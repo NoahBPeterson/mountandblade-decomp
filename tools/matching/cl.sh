@@ -13,7 +13,10 @@ root=$(cd "$(dirname "$0")/../.." && pwd)
 tc="$root/work/toolchain/vc71tk"
 winpath() { printf 'Z:%s' "$1" | tr '/' '\\'; }
 export WINEPREFIX="${CL_WINEPREFIX:-$root/work/toolchain/wineprefix-mb}" WINEDEBUG=-all
-export INCLUDE="$(winpath "$root/src/include");$(winpath "$tc/include");$(winpath "$root/work/toolchain/vc9sp1/WinSDK/Include")"
+# work/toolchain/sal holds ONLY VC9's sal.h (copied from vc9sp1/VC/include): SDK 6.0A's specstrings.h includes
+# <sal.h>, which VC7.1 lacks, so windows.h/d3d9.h/dinput.h failed (C1083). The Windows 10 SDK sal.h does not
+# work with cl 13.10 (ConcurrencySal.h, unknown pragmas). Keep it after the VC7.1 headers.
+export INCLUDE="$(winpath "$root/src/include");$(winpath "$tc/include");$(winpath "$root/work/toolchain/sal");$(winpath "$root/work/toolchain/vc9sp1/WinSDK/Include")"
 export LIB="$(winpath "$tc/lib");$(winpath "$root/work/toolchain/vc9sp1/WinSDK/Lib")"
 export WINEPATH="$(winpath "$tc/bin")"
 # Output goes through a temp file, never the caller's pipes: wine's services inherit cl's stdio and
