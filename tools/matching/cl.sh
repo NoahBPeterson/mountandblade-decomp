@@ -3,11 +3,16 @@
 # mount&blade.exe was linked by link 7.10; the Rich header is gone (Valve's VLV block), so the exact
 # cl 13.10 build is inferred from matches. Toolchain: work/toolchain/vc71tk (symlink to spore-decomp's
 # copy, extracted from VCToolkitSetup.exe). Headers: vc71tk CRT/STL + Windows SDK 6.0A (from vc9sp1)
-# for windows.h / d3d9.h / dinput.h. Shares spore-decomp's wine prefix.
+# for windows.h / d3d9.h / dinput.h.
+# Wine prefix: work/toolchain/wineprefix-mb, our own (create with `WINEPREFIX=$PWD/work/toolchain/wineprefix-mb
+# wineboot -i`). Sharing spore-decomp's prefix meant one wineserver for both projects' waves: a one-line
+# file took 6.5-14.6 s to compile; in our own prefix it takes ~2 s. Keep it warm during waves with
+# tools/matching/keepalive.sh (wine stops its services ~3 s after the last program exits; a cold
+# compile costs ~6-8 s).
 root=$(cd "$(dirname "$0")/../.." && pwd)
 tc="$root/work/toolchain/vc71tk"
 winpath() { printf 'Z:%s' "$1" | tr '/' '\\'; }
-export WINEPREFIX="${CL_WINEPREFIX:-$root/work/toolchain/wineprefix}" WINEDEBUG=-all
+export WINEPREFIX="${CL_WINEPREFIX:-$root/work/toolchain/wineprefix-mb}" WINEDEBUG=-all
 export INCLUDE="$(winpath "$root/src/include");$(winpath "$tc/include");$(winpath "$root/work/toolchain/vc9sp1/WinSDK/Include")"
 export LIB="$(winpath "$tc/lib");$(winpath "$root/work/toolchain/vc9sp1/WinSDK/Lib")"
 export WINEPATH="$(winpath "$tc/bin")"
