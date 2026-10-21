@@ -1161,17 +1161,7 @@ class Runner:
         o["mxcsr"] = uc.reg_read(UC_X86_REG_MXCSR) & 0xFFC0
         o["xmm0"] = uc.reg_read(UC_X86_REG_XMM0)
         # memory after the run (and undo it)
-        mem = {}
-        for nm, lo, hi in m.writable:
-            base = m.image_baseline[nm]
-            cur = m.read(lo, hi - lo)
-            if cur != base:
-                pages = {}
-                for p in range(0, hi - lo, 0x1000):
-                    if cur[p:p + 0x1000] != base[p:p + 0x1000]:
-                        pages[lo + p] = cur[p:p + 0x1000]
-                        m.write(lo + p, base[p:p + 0x1000])
-                mem[nm] = pages
+        mem = m.take_image_dirty()      # only pages written during the run (machine.py write hooks)
         o["pool_init"] = init = dict(m.pool_pages)
         entry = m.pool_entry
         mem["pool"] = m.unmap_pool()
@@ -1364,10 +1354,8 @@ class Comparer:
                 elif region == "misc":
                     basepg = m.misc_base_page
                 else:
-                    lo = dict((nm, l) for nm, l, h in m.writable)[region]
-
-                    def basepg(page, lo=lo, base=m.image_baseline[region]):
-                        return base[page - lo:page - lo + 0x1000]
+                    def basepg(page, region=region):
+                        return m.image_base_page(region, page)
                 for page in sorted(set(xa) | set(xb)):
                     pa = xa.get(page) or basepg(page)
                     pb = xb.get(page) or basepg(page)

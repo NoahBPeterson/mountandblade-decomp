@@ -121,13 +121,24 @@ class Machine:
         self._rdtsc_cb = uccallback(uc, intel.HOOK_INSN_CPUID_CFUNC)(self._on_rdtsc)
         # The Python binding only maps in/out/syscall/cpuid; rdtsc hooks share cpuid's C signature.
         uc._Uc__do_hook_add(UC_HOOK_INSN, self._rdtsc_cb, 1, 0, ctypes.c_int(UC_X86_INS_RDTSC))
-        self.image_baseline = {nm: bytes(uc.mem_read(lo, hi - lo)) for nm, lo, hi in self.writable}
+        # Baseline of each writable section up to its last nonzero page; pages beyond are zero
+        # (mount&blade.exe: 188 KB initialized of a 144 MB .data). Read through image_base_page().
+        self.image_baseline = {}
+        for nm, lo, hi in self.writable:
+            raw = next((s.get_data() for s in pe.sections if base + s.VirtualAddress == lo), b"")
+            n = min(hi - lo, _page(len(raw.rstrip(b"\0"))))
+            self.image_baseline[nm] = bytes(uc.mem_read(lo, n))
         self.misc_baseline = bytes(uc.mem_read(MISC_BASE, MISC_SIZE))
         # Dirty-page tracking for DYN and MISC: emulated writes through a hook, handler writes in
         # write(). Both sides start from the baseline (zeros / misc_baseline) on every run.
         self.dirty = set()
         self._dirty_hooks = [uc.hook_add(UC_HOOK_MEM_WRITE, self._on_tracked_write, begin=lo, end=hi - 1)
                              for lo, hi in ((DYN_BASE, DYN_BASE + DYN_SIZE), (MISC_BASE, MISC_BASE + MISC_SIZE))]
+        # Same for the image's writable sections. mount&blade.exe's .data is 144 MB (mostly .bss): reading
+        # and comparing whole sections after every run allocated 144 MB per run (~5 GB peak per process).
+        self.img_dirty = set()
+        self._dirty_hooks += [uc.hook_add(UC_HOOK_MEM_WRITE, self._on_image_write, begin=lo, end=hi - 1)
+                              for _nm, lo, hi in self.writable]
         self.obj = None
         self.dyn_next = DYN_BASE
         self.dyn_sizes = {}
@@ -146,6 +157,35 @@ class Machine:
         self.dirty.add(address & ~0xFFF)
         if (address + size - 1) & ~0xFFF != address & ~0xFFF:
             self.dirty.add((address + size - 1) & ~0xFFF)
+
+    def _on_image_write(self, uc, access, address, size, value, _):
+        self.img_dirty.add(address & ~0xFFF)
+        if (address + size - 1) & ~0xFFF != address & ~0xFFF:
+            self.img_dirty.add((address + size - 1) & ~0xFFF)
+
+    def image_base_page(self, nm, p):
+        lo = next(l for n, l, _h in self.writable if n == nm)
+        b = self.image_baseline[nm][p - lo:p - lo + 0x1000]
+        return b + b"\0" * (0x1000 - len(b))
+
+    def in_image_writable(self, a):
+        return any(lo <= a < hi for _nm, lo, hi in self.writable)
+
+    def take_image_dirty(self):
+        """-> {section name: {page: bytes}} for image pages written since the last call that differ from
+        the baseline (sections with no such page are absent); restores every dirty page."""
+        out = {}
+        for p in sorted(self.img_dirty):
+            for nm, lo, hi in self.writable:
+                if lo <= p < hi:
+                    base = self.image_base_page(nm, p)
+                    cur = bytes(self.uc.mem_read(p, len(base)))
+                    if cur != base:
+                        out.setdefault(nm, {})[p] = cur
+                        self.uc.mem_write(p, base)
+                    break
+        self.img_dirty = set()
+        return out
 
     @staticmethod
     def tracked(a):
@@ -366,6 +406,9 @@ class Machine:
                 for p in range(a & ~0xFFF, e, 0x1000):
                     if self.tracked(p):
                         self.dirty.add(p)
+            for p in range(a & ~0xFFF, e, 0x1000):
+                if self.in_image_writable(p):
+                    self.img_dirty.add(p)
         self.uc.mem_write(a, bytes(data))
 
     def cstr(self, a, wide=False, limit=1 << 16):
