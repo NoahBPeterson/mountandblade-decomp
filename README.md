@@ -16,7 +16,7 @@ python3 -m venv .venv && .venv/bin/pip install pefile capstone unicorn pycryptod
 MB="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Mount and Blade"
 .venv/bin/python tools/steamstub21_analysis_image.py "$MB/mount&blade.exe" work/mb.analysis.bin work/mb.analysis.json
 # toolchain: work/toolchain/{vc71tk,vc9sp1,wineprefix} -> symlinks to ../spore-decomp/work/toolchain/*
-export GHIDRA_INSTALL_DIR=/opt/homebrew/Cellar/ghidra/12.1.3/libexec PY=/opt/homebrew/opt/python@3.11/bin/python3.11
+export GHIDRA_INSTALL_DIR=$(ls -d /opt/homebrew/Cellar/ghidra/*/libexec | tail -1) PY=/opt/homebrew/opt/python@3.11/bin/python3.11
 $PY tools/ghidra/index.py new work/mb.analysis.bin work/ghidra mb 0x5390ba work/index/functions.csv  # ~5 min
 $PY tools/ghidra/fixups.py work/mb.analysis.bin work/ghidra mb          # jump tables, missed functions
 $PY tools/ghidra/create_functions.py work/mb.analysis.bin work/ghidra mb 401000 40c1d8  # callbacks referenced only by immediates
