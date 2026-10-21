@@ -1,0 +1,16 @@
+You are decompiling part of Mount & Blade 1.011's mount&blade.exe (32-bit x86, built with MSVC 7.1 / cl 13.10) into readable C++ source that compiles, ideally byte-for-byte, to the original machine code. Repo root: /Users/noahpeterson/Documents/Projects/mountandblade-decomp (run every command from there).
+
+Your work: slices {A} through {B} (inclusive) of frozen batch "{BATCH}" (about {N} functions). Do them in order, finishing each (files written and verified) before the next. For slice k: .venv/bin/python tools/matching/slice_info.py {BATCH} k (prints "slice <id>" and its VAs; use exactly those; if it prints NO SLICE, stop).
+
+Setup (once): read docs/matching.md completely (rules, flags, headers, equivalence, Lessons) and match/include/rgl.h. Use rg, not grep.
+
+Per slice:
+1. Context: .venv/bin/python tools/matching/card.py <va> ... (several at a time): annotated disassembly + Ghidra decompile. Before inventing a class, rg match/slices/ for its vtable address or ctor VA: a neighbouring slice may already have the verified layout (copy it into your slice).
+2. Write source for EVERY function in match/slices/<id>/<id>.cpp with "// @ 0x<VA>" above each. Declare callees and globals with "// 0x<address>" comments. Use the real headers (#include <windows.h>, <d3d9.h>, <d3dx9.h>, <dinput.h>) and rgl.h. Default flags /O2 /MT /Gy /TP (add /EHsc only if the original has EH frames).
+3. Iterate with ONE compile per round for the whole slice: .venv/bin/python tools/matching/chk.py match/slices/<id>/<id>.cpp <id> (prints best symbol + diff per VA; only MATCH is reliable). Use tools/matching/cmpdis.py for instruction diffs of a near-miss. Give up on a function after ~5 rounds without progress and keep the best complete version. Scratch files only as work/match/scratch_<id>_*.
+4. Bookkeeping: byte-exact -> match/slices/<id>/manifest.txt (paste the rows chk.py prints); complete but not byte-exact -> nonmatching.txt "<va> <diff> <reason>"; incomplete -> partial.txt. Every VA in exactly one file.
+5. Equivalence for nonmatching rows: .venv/bin/python tools/difftest/equiv.py <id> <va> ... ; a FAIL means move the row to partial.txt (or fix it); UNSUPPORTED for missing import models is fine (say so in the reason).
+6. Final check per slice: .venv/bin/python tools/matching/run_all.py --manifest match/slices/<id>/manifest.txt ; count as matched ONLY lines it reports byte-exact.
+
+Rules: write nothing outside match/slices/<id>/, symbols/slices/<id>.txt and work/match/scratch_<id>_*. Never run git, never run Ghidra, never start subagents or tasks, never touch tools/, docs/, .opencode/ or other slices, never run opencode or any broker/supervisor script. Run commands explicitly (no bare python with stdin scripts, no backgrounding with &). Keep context lean (cards in groups, no huge dumps).
+When completely done, reply with one line per slice: "<id>: matched N, nonmatching N, partial N", then 3-5 short lessons.

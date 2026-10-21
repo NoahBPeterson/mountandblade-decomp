@@ -47,3 +47,16 @@ Target: byte-exact wherever reachable. There is no sign of `/GL`/LTCG so far, so
   `coverage.py`, `export_decomp.py`).
 - `match/` — slices and manifests (as spore-decomp). `match/include/` — shared headers.
 - `symbols/` — recovered names. `work/` — git-ignored binary-derived artifacts.
+
+## DeepSeek waves (opencode), ported from spore-decomp
+- Config: `.opencode/opencode.json` (git-ignored; every tool "ask", web/external dirs denied; providers
+  cheaperinference + OpenRouter for DeepSeek V4.1 Flash; `tools/opencode_cache_ns.py 16` writes per-session
+  prompt-cache aliases). `.opencode/silent` mutes notification plugins.
+- Batch + group: `work/batches/<batch>.json`, `work/opencode/groups/<group>.json` (`ranges` of slice indices,
+  one per session). Prompt template `work/opencode/wave_prompt.txt` (tracked copy: `docs/opencode_wave_prompt.txt`).
+- Gate: `tools/opencode_broker.py <batch> --sessions work/opencode/sessions_<group>.txt [--manual]`
+  (kept alive by `tools/opencode_broker_watch.sh`); policy mode auto-approves the matching tools and edits
+  inside the session's own slices, `--manual` holds everything for a supervisor.
+- Run: `tools/opencode_sup.py <group> launch N | pending | reply | status | unhang | nudge`;
+  `tools/opencode_drain.py <group>` nudges idle sessions and interrupts hung ones until done;
+  `tools/opencode_verify_group.sh <batch>` re-verifies and gates bookkeeping afterwards.
