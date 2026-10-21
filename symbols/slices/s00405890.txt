@@ -1,0 +1,4 @@
+00405890 D3DSettingsDlg::ComboSelectData  # sample ComboBoxSelectItemData(id, data): scans CB items, SETCURSEL, posts WM_COMMAND CBN_SELCHANGE
+00405920 D3DSettingsDlg::OnAdapterChanged  # fills IDC_DEVICE_COMBO (1000) with D3DDEVTYPE_* strings
+00405ac0 D3DSettingsDlg::OnWindowedFullscreenChanged  # IsDlgButtonChecked(0x3f8 windowed radio)
+00405e00 D3DSettingsDlg::OnAdapterFormatChanged  # fills resolution (0x3ec) and backbuffer format (0x3ef) combos

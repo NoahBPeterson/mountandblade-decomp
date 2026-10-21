@@ -1,0 +1,7 @@
+0040a540 ??_Gcapsule@@UAEPAXI@Z  # vtable 0x54a540 slot 0 (scalar deleting dtor; folded with sphere's)
+0054a540 ??_7capsule@@6B@  # vtable stored by the ctor at 0x408600
+0040a540 ??_Gface@@UAEPAXI@Z  # vtable 0x54a588 slot 0 (scalar deleting dtor; folded)
+0054a588 ??_7face@@6B@  # vtable stored by the ctor at 0x408980
+00408170 renderer_translate  # world matrix += offset, D3D SetTransform(WORLD)
+004081b0 renderer_pop_matrix  # pops the world matrix stack and SetTransform(WORLD)
+004081f0 renderer_draw_sphere  # 5x8 wireframe lat/long sphere via DrawPrimitiveUP(LINELIST)

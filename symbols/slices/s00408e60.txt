@@ -1,0 +1,1 @@
+00408e60 ?draw_polygon_outline@renderer@@QAEXPBUvector4@rgl@@H@Z  # SetRenderState/SetTexture/DrawPrimitiveUP(LINELIST) via device at this+0x618 (provisional name)

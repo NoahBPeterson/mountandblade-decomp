@@ -187,7 +187,7 @@ def main():
                 diffs = [i for i in range(n) if i not in mask and theirs[i] != mine[i]]
                 if obj not in const_cache:
                     const_cache[obj] = coff_constants(obj)
-                diffs += constant_diffs(const_cache[obj], sec["relocs"], off, theirs, orig.read)
+                diffs += constant_diffs(const_cache[obj], sec["relocs"], off, theirs, orig.read, mine)
                 status = "MATCH" if not diffs else "DIFF %d bytes" % len(diffs)
         # docs/matching.md "No assembly transcription": a naked/_emit/mostly-__asm body is not decompiled, so it
         # never counts as byte-exact (2026-10-18 audit: 18 such manifest rows had been counted).

@@ -1,0 +1,3 @@
+slices/s00408a50/s00408a50.cpp  ?save@face@@UAEXPAUstream@@@Z  00408d60  /O2 /MT /Gy /EHsc /TP
+slices/s00408a50/s00408a50.cpp  ?load@face@@UAEXPAUstream@@@Z  00408dd0  /O2 /MT /Gy /EHsc /TP
+slices/s00408a50/s00408a50.cpp  ?draw@face@@UAEXXZ  00408e40  /O2 /MT /Gy /EHsc /TP

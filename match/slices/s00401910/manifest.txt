@@ -1,0 +1,6 @@
+slices/s00401910/s00401910.cpp  ?ConfirmDevice@Application@@UAEHHHHH@Z  00401a20  /O2 /MT /Gy /TP
+slices/s00401910/s00401910.cpp  ??_GApplication@@UAEPAXI@Z  00401a30  /O2 /MT /Gy /TP
+slices/s00401910/s00401910.cpp  ?FindBestWindowedMode@Application@@QAE_N_N0@Z  00401a60  /O2 /MT /Gy /TP
+slices/s00401910/s00401910.cpp  ?FindBestFullscreenMode@Application@@UAE_N_N0@Z  00401d40  /O2 /MT /Gy /TP
+slices/s00401910/s00401910.cpp  ?ChooseInitialD3DSettings@Application@@QAEHXZ  00402100  /O2 /MT /Gy /TP
+slices/s00401910/s00401910.cpp  ?HandlePossibleSizeChange@Application@@QAEHXZ  00402150  /O2 /MT /Gy /TP

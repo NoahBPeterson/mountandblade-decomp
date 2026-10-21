@@ -1,0 +1,3 @@
+slices/s00405890/s00405890.cpp  ?ComboSelectData@D3DSettingsDlg@@QAEXHH@Z  00405890  /O2 /MT /Gy /EHsc /TP
+slices/s00405890/s00405890.cpp  ?OnAdapterChanged@D3DSettingsDlg@@QAEXXZ  00405920  /O2 /MT /Gy /EHsc /TP
+slices/s00405890/s00405890.cpp  ?OnWindowedFullscreenChanged@D3DSettingsDlg@@QAEXXZ  00405ac0  /O2 /MT /Gy /EHsc /TP

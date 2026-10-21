@@ -1,0 +1,2 @@
+00404a00 CD3DFont::PaintAlphabet  # GetTextExtentPoint32A per char 32..126 filling m_fTexCoords, D3DERR_MOREDATA when the texture is too small
+00404c00 CD3DFont::InitDeviceObjects  # GDI font + A4R4G4B4 texture + DIB section, copies alpha into the texture

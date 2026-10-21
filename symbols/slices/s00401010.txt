@@ -1,0 +1,11 @@
+00535712 ??3@YAXPAX@Z  # operator delete: libcmt thunk, jmp _free; called from the vector-deleting dtor tail (0x4018f3) and 0x42bc48
+0053570d ??_V@YAXPAX@Z  # operator delete[]: libcmt thunk to operator delete; called for the +0x30 array member and the array block (0x4018a2)
+00401870 ??_ERec34@@QAEPAXI@Z  # vector deleting destructor of the 0x34-byte record (flags 2 = array, 1 = free)
+00549c60 ??_7Application@@6B@  # Application vtable
+00401a30 ??_GApplication@@UAEPAXI@Z  # Application scalar deleting destructor (vtable slot 17)
+00401010 app_confirm_device  # ConfirmDeviceHelper: maps vertex-processing type to D3DCREATE flags, calls g_app->ConfirmDevice
+00401070 Application::Create  # registers "MB Window" class and creates the window
+00401290 Application::Reset3DEnvironment  # DX SDK CD3DApplication::Reset3DEnvironment
+004013e0 Application::AdjustWindowForChange  # DX SDK AdjustWindowForChange
+00401480 Application::Pause  # DX SDK Pause (static dwAppPausedCount at 0x5d6f44)
+004014f0 Application::DisplayErrorMsg  # DX SDK DisplayErrorMsg (switch on HRESULT)

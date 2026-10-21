@@ -1,0 +1,5 @@
+00402280 Application::BuildPresentParamsFromSettings  # DX SDK BuildPresentParamsFromSettings (BackBufferCount from PresentationInterval)
+00402430 Application::Render3DEnvironment  # DX SDK Render3DEnvironment (+ frame limiter against Application+8)
+00402580 Application::UpdateStats  # DX SDK UpdateStats (vtable slot 2)
+004026e0 Application::Cleanup3DEnvironment  # DX SDK Cleanup3DEnvironment with the non-zero refcount error inlined
+004027c0 Application::Initialize3DEnvironment  # DX SDK Initialize3DEnvironment with UpdateDeviceStats inlined

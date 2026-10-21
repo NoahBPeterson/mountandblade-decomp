@@ -1,0 +1,8 @@
+slices/s00401010/s00401010.cpp  ?app_confirm_device@@YA_NHHHH@Z  00401010  /O2 /MT /Gy /TP
+slices/s00401010/s00401010.cpp  ?Reset3DEnvironment@Application@@QAEHXZ  00401290  /O2 /MT /Gy /TP
+slices/s00401010/s00401010.cpp  ?AdjustWindowForChange@Application@@UAEHXZ  004013e0  /O2 /MT /Gy /TP
+slices/s00401010/s00401010.cpp  ?Pause@Application@@UAEX_N@Z  00401480  /O2 /MT /Gy /TP
+slices/s00401010/s00401010.cpp  ?vec_ctor@@YGXPAXIHP6IX0@Z@Z  00401800  /O2 /MT /Gy /TP
+slices/s00401010/s00401010.cpp  ?vec_dtor@@YGXPAXIHP6IX0@Z@Z  00401830  /O2 /MT /Gy /TP
+slices/s00401010/s00401010.cpp  ??_ERec34@@QAEPAXI@Z  00401870  /O2 /MT /Gy /TP
+slices/s00401010/s00401010.cpp  ?DisplayErrorMsg@Application@@QAEHHH@Z  004014f0  /O2 /MT /Gy /TP

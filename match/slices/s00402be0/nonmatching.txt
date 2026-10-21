@@ -1,0 +1,1 @@
+00402be0 188 callee 0x402280 and 0x401290 are called back to back with ECX left from the first (cl knew 0x402280 preserves ECX: file-local custom convention); we reload ECX (+2 bytes). Rest identical (volatile read of the windowed byte reproduces the non-CSE'd mode-size reads).

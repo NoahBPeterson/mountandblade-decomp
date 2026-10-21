@@ -1,0 +1,7 @@
+00401910 Application::Application  # CD3DApplication constructor: stores the vtable, inits members, Pause(true)
+00401a30 ??_GApplication@@UAEPAXI@Z  # scalar deleting destructor (vtable slot 17)
+00401a20 Application::ConfirmDevice  # default ConfirmDevice: accepts every device (vtable slot 3)
+00401a60 Application::FindBestWindowedMode  # DX SDK CD3DApplication::FindBestWindowedMode
+00401d40 Application::FindBestFullscreenMode  # DX SDK CD3DApplication::FindBestFullscreenMode (vtable slot 0)
+00402100 Application::ChooseInitialD3DSettings  # DX SDK ChooseInitialD3DSettings
+00402150 Application::HandlePossibleSizeChange  # DX SDK HandlePossibleSizeChange

@@ -1,0 +1,6 @@
+slices/s00403ab0/s00403ab0.cpp  ?BuildPresentIntervalList@@YGXPAUDeviceInfo@@PAUDeviceCombo@@@Z  00403ab0  /O2 /MT /Gy /EHsc /TP
+slices/s00403ab0/s00403ab0.cpp  ?BuildConflictList@D3DEnum@@QAEXPAUDeviceCombo@@@Z  00403b40  /O2 /MT /Gy /EHsc /TP
+slices/s00403ab0/s00403ab0.cpp  ??1DeviceInfo@@QAE@XZ  00403bf0  /O2 /MT /Gy /EHsc /TP
+slices/s00403ab0/s00403ab0.cpp  ?EnumerateDeviceCombos@D3DEnum@@QAEJPAUDeviceInfo@@PAUCArrayList@@@Z  00403c50  /O2 /MT /Gy /EHsc /TP
+slices/s00403ab0/s00403ab0.cpp  ?EnumerateDevices@D3DEnum@@QAEJPAUAdapterInfo@@PAUCArrayList@@@Z  00403f90  /O2 /MT /Gy /EHsc /TP
+slices/s00403ab0/s00403ab0.cpp  ??1AdapterInfo@@QAE@XZ  004040c0  /O2 /MT /Gy /EHsc /TP

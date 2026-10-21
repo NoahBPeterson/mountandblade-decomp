@@ -1,0 +1,8 @@
+slices/s00404f00/s00404f00.cpp  ?DrawText@CD3DFont@@QAEJMMKPBDK@Z  00404f00  /O2 /MT /Gy /TP
+slices/s00404f00/s00404f00.cpp  ?MultisampleTypeToString@@YAPBDH@Z  004055e0  /O2 /MT /Gy /TP
+slices/s00404f00/s00404f00.cpp  ??0CSettingsDialog@@QAE@HPBUD3DSettingsBlock@@@Z  004056a0  /O2 /MT /Gy /TP
+slices/s00404f00/s00404f00.cpp  ?ComboBoxAdd@CSettingsDialog@@QAEXHPAXPBD@Z  004056d0  /O2 /MT /Gy /TP
+slices/s00404f00/s00404f00.cpp  ?ComboBoxSelect@CSettingsDialog@@QAEXHH@Z  00405710  /O2 /MT /Gy /TP
+slices/s00404f00/s00404f00.cpp  ?ComboBoxSelected@CSettingsDialog@@QAEPAXH@Z  00405760  /O2 /MT /Gy /TP
+slices/s00404f00/s00404f00.cpp  ?ComboBoxContainsText@CSettingsDialog@@QAE_NHPBD@Z  004057a0  /O2 /MT /Gy /TP
+slices/s00404f00/s00404f00.cpp  ?UpdateRefreshRate@CSettingsDialog@@QAEXXZ  00405840  /O2 /MT /Gy /TP

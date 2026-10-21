@@ -1,0 +1,2 @@
+00408a50  4  face::scale: complete; y multiply operand order (fld v.y; fmul s[1] in original, reversed in ours) - compiler ignores every source spelling tried; equiv PASS
+00408bd0  18  face::transform: complete; the three inlined transform_point sums are emitted in a different term order than the original (z: f,s,u with p.z*m operands), so equiv FAILs by 1 ulp on ~1% of inputs (summation order, not logic); no source spelling reproduced the original order

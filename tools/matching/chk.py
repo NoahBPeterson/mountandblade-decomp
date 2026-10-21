@@ -125,7 +125,7 @@ def main():
                 continue
             theirs, omask = orig.bytes_and_mask(va, n)
             d = sum(1 for i in range(n) if i not in rmask and i not in omask and theirs[i] != mine[i]) + abs(n - n0)
-            d += len(constant_diffs(consts, relocs, off, theirs, orig.read))
+            d += len(constant_diffs(consts, relocs, off, theirs, orig.read, mine))
             if near and (size_best is None or d < size_best[0]):
                 size_best = (d, n, name)
             if (not bound or name in bound) and (va not in best or d < best[va][0]):

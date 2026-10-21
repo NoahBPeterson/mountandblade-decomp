@@ -1,0 +1,8 @@
+00404f00 CD3DFont::DrawText  # DX9 d3dfont.cpp DrawText: FONT2DVERTEX quads, 300-vertex flush
+004055e0 MultisampleTypeToString  # returns the D3DMULTISAMPLE_* names
+004056a0 CSettingsDialog::CSettingsDialog  # stores this in g_pSettingsDialog (0x5d6f54), copies the 0x6c-byte settings
+004056d0 CSettingsDialog::ComboBoxAdd  # CB_ADDSTRING then CB_SETITEMDATA
+00405710 CSettingsDialog::ComboBoxSelect  # CB_SETCURSEL then PostMessage WM_COMMAND/CBN_SELCHANGE
+00405760 CSettingsDialog::ComboBoxSelected  # CB_GETCURSEL/CB_GETITEMDATA
+004057a0 CSettingsDialog::ComboBoxContainsText  # CB_GETLBTEXT/lstrcmpA loop
+00405840 CSettingsDialog::UpdateRefreshRate  # combo 0x3ee (IDC_REFRESHRATE_COMBO) item data -> +0x58

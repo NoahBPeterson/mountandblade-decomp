@@ -1,0 +1,1 @@
+slices/s00404a00/s00404a00.cpp  ?PaintAlphabet@CD3DFont@@QAEJPAUHDC__@@H@Z  00404a00  /O2 /MT /Gy /TP

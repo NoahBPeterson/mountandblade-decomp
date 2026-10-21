@@ -1,0 +1,3 @@
+slices/s004061c0/s004061c0.cpp  ?OnResolutionChanged@D3DSettingsDlg@@QAEXXZ  004061c0  /O2 /MT /Gy /EHsc /TP
+slices/s004061c0/s004061c0.cpp  ?OnBackBufferFormatChanged@D3DSettingsDlg@@QAEXXZ  00406370  /O2 /MT /Gy /EHsc /TP
+slices/s004061c0/s004061c0.cpp  ?OnDepthStencilChanged@D3DSettingsDlg@@QAEXXZ  004068c0  /O2 /MT /Gy /EHsc /TP

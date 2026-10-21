@@ -1,0 +1,6 @@
+00403ab0 D3DEnumeration::BuildPresentIntervalList  # DX9 SDK d3denumeration.cpp: 6 intervals {IMMEDIATE,DEFAULT,ONE,TWO,THREE,FOUR}, windowed skips TWO..FOUR, caps+0x14 PresentationIntervals
+00403b40 D3DEnumeration::BuildDSMSConflictList  # CheckDeviceMultiSampleType(ds fmt) failure -> DSMSConflict{ds,ms}
+00403bf0 D3DDeviceInfo::~D3DDeviceInfo  # deletes pDeviceComboList entries then list
+00403c50 D3DEnumeration::EnumerateDeviceCombos  # backbuffer fmt array {A8R8G8B8,X8R8G8B8,A2R10G10B10,R5G6B5,A1R5G5B5,X1R5G5B5}, AppMinAlphaChannelBits, CheckDeviceType, E_OUTOFMEMORY
+00403f90 D3DEnumeration::EnumerateDevices  # device types {HAL,SW,REF}, GetDeviceCaps (IDirect3D9 slot 14)
+004040c0 D3DAdapterInfo::~D3DAdapterInfo  # deletes pDisplayModeList and pDeviceInfoList

@@ -1,0 +1,8 @@
+00406a90 D3DSettingsDlg::OnMultisampleTypeChanged  # fills multisample-quality combo (0x3f3) with "%d"
+00406c40 D3DSettingsDlg::OnMultisampleQualityChanged  # stores combo 0x3f3 selection
+00406c90 D3DSettingsDlg::OnVertexProcessingChanged  # stores combo 0x3f1 selection
+00406ce0 D3DSettingsDlg::OnPresentIntervalChanged  # stores combo 0x3f2 selection
+00406d30 D3DSettingsDlg::OnDeviceChanged  # enables windowed/fullscreen radios (0x3f8/0x3fa) from device combos
+00406e50 D3DSettingsDlg::DlgProc  # WM_INITDIALOG/WM_COMMAND dispatch for the settings dialog
+00407220 SettingsDlgProcThunk  # static DLGPROC, tail-jumps to DlgProc on global dialog object 0x5d6f54
+00407230 ShowD3DSettingsDialog  # DialogBoxParamA(NULL, resource 0x90, parent, thunk, 0)

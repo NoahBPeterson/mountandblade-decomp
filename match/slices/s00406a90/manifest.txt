@@ -1,0 +1,7 @@
+slices/s00406a90/s00406a90.cpp  ?OnMultisampleQualityChanged@D3DSettingsDlg@@QAEXXZ  00406c40  /O2 /MT /Gy /EHsc /TP
+slices/s00406a90/s00406a90.cpp  ?OnVertexProcessingChanged@D3DSettingsDlg@@QAEXXZ  00406c90  /O2 /MT /Gy /EHsc /TP
+slices/s00406a90/s00406a90.cpp  ?OnPresentIntervalChanged@D3DSettingsDlg@@QAEXXZ  00406ce0  /O2 /MT /Gy /EHsc /TP
+slices/s00406a90/s00406a90.cpp  ?OnDeviceChanged@D3DSettingsDlg@@QAEXXZ  00406d30  /O2 /MT /Gy /EHsc /TP
+slices/s00406a90/s00406a90.cpp  ?DlgProc@D3DSettingsDlg@@QAEHPAUHWND__@@IIJ@Z  00406e50  /O2 /MT /Gy /EHsc /TP
+slices/s00406a90/s00406a90.cpp  ?SettingsDlgProcThunk@@YGHPAUHWND__@@IIJ@Z  00407220  /O2 /MT /Gy /EHsc /TP
+slices/s00406a90/s00406a90.cpp  ?ShowD3DSettingsDialog@@YGXPAUHWND__@@@Z  00407230  /O2 /MT /Gy /EHsc /TP

@@ -1,0 +1,8 @@
+00403120 CD3DApplication::MsgProc  # WM_PAINT/SIZE/CLOSE/SETCURSOR/GETMINMAXINFO/NCHITTEST/SYSCOMMAND/COMMAND handling as in the DX9 SDK sample framework
+004035d0 GetColorChannelBits  # file-local, EAX argument; D3DFMT 0x14..0x23 -> 8/5/4/2/10 bits
+00403640 D3DDeviceCombo::~D3DDeviceCombo  # deletes the six CArrayLists
+004036e0 D3DEnumeration::D3DEnumeration  # AppMinFullscreenWidth=640, Height=480, ColorChannelBits=5, DepthBits=15 defaults
+00403720 SortModesCallback  # DX9 SDK qsort comparator for D3DDISPLAYMODE (Width, Height, Format, RefreshRate)
+00403770 D3DEnumeration::BuildDepthStencilFormatList  # D16, D15S1, D24X8, D24S8, D24X4S4, D32 vs AppMinDepthBits/StencilBits
+004038c0 D3DEnumeration::BuildMultiSampleTypeList  # 17 multisample types 0..16, CheckDeviceMultiSampleType
+004039b0 D3DEnumeration::BuildVertexProcessingTypeList  # DEVCAPS_HWTRANSFORMANDLIGHT 0x10000 / PUREDEVICE 0x100000, ConfirmDeviceCallback

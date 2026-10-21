@@ -1,0 +1,9 @@
+00404140 CD3DEnumeration::Enumerate  # DX9 sample d3denum.cpp: new CArrayList x2, adds X8R8G8B8/X1R5G5B5/R5G6B5/A2R10G10B10, per-adapter D3DAdapterInfo, qsort of display modes
+00404480 CD3DEnumeration::~CD3DEnumeration  # deletes each D3DAdapterInfo, the adapter list and the allowed-format list
+00404500 CD3DFont::CreateGDIFont  # GetDeviceCaps(LOGPIXELSY)/MulDiv/CreateFontA with the font name at +0
+00404590 ceil_f  # float -> double _ceil wrapper
+004045b0 CD3DFont::RestoreDeviceObjects  # CreateVertexBuffer + two state blocks (saved / drawtext)
+00404900 CD3DFont::InvalidateDeviceObjects  # releases m_pVB and both state blocks
+00404950 CD3DFont::DeleteDeviceObjects  # releases texture, clears device
+00404980 CD3DFont::CD3DFont  # (strFontName, dwHeight, dwFlags)
+004049d0 CD3DFont::~CD3DFont  # InvalidateDeviceObjects + DeleteDeviceObjects

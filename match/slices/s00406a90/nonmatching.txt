@@ -1,0 +1,1 @@
+00406a90 311 complete (equiv UNSUPPORTED: harness has no user32 imports); 1-byte shift: orig stores msType from eax (flag in cl, reloaded in al), ours copies to ecx and CSEs the windowed flag

@@ -1,0 +1,9 @@
+slices/s00404140/s00404140.cpp  ?Enumerate@CD3DEnumeration@@QAEJXZ  00404140  /O2 /MT /Gy /TP
+slices/s00404140/s00404140.cpp  ??1CD3DEnumeration@@QAE@XZ  00404480  /O2 /MT /Gy /TP
+slices/s00404140/s00404140.cpp  ?CreateGDIFont@CD3DFont@@QAEJPAUHDC__@@PAPAUHFONT__@@@Z  00404500  /O2 /MT /Gy /TP
+slices/s00404140/s00404140.cpp  ?CeilF@@YANM@Z  00404590  /O2 /MT /Gy /TP
+slices/s00404140/s00404140.cpp  ?RestoreDeviceObjects@CD3DFont@@QAEJXZ  004045b0  /O2 /MT /Gy /TP
+slices/s00404140/s00404140.cpp  ?InvalidateDeviceObjects@CD3DFont@@QAEJXZ  00404900  /O2 /MT /Gy /TP
+slices/s00404140/s00404140.cpp  ?DeleteDeviceObjects@CD3DFont@@QAEJXZ  00404950  /O2 /MT /Gy /TP
+slices/s00404140/s00404140.cpp  ??0CD3DFont@@QAE@PBDKK@Z  00404980  /O2 /MT /Gy /TP
+slices/s00404140/s00404140.cpp  ??1CD3DFont@@QAE@XZ  004049d0  /O2 /MT /Gy /TP

@@ -1,0 +1,7 @@
+00407e00 ?normalize@rgl@@YAXAAUvector4@1@ABU21@@Z  # rgl::normalize(out, in), s00407c10
+00407ef0 ?orthonormalize@matrix@rgl@@QAEXXZ  # s00407c10
+00407f70 ?transform_point_to_local@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z  # s00407c10
+00409500 ?segment_closest_points@@YAXPBUvector4@rgl@@000PAU12@1@Z  # closest points of two segments; callers 0x409e90 (capsule/capsule)
+00409980 ?sphere_sphere_contact@@YAXPAUcoll_shape@@0HPAUcontact@@PAH@Z  # contact record 0x24 bytes, count/max protocol (provisional name)
+00409ac0 ?capsule_sphere_contact@@YAXPAUcoll_shape@@0HPAUcontact@@PAH@Z  # provisional name
+00409d20 ?capsule_sphere_gap@@YAMPAUcoll_shape@@0@Z  # provisional name

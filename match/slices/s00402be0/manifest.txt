@@ -1,0 +1,3 @@
+slices/s00402be0/s00402be0.cpp  ?toggle_fullscreen@App@@QAEHXZ  00402d40  /O2 /MT /Gy /EHsc /TP
+slices/s00402be0/s00402be0.cpp  ?run@App@@QAEIXZ  00402ee0  /O2 /MT /Gy /EHsc /TP
+slices/s00402be0/s00402be0.cpp  ?initialize@App@@QAEHH@Z  00403010  /O2 /MT /Gy /EHsc /TP

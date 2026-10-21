@@ -1,0 +1,1 @@
+00405e00 317 complete (equiv UNSUPPORTED: harness has no user32 imports); register allocation differs in the backbuffer-format loop (orig keeps combo in ebx, i in eax; ours caches GetDlgItem in ebx), size 949 vs 951

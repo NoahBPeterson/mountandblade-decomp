@@ -1,0 +1,1 @@
+00404c00 435 not byte-exact: register allocation only (original caches SelectObject in ebx inside the font-shrink retry loop and uses ebp as row counter in the alpha copy; ours does not, 17 bytes longer); source is complete and was cross-checked by hand against the asm; equiv UNSUPPORTED (gdi32 imports not modelled)

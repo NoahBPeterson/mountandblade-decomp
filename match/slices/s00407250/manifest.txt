@@ -1,0 +1,4 @@
+slices/s00407250/s00407250.cpp  ?d3dfmt_name@@YAPBEHD@Z  00407250  /O2 /MT /Gy /EHsc /TP
+slices/s00407250/s00407250.cpp  ?safe_strncpy@@YAHPADPBDH@Z  00407a30  /O2 /MT /Gy /EHsc /TP
+slices/s00407250/s00407250.cpp  ??1dyn_array@@QAE@XZ  00407aa0  /O2 /MT /Gy /EHsc /TP
+slices/s00407250/s00407250.cpp  ?at@dyn_array@@QAEPAXH@Z  00407ba0  /O2 /MT /Gy /EHsc /TP

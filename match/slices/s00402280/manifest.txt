@@ -1,0 +1,4 @@
+slices/s00402280/s00402280.cpp  ?BuildPresentParamsFromSettings@Application@@QAEXXZ  00402280  /O2 /MT /Gy /TP
+slices/s00402280/s00402280.cpp  ?Render3DEnvironment@Application@@QAEHXZ  00402430  /O2 /MT /Gy /TP
+slices/s00402280/s00402280.cpp  ?UpdateStats@Application@@UAEXXZ  00402580  /O2 /MT /Gy /TP
+slices/s00402280/s00402280.cpp  ?Cleanup3DEnvironment@Application@@QAEXXZ  004026e0  /O2 /MT /Gy /TP

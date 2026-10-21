@@ -1,0 +1,1 @@
+00403120 46 App::wndproc (MsgProc): all cases/paths present; remaining diffs are register choice for the hwnd load before DefWindowProcA (ecx vs eax), edx/eax in the 0x212 case, and tail padding of the jump tables (4 bytes)

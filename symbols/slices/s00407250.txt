@@ -1,0 +1,3 @@
+00407250 d3dfmt_name  # returns the D3DFMT_* name string for a D3DFORMAT, optionally stripping the "D3DFMT_" prefix
+00407660 timer_op  # QueryPerformanceCounter/timeGetTime stopwatch; op 0 reset,1 stop,2 start,3 advance 0.1s,4 now,5 total,6 lap (provisional)
+00407a30 safe_strncpy  # strncpy + NUL terminate, returns E_INVALIDARG (0x80070057) on bad args

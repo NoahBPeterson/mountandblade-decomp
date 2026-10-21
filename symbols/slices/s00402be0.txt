@@ -1,0 +1,4 @@
+00402be0 CD3DApplication::HandleSizeChange  # toggles windowed flag, Reset path, SetWindowPos(HWND_NOTOPMOST), DisplayErrorMsg(E_FAIL-ish 0x8200000c)
+00402d40 CD3DApplication::UserSelectNewDevice  # DialogBox settings, "Could not reset the Direct3D device." message
+00402ee0 CD3DApplication::Run  # message loop with LoadAccelerators(0x71), PeekMessage/GetMessage, Sleep(100)
+00403010 CD3DApplication::Create3DEnvironment  # provisional; initialize + ShowWindow/UpdateWindow

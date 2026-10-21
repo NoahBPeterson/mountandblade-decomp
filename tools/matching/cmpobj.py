@@ -55,17 +55,22 @@ def coff_constants(path):
     return out
 
 
-def constant_diffs(consts, relocs, off, theirs, read):
+def constant_diffs(consts, relocs, off, theirs, read, mine=None):
     """Masked relocations hide WHICH constant an instruction uses: `fcom [eps]` matches whether eps is 0.0
     or 1e-10. mount&blade.exe has no .reloc, so a DIR32 operand in the original is the absolute address;
     read what it points at and compare it with the constant our object references. -> list of offsets
-    (relative to the function) of mismatching constant operands. `read(va, n)` reads the image."""
+    (relative to the function) of mismatching constant operands. `read(va, n)` reads the image.
+    `mine` (our function's bytes) supplies each DIR32's addend: copying a string literal with dword loads
+    references literal+4, +8, ..., so the original's operand points that far into the same constant."""
     bad = []
     for vaddr, symidx, typ in relocs:
         if typ != 0x06 or symidx not in consts or not 0 <= vaddr - off <= len(theirs) - 4:
             continue
         want = consts[symidx]
-        va = struct.unpack_from("<I", theirs, vaddr - off)[0]
+        addend = struct.unpack_from("<i", mine, vaddr - off)[0] if mine is not None and vaddr - off + 4 <= len(mine) else 0
+        if not 0 <= addend < len(want):
+            addend = 0
+        va = struct.unpack_from("<I", theirs, vaddr - off)[0] - addend
         try:
             have = read(va, len(want))
         except Exception:
@@ -145,7 +150,7 @@ def main():
     mask = mask_mine | mask_orig
     diffs = [i for i in range(length) if i not in mask and orig[i] != mine[i]]
     read = lambda v, n: pe.get_data(v - pe.OPTIONAL_HEADER.ImageBase, n)
-    diffs += constant_diffs(coff_constants(a.obj), sec["relocs"], off, orig, read)
+    diffs += constant_diffs(coff_constants(a.obj), sec["relocs"], off, orig, read, mine)
     ok = not diffs and len(mine) == length
     if not a.quiet or not ok:
         print("%s @ %08x len %d: %s (%d diff bytes, %d masked)" % (

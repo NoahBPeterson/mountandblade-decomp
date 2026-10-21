@@ -1,0 +1,1 @@
+00408e60  1426  renderer::draw_polygon_outline (D3D9 debug line-loop of a <=4-point polygon shrunk 0.99 to its centroid). Complete; equiv PASS (233 valid, 100% cov). x87 scheduling/spill layout differs: original frame 0xf8 (spill slots, 4x-unrolled loops with different register assignment); no spelling of the shrink step reproduced it (6 rounds)

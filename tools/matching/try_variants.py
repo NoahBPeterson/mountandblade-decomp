@@ -37,7 +37,7 @@ for name, (si, off) in syms.items():
     mask = {v + k - off for v, _, t in sec["relocs"] for k in range(4)}
     orig = pe.get_data(va - pe.OPTIONAL_HEADER.ImageBase, len(mine))
     d = sum(1 for i in range(len(mine)) if i not in mask and mine[i] != orig[i])
-    d += len(constant_diffs(consts, sec["relocs"], off, orig, lambda v, n: pe.get_data(v - pe.OPTIONAL_HEADER.ImageBase, n)))
+    d += len(constant_diffs(consts, sec["relocs"], off, orig, lambda v, n: pe.get_data(v - pe.OPTIONAL_HEADER.ImageBase, n), mine))
     res.append((d, len(mine), name))
 best = min(res)[2] if res else None
 for d, n, name in sorted(res):

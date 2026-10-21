@@ -1,0 +1,7 @@
+slices/s00403120/s00403120.cpp  ?GetColorChannelBits@@YAIH@Z  004035d0  /O2 /MT /Gy /EHsc /TP
+slices/s00403120/s00403120.cpp  ?destroy@DeviceComboDtor@@QAEXXZ  00403640  /O2 /MT /Gy /EHsc /TP
+slices/s00403120/s00403120.cpp  ??0D3DEnumeration@@QAE@XZ  004036e0  /O2 /MT /Gy /EHsc /TP
+slices/s00403120/s00403120.cpp  ?SortModesCallback@@YAHPBX0@Z  00403720  /O2 /MT /Gy /EHsc /TP
+slices/s00403120/s00403120.cpp  ?enum_depth_formats@DeviceEnum@@QAEXPAUFmtInfo@@@Z  00403770  /O2 /MT /Gy /EHsc /TP
+slices/s00403120/s00403120.cpp  ?enum_multisample@DeviceEnum@@QAEXPAUFmtInfo@@@Z  004038c0  /O2 /MT /Gy /EHsc /TP
+slices/s00403120/s00403120.cpp  ?collect@ModeFilter@@QAEXPAUModeRec@@PAUModeKey@@@Z  004039b0  /O2 /MT /Gy /EHsc /TP

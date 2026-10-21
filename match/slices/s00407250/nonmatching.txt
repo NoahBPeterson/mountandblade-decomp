@@ -1,0 +1,4 @@
+00407660  611  timer_op: complete (QPC path + timeGetTime fallback); x87/int64 register allocation differs (original keeps pause lo/hi in esi:edi and re-reads after QueryPerformanceCounter); equiv WEAK (58% coverage, 400 inputs, no mismatches)
+00407a70  16  dyn_array ctor: same stores, but original loads arg0 into ecx / arg1 into edx (mine swaps the two registers); equiv PASS
+00407ab0  5  dyn_array::push_back: complete; original keeps data pointer in ebp for the by-value element copy (register choice only); equiv PASS
+00407bc0  2  dyn_array::contains: complete; edi/ebp swap in the inlined repe cmpsb setup; equiv PASS
