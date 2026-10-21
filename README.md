@@ -19,6 +19,7 @@ MB="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Fi
 export GHIDRA_INSTALL_DIR=/opt/homebrew/Cellar/ghidra/12.1.3/libexec PY=/opt/homebrew/opt/python@3.11/bin/python3.11
 $PY tools/ghidra/index.py new work/mb.analysis.bin work/ghidra mb 0x5390ba work/index/functions.csv  # ~5 min
 $PY tools/ghidra/fixups.py work/mb.analysis.bin work/ghidra mb          # jump tables, missed functions
+$PY tools/ghidra/create_functions.py work/mb.analysis.bin work/ghidra mb 401000 40c1d8  # callbacks referenced only by immediates
 $PY tools/ghidra/index.py existing work/mb.analysis.bin work/ghidra mb work/index/functions.csv
 $PY tools/ghidra/export_decomp.py work/mb.analysis.bin work/ghidra mb work/decomp
 ```

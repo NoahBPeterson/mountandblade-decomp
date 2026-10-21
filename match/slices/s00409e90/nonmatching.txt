@@ -1,2 +1,1 @@
 00409e90  144  capsule_capsule_contact: complete; equiv PASS. Diff is the x87 order of the d*t products (original multiplies d.y*t into a spilled temp with t in st(2))
-0040a000  1255  polygon_sphere_contact (sphere vs convex polygon of <=4 vertices): complete; equiv FAIL 3/341, only for vertex counts > 4 which index past the local vertex array (undefined; original has a different frame layout). Original inlines vector sub/cross/dot with different temps (frame 0xd8 vs our 0x9c)

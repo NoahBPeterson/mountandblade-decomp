@@ -1,4 +1,2 @@
-00409500  1087  segment_closest_points: complete (nonparallel branch + parallel branch using matrix::orthonormalize/transform_point_to_local). equiv FAIL 1/400 only on denormal ("smallint") inputs (x87 extended vs float rounding of intermediates) and the uninitialised w lane; whole-function codegen differs (original inlines vector ops with different temps)
 00409980  118  sphere_sphere_contact: complete; equiv PASS. Remaining diff is x87 operand order/spills of the length and point computation (6 rounds)
-00409ac0  549  capsule_sphere_contact: complete; equiv FAIL 1/396 (signed zero 0.0 vs -0.0 in point.z, 0 ulp apart; intermediate rounding differs). Codegen differs: original reuses stack slots for closest point/diff vectors
 00409d20  153  capsule_sphere_gap: complete; equiv PASS. Remaining diff is stack layout (original reuses the d/dir slots in place for the closest point) and the dot product's x87 register order
