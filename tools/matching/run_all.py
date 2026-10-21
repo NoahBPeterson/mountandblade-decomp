@@ -24,7 +24,7 @@ import asm_audit
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IMAGE = os.path.join(ROOT, "work", "mb.analysis.bin")
 OUT = os.path.join(ROOT, "work", "match")
-DEFAULT_FLAGS = ["/O2", "/MT", "/Gy", "/EHsc", "/TP"]  # cl 13.10; static CRT
+DEFAULT_FLAGS = ["/O2", "/MT", "/Gy", "/TP"]  # cl 13.10; static CRT; /EHsc only where the original has EH frames
 INCLUDE = "/I" + "Z:" + os.path.join(ROOT, "match", "include").replace("/", "\\")
 
 

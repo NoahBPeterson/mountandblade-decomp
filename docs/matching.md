@@ -8,10 +8,14 @@ return to it the first time a function shows a diff. M&B-specific findings go in
 ## Toolchain
 - `tools/matching/cl.sh` runs **cl 13.10.3052** (Visual C++ Toolkit 2003) under wine. The game was built with
   VC .NET 2003 (cl 13.10, possibly a later build than 3052; no function has needed it so far).
-- Default flags **`/O2 /MT /Gy /EHsc /TP`**. x87 only (no `/arch:SSE`), no `/GS`, no `/GR`.
-  VC7.1 has no `/fp:` switch.
-- Headers: `match/include/` (shared, verified layouts: `rgl.h`), the VC7.1 CRT/STL, Windows SDK 6.0A
-  (`windows.h`, `d3d9.h`, `dinput.h`). No `d3dx9.h`: declare the few D3DX functions/interfaces you need.
+- Default flags **`/O2 /MT /Gy /TP`**. Add `/EHsc` only where the original has EH frames (`push -1; push
+  <handler>; mov eax, fs:[0]` prologues, `__ehhandler$` stubs): with it, a local with a destructor plus `new`
+  emits a frame the original lacks (every wave-1 region was built without it). x87 only (no `/arch:SSE`),
+  no `/GS`, no `/GR`. VC7.1 has no `/fp:` switch.
+- Headers (all on `cl.sh`'s include path, so a hand-run `cl.sh` needs no `/I`): `match/include/` (shared,
+  verified layouts: `rgl.h`), the VC7.1 CRT/STL, **Windows SDK 6.0A** (`#include <windows.h>`, `<d3d9.h>`,
+  `<dinput.h>`, `<mmsystem.h>`, `<winsock2.h>` before `<windows.h>`), and the **DirectX SDK June 2010** for
+  `<d3dx9.h>`. Use the real headers; do not hand-declare Win32/D3D9/D3DX.
 
 ## The binary, as it affects matching
 - **No `.reloc`.** Relocated operands are masked at the offsets of *our* object's relocations. The verifier
@@ -59,14 +63,21 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
   (`marker`), the manifest (`manif`), or size (`~size`, unreliable: add markers).
 - `.venv/bin/python tools/matching/try_variants.py <scratch.cpp> <va>`: rank every function in a scratch file.
 - `.venv/bin/python tools/matching/cmpdis.py <obj> <symbol-substring> <va>`: instruction-level diff (compile
-  first: `tools/matching/cl.sh /nologo /c /O2 /MT /Gy /EHsc /TP <src> /Fo<obj>`).
+  first: `tools/matching/cl.sh /nologo /c /O2 /MT /Gy /TP <src> /Fo<obj>`).
 - `.venv/bin/python tools/matching/disasm.py <va> [len]`: the original's instructions.
 - `.venv/bin/python tools/matching/run_all.py --manifest match/slices/<id>/manifest.txt`: final check.
 - `.venv/bin/python tools/difftest/equiv.py <id> <va> [...]`: **differential equivalence test**. Runs the
   original and ours in an emulator on generated inputs, with every callee/global mapped to the original's
   address. Must PASS for every nonmatching.txt row; run it on byte-exact rows that call or reference
   globals too. UNSUPPORTED "map that symbol" means a reference it cannot resolve: add a `// 0x…` comment on the
-  declaration, or a `symbols/slices/<id>.txt` line for compiler-generated symbols.
+  declaration, or a `symbols/slices/<id>.txt` line for compiler-generated symbols (and for an `rgl.h`
+  function the resolver missed).
+  - **A FAIL is not equivalent**, even by 1 ulp: fix the source (float rounding points, operand order,
+    `!(a < b)` vs `a >= b` for NaN), or move the row to partial.txt.
+  - UNSUPPORTED because of the harness (no model yet for user32/gdi32/winmm imports, D3D device or stream
+    vtables, faults on random pointers) is acceptable for a complete function: say so in the reason column.
+  - Limit is 180 s per function by default. Run it with `run_in_background` and keep working, never with a
+    shell `&`.
 
 ## Writing matchable source
 - Calling convention from the epilogue: `ret N` with ECX as `this` = member function (declare a stub class);
@@ -92,3 +103,24 @@ to `docs/Papercuts.md`, following the format at its top. Read its Open section f
 ## Lessons (M&B)
 - Pilot `s00407c10` (25/25 byte-exact, all PASS): first-try source matches more often than on Spore; most
   misses were *semantic* (wrong constant, return value, out-param vs return), not codegen.
+- Wave 1 (98/120 byte-exact):
+  - **Recognise library code first.** 0x401000-0x407c00 is the **DirectX 9 SDK sample framework**
+    (`d3dapp.cpp` `CD3DApplication`, `d3denumeration.cpp` `CD3DEnumeration`/`CArrayList`, `d3dfont.cpp`
+    `CD3DFont`, `d3dsettings.cpp` settings dialog). Writing the SDK's literal source (its comparison order,
+    `bool` temporaries, one `case` per value) is what matched. Recall the original source before inventing.
+  - **Register-argument callees.** A `static` function in the same TU gets cl 13.10's custom convention
+    (argument in EAX; ECX kept across the call). Define such a callee as `static __declspec(noinline)` in
+    your slice to reproduce a caller (0x4035d0, 0x404140). Conversely, a same-TU callee lets cl assume its
+    register use; call an undefined declaration when the original does not.
+  - `__declspec(noinline)` keeps a call that cl would otherwise inline.
+  - A base class with an **inline ctor** puts the derived class's vptr store last.
+  - `float pts[N]` locals set the exact `__chkstk`/frame size; whole-struct copies (`T m = *p`) reproduce
+    4-dword spills that field-by-field reads do not.
+  - Unsigned count tests: `> 0` gives `jbe`, `!= 0` gives `je`. `(unsigned short)x` gives `movzx`,
+    `& 0xffff` gives `and`.
+  - Nested `SendMessage(GetDlgItem(...), ...)` pushes constants first; a temp `HWND` assigned first
+    reproduces the original order.
+  - Shapes (vtables 0x54a4b8 sphere, 0x54a540 capsule, 0x54a588 face) share a 0x20-byte base: vptr + 7 ints
+    (`m4=-1, m8=8, mc=-1`, int bbox ±1e8). See match/slices/s00407c10, s00408110, s00409e90.
+  - Before writing a class, `rg` the other slices (`match/slices/*/*.h, *.cpp`) for its vtable address or ctor:
+    a neighbour may already have the verified layout.

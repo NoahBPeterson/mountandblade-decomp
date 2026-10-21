@@ -1842,7 +1842,7 @@ def parse_args(argv=None):
     ap.add_argument("--budget", type=int, default=DEFAULT_BUDGET, help="max instructions per original run (ours: 4x)")
     ap.add_argument("--start-budget", type=int, default=START_BUDGET,
                     help="initial cap; raised to --budget if one of the first %d capped inputs finishes under it" % BUDGET_PROBES)
-    ap.add_argument("--time-limit", type=int, default=600, help="seconds per function")
+    ap.add_argument("--time-limit", type=int, default=180, help="seconds per function")
     ap.add_argument("--run-seconds", type=float, default=10, help="wall-clock cap per original run (ours: 4x)")
     ap.add_argument("--max-mismatch", type=int, default=5)
     ap.add_argument("--no-fake-calls", dest="fake_calls", action="store_false",

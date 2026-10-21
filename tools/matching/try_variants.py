@@ -11,7 +11,7 @@ import pefile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 src, va = sys.argv[1], int(sys.argv[2], 16)
-flags = sys.argv[3:] or ["/O2", "/MT", "/Gy", "/EHsc", "/TP"]
+flags = sys.argv[3:] or ["/O2", "/MT", "/Gy", "/TP"]
 os.makedirs(os.path.join(ROOT, "work", "match", "variants"), exist_ok=True)
 obj = os.path.join(ROOT, "work", "match", "variants",
                    os.path.abspath(src).replace(ROOT, "").strip("/").replace("/", "_") + ".obj")

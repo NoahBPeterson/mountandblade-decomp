@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 
 from coff import Coff  # noqa: E402
 
-DEFAULT_FLAGS = ["/O2", "/MT", "/Gy", "/EHsc", "/TP"]  # cl 13.10; static CRT
+DEFAULT_FLAGS = ["/O2", "/MT", "/Gy", "/TP"]  # cl 13.10; static CRT; /EHsc only where the original has EH frames
 INCLUDE = "/I" + "Z:" + os.path.join(ROOT, "match", "include").replace("/", "\\")
 OBJDIR = os.path.join(ROOT, "work", "difftest", "obj")
 CL = os.path.join(ROOT, "tools", "matching", "cl.sh")
