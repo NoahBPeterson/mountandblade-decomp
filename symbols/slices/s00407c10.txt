@@ -1,0 +1,2 @@
+0040a540 ??_Gsphere@rgl@@UAEPAXI@Z  # vtable 0x54a4b8 slot 0 (scalar deleting dtor)
+0054a4b8 ??_7sphere@rgl@@6B@  # vtable stored by the ctor at 0x407ff0

@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+"""Recompile every manifested source and verify each listed function byte-for-byte.
+
+usage: run_all.py [--filter substr] [-v] [--manifest path] [--jobs N]
+
+Manifests: match/manifest.txt, match/slices/*/manifest.txt, match/clones.txt, match/synth/*.manifest.
+Each distinct (source, flags) pair is compiled once, in parallel, into its own object file; every
+function is then compared in-process (relocations masked on both sides). Only one run_all may run
+at a time (work/run_all.lock). Results are written to work/verify_results.json.
+With --manifest, a run uses its own object directory, lock and results file (work/match/m/<key>/,
+work/run_all_m/<key>.lock, work/run_all_m/<key>.json, key = hash of the manifest path), so runs on different
+manifests never wait for each other (fix pass 6 F26: mig7 agents waited 20-40 minutes on the shared lock).
+Exit 0 iff every listed function matches.
+"""
+import argparse, bisect, fcntl, glob, hashlib, json, os, subprocess, sys
+from concurrent.futures import ThreadPoolExecutor
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pefile
+from cmpobj import parse_coff, REL_SIZES, coff_constants, constant_diffs
+import imgcache
+import asm_audit
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+IMAGE = os.path.join(ROOT, "work", "mb.analysis.bin")
+OUT = os.path.join(ROOT, "work", "match")
+DEFAULT_FLAGS = ["/O2", "/MT", "/Gy", "/EHsc", "/TP"]  # cl 13.10; static CRT
+INCLUDE = "/I" + "Z:" + os.path.join(ROOT, "match", "include").replace("/", "\\")
+
+
+def winpath(p):
+    return "Z:" + p.replace("/", "\\")
+
+
+def resolve_flags(flags):
+    """Make relative /I paths independent of the working directory. Manifests were written with
+    paths relative to work/match (e.g. /Iscratch_s00880170_inc, local EAWebKit include links; see
+    THIRD_PARTY.md); cl resolved them against cwd, so they only worked when run from there. Try
+    work/match first, then the repo root; absolute and Z: paths are left alone."""
+    out = []
+    for f in flags:
+        if f[:2] in ("/I", "-I") and len(f) > 2 and not f[2:].startswith(("Z:", "/", "\\")) and ":" not in f[2:4]:
+            rel = f[2:]
+            for base in (OUT, ROOT):
+                cand = os.path.join(base, rel)
+                if os.path.isdir(cand):
+                    f = "/I" + winpath(cand)
+                    break
+        out.append(f)
+    return out
+
+
+OBJ_DIR = OUT        # main() points this at a per-manifest directory for --manifest runs
+
+
+def obj_path(src, flags):
+    return os.path.join(OBJ_DIR, src.replace("/", "_").rsplit(".", 1)[0] + "_" +
+                        "".join(f.strip("/") for f in flags).replace(":", "").replace("/", "_") + ".obj")
+
+
+def manifests(only=None):
+    if only:
+        return [only]
+    m = [os.path.join(ROOT, "match", "manifest.txt")]
+    m += sorted(glob.glob(os.path.join(ROOT, "match", "slices", "*", "manifest.txt")))
+    if os.path.exists(os.path.join(ROOT, "match", "clones.txt")):
+        m.append(os.path.join(ROOT, "match", "clones.txt"))
+    m += sorted(glob.glob(os.path.join(ROOT, "match", "synth", "*.manifest")))
+    return m
+
+
+def read_rows(paths, filt):
+    rows = []
+    for m in paths:
+        for line in open(m):
+            p = line.split("#", 1)[0].split()
+            if len(p) >= 3 and filt in " ".join(p):
+                rows.append((p[0], p[1], int(p[2], 16), tuple(p[3:]) or tuple(DEFAULT_FLAGS)))
+    return rows
+
+
+def compile_one(key):
+    src, flags = key
+    obj = obj_path(src, list(flags))
+    r = subprocess.run([os.path.join(ROOT, "tools", "matching", "cl.sh"), "/nologo", "/c", *resolve_flags(flags), INCLUDE,
+                        "/Fo" + winpath(obj), winpath(os.path.join(ROOT, "match", src))],
+                       capture_output=True, text=True)
+    return key, (obj if r.returncode == 0 else None), (r.stdout + r.stderr)[-2000:]
+
+
+class Original:
+    def __init__(self):
+        pe = pefile.PE(IMAGE, fast_load=True)
+        self.pe, self.base = pe, pe.OPTIONAL_HEADER.ImageBase
+        self.relocs = imgcache.relocs(IMAGE)  # sorted HIGHLOW reloc RVAs, cached (was ~1.6 s per run)
+
+    def read(self, va, n):
+        return self.pe.get_data(va - self.base, n)
+
+    def bytes_and_mask(self, va, n):
+        rva = va - self.base
+        data = self.pe.get_data(rva, n)
+        mask = set()
+        i = bisect.bisect_left(self.relocs, rva - 3)
+        while i < len(self.relocs) and self.relocs[i] < rva + n:
+            for k in range(4):
+                j = self.relocs[i] + k - rva
+                if 0 <= j < n:
+                    mask.add(j)
+            i += 1
+        return data, mask
+
+
+def resolve(syms, sym):
+    if sym in syms:
+        return sym
+    c = [s for s in syms if sym in s and not s.startswith(("__ehhandler", "__unwindfunclet", "__catch", "__tryend"))]
+    return c[0] if len(c) == 1 else None
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--filter", default=""); ap.add_argument("-v", action="store_true")
+    ap.add_argument("--manifest"); ap.add_argument("--jobs", type=int, default=6)
+    a = ap.parse_args()
+    global OBJ_DIR
+    os.makedirs(OUT, exist_ok=True)
+    # One run_all at a time per object directory: the lock serialises it and the results file. Wait for it (module
+    # manifests take seconds), say so first so a caller can tell a queue from a slow compile.
+    lock_path, res_path = os.path.join(ROOT, "work", "run_all.lock"), os.path.join(ROOT, "work", "verify_results.json")
+    if a.manifest:
+        key = hashlib.sha1(os.path.abspath(a.manifest).encode()).hexdigest()[:16]
+        OBJ_DIR = os.path.join(OUT, "m", key)
+        os.makedirs(OBJ_DIR, exist_ok=True)
+        os.makedirs(os.path.join(ROOT, "work", "run_all_m"), exist_ok=True)
+        lock_path = os.path.join(ROOT, "work", "run_all_m", key + ".lock")
+        res_path = os.path.join(ROOT, "work", "run_all_m", key + ".json")
+    lock = open(lock_path, "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print("waiting for another run_all.py to finish (%s)" % os.path.relpath(lock_path, ROOT), flush=True)
+        fcntl.flock(lock, fcntl.LOCK_EX)
+
+    rows = read_rows(manifests(a.manifest), a.filter)
+    keys = sorted(set((r[0], r[3]) for r in rows))
+    objs = {}
+    with ThreadPoolExecutor(a.jobs) as ex:
+        for i, (key, obj, log) in enumerate(ex.map(compile_one, keys)):
+            objs[key] = obj
+            if obj is None:
+                print("COMPILE FAIL %s %s\n%s" % (key[0], " ".join(key[1]), log))
+            if a.v and i % 25 == 0:
+                print("compiled %d/%d" % (i + 1, len(keys)), flush=True)
+
+    orig = Original()
+    coff_cache, const_cache = {}, {}
+    results, ok = {}, 0
+    for src, sym, va, flags in rows:
+        obj = objs.get((src, flags))
+        status = "FAIL no object"
+        if obj:
+            if obj not in coff_cache:
+                secs_, syms_ = parse_coff(obj)
+                starts = {}
+                for si_, off_ in syms_.values():
+                    starts.setdefault(si_, set()).add(off_)
+                coff_cache[obj] = (secs_, syms_, {k: sorted(v) for k, v in starts.items()})
+            secs, syms, starts = coff_cache[obj]
+            name = resolve(syms, sym)
+            if name is None:
+                status = "FAIL symbol %s not found/ambiguous" % sym
+            else:
+                si, off = syms[name]
+                sec = secs[si]
+                nxt = [o for o in starts.get(si, []) if o > off]
+                mine = sec["data"][off:nxt[0] if nxt else len(sec["data"])]
+                if nxt:  # strip int3 padding between functions in a shared section
+                    mine = mine.rstrip(b"\xcc")
+                n = len(mine)
+                theirs, mask_o = orig.bytes_and_mask(va, n)
+                mask = set(mask_o)
+                for v, _s, t in sec["relocs"]:
+                    for k in range(REL_SIZES.get(t, 4)):
+                        if off <= v + k < off + n:
+                            mask.add(v + k - off)
+                diffs = [i for i in range(n) if i not in mask and theirs[i] != mine[i]]
+                if obj not in const_cache:
+                    const_cache[obj] = coff_constants(obj)
+                diffs += constant_diffs(const_cache[obj], sec["relocs"], off, theirs, orig.read)
+                status = "MATCH" if not diffs else "DIFF %d bytes" % len(diffs)
+        # docs/matching.md "No assembly transcription": a naked/_emit/mostly-__asm body is not decompiled, so it
+        # never counts as byte-exact (2026-10-18 audit: 18 such manifest rows had been counted).
+        asm = asm_audit.transcribed(os.path.join(ROOT, "match", src)).get("%08x" % va)
+        if asm:
+            status = "ASM transcription (%s), not decompiled: move the row to partial.txt" % asm
+        results["%08x" % va] = {"src": src, "sym": sym, "status": status}
+        if status == "MATCH":
+            ok += 1
+            if a.v:
+                print("MATCH  %-40s %08x" % (sym[:40], va))
+        else:
+            print("%-6s %-40s %08x  %s" % (status.split()[0], sym[:40], va, status))
+    json.dump(results, open(res_path, "w"))
+    print("\n%d / %d functions byte-exact (%d sources compiled)" % (ok, len(rows), len(keys)))
+    return 0 if ok == len(rows) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

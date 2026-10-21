@@ -1,0 +1,7 @@
+work/
+*.obj
+*.exe
+*.dll
+*.pdb
+__pycache__/
+.venv/

@@ -1,0 +1,1 @@
+# Byte-exact functions outside slices: <source rel. to match/>  <symbol>  <va>  [flags]
