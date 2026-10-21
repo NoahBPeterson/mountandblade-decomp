@@ -28,6 +28,11 @@ return to it the first time a function shows a diff. M&B-specific findings go in
   records and script operations). Mark guesses as provisional in a comment.
 - **Static CRT** at `0x535440..0x547100`: linked from the real `libcmt.lib`, never decompiled.
   `symbols/lib_names.txt` names 415 of them (`malloc`, `operator new`, `_purecall`, `_ftol`, …).
+- **Module System 1.011 headers** (TaleWorlds, via the Star Wars Conquest repo; git-ignored):
+  `work/ext/msys_1011/Headers/*.py`. `header_operations.py` names the script opcodes (589 of the
+  interpreter's 591 real cases agree with it); `header_troops.py`, `header_items.py`, `header_parties.py`,
+  `header_common.py`, … give flag bits, enums and constants. When a function tests a flag or switches on a
+  constant that appears there, use that name (as an enum/`#define` in your slice).
 - The script interpreter (`0x49fa10`, 70 KB, `switch (op - 30)` over 2356 cases) is a separate track,
   not part of normal waves.
 
