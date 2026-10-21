@@ -1,0 +1,5 @@
+slices/s004362e0/s004362e0.cpp  ?normalize@vec2@@QAEMXZ  004367c0  /O2 /MT /Gy /TP
+slices/s004362e0/s004362e0.cpp  ?weapon_info@Agent@@QAEXHPAIPAH@Z  00436810  /O2 /MT /Gy /TP
+slices/s004362e0/s004362e0.cpp  ?total_missing_ammo@Agent@@QAEHXZ  00436a70  /O2 /MT /Gy /TP
+slices/s004362e0/s004362e0.cpp  ?sample@KeyTable@@QAE?AUquaternion@@H@Z  00436ae0  /O2 /MT /Gy /TP
+slices/s004362e0/s004362e0.cpp  ?sample@KeyHolder@@QAE?AUvector4@rgl@@H@Z  00436b90  /O2 /MT /Gy /TP

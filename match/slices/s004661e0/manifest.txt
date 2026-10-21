@@ -1,0 +1,3 @@
+slices/s004661e0/s004661e0.cpp  ?clear_flags@terrain_obj@@QAEXI@Z  00466480  /O2 /MT /Gy /TP
+slices/s004661e0/s004661e0.cpp  ?compute_weights@terrain_obj@@QAEXXZ  004664e0  /O2 /MT /Gy /TP
+slices/s004661e0/s004661e0.cpp  ?pick_triangle_types@terrain_obj@@QAEXXZ  00466930  /O2 /MT /Gy /TP

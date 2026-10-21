@@ -1,0 +1,16 @@
+slices/s00421110/s00421110.cpp  ?reset@World@@QAEXXZ  00421390  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ??1MeshEntity@@UAE@XZ  004213f0  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?type_name@MeshEntity@@QAE?AUstring@rgl@@XZ  004214c0  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ??_GMeshEntity@@UAEPAXI@Z  004214e0  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?type_name@CollisionEntity@@QAE?AUstring@rgl@@XZ  00421500  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?get_vec@Stub@@QAEXPAMH@Z  00421520  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?nop@Stub@@QAEXHH@Z  00421540  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?zero@Stub@@QAEMHH@Z  00421550  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?insert@World@@QAEXPAUEnt@@HH@Z  00421560  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ??1FxDef@@QAE@XZ  00421680  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?type_name@StrategicEntity@@QAE?AUstring@rgl@@XZ  00421870  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?get_radius@StrategicEntity@@QAEMXZ  00421890  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?set_color@PsysListBody@@QAEXABH@Z  00421990  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?find_emitter@StrategicEntity@@QAEHH@Z  00421a50  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?set_color@StrategicEntity@@QAEXH@Z  004218a0  /O2 /MT /Gy /TP
+slices/s00421110/s00421110.cpp  ?set_color@FxDef@@QAEXH@Z  004218e0  /O2 /MT /Gy /TP

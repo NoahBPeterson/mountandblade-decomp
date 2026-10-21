@@ -1,0 +1,4 @@
+slices/s00439100/s00439100.cpp  ?copy_shape@body_res@@QAEPAUshape_base@@XZ  00439100  /O2 /MT /Gy /TP
+slices/s00439100/s00439100.cpp  ?next_stamp@NavMesh@@QAEXXZ  00439410  /O2 /MT /Gy /TP
+slices/s00439100/s00439100.cpp  ?query_segment@level@@QAEXPBM0IPAPAUshape_base@@PAH@Z  00439870  /O2 /MT /Gy /TP
+slices/s00439100/s00439100.cpp  ?nav_search@level@@QAEXPBMPBH1HPAHPAM@Z  00439900  /O2 /MT /Gy /TP

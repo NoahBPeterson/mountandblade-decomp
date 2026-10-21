@@ -1,0 +1,4 @@
+slices/s00412a90/s00412a90.cpp  ??0mesh@rgl@@QAE@XZ  00412a90  /O2 /MT /Gy /TP
+slices/s00412a90/s00412a90.cpp  ??4?$vector@Uelem14@rgl@@V?$allocator@Uelem14@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z  00412d50  /O2 /MT /Gy /TP
+slices/s00412a90/s00412a90.cpp  ?ensure_local@mesh@rgl@@QAEXXZ  00412ee0  /O2 /MT /Gy /TP
+slices/s00412a90/s00412a90.cpp  ?add_point@mesh@rgl@@QAEHPBUvector4@2@@Z  00412f50  /O2 /MT /Gy /TP

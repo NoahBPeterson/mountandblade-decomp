@@ -1,0 +1,1 @@
+00412150  24  Emitter::update: complete (particle integrate + noise, cull, spawn). Differs by 24 bytes: three x87 operand orders (drag*dt, dt*vel.y, spin_drag*dt load dt first instead of the member) and one lea placement; frame, registers and everything else identical. equiv WEAK (229 valid inputs, 31.6% coverage, no mismatch; pow/rand/noise calls under harness)

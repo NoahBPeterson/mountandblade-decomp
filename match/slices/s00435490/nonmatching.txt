@@ -1,0 +1,1 @@
+00435520  98  type-switch tail: original keeps a dead zero test (xor ecx,ecx / test ecx,ecx) in the 0x20000/0x30000 branch and lays the else block last; ours folds the constant

@@ -1,0 +1,22 @@
+0042dcb0 ?ClearThis@TiXmlElement@@QAEXXZ  # TinyXML: delete children and attributes
+0042dd30 ?CopyTo@TiXmlDocument@@QBEXPAV1@@Z  # TinyXML
+0042ddd0 ?Print@TiXmlDocument@@UBEXPAU_iobuf@@H@Z  # TinyXML (vtable 0x54b9e8 slot 1)
+0042de10 ?StreamOut@TiXmlDocument@@UBEXPAVTiXmlOutStream@@@Z  # TinyXML (vtable 0x54b9e8 slot 3)
+0042de40 ?Print@TiXmlComment@@UBEXPAU_iobuf@@H@Z  # TinyXML
+0042de80 ?Print@TiXmlDeclaration@@UBEXPAU_iobuf@@H@Z  # TinyXML
+0042df00 ?Print@TiXmlUnknown@@UBEXPAU_iobuf@@H@Z  # TinyXML
+0042df40 ?Find@TiXmlAttributeSet@@QBEPAVTiXmlAttribute@@ABVTiXmlString@@@Z  # TinyXML
+0042dfc0 ?FirstChild@TiXmlHandle@@QBE?AV1@XZ  # TinyXML
+0042dff0 ?FirstChild@TiXmlHandle@@QBE?AV1@PBD@Z  # TinyXML
+0042e020 ?FirstChildElement@TiXmlHandle@@QBE?AV1@XZ  # TinyXML
+0042e070 ??0TiXmlAttribute@@QAE@PBD0@Z  # TinyXML (vtable 0x54b974)
+0042e0f0 ??1TiXmlAttribute@@UAE@XZ  # implicit destructor: destroys value, name; resets the vptr to TiXmlBase
+0054b974 ??_7TiXmlAttribute@@6B@  # TiXmlAttribute vtable (slot 0 = 0x42ed70)
+0042e130 ??0TiXmlNode@@QAE@W4NodeType@0@@Z  # TinyXML
+0042e170 ??1TiXmlNode@@UAE@XZ  # TinyXML
+0054b988 ??_7TiXmlNode@@6B@  # TiXmlNode vtable (17 slots; slots 4..15 are the ToXxx casts, 16 = Clone)
+0042e1b0 ?Print@TiXmlElement@@UBEXPAU_iobuf@@H@Z  # TinyXML
+0042e300 ?StreamOut@TiXmlElement@@UBEXPAVTiXmlOutStream@@@Z  # TinyXML
+0042e3e0 ??0TiXmlDocument@@QAE@XZ  # TinyXML (vtable 0x54b9e8)
+0042e450 ??0TiXmlDocument@@QAE@PBD@Z  # TinyXML
+0054b9e8 ??_7TiXmlDocument@@6B@  # TiXmlDocument vtable (dtor 0x42efe0)

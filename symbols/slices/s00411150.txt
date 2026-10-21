@@ -1,0 +1,4 @@
+00411150 ??4?$vector@UIdxWeight@@V?$allocator@UIdxWeight@@@std@@@std@@QAEAAV01@ABV01@@Z  # std::vector<8-byte (index,weight)>::operator= (VC7.1 <vector>; byte-exact via explicit instantiation)
+004112a0 ??4?$vector@UVert96@@V?$allocator@UVert96@@@std@@@std@@QAEAAV01@ABV01@@Z  # std::vector<0x60-byte vertex>::operator=
+00411780 ??0VecPair@@QAE@XZ  # ctor of the 0x20-byte pair-of-vector<vector4> record (array-new ctor at 0x4125e0)
+00411920 ?add_rec2@Psys@@QAEHHHH@Z  # Psys::add_rec2 (lazily copies parent's +0x90 vector, then appends a 0x20-byte record)

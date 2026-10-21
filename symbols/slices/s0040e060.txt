@@ -1,0 +1,12 @@
+0040e060 vector_elem32_Insert_n  # std::vector<32-byte POD>::_Insert_n (MSVC 7.1 <vector>); byte-exact with /EHa
+0040e350 Uninit_fill_n_elem32  # std::_Uninit_fill_n for the 32-byte element, placement copy inlined; byte-exact
+0040e3d0 clamp_float  # returns lo if x<lo, hi if x>=hi else x
+0040e400 frand  # (rand() % 15817) / 15817.0f, uniform [0,1)
+0040e420 vec3_add  # xyz += xyz
+0040e440 pack_color  # 4 floats (r,g,b,a) *256 clamped to 255 -> 0xAARRGGBB
+0040e4e0 unpack_color  # 0xAARRGGBB -> (r,g,b,a) / 255 as vector4
+0040e570 matrix_rotate_fu  # rotates the forward/up rows by *angle
+0040e670 matrix_rotate_su  # rotates the side/up rows by *angle
+0040e770 matrix_rotate_sf  # rotates the side/forward rows by *angle
+0040e870 pos_mul  # out = this * m (rot3 via 0x40a920, origin transformed)
+0040e940 renderer_set_blend_mode  # D3DRS_ALPHABLENDENABLE/SRCBLEND/DESTBLEND for mode 0..3, cached at +0x58c of 0xa17910

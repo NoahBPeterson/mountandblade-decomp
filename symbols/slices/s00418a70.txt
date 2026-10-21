@@ -1,0 +1,6 @@
+0054a740 ??_7stream_base@@6B@  # stream root vtable
+00418a70 resource_manager::get_material  # name lookup in the list at +0x50 with a logged fallback to "default"
+00418b30 resource_manager::get_shader  # name lookup in the shader/material list at +0x40, logs on failure
+00418e90 resource_manager::resolve_shader  # picks a supported shader, trying alternatives then the default shader
+00419030 save_key_clip  # writes a key clip: name, tracks (yzwx key arrays), extra xyz key array
+00419360 mesh_obj::linearise_vertex_colors  # pow(c, 2.2) on each vertex colour

@@ -1,0 +1,2 @@
+slices/s0046c4f0/s0046c4f0.cpp  ?apply@mesh_list@rgl@@QAEXUmat4@2@@Z  0046c990  /O2 /MT /Gy /TP
+slices/s0046c4f0/s0046c4f0.cpp  ?apply@lod_mesh@rgl@@QAEXPBUmat4@2@@Z  0046c9f0  /O2 /MT /Gy /TP

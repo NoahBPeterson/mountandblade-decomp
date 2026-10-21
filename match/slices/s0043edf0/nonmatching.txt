@@ -1,0 +1,2 @@
+0043ef97  0  catch funclet + cold branches (spill and in-place insert) of 0x43edf0 (vector<E12>::_Insert_n): bytes identical (686/686 incl. 0x43edf0); symbol-less COMDAT tail, run_all cannot address it. Equivalence UNSUPPORTED: not a callable function (covered by the 0x43edf0 test).
+0043f560  56  Agent::aim_point_and_dir: x87 temp/stack layout differs (the two result vectors share one temp in the original, mine uses two; 1 byte longer); same arithmetic and operand order otherwise. Equivalence PASS (324 valid inputs, 100% coverage)

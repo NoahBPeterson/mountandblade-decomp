@@ -1,0 +1,4 @@
+004520d0 Font::layout_text  # decodes UTF-8 text, shrinks to fit unless flags 0x100/0x2, greedy word wrap between xmin/xmax with alignment flags (0x4/0x200 left, 0x10 centre, 0x8 right, 0x400 start x, 0x800 tall lines), draws each glyph with draw_glyph, computes mesh normals, returns the size; provisional
+00452530 FxDef::skin_lods  # calls FxDef::skin (0x4291c0) for every mesh pointer in every list of a lod_mesh; byte-exact; provisional
+004525a0 Mission::blood_burst  # for every used agent within 3.5 units of (x,y,z) calls Agent::apply_blood; skipped when the global at 0x5a9fc0 is zero; byte-exact; provisional
+00452650 Carrier::refresh_carried  # (re)creates the lod_mesh showing the carried item on the agent in slot +0x230: ranged mesh from make_ranged_mesh, offset relative to the bone-12 matrix with random jitter, appended into the lod's first mesh; provisional

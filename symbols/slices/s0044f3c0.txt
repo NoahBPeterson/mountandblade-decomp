@@ -1,0 +1,8 @@
+0044f3c0 rgl::mesh::transform  # transforms every point (both rest/current vectors) and vertex normal of the mesh by a 4x4 passed by value, marks it dirty, 0x419300; provisional
+0044f5d0 Font::draw_glyph  # one glyph quad (uv rect from the glyph record, offsets scaled) added to a mesh via 0x44e970; provisional
+0044f6a0 Agent::make_ranged_mesh  # clones the display mesh of the carried ranged/thrown item (name via ItemKind::mesh_name_for), shifts it by its length, random tilt for thrown, transforms it; provisional
+0044f870 Mission::add_placed  # appends a default 0x1c8 scene-object record, init_placed, bumps the slot number for kind 1, then spawn_prop 0x44c210; provisional
+0044fa40 ?push_back@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QAEXABUE56@@@Z  # std::vector<0x38-byte record>::push_back (fast path _Uninit_fill_n 0x444bc0, else insert 0x44cf90), byte-exact; also used for the Newton PhysRec vector
+0044fad0 PhysSet::create_world  # first free record (or new one), NewtonCreate + solver 6 + world size, default material group softness 0.1, elasticity 0.5, friction 1.1/0.9; returns the index; byte-exact
+00590b84 ??_7PlacedObj@@6B@  # vtable of the 0x1c8-byte scene-object record (same as ??_7Agent@@6B@ / ??_7Rec1c8@@6B@ in other slices); stored by the inlined ctor in 0x44f870
+00487b00 decode_utf8  # UTF-8 to int code points: text in edi, count out in edx, stack (buf, max count ptr 0x59095c = 8192); static function with cl's custom register convention

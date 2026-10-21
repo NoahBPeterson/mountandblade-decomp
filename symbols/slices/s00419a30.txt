@@ -1,0 +1,2 @@
+00419a30 resmgr::save  # counts resources by type() then writes "texture"/"shader"/"material"/"mesh"/"body"/"skeleton"/"skeleton_anim"/"end" sections
+00419e90 resmgr::~resmgr  # releases lods, clears mesh->res, delete[]s the object list, then the member vectors/list/string

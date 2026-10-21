@@ -1,0 +1,1 @@
+0046d8c0 drawer_draw_meshes  # renders scene mesh list with D3D9 fixed function; DrawIndexedPrimitive per entry

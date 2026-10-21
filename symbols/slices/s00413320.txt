@@ -1,0 +1,10 @@
+0054a6f4 ??_7mesh@rgl@@6B@  # mesh vtable (see s00412a90)
+0054a6c8 ??_7mesh_base@rgl@@6B@  # mesh_base vtable
+00413b60 ?erase@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  # std::vector<vertex60>::erase(first, last)
+00413bb0 ?resize@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QAEXIUvertex60@rgl@@@Z  # std::vector<vertex60>::resize(n, val)
+00410610 ?_Insert_n@?$vector@PAUobj_c0@rgl@@V?$allocator@PAUobj_c0@rgl@@@std@@@std@@IAEXViterator@12@IABQAUobj_c0@rgl@@@Z  # std::vector<T*>::_Insert_n (ICF'd with all pointer vectors)
+00410610 ?_Insert_n@?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@IAEXViterator@12@IABQAUmesh@rgl@@@Z  # same function, mesh* instance
+00413320 rgl::mesh::update_morph  # blends morph key frames a/b by t into current points and normals
+00413750 rgl::mesh::render  # per-frame draw/collect of a mesh instance
+00413ac0 rgl::mesh_list::render_all  # calls render on each non-null mesh* of a vector
+00413b00 rgl::lod_mesh::render  # renders list[cur] with frame * own matrix when mask matches

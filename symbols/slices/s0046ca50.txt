@@ -1,0 +1,1 @@
+0046ca50 scene_apply_state  # per-frame D3D9 setup: viewport/clear, projection+view, cull mode, fog, clip plane, D3DLIGHT9 list

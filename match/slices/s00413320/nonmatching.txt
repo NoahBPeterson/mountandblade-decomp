@@ -1,0 +1,2 @@
+00413320  40  stack slots: original overlays the dead frame index (a or b) with the loop counter / induction temp, ours uses a fresh slot ([esp+0x1c]); instruction streams otherwise identical [equiv: WEAK, no mismatch; random pointers fault early so coverage is low]
+00413750  16  x87 term order of the attached-object transform (lanes y,z emit z,y,x instead of x,z,y; x lane operand order of the last product) [equiv: WEAK, no mismatch; random pointers fault early so coverage is low]

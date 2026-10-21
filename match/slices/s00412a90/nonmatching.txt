@@ -1,0 +1,2 @@
+00412c30  197  register allocation: original keeps the res_t* parameter in its stack slot and reloads it each use (ebp held for the size), ours enregisters it (ebx) and spills the saved `this`; loop, push_back fast path and calls identical in shape [equiv: PASS]
+00412fe0  561  x87 term order of the point transform (original: lea of &q.y shared, push of &p early) and scheduling of the vertex copy / index add in the second loop differ; control flow, calls and the register roles match [equiv: WEAK, no mismatch; random pointers fault early so coverage is low]

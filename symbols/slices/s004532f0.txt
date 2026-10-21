@@ -1,0 +1,1 @@
+004532f0 Agent::shield_hit  # durability loss of the held shield; at 0 breaks it (add_placed kind 7) and posts ui_shield_* messages

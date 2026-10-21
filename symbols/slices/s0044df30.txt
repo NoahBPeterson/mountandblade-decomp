@@ -1,0 +1,1 @@
+0044df30 ?ai_idle_tick@Agent@@QAEXPBM@Z  # per-frame AI timer block: decays alertness, runs choose_action / update_ai / random input event timers; provisional name

@@ -1,0 +1,3 @@
+00454e30 ?reduce_blow@Agent@@QAEXPAUBlow@@@Z  # armor absorption of a blow (damage_in -> absorbed int + damage_out), uses 0xa1817c/0xa18188 factor tables
+004552c0 ?draw_name@Agent@@QAEXXZ  # draws the troop name label above a friendly agent
+004554c0 ?spawn_corpse@Agent@@QAEXXZ  # drops the agent onto the floor below its position and starts ragdoll_update (0x4543a0)

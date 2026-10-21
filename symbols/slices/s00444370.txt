@@ -1,0 +1,2 @@
+00444370 Agent::on_wield_changed  # draw/stow animation + sound choice after the wielded slots changed (provisional name)
+00444bc0 uninit_fill_n_e56  # std::_Uninit_fill_n for the 0x38-byte record, nonscalar tag; catch funclet at 0x444c28 (provisional name)

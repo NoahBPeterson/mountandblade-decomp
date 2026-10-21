@@ -1,0 +1,11 @@
+slices/s00416540/s00416540.cpp  ?load@texture@@QAEHHPAUtstring@@@Z  00416540  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ?unload@texture@@QAEHXZ  004167c0  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ??0material@@QAE@XZ  00416830  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ??1material@@UAE@XZ  004168f0  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ?load@material@@UAEXPAUstream_base@@@Z  004169a0  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ?load@stage_t@@QAEXPAUstream_base@@@Z  00416ad0  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ?save@material@@UAEXPAUstream_base@@@Z  00416b10  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ?save@stage_t@@QAEXPAUstream_base@@@Z  00416bc0  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ?create_shaders@material@@QAEXXZ  00416c00  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ??0skin@@QAE@XZ  00416cd0  /O2 /MT /Gy /TP
+slices/s00416540/s00416540.cpp  ?reset@aabb@@QAEXXZ  00416e40  /O2 /MT /Gy /TP

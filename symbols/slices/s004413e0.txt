@@ -1,0 +1,3 @@
+004413e0 ?add_bone@PhysSet@@QAEPBUNewtonRagDollBone@@HPBU2@PBMUmatrix@rgl@@1121111@Z  # NewtonCreateCapsule + NewtonRagDollAddBone + inertia/mass/damping/freeze/limits setup (limits in degrees * pi/180), remembers the bone in rec.bones
+00441610 ?begin_static_build@PhysSet@@QAEXH@Z  # destroys the previous tree-collision body (and the extra bodies) of record idx, then NewtonCreateTreeCollision + NewtonTreeCollisionBeginBuild
+004416c0 ?add_capsule_body@PhysSet@@QAEPAUNewtonBody@@HPBM00PAUmatrix@rgl@@1_N@Z  # capsule rigid body: NewtonCreateBody + matrix + inertia + mass + material group; optionally appended to rec.bodies

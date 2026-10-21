@@ -1,0 +1,1 @@
+0044d000 Agent::choose_action  # per-tick AI decision: 15 scored candidate actions (target id + position each), randomised x0.9..1.1, argmax -> start_attack + set_goal_*; called with one unused stack arg (ret 4)

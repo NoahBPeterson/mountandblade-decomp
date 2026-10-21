@@ -1,0 +1,10 @@
+slices/s0042f840/s0042f840.cpp  ?Stamp@TiXmlParsingData@@QAEXPBDW4TiXmlEncoding@@@Z  0042f840  /O2 /MT /Gy /TP
+slices/s0042f840/s0042f840.cpp  ?IsWhiteSpace@TiXmlBase@@KA_ND@Z  0042fa40  /O2 /MT /Gy /TP
+slices/s0042f840/s0042f840.cpp  ?SkipWhiteSpace@TiXmlBase@@KAPBDPBDW4TiXmlEncoding@@@Z  0042fa70  /O2 /MT /Gy /TP
+slices/s0042f840/s0042f840.cpp  ?ReadName@TiXmlBase@@KAPBDPBDPAVTiXmlString@@W4TiXmlEncoding@@@Z  0042fb30  /O2 /MT /Gy /TP
+slices/s0042f840/s0042f840.cpp  ?StringEqual@TiXmlBase@@KA_NPBD0_NW4TiXmlEncoding@@@Z  0042fbc0  /O2 /MT /Gy /TP
+slices/s0042f840/s0042f840.cpp  ?SetError@TiXmlDocument@@QAEXHPBDPAVTiXmlParsingData@@W4TiXmlEncoding@@@Z  0042fc70  /O2 /MT /Gy /TP
+slices/s0042f840/s0042f840.cpp  ?Parse@TiXmlUnknown@@UAEPBDPBDPAVTiXmlParsingData@@W4TiXmlEncoding@@@Z  0042fce0  /O2 /MT /Gy /TP
+slices/s0042f840/s0042f840.cpp  ?Blank@TiXmlText@@QBE_NXZ  0042fdb0  /O2 /MT /Gy /TP
+slices/s0042f840/s0042f840.cpp  ?GetEntity@TiXmlBase@@KAPBDPBDPADPAHW4TiXmlEncoding@@@Z  0042fe00  /O2 /MT /Gy /TP
+slices/s0042f840/s0042f840.cpp  ?Identify@TiXmlNode@@IAEPAV1@PBDW4TiXmlEncoding@@@Z  0042ffc0  /O2 /MT /Gy /TP

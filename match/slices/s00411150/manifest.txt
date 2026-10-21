@@ -1,0 +1,13 @@
+slices/s00411150/s00411150.cpp  ??4?$vector@UIdxWeight@@V?$allocator@UIdxWeight@@@std@@@std@@QAEAAV01@ABV01@@Z  00411150  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ??4?$vector@UVert96@@V?$allocator@UVert96@@@std@@@std@@QAEAAV01@ABV01@@Z  004112a0  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ?push_back@?$vector@UVert96@@V?$allocator@UVert96@@@std@@@std@@QAEXABUVert96@@@Z  00411420  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ??4?$vector@USkinVert@@V?$allocator@USkinVert@@@std@@@std@@QAEAAV01@ABV01@@Z  004114b0  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ??4?$vector@URec32@@V?$allocator@URec32@@@std@@@std@@QAEAAV01@ABV01@@Z  00411630  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ??0VecPair@@QAE@XZ  00411780  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ?resize@?$vector@USkinVert@@V?$allocator@USkinVert@@@std@@@std@@QAEXIUSkinVert@@@Z  004117a0  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ?insert@?$vector@UParticle@@V?$allocator@UParticle@@@std@@@std@@QAE?AViterator@12@V312@ABUParticle@@@Z  00411840  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ??$_Copy_opt@PAUBoneInfluence@@PAU1@@std@@YAPAUBoneInfluence@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004118b0  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ?destroy@?$allocator@UBoneInfluence@@@std@@QAEXPAUBoneInfluence@@@Z  004118f0  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ?add_rec2@Psys@@QAEHHHH@Z  00411920  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ?push_back@?$vector@PAUObj@@V?$allocator@PAUObj@@@std@@@std@@QAEXABQAUObj@@@Z  004119d0  /O2 /MT /Gy /TP
+slices/s00411150/s00411150.cpp  ?push_back@?$vector@UIdxWeight@@V?$allocator@UIdxWeight@@@std@@@std@@QAEXABUIdxWeight@@@Z  00411a20  /O2 /MT /Gy /TP

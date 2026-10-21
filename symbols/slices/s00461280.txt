@@ -1,0 +1,9 @@
+00461280 copy_backward24  # std::copy_backward over 24-byte elements (six dword moves, both pointers stepping down by 0x18)
+004612d0 tri_normal  # unit normal of the triangle (p0,p1,p2) held in three consecutive vector4: cross(p1-p0, p2-p0), vector4::normalize (0x407d60)
+00461370 pack_signed_color  # (unsigned)(v*128+128) clamped to 255 for w,x,y,z -> 0xWWXXYYZZ (normal-map style packing)
+00461420 set_clock_step  # g_dt[*clock] = (int64)(step*1e5); g_time[*clock] += g_dt[*clock]; g_step_tbl[*clock] = step (clock table 0x5e2948, 1e-5 s ticks)
+00461480 wind::init  # zeroes the frame/vector members, up vector (0,1,0), random phase rand()%0x3f9
+00461570 wind::sample  # scales the wind direction by 1 + 15*strength*noise_fractal(clock 2 wrapped at 1e9 ticks * 1e-5 + phase)
+00461630 renderer::set_view  # builds view = identity-rotation * p.relative(identity), sets D3DTS_VIEW (SetTransform state 2)
+004617b0 renderer::reset_state  # default D3D9 render/sampler/texture-stage state and cache reset, shader gamma uniforms ("output_gamma", "iLightPointCount")
+00461ba0 renderer::set_lighting  # caches and sets D3DRS_LIGHTING (0x89)

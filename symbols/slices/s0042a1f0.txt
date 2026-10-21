@@ -1,0 +1,3 @@
+0042a1f0 ?update_shadows@StratEnt@@QAEXPAUscene@@_N1@Z  # creates/updates the two shadow meshes; resource "shadow_default"
+0042a480 ?update_ground_cache@StratEnt@@QAEXXZ  # sweeps a capsule below the entity, caches up to 64 ground face ids (0x174..0x274)
+0042aa50 ?query_box@Ctx@@QAEXPBM0IPAPAUshape@@PAH@Z  # grid box query: locate() of both corners, cell::collect (0x426500) over the cell range

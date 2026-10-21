@@ -1,0 +1,2 @@
+slices/s004520d0/s004520d0.cpp  ?skin_lods@FxDef@@QAEXPAUlod_mesh@rgl@@H@Z  00452530  /O2 /MT /Gy /TP
+slices/s004520d0/s004520d0.cpp  ?blood_burst@Mission@@QAEXMMMHM@Z  004525a0  /O2 /MT /Gy /TP

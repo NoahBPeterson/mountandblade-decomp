@@ -1,0 +1,1 @@
+slices/s00454e30/s00454e30.cpp  ?spawn_corpse@Agent@@QAEXXZ  004554c0  /O2 /MT /Gy /TP

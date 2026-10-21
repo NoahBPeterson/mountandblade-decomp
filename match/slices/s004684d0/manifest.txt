@@ -1,0 +1,6 @@
+slices/s004684d0/s004684d0.cpp  ?apply_state@mesh_part@@QAEXPBM@Z  004684d0  /O2 /MT /Gy /TP
+slices/s004684d0/s004684d0.cpp  ?count@mesh@rgl@@QAEHH@Z  00468620  /O2 /MT /Gy /TP
+slices/s004684d0/s004684d0.cpp  ?level_index@Rec468770@@QAEHXZ  00468770  /O2 /MT /Gy /TP
+slices/s004684d0/s004684d0.cpp  ?unequip_all@Inv@@QAEXXZ  004687a0  /O2 /MT /Gy /TP
+slices/s004684d0/s004684d0.cpp  ?auto_equip@Inv@@QAEXHHDD@Z  004687e0  /O2 /MT /Gy /TP
+slices/s004684d0/s004684d0.cpp  ?extend@BodyHolder@@QAEXPBUvector4@rgl@@@Z  00468c20  /O2 /MT /Gy /TP

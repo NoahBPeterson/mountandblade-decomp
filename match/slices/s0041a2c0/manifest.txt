@@ -1,0 +1,6 @@
+slices/s0041a2c0/s0041a2c0.cpp  ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z  0041a2c0  /O2 /MT /Gy /TP
+slices/s0041a2c0/s0041a2c0.cpp  ??1res_dc@@QAE@XZ  0041a510  /O2 /MT /Gy /TP
+slices/s0041a2c0/s0041a2c0.cpp  ??_Eres_dc@@QAEPAXI@Z  0041a550  /O2 /MT /Gy /TP
+slices/s0041a2c0/s0041a2c0.cpp  ?_Buy@?$vector@UE44@@V?$allocator@UE44@@@std@@@std@@IAE_NI@Z  0041a610  /O2 /MT /Gy /TP
+slices/s0041a2c0/s0041a2c0.cpp  ?erase@?$vector@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@QAE?AViterator@12@V312@0@Z  0041a660  /O2 /MT /Gy /TP
+slices/s0041a2c0/s0041a2c0.cpp  ?_Insert_n@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@IAEXViterator@12@IABUE8@@@Z  0041a9b0  /O2 /MT /Gy /TP

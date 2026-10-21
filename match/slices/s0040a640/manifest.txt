@@ -1,0 +1,10 @@
+slices/s0040a640/s0040a640.cpp  ?apply@renderer@@QAEXPBUmatrix@rgl@@@Z  0040a870  /O2 /MT /Gy /TP
+slices/s0040a640/s0040a640.cpp  ?rot3@pos@@QBE?AUmat3@@ABUmatrix@rgl@@@Z  0040a920  /O2 /MT /Gy /TP
+slices/s0040a640/s0040a640.cpp  ?rot@pos@@QBE?AUvector4@rgl@@ABU23@@Z  0040a9c0  /O2 /MT /Gy /TP
+slices/s0040a640/s0040a640.cpp  ?draw_capsule@renderer@@QAEXMMM@Z  0040aa20  /O2 /MT /Gy /TP
+slices/s0040a640/s0040a640.cpp  ?get_min@capsule@@UAEXPAM@Z  0040ad80  /O2 /MT /Gy /TP
+slices/s0040a640/s0040a640.cpp  ?get_max@capsule@@UAEXPAM@Z  0040ade0  /O2 /MT /Gy /TP
+slices/s0040a640/s0040a640.cpp  ?clone@face@@UAEPAU1@XZ  0040ae40  /O2 /MT /Gy /TP
+slices/s0040a640/s0040a640.cpp  ??0face@@QAE@ABU0@@Z  0040ae70  /O2 /MT /Gy /TP
+slices/s0040a640/s0040a640.cpp  ?get_min@face@@UAE?AUvector4@rgl@@XZ  0040aef0  /O2 /MT /Gy /TP
+slices/s0040a640/s0040a640.cpp  ?vmin@@YAXPAUvector4@rgl@@PBU12@1@Z  0040af80  /O2 /MT /Gy /TP

@@ -1,0 +1,11 @@
+slices/s004375b0/s004375b0.cpp  ?falloff@Troop@@QAEMMM@Z  004375b0  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ?adjust@Troop@@QAEXHM@Z  00437770  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ??0RecJ@@QAE@XZ  004377d0  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ?slot1@RecJ@@UAEXXZ  00437810  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ??0Agent@@QAE@XZ  00437830  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ??_GAgent@@UAEPAXI@Z  00437870  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ?set@OrderSlot@@QAE_NHI@Z  004378a0  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ?get_dir@Combatant@@QAEXPAUvec2@@@Z  004378f0  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ?skill_level@World@@QAEHHH@Z  00437b20  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ??0Agent@@QAE@ABU0@@Z  00437bb0  /O2 /MT /Gy /TP
+slices/s004375b0/s004375b0.cpp  ??4Agent@@QAEAAU0@ABU0@@Z  00437d60  /O2 /MT /Gy /TP

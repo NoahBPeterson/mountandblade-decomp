@@ -1,0 +1,1 @@
+0040cb60  3  complete; faces[i].m4/flags/n loads address as [eax+ebx+0x1c] in the original, [ebx+eax+0x1c] in ours (base/index operands swapped; whole register assignment permuted, this=esi/new=edi/zero=ebx/i=ebp vs ebx/ebp/esi/edi); equiv WEAK (272 valid inputs, no mismatch; malloc discards limit coverage)

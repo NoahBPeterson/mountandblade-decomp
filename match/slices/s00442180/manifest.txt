@@ -1,0 +1,6 @@
+slices/s00442180/s00442180.cpp  ?collect_boxed@world@@QAEXPBUvector4@rgl@@0PAV?$vector@IV?$allocator@I@std@@@std@@@Z  00442180  /O2 /MT /Gy /TP
+slices/s00442180/s00442180.cpp  ?add_psys@FxElem@@QAEXH@Z  00442390  /O2 /MT /Gy /TP
+slices/s00442180/s00442180.cpp  ?add_group@FxElem@@QAEXH@Z  004423f0  /O2 /MT /Gy /TP
+slices/s00442180/s00442180.cpp  ?attach_psys@FxDef@@QAEXHPAUPsys@@PBUmat4@@@Z  00442460  /O2 /MT /Gy /TP
+slices/s00442180/s00442180.cpp  ?attach_group@FxDef@@QAEXHPAUPsysGroup@@@Z  004424a0  /O2 /MT /Gy /TP
+slices/s00442180/s00442180.cpp  ?play_slot@SoundMgr@@QAEHHHPBMMPAH@Z  004428a0  /O2 /MT /Gy /TP

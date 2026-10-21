@@ -1,0 +1,8 @@
+slices/s0041ffe0/s0041ffe0.cpp  ?recalc@entity@rgl@@UAEXXZ  0041ffe0  /O2 /MT /Gy /TP
+slices/s0041ffe0/s0041ffe0.cpp  ?render@entity@rgl@@UAEXPAUscene@2@PAUrender_info@2@@Z  00420310  /O2 /MT /Gy /TP
+slices/s0041ffe0/s0041ffe0.cpp  ?select@lod_mesh2@rgl@@QAEXPBM@Z  004205b0  /O2 /MT /Gy /TP
+slices/s0041ffe0/s0041ffe0.cpp  ?push_back@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXABQAUObj@rgl@@@Z  00420650  /O2 /MT /Gy /TP
+slices/s0041ffe0/s0041ffe0.cpp  ?grow@?$pool@UCell12@rgl@@@rgl@@QAEXXZ  004206a0  /O2 /MT /Gy /TP
+slices/s0041ffe0/s0041ffe0.cpp  ?grow@?$pool@UCell16@rgl@@@rgl@@QAEXXZ  00420720  /O2 /MT /Gy /TP
+slices/s0041ffe0/s0041ffe0.cpp  ?add@objgrp@rgl@@QAEXPAUObj@2@@Z  004207a0  /O2 /MT /Gy /TP
+slices/s0041ffe0/s0041ffe0.cpp  ?clear@objgrp@rgl@@QAEXXZ  004207e0  /O2 /MT /Gy /TP

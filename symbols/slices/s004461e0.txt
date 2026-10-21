@@ -1,0 +1,2 @@
+004461e0 ?set_weapon_mode@Agent@@QAEXH@Z  # provisional: picks held-slot for weapon mode 1/2/3 and sets +0x56d4
+004464d0 ?start_attack@Agent@@QAEXH@Z  # provisional: stores attack kind, chooses weapon mode, randomised delay

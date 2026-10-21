@@ -1,0 +1,1 @@
+0045c220  4464  update_attack: complete (melee + ranged states, tail block animations); frame 0xd0 vs 0xc0 (stack slot sharing of tstring/cur/temps not reproduced), register allocation and tail-merge layout differ; equiv WEAK 25% coverage, 0 mismatches in 4716 valid inputs (earlier variant)

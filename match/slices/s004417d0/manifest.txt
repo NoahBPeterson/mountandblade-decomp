@@ -1,0 +1,4 @@
+slices/s004417d0/s004417d0.cpp  ?add_to_list@Poser@@QAEXHH@Z  00441ff0  /O2 /MT /Gy /TP
+slices/s004417d0/s004417d0.cpp  ?construct@alloc_e56@@QAEXPAUE56@@ABU2@@Z  00442060  /O2 /MT /Gy /TP
+slices/s004417d0/s004417d0.cpp  ?uninit_copy_e56@@YAPAUE56@@PBU1@0PAU1@AAUalloc_e56@@@Z  00442080  /O2 /MT /Gy /TP
+slices/s004417d0/s004417d0.cpp  ?add_extra@Poser@@QAEXH@Z  00442110  /O2 /MT /Gy /TP

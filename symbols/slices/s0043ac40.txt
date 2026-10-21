@@ -1,0 +1,5 @@
+0043b100 Table1f8::get_f1f0  # bounds-checked accessor of the 0x1f8-byte record table (count at +0x28, vector first at +0x1c)
+0043b130 Table1f8::get_f1f4  # same table, next dword
+0043b160 AgentTable::next_used  # advances *i to the next used agent slot (0x5928-byte agents in pages of 16, used flag at +4)
+0043b1b0 AgentTable::first_used  # index of the first used agent slot
+0043b1f0 AgentTable::get  # agent record for an id: pages[id >> 4] + (id & 0xf) * 0x5928

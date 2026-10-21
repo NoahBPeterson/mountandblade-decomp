@@ -1,0 +1,21 @@
+slices/s0041f720/s0041f720.cpp  ?_Insert_n@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@IAEXViterator@12@IABQAUObj@rgl@@@Z  0041f720  /O2 /MT /Gy /EHa /TP
+slices/s0041f720/s0041f720.cpp  ?resize@?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@QAEXIPAUmesh@rgl@@@Z  0041f970  /O2 /MT /Gy /EHa /TP
+slices/s0041f720/s0041f720.cpp  ?resize@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXIPAUObj@rgl@@@Z  0041fa00  /O2 /MT /Gy /EHa /TP
+slices/s0041f720/s0041f720.cpp  ?resize@?$list@HV?$allocator@H@std@@@std@@QAEXIH@Z  0041fa90  /O2 /MT /Gy /EHa /TP
+slices/s0041f720/s0041f720.cpp  ?resize@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@QAEXIUE100@@@Z  0041fb00  /O2 /MT /Gy /EHa /TP
+slices/s0041f720/s0041f720.cpp  ??0entity@rgl@@QAE@XZ  0041fba0  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?type_name@entity@rgl@@UAE?AUstring@2@XZ  0041fcb0  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?sync@entity@rgl@@UAEXXZ  0041fcd0  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?get_fbc@entity@rgl@@UAEMXZ  0041fd80  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?set_fbc@entity@rgl@@UAEXPBM@Z  0041fd90  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?commit@entity@rgl@@UAEXH@Z  0041fda0  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?set_f144@entity@rgl@@UAEXPBM@Z  0041fdd0  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?local_origin@entity@rgl@@UAEPBUvector4@2@XZ  0041fde0  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?get_vac@entity@rgl@@UAEPBUvector4@2@XZ  0041fdf0  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?get_v9c@entity@rgl@@UAEPBUvector4@2@XZ  0041fe00  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?is_dirty@entity@rgl@@UAEHXZ  0041fe10  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?set_mode@entity@rgl@@UAEXI@Z  0041fe30  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?set_local@entity@rgl@@UAEXPBUmat4@2@@Z  0041fe50  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?set_local_dirty@entity@rgl@@UAEXPBUmat4@2@@Z  0041fe70  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?set_local_scaled_dirty@entity@rgl@@UAEXPBUmat4@2@PBUvector4@2@@Z  0041ff40  /O2 /MT /Gy /TP
+slices/s0041f720/s0041f720.cpp  ?set_local_scaled@entity@rgl@@UAEXPBUmat4@2@PBUvector4@2@@Z  0041fe90  /O2 /MT /Gy /TP /DOPAQUE_SCALE_ROWS

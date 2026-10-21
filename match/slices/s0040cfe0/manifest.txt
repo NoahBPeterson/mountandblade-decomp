@@ -1,0 +1,16 @@
+slices/s0040cfe0/s0040cfe0.cpp  ?scale@composite@@UAEXPBM@Z  0040cfe0  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ?transform@composite@@UAEXPBUpos@@@Z  0040d070  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ?set_mc@composite@@UAEXABH@Z  0040d0a0  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ?set_m8@composite@@UAEXH@Z  0040d0d0  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ?or_m8@composite@@UAEXH@Z  0040d100  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ??_Gcomposite@@UAEPAXI@Z  0040d140  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ??1composite@@UAE@XZ  0040d160  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ?get_min@composite@@UAEPAUvector4@rgl@@PAU23@@Z  0040d1a0  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ?get_max@composite@@UAEPAUvector4@rgl@@PAU23@@Z  0040d260  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ??_Gmanifold@@UAEPAXI@Z  0040d320  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ??1manifold@@UAE@XZ  0040d340  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ?copy_from@manifold@@UAEXPBUshape_base@@@Z  0040d3a0  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ??4?$vec@Uvector4@rgl@@@@QAEAAU0@ABU0@@Z  0040d3d0  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ??$uninit_copy@Uvector4@rgl@@@@YAPAUvector4@rgl@@PAU01@00AAV?$allocator@Uvector4@rgl@@@std@@U_Nonscalar_ptr_iterator_tag@3@@Z  0040d550  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ??4?$vec@Umface@@@@QAEAAU0@ABU0@@Z  0040d5e0  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  ??$uninit_copy@Umface@@@@YAPAUmface@@PAU0@00AAV?$allocator@Umface@@@std@@U_Nonscalar_ptr_iterator_tag@2@@Z  0040d750  /O2 /MT /Gy /TP

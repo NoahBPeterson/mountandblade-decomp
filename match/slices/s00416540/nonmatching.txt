@@ -1,0 +1,2 @@
+00416930 66 material::supported: complete; equiv PASS. All condition variants tried compile to 109 bytes, the original is 111 (it re-tests the 0x20000000 flag after the first branch instead of threading the jump)
+00416d50 1 skin::save: complete; equiv UNSUPPORTED (harness: virtual calls through random stream pointers fault). movsx byte [esi+eax] has base/index swapped in the original (SIB 06 vs 30); no source form tried flips it

@@ -1,0 +1,1 @@
+08ed5090 ?g_emit_defs@@3UEmitTable@@A  # effect emitter definition table (global object, address beyond the image sections)

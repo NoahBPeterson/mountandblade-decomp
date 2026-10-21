@@ -1,0 +1,4 @@
+00451710 dust_vertices  # tints the vertices of a mesh within a radius of a point toward a colour (random falloff, 60% of them), marks the mesh dirty; provisional
+004519f0 Agent::apply_blood  # clamps radius = 0.06*amount (max 0.7) and strength = 0.07*amount (max 1), runs dust_vertices with the tint (0.4,0.01,0.01) over every mesh of every lod_mesh attached to the body; provisional
+00451c50 rgl::mesh::compute_normals  # per-face normals from the points (cross, normalised or (0,1,0)), summed into the vertex normals, renormalised ((0,-1,0) when tiny); marks the mesh dirty; provisional
+004520b0 rgl::mesh::append_plain  # append_skinned(other, m, -1, -1, 0); byte-exact tail call that keeps ecx; provisional

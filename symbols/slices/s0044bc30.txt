@@ -1,0 +1,2 @@
+0044bc30 ?cycle_slot@Agent@@QAEXH@Z  # provisional: advances slots[which] to the next usable held item (weapon / shield selector)
+0044be50 ?spawn_missile@Mission@@QAEHPBUvector4@rgl@@0PAUItemRef@@1I@Z  # provisional: creates flying_missile entity + missile record, returns id

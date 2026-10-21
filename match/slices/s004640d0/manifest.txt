@@ -1,0 +1,10 @@
+slices/s004640d0/s004640d0.cpp  ?sync_readback@ShadowMap@@QAEXXZ  004640d0  /O2 /MT /Gy /TP
+slices/s004640d0/s004640d0.cpp  ?read_pixel@ShadowMap@@QAEXHHHPAI0@Z  004641a0  /O2 /MT /Gy /TP
+slices/s004640d0/s004640d0.cpp  ?read@TerrainDescEntry@@QAEXPAUstream_base@@PAUDims@@@Z  00464200  /O2 /MT /Gy /TP
+slices/s004640d0/s004640d0.cpp  ?init@TerrainDesc@@QAEXXZ  00464400  /O2 /MT /Gy /TP
+slices/s004640d0/s004640d0.cpp  ?read@TerrainDesc@@QAEXPAUstream_base@@@Z  00464440  /O2 /MT /Gy /TP
+slices/s004640d0/s004640d0.cpp  ?visible@Blend@@QAE_NH@Z  004645b0  /O2 /MT /Gy /TP
+slices/s004640d0/s004640d0.cpp  ?dominant@Blend@@QAEHXZ  004646b0  /O2 /MT /Gy /TP
+slices/s004640d0/s004640d0.cpp  ?init@Seg@@QAEXXZ  00464760  /O2 /MT /Gy /TP
+slices/s004640d0/s004640d0.cpp  ?get@BitWords@@QAEIABIABH@Z  004649b0  /O2 /MT /Gy /TP
+slices/s004640d0/s004640d0.cpp  ?set_pct@Pct@@QAEXABM@Z  004649f0  /O2 /MT /Gy /TP

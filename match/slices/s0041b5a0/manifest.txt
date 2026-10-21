@@ -1,0 +1,5 @@
+slices/s0041b5a0/s0041b5a0.cpp  ?read_body@@YAPAUstream_base@@PAU1@PAUbody@@@Z  0041b5a0  /O2 /MT /Gy /TP
+slices/s0041b5a0/s0041b5a0.cpp  ?push_back@?$vector@PAUres_base@@V?$allocator@PAUres_base@@@std@@@std@@QAEXABQAUres_base@@@Z  0041b750  /O2 /MT /Gy /TP
+slices/s0041b5a0/s0041b5a0.cpp  ??$fill@PAUBoneInfluence@@U1@@std@@YAXPAUBoneInfluence@@0ABU1@@Z  0041b7a0  /O2 /MT /Gy /TP
+slices/s0041b5a0/s0041b5a0.cpp  ?add@resmgr@@QAEXPAUres_base@@@Z  0041ba90  /O2 /MT /Gy /TP
+slices/s0041b5a0/s0041b5a0.cpp  ??_Eskel_anim@@UAEPAXI@Z  0041bed0  /O2 /MT /Gy /TP

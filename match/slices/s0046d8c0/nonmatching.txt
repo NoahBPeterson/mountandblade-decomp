@@ -1,0 +1,1 @@
+0046d8c0  2519  complete source (all three pass kinds, light loop, draw); reg alloc differs (orig keeps this/view in memory, p in ebx) and light-loop codegen; equiv WEAK: no mismatch, but harness cannot build a non-empty entry vector (19% coverage, loop body unexecuted)

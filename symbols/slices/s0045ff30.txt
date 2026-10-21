@@ -1,0 +1,10 @@
+0045ff30 Agent::tick  # per-frame agent update: animations, rider/mount state copy, map-edge check (state 2 -> 3 and name label), tick_death, ragdoll_update, expiry of the +0x5858 timer; provisional
+00460160 ScriptState::expand_token  # expands one {token} of a dialog / string: regN, regN?a:b, sN, playername, he/she, nested {..}; "TOKEN EXCEEDS MAX REGISTERS" / "UNRECOGNIZED TOKEN" errors; provisional
+004606d0 ScriptState::expand  # expands a whole string: '^' -> newline, {tokens} via expand_token; provisional
+00460620 DialogMgr::get_c8  # 1 when +8 is 6, else the game's +0xc8 flag
+00460640 DialogMgr::speaker  # troop id speaking the current dialog line (player / id in the top 12 flag bits / default)
+00460670 DialogMgr::listener  # the other party of the current dialog line
+004606a0 DialogMgr::line_text  # copy of the text of line i of the collected list
+004606c0 DialogMgr::line_flags  # flags of line i of the collected list
+004607d0 ??0Elem@@QAE@XZ  # script block statement constructor (last field -1), passed to the vector constructor iterator in Block::read
+004607e0 Block::read  # reads a script block (statement count, then id / parameter count / parameters each) from a stream

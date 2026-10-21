@@ -1,0 +1,15 @@
+0040a640 ?draw@capsule@@UAEXXZ  # capsule vtable 0x54a540 slot 6: draws a wire capsule through the render state at 0xa17910
+0040a870 ?apply@renderer@@QAEXPBUmatrix@rgl@@@Z  # cur = cur * m (multiply the render state world matrix) + SetTransform; provisional name
+0040a920 ?rot3@pos@@QBE?AUmat3@@ABUmatrix@rgl@@@Z  # rotate the three rows of m by this matrix; provisional name
+0040a9c0 ?rot@pos@@QBE?AUvector4@rgl@@ABU23@@Z  # rotate a vector (no translation); provisional name
+0040a9c0 ?rot_ext@pos@@QBE?AUvector4@rgl@@ABU23@@Z  # same function, declared apart in the source
+0040aa20 ?draw_capsule@renderer@@QAEXMMM@Z  # wire capsule via 3 tessellate calls + DrawPrimitiveUP(LINELIST, 0xe0); provisional name
+0040ab10 ?tessellate@renderer@@QAEXPAMPAHMMMHHH@Z  # sphere-cap / cylinder line tessellation (thiscall, this unused); provisional name
+00408460 ?transform_point@pos@@QBE?AUvector4@rgl@@ABU23@@Z  # s00408110
+00407e00 ?normalize@rgl@@YAXAAUvector4@1@ABU21@@Z  # s00407c10
+00a17910 ?g_render@@3Urenderer@@A  # render state object (matrix stack, device at +0x618, world matrix at +0x794)
+0040af80 ?vmin_ext@@YAXPAUvector4@rgl@@PBU12@1@Z  # same function as vmin, declared apart in the source
+0054a540 ??_7capsule@@6B@  # capsule vtable
+0054a588 ??_7face@@6B@  # face vtable
+0040a540 ??_Gface@@UAEPAXI@Z  # slot 0 of the shape vtables (scalar deleting dtor; folded)
+0040a540 ??_Gshape_base@@UAEPAXI@Z  # same

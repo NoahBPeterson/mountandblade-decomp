@@ -1,0 +1,5 @@
+0054b460 ??_7entity@rgl@@6B@  # entity vtable
+0041ffe0 ?recalc@entity@rgl@@UAEXXZ  # vtable slot 4 of the entity: rebuilds the bounding box from the child meshes
+00420310 ?render@entity@rgl@@UAEXPAUscene@2@PAUrender_info@2@@Z  # vtable slot 9: renders the child meshes and LOD records
+004201b0 ?extend_box@aabb@rgl@@QAEXPBU12@PBUmat4@2@@Z  # grows the box by the eight transformed corners of another box
+004205b0 ?select@lod_mesh2@rgl@@QAEXPBM@Z  # LOD selection from the 0.1 / 0.05 / 0.025 / 0.0125 thresholds

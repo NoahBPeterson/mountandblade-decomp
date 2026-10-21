@@ -1,0 +1,14 @@
+slices/s0041bf40/s0041bf40.cpp  ?get_small@resmgr@@QAEPAUsmall_res@@Utstring@@@Z  0041bf40  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?load_shaders@resmgr@@QAEXXZ  0041c000  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?read_skel_anim@@YAPAUstream_base@@PAU1@PAUskel_anim@@@Z  0041c060  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?read_bone_influence@@YAPAUstream_base@@PAU1@PAUBoneInfluence@@@Z  0041c110  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?read_vec_pair@@YAPAUstream_base@@PAU1@PAUVecPair@@@Z  0041c180  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ??0lod_mesh2@@QAE@XZ  0041c2a0  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?read_morph_set@@YAPAUstream_base@@PAU1@PAUMorphSet@@@Z  0041c340  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?get_texture@resmgr@@QAEPAUrender_res@@HHH@Z  0041c400  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?get_shadow_skin@resmgr@@QAEPAUskin@@HHHH@Z  0041c420  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?load_all@resmgr@@QAEHHPAUtstring@@@Z  0041c540  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ??$_Uninit_fill_n@PAUBoneInfluence@@IU1@V?$allocator@UBoneInfluence@@@std@@@std@@YAXPAUBoneInfluence@@IABU1@AAV?$allocator@UBoneInfluence@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0041c5c0  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?erase@?$vector@UBoneInfluence@@V?$allocator@UBoneInfluence@@@std@@@std@@QAE?AViterator@12@V312@0@Z  0041c650  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?_Ufill@?$vector@UBoneInfluence@@V?$allocator@UBoneInfluence@@@std@@@std@@IAEPAUBoneInfluence@@PAU3@IABU3@@Z  0041c6a0  /O2 /MT /Gy /TP
+slices/s0041bf40/s0041bf40.cpp  ?clone@mesh@rgl@@QAEPAU12@XZ  0041c6d0  /O2 /MT /Gy /TP

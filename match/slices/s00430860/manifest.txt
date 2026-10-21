@@ -1,0 +1,4 @@
+slices/s00430860/s00430860.cpp  ?Parse@TiXmlElement@@UAEPBDPBDPAVTiXmlParsingData@@W4TiXmlEncoding@@@Z  00430860  /O2 /MT /Gy /TP
+slices/s00430860/s00430860.cpp  ?Parse@TiXmlComment@@UAEPBDPBDPAVTiXmlParsingData@@W4TiXmlEncoding@@@Z  00430c60  /O2 /MT /Gy /TP
+slices/s00430860/s00430860.cpp  ?Parse@TiXmlAttribute@@UAEPBDPBDPAVTiXmlParsingData@@W4TiXmlEncoding@@@Z  00430d30  /O2 /MT /Gy /TP
+slices/s00430860/s00430860.cpp  ?Parse@TiXmlText@@UAEPBDPBDPAVTiXmlParsingData@@W4TiXmlEncoding@@@Z  00430eb0  /O2 /MT /Gy /TP

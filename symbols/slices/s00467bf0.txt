@@ -1,0 +1,17 @@
+00467bf0 fill_elem52  # std::fill for 0x34-byte elements
+00467c20 copy_backward_elem52  # std::copy_backward for 0x34-byte elements
+00467c50 prop_update_tween  # timed frame tween between two matrices (0x118 -> 0xd8), notifies the entity via vtable slot 23
+00467f80 missile_ammo_scale  # ammo item field +0x20c * 0.01, 0.8 without ammo
+00467fb0 missile_init  # neighbour s0044bc30 declares Missile::init at this VA
+00468050 copy_elem56  # forward copy of 0x38-byte elements (tstring + 10 ints)
+004680c0 copy_backward_elem56  # std::copy_backward for 0x38-byte elements
+00468130 allocator_construct_elem24  # placement copy-construct, 0x18 bytes
+00468170 allocator_construct_particle100  # placement copy-construct, 0x64 bytes (declared as alloc100 in s0040f300)
+00468190 allocator_construct_elem52  # placement copy-construct, 0x34 bytes
+004681b0 uninit_copy_elem24  # std::_Uninit_copy with try/catch(...) { destroy; throw; }
+00468220 uninit_copy_particle100  # same, 0x64-byte elements
+00468290 uninit_copy_elem52  # same, 0x34-byte elements
+00468300 vmax3  # component-wise max of two 3-float vectors (AABB extend helper)
+00468360 vmin3  # component-wise min of two 3-float vectors
+004683c0 texture_bind  # SetTexture (animated frame by time) + texgen mode for one stage
+00468440 material_bind  # binds every stage of a material then disables the next stage

@@ -1,0 +1,17 @@
+slices/s00461bd0/s00461bd0.cpp  ?set_stage_color@renderer@@QAEXHH@Z  00461bd0  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?set_stage_alpha@renderer@@QAEXHH@Z  00461c60  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?set_alpha_mode@renderer@@QAEXH@Z  00461cf0  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?set_stage_sampler@renderer@@QAEXHI@Z  00461d90  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?set_material@renderer@@QAEXMPBM@Z  00461e10  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?set_specular@renderer@@QAEXPBM@Z  00461eb0  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?bind_pixel_shader@material@@QAEXXZ  00461f20  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?set_state@mesh_part@@QAEXXZ  00461f80  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?set_part@mesh_inst@@QAEXPAUmesh_part@@@Z  004620b0  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?projection@frustum@@QAE?AUD3DXMATRIX@@XZ  004620d0  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?view_matrix@frustum@@QAE?AUmatrix@rgl@@XZ  00462170  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?to_clip@frustum@@QAE?AUvector4@rgl@@ABU23@@Z  004621f0  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?rec_less@@YA_NPBQAUsort_rec@@0@Z  004622a0  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?restore@dev_buffer@@QAEJXZ  004622e0  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?restore_all@buffer_pair@@QAEXXZ  004623c0  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?alloc@cell_rows@@QAEXPBH@Z  00462420  /O2 /MT /Gy /TP
+slices/s00461bd0/s00461bd0.cpp  ?set_fade@envelope@@QAEXPBMPBH@Z  004624c0  /O2 /MT /Gy /TP

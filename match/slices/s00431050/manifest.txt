@@ -1,0 +1,14 @@
+slices/s00431050/s00431050.cpp  ?Parse@TiXmlDeclaration@@UAEPBDPBDPAVTiXmlParsingData@@W4TiXmlEncoding@@@Z  00431050  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??_GIfaceA@@UAEPAXI@Z  00431400  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??_GIfaceB@@UAEPAXI@Z  00431420  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??1RecD@@QAE@XZ  00431440  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??_ERecD@@QAEPAXI@Z  00431480  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??_ERecG@@QAEPAXI@Z  00431540  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??_ERecH@@QAEPAXI@Z  004315d0  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??1RecI@@QAE@XZ  00431660  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??1NameHolder@@QAE@XZ  004316b0  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??_ERecF@@UAEPAXI@Z  004316c0  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??_ERecJ@@UAEPAXI@Z  00431750  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ?clear@RecGList@@QAEXXZ  004317b0  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??_ERecI@@QAEPAXI@Z  00431810  /O2 /MT /Gy /TP
+slices/s00431050/s00431050.cpp  ??_ERecK@@QAEPAXI@Z  004318c0  /O2 /MT /Gy /TP

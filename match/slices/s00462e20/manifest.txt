@@ -1,0 +1,8 @@
+slices/s00462e20/s00462e20.cpp  ?find_free@Inv@@QAEHXZ  00463030  /O2 /MT /Gy /TP
+slices/s00462e20/s00462e20.cpp  ?add@Inv@@QAE_NPAUSlot@@@Z  00463070  /O2 /MT /Gy /TP
+slices/s00462e20/s00462e20.cpp  ?unequip@Inv@@QAEXH@Z  004630d0  /O2 /MT /Gy /TP
+slices/s00462e20/s00462e20.cpp  ?equip_best@Inv@@QAE_NHHIIIIID@Z  00463100  /O2 /MT /Gy /TP
+slices/s00462e20/s00462e20.cpp  ?first_flagged@RecHolder@@QAEHXZ  00463190  /O2 /MT /Gy /TP
+slices/s00462e20/s00462e20.cpp  ?read@Placed@@QAEXPAUstream_base@@H@Z  004631c0  /O2 /MT /Gy /TP
+slices/s00462e20/s00462e20.cpp  ??0ArrSet@@QAE@ABU0@@Z  004636d0  /O2 /MT /Gy /TP
+slices/s00462e20/s00462e20.cpp  ??1ArrSet@@QAE@XZ  00463760  /O2 /MT /Gy /TP

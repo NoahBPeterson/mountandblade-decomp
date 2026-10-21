@@ -1,0 +1,1 @@
+004259a0 ?resolve@dynamic_entity@rgl@@UAEXXZ  # slot 31: contact resolution (cancels force into contacts, angular enclosure test, torques, velocity update)

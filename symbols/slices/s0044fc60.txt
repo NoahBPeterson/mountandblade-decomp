@@ -1,0 +1,2 @@
+0044fc60 ?start_ragdoll@Agent@@QAEXXZ  # turns the agent's animated skeleton into a Newton ragdoll (NewtonCreateRagDoll/Begin/AddBone via PhysSet::add_bone/End), seeds bone velocities, adds the mount capsule body
+0044fad0 ?alloc@PhysSet@@QAEHXZ  # thiscall on g_phys (0xa181f8): returns the index of a new 0x38-byte physics record, stored at Agent+0x58dc and used to index recs

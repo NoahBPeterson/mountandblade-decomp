@@ -1,0 +1,2 @@
+slices/s0040aff0/s0040aff0.cpp  ?get_max@face@@UAE?AUvector4@rgl@@XZ  0040aff0  /O2 /MT /Gy /TP
+slices/s0040aff0/s0040aff0.cpp  ?vmax@@YAXPAUvector4@rgl@@PBU12@1@Z  0040b080  /O2 /MT /Gy /TP

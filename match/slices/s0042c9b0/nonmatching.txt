@@ -1,0 +1,1 @@
+0042cf50  334  mouse_event: complete; widget* loop of the (mask&7)==0 branch loads children[i] with a duplicated base register (mov eax,edx before each fld) and the 1-constant is hoisted into ebx in the other branch; r lives on the stack in the original

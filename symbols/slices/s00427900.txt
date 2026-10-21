@@ -1,0 +1,15 @@
+0054b548 ??_7collision_entity@@6B@  # collision_entity vtable (stubs at slots 25..27 = 0x421520/0x421540/0x421550); stored by the dtor 0x427cd0 and inlined ctor of 0x427d80
+00427d20 ??_Gcollision_entity@@UAEPAXI@Z  # scalar deleting destructor, slot 0 of vtable 0x54b548 (type name "collision_entity" 0x421500)
+0054b730 ??_7skeleton_entity@@6B@  # skeleton_entity vtable; stored by the ctor 0x427d80 and the dtor 0x427e10; type name "skeleton_entity" (0x427dd0)
+00427e80 ??_Gskeleton_entity@@UAEPAXI@Z  # scalar deleting destructor, slot 0 of vtable 0x54b730
+0054b7b8 ??_7static_entity@@6B@  # static_entity vtable; type name "static_entity" (0x4280c0)
+004280f0 ??_Gstatic_entity@@UAEPAXI@Z  # scalar deleting destructor, slot 0 of vtable 0x54b7b8 (sets the vptr, calls ~entity 0x4213f0, deletes)
+0054b5d0 ??_7StrategicEntity@@6B@  # strategic entity vtable (same as s00421110); stored by the dtor 0x428120
+00428220 ??_GStrategicEntity@@UAEPAXI@Z  # scalar deleting destructor, slot 0 of vtable 0x54b5d0
+00427ca0 ??$_Uninitialized_fill_n@PAUE32@@IU1@V?$allocator@UE32@@@std@@@std@@YAXPAUE32@@IABU1@AAV?$allocator@UE32@@@0@@Z  # std::_Uninitialized_fill_n<E32*,...>: 4-arg wrapper that forwards to _Uninit_fill_n 0x4274c0
+00427900 ?collide_shape@rigid_base@@QAE_NPAUcoll_shape@@@Z  # rigid body vs a shape: contacts (0x40bfe0), point velocity vtable slot 25, impulses slots 26/27, position shift at +0x1c4
+00427f40 ?step@world@@QAEXM@Z  # world per-frame step: activates pending entities, updates entities, re-buckets awake ones, updates emitters
+00427ea0 ?alloc_emitter@world@@QAEPAUEmitter@@XZ  # emitter pool: reuse emitters[live] or new Emitter (0x1bc bytes)
+00427e10 ??1skeleton_entity@@UAE@XZ  # skeleton_entity destructor body (called by the deleting destructor 0x427e80)
+00427cd0 ??1collision_entity@@UAE@XZ  # collision_entity destructor body
+00428120 ??1StrategicEntity@@UAE@XZ  # StrategicEntity destructor body (called by the deleting destructor 0x428220)

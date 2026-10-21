@@ -1,0 +1,9 @@
+0054a6f4 ??_7mesh@rgl@@6B@  # vtable stored by the mesh ctor 0x412a90: [0x417730 deleting dtor, 0x48b1f0 (returns 1), 0x412980]
+0054a6c8 ??_7mesh_base@rgl@@6B@  # base vtable stored first by the ctor: [__purecall, 0x408020 (returns 0)]
+00412d50 ??4?$vector@Uelem14@rgl@@V?$allocator@Uelem14@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z  # std::vector<elem14>::operator= (elem14 = {int, vector<int>}, 0x14 bytes)
+00410610 ?_Insert_n@?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@IAEXViterator@12@IABQAUmesh@rgl@@@Z  # std::vector<T*>::_Insert_n (ICF'd with all pointer vectors)
+00412a90 rgl::mesh::mesh  # constructor of the 0x260-byte mesh instance (vptr 0x54a6f4, 3 slots at 0x110, identity matrices); provisional class name
+00412c30 rgl::scene::get_mesh  # find-or-create the cached mesh for a resource in the vector at scene+0x1c8; provisional
+00412ee0 rgl::mesh::ensure_local  # copies parent's vectors/keyframes into the instance once (flag at +0xa1); provisional
+00412f50 rgl::mesh::add_point  # resize point vector by one and store the position twice
+00412fe0 rgl::mesh::append  # appends another mesh's points/vertices/faces transformed by a matrix; provisional

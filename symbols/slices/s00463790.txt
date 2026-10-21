@@ -1,0 +1,8 @@
+00463790 Ramp::eval  # colour ramp lookup: lerp of two adjacent stops, optional pow(gamma), pack_color
+00463a80 wind_noise  # three noise_fractal octave sums driven by the 1e-5 s clock (g_ticks[1])
+00463b70 ShadowMap::release_all  # releases the D3D surface and the two render targets
+00463bc0 ShadowMap::pick_size  # 1024/2048/4096 by shadow quality, clamped to the device maximum
+00463e10 ShadowMap::create_target  # get_shadow_skin(w,h,R16F/R32F) + "shadow_shader"
+00463e90 ShadowMap::setup  # fits the orthographic light frustum around the caster bounds
+00463950 GameState::scene_path  # "SceneObj\" + name + ".sco"
+004639d0 GameState::module_path  # "Modules\" + module + "\" + sub into a static buffer

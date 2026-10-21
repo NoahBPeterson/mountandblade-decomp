@@ -1,0 +1,2 @@
+0042aaf0 ?build_shadow_frame@StratEnt@@QAEXPAUmatrix@rgl@@PAUvector4@3@@Z  # builds the shadow camera frame looking along the dominant light direction
+0042ad60 ?sample_lights@Ctx@@QAEXPBUvector4@rgl@@PAU23@1@Z  # sums all scene lights at a point: dominant direction (normalized) and clamped ambient colour

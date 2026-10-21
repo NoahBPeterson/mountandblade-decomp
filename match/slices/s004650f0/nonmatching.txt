@@ -1,0 +1,5 @@
+004650f0  575  Terrain::scatter: complete; equiv WEAK (no mismatch, 15% coverage: g_ground_spec_count is 0 in the image so the loops never run). Register caching of address-taken idx matches (needs same-TU spec_weight); diff is local slot order and register choice (original ebp=count, ebx=type)
+00465540  294  Terrain::scatter_all: complete; equiv PASS (397, 84%). Original has two 18-byte inline tags (jmp +0x10; "WL  ", 0x0c/0x0d, 0, "WL  ") that C++ cannot express; rest differs in rand()%4+2 temp register
+004656c0  202  Terrain::fill_desc_named: complete; equiv PASS (452 valid, 95%). Original has two inline "WL  " tags (18 bytes each) not reproducible; remaining code matches except loop alignment
+004657c0  210  Terrain::fill_desc_none: complete; equiv PASS (454 valid, 95%). Same two inline "WL  " tags as 0x4656c0
+004658c0  121  HexWords::parse (hex words from a "0x.." string): complete; equiv PASS (302 valid, 93%). Diff is register allocation (original keeps lo in a stack slot, s in ebp) and frame size 0x2c vs 0x28

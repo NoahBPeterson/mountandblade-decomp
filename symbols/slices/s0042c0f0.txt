@@ -1,0 +1,14 @@
+0042c0f0 ?min_int@@YAHABH0@Z  # smaller of two ints by reference (inlined by range_equals 0x42c160)
+0042c110 ??0tstring@@QAE@ABU0@@Z  # tstring copy ctor (inlined by substr 0x42c4a0 and operator+ 0x42c840)
+0042c160 ?range_equals@tstring@@QBEDABH0ABU1@@Z  # tstring: compare the range [start, min(end, len)) with another tstring of the same length
+0042c1e0 ?append@tstring@@QAEXABU1@@Z  # tstring::append(const tstring&) (inlined by erase_range, trim, operator+, insert)
+0042c230 ?has_token@tstring@@QAE_NXZ  # tstring::has_token: skips blanks (<= 0x20) at the read cursor, true if a token follows
+0042c440 ?find@tstring@@QBEHABU1@H@Z  # tstring::find(const tstring&, start): substring search, -1 if absent
+0042c4a0 ?substr@tstring@@QBE?AU1@HH@Z  # tstring::substr(start, end) by value (hidden return pointer)
+0042c560 ?erase_range@tstring@@QAEXHH@Z  # tstring::erase_range(a, b): removes [a, b)
+0042c7a0 ?trim@tstring@@QAEXXZ  # tstring::trim: strips leading and trailing blanks in place
+0042c840 ??Htstring@@QBE?AU0@ABU0@@Z  # tstring::operator+ (by value)
+0042c900 ?insert@tstring@@QAEXHABU1@@Z  # tstring::insert(at, const tstring&)
+0042c270 ?get_token@tstring@@QAEXPADPAH@Z  # tstring::get_token(out, &len): next blank-delimited or quoted token at the read cursor, at most 0x1fff chars (text streams, s00415c80)
+0042c350 ?get_string@tstring@@QAEXAAU1@@Z  # tstring::get_string(out): same tokenizer into a tstring
+0042c5d0 ?strip_tags@tstring@@QBE?AU1@XZ  # tstring::strip_tags: removes <...> runs, by value

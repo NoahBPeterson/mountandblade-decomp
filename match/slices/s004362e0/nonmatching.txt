@@ -1,0 +1,2 @@
+004362e0  45  original shares one 8-byte stack slot between the slot_pair result and the inlined slot_pair temporary (frame 8 vs 0x10); sharing one Pair variable instead gives a matching body but one extra dead store of .a; every other byte matches (equiv WEAK: 32% coverage, no FAIL)
+00436880  424  best_ammo: original keeps the five-way type test as a literal || chain (falls through to the next cmp) and reloads g_items[cur->a] per term; cl jump-threads and CSEs ours (437 vs 489 bytes) (equiv WEAK: 35% coverage, no FAIL)

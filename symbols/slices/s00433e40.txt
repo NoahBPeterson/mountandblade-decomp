@@ -1,0 +1,1 @@
+00433e40 item_kind::get_carry_pos  # item carry placement by itcf_carry_* flags: fills bone index, bone flags and the local pos

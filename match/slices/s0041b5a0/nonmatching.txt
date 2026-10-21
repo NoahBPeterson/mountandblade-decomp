@@ -1,0 +1,2 @@
+0041b7d0  7  complete; the inlined render_res ctor stores are in the right order but cl loads the -1 constant (`or ecx,-1`) after the width/height stores, the original before them (7 bytes, same length); equiv PASS (204 valid inputs)
+0041b960  17  complete; same code and length; the zero store of the local `from` is scheduled before `mov ecx,[esi]` instead of after it and one register (ecx vs edx) differs; equiv WEAK (227 valid inputs, no mismatch, 33.6% coverage: random prefix tstrings rarely match)

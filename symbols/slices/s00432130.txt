@@ -1,0 +1,3 @@
+00432130 ?group_base@@YAHH@Z  # maps a control id (triples 0x97.., 0xc7..0xed) to the first id of its triple, -1 otherwise
+00432860 ?mul_t@mat3@@QBE?AU1@ABU1@@Z  # 3x3 product, result rows are dot products of the argument's rows with this's rows (provisional)
+004329d0 ?relative@pos@@QBE?AUmatrix@rgl@@ABU23@@Z  # expresses a frame in this frame: origin via transform_point_to_local 0x407f70, rotation via 0x432860

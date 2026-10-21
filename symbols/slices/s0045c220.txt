@@ -1,0 +1,1 @@
+0045c220 Agent::update_attack  # per-tick attack/reload state machine (+0x560c): melee swing, bow/crossbow/thrown/gun draw-release-reload, block animations (provisional name)

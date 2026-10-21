@@ -1,0 +1,3 @@
+slices/s004413e0/s004413e0.cpp  ?add_bone@PhysSet@@QAEPBUNewtonRagDollBone@@HPBU2@PBMUmatrix@rgl@@1121111@Z  004413e0  /O2 /MT /Gy /TP
+slices/s004413e0/s004413e0.cpp  ?begin_static_build@PhysSet@@QAEXH@Z  00441610  /O2 /MT /Gy /TP
+slices/s004413e0/s004413e0.cpp  ?add_capsule_body@PhysSet@@QAEPAUNewtonBody@@HPBM00PAUmatrix@rgl@@1_N@Z  004416c0  /O2 /MT /Gy /TP

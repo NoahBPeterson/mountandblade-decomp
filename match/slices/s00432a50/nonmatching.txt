@@ -1,0 +1,3 @@
+00432c40  279  rand_cone_dir: complete (equiv PASS); the original keeps the first rotated vec2 and a mat3 in a 0x44-byte frame, ours reuses fewer stack slots (frame 0x38) and spills in another order
+00432e30  79  bounce: complete; correct instruction mix and size (291 bytes) but cl assigns the Vec3 temporaries to different stack slots (frame 0x30 vs 0x38) and orders the first copy-through-eax differently
+00432f60  142  fill_weights: complete; the original adds the byte offset to the items pointer (add eax,ebx; mov eax,[eax+8]) where cl folds it into [eax+ebx+8]; 208 vs 209 bytes, no source form found

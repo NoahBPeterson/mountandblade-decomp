@@ -1,0 +1,10 @@
+00440a30 ??$_Copy_backward_opt@PAUE56@@PAU1@@std@@YAPAUE56@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  # std::copy_backward over 0x38-byte records (memberwise operator= incl. two vector<int>), byte-exact
+00440aa0 ?push_back@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@QAEXABUE48@@@Z  # std::vector<48-byte element>::push_back (VC7.1 inline fast path + insert call 0x43f3a0), byte-exact
+00440b30 ?push_back@?$vector@HV?$allocator@H@std@@@std@@QAEXABH@Z  # std::vector<int>::push_back; ICF-folded with every 4-byte-element vector (pointer vectors call it too, e.g. 0x4416c0), byte-exact
+00440b80 ?push_back@?$vector@URec1c8@@V?$allocator@URec1c8@@@std@@@std@@QAEXABURec1c8@@@Z  # std::vector<0x1c8 record>::push_back, byte-exact
+00440c10 ?push_back@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@QAEXABUE12@@@Z  # std::vector<12-byte element>::push_back, byte-exact
+00440c90 ?alloc@Pool@@QAEHXZ  # id pool: hands out the next free id, allocating a page of 16 0xb0-byte records (new[] with ctor 0x4377d0) when the free list is empty; marks it used and stamps a serial number
+00440dc0 ??$fill@PAUE56@@U1@@std@@YAXPAUE56@@0ABU1@@Z  # std::fill over 0x38-byte records (memberwise operator=), byte-exact
+00440e30 ?line_of_sight@Agent@@QAE_NIPAUshape_base@@@Z  # can this agent see the other agent's head (<= 300 units; aim point to head+0.2; optional capsule contact test; 400-unit trace_ray)
+00441020 ?fire_check@Agent@@QAEHIPAH@Z  # shot assessment vs a target id: 3 out of range window, 0 no line of sight, 2 friendly in the line of fire (id in *out), 1 clear
+00441360 ?destroy_world@PhysSet@@QAEXH@Z  # tears down record idx of the Newton physics set (clears ragdoll/collision/body, both int vectors, NewtonDestroy, --world count)

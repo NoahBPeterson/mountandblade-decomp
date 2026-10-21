@@ -1,0 +1,1 @@
+00443aa0 Agent::update_equipment_display  # per-slot mesh visibility, carry-bone attach, first-person weapon hiding, then update_quiver (0x43a800) (provisional name)

@@ -1,0 +1,6 @@
+slices/s00436c90/s00436c90.cpp  ?construct@alloc_tstring@@QAEXPAUtstring@@ABU2@@Z  00436c90  /O2 /MT /Gy /TP
+slices/s00436c90/s00436c90.cpp  ?construct@alloc_rec36@@QAEXPAUrec36@@ABU2@@Z  00436cb0  /O2 /MT /Gy /TP
+slices/s00436c90/s00436c90.cpp  ?construct@alloc_rec136@@QAEXPAUrec136@@ABU2@@Z  00436cd0  /O2 /MT /Gy /TP
+slices/s00436c90/s00436c90.cpp  ?construct@alloc_int3@@QAEXPAUint3@@ABU2@@Z  00436cf0  /O2 /MT /Gy /TP
+slices/s00436c90/s00436c90.cpp  ?uninit_copy_int3@@YAPAUint3@@PBU1@0PAU1@AAUalloc_int3@@@Z  00436d10  /O2 /MT /Gy /TP
+slices/s00436c90/s00436c90.cpp  ?construct@alloc_int1@@QAEXPAUint1@@ABU2@@Z  00436d80  /O2 /MT /Gy /TP

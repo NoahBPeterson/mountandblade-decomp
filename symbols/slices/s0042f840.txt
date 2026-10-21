@@ -1,0 +1,4 @@
+005a9070 ?errorString_@@3PBQBDB  # TinyXML TiXmlBase::errorString table (26 entries? 16 used), indexed by error id
+005a90b0 ?entity@@3QBUEntity@@B  # TinyXML entity table {str, strLength, chr} x5: &amp; &lt; &gt; &quot; &apos;
+0054bd88 ?utf8ByteTable@TiXmlBase@@2QBHB  # TiXmlBase::utf8ByteTable[256]
+0054a480 ??_C@_00CNPNBAHC@?$AA@  # the shared empty string literal ""

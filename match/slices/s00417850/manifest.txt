@@ -1,0 +1,24 @@
+slices/s00417850/s00417850.cpp  ??4vec_array@@QAEXABU0@@Z  00417850  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?w_stream@mem_stream@@UAEAAUstream_base@@PAU2@@Z  00417930  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?w_cstr@mem_stream@@UAEAAUstream_base@@PBD@Z  00417990  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?w_int@mem_stream@@UAEAAUstream_base@@PAH@Z  004179e0  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?w_i64@mem_stream@@UAEAAUstream_base@@PA_J@Z  00417a00  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?w_tstr@mem_stream@@UAEAAUstream_base@@PBUtstring@@@Z  00417a20  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?w_byte@mem_stream@@UAEAAUstream_base@@PAE@Z  00417a70  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?r_tstr@mem_stream@@UAEAAUstream_base@@PAUtstring@@@Z  00417a90  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?r_byte@mem_stream@@UAEAAUstream_base@@PAD@Z  00417af0  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?r_int@mem_stream@@UAEAAUstream_base@@PAH@Z  00417b10  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?r_i64@mem_stream@@UAEAAUstream_base@@PA_J@Z  00417b30  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?r_stream@mem_stream@@UAEAAUstream_base@@PAU2@@Z  00417b50  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?flush@bin_writer@@UAEHXZ  00417bb0  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ??0bin_writer@@QAE@XZ  00417c10  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ??0bin_reader@@QAE@XZ  00417c50  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ??1mem_stream@@QAE@XZ  00417c90  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ??0vec_table@@QAE@XZ  00417cb0  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ??0frame_set@@QAE@XZ  00417e10  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ?read_continuous_quats@@YAPAUstream_base@@PAU1@PAUvec_array@@@Z  00417e50  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ??_Etexture@@UAEPAXI@Z  00417f20  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ??_Eeffect_set@@UAEPAXI@Z  00417fb0  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ??$_Copy_opt@PAUvec_array@@PAU1@@std@@YAPAUvec_array@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004180d0  /O2 /MT /Gy /TP
+slices/s00417850/s00417850.cpp  ??$_Copy_backward_opt@PAUvec_array@@PAU1@@std@@YAPAUvec_array@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00418110  /O2 /MT /Gy /TP
+slices/s00417850/s00417850_eh.cpp  ?_Buynode@list_res@@QAEPAUlist_node@@PAU2@0ABQAUres_obj@@@Z  00418050  /O2 /MT /Gy /EHa /TP

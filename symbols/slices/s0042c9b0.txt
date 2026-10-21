@@ -1,0 +1,13 @@
+0042c9b0 ?split@tstring@@QBEPAU1@ABDAAH@Z  # tstring::split(char, int& count): new tstring[count+1], substr between separators
+0042cb70 ?bump_counter@@YAXXZ  # ++g_counter (0x5d7074)
+0042cb80 ?mb_warning@@YAXPBDZZ  # vsnprintf + MessageBoxA "RGL WARNING"
+0042cbc0 ?file_length@@YA_JPAU_iobuf@@@Z  # ftell / fseek END / ftell / fseek back
+0042cc10 ?flush@log_stream@@UAEHXZ  # text-log flush: fwrite the unflushed tail of the buffer, fflush
+0042cc80 ?mb_error@@YAXPBDZZ  # "ERROR:" to the log, MessageBoxA "RGL ERROR", printf, exit(-1)
+0042cd20 ?set_delay@gui_timer@@QAEXM@Z  # t = g_time[clock] - (int)(seconds * 100000)
+0042ce50 ?wheel_step@widget@@QAEXXZ  # unlisted function inside the 0x42cdb0 range: applies the wheel step to the selection
+0042cec0 ?wheel_focus@widget@@QAEXXZ  # picks the topmost child under the wheel, then wheel_step
+0042cf50 ?mouse_event@widget@@QAEDI@Z  # hit-tests the children against the mouse (0x5d7094/98) and sends hover enter/leave/event
+0042d1b0 ?reset@gui_manager@@QAEXXZ  # clears objects, log lines and timers
+00537e8e _printf  # CRT printf (0x42cc80 prints "Error: %s")
+005d5da8 __iob  # CRT FILE table (stdout = __iob + 0x20 = 0x5d5dc8)

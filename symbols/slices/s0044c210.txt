@@ -1,0 +1,1 @@
+0044c210 ?spawn_prop@Mission@@QAEXPAH0@Z  # provisional: instantiates scene-prop record props[*idx] (this+0x668c, 0x1c8 bytes) as a world entity (meshes, collision shape, 3D sounds), pushes it on the mission entity list (this+0x63c0)

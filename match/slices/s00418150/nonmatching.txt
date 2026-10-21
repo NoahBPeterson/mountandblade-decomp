@@ -1,0 +1,3 @@
+004181b4  0  catch(...) { throw; } funclet of 0x418150 (std::_Uninit_fill_n<E8*>): bytes identical (9/9, checked against the object's COMDAT tail at +0x64); cl emits it after the parent with no symbol of its own, so run_all cannot address it. Equivalence UNSUPPORTED: not a callable function.
+00418516  0  catch(...) { throw; } funclet of 0x4184b0 (std::_Uninit_copy<T**>): bytes identical (9/9, tail at +0x66); symbol-less COMDAT tail, run_all cannot address it. Equivalence UNSUPPORTED: not a callable function.
+0041881f  0  catch(...) { operator delete(p); throw; } funclet of 0x4187b0 (std::list<T*>::_Buynode()): bytes identical (21/21, tail at +0x6f); symbol-less COMDAT tail. Equivalence UNSUPPORTED: not a callable function.

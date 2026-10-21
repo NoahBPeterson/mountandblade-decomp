@@ -1,0 +1,5 @@
+slices/s00423540/s00423540.cpp  ?slerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004238c0  /O2 /MT /Gy /EHa /TP
+slices/s00423540/s00423540.cpp  ?nlerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004239c0  /O2 /MT /Gy /EHa /TP
+slices/s00423540/s00423540.cpp  ?update@World@@QAEXPAUObj@@@Z  00423c00  /O2 /MT /Gy /EHa /TP
+slices/s00423540/s00423540.cpp  ?min2@def@@YAPAUint2@@PAU2@PBU2@1@Z  00423e70  /O2 /MT /Gy /EHa /TP
+slices/s00423540/s00423540.cpp  ?max2@def@@YAPAUint2@@PAU2@PBU2@1@Z  00423ea0  /O2 /MT /Gy /EHa /TP

@@ -1,0 +1,2 @@
+00438360  332  attack_speed: add eax,[g_items] placement and dead-slot reuse for skill temp (frame 0x10 vs 0x14); equiv WEAK 37%
+004385e0  240  damage_factor: original computes item pointer before stat_1f0a call; equiv PASS 82.6%

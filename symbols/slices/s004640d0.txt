@@ -1,0 +1,11 @@
+08ed4df8 ?g_ground_types@@3PAUGroundType@@A  # table of 11 ground-type records (0x20 bytes, name tstring at +0); matched in TerrainDescEntry::read
+004640d0 ShadowMap::sync_readback  # creates the system-memory R16F/R32F texture and GetRenderTargetData()s the shadow map into it
+004641a0 ShadowMap::read_pixel  # LockRect of a 1x1 rect on the system-memory copy, returns the texel twice
+00464200 TerrainDescEntry::read  # one ground layer of an sco terrain: name -> ground type index, run-length coded 420x420 float plane
+00464400 TerrainDesc::init  # frees the 13 layer planes, type = -1 (same address as s00464a60's TerrainDesc::init)
+00464440 TerrainDesc::read  # reads layer count (<= 13), terrain size (<= 420, else "Illegal terrain size in sco file"), then every layer
+004645b0 Blend::visible  # layer i weight >= 0.01 and the layers above it do not cover it (prod(1-w[j]) >= 0.01)
+004646b0 Blend::dominant  # highest layer index (1..14) whose weight exceeds 0.4
+004649b0 BitWords::get  # extracts a bit-field [lo..hi] from a word array, width from the 2<<n table at 0x5a8e70
+00464960 BitWords::set  # stores a clamped value into the bit-field [lo..hi]
+004649f0 Pct::set_pct  # stores round(f * 100) clamped to 0..99 (and to the 7-bit mask) into the low bits of the word at +0x10

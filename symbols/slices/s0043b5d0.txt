@@ -1,0 +1,1 @@
+0043b7b0 Agent::local_velocity  # (vx,vy,0) of the agent (or of agent f2c) rotated by the body matrix rows at +0x58 of the object at +0x250

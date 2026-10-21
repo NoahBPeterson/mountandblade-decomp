@@ -1,0 +1,1 @@
+0042f210  58  complete TiXmlElement::SetAttribute(const char*, const char*); only the frame differs: the original builds both TiXmlString temporaries in the two dead parameter home slots, ours puts the second in a fresh local (push ecx) so every [esp+N] offset shifts (6+ source shapes tried)

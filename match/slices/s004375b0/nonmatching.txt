@@ -1,0 +1,1 @@
+004379c0  4  set_order: push edx vs lea edi,[ecx+esi] ordering; equiv PASS

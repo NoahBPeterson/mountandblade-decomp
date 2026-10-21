@@ -1,0 +1,2 @@
+slices/s00443270/s00443270.cpp  ?play_pain_sound@Agent@@QAEXM@Z  00443a00  /O2 /MT /Gy /TP
+slices/s00443270/s00443270.cpp  ?play_sound@Agent@@QAEXPAH@Z  00443870  /O2 /MT /Gy /TP

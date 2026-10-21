@@ -1,0 +1,8 @@
+slices/s00440a30/s00440a30.cpp  ??$_Copy_backward_opt@PAUE56@@PAU1@@std@@YAPAUE56@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00440a30  /O2 /MT /Gy /TP
+slices/s00440a30/s00440a30.cpp  ?push_back@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@QAEXABUE48@@@Z  00440aa0  /O2 /MT /Gy /TP
+slices/s00440a30/s00440a30.cpp  ?push_back@?$vector@HV?$allocator@H@std@@@std@@QAEXABH@Z  00440b30  /O2 /MT /Gy /TP
+slices/s00440a30/s00440a30.cpp  ?push_back@?$vector@URec1c8@@V?$allocator@URec1c8@@@std@@@std@@QAEXABURec1c8@@@Z  00440b80  /O2 /MT /Gy /TP
+slices/s00440a30/s00440a30.cpp  ?push_back@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@QAEXABUE12@@@Z  00440c10  /O2 /MT /Gy /TP
+slices/s00440a30/s00440a30.cpp  ?alloc@Pool@@QAEHXZ  00440c90  /O2 /MT /Gy /TP
+slices/s00440a30/s00440a30.cpp  ??$fill@PAUE56@@U1@@std@@YAXPAUE56@@0ABU1@@Z  00440dc0  /O2 /MT /Gy /TP
+slices/s00440a30/s00440a30.cpp  ?destroy_world@PhysSet@@QAEXH@Z  00441360  /O2 /MT /Gy /TP

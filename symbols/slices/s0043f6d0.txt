@@ -1,0 +1,4 @@
+0054a540 ??_7capsule@@6B@  # rgl::capsule vtable stored by the inlined capsule ctor in Agent::capsule_hit
+0043f6d0 ?capsule_hit@Agent@@QAE_NPAUshape_base@@PAUvector4@rgl@@1PAH@Z  # per-skeleton-capsule hit test against another shape
+0043f970 ?pick_attack_dir@Agent@@QAEHI@Z  # attack direction (0 thrust,1,2,3) from mouse movement or the target's position
+0043fd10 ?start_shoot@Agent@@QAEXH@Z  # chooses shoot/throw animation + sound ids by itcf_shoot_* class

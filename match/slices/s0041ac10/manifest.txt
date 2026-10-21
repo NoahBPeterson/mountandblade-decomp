@@ -1,0 +1,11 @@
+slices/s0041ac10/s0041ac10.cpp  ??0?$vector@PAUres_base@@V?$allocator@PAUres_base@@@std@@@std@@QAE@ABV01@@Z  0041ac10  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ?push_back@?$list@PAUres_base@@V?$allocator@PAUres_base@@@std@@@std@@QAEXABQAUres_base@@@Z  0041ace0  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ?resize@?$vector@PAUres_base@@V?$allocator@PAUres_base@@@std@@@std@@QAEXIPAUres_base@@@Z  0041ad20  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ?resize@?$vector@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@QAEXIUvec_array@@@Z  0041adb0  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ?resize@?$vector@UIdxWeight@@V?$allocator@UIdxWeight@@@std@@@std@@QAEXIUIdxWeight@@@Z  0041ae70  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ??$_Copy_backward_opt@PAUBoneInfluence@@PAU1@@std@@YAPAUBoneInfluence@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  0041afc0  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ??0resmgr@@QAE@XZ  0041b000  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ??0Bone@@QAE@XZ  0041b0c0  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ?read_frame_set@@YAPAUstream_base@@PAU1@PAUframe_set@@@Z  0041b180  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ??0skel_anim@@QAE@XZ  0041b4e0  /O2 /MT /Gy /TP
+slices/s0041ac10/s0041ac10.cpp  ??1skel_anim@@UAE@XZ  0041b520  /O2 /MT /Gy /TP

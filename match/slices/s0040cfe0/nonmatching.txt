@@ -1,0 +1,2 @@
+0040d5cc  0  catch(...) { throw; } tail (push 0; push 0; call __CxxThrowException; int3) of the COMDAT at 0x40d550; byte-exact inside that manifest row (not separately addressable)
+0040d7bd  0  catch(...) { throw; } tail of the COMDAT at 0x40d750; byte-exact inside that manifest row (not separately addressable)

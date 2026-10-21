@@ -1,0 +1,17 @@
+00461bd0 renderer::set_stage_color  # per-stage cache of COLOROP/COLORARG1/COLORARG2 (stage states 1..3), args mapped through the table at 0x5a9c00
+00461c60 renderer::set_stage_alpha  # same for ALPHAOP/ALPHAARG1/ALPHAARG2 (stage states 4..6), cache at +0x568
+00461cf0 renderer::set_alpha_mode  # D3DRS_ALPHATESTENABLE (0xf) and D3DRS_ALPHAREF (0x18) = 8 / 0x88 / 0xfb for modes 1 / 2 / 3
+00461d90 renderer::set_stage_sampler  # D3DSAMP_ADDRESSU/V = CLAMP or WRAP from flag bits 0/1, cache at +0x59c
+00461e10 renderer::set_material  # builds a D3DMATERIAL9 (white diffuse/ambient, given specular and power) and calls SetMaterial
+00461eb0 renderer::set_specular  # caches the specular colour and uploads effect parameter "vSpecularColor"
+00461f20 material::bind_pixel_shader  # SetPixelShader(material pixel shader) with a cache at +0x558; flag bits 28/29 of +0x20
+00461f80 mesh_part::set_state  # z-func/z-write/alpha-test/normalize/specular render states from the part flags, "fMaterialPower" uniform
+004620b0 mesh_inst::set_part  # reference-counted part pointer (refcount at part+0x64)
+004620d0 frustum::projection  # D3DXMatrix{Ortho,Perspective}OffCenter{LH,RH} from the six frustum extents (+0x108..)
+00462170 frustum::view_matrix  # frame (+0xc8) relative to identity with the w column forced to (0,0,0,1)
+004621f0 frustum::to_clip  # maps a world point to the frustum's local frame and, for orthographic frusta, normalises to 0..1
+004622a0 rec_less  # strict 64-bit key compare (key at +0x218) of two records for sorting
+004622e0 dev_buffer::restore  # recreates a device vertex/index buffer ("Unable to restore vertex buffer." / "...index buffer.")
+004623c0 buffer_pair::restore_all  # releases and recreates both buffers whose loaded size is below the requested size
+00462420 cell_rows::alloc  # destroys the old rows, then new[] of (w+1) rows of (h+1) 16-byte cells initialised (0,-1,-1)
+004624c0 envelope::set_fade  # inverse-time clamp to [0,10000], marks the block dirty

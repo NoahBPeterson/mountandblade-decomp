@@ -1,0 +1,2 @@
+0042b080 ?create_shadow_mesh@StratEnt@@QAEXPAPAUmesh@@D@Z  # strategic_entity: builds the ground shadow decal mesh (called from update_shadows 0x42a1f0 with &shadow_a / &shadow_b)
+0042b6d0 ?ambient@Ctx@@QAE?AUvector4@rgl@@XZ  # scene ambient colour: last enabled type-2 light's colour * 0.7 + base ambient at +0x68 (by-value return)

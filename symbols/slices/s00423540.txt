@@ -1,0 +1,5 @@
+0041ed00 ?to_cell@World@@QAEXPBMPAH@Z  # World::to_cell (cell of a point), s0041e470 / s00421110
+00423ed0 ?in_rect@World@@QAE_NPBUint2@@00@Z  # in_rect(point, lo, hi): defined in s00423ed0 as a free stdcall function (returns int); the caller treats it as a bool member
+00424060 ?remove@Cell@@QAEXPAUObj@@@Z  # Cell sorted-vector remove (s00423ed0)
+00423f10 ?add@Cell@@QAEXPAUObj@@@Z  # Cell::add (s00423ed0)
+00422eb0 ?mul@quaternion@@QBEPAU1@PAU1@PBU1@@Z  # quaternion::mul (s00422db0), by-value return written as its out-parameter

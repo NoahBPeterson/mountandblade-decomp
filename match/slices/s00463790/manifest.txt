@@ -1,0 +1,6 @@
+slices/s00463790/s00463790.cpp  ??0Block16@@QAE@XZ  004638b0  /O2 /MT /Gy /TP
+slices/s00463790/s00463790.cpp  ?agent_low@GameState@@QAE_NH@Z  004638f0  /O2 /MT /Gy /TP
+slices/s00463790/s00463790.cpp  ?scene_path@GameState@@QAE?AUtstring@@H@Z  00463950  /O2 /MT /Gy /TP
+slices/s00463790/s00463790.cpp  ?module_path@GameState@@QAEPBDPBD@Z  004639d0  /O2 /MT /Gy /TP
+slices/s00463790/s00463790.cpp  ?release_all@ShadowMap@@QAEXXZ  00463b70  /O2 /MT /Gy /TP
+slices/s00463790/s00463790.cpp  ?create_target@ShadowMap@@QAEXPAPAUSkin@@@Z  00463e10  /O2 /MT /Gy /TP

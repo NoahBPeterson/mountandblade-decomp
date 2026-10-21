@@ -1,0 +1,2 @@
+00435fc0 ?best_weapon_slot@Agent@@QBE?AUPair@@XZ  # last of the 4 equipped slots holding a kind-7 item with >10 in the low 16 bits of its modifier word
+00436050 ?equipment_value@Agent@@QBEMXZ  # sum of item values (ammo and thrown scaled by remaining amount, kind-7 weapons zeroed when empty)

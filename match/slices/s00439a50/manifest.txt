@@ -1,0 +1,4 @@
+slices/s00439a50/s00439a50.cpp  ?floor_z@level@@QAEMPBM@Z  00439d40  /O2 /MT /Gy /TP
+slices/s00439a50/s00439a50.cpp  ?init_link@Group@@QAEXHPAUPoly@@HH@Z  00439fc0  /O2 /MT /Gy /TP
+slices/s00439a50/s00439a50.cpp  ?all_shapes@Group@@QAEXPAPAUshape_base@@PAH@Z  0043a130  /O2 /MT /Gy /TP
+slices/s00439a50/s00439a50.cpp  ?lookup@StrTab@@QAEPAUtstring@@ABU2@@Z  0043a1e0  /O2 /MT /Gy /TP

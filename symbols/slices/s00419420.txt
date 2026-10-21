@@ -1,0 +1,8 @@
+00419420 mesh_list::~mesh_list  # virtual-deletes every owned mesh* (scalar deleting dtor, arg 1) then frees the array; lod_mesh::lists[i]
+00419470 mesh_list::forget  # nulls every entry without deleting, then frees the array (called per list before ~lod_mesh)
+004194c0 save_keyframes  # stream: int count, then per key frame a time word and the 0x20-byte frame (0x419200)
+00419540 resmgr::get_object  # find(name) else mb_error("get_object failed for: %s")
+00419580 resmgr::m419580  # per-frame update: v30 elements (0x418520), then v90 elements (0x417050) when g_resource_flag (0x5e28fc)
+004195e0 resmgr::m4195e0  # reset: v30 elements (0x4167c0), clear v90 elements' fields +0x18..0x28, then 0x418e40
+00419640 resmgr::m419640  # once: run 0x419360 on every mesh, then set the flag at +0xce (only when g_resource_flag)
+00419760 save_mesh  # binary mesh record: names, flags, 3 floats per point, elem14 list, keyframes, vertices (index, color, pos, 2 uv), 3 face indices

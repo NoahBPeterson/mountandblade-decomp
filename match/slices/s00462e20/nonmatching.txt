@@ -1,0 +1,3 @@
+00462e20  50  Inv::pick (complete random item picker): cl compares with a zero register (cmp eax,esi) where the original uses test eax,eax; loop/stack layout otherwise identical. equiv UNSUPPORTED (faults on random item-table pointers)
+00463370  236  ViewState::init (complete 0x5374-byte object init): store scheduling and dead vector4 temporaries differ (652 vs 664 bytes). equiv PASS
+00463610  100  ViewState::get_dir (complete): original keeps s*1.0 (cl folds it) and spills cos to the argument slot differently. equiv PASS

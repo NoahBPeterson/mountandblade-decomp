@@ -1,0 +1,15 @@
+00467250 ?load_layer@terrain_obj@@QAEXPAHH@Z  # copies layer idx of a layer set (type 0xffffe18f = height offset, 0xffffceeb = class id, else a per-cell weight slot) into every cell
+00467530 ?count_low_quads@terrain_obj@@QAEHXZ  # counts quads in the interior (20-cell border) with f14 < 0.6 or f24 < 0.45
+004676c0 ?clear_done@Mission3@@QAEXXZ  # zeroes the 64 flag bytes at mission+0x6824
+004676e0 ?copy_slot@Mission3@@QAEXH@Z  # slot idx (0x130 stride from +0x6b0): copies the 64-byte block at +0x40 over +0x00 and +0x80, clears three fields
+00467740 ?speed_factor@Mission3@@QAEMM@Z  # (x + 15) / 15 clamped to [0.2, 2.5] times (2.5 * g_5aa07c + 0.8333)
+004677a0 ?add_amount@Mission3@@QAEXHI@Z  # adds a (scaled, optionally randomised x0.6..1.4 and rounded via 0x432540) amount to mode record idx; clears done[idx]
+00467940 ?rule_accepts@@YG_NPAURuleRec@@PAUCandRec@@HDDD@Z  # filter test of a candidate against a rule's 0x100/0x200/0x400 and 0x10000..0x40000 flag groups, using the troop flags (0x13a00 table, stride 0x508)
+00467ac0 ?size@vec36@@QBEHXZ  # std::vector<0x24-byte>::size: first == 0 ? 0 : (last - first)
+00467ae0 ?size@vec24@@QBEHXZ  # std::vector<0x18-byte>::size
+00467b00 ?size@vec52@@QBEHXZ  # std::vector<0x34-byte>::size
+00467b20 ?size@vec516@@QBEHXZ  # std::vector<0x204-byte>::size
+00467b40 ?fill36@@YAXPAUS36@@0PBU1@@Z  # std::fill over 0x24-byte elements
+00467b70 ?copy_backward36@@YAPAUS36@@PAU1@00@Z  # std::copy_backward over 0x24-byte elements, returns the new dest begin
+00467ba0 ?fill24@@YAXPAUS24@@0PBU1@@Z  # std::fill over 0x18-byte elements
+08ed4df8 ?g_ttypes@@3PAUttype@@A  # table of 0x20-byte terrain type records (+0x10, +0x18, +0x1c copied into a layer)

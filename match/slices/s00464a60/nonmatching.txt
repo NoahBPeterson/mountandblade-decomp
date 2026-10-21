@@ -1,0 +1,3 @@
+00464bf0  281  Terrain::spec_weight: complete; equiv PASS (350 valid, 83%). Diff is register allocation (original keeps *mode in edi, table base in edx) and the original does not cross-jump the per-type 64-bit flag tests (ours merges them into a shared tail)
+00464d50  11  Terrain::ground_color: complete; equiv PASS (400, 93%). Only diff: original schedules `dec edx` before `shr eax,0x1c` of the type-field extraction (ours the reverse); tried 10 spellings of the expression
+00464f10  187  Terrain::init_layers: complete; equiv PASS (393, 91%). 3x5 clear loop, switch order and spill slot now match; diff is the table-entry pointer (original copies the index to eax and keeps ebx) and load order of the type extraction

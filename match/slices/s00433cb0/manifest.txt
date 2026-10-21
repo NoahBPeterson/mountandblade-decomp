@@ -1,0 +1,3 @@
+slices/s00433cb0/s00433cb0.cpp  ?is_ranged@ItemKind@@QAE_NXZ  00433d90  /O2 /MT /Gy /TP
+slices/s00433cb0/s00433cb0.cpp  ?is_melee@ItemKind@@QAE_NXZ  00433dc0  /O2 /MT /Gy /TP
+slices/s00433cb0/s00433cb0.cpp  ?ammo_skill@ItemKind@@QAEHXZ  00433df0  /O2 /MT /Gy /TP

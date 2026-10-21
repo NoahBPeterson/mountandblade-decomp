@@ -1,0 +1,7 @@
+slices/s00428240/s00428240.cpp  ?instantiate@World@@QAEPAUentity@@H@Z  00428240  /O2 /MT /Gy /TP
+slices/s00428240/s00428240.cpp  ?create_entity@World@@QAEPAUentity@@H@Z  00428440  /O2 /MT /Gy /TP
+slices/s00428240/s00428240.cpp  ?load@entity@@UAEXPAUstream_base@@@Z  004284e0  /O2 /MT /Gy /TP
+slices/s00428240/s00428240.cpp  ?load@strategic_entity@@UAEXPAUstream_base@@@Z  004286d0  /O2 /MT /Gy /TP
+slices/s00428240/s00428240.cpp  ?load@skeleton_entity@@UAEXPAUstream_base@@@Z  004286e0  /O2 /MT /Gy /TP
+slices/s00428240/s00428240.cpp  ??0FxDef@@QAE@H@Z  00428820  /O2 /MT /Gy /TP
+slices/s00428240/s00428240.cpp  ?init@FxDef@@QAEXPAUFxRes@@@Z  004288c0  /O2 /MT /Gy /TP

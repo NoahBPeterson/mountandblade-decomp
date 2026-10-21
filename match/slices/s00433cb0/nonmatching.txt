@@ -1,0 +1,1 @@
+00433cb0  180  ItemKind::mesh_for: complete; equiv PASS (66% coverage, the rest is the resmgr call). The original keeps a constant 0 in edi from entry (mov eax,edi on the empty-list path, xor eax,eax on the not-found path) and reuses the bit parameter slot for the best index; ours folds the 0 and the prologue pushes differ (5 spellings tried)

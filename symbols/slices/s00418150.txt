@@ -1,0 +1,7 @@
+0054a740 ??_7stream_base@@6B@  # stream root vtable (stored first by the inlined stream ctor in 0x4181c0)
+0054add8 ??_7bin_writer@@6B@  # file binary writer vtable (final vptr of the writer on 0x4181c0's stack)
+004bab70 ?user_path@@YAXPAD@Z  # static helper of another TU, called with its argument in ESI: rewrites a file name to the full %APPDATA%\Mount&Blade path
+00535482 ??_U@YAPAXI@Z  # operator new[]: same libcmt code as operator new
+004181c0 options::save  # writes options.dat through a binary stream
+00418520 texture::create  # creates the depth-stencil surface / render-target texture with format fallback
+00418870 resource_manager::get_texture  # looks up a texture by name trying .dds, bare name, .jpg, .tga

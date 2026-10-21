@@ -1,0 +1,5 @@
+slices/s0041e470/s0041e470.cpp  ?in_front@plane@@QBEHPBUvector4@rgl@@M@Z  0041e470  /O2 /MT /Gy /TP
+slices/s0041e470/s0041e470.cpp  ?build_planes@frustum@@QAEXXZ  0041e4f0  /O2 /MT /Gy /TP
+slices/s0041e470/s0041e470.cpp  ??1cell_rows@@QAE@XZ  0041ecc0  /O2 /MT /Gy /TP
+slices/s0041e470/s0041e470.cpp  ?locate@cell_grid@@QBEXPBMPAH@Z  0041ed00  /O2 /MT /Gy /TP
+slices/s0041e470/s0041e470.cpp  ??_Ebuf3@@QAEPAXI@Z  0041ed70  /O2 /MT /Gy /TP

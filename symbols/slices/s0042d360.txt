@@ -1,0 +1,21 @@
+0042d360 ?destroy_tstrings@@YGXPAUtstring@@0@Z  # std::_Destroy over a tstring range (calls ~tstring 0x42bc40)
+0042d390 ?tidy@tstring_vec@@QAEXXZ  # std::vector<tstring>::_Tidy
+0042d3e0 ??1gui_manager@@QAE@XZ  # UI root destructor: reset, delete owned objects, destroy members in reverse order
+0042d570 ?buy@vec4_vec@@QAE_NI@Z  # std::vector<vector4>::_Buy
+0042d5c0 ??0gui_manager@@QAE@XZ  # UI root constructor (inline-asm "WL" markers around reset())
+0042d820 ?quit@TiXmlString@@AAEXXZ  # TiXmlString::quit: delete[] rep_ unless it is nullrep_
+0042d840 ?reserve@TiXmlString@@QAEXI@Z  # TinyXML tinystr.cpp
+0042d8b0 ?assign@TiXmlString@@QAEAAV1@PBDI@Z  # TinyXML tinystr.cpp
+0042d950 ?append@TiXmlString@@QAEAAV1@PBDI@Z  # TinyXML tinystr.cpp
+0042d9a0 ?LinkEndChild@TiXmlNode@@QAEPAV1@PAV1@@Z  # TinyXML tinyxml.cpp
+0042d9d0 ?GetDocument@TiXmlNode@@QBEPBVTiXmlDocument@@XZ  # TinyXML: climb parents calling ToDocument (vtable slot 4)
+0042da00 ?Add@TiXmlAttributeSet@@QAEXPAVTiXmlAttribute@@@Z  # TinyXML: link before the sentinel
+0042da20 ??4TiXmlString@@QAEAAV0@PBD@Z  # TiXmlString::operator=(const char*)
+0042da50 ??YTiXmlString@@QAEAAV0@PBD@Z  # TiXmlString::operator+=(const char*)
+0042da80 ??_GTiXmlBase@@UAEPAXI@Z  # TiXmlBase scalar deleting destructor, slot 0 of vtable 0x54b8f8
+0054b8f8 ??_7TiXmlBase@@6B@  # TinyXML root vtable: dtor + 3 pure virtuals (Print, Parse, StreamOut)
+0042daa0 ?SetValue@TiXmlAttribute@@QAEXPBD@Z  # TinyXML
+0042dad0 ?PutString@TiXmlBase@@SAXABVTiXmlString@@PAV2@@Z  # TinyXML entity-escaping writer (entity table 0x5a90b0)
+0042dc10 ?FirstChild@TiXmlNode@@QBEPAV1@PBD@Z  # TinyXML
+0042dc80 ?NextSiblingElement@TiXmlNode@@QBEPAVTiXmlElement@@XZ  # TinyXML
+005e23d0 ?nullrep_@TiXmlString@@0URep@1@A  # TiXmlString::nullrep_ (shared empty representation)

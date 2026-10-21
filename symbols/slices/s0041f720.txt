@@ -1,0 +1,6 @@
+0054b460 ??_7entity@rgl@@6B@  # vtable of the scene entity, set by the ctor 0x41fba0
+004214e0 ??_Gentity@rgl@@UAEPAXI@Z  # entity scalar deleting destructor (vtable slot 0), outside this slice
+0041fba0 ??0entity@rgl@@QAE@XZ  # entity ctor: sets vptr 0x54b460, type_name string "entity" at 0x54b4c0 (class name provisional)
+0041fcb0 ?type_name@entity@rgl@@UAE?AUstring@2@XZ  # returns rgl::string("entity")
+0041fcd0 ?sync@entity@rgl@@UAEXXZ  # world = local, then position vectors from the frame source or the local origin
+0041fee0 ?scale_rows@smat@rgl@@QAEXPBUvector4@2@@Z  # multiplies the three basis rows by k.x, k.y, k.z

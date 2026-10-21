@@ -1,0 +1,13 @@
+00462540 envelope::set_params  # stores 4 parameters, derives the smoothing factor clamp((1/time)*3, 0.001, 0.95)
+004625d0 snd_slot::update  # 3-state sound slot (idle / first channel / second channel) timed by the 1e-5 s clock table
+00462760 snd_bank::update_all  # calls snd_slot::update on every 0x78-byte slot
+00462790 snd_bank::randomize  # random initial offset (up to min_gap seconds) of every slot's gap timer
+00462820 ItemKind::mesh_name  # same search as ItemKind::mesh_for (0x433cb0) but returns the mesh name string
+00462900 ItemRef::mesh_name  # bounds-checks the item index and returns the name of the mesh for (class, modifier)
+00462960 ItemRef::stat_1fc  # item stat +0x1fc adjusted by the item modifier (same switch as stat_200 at 0x434eb0)
+00462a10 ItemRef::stat_204  # item stat +0x204 adjusted by the item modifier
+00462ac0 item_slot_source  # static, register convention: item type -> nibble index / f58 index / stat index for the troop skill lookup
+00462b60 Agent::tier_base  # 0x5a, or 0x1e + 6*nibble(12) for nibble 0..9, else 0x60
+00462c00 Agent::slot_value  # value of the troop field selected by item_slot_source (f58[], nibble() or stat[])
+00462c80 Agent::fits_slot  # may this item (type check per equipment slot 0..9, plus a skill requirement) go into the slot
+00462da0 Agent::item_matches  # fits_slot plus required / forbidden type flags and up to three accepted item types

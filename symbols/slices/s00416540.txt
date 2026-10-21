@@ -1,0 +1,16 @@
+0054a6c8 ??_7res_base@@6B@  # vtable of the resource root (slot 0 _purecall dtor, slot 1 0x408020), stored by the material/skin ctors
+0054ab30 ??_7material@@6B@  # vtable stored by the material ctor 0x416830 (slots: dtor 0x417690, type 0x48c460, load 0x4169a0, save 0x416b10)
+0054abf0 ??_7skin@@6B@  # vtable stored by the skin ctor 0x416cd0 (slots: dtor 0x417600, type 0x48b880, load 0x4190d0, save 0x416d50)
+00416540 texture::load  # "Unable to open texture file %s", D3DXCreateTextureFromFileExA
+004167c0 texture::unload  # releases the D3D textures
+00416830 material::material  # message strings in load: "Number of stages exceeds %d for material %s."
+004168f0 material::~material  # 
+00416930 material::supported  # shader version checks against D3DCAPS9 (0xa17f2c)
+004169a0 material::load  # 
+00416b10 material::save  # 
+00416c00 material::create_shaders  # "Failed to assemble shader %s from file", CreatePixelShader
+00416cd0 skin::skin  # 
+00416d50 skin::save  # five texture references written without extension, "none" if null
+00416e40 aabb::reset  # min=1e8, max=-1e8 (void, not a ctor)
+00535482 ??_U@YAPAXI@Z  # operator new[] (unnamed CRT jump to operator new)
+0053570d ??_V@YAXPAX@Z  # operator delete[]

@@ -1,0 +1,2 @@
+00440070 ?pick_sound_ids@Agent@@QAEXPAH00@Z  # sound-id triple (ids 0x97..0xed come in consecutive triples, see group_base) for the agent's attack direction (stick / view-relative / target's) and the wielded item's itcf class
+004406a0 ?can_hit@Agent@@QAEHIIHHPBM@Z  # can agent A's current attack/guard still connect with agent B: direction cone test, action group (0x97, 0xc7) special cases, vertical window around B's bone 12 scaled by skill 0x1a

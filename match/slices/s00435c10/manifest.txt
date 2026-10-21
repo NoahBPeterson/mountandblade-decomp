@@ -1,0 +1,4 @@
+slices/s00435c10/s00435c10.cpp  ?steer@Agent@@QAEXM@Z  00435f10  /O2 /MT /Gy /TP
+slices/s00435c10/s00435c10.cpp  ?best_weapon_slot@Agent@@QBE?AUPair@@XZ  00435fc0  /O2 /MT /Gy /TP
+slices/s00435c10/s00435c10.cpp  ?equipment_value@Agent@@QBEMXZ  00436050  /O2 /MT /Gy /TP
+slices/s00435c10/s00435c10.cpp  ?update_pitch@Agent@@QAEXM@Z  00436130  /O2 /MT /Gy /TP

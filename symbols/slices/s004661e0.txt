@@ -1,0 +1,5 @@
+004661e0 ?smooth_heights@terrain_obj@@QAEXXZ  # terrain height smoothing: 3x3 neighbourhood mean pulled towards the cell by a random 0.2..0.8 factor, clamped to [-10, 2]; writes pz and the h2 copy
+00466480 ?clear_flags@terrain_obj@@QAEXI@Z  # cells[x][y].flags &= ~mask over the whole (w+1) x (h+1) grid
+004664e0 ?compute_weights@terrain_obj@@QAEXXZ  # per-cell layer weights: v4c from f28 (12*(1-f28-0.19)), noise_fractal 0x414fc0 (15.0, 0.6, 3 octaves) gating v50; flag byte at +0x843bd75
+004666b0 ?pick_diagonals@terrain_obj@@QAEXXZ  # per quad: cell classes (0x4646b0) of the 4 corners via the neighbour table 0x591340, then the diagonal flag (0/1), by triple product of the corner positions when the classes tie
+00466930 ?pick_triangle_types@terrain_obj@@QAEXXZ  # per quad: picks the two triangle class ids (first positive corner class on each side of the diagonal)

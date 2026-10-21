@@ -1,0 +1,1 @@
+slices/s0042aaf0/s0042aaf0.cpp  ?sample_lights@Ctx@@QAEXPBUvector4@rgl@@PAU23@1@Z  0042ad60  /O2 /MT /Gy /TP

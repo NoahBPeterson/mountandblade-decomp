@@ -1,0 +1,3 @@
+0040dc50  30  complete std::vector<vector4>::_Insert_n; first 421 bytes differ only in register assignment (first-pointer in ecx vs edx) and a 1-byte-longer fill loop head; the rest of the COMDAT is listed at 0x40ddf5; equiv WEAK (145 valid inputs, 86.6% coverage, no mismatch)
+0040ddf5  69  interior of the 0x40dc50 function (catch handler + spill/assign branches), not a function of its own; differs by the fill-loop shape and the 1-byte shift from above
+0040dfda  0  catch(...) { throw; } tail of the COMDAT at 0x40df60; byte-exact inside that manifest row (not separately addressable)

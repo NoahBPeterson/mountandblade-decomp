@@ -1,0 +1,5 @@
+slices/s00421aa0/s00421aa0.cpp  ?add_emitter@StrategicEntity@@QAEXPAUEmitter@@@Z  00421aa0  /O2 /MT /Gy /TP
+slices/s00421aa0/s00421aa0.cpp  ?clear_emitters@StrategicEntity@@QAEXXZ  00421b00  /O2 /MT /Gy /TP
+slices/s00421aa0/s00421aa0.cpp  ?update@StrategicEntity@@QAEXM@Z  00421b70  /O2 /MT /Gy /TP
+slices/s00421aa0/s00421aa0.cpp  ?update_envelopes@FxDef@@QAEXM@Z  00421ef0  /O2 /MT /Gy /TP
+slices/s00421aa0/s00421aa0.cpp  ?update_poses@FxDef@@QAEXXZ  00422080  /O2 /MT /Gy /TP

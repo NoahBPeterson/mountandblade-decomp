@@ -1,0 +1,8 @@
+004684d0 mesh_part_apply_state  # depth func/write, normalize, specular render states, then material bind
+00468620 mesh_count  # rgl::mesh vertex count (kind != 1) or index count (kind 1)
+004686a0 fx_reset  # reset of a 0xd0-byte state object
+00468770 level_index  # clamped 4-bit level index
+004687a0 inv_unequip_all  # moves the 10 equipped item slots back into the inventory
+004687e0 inv_auto_equip  # troop auto-equip (Module System tf_guarantee_* flags)
+00468c20 body_extend_bounds  # grows the local bounding box by a world point
+00468c80 probe_occlusion_test  # projects a point and compares its depth with the depth buffer

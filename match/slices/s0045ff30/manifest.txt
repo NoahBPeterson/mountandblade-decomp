@@ -1,0 +1,10 @@
+slices/s0045ff30/s0045ff30.cpp  ?tick@Agent@@QAEXXZ  0045ff30  /O2 /MT /Gy /TP
+slices/s0045ff30/s0045ff30.cpp  ?expand_token@ScriptState@@QAE?AUtstring@@ABU2@@Z  00460160  /O2 /MT /Gy /TP
+slices/s0045ff30/s0045ff30.cpp  ?get_c8@DialogMgr@@QAEHXZ  00460620  /O2 /MT /Gy /TP
+slices/s0045ff30/s0045ff30.cpp  ?speaker@DialogMgr@@QAEHXZ  00460640  /O2 /MT /Gy /TP
+slices/s0045ff30/s0045ff30.cpp  ?listener@DialogMgr@@QAEHXZ  00460670  /O2 /MT /Gy /TP
+slices/s0045ff30/s0045ff30.cpp  ?line_text@DialogMgr@@QAE?AUtstring@@H@Z  004606a0  /O2 /MT /Gy /TP
+slices/s0045ff30/s0045ff30.cpp  ?line_flags@DialogMgr@@QAEHH@Z  004606c0  /O2 /MT /Gy /TP
+slices/s0045ff30/s0045ff30.cpp  ?expand@ScriptState@@QAE?AUtstring@@ABU2@@Z  004606d0  /O2 /MT /Gy /TP
+slices/s0045ff30/s0045ff30.cpp  ??0Elem@@QAE@XZ  004607d0  /O2 /MT /Gy /TP
+slices/s0045ff30/s0045ff30.cpp  ?read@Block@@QAEXPAUstream_base@@@Z  004607e0  /O2 /MT /Gy /TP

@@ -1,0 +1,7 @@
+slices/s00418150/s00418150.cpp  ?save@options@@QAEXXZ  004181c0  /O2 /MT /Gy /TP
+slices/s00418150/s00418150.cpp  ?create@texture@@QAEHXZ  00418520  /O2 /MT /Gy /TP
+slices/s00418150/s00418150.cpp  ?fill_vec_arrays@@YAXPAUvec_array@@0ABU1@@Z  00418840  /O2 /MT /Gy /TP
+slices/s00418150/s00418150.cpp  ?get_texture@resource_manager@@QAEPAUresource@@ABUtstring@@@Z  00418870  /O2 /MT /Gy /TP
+slices/s00418150/s00418150_eh.cpp  ??$_Uninit_fill_n@PAUE8@@IU1@V?$allocator@UE8@@@std@@@std@@YAXPAUE8@@IABU1@AAV?$allocator@UE8@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00418150  /O2 /MT /Gy /EHa /TP
+slices/s00418150/s00418150_eh.cpp  ??$_Uninit_copy@PAPAHPAPAHV?$allocator@PAH@std@@@std@@YAPAPAHPAPAH00AAV?$allocator@PAH@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004184b0  /O2 /MT /Gy /EHa /TP
+slices/s00418150/s00418150_eh.cpp  ?_Buynode@?$list@PAUres_obj@@V?$allocator@PAUres_obj@@@std@@@std@@IAEPAU_Node@?$_List_nod@PAUres_obj@@V?$allocator@PAUres_obj@@@std@@@2@XZ  004187b0  /O2 /MT /Gy /EHa /TP

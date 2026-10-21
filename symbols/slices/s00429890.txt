@@ -1,0 +1,3 @@
+00429890 ?render_scene@Ctx@@QAEXPAUscene@@_N@Z  # world render: culls entities/psys against the scene frustum, runs the reflection pass (string "RENDERING REFLECTIONS;")
+0042a090 ?render@StratEnt@@UAEXPAUscene@@PAUrender_info@@@Z  # strategic_entity vtable 0x54b5d0 slot 9 (0x54b5f4): fx draw, base render, shadow update, emitter update
+0042a1a0 ?first_dir_light@Ctx@@QAEPAULight@@XZ  # first enabled directional light (type 2, flag bit0 clear) of the world's light list at +0xbc

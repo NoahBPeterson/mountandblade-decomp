@@ -1,0 +1,4 @@
+00410a57  0  catch funclet + cold branches of 0x4108b0 (vector<E48>::_Insert_n): bytes identical (265/265); symbol-less COMDAT tail, run_all cannot address it. Equivalence UNSUPPORTED: not a callable function (covered by the 0x4108b0 test).
+00410cc6  0  catch funclet + cold branches of 0x410b60 (vector<E8>::_Insert_n): bytes identical (238/238); symbol-less COMDAT tail, run_all cannot address it. Equivalence UNSUPPORTED: not a callable function (covered by the 0x410b60 test).
+00410f6a  0  catch funclet + cold branches of 0x410dc0 (vector<E100>::_Insert_n): bytes identical (270/270); symbol-less COMDAT tail, run_all cannot address it. Equivalence UNSUPPORTED: not a callable function (covered by the 0x410dc0 test).
+00411139  0  catch(...) { _Tidy(); throw; } funclet of 0x411080 (vector<E8> copy ctor): bytes identical (17/17); symbol-less COMDAT tail, run_all cannot address it. Equivalence UNSUPPORTED: not a callable function.

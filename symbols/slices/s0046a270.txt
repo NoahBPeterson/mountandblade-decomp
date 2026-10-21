@@ -1,0 +1,2 @@
+0046a270 terrain_obj::spawn_particles  # per-quad scatter: noise-weighted random particles (grass/rocks) from the ground-type scatter records, placed on random triangle points (provisional name)
+00407eb0 ?cross@rgl@@YAXAAUvector4@1@ABU21@1@Z  # rgl::cross out-param form (rgl.h)

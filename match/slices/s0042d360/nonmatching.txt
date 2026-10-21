@@ -1,0 +1,1 @@
+0042d5c0  388  gui_manager ctor: complete. The original embeds two 16-byte inline-asm data markers (jmp +0x10; "WL  " tag, 12 resp. 13, 0, "WL  ") around reset() (would need _emit, which the rules do not allow) and builds three zero 8-byte temporaries on the stack that cl 13.10 here folds into registers

@@ -1,0 +1,5 @@
+slices/s004452f0/s004452f0.cpp  ?reachable@NavMesh@@QAE_NPBH00@Z  004452f0  /O2 /MT /Gy /TP
+slices/s004452f0/s004452f0.cpp  ??$_Ucopy@PAUE56@@@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEPAUE56@@PAU2@00@Z  00445700  /O2 /MT /Gy /TP
+slices/s004452f0/s004452f0.cpp  ?goal_near_for_class@Agent@@QAEXPBUvector4@rgl@@PBM@Z  00445850  /O2 /MT /Gy /TP
+slices/s004452f0/s004452f0.cpp  ?play_class_sound@Agent@@QAEXPBH@Z  004459c0  /O2 /MT /Gy /TP
+slices/s004452f0/s004452f0.cpp  ?on_wield_reset@Agent@@QAEXXZ  00445a20  /O2 /MT /Gy /TP

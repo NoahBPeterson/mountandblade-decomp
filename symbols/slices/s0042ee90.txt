@@ -1,0 +1,23 @@
+0054b9e8 ??_7TiXmlDocument@@6B@  # TiXmlDocument vtable (slot 0 0x42efe0, Clone 0x42e6b0)
+0054bab0 ??_7TiXmlDeclaration@@6B@  # TiXmlDeclaration vtable (slot 0 0x42ef00, StreamOut 0x42eaf0, Clone 0x42f560)
+0054bb68 ??_7TiXmlUnknown@@6B@  # TiXmlUnknown vtable (slot 0 0x42efb0, Parse 0x42fce0, StreamOut 0x42ecc0, Clone 0x42f5d0)
+0054bbb0 ??_7TiXmlElement@@6B@  # TiXmlElement vtable (slot 0 0x42f660, Print 0x42e1b0, Parse 0x430860, StreamOut 0x42e300, Clone 0x42f3b0)
+0054b988 ??_7TiXmlNode@@6B@  # TiXmlNode vtable
+0054b8f8 ??_7TiXmlBase@@6B@  # TiXmlBase vtable
+0054b974 ??_7TiXmlAttribute@@6B@  # TiXmlAttribute vtable (sentinel of the element's attribute set)
+0054ba48 ??_7TiXmlComment@@6B@  # TiXmlComment vtable
+0054bb20 ??_7TiXmlText@@6B@  # TiXmlText vtable
+0042ee90 ??_GTiXmlText@@UAEPAXI@Z  # vtable 0x54bb20 slot 0
+0042ef00 ??_GTiXmlDeclaration@@UAEPAXI@Z  # vtable 0x54bab0 slot 0 (calls ~TiXmlDeclaration 0x42ef20)
+0042ef20 ??1TiXmlDeclaration@@UAE@XZ  # frees standalone, encoding, version then jumps to ~TiXmlNode
+0042efb0 ??_GTiXmlUnknown@@UAEPAXI@Z  # vtable 0x54bb68 slot 0
+0042efe0 ??_GTiXmlDocument@@UAEPAXI@Z  # vtable 0x54b9e8 slot 0
+0042f010 ??_GTiXmlNode@@UAEPAXI@Z  # TiXmlNode vtable 0x54b988 slot 0
+0042f660 ??_GTiXmlElement@@UAEPAXI@Z  # vtable 0x54bbb0 slot 0
+0042dcb0 ?ClearThis@TiXmlElement@@IAEXXZ  # TiXmlElement::ClearThis (children + attributes)
+0042df40 ?Find@TiXmlAttributeSet@@QBEPAVTiXmlAttribute@@ABVTiXmlString@@@Z  # attribute lookup by name
+0042e070 ??0TiXmlAttribute@@QAE@PBD0@Z  # TiXmlAttribute(name, value)
+0042d9d0 ?GetDocument@TiXmlNode@@QAEPAVTiXmlDocument@@XZ  # walks parents with ToDocument()
+0042e4f0 ?LoadFile@TiXmlDocument@@QAE_NPAU_iobuf@@W4TiXmlEncoding@@@Z  # LoadFile(FILE*, encoding)
+005e23d0 ?nullrep_@TiXmlString@@0URep@1@A  # TiXmlString empty rep
+0042e170 ??1TiXmlNode@@UAE@XZ  # ~TiXmlNode proper (resets vptr, deletes children, frees value); defined locally only to emit the deleting form 0x42f010

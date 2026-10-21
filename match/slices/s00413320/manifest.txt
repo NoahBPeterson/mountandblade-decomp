@@ -1,0 +1,4 @@
+slices/s00413320/s00413320.cpp  ?render_all@mesh_list@rgl@@QAEXPAUscene@2@ABUmat4@2@@Z  00413ac0  /O2 /MT /Gy /TP
+slices/s00413320/s00413320.cpp  ?render@lod_mesh@rgl@@QAEXPAUscene@2@ABUmat4@2@@Z  00413b00  /O2 /MT /Gy /TP
+slices/s00413320/s00413320.cpp  ?erase@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  00413b60  /O2 /MT /Gy /TP
+slices/s00413320/s00413320.cpp  ?resize@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QAEXIUvertex60@rgl@@@Z  00413bb0  /O2 /MT /Gy /TP

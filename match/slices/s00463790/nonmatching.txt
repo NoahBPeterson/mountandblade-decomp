@@ -1,0 +1,7 @@
+00463790  160  Ramp::eval (complete colour-ramp sampler): x87 scheduling differs (cl hoists 1-frac before the products and indexes the stop array by eax+0x3c, ours stores temporaries differently). equiv PASS
+00463a80  256  wind_noise (complete, three noise_fractal calls, stdcall hidden return): original writes the result straight into the return buffer, ours builds a local vector4 and copies. equiv PASS
+00463bc0  52  ShadowMap::pick_size (complete): original keeps the two max-size globals in an 8-byte stack temporary (struct copy) that cl removes from our source. equiv PASS
+00463c20  97  ShadowMap::to_unit (complete): original keeps the x/y subtractions on the x87 stack across the cam reload; ours spills them. equiv PASS
+00463cc0  309  ShadowMap::fit_bounds (complete): original is bracketed by two inline-asm data markers (jmp +0x10; "WL  ", 12 resp. 13) that would need _emit, plus different operand order of the fadds. equiv PASS
+00463e90  237  ShadowMap::setup (complete): cl computes the min.z-center.z difference early and keeps it on the x87 stack; our build defers it. equiv PASS
+00464070  2  ShadowMap::bind_target (complete): original reloads cam into ecx for the second store, ours reuses eax; 2 modrm bytes differ. equiv WEAK (no mismatch)

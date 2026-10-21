@@ -1,0 +1,5 @@
+0054a6f4 ??_7mesh@rgl@@6B@  # mesh vtable (see s00412a90)
+0054a6c8 ??_7mesh_base@rgl@@6B@  # mesh_base vtable
+00410610 ?_Insert_n@?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@IAEXViterator@12@IABQAUmesh@rgl@@@Z  # std::vector<T*>::_Insert_n (ICF'd with all pointer vectors)
+00413c50 rgl::mesh::add_vertex  # append a 0x60-byte vertex record (index, uv, color, position copied to pos and normal)
+00413d30 rgl::mesh_pool::get_mesh  # find-or-create mesh by resource (default resource if null)

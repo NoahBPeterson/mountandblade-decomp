@@ -1,0 +1,6 @@
+00443270 Agent::pick_shout_target  # loops over the used agents calling check(0x442ed0) and scores by distance, facing and f55e8 (provisional name)
+00443430 Agent::pick_threat  # best of the 16-entry threat list at +0x53ec by 3/dist and a random factor (provisional name)
+004435c0 Agent::play_hit_sound  # hit-sound id selection by hit kind/agent class then SoundSystem::play (provisional name)
+00443730 Agent::play_sound_var  # play sound table entry *kind with a random pitch spread (provisional name)
+00443870 Agent::play_sound  # stops the agent's current channel, plays sound *snd and records channel and start time at +0x5858.. (provisional name)
+00443a00 Agent::play_pain_sound  # sound id 0x11 with pitch 0.95 + clamp((1.2-health)*0.3, 0, 0.5) + rand spread (provisional name)

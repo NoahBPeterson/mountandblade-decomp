@@ -1,0 +1,1 @@
+00444c50 NavMesh::find_path  # A*-style face search + path/portal extraction used by Agent::plan_path (provisional name)

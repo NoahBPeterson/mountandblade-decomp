@@ -1,0 +1,8 @@
+slices/s00412150/s00412150.cpp  ?assign@MorphSet@@QAEXABU1@@Z  004125e0  /O2 /MT /Gy /TP
+slices/s00412150/s00412150.cpp  ?update_emitters@Psys@@QAEXPBMABUmatrix64@@@Z  004126a0  /O2 /MT /Gy /TP
+slices/s00412150/s00412150.cpp  ?ensure_skin@Psys@@QAEXXZ  00412700  /O2 /MT /Gy /TP
+slices/s00412150/s00412150.cpp  ?_Destroy@?$vector@UBoneInfluence@@V?$allocator@UBoneInfluence@@@std@@@std@@IAEXPAUBoneInfluence@@0@Z  00412770  /O2 /MT /Gy /TP
+slices/s00412150/s00412150.cpp  ??$_Ucopy@PAUBoneInfluence@@@?$vector@UBoneInfluence@@V?$allocator@UBoneInfluence@@@std@@@std@@IAEPAUBoneInfluence@@PAU2@00@Z  00412790  /O2 /MT /Gy /TP
+slices/s00412150/s00412150.cpp  ?_Tidy@?$vector@UBoneInfluence@@V?$allocator@UBoneInfluence@@@std@@@std@@IAEXXZ  004127b0  /O2 /MT /Gy /TP
+slices/s00412150/s00412150.cpp  ??1Psys@@UAE@XZ  004127f0  /O2 /MT /Gy /TP
+slices/s00412150/s00412150.cpp  ?compute_sortkey@Psys@@UAEXXZ  00412980  /O2 /MT /Gy /TP

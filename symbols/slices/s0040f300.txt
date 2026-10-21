@@ -1,0 +1,6 @@
+0040f3f0 mesh_inst_setup_material  # blend mode, per-stage texcoord gen/transform, texture factor or pixel shader constant
+0040f7f0 mesh_inst_over_budget  # draw-budget test on the owner's std::vector<elem32> size
+0040f5b0 allocator_construct_elem96  # placement copy-construct, 0x60 bytes
+0040f5d0 allocator_construct_elem48  # placement copy-construct, 0x30 bytes
+0040f5f0 allocator_construct_elem32  # placement copy-construct, 0x20 bytes
+0040f610 allocator_construct_elem8  # placement copy-construct, 8 bytes

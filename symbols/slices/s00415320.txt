@@ -1,0 +1,23 @@
+0054a740 ??_7stream_base@@6B@  # vtable of the abstract text stream (27 slots, slots 2..22 _purecall), s00414960/s00415320
+0054a7d0 ??_7text_stream@@6B@  # vtable 1 of the concrete text stream (identical slots to 0x54a890)
+0054a890 ??_7text_stream2@@6B@  # vtable 2 of the concrete text stream (second class sharing every method; name provisional)
+00415320 ?open_write@text_stream@@QAEHPBD@Z  # opens the file "wb" (writer)
+00415370 ?close@text_stream@@QAEHXZ  # flush + fclose
+004153a0 ?w_cstr@text_stream@@UAEAAUstream_base@@PBD@Z  # write C string + blank
+00415410 ?w_tstr@text_stream@@UAEAAUstream_base@@PBUtstring@@@Z  # write tstring + blank
+00415470 ?w_byte@text_stream@@UAEAAUstream_base@@PAE@Z  # write byte as decimal + blank
+00415500 ?w_int@text_stream@@UAEAAUstream_base@@PAH@Z  # write int as decimal + blank (slots 7 and 8, ICF)
+00415590 ?w_i64@text_stream@@UAEAAUstream_base@@PA_J@Z  # write int64
+00415670 ?w_u64@text_stream@@UAEAAUstream_base@@PA_K@Z  # write uint64
+00415730 ?w_bool@text_stream@@UAEAAUstream_base@@PAD@Z  # write bool "0 "/"1 "
+00415790 ?w_float@text_stream@@UAEAAUstream_base@@PAM@Z  # write float "%f "
+00415800 ?w_stream@text_stream@@UAEAAUstream_base@@PAU2@@Z  # write length + contents of another stream
+00415870 ?slot12@text_stream@@UAEAAUstream_base@@PAX@Z  # returns this (slots 12 and 22)
+00415880 ?r_tstr@text_stream@@UAEAAUstream_base@@PAUtstring@@@Z  # read string token, checks the "format broken" tag
+00415900 ?expect_token@text_stream@@QAEXXZ  # EOF check with message "Unexpected End of File while reading file: %s"
+00415930 ?r_int@text_stream@@UAEAAUstream_base@@PAH@Z  # read int (slots 16 and 19, ICF)
+004159a0 ?mb_parse_int@@YAHPBD@Z  # atoi-like parser (15 digits max)
+004159f0 ?r_byte@text_stream@@UAEAAUstream_base@@PAD@Z  # read byte via atol
+00415a60 ?r_i64@text_stream@@UAEAAUstream_base@@PA_J@Z  # read int64
+00415b60 ?r_u64@text_stream@@UAEAAUstream_base@@PA_K@Z  # read uint64
+00415c10 ?r_bool@text_stream@@UAEAAUstream_base@@PAD@Z  # read bool via atol

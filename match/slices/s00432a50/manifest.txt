@@ -1,0 +1,13 @@
+slices/s00432a50/s00432a50.cpp  ?apply_force_and_torque@@YAXPBUNewtonBody@@@Z  00432a50  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ?restart@Timer@@QAEXXZ  00432bf0  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ?elapsed@Timer@@QBEMXZ  00432c10  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ?begin@Timer@@QAEXM@Z  00432da0  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ?expired@Timer@@QAE_NXZ  00432de0  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ?pick@Actor@@QAEHH@Z  00433040  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ?hand_kind@Actor@@QBEHXZ  00433140  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ?clamp_c8@mesh_node@@QAEXPBM@Z  00433190  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ??$_Copy_opt@PAUtstring@@PAU1@@std@@YAPAUtstring@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004331e0  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ??$_Copy_backward_opt@PAUtstring@@PAU1@@std@@YAPAUtstring@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00433220  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ??$_Copy_backward_opt@PAUVec3@@PAU1@@std@@YAPAUVec3@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00433260  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ??0sphere_shape@@QAE@Uvector4@rgl@@PBM@Z  004332a0  /O2 /MT /Gy /TP
+slices/s00432a50/s00432a50.cpp  ??0capsule@@QAE@MPBUvector4@rgl@@0@Z  00433310  /O2 /MT /Gy /TP

@@ -1,0 +1,3 @@
+00465af0  846  Terrain::sample (bilinear lookup in the cell grid): complete; equiv PASS (714 valid, 100%). Original recomputes ((i*251+j)*0x94) per corner and keeps more values in GPRs; ours differs in scheduling and frame (782 vs 887 bytes). vector4(x,y,z) temporaries reproduce the uninitialised w lane
+00465e70  4  Terrain::set_cells: complete; equiv PASS (100%). Only diff: original stores f[2] before f84 while anchoring the induction pointer at f84; ours stores f84 first
+00465ee0  709  Terrain::smooth_cells (8-neighbour smoothing): complete; equiv PASS (721 valid, 100%). Neighbour order verified; diff is stack/register layout (original keeps the mask in the bit argument slot and nv on the x87 stack)

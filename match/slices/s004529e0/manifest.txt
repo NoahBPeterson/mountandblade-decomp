@@ -1,0 +1,4 @@
+slices/s004529e0/s004529e0.cpp  ?drop_held@Agent@@QAEXXZ  004529e0  /O2 /MT /Gy /TP
+slices/s004529e0/s004529e0.cpp  ?layout_clear@Font@@QAEPAUvector4@rgl@@PAU23@PBUtstring@@PBU23@PBUvec2@@PAUmesh@@PBH5PBMH@Z  00452bb0  /O2 /MT /Gy /TP
+slices/s004529e0/s004529e0.cpp  ?set_visible@Skeleton@@QAEXD@Z  00452f80  /O2 /MT /Gy /TP
+slices/s004529e0/s004529e0.cpp  ?log_message@@YGXPBUtstring@@H@Z  00453020  /O2 /MT /Gy /TP

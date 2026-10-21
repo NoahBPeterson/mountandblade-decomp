@@ -1,0 +1,15 @@
+slices/s00431960/s00431960.cpp  ??_ERecA@@QAEPAXI@Z  00431960  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ?_Destroy@?$vector@UItem@@V?$allocator@UItem@@@std@@@std@@IAEXPAUItem@@0@Z  00431a30  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ?_Tidy@?$vector@UItem@@V?$allocator@UItem@@@std@@@std@@IAEXXZ  00431a60  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??1RecP@@QAE@XZ  00431ab0  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??1RecQ@@QAE@XZ  00431b10  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??1RecR@@UAE@XZ  00431b90  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??1RecS@@QAE@XZ  00431c40  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??_ERecR@@UAEPAXI@Z  00431cb0  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??_ERecP@@QAEPAXI@Z  00431d30  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??1RecY@@UAE@XZ  00431e10  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??_ERecY@@UAEPAXI@Z  00431ec0  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??_ERecZ@@UAEPAXI@Z  00431f40  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ??1RecT@@QAE@XZ  00432010  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ?reset@BigObj@@QAEXXZ  00432080  /O2 /MT /Gy /TP
+slices/s00431960/s00431960.cpp  ?not_group_base@@YAHH@Z  004320b0  /O2 /MT /Gy /TP

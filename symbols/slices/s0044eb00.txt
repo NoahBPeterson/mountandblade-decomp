@@ -1,0 +1,6 @@
+00411630 ??4?$vector@Uface20@rgl@@V?$allocator@Uface20@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z  # std::vector<face20>::operator= called by append_skinned (0x44eb00) when copying the parent's faces
+00411420 ?push_back@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QAEXABUvertex60@rgl@@@Z  # std::vector<vertex60>::push_back (call at 0x44efee)
+00440aa0 ?push_back@?$vector@Uelem30@rgl@@V?$allocator@Uelem30@rgl@@@std@@@std@@QAEXABUelem30@rgl@@@Z  # std::vector<elem30>::push_back (0x30-byte skin records; calls at 0x44ed5e / 0x44ee63)
+0044eb00 ?append_skinned@mesh@rgl@@QAEXPAU12@PBUmat4@2@HID@Z  # mesh append with transform, skin record per vertex, tint colour and optional winding flip; provisional name
+0044f0c0 ?scale@mesh@rgl@@QAEXM@Z  # uniform scale of points, morph frames and bounding box
+0044f240 ?translate@mesh@rgl@@QAEXPBUvector4@2@@Z  # translate points, morph frames and bounding box

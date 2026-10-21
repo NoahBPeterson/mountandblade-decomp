@@ -1,0 +1,1 @@
+00468fc0 terrain_obj::trace_path  # weighted random walk across the 251x251 cell grid toward a goal, marking visited cells with a bit and recording direction/step (provisional name)

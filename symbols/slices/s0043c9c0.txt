@@ -1,0 +1,3 @@
+0043c9c0 Agent::poll_input  # drains the time-gated input ring (+0x53c4..0x53d0) up to now=0x5e2958 into a 6-dword state
+0043cb30 Agent::update_nav_face  # re-locates the nav face when the position moved > 0.03 (inside 0x4391d0, locate_near 0x43abf0, locate 0x439a50)
+0043cc30 Agent::move_anim  # picks one of the animation ids 0xfe..0x118 from the bearing to the target and the weapon kind

@@ -1,0 +1,11 @@
+slices/s00422db0/s00422db0.cpp  ?set@quaternion@@QAEAAU1@PBM000@Z  00422db0  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ?add@quaternion@@QAEXABU1@@Z  00422de0  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ??Hquaternion@@QBE?AU0@ABU0@@Z  00422e10  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ?normalize@quaternion@@QAEXXZ  00422e40  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ?dot@quaternion@@QBEMABU1@@Z  00423010  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ?dot_negative@quaternion@@QBE_NABU1@@Z  00423040  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ?quat_to_matrix@@YAXPAUmatrix@rgl@@PBUquaternion@@@Z  00423080  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ?quat_to_axis_angle@@YAXPAUvector4@rgl@@PAMPBUquaternion@@@Z  00423160  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ?phase@Curve@@QAEMXZ  004231f0  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ?shape@Curve@@QAEMM@Z  004232b0  /O2 /MT /Gy /TP
+slices/s00422db0/s00422db0.cpp  ?key_value@Curve@@QAE?AUvector4@rgl@@H@Z  00423300  /O2 /MT /Gy /TP

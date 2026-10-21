@@ -1,0 +1,8 @@
+0043a280 ui_weapon_class_name  # register-ABI (type in EAX, buffer in ESI) static helper: maps weapon class 0..6 to the "ui_one_handed_weapons".."ui_firearms" strings looked up in the translation table 0x5e2a18
+0043a480 TroopRec::display_name  # looks name (+0x20) up in the translation table (0x4c6010); falls back to the record itself
+0043a6f0 AgentBodyOwner::release_body  # removes the entity id stored at (+0x250)->+8 from the scene (0x41f0d0) and clears the pointer
+0043a720 probe_shape_contact  # virtual get_min/get_max (slots 10/11), scene box query 0x42aa50, then 0x40bfe0 contact test per hit
+0043a8a0 PhysSet::none_sleeping  # Newton NewtonBodyGetSleepingState over the ragdoll bones of record idx (0x38-byte records)
+0043a900 PhysSet::rebuild_static_body  # NewtonTreeCollisionEndBuild / NewtonCreateBody / NewtonReleaseCollision / NewtonBodySetMatrix(identity_pos)
+0043a980 AgentA::start_channel  # sets period / blend / mode of animation channel idx (0xd8-byte records) and its phase
+0043abf0 Scene::locate_near  # next_stamp, then 0x439900 nav-mesh search with start -1 / limit 100000.0f; returns the face id

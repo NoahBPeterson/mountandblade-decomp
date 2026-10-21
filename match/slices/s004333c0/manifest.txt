@@ -1,0 +1,13 @@
+slices/s004333c0/s004333c0.cpp  ?plane_z@face@@QBEMPBM@Z  00433440  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ??0composite@@QAE@ABU0@@Z  00433470  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?in_box@@YA_NPBUvector4@rgl@@00@Z  004336d0  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?set_v184@Obj3@@QAEXPBUvector4@rgl@@@Z  00433740  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?set_placement@Obj3@@QAEXPBUmatrix@rgl@@PBUvector4@3@1H@Z  00433770  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?reset_pending@Obj3@@QAEXH@Z  00433810  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?unshape@Curve@@QAEMM@Z  004338e0  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?set_phase@Curve@@QAEXM@Z  00433930  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?reset_rec@Curve@@QAEXH@Z  004339d0  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?rec_shaped_phase@Curve@@QAEMH@Z  00433ac0  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?set_rec_phase@Curve@@QAEXHM@Z  00433b20  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?hash_string@@YGIPBUtstring@@@Z  00433bb0  /O2 /MT /Gy /TP
+slices/s004333c0/s004333c0.cpp  ?mesh_name_for@ItemKind@@QAE?AUtstring@@H@Z  00433bf0  /O2 /MT /Gy /TP

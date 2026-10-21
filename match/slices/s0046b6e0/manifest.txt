@@ -1,0 +1,5 @@
+slices/s0046b6e0/s0046b6e0.cpp  ?uninit_copy36@@YAPAUrec36@@PAU1@00AAUalloc36@@@Z  0046b6e0  /O2 /MT /Gy /TP
+slices/s0046b6e0/s0046b6e0.cpp  ?uninit_copy136@@YAPAUrec136@@PAU1@00AAUalloc136@@@Z  0046b750  /O2 /MT /Gy /TP
+slices/s0046b6e0/s0046b6e0.cpp  ??$_Copy_opt@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@V?$_Temp_iterator@UE8@@@3@@std@@YA?AV?$_Temp_iterator@UE8@@@0@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@0@0V10@U_Nonscalar_ptr_iterator_tag@0@@Z  0046b7d0  /O2 /MT /Gy /TP
+slices/s0046b6e0/s0046b6e0.cpp  ??$_Rotate@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@HUE8@@@std@@YAXViterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@0@00PAHPAUE8@@@Z  0046b860  /O2 /MT /Gy /TP
+slices/s0046b6e0/s0046b6e0.cpp  ?set_env_count@FxDef2@@QAEXH@Z  0046b9d0  /O2 /MT /Gy /TP

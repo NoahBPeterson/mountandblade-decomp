@@ -1,0 +1,14 @@
+004608d0 DialogRec::read  # reads one dialog record (id, speaker flags, condition block, spoken text, consequence block) and builds the "dialog condition: %s" / "dialog consequence: %s" debug strings; provisional
+004609d0 ??_EDialogRec@@QAEPAXI@Z  # vector deleting destructor of the 0x64-byte dialog record (two script blocks, three strings)
+00460ab0 DialogMgr::read  # reads the dialog count and allocates / reads that many DialogRec
+00460b90 DialogMgr::available  # whether dialog idx can be offered: matching state, speaker (troop / party owner / default) and the any-flag; provisional
+00460c10 DialogMgr::refresh_text  # translates the current dialog's text (string table by id) and expands its {tokens} into +0xe028
+00460ca0 PartyMgr::next_party_id  # id of the next party of type 1 after *id (or the default id); provisional
+00460d20 PartyMgr::first_party_id  # id of the first party of type 1 (or the default id)
+00460d80 DialogMgr::select  # makes a collected line current: clears flags, runs its consequence block, refreshes the text
+00460de0 DialogMgr::collect  # collects up to max (<= 0x400) dialog lines whose condition block succeeds, with repeat modes in the flag nibble (0x1000 .. 0x5000)
+00460ff0 DialogMgr::advance  # runs the automatic (0x40000) first line repeatedly, then selects the first line
+004610b0 DialogMgr::start  # begins a conversation (parties, troop, flag) and advances; starts with an inline "WL" tag block
+00461140 DialogMgr::advance_all  # like advance(), but over the full collected list (up to 0x400 lines); stores the line count at +0x20
+00461200 Agent::init_max_hp  # +0x1c0 = +0x1bc when positive, else 100
+00461230 copy_range  # std::copy of 24-byte records (field-wise assignment); returns the end of the destination

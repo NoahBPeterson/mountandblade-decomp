@@ -1,0 +1,11 @@
+slices/s0042c0f0/s0042c0f0.cpp  ?min_int@@YAHABH0@Z  0042c0f0  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ??0tstring@@QAE@ABU0@@Z  0042c110  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ?range_equals@tstring@@QBEDABH0ABU1@@Z  0042c160  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ?append@tstring@@QAEXABU1@@Z  0042c1e0  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ?has_token@tstring@@QAE_NXZ  0042c230  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ?find@tstring@@QBEHABU1@H@Z  0042c440  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ?substr@tstring@@QBE?AU1@HH@Z  0042c4a0  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ?erase_range@tstring@@QAEXHH@Z  0042c560  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ?trim@tstring@@QAEXXZ  0042c7a0  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ??Htstring@@QBE?AU0@ABU0@@Z  0042c840  /O2 /MT /Gy /TP
+slices/s0042c0f0/s0042c0f0.cpp  ?insert@tstring@@QAEXHABU1@@Z  0042c900  /O2 /MT /Gy /TP

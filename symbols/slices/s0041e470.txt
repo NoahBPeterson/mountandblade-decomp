@@ -1,0 +1,5 @@
+0041e470 plane::in_front  # dot(point - plane.pos, plane.normal) >= -eps
+0041e4f0 frustum::build_planes  # six clip planes (point + normal) from the camera frame and the left/right/top/bottom/near/far extents; perspective and orthographic branches
+0041ecc0 cell_rows::~cell_rows  # frees rows[0..last] and the row table
+0041ed00 cell_grid::locate  # clamps a 2D point to cell indices (0 .. n-1)
+0041ed70 ??_Ebuf3@@QAEPAXI@Z  # vector deleting destructor of a 0xd8-byte record owning three delete[] buffers

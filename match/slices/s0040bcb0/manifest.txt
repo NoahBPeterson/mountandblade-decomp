@@ -1,0 +1,16 @@
+slices/s0040bcb0/s0040bcb0.cpp  ?shape_contacts@@YAXPAUcoll_shape@@0HPAUcontact@@PAH@Z  0040bcb0  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ?shape_contact_count@@YAHPAUcoll_shape@@0HPAUcontact@@@Z  0040bfe0  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ?clone@sphere@@UAEPAU1@XZ  0040c010  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ??0sphere@@QAE@ABU0@@Z  0040c030  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@II@Z  0040c0c0  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXII@Z  0040c140  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ  0040c290  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ??1logic_error@@UAE@XZ  0040c2c0  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ??_Glogic_error@@UAEPAXI@Z  0040c310  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@II@Z  0040c360  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBDI@Z  0040c450  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z  0040c540  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ??0logic_error@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z  0040c580  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ??_Glength_error@@UAEPAXI@Z  0040c5c0  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ??0logic_error@@QAE@ABV0@@Z  0040c5f0  /O2 /MT /Gy /TP
+slices/s0040bcb0/s0040bcb0.cpp  ??0length_error@@QAE@ABV0@@Z  0040c630  /O2 /MT /Gy /TP

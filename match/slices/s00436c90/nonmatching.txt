@@ -1,0 +1,4 @@
+00436d76  0  catch(...){throw;} funclet lives inside the 0x436d10 COMDAT; bytes identical there, chk cannot pair it
+00436da0  1148  line_clear: frame 0x78 vs 0x68 and register roles differ; equiv PASS
+00437290  32  Grid2::walk: size exact; count/n register roles (esi/edi/ecx) and loop pad differ; equiv PASS
+00437510  17  ItemRef::reduce: cl fuses to 'or [esi+4],edx' where original reloads ecx; equiv not run

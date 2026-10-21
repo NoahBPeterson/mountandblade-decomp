@@ -1,0 +1,10 @@
+00424220 ?add@StoreX@@QAEHHPBUvector4@rgl@@@Z  # Store::add_points (this slice), declared on a stub so Registry::reg keeps the call out of line
+00423fc0 ?push_back@ObjVecX@@QAEXABQAUObj@@@Z  # ObjVec::push_back (this slice), stub declaration
+00425240 ?post@Registry@@QAEXPAUObj@@@Z  # Registry post-registration hook (next slice)
+0041fa00 ?resize@ObjVec@@QAEXIPAUObj@@@Z  # std::vector<Obj*>::resize (s0041f720)
+0041f640 ?_Insert@ObjList@@QAEXPAUNode@1@ABQAUObj@@@Z  # std::list<Obj*>::_Insert(where, value) (library instantiation)
+004240d0 ?find@ObjVec@@QBEHPAUObj@@@Z  # ObjVec::find (defined on ObjVecF in this slice, to keep remove()'s call out of line)
+00424010 ?insert@ObjVec@@QAE?AUIter@1@U21@ABQAUObj@@@Z  # std::vector<Obj*>::insert(iterator, const value&) (this slice)
+00424740 ?resize@V36@@QAEXIUVert@@@Z  # std::vector<E36>::resize (this slice)
+00424cc0 ?resize@V136@@QAEXIUGroup@@@Z  # std::vector<E136>::resize (s00424830)
+00424650 ?face_normal_x@@YAPAUvector4@rgl@@PAU12@PBU12@11@Z  # face_normal, caller's view with an explicit out-parameter (defined as ?face_normal@@YA?AUvector4@rgl@@PBU12@00@Z)

@@ -1,0 +1,2 @@
+0054a540 ??_7capsule@@6B@  # rgl::capsule vtable stored by the inlined capsule ctor
+0045a170 ?swing_trace@Agent@@QAEHHPAUMissile@@PAUBlow@@PAM@Z  # per-tick melee swing / missile hit test: swept capsule from the two hand frames (+0x5734/+0x5774), nearby-agent scan, shield block, hit_damage + reduce_blow Blow, then scene-prop hit

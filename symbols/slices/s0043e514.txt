@@ -1,0 +1,8 @@
+0043e590 ?_Growmap@?$deque@UE32@@V?$allocator@UE32@@@std@@@std@@IAEXI@Z  # std::deque<32-byte element>::_Growmap(size_t)
+0043e6e0 ??$_Destroy_range@UE56@@V?$allocator@UE56@@@std@@@std@@YAXPAUE56@@0AAV?$allocator@UE56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Destroy_range<E56*> (two vector<int> members, inlined dtor)
+0043e740 ?ensure_updated@Skeleton@@QAEXXZ  # if (!done) { has_poses ? update_poses() : update() }
+0043e760 ?_Buy@?$vector@HV?$allocator@H@std@@@std@@IAE_NI@Z  # std::vector<int>::_Buy
+0043e7b0 ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z  # std::vector<int>::_Insert_n (second instance, not folded with 0x410610)
+0043ea00 ?_Insert_n@?$vector@URec1c8@@V?$allocator@URec1c8@@@std@@@std@@IAEXViterator@12@IABURec1c8@@@Z  # std::vector<0x1c8-byte polymorphic record>::_Insert_n
+0043ed20 ??0?$vector@HV?$allocator@H@std@@@std@@QAE@ABV01@@Z  # std::vector<int> copy constructor
+00590b84 ??_7Rec1c8@@6B@  # vtable of the 0x1c8-byte record (copy ctor 0x437bb0), stored by its inlined destructor

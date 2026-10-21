@@ -1,0 +1,12 @@
+slices/s00467250/s00467250.cpp  ?count_low_quads@terrain_obj@@QAEHXZ  00467530  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?clear_done@Mission3@@QAEXXZ  004676c0  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?copy_slot@Mission3@@QAEXH@Z  004676e0  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?speed_factor@Mission3@@QAEMM@Z  00467740  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?add_amount@Mission3@@QAEXHI@Z  004677a0  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?size@vec36@@QBEHXZ  00467ac0  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?size@vec24@@QBEHXZ  00467ae0  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?size@vec52@@QBEHXZ  00467b00  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?size@vec516@@QBEHXZ  00467b20  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?fill36@@YAXPAUS36@@0PBU1@@Z  00467b40  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?copy_backward36@@YAPAUS36@@PAU1@00@Z  00467b70  /O2 /MT /Gy /TP
+slices/s00467250/s00467250.cpp  ?fill24@@YAXPAUS24@@0PBU1@@Z  00467ba0  /O2 /MT /Gy /TP

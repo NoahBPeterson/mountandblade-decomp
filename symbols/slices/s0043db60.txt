@@ -1,0 +1,11 @@
+0043e310 ?_Insert_n@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXViterator@12@IABUtstring@@@Z  # std::vector<tstring>::_Insert_n (VC7.1 <vector>): this+4/8/0xc = _Myfirst/_Mylast/_Myend, 16-byte tstring elements, ucopy 0x43a4d0, ufill 0x43b2b0, destroy 0x42d360
+0043db60 vec1c8::ufill  # std::_Uninitialized_fill_n wrapper for 0x1c8-byte records, tail-calls 0x43ab50
+0043db90 Agent::set_goal_agent  # path goal = another agent (copies its pos / direction / face)
+0043dcb0 Agent::set_goal_point  # path goal = a point + nav face
+0043dd70 Agent::set_goal_near  # random jitter within radius (rand()%0x3dc9), 32 tries, inside the play area
+0043df60 Agent::advance_path  # advances path_cur when the next waypoint is reached (NavMesh::trace)
+0043e0e0 deque_xlen  # throws std::length_error("deque<T> too long")
+0043e150 tidy_vec_pair  # frees and clears two (first,last,end) pointer vectors at +0x10 and +0x20
+0043e190 Font::advance  # glyph advance for a character code
+0043e200 Font::measure  # text width, skipping <...> tags, tab stops at 0.25
+0043e2a0 vec_xlen  # throws std::length_error("vector<T> too long")

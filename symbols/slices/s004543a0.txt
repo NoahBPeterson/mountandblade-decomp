@@ -1,0 +1,2 @@
+00407c20 ??0matrix@rgl@@QAE@XZ  # empty matrix default ctor (ICF folds all empty ctors at 0x407c20); passed as the element ctor to the vector constructor iterator (0x401800) for the 32-entry bone world table in Agent::ragdoll_update 0x4543a0
+00454320 ?on_removed@Agent@@QAEXXZ  # Agent teardown (s00454320)

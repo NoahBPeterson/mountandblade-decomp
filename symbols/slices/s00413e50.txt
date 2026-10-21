@@ -1,0 +1,3 @@
+00413e50 ?emit@psys@@QAEXPAUparticle@@PAUmat4@rgl@@PAUmesh@4@PBM@Z  # builds frame, colour and geometry for one particle (provisional name)
+00407d60 ?normalize@vector4@rgl@@QAEMXZ  # rgl::vector4::normalize (rgl.h comment keeps the address mid-line)
+00407dc0 ?cross@rgl@@YA?AUvector4@1@ABU21@0@Z  # rgl::cross by value (rgl.h)

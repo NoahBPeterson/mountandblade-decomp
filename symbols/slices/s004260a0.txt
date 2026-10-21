@@ -1,0 +1,9 @@
+004260a0 ?integrate@dynamic_entity@rgl@@UAEXM@Z  # slot 30: resolve, clear contacts, sleep test, position/orientation update from velocities
+004263d0 ?collide@dynamic_entity@rgl@@UAEXXZ  # slot 29: gather overlapping shapes (mask 0x8106) and dynamic entities, call slots 35 / 34
+00426490 ?query_shapes@world@rgl@@QAEXPAUentity@2@PAPAUshape@2@PAH2I@Z  # per-cell shape collection for an entity's cells
+00426500 ?collect@cell@rgl@@QAEXPBUvector4@2@0PAHIPAPAUshape@2@1@Z  # merges box-overlapping shapes of one cell into a sorted unique pointer array
+00426690 ?box_overlap3@@YAHPBUvector4@rgl@@000@Z  # 3D box overlap
+00426700 ?box_overlap2@@YAHPBUvector4@rgl@@000@Z  # 2D (xy) box overlap
+00426750 ?query_entities@world@rgl@@QAEXPAUentity@2@I_NPAV?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@@Z  # entities in the same cells filtered by type mask and box, sorted and unique
+00426960 ?less@world@rgl@@QAE_NPAUObj@2@0@Z  # ordering predicate on entities (type mask bits, then id)
+004269e0 ??$unique@Viterator@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@@std@@YA?AViterator@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@0@V120@0@Z  # std::unique on vector<Obj*>::iterator

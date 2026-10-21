@@ -1,0 +1,1 @@
+00432860  108  mat3 multiply: same sums in the same association as the original, but cl canonicalises operand order inside each product differently (9 fld/fmul pairs swapped, 4 inner pairs evaluated in the other order); no source form found in ~100 candidates

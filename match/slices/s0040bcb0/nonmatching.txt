@@ -1,0 +1,2 @@
+0040c1b1  0  catch(...) funclet of 0x40c140 (std::string::_Copy, retry with _Newres = _Newsize): bytes identical (checked against the object's COMDAT tail, 328/328 incl. 0x40c140); cl emits it after the parent with no symbol, so run_all cannot address it. Equivalence UNSUPPORTED: not a callable function (covered by the 0x40c140 test).
+0040c257  0  catch(...) { _Tidy(true); throw; } funclet of 0x40c140 (std::string::_Copy): bytes identical (same check); symbol-less COMDAT tail. Equivalence UNSUPPORTED: not a callable function.

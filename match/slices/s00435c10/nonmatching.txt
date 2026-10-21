@@ -1,0 +1,2 @@
+00435c10  688  camera_params: original builds vector4 a/(a-v98) through 16-byte stack temporaries with a split T->a copy (x,y,w first, z last) and keeps f80*0.0 spilled; ours folds the temporaries (659 vs 759 bytes). Best structural try (inline vsub/vadd by const ref) reached 725 bytes but is not byte-closer
+00436210  48  rotate_scale_xy: tx/ty order and sin kept unrounded now match; remaining diff is register choice for the out pointer (eax vs edx) and fmul st(1) vs fmul [mem] on the second product (188 vs 194 bytes)

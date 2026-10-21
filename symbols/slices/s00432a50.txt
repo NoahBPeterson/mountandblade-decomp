@@ -1,0 +1,6 @@
+00432a50 ?apply_force_and_torque@@YAXPBUNewtonBody@@@Z  # Newton force/torque callback: pending force at 0xa18214, torque at 0xa18224, gravity 9.8
+00432da0 ?begin@Timer@@QAEXM@Z  # arms a countdown timer on the 64-bit tick table 0x5e2948
+004332a0 ??0sphere_shape@@QAE@Uvector4@rgl@@PBM@Z  # sphere shape ctor, vtable 0x54a4f0
+00433310 ??0capsule@@QAE@MPBUvector4@rgl@@0@Z  # capsule shape ctor, vtable 0x54a540
+0054a4f0 ??_7sphere_shape@@6B@  # vtable stored by 0x4332a0
+0054a540 ??_7capsule@@6B@  # vtable stored by 0x433310

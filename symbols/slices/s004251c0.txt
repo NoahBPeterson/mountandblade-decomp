@@ -1,0 +1,14 @@
+0054b668 ??_7dynamic_entity@rgl@@6B@  # vtable stored by the ctor at 0x425370 (slot 2 returns "dynamic_entity")
+004251c0 ??$uninit_fill_n@UE136@@@@YAXPAUE136@@IABU0@AAV?$allocator@UE136@@@std@@U_Nonscalar_ptr_iterator_tag@2@@Z  # std::_Uninit_fill_n for the 0x88-byte group record (copy-construct n elements, catch(...) { throw; })
+00425240 ?add_tree@world@rgl@@QAEXPAUshape@2@@Z  # walks a composite shape (type 3) recursively and adds each leaf (type != 4) to the grid cells
+004252c0 ?add_shape@world@rgl@@QAEXPAUshape@2@@Z  # locates the shape's min/max corner cells (0x41ed00), cell::add (0x423f10) for each, stores the rectangle at shape+0x10
+00425370 ??0dynamic_entity@rgl@@QAE@XZ  # ctor: calls entity ctor 0x41fba0, vtable 0x54b668, mass 5.0, inertia 2.0, damping 0.1/0.8
+00425490 ?type_name@dynamic_entity@rgl@@UAE?AUstring@2@XZ  # vtable 0x54b668 slot 2, returns rgl::string("dynamic_entity")
+004254b0 ?awake@dynamic_entity@rgl@@UAE_NXZ  # slot 10: not asleep (byte at +0x1d5 clear)
+004254c0 ?point_velocity@dynamic_entity@rgl@@UAEXPAUvector4@2@PBU32@@Z  # slot 25: v + w x (p - origin)
+00425550 ?apply_impulse@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  # slot 26: wakes the body, v += j/m, w += (r x j)/I
+00425670 ?impulse_response@dynamic_entity@rgl@@UAEMPBUvector4@2@0@Z  # slot 27: 1/m + n . ((I^-1 (r x n)) x r)
+00425730 ?commit@dynamic_entity@rgl@@UAEXM@Z  # slot 7: apply_forces, collide, integrate, then refresh bounds from the frame source
+004257e0 ?apply_forces@dynamic_entity@rgl@@UAEXM@Z  # slot 28: gravity force (-9.8 z), clears torque, damps velocities
+004258e0 ?add_torque@dynamic_entity@rgl@@UAEXPBUvector4@2@@Z  # slot 32: torque += t
+00425920 ?add_torque_at@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  # slot 33: torque += (p - origin) x f

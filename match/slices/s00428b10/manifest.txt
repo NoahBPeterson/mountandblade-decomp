@@ -1,0 +1,7 @@
+slices/s00428b10/s00428b10.cpp  ?quat_from_matrix@@YAXPAUquat4@@PBM@Z  00428b10  /O2 /MT /Gy /TP
+slices/s00428b10/s00428b10.cpp  ?alloc@EnvRec@@QAEXH@Z  00428c60  /O2 /MT /Gy /TP
+slices/s00428b10/s00428b10.cpp  ??0FxElem@@QAE@XZ  00428d10  /O2 /MT /Gy /TP
+slices/s00428b10/s00428b10.cpp  ?clear_geometry@mesh@@QAEXXZ  00428e80  /O2 /MT /Gy /TP
+slices/s00428b10/s00428b10.cpp  ?reset@scene@@QAEXXZ  00428f30  /O2 /MT /Gy /TP
+slices/s00428b10/s00428b10.cpp  ?render@skeleton_entity@@UAEXPAUscene@@@Z  00428f80  /O2 /MT /Gy /TP
+slices/s00428b10/s00428b10.cpp  ?render@FxDef@@QAEXPAUscene@@PBUmat4@@PBM@Z  00428ff0  /O2 /MT /Gy /TP

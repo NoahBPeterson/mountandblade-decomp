@@ -1,0 +1,2 @@
+slices/s004428c0/s004428c0.cpp  ?queue_dead@Mission2@@QAEXPAUAgent@@@Z  00442dc0  /O2 /MT /Gy /TP
+slices/s004428c0/s004428c0.cpp  ?can_target@Agent@@QAE_NIIMPAM@Z  00442ed0  /O2 /MT /Gy /TP

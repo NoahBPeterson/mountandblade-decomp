@@ -1,0 +1,7 @@
+00462e20 Inv::pick  # random weighted pick of a matching inventory slot (value-weighted, optional cheapest)
+00463030 Inv::find_free  # first slot with item == -1
+00463070 Inv::add  # stores an item pair in the first free slot
+00463100 Inv::equip_best  # picks a slot and moves it into the equip slot
+004631c0 Placed::read  # reads a placed sprite record ("spr_" prefix, table 0x5e29dc)
+004636d0 ArrSet::ArrSet  # copy ctor: name + five (count, int array) pairs
+00463760 ArrSet::~ArrSet  # delete[] of the five arrays, then ~tstring

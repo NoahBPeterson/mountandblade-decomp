@@ -1,0 +1,5 @@
+00445e70 ?_Ufill@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEPAUE56@@PAU3@IABU3@@Z  # std::vector<E56>::_Ufill (-> _Uninit_fill_n 0x444bc0)
+00445ea0 ?_Insert_n@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEXViterator@12@IABUE56@@@Z  # std::vector<E56>::_Insert_n (catch funclets and cold tails 0x44608f / 0x44614e belong to it)
+00445700 ??$_Ucopy@PAUE56@@@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEPAUE56@@PAU2@00@Z  # std::vector<E56>::_Ucopy<E56*>
+00442080 ??$_Uninit_copy@PAUE56@@PAU1@V?$allocator@UE56@@@std@@@std@@YAPAUE56@@PAU1@00AAV?$allocator@UE56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_copy<E56*> (copy-construct a range of 0x38-byte records; s004417d0)
+00445a90 Agent::refill_ammo  # tops up ammo stacks of the held ranged weapon; returns units added (provisional name)

@@ -1,0 +1,5 @@
+0041ef60 ??0frustum@@QAE@XZ  # frustum ctor (planes built by 0x41e4f0), called by scene::scene 0x429740 for the member at +0x30
+0040a920 ?rot3@pos@@QBE?AUmat3@@ABUmatrix@rgl@@@Z  # pos::rot3(const matrix&) const: rotation part of a matrix multiply, hidden mat3 return (s0040a640)
+00429670 ?rot_t@mat4@@QBEPAUmat3@@PAU2@@Z  # transposed 3x3 rotation of a frame, returns the out pointer
+0054b454 ??_7FxElem@@6B@  # vtable of the skeleton element (see s00428b10)
+00407c20 ??0mat4@@QAE@XZ  # empty default ctor (ICF folds all empty ctors at 0x407c20); passed as the element ctor to __vec_new by FxDef::skin 0x4291c0

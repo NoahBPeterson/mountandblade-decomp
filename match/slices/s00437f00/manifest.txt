@@ -1,0 +1,5 @@
+slices/s00437f00/s00437f00.cpp  ?has_weapon_for@Agent@@QAE_NH@Z  00437f00  /O2 /MT /Gy /TP
+slices/s00437f00/s00437f00.cpp  ?stamina_scale@Agent@@QAEMXZ  00438180  /O2 /MT /Gy /TP
+slices/s00437f00/s00437f00.cpp  ?signed_angle@@YAMPBUvec2@@0@Z  004381e0  /O2 /MT /Gy /TP
+slices/s00437f00/s00437f00.cpp  ?set_default_order@Agent@@QAEXXZ  004382e0  /O2 /MT /Gy /TP
+slices/s00437f00/s00437f00.cpp  ?clear_ammo@Agent@@QAEXH@Z  00438520  /O2 /MT /Gy /TP

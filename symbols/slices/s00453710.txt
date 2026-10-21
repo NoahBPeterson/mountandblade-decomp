@@ -1,0 +1,1 @@
+00453710 ?hit_damage@Agent@@QAEXHPAUMissile@@PAMPAII1@Z  # damage magnitude of a melee blow or missile hit from this agent on `victim`; provisional name

@@ -1,0 +1,8 @@
+slices/s00461280/s00461280.cpp  ?copy_backward24@@YAPAUelem24@@PAU1@00@Z  00461280  /O2 /MT /Gy /TP
+slices/s00461280/s00461280.cpp  ?tri_normal@@YA?AUvector4@rgl@@PBU12@@Z  004612d0  /O2 /MT /Gy /TP
+slices/s00461280/s00461280.cpp  ?pack_signed_color@@YAIPBM@Z  00461370  /O2 /MT /Gy /TP
+slices/s00461280/s00461280.cpp  ?set_clock_step@@YAXPAHM@Z  00461420  /O2 /MT /Gy /TP
+slices/s00461280/s00461280.cpp  ?sample@wind@@QAE?AUvector4@rgl@@XZ  00461570  /O2 /MT /Gy /TP
+slices/s00461280/s00461280.cpp  ?set_view@renderer@@QAEXPBUpos@@@Z  00461630  /O2 /MT /Gy /TP
+slices/s00461280/s00461280.cpp  ?reset_state@renderer@@QAEXXZ  004617b0  /O2 /MT /Gy /TP
+slices/s00461280/s00461280.cpp  ?set_lighting@renderer@@QAEX_N@Z  00461ba0  /O2 /MT /Gy /TP

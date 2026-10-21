@@ -1,0 +1,4 @@
+0054b5d0 ??_7StrategicEntity@@6B@  # vtable of the strategic_entity class (stored by its ctor 0x421720)
+0041ed70 ??_EEnvRec@@QAEPAXI@Z  # vector deleting destructor of the 0xd8-byte envelope record
+00423c00 ?attach@Ctx@@QAEXPAUEnt3@@@Z  # object registrar: called by StrategicEntity::update (0x421b70) with an item, this = entity+4
+004175f0 ?release@Mgr@@QAEXPAX@Z  # clears field +0x14 of its argument; this = global manager 0x5d6fa0

@@ -1,0 +1,3 @@
+0043e2a0 ?_Xlen@vec36@@QBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@vec136@@QBEXXZ  # same shared body, for the 0x88-byte element vector
+004251c0 ??$_Uninit_fill_n@PAUE136@@IU1@V?$allocator@UE136@@@std@@@std@@YAXPAUE136@@IABU1@AAV?$allocator@UE136@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_fill_n<E136*> (next slice), called by vec136::_Insert_n

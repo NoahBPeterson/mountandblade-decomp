@@ -1,0 +1,3 @@
+0041a510 res_dc::~res_dc  # frees the vector at +0xcc and the string at +0x8c (0xdc-byte resource record)
+0041a550 ??_Eres_dc@@QAEPAXI@Z  # vector deleting destructor of the 0xdc-byte record (flag 2 = array with count cookie)
+0041a6b0 ?_Insert_n@?$vector@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@IAEXViterator@12@IABUvec_array@@@Z  # std::vector<vec_array>::_Insert_n (12-byte record with destructor)

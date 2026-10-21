@@ -1,0 +1,15 @@
+005908ec ??_7IfaceA@@6B@  # vtable stored by the scalar deleting destructor 0x431400 (3 slots: dtor, 0x477b70, 0x477b70)
+005908f8 ??_7IfaceB@@6B@  # vtable stored by 0x431420 and, as the base-class vptr, by the vector deleting destructors 0x4316c0 and 0x431750
+00431400 ??_GIfaceA@@UAEPAXI@Z  # slot 0 of vtable 0x5908ec
+00431420 ??_GIfaceB@@UAEPAXI@Z  # slot 0 of vtable 0x5908f8
+00431480 ??_ERecD@@QAEPAXI@Z  # vector deleting destructor of the 0x78-byte record with two (array, name) pairs
+00431540 ??_ERecG@@QAEPAXI@Z  # vector deleting destructor of the 0x30-byte record (pair at +4)
+004315d0 ??_ERecH@@QAEPAXI@Z  # vector deleting destructor of the 0x30-byte record (name at +0, pair at +0x10)
+00431810 ??_ERecI@@QAEPAXI@Z  # vector deleting destructor of the 0x68-byte record (scalar path calls ~RecI 0x431660)
+004316c0 ??_ERecF@@UAEPAXI@Z  # vector deleting destructor of the 0x98-byte IfaceB-derived record
+00431750 ??_ERecJ@@UAEPAXI@Z  # vector deleting destructor of the 0xb0-byte IfaceB-derived record
+004318c0 ??_ERecK@@QAEPAXI@Z  # vector deleting destructor of the 0x34-byte record
+00431660 ??1RecI@@QAE@XZ  # destructor body of the 0x68-byte record
+00431440 ??1RecD@@QAE@XZ  # destructor body of the 0x78-byte record
+004316b0 ??1NameHolder@@QAE@XZ  # one-tstring class destructor: a tail jump to tstring::~tstring (0x42bc40)
+0042bc40 ??1tstring@@QAE@XZ  # frees the buffer at +4

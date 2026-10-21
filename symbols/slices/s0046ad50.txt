@@ -1,0 +1,4 @@
+0046ad50 ?compute_normals@terrain_obj@@QAEXXZ  # per-triangle normals (tri_normal 0x4612d0), summed per vertex at cell+0x20 and normalised; provisional name
+0046b190 ?pick_slot_item@@YA_JHHHHPAHDPAD@Z  # returns the troop's (item, modifier) for an equipment slot, else the first candidate item that fits (Troop::fits_slot 0x462c80) and is reduced; provisional
+0046b2d0 ?AgentEq_pick_slots@@YGXPAUAgentEq@@@Z  # fills the ten equipment slots of a live agent via pick_slot_item; provisional
+0046b410 ?ray@FireAgent@@QAEXPAUFireRay@@@Z  # weapon segment: from = pos, to = org + dir * reach (0.8, or item +0x20c * 0.01), width 0.002; provisional

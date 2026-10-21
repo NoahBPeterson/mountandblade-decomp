@@ -1,0 +1,12 @@
+0043edf0 ?_Insert_n@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@IAEXViterator@12@IABUE12@@@Z  # std::vector<12-byte element>::_Insert_n
+0043f0a0 ??4?$vector@HV?$allocator@H@std@@@std@@QAEAAV01@ABV01@@Z  # std::vector<int>::operator=
+0043f1f0 ?push_back@?$deque@UE32@@V?$allocator@UE32@@@std@@@std@@QAEXABUE32@@@Z  # std::deque<32-byte element>::push_back
+0043f260 ?rec@Skeleton@@QAEPADH@Z  # animator record i (stride 0x1dc, +0x84), after bringing the skeleton up to date
+0043f2a0 ?push_back@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAEXABUtstring@@@Z  # std::vector<tstring>::push_back
+0043f310 ?resize@?$vector@HV?$allocator@H@std@@@std@@QAEXIH@Z  # std::vector<int>::resize(n, val)
+0043f3a0 ?insert@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@QAE?AViterator@12@V312@ABUE48@@@Z  # std::vector<48-byte element>::insert
+0043f410 ?insert@?$vector@URec1c8@@V?$allocator@URec1c8@@@std@@@std@@QAE?AViterator@12@V312@ABURec1c8@@@Z  # std::vector<0x1c8 record>::insert
+0043f480 ?_Destroy@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEXPAUE56@@0@Z  # std::vector<E56>::_Destroy(first, last)
+0043f4a0 ?insert@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@QAE?AViterator@12@V312@ABUE12@@@Z  # std::vector<12-byte element>::insert
+0043f510 ??0E56@@QAE@ABU0@@Z  # E56 copy constructor (two vector<int> copies)
+0043f560 ?aim_point_and_dir@AimAgent@@QAEXPAUvector4@rgl@@0@Z  # aim origin/direction in world space from the skeleton record at +0x1140

@@ -1,0 +1,11 @@
+slices/s00423ed0/s00423ed0.cpp  ?in_rect@@YGHPBH00@Z  00423ed0  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ?add@Cell@@QAEXPAUObj@@@Z  00423f10  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ?push_back@ObjVec@@QAEXABQAUObj@@@Z  00423fc0  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ?insert@?$vector@PAUObj@@V?$allocator@PAUObj@@@std@@@std@@QAE?AViterator@12@V312@ABQAUObj@@@Z  00424010  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ?remove@ObjVec@@QAEXPAUObj@@@Z  00424060  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ?add@Scene@@QAEXPAUObj@@@Z  00424100  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ?reg@Registry@@QAEXPAUObj@@@Z  00424170  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ??0Group@@QAE@XZ  004246f0  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ??Hiter@V136@@QBE?AU01@H@Z  00424720  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ?resize@?$vector@UE36@@V?$allocator@UE36@@@std@@@std@@QAEXIUE36@@@Z  00424740  /O2 /MT /Gy /EHa /TP
+slices/s00423ed0/s00423ed0.cpp  ?erase@?$vector@UE36@@V?$allocator@UE36@@@std@@@std@@QAE?AViterator@12@V312@0@Z  004247e0  /O2 /MT /Gy /EHa /TP

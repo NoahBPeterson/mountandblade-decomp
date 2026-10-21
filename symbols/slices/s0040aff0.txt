@@ -1,0 +1,5 @@
+0040aff0 ?get_max@face@@UAE?AUvector4@rgl@@XZ  # face vtable 0x54a588 slot 11
+0040b080 ?vmax@@YAXPAUvector4@rgl@@PBU12@1@Z  # component-wise max (cdecl); provisional name
+0040b080 ?vmax_ext@@YAXPAUvector4@rgl@@PBU12@1@Z  # same function, declared apart in the source
+0054a588 ??_7face@@6B@  # face vtable
+0040a540 ??_Gface@@UAEPAXI@Z  # slot 0 of the shape vtables (scalar deleting dtor; folded)

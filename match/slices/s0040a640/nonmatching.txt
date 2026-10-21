@@ -1,0 +1,2 @@
+0040a640  248  capsule::draw: complete; the origin sums (v30+v20) are computed for all three lanes before the *0.5 and the copies are interleaved differently by cl; same size class (548 vs 558 bytes), operand order/lane scheduling of the matrix build differs
+0040ab10  25  renderer::tessellate: complete; only the register assignment differs (loop counter j in esi, vertex pointer in edi; the original has them swapped), tried hoisting c[], int k/lat/lon outside, pointer iteration, declaration order

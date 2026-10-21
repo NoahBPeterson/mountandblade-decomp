@@ -1,0 +1,15 @@
+00535482 ??_U@YAPAXI@Z  # operator new[]: the same libcmt code as operator new (called for the 0x417850 arrays)
+0054a740 ??_7stream_base@@6B@  # stream root vtable (2 real slots: reset, rewind)
+0054a6c8 ??_7named_object@@6B@  # named resource root vtable (slot 0 pure virtual dtor)
+0054ad68 ??_7mem_stream@@6B@  # in-memory binary stream vtable (all read and write slots)
+0054add8 ??_7bin_writer@@6B@  # file binary writer vtable (flush slot 26 = 0x417bb0)
+0054ae48 ??_7bin_reader@@6B@  # file binary reader vtable
+0054aeb4 ??_7frame_set@@6B@  # 0x34-byte resource owning a 32-entry vec16 table (slot 1 returns 7)
+0054aaac ??_7texture@@6B@  # 0x54-byte texture record (s00416540 texture) (slot 0 vector deleting dtor 0x417f20, slot 1 returns 2)
+0054ac08 ??_7effect_set@@6B@  # 0x2c-byte effect technique set (s00416ef0 effect_set) (slot 0 vector deleting dtor 0x417fb0)
+00417f20 ??_Etexture@@UAEPAXI@Z  # vector deleting destructor (flags 2 = array, 1 = free), vtable 0x54aaac slot 0
+00417fb0 ??_Eeffect_set@@UAEPAXI@Z  # vector deleting destructor, vtable 0x54ac08 slot 0
+00417850 vec_array::operator=  # copies a vec_array: n, n 16-byte vectors and n ints
+00417e50 read_continuous_quats  # reads a vec_array then flips signs so consecutive quaternions have non-negative dot
+00417bb0 bin_writer::flush  # fwrite of the unflushed tail of the buffer, fflush
+00417cb0 vec_table::vec_table  # allocates a 32-entry table of zero vec16s

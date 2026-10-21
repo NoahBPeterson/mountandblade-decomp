@@ -1,0 +1,2 @@
+004367c0 ?normalize@vec2@@QAEMXZ  # 2D normalize, returns the old length (len<=0 -> (0,1))
+004362e0 ?pick_sounds@Agent@@QAEXHHPAH000@Z  # sound id triples chosen from item flags and attack mode

@@ -1,0 +1,11 @@
+0054a5f4 ??_7manifold@@6B@  # vtable stored by the ctor at 0x40c670 (type_name "manifold")
+0054a63c ??_7composite@@6B@  # vtable stored by the creation sites at 0x40cb60 / 0x40ce10 (type_name "composite_body")
+0054a588 ??_7face@@6B@  # vtable stored by build_composite for each polygon (see s00408110)
+0054a4b8 ??_7shape_base@@6B@  # abstract shape base (0x407ff0 stores it)
+0040c670 manifold::manifold  # stores 0x54a5f4, zeroes three vector triples
+0040c6e0 manifold::save  # writes vertex count/floats then face records
+0040cb60 manifold::build_composite  # one face body per mesh face, wrapped in a composite_body
+0040cd00 identity_pos  # identity rotation rows + zero origin
+0040cd60 identity3  # three identity basis rows
+0040ced0 composite::save  # writes the body count, a type name per body, then each body
+00407ff0 ??0shape_ext@@QAE@XZ  # shape base constructor, out-of-line copy called by the composite_body creation sites

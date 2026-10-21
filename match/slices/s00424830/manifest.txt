@@ -1,0 +1,6 @@
+slices/s00424830/s00424830.cpp  ?_Insert_n@vec36@@QAEXPAUE36@@IABU2@@Z  00424830  /O2 /MT /Gy /EHa /TP
+slices/s00424830/s00424830.cpp  ??$_Uninit_copy@PAUE36@@PAU1@V?$allocator@UE36@@@std@@@std@@YAPAUE36@@PAU1@00AAV?$allocator@UE36@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00424bc0  /O2 /MT /Gy /EHa /TP
+slices/s00424830/s00424830.cpp  ??$_Uninit_fill_n@PAUE36@@IU1@V?$allocator@UE36@@@std@@@std@@YAXPAUE36@@IABU1@AAV?$allocator@UE36@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00424c40  /O2 /MT /Gy /EHa /TP
+slices/s00424830/s00424830.cpp  ?erase@vec136@@QAE?AUiterator_@1@U21@0@Z  00424d60  /O2 /MT /Gy /EHa /TP
+slices/s00424830/s00424830.cpp  ?_Insert_n@vec136@@QAEXPAUE136@@IABU2@@Z  00424db0  /O2 /MT /Gy /EHa /TP
+slices/s00424830/s00424830.cpp  ??$_Uninit_copy@PAUE136@@PAU1@V?$allocator@UE136@@@std@@@std@@YAPAUE136@@PAU1@00AAV?$allocator@UE136@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00425140  /O2 /MT /Gy /EHa /TP

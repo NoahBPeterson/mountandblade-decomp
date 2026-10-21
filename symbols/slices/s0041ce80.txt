@@ -1,0 +1,1 @@
+0041ce80 rgl::mesh::compute_tangents  # per-vertex tangent frame from face positions + uv; Gram-Schmidt against the normal with fallback axes, handedness flip

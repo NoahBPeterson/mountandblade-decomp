@@ -1,0 +1,1 @@
+00454320 Agent::on_removed  # destroys the agent's physics world, hides the skeleton, drops held items, queues it dead

@@ -1,0 +1,6 @@
+slices/s0040d7d0/s0040d7d0.cpp  ?load@composite@@UAEXPAUstream@@@Z  0040d7d0  /O2 /MT /Gy /TP
+slices/s0040d7d0/s0040d7d0.cpp  ?load@manifold@@UAEXPAUstream@@@Z  0040d9d0  /O2 /MT /Gy /TP
+slices/s0040d7d0/s0040d7d0.cpp  ?resize@?$vec@Uvector4@rgl@@@@QAEXIUvector4@rgl@@@Z  0040db80  /O2 /MT /Gy /TP
+slices/s0040d7d0/s0040d7d0.cpp  ?erase@?$vec@Uvector4@rgl@@@@QAE?AUiter@1@U21@0@Z  0040dbf0  /O2 /MT /Gy /TP
+slices/s0040d7d0/s0040d7d0.cpp  ??$uninit_fill_n@Uvector4@rgl@@@@YAXPAUvector4@rgl@@IABU01@AAV?$allocator@Uvector4@rgl@@@std@@U_Nonscalar_ptr_iterator_tag@3@@Z  0040df60  /O2 /MT /Gy /TP
+slices/s0040d7d0/s0040d7d0.cpp  ?resize@?$vec@Umface@@@@QAEXIUmface@@@Z  0040dff0  /O2 /MT /Gy /TP

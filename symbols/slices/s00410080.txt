@@ -1,0 +1,15 @@
+004101a0 ?_Insert_n@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@IAEXViterator@12@IABUE32@@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+004103f0 ?insert@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@QAE?AViterator@12@V312@ABUE96@@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+00410460 ?_Buy@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@IAE_NI@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+004104b0 ?_Buy@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@IAE_NI@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+00410500 ?_Buy@?$vector@UE20@@V?$allocator@UE20@@@std@@@std@@IAE_NI@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+00410550 ?resize@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@QAEXIUE32@@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+004105c0 ?_Buy@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@IAE_NI@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+00410610 ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+00410860 ?_Buy@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@IAE_NI@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0043e2a0 ?_Xlen@?$vector@HV?$allocator@H@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE20@@V?$allocator@UE20@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)

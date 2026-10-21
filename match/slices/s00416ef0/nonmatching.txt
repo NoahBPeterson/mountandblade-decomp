@@ -1,0 +1,1 @@
+004172d0 6 tstream3 ctor: complete; equiv PASS. cl stores the final vptr before `failed = 1` (+0x34) where the original stores it last; init-list/body permutations did not move it

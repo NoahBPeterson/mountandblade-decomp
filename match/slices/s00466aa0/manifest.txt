@@ -1,0 +1,5 @@
+slices/s00466aa0/s00466aa0.cpp  ?accumulate_kinds@terrain_obj@@QAEXXZ  00466aa0  /O2 /MT /Gy /TP
+slices/s00466aa0/s00466aa0.cpp  ?erode@terrain_obj@@QAEXXZ  00466c10  /O2 /MT /Gy /TP
+slices/s00466aa0/s00466aa0.cpp  ?emit_particle@terrain_obj@@QAEXPAUparticle_list@@HPBUmatrix@rgl@@PBUvector4@4@H@Z  00466cd0  /O2 /MT /Gy /TP
+slices/s00466aa0/s00466aa0.cpp  ?emit_by_type@terrain_obj@@QAEXHPBUmatrix@rgl@@PBUvector4@3@H@Z  00466d90  /O2 /MT /Gy /TP
+slices/s00466aa0/s00466aa0.cpp  ?triangle_corners@terrain_obj@@QAEXHHHPAH00@Z  00466e20  /O2 /MT /Gy /TP

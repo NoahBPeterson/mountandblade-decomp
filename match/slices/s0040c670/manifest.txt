@@ -1,0 +1,17 @@
+slices/s0040c670/s0040c670.cpp  ??0manifold@@QAE@XZ  0040c670  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?type_name@manifold@@UBE?AUstring@rgl@@XZ  0040c6c0  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?save@manifold@@UAEXPAUstream@@@Z  0040c6e0  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?scale@manifold@@UAEXPBM@Z  0040c820  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?transform@manifold@@UAEXPBUpos@@@Z  0040c880  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?get_min@manifold@@UAEPAUvector4@rgl@@PAU23@@Z  0040c940  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?get_max@manifold@@UAEPAUvector4@rgl@@PAU23@@Z  0040ca00  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?set_m8@manifold@@UAEXH@Z  0040cac0  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?or_m8@manifold@@UAEXH@Z  0040cb00  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?clone@manifold@@UAEPAUshape_base@@XZ  0040cb50  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?identity_pos@@YAPAUpos@@PAU1@@Z  0040cd00  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?identity3@@YAPAUmat3@@PAU1@@Z  0040cd60  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?clone@composite@@UAEPAUshape_base@@XZ  0040ce10  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?copy_from@composite@@UAEXPBUshape_base@@@Z  0040ce50  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?type_name@composite@@UBE?AUstring@rgl@@XZ  0040ceb0  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?save@composite@@UAEXPAUstream@@@Z  0040ced0  /O2 /MT /Gy /TP
+slices/s0040c670/s0040c670.cpp  ?update@composite@@UAEXXZ  0040cfb0  /O2 /MT /Gy /TP

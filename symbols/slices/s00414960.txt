@@ -1,0 +1,18 @@
+0054a6c8 ??_7named_object@@6B@  # vtable of the root object (one slot, _purecall): stored by the dtor 0x4150f0 (mesh.h calls it mesh_base)
+004150f0 ??1named_object@@QAE@XZ  # stores vtable 0x54a6c8, frees the name string at +4
+00415100 ?mb_snprintf@@YAXPADIPBDZZ  # _vsnprintf wrapper
+00415120 ?mb_file_exists@@YA_NPBD@Z  # FindFirstFileA/FindClose
+00415160 ?mb_open_user_file@@YAPAU_iobuf@@PBD0@Z  # fopen("<CSIDL_APPDATA>\Mount&Blade\<name>", mode), creating the directory
+004151e0 ?read_from@tstring@@QAEXPAU_iobuf@@I@Z  # reserve(n+1); fread; NUL; len
+00415220 ?reset@stream_base@@UAEXXZ  # stream_base vtable 0x54a740 slot 0: clear buffer + rewind
+00415240 ?rewind@stream_base@@UAEXXZ  # slot 1
+00415250 ?at_end@stream_base@@UAE_NXZ  # slot 23: cursor >= length
+00415270 ?set_autoflush@stream_base@@UAEXD@Z  # slot 24
+00415280 ?get_autoflush@stream_base@@UAEDXZ  # slot 25
+00415290 ?open_read@text_stream@@QAE_NPBD@Z  # fopen "rb", reads the whole file into the buffer
+00408020 ?flush@stream_base@@UAEHXZ  # slot 26: returns 0 (shared by ICF with other empty slots)
+00414960 ?update@psys@@QAEXPAUscene2@@@Z  # per-frame driver of the particle system (name provisional)
+00414ae0 ?noise_gradient@@YAXMPBMPAM@Z  # 3-D gradient (Perlin-style) noise, per-component weighted sum
+00414fc0 ?noise_fractal@@YAXMMHHPBMPAM@Z  # octave sum of noise_gradient (gain 0.61 after the first octave)
+00407d60 ?normalize@vector4@rgl@@QAEMXZ  # rgl::vector4::normalize (rgl.h comment keeps the address mid-line)
+00413d30 ?get_mesh@mesh_pool@rgl@@QAEPAUmesh@2@PAUres_t@2@@Z  # mesh_pool::get_mesh (s00413c50)

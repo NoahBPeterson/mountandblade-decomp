@@ -1,0 +1,2 @@
+0054b460 ??_7entity@rgl@@6B@  # vtable of the scene entity (set by the ctor 0x41fba0, slot 19 is 0x420960)
+00420960 ?clear@entity@rgl@@UAEXXZ  # vtable slot 19 of the entity: deletes child meshes and LOD records

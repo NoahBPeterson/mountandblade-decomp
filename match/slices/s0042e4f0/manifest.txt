@@ -1,0 +1,15 @@
+slices/s0042e4f0/s0042e4f0.cpp  ?LoadFile@TiXmlDocument@@QAE_NPAU_iobuf@@W4TiXmlEncoding@@@Z  0042e4f0  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ?Clone@TiXmlDocument@@UBEPAVTiXmlNode@@XZ  0042e6b0  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ?Print@TiXmlAttribute@@UBEXPAU_iobuf@@H@Z  0042e6f0  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ?StreamOut@TiXmlAttribute@@UBEXPAVTiXmlOutStream@@@Z  0042e7c0  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ?StreamOut@TiXmlComment@@UBEXPAVTiXmlOutStream@@@Z  0042e960  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ?Print@TiXmlText@@UBEXPAU_iobuf@@H@Z  0042e9a0  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ?StreamOut@TiXmlText@@UBEXPAVTiXmlOutStream@@@Z  0042ea60  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ?StreamOut@TiXmlDeclaration@@UBEXPAVTiXmlOutStream@@@Z  0042eaf0  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ?CopyTo@TiXmlDeclaration@@IBEXPAV1@@Z  0042ec50  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ?StreamOut@TiXmlUnknown@@UBEXPAVTiXmlOutStream@@@Z  0042ecc0  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ??0TiXmlString@@QAE@PBD@Z  0042ed00  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ??_GTiXmlAttribute@@UAEPAXI@Z  0042ed70  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ??0TiXmlComment@@QAE@XZ  0042edc0  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ??_GTiXmlComment@@UAEPAXI@Z  0042ee00  /O2 /MT /Gy /TP
+slices/s0042e4f0/s0042e4f0.cpp  ??0TiXmlText@@QAE@PBD@Z  0042ee30  /O2 /MT /Gy /TP

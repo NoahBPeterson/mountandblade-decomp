@@ -1,0 +1,4 @@
+00411c10 ?copy_from@VecPair@@QAEXABU1@@Z  # VecPair::copy_from: resize + element copy of both vector<vector4>
+00411d20 ?build_skin@Psys@@QAEXXZ  # per-vertex 4-bone skinning table from the bone->(vertex,weight) lists (nonmatching: register allocation)
+00412040 ?register_obj@Scene@@QAEXPAUObj@@@Z  # inserts Obj* at the front of the +0x3a4 vector (push_back when flags & 0x1000)
+00412100 ?add_obj_param@Scene@@QAEXPAUObj@@H@Z  # registers the Obj if needed, then appends (v, 0.0f) to Obj+0x1b4

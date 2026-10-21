@@ -1,0 +1,14 @@
+slices/s0042c9b0/s0042c9b0.cpp  ?split@tstring@@QBEPAU1@ABDAAH@Z  0042c9b0  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?bump_counter@@YAXXZ  0042cb70  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?mb_warning@@YAXPBDZZ  0042cb80  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?file_length@@YA_JPAU_iobuf@@@Z  0042cbc0  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?flush@log_stream@@UAEHXZ  0042cc10  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?mb_error@@YAXPBDZZ  0042cc80  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?set_delay@gui_timer@@QAEXM@Z  0042cd20  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?refresh_all@widget@@QAEDI@Z  0042cd60  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?set_o564@gui_manager@@QAEXPAUgui_obj@@@Z  0042cd80  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?handle_event@widget@@QAEDI@Z  0042d170  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?wheel_focus@widget@@QAEXXZ  0042cec0  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?reset@gui_manager@@QAEXXZ  0042d1b0  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?wheel_step@widget@@QAEXXZ  0042ce50  /O2 /MT /Gy /TP
+slices/s0042c9b0/s0042c9b0.cpp  ?set_o568@gui_manager@@QAEXPAUgui_obj@@_N@Z  0042cdb0  /O2 /MT /Gy /TP

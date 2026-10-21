@@ -1,0 +1,2 @@
+0044e2b0 ?shoot@Agent@@QAEXXZ  # fires a missile from the agent's hand (bone 9/19 blend), aim error from relative motion, then 0x44be50 spawn_missile; provisional name
+0044e970 ?add_quad@mesh@rgl@@QAEXPBUvector4@2@0PBUvec2@2@1PBI@Z  # axis-aligned quad: 4 points, 4 vertices with uv corners, 2 faces; provisional name

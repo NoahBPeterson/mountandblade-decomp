@@ -1,0 +1,10 @@
+0040ea00 renderer_set_texcoord_gen  # D3DTSS_TEXCOORDINDEX for stage (mode 0x10 sphere map, 0x20 camera normal, 0x30 reflection, 0x40 camera position), cached at +0x580+stage*4 of 0xa17910
+0040eab0 mesh_info_shader_class  # decodes flag bits 29..31 into 0..4
+0040eaf0 rot_state_ctor  # three zero rows + zero dword
+0040eba0 rnode_get70  # follows +0x18 links until the +0xa1 flag; returns &node->+0x70 (std::vector<elem32>)
+0040ebd0 rnode_get50  # same chain, returns +0x50
+0040ec00 rnode_get_a4  # same chain, returns +0xa4
+0040ec30 rnode_get90  # chain on the +0xa0 flag, returns +0x90
+0040ec60 rnode_get60  # same chain, returns +0x60
+0040ec90 emitter_spawn  # particle emitter: fills one 100-byte particle from the emitter's psf_* flags
+0040f0d0 key_table_find  # binary search in an ascending int key table; fraction between the neighbours

@@ -1,0 +1,16 @@
+0040bcb0 ?shape_contacts@@YAXPAUcoll_shape@@0HPAUcontact@@PAH@Z  # shape-vs-shape contact dispatcher on virtual type() (0 sphere, 1 capsule, 2 polygon, 3 compound); provisional name
+0040bfe0 ?shape_contact_count@@YAHPAUcoll_shape@@0HPAUcontact@@@Z  # wrapper returning the contact count; provisional name
+00409980 ?sphere_sphere_contact@@YAXPAUcoll_shape@@0HPAUcontact@@PAH@Z  # s00409500
+00409ac0 ?capsule_sphere_contact@@YAXPAUcoll_shape@@0HPAUcontact@@PAH@Z  # s00409500
+00409e90 ?capsule_capsule_contact@@YAXPAUcoll_shape@@0HPAUcontact@@PAH@Z  # s00409e90
+0040a000 ?polygon_sphere_contact@@YAXPAUcoll_poly@@PAUcoll_shape@@HPAUcontact@@PAH@Z  # s00409e90
+0040b0f0 ?polygon_capsule_contact@@YAXPAUcoll_poly@@PAUcoll_shape@@HPAUcontact@@PAH@Z  # s0040b0f0
+0054a4b8 ??_7shape@rgl@@6B@  # abstract shape base vtable stored by the sphere copy ctor
+0054a4f0 ??_7sphere@@6B@  # sphere vtable (slot 5 = clone 0x40c010)
+0040a540 ??_Gshape@rgl@@UAEPAXI@Z  # slot 0 of the shape vtables (scalar deleting dtor)
+0059c978 ??_7logic_error@@6B@  # std::logic_error vtable: ??_G 0x40c310, what 0x40c300
+0059c984 ??_7length_error@@6B@  # std::length_error vtable: ??_G 0x40c5c0
+0040c300 ?what@logic_error@@UBEPBDXZ  # libcpmt string.obj
+005354ae ?_Xran@_String_base@std@@QBEXXZ  # std::string out_of_range raiser (static CRT)
+00535506 ?_Xlen@_String_base@std@@QBEXXZ  # std::string length_error raiser (static CRT)
+00536020 _memmove  # static CRT

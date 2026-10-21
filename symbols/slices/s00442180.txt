@@ -1,0 +1,3 @@
+00407ca0 ??Gvector4@rgl@@QBE?AU01@ABU01@@Z  # rgl::vector4::operator- (rgl.h's comment is not at the start of the line, resolver missed it)
+00407c50 ?out_length@vector4@rgl@@QBEMXZ  # rgl::vector4::out_length (same)
+08ed5090 ?g_emit_defs@@3UEmitTable@@A  # effect emitter definition table (global object, address beyond the image sections)

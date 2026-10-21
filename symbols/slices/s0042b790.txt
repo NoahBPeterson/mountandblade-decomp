@@ -1,0 +1,25 @@
+0042b790 ?shadow_tick@StratEnt@@QAEXXZ  # strategic_entity: renders the entity into its 128x128 "shadow_shader" render target (called from update_shadows 0x42a1f0)
+0042ba50 ?find_entity@Ctx@@QAEPAUStratEnt@@H@Z  # scene lookup by entity id in the two entity lists (called from shadow_tick with the linked-entity id at +0x298)
+0042bac0 ?grow@tstring@@QAEXI@Z  # tstring: reserve n chars keeping the contents; called by push_back (0x42be70), write (0x42bf30), append (0x42c1e0)
+0042bb50 ?reserve@tstring@@QAEXI@Z  # tstring: reserve n chars discarding the contents; called by the C-string ctor (0x42bbe0), assign (0x42bcb0), operator= (0x42bc50)
+0042bbd0 ??0tstring@@QAE@XZ  # tstring default ctor (zeroes the four dwords; used by every by-value string local)
+0042bbe0 ??0tstring@@QAE@PBD@Z  # tstring ctor from a C string ("shadow_default" in 0x42b080)
+0042bc40 ??1tstring@@QAE@XZ  # tstring dtor (operator delete of the buffer); also named ??1PName@@QAE@XZ in the s00412150 slice
+0042bc50 ??4tstring@@QAEXABU0@@Z  # tstring::operator=
+0042bcb0 ?assign@tstring@@QAEXPBD@Z  # tstring::assign(const char*), used by shadow_tick on the skin's file name
+0042bd10 ?equals@tstring@@QBEDPBD@Z  # tstring == C string (inline strcmp; returns char, as the engine's bool); called as a literal compare by the serializers (name_string::equals in s0040c670)
+0042bdb0 ?differs@tstring@@QBE_NPBD@Z  # tstring != C string: calls equals 0x42bd10 and negates
+0042bdd0 ?equals@tstring@@QBEDABU1@@Z  # tstring == tstring (see s00415c80 mbstream.h tstring::equals)
+0042be50 ?clear@tstring@@QAEXXZ  # tstring::clear (len = 0, buf[0] = 0); inlined by get_string (0x42c350) on its out string
+0042be70 ?push_back@tstring@@QAEXD@Z  # tstring::push_back(char): grow(len+1), store, terminator; inlined into substr (0x42c4a0) and get_string (0x42c350)
+0042bea0 ?erase@tstring@@QAEXHH@Z  # tstring::erase(start, count)
+0042bef0 ?rewind@tstring@@QAEXXZ  # tstring::rewind: read cursor = 0
+0042bf00 ?read@tstring@@QAEXPAXH@Z  # copy n bytes from the read cursor, advance it (binary streams, s00418150)
+0042bf30 ?write@tstring@@QAEXPBXH@Z  # append n bytes (binary streams, s00418150)
+0042bf80 ?underscores_to_spaces@tstring@@QAEXXZ  # replaces '_' by ' ' (script identifiers to display text)
+0042bfb0 ?spaces_to_underscores@tstring@@QAEXXZ  # replaces ' ' by '_'
+0042bfe0 ?to_upper@tstring@@QAEXXZ  # 'a'..'z' -> 'A'..'Z' in place
+0042c020 ?to_lower@tstring@@QAEXXZ  # 'A'..'Z' -> 'a'..'z' in place
+0042c060 ?capitalize@tstring@@QAEXXZ  # upper-cases the first character
+0042c080 ?find@tstring@@QBEHABDH@Z  # index of a character from a start index, -1 if absent
+0042c0b0 ?rfind@tstring@@QBEHABDHH@Z  # last index of a character in [start, end), end = -1 means len; -1 if absent

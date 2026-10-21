@@ -1,0 +1,6 @@
+slices/s004260a0/s004260a0.cpp  ?collide@dynamic_entity@rgl@@UAEXXZ  004263d0  /O2 /MT /Gy /TP
+slices/s004260a0/s004260a0.cpp  ?query_shapes@world@rgl@@QAEXPAUentity@2@PAPAUshape@2@PAH2I@Z  00426490  /O2 /MT /Gy /TP
+slices/s004260a0/s004260a0.cpp  ?box_overlap3@@YAHPBUvector4@rgl@@000@Z  00426690  /O2 /MT /Gy /TP
+slices/s004260a0/s004260a0.cpp  ?box_overlap2@@YAHPBUvector4@rgl@@000@Z  00426700  /O2 /MT /Gy /TP
+slices/s004260a0/s004260a0.cpp  ?less@world@rgl@@QAE_NPAUObj@2@0@Z  00426960  /O2 /MT /Gy /TP
+slices/s004260a0/s004260a0.cpp  ??$unique@Viterator@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@@std@@YA?AViterator@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@0@V120@0@Z  004269e0  /O2 /MT /Gy /TP

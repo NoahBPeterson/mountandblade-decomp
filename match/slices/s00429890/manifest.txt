@@ -1,0 +1,2 @@
+slices/s00429890/s00429890.cpp  ?render@StratEnt@@UAEXPAUscene@@PAUrender_info@@@Z  0042a090  /O2 /MT /Gy /TP
+slices/s00429890/s00429890.cpp  ?first_dir_light@Ctx@@QAEPAULight@@XZ  0042a1a0  /O2 /MT /Gy /TP

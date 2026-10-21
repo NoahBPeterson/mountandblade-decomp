@@ -1,0 +1,17 @@
+0054a5f4 ??_7manifold@@6B@  # vtable stored by the ctor at 0x40c670 (called from composite::load)
+0054a63c ??_7composite@@6B@  # vtable of composite_body
+0054a588 ??_7face@@6B@  # vtable stored by the inline face construction in composite::load
+0054a540 ??_7capsule@@6B@  # vtable stored by the inline capsule construction in composite::load
+0054a4f0 ??_7sphere_shape@@6B@  # vtable stored by the inline sphere construction in composite::load
+0054a4b8 ??_7shape_base@@6B@  # abstract shape base
+0040d7d0 composite::load  # reads the body count and builds each body from its type name
+0040d9d0 manifold::load  # reads vertices and face records
+0040db80 vec<vector4>::resize  # std::vector<vector4>::resize(n, val)
+0040dc50 vec<vector4>::insert_n  # std::vector<vector4>::_Insert_n
+0040d550 ??$uninit_copy@Uvector4@rgl@@@@YAPAUvector4@rgl@@PAU01@00AAV?$allocator@Uvector4@rgl@@@std@@U_Nonscalar_ptr_iterator_tag@3@@Z  # std::_Uninit_copy, previous slice
+0040d750 ??$uninit_copy@Umface@@@@YAPAUmface@@PAU0@00AAV?$allocator@Umface@@@std@@U_Nonscalar_ptr_iterator_tag@2@@Z  # std::_Uninit_copy for mface, previous slice
+0043e2a0 ?xlen@?$vec@Uvector4@rgl@@@@QBEXXZ  # std::vector::_Xlen (throws length_error)
+0043e2a0 ?xlen@?$vec@Umface@@@@QBEXXZ  # same instance for mface
+0040e060 ?insert_n@?$vec@Umface@@@@QAEXUiter@1@IABUmface@@@Z  # std::vector<mface>::_Insert_n, next slice
+0040fd40 ?erase@?$vec@Umface@@@@QAE?AUiter@1@U21@0@Z  # std::vector<mface>::erase, next slice
+0041f4b0 ?clear@?$vec@Uvector4@rgl@@@@QAEXXZ  # std::vector::clear

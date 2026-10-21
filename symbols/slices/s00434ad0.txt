@@ -1,0 +1,1 @@
+08ee3100 ?g_skill_tbl@@3PADA  # table of 0x44-byte records indexed by the 4-bit field number (cap at +0x34, read at 0x4351da)

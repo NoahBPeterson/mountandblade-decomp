@@ -1,0 +1,6 @@
+00438860 camera_smooth_range_value  # clamps blend_target(0x4381e0) to the per-mode {lo,hi} pair at 0x590aac and eases the stored value toward it (x dt*9) unless within 0.8
+00438910 std_remove_copy_vector_int  # std::remove_copy over vector<int>::iterator (VC7.1 template: iterator returned through a hidden pointer)
+00438bc0 flagged_set_kind  # stores a 0..0x2a kind in the top byte of the flags dword at +4, clears byte +7, calls 0x437510
+00438cb0 ranged_hit_chance  # duration*2, x0.9 when +0x2c >= 0, item-type factors (thrown .65, bow .9, firearm .55), skill product/10000 capped at 1
+00438d80 mesh_node_calc_bounds  # min/max of the 32-byte vertex records (first three floats) of the node's (or its master's) vertex list, seeds +-1e7
+00438f90 mesh_node_list_cap_all  # caps each node's +0xc8 with the last entry of its int list

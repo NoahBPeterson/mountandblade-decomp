@@ -1,0 +1,5 @@
+00435490 ?clamped_team@Agent@@QBEHXZ  # team index clamped to 0..7 (default 7); same +0x1c4 field as s00432130 Agent::team
+004354b0 ?set_slot@Agent_f8@@QAEXHM@Z  # float store into the 0x2c-stride array at +0xf8
+00435a10 ??$_Copy_opt@PAHPAH@std@@YAPAHPAH00U_Scalar_ptr_iterator_tag@0@@Z  # std::copy of int* ranges: byte-exact via std::_Copy_opt instantiation
+00435860 ?init_placed@@YGXPAUPlacedObj@@PBH11PBUmatrix@rgl@@@Z  # placed-object initialiser (kind/id/value/matrix, name from item/record tables)
+00435840 ?mode_flag1@Mission@@QBEDXZ  # bit 1 of the 0x58-byte mode record selected by the mission

@@ -1,0 +1,11 @@
+slices/s00414960/s00414960.cpp  ??1named_object@@QAE@XZ  004150f0  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?mb_snprintf@@YAXPADIPBDZZ  00415100  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?mb_file_exists@@YA_NPBD@Z  00415120  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?mb_open_user_file@@YAPAU_iobuf@@PBD0@Z  00415160  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?read_from@tstring@@QAEXPAU_iobuf@@I@Z  004151e0  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?reset@stream_base@@UAEXXZ  00415220  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?rewind@stream_base@@UAEXXZ  00415240  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?at_end@stream_base@@UAE_NXZ  00415250  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?set_autoflush@stream_base@@UAEXD@Z  00415270  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?get_autoflush@stream_base@@UAEDXZ  00415280  /O2 /MT /Gy /TP
+slices/s00414960/s00414960.cpp  ?open_read@text_stream@@QAE_NPBD@Z  00415290  /O2 /MT /Gy /TP

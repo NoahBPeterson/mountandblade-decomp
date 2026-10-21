@@ -1,0 +1,4 @@
+0041c760 ?_Insert_n@?$vector@Uelem14@rgl@@V?$allocator@Uelem14@rgl@@@std@@@std@@IAEXViterator@12@IABUelem14@rgl@@@Z  # std::vector<bone influence {int, vector<IdxWeight>}>::_Insert_n (EH frame, catch funclets 0x41c916/0x41c9cd)
+0041ca60 rgl::resmgr::make_lod_mesh  # new 0xe0-byte LOD group; collects meshes named pat / pat.lodN (N 1..4) into its five lists, fills missing levels from the previous one
+0041cd10 ?resize@?$vector@Uelem14@rgl@@V?$allocator@Uelem14@rgl@@@std@@@std@@QAEXIUelem14@rgl@@@Z  # std::vector<bone influence>::resize(n, val) (val by value, destroyed by callee)
+0041cdc0 rgl::resmgr::get_lod_mesh  # find a LOD group by name in the manager's list (+0x10), else build one with make_lod_mesh and register it

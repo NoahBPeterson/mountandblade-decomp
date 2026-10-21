@@ -1,0 +1,12 @@
+slices/s00419420/s00419420.cpp  ??1mesh_list@@QAE@XZ  00419420  /O2 /MT /Gy /TP
+slices/s00419420/s00419420.cpp  ?forget@mesh_list@@QAEXXZ  00419470  /O2 /MT /Gy /TP
+slices/s00419420/s00419420.cpp  ?save_keyframes@@YAPAUstream_base@@PAU1@PAUkeyframes@@@Z  004194c0  /O2 /MT /Gy /TP
+slices/s00419420/s00419420_stl.cpp  ?_Ufill@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@IAEPAUE8@@PAU3@IABU3@@Z  00419510  /O2 /MT /Gy /TP
+slices/s00419420/s00419420.cpp  ?get_object@resmgr@@QAEPAUmesh@@PBUtstring@@@Z  00419540  /O2 /MT /Gy /TP
+slices/s00419420/s00419420.cpp  ?m419580@resmgr@@QAEHH@Z  00419580  /O2 /MT /Gy /TP
+slices/s00419420/s00419420.cpp  ?m419640@resmgr@@QAEXXZ  00419640  /O2 /MT /Gy /TP
+slices/s00419420/s00419420_stl.cpp  ??$_Ucopy@PAUE4@@@?$vector@UE4@@V?$allocator@UE4@@@std@@@std@@IAEPAUE4@@PAU2@00@Z  00419680  /O2 /MT /Gy /TP
+slices/s00419420/s00419420_stl.cpp  ?destroy@?$allocator@Uvec_array@@@std@@QAEXPAUvec_array@@@Z  004196a0  /O2 /MT /Gy /TP
+slices/s00419420/s00419420_stl.cpp  ??$_Uninit_copy@PAUvec_array@@PAU1@V?$allocator@Uvec_array@@@std@@@std@@YAPAUvec_array@@PAU1@00AAV?$allocator@Uvec_array@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004196d0  /O2 /MT /Gy /TP
+slices/s00419420/s00419420_stl.cpp  ?erase@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@QAE?AViterator@12@V312@0@Z  004199f0  /O2 /MT /Gy /TP
+slices/s00419420/s00419420.cpp  ?save_mesh@@YAPAUstream_base@@PAU1@PAUmesh@@@Z  00419760  /O2 /MT /Gy /TP

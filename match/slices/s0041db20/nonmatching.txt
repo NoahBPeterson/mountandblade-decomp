@@ -1,0 +1,1 @@
+0041db20  6  complete resource-stream loader; byte-exact except the inline render_res ctor inside the texture array-new loop: 'or ecx,-1' is scheduled after the two 0x80 stores instead of before them (statement-order hill climb found nothing better). Equivalence UNSUPPORTED: harness cannot model the pure-virtual stream/operator-new array path (import:_purecall)

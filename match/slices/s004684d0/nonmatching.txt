@@ -1,0 +1,2 @@
+004686a0  92  equiv PASS; statements in the same order, cl hoists the clock-table load (and push edi) ahead of the b4/50 stores
+00468c80  235  equiv PASS (66.7% coverage); result variable is constant-folded (mov al,1 where the original keeps bl), epilogue layout differs

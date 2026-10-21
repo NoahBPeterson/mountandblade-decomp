@@ -1,0 +1,9 @@
+00439a50 level_nearest_nav_face  # best nav face for a point: containing faces by smallest |dz| (< 2 below), else near faces (<10) by 10-dist-|dz|
+00439be0 level_floor_at  # point query of the cell (0x439780, mask 0x304), highest face polygon under p+1 (plane height), fallback lowest above
+00439d40 level_floor_z  # height only
+00439d60 level_trace_ray  # height-field line test (0x436da0), then capsule(0.015) swept from a toward b (clipped to maxlen) against the segment-query shapes
+00439ec0 group_remove_shape  # std::remove + erase of a shape pointer from the group's list, else from the first region list holding it
+00439fc0 group_init_link  # fills a 0xd8-byte link record from a polygon object and two vertex indices
+0043a130 group_all_shapes  # up to 32 shape pointers from the group list and every region list
+0043a1e0 strtab_lookup  # hash bucket of 16-byte tstring keys (0x433bb0), parallel value table at +0xdf30, returns "STR NOT FOUND: <key>" in a scratch string when absent
+0041f080 ??$remove@Viterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@std@@PAUshape_base@@@std@@YA?AViterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@0@V120@0ABQAUshape_base@@@Z  # std::remove over vector<T*>::iterator (one body for every pointer element type, ICF)

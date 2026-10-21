@@ -1,0 +1,9 @@
+00439100 body_copy_shape  # dispatches on shape_type (vtable slot 1): 0 sphere (0x40c030), 1 capsule (0x40a580), 2 face (0x40ae70), 3 composite (0x433470), 4 manifold -> build_composite (0x40cb60)
+004391d0 navmesh_face_contains_xy  # point-in-convex-polygon test on the face's vertex ring (cross products against each edge)
+00439280 navmesh_face_distance  # xy distance outside the polygon (max over edges) plus |dz| to the face plane
+00439410 navmesh_next_stamp  # visit-stamp counter += 3 with rollover reset of every face stamp past 1e9
+00439460 navmesh_trace  # walks the neighbour faces crossed by the segment from (x,y,z) to `to`, stops at end_face / step limit
+004396b0 cell_collect_masked  # merges the cell's unmasked shapes into the sorted pointer array out[] (dedup)
+00439780 cell_collect_point  # shapes of the cell whose box (xy, or 3-D via in_box 0x4336d0) contains the point
+00439870 level_query_segment  # grid walk of a segment (0x437290) then cell_collect_masked for each visited cell
+00439900 level_nav_search  # recursive neighbour walk keeping the nearest nav face containing p (|dz| < 2)

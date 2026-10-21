@@ -1,0 +1,7 @@
+slices/s00411a90/s00411a90.cpp  ?push_back@?$vector@UParticle@@V?$allocator@UParticle@@@std@@@std@@QAEXABUParticle@@@Z  00411a90  /O2 /MT /Gy /TP
+slices/s00411a90/s00411a90.cpp  ??$_Destroy_range@UBoneInfluence@@V?$allocator@UBoneInfluence@@@std@@@std@@YAXPAUBoneInfluence@@0AAV?$allocator@UBoneInfluence@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00411b20  /O2 /MT /Gy /TP
+slices/s00411a90/s00411a90.cpp  ?construct@?$allocator@UBoneInfluence@@@std@@QAEXPAUBoneInfluence@@ABU3@@Z  00411b60  /O2 /MT /Gy /TP
+slices/s00411a90/s00411a90.cpp  ??$_Uninit_copy@PAUBoneInfluence@@PAU1@V?$allocator@UBoneInfluence@@@std@@@std@@YAPAUBoneInfluence@@PAU1@00AAV?$allocator@UBoneInfluence@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00411b80  /O2 /MT /Gy /TP
+slices/s00411a90/s00411a90.cpp  ?copy_from@VecPair@@QAEXABU1@@Z  00411c10  /O2 /MT /Gy /TP
+slices/s00411a90/s00411a90.cpp  ?register_obj@Scene@@QAEXPAUObj@@@Z  00412040  /O2 /MT /Gy /TP
+slices/s00411a90/s00411a90.cpp  ?add_obj_param@Scene@@QAEXPAUObj@@H@Z  00412100  /O2 /MT /Gy /TP

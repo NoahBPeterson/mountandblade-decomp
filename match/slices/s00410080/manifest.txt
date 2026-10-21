@@ -1,0 +1,9 @@
+slices/s00410080/s00410080.cpp  ?_Insert_n@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@IAEXViterator@12@IABUE32@@@Z  004101a0  /O2 /MT /Gy /EHa /TP
+slices/s00410080/s00410080.cpp  ?insert@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@QAE?AViterator@12@V312@ABUE96@@@Z  004103f0  /O2 /MT /Gy /EHa /TP
+slices/s00410080/s00410080.cpp  ?_Buy@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@IAE_NI@Z  00410460  /O2 /MT /Gy /EHa /TP
+slices/s00410080/s00410080.cpp  ?_Buy@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@IAE_NI@Z  004104b0  /O2 /MT /Gy /EHa /TP
+slices/s00410080/s00410080.cpp  ?_Buy@?$vector@UE20@@V?$allocator@UE20@@@std@@@std@@IAE_NI@Z  00410500  /O2 /MT /Gy /EHa /TP
+slices/s00410080/s00410080.cpp  ?resize@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@QAEXIUE32@@@Z  00410550  /O2 /MT /Gy /EHa /TP
+slices/s00410080/s00410080.cpp  ?_Buy@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@IAE_NI@Z  004105c0  /O2 /MT /Gy /EHa /TP
+slices/s00410080/s00410080.cpp  ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z  00410610  /O2 /MT /Gy /EHa /TP
+slices/s00410080/s00410080.cpp  ?_Buy@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@IAE_NI@Z  00410860  /O2 /MT /Gy /EHa /TP

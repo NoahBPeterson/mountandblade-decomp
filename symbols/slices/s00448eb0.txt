@@ -1,0 +1,2 @@
+00407e90 ?dot@rgl@@YAMABUvector4@1@0@Z  # rgl::dot (rgl.h declares it with the address mid-line)
+00448eb0 ?ai_update_control@Agent@@QAEXXZ  # per-tick agent AI control update (target, move dir, input bits, combat states)

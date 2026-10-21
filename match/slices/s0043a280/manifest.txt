@@ -1,0 +1,11 @@
+slices/s0043a280/s0043a280.cpp  ?ui_weapon_class_name@@YAXHPAD@Z  0043a280  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?display_name@TroopRec@@QAEPAUtstring@@XZ  0043a480  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?ufill@vec12@@QAEPAUE12@@PAU2@IABU2@@Z  0043a4a0  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?ucopy@vecstr@@QAEPAUtstring@@PAU2@00@Z  0043a4d0  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?ucopy@vecint@@QAEPAHPAH00@Z  0043a4f0  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?release_body@AgentBodyOwner@@QAEXXZ  0043a6f0  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?none_sleeping@PhysSet@@QAE_NH@Z  0043a8a0  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?rebuild_static_body@PhysSet@@QAEXH@Z  0043a900  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?start_channel@AgentA@@QAEXHPAUAnimCmd@@PAIPAM@Z  0043a980  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?uninit_fill_n1c8@@YAXPAUE1c8@@IABU1@AAUallocE1c8@@Uptr_tag@@@Z  0043ab50  /O2 /MT /Gy /TP
+slices/s0043a280/s0043a280.cpp  ?locate_near@Ctx@@QAEHPBUvector4@rgl@@PAH1@Z  0043abf0  /O2 /MT /Gy /TP

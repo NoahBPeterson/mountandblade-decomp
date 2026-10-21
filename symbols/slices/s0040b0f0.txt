@@ -1,0 +1,1 @@
+0040b0f0 polygon_capsule_contact  # polygon face (4 verts at +0x20, normal +0xa0, count +0xb0) vs capsule (p0 +0x20, p1 +0x30, radius +0x60): fills 0x24-byte contacts, sibling of 0x409e90/0x40a000

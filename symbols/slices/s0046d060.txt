@@ -1,0 +1,1 @@
+0046d060 geombuffer_upload  # refills a vertex/index buffer from its meshes (static incremental/rebuild, dynamic), logs "Expanding Buffer Capacity to"

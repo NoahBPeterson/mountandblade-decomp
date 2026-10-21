@@ -1,0 +1,2 @@
+0054a540 ??_7capsule@@6B@  # vtable stored by the inline capsule construction in Agent::move_step
+0045d820 Agent::move_step  # per-frame movement/collision step

@@ -1,0 +1,2 @@
+0045f660 Agent::update  # per-frame agent tick: footstep sounds and dust/splash emitters on animation event times, AI/input poll, attack/movement updates, aim-error easing; provisional
+08ed50a8 ?g_default_fx@@3HA  # default effect kind index (compared with the emitter's +0x1a8 in Agent::update 0x45f660); address beyond the resolver's annotation range

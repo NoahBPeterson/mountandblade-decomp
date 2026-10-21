@@ -1,0 +1,13 @@
+slices/s004608d0/s004608d0.cpp  ?read@DialogRec@@QAEXPAUstream_base@@@Z  004608d0  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ??_EDialogRec@@QAEPAXI@Z  004609d0  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?read@DialogMgr@@QAEXPAUstream_base@@@Z  00460ab0  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?available@DialogMgr@@QAE_NHD@Z  00460b90  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?refresh_text@DialogMgr@@QAEXXZ  00460c10  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?next_party_id@PartyMgr@@QAEXPAH@Z  00460ca0  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?first_party_id@PartyMgr@@QAEHXZ  00460d20  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?select@DialogMgr@@QAEXPAUDlgLine@@@Z  00460d80  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?collect@DialogMgr@@QAEXPAUDlgLine@@HPAHD@Z  00460de0  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?advance@DialogMgr@@QAEXXZ  00460ff0  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?advance_all@DialogMgr@@QAEXPAH@Z  00461140  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?init_max_hp@Agent@@QAEXXZ  00461200  /O2 /MT /Gy /TP
+slices/s004608d0/s004608d0.cpp  ?copy_range@@YAPAUE24@@PAU1@00@Z  00461230  /O2 /MT /Gy /TP

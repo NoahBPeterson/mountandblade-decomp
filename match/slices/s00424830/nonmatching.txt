@@ -1,0 +1,1 @@
+00424cc0  31  vector<E136>::resize(n, x): complete (insert(end(), n-size(), x) / erase(begin()+n, end())); only the register assignment differs (original keeps _Myfirst in edi and n in esi, cl 13.10.3052 swaps them); source spellings of size()/insert/erase tried, none changes it

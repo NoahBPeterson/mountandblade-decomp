@@ -1,0 +1,9 @@
+0054a6c8 ??_7res_base@@6B@  # resource root vtable (slot 0 pure virtual dtor, slot 1 type)
+0054aaac ??_7render_res@@6B@  # 0x54-byte texture/render-target record (type 2); same vtable the s00417850 slice calls texture
+0054a740 ??_7stream_base@@6B@  # stream root vtable
+0054a890 ??_7tstream_b@@6B@  # text stream class left behind by the user-declared dtor in 0x41e150
+0054ac88 ??_7tstream_c@@6B@  # text resource reader (open_read_text)
+0054ad68 ??_7mem_stream@@6B@  # in-memory binary stream
+0054ae48 ??_7bin_reader@@6B@  # binary file reader
+0041db20 resmgr::load_stream  # reads "<type> <count> <records...>" blocks until "end" and creates textures, shaders, materials, meshes, bodies, skeletons, skeleton anims
+0041e150 resmgr::load_pack  # picks Resource\<name>.trf (text) or .brf (binary), re-exporting the .brf when the .trf is newer

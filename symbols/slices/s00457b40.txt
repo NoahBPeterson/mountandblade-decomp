@@ -1,0 +1,4 @@
+08ed4f60 ?g_voices@@3UVoiceTable@@A  # troop-class voice record table object, address beyond the resolver's annotation range (see s004452f0)
+08ed5090 ?g_emit_defs@@3UEmitTable@@A  # effect emitter definition table (see s004428c0)
+08ed50a0 ?g_voice_default_a@@3HA  # default effect index when a voice record has none (0x457b40, read after get_f1f0)
+08ed50a4 ?g_voice_default_b@@3HA  # default effect index when a voice record has none (0x457b40, read after get_f1f4)

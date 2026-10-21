@@ -1,0 +1,1 @@
+0054b454 ??_7owner_t@@6B@  # vtable of the 0x41f1d0 object (scene part owner; only slot 0 is seen)

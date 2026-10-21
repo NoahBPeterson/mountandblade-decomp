@@ -1,0 +1,6 @@
+00417730 ??_GPsys@@UAEPAXI@Z  # vtable 0x54a6f4 slot 0 (scalar deleting dtor)
+0054a6f4 ??_7Psys@@6B@  # vtable stored by ~Psys at 0x4127f0 (slot 2 = compute_sortkey 0x412980)
+0040fe10 ??_EVecPair@@QAEPAXI@Z  # vector deleting dtor: `push 3; call` in ~Psys (0x4127f0) and MorphSet::assign (0x4125e0)
+0042bc40 ??1PName@@QAE@XZ  # rgl::string destructor, called on Psys+0x1c by ~Psys (0x4127f0)
+004150f0 ??1PsysBase@@UAE@XZ  # base-class destructor tail-called by ~Psys (0x4127f0)
+00535482 ??_U@YAPAXI@Z  # operator new[] (static CRT), used by MorphSet::assign (0x4125e0)

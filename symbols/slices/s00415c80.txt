@@ -1,0 +1,10 @@
+00415c80 text_stream::r_float  # vtable 0x54a7d0/0x54a890/0x54ac88 slot 14; reads a token and atof()s it
+00415cf0 text_stream::r_stream  # vtable slot 13; counterpart of w_stream (0x415800), copies n buffer bytes into another stream
+00415d60 text_stream::open_read_text  # like open_read (0x415290) but fopen "r" and fread's own byte count
+00415df0 w_rotation  # writes 9 floats (rows s,f,u of an rgl::matrix) through stream slot 3 (w_float)
+00415e70 r_rotation  # same through slot 14 (r_float)
+00415ef0 w_matrix  # w_rotation + origin row
+00415f30 r_matrix  # r_rotation + origin row
+00415f70 noise_hash  # permutation-table lookups at 0x5a8160 (same table as the gradient noise 0x414ae0)
+00415fb0 render_config::write  # prints the rgl_config.txt option names ("first_time", "texture_detail", ...)
+00416490 w_skeleton  # name, bone count, then per bone int/tstring/uint/matrix (stride 0xdc)

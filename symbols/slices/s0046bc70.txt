@@ -1,0 +1,2 @@
+0046bc70 ?make_river@terrain_obj@@QAEXXZ  # picks a high-noise start cell, a far edge cell, traces a path (0x468fc0) and spreads the flow masks (0x469a70), then smooths; provisional name
+0046c0c0 ?_Buynode@?$list@HV?$allocator@H@std@@@std@@IAEPAU_Node@?$_List_nod@HV?$allocator@H@std@@@2@XZ  # std::list<int-sized value>::_Buynode(): 12-byte head node linking to itself

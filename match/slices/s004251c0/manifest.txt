@@ -1,0 +1,11 @@
+slices/s004251c0/s004251c0.cpp  ?add_tree@world@rgl@@QAEXPAUshape@2@@Z  00425240  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0.cpp  ??0dynamic_entity@rgl@@QAE@XZ  00425370  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0.cpp  ?type_name@dynamic_entity@rgl@@UAE?AUstring@2@XZ  00425490  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0.cpp  ?awake@dynamic_entity@rgl@@UAE_NXZ  004254b0  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0.cpp  ?point_velocity@dynamic_entity@rgl@@UAEXPAUvector4@2@PBU32@@Z  004254c0  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0.cpp  ?apply_impulse@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  00425550  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0.cpp  ?impulse_response@dynamic_entity@rgl@@UAEMPBUvector4@2@0@Z  00425670  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0.cpp  ?commit@dynamic_entity@rgl@@UAEXM@Z  00425730  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0.cpp  ?add_torque@dynamic_entity@rgl@@UAEXPBUvector4@2@@Z  004258e0  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0.cpp  ?add_torque_at@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  00425920  /O2 /MT /Gy /TP
+slices/s004251c0/s004251c0_eh.cpp  ??$uninit_fill_n@UE136@@@@YAXPAUE136@@IABU0@AAV?$allocator@UE136@@@std@@U_Nonscalar_ptr_iterator_tag@2@@Z  004251c0  /O2 /MT /Gy /EHa /TP

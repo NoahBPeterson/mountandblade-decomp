@@ -1,0 +1,9 @@
+0054aeb4 ??_7frame_set@@6B@  # skeleton model vtable (type() 7), stored by the dtor at 0x41aee0 / ctor 0x417e10
+0041aee0 ??_Eframe_set@@UAEPAXI@Z  # vtable 0x54aeb4 slot 0 (vector deleting dtor)
+0054b24c ??_7skel_anim@@6B@  # skeleton animation vtable (type() 8), stored by the ctor 0x41b4e0
+0041bed0 ??_Eskel_anim@@UAEPAXI@Z  # vtable 0x54b24c slot 0 (vector deleting dtor, calls 0x41b520)
+0041b520 ??1skel_anim@@UAE@XZ  # implicit dtor of skel_anim (members: tail arrays, key vector), tail-calls the root dtor
+0054a6c8 ??_7res_base@@6B@  # root resource vtable (slot 0 _purecall)
+0041a550 ??_EBone@@QAEPAXI@Z  # Bone vector deleting dtor (flags 3 = delete[]), called by ??_Eframe_set's scalar path
+0041a510 ??1Bone@@QAE@XZ  # Bone dtor (frees the link vector, destroys the name), passed to __vec_dtor by the array path
+0054abf0 ??_7skin@@6B@  # skin record vtable stored by its ctor 0x416cd0 (called from 0x41c420)

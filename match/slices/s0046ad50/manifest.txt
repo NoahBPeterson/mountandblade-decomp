@@ -1,0 +1,9 @@
+slices/s0046ad50/s0046ad50.cpp  ?AgentEq_pick_slots@@YGXPAUAgentEq@@@Z  0046b2d0  /O2 /MT /Gy /TP
+slices/s0046ad50/s0046ad50.cpp  ?fill56@@YAXPAUelem56@@0ABU1@@Z  0046b3a0  /O2 /MT /Gy /TP
+slices/s0046ad50/s0046ad50.cpp  ?ray@FireAgent@@QAEXPAUFireRay@@@Z  0046b410  /O2 /MT /Gy /TP
+slices/s0046ad50/s0046ad50.cpp  ?copy1c8@@YAPAUE1c8@@PAU1@00@Z  0046b4c0  /O2 /MT /Gy /TP
+slices/s0046ad50/s0046ad50.cpp  ?uninit_fill_n36@@YAXPAUrec36@@IABU1@AAUalloc36@@@Z  0046b500  /O2 /MT /Gy /TP
+slices/s0046ad50/s0046ad50.cpp  ?uninit_fill_n24@@YAXPAUelem24@@IABU1@AAUalloc24@@@Z  0046b570  /O2 /MT /Gy /TP
+slices/s0046ad50/s0046ad50.cpp  ?uninit_fill_n100@@YAXPAUparticle@@IABU1@AAUalloc100@@@Z  0046b5e0  /O2 /MT /Gy /TP
+slices/s0046ad50/s0046ad50.cpp  ?uninit_fill_n52@@YAXPAUelem52@@IABU1@AAUalloc52@@@Z  0046b650  /O2 /MT /Gy /TP
+slices/s0046ad50/s0046ad50.cpp  ?construct_arrset@@YGXPAUArrSet@@ABU1@@Z  0046b6c0  /O2 /MT /Gy /TP

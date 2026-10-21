@@ -1,0 +1,6 @@
+004529e0 Agent::drop_held  # rolls 25% per held slot to throw the item into the world (add_placed kind 6) at its carry bone
+00452bb0 Font::layout_clear  # clears the mesh then calls Font::layout 0x4520d0; returns its first argument
+00452c00 MsgLog::add  # on-screen message log: strips tags, wraps at 0x50 chars, scrolls the 32-entry ring of text+background meshes
+00452f80 Skeleton::set_visible  # on first show re-skins every psys and lod group; stores the frozen/visible byte at +0x58
+00453020 log_message  # MsgLog::add(*s, -261)
+00453050 Agent::get_label_box  # corner vectors of the box above an agent for its label; warns on an agent without a body

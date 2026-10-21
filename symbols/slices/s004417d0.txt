@@ -1,0 +1,2 @@
+00442060 ?construct@alloc_e56@@QAEXPAUE56@@ABU2@@Z  # std::allocator<E56>::construct (placement copy-construct with null check; called from 0x442080)
+00442080 ?uninit_copy_e56@@YAPAUE56@@PBU1@0PAU1@AAUalloc_e56@@@Z  # std::_Uninit_copy<E56*> (non-scalar tag; catch(...) funclet at 0x4420ea destroys the copied prefix)

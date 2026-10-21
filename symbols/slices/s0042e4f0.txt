@@ -1,0 +1,17 @@
+0054b8f8 ??_7TiXmlBase@@6B@  # vtable of TinyXML 2.5 TiXmlBase (dtor + 3 pure slots); stored last by ~TiXmlAttribute 0x42ed70 and by ~TiXmlNode 0x42e170
+0054b974 ??_7TiXmlAttribute@@6B@  # vtable stored by the sentinel/attribute ctors (slots: dtor 0x42ed70, Print 0x42e6f0, Parse 0x430d30, StreamOut 0x42e7c0)
+0054b988 ??_7TiXmlNode@@6B@  # TiXmlNode vtable (slot 0 = deleting dtor 0x42f010), stored by 0x42e170
+0054ba48 ??_7TiXmlComment@@6B@  # TiXmlComment vtable (slot 0 0x42ee00, StreamOut 0x42e960, Clone 0x42f470)
+0054bb20 ??_7TiXmlText@@6B@  # TiXmlText vtable (slot 0 0x42ee90, Print 0x42e9a0, StreamOut 0x42ea60, Clone 0x42f500)
+0042ed70 ??_GTiXmlAttribute@@UAEPAXI@Z  # vtable 0x54b974 slot 0: scalar deleting dtor (frees value then name, stores TiXmlBase vptr)
+0042ee00 ??_GTiXmlComment@@UAEPAXI@Z  # vtable 0x54ba48 slot 0
+005e23d0 ?nullrep_@TiXmlString@@0URep@1@A  # the shared empty rep of TiXmlString (size 0, capacity 0, "")
+0054b8f4 ?npos@TiXmlString@@2IB  # TiXmlString::npos
+0042ed00 ??0TiXmlString@@QAE@PBD@Z  # TiXmlString(const char*): init(strlen) + memcpy; tinystr.h inline emitted out of line
+0042d820 ??1TiXmlString@@QAE@XZ  # ~TiXmlString (quit), fastcall-style ecx = string
+0042d840 ?reserve@TiXmlString@@QAEXI@Z  # tinystr.cpp reserve(cap)
+0042d8b0 ?assign@TiXmlString@@QAEAAV1@PBDI@Z  # tinystr.cpp assign(str, len)
+0042d950 ?append@TiXmlString@@QAEAAV1@PBDI@Z  # tinystr.cpp append(str, len)
+0042dad0 ?PutString@TiXmlBase@@KAXABVTiXmlString@@PAV2@@Z  # PutString(const TiXmlString&, TiXmlString*), cdecl
+0042fc70 ?SetError@TiXmlDocument@@QAEXHPBDPAVTiXmlParsingData@@W4TiXmlEncoding@@@Z  # error(err, location, data, encoding)
+0042e170 ??1TiXmlNode@@UAE@XZ  # ~TiXmlNode proper (called from every derived destructor)

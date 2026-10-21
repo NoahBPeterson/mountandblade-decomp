@@ -1,0 +1,14 @@
+slices/s0040e060/s0040e060.cpp  ?_Insert_n@vec32@@QAEXPAUelem32@@IABU2@@Z  0040e060  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?uninit_fill_n32@@YAXPAUelem32@@IABU1@AAV?$allocator@Uelem32@@@std@@H@Z  0040e350  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?clamp@@YAMPBM00@Z  0040e3d0  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?frand@@YAMXZ  0040e400  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?add@vec3@@QAEXABU1@@Z  0040e420  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?pack_color@@YAIPBM@Z  0040e440  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?unpack_color@@YA?AUvector4@rgl@@PBI@Z  0040e4e0  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?rotate_fu@pos2@@QAEXPBM@Z  0040e570  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?rotate_su@pos2@@QAEXPBM@Z  0040e670  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?rotate_sf@pos2@@QAEXPBM@Z  0040e770  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?mul@pos3@@QBE?AUmatrix@rgl@@ABU23@@Z  0040e870  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  ?set_blend_mode@renderer@@QAEXH@Z  0040e940  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  $L73928  0040e200  /O2 /MT /Gy /TP /EHa
+slices/s0040e060/s0040e060.cpp  $L72380  0040e3bb  /O2 /MT /Gy /TP /EHa

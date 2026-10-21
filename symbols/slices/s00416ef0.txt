@@ -1,0 +1,19 @@
+004168f0 ??1material@@UAE@XZ  # called by 0x417690
+00416930 ?supported@material@@QAE_NXZ  # 
+00417600 ??_Eskin@@UAEPAXI@Z  # vector deleting dtor, slot 0 of vtable 0x54abf0
+00417690 ??_Ematerial@@UAEPAXI@Z  # slot 0 of vtable 0x54ab30
+00417730 ??_EPsys@@UAEPAXI@Z  # slot 0 of vtable 0x54a6f4 (same address as ??_GPsys in s00411a90's symbols)
+004177b0 ??_Ebody_part@@UAEPAXI@Z  # slot 0 of vtable 0x54ac58
+0054a6c8 ??_7res_base@@6B@  # vtable of the resource root (stored by effect_set/body_part ctors)
+0054a6f4 ??_7Psys@@6B@  # particle system vtable (deleting dtor 0x417730)
+0054a740 ??_7stream_root@@6B@  # 
+0054a890 ??_7tstream2@@6B@  # vtable stored by the dtor 0x417310 (text_stream2 in s00415320)
+0054ab30 ??_7material@@6B@  # vtable 0x54ab30 (deleting dtor 0x417690)
+0054abf0 ??_7skin@@6B@  # vtable 0x54abf0 (deleting dtor 0x417600)
+0054ac08 ??_7effect_set@@6B@  # vtable stored by 0x417010 (slots: dtor 0x417fb0, type 0x417040)
+0054ac58 ??_7body_part@@6B@  # vtable stored by 0x4171c0 (slots: dtor 0x4177b0, type 0x4171f0)
+0054ac88 ??_7tstream3@@6B@  # vtable stored last by 0x4172d0 (slots 13/14 = 0x415cf0/0x415c80)
+00401800 ??_H@YGXPAXIHP6EPAX0@Z@Z  # eh vector constructor iterator = s00401010 ?vec_ctor (new rgl::vector4[n])
+00401830 ??_I@YGXPAXIHP6EX0@Z@Z  # eh vector destructor iterator = s00401010 ?vec_dtor (array path of the deleting dtors)
+00535482 ??_U@YAPAXI@Z  # operator new[] (unnamed CRT jump to operator new)
+0053570d ??_V@YAXPAX@Z  # operator delete[]

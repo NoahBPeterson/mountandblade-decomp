@@ -1,0 +1,2 @@
+00457710 ?tick_death@Agent@@QAEXXZ  # death state machine: state 3 (down) -> 4 (fade) -> 5 (body released)
+00457af0 ?note_blow@Agent@@QAEXPAUBlow@@@Z  # reduce_blow, then remember the blow with the lowest damage_out

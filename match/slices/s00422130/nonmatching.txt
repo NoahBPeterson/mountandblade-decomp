@@ -1,0 +1,1 @@
+00422130  1479  complete and equivalent (equiv.py PASS, 68% coverage); ~114 differing instrs of 785: register allocation in the angular-velocity loop (temp-vector copies), 8-byte larger frame, push/lea scheduling in one qa.set call

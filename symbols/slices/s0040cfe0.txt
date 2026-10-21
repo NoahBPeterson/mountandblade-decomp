@@ -1,0 +1,13 @@
+0054a5f4 ??_7manifold@@6B@  # vtable stored by ~manifold at 0x40d340
+0054a63c ??_7composite@@6B@  # vtable stored by ~composite at 0x40d160
+0054a4b8 ??_7shape_base@@6B@  # base vtable stored last by both destructors
+0040d140 ??_Gcomposite@@UAEPAXI@Z  # vtable 0x54a63c slot 0 (scalar deleting dtor)
+0040d320 ??_Gmanifold@@UAEPAXI@Z  # vtable 0x54a5f4 slot 0 (scalar deleting dtor)
+0040d160 composite::~composite  # deletes every body then the array
+0040d340 manifold::~manifold  # three vector tidies inline
+0040d3d0 vec<vector4>::operator=  # std::vector<vector4>::operator= (VC7.1 Dinkumware)
+0040d550 uninit_copy<vector4>  # std::_Uninit_copy with try/catch(...) rethrow
+0041f4b0 ?clear@?$vec@Uvector4@rgl@@@@QAEXXZ  # std::vector::clear (_Tidy), shared out-of-line instance
+0041f4b0 ?clear@?$vec@Umface@@@@QAEXXZ  # same code folded for the 32-byte element type
+0042d570 ?buy@?$vec@Uvector4@rgl@@@@QAE_NI@Z  # std::vector<vector4>::_Buy
+004105c0 ?buy@?$vec@Umface@@@@QAE_NI@Z  # std::vector<mface>::_Buy

@@ -1,0 +1,2 @@
+slices/s004461e0/s004461e0.cpp  ?set_weapon_mode@Agent@@QAEXH@Z  004461e0  /O2 /MT /Gy /TP
+slices/s004461e0/s004461e0.cpp  ?start_attack@Agent@@QAEXH@Z  004464d0  /O2 /MT /Gy /TP

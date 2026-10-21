@@ -1,0 +1,6 @@
+slices/s0043ac40/s0043ac40.cpp  ?get_f1f0@Table1f8@@QAEHI@Z  0043b100  /O2 /MT /Gy /TP
+slices/s0043ac40/s0043ac40.cpp  ?get_f1f4@Table1f8@@QAEHI@Z  0043b130  /O2 /MT /Gy /TP
+slices/s0043ac40/s0043ac40.cpp  ?first_used@AgentTable@@QAEHXZ  0043b1b0  /O2 /MT /Gy /TP
+slices/s0043ac40/s0043ac40.cpp  ?get@AgentTable@@QAEPAUAgent@@I@Z  0043b1f0  /O2 /MT /Gy /TP
+slices/s0043ac40/s0043ac40.cpp  ?ufill@vecstr@@QAEPAUtstring@@PAU2@IABU2@@Z  0043b2b0  /O2 /MT /Gy /TP
+slices/s0043ac40/s0043ac40.cpp  ?ucopy@vecE1c8@@QAEPAUE1c8@@PAU2@00@Z  0043b2e0  /O2 /MT /Gy /TP

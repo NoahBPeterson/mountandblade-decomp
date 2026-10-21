@@ -1,0 +1,1 @@
+00420ec0  2  slotarr::clear: complete; the two address computations `[slots + off + 0x1b8]` / `[slots + off + 0x1b0]` in the second slot loop use the opposite SIB base/index order (esi+eax in the original, eax+esi in mine); explicit pointer forms, (slots + i) and byte-offset arithmetic all give the same bytes

@@ -1,0 +1,1 @@
+0044d000  2392  complete (all paths and calls); equiv WEAK not FAIL (harness 21.6% coverage: agent-table reads fault on random pointers); 86 bytes short: else-block layout (no-threat loop after tail), stack slot order, threat-loop regalloc, x87 operand order

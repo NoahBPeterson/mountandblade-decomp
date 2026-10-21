@@ -1,0 +1,4 @@
+0041ed70 ??_EEnvRec@@QAEPAXI@Z  # vector deleting destructor of the 0xd8-byte envelope record (inline dtor frees k0/k1/k2), called with flags 3 by 0x46b9d0
+0046b940 ??0ViewParams@@QAE@XZ  # constructor of a viewport / light parameter block (frustum at +0x34, two identity frames at +0x1a4 / +0x1e4); provisional
+0046b9d0 ?set_env_count@FxDef2@@QAEXH@Z  # (re)allocates the EnvRec array (0xd8 bytes each) and the int array of an FxDef (env at +0x40, count +0x44, ints +0x48)
+0046baf0 ?seed_brushes@Terr@@QAEXMMM@Z  # scatters random apply_brush strokes (0x468da0) over the terrain; count from area / size^2 and a random factor; provisional

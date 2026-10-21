@@ -1,0 +1,4 @@
+0054b454 ??_7FxElem@@6B@  # vtable stored by the FxElem ctor 0x428d10 (element of the skeleton FxDef; dtor 0x41f1d0)
+00428e80 ?clear_geometry@mesh@@QAEXXZ  # resizes the five geometry vectors of a mesh to 0 (called per cached mesh by scene::reset 0x428f30)
+00407c20 ??0vector4@rgl@@QAE@XZ  # empty vector4 default ctor (ICF folds all empty ctors here); passed as the element ctor to __vec_new by EnvRec::alloc 0x428c60
+00428b10 ?quat_from_matrix@@YAXPAUquat4@@PBM@Z  # trace > 0 branch, else the largest-diagonal branch with nxt[3]={1,2,0}: the classic rotation-matrix to quaternion conversion

@@ -1,0 +1,27 @@
+0040f9a0 ??$_Uninit_fill_n@PAUE32@@IU1@V?$allocator@UE32@@@std@@@std@@YAXPAUE32@@IABU1@AAV?$allocator@UE32@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fa10 ??$_Uninit_fill_n@PAUE8@@IU1@V?$allocator@UE8@@@std@@@std@@YAXPAUE8@@IABU1@AAV?$allocator@UE8@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fa80 ??$_Uninit_fill_n@PAUE100@@IU1@V?$allocator@UE100@@@std@@@std@@YAXPAUE100@@IABU1@AAV?$allocator@UE100@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040faf0 ??$_Uninit_copy@PAUE8@@PAU1@V?$allocator@UE8@@@std@@@std@@YAPAUE8@@PAU1@00AAV?$allocator@UE8@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fb60 ??A?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@QBEABUE96@@I@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fb80 ??A?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@QBEABUE32@@I@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fb90 ??$_Ucopy@PAUE96@@@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@IAEPAUE96@@PAU2@00@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fbb0 ??$_Ucopy@PAUE48@@@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@IAEPAUE48@@PAU2@00@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fbd0 ??$_Ucopy@PAUE32@@@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@IAEPAUE32@@PAU2@00@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fbf0 ??$_Ucopy@PAUE8@@@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@IAEPAUE8@@PAU2@00@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fc10 ??$_Ucopy@PAUE100@@@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@IAEPAUE100@@PAU2@00@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fc30 ?_Ufill@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@IAEPAUE96@@PAU3@IABU3@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fc60 ?_Ufill@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@IAEPAUE48@@PAU3@IABU3@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fc90 ?_Ufill@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@IAEPAUE8@@PAU3@IABU3@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fcc0 ?_Ufill@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@IAEPAUE100@@PAU3@IABU3@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fcf0 ?erase@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@QAE?AViterator@12@V312@0@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fd40 ?erase@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@QAE?AViterator@12@V312@0@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fd90 ?_Ufill@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@IAEPAUE32@@PAU3@IABU3@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fdc0 ?erase@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@QAE?AViterator@12@V312@0@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fed0 ?_Insert_n@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@IAEXViterator@12@IABUE96@@@Z  # std::vector/<memory> template instantiation (VC7.1 Dinkumware STL), byte-exact
+0040fe10 ??_EVecPair@@QAEPAXI@Z  # vector deleting destructor of the 0x20-byte two-vector record (delete[] at 0x4125e0), byte-exact; TU built without EH switches
+0043e2a0 ?_Xlen@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE20@@V?$allocator@UE20@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE32@@V?$allocator@UE32@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)

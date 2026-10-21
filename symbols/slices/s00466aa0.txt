@@ -1,0 +1,7 @@
+00466aa0 ?accumulate_kinds@terrain_obj@@QAEXXZ  # per quad: counts corners of class 2 and sums their v50 weights, stores sum*0.2273 in quad+0x34 when count > 2 and sum > 2.75
+00466c10 ?erode@terrain_obj@@QAEXXZ  # random height perturbation where v50 + v4c < 0.5, scaled by (1 - v4c) and the +0xc3b0e0 factor; adds to pz and h2
+00466cd0 ?emit_particle@terrain_obj@@QAEXPAUparticle_list@@HPBUmatrix@rgl@@PBUvector4@4@H@Z  # appends a 0xa0-byte particle (type, source cell via 0x464b40, frame, vector, animation frame % nframes) to a list capped at 0x40000
+00466d90 ?emit_by_type@terrain_obj@@QAEXHPBUmatrix@rgl@@PBUvector4@3@H@Z  # selects one of the three particle lists from the 64-bit type flags (0x80000 -> list_c, 0x400000 -> list_b, else list_a) of the table at *0x5e28f8
+00466e20 ?triangle_corners@terrain_obj@@QAEXHHHPAH00@Z  # the three (x,y) corners of one of the two triangles of quad (x,y) depending on quad.diag
+00466ed0 ?sun_light@terrain_obj@@QAEXPAUvector4@rgl@@PBM1@Z  # ambient + max(0, -dot(sun_dir, n)) * scale * sun_diffuse (offsets +0x843bd0c..+0x843bd44)
+00466fa0 ?create_chunk_entities@terrain_obj@@QAEXXZ  # splits the grid into up to 4x4 chunks of `block` cells, creating one type-9 entity per chunk (World 0x428440) placed at the chunk centre cell + 2.0 height

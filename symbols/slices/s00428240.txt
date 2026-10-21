@@ -1,0 +1,9 @@
+0054b4d8 ??_7mesh_entity@@6B@  # vtable stored by the inline derived ctor in World::instantiate 0x428240 (slot 1 = 0x48b1f0, type name "mesh_entity")
+0054b7b8 ??_7static_entity@@6B@  # vtable of static_entity ("static_entity" type name; slot 1 = 0x493300), stored by the inline derived ctor in 0x428240
+0054b5d0 ??_7strategic_entity@@6B@  # vtable 0x54b5d0 (slot 16 = thunk 0x4286d0)
+0054b730 ??_7skeleton_entity@@6B@  # vtable 0x54b730 ("skeleton_entity", slot 16 = 0x4286e0)
+0054b460 ??_7entity@@6B@  # base vtable stored by the ctor 0x41fba0
+0054a63c ??_7composite@@6B@  # collision shape vtable stored by the inlined copy ctor in 0x4285e0
+0054b454 ??_7FxElem@@6B@  # vtable stored by the FxElem ctor 0x428d10
+00428240 ?instantiate@World@@QAEPAUentity@@H@Z  # factory: compares the requested id with the type id of a temporary of each entity class (entity, mesh_entity, static_entity, dynamic_entity, skeleton_entity, strategic_entity)
+00428440 ?create_entity@World@@QAEPAUentity@@H@Z  # "Unable to create entity of type id %d." (0x54b828), assigns the running id (+0x9c) and registers the entity in the list at +0x8c

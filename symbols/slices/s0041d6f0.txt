@@ -1,0 +1,1 @@
+0041d6f0 read_mesh  # binary mesh reader: names, flags, resource, points, bone influences, key frames, vertices (normal, uv), faces, then tangents/skin (error "Too many bones in mesh %s" if > 32)

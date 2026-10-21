@@ -1,0 +1,1 @@
+0043bdb0 ?update_aim_error@Agent@@QAEXXZ  # per-tick aim-error smoother for ranged weapons (bow/crossbow/thrown/pistol/musket); provisional name

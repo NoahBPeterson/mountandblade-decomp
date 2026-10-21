@@ -1,0 +1,7 @@
+slices/s00419a30/s00419a30.cpp  ??1resmgr@@QAE@XZ  00419e90  /O2 /MT /Gy /TP
+slices/s00419a30/s00419a30_stl.cpp  ??$_Destroy_range@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@YAXPAUvec_array@@0AAV?$allocator@Uvec_array@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0041a0f0  /O2 /MT /Gy /TP
+slices/s00419a30/s00419a30_stl.cpp  ??$_Uninit_fill_n@PAUvec_array@@IU1@V?$allocator@Uvec_array@@@std@@@std@@YAXPAUvec_array@@IABU1@AAV?$allocator@Uvec_array@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0041a130  /O2 /MT /Gy /TP
+slices/s00419a30/s00419a30_stl.cpp  ??$_Ucopy@PAUvec_array@@@?$vector@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@IAEPAUvec_array@@PAU2@00@Z  0041a1c0  /O2 /MT /Gy /TP
+slices/s00419a30/s00419a30_list.cpp  ?_Incsize@?$list@PAUres_base@@V?$allocator@PAUres_base@@@std@@@std@@IAEXI@Z  0041a1e0  /O2 /MT /Gy /TP
+slices/s00419a30/s00419a30_stl.cpp  ?_Destroy@?$vector@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@IAEXPAUvec_array@@0@Z  0041a270  /O2 /MT /Gy /TP
+slices/s00419a30/s00419a30_stl.cpp  ?_Ufill@?$vector@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@IAEPAUvec_array@@PAU3@IABU3@@Z  0041a290  /O2 /MT /Gy /TP
