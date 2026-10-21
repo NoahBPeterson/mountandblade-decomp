@@ -1,0 +1,1 @@
+../src/dxframework/d3dutil.cpp  ?D3DUtil_D3DFormatToString@@YAPBDW4_D3DFORMAT@@_N@Z  00407250  /O2 /MT /Gy /TP
