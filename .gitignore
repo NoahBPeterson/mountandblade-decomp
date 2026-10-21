@@ -5,3 +5,4 @@ work/
 *.pdb
 __pycache__/
 .venv/
+game
