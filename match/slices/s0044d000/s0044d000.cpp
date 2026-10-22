@@ -166,7 +166,7 @@ inline Pair Agent::cur_pair() const
     }
     return r;
 }
-#define AG(i) (g_mission->agents.pages[(i) >> 4][(i) & 0xf])
+#define AG(i) (g_mission->agents.pages[(unsigned)(i) >> 4][(unsigned)(i) & 0xf])   // unsigned index: shr, as the original
 
 float frand();                                                          // 0x40e400
 

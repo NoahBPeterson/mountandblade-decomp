@@ -6,11 +6,13 @@ the same real globals. Methods, tried in order (the report records which one fir
 
   import        __imp_X -> the IAT slot of X; a direct reference to an import -> its image thunk
   crt           compiler helpers (__chkstk, __ftol2_sse, ___security_cookie, ...) from lib_names.txt
-  symbols       exact mangled name in symbols/*.txt, symbols/slices/*.txt, pdb_globals.json, or a
+  annotation    a '// 0x...' comment on the declaration line (or a '// @ 0x...' marker above it)
+                in the slice source, matched by identifier and enclosing class (tried before symbols/:
+                names are not unique across slices)
+  symbols       exact mangled name in symbols/*.txt, symbols/slices/*.txt, byte-exact manifest rows
+                (match/slices/*/manifest.txt, src/**/*.manifest.txt), pdb_globals.json, or a
                 unique qualified name there (only when our object has no overload of that name)
   hex-name      an address embedded in the name (FUN_00abcdef, Fn9467b0, g_01582df8, ..._0167a6d0)
-  annotation    a '// 0x...' comment on the declaration line (or a '// @ 0x...' marker above it)
-                in the slice source, matched by identifier and enclosing class
   rdata-literal string literals found byte-identical in the image's .rdata
   align         the N-th call/global reference of ours vs the original's N-th one, between
                 already-resolved anchors, when gap lengths and instruction mnemonics agree
@@ -200,6 +202,15 @@ class SymbolDB:
                         self.qual[q].add(va)
                 else:
                     self.qual[nm].add(va)
+        # byte-exact manifest rows (`<src> <mangled> <va> <flags>`) are the strongest name evidence there is: a
+        # callee our object references but symbols/ never listed (an out-of-line vector::resize matched in a
+        # neighbouring slice) would otherwise run as our own copy and its inner calls misalign the call trace
+        for f in glob.glob(os.path.join(ROOT, "match", "slices", "*", "manifest.txt")) + \
+                glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True):
+            for line in open(f, encoding="utf-8", errors="replace"):
+                p = line.split()
+                if len(p) >= 3 and p[1].startswith(("?", "_")) and re.fullmatch(r"[0-9a-fA-F]{6,8}", p[2]):
+                    self.mangled[p[1]].add(int(p[2], 16))
         try:
             for k, v in json.load(open(os.path.join(ROOT, "symbols", "pdb_globals.json"))).items():
                 nm = v["name"]
@@ -577,11 +588,11 @@ class Resolver:
         return self.img.in_data(va) or va in self.img.start_set
 
     def by_symbols(self, name, our_quals, want_func):
-        vas = self.db.mangled.get(name)
-        if vas and len(vas) == 1:
-            va = next(iter(vas))
-            if self.plausible(va, want_func):
-                return va, "symbols(mangled)"
+        # implausible candidates (a data name on a code address, from a mistyped symbols line) are dropped
+        # before the uniqueness test, so one bad line elsewhere cannot make a name ambiguous
+        vas = {v for v in self.db.mangled.get(name, ()) if self.plausible(v, want_func)}
+        if len(vas) == 1:
+            return next(iter(vas)), "symbols(mangled)"
         q = demangle_qual(name)
         if q and our_quals.get(q, 0) == 1 and "::" in q:
             vas = self.db.qual.get(q)
@@ -727,16 +738,19 @@ class Resolver:
             va = self.by_crt(name)
             if va:
                 return va, "crt"
+            # The slice's own `// 0x` annotation wins over symbols/: names are not unique across slices (two
+            # slices each called a different global `g_item_count`, and the other slice's symbols line sent
+            # 0x44c210's bounds check to the wrong address: a false FAIL).
+            va, how = self.by_annotation(name, annots, wf)
+            if va:
+                return va, how
+            note = how
             va, how = self.by_symbols(name, our_quals, wf)
             if va:
                 return va, how
             va = self.by_hex_name(name, wf)
             if va:
                 return va, "hex-name"
-            va, how = self.by_annotation(name, annots, wf)
-            if va:
-                return va, how
-            note = how
             # a slice stub renamed for a module TU (`System_s0113_88f0`, `string8_s0083_f140`): its methods keep the slice
             # spelling in symbols/ and in the `// 0x` annotations, so the suffix is stripped and the name retried
             # (mig9/mig10 holds: renamed stubs lost the callee bindings the slice had)
