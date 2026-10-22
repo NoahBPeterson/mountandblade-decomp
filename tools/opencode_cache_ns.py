@@ -15,7 +15,7 @@ k % N to range k, so concurrent sessions land in disjoint namespaces.
 The session header is deliberately NOT set at provider level: provider-level headers can
 override per-model ones, which would make every alias share one namespace (a no-op).
 
-usage: opencode_cache_ns.py [N]        # default 32; rewrites .opencode/opencode.json
+usage: opencode_cache_ns.py [N] [BASE] # default 32, deepseek-v4.1-flash; rewrites .opencode/opencode.json
 """
 import json
 import os
@@ -24,7 +24,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CFG = os.path.join(ROOT, ".opencode", "opencode.json")
 PROVIDER = "cheaperinference"
-BASE = "deepseek-v4.1-flash"
+BASE = sys.argv[2] if len(sys.argv) > 2 else "deepseek-v4.1-flash"  # base model key (= API model id)
 NS_PREFIX = "mb-decomp"
 STALE = {BASE + "-off", BASE + "-authprobe"}  # probe aliases from development
 

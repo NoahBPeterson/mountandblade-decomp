@@ -179,7 +179,7 @@ def last_assistant(sid):
 
 retry_at = {}    # sid -> last re-prompt after a provider error (not counted as a nudge)
 nudged_at = {}   # sid -> (monotonic time, done-count when nudged)
-moved = {}       # range -> (time the settled count last changed, that count)
+moved = {}       # session -> (time the settled count last changed, that count)
 nudges = {}      # session -> nudges sent (re-read from the log on restart)
 abandoned = set()  # sessions; keyed by session so a re-queued range (new session) starts fresh
 if os.path.exists(LOG):
@@ -212,13 +212,13 @@ while True:
         if done >= tot:
             finished += 1
             continue
-        if moved.get(k, (0, -1))[1] != done:
-            moved[k] = (now, done)
-        if a.stall and now - moved[k][0] > a.stall:
+        if moved.get(sid, (0, -1))[1] != done:
+            moved[sid] = (now, done)
+        if a.stall and now - moved[sid][0] > a.stall:
             uns = []
             progress(k, uns)
             api("POST", "/api/session/%s/interrupt" % sid, {})
-            log("STALLED r%d %s (done %d/%d unchanged for %.0fs), interrupted" % (k, sid, done, tot, now - moved[k][0]))
+            log("STALLED r%d %s (done %d/%d unchanged for %.0fs), interrupted" % (k, sid, done, tot, now - moved[sid][0]))
             log("ABANDONED r%d %s (done %d/%d after stall) unsettled: %s" % (k, sid, done, tot, " ".join(uns)))
             abandoned.add(sid)
             finished += 1
