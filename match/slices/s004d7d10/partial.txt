@@ -1,0 +1,4 @@
+# complete translations whose code is not byte-exact
+004d7d10   120   82 diff  ?key_binding_name@options_panel@@QAEXHPAUtstring@@PAH@Z
+004d7e50   426  319 diff  ?draw_faction_report@options_panel@@QAEXXZ
+004d8000  1739 1165 diff  ?options_panel_import_export@@YAXPAUoptions_panel@@H@Z
