@@ -55,8 +55,18 @@ def our_insns(coff, fsym):
     data = sec.data
     rel = {off: (si, typ) for (off, si, typ) in sec.relocs}
 
+    # a switch's `jmp [eax*4 + table]` holds only the addend until relocated: apply our own section's DIR32
+    # relocations for decoding, or recursive descent never reaches the case bodies and the audit pairs the
+    # default case with the original's first case (0x4055e0)
+    code = bytearray(data)
+    for off, (si, typ) in rel.items():
+        s = coff.syms[si]
+        if typ == REL_DIR32 and s.defined and s.secno == fsym.secno and off + 4 <= len(code):
+            struct.pack_into("<I", code, off, (s.value + struct.unpack_from("<I", data, off)[0]) & 0xFFFFFFFF)
+    code = bytes(code)
+
     def rd(a, n):
-        return data[a:a + n]
+        return code[a:a + n]
 
     def tt(a):
         x = rel.get(a)

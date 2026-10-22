@@ -28,7 +28,7 @@ TiXmlText::~TiXmlText() {}
 // @ 0x42eec0
 // TiXmlDeclaration::TiXmlDeclaration() -- inline in the header; out-of-line copy
 
-// @ 0x42ef00 (deleting form; 0x42ef20 is the destructor proper)
+// @ 0x42ef20 (the destructor proper; defining it here also emits the deleting form 0x42ef00)
 TiXmlDeclaration::~TiXmlDeclaration() {}
 
 // @ 0x42ef70
@@ -43,7 +43,7 @@ TiXmlUnknown::~TiXmlUnknown() {}
 TiXmlDocument::~TiXmlDocument() {}
 #pragma inline_depth()
 
-// @ 0x42f010
+// @ 0x42e170 (the destructor proper, out of line in s0042dcb0; defining it here emits the deleting form 0x42f010)
 TiXmlNode::~TiXmlNode()
 {
     TiXmlNode* node = firstChild;

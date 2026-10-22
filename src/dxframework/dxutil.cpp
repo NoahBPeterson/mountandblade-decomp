@@ -11,6 +11,7 @@
 #include <mmsystem.h>
 #include <tchar.h>
 #include <string.h>
+#include <new>             // declares operator new[]/delete[]: without it cl 13.10 uses plain operator new/delete for arrays (the original calls 0x535482/0x53570d)
 #include "./dxutil.h"
 
 //-----------------------------------------------------------------------------

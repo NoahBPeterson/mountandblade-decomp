@@ -1,5 +1,6 @@
 // Slice s00401010: Direct3D application framework (window creation, device reset, error messages).
 #include <string.h>
+#include <new>             // declares operator delete[]: without it cl frees arrays with plain operator delete
 #include "s00401010.h"
 
 Application* g_app;     // 0x5d6f40

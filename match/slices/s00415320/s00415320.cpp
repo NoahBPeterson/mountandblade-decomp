@@ -238,7 +238,7 @@ stream_base& text_stream::r_byte(char* v)
     int toklen;
     EXPECT_TOKEN();
     buf.get_token(tok, &toklen);
-    *v = (char)atol(tok);
+    *v = (char)atoi(tok);
     return *this;
 }
 
@@ -289,6 +289,6 @@ stream_base& text_stream::r_bool(char* v)
     int toklen;
     EXPECT_TOKEN();
     buf.get_token(tok, &toklen);
-    *v = atol(tok) != 0;
+    *v = atoi(tok) != 0;
     return *this;
 }

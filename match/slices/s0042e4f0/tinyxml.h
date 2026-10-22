@@ -187,7 +187,7 @@ public:
 class TiXmlNode : public TiXmlBase {
 public:
     enum NodeType { DOCUMENT, ELEMENT, COMMENT, UNKNOWN, TEXT, DECLARATION, TYPECOUNT };
-    virtual ~TiXmlNode();                                         // deleting dtor 0x42f010, body 0x42e170
+    virtual ~TiXmlNode();                                         // body 0x42e170 (deleting dtor 0x42f010)
     void SetValue(const char* _value) { value = _value; }
     const char* Value() const { return value.c_str(); }
     TiXmlDocument* GetDocument();                                 // 0x42d9d0
@@ -355,7 +355,7 @@ public:
 class TiXmlDeclaration : public TiXmlNode {
 public:
     TiXmlDeclaration() : TiXmlNode(TiXmlNode::DECLARATION) {}     // 0x42eec0 (inline)
-    __declspec(noinline) virtual ~TiXmlDeclaration();                                  // 0x42ef00 / 0x42ef20
+    __declspec(noinline) virtual ~TiXmlDeclaration();                                  // 0x42ef20 (deleting dtor 0x42ef00)
     virtual TiXmlNode* Clone() const;                             // 0x42f560
     virtual void Print(FILE* cfile, int depth) const;             // 0x42de80 .. printed through 0x431050
     virtual const char* Parse(const char* p, TiXmlParsingData* data, TiXmlEncoding encoding);

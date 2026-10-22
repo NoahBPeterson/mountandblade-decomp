@@ -221,6 +221,12 @@ int D3DSettingsDlg::DlgProc(HWND hwnd, unsigned msg, unsigned wParam, long lPara
                 return 1;
             }
             break;
+        case IDC_MULTISAMPLE_QUALITY_COMBO:
+            if ((short)(wParam >> 16) == CBN_SELCHANGE) {
+                OnMultisampleQualityChanged();
+                return 1;
+            }
+            break;
         case IDC_VERTEXPROCESSING_COMBO:
             if ((short)(wParam >> 16) == CBN_SELCHANGE) {
                 OnVertexProcessingChanged();
@@ -230,12 +236,6 @@ int D3DSettingsDlg::DlgProc(HWND hwnd, unsigned msg, unsigned wParam, long lPara
         case IDC_PRESENTINTERVAL_COMBO:
             if ((short)(wParam >> 16) == CBN_SELCHANGE) {
                 OnPresentIntervalChanged();
-                return 1;
-            }
-            break;
-        case IDC_MULTISAMPLE_QUALITY_COMBO:
-            if ((short)(wParam >> 16) == CBN_SELCHANGE) {
-                OnMultisampleQualityChanged();
                 return 1;
             }
             break;

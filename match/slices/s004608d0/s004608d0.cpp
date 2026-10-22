@@ -5,6 +5,7 @@
 // leaf functions. Names provisional (Module System: dialogs, dlga_/dlgb_ ids, anyone/party_tpl speaker flags).
 #include <stdio.h>
 #include <stddef.h>
+#include <new>                                             // declares operator new[]/delete[]: without it cl calls operator new/delete for arrays
 #include "tstring.h"
 
 #define MB_NOTHROW throw()

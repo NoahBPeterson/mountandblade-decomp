@@ -181,6 +181,7 @@ class SymbolDB:
         self.mangled = defaultdict(set)   # exact mangled name -> {va}
         self.qual = defaultdict(set)      # qualified name -> {va}
         self.lib = {}                     # lib_crt helper short name -> va
+        self.lib_full = {}                # lib_crt C symbol name as spelled in lib_names.txt -> va
         files = glob.glob(os.path.join(ROOT, "symbols", "*.txt")) + glob.glob(os.path.join(ROOT, "symbols", "slices", "*.txt"))
         for f in files:
             for line in open(f, encoding="utf-8", errors="replace"):
@@ -197,6 +198,7 @@ class SymbolDB:
                     nm = m.group(2)
                     if m.group(1) == "crt":
                         self.lib[nm.lstrip("_")] = va
+                        self.lib_full[nm] = va
                 if nm.startswith(("?", "@")) or (nm.startswith("_") and "::" not in nm):
                     self.mangled[nm].add(va)
                     q = demangle_qual(nm)
@@ -575,6 +577,10 @@ class Resolver:
         return None
 
     def by_crt(self, name):
+        # the exact C symbol first: stripping underscores folds `_exit` (exit, 0x537ced) and `__exit` (_exit,
+        # 0x537cfe) into one key, and the later lib_names line won (0x42cc80's exit(-1) resolved to _exit)
+        if name in self.db.lib_full:
+            return self.db.lib_full[name]
         key = name.lstrip("_@")
         h = self.crt_helpers()
         if name in h:

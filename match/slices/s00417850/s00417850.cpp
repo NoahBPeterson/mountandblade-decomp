@@ -143,7 +143,7 @@ struct vec_table {
 vec_table::vec_table()
 {
     count = 0x20;
-    data = (vec16*)operator new(0x200);
+    data = (vec16*)operator new[](0x200);
     vec16 tmp(0.0f, 0.0f, 0.0f);
     for (int j = 0; j < 4; j++)
         for (int k = 0; k < 8; k++) {

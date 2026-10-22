@@ -1,6 +1,7 @@
 // Slice s00407250: D3DFMT name lookup, high-res timer, dynamic array.
 #include <string.h>
 #include <stdlib.h>
+#include <new>             // declares operator new[]/delete[] (0x535482/0x53570d)
 // windows.h does not compile here (sal.h missing); declare the few Win32 calls used.
 typedef unsigned long DWORD;
 typedef union _LARGE_INTEGER { struct { DWORD LowPart; long HighPart; }; __int64 QuadPart; } LARGE_INTEGER;
@@ -233,7 +234,7 @@ dyn_array::dyn_array(int m, int sz)
     cap = 0;
 }
 // @ 0x407aa0
-dyn_array::~dyn_array() { if (data) free(data); }
+dyn_array::~dyn_array() { if (data) operator delete[](data); }   // 0x53570d
 // @ 0x407ab0
 int dyn_array::push_back(const void* e)
 {
@@ -241,11 +242,11 @@ int dyn_array::push_back(const void* e)
     if (data == 0 || count + 1 > cap) {
         int ncap;
         if (cap == 0) ncap = 16; else ncap = cap * 2;
-        char* nd = (char*)operator new(elem_size * ncap);
+        char* nd = (char*)operator new[](elem_size * ncap);   // 0x535482
         if (nd == 0) return 0x8007000e;
         if (data != 0) {
             memcpy(nd, data, count * elem_size);
-            free(data);
+            operator delete[](data);   // 0x53570d
         }
         data = nd;
         cap = ncap;

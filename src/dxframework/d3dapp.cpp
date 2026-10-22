@@ -10,6 +10,7 @@
 #include <tchar.h>
 #include <stdio.h>
 #include <string.h>
+#include <new>             // declares operator delete[]: without it cl 13.10 frees arrays with plain operator delete (the original calls 0x53570d)
 #include <mbstring.h>
 #include <d3d9.h>
 #include "./dxutil.h"

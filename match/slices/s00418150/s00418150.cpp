@@ -180,7 +180,7 @@ int texture::create()
             return 0;
         if (d3d_tex == 0) {
             owns_texture = 1;
-            d3d_tex = (IDirect3DTexture9**)operator new(4);
+            d3d_tex = (IDirect3DTexture9**)operator new[](4);
         }
         HRESULT hr;
         if (format == D3DFMT_D24S8 || format == D3DFMT_D24X8 || format == D3DFMT_D16)

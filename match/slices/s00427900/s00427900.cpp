@@ -18,39 +18,39 @@ struct contact_rec {                 // 0x24 bytes, filled by shape_contact_coun
 };
 int shape_contact_count(coll_shape* a, coll_shape* b, int max, contact_rec* out);       // 0x40bfe0
 
-struct E32 { vector4 p, n; };        // 0x20 stored contact (point, normal)
+struct Contact { vector4 p, n; };        // 0x20 stored contact (point, normal)
 
-// 0x427ca0: std::_Uninitialized_fill_n for E32, called out of line from push_back's fast path
+// 0x427ca0: std::_Uninitialized_fill_n for Contact, called out of line from push_back's fast path
 // @ 0x427ca0
-template void std::_Uninitialized_fill_n<E32*, unsigned int, E32, std::allocator<E32> >(E32*, unsigned int, const E32&, std::allocator<E32>&);
+template void std::_Uninitialized_fill_n<Contact*, unsigned int, Contact, std::allocator<Contact> >(Contact*, unsigned int, const Contact&, std::allocator<Contact>&);
 
 // the same function seen from its callers: kept out of line (the instantiation above would be inlined)
-void __cdecl ufill_ext(E32* p, unsigned int n, const E32& v, std::allocator<E32>& al);     // 0x427ca0
+void __cdecl ufill_ext(Contact* p, unsigned int n, const Contact& v, std::allocator<Contact>& al);     // 0x427ca0
 
-// std::vector<E32> written out (VC7.1 layout: empty allocator slot, first, last, end)
+// std::vector<Contact> written out (VC7.1 layout: empty allocator slot, first, last, end)
 struct contact_vec {
-    std::allocator<E32> _Alval;
-    E32 *_Myfirst, *_Mylast, *_Myend;
+    std::allocator<Contact> _Alval;
+    Contact *_Myfirst, *_Mylast, *_Myend;
     typedef unsigned size_type;
     struct iterator {
-        E32* _Ptr;
+        Contact* _Ptr;
         iterator() {}
-        iterator(E32* p) : _Ptr(p) {}
+        iterator(Contact* p) : _Ptr(p) {}
         iterator operator+(int off) const;                      // 0x40f880
     };
     size_type capacity() const { return _Myfirst == 0 ? 0 : _Myend - _Myfirst; }
     size_type size() const { return _Myfirst == 0 ? 0 : _Mylast - _Myfirst; }
     iterator begin() { return iterator(_Myfirst); }
     iterator end() { return iterator(_Mylast); }
-    E32* _Ufill(E32* p, size_type n, const E32& v) { ufill_ext(p, n, v, _Alval); return p + n; }
-    void _Insert_n(E32* _Where, size_type _Count, const E32& _Val);            // 0x427590 (s00427000)
-    __forceinline iterator insert(iterator _Where, const E32& _Val)
+    Contact* _Ufill(Contact* p, size_type n, const Contact& v) { ufill_ext(p, n, v, _Alval); return p + n; }
+    void _Insert_n(Contact* _Where, size_type _Count, const Contact& _Val);            // 0x427590 (s00427000)
+    __forceinline iterator insert(iterator _Where, const Contact& _Val)
     {
         size_type _Off = size() == 0 ? 0 : _Where._Ptr - _Myfirst;
         _Insert_n(_Where._Ptr, (size_type)1, _Val);
         return begin() + _Off;
     }
-    __forceinline void push_back(const E32& _Val)
+    __forceinline void push_back(const Contact& _Val)
     {
         if (size() < capacity())
             _Mylast = _Ufill(_Mylast, 1, _Val);
@@ -120,7 +120,7 @@ bool rigid_base::collide_shape(coll_shape* s)
     for (int i = 0; i < n; ++i) {
         vector4 nrm = c[i].normal;
         vector4 pt = c[i].point;
-        E32 rec;
+        Contact rec;
         vector4 v;
         point_velocity(&v, &pt);
         rec.p = pt;

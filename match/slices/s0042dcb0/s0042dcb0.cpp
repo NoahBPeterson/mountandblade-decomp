@@ -2,6 +2,7 @@
 // comment/unknown output, attribute and node constructors, attribute-set lookup and TiXmlHandle.
 #include <stdio.h>
 #include <string.h>
+#include <new>             // declares operator delete[]: without it cl 13.10 frees TiXmlString reps with plain operator delete (the original calls 0x53570d)
 #include "tinyxml.h"
 
 TiXmlString::Rep TiXmlString::nullrep_;       // 0x5e23d0

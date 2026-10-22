@@ -6,7 +6,7 @@
 004280f0 ??_Gstatic_entity@@UAEPAXI@Z  # scalar deleting destructor, slot 0 of vtable 0x54b7b8 (sets the vptr, calls ~entity 0x4213f0, deletes)
 0054b5d0 ??_7StrategicEntity@@6B@  # strategic entity vtable (same as s00421110); stored by the dtor 0x428120
 00428220 ??_GStrategicEntity@@UAEPAXI@Z  # scalar deleting destructor, slot 0 of vtable 0x54b5d0
-00427ca0 ??$_Uninitialized_fill_n@PAUE32@@IU1@V?$allocator@UE32@@@std@@@std@@YAXPAUE32@@IABU1@AAV?$allocator@UE32@@@0@@Z  # std::_Uninitialized_fill_n<E32*,...>: 4-arg wrapper that forwards to _Uninit_fill_n 0x4274c0
+00427ca0 ??$_Uninitialized_fill_n@PAUContact@@IU1@V?$allocator@UContact@@@std@@@std@@YAXPAUContact@@IABU1@AAV?$allocator@UContact@@@0@@Z  # std::_Uninitialized_fill_n<Contact*,...>: 4-arg wrapper that forwards to _Uninit_fill_n 0x4274c0
 00427900 ?collide_shape@rigid_base@@QAE_NPAUcoll_shape@@@Z  # rigid body vs a shape: contacts (0x40bfe0), point velocity vtable slot 25, impulses slots 26/27, position shift at +0x1c4
 00427f40 ?step@world@@QAEXM@Z  # world per-frame step: activates pending entities, updates entities, re-buckets awake ones, updates emitters
 00427ea0 ?alloc_emitter@world@@QAEPAUEmitter@@XZ  # emitter pool: reuse emitters[live] or new Emitter (0x1bc bytes)

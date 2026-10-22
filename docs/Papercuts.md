@@ -45,6 +45,16 @@ Format (one entry per problem):
   (likely an unannotated element destructor), not the "plausible() rejects jmp thunks" diagnosis in the agent's
   report. Matters for the relink: a byte-exact row can still name the wrong callee — fix idea: a relocation-target
   audit (our reloc symbol -> resolved VA vs. the original's operand) over every manifest row — minutes lost: 10
+- resaudit-fixes 2026-10-22: resaudit.our_insns decoded the unrelocated object, so `jmp [eax*4 + table]` had disp 0 and
+  recursive descent never reached a switch's case bodies; the audit then paired the default case with the original's first
+  case and reported every switch-returning-strings function as "messages shifted by one" (0x4014f0, 0x4055e0, 0x406370,
+  0x407250: all false). Fixed in resaudit.py (applies same-section DIR32 relocs before decoding); resolve.our_refs has the
+  same blind spot (case-body references are never aligned) — fix idea: same patch in resolve.our_refs — minutes lost: 20
+- resaudit-fixes 2026-10-22: resolve.by_crt keyed lib_names by `name.lstrip("_")`, folding `_exit` (exit, 0x537ced) and
+  `__exit` (_exit, 0x537cfe) into one key; the later line won, so exit(-1) ran _exit. Fixed (exact C name first).
+  Same family: cl 13.10 only emits `??_U`/`??_V` (operator new[]/delete[]) when `<new>` is included; without it `new T[n]`
+  and `delete[] p` call plain operator new/delete with identical bytes. Every slice using array new/delete needs `<new>` —
+  fix idea: put `#include <new>` in a common header or say so in matching.md — minutes lost: 10
 
 ## Resolved
 - pilot 2026-10-20: masked `DIR32` operands hid a wrong float constant (eps 1e-10 vs 0.0) — fixed: the verifiers
@@ -53,3 +63,25 @@ Format (one entry per problem):
   `machine.py` routes byte-exact-identified CRT functions (`symbols/lib_names.txt` source) to its Python handlers.
 - pilot 2026-10-20: harness could not map a constructed vtable — slot 0 is the deleting dtor `??_G…`, which has no
   declaration to annotate — fixed: name it (and the vtable) in `symbols/slices/<id>.txt`.
+- s004f73c0 2026-10-21: `cmpdis.py` silently diffs a STALE object when `cl.sh` failed on the current source (errors are printed but the old `.obj` from a previous compile is still on disk, so the diff looks like a codegen result), and its output shows `call 9` for unresolved (external) call targets, which reads like a bogus offset — fix idea: cmpdis should compile or at least warn when the obj is older than the source, and print `<ext>` for relocations — minutes lost: 10
+- s004e65e0 2026-10-22: writing a transform-ish expression with a local `vector4 operator+` (one temp per operator) blew the frame
+  from 0x11c to 0x26c and the diff from 993 to 2088 bytes; spelling the same maths scalar-per-component (letting cl CSE the
+  shared `w * k` temporaries) brought the function to within 10 bytes of the original. minutes lost: 10
+- s004e65e0 2026-10-22: `(unsigned)((char*)end - (char*)begin) / 0x18` compiles to an unsigned `mul`/`shr` division, while the
+  original's `imul`/`sar`/sign-fix sequence shows a *signed* division whose result is then compared unsigned — cast the result
+  (`(unsigned)(diff / 0x18)`), not the numerator. minutes lost: 5
+- s005134c0 2026-10-22: `equiv.py` compares a `char`-returning function's result as `eax&0xffff`, so a reconstruction
+  that differs only in the *undefined* high byte of EAX is reported FAIL 5/5 (`orig 00008d00 / ours 00000000`; the
+  original just leaves an earlier `imul` product there) and the row has to be filed as partial even though AL matches
+  on every input — fix idea: for sub-dword returns compare only the declared width (AL), or grade it
+  `weak(garbage-high-bits)` — minutes lost: 15
+- s005134c0 2026-10-22: two `MsgLog` methods at 0x452c00 and 0x4334b0 take the same operands in *opposite* order
+  (`add(int, tstring)` vs `add(tstring*, int)`); `chk.py` cannot see it (call targets are masked) and the first
+  declaration made the whole 718-byte flush look wrong, while equiv pinned it to the two arguments in one line
+  (`orig args=[5fe878, ffbbffbb], ours=[ffbbffbb, 5fe878]`) — declare the overload to match the original's push
+  order, not the plausible C++ one — minutes lost: 20
+- s005134c0 2026-10-22: spelling `Agent* a = (Agent*)(g_game->chars + idx * 0x508);` once per branch costs 249 bytes
+  of diff (706 -> 457) against writing the accessor inline for every use (`g_game->troop(idx)->items[i]`): the local
+  forces `add base, idx*0x508` plus a separate `lea +0xb4`, while the inlined accessor lets cl fold it into one
+  `lea [chars + idx*0x508 + 0xb4]` — and that change alone flipped the register allocation to the original's
+  (this->edi, id->ebx) — minutes lost: 15

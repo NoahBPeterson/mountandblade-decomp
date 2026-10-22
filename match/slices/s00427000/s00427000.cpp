@@ -1,5 +1,5 @@
 // Slice s00427000: rigid_base::collide_entity (two bodies' shape contacts -> impulses on both) and the
-// std::vector<E32> contact-list instantiations it uses (push_back, insert, _Insert_n, _Uninit_fill_n, _Uninit_copy,
+// std::vector<Contact> contact-list instantiations it uses (push_back, insert, _Insert_n, _Uninit_fill_n, _Uninit_copy,
 // with their catch(...) funclets). Names and layouts are provisional. The vector members need /EHa (with /EHsc cl
 // drops the EH frame the original keeps); collide_entity has no EH constructs and is identical either way, so the
 // manifest rows carry /EHa for the STL helpers and the default flags for collide_entity.
@@ -26,25 +26,25 @@ struct contact_rec {                 // 0x24 bytes, filled by shape_contact_coun
 };
 int shape_contact_count(coll_shape* a, coll_shape* b, int max, contact_rec* out);       // 0x40bfe0
 
-struct E32 { vector4 p, n; };        // 0x20 stored contact (point, normal)
+struct Contact { vector4 p, n; };        // 0x20 stored contact (point, normal)
 
 struct contact_vec {
-    std::allocator<E32> _Alval;
-    E32 *_Myfirst, *_Mylast, *_Myend;
+    std::allocator<Contact> _Alval;
+    Contact *_Myfirst, *_Mylast, *_Myend;
     typedef unsigned size_type;
-    struct iterator { E32* _Ptr; iterator() {} iterator(E32* p) : _Ptr(p) {} };
+    struct iterator { Contact* _Ptr; iterator() {} iterator(Contact* p) : _Ptr(p) {} };
     size_type capacity() const { return _Myfirst == 0 ? 0 : _Myend - _Myfirst; }
     size_type size() const { return _Myfirst == 0 ? 0 : _Mylast - _Myfirst; }
     size_type max_size() const { return _Alval.max_size(); }
     iterator begin() { return iterator(_Myfirst); }
     iterator end() { return iterator(_Mylast); }
-    __forceinline E32* _Ucopy(E32* f, E32* l, E32* p) { return std::_Uninitialized_copy(f, l, p, _Alval); }
-    __forceinline E32* _Ufill(E32* p, size_type n, const E32& v) { std::_Uninitialized_fill_n(p, n, v, _Alval); return p + n; }
-    void _Destroy(E32* f, E32* l) { for (; f != l; ++f) std::_Destroy(f); }
+    __forceinline Contact* _Ucopy(Contact* f, Contact* l, Contact* p) { return std::_Uninitialized_copy(f, l, p, _Alval); }
+    __forceinline Contact* _Ufill(Contact* p, size_type n, const Contact& v) { std::_Uninitialized_fill_n(p, n, v, _Alval); return p + n; }
+    void _Destroy(Contact* f, Contact* l) { for (; f != l; ++f) std::_Destroy(f); }
     void _Xlen() const;                                             // 0x43e2a0 (length_error "vector<T> too long")
-    void _Insert_n(E32* _Where, size_type _Count, const E32& _Val);
-    __declspec(noinline) iterator insert(iterator _Where, const E32& _Val);
-    void push_back(const E32& _Val);
+    void _Insert_n(Contact* _Where, size_type _Count, const Contact& _Val);
+    __declspec(noinline) iterator insert(iterator _Where, const Contact& _Val);
+    void push_back(const Contact& _Val);
 };
 
 // ---- entity family (reduced; see s00427900) ------------------------------------------------------------------------
@@ -111,12 +111,12 @@ bool rigid_base::collide_entity(rigid_base* o)
         const vector4* vb = o->point_velocity(&tb, &pt);
         const vector4* va = point_velocity(&ta, &pt);
         vector4 rel(va->x - vb->x, va->y - vb->y, va->z - vb->z);
-        E32 rec;
+        Contact rec;
         rec.p = pt;
         rec.n = nrm;
         contacts.push_back(rec);
         vector4 neg(-nrm.x, -nrm.y, -nrm.z);
-        E32 rec2;
+        Contact rec2;
         rec2.p = pt;
         rec2.n = neg;
         o->contacts.push_back(rec2);
@@ -146,12 +146,12 @@ bool rigid_base::collide_entity(rigid_base* o)
 
 namespace std {
 // @ 0x427880
-template<> E32* _Uninit_copy<E32*, E32*, allocator<E32> >(E32* _First, E32* _Last, E32* _Dest, allocator<E32>& _Al, _Nonscalar_ptr_iterator_tag)
+template<> Contact* _Uninit_copy<Contact*, Contact*, allocator<Contact> >(Contact* _First, Contact* _Last, Contact* _Dest, allocator<Contact>& _Al, _Nonscalar_ptr_iterator_tag)
 {
-    E32* _Next = _Dest;
+    Contact* _Next = _Dest;
     try {
         for (; _First != _Last; ++_Dest, ++_First)
-            new ((void*)_Dest) E32(*_First);
+            new ((void*)_Dest) Contact(*_First);
     } catch (...) {
         for (; _Next != _Dest; ++_Next)
             _Al.destroy(_Next);
@@ -160,12 +160,12 @@ template<> E32* _Uninit_copy<E32*, E32*, allocator<E32> >(E32* _First, E32* _Las
     return _Dest;
 }
 // @ 0x4274c0
-template<> void _Uninit_fill_n<E32*, unsigned int, E32, allocator<E32> >(E32* _First, unsigned int _Count, const E32& _Val, allocator<E32>& _Al, _Nonscalar_ptr_iterator_tag)
+template<> void _Uninit_fill_n<Contact*, unsigned int, Contact, allocator<Contact> >(Contact* _First, unsigned int _Count, const Contact& _Val, allocator<Contact>& _Al, _Nonscalar_ptr_iterator_tag)
 {
-    E32* _Next = _First;
+    Contact* _Next = _First;
     try {
         for (; 0 < _Count; --_Count, ++_First)
-            new ((void*)_First) E32(_Val);
+            new ((void*)_First) Contact(_Val);
     } catch (...) {
         for (; _Next != _First; ++_Next)
             _Al.destroy(_Next);
@@ -176,7 +176,7 @@ template<> void _Uninit_fill_n<E32*, unsigned int, E32, allocator<E32> >(E32* _F
 
 void contact_vec::_Xlen() const { throw std::length_error("vector<T> too long"); }
 // @ 0x427450
-void contact_vec::push_back(const E32& _Val)
+void contact_vec::push_back(const Contact& _Val)
 {
     if (size() < capacity())
         _Mylast = _Ufill(_Mylast, 1, _Val);
@@ -184,16 +184,16 @@ void contact_vec::push_back(const E32& _Val)
         insert(end(), _Val);
 }
 // @ 0x427540
-contact_vec::iterator contact_vec::insert(iterator _Where, const E32& _Val)
+contact_vec::iterator contact_vec::insert(iterator _Where, const Contact& _Val)
 {
     size_type _Off = size() == 0 ? 0 : _Where._Ptr - _Myfirst;
     _Insert_n(_Where._Ptr, (size_type)1, _Val);
     return iterator(_Myfirst + _Off);
 }
 // @ 0x427590
-void contact_vec::_Insert_n(E32* _Where, size_type _Count, const E32& _Val)
+void contact_vec::_Insert_n(Contact* _Where, size_type _Count, const Contact& _Val)
 {
-    E32 _Tmp = _Val;
+    Contact _Tmp = _Val;
     size_type _Capacity = capacity();
     if (_Count == 0)
         ;
@@ -203,8 +203,8 @@ void contact_vec::_Insert_n(E32* _Where, size_type _Count, const E32& _Val)
         _Capacity = max_size() - _Capacity / 2 < _Capacity ? 0 : _Capacity + _Capacity / 2;
         if (_Capacity < size() + _Count)
             _Capacity = size() + _Count;
-        E32* _Newvec = _Alval.allocate(_Capacity);
-        E32* _Ptr = _Newvec;
+        Contact* _Newvec = _Alval.allocate(_Capacity);
+        Contact* _Ptr = _Newvec;
         try {
             _Ptr = _Ucopy(_Myfirst, _Where, _Newvec);
             _Ptr = _Ufill(_Ptr, _Count, _Tmp);
@@ -232,22 +232,22 @@ void contact_vec::_Insert_n(E32* _Where, size_type _Count, const E32& _Val)
         }
         _Mylast += _Count;
         {
-            E32* _Fe = _Mylast - _Count;
-            for (E32* _Q = _Where; _Q != _Fe; ++_Q)
+            Contact* _Fe = _Mylast - _Count;
+            for (Contact* _Q = _Where; _Q != _Fe; ++_Q)
                 *_Q = _Tmp;
         }
     } else {
-        E32* _Oldend = _Mylast;
+        Contact* _Oldend = _Mylast;
         _Mylast = _Ucopy(_Oldend - _Count, _Oldend, _Mylast);
         {
-            E32* _L = _Oldend - _Count;
-            E32* _D = _Oldend;
+            Contact* _L = _Oldend - _Count;
+            Contact* _D = _Oldend;
             while (_Where != _L)
                 *--_D = *--_L;
         }
         {
-            E32* _Q = _Where;
-            E32* _Fe = _Where + _Count;
+            Contact* _Q = _Where;
+            Contact* _Fe = _Where + _Count;
             for (; _Q != _Fe; ++_Q)
                 *_Q = _Tmp;
         }

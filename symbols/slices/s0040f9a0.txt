@@ -25,3 +25,5 @@
 0043e2a0 ?_Xlen@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
 0043e2a0 ?_Xlen@?$vector@UE96@@V?$allocator@UE96@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
 0043e2a0 ?_Xlen@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@IBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0040f710 ??$_Uninit_copy@PAUE32@@PAU1@V?$allocator@UE32@@@std@@@std@@YAPAUE32@@PAU1@00AAV?$allocator@UE32@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_copy<E32*> (called by _Ucopy 0x40fbd0; element copied through construct 0x40f5f0)
+0040f5f0 ?construct@?$allocator@UE32@@@std@@QAEXPAUE32@@ABU3@@Z  # std::allocator<E32>::construct (s0040f300's allocator_construct_elem32)

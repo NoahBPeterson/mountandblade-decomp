@@ -1,6 +1,6 @@
 00427000 ?collide_entity@rigid_base@@QAE_NPAU1@@Z  # rigid body vs rigid body: shape contacts (0x40bfe0), relative velocity via vtable slot 25, impulses slots 26/27 on both bodies, contacts appended to both lists
-00427450 ?push_back@contact_vec@@QAEXABUE32@@@Z  # std::vector<E32>::push_back (fast path _Ufill via 0x4274c0, slow path insert 0x427540)
-00427540 ?insert@contact_vec@@QAE?AUiterator@1@U21@ABUE32@@@Z  # std::vector<E32>::insert(where, val) -> _Insert_n(where, 1, val)
-00427590 ?_Insert_n@contact_vec@@QAEXPAUE32@@IABU2@@Z  # std::vector<E32>::_Insert_n (+ catch funclets / cold tail 0x427730)
-004274c0 ??$_Uninit_fill_n@PAUE32@@IU1@V?$allocator@UE32@@@std@@@std@@YAXPAUE32@@IABU1@AAV?$allocator@UE32@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_fill_n<E32*> (+ funclet 0x42752b)
-00427880 ??$_Uninit_copy@PAUE32@@PAU1@V?$allocator@UE32@@@std@@@std@@YAPAUE32@@PAU1@00AAV?$allocator@UE32@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_copy<E32*> (+ funclet 0x4278ed)
+00427450 ?push_back@contact_vec@@QAEXABUContact@@@Z  # std::vector<Contact>::push_back (fast path _Ufill via 0x4274c0, slow path insert 0x427540)
+00427540 ?insert@contact_vec@@QAE?AUiterator@1@U21@ABUContact@@@Z  # std::vector<Contact>::insert(where, val) -> _Insert_n(where, 1, val)
+00427590 ?_Insert_n@contact_vec@@QAEXPAUContact@@IABU2@@Z  # std::vector<Contact>::_Insert_n (+ catch funclets / cold tail 0x427730)
+004274c0 ??$_Uninit_fill_n@PAUContact@@IU1@V?$allocator@UContact@@@std@@@std@@YAXPAUContact@@IABU1@AAV?$allocator@UContact@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_fill_n<Contact*> (+ funclet 0x42752b)
+00427880 ??$_Uninit_copy@PAUContact@@PAU1@V?$allocator@UContact@@@std@@@std@@YAPAUContact@@PAU1@00AAV?$allocator@UContact@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_copy<Contact*> (+ funclet 0x4278ed)

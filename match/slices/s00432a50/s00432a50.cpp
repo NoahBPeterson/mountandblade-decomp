@@ -37,8 +37,8 @@ void __cdecl apply_force_and_torque(const NewtonBody* body)
         f[1] = g_pending.force.y * mass;
         f[2] = (g_pending.force.z - 9.8f) * mass;
         NewtonBodyAddForce(body, f);
-        if (g_pending.torque.z * g_pending.torque.z + g_pending.torque.y * g_pending.torque.y +
-                g_pending.torque.x * g_pending.torque.x > 0.0f) {
+        if (g_pending.torque.x * g_pending.torque.x + g_pending.torque.y * g_pending.torque.y +
+                g_pending.torque.z * g_pending.torque.z > 0.0f) {
             f[0] = g_pending.torque.x * mass;
             f[1] = g_pending.torque.y * mass;
             f[2] = g_pending.torque.z * mass;
