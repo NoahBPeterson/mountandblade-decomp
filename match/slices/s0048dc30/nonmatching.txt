@@ -1,0 +1,7 @@
+0048dc30  431  Mission::set_a_color (agent kind dispatch: kinds 4->f108/f10c, 8->f110/f10c, 7->set_all_colors(this), else set_color on color14c; identity kinds 0/1/9/5/6 set color then vc8) complete per disassembly; not byte-exact (original 333 vs ours 464 bytes; different inlining/register codegen).
+0048de00  834  Mission::set_b_color (kind switch 0/1,2,3,4,5/6,7/8/9 with f108/f10c/f110/f114 colour masks, f1a8/f194 for kind 3, set_all_colors_team for 7) complete per disassembly; not byte-exact (original 548 vs ours 914 bytes; switch/inlining codegen differs).
+0048e1a0  183  Mission::set_highlight_colors complete: identity kinds only, mask color14c, set_color2 + vc8; not byte-exact (original 156 vs ours 199 bytes).
+0048e270  186  Mission::set_c_color complete: identity kinds only, mask color150, set_color2 + vc8; not byte-exact (original 159 vs ours 202 bytes).
+0048e340  341  Mission::set_value complete: kinds 2/3 float clamp to [lo16c,hi170], kind 5 int clamp to [min160,max164], kind 8/kind184==1 clamp 0..2 and set on180; not byte-exact (original 292 vs ours 374 bytes; float/clamp codegen differs).
+0048e4c0  189  Mission::set_limits complete: kinds 2/3 only, lo16c=lo/100, hi170=hi/100, clamp v168; not byte-exact (original 149 vs ours 199 bytes).
+0048e590  59  Mission::set_extra complete: kind 5 only -> vc8(value); not byte-exact (original 61 vs ours 60 bytes; 1-instruction scheduling diff).

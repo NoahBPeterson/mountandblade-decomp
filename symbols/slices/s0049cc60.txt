@@ -1,0 +1,24 @@
+0049cc60 report                    # formats "%s; LINE NO: %d:", logs it via MsgLog::add and the text log stream, sets g_script_out
+0049ccc0 check_script_param        # 2-arg guard: ECX=*value, EDX=*limit; errors "Invalid Script Parameter ID" when out of [0,*limit)
+0049cd00 check_register            # guard: "Invalid Register ID" when *value not in [0,0x80)
+0049cd50 check_presentation        # guard: "Invalid Presentation ID" against g_presentation_n
+0049cda0 check_string_arg          # 2-arg guard: ECX=type (3 string/0x16 quick string/0 register) selects the table bounds-checked against *value
+0049ce40 check_mesh                # guard: "Invalid Mesh ID" against g_mesh_n
+0049ce90 check_menu                # guard: "Invalid Menu ID" against g_menu_n
+0049cee0 check_troop               # guard: "Invalid Troop ID" against the troop count in the GameData object
+0049cf30 check_quest               # guard: "Invalid Quest ID" against the quest count in the GameData object
+0049cf80 check_faction             # guard: "Invalid Faction ID" against the faction count in the GameData object
+0049cfd0 check_item_kind           # guard: "Invalid Item Kind ID" against g_item_kind_n
+0049d020 check_scene               # guard: "Invalid Scene ID" against the scene count in the GameData object
+0049d070 check_mission_template    # guard: "Invalid Mission Template ID" against g_mission_tpl_n
+0049d0c0 check_party_template      # guard: "Invalid Party Template ID" against g_party_tpl_n
+0049d110 check_map_icon            # guard: "Invalid Map Icon ID" against g_map_icon_n
+0049d160 check_party               # guard: "Invalid Party ID"; probes the party table (index_of + live flag at +4) for a live entry
+0049d1f0 warn_particle_system      # warning: "Invalid particle_system ID" against g_particle_n (reports, returns 0)
+0049d240 warn_scene_prop           # warning: "Invalid Scene_prop ID" against g_scene_prop_n
+0049d290 warn_scene_prop_instance   # warning: "Invalid Scene_prop Instance ID"; bounds the mission prop-instance array (0x1c8 stride)
+0049d310 warn_sound                # warning: "Invalid Sound ID" against g_sound_n, gated by the g_warn_b switch
+0049d360 warn_tableau              # warning: "Invalid Tableau ID"; bounds the tableau array (0x68 stride, 0xa75f44/0xa75f48)
+0049d3d0 warn_track                # warning: "Invalid Track ID" against g_track_n, gated by g_warn_a/g_warn_b
+0049d430 warn_agent                # warning: "Invalid Agent ID"; probes the mission agent table (0x5928 stride, live flag at +4)
+0049d4b0 check_animation           # guard: "Invalid Animation ID" against g_anim_n

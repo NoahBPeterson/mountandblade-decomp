@@ -1,0 +1,9 @@
+0048ae20 ??0panel@@QAE@XZ  # base widget ("panel") ctor, called first by the inlined cls_e ctor
+0053545e ??2@YAPAXI@Z  # operator new (the 0x188-byte allocation)
+005d6fa0 ?g_resmgr@rgl@@3Uresmgr@1@A  # resource manager global
+00419540 ?get_object@resmgr@rgl@@QAEPAUmesh@2@ABUmstr@2@@Z  # resmgr::get_object(const mstr&) -> mesh*
+0041c6d0 ?clone@mesh@rgl@@QAEPAU12@XZ  # mesh::clone()
+0042bbe0 ??0mstr@rgl@@QAE@PBD@Z  # mstr(const char*)
+0042bc40 ??1mstr@rgl@@QAE@XZ  # ~mstr()
+0047af30 ?set_scale@mesh@rgl@@QAEXUvector4@2@@Z  # mesh::set_scale(vector4) (by value; .w copied uninitialised)
+004927d0 ?_Insert_n@?$vector@PAUpanel@@V?$allocator@PAUpanel@@@std@@@std@@IAEXViterator@12@IABQAUpanel@@@Z  # vector<panel*>::_Insert_n (grow path of push_back)

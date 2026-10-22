@@ -1,0 +1,1 @@
+slices/s004d3720/s004d3720.cpp  ?restore_defaults@@YAXXZ  004d3a50  /O2 /MT /Gy /TP

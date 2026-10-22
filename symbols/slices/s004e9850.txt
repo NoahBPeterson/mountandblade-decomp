@@ -1,0 +1,76 @@
+slice s004e9850 (batch ds1) - layout notes
+==========================================
+
+Range: 0x4e9850 .. 0x4ea1c0 (9 functions)
+
+004e9850  GameRecord::write(OutStream*)           thiscall (ecx = GameRecord), ret 4, MATCH
+004e99a0  cPairs96::write(OutStream*)             thiscall, MATCH
+004e99d0  Table::write_table(OutStream*)          thiscall, MATCH
+004e9ab0  Entry::write(OutStream*)                thiscall, MATCH
+004e9b50  OutRecList::write_missions(OutStream*)  receiver = GameRecord + 0xf8's owner; RecList at this+0xf8
+004e9c50  RecList::write_table(OutStream*)        thiscall; count +0x138b8, pages +0x138d0, f138dc +0x138dc
+004e9d10  Rec5ac8::write(OutStream*)              thiscall; the 0x5ac8-byte record
+004e9fe0  RecList::flush_ids()                    thiscall, ret 0
+004ea030  RecList::id_remove(int id)              thiscall, ret 4
+
+RecList (pack 4) layout used by this slice
+------------------------------------------
+  +0x78    f78    (the id whose record write_missions walks)
+  +0x138b8 count
+  +0x138bc the 0x2717-slot open-addressed id set (pairs of int, stride 8)
+  +0x138d0 page vector: page P's +0 word points at page P+1 (walked by the indexed form)
+  +0x13a00 (in the *outer* Game) the 0x508 game-record array
+
+Rec5ac8 layout (pack 4, stride 0x5ac8)
+--------------------------------------
+  +0x00  unknown int (never read by this slice)
+  +0x04  type    (1 = live, 2 = dropped, 0 = free)
+  +0x08  id
+  +0x1c  f1c     (int4)
+  +0x20  f20     (struct, 4 bytes)
+  +0x30  f30/f34/f38 (three ints)
+  +0x50  f50, +0x54 f54 (struct)
+  +0x6c  f6c (raw), +0x74 f74 (raw), +0x78 f78
+  +0x7c, +0x80, +0x84, +0x8c, +0x90, +0x94 raw
+  +0xa0  fa0
+  +0xa8  the 0x20-byte entries, f8a8 count at +0x8a8
+  +0x8bc List4, +0x8c8 raw, +0x8cc int4
+  +0x8e4, +0x8e8, +0x8ec, +0x8f0, +0x8f4 raw
+  +0x918, +0x91c raw; +0x924, +0x928 raw
+  +0x958  f958
+  +0x59d8 List8, +0x59f8 List4, +0x5a08 the 0xb0 struct-of-arrays, +0x5ab8 raw
+
+  NOTE: the original never touches +0x92c..+0x958; 0x20 bytes of that window are unobserved padding
+  (+0x92c..+0x958 is 0x2c bytes of it, minus the f958 int itself). The total size (0x5ac8) is what the
+  `imul eax, eax, 0x5ac8` stride requires, so keep sizeof exact -- and keep the +0x14 pad between the
+  List8 at +0x59d8 (ends +0x59e4) and the List4 at +0x59f8, which is what makes the stride come out right.
+
+stride facts
+------------
+* rec_at: page = ((char**)l->f138d0)[i >> 4]; rec = page + (i & 0xf) * 0x5ac8.
+  Writing it as `&base[(i>>4)*16 + (i&0xf)]` makes MSVC fold the page load into the imul;
+  the two-step char* form produces the original's `lea ecx,[edx+ecx*4]; add eax,[ecx]`.
+* `sizeof(Rec5ac8)` feeds the imul, so any layout drift shows up as a wrong constant there first.
+
+Codegen findings
+----------------
+* `Table` is count +0x0, pages +0x18, f24 +0x24 (there is no field at +0x28).
+  The thiscall member form gave the exact `sub esp,8 / push ebx / mov ebp,ecx` prologue.
+* flush_ids / id_remove are RecList members. id_remove's receiver (ecx) is the *set* at +0x138bc --
+  its probe indexes `[ecx+edx*8]` -- and it adds 0x138bc to ecx only for the tail call to int_remove.
+* Chain-vs-linear: Rec5ac8::write is mostly an `out->w(...)` sequence, but several runs ARE method chains
+  in the original -- write them as `out->wA(x).wB(y)` (dot-chaining on the `OutStream&` returns) rather
+  than storing the `OutStream*` in a local. Storing it spills to `mov ebx,eax` (2 bytes each) and breaks
+  0x4e9850. The inlined int-vector writer must loop as
+  `for (unsigned i=0;;i++){ if(!v->begin) break; if(i>=(unsigned)(v->end-v->begin)) break; ... }`
+  with the `if (!v->begin) n = 0; else n = ...;` count above it -- that is the shape the original inlines
+  at +0x8bc and +0x59f8.
+* 0x4e9850 also needs `cPairs96::write` to be `__declspec(noinline)`: with /O2 MSVC otherwise inlines it,
+  which is what kept that function 31 bytes too big (and the same member was still emitted separately at
+  0x4e99a0, so the original source marked it noinline too).
+* Remaining 0x4e9b50/0x4e9c50/0x4e9fe0 residuals: the original emits a two-instruction `lea ecx,[edx+ecx*4]`
+  + separate load for `page[idx]`; MSVC here always folds it into `add eax,[edx+ecx*4]` (probed four
+  spellings: `char* base` + `*(char**)(base+idx*4)`, `char** base` + `base[idx]`, `char** slotp = base+idx`,
+  and `slot`-first -- all folded). 0x4e9b50 additionally keeps the outer `this` in ebp and the RecList in
+  edi where we get edi/ebx; 0x4e9fe0 spills the page pointer to ebp (an extra push/pop). 0x4ea030 differs
+  only in whether `mov dword ptr [esp+0xc],eax` precedes or follows `mov edx,eax` (scheduler tie-break).

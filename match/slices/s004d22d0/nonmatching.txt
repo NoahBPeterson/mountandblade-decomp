@@ -1,0 +1,1 @@
+004d22d0  1227  fp codegen: the original keeps the normal accumulators n.x/n.y/n.z in st() registers across the `edges[].uses++` inner loop (it proves the local cannot alias), ours stores/reloads them each iteration; also a different spill of the remap temporaries. equiv WEAK: 635 valid inputs, 50.8% insns (213/419), no mismatch

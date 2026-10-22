@@ -1,0 +1,14 @@
+004c3d90 99 copy_uninit_204: original has a /EHa funclet frame (push ebp; push -1; push 0x5476e0; fs:[0]; mov [ebp-0x10],esp) that cl 13.10 only emits when the fill_n body is compiled with exception handling; no spelling (explicit throw(int), volatile this touch, /EHa) reproduced it, body/loop otherwise correct.
+004c3df7 5 copy_uninit_204's destructor funclet (??1tstr_rec): not emitted, no separate symbol without the EH frame.
+004c3e10 96 copy_uninit_4: same missing /EHa funclet frame, loop identical.
+004c3e74 5 copy_uninit_4's destructor funclet: not emitted.
+004c3e80 97 copy_uninit_2c: same missing /EHa funclet frame, range loop identical.
+004c3ee6 5 copy_uninit_2c's destructor funclet: not emitted.
+004c3ef0 97 copy_uninit_4_range: same missing /EHa funclet frame, range loop identical.
+004c3f56 5 copy_uninit_4_range's destructor funclet: not emitted.
+004c3f60 35 destroy_elem48_array: frame is push ebp; mov ebp,ecx (ebp holds the caller's pointer through the free) and the count-stride loop uses lea edx,[eax+eax*8]; lea esi,[ecx+edx*8]; our ebp/edx allocation differs.
+004c3fb0 200 load_elem48_array: original keeps this in ebx, count in ebp, and schedules the free-loop pointer into edx with a 0x10 stack slot for the block base; cl 13.10 reproduces the lea edx/lea esi strides only in that register assignment, which we could not force.
+004c4090 221 scenefile_obj::~scenefile_obj: original is push ebx/esi/edi with edi=this, s_e028 destroyed first, then lea esi,[edi+0xe030]; mov ebx,0x400; a back-to-front loop that pairs two 0x1c records per iteration (sub esi,0x1c / call / dec ebx), then a rotated second pass with lea esp,[esp] padding. Our cl version either merges the walks into one loop with an extra push ebp or unrolls the pairing.
+004c4100 445 sound_engine::tick: body approximated (volume = 1.0f - clamp(...), ftol2 rounding, 5aa010 clamp, FMOD volume push); register allocation and the fade/advance block ordering still differ.
+004c4340 679 music_set::load: 433 bytes against the original's 765; the sample-load block (sprintf paths, FSOUND_Sample_Load flags, level/volume arithmetic) is written, the 0x98-stride array walk and object field writes are not all reproduced.
+004c4640 82 destroy_tstring_pairs: body right (pairs of tstrings, 0x20 stride), the original's count-stride lea (no shl) and frame differ.

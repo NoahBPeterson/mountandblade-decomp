@@ -1,0 +1,10 @@
+slices/s0051e2b0/s0051e2b0.cpp  ?load_factions@Game@@QAEXPAULoadStream@@@Z        0051e2b0  /O2 /MT /Gy /TP
+slices/s0051e2b0/s0051e2b0.cpp  ?read@Rec300@@QAEXPAULoadStream@@H@Z             0051e320  /O2 /MT /Gy /TP
+slices/s0051e2b0/s0051e2b0.cpp  ?load_party_templates@Game@@QAEXPAULoadStream@@@Z 0051e3a0  /O2 /MT /Gy /TP
+slices/s0051e2b0/s0051e2b0.cpp  ?read@Rec0B0@@QAEXPAULoadStream@@@Z              0051e410  /O2 /MT /Gy /TP
+slices/s0051e2b0/s0051e2b0.cpp  ?load_items@Game@@QAEXPAULoadStream@@@Z          0051e450  /O2 /MT /Gy /TP
+slices/s0051e2b0/s0051e2b0.cpp  ?load_troops@Game@@QAEXPAULoadStream@@@Z         0051e4c0  /O2 /MT /Gy /TP
+slices/s0051e2b0/s0051e2b0.cpp  ?read@Rec508@@QAEXPAULoadStream@@@Z              0051e540  /O2 /MT /Gy /TP
+slices/s0051e2b0/s0051e2b0.cpp  ?read@Rec60@@QAEXPAULoadStream@@@Z               0051e690  /O2 /MT /Gy /TP
+slices/s0051e2b0/s0051e2b0.cpp  ?read@Rec5c@@QAEXPAULoadStream@@@Z               0051e750  /O2 /MT /Gy /TP
+slices/s0051e2b0/s0051e2b0.cpp  ?read@Rec98@@QAEXPAULoadStream@@H@Z              0051e970  /O2 /MT /Gy /TP

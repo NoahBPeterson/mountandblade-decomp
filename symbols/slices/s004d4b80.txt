@@ -1,0 +1,1 @@
+43e7b0 ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z  # std::vector<int>::_Insert_n, the out-of-line insert used by the inline push_back of the local `found` list in 0x4d4b80 (ICF-shared at this VA with the vector<const NewtonRagDollBone*> copy)

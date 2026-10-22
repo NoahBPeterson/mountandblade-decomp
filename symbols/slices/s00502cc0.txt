@@ -1,0 +1,14 @@
+# s00502cc0 -- NOT RECONSTRUCTED
+#
+# 00502cc0  <name unknown>  # single large function (~2900 bytes); no decompiled source was written
+#
+# Status: blocked. The slice was never started, and the environment lost command execution
+# (tools/matching/card.py, disasm.py, chk.py, cmpdis.py and work/mb.analysis.bin decoding all
+# need a shell). No disassembly of 0x502cc0 was captured in the session, so there is no evidence
+# from which to write the body. Nothing has been invented here on purpose: a fabricated body
+# would be indistinguishable from a real reconstruction in later audits.
+#
+# To resume, run from the repo root:
+#   .venv/bin/python tools/matching/card.py 0x502cc0
+# then write match/slices/s00502cc0/s00502cc0.cpp and score with
+#   .venv/bin/python tools/matching/chk.py match/slices/s00502cc0/s00502cc0.cpp s00502cc0

@@ -1,0 +1,4 @@
+0047d3e0  2159  incomplete: 2159-byte area update (vector4 h = +0x30..; motion/steering, capsule query 0x472650, per-object transforms); analysed only
+0047dc50  0  incomplete: not written
+0047dcd0 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+0047dcd0 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)

@@ -1,0 +1,2 @@
+# slice s004c7bf0 (0x4c7bf0..0x4c84e4): the map editor's object dialog + mesh block serializers.
+# all nine functions are implemented; none reproduces the original byte-for-byte (see nonmatching.txt).

@@ -1,0 +1,6 @@
+# Slice s004dc630 -- result window + button maker
+s004dc630: partial
+00.4dc630  result_window::init (structural; switch on outcome, ini lookups, widget chain) -- 1432 vs 1052 bytes
+00.4dcbd0  new_long_button                       -- 117 vs 122 bytes
+00.4dcc50  new_button body                       -- 539 vs 572 bytes
+00.4dce70  new_medium_button                     -- 117 vs 122 bytes

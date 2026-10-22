@@ -1,0 +1,20 @@
+0052dfd0 ?poly_ray@Mesh@@QAEXABUvector4@rgl@@0AAIPAM@Z  # this slice: ray vs polygon, writes the hit distance (complete, not byte-exact)
+0052e510 ?toggle_flag@Mesh@@QAEXHH@Z  # this slice: flip the selection flag of vertex/edge/polygon `index` (equivalent)
+0052e590 ?scale_selected@Mesh@@QAEXHPBUvector4@rgl@@@Z  # this slice: scale the selection about its centroid (equiv PASS)
+0052e6d0 ?transform_selected@Mesh@@QAEXHPBM@Z  # this slice: rotate the selection about its centroid by a 4x4 float block (equiv PASS at --ulp 1)
+0052e870 ?remove_selected@Mesh@@QAEXXZ  # this slice: delete the selected elements, then rebuild (equiv PASS)
+004c54f0 Mesh::gather_selection  # re-stamps the mface/medge/mpoly +0x14/+0x10 selection fields from `mode`
+004c8af0 Mesh::delete_vert  # remove a vertex and fix the referencing faces
+004ca9b0 Mesh::delete_edge  # remove an edge
+004cb940 Mesh::delete_poly  # remove a polygon
+00470920 Mesh::rebuild  # rebuild the derived adjacency data after an edit
+00432830 rgl::sub  # sub(out, a, b): out = a - b, xyz only
+00407eb0 rgl::cross  # cross(out, a, b) out-of-line form
+00407d60 rgl::vector4::normalize  # normalise in place, returns the old length
+00407f70 rgl::matrix::transform_point_to_local  # (ret 8) out = (p - o) dotted with s/f/u
+0041f4b0 vec<mface>::clear  # ICF-folded with every other vec element type
+0041f4b0 vec<medge>::clear  # same folded body
+0041f4b0 vec<mpoly>::clear  # same folded body
+00477c10 vec<mface>::push_back
+00477d20 vec<mpoly>::push_back
+00477e10 vec<medge>::push_back

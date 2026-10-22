@@ -1,0 +1,2 @@
+slices/s004b2c00/s004b2c00.cpp  ?throw_stub@@YAXXZ  004b33b4  /O2 /MT /Gy /TP
+slices/s004b2c00/s004b2c00.cpp  ?construct_items_n@@YAXPAXIPBXPAUElemCopier@@@Z  004b3350  /O2 /MT /Gy /TP

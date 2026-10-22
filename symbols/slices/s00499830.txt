@@ -1,0 +1,16 @@
+00591e20 ??_7cls_a@@6B@  # medium-button (0x188) vtable, installed by its ctor after the 0x48ae20 base ctor
+00591ee8 ??_7cls_b@@6B@  # xyz-button (0x188) vtable, same ctor shape as cls_a
+0048ae20 ??0panel@@QAE@XZ  # base widget ("panel") ctor, called first by the cls_a/cls_b/cls_d ctors
+0048b760 ??0cls_c@@QAE@XZ  # progress-bar (0x1b0) ctor: external call, installs its own vtable
+004931d0 ??0cls_d@@QAE@XZ  # drop-down (0x1d0) ctor: external call, installs its own vtable
+00499050 ?placed@scene_tbl@@QAEPAUmesh@rgl@@H@Z  # scene_tbl::placed(index) -> mesh (slice s00499050)
+8ed4f58 ?g_scene@@3Uscene_tbl@@A  # scene table global used by the factories (address beyond the image sections)
+005d6fa0 ?g_resmgr@rgl@@3Uresmgr@1@A  # resource manager global
+00419540 ?get_object@resmgr@rgl@@QAEPAUmesh@2@ABUmstr@2@@Z  # resmgr::get_object(const mstr&) -> mesh*
+0041c6d0 ?clone@mesh@rgl@@QAEPAU12@XZ  # mesh::clone()
+0042bbe0 ??0mstr@rgl@@QAE@PBD@Z  # mstr(const char*)
+0042bc40 ??1mstr@rgl@@QAE@XZ  # ~mstr()
+0044f0c0 ?scale@mesh@rgl@@QAEXM@Z  # mesh::scale(float)
+0047af30 ?set_scale@mesh@rgl@@QAEXUvector4@2@@Z  # mesh::set_scale(vector4) (by value; .w copied uninitialised)
+0053545e ??2@YAPAXI@Z  # operator new
+004927d0 ?_Insert_n@?$vector@PAUpanel@@V?$allocator@PAUpanel@@@std@@@std@@IAEXViterator@12@IABQAUpanel@@@Z  # vector<panel*>::_Insert_n (grow path of push_back)

@@ -1,0 +1,6 @@
+004779b0 ?flip_faces@mesh@rgl@@QAEXXZ  # rgl::mesh::flip_faces: swaps each face's first/third index, marks face slots dirty
+00477a30 ??0RecZ@@QAE@XZ  # RecZ constructor (0x5928-byte record, vtable 0x591848)
+00477ca0 ?resize@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@QAEXI@Z  # vector<E100>::resize(n): E100() temp passed by value to resize(n, E100) 0x4775a0
+00477db0 ?resize@?$vector@UE52@@V?$allocator@UE52@@@std@@@std@@QAEXI@Z  # vector<E52>::resize(n): E52() temp passed by value to resize(n, E52) 0x4776b0
+00475e50 ?init@RecZSubA@@QAEXXZ  # RecZ sub-object initialiser called by ctor 0x477a30
+004353a0 ?init@RecZSubB@@QAEPAU1@XZ  # RecZ sub-object initialiser called by ctor 0x477a30

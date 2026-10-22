@@ -1,0 +1,5 @@
+slices/s0049cc60/s0049cc60.cpp  ?check_script_param@@YIDPAH0@Z  0049ccc0  /O2 /MT /Gy /TP
+slices/s0049cc60/s0049cc60.cpp  ?check_troop@@YIDPAH@Z  0049cee0  /O2 /MT /Gy /TP
+slices/s0049cc60/s0049cc60.cpp  ?check_quest@@YIDPAH@Z  0049cf30  /O2 /MT /Gy /TP
+slices/s0049cc60/s0049cc60.cpp  ?check_faction@@YIDPAH@Z  0049cf80  /O2 /MT /Gy /TP
+slices/s0049cc60/s0049cc60.cpp  ?check_scene@@YIDPAH@Z  0049d020  /O2 /MT /Gy /TP

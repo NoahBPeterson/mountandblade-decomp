@@ -1,0 +1,5 @@
+slices/s00499830/s00499830.cpp  ?add_medium@widget_mgr@@QAEHH@Z  00499830  /O2 /MT /Gy /TP
+slices/s00499830/s00499830.cpp  ?add_xyz@widget_mgr@@QAEHHH@Z  00499a20  /O2 /MT /Gy /TP
+slices/s00499830/s00499830.cpp  ?add_xyz_clicked@widget_mgr@@QAEHHH@Z  00499b50  /O2 /MT /Gy /TP
+slices/s00499830/s00499830.cpp  ?add_progress@widget_mgr@@QAEHHH@Z  00499b80  /O2 /MT /Gy /TP
+slices/s00499830/s00499830.cpp  ?add_dropdown@widget_mgr@@QAEHXZ  00499d90  /O2 /MT /Gy /TP

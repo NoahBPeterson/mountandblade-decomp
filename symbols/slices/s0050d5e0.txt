@@ -1,0 +1,7 @@
+# s0050d5e0 (load_module_files 0x50d5e0): globals whose addresses lie beyond the image's annotated
+# data range, so resolve.py cannot take them from a `// 0x...` source annotation.
+08ed4f58 ?g_meshes@@3UMeshTable@@A  # mesh table (load 0x4c3fb0)
+08ed4f60 ?g_anims@@3UAnimTable@@A  # animation table (load 0x50d520)
+08ed50c8 ?g_dialogs@@3UDialogTable@@A  # dialog manager (read 0x460ab0)
+08ee3c28 ?g_module_path@@3Utstring@@A  # module directory path used by the file opener
+08ee41f0 ?g_path@@3PADA  # 0x100 byte scratch path buffer

@@ -1,0 +1,7 @@
+004d5290   134  complete: Hud::handle_buttons (forward &arg to the item source at +0x30, then f60/f64/f68/
+                   f6c/f70/f74/f78 used-flag tests opening menu options 3, 3, 0x15, 3, 0x12, 0x1c and the
+                   0x5e2a08 flag); codegen only (shared return targets, per-statement global loads).
+004d51d0   173  complete: world_destroy (base dtor 0x479160, sub-object dtors at +0x6814/+0x6698/+0x6688/
+                   +0x63d0/+0x30/+0x4, frees of vectors at +0x667c/+0x63c4/+0x5e00); codegen only.
+                   equiv: UNSUPPORTED/FAIL by harness limit -- the generated world has no mapped
+                   sub-objects, so 0x431a60's read of [this+4] faults in ours only (orig 4/6 edges).

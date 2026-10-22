@@ -1,0 +1,1 @@
+0049c2c0 order    # Mission::order; arms the three order slots of the selected order leader, composes the localised order caption and re-seeds the order group's agents

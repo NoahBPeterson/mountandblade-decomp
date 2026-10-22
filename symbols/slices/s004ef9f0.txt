@@ -1,0 +1,10 @@
+# names used while matching slice s004ef9f0 (character-panel detail page)
+004ef9f0  CharSheet::update_detail
+005e2930  g_game
+005e2a18  g_strtable (0x43a1e0 lookup, 0x4c6010 find)
+008ee3100 g_skills (0x44-byte records)
+00a44240  g_config (ini, 0x4bd5e0 get_float)
+00a18120  char_t_current_level_x anchor (g_char_t_level_x)
+00a18124  char_t_current_level_y anchor (g_char_t_level_y)
+004f04f0  prof_group_name (proficiency group name)
+00415100  mb_snprintf

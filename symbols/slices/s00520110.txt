@@ -1,0 +1,2 @@
+00520270 ?level_up@TroopRec@@QAEXXZ  # this slice: recompute the point budgets from the level and spend them
+00520420 ?raise_skills@TroopRec@@QAEXXZ  # this slice: spend the "hp" budget on random, not yet capped skills

@@ -1,0 +1,10 @@
+005305b0 ?update@MapEditorDialog@@QAEXXZ  # map editor per-frame update (see match/slices/s005305b0)
+00531380 ?move_forward@matrix@rgl@@QAEXABM@Z  # o += f * d on a matrix (provisional name; called with this=local matrix, arg=&1.0f)
+005313c0 Mission::remove_record  # removes record index (this = map/mission at 0x5e292c)
+005314e0 MapEditorDialog::add_selected  # (mesh, frame matrix, record, 0x70886611)
+004ea0c0 MapEditorDialog::select_entity  # (mesh, record, 0xa0dd7711)
+0052fe40 MapEditorDialog::handle_input  # (moved, pos, rotated, frame, drag, dir, flag)
+0040cd60 ?identity3@@YAPAUmat3@@PAU1@@Z  # 3x3 identity into out
+004329d0 ?relative@pos@@QBE?AUmatrix@rgl@@ABU23@@Z  # b expressed in this frame
+0040e870 ?mul@pos3@@QBE?AUmatrix@rgl@@ABU23@@Z  # this * m (rotation composed via 0x40a920)
+0043f310 ?resize@?$vector@HV?$allocator@H@std@@@std@@QAEXIABH@Z  # vararg resize(count, value)

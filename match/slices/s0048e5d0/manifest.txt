@@ -1,0 +1,2 @@
+slices/s0048e5d0/s0048e5d0.cpp  ?resolve@NameRec@@QAEPAUtstring@@XZ  0048e8d0  /O2 /MT /Gy /TP
+slices/s0048e5d0/s0048e5d0.cpp  ?string_value@World@@QAE?AUtstring@@H@Z  0048e9e0  /O2 /MT /Gy /TP

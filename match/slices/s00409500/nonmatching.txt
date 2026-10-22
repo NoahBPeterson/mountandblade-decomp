@@ -1,2 +1,3 @@
 00409980  118  sphere_sphere_contact: complete; equiv PASS. Remaining diff is x87 operand order/spills of the length and point computation (6 rounds)
+00409ac0  549  capsule_sphere_contact: complete; equiv PASS. Original inlines the vector sub/normalize/scale with different temps and a different frame (0x54 vs 0x54+temps); codegen differs
 00409d20  153  capsule_sphere_gap: complete; equiv PASS. Remaining diff is stack layout (original reuses the d/dir slots in place for the closest point) and the dot product's x87 register order

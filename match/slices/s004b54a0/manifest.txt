@@ -1,0 +1,6 @@
+slices/s004b54a0/s004b54a0.cpp  ?_Insert_n@?$vector@UE92@@V?$allocator@UE92@@@std@@@std@@IAEXViterator@12@IABUE92@@@Z  004b54a0  /O2 /MT /Gy /EHa /TP
+slices/s004b54a0/s004b54a0.cpp  ?_Insert_n@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@IAEXViterator@12@IABUE12@@@Z  004b5790  /O2 /MT /Gy /EHa /TP
+slices/s004b54a0/s004b54a0.cpp  ?insert@?$vector@UE92@@V?$allocator@UE92@@@std@@@std@@QAE?AViterator@12@V312@ABUE92@@@Z  004b5a40  /O2 /MT /Gy /EHa /TP
+slices/s004b54a0/s004b54a0.cpp  ?insert@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@QAE?AViterator@12@V312@ABUE12@@@Z  004b5ab0  /O2 /MT /Gy /EHa /TP
+slices/s004b54a0/s004b54a0.cpp  ?push_back@?$vector@UE92@@V?$allocator@UE92@@@std@@@std@@QAEXABUE92@@@Z  004b5b20  /O2 /MT /Gy /EHa /TP
+slices/s004b54a0/s004b54a0.cpp  ?push_back@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@QAEXABUE12@@@Z  004b5bb0  /O2 /MT /Gy /EHa /TP

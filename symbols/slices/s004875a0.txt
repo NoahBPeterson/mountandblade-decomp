@@ -1,0 +1,2 @@
+00487c00 ??1Buffer@@UAE@XZ  # Buffer dtor (vtable 0x591c80), byte-exact
+00591c80 ??_7Buffer@@6B@  # vtable of Buffer (slot 0 = its deleting dtor; stored by ~Buffer 0x487c00)

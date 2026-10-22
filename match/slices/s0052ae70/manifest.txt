@@ -1,0 +1,2 @@
+slices/s0052ae70/s0052ae70.cpp  ?order_tick@Screen@@QAEXXZ  0052b300  /O2 /MT /Gy /TP
+slices/s0052ae70/s0052ae70.cpp  ?draw_order_menu@Screen@@QAEXXZ  0052b3c0  /O2 /MT /Gy /TP

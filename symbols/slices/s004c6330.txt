@@ -1,0 +1,24 @@
+004c6330 ?text_by_kind@RecA@@QAE?AUtstring@@XZ  # RecA accessor: builds "field_pl", finds it in g_strtable (0x4c6010), else text + "{***}" (0x42c1e0 append); tstring ctor 0x42bbe0, copy 0x42c110, dtor 0x42bc40; `+suffix` is operator+ 0x42c840 (2 out params)
+004c63f0 ?src_text@RecA@@QAE?AUtstring@@XZ  # RecA accessor: finds the record key (at +0x54) in g_strtable, else name + "{***}"
+004c6470 ?src_id_name@RecA@@QAE?AUtstring@@XZ  # RecA accessor: builds "key_text" via operator+ 0x42c840, finds it, else text (at +0x10) + "{***}"
+004c6530 ?name_by_state@RecB@@QAE?AUtstring@@XZ  # RecB accessor: if the flag at +0x1c return the string at +0xc, else find the string at +0x20, else field + "{***}"
+004c65d0 ?reset@ItemPage@@QAEXXZ  # ItemPage: scalar-delete +0x54, destroy the keyframe array at +0x6c, free_mem +0x44 and zero +0x44/+0x48/+0x4c, destroy name
+004c6620 ?format@ItemPage@@QAEXPAD@Z  # ItemPage message formatter; kind at +0x188, index at +0x18c, field at +0x190, text_ptr +0x1a0, text_ptr2 +0x1a4; lookup 0x43a1e0, sprintf 0x535717, kinds 1/5/4/2|6/0/else, INVALID PLANT 0x595cfc, INVALID ITEM 0x595cac, counts 0x5e29e8/0x5e29d4, arrays 0x5e28f8/0x5e29d0
+004c6860 ?field_name@RecC@@QAE?AUtstring@@XZ  # RecC accessor: if the flag at +0x10 return name, else find the string at +0x14, else name + "{***}"
+004c6900 ?retire@ItemPage@@QAEXXZ  # ItemPage: destroy the 0x24-byte record array backwards (count at records[-1]), free_mem_arr(records-4), null the pointer
+004c6950 ?fill_records@ItemPage@@QAEPAURefRecord@@PAU2@@Z  # ItemPage: builds the 0x24-byte target array from the source records (element ctor 0x4c23f0, find_frame 0x40f0d0)
+004c6aa0 ?clear@ItemPage@@QAEXXZ  # ItemPage: frees the +0x24c..+0x250 range, destroys the buffered records, resets the counters
+004c6b30 ?place@ItemPage@@QAEXH@Z  # ItemPage: placement helper (keyframe walk + per-item writes)
+0040cd00 identity_pos  # (see s004c2b20) fills a 4x4 out matrix with the identity rotation and zero origin
+00592a18-005e2a18 g_strtable  # the UI string table (find 0x4c6010 returns null, lookup 0x43a1e0 returns a shared entry)
+00595717 sprintf  # the CRT-style formatter the formatter calls (char* out, int size, const char* fmt, ...)
+0042bbe0 tstring(const char*)  # ctor
+0042bbd0 tstring()  # ctor
+0042bc40 ~tstring()  # dtor
+0042c110 tstring(const tstring&)  # copy ctor
+0042c50 operator=  # assignment
+0042c1e0 append  # appends a string
+0042c840 operator+  # builds a temp and copies it into BOTH out params (used for "key_text"/"field_pl")
+0043a1e0 StrTable::lookup  # returns the entry or a shared "ui_unknown..." record
+0043a480 ItemKind::display_name  # returns the record's own name (or the record itself)
+0042c110 RecA::src_text / src_id_name copy  # both fall through to the same "copy the temp out" tail

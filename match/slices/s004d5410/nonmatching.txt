@@ -1,0 +1,18 @@
+004d5410  1061  complete: MissionSource::pick. Start-of-frame bookkeeping (spawn tick global + family
+                   sound at MenuKind(family)+0x14, hour-of-day float), nearest kind-7 item to the mouse
+                   (rect distance, two fabs candidates per axis), that item's value handler + key flag,
+                   then every item's 5 animation clocks and key reactions (used 0x10000: kind 2/3
+                   float, 5 int, 6 title string, 8+0x184==1 flag byte; else pressed 2 / pressed 4).
+                   Not byte-exact: the original's STL iterator (0x534160) and vector _M_start reloads
+                   per access, non-inlined virtuals, and a 0x3c-byte frame vs 0x10.
+004d5940    42  complete: ValueSource::on_value_changed. Semantics confirmed equivalent in order
+                   (set_value(step/slot * arg * scale + value())): the original's observable value is
+                   reproduced but 1 ulp off on extreme inputs (equiv: input 0, float-rounding, orig
+                   0x22ad6d4c vs ours 0x22ad6d4d), the same for all three algebraically equal groupings;
+                   the original splits the arg*scale product into its own x87 chain.
+004d5980    61  complete: Hud::on_mission_start (stamp world+0x5270 from g_u32, ++g_u32, mission setup,
+                   screen v2(), screen+0x18 = f18, two menu-widget fields, choose(0xe)); only the
+                   global-reload/register schedule differs.
+004d5a20   325  complete: Hud::on_update (mission clock step on f30[0]'s value source + key flag, page
+                   list poll 0x24c/0x250 with 0x4d5ba0, page buttons 0x34/0x38, menu button f30[0],
+                   choose(f18) with the 0xa170d8 / 0xa174d8 guards); codegen only.

@@ -1,0 +1,2 @@
+00532de0 488 update_party_sprites: code shape matches modulo the two 18-byte non-code ("WL  ") marker blocks inside the original symbol at 0x532deb and 0x533005 (skipped by `jmp +0x10`); size 525 vs 573; equiv WEAK (no mismatch over 403 valid inputs; loop/row branches unreachable from generated inputs because party row state is not part of the input surface - harness limit)
+00533070 1277 on_event: large key/menu dispatch, register allocation and frame size differ (size 1635 vs 1827); equiv UNSUPPORTED (import resolution audit)

@@ -1,0 +1,3 @@
+slices/s00471b30/s00471b30.cpp  ?light_all@Terrain@@QAEXPAUparticle_list@@_N@Z  00472020  /O2 /MT /Gy /TP
+slices/s00471b30/s00471b30.cpp  ?clear@ArrList@@QAEXXZ  00472460  /O2 /MT /Gy /TP
+slices/s00471b30/s00471b30.cpp  ?ufill@vec24@@QAEPAUR24@@PAU2@IABU2@@Z  004724c0  /O2 /MT /Gy /TP

@@ -1,0 +1,5 @@
+8ed50c8 ?g_n_dialogs@@3HA  # global dialog count (read by save_language_files)
+8ed50cc ?g_dialogs@@3PAUDialogRec@@A  # global dialog array pointer
+8ed4f7c ?g_skins_begin@@3PAUSkinSet@@A  # first skin set
+8ed4f80 ?g_skins_end@@3PAUSkinSet@@A  # one past last skin set
+8ee3100 ?g_skills@@3PAUSkillRec@@A  # global skill table, 42 records of 0x44 bytes

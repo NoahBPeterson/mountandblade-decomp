@@ -1,0 +1,4 @@
+slices/s005324d0/s005324d0.cpp  ?clear_selection@Party@@QAEXXZ  005324d0  /O2 /MT /Gy /TP
+slices/s005324d0/s005324d0.cpp  ?get_cell@Party@@QAEXHHHPAH0@Z  00532520  /O2 /MT /Gy /TP
+slices/s005324d0/s005324d0.cpp  ?move_men@Party@@QAEXH@Z  00532560  /O2 /MT /Gy /TP
+slices/s005324d0/s005324d0.cpp  ?compact@Party@@QAEXXZ  00532db0  /O2 /MT /Gy /TP

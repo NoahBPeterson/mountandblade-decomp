@@ -25,15 +25,8 @@ template BoneInfluence* std::copy_backward(BoneInfluence*, BoneInfluence*, BoneI
 // ---- skeleton model -------------------------------------------------------------------------
 frame_set::frame_set() {}
 int frame_set::type() { return 7; }
-// @ 0x41aee0
-// vector deleting destructor ??_Eframe_set (the dtor body is inlined into both paths). NOT byte-exact: the original
-// expands `delete[] bones` in the array path with __vec_dtor(bones, 0xdc, n, &Bone::~Bone) and keeps the call to
-// Bone's vector deleting destructor in the scalar path; cl 13.10 here calls it in both (see nonmatching.txt).
-frame_set::~frame_set()
-{
-    if (nbones != 0 && bones != 0)
-        delete[] bones;
-}
+// cl emits the vector deleting destructor ??_Eframe_set (0x41aee0, slot 0 of vtable 0x54aeb4) for the array-new
+// anchors at the end of the file; the destructor body (inline in the header) is inlined into both paths.
 
 // ---- resource manager (global object at 0x5d6fa0) ----------------------------------------------
 // @ 0x41b000

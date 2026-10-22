@@ -1,0 +1,3 @@
+004b6180 detach_party  # PartyObj::detach_party groundwork: leave a mission, drop the member lists and mark both parties out-of-mission
+004b6870 commit_party  # PartyObj::commit_party wrapper: set the commit globals, begin the commit state (flag -5), commit every live member, and fall back to detach_party when the commit reports failure
+004b6ae0 PartyObj::recover  # per-party "leave mission" entry (tail-calls detach_party for the slot named by +0x88)

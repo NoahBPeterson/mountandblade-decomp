@@ -1,0 +1,7 @@
+0x8ee3cec ?g_screenshot_cropped@@3DA  # byte flag: nonzero crops a screenshot to the view rect (0x4bb9c0)
+0x8ee3fc0 ?g_settings_dlg@@3PAUHWND__@@A  # settings dialog window handle (list box id 0x4b0)
+0x5e2930 g_game  # game data pointer; settings text tstring at +0x1a080
+0x593160 _g_eq_sep  # " = " separator literal used by refresh_settings_list
+0x5e28d0 ?g_edit_key@@3HA  # first value of the line being edited
+0x5e28d4 ?g_edit_value@@3HA  # second value of the line being edited
+0x590d94 ?g_line_pitch_ratio@@3MA  # 0.6f visible lines vs window height

@@ -1,0 +1,1 @@
+004fa790 ?update@View@@QAEXPBUmatrix@rgl@@H@Z  # the 0xa76630 camera/sun/flare per-tick update; View is a provisional container name

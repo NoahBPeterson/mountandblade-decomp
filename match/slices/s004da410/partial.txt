@@ -1,0 +1,3 @@
+# s004da410 partial: complete control flow / call sequence written, but not verifiably equivalent or not complete.
+# none: every VA in this slice is either byte-exact (manifest.txt) or complete and non-exact
+# (nonmatching.txt).

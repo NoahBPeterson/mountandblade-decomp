@@ -1,0 +1,13 @@
+04b2370 Party::skill  # __fastcall-ish member read by agent_speed_factor/set_order* (ecx = this, stack arg = skill id)
+05e2930 g_game  # GameData* singleton (parties at +0xf8, chars +0x13a00, zoom +0x13ad0)
+05e2948 g_ticks  # __int64 clock table used by update_2/update_3
+0a732b4 g_scene  # rgl scene (0xb0 = anim record store)
+04b2180 fill_range  # 0xc-byte element copy loop called by fill_elems
+04b2160 copy_item  # 0x5c-byte item record copy called by construct_items
+04b24b0 construct_elems2  # by-reference-iterator construct loop (calls 0x436cf0)
+0436cf0 ElemCopier::copy  # __thiscall copy into a 0xc-byte element
+048ad00 party_lookup  # pool handle -> party record (mask 0xf, *0x5ac8)
+048ea80 GameData::find_at  # map position -> anim/agent node
+04b2970 Party::set_order  # order kind 1 (map position)
+04b29d0 Party::set_order_party  # order kind 2 (chase party)
+04b2ab0 Party::set_order_agent  # order kind 3 (chase agent)

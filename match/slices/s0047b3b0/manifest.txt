@@ -1,0 +1,3 @@
+slices/s0047b3b0/s0047b3b0.cpp  ?append@mesh_list@rgl@@QAEXPAU12@HPBUmat4@2@PBI@Z  0047b480  /O2 /MT /Gy /TP
+slices/s0047b3b0/s0047b3b0.cpp  ?set_color@lod_mesh@rgl@@QAEXI@Z  0047b5b0  /O2 /MT /Gy /TP
+slices/s0047b3b0/s0047b3b0.cpp  ?transform@lod_mesh@rgl@@QAEXABUmat4@2@@Z  0047b610  /O2 /MT /Gy /TP

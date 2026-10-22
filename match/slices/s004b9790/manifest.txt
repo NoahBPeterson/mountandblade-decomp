@@ -1,0 +1,4 @@
+slices/s004b9790/s004b9790.cpp  ?set_active_tab@OptionsDlg@@QAEXH@Z  004b9790  /O2 /MT /Gy /TP
+slices/s004b9790/s004b9790.cpp  ?run_settings_probe@@YAXXZ  004b99c0  /O2 /MT /Gy /TP
+slices/s004b9790/s004b9790.cpp  ?paint@OptionsDlg@@QAEXXZ  004b9af0  /O2 /MT /Gy /TP
+slices/s004b9790/s004b9790.cpp  ?get_latest_version@@YAJXZ  004b9aa0  /O2 /MT /Gy /TP

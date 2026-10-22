@@ -1,0 +1,1 @@
+004fe860  6891  complete, functionally equivalent dialog proc (WM_INITDIALOG / WM_NOTIFY / WM_COMMAND, ~130 cases); MSVC switch layout, jump-table form, register allocation and 0x5c of dead/oversized frame locals differ from the original

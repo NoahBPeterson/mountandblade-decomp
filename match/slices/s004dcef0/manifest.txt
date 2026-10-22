@@ -1,0 +1,4 @@
+# slice s004dcef0 (batch ds1) -- 2 of 3 byte-exact; MainMenu::create is complete but nonmatching.
+# VAs: 004dcef0 004dd6e0 004dd7b0  (see nonmatching.txt / partial.txt)
+slices/s004dcef0/s004dcef0.cpp  ?scan_saves@@YAXHPAH0PBD@Z  004dd6e0  /O2 /MT /Gy /TP
+slices/s004dcef0/s004dcef0.cpp  ?save_path@@YAXPAD@Z  004dd7b0  /O2 /MT /Gy /TP

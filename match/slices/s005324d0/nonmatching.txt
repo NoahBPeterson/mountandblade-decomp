@@ -1,0 +1,3 @@
+005325b0 199 apply: register-allocation shape differs (this/which/g_game land in ebx/esi/edi instead of ebx/edi/ebp); size 407 vs 391; equiv PASS (252 valid inputs, all edges)
+00532830 1043 stack_remove: compiler folds page-slot `lea;mov` into a single `mov` and keeps some RMW counters in registers; size 1397 vs 1405; equiv PASS (256 valid inputs, all edges)
+00532740 135 swap_rows: compiler folds second row offset (o1 + which*0x80) instead of computing slot<<7 and (slot+which)<<7 separately (size 221 vs 232)

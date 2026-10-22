@@ -1,0 +1,2 @@
+slices/s0049aca0/s0049aca0.cpp  ?destroy@NodeA@@QAEPAXI@Z  0049b0f0  /O2 /MT /Gy /TP
+slices/s0049aca0/s0049aca0.cpp  ?place@PObj@@QAEXPAH@Z  0049b4b0  /O2 /MT /Gy /TP

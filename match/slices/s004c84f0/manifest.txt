@@ -1,0 +1,4 @@
+slices/s004c84f0/s004c84f0.cpp  ?erase_range@ptr_vec@@QAE?AUptr_iter@@PAH0@Z  004c88a0  /O2 /MT /Gy /TP
+slices/s004c84f0/s004c84f0.cpp  ?loader_thread_body@@YGXXZ  004c8900  /O2 /MT /Gy /TP
+slices/s004c84f0/s004c84f0.cpp  ?conv_sub_dtor@@YGXPAPAX@Z  004c8ab0  /O2 /MT /Gy /TP
+slices/s004c84f0/s004c84f0.cpp  ?conv_zero_node@@YIPAXPAX@Z  004c8c20  /O2 /MT /Gy /TP

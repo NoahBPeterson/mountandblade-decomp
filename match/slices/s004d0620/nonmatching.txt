@@ -1,0 +1,7 @@
+# The original calls bare operator new (0x53545e) and then the record ctor; cl 13.10 with RTTI on
+# emits ??_U@YAPAXI@Z plus the RTTI name descriptor (whose text is this TU's source name), so the
+# first bytes after `mov ecx,imm` can never match. Control flow of all 20 record builds is known
+# (each: operator new -> ctor 0xa73980..0xa739f4 -> head vtable 0x5947d8 / +4=0 / +8=0x63 ->
+# derived vtable 0x595804..0x595c68), but most record kinds are built by ctors owned by other
+# slices, so only one head-style record (record_38) is written out here.
+# equiv.py: FAIL — 5/5 inputs differ at .data 0xa73980 (the other 19 record pointers).

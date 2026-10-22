@@ -1,0 +1,2 @@
+# slice s004ea0c0 (provisional)
+0x8ee3c3c ?g_save_prefix@@3PADA  # save-folder prefix string pointer used by the save-slot path builder

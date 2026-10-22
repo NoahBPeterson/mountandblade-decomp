@@ -1,0 +1,13 @@
+004ed8d0 pick_entity        pick_entity               (0x4ed8d0; __fastcall, view-rect owner in Ctx::f60)
+005e292c g_scene           scene                     rows of 0x1c8; f65dc / f65e0 / f668c / f6690 used here
+005e28f8 g_map             map array                 rows of 0x20
+005e29dc g_map_points      map points                rows of 0x78
+005e29e8 g_map_count       map point count
+004ea0c0 select_entity     entity selection
+004e43e0 draw_string       text draw
+00433310 capsule           capsule shape
+0040cd00 identity_pos      identity position
+00408770 sphere_shape      sphere shape
+00408420 make_contact_box  contact box
+0040bfe0 shape_contact_count contact count
+004bd2f0 cell_rect         view-rect cell

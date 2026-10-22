@@ -1,0 +1,51 @@
+# slice s00512c80 (batch ds1, entry 409) - the inventory panel's slot-transfer engine and its four helpers.
+# Status column is the current chk/run_all verdict for the VA.
+00512c80 ?transfer_slot@InventoryPanel@@QAEXPAUItemRef@@HH@Z  # InventoryPanel::transfer_slot (nonmatching, 1190 diff; ours 1452 vs 1449) - ret 0xc; registers ebx=item, ebp=slot, edi=page, esi=this; frame sub esp,0x120 with fl at +0x13, tmp(ItemRef) at +0x14, sv +0x28, hv +0x2c (also the make_mesh out param) and buf at +0x30
+00513230 ?can_transfer@InventoryPanel@@QAEDPAUItemRef@@HH@Z  # can_transfer (nonmatching, 147 diff) - ret 0xc; "may this item go into this slot for this mode/flag"
+005132e0 ?set_slot_value@InventoryPanel@@QAEXHHH@Z  # set_slot_value (MATCH) - ret 0xc; values page<2 else vstash[page-2]
+00513320 ?or_slot_flag@InventoryPanel@@QAEXHH@Z  # or_slot_flag (MATCH) - ret 8; flags |= 2 (page<2) else fstash[page-2]
+00513360 ?add_cost@InventoryPanel@@QAEXH@Z  # add_cost (nonmatching, 4 diff) - ret 4; pending trade value + label text
+# ---- facts that made this slice's failure findable ----
+# MsgLog::add at 0x452c00 takes the tstring BY VALUE IN THE LOW STACK SLOT and the colour second:
+#   `void MsgLog::add(tstring text, int color)` (ret 0x14)
+# The callee proves it: entry prologue `lea ecx,[esp+0xa4]` == entry+4 == the first stack argument, used as
+# `this` for the markup scanner 0x42c5d0.  Declaring it `(int color, tstring text)` makes the callee read the
+# colour as a tstring pointer - equiv.py then faults inside 0x42c5d0/0x42c600 while every diff-based tool
+# looks plausible.  s0047f650 and s005134c0 record the same signature.
+# The 0x4334b0 overload of the same name takes the operands in the opposite order (docs/Papercuts.md).
+# The original homes all three arguments in callee-saved registers at the top (mov ebx,[esp+0x128] ...), which
+# cl 13.10 does not reproduce here - that (plus the block order) is why this VA stays nonmatching although the
+# two instruction streams are the same size and shape.
+# ---- the panel object (`this`) ----
+# InventoryPanel: mode +0x4, troop +0x14, slot state table +0x364 (pages 0/1, 0x300 bytes), slot values +0x664,
+# pages 2/3 stash flags +0x9c0 / values +0xa10 (addressed as slot + page*10), total-cost label +0xa60,
+# pending trade value +0xa8c, "holding an item" flag +0xa98, held ItemRef +0xa9c (count +0xaa0), its saved flag
+# +0xaa4, its saved value +0xaa8 and the page it came from +0xaac.
+0126e0 see below; the panel callees: 005126e0 slot_flag, 00510850 slot_flags (ret 0x10), 00512960 price_512960 (ret 8), 00502b80 make_mesh (ret 0xc, troop = +0x13a00 + troop*0x508), 005134c0 try_place (ret 0xc, slice s005134c0)
+05126e0 InventoryPanel::slot_flag  # (page, slot, mask)
+0510850 InventoryPanel::slot_flags  # (page, idx, mask, on) - ret 0x10; the 1-in-4 stack argument order is the original's
+0512960 InventoryPanel::price_512960  # (ItemRef*, mode) - trade re-pricing
+0502b80 InventoryPanel::make_mesh  # (ItemRef*, int* out, int troop) - ret 0xc
+05134c0 InventoryPanel::try_place  # (ItemRef*, page, slot) - ret 0xc, byte-exact in slice s005134c0
+# ---- shared symbols used ----
+0434b70 ItemRef::max_amount
+0437510 ItemRef::reduce  # ret 4
+0434be0 ItemRef::add_amount  # ret 4
+0462c80 Agent::fits_slot  # ret 8
+043a480 Agent::display_name  # (Agent = one 0x508-byte row of g_game->chars)
+048e9e0 GameData::string_value  # ret 8, writes into its first argument
+0435790 GameData::pick_event  # ret 0xc
+048b2d0 MsgLog::lock
+042cd80 MsgLog::unlock  # ret 4
+0452c00 MsgLog::add  # ret 0x14; (tstring text, int color) - text by value FIRST (see above)
+042bbd0/042bbe0/042c110/042bc40 tstring ctor/(const char*)/copy/dtor
+042c5d0 tstring markup scanner  # `this` from ecx, one stack argument
+043a1e0 StrTable::lookup  # ret 4; g_strtable is the fixed global 0x5e2a18
+044f0c0 Mesh::scale  # ret 4; the mouse-carried mesh
+0536f8f sprintf  # the ui_troop_cant_use_item path formats through this (not the CRT's)
+05e29d0 g_items  # 0x238-byte item kind records; kind dword/flags at +0x1c8 (low byte = kind)
+05e2a18 g_strtable
+05e2930 g_game
+05d7080 g_msglog  # == 0x5d7080, the singleton whose first member is the log (see s0050f440 g_gui)
+05d75e4 g_drag  # the mesh carried by the mouse; vtable slot 0 = release(int)
+05e2930 g_game  # +0x8c = the "player" troop index, +0x13a00 = 0x508-byte troop rows

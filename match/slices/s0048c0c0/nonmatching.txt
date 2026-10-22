@@ -1,0 +1,12 @@
+0048c210  76   complete: Event ctor, but the original builds the initial int/float values in a stack pair and spills them (source order 0/1 vs 0/1 in registers); not reproduced.
+0048c260  176  complete: Event::init; original spills 0.0/1.0 through a stack pair and keeps the cos/sin result in a stack temp (x87 scheduling differs).
+0048c330  149  complete: slot removal by rotating copies; original tests/copies through a walking pointer (one vptr byte test before the loop) and unrolls differently; MISSING-CALL: none.
+0048c3c0  117  complete: slot count-down; UNSUPPORTED call model for 0x489540 (Agent::slot_remove, out-param copy) and only the (idx, amount, extra, merge) subset of the original's arguments modelled.
+0048c470  70   complete (behavioural): builds the name record (empty name + record(id/0x18) + id copy) through the global store object 0xa7045c; the original's callee at 0x435790 takes 3 stack args (0xf, id/0x18, id) and the resolver cannot map it: UNSUPPORTED. Call shape modelled by a local 3-arg declaration.
+0048c4c0  154  complete: World::init_slots; writes through an 8-byte-stride view of the slot array (source uses the 0x20-byte entry type), loop shapes differ.
+0048c570  33   complete: 8-byte record copy; original computes count = n*8 with lea after sar and keeps it in esi across memmove.
+0048c5c0  543  complete: ItemRef::randomize_modifier; MSVC 7.1 refuses to share the two unrolled modifier loops (original folded them into one loop with an early-exit flag).
+0048c7f0  68   complete: Agent::set_slot; original addresses the reference with lea [ecx+idx*8+0xb4] (8-byte view of the slot table).
+0048c840  372  complete: Agent::slot_add (merge into an equal entry, else append a new 0x20-byte entry); the original shares its tail with 0x48c849 by falling into it (ZF from the amount test), our code has one merged copy.
+0048c849  296  complete: the original function at 0x48c849 is the shared tail of 0x48c840 (entered with ZF/EBX preset); our slot_add covers it. ~size marker pairing (name is Agent::slot_add there).
+0048c9b0  102  complete: World::give_item(troop, item, count) filling free slots via ItemRef::set; original walks through a World* alive across the call (imul from the global each iteration).

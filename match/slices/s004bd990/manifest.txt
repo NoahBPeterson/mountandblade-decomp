@@ -1,0 +1,5 @@
+slices/s004bd990/s004bd990.cpp  ?load_extras@psys_record@@QAEXAAUstream_base@@@Z  004bdd50  /O2 /MT /Gy /TP
+slices/s004bd990/s004bd990.cpp  ?load_extras@prsnt_record@@QAEXAAUstream_base@@@Z  004bddf0  /O2 /MT /Gy /TP
+slices/s004bd990/s004bd990.cpp  ?save@prsnt_record@@QAEXAAUstream_base@@@Z  004bdf60  /O2 /MT /Gy /TP
+slices/s004bd990/s004bd990.cpp  ?stop@music_player@@QAEXH@Z  004be0a0  /O2 /MT /Gy /TP
+slices/s004bd990/s004bd990.cpp  ?load@sound_record@@QAEXAAUstream_base@@@Z  004be200  /O2 /MT /Gy /TP

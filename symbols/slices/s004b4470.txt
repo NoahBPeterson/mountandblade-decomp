@@ -1,0 +1,15 @@
+004b3350 ??$fill@VParty@@@@YAXPAVParty@@HPAX1H@Z  # helper of 0x4b49d0: fills `count` 0x5c-byte item records (EH frame, like a template instantiation); called as (dst, count, src, this, extra)
+0048ad00 ?index_of@PartyMgr@@QAEHH@Z  # PartyMgr::index_of: page id>>4, slot id&0xf (used by 0x4b4470/0x4b4700/0x4b4800)
+0048c330 ?remove_slot@Party@@QAEXH@Z  # Party::remove_slot: shift stack row `idx` out of the table, set dirty
+0048f9f0 ?add_to_stack@Party@@QAEHHHEH@Z  # Party::add_to_stack: move `amount` of a troop into the last matching stack (full-table promotion path)
+00489540 ?remove_row@Party@@QAEXPAHHPAH@Z  # Party::remove_row: remove stack row `idx` plus its optional 0x80-byte companion row
+004b1b80 ?update@Party@@QAE_NXZ  # Party::update: recompute the derived party stats after the stack table changed
+004b2160 ??$copy@VParty@@@@YAXPAXABVParty@@@Z  # item-record copy used by 0x4b3350 (0x5c bytes)
+004638f0 ?agent_low@GameData@@QAE_NH@Z  # GameData::agent_low: hero level below the current agent threshold
+0048ffa0 ?relation@GameData@@QAEMHH@Z  # GameData::relation: relation value between two troop/party kinds
+004b4800 ?party_value@GameData@@QAEMI@Z  # GameData::party_value: equipment value of a party (slice s004b4470)
+005e2930 ?g_game@@3PAVGameData@@A  # global GameData* (parties at +0xf8, troops at +0x13a00)
+005e2948 ?g_ticks@@3_JA  # 100 kHz clock words
+0054b8a8 0x54b8a8  # 12.0f constant (troop level -> value offset)
+0054a6f0 0x54a6f0  # 0.01f constant (value scale)
+00a70458 ?g_result@@3HA  # 0xa70458: int slot written by item construction

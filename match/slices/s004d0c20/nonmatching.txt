@@ -1,0 +1,23 @@
+# s004d0c20 nonmatching: complete reconstructions, not byte-exact.
+# s004d0c20.cpp  ?load_module_files@@YAXXZ                            4d0c20
+# s004d0c20.cpp  ?item_modifier_array_dtor@@YAXPAUitem_modifier@@0@Z   4d10f0
+# s004d0c20.cpp  ?destroy_range_and_rethrow@@YAXPAUground_spec@@0@Z    4d120a
+# s004d0c20.cpp  ?destroy_range_ground@@YAXPAUground_spec@@0@Z         4d129a
+# s004d0c20.cpp  ?destroy_range_mission@@YAXPAUmission_type@@0@Z       4d1330
+# s004d0c20.cpp  ??0growable_array@@QAE@XZ                            4d1360
+# 4d1140/4d1160/4d1180 are byte-exact (allocator construct: thiscall, callee pops 8); 4d0c20 stays partial (16-byte gap).
+# Where the diffs come from:
+#  4d11a0/1230/12c0  the loop body (push src / push dst / ecx=allocator / add stride / jne) is right; the
+#                original additionally has a funclet EH frame (push -1, handler 0x5477f0, [ebp-0x14] = dst,
+#                [ebp+0x14] = cb) and ends in ret, which VC7.1 emits only for template-generated funclets.
+#  4d129a/1330   identical loop except the EH prologue and the ground element stride (0x68 original).
+#  4d1360        VC7.1 keeps vector4's 3-lane ctor separate instead of folding it into the 4-lane store.
+004d0c20 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
+004d10f0 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
+004d11a0 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
+004d120a ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
+004d1230 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
+004d129a ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
+004d12c0 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
+004d1330 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
+004d1360 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)

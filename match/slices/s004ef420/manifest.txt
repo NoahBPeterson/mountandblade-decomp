@@ -1,0 +1,2 @@
+slices/s004ef420/s004ef420.cpp  ?apply_to_troop@CharSheet@@QAEXXZ  004ef420  /O2 /MT /Gy /TP
+slices/s004ef420/s004ef420.cpp  ?steps_to_point@CharSheet@@QAEHH@Z  004ef6d0  /O2 /MT /Gy /TP

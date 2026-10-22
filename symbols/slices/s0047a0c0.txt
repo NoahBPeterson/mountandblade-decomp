@@ -1,0 +1,21 @@
+0047a370 ?clone@tmesh@@QAEPAU1@XZ  # tmesh::clone: new 0x41c2a0, name copy 0x42bc50, count copy, per used list std::vector<mesh_rec*>::resize (0x41f970) + mesh::clone (0x41c6d0) per element
+0047a980 ?resize@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QAEXIUE56@@@Z  # std::vector<E56>::resize, E56 = {int a,b,c; vector<int> v1; vector<int> v2; int d,e,f} (0x38)
+0047a0c0 ?post_spawn@Mission@@QAEXH@Z  # Mission::post_spawn (nonmatching)
+0047a460 ?make_grid@Mission@@QAEXXZ  # Mission::make_grid (nonmatching)
+0047a800 ?build_interior@Mission@@QAEXHPAH0@Z  # Mission::build_interior (nonmatching)
+0047a800 0x41b960  # res_mgr::find_meshes(const tstring* prefix) -> std::vector<mesh_rec*>, cdecl/ret 8
+0047a370 0x41f970  # std::vector<mesh_rec*>::resize(size_type, mesh_rec*) used by clone
+0047a370 0x410610  # std::vector<mesh_rec*>::_Insert_n (shared out-of-line insert used by the inline push_back)
+0047a800 0x43f0a0  # std::vector<mesh_rec*>::operator=
+0047a800 0x428440  # Scene::create_entity(int type) (9 = mesh object)
+0047a800 0x535712  # operator delete[](void*) for the temporary find_meshes vector storage
+0047a800 0x41c6d0  # mesh_rec::clone (thiscall, returns the 0x260-byte copy)
+0047a370 0x41c2a0  # tmesh ctor (0xe0 bytes)
+0047a460 0x412a90  # mesh cell render object ctor (0x260 bytes; material at +0x2c, flags at +0x30)
+0047a460 0x418a70  # res_mgr::get_material(const tstring&)
+0047a460 0x416e40  # bound_reset(aabb*)
+0047a460 0x416f70  # bound_update(aabb*)
+0047a0c0 0x479d20  # EmitTable::spawn(int* idx, const vector4* pos, const int* owner)
+0047a0c0 0x8ed5098  # g_emit_id[] dense-fog emitter ids (element 4); thin fog ids at +0x18 (element 6); ground-fog layers 0x8ed50b4/0x8ed50b8/0x8ed50bc
+00535ae0 lib_crt::_ceil  # ceil used by make_grid cell counts and the dust clipping
+0047a980 0x445ea0  # vector<E56> growth (_Insert_n/_Realloc) as in s0043edf0

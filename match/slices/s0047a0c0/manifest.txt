@@ -1,0 +1,2 @@
+slices/s0047a0c0/s0047a0c0.cpp  ?clone@tmesh@@QAEPAU1@XZ  0047a370  /O2 /MT /Gy /TP
+slices/s0047a0c0/s0047a0c0.cpp  ?resize@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QAEXIUE56@@@Z  0047a980  /O2 /MT /Gy /TP

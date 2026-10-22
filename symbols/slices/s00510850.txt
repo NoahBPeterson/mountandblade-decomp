@@ -1,0 +1,28 @@
+# names used while matching slice s00510850 (inventory panel list/grid refresh)
+00510850  InventoryPanel::set_slot_flag   # page/idx/mask/on -> OR or AND-NOT of the state dword
+005108d0  InventoryPanel::refresh         # both equipment pages, the ten-slot grids, the page buttons, gui reset
+00510f50  InventoryPanel::place_slot      # w->x/y + 0.044f, then hand the slot to 0x510fa0
+00510fa0  InventoryPanel::place_slot_mesh # outside the slice (builds the item mesh from the slot id)
+00512c80  InventoryPanel::transfer_slot   # outside the slice, ret 0xc (slot, page, index)
+005025a0  InventoryPanel::init_window     # tail call of refresh
+00462b60  TroopRec::count                 # hero fewer-slot case uses 9 instead
+00463030  TroopRec::find_free             # first equipment slot with id == -1
+0042cdb0  GuiManager::set_o568(GuiObj*, bool)  # called as g_gui->set_o568(0, true)
+0042bcb0  tstring::assign(const char*)    # used by the gui reset loop
+005e2930  g_game         # cur_troop +0x8c, hero_troop +0x90, troops +0x13a00
+005e29d0  g_items        # 0x238-byte records, used by 0x510fa0
+005d7080  g_gui          # +0x568 is the current GuiObj*
+005d75e8  g_gui->f568    # GuiObj* reset, vtable slot 0 called with (1)
+005d7850  tstring pool   # 0x50 records, 0x5d7d50 is the end; all assigned "" on reset
+005d8760  g_5d8760       # reset to -1
+005d8764  g_5d8764       # reset to 0xff101010
+005d8020  g_5d8020       # reset to 0
+005d8024  g_5d8024       # reset to 0
+005d8028  g_5d8028       # reset to -0.03f
+005d8780  g_5d8780       # reset to 0
+0054a480  the shared empty string literal ""
+00599bd8  0.044f (slot mesh offset added to the widget position)
+00a17148  g_a17148       # one of the four trade/character-sheet mode flags
+00a17348  g_a17348
+00a171b4  g_a171b4
+00a173b4  g_a173b4

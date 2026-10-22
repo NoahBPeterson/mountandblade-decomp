@@ -1,0 +1,8 @@
+004e40f0 214 resize/erase path expanded inline instead of calling the vector helpers the original calls (outlined _Insert_n + _Erase); equiv.py UNSUPPORTED (audit: last callee resolves to 0x535712, the free routine, so the original's tail call is argued differently)
+004e41e0 190 same as 0x4e40f0 for the 0xb0-byte world record; our insert callee resolves to 0x4d3e70 where the original's operand is 0x535712; equiv.py UNSUPPORTED
+004e42b0 41 backward copy (original does `last -= 0x20; dst -= 0x20` then copies forward and returns the old dst); ours walks forward and returns the advanced pointer; equiv.py FAIL (branch trace differs on the first path)
+004e42f0 30 out-of-line row20 copy ctor: original 39 bytes (tstring copy then vector copy, both as calls); ours 33 bytes with a different tail; equiv.py FAIL
+004e4340 107 in-place range copy with an EH frame (/EHsc): ours compiles to 50 bytes, no EH frame; equiv.py FAIL (unwinder path absent)
+004e43b0 1150 compiler-emitted EH unwinder of the fill helper that 0x4e4340 needs; not reproducible without the original fill helper's frame; equiv.py UNSUPPORTED (resolution conflict: tstring dtor)
+004e43e0 541 add_label: behaviour complete (mesh alloc via 0x412a90/0x42cdb0, label store, layout_text 0x4520d0, mesh_bounds, loading_config_assign, panel_refresh/panel_update, width bookkeeping); cl emits this-relative field offsets +0x500 late (0x14a0 for 0xfa0) so the object layout never agrees; equiv.py UNSUPPORTED (get_material unresolved)
+004e4690 197 load("name" + "Bones" children): behaviour complete; ours keeps the TiXmlHandle temporaries in different stack slots (no 0x58 frame) and inlines the second ToElement check as a for-head test; equiv.py UNSUPPORTED (ToElement virtual unresolved)

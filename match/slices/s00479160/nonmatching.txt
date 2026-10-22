@@ -1,0 +1,26 @@
+00479160  367  Mission::reset: complete; byte-identical except one scheduled store (`mov dword ptr [eax+0xc], edx`,
+                the dead 4th word of the f6598 = vector4(10,10,10) copy) which the original places after the
+                0x65xx block and the `f6664 = -1` store rather than immediately after `[eax+8]` (offsets 148-180
+                differ, 148 bytes total). cl's list scheduler keeps stores in source order, so the original's
+                source must interleave the members differently; not reproduced in 5 rounds. Also expected:
+                `eax` holds the float 10.0f there, not an address, so no pooling reloc is involved.
+004792d0  1628 Mission::setup_ambient: complete but a wrong reconstruction: the level/spec indexing and the
+                Level/Row struct layouts in this file are wrong (g_game is dereferenced as [0] instead of
+                [g_game+0x13a50], Row stride 0x31 instead of 0x4c, boundary-store and wind-store sequences are
+                reordered by the compiler), and equiv.py FAILs (our version faults where the original returns).
+                Byte-exact judged out of reach for this entry; needs its own research pass.
+
+# equiv.py verdicts (recorded here since docs/Papercuts.md is outside this slice's write scope):
+#   00479160 equiv.py FAIL 5/5 -- single dword of *undefined* struct state (0x65a4, the memberwise copy's 4th
+#            word): original leaves 0x3f800000, ours 0. Not a real behavioural difference; byte-exact impossible.
+#   004792d0 equiv.py FAIL 5/5 -- ours faults (UC_ERR_READ_UNMAPPED) where the original returns: the wrong
+#            layout above is the cause.
+#
+# Tooling papercuts (would go in docs/Papercuts.md):
+# - cl 13.10's scheduler keeps stores in source order, but the original places one store after several later
+#   statements; a `vector4` 3-arg-temp memberwise copy reproduces the "4th word loaded before it is written"
+#   oddity exactly, so the remaining gap is source *interleaving*, not the statements.
+# - cmpdis.py renders in-function call targets as `<+0x..>` for our object but `<ext>` for the original, and
+#   truncates both streams at our length, so call-offset differences and trailing instructions read as big diffs.
+# - run_all.py --manifest silently prints `0 / 0 functions` when a manifest row lacks the leading `.cpp` source
+#   column (rows must be `src  symbol  va  flags`, tab-separated).

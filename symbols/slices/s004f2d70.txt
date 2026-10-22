@@ -1,0 +1,2 @@
+004f2d70 TerrainPage::update  # thiscall(float dt): widget polling via virtual +0x44, hex field at page +0x1b4, calls 0x4f28a0/0x4f28f0/0x4f2960/0x4f2ae0/0x4f34c0/0x4f3c30
+004f34c0 TerrainPage::copy_code  # builds the hex text (0x4f29b0) and copies it to the clipboard (user32/kernel32)

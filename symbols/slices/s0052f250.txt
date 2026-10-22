@@ -1,0 +1,7 @@
+0052f250 ?update@MapEditor@@QAEXXZ  # map editor per-frame placement update: key repeat into adjust_mode 0x4bb260, preview rebuild (clear / init_placed 0x435860 / build_meshes 0x5302f0 / mesh::clone 0x41c6d0), adjust 0x52fe40, find_position 0x52bdb0, commit through Mission::add_placed 0x44f870 then dialog update/refresh 0x4c7e20/0x4c77c0
+008ee3c48 ?g_editor_dialog@@3UMapEditorDialog@@A  # map-editor dialog singleton: the object 0x52f250 calls update_objects 0x4c7e20 and refresh 0x4c77c0 on (also the this-pointer of the settings WndProc 0x4d9440)
+008ee3d30 ?g_editor_hwnd@@3PAUHWND__@@A  # map-editor main window: SetFocus target at the end of the placement commit in 0x52f250
+005d70b4 ?g_cursor_x@@3HA  # map-editor cursor x, saved to 0x5e2130 before SetCursorPos in 0x52f250
+005d70b8 ?g_cursor_y@@3HA  # map-editor cursor y, saved to 0x5e2134 before SetCursorPos in 0x52f250
+005e2130 ?g_saved_x@@3HA  # cursor x stored when the placement is confirmed (0x52fd95 path)
+005e2134 ?g_saved_y@@3HA  # cursor y stored when the placement is confirmed (0x52fd95 path)

@@ -1,0 +1,2 @@
+slices/s004c5080/s004c5080.cpp  ?clear_vec38@editor@@QAEXXZ  004c5110  /O2 /MT /Gy /TP
+slices/s004c5080/s004c5080.cpp  ?free_items@editor@@QAEXXZ  004c5150  /O2 /MT /Gy /TP

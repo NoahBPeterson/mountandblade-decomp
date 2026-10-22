@@ -1,0 +1,2 @@
+8ed4f7c ?g_item_table@@3PAUItemKind@@A  # 0x1f8-byte record table (same table s00482240 calls g_chars/EChar), the skin->record lookup at 0x483470/0x4834bc; beyond annotation range
+8ed4f88 ?g_item_count@@3HA  # number of 0x1f8-byte records, bounds check at 0x48345d; beyond annotation range

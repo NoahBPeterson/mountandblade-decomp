@@ -1,0 +1,9 @@
+# slices/s004d1410/s004d1410.cpp  ?build_first_pass@scene_builder@@QAE_NXZ   4d1410
+# slices/s004d1410/s004d1410.cpp  ?build_second_pass@scene_builder@@QAEXXZ  4d1880
+# 4d1410 (1136 bytes) vs 836 bytes: the original also builds the direction vector by re-reading the three
+#   nodes into a stack "a/b" triple and spills intermediates (0x4d1722-0x4d178f) where this code keeps the
+#   cross product in registers; the two region branches share one block in the original.
+# 4d1880 (1269 bytes) vs 48 bytes: only the prologue (init_scene(1), f7c = -1) and the face-reset loop are
+#   written; the per-face body (0x4d1940-0x4d1bc2: Block::normal accumulation, edge/slot tests, the
+#   0x40-byte position record and its push_edge) is not reconstructed.
+# Neither is close enough to be a "complete, not exact" row.

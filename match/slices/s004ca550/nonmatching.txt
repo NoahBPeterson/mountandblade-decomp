@@ -1,0 +1,7 @@
+004ca550  131  UNSUPPORTED (fake-arity/import:fault) - screen_text::refresh, complete but codegen differs
+004ca600  193  UNSUPPORTED (build-limited) - screen_cfg::apply, complete but codegen differs (equiv FAIL: execution)
+004ca720  172  UNSUPPORTED (pool-limit) - str_table::release_strings, complete but codegen differs
+004ca7e0  54   UNSUPPORTED (pool-limit) - destroy_range, complete but codegen differs
+004ca830  10   complete but codegen differs: the 5-row loop. The original keeps esi = this+0x30c (rows+5) and pre-decrements (sub esi,0x98 before push esi); cl 13.10 strength-reduces every spelling tried (for/while/do, &rows[i], rows+i-1, pre/post --p) to an induction pointer at this+0x274 with a post-decrement, or hoists `add esi,0x30c` above the tail.clear() call. Same size (144) as the original, both call __eh_vector_destructor_iterator (0x401830) on the same 5 rows. equiv PASS
+004ca8c0  406  UNSUPPORTED (build-limited) - graph_obj::rebuild, complete but codegen differs (equiv FAIL: fault in ours)
+004ca9b0  111  UNSUPPORTED (0/400 valid) - graph_obj::remove_edge, complete but codegen differs

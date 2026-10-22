@@ -1,0 +1,5 @@
+slices/s00492b30/s00492b30.cpp  ?dtor_492f40@TextPanel@@QAEXXZ  00492f40  /O2 /MT /Gy /TP
+slices/s00492b30/s00492b30.cpp  ?push_back@DequeI@@QAEXABH@Z  00493120  /O2 /MT /Gy /TP
+slices/s00492b30/s00492b30.cpp  ?panel_count_493300@@YAHXZ  00493300  /O2 /MT /Gy /TP
+slices/s00492b30/s00492b30.cpp  ?reset_tail@PanelE@@QAEXXZ  004933b0  /O2 /MT /Gy /TP
+slices/s00492b30/s00492b30.cpp  ?delete_4933d0@PanelE@@QAEPAXI@Z  004933d0  /O2 /MT /Gy /TP

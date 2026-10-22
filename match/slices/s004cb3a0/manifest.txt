@@ -1,0 +1,10 @@
+slices/s004cb3a0/s004cb3a0.cpp  ?release@rec_2e4@@QAEXXZ  004cb610  /O2 /MT /Gy /TP
+slices/s004cb3a0/s004cb3a0.cpp  ?release@rec_1ac@@QAEXXZ  004cb650  /O2 /MT /Gy /TP
+slices/s004cb3a0/s004cb3a0.cpp  ?release@rec_178@@QAEXXZ  004cb680  /O2 /MT /Gy /TP
+slices/s004cb3a0/s004cb3a0.cpp  ?clear@vec3_holder@@QAEXXZ  004cb6b0  /O2 /MT /Gy /TP
+slices/s004cb3a0/s004cb3a0.cpp  ?grow@list_node@@QAEXI@Z  004cb6f0  /O2 /MT /Gy /TP
+slices/s004cb3a0/s004cb3a0.cpp  ?clear_vecs@graph_obj@@QAEXXZ  004cb780  /O2 /MT /Gy /TP
+slices/s004cb3a0/s004cb3a0.cpp  ?reserve_50@tvec@@QAE_NI@Z  004cbb90  /O2 /MT /Gy /TP
+slices/s004cb3a0/s004cb3a0.cpp  ?reserve_38@tvec@@QAE_NI@Z  004cbbe0  /O2 /MT /Gy /TP
+slices/s004cb3a0/s004cb3a0.cpp  ?reserve_204@tvec@@QAE_NI@Z  004cbc30  /O2 /MT /Gy /TP
+slices/s004cb3a0/s004cb3a0.cpp  ?reserve_b0@tvec@@QAE_NI@Z  004cbc80  /O2 /MT /Gy /TP

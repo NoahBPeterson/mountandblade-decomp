@@ -1,0 +1,3 @@
+# symbol notes for the difftest resolver: 0x4e6a70 is framed with ecx as a first (soup) argument:
+# the folded callee at this address takes `this`-style state through ecx.
+0x4e6a70 build_ribbon_mesh@rgl  # ecx is the frame state; declared with rgl::mesh* owner from this

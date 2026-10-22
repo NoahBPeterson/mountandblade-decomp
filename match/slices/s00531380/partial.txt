@@ -1,0 +1,3 @@
+# s00531380: no partial functions; the three VAs that are not byte-exact are complete
+# reconstructions whose remaining differences are codegen only (see nonmatching.txt), and all
+# three pass tools/difftest/equiv.py (2 PASS, 1 WEAK with no mismatched outputs).

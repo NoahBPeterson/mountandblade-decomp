@@ -1,0 +1,68 @@
+# slice s00514d40 (batch ds1) - layout notes
+#
+# 0x514d40 Screen::frame_update(float dt): the campaign map screen's per-frame update, 4154 bytes,
+# thiscall (ret 4), `this` in ECX. Its last call is 0x4ece20 (Screen::camera_update) on the same object, so
+# `this` is the Screen of slice s004ece20. 0x514d40 is complete but NOT byte-exact (emitted 3979 bytes,
+# 2921 differing bytes); the diffs are codegen only - stack-slot/register allocation - see
+# match/slices/s00514d40/nonmatching.txt for the exact list. Nothing in this slice is a byte-exact row.
+#
+# Screen layout used here (0x514d40 + the neighbours s005146f0/s00515d80/s00516700/s00516ac0):
+#   +0x000 ..      widget table; widget ids are byte offsets into the screen's widget array, so
+#                  `widget(0x5c)` / `widget(0x60)` used by this slice are the tstrings whose text_size it
+#                  measures (0x5c = the ui_midnight..ui_evening caption, 0x60 = the cleared 0xa70464 label).
+#   +0x170         0x120-byte camera/frame block (rgl::matrix + planes) that frame_update rebuilds from
+#                  g_view_a/g_view_b + rgl::matrix::build_planes (0x41e4f0) and then copies into widget+0x1ac.
+#   +0x2a8         renderer pointer used at the end (vtbl +0x54 = set_frame).
+# Globals this slice pins down (all offsets are into the game data object at 0x5e2930 unless stated):
+#   0x5e2930  char* g_game          game/mission data object (the same one the other 0x5xxxxx slices use)
+#   0x5e2948  Tick64 g_ticks[]      clock pairs; [G_INT(0x13b18)] is "now", G_INT(0x13b20)+0x5e2930 is the
+#                                   stored 64-bit reference; (now - ref) * 1e-5f = hours. Model both as a
+#                                   `struct TickPair {int lo, hi;} / union Tick64 {TickPair p; __int64 v;}`
+#                                   pair: only then does cl 13.10 emit the original 5 loads + sub/sbb.
+#   0x5e291c  Flags5e291c g_flags   the framed command block the battle start commits via 0x513710
+#   0xa70448  __int64 g_a70448      the 64-bit clock the map last played (store shape needs a 64-bit global)
+#   0xa70464  tstring g_scratch     scratch caption, cleared then measured through widget 0x60
+#   0xa73980  MainMenu g_main_menu  0xa73994/9a0/9b0/9b4/9bc/9c0/9d8/9dc/9e4/9e8/9ec are its MenuRec* slots
+#   0xa73730  KeyTable g_keys, 0xa170c8 KeyNames g_key_names - the map key section
+#   0xa70248  Psys* g_psys          reset at the top of the frame
+#   0x5d7080  MsgLog g_msglog, 0x5a9f30 TextLog g_textlog (the "Position: %3.2f, %3.2f ;" debug dump)
+#   0x5e29c4  int g_trial_mode      gates both limit dialogs and the level/time-limit tests
+#   0x5d75d8/0x5d75dc float g_view_a/g_view_b   drive the camera block above
+#   GameData fields: +0x8c level index (into the TroopRec array at +0x13a00), +0xe4 scene page table
+#   (party->f88 >> 4 indexes pages, & 0xf selects the 0x98-byte node), +0x13aa4 order block (PartyMgr::get
+#   at 0x51ee50 on +0xf78), +0x13ad0/+0x13ad8 overlay timer, +0x14058 show flag, +0x1a090 debug HUD flag,
+#   +0x1a2a8 Renderer*.
+# Behaviour landmarks: emit_event(0xf, hours/24, hours) once per time-of-day change; the 11-way
+# ui_midnight..ui_evening caption; level test TroopRec[+0x8c].level > 6 and time test
+# 1 - (int)(hours * -0.041666668f) > 30, both && !g_trial_mode, gated to a single fire by a `char f64`
+# flag and a `char start` flag; the battle start recomputes the scene node from +0xe4 every time and
+# f516250/f516370 + ItemSound(-6) + the command block follow it.
+0x514d40 ?frame_update@Screen@@QAEXM@Z  # campaign screen per-frame update; complete, not byte-exact (see nonmatching.txt)
+0x4ece20 ?camera_update@Screen@@QAEXM@Z  # Screen::camera_update, called last by frame_update; `this` owner
+0x515d80 Screen::f515d80  # 0x515d80 ret 4, per-frame overlay/timer step on the same screen
+0x516250 Screen::f516250  # 0x516250 ret 4, battle start helper A
+0x516370 Screen::f516370  # 0x516370 ret 4, battle start helper B
+0x514890 Screen::f514890  # 0x514890 ret 0x10, thiscall helper (4 args)
+0x516a70 f516a70  # 0x516a70, cdecl helper called by frame_update
+0x516ac0 Screen::f516ac0  # 0x516ac0 ret 4, float dt
+0x5191e0 Screen::f5191e0  # 0x5191e0, no args
+0x513710 Flags5e291c::commit  # 0x513710 ret 4, commits the framed command block at 0x5e291c
+0x41e4f0 rgl::matrix::build_planes  # 0x41e4f0, fills the plane block of the 0x120-byte camera frame
+0x408460 rgl::matrix::transform_point  # 0x408460, used on the camera frame at the end
+0x40cd00 identity_pos  # 0x40cd00 cdecl (returns out), seeds the final matrix
+0x435790 GameData::emit_event  # 0x435790 ret 0xc
+0x49e9c0 attach_party_center  # 0x49e9c0 ret 0xc, takes a float* + 2 ints
+0x51ee50 PartyMgr::get  # 0x51ee50 ret 4, party by id (used 4x on GameData+0xf78)
+0x43a1e0 StrTable::lookup  # 0x43a1e0 ret 4, key -> tstring* (Equiv: no unique address)
+0x48a3a0 NamedRec::setup  # 0x48a3a0 ret 8, explanation record setup(a, b)
+0x495700 MenuRec::choose  # 0x495700 ret 4
+0x494260 MenuRec::reset  # 0x494260 ret 4
+0x48ac90 KeyTable::down  # 0x48ac90 ret 4
+0x487900 KeyNames::bound  # 0x487900 ret 4 (Equiv: no unique address)
+0x48add0 ItemSound::play  # 0x48add0 ret 4 (-8 = the clock tick, -6 = the battle start)
+0x4b3bc0 reset_order  # 0x4b3bc0, clears the 0x13aa4 order block
+0x4f1390 MsgLog::flush  # 0x4f1390
+0x47fef0 Psys::reset  # 0x47fef0, called on g_psys (0xa70248) at frame start
+0x4e8980 save_game  # 0x4e8980 (arg, name)
+0x536a6a __CIfmod  # 0x536a6a, fmod(double,double) - the 24-hour wrap
+0x536f8f sprintf  # 0x536f8f cdecl, the debug HUD string

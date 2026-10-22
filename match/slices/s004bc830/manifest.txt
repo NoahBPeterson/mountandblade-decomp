@@ -1,0 +1,2 @@
+slices/s004bc830/s004bc830.cpp  ?init_shaders@renderer@@QAEXXZ  004bcfb0  /O2 /MT /Gy /TP
+slices/s004bc830/s004bc830.cpp  ?release_decls@renderer@@QAEHXZ  004bd0c0  /O2 /MT /Gy /TP

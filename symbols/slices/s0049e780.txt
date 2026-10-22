@@ -1,0 +1,5 @@
+0049e780 View::create  # entry of the slice; operator new 0x53545e + base ctor 0x48ae20, flags is the 2nd argument
+0049e9c0 Party::attach_sprite  # free list 0x493700, sprite pool this+0xe4, scene obj 0x48ad00
+0049ebd0 Party::add_sprite  # scene last 0x493960, troop table 0x5e29f8, setup 0x48f180
+0049ef00 Party::add_member_sprite  # character table this+0x13a00, set_record 0x48c840
+0049f020 Party::add_sprite_at  # wrapper over 0x490030 and 0x49ebd0

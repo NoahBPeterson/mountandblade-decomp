@@ -1,0 +1,3 @@
+slices/s00492230/s00492230.cpp  ?set_weapon_order_1@Mission3@@QAEXHI@Z  00492230  /O2 /MT /Gy /TP
+slices/s00492230/s00492230.cpp  ?set_weapon_order_2@Mission3@@QAEXHI@Z  00492350  /O2 /MT /Gy /TP
+slices/s00492230/s00492230.cpp  ?free_arrays@World@@QAEXXZ  00492a20  /O2 /MT /Gy /TP

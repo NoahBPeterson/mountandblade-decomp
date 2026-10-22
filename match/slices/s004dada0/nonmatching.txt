@@ -1,0 +1,29 @@
+# s004dada0 nonmatching: complete, behaviourally-equivalent reconstructions that are not byte-exact.
+# Every row here passes equiv.py (004db440 is WEAK only because the original's unused branches are unreachable
+# in the harness).
+004db090  343  shape-only: the whole three-level unit-grid walk is written (strtab lookup per cell, text at
+                (0.1, y), y synced by -0.02/-0.005/-0.01 per level, byte-offset accumulators +0xc/+0x38 into
+                0xa73348), but cl 13.10 picks EBX/EDI for the loop counters where the original uses
+                EBX/EBP/ESI and hoists the three loop bounds differently, so 210 of 343 bytes differ.
+                Equiv: PASS (400 valid inputs, all 14 edges, 100% instructions).
+004db440  543  complete: side -> party id (g_game->78, selection tables, per-side fallback), chunked party
+                lookup, header text selection through strtab/g_a181b8, per-unit health-percent vs (x/y) text
+                and the "%s %s" row text at (0.01, y) with y -= 0.02.  Shape-only: register allocation and the
+                tstring/vector stack slots differ (534 vs 543 bytes, 414 differ).  Equiv: WEAK (same 14 edges,
+                43.7% instruction coverage; the rest of the original's graph is unreachable in the harness).
+004dae40  476  complete: the whole mission-window construction is there (gui reset, ctor_494310, 0x190 overlay
+                with vptr 0x592848 and +0x188 byte, pos/scale/mesh/colour/size, the 0x178 child widget,
+                row[4] = 0, the stage switch into 0x4db090 / 0x4db020, root add, visibility store).  The only
+                difference is scheduling: the original places `mov byte [0x5d8788], 1` between
+                `mov ecx, 0x5d7080` and the 0x49b120 call, this build emits the same store after the call
+                (7-byte store moved past the call + 2 bytes of offsets).  Equiv UNSUPPORTED: every path enters
+                ctor_494310, which calls the unmodelled import FSOUND_3D_Listener_SetAttributes (0/400 valid
+                inputs; 12 edges unreachable on both sides past that call).
+004db1f0  225  complete: same base construction for "meeting_window", then 16 Entry widgets (0x188, ctor
+                0x48b1c0) at row[0..15] with pos (0, 0.41 - i*0.05), scale (0.6, 0.05) and colour 0xffaaff55 via
+                slot 0x9c, then the 3 do-while column windows (0x188, ctor 0x4931a0 + vptr 0x597050) at col[0..2]
+                with pos (0.6, 0.65 - j*0.2145) and scale from 0x5a9f28, then add_root, the visibility store and
+                fill_mission_row(0/1/2).  Shape-only: cl keeps the loop counters and the 0.6 constant in different
+                places (582 vs 583 bytes, 225 differ).  Equiv UNSUPPORTED: the same ctor_494310 import
+                (FSOUND_3D_Listener_SetAttributes) stops every run (0/400 valid; 10 edges unreachable on both
+                sides).

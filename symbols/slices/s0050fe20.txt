@@ -1,0 +1,27 @@
+# names used while matching slice s0050fe20 (inventory panel per-frame trade step)
+0050fe20  InventoryPanel::refresh_transaction
+005e2930  g_game (cur_troop +0x8c, hero_troop +0x90, troops +0x13a00, string_value 0x48e9e0)
+0049b720  World::add_value
+0049b820  World::sub_value
+00501940  InventoryPanel::money_label
+005024e0  InventoryPanel::add_strip_icon
+005025a0  InventoryPanel::init_window
+005108d0  InventoryPanel::refresh_lists
+00510850  InventoryPanel::slot_flags
+005e29d0  g_items (0x238-byte records, type at +0x1c8, name tstring at +0x20)
+005e2a18  g_strtable (0x43a1e0 lookup, 0x4c6010 find)
+005d7080  g_msglog (0x4f1390 flush)
+00a73980  g_main_menu (0x48a3d0 ask, 0x495700 choose, next-action +0x4)
+005e291c  g_flags5e291c (0x513710 commit)
+005aa128  g_sound_mgr (0x442650 play)
+005aa350  g_snd_id_a
+005aa2fc  g_snd_id_b
+005aa168  g_sound_origin
+005e29c4  g_trial_mode
+005d8790  g_time (integer tick counter, 75 at startup)
+005d7094  g_ui_alpha (compared with 0.5f)
+00549d70  0.5f
+00590d7c  0.0005f (scroll scale)
+0048baa0  UiDsv::set_value
+00437510  ItemStack::reduce
+004687e0  TroopRec::auto_equip

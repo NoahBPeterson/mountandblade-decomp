@@ -1,0 +1,3 @@
+# Slice s0051a2d0: no function is partial any more. Every listed function is complete in
+# s0051a2d0.cpp; the byte-exact ones are recorded in manifest.txt and the complete but
+# inexact ones (all of which pass tools/difftest/equiv.py) in nonmatching.txt.

@@ -1,0 +1,12 @@
+005108d0  1369  Complete and equivalent source (size 1630 vs 1664), but the register/slot allocation differs throughout:
+  the original keeps `count` in EBP and runs the first equipment scan as a down-counter (`dec ebx / jne`) with the
+  widget base spilled at [esp+0x14], `page` at [esp+0x18] and `troop` at [esp+0x1c]; our build puts `count` in EBX,
+  keeps the widget base in EBP and `page` at [esp+0x14], so every loop and every slot reference shifts.  All five
+  loops, the six-place_slot/transfer_slot calls, the closing gui reset (0x5d75e8 vtable slot 0, 0x5d8760/0x5d8764,
+  the 0x50-tstring 0x5d7850..0x5d7d50 reset, 0x5d8020/24/28, 0x5d8780), the four global guards and the tail
+  init_window() (0x5025a0) are identical.  One reconstruction note: place_slot (0x510f50) is marked __declspec(
+  noinline) because the original build never saw its body (separate translation unit) - without that the inliner
+  duplicates it four times and forces an 8-byte aligned frame pointer prologue.
+  equiv.py: WEAK - coverage only 11.4% (54/475) because both sides stop at _purecall in the 0x510e45 click path;
+  edges orig 10/118 vs ours 10/122 with the same blocked set (the 0x5d7080 gui object is a pure virtual stub in
+  the harness), so the audit could not reach a proof.

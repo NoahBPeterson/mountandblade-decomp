@@ -1,0 +1,2 @@
+004c03b0  301  complete source; equiv WEAK (14.9% insn coverage, both sides blocked at unmodelled imports RegCreateKeyExA/GetDlgItemTextA/EndDialog); diffs: msg dispatch (cmp vs sub eax,0x110 / dec chain), shared `xor eax,eax` return tail, tstring temp slots, EndDialog call targets
+004c0520  60  complete source; equiv UNSUPPORTED (unresolved g_module_name global); diffs: three trailing tstring dtors vs the original's one, `lea eax,[esp]` slot for the path buffer, fopen/append operand shapes

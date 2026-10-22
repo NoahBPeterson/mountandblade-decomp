@@ -1,0 +1,4 @@
+slices/s004b8f40/s004b8f40.cpp  ?bytes_append@@YAXPAUbyte_buf@@PBDI@Z  004b8f40  /O2 /MT /Gy /TP
+slices/s004b8f40/s004b8f40.cpp  ?sock_send_str@@YAXHPBD@Z  004b8fc0  /O2 /MT /Gy /TP
+slices/s004b8f40/s004b8f40.cpp  ?open_keys_key@@YAXPAPAUHKEY__@@@Z  004b96d0  /O2 /MT /Gy /TP
+slices/s004b8f40/s004b8f40.cpp  ?read_key_string@@YAXPAPAUHKEY__@@PBDPAUtstring@@@Z  004b9720  /O2 /MT /Gy /TP

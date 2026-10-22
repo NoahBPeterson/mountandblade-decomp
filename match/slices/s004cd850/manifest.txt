@@ -1,0 +1,2 @@
+slices/s004cd850/s004cd850.cpp  ??0LangTables@@QAE@XZ  004cda20  /O2 /MT /Gy /TP
+slices/s004cd850/s004cd850.cpp  ??0csv_row@@QAE@XZ  004cdf20  /O2 /MT /Gy /TP

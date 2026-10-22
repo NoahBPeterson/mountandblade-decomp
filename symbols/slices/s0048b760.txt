@@ -1,0 +1,4 @@
+0048b930 ?value@UiDv@@QAEMXZ  # stand-in for UiD::value (same-TU out-of-line call in the original); resolver mapping
+0048baa0 ?set_value@UiDsv@@QAEXM@Z  # stand-in for UiD::set_value; resolver mapping
+0048be70 ?set_stat@StatPanelX@@QAEXHH@Z  # stand-in for StatPanel::set_stat; resolver mapping
+0048bf90 ?set_skill@StatPanelX@@QAEXHH@Z  # stand-in for StatPanel::set_skill; resolver mapping

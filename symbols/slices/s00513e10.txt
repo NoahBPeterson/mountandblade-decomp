@@ -1,0 +1,7 @@
+00513e10 count_hero_items            # total f14 of hero-flagged non-empty inventory stacks of the main party
+00513eb0 GameData::clear_hero_ammo    # clear f10 of hero stacks in a party
+00513f80 MissionCtx::setup           # apply mission start flags, select sides, rate the battle, refresh parties
+00514360 MissionCtx::pick_template   # choose a template of the current mission type and start the scene
+005143f0 Scene::init                 # store launch args and collect both sides' agents
+005144d0 Scene::init_scene           # reset the scene state and build the initial placement
+00514670 Team::init                  # reset an 8-slot team selection table

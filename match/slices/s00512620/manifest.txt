@@ -1,0 +1,5 @@
+slices/s00512620/s00512620.cpp  ?emit_event@GameData@@QAEDHHHH@Z  00512620  /O2 /MT /Gy /TP
+slices/s00512620/s00512620.cpp  ?slot_flag@SlotWindow@@QAEDHHI@Z  005126e0  /O2 /MT /Gy /TP
+slices/s00512620/s00512620.cpp  ?name@ItemRef@@QAEXPAD@Z  00512730  /O2 /MT /Gy /TP
+slices/s00512620/s00512620.cpp  ?attribute_name@@YAXHPAD@Z  00512840  /O2 /MT /Gy /TP
+slices/s00512620/s00512620.cpp  ?compute@InvWindow@@QAEXPAHH@Z  00512960  /O2 /MT /Gy /TP

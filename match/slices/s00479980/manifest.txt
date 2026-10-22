@@ -1,0 +1,2 @@
+slices/s00479980/s00479980.cpp  ?spawn@EmitTable@@QAEPAUEmit@@PAHPBUvector4@rgl@@PBH@Z  00479d20  /O2 /MT /Gy /TP
+slices/s00479980/s00479980.cpp  ?spawn_bodies@Mission@@QAEXPAUSpawnRec@@@Z  00479da0  /O2 /MT /Gy /TP

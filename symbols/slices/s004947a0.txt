@@ -1,0 +1,5 @@
+004947a0 GameData::set_quest_concluded  # complete; body bracketed by a non-compiler inline tag (jmp +0x10; "WL  ",12,0,"WL  ")
+004948c0 GameData::set_quest_cancelled  # complete; same non-compiler inline tag
+004949d0 GameData::set_objective  # byte-exact
+00494ad0 GameData::switch_objective  # byte-exact
+00494b60 GameData::share_experience  # distributes party experience; complete, register allocation differs

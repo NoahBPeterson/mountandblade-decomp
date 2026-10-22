@@ -1,1 +1,2 @@
 00408a50  4  face::scale: complete; y multiply operand order (fld v.y; fmul s[1] in original, reversed in ours) - compiler ignores every source spelling tried; equiv PASS
+00408bd0  34  face::transform: complete; the three inlined transform-point sums have the original's summation order (x: (s,f),u; y: (s,f),u; z: (f,s),u) so equiv PASSes, but cl 13.10 emits the per-product operand order / base register (edx 0x68 vs 0x64) differently than the original; no source spelling reproduced the exact schedule (5 rounds)

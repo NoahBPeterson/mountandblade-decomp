@@ -1,0 +1,1 @@
+004966b0  1397  complete; WEAK equiv (159/200 valid inputs, no mismatch, 70.5% cov; random-pointer faults). Structure matches (two mesh scale lerps + invalidate, RGB group on +0x110 then shared alpha tail on +0x10c, set_color); remaining diffs are x87 scheduling and frame-slot allocation (size 1597 vs 1659).

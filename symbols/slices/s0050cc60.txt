@@ -1,0 +1,26 @@
+# slice s0050cc60 (batch ds1, entry 407) - editor helpers and five members of the engine's vector template.
+# The engine vector is VC7.1 std::vector with a stateful allocator, so the three pointers sit at +4/+8/+0xc
+# behind the allocator dword at +0.  Status column is the current chk/run_all verdict for the VA.
+0050cc60 ?flag1@widget@@QBEIXZ  # widget::flag1 (MATCH) - reads the +0x11c flag dword
+0050cc70 ?sort_list@@YGXPAUsel_list@@H@Z  # sort_list (nonmatching, 944 diff) - index-list sorter over a sel_list's (key,index) pairs
+0050d0b0 ??0text_box@@QAE@XZ  # text_box ctor (MATCH) - vtable 0x597050, base widget ctor 0x48ae20
+0050d0e0 ?add@sel_list@@QAEXH@Z  # sel_list::add (nonmatching, 4 diff) - appends one index
+0050d140 ?_Ufill@vec_named@@QAEPAUnamed_vec@@PAU2@IABU2@@Z  # vec_named::_Ufill (nonmatching, 23 diff)
+0050d170 ?resize@vec_model@@QAEXIUmodel_b@@@Z  # vec_model::resize (nonmatching, 89 diff)
+0050d230 ?_Destroy@vec_named@@QAEXPAUnamed_vec@@0@Z  # vec_named::_Destroy (nonmatching, 19 diff)
+0050d250 ?dialog_thunk@@YGJPAUHWND__@@IIJ@Z  # dialog window proc thunk (MATCH) - forwards to EditorPanel::terrain_dialog 0x4fe860
+0050d260 ?_Insert_n@vec_named@@QAEXPAUnamed_vec@@IABU2@@Z  # vec_named::_Insert_n (MATCH, 377 bytes COMDAT)
+0050d3d9  # first __catch funclet of 0x50d260 (partial): uninitialised-copy rollback, `_Destroy(newvec,ptr); operator delete(newvec); throw;` - 154 bytes, byte-identical inside our COMDAT at +0x179, but cl emits it as a `$L` funclet with no COFF symbol so chk.py can never pair it
+0050d473  # second __catch funclet of 0x50d260 (partial): `_Ufill` rollback `_Destroy(where+count, last+count); throw;` plus the epilogue and the inlined tmp destructor - 172 bytes, byte-identical in our section; chk's size fallback pairs it with mesh_scene::read (178)
+0050d520 ?read@mesh_scene@@QAEXPAUAccessStream@@@Z  # mesh_scene::read (nonmatching, 36 diff) - 0x1f8-byte record collection: five dwords of state, model vector at +0x18
+# ---- shared helpers referenced by this slice ----
+004d10f0 destroy_items  # element destructor walk over 0x50-byte item50 records (self + tag argument)
+004da1f0 sub_vec copy ctor  # 0x4-byte-allocator vector<item50> copy
+004fe840 vec_named::_Ucopy    # folded into the byte-exact _Insert_n
+0043e2a0 vec_named::_Xlen     # length-error helper
+0042bbd0/0042bbe0/0042c110/0042bc40 tstring ctor/(const char*)/copy/dtor  # the 0x10-byte engine string
+0042c5d0 tstring::strip_tags  # markup scanner, takes `this` from ecx
+004c6010 NameTable::find  # strtable lookup, `this` is the fixed global 0x5e2a18
+005e2a18 g_strtable
+005e2930 g_game
+005e29d0 g_items  # 0x238-byte item kind records (kind flags at +0x1c8)

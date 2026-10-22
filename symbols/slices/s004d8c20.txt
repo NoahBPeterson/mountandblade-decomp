@@ -1,0 +1,9 @@
+004d8c20 FUN_004d8c20  # character-import text reader (called from the character/save loader; per-key tstring compares)
+004d9260 FUN_004d9260  # builds "CharExport\\%s.txt" for the active character
+004d92c0 Cls_map::find  # std::map find wrapper: key-copy trampoline, end-sentinel test, tree descent
+004d9370 FUN_004d9370  # hidden-this dispatch to the record-range destroy helper 0x4d10f0
+004d9390 Cls_map::insert_unique  # std::_Tree insert_unique wrapper (0x4cd530 / 0x4cd570)
+004d93e0 FUN_004d93e0  # forwards this + two args to 0x4d11a0
+004d9400 FUN_004d9400  # forwards this + two args to 0x4d1230
+004d9420 FUN_004d9420  # forwards this + two args to 0x4d12c0
+004d9440 FUN_004d9440  # settings panel WndProc: jmp to 0x4d4140 with this = 0x8ee3c48

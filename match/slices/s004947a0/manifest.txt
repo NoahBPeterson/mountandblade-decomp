@@ -1,0 +1,2 @@
+slices/s004947a0/s004947a0.cpp  ?set_objective@GameData@@QAEXHH@Z  004949d0  /O2 /MT /Gy /TP
+slices/s004947a0/s004947a0.cpp  ?switch_objective@GameData@@QAEXHH@Z  00494ad0  /O2 /MT /Gy /TP

@@ -1,0 +1,3 @@
+# s004db660 manifest: byte-exact functions (none).
+# All eight addresses of the slice are reconstructed in s004db660.cpp but none is byte-exact, so every address
+# is listed in nonmatching.txt (the one fully verifiable row) or in partial.txt.

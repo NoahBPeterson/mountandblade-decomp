@@ -1,0 +1,19 @@
+004c17c0 build_shader  # D3DXCreateEffectFromFileA on mb.fx/mb.fxo from g_shader_dir, then sets shadow-map/gamma effect params
+004c1940 gfx_setup  # restores font device objects, D3D render states, create effect, sky/mapping setup, cursor shadow texture
+004c1a60 gfx_release  # invalidates font, releases effect + shadow texture, resets the 0x5fe8ac..0x5feba4 mapping table (0x98 stride)
+004c1ad0 gfx_cleanup  # deletes font device objects, shuts the resource manager down, releases 0x5fe898
+004c1b00 gfx_restore  # release + setup on the global gfx object 0x8ee3c48
+004c1b20 copy_block44  # 0x2c-byte (11 dword) guarded block copy, stdcall
+004c1b40 copy_block204  # 0x204-byte (0x81 dword) guarded block copy, stdcall
+004c1b60 copy_block204_range  # guarded loop copy of 0x204-byte blocks, rethrowing on exception
+004c1bcc throw_oom  # _CxxThrowException(0,0) + int3 (out-of-memory thrower)
+004c1be0 init_small_table  # constructs 0x1000 pairs of tstrings 0x2c bytes apart; returns the first element
+004c1c20 TriggerRec::TriggerRec  # trigger record ctor: two tstrings, flags, three timed values from g_ticks
+004c1c90 TriggerVec::resize  # reads count from the stream, reallocates the trigger records, timestamps them, reads each
+004c1d70 TriggerVec::stamp  # writes the clock reading for index c into the three timed values of every trigger record
+004c1de0 GameRec::GameRec  # game record ctor: one tstring, flags, one timed value from g_ticks
+004c1e10 GameVec::resize  # grows the game records by `extra`, timestamps them and reads the first ones from the stream
+004c1ee0 GameVec::stamp  # writes the clock reading for index c into e_v/t0 of every game record
+004c1f20 MouseVec::clear  # deletes the mouse-record array
+004c1f70 MouseVec::resize  # reads count (into +4), reallocates the mouse records, rebuilds each + tail fixup
+004c20c0 read_map_icon  # stream reads a map icon name, formats "Map icon %s", resizes+stamps the game-record vector at +0x3c

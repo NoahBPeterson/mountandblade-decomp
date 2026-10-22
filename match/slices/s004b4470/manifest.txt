@@ -1,0 +1,2 @@
+# s004b4470 -- byte-exact matches (chk.py rows)
+# none: all four functions are complete but not byte-exact (see nonmatching.txt)

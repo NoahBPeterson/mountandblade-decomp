@@ -1,0 +1,4 @@
+005922e8 ??_7widget@@6B@  # widget vtable: stored by widget::widget (after the 0x48ae20 base ctor); virtual slots used here +0x0c (w3), +0x58 (w22), +0x74 (w29), +0x80 (w32)
+0048ae20 ??0widget_base@@QAE@XZ  # base "panel" ctor called by widget's ctor before the derived vptr store
+8ed4f58 ?g_scene@@3Uscene_tbl@@A  # scene table global: +0 holds the 0x48-byte record array placed() indexes (address beyond the image sections)
+a75f40 ?g_obj@@3Uobj_tbl@@A  # object table global: +4 holds the 0x68-byte record array, +0x14 the worlds vector (address beyond the image sections)

@@ -1,0 +1,1 @@
+00525160 ?handle_event@Game@@QAEXH@Z  # Game::handle_event(int code) - per-frame event handler / menu dispatch

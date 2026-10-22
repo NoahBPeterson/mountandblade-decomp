@@ -1,0 +1,4 @@
+slices/s00501940/s00501940.cpp  ?refresh_event@PartyWindow@@QAEDI@Z  005022c0  /O2 /MT /Gy /TP
+slices/s00501940/s00501940.cpp  ?mouse_event@PartyWindow@@QAEDI@Z  005021b0  /O2 /MT /Gy /TP
+slices/s00501940/s00501940.cpp  ?destroy@UiFrame@@QAEPAXI@Z  005021f0  /O2 /MT /Gy /TP
+slices/s00501940/s00501940.cpp  ?make_slot@PartyWindow@@QAEPAUUiText2@@PAX@Z  00502230  /O2 /MT /Gy /TP

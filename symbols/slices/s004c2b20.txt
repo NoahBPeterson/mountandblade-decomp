@@ -1,0 +1,32 @@
+004c2b20 ?load@Rec2b20@@QAEHPAX@Z  # voice/module record loader (tstrings +0x10/+0x20/+0x28/+0x44, 0x68-stride vector at +0x54, element reader 0x4be310)
+004c2c50 ??0C4c2c50@@QAE@XZ  # ctor, vtable 0x595740
+004c2cb0 ?destroy_C4c2c50@@YIPAXPAUC4c2c50@@HH@Z  # deleting dtor of C4c2c50 (vtable slot; calls its dtor 0x4c2cd0)
+004c2cd0 ?dtor@C4c2c50@@QAEXXZ  # dtor, tstrings +0x54/+0x68/+0x78/+0x88 reverse, then base +0x1c
+004c2d10 ??0C4c2d10@@QAE@XZ  # ctor, 0x140-byte state block (four 0x40 blocks from 0x40cd00, clock at +0x118)
+004c2dd0 ?read_block_2dd0@@YIHPAUBlk2dd0@@PAX@Z  # 0x18-stride entry vector reader (element ctor 0x4be720)
+004c2ea0 ?fn_4c2ea0@@YIXPAX@Z  # reads an "WL" config section (SHGetFolderPathA) and 0x25 records of two ints
+004c2fb0 ??0C4c2fb0@@QAE@XZ  # ctor, vtable 0x595798
+004c3000 ?destroy_C4c2fb0@@YIPAXPAUC4c2fb0@@HH@Z  # deleting dtor of C4c2fb0 (vtable slot; calls its dtor 0x4c3020)
+004c3020 ?dtor@C4c2fb0@@QAEXXZ  # dtor, tstrings +0x68/+0x58/+0x48 reverse, then base +0x1c
+004c3050 ??0C4c3050@@QAE@XZ  # ctor, vtable 0x5957bc, tstring at +0x5c and 6 at +0x6c, +0x50=-1, +0x54=0
+004c30b0 ?set_flag_5d8789@@YAXXZ  # g_5d8789 = 1
+004c30c0 ?destroy_C4c3050@@YIPAXPAUC4c3050@@HH@Z  # ICF-folded deleting dtor for C4c3050 (vtable slot)
+004c30e0 ?dtor@C4c3050@@QAEXXZ  # dtor, 6 tstrings +0xbc..+0x6c reverse, +0x5c, then base +0x1c
+004c3120 ?destroy_C4c3120@@YIPAXPAXHH@Z  # deleting dtor: tstring 0x42bc40 at +0x84 and the base's at +0x1c, base vtable 0x5947d8 restored (class vtable 0x595804, tstrings at +0x1c/+0x84)
+004c3160 ??0C4c3160@@QAE@XZ  # ctor, vtable 0x595870, 0x80 x 0x20-byte slots at +0x8e8
+004c31c0 ??0C4c31c0@@QAE@XZ  # ctor, vtable 0x595924, 9 x 0x30 pairs at +0x2c, tstring +0x224
+004c3220 ?destroy_C4c31c0@@YIPAXPAUC4c31c0@@HH@Z  # deleting dtor for C4c31c0 (vtable slot)
+004c3240 ?dtor@C4c31c0@@QAEXXZ  # dtor, +0x224 then 9 pairs reverse, then base +0x1c
+004c3290 ??0C4c3290@@QAE@XZ  # ctor, vtable 0x595a20, tstrings +0x50/+0x60/+0x70
+004c32e0 ?destroy_C4c3290@@YIPAXPAUC4c3290@@HH@Z  # deleting dtor of C4c3290 (vtable slot; calls its dtor 0x4c3300)
+004c3300 ?dtor@C4c3290@@QAEXXZ  # dtor, tstrings +0x70/+0x60/+0x50 reverse, then base +0x1c
+004c3330 ?global_4bf870@@YAXXZ  # static-init thunk: `mov ecx,0x8ee3c48; jmp 0x4bf870` (thiscall on the editor singleton ?g_editor_dialog@@3UMapEditorDialog@@A)
+004c3340 ?global_4c03b0@@YAXXZ  # static-init thunk: `mov ecx,0x8ee3c48; jmp 0x4c03b0` (same singleton; raw bytes at both VAs are b9 48 3c ee 08)
+004c3350 ?fn_4c3350@@YAXXZ  # builds a module path from the global at 0x8ee3c28 and appends 0x595a44, then 0x4c2250
+0040cd00 identity_pos  # fills the 4x4 out matrix (arg) with the identity rotation and zero origin, returns the out pointer (used by 0x4c2d10)
+005947d8 ??_7C4c2da8@@6B@  # base vtable stored by every ctor in this slice before the own vtable00595740 ??_7C4c2c50@@6B@  # ctor 0x4c2c50
+00595798 ??_7C4c2fb0@@6B@  # ctor 0x4c2fb0
+005957bc ??_7C4c3050@@6B@  # ctor 0x4c3050
+00595870 ??_7C4c3160@@6B@  # ctor 0x4c3160
+00595924 ??_7C4c31c0@@6B@  # ctor 0x4c31c0
+00595a20 ??_7C4c3290@@6B@  # ctor 0x4c3290

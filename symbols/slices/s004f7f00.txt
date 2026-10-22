@@ -1,0 +1,4 @@
+# slice s004f7f00 - data symbols the equivalence resolver cannot map from a declaration
+# (a `// 0x...` annotation cannot cover 0x8ee3ac4: it is outside the loaded image, like the s00483870 entries,
+#  and the resolver only accepts symbols evidence for in-image data)
+8ee3ac4 ?g_skin_cap@@3HA  # int, skin-index clamp on the HUD slot count in MissionObj::refresh (0x4f7f00); same global as symbols/slices/s00483870.txt

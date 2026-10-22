@@ -1,0 +1,4 @@
+; face-generator window widget
+004f1460 facegen_win::init  # builds the facegen board window; see s004f1460.cpp
+004f2610 region_name  # sprintf switch over terrain kinds 0..12
+004f25a0 build_terrain_params  # fptan-based terrain record setup (not in this slice)

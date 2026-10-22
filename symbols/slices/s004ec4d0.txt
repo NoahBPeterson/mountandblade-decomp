@@ -1,0 +1,3 @@
+# globals/methods for slice s004ec4d0 (Screen::init_screen / camera_mark_entities)
+0x49b120 ?add_root@GuiMgr@@QAEXPAX@Z
+0x40f8a0 ?push_back3@?$vec@PAUWidget@@@@QAEXABQAUWidget@@H@Z

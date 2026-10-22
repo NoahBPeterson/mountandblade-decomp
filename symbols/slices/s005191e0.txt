@@ -1,0 +1,3 @@
+0054a4f0 ??_7sphere_shape@@6B@  # vtable of the locally built sphere_shape; update_target stores this exact address into the shape's vptr at 0x519acf
+0040a540 ??_Gshape_base@@UAEPAXI@Z  # shape_base scalar deleting destructor: slot 0 of every shape vtable (vptr -> 0x54a4b8, then operator delete 0x535712)
+00408020 ?shape_type@shape_base@@UAEHXZ  # slot 1: returns 0 for sphere; update_target's picker filter is `shape_type() != 2` (face shapes) at 0x51974d

@@ -1,0 +1,21 @@
+# slice s004e85d0 (batch ds1) - the world-map screen and the save-game machinery
+#
+# 0x4e85d0 MapScreen::init     rebuilds the cell grid (y = 0, -1 marker at cell+0x88, f8c = y + x, 11
+#                              zeroed dwords at cell+0x58) and issues the 0xf-slot terrain chunk passes
+#                              per map chunk, then the aligned-objects pass
+# 0x4e8720 MapScreen::frame_step  early-out on the party flag word (bit 8 of the dword at record +0x30),
+#                              maps the render-mode mask to 3/2 and pushes the three map widget values
+# 0x4e87d0 MapScreen::buttons  the button reactions: leave-to-menu, save, mission, back; the leave path
+#                              updates the world averages, optionally saves, frees the game and returns to menu
+# 0x4e8980 save_game           the whole save pipeline: header (0x4e8d70), game state (0x4e8f10), close,
+#                              backup/rename, success/failure messages
+# 0x4e8d70 SaveCtx::write      stream blocks: the magic, the 0x3f3 version, the class list, the two header
+#                              tstrings and the two trailer words            [BYTE-EXACT]
+# 0x4e8df0 log_save_path       builds the module save directory and then the per-slot path, creating both
+#                              with CreateDirectoryA                              [BYTE-EXACT]
+# 0x4e8e70 Game::load_header   the save header out of Game: the current record's title (str-table lookup
+#                              with the record's own name as fallback), the slot title, the party flag and
+#                              the elapsed clock * 0x54a6d0                  [BYTE-EXACT]
+#
+# 0x4e8980: the `log_stream` reference is unresolved in the harness model (its 0x5a9f60 import model is
+# absent), so equiv.py cannot run it at all (UNSUPPORTED).

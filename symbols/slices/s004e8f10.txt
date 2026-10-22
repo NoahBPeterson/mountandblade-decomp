@@ -1,0 +1,48 @@
+slice s004e8f10 (batch ds1) - layout notes
+==========================================
+
+Range: 0x4e8f10 .. 0x4e9830 (17 functions)
+
+004e8f10  int Game::save_state(OutStream*)          thiscall, ret 4, returns 0
+          Writes: two separate ints at 0x5e2950 / 0x5e2954 (NOT one __int64 - the original
+          emits two w_int calls with slot 0xc), raw +4, raw +0xb4, then
+          clock(+0x13b20..), vec8 @0xa70480, Rec78Tag @+0x139e8, Rec30Tag @+0x139f4,
+          list138(this), list_party(this), list300(this), vec5c(this, +0x13a64/+0x13a68),
+          raw @0x5e29fc (count) + loop over 0x5e29f8, other(+0x9b50 obj), table(@+0xcc),
+          records, items, int1 records[f8c].f3c0 / f3c8, raw +0x98/+0xa0/+0x9c/+0xa4.
+          Receiver objects for list138 / list_party / list300 are the Game itself (ecx = this).
+
+004e90d0  Rec78Tag::write(OutStream*)              thiscall; count +0, array +4, stride 0x78
+004e9110  write_rec78(Rec78*, OutStream*)          raw +0xc then int1 +0x50/+0x60/+0x70
+004e9150  Rec30Tag::write(OutStream*)              thiscall; count +0, array +4, stride 0x30, int1 +0x28
+004e9190  write_game_clock(Game*, OutStream*)      the clock block at +0x13a0c..+0x13b60
+004e93f0  write_vec5c(Game*, OutStream*)           vector +0x13a64/+0x13a68, stride 0x5c (0xb21642c9 magic)
+004e9460  write_rec5c(Rec5c*, StrStream*)          three ints, then +0x14 and raw
+004e94b0  List8::write8(OutStream*)                thiscall: count = (end-begin)>>3 (0 if begin==0),
+                                                   w_count, then int1 per 8-byte element; returns out
+004e9510  write_rec_b0(char*, OutStream*)          the 0xb0 record of the 0x5e29f8 list
+004e9550  write_list138(Rec138Tag*, OutStream*)    list at Game+0x13a58 / count +0x13a5c, stride 0x138
+004e95a0  write_rec138(Rec138*, OutStream*)
+004e9620  OutStream* write_soa(OutStream*, char*)  8 iterations of {struct +0x20+i*0x10, raw base, raw +0xa0}
+                                                   stream for the leading ints is *out (StrStream-ish)
+004e9670  write_list_party(PartyListTag*, OutStream*)  array +0x13a50 / count +0x13a54, stride 0x494, vec8 +0x474
+004e96c0  write_list300(Rec300Tag*, OutStream*)    array +0x13a48 / count +0x13a4c, stride 0x300
+004e9710  Rec300::write300(OutStream*, int n)      thiscall ret 8: vec8 +0x24c, n ints at +0x2c,
+                                                   struct, int4 +0x10, count +0x28, raw +0x230, soa +0x25c
+004e9790  write_items(ItemListTag*, OutStream*)    raw @0x5e29d4 + loop of vec8 at item+0x30 (stride 0x238)
+004e97e0  write_records(Game*, OutStream*)         array +0x13a00 / count +0x13a04, stride 0x508
+
+OutStream slots: 0xc w_int, 0x10 w_int4, 0x14 w_int5, 0x18 w_int1, 0x1c w_count,
+                 0x20 w_raw, 0x28 w_cstr, 0x2c w_struct (all return OutStream&).
+
+Codegen findings
+----------------
+* The thiscall originals keep the *data* pointer in ecx and the stream on the stack.
+  Free functions taking (data, out) therefore need two stack loads; making the
+  wrapper a real member (Rec78Tag::write / Rec30Tag::write / List8::write8 /
+  Rec300::write300) reproduces `mov edi, [esp+0x10] ... mov esi, ecx`.
+* Keep the `write_vec8(List8*, OutStream*)` name as a thin non-inlined alias so the
+  `write_items` call site keeps the original `call rel32`.
+* In the member form MSVC hoists the count load before the first vtable call only if the
+  loop is written as `int n = this->count; char* a = this->array + 0x28; int i = 0;
+  if (n > 0) { do { ...; i++; } while (i < n); }`.

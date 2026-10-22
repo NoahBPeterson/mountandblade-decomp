@@ -1,0 +1,16 @@
+slices/s0048add0/s0048add0.cpp  ?update@TimerList@@QAEXH@Z  0048add0  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?set_text_pos@MissionUi@@QAEXPBM@Z  0048b090  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?always1@MissionUi@@QAEDXZ  0048b170  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?flag2@MissionUi@@QAEXXZ  0048b180  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?flag1@MissionUi@@QAEXXZ  0048b1a0  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ??0UiA@@QAE@XZ  0048b1c0  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?type@UiA@@QAEHXZ  0048b1f0  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?key@UiA@@QAEDI@Z  0048b200  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?play_sound@@YIXPAUSoundMgr@@@Z  0048b2d0  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?update@UiA@@QAEXHHHH@Z  0048b320  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?type9@UiA@@QAEHXZ  0048b390  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?type8@UiA@@QAEHXZ  0048b4a0  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ??0UiB@@QAE@XZ  0048b4b0  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?value@UiB@@QAEMXZ  0048b550  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?type2@UiB@@QAEHXZ  0048b590  /O2 /MT /Gy /TP
+slices/s0048add0/s0048add0.cpp  ?set_value@UiB@@QAEXM@Z  0048b6e0  /O2 /MT /Gy /TP

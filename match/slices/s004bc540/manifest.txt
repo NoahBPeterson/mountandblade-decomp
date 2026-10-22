@@ -1,0 +1,1 @@
+slices/s004bc540/s004bc540.cpp  ?release@buffer_pair@@QAEXXZ  004bc540  /O2 /MT /Gy /TP

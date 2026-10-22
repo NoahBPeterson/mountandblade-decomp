@@ -1,0 +1,7 @@
+004dcef0  1562  MainMenu::create, complete (every path and call of the original): gui reset + window
+  creation, the seven add_row calls, all colour/text-position setters, logo/mercenary panels, version
+  label, save scan, block init and set_window.  Not byte-exact: ours is 1963 vs 2026 bytes and keeps a
+  0x294 frame vs 0x284 (cl does not keep the reused zero in ebx and gives the address-taken temps
+  separate slots); the save-prefix c_str idiom and pointer-form colour setters now match.  equiv
+  UNSUPPORTED: input generation reaches _purecall through the widget vtable (400/400 discards), so no
+  equivalence verdict is possible.

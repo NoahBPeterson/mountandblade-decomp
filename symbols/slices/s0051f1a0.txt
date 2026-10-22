@@ -1,0 +1,3 @@
+0041f4b0 ?clear@Vec@@QAEXXZ  # std::vector<mface>::clear (ICF-folded, called from 0x51f40a and 0x51f43a)
+00415880 ?r_tstr@tstream3@@UAEAAUstream_root@@PAUtstring@@@Z  # text_stream::r_tstr, vtable 0x54ac88 slot 21 (ICF)
+00415930 ?r_int@tstream3@@UAEAAUstream_root@@PAH@Z  # text_stream::r_int, vtable 0x54ac88 slot 19 (ICF)

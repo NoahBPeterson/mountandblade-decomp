@@ -1,0 +1,8 @@
+# symbol notes for the difftest resolver: 0x4e7b30 is scene::read(rgl::mesh* owner, access_stream* s) --
+# the map scene object (this) is in ecx, the arguments are the scene's own mesh (the lod resource owner) and
+# the access-code stream. The stream helpers are undefined in the object, so the harness stubs them:
+#   ?stream_f@@YAXPAUaccess_stream@@PAM@Z        (vtable +0x38, float)
+#   ?stream_block@@YAXPAUaccess_stream@@PAUlod_block@@@Z  (vtable +0x40, 16 dwords)
+#   ?stream_i@@YAXPAUaccess_stream@@PAH@Z        (vtable +0x4c, int)
+#   ?stream_str@@YAXPAUaccess_stream@@PAUtstring@@@Z      (vtable +0x54, string)
+0x4e7b30 ?read@scene@@QAEXPAUmesh@rgl@@PAUaccess_stream@@@Z

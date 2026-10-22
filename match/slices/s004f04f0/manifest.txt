@@ -1,0 +1,1 @@
+slices/s004f04f0/s004f04f0.cpp  ?weapon_class_caption@@YAXHPAD@Z  004f04f0  /O2 /MT /Gy /TP

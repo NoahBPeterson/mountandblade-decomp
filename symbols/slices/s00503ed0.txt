@@ -1,0 +1,44 @@
+# Symbols recovered from slice s00503ed0 (Mission::refresh_party_members, 0x503ed0).
+# Address  name  # evidence
+
+00503ed0  ?refresh_party_members@Mission@@QAEXH@Z  # this slice; thiscall on Mission (ecx=this), one int arg (ret 4), 3274 bytes; body clears the 2x2x64 grid widgets of one half, rebuilds each row label and refreshes the party footer totals -> "refresh_party_members" is provisional but descriptive; sibling s005063e0 (right after it) is refresh_party_window.
+
+# --- callees reached from 0x503ed0 -------------------------------------------------------------------
+0042bbd0  ??0tstring@@QAE@XZ              # default ctor (called for every label/key temporary; sets pos/buf/cap/len to 0)
+0042bbe0  ??0tstring@@QAE@PBD@Z           # const char* ctor (the "" / " +" and the ini-key temporaries)
+0042bc40  ??1tstring@@QAE@XZ              # dtor (18-byte teardown after each set_text)
+0042bcb0  ?assign@tstring@@QAEXPBD@Z      # label.assign(buf) after each sprintf
+0042bdd0  ?equals@tstring@@QBEDABU1@@Z    # config lookup: entries[i].key.equals(key); note it returns char (al), not bool
+42c1e0  ?append@tstring@@QAEXABU1@@Z      # label.append(plus) for the conditional " +"
+0043a1e0  ?find@StrTable@@QAEPAVtstring@@PAU1@@Z     # troop display-name lookup (g_strtable.find(&rec->name))
+4894b0  ?sum_head@Party@@QAEHXZ           # no args (ret, not ret N): sum of the unflagged prefix, used for ui_company
+4894e0  ?sum_flagged@Party@@QAEHXZ        # no args (ret): sum of the flagged stacks, used for ui_prisoners_equal_value
+48ad00  ?index_of@PartyMgr@@QAEHH@Z       # id -> packed index (page = idx>>4, slot = idx&0xf)
+4b1700  ?ext_4b1700@Party@@QAEHXZ         # rows this half can show (loop bound in the two prep loops)
+4b22d0  ?regular_limit@Party@@QAEHXZ       # company regular limit
+4b2330  ?prisoner_limit@Party@@QAEHXZ      # prisoners equal-value limit
+4c6010  ?find@StrTable@@QAEPAVtstring@@PAU1@@Z       # (alt find) string-table lookup used by display_name
+4638f0  ?agent_low@GameData@@QAE_NH@Z      # thiscall on g_game (ecx=0x5e2930), int arg, ret 4
+48e9e0  ?string_value@GameData@@QAE?AUtstring@@H@Z   # hidden-return tstring by value (weekly cost text)
+504ba0  ?fn_504ba0@Mission@@QAEXHHPAUParty@@H@Z      # thiscall, 4 args (ret 0x10): (type, kind, party, count)
+504d50  ?fn_504d50@Mission@@QAEXHH@Z                 # thiscall, 2 args (ret 8): (type, troop) - select the player agent
+504e20  ?weekly_cost@GameData@@QAEHXZ                # thiscall on g_game, no args (ret 4)
+
+# --- globals -----------------------------------------------------------------------------------------
+5e2930  g_game      # GameData*; player_party +0x78, player +0x8c, PartyMgr +0xf8, troops +0x13a00
+5e2a18  g_strtable  # StrTable (tstring.find)
+a44240  g_config    # ini table, 0x2c-byte entries (key tstring +0, value tstring +0x1c), count at 0xa70240
+
+# --- named string constants quoted in the body --------------------------------------------------------
+0059a110  "ui_weekly_cost_value"
+0059a104  "ui_company"
+0059a0e8  "ui_prisoners_equal_value"
+0059a1b4  "ui_button_party_member_total"
+0059a1d4  "ui_button_party_member_healthy_total"
+0059a158  "ui_button_party_member_hero_percentage"
+0059a180  "ui_button_party_member_hero_percentage_wounded"
+0059a13c  "party_b_member_t_c_wounded"
+0059a128  "party_b_member_t_c"
+0059a1b0  " +"
+00598118  "%x"
+0054a480  ""

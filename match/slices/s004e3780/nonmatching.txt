@@ -1,0 +1,8 @@
+004e3780 671 widget-member offsets are 4 bytes late in our build (sub at +0x17c, rect at +0x18c, scale flag +0x184 -> +0x188); equiv.py UNSUPPORTED (purecall inputs)
+004e3aa0 501 same widget-offset shift (+4) as 0x4e3780; equiv.py UNSUPPORTED (purecall inputs)
+004e3d50 270 same widget-offset shift (+4); pointer-reinterpretation of the cloned mesh stored in sub; equiv.py UNSUPPORTED
+004e3eb0 96 same widget-offset shift (+4); equiv.py UNSUPPORTED (external g_progressbar_scale)
+004e3f20 54 same widget-offset shift (+4); equiv.py UNSUPPORTED (reads ecx at entry: thiscall with ret 0x10)
+004e3f60 63 same widget-offset shift (+4); equiv.py FAIL only on memory-pool address @40010168 (unmodelled allocator)
+004e3fb0 136 same widget-offset shift (+4); equiv.py FAIL (layout-dependent vtable/dispatch reads)
+004e4060 116 same widget-offset shift (+4) in the row store; equiv.py FAIL (insert into unmodelled pool)

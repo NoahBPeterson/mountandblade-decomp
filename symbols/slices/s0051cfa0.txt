@@ -1,0 +1,29 @@
+# names used while matching slice s0051cfa0 (Game ctor + its nav containers)
+0051cfa0  Game::Game              # 0x1a2b0 object ctor, ends by calling reset()
+0051cc80  Game::reset             # out of slice (declared only), called at the ctor tail
+0051d1c0  Game::alloc             # bool alloc(int count): reserve 0x5c-byte records at +0x13a60
+0051d220  Game::ctor_a            # container at game+0xcc (std::vector<int> _Buy(0))
+0051d250  Game::ctor_b            # container at game+0xf8, do/while over 0x2717 int pairs
+0051d2b0  Game::init_map          # one-shot scene/nav graph builder
+0051d3a0  Game::solve             # worklist shortest path, 3 int* args (7/0/7 at the caller)
+0051d7c0  Game::walk              # recursive neighbour walk called by solve
+0051d920  solve helper            # 7-arg thiscall: (&local_10,&local_30,work,count,arg1,arg2,arg3)
+0051dac0  nav run                # this = world (0xa732b8), 3 int* args (7/0/1 at the caller)
+004704b0  world reset            # called on *(int*)0xa732b8 before the scene is created
+00478ad0  SceneCtor::Init        # this = new(0x344), (world+0x44, world+0x54, &c, &b, &a)
+00479980  NavStore::build        # this = *(int*)0xa732b4, arg = world; builds the nav mesh
+0042bbd0  tstring::tstring       # 16-byte rgl string {pos, buf, cap, len} subobject ctor
+004638b0  record ctor            # 0x10-byte ctor for the 4 objects at +0x13b64
+0043e760  std::vector<int>::_Buy # called by ctor_a with count 0 (this = game+0xcc+0x14)
+0043e2a0  std::vector::_Xlen    # count > 0x2c8590b guard in alloc
+0053545e  operator new           # alloc(0x344) for the scene
+0053570d  operator delete[]     # frees solve()'s two work lists
+0059be1c  float 1e9f             # constant compared against the neighbour weight
+00a73090  g_a73090               # byte gate: init_map returns immediately when set
+00a732b8  g_world                # world/scene object (all init_map calls go through it)
+00a732b4  g_scene                # SceneCtor result, reused by NavStore::build
+005e2948  g_5e2948               # int64 clock pair copied into game+0x1a158 (and +0x13b20)
+005e294c  g_5e294c               # second half of the 0x5e2948 pair
+005e2950  g_5e2950               # int64 pair copied into game+0x13a88/+0x1a2a0 style slots
+005e2954  g_5e2954               # second half of the 0x5e2950 pair
+005e2930  g_game                 # Game* global (not touched directly by this slice)

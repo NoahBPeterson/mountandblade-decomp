@@ -1,0 +1,2 @@
+004be950 4 vec60::size: divide-by-0xc0 constant encoded as 0x2aaaaaab vs original 0x66666667; identical semantics
+004be9a0 4 vec (0xc0 stride)::size: same single constant difference as 0x4be950

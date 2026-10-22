@@ -1,0 +1,7 @@
+# Slice s004dc630 -- the two button wrappers are byte-exact; the shared maker and the result window are partial.
+4dcc50  456  Incomplete: new_button body (548 vs 539 bytes, 456 diff).  The allocation/ctor/vptr block, the two clone+scale+set_mesh(2/1) blocks, the 0xff007700 colour and set_pos are recovered, but the ten-argument mapping (parent, F2..F5, name, down_name, 9.7/3.7, 0.072, 0.085), the x87 text-metric expression and the exact local buffer layout still differ, so the body is not behaviourally complete.
+4dc630  1356  Incomplete: result_window::init opening block only (295 vs 1432 bytes, 1356 diff).  The root window (new 0x190, ctor 0x4931a0, "message_window" mesh) and the panel (new 0x178, ctor 0x48ae20) are modelled; the switch over the outcome (this+4) into the medium/long/yes-no button rows, the window-list push 0x49b120 and byte 0x5d8788 = 1 are still disassembly notes.
+#
+# 004dcbd0 new_long_button  MATCH (117 bytes): tstring down first, then button, then
+#   new_button(parent,x,y,z,u,button,down,9.7f,0.072f,0.085f); the callee takes the two names by const&.
+# 004dce70 new_medium_button MATCH (117 bytes): same with "medium_button"/"medium_button_down" and 3.7f.

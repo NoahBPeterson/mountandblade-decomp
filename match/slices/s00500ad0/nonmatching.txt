@@ -1,0 +1,9 @@
+00500ad0 2755 InventoryPanel::create compiles and is behaviourally faithful (equiv.py UNSUPPORTED: call-resolution
+# audit only) but the codegen does not reproduce the original: the compiler assigns `this` to edi instead of esi and
+# keeps a tstring temporary live across the mode branch, so the whole body is one register off; the stack frame is
+# 0x150 vs the original's 0xf0 because the tstring temporaries are scoped too wide; and the four inlined
+# config-table lookups (`config_float`) are emitted as a call to a shared helper rather than the original's
+# straight-line code.  Struct layout (InventoryPanel: mode +0x04, troop +0x14, view +0x34, gold +0x44, name +0x4c,
+# hinge +0x54, view_count +0x964, bottom_count +0x968, window +0x96c, total_cost +0xa60, armor +0xa64,
+# armor2 +0xa74, f_a84/f_a88 character slots, f_a8c, leave +0xa90, f_a98, f_ab0..f_ab8, pabc +0xabc,
+# f_ac0/f_ac4, equip_bg +0xac8) is verified byte-for-byte with offsetof.

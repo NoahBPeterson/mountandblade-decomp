@@ -1,0 +1,2 @@
+# s004e05c0: manifest of the one function in this slice (copied from chk.py output)
+# <file> <symbol> <va-hex> <size> <diff-bytes> <status> <how>

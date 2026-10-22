@@ -1,0 +1,6 @@
+slice s00507400 (batch ds1)
+===========================
+
+0x419540 ?get_object@ResMgr@@QAEPAUMesh@@PBUtstring@@@Z  # resource manager (this = 0x5d6fa0): look a mesh/object up by name; ret 4
+0x41c6d0 ?clone@Mesh@@QAEPAU1@XZ  # Mesh::clone
+0x8ee3100 ?g_skill_table@@3PADA  # skill table base; records of 0x44 bytes, display-name tstring at +0x20 (fallback +0x10), level text filled in by other slices

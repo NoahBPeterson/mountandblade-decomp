@@ -1,0 +1,1 @@
+# slice s004c3d90 - no byte-exact functions (see nonmatching.txt); every function is written and compiles.

@@ -1,0 +1,13 @@
+slices/s00477530/s00477530.cpp  ?insert@?$vector@UE24@@V?$allocator@UE24@@@std@@@std@@QAE?AViterator@12@V312@ABUE24@@@Z  00477530  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?resize@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@QAEXIUE100@@@Z  004775a0  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?insert@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@QAE?AViterator@12@V312@ABUE100@@@Z  00477640  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?resize@?$vector@UE52@@V?$allocator@UE52@@@std@@@std@@QAEXIUE52@@@Z  004776b0  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?insert@?$vector@UE52@@V?$allocator@UE52@@@std@@@std@@QAE?AViterator@12@V312@ABUE52@@@Z  00477750  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?resize@?$vector@URec1c8@@V?$allocator@URec1c8@@@std@@@std@@QAEXIURec1c8@@@Z  004777c0  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?resize@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@QAEXIUArrSet@@@Z  00477880  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?copy_e56@@YAPAUE56@@PAU1@00@Z  00477940  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?slot@EmptySlot@@UAEXXZ  00477b70  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?push_back@?$vector@UE36@@V?$allocator@UE36@@@std@@@std@@QAEXABUE36@@@Z  00477b80  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?push_back@?$vector@UE24@@V?$allocator@UE24@@@std@@@std@@QAEXABUE24@@@Z  00477c10  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?push_back@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@QAEXABUE100@@@Z  00477d20  /O2 /MT /Gy /TP
+slices/s00477530/s00477530.cpp  ?push_back@?$vector@UE52@@V?$allocator@UE52@@@std@@@std@@QAEXABUE52@@@Z  00477e10  /O2 /MT /Gy /TP

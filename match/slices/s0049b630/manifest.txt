@@ -1,0 +1,1 @@
+# s0049b630: no byte-exact functions (all six are recorded in nonmatching.txt)

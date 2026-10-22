@@ -1,0 +1,8 @@
+# slice s004e85d0 - complete reconstructions that are not byte-exact (they are semantically equivalent /
+# cannot be confirmed by the harness). usage: <source> <va> [flags]
+# equiv.py: 0x4e8720 PASS (340 valid inputs, all edges covered, 100% insns - only the mask-chain register
+#              allocation differs from the original, so it is not byte-exact),
+#           0x4e8980 UNSUPPORTED (1 unresolved reference: ?w_cstr@log_stream@@UAEXPBD@Z - the 0x5a9f60
+#              import model is absent from the harness).
+# slices/s004e85d0/s004e85d0.cpp 0x4e8720
+# slices/s004e85d0/s004e85d0.cpp 0x4e8980

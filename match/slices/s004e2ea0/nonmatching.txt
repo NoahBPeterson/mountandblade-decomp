@@ -1,0 +1,1 @@
+004e2ea0 1518 37-way switch of string-table key names with two 0x1c0-byte text-local blocks; all 37 lookups and assignments are present but the per-case local offsets/size are not reproduced byte-exactly (EQUIV UNSUPPORTED: StrTable::lookup / tstring map conflict)

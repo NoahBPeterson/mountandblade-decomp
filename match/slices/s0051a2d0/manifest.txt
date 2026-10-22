@@ -1,0 +1,2 @@
+slices/s0051a2d0/s0051a2d0.cpp  ?collect@Picker@@QAEXIPAPAUPickable@@PAH@Z  0051a3a0  /O2 /MT /Gy /TP
+slices/s0051a2d0/s0051a2d0.cpp  ?set_pos@gui_manager@@QAEXPBM@Z  0051a760  /O2 /MT /Gy /TP

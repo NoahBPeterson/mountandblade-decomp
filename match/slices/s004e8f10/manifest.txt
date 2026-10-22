@@ -1,0 +1,11 @@
+# slice s004e8f10
+slices/s004e8f10/s004e8f10.cpp  ?write@Rec78@@QAEXPAUOutStream@@@Z  004e9110  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write@Rec30Tag@@QAEXPAUOutStream@@@Z  004e9150  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write_vec5c@Game@@QAEXPAUOutStream@@@Z  004e93f0  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write@RecB0@@QAEXPAUOutStream@@@Z  004e9510  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write_list138@Game@@QAEXPAUOutStream@@@Z  004e9550  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write@Rec138@@QAEXPAUOutStream@@@Z  004e95a0  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write_list_party@Game@@QAEXPAUOutStream@@@Z  004e9670  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write_list300@Game@@QAEXPAUOutStream@@@Z  004e96c0  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write300@Rec300@@QAEXPAUOutStream@@H@Z  004e9710  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write_records@Game@@QAEXPAUOutStream@@@Z  004e97e0  /O2 /MT /Gy /TP

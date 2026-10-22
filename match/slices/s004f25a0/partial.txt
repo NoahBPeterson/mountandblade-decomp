@@ -1,0 +1,3 @@
+004f25a0	0	NOT a page member: frustum init (this): copies flag +0 and the near/far +0x118/+0x11c into the frustum, then 0x41e4f0 builds the six planes from +0x108..+0x114. Source sketch only.
+004f2610	0	terrain ground-type name table lookup (same table as s00484590); sketch only (call shape unverified)
+004f2ae0	0	write the page values into the terrain bit words at 0xa76630 (BitWords::set conventions unexplained); sketch only

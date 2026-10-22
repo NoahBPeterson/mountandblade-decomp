@@ -1,0 +1,3 @@
+slices/s00499050/s00499050.cpp  ?spawn@obj_tbl@@QAEXHHPBUmat4@rgl@@PBUvector4@3@@Z  004992b0  /O2 /MT /Gy /TP
+slices/s00499050/s00499050.cpp  ?spawn_scaled@obj_tbl@@QAEXHPBUmat4@rgl@@PBUvector4@3@PBMPBI@Z  00499390  /O2 /MT /Gy /TP
+slices/s00499050/s00499050.cpp  ?spawn_scaled2@obj_tbl@@QAEXHPBUmat4@rgl@@PBM@Z  00499540  /O2 /MT /Gy /TP

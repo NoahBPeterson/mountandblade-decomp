@@ -1,0 +1,35 @@
+0051abd0 MapPanel::update          # map info panel repaint: anchor, capital-battle columns, order line, garrison block
+0051be20 RecR::at_target           # order target reached? (state 6 and the order-line tail)
+0051be60 GameData::party_counts    # extra / wounded / size of one party's garrison
+0051c090 MapPanel::select          # selection changed (called for type == 3)
+0051a690 MapView::to_screen        # world position -> screen anchor (view matrix at +0x274)
+0051ee50 PartyMgr::get             # party record by id (manager base g_game+0xf8)
+0048ad00 PartyMgr::index_of        # id -> party page index (manager base g_game+0xf8)
+0048d7b0 RecR::display_name        # display-name tstring appended to order lines
+0048ef20 AgentPages::slot          # battle agent slot: pages[i>>4] + (i&15)*0x98 (manager base g_game+0xcc)
+0048fd60 GameData::fill_parties    # fill a roster record for a party id
+00490fa0 GameData::collect         # collect member party ids into an int[128]
+0048ffa0 GameData::relation        # relation between two parties (float)
+004b1930 GameData::relation_color  # relation value -> colour
+004b1eb0 RecR::prepare             # post-process a filled roster
+004b20b0 RecR::speed               # movement speed, formatted into the ui_speed_equals line
+004934d0 RecR::RecR                # roster record constructor
+00431b90 RecR::~RecR               # roster record destructor
+0042cdb0 gui_manager::set_o568     # select the panel's object slot
+004c5190 gui_manager::set_view     # move the panel to a screen position
+004e43e0 gui_manager::draw_string  # draw one tstring at a relative y with a colour
+0043a1e0 StrTable::lookup          # key -> tstring (base g_strtable 0x5e2a18)
+004c6010 StrTable::find            # key -> tstring or 0
+00415100 mb_snprintf               # engine snprintf wrapper (faction tag "(%s)")
+00535717 lib_crt::_snprintf        # CRT _snprintf
+00536f8f lib_crt::sprintf          # CRT sprintf
+005e2930 g_game                    # world: parties, agents, troops, factions, fleet tables
+005d7080 g_gui                     # gui manager
+005e2a18 g_strtable                # string table
+005aa3b4 g_sel_type                # last painted selection type
+005aa3b0 g_sel_id                  # last painted selection id
+00a181b0 g_use_faction_colors      # dword: colour party names by faction
+00a181b8 g_show_keys               # byte: show string-table keys instead of display names
+005d8760 g_panel_color             # name colour of the left capital-battle column
+005d8764 g_panel_bg                # background tint of the left capital-battle column
+08ee3ac4 g_clamp_max               # troop-tier clamp (same global as s004b2c00's entry)

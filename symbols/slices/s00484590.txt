@@ -1,0 +1,1 @@
+00484590 Mission::start_setup  # 0x484590; 12294 bytes; thiscall (ecx=this), plain ret. Reconstructed in s00484590.cpp (partial).

@@ -1,0 +1,3 @@
+0052fe40 ViewCtrl::apply  # seven flag out-params: integrate the look axes into the eye position, build the view matrix (identity/fu/su/sf/heading) and scale the velocity vector (layout from s005284a0)
+005302f0 build_mesh_name  # choose the mesh list for the selected object kind and look it up in resmgr (0x41b960)
+005302f0 0x43f0a0  # std::vector<rgl::mesh*>::operator= (inline copy; the original calls the out-of-line ICF'd helper)

@@ -1,0 +1,23 @@
+# slice s005181c0 (batch ds1) - symbols resolved by this slice
+#
+005e2930 g_game                     # game/mission data block; `this` of the four functions
+00a18118 g_track_scale              # tracking radius scale (fmul [0xa18118])
+005e2a18 g_strtable                 # translated-string table (StrTable::lookup / find)
+0042bbd0 tstring::tstring           # thiscall default ctor
+0042bbe0 tstring::tstring(char*)    # thiscall ctor, ret 4
+0042bc40 tstring::~tstring          # thiscall dtor
+0042bc50 tstring::operator=         # thiscall copy assign
+0042c1e0 tstring::append            # thiscall append(const tstring&)
+0042be70 tstring::push_back         # thiscall push_back(char)
+0043a1e0 StrTable::lookup           # thiscall ret 4, never null
+004c6010 StrTable::find             # thiscall ret 4, null when absent
+0048ad00 PartyMgr::index_of         # id -> party page index (signed sar 4, and 0xf)
+004b22d0 Party::regular_limit       # thiscall, returns int
+004b2330 Party::prisoner_limit      # thiscall, returns int
+004b2370 Party::skill               # thiscall ret 4, skill(n)
+004b22b0 RecArray::at               # thiscall ret 8, *out = base + idx*0x5c
+0048c3c0 Party::slot_consume        # thiscall ret 0x10 (idx, amount, extra, merge)
+00435700 GameData::is_daytime       # member call; body ignores `this`
+00536a9f lib_crt::rand              # CRT rand
+00518940 GameData::skill_plus_8     # thiscall, returns float (byte-exact)
+00518990 Vec5c::shift_over          # thiscall ret 0xc, copy [src,_Mylast) to dst (byte-exact)

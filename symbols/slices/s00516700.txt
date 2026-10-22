@@ -1,0 +1,1 @@
+8ee3ac4 ?g_max_level@@3HA  # int, level clamp used by Unit::update_anim (0x516700); outside the loaded image

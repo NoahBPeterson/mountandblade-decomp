@@ -1,0 +1,4 @@
+slices/s005146f0/s005146f0.cpp  ?init@Sub3@@QAEXXZ  005146f0  /O2 /MT /Gy /TP
+slices/s005146f0/s005146f0.cpp  ?start_scene@MissionCtx@@QAEXHHH@Z  005147e0  /O2 /MT /Gy /TP
+slices/s005146f0/s005146f0.cpp  ?autosave_notice@@YAXXZ  00514830  /O2 /MT /Gy /TP
+slices/s005146f0/s005146f0.cpp  ?start_battle@MissionCtx@@QAEXHHHH@Z  00514c00  /O2 /MT /Gy /TP

@@ -1,0 +1,6 @@
+slices/s00489d10/s00489d10.cpp  ?sl_item_flag_all@@YAXXZ  0048a210  /O2 /MT /Gy /TP
+slices/s00489d10/s00489d10.cpp  ?setup@NamedRec@@QAEXPBUtstring@@0@Z  0048a3a0  /O2 /MT /Gy /TP
+slices/s00489d10/s00489d10.cpp  ?setup2@NamedRec@@QAEXPBUtstring@@00H@Z  0048a3d0  /O2 /MT /Gy /TP
+slices/s00489d10/s00489d10.cpp  ?sl_item_set_all@@YGXM@Z  0048a250  /O2 /MT /Gy /TP
+slices/s00489d10/s00489d10.cpp  ?sl_party_price@World@@QAEHH@Z  0048a320  /O2 /MT /Gy /TP
+slices/s00489d10/s00489d10.cpp  ?set_names@World@@QAEXHPBUtstring@@@Z  0048a380  /O2 /MT /Gy /TP

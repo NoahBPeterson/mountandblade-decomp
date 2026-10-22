@@ -1,0 +1,1 @@
+004f66e0  ConvScreen::open  # conversation screen ctor; string literals "conversation_window"/"conv_bo_board"/"message_window"/"conv_s_choices" and the widget ctors 0x4931a0/0x48ae20/0x4ed630

@@ -101,8 +101,8 @@ void face::transform(const pos* m)
         const vector4& s = mm.s, &f = mm.f, &u = mm.u, &o = mm.o;
         const vector4& p = v[i];
         w[i] = vector4((s.x * p.x + f.x * p.y) + u.x * p.z + o.x,
-                       o.y + (s.y * p.x + u.y * p.z + f.y * p.y),
-                       (u.z * p.z + s.z * p.x) + f.z * p.y + o.z);
+                       (s.y * p.x + f.y * p.y) + u.y * p.z + o.y,
+                       (f.z * p.y + s.z * p.x) + u.z * p.z + o.z);
     }
     vector4 e1 = vsub(w[2], w[1]);
     vector4 e0 = vsub(w[1], w[0]);

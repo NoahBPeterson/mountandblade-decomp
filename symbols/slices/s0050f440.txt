@@ -1,0 +1,45 @@
+# slice s0050f440 (batch ds1, entry 408) - loading screen: module table load, frame/quads meshes, record reader.
+# Status column is the current chk/run_all verdict for the VA.
+0050f440 ?advance@LoadingScreen@@QAE_NPAH0PAUtstring@@@Z  # LoadingScreen::advance (MATCH, 922 bytes) - the module-load state machine step; called as advance(&this->step, &this->total, &text)
+0050f7e0 ?build@Table@@QAEXPAUSrc@@@Z  # Table::build (MATCH) - 0x100-entry 0x20-byte record table + index array at +0x2008
+0050f840 ?read@Rec@@QAEXPAUSrc@@@Z  # Rec::read (MATCH) - one 0x20-byte table record through the Src virtuals (+0x4c out_int, +0x54 out_vec)
+0050f8a0 ?build_quad@Frame570@@QAEXXZ  # Frame570::build_quad (MATCH)
+0050f930 ?build_frames@Screen@@QAEXXZ  # Screen::build_frames (nonmatching, 401 diff) - border mesh at this+0xfb0 then the four frame_corner_a..d clones into +0x1210..+0x121c
+0050fbf0 ?add@Entries@@QAEXABUEntry@@@Z  # Entries::add (nonmatching, 46 diff) - vector<Entry> push_back (reuses the 0x50d260 insert_n helper)
+# ---- facts that made 0050f440 byte-exact ----
+# The virtual operator<< overload set is laid out by cl in REVERSE declaration order starting at the first
+# declared member's slot: with 10 leading dummies the text sink `operator<<(const char*)` lands at +0x28,
+# `operator<<(int)` at +0x2c and `operator<<(float)` at +0x30 (see logger below, vtable 0x5a9f60).
+# The fopen mode literal used by advance() is "r" at 0x54a8fc (the byte at 0x54a8fd is 00, NOT "rb").
+# case 1 of the switch begins with g_editor_dialog.restart() (0x4c0520) - 10 bytes that were missing from
+# the first reconstruction and are required for the byte match.
+# ---- symbols used ----
+05a9f60 g_logger  # the message logger; text sink = virtual operator<<(const char*) at vtable +0x28
+08ee3c48 g_editor_dialog  # EditorDialog; restart() at 0x4c0520
+08ee3c28 g_module_path  # the active module directory, handed to the loaders
+0a73a10 g_music_table  # Table loaded from music.txt
+0a18238 g_mod_info  # ModInfo; load(FILE*) at 0x4bd630
+05d6fa0 g_res / g_resmgr2  # resource manager; get_object 0x419540 (returns mesh 0x41c6d0 clone target)
+05d7080 g_gui  # GUI manager singleton; its first member is the message log that MsgLog::add 0x452c00 appends to
+05a9fd4 g_sound_paused
+05a9fd8 g_sound_muted
+0a18108 g_scan_module_textures
+0a44238 g_xa44238
+042bbe0/042c110/042bc40 tstring ctor/(const char*)/copy/dtor  # the 0x10-byte engine string
+042bcb0 tstring::assign    # named-local idiom: `{ tstring key("X"); ... }` reproduces cl's block order
+042c1e0 tstring::append
+043a1e0 StrTable::lookup  # 0x5e2a18 lookup(key)
+0419540 ResMgr::get_object
+041c6d0 Mesh::clone
+0419300 Mesh::finish_load
+0451c50 Mesh::compute_normals
+04de3e0 Mesh::build_panel
+047af30 Mesh::set_color
+04172d0/0417310 text_stream ctor/dtor
+0415d60 text_stream::open_read_text
+042cc80 mb_error
+04c05b0 parse_module_info
+04d0c20 fn_4d0c20  # advance() step hook
+050d5e0 fn_50d5e0  # advance() step hook
+050d260 vec template insert_n  # shared with slice s0050cc60
+04f65f0 uninit_fill  # shared element-copy helper

@@ -1,0 +1,19 @@
+0x4e7b30  -  Complete semantic model of the map scene's stream reader, in source order: tag string, 16-dword
+  transform, the four scenery lod-mesh names + the scene's own lod resource (0x41cdc0, with the 'l'<->'R' last
+  character toggle for two of them), the scenery entry list (count -> count-prefixed 0x34-byte allocation, each
+  entry: string, int, 16-dword block, two floats, string normalised by 0x42bf80, its first mesh's point count ->
+  allocation + 0x473570 on the entry's record), the column table (<=0x40 names, 0x477880 records, list resized
+  by 0x4ccf60), the material table (count-prefixed 0x18-byte entries, 0x418a70 lookups, 0x477880/0x473570
+  records), the two 0x10-byte string tables (0x4cbb10), the 0xb0-byte cell grid (0x4ce680 ctor, 0x418a70,
+  colour unpack/pack gated on 0x5e28fc, cross references resolved against the second string table with
+  vector<int> push_back, 8 unpacked 16-byte tiles), the map slot ids (0..6 resolved against the 0x5aa134 front
+  table, 0x98-byte records, name at +0xd0), one 0x418cf0 object + three scalars, and the 0x204-byte scratch
+  block (16-dword read, list resized by 0x4ccf60) followed by the 0x204-byte block-face records (an int at
+  +0x200, the entry count clamped to 0x3f, float/int pairs from +0x04). Not byte-exact: ours is 2580 bytes vs
+  2706 (we keep the scene in ebp instead of ebx, merge the two name declarations into one stack slot, call the
+  partially modelled block allocator by name, and build the colour vector / float squares with a different
+  x87/stack shape); the original also folds the scenery mesh list into one allocation behind [0x8c].
+  equiv.py UNSUPPORTED: the out-of-line stream helpers (and the block allocator) are unresolved references, so
+  no valid inputs could be generated. The intermediate count-prefixed allocations, the cell +0x00/+0x04
+  fields (a tstring plus a 0x42bbe0/0x42c840 join feeding unpack, the material resource at +0x10) and the cell
+  reference vector at +0x1c are modelled from the disassembly shapes only, not verified.

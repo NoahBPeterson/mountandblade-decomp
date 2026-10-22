@@ -1,0 +1,21 @@
+004d63b0 0x4d63b0 update  # video-options page change handler (ret 4)
+004d6b80 0x4d6b80 update_perf  # re-caption the page (slice s004d6b80)
+004d6dd0 0x4d6dd0 set_enabled_text  # caption a value enabled/disabled (slice s004d6b80)
+00a73980 0xa73980 g_main_menu
+005e2930 0x5e2930 g_game
+005e293c 0x5e293c g_renderer
+005d6fa0 0x5d6fa0 g_resources
+005a9f98 0x5a9f98 g_render_config
+005e2a18 0x5e2a18 g_string_table
+0043a1e0 0x43a1e0 lookup  # string table lookup
+00489f40 0x489f40 rating
+00415160 0x415160 open_user_file
+00415fb0 0x415fb0 write  # render config write
+004b99c0 0x4b99c0 settings_refresh
+004bc090 0x4bc090 set_quality1
+004bc100 0x4bc100 set_quality2
+00418260 0x418260 resources_rebuild0
+00418d60 0x418d60 resources_rebuild2
+00494260 0x494260 reset  # main menu reset
+00495700 0x495700 choose  # main menu choose
+0048a3a0 0x48a3a0 set_texts  # main menu explanation record

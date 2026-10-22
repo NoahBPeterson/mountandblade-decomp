@@ -1,0 +1,6 @@
+004de1b0  133  create_report, complete (every path and call of the original).  Misses on stack-slot
+  colouring and one lea+add shape; the uninitialised set_text position now mirrors the original's
+  v+4 slot.  equiv UNSUPPORTED: no _purecall model (400/400 discards).
+004de320  100  make_background, complete (every path and call of the original).  Misses on frame layout,
+  x87 scheduling (fxch/fadd) and the tstring slot; 174 vs 183 bytes.  equiv UNSUPPORTED: no _purecall
+  model (400/400 discards).

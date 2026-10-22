@@ -1,0 +1,9 @@
+004902a0 51 token: complete and behaviourally equivalent (equiv PASS); page-table lookup and pointer folding (mov vs lea+mov) differ
+00490310 36 paged_last: complete and behaviourally equivalent (equiv PASS); remainder/register encoding differs
+004903e0 28 is_slot: complete and behaviourally equivalent (equiv PASS); page-pointer load folded vs two-step
+00490430 48 script_value: complete and behaviourally equivalent (equiv PASS); shift/and scheduling and page/vehicle pointer folding differ
+004904a0 91 agent_of: complete; equiv UNSUPPORTED (harness: custom/LTCG register ABI, reads eax at entry)
+00490570 2 place: complete and behaviourally equivalent (equiv PASS); vtable reload register eax vs edx
+004905c0 8 track_bounds: complete; equiv UNSUPPORTED (harness fake-arity on float/vector inputs); delayed store vs load scheduling in the position copy
+00490710 14 bounds_of: complete; equiv WEAK (harness limit: both builds miss the same 13 entity-loop edges); initial local register allocation differs
+00490990 128 mark_kind: complete; equiv WEAK (harness limit: loop back-edge not taken); this kept in edi vs ebx and page lookup folded

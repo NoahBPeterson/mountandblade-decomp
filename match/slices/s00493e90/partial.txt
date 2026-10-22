@@ -1,0 +1,2 @@
+# s00493e90: every function in this slice is complete; the rows above are the
+# non-byte-exact ones.  No function is partial and no equivalence check FAILs.

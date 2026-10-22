@@ -1,0 +1,2 @@
+004ea0c0  357  complete reconstruction; equivalence WEAK (orig 7/8 edges, ours 7/8 edges — both misses are harness limits, not divergence); size 386 vs 458
+004ea290  975  complete reconstruction; equivalence UNSUPPORTED (resolver disagreements: adjacent tstring dtor/op= symbols 0x42bc40/0x42bc50, ?choose 0x495700); branch fallthrough/layout differs and size 1399 vs 1467

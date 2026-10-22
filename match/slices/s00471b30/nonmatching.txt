@@ -1,0 +1,3 @@
+00471b30 1146 complete source; equiv WEAK (no mismatch, orig/ours both 34/36 edges, 99.0% insns; two x87 comparison edges the harness cannot take)
+00472050 154 complete source; equiv WEAK (no mismatch, orig/ours both 11/24 edges, 57.5% insns; edges on prop/global state the generated inputs cannot reach)
+00472160 643 complete source; equiv WEAK (no mismatch, orig/ours both 8/14 edges, 76.2% insns; floating-point retry-loop edges not reachable by the harness)

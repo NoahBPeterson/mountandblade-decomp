@@ -1,0 +1,8 @@
+slices/s004b1160/s004b1160.cpp  ?add_spawned@Holder@@QAEXPAHH@Z  004b14b0  /O2 /MT /Gy /TP
+slices/s004b1160/s004b1160.cpp  ?max_scene_slots@@YAHXZ  004b1700  /O2 /MT /Gy /TP
+slices/s004b1160/s004b1160.cpp  ?rotate@RotHolder@@QAEXHH@Z  004b1710  /O2 /MT /Gy /TP
+slices/s004b1160/s004b1160.cpp  ?set@ScriptState@@QAEXPAH0@Z  004b1780  /O2 /MT /Gy /TP
+slices/s004b1160/s004b1160.cpp  ?visible@VisHolder@@QBE_NXZ  004b17d0  /O2 /MT /Gy /TP
+slices/s004b1160/s004b1160.cpp  ?set_fade@FadeCam@@QAEXPBM@Z  004b1800  /O2 /MT /Gy /TP
+slices/s004b1160/s004b1160.cpp  ?count@CountHolder@@QBEHXZ  004b1af0  /O2 /MT /Gy /TP
+slices/s004b1160/s004b1160.cpp  ?add_scene@widget_mgr2@@QAEHHHH@Z  004b14f0  /O2 /MT /Gy /TP

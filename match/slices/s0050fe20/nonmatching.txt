@@ -1,0 +1,7 @@
+0050fe20  1835  Complete and equivalent source (frame 0x268 vs 0x244: our build keeps the worn-counter/scratch registers
+  in different slots, pushes ebx in the prologue and shares one 0x200 message buffer where the original uses
+  per-scope slots 0x50/0x54); all 15 constants, all 9 call sites and all 6 message keys are identical, but the
+  register allocation for the four tstring scopes and the two summary questions differs throughout. equiv
+  UNSUPPORTED: the resolution audit reports 2 disagreements at shifted addresses (my ask/choose and g_game/
+  g_main_menu operands sit 0x20 bytes earlier because the body is 89 bytes shorter) - a layout artifact of the
+  nonmatching code, not a wrong target.

@@ -1,0 +1,1 @@
+004d86d0  char_export_write  ?char_export_write@@YAXPAUstream_text@@@Z

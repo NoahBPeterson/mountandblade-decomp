@@ -1,0 +1,22 @@
+# slice s004d5410 - the mission-item source callbacks (batch ds1)
+#
+# 0x4d59f0 Hud::on_leave is byte-exact. Every other function is reconstructed call-for-call from the
+# original and recorded in nonmatching.txt:
+#   0x4d5410 MissionSource::pick   1325 bytes; 1110 bytes emitted, 1061 differ. All behaviour is present
+#                                   (spawn-tick bookkeeping, kind-7 nearest-item search, per-item clock
+#                                   and key reactions), but the original was built from an out-of-line
+#                                   VC7.1 vector<MissionItem*> iterator (0x534160 + _M_start reloads) and
+#                                   non-inlined Widget virtuals, and its stack frame is 0x3c vs 0x10.
+#   0x4d5940 ValueSource::on_value_changed  42 diff, and 1 ulp off on extreme inputs (equiv); the
+#                                   original splits the arg*scale product into its own x87 chain.
+#   0x4d5980 Hud::on_mission_start 61 diff: the original loads 0xa739ac once per statement into
+#                                   different registers where the source's single int* global is
+#                                   reloaded; frame/sequence otherwise identical.
+#   0x4d5a20 Hud::on_update       302 diff: the original inlines on_value_changed's whole x87 body for
+#                                   f30[0] and re-loads MissionSource::begin between statements.
+#   0x4d5980 Hud::on_mission_start 61 diff: the original loads 0xa739ac once per statement into
+#                                   different registers where the source's single int* global is
+#                                   reloaded; frame/sequence otherwise identical.
+#   0x4d5a20 Hud::on_update       325 diff: the original inlines on_value_changed's whole x87 body for
+#                                   f30[0] and re-loads MissionSource::begin between statements.
+slices/s004d5410/s004d5410.cpp  ?on_leave@Hud@@QAEXH@Z  004d59f0  /O2 /MT /Gy /TP

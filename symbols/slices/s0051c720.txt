@@ -1,0 +1,36 @@
+# names used while matching slice s0051c720 (new-game state machine + Game init/reset)
+0051c720  Panel::sub               # one step per call; counter in *arg1, status text in arg3
+0051cc10  Game::init               # (const tstring& name, int value, char flag) -> +0x1c/+0x00/+0x18
+0051cc80  Game::reset              # ~150 field stores, 0x1a240..0x1a290 clear loop
+0051cfa0  Game::Game               # out of slice, the 0x1a2b0 ctor called by `new Game`
+0042bbd0  tstring::tstring        # 16-byte rgl string {pos, buf, cap, len}
+0042bbe0  tstring::tstring(const char*)
+0042c110  tstring::tstring(const tstring&)
+0042bc40  tstring::~tstring
+0042bc50  tstring::operator=(const tstring&)
+0042bcb0  tstring::assign(const char*)
+0042be50  tstring::clear          # len = 0, buf[0] = 0
+0043a1e0  StrTable::lookup        # this = 0x5e2a18, never returns null
+0042cc80  mb_error                # modal "Unable to open found savegame!!!"
+00415290  SaveGame::open_read(const char*)
+00417c50  SaveGame::SaveGame
+00417c90  SaveGame::~SaveGame
+004e54e0  PanelLoader::load       # this = panel+0x58, reads the SaveGame into +0x28..+0x30
+005236f0  game::step2            # this = g_game, arg = *(int*)0xa75eb8
+0051dbd0  game::step3            # this = g_game, arg = SaveGame*
+0051f1a0  game::load_map_data
+00520b20  game::load_map_data_2
+0051d2b0  game::init_map
+00520d60  game::launch
+004be730  meta_mission_init        # this = 0xa73300
+005e2930  g_game                   # Game* (0x1a2b0)
+005e29bc  g_5e29bc                 # <- panel+0x80 after loading a savegame
+005e2948  g_5e2948                 # int64 tick/clock; also a {int,int} array indexed by game+0x13a90
+0054a6d0  float scale              # 0x13b4c = (float)g_5e2948 * [0x54a6d0]
+005a9f60  g_log                    # static log stream, vtable slot +0x28 = w_cstr
+005e2a18  g_strtable               # StrTable (0x43a1e0 lookup)
+08ee3c38  g_8ee3c38                # tstring name passed to Game::init (in the .data tail gap)
+00a75eb8  g_a75eb8                 # int arg of game::step2
+00a73090  g_a73090                 # byte set to 1 by step 6, cleared by reset
+00a73300  g_a73300                 # meta-mission object (0x4be730)
+0054a480  ""                       # shared empty string literal

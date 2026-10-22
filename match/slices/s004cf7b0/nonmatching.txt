@@ -1,0 +1,1 @@
+004cf7b0  2682  complete; per-key tstring temporaries cannot be reproduced byte-exactly by MSVC 13.10 (frame 0x54/0x80 vs 0x60, per-block key temps at [esp+0x34]); diff-test UNSUPPORTED (0/400 valid inputs, import GetDlgItem not modelled in the emulator)

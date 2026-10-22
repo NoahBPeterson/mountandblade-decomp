@@ -1,0 +1,1 @@
+004d7300  dummy  # nothing lives here: this placeholder only exists so the equivalence resolver sees a symbol with a `// 0x…` comment for the two free functions below (chk.py cannot pair two VAs with one C++ member name, so 0x4d7370/0x4d7610 are written as free functions taking the keyboard object / panel first)

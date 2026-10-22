@@ -1,0 +1,6 @@
+005146f0 Sub3::init                     # reset the 0x6c-byte mission sub-record (four 4-lane vectors, sentinel ints)
+005147e0 MissionCtx::start_scene        # store the launch args at +0x154/+0x158/+0x15c and start the scene
+00514830 autosave_notice                # "ui_autosaving" message + save_game while g_game+0xb4 == 0
+00514890 MissionCtx::build_hero_table   # fill the battle participant table and start the mission scene
+00514c00 MissionCtx::start_battle       # store args, start the scene, count launches and open the dialog
+00514cd0 MissionCtx::start_mission      # party leader item + mission rating -> build_hero_table

@@ -1,0 +1,1 @@
+# slice s0047aa40: every function is complete; see nonmatching.txt for the three non-exact ones.

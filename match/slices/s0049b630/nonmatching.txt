@@ -1,0 +1,6 @@
+0049b630   238   168 diff  marker ?set_font_mesh@Mission@@QAEXPBUtstring@@H@Z  (size 252 vs 238)
+0049b720   255   243 diff  marker ?add_value@Mission@@QAEXHH@Z  (size 82 vs 255)
+0049b820   267   249 diff  marker ?sub_value@Mission@@QAEXHH@Z  (size 96 vs 267)
+0049b930   364   274 diff  marker ?quest_taken@Mission@@QAEXHH@Z  (size 340 vs 364)
+0049baa0   261   232 diff  marker ?add_item@Mission@@QAEXPAUmesh@rgl@@PBUtstring@@DHPBM@Z  (size 215 vs 261)
+0049bbb0   749   580 diff  marker ?spawn_battle_icon@Mission@@QAEXI@Z  (size 712 vs 749)

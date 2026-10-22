@@ -1,0 +1,3 @@
+# s004ebc10 partial: incomplete reconstructions.
+# (none: 0x4ebe7a is the compiler-emitted EH funclet of the byte-exact 0x4ebe10 append_rows,
+#  recorded in nonmatching.txt as covered by that function)

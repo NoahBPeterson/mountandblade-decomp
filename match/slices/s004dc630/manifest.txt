@@ -1,0 +1,2 @@
+slices/s004dc630/s004dc630.cpp  ?new_long_button@@YAPAUbutton@@PAUwidget@@MMMM@Z  004dcbd0  /O2 /MT /Gy /TP
+slices/s004dc630/s004dc630.cpp  ?new_medium_button@@YAPAUbutton@@PAUwidget@@MMMM@Z  004dce70  /O2 /MT /Gy /TP

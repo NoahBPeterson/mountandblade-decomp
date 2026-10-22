@@ -1,0 +1,13 @@
+# slice s004e85d0 - reconstructions that are NOT proven equivalent, so they are filed here instead of in
+# nonmatching.txt. Both compile and are complete, but equiv.py cannot establish equivalence, so byte-exact
+# matching (and 100% coverage of the original control flow) is not reached. usage: <source> <va> [flags]
+# equiv.py: 0x4e85d0 FAIL (5/5 valid inputs mismatched; ours faults at eip=0x004656e3 inside unmodelled
+#              image code where the original walks its import thunks; only 67% coverage, 6/26 orig edges).
+#           0x4e87d0 UNSUPPORTED (resolution conflict: _crt_free resolved to 00537168 but the original
+#              operand is 00535712 - the 0x535712 free model is not exported by the harness).
+# slices/s004e85d0/s004e85d0.cpp 0x4e85d0
+# slices/s004e85d0/s004e85d0.cpp 0x4e87d0
+004e85d0 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+004e8720 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+004e87d0 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+004e8980 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)

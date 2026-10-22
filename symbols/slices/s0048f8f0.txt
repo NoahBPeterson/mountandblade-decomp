@@ -1,0 +1,9 @@
+0048f8f0 Party::seed_slots      # per-stack random slot seeding
+0048f9f0 Party::add_to_stack    # add into the last matching stack
+0048fbd0 Party::tick_slots       # timed slot regeneration ticks
+0048fce0 Party::last_leader      # end of the leader chain
+0048fd60 Party::clear_with_extras # clear stacks, recurse into attached parties
+0048ff70 clear_party             # reset nstacks + clear
+0048ffa0 Party::relation         # troop-pair relation value (rel + pair*0xc0 + 0xb)
+00490030 Party::pick_near        # random point on an overlapping face
+00490160 Party::pick_near_type   # random point on a face of a given type

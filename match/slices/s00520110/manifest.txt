@@ -1,0 +1,2 @@
+slices/s00520110/s00520110.cpp  ?apply_items@TroopRec@@QAEXXZ  00520110  /O2 /MT /Gy /TP
+slices/s00520110/s00520110.cpp  ?raise_stats@TroopRec@@QAEXXZ  005204d0  /O2 /MT /Gy /TP

@@ -1,0 +1,6 @@
+slices/s004902a0/s004902a0.cpp  ?activate_all@Mgr@@QAEXXZ  004906b0  /O2 /MT /Gy /TP
+slices/s004902a0/s004902a0.cpp  ?reset_all@Mgr@@QAEXXZ  004906e0  /O2 /MT /Gy /TP
+slices/s004902a0/s004902a0.cpp  ?update_all@Mgr@@QAEXH@Z  004908c0  /O2 /MT /Gy /TP
+slices/s004902a0/s004902a0.cpp  ?clear_entities@Mgr@@QAEXXZ  00490340  /O2 /MT /Gy /TP
+slices/s004902a0/s004902a0.cpp  ?dtor_common@Mgr@@QAEXXZ  00490520  /O2 /MT /Gy /TP
+slices/s004902a0/s004902a0.cpp  ?delete_this@Mgr@@QAEPAU1@I@Z  00490930  /O2 /MT /Gy /TP

@@ -1,0 +1,1 @@
+004ed6f0 439 shape frame renderer: the frame shape (push ecx) cannot be produced by cl 13.10 from a free function or a member with these locals, and several members are stored through icall-style offsets; the grid counts, the vector<int> copy from +0xb8, render_scene(&cell_x0,1), the +1.0f advance and follow(...) are all reproduced

@@ -1,0 +1,21 @@
+004c46d0 ?load_pair_array@@YIXPAX0PAUstream_base@@@Z  # vector of 0x20-byte string pairs: count at +8, destroy/rebuild, then read b/a per element
+004c47d0 ?load_pair_array12@@YIXPAX0PAUstream_base@@@Z  # same loader for 0x12-byte pair records
+004c48d0 ?rec34_list_load@@YIXPAX0PAUstream_base@@@Z  # 0x34-byte record vector load (reader 0x4be470, finish 0x4be560)
+004c49f0 ??0head_cam@@QAE@XZ  # ctor, vtable 0x595bd8, head_rec base + frustum at +0x170, vector4 at +0x268
+004c4b70 ?write_stream@head_cam@@QAEXPAUw_stream@@@Z  # chained float writer (slot 3 = 0xc), p290/p2a0/+0x2b0/+0x2b4/+0x2b8
+004c4c00 ?read_stream@head_cam@@QAEXPAUw_stream@@@Z  # chained float reader (slot 14 = 0x38), same fields
+004c4c90 ?head_rec_delete@@YIPAXPAUhead_rec@@PAXI@Z  # deleting dtor (ret 4): head vtable 0x5947d8, name at +0x1c, optional free
+004c4cc0 ??0head_obj2@@QAE@XZ  # ctor, vtable 0x595c20, frustum at +0x2ec, +0x2dc=-1, +0x2e4=0
+004c4d10 ??1Tail2@@QAE@XZ  # dtor: drains +0x10 refcap, frees +4 pointer vector back-to-front, drops the array
+004c4d80 ?clear@list_int@@QAEXXZ  # std::list<int>::clear: walk next from head+4, free every node
+004c4dc0 ?list_int_buynode@@YIPAXPAUlist_int@@@Z  # scalar new of a 0x28-byte self-linking node (EH-framed in the original)
+004c4e2f ?list_int_buynode_funclet@@YAXPAUlist_node_int@@@Z  # EH funclet of 0x4c4dc0 (delete + rethrow)
+004c4e50 ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z  # scalar new of a node initialised through 0x4be9c0 (ret 0xc)
+004c4ebd ?list_int_make_node_funclet@@YAXPAX@Z  # EH funclet of 0x4c4e50 (delete + rethrow)
+004c4ee0 ??1world_obj@@QAE@XZ  # big object dtor: free +0x845e7bc, clear 3 words, dtor name + 15 0x28-stride strings
+004c4f40 ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z  # deleting dtor (ret 4) of a 0x60-byte element / its vector
+004c5010 ?fill_records@@YAXPAXIPBXPAUblock_copier@@@Z  # uninitialized fill of n 0x2c-byte records through 0x4c1b20, EH-guarded
+004c5074 ?fill_records_funclet@@YAXXZ  # EH funclet of 0x4c5010 (rethrow)
+5947d8 ??_7head_rec@@6B@  # head_rec / head_cam base vtable
+595bd8 ??_7head_cam@@6B@  # head_cam vtable
+595c20 ??_7head_obj2@@6B@  # head_obj2 vtable

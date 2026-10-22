@@ -1,0 +1,26 @@
+05e29d0 g_items  # ItemKind*: 0x238-byte item-kind table; +0x1d8 price, +0x21c fresh flag, +0x224 stored float
+05e29d4 g_item_count  # int: item-kind count, loop bound of sl_item_flag_all (0x48a210) / sl_item_set_all (0x48a250)
+0a75f90 g_sort_val  # float[5]: 5-float stride table indexed by the record byte at +7, read by sl_cell_coord (0x48a150)
+05e2948 g_ticks  # __int64[]: tick table, element 0 = game time in 10us; read by sl_value_factor (0x489f40)
+05aa04c g_difficulty  # int: difficulty, added to the sl_value_factor result
+05aa050 g_agent_count  # int: agent count, scales the party-value average in sl_value_factor (0x489f40)
+05aa054 g_int_5aa054  # int: factor input read by sl_value_factor (0x489f40)
+05aa058 g_int_5aa058  # int: factor input read by sl_value_factor (0x489f40)
+05aa078 g_stick_mode  # int: stick/aim mode selecting the 0.75 branch of sl_value_factor (0x489f40)
+05aa07c g_speed_base  # float (1.0f): speed base divisor in sl_value_factor (0x489f40)
+0590b94 g_r43  # float: read by sl_value_factor (0x489f40)
+0591d50 g_r44  # float: read by sl_value_factor (0x489f40)
+0591d54 g_r45  # float: read by sl_value_factor (0x489f40)
+0a70458 g_store0  # int: first out-slot of sl_query, returned by sl_party_value (0x48a290)
+0a7045c g_store1  # int: second out-slot of sl_query, cleared by sl_party_value (0x48a290)
+05e2930 g_world  # the World object; ECX owner of every World:: member here (0x489d10 ... 0x48a380)
+05e2934 g_party_recs  # char*: 0x138-byte PartyRec table, read by sl_roll_party/sl_cell_coord (equiv cannot resolve it)
+0488f80 sl_value  # int(const int*): item value of a slot pair; called by sl_take (0x489d10)
+0488d50 sl_quarter  # int(int*): ranged-integer roll of half a slot pair; called by sl_take (0x489d10)
+0435790 sl_query  # thiscall(World, kind, troop, arg): record probe; returns 0 on success (sl_party_value 0x48a290)
+048a290 World::sl_party_value  # int(int party); called by sl_party_price (0x48a320)
+0489f40 World::sl_value_factor  # float(); called by sl_update_avg (0x48a000)
+048a000 World::sl_update_avg  # void(); running party average, calls sl_value_factor then truncates
+042bc50 tstring::assign  # rgl::string operator=; thiscall, called by set_names (0x48a380) and NamedRec::setup
+042be50 tstring::clear  # rgl::string clear; thiscall, used by the tstring setters
+g_rnd  # int(): random integer roll used by sl_roll_party/sl_roll_other/sl_pick_chain (address not pinned; equiv: unresolved)

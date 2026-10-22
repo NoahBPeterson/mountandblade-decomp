@@ -1,0 +1,1 @@
+slices/s0049a0b0/s0049a0b0.cpp  ?add_party@widget_mgr@@QAEHXZ  0049a0b0  /O2 /MT /Gy /TP

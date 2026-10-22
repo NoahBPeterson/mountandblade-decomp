@@ -1,0 +1,3 @@
+slices/s00529840/s00529840.cpp  ?fn_529b70@Mission@@QAEXPAUAgent@@@Z  00529b70  /O2 /MT /Gy /TP
+slices/s00529840/s00529840.cpp  ?fn_529bc0@@YGXPAUAgent@@H@Z  00529bc0  /O2 /MT /Gy /TP
+slices/s00529840/s00529840.cpp  ?fn_529d00@Mission@@QAEXPAUAgent@@@Z  00529d00  /O2 /MT /Gy /TP

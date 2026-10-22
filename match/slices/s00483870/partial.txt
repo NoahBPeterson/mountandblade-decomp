@@ -1,0 +1,1 @@
+# slice s00483870 - no partial functions: 0x483de0 is byte-exact, 0x483870 and 0x483eb0 are complete (see nonmatching.txt).

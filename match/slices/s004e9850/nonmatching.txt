@@ -1,0 +1,13 @@
+# slice s004e9850 - five complete reconstructions that are not byte-exact (four others match exactly, see
+# manifest.txt; nothing is filed in partial.txt).
+# usage: <source> <va> [flags]
+# equiv.py: 0x4e9fe0 PASS (only the register allocation differs),
+#           0x4ea030 PASS (only a spill/`mov edx,eax` scheduling swap differs),
+#           0x4e9b50 UNSUPPORTED (only 0/400 inputs valid: fake arity / fault(read)),
+#           0x4e9c50 UNSUPPORTED (only 0/400 inputs valid: fake arity / fault(read)/fault(fetch)),
+#           0x4e9d10 UNSUPPORTED (harness cannot model the vtable-call chain: fault(fetch)/fault(read)).
+# slices/s004e9850/s004e9850.cpp 0x4e9b50
+# slices/s004e9850/s004e9850.cpp 0x4e9c50
+# slices/s004e9850/s004e9850.cpp 0x4e9d10
+# slices/s004e9850/s004e9850.cpp 0x4e9fe0
+# slices/s004e9850/s004e9850.cpp 0x4ea030

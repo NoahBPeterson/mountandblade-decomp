@@ -1,0 +1,8 @@
+slices/s0048b760/s0048b760.cpp  ?show@UiC@@QAEXHHHH@Z  0048b7f0  /O2 /MT /Gy /TP
+slices/s0048b760/s0048b760.cpp  ?type@UiC@@QAEHXZ  0048b880  /O2 /MT /Gy /TP
+slices/s0048b760/s0048b760.cpp  ??0UiD@@QAE@XZ  0048b890  /O2 /MT /Gy /TP
+slices/s0048b760/s0048b760.cpp  ?show@UiD@@QAEXHHHH@Z  0048b8d0  /O2 /MT /Gy /TP
+slices/s0048b760/s0048b760.cpp  ?value@UiD@@QAEMXZ  0048b930  /O2 /MT /Gy /TP
+slices/s0048b760/s0048b760.cpp  ?set_value@UiD@@QAEXM@Z  0048baa0  /O2 /MT /Gy /TP
+slices/s0048b760/s0048b760.cpp  ??0UiE@@QAE@XZ  0048bb10  /O2 /MT /Gy /TP
+slices/s0048b760/s0048b760.cpp  ?add_skill@StatPanel@@QAEXHH@Z  0048c090  /O2 /MT /Gy /TP

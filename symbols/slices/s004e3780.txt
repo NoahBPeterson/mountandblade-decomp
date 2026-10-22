@@ -1,0 +1,8 @@
+004e3780 MeetingWindow::init  # builds the character-sheet window: meeting_window quad + ui_done/ui_export_character/ui_import_character buttons, 0x597050 panel, 10 label rows fed by game->435790(0xe, i, 0)
+004e3aa0 MeetingWindow::init2  # builds the loading window: load_window quad, timer-picked ini_pic_mb_warrior_{6,7,8} mesh, warrider_logo, progress bar, done button
+004e3d50 new_progress_bar  # allocates the 0x198-byte 0x597f20 progress bar, sets bounds, scales the cloned progressbar mesh, clones progressbar_handle
+004e3eb0 progress_bar::progress_bar  # 0x597f20 ctor: rect=(1,1,1,0), sub/handle=0, scale=0.01, dirty=1
+004e3f20 draw_label  # marks the panel dirty, refreshes it, draws one text line via 0x488720 (ret 0x10)
+004e3f60 progress_bar::set_ratio  # clamps to [0.01,1], stores the scale, marks dirty
+004e3fb0 progress_bar::update  # notifies the old sub, then (re)clones handle and scales the rect component indexed by f170
+004e4060 pb_rows::push  # appends a 0x50-byte row at end; in place while capacity remains (0x4d49c0), else grows (0x4db960)

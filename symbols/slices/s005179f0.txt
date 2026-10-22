@@ -1,0 +1,19 @@
+# slice s005179f0 (batch ds1) - symbols resolved by this slice
+#
+005e2930 g_game                     # game/mission data block; `this` of both methods (Pool +0xcc, PartyMgr +0xf8)
+005e2948 g_ticks                    # 64-bit frame clock pairs (TickPair{lo,hi} / __int64), indexed by +0x13b18
+00a70458 g_result                   # event-query result, set to 1 before sl_query 0x19
+00a7045c g_store1                   # event-query second result, cleared before sl_query 0x19
+00435790 GameData::sl_query          # thiscall, 3 int args, ret 0xc (event 0x19 / 0xc / 0xd queries)
+005181c0 GameData::f5181c0           # thiscall, 1 bool arg, ret 4; the dusk/night fire trigger
+0048ad00 PartyMgr::index_of          # id -> party page index (signed sar 4, and 0xf)
+00460d20 PartyMgr::first_party_id     # first live party id
+00460ca0 PartyMgr::next_party_id      # void(unsigned* id); advances the id cursor in place
+004b25c0 Party::sight_radius          # thiscall, returns float
+004b1fa0 Party::strength              # thiscall, returns float
+004b2c00 Party::tick                  # thiscall, per-frame party update
+004b1800 SceneEnt::set_fade           # thiscall, const float* (0.0 / 1.0 fade target) on Party+0x59c0
+00517960 Pool::next                   # thiscall, int* cursor over the 0x98-byte settlement records
+005179b0 Pool::first                  # returns first used settlement slot (inlined here)
+00536a9f lib_crt::rand                # CRT rand (stdlib.h), rand() % 0x3dc9
+00535a64 lib_crt::_ftol2              # x87 st0 -> int, emitted by (int)(float) for the hour

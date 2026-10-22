@@ -1,0 +1,2 @@
+# s004eeb10 partial: anything not byte-exact and not proven behaviourally equivalent.
+004eeb10 1836 incomplete: CharSheet::update per-frame body reordered into readable form; panel/scroll/row loops present, but codegen and CSE differ and equiv.py cannot prove equivalence (UNSUPPORTED)

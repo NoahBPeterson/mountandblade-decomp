@@ -1,0 +1,13 @@
+0052da20 ?pick_vert@Mesh@@QAEIABUvector4@rgl@@0@Z  # this slice: nearest vertex to the ray within the pick radius (equivalent, 8-byte arg-setup rotation)
+0052dae0 ?vert_ray@Mesh@@QAEXABUvector4@rgl@@0AAIPAM2@Z  # this slice: ray vs vertex -> (distance, |hit-p|); equivalent at --ulp 1
+0052dae0 ?vert_ray@MeshImpl@@QAEXABUvector4@rgl@@0AAIPAM2@Z  # opaque view the pickers call, so cl cannot summarise/hoist the callee body; same body as Mesh::vert_ray
+0052dc00 ?pick_edge@Mesh@@QAEIABUvector4@rgl@@0@Z  # this slice: nearest edge (equivalent)
+0052dcc0 ?edge_ray@Mesh@@QAEXABUvector4@rgl@@0AAIPAM2@Z  # this slice: ray vs edge (reconstruction is NOT verified against the original)
+0052dcc0 ?edge_ray@MeshImpl@@QAEXABUvector4@rgl@@0AAIPAM2@Z  # opaque view used by pick_edge
+0052df40 ?pick_poly@Mesh@@QAEIABUvector4@rgl@@0@Z  # this slice: nearest polygon (equiv PASS)
+0052dfd0 ?poly_ray@Mesh@@QAEXABUvector4@rgl@@0AAIPAM@Z  # this slice: ray vs polygon (defined in s0052dfd0, called through the opaque view here)
+0052dfd0 ?poly_ray@MeshImpl@@QAEXABUvector4@rgl@@0AAIPAM@Z  # opaque view used by pick_poly
+00432830 ?sub@rgl@@YAXAAUvector4@1@ABU21@1@Z  # rgl::sub(out, a, b): out = a - b, xyz only
+0041f4b0 ?clear@?$vec@Umface@@@@QAEXXZ  # vec<mface>::clear (ICF-folded with every other element type)
+0041f4b0 ?clear@?$vec@Uvector4@rgl@@@@QAEXXZ  # same folded body
+00477c10 ?push_back@?$vec@Umface@@@@QAEXABUmface@@@Z  # vec<mface>::push_back

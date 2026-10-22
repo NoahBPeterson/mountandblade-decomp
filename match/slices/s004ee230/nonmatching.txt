@@ -1,0 +1,4 @@
+004ee230 1341 quest log build-up: /Gh frame (and esp,-8; sub esp,0x248; this in esi; xor ebx,ebx zero register) not reproducible from ordinary source, and the `mov ecx,eax / call ctor` new-form and add eax,<imm> vtable slot encodings are not emitted by cl 13.10; every store/constant/tab/row/list path present
+004ee840 155 refresh: g_game is reloaded twice (ebx reloaded after count++ and once in the loop body) and the two-mode flag test is merged into one two-branch chain; both are a scheduling choice cl 13.10 does not make, the kept/rejected sets are identical
+004ee910 268 make_scrollbar: frame 0x20 vs larger (the original shares the vector4 colour slot with the size vector); the +0x80 add_item calls go through ff 90 ff 90 instead of add eax,0x80 / call [eax]
+004eea90 118 make_quest_list: `mov ecx,eax / call ctor` new-form and the `mov ebx,eax / jmp` join not emitted by cl 13.10; all field writes, the d gate and the 0x490 store are reproduced

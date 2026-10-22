@@ -1,0 +1,5 @@
+slices/s00531380/s00531380.cpp  ?remove_prop@Mission@@QAEXH@Z  005313c0  /O2 /MT /Gy /TP
+slices/s00531380/s00531380.cpp  ?erase@PropVec@@QAE?AViterator@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@V234@@Z  00531470  /O2 /MT /Gy /TP
+slices/s00531380/s00531380.cpp  ?select@Menu@@QAEXH@Z  00531590  /O2 /MT /Gy /TP
+slices/s00531380/s00531380.cpp  ?setup_entry@MissionUi@@QAEXPAUMenuEntry@@@Z  00531600  /O2 /MT /Gy /TP
+slices/s00531380/s00531380.cpp  ?update@Menu@@QAEXH@Z  00531780  /O2 /MT /Gy /TP

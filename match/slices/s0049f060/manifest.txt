@@ -1,0 +1,2 @@
+slices/s0049f060/s0049f060.cpp  ?enter_trigger@Mission@@QAEXHH@Z  0049f980  /O2 /MT /Gy /TP
+slices/s0049f060/s0049f060.cpp  ?exec_trigger@Mission@@QAEXH@Z  0049f9e0  /O2 /MT /Gy /TP

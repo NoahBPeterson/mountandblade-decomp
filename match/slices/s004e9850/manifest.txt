@@ -1,0 +1,5 @@
+# slice s004e9850
+slices/s004e9850/s004e9850.cpp  ?write@GameRecord@@QAEXPAUOutStream@@@Z  0x4e9850  /O2 /MT /Gy /TP
+slices/s004e9850/s004e9850.cpp  ?write@cPairs96@@QAEXPAUOutStream@@@Z  0x4e99a0  /O2 /MT /Gy /TP
+slices/s004e9850/s004e9850.cpp  ?write_table@Table@@QAEXPAUOutStream@@@Z  0x4e99d0  /O2 /MT /Gy /TP
+slices/s004e9850/s004e9850.cpp  ?write@Entry@@QAEXPAUOutStream@@@Z  0x4e9ab0  /O2 /MT /Gy /TP

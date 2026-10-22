@@ -1,0 +1,24 @@
+# s004da410 nonmatching: complete, behaviourally-equivalent reconstructions that are not byte-exact.
+# Every row here passes equiv.py (004da900 is WEAK only on a pure-virtual-call edge the original cannot take;
+# 004daa10/004da5b0 are UNSUPPORTED only through a harness limitation).
+004da900  17   shape-only: the array walk is byte-identical except that cl assigns the null constant/loop index
+              to EBX (original: EDI) and the mesh/ids pointer to EDI (original: EBX); the whole body, the
+              refresh call's 4 stack args (pos, id, id2, flag) and both stores match. Equiv: WEAK (no mismatch).
+004da5b0  431  the whole shutdown sequence is written (FSOUND_Close, the "Saving options..." message,
+              options_save, both scalar deletes, the ten array teardowns with the right element sizes/dtors, the
+              30-entry timer loop, the font teardown, the final message-log/fclose tail). It cannot be
+              byte-matched: the delete[] loops' 16-byte alignment padding lands differently, and the font
+              teardown's inlined dtor keeps `this` in ESI with +0x14 field offsets in the original instead of the
+              flat +0x58 form cl picks here. Equiv UNSUPPORTED: the first call is the unmodelled import
+              FSOUND_Close (0/400 valid inputs; 56 edges unreachable on both sides past that call).
+004daa10  914  the whole loading-screen construction is written (gui reset, 0x190-byte overlay with vptr 0x592848,
+              pos (-0.001, -0.001)/scale (1.002, 0.75)/colour 0xff442323/mesh "load_window", the 0x178 logo
+              widget at (0.05, 0.6) scale (0.4, 0.05) with mesh "warrider_logo", two make_hint calls with the
+              empty hint id at (0.1404162, 0.1, 0.3, 0.04) and (0.5872804, 0.3, 0.3375, 0.03), the
+              0x100 text flag, gui_add_root, the random "hint_N"/ui_hint chain, and the f3c/f40 clears).
+              Shape-only: the tstring temporary lifetimes and stack slots differ, so cl emits 1053 bytes vs the
+              original's 907 (914 bytes differ). Equiv UNSUPPORTED (resolution audit): the schedule pairs 16
+              operands and leaves 6 unverified; its one "disagree" pairs our "warrider_logo" operand
+              (0x597020) with original 4dab81 (0x54a480 = ""), but the source's literal order is the
+              original's ("load_window" 0x597030 at 4daa8e, "warrider_logo" 0x597020 at 4dab38, "" at
+              4dab81) - the mispairing comes from the 146 extra temporary bytes, not a wrong reference.

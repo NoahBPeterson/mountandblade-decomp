@@ -1,0 +1,42 @@
+0x47f650 ?collect@EChar@@QAEXPAPAUlod_mesh@rgl@@00PBMHHHHMM@Z  # EChar::collect (nonmatching): per-set/item character mesh assembly, blend, mirror build, colour pass
+0x47fb10 ?collect@Animator@@QAEXDPAPAUlod_mesh@rgl@@00@Z  # Animator::collect (nonmatching): bone weight fix-up, variant/MatRec::vals lookup, tail call to EChar::collect
+0x47fbd0 ?load_scene@GameState@@QAEXH@Z  # GameState::load_scene (MATCH)
+0x47fce0 ?build_hw@ShadowMap@@QAEXXZ  # ShadowMap::build_hw (MATCH)
+0x47fdd0 ?build_sw@ShadowMap@@QAEXXZ  # ShadowMap::build_sw (nonmatching)
+0x47fef0 ?render@ShadowMap@@QAEXXZ  # ShadowMap::render (MATCH)
+0x47c1d0 build_mirror  # mirror/seam builder; epilogue `ret 0x10` with `this` in ecx, so EChar declares it as a member with 4 stack args
+0x47c6b0 EChar::blend  # weighted skin blend used by collect
+0x47ddf0 EChar::blend_all  # blend into every list of a lod_mesh
+0x47a370 lod_mesh::clone  # alloc 0x41c2a0, name copy, list resize/copy
+0x54ae48 ??_7bin_reader@@6B@  # bin_reader vtable stored last by the ctor (0x54a740 first, 0x54ad68 dtor trampoline)
+0x54a740 bin_reader base vtable  # first store in the ctor
+0x54ad68 bin_reader deleting-dtor trampoline  # stored by the dtor
+0x415290 bin_reader::open_read  # open the file named by module_path
+0x479000 SceneObjRec::load  # scene-object loader
+0x463950 GameState::scene_path  # scene objects/scene_<idx>.sco path
+0x4639d0 GameState::module_path  # resolve a path under the active module
+0x452c00 MsgLog::add  # message log append (tstring by value, color in the second stack slot)
+0x463790 MatRec::eval  # colour-ramp sampler
+0x418a70 res_mgr::get_material  # resource-manager material lookup
+0x4175f0 res_mgr::get_render_target  # render-target creation
+0x417500 res_mgr::get_texture  # texture creation
+0x418e90 res_mgr::get_shadow_skin  # shadow skin/material creation
+0x41b7d0 res_mgr::resolve_shader  # shader resolution
+0x41c400 res_mgr::release  # release a resource
+0x463e10 ShadowMap::create_target
+0x463e90 ShadowMap::setup
+0x464070 ShadowMap::bind_target
+0x4640d0 ShadowMap::sync_readback
+0x421110 World::attach  # light-camera attach
+0x429890 World::render_scene  # render the shadow view
+0x47e520 SceneReg::select
+0x47b360 mesh::compute_normals
+0x8ed4f60 g_anim  # the single Animator instance (set/item/cur/variant/material/chars/weights/scale/time)
+0x5fe898 g_scene_reg  # scene registry used by both shadow paths
+0x5d7080 g_msglog
+0x5aa034 g_x5aa034  # shadow-map enable count
+0x5aa084 g_water_mode
+0x5e28fc g_dinput_enabled
+0xa17f24 g_use_hw_shadow
+0x590cec f255  # 255.0f
+0x535a64 ftol  # float -> int helper used for the alpha byte

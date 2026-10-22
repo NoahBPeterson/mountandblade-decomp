@@ -1,0 +1,3 @@
+0040a540 ??1shape@rgl@@UAE@XZ  # rgl::shape complete dtor (vptr store only; ICF-folded with the deleting dtor)
+0040a540 ??_Gshape@rgl@@UAEPAXI@Z  # rgl::shape scalar deleting dtor
+0054a4b8 ??_7shape@rgl@@6B@  # rgl::shape vtable (shape_base)

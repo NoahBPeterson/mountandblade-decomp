@@ -1,0 +1,7 @@
+0x8ed4f60 ?g_anim@@3UAnimator@@A   # global Animator (cur at +0x8); f350/f354 read +0x00/+0x04, f358/f35c read +0x0c/+0x14
+0x8ed4f88 ?g_char_count@@3HA       # character count, out param of gen_face_seed
+0x8ed4f8c ?g_dummy_mat@@3MA       # scratch float array, one animated value per deform key
+0x8ed5088 ?g_dummy0@@3MA          # scratch float passed to the age slider
+0x8ed508c ?g_dummy1@@3MA          # scratch float passed to the hair-colour slider
+0x49b120 ?set_window@gui_mgr@@QAEXPAPAUwidget@@@Z   # gui manager window setter (root at 0x5d7080)
+0x4f49d0 ?init@FaceGen@@QAEXXZ    # face generator window construction; 4936 bytes

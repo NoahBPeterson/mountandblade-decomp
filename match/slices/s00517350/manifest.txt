@@ -1,0 +1,4 @@
+slices/s00517350/s00517350.cpp  ?sun_color@Game@@QAEPAUvector4@rgl@@PAU23@@Z  005176e0  /O2 /MT /Gy /TP
+slices/s00517350/s00517350.cpp  ?fog_color@Game@@QAEPAUvector4@rgl@@PAU23@@Z  00517820  /O2 /MT /Gy /TP
+slices/s00517350/s00517350.cpp  ?set_grid_color@Game@@QAEXPAI@Z  005178d0  /O2 /MT /Gy /TP
+slices/s00517350/s00517350.cpp  ?first@Pool@@QAEHXZ  005179b0  /O2 /MT /Gy /TP

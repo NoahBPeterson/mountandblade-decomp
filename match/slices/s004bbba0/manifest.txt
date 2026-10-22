@@ -1,0 +1,11 @@
+slices/s004bbba0/s004bbba0.cpp  ?set@Config@@QAEXAAUtstring@@0@Z  004bbba0  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ?load_file@Config@@QAEXPAU_iobuf@@@Z  004bbf70  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ?init_defaults@Config@@QAEXXZ  004bc020  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ?set_triple_buffering@Config@@QAEXH@Z  004bc090  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ?set_texture_quality@Config@@QAEXH@Z  004bc100  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ??0Cursor@@QAE@XZ  004bc170  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ?read@Cursor@@QAEXPAUSettings@@@Z  004bc1f0  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ??0DisplayState@@QAE@XZ  004bc2d0  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ?apply_input_settings@@YIXPAUInputSet@@@Z  004bc350  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ?release_input_devices@@YIXPAUInputSet@@@Z  004bc3d0  /O2 /MT /Gy /TP
+slices/s004bbba0/s004bbba0.cpp  ?init_devices@InputSet@@QAEHPAUHWND__@@@Z  004bc430  /O2 /MT /Gy /TP

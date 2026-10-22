@@ -1,0 +1,1 @@
+004b80d0  agent::tick  # ?tick@Agent@@QAEXM@Z -- the mission agent's per-tick update: periodic re-planning (0x4b4a00), steering, scene probe (0x48ea80/0x48ef20), model matrix/colour refresh, and the two action entities at +0x59ec/+0x59f0

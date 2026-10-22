@@ -1,0 +1,4 @@
+005181b8  8  int3 padding before f5181c0 (slice s005179f0's f517e70 ends 0x5181b8)
+0051867b  5  int3 padding between f5181c0 (ends 0x51867b) and f518680 (starts 0x518680)
+0051893f  1  int3 padding between f518680 (ends 0x51893f) and f518940 (starts 0x518940)
+00518987  9  int3 padding between f518940 (ends 0x518987) and f518990 (starts 0x518990)

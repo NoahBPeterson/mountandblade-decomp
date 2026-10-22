@@ -1,0 +1,1 @@
+slices/s00479160/s00479160.cpp  ?erase@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QAE?AViterator@12@V312@0@Z  00479930  /O2 /MT /Gy /TP

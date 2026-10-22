@@ -1,0 +1,2 @@
+004f1390 MsgLog::flush   # pops every pending message of the log ring (0x4f13f0) and hands it to MsgLog::add (0x452c00)
+004f13f0 MsgLog::Ring::pop  # oldest entry of the 32-slot log ring: copies names[head] into `out`, yields indices[head], advances head mod 32, decrements count; empty ring -> assign("No messages"), index -1

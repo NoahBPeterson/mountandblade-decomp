@@ -1,0 +1,2 @@
+slices/s004f1390/s004f1390.cpp  ?flush@MsgLog@@QAEXXZ  004f1390  /O2 /MT /Gy /TP
+slices/s004f1390/s004f1390.cpp  ?pop@Ring@MsgLog@@QAEXAAUtstring@@AAH@Z  004f13f0  /O2 /MT /Gy /TP

@@ -1,0 +1,3 @@
+# Slice s004f1460 -- face-generator window initialiser (0x4f1460) and terrain name table (0x4f2610).
+004f1460  3868  complete source, not byte-exact (window base ctor from another slice, cl 13.10 register/loop shape); difftest UNSUPPORTED: resolution audit disagrees because the widget ctor/dtor inlining gates put non-equivalent call operands in (no import models for the D3D/window vtables)
+004f2610  0  complete source, not byte-exact (switch over 0..12 sharing the sprintf tail); equiv.py PASS (400 inputs, all edges)

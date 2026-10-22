@@ -1,0 +1,1 @@
+slices/s0051f800/s0051f800.cpp  ?reset_items@TroopRec@@QAEXH@Z  0051ff90  /O2 /MT /Gy /TP

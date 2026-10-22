@@ -1,0 +1,4 @@
+slices/s0049deb0/s0049deb0.cpp  ?type@Camera@@QAEHXZ  0049df30  /O2 /MT /Gy /TP
+slices/s0049deb0/s0049deb0.cpp  ?mask@Camera@@QAEIH@Z  0049df40  /O2 /MT /Gy /TP
+slices/s0049deb0/s0049deb0.cpp  ?move@Camera@@QAEXPAUshape_ref@@@Z  0049df60  /O2 /MT /Gy /TP
+slices/s0049deb0/s0049deb0.cpp  ?destroy@Camera@@QAEPAXI@Z  0049e580  /O2 /MT /Gy /TP

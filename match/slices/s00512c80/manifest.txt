@@ -1,0 +1,2 @@
+slices/s00512c80/s00512c80.cpp  ?set_slot_value@InventoryPanel@@QAEXHHH@Z  005132e0  /O2 /MT /Gy /TP
+slices/s00512c80/s00512c80.cpp  ?or_slot_flag@InventoryPanel@@QAEXHH@Z  00513320  /O2 /MT /Gy /TP

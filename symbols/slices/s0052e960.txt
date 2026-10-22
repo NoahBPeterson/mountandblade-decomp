@@ -1,0 +1,13 @@
+0041f4b0 ?clear@?$vec@Umface@@@@QAEXXZ  # vec<mface>::clear (ICF-folded with the other element types)
+0041f4b0 ?clear@?$vec@Umedge@@@@QAEXXZ  # vec<medge>::clear (same folded body)
+0041f4b0 ?clear@?$vec@Umpoly@@@@QAEXXZ  # vec<mpoly>::clear (same folded body)
+00477c10 ?push_back@?$vec@Umface@@@@QAEXABUmface@@@Z  # vec<mface>::push_back
+00477d20 ?push_back@?$vec@Umpoly@@@@QAEXABUmpoly@@@Z  # vec<mpoly>::push_back
+00477e10 ?push_back@?$vec@Umedge@@@@QAEXABUmedge@@@Z  # vec<medge>::push_back
+00407d60 ?normalize@vector4@rgl@@QAEMXZ  # rgl::vector4::normalize (out-of-line, matches the original)
+00407f70 ?transform_point_to_local@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z  # matrix::transform_point_to_local (ret 8)
+00470920 rebuild_mesh  # Mesh::rebuild: rebuild the derived vertex/edge/polygon data after edits
+0052e960 ?make_copy@Mesh@@QAEXABUmatrix@rgl@@@Z  # this slice: duplicate flagged polygons through the basis (not byte-exact)
+0052ebc0 ?vertex_index@Mesh@@QAEHHABUmatrix@rgl@@@Z  # this slice: find-or-create the copy of a vertex (equivalent, one dead edge)
+0052eca0 ?edge_index@Mesh@@QAEHHABUmatrix@rgl@@@Z  # this slice: find-or-create the copy of an edge (equivalent, one dead edge)
+0052edb0 ?apply_copy@Mesh@@QAEXABUmatrix@rgl@@@Z  # this slice: flatten the copy buffers back into the mesh (not byte-exact)

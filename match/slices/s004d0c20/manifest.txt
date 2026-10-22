@@ -1,0 +1,4 @@
+slices/s004d0c20/s004d0c20.cpp  ?construct@flora_alloc@@QAEXPAUflora_kind@@ABU2@@Z  4d1140
+slices/s004d0c20/s004d0c20.cpp  ?construct@ground_alloc@@QAEXPAUground_spec@@ABU2@@Z  4d1160
+slices/s004d0c20/s004d0c20.cpp  ?construct@mission_alloc@@QAEXPAUmission_type@@ABU2@@Z  4d1180
+# Byte-exact: 4d1140/4d1160/4d1180 only; the others are not yet (see nonmatching.txt; 4d10f0 also in partial.txt). Flags /O2 /MT /Gy /TP.

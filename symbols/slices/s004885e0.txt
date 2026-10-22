@@ -1,0 +1,5 @@
+05e2948 g_time  # __int64[]: clock table (1e-5 s ticks); read by Effect::update (0x488720)
+040cd00 helper40cd00  # __cdecl(void* out): builds a 0x40-byte transform block; called by Effect::update
+0413750 helper413750  # __thiscall(Track* t, const void* a): per-track advance step, fires the track's virtual +0x04; called by Effect::update
+0048c0c0 Effect  # the class named in slice s0048c0c0; every method here is a member of it (ECX = the effect object)
+00487c40 Effect_track  # slice s00487c40 first named the effect/track object whose layout these setters share

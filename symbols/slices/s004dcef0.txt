@@ -1,0 +1,9 @@
+# slice s004dcef0 symbols (provisional)
+0x4dcef0  MainMenu::create   (main menu ctor: root UiContainer 0x190, seven rows 0x4dd830, two 0x178 widgets
+                              (warrider_logo/pic_mercenary), version row 0x4dcc50, scan_saves into +0x90/+0xb8,
+                              block init 0x4dd920, g_gui.push_back(win) 0x49b120, g_reload 0x5d8788 = 1)
+0x4dd6e0  scan_saves         (int* count, int* first, int* ids, const tstring* prefix): 9x save_path + sprintf
+                              0x597294 "%s%s\\sg%d%d.sav" + fopen "r" 0x54a8fc
+0x4dd7b0  save_path          (char* out, const tstring* prefix): SHGetFolderPathA(CSIDL_PERSONAL) 0x5492c0,
+                              sprintf 0x5972c0 "%s\\Mount&Blade Savegames", CreateDirectoryA 0x5491a8,
+                              sprintf 0x5972a4 "%s\\Mount&Blade Savegames\\%s"

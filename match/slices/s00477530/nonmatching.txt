@@ -1,0 +1,4 @@
+004779b0  6  complete: only the epilogue `pop edi` sits between the two dirty-flag stores in the original (ours restores it before both); equiv PASS.
+00477a30  32  complete: same instructions, scheduler/register-order differences (early `push edi`, tick load hoisted before the state store in some Timed blocks); equiv PASS.
+00477ca0  26  complete: vector<E100>::resize(n), same instructions; prologue order differs (-100000 loaded before vs after the zero stores, zero register ecx vs eax); equiv PASS.
+00477db0  32  complete: vector<E52>::resize(n), same instructions; prologue/scheduler order differs (constant load, push edi, zero register); equiv PASS.

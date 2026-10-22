@@ -1,0 +1,1 @@
+slices/s004934d0/s004934d0.cpp  ?thunk_4936a0@BigMgr@@QAEXXZ  004936a0  /O2 /MT /Gy /TP

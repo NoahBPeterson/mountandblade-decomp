@@ -1,0 +1,2 @@
+004fd700 ?layout@Font@@QAEPAUMapText@@PAXPBX11PAUmesh@rgl@@11111HH11111@Z  # map-spot table renderer called by MWidget::text_rect
+005995c0 ??_7MWidget@@6B@  # MWidget vtable (mapped from the vptr store in ~MWidget 0x4fd3d0)

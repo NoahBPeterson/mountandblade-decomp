@@ -1,0 +1,5 @@
+0x4e6a70  2478  Complete (all paths: per-record colour/width from mesh+0x78 and the record flag, normal frame,
+  8 corner points, 6 add_point/add_vertex calls, 4 add_face, dirty flags at owner+0x138/0x164). Not
+  byte-exact: the original inlines rgl::normalize (fxch reorder) and the offset construction. equiv.py
+  UNSUPPORTED: the original reads ecx at entry (its frame state), which our cdecl declaration does not pass;
+  same callee signatures (by-value vec2/vector4 args of add_vertex) are not byte-verified either.

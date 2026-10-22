@@ -1,0 +1,25 @@
+0x4bbba0 ?set@Config@@QAEXAAUtstring@@0@Z  # applies one "name = value" line (thiscall, ret 8)
+0x4bbf70 ?load_file@Config@@QAEXPAU_iobuf@@@Z  # reads lines from config.ini and applies them
+0x4bc020 ?init_defaults@Config@@QAEXXZ  # fills the built-in configuration defaults
+0x4bc090 ?set_triple_buffering@Config@@QAEXH@Z  # triple-buffering choice -> render buffer size
+0x4bc100 ?set_texture_quality@Config@@QAEXH@Z  # texture-quality choice -> anisotropic level
+0x4bc170 ??0Cursor@@QAE@XZ  # software cursor constructor
+0x4bc1f0 ?read@Cursor@@QAEXPAUSettings@@@Z  # reads cursor floats from the settings object
+0x4bc2d0 ??0DisplayState@@QAE@XZ  # clears input state and rebuilds both view matrices
+0x4bc350 ?apply_input_settings@@YIXPAUInputSet@@@Z  # pushes exclusive/background input flags to the devices
+0x4bc3d0 ?release_input_devices@@YIXPAUInputSet@@@Z  # releases and clears the DirectInput devices
+0x4bc430 ?init_devices@InputSet@@QAEHPAUHWND__@@@Z  # creates and acquires the keyboard and buffered mouse
+0x4bba90 ?split_line@Config@@QAEXPBDAAUtstring@@1@Z  # splits a config line at " = "
+0x4bbb70 ?value_as_int@Config@@QAEHABUtstring@@@Z  # parses the right-hand value (1 when empty)
+0x42bbd0 ??0tstring@@QAE@XZ  # tstring default constructor
+0x42bbe0 ??0tstring@@QAE@PBD@Z  # tstring(const char*) constructor
+0x42bc40 ??1tstring@@QAE@XZ  # tstring destructor
+0x42bd10 ?equals@tstring@@QAEDPBD@Z  # case-insensitive comparison against a literal
+0x42be50 ?clear@tstring@@QAEXXZ  # clears the string
+0x42c020 ?to_lower@tstring@@QAEXXZ  # lowers the string in place
+0x42f190 ?get_float@Settings@@QAEHPBDQAN@Z  # looks up a named float ("radius", "pos_x", ...)
+0x40cd00 make_matrix  # fills a 4x4 matrix and returns the out pointer
+0x53734d _atoi  # atoi (jmp _atol 0x5372c5)
+0x535440 DirectInput8Create  # imported function thunk
+0x5491b0 GetModuleHandleA  # IAT slot used as the DirectInput8Create instance handle
+0x5e28fc ?g_dinput_enabled@@3HA  # nonzero keeps DirectInput initialised between screens

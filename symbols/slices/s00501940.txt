@@ -1,0 +1,6 @@
+00501940 PartyWindow::money_label  # sprintf("%s %s", ui_money_value string, troop+0x3b4 money formatted) into a 0x200 stack buffer, then set_text on lists[arg]
+00501a20 PartyWindow::make_inventory_menu  # builds the equipment panel for slot idx: five inv_* config floats (0x4bd5a0 find + 0x599ae8/0x599cc4/0x599cc8 layout), UiPanel 0x4931a0 + 0x4e4c70 open, outfit/arms/horse/food labels via 0x43a1e0+sprintf, ten slot widgets at troop+0x4a4+i*8
+005021b0 PartyWindow::mouse_event  # mask 0x10 -> on_input(0x10000) and return 1, else forward to the widget mouse handler (0x42cf50) and OR the result
+005021f0 UiFrame::~UiFrame  # vptr 0x5924a0, free the vector at +0x178 (0x41f4b0), base dtor 0x487c00, scalar deleting dtor (ret 4)
+00502230 make_inventory_menu  # the inventory slot: 0x178-byte UiText2 (0x48ae20) with vptr 0x599d28, set_scale(0.088,0.088) via slot +0x64, add_image(0, clone of "inv_i_slot") via slot +0xc4
+005022c0 PartyWindow::refresh_event  # mask 0x10 -> on_input(0x10000), then on_input(mask) and refresh (+0x90)

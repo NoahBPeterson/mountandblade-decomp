@@ -1,0 +1,3 @@
+slices/s004b24b0/s004b24b0.cpp  ?set_order@Party@@QAEXPAH@Z  004b2970  /O2 /MT /Gy /TP /EHsc
+slices/s004b24b0/s004b24b0.cpp  ?throw_stub@@YAXXZ  004b2514  /O2 /MT /Gy /TP
+slices/s004b24b0/s004b24b0.cpp  ?throw_stub2@@YAXXZ  004b26d6  /O2 /MT /Gy /TP

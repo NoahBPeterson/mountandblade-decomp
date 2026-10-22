@@ -1,0 +1,24 @@
+# s004ece20 nonmatching: complete reconstructions, not byte-exact.
+#
+# 0x4ece20 Screen::camera_update - complete body in the original order: pan by dt*10*(+0x2bc/+0x2c0/+0x2c4);
+#          the tactical-view gate on 0xa17148/0xa1717c/0x5a9fbc (yaw and yaw rate pinned to 0, zoom limit
+#          105 -> 235); the zoom integration with its 1e-05 dead band and 3.5/limit clamps plus
+#          camera_mark_entities (0x4ecce0); the four (1 - dt*9.8, floored at 0) rate decays; the +/-50
+#          map clamp; the pitch 0.014*zoom + 0.23 clamped to 0.1 / pi/2; the g_game+0x88 party follow
+#          (PartyMgr::is_slot 0x4903e0 gate, PartyMgr::index_of 0x48ad00 lookup, party +0x30 lifted by 1,
+#          0.05*zoom radius on sqrt(dz^2+dy^2+dx^2), +/-10 delta clamp, 4*dt easing); the velocity
+#          integration and (1 - 2*dt) decay; the 0x40-byte frame held in one stack slot (identity 0x40cd00,
+#          +90deg rotate_fu 0x40e570, -yaw rotate_su 0x40e670, -pitch rotate_fu 0x40e570, each angle written
+#          to the same caller slot); eye = frame.o after o = 0, o += zoom*f, then hx/hy/hz = o - 0.5*u passed
+#          to World::scene_query (0x470f40) with frame.o.z >= map.x + 0.5 clamp; the fog parameter chain on
+#          g_game+0x13b40 (reloaded before each 0.9/0.94/0.98 compare) and +0x13b3c (1.7/1.6/1.5) divided by
+#          zoom+10; pack_color 0x40e440 on g_game+0x58 and Envelope::set_fade 0x4624c0 on g_scene; the frame
+#          copy into this+0x238 with Frustum::build_planes 0x41e4f0 on this+0x170; the negated frame.f row
+#          into scene+0x30c (with its stale w) and the eye into scene+0x31c; the 0x120-byte label matrix copy
+#          to widget+0x1ac; the one-shot listener block copy and 0x5342dc(up 0x5aa168, zero, vel 0x5aa148..).
+#          Residue (1935 vs 2058 bytes): x87 scheduling / CSE choices, not structure. The original keeps
+#          dt*10 live in a register to feed both f2bc and f2c0 in one fused chain and CSEs the (1 - dt*9.8)
+#          factor across the four decays (one 9.8 multiply, clamp sequence replayed per store); this build
+#          recomputes each factor and splits the pan chain. The float operand order on a few commutative
+#          adds / the sqrt accumulation also come out reversed by this compiler.
+# slices/s004ece20/s004ece20.cpp  ?camera_update@Screen@@QAEXM@Z  004ece20

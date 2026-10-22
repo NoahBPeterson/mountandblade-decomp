@@ -1,0 +1,5 @@
+004cdfd0 627 ObjectList::read - heap block/list build order and the stream-vtable call sequence differ; equiv UNSUPPORTED (resolution audit: ??2@YAPAXI@Z resolved 0053545e vs original operand 00535482).
+004ce360 638 MissionObj::read - stream reads and both bounds-merge blocks reconstructed; the body-shape +0x28/+0x2c vtable calls and cl-chosen x87 temporaries differ; equiv UNSUPPORTED (0/400 inputs valid: unmodelled malloc import faults).
+004ce720 357 SceneGen::SceneGen - 15x tstring and 0x900x rot_state ctor loops get different loop shapes plus destructor cleanups; equiv UNSUPPORTED (resolution audit: tstring ctor 0042bbd0 vs original operand 0040eaf0).
+004ce870 25 ItemRec::ItemRec - base item ctor (vtbl 0x596124 + tstring + id 99) inlined in a not-identical store order; equiv UNSUPPORTED (own-copy vtable 30001000 vs image 00596124).
+004ce8d0 25 ItemRec2::ItemRec2 - same shape as 0x4ce870 with vtable 0x596148; equiv UNSUPPORTED (own-copy vtable 30001000 vs image 00596148).

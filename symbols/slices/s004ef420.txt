@@ -1,0 +1,9 @@
+# names used while matching slice s004ef420 (character sheet helpers)
+004ef420  CharSheet::apply_to_troop     (MATCH)
+004ef6d0  CharSheet::steps_to_point     (MATCH)
+004ef730  item_events (item index -> event ids; complete, nonmatching)
+004ef7d0  CharSheet::update_skill_rows
+005e2930  g_game
+005e29d0  g_items
+008ee3134 skill max-rank table (stride 0x44)
+008ee3140 skill attribute table (stride 0x44)

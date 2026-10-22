@@ -1,0 +1,1 @@
+0048c0c0  300  partial: Agent::sort_slots - the sort itself is complete (selection passes over the 8-byte item references, weight = item stat * modifier factor, floor + 0.5 rounding, tie-break by item id), but the original re-reads index/length through the mutable slot table pointer inside the bubble loop; our loop keeps them in registers. x87/loop shape not matched.

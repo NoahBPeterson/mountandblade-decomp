@@ -1,0 +1,2 @@
+slices/s0048ca30/s0048ca30.cpp  ?copy_refs@@YGPAUItemRef@@PAU1@IPBU1@@Z  0048ce90  /O2 /MT /Gy /TP
+slices/s0048ca30/s0048ca30.cpp  ?set_owner@ListHolder@@QAEXPAX@Z  0048cfc0  /O2 /MT /Gy /TP

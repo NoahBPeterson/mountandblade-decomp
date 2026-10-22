@@ -1,0 +1,2 @@
+00526130 ?find_listener_agent@@YAHXZ  # last used agent whose troop (+0x88) equals DialogMgr::listener, else -1
+08ed50c8 ?g_n_dialogs@@3UDialogMgr@@A  # dialogue manager singleton (listener 0x460670)

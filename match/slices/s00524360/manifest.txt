@@ -1,0 +1,3 @@
+slices/s00524360/s00524360.cpp	?init@TriggerStmt@@QAEXHH@Z	00524360	/O2 /MT /Gy /TP
+slices/s00524360/s00524360.cpp	?read_skill@@YAAAUstream_base@@AAU1@AAUSkillRec@@@Z	005243c0	/O2 /MT /Gy /TP
+slices/s00524360/s00524360.cpp	?read@QuestRec@@QAEXAAUstream_base@@@Z	00524690	/O2 /MT /Gy /TP

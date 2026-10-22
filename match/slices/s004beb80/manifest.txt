@@ -1,0 +1,6 @@
+slices/s004beb80/s004beb80.cpp  ?keys_write_value@@YAXPAPAUHKEY__@@PBDPBUtstring@@@Z  004beb80  /O2 /MT /Gy /TP
+slices/s004beb80/s004beb80.cpp  ?module_ini_exists@@YA_NPBD@Z  004bebc0  /O2 /MT /Gy /TP
+slices/s004beb80/s004beb80.cpp  ?scan_module_folders@@YAXPAUtstring@@PAH@Z  004bec60  /O2 /MT /Gy /TP
+slices/s004beb80/s004beb80.cpp  ??1GameApp@@QAE@XZ  004bed90  /O2 /MT /Gy /TP
+slices/s004beb80/s004beb80.cpp  ?deleting_dtor@GameApp@@QAEPAXI@Z  004bedf0  /O2 /MT /Gy /TP
+slices/s004beb80/s004beb80.cpp  ?gfx_query@@YIXPAUEditorPanel@@@Z  004bee10  /O2 /MT /Gy /TP

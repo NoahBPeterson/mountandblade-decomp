@@ -1,0 +1,2 @@
+0049bea0 add_order_arrow    # MissionAgents::add_order_arrow; creates the type-9 order scene object, 0.44 sphere shape, identity frame, then the ui_ label
+0049c170 check_slot         # Mission::check_slot; validates a reinforcement packet id and applies its team-slot flags

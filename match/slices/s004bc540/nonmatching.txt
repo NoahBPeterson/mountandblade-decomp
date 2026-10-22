@@ -1,0 +1,1 @@
+004bc5b0  471  init_formats (complete): the original body is bracketed by the compiler-invisible 18-byte inline tag (jmp +0x10 over the fixed record 0x20204C57, 12/13, 0, 0x20204C57) that cl 13.10 cannot emit; store scheduling of the FVF/stride pair table also differs (cl groups same-constant stores). Behaviour and all values match.

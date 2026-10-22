@@ -1,0 +1,8 @@
+# slice s0048dc30 evidence symbols (names provisional)
+0048dc30 ?set_a_color@Mission@@QAEXII@Z  # agent kind dispatch, OR-in argb into colour fields
+0048de00 ?set_b_color@Mission@@QAEXII@Z  # kind switch, colour<<24 into f108/f10c/f110/f114
+0048e1a0 ?set_highlight_colors@Mission@@QAEXII@Z  # identity kinds, mask color14c, set_color2
+0048e270 ?set_c_color@Mission@@QAEXII@Z  # identity kinds, mask color150, set_color2
+0048e340 ?set_value@Mission@@QAEXIH@Z  # kind 2/3 float clamp, kind 5 int clamp, kind 8 0..2
+0048e4c0 ?set_limits@Mission@@QAEXIHH@Z  # kind 2/3 lo16c/hi170 = v/100, clamp v168
+0048e590 ?set_extra@Mission@@QAEXIH@Z  # kind 5 -> vc8(value)

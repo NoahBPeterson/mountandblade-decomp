@@ -106,6 +106,9 @@ struct Bone {
     rgl::vector4 vb_c;             // +0xbc
     std::vector<int> link;         // +0xcc (first at +0xd0)
     Bone();                        // 0x41b0c0
+    // the real destructor 0x41a510: frees the link vector, zeroes it and destroys the name. Declared inline
+    // (like Rec34 in s00401010) so ??_Eframe_set can expand the `delete[] bones` in its array path.
+    ~Bone() { link.~vector(); name.~tstring(); }
 };
 
 // 32-entry vec16 table, zero-initialised (s00417850, ctor 0x417cb0); count is overwritten by the loader
@@ -123,7 +126,7 @@ struct frame_set : res_base {
     vec_table table;               // +0x20 (data, count)
     unsigned f28, f2c, f30;        // +0x28 body-part masks
     frame_set();                   // 0x417e10
-    virtual ~frame_set();          // 0x41aee0 (deleting)
+    virtual ~frame_set() { if (nbones != 0 && bones != 0) delete[] bones; }   // 0x41aee0 (deleting)
     virtual int type();            // 0x49df30 (7)
 };
 

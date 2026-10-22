@@ -1,0 +1,9 @@
+00502300 destroy_troop  # scalar deleting destructor (ret 4): base destructor 0x487c00 then operator delete when flag & 1
+00502320 PartyWindow::build_page  # equipment page builder: UiPanel, per-slot make_slot(0x502230) in a 3-column grid, +0x300/+0x600 pokes, widgets cached at this+page*0x180+0x64
+005024e0 PartyWindow::add_strip_icon  # lazily creates the 0x188 icon (0x48b1c0, vptr 0x591ee8), open_menu(tstring) 0x4e4c70, add_child on f96c, add_image(0,0) then make_mesh_from(idx,kind) 0x4991d0
+005025a0 PartyWindow::init_window  # refresh_page over f964, refresh_stash over f968, refresh_armor at +0xa64 and (when f968 == 2) +0xa74
+00502620 PartyWindow::refresh_armor  # 8 equipment slots: head/body/leg sums via 0x462960/0x434eb0/0x462a10, modifier class from ITEMS[item]+0x1c8, encumbrance, four strtab labels ui_*_armor/ui_encumbrance
+00502920 PartyWindow::refresh_page  # worn page: hero 9-slot case, troop count 0x462b60, widgets at this+page*0x180+0x64, state at +page*0x180+0x364
+005029f0 PartyWindow::place_slot  # one slot: state bit 2, empty-slot clears at widget +0x11e/+0x11c, make_mesh + 0.044 translate + add_image(2,m), f_a84/f_a88 strip icons (inv_i_character / inv_i_character2)
+00502b80 PartyWindow::make_mesh  # item mesh via 0x4fba40 at scale 0.088, then spawn fields 0x1a1f4..0x1a204 and sliders 0xa70448..0xa70454, ITEMS[item].play(-0x32)
+00502c30 PartyWindow::refresh_stash  # ground rows: row*0x28 blocks at +0x970, ten slots, place_slot(n, row, 1, 1) with SLOT(troop,n)

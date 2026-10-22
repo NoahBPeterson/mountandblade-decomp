@@ -1,0 +1,9 @@
+004ce960 108 MissionBlocker::MissionBlocker - base item ctor (vtbl 0x5947d8 + tstring + id 99) inlined in a not-identical store order and the frustum sub-object frame (pad 0xd4) differs; equiv UNSUPPORTED (resolution audit: ??0frustum@@QAE@XZ resolved 0041ef60 but the original operand at 004ce96d is 0042bbd0).
+004cea10 308 MissionParams::init - cl lays the two (0,0,10,uninitialised-w) vector4 temporaries into a different stack-slot order than the original (the w lane is deliberately left untouched); equiv PASS.
+004ceb30 25 ItemA::ItemA - shared item-base ctor inlining; base-vptr and +0xf8 store scheduling differs (25-byte floor); equiv UNSUPPORTED (own-copy vtable 30001004 vs image 00596190).
+004ceb90 534 MissionUpdater::update - object-group record virtual slots modelled from call sites only, call sequence and float temporaries differ; equiv UNSUPPORTED (8 unresolved references).
+004cee50 30 ItemD::ItemD - base ctor inlining plus the 0x5961c0 vptr store ordering; equiv UNSUPPORTED (own-copy vtable 30001004 vs image 005961c0).
+004ceec0 48 ItemD_vt::~ItemD_vt - free calls and the trailing tstring dtor are scheduled differently through the self cast; equiv UNSUPPORTED (own-copy vtable 30001000 vs image 005947d8).
+004cef20 25 ItemB::ItemB - same shape as 0x4ceb30 with vtable 0x5961e4; equiv UNSUPPORTED (own-copy vtable 30001004 vs image 005961e4).
+004cef80 25 ItemC::ItemC - same shape as 0x4ceb30 with vtable 0x596208; equiv UNSUPPORTED (own-copy vtable 30001004 vs image 00596208).
+004cefe0 49 vec2c::push_back - the 0x4c5010 fill call reuses one register for the two v arguments where the original reloads v from its home slot (128 vs 129 bytes); equiv PASS.

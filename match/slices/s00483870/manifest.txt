@@ -1,0 +1,1 @@
+slices/s00483870/s00483870.cpp  ?spawn_one@Game@@QAE_NH@Z  00483de0  /O2 /MT /Gy /TP

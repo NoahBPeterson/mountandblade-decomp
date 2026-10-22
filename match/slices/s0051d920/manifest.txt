@@ -1,0 +1,6 @@
+slices/s0051d920/s0051d920.cpp  ?read@Rec78Tag@@QAEXPAULoadStream@@@Z   0051dd60  /O2 /MT /Gy /TP
+slices/s0051d920/s0051d920.cpp  ?read@Rec78@@QAEXPAULoadStream@@@Z      0051ddc0  /O2 /MT /Gy /TP
+slices/s0051d920/s0051d920.cpp  ?read@Rec30Tag@@QAEXPAULoadStream@@@Z   0051de00  /O2 /MT /Gy /TP
+slices/s0051d920/s0051d920.cpp  ?load_quests@Game@@QAEXPAULoadStream@@@Z 0051e100  /O2 /MT /Gy /TP
+slices/s0051d920/s0051d920.cpp  ?read@Rec138@@QAEXPAULoadStream@@@Z     0051e170  /O2 /MT /Gy /TP
+slices/s0051d920/s0051d920.cpp  ?load_parties@Game@@QAEXPAULoadStream@@@Z 0051e240  /O2 /MT /Gy /TP

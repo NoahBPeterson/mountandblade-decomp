@@ -1,0 +1,13 @@
+slices/s004759c0/s004759c0.cpp  ?update_team_counts@Mission@@QAEXXZ  004759c0  /O2 /MT /Gy /TP
+slices/s004759c0/s004759c0.cpp  ?destroy@vecArrS@@QAEXPAUArrSet@@0@Z  00475b60  /O2 /MT /Gy /TP
+slices/s004759c0/s004759c0.cpp  ?ufill@vecArrS@@QAEPAUArrSet@@PAU2@IABU2@@Z  00475b80  /O2 /MT /Gy /TP
+slices/s004759c0/s004759c0.cpp  ??$_Buffered_merge_sort@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HUP8@@P6A_NABU4@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@0HAAV?$_Temp_iterator@UP8@@@0@P6A_NABUP8@@2@Z@Z  00475bb0  /O2 /MT /Gy /TP
+slices/s004759c0/s004759c0.cpp  ??1RecSetBase@@QAE@XZ  00475c60  /O2 /MT /Gy /TP
+slices/s004759c0/s004759c0.cpp  ??1RecSet@@QAE@XZ  00475d50  /O2 /MT /Gy /TP
+slices/s004759c0/s004759c0.cpp  ?erase@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@QAE?AViterator@12@V312@0@Z  00475f20  /O2 /MT /Gy /TP
+slices/s004759c0/s004759c0.cpp  ??$_Stable_sort@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HUP8@@P6A_NABU4@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@0HAAV?$_Temp_iterator@UP8@@@0@P6A_NABUP8@@2@Z@Z  00475f70  /O2 /MT /Gy /TP
+slices/s004759c0/s004759c0_stl.cpp  ?reserve@?$vector@Urec36@@V?$allocator@Urec36@@@std@@@std@@QAEXI@Z  00476020  /O2 /MT /Gy /TP /EHa
+slices/s004759c0/s004759c0_stl.cpp  ?reserve@?$vector@Urec136@@V?$allocator@Urec136@@@std@@@std@@QAEXI@Z  00476130  /O2 /MT /Gy /TP /EHa
+slices/s004759c0/s004759c0_stl.cpp  ?insert@?$vector@Urec36@@V?$allocator@Urec36@@@std@@@std@@QAE?AViterator@12@V312@ABUrec36@@@Z  00476240  /O2 /MT /Gy /TP /EHa
+slices/s004759c0/s004759c0_stl.cpp  ?insert@?$vector@Urec136@@V?$allocator@Urec136@@@std@@@std@@QAE?AViterator@12@V312@ABUrec136@@@Z  004762b0  /O2 /MT /Gy /TP /EHa
+slices/s004759c0/s004759c0_stl.cpp  ?_Buy@?$vector@Urec456@@V?$allocator@Urec456@@@std@@@std@@IAE_NI@Z  00476320  /O2 /MT /Gy /TP /EHa

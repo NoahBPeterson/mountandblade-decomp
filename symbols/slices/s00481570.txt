@@ -1,0 +1,14 @@
+0x481570 ?tessellate@terrain_obj@@QAEXXZ  # rebuilds the whole terrain mesh: new Geom, new cell_rows (scale/bounds/alloc(&h)), reset every cell rec to -1 while copying the first dword into rows[x][y], reserve (h+2)*(w+2) points and (h+1)*(w+1)*2 elements, then per quad two triangle_corners + tri_normal calls; when the two normals' dot > 0.999 the quad is one 4-corner element else two 3-corner elements with rows[x][y].flags |= 1 (|2 when quads[y*250+x].diag). Each corner gets a point (px/py/wet/f0c + w=1) the first time and an element id, and each element carries the 15-light sum at lum[14] down with mult *= 1-lum[m] (lights this+0x258, 40-byte slots, g_x8ed4e14[slot*0x20] & 2), flags 0x10 (|0x4000 when the sum > 1.5). Finishes with build (0x47ee60), compute_bounds (0x4704b0), world->set_geom (0x479980), frees the previous cell_rows of world+0x64 and relights (0x472ed0) with g_use_shaders
+0x481c40 ?append_mesh@@YAPAUEChar@@HHPAPAX00DPAH@Z  # 7 args (colour, kind, a, b, c, carried, out); clamps colour into g_cur (0 / g_char_count-1 / colour), then set_anim_a(a) when kind == -1 else set_anim_b(a, b, kind) on the animator at 0x8ed4f60, sets g_x8ed4f64 = -1 when carried, collects (c, c+1, c+2) with (g_xa181ac != 0) as the shader flag, and returns &g_chars[g_cur] with *(lods + g_x8ed4f74*0xb0 + 0x18) written to *out
+0x8ed4f60 g_anim       # global Animator: set_anim_a 0x473800, set_anim_b 0x4746e0, collect 0x47fb10 (4 args, last = shader flag)
+0x8ed4f68 g_cur        # selected character index
+0x8ed4f74 g_x8ed4f74   # lod mesh index (stride 0xb0, count at +0x18)
+0x8ed4f7c g_chars      # EChar table (stride 0x1f8, lods pointer at +0x1c0)
+0x8ed4f88 g_char_count # number of characters
+0x8ed4e14 g_x8ed4e14   # 0x20-byte light records; bit 1 of the first dword = the light affects terrain
+0xa181ac g_xa181ac     # non-zero selects the shader path in Animator::collect
+0x462420 cell_rows::alloc  # thiscall (ecx = cell_rows, arg = &terrain.h); allocates h+1 rows of (w+1)*0x10, each record {0, -1, -1}
+0x466e20 triangle_corners  # cdecl 6 args (x, y, flip, c0, c1, c2); the two (x, y) corners of half-quad `flip` of quad (x, y)
+0x4612d0 tri_normal        # cdecl 2 args; normal of the triangle spanned by three 16-byte cell records
+0x4772f0 pts.push_back    # point-list append (0x24 records)
+0x477380 elems.push_back  # element-list append (0x88 records)

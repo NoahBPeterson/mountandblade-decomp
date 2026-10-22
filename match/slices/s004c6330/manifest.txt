@@ -1,0 +1,5 @@
+slices/s004c6330/s004c6330.cpp  ?text_by_kind@RecA@@QAE?AUtstring@@XZ  004c6330  /O2 /MT /Gy /TP
+slices/s004c6330/s004c6330.cpp  ?src_text@RecA@@QAE?AUtstring@@XZ  004c63f0  /O2 /MT /Gy /TP
+slices/s004c6330/s004c6330.cpp  ?src_id_name@RecA@@QAE?AUtstring@@XZ  004c6470  /O2 /MT /Gy /TP
+slices/s004c6330/s004c6330.cpp  ?name_by_state@RecB@@QAE?AUtstring@@XZ  004c6530  /O2 /MT /Gy /TP
+slices/s004c6330/s004c6330.cpp  ?field_name@RecC@@QAE?AUtstring@@XZ  004c6860  /O2 /MT /Gy /TP

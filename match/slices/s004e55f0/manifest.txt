@@ -1,0 +1,4 @@
+slices/s004e55f0/s004e55f0.cpp  ?hex_field@config_table@@QAEHABUtstring@@@Z  004e5d30  /O2 /MT /Gy /TP
+slices/s004e55f0/s004e55f0.cpp  ?create_stub@SavePanel@@QAEXXZ  004e5d80  /O2 /MT /Gy /TP
+slices/s004e55f0/s004e55f0.cpp  ?create_flagged@SavePanel@@QAEXXZ  004e5e50  /O2 /MT /Gy /TP
+slices/s004e55f0/s004e55f0.cpp  ?destroy_range@@YGXPAURec@@0@Z  004e5f50  /O2 /MT /Gy /TP

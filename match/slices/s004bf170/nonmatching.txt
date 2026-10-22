@@ -1,0 +1,3 @@
+004bf170  335  complete source; equiv UNSUPPORTED (missing import model __imp__GetDlgItemA@8); remaining diffs: 0xb0 vs 0x8c stack frame, fps-clamp/GetDlgItemInt in/out register shape, tstring separator temp layout, CB_GETSTATE nested GetDlgItem reload
+004bf5f0  36  complete source; equiv WEAK (coverage 45.5%); EndDialog arg loads into ecx vs eax, one extra push/pop esp adjust, int3 padding
+004bf640  514  complete source; equiv UNSUPPORTED (missing import model __imp__GetDlgItemA@8); original reloads g_editor_state per control and ends in jmp to 0x4b9e70 tail call; our version keeps it in a register

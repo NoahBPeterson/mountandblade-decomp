@@ -1,0 +1,1 @@
+0x47ff60  3514  single function holding two inline copies of the vertex loop (plain and shader/tangent); ecx is an unrelated global (0xa70438) not `this`, so the original thiscall ABI is not reproduced; shader path unmodelled

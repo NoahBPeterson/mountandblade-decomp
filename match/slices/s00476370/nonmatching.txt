@@ -1,0 +1,3 @@
+00476515  0  cold partition of 0x476370 (catch funclet + reallocation path): bytes identical to the object's COMDAT tail (686-byte section, 0 diff); symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a standalone callable function.
+004767de  0  cold partition of 0x476620 (catch funclet + reallocation path): bytes identical to the object's COMDAT tail (715-byte section, 0 diff); symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a standalone callable function.
+00476a9a  0  cold partition of 0x4768f0 (catch funclet + reallocation path): bytes identical to the object's COMDAT tail (696-byte section, 0 diff); symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a standalone callable function.

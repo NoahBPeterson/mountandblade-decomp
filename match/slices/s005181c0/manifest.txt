@@ -1,0 +1,2 @@
+slices/s005181c0/s005181c0.cpp  ?skill_plus_8@GameData@@QAEMXZ  00518940  /O2 /MT /Gy /TP
+slices/s005181c0/s005181c0.cpp  ?shift_over@Vec5c@@QAEPAPAURec5c@@PAPAU2@PAU2@1@Z  00518990  /O2 /MT /Gy /TP

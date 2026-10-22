@@ -1,0 +1,7 @@
+00479d20 ?spawn@EmitTable@@QAEPAUEmit@@PAHPBUvector4@rgl@@PBH@Z  # EmitTable::spawn: range-check *idx against count (+4) of the defs array (+0), new an Emit with the owner and EmitTable::setup (0x4424c0)
+00479da0 ?spawn_bodies@Mission@@QAEXPAUSpawnRec@@@Z  # Mission::spawn_bodies: one 0xa0-byte spawn entry per record, cycles e->counter % g_types[type].count (0x5e28f8), clones res_shape::shape (+0x20 -> +0x18, 0x4285e0), set_frame (vtable+0x20), set_flags (0x200, +0x34), registry->reg (0x424170)
+00479980 ?build@NavStore@@QAEXPAUNavCore@@@Z  # NavStore::build: per-cell face (0xb4 bytes, vtable 0x54a588) into the store's list at +0x54, scene post 0x425240, then vertex normals from the cells and a +Y fallback for zero lengths
+00479e20 ?rebuild_nav@Mission@@QAEXHH@Z  # Mission::rebuild_nav: NavStore (0x478ad0) for the level slot (0x494 stride, flag 0x100), body collision bbox, log2 LOD, 0x100? none : build + registered identity-framed clone
+00535a64 lib_crt::__ftol2  # float -> int conversion helper used by rebuild_nav's ceil rounding
+00535ae0 lib_crt::_ceil  # ceil used by rebuild_nav's LOD computation
+08ed5090 ?g_emit_defs@@3UEmitTable@@A  # effect emitter definition table at 0x8ed5090 (defs 0x8ed5098[6], extra defs 0x8ed50b4..0xbc); the NavStore ctor 0x478ad0 is an unnamed FUN_ (not resolved from source)

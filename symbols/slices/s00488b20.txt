@@ -1,0 +1,6 @@
+05e29d0 g_items  # ItemKind* array base (0x238-byte records); read by sort_value (0x488f80)
+0a75f90 g_sort_val  # SortVal[] (8-byte stride: float v + pad); tie-break weights read by sort_value/sort_sel
+05e2948 g_ticks  # __int64 clock table (see s00461280/s0042aaf0); sampled by tick (0x488e90)
+042bc50 TString::assign  # direct (non-virtual) rgl::string assign; thiscall, called by set_text/put
+04b09e0 EmitSub::emit  # emitter (ECX = &(this+4)); called by draw/tick
+04875e0 EmitSub::emit_simple  # wrapper on the same sub-object (ECX = &(this+4)); called by tick

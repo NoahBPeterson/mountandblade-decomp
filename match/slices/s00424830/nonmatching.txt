@@ -1,1 +1,12 @@
-00424cc0  31  vector<E136>::resize(n, x): complete (insert(end(), n-size(), x) / erase(begin()+n, end())); only the register assignment differs (original keeps _Myfirst in edi and n in esi, cl 13.10.3052 swaps them); source spellings of size()/insert/erase tried, none changes it
+00424a3e  0  catch(...) { _Al.destroy(_Next); throw; } funclet (cold tail) of std::_Uninit_copy<E36*>: symbol-less COMDAT
+                tail, verified byte-identical to the original via cmpobj.py (0 diff). Equivalence UNSUPPORTED:
+                not a callable function (no symbol of its own).
+00424c2d  0  catch(...) funclet (cold tail) of std::_Uninit_fill_n<E36*>: symbol-less COMDAT tail, verified
+                byte-identical via cmpobj.py (0 diff). Equivalence UNSUPPORTED: not a callable function.
+00424cab  0  catch(...) funclet (cold tail) of std::vector<E36>::_Insert_n: symbol-less COMDAT tail, verified
+                byte-identical via cmpobj.py (0 diff). Equivalence UNSUPPORTED: not a callable function.
+00424fc4  0  catch(...) funclet (cold tail) of std::vector<E136>::_Insert_n: symbol-less COMDAT tail, verified
+                byte-identical via cmpobj.py (0 diff). Equivalence UNSUPPORTED: not a callable function.
+004251b2  0  catch(...) funclet (cold tail) of std::_Uninit_copy<E136*>: symbol-less COMDAT tail, verified
+                byte-identical via cmpobj.py (0 diff). Equivalence UNSUPPORTED: not a callable function.
+00424cc0  31  vector<E136>::resize(n, x): complete (insert(end(), n-size(), x) / erase(begin()+n, end())); only the register assignment differs (original keeps _Myfirst in edi and n in esi, cl 13.10.3052 swaps them); source spellings of size()/insert/erase tried, none changes it. equiv.py PASS.

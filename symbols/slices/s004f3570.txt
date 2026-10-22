@@ -1,0 +1,6 @@
+004f3570 TerrainPage::read_fields  # decodes the terrain bit words at 0xa76630 into the page's +0x2c..+0x64 fields, inverse of 0x4f2ae0
+004f37f0 TerrainPage::simulate  # thiscall(this,float): camera keys/settings 0xa17xxx, calls 0x4f3be0 and 0x4f3b40
+004f3b40 rotate_2x2  # thiscall(float* m, float angle), ret 4: 2x2 rotation of m[0..3], inline fsin/fcos
+004f3be0 identity_2x2  # cdecl(float* m): writes 1,0,0,1
+004f3c30 TerrainPage::paste_clipboard  # user32 clipboard CF_TEXT -> 0x4658c0 then hex field vtable +0xa4, 0x4f3570, 0x4f2730
+004f3cf0 TerrainPage::path  # 0x40cd00/0x40e570/0x40e670, 0x41e4f0, then 0x4f3e10(frame)

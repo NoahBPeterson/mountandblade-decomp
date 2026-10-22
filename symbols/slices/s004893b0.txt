@@ -1,0 +1,12 @@
+05a9f9c g_day  # int day/threshold counter compared with 0x19 / 0x3c by quarter (0x489ad0)
+05e2948 g_ticks  # Tick[8]: two ints per entry, indexed as [idx*8 + 0x5e2948]/[+4] by setup (0x4897a0)
+05d6fa0 g_alloc  # global object whose make(a,b,c,d) allocates; ECX = 0x5d6fa0, called by Mission::make (0x489b20)
+042bc50 tstring::assign  # direct (non-virtual) rgl::string assign; thiscall, called by sub_489400/489ab0/make
+042c110 tstring::copy  # rgl::string copy ctor; thiscall(dst, src), called by get_name (0x489c30)
+0462b60 Troop508::count  # thiscall; reads flags & 0x10 at +0x30, default 90; called by count_in (0x489c50)
+04b22d0 Party::ext_4b22d0  # thiscall capacity for the unflagged container; reads g_world 0x5e2930 (+0x8, +0xac, +0x13a00); called by find_or_add
+04b2330 Party::ext_4b2330  # thiscall capacity for the flagged container; called by find_or_add
+04b1700 Party::ext_4b1700  # thiscall per-flag limit; called by find_or_add
+0463190 Party::ext_463190  # thiscall count for the unflagged container; called by find_or_add
+0467c50 Mission::ext_467c50  # thiscall, takes one stack arg 0; first call in setup (0x4897a0)
+0477b70 Mission::ext_477b70  # thiscall, no args; last call in set (0x489820)

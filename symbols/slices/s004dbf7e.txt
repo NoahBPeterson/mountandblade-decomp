@@ -1,0 +1,6 @@
+# s004dbf7e -- loading-screen configuration record (element of the 0x1f8-byte list) and its vector helpers
+004dc030 loading_config_copy_ctor  # element-wise copy; tstrings via 0x42c110, three 0x10-byte ranges via 0x4cca70/0x4cc750/0x4cc680, 0x1c8-byte block via 0x4da300
+004dc190 destroy_range            # _Destroy_range over the list: calls the element dtor 0x4da410 per element, stride 0x1f8, no frame
+004dc1c0 ??4VecCfg@@QAEAAU0@ABU0@@Z  # vector<loading_config>::operator=: clear / copy / reallocate / grow arms (calls 0x4da840, 0x4be950, 0x4d10f0, 0x4cd6e0, 0x4cd660, 0x4d11a0, 0x4cbb90, 0x4d93e0, 0x4d9370, 0x535712)
+004dbf7e insert_catch             # vector<loading_config>::insert catch(...) arm: append_range 0x4cd660, then delete + tstring dtor of the temporary (0x42bc40), __CxxThrowException
+004dc350 loading_config_ctor       # ~1.9 KB loading-screen config construction (widgets, tstrings, ini lookups); not reconstructed

@@ -1,0 +1,2 @@
+# s0052bf40: no partial function.  0052c290 is byte-exact (manifest.txt) and 0052bf40 is
+# complete but not byte-exact (nonmatching.txt).

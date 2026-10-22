@@ -1,0 +1,38 @@
+# globals for slice s004eb270 (face-generator window refresh, skin packer, save/load menu handler)
+0x8ed4f60 ?g_anim@@3UAnimator@@A      # character-builder animation state (skin table +0x1c, values +0x2c)
+0x8ed4f68 ?g_cur@@3HA                 # selected character/seed index
+0x8ed4f7c ?g_skins_begin@@3PAUSkinSet@@A  # SkinSet table base (0x1f8-byte records)
+0x8ed4f88 ?g_char_count@@3HA          # out param of gen_face_seed
+0x8ed4f8c ?g_dummy_mat@@3MA           # scratch float, one animated value per deform key
+0x8ed5088 ?g_dummy0@@3MA              # scratch float (age slider)
+0x8ed508c ?g_dummy1@@3MA              # scratch float (hair-colour slider)
+0x5e2930 ?g_game@@3PAUGame@@A         # game/mission data object (chars at +0x13a00)
+0xa181ac ?g_xa181ac@@3IA              # non-zero selects the shader path in Animator::collect
+0x549d70 ?g_549d70@@3MB               # 0.5f
+0x590c54 ?g_590c54@@3MB               # 7.0f
+0x598588 ?g_598588@@3MB               # 63.0f
+0x5a9fb0 ?g_no_cam@@3HA               # non-zero suppresses the editor restart
+0x5d7080 ?g_msglog@@3UMsgLog@@A       # message log
+0xa73980 ?g_main_menu@@3Umain_menu@@A # main menu (choose at 0x495700)
+0xa739f8 ?g_menu_vars@@3UMenuVars@@A  # menu variable table (rows +4, count +8)
+0xa73a04 ?g_a73a04@@3IA
+0xa73a08 ?g_a73a08@@3IA
+0x4bace0 ?start@SaveLoadUi@@QAEXXZ
+0x404f00 ?DrawTextA@CD3DFont@@QAEXMMKPBDK@Z
+0x47e520 ?func_47e520@Renderer@@QAEXH@Z
+0x4c1a60 ?func_4c1a60@MapEditor@@QAEXXZ
+0x4c1940 ?func_4c1940@MapEditor@@QAEXXZ
+0x4e6050 ?func_4e6050@MsgLog@@QAEXXZ
+0x5fe898 ?g_renderer@@3URenderer@@A
+0x5e2938 ?g_5e2938@@3DA
+0x5e28c8 ?g_5e28c8@@3HA
+0xa16c58 ?g_a16c58@@3HA
+0x5d75c8 ?g_5d75c8@@3HA
+0x5d75cc ?g_5d75cc@@3HA
+0xa17f28 ?g_a17f28@@3PAXA
+0x5a9f54 ?g_5a9f54@@3PADA
+0x5a9f5c ?g_5a9f5c@@3HA
+0x5a9fa0 ?g_5a9fa0@@3HA
+0x5a9fb8 ?g_5a9fb8@@3HA
+0x5a9fb0 ?g_5a9fb0@@3HA
+0x5a9f50 ?g_5a9f50@@3Utstring@@A

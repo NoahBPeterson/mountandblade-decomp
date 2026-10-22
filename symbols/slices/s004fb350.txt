@@ -1,0 +1,2 @@
+004fb350 status_widget::update  # the 0xa76630 object's per-tick status widget (health bar, shield, ammo)
+004fb8e0 ?set_offset@mesh@@QAEXABUvector4@rgl@@@Z  # offsets the mesh vertices by the scaled rest points; provisional

@@ -1,0 +1,7 @@
+slices/s00476bb0/s00476bb0.cpp  ?_Insert_n@?$vector@UE52@@V?$allocator@UE52@@@std@@@std@@IAEXViterator@12@IABUE52@@@Z  00476bb0  /O2 /MT /Gy /TP
+slices/s00476bb0/s00476bb0.cpp  ?_Insert_n@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@IAEXViterator@12@IABUArrSet@@@Z  00476e60  /O2 /MT /Gy /TP
+slices/s00476bb0/s00476bb0.cpp  ??4?$vector@URec1c8@@V?$allocator@URec1c8@@@std@@@std@@QAEAAV01@ABV01@@Z  00477160  /O2 /MT /Gy /TP
+slices/s00476bb0/s00476bb0.cpp  ?push_back@?$vector@UE36x@@V?$allocator@UE36x@@@std@@@std@@QAEXABUE36x@@@Z  004772f0  /O2 /MT /Gy /TP
+slices/s00476bb0/s00476bb0.cpp  ?push_back@?$vector@UE136@@V?$allocator@UE136@@@std@@@std@@QAEXABUE136@@@Z  00477380  /O2 /MT /Gy /TP
+slices/s00476bb0/s00476bb0.cpp  ?insert@?$vector@UE36@@V?$allocator@UE36@@@std@@@std@@QAE?AViterator@12@V312@ABUE36@@@Z  00477410  /O2 /MT /Gy /TP
+slices/s00476bb0/s00476bb0.cpp  ?resize@?$vector@UE24@@V?$allocator@UE24@@@std@@@std@@QAEXIUE24@@@Z  00477480  /O2 /MT /Gy /TP

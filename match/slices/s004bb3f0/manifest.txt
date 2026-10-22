@@ -1,0 +1,2 @@
+slices/s004bb3f0/s004bb3f0.cpp  ?save_screenshot@@YA_NPBDW4_D3DXIMAGE_FILEFORMAT@@@Z  004bb9c0  /O2 /MT /Gy /TP
+slices/s004bb3f0/s004bb3f0.cpp  ?value_as_int@@YGHABUtstring@@@Z  004bbb70  /O2 /MT /Gy /TP

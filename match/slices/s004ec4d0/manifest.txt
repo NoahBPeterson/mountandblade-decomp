@@ -1,0 +1,2 @@
+# s004ec4d0 manifest: byte-exact functions
+# (none: both targets are complete reconstructions but not byte-exact)

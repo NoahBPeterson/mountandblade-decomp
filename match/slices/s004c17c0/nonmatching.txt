@@ -1,0 +1,12 @@
+004c17c0  214  build_shader: complete; tstring temporaries and the D3DX/FindFirstFileA block shape differ (inlined tstring ctors/dtors + effect parameter setup). equiv: UNSUPPORTED (g_shader_dir unresolved)
+004c1940  184  gfx_setup: complete; differs in inlined tstring ctor/dtor placement around get_texture and the render-state argument registers. equiv: UNSUPPORTED (0/400 valid inputs: fake-arity/fault(read))
+004c1a60    1  gfx_release: single conditional-jump opcode differs (jb vs jl on the unsigned mapping-table pointer compare). equiv: PASS (100% insn + edges)
+004c1b60   44  copy_block204_range: try/catch+rethrow frame correct, per-element copy hoisting differs. equiv: UNSUPPORTED (pool-limit on all inputs)
+004c1bcc    3  throw_oom: _CxxThrowException(0,0); __debugbreak(); argument setup differs by 3 bytes. equiv: UNSUPPORTED (stops in RaiseException)
+004c1be0   29  init_small_table: 0x1000-iteration tstring-pair ctor loop; trailing sentinel store addressing differs. equiv: UNSUPPORTED (original takes self in ecx; declared as a plain pointer arg)
+004c1c20    4  TriggerRec::TriggerRec: complete; two adjacent constant stores are scheduled in the opposite order (t1.id before t0.t.hi, f0c before t2.t.hi) by the register allocator - same stores, same values, same addresses.
+004c1c90  179  TriggerVec::resize: complete; original calls the compiler array-ctor helper ?_H@ instead of an inline ctor loop. equiv: UNSUPPORTED (read_count unresolved)
+004c1e10  263  GameVec::resize: complete; array ctor loop shape (?_H helper) plus tail-element skip differs. equiv: UNSUPPORTED (read_count unresolved)
+004c1f20   62  MouseVec::clear: complete delete[] of MouseRec; original inline dtor loop shaped as a -4 header walk and it calls operator delete[] via 0x53570d (we call it via 0x535712 - same libcmt routine). equiv: FAIL only on 'import call #0' (equivalent delete[] entry points)
+004c1f70  308  MouseVec::resize: complete; inlined MouseRec ctor + tstring ctor/dtor loop not reproduced byte-exactly. equiv: UNSUPPORTED (read_count unresolved)
+004c20c0  147  read_map_icon: complete; vtable read calls / sprintf argument registers differ. equiv: UNSUPPORTED (s16 unresolved)

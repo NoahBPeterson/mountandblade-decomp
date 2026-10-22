@@ -1,0 +1,3 @@
+00490a30 565 drop_party: complete and behaviourally equivalent (equiv PASS); page lookup/pointer folding (mov vs lea+mov) and register allocation (id in ebp vs edi, cur/done spill) differ, size 650 vs 679
+00490ce0 586 count_party: complete; equiv WEAK (harness limit: both builds miss the same stack-loop/follower-loop edges because inputs cannot produce a type-1 party with nstacks>0); page lookup folding and loop rotation differ, size 694 vs 689
+00490fa0 242 collect: complete; equiv WEAK (harness limit: both builds miss the same follower-loop edges because inputs cannot produce a type-1 party with followers); page lookup folding/loop rotation and register allocation differ, size 282 vs 251

@@ -1,0 +1,5 @@
+# s004d2df0 -- collision quad-mesh helper, ragdoll bone loader, and two model record constructors
+004d2df0 QuadMesh::add_quad  # appends 4 vertices + 4 edges + 1 quad face, then build_adjacency (0x470920)
+004d3330 Bone::load  # TinyXML: name attribute, ten QueryDoubleAttribute scalars, socket_dir length/normalize, Bodies child loop
+004d3580 model_a::model_a  # 0x2ebc-byte record ctor: init_base 0x4c80c0 then field clears
+004d3640 model_b::model_b  # 0x1f8-byte record ctor, seven -1 fields and 1.0f flag

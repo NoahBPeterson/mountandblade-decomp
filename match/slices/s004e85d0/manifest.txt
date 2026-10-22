@@ -1,0 +1,3 @@
+slices/s004e85d0/s004e85d0.cpp  ?write@SaveCtx@@QAEHPAUOutStream@@@Z  004e8d70  /O2 /MT /Gy /TP
+slices/s004e85d0/s004e85d0.cpp  ?log_save_path@@YAXXZ  004e8df0  /O2 /MT /Gy /TP
+slices/s004e85d0/s004e85d0.cpp  ?load_header@Game@@QAEXPAUSaveCtx@@@Z  004e8e70  /O2 /MT /Gy /TP

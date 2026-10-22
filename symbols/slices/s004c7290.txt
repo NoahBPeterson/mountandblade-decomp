@@ -1,0 +1,2 @@
+004c7290 ConfigDialog::init  # settings dialog: rgl_config.txt read/apply/write, SetWindowPos layout of controls 0x405/0x406/0x410/0x41f/0x420/0x425/0x469/0x46b, "ui_*" lookups in 0x5e2a18, skin probe ".\Skins\mb_skin_%s.smf", LoadImageA "main.bmp" -> +0x354
+004c77c0 MapEditorDialog::refresh  # map-editor object dialog: shows the edited object (frame +0x1a098) or record (+0x1a1b4, stride 0x1c8 via map+0x668c), name via 0x4c6620, "%3f" matrix/position rows, labels "Entry No:"/"Menu Item No:"/"Var No:"/"Var2 No:"

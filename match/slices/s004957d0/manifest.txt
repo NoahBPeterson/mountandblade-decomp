@@ -1,0 +1,2 @@
+slices/s004957d0/s004957d0.cpp  ?clone@rgl_mesh@@QAEPAU1@XZ  004958f0  /O2 /MT /Gy /TP
+slices/s004957d0/s004957d0.cpp  ?normalize_uv@rgl_mesh@@QAEXPAU1@@Z  00495fa0  /O2 /MT /Gy /TP

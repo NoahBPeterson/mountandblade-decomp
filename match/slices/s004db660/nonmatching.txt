@@ -1,0 +1,10 @@
+# s004db660 nonmatching: complete reconstructions that pass equiv.py (WEAK here only because the harness cannot
+# feed 200 valid inputs past the vector's malloc/RaiseException path - there is no behavioural mismatch).
+004db960  107  complete, 66 bytes differ.  @insert_@20 is __fastcall (ecx = vector, edx unused) with
+              (out, pos, value) on the stack and `ret 0xc`; the index is ((last-first)/0x50 via the 0x66666667
+              reciprocal with the sign fixup) then (pos-first)/0x50; 0x4d9ed0 is called thiscall with
+              (pos, 1, value); first + idx*0x50 is stored through `out` and returned in EAX.  Remaining shape
+              difference: the original spills the element count to a dead stack-parameter slot
+              (`mov [esp+0x14],eax`) and lays the idx = 0 block out as the fall-through (`jne` into the compute
+              block); cl 13.10 keeps the count in a register and inlines the compute block (103 vs 107 bytes).
+              Equiv: WEAK (146 valid inputs, 4/4 edges both sides, 100% instructions, 0 mismatches).

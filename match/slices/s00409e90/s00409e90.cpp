@@ -59,9 +59,12 @@ void polygon_sphere_contact(coll_poly* a, coll_shape* b, int max, contact* out, 
 {
     vector4 v[4];
     v[0] = a->v[0]; v[1] = a->v[1]; v[2] = a->v[2]; v[3] = a->v[3];
-    vector4 e1(v[1].x - v[0].x, v[1].y - v[0].y, v[1].z - v[0].z);
-    vector4 e2(v[2].x - v[1].x, v[2].y - v[1].y, v[2].z - v[1].z);
-    vector4 n(e1.y * e2.z - e1.z * e2.y, e1.z * e2.x - e2.z * e1.x, e2.y * e1.x - e1.y * e2.x);
+    vector4 n;
+    float e1x = v[1].x - v[0].x;
+    float e1y = v[1].y - v[0].y;
+    n.x = e1y * (v[2].z - v[1].z) - (v[1].z - v[0].z) * (v[2].y - v[1].y);
+    n.y = (v[1].z - v[0].z) * (v[2].x - v[1].x) - (v[2].z - v[1].z) * e1x;
+    n.z = (v[2].y - v[1].y) * e1x - e1y * (v[2].x - v[1].x);
     normalize(n, n);
     float dist = (b->p1.x - v[0].x) * n.x + ((b->p1.y - v[0].y) * n.y + (b->p1.z - v[0].z) * n.z);
     if (dist > b->radius) return;

@@ -1,0 +1,7 @@
+004957d0 GameData::spread_party_experience  # complete; body bracketed by two non-compiler inline tags (jmp +0x10; "WL  ",12/13)
+004958f0 rgl_mesh::clone  # byte-exact
+00495970 slider_panel::build_slider  # builds+appends the horizontal slider widget; complete, vtable-slot arg convention differs
+00495b20 build_legend_mesh  # complete; only unresolved symbolic operands differ (constant-diff)
+00495ba0 rgl_mesh::transform  # positions/verts/named lists; complete, x87+register scheduling differs
+00495f00 rgl_mesh::set_colour_all  # repack colour at vertex+0x54; complete, loop-bound guard differs
+00495fa0 rgl_mesh::normalize_uv  # byte-exact

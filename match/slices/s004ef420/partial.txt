@@ -1,0 +1,1 @@
+004ef7d0 467 incomplete: skill-row colouring; original inlines the rank fetch differently

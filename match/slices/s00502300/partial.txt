@@ -1,0 +1,2 @@
+# none: every target VA of slice s00502300 is either byte-exact (manifest.txt) or complete and equivalent
+# but not byte-exact (nonmatching.txt).

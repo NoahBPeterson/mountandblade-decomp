@@ -1,0 +1,9 @@
+slices/s004c46d0/s004c46d0.cpp  ?write_stream@head_cam@@QAEXPAUw_stream@@@Z  004c4b70  /O2 /MT /Gy /TP
+slices/s004c46d0/s004c46d0.cpp  ?read_stream@head_cam@@QAEXPAUw_stream@@@Z  004c4c00  /O2 /MT /Gy /TP
+slices/s004c46d0/s004c46d0.cpp  ?head_rec_delete@@YIPAXPAUhead_rec@@PAXI@Z  004c4c90  /O2 /MT /Gy /TP
+slices/s004c46d0/s004c46d0.cpp  ??0head_obj2@@QAE@XZ  004c4cc0  /O2 /MT /Gy /TP
+slices/s004c46d0/s004c46d0.cpp  ??1Tail2@@QAE@XZ  004c4d10  /O2 /MT /Gy /TP
+slices/s004c46d0/s004c46d0.cpp  ?clear@list_int@@QAEXXZ  004c4d80  /O2 /MT /Gy /TP
+slices/s004c46d0/s004c46d0.cpp  ??1world_obj@@QAE@XZ  004c4ee0  /O2 /MT /Gy /TP
+slices/s004c46d0/s004c46d0.cpp  ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z  004c4f40  /O2 /MT /Gy /TP
+slices/s004c46d0/s004c46d0.cpp  ?fill_records@@YAXPAXIPBXPAUblock_copier@@@Z  004c5010  /O2 /MT /Gy /TP

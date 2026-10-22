@@ -1,0 +1,15 @@
+004902a0 World::token           # hash-like combatant token
+00490310 Mgr::paged_last        # last element of a paged vector
+00490340 Mgr::clear_entities    # delete the entity vector
+004903e0 Mgr::is_slot           # party type == 1 test
+00490430 Mgr::script_value      # script/troop value
+004904a0 Mgr::agent_of          # agent of a script value
+00490520 Mgr::dtor_common       # non-deleting destructor
+00490570 Mgr::place             # set extents/position, notify
+004905c0 Mgr::track_bounds      # move an entity and expand bounds
+004906b0 Mgr::activate_all      # notify every entity
+004906e0 Mgr::reset_all         # reset every entity
+00490710 Mgr::bounds_of         # clip and accumulate bounds
+004908c0 Mgr::update_all        # update every entity
+00490930 Mgr::delete_this       # deleting destructor
+00490990 World::mark_kind       # mark parties of a kind dirty

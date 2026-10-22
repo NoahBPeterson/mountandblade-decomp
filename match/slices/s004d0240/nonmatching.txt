@@ -1,0 +1,1 @@
+004d0240  820  complete; tree too far off (size 710 vs 991: switch jump table, shared 0x208 epilogue and the WM_COMMAND tail are not reproduced by the compiler, so the tail is spelled with inline asm); diff-test WEAK (400/400 valid, 7.4% coverage: only the two zero/one dispatch cases are exercised, the 0x111/0x114 paths stay unreachable behind unmodelled imports)

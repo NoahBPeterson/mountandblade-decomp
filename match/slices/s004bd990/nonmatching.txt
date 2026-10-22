@@ -1,0 +1,7 @@
+004bd990 253 psys_record::load: complete; group chaining recovered but 'this' stays in ebx where the original uses edi (size 449 vs 461); equiv UNSUPPORTED (0/400 valid: fake-arity + fault(read))
+004bdb60 117 loaded_psys_table::load_used: complete; inner/outer scan register shape differs (size 154 vs 156); equiv UNSUPPORTED (unresolved w_cstr@log_stream)
+004bdc00 147 psys_record::read: complete; r_i64 chain split and float-ternary codegen differ (size 325 vs 335); equiv UNSUPPORTED (0/400 valid: _purecall on unmocked vtable)
+004bdec0 124 prsnt_load_used: complete; inner scan shape (size 137 vs 153); equiv UNSUPPORTED (unresolved w_cstr@log_stream)
+004bdff0 1 sound_record::save: loop entry lea base only (edi+0x48 vs edi+0x50); stream slot for underscores_to_spaces is an external import
+004be0e0 245 music_player::play: complete; FMOD path/format handling codegen differs (size 234 vs 282); equiv UNSUPPORTED (0/400 valid: _FSOUND_Stream_Open@16 + fault(read))
+004be270 126 snd_load_used: complete; inner scan shape (size 140 vs 157); equiv UNSUPPORTED (unresolved w_cstr@log_stream)

@@ -1,0 +1,6 @@
+slices/s004cbcd0/s004cbcd0.cpp  ?_Insert_n@?$vector@UE44@@V?$allocator@UE44@@@std@@@std@@IAEXViterator@12@IABUE44@@@Z  004cbcd0  /O2 /MT /Gy /TP
+slices/s004cbcd0/s004cbcd0.cpp  ?_Insert_n@?$vector@UE516@@V?$allocator@UE516@@@std@@@std@@IAEXViterator@12@IABUE516@@@Z  004cbf90  /O2 /MT /Gy /TP
+slices/s004cbcd0/s004cbcd0.cpp  ?erase_110@@YIXPAXH00@Z  004cc260  /O2 /MT /Gy /TP
+slices/s004cbcd0/s004cbcd0.cpp  ??0?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@QAE@ABV01@@Z  004cc280  /O2 /MT /Gy /TP
+slices/s004cbcd0/s004cbcd0.cpp  ??0?$vector@UE44@@V?$allocator@UE44@@@std@@@std@@QAE@ABV01@@Z  004cc350  /O2 /MT /Gy /TP
+slices/s004cbcd0/s004cbcd0.cpp  ?_Insert_n@?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@IAEXViterator@12@IABUscalar4@@@Z  004cc430  /O2 /MT /Gy /TP

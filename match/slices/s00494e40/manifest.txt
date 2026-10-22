@@ -1,0 +1,3 @@
+slices/s00494e40/s00494e40.cpp  ?add_random_experience@GameData@@QAEHH@Z  004952a0  /O2 /MT /Gy /TP
+slices/s00494e40/s00494e40.cpp  ?push@SceneList@@QAEPAUSceneObject@@XZ  00495650  /O2 /MT /Gy /TP
+slices/s00494e40/s00494e40.cpp  ?remove@SceneMap@@QAEXH@Z  00495700  /O2 /MT /Gy /TP

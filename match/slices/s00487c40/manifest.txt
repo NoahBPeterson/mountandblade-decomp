@@ -1,0 +1,2 @@
+slices/s00487c40/s00487c40.cpp  ?set_a@Effect@@QAEXMH@Z  00488560  /O2 /MT /Gy /TP
+slices/s00487c40/s00487c40.cpp  ?set_b@Effect@@QAEXMH@Z  004885a0  /O2 /MT /Gy /TP

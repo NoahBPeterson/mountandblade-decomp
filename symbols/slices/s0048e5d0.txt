@@ -1,0 +1,16 @@
+# slice s0048e5d0 evidence symbols (names provisional; addresses from slice disassembly)
+0048e5d0 ?slot70@SlotAPI@@QAEXIMH@Z  # wrapper: reads +0x20 int64 tick, computes (g_ticks[idx]-tick)*1e-5f+bump, stores via time=max
+0048e650 ?slot71@SlotAPI@@QAEXIMH@Z  # same wrapper, slot target vt+0x10
+0048e6d0 ?slot72@SlotAPI@@QAEXIMH@Z  # same wrapper, slot target vt+0x14 (b<<24)
+0048e750 ?slot73@SlotAPI@@QAEXIMH@Z  # same wrapper, slot target vt+0x18
+0048e7d0 ?slot74@SlotAPI@@QAEXIMH@Z  # same wrapper, slot target vt+0x1c (b<<24)
+0048e850 ?slot75@SlotAPI@@QAEXIMH@Z  # same wrapper, slot target vt+0x20
+0048e8d0 ?resolve@NameRec@@QAEPAUtstring@@XZ  # g_strtable.find(&key) or &name
+0048e8f0 ?get_string@NameTable@@QAE?AUtstring@@HH@Z  # kind 0 registers, 0x16 base2/count2, else base/count
+0048e9e0 ?string_value@World@@QAE?AUtstring@@H@Z  # g_script_string.assign; fmt16/spr/g_strtable.lookup
+0048ea80 ?cell_search@@YGPAXH@Z  # free __stdcall: scan grid [0xa732b4] up to 0x100 candidates, first rec_applies
+0048eb50 ?inventory_add@InvOwner@@QAEXHH@Z  # agent_base+agent_index*0x508 rows at +0xb4; add/msg/replace/recurse
+0048ed60 ?inventory_tag@InvOwner@@QAEXHH@Z  # 0x1c8 records at +0x668c; name.equals(g_tags[a*0x78])
+0048ee20 ?inventory_count@InvOwner@@QAEHH@Z  # count records whose name equals g_tags[tag*0x78]
+0048ee90 ?inventory_find@InvOwner@@QAEHHH@Z  # index of nth matching record, else -1
+0048ef20 ?slot@AgentPages@@QAEPAXI@Z  # (char*)pages[index>>4] + (index&0xf)*0x98

@@ -1,0 +1,13 @@
+00476111  0  catch(...) { deallocate(_Ptr); throw; } funclet of std::vector<rec36>::reserve (0x476020), at
+                offset +241 in the same COMDAT; symbol-less COMDAT tail. Verified byte-identical via cmpobj.py
+                (reserve COMDAT, len 262: 0 diff). Equivalence UNSUPPORTED: not a callable function.
+00476225  0  catch(...) { deallocate(_Ptr); throw; } funclet of std::vector<rec136>::reserve (0x476130), at
+                offset +245 in the same COMDAT; symbol-less COMDAT tail. Verified byte-identical via cmpobj.py
+                (reserve COMDAT, len 266: 0 diff). Equivalence UNSUPPORTED: not a callable function.
+
+# Extra function reconstructed by this slice's source but not listed in the entry (the slice file covers a
+# contiguous range): complete, not byte-exact.
+00475e50  202  TimedObj::TimedObj(): complete; the only difference is scheduling of one `mov edx, ecx` (cl
+                13.10.3052 hoists it above the four zero stores to +0x516c..+0x5178, the original emits it just
+                before the zero Vec2 temp at [esp]); the byte count is the shifted tail after that 2-byte
+                insertion. 12 source spellings tried; none changes the schedule. equiv.py PASS (400 inputs, all edges).

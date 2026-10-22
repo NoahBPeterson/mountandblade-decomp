@@ -1,0 +1,5 @@
+slices/s00527c90/s00527c90.cpp  ?save_scene@GameData@@QAEXH@Z  00527c90  /O2 /MT /Gy /TP
+slices/s00527c90/s00527c90.cpp  ?save@SceneObj@@QAEXPAUstream_base@@@Z  00527ef0  /O2 /MT /Gy /TP
+slices/s00527c90/s00527c90.cpp  ?save_scene_data@Mission@@QAEXXZ  00527f90  /O2 /MT /Gy /TP
+slices/s00527c90/s00527c90.cpp  ?save@GridSet@@QAEXPAUstream_base@@@Z  00528000  /O2 /MT /Gy /TP
+slices/s00527c90/s00527c90.cpp  ?release@ResourceOwner@@QAEXXZ  00528470  /O2 /MT /Gy /TP

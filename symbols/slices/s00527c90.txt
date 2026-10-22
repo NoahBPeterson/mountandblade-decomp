@@ -1,0 +1,12 @@
+00527c90 GameData::save_scene  # opens Modules\<mod>\SceneObj\<name>.sco via bin_writer and serialises one 0x494-byte scene record
+00527da0 SceneObjRec::save  # writes version tag -0x2cd, tag 4, the filtered object list, then both embedded streams
+00527ef0 SceneObj::save  # serialises one 0x1c8-byte scene object (ids, matrix, name, tail floats)
+00527f90 Mission::save_scene_data  # resets the live scene's two memory streams and serialises grids / sub-record
+00528000 GridSet::save  # writes grid count + dimensions then every 0x18-byte grid
+00528060 Grid::save  # run-length encodes one grid, quantising floats to bytes
+00528410 Mission::release_item  # releases the resource in one per-item slot and removes its entity
+00528470 ResourceOwner::release  # marks every owned sub-resource with flag 0x8000
+0054a740 ??_7stream_base@@6B@  # stream root vtable
+0054add8 ??_7bin_writer@@6B@  # file binary writer vtable
+005e292c g_mission  # current Mission*
+005e2930 g_game  # current GameData*

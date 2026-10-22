@@ -1,0 +1,4 @@
+slices/s004e5f80/s004e5f80.cpp  ?assign_elems@@YAXPAUvector16_pair@@0PBU1@@Z  004e5f80  /O2 /MT /Gy /TP
+slices/s004e5f80/s004e5f80.cpp  ?fill_records@@YAXPAURec@@IPBU1@PAUBuilder@@@Z  004e5fc0  /O2 /MT /Gy /TP
+slices/s004e5f80/s004e5f80.cpp  ?reset_geometry@BigObj@@QAEXXZ  004e64b0  /O2 /MT /Gy /TP
+slices/s004e5f80/s004e5f80.cpp  ?update@BigObj@@QAEXM@Z  004e6510  /O2 /MT /Gy /TP

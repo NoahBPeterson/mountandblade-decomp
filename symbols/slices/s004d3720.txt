@@ -1,0 +1,7 @@
+# s004d3720 -- world-record init/destroy, default restore, hash insert, two range wrappers
+004d3720 Big::destroy  # vecdel f040, delete[] f044 (0x18 stride), v1bc/v78/v68/v58/v48 clear, Tail dtors f1ac/f19c, tstring f028 and *this
+004d3880 Big::init  # 0x40 x 0x130 block ctors, repeated {2, g_5e2958, g_5e295c} triples, Sub63d0/Sub6698 init, tstring f6814 ctor
+004d3a50 restore_defaults  # clears game f1a090..f1a0c4, world node flags, and conditionally the UI change-question dialog
+004d3c00 hash_table::insert  # rehash walk with sentinel rotation, bucket fixups, key lookup, node copy/alloc, ret 8 {node, inserted}
+004d3e50 TreeW::erase  # range dtor wrapper 0x4cd570(first,last,this,last)
+004d3e70 TreeW::insert  # 0x4cd620 copy -> 0x4ca7e0 destroy -> f8 = new, then *out = first

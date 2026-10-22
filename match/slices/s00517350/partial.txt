@@ -1,0 +1,1 @@
+0051776f  0  not a function: five bytes of int3 padding between sun_color (ends 0x51776f) and sky_color (starts 0x517770)

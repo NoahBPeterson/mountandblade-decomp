@@ -1,0 +1,9 @@
+slices/s004bab70/s004bab70.cpp  ?user_path@@YAXPAD@Z  004bab70  /O2 /MT /Gy /TP
+slices/s004bab70/s004bab70.cpp  ?screenshots_path@@YAXPAD@Z  004babf0  /O2 /MT /Gy /TP
+slices/s004bab70/s004bab70.cpp  ?unescape@@YIXPAUtstring@@@Z  004bac70  /O2 /MT /Gy /TP
+slices/s004bab70/s004bab70.cpp  ?update_view_rect@Core@@QAEXXZ  004bace0  /O2 /MT /Gy /TP
+slices/s004bab70/s004bab70.cpp  ?init_d3d@Core@@QAEHXZ  004bad70  /O2 /MT /Gy /TP
+slices/s004bab70/s004bab70.cpp  ?set_list_scroll@@YAXH@Z  004bb260  /O2 /MT /Gy /TP
+slices/s004bab70/s004bab70.cpp  ?pump_messages@@YAXXZ  004bb310  /O2 /MT /Gy /TP
+slices/s004bab70/s004bab70.cpp  ?set_debug_label@@YAXXZ  004bb390  /O2 /MT /Gy /TP
+slices/s004bab70/s004bab70.cpp  ?set_progress_range@@YAXHH@Z  004bb3b0  /O2 /MT /Gy /TP

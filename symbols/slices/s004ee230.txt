@@ -1,0 +1,34 @@
+004ee230 build             quest_window::build       ?build@quest_window@@QAIXXZ
+004ee840 refresh           quest_window::refresh     ?refresh@quest_window@@QAIXXZ
+004ee910 make_scrollbar    make_scrollbar            ?make_scrollbar@@YAPAUwidget@@PAU1@MMMM@Z
+004eea90 make_quest_list   make_quest_list           ?make_quest_list@@YAPAUwidget@@PAU1@PBM1H@Z
+005e2930 g_game            quest database base       (quest array pointer at +0x13a58, quest count at +0x13a5c; rows of 0x138 bytes)
+005e2a18 g_strtable        string table              lookup 0x43a1e0 (key pushed last, returns tstring*)
+005d6fa0 g_resmgr          resource manager          get_object 0x419540
+005d7080 gui_manager       gui manager               reset 0x42d1b0, set_window 0x49b120
+005d8788 g_frame_flag      frame flag byte           set to 1 by build
+0054ab1c g_54ab1c         float constant            row pitch per quest / per row
+0054b4d0 g_54b4d0         float constant            clamped frame height
+00591d54 g_591d54         float constant            frame height base
+005987e4 g_5987e4         float constant            frame height limit
+00590b70 g_590b70         float constant            scrollbar width factor
+00592758 g_592758         float constant            scrollbar height factor
+00592754 g_592754         float constant            scrollbar +0x17c factor
+0053545e ??2@YAPAXI@Z     operator new (scalar)     the new-form used by every `new widget` here
+0048ae20 ctor_panel        widget (0x178) ctor     returns this, vtable set by the caller
+004931a0 ctor_window       widget (0x190) ctor     vtable 0x592848
+0048b890 ctor_scrollbar    widget (0x188) ctor
+0049deb0 ctor_list         widget (0x4a8) ctor
+00488d50 list_setup        list widget setup
+0049b120 gui_set_window    gui manager window setter
+004dce70 make_text         text widget factory       (parent, tstring*, w, h, x, y)
+004de320 make_color        colour mesh factory       (colour buffer, rgb)
+0043a1e0 StrTable::lookup  string table lookup
+0042d1b0 gui_reset         gui manager reset
+0041c6d0 mesh::clone       resource object clone
+0047af30 mesh::set_color    resource colour           vector4 by value
+0042bbe0 tstring::tstring  from const char*
+0042c110 tstring copy ctor
+0042bc40 tstring::~tstring
+0042cc80 mb_error          error message             takes the tstring* it received
+00415100 mb_snprintf      snprintf                  (buf, size, fmt, ...)

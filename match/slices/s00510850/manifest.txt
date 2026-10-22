@@ -1,0 +1,2 @@
+slices/s00510850/s00510850.cpp  ?slot_flag@InventoryPanel@@QAEXHHID@Z  00510850  /O2 /MT /Gy /TP
+slices/s00510850/s00510850.cpp  ?place_slot@InventoryPanel@@QAEXPAUUiWidget@@PAUItemRef@@HH@Z  00510f50  /O2 /MT /Gy /TP

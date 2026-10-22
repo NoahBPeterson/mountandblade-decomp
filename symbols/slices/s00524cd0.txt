@@ -1,0 +1,4 @@
+00524cd0 ?uninit_copy_str@@YAPAUtstring@@PAU1@00AAUtstring_alloc@@Uptr_tag@@@Z  # _Uninit_copy for tstring vectors with its catch(...) handler - byte-exact
+00524d3a -  # catch(...) handler body of 0x524cd0 (symbol-less EH tail, relocation-only differences)
+00524d60 ?read@SceneRec@@QAEXAAUstream_base@@@Z  # SceneRec::read(stream_base&) - polymorphic scene record (0x494 bytes, vtable 0x590904)
+00524f00 ?read@Local@@QAEXAAUser_stream@@@Z  # Local::read(ser_stream&) - passage/site serialiser behind SceneRec::f444

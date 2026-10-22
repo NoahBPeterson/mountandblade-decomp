@@ -1,0 +1,2 @@
+004fba40 985 game-mesh builder: vector fallback and rotation-switch register/slot allocation differ; equiv UNSUPPORTED (resolution audit mismatch on append_skinned operand)
+004fbef0 98 vertex-darken loop: frame size and register scheduling differ; equiv WEAK (192/400 valid inputs, same 3 missed edges both sides)

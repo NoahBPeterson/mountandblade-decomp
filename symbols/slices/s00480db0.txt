@@ -1,0 +1,7 @@
+0x480db0 ?create_water@terrain_obj@@QAEXPAPAX@Z  # builds the "river" mesh from the wet terrain triangles and hands it to a new type-9 scene entity; `out` receives the mesh. Light terms: d = max(0, -dot(sun_dir, n)) * cell+0x40 * (map_centre sum * 0.33); written to world->store[1][cell.rec*9+8]. Water-type records are 40 bytes at this+0x28 (active at +0x00, < 0 skips); particle rows water_part[16][25] at 0x845d9f0
+0x4814a0 ?destroy_water@terrain_obj@@QAEXH@Z  # g_use_shaders (0x5e28fc): reset the psys (0x47fef0) and, when g_x5aa084 == 1 and g_use_shaders, relight lists at this+0xc3b0e4 (arg 1) and this+0x343b4ec (arg 0). Else when g_x5aa034: reset then re-point water_part[0][x*5+y] -> mat at +0x2c for x < nx, y < ny at the material at 0xa70248
+0x472020 ?light_particles@terrain_obj@@QAEXPAXH@Z  # thiscall, cleans 8: relight one particle list; second argument selects the variant (1 / 0)
+0x5e28fc g_use_shaders   # programmable-pipeline flag (selects the high-quality water paths)
+0x5aa034 g_x5aa034       # water quality toggle: adds the 16th particle row when shaders are off
+0x5aa084 g_x5aa084       # shader mode; 1 selects the relight branch of destroy_water
+0xa70248 g_psys          # particle-system global; dword [+0] is the material destroy_water restores

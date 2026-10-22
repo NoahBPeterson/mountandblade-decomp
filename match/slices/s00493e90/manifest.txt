@@ -1,0 +1,2 @@
+slices/s00493e90/s00493e90.cpp  ?purge_all_493f30@QMgr@@QAEXXZ  00493f30  /O2 /MT /Gy /TP
+slices/s00493e90/s00493e90.cpp  ?set_params_4942f0@QMgr@@QAEXHI@Z  004942f0  /O2 /MT /Gy /TP

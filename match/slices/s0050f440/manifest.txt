@@ -1,0 +1,4 @@
+slices/s0050f440/s0050f440.cpp  ?advance@LoadingScreen@@QAE_NPAH0PAUtstring@@@Z  0050f440  /O2 /MT /Gy /TP
+slices/s0050f440/s0050f440.cpp  ?build@Table@@QAEXPAUSrc@@@Z  0050f7e0  /O2 /MT /Gy /TP
+slices/s0050f440/s0050f440.cpp  ?read@Rec@@QAEXPAUSrc@@@Z  0050f840  /O2 /MT /Gy /TP
+slices/s0050f440/s0050f440.cpp  ?build_quad@Frame570@@QAEXXZ  0050f8a0  /O2 /MT /Gy /TP

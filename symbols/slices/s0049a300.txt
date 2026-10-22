@@ -1,0 +1,1 @@
+05e2934 ?g_font@@3PAUFont@@A  # Font* : the global layout font, read by Mission::layout_text_to (0x49abc0) before the shared Font::layout_text call

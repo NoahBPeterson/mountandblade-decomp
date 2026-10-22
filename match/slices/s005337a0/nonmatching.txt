@@ -1,0 +1,3 @@
+005337a0 402 on_tick: frame/register scheduling differs (size 693 vs 692); equiv UNSUPPORTED (no valid inputs)
+00533a60 45 get3: original materializes address with lea before load, compiler folds into one mov (size 57 vs 61); equiv PASS
+00533aa0 1435 on_input: large vector/UI update handler, scheduling and frame size differ (size 1191 vs 1719); equiv UNSUPPORTED (import resolution audit)

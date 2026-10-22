@@ -1,0 +1,6 @@
+004d5410 MissionSource::pick  # item-source frame: kind-7 nearest-item search + per-item key reactions (this = Hud+0x30)
+004d5940 ValueSource::on_value_changed  # progress-bar step handler; value source at item+0x484, slots +0xf0
+004d5980 Hud::on_mission_start  # spawn-tick stamp, mission setup (0x484590), screen switch, menu option 0xe
+004d59f0 Hud::on_leave  # "leave" button -> menu option 7 (byte-exact; this = Hud, button at +0x34)
+004d5a20 Hud::on_update  # per-frame: mission-clock step, page list/buttons, menu button
+0xa75f2c g_menu_kinds  # menu-kind table, element stride 0x1c, timer-list sound holder at +0x14

@@ -1,0 +1,2 @@
+004c6e00 map_menu_reset  # tails into gui_manager::reset (0x42d1b0) on the UI root 0x5d7080
+004c6ca0 MapObject::mesh_ptr  # "_door" + mesh name looked up in the translation table 0x5e2a18 (0x4c6010), falls back to the name at +0x10

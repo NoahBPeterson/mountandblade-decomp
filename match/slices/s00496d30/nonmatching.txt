@@ -1,0 +1,1 @@
+00496d30  2489  complete; WEAK equiv (171/200 valid inputs, no mismatch, 73.4% cov; random-pointer faults). Structure matches (6 elapsed timers, 3 mesh scale lerps + invalidate, two colour/alpha groups on slots 0x98/0x9c, +0x6c/+0x70 vectors, set_pos, dirty refresh on +0x94); remaining diffs are x87 scheduling and frame-slot allocation (size 2801 vs 2886).

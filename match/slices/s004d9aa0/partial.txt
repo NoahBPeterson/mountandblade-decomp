@@ -1,0 +1,2 @@
+# none: every VA in this slice is either byte-exact (manifest.txt) or
+# behaviourally complete and non-exact (nonmatching.txt).

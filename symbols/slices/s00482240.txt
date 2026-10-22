@@ -1,0 +1,6 @@
+00482240 build_appearance  # builds an agent's appearance lods from troop + equipset (12 cdecl args)
+8ed4f68 ?g_cur@@3HA  # index of the character being built (read at 0x482590); beyond the resolver's annotation range
+8ed4f7c ?g_chars@@3PAUEChar@@A  # character record table (0x1f8-byte EChar records), read at 0x482596 etc.; beyond annotation range
+8ed4f88 ?g_char_count@@3HA  # number of EChar records (bounds checks at 0x48284c, 0x482979, ...); beyond annotation range
+8ed4f8c ?g_dummy_mat@@3MA  # scratch float passed as the matrix to use_carry (0x4825a2); beyond annotation range
+48add0 ?play@ItemSound@@QAEXH@Z  # item sound player (this = &ItemKind+0x228), called with -50 at 0x482xxx

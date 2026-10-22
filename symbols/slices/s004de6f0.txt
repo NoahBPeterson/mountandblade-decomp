@@ -1,0 +1,1 @@
+004de6f0 ?open@OptionsScreen@@QAEXXZ  # options-screen setup, thiscall on the menu object (fields +0x2c..+0xd4)

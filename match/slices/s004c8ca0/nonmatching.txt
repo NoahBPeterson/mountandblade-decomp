@@ -1,0 +1,1 @@
+0x4c8ca0  4285  Complete reconstruction of GameData::save_language_files(bool); all CSV blocks, translation lookups and row writers implemented. Not byte-exact (size 6074 vs 6320); equivalence harness UNSUPPORTED because CreateDirectoryA has no import model (0/400 generated inputs valid).

@@ -1,0 +1,36 @@
+# names used while matching slice s004eeb10 (character-sheet per-frame update)
+004eeb10  CharSheet::update
+004ef420  CharSheet::apply_to_troop
+004ef6d0  CharSheet::steps_to_point
+004ef7d0  CharSheet::update_skill_rows
+004ef9f0  CharSheet::update_detail
+004f0820  CharSheet::refresh_panels
+004f06f0  CharSheet::refresh_lists
+004f1390  MsgLog::flush (object 0x5d7080)
+005e2930  g_game
+008ee3100 g_skill_tbl (max rank at +0x34)
+005d8790  g_world_time (scaled into the scroll bar)
+00590d7c  scroll scale constant
+00a73980  g_main_menu (0x495700 choose)
+00495700  ?choose@MainMenu@@QAEXH@Z  # MainMenu::choose (other slice s004d6b80)
+00a73984  g_profile
+00a739f4  g_menu_state
+00a739e0  g_army_state
+00a170d8  g_a170d8
+00a17118  g_a17118
+00a17148  g_a17148
+00a17188  g_a17188
+00a17348  g_a17348
+00a174d8  g_a174d8
+00a17518  g_a17518
+00a17588  g_a17588
+005a9fbc  g_a5a9fbc
+005e29c4  g_trial_mode
+00427f40  world::step
+0048baa0  UiDsv::set_value
+0048bf90  set_skill
+0048bef0  attribute learning
+00437770  bump proficiency
+004687e0  inv_auto_equip
+004428c0  equip hero
+00435790  sl_query

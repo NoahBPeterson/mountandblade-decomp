@@ -1,0 +1,11 @@
+00524360 ?init@TriggerStmt@@QAEXHH@Z  # TriggerStmt::init(int op, int idx) - byte-exact
+005243c0 ?read_skill@@YAAAUstream_base@@AAU1@AAUSkillRec@@@Z  # read_skill(stream_base&, SkillRec&) - byte-exact
+00524420 ?read@TroopRec@@QAEXAAUstream_base@@@Z  # TroopRec::read(stream_base&) - tool_kit record reader (0x508 bytes)
+00524690 ?read@QuestRec@@QAEXAAUstream_base@@@Z  # QuestRec::read(stream_base&) - byte-exact
+00524710 ??0TroopRec@@QAE@XZ  # TroopRec::TroopRec()
+00524860 ??0QuestRec@@QAE@XZ  # QuestRec::QuestRec()
+005248e0 ??0RecY@@QAE@XZ  # RecY::RecY() - polymorphic scene record (vtable 0x590904)
+005249f0 ??0Faction@@QAE@XZ  # Faction::Faction()
+00524a70 ?read@Faction@@QAEXAAUstream_base@@H@Z  # Faction::read(stream_base&, int count)
+00524bc0 ?reserve@tstring_vec@@QAEXI@Z  # tstring_vec::reserve(unsigned) with a catch(...) EH frame
+00524cb6 -  # catch(...) handler body of 0x524bc0 (symbol-less EH tail)

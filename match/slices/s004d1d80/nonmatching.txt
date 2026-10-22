@@ -1,0 +1,1 @@
+004d1d80  1196  register/frame layout: original keeps `found` and the accumulated face normal in different slots and inlines vector4::normalize with a shorter spill pattern; ours recomputes &*begin() per access. equiv WEAK: 33 valid inputs (<200), 86.2% insns (361/419), no mismatch

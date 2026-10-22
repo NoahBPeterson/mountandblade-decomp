@@ -1,0 +1,2 @@
+004cda90 LangTables::load  # untagged member of the 0xdf3-bucket language tables (0x5a8e68), ret 4
+004cda20 LangTables::LangTables  # untagged ctor of the language tables

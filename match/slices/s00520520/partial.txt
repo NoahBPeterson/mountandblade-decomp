@@ -1,0 +1,13 @@
+# s00520520 partial: no separate source function for either VA.
+# 00520b20 - spurious Ghidra split. This VA is only the 13-byte guard prologue of GameState::build_map
+#            (mov al,[0xa73090]; sub esp,0x38; push ebx; xor ebx,ebx; cmp al,bl at 0x520b20..0x520b2d);
+#            it falls through into 0x520b2d and is not a callable function.
+# 00520b2d - spurious Ghidra split. The 202-byte fall-through body of the very same build_map
+#            (0x520b2d..0x520bf6): nothing branches, calls or points to it. The complete function is
+#            written once at the `// @ 0x520b20` marker (0x520b20..0x520bf6, 214 bytes) and its result is
+#            recorded in nonmatching.txt, so these bytes are emitted but neither VA can be scored as a
+#            standalone function.
+00520b20 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+00520b2d 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+00520b20 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+00520b2d 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)

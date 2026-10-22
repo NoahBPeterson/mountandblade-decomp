@@ -1,0 +1,2 @@
+# Both are reconstructions (0x4d1410: node/region tests, region update and normal computed; 0x4d1880:
+# init + face reset walked, per-face push loop blocked out). See partial.txt. Flags /O2 /MT /Gy /TP.

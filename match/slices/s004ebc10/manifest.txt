@@ -1,0 +1,14 @@
+# s004ebc10 manifest: byte-exact functions
+#
+# 0x4ebc10 take_screenshot - next-free mb<N>.bmp path, save + translated result message. The original
+#          calls the file-local 0x4babf0 helper with its out pointer in ESI (cl's static-function
+#          register convention); the slice defines that helper static to reproduce the call site.
+# 0x4ebdc0 dtor_ui_row     - out-of-line allocator destroy(pointer) for the 0x20-byte row (__stdcall).
+# 0x4ebe10 append_rows     - VC7.1 <memory> _Uninit_copy (try/catch; emits its own EH frame with /O2).
+# 0x4ebea0 Screen::Screen  - 1.1 MB screen ctor.
+# 0x4ec460 frame_hook      - end-of-frame screenshot / leave-mission callback.
+slices/s004ebc10/s004ebc10.cpp  ?take_screenshot@@YAXXZ  004ebc10  /O2 /MT /Gy /TP
+slices/s004ebc10/s004ebc10.cpp  ?dtor_ui_row@@YGXPAUUiRow@@@Z  004ebdc0  /O2 /MT /Gy /TP
+slices/s004ebc10/s004ebc10.cpp  ?append_rows@@YAPAUUiRow@@PAU1@00AAURowAlloc@@@Z  004ebe10  /O2 /MT /Gy /TP
+slices/s004ebc10/s004ebc10.cpp  ??0Screen@@QAE@XZ  004ebea0  /O2 /MT /Gy /TP
+slices/s004ebc10/s004ebc10.cpp  ?frame_hook@@YAXXZ  004ec460  /O2 /MT /Gy /TP

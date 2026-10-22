@@ -1,0 +1,13 @@
+004ce960 ??0MissionBlocker@@QAE@XZ  # ctor of the 0x2c8-byte mission blocker (vtable 0x59616c; owns a 0xd4 frustum at +0xf8)
+004cea10 ?init@MissionParams@@QAEXH@Z  # initialiser of the 0x328-byte mission parameter block (thiscall, one int arg)
+004ceb30 ??0ItemA@@QAE@XZ  # ctor of the 0x60-byte item record, vtable 0x596190
+004ceb90 ?update@MissionUpdater@@QAEXXZ  # per-frame update of the placed mission objects (16-slot table, snd_channel scheduling)
+004cee50 ??0ItemD@@QAE@XZ  # ctor of the 0x9c-byte item record with two owned pointer triples, vtable 0x5961c0
+004ceea0 ??_GItemD_vt@@UAEPAXI@Z  # deleting dtor of the 0x9c-byte record above (ret 4; frees when the flag bit is set)
+004ceec0 ??1ItemD_vt@@UAE@XZ  # releasing dtor of that record (frees both owned blocks, then the tstring)
+004cef20 ??0ItemB@@QAE@XZ  # ctor of the 0x60-byte item record, vtable 0x5961e4
+004cef80 ??0ItemC@@QAE@XZ  # ctor of the 0x60-byte item record, vtable 0x596208
+004cefe0 ?push_back@vec2c@@QAEXPAD@Z  # append one 0x2c-byte element with the capacity check (thiscall, ret 4)
+004cf070 ?walk50@@YAXPAUrec50@@0PAX@Z  # walk a 0x50-stride record array calling the reader 0x4cd270
+004cf0a0 ?walk68@@YAXPAUrec68@@0PAX@Z  # walk a 0x68-stride record array calling the reader 0x4cd2f0
+004cf0d0 ?walkb0@@YAXPAUrecb0@@0PAX@Z  # walk a 0xb0-stride record array calling the reader 0x4cd380

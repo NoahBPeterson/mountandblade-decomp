@@ -1,0 +1,2 @@
+0049bea0  592  complete; object/agent-table layout and the 5-arg add_item convention could not be confirmed, so no byte-exact codegen
+0049c170  222  complete and equivalence-PASS; the hand-scheduled flag/team decision chain (cl 13.10 bit-test ordering) is not reproduced byte-for-byte

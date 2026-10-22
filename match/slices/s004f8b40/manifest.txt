@@ -1,0 +1,2 @@
+slices/s004f8b40/s004f8b40.cpp  ?hide@Agent@@QAEXXZ  004f8bc0  /O2 /MT /Gy /TP
+slices/s004f8b40/s004f8b40.cpp  ?show@Agent@@QAEXXZ  004f8c20  /O2 /MT /Gy /TP

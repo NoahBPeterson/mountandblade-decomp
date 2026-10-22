@@ -1,0 +1,4 @@
+0051eb90 Scene::read  # loads the scene party table: clear, grow pages until the saved count fits, then per record the alive flag, the id-hash insert (open addressing, key % 0x2717, step 0x4f, value = record index) and Rec5ac8::read; finally rebuilds the free index list and stores the second header int at +0x138dc
+0051eda0 Scene::clear  # resets the id hash (0x2717 entries to -1), frees the free index vector, marks every party record dead and refills the free list with 0..count-1
+0051ee50 Scene::get  # record of a party id: lookup(id) -> pages[idx >> 4] + (idx & 0xf) * 0x5ac8
+0051ee80 Rec5ac8::read  # reads one 0x5ac8-byte party record: name string + '_' fixup, 8-byte blocks, chained int pairs (0x30/0x34/0x38, 0x7c/0x80/0x84, 0x8ec/0x8f0, 0x924/0x928), a 0x20-stride 0xa8 array, and the extended block guarded by the flag argument (vectors at 0x8b8/0x59f4/0x59d8, SOA at 0x5a08); without the flag it derives +0x78 from the byte at +0xa6

@@ -1,0 +1,5 @@
+slices/s00502300/s00502300.cpp  ?init_window@PartyWindow@@QAEXXZ  005025a0  /O2 /MT /Gy /TP
+slices/s00502300/s00502300.cpp  ?destroy_troop@TroopRec@@QAEPAXE@Z  00502300  /O2 /MT /Gy /TP
+slices/s00502300/s00502300.cpp  ?refresh_stash@PartyWindow@@QAEXH@Z  00502c30  /O2 /MT /Gy /TP
+slices/s00502300/s00502300.cpp  ?make_mesh@PartyWindow@@QAEPAUmesh@rgl@@PAHPAMH@Z  00502b80  /O2 /MT /Gy /TP
+slices/s00502300/s00502300.cpp  ?add_strip_icon@PartyWindow@@QAEXPADABUtstring@@HH@Z  005024e0  /O2 /MT /Gy /TP

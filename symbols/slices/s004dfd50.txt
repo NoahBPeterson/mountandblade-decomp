@@ -1,0 +1,2 @@
+004dfd50 make_slider  # creates the horizontal slider UiB: move_a(x,y), move_f0(y*0.25,k*0.03), clones slider_hor/handle_hor, recolours both with vector4(k,k,k) when k != 1.0f, set_track(0/2), add_child
+004dfec0 make_button  # creates the drop-down/combo PanelB: move_a(x+0.0176,y), button_drop/_clicked/_hl meshes on tracks 2/1/3, child objects, then the combobox_* size/position/text settings

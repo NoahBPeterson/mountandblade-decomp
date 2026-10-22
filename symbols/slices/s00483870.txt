@@ -1,0 +1,5 @@
+# slice s00483870 - globals referenced by the matching/differential harness that live outside the image
+# (VA >= SizeOfImage 0x8b4f000) or that equiv.py cannot model as plain globals.
+8ee3ac4 ?g_skin_cap@@3HA  # int, skin-index clamp used by Game::spawn_full (0x483870); beyond annotation range
+a70448 ?g_spawn_lo@@3HA  # low dword of the last handed-out pool id (0x483870)
+a7044c ?g_spawn_hi@@3HA  # high dword (sign) of the last handed-out pool id (0x483870)

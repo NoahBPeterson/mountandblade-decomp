@@ -1,0 +1,2 @@
+004fc820 1966 game-log HUD builder: helper-abstracted widget/tab construction collapses the inlined original; equiv UNSUPPORTED (unmodelled _purecall from virtual widget calls)
+004fd150 21 log-widget ctor: field stores and the +0x198 subobject call are scheduled differently; size exact, equiv PASS

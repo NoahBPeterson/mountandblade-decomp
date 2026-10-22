@@ -1,0 +1,1 @@
+004fd700 ?layout@Font@@QAEPAUMapText@@PAXPBX11PAUmesh@rgl@@11111HH11111@Z  # map-text row renderer (Font::layout)

@@ -1,0 +1,1 @@
+004985f0 2279 complete but not byte-identical: full per-frame update of all four colour groups, both bar scales and the position lerp (2563 bytes vs 2645). Remaining divergence is register/stack allocation of the six elapsed() floats and the x87 compare forms; behaviourally equivalent (equiv.py: WEAK, 186/200 valid, 69.0% coverage).
