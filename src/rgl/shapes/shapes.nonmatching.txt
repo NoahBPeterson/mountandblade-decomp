@@ -14,3 +14,4 @@
 0040dfda  0  catch(...) { throw; } tail of uninit_fill_n<vector4> 0x40df60: byte-exact inside the parent's COMDAT (132 of 132)
 0040e200  0  catch(...) funclet of vec<mface>::insert_n 0x40e060 (was the slice's manifest row $L73928, built with /EHa): with the default flags it has no symbol; the parent's whole COMDAT (745 bytes) is byte-exact
 0040e3bb  0  catch(...) { throw; } tail of uninit_fill_n<mface> 0x40e350 (was the slice's manifest row $L72380): byte-exact inside the parent's COMDAT (117 of 117)
+0040c1d8  0  catch continuation label inside 0x40c140 (std::string::_Copy): the catch(...) funclet 0x40c1b1 returns 0x40c1d8 to resume after the handler; not a function (Ghidra split it off). The whole 328-byte COMDAT 0x40c140..0x40c288, funclet and continuation included, is byte-identical to the original
