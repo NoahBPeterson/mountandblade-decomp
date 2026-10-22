@@ -56,7 +56,10 @@ struct ui_control {
     virtual char is_key_down(int key);                              // +0x44
 };
 
-// the panel's text store: +0xa4 and +0xac both take a tstring and a float pair
+// set_text returns an 8-byte object through a hidden pointer that no caller destroys (a non-POD pair; same
+// slot as the terrain page's widgets, s004f25a0)
+struct WRet { int a, b; WRet(); };
+// the panel's text store
 struct text_store {
     virtual void t00(); virtual void t04(); virtual void t08(); virtual void t0c();
     virtual void t10(); virtual void t14(); virtual void t18(); virtual void t1c();
@@ -69,7 +72,7 @@ struct text_store {
     virtual void t80(); virtual void t84(); virtual void t88(); virtual void t8c();
     virtual void t90(); virtual void t94(); virtual void t98(); virtual void t9c();
     virtual void ta0();
-    virtual void add_key(tstring* text, float* pos);                // +0xa4
+    virtual WRet set_text(const tstring& s);                        // +0xa4
     virtual void add_text(tstring* text, float* pos);               // +0xa8
 };
 
@@ -183,9 +186,9 @@ struct options_panel {
 
     void key_binding_name(int slot, tstring* out, int* translated);  // 0x4d7d10
     void on_key_event(int);                                         // 0x4d7d90
-    void update_cursor();                                           // 0x4d7de0
-    void refresh_texts();                                           // 0x4d7e00
-    void draw_faction_report();                                     // 0x4d7e50
+    __declspec(noinline) void update_cursor();                      // 0x4d7de0
+    __declspec(noinline) void refresh_texts();                      // 0x4d7e00
+    __declspec(noinline) void draw_faction_report();                // 0x4d7e50
     void import_export(int);                                        // 0x4d8000
 };
 
@@ -227,10 +230,10 @@ void options_panel::update_cursor()
 // @ 0x4d7e00
 void options_panel::refresh_texts()
 {
-    tstring empty(EMPTY_TEXT);                                      // 0x54a480
-    const void* zero = 0;
-    texts->add_key(strtab_lookup(&empty), (float*)zero);
-    empty.clear();
+    {
+        tstring empty(EMPTY_TEXT);                                  // 0x54a480 ""
+        texts->set_text(empty);
+    }
     if (menu_open == 0)
         draw_faction_report();
 }
@@ -239,9 +242,7 @@ void options_panel::refresh_texts()
 void options_panel::draw_faction_report()
 {
     float row = 0.1f;
-    tstring empty(EMPTY_TEXT);                                      // 0x54a480
-    const void* zero = 0;
-    texts->add_key(&empty, (float*)zero);
+    texts->set_text(tstring(EMPTY_TEXT));                           // 0x54a480 ""
     tstring title("ui_factions_report");                            // 0x596bac
     float pos[2];
     pos[0] = 0.1f;

@@ -1,1 +1,3 @@
 slices/s004d7d10/s004d7d10.cpp  ?update_cursor@options_panel@@QAEXXZ  004d7de0  /O2 /MT /Gy /TP
+slices/s004d7d10/s004d7d10.cpp  ?on_key_event@options_panel@@QAEXH@Z  004d7d90  /O2 /MT /Gy /TP
+slices/s004d7d10/s004d7d10.cpp  ?refresh_texts@options_panel@@QAEXXZ  004d7e00  /O2 /MT /Gy /TP
