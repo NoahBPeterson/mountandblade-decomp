@@ -39,7 +39,9 @@ EH_PREFIXES = ("??_R", "__ehhandler$", "__unwindfunclet$", "__ehfuncinfo$", "__u
 # a function-local static ('?sMax@?1??Update@C@@QAEXXZ@4MA') or its guard ('?$S1@?1??Update@...')
 LOCAL_STATIC_RE = re.compile(r"@\?[0-9A-P]*\?\?")
 LOCAL_CONST_PREFIXES = ("__real@", "__xmm@", "__mask@", "__int64@", "??_C@", "__fltused")
-HEX_RE = re.compile(r"(?<![0-9A-Fa-f])(?:0x)?([0-9A-Fa-f]{6,8})(?![0-9A-Fa-f])")
+# the hex run must end the identifier or be followed by '_' (FUN_00abcdef, Fn9467b0, g_01582df8_x): a run followed by a
+# letter is part of a word ("??_7CD3DApplication" read as 0x7cd3da, a vtable mapped into .rdata garbage)
+HEX_RE = re.compile(r"(?<![0-9A-Fa-f])(?:0x)?([0-9A-Fa-f]{6,8})(?![0-9A-Za-z])")
 ADDR_IN_COMMENT = re.compile(r"(?:\b0x([0-9A-Fa-f]{6,8})|(?:\b|DAT_|FUN_|PTR_|LAB_|g_|_)([0-9A-Fa-f]{8}))\b")
 
 _md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)

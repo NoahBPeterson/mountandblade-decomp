@@ -52,6 +52,7 @@ from unicorn.x86_const import *                    # noqa: E402,F401,F403
 
 import slice as S                                  # noqa: E402
 import resolve as R
+import resaudit as RA                              # noqa: E402
 import regfacts as RF                                # noqa: E402
 import cfgcov as CF                                # noqa: E402
 import steer as ST                                 # noqa: E402
@@ -1852,6 +1853,16 @@ def _test_function(sid, va, opts, log=print):
     if t.verdict == "UNSUPPORTED":
         out.update(verdict="UNSUPPORTED", reason=t.reason, seconds=round(time.time() - t0, 1))
         return out
+    # Resolution audit (resaudit.py): every mapped reference vs the original's operand at the paired instruction.
+    # A disagreement means our build would call/read something other than what the original does there, so any
+    # PASS or FAIL would be meaningless (three wave-1 FAILs were wrong mappings): report it instead of running.
+    aud = RA.audit(t.coff, t.fsym, t.res, t.orig_insns, context()["img"])
+    out["resolution_audit"] = {"disagree": aud["disagree"], "unverified": aud["unverified"],
+                               "local_copy": aud["local_copy"], "same_code": aud["same_code"],
+                               "agree": len(aud["agree"]), "paired_insns": aud["pairs"], "insns": aud["insns"]}
+    if aud["disagree"]:
+        out.update(verdict="UNSUPPORTED", reason=RA.summary(aud), seconds=round(time.time() - t0, 1))
+        return out
     out.update(signature=str(t.sig) if t.sig else "unparsed (%s)" % getattr(t, "sig_error", "?"),
                stack_args=len(t.stack_kinds), reg_args=t.reg_kinds, callee_pop=t.callee_pop,
                ret_kind=t.ret_kind, layout_notes=t.layout_notes, orig_size=t.orig_hi - t.orig_lo,
@@ -2054,6 +2065,9 @@ def _test_function(sid, va, opts, log=print):
             if not all_insns:
                 need.append("--require-all: %d original insns never ran" % (total - len(covered)))
             v, why = "WEAK", "%s; edges %s; %.1f%% insns" % (", ".join(need), edges_txt, cov)
+    if v == "FAIL" and aud["local_copy"]:
+        # our own copy of a callee ran where the original calls a real function: a call-trace FAIL may be that
+        why += "; NOTE " + RA.summary(aud)
     out.update(verdict=v, reason=why, seconds=round(time.time() - t0, 1))
     return out
 

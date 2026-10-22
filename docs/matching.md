@@ -95,6 +95,18 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
     `mapped_at_fault` when repair mapped memory); `--replay` re-runs it.
   - UNSUPPORTED because of the harness (no model yet for user32/gdi32/winmm imports, D3D device or stream
     vtables, faults on random pointers) is acceptable for a complete function: say so in the reason column.
+  - **Resolution audit** (`tools/difftest/resaudit.py`, run by equiv.py before any input): every callee,
+    global, string and vtable our object references was mapped to an original address; the audit pairs our
+    instructions with the original's and checks each mapped operand against the original's operand at the
+    paired instruction. `resolution audit: ... disagree (X resolved A, original operand B at C)` is
+    UNSUPPORTED, because our build would call/read something else than the original there: either our source
+    names the wrong thing (fix it), or the mapping is wrong (fix the `// 0x` annotation / symbols line). It
+    also catches byte-exact rows that are wrong (byte compares mask relocations): run
+    `tools/difftest/resaudit.py <slice> <va>...` on your manifest rows. Typical real findings: `new` where
+    the original has `new[]` (0x535482), `delete` vs `delete[]` (0x53570d), `free` vs `operator delete`,
+    `atol` vs `atoi` (0x53734d), two messages swapped, a struct field 4 bytes off, two slices using one
+    name for different globals. `local copies` in the summary means our own copy of a callee ran where the
+    original calls a real function (an ICF'd template helper): map it in your symbols file.
   - Limit is 180 s per function by default. Run it with `run_in_background` and keep working, never with a
     shell `&`.
 
