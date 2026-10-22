@@ -3,8 +3,8 @@
 
   .venv/bin/python tools/progress.py                 # coverage + per-batch tables
   .venv/bin/python tools/progress.py --plot [out.png]  # chart of progress over time (default work/progress.png;
-                                                       # one point per committed docs/STATUS.md and one per day of
-                                                       # --plot runs, kept in docs/progress_history.json; needs matplotlib)
+                                                       # one point per committed docs/STATUS.md and one per
+                                                       # --plot run, kept in docs/progress_history.json; needs matplotlib)
 
 Coverage is computed by tools/status.py itself (run via runpy), so the numbers match docs/STATUS.md.
 """
@@ -87,19 +87,19 @@ def plot_history(path):
     live = {"exact": 100.0 * len(exact) / G, "comp": 100.0 * len(done) / G, "mig": 100.0 * len(migrated) / G,
             "exact_sz": 100.0 * nbytes(exact) / B, "comp_sz": 100.0 * nbytes(done) / B,
             "mig_sz": 100.0 * nbytes(migrated) / B}
-    # One saved point per day: each run overwrites today's entry, so a day keeps its latest figure.
+    # One saved point per --plot run, keyed by its timestamp (older files were keyed by date, one entry per day;
+    # re-keying them by their 'when' keeps those points).
     hist_path = W("docs", "progress_history.json")
     try:
-        hist = json.load(open(hist_path))
-    except (OSError, ValueError):
+        hist = {p["when"]: p for p in json.load(open(hist_path)).values()}
+    except (OSError, ValueError, KeyError, TypeError):
         hist = {}
-    today = now.date().isoformat()
-    hist[today] = dict(live, when=now.isoformat(timespec="seconds"))
+    stamp = now.isoformat(timespec="seconds")
+    hist[stamp] = dict(live, when=stamp)
     with open(hist_path, "w") as f:
         json.dump(dict(sorted(hist.items())), f, indent=1)
         f.write("\n")
-    pts += [(datetime.datetime.fromisoformat(p["when"]), p) for d, p in hist.items() if d != today]
-    pts.append((now, live))
+    pts += [(datetime.datetime.fromisoformat(p["when"]), p) for p in hist.values()]   # includes this run
     pts.sort(key=lambda t: t[0])
 
     # dataviz reference palette (validated light): categorical slots 1-3, surface and text tokens
@@ -132,14 +132,20 @@ def plot_history(path):
             ax.spines[s].set_visible(False)
         ax.spines["bottom"].set_color(GRID)
         ax.tick_params(colors=MUTED, labelsize=9, length=0)
-        loc = mdates.AutoDateLocator(minticks=3, maxticks=8)   # hours while the history is short, days later
-        ax.xaxis.set_major_locator(loc)
-        ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(loc))
+        # Calendar dates only, never hours: one label per local calendar day, under the middle of that day's points
+        # (every Nth day once the history passes 8 days). Day locators would put ticks at UTC midnights, and a day
+        # whose midnight lies outside the plotted range would get no label at all.
+        byday = {}
+        for t, _ in pts:
+            byday.setdefault(t.astimezone(now.tzinfo).date(), []).append(t)
+        days = sorted(byday)[::max(1, -(-len(byday) // 8))]
+        ax.set_xticks([min(byday[d]) + (max(byday[d]) - min(byday[d])) / 2 for d in days])
+        ax.set_xticklabels([d.strftime("%b %-d") for d in days])
         ax.margins(x=0.08)
     axes[0].legend(loc="upper left", frameon=False, fontsize=9, labelcolor=INK)
     fig.suptitle("Mount & Blade 1.011 decompilation progress (%d game functions, %.2f MB; static CRT excluded)" % (G, B / 1e6),
                  x=0.01, ha="left", fontsize=12, color=INK)
-    fig.text(0.01, 0.01, "One point per committed docs/STATUS.md, one per day of --plot runs (latest run that day), plus now. "
+    fig.text(0.01, 0.01, "One point per committed docs/STATUS.md and one per --plot run. "
              "Equivalent = complete compilable source, not yet byte-identical.\nMigrated = moved from match/slices "
              "into one .cpp per original translation unit (0%% before the first migration).%s" %
              ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax), fontsize=8, color=MUTED)
