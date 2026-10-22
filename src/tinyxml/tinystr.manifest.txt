@@ -1,0 +1,4 @@
+../src/tinyxml/tinystr.cpp  ?quit@TiXmlString@@AAEXXZ  0042d820  /O2 /MT /Gy /TP
+../src/tinyxml/tinystr.cpp  ?reserve@TiXmlString@@QAEXI@Z  0042d840  /O2 /MT /Gy /TP
+../src/tinyxml/tinystr.cpp  ?assign@TiXmlString@@QAEAAV1@PBDI@Z  0042d8b0  /O2 /MT /Gy /TP
+../src/tinyxml/tinystr.cpp  ?append@TiXmlString@@QAEAAV1@PBDI@Z  0042d950  /O2 /MT /Gy /TP

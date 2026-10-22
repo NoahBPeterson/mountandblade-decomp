@@ -1,0 +1,20 @@
+0042da20 ??4TiXmlString@@QAEAAV0@PBD@Z  # src/tinyxml/tinyxml.cpp: inline TiXmlString::operator=(const char*) emitted out of line
+0042da50 ??YTiXmlString@@QAEAAV0@PBD@Z  # inline TiXmlString::operator+=(const char*) emitted out of line
+0042da80 ??_GTiXmlBase@@UAEPAXI@Z  # compiler-generated, vtable 0x54b8f8 slot 0
+0042daa0 ?SetValue@TiXmlAttribute@@QAEXPBD@Z  # inline TiXmlAttribute::SetValue emitted out of line
+0042e070 ??0TiXmlAttribute@@QAE@PBD0@Z  # inline TiXmlAttribute(name, value) emitted out of line
+0042e0f0 ??1TiXmlAttribute@@UAE@XZ  # implicit ~TiXmlAttribute emitted out of line
+0042ed00 ??0TiXmlString@@QAE@PBD@Z  # inline TiXmlString(const char*) emitted out of line
+0042ed70 ??_GTiXmlAttribute@@UAEPAXI@Z  # compiler-generated, vtable 0x54b974 slot 0
+0042edc0 ??0TiXmlComment@@QAE@XZ  # inline ctor emitted out of line
+0042ee00 ??_GTiXmlComment@@UAEPAXI@Z  # compiler-generated, vtable 0x54ba48 slot 0
+0042ee30 ??0TiXmlText@@QAE@PBD@Z  # inline ctor emitted out of line
+0042ee90 ??_GTiXmlText@@UAEPAXI@Z  # compiler-generated, vtable 0x54bb20 slot 0
+0042eec0 ??0TiXmlDeclaration@@QAE@XZ  # inline ctor emitted out of line
+0042ef00 ??_GTiXmlDeclaration@@UAEPAXI@Z  # compiler-generated, vtable 0x54bab0 slot 0
+0042ef20 ??1TiXmlDeclaration@@UAE@XZ  # inline ~TiXmlDeclaration emitted out of line (called by 0x42ef00)
+0042ef70 ??0TiXmlUnknown@@QAE@XZ  # inline ctor emitted out of line
+0042efb0 ??_GTiXmlUnknown@@UAEPAXI@Z  # compiler-generated, vtable 0x54bb68 slot 0
+0042efe0 ??_GTiXmlDocument@@UAEPAXI@Z  # compiler-generated, vtable 0x54b9e8 slot 0
+0042f010 ??_GTiXmlNode@@UAEPAXI@Z  # compiler-generated, vtable 0x54b988 slot 0
+0042f660 ??_GTiXmlElement@@UAEPAXI@Z  # compiler-generated, vtable 0x54bbb0 slot 0

@@ -55,6 +55,7 @@ Format (one entry per problem):
   Same family: cl 13.10 only emits `??_U`/`??_V` (operator new[]/delete[]) when `<new>` is included; without it `new T[n]`
   and `delete[] p` call plain operator new/delete with identical bytes. Every slice using array new/delete needs `<new>` —
   fix idea: put `#include <new>` in a common header or say so in matching.md — minutes lost: 10
+- src/tinyxml 2026-10-22: resaudit_all.py on `src:` module rows ignores the module's `<module>.manifest.txt` symbol: `slice.find_symbol` only reads `match/slices/<sid>/manifest.txt`, so it falls back to `// @ 0x` markers. A marker followed by a comment instead of a definition (out-of-line copies of inline members, compiler-generated `??_G`) silently resolved to the NEXT definition in the file, giving 3 false `disagree` and 7 `unverified` rows; `??4`/`??Y`/`??_G` have no name the marker/`named` patterns can express. Worked around with plain `// 0x...:` comments (no `@`) plus `symbols/slices/<module>.txt` lines. — fix idea: have find_symbol read the `src/**/<psid>.manifest.txt` row for module sources, and make `_def_name_after` stop at a blank line / the next marker before any definition — minutes lost: 15
 
 ## Resolved
 - pilot 2026-10-20: masked `DIR32` operands hid a wrong float constant (eps 1e-10 vs 0.0) — fixed: the verifiers

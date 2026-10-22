@@ -1,0 +1,1 @@
+0042d820 ?quit@TiXmlString@@AAEXXZ  # src/tinyxml/tinystr.cpp: inline TiXmlString::quit emitted out of line (ICF with ~TiXmlString)

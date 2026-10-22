@@ -1,0 +1,2 @@
+0042fa40 ?IsWhiteSpace@TiXmlBase@@KA_ND@Z  # src/tinyxml/tinyxmlparser.cpp: inline TiXmlBase::IsWhiteSpace(char) emitted out of line
+00430360 ?GetChar@TiXmlBase@@KAPBDPBDPADPAHW4TiXmlEncoding@@@Z  # inline TiXmlBase::GetChar emitted out of line
