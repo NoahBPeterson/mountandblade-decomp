@@ -213,6 +213,7 @@ while True:
     # re-read the group every pass: sessions launched after the drain started (by hand or by --keep-active) must be watched
     G = json.load(open(GF))
     SESS = G.get("sessions", {})
+    BATCH = json.load(open(W("work/batches", G["batch"] + ".json")))   # ranges may be appended to both
     active = api("GET", "/api/session/active").get("data", {})
     if isinstance(active, list):
         active = {s.get("id", s) if isinstance(s, dict) else s: 1 for s in active}
