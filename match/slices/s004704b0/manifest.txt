@@ -1,0 +1,2 @@
+slices/s004704b0/s004704b0.cpp  ?compute_bounds@PointSet@@QAEXXZ  004704b0  /O2 /MT /Gy /TP
+slices/s004704b0/s004704b0.cpp  ?set_slot@MeterBar@@QAEXHH@Z  00470d80  /O2 /MT /Gy /TP

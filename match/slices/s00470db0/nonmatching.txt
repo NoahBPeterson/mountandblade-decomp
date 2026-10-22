@@ -1,0 +1,4 @@
+00470db0  343  SkinOwner::build_map (nearest base point per point): complete; fp body matches (fcom/fchs abs, (dy^2+(dx^2+dz^2)) order); diff is register allocation (original keeps i in ebx and spills the point count; ours the reverse)
+00470f40  34   ground_height: complete; identical except cl keeps the cell column pointer in esi and loads count straight into ebx in the original
+00471040  341  Anchors::blend: complete; original keeps different accumulators on the x87 stack and spills more
+004711e0  430  ShadowMap::attach_camera: complete; the two inline "WL" source-location markers (jmp over 16 data bytes) are not reproducible without inline asm (which forces an ebp frame); the world.o clear schedules differently

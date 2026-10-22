@@ -1,0 +1,4 @@
+00477ea0 ?resize@?$vector@UAgent@@V?$allocator@UAgent@@@std@@@std@@QAEXI@Z  # vector<Agent>::resize(n): Agent() temp (vtable 0x590b84, reset 0x4352f0) passed by value to resize(n, Agent) 0x4777c0
+00477f00 ?reset@?$Pool@URecZ@@@@QAEXXZ  # id pool of 0x5928-byte records: free list rebuilt from all pages
+00477f90 ?reset@?$Pool@URecJ@@@@QAEXXZ  # id pool of 0xb0-byte records: free list rebuilt from all pages
+00478020 ?alloc@?$Pool@URecZ@@@@QAEHXZ  # id pool of 0x5928-byte records: hand out an id, adding a page of 16 when the free list is empty

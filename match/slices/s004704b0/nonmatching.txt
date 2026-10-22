@@ -1,0 +1,5 @@
+004705e0  276  face-normal loop: register/frame layout differs (original keeps a 16-byte b temp, operand order of the cross products)
+00470750  315  edge crease loop: original builds the projection through vector4 temporaries; ours folds them
+00470920  181  edge/face adjacency: same loads and stores, different register allocation and i spill
+00470a00  429  centroid/neighbour/midpoint pass: register allocation and vat() reload pattern differ
+00470c00  24   light frame: identical except the operand order of the second product in each cross-product term

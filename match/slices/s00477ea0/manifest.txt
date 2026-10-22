@@ -1,0 +1,9 @@
+slices/s00477ea0/s00477ea0.cpp  ?resize@?$vector@UAgent@@V?$allocator@UAgent@@@std@@@std@@QAEXI@Z  00477ea0  /O2 /MT /Gy /TP
+slices/s00477ea0/s00477ea0.cpp  ?reset@?$Pool@URecZ@@@@QAEXXZ  00477f00  /O2 /MT /Gy /TP
+slices/s00477ea0/s00477ea0.cpp  ?reset@?$Pool@URecJ@@@@QAEXXZ  00477f90  /O2 /MT /Gy /TP
+slices/s00477ea0/s00477ea0.cpp  ?alloc@?$Pool@URecZ@@@@QAEHXZ  00478020  /O2 /MT /Gy /TP
+slices/s00477ea0/s00477ea0.cpp  ??0NavCore@@QAE@XZ  00478150  /O2 /MT /Gy /TP
+slices/s00477ea0/s00477ea0.cpp  ?load@NavMap@@QAEXPAUstream@@@Z  004781d0  /O2 /MT /Gy /TP
+slices/s00477ea0/s00477ea0.cpp  ?add_edge@NavMap@@QAEHHH@Z  00478450  /O2 /MT /Gy /TP
+slices/s00477ea0/s00477ea0.cpp  ?add_face@NavMap@@QAEHHHHHHHHHH@Z  004784d0  /O2 /MT /Gy /TP
+slices/s00477ea0/s00477ea0.cpp  ?clear@NavMap@@QAEXXZ  00478580  /O2 /MT /Gy /TP

@@ -1,0 +1,14 @@
+slices/s004724f0/s004724f0.cpp  ?ufill@vec18@@QAEPAUR18@@PAU2@IABU2@@Z  004724f0  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ?ufill@vec64@@QAEPAUR64@@PAU2@IABU2@@Z  00472520  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ?ufill@vec34@@QAEPAUR34@@PAU2@IABU2@@Z  00472550  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ?erase@?$vector@UR34@@V?$allocator@UR34@@@std@@@std@@QAE?AViterator@12@V312@0@Z  00472580  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ?erase@?$vector@URec1c8@@V?$allocator@URec1c8@@@std@@@std@@QAE?AViterator@12@V312@0@Z  004725d0  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ?ucopy@vecArr@@QAEPAUArrSet@@PAU2@00@Z  00472630  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ?settle@MissileG@?A0x4af34965@@QAE_NPBD@Z  00472650  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ?destroy_arrsets@@YAXPAUArrSetI@@0@Z  004727a0  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ?uninit_fill_n_arrset@@YAXPAUArrSet@@IABU1@AAUalloc_arrset@@Uptr_tag@@@Z  004727e0  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ??$_Chunked_merge@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@V?$_Temp_iterator@UP8@@@3@HP6A_NABUP8@@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@0V?$_Temp_iterator@UP8@@@0@HHP6A_NABUP8@@2@Z@Z  00472870  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ??$merge@PAUP8@@PAU1@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@P6A_NABU1@0@Z@std@@YA?AViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@PAUP8@@000V120@P6A_NABU3@2@Z@Z  00472980  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ??$_Merge_backward@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@PAUP8@@V123@P6A_NABU4@0@Z@std@@YA?AViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@V120@0PAUP8@@10P6A_NABU3@2@Z@Z  00472a20  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ??$_Buffered_rotate@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HUP8@@@std@@YA?AViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@V120@00HHAAV?$_Temp_iterator@UP8@@@0@@Z  00472ad0  /O2 /MT /Gy /TP
+slices/s004724f0/s004724f0.cpp  ?clamp_rec@PhysSet@@QAEXH@Z  00472c50  /O2 /MT /Gy /TP

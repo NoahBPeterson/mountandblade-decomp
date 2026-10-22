@@ -1,0 +1,1 @@
+00473a60  1935  register allocation (this in edi vs ebp, idx/r swapped), stack-array induction pointer base (+0xb4/+0xac vs +0xa8), 64-bit hero test is jump-threaded; same control flow and calls (size 2174 vs 2200)

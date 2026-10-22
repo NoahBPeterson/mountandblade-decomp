@@ -1,0 +1,1 @@
+004785e0  42  NavMap::build: complete (grid vertices at 0.4 above the height field, horizontal/vertical edges, quad faces). Only stack-slot assignment differs: original keeps ny in a frame slot and shares the hf parameter slot with the int->float temporaries (42 bytes of esp offsets)

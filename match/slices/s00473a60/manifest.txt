@@ -1,0 +1,3 @@
+slices/s00473a60/s00473a60.cpp  ?next_used@Pool@@QAEXPAI@Z  00474300  /O2 /MT /Gy /TP
+slices/s00473a60/s00473a60.cpp  ?ucopy@vecArr@@QAEPAUArrSet@@PAU2@00@Z  00474350  /O2 /MT /Gy /TP
+slices/s00473a60/s00473a60.cpp  ??$_Insertion_sort@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@P6A_NABUP8@@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@0P6A_NABUP8@@1@Z@Z  00474370  /O2 /MT /Gy /TP

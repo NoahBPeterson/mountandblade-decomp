@@ -1,0 +1,1 @@
+slices/s004713d0/s004713d0.cpp  ?sun_visibility@TerrSun@@QAEMPBM@Z  00471a30  /O2 /MT /Gy /TP
