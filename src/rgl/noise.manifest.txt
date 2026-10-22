@@ -1,0 +1,1 @@
+# noise.cpp has no byte-exact function yet: both functions are rows of noise.nonmatching.txt.
