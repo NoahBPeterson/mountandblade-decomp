@@ -1,0 +1,15 @@
+0054a4b8 ??_7shape_base@@6B@  # abstract shape base vtable (14 slots, slots 1-4 pure), stored by 0x407ff0 and the inline base constructors
+0054a4f0 ??_7sphere@@6B@  # sphere vtable, stored by the sphere constructors / copy constructor 0x40c030
+0054a540 ??_7capsule@@6B@  # capsule vtable, stored by 0x408600 / 0x40a580
+0054a588 ??_7face@@6B@  # face vtable, stored by 0x408980 / 0x40ae70
+0054a5f4 ??_7manifold@@6B@  # manifold vtable, stored by 0x40c670
+0054a63c ??_7composite@@6B@  # composite vtable, stored by the inline composite constructors (0x40cb60, 0x40ce10)
+0040a540 ??_Gshape_base@@UAEPAXI@Z  # slot 0 of the vtables of shape_base, sphere, capsule and face (one folded body)
+0040a540 ??_Gsphere@@UAEPAXI@Z  # same function (folded)
+0040a540 ??_Gcapsule@@UAEPAXI@Z  # same function (folded)
+0040a540 ??_Gface@@UAEPAXI@Z  # same function (folded)
+0040d140 ??_Gcomposite@@UAEPAXI@Z  # composite vtable slot 0
+0040d320 ??_Gmanifold@@UAEPAXI@Z  # manifold vtable slot 0
+0040c310 ??_Glogic_error@@UAEPAXI@Z  # std::logic_error scalar deleting destructor (vtable 0x59c978 slot 0)
+0040c5c0 ??_Glength_error@@UAEPAXI@Z  # std::length_error scalar deleting destructor (vtable 0x59c984 slot 0)
+0040dc50 ?insert_n@?$vec@Uvector4@rgl@@@@QAEXUiter@1@IABUvector4@rgl@@@Z  # std::vector<vector4>::_Insert_n (nonmatching, 100 bytes of register choice differ)

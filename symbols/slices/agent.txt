@@ -1,0 +1,5 @@
+005e29d0 ?g_items@@3PAUItemKind@@A  # item definition table (0x238-byte records)
+005e29d4 ?g_item_kind_count@@3HA  # item count
+005e2948 ?g_time@@3PA_JA  # clock table, 1e-5 s ticks
+08ee3860 ?g_clamp_level@@3HA  # highest allowed skill tier (read by Troop::falloff 0x4375b0); beyond the resolver's annotation range
+08ee3100 ?g_skill_tbl@@3PAUSkillCap@@A  # table of 0x44-byte skill records, cap at +0x34 (read by Troop::nibble 0x4351a0)

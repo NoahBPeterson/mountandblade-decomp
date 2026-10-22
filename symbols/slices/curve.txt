@@ -1,0 +1,1 @@
+005e2948 ?g_time@@3PA_JA  # clock table, 1e-5 s ticks

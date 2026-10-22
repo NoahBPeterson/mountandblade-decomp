@@ -1,0 +1,4 @@
+0042d360 ?_Destroy@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXPAUtstring@@0@Z  # std::vector<tstring>::_Destroy(first, last): ~tstring over a range (called by _Tidy)
+0042d390 ?_Tidy@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXXZ  # std::vector<tstring>::_Tidy (gui_manager::strs destructor body)
+0042d570 ?_Buy@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@IAE_NI@Z  # std::vector<rgl::vector4>::_Buy(n)
+0043e2a0 ?_Xlen@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@IBEXXZ  # std::vector<rgl::vector4>::_Xlen (throws length_error), in the next object; called by _Buy

@@ -1,0 +1,4 @@
+../src/game/agent/phys_set.cpp  ?destroy_world@PhysSet@@QAEXH@Z  00441360  /O2 /MT /Gy /TP
+../src/game/agent/phys_set.cpp  ?add_bone@PhysSet@@QAEPBUNewtonRagDollBone@@HPBU2@PBMUmatrix@rgl@@1121111@Z  004413e0  /O2 /MT /Gy /TP
+../src/game/agent/phys_set.cpp  ?begin_static_build@PhysSet@@QAEXH@Z  00441610  /O2 /MT /Gy /TP
+../src/game/agent/phys_set.cpp  ?add_capsule_body@PhysSet@@QAEPAUNewtonBody@@HPBM00PAUmatrix@rgl@@1_N@Z  004416c0  /O2 /MT /Gy /TP

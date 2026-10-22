@@ -1,0 +1,6 @@
+0043f310 ?resize@?$vector@PBUNewtonBody@@V?$allocator@PBUNewtonBody@@@std@@@std@@QAEXIPBUNewtonBody@@@Z  # vector<4-byte element>::resize(n, val): ICF-folded with std::vector<int>::resize
+0043f310 ?resize@?$vector@PBUNewtonRagDollBone@@V?$allocator@PBUNewtonRagDollBone@@@std@@@std@@QAEXIPBUNewtonRagDollBone@@@Z  # same folded instance
+0043e7b0 ?_Insert_n@?$vector@PBUNewtonRagDollBone@@V?$allocator@PBUNewtonRagDollBone@@@std@@@std@@IAEXViterator@12@IABQBUNewtonRagDollBone@@@Z  # std::vector<int>::_Insert_n second instance (not folded with 0x410610)
+00440b30 ?push_back@?$vector@PBUNewtonBody@@V?$allocator@PBUNewtonBody@@@std@@@std@@QAEXABQBUNewtonBody@@@Z  # std::vector<int>::push_back, ICF-folded with every 4-byte-element vector
+005e292c ?g_mission@@3PAUMission@@A  # mission object pointer (Agent::build_static_collision reads ->scene)
+00a181f8 ?g_phys@@3UPhysSet@@A  # the physics set (object at 0xa181f8)

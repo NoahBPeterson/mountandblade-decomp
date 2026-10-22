@@ -1,0 +1,5 @@
+../src/game/agent/item_kind.cpp  ?mesh_name_for@ItemKind@@QAE?AUtstring@@H@Z  00433bf0  /O2 /MT /Gy /TP
+../src/game/agent/item_kind.cpp  ?is_ranged@ItemKind@@QAE_NXZ  00433d90  /O2 /MT /Gy /TP
+../src/game/agent/item_kind.cpp  ?is_melee@ItemKind@@QAE_NXZ  00433dc0  /O2 /MT /Gy /TP
+../src/game/agent/item_kind.cpp  ?ammo_skill@ItemKind@@QAEHXZ  00433df0  /O2 /MT /Gy /TP
+../src/game/agent/item_kind.cpp  ?find_item@@YAHPBUtstring@@@Z  00434ad0  /O2 /MT /Gy /TP

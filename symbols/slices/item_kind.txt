@@ -1,0 +1,2 @@
+005e29d0 ?g_items@@3PAUItemKind@@A  # item definition table (0x238-byte records)
+005e29d4 ?g_item_kind_count@@3HA  # item count

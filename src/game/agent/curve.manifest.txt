@@ -1,0 +1,6 @@
+../src/game/agent/curve.cpp  ?unshape@Curve@@QAEMM@Z  004338e0  /O2 /MT /Gy /TP
+../src/game/agent/curve.cpp  ?set_phase@Curve@@QAEXM@Z  00433930  /O2 /MT /Gy /TP
+../src/game/agent/curve.cpp  ?reset_rec@Curve@@QAEXH@Z  004339d0  /O2 /MT /Gy /TP
+../src/game/agent/curve.cpp  ?rec_shaped_phase@Curve@@QAEMH@Z  00433ac0  /O2 /MT /Gy /TP
+../src/game/agent/curve.cpp  ?set_rec_phase@Curve@@QAEXHM@Z  00433b20  /O2 /MT /Gy /TP
+../src/game/agent/curve.cpp  ?hash_string@@YGIPBUtstring@@@Z  00433bb0  /O2 /MT /Gy /TP

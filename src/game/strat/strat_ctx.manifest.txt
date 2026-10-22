@@ -1,0 +1,3 @@
+../src/game/strat/strat_ctx.cpp  ?ambient@Ctx@@QAE?AUvector4@rgl@@XZ  0042b6d0  /O2 /MT /Gy /TP
+../src/game/strat/strat_ctx.cpp  ?shadow_tick@StratEnt@@QAEXXZ  0042b790  /O2 /MT /Gy /TP
+../src/game/strat/strat_ctx.cpp  ?find_entity@Ctx@@QAEPAUStratEnt@@H@Z  0042ba50  /O2 /MT /Gy /TP
