@@ -1,0 +1,1 @@
+0041fa00 ?resize@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXIPAUObj@rgl@@@Z  # src/game/entity.cpp: same-size vector::resize instance
