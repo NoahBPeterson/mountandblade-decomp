@@ -72,7 +72,8 @@ def prompt_for(k):
     # Migration batches (docs/migration-runbook.md s8a): entries carry "module" = "<dir>/<obj stem>";
     # a range holds entries of one module.
     module = BATCH[a].get("module", "")
-    return (PROMPT.replace("{BATCH}", G["batch"]).replace("{A}", str(a)).replace("{B}", str(b)).replace("{N}", str(n))
+    tmpl = open(W("work/opencode", BATCH[a]["prompt"])).read() if BATCH[a].get("prompt") else PROMPT
+    return (tmpl.replace("{BATCH}", G["batch"]).replace("{A}", str(a)).replace("{B}", str(b)).replace("{N}", str(n))
             .replace("{MODULE}", module).replace("{OBJ}", module.rsplit("/", 1)[-1]))
 
 
@@ -111,6 +112,24 @@ def progress(k):
                     if va in want:
                         done += 1
                         ok += isok
+            continue
+        if BATCH[i].get("redo"):
+            # redo entry: finish functions left partial/unwritten in an existing slice; only a manifest or
+            # nonmatching row settles one (partial.txt rows were there before the session started)
+            want = {v.lower().lstrip("0x") for v in BATCH[i]["vas"]}
+            for f, isok in (("manifest.txt", 1), ("nonmatching.txt", 0)):
+                fp = W("match/slices", sid, f)
+                if not os.path.exists(fp):
+                    continue
+                seen = set()
+                for l in open(fp):
+                    parts = l.split("#", 1)[0].split()
+                    if parts:
+                        va = (parts[2] if isok and len(parts) > 2 else parts[0]).lower().lstrip("0x")
+                        if va in want and va not in seen:
+                            seen.add(va)
+                done += len(seen)
+                ok += isok * len(seen)
             continue
         if BATCH[i].get("causes"):
             # fix entry: settled targets are the ones logged in a work/match fix log (see opencode_drain.py)

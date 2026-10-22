@@ -127,6 +127,23 @@ def progress(k, unsettled=None):
             if unsettled is not None:
                 unsettled += ["%s:%s" % (sid, v) for v in sorted(want - seen)]
             continue
+        if BATCH[i].get("redo"):
+            # redo entry (see opencode_sup.py progress): only manifest / nonmatching rows of the entry's VAs settle
+            want = {v.lower().lstrip("0x") for v in BATCH[i]["vas"]}
+            seen = set()
+            for f, col in (("manifest.txt", 2), ("nonmatching.txt", 0)):
+                fp = W("match/slices", sid, f)
+                if os.path.exists(fp):
+                    for l in open(fp):
+                        parts = l.split("#", 1)[0].split()
+                        if len(parts) > col:
+                            va = parts[col].lower().lstrip("0x")
+                            if va in want:
+                                seen.add(va)
+            done += len(seen)
+            if unsettled is not None:
+                unsettled += ["%s:%s" % (sid, v) for v in sorted(want - seen)]
+            continue
         if BATCH[i].get("causes"):
             # fix entry (batch rck1 on): its target VAs are already in the slice's bookkeeping, so a target
             # counts as settled once a session logs "<va> <verdict> <note>" in a work/match fix log
