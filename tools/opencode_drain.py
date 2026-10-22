@@ -65,6 +65,8 @@ ap.add_argument("--hang", type=int, default=900, help="seconds an open model cal
 ap.add_argument("--max-nudges", type=int, default=3, help="nudges per range before it is ABANDONED and counted as done")
 ap.add_argument("--stall", type=int, default=7200,
                 help="seconds an unfinished range may go without settling another function before it is ABANDONED (0 = off)")
+ap.add_argument("--keep-active", type=int, default=0,
+                help="launch unlaunched ranges (opencode_sup.py launch) whenever fewer than N sessions are busy (0 = off)")
 ap.add_argument("--once", action="store_true")
 a = ap.parse_args()
 
@@ -175,30 +177,35 @@ def last_assistant(sid):
     return None
 
 
+retry_at = {}    # sid -> last re-prompt after a provider error (not counted as a nudge)
 nudged_at = {}   # sid -> (monotonic time, done-count when nudged)
 moved = {}       # range -> (time the settled count last changed, that count)
-nudges = {}      # range -> nudges sent (re-read from the log on restart)
-abandoned = set()
+nudges = {}      # session -> nudges sent (re-read from the log on restart)
+abandoned = set()  # sessions; keyed by session so a re-queued range (new session) starts fresh
 if os.path.exists(LOG):
     for l in open(LOG):
-        m = re.search(r" (nudge|ABANDONED) r(\d+) ", l)
+        m = re.search(r" (nudge|ABANDONED) r\d+ (ses_\w+) ", l)
         if m and m.group(1) == "nudge":
-            nudges[int(m.group(2))] = nudges.get(int(m.group(2)), 0) + 1
+            nudges[m.group(2)] = nudges.get(m.group(2), 0) + 1
         elif m:
-            abandoned.add(int(m.group(2)))
+            abandoned.add(m.group(2))
 loops = 0
 while True:
     loops += 1
     now = time.time()
+    # re-read the group every pass: sessions launched after the drain started (by hand or by --keep-active) must be watched
+    G = json.load(open(GF))
+    SESS = G.get("sessions", {})
     active = api("GET", "/api/session/active").get("data", {})
     if isinstance(active, list):
         active = {s.get("id", s) if isinstance(s, dict) else s: 1 for s in active}
     finished = busy = 0
+    provider_err = []   # (last retry time, k, sid) of idle sessions whose last model call failed at the provider
     for k in range(len(G["ranges"])):
         sid = SESS.get(str(k))
         if not sid:
             continue
-        if k in abandoned:
+        if sid in abandoned:
             finished += 1
             continue
         tot, done = progress(k)
@@ -213,7 +220,7 @@ while True:
             api("POST", "/api/session/%s/interrupt" % sid, {})
             log("STALLED r%d %s (done %d/%d unchanged for %.0fs), interrupted" % (k, sid, done, tot, now - moved[k][0]))
             log("ABANDONED r%d %s (done %d/%d after stall) unsettled: %s" % (k, sid, done, tot, " ".join(uns)))
-            abandoned.add(k)
+            abandoned.add(sid)
             finished += 1
             continue
         if pending(sid):
@@ -235,6 +242,12 @@ while True:
             else:
                 busy += 1
             continue
+        # idle after a provider-side failure (model unavailable, no route, 5xx): the session did nothing wrong, so
+        # it is retried below without spending a nudge, and nothing new is launched while the provider is down
+        err = (last or {}).get("error") or {}
+        if str(err.get("type", "")).startswith("provider"):
+            provider_err.append((retry_at.get(sid, 0), k, sid, err.get("message", "")[:80]))
+            continue
         # idle and unfinished
         since = now - (completed or created or 0)
         prev = nudged_at.get(sid)
@@ -242,15 +255,15 @@ while True:
             continue
         if since < a.cooldown:
             continue
-        if nudges.get(k, 0) >= a.max_nudges:
+        if nudges.get(sid, 0) >= a.max_nudges:
             uns = []
             progress(k, uns)
-            log("ABANDONED r%d %s (done %d/%d after %d nudges) unsettled: %s" % (k, sid, done, tot, nudges[k], " ".join(uns)))
-            abandoned.add(k)
+            log("ABANDONED r%d %s (done %d/%d after %d nudges) unsettled: %s" % (k, sid, done, tot, nudges[sid], " ".join(uns)))
+            abandoned.add(sid)
             finished += 1
             continue
-        nudges[k] = nudges.get(k, 0) + 1
-        log("nudge r%d %s (done %d/%d, idle %.0fs, nudge %d of %d)" % (k, sid, done, tot, since, nudges[k], a.max_nudges))
+        nudges[sid] = nudges.get(sid, 0) + 1
+        log("nudge r%d %s (done %d/%d, idle %.0fs, nudge %d of %d)" % (k, sid, done, tot, since, nudges[sid], a.max_nudges))
         api("POST", "/api/session/%s/model" % sid, {"model": model_of(k)})
         r = api("POST", "/api/session/%s/prompt" % sid, {"text": "Continue your task: check the files already "
             "written in your slices and finish the remaining slices, then give the final one-line-per-slice summary.",
@@ -258,7 +271,25 @@ while True:
         if "error" in r:
             log("  nudge failed r%d: %s" % (k, r))
         nudged_at[sid] = (now, done)
-    log("pass %d: %d/%d ranges done (%d abandoned), %d busy/working" % (loops, finished, len(G["ranges"]), len(abandoned), busy))
+    log("pass %d: %d/%d ranges done (%d abandoned), %d busy/working" % (loops, finished, len(G["ranges"]), sum(s in abandoned for s in SESS.values()), busy))
+    if provider_err:
+        # retry at most (keep-active - busy) per pass, longest-waiting first, so a recovered provider is not hit by
+        # every stranded session at once
+        room = max(0, (a.keep_active or len(provider_err)) - busy)   # 0 when the fleet is full
+        due = sorted(x for x in provider_err if now - x[0] >= a.cooldown)[:room]
+        for _, k, sid, _m in due:
+            retry_at[sid] = now
+            api("POST", "/api/session/%s/model" % sid, {"model": model_of(k)})
+            api("POST", "/api/session/%s/prompt" % sid, {"text": "Your previous model call failed at the provider. "
+                "Continue your task from the files already written in your slices.", "model": model_of(k)})
+        log("provider errors: %d idle sessions (%s); retried %d" % (len(provider_err), provider_err[0][3], len(due)))
+    unlaunched = len(G["ranges"]) - len(SESS)
+    if a.keep_active and busy < a.keep_active and unlaunched and not provider_err:
+        n = min(a.keep_active - busy, unlaunched)
+        r = subprocess.run([sys.executable, W("tools", "opencode_sup.py"), a.group, "launch", str(n)],
+                           capture_output=True, text=True)
+        log("top-up: launched %d (busy %d < %d): %s" % (n, busy, a.keep_active,
+                                                        (r.stdout + r.stderr).strip().replace("\n", "; ")[:300]))
     if finished == len(G["ranges"]):
         log("DRAIN_COMPLETE")
         sys.exit(0)
