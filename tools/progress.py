@@ -20,6 +20,7 @@ sys.argv = _argv
 game, size, G, B = S["game"], S["size"], S["G"], S["B"]
 exact, equiv, partial = S["exact"] & game, S["equiv"] & game, S["partial"] & game
 done = exact | equiv
+migrated = S["migrated"] & done
 
 
 def table(headers, rows):
@@ -35,6 +36,9 @@ print("Mount & Blade 1.011 decompilation: %d game functions, %.2f MB (static CRT
 print(table(["Tier", "Functions", "Share", "Code size", "Share (size)"],
             [row("Byte-exact", exact), row("Equivalent, not exact", equiv), row("Total with compilable source", done),
              row("Partial (not counted)", partial), row("No source yet", game - done - partial)]))
+print()
+print(table(["Source tree", "Functions", "Share", "Code size", "Share (size)"],
+            [row("Migrated into src/", migrated), row("Compilable, still only in match/slices", done - migrated)]))
 
 rows = []
 for bf in sorted(glob.glob(W("work", "batches", "*.json")), key=os.path.getmtime):
@@ -56,7 +60,8 @@ def parse_status_md(md):
         cells = [c.strip().strip("*").strip() for c in line.strip().strip("|").split("|")]
         if len(cells) < 5 or not cells[2].endswith("%"):
             continue
-        key = {"byte-exact": "exact", "total with compilable source": "comp"}.get(cells[0].lower())
+        key = {"byte-exact": "exact", "total with compilable source": "comp",
+               "migrated into src/": "mig"}.get(cells[0].lower())
         if key:
             out[key] = float(cells[2].rstrip("%"))
             out[key + "_sz"] = float(cells[4].rstrip("%"))
@@ -79,8 +84,9 @@ def plot_history(path):
         if p:
             pts.append((datetime.datetime.fromisoformat(when), p))
     now = datetime.datetime.now().astimezone()
-    live = {"exact": 100.0 * len(exact) / G, "comp": 100.0 * len(done) / G,
-            "exact_sz": 100.0 * nbytes(exact) / B, "comp_sz": 100.0 * nbytes(done) / B}
+    live = {"exact": 100.0 * len(exact) / G, "comp": 100.0 * len(done) / G, "mig": 100.0 * len(migrated) / G,
+            "exact_sz": 100.0 * nbytes(exact) / B, "comp_sz": 100.0 * nbytes(done) / B,
+            "mig_sz": 100.0 * nbytes(migrated) / B}
     # One saved point per day: each run overwrites today's entry, so a day keeps its latest figure.
     hist_path = W("docs", "progress_history.json")
     try:
@@ -96,19 +102,22 @@ def plot_history(path):
     pts.append((now, live))
     pts.sort(key=lambda t: t[0])
 
-    # dataviz reference palette (validated light): categorical slots 1-2, surface and text tokens
-    BLUE, ORANGE = "#2a78d6", "#eb6834"
+    # dataviz reference palette (validated light): categorical slots 1-3, surface and text tokens
+    BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
     SURFACE, INK, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e6e5e0"
     top = max([p[k] for _, p in pts for k in ("comp", "comp_sz") if p.get(k) is not None] + [0])
     ymax = 100 if top > 40 else max(5, round(top * 1.4 + 0.5))
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), dpi=150, sharey=True, sharex=True)
     fig.patch.set_facecolor(SURFACE)
-    for ax, (title, ke, kc) in zip(axes, (("Share of functions", "exact", "comp"),
-                                          ("Share of code size", "exact_sz", "comp_sz"))):
+    for ax, (title, ke, kc, km) in zip(axes, (("Share of functions", "exact", "comp", "mig"),
+                                              ("Share of code size", "exact_sz", "comp_sz", "mig_sz"))):
         ax.set_facecolor(SURFACE)
-        for key, color, label in ((kc, ORANGE, "Compilable (byte-exact + equivalent)"), (ke, BLUE, "Byte-exact")):
-            xs = [t for t, p in pts if p.get(key) is not None]
-            ys = [p[key] for t, p in pts if p.get(key) is not None]
+        for key, color, label in ((kc, ORANGE, "Compilable (byte-exact + equivalent)"), (ke, BLUE, "Byte-exact"),
+                                  (km, AQUA, "Migrated into src/ modules")):
+            # snapshots from before the migrated row existed had nothing in src/: their migrated share is 0
+            val = (lambda p, key=key: p.get(key, 0.0)) if key == km else (lambda p, key=key: p.get(key))
+            xs = [t for t, p in pts if val(p) is not None]
+            ys = [val(p) for t, p in pts if val(p) is not None]
             if not xs:
                 continue
             ax.plot(xs, ys, color=color, lw=2, marker="o", ms=4, label=label, solid_capstyle="round")
@@ -131,9 +140,10 @@ def plot_history(path):
     fig.suptitle("Mount & Blade 1.011 decompilation progress (%d game functions, %.2f MB; static CRT excluded)" % (G, B / 1e6),
                  x=0.01, ha="left", fontsize=12, color=INK)
     fig.text(0.01, 0.01, "One point per committed docs/STATUS.md, one per day of --plot runs (latest run that day), plus now. "
-             "Equivalent = complete compilable source, not yet byte-identical.%s" %
+             "Equivalent = complete compilable source, not yet byte-identical.\nMigrated = moved from match/slices "
+             "into one .cpp per original translation unit (0%% before the first migration).%s" %
              ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax), fontsize=8, color=MUTED)
-    fig.tight_layout(rect=(0, 0.07, 1, 0.95))
+    fig.tight_layout(rect=(0, 0.09, 1, 0.95))
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d snapshots)" % (os.path.relpath(path, ROOT), len(pts)))
 
