@@ -2,7 +2,7 @@
 
 Read-only with respect to match/: objects are compiled into work/difftest/obj/.
 """
-import hashlib, os, re, subprocess, sys
+import glob, hashlib, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -52,7 +52,12 @@ def manifest_rows(sid):
     out = []
     path = os.path.join(slice_dir(sid), "manifest.txt")
     if not os.path.exists(path):
-        return out
+        # a migrated module (src/<area>/<stem>.cpp): its rows are in src/<area>/<stem>.manifest.txt, and the mangled
+        # names there are the only binding for compiler-generated functions and same-size template instances
+        hits = glob.glob(os.path.join(ROOT, "src", "**", sid + ".manifest.txt"), recursive=True)
+        if len(hits) != 1:
+            return out
+        path = hits[0]
     for line in open(path):
         p = line.split("#", 1)[0].split()
         if len(p) >= 3:
