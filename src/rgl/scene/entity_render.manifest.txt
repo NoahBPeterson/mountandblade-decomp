@@ -1,0 +1,1 @@
+../src/rgl/scene/entity_render.cpp  ?render@entity@rgl@@UAEXPAUscene@2@PAUrender_info@2@@Z  00420310  /O2 /MT /Gy /TP

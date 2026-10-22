@@ -1,0 +1,32 @@
+0054b4d8 ??_7mesh_entity@rgl@@6B@  # src/rgl/scene: vtable stored by the inline constructor in world::instantiate 0x428240 (type name "mesh_entity")
+0054b548 ??_7collision_entity@rgl@@6B@  # src/rgl/scene: collision_entity vtable (slots 25..27 = 0x421520 / 0x421540 / 0x421550); stored by ~skeleton_entity 0x427e10
+0054b5d0 ??_7strategic_entity@rgl@@6B@  # src/rgl/scene: strategic_entity vtable, stored by the constructor 0x421720
+0054b730 ??_7skeleton_entity@rgl@@6B@  # src/rgl/scene: skeleton_entity vtable, stored by the constructor 0x427d80 and the destructor 0x427e10
+0054b7b8 ??_7static_entity@rgl@@6B@  # src/rgl/scene: static_entity vtable, stored by the inline constructor in world::instantiate
+00427d20 ??_Gcollision_entity@rgl@@UAEPAXI@Z  # src/rgl/scene: scalar deleting destructor of the collision entity (physics objects)
+00427cd0 ??1collision_entity@rgl@@UAE@XZ  # src/rgl/scene: collision_entity destructor body (inlined into ~skeleton_entity 0x427e10; out-of-line copy here)
+00427e80 ??_Gskeleton_entity@rgl@@UAEPAXI@Z  # src/rgl/scene: scalar deleting destructor of skeleton_entity (slot 0 of vtable 0x54b730)
+004280f0 ??_Gstatic_entity@rgl@@UAEPAXI@Z  # src/rgl/scene: scalar deleting destructor of static_entity (slot 0 of vtable 0x54b7b8)
+00428220 ??_Gstrategic_entity@rgl@@UAEPAXI@Z  # src/rgl/scene: scalar deleting destructor of strategic_entity (slot 0 of vtable 0x54b5d0)
+0054b454 ??_7FxElem@@6B@  # src/rgl/scene: vtable of the effect element (slots: add_to_first 0x420e90, set_data 0x41f250, find_kid 0x41f2a0)
+0041f720 ?_Insert_n@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@IAEXViterator@12@IABQAUentity@rgl@@@Z  # src/rgl/scene: ICF-folded pointer-vector _Insert_n (same code as the Obj* instance)
+0041f720 ?_Insert_n@?$vector@PAUpsys@rgl@@V?$allocator@PAUpsys@rgl@@@std@@@std@@IAEXViterator@12@IABQAUpsys@rgl@@@Z  # src/rgl/scene: same instance, emitter pointers
+00420650 ?push_back@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@QAEXABQAUentity@rgl@@@Z  # src/rgl/scene: ICF-folded pointer-vector push_back
+0041fa00 ?resize@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@QAEXIPAUentity@rgl@@@Z  # src/rgl/scene: pointer-vector resize instance shared with the Obj* one (src/game/entity.cpp)
+0041fa00 ?resize@?$vector@PAUpsys@rgl@@V?$allocator@PAUpsys@rgl@@@std@@@std@@QAEXIPAUpsys@rgl@@@Z  # src/rgl/scene: same instance, emitter pointers
+0041f970 ?resize@?$vector@PAUlight@rgl@@V?$allocator@PAUlight@rgl@@@std@@@std@@QAEXIPAUlight@rgl@@@Z  # src/rgl/scene: pointer-vector resize instance shared with the mesh* one
+0041ad20 ?resize@?$vector@PAUlod_mesh2@rgl@@V?$allocator@PAUlod_mesh2@rgl@@@std@@@std@@QAEXIPAUlod_mesh2@rgl@@@Z  # src/rgl/scene: pointer-vector resize instance of the lod records
+0041eeb0 ?_Buynode@?$list@PAUcellnode@rgl@@V?$allocator@PAUcellnode@rgl@@@std@@@std@@IAEPAU_Node@?$_List_nod@PAUcellnode@rgl@@V?$allocator@PAUcellnode@rgl@@@std@@@2@PAU342@0ABQAUcellnode@rgl@@@Z  # src/rgl/scene: list node allocation (folded with the item_t* instance)
+0041a1e0 ?_Incsize@?$list@PAUcellnode@rgl@@V?$allocator@PAUcellnode@rgl@@@std@@@std@@IAEXI@Z  # src/rgl/scene: list size increment
+0041eeb0 ?_Buynode@?$list@PAUcellref@rgl@@V?$allocator@PAUcellref@rgl@@@std@@@std@@IAEPAU_Node@?$_List_nod@PAUcellref@rgl@@V?$allocator@PAUcellref@rgl@@@std@@@2@PAU342@0ABQAUcellref@rgl@@@Z  # src/rgl/scene: list node allocation, ref cells
+0041a1e0 ?_Incsize@?$list@PAUcellref@rgl@@V?$allocator@PAUcellref@rgl@@@std@@@std@@IAEXI@Z  # src/rgl/scene: list size increment, ref cells
+004117a0 ?resize@?$vector@Uelem30@rgl@@V?$allocator@Uelem30@rgl@@@std@@@std@@QAEXIUelem30@rgl@@@Z  # src/rgl/scene: vector<elem30>::resize (mesh object)
+00410550 ?resize@?$vector@Uface20@rgl@@V?$allocator@Uface20@rgl@@@std@@@std@@QAEXIUface20@rgl@@@Z  # src/rgl/scene: vector<face20>::resize (folded with point20)
+00410550 ?resize@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QAEXIUpoint20@rgl@@@Z  # src/rgl/scene: vector<point20>::resize
+0041f350 ?link_chunks@?$pool@Ucellnode@rgl@@@rgl@@QAEXXZ  # src/rgl/scene: pool<cellnode>::link_chunks (src/game/entity.cpp's pool<cell12>)
+0041f3d0 ?link_chunks@?$pool@Ucellref@rgl@@@rgl@@QAEXXZ  # src/rgl/scene: pool<cellref>::link_chunks (src/game/entity.cpp's pool<cell16>)
+00427cd0 ??1dynamic_entity@rgl@@UAE@XZ  # src/rgl/scene: dynamic_entity's implicit destructor is the collision_entity body
+00438910 ??$remove_copy@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@V123@PAUentity@rgl@@@std@@YA?AViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@V120@00ABQAUentity@rgl@@@Z  # src/rgl/scene: std::remove's callee
+00407c20 ??0mat4@rgl@@QAE@XZ  # src/rgl/scene: empty default constructor of rgl::mat4 (ICF folds all empty constructors at 0x407c20), passed to __vec_new by FxDef::skin 0x4291c0
+0040ec60 ?get60@mesh@rgl@@QAEAAV?$vector@Uelem30@rgl@@V?$allocator@Uelem30@rgl@@@std@@@std@@XZ  # src/rgl/scene: mesh::get60, the out-of-line parent-chain accessor (mesh.h inlines one level)
+0041fb00 ?resize@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@QAEXIUE100@@@Z  # src/rgl/scene: vector<E100>::resize (src/game/entity.cpp), called by psys::init 0x420b40

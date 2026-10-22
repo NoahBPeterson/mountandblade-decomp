@@ -1,0 +1,2 @@
+00591c80 ??_7MissionUi@@6B@  # vtable of the mission-UI widget base (stored by MissionUi::MissionUi 0x48ae20); the slices/symbols call it Buffer
+00591d58 ??_7UiA@@6B@  # vtable of the toggle widget (stored by UiA::UiA 0x48b1c0)

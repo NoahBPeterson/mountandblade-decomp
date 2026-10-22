@@ -1,0 +1,5 @@
+../src/game/ui/ui_widgets_b.cpp  ?set_value@UiB@@QAEXM@Z  0048b6e0  /O2 /MT /Gy /TP
+../src/game/ui/ui_widgets_b.cpp  ?show@UiC@@QAEXPAXPAMHH@Z  0048b7f0  /O2 /MT /Gy /TP
+../src/game/ui/ui_widgets_b.cpp  ?type@UiC@@QAEHXZ  0048b880  /O2 /MT /Gy /TP
+../src/game/ui/ui_widgets_b.cpp  ??0UiD@@QAE@XZ  0048b890  /O2 /MT /Gy /TP
+../src/game/ui/ui_widgets_b.cpp  ?show@UiD@@QAEXPAXPAMHH@Z  0048b8d0  /O2 /MT /Gy /TP

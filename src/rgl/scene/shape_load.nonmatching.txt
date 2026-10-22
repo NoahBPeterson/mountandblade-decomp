@@ -1,0 +1,1 @@
+004285e0  176  shape_resource::clone_shape (shape deep copy by type): complete. The original saves edi in the prologue and shares one 'return 0' block for all four new-failure paths; cl keeps the push edi inside the composite branch (branch order and results identical); ~10 source shapes tried in the slice.

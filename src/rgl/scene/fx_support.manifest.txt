@@ -1,0 +1,6 @@
+../src/rgl/scene/fx_support.cpp  ?quat_from_matrix@@YAXPAUquat4@@PBM@Z  00428b10  /O2 /MT /Gy /TP
+../src/rgl/scene/fx_support.cpp  ?alloc@EnvRec@@QAEXH@Z  00428c60  /O2 /MT /Gy /TP
+../src/rgl/scene/fx_support.cpp  ??0FxElem@@QAE@XZ  00428d10  /O2 /MT /Gy /TP
+../src/rgl/scene/fx_support.cpp  ?clear_geometry@mesh_ext@rgl@@QAEXXZ  00428e80  /O2 /MT /Gy /TP
+../src/rgl/scene/fx_support.cpp  ?reset@scene@rgl@@QAEXXZ  00428f30  /O2 /MT /Gy /TP
+../src/rgl/scene/fx_support.cpp  ?render_fx@skeleton_entity@rgl@@UAEXPAUscene@2@@Z  00428f80  /O2 /MT /Gy /TP

@@ -1,0 +1,1 @@
+../src/rgl/scene/fxdef_set_color.cpp  ?set_color@FxDef@@QAEXH@Z  004218e0  /O2 /MT /Gy /TP

@@ -1,0 +1,1 @@
+../src/rgl/scene/fxdef_render.cpp  ?render@FxDef@@QAEXPAUscene@rgl@@PBUmatrix@3@PBM@Z  00428ff0  /O2 /MT /Gy /TP

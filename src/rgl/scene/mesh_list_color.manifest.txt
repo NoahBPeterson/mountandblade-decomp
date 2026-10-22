@@ -1,0 +1,1 @@
+../src/rgl/scene/mesh_list_color.cpp  ?set_color@mesh_list2@rgl@@QAEXABH@Z  00421990  /O2 /MT /Gy /TP

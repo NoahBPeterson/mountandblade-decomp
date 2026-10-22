@@ -1,0 +1,2 @@
+../src/rgl/scene/shape_load.cpp  ?load@strategic_entity@rgl@@UAEXPAUstream_base@@@Z  004286d0  /O2 /MT /Gy /TP
+../src/rgl/scene/shape_load.cpp  ?load@skeleton_entity@rgl@@UAEXPAUstream_base@@@Z  004286e0  /O2 /MT /Gy /TP

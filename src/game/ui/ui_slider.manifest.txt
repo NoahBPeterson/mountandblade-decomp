@@ -1,0 +1,2 @@
+../src/game/ui/ui_slider.cpp  ?value@UiB@@QAEMXZ  0048b550  /O2 /MT /Gy /TP
+../src/game/ui/ui_slider.cpp  ?type2@UiB@@QAEHXZ  0048b590  /O2 /MT /Gy /TP

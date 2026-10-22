@@ -1,0 +1,1 @@
+00462ac0 ?item_slot_source@@YAXHPAH00@Z  # src/game/ui/troop_inv.cpp: static helper (register convention), called by slot_value 0x462c00

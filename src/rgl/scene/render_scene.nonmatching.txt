@@ -1,0 +1,2 @@
+00429740  48  scene::scene (render scene ctor, 0x1d8 bytes): complete. Only the placement of 'lea ecx,[esi+0x30]' (frustum this) and the ambient vector temp copy (ecx vs eax) differ; init-list vs body, 4 spellings tried in the slice.
+00429890  1727  world::render_scene: complete (all paths incl. the water-reflection pass), 2070 vs 2036 bytes. Register allocation differs (the original spills this/iterator to [esp+0x14]/[esp+0x10] around the inlined frustum loops) and the sums of products for the entity centre are ordered differently; frame 0x1d4 vs 0x1cc.

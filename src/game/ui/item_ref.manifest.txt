@@ -1,0 +1,7 @@
+../src/game/ui/item_ref.cpp  ?update@snd_slot@@QAEXH@Z  004625d0  /O2 /MT /Gy /TP
+../src/game/ui/item_ref.cpp  ?update_all@snd_bank@@QAEXH@Z  00462760  /O2 /MT /Gy /TP
+../src/game/ui/item_ref.cpp  ?randomize@snd_bank@@QAEXXZ  00462790  /O2 /MT /Gy /TP
+../src/game/ui/item_ref.cpp  ?mesh_name@ItemKind@@QAE?AUtstring@@_KH@Z  00462820  /O2 /MT /Gy /TP
+../src/game/ui/item_ref.cpp  ?mesh_name@ItemRef@@QAE?AUtstring@@_K@Z  00462900  /O2 /MT /Gy /TP
+../src/game/ui/item_ref.cpp  ?stat_1fc@ItemRef@@QAEHXZ  00462960  /O2 /MT /Gy /TP
+../src/game/ui/item_ref.cpp  ?stat_204@ItemRef@@QAEHXZ  00462a10  /O2 /MT /Gy /TP

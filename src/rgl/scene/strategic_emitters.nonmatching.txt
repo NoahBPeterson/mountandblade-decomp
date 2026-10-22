@@ -1,0 +1,1 @@
+004219c0  107  FxElem::set_color: complete. The original hoists the tint load out of the first loop and spills this; ours keeps this in a register and loads the tint inside the loop (FxDef::set_color 0x4218e0, the same loops, is byte-exact); 12 shapes tried in the slice.

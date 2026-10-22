@@ -1,0 +1,1 @@
+00427f40  98  world::step(float): complete. The original hoists the dt load out of the entity-update loop (ebx) although &dt is passed to the emitter update later; cl reloads it and allocates the loop registers differently (all three loops shifted). A local copy of dt gets the hoist but adds a stack slot (372 vs 371 bytes), so the plain form is kept.

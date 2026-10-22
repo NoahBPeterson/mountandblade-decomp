@@ -1,0 +1,2 @@
+00592078 ??_7UiC@@6B@  # vtable of the label widget (stored by UiC::UiC 0x48b760)
+00592140 ??_7UiD@@6B@  # vtable of the progress bar widget (stored by UiD::UiD 0x48b890)

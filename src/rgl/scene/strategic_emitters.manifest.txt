@@ -1,0 +1,4 @@
+../src/rgl/scene/strategic_emitters.cpp  ?find_emitter@strategic_entity@rgl@@UAEHH@Z  00421a50  /O2 /MT /Gy /TP
+../src/rgl/scene/strategic_emitters.cpp  ?add_emitter@strategic_entity@rgl@@UAEXPAUpsys@2@@Z  00421aa0  /O2 /MT /Gy /TP
+../src/rgl/scene/strategic_emitters.cpp  ?clear_emitters@strategic_entity@rgl@@UAEXXZ  00421b00  /O2 /MT /Gy /TP
+../src/rgl/scene/strategic_emitters.cpp  ?update@strategic_entity@rgl@@UAEXM@Z  00421b70  /O2 /MT /Gy /TP

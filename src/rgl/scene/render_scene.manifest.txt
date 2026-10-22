@@ -1,0 +1,3 @@
+../src/rgl/scene/render_scene.cpp  ?rot_t@mat4@rgl@@QBEPAUmat3@2@PAU32@@Z  00429670  /O2 /MT /Gy /TP
+../src/rgl/scene/render_scene.cpp  ??Hskin_iter@@QBE?AU0@H@Z  004296d0  /O2 /MT /Gy /TP
+../src/rgl/scene/render_scene.cpp  ?skin_group@FxDef@@QAEXPAUlod_mesh2@rgl@@@Z  004296f0  /O2 /MT /Gy /TP

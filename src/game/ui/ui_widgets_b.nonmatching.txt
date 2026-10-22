@@ -1,0 +1,1 @@
+0048b760  109  UiC::UiC: complete (all fields, vptr, colour, tolerance). The original materializes a local float v[4], keeps three dead 1.0f stores to it alive until the epilogue and reads the uninitialized v[3] into f_1a4; cl 13.10 DCEs those stores and reads its own local slot (122 vs 131 bytes). [equiv: PASS, 400 valid inputs]

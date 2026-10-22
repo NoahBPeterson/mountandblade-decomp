@@ -1,0 +1,4 @@
+00420ec0  2  FxDef::clear_defs: complete. The two address computations [slots + off + 0x1b8] / [slots + off + 0x1b0] in the second slot loop use the opposite SIB base/index order (esi+eax in the original, eax+esi in mine); explicit pointer forms, (slots + i) and byte-offset arithmetic all give the same bytes.
+00421110  41  world::render_part: complete (both entity-list loops, frustum test, render). Frame, flags and call structure identical; only the order of the products inside each transformed-point sum differs (cl orders them by internal ids; source operand order is neutral) in 6 places.
+00421600  43  world::insert_obj: complete. cl hoists the inner-loop bound into eax and adds a jmp where the original compares against memory (and pads with nop/lea); 20 loop shapes tried in the slice.
+00421720  4  strategic_entity::strategic_entity: complete. Only the position of 'xor ebp,ebp' relative to the vptr store differs.

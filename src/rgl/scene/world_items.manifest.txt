@@ -1,0 +1,5 @@
+../src/rgl/scene/world_items.cpp  ??$_Ucopy@PAPAUpsys@rgl@@@?$vector@PAUpsys@rgl@@V?$allocator@PAUpsys@rgl@@@std@@@std@@IAEPAPAUpsys@rgl@@PAPAU23@00@Z  0041ef30  /O2 /MT /Gy /TP
+../src/rgl/scene/world_items.cpp  ??0frustum@rgl@@QAE@XZ  0041ef60  /O2 /MT /Gy /TP
+../src/rgl/scene/world_items.cpp  ?partition_items@world@rgl@@QAEXXZ  0041efd0  /O2 /MT /Gy /TP
+../src/rgl/scene/world_items.cpp  ??$remove@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@PAUentity@rgl@@@std@@YA?AViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@V120@0ABQAUentity@rgl@@@Z  0041f080  /O2 /MT /Gy /TP
+../src/rgl/scene/world_items.cpp  ?remove_entity@world@rgl@@QAEXH@Z  0041f0d0  /O2 /MT /Gy /TP

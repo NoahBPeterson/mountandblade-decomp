@@ -1,0 +1,1 @@
+00591fb0 ??_7UiB@@6B@  # vtable of the slider widget (stored by UiB::UiB 0x48b4b0)

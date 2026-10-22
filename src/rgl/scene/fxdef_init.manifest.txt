@@ -1,0 +1,2 @@
+../src/rgl/scene/fxdef_init.cpp  ??0FxDef@@QAE@H@Z  00428820  /O2 /MT /Gy /TP
+../src/rgl/scene/fxdef_init.cpp  ?init@FxDef@@QAEXPAUFxRes@@@Z  004288c0  /O2 /MT /Gy /TP

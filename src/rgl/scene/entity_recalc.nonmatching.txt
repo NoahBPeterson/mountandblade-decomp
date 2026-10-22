@@ -1,0 +1,1 @@
+0041fee0  4  smat::scale_rows: complete. Only the operand order of the first f-row multiply differs (original 'fld k.y; fmul f.x', cl emits 'fld f.x; fmul k.y' for f.x only; the other eight products match). Same in the slice (all 512 operand-order masks tried there); six more spellings tried in the module (locals for k, references, compound assignment, product order).

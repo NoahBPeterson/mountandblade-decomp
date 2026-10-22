@@ -1,0 +1,73 @@
+// shape_load.cpp (0x4285e0..0x428820): the shape resource's deep copy by shape type, and the load slots of the
+// strategic and skeleton entities. Migrated from slice s00428240 (0x4285e0, 0x4286d0, 0x4286e0).
+// Boundary: start 0x4285e0 (entity::load 0x4284e0 calls shape_resource::clone_shape forward: high); end 0x428820
+// (skeleton_entity::load calls the FxDef constructor 0x428820 and FxDef::init 0x4288c0 forward: high).
+#include <vector>
+#include <new>
+#include "../rgl_string.h"
+#include "../rgl_math.h"
+#include "../stream.h"
+#include "../resource.h"
+#include "./scene_math.h"
+#include "./frustum.h"
+#include "./scene.h"
+#include "./emitter.h"
+#include "./scene_entity.h"
+#include "./world.h"
+#include "./fx.h"
+#include "./shape_clone.h"
+
+using namespace rgl;
+
+// @ 0x4285e0
+shape_base* shape_resource::clone_shape()
+{
+    shape_base* r;
+    if (shape->shape_type() == 0) {
+        return new sphere_shape(*(sphere_shape*)shape);
+    } else if (shape->shape_type() == 1) {
+        return new capsule_shape(*(capsule_shape*)shape);
+    } else if (shape->shape_type() == 2) {
+        return new face_shape(*(face_shape*)shape);
+    } else if (shape->shape_type() == 3) {
+        return new composite(*(composite*)shape);
+    } else if (shape->shape_type() == 4) {
+        return ((manifold*)shape)->build_composite();
+    }
+    return r;
+}
+
+namespace rgl {
+
+// the element is pushed through a conversion from the derived type (a temporary pointer, as in the original)
+struct particle_mesh : mesh {};
+
+// @ 0x4286d0
+void strategic_entity::load(stream_base* s) { entity::load(s); }
+
+// @ 0x4286e0
+void skeleton_entity::load(stream_base* s)
+{
+    entity::load(s);
+    string a;
+    string b;
+    s->r_tstr(&a);
+    if (a != "none") {
+        fx = new FxDef(0);
+        fx->init((FxRes*)g_resmgr.get_object70(a));
+    }
+    if (fx) {
+        s->r_int(&nfx);
+        for (int i = 0; i < nfx; i++) {
+            int idx;
+            mesh* m;
+            s->r_int(&idx);
+            s->r_tstr(&a);
+            if (a != "none")
+                m = resmgr().get_object(&a)->clone();
+            fx->elems[idx].psys.push_back((particle_mesh*)m);
+        }
+    }
+}
+
+} // namespace rgl
