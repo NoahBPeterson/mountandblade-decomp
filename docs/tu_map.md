@@ -73,6 +73,13 @@ caller (Scene::init -> init_scene -> Team::init -> Sub3::init). That is the orde
   test VAs (13.10.3052 and 13.10.3077 both match 32). cl 13.10 keeps callee-first order under every flag tried
   with /Og on, in TUs up to 9000 functions. Caller-first on 13.10 only with /Og-, /Od, or vtable calls.
   Untested: per-function `#pragma optimize`, a linker /ORDER file, a different object split.
+- Pragmas, inline asm / WinLicense markers, a link /ORDER file, a per-helper object split and cl 13.10 builds
+  2179 (2003 DDK), 3077, 4035 (2003 SP1 DDK) and 6030 (VS 2003 SP1) are all ruled out too (work/migrate/exp_order/).
+  T code shows source-order emission (inline/template COMDATs land after their first caller: 30 vs 5; B: 1 vs
+  170) AND whole-TU interprocedural register conventions for static helpers (decode_utf8 0x487b00 takes
+  EDI/EDX from T callers), a combination no tested mode produces. Matching consequence: write T slices in
+  binary order and keep helpers defined after their caller out of line (/Ob1 per slice or noinline):
+  /Ob1 on the noinline slices gains 14 T functions, loses 4.
 In T regions forward calls are normal, so the boundaries there rest on class names only (low). The
 byte-exact rate is also much lower there (20-35% vs ~85% in 0x401000..0x43ffff), so whatever causes this
 may matter for matching as well.
