@@ -67,6 +67,12 @@ caller (Scene::init -> init_scene -> Team::init -> Sub3::init). That is the orde
 - LTCG is ruled out: a test link (`/GL` + `/LTCG`, link 7.10) gives source order but puts register
   arguments on nearly every internal function and places all LTCG code before non-LTCG objects; the
   binary has only 17 register-argument functions.
+- An older compiler is ruled out (2026-10-22, work/migrate/exp_compilers/): cl 12.00 (VC6 RTM and SP6+PP) emits
+  source order but calls `__ftol` (the image links only `__ftol2`, called 93 times from T code) and is 39-325
+  bytes off on functions 13.10 matches; cl 13.00.9466 orders callees first like 13.10 and matches none of 93
+  test VAs (13.10.3052 and 13.10.3077 both match 32). cl 13.10 keeps callee-first order under every flag tried
+  with /Og on, in TUs up to 9000 functions. Caller-first on 13.10 only with /Og-, /Od, or vtable calls.
+  Untested: per-function `#pragma optimize`, a linker /ORDER file, a different object split.
 In T regions forward calls are normal, so the boundaries there rest on class names only (low). The
 byte-exact rate is also much lower there (20-35% vs ~85% in 0x401000..0x43ffff), so whatever causes this
 may matter for matching as well.
