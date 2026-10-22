@@ -72,8 +72,27 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
   globals too. UNSUPPORTED "map that symbol" means a reference it cannot resolve: add a `// 0x…` comment on the
   declaration, or a `symbols/slices/<id>.txt` line for compiler-generated symbols (and for an `rgl.h`
   function the resolver missed).
+  - **PASS** = no mismatch, >= 200 valid inputs, and **every branch edge covered on BOTH builds**: each
+    conditional jump taken and not taken, each jump-table target, in the original AND in ours. The only
+    exceptions are edges the harness lists as unreachable, each with its reason (printed, and in the JSON
+    under `edges.<orig|ours>.unreachable`): an x87 branch no comparison outcome takes, a NaN-only branch
+    (without `--nan`), or code only reachable past a call that never returned (unmodelled import, C++ throw,
+    pure virtual call). Instruction coverage is still printed but no longer decides anything.
+  - **WEAK** = no mismatch, but too few valid inputs or uncovered edges; the reason says which side and how
+    many (`orig misses 3 edge(s), ours misses 1 edge(s)`), the JSON lists them (`edges.<side>.missed`).
+    WEAK is not a PASS. Look at the missed edges: an edge only ours misses is a branch our code has and
+    the original never needs (check it); a branch on state the inputs cannot reach is a harness limit
+    (say so in the reason column).
+  - Inputs are steered toward uncovered branches: compare constants, input-to-state replays (the compared
+    argument/field/global/`new` result is set to the other operand), boundary probes (`==`, +-1, +-1 ulp)
+    on covered compares, and fault repair that also maps memory at untraceable faulting addresses.
+    `--no-steer` turns it off.
+  - `--gate insns` is the old gate (>= 60% of the original's instructions); only for comparing with old
+    results.
   - **A FAIL is not equivalent**, even by 1 ulp: fix the source (float rounding points, operand order,
-    `!(a < b)` vs `a >= b` for NaN), or move the row to partial.txt.
+    `!(a < b)` vs `a >= b` for NaN), or move the row to partial.txt. The first mismatch says which input
+    triggered it (`origin`: fresh, mutant, steer; `alloc_fail` when a `new` returned NULL;
+    `mapped_at_fault` when repair mapped memory); `--replay` re-runs it.
   - UNSUPPORTED because of the harness (no model yet for user32/gdi32/winmm imports, D3D device or stream
     vtables, faults on random pointers) is acceptable for a complete function: say so in the reason column.
   - Limit is 180 s per function by default. Run it with `run_in_background` and keep working, never with a

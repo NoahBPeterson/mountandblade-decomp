@@ -1,0 +1,1 @@
+0044c210  equiv FAIL (steered input, 5/181): original calls ItemSound::play(-50) and writes .data 0xa70448/0xa70450, ours skips the call and writes 0

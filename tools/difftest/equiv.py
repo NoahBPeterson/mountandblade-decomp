@@ -2,17 +2,39 @@
 """Differential equivalence test: ORIGINAL function (from the binary) vs OUR compiled function.
 
 usage: equiv.py <slice-id> [<va> ...] [--flags "..."] [--inputs N] [--seed S] [--json out.json]
-                [--min-valid K] [--min-cov C] [--ulp U] [--strict-calls] [--budget N] [--time-limit S] [-v]
+                [--min-valid K] [--gate edges|insns] [--no-steer] [--ulp U] [--strict-calls]
+                [--budget N] [--time-limit S] [-v]
 
 Default VAs: the slice's nonmatching.txt. Our function is compiled (into work/difftest/obj/, never
 match/), its relocations are resolved to the ORIGINAL's addresses (tools/difftest/resolve.py), and
-both versions run under Unicorn on the same random inputs; every observable (return registers,
+both versions run under Unicorn on the same generated inputs; every observable (return registers,
 callee-saved registers, esp, x87/SSE result, every written byte of .data/heap/input buffers/caller
 stack, the import-call trace and the depth-1 call trace) must agree.
 
-Verdicts: PASS (>= K valid inputs, no mismatch, original coverage >= C), WEAK (no mismatch, below a
-threshold), FAIL (a mismatch; the first one is printed), UNSUPPORTED (unresolved reference, symbol
-not found, compile error, or almost every input discarded). See docs/equivalence.md.
+Coverage is BRANCH (edge) coverage on BOTH builds (tools/difftest/cfgcov.py): every conditional jump's
+taken and not-taken edge and every jump-table target of the original function and of ours, counted over
+valid inputs. An edge the harness cannot reach is listed with its reason in the JSON ("edges" ->
+side -> "unreachable") and in the printed result, never dropped silently: statically infeasible x87
+status-word branches, NaN-only branches (without --nan), edges only reachable past a call that never
+returned (an unmodelled import, a C++ throw or a pure virtual call stopped every run that reached it),
+and edges only reachable through such edges. Instruction coverage of the original is still reported.
+
+Inputs are random "pointer soup" plus steering (tools/difftest/steer.py; --no-steer turns it off):
+the constants compared before branches (both builds, +-1 / +-1 ulp) join the dictionary; uncovered
+branches are replayed with the compare instrumented and the compared input location (argument, entry
+register, pool field, .data global, malloc result) is set to the other operand (input-to-state);
+mutation prefers inputs that reach uncovered branches; covered compares get boundary probes; fault
+repair redirects bad pointers, small-ifies garbage indices and, as a last resort, maps input memory
+at the faulting address.
+
+Verdicts:
+  PASS        no mismatch, >= K valid inputs (--min-valid, default 200) and every edge of BOTH builds
+              covered except the listed unreachable ones;
+  WEAK        no mismatch, but too few valid inputs or missed edges; the reason names the side(s) and
+              how many edges each misses;
+  FAIL        a mismatch (the first one is printed, its input saved for --replay);
+  UNSUPPORTED unresolved reference, symbol not found, compile error, or almost every input discarded.
+--gate insns restores the legacy gate (original's instruction coverage >= --min-cov, default 60%).
 """
 import argparse, glob, json, math, os, random, struct, sys, time, zlib
 
@@ -25,23 +47,25 @@ except OSError:
     pass
 import numpy as np                                 # noqa: E402
 from capstone import x86_const as CX               # noqa: E402
-from unicorn import UC_HOOK_CODE, UC_HOOK_BLOCK, UC_HOOK_MEM_READ    # noqa: E402
+from unicorn import UC_HOOK_CODE, UC_HOOK_BLOCK, UC_HOOK_MEM_READ, UC_PROT_READ, UC_PROT_WRITE    # noqa: E402
 from unicorn.x86_const import *                    # noqa: E402,F401,F403
 
 import slice as S                                  # noqa: E402
 import resolve as R
 import regfacts as RF                                # noqa: E402
+import cfgcov as CF                                # noqa: E402
+import steer as ST                                 # noqa: E402
 import sig as SIG                                  # noqa: E402
 import machine as M                                # noqa: E402
 from coff import Coff                              # noqa: E402
 
 DEFAULT_INPUTS = 400
 DEFAULT_K = 200
-DEFAULT_C = 60.0
+DEFAULT_C = 60.0                  # legacy --gate insns only
 DEFAULT_BUDGET = 10_000_000
 START_BUDGET = 100_000
 BUDGET_PROBES = 3
-FAIL_DIR = os.path.join(S.ROOT, "work", "difftest", "fail_inputs")
+FAIL_DIR = os.environ.get("DIFFTEST_FAIL_DIR") or os.path.join(S.ROOT, "work", "difftest", "fail_inputs")
 
 _md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
 _md.detail = True
@@ -58,8 +82,30 @@ def context():
     if not _ctx:
         img = R.Image()
         db = R.SymbolDB(img)
-        _ctx.update(img=img, db=db, res=R.Resolver(img, db), m=M.Machine(img), arity={}, ecxuse={})
+        _ctx.update(img=img, db=db, res=R.Resolver(img, db), m=machine_hooks(M.Machine(img)), arity={}, ecxuse={})
     return _ctx
+
+
+def machine_hooks(m):
+    """Input-controlled allocation failure: the k-th malloc/operator new of a run returns NULL when k is
+    in the input's alloc_fail (the null-check branches after `new` are edges like any other)."""
+    h = m.handlers.get("malloc")
+    if h is not None and h["fn"] is not None and not getattr(m, "_alloc_wrapped", False):
+        inner = h["fn"]
+
+        def malloc(m_, a, esp):
+            k = m_.alloc_count
+            m_.alloc_count += 1
+            if k in m_.alloc_fail:
+                return 0
+            p = inner(m_, a, esp)
+            if m_.alloc_log is not None:
+                m_.alloc_log.append((k, p))
+            return p
+        h["fn"] = malloc
+        m._alloc_wrapped = True
+    m.alloc_fail, m.alloc_count, m.alloc_log = (), 0, None
+    return m
 
 
 # ====================================================================== preparation
@@ -185,12 +231,17 @@ def analyse_original(t):
     def rd(a, n):
         return code[a - lo:a - lo + n]
 
+    norel = not img.relocs      # mount&blade.exe has no .reloc: a jump table is any in-function dword run of
+                                # in-function targets (MSVC puts it after the body); without this the
+                                # original's switch bodies were missing from its CFG, coverage and call sites
+
     def tt(a):
-        if a in relset and lo <= a <= hi - 4:
+        if (norel or a in relset) and lo <= a <= hi - 4:
             return struct.unpack_from("<I", code, a - lo)[0]
         return None
     insns, tables = R.recursive_descent(rd, lo, hi, t.va, tt)
     t.orig_insns = insns
+    t.orig_cfg = CF.Cfg(insns, t.va, lo, hi, tt)
     pops = set()
     consts = set()
     for a, ins in insns.items():
@@ -353,6 +404,8 @@ class Input:
         n.pool_over, n.regs, n.xmm, n.overrides = dict(self.pool_over), dict(self.regs), list(self.xmm), dict(self.overrides)
         n.origin, n.touched = self.origin, list(self.touched)
         n.pagegen = self.pagegen
+        n.alloc_fail = tuple(getattr(self, "alloc_fail", ()))
+        n.extra = dict(getattr(self, "extra", {}))
         return n
 
 
@@ -560,6 +613,8 @@ class InputGen:
                 v |= f2u(rng.uniform(-10, 10)) << (32 * j)
             inp.xmm.append(v)
         inp.overrides = {}
+        inp.alloc_fail = ()
+        inp.extra = {}
         return inp
 
     def mutate(self, parent, rng, corpus):
@@ -620,8 +675,11 @@ STACK_END = M.STACK_TOP + 0x1000           # end of the stack mapping (one guard
 class Side:
     """One installed function (original or ours): entry, ranges, call-site hooks."""
 
-    def __init__(self, name, entry, ranges, sites):
+    def __init__(self, name, entry, ranges, sites, cfg=None, span=None):
         self.name, self.entry, self.ranges, self.sites = name, entry, ranges, sites
+        self.cfg, self.span = cfg, span         # edge model and [lo, hi) of the tested function itself
+        self.edges = set()                      # edges covered by valid runs
+        self.site_hits, self.site_returned, self.site_stops = {}, {}, {}
 
     def inside(self, a):
         return any(lo <= a < hi for lo, hi in self.ranges)
@@ -658,8 +716,10 @@ class Runner:
         self.our_insns = {}
         self.code_cache = {}      # image function start -> (sorted addrs, insns) for fake-call arity
         self.fakes = []
-        self.orig = Side("orig", t.va, [(t.orig_lo, t.orig_hi)], self._sites_orig())
-        self.ours = Side("ours", obj["entry"], obj["code"], self._sites_ours())
+        self.orig = Side("orig", t.va, [(t.orig_lo, t.orig_hi)], self._sites_orig(), t.orig_cfg, (t.orig_lo, t.orig_hi))
+        self.ours = Side("ours", obj["entry"], obj["code"], self._sites_ours(), self._cfg_ours(), obj["func_range"])
+        for side in (self.orig, self.ours):
+            side.cfg_static_unreachable = {e for e, k in side.cfg.x87_facts().items() if k == "infeasible" or not opts.nan}
         self.hooks = []
         self.cur = None
         self.calls = []
@@ -675,8 +735,15 @@ class Runner:
         code = [(a, a + n) for nm, a, n, ch in self.img.sections if ch & 0x20000000]
         self.gen = InputGen(t, opts.alias, opts.nan, code + list(obj["code"]))
         self.cov_on = False
+        self.cov_side = None
+        self.prev_end = None
+        self.run_edges = set()
+        self.last_site = None
+        self.run_sites = {}
         self.reads = None
-        self.hooks.append(m.uc.hook_add(UC_HOOK_BLOCK, self._on_block, begin=t.orig_lo, end=t.orig_hi - 1))
+        for side in (self.orig, self.ours):
+            self.hooks.append(m.uc.hook_add(UC_HOOK_BLOCK, self._on_block, user_data=side,
+                                            begin=side.span[0], end=side.span[1] - 1))
         nst = len(t.stack_kinds) + 4
         self.frame_dw = nst
         self.esp_entry = M.STACK_TOP - 0x2000 - 4 * (1 + nst)
@@ -723,6 +790,26 @@ class Runner:
             return True        # jump table
         return False
 
+    def _cfg_ours(self):
+        """Edge model of OUR tested function (its own COMDAT section, from its entry)."""
+        m, obj, coff = self.m, self.obj, self.t.coff
+        lo, hi = obj["func_range"]
+        i = self.t.fsym.secno - 1
+        a0 = obj["sec_addr"][i]
+        relpos = {a0 + off for off, _si, typ in coff.sections[i].relocs if typ in (0x06,)}
+
+        def rd(a, n):
+            return m.read(a, min(n, hi - a))
+
+        def tt(a):
+            if a in relpos:
+                v = m.u32(a)
+                return v if lo <= v < hi else None
+            return None
+        insns, _tb = R.recursive_descent(rd, lo, hi, obj["entry"], tt)
+        self.ours_func_insns = insns
+        return CF.Cfg(insns, obj["entry"], lo, hi, tt)
+
     def _sites_ours(self):
         m, obj, coff = self.m, self.obj, self.t.coff
         sites = {}
@@ -751,9 +838,21 @@ class Runner:
         return sites
 
     # --- hooks
-    def _on_block(self, uc, address, size, _):
-        if self.cov_on:
-            self.run_blocks.add((address, size))
+    def _on_block(self, uc, address, size, side):
+        if not self.cov_on or side is not self.cov_side:
+            return
+        self.run_blocks.add((address, size))
+        pe = self.prev_end
+        if pe is not None:
+            br = side.cfg.branch_end.get(pe)
+            if br is not None:
+                src, kind, fall = br
+                if kind == "jcc":
+                    tgt = side.cfg.insns[src].operands[0].imm & 0xFFFFFFFF
+                    self.run_edges.add((src, fall) if address == fall else (src, tgt))
+                elif (src, address) in side.cfg.edges:
+                    self.run_edges.add((src, address))
+        self.prev_end = address + size
 
     def _eval_target(self, ins):
         uc = self.m.uc
@@ -781,6 +880,9 @@ class Runner:
         side, info = data
         if side is not self.cur:
             return
+        if side.span[0] <= address < side.span[1]:
+            self.last_site = address
+            self.run_sites[address] = self.run_sites.get(address, 0) + 1
         tgt = self._eval_target(info["ins"])
         if tgt is None:
             return
@@ -892,7 +994,8 @@ class Runner:
                     return code[a - lo:a - lo + n]
 
                 def tt(a, lo=lo, hi=hi, code=code, rel=rel):
-                    return struct.unpack_from("<I", code, a - lo)[0] if a in rel and lo <= a <= hi - 4 else None
+                    return struct.unpack_from("<I", code, a - lo)[0] \
+                        if (a in rel or not self.img.relocs) and lo <= a <= hi - 4 else None
                 insns, _ = R.recursive_descent(rd, lo, hi, f, tt)
                 self.code_cache[f] = (sorted(insns), insns)
             return self.code_cache[f]
@@ -1022,7 +1125,7 @@ class Runner:
             except Exception:
                 pass
 
-    def repair(self, inp, fault, rng):
+    def repair(self, inp, fault, rng, attempt=0):
         """The original faulted at an unmapped address A. Find the dword the bad pointer V came from
         (the last 4-byte read from the input buffers, image .data or the argument area with
         0 <= A - V < 64K; else an argument/register holding such a V) and make it point into a
@@ -1046,50 +1149,123 @@ class Runner:
 
         # The faulting instruction's base register is the bad pointer V (exactly, if it was
         # loaded unchanged); otherwise fall back to "some value up to 64K below A".
-        base_v = None
+        base_v = idx_v = None
         try:
             eip = fault_eip
             ins = next(_md.disasm(m.read(eip, 16), eip, 1))
             for op in ins.operands:
-                if op.type == CX.X86_OP_MEM and op.mem.base and op.mem.base in CS2UC:
-                    base_v = fault_regs.get(op.mem.base)
+                if op.type == CX.X86_OP_MEM:
+                    if op.mem.base and op.mem.base in CS2UC:
+                        base_v = fault_regs.get(op.mem.base)
+                    if op.mem.index and op.mem.index in CS2UC:
+                        idx_v = fault_regs.get(op.mem.index)
                     break
         except Exception:
-            base_v = None
-
-        def near(v):
-            if base_v is not None:
-                return v == base_v
-            return 0 <= (A - v) & 0xFFFFFFFF < 0x10000
+            base_v = idx_v = None
         newp = M.POOL_BASE + M.SLOT * (HOT_SLOTS + rng.randrange(NSLOTS - HOT_SLOTS))
         out = inp.copy()
-        for addr, v in reversed(reads):
-            if not near(v):
-                continue
+
+        def put(addr, val):
             if M.POOL_BASE <= addr < M.POOL_BASE + M.POOL_SIZE:
                 if addr & 3:
                     return None
-                out.pool_over[addr] = newp
+                out.pool_over[addr] = val
             elif self.esp_entry + 4 <= addr < self.args_hi:
                 k = (addr - self.esp_entry - 4) // 4
                 if addr & 3:
                     return None
                 if k < len(out.args):
-                    out.args[k] = newp
+                    out.args[k] = val
                 else:
-                    out.pad[k - len(out.args)] = newp
+                    out.pad[k - len(out.args)] = val
             else:
-                out.overrides[addr] = newp
+                out.overrides[addr] = val
             return out
+
+        def mapped(v):
+            return v is not None and (M.POOL_BASE <= v < M.POOL_BASE + M.POOL_SIZE or self.img.in_image(v) or
+                                      M.DYN_BASE <= v < M.DYN_BASE + M.DYN_SIZE or
+                                      M.STACK_TOP - M.STACK_SIZE <= v < STACK_END)
+        # 0. a NULL(+offset) access after an allocation the input made fail, or after 8 repairs that did
+        # not get past it: map the null page instead of redirecting yet another zero dword
+        if kind in ("read", "write") and A < 0x10000 and (getattr(inp, "alloc_fail", ()) or attempt >= 8) \
+                and 0 not in out.extra and self._mappable(0, M.SLOT) and not getattr(self.opts, "no_extra_map", False):
+            out.extra[0] = M.SLOT
+            return out
+        # 1. the bad base pointer, loaded unchanged
+        if base_v is not None and not mapped(base_v):
+            for addr, v in reversed(reads):
+                if v == base_v:
+                    return put(addr, newp)
+            for k, v in enumerate(out.args):
+                if v == base_v:
+                    out.args[k] = newp
+                    return out
+            for r, v in out.regs.items():
+                if v == base_v:
+                    out.regs[r] = newp
+                    return out
+        # 2. a good base with a garbage index: make the index small
+        if idx_v is not None and (base_v is None or mapped(base_v)) and idx_v > 0x100:
+            for addr, v in reversed(reads):
+                if v == idx_v:
+                    return put(addr, rng.randrange(4))
+            for k, v in enumerate(out.args):
+                if v == idx_v:
+                    out.args[k] = rng.randrange(4)
+                    return out
+        # 3. a pointer loaded and then offset (lea/add) before the access: up to 64K below it
+        ref = base_v if base_v is not None and not mapped(base_v) else A
+        for addr, v in reversed(reads):
+            if 0 <= (ref - v) & 0xFFFFFFFF < 0x10000:
+                return put(addr, newp)
         for k, v in enumerate(out.args):
-            if near(v):
+            if 0 <= (ref - v) & 0xFFFFFFFF < 0x10000:
                 out.args[k] = newp
                 return out
         for r, v in out.regs.items():
-            if near(v):
+            if 0 <= (ref - v) & 0xFFFFFFFF < 0x10000:
                 out.regs[r] = newp
                 return out
+        # 4. no traceable source (a computed or constant address): map input memory at the fault
+        if kind in ("read", "write") and len(out.extra) < 4 and not getattr(self.opts, "no_extra_map", False):
+            for base, size in ((A & ~(M.SLOT - 1), M.SLOT), (A & ~0xFFF, 0x1000)):
+                if self._mappable(base, size):
+                    out.extra[base] = size
+                    return out
         return None
+
+    def _mappable(self, base, size):
+        """True if [base, base+size) is free address space outside the harness's own regions."""
+        if base + size > M.TRAP_BASE or M.OBJ_BASE <= base + size and base < M.DYN_BASE + M.DYN_SIZE:
+            return False
+        for lo, hi, _p in self.m.uc.mem_regions():
+            if base <= hi and lo < base + size:
+                return False
+        return True
+
+    def note_sites(self, side, status, sites, last):
+        """Call-site bookkeeping for 'blocked' edges: how often each depth-1 call site returned, and
+        how often a run stopped at an unmodelled import (or a handler that cannot go on) inside it."""
+        for a, n in sites.items():
+            stopped = status[0] != "ok" and a == last
+            side.site_hits[a] = side.site_hits.get(a, 0) + n
+            side.site_returned[a] = side.site_returned.get(a, 0) + n - (1 if stopped else 0)
+        if status[0] == "import" and last is not None and noreturn_stop(status[1]):
+            nm = str(status[1]).split(":")[0]
+            side.site_stops.setdefault(last, {})
+            side.site_stops[last][nm] = side.site_stops[last].get(nm, 0) + 1
+
+    def blocked_calls(self, side):
+        """{call site: description} for sites that never returned and stopped at an unmodelled import, a
+        C++ throw or a pure virtual call (never an input-dependent handler stop such as a huge malloc)."""
+        out = {}
+        for a, stops in side.site_stops.items():
+            if side.site_returned.get(a, 0) == 0:
+                out[a] = "never returned: stopped at %s in all %d runs that reached it" % (
+                    "/".join("%s (%s)" % (n, NORETURN_WHY.get(n, "unmodelled import")) for n in sorted(stops)),
+                    sum(stops.values()))
+        return out
 
     # --- one run
     def run_side(self, side, inp):
@@ -1116,6 +1292,15 @@ class Runner:
         m.dyn_next = M.DYN_BASE
         m.dyn_sizes = {}
         m.rand_state = 1
+        m.alloc_fail, m.alloc_count = tuple(getattr(inp, "alloc_fail", ())), 0
+        extra_init = {}
+        for base, size in sorted(getattr(inp, "extra", {}).items()):
+            # memory mapped at a faulting address by fault repair: input soup, compared like pool pages
+            m.uc.mem_map(base, size, UC_PROT_READ | UC_PROT_WRITE)
+            data = self.gen._slot_soup(inp, base)[:size]
+            m.uc.mem_write(base, data)
+            for k in range(0, size, 0x1000):
+                extra_init[base + k] = data[k:k + 0x1000]
         stk_lo = M.STACK_TOP - M.STACK_SIZE
         m.write(stk_lo, STACK_FILL * (STACK_END - stk_lo))
         frame = struct.pack("<I", M.SENTINEL) + struct.pack("<%dI" % (len(inp.args) + 4), *(inp.args + inp.pad))
@@ -1133,14 +1318,27 @@ class Runner:
         self.fakes = []
         self.calls = []
         self.cur = side
-        self.cov_on = side is self.orig
+        self.cov_on = True
+        self.cov_side = side
+        self.prev_end = None
+        self.run_edges = set()
+        self.last_site = None
+        self.run_sites = {}
         self.run_blocks = set()
         budget = self.budget if side is self.orig else self.opts.budget * 4
         t0 = time.time()
         status = m.run(side.entry, None, budget, self.opts.run_seconds * (1 if side is self.orig else 4))
         self.cur = None
         self.cov_on = False
+        if status[0] == "ok" and self.prev_end is not None:
+            br = side.cfg.branch_end.get(self.prev_end)
+            if br is not None and br[1] == "jcc":       # last block ended in a jcc taken out of the function
+                src = br[0]
+                self.run_edges.add((src, side.cfg.insns[src].operands[0].imm & 0xFFFFFFFF))
         o = {"status": status, "time": time.time() - t0, "fault": m.last_fault}
+        o["edges"], o["blocks"] = self.run_edges, self.run_blocks
+        o["sites"], o["last_site"] = self.run_sites, self.last_site
+        self.note_sites(side, status, self.run_sites, self.last_site)
         o["eax"] = uc.reg_read(UC_X86_REG_EAX)
         o["edx"] = uc.reg_read(UC_X86_REG_EDX)
         o["ecx"] = uc.reg_read(UC_X86_REG_ECX)
@@ -1162,6 +1360,14 @@ class Runner:
         o["xmm0"] = uc.reg_read(UC_X86_REG_XMM0)
         # memory after the run (and undo it)
         mem = m.take_image_dirty()      # only pages written during the run (machine.py write hooks)
+        if extra_init:
+            o["extra_init"] = extra_init
+            mem["extra"] = {}
+            for base, size in sorted(inp.extra.items()):
+                data = m.read(base, size)
+                for k in range(0, size, 0x1000):
+                    mem["extra"][base + k] = data[k:k + 0x1000]
+                m.uc.mem_unmap(base, size)
         o["pool_init"] = init = dict(m.pool_pages)
         entry = m.pool_entry
         mem["pool"] = m.unmap_pool()
@@ -1334,10 +1540,12 @@ class Comparer:
             if region == "ours_data":
                 continue
             xa, xb = ma.get(region), mb.get(region)
-            if region == "pool":
+            if region in ("pool", "extra"):
+                ik = "pool_init" if region == "pool" else "extra_init"
+                xa, xb = xa or {}, xb or {}
                 for page in sorted(set(xa) | set(xb)):
-                    pa = xa.get(page) or a["pool_init"].get(page) or b["pool_init"].get(page)
-                    pb = xb.get(page) or b["pool_init"].get(page) or a["pool_init"].get(page)
+                    pa = xa.get(page) or a.get(ik, {}).get(page) or b.get(ik, {}).get(page)
+                    pb = xb.get(page) or b.get(ik, {}).get(page) or a.get(ik, {}).get(page)
                     d = self.diff_bytes(pa, pb, page, region, esp)
                     if d:
                         return d
@@ -1612,11 +1820,15 @@ def test_function(sid, va, opts, log=print):
 
 def _ledger(r):
     """Append one line per function result to work/opencode/attempts.jsonl (never in git).
-    Model attribution comes from $OPENCODE_LEDGER_MODEL (set by the wave runners); empty if unset."""
+    Model attribution comes from $OPENCODE_LEDGER_MODEL (set by the wave runners); empty if unset.
+    DIFFTEST_NO_LEDGER=1 (harness re-grades, self-tests) writes nothing."""
+    if os.environ.get("DIFFTEST_NO_LEDGER"):
+        return
     try:
         rec = {"t": int(time.time()), "slice": r.get("slice"), "va": r.get("va"),
                "verdict": r.get("verdict"), "seconds": r.get("seconds"),
                "coverage": (r.get("coverage") or {}).get("pct"), "all": (r.get("coverage") or {}).get("all"),
+               "edges": {k: v.get("pct") for k, v in (r.get("edges") or {}).items()},
                "valid": r.get("valid"), "inputs": r.get("inputs"), "orig_size": r.get("orig_size"),
                "wave": os.environ.get("OPENCODE_LEDGER_WAVE", ""),
                "model": os.environ.get("OPENCODE_LEDGER_MODEL", "")}
@@ -1658,24 +1870,39 @@ def _test_function(sid, va, opts, log=print):
     repaired = 0
     faked = 0
     ran = 0
+    ours_probe = 0
     probes = 0
     deadline = time.time() + opts.time_limit
+    steer = ST.Steer(runner, gen, opts) if getattr(opts, "steer", True) else None
+    hard = opts.inputs + (opts.extra_inputs if steer else 0)
+    i = -1
     try:
-        for i in range(opts.inputs):
+        while True:
+            i += 1
+            if i >= hard:
+                break
+            if i >= opts.inputs and not (steer and corpus and edges_missing(runner) and steer.has_work()):
+                break               # past --inputs only while steering still has uncovered branches to try
             if time.time() > deadline:
                 out["stopped_early"] = "time limit %ds after %d inputs" % (opts.time_limit, i)
                 break
             ran += 1
             rng = random.Random(rng_master.getrandbits(64))
-            if corpus and rng.random() < opts.mutate:
-                inp = gen.mutate(corpus[-1 - min(int(rng.expovariate(0.15)), len(corpus) - 1)], rng, corpus)
-            else:
-                inp = gen.fresh(rng)
+            inp = None
+            if steer and corpus and (i >= opts.inputs or rng.random() < opts.steer_share):
+                inp = steer.next(rng, corpus)
+            if inp is None:
+                if corpus and rng.random() < opts.mutate:
+                    parent = steer.pick_parent(corpus, rng) if steer else \
+                        corpus[-1 - min(int(rng.expovariate(0.15)), len(corpus) - 1)]
+                    inp = gen.mutate(parent, rng, corpus)
+                else:
+                    inp = gen.fresh(rng)
             a = runner.run_side(runner.orig, inp)
             fixes = 0
             while (a["status"][0] == "fault" and a["fault"] and a["fault"][0] != "pool-limit"
                    and fixes < opts.repairs and time.time() < deadline):
-                rep = runner.repair(inp, a["fault"], rng)
+                rep = runner.repair(inp, a["fault"], rng, fixes)
                 if rep is None:
                     break
                 inp = rep
@@ -1692,6 +1919,10 @@ def _test_function(sid, va, opts, log=print):
                     a = a2
                     out["budget_raised"] = "input %d needed more than %d instructions" % (i, low)
             st = a["status"][0]
+            if st == "import" and ours_probe < OURS_IMPORT_PROBES:
+                # our side's call sites that stop at the same import (for its 'blocked' edges): run it, never compare
+                ours_probe += 1
+                runner.run_side(runner.ours, inp)
             if st != "ok":
                 key = st if st != "import" else "import:%s" % str(a["status"][1]).split(":")[0]
                 if st == "fault" and a["fault"]:
@@ -1729,9 +1960,16 @@ def _test_function(sid, va, opts, log=print):
                     continue
                 faked += 1
             valid += 1
-            if run_blocks - runner.blocks:
-                runner.blocks |= run_blocks
+            new = bool(run_blocks - runner.blocks) or bool(a["edges"] - runner.orig.edges) or \
+                bool(sb[0] == "ok" and b["edges"] - runner.ours.edges)
+            runner.blocks |= run_blocks
+            runner.orig.edges |= a["edges"]
+            if sb[0] == "ok":
+                runner.ours.edges |= b["edges"]
+            if new:
                 corpus.append(inp)
+            if steer:
+                steer.note_valid(inp, {"orig": a["edges"], "ours": b["edges"] if sb[0] == "ok" else set()})
             cmp_.last_kind = None
             if sb[0] != "ok":
                 d = ("execution", "returned normally", "%s: %s" % sb, "ours failed where the original succeeded")
@@ -1745,6 +1983,10 @@ def _test_function(sid, va, opts, log=print):
                              "orig": d[1], "ours": d[2], "detail": d[3], "args": ["%08x" % w for w in inp.args],
                              "regs": {k: "%08x" % v for k, v in inp.regs.items()},
                              "fake_calls": len(a["fakes"]), "repairs": fixes}
+                    if getattr(inp, "alloc_fail", ()):
+                        first["alloc_fail"] = list(inp.alloc_fail)      # these malloc/new calls returned NULL
+                    if getattr(inp, "extra", {}):
+                        first["mapped_at_fault"] = ["%08x+%x" % kv for kv in sorted(inp.extra.items())]
                     try:
                         import pickle
                         os.makedirs(FAIL_DIR, exist_ok=True)
@@ -1761,8 +2003,8 @@ def _test_function(sid, va, opts, log=print):
     finally:
         runner.close()
     out["repaired_inputs"] = repaired
-    out["inputs_with_fake_calls"] = faked
-    out["corpus"] = len(corpus)
+    if steer:
+        out["steering"] = dict(steer.stats, constants=steer.n_consts, queued=steer.made)
     covered = set()
     for (ba, bs) in runner.blocks:
         for a in range(ba, ba + bs):
@@ -1775,6 +2017,7 @@ def _test_function(sid, va, opts, log=print):
                          "all": len(covered) >= total,
                          "missed": ["%08x" % a for a in sorted(set(t.orig_insns) - covered)][:64]},
                tolerated=cmp_.tolerated, ours_traps=traps)
+    ecov = out["edges"] = {nm: edge_report(runner, side, opts) for nm, side in (("orig", runner.orig), ("ours", runner.ours))}
     if opts.ulp:
         out["ulp"] = opts.ulp
     if mism and first.get("kind") == "local-address":
@@ -1787,13 +2030,71 @@ def _test_function(sid, va, opts, log=print):
     elif valid < max(10, ran // 20):
         top = sorted(discarded.items(), key=lambda x: -x[1])[:3]
         v, why = "UNSUPPORTED", "only %d/%d inputs valid (discards: %s)" % (valid, ran, ", ".join("%s=%d" % x for x in top))
-    elif valid >= opts.min_valid and (len(covered) >= total if getattr(opts, "require_all", False) else cov >= opts.min_cov):
-        v, why = "PASS", "%d valid inputs, %.1f%% coverage%s" % (valid, cov, " (all insns)" if getattr(opts, "require_all", False) else "")
+    elif getattr(opts, "gate", "edges") == "insns":
+        # legacy gate (before 2026-10-21): instruction coverage of the original only
+        if valid >= opts.min_valid and (len(covered) >= total if getattr(opts, "require_all", False) else cov >= opts.min_cov):
+            v, why = "PASS", "%d valid inputs, %.1f%% coverage%s [legacy insns gate]" % (
+                valid, cov, " (all insns)" if getattr(opts, "require_all", False) else "")
+        else:
+            need = "100%% (all insns)" if getattr(opts, "require_all", False) else "%.0f%%" % opts.min_cov
+            v, why = "WEAK", "%d valid inputs (need %d), %.1f%% coverage (need %s) [legacy insns gate]" % (
+                valid, opts.min_valid, cov, need)
     else:
-        need = "100%% (all insns)" if getattr(opts, "require_all", False) else "%.0f%%" % opts.min_cov
-        v, why = "WEAK", "%d valid inputs (need %d), %.1f%% coverage (need %s)" % (valid, opts.min_valid, cov, need)
+        missed = [nm for nm in ("orig", "ours") if ecov[nm]["missed_n"]]
+        edges_txt = "; ".join(edge_summary(nm, ecov[nm]) for nm in ("orig", "ours"))
+        all_insns = len(covered) >= total or not getattr(opts, "require_all", False)
+        if valid >= opts.min_valid and not missed and all_insns:
+            v, why = "PASS", "%d valid inputs, all edges covered (%s), %.1f%% insns" % (valid, edges_txt, cov)
+        else:
+            need = []
+            if valid < opts.min_valid:
+                need.append("%d valid inputs (need %d)" % (valid, opts.min_valid))
+            for nm in missed:
+                need.append("%s misses %d edge(s)" % (nm, ecov[nm]["missed_n"]))
+            if not all_insns:
+                need.append("--require-all: %d original insns never ran" % (total - len(covered)))
+            v, why = "WEAK", "%s; edges %s; %.1f%% insns" % (", ".join(need), edges_txt, cov)
     out.update(verdict=v, reason=why, seconds=round(time.time() - t0, 1))
     return out
+
+
+OURS_IMPORT_PROBES = 40
+
+
+NORETURN_WHY = {"_purecall": "pure virtual call", "_CxxThrowException": "C++ throw", "RaiseException": "C++ throw"}
+
+
+def noreturn_stop(why):
+    """A run stopped in an import that can never return to the function: no handler (unmodelled), a C++ throw,
+    or a pure virtual call. Handler stops that depend on the input (a huge malloc/memcpy) are not."""
+    why = str(why)
+    return ":" not in why or why.split(":")[0] in NORETURN_WHY
+
+
+def edges_missing(runner):
+    return any(set(side.cfg.edges) - side.edges - side.cfg_static_unreachable for side in (runner.orig, runner.ours))
+
+
+def edge_report(runner, side, opts):
+    """Edge coverage of one side: totals, the uncovered edges the harness cannot reach (each with its
+    reason) and the remaining missed edges (which make the verdict WEAK)."""
+    cfg = side.cfg
+    allx = set(cfg.edges)
+    cov = side.edges & allx
+    unr = cfg.unreachable(cov, runner.blocked_calls(side), nan=opts.nan)
+    missed = sorted(allx - cov - set(unr))
+    req = len(allx) - len(unr)
+    return {"total": len(allx), "covered": len(cov), "required": req,
+            "pct": round(100.0 * len(cov) / req, 1) if req else 100.0,
+            "unreachable": [{"edge": CF.fmt_edge(e), "reason": unr[e]} for e in sorted(unr)],
+            "missed_n": len(missed), "missed": [CF.fmt_edge(e) for e in missed[:64]]}
+
+
+def edge_summary(nm, r):
+    s = "%s %d/%d" % (nm, r["covered"], r["required"])
+    if r["unreachable"]:
+        s += " (+%d unreachable)" % len(r["unreachable"])
+    return s
 
 
 def replay(sid, va, path, opts):
@@ -1836,7 +2137,10 @@ def parse_args(argv=None):
     ap.add_argument("--min-valid", type=int, default=DEFAULT_K)
     ap.add_argument("--min-cov", type=float, default=DEFAULT_C)
     ap.add_argument("--require-all", action="store_true",
-                    help="a PASS requires every original instruction to execute (coverage 100%%), not just --min-cov")
+                    help="a PASS also requires every original instruction to execute (legacy insns gate: instead of --min-cov)")
+    ap.add_argument("--gate", choices=("edges", "insns"), default="edges",
+                    help="edges (default): PASS needs every reachable branch edge covered on BOTH builds; "
+                         "insns: the legacy gate (original's instruction coverage >= --min-cov)")
     ap.add_argument("--ulp", type=int, default=0)
     ap.add_argument("--strict-calls", action="store_true")
     ap.add_argument("--budget", type=int, default=DEFAULT_BUDGET, help="max instructions per original run (ours: 4x)")
@@ -1855,6 +2159,13 @@ def parse_args(argv=None):
                          "027F = CRT 53-bit state of worker threads)" % M.FPCW)
     ap.add_argument("--alias", type=float, default=0.0, help="probability that a generated pointer aliases an argument object")
     ap.add_argument("--mutate", type=float, default=0.6, help="share of inputs mutated from the coverage corpus")
+    ap.add_argument("--no-steer", dest="steer", action="store_false",
+                    help="no input steering (comparison constants, input-to-state replays, frontier-weighted parents)")
+    ap.add_argument("--steer-share", type=float, default=0.35, help="share of inputs taken from the steering queue")
+    ap.add_argument("--extra-inputs", type=int, default=DEFAULT_INPUTS,
+                    help="inputs beyond --inputs, spent only on steering while an edge is still uncovered")
+    ap.add_argument("--no-extra-map", action="store_true",
+                    help="fault repair never maps input memory at an untraceable faulting address")
     ap.add_argument("-v", "--verbose", action="store_true")
     ap.add_argument("--replay", help="re-run one saved failing input (first_mismatch.input_file) and print details")
     return ap.parse_args(argv)
@@ -1883,7 +2194,7 @@ def main(argv=None):
             r = {"slice": sid, "va": "%08x" % va, "verdict": "UNSUPPORTED",
                  "reason": "harness error: %s: %s" % (type(e).__name__, str(e)[:160])}
             ctx = context()
-            ctx["m"] = M.Machine(ctx["img"])
+            ctx["m"] = machine_hooks(M.Machine(ctx["img"]))
         results.append(r)
         print_result(r)
     if opts.json:
@@ -1900,6 +2211,17 @@ def print_result(r):
         print("    inputs %d, valid %d, discarded %s, coverage %s%% (%d/%d insns), %.1fs" % (
             r["inputs"], r["valid"], r["discarded"] or "{}", r["coverage"]["pct"], r["coverage"]["covered_insns"],
             r["coverage"]["total_insns"], r["seconds"]))
+        if r.get("edges"):
+            print("    edges: %s" % "; ".join(edge_summary(nm, r["edges"][nm]) for nm in ("orig", "ours")))
+            for nm in ("orig", "ours"):
+                e = r["edges"][nm]
+                if e["missed_n"]:
+                    print("      %s missed: %s%s" % (nm, " ".join(e["missed"][:8]), " ..." if e["missed_n"] > 8 else ""))
+                groups = {}
+                for u in e["unreachable"]:
+                    groups.setdefault(u["reason"], []).append(u["edge"])
+                for why, es in groups.items():
+                    print("      %s unreachable (%d): %s [%s%s]" % (nm, len(es), why, " ".join(es[:4]), " ..." if len(es) > 4 else ""))
         tol = {k: v for k, v in r["tolerated"].items() if v}
         if tol:
             print("    tolerated: %s" % tol)

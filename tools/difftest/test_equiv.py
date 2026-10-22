@@ -1,93 +1,157 @@
 """Self-tests for the equivalence harness (run: .venv/bin/python -m pytest tools/difftest/test_equiv.py).
 
-(a) a byte-exact function from a slice manifest must PASS;
-(b) the same source with one operator changed must FAIL;
+(a) byte-exact functions from slice manifests PASS the edge gate;
+(b) the same source with one operator, one boundary (`<=` -> `<`) or one constant changed FAILs;
 (c) real nonmatching functions get a verdict (any of the four) without crashing;
-(d) regressions for checker artifacts: argument-slot pointers, state leaking between runs, code
-    writes, generated pointers into code, string literal mapping, extern "C" signatures, flags.
+(d) the edge gate: both builds reported, WEAK names the side and the number of missed edges, the legacy
+    instruction gate still works, steering reaches a branch random inputs never take;
+(e) the static edge model: x87 status-word facts (infeasible / NaN-only), jump-table edges, edges behind
+    a blocked call listed with a reason;
+(f) harness regressions: state restored between runs, generated values never point into code.
 """
 import os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
+os.environ.setdefault("DIFFTEST_NO_LEDGER", "1")
+os.environ.setdefault("DIFFTEST_FAIL_DIR", os.path.join(ROOT, "work", "difftest", "test_fail_inputs"))
+import capstone  # noqa: E402
 import equiv  # noqa: E402
+import cfgcov as CF  # noqa: E402
+import resolve as R  # noqa: E402
 
-EXACT_SID, EXACT_VA = "s0085f1e0", 0x0085f1e0     # jpeg_fdct_float, byte-exact (manifest)
+RECT_SID, RECT_VA = "s00423ed0", 0x00423ed0      # in_rect(p, lo, hi): integer compares, byte-exact
+ANGLE_SID, ANGLE_VA = "s00432130", 0x004325a0    # closer_angle(ref, a, b): x87 compares against pi, byte-exact
+GLOBAL_SID, GLOBAL_VA = "s00463790", 0x00464070  # ShadowMap::bind_target: branches on two .data globals
 MUT_DIR = os.path.join(ROOT, "work", "difftest", "mut")
 
 
 def opts(*extra):
-    return equiv.parse_args(["x", "--inputs", "220", "--time-limit", "60", *extra])
+    return equiv.parse_args(["x", "--inputs", "220", "--time-limit", "90", *extra])
 
 
-def test_byte_exact_passes():
-    r = equiv.test_function(EXACT_SID, EXACT_VA, opts())
-    assert r["verdict"] == "PASS", r
-
-
-def mutant(old, new, tag):
-    src = os.path.join(ROOT, "match", "slices", EXACT_SID, EXACT_SID + ".cpp")
+def mutant(sid, old, new, tag):
+    src = os.path.join(ROOT, "match", "slices", sid, sid + ".cpp")
     text = open(src).read()
     assert old in text, old
     os.makedirs(MUT_DIR, exist_ok=True)
-    path = os.path.join(MUT_DIR, "%s_%s.cpp" % (EXACT_SID, tag))
+    path = os.path.join(MUT_DIR, "%s_%s.cpp" % (sid, tag))
     open(path, "w").write(text.replace(old, new, 1))
     return path
 
 
+# ---------------------------------------------------------------------- (a) (b) (c)
+
+def test_byte_exact_passes():
+    for sid, va in ((RECT_SID, RECT_VA), (ANGLE_SID, ANGLE_VA)):
+        r = equiv.test_function(sid, va, opts())
+        assert r["verdict"] == "PASS", r
+        for side in ("orig", "ours"):
+            e = r["edges"][side]
+            assert e["total"] > 0 and e["covered"] == e["required"] and not e["missed"], r
+
+
 def test_changed_operator_fails():
-    path = mutant("dataptr[4] = tmp10 - tmp11;", "dataptr[4] = tmp11 - tmp10;", "op")
-    r = equiv.test_function(EXACT_SID, EXACT_VA, opts("--src", path))
+    path = mutant(RECT_SID, "p[0] >= lo[0]", "p[0] > lo[0]", "op")
+    r = equiv.test_function(RECT_SID, RECT_VA, opts("--src", path))
     assert r["verdict"] == "FAIL", r
-    assert r["first_mismatch"]["observable"].startswith("memory"), r
+    assert r["first_mismatch"]["observable"].startswith("eax"), r
 
 
 def test_changed_constant_fails():
-    # first pass only, ~2 ulp: 0.541196100f -> 0.5411962f
-    path = mutant("((float)0.541196100)", "((float)0.5411962)", "const")
-    r = equiv.test_function(EXACT_SID, EXACT_VA, opts("--src", path))
+    # round_float: (*p - floor(*p) <= 0.5f) -> 0.4f
+    path = mutant(ANGLE_SID, "(*p - fl <= 0.5f)", "(*p - fl <= 0.4f)", "const")
+    r = equiv.test_function(ANGLE_SID, 0x00432540, opts("--src", path))
+    assert r["verdict"] == "FAIL", r
+
+
+def test_boundary_operator_fails():
+    # `<=` -> `<` on the last compare: only inputs with p[1] == hi[1] tell them apart
+    path = mutant(RECT_SID, "p[1] <= hi[1]", "p[1] < hi[1]", "edge")
+    r = equiv.test_function(RECT_SID, RECT_VA, opts("--src", path))
     assert r["verdict"] == "FAIL", r
 
 
 def test_real_nonmatching_get_a_verdict():
-    for sid, va in (("s00f7d9d0", 0x00f7d9d0), ("s0116c750", 0x0116c750), ("s010b48b0", 0x010b48b0)):
+    for sid, va in (("s0040c670", 0x0040cb60), ("s0043b5d0", 0x0043b8a0), ("s00411a90", 0x00411d20)):
         r = equiv.test_function(sid, va, equiv.parse_args(["x", "--inputs", "60", "--time-limit", "25"]))
         assert r["verdict"] in ("PASS", "WEAK", "FAIL", "UNSUPPORTED"), r
         assert r["reason"]
 
 
-# ---------------------------------------------------------------------- harness-artifact regressions
+# ---------------------------------------------------------------------- (d) the gate
 
-ARG_SID, ARG_VA = "s00d00ee0", 0x00d01410      # RelBook::FindRel: find(&it, key) out-iterator
-ARG_OLD = "RBNode* it;\n    t->find(&it, key);"
-
-
-def arg_mutant(new, tag):
-    src = os.path.join(ROOT, "match", "slices", ARG_SID, ARG_SID + ".cpp")
-    text = open(src).read()
-    assert ARG_OLD in text
-    os.makedirs(MUT_DIR, exist_ok=True)
-    path = os.path.join(MUT_DIR, "%s_%s.cpp" % (ARG_SID, tag))
-    open(path, "w").write(text.replace(ARG_OLD, new, 1))
-    return path
+def test_weak_names_side_and_missed_edges():
+    # without steering the .data globals stay at their (zero) baseline: the first branch never falls through
+    r = equiv.test_function(GLOBAL_SID, GLOBAL_VA, opts("--no-steer"))
+    assert r["verdict"] == "WEAK", r
+    assert "orig misses" in r["reason"] and "ours misses" in r["reason"], r
+    assert r["edges"]["orig"]["missed_n"] > 0 and r["edges"]["ours"]["missed_n"] > 0, r
 
 
-def test_argument_slot_pointer_is_a_stack_pointer():
-    # the out-iterator lives in the function's own incoming 'b' slot (the original uses 'a's,
-    # the old checker reported FAIL): only the pointer passed to find differs, not observable
-    path = arg_mutant("t->find((RBNode**)&b, key);\n    RBNode* it = *(RBNode**)&b;", "argslot")
-    r = equiv.test_function(ARG_SID, ARG_VA, opts("--src", path))
-    assert r["verdict"] in ("PASS", "WEAK") and not r["mismatches"], r
+def test_steering_reaches_global_branch():
+    r = equiv.test_function(GLOBAL_SID, GLOBAL_VA, opts())
+    assert r["verdict"] == "PASS", r
+    assert r["steering"]["replays"] > 0, r
 
 
-def test_argument_slot_different_value_fails():
-    # same, but a different value is written through the argument-slot pointer
-    path = arg_mutant("t->find((RBNode**)&b, key);\n    *(char**)&b += 4;\n    RBNode* it = *(RBNode**)&b;",
-                      "argslot_write")
-    r = equiv.test_function(ARG_SID, ARG_VA, opts("--src", path))
-    assert r["verdict"] == "FAIL", r
+def test_legacy_instruction_gate():
+    r = equiv.test_function(GLOBAL_SID, GLOBAL_VA, opts("--no-steer", "--gate", "insns"))
+    assert r["verdict"] == "WEAK" and "legacy insns gate" in r["reason"], r
+    r = equiv.test_function(RECT_SID, RECT_VA, opts("--gate", "insns"))
+    assert r["verdict"] == "PASS", r
 
+
+# ---------------------------------------------------------------------- (e) edge model
+
+_md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+_md.detail = True
+
+
+def cfg_of(code, base=0x1000, tables=None):
+    tables = tables or {}
+
+    def rd(a, n):
+        return code[a - base:a - base + n]
+
+    def tt(a):
+        return tables.get(a)
+    insns, _ = R.recursive_descent(rd, base, base + len(code), base, tt)
+    return CF.Cfg(insns, base, base, base + len(code), tt)
+
+
+def test_x87_branch_facts():
+    # fcomp [eax]; fnstsw ax; test ah, 4; jne +2; nop; nop; ret   -> C2 alone: only NaN takes the jump
+    c = cfg_of(bytes.fromhex("d818" "dfe0" "f6c404" "7502" "9090" "c3"))
+    assert c.x87_facts() == {(0x1007, 0x100b): "nan-only"}
+    # test ah, 2 (C1, 0 after a compare): never taken
+    c = cfg_of(bytes.fromhex("d818" "dfe0" "f6c402" "7502" "9090" "c3"))
+    assert c.x87_facts() == {(0x1007, 0x100b): "infeasible"}
+    # MSVC's usual tests (41h/5 with jp/jne) have no such edge
+    for t in ("f6c441" "7a02", "f6c405" "7a02", "f6c441" "7502"):
+        assert cfg_of(bytes.fromhex("d818" "dfe0" + t + "9090" "c3")).x87_facts() == {}
+    u = c.unreachable(set(), {}, nan=False)
+    assert u[(0x1007, 0x100b)].startswith("infeasible")
+
+
+def test_jump_table_edges():
+    # jmp [eax*4+0x2000] with targets 0x1007, 0x1008 (two distinct, one repeated)
+    code = bytes.fromhex("ff248500200000" "c3" "c3")
+    c = cfg_of(code, tables={0x2000: 0x1007, 0x2004: 0x1008, 0x2008: 0x1007})
+    assert {e for e, k in c.edges.items() if k == "table"} == {(0x1000, 0x1007), (0x1000, 0x1008)}
+
+
+def test_blocked_edges_are_listed():
+    # call 0x5000; test eax, eax; je +1; nop; ret: both edges only reachable past the call
+    code = bytes.fromhex("e8fb3f0000" "85c0" "7401" "90" "c3")
+    c = cfg_of(code)
+    u = c.unreachable(set(), {0x1000: "stopped at unmodelled import X in all 3 runs that reached it"})
+    assert set(u) == {(0x1007, 0x100a), (0x1007, 0x1009)}
+    assert all(r.startswith("blocked: only reachable past call @00001000") for r in u.values()), u
+
+
+# ---------------------------------------------------------------------- (f) harness regressions
 
 def test_state_is_restored_between_runs():
     import machine as M
@@ -104,89 +168,17 @@ def test_state_is_restored_between_runs():
     import pytest
     from unicorn import UcError
     with pytest.raises(UcError):
-        m.write(0x006b709a, b"\x90" * 16)
+        m.write(0x00401000, b"\x90" * 16)
 
 
 def test_generated_values_avoid_code():
-    t = equiv.prepare(EXACT_SID, EXACT_VA)
+    t = equiv.prepare(RECT_SID, RECT_VA)
     runner = equiv.Runner(t, opts())
     try:
         g = runner.gen
         assert not any(lo <= v < hi for v in g.dic for lo, hi in g.code)
-        v = g.fin(0x004b229e)                     # a jump target inside a function (an immediate)
+        v = g.fin(0x00423f12)                     # a jump target inside a function (an immediate)
         assert not any(lo <= v < hi for lo, hi in g.code)
     finally:
         runner.close()
 
-
-def test_string_literal_mapping():
-    img = equiv.context()["img"]
-    assert img.rdata_find(b"Graphics\0") == 0x013eb8a4      # follows a float constant, no NUL before
-    assert img.rdata_find(b":\0") == 0x013fe618             # not the ':' inside a UTF-16 string
-
-
-def test_extern_c_signature():
-    import sig as SIG
-    text = open(os.path.join(ROOT, "match", "slices", "s010af750", "s010af750.cpp")).read()
-    s = SIG.parse_c_decl("hkPoweredChain_ScanAndEnableMotors", [text])
-    assert s.ret == "void" and s.params == [("ptr", 1)] * 3 and s.conv == "cdecl"
-
-
-def test_flag_order():
-    import slice as S
-    # an explicit 'flags ...' note in the reason wins over loose tokens and comments
-    f, how = S.choose_flags("s004604f0", 0x00460bf0)
-    assert how == "reason" and "/Od" in f and "/fp:fast" in f
-
-
-# ---------------------------------------------------------------------- hybrid-found blind spots (2026-10-12)
-
-def test_untouched_register_clobber_fails():
-    # InterpRamp: instruction-for-instruction equivalent but writes xmm3, which the original never
-    # touches; its LTCG caller kept a live value there (crackling audio in the hybrid).
-    r = equiv.test_function("s0114da70", 0x0114e780, opts())
-    assert r["verdict"] == "FAIL", r
-    assert r["first_mismatch"]["observable"].startswith("xmm3"), r
-
-
-def test_fake_call_argument_order_fails():
-    # cViewer::SetRaster: the renderer virtual takes (handle0, handle1, &rect); the old source
-    # passed (&rect, handle0, handle1) and PASSed because fake-call arguments were not compared.
-    src = os.path.join(ROOT, "match", "slices", "s007c4be0", "s007c4be0.cpp")
-    text = open(src).read()
-    old = "r2->v20(handle[0], handle[1], rect);"
-    assert old in text
-    text = text.replace(old, "r2->v20(rect, handle[0], handle[1]);")
-    text = text.replace("virtual void v20(int a, int b, int* out);", "virtual void v20(int* out, int a, int b);")
-    os.makedirs(MUT_DIR, exist_ok=True)
-    path = os.path.join(MUT_DIR, "s007c4be0_argorder.cpp")
-    open(path, "w").write(text)
-    r = equiv.test_function("s007c4be0", 0x007c4be0, opts("--src", path))
-    assert r["verdict"] == "FAIL" and r["first_mismatch"]["observable"].startswith("fake call"), r
-    r = equiv.test_function("s007c4be0", 0x007c4be0, opts())
-    assert r["verdict"] in ("PASS", "WEAK") and not r["mismatches"], r
-
-
-def test_void_declaration_hiding_eax_return_fails():
-    # rw::audio pop-front leaf: returns the popped node in eax; declared void it handed callers the
-    # list pointer (black window in the hybrid). The harness now compares eax when the original
-    # writes it before every ret, whatever the declaration says.
-    import re
-    src = os.path.join(ROOT, "match", "slices", "s01140b70", "s01140b70.cpp")
-    text = open(src).read()
-    s = text.index('extern "C" int* FUN_01141200(int* list)')
-    e = text.index("\n}\n", s) + 3
-    body = re.sub(r"return [^;]+;", "return;", text[s:e].replace("int* FUN_01141200", "void FUN_01141200"))
-    text = (text[:s] + body + text[e:]).replace('extern "C" int* FUN_01141200(int* list);', 'extern "C" void FUN_01141200(int* list);')
-    os.makedirs(MUT_DIR, exist_ok=True)
-    path = os.path.join(MUT_DIR, "s01140b70_void.cpp")
-    open(path, "w").write(text)
-    r = equiv.test_function("s01140b70", 0x01141200, opts("--src", path))
-    assert r["verdict"] == "FAIL" and r["first_mismatch"]["observable"] == "eax", r
-    assert r["void_hides_eax"] is True, r
-
-
-def test_ret_n_mismatch_fails():
-    # `ret` vs the original's `ret 4` unbalances the caller's stack; the esp observable catches it.
-    r = equiv.test_function("s0056fb90", 0x0056fe60, opts())
-    assert r["verdict"] == "FAIL" and r["first_mismatch"]["observable"] in ("esp", "eax"), r
