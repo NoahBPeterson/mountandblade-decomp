@@ -1029,7 +1029,7 @@ void terrain_obj::erode()
 void terrain_obj::emit_particle(particle_list* l, int type, const rgl::matrix* frame, const rgl::vector4* dir, int anim)
 {
     if (l->count < 0x40000) {
-        particle* e = &l->items[l->count];
+        TerrainParticle* e = &l->items[l->count];
         e->nmesh = 0;
         e->type = type;
         int c[2];
@@ -2131,7 +2131,7 @@ void terrain_obj::spawn_particles(particle_list* list, int unused)
                                 if (maxn <= n) break;
                                 if (!(RND() < q.f34) && (pt->flags & 0x80000) != 0) break;
                                 rate = rate - 1.0f;
-                                particle* e = &list->items[list->count];
+                                TerrainParticle* e = &list->items[list->count];
                                 e->type = kind;
                                 e->cx = x;
                                 e->cy = y;

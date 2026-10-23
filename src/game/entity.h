@@ -145,20 +145,8 @@ struct four_vecs {
     ~four_vecs();               // 0x41f5d0
 };
 
-// ---- effect element (0x1dc bytes, vtable 0x54b454; see FxElem in s00421110 fx.h) ---------------------------
-struct FxElem {
-    virtual ~FxElem();                                      // 0x41f1d0
-    char pad4[0x19c - 4];
-    std::vector<rgl::mesh*> psys;   // +0x19c (first at +0x1a0)       0x41f250, 0x41f2a0
-    char pad1ac[4];
-    std::vector<void*> groups;      // +0x1b0 (first at +0x1b4)       0x41f1d0
-    int parent;                 // +0x1c0
-    int has_arr;                // +0x1c4                              0x41f1d0
-    int* arr;                   // +0x1c8                              0x41f1d0
-    char pad1cc[0x1dc - 0x1cc];
-    void set_data(void* p);                                 // 0x41f250
-    int find_kid(int id);                                   // 0x41f2a0
-};
+// ---- effect element (0x1dc bytes, vtable 0x54b454): FxElem, one definition in src/include/fx.h ---------------------
+#include "../include/fx.h"
 
 // ---- chunked free-list pool: a list of chunk pointers, per_chunk cells in each, chained through `next` ----
 struct cell12 { cell12* next; int a, b; };

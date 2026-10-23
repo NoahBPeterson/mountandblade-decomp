@@ -64,7 +64,7 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
 }
 
 // @ 0x48b2d0
-void __fastcall play_sound(SoundMgr* m)
+void __fastcall play_sound(UiSoundHost* m)
 {
     int ch = FSOUND_PlaySoundEx(-1, (void*)m->handle, 0, 1);
     float v = g_master_volume * 155.0f;

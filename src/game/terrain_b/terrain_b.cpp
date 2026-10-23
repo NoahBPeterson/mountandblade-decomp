@@ -976,7 +976,7 @@ float Terrain::sun_visibility(const float* p)
 // @ 0x471b30
 void Terrain::light_particle(particle_list* l, int idx, bool trace)
 {
-    particle* p = &l->items[idx];
+    TerrainParticle* p = &l->items[idx];
     ptype* pt = &g_ptypes[p->type];
     if (g_use_shaders == 0 || g_mesh_quality != 2) {
         for (int k = 0; k < p->nmesh; k++) {

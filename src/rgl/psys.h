@@ -7,6 +7,7 @@
 #include "./rgl_math.h"
 #include "./resource.h"
 #include "./mesh.h"
+#include "./scene/emitter.h"   // psys, curve4 (one definition for the scene modules and psys.cpp)
 
 namespace rgl {
 
@@ -30,36 +31,6 @@ struct mesh_pool {
     vector4 axis;                // 0x30c
     vector4 eye;                 // 0x31c
     mesh* get_mesh(skin* r);                        // 0x413d30
-};
-
-// piecewise-linear key: value v0 until t0, v1 after t1, linear in between
-struct curve4 { float t0, v0, t1, v1; };
-
-struct psys {
-    mesh* cache;         // 0x00 mesh looked up from `res` on first use
-    skin* res;           // 0x04
-    mesh* src;           // 0x08 template mesh (null: emit camera-facing quads)
-    int f0c;
-    particle* begin;     // 0x10
-    particle* end;       // 0x14
-    char pad18[0x28 - 0x18];
-    curve4 a;            // 0x28 alpha curve (rise, hold, fall)
-    curve4 r;            // 0x38
-    curve4 g;            // 0x48
-    curve4 b;            // 0x58
-    curve4 s;            // 0x68 size curve
-    float half_w;        // 0x78
-    float half_h;        // 0x7c
-    vec2 uv[4];          // 0x80 uv of the four quad corners
-    char pad_a0[0xb4 - 0xa0];
-    vector4 axis;        // 0xb4
-    char pad_c4[0xd8 - 0xc4];
-    float brightness;    // 0xd8
-    char pad_dc[0xe8 - 0xdc];
-    unsigned flags;      // 0xe8 (mask 0xf00 selects how the frame is built)
-
-    void emit(particle* p, matrix* m, mesh* out, const float* ref);   // 0x413e50
-    void update(scene* sc);                                          // 0x414960
 };
 
 } // namespace rgl

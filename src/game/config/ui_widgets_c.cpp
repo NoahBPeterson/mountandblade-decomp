@@ -142,14 +142,14 @@ leave_edit:
             f180 = 0;
             b = 1;
             g_ui_active = 0;
-            ::play_sound(&g_sound);
+            ::play_sound(&g_ui_sound);
             set_key_flags(0x10000);
         }
     } else if (p == 0x10) {
         f180 = 1;
         b = 1;
         g_ui_active = this;
-        ::play_sound(&g_sound);
+        ::play_sound(&g_ui_sound);
         if (f181) {
             {
                 tstring tmp("");

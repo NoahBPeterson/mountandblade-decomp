@@ -17,6 +17,7 @@
 #include "./entity.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../include/mat4.h"
+#include "../include/fx.h"
 #include "../include/mesh_prims.h"
 #include "../include/poly.h"
 #include "../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
@@ -35,8 +36,8 @@ template<class _FI, class _Ty> _FI remove(_FI _First, _FI _Last, const _Ty& _Val
 // @ 0x41f1d0
 FxElem::~FxElem()
 {
-    if (has_arr)
-        operator delete(arr);
+    if (nchild)
+        operator delete(children);
 }
 
 // @ 0x41f250

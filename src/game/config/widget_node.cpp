@@ -42,7 +42,7 @@ struct NodeVec : std::vector<NodeA*> {
         return begin() + off;
     }
 };
-#define g_root_widgets (*(NodeVec*)&g_sound)
+#define g_root_widgets (*(NodeVec*)&g_ui_sound)
 
 #define ROWS() (rows_first ? (unsigned)(rows_last - rows_first) : 0u)       // the row vector's size(), re-read at each use
 

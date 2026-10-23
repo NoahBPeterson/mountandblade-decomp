@@ -1,4 +1,4 @@
-../src/game/ui/ui_widgets_a.cpp  ?play_sound@@YIXPAUSoundMgr@@@Z  0048b2d0  /O2 /MT /Gy /TP
+../src/game/ui/ui_widgets_a.cpp  ?play_sound@@YIXPAUUiSoundHost@@@Z  0048b2d0  /O2 /MT /Gy /TP
 ../src/game/ui/ui_widgets_a.cpp  ?update@UiA@@QAEXPAXPAMHH@Z  0048b320  /O2 /MT /Gy /TP
 ../src/game/ui/ui_widgets_a.cpp  ?type9@UiA@@QAEHXZ  0048b390  /O2 /MT /Gy /TP
 ../src/game/ui/ui_widgets_a.cpp  ?type8@UiA@@QAEHXZ  0048b4a0  /O2 /MT /Gy /TP

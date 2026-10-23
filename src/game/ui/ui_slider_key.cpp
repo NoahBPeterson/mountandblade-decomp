@@ -26,7 +26,7 @@ char UiB::key(unsigned p)
         if (p != 0x10)
             goto tail;
         b = 1;
-        ::play_sound(&g_sound);
+        ::play_sound(&g_ui_sound);
         int i = f178;
         float t = g_ui_target[i];
         float v = value() + e[i];

@@ -74,80 +74,10 @@ struct Psys {                                           // particle system (prov
     mat4 frame;
 };
 struct PsysGroup;
-struct FxElem {                                         // 0x1dc bytes
-    char pad0[0x19c];
-    std::vector<int> psys;                              // +0x19c (first at +0x1a0); holds Psys*
-    int ngroups;                                        // +0x1ac
-    std::vector<int> groups;                            // +0x1b0 (first at +0x1b4); holds PsysGroup*
-    char pad1c0[0x1dc - 0x1c0];
-    void add_psys(int p);                               // 0x442390
-    void add_group(int g);                              // 0x4423f0
-};
-struct FxDef {
-    int count;                                          // +0
-    FxElem* elems;                                      // +4
-    void attach_psys(int idx, Psys* p, const mat4* m);  // 0x442460
-    void attach_group(int idx, PsysGroup* g);           // 0x4424a0
-};
+#include "../../include/fx.h"        // FxElem, FxDef, EnvRec (shared with src/rgl and entity.cpp)
 
 // ---- emitter setup from a definition table (0x4424c0) ---------------------------------------------------------------------
-struct EmitRes {                                        // what Emit::res points to
-    char pad0[0x1c];
-    unsigned flags;                                     // +0x1c (0x40: follows the camera) (0x442ca0)
-};
-struct res_obj {                                        // resource returned by resmgr::get_object
-    char pad0[0x1c];
-    unsigned flags;                                     // +0x1c
-    char pad20[0x2c - 0x20];
-    EmitRes* f2c;                                       // +0x2c (0x4424c0)
-};
-struct P8 { int a, b; };
-struct EmitDef {                                        // 0xc0-byte definition record
-    char pad0[0x10];
-    int f10;                                            // +0x10
-    tstring name;                                       // +0x14
-    int f24;                                            // +0x24
-    char pad28[0x30 - 0x28];
-    int f30, f34, f38, f3c, f40;                        // +0x30
-    P8 t[5][2];                                         // +0x44 (rows of 0x10)
-    vector4 a;                                          // +0x94
-    vector4 b;                                          // +0xa4
-    int c;                                              // +0xb4
-    int fb8, fbc;                                       // +0xb8
-};
-struct Emit {                                           // particle emitter (0x1bc bytes)
-    char pad0[4];
-    EmitRes* res;                                       // +4 (0x4424c0 stores res_obj::f2c; 0x442ca0 reads its flags)
-    res_obj* obj;                                       // +8
-    char padc[0x1c - 0xc];
-    int f1c, f20, f24;                                  // +0x1c
-    P8 t[5][2];                                         // +0x28
-    char pad78[0xa0 - 0x78];
-    int fa0;                                            // +0xa0
-    char pada4[0xc4 - 0xa4];
-    vector4 gravity;                                    // +0xc4
-    int fd4;                                            // +0xd4
-    vector4 offs;                                       // +0xd8
-    unsigned flags;                                     // +0xe8 (bit 0 cleared on spawn)
-    char padec[0xf4 - 0xec];
-    mat4 world;                                         // +0xf4
-    mat4 local;                                         // +0x134
-    char pad174[0x198 - 0x174];
-    int f198;                                           // +0x198
-    int f19c, f1a0, f1a4;                               // +0x19c
-    int idx;                                            // +0x1a8
-    char pad1ac[4];
-    int f1b0, f1b4;                                     // +0x1b0
-    char pad1b8[4];
-    void init();                                        // 0x420b40
-    void set_placement(const mat4* m, const vector4* a, const vector4* b, int c);   // 0x433770
-};
-struct EmitTable {
-    EmitDef* defs;                                      // +0
-    int count;                                          // +4
-    void setup(Emit* e, int idx, const vector4* pos);   // 0x4424c0
-};
-extern EmitTable g_emit_defs;                           // 0x8ed5090
+#include "../emit.h"                  // Emit, EmitTable, EmitDef, EmitRes, res_obj (shared with terrain_b)
 
 // ---- FMOD 3 imports (stdcall thunks into the import table; names from the import library) ---------------------------------
 extern "C" {

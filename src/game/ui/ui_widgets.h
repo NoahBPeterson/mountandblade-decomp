@@ -5,12 +5,12 @@
 #define GAME_UI_WIDGETS_H
 #include "./mission_ui.h"
 
-struct SoundMgr {                           // the sound object used by the UI (global 0x5d7080)
+struct UiSoundHost {                           // the sound object used by the UI (global 0x5d7080)
     char pad[0x170c];
     int handle;                             // +0x170c the UI click sample    0x48b2d0
 };
-extern SoundMgr g_sound;                    // 0x5d7080
-void __fastcall play_sound(SoundMgr* m);    // 0x48b2d0 (FSOUND_PlaySoundEx + volume from g_master_volume)
+extern UiSoundHost g_ui_sound;                    // 0x5d7080
+void __fastcall play_sound(UiSoundHost* m);    // 0x48b2d0 (FSOUND_PlaySoundEx + volume from g_master_volume)
 extern float g_master_volume;               // 0x5aa014
 extern float g_ui_target[2];                // 0x5d7094 slider target positions   0x48b5a0
 extern void* g_ui_active;                   // 0x5d7090 widget being dragged       0x48b5a0

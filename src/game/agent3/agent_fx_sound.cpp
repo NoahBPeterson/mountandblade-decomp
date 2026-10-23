@@ -17,6 +17,9 @@
 #include "../../include/timer.h"
 #include "../cell.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../world.h"
+#include "../../include/fx.h"
+#include "../emit.h"
+#include "../anim_slot.h"
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
@@ -104,12 +107,12 @@ void world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<
 
 // ---- effect elements / definitions ----------------------------------------------------------------------------------------
 // @ 0x442390
-void FxElem::add_psys(int p) { vpush(psys, p); }
+void FxElem::add_psys(int p) { vpush(*(std::vector<int>*)&psys, p); }   // the list holds Psys* stored as ints
 // @ 0x4423f0
 void FxElem::add_group(int g)
 {
-    vpush(groups, g);
-    ngroups++;
+    vpush(*(std::vector<int>*)&groups, g);
+    f1ac++;
 }
 // @ 0x442460
 void FxDef::attach_psys(int idx, Psys* p, const mat4* m)

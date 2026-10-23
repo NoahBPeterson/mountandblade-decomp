@@ -15,8 +15,11 @@
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
+#define ANIM_SLOT_SET_OUT_OF_LINE   // AnimSlot::set 0x4378a0 stays a real function in this TU
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "./agent_stats.h"
+#include "../anim_slot.h"      // (named here too for the resolution audit)
+#include "../channel.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"

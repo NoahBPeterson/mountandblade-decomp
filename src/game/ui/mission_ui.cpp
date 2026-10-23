@@ -1708,7 +1708,7 @@ char UiA::key(unsigned p)
             goto tail;
         b = 1;
         if (!(f184 & 2) || v15c == 0) {
-            ::play_sound(&g_sound);
+            ::play_sound(&g_ui_sound);
             f180 = (f180 == 0);
             set_key_flags(0x10000);
             v15c = (v15c == 0);
@@ -1718,7 +1718,7 @@ char UiA::key(unsigned p)
             goto clear;
         if (p & 0x10) {
             b = 1;
-            ::play_sound(&g_sound);
+            ::play_sound(&g_ui_sound);
             f180 = 1;
             goto tail;
         }

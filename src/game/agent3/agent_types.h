@@ -51,7 +51,7 @@ struct SkelData {
     int count;                                        // +0x18 (0x43f6d0)
     ChanRec* items;                                   // +0x1c
 };
-struct Channel { char pad0[0xd8]; float charge; };    // animation channel: charge at +0xd8 (0x4406a0, via charged_0x48)
+#include "../channel.h"             // Channel (shared with agent2)
 #include "../skeleton.h"                // Skeleton, Region, node_groups (shared with agent / agent2)
 struct AgentBody {
     char pad0[0x58];
@@ -79,30 +79,7 @@ struct ItemRef { int item; unsigned m4; };
 
 // ---- animation slot: 2 x 0x2c bytes at agent+0xd4 (0x4406a0 reads slot[1].cur at +0x100 and .scale at +0x118;
 // 0x444370 sets cur/next/events/rate through the inlined 0x4378a0) ----------------------------------------------
-struct AnimSlot {
-    int cur;                                          // +0 current animation / action id (-1 none)
-    int next;                                         // +4
-    int sub;                                          // +8
-    unsigned prev_mask;                               // +0xc
-    int f10;                                          // +0x10
-    unsigned events;                                  // +0x14 priority word (0x444370)
-    float scale;                                      // +0x18
-    int f1c;                                          // +0x1c
-    float rate;                                       // +0x20 (0x444370)
-    float phase;                                      // +0x24
-    int f28;                                          // +0x28
-    // 0x4378a0 as cl inlines it into 0x444370: accept a new animation when its priority is not lower
-    bool set(int id, unsigned prio)
-    {
-        if ((prio & 0x1ffff) < (events & 0x1ffff) && (cur != -1 || next != -1))
-            return false;
-        next = id;
-        events = prio;
-        if (id == -1)
-            events = 0;
-        return true;
-    }
-};
+#include "../anim_slot.h"          // AnimSlot (shared with agent2; set() inline here as in 0x444370)
 struct DefList { void* defs; int count; };            // +0x12c of the agent (0x444370)
 struct Threat { unsigned id; float dist; vector4 dir; };      // 0x18 bytes (0x443430)
 
@@ -240,7 +217,7 @@ struct Agent {                                          // 0x5928 bytes
         if (p) r = *p;
         return r;
     }
-    bool charged_0x48() const { return anim[1].cur == 0x48 && body->skel->chans->charge > 0.1f; }   // 0x432470 inlined
+    bool charged_0x48() const { return anim[1].cur == 0x48 && body->skel->chans->charge() > 0.1f; }   // 0x432470 inlined
     bool rel_a(const Agent* o);                         // 0x432350
     bool rel_b(const Agent* o);                         // 0x4323a0
     bool rel_c(const Agent* o);                         // 0x4323f0

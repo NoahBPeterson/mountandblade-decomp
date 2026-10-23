@@ -1,6 +1,6 @@
-../src/game/entity.cpp  ??1FxElem@@UAE@XZ  0041f1d0  /O2 /MT /Gy /TP
-../src/game/entity.cpp  ?set_data@FxElem@@QAEXPAX@Z  0041f250  /O2 /MT /Gy /TP
-../src/game/entity.cpp  ?find_kid@FxElem@@QAEHH@Z  0041f2a0  /O2 /MT /Gy /TP
+../src/game/entity.cpp  ??1FxElem@@QAE@XZ  0041f1d0  /O2 /MT /Gy /TP
+../src/game/entity.cpp  ?set_data@FxElem@@UAEXPAX@Z  0041f250  /O2 /MT /Gy /TP
+../src/game/entity.cpp  ?find_kid@FxElem@@UAEHH@Z  0041f2a0  /O2 /MT /Gy /TP
 ../src/game/entity.cpp  ?erase@?$list@HV?$allocator@H@std@@@std@@QAE?AViterator@12@V312@@Z  0041f310  /O2 /MT /Gy /TP
 ../src/game/entity.cpp  ?link_chunks@?$pool@Ucell12@@@@QAEXXZ  0041f350  /O2 /MT /Gy /TP
 ../src/game/entity.cpp  ?link_chunks@?$pool@Ucell16@@@@QAEXXZ  0041f3d0  /O2 /MT /Gy /TP

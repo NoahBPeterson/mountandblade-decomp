@@ -156,35 +156,7 @@ struct AnimDef {                                        // 0x30 bytes
     int f2c;                                            // +0x2c
 };
 struct DefList { AnimDef* defs; int count; };           // +0x12c of the agent
-struct Channel {                                        // 0xd8 bytes (Curve of src/game/agent/curve.h)
-    char pad0[8];
-    unsigned flags;                                     // +8 (bone mask set)
-    int fc;                                             // +0xc
-    unsigned mask_lo, mask_hi;                          // +0x10 / +0x14 (bone mask bits)
-    char pad18[0x38 - 0x18];
-    float blend;                                        // +0x38 (0x43a980)
-    int f3c;                                            // +0x3c
-    char pad40[0x44 - 0x40];
-    int k44, k48, k4c, k50;                             // +0x44 (0x439fc0: 0x33, 0x33, a, b)
-    char pad54[8];
-    Anim* anim;                                         // +0x5c
-    vector4* pa;                                        // +0x60 (one point per track)
-    vector4* pb;                                        // +0x64
-    float* xform;                                       // +0x68 (quaternion blocks at +0, +0x70, +0x80, ...)
-    float v6c[4];                                       // +0x6c
-    vector4 va, vb;                                     // +0x7c, +0x8c
-    char pad9c[0xa0 - 0x9c];
-    float period;                                       // +0xa0
-    char pada4[4];
-    int mode;                                           // +0xa8
-    char padac[0xc0 - 0xac];
-    float w0, w1;                                       // +0xc0 / +0xc4
-    char padc8[0xcc - 0xc8];
-    int rate;                                           // +0xcc
-    char padd0[0xd8 - 0xd0];
-    bool busy();                                        // 0x433840 (Curve::step_reached)
-    void set_phase(float period);                       // 0x433930
-};
+#include "../channel.h"             // Channel (shared with agent3)
 #include "../skeleton.h"                // Region, Skeleton, node_list, node_groups (shared with agent / agent3)
 
 // ---- the mesh instance's node lists (0x438d80, 0x438f90, 0x439000) ---------------------------------------------
@@ -214,20 +186,7 @@ struct mnode {
 // 0x18-byte entry of the sorted nearest-enemy list (0x43b300)
 struct Threat { int id; float dist; vector4 dir; };
 // animation / order slot: 2 x 0x2c bytes at agent+0xd4
-struct AnimSlot {
-    int cur;                                            // +0 current animation id (-1 none)
-    int next;                                           // +4
-    int sub;                                            // +8
-    unsigned prev_mask;                                 // +0xc
-    int f10;                                            // +0x10
-    unsigned events;                                    // +0x14 priority word (low 17 bits)
-    float scale;                                        // +0x18
-    float f1c;                                          // +0x1c
-    float rate;                                         // +0x20
-    float phase;                                        // +0x24 (>= 0: pending phase for set_rec_phase)
-    int f28;                                            // +0x28
-    __declspec(noinline) bool set(int id, unsigned prio);   // 0x4378a0
-};
+#include "../anim_slot.h"          // AnimSlot (shared with agent3; agent_stats.cpp defines set() out of line)
 #include "../../include/timer.h"
 struct InputRec { unsigned bits; char pad[0x14]; unsigned lo; int hi; };   // queued input record (+0x18 time)
 struct InputState { unsigned v[6]; };

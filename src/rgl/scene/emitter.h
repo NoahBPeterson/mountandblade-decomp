@@ -18,6 +18,10 @@ namespace rgl {
 
 struct mesh;
 struct scene;
+struct particle;                                                // ../psys.h: the 0x64-byte record (E100 here)
+
+// piecewise-linear key: value v0 until t0, v1 after t1, linear in between (psys::emit 0x413e50 reads the curves as these)
+struct curve4 { float t0, v0, t1, v1; };
 
 struct float_pair {                      // two floats built through a stack temporary (psys::init)
     float u, v;
@@ -28,16 +32,24 @@ struct float_pair {                      // two floats built through a stack tem
 struct psys {
     mesh* cache;                    // 0x00 (zeroed by init 0x420b40)
     skin* res;                      // 0x04
-    int f8;                         // 0x08
+    union {
+        int f8;                     // 0x08
+        mesh* src;                  // 0x08 template mesh (null: emit camera-facing quads; psys::emit 0x413e50)
+    };
     std::vector<E100> particles;    // 0x0c (first at 0x10, last at 0x14)   0x41efd0, 0x420b40
     float f1c, f20, f24;            // 0x1c noise scale, 0x20 noise amount, 0x24 drag      0x420b40
-    float_pair curve[10];                // 0x28 five (t0,v0,t1,v1) curves written as ten pairs  0x420b40
-    float_pair half;                     // 0x78
-    float_pair quad[4];                  // 0x80 corner uvs
+    float_pair curve[10];                // 0x28 five (t0,v0,t1,v1) curves written as ten pairs  0x420b40; psys::emit 0x413e50 reads them as curve4: alpha, r, g, b, size
+    float_pair half;                     // 0x78 (u = half width, v = half height; 0x413e50)
+    float_pair quad[4];                  // 0x80 corner uvs (0x413e50 passes them as vec2)
     int fa0;                        // 0xa0
-    vector4 va4, vb4, vc4;          // 0xa4 x axis, 0xb4 z axis, 0xc4 gravity                0x420b40
-    float fd4, fd8, fdc, fe0;       // 0xd4..0xe0
-    int fe4, fe8, fec, ff0;         // 0xe4..0xf0 (fe8 = 1)
+    vector4 va4, vb4, vc4;          // 0xa4 x axis, 0xb4 z axis (the particle axis of 0x414960), 0xc4 gravity   0x420b40
+    float fd4, fd8, fdc, fe0;       // 0xd4..0xe0 (fd8 = brightness, 0x413e50)
+    int fe4;                        // 0xe4
+    union {
+        int fe8;                    // 0xe8 (1)
+        unsigned flags;             // 0xe8 (mask 0xf00 selects how the frame is built; 0x413e50)
+    };
+    int fec, ff0;                   // 0xec, 0xf0
     mat4 mf4, m134;                 // 0xf4, 0x134 (identity)
     vector4 v174;                   // 0x174
     vector4 v184;                   // 0x184 (0,0,1)
@@ -53,6 +65,7 @@ struct psys {
     void init();                                    // 0x420b40
     void update(const float* dt, const matrix& frame);      // 0x412150 (per-frame step)
     void update(scene* sc);                         // 0x414960 (render-time update, ../psys.cpp)
+    void emit(particle* p, matrix* m, mesh* out, const float* ref);   // 0x413e50 (../psys.cpp)
 };
 
 } // namespace rgl

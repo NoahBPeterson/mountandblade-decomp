@@ -69,7 +69,7 @@ static __forceinline vector4 vadd(const vector4& a, const vector4& b) { return v
 static __forceinline vector4 vsubl(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline vector4 vmul(const vector4& a, const float& k) { return vector4(a.x * k, a.y * k, a.z * k); }
 
-static __forceinline float curve(float t, const curve4& c)
+static __forceinline float eval_curve(float t, const curve4& c)
 {
     if (t < c.t0)
         return c.v0;
@@ -96,6 +96,16 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
     // quad's first corner and finally the four corner indices
     union { float col[4]; int idx[4]; } c;
     vector4& t = *(vector4*)c.col;
+    // the views psys.h used to declare as members: five curve4 over the ten float pairs, the quad's half size and uvs
+    curve4& a = *(curve4*)&curve[0];
+    curve4& r = *(curve4*)&curve[2];
+    curve4& g = *(curve4*)&curve[4];
+    curve4& b = *(curve4*)&curve[6];
+    curve4& s = *(curve4*)&curve[8];
+    float& half_w = half.u;
+    float& half_h = half.v;
+    float& brightness = fd8;
+    vec2* uv = (vec2*)quad;
     unsigned type = flags & 0xf00;
     if (type == 0x100) {
         vector4 d;
@@ -160,9 +170,9 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
 
     // colour and alpha over the particle's life
     // the colour (r, g, b, a) is also reused as the scratch vector / index slots below, as in the original
-    c.col[0] = curve(p->t, r) * brightness;
-    c.col[1] = curve(p->t, g) * brightness;
-    c.col[2] = curve(p->t, b) * brightness;
+    c.col[0] = eval_curve(p->t, r) * brightness;
+    c.col[1] = eval_curve(p->t, g) * brightness;
+    c.col[2] = eval_curve(p->t, b) * brightness;
     if (p->t < a.t0)
         c.col[3] = (p->t / a.t0) * a.v0;
     else if (p->t > a.t1)
@@ -170,7 +180,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
     else
         c.col[3] = (a.v1 - a.v0) * ((p->t - a.t0) / (a.t1 - a.t0)) + a.v0;
     unsigned color = pack_color((const vector4*)c.col);
-    float size = curve(p->t, s);
+    float size = eval_curve(p->t, s);
 
     if (src) {
         m->o = p->pos;
@@ -244,7 +254,7 @@ void psys::update(scene* sc)
         if (cache == 0)
             cache = v->get_mesh(res);
         matrix m;
-        m.u = axis;
+        m.u = vb4;
         m.f = v->axis;
         vector4 t, t2;
         t.x = ((m.f.y)*( m.u.z)) - ((m.u.y)*( m.f.z));
@@ -256,12 +266,12 @@ void psys::update(scene* sc)
         t2.y = ((m.u.z)*( m.s.x)) - ((m.s.z)*( m.u.x));
         t2.z = ((m.s.y)*( m.u.x)) - ((m.s.x)*( m.u.y));
         m.f = t2;
-        if (begin != end) {
-            particle* q = begin;
+        if ((particle*)&*particles.begin() != (particle*)&*particles.end()) {
+            particle* q = (particle*)&*particles.begin();
             do {
                 emit(q, &m, cache, (const float*)&v->eye);
                 q++;
-            } while (q != end);
+            } while (q != (particle*)&*particles.end());
         }
     }
 }

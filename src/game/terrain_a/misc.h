@@ -171,49 +171,7 @@ struct mesh_list_x : rgl::mesh_list { void apply(rgl::matrix m); };            /
 struct lod_mesh_x : rgl::lod_mesh { void apply(const rgl::matrix* m); };       // 0x46c9f0
 
 // ---- effect slot record (0xd8 bytes; reset 0x4686a0, inline ctor / dtor in 0x46b9d0) --------------------------------
-struct Quad4 {                                  // four floats at EnvRec+0xc0 (zeroed member-wise, then x = 1)
-    float x, y, z, w;
-    void zero() { x = 0; z = 0; y = 0; w = 0; }
-};
-struct EnvRec {
-    int f0;                                     // +0
-    char pad4[4];
-    int f8, fc;                                 // +8 / +0xc
-    char pad10[0x10];
-    int clock;                                  // +0x20
-    char pad24[4];
-    __int64 t0;                                 // +0x28
-    int f30;                                    // +0x30
-    float f34, f38;                             // +0x34 / +0x38
-    int f3c;                                    // +0x3c
-    float f40;                                  // +0x40
-    char pad44[8];
-    int f4c, f50, f54, f58, f5c;                // +0x4c..
-    rgl::vector4* k0; rgl::vector4* k1; rgl::vector4* k2;     // +0x60..0x68
-    char pad6c[0x7c - 0x6c];
-    rgl::vector4 v7c[2];                        // +0x7c
-    int f9c;                                    // +0x9c
-    float fa0;                                  // +0xa0
-    int fa4, fa8, fac;                          // +0xa4..
-    char fb0;                                   // +0xb0
-    char padb1[3];
-    int fb4, fb8;                               // +0xb4 / +0xb8
-    float fbc;                                  // +0xbc
-    Quad4 q;                                    // +0xc0
-    int fd0;                                    // +0xd0 (clock index copy)
-    char padd4[4];
-    EnvRec() : clock(0), t0(g_ticks[0]) {
-        fd0 = 0;
-        f8 = -1;
-        fc = -1;
-        f0 = 0;
-        k0 = 0; k1 = 0; k2 = 0;
-        reset();
-    }
-    ~EnvRec() { delete[] k0; delete[] k1; delete[] k2; }    // inline: delete[] env calls the vector deleting dtor 0x41ed70
-    void reset();                               // 0x4686a0
-    void alloc(int n);                          // 0x428c60
-};
+#include "../../include/fx.h"           // Quad4, EnvRec (shared with src/rgl/scene)
 struct FxDef2 {
     int count;                                  // +0
     char pad4[0x40 - 4];

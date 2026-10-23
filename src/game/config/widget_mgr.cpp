@@ -411,7 +411,7 @@ char DropDown::on_event(unsigned ev)
         if (rows_first != 0) {
             int n = (int)(rows_last - rows_first);
             if (n != 0) {
-                ::play_sound(&g_sound);
+                ::play_sound(&g_ui_sound);
                 NodeA* o = create();
                 f188 = o;
                 o->f158 = (int)this;

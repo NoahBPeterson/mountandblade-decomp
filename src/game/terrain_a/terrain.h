@@ -120,7 +120,7 @@ struct TEntity {                                // stub of the scene entity (vta
 };
 struct SceneWorld { char pad0[0x9c]; TEntity* create_entity(int id); };     // 0x428440
 
-struct particle {                               // 0xa0
+struct TerrainParticle {                               // 0xa0
     int type;                                   // +0x00 index into g_ptypes
     int cx, cy;                                 // +0x04 / +0x08 source cell
     int f0c;                                    // +0x0c
@@ -142,7 +142,7 @@ struct scatter_src {                            // 0x20, source records after th
 };
 struct particle_list {                          // 0x2800408
     int count;
-    particle items[0x40000];
+    TerrainParticle items[0x40000];
     int nsrc;                                   // +0x2800004
     scatter_src src[32];                        // +0x2800008
 };
