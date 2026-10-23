@@ -249,6 +249,9 @@ def compile_obj(src, flags):
         if hdr.endswith((".h", ".hpp", ".inl")):
             h.update(open(os.path.join(os.path.dirname(src), hdr), "rb").read())
     h.update(" ".join(flags).encode())
+    # the shared slice headers (match/include, on cl.sh's include path): an edit there must invalidate too
+    for f in sorted(glob.glob(os.path.join(ROOT, "match", "include", "*.h"))):
+        h.update(open(f, "rb").read())
     if os.path.abspath(src).startswith(os.path.join(ROOT, "src", "game") + os.sep):
         # module TUs include the generated class headers under src/game/include: a header edit must
         # invalidate the cached object (the slice-era key only covered headers next to the source)

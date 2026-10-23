@@ -38,7 +38,7 @@ Verdicts:
   UNSUPPORTED unresolved reference, symbol not found, compile error, or almost every input discarded.
 --gate insns restores the legacy gate (original's instruction coverage >= --min-cov, default 60%).
 """
-import argparse, glob, json, math, os, random, struct, sys, time, zlib
+import argparse, collections, glob, json, math, os, random, struct, sys, time, zlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -2188,6 +2188,7 @@ def _test_function(sid, va, opts, log=print):
     gen = runner.gen
     corpus = []
     valid, discarded, mism, first = 0, {}, 0, None
+    sigs = collections.Counter()
     traps = {}
     repaired = 0
     faked = 0
@@ -2302,6 +2303,7 @@ def _test_function(sid, va, opts, log=print):
                     d = d_ if kind_ == "real" else None
             if d:
                 mism += 1
+                sigs[mismatch_sig(d)] += 1
                 if first is None:
                     first = {"input": i, "profile": inp.profile, "origin": inp.origin, "observable": d[0],
                              "kind": cmp_.last_kind or ("float-rounding" if d[0] == "st0" else "value"),
@@ -2337,6 +2339,7 @@ def _test_function(sid, va, opts, log=print):
                 covered.add(a)
     total = len(t.orig_insns)
     cov = 100.0 * len(covered) / total if total else 0.0
+    out["mismatch_sigs"] = dict(sigs.most_common(40))
     out.update(inputs=ran, valid=valid, discarded=discarded, mismatches=mism, first_mismatch=first,
                coverage={"covered_insns": len(covered), "total_insns": total, "pct": round(cov, 1),
                          "all": len(covered) >= total,
@@ -2396,6 +2399,15 @@ def _test_function(sid, va, opts, log=print):
 
 
 OURS_IMPORT_PROBES = 40
+
+
+def mismatch_sig(d):
+    """Run-independent signature of one mismatch for the JSON tally: the observable with addresses reduced to
+    their low 12 bits (heap/pool bases differ per input, field offsets do not), plus the differing offsets."""
+    import re as _re
+    obs = _re.sub(r"@([0-9a-f]{5,8})", lambda m: "+" + m.group(1)[-3:], str(d[0]))
+    offs = sorted({a[-3:] for a in _re.findall(r"([0-9a-f]{8}): [0-9a-f]{8}/", str(d[3]))})
+    return obs + ((" [" + ",".join(offs[:8]) + "]") if offs else "")
 
 
 NORETURN_WHY = {"_purecall": "pure virtual call", "_CxxThrowException": "C++ throw", "RaiseException": "C++ throw"}
