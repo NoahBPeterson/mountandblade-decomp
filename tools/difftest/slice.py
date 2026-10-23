@@ -239,12 +239,39 @@ def resolve_include_flags(flags):
     return out
 
 
+_INC = re.compile(r'^\s*#\s*include\s*"([^"]+)"', re.M)
+
+
+def _quoted_includes(src):
+    """src plus every file it reaches through #include "..." (resolved next to the including file, then in
+    match/include), so an edit to any header a TU uses (src/include, ../../rgl/..., ...) invalidates its object."""
+    seen, todo = [], [os.path.abspath(src)]
+    while todo:
+        f = todo.pop()
+        if f in seen:
+            continue
+        seen.append(f)
+        try:
+            text = open(f, "rb").read().decode("latin-1")
+        except OSError:
+            continue
+        for name in _INC.findall(text):
+            for d in (os.path.dirname(f), os.path.join(ROOT, "match", "include")):
+                c = os.path.normpath(os.path.join(d, name))
+                if os.path.isfile(c):
+                    todo.append(c)
+                    break
+    return sorted(seen)
+
+
 def compile_obj(src, flags):
     """Compile src with flags into work/difftest/obj (cached by source+headers+flags). -> (obj, log)."""
     flags = resolve_include_flags(flags)
     os.makedirs(OBJDIR, exist_ok=True)
     h = hashlib.md5()
-    h.update(open(src, "rb").read())
+    for f in _quoted_includes(src):
+        h.update(f.encode())
+        h.update(open(f, "rb").read())
     for hdr in sorted(os.listdir(os.path.dirname(src))):
         if hdr.endswith((".h", ".hpp", ".inl")):
             h.update(open(os.path.join(os.path.dirname(src), hdr), "rb").read())
@@ -253,8 +280,7 @@ def compile_obj(src, flags):
     for f in sorted(glob.glob(os.path.join(ROOT, "match", "include", "*.h"))):
         h.update(open(f, "rb").read())
     if os.path.abspath(src).startswith(os.path.join(ROOT, "src", "game") + os.sep):
-        # module TUs include the generated class headers under src/game/include: a header edit must
-        # invalidate the cached object (the slice-era key only covered headers next to the source)
+        # generated class headers under src/game/include may also be reached through an /I path
         for d, _sub, files in sorted(os.walk(os.path.join(ROOT, "src", "game", "include"))):
             for f in sorted(files):
                 if f.endswith((".h", ".hpp", ".inl")):
