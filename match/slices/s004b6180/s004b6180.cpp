@@ -286,7 +286,7 @@ tail:
 void __fastcall commit_party(MissionParty* self)
 {
     unsigned list1[128], list2[128];
-    unsigned n1, n2;
+    int n1 = 0, n2 = 0;                       // signed counts, zeroed before the calls (jle/jl loops in the original)
 
     g_commit_id = self->f58;
     g_commit_leader = self->leader;
@@ -295,10 +295,10 @@ void __fastcall commit_party(MissionParty* self)
     if (g_commit_ok == 0)
         g_game->show_party_refresh(2, self->f58, self->leader);
 
-    g_game->list_members(self->leader, list1, &n1);
-    g_game->list_members(self->f58, list2, &n2);
+    g_game->list_members(self->leader, list1, (unsigned*)&n1);
+    g_game->list_members(self->f58, list2, (unsigned*)&n2);
 
-    for (unsigned i = 0; i < n2; i++) {
+    for (int i = 0; i < n2; i++) {
         unsigned id = list2[i];
         if (id < g_game->parties.count) {
             int j = g_game->parties.index_of(id);
@@ -310,7 +310,7 @@ void __fastcall commit_party(MissionParty* self)
         }
     }
 
-    for (unsigned i = 0; i < n1; i++) {
+    for (int i = 0; i < n1; i++) {
         unsigned id = list1[i];
         if (id < g_game->parties.count) {
             int j = g_game->parties.index_of(id);

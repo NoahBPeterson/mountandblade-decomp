@@ -172,7 +172,7 @@ void Mesh::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& inde
 
     float den = a1 * c1 - b1 * b1;
     float s = (b1 * e1 - c1 * d1) / den;
-    float t = (b1 * s - d1) / a1;
+    float t = (e1 + s * b1) / c1;                       // edge parameter from the UNCLAMPED ray parameter
 
     if (s < 0.0f)
         s = 0.0f;
@@ -191,8 +191,8 @@ void Mesh::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& inde
     float qz = v1.z + wz * t;
 
     *a = (float)sqrt((rx - qx) * (rx - qx) + (ry - qy) * (ry - qy) + (rz - qz) * (rz - qz));
-    *b = (float)sqrt((rx - p.x) * (rx - p.x) + (ry - p.y) * (ry - p.y) +
-                     (rz - p.z) * (rz - p.z));
+    *b = (float)sqrt((qx - p.x) * (qx - p.x) + (qy - p.y) * (qy - p.y) +
+                     (qz - p.z) * (qz - p.z));          // distance from the ray origin to the edge point
 }
 
 // @ 0x52df40
