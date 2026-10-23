@@ -14,6 +14,8 @@
 #include <new>                                             // declares operator new[]/delete[]: without it cl calls operator new/delete for arrays
 #include "./tstring.h"
 #include "./dialog_manager.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "./str_table.h"
 
 // @ 0x460160
 tstring ScriptState::expand_token(const tstring& tok_)

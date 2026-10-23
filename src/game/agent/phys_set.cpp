@@ -7,6 +7,11 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "./phys_set.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/mat4.h"
+#include "../../include/quaternion.h"
+#include "../../include/timer.h"
+#include "../../include/vec.h"
 
 // @ 0x441360
 void PhysSet::destroy_world(int idx)

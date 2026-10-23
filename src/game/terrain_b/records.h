@@ -11,8 +11,7 @@
 #include "../tstring.h"
 #include "./poly_mesh.h"
 
-// std::_Nonscalar_ptr_iterator_tag: an UNINITIALISED local pushes whatever EAX holds
-struct ptr_tag {};
+#include "../../include/ptr_tag.h"
 
 // ---- plain records --------------------------------------------------------------------------------------------------
 struct MRow36  { int v[9]; };      // 0x24: vector inserted by 0x477410, _Insert_n 0x476370, push_back 0x477b80
@@ -39,20 +38,13 @@ MVert* __cdecl uninit_fill_n_18(MVert* f, unsigned n, const MVert& v, alloc18& a
 MRow36* __cdecl uninit_fill_n_24(MRow36* f, unsigned n, const MRow36& v, alloc24& al, ptr_tag tag);         // 0x46b500
 MEdge* __cdecl uninit_fill_n_34(MEdge* f, unsigned n, const MEdge& v, alloc34& al, ptr_tag tag);   // 0x46b650
 MPoly* __cdecl uninit_fill_n_64(MPoly* f, unsigned n, const MPoly& v, alloc64& al, ptr_tag tag);   // 0x46b5e0
-struct vec24 : alloc24 { MRow36* first; MRow36* last; MRow36* end; MRow36* ufill(MRow36* f, unsigned n, const MRow36& v); };            // 0x4724c0
+struct vecMRow36 : alloc24 { MRow36* first; MRow36* last; MRow36* end; MRow36* ufill(MRow36* f, unsigned n, const MRow36& v); };            // 0x4724c0
 struct vec18 : alloc18 { MVert* first; MVert* last; MVert* end; MVert* ufill(MVert* f, unsigned n, const MVert& v); };   // 0x4724f0
 struct vec64 : alloc64 { MPoly* first; MPoly* last; MPoly* end; MPoly* ufill(MPoly* f, unsigned n, const MPoly& v); };   // 0x472520
 struct vec34 : alloc34 { MEdge* first; MEdge* last; MEdge* end; MEdge* ufill(MEdge* f, unsigned n, const MEdge& v); };   // 0x472550
 
 // ---- ArrSet: name + five (count, int array) pairs (0x38 bytes) -----------------------------------------------------
-// The destructor is an inline function whose out-of-line copy is the one at 0x463760 (the earlier object's COMDAT wins).
-struct ArrSet {
-    tstring name;                               // +0
-    int cnt[5];                                 // +0x10
-    int* arr[5];                                // +0x24
-    ArrSet(const ArrSet& o);                    // 0x4636d0
-    ~ArrSet() { for (int i = 0; i < 5; i++) if (arr[i]) delete[] arr[i]; }       // 0x463760
-};
+#include "../arr_set.h"
 
 // The range algorithms of vector<ArrSet> are the object's own out-of-line instances (erase / resize call them):
 namespace std {
@@ -65,7 +57,7 @@ struct alloc_arrset {
     __declspec(noinline) void construct(ArrSet* p, const ArrSet& v);     // 0x46b6c0
     void destroy(ArrSet* p) { p->~ArrSet(); }
 };
-struct allocArr {};
+
 ArrSet* __cdecl uninit_copy_arrset(ArrSet* f, ArrSet* l, ArrSet* d, allocArr& al, ptr_tag tag);    // 0x46b750
 ArrSet* __cdecl uninit_copy_arrset2(ArrSet* f, ArrSet* l, ArrSet* d, allocArr& al, ptr_tag tag);   // 0x46c1d0 (a second instance)
 ArrSet* __cdecl copy_arrset(ArrSet* f, ArrSet* l, ArrSet* d, ptr_tag tag);                          // 0x468050

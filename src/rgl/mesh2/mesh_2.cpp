@@ -4,6 +4,10 @@
 // csv row and the scene object readers. Migrated from slices s004ca550 (0x4ca600..0x4ca9b0), s004caa40, s004cb3a0,
 // s004cbcd0, s004cc680, s004cd010, s004cd850 and s004cdfd0 (up to 0x4ce680; 0x4ce720 onward is the next object).
 #include "./mesh_2.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/frustum.h"
+#include "../../include/mat4.h"
+#include "../../include/ptr_tag.h"
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 

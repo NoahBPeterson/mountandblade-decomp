@@ -5,6 +5,11 @@
 // Migrated from slices s004c46d0, s004c5080, s004c5a20, s004c6330, s004c6ca0, s004c7290, s004c7bf0, s004c84f0,
 // s004c8ca0 and s004ca550 (0x4ca550).
 #include "./gui_edit.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/frustum.h"
+#include "../../include/mat4.h"
+#include "../../include/ptr_vec.h"
+#include "../../include/vec.h"
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 #pragma warning(disable:4700)     // 0x4c77c0: the matrix is left unread when no record is selected
@@ -1638,14 +1643,14 @@ tstr_iter tstr_vec::erase_range(tstring* first, tstring* lastp)
 ptr_iter ptr_vec::erase_range(int* first, int* last)
 {
     if (first != last) {
-        int* end = (int*)this->end;
+        int* end = this->last;
         int* d = first;
         while (last != end) {
             *d = *last;
             last++;
             d++;
         }
-        this->end = d;
+        this->last = d;
     }
     ptr_iter r;
     r.p = first;

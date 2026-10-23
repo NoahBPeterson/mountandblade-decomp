@@ -8,6 +8,7 @@
 #include <list>
 #include "rgl.h"
 #include "./mat4.h"
+#include "../include/mesh_prims.h"
 #include "./tstring.h"
 
 // ---- hand-written VC7.1 std::vector layout (empty allocator slot, first, last, end) -----------------------
@@ -70,10 +71,6 @@ struct scene {
     ~scene();                   // 0x41f4e0
 };
 
-// ---- the scene entity (vtable 0x54b460, ctor 0x41fba0, 0x15c bytes) -----------------------------------
-struct smat : mat4 {
-    void scale_rows(const vector4* k);                      // 0x41fee0 (next TU)
-};
 
 // the optional frame source behind entity::parent (vtable slots used: 8, 10, 11)
 struct frame_src {
@@ -85,12 +82,6 @@ struct frame_src {
     virtual vector4 get_b();                                // slot 11 (+0x2c)
 };
 
-// Axis-aligned box with centre and radius (0x34 bytes; ctor 0x40eaf0, see s00416ef0)
-struct aabb {
-    vector4 min, max, center;
-    float radius;
-    aabb();                                                 // 0x40eaf0
-};
 
 struct lod_mesh2;
 struct render_info { char valid; float depth; };

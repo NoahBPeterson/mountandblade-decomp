@@ -54,7 +54,7 @@
 ../src/rgl/shapes/shapes.cpp  ?clone@capsule@@UAEPAUshape_base@@XZ  0040a560  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??0capsule@@QAE@ABU0@@Z  0040a580  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?apply@renderer@@QAEXPBUmatrix@rgl@@@Z  0040a870  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?rot3@pos@@QBE?AUmat3@@ABUmatrix@rgl@@@Z  0040a920  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?rot3@pos@@QBE?AUmat3@rgl@@ABUmatrix@3@@Z  0040a920  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?rot@pos@@QBE?AUvector4@rgl@@ABU23@@Z  0040a9c0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?draw_capsule@renderer@@QAEXMMM@Z  0040aa20  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?get_min@capsule@@UAEPAUvector4@rgl@@PAU23@@Z  0040ad80  /O2 /MT /Gy /TP
@@ -93,7 +93,7 @@
 ../src/rgl/shapes/shapes.cpp  ?clone@manifold@@UAEPAUshape_base@@XZ  0040cb50  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?build_composite@manifold@@QAEPAUshape_base@@XZ  0040cb60  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?identity_pos@@YAPAUpos@@PAU1@@Z  0040cd00  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?identity3@@YAPAUmat3@@PAU1@@Z  0040cd60  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?identity3@@YAPAUmat3@rgl@@PAU12@@Z  0040cd60  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?clone@composite@@UAEPAUshape_base@@XZ  0040ce10  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?copy_from@composite@@UAEXPBUshape_base@@@Z  0040ce50  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?type_name@composite@@UBE?AUstring@rgl@@XZ  0040ceb0  /O2 /MT /Gy /TP

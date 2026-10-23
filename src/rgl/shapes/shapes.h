@@ -36,23 +36,9 @@ struct string_view_ : rgl::string {
 struct self_ref { self_ref* self(); };                      // 0x407c20
 
 // A frame with the point/rotation helpers the shapes and the renderer use (rgl::matrix + 0x408460, 0x40a920,
-// 0x40a9c0). The Module System calls the 4x4 frame `pos`.
-struct mat3 {
-    rgl::vector4 s, f, u;
-    mat3() {}
-    __forceinline mat3(const rgl::vector4& s_, const rgl::vector4& f_, const rgl::vector4& u_) : s(s_), f(f_), u(u_) {}
-};
-struct pos : rgl::matrix {
-    __declspec(noinline) rgl::vector4 transform_point(const rgl::vector4& p) const;      // 0x408460
-    mat3 rot3(const rgl::matrix& m) const;                          // 0x40a920 (rotation rows of m through this)
-    __declspec(noinline) rgl::vector4 rot(const rgl::vector4& p) const;                  // 0x40a9c0 (no translation)
-    __forceinline rgl::vector4 transform_point_inl(const rgl::vector4& p) const     // the body as callers inline it
-    {
-        return rgl::vector4(s.x * p.x + f.x * p.y + u.x * p.z + o.x,
-                            s.y * p.x + f.y * p.y + u.y * p.z + o.y,
-                            s.z * p.x + f.z * p.y + u.z * p.z + o.z);
-    }
-};
+// 0x40a9c0). The Module System calls the 4x4 frame `pos` (src/include/mat4.h).
+#include "../../include/mat4.h"
+using rgl::mat3;
 void __cdecl vmin(rgl::vector4* out, const rgl::vector4* a, const rgl::vector4* b);     // 0x40af80
 void __cdecl vmax(rgl::vector4* out, const rgl::vector4* a, const rgl::vector4* b);     // 0x40b080
 
@@ -308,7 +294,7 @@ mat3* __cdecl identity3(mat3* out);                         // 0x40cd60
 // ---- float / colour helpers and the matrix axis rotations (0x40e3d0..0x40e870) -----------------------------
 float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0
 float frand();                                                      // 0x40e400
-struct vec3 { float x, y, z; void add(const vec3& o); };           // 0x40e420
+#include "../../include/vec.h"
 namespace rgl {
 // The binary's 0x40e4e0 returns the colour by value (hidden return pointer, eax = it): rgl_math.h declares it as
 // `void unpack_color(vector4* out, const unsigned*)`, which cannot reproduce the code. Same call ABI, other symbol.

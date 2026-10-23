@@ -17,6 +17,12 @@
 #include <stdexcept>
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "./agent_stats.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/mat4.h"
+#include "../../include/ptr_tag.h"
+#include "../../include/ptr_vec.h"
+#include "../../include/timer.h"
+#include "../../include/vec.h"
 
 // inline vector helpers of the original: rgl's operators are out-of-line in other objects
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }

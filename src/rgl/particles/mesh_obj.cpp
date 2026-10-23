@@ -19,6 +19,11 @@
 #include "../noise.h"
 #include "./render_cache.h"
 #include "./mesh_obj.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
 
 using namespace rgl;
 
@@ -98,7 +103,6 @@ aabb::aabb() : radius(0)
 // ---- particle emitter: spawn one particle --------------------------------------------------------------------------
 #define RND(k) ((float)(rand() % 15817) * ((k) / 15817.0f))
 
-struct rot3 { vector4 s, f, u; };
 
 // @ 0x40ec90
 void emitter::spawn(emitter_particle* out)

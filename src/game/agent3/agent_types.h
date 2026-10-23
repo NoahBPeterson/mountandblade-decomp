@@ -17,6 +17,7 @@
 #include "../tstring.h"
 #include "../agent/item_kind.h"       // ItemKind, g_items, pos2
 #include "../mat4.h"                   // rgl::mat4
+#include "../../include/timer.h"
 
 using rgl::vector4;
 using rgl::matrix;
@@ -246,10 +247,7 @@ struct Agent {                                          // 0x5928 bytes
     vector4 v56b4;                                      // +0x56b4 (0x441020)
     int variant;                                        // +0x56c4 (0x43fd10; range table index 0x441020)
     char pad56c8[0x57e0 - 0x56c8];
-    struct Timer {
-        int clock; int pad; __int64 start;
-        void reset() { start = g_ticks[clock]; }
-    } tm;                                               // +0x57e0 (clock id, start tick) (0x442dc0)
+    Timer tm;                                           // +0x57e0 (clock id, start tick) (0x442dc0)
     char pad57f0[0x5830 - 0x57f0];
     int state;                                          // +0x5830 (0x442dc0)
     char pad5834[0x5858 - 0x5834];

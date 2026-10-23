@@ -12,6 +12,10 @@
 #include "./agent_combat.h"
 #include "../tstring.h"
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../font.h"
+#include "../../include/mat4.h"
+#include "../../include/timer.h"
 
 // inline helpers: the original compiled them into the callers
 static __forceinline vector4 vmul(const vector4& v, const float& k) { return vector4(v.x * k, v.y * k, v.z * k); }

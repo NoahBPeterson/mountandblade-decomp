@@ -6,6 +6,9 @@
 //       (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "./curve.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/quaternion.h"
+#include "../../include/timer.h"
 
 // @ 0x4338e0
 float Curve::unshape(float y)

@@ -19,7 +19,7 @@ struct Timer16 {
     tick start;                 // +8
     void init(int c) { clock = c; start = tk(clock); }
 };
-struct Vec2 { float x, y; };
+#include "../../include/vec.h"
 struct Vec4z { float x, y, z, w; };
 
 // The view sub-object of an agent (0x5374 bytes at agent +0x258): five timers, the target agent id and two floats

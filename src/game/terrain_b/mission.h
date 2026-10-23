@@ -66,12 +66,7 @@ struct Team {                                   // 0x16c bytes
     int relation[8];                            // +0x148
     int pad168;
 };
-struct Timer {                                  // 0x10 bytes
-    int clock;                                  // +0 index into g_ticks
-    int pad4;
-    __int64 start;                              // +8
-    float elapsed() const { return (float)(g_ticks[clock] - start) * 1e-5f; }
-};
+#include "../../include/timer.h"
 
 // ---- mark records (0x472160) ----------------------------------------------------------------------------------------
 struct MarkRec {                                // 0x130 bytes; array at Mission +0x6b0 (offsets relative to the record)

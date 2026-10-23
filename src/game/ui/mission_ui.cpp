@@ -21,6 +21,11 @@
 #include "./ui_widgets.h"
 #include "./world.h"
 #include "./mission.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
 static __forceinline int rnd(const float* p)
@@ -359,7 +364,7 @@ void MissionUi::set_text(float* out, const tstring* s)
         get_xy(v);
     }
     b11c[4] = 1;
-    *(rgl::vec2*)out = *(rgl::vec2*)var;
+    *(vec2*)out = *(vec2*)var;
 }
 
 // @ 0x488c70

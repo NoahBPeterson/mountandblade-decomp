@@ -5,6 +5,9 @@
 // 0x4c3050..0x4c48d0 is the "T regime" region (docs/tu_map.md): helpers sit right after their caller, so
 // the functions stay in binary order and the helpers defined after a caller are kept out of line.
 #include "./rec_tables.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/frustum.h"
+#include "../../include/mat4.h"
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 

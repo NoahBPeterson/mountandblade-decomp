@@ -15,6 +15,9 @@
 #include <new>
 #include "rgl.h"
 #include "./entity.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../include/mat4.h"
+#include "../include/mesh_prims.h"
 
 using rgl::vector4;
 

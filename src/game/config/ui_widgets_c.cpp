@@ -9,6 +9,11 @@
 //-----------------------------------------------------------------------------
 #include "../tstring.h"
 #include "./ui_widgets_c.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
 
 // 0x487b00: UTF-8 decoder (another object in the original; cl gave it a custom register convention: text in EDI,
 // out_len in EDX, buffer and &capacity on the stack). A static noinline copy here reproduces that convention.

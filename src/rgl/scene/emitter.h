@@ -19,10 +19,10 @@ namespace rgl {
 struct mesh;
 struct scene;
 
-struct pair2 {                      // two floats built through a stack temporary (psys::init)
+struct float_pair {                      // two floats built through a stack temporary (psys::init)
     float u, v;
-    pair2() {}
-    pair2(float a, float b) : u(a), v(b) {}
+    float_pair() {}
+    float_pair(float a, float b) : u(a), v(b) {}
 };
 
 struct psys {
@@ -31,9 +31,9 @@ struct psys {
     int f8;                         // 0x08
     std::vector<E100> particles;    // 0x0c (first at 0x10, last at 0x14)   0x41efd0, 0x420b40
     float f1c, f20, f24;            // 0x1c noise scale, 0x20 noise amount, 0x24 drag      0x420b40
-    pair2 curve[10];                // 0x28 five (t0,v0,t1,v1) curves written as ten pairs  0x420b40
-    pair2 half;                     // 0x78
-    pair2 quad[4];                  // 0x80 corner uvs
+    float_pair curve[10];                // 0x28 five (t0,v0,t1,v1) curves written as ten pairs  0x420b40
+    float_pair half;                     // 0x78
+    float_pair quad[4];                  // 0x80 corner uvs
     int fa0;                        // 0xa0
     vector4 va4, vb4, vc4;          // 0xa4 x axis, 0xb4 z axis, 0xc4 gravity                0x420b40
     float fd4, fd8, fdc, fe0;       // 0xd4..0xe0

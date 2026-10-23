@@ -38,7 +38,16 @@ extern int g_mesh_quality;                      // 0x5aa084
 extern int g_nav_param;                         // 0x59132c
 extern __int64 g_ticks[];                       // 0x5e2948
 extern ptype* g_ptypes;                         // 0x5e28f8
-struct mat3 { vector4 s, f, u; };
+#include "../../include/mat4.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../arr_set.h"
+#include "../../include/frustum.h"
+#include "../../include/keyframes.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/ptr_tag.h"
+#include "../../include/timer.h"
+#include "../../include/vec.h"
+using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);             // 0x40cd60
 matrix* __cdecl identity_pos(matrix* out);      // 0x40cd00
 // resource-manager members this object calls that rgl/resource.h does not declare (no new fields)

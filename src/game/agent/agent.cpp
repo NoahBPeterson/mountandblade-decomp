@@ -12,6 +12,11 @@
 #include <new>
 #include <algorithm>
 #include "./agent.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/mat4.h"
+#include "../../include/quaternion.h"
+#include "../../include/timer.h"
+#include "../../include/vec.h"
 
 // inline helpers: the original compiled them into the callers (no out-of-line copies in this object)
 static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)

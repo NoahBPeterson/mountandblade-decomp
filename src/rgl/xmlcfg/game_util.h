@@ -61,17 +61,7 @@ struct vec2x : vec2 {                       // agent.h's vec2 only has normalize
     void rotate_b(float ang);               // 0x4327f0
 };
 // 12-byte float triple with the engine's inline operators (the element of the std::copy_backward at 0x433260)
-struct Vec3 {
-    float x, y, z;
-    Vec3() {}
-    Vec3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
-    Vec3 operator-() const { return Vec3(-x, -y, -z); }
-    Vec3 operator+(const Vec3& o) const { return Vec3(x + o.x, y + o.y, z + o.z); }
-    Vec3 operator*(float s) const { return Vec3(x * s, y * s, z * s); }
-    Vec3& operator-=(const Vec3& o) { x = x - o.x; y = y - o.y; z = z - o.z; return *this; }
-    float dot(const Vec3& o) const { return x * o.x + y * o.y + z * o.z; }
-    void sub_assign(const Vec3& o);         // 0x432770
-};
+#include "../../include/vec.h"
 void __cdecl vec3_sub(Vec3* out, const Vec3* a, const Vec3* b);      // 0x432830
 // agent.h's slot_pair (0x432790) is defined here; rgl::rot3 (mat4.h) is the 3x3 rotation, rows padded to 4 floats.
 struct rot3x : rgl::rot3 {
@@ -90,16 +80,7 @@ struct PendingForce {
 };
 extern PendingForce g_pending;              // 0xa18210
 
-struct Timer {
-    int clock;                              // +0 index into g_time (0x5e2948: 64-bit counters, 100 kHz units)
-    int pad4;
-    __int64 start;                          // +8
-    char active;                            // +0x10
-    void restart();                         // 0x432bf0
-    float elapsed() const;                  // 0x432c10
-    void begin(float seconds);              // 0x432da0
-    bool expired();                         // 0x432de0
-};
+#include "../../include/timer.h"
 void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread);       // 0x432c40
 void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30
 

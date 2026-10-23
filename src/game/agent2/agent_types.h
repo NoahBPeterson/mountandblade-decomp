@@ -83,7 +83,7 @@ struct ItemRef {
 };
 
 // ---- 2-D helpers --------------------------------------------------------------------------------------------
-struct vec2 { float x, y; };
+#include "../../include/vec.h"
 float __cdecl signed_angle(const vec2* a, const vec2* b);       // 0x4381e0 (also the "blend_target" of the slices)
 float __cdecl clamp_ref(const float* v, const float* lo, const float* hi);   // 0x4325a0 (earlier object)
 float __cdecl fmin_ref(const float* a, const float* b);         // 0x4324b0
@@ -301,12 +301,7 @@ struct AnimSlot {
     int f28;                                            // +0x28
     __declspec(noinline) bool set(int id, unsigned prio);   // 0x4378a0
 };
-struct Timer {
-    int clock;
-    int pad4;
-    __int64 start;
-    float elapsed();                                    // 0x432c10 (thiscall)
-};
+#include "../../include/timer.h"
 struct InputRec { unsigned bits; char pad[0x14]; unsigned lo; int hi; };   // queued input record (+0x18 time)
 struct InputState { unsigned v[6]; };
 struct Mesh { char pad[0xcc]; int f_cc; };              // quiver / holster display mesh
@@ -541,7 +536,7 @@ extern GameData* g_game;                                // 0x5e2930
 
 
 // ---- STL instantiation helpers (VC7.1 <vector>/<memory>/<algorithm> code the linker kept from this object) ------
-struct ptr_tag {};     // std::_Nonscalar_ptr_iterator_tag: empty class passed by value; an UNINITIALISED local pushes whatever EAX holds
+#include "../../include/ptr_tag.h"
 struct E12 { int a[3]; };                                // 12-byte element
 struct hnode {                                           // 12-byte heap node (key float at +8); user-written copy (load order)
     int a, b; float key;
@@ -571,12 +566,7 @@ struct vecE1c8 : allocE1c8 {
     E1c8* ucopy(E1c8* f, E1c8* l, E1c8* d);             // 0x43b2e0
     E1c8* ufill(E1c8* f, unsigned n, const E1c8& v);    // 0x43db60
 };
-struct ptr_vec {
-    int al; int* first; int* last; int* end;
-    unsigned size() const { return first == 0 ? 0 : last - first; }
-    bool empty() const { return size() == 0; }
-    void pop_back_if();                                 // 0x438bf0
-};
+#include "../../include/ptr_vec.h"
 struct vec1c8 {
     int al; E1c8* first; E1c8* last; E1c8* end;
     E1c8* at(int i);                                    // 0x438c10

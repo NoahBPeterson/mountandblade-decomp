@@ -290,13 +290,7 @@ struct SlotArray {
     void set(const int& slot, const __int64& value);            // 0x493d70 (thiscall, ret 8)
 };
 
-// a clock index + start time (gui_timer in src/game/strat/gui_manager.h)
-struct Timer16 {
-    int clock;
-    int pad4;
-    __int64 t;
-    void set_delay(float seconds);      // 0x42cd20 (ret 4)
-};
+#include "../../include/timer.h"
 
 // ---- parties (0x5ac8 bytes; pages at PartyMgr +0x138d0) ----------------------------------------------------------
 struct PartyStack {                     // 0x20 bytes (0x463190, 0x4894b0)
@@ -362,7 +356,7 @@ struct PartyX {
     tstring notes[8];                   // +0x5a28 (0x4a353c)
     int note_tableau;                   // +0x5aa8 (add_party_note_tableau_mesh 0x4a31a6)
     int pad5aac;
-    Timer16 ignore_player_timer;        // +0x5ab0 (party_ignore_player 0x4a7b0c)
+    Timer ignore_player_timer;         // +0x5ab0 (party_ignore_player 0x4a7b0c)
     char pad5ac0[0x5ac8 - 0x5ac0];
     int max_stacks();                   // 0x4b1700 (always 32)
     int num_members();                  // 0x489490

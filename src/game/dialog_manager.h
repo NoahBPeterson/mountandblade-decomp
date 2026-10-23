@@ -35,8 +35,7 @@ struct stream_base {
 
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 
-// ---- translated-string table (object 0x5e2a18) -------------------------------------------------------------
-struct StrTable { tstring* find(const tstring* key); };    // 0x4c6010 (null when absent)
+#include "./str_table.h"
 extern StrTable g_strtable;                                // 0x5e2a18
 
 // ---- parties ---------------------------------------------------------------------------------------------

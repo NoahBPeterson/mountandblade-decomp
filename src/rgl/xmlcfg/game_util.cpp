@@ -14,6 +14,11 @@
 #include <algorithm>
 #pragma intrinsic(sin, cos, fabs)
 #include "game_util.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/mat4.h"
+#include "../../include/quaternion.h"
+#include "../../include/timer.h"
+#include "../../include/vec.h"
 
 // ---- Newton Game Dynamics imports (cdecl) -----------------------------------------------------------
 extern "C" {
@@ -300,7 +305,7 @@ void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread)
 }
 
 // @ 0x432da0
-void Timer::begin(float seconds)
+void ActiveTimer::begin(float seconds)
 {
     if (!active) {
         start = g_time[clock] - (int)(seconds * -100000.0f);
@@ -308,7 +313,7 @@ void Timer::begin(float seconds)
     }
 }
 // @ 0x432de0
-bool Timer::expired()
+bool ActiveTimer::expired()
 {
     if (active) {
         float e = (float)(g_time[clock] - start) * 1e-5f;

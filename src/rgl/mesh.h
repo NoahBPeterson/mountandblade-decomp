@@ -8,6 +8,8 @@
 #include "./rgl_string.h"
 #include "./rgl_math.h"
 #include "./resource.h"
+#include "../include/vec.h"
+#include "../include/mesh_prims.h"
 
 namespace rgl {
 
@@ -25,7 +27,6 @@ template<class T> __forceinline void vpush(std::vector<T>& v, const T& x)
 template<class T> inline T& vat(std::vector<T>& v, size_t i) { return (&*v.begin())[i]; }
 
 // element types of the mesh's std::vectors
-struct vec2 { float x, y; };
 struct vertex60 {                // 0x60 bytes, vector at mesh+0x50
     vector4 pos;                 // 0x00
     vector4 f10, f20;
@@ -38,32 +39,17 @@ struct vertex60 {                // 0x60 bytes, vector at mesh+0x50
     int f5c;
 };
 struct elem30 { char b[0x30]; };            // vector at +0x60
-struct point20 { vector4 a, b; };           // 0x20, vector at +0x70 (rest, current)
 struct elem14 { int id; std::vector<int> items; };   // 0x14, vector at +0x80 (items' element type unknown)
 struct face20 { vector4 n; int a, b, c, d; };   // 0x20, vector at +0x90
 
 struct frame_t { std::vector<vector4> verts; std::vector<vector4> norms; };   // 0x20: morph key frame
 
-// morph key frames: frames[count], times[count]
-struct keyframes {               // 12 bytes at mesh+0xa4
-    frame_t* frames; float* times; int count;
-    keyframes() { count = 0; frames = 0; times = 0; }
-    keyframes& operator=(const keyframes& o);                                   // 0x4125e0
-    void find(int* a, int* b, float* t, const float* time);                     // 0x40f0d0
-};
+} // namespace rgl
+#include "../include/keyframes.h"      // rgl::keyframes (frame_t above)
+namespace rgl {
 
 struct obj_c0 { char pad[0x24]; vector4 out; vector4 in; };   // object attached at mesh+0xc0
 
-// Bounding box with centre and radius (0x34 bytes) at mesh+0x22c.
-struct aabb {
-    vector4 min;                 // +0
-    vector4 max;                 // +0x10
-    vector4 center;              // +0x20
-    float radius;                // +0x30
-    void reset();                                  // 0x416e40
-    void extend(const vector4* p);                 // 0x416ef0
-    void update();                                 // 0x416f70
-};
 
 struct slot {                    // 0x2c bytes, array of 3 at mesh+0x110
     int f0, f4, f8, fc;

@@ -15,6 +15,12 @@
 #include <stdexcept>
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "./agent_ai.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/mat4.h"
+#include "../../include/ptr_tag.h"
+#include "../../include/ptr_vec.h"
+#include "../../include/timer.h"
+#include "../../include/vec.h"
 
 static __forceinline float clampf(float v, float lo, float hi)
 {

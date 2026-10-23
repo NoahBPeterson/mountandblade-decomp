@@ -24,21 +24,7 @@
 #include "../scene/world.h"
 #include "../scene/fx.h"
 
-// ---- quaternion, memory order w, x, y, z (verified: 0x422db0 stores x y z w in this order of arguments) ---------
-// Every member stays out of line (callers in this object call them; the original compiled them in the same object).
-struct quaternion {
-    float w, x, y, z;
-    quaternion() {}
-    quaternion(float x_, float y_, float z_, float w_) { x = x_; y = y_; z = z_; w = w_; }
-    __declspec(noinline) quaternion& set(const float& x_, const float& y_, const float& z_, const float& w_);   // 0x422db0
-    __declspec(noinline) void add(const quaternion& o);                                                         // 0x422de0
-    __declspec(noinline) quaternion operator+(const quaternion& o) const;                                       // 0x422e10
-    __declspec(noinline) void normalize();                                                                      // 0x422e40
-    __declspec(noinline) quaternion mul(const quaternion& o) const;                                             // 0x422eb0
-    __declspec(noinline) quaternion mul_conj(const quaternion& o) const;                                        // 0x422f60
-    __declspec(noinline) float dot(const quaternion& o) const;                                                  // 0x423010
-    __declspec(noinline) bool dot_negative(const quaternion& o) const;                                          // 0x423040
-};
+#include "../../include/quaternion.h"
 __declspec(noinline) void quat_to_matrix(rgl::matrix* m, const quaternion* q);                                  // 0x423080
 __declspec(noinline) void quat_to_axis_angle(rgl::vector4* axis, float* angle, const quaternion* q);            // 0x423160
 

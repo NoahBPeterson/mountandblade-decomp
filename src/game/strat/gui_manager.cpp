@@ -13,6 +13,9 @@
 #include "../tstring.h"
 #include "../../rgl/stream.h"
 #include "./gui_manager.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/frustum.h"
+#include "../../include/mat4.h"
 
 // @ 0x42cb70
 void bump_counter() { g_counter++; }

@@ -32,26 +32,7 @@ struct capsule : shape_base {
 };
 struct contact { vector4 a; vector4 point; int extra; };          // 0x24 bytes (0x43f6d0)
 
-// ---- font glyph metrics -----------------------------------------------------------------------------------
-struct Glyph {                                       // 0x1c bytes: key + 6 floats (std::map<int, glyph> value_type)
-    int key;
-    float f4, f8, fc, f10, f14, f18;
-};
-struct GlyphNode { GlyphNode *left, *parent, *right; Glyph val; };
-struct GlyphMap {                                    // std::map<int, glyph> (comparator, head, size)
-    int pad0[2];
-    GlyphNode* head;                                 // +8 (0x43e190)
-    void lookup(GlyphNode** out, const int* key);    // 0x43b210 (lower_bound/find with an out iterator)
-};
-struct Font {
-    char pad0[0x28];
-    Glyph dflt;                                      // +0x28 (returned for unknown characters) (0x43e190)
-    GlyphMap map;                                    // +0x44
-    char pad50[0x6c - 0x50];
-    Glyph ascii[0x200];                              // +0x6c (0x43e190)
-    __declspec(noinline) float advance(int ch);      // 0x43e190
-    float measure(const int* text, int len, int* start, int* end);   // 0x43e200 (ret 0x10)
-};
+#include "../font.h"
 
 // ---- element types of the container instantiations -----------------------------------------------------------
 struct E12 { int v[3]; };                            // 0x0c (vector<E12>)

@@ -23,10 +23,8 @@ struct scene {
     scene();                        // 0x429740
     ~scene();                       // 0x41f4e0
 };
-struct frustum {
-    char d[0x120];
-    frustum();                      // 0x41ef60 (no dtor)
-};
+#include "../../include/frustum.h"
+using rgl::frustum;                 // 0x41ef60 (ctor, no dtor); the sized stand-in became the shared class
 struct mesh {
     char d0[0x10c];
     unsigned mask;                  // +0x10c (reset 0x42d1b0 clears it on two of them)

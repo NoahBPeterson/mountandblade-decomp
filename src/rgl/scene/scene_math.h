@@ -1,27 +1,16 @@
-// scene_math.h: frame types of the scene modules. rgl::matrix (../rgl_math.h) is the 64-byte frame {s, f, u, o};
-// the scene code adds the point transform (0x408460), the rotation product (0x40a920), the transposed rotation
-// (0x429670) and the in-place row scaling (0x41fee0) on top of it. Same layout everywhere: members only.
+// scene_math.h: frame helpers of the scene modules. rgl::matrix (../rgl_math.h) is the 64-byte frame {s, f, u, o};
+// the frame types the scene code builds on it (mat3, mat4 with transform_point 0x408460 / rot3 0x40a920 / rot_t
+// 0x429670, smat with scale_rows 0x41fee0) are shared with src/game and live in src/include/mat4.h. This header keeps
+// the cdecl identity writers and the inline point transform of the scene modules.
 //
 // Verified by: entity::render 0x420310 (transform_point on entity::local and mesh::m_cc), FxDef::skin 0x4291c0
 // (rot_t, rot3), entity::set_local_scaled 0x41fe90 (scale_rows), recalc 0x41ffe0 (identity3).
 #ifndef SCENE_MATH_H
 #define SCENE_MATH_H
 #include "../rgl_math.h"
+#include "../../include/mat4.h"
 
 namespace rgl {
-
-struct mat3 { vector4 s, f, u; };                               // 3x3 rotation, rows padded to 4 floats
-
-struct mat4 : matrix {
-    vector4 transform_point(const vector4& p) const;            // 0x408460 (hidden return pointer)
-    mat3 rot3(const matrix& m) const;                           // 0x40a920 (rotation part of this * m; hidden mat3 return)
-    mat3* rot_t(mat3* out) const;                               // 0x429670 (transposed rotation of this, returns out)
-};
-
-// a frame whose rows can be scaled in place (entity::local)
-struct smat : mat4 {
-    void scale_rows(const vector4* k);                          // 0x41fee0
-};
 
 mat3* identity3(mat3* out);                                     // 0x40cd60 (cdecl; returns out)
 matrix* identity_pos(matrix* out);                              // 0x40cd00 (cdecl; returns out)

@@ -10,12 +10,8 @@
 
 using rgl::vector4;
 
-// quaternion, memory order w, x, y, z (0x4339d0 stores (0,0,0,1) as w=1 last in the constructor call order)
-struct quaternion {
-    float w, x, y, z;
-    quaternion() {}
-    quaternion(float x_, float y_, float z_, float w_) { x = x_; y = y_; z = z_; w = w_; }
-};
+#include "../../include/quaternion.h"
+#include "../../include/timer.h"
 
 extern __int64 g_time[];        // 0x5e2948 clock table, 1e-5 s ticks (0x4339d0 reads g_time[tm.clock])
 extern float g_step_tbl[];      // 0x5a9c20 (step_reached)
@@ -26,7 +22,7 @@ struct Curve {
     __int64 m10;                // +0x10 (0x4339d0)
     char pad18[0x1c - 0x18];
     int cur;                    // +0x1c
-    struct Timer { int clock; int pad; __int64 start; } tm;   // +0x20 clock id, +0x28 start tick (0x433930, 0x4339d0)
+    Timer tm;                   // +0x20 clock id, +0x28 start tick (0x433930, 0x4339d0)
     float m30;                  // +0x30 (0x4339d0 sets 1.0)
     char pad34[0x40 - 0x34];
     Curve* recs;                // +0x40 array of 0xd8-byte records (0x4339d0, 0x433ac0, 0x433b20)

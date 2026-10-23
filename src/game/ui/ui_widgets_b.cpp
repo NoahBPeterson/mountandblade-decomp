@@ -14,6 +14,11 @@
 #include "./item_ref.h"
 #include "./mission_ui.h"
 #include "./ui_widgets.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
 
 // @ 0x48b6e0
 void UiB::set_value(float x)

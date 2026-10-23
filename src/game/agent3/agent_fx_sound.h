@@ -209,10 +209,7 @@ extern int g_xp_table[];                                // 0x590974: experience 
 extern unsigned g_max_dead;                             // 0x5aa044
 
 // ---- message log (object at 0x5d7080): enabled byte at +0x1714, 32-entry ring at +0xb0b8 ------------------------------------
-struct StrTable {
-    tstring* lookup(const tstring& key);                // 0x43a1e0 (key -> translated string)
-    tstring* find(const tstring* key);                  // 0x4c6010 (null when absent)
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                             // 0x5e2a18
 struct MsgLog {
     char pad0[0x1714];
@@ -239,7 +236,8 @@ struct CamRec {                                         // 0x4c bytes, array beh
 extern CamRec* g_cams;                                  // 0x5e28f4
 
 // ---- mesh objects hanging off the agent (0x443aa0, 0x444370) ----------------------------------------------------------------------
-struct mat3 { vector4 s, f, u; };
+#include "../../include/mat4.h"
+using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);                     // 0x40cd60
 struct node_list {
     int al; void** first; void** last; void** end;

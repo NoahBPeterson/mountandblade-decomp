@@ -69,7 +69,7 @@ struct alloc52 { void construct(elem52* p, const elem52& v); void destroy(elem52
 struct alloc24_def { void construct(elem24* p, const elem24& v); };        // 0x468130 (the definition)
 struct alloc100_def { void construct(particle100* p, const particle100& v); };   // 0x468170
 struct alloc52_def { void construct(elem52* p, const elem52& v); };        // 0x468190
-struct allocArr { void construct(ArrSet* p, const ArrSet& v); };           // 0x46b6c0
+
 struct vec36 { alloc36 _Alval; rec36* first; rec36* last; rec36* end; int size() const; rec36* _Ucopy(rec36* f, rec36* l, rec36* d); };         // 0x467ac0 / 0x46c150
 struct vec24 { alloc24 _Alval; elem24* first; elem24* last; elem24* end; int size() const; elem24* _Ucopy(elem24* f, elem24* l, elem24* d); };   // 0x467ae0 / 0x46c170
 struct vec52 { alloc52 _Alval; elem52* first; elem52* last; elem52* end; int size() const; elem52* _Ucopy(elem52* f, elem52* l, elem52* d); };   // 0x467b00 / 0x46c1b0
@@ -324,9 +324,6 @@ struct FireAgent {
 struct ProjView { void project(float* out, unsigned p); };    // 0x4621f0 (the frustum's clip projection of a point; the frustum is the one at cam+0x10c)
 
 // ---- scene view setup (0x46ca50) -------------------------------------------------------------------------------------
-struct frustum_x : rgl::frustum {
-    D3DXMATRIX projection();                    // 0x4620d0 (hidden return pointer)
-};
 struct light_src {                              // one scene light; types 0/1/2 map to D3DLIGHT_POINT/SPOT/DIRECTIONAL
     int type;                                   // 0x00
     float diffuse[3];                           // 0x04
@@ -410,7 +407,8 @@ struct light_t {
 };
 struct flag_obj { char pad[0x10]; char on; };
 struct entry { rgl::mesh* m; int extra; };      // 8 bytes
-struct rot3 { rgl::vector4 s, f, u; };          // 3x3 rotation, rows padded to 4 floats
+#include "../../include/mat4.h"
+using rgl::rot3;
 struct view_t {
     char pad0[0xf8];
     rot3 rot;                                   // 0xf8 (rows s, f, u of the camera frame)

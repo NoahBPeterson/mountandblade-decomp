@@ -215,10 +215,7 @@ struct CamParams {                               // camera parameter block writt
     vector4 v50;                                 // +0x50 target offset
     float f60;                                   // +0x60
 };
-struct vec2 {
-    float x, y;
-    float normalize();                           // 0x4367c0 (returns the old length; (0,1) if <= 0)
-};
+#include "../../include/vec.h"
 
 struct Agent {
     char pad0[4];

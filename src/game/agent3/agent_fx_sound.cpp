@@ -11,6 +11,10 @@
 #include "./agent_fx_sound.h"
 #include "../tstring.h"
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../str_table.h"
+#include "../../include/mat4.h"
+#include "../../include/timer.h"
 
 // 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
 template<> void std::vector<int>::push_back(const int&);
@@ -237,7 +241,7 @@ void GameData::add_experience(int troop, int amount)
     if (troop == player && amount > 0 && f13a34 != 0 && g_show_messages != 0) {
         {
             tstring key("ui_you_got_number_experience");
-            sprintf(buf1, g_strtable.lookup(key)->c_str(), amount);
+            sprintf(buf1, g_strtable.lookup(&key)->c_str(), amount);
         }
         {
             tstring msg(buf1);
@@ -255,7 +259,7 @@ void GameData::add_experience(int troop, int amount)
             g_sound.play(g_levelup_sound, 1, g_levelup_pos, 1.0f, 0);
             {
                 tstring key("ui_you_have_advanced_to_level_number");
-                sprintf(buf2, g_strtable.lookup(key)->c_str(), c->level);
+                sprintf(buf2, g_strtable.lookup(&key)->c_str(), c->level);
             }
             {
                 tstring msg(buf2);
@@ -274,7 +278,7 @@ void GameData::add_experience(int troop, int amount)
                             tstring* nm = g_strtable.find(&c->name);
                             if (nm == 0)
                                 nm = (tstring*)c;
-                            sprintf(buf3, g_strtable.lookup(key)->c_str(), nm->c_str(), c->level);
+                            sprintf(buf3, g_strtable.lookup(&key)->c_str(), nm->c_str(), c->level);
                         }
                         {
                             tstring msg(buf3);
@@ -323,7 +327,8 @@ void Mission::queue_dead(Agent* a)
     while (dead.size() > g_max_dead) {
         dead[0]->state = 4;
         Agent* o = dead[0];
-        o->tm.reset();
+        Timer* tm = &o->tm;
+        tm->start = g_ticks[tm->clock];      // Timer::restart inlined
         for (unsigned i = 1; i < dead.size(); i++)
             dead[i - 1] = dead[i];
         dead.pop_back();

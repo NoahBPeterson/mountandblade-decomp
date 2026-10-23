@@ -161,29 +161,8 @@ struct InputSet {
 void __fastcall apply_input_settings(InputSet* self);   // 0x4bc350
 void __fastcall release_input_devices(InputSet* self);  // 0x4bc3d0
 
-// ---- the render batch's buffer table (0x4bc540..0x4bd0c0) -------------------------------------------------------
-// The 0x4c-byte device vertex/index buffer record (restore 0x4622e0 in ../renderer.h declares the same first
-// 0x48 bytes; this one names the string at +0x18 and the declaration at +0x48).
-struct dev_buffer {
-    int type;                                       // 0x00 0 vertex buffer, 1 index buffer   0x4bc540
-    int elem_size;                                  // 0x04   0x4bc5b0
-    IDirect3DVertexBuffer9* vb;                     // 0x08   0x4bc540
-    unsigned fvf;                                   // 0x0c   0x4bc5b0
-    int f10;                                        // 0x10
-    int generation;                                 // 0x14   0x4bc540
-    tstring name;                                   // 0x18   0x4bc5b0 ("vdt_...")
-    int count;                                      // 0x28   0x4bc540, 0x4bc830
-    int loaded;                                     // 0x2c   0x4bc540
-    char pad30[0x44 - 0x30];
-    IDirect3DIndexBuffer9* ib;                      // 0x44   0x4bc540
-    IDirect3DVertexDeclaration9* decl;              // 0x48   0x4bc830
-    void restore();                                 // 0x4622e0
-};
-struct buffer_pair {
-    dev_buffer bufs[2];                             // stride 0x4c
-    void release();                                 // 0x4bc540
-    void restore() { bufs[0].restore(); bufs[1].restore(); }   // inline (0x4bcfb0 loop body)
-};
+// ---- the render batch's buffer table (0x4bc540..0x4bd0c0): dev_buffer / buffer_pair
+#include "../dev_buffer.h"
 struct shader_res;
 struct resource_manager_x {                         // the resource manager (0x5d6fa0), shader lookup only
     shader_res* get_shader(const tstring& name);    // 0x418b30

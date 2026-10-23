@@ -8,6 +8,9 @@
 #include <exception>
 #include <stdlib.h>
 #include "./shapes.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/mat4.h"
+#include "../../include/vec.h"
 using namespace rgl;
 
 // Bind the ext declarations of shapes.h to the functions they stand for (see there).

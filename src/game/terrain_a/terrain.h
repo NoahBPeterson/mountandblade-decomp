@@ -15,7 +15,7 @@
 #include "../tstring.h"
 #include "../../rgl/stream.h"
 
-struct vec2 { float x, y; };
+#include "../../include/vec.h"
 struct ivec2 { int dx, dy; };
 extern ivec2 g_nbr[];                           // 0x591340 the eight neighbour offsets (0x4666b0, 0x468fc0)
 

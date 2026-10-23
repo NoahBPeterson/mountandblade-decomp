@@ -2047,7 +2047,14 @@ void terrain_obj::spread_flow(unsigned mask, int mode, unsigned mark)
     }
 }
 
-struct mat3 { rgl::vector4 s, f, u; };
+#include "../../include/mat4.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../arr_set.h"
+#include "../../include/frustum.h"
+#include "../../include/keyframes.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
+using rgl::mat3;
 __declspec(noinline) mat3* identity3(mat3* out);                             // 0x40cd60
 struct pos2 : rgl::matrix {
     void rotate_sf(const float* angle);     // 0x40e770
@@ -2741,7 +2748,7 @@ void Scene::apply_state()
     }
     rgl::frustum* c = &cam;
     {
-        D3DXMATRIX proj = ((frustum_x*)c)->projection();
+        D3DXMATRIX proj = c->projection();
         g_device->SetTransform(D3DTS_PROJECTION, &proj);
     }
     g_render.set_view(&c->m);
@@ -2749,9 +2756,9 @@ void Scene::apply_state()
         if (g_use_hw_shadow)
             g_cull_mode = 1;
         else
-            g_cull_mode = cam.flag1 ? 2 : 3;
+            g_cull_mode = cam.left_handed ? 2 : 3;
     } else {
-        g_cull_mode = (cam.flag1 != 0) + 2;
+        g_cull_mode = (cam.left_handed != 0) + 2;
     }
     unsigned char fog_enable = (fog && fog->enabled) ? 1 : 0;
     if (g_fog_on != fog_enable) {

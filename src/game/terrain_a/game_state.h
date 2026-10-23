@@ -9,14 +9,9 @@
 #include "../tstring.h"
 #include "../../rgl/scene/frustum.h"
 
-// ---- ArrSet: a name and five (count, int array) pairs (copy ctor 0x4636d0, dtor 0x463760) ---------------------------
-struct ArrSet {
-    tstring name;                               // +0
-    int cnt[5];                                 // +0x10
-    int* arr[5];                                // +0x24
-    ArrSet(const ArrSet& o);                    // 0x4636d0
-    ~ArrSet();                                  // 0x463760
-};
+// the terrain_a objects only call the dtor of ArrSet (its out-of-line copy 0x463760 is defined in game_state.cpp)
+#define ARRSET_DTOR_OUT_OF_LINE
+#include "../arr_set.h"
 
 // ---- colour ramp: n stops (3 floats each, stride 0x10) from +0x2c, count at +0xac -----------------------------------
 struct Ramp {
@@ -28,7 +23,7 @@ struct Ramp {
 extern int g_use_shaders;                       // 0x5e28fc (0: colours are gamma-corrected on output; 0x463790)
 extern float g_ramp_gamma;                      // 0x5a9bfc (0x463790)
 
-struct Vec2 { float x, y; Vec2() {} Vec2(float a, float b) : x(a), y(b) {} };
+#include "../../include/vec.h"
 struct Block16 {                                // 16-byte default block (0, 0.5, 0, 0)  0x4638b0
     Vec2 p, q;
     Block16();                                  // 0x4638b0

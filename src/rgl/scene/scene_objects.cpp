@@ -20,6 +20,12 @@
 #include "./scene_entity.h"
 #include "./world.h"
 #include "./fx.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/frustum.h"
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
 
 using namespace rgl;
 
@@ -166,23 +172,23 @@ void psys::init()
     va4 = vector4(1.0f, 0.0f, 0.0f);
     vb4 = vector4(0.0f, 0.0f, 1.0f);
     fe8 = 1;
-    half = pair2(0.5f, 0.5f);
-    curve[0] = pair2(0.0f, 1.0f);
-    curve[1] = pair2(1.0f, 0.0f);
-    curve[2] = pair2(0.0f, 1.0f);
-    curve[3] = pair2(1.0f, 1.0f);
-    curve[4] = pair2(0.0f, 1.0f);
-    curve[5] = pair2(1.0f, 1.0f);
-    curve[6] = pair2(0.0f, 1.0f);
-    curve[7] = pair2(1.0f, 1.0f);
-    curve[8] = pair2(0.0f, 1.0f);
-    curve[9] = pair2(1.0f, 1.0f);
+    half = float_pair(0.5f, 0.5f);
+    curve[0] = float_pair(0.0f, 1.0f);
+    curve[1] = float_pair(1.0f, 0.0f);
+    curve[2] = float_pair(0.0f, 1.0f);
+    curve[3] = float_pair(1.0f, 1.0f);
+    curve[4] = float_pair(0.0f, 1.0f);
+    curve[5] = float_pair(1.0f, 1.0f);
+    curve[6] = float_pair(0.0f, 1.0f);
+    curve[7] = float_pair(1.0f, 1.0f);
+    curve[8] = float_pair(0.0f, 1.0f);
+    curve[9] = float_pair(1.0f, 1.0f);
     vc4 = vector4(0.0f, 0.0f, -9.8f);
     fd4 = 1.0f;
-    quad[0] = pair2(1.0f, 1.0f);
-    quad[1] = pair2(0.0f, 1.0f);
-    quad[2] = pair2(0.0f, 0.0f);
-    quad[3] = pair2(1.0f, 0.0f);
+    quad[0] = float_pair(1.0f, 1.0f);
+    quad[1] = float_pair(0.0f, 1.0f);
+    quad[2] = float_pair(0.0f, 0.0f);
+    quad[3] = float_pair(1.0f, 0.0f);
     f20 = 0.0f; f1c = 1.0f; f24 = 0.5f;
     f8 = 0;
     tag = -1; radius = 0.0f; f1b0 = 0; f1b4 = 0;

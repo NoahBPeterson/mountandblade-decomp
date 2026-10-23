@@ -7,10 +7,7 @@
 #include "../tstring.h"
 #include "../../rgl/stream.h"
 
-// string table (global 0x5e2a18): lookup never fails (a shared entry answers a miss)
-struct StrTable {
-    tstring* lookup(const tstring* key);    // 0x43a1e0 (ret 4)
-};
+#include "../str_table.h"
 extern StrTable g_strtab;                   // 0x5e2a18
 
 // the engine log (global 0x5a9f60): stream slot 10 (+0x28) writes a C string

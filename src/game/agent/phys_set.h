@@ -75,7 +75,8 @@ struct face_shape : shape_base {                        // vtable 0x54a588, size
     vector4 normal;                                     // +0xa0
     int count;                                          // +0xb0
 };
-struct mat3 { vector4 s, f, u; };
+#include "../../include/mat4.h"
+using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);                     // 0x40cd60
 
 #endif // AGENT_PHYS_SET_H

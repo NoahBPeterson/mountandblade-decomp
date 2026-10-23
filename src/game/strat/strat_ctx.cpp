@@ -9,6 +9,12 @@
 //-----------------------------------------------------------------------------
 #include "./strat_ext.h"       // (listed directly: the resolution audit scans only the source's own includes)
 #include "./strat_entity.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/frustum.h"
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
 
 // @ 0x42b6d0
 // The ambient light colour of the scene: the colour of the last enabled ambient light (type 2, flags bit 0),

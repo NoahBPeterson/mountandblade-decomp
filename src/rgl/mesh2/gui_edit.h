@@ -238,14 +238,14 @@ extern ItemKind* g_items;                       // 0x5e29d0
 extern int g_n_items;                           // 0x5e29d4
 
 // a mesh's keyframe track (a 0x24-byte record's +0x14 points at an array of these)
-struct keyframes {
+struct kf_track {               // (not the 12-byte rgl::keyframes of src/include/keyframes.h: times at +8, count at +0xc)
     char pad0[0x8];
     int* times;                 // +0x8
     int count;                  // +0xc
 };
 struct mesh_node {              // 0x98-byte record with a keyframe track at +0x84
     char pad0[0x84];
-    keyframes kf;               // +0x84
+    kf_track kf;                // +0x84
 };
 
 struct RefItem {                // 0x24-byte entry of the record array
@@ -563,7 +563,7 @@ struct Pawn {
 };
 extern Pawn* g_edited_object;                           // 0x5e292c+0x65e4 (the map's edited object)
 
-struct Vec3 { float x, y, z; };                         // a position / direction in the world
+#include "../../include/vec.h"
 
 // the map editor's object dialog
 struct MapEditorDialog {
@@ -840,18 +840,8 @@ struct tstr_vec {
     tstr_iter erase_range(tstring* first, tstring* last);   // 0x4c8840 (thiscall, ret 0xc, hidden return)
 };
 
-// the returned iterator of the pointer vector below (one pointer, returned by value)
-struct ptr_iter {
-    int* p;                                                  // +0
-};
 
-// the pointer vector the erase helper belongs to (first at +0, end at +8)
-struct ptr_vec {
-    void* first;                                             // +0
-    void* last;                                              // +4
-    void* end;                                               // +8
-    ptr_iter erase_range(int* first, int* last);             // 0x4c88a0
-};
+#include "../../include/ptr_vec.h"
 
 // the 0x38-byte record vector the copy helper belongs to
 struct item38_vec {

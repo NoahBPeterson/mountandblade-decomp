@@ -19,6 +19,8 @@
 #include <string.h>
 #include "../rgl_string.h"
 #include "../rgl_math.h"
+#include "../../include/vec.h"
+#include "../../include/mesh_prims.h"
 #include "../resource.h"
 
 namespace rgl {
@@ -57,7 +59,6 @@ struct frame_ops : matrix {
 };
 
 // ---- element types of the mesh's std::vectors ---------------------------------------------------------------
-struct vec2 { float x, y; };
 struct vertex60 {                // 0x60 bytes, vector at mesh+0x50 (index read by build_skin 0x411d20)
     vector4 pos;                 // 0x00
     vector4 f10, f20;
@@ -71,7 +72,6 @@ struct vertex60 {                // 0x60 bytes, vector at mesh+0x50 (index read 
 };
 // 0x30 bytes, vector at +0x60: per-vertex skinning record (build_skin 0x411d20 writes w[], bone[], bonef[])
 struct skin_vert { float w[4]; int bone[4]; float bonef[4]; };
-struct point20 { vector4 a, b; };           // 0x20, vector at +0x70 (rest, current)
 // 8 bytes: (vertex index, weight). Also the scene's queue entries (key = the mesh pointer, weight 0).
 struct idx_weight { int index; float weight; };
 // 0x14 bytes, vector at +0x80: the vertices one bone influences (build_skin 0x411d20)
@@ -85,35 +85,13 @@ struct frame_t {
     void copy_from(const frame_t& o);               // 0x411c10
 };
 
-// morph key frames: frames[count], times[count] (integer key times). Assignment 0x4125e0, destructor inline.
-struct keyframes {               // 12 bytes at mesh+0xa4
-    frame_t* frames; int* times; int count;
-    keyframes() { count = 0; frames = 0; times = 0; }
-    ~keyframes()                                    // inline: ~mesh 0x4127f0 (the ??_E call 0x40fe10)
-    {
-        if (frames)
-            delete[] frames;
-        if (times)
-            delete[] times;
-    }
-    void operator=(const keyframes& o);                                         // 0x4125e0 (returns nothing)
-    void find(int* lo, int* hi, float* frac, const float* t);                   // 0x40f0d0
-};
+} // namespace rgl
+#include "../../include/keyframes.h"      // rgl::keyframes (frame_t above)
+namespace rgl {
 
 // object attached at mesh+0xc0, deleted with the mesh (~mesh 0x4127f0)
 struct obj_c0 { char pad[0x24]; vector4 out; vector4 in; };
 
-// Bounding box with centre and radius (0x34 bytes) at mesh+0x22c. Zeroing ctor 0x40eaf0.
-struct aabb {
-    vector4 min;                 // +0
-    vector4 max;                 // +0x10
-    vector4 center;              // +0x20
-    float radius;                // +0x30
-    aabb();                                        // 0x40eaf0
-    void reset();                                  // 0x416e40
-    void extend(const vector4* p);                 // 0x416ef0
-    void update();                                 // 0x416f70
-};
 
 struct slot {                    // 0x2c bytes, array of 3 at mesh+0x110 (ctor loop in mesh::mesh 0x412a90)
     int f0, f4, f8, fc;

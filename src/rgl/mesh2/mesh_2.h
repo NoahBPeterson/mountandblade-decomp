@@ -106,7 +106,7 @@ struct res_rec {
 
 // the lib's 4-arg _Destroy_range (0x4727a0) takes (first, last, allocator&, tag): the tag is an empty
 // class passed by value, so the call materialises a local `ptr_tag` before the branch.
-struct ptr_tag { };
+#include "../../include/ptr_tag.h"
 void obj_free(void* first, void* last, void* al, ptr_tag tag); // 0x4727a0
 void delete_obj(void* p);                        // 0x535712
 

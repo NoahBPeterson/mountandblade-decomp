@@ -24,6 +24,12 @@
 #include "../dialog_manager.h"
 #include "../agent/agent.h"
 #include "../tstring.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../str_table.h"
+#include "../../include/mat4.h"
+#include "../../include/quaternion.h"
+#include "../../include/timer.h"
+#include "../../include/vec.h"
 
 // ==== error reporting and argument validators (static, same object) =========================================
 

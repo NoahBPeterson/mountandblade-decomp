@@ -3,7 +3,7 @@
 ../src/game/terrain_b/terrain_b.cpp  ?sun_visibility@Terrain@@QAEMPBM@Z  00471a30  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?light_all@Terrain@@QAEXPAUparticle_list@@_N@Z  00472020  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?free_values@PList@@QAEXXZ  00472460  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?ufill@vec24@@QAEPAUMRow36@@PAU2@IABU2@@Z  004724c0  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?ufill@vecMRow36@@QAEPAUMRow36@@PAU2@IABU2@@Z  004724c0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?ufill@vec18@@QAEPAUMVert@@PAU2@IABU2@@Z  004724f0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?ufill@vec64@@QAEPAUMPoly@@PAU2@IABU2@@Z  00472520  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?ufill@vec34@@QAEPAUMEdge@@PAU2@IABU2@@Z  00472550  /O2 /MT /Gy /TP

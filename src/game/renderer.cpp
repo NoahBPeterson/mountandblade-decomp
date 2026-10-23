@@ -17,6 +17,10 @@
 #include "rgl.h"
 #include "./mat4.h"
 #include "./renderer.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "./dev_buffer.h"
+#include "../include/frustum.h"
+#include "../include/mat4.h"
 
 using rgl::vector4;
 using rgl::mat4;
@@ -41,7 +45,7 @@ void renderer::set_view(const mat4* p)
     {
         mat4 rel;
         rel = p->relative(rgl::identity());
-        to_d3d(&view, mat4(r, vector4(0.0f, 0.0f, 0.0f)) * rel);
+        to_d3d(&view, mat4_ro(r, vector4(0.0f, 0.0f, 0.0f)) * rel);
     }
     dev->SetTransform(D3DTS_VIEW, &view);
 }
@@ -294,7 +298,7 @@ void mesh_inst::set_part(mesh_part* p)
 }
 
 // @ 0x4620d0
-D3DXMATRIX frustum::projection()
+D3DXMATRIX rgl::frustum::projection()
 {
     D3DXMATRIX mat;
     if (left_handed) {
@@ -312,16 +316,16 @@ D3DXMATRIX frustum::projection()
 }
 
 // @ 0x462170
-mat4 frustum::view_matrix()
+mat4 frustum_view::view_matrix()
 {
     mat4 rel;
-    rel = m.relative(rgl::identity());
+    rel = ((mat4&)m).relative(rgl::identity());
     rel.s.w = 0.0f; rel.f.w = 0.0f; rel.u.w = 0.0f; rel.o.w = 1.0f;
     return rel;
 }
 
 // @ 0x4621f0
-vector4 frustum::to_clip(const vector4& p)
+vector4 rgl::frustum::to_clip(const vector4& p)
 {
     vector4 t = m.transform_point_to_local(p);
     vector4 v = t;

@@ -89,11 +89,7 @@ struct skin_calls : skin {
     void set_state();                   // 0x461f80 (mesh_part::set_state in renderer.h)
 };
 
-struct vec3 {
-    float x, y, z;
-    vec3() {}
-    vec3(float a, float b, float c) { x = a; y = b; z = c; }
-};
+#include "../../include/vec.h"
 static __forceinline vector4 make4(float a, float b, float c, float d)
 {
     vector4 v;
@@ -175,7 +171,8 @@ struct render_batch {
     void render_scene(scene* sc);           // 0x46e590
 };
 
-struct rot3 { vector4 s, f, u; };
+#include "../../include/mat4.h"
+using rgl::rot3;
 static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 {
     vector4 r;

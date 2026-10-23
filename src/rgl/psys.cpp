@@ -11,6 +11,11 @@
 #include "./resource.h"
 #include "./mesh.h"
 #include "./psys.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../include/keyframes.h"
+#include "../include/mat4.h"
+#include "../include/mesh_prims.h"
+#include "../include/vec.h"
 
 // 0x413b60 vector::erase (std::vector<rgl::vertex60>, explicit instantiation)
 template std::vector<rgl::vertex60>::iterator std::vector<rgl::vertex60>::erase(std::vector<rgl::vertex60>::iterator, std::vector<rgl::vertex60>::iterator);

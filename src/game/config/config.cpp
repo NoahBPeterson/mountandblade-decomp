@@ -22,6 +22,10 @@
 #include <new>
 #include "./config.h"
 #include "../../rgl/resource.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../dev_buffer.h"
+#include "../../include/frustum.h"
+#include "../../include/mat4.h"
 
 // ---- imports and library functions the slices declared by hand ------------------------------------------------------
 extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(HWND hwnd, int csidl, HANDLE token, DWORD flags, char* path);   // 0x5492c0

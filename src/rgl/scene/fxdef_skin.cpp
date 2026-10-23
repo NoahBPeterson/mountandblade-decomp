@@ -15,6 +15,12 @@
 #include "./scene_entity.h"
 #include "./world.h"
 #include "./fx.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/frustum.h"
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
 
 using namespace rgl;
 

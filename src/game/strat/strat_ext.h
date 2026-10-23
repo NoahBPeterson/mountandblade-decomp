@@ -11,10 +11,16 @@
 #include "rgl.h"
 #include "../mat4.h"
 #include "../tstring.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/frustum.h"
 
 using rgl::vector4;
 using rgl::matrix;
 using rgl::mat4;
+using rgl::aabb;
+using rgl::point20;
+using rgl::plane;
+using rgl::frustum;
 
 #define OFFSET_CHECK3(T, m, off) typedef char T##_##m##_at3_##off[(offsetof(T, m) == (off)) ? 1 : -1]
 
@@ -27,7 +33,9 @@ struct shape;
 
 // 64-byte-per-element helpers of the mesh's std::vectors (rgl::mesh in src/rgl/mesh.h is the namespaced twin)
 // element types of the mesh's std::vectors
-struct vec2 { float x, y; vec2() {} vec2(float x_, float y_) { x = x_; y = y_; } };
+#include "../../include/vec.h"
+// vec2 is an aggregate; strat_entity.cpp builds its uv offsets through a constructor call (a temporary, then a copy)
+struct vec2c : vec2 { vec2c(float x_, float y_) { x = x_; y = y_; } };
 struct vertex60 {                // 0x60 bytes, vector at mesh+0x50
     vector4 pos;                 // 0x00
     vector4 f10, f20;
@@ -40,7 +48,6 @@ struct vertex60 {                // 0x60 bytes, vector at mesh+0x50
     int f5c;
 };
 struct elem30 { char b[0x30]; };            // vector at +0x60
-struct point20 { vector4 a, b; };           // 0x20, vector at +0x70 (rest, current)
 struct elem14 { int id; std::vector<int> items; };   // 0x14, vector at +0x80 (items' element type unknown)
 struct face20 { vector4 n; int a, b, c, d; };   // 0x20, vector at +0x90
 
@@ -50,12 +57,8 @@ inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b
 
 struct frame_t { std::vector<vector4> verts; std::vector<vector4> norms; };   // 0x20: morph key frame
 
-struct keyframes {               // 12 bytes at mesh+0xa4
-    frame_t* frames; float* times; int count;
-    keyframes() { count = 0; frames = 0; times = 0; }
-    keyframes& operator=(const keyframes& o);                                   // 0x4125e0
-    void find(int* a, int* b, float* t, const float* time);                     // 0x40f0d0
-};
+#include "../../include/keyframes.h"      // rgl::keyframes (frame_t above)
+using rgl::keyframes;
 
 struct obj_c0 { char pad[0x24]; vector4 out; vector4 in; };   // object attached at mesh+0xc0 (0x34.. read, 0x24.. written)
 
@@ -70,18 +73,6 @@ struct res_t {
     int f5c;                     // 0x5c
     char pad3[0x68 - 0x60];
     void (*fn68)(res_t*);        // 0x68
-};
-
-// Axis-aligned box with centre and radius (0x34 bytes): ctor 0x40eaf0, reset 0x416e40, extend 0x416ef0,
-// update 0x416f70 (see s00416ef0), extend_box 0x4201b0 (s0041ffe0). It is also mesh::v22c.
-struct aabb {
-    vector4 min, max, center;
-    float radius;
-    __declspec(noinline) aabb();                        // 0x40eaf0
-    void reset();                                       // 0x416e40
-    void extend(const vector4* p);                      // 0x416ef0
-    void update();                                      // 0x416f70
-    void extend_box(const aabb* b, const mat4* m);      // 0x4201b0
 };
 
 struct slot_pair { int a, b; };
@@ -161,19 +152,6 @@ struct mesh : mesh_base {
     void clear_all();                               // 0x428e80 (resizes every vector to 0)
 };
 
-// ---- view frustum (0x41ef60 ctor, 0x41e4f0 build_planes)
-struct plane { vector4 pos, normal; };
-struct frustum {
-    char perspective;           // +0   (shadow_tick 0x42b790 clears it for the orthographic shadow camera)
-    char flag1;                 // +1
-    char pad2[2];
-    int nplanes;                // +4
-    plane planes[6];            // +8
-    matrix m;                   // +0xc8 (camera frame, set from build_shadow_frame's matrix)
-    float left, right, top, bottom, nearz, farz;   // +0x108 (shadow_tick)
-    frustum();                  // 0x41ef60
-    void build_planes();        // 0x41e4f0
-};
 
 // ---- render target / skin resources: only the fields used here
 struct render_res { char pad0[0x18]; char loaded; char pad19[0x24 - 0x19]; int f24; };

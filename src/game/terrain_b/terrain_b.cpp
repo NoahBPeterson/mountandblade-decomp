@@ -28,6 +28,16 @@
 #include "./face_gen.h"
 #include "./entity_rec.h"
 #include "./tmesh.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../arr_set.h"
+#include "../int_vec.h"
+#include "../../include/frustum.h"
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/ptr_tag.h"
+#include "../../include/timer.h"
+#include "../../include/vec.h"
 
 using rgl::vector4;
 using rgl::matrix;
@@ -1118,7 +1128,7 @@ void PList::free_values()
 }
 
 // @ 0x4724c0
-MRow36* vec24::ufill(MRow36* f, unsigned n, const MRow36& v)
+MRow36* vecMRow36::ufill(MRow36* f, unsigned n, const MRow36& v)
 {
     ptr_tag t;
     uninit_fill_n_24(f, n, v, *this, t);
@@ -1781,11 +1791,11 @@ void FaceGen::breed(const unsigned __int64* a, const unsigned __int64* b, int se
     FaceHairRec* r = &races[race].recs[pick_c];
     IntVec* v = &r->list;
     int n;
-    if (v->first == 0 || (n = (int)(v->last - v->first)) <= 0) {
+    if (v->_Myfirst == 0 || (n = (int)(v->_Mylast - v->_Myfirst)) <= 0) {
         pick_d = lerp_int(s3, pick_d);
     } else {
         RAND();
-        pick_d = races[race].recs[pick_c].list.first[g_rand_seed % (unsigned)n];
+        pick_d = races[race].recs[pick_c].list._Myfirst[g_rand_seed % (unsigned)n];
     }
     weight = (float)(RAND() % 0x3dc9) * (weight - a0) * 6.322312e-05f + a0;
     age = (float)(RAND() % 0x3dc9) * (age - a1) * 6.322312e-05f + a1;
@@ -1840,7 +1850,7 @@ void Mission::update_team_stats()
             }
         }
     }
-    if (tm.elapsed() >= 0.0f) {
+    if ((float)(g_ticks[tm.clock] - tm.start) * 1e-5f >= 0.0f) {      // Timer::elapsed() inlined
         tm.start = g_ticks[tm.clock] + 110000;
         vector4 zero(0.0f, 0.0f, 0.0f);
         for (t = 0; t < 8; t++)

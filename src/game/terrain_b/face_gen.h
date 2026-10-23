@@ -13,7 +13,7 @@ struct Constraint {                             // 0x204 bytes
     int mode;                                   // +0x1fc -1: value must stay >= limit, +1: must stay <= limit
     float limit;                                // +0x200
 };
-struct IntVec { int pad; int* first; int* last; int* endcap; };   // VC7.1 std::vector<int> layout
+#include "../int_vec.h"
 struct FaceHairRec {                            // 0xb0 bytes
     char pad0[0x1c];
     IntVec list;                                // +0x1c candidate values (0x4746e0)

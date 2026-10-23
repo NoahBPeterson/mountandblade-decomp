@@ -9,6 +9,11 @@
 #include <string.h>
 #include <new>
 #include "./game_state.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../arr_set.h"
+#include "../../include/frustum.h"
+#include "../../include/mat4.h"
+#include "../../include/vec.h"
 
 using rgl::vector4;
 using rgl::matrix;

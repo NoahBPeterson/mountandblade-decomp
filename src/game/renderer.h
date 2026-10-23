@@ -10,6 +10,7 @@
 #include <d3dx9.h>
 #include "rgl.h"
 #include "./mat4.h"
+#include "../include/frustum.h"
 
 // ---- globals -----------------------------------------------------------------------------------------
 extern int g_use_shaders;                   // 0x5e28fc
@@ -103,44 +104,24 @@ struct mesh_inst {
     void set_part(mesh_part* p);    // 0x4620b0
 };
 
-// ---- view frustum (0x120 bytes; ctor 0x41ef60 and planes 0x41e4f0 in earlier objects) -------------------
-struct plane { rgl::vector4 pos, normal; };
-struct frustum {
-    char perspective;               // +0                                         0x4620d0, 0x4621f0
-    char left_handed;               // +1                                         0x4620d0
-    char pad2[2];
-    int nplanes;                    // +4
-    plane planes[6];                // +8
-    rgl::mat4 m;                    // +0xc8 camera frame                         0x462170, 0x4621f0
-    float left, right, top, bottom, nearz, farz;   // +0x108                      0x4620d0, 0x4621f0
-    D3DXMATRIX projection();                // 0x4620d0 (hidden return pointer)
+// ---- view frustum: rgl::frustum of src/include/frustum.h (projection 0x4620d0, view_matrix 0x462170, to_clip 0x4621f0)
+using rgl::frustum;
+using rgl::plane;
+// view_matrix is declared there with a D3DXMATRIX result (terrain_b reads it that way); renderer.cpp builds a mat4 and
+// defines the function through this view of the same record
+// mat4 from a rotation and an origin as renderer::set_view (0x461630) builds it (rgl::mat4 itself has no constructor)
+struct mat4_ro : rgl::mat4 {
+    mat4_ro(const rgl::rot3& r, const rgl::vector4& origin) { *(rgl::rot3*)this = r; o = origin; }
+};
+struct frustum_view : rgl::frustum {
     rgl::mat4 view_matrix();                // 0x462170 (hidden return pointer)
-    rgl::vector4 to_clip(const rgl::vector4& p);    // 0x4621f0 (hidden return pointer)
 };
 
 // ---- render-queue record (key at +0x218) ------------------------------------------------------------------
 struct sort_rec { char pad[0x218]; __int64 key; };
 
-// ---- device vertex / index buffer pair (restore after reset) ---------------------------------------------
-struct dev_buffer {
-    int type;                       // 0x00  0 vertex buffer, 1 index buffer      0x4622e0
-    int elem_size;                  // 0x04
-    IDirect3DVertexBuffer9* vb;     // 0x08
-    unsigned fvf;                   // 0x0c
-    char pad10[4];
-    int generation;                 // 0x14
-    char pad18[0x28 - 0x18];
-    int count;                      // 0x28  capacity requested
-    int loaded;                     // 0x2c  capacity currently on the device
-    char pad30[0x44 - 0x30];
-    IDirect3DIndexBuffer9* ib;      // 0x44
-    char pad48[4];
-    HRESULT restore();              // 0x4622e0
-};
-struct buffer_pair {
-    dev_buffer bufs[2];             // stride 0x4c                                0x4623c0
-    void restore_all();             // 0x4623c0
-};
+// ---- device vertex / index buffer pair (restore after reset)
+#include "./dev_buffer.h"
 
 // ---- 2D cell grid (rows of 16-byte cells; dtor 0x41ecc0 in an earlier object) ------------------------------
 struct grid_cell {

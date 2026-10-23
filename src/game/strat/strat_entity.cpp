@@ -12,6 +12,12 @@
 #include <stdlib.h>
 #include "./strat_ext.h"       // (listed directly: the resolution audit scans only the source's own includes)
 #include "./strat_entity.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../../include/frustum.h"
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
 
 // @ 0x42a090
 void StratEnt::render(scene* sc, render_info* out)
@@ -297,14 +303,14 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         if (f15c > 0.7f) nt = 3;
     }
     if (nt == 1) {
-        off[0] = vec2(0.0f, 0.0f);
+        off[0] = vec2c(0.0f, 0.0f);
     } else if (nt == 2) {
-        off[0] = vec2(-0.004296875f, 0.0046875f);
-        off[1] = vec2(0.00390625f, -0.004296875f);
+        off[0] = vec2c(-0.004296875f, 0.0046875f);
+        off[1] = vec2c(0.00390625f, -0.004296875f);
     } else {
-        off[0] = vec2(0.00078125f, 0.00546875f);
-        off[1] = vec2(-0.005078125f, -0.00546875f);
-        off[2] = vec2(0.00546875f, -0.005078125f);
+        off[0] = vec2c(0.00078125f, 0.00546875f);
+        off[1] = vec2c(-0.005078125f, -0.00546875f);
+        off[2] = vec2c(0.00546875f, -0.005078125f);
     }
     for (i = 0; i < nids; i++) {
         face = &ctx->ground->faces[ids[i]];
@@ -354,7 +360,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             else if (al >= 0x100) al = 0xff;
             col = (al << 24) | 0xffffff;
             for (q = 0; q < nt; q++) {
-                uv = vec2(u + off[q].x, v + off[q].y);
+                uv = vec2c(u + off[q].x, v + off[q].y);
                 f5c = 0;
                 vtx[q][j] = (*slot)->add_vertex(pi, &uv, &col, n, &f5c);
             }

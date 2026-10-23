@@ -12,6 +12,12 @@
 // std::vector<NodeA*> (template COMDATs land after their first caller), not separate objects; see MIGRATION.md.
 //-----------------------------------------------------------------------------
 #include "./widget_mgr.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "../font.h"
+#include "../../include/keyframes.h"
+#include "../../include/mat4.h"
+#include "../../include/mesh_prims.h"
+#include "../../include/vec.h"
 
 extern char g_ui_dirty;                         // 0x5d8788 set when the widget list changed (0x49ad20)
 

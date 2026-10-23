@@ -16,7 +16,7 @@
 #include "../../rgl/resource.h"
 
 using rgl::vector4;
-using rgl::vec2;
+#include "../../include/vec.h"
 
 // ---- the widget vtable as the factories see it (slot n at +4n) ------------------------------------------------
 struct WVt {
@@ -158,10 +158,7 @@ struct Font;
 struct MissionUiText : MissionUi {
     void layout_text_to(const tstring* text, const float* pos);     // 0x49abc0 (ret 8)
 };
-struct Font {
-    void layout_text(float* out, const tstring* text, const vector4* pos_in, const float* scale_in, void* m,
-                     int arg, const float* xmin, const float* xmax, unsigned flags);   // 0x4520d0 (ret 0x24)
-};
+#include "../font.h"
 extern Font* g_font;                            // 0x5e2934
 
 // ---- the manager: a std::vector of widgets at +0 (first at +4), the scene container at +0x2c ------------------
