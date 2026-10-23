@@ -21,7 +21,7 @@ OFFSET_CHECK3(Light, dir, 0x44);
 OFFSET_CHECK3(Light, flags, 0x6c);
 
 struct Psys;
-struct cell { char pad[0x34]; void collect(const float* bmin, const float* bmax, int* flat, unsigned mask, shape** out, int* count); };  // 0x426500
+#include "../cell.h"          // cell (collect 0x426500)
 
 // face record of the static ground mesh (0x88 bytes): vertex count and up to 4 vertex indices, plane normal at +0x54
 struct GFace { int n; int idx[4]; char pad14[0x54 - 0x14]; float normal[3]; char pad60[0x88 - 0x60]; };
@@ -59,7 +59,7 @@ struct Ctx {
     void sample_lights(const vector4* p, vector4* dir, vector4* amb);   // 0x42ad60
     vector4 ambient();                              // 0x42b6d0 (by-value return)
     StratEnt* find_entity(int id);                  // 0x42ba50
-    void query_box(const float* bmin, const float* bmax, unsigned mask, shape** out, int* count);   // 0x42aa50
+    void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50
     void render_scene(scene* sc, bool reflect);     // 0x429890 (another module)
 };
 OFFSET_CHECK3(Ctx, cells, 0x28);

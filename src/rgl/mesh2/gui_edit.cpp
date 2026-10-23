@@ -10,6 +10,7 @@
 #include "../../include/mat4.h"
 #include "../../include/ptr_vec.h"
 #include "../../include/vec.h"
+#include "../../include/phys_set.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 #pragma warning(disable:4700)     // 0x4c77c0: the matrix is left unread when no record is selected
@@ -539,7 +540,7 @@ void graph_obj::update_vertex_mode()
     } else {
         int np = faces ? (int)(faces_end - faces) : 0;
         for (int i = 0; i < np; i++) {
-            face* p = &faces[i];
+            graph_face* p = &faces[i];
             if (p->used) {
                 for (int k = 0; k < p->count; k++) {
                     nodes[p->verts[k]].used = 1;
@@ -565,7 +566,7 @@ void graph_obj::update_edge_mode()
     } else {
         int np = faces ? (int)(faces_end - faces) : 0;
         for (int i = 0; i < np; i++) {
-            face* p = &faces[i];
+            graph_face* p = &faces[i];
             if (p->used) {
                 for (int k = 0; k < p->count; k++)
                     edges[p->ends[k]].sel = 1;
@@ -622,7 +623,7 @@ void graph_obj::refresh_selection()
         calc_edge_mode(mode);
         int np = faces ? (int)(faces_end - faces) : 0;
         for (int i = 0; i < np; i++) {
-            face* p = &faces[i];
+            graph_face* p = &faces[i];
             for (int k = 0; k < p->count; k++)
                 if (edges[p->ends[k]].flag)
                     p->used = 1;
@@ -636,7 +637,7 @@ void graph_obj::refresh_selection()
 void graph_obj::find_triangle(const int* e, int* a, int* b)
 {
     int ei = *e;
-    face* f = &faces[edges[ei].f0];
+    graph_face* f = &faces[edges[ei].f0];
     int idx = -1;
     for (int k = 0; k < f->count; k++) {
         if (ei == f->ends[k]) {
@@ -645,7 +646,7 @@ void graph_obj::find_triangle(const int* e, int* a, int* b)
         }
     }
     *a = f->verts[idx];
-    face* g = &faces[edges[*e].f0];
+    graph_face* g = &faces[edges[*e].f0];
     *b = g->verts[(idx + 1) % g->count];
 }
 

@@ -122,15 +122,9 @@ struct effect_set : named_object {
 };
 
 // ---- body parts ---------------------------------------------------------------------------------------------
-// Collision-shape base (vtables 0x54a4b8 sphere, 0x54a540 capsule, 0x54a588 face, ...; see s0040cfe0).
-struct shape_base {
-    int m4, m8, mc, min_x, min_y, max_x, max_y;
-    virtual ~shape_base();                              // slot 0
-    virtual int shape_type();  // slot 1 (0 sphere, 1 capsule, 2 face, 3 composite, 4 manifold)
-    virtual void slot2();
-    virtual void slot3(stream_base* s);
-    virtual void save(stream_base* s);                  // slot 4
-};
+// Collision-shape base (vtables 0x54a4b8 sphere, 0x54a540 capsule, 0x54a588 face, ...; see s0040cfe0) and the
+// shapes: src/include/shape.h
+#include "../include/shape.h"
 // vtable 0x54ac58 (slot 0 0x4177b0, slot 1 0x4171f0), 0x1c bytes: a name and its collision shape.
 struct body_part : named_object {
     shape_base* shape;                         // +0x18

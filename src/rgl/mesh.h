@@ -40,7 +40,7 @@ struct vertex60 {                // 0x60 bytes, vector at mesh+0x50
 };
 struct elem30 { char b[0x30]; };            // vector at +0x60
 struct elem14 { int id; std::vector<int> items; };   // 0x14, vector at +0x80 (items' element type unknown)
-struct face20 { vector4 n; int a, b, c, d; };   // 0x20, vector at +0x90
+// face20 (0x20, vector at +0x90) is in src/include/mesh_prims.h
 
 struct frame_t { std::vector<vector4> verts; std::vector<vector4> norms; };   // 0x20: morph key frame
 

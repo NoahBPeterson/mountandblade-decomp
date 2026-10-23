@@ -29,31 +29,16 @@ struct posm : matrix {
     vector4 transform_point(const vector4& p) const;   // 0x408460
 };
 
-// ---- collision shapes (vtable 0x54a4b8 shape_base, 0x54a540 capsule; the full classes are in
-// src/rgl/shapes/shapes.h, which cannot be included together with rgl.h) ---------------------------------------
-struct shape_base {
-    int m4, m8, mc, min_x, min_y, max_x, max_y;
-    shape_base() : m4(-1), m8(8), mc(-1), min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
-    virtual ~shape_base() {}
-};
-int __cdecl shape_contact_count(shape_base* a, shape_base* b, int max, void* out);    // 0x40bfe0
+// ---- collision shapes (vtable 0x54a4b8 shape_base, 0x54a540 capsule): src/include/shape.h ---------------------------
+#include "../../include/shape.h"
 extern shape_base* g_hit_shape;                         // 0x5e246c: last shape hit by trace_ray
 
 struct Emit;                                            // particle emitter (agent_fx_sound.h)
 struct cell;                                            // world grid cell (agent_fx_sound.h)
 struct Mesh;                                            // mesh object hanging off the agent (agent_fx_sound.h)
 
-// the scene (rgl world): first field of the mission object. The members of other objects are only declared.
-struct world {
-    char pad0[0x28];
-    cell** cells;                                // +0x28 grid of cells (0x442180)
-    char pad2c[0xb4 - 0x2c];
-    void* nav;                                          // +0xb4 navigation mesh
-    void locate(const vector4* p, int* out) const;      // 0x41ed00 (grid cell of a point)
-    Emit* alloc_emitter();                              // 0x427ea0 (0x442ca0)
-    int trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60 (0x440e30)
-    void collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<unsigned>* out);   // 0x442180 (agent_fx_sound.cpp)
-};
+// the scene (rgl world): first field of the mission object, defined once in ../world.h (members of other objects only declared)
+#include "../world.h"
 
 // ---- animation channels / skeleton (the animator at body+0x304) ---------------------------------------------
 struct CapDef { vector4 a; vector4 b; float r; int pad[2]; };     // 0x2c bytes (0x43f6d0)

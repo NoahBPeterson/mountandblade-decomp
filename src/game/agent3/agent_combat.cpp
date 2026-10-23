@@ -16,6 +16,8 @@
 #include "../font.h"
 #include "../../include/mat4.h"
 #include "../../include/timer.h"
+#include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../world.h"
 
 // inline helpers: the original compiled them into the callers
 static __forceinline vector4 vmul(const vector4& v, const float& k) { return vector4(v.x * k, v.y * k, v.z * k); }
@@ -188,8 +190,8 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
             if (j >= sd->items[i].caps.size())
                 break;
             const CapDef& d = sd->items[i].caps[j];
-            c.v40 = smul(scale, d.a);
-            c.v50 = vmul(d.b, scale);
+            c.l0 = smul(scale, d.a);
+            c.l1 = vmul(d.b, scale);
             c.radius = d.r * scale;
             Skeleton* sk = body->skel;
             if (!sk->done) {
@@ -198,11 +200,12 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
                 else
                     sk->update();
             }
-            c.transform(body->m.mul(*(matrix*)(sk->recs + i * 0x1dc + 0x84)));
+            matrix tm = body->m.mul(*(matrix*)(sk->recs + i * 0x1dc + 0x84));
+            c.transform((const ::pos*)&tm);
             contact ct;
             if (shape_contact_count(&c, other, 1, &ct)) {
                 *out_point = ct.point;
-                *out_a = ct.a;
+                *out_a = ct.normal;
                 *out_bone = i;
                 return true;
             }

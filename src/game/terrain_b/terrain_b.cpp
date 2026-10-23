@@ -38,6 +38,9 @@
 #include "../../include/ptr_tag.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
+#include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/phys_set.h"
+#include "../../include/height_field.h"
 
 using rgl::vector4;
 using rgl::matrix;
@@ -2326,7 +2329,7 @@ void Mesh::build(HeightField* hf, int step_)
         for (int ix = 0; ix < nx; ix++) {
             MVert v;
             v.flag = 0;
-            v.pos = vector4((float)(step * ix + 0xc) * hf->scale, (float)(step * iy + 0xc) * hf->scale,
+            v.pos = vector4((float)(step * ix + 0xc) * hf->cell, (float)(step * iy + 0xc) * hf->cell,
                             hf->cols[step * ix + 0xc][step * iy + 0xc].h + 0.4f);
             c.verts.push_back(v);
         }

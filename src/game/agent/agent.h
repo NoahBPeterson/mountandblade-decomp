@@ -340,15 +340,7 @@ AGENT_ALLOC(alloc_int1, int1)
 int3* uninit_copy_int3(const int3* first, const int3* last, int3* dest, alloc_int3& al);   // 0x436d10
 
 // ---- height field + 2-D grid walkers (0x436da0, 0x437290)
-struct HCell { float h; unsigned flags; int id; int id2; };
-struct HeightField {
-    HCell** cols;                       // +0
-    float x0, y0;                       // +4, +8 world origin of the tile grid (0x436da0)
-    char padc[0x14 - 0xc];
-    int w, h;                           // +0x14, +0x18
-    float cell;                         // +0x1c
-    bool line_clear(const vector4* a, const vector4* b);        // 0x436da0
-};
+#include "../../include/height_field.h"      // HCell, HeightField (line_clear 0x436da0)
 struct Grid2 {
     char pad0[8];
     int dim[2];                         // +8, +0xc cells per axis

@@ -76,7 +76,7 @@ struct skin_vert { float w[4]; int bone[4]; float bonef[4]; };
 struct idx_weight { int index; float weight; };
 // 0x14 bytes, vector at +0x80: the vertices one bone influences (build_skin 0x411d20)
 struct bone_influence { int bone; std::vector<idx_weight> verts; };
-struct face20 { vector4 n; int a, b, c, d; };   // 0x20, vector at +0x90 (a, b, c at +0x10: add_face 0x411920)
+// face20 (0x20 bytes, vector at +0x90; a, b, c at +0x10: add_face 0x411920) is in src/include/mesh_prims.h
 
 // 0x20 bytes: one morph key frame (two vector4 arrays). Out-of-line ctor 0x411780, copy 0x411c10.
 struct frame_t {

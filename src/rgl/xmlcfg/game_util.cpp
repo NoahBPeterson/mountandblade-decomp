@@ -19,6 +19,8 @@
 #include "../../include/quaternion.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
+#include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/height_field.h"
 
 // ---- Newton Game Dynamics imports (cdecl) -----------------------------------------------------------
 extern "C" {
@@ -425,20 +427,20 @@ template Vec3* _Copy_backward_opt<Vec3*, Vec3*>(Vec3*, Vec3*, Vec3*, _Nonscalar_
 
 // ---- collision shapes -----------------------------------------------------------------------------------
 // @ 0x4332a0
-sphere_shape::sphere_shape(vector4 center, const float* r)
+sphere::sphere(vector4 c, const float* r) : shape_base(inline_init())
 {
-    v20 = center;
-    v30 = center;
+    local_center = c;
+    center = c;
     radius = *r;
 }
 // @ 0x433310
-capsule::capsule(float r, const vector4* a, const vector4* b)
+capsule::capsule(float r, const vector4* a, const vector4* b) : shape_base(inline_init())
 {
     radius = r;
-    v40 = *a;
-    v50 = *b;
-    v20 = v40;
-    v30 = v50;
+    l0 = *a;
+    l1 = *b;
+    p0 = l0;
+    p1 = l1;
 }
 
 // @ 0x4333c0
@@ -464,7 +466,7 @@ float face::plane_z(const float* p) const
     return w[0].z - ((p[1] - w[0].y) * normal.y + (p[0] - w[0].x) * normal.x) / normal.z;
 }
 // @ 0x433470
-composite::composite(const composite& o) { ((shape_base*)this)->copy_from(&o); }
+composite::composite(const composite& o) : shape_base(inline_init()) { ((composite*)this)->copy_from(&o); }
 
 // @ 0x4334b0
 void MsgLog::push(const tstring& s, int v)

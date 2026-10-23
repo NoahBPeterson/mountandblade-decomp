@@ -21,6 +21,7 @@
 #include "./dev_buffer.h"
 #include "../include/frustum.h"
 #include "../include/mat4.h"
+#include "../include/height_field.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 
 using rgl::vector4;
 using rgl::mat4;
@@ -385,9 +386,9 @@ void cell_rows::alloc(const int* dim)
     this->~cell_rows();
     last = dim[0];
     rows_n = dim[1];
-    rows = new grid_cell*[last + 1];
+    rows = new HCell*[last + 1];
     for (int i = 0; i <= last; i++)
-        rows[i] = new grid_cell[rows_n + 1];
+        rows[i] = new HCell[rows_n + 1];
 }
 
 // @ 0x4624c0

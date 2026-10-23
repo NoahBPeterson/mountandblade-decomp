@@ -47,6 +47,7 @@ extern ptype* g_ptypes;                         // 0x5e28f8
 #include "../../include/ptr_tag.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
+#include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);             // 0x40cd60
 matrix* __cdecl identity_pos(matrix* out);      // 0x40cd00
@@ -404,7 +405,7 @@ void CellGrid::build_faces(NavData* map)
         m.f = rot.f;
         m.u = rot.u;
         m.o = vector4(0.0f, 0.0f, 0.0f);
-        f->transform(&m);
+        f->transform((const pos*)&m);
         if (items.size() < items.capacity()) {
             *items._Mylast = f;
             items._Mylast++;

@@ -103,10 +103,8 @@ struct RecK {
 };
 
 // ---- from 0x431960 on --------------------------------------------------------------------------------------
-// Polymorphic owned object (only its virtual destructor is called).
-struct Poly {
-    virtual ~Poly();
-};
+// Polymorphic owned object (only its virtual destructor is called): src/include/poly.h
+#include "../../include/poly.h"
 // 0x1c8-byte polymorphic record in a std::vector (helpers 0x431a30 / 0x431a60).
 struct Item {
     virtual ~Item();

@@ -463,7 +463,7 @@ frame_set* make_frame_set_array(int n) { return new frame_set[n]; }
 // The collision shapes read_body creates. resource.h's shape_base is the base (vtable slot 3 = load); the
 // constructors are expanded inline except capsule (0x408600), face (0x408980) and manifold (0x40c670).
 struct shape_inline : shape_base {
-    shape_inline() { m4 = -1; m8 = 8; mc = -1; min_x = 100000000; min_y = 100000000; max_x = -100000000; max_y = -100000000; }
+    shape_inline() : shape_base(inline_init()) {}
 };
 struct composite_obj : shape_inline {                   // vtable 0x54a63c, size 0x28
     shape_base** bodies; int count;
@@ -503,7 +503,7 @@ stream_base* read_body(stream_base* s, body_part* b)
         b->shape = new manifold_obj;
     else
         mb_error("unrecognized body part %s \n", kind.c_str());
-    b->shape->slot3(s);
+    b->shape->load(s);
     return s;
 }
 

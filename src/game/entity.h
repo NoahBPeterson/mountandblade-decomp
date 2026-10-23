@@ -35,7 +35,7 @@ template<class T> struct vec {
 };
 template<class T> void vec<T>::clear() { if (first != 0) operator delete(first); first = 0; last = 0; end = 0; }
 
-struct mface { int a, flags, n, idx[4], m4; };          // 0x20-byte face record (s0040d7d0)
+#include "../include/shape.h"                         // mface: the 0x20-byte face record (s0040d7d0), with the shapes
 
 namespace rgl {
 
@@ -54,7 +54,7 @@ struct resmgr {
 };
 extern resmgr g_resmgr;                                     // 0x5d6fa0
 
-struct Poly { virtual ~Poly(); };                           // anything deleted through vtable slot 0
+#include "../include/poly.h"                               // Poly: anything deleted through vtable slot 0
 struct Obj { virtual ~Obj(); int owner; int id; };          // element of std::vector<Obj*> (0x41f720, 0x41fa00)
 
 // ---- scene (see mesh.h of s00412a90: list at +0x194, cache at +0x1c8); dtor 0x41f4e0 --------------------
@@ -176,10 +176,6 @@ struct E100 { int v[25]; };                                 // 0x64-byte particl
 
 // ---- the world's entity list (vector at +0x7c; the rest of the world object is in the previous TU) ----------
 namespace rgl { struct entity; }
-struct world {
-    char pad0[0x7c];
-    std::vector<rgl::entity*> ents;  // +0x7c (first at +0x80)              0x41f450
-    void erase_entity(rgl::entity* e);                           // 0x41f450
-};
+#include "./world.h"                                        // world: ents +0x7c, erase_entity 0x41f450
 
 #endif // GAME_ENTITY_H

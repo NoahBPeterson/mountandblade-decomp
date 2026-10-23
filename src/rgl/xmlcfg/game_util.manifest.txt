@@ -31,7 +31,7 @@
 ../src/rgl/xmlcfg/game_util.cpp  ??$_Copy_opt@PAUtstring@@PAU1@@std@@YAPAUtstring@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004331e0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ??$_Copy_backward_opt@PAUtstring@@PAU1@@std@@YAPAUtstring@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00433220  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ??$_Copy_backward_opt@PAUVec3@@PAU1@@std@@YAPAUVec3@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00433260  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/game_util.cpp  ??0sphere_shape@@QAE@Uvector4@rgl@@PBM@Z  004332a0  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/game_util.cpp  ??0sphere@@QAE@Uvector4@rgl@@PBM@Z  004332a0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ??0capsule@@QAE@MPBUvector4@rgl@@0@Z  00433310  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?plane_z@face@@QBEMPBM@Z  00433440  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ??0composite@@QAE@ABU0@@Z  00433470  /O2 /MT /Gy /TP

@@ -34,7 +34,7 @@
 ../src/game/agent2/agent_stats.cpp  ?next_stamp@NavMesh@@QAEXXZ  00439410  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?query_segment@level@@QAEXPBM0IPAPAUshape_base@@PAH@Z  00439870  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?nav_search@level@@QAEXPBMPBH1HPAHPAM@Z  00439900  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?floor_at@level@@QAEXPBMPAMPAPAUface_shape@@@Z  00439be0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?floor_at@level@@QAEXPBMPAMPAPAUface@@@Z  00439be0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?floor_z@level@@QAEMPBM@Z  00439d40  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?remove_shape@Skeleton@@QAEXPAUshape_base@@@Z  00439ec0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?start_anim@Skeleton@@QAEXHPAUAnim@@HH@Z  00439fc0  /O2 /MT /Gy /TP

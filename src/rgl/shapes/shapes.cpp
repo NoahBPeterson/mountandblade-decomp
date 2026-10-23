@@ -11,6 +11,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/mat4.h"
 #include "../../include/vec.h"
+#include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 using namespace rgl;
 
 // Bind the ext declarations of shapes.h to the functions they stand for (see there).
@@ -22,9 +23,6 @@ using namespace rgl;
 #pragma comment(linker, "/alternatename:?normalize@vec4_ext@@QAEMXZ=?normalize@vector4@rgl@@QAEMXZ")
 #pragma comment(linker, "/alternatename:?vmin_ext@@YAXPAUvector4@rgl@@PBU12@1@Z=?vmin@@YAXPAUvector4@rgl@@PBU12@1@Z")
 #pragma comment(linker, "/alternatename:?vmax_ext@@YAXPAUvector4@rgl@@PBU12@1@Z=?vmax@@YAXPAUvector4@rgl@@PBU12@1@Z")
-
-// Other objects (src/rgl/scene/shape_clone.h) call the out-of-line base constructor 0x407ff0 as shape_ext::shape_ext().
-#pragma comment(linker, "/alternatename:??0shape_ext@@QAE@XZ=??0shape_base@@QAE@XZ")
 
 // ---- vector4 / matrix (0x407c30..0x407f70) ---------------------------------------------------------------
 // @ 0x407c10

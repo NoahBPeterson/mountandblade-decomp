@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 #include <new>      // declares operator delete[]: without it cl 13.10 frees arrays with plain operator delete
 #include "records.h"
+#include "../../include/poly.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 
 template class std::vector<Item>;       // 0x431a30 _Destroy, 0x431a60 _Tidy
 

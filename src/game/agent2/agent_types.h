@@ -20,11 +20,12 @@
 #include "../tstring.h"
 #include "../mat4.h"
 #include "../agent/item_kind.h"       // ItemKind, g_items, item type enum
+#include "../../include/height_field.h"   // HeightField (line_clear 0x436da0, src/game/agent/agent.cpp)
 
 using rgl::vector4;
 using rgl::matrix;
 
-struct shape_base; struct face_shape; struct capsule; struct contact;
+struct shape_base; struct face; struct capsule; struct contact;
 
 // ---- globals ------------------------------------------------------------------------------------------------
 extern int g_tick_lo;                  // 0x5e2958 (g_time[2], 1e-5 s ticks)
@@ -92,7 +93,8 @@ void __cdecl noise_gradient(float scale, const float* in, float* out);   // 0x41
 extern char g_range_tbl[];             // 0x590aac per-mode {lo, hi} float pairs of Agent::smooth_turn (0x438860)
 
 // ---- the navigation mesh ------------------------------------------------------------------------------------
-struct NavVert { float x, y, z; float pad[3]; };        // 0x18 bytes
+// 0x18 bytes: the mission scene navigation mesh vertex (terrain_b/cell_grid.h NavVert is the 0x24-byte ground vertex of another object)
+struct NavPoint18 { float x, y, z; float pad[3]; };
 struct NavFace {                                        // 0x64 bytes: a convex polygon of up to 4 vertices
     int stamp;                                          // 0x00 visit stamp (compared with NavMesh::stamp) (0x439900)
     char pad04[0x18 - 4];
@@ -111,7 +113,7 @@ struct NavFace {                                        // 0x64 bytes: a convex 
 struct NavMesh {
     int stamp;                                          // 0x00 current visit stamp (0x439410)
     char pad04[0x14];
-    std::vector<NavVert> verts;                         // 0x18
+    std::vector<NavPoint18> verts;                         // 0x18
     std::vector<NavFace> faces;                         // 0x28
     bool inside(const int* face, const float* p);       // 0x4391d0 point inside the polygon (xy)
     float dist(const int* face, const float* p);        // 0x439280 xy distance outside the polygon + |dz| to its plane
@@ -120,15 +122,7 @@ struct NavMesh {
 };
 
 // ---- the level (scene: first field of the mission object) -----------------------------------------------------
-struct cell {                                           // one grid cell (0x34 bytes)
-    std::vector<shape_base*> shapes;                    // 0x00
-    char pad10[0x24];
-    void collect_masked(unsigned mask, shape_base** out, int* count);                                     // 0x4396b0
-    void collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count);          // 0x439780
-};
-struct HeightField {
-    bool line_clear(const vector4* a, const vector4* b);        // 0x436da0 (src/game/agent/agent.cpp)
-};
+#include "../cell.h"                                  // cell: one grid cell (0x34 bytes; collect_masked 0x4396b0, collect_point 0x439780)
 struct Light {
     int type;                                           // +0 (2 = directional) (0x43ac40)
     float r, g, b;                                      // +4 / +8 / +0xc
@@ -162,7 +156,7 @@ struct level {
     void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870
     void nav_search(const float* p, const int* face, const int* max_depth, int depth, int* best, float* best_d);   // 0x439900
     int nearest_face(const float* p);                                               // 0x439a50
-    void floor_at(const float* p, float* out_z, face_shape** out_face);             // 0x439be0
+    void floor_at(const float* p, float* out_z, face** out_face);             // 0x439be0
     float floor_z(const float* p);                                                  // 0x439d40
     bool trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60
     int locate_near(const vector4* pos, int* hint, int* mode);                      // 0x43abf0

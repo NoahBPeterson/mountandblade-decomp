@@ -101,40 +101,9 @@ struct mesh_node {
     void clamp_c8(const float* t);          // 0x433190
 };
 
-// ---- collision shapes: only what the constructors / helpers here need (the classes are src/rgl/shapes/shapes.h's
-// shape_base, sphere, capsule, face, composite; that header cannot be included with rgl.h and lacks these members)
-struct shape_base {
-    int m4, m8, mc, min_x, min_y, max_x, max_y;
-    shape_base() : m4(-1), m8(8), mc(-1), min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
-    virtual ~shape_base();
-    virtual int shape_type();                               // 1
-    virtual void v2(); virtual void v3(); virtual void v4(); virtual void v5(); virtual void v6();
-    virtual void v7(); virtual void v8(); virtual void v9(); virtual void v10(); virtual void v11();
-    virtual void v12(); virtual void v13();
-    virtual void copy_from(const shape_base* o);            // 14 (0x54a674 in composite's vtable)
-};
-struct sphere_shape : shape_base {                          // vtable 0x54a4f0, size 0x44
-    vector4 v20, v30;                                       // +0x20 local centre, +0x30 world centre
-    float radius;                                           // +0x40
-    sphere_shape(vector4 center, const float* r);           // 0x4332a0
-};
-struct capsule : shape_base {                               // vtable 0x54a540, size 0x64
-    vector4 v20, v30, v40, v50;                             // world ends, local ends
-    float radius;                                           // +0x60
-    capsule(float r, const vector4* a, const vector4* b);   // 0x433310
-};
-struct composite : shape_base {                             // vtable 0x54a63c, size 0x28
-    shape_base** bodies; int count;
-    composite(const composite& o);                          // 0x433470
-};
-struct face {                                               // vtable 0x54a588, size 0xb4 (the vtable pointer is in hdr)
-    char hdr[0x20];
-    vector4 w[8];                                           // +0x20 world vertices (4 used, then local ones from +0x60)
-    vector4 normal;                                         // +0xa0 world normal (0x433440)
-    int count;                                              // +0xb0 vertex count (0x4333c0)
-    bool contains_xy(const float* p) const;                 // 0x4333c0
-    float plane_z(const float* p) const;                    // 0x433440
-};
+// ---- collision shapes: shape_base, sphere (0x4332a0), capsule (0x433310), face (0x4333c0, 0x433440) and composite
+// (0x433470) are src/include/shape.h's; the constructors and helpers named here are defined in game_util.cpp ----
+#include "../../include/shape.h"
 bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   // 0x4336d0
 
 // ---- message ring, height field, scene object ---------------------------------------------------------------------

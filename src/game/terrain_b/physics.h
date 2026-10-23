@@ -15,20 +15,6 @@ __declspec(dllimport) void __cdecl NewtonBodySetOmega(const NewtonBody* b, const
 __declspec(dllimport) NewtonBody* __cdecl NewtonRagDollBoneGetBody(const NewtonRagDollBone* b);                  // 0x549294
 }
 
-struct PhysRec {                                  // 0x38 bytes
-    int f0;
-    const NewtonWorld* world;                     // +4
-    char pad8[4];
-    std::vector<const NewtonRagDollBone*> bones;  // +0xc (first at +0x10, last at +0x14)
-    std::vector<const NewtonBody*> bodies;        // +0x1c (first at +0x20, last at +0x24)
-    char pad2c[0x38 - 0x2c];
-};
-struct PhysSet {
-    std::vector<PhysRec> recs;                    // +0 (first at +4)
-    char pad10[0x3c - 0x10];
-    int nworlds;                                  // +0x3c
-    void clamp_rec(int i);                        // 0x472c50 (thiscall, ret 4)
-    void update(float dt);                        // 0x472dc0
-};
+#include "../../include/phys_set.h"      // PhysRec, PhysSet (clamp_rec 0x472c50, update 0x472dc0)
 
 #endif // TERRAIN_B_PHYSICS_H

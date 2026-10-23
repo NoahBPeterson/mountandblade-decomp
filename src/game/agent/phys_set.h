@@ -34,47 +34,13 @@ __declspec(dllimport) NewtonBody* __cdecl NewtonRagDollBoneGetBody(const NewtonR
 __declspec(dllimport) void __cdecl NewtonConvexCollisionCalculateInertialMatrix(const NewtonCollision* c, float* inertia, float* origin);   // 0x5492a4
 }
 
-struct PhysRec {                                  // 0x38 bytes
-    int f0;
-    const NewtonWorld* world;                     // +4 (0x441360, 0x4413e0)
-    const NewtonRagDoll* ragdoll;                 // +8
-    std::vector<const NewtonRagDollBone*> bones;  // +0xc (first at +0x10, last at +0x14)
-    std::vector<const NewtonBody*> bodies;        // +0x1c (first at +0x20, last at +0x24)
-    const NewtonCollision* collision;             // +0x2c (0x441610, 0x4417d0)
-    const NewtonBody* body;                       // +0x30
-    int material;                                 // +0x34
-};
+#include "../../include/phys_set.h"      // PhysRec, PhysSet, g_phys
 void push_back_body(std::vector<const NewtonBody*>& v, const NewtonBody* const& b);   // 0x440b30 (folded vector<int>::push_back)
 
-struct PhysSet {
-    std::vector<PhysRec> recs;                    // +0 (first at +4)
-    char pad10[0x3c - 0x10];
-    int nworlds;                                  // +0x3c (0x441360)
-    void destroy_world(int idx);                  // 0x441360
-    const NewtonRagDollBone* add_bone(int idx, const NewtonRagDollBone* parent, const float* mass, matrix m0,
-                                      const float* radius, const float* height, matrix m1, const float* cone_dir,
-                                      const float* lim_min, const float* lim_max, const float* lim_twist);   // 0x4413e0 (ret 0xa4)
-    void begin_static_build(int idx);             // 0x441610
-    NewtonBody* add_capsule_body(int idx, const float* radius, const float* height, const float* mass, matrix* m0, matrix* m1, bool list);   // 0x4416c0 (ret 0x1c)
-    void rebuild_static_body(int idx);            // 0x43a900 (earlier object)
-};
-extern PhysSet g_phys;                            // 0xa181f8
 
-// ---- collision shapes (vtables 0x54a540 capsule, 0x54a588 polygon face; layouts of the shape objects as in the
-// shapes' own objects, 0x40c670 / 0x433310): only the fields build_static_collision reads
-struct shape_base {
-    int m4, m8, mc, min_x, min_y, max_x, max_y;
-    virtual ~shape_base();
-    virtual int shape_type();                           // slot 1: 1 = capsule, 2 = polygon face
-};
-struct capsule_shape : shape_base {                     // vtable 0x54a540, size 0x64
-    vector4 p0, p1, p2, p3; float radius;
-};
-struct face_shape : shape_base {                        // vtable 0x54a588, size 0xb4
-    vector4 v[8];                                       // +0x20
-    vector4 normal;                                     // +0xa0
-    int count;                                          // +0xb0
-};
+// ---- collision shapes (vtables 0x54a540 capsule, 0x54a588 polygon face): src/include/shape.h (only the fields
+// build_static_collision reads are used here) -------------------------------------------------------------------------
+#include "../../include/shape.h"
 #include "../../include/mat4.h"
 using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);                     // 0x40cd60

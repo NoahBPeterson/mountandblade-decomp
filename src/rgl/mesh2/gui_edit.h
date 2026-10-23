@@ -799,11 +799,7 @@ struct world_root {
 };
 
 
-struct PhysSet {
-    char pad[4];
-    void update(float dt);                                   // 0x472dc0
-};
-extern PhysSet g_phys;                                       // 0xa181f8
+#include "../../include/phys_set.h"                      // PhysSet (update 0x472dc0), g_phys 0xa181f8
 
 extern char g_loading;                                       // 0x5a9c38 (loader thread runs while set)
 extern HANDLE g_load_event;                                  // 0x5e28d8

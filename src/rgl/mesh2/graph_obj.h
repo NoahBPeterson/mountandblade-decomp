@@ -39,8 +39,8 @@ struct edge {
     char pad24[0x10];
 };
 
-// 0x64 bytes (the slices call it poly / face)
-struct face {
+// 0x64 bytes (the slices call it poly / face; named graph_face: `face` is the collision polygon of src/include/shape.h)
+struct graph_face {
     char pad00[0x18];
     float pn[3];                 // +0x18 plane normal (0x4c8000 graph_obj::normal reads +0x18..+0x20)
     float pw;                    // +0x24 (0x4c8000: the 4th lane of the result)
@@ -66,9 +66,9 @@ struct graph_obj {
     node*  nodes_end;            // +0x20
     node*  nodes_cap;            // +0x24
     char pad28[0x4];
-    face*  faces;                // +0x2c
-    face*  faces_end;            // +0x30
-    face*  faces_cap;            // +0x34
+    graph_face*  faces;                // +0x2c
+    graph_face*  faces_end;            // +0x30
+    graph_face*  faces_cap;            // +0x34
     char pad38[0x4];
     edge*  edges;                // +0x3c
     edge*  edges_end;            // +0x40
@@ -91,7 +91,7 @@ struct graph_obj {
     // typed std::vector views of the three tables (the original's members: allocator lane at +0x18/+0x28/+0x38,
     // then first/last/end as above); the raw pointers above are kept for the functions that were matched with them
     std::vector<node>& nodev() { return *(std::vector<node>*)((char*)this + 0x18); }
-    std::vector<face>& facev() { return *(std::vector<face>*)((char*)this + 0x28); }
+    std::vector<graph_face>& facev() { return *(std::vector<graph_face>*)((char*)this + 0x28); }
     std::vector<edge>& edgev() { return *(std::vector<edge>*)((char*)this + 0x38); }
 
     // size of a table, as the original inlines it: guarded count

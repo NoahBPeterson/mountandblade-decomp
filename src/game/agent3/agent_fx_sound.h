@@ -64,11 +64,7 @@ struct Obj {                                            // entity base: virtual 
     virtual const vector4* get_max();                   // 13 (+0x34)
     virtual const vector4* get_min();                   // 14 (+0x38)
 };
-struct enode { enode* next; int pad4; Obj* ent; };
-struct cell {                                           // 0x34 bytes
-    char pad0[0x30];
-    enode* ents;                                        // +0x30
-};
+#include "../cell.h"                                  // enode, cell (ents +0x30: 0x442180)
 typedef std::vector<unsigned>::iterator UIt;
 void __cdecl sort_range(UIt first, UIt last, int ideal);        // 0x426a30 (std::_Sort)
 

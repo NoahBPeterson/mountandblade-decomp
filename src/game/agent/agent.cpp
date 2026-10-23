@@ -17,6 +17,7 @@
 #include "../../include/quaternion.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
+#include "../../include/height_field.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 
 // inline helpers: the original compiled them into the callers (no out-of-line copies in this object)
 static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)

@@ -85,101 +85,14 @@ struct renderer {
 extern renderer g_render;                                   // 0xa17910
 
 // ---- shapes ------------------------------------------------------------------------------------------------
-struct shape_base {
-    int m4;                                 // +0x04  copied by every copy_from (0x4080b0, 0x408690, 0x4089e0, 0x40ce50)
-    int m8;                                 // +0x08  flags: 8 initially; set_m8 0x408070, or_m8 0x408080
-    int mc;                                 // +0x0c  set_mc 0x408040; composite::set_mc forwards it
-    int min_x, min_y, max_x, max_y;         // +0x10..0x1c  1e8 / -1e8 (0x407ff0)
-    // 0x407ff0 is the out-of-line constructor; the creation sites of composite (manifold::build_composite 0x40cb60,
-    // composite::clone 0x40ce10) call it, while the constructors of the other shapes (0x408600, 0x408980, 0x40c670,
-    // the inline ones in composite::load) have the same stores expanded inline: they use the second form.
-    struct inline_init {};
-    __declspec(noinline) shape_base();                      // 0x407ff0
-    __forceinline shape_base(inline_init) : m4(-1), m8(8), mc(-1), min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
-    virtual ~shape_base() {}                                // 0  0x40a540 (deleting)
-    virtual int shape_type() = 0;                           // 1
-    virtual rgl::string type_name() const = 0;              // 2
-    virtual void load(stream_base* s) = 0;                  // 3
-    virtual void save(stream_base* s) = 0;                  // 4
-    virtual shape_base* clone();                            // 5  0x408020 (returns 0)
-    virtual void draw();                                    // 6  0x477b70 (an empty function of another object)
-    virtual void scale(const float* s);                     // 7  0x408030
-    virtual void transform(const pos* m);                   // 8  0x408030
-    virtual void set_mc(const int& v);                      // 9  0x408040
-    virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x408050 (zeroes xyz, returns out)
-    virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x408050
-    virtual void set_m8(int v);                             // 12 0x408070
-    virtual void or_m8(int v);                              // 13 0x408080
-};
-
-// vtable 0x54a4f0, 0x44 bytes
-struct sphere : shape_base {
-    rgl::vector4 local_center;              // +0x20  load 0x4084c0 / save 0x408540, scale 0x4083f0
-    rgl::vector4 center;                    // +0x30  world centre: transform 0x408420, bounds 0x4085a0
-    float radius;                           // +0x40  draw 0x408110
-    sphere() : shape_base(inline_init()) {}
-    sphere(const sphere& o);                                // 0x40c030
-    virtual int shape_type();                               // 1  0x408020
-    virtual rgl::string type_name() const;                  // 2  0x408090 "sphere"
-    virtual void load(stream_base* s);                      // 3  0x4084c0
-    virtual void save(stream_base* s);                      // 4  0x408540
-    virtual shape_base* clone();                            // 5  0x40c010
-    virtual void draw();                                    // 6  0x408110
-    virtual void scale(const float* s);                     // 7  0x4083f0
-    virtual void transform(const pos* m);                   // 8  0x408420
-    virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x4085a0
-    virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x4085d0
-    virtual void copy_from(const sphere* o);                // 14 0x4080b0
-};
-
-// vtable 0x54a540, 0x64 bytes
-struct capsule : shape_base {
-    rgl::vector4 p0, p1;                    // +0x20,+0x30  world segment ends (transform 0x408770; contacts 0x409ac0..)
-    rgl::vector4 l0, l1;                    // +0x40,+0x50  local segment ends (load 0x408870, scale 0x408720)
-    float radius;                           // +0x60
-    capsule() : shape_base(inline_init()) {}                // 0x408600
-    capsule(const capsule& o);                              // 0x40a580
-    virtual int shape_type();                               // 1  0x48b1f0 (another object)
-    virtual rgl::string type_name() const;                  // 2  0x408630 "capsule"
-    virtual void load(stream_base* s);                      // 3  0x408870
-    virtual void save(stream_base* s);                      // 4  0x408910
-    virtual shape_base* clone();                            // 5  0x40a560
-    virtual void draw();                                    // 6  0x40a640
-    virtual void scale(const float* s);                     // 7  0x408720
-    virtual void transform(const pos* m);                   // 8  0x408770
-    virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x40ad80
-    virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x40ade0
-    virtual capsule* create_new();                          // 14 0x408650
-    virtual void copy_from(const capsule* o);               // 15 0x408690
-};
-
-// vtable 0x54a588, 0xb4 bytes: a convex polygon of at most 4 vertices
-struct face : shape_base {
-    rgl::vector4 w[4];                      // +0x20  world vertices (transform 0x408bd0; contacts read them)
-    rgl::vector4 v[4];                      // +0x60  local vertices (load 0x408d60)
-    rgl::vector4 normal;                    // +0xa0  world normal (0x408bd0)
-    int count;                              // +0xb0  vertex count
-    face() : shape_base(inline_init()), count(0) {}         // 0x408980
-    face(const face& o);                                    // 0x40ae70
-    virtual int shape_type();                               // 1  0x48b590 (another object)
-    virtual rgl::string type_name() const;                  // 2  0x4089c0 "face"
-    virtual void load(stream_base* s);                      // 3  0x408d60
-    virtual void save(stream_base* s);                      // 4  0x408dd0
-    virtual shape_base* clone();                            // 5  0x40ae40
-    virtual void draw();                                    // 6  0x408e40
-    virtual void scale(const float* s);                     // 7  0x408a50
-    virtual void transform(const pos* m);                   // 8  0x408bd0
-    virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x40aef0
-    virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x40aff0
-    virtual void copy_from(const face* o);                  // 14 0x4089e0
-};
+// shape_base, sphere, capsule, face, composite, mface and contact are the shared classes of src/include/shape.h (the
+// callers in src/game and in other rgl objects use them too); manifold needs this file's vec<T> and stays here.
+#define MB_SHAPE_FULL_MANIFOLD          // manifold is defined below
+#include "../../include/shape.h"
+// composite's copy constructor is out of line in the binary (0x433470, src/rgl/xmlcfg/game_util.cpp); clone 0x40ce10 expands it inline
+inline composite::composite(const composite& o) { ((composite*)this)->copy_from(&o); }
 
 // ---- contacts (shape_contacts 0x40bcb0 and the pair functions below it) -----------------------------------
-struct contact {                            // 0x24 bytes
-    rgl::vector4 normal;
-    rgl::vector4 point;
-    float depth;
-};
 void segment_closest_points(const rgl::vector4* a0, const rgl::vector4* a1, const rgl::vector4* b0,
                             const rgl::vector4* b1, rgl::vector4* outA, rgl::vector4* outB);    // 0x409500
 void sphere_sphere_contact(sphere* a, sphere* b, int max, contact* out, int* count);            // 0x409980
@@ -189,7 +102,6 @@ void capsule_capsule_contact(capsule* a, capsule* b, int max, contact* out, int*
 void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* count);              // 0x40a000
 void polygon_capsule_contact(face* a, capsule* b, int max, contact* out, int* count);            // 0x40b0f0
 void shape_contacts(shape_base* a, shape_base* b, int max, contact* out, int* count);            // 0x40bcb0
-int shape_contact_count(shape_base* a, shape_base* b, int max, contact* out);                    // 0x40bfe0
 
 // ---- std::vector instantiations (VC7.1 layout: empty allocator, first, last, end) --------------------------
 // Written out so that each out-of-line member can be pinned: clear() (0x41f4b0), _Buy (0x42d570 / 0x4105c0)
@@ -230,15 +142,6 @@ template<class T> struct vec {
     T* ufill(T* p, unsigned count, const T& val);
 };
 
-// manifold face record, 0x20 bytes (manifold::save 0x40c6e0, load 0x40d9d0, build_composite 0x40cb60)
-struct mface {
-    int a;                                  // +0x00
-    int flags;                              // +0x04  set_m8 0x40cac0, or_m8 0x40cb00
-    int n;                                  // +0x08  index count (<= 4)
-    int idx[4];                             // +0x0c  indices into manifold::verts
-    int m4;                                 // +0x1c  copied into face::m4 (0x40cb60)
-    mface() : a(0), flags(0), n(0), m4(0) {}
-};
 
 // vtable 0x54a5f4, 0x50 bytes: a triangle/polygon mesh
 struct manifold : shape_base {
@@ -262,28 +165,6 @@ struct manifold : shape_base {
     shape_base* build_composite();                          // 0x40cb60
 };
 
-// vtable 0x54a63c, 0x28 bytes: owns its bodies
-struct composite : shape_base {
-    shape_base** bodies;                    // +0x20
-    int count;                              // +0x24
-    composite() : bodies(0), count(0) {}
-    composite(const composite& o) { ((composite*)this)->copy_from(&o); }
-    virtual ~composite();                                   // 0  0x40d140 (deleting), 0x40d160
-    virtual int shape_type();                               // 1  0x48b880 (another object)
-    virtual rgl::string type_name() const;                  // 2  0x40ceb0 "composite_body"
-    virtual void load(stream_base* s);                      // 3  0x40d7d0
-    virtual void save(stream_base* s);                      // 4  0x40ced0
-    virtual shape_base* clone();                            // 5  0x40ce10
-    virtual void draw();                                    // 6  0x40cfb0
-    virtual void scale(const float* s);                     // 7  0x40cfe0
-    virtual void transform(const pos* m);                   // 8  0x40d070
-    virtual void set_mc(const int& v);                      // 9  0x40d0a0
-    virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x40d1a0
-    virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x40d260
-    virtual void set_m8(int v);                             // 12 0x40d0d0
-    virtual void or_m8(int v);                              // 13 0x40d100
-    virtual void copy_from(const shape_base* o);            // 14 0x40ce50
-};
 
 // shapes composite::load creates inline (vtables 0x54a4f0, 0x54a540, 0x54a588, 0x54a5f4) are the classes above.
 

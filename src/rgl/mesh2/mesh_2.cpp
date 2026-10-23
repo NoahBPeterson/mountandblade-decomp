@@ -319,10 +319,10 @@ bool graph_obj::split_edge(int e)
     }
     if (edges[e].n != 2)
         return false;
-    face* f0 = &faces[edges[e].f0];
+    graph_face* f0 = &faces[edges[e].f0];
     if (f0->count != 3)
         return false;
-    face* f1 = &faces[edges[e].f1];
+    graph_face* f1 = &faces[edges[e].f1];
     if (f1->count != 3)
         return false;
 

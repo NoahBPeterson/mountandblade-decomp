@@ -124,12 +124,9 @@ struct sort_rec { char pad[0x218]; __int64 key; };
 #include "./dev_buffer.h"
 
 // ---- 2D cell grid (rows of 16-byte cells; dtor 0x41ecc0 in an earlier object) ------------------------------
-struct grid_cell {
-    float h; int flags; int id, id2;
-    grid_cell() : flags(0), id(-1), id2(-1) {}
-};
-struct cell_rows {
-    grid_cell** rows;               // +0
+#include "../include/height_field.h"      // HCell: the 16-byte cell (its constructor is the one `new grid_cell[n]` ran)
+struct cell_rows {                  // = HeightField (src/include/height_field.h) as 0x41ecc0 / 0x462420 see it
+    HCell** rows;                   // +0
     int pad[4];
     int last;                       // +0x14  highest column index                0x462420
     int rows_n;                     // +0x18  highest row index

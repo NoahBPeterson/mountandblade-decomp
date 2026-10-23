@@ -22,6 +22,7 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 
 using namespace rgl;
 
@@ -30,11 +31,11 @@ shape_base* shape_resource::clone_shape()
 {
     shape_base* r;
     if (shape->shape_type() == 0) {
-        return new sphere_shape(*(sphere_shape*)shape);
+        return new sphere(*(sphere*)shape);
     } else if (shape->shape_type() == 1) {
-        return new capsule_shape(*(capsule_shape*)shape);
+        return new capsule(*(capsule*)shape);
     } else if (shape->shape_type() == 2) {
-        return new face_shape(*(face_shape*)shape);
+        return new face(*(face*)shape);
     } else if (shape->shape_type() == 3) {
         return new composite(*(composite*)shape);
     } else if (shape->shape_type() == 4) {

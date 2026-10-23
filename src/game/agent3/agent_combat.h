@@ -12,26 +12,8 @@
 #include <math.h>
 #include "./agent_types.h"
 
-// ---- collision shapes used by the hit tests -------------------------------------------------------------------------
-// vtable 0x54a540 (rgl::capsule, 0x64 bytes; src/rgl/shapes/shapes.h has the full class). The default constructor is
-// inlined into 0x43f6d0, the (radius, a, b) one is 0x433310.
-struct capsule : shape_base {
-    vector4 v20, v30, v40, v50;
-    float radius;
-    capsule() {}
-    capsule(float r, const vector4* a, const vector4* b);   // 0x433310
-    virtual ~capsule() {}
-    virtual void s1();
-    virtual void s2();
-    virtual void s3();
-    virtual void s4();
-    virtual void s5();
-    virtual void s6();
-    virtual void scale(const float* s);              // slot 7   0x408720
-    virtual void transform(const matrix& m);         // slot 8   0x408770
-};
-struct contact { vector4 a; vector4 point; int extra; };          // 0x24 bytes (0x43f6d0)
-
+// ---- collision shapes used by the hit tests: src/include/shape.h (capsule: the default constructor is inlined into
+// 0x43f6d0, the (radius, a, b) one is 0x433310; contact is 0x24 bytes, point at +0x10) -------------------------------
 #include "../font.h"
 
 // ---- element types of the container instantiations -----------------------------------------------------------

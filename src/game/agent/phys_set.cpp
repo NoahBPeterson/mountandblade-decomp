@@ -12,6 +12,8 @@
 #include "../../include/quaternion.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
+#include "../../include/phys_set.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/shape.h"
 
 // @ 0x441360
 void PhysSet::destroy_world(int idx)
@@ -138,19 +140,19 @@ void Agent::build_static_collision()
     int i;
     for (i = 0; i < cnt; i++) {
         if (hits[i]->shape_type() == 2) {
-            face_shape* f = (face_shape*)hits[i];
+            face* f = (face*)hits[i];
             int tri[12];
-            tri[0] = *(int*)&f->v[0].x; tri[1] = *(int*)&f->v[0].y; tri[2] = *(int*)&f->v[0].z;
-            tri[3] = *(int*)&f->v[1].x; tri[4] = *(int*)&f->v[1].y; tri[5] = *(int*)&f->v[1].z;
-            tri[6] = *(int*)&f->v[2].x; tri[7] = *(int*)&f->v[2].y; tri[8] = *(int*)&f->v[2].z;
-            tri[9] = *(int*)&f->v[3].x; tri[10] = *(int*)&f->v[3].y; tri[11] = *(int*)&f->v[3].z;
-            NewtonTreeCollisionAddFace(g_phys.recs[phys_idx].collision, ((face_shape*)hits[i])->count, (float*)tri, 12, 0);
+            tri[0] = *(int*)&f->w[0].x; tri[1] = *(int*)&f->w[0].y; tri[2] = *(int*)&f->w[0].z;
+            tri[3] = *(int*)&f->w[1].x; tri[4] = *(int*)&f->w[1].y; tri[5] = *(int*)&f->w[1].z;
+            tri[6] = *(int*)&f->w[2].x; tri[7] = *(int*)&f->w[2].y; tri[8] = *(int*)&f->w[2].z;
+            tri[9] = *(int*)&f->w[3].x; tri[10] = *(int*)&f->w[3].y; tri[11] = *(int*)&f->w[3].z;
+            NewtonTreeCollisionAddFace(g_phys.recs[phys_idx].collision, ((face*)hits[i])->count, (float*)tri, 12, 0);
         }
     }
     g_phys.rebuild_static_body(phys_idx);
     for (i = 0; i < cnt; i++) {
         if (hits[i]->shape_type() == 1) {
-            capsule_shape* c = (capsule_shape*)hits[i];
+            capsule* c = (capsule*)hits[i];
             vector4 dir;
             int radius = *(int*)&c->radius;
             dir.x = c->p1.x - c->p0.x; dir.y = c->p1.y - c->p0.y; dir.z = c->p1.z - c->p0.z;

@@ -17,15 +17,7 @@ struct face;
 struct Entity;
 
 // ---- height field (CellGrid::hf, +0x64): 16-byte cells in columns -------------------------------------------------
-struct HCell { float h; unsigned flags; int id; int id2; };     // 0x471b30 (id read at ints [f0c + cy*4 + 2])
-struct HeightField {
-    HCell** cols;               // +0x00 (0x471b30, 0x4785e0)
-    int pad[4];
-    int w, h;                   // +0x14, +0x18 (0x4785e0)
-    float scale;                // +0x1c (0x4785e0)
-    bool line_clear(const rgl::vector4* a, const rgl::vector4* b);          // 0x436da0 (thiscall, ret 8; returns al)
-    void sample(float x, float y, float* out_h, int* out_id);               // 0x433510 (thiscall, ret 8 x2)
-};
+#include "../../include/height_field.h"      // HCell, HeightField (cols 0x471b30, 0x4785e0; line_clear 0x436da0; sample 0x433510)
 
 // ---- ground / nav data (CellGrid::core, +0xb0): the four-vector container with other element types ---------------
 template<class T> struct vec {

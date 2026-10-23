@@ -15,6 +15,8 @@
 #include "../str_table.h"
 #include "../../include/mat4.h"
 #include "../../include/timer.h"
+#include "../cell.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../world.h"
 
 // 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
 template<> void std::vector<int>::push_back(const int&);

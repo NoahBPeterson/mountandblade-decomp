@@ -23,6 +23,10 @@
 #include "../../include/ptr_vec.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
+#include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/phys_set.h"
+#include "../../include/height_field.h"
+#include "../cell.h"
 
 // inline vector helpers of the original: rgl's operators are out-of-line in other objects
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -628,11 +632,11 @@ shape_base* body_res::copy_shape()
 {
     shape_base* r;                                      // (uninitialised when the type is unknown)
     if (shape->shape_type() == 0) {
-        r = new sphere_shape(*(sphere_shape*)shape);
+        r = new sphere(*(sphere*)shape);
     } else if (shape->shape_type() == 1) {
         r = new capsule(*(capsule*)shape);
     } else if (shape->shape_type() == 2) {
-        r = new face_shape(*(face_shape*)shape);
+        r = new face(*(face*)shape);
     } else if (shape->shape_type() == 3) {
         r = new composite(*(composite*)shape);
     } else if (shape->shape_type() == 4) {
@@ -651,9 +655,9 @@ bool NavMesh::inside(const int* face, const float* p)
     const int* vi = f->vert_p();
     do {
         if (i >= n) return in;
-        const NavVert* a = &verts[*vi];
+        const NavPoint18* a = &verts[*vi];
         i++;
-        const NavVert* b = &verts[f->vert_p()[i % n]];
+        const NavPoint18* b = &verts[f->vert_p()[i % n]];
         float e = b->x - a->x, f_ = b->y - a->y, g = p[0] - a->x, h = p[1] - a->y;
         if (h * e - g * f_ < 0.0f)
             in = false;
@@ -673,9 +677,9 @@ float NavMesh::dist(const int* face, const float* p)
     if (0 < n) {
         const int* vi = f->vert_p();
         do {
-            const NavVert* a = &verts[*vi];
+            const NavPoint18* a = &verts[*vi];
             i++;
-            const NavVert* b = &verts[f->vert_p()[i % n]];
+            const NavPoint18* b = &verts[f->vert_p()[i % n]];
             float dx = b->x - a->x;
             float dy = b->y - a->y;
             float len = (float)sqrt(dx * dx + dy * dy);
@@ -700,7 +704,7 @@ float NavMesh::dist(const int* face, const float* p)
     }
     out = 0.0f;
 have_out:
-    const NavVert* a0 = &verts[f->vert_p()[0]];
+    const NavPoint18* a0 = &verts[f->vert_p()[0]];
     float dz = p[2] - (a0->z - ((p[0] - a0->x) * f->nx + (p[1] - a0->y) * f->ny) / f->nz);
     if (-1.0f < dz && dz < 0.1f)
         dz = 0.0f;
@@ -746,8 +750,8 @@ bool NavMesh::trace(int face, vector4 from, int end_face, const float* to, int* 
             st.found = -1;
             for (int i = 0; i < faces[st.cur].nverts; ++i) {
                 if (f->edge_p()[i] != st.prev) {
-                    const NavVert* a = &verts[f->vert_p()[i]];
-                    const NavVert* b = &verts[f->vert_p()[(i + 1) % f->nverts]];
+                    const NavPoint18* a = &verts[f->vert_p()[i]];
+                    const NavPoint18* b = &verts[f->vert_p()[(i + 1) % f->nverts]];
                     float ex = b->x - a->x;
                     float ey = b->y - a->y;
                     float t = ((x - a->x) * dy - (y - a->y) * dx) / (ex * dy - ey * dx);
@@ -866,7 +870,7 @@ void level::nav_search(const float* p, const int* face, const int* max_depth, in
             if (nb >= 0 && nav->faces[nb].stamp < nav->stamp) {
                 nav->faces[nb].stamp = nav->stamp;
                 if (nav->inside(&nb, p)) {
-                    const NavVert* v = &nav->verts[nav->faces[nb].vert_p()[0]];
+                    const NavPoint18* v = &nav->verts[nav->faces[nb].vert_p()[0]];
                     NavFace* f = &nav->faces[nb];
                     float dz = (float)fabs(p[2] - (v->z - ((p[0] - v->x) * f->nx + (p[1] - v->y) * f->ny) / f->nz));
                     if (dz < 2.0f && dz < *best_d) {
@@ -897,7 +901,7 @@ int level::nearest_face(const float* p)
             float d = m->dist(&idx, p);
             if (d <= 0.0f) {
                 NavFace* f = &m->faces[i];
-                const NavVert* v = &m->verts[f->vert_p()[0]];
+                const NavPoint18* v = &m->verts[f->vert_p()[0]];
                 float dz = p[2] - (v->z - ((p[0] - v->x) * f->nx + (p[1] - v->y) * f->ny) / f->nz);
                 if (dz > -2.0f) {
                     dz = (float)fabs(dz);
@@ -909,7 +913,7 @@ int level::nearest_face(const float* p)
                 }
             } else if (d < 10.0f) {
                 NavFace* f = &m->faces[i];
-                const NavVert* v = &m->verts[f->vert_p()[0]];
+                const NavPoint18* v = &m->verts[f->vert_p()[0]];
                 float dz = p[2] - (v->z - ((p[0] - v->x) * f->nx + (p[1] - v->y) * f->ny) / f->nz);
                 if (dz > -2.0f) {
                     float s = (10.0f - d) - (float)fabs(dz);
@@ -927,7 +931,7 @@ int level::nearest_face(const float* p)
 
 // highest floor polygon under (or at most 1 above) p; falls back to the lowest polygon above it
 // @ 0x439be0
-void level::floor_at(const float* p, float* out_z, face_shape** out_face)
+void level::floor_at(const float* p, float* out_z, face** out_face)
 {
     int n = 0;
     *out_z = -1000000.0f;
@@ -945,12 +949,12 @@ void level::floor_at(const float* p, float* out_z, face_shape** out_face)
         pt[0] = p[0];
         pt[1] = p[1];
         *out_face = 0;
-        face_shape* far_face = 0;
+        face* far_face = 0;
         float far_z = 100000.0f;
         for (; n < count; n++) {
-            face_shape* s = (face_shape*)shapes[n];
+            face* s = (face*)shapes[n];
             if (s->m4 >= 0 && s->contains_xy(pt)) {
-                float z = s->v[0].z - ((pt[0] - s->v[0].x) * s->normal.x + (pt[1] - s->v[0].y) * s->normal.y) / s->normal.z;
+                float z = s->w[0].z - ((pt[0] - s->w[0].x) * s->normal.x + (pt[1] - s->w[0].y) * s->normal.y) / s->normal.z;
                 if (z < p[2] + 1.0f) {
                     if (*out_z < z) {
                         *out_z = z;
@@ -973,7 +977,7 @@ void level::floor_at(const float* p, float* out_z, face_shape** out_face)
 float level::floor_z(const float* p)
 {
     float z;
-    face_shape* f;
+    face* f;
     floor_at(p, &z, &f);
     return z;
 }
@@ -1205,7 +1209,7 @@ void Agent::hand_pos(vector4* out)
     out->x = x2 + (k * 0.1f) * f5348;
     out->y = y2 + t4;
     float height = x2;
-    face_shape* hit;
+    face* hit;
     g_mission->scene->floor_at(&out->x, &height, &hit);
     out->z = height;
 }

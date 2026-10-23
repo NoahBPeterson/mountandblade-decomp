@@ -29,7 +29,6 @@ struct MeshEnt;
 struct Ctx;
 struct scene;
 struct mesh;
-struct shape;
 
 // 64-byte-per-element helpers of the mesh's std::vectors (rgl::mesh in src/rgl/mesh.h is the namespaced twin)
 // element types of the mesh's std::vectors
@@ -49,7 +48,7 @@ struct vertex60 {                // 0x60 bytes, vector at mesh+0x50
 };
 struct elem30 { char b[0x30]; };            // vector at +0x60
 struct elem14 { int id; std::vector<int> items; };   // 0x14, vector at +0x80 (items' element type unknown)
-struct face20 { vector4 n; int a, b, c, d; };   // 0x20, vector at +0x90
+using rgl::face20;                           // 0x20, vector at +0x90 (src/include/mesh_prims.h)
 
 // inline vector helpers used by the mesh code (distinct from the out-of-line rgl::operator* in rgl.h)
 inline vector4 vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
@@ -202,23 +201,8 @@ struct render_info { char valid; float depth; };
 struct Psys { void update(scene* sc); };                // 0x414960
 struct FxDef { void draw(scene* sc, const matrix* m, const float* p); };   // 0x428ff0 (provisional)
 
-// ---- the collision capsule built on the stack by update_ground_cache (vtable 0x54a540, size 0x64)
-struct shape_base {
-    int m4, m8, mc, min_x, min_y, max_x, max_y;
-    virtual ~shape_base() {}
-    virtual int shape_type();
-    virtual void s2(); virtual void s3(); virtual void s4(); virtual void s5(); virtual void s6();
-    virtual void s7(); virtual void s8(); virtual void s9();
-    virtual vector4* get_min(vector4* out);             // slot 10
-    virtual vector4* get_max(vector4* out);             // slot 11
-};
-struct shape_ext : shape_base { shape_ext(); };         // 0x407ff0 (out of line)
-struct capsule : shape_ext {
-    vector4 p0, p1, p2, p3;                             // 0x20..0x60
-    float radius;                                       // 0x60
-    virtual vector4* get_min(vector4* out);             // 0x40ad80
-    virtual vector4* get_max(vector4* out);             // 0x40ade0
-};
-int shape_contact_count(shape_base* a, shape* b, int max, void* out);   // 0x40bfe0 (cdecl)
+// ---- the collision capsule built on the stack by update_ground_cache (vtable 0x54a540, size 0x64): src/include/shape.h.
+// Its base constructor is the out-of-line 0x407ff0 here (capsule(capsule::outline_init())).
+#include "../../include/shape.h"
 
 #endif // STRAT_EXT_H

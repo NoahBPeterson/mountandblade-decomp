@@ -18,6 +18,8 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../cell.h"
 
 // @ 0x42a090
 void StratEnt::render(scene* sc, render_info* out)
@@ -105,7 +107,7 @@ void StratEnt::update_ground_cache()
     vector4 amb;
     build_shadow_frame(&m, &amb);
     float reach = radius * 3.0f;
-    capsule cap;
+    capsule cap((capsule::outline_init()));
     cap.p0 = tp(pos, off);
     vector4 t(m.u.x * reach, m.u.y * reach, m.u.z * reach);
     cap.p1 = vector4(cap.p0.x - t.x, cap.p0.y - t.y, cap.p0.z - t.z);
@@ -115,7 +117,7 @@ void StratEnt::update_ground_cache()
     vector4 bmin(mn->x - 0.1f, mn->y - 0.1f, mn->z - 0.1f);
     const vector4* mx = cap.get_max(&tmp);
     vector4 bmax(mx->x + 0.1f, mx->y + 0.1f, mx->z + 0.1f);
-    shape* found[0x2000];
+    shape_base* found[0x2000];
     int nfound;
     ctx->query_box(&bmin.x, &bmax.x, 0x104, found, &nfound);
     nids = 0;
@@ -155,7 +157,7 @@ void StratEnt::update_ground_cache()
 }
 
 // @ 0x42aa50
-void Ctx::query_box(const float* bmin, const float* bmax, unsigned mask, shape** out, int* count)
+void Ctx::query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count)
 {
     int lo[2], hi[2];
     locate(bmin, lo);
