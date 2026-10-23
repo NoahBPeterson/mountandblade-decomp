@@ -1,7 +1,1 @@
-# VAs whose behaviour could not be reproduced under the equivalence harness (equiv FAIL).
-# Both bodies are complete in the source but use conventions the harness cannot ground, so the results
-# are not a statement about the logic: 0x48d690 returns through cl's native pair-return idiom (the
-# original's custom eax-return plus dead store cannot be expressed in C), and 0x48d940 depends on the
-# custom-ABI callee 0x48d830 that the harness refuses to execute, so it faults on its own output buffer.
-0048d690  59  partial: Cont690::get; equiv FAIL 5/5 valid inputs mismatched (eax return value) - the custom register convention (eax selector / edx array / esi output / eax return + dead [esp+8] store) is not expressible from C, coverage 79.2%.
-0048d940  376  partial: Mission::make_label; equiv FAIL 5/19 valid inputs mismatched (ours faults UC_ERR_WRITE_UNMAPPED at eip=0048d923 where the original returns) - the harness cannot execute the custom-ABI unit_class_name callee, coverage 85.6%.
+# (none: 0x48d690 moved to nonmatching.txt, 0x48d830 and 0x48d940 are byte-exact)

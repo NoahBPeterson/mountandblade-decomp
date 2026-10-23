@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <new>
+#include <vector>
 
 // ---- engine strings (s004608d0/tstring.h) ----
 struct tstring {
@@ -24,13 +25,14 @@ extern StrTable g_strtable;                                                     
 struct Party;                                                                     // 0x5ac8 bytes
 struct PartyMgr {                                                                 // embedded in the game data at +0xf8
     char pad0[0x138cc];
-    void* v_begin;                                                                // +0x138cc (vector<Party*>)
-    char** pages;                                                                 // +0x138d0 (page table: pages[id >> 4][id & 0xf])
-    void* v_cap;                                                                  // +0x138d4
-    char pad138d8[0x138dc - 0x138d8];
-    int deflt;                                                                    // +0x138dc
+    std::vector<char*> pages;                                                     // +0x138cc (page pointers, 16 parties per page)
+    int deflt;                                                                    // +0x138dc (never read here)
     int index_of(int id);                                                         // 0x48ad00 (thiscall, ret 4)
-    Party* get(int id);                                                           // 0x51ee50 (thiscall, ret 4)
+    Party* get(int id)                                                            // 0x51ee50 (thiscall, ret 4): out of line when the caller is too big
+    {
+        int k = index_of(id);
+        return (Party*)((k & 0xf) * 0x5ac8 + *(pages.begin() + (k >> 4)));
+    }
     void next_party_id(int* p);                                                   // 0x460ca0 (thiscall, ret 4)
 };
 struct KindRec {                                                                  // 0x98-byte scene object record
@@ -65,6 +67,10 @@ struct TroopRec {                                                               
 struct ItemRef {                                                                  // 8 bytes
     int item; union { unsigned m4; struct { unsigned char amount; char pad[2]; signed char mod; } b; };
 };
+struct V2 {
+    float x, y;
+    V2(float a, float b) : x(a), y(b) {}
+};
 struct Receiver {                                                                 // a 0x98-byte scene object record
     char pad0[0x54];
     int f54;                                                                      // +0x54
@@ -74,12 +80,13 @@ struct Receiver {                                                               
 struct GameData {
     char pad0[0x78];
     int f78;                                                                      // +0x78 (player party)
-    char pad7c[0xe4 - 0x7c];
-    Receiver** nodes;                                                             // +0xe4 (index >> 4 -> page)
-    char pade8[0xf8 - 0xe8];
+    char pad7c[0xe0 - 0x7c];
+    std::vector<char*> nodes;                                                     // +0xe0 (scene object pages, 16 records of 0x98 bytes)
+    char padf0[0xf8 - 0xf0];
     PartyMgr parties;                                                             // +0xf8
     char pad_to_chars[0x13a00 - 0xf8 - sizeof(PartyMgr)];
     TroopRec* chars;                                                              // +0x13a00
+    char pad13a04[0x13a0c - 0x13a04];
     int f13a0c;                                                                   // +0x13a0c
     int f13a10;                                                                   // +0x13a10
     int f13a14;                                                                   // +0x13a14
@@ -89,27 +96,18 @@ struct GameData {
     char pad13ad8[0x14014 - 0x13ad8];
     unsigned char f14014;                                                         // +0x14014 (trigger block object)
 
-    Party* party(int id)                                                          // index_of + page lookup
+    Receiver* node(unsigned idx)                                                  // scene object by index
     {
-        int idx = parties.index_of(id);
-        return (Party*)(parties.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
-    }
-    Receiver* node(int idx)                                                       // scene object by index
-    {
-        return &nodes[idx >> 4][idx & 0xf];
+        return (Receiver*)((idx & 0xf) * 0x98 + *(nodes.begin() + (idx >> 4)));
     }
     int last_leader(int id);                                                      // 0x48fce0 (ret 4)
     float party_relation(int a, int b);                                           // 0x48ffa0 (ret 8)
     void attach_party(int a, int b);                                              // 0x4949d0 (ret 8)
-    void attach_party_center(const float* pt, int a, int b);                      // 0x49e9c0 (ret 0xc)
+    void attach_party_center(const V2& pt, int a, int b);                         // 0x49e9c0 (ret 0xc)
     bool deploy_party(int a, int b);                                              // 0x49f060 (ret 8)
 };
 extern GameData* g_game;                                                          // 0x5e2930
 
-inline Party* party_at(GameData* g, int id)
-{
-    return *(Party**)(((char**)((void**)g->parties.v_begin)[id & 0xf]) + (id >> 4));
-}
 
 // ---- the mission -----------------------------------------------------------------------------------------
 struct PartyStack { int id; int val; void reduce(int n); };                       // 8 bytes, mission+0x404
@@ -179,6 +177,7 @@ struct FxDef2 {                                                                 
     unsigned char* f40;                                                           // +0x40
     char pad44[0x5c - 0x44];
     int f5c;                                                                      // +0x5c
+    char pad60[0x7c - 0x60];
     void set_env_count(int n);                                                    // 0x46b9d0 (ret 4)
     void set_skeleton(void* p);                                                   // 0x4288c0 (ret 4)
     void set_group0(int g, int id, int a, int b);                                 // 0x439fc0 (ret 0x14)
@@ -203,60 +202,54 @@ extern unsigned g_body_count;                                                   
 
 // @ 0x49f060
 // Decide whether party `a` can be attached to `b`, and where the join point is. When the leader of `b` is not
-// deployed yet the two parties join at the midpoint of their positions; otherwise `a` adopts the leader's scene
-// object (or attaches to the receiver standing next to it).
+// deployed yet the two parties join at the midpoint of their positions (the player's party is always the first
+// one handed to attach_party_center); otherwise `a` adopts the leader's scene object (the player) or attaches to
+// the party standing next to it.
 bool GameData::deploy_party(int a, int b)
 {
     int lead = last_leader(b);
-    if (party(lead)->f88 < 0) {
-        float mid[2];
+    if (parties.get(lead)->f88 >= 0) {
         if (a == f78) {
-            lead = last_leader(b);
-            f13a0c = lead;
-            f13a10 = -100000;
+            f13a0c = node(parties.get(lead)->f88)->f58;
+            f13a10 = node(parties.get(lead)->f88)->f54;
             f13a14 = 0;
-            Party* pl = party(lead);
-            Party* pa = party(a);
-            mid[0] = pa->x + pl->x;
-            mid[1] = pl->y + pa->y;
-        } else if (b == f78) {
-            if (0.0f < f13ad0 && f13ad4 != 0)
-                return 0;
-            lead = last_leader(a);
-            f13a0c = lead;
-            f13a10 = -100000;
-            f13a14 = 1;
-            Party* p1 = parties.get(lead);
-            Party* p2 = parties.get(b);
-            mid[0] = p1->x + p2->x;
-            mid[1] = p2->y + p1->y;
-            a = b;
-        } else {
-            Party* p1 = parties.get(a);
-            Party* p2 = parties.get(lead);
-            mid[0] = p2->x + p1->x;
-            mid[1] = p2->y + p1->y;
+            parties.get(a)->f88 = parties.get(lead)->f88;
+            return 1;
         }
-        mid[0] *= 0.5f;
-        mid[1] *= 0.5f;
-        attach_party_center(mid, a, lead);
+        int x = node(parties.get(lead)->f88)->f58;
+        if (x == lead)
+            x = node(parties.get(lead)->f88)->f54;
+        if (party_relation(x, a) < -0.01f)
+            return 0;
+        attach_party(a, x);
+        parties.get(a)->f8cc = 1;
         return 1;
     }
     if (a == f78) {
         lead = last_leader(b);
-        f13a0c = node(party(lead)->f88)->f58;
-        f13a10 = node(party(lead)->f88)->f54;
+        f13a0c = lead;
+        f13a10 = -100000;
         f13a14 = 0;
-        party(a)->f88 = party(lead)->f88;
+        Party* pl = parties.get(lead);
+        Party* pa = parties.get(a);
+        attach_party_center(V2((pa->x + pl->x) * 0.5f, (pl->y + pa->y) * 0.5f), a, lead);
         return 1;
     }
-    int x = node(party(lead)->f88)->f58;
-    if (x == lead)
-        x = node(party(lead)->f88)->f54;
-    if (party_relation(x, a) < -0.01f)
-        return 0;
-    attach_party(a, x);
-    parties.get(a)->f8cc = 1;
+    if (b == f78) {
+        if (0.0f < f13ad0 && f13ad4 != 0)
+            return 0;
+        int la = last_leader(a);
+        f13a0c = la;
+        f13a10 = -100000;
+        f13a14 = 1;
+        Party* p1 = parties.get(la);
+        Party* p2 = parties.get(b);
+        attach_party_center(V2((p1->x + p2->x) * 0.5f, (p2->y + p1->y) * 0.5f), b, a);
+        return 1;
+    }
+    Party* p1 = parties.get(a);
+    Party* p2 = parties.get(lead);
+    attach_party_center(V2((p2->x + p1->x) * 0.5f, (p2->y + p1->y) * 0.5f), a, lead);
     return 1;
 }
 
@@ -267,6 +260,16 @@ struct SpawnArea {
     int bc; int b8; int b4; int b0; int ac; int a8; int a4; int a0;
     int x9c; int x98; int x94; int x90; int x8c; int x88; int x84; int x80; int x7c; int x78;
     int f74; int f70; int x6c; int x68; int x64; int f60; int x5c; int x58; int x54;
+    // the original zeroes every member with its own store
+    __forceinline SpawnArea()
+        : bc(0), b8(0), b4(0), b0(0), ac(0), a8(0), a4(0), a0(0), x9c(0), x98(0), x94(0), x90(0), x8c(0), x88(0),
+          x84(0), x80(0), x7c(0), x78(0), f74(0), f70(0), x6c(0), x68(0), x64(0), f60(0), x5c(0), x58(0), x54(0)
+    {
+    }
+};
+struct V4c {                                                                      // w is left uninitialised (a stack slot)
+    float x, y, z, w;
+    V4c(float a, float b, float c) : x(a), y(b), z(c) {}
 };
 struct World {
     char pad0[0x344];
@@ -312,10 +315,9 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     s.val = 0;
     s.reduce(0);
 
-    SpawnArea area = {0};
+    SpawnArea area;
     float dist = 0.0f;
     char scratch = 0;
-    char name[0x10];
 
     FxDef2* def = new FxDef2(2);
     e->skel = def;
@@ -325,8 +327,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     ItemRef items[10];
     int count;
     if (party < 0) {
-        tstring horse("skel_horse");
-        def->set_skeleton(g_strtable.find(&horse));
+        def->set_skeleton(g_strtable.find(&tstring("skel_horse")));
         count = 1;
     } else {
         unsigned t = (unsigned)g_game->chars[party].flags & 0xf;
@@ -338,6 +339,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
                                                            &world->f34c, 0, &scratch);
         count = level;
     }
+    char name[0x10];
     build_appearance(e, count, party, *args, &s, &area.b8, name, &area.f60, &dist, &area.bc, items, -1);
     if (party >= 0) {
         build_agent(e, count, party, &area.b8, &dist, items, -1);
@@ -361,38 +363,32 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         *(int*)e->skel->f40 = 0x3f800000;
         e->skel->set_blend(0.05f, e->m);
     }
-    int z0 = 0;
-    e->f_c4 = z0;
-    int z1 = 0;
-    e->f_c8 = z1;
-    float k = 1.1f;
-    e->f_cc = k;
-    e->f_d0 = *(int*)(name + 0xc);          // the original copies an uninitialised dword here
+    *(V4c*)&e->f_c4 = V4c(0.0f, 0.0f, 1.1f);
     dist = 100000.0f;
     e->set_pos(&dist);
 }
 
 // @ 0x49f7c0
-// Pop / replace the party on top of the trigger stack. `depth` counts down; the top entry's kind decides what
-// happens to its value (kind 4/5 just unwind, kind 6/7/0xb/0xf/0xc shift it along one), then the trigger step
-// runs and the (possibly re-mapped) value is written back as a 64-bit script value.
+// Pop / replace the party on top of the trigger stack. `n` is the depth read once at entry; the top entry's
+// kind decides what happens to its value (kind 4/5 just unwind, kind 6/7/0xb/0xf/0xc shift it along one), then the
+// trigger step runs and the (possibly re-mapped) value is written back as a 64-bit script value.
 void Mission::pop_party(int a, int t, int* out)
 {
-    int* d = (int*)(t + 0x400);
     int val;
     int idx;
     (*out)++;
-    if (*d == 0)
+    int n = *(int*)(t + 0x400);
+    if (n == 0)
         return;
-    if (*d > 0 && *d < 0x80) {
-        idx = *(int*)(t + *d * 8 - 8);
-        val = *(int*)(t + *d * 8 - 4);
+    if (n > 0 && n < 0x80) {
+        idx = *(int*)(t + n * 8 - 8);
+        val = *(int*)(t + n * 8 - 4);
     }
     int kind = table[idx].kind;
     if (kind == 4 || kind == 5) {
-        if (*d < 1)
+        if (n < 1)
             return;
-        *d = *d - 1;
+        *(int*)(t + 0x400) = n - 1;
         return;
     }
     if (kind == 6 || kind == 7 || kind == 0xb || kind == 0xf || kind == 0xc) {
@@ -408,16 +404,17 @@ void Mission::pop_party(int a, int t, int* out)
     } else {
         return;
     }
-    if (*d > 0 && *d < 0x80)
-        *(int*)(t + *d * 8 - 4) = val;
+    if (n > 0 && n < 0x80)
+        *(int*)(t + n * 8 - 4) = val;
     if (!trigger_step(a, (void*)t)) {
-        if (*d > 0)
-            (*d)--;
+        int c = *(int*)(t + 0x400);
+        if (c > 0)
+            *(int*)(t + 0x400) = c - 1;
         return;
     }
     if (kind == 0xf) {
-        t = 1;
-        int p = add_party_to_trigger(a, &t, &a);
+        int one = 1;
+        int p = add_party_to_trigger(a, &one, &a);
         val = ((PartyMgr*)((char*)g_game + 0xf8))->get(p)->f8bc[val];
     }
     long long wide = val;

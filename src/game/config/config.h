@@ -379,6 +379,11 @@ struct rec34 {                                      // 0x34 bytes
     Block   body;                                   // +0x18
     int read(stream_base* s);                       // 0x4be470
 };
+struct rec_table {                                  // {records, count} pair of the module-file tables (globals 0xa75eb0, 0xa75f2c, 0x8ed4f58)
+    void* records;                                  // +0
+    int   count;                                    // +4
+    rec_table();                                    // 0x4be520 (the original is bracketed by WinLicense marker records)
+};
 struct rec34_table {
     rec34* records;                                 // +0x00
     int    count;                                   // +0x04

@@ -1171,29 +1171,43 @@ void weather::update(void* pass, const float* depth)
 
 // ---- screen ray ---------------------------------------------------------------------------------------------------------------
 // @ 0x4bd2f0
+// The original reads stack slots it never writes: the far point's ox/oy when the camera is not in the ortho mode
+// and the w of the position vector (both points copy it).  The locals are gathered in one 0x28-byte record so the
+// uninitialised reads hit the same frame offsets as the original (frame 0x30: w at +0x1c, ox at +0x20, oy at +0x24);
+// the equivalence harness then sees the same stack garbage on both sides.
 void camera_ray::screen_to_world(vector4* near_pt, vector4* far_pt)
 {
-    float sx = (g_mouse_x - vx) / vw;
+    struct Frame {
+        float px, z;
+        float v[4];                                 // v[3] (w) is never written
+        float ox, oy;                               // only written when ortho != 0
+        float pad[2];
+    } f;
+    f.px = (g_mouse_x - vx) / vw;
     float sy = (g_mouse_y - vy) / vh;
-    float px = (zb8 - zb4) * sx + zb4;
+    f.px = (zb8 - zb4) * f.px + zb4;
     float py = (zbc - zc0) * sy + zc0;
-    float z = -zc4;
-    float ox, oy;
+    f.z = -zc4;
     if (ortho) {
         float k = 1.0f / zc4;
-        ox = k * zc8 * px;
-        oy = k * zc8 * py;
+        f.ox = k * zc8 * f.px;
+        f.oy = k * zc8 * py;
     }
     float z2 = -zc8;
-    vector4 p;
-    p.x = z * view.u.x + py * view.f.x + px * view.s.x + view.o.x;
-    p.y = z * view.u.y + py * view.f.y + px * view.s.y + view.o.y;
-    p.z = z * view.u.z + py * view.f.z + px * view.s.z + view.o.z;
-    *near_pt = p;
-    far_pt->x = z2 * view.u.x + oy * view.f.x + ox * view.s.x + view.o.x;
-    far_pt->y = z2 * view.u.y + oy * view.f.y + ox * view.s.y + view.o.y;
-    far_pt->z = z2 * view.u.z + oy * view.f.z + ox * view.s.z + view.o.z;
-    far_pt->w = p.w;
+    f.v[0] = f.z * view.u.x + py * view.f.x + f.px * view.s.x + view.o.x;
+    f.v[1] = f.z * view.u.y + py * view.f.y + f.px * view.s.y + view.o.y;
+    f.v[2] = f.z * view.u.z + py * view.f.z + f.px * view.s.z + view.o.z;
+    near_pt->x = f.v[0];
+    near_pt->y = f.v[1];
+    near_pt->z = f.v[2];
+    near_pt->w = f.v[3];
+    f.v[0] = z2 * view.u.x + f.oy * view.f.x + f.ox * view.s.x + view.o.x;
+    f.v[1] = z2 * view.u.y + f.oy * view.f.y + f.ox * view.s.y + view.o.y;
+    f.v[2] = z2 * view.u.z + f.oy * view.f.z + f.ox * view.s.z + view.o.z;
+    far_pt->x = f.v[0];
+    far_pt->y = f.v[1];
+    far_pt->z = f.v[2];
+    far_pt->w = f.v[3];
 }
 
 // ---- ini file -------------------------------------------------------------------------------------------------------------------
@@ -1633,6 +1647,17 @@ int rec34::read(stream_base* s)
     _snprintf(buf, 0x200, "script: %s", name.c_str());
     body.name = buf;
     return f14 >= 0.0f;
+}
+
+// @ 0x4be520
+// A real constructor, not string data: 0x4be520..0x4be553 is `mov eax,ecx; mov [eax+4],0; mov [eax],0; ret` with a
+// WinLicense marker pair around the two stores (jmp +0x10 over a 16-byte 'WL  ' record, twice); the 'WL  '
+// bytes at 0x4be524/0x4be530/0x4be543/0x4be54e are those records. Called by the static initializers at
+// 0x547f10, 0x547f30 and 0x548010 for the tables at 0xa75eb0, 0xa75f2c and 0x8ed4f58.
+rec_table::rec_table()
+{
+    count = 0;
+    records = 0;
 }
 
 // @ 0x4be560

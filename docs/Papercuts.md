@@ -97,3 +97,8 @@ Format (one entry per problem):
 - s00487c40 2026-10-22: resaudit.py pairs a `g_time` `+4` operand as a `disagree` when instruction order differs between our build and the original, even though both read the same `__int64` high word — fix idea: normalise `[sym]`/`[sym+4]` pairs for `__int64` accesses before pairing — minutes lost: 10
 - s004885e0 2026-10-22: `cmpobj.py --len` crashes with `IndexError` when the requested length exceeds our symbol's own size, which is exactly the case when checking whether our block is *shorter* than the original's — fix idea: clamp `--len` to min(len, symbol size) or report "our block is N bytes shorter" — minutes lost: 10
 - s004885e0 2026-10-22: the orchestrator rejects ad-hoc `.venv/bin/python <script>` probes even for scripts inside allowed paths (`work/match/*.py`, `match/slices/*/scratch_*.py`, heredocs, `-m py_compile` all rejected); only `.venv/bin/python tools/**` and side-effect-free `-c` one-liners run — fix idea: document the exact policy in matching.md so agents do not burn rounds discovering it — minutes lost: 15
+
+- equiv.py and run_all.py need `.venv/bin/python` (system python3 lacks capstone); a full nine-VA equiv run exceeds the 120 s tool timeout, so it must go through run_in_background.
+- chk.py takes a slice id or VA list only; module stems such as `config` are rejected.
+- The marker parser takes the first identifier before `(`, so `static __declspec(noinline) void f(` is read as `__declspec`; forward-declare with the attribute and put the marker on a plain `static void f(` definition line.
+- equiv.py resolves a same-TU custom-ABI static to its own copy ("local copies: 1") and reports FAIL even though the bytes are exact (0x48d940 calling 0x48d830).

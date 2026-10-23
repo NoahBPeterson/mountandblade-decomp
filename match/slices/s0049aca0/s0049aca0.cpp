@@ -373,12 +373,8 @@ void PVec::_Insert_n(E4* where, unsigned count, const E4& val)
     }
 }
 
-// @ 0x49b37d  (cleanup funclet reached from 0x49b1c0's catch block: free the new buffer and rethrow)
-void vec_cleanup_throw(E4** newvec)
-{
-    ::operator delete(*newvec);
-    __CxxThrowException(0, 0);
-}
+// 0x49b37d is not a function: it is the catch(...) funclet inside PVec::_Insert_n (0x49b1c0, whose COMDAT really spans
+// 0x49b1c0..0x49b4af); see nonmatching.txt.
 
 // @ 0x49b4b0
 void PObj::place(int* p)

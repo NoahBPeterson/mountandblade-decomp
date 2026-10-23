@@ -259,10 +259,10 @@ struct Cont690 {
     char pad0[0x44];
     char* base;                                         // +0x44
     char* end;                                          // +0x48
-    Pair690 get(unsigned index);                        // 0x48d690
+    int get(unsigned index);                            // 0x48d690 (only the first dword is returned)
 };
 // @ 0x48d690
-Pair690 Cont690::get(unsigned index)
+int Cont690::get(unsigned index)
 {
     Pair690 r;
     if ((int)index >= 0 && base != 0 && index < (unsigned)((end - base) >> 3))
@@ -271,7 +271,7 @@ Pair690 Cont690::get(unsigned index)
         r.a = 0;
         r.b = 0;
     }
-    return r;
+    return r.a;
 }
 
 // ---- 0x48d6d0: look up "<name at +0x20>_pl" in the string table, else the object itself ------------
@@ -355,11 +355,13 @@ void Owned7e0::clear()
         p59c0->v68();
 }
 
+static __declspec(noinline) void unit_class_name(unsigned kind, char* out);
+
 // ---- 0x48d830: copy a force-class name (0 infantry / 1 archers / 2 cavalry / else everyone) into
 //      `out` (esi).  The original passes the class in eax and the buffer in esi, a convention cl does
 //      not produce from C; modelled here with the class first, buffer second.
 // @ 0x48d830
-void __fastcall unit_class_name(unsigned kind, char* out)
+static void unit_class_name(unsigned kind, char* out)
 {
     if (kind == 0) {
         tstring key((const char*)0x5923e0);
@@ -378,9 +380,17 @@ void __fastcall unit_class_name(unsigned kind, char* out)
 
 // ---- 0x48d940: build the three-part force label ("infantry, archers and cavalry") ------------------
 // @ 0x48d940
+// The three force groups are 0x6c-byte records at +0x4c (the +0xb8 and +0x124 fields are their counts too).
 void Mission::make_label(char* out)
 {
-    if (f4c && fB8 && f124) {
+    struct Grp { int n; char pad[0x68]; };
+    Grp* g = (Grp*)((char*)this + 0x4c);
+    char all = 1;
+    if (g->n == 0)
+        all = 0;
+    if (fB8 == 0)
+        all = 0;
+    if (f124 != 0 && all) {
         tstring key((const char*)0x5923bc);
         strcpy(out, g_strtable.lookup(&key)->c_str());
         return;
@@ -390,19 +400,12 @@ void Mission::make_label(char* out)
     char acc[0x200];
     char first_done = 1;
     for (int i = 0; i < 3; i++) {
-        int* p = (int*)((char*)this + 0x4c + i * 0x6c);
-        if (*p == 0)
+        if (g[i].n == 0)
             continue;
         char grouped = 1;
-        if (i + 1 < 3) {
-            int* q = p;
-            int n = 3 - (i + 1);
-            do {
-                q = (int*)((char*)q + 0x6c);
-                if (*q != 0)
-                    grouped = 0;
-            } while (--n);
-        }
+        for (int j = i + 1; j < 3; j++)
+            if (g[j].n != 0)
+                grouped = 0;
         unit_class_name(i, part);
         if (first_done) {
             strcpy(out, part);

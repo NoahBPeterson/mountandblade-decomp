@@ -1,0 +1,1 @@
+0048d830 ?unit_class_name@@YAXIPAD@Z  # force-class name: file-static helper with cl's register convention (class in eax, buffer in esi)

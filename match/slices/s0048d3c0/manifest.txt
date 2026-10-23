@@ -1,3 +1,5 @@
 slices/s0048d3c0/s0048d3c0.cpp  ?resolve@Named54@@QAEPAXXZ  0048d730  /O2 /MT /Gy /TP
 slices/s0048d3c0/s0048d3c0.cpp  ?display_name@Named7b0@@QAEPAXXZ  0048d7b0  /O2 /MT /Gy /TP
 slices/s0048d3c0/s0048d3c0.cpp  ?display@NamedDb00@@QAEPAXXZ  0048db00  /O2 /MT /Gy /TP
+slices/s0048d3c0/s0048d3c0.cpp  ?unit_class_name@@YAXIPAD@Z  0048d830  /O2 /MT /Gy /TP
+slices/s0048d3c0/s0048d3c0.cpp  ?make_label@Mission@@QAEXPAD@Z  0048d940  /O2 /MT /Gy /TP

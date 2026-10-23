@@ -47,7 +47,7 @@ struct view_iface {                             // `this` seen as its own descri
     virtual void s23(void* v);                                          // [this+0x5c] follow target
 };
 
-struct sub_iface {                              // the target's sub-object (target+0x17c)
+struct sub_iface {                              // the target's sub-object (*(target+0x17c))
     virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
     virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
     virtual void s8(); virtual void s9(); virtual void s10(); virtual void s11();
@@ -61,6 +61,8 @@ struct sub_iface {                              // the target's sub-object (targ
     virtual void s36();
     virtual void s37(void* v);                                          // [this+0x94] colour reset
     virtual void s38(void* v);                                          // [this+0x98] colour set
+    char pad_s[0x14c - 4];
+    unsigned colour;                            // +0x14c
 };
 
 struct float2 {                                 // a 2-float vector (position/displacement)
@@ -84,10 +86,8 @@ struct shape_ref {                              // the object the view follows (
     float2 disp;                                // +0xe8  displacement for this frame
     float sa[2];                                // +0xf0  shake target (near)
     float sb[2];                                // +0xf8  shake base (far)
-    char pad100[0x14c - 0x100];
-    unsigned af14c;                             // +0x14c  colour of the target sub-object
-    char pad150[0x17c - 0x150];
-    sub_iface* sub;                             // +0x17c
+    char pad100[0x17c - 0x100];
+    sub_iface** sub;                            // +0x17c  pointer to the sub-object pointer
 };
 
 // ---- the sub-objects -----------------------------------------------------------------------------
@@ -109,6 +109,17 @@ struct Frustum {                                // the box frustum, 0x120 bytes 
     float box[6];                               // +0x108  half extents + the far plane
     void ctor();                                // 0x41ef60
     void build();                               // 0x41e4f0  recompute the 6 planes
+    // the box setter (inline): left, right, bottom, top, near, far
+    void set_box(float l, float r, float b, float t, float n, float f)
+    {
+        first = 0;
+        box[0] = l;
+        box[1] = r;
+        box[3] = b;
+        box[2] = t;
+        box[4] = n;
+        box[5] = f;
+    }
 };
 
 struct Timer {                                  // one of six 0x10-byte timers
@@ -191,13 +202,23 @@ struct Camera : Object {
     void render(int a, float* pos, void* c, void* d);   // 0x49e5b0
 };
 
-// Blend one byte colour level from `nearv` (target) to `farv` (rendered) over a fade of length `lim`
-// that has run for `d`, rounded half-up.
-static int blend_level(float lim, float d, unsigned char nearv, unsigned char farv)
+// Blend one colour level from `a` (target) to `b` (rendered) over a fade of length `lim` that has run for
+// `d`, rounded half-up.  The first colour byte is read as a masked dword (unsigned), the others as bytes.
+static __forceinline int blend_u(const float& lim, const float& d, unsigned a, unsigned b)
 {
-    float v = (nearv * (lim - d) + farv * d) * (1.0f / lim);
-    int i = (int)floor(v);
-    if (v - i > 0.5f)
+    float v = ((float)a * (lim - d) + (float)b * d) * (1.0f / lim);
+    float fl = (float)floor(v);
+    int i = (int)fl;
+    if (!(v - fl <= 0.5f))
+        i++;
+    return i;
+}
+static __forceinline int blend_i(const float& lim, const float& d, int a, int b)
+{
+    float v = ((lim - d) * (float)a + (float)b * d) * (1.0f / lim);
+    float fl = (float)floor(v);
+    int i = (int)fl;
+    if (!(v - fl <= 0.5f))
         i++;
     return i;
 }
@@ -252,7 +273,7 @@ void Camera::move(shape_ref* e)
 // a weight, then the four fades (zoom, colour, level, shake) are advanced.
 void Camera::update(int)
 {
-    vector4 v;
+    float2 v;
 
     shake_x = target->sb[0];
     shake_y = target->sb[1];
@@ -274,11 +295,13 @@ void Camera::update(int)
     if (d4 < lim[4]) {
         float inv = 1.0f / lim[4];
         float rest = lim[4] - d4;
-        float x = (d4 * w20 + rest * w22) * inv;
-        float y = (d4 * w21 + rest * w23) * inv;
-        v.x = x * g_590cd0;
-        v.y = y * g_590cd0;
-        target->sub->s27(&v);
+        float xn = d4 * w20 + rest * w22;
+        float yn = rest * w23 + d4 * w21;
+        float x = xn * inv;
+        float y = yn * inv;
+        v.x = x * 0.02f;
+        v.y = y * 0.02f;
+        (*target->sub)->s27(&v);
         f_d8 = x;
         f_dc = y;
         reset_timer_a();
@@ -290,13 +313,13 @@ void Camera::update(int)
     // colour: the three level bytes blended from the target levels and packed under the inherited
     // alpha byte, then the target sub-object's colour slot
     if (d0 < lim[0]) {
-        int i0 = blend_level(lim[0], d0, le[0], lv[0]);
-        int i1 = blend_level(lim[0], d0, le[1], lv[1]);
-        int i2 = blend_level(lim[0], d0, le[2], lv[2]);
-        unsigned col = (colour | target->af14c) & 0xff000000u;
+        int i0 = blend_u(lim[0], d0, *(unsigned*)le & 0xff, *(unsigned*)lv & 0xff);
+        int i1 = blend_i(lim[0], d0, le[1], lv[1]);
+        int i2 = blend_i(lim[0], d0, le[2], lv[2]);
+        unsigned col = (colour | (*target->sub)->colour) & 0xff000000u;
         col |= (unsigned)((i2 << 16) + (i1 << 8) + i0);
-        target->sub->s38(&col);
-        target->sub->s37(&v);
+        (*target->sub)->s38(&col);
+        (*target->sub)->s37(&v);
     } else if (flag0) {
         flag0 = 0;
         reset_timer_c(colour ^ ((colour ^ *(unsigned*)lv) & 0xffffff));
@@ -304,7 +327,7 @@ void Camera::update(int)
 
     // level
     if (d1 < lim[1]) {
-        reset_timer_d(blend_level(lim[1], d1, le[7], lv[7]));
+        reset_timer_d(blend_i(lim[1], d1, le[7], lv[7]));
     } else if (flag1) {
         flag1 = 0;
         reset_timer_d(lv[7]);
@@ -337,7 +360,10 @@ void* Camera::destroy(unsigned flags)
 
 // @ 0x49e5b0
 // Place the view: size the scene viewport from the view box, rebuild the box frustum, install it as
-// the scene's volume and the view matrix, then hand the frame to the scene.
+// the scene's volume and the view matrix, then hand the frame to the scene.  The view matrix is the
+// identity with its translation row set from a position vector whose w is never initialised (the
+// original copies that stack slot into m[15]).
+struct V4 { float x, y, z, w; };
 void Camera::render(int a, float* pos, void* c, void* d)
 {
     scene.reset();
@@ -348,22 +374,19 @@ void Camera::render(int a, float* pos, void* c, void* d)
     scene.f14 = 1.0f;
     scene.f10 = 0;
     scene.flags |= 0x1000;
-    fr.first = 0;
-    fr.box[0] = w * -0.5f;
-    fr.box[1] = w * 0.5f;
-    fr.box[2] = h * 0.5f;
-    fr.box[3] = h * -0.5f;
-    fr.box[4] = 0;
-    fr.box[5] = 500.0f;
-    fr.build();
-    float m[17];
+    Frustum* f = &fr;
+    f->set_box(w * -0.5f, w * 0.5f, h * -0.5f, h * 0.5f, 0, 501.0f);
+    f->build();
+    float m[16];
     make_identity(m);
-    m[12] = w * 0.5f + px;
-    m[13] = h * 0.5f + py;
-    m[15] = 400.0f;
-    memcpy((char*)&fr + 0xc8, m + 1, 0x40);
-    fr.build();
-    memcpy((char*)this + 0x1b8, &fr, 0x120);
+    V4 v;
+    v.z = 400.0f;
+    v.x = w * 0.5f + px;
+    v.y = h * 0.5f + py;
+    *(V4*)&m[12] = v;
+    memcpy((char*)f + 0xc8, m, 0x40);
+    f->build();
+    memcpy((char*)this + 0x1b8, f, 0x120);
     *pos = *pos + 1.0f;
     scene_render(&scene, pos, c, d);
 }

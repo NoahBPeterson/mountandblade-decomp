@@ -59,9 +59,9 @@ extern int   g_cur_opcode;                      // 0x5e25a0  opcode of the state
 extern int   g_script_flag;                     // 0x5e25a4  "aborted/returned" latch cleared each run
 extern char* g_mission;                         // 0x5e292c  current Mission (0 when none)
 
-// keyboard state: two parallel key-down tables 0x480 bytes apart (see s005261e0)
-extern unsigned char g_key_a[256];              // 0xa170d4
-extern unsigned char g_key_b[256];              // 0xa174d4
+// keyboard state: per-scan-code ints, held state at 0xa17000 and this frame's press at 0xa17400 (see s0052cf60)
+extern int g_key_a[256];                        // 0xa17000
+extern int g_key_b[256];                        // 0xa17400
 
 // the game data: the "current emitter audio" state at +0x1a068..+0x1a07c (see s00435490.h SoundCtl)
 struct GameData {
@@ -83,6 +83,7 @@ struct Elem {                                   // 0x98 bytes: one statement
     int f90;                                    // +0x90 skip target (braces/else)
     int pad94;
     void set_value(int* a, long long* out);     // 0x49d500 (thiscall, ret 8)
+    __int64 param(int* buf, int* which, int* out);    // 0x49d650 (thiscall on the statement, ret 0xc)
 };
 struct ScriptStmt {                             // statement pointer in ECX
     char run(int stmt, int which, int* out);    // 0x49fa10 (thiscall, ret 0xc)
@@ -95,7 +96,6 @@ struct ScriptHolder {
 
     char run_line(int a, int* p, int which);                        // 0x4b0940 (thiscall, ret 0xc)
     char emit(int script, int depth, int* limit, __int64* vals, unsigned tag);   // 0x4b09e0 (ret 0x14)
-    __int64 param(int* buf, int* which, int* out);                  // 0x49d650 (thiscall, ret 0xc)
     bool run_stmt(int* buf, int* buf2);                             // 0x49d7f0 (thiscall, ret 8)
     void format(tstring* out, int* buf, int line, int ok, int* lo, int* hi);   // 0x49d930
     void pop_party(int* a, int* t, int* out);                       // 0x49f7c0 (thiscall, ret 0xc)
@@ -199,7 +199,9 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
     done = 0;
     advance = 1;
 
-    do {
+    for (;;) {
+        if (idx >= count)
+            break;
         brk = 0;
         if ((tag & 0xffff) == (unsigned)idx || in_key) {
             in_key = 1;
@@ -266,10 +268,10 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
                 advance = 1;
                 if (stmt->id == 6) {
                     which = 1;
-                    v = (int)param(buf, &which, &out2);
+                    v = (int)stmt->param(buf, &which, &out2);
                 } else if (stmt->id == 7) {
                     which = 2;
-                    v = (int)param(buf, &which, &out2) - 1;
+                    v = (int)stmt->param(buf, &which, &out2) - 1;
                 } else if (stmt->id == 0xc) {
                     v = ((AgentTable*)(g_mission + 4))->first_used();
                 } else if (stmt->id == 0xb) {
@@ -291,7 +293,7 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
         } else if (op < 0x1e) {
             if (op == 1) {
                 which = 0;
-                int id = (int)param(buf, &which, &out1);
+                int id = (int)stmt->param(buf, &which, &out1);
                 if (id < 0 || id >= g_emitter_count || depth >= 0x100) {
                     ok = 0;
                     advance = 0;
@@ -301,7 +303,7 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
                 which = 1;
                 for (int i = 1; i < stmt->n; i++) {
                     which = i;
-                    sub[i - 1] = param(buf, &which, &out1);
+                    sub[i - 1] = stmt->param(buf, &which, &out1);
                 }
                 unsigned t;
                 if (brk)
@@ -330,7 +332,7 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
                 idx++;
             } else if (op == 0x17) {
                 which = 1;
-                int k = (int)param(buf, &which, &out3) - 1;
+                int k = (int)stmt->param(buf, &which, &out3) - 1;
                 which = k;
                 if (check_script_param(&which, limit))
                     stmt->set_value(buf, &vals[k]);
@@ -370,7 +372,9 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
             stream_base& lg = g_log;
             lg.w_cstr(msg);
         }
-    } while (last_ok);
+        if (!last_ok)
+            break;
+    }
 
     return last_ok;
 }

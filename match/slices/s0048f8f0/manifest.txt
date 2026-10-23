@@ -1,0 +1,4 @@
+slices/s0048f8f0/s0048f8f0.cpp  ?add_members@Game@@QAEHHHHD@Z  0048f8f0  /O2 /MT /Gy /TP
+slices/s0048f8f0/s0048f8f0.cpp  ?add_template@Game@@QAEXHHH@Z  0048fbd0  /O2 /MT /Gy /TP
+slices/s0048f8f0/s0048f8f0.cpp  ?collect_attachments@Game@@QAEXHPAUParty@@@Z  0048ff70  /O2 /MT /Gy /TP
+slices/s0048f8f0/s0048f8f0.cpp  ?relation@Game@@QAEMHH@Z  0048ffa0  /O2 /MT /Gy /TP

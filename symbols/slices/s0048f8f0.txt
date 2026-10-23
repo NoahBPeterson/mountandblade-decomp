@@ -1,9 +1,9 @@
-0048f8f0 Party::seed_slots      # per-stack random slot seeding
-0048f9f0 Party::add_to_stack    # add into the last matching stack
-0048fbd0 Party::tick_slots       # timed slot regeneration ticks
-0048fce0 Party::last_leader      # end of the leader chain
-0048fd60 Party::clear_with_extras # clear stacks, recurse into attached parties
-0048ff70 clear_party             # reset nstacks + clear
-0048ffa0 Party::relation         # troop-pair relation value (rel + pair*0xc0 + 0xb)
-00490030 Party::pick_near        # random point on an overlapping face
-00490160 Party::pick_near_type   # random point on a face of a given type
+0048f8f0 ?add_members@Game@@QAEHHHHD@Z  # add troops to a party; reseeds the main party's per-stack random table (Module System: party_add_members)
+0048f9f0 ?remove_members@Game@@QAEHHHHDH@Z  # remove troops from the last matching stack (party_remove_members)
+0048fbd0 ?add_template@Game@@QAEXHHH@Z  # fill a party from a party template's six slots (party_add_template)
+0048fce0 ?battle_root@Game@@QAEHH@Z  # end of the attached-to chain (0x8c8 = attached_to)
+0048fd60 ?clear_stacks@Game@@QAEXHPAUParty@@@Z  # re-add every stack of a party (and of its attached parties) to a destination party
+0048ff70 ?collect_attachments@Game@@QAEXHPAUParty@@@Z  # zero the destination's stack count, collect the party tree into it, then clear it
+0048ffa0 ?relation@Game@@QAEMHH@Z  # faction relation of two parties (rel + faction_a*0xc0 + faction_b + 0xb)
+00490030 ?pick_near@Game@@QAEXUV2@@MPAU2@@Z  # random position around a point that lies on the same face
+00490160 ?pick_near_type@Game@@QAEDUV2@@MPAU2@D@Z  # random position around a point whose face has a given surface kind

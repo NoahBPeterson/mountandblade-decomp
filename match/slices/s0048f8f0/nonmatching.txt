@@ -1,0 +1,5 @@
+0048f9f0	45	Game::remove_members (ret 0x14): complete; stack scan with the (prisoners && flags&1) || (!prisoners && !(flags&1)) test, clamp to stack count, then the removal. Differs in where xor ebp is placed and the order of an add ecx pair. equiv WEAK (176 valid, edges 18/18, 100% insns, no mismatch).
+0048fce0	55	Game::battle_root: complete; leader chain walk through the page-vector lookup. Original hoists pages.begin() into ebx across the index_of call, ours reloads it. equiv WEAK (165 valid, edges 4/4, no mismatch).
+0048fd60	91	Game::clear_stacks (thiscall ret 8): complete, same size (520 bytes), only register naming differs (original and ours assign the four cached page pointers to different callee-saved registers). equiv WEAK (197 valid, 1 symmetric missed edge, no mismatch).
+00490030	14	Game::pick_near: complete; only stack slot assignment of the float locals differs. equiv WEAK (27.5% insns, 11 symmetric missed edges: harness cannot reach the face-found paths, no mismatch).
+00490160	242	Game::pick_near_type: complete; 298 vs 309 bytes, frame and register allocation differ. equiv WEAK (41 valid, 68% insns, no mismatch).

@@ -80,6 +80,9 @@ struct ItemSlot {
 
 struct Agent;
 struct World;
+struct SlotTable {                      // the 8-byte item references at agent+0xb4
+    void prepare(int n);                // 0x48be00 (thiscall, ret 4)
+};
 
 struct Agent {
     char pad0[0x30];
@@ -120,40 +123,49 @@ extern float g_imod_lo[];               // 0xa75f94
 // @ 0x48c0c0
 void Agent::sort_slots()
 {
-    int* const table = (int*)((char*)this + 0xb4);
     int count = tier_base();
-    slot_begin(count, (unsigned)count, 0);
-    int passes = count;
-    int limit = count - 1;
-    do {
-        int i = limit;
-        for (int* p = table; i > 0; p += 2, i--) {
-            int l, r;
-            if (*p < 0) {
-                l = 0;
-            } else {
-                float v = (float)g_items[*p].f1d8 * *(float*)((char*)g_bit + *((char*)p + 7) * 0x28);
-                int n = (int)floor(v);
-                if (!(v - (float)floor(v) <= 0.5f))
-                    n++;
-                l = n;
+    int* table = (int*)((char*)this + 0xb4);
+    ((SlotTable*)table)->prepare(count);
+    if (count > 0) {
+        int passes = count;
+        int limit = count - 1;
+        do {
+            if (limit > 0) {
+                int* p = table;
+                int i = limit;
+                do {
+                    int l, r;
+                    if (*p < 0) {
+                        l = 0;
+                    } else {
+                        float v = (float)g_items[*p].f1d8 * *(float*)((char*)g_imod_hi + *((char*)p + 7) * 0x28);
+                        float fl = (float)floor(v);
+                        int n = (int)fl;
+                        if (!(v - fl <= 0.5f))
+                            n++;
+                        l = n;
+                    }
+                    if (p[2] < 0) {
+                        r = 0;
+                    } else {
+                        float v = (float)g_items[p[2]].f1d8 * *(float*)((char*)g_imod_hi + *((char*)p + 0xf) * 0x28);
+                        float fl = (float)floor(v);
+                        int n = (int)fl;
+                        if (!(v - fl <= 0.5f))
+                            n++;
+                        r = n;
+                    }
+                    if (l < r || (l == r && p[0] > p[2])) {
+                        int t = p[0]; p[0] = p[2]; p[2] = t;
+                        t = p[1]; p[1] = p[3]; p[3] = t;
+                    }
+                    p += 2;
+                    i--;
+                } while (i != 0);
             }
-            if (p[2] < 0) {
-                r = 0;
-            } else {
-                float v = (float)g_items[p[2]].f1d8 * *(float*)((char*)g_bit + *((char*)p + 0xf) * 0x28);
-                int n = (int)floor(v);
-                if (!(v - (float)floor(v) <= 0.5f))
-                    n++;
-                r = n;
-            }
-            if (l < r || (l == r && p[0] > p[2])) {
-                int t = p[0]; p[0] = p[2]; p[2] = t;
-                t = p[1]; p[1] = p[3]; p[3] = t;
-            }
-        }
-        passes--;
-    } while (passes != 0);
+            passes--;
+        } while (passes != 0);
+    }
 }
 
 // ---- 0x48c210 / 0x48c260: "Event" placeholder object ------------------------------------------------
