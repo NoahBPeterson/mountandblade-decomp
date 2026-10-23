@@ -1,3 +1,2 @@
-004e25a0 1744 options-menu build-up: vtable layer of the menu object not modelled, out-of-TU callees declared with guessed arity, member frame 0x5c vs 0x50; behavioural paths all present (EQUIV UNSUPPORTED: object/vtable and resource-manager not modelled)
-004e2cb0 3 every store is equivalent (fail only on the harness's unmapped object-pool element); pointer base/field encoding of the stride-8 copy differs
+004e25a0 1743 options-menu build-up (duplicate vptr slot f00 removed: fields were +4 off): vtable layer of the menu object not modelled, out-of-TU callees declared with guessed arity, member frame 0x5c vs 0x50; behavioural paths all present (EQUIV UNSUPPORTED: object/vtable and resource-manager not modelled)
 004e2ce0 302 ret 8 string table lookup reconstructed (0x43a1e0: text+len+3 floats, out tstring in `this`) but the 7 case bodies do not reproduce the original's shared 0x80-byte block (EQUIV UNSUPPORTED: StrTable::lookup map conflict)

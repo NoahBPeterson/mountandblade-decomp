@@ -21,7 +21,7 @@
 //               per point and zero dist where the mask pair matches.
 //   E 0x5217c0  ten relaxation passes over the edge list (0x24-byte records).
 //   F 0x521996  build the four material-name tables map/snow/steppe/desert_tree_*.
-//   G 0x521bd2  grid dims = ceil((size+5)*0.125), error past 8; create the grid cells.
+//   G 0x521bd2  grid dims = ceil(size / ((size+5)*0.125)), error past 8; create the grid cells.
 //   H 0x521cae  per cell: one cell mesh + one mesh per material (0..0xc), walk the
 //               nodes that fall in the cell, emit geometry, pick the tree mesh by node
 //               type for material 0, then finalize/register everything.
@@ -99,9 +99,12 @@ extern void*  g_pts;                 // 0xa732b8 (object, +0x04 = Point array)
 extern int    g_grid_cols;           // 0xa73294
 extern int    g_grid_rows;           // 0xa73298
 extern void*  g_grid[64];            // 0xa73094 cell entities, index col*8+row
-extern float  g_minx, g_miny;        // 0xa7329c, 0xa732a0
-extern float  g_maxx, g_maxy;        // 0xa732a4, 0xa732a8
-extern float  g_sizex, g_sizey;      // 0xa732ac, 0xa732b0
+extern float  g_minx;                // 0xa7329c
+extern float  g_miny;                // 0xa732a0
+extern float  g_maxx;                // 0xa732a4
+extern float  g_maxy;                // 0xa732a8
+extern float  g_sizex;               // 0xa732ac
+extern float  g_sizey;               // 0xa732b0
 extern PtrVec g_mat_vec[4];          // 0xa732c0 / 0xa732d0 / 0xa732e0 / 0xa732f0
 extern int    g_mat_count[4];        // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
 extern int    g_ang_a;               // 0xa18144
@@ -122,8 +125,6 @@ void     tstring_push_back(void* self, char c);                              // 
 void     tstring_dtor(void* self);                                           // 0x42bc40
 void*    resmgr_get_object(void* resmgr, void* name);                        // 0x419540
 void*    resmgr_get_material(void* resmgr, void* name);                      // 0x418a70
-float    mb_ceil(float f);                                                   // 0x535ae0
-int      mb_ftol(float f);                                                   // 0x535a64
 void     mb_error(const char* msg);                                          // 0x42cc80
 void*    create_entity(int type);                                            // 0x428440
 void*    mesh_ctor(void* p);                                                 // 0x412a90
@@ -271,8 +272,8 @@ void Game::build_map_trees()
     g_sizey = g_maxy - g_miny;
     float stepx = (g_sizex + 5.0f) * 0.125f;                                 // 0x59393c, 0x54b8a0
     float stepy = (g_sizey + 5.0f) * 0.125f;
-    g_grid_cols = mb_ftol(mb_ceil(stepx));
-    g_grid_rows = mb_ftol(mb_ceil(stepy));
+    g_grid_cols = (int)ceil(g_sizex / stepx);                                // ceil 0x535ae0, __ftol2 0x535a64
+    g_grid_rows = (int)ceil(g_sizey / stepy);
     if (g_grid_cols > 8) mb_error("Map size too big in x axis!");            // 0x59c090
     if (g_grid_rows > 8) mb_error("Map size too big in x axis!");
 

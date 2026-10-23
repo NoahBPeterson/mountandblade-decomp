@@ -151,7 +151,6 @@ struct OptionsMenu {
     virtual void vc0();                                 // +0xc0
     virtual void vc4();                                 // +0xc4
     virtual void vc8(OptionsMenu* o);                   // +0xc8 (not called; keeps the count right)
-    int f00;                                            // +0x00 (vptr)
     int f04;                                            // +0x04
     int f08;                                            // +0x08
     int f0c;                                            // +0x0c
@@ -346,11 +345,12 @@ void OptionsMenu::init()
 // @ 0x4e2cb0
 void OptionsMenu::copy_slots()
 {
-    int* p = &f24;
+    // 37 pairs of dwords at this+0 (the vptr slot included, as in the original) are copied to this+0x128
+    int* p = (int*)this + 1;
     int n = 0x25;
     do {
-        p[0x47] = p[-1];
-        p[0x48] = p[0];
+        p[0x49] = p[-1];
+        p[0x4a] = p[0];
         p += 2;
     } while (--n != 0);
 }

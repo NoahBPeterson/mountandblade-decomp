@@ -20,26 +20,31 @@ struct tstring {
 };
 
 // rgl resource base (ctor 0x48ae20): flags at +0x148, cache size at +0x14c/+0x150.
+struct widget;
 struct resource {
-    char pad0[0x148];
+    virtual void v00(int del);                          // vptr at +0 (widget's slots start here); deleting dtor, pops 4
+    char pad0[0x110 - 4];
+    widget* sub;                // +0x110 (owned cloned sub-element/mesh; the progress bar's scaled mesh)
+    char pad1[0x148 - 0x114];
     unsigned flags;             // +0x148
     int size;                   // +0x14c
     int size2;                  // +0x150
     resource();                                         // 0x48ae20
 };
 
-struct mesh;                // 0x260 bytes (see s00419420)
-mesh* mesh_clone(mesh* m);                          // 0x41c6d0
-void mesh_scale(mesh* m, const rgl::vector4& v);    // 0x47af30
+struct mesh {               // 0x260 bytes (see s00419420)
+    mesh* clone();                                      // 0x41c6d0 (thiscall)
+    void set_color(rgl::vector4 color);                 // 0x47af30 (thiscall, vector4 by value)
+};
 
 // The UI element (layout from 0x48ae20). Slots are named by vtable offset; only the ones used here matter.
 struct widget : resource {
     unsigned char f154[0x168 - 0x154];
     float f168;                 // +0x168
     int f16c;                   // +0x16c
-    int f170;                   // +0x170 (index of the scaled rect component)
+    int f170;                   // +0x170 (float 1.0 by default)
     int f174;                   // +0x174
-    widget* sub;                // +0x178
+    int idx;                    // +0x178 (index of the scaled rect component)
     float ratio;                // +0x17c
     mesh* handle;               // +0x180 (source mesh for the sub element)
     unsigned char f184;         // +0x184 (dirty flag)
@@ -47,7 +52,7 @@ struct widget : resource {
     unsigned char f186;         // +0x186
     unsigned char f187;         // +0x187
     rgl::vector4 rect;          // +0x188
-    virtual void v00();                                 // +0x00
+    virtual void v00(int del);                                 // +0x00
     virtual void v04();                                 // +0x04
     virtual void v08();                                 // +0x08
     virtual void v0c();                                 // +0x0c
@@ -188,11 +193,15 @@ struct MeetingWindow {
 };
 
 // the progress bar's key-value row store (element 0x50 bytes; ctor 0x4d1140).
-struct pb_rows {
-    int* begin;                                         // +0
-    int* cur;                                           // +4
-    int* end;                                           // +8
+struct pb_rows {                                        // std::vector<E80> (allocator pad at +0)
+    int alloc_pad;                                      // +0
+    char* begin;                                        // +4
+    char* end;                                          // +8
+    char* cap;                                          // +0xc
     void push(const tstring* v);                        // 0x4e4060 (ret 4)
+    unsigned size() const { return begin == 0 ? 0 : (unsigned)((end - begin) / 0x50); }
+    unsigned capacity() const { return begin == 0 ? 0 : (unsigned)((cap - begin) / 0x50); }
+    void grow(int* out, char* at, const tstring* v);    // 0x4db960 vector<E80>::insert (hidden iterator return, ret 0xc)
 };
 
 // ---- globals / externals -------------------------------------------------------------------------------
@@ -220,8 +229,7 @@ widget* new_button(widget* o, tstring* txt, float a, float b, float c, float d, 
 progress_bar* new_progress_bar(widget* o, float x, float y, float a, float b);           // 0x4e3d50
 void draw_label(widget* q, float x, float y, float z, const tstring* s);                  // 0x4e3f20
 void widget_text(widget* w, float x, float y, float z, const tstring* s);                 // 0x488720
-void rows_insert(int* where, pb_rows* self, const tstring* v);                            // 0x4d49c0
-void rows_grow(pb_rows* self, int* at, const tstring* v);                                 // 0x4db960
+void rows_insert(char* where, unsigned n, const tstring* v, pb_rows* self, const tstring* v2);  // 0x4d49c0 (cdecl, 5 args pushed)
 int  timer_tick();                                                                       // 0x536a9f
 
 #define LOOKUP(T, S) g_strtable.lookup(&(T), (S), sizeof(S) - 1, 0.82f, 0.6f, 0.15f)
@@ -244,7 +252,7 @@ void MeetingWindow::init()
     {
         tstring name("meeting_window");
         mesh* m = g_resmgr.get_object(&name);
-        mesh* c = mesh_clone(m);
+        mesh* c = m->clone();
         bg->v7c(c, 0);
     }
     gui_set_window(&g_msg_log, (void**)&bg);
@@ -312,7 +320,7 @@ void MeetingWindow::init2()
     bg->v64(f2);
     {
         tstring name("load_window");
-        mesh* c = mesh_clone(g_resmgr.get_object(&name));
+        mesh* c = g_resmgr.get_object(&name)->clone();
         bg->v7c(c, 0);
     }
     int iv = 0xff442323;
@@ -328,7 +336,7 @@ void MeetingWindow::init2()
         else if (f < 30.0f)
             name.assign("ini_pic_mb_warrior_8");
         {
-            mesh* c = mesh_clone(g_resmgr.get_object(&name));
+            mesh* c = g_resmgr.get_object(&name)->clone();
             bg->v80(2, c);
         }
     }
@@ -344,7 +352,7 @@ void MeetingWindow::init2()
         f2[1] = 0.1f;
         logo->v64(f2);
         tstring name("warrider_logo");
-        logo->v7c(mesh_clone(g_resmgr.get_object(&name)), 0);
+        logo->v7c(g_resmgr.get_object(&name)->clone(), 0);
     }
     bg->vc8(logo);
     bar = new_progress_bar(bg, 0.1f, 0.07f, 0.4f, 0.048f);
@@ -363,7 +371,7 @@ progress_bar* new_progress_bar(widget* o, float x, float y, float a, float b)
     progress_bar* p = (progress_bar*)operator new(0x198);
     if (p != 0)
         new (p) progress_bar;
-    p->sub = 0;
+    p->idx = 0;
     float pos[2];
     pos[0] = x;
     pos[1] = y;
@@ -376,16 +384,17 @@ progress_bar* new_progress_bar(widget* o, float x, float y, float a, float b)
     float sxy[2];
     sxy[0] = 1.0f;
     sxy[1] = b * 50.0f;
+    mesh* c;
     {
         tstring name("progressbar");
-        mesh* c = mesh_clone(g_resmgr.get_object(&name));
-        rgl::vector4 v;
-        v.x = pos[0];
-        v.y = pos[1];
-        v.z = sxy[0];
-        v.w = sxy[1];
-        mesh_scale(c, v);
+        c = g_resmgr.get_object(&name)->clone();
     }
+    rgl::vector4 v;
+    v.x = pos[0];
+    v.y = pos[1];
+    v.z = sxy[0];
+    v.w = sxy[1];
+    c->set_color(v);
     {
         tstring name("progressbar_handle");
         p->handle = g_resmgr.get_object(&name);
@@ -394,7 +403,7 @@ progress_bar* new_progress_bar(widget* o, float x, float y, float a, float b)
     p->rect.y = pos[1];
     p->rect.z = sxy[0];
     p->rect.w = sxy[1];
-    p->v80(0, p->sub);
+    p->v80(0, c);
     o->vc8(p);
     return p;
 }
@@ -405,7 +414,7 @@ progress_bar::progress_bar()
     rect.x = 1.0f;
     rect.y = 1.0f;
     rect.z = 1.0f;
-    sub = 0;
+    idx = 0;
     handle = 0;
     rect.w = 0;
     f168 = g_progressbar_scale;
@@ -445,16 +454,16 @@ void progress_bar::update()
         if (f184 == 0)
             return;
         if (sub != 0)
-            sub->v00();
+            sub->v00(1);
     }
     if (handle != 0) {
-        mesh* c = mesh_clone(handle);
+        mesh* c = handle->clone();
         float sx = f168;
         rgl::vector4 r = rect;
-        float* d = &r.x + f170;
+        float* d = &r.x + idx;
         *d = sx * *d;
         sub = (widget*)c;
-        mesh_scale(c, r);
+        c->set_color(r);
         f184 = 0;
     }
 }
@@ -462,16 +471,12 @@ void progress_bar::update()
 // @ 0x4e4060
 void pb_rows::push(const tstring* v)
 {
-    int n = 0;
-    if (begin != 0)
-        n = (int)(((char*)end - (char*)begin) / 0x50);
-    int cap = 0;
-    if (begin != 0)
-        cap = (int)(((char*)cur - (char*)begin) / 0x50);
-    if (begin != 0 && cap < n) {
-        rows_insert(end, this, v);
-        end = (int*)((char*)end + 0x50);
+    if (size() < capacity()) {
+        char* e = end;
+        rows_insert(e, 1, v, this, v);
+        end = e + 0x50;
         return;
     }
-    rows_grow(this, end, v);
+    int out;
+    grow(&out, end, v);
 }
