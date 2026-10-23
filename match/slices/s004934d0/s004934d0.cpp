@@ -39,7 +39,7 @@ struct Vec4 {
     size_type size() const     { return (_Mylast - _Myfirst); }
     size_type capacity() const { return (_Myend - _Myfirst); }
 
-    void push_back(const int& _Val);                      // 0x4936b0
+    __declspec(noinline) void push_back(const int& _Val);                      // 0x4936b0
     void insert_nA(int* _Where, size_type _Count, const int& _Val);   // 0x4927d0
     void insert_nB(int* _Where, size_type _Count, const int& _Val);   // 0x43e7b0
     void insert_nC(int* _Where, size_type _Count, const int& _Val);   // 0x41a2c0
@@ -232,7 +232,7 @@ void BigMgr::pool_alloc_493700()
     Vec4* _v1 = (Vec4*)(self + 4);                        // int indices (this+8)
     Vec4* _v2 = (Vec4*)(self + 0x14);                     // block pointers (this+0x18)
 
-    if (_v1->size() == 0)
+    if (_v1->_Myfirst == 0 || _v1->size() == 0)
         {
         int* _arr = (int*)alloc_arr_535482(0x984);
         char* _p;
@@ -265,7 +265,7 @@ void BigMgr::pool_alloc_493700()
         *(int*)(self) += 0x10;
         }
 
-    int _idx = _v1->_Mylast[-1];
+    unsigned _idx = (unsigned)_v1->_Mylast[-1];     // unsigned: the original uses shr, not sar, on the popped index
     if (_v1->_Myfirst != 0 && _v1->size() != 0)
         --_v1->_Mylast;
 
