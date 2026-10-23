@@ -14,7 +14,6 @@ using rgl::vector4;
 // ---- callees that live in other slices -----------------------------------------------------------
 void make_identity(float* m);                   // 0x40cd00  out-only 4x4 identity (cdecl)
 extern "C" double _floor(double v);             // 0x536b10  lib_crt::_floor
-float grid_round(float v);                      // 0x535a64  __ftol2 (int in eax, x87 arg)
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
 float g_tick_scale = 1e-5f;                    // 0x54a6d0  1e-05f  (tick -> seconds)

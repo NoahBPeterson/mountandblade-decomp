@@ -13,6 +13,8 @@
 #include <windows.h>
 #include <d3d9.h>
 #include <limits.h>
+#include <deque>
+#include <vector>
 #include "rgl.h"
 
 // the engine's 16-byte string (see s0049b630/tstring.h)
@@ -50,14 +52,17 @@ struct dev_rec {
 };
 
 // slots 0x04 (no-arg restore) and 0x20 (the state index stored in g_5d75e0)
-struct dev_item : dev_rec {
+// (a standalone vtable: deriving from dev_rec would put these after dev_rec's 19 slots)
+struct dev_item {
+    virtual void s00() = 0;
     virtual void restore() = 0;                  // +0x04
-    virtual int index() = 0;                     // +0x20
-};
-
-// the render device seen through slot 0x30 (set_index)
-struct dev_index : dev_rec {
-    virtual void set_index(unsigned char i) = 0; // +0x30
+    virtual void s08() = 0;
+    virtual void s0c() = 0;
+    virtual void s10() = 0;
+    virtual void s14() = 0;
+    virtual void s18() = 0;
+    virtual void s1c() = 0;
+    virtual unsigned char index() = 0;           // +0x20
 };
 
 struct gui_manager {
@@ -66,7 +71,7 @@ struct gui_manager {
 };
 extern gui_manager g_gui;                        // 0x5d7080
 
-extern dev_rec* g_dev_renderer;                  // 0xa17f28
+extern IDirect3DDevice9* g_dev_renderer;        // 0xa17f28 (slot 0x30 = ShowCursor)
 extern int g_windowed_setting;                   // 0xa17144
 extern int g_windowed_other;                     // 0xa17544
 extern unsigned char g_5d75e0;                   // 0x5d75e0
@@ -128,7 +133,7 @@ struct screen_cfg {
     __declspec(noinline) void apply();           // 0x4ca600
     dev_item* items[1];                          // +0x00: array of records, indexed by the queue
     char pad4[0x74];
-    paged req;                                   // +0x78
+    std::deque<int> req;                         // +0x78 (VC7.1 deque: allocator, map +4, mapsize +8, off +0xc, size +0x10)
 };
 extern screen_cfg g_screen;                      // 0xa73980
 
@@ -245,12 +250,10 @@ struct graph_obj {
     void remove_node(int i);                     // 0x4c8af0
     void edge_changed(int last, int i);          // 0x4c5840
     void edge_removed(int last);                 // 0x4c5940
-    char pad0[0x1c];
-    node* nodes;                                 // +0x1c
-    node* nodes_end;                             // +0x20
-    char pad24[0x18];
-    edge* edges;                                 // +0x3c
-    edge* edges_end;                             // +0x40
+    char pad0[0x18];
+    std::vector<node> nodes;                     // +0x18 (VC7.1 vector: allocator word, first +0x1c, last +0x20)
+    char pad28[0x10];
+    std::vector<edge> edges;                     // +0x38 (first +0x3c, last +0x40)
 };
 
 // @ 0x4ca550
@@ -287,10 +290,10 @@ void screen_cfg::apply()
     g_gui.set_state(0, 1);
     items[req.back()]->restore();
     req.pop_back();
-    if (req.count) {
+    if (!req.empty()) {
         unsigned char v = items[req.back()]->index();
         if (g_dev_renderer)
-            ((dev_index*)g_dev_renderer)->set_index(v);
+            g_dev_renderer->ShowCursor(v);
         g_5d75e0 = v;
     }
 }
@@ -384,18 +387,18 @@ void graph_obj::rebuild()
 {
     for (;;) {
         unsigned k;
-        for (k = 0; nodes != 0 && k < (nodes ? (unsigned)((nodes_end - nodes) / 0x18) : 0); k++)
+        for (k = 0; k < nodes.size(); k++)
             nodes[k].used = 0;
-        for (k = 0; edges != 0 && k < (edges ? (unsigned)((edges_end - edges) / 0x34) : 0); k++) {
+        for (k = 0; k < edges.size(); k++) {
             nodes[edges[k].a].used = 1;
             nodes[edges[k].b].used = 1;
         }
-        for (k = 0; nodes != 0 && k < (nodes ? (unsigned)((nodes_end - nodes) / 0x18) : 0); k++) {
+        for (k = 0;; k++) {
+            if (!(k < nodes.size()))
+                return;
             if (nodes[k].used == 0)
                 break;
         }
-        if (nodes != 0 && !(k < (nodes ? (unsigned)((nodes_end - nodes) / 0x18) : 0)))
-            return;
         remove_node(k);
     }
 }
@@ -403,13 +406,12 @@ void graph_obj::rebuild()
 // @ 0x4ca9b0
 void graph_obj::remove_edge(int i)
 {
-    int last = edges ? (int)((edges_end - edges) / 0x34) : 0;
-    last--;
+    int last = (int)edges.size() - 1;
     if (i != last) {
         edges[i] = edges[last];
         edge_changed(last, i);
     }
-    edges_end--;
+    edges.pop_back();
     rebuild();
     edge_removed(last);
 }

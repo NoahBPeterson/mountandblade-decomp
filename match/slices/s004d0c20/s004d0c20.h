@@ -75,7 +75,6 @@ struct growable_array {
     range10 head;                   // +8
     int f18;                        // +0x18
     range10 items[6];               // +0x1c
-    int f78;                        // +0x78
     int f7c;                        // +0x7c (-1)
     rgl::vector4 f80;               // +0x80 = (1,1,1) normalised
     int f90;                        // +0x90 = 1

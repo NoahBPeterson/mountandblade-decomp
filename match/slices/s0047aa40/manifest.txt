@@ -1,0 +1,1 @@
+slices/s0047aa40/s0047aa40.cpp  ?set_bone_index@mesh@@QAEXH@Z  0047b360  /O2 /MT /Gy /TP

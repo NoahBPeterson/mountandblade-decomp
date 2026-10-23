@@ -20,4 +20,4 @@
 004d129a ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
 004d12c0 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
 004d1330 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
-004d1360 ? listed byte-exact but chk.py does not MATCH (moved by fix_bookkeeping)
+004d1360	124	growable_array::growable_array, complete. reaudit b07: the layout was wrong (a stray `int f78` after items[6] pushed f7c/f80/f90 four bytes up, so the (1,1,1) vector4 + normalize landed at +0x84 and the equiv memory-pool mismatch at +08c was a REAL offset bug, not float rounding); items[5].spare now covers +0x78 as in the original. equiv PASS (400/400 valid, 0 mismatches, default and --fp-tol). Remaining diff is pure scheduling: cl hoists the vector4(1,1,1) temp stores ([esp+4..0x10], before the zero stores and the push edi) where the original emits the zero stores first and the temp at [esp+8..0x14]; the w lane (mov edx,[esp+0x14]) is an uninitialised stack copy in both builds (benign). Variants tried: f80 = vector4(...) directly, f0=0 first, member-wise stores (all 120-163 diff).

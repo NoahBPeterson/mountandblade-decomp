@@ -62,7 +62,6 @@ struct Node {                                       // the agent's scene object:
 
 // ---- helpers ----------------------------------------------------------------------------------------------
 int  clamp_int(int* v, int* lo, int* hi);           // 0x432510 (cdecl: max(lo, min(v, hi-1)))
-int  round_int(float f);                            // 0x535a64 (lib_crt _ftol2)
 
 // ---- globals ----------------------------------------------------------------------------------------------
 extern int g_shadow_enabled;                        // 0x5e28fc
@@ -91,6 +90,7 @@ struct View {
     int light_y;                                    // +0x24
     char pad28[0x1f0 - 0x28];
     void* sun_cam;                                  // +0x1f0
+    void read_pixel(IDirect3DDevice9* dev, int x, int y, float* a, float* b);   // 0x4641a0 (this is the shadow-map object itself)
     bool shadow_sample(const vector4* p, float* out);       // 0x4faee0
     void apply_sun_light(const vector4* pos, const float* scale);    // 0x4fb180
 };
@@ -105,41 +105,40 @@ struct ViewLight {
 // @ 0x4faee0
 bool View::shadow_sample(const vector4* p, float* out)
 {
-    static const int cells[18] = {
-        0, 1, 1, 0, 2, -2, -1, 1, -2, 0,
-        -1, -1, 0, 0, 1, 1, -1, 2
-    };
-    static const float w[9] = { 1.0f, 0.9f, 0.9f, 0.9f, 0.9f, 0.7f, 0.7f, 0.7f, 0.7f };
+    // (dx, dy) tap offsets: the original builds two int[9] tables on the stack (x then y)
+    int tx[9] = { 0, 1, 1, -1, -1, 2, -2, 0, 0 };
+    int ty[9] = { 0, 1, -1, 1, -1, 0, 0, 2, -2 };
+    float w[9] = { 1.0f, 0.9f, 0.9f, 0.9f, 0.9f, 0.7f, 0.7f, 0.7f, 0.7f };
 
+    bool ret = true;
     *out = 1.0f;
-    if (!sun_cam || !g_shadow_enabled || !light_src)
-        return false;
+    if (!sun_cam || !g_shadow_enabled || !light_src) {
+        ret = false;
+        return ret;
+    }
     Frustum* fr = (Frustum*)((char*)sun_cam + 0x10c);
-    matrix clip;
-    fr->to_clip((vector4*)&clip, p);
-    if (!(clip.o.x >= 0.0f && clip.o.x < 1.0f && clip.o.y >= 0.0f && clip.o.y < 1.0f))
-        return true;
-    int cx = round_int((1.0f - clip.o.y) * (float)light_y);
-    int cy = round_int(clip.o.x * (float)light_x);
+    vector4 clip;
+    fr->to_clip(&clip, p);
+    if (!(0.0f <= clip.x && clip.x < 1.0f && 0.0f <= clip.y && clip.y < 1.0f))
+        return ret;
+    int zero_x = 0;
     *out = 0.0f;
-    float depth = clip.o.z - 0.001f;
+    int px = (int)((float)light_x * clip.x);
+    int zero_y = 0;
+    int py = (int)((1.0f - clip.y) * (float)light_y);
+    float depth = clip.z - 0.001f;
     for (int i = 0; i < 9; i++) {
-        int lo = 0;
-        int x = cells[i * 2 + 1] + cx;
-        int y = cells[i * 2] + cy;
-        int cl = clamp_int(&y, &lo, &light_y);
-        int cl2 = clamp_int(&x, &lo, &light_x);
-        (void)cl;
-        unsigned a = 0, b = 0;
-        float s = 0.0f;
-        g_shadow->read_pixel(0, cl2, cl, &a, &b);
-        float t = (float)a * (1.0f / 255.0f);
-        (void)s;
-        if (!(t < depth))
+        int xv = tx[i] + px;
+        int yv = ty[i] + py;
+        float a, b;
+        int cy = clamp_int(&yv, &zero_y, &light_y);
+        int cx = clamp_int(&xv, &zero_x, &light_x);
+        read_pixel(g_device, cx, cy, &a, &b);
+        if (!(a < depth))
             *out += w[i];
     }
     *out = *out * 0.13513514f;
-    return true;
+    return ret;
 }
 
 // @ 0x4fb180

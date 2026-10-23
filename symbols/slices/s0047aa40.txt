@@ -1,13 +1,13 @@
 # slice s0047aa40 -- VA: description / callees
-0047aa40  rgl::mesh::transform(const rgl::matrix&)   [vtable 0x54a6f4 member, called with ret 0xc incl. hidden result]
-  callees: 0x411630 vector<int>::assign (faces), 0x412ee0 ensure_local, 0x40eba0 get70, 0x40ebd0 get50,
-           0x407d60 vector4::normalize, 0x412f50 add_point, 0x411920 add_face, 0x40e4e0 unpack_color,
+0047aa40  rgl::mesh::transform(rgl::mesh*, const rgl::matrix*, unsigned)   [ret 0xc: append a transformed, tinted copy of src]
+  callees: 0x411630 vector<int>::assign (faces), 0x412ee0 ensure_local, 0x40eba0 get70, 0x40ebd0 get50, 0x40ec30 get90,
+           0x407d60 vector4::normalize, 0x412f50 add_point, 0x411920 add_face, 0x40e4e0 unpack_color, 0x40e440 pack_color,
            0x411420 vector<vertex60>::push_back, 0x419300 compute_bounds
   writes: this+0xa0 (local face flag), +0x138, +0x164
-0047af30  rgl::mesh::set_color(const rgl::vector4&)
+0047af30  rgl::mesh::set_color(rgl::vector4)   [vector4 by value, ret 0x10]
   callees: 0x412ee0 ensure_local, 0x4779b0 refresh_slots, 0x416f70 aabb::update (this+0x22c)
   reads:  0x5e28fc g_use_shaders
-  writes: +0x70 list, +0xa4 key-frames, vertex +0x30/+0x20 (always) and +0x10/+0x00 (shader path),
+  writes: +0x70 list, +0xa4 key-frames, vertex +0x30 and +0x00 (always) and +0x10/+0x20 (shader path),
           +0x138, +0x22c..+0x234, +0x23c..+0x244
 0047b360  rgl::mesh::set_bone_index(int)
   callees: 0x412ee0 ensure_local
