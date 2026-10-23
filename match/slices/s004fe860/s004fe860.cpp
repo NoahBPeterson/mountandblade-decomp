@@ -26,7 +26,6 @@ float g_one;                                        // 0x549cdc   1.0f
 float g_hundred;                                    // 0x54ab28 100.0f
 float g_color_unit;                                 // 0x54a6c4   1/255
 
-char* __cdecl rcvt(float v);                        // 0x535a64 float -> decimal string
 
 int  sel_count();                                   // 0x40f010
 void sel_push(int i);                               // 0x438bf0
@@ -223,9 +222,9 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETRANGE, TRUE, MAKELONG(0, 100));
         SendMessageA(GetDlgItem(hDlg, 0x477), TBM_SETRANGE, TRUE, MAKELONG(0, 100));
         SendMessageA(GetDlgItem(hDlg, 0x472), TBM_SETRANGE, TRUE, MAKELONG(0, 100));
-        SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)rcvt(g_one));
-        SendMessageA(GetDlgItem(hDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)rcvt(g_one));
-        SendMessageA(GetDlgItem(hDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)rcvt(g_one));
+        SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(g_one));
+        SendMessageA(GetDlgItem(hDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(g_one));
+        SendMessageA(GetDlgItem(hDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(g_one));
         SendMessageA(GetDlgItem(hDlg, 0x4c8), TBM_SETRANGE, TRUE, MAKELONG(0, 255));
         SendMessageA(GetDlgItem(hDlg, 0x4c9), TBM_SETRANGE, TRUE, MAKELONG(0, 255));
         SendMessageA(GetDlgItem(hDlg, 0x4ca), TBM_SETRANGE, TRUE, MAKELONG(0, 255));
@@ -392,13 +391,13 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         {
             float v1 = g_game->my, v2 = g_game->sy, v3 = g_game->ty;
             char buf[512];
-            SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_SETPOS, TRUE, (LPARAM)rcvt(v1));
+            SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
             _sprintf(buf, "%1.0f", (double)v1);
             SetWindowTextA(GetDlgItem(view_hwnd, 0x47f), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_SETPOS, TRUE, (LPARAM)rcvt(v2 * g_hundred));
+            SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v2);
             SetWindowTextA(GetDlgItem(view_hwnd, 0x480), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_SETPOS, TRUE, (LPARAM)rcvt(v3 * g_hundred));
+            SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v3);
             SetWindowTextA(GetDlgItem(view_hwnd, 0x482), buf);
         }
@@ -417,13 +416,13 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         {
             float v1 = g_game->mx, v2 = g_game->sx, v3 = g_game->tx;
             char buf[512];
-            SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_SETPOS, TRUE, (LPARAM)rcvt(v1));
+            SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
             _sprintf(buf, "%1.0f", (double)v1);
             SetWindowTextA(GetDlgItem(view_hwnd, 0x47f), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_SETPOS, TRUE, (LPARAM)rcvt(v2 * g_hundred));
+            SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v2);
             SetWindowTextA(GetDlgItem(view_hwnd, 0x480), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_SETPOS, TRUE, (LPARAM)rcvt(v3 * g_hundred));
+            SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v3);
             SetWindowTextA(GetDlgItem(view_hwnd, 0x482), buf);
         }
@@ -436,13 +435,13 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         {
             float v1 = g_game->mz, v2 = g_game->sz, v3 = g_game->tz;
             char buf[512];
-            SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_SETPOS, TRUE, (LPARAM)rcvt(v1));
+            SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
             _sprintf(buf, "%1.0f", (double)v1);
             SetWindowTextA(GetDlgItem(view_hwnd, 0x47f), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_SETPOS, TRUE, (LPARAM)rcvt(v2 * g_hundred));
+            SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v2);
             SetWindowTextA(GetDlgItem(view_hwnd, 0x480), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_SETPOS, TRUE, (LPARAM)rcvt(v3 * g_hundred));
+            SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v3);
             SetWindowTextA(GetDlgItem(view_hwnd, 0x482), buf);
         }

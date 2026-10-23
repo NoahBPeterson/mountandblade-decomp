@@ -31,7 +31,6 @@ struct tstring : rgl::string {
 };
 extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0x536f8f
 extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0x535fe4
-int ftol(float v);                                                          // 0x535a64 (x87 argument, int in eax)
 
 // ---- controls (layouts verified in s004d5ba0 / s004d63b0 / s004d6b80) --------------------------------
 // set_text returns an 8-byte object through a hidden pointer that no caller destroys: a non-POD pair (a user
