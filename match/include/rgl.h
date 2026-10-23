@@ -37,9 +37,10 @@ struct matrix {
     vector4 transform_point_to_local(const vector4& p) const;               // 0x407f70
 };
 
-// 16 bytes; ctor from a C string at 0x42bbe0 (zeroes all four dwords, then copies). Fields unverified.
+// 16 bytes; ctor from a C string at 0x42bbe0 (zeroes all four dwords, then copies). Layout from the
+// disassembly (0x4f34c0 and src/rgl): pos +0, buffer +4, capacity +8, length +0xc.
 struct string {
-    char* p; int size, cap, extra;
+    int pos; char* p; int cap, size;
     string(const char* s);                                                  // 0x42bbe0
 };
 
