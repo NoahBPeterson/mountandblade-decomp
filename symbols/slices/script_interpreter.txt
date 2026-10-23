@@ -1,0 +1,12 @@
+# extra name -> address facts for the scratch resolution audit of src/game/script (addresses above the annotation
+# range 0x1900000, and names no symbols/ file lists)
+08ee30ec ?g_in_meta_mission@@3DA
+08ed50c8 ?g_dialogs@@3UDialogMgrX@@A
+08ed50d4 ?g_conversation_troop@@3HA
+08ed50d8 ?g_encountered_party@@3HA
+08ed50dc ?g_conversation_agent@@3HA
+08ed4f88 ?g_skin_count@@3HA
+08ed4f58 ?g_meshes@@3PAUMeshRec@@A
+08ed5090 ?g_particle_mgr@@3UParticleMgr@@A
+08ed4f5c ?g_mesh_count@@3HA
+08ed5094 ?g_particle_system_count@@3HA
