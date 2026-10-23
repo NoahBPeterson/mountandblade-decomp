@@ -117,7 +117,7 @@ struct graph_obj {
     void remove_node(int i);                     // 0x4c8af0
     void rebuild();                              // 0x4ca8c0
     void remove_edge(int i);                     // 0x4ca9b0
-    bool combine(int k, int o);                  // 0x4caa40
+    bool combine();                              // 0x4caa40
     bool split_edge(int e);                      // 0x4cb3a0
     void clear_vecs();                           // 0x4cb780
     void clean();                                // 0x4cb840

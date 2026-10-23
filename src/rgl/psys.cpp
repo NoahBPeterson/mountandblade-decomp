@@ -59,6 +59,10 @@ mesh* mesh_pool::get_mesh(skin* r)
     return m;
 }
 
+static __forceinline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 vsubl(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+static __forceinline vector4 vmul(const vector4& a, const float& k) { return vector4(a.x * k, a.y * k, a.z * k); }
+
 static __forceinline float curve(float t, const curve4& c)
 {
     if (t < c.t0)
@@ -67,6 +71,14 @@ static __forceinline float curve(float t, const curve4& c)
         return c.v1;
     return (c.v1 - c.v0) * ((t - c.t0) / (c.t1 - c.t0)) + c.v0;
 }
+
+// the out-of-line chain accessors (0x40eba0, 0x40ebd0, 0x40ec30): emit tests the local flag itself and calls them on
+// the parent (mesh.h's inline get70() would expand one level more)
+struct mesh_acc : rgl::mesh {
+    std::vector<point20>& get70_();     // 0x40eba0
+    std::vector<vertex60>& get50_();    // 0x40ebd0
+    std::vector<face20>& get90_();      // 0x40ec30
+};
 
 // out-of-line std::vector<vertex60> append (push_back's slow path), called by the original
 struct vertex_vec : std::vector<vertex60> { void push_ext(const vertex60& v); };   // 0x411420
@@ -110,9 +122,9 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
         t.z = f->x * 0.0f - f->y * 0.0f;
         m->s = t;
         m->s.normalize();
-        t.x = m->s.z * f->y - m->s.y * f->z;
-        t.y = m->s.x * f->z - m->s.z * f->x;
-        t.z = m->s.y * f->x - f->y * m->s.x;
+        t.x = f->z * m->s.y - m->s.z * f->y;
+        t.y = m->s.z * f->x - f->z * m->s.x;
+        t.z = f->y * m->s.x - m->s.y * f->x;
         m->u = t;
         m->rotate_about_f(&p->rot);
     } else if (type == 0x300) {
@@ -158,7 +170,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
         m->o = p->pos;
         int npoints = out->v70.size();
         int nverts = out->v50.size();
-        std::vector<point20>& pts = src->local_a1 ? src->v70 : src->parent->get70();
+        std::vector<point20>& pts = src->local_a1 ? src->v70 : ((mesh_acc*)src->parent)->get70_();
         for (unsigned i = 0; i < pts.size(); i++) {
             float k = size * p->scale;
             float x = k * pts[i].a.x;
@@ -169,7 +181,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             c.col[2] = (y * m->f.z + (z * m->u.z + x * m->s.z)) + m->o.z;
             out->add_point((const vector4*)c.col);
         }
-        std::vector<vertex60>& vts = src->local_a1 ? src->v50 : src->parent->get50();
+        std::vector<vertex60>& vts = src->local_a1 ? src->v50 : ((mesh_acc*)src->parent)->get50_();
         for (unsigned i = 0; i < vts.size(); i++) {
             vertex60 vx = vts[i];
             float dx = m->s.x * vts[i].pos.x + (m->f.x * vts[i].pos.y + m->u.x * vts[i].pos.z);
@@ -183,35 +195,23 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             vx.color = color;
             ((vertex_vec*)&out->v50)->push_ext(vx);
         }
-        std::vector<face20>& fcs = src->local_a0 ? src->v90 : src->parent->get90();
+        std::vector<face20>& fcs = src->local_a0 ? src->v90 : ((mesh_acc*)src->parent)->get90_();
         for (unsigned i = 0; i < fcs.size(); i++)
             out->add_face(fcs[i].a + nverts, fcs[i].b + nverts, fcs[i].c + nverts);
     } else {
         // camera-facing quad: half-width along s, half-height along u
-        float hu_x = ((half_h * m->u.x) * size) * p->scale;
-        float hu_y = ((m->u.y * half_h) * size) * p->scale;
-        float hu_z = ((m->u.z * half_h) * size) * p->scale;
-        float hs_x = (half_w * m->s.x) * size;
-        float hs_xs = hs_x * p->scale;
-        float hs_y = ((m->s.y * half_w) * size) * p->scale;
-        float hs_z = ((m->s.z * half_w) * size) * p->scale;
-        c.col[0] = (hu_x + p->pos.x) + hs_xs;
-        c.col[1] = (hu_y + p->pos.y) + hs_y;
-        c.col[2] = (hu_z + p->pos.z) + hs_z;
+        vector4 hs0 = vmul(m->s, half_w);
+        vector4 hu0 = vmul(m->u, half_h);
+        vector4 hu = vmul(vmul(hu0, size), p->scale);
+        vector4 hs = vmul(vmul(hs0, size), p->scale);
+        c.col[0] = (hu.x + p->pos.x) + hs.x; c.col[1] = (hu.y + p->pos.y) + hs.y; c.col[2] = (hu.z + p->pos.z) + hs.z;
         c.idx[0] = out->add_point((const vector4*)c.col);
-        vector4 vb;
-        vb.x = (hu_x + p->pos.x) - hs_xs;
-        vb.y = (hu_y + p->pos.y) - hs_y;
-        vb.z = (hu_z + p->pos.z) - hs_z;
+        vector4 vb = vsubl(vadd(hu, p->pos), hs);
         c.idx[1] = out->add_point(&vb);
-        vb.x = (p->pos.x - hu_x) - hs_xs;
-        vb.y = (p->pos.y - hu_y) - hs_y;
-        vb.z = (p->pos.z - hu_z) - hs_z;
-        c.idx[2] = out->add_point(&vb);
-        vb.x = (p->pos.x - hu_x) + hs_xs;
-        vb.y = (p->pos.y - hu_y) + hs_y;
-        vb.z = (p->pos.z - hu_z) + hs_z;
-        c.idx[3] = out->add_point(&vb);
+        vector4 vc = vsubl(vsubl(p->pos, hu), hs);
+        c.idx[2] = out->add_point(&vc);
+        vector4 vd = vadd(vsubl(p->pos, hu), hs);
+        c.idx[3] = out->add_point(&vd);
         unsigned colorv;
         int f5c;
         int v0, v1, v2, v3;

@@ -425,180 +425,93 @@ void Game::init_map()
 }
 
 // @ 0x51d3a0
+// Zone numbering over the node graph: nodes whose class mask equals *arg3 are the 0x5f5e0ff "blocked" zone; the
+// others are flood-filled into numbered zones (find_trigger decides what a blocked neighbour contributes) and two
+// zones met through one node are merged. The special zone's members are then walked.
 void NavGraph::solve(int* arg1, int* arg2, int* arg3)
 {
-    int iVar1, iVar4, iVar6, iVar8, iVar10;
-    unsigned uVar9, uVar11;
-    int *piVar2, *piVar3;
-    int *local_1c, *local_4;
-    int local_30 = 0, local_2c, local_28, local_24, local_20, local_18, local_14, local_10, local_c, local_8;
-    int* pb;
-    int puVar5, puVar7;
-
-    local_20 = -1;
-    iVar4 = 0;
-    for (uVar9 = 0; ; uVar9++) {
-        pb = (int*)nodes;
-        if (pb == 0)
-            break;
-        if ((unsigned)(((int)nodes_end - (int)pb) / 0x88) <= uVar9)
-            break;
-        *(int*)((char*)pb + iVar4 + 0x48) = -1;
-        *(int*)((char*)pb + iVar4 + 0x4c) = -1;
-        *(int*)((char*)pb + iVar4 + 0x50) = -1;
-        iVar4 += 0x88;
+    std::vector<NavNode>& nv = vec();
+    int zone = -1;
+    unsigned i;
+    for (i = 0; i < nv.size(); i++) {
+        nv[i].cost = -1;
+        nv[i].prev = -1;
+        nv[i].next = -1;
     }
-    iVar4 = 0;
-    pb = (int*)nodes;
-    if (pb != 0)
-        iVar4 = ((int)nodes_end - (int)pb) / 0x88;
-    local_1c = new int[iVar4];
-    iVar4 = 0;
-    pb = (int*)nodes;
-    if (pb != 0)
-        iVar4 = ((int)nodes_end - (int)pb) / 0x88;
-    local_4 = new int[iVar4];
-
-    local_2c = -1;
-    local_18 = 0;
-    for (;;) {
-        for (;;) {
-            if ((int)nodes == 0 ||
-                (unsigned)(((int)nodes_end - (int)nodes) / 0x88) <= (unsigned)local_18) {
-                for (iVar4 = 0; ; iVar4++) {
-                    if ((int)nodes == 0 ||
-                        (unsigned)(((int)nodes_end - (int)nodes) / 0x88) <= (unsigned)iVar4)
-                        break;
-                    if (*(int*)((int)nodes + iVar4 * 0x88 + 0x48) == 0x5f5e0ff) {
-                        local_14 = 0;
-                        *local_4 = iVar4;
-                        walk(&iVar4, &iVar4, local_4, &local_14);
-                    }
-                }
-                operator delete[](local_1c);
-                operator delete[](local_4);
-                return;
-            }
-            iVar4 = 0;
-            uVar9 = (unsigned)local_18;
-            if (local_2c >= 0) {
-                uVar9 = (unsigned)local_1c[local_2c];
-                local_18--;
-                local_2c--;
-            }
-            iVar6 = (int)nodes;
-            piVar3 = (int*)(uVar9 * 0x88 + iVar6);
-            local_30 = (int)uVar9;
-            if (piVar3[0x12] >= 0) {
-                local_18++;
-                continue;
-            }
-            break;
+    int* stack = new int[nv.size()];
+    int* path = new int[nv.size()];
+    int top = -1;
+    for (int ctr = 0; (unsigned)ctr < nv.size(); ctr++) {
+        int cur = ctr;
+        if (top >= 0) {
+            cur = stack[top];
+            ctr--;
+            top--;
         }
-
-        if (piVar3[9] != *arg3) {
-            local_24 = -1;
-            local_8 = 0;
-            if (*piVar3 < 1)
-                goto lab67a;
-            {
-                local_28 = 0x38;
-                do {
-                    piVar2 = arg3;
-                    local_10 = *(int*)(local_28 - 0x10 + (int)piVar3);
-                    puVar5 = local_24;
-                    if (local_10 >= 0) {
-                        puVar7 = -1;
-                        if (*(int*)(local_10 * 0x88 + iVar6 + 0x24) == *arg3) {
-                            local_14 = 0;
-                            *local_4 = (int)uVar9;
-                            puVar7 = (int)find_trigger(&local_10, &local_30, local_4, &local_14, (unsigned*)arg1, (unsigned*)arg2, arg3);
-                            uVar9 = (unsigned)local_30;
-                        }
-                        iVar4 = (int)nodes;
-                        if (*(float*)(uVar9 * 0x88 + iVar4 + local_28) < 1e9f ||
-                            (uVar9 = (unsigned)local_30, puVar5 = local_24,
-                             *(int*)(local_10 * 0x88 + iVar4 + 0x24) == *piVar2)) {
-                            if (puVar7 < 0 && *(int*)(local_10 * 0x88 + iVar4 + 0x24) != *piVar2)
-                                puVar7 = *(int*)(local_10 * 0x88 + iVar4 + 0x48);
-                            if (*(int*)(local_10 * 0x88 + iVar4 + 0x48) < 0) {
-                                local_2c++;
-                                *(int*)((char*)local_1c + local_2c * 4) = local_10;
-                            }
-                            uVar9 = (unsigned)local_30;
-                            puVar5 = puVar7;
-                            if (local_24 >= 0 && puVar7 >= 0 && local_24 != puVar7) {
-                                local_20--;
-                                if (puVar7 < local_24) {
-                                    local_c = local_24;
-                                    local_24 = puVar7;
-                                } else {
-                                    local_c = puVar7;
-                                }
-                                iVar4 = 0;
-                                uVar11 = 0;
-                                while ((int)nodes != 0 &&
-                                       uVar11 < (unsigned)(((int)nodes_end - (int)nodes) / 0x88)) {
-                                    puVar5 = *(int*)((int)nodes + iVar4 + 0x48);
-                                    iVar6 = (int)nodes + iVar4;
-                                    if (local_c < puVar5) {
-                                        if (puVar5 == 0x5f5e0ff) {
-                                            puVar5 = *(int*)(iVar6 + 0x48);
-                                            goto lab725;
-                                        }
-                                        uVar11++;
-                                        *(int*)(iVar6 + 0x48) = puVar5 - 1;
-                                        iVar4 += 0x88;
-                                    } else {
-lab725:
-                                        if (puVar5 == local_c)
-                                            *(int*)(iVar6 + 0x48) = local_24;
-                                        uVar11++;
-                                        iVar4 += 0x88;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    local_24 = puVar5;
-                    local_28 += 4;
-                    iVar6 = (int)nodes;
-                    piVar3 = (int*)(uVar9 * 0x88 + iVar6);
-                    local_8++;
-                } while (local_8 < *piVar3);
-                puVar5 = local_24;
-                if (local_24 < 0)
-                    goto lab67a;
-                *(int*)(uVar9 * 0x88 + (int)nodes + 0x48) = puVar5;
-                goto lab693;
-            lab67a:
-                puVar5 = local_20 + 1;
-                local_20 = puVar5;
-                *(int*)(uVar9 * 0x88 + (int)nodes + 0x48) = puVar5;
-            lab693:
-                local_18++;
+        if (nv[cur].cost >= 0)
+            continue;
+        if (nv[cur].mask == *arg3) {
+            nv[cur].cost = 0x5f5e0ff;
+            for (int k = 0; k < nv[cur].count; k++) {
+                int nb = nv[cur].nb[k];
+                if (nb >= 0 && nv[nb].cost < 0)
+                    stack[++top] = nb;
             }
         } else {
-            piVar3[0x12] = 0x5f5e0ff;
-            iVar6 = (int)nodes;
-            iVar10 = (int)uVar9 * 0x88;
-            if (*(int*)(iVar10 + iVar6) >= 1) {
-                iVar8 = 0x28;
-                iVar4 = 0;
-                do {
-                    iVar1 = *(int*)(iVar10 + iVar6 + iVar8);
-                    if (iVar1 >= 0 && *(int*)(iVar1 * 0x88 + iVar6 + 0x48) < 0) {
-                        local_2c++;
-                        *(int*)((char*)local_1c + local_2c * 4) = iVar1;
+            int comp = -1;
+            for (int k = 0; k < nv[cur].count; k++) {
+                int nb = nv[cur].nb[k];
+                if (nb < 0)
+                    continue;
+                int res = -1;
+                if (nv[nb].mask == *arg3) {
+                    int cnt = 0;
+                    path[0] = cur;
+                    res = find_trigger(&nb, &cur, path, &cnt, (unsigned*)arg1, (unsigned*)arg2, arg3);
+                }
+                if (!(nv[cur].weight[k] < 1e9f) && nv[nb].mask != *arg3)
+                    continue;
+                if (res < 0 && nv[nb].mask != *arg3)
+                    res = nv[nb].cost;
+                if (nv[nb].cost < 0)
+                    stack[++top] = nb;
+                if (comp < 0) {
+                    comp = res;
+                    continue;
+                }
+                if (res < 0 || comp == res)
+                    continue;
+                zone--;
+                int hi = comp;
+                if (comp > res)
+                    comp = res;
+                else
+                    hi = res;
+                for (i = 0; i < nv.size(); i++) {
+                    int c = nv[i].cost;
+                    if (c > hi) {
+                        if (c != 0x5f5e0ff)
+                            nv[i].cost = c - 1;
+                    } else if (c == hi) {
+                        nv[i].cost = comp;
                     }
-                    iVar6 = (int)nodes;
-                    iVar4++;
-                    iVar8 += 4;
-                } while (iVar4 < *(int*)(iVar10 + iVar6));
+                }
             }
-            local_18++;
+            if (comp < 0)
+                comp = ++zone;
+            nv[cur].cost = comp;
         }
     }
+    for (i = 0; i < nv.size(); i++) {
+        if (nv[i].cost == 0x5f5e0ff) {
+            int cnt = 0;
+            *path = (int)i;
+            int ii = (int)i;
+            walk(&ii, &ii, path, &cnt);
+        }
+    }
+    delete[] stack;
+    delete[] path;
 }
 
 // @ 0x51d7c0

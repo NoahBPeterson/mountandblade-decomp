@@ -16,10 +16,10 @@ void screen_cfg::apply()
     g_gui.set_o568(0, true);
     items[req.back()]->restore();
     req.pop_back();
-    if (req.count) {
+    if (!req.empty()) {
         unsigned char v = items[req.back()]->index();
         if (g_dev_renderer)
-            ((dev_index*)g_dev_renderer)->set_index(v);
+            g_dev_renderer->ShowCursor(v);
         g_5d75e0 = v;
     }
 }
@@ -96,34 +96,31 @@ void big_holder::release()
 // @ 0x4ca8c0
 void graph_obj::rebuild()
 {
-    for (;;) {
-        unsigned k;
-        for (k = 0; nodes != 0 && k < (nodes ? (unsigned)((nodes_end - nodes) / 0x18) : 0); k++)
-            nodes[k].flag = 0;
-        for (k = 0; edges != 0 && k < (edges ? (unsigned)((edges_end - edges) / 0x34) : 0); k++) {
-            nodes[edges[k].a].flag = 1;
-            nodes[edges[k].b].flag = 1;
+again:
+    unsigned i;
+    for (i = 0; i < nodev().size(); i++)
+        nodev()[i].flag = 0;
+    for (i = 0; i < edgev().size(); i++) {
+        nodev()[edgev()[i].a].flag = 1;
+        nodev()[edgev()[i].b].flag = 1;
+    }
+    for (i = 0; i < nodev().size(); i++) {
+        if (nodev()[i].flag == 0) {
+            remove_node(i);
+            goto again;
         }
-        for (k = 0; nodes != 0 && k < (nodes ? (unsigned)((nodes_end - nodes) / 0x18) : 0); k++) {
-            if (nodes[k].flag == 0)
-                break;
-        }
-        if (nodes != 0 && !(k < (nodes ? (unsigned)((nodes_end - nodes) / 0x18) : 0)))
-            return;
-        remove_node(k);
     }
 }
 
 // @ 0x4ca9b0
 void graph_obj::remove_edge(int i)
 {
-    int last = edges ? (int)((edges_end - edges) / 0x34) : 0;
-    last--;
+    int last = edgev().size() - 1;
     if (i != last) {
-        edges[i] = edges[last];
+        edgev()[i] = edgev()[last];
         swap_poly_normals(last, i);
     }
-    edges_end--;
+    edgev().pop_back();
     rebuild();
     remove_vertex_from_polys(last);
 }
@@ -134,51 +131,62 @@ void graph_obj::remove_edge(int i)
 #define EDGES(g) ((g)->edges ? (int)((g)->edges_end - (g)->edges) : 0)
 
 // @ 0x4caa40
-bool graph_obj::combine(int k, int o)
+// Welds the two selected vertices (or the two ends of the one selected edge) into one: the second is swapped to the
+// end of the node table, its position merged into the first, every edge / face reference redirected, the last node
+// removed; then edges that now run between the same two nodes are merged.
+bool graph_obj::combine()
 {
-    int count = 0;
-    int picked[2];
-    int sel = -1;
-    bool eo = false;
-    bool ek = false;
-    bool twice = false;
-
-    if (edges) {
-        for (int i = 0; i < EDGES(this); i++) {
-            if (edges[i].n) {
-                if (count < 2) {
-                    picked[count] = i;
-                    o = edges[i].b;
-                }
+    int sel;
+    int count;
+    bool ek;
+    bool eo;
+    bool twice;
+    int p[2];
+    unsigned i;
+    // the three scratch objects share one frame block (the original keeps them apart: 0x2c / 0x3c / 0x54)
+    struct { rgl::vector4 avg; node t; edge te; } L;
+    count = 0;
+    ek = false;
+    eo = false;
+    twice = false;
+    sel = -1;
+    if (mode == 0) {
+        for (i = 0; i < nodev().size(); i++) {
+            if (nodev()[i].used) {
+                if (count < 2)
+                    p[count] = i;
                 count++;
             }
         }
     } else {
-        for (int i = 0; i < NODES(this); i++) {
-            if (nodes[i].used) {
-                if (count < 2)
-                    picked[count] = i;
-                count++;
+        for (i = 0; i < edgev().size(); i++) {
+            if (edgev()[i].sel) {
+                if (count < 2) {
+                    p[0] = edgev()[i].a;
+                    p[1] = edgev()[i].b;
+                }
+                count += 2;
             }
         }
     }
+    int o = p[1];
     if (count != 2)
         return false;
-
-    bool other_k = picked[0] == k;
-    bool other_o = o == k;
-    if (!other_k)
-        other_o = o == o;
-
-    for (int i = 0; i < EDGES(this); i++) {
+    bool pk = false;
+    bool po = false;
+    if (p[0] == cur)
+        pk = true;
+    else if (o == cur)
+        po = true;
+    for (i = 0; i < edgev().size(); i++) {
         int hits = 0;
-        if (edges[i].a == k || edges[i].b == k) {
+        if (edgev()[i].a == p[0] || edgev()[i].b == p[0]) {
             hits = 1;
-            if (edges[i].n == 1)
+            if (edgev()[i].n == 1)
                 ek = true;
         }
-        if (edges[i].a == o || edges[i].b == o) {
-            if (edges[i].n == 1)
+        if (edgev()[i].a == o || edgev()[i].b == o) {
+            if (edgev()[i].n == 1)
                 eo = true;
             hits++;
         }
@@ -187,109 +195,103 @@ bool graph_obj::combine(int k, int o)
             sel = i;
         }
     }
-
     if (twice) {
-        swap_face_vertices(o, k);
-        swap_poly_colors(o, k);
-        swap_poly_normals(sel, NODES(this) - 1);
-
-        node f = *(node*)&faces[k];
-        nodes[k] = nodes[NODES(this) - 1];
-        *(node*)&faces[NODES(this) - 1] = f;
-
-        edge t = edges[sel];
-        edges[sel] = edges[EDGES(this) - 1];
-        edges[EDGES(this) - 1] = t;
-
-        k = NODES(this) - 1;
-        int last = EDGES(this) - 1;
-        if (!other_o) {
-            if (!other_k) {
-                nodes[o].x = (nodes[o].x + nodes[k].x) * 0.5f;
-                nodes[o].y = (nodes[o].y + nodes[k].y) * 0.5f;
-                nodes[o].z = (nodes[o].z + nodes[k].z) * 0.5f;
+        swap_face_vertices(o, nodev().size() - 1);
+        swap_poly_colors(o, nodev().size() - 1);
+        swap_poly_normals(sel, edgev().size() - 1);
+        L.t = nodev()[o];
+        nodev()[o] = nodev()[nodev().size() - 1];
+        nodev()[nodev().size() - 1] = L.t;
+        L.te = edgev()[sel];
+        edgev()[sel] = edgev()[edgev().size() - 1];
+        edgev()[edgev().size() - 1] = L.te;
+        o = nodev().size() - 1;
+        sel = edgev().size() - 1;
+        if (po) {
+            *(rgl::vector4*)&nodev()[p[0]] = *(rgl::vector4*)&nodev()[o];
+        } else if (!pk) {
+            L.avg.x = (nodev()[p[0]].x + nodev()[o].x) * HALF;
+            L.avg.y = (nodev()[p[0]].y + nodev()[o].y) * HALF;
+            L.avg.z = (nodev()[p[0]].z + nodev()[o].z) * HALF;
+            *(rgl::vector4*)&nodev()[p[0]] = L.avg;
+        }
+        for (i = 0; i < edgev().size(); i++) {
+            if (edgev()[i].a == o) {
+                if ((int)i != sel)
+                    edgev()[i].a = p[0];
+            } else if (edgev()[i].b == o && (int)i != sel) {
+                edgev()[i].b = p[0];
             }
         }
-        for (int i = 0; i < EDGES(this); i++) {
-            if (edges[i].a == k) {
-                if (i != last)
-                    edges[i].a = o;
-            } else if (edges[i].b == k && i != last) {
-                edges[i].b = o;
+        for (i = 0; i < facev().size(); i++) {
+            int j;
+            for (j = 0; j < facev()[i].count; j++) {
+                if (facev()[i].verts[j] == o)
+                    facev()[i].verts[j] = p[0];
             }
-        }
-        for (int i = 0; i < FACES(this); i++) {
-            for (int j = 0; j < faces[i].verts[8]; j++) {
-                if (faces[i].verts[j] == k)
-                    faces[i].verts[j] = o;
-            }
-            for (j = 0; j < faces[i].ends[8]; j++) {
-                if (faces[i].ends[j] == sel) {
-                    if (faces[i].ends[8] == 4) {
-                        for (int m = j + 1; m < faces[i].ends[8]; m++) {
-                            faces[i].ends[m - 1] = faces[i].ends[m];
-                            faces[i].verts[m + 2] = faces[i].verts[m + 3];
+            for (j = 0; j < facev()[i].count; j++) {
+                if (facev()[i].ends[j] == sel) {
+                    if (facev()[i].count == 4) {
+                        for (int m = j + 1; m < facev()[i].count; m++) {
+                            facev()[i].ends[m - 1] = facev()[i].ends[m];
+                            facev()[i].verts[m - 1] = facev()[i].verts[m];
                         }
-                        faces[i].ends[8]--;
+                        facev()[i].count--;
                     }
                     break;
                 }
             }
         }
-        remove_node(k);
     } else {
-        if (!ek || !eo)
+        if (!ek)
             return false;
-
-        swap_face_vertices(o, k);
-        swap_poly_colors(o, k);
-
-        node f = *(node*)&faces[k];
-        nodes[k] = nodes[NODES(this) - 1];
-        *(node*)&faces[NODES(this) - 1] = f;
-
-        k = NODES(this) - 1;
-        if (!other_o) {
-            if (!other_k) {
-                nodes[o].x = (nodes[o].x + nodes[k].x) * 0.5f;
-                nodes[o].y = (nodes[o].y + nodes[k].y) * 0.5f;
-                nodes[o].z = (nodes[o].z + nodes[k].z) * 0.5f;
+        if (!eo)
+            return false;
+        swap_face_vertices(o, nodev().size() - 1);
+        swap_poly_colors(o, nodev().size() - 1);
+        L.t = nodev()[o];
+        nodev()[o] = nodev()[nodev().size() - 1];
+        nodev()[nodev().size() - 1] = L.t;
+        o = nodev().size() - 1;
+        if (po) {
+            *(rgl::vector4*)&nodev()[p[0]] = *(rgl::vector4*)&nodev()[o];
+        } else if (!pk) {
+            L.avg.x = (nodev()[o].x + nodev()[p[0]].x) * HALF;
+            L.avg.y = (nodev()[p[0]].y + nodev()[o].y) * HALF;
+            L.avg.z = (nodev()[p[0]].z + nodev()[o].z) * HALF;
+            *(rgl::vector4*)&nodev()[p[0]] = L.avg;
+        }
+        for (i = 0; i < edgev().size(); i++) {
+            if (edgev()[i].a == o)
+                edgev()[i].a = p[0];
+            else if (edgev()[i].b == o)
+                edgev()[i].b = p[0];
+        }
+        for (i = 0; i < facev().size(); i++) {
+            for (int j = 0; j < facev()[i].count; j++) {
+                if (facev()[i].verts[j] == o)
+                    facev()[i].verts[j] = p[0];
             }
         }
-        for (int i = 0; i < EDGES(this); i++) {
-            if (edges[i].a == k)
-                edges[i].a = o;
-            else if (edges[i].b == k)
-                edges[i].b = o;
-        }
-        for (int i = 0; i < FACES(this); i++) {
-            for (int j = 0; j < faces[i].verts[8]; j++) {
-                if (faces[i].verts[j] == k)
-                    faces[i].verts[j] = o;
-            }
-        }
-        remove_node(k);
     }
-
-    for (;;) {
-        int i = 0;
-        for (; i < EDGES(this); i++) {
-            if (edges[i].a == o || edges[i].b == o) {
-                for (int j = i + 1; j < EDGES(this); j++) {
-                    int c = edges[i].a;
-                    if (c == edges[j].a || c == edges[j].b) {
-                        if (edges[i].b == edges[j].a || edges[i].b == edges[j].b)
-                            break;
+    remove_node(o);
+    unsigned a;
+    unsigned b;
+again:
+    for (a = 0; a < edgev().size(); a++) {
+        for (b = a + 1; b < edgev().size(); b++) {
+            if ((edgev()[a].a == edgev()[b].a || edgev()[a].a == edgev()[b].b) &&
+                (edgev()[a].b == edgev()[b].a || edgev()[a].b == edgev()[b].b)) {
+                for (i = 0; i < facev().size(); i++) {
+                    for (int j = 0; j < facev()[i].count; j++) {
+                        if (facev()[i].ends[j] == (int)b)
+                            facev()[i].ends[j] = a;
                     }
                 }
-                if (j < EDGES(this)) {
-                    remove_edge(j);
-                    break;
-                }
+                remove_edge(b);
+                goto again;
             }
         }
-        if (i >= EDGES(this))
-            break;
     }
     finish();
     return true;
@@ -434,34 +436,29 @@ void graph_obj::clear_vecs()
 // @ 0x4cb840
 void graph_obj::clean()
 {
-    for (;;) {
-        int i;
-        for (i = 0; i < (edges ? (int)(edges_end - edges) : 0); i++)
-            edges[i].flag = 0;
-        for (i = 0; i < (faces ? (int)(faces_end - faces) : 0); i++) {
-            int j;
-            for (j = 0; j < faces[i].count; j++)
-                edges[faces[i].ends[j]].flag = 1;
+again:
+    unsigned i;
+    for (i = 0; i < edgev().size(); i++)
+        edgev()[i].flag = 0;
+    for (i = 0; i < facev().size(); i++) {
+        for (int j = 0; j < facev()[i].count; j++)
+            edgev()[facev()[i].ends[j]].flag = 1;
+    }
+    for (i = 0; i < edgev().size(); i++) {
+        if (edgev()[i].flag == 0) {
+            remove_edge(i);
+            goto again;
         }
-        i = 0;
-        for (; i < (edges ? (int)(edges_end - edges) : 0); i++) {
-            if (!edges[i].flag)
-                break;
-        }
-        if (i >= (edges ? (int)(edges_end - edges) : 0))
-            return;
-        remove_edge(i);
     }
 }
 
 // @ 0x4cb940
 void graph_obj::remove_face(int i)
 {
-    int last = (faces ? (int)(faces_end - faces) : 0) - 1;
+    int last = facev().size() - 1;
     if (i != last)
-        faces[i] = faces[last];
-    if ((faces ? (int)(faces_end - faces) : 0) != 0)
-        faces_end--;
+        facev()[i] = facev()[facev().size() - 1];
+    facev().pop_back();
     clean();
 }
 
@@ -473,14 +470,12 @@ void big_obj::release()
         r->remove();
         engine_delete(r);
     }
-    gadget** s = slots;
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
-            if (*s) {
-                (*s)->release(1);
-                *s = 0;
+            if (slots[i * 8 + j]) {
+                slots[i * 8 + j]->release(1);
+                slots[i * 8 + j] = 0;
             }
-            s++;
         }
     }
     tidy(&vec2eb0);
@@ -600,31 +595,26 @@ Obj7a0::Obj7a0()
 }
 
 // @ 0x4cd850
-void fix_skeletons(std::vector<Skeleton*>* list)
+void __fastcall fix_skeletons(std::vector<Skeleton>* list)
 {
-    for (unsigned i = 0; i < (unsigned)(list->_Mylast - list->_Myfirst) && i < list->_Mylast - list->_Myfirst; i++) {
-        Skeleton* sk = list->_Myfirst[i];
+    for (unsigned i = 0; i < list->size(); i++) {
+        Skeleton* sk = &(*list)[i];
         SkelRes* res = g_resmgr.get_object70(sk->model);
-        if (res == 0) {
-            ((stream_base&)g_log).w_cstr("Fixing skeletons: Unable to find skeleton model:").w_tstr((const rgl::string*)&sk->model);
-            continue;
-        }
-        int n = (int)((sk->end - sk->begin) / 0x50);
-        int j = 0;
-        if (n) {
-            while (j < n && j < res->count) {
-                SkelBone* d = (SkelBone*)(res->bones + j * 0xdc);
-                Bone* b = sk->begin + j;
-                d->name = b->name;
-                copy16(&d->vcc, b->m40);
-                d->fa0 = b->parent;
-                d->fa4 = b->f18;
-                d->f9c = b->idx;
-                d->fa8 = b->f1c;
-                d->vac = b->v20;
-                d->vbc = b->v30;
-                j++;
+        if (res != 0) {
+#define DST(j) ((SkelBone*)(res->bones + (j) * 0xdc))
+            for (unsigned j = 0; j < sk->bones.size() && (int)j < res->count; j++) {
+                DST(j)->name = sk->bones[j].name;
+                DST(j)->vcc = sk->bones[j].m40;
+                DST(j)->fa0 = sk->bones[j].parent;
+                DST(j)->fa4 = sk->bones[j].f18;
+                DST(j)->f9c = sk->bones[j].idx;
+                DST(j)->fa8 = sk->bones[j].f1c;
+                DST(j)->vac = sk->bones[j].v20;
+                DST(j)->vbc = sk->bones[j].v30;
             }
+#undef DST
+        } else {
+            ((stream_base&)g_log).w_cstr("Fixing skeletons: Unable to find skeleton model:").w_tstr((const rgl::string*)&sk->model);
         }
     }
 }
@@ -739,6 +729,11 @@ csv_row::csv_row()
     v34.clear();
 }
 
+static inline void keep_min(float& d, const float& v) { float t = d; d = (t < v) ? t : v; }
+static inline void keep_max(float& d, const float& v) { float t = d; d = (t > v) ? t : v; }
+static inline void merge_min(vector4& d, const vector4& v) { keep_min(d.x, v.x); keep_min(d.y, v.y); keep_min(d.z, v.z); }
+static inline void merge_max(vector4& d, const vector4& v) { keep_max(d.x, v.x); keep_max(d.y, v.y); keep_max(d.z, v.z); }
+
 // @ 0x4cdfd0
 void ObjectList::read(stream_base* s)
 {
@@ -746,60 +741,28 @@ void ObjectList::read(stream_base* s)
     s->r_tstr((rgl::string*)&name);
     s->r_u64((unsigned __int64*)&f10);
     s->r_int(&count);
-    int cnt = count;
-    char* block = (char*)engine_alloc(cnt * 0x48 + 4);
-    if (block) {
-        *(int*)block = cnt;
-        shape_entry* e = (shape_entry*)(block + 4);
-        entries = e;
-        for (int k = cnt - 1; k >= 0; k--) {
-            CONSTRUCT_TSTRING(&e->name);
-            e->nodes.begin = 0;
-            e->nodes.end = 0;
-            e->nodes.cap = 0;
-            e->shape = 0;
-            e->body = 0;
-            e++;
+    entries = new shape_entry[count];
+    for (int i = 0; i < count; i++) {
+        vector4 big(10000000.0f, 10000000.0f, 10000000.0f);
+        vector4 neg(-10000000.0f, -10000000.0f, -10000000.0f);
+        s->r_tstr((rgl::string*)&entries[i].name);
+        entries[i].nodes.assign(g_resmgr.find_meshes_tmp(&entries[i].name));
+        entries[i].mn = big;
+        entries[i].mx = neg;
+        for (unsigned j = 0; j < entries[i].nodev().size(); j++) {
+            vector4 a, b;
+            mesh_node_bounds(entries[i].nodev()[j], &a, &b);
+            merge_min(entries[i].mn, a);
+            merge_max(entries[i].mx, b);
         }
-    } else {
-        entries = 0;
-    }
-    if (count > 0) {
-        shape_entry* c = entries;
-        for (int i = 0; i < count; i++) {
-            s->r_tstr((rgl::string*)&c->name);
-            mesh_vector nodes;
-            g_resmgr.find_meshes(&nodes, &c->name);
-            vec_assign_43f0a0(&c->nodes, &nodes);
-            if (nodes.begin)
-                engine_delete(nodes.begin);
-            c->mn = vector4(10000.0f, 10000.0f, 10000.0f);
-            c->mx = vector4(-10000.0f, -10000.0f, -10000.0f);
-            nodes.begin = 0;
-            nodes.end = 0;
-            nodes.cap = 0;
-            for (unsigned j = 0; j < (unsigned)((c->nodes.end - c->nodes.begin) >> 2); j++) {
-                mesh* node = c->nodes.begin[j];
-                vector4 a, b;
-                mesh_node_bounds(node, &a, &b);
-                if (c->mn.x < a.x) ; else c->mn.x = a.x;
-                if (c->mn.y < a.y) ; else c->mn.y = a.y;
-                if (c->mn.z < a.z) ; else c->mn.z = a.z;
-                if (c->mx.x > a.x) ; else c->mx.x = a.x;
-                if (c->mx.y > a.y) ; else c->mx.y = a.y;
-                if (c->mx.z > a.z) ; else c->mx.z = a.z;
-            }
-            s->r_tstr((rgl::string*)&buf);
-            if (buf.equals(g_none)) {
-                c->shape = 0;
-            } else {
-                c->shape = g_resmgr.get_mesh(&buf);
-                c->body = body_copy_shape(c->shape);
-            }
-            c = c + 1;
+        s->r_tstr((rgl::string*)&buf);
+        if (buf.equals("0")) {
+            entries[i].shape = 0;
+        } else {
+            entries[i].shape = g_resmgr.get_mesh(&buf);
+            entries[i].body = body_copy_shape(entries[i].shape);
         }
     }
-    s->r_tstr((rgl::string*)&buf);
 }
 
 // @ 0x4ce2a0

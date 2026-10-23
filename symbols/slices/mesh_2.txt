@@ -5,7 +5,7 @@
 004ca830 ?release@big_holder@@QAEXXZ
 004ca8c0 ?rebuild@graph_obj@@QAEXXZ
 004ca9b0 ?remove_edge@graph_obj@@QAEXH@Z
-004caa40 ?combine@graph_obj@@QAE_NHH@Z
+004caa40 ?combine@graph_obj@@QAE_NXZ
 004cb3a0 ?split_edge@graph_obj@@QAE_NH@Z
 004cb610 ?release@rec_2e4@@QAEXXZ
 004cb650 ?release@rec_1ac@@QAEXXZ
@@ -55,7 +55,7 @@
 004cd6e0 ??$_Copy_opt@PAUE50@@PAU1@@std@@YAPAUE50@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z
 004cd720 ??0Obj720@@QAE@XZ
 004cd7a0 ??0Obj7a0@@QAE@XZ
-004cd850 ?fix_skeletons@@YAXPAV?$vector@PAUSkeleton@@V?$allocator@PAUSkeleton@@@std@@@std@@@Z
+004cd850 ?fix_skeletons@@YIXPAV?$vector@USkeleton@@V?$allocator@USkeleton@@@std@@@std@@@Z
 004cda20 ??0LangTables@@QAE@XZ
 004cda90 ?load@LangTables@@QAEXPBD@Z
 004cdf20 ??0csv_row@@QAE@XZ

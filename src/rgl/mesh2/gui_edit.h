@@ -640,17 +640,32 @@ struct RecordArrayHead {
 };
 void __fastcall record_array_clear(void* r);            // 0x4317b0 (thiscall)
 void __fastcall record_free(void* r);                   // 0x4c65d0 (thiscall: = ItemPage::reset)
+struct Rec78Buf {                                       // three owned pointers (begin, end, cap)
+    char* p;
+    char* e;
+    char* c;
+    void release() { if (p) operator delete(p); p = 0; e = 0; c = 0; }
+};
+struct Rec78Tail {                                      // the sub-object at +0x44 of the element (inline destructor)
+    Rec78Buf buf;                                       // +0 owned buffer (operator delete), end, cap
+    char pad0c[4];
+    RefRecord* owner;                                   // +0x10 (deleted through slot 0)
+    char pad14[0x14];
+    char groups[4];                                     // +0x28 (record_array_clear)
+    char pad2c[8];
+    ~Rec78Tail()
+    {
+        Rec78Buf* b = &buf;
+        if (owner)
+            owner->deleting_dtor(1);
+        record_array_clear(groups);
+        b->release();
+    }
+};
 struct Rec78 {                                          // the 0x78-byte element of the array (destructor = 0x4c65d0)
     tstring name;                                       // +0
     char pad10[0x34];
-    char* buf;                                          // +0x44 owned buffer (operator delete)
-    char* buf_end;                                      // +0x48
-    char* buf_cap;                                      // +0x4c
-    char pad50[4];
-    RefRecord* owner;                                   // +0x54 (deleted through slot 0)
-    char pad58[0x14];
-    char groups[4];                                     // +0x6c (record_array_clear)
-    char pad70[8];
+    Rec78Tail tail;                                     // +0x44
 };
 
 // a block of the map's mesh: name (+0x00), a second name (+0x10), variation count (+0x44), material
@@ -707,11 +722,15 @@ struct BufTriple {
     char* c;
     void release() { if (p) operator delete(p); p = 0; e = 0; c = 0; }
 };
-struct Rec0xb0 {                                         // element of the array destroyed by 0x4c8980 (destructor = 0x4c85e0)
-    tstring name;                                        // +0
+struct Rec0xb0Tail {                                     // the sub-object at +0x10 of the element (inline destructor)
     tstring key;                                         // +0x10
     char pad20[0x84];
     BufTriple buf;                                       // +0xa4 owned buffer (operator delete), end, cap
+    ~Rec0xb0Tail() { buf.release(); }
+};
+struct Rec0xb0 {                                         // element of the array destroyed by 0x4c8980 (destructor = 0x4c85e0)
+    tstring name;                                        // +0
+    Rec0xb0Tail tail;                                    // +0x10
 };
 struct ConvOwner {
     char pad0[4];

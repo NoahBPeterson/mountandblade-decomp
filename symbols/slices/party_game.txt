@@ -1,0 +1,2 @@
+# names the resolution audit cannot read from an annotation (src/game/party/game.cpp, 0x51c5a0..0x51eaa0)
+08ee3138 ?g_troop_extra@@3PADA  # 42 save-game entries of 0x44 bytes (0x51e4c0), above the image's annotation range

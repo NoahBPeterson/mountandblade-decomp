@@ -115,13 +115,16 @@ struct Entry18 {
     tstring s0;              // +0
     int  v10;                // +0x10
     int  v14;                // +0x14
+    Entry18();               // 0x4be720 (out of line: array new goes through the vector constructor iterator)
 };
-// Block with tstrings at +0/+0x10 and an entry vector at +0x18 (0x4c2dd0).
+// Block with a tstring at +0, two ints and an entry array at +0x18 (0x4c2dd0).
 struct Blk2dd0 {
     tstring  s0;             // +0
-    tstring  s10;            // +0x10
+    int      v10;            // +0x10
+    int      v14;            // +0x14
     int      count;          // +0x18
     Entry18* entries;        // +0x1c
+    void read(stream_base* s);   // 0x4c2dd0 (thiscall, ret 4)
 };
 
 // ---- stream slots used through raw vtable calls (0x4c2dd0, 0x4c2ea0): slot 0x54 = r_tstr, 0x4c = r_int ----
@@ -147,77 +150,81 @@ extern int    g_5e2958;               // 0x5e2958  clock snapshot source
 extern int    g_5e295c;               // 0x5e295c
 
 
-// ---- options.dat loader (0x4c3a40) and renderer setup (0x4c3510) ----------------------------------------------
+// ---- options.dat loader (0x4c3a40) and GameApp::InitDeviceObjects (0x4c3510) -----------------------------------
 extern IDirect3DDevice9* g_d3d_device;             // 0xa17f28 ("current device")
 extern D3DCAPS9 g_caps;                            // 0xa17f2c (GetDeviceCaps fills it here)
 extern int   g_renderer_width;                     // 0xa1805c
 extern int   g_renderer_height;                    // 0xa18060
 extern int   g_renderer_vsync;                     // 0xa180e4
 extern char  g_renderer_flag;                      // 0xa17e14
-extern int   g_use_shaders;                        // 0x5e28fc
+extern int   g_use_shaders;                        // 0x5e28fc (also g_dinput_enabled)
 extern int   g_shader_support;                     // 0x5a9fcc "use_vertex_shaders"
 
-struct renderer;
-struct font_ref { void set_device(IDirect3DDevice9* d); };   // 0x404c00 (ret 4): the renderer's font object
-extern renderer g_render;                          // 0xa17910  ?g_render@@3Urenderer@@A
-void __fastcall render_init(renderer* r);          // 0x4bc350 (resets the shader state, creates buffers)
-void __fastcall create_shader_constants(renderer* r, int a1, int a2, int a3, int a4, int a5,
-                                        int a6, int a7, int a8, int a9, int a10);   // 0x4bc830 (by value)
-void __fastcall set_render_buffer_sizes(renderer* r, int a);  // 0x4bc430
-extern char g_setup_obj;                           // 0x5d6fa0
-void __fastcall setup_obj_init(char* self, int a, void* b);  // 0x41c540
+struct font_ref { void set_device(IDirect3DDevice9* d); };   // 0x404c00 (CD3DFont::InitDeviceObjects, ret 4)
 
-// config values: a tstring-keyed table of 0x2c-byte entries at 0xa44240
-extern char g_config;                              // 0xa44240
-int __fastcall config_find(char* t, tstring* key); // 0x4bd5a0
-#define CFG_ENTRY(idx) (*(const char**)(0xa4425c + (idx) * 0x2c) != 0 ? *(const char**)(0xa4425c + (idx) * 0x2c) : "")
+// layout-only view of the application object (GameApp : CD3DApplication)
+struct GameAppView {
+    char  pad0[0xa4];
+    char  windowed;                 // +0xa4
+    char  pada5[0xec - 0xa5];
+    HWND  hwnd;                     // +0xec
+    int   pad_f0;
+    int   width;                    // +0xf4
+    IDirect3DDevice9* device;       // +0xf8
+    char  padfc[0x22c - 0xfc];
+    int   height;                   // +0x22c
+    char  pad230[0x348 - 0x230];
+    font_ref* font;                 // +0x348
+};
+
+struct InputGlobal;                                // the object at 0xa17910 (apply_input_settings' argument)
+void __fastcall apply_input_settings(InputGlobal* self);   // 0x4bc350
+struct InputDevices {                                      // the object at 0xa170c8
+    int init_devices(HWND h);                              // 0x4bc430 (thiscall, ret 4)
+};
+struct RenderSetup {                                       // the object at 0x5fe898
+    int init_decls(const int& a0, const int& a1, const int& a2, const int& a3, const int& a4, const int& a5, const int& a6, const int& a7, const int& a8, const int& a9);   // 0x4bc830 (thiscall, ret 0x28)
+};
+struct ResMgrX {                                           // the object at 0x5d6fa0
+    void set_path_prefix(int flag, tstring* prefix);       // 0x41c540 (thiscall, ret 8)
+};
+extern tstring g_path_prefix;                              // 0x8ee3c28
+
+// the ini table at 0xa44240 (0x2c-byte entries: key tstring +0, value tstring +0x1c); get_float is inline (header)
+struct ini_entry_x { tstring key; char pad10[0xc]; tstring value; };
+struct ini_file_x {
+    ini_entry_x entries[0x1000];                           // +0
+    int count;                                             // +0x2c000
+    int find(const tstring& key);                          // 0x4bd5a0 (thiscall, ret 4)
+    float get_float(const tstring& key)
+    {
+        float ret = 0.0f;
+        int idx = find(key);
+        if (idx >= 0)
+            ret = (float)atof(entries[idx].value.c_str());
+        return ret;
+    }
+};
+extern ini_file_x g_ini;                                   // 0xa44240
 
 void __fastcall reset_buffer_group(void* self);    // 0x4c0520 (resets one buffer-size group)
-// 0x4bab70: rewrites a file name to its full %APPDATA%\Mount&Blade path (helper of another TU).
-void user_path(char* name);                        // 0x4bab70
+// 0x4bab70 user_path (argument in ESI, a static helper of another TU) has a local copy in rec_tables.cpp.
 
-// buffer-size option names, in the order 0x4c3510 reads them (each is copied into the stack tstring)
-extern const char g_opt_dx7_regular_ffp_dynamic[]; // 0x595b68
-extern const char g_opt_dx7_regular_ffp_static[];  // 0x595b44
-extern const char g_opt_normal_map_dynamic[];      // 0x595b24
-extern const char g_opt_normal_map_static[];       // 0x595b04
-extern const char g_opt_skinning_dynamic[];        // 0x595ae4
-extern const char g_opt_skinning_static[];         // 0x595ac8
-extern const char g_opt_regular_dynamic[];         // 0x595aac
-extern const char g_opt_regular_static[];          // 0x595a90
-extern const char g_opt_regular_ffp_dynamic[];     // 0x595a70
-extern const char g_opt_regular_ffp_static[];      // 0x595a50
-
-// The stream the options loader builds on its stack (vtable 0x54ae48 = bin_reader, inline ctor; see 0x4c3a40).
-// The original never destroys it: with src/rgl/stream.h's members (rgl::string name, buf) the implicit destructor
-// would add an unwind frame the loader does not have, so the loader uses this trivially destructible view
-// (same layout: name +0x4, state +0x14, buf +0x20, fp +0x30, failed +0x34).
-struct options_stream {
-    virtual void reset();
-    virtual void rewind();
-    virtual void* slot02(); virtual void* slot03(); virtual void* slot04(); virtual void* slot05();
-    virtual void* slot06(); virtual void* slot07(); virtual void* slot08(); virtual void* slot09();
-    virtual void* slot10(); virtual void* slot11(); virtual void* slot12(); virtual void* slot13();
-    virtual void* r_float(float* v);                 // slot 14 (+0x38)
-    virtual void* slot15(); virtual void* slot16(); virtual void* slot17();
-    virtual void* slot18(); virtual void* r_int(int* v);   // slot 19 (+0x4c)
-    virtual void* slot20(); virtual void* slot21();
-    virtual void* slot22();
-    char name_raw[0x10];                       // +0x04 tstring
-    int state;                                 // +0x14
-    char autoflush;                            // +0x18
-    int flushed;                               // +0x1c
-    char buf_raw[0x10];                        // +0x20 tstring
+// The binary file reader the options loader builds on its stack (vtable 0x54ae48 = bin_reader): the same inline chain
+// as rgl/core/resmgr.h (inline ctors, user-declared empty destructor of the in-memory stream 0x54ad68).
+struct opt_mem_stream : stream_base {
+    STREAM_SLOTS
+    __forceinline opt_mem_stream() {}
+    ~opt_mem_stream() {}
+};
+struct opt_reader_b : opt_mem_stream {
     FILE* fp;                                  // +0x30
-    volatile char failed;                      // +0x34
-    char is_open;                              // +0x35
-    options_stream() {
-        CONSTRUCT_TSTRING(name_raw);
-        autoflush = 0; flushed = 0;
-        CONSTRUCT_TSTRING(buf_raw);
-        fp = 0; state = 0; failed = 1;
-    }
-    bool open_read(const char* path);          // 0x415290
+    char failed;                               // +0x34
+    __forceinline opt_reader_b() { failed = 1; fp = 0; state = 0; }
+};
+struct opt_reader : opt_reader_b {             // vtable 0x54ae48
+    __forceinline opt_reader() {}
+    STREAM_SLOTS
 };
 
 // 0x9c bytes; the loader reads the fields in the order shown, with the file's tokens in a different order.
@@ -256,16 +263,16 @@ struct options_record {
     int   w78;           // +0x78
     int   w7c;           // +0x7c
     float f80;           // +0x80  clamped to [1.4, 2.6], else 2.2
-    float f84;           // +0x84  clamped to [0.5, 1.01], else 0.5
-    float f88;           // +0x88  clamped to [0.5, 1.01], else 0.5
+    float f84;           // +0x84  must be in [-0.001, 1.01), else 0.5
+    float f88;           // +0x88  must be in [-0.001, 1.01), else 0.5
     int   w8c;           // +0x8c
     int   w90;           // +0x90
     int   w94;           // +0x94
     int   w98;           // +0x98
     void load();                               // 0x4c3a40
+    void set_mode(int mode);                   // 0x4bc090 (thiscall, ret 4)
+    void set_spacing(int v);                   // 0x4bc100 (thiscall, ret 4)
 };
-int __fastcall options_set_mode(options_record* o, int mode);  // 0x4bc090 (ret 4)
-int __fastcall options_set_spacing(options_record* o, int v);  // 0x4bc100 (ret 4)
 
 // ---- element type of the 0x58-byte arrays (0x4c3430) ------------------------------------------------------------
 struct RecD { void* scalar_delete(unsigned flags); };  // 0x431480 (??_ERecD, ret 4)
@@ -288,87 +295,122 @@ struct elem58 {
 
 // ---- music / sound objects (0x4c3d90..0x4c4640; s004c3d90) -------------------------------------------------------
 int   __stdcall ftol2(double d);                   // 0x535a64
-float __fastcall elapsed_since(const __int64* t);  // 0x432c10: (now - *t) * 1e-5f
-int   __fastcall round_f(const float* f);          // 0x432540: (int)(*f + 0.5f)
-float __cdecl clamp_float3(const float* v, const float* lo, const float* hi);  // 0x40e3d0
+int   __cdecl round_f(const float* f);             // 0x432540: round to nearest
+float __cdecl clamp_float3(const float& v, const float& lo, const float& hi);  // 0x40e3d0
 
 // FMOD 3 entry points used by the sound loader.
 struct FSOUND_SAMPLE;
 FSOUND_SAMPLE* __stdcall FSOUND_Sample_Load(int index, const char* name, unsigned flags, int offset, int length); // 0x534330 (ret 20)
 void  __stdcall _FSOUND_SetVolume(int channel, int volume);                                                       // 0x5342ca (ret 8)
+int   __stdcall FSOUND_Sample_SetDefaults(FSOUND_SAMPLE* s, int freq, int vol, int pan, int pri);                 // 0x53432a (ret 20)
+int   __stdcall FSOUND_Sample_GetLength(FSOUND_SAMPLE* s);                                                         // 0x534324 (ret 4)
+int   __stdcall FSOUND_Sample_GetDefaults(FSOUND_SAMPLE* s, int* freq, int* vol, int* pan, int* pri);              // 0x53431e (ret 20)
 
+extern const float g_54ab2c;   // 0x54ab2c (0.0625f)
+extern const float g_590b60;   // 0x590b60 (250.0f)
+extern const float g_549d70;   // 0x549d70 (0.5f)
 extern int    g_sound_paused;   // 0x5a9fd4
 extern int    g_sound_muted;    // 0x5a9fd8
 extern float  g_music_volume;   // 0x5aa010
 
-// the "sound manager" tail (0x2400-byte object)
+// a clock reading: slot into g_time[] and the start tick; elapsed() = (g_time[slot] - start) * 1e-5f
+struct SndTimer {
+    int     slot;       // +0
+    int     pad4;
+    __int64 start;      // +8
+    float elapsed();    // 0x432c10 (thiscall)
+};
+
+// the "sound manager" tail (0x2474-byte object, layout-only view)
 struct sound_engine {
-    int   w240c;            // +0x240c  fade-out flag
-    int   cur_index;        // +0x2438  channel driven so far (or -1)
-    int   channel;          // +0x243c  channel of the current piece
-    int   last_volume;      // +0x2440
-    int   slot;             // +0x2418  tick slot of the current piece
-    __int64 start_tick;     // +0x2420
-    int   w2450;            // +0x2450  tick slot of the new piece
-    __int64 w2458;          // +0x2458  its start (8 bytes)
-    __int64 w2460;          // +0x2460  fade end (read by elapsed_since)
-    int   fading;           // +0x2470
+    int   w0;                       // +0
+    char  pad4[0x240c - 4];
+    int   w240c;                    // +0x240c  fade-out flag
+    char  pad2410[0x2418 - 0x2410];
+    SndTimer t2418;                 // +0x2418  last advance of the current piece
+    char  pad2428[0x2438 - 0x2428];
+    int   cur_index;                // +0x2438  channel driven so far (or -1)
+    int   channel;                  // +0x243c  channel of the current piece
+    int   last_volume;              // +0x2440
+    char  pad2444[0x2450 - 0x2444];
+    SndTimer t2450;                 // +0x2450  start of the new piece
+    SndTimer t2460;                 // +0x2460  fade end
+    int   fading;                   // +0x2470
     void __fastcall advance_piece();               // 0x4c25e0
-    void __fastcall stop_piece(int idx);           // 0x4be0a0 (ret 4)
+    void stop_piece(int idx);                      // 0x4be0a0 (thiscall, ret 4)
     void __fastcall tick();                        // 0x4c4100
 };
 
-// Array helpers (engine template members, provisional names). Signature recovered from 0x4c3d90: the call site
-// pushes dst then arg and calls with `this` = ebx = 4th arg, but the callee is `ret 8`, so the argument order below
-// is what the call site passes.
-void __stdcall construct_204(void* dst, const void* arg);   // 0x4c1b40 (ret 8, this in ecx, may throw)
-void __stdcall construct_4(void* dst, const void* arg);     // 0x436d80 (ret 8, this in ecx, may throw)
-void __stdcall construct_2c(void* dst, const void* arg);    // 0x4c1b20 (ret 8, this in ecx, may throw)
+// Allocator objects of the engine's array helpers (provisional names): construct(dst, src) is a thiscall, ret 8.
+struct Alloc204 { void construct(void* dst, const void* src); };   // 0x4c1b40
+struct Alloc4   { void construct(void* dst, const void* src); };   // 0x436d80
+struct Alloc2c  { void construct(void* dst, const void* src); };   // 0x4c1b20
 
 struct elem48 {
     tstring s0;          // +0
+    int w10;             // +0x10
     tstring s14;         // +0x14
-    char pad28[0x20];
+    char pad24[0x24];
+    void init(stream_base* s);   // 0x4bdf60 (thiscall, ret 4)
+};
+struct elem48_holder {
+    elem48* arr;     // +0 (array new, count in front)
+    int count;       // +4
 };
 
-void __stdcall elem48_init(elem48* e, void* arg);   // 0x4bdf60 (ret 4, this in ecx)
-void __fastcall free_vec_4609d0(void* p, unsigned flags);   // 0x4609d0 (ret 4): vector-like delete of [this]
-struct tstr_rec { tstring s; int w10, w14, w18; };   // 0x1c bytes
+
+struct DialogRec { void* vdel(unsigned flags); };   // 0x4609d0 (thiscall, ret 4): vector deleting destructor
+struct tstr_rec { int w0, w4, w8; tstring s; };   // 0x1c bytes (the string sits at +0xc)
 
 struct scenefile_obj {
-    int* w001;
-    int* w004;               // +4   (freed first, moving to ecx for the call)
-    char pad8[0xe028 - 0xc];
+    int  w000;
+    DialogRec* w004;         // +4   (freed first, moving to ecx for the call)
+    char pad8[0x24 - 8];
+    tstr_rec ts_a[0x400];    // +0x24
+    tstr_rec ts_b[0x400];    // +0x7024
+    char pad_e024[4];
     tstring s_e028;          // +0xe028
-    tstr_rec ts2[0x400];     // +0xe050
-    tstr_rec ts3[0x400];     // +0x15050
-    tstr_rec ts4[0x400];     // +0x1c050
-    int w1c02c;              // +0x1c02c
-    tstring s_e03c;          // +0xe03c   (second live string, placed last so it can hold a callee-saved reg)
     ~scenefile_obj();
 };
 
 struct music_rec {
     FSOUND_SAMPLE* sample;   // +0
-    int   level;             // +4
-    float ratio;             // +8
-    int   length;            // +0xc
-    int   channels;          // +0x10
+    int   level;             // +4   file bits: bit0 = looped, bits 4..7 = channel class
+    float ratio;             // +8   length / default frequency
+    int   freq;              // +0xc default frequency
+    int   length;            // +0x10 sample length
+    music_rec() : sample(0), level(0), ratio(0.0f), length(0) {}    // +0xc is left alone
 };
 
-void __stdcall music_entry_read(music_rec* rec, stream_base& s);   // 0x4be200 (ret 4): tstring name, int, ints
-void __fastcall music_set_finish(void* m);                         // 0x4be270
+void __fastcall music_set_finish(struct music_set* m);                     // 0x4be270
+
+struct music_name {         // 0x98 bytes, only the leading tstring is constructed
+    tstring s;
+    char pad[0x98 - sizeof(tstring)];
+    void read(stream_base& s);   // 0x4be200 (thiscall, ret 4)
+};
+
 struct music_set {
     int count;                 // +0  number of samples
     music_rec* recs;           // +4  [count]
     int count2;                // +8  number of names
-    tstring* names;            // +0xc [count2]
-    void __fastcall load(stream_base& s); // 0x4c4340 (ret 0xc)
+    music_name* names;         // +0xc [count2]
+    void load(stream_base* s, int load_samples, const tstring* dir);   // 0x4c4340 (thiscall, ret 0xc)
 };
 
 struct tstring_pair {
     tstring a;       // +0
     tstring b;       // +0x10
+};
+
+// the object with two pair arrays: arrays at +0 / +4, counts at +8 / +0xc (destroyed by 0x4c4640)
+struct pair_holder {
+    tstring_pair* arr1;   // +0
+    tstring_pair* arr2;   // +4
+    int count1;           // +8
+    int count2;           // +0xc
+    void load1(stream_base* s);   // 0x4c46d0 (thiscall, ret 4)
+    void load2(stream_base* s);   // 0x4c47d0 (thiscall, ret 4)
 };
 
 

@@ -5,6 +5,8 @@
 #ifndef GAME_PARTY_NAV_GRAPH_H
 #define GAME_PARTY_NAV_GRAPH_H
 
+#include <vector>
+
 struct NavNode {                            // 0x88 bytes
     int count;                              // +0x00  number of neighbours (at most 4)           0x51d3a0, 0x51d7c0
     char pad04[0x24 - 0x04];
@@ -22,6 +24,7 @@ struct NavGraph {
     NavNode* nodes;                         // +0x14  vector of nodes (null while empty)          0x51d3a0, 0x51dac0
     NavNode* nodes_end;                     // +0x18                                              0x51dac0
 
+    std::vector<struct NavNode>& vec() { return *(std::vector<NavNode>*)((char*)this + 0x10); }     // the node vector (allocator lane at +0x10)
     void solve(int* arg1, int* arg2, int* arg3);                // 0x51d3a0 (ret 0xc)
     int* walk(int* a, int* idx, int* seen, int* n);             // 0x51d7c0 (ret 0x10)
     int find_trigger(int* idp, int* a2, int* arr, int* cnt, unsigned* m1, unsigned* m2, int* flag);   // 0x51d920 (ret 0x1c)

@@ -339,14 +339,11 @@ struct Bone {                                                   // 0x50 bytes: b
     int f1c;                                                    // +0x1c
     vector4 v20;                                                // +0x20
     vector4 v30;                                                // +0x30
-    float m40[4];                                               // +0x40
+    std::vector<R44> m40;                                       // +0x40 (assigned with 0x4ccd80)
 };
 struct Skeleton {                                               // 0x20 bytes: one registered skeleton
     tstring model;                                              // +0x00
-    char pad[0x14 - 0x10];
-    Bone* begin;                                                // +0x14
-    Bone* end;                                                  // +0x18
-    char pad2[0x20 - 0x1c];
+    std::vector<Bone> bones;                                    // +0x10 (first +0x14, last +0x18)
 };
 struct SkelRes {                                                // the object 0x418cf0 returns
     char pad[0x18];
@@ -362,7 +359,7 @@ struct SkelBone {                                               // the resource 
     int fa8;                                                    // +0xa8 (source +0x1c)
     vector4 vac;                                                // +0xac
     vector4 vbc;                                                // +0xbc
-    vector4 vcc;                                                // +0xcc (source +0x40)
+    std::vector<R44> vcc;                                       // +0xcc (source +0x40)
 };
 // The 0x10-byte "vector" these records carry: a leading word followed by the usual begin/end/cap trio
 // (0x43f0a0 is the assignment, reading _Myfirst at +4 and _Mylast at +8).
@@ -372,13 +369,20 @@ struct mesh_vector {
     mesh** end;                                                 // +0x08
     mesh** cap;                                                 // +0x0c
     mesh_vector() : begin(0), end(0), cap(0) {}                 // zeroes the trio, leaves f0
+    unsigned size() const { return begin ? (unsigned)(end - begin) : 0; }
+    void assign(const mesh_vector& o);                          // 0x43f0a0 (vector<scalar4>::operator=, thiscall ret 4)
+};
+// the by-value result of find_meshes: the temporary's inline destructor frees the buffer and zeroes the trio
+struct mesh_vector_tmp : mesh_vector {
+    ~mesh_vector_tmp() { if (begin) operator delete(begin); begin = 0; end = 0; cap = 0; }
 };
 
 struct resmgr {                                                 // global at 0x5d6fa0
     SkelRes* get_object70(const tstring& name);                 // 0x418cf0 (ret 4)
     mesh* get_mesh(const tstring* name);                        // 0x418c10 (provisional)
     // hidden-return form of the std::vector<mesh*> result: at the call site the buffer is a raw 0x10-byte block
-    mesh_vector* find_meshes(mesh_vector* ret, tstring* prefix);   // 0x41b960 (ret 4)
+    mesh_vector* find_meshes(mesh_vector* ret, tstring* prefix);   // 0x41b960 (ret 8)
+    mesh_vector_tmp find_meshes_tmp(tstring* prefix);              // 0x41b960 (hidden return pointer first, ret 8)
 };
 extern resmgr g_resmgr;                                         // 0x5d6fa0
 
@@ -421,11 +425,10 @@ struct csv_row {                                                // 0x238 bytes (
     csv_row();                                                  // 0x4cdf20
 };
 
-extern std::vector<Skeleton*> g_skeletons;                      // 0x5d6fa0 + 0x70 (provisional)
-void copy16(void* dst, const void* src);                        // 0x4ccd80 (tstring::operator=)
+extern std::vector<Skeleton> g_skeletons;                      // 0x5d6fa0 + 0x70 (provisional)
 void vec_insert_n(lang_bucket* vec, tstring* pos, unsigned n, const tstring& v);   // 0x438f00
 void vec_insert_n2(lang_bucket* vec, tstring* pos, unsigned n, const tstring& v);  // 0x43e310
-void fix_skeletons(std::vector<Skeleton*>* list);               // 0x4cd850
+void __fastcall fix_skeletons(std::vector<Skeleton>* list);               // 0x4cd850
 
 
 // ============================================================================================================
@@ -439,8 +442,10 @@ struct shape_res {                                              // the body shap
     virtual vector4* get_bounds_min(vector4* out);              // 10 (+0x28)
     virtual vector4* get_bounds_max(vector4* out);              // 11 (+0x2c)
 };
-shape_res* body_copy_shape(mesh* m);                            // 0x439100 (provisional: mesh -> body shape)
-void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx);    // 0x438d80
+struct mesh_body_t { shape_res* copy_shape(); };                // 0x439100 (thiscall: mesh -> body shape)
+inline shape_res* body_copy_shape(mesh* m) { return ((mesh_body_t*)m)->copy_shape(); }
+struct mesh_bounds_t { void bounds(vector4* mn, vector4* mx); };   // 0x438d80 (thiscall, ret 8)
+inline void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx) { ((mesh_bounds_t*)node)->bounds(mn, mx); }
 void vmin_ext(vector4* r, const vector4* a, const vector4* b);  // 0x40af80
 void vmax_ext(vector4* r, const vector4* a, const vector4* b);  // 0x40b080
 
@@ -456,10 +461,12 @@ struct game_vec {                                               // the 12-byte r
 struct shape_entry {                                            // 0x48 bytes
     tstring name;                                               // +0x00
     mesh_vector nodes;                                          // +0x10
-    mesh* shape;                                                // +0x20 (0 when the name is "none")
+    mesh* shape;                                                // +0x20 (0 when the name is "0")
     shape_res* body;                                            // +0x24 (body_copy_shape(shape))
-    vector4 mn;                                                 // +0x28 (10000.0f, merged with 0x438d80 bounds)
-    vector4 mx;                                                 // +0x38 (-10000.0f, merged with 0x438d80 bounds)
+    vector4 mn;                                                 // +0x28 (1e7f, merged with 0x438d80 bounds)
+    vector4 mx;                                                 // +0x38 (-1e7f, merged with 0x438d80 bounds)
+    shape_entry() : shape(0), body(0) {}
+    std::vector<mesh*>& nodev() { return *(std::vector<mesh*>*)&nodes; }   // the vector view (allocator lane at +0x10)
 };
 
 struct ObjectList {                                             // "0x4cdfd0's class"
@@ -514,7 +521,7 @@ struct MissionRec2 {
     MissionRec2();                                              // 0x4ce680
 };
 
-void vec_assign_43f0a0(mesh_vector* self, const mesh_vector* other); // 0x43f0a0
+inline void vec_assign_43f0a0(mesh_vector* self, const mesh_vector* other) { self->assign(*other); }
 
 
 

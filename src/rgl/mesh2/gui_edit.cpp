@@ -1357,25 +1357,17 @@ void MapEditorDialog::update_objects()
 // @ 0x4c7ee0
 void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
 {
-    Rec78* a = (Rec78*)p;
     if (flags & 2) {
-        int* head = (int*)p - 1;
-        int n = *head;
-        for (int i = n - 1; i >= 0; i--) {
-            Rec78& e = a[i];
-            if (e.owner)
-                e.owner->deleting_dtor(1);
-            record_array_clear(e.groups);
-            if (e.buf)
-                engine_delete(e.buf);
-            e.buf = 0;
-            e.buf_end = 0;
-            e.buf_cap = 0;
-            e.name.~tstring();
+        int n = *((int*)p - 1);
+        Rec78* cur = (Rec78*)p + n;
+        while (--n >= 0) {
+            --cur;
+            cur->tail.~Rec78Tail();
+            cur->name.~tstring();
         }
         if (flags & 1)
-            engine_free(head);
-        return head;
+            engine_free((char*)p - 4);
+        return (char*)p - 4;
     }
     record_free(p);
     if (flags & 1)
@@ -1683,20 +1675,17 @@ void __stdcall loader_thread_body()
 // @ 0x4c8980
 void* __fastcall conv_item_array_dtor(conv_rec* self, int, unsigned char flags)
 {
-    Rec0xb0* a = (Rec0xb0*)self;
     if (flags & 2) {
-        int* head = (int*)self - 1;
-        int n = *head;
-        Rec0xb0* p = a + n;
-        for (int i = n - 1; i >= 0; i--) {
-            --p;
-            p->buf.release();
-            p->key.~tstring();
-            p->name.~tstring();
+        int n = *((int*)self - 1);
+        Rec0xb0* cur = (Rec0xb0*)self + n;
+        while (--n >= 0) {
+            --cur;
+            cur->tail.~Rec0xb0Tail();
+            cur->name.~tstring();
         }
         if (flags & 1)
-            engine_free(head);
-        return head;
+            engine_free((char*)self - 4);
+        return (char*)self - 4;
     }
     conv_free_one(self);
     if (flags & 1)

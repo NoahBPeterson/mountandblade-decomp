@@ -1284,34 +1284,39 @@ void Mission::get_frame(rgl::matrix* out)
         }
         float s = 1.0f - t;
         rgl::matrix m;
-        // each row is two scaled copies added lane by lane; the original rounds every product to float (vector4
-        // temporaries) before adding, which the equivalence harness sees as signed zeros when this is fused
+        // each row is two scaled copies added lane by lane; the original rounds the y and z products to float
+        // (stack temporaries, modelled with volatile) while the x lane stays in the x87 register. The 4th lane of
+        // r is never written: the copy into the matrix carries a stale stack dword.
         {
-            rgl::vector4 pa, pb, r;
-            pa.x = frame_a.o.x * s; pa.y = frame_a.o.y * s; pa.z = frame_a.o.z * s;
-            pb.x = frame_b.o.x * t; pb.y = frame_b.o.y * t; pb.z = frame_b.o.z * t;
-            r.x = pa.x + pb.x; r.y = pa.y + pb.y; r.z = pa.z + pb.z;
+            volatile float pay, paz, pby, pbz;
+            rgl::vector4 r;
+            float pax = frame_a.o.x * s; pay = frame_a.o.y * s; paz = frame_a.o.z * s;
+            float pbx = frame_b.o.x * t; pby = frame_b.o.y * t; pbz = frame_b.o.z * t;
+            r.x = pbx + pax; r.y = pby + pay; r.z = pbz + paz;
             m.o = r;
         }
         {
-            rgl::vector4 pa, pb, r;
-            pa.x = frame_a.f.x * s; pa.y = frame_a.f.y * s; pa.z = frame_a.f.z * s;
-            pb.x = frame_b.f.x * t; pb.y = frame_b.f.y * t; pb.z = frame_b.f.z * t;
-            r.x = pa.x + pb.x; r.y = pa.y + pb.y; r.z = pa.z + pb.z;
+            volatile float pay, paz, pby, pbz;
+            rgl::vector4 r;
+            float pax = frame_a.f.x * s; pay = frame_a.f.y * s; paz = frame_a.f.z * s;
+            float pbx = frame_b.f.x * t; pby = frame_b.f.y * t; pbz = frame_b.f.z * t;
+            r.x = pbx + pax; r.y = pby + pay; r.z = pbz + paz;
             m.f = r;
         }
         {
-            rgl::vector4 pa, pb, r;
-            pa.x = frame_a.u.x * s; pa.y = frame_a.u.y * s; pa.z = frame_a.u.z * s;
-            pb.x = frame_b.u.x * t; pb.y = frame_b.u.y * t; pb.z = frame_b.u.z * t;
-            r.x = pa.x + pb.x; r.y = pa.y + pb.y; r.z = pa.z + pb.z;
+            volatile float pay, paz, pby, pbz;
+            rgl::vector4 r;
+            float pax = frame_a.u.x * s; pay = frame_a.u.y * s; paz = frame_a.u.z * s;
+            float pbx = frame_b.u.x * t; pby = frame_b.u.y * t; pbz = frame_b.u.z * t;
+            r.x = pbx + pax; r.y = pby + pay; r.z = pbz + paz;
             m.u = r;
         }
         {
-            rgl::vector4 pa, pb, r;
-            pa.x = frame_a.s.x * s; pa.y = frame_a.s.y * s; pa.z = frame_a.s.z * s;
-            pb.x = frame_b.s.x * t; pb.y = frame_b.s.y * t; pb.z = frame_b.s.z * t;
-            r.x = pa.x + pb.x; r.y = pa.y + pb.y; r.z = pa.z + pb.z;
+            volatile float pay, paz, pby, pbz;
+            rgl::vector4 r;
+            float pax = frame_a.s.x * s; pay = frame_a.s.y * s; paz = frame_a.s.z * s;
+            float pbx = frame_b.s.x * t; pby = frame_b.s.y * t; pbz = frame_b.s.z * t;
+            r.x = pbx + pax; r.y = pby + pay; r.z = pbz + paz;
             m.s = r;
         }
         m.orthonormalize();

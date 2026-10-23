@@ -1,0 +1,4 @@
+# src/game/terrain_a: globals beyond the annotation range of the `// 0x...` comments (high .bss addresses)
+08ed4df8 ?g_ground_types@@3PAUGroundType@@A  # table of 11 ground-type records (0x20 bytes, name tstring at +0); terrain.h
+08ee3ac4 ?g_lod_max@@3HA  # highest level index of a 4-bit level field (0x468770); misc.h
+005a9f60 ?g_log@@3Utext_stream@@A  # the engine text log (resource_manager.h); used by the buffer uploader 0x46d060

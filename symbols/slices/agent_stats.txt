@@ -1,0 +1,5 @@
+00437870 ??_GPlacedObj@@UAEPAXI@Z  # slot 0 of vtable 0x590b84: scalar deleting destructor of the 0x1c8-byte record (~tstring on the name at +0x190, IfaceB vptr, optional operator delete); src/game/agent/agent.h calls the class PlacedObj
+00590b84 ??_7PlacedObj@@6B@  # vtable of the 0x1c8-byte record, stored by its constructor 0x437830 and copy constructor 0x437bb0
+00432790 ?slot_pair@Agent@@QBE?AUItemRef@@H@Z  # Agent::slot_pair: the original body lives in an earlier object; agent_stats.cpp defines a local copy only so that cl sees its register use (damage_factor 0x4385e0 calls the original)
+00438910 ??$remove_copy@Viterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@std@@V123@PAUshape_base@@@std@@YA?AViterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@0@V120@00ABQAUshape_base@@@Z  # std::remove_copy over vector<T*>::iterator, ICF-folded (one body for every pointer element type)
+08ee3100 ?g_skill_tbl@@3PAUSkillCap@@A  # table of 0x44-byte skill records, cap at +0x34 (read by GameData::skill_level 0x437b20); beyond the resolver's annotation range

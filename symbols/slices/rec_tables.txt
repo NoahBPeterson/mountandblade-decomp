@@ -2,7 +2,7 @@
 004c2cb0 ?destroy_C4c2c50@@YIPAXPAUC4c2c50@@HH@Z
 004c2cd0 ?dtor@C4c2c50@@QAEXXZ
 004c2d10 ??0C4c2d10@@QAE@XZ
-004c2dd0 ?read_block_2dd0@@YIHPAUBlk2dd0@@PAX@Z
+004c2dd0 ?read@Blk2dd0@@QAEXPAUstream_base@@@Z
 004c2ea0 ?fn_4c2ea0@@YIXPAX@Z
 004c2fb0 ??0C4c2fb0@@QAE@XZ
 004c3000 ?destroy_C4c2fb0@@YIPAXPAUC4c2fb0@@HH@Z
@@ -23,20 +23,20 @@
 004c3340 ?global_4c03b0@@YAXXZ
 004c3350 ?fn_4c3350@@YAXXZ
 004c3430 ?vector_deleting_delete@elem58@@QAEPAXI@Z
-004c3510 ?renderer_setup@@YIXPAX@Z
+004c3510 ?renderer_setup@@YIHPAUGameAppView@@@Z
 004c3a40 ?load@options_record@@QAEXXZ
-004c3d90 ?copy_uninit_204@@YAXPAXIPBX0@Z
-004c3e10 ?copy_uninit_4@@YAXPAXIPBX0@Z
-004c3e80 ?copy_uninit_2c@@YAPAXPAX0PBX00@Z
-004c3ef0 ?copy_uninit_4_range@@YAPAXPAX0PBX00@Z
+004c3d90 ?copy_uninit_204@@YAXPADIPBXAAUAlloc204@@@Z
+004c3e10 ?copy_uninit_4@@YAXPADIPBXAAUAlloc4@@@Z
+004c3e80 ?copy_uninit_2c@@YAPAXPAD00AAUAlloc2c@@@Z
+004c3ef0 ?copy_uninit_4_range@@YAPAXPAD00AAUAlloc4@@@Z
 004c3f60 ?destroy_elem48_array@@YIXPAPAUelem48@@@Z
-004c3fb0 ?load_elem48_array@@YIXPAX0PAUstream_base@@@Z
+004c3fb0 ?load_elem48_array@@YIXPAUelem48_holder@@HPAUstream_base@@@Z
 004c4090 ??1scenefile_obj@@QAE@XZ
 004c4100 ?tick@sound_engine@@QAIXXZ
-004c4340 ?load@music_set@@QAIXAAUstream_base@@@Z
+004c4340 ?load@music_set@@QAEXPAUstream_base@@HPBUtstring@@@Z
 004c4640 ?destroy_tstring_pairs@@YIXPAPAUtstring_pair@@@Z
-004c46d0 ?load_pair_array@@YIXPAPAUtstring_pair@@PAHPAUstream_base@@@Z
-004c47d0 ?load_pair_array12@@YIXPAPAUtstring_pair@@PAHPAUstream_base@@@Z
+004c46d0 ?load1@pair_holder@@QAEXPAUstream_base@@@Z
+004c47d0 ?load2@pair_holder@@QAEXPAUstream_base@@@Z
 0040cd00 identity_pos  # fills the 4x4 out matrix (arg) with the identity rotation and zero origin, returns the out pointer (used by 0x4c2d10)
 005947d8 ??_7head_rec@@6B@  # head record base vtable stored by every ctor of this module before the own vtable
 00595740 ??_7C4c2c50@@6B@  # ctor 0x4c2c50
@@ -57,3 +57,4 @@
 005e2a18 ?g_strtable@@3ULangTables@@A  # the UI string table
 005d7080 ?g_gui@@3Ugui_manager@@A  # the UI root
 0042d1b0 ?reset@gui_manager@@QAEXXZ  # gui_manager::reset
+004bab70 ?user_path@@YAXPAD@Z  # static helper of another TU, called with its argument in ESI; rec_tables.cpp keeps a local copy so cl picks the same register convention (the audit lists it as a local copy)

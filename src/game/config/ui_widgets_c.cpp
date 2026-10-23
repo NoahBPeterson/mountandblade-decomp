@@ -10,20 +10,56 @@
 #include "../tstring.h"
 #include "./ui_widgets_c.h"
 
-// 0x487b00: UTF-8 decoder in another object, custom ABI (string in EDI, &out_len in EDX, buffer and &capacity on
-// the stack, caller pops 8). Same 6-instruction asm helper as ../ui/ui_widgets_a.cpp.
-extern "C" void decode_utf8_raw();          // 0x487b00
-static __forceinline void decode_utf8(int* out_len, const tstring* s, int* buf, const int* maxn)
+// 0x487b00: UTF-8 decoder (another object in the original; cl gave it a custom register convention: text in EDI,
+// out_len in EDX, buffer and &capacity on the stack). A static noinline copy here reproduces that convention.
+static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int* buf, const int* maxn)   // 0x487b00
 {
-    __asm {
-        mov edi, s
-        mov edx, out_len
-        push maxn
-        push buf
-        call decode_utf8_raw
-        add esp, 8
+    *out_len = 0;
+    int n = s->len;
+    int i = 0;
+    if (n > 0) {
+        do {
+            int cnt = *out_len;
+            if (cnt >= *maxn)
+                break;
+            unsigned char c = s->buf[i];
+            int ch;
+            if (c >= 0xf0 && c < 0xf5) {
+                ch = ((((((unsigned char)s->buf[i] & 7) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6 | ((unsigned char)s->buf[i+2] & 0x3f)) << 6) | ((unsigned char)s->buf[i+3] & 0x3f);
+                i += 4;
+            } else if (c >= 0xe0 && c < 0xf0) {
+                ch = (((((unsigned char)s->buf[i] & 0xf) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6) | ((unsigned char)s->buf[i+2] & 0x3f);
+                i += 3;
+            } else if (c >= 0xc2 && c < 0xe0) {
+                ch = ((((unsigned char)s->buf[i] & 0x1f) << 6) | ((unsigned char)s->buf[i+1] & 0x3f));
+                i += 2;
+            } else {
+                i++;
+                if (c >= 0x80)
+                    continue;
+                ch = (signed char)c;
+            }
+            buf[cnt] = ch;
+            *out_len = cnt + 1;
+        } while (i < n);
     }
 }
+
+struct WRet { int a, b; WRet(); };
+// view of MissionUi's vtable for the +0xa4 slot: it returns an 8-byte non-POD through a hidden pointer, which the
+// header's get_text_size(s, out) does not express
+struct TextSizeView {
+    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03(); virtual void s04();
+    virtual void s05(); virtual void s06(); virtual void s07(); virtual void s08(); virtual void s09();
+    virtual void s10(); virtual void s11(); virtual void s12(); virtual void s13(); virtual void s14();
+    virtual void s15(); virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
+    virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23(); virtual void s24();
+    virtual void s25(); virtual void s26(); virtual void s27(); virtual void s28(); virtual void s29();
+    virtual void s30(); virtual void s31(); virtual void s32(); virtual void s33(); virtual void s34();
+    virtual void s35(); virtual void s36(); virtual void s37(); virtual void s38(); virtual void s39();
+    virtual void s40();
+    virtual WRet get_text_size(const tstring* s);       // +0xa4
+};
 
 // @ 0x48baa0
 void UiD::set_value(float x)
@@ -56,12 +92,12 @@ char UiE::key(unsigned p)
     if (f180) {
         if (p == 0x1000) {
             char buf[0x2000];
-            int out_len;
-            int maxn = 0x800;
+            int out_len[2];
             b = 1;
             int ch = g_last_char;
-            decode_utf8(&out_len, &name, (int*)buf, &maxn);
-            if (ch >= 0x20 && out_len < f184) {
+            int maxn = 0x800;
+            decode_utf8(&name, out_len, (int*)buf, &maxn);
+            if (ch >= 0x20 && out_len[0] < f184) {
                 char u[4];
                 int n;
                 if (ch < 0x80) {
@@ -79,27 +115,23 @@ char UiE::key(unsigned p)
                 }
                 for (int i = 0; i < n; i++)
                     name.push_back(u[i]);
-            }
-            get_xy((float*)&out_len);
-            if (g_last_char == 0xd) {
-                f180 = 0;
-                b = 1;
-                g_ui_active = 0;
-                ::play_sound(&g_sound);
-                set_key_flags(0x10000);
-            } else if (g_last_char == 8) {
+                get_xy((float*)out_len);
+            } else if (ch == 8) {
                 if (name.len > 0) {
-                    int i = name.len - 1;
+                    const char* q = name.buf + name.len - 1;
                     int n = 1;
-                    while (i > 0 && (name.buf[i] & 0xc0) == 0x80 && n < name.len) {
-                        i--;
+                    while ((*q & 0xc0) == 0x80 && n < name.len) {
                         n++;
+                        q--;
                     }
                     name.erase(name.len - n, n);
                 }
-                get_xy((float*)&out_len);
+                get_xy((float*)out_len);
             }
+            if (g_last_char == 0xd)
+                goto leave_edit;
         } else if (p == 0x10) {
+leave_edit:
             f180 = 0;
             b = 1;
             g_ui_active = 0;
@@ -112,10 +144,11 @@ char UiE::key(unsigned p)
         g_ui_active = this;
         ::play_sound(&g_sound);
         if (f181) {
-            tstring tmp("");
-            float sz[2];
-            get_text_size(&tmp, sz);
-            tmp.~tstring();
+            {
+                tstring tmp("");
+                // +0xa4 returns an 8-byte non-POD (hidden pointer, never destroyed); the header's (s, out) is swapped
+                ((TextSizeView*)this)->get_text_size(&tmp);
+            }
             unsigned c = 0xff000000;
             set_color(&c);
             f181 = 0;

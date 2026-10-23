@@ -256,6 +256,10 @@ void Ctx::sample_lights(const vector4* p, vector4* dir, vector4* amb)
 // alpha that falls off with the distance from the entity; 1..3 sample vertices per ground vertex.
 void StratEnt::create_shadow_mesh(mesh** slot, char flag)
 {
+    int vtx[3][4];
+    vector4 amb;
+    int pt[4];
+    matrix fr;
     float ir;
     int nt;
     float ik;
@@ -274,10 +278,6 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
     const vector4* n;
     float k, dx, dy, dz, shade, c, dx2, dy2, dz2, a, t;
     int al;
-    matrix fr;
-    vector4 amb;
-    int pt[4];
-    int vtx[3][4];
     build_shadow_frame(&fr, &amb);
     if (*slot == 0) {
         *slot = new mesh;

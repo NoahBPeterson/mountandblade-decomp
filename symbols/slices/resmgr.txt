@@ -1,0 +1,3 @@
+0054aeb4 ??_7frame_set@@6B@  # skeleton model vtable (type() 7), stored by the dtor at 0x41aee0 / ctor 0x417e10
+0041aee0 ??_Eframe_set@@UAEPAXI@Z  # vtable 0x54aeb4 slot 0 (vector deleting dtor)
+0041a550 ??_EBone@@QAEPAXI@Z  # Bone vector deleting dtor (flags 3 = delete[]), called by ??_Eframe_set's scalar path

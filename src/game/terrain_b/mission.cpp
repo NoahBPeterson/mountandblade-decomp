@@ -217,12 +217,9 @@ void Mission::reset()
     poolJ.reset();
     f5c = -1;
     f60 = -1;
-    {
-        vector4 v(10.0f, 10.0f, 10.0f);
-        f6598 = v;
-    }
     // The store order below is the original's (the compiler keeps it), so it is reproduced verbatim.
     f65ac = 0;
+    f65a8 = 0;
     f65b8 = 0;
     f65bc = 0;
     f65c0 = 0;
@@ -237,6 +234,7 @@ void Mission::reset()
     f65cc = 0;
     f65b0 = 0;
     f6664 = -1;
+    f6598 = vector4(10.0f, 10.0f, 10.0f);
     terrain.init();
     f672c = 0;
     f6730 = 0;
@@ -245,6 +243,7 @@ void Mission::reset()
     f6738 = 0;
     special = 0;
     f6748 = 0;
+    blend2_from = 1.0f;
     {
         matrix tmp;
         frame_a = *identity_pos(&tmp);
@@ -259,99 +258,116 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
     Level494* lv = g_game->levels + level_idx;
     EnvRow* sp = g_env_rows + spec_idx;
 
-    vector4 col;
-    unpack_color(&col, (const unsigned*)&sp->f44);
+    {
+        vector4 col;
+        unpack_color(&col, (const unsigned*)&sp->f44);
 
-    float k = t * 60.0f;
-    if (k < 0.0f)
-        k = 0.0f;
-    else if (k >= 1.0f)
-        k = 1.0f;
+        float k;
+        if (t * 60.0f < 0.0f)
+            k = 0.0f;
+        else if (t * 60.0f >= 1.0f)
+            k = 1.0f;
+        else
+            k = t * 60.0f;
 
-    // ---- first wind object: a horizontal "sheet" whose normal comes from the hourly table
-    Wind* a = scene->spawn_wind();
-    f65b0 = a;
-    a->f0 = 2;
+        // ---- first wind object: a horizontal "sheet" whose normal comes from the hourly table
+        f65b0 = scene->spawn_wind();
+        f65b0->f0 = 2;
 
-    double hour = fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
-    int day = (4.0 <= hour && hour < 20.0);
+        float hour = (float)fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
+        bool day = (4.0f <= hour && hour < 20.0f);
 
-    int slot = (int)((float)(g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f) % 24;
-    vector4 dir = sp->get_dir(slot, day);
-    a->f44 = dir;
-    a->f24 = vector4(dir.x * -10000.0f, dir.y * -10000.0f, dir.z * -10000.0f);
-    a->f54 = 20000.0f;
-    a->f6c = 0;
+        int slot = (int)((float)(g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f) % 24;
+        {
+            vector4 dir = sp->get_dir(slot, day);
+            f65b0->f44 = dir;
+            f65b0->f24 = vector4(dir.x * -10000.0f, dir.y * -10000.0f, dir.z * -10000.0f);
+        }
+        f65b0->f54 = 20000.0f;
+        f65b0->f6c = 0;
 
-    if (lv->flags & 1) {
-        // flat variant: the wind object just sits at the origin, the cell gets a uniform colour
-        a->pos = vector4(0.0f, 0.0f, 0.0f);
-        float s = g_use_shaders ? 0.03f : 0.15f;
-        scene->amb = vector4(s, s, s);
+        if (lv->flags & 1) {
+            // flat variant: the wind object just sits at the origin, the cell gets a uniform colour
+            f65b0->pos = vector4(0.0f, 0.0f, 0.0f);
+            vector4 c;
+            if (g_use_shaders) {
+                c.x = 0.03f;
+                c.y = 0.03f;
+                c.z = 0.03f;
+            } else {
+                c.x = 0.15f;
+                c.y = 0.15f;
+                c.z = 0.15f;
+            }
+            scene->amb = c;
+            scene->amb.w = 1.0f;
+            f65b0->f14 = f65b0->pos;
+            return;
+        }
+
+        // ---- variant B: an anisotropically scaled wind gust
+        float p = (float)pow((double)(1.0f - k), 1.5);
+        vector4 u(p * sp->v20.x, p * sp->v20.y, p * sp->v20.z);
+        if ((sp->f10 & 0x10000000) || sqrtf(u.x * u.x + (u.y * u.y + u.z * u.z)) < 0.1f)
+            f65b0->f6c |= 2;
+        if (!g_use_shaders) {
+            u.x = sqrtf(u.x);
+            u.y = sqrtf(u.y);
+            u.z = sqrtf(u.z);
+        }
+        float cx = col.x * k;
+        float cy = col.y * k;
+        col.z *= k;
+        f65b0->pos = u;
+        f65b0->f14 = f65b0->pos;
+
+        // the cell colour: the unpacked table colour faded by k, offset by the table base position
+        u.x = cx * 0.2f + sp->base.x;
+        u.y = cy * 0.2f + sp->base.y;
+        u.z = col.z * 0.2f + sp->base.z;
+        if (!g_use_shaders) {
+            u.x = sqrtf(u.x);
+            u.y = sqrtf(u.y);
+            u.z = sqrtf(u.z);
+        }
+        scene->amb = u;
         scene->amb.w = 1.0f;
-        a->f14 = a->pos;
-        return;
     }
-
-    // ---- variant B: an anisotropically scaled wind gust
-    float p = (float)pow((double)(1.0f - k), 1.5);
-    float w1 = p * sp->v20.x;
-    float w2 = p * sp->v20.y;
-    float w3 = p * sp->v20.z;
-    if ((sp->f10 & 0x10000000) || sqrtf(w1 * w1 + w2 * w2 + w3 * w3) < 0.1f)
-        a->f6c |= 2;
-    if (!g_use_shaders) {
-        w1 = sqrtf(w1);
-        w2 = sqrtf(w2);
-        w3 = sqrtf(w3);
-    }
-    a->pos = vector4(w1, w2, w3);
-    a->f14 = a->pos;
-
-    // the cell colour: the unpacked table colour faded by k, offset by the table base position
-    float g1 = col.x * k * 0.2f + sp->base.x;
-    float g2 = col.y * k * 0.2f + sp->base.y;
-    float g3 = col.z * k * 0.2f + sp->base.z;
-    if (!g_use_shaders) {
-        g1 = sqrtf(g1);
-        g2 = sqrtf(g2);
-        g3 = sqrtf(g3);
-    }
-    scene->amb = vector4(g1, g2, g3);
-    scene->amb.w = 1.0f;
 
     // ---- second wind object: the table's direction rotated by 3.5 rad, normalised, half-size
-    Wind* b = scene->spawn_wind();
-    f65b4 = b;
-    b->f0 = 2;
+    {
+    f65b4 = scene->spawn_wind();
+    f65b4->f0 = 2;
 
-    double hour2 = fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
-    int day2 = (4.0 <= hour2 && hour2 < 20.0);
+    float hour2 = (float)fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
+    bool day2 = (4.0f <= hour2 && hour2 < 20.0f);
     int slot2 = (int)((float)(g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f) % 24;
-    vector4 d2 = sp->get_dir(slot2, day2);
+    const vector4& d2 = sp->get_dir(slot2, day2);
+    float dx = d2.x, dy = d2.y;
 
-    float len = sqrtf(d2.x * d2.x + d2.y * d2.y);
+    float len = sqrtf(dx * dx + dy * dy);
     float cx, cy;
-    if (len == 0.0f) {
+    if (len > 0.0f) {
+        float inv = 1.0f / len;
+        cx = inv * dx;
+        cy = inv * dy;
+    } else {
         cx = 0.0f;
         cy = 1.0f;
-    } else {
-        float inv = 1.0f / len;
-        cx = d2.x * inv;
-        cy = d2.y * inv;
     }
     vector4 rd(cos(3.5) * cx - sin(3.5) * cy, sin(3.5) * cx + cos(3.5) * cy, -0.9f);
     rd.normalize();
-    b->f44 = rd;
+    f65b4->f44 = rd;
 
-    b->pos = sp->base;
-    b->pos.x *= 0.5f;
-    b->pos.y *= 0.5f;
-    b->pos.z *= 0.5f;
-    b->f14 = b->pos;
-    b->f24 = vector4(rd.x * -10000.0f, rd.y * -10000.0f, rd.z * -10000.0f);
-    b->f54 = 20000.0f;
-    b->f6c = 1;
+    f65b4->pos = sp->base;
+    f65b4->pos.x *= 0.5f;
+    f65b4->pos.y *= 0.5f;
+    f65b4->pos.z *= 0.5f;
+    f65b4->f14 = f65b4->pos;
+    f65b4->f24 = vector4(rd.x * -10000.0f, rd.y * -10000.0f, rd.z * -10000.0f);
+    f65b4->f54 = 20000.0f;
+    f65b4->f6c = 1;
+    }
 }
 
 // @ 0x479930
@@ -448,6 +464,24 @@ void Terrain::spawn_bodies(SpawnSet* r)
     }
 }
 
+// the stock VC7.1 vector::push_back for the mesh pointers (separate null tests in size() and capacity()); its growth path is the
+// shared out-of-line _Insert_n at 0x410610 (declared with a plain pointer for the iterator)
+struct MeshPush : std::vector<rgl::mesh*> {
+    void ins(rgl::mesh** where, size_t n, rgl::mesh* const& v);     // 0x410610
+    void push(rgl::mesh* const& x)
+    {
+        if (size() < capacity()) {
+            *_Mylast = x;
+            _Mylast++;
+        } else {
+            ins(_Mylast, 1, x);
+        }
+    }
+};
+struct V2 { float x, y; V2() {} V2(float a, float b) : x(a), y(b) {} };
+#define LGF(v) ((float)log((double)(v)) * 1.442695f)
+#define LOG2UP(v) ((int)(LGF(v) > 0.0f ? (float)ceil(LGF(v)) + 1e-8f : (float)ceil(LGF(v)) - 1e-8f))
+
 // @ 0x479e20
 void Mission::rebuild_nav(int which, int)
 {
@@ -455,12 +489,10 @@ void Mission::rebuild_nav(int which, int)
     Level494* cs = g_game->levels + f5df4;
     NavData* core_ = 0;
     res_shape* r = 0;
-    vector4 hi, lo;
+    V2 hi, lo;
     if (sl->flags & 0x100) {
-        hi.x = terrain.max_x + 1.0f;
-        hi.y = terrain.max_y + 1.0f;
-        lo.x = terrain.min_x - 1.0f;
-        lo.y = terrain.min_y - 1.0f;
+        lo = V2(terrain.min_x - 1.0f, terrain.min_y - 1.0f);
+        hi = V2(terrain.max_x + 1.0f, terrain.max_y + 1.0f);
     } else {
         core_ = new NavData;
         r = (res_shape*)g_resmgr.get_object60(*(rgl::string*)&cs->name44);
@@ -469,18 +501,12 @@ void Mission::rebuild_nav(int which, int)
             mb_error("Unable to find body %s", nm->c_str());
         }
         r->shape->get_max(&hi.x);
-        hi.x += 1.0f;
-        hi.y += 1.0f;
+        hi = V2(hi.x + 1.0f, hi.y + 1.0f);
         r->shape->get_min(&lo.x);
-        lo.x -= 1.0f;
-        lo.y -= 1.0f;
+        lo = V2(lo.x - 1.0f, lo.y - 1.0f);
     }
-    double dx = (double)(hi.x - lo.x) * (1.0f / 3.0f);
-    double lx = (double)(float)log(dx) * 1.4426950408889634;
-    int lod1 = (int)(ceil(lx) + (lx > 0.0 ? 1e-8f : -1e-8f));
-    double dy = (double)(hi.y - lo.y) * (1.0f / 3.0f);
-    double ly = (double)(float)log(dy) * 1.4426950408889634;
-    int lod2 = (int)(ceil(ly) + (ly > 0.0 ? 1e-8f : -1e-8f));
+    int lod1 = LOG2UP((hi.x - lo.x) * (1.0f / 3.0f));
+    int lod2 = LOG2UP((hi.y - lo.y) * (1.0f / 3.0f));
     CellGrid* s = new CellGrid(&lo.x, &hi.x, &lod1, &lod2, &g_nav_param);
     scene = s;
     if ((sl->flags & 0x100) == 0) {
@@ -605,48 +631,47 @@ void Terrain::make_grid()
             n_outer = 0x30;
         for (int x = 0; x < n_outer; x++) {
             for (int y = 0; y < n_inner; y++) {
-                Entity* e = world->create_entity(9);
-                gridA[y][x] = e;
+                gridA[y][x] = world->create_entity(9);
                 rgl::mesh* m = new rgl::mesh;
                 if (g_use_shaders != 0 && g_mesh_quality == 2)
                     m->res = g_resmgr.get_material(rgl::string("grass"));
                 else
                     m->res = g_resmgr.get_material(rgl::string("grass_no_shadow"));
                 m->flags |= 0x10000000;
-                e->meshes.push_back(m);
-                e->refresh();
+                ((MeshPush*)&gridA[y][x]->meshes)->push(m);
+                gridA[y][x]->refresh();
             }
         }
+        for (int i = 0; i < dust_count; i++) {
+            DustEntry* d = &dust[i];
+            int iy = (int)(d->x * 0.05f);
+            if (iy < 0)
+                iy = 0;
+            else if (iy >= n_inner)
+                iy = n_inner - 1;
+            int ix = (int)(d->y * 0.05f);
+            if (ix < 0)
+                ix = 0;
+            else if (ix >= n_outer)
+                ix = n_outer - 1;
+            rgl::aabb* c = &boxes[iy][ix];
+            if (d->x < c->min.x)
+                c->min.x = d->x;
+            if (d->y < c->min.y)
+                c->min.y = d->y;
+            if (d->z < c->min.z)
+                c->min.z = d->z;
+            if (d->x > c->max.x)
+                c->max.x = d->x;
+            if (d->y > c->max.y)
+                c->max.y = d->y;
+            if (d->z > c->max.z)
+                c->max.z = d->z;
+        }
+        for (int x = 0; x < n_outer; x++)
+            for (int y = 0; y < n_inner; y++)
+                boxes[y][x].update();
     }
-    for (int i = 0; i < dust_count; i++) {
-        DustEntry* d = &dust[i];
-        int iy = (int)ceil(d->x * 0.05f);
-        if (iy < 0)
-            iy = 0;
-        else if (iy >= n_inner)
-            iy = n_inner - 1;
-        int ix = (int)ceil(d->y * 0.05f);
-        if (ix < 0)
-            ix = 0;
-        else if (ix >= n_outer)
-            ix = n_outer - 1;
-        rgl::aabb* c = &boxes[iy][ix];
-        if (d->x < c->min.x)
-            c->min.x = d->x;
-        if (d->y < c->min.y)
-            c->min.y = d->y;
-        if (d->z < c->min.z)
-            c->min.z = d->z;
-        if (c->max.x < d->x)
-            c->max.x = d->x;
-        if (c->max.y < d->y)
-            c->max.y = d->y;
-        if (c->max.z < d->z)
-            c->max.z = d->z;
-    }
-    for (int x = 0; x < n_outer; x++)
-        for (int y = 0; y < n_inner; y++)
-            boxes[y][x].update();
 }
 
 // @ 0x47a800

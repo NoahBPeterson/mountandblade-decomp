@@ -1,6 +1,7 @@
 ../src/rgl/mesh2/rec_tables.cpp  ??0C4c2c50@@QAE@XZ  004c2c50  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?destroy_C4c2c50@@YIPAXPAUC4c2c50@@HH@Z  004c2cb0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?dtor@C4c2c50@@QAEXXZ  004c2cd0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?read@Blk2dd0@@QAEXPAUstream_base@@@Z  004c2dd0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??0C4c2fb0@@QAE@XZ  004c2fb0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?destroy_C4c2fb0@@YIPAXPAUC4c2fb0@@HH@Z  004c3000  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?dtor@C4c2fb0@@QAEXXZ  004c3020  /O2 /MT /Gy /TP
@@ -19,3 +20,13 @@
 ../src/rgl/mesh2/rec_tables.cpp  ?global_4bf870@@YAXXZ  004c3330  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?global_4c03b0@@YAXXZ  004c3340  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?vector_deleting_delete@elem58@@QAEPAXI@Z  004c3430  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?load@options_record@@QAEXXZ  004c3a40  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_204@@YAXPADIPBXAAUAlloc204@@@Z  004c3d90  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_4@@YAXPADIPBXAAUAlloc4@@@Z  004c3e10  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_2c@@YAPAXPAD00AAUAlloc2c@@@Z  004c3e80  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_4_range@@YAPAXPAD00AAUAlloc4@@@Z  004c3ef0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?destroy_elem48_array@@YIXPAPAUelem48@@@Z  004c3f60  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?load_elem48_array@@YIXPAUelem48_holder@@HPAUstream_base@@@Z  004c3fb0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??1scenefile_obj@@QAE@XZ  004c4090  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?load@music_set@@QAEXPAUstream_base@@HPBUtstring@@@Z  004c4340  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?destroy_tstring_pairs@@YIXPAPAUtstring_pair@@@Z  004c4640  /O2 /MT /Gy /TP

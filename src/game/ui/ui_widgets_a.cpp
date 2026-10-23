@@ -21,18 +21,38 @@ int __stdcall FSOUND_SetVolume(int channel, int vol);                           
 int __stdcall FSOUND_SetPaused(int channel, int paused);                                   // 0x5342ac
 }
 
-// 0x487b00: UTF-8 decoder in another object. Its convention is custom: string in EDI, &out_len in EDX, buffer and
-// &capacity on the stack (the caller pops 8). Expressed as a 6-instruction asm helper (matching.md allows <= 8).
-extern "C" void decode_utf8_raw();          // 0x487b00
-static __forceinline void decode_utf8(int* out_len, const tstring* s, int* buf, const int* maxn)
+// 0x487b00: UTF-8 decoder (another object in the original; cl gave it a custom register convention: text in EDI,
+// &out_len in EDX, buffer and &capacity on the stack). A static noinline copy here reproduces that convention.
+static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int* buf, const int* maxn)   // 0x487b00
 {
-    __asm {
-        mov edi, s
-        mov edx, out_len
-        push maxn
-        push buf
-        call decode_utf8_raw
-        add esp, 8
+    *out_len = 0;
+    int n = s->len;
+    int i = 0;
+    if (n > 0) {
+        do {
+            int cnt = *out_len;
+            if (cnt >= *maxn)
+                break;
+            unsigned char c = s->buf[i];
+            int ch;
+            if (c >= 0xf0 && c < 0xf5) {
+                ch = ((((((unsigned char)s->buf[i] & 7) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6 | ((unsigned char)s->buf[i+2] & 0x3f)) << 6) | ((unsigned char)s->buf[i+3] & 0x3f);
+                i += 4;
+            } else if (c >= 0xe0 && c < 0xf0) {
+                ch = (((((unsigned char)s->buf[i] & 0xf) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6) | ((unsigned char)s->buf[i+2] & 0x3f);
+                i += 3;
+            } else if (c >= 0xc2 && c < 0xe0) {
+                ch = ((((unsigned char)s->buf[i] & 0x1f) << 6) | ((unsigned char)s->buf[i+1] & 0x3f));
+                i += 2;
+            } else {
+                i++;
+                if (c >= 0x80)
+                    continue;
+                ch = (signed char)c;
+            }
+            buf[cnt] = ch;
+            *out_len = cnt + 1;
+        } while (i < n);
     }
 }
 
@@ -71,14 +91,15 @@ int UiA::type9() { return 9; }
 // @ 0x48b3a0
 void* MissionUi::make_text(void* out, const tstring* s)
 {
+    float sw = screen[0];
     float h = screen[1];
     float scale = h * 0.65f;
     int buf[0x800];
     int len;
     const int maxn = 0x800;
-    float avail = screen[0] - h * 1.1805556f;
-    decode_utf8(&len, s, buf, &maxn);
+    decode_utf8(s, &len, buf, &maxn);
     float w = (float)len * scale * 0.39f;
+    float avail = sw - h * 1.1805556f;
     if (w > avail)
         scale = avail / w * scale;
     float size[2];

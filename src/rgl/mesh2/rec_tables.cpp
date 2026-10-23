@@ -55,33 +55,21 @@ C4c2d10::C4c2d10()
 }
 
 // @ 0x4c2dd0
-int __fastcall read_block_2dd0(Blk2dd0* self, void* s)
+void Blk2dd0::read(stream_base* s)
 {
-    st_str(s, self);
-    self->s0.underscores_to_spaces();
-    st_int(s, &self->count);
-    int n = self->count;
-    if (n != 0) {
-        void* p = engine_alloc(n * 0x18 + 4);
-        if (p != 0) {
-            *(int*)p = n;
-            Entry18* e = (Entry18*)((char*)p + 4);
-            alloc_ctor(e, 0x18, n, (void*)0x4be720);
-            self->entries = e;
-        } else {
-            self->entries = 0;
-        }
+    s->r_tstr((rgl::string*)&s0);
+    s0.underscores_to_spaces();
+    s->r_int(&count);
+    if (count != 0)
+        entries = new Entry18[count];
+    for (int i = 0; i < count; i++) {
+        s->r_int(&entries[i].v10);
+        s->r_tstr((rgl::string*)&entries[i].s0);
+        s->r_int(&entries[i].v14);
+        entries[i].s0.underscores_to_spaces();
     }
-    for (int i = 0; i < self->count; i++) {
-        Entry18* e = &self->entries[i];
-        st_int(s, &e->v10);
-        st_str(s, e);
-        st_int(s, &e->v14);
-        e->s0.underscores_to_spaces();
-    }
-    st_int(s, (int*)&self->s10);
-    st_int(s, (int*)((char*)self + 0x14));
-    return 0;
+    s->r_int(&v10);
+    s->r_int(&v14);
 }
 
 // @ 0x4c2ea0
@@ -337,192 +325,185 @@ void* elem58::vector_deleting_delete(unsigned flags)
     return this;
 }
 // @ 0x4c3510
-// Renderer setup: hands the font object the device, publishes the window size, queries the caps, decides
-// whether shaders can be used, then reads the ten buffer-size options into create_shader_constants.
-//
-// Complete but NOT byte-exact: the original frame ([esp+8] arguments, a 0xc8-byte sub, `this` in esi, the
-// 0x348 offset in ecx and the device kept in [esp+0x10]) shows this function was built into an object without
-// /Gy (identical code in a non-COMDAT section) and with different inlining decisions, so cl 13.10 under this
-// slice's flags cannot reproduce it. See nonmatching.txt.
-void __fastcall renderer_setup(void* self)
+// GameApp::InitDeviceObjects: hands the font object the device, publishes the window size, queries the caps,
+// decides whether shaders can be used, then reads the ten buffer-size options into the renderer's buffer table.
+// The original brackets two groups of statements with 18-byte WinLicense markers (jmp +0x10 over the 16-byte
+// record "WL  ",12/13,0,"WL  ") that cl cannot emit from C++ (an _emit block would be an asm transcription):
+// they are left out here, everything between them is the original's code.
+int __fastcall renderer_setup(GameAppView* self)
 {
-    IDirect3DDevice9* device = *(IDirect3DDevice9**)((char*)self + 0xf8);
-    ((font_ref*)*(void**)((char*)self + 0x348))->set_device(device);   // 0x404c00
-    g_d3d_device = *(IDirect3DDevice9**)((char*)self + 0xf8);
-    g_renderer_width = *(int*)((char*)self + 0xf4);
-    g_renderer_height = *(int*)((char*)self + 0x22c);   // (the original tests +0xa4 first; both branches load +0x22c)
+    self->font->set_device(self->device);
+    g_d3d_device = self->device;
+    g_renderer_width = self->width;
+    if (self->windowed)
+        g_renderer_height = self->height;
+    else
+        g_renderer_height = self->height;
     g_d3d_device->GetDeviceCaps(&g_caps);
     g_renderer_vsync = -1;
-    g_use_shaders = 0;
-    if (g_caps.PixelShaderVersion >= 0xfffe0200 && g_caps.VertexShaderVersion >= 0xffff0200 &&
-        g_caps.MaxTextureBlendStages >= 0x10 && (g_caps.DevCaps & 1) != 0 && g_shader_support != 0)
-        g_use_shaders = 1;
     g_renderer_flag = 0;
-    render_init(&g_render);
+    g_use_shaders = 0;
+    if (((unsigned*)&g_caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_caps)[0xcc / 4] >= 0xffff0200 &&
+        ((unsigned*)&g_caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_caps)[0xd4 / 4] & 1) != 0 && g_shader_support != 0)
+        g_use_shaders = 1;
+    apply_input_settings((InputGlobal*)0xa17910);
+    reset_buffer_group(self);
     {
-        tstring key1(g_opt_dx7_regular_ffp_dynamic);
-        reset_buffer_group(self);
-        int idx1 = config_find(&g_config, &key1);
-        int dx7_regular_ffp_dynamic = atoi(idx1 >= 0 ? CFG_ENTRY(idx1) : "");
-        tstring key2(g_opt_dx7_regular_ffp_static);
-        int idx2 = config_find(&g_config, &key2);
-        int dx7_regular_ffp_static = atoi(idx2 >= 0 ? CFG_ENTRY(idx2) : "");
-        tstring key3(g_opt_normal_map_dynamic);
-        int idx3 = config_find(&g_config, &key3);
-        int normal_map_dynamic = atoi(idx3 >= 0 ? CFG_ENTRY(idx3) : "");
-        tstring key4(g_opt_normal_map_static);
-        int idx4 = config_find(&g_config, &key4);
-        int normal_map_static = atoi(idx4 >= 0 ? CFG_ENTRY(idx4) : "");
-        tstring key5(g_opt_skinning_dynamic);
-        int idx5 = config_find(&g_config, &key5);
-        int skinning_dynamic = atoi(idx5 >= 0 ? CFG_ENTRY(idx5) : "");
-        tstring key6(g_opt_skinning_static);
-        int idx6 = config_find(&g_config, &key6);
-        int skinning_static = atoi(idx6 >= 0 ? CFG_ENTRY(idx6) : "");
-        tstring key7(g_opt_regular_dynamic);
-        int idx7 = config_find(&g_config, &key7);
-        int regular_dynamic = atoi(idx7 >= 0 ? CFG_ENTRY(idx7) : "");
-        tstring key8(g_opt_regular_static);
-        int idx8 = config_find(&g_config, &key8);
-        int regular_static = atoi(idx8 >= 0 ? CFG_ENTRY(idx8) : "");
-        tstring key9(g_opt_regular_ffp_dynamic);
-        int idx9 = config_find(&g_config, &key9);
-        int regular_ffp_dynamic = atoi(idx9 >= 0 ? CFG_ENTRY(idx9) : "");
-        tstring key10(g_opt_regular_ffp_static);
-        int idx10 = config_find(&g_config, &key10);
-        int regular_ffp_static = atoi(idx10 >= 0 ? CFG_ENTRY(idx10) : "");
-        create_shader_constants(&g_render,
-                                regular_ffp_static, regular_ffp_dynamic,
-                                regular_static, regular_dynamic,
-                                skinning_static, skinning_dynamic,
-                                normal_map_static, normal_map_dynamic,
-                                dx7_regular_ffp_static, dx7_regular_ffp_dynamic);
-        setup_obj_init(&g_setup_obj, 1, (void*)0x8ee3c28);
-        set_render_buffer_sizes(&g_render, *(int*)((char*)self + 0xec));
+        tstring k1("buffer_size_dx7_regular_ffp_dynamic");
+        int v1 = (int)g_ini.get_float(k1);
+        tstring k2("buffer_size_dx7_regular_ffp_static");
+        int v2 = (int)g_ini.get_float(k2);
+        tstring k3("buffer_size_normal_map_dynamic");
+        int v3 = (int)g_ini.get_float(k3);
+        tstring k4("buffer_size_normal_map_static");
+        int v4 = (int)g_ini.get_float(k4);
+        tstring k5("buffer_size_skinning_dynamic");
+        int v5 = (int)g_ini.get_float(k5);
+        tstring k6("buffer_size_skinning_static");
+        int v6 = (int)g_ini.get_float(k6);
+        tstring k7("buffer_size_regular_dynamic");
+        int v7 = (int)g_ini.get_float(k7);
+        tstring k8("buffer_size_regular_static");
+        int v8 = (int)g_ini.get_float(k8);
+        tstring k9("buffer_size_regular_ffp_dynamic");
+        int v9 = (int)g_ini.get_float(k9);
+        tstring k10("buffer_size_regular_ffp_static");
+        ((RenderSetup*)0x5fe898)->init_decls((int)g_ini.get_float(k10), v9, v8, v7, v6, v5, v4, v3, v2, v1);
     }
+    ((ResMgrX*)0x5d6fa0)->set_path_prefix(1, &g_path_prefix);
+    ((InputDevices*)0xa170c8)->init_devices(self->hwnd);
+    return 0;
+}
+
+// The user-data path builder at 0x4bab70 takes its argument in ESI: a static helper of another object.
+// Reproduced with the same body so cl picks the same register convention for the call (a local copy, not in
+// the binary: the original calls 0x4bab70; see symbols/slices/rec_tables.txt).
+static __declspec(noinline) void user_path(char* name)
+{
+    char folder[260];
+    char dir[260];
+    char tmp[260];
+    SHGetFolderPathA(0, CSIDL_APPDATA, 0, 0, folder);
+    sprintf(dir, "%s\\Mount&Blade", folder);
+    CreateDirectoryA(dir, 0);
+    sprintf(tmp, "%s", name);
+    sprintf(name, "%s\\Mount&Blade\\%s", folder, tmp);
 }
 
 // @ 0x4c3a40
-// Reads options.dat (in the user folder) into the record.
-//
-// Complete but NOT byte-exact (see nonmatching.txt): the reader's open_read() was inlined into the original
-// (no call at +0x3a, the one `call`s left are the two tstring ctors, _sprintf, user_path, the 4bc090/4bc100
-// setters, the shader-slot calls and the log), so that TU saw the text_stream body. No local declaration
-// makes cl 13.10 inline a virtual base's 0x415290 under these flags, and the original's frame/register
-// choices (0x13c frame, `this` in edi from the first instruction, the record's old fields in registers)
-// follow from that inlining. The record layout, read order and clamps below are exact.
+// Reads options.dat (in the user folder) into the record through a binary file reader built on the stack.
 void options_record::load()
 {
-    char path[0x100];
-    options_stream st;
-    sub_536f8f(path, (const char*)0x54aebc);
+    char path[0x104];
+    opt_reader br;
+    sub_536f8f(path, "options.dat");
     user_path(path);
-    st.open_read(path);
-    if (!st.failed) {   // the original branches on the stream's `failed` byte
-        st.r_float(&(this->f08));
-        st.r_float(&(this->f0c));
-        st.r_float(&(this->f10));
-        { int* p = &(this->w14); st.r_int(p); }
-        st.r_int(&(this->w1c));
-        st.r_int(&(this->w20));
-        st.r_int(&(this->w24));
-        st.r_int(&(this->w28));
-        st.r_int(&(this->w30));
-        st.r_int((int*)(void*)this);
-        options_set_mode(this, this->mode);
-        st.r_int(&(this->w34));
-        st.r_int(&(this->w48));
-        if (this->w48 < 0 || this->w48 >= 3)
-            this->w48 = 1;
-        st.r_int(&(this->w50));
-        st.r_int(&(this->w98));
-        st.r_int(&(this->w44));
-        st.r_int(&(this->w4c));
-        st.r_int(&(this->w54));
-        st.r_int(&(this->w64));
-        st.r_int(&(this->w68));
-        st.r_int(&(this->w58));
-        st.r_int(&(this->w5c));
-        st.r_float(&(this->f74));
-        st.r_int(&(this->w6c));
-        st.r_int(&(this->w70));
-        st.r_int(&(this->w38));
-        st.r_int(&(this->w2c));
-        st.r_int(&(this->w60));
-        st.r_int(&(this->w78));
-        st.r_int(&(this->w7c));
-        st.r_int(&(this->w04));
-        options_set_spacing(this, this->w04);
-        st.r_float(&(this->f80));
-        if (this->f80 < 1.4f || this->f80 > 2.6f)
-            this->f80 = 2.2f;
-        st.r_float(&(this->f84));
-        if (this->f84 < 0.5f || this->f84 > 1.01f)
-            this->f84 = 0.5f;
-        st.r_float(&(this->f88));
-        if (this->f88 < 0.5f || this->f88 > 1.01f)
-            this->f88 = 0.5f;
-        st.r_int(&(this->w18));
+    ((text_stream*)&br)->open_read(path);
+    if (!br.failed) {
+        stream_base& st = br;
+        st.r_float(&f08);
+        st.r_float(&f0c);
+        st.r_float(&f10);
+        st.r_int(&w14);
+        st.r_int(&w1c);
+        st.r_int(&w20);
+        st.r_int(&w24);
+        st.r_int(&w28);
+        st.r_int(&w30);
+        st.r_int(&mode);
+        set_mode(mode);
+        st.r_int(&w34);
+        st.r_int(&w48);
+        if (w48 < 0 || w48 >= 3)
+            w48 = 1;
+        st.r_int(&w50);
+        st.r_int(&w98);
+        st.r_int(&w44);
+        st.r_int(&w4c);
+        st.r_int(&w54);
+        st.r_int(&w64);
+        st.r_int(&w68);
+        st.r_int(&w58);
+        st.r_int(&w5c);
+        st.r_float(&f74);
+        st.r_int(&w6c);
+        st.r_int(&w70);
+        st.r_int(&w38);
+        st.r_int(&w2c);
+        st.r_int(&w60);
+        st.r_int(&w78);
+        st.r_int(&w7c);
+        st.r_int(&w04);
+        set_spacing(w04);
+        st.r_float(&f80);
+        if (!(1.4f <= f80) || !(f80 < 2.6f))
+            f80 = 2.2f;
+        st.r_float(&f84);
+        if (!(-0.001f <= f84) || !(f84 < 1.01f))
+            f84 = 0.5f;
+        st.r_float(&f88);
+        if (!(-0.001f <= f88) || !(f88 < 1.01f))
+            f88 = 0.5f;
+        st.r_int(&w18);
     } else
-        g_log.w_cstr("Unable to find options.dat. Loading defaults\n");
-    st.is_open = 1;
+        ((stream_base&)g_log).w_cstr("Unable to find options.dat. Loading defaults\n");
+    br.failed = 1;
 }
 
-
 // @ 0x4c3d90
-// fill_n(dst, n, arg, this) for 0x204-byte elements: builds each element at dst+k from arg.
-void copy_uninit_204(void* dst, unsigned n, const void* arg, void* thisptr) throw(int)
+// std::_Uninit_fill_n(first, n, val, alloc) for 0x204-byte elements; the try/catch(...) { destroy; throw; } of the
+// STL is kept (cl without /EH still builds the frame for an explicit try); the elements are trivial so the
+// catch path is a bare rethrow (funclet 0x4c3df7).
+void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al)
 {
-    *((volatile void**)thisptr) = thisptr;
-    char* d = (char*)dst;
-    while (n > 0) {
-        construct_204(d, arg);
-        --n;
-        d += 0x204;
+    char* first = dst;
+    try {
+        for (; 0 < n; --n, dst += 0x204)
+            al.construct(dst, arg);
+    } catch (...) {
+        throw;
     }
 }
 
 // @ 0x4c3e10
-// fill_n(dst, n, arg, this) for 4-byte elements.
-void copy_uninit_4(void* dst, unsigned n, const void* arg, void* thisptr) throw(int)
+// _Uninit_fill_n for 4-byte elements (funclet 0x4c3e74).
+void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al)
 {
-    *((volatile void**)thisptr) = thisptr;
-    char* d = (char*)dst;
-    while (n > 0) {
-        construct_4(d, arg);
-        --n;
-        d += 4;
+    char* first = dst;
+    try {
+        for (; 0 < n; --n, dst += 4)
+            al.construct(dst, arg);
+    } catch (...) {
+        throw;
     }
 }
 
 // @ 0x4c3e80
-// Uninitialized copy of the [first, last) range of 0x2c-byte elements onto dst; returns the output end.
-void* copy_uninit_2c(void* dst, void* last, const void* arg, void* first, void* thisptr) throw(int)
+// _Uninit_copy of [first, last) of 0x2c-byte elements onto dst; returns the output end (funclet 0x4c3ee6).
+void* copy_uninit_2c(char* first, char* last, char* dst, Alloc2c& al)
 {
-    *((volatile void**)thisptr) = thisptr;
-    char* d = (char*)dst;
-    char* s = (char*)first;
-    while (s != last) {
-        construct_2c(d, s);
-        d += 0x2c;
-        s += 0x2c;
+    char* dest0 = dst;
+    try {
+        for (; first != last; dst += 0x2c, first += 0x2c)
+            al.construct(dst, first);
+    } catch (...) {
+        throw;
     }
-    return d;
+    return dst;
 }
 
 // @ 0x4c3ef0
-// Uninitialized copy of the [first, last) range of 4-byte elements onto dst; returns the output end.
-void* copy_uninit_4_range(void* dst, void* last, const void* arg, void* first, void* thisptr) throw(int)
+// _Uninit_copy for 4-byte elements (funclet 0x4c3f56).
+void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al)
 {
-    *((volatile void**)thisptr) = thisptr;
-    char* d = (char*)dst;
-    char* s = (char*)first;
-    while (s != last) {
-        construct_4(d, s);
-        d += 4;
-        s += 4;
+    char* dest0 = dst;
+    try {
+        for (; first != last; dst += 4, first += 4)
+            al.construct(dst, first);
+    } catch (...) {
+        throw;
     }
-    return d;
+    return dst;
 }
 
 // ---- element type of the 0x48-byte array destroyed by 0x4c3f60 ------------------------------------
@@ -533,14 +514,8 @@ void* copy_uninit_4_range(void* dst, void* last, const void* arg, void* first, v
 // frees the block and clears the caller's pointer.
 void __fastcall destroy_elem48_array(elem48** pv)
 {
-    elem48* v = *pv;
-    if (v != 0) {
-        int n = *(int*)((char*)v - 4);
-        while (--n >= 0) {
-            v[n].s14.~tstring();
-            v[n].s0.~tstring();
-        }
-        engine_free((char*)v - 4);
+    if (*pv != 0) {
+        delete[] *pv;
         *pv = 0;
     }
 }
@@ -548,67 +523,29 @@ void __fastcall destroy_elem48_array(elem48** pv)
 // @ 0x4c3fb0
 // Loader (ret 4) of an object whose array member at +0 holds 0x48-byte entries and whose count sits at +4:
 // reads the count, destroys and rebuilds the array (both tstrings of every element), then initializes each
-// element with the given argument.
-void __fastcall load_elem48_array(void* self, void* unused, stream_base* s)
+// element from the stream.
+void __fastcall load_elem48_array(elem48_holder* self, int, stream_base* s)
 {
-    int* count = (int*)((char*)self + 4);
-    s->r_int(count);
-    void* old = *(void**)self;
-    if (old != 0) {
-        elem48* p = (elem48*)((char*)old + *(int*)((char*)old - 4) * 0x48);
-        int k = *(int*)((char*)old - 4);
-        while (--k >= 0) {
-            p = (elem48*)((char*)p - 0x48);
-            p->s14.~tstring();
-            p->s0.~tstring();
-        }
-        engine_free((char*)old - 4);
-        *(void**)self = 0;
+    s->r_int(&self->count);
+    if (self->arr) {
+        delete[] self->arr;
+        self->arr = 0;
     }
-    int n = *count;
-    void* mem = (char*)engine_alloc(n * 0x48 + 4);
-    if (mem != 0) {
-        int* pc = (int*)mem;
-        *pc = n;
-        elem48* v = (elem48*)(pc + 1);
-        memset(v, 0, n * 0x48);
-        elem48* p = v;
-        int i = n;
-        if (--i >= 0) {
-            int j = i + 1;
-            do {
-                new (p) tstring();
-                new ((char*)p + 0x14) tstring();
-                p = (elem48*)((char*)p + 0x48);
-            } while (--j != 0);
-        }
-        mem = v;
-    } else
-        mem = 0;
-    *(void**)self = mem;
-    void* mem2 = mem;
-    int cnt = *count;
-    for (int i = 0; i < cnt; i++)
-        elem48_init((elem48*)((char*)mem2 + i * 0x48), s);
+    self->arr = new elem48[self->count];
+    for (int i = 0; i < self->count; i++)
+        self->arr[i].init(s);
 }
 
 // ---- the 0x1c034-byte scene file object (last member ends at +0x1c034) -----------------------------
 
 
 // @ 0x4c4090
-// Destructor: frees the object at +4 (scalar delete), destroys the tstrings at +0xe028/+0xe03c and the 0x400
-// records of ts2/ts3 whose strings run back to back (cl merges the two back-to-front walks).
+// Destructor: frees the object at +4, then the members die in reverse order: s_e028, the 0x400 records of ts_b,
+// the 0x400 records of ts_a (each record's tstring is at +0xc).
 scenefile_obj::~scenefile_obj()
 {
-    int* v = w004;
-    if (v != 0)
-        free_vec_4609d0(v, 3);
-    s_e028.~tstring();
-    tstr_rec* d = &ts3[0x400];
-    for (int i = 0x400; i != 0; i--) {
-        (--d)->s.~tstring();
-        (d - 0x400)->s.~tstring();
-    }
+    if (w004 != 0)
+        w004->vdel(3);
 }
 
 // @ 0x4c4100
@@ -618,34 +555,26 @@ void __fastcall sound_engine::tick()
 {
     if (g_sound_paused != 0 || g_sound_muted != 0)
         return;
-    __int64 now = g_time[slot];
-    if ((float)(now - start_tick) * 0.00001f > 0.5f) {
+    if ((float)(g_time[t2418.slot] - t2418.start) * 1e-5f > 0.5f) {
         advance_piece();
-        start_tick = g_time[slot];
+        t2418.start = g_time[t2418.slot];
     }
     float vol = g_music_volume;
     if (fading != 0) {
-        if (elapsed_since(&w2458) > 5.0f) {
+        if ((float)(g_time[t2450.slot] - t2450.start) * 1e-5f > 5.0f) {
+            vol = 0.0f;
             stop_piece(0);
             fading = 0;
         } else {
-            float v2 = 0.0f;
-            float v0 = 1.0f;
-            float v1 = elapsed_since(&w2458) * 0.2f;
-            vol = clamp_float3(&v0, &v1, &v2);
-            vol = (1.0f - vol) * g_music_volume;
+            vol = (1.0f - clamp_float3(t2450.elapsed() * 0.2f, 0.0f, 1.0f)) * vol;
         }
     }
-    int iv = ftol2((double)(vol * 255.0f));
-    if ((float)(vol * 255.0f) - (float)iv > 0.5f)
-        iv = iv + 1;
-    int level;
-    if (iv < 0)
-        level = 0;
-    else if (iv >= 255)
-        level = 254;
-    else
-        level = iv;
+    vol = vol * 255.0f;
+    float fl = (float)floor((double)vol);
+    int n = (int)fl;
+    int iv = (vol - fl <= g_549d70) ? n : n + 1;
+    int idx;
+    int level = (iv < 0) ? 0 : ((iv >= 255) ? 254 : iv);
     if (w240c != 0) {
         float f = g_music_volume * 255.0f;
         int v = round_f(&f);
@@ -655,11 +584,12 @@ void __fastcall sound_engine::tick()
             v = 254;
         _FSOUND_SetVolume(channel, v);
     }
-    if (cur_index >= 0 && (level != last_volume || w240c != 0)) {
+    idx = cur_index;
+    if (idx >= 0 && (level != last_volume || w240c != 0)) {
         last_volume = level;
-        if (w240c != 0 && elapsed_since(&w2460) > 5.0f)
-            *(int*)this = 0;
-        _FSOUND_SetVolume(cur_index, level);
+        if (w240c != 0 && t2460.elapsed() > 5.0f)
+            w0 = 0;
+        _FSOUND_SetVolume(idx, level);
     }
 }
 
@@ -668,60 +598,53 @@ void __fastcall sound_engine::tick()
 
 
 // @ 0x4c4340
-// Loader (ret 0xc) of a music set (the sound library): frees the old records and names, reads the sample
-// records, loads every sample through FMOD (user "Sounds\<names>\x" first, then "sounds\x"), fills level,
-// ratio and length from the defaults, then reads the names (both lists go through 0x4be200) and finishes.
-void __fastcall music_set::load(stream_base& s)
+// Loader (ret 0xc) of a music set: frees the old records and names, reads the sample records (name string and
+// flag bits), loads every sample through FMOD ("<dir>Sounds\<name>" first, then "sounds\<name>") unless muted,
+// derives priority, ratio and length from the sample defaults, then reads the name records and finishes.
+void music_set::load(stream_base* s, int load_samples, const tstring* dir)
 {
     char buf[0x200];
-    tstring name;
-    tstring tmp;
-    if (recs != 0) {
-        engine_free(recs);
+    if (recs) {
+        delete[] recs;
         recs = 0;
     }
-    if (names != 0) {
-        int n = *(int*)((char*)names - 4);
-        while (--n >= 0)
-            names[n].~tstring();
-        engine_free((char*)names - 4);
+    if (names) {
+        delete[] names;
         names = 0;
     }
-    s.r_int(&count);
-    int n = count;
-    int* r = (int*)operator new(n * 0x14);
-    if (r != 0) {
-        memset(r, 0, n * 0x14);
-    } else
-        r = 0;
-    recs = (music_rec*)r;
+    s->r_int(&count);
+    recs = new music_rec[count];
+    tstring name;
     for (int i = 0; i < count; i++) {
-        int off = i * 0x14;
-        music_entry_read((music_rec*)((char*)r + off), s);
-        // load the sample named by its string
-        if (count > 0 && g_sound_muted == 0) {
-            tstring* ts = (tstring*)((char*)r + off + 4);
-            const char* nm = ts->buf ? ts->buf : (const char*)((char*)ts + 4);
-            char* base = buf;
-            sub_536f8f(base, "%s", nm);
-            (void)base;
+        int level;
+        s->r_tstr((rgl::string*)&name).r_int(&level);
+        recs[i].sample = 0;
+        if (load_samples != 0 && g_sound_muted == 0) {
+            sub_536f8f(buf, "%sSounds\\%s", dir->c_str(), name.c_str());
+            recs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
+        }
+        if (recs[i].sample == 0 && g_sound_muted == 0) {
+            sub_536f8f(buf, "sounds\\%s", name.c_str());
+            recs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
+        }
+        recs[i].level = level;
+        FSOUND_SAMPLE* smp = recs[i].sample;
+        if (smp) {
+            int ch = (recs[i].level >> 4) & 0xf;
+            if (ch == 0)
+                ch = 5;
+            FSOUND_Sample_SetDefaults(smp, -1, -1, -1, (int)((float)ch * g_590b60 * g_54ab2c));
+            int len = FSOUND_Sample_GetLength(recs[i].sample);
+            FSOUND_Sample_GetDefaults(recs[i].sample, &recs[i].freq, 0, 0, 0);
+            recs[i].ratio = (float)len / recs[i].freq;
+            recs[i].length = len;
         }
     }
-    s.r_int(&count2);
-    int m = count2;
-    tstring* nm = (tstring*)engine_alloc(m * 0x98 + 4);
-    if (nm != 0) {
-        *(int*)((char*)nm - 4) = m;
-        for (int i = 0; i < m; i++)
-            new (&nm[i]) tstring();
-    } else
-        nm = 0;
-    names = nm;
-    for (int i = 0; i < count2; i++)
-        music_entry_read((music_rec*)&nm[i], s);
+    s->r_int(&count2);
+    names = new music_name[count2];
+    for (int j = 0; j < count2; j++)
+        names[j].read(*s);
     music_set_finish(this);
-    name.~tstring();
-    tmp.~tstring();
 }
 
 // ---- the two 0x20-byte tstring arrays destroyed by 0x4c4640 ----------------------------------------
@@ -730,90 +653,44 @@ void __fastcall music_set::load(stream_base& s)
 // Destructor of an object holding two arrays of 0x20-byte tstring pairs ([this] and [this+4]).
 void __fastcall destroy_tstring_pairs(tstring_pair** self)
 {
-    tstring_pair* v = *self;
-    if (v != 0) {
-        int n = *(int*)((char*)v - 4);
-        while (--n >= 0) {
-            v[n].b.~tstring();
-            v[n].a.~tstring();
-        }
-        engine_free((char*)v - 4);
-    }
-    tstring_pair* w = *(tstring_pair**)((char*)self + 4);
-    if (w != 0) {
-        int n = *(int*)((char*)w - 4);
-        while (--n >= 0) {
-            w[n].b.~tstring();
-            w[n].a.~tstring();
-        }
-        engine_free((char*)w - 4);
-    }
+    if (self[0])
+        delete[] self[0];
+    if (self[1])
+        delete[] self[1];
 }
 
 // @ 0x4c46d0
-// Loader (ret 4) of a pair array at +0 with its count at +8: reads the count, rebuilds the array (two
-// tstrings per 0x20-byte element), reads both strings of each element and converts underscores to spaces.
-void __fastcall load_pair_array(tstring_pair** pv, int* count, stream_base* s)
+// Loader (ret 4) of the first pair array: reads the count, rebuilds the array (two tstrings per 0x20-byte element),
+// reads both strings of each element and converts the underscores of the first to spaces.
+void pair_holder::load1(stream_base* s)
 {
-    s->r_int(count);
-    tstring_pair* v = *pv;
-    if (v != 0) {
-        int n = *(int*)((char*)v - 4);
-        while (--n >= 0) {
-            v[n].b.~tstring();
-            v[n].a.~tstring();
-        }
-        engine_free((char*)v - 4);
-        *pv = 0;
+    s->r_int(&count1);
+    if (arr1) {
+        delete[] arr1;
+        arr1 = 0;
     }
-    int n = *count;
-    tstring_pair* p = (tstring_pair*)engine_alloc(n * 0x20 + 4);
-    if (p != 0) {
-        *(int*)((char*)p - 4) = n;
-        for (int i = 0; i < n; i++) {
-            new (&p[i].a) tstring();
-            new (&p[i].b) tstring();
-        }
-    } else
-        p = 0;
-    *pv = p;
-    for (int i = 0; i < *count; i++) {
-        s->r_tstr((rgl::string*)&p[i].b);
-        s->r_tstr((rgl::string*)&p[i].a);
-        p[i].a.underscores_to_spaces();
+    arr1 = new tstring_pair[count1];
+    for (int i = 0; i < count1; i++) {
+        s->r_tstr((rgl::string*)&arr1[i].b);
+        s->r_tstr((rgl::string*)&arr1[i].a);
+        arr1[i].a.underscores_to_spaces();
     }
 }
 
 // @ 0x4c47d0
-// Same loader (ret 4) for a pair array at +4 whose count sits at +0xc.
-void __fastcall load_pair_array12(tstring_pair** pv, int* count, stream_base* s)
+// Same loader for the second array (+4, count at +0xc).
+void pair_holder::load2(stream_base* s)
 {
-    s->r_int(count);
-    tstring_pair* v = *pv;
-    if (v != 0) {
-        int n = *(int*)((char*)v - 4);
-        while (--n >= 0) {
-            v[n].b.~tstring();
-            v[n].a.~tstring();
-        }
-        engine_free((char*)v - 4);
-        *pv = 0;
+    s->r_int(&count2);
+    if (arr2) {
+        delete[] arr2;
+        arr2 = 0;
     }
-    int n = *count;
-    tstring_pair* p = (tstring_pair*)engine_alloc(n * 0x20 + 4);
-    if (p != 0) {
-        *(int*)((char*)p - 4) = n;
-        for (int i = 0; i < n; i++) {
-            new (&p[i].a) tstring();
-            new (&p[i].b) tstring();
-        }
-    } else
-        p = 0;
-    *pv = p;
-    for (int i = 0; i < *count; i++) {
-        s->r_tstr((rgl::string*)&p[i].b);
-        s->r_tstr((rgl::string*)&p[i].a);
-        p[i].a.underscores_to_spaces();
+    arr2 = new tstring_pair[count2];
+    for (int i = 0; i < count2; i++) {
+        s->r_tstr((rgl::string*)&arr2[i].b);
+        s->r_tstr((rgl::string*)&arr2[i].a);
+        arr2[i].a.underscores_to_spaces();
     }
 }
 

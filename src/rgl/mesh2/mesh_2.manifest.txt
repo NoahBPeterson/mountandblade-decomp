@@ -1,11 +1,16 @@
+../src/rgl/mesh2/mesh_2.cpp  ?apply@screen_cfg@@QAEXXZ  004ca600  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?select_windowed@dev_list@@QAEXH@Z  004ca6c0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??$_Destroy_range@UE176@@V?$allocator@UE176@@@std@@@std@@YAXPAUE176@@0AAV?$allocator@UE176@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004ca7e0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?rebuild@graph_obj@@QAEXXZ  004ca8c0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?remove_edge@graph_obj@@QAEXH@Z  004ca9b0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?release@rec_2e4@@QAEXXZ  004cb610  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?release@rec_1ac@@QAEXXZ  004cb650  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?release@rec_178@@QAEXXZ  004cb680  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?clear@vec3_holder@@QAEXXZ  004cb6b0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?grow@list_node@@QAEXI@Z  004cb6f0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?clear_vecs@graph_obj@@QAEXXZ  004cb780  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?clean@graph_obj@@QAEXXZ  004cb840  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?remove_face@graph_obj@@QAEXH@Z  004cb940  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?resize@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAEXIUtstring@@@Z  004cbb10  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?reserve_50@tvec@@QAE_NI@Z  004cbb90  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?reserve_38@tvec@@QAE_NI@Z  004cbbe0  /O2 /MT /Gy /TP
@@ -44,7 +49,9 @@
 ../src/rgl/mesh2/mesh_2.cpp  ?destroy@?$allocator@UE50@@@std@@QAEXPAUE50@@@Z  004cd6a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??$_Copy_opt@PAUE50@@PAU1@@std@@YAPAUE50@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004cd6e0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0Obj7a0@@QAE@XZ  004cd7a0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?fix_skeletons@@YIXPAV?$vector@USkeleton@@V?$allocator@USkeleton@@@std@@@std@@@Z  004cd850  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0LangTables@@QAE@XZ  004cda20  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0csv_row@@QAE@XZ  004cdf20  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?read@ObjectList@@QAEXPAUstream_base@@@Z  004cdfd0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0MissionObj@@QAE@XZ  004ce2a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0MissionRec2@@QAE@XZ  004ce680  /O2 /MT /Gy /TP

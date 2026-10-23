@@ -4,6 +4,9 @@
 // Merged from slice s004ca550.
 #ifndef MESH2_SCREEN_CFG_H
 #define MESH2_SCREEN_CFG_H
+#include <deque>
+#include <windows.h>
+#include <d3d9.h>
 #include "../../game/tstring.h"
 #include "../../game/strat/gui_manager.h"
 
@@ -31,51 +34,46 @@ struct dev_rec {
 };
 
 // slots 0x04 (no-arg restore) and 0x20 (the state index stored in g_5d75e0)
-struct dev_item : dev_rec {
+struct dev_item {
+    virtual void s00() = 0;
     virtual void restore() = 0;                  // +0x04
+    virtual void s08() = 0;
+    virtual void s0c() = 0;
+    virtual void s10() = 0;
+    virtual void s14() = 0;
+    virtual void s18() = 0;
+    virtual void s1c() = 0;
     virtual int index() = 0;                     // +0x20
 };
 
 // the render device seen through slot 0x30 (set_index)
-struct dev_index : dev_rec {
+struct dev_index {
+    virtual void s00() = 0;
+    virtual void s04() = 0;
+    virtual void s08() = 0;
+    virtual void s0c() = 0;
+    virtual void s10() = 0;
+    virtual void s14() = 0;
+    virtual void s18() = 0;
+    virtual void s1c() = 0;
+    virtual void s20() = 0;
+    virtual void s24() = 0;
+    virtual void s28() = 0;
+    virtual void s2c() = 0;
     virtual void set_index(unsigned char i) = 0; // +0x30
 };
 
 extern gui_manager g_gui;                        // 0x5d7080
-extern dev_rec* g_dev_renderer;                  // 0xa17f28
+extern IDirect3DDevice9* g_dev_renderer;         // 0xa17f28 (the Direct3D device)
 extern int g_windowed_setting;                   // 0xa17144
 extern int g_windowed_other;                     // 0xa17544
 extern unsigned char g_5d75e0;                   // 0x5d75e0
-
-// a 0x1c-byte index deque (inside the object at +0x78)
-struct paged {
-    int  pad0;                                   // +0x00
-    int** map;                                   // +0x04
-    unsigned mapsize;                            // +0x08
-    unsigned base;                               // +0x0c
-    unsigned count;                              // +0x10
-    unsigned state;                              // +0x14
-    unsigned pad18;                              // +0x18
-    int& operator[](unsigned i) {
-        unsigned n = base + i;
-        unsigned page = n >> 2;
-        unsigned slot = n - page * 4;
-        if (mapsize <= page)
-            page -= mapsize;
-        return map[page][slot];
-    }
-    int& back() { return (*this)[count - 1]; }
-    void pop_back() {
-        if (count != 0 && --count == 0)
-            base = 0;
-    }
-};
 
 struct screen_cfg {
     __declspec(noinline) void apply();           // 0x4ca600
     dev_item* items[1];                          // +0x00: array of records, indexed by the queue
     char pad4[0x74];
-    paged req;                                   // +0x78
+    std::deque<int> req;                         // +0x78 the request queue (VC7.1 deque of 4-int blocks)
 };
 extern screen_cfg g_screen;                      // 0xa73980
 

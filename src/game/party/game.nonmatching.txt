@@ -2,6 +2,7 @@
 0051c720	866	LoadingPanel::sub: complete state machine (save open, header load, mode 2/3 init, teardown). Large register-allocation/scheduling difference (1266 vs 1262 bytes). [equiv: UNSUPPORTED, unresolved externs g_hero_default, MetaMission::init, GameStep6::call]
 0051cc80	701	Game::reset: complete. Register allocation and store ordering differ (790 vs 799 bytes). [equiv: PASS, 400 valid, all edges]
 0051cfa0	95	Game::Game: complete and structurally identical; the original contains an 18-byte WinLicense marker (EB 10 "WL  ...") that cannot be emitted from C++ (506 vs 542 bytes). [equiv: PASS, 400 valid, all edges]
+0051d3a0  931  NavGraph::solve: complete, rewritten structurally from the disassembly (the old Ghidra-goto transliteration lost the '+0x48 == -1' initialisation semantics on degenerate nodes): node vector via std::vector<NavNode> (vec(), at +0x10), zone flood fill with find_trigger, zone merge loop, walk of the 0x5f5e0ff zone; 1021 vs 1046 bytes, register allocation (this in edi vs esi) and one extra spilled induction variable differ. [equiv: WEAK, no mismatch, 560 valid, 96.9% insns, 63/70 edges]
 0051d7c0	310	NavGraph::walk: complete. Different branch layout/register allocation (307 vs 342 bytes). [equiv: PASS, 316 valid, all edges]
 0051d920	373	NavGraph::find_trigger: complete. Different branch layout (377 vs 405 bytes). [equiv: WEAK, no mismatch, 100% insns; ours has extra unreachable-in-harness edges]
 0051dac0	143	NavGraph::score_triggers: complete. Different loop layout (177 vs 170 bytes). [equiv: WEAK, no mismatch, 100% insns]

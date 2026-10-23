@@ -226,6 +226,7 @@ static __forceinline void vcross(vector4& r, const vector4& a, const vector4& b)
 {
     r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x;
 }
+static __forceinline void vsubo(vector4& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; }
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 
 // @ 0x4084c0
@@ -479,64 +480,63 @@ void sphere_sphere_contact(sphere* a, sphere* b, int max, contact* out, int* cou
 // Closest points between segments [a0,a1] and [b0,b1]; outA on the first, outB on the second.
 void segment_closest_points(const vector4* a0, const vector4* a1, const vector4* b0, const vector4* b1, vector4* outA, vector4* outB)
 {
-    vector4 d1(a1->x - a0->x, a1->y - a0->y, a1->z - a0->z);
-    vector4 d2(b1->x - b0->x, b1->y - b0->y, b1->z - b0->z);
-    vector4 r(a0->x - b0->x, a0->y - b0->y, a0->z - b0->z);
-    // c, b, a stay in x87 registers (extended precision) in the original; only e is rounded to float
-    double c = r.x * d2.x + r.y * d2.y + r.z * d2.z;
-    double b = d1.x * d2.x + d1.y * d2.y + d1.z * d2.z;
-    volatile float e_r = d2.x * d2.x + d2.y * d2.y + d2.z * d2.z;   // e is rounded to float in the original
-    float e = e_r;
-    double a = d1.x * d1.x + d1.y * d1.y + d1.z * d1.z;
+    float a;
+    vector4 d2, r, d1;
+    float e;
+    d1.x = a1->x - a0->x; d1.y = a1->y - a0->y; d1.z = a1->z - a0->z;
+    d2.x = b1->x - b0->x; d2.y = b1->y - b0->y; d2.z = b1->z - b0->z;
+    r.x = a0->x - b0->x; r.y = a0->y - b0->y; r.z = a0->z - b0->z;
+    float c = r.x * d2.x + r.y * d2.y + r.z * d2.z;
+    float b = d1.x * d2.x + d1.y * d2.y + d1.z * d2.z;
+    float rd1 = r.x * d1.x + r.y * d1.y + r.z * d1.z;
+    e = d2.x * d2.x + d2.y * d2.y + d2.z * d2.z;
+    a = d1.x * d1.x + d1.y * d1.y + d1.z * d1.z;
     float denom = (float)(a * e - b * b);
-    if (!(denom < 1e-06f)) {
-        float sn = (b * c - e * (r.x * d1.x + r.y * d1.y + r.z * d1.z)) / denom;
-        float tn = (sn * b + c) / e;
-        if (sn < 0.0f) sn = 0.0f; else if (1.0f < sn) sn = 1.0f;
-        if (tn < 0.0f) tn = 0.0f; else if (1.0f < tn) tn = 1.0f;
-        vector4 pa;
-        pa.x = sn * d1.x + a0->x; pa.y = sn * d1.y + a0->y; pa.z = sn * d1.z + a0->z;
-        *outA = pa;
-        vector4 pb;
-        pb.x = d2.x * tn + b0->x; pb.y = d2.y * tn + b0->y; pb.z = tn * d2.z + b0->z;
-        *outB = pb;
-        return;
-    }
-    // (nearly) parallel: work in a frame whose forward axis is a0->a1.
-    matrix m;
-    m.o = *a0;
-    vector4 nr(-r.x, -r.y, -r.z);
-    m.u = nr;
-    m.f = d1;
-    m.orthonormalize();
-    vector4 l3 = ((matrix_ext&)m).transform_point_to_local(*b0);
-    vector4 l4 = ((matrix_ext&)m).transform_point_to_local(*b1);
-    volatile float len_r = (float)sqrt(a);   // the original rounds the length to float before comparing
-    float len = len_r;
-    float lo = l3.y, hi = l4.y;
-    bool swapped = false;
-    if (l4.y < l3.y) { lo = l4.y; hi = l3.y; swapped = true; }
-    const vector4* pick = b0;
-    if (len < lo) {
-        *outA = *a1;
-        if (swapped) pick = b1;
-    } else {
-        if (hi < 0.0f) {
-            *outA = *a0;
-            if (!swapped) pick = b1;
+    if (denom < 1e-06f) {
+        // (nearly) parallel: work in a frame whose forward axis is a0->a1.
+        float nrz, nry, nrx;
+        vector4 tu;
+        matrix m;
+        m.o = *a0;
+        tu.x = nrx = -r.x; tu.y = nry = -r.y; tu.z = nrz = -r.z;
+        m.u = tu;
+        m.f = d1;
+        m.orthonormalize();
+        vector4 l3 = ((matrix_ext&)m).transform_point_to_local(*b0);
+        vector4 l4 = ((matrix_ext&)m).transform_point_to_local(*b1);
+        float len = (float)sqrt(a);
+        float lo = l3.y, hi = l4.y;
+        bool swapped = false;
+        if (l3.y > l4.y) { lo = l4.y; hi = l3.y; swapped = true; }
+        const vector4* pick = b0;
+        if (lo > len) {
+            *outA = *a1;
+            if (swapped) pick = b1;
         } else {
-            if (0.0f < lo) {
-                if (swapped) pick = b1;
-            } else if (!swapped) pick = b1;
-            *outB = *pick;
-            float dot = m.u.x * nr.x + m.u.y * nr.y + m.u.z * nr.z;
-            vector4 pa;
-            pa.x = outB->x - m.u.x * dot; pa.y = outB->y - m.u.y * dot; pa.z = outB->z - m.u.z * dot;
-            *outA = pa;
-            return;
+            if (hi < 0.0f) {
+                *outA = *a0;
+                if (!swapped) pick = b1;
+            } else {
+                if (lo > 0.0f) {
+                    if (swapped) pick = b1;
+                } else if (!swapped) pick = b1;
+                *outB = *pick;
+                float dot = m.u.x * nrx + m.u.y * nry + m.u.z * nrz;
+                *outA = *outB - m.u * dot;
+                return;
+            }
         }
+        *outB = *pick;
+    } else {
+        float sn = (b * c - e * rd1) / denom;
+        float tn = (sn * b + c) / e;
+        if (sn < 0.0f) sn = 0.0f; else if (sn > 1.0f) sn = 1.0f;
+        if (tn < 0.0f) tn = 0.0f; else if (tn > 1.0f) tn = 1.0f;
+        vector4 sc = d1 * sn;
+        *outA = vector4(sc.x + a0->x, sc.y + a0->y, sc.z + a0->z);
+        vector4 sd = d2 * tn;
+        *outB = vector4(sd.x + b0->x, sd.y + b0->y, sd.z + b0->z);
     }
-    *outB = *pick;
 }
 
 // @ 0x409ac0
@@ -619,28 +619,26 @@ void capsule_capsule_contact(capsule* a, capsule* b, int max, contact* out, int*
 void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* count)
 {
     vector4 v[4];
-    vector4 e, ed, w;
     v[0] = a->w[0]; v[1] = a->w[1]; v[2] = a->w[2]; v[3] = a->w[3];
-    float e1x = v[1].x - v[0].x;
-    float e1y = v[1].y - v[0].y;
+    vector4 e1 = vsub(v[2], v[1]);
+    vector4 e0 = vsub(v[1], v[0]);
     vector4 n;
-    n.x = e1y * (v[2].z - v[1].z) - (v[1].z - v[0].z) * (v[2].y - v[1].y);
-    n.y = (v[1].z - v[0].z) * (v[2].x - v[1].x) - (v[2].z - v[1].z) * e1x;
-    n.z = (v[2].y - v[1].y) * e1x - e1y * (v[2].x - v[1].x);
+    vcross(n, e0, e1);
     normalize_ext(n, n);
     float dist = (b->center.x - v[0].x) * n.x + ((b->center.y - v[0].y) * n.y + (b->center.z - v[0].z) * n.z);
-    if (b->radius < dist)
+    if (dist > b->radius)
         return;
     float negr = -b->radius;
     if (dist < negr)
         return;
 
-    vector4 nn(-n.x, -n.y, -n.z);
-    bool outside = false;
+    vector4 nn;
+    nn = vector4(-n.x, -n.y, -n.z);
+    volatile bool outside = false;
     bool hit = true;
-    float depth_z = nn.z * dist;
-    vector4 pt(nn.x * dist + b->center.x, nn.y * dist + b->center.y, depth_z + b->center.z);
-    pt.w = nn.w;
+    vector4 pt;
+    volatile float zr = nn.z * dist;
+    pt = vector4(nn.x * dist + b->center.x, nn.y * dist + b->center.y, zr + b->center.z);
     float depth = b->radius - dist;
     int cnt = a->count;
     int i = 0;
@@ -648,13 +646,15 @@ void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* coun
         ++i;
         int j = i % cnt;
         const vector4& s = v[i - 1];
-        e = vector4(v[j].x - s.x, v[j].y - s.y, v[j].z - s.z);
+        vector4 e = vsub(v[j], s);
+        vector4 ed;
         normalize_ext(ed, e);
-        w = vector4(b->center.x - s.x, b->center.y - s.y, b->center.z - s.z);
+        vector4 w;
+        vsubo(w, b->center, s);
         float cx = ed.y * w.z - ed.z * w.y;
         float cy = ed.z * w.x - w.z * ed.x;
         float cz = w.y * ed.x - ed.y * w.x;
-        if (cx * n.x + (cy * n.y + n.z * cz) < 0.0f) {
+        if (cx * n.x + (cy * n.y + n.z * cz) < 0.0) {
             outside = true;
             float t;
             if (b->radius < (float)sqrt(cx * cx + (cy * cy + cz * cz))
@@ -663,12 +663,9 @@ void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* coun
                 hit = false;
             } else {
                 hit = true;
-                float dz = ed.z * t;
                 pt = vector4(ed.x * t + s.x, ed.y * t + s.y, ed.z * t + s.z);
-                pt.w = ed.w;
                 float fx = pt.x - b->center.x, fy = pt.y - b->center.y, fz = pt.z - b->center.z;
                 depth = b->radius - (float)sqrt(fx * fx + (fy * fy + fz * fz));
-                (void)dz;
             }
         }
     } while (!outside && i < cnt);
