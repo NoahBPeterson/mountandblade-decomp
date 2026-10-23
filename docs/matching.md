@@ -137,6 +137,14 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
     will usually FAIL; the "inputs feed it" test is any 4-byte read of a huge value (an integer 0xFFFFFFFF
     also qualifies); control flow of ours is not compared with the original's directly (call trace and
     outputs are).
+  - **`--transparent VA,VA,...`** (image function addresses, hex): a depth-1 call to one of these is replaced
+    in the call trace by the calls that function makes itself (recursively, for listed callees it calls).
+    Use it when one build inlined a helper and the other calls it, and the call boundary is the only
+    difference: e.g. ??_Eframe_set 0x41aee0, where the original inlined ??_EBone on one path as
+    `??_I(.., ~Bone) + operator delete[]` (`--transparent 401830,41a510,41a550`). Arguments of every
+    recorded call, memory, registers and imports are still compared; a real difference inside still FAILs
+    (`test_transparent_keeps_real_differences`). Name the option and the addresses in the reason column,
+    and say what the default mode gives.
   - Limit is 180 s per function by default. Run it with `run_in_background` and keep working, never with a
     shell `&`.
 

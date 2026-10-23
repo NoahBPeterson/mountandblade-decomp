@@ -758,6 +758,19 @@ class Runner:
         for side in (self.orig, self.ours):
             for a, info in side.sites.items():
                 self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_site, user_data=(side, info), begin=a, end=a))
+        # --transparent: image functions whose call is replaced in the depth-1 trace by the calls they make
+        self.transparent = set(getattr(opts, "transparent", None) or ())
+        self.tr_stack, self.tr_block = [], None
+        for tva in sorted(self.transparent):
+            lo, hi = self.img.func_extent(tva)
+            code = self.img.read(lo, hi - lo)
+            insns, _ = R.recursive_descent(lambda a, k, lo=lo, code=code: code[a - lo:a - lo + k], lo, hi, tva, lambda a: None)
+            for a, ins in insns.items():
+                if ins.id == CX.X86_INS_CALL or (ins.id == CX.X86_INS_JMP and not self._jmp_internal(ins, lo, hi)):
+                    self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_tsite, user_data=self._site_info(ins, self.img.read),
+                                                    begin=a, end=a))
+                    r = a + ins.size
+                    self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_tret, begin=r, end=r))
         self.blocks = set()
         self.run_blocks = set()
         self.page_cache = {}
@@ -920,6 +933,39 @@ class Runner:
         if self._thunk(tgt):
             return
         esp = uc.reg_read(UC_X86_REG_ESP)
+        while self.tr_stack and esp >= self.tr_stack[-1]:
+            self.tr_stack.pop()                         # transparent calls that already returned
+        self.tr_block = None                            # (also after a transparent function's tail jump)
+        if tgt in self.transparent:
+            self.tr_stack.append(esp)
+            return
+        self._record_call(uc, tgt, info, esp)
+
+    def _on_tsite(self, uc, address, size, info):
+        """A call inside a --transparent function: recorded as depth 1 when every frame between the tested
+        function and this call is transparent (not inside a recorded callee)."""
+        if self.cur is None:
+            return
+        esp = uc.reg_read(UC_X86_REG_ESP)
+        while self.tr_stack and esp >= self.tr_stack[-1]:
+            self.tr_stack.pop()
+        if not self.tr_stack or self.tr_block is not None:
+            return
+        tgt = self._eval_target(info["ins"])
+        if tgt is None or self._thunk(tgt):
+            return
+        if tgt in self.transparent:
+            self.tr_stack.append(esp)
+            return
+        self.tr_block = esp
+        self._record_call(uc, tgt, info, esp)
+
+    def _on_tret(self, uc, address, size, data):
+        """Return address of a call inside a transparent function: the recorded callee has returned."""
+        if self.tr_block is not None and uc.reg_read(UC_X86_REG_ESP) >= self.tr_block:
+            self.tr_block = None
+
+    def _record_call(self, uc, tgt, info, esp):
         try:
             words = struct.unpack("<8I", self.m.read(esp, 32))
         except Exception:
@@ -1346,6 +1392,7 @@ class Runner:
         m.fake_handler = (getattr(self, "fake_override", None) or self.fake_call) if self.opts.fake_calls else None
         self.fakes = []
         self.calls = []
+        self.tr_stack, self.tr_block = [], None
         self.cur = side
         self.cov_on = True
         self.cov_side = side
@@ -2441,6 +2488,10 @@ def parse_args(argv=None):
     ap.add_argument("--max-mismatch", type=int, default=5)
     ap.add_argument("--no-fake-calls", dest="fake_calls", action="store_false",
                     help="discard inputs that call through a generated function pointer instead of emulating a do-nothing method")
+    ap.add_argument("--transparent", type=lambda v: [int(x, 16) for x in v.split(",")], default=None,
+                    help="comma-separated image function VAs (hex) whose calls the depth-1 call trace replaces by the "
+                         "calls they make themselves (e.g. a vector deleting destructor one build inlined and the "
+                         "other calls); arguments, memory, registers and imports are still compared")
     ap.add_argument("--ignore-abi", action="store_true", help="run even if the original reads an undeclared register argument")
     ap.add_argument("--repairs", type=int, default=24, help="fault repairs per input (0 = off)")
     ap.add_argument("--nan", action="store_true", help="also generate NaN/Inf float bit patterns")

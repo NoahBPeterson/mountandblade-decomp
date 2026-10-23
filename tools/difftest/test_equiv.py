@@ -253,3 +253,36 @@ def test_fp_realistic_floats_are_finite_and_bounded():
     for _ in range(500):
         f = equiv.InputGen.freal(rng)
         assert f == 0.0 or abs(f) == 1.0 or 1e-3 * 0.999 <= abs(f) <= 1e5 * 1.001, f
+
+
+# ---------------------------------------------------------------------- --transparent
+
+RESMGR_SRC = os.path.join(ROOT, "src", "rgl", "core", "resmgr.cpp")
+# ??_Eframe_set: the original inlines ??_EBone (0x41a550) on its array path as ??_I (0x401830, calling
+# ~Bone 0x41a510) + operator delete[], ours calls ??_EBone on both paths
+FS_TRANSPARENT = ["--transparent", "401830,41a510,41a550"]
+
+
+def resmgr_run(extra, src=RESMGR_SRC):
+    return equiv.test_function("resmgr", 0x41aee0, equiv.parse_args(["resmgr", "41aee0", "--src", src, "--inputs", "300",
+                                                                      *extra]))
+
+
+def test_transparent_hides_only_the_call_boundary():
+    base = resmgr_run([])
+    assert base["verdict"] == "FAIL" and "call #" in base["first_mismatch"]["observable"], base
+    r = resmgr_run(FS_TRANSPARENT)
+    assert r["verdict"] in ("PASS", "WEAK"), r
+
+
+def test_transparent_keeps_real_differences():
+    text = open(RESMGR_SRC).read()
+    old = "if (f18 != 0 && f1c != 0) delete[] (Bone*)f1c; delete[] table.data; }"
+    assert old in text
+    path = os.path.join(os.path.dirname(RESMGR_SRC), "_mut_resmgr_transparent.cpp")    # beside its headers
+    open(path, "w").write(text.replace(old, "if (f18 != 0 && f1c != 0) delete[] (Bone*)f1c; }", 1))
+    try:
+        r = resmgr_run(FS_TRANSPARENT, path)
+    finally:
+        os.remove(path)
+    assert r["verdict"] == "FAIL", r
