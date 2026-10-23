@@ -255,32 +255,54 @@ ItemRef* __stdcall copy_refs(ItemRef* dst, unsigned n, const ItemRef* src)
     return dst + n;
 }
 
-// a mission record's vector at +0x108 (begin/end at +0x10c/+0x110 and +0x11c/+0x120)
-struct RecVec {
-    void** b10c;                        // +0x108 (int* [2])
+// a mission record's int vectors at +0x108 and +0x118 (begin/end at +4/+8 inside each 0x10-byte header)
+struct IntVec {
+    int pad0;                           // +0x00
+    int* first;                         // +0x04
+    int* last;                          // +0x08
+    int* cap;                           // +0x0c
+};
+struct RecDetail {
+    char pad0[0x108];
+    IntVec a;                           // +0x108
+    IntVec b;                           // +0x118
+};
+struct MissionRec {                     // 0x1c8 bytes, array at mission +0x668c
+    char pad0[0x1b4];
+    RecDetail* detail;                  // +0x1b4
+    char pad1b8[0x1c8 - 0x1b8];
+};
+struct MissionTable {
+    char pad0[0x668c];
+    MissionRec* recs;                   // +0x668c
+};
+struct WorldKeys {
+    char pad0[0x1a1f0];
+    int cur;                            // +0x1a1f0
+    char pad1a1f4[0x1a1fc - 0x1a1f4];
+    int key_a;                          // +0x1a1fc
+    int key_b;                          // +0x1a200
 };
 
 // ---- 0x48cec0: fastcall lookup into the current mission's records (keys are negative ids) ---------------
+// The vector's element count is the byte difference shifted by 2 and is tested unsigned (jbe).
 // @ 0x48cec0
 int __fastcall lookup_a(int key)
 {
     int r = 0;
     if (key == -0x28 || key == -0x2b || key == -0x2a) {
-        int i = *(int*)((char*)g_world + 0x1a1f0);
+        int i = ((WorldKeys*)g_world)->cur;
         if (i >= 0) {
-            char* rec = *(char**)((char*)g_mission + 0x668c) + i * 0x1c8;
-            rec = *(char**)(rec + 0x1b4);
-            int* first = *(int**)(rec + 0x10c);
-            if (first != 0) {
-                int n = (int)(*(int**)(rec + 0x110) - first) >> 2;
+            MissionRec* m = &((MissionTable*)g_mission)->recs[i];
+            IntVec* v = &m->detail->a;
+            if (v->first != 0) {
+                unsigned n = v->last - v->first;
                 if (n > 0)
-                    r = *first;
+                    r = *m->detail->a.first;
             }
         }
-        return r;
-    }
-    if (key == -0x32 || key == -0x33)
-        return *(int*)((char*)g_world + 0x1a1fc);
+    } else if (key == -0x32 || key == -0x33)
+        r = ((WorldKeys*)g_world)->key_a;
     return r;
 }
 
@@ -290,21 +312,18 @@ int __fastcall lookup_b(int key)
 {
     int r = 0;
     if (key == -0x28) {
-        int i = *(int*)((char*)g_world + 0x1a1f0);
+        int i = ((WorldKeys*)g_world)->cur;
         if (i >= 0) {
-            char* rec = *(char**)((char*)g_mission + 0x668c) + i * 0x1c8;
-            rec = *(char**)(rec + 0x1b4);
-            int* first = *(int**)(rec + 0x11c);
-            if (first != 0) {
-                int n = (int)(*(int**)(rec + 0x120) - first) >> 2;
+            MissionRec* m = &((MissionTable*)g_mission)->recs[i];
+            IntVec* v = &m->detail->b;
+            if (v->first != 0) {
+                unsigned n = v->last - v->first;
                 if (n > 0)
-                    r = *first;
+                    r = *m->detail->b.first;
             }
         }
-        return r;
-    }
-    if (key == -0x32 || key == -0x46)
-        return *(int*)((char*)g_world + 0x1a200);
+    } else if (key == -0x32 || key == -0x46)
+        r = ((WorldKeys*)g_world)->key_b;
     return r;
 }
 
