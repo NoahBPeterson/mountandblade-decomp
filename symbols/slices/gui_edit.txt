@@ -68,7 +68,7 @@
 004c77c0 ?refresh@MapEditorDialog@@QAEXXZ
 004c7bf0 ?update_object_type@MapEditorDialog@@QAEXXZ
 004c7e20 ?update_objects@MapEditorDialog@@QAEXXZ
-004c7ee0 ?destroy_record_array@@YAPAXPAXI@Z
+004c7ee0 ?destroy_record_array@@YIPAXPAXHE@Z
 004c7f90 ?update_terrain@graph_obj@@QAEXHPBM@Z
 004c8000 ?normal@graph_obj@@QAE?AUvector4@rgl@@PBH@Z
 004c80c0 ?clear@Block@@QAEXXZ
@@ -78,12 +78,12 @@
 004c84f0 ?conv_map_codes@@YIXPAUconv_rec@@@Z
 004c85e0 ?conv_free_one@@YIXPAUconv_rec@@@Z
 004c8630 ?conv_build_scene@@YIXPAUconv_rec@@@Z
-004c8810 ?fill_verts@@YAPAUedit_vert@@PAU1@HPBU1@@Z
-004c8840 ?conv_assign_back@@YIXPAUconv_rec@@HPAPAU1@00@Z
+004c8810 ?ufill@edit_vec@@QAEPAUedit_vert@@PAU2@HPBU2@@Z
+004c8840 ?erase_range@tstr_vec@@QAE?AUtstr_iter@@PAUtstring@@0@Z
 004c88a0 ?erase_range@ptr_vec@@QAE?AUptr_iter@@PAH0@Z
 004c88e0 ?copy_range@item38_vec@@QAEXPAUitem38@@PBU2@1@Z
 004c8900 ?loader_thread_body@@YGXXZ
-004c8980 ?conv_item_array_dtor@@YIPAXPAUconv_rec@@HI@Z
+004c8980 ?conv_item_array_dtor@@YIPAXPAUconv_rec@@HE@Z
 004c8a40 ?conv_group_dtor@@YIXPAUconv_rec@@@Z
 004c8ab0 ?conv_sub_dtor@@YGXPAPAX@Z
 004c8af0 ?remove_node@graph_obj@@QAEXH@Z
@@ -105,9 +105,12 @@
 0043a1e0 ?lookup@LangTables@@QAEPAUtstring@@ABU2@@Z  # LangTables::lookup
 00433bb0 ?hash@LangTables@@QAEIPBUtstring@@@Z  # LangTables::hash
 004bd740 ?write@LangTables@@QAEXPAU_iobuf@@ABUtstring@@1@Z  # LangTables::write
-08ee3c28 ?g_path_prefix@@3DA  # global file-name prefix
+08ee3c28 ?g_path_prefix@@3Utstring@@A  # global file-name prefix
 00a17144 ?g_windowed_setting@@3HA  # windowed setting
 00a17544 ?g_windowed_other@@3HA
 00a17f28 ?g_dev_renderer@@3PAUdev_rec@@A  # current render device record
 005d75e0 ?g_5d75e0@@3EA  # device state index
 005a9f60 ?g_log@@3Ulog_stream@@A  # text log stream
+004317b0 ?clear_groups@conv_rec@@QAEXXZ  # release of the 16 variation tracks
+004c8330 ?reset_groups@conv_rec@@QAEXXZ  # block material release
+005fe888 ?g_skin_name@@3Utstring@@A  # the skin name tstring (buf at 0x5fe88c)

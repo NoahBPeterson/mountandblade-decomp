@@ -92,21 +92,25 @@ void EChar::blend_all(lod_mesh* m, void* set, const float* w)
 // @ 0x47de60
 void EChar::use_carry(lod_mesh* l, const float* w)
 {
+    std::vector<ArrSet>& v = sets;
     unsigned idx = (unsigned)-1;
     unsigned i = 0;
+    unsigned off = 0;
     do {
-        if (sets._Myfirst == 0 || i >= (unsigned)sets.size()) {
-            idx = sets.size();
-            unsigned n = sets.size();
-            sets.resize(n + 1, ArrSet());
-            copy_troop(&vat(sets, idx).name, l);
+        if (v._Myfirst == 0 || i >= (unsigned)v.size()) {
+            idx = v.size();
+            sets.resize(sets.size() + 1);
+            ArrSet* e = &vat(sets, idx);
+            copy_troop(&e->name, l);
             break;
         }
-        if (vat(sets, i).name.equals(*(tstring*)((char*)l + 0xd0)))
+        if (((ArrSet*)((char*)sets._Myfirst + off))->name.equals(*(tstring*)((char*)l + 0xd0)))
             idx = i;
         i++;
+        off += 0x38;
     } while (idx == (unsigned)-1);
-    blend_all(l, &vat(sets, idx), w);
+    ArrSet* e2 = &vat(sets, idx);
+    blend_all(l, e2, w);
 }
 
 // ---- 0x47df80: the scatter-set generator ----------------------------------------------------------------

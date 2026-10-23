@@ -1,6 +1,1 @@
-# s00520520 partial: no separate source function for 00520b2d.
-# 00520b2d - spurious Ghidra split. The 202-byte fall-through body of GameState::build_map (0x520b20..0x520bf6):
-#            nothing branches, calls or points to it. The complete function is written once at the
-#            `// @ 0x520b20` marker (215 bytes) and scored via nonmatching.txt (00520b20); these bytes are emitted
-#            but this VA cannot be scored as a standalone function.
-00520b2d	0	not a function: fall-through body of GameState::build_map (0x520b20, see nonmatching.txt); source is complete there
+# s00520520: no partial functions (0x520b20 is byte-exact in manifest.txt; its interior VA 0x520b2d is recorded in nonmatching.txt)

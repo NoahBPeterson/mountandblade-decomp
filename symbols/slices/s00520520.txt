@@ -1,0 +1,3 @@
+0054a740 ??_7stream_base@@6B@  # stream root vtable, stored first by the inlined stream ctor in 0x520b20
+0054a890 ??_7tstream_b@@6B@  # text stream class, vptr restored by the user-declared dtor stage
+0054ac88 ??_7text_stream@@6B@  # text reader (final vptr store of the inlined ctor)

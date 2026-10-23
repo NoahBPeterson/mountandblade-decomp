@@ -1,2 +1,1 @@
-# s00520520: no byte-exact functions this pass. All four VAs are accounted for in
-# nonmatching.txt (00520520, 00520c00) and partial.txt (00520b20, 00520b2d, the spurious split).
+slices/s00520520/s00520520.cpp  ?build_map@GameState@@QAEXXZ  00520b20  /O2 /MT /Gy /TP

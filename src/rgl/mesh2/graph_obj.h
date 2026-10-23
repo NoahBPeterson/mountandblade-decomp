@@ -11,6 +11,7 @@
 #ifndef MESH2_GRAPH_OBJ_H
 #define MESH2_GRAPH_OBJ_H
 #include <new>
+#include <vector>
 #include <stdexcept>
 #include "../../game/tstring.h"
 #include "../rgl_math.h"
@@ -43,8 +44,8 @@ struct face {
     char pad00[0x18];
     float pn[3];                 // +0x18 plane normal (0x4c8000 graph_obj::normal reads +0x18..+0x20)
     float pw;                    // +0x24 (0x4c8000: the 4th lane of the result)
-    int  verts[4];               // +0x28 node indices of the ring (0x4c5840)
-    int  ends[4];                // +0x38 edge indices of the ring  (0x4c58c0)
+    int  verts[4];               // +0x28 node indices of the ring (0x4c58c0)
+    int  ends[4];                // +0x38 edge indices of the ring  (0x4c5840)
     int  count;                  // +0x48 number of ring entries
     char pad4c[0xc];
     int  count2;                 // +0x58 (0x4caa40 reads ends[8])
@@ -87,6 +88,12 @@ struct graph_obj {
     int  mode;                   // +0x78 (0x4c5a20: 0 vertex / 1 edge / 2 face)
     int  cur;                    // +0x7c current element (0x4c53f0)
 
+    // typed std::vector views of the three tables (the original's members: allocator lane at +0x18/+0x28/+0x38,
+    // then first/last/end as above); the raw pointers above are kept for the functions that were matched with them
+    std::vector<node>& nodev() { return *(std::vector<node>*)((char*)this + 0x18); }
+    std::vector<face>& facev() { return *(std::vector<face>*)((char*)this + 0x28); }
+    std::vector<edge>& edgev() { return *(std::vector<edge>*)((char*)this + 0x38); }
+
     // size of a table, as the original inlines it: guarded count
     unsigned nodes_n() const { return nodes ? (unsigned)(nodes_end - nodes) : 0; }
     unsigned faces_n() const { return faces ? (unsigned)(faces_end - faces) : 0; }
@@ -95,12 +102,12 @@ struct graph_obj {
     void tidy(void* base) { void** q = (void**)base; if (q[0]) operator delete(q[0]); q[0] = 0; q[1] = 0; q[2] = 0; }
 
     void select_mode(int mode, char on);         // 0x4c53f0
-    int  calc_vertex_mode(int mode);             // 0x4c54f0
-    int  calc_edge_mode(int mode);               // 0x4c5670
+    void calc_vertex_mode(int mode);             // 0x4c54f0
+    void calc_edge_mode(int mode);               // 0x4c5670
     void swap_face_vertices(int a, int b);       // 0x4c57d0
-    void swap_poly_normals(int a, int b);        // 0x4c5840
-    void swap_poly_colors(int a, int b);         // 0x4c58c0
-    void remove_vertex_from_polys(int v);        // 0x4c5940
+    void swap_poly_normals(int a, int b);        // 0x4c5840 (swaps EDGE indices in the face rings: ends[], +0x38)
+    void swap_poly_colors(int a, int b);         // 0x4c58c0 (swaps NODE indices in the face rings: verts[], +0x28)
+    void remove_vertex_from_polys(int v);        // 0x4c5940 (removes faces whose ends[] contain edge v)
     void remove_vertex_from_edges(int v);        // 0x4c59c0
     void update_vertex_mode();                   // 0x4c5a20
     void update_edge_mode();                     // 0x4c5b60

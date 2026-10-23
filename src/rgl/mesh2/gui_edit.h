@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <new>
+#include <vector>
 #include <d3d9.h>
 #include "../rgl_math.h"
 #include "../text_stream.h"
@@ -147,7 +148,7 @@ struct editor {
 // declared on a layout-only view of it (offsets as in that header: objs +0, f10 +0x10, o568 +0x568, f1709).
 // ============================================================================================================
 struct gui_child {                               // polymorphic child (deleted through slot 0, events through slot 35)
-    virtual void d0();                           // slot 0 (deleting dtor)
+    virtual ~gui_child();                        // slot 0 (deleting dtor)
     virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4(); virtual void s5();
     virtual void s6(); virtual void s7(); virtual void s8(); virtual void s9(); virtual void s10();
     virtual void s11(); virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
@@ -158,7 +159,7 @@ struct gui_child {                               // polymorphic child (deleted t
     virtual char on_event(unsigned mask);        // slot 35 (0x8c)
 };
 
-void mesh_bounds(float* xp, float* yp);          // 0x438d80 (x lo, x hi into xp; y lo, y hi into yp)
+struct mesh_bnd { void bounds(vector4* lo, vector4* hi); };   // 0x438d80 (thiscall, ret 8: min/max corners)
 extern const float g_f95;                        // 0x54b890 = 0.95
 extern const float g_f05;                        // 0x54b4d0 = 0.05
 extern const float g_f011;                       // 0x595c98 = 0.011
@@ -167,9 +168,10 @@ extern const float g_f739;                       // 0x595c90 = 0.739
 extern const float g_f728;                       // 0x595c8c = 0.728
 
 struct gui_view {
-    char d0[0x18];
-    char d18[0x568 - 0x18];
-    gui_child* o568;         // +0x568
+    std::vector<gui_child*> kids;   // +0 (begin +4, end +8)
+    gui_child* active;       // +0x10
+    char d14[0x568 - 0x14];
+    mesh_bnd* o568;         // +0x568
     char d56c[0x16e8 - 0x56c];
     float fx;                // +0x16e8 view x (clamped to [0.05, 0.95])
     float fy;                // +0x16ec view y
@@ -206,7 +208,7 @@ extern const char s_passage[];                  // 0x595d20 "ui_passage_menu_ite
 extern const char s_entry_point[];              // 0x595d44 "ui_entry_point_entrypointname"
 
 int sprintf_c(char* out, int size, const char* fmt, ...);        // 0x535717 (_snprintf)
-void kf_arr_dtor(void* k);                                       // 0x4317b0 (an array of keyframe tracks)
+void __fastcall kf_arr_dtor(void* k);                                       // 0x4317b0 (an array of keyframe tracks)
 void ref_item_ctor(void* item, int i, void* rec, int k);         // 0x4c23f0
 void* find_frame(void* kf, const float* t, int* lo, int* hi, float* frac);   // 0x40f0d0
 struct RefRecord;                                                // below
@@ -251,6 +253,11 @@ struct RefItem {                // 0x24-byte entry of the record array
     void* refs;                 // +0x10
     void* kf;                   // +0x14 (an array of keyframes, freed with the item)
     int f18, f1c, f20;
+    ~RefItem() { kf_arr_dtor(&kf); }
+};
+struct RefList {                // the object whose record array sits at +0 (fill_records 0x4c6950 / retire 0x4c6900)
+    RefItem* records;           // +0
+    void retire();              // 0x4c6900
 };
 struct Pad98 {                  // a 0x98-byte record whose head is a string (see clear)
     tstring name;               // +0
@@ -301,11 +308,50 @@ struct RecB {
     tstring name_by_state();                    // 0x4c6530
 };
 
+// ---- the morph-target layout used by ItemPage::place (0x4c6b30); these mirror rgl::mesh / rgl::keyframes of
+// src/rgl/particles/mesh_obj.h (point20 vector at mesh+0x70, keyframes at mesh+0xa4), kept local because that header
+// cannot be mixed with the rest of this module.
+struct PFrame {                 // 0x20: a morph key frame (vertices at +4, normals at +0x14, std::vector layout)
+    int a0;
+    vector4* v;
+    vector4* vend;
+    vector4* vcap;
+    char norms[0x10];
+};
+struct PTrack {                 // keyframes (12 bytes)
+    PFrame* frames;
+    int* times;
+    int count;
+    void find(int* lo, int* hi, float* frac, const float* t);   // 0x40f0d0 (thiscall, ret 0x10)
+};
+struct PPoint { vector4 a, b; };   // 0x20 (rest, current)
+struct PMesh {
+    char pad0[0x70];
+    int pa0;                    // +0x70 (allocator lane)
+    PPoint* pts;                // +0x74
+    PPoint* pts_end;            // +0x78
+    PPoint* pts_cap;            // +0x7c
+    char pad80[0xa4 - 0x80];
+    PTrack kf;                  // +0xa4
+    unsigned npts() const { return pts ? (unsigned)(pts_end - pts) : 0; }
+};
+struct POwner { char pad0[0x38]; PMesh** mesh; };       // +0x38
+struct PoseRec {                // 0x34
+    char pad0[0x20];
+    int key;                    // +0x20 key time
+    char pad24[0xc];
+    vector4* vecs;              // +0x30
+};
+
 // the editor page: the message formatter and the buffers it owns
 struct ItemPage {
     tstring name;               // +0
     tstring text;               // +0x10
-    char pad20[0x188 - 0x20];
+    char pad20[0x38 - 0x20];
+    POwner* owner;              // +0x38 (place 0x4c6b30)
+    char pad3c[4];
+    PoseRec* poses;             // +0x40 (place)
+    char pad44[0x188 - 0x44];
     int kind;                   // +0x188
     int index;                  // +0x18c
     tstring field;              // +0x190
@@ -314,12 +360,10 @@ struct ItemPage {
     char pad1a8[0x24c - 0x1a8];
     void* extra;                // +0x24c (free_mem'd)
     void* extra_end;            // +0x250
-    RefItem* records;           // placeholder for the record-array helpers below
-    int rec_count;
+    void* extra_cap;            // +0x254
 
     void reset();                               // 0x4c65d0
     void format(char* out);                     // 0x4c6620
-    void retire();                              // 0x4c6900
     RefRecord* fill_records(RefRecord* rec);    // 0x4c6950
     void clear();                               // 0x4c6aa0
     void place(int e);                          // 0x4c6b30
@@ -482,24 +526,28 @@ extern int g_map_state;                                 // 0x5aa100
 // 0x4c7290..0x4c7f90: the configuration dialog and the map editor's object dialog
 // ============================================================================================================
 // the renderer configuration as read from / written to the user's rgl_config.txt
-struct RenderConfig {
-    char data[0x10];                                    // (its first int: "settings were reloaded" is 0)
-    RenderConfig();                                     // 0x4bc020
-    void read(FILE* f);                                 // 0x4bbf70
-    void apply(int fullscreen, const char* name);       // 0x4b9b90
-    void write(FILE* f);                                // 0x415fb0
+struct RenderConfig {                                   // game/config/config.h `Config`, 0x70 bytes
+    int first_time;                                     // +0 (set when the file was missing or fresh)
+    char data[0x70 - 4];
+    RenderConfig();                                     // 0x4bc020 (Config::init_defaults)
+    void read(FILE* f);                                 // 0x4bbf70 (Config::load_file)
+    void write(FILE* f);                                // 0x415fb0 (rgl_config::save)
 };
 
-extern void* g_skin_name;                               // 0x5fe88c (its address stands in for an empty skin)
+extern tstring g_skin_name;                             // 0x5fe888 (the skin name; buf at 0x5fe88c)
 extern int g_show_download;                             // 0x5e29c4 (show the download button)
 extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb_skin_%s.smf")
 extern char g_rgl_name[];                               // 0x54b048 ("rgl_config.txt")
+extern const char g_mode_rb[];                          // 0x54a8fc ("rb")
+extern const char g_mode_wb[];                          // 0x54b058 ("wb")
 
 // the settings / configuration dialog
 struct ConfigDialog {
     char pad[0x364];                                    // (+0x354 is the main.bmp logo handle)
     HWND hwnd;                                          // 0x364
+    char pad368[0x380 - 0x368];
     void init();                                        // 0x4c7290
+    void choose_dx_settings(RenderConfig* cfg, bool overwrite);   // 0x4b9b90 (OptionsDlg, game/config/options_dlg.h)
 };
 
 // the settings snapshot taken by the dialog: 0x230 bytes + 0x20 = a 0x250-byte frame
@@ -551,7 +599,7 @@ struct Map {
 };
 extern Map* g_map;                                      // 0x5e292c
 
-extern char g_path_prefix;                              // 0x8ee3c28 (global file-name prefix)
+extern tstring g_path_prefix;                           // 0x8ee3c28 (global file-name prefix)
 extern char g_ui_play[];                                // 0x595e0c
 extern char g_ui_configure[];                           // 0x595dfc
 extern char g_ui_check_for_new_version[];               // 0x595de0
@@ -590,11 +638,24 @@ extern res_manager g_res_manager;                       // 0x5d6fa0
 struct RecordArrayHead {
     int count;                                          // -4
 };
-void record_array_clear(void* r);                       // 0x4317b0
-void record_free(void* r);                              // 0x4c65d0 (= MapRecord reset)
+void __fastcall record_array_clear(void* r);            // 0x4317b0 (thiscall)
+void __fastcall record_free(void* r);                   // 0x4c65d0 (thiscall: = ItemPage::reset)
+struct Rec78 {                                          // the 0x78-byte element of the array (destructor = 0x4c65d0)
+    tstring name;                                       // +0
+    char pad10[0x34];
+    char* buf;                                          // +0x44 owned buffer (operator delete)
+    char* buf_end;                                      // +0x48
+    char* buf_cap;                                      // +0x4c
+    char pad50[4];
+    RefRecord* owner;                                   // +0x54 (deleted through slot 0)
+    char pad58[0x14];
+    char groups[4];                                     // +0x6c (record_array_clear)
+    char pad70[8];
+};
 
 // a block of the map's mesh: name (+0x00), a second name (+0x10), variation count (+0x44), material
 // variations (+0x58 array of 0x18-byte entries), the read pose (+0x1c8..), flags (+0x21c)
+struct BlockMat { char pad0[0x64]; void* owned; };      // a material entry; +0x64 the owning block (cleared on release)
 struct Block {
     int first;                                          // +0x00
     char pad0[0x1c];
@@ -613,12 +674,13 @@ struct Block {
     char* variations_cap;                               // +0x60
     void* material;                                     // +0x64
 
+    std::vector<BlockMat*>& mats() { return *(std::vector<BlockMat*>*)((char*)this + 0x54); }   // allocator lane +0x54
     void clear();                                       // 0x4c80c0
     void read(stream_base* stream);                     // 0x4c8110
     void free_materials();                              // 0x4c8330
     void read_terrain(stream_base* stream);             // 0x4c83a0
 };
-void block_read_base(Block* b, stream_base* s);         // 0x4607e0
+struct BlockBase { void read(stream_base* s); };        // 0x4607e0 (thiscall on block+0x38)
 void add_frame(stream_base* s, const char* name, int flags);   // 0x4c1e10
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/strat/gui_manager.h)
 
@@ -638,6 +700,18 @@ struct ConvItem16 {                                          // a 0x68-byte entr
     int a4;                                                  // +0xa4
     int a8;                                                  // +0xa8
     int ac;                                                  // +0xac
+};
+struct BufTriple {
+    char* p;
+    char* e;
+    char* c;
+    void release() { if (p) operator delete(p); p = 0; e = 0; c = 0; }
+};
+struct Rec0xb0 {                                         // element of the array destroyed by 0x4c8980 (destructor = 0x4c85e0)
+    tstring name;                                        // +0
+    tstring key;                                         // +0x10
+    char pad20[0x84];
+    BufTriple buf;                                       // +0xa4 owned buffer (operator delete), end, cap
 };
 struct ConvOwner {
     char pad0[4];
@@ -662,53 +736,45 @@ struct conv_rec {
 struct scene_vert {
     vector4 pos;                                             // +0
     int f10;                                                 // +0x10
+    char pad14[0x10];
 };
 
-// a variable of the map, as a grid of 4-dword vertices
-struct map_var {
-    vector4 min;                                             // +0
-    vector4 max;                                             // +0x10
-    int n;                                                   // +0x20
-    int pad;                                                 // +0x24
+// one cell of the tableau grid (conv_build_scene 0x4c8630): the cells of a column are 0x94 bytes apart, the
+// columns 0x911c bytes apart, starting at conv_rec+0x288
+struct tab_cell {
+    vector4 v;                                               // +0 (v.z holds the code stored in the scene cell)
+    int f10;                                                 // +0x10
+    int vert;                                                // +0x14 (scene vertex index, < 0 = none)
 };
 
-// 0x94-byte records: one cell of the tableau grid (0x25 dwords): six ints, then a 0x911c-byte row.
-struct grid_slot {
-    int f0;                                                  // +0   (code stored in the scene cell)
-    vector4 v;                                               // +4   (map vertex; read at slot-0x14 in the row below)
-    int f14;                                                 // +0x14 (scene vertex index, < 0 = none)
-    int f18;                                                 // +0x18
-    // one 0x911c-byte row follows at +0x18
+// 0x88-byte record of the scene's list at +0x14: n (+0) vertex indices (+4), the scene object at +0x84
+struct scene_obj {                                           // polymorphic scene object, vertices (vector4) at +0x60
+    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
+    virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
+    virtual void set_frame(const rgl::matrix* m);                 // slot 8 (0x20), ret 4
+    char pad4[0x60 - 4];
+    vector4 pts[1];                                          // +0x60
 };
-struct grid_row {                                            // 0x911c bytes per row
-    char cell[0x9110];
-    map_var var;                                             // +0x9110
-};
-
-// 0x88-byte record of the +0xb0 sub-object; +0x84 points at the vertex array for its n (+0) indices (+4).
 struct var_rec {
     int n;                                                   // +0
     int idx[32];                                             // +4
-    char pad84[0x84];
-    scene_vert* verts;                                       // +0x84
+    scene_obj* obj;                                          // +0x84
 };
 
-struct matrix3 {                                             // 3x4 = 0x30 bytes
-    float m[3][4];
-};
+struct matrix3 { vector4 s, f, u; };                         // identity3's result (0x30 bytes)
 matrix3* __cdecl identity3(matrix3* out);                    // 0x40cd60
 
 // the scene graph global (at +0xc3b0dc of the layout record)
 struct scene_sub {
     char pad0[4];
     scene_vert* verts;                                       // +4
-    char pad8[0xc];
-    var_rec* first;                                          // +0x14
-    var_rec* last;                                           // +0x18
+    char pad8[8];
+    std::vector<var_rec> items;                              // +0x10 (0x88-byte records)
 };
+struct code_tab { int** cols; };                             // cols[x] -> 16-byte cells (one per row)
 struct world_root {
     char pad0[0x64];
-    int** codes;                                             // +0x64 (int* codes[n]; each points at a 16-byte cell)
+    code_tab* codes;                                         // +0x64
     char pad68[0x48];
     scene_sub* sub;                                          // +0xb0
 };
@@ -737,11 +803,23 @@ struct edit_vert {
 };
 
 
-void uninit_fill_n(edit_vert* dst, unsigned n, const edit_vert* src, conv_rec* self, const edit_vert* src2);  // 0x4c5010
+struct edit_vec;
+void uninit_fill_n(edit_vert* dst, unsigned n, const edit_vert* src, edit_vec* self, const edit_vert* src2);  // 0x4c5010
+struct edit_vec {                                       // the vector<edit_vert> whose _Ufill is 0x4c8810 (this = allocator)
+    edit_vert* ufill(edit_vert* dst, int n, const edit_vert* src);   // 0x4c8810 (thiscall, ret 0xc)
+};
 tstring* assign_range(tstring* first, tstring* last, tstring* dst, tstring* dst2);  // 0x4331e0 (self, first, last)
 extern item38* copy_range38(item38* dst, const item38* first, const item38* last, conv_rec* self, const item38* last2);  // 0x4c5080
 void __fastcall conv_free_one(conv_rec* self);            // 0x4c85e0
 
+
+// vector<tstring>::erase (0x4c8840): end pointer at +8
+struct tstr_iter { tstring* p; };
+struct tstr_vec {
+    char pad0[8];
+    tstring* last;                                           // +8
+    tstr_iter erase_range(tstring* first, tstring* last);   // 0x4c8840 (thiscall, ret 0xc, hidden return)
+};
 
 // the returned iterator of the pointer vector below (one pointer, returned by value)
 struct ptr_iter {

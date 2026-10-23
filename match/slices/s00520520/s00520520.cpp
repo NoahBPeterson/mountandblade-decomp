@@ -30,21 +30,17 @@ struct tstring {
 };
 void mb_error(const char* fmt, ...);                // 0x42cc80 (cdecl)
 
-struct named_object {
-    virtual void reset() = 0;                       // slot 0
+// Stream classes with the verified layout of s0041db20/s0041db20.h (vtable 0x54a740 root, 0x54a890 text stream,
+// 0x54ac88 text reader).
+struct stream_base {
     tstring name;                                   // +4
-    ~named_object();                                // 0x4150f0
-};
-
-struct stream_base : named_object {
     int state;                                      // +0x14
     char autoflush;                                 // +0x18
-    char pad19[3];
-    int pad1c;
-    tstring buf;
-                                        // +0x20
-    virtual void reset();                           // slot 0
-    virtual void rewind();                          // slot 1
+    int flushed;                                    // +0x1c
+    tstring buf;                                    // +0x20
+    __forceinline stream_base() { autoflush = 0; flushed = 0; }
+    virtual void reset();                           // 0
+    virtual void rewind();                          // 1
     virtual stream_base& w_stream(stream_base* o) = 0;   // 2
     virtual stream_base& w_float(float* v) = 0;          // 3
     virtual stream_base& w_bool(char* v) = 0;            // 4
@@ -72,33 +68,42 @@ struct stream_base : named_object {
     virtual int flush();                                 // 26
 };
 
-struct text_stream : stream_base {
+#define STREAM_SLOTS \
+    virtual stream_base& w_stream(stream_base* o); \
+    virtual stream_base& w_float(float* v); \
+    virtual stream_base& w_bool(char* v); \
+    virtual stream_base& w_u64(unsigned __int64* v); \
+    virtual stream_base& w_i64(__int64* v); \
+    virtual stream_base& w_uint(unsigned* v); \
+    virtual stream_base& w_int(int* v); \
+    virtual stream_base& w_byte(unsigned char* v); \
+    virtual stream_base& w_cstr(const char* s); \
+    virtual stream_base& w_tstr(const tstring* s); \
+    virtual stream_base& slot12(void* v); \
+    virtual stream_base& r_stream(stream_base* o); \
+    virtual stream_base& r_float(float* v); \
+    virtual stream_base& r_bool(char* v); \
+    virtual stream_base& r_uint(unsigned* v); \
+    virtual stream_base& r_u64(unsigned __int64* v); \
+    virtual stream_base& r_i64(__int64* v); \
+    virtual stream_base& r_int(int* v); \
+    virtual stream_base& r_byte(char* v); \
+    virtual stream_base& r_tstr(tstring* v); \
+    virtual stream_base& slot22(void* v);
+
+struct tstream_b : stream_base {                    // vtable 0x54a890
     FILE* fp;                                       // +0x30
     char failed;                                    // +0x34
-    char is_open;                                   // +0x35
-    char pad36[2];
-    text_stream() : fp(0), failed(1) { autoflush = 0; pad1c = 0; state = 0; }             // ctor (inlined in build_map)
-    virtual stream_base& w_stream(stream_base* o);
-    virtual stream_base& w_float(float* v);
-    virtual stream_base& w_bool(char* v);
-    virtual stream_base& w_u64(unsigned __int64* v);
-    virtual stream_base& w_i64(__int64* v);
-    virtual stream_base& w_uint(unsigned* v);
-    virtual stream_base& w_int(int* v);
-    virtual stream_base& w_byte(unsigned char* v);
-    virtual stream_base& w_cstr(const char* s);
-    virtual stream_base& w_tstr(const tstring* s);
-    virtual stream_base& slot12(void* v);
-    virtual stream_base& r_stream(stream_base* o);
-    virtual stream_base& r_float(float* v);
-    virtual stream_base& r_bool(char* v);
-    virtual stream_base& r_uint(unsigned* v);
-    virtual stream_base& r_u64(unsigned __int64* v);
-    virtual stream_base& r_i64(__int64* v);
-    virtual stream_base& r_int(int* v);
-    virtual stream_base& r_byte(char* v);
-    virtual stream_base& r_tstr(tstring* v);
-    virtual stream_base& slot22(void* v);
+    STREAM_SLOTS
+    __forceinline tstream_b() {}
+    ~tstream_b() {}
+};
+struct tstream_base : tstream_b {
+    __forceinline tstream_base() { failed = 1; fp = 0; state = 0; }
+};
+struct text_stream : tstream_base {                 // vtable 0x54ac88: text reader
+    __forceinline text_stream() {}
+    STREAM_SLOTS
     bool open_read_text(const char* path);          // 0x415d60 (ret 4)
 };
 
@@ -168,92 +173,6 @@ extern GameState* g_game;                           // 0x5e2930
 extern unsigned g_rng;                              // 0x5d7078
 
 int float_to_int(float* p);                         // 0x432540 (cdecl)
-
-stream_base* read_map(stream_base* s, Store* map);
-
-// @ 0x520520 -----------------------------------------------------------------------------------------
-void Anim::reset(void* a, void* b)
-{
-    begin(a);
-    int s3 = f0c;
-    float s128 = f128;
-    float s12c = f12c;
-    int s1 = f04;
-    int s0 = f00;
-    int s5 = f14;
-
-    float save[63];
-    float* pf = track;
-    for (int i = 0; i < 0x3f; i += 9) {
-        for (int k = 0; k < 9; k++)
-            save[i + k] = pf[k];
-        pf += 9;
-    }
-
-    begin(b);
-
-    int r = rand();
-    float t = (float)(f04 - s1) * ((float)(r % 15817) * 6.322311674011871e-05f);
-    f04 = s1 + float_to_int(&t);
-
-    r = rand();
-    t = (float)(f00 - s0) * ((float)(r % 15817) * 6.322311674011871e-05f);
-    f00 = s0 + float_to_int(&t);
-
-    r = rand();
-    t = (float)(f14 - s5) * ((float)(r % 15817) * 6.322311674011871e-05f);
-    int v = float_to_int(&t) + s5;
-    f14 = v;
-
-    f0c = -1;
-
-    int base = *(int*)(f08 * 0x1f8 + 0x1c0 + f1c);
-    int* q = (int*)(base + 0x1c + v * 0xb0);
-    int cnt = q[1];
-    int m = (q[2] - cnt) >> 2;
-    if (cnt == 0 || m < 1) {
-        r = rand();
-        t = (float)(f0c - s3) * ((float)(r % 15817) * 6.322311674011871e-05f);
-        f0c = s3 + float_to_int(&t);
-    } else {
-        int k = (m < 2) ? 0 : rand() % m;
-        f0c = *(int*)(*(int*)(base + 0x20 + f14 * 0xb0) + k * 4);
-    }
-
-    r = rand();
-    f128 = (f128 - s128) * ((float)(r % 15817) * 6.322311674011871e-05f) + s128;
-    r = rand();
-    f12c = (f12c - s12c) * ((float)(r % 15817) * 6.322311674011871e-05f) + s12c;
-
-    pf = track;
-    for (int i = 0; i < 0x3f; i += 9) {
-        for (int k = 0; k < 9; k++) {
-            g_rng = ((g_rng * 0x1c13 + 0xf2f67aaa) * 0x1ddcf5f + 0xf2f67aaa) * 0x1105;
-            pf[k] = ((pf[k] - save[i + k]) * ((float)(g_rng % 15817) * 1.2644623348023742e-04f)) * 0.5f + save[i + k];
-        }
-        pf += 9;
-    }
-
-    end(a);
-}
-
-// @ 0x520b20 -----------------------------------------------------------------------------------------
-void GameState::build_map()
-{
-    if (!g_map_loaded) {
-        g_map = new Store();
-        text_stream s;
-        const char* path = module_path("map.txt");
-        if (!s.open_read_text(path))
-            mb_error("Unable to open %s", path);
-        if (!s.failed) {
-            read_map(&s, g_map);
-            s.failed = 1;
-        }
-    }
-}
-
-stream_base* read_map(stream_base* s, Store* map);
 
 stream_base* read_map(stream_base* s, Store* map);
 

@@ -1,1 +1,1 @@
-0051776f  0  not a function: five bytes of int3 padding between sun_color (ends 0x51776f) and sky_color (starts 0x517770)
+0051776f	0	not a function: the last of five 0xcc padding bytes (0x51776b..0x51776f) between sun_color (Game::sun_color 0x5176e0, ends with ret 4 at 0x517768) and sky_color (0x517770). Proven: all five bytes are int3, no instruction falls into or branches to 0x51776f, and the image holds no 4-byte reference to it (only hit of 6f 77 51 00 is inside the string "Shadow"). Same convention as the other int3 padding rows (0x517e6d, 0x51893f); nothing to score

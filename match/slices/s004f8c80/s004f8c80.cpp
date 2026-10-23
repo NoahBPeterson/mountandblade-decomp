@@ -1,55 +1,46 @@
-// s004f8c80: the mission camera tick (0x4f8c80): follows the agent the camera looks through, applies the
-// script camera (mission +0x6748: a record plus the cur/sway/from/to frames and a blend timer), the free
-// camera, the body-collision push-out (capsule vs the shapes a segment query returns), and finally the
-// frustum (copy the frame, build the planes, pick the far plane, init).  The two private helpers 0x4f25a0
-// (frustum::init) and 0x4fa790 (mission camera copy) follow it and are written below too.
+// s004f8c80: the mission camera tick (0x4f8c80, Camera::update, ret 4).  Each frame it builds the camera frame
+// k (this+0x228) and position, from one of: the free/script camera (g_game+0x1a090: keys move g_game+0x1a1a4),
+// the mission's scripted camera slot (mission+0x6748: frames cur/sway, zoom blend, optional attachment to an
+// agent), the spectator view through an agent (g_game+0x139e4), or the player's third-person camera with the
+// capsule push-out against the level's faces.  Then (second pass) a scripted blend towards the previous
+// camera, the frustum (aspect from 0x5d75dc / 0x5d75d8, fov clamped, near 0.03) and the mission's camera_to
+// (0x4fa790).  The private helpers 0x4f25a0 (frustum::init) and 0x4fa790 follow, as before.
 // Offsets were read from this function; names are provisional.
-#include <windows.h>
-#include <d3d9.h>
-#include <d3dx9.h>
 #include <math.h>
+#include <vector>
 #include "rgl.h"
 using rgl::vector4;
 using rgl::matrix;
 
-float __cdecl atan2(float y, float x);                                  // 0x42b350
-float __cdecl frand();                                                  // 0x40e400
+#pragma intrinsic(atan2, atan, sqrt)
 
-struct pos2 : matrix {                                                  // 0x48 bytes; agents 0x5928 apart
-    float yaw;                                                          // +0x40
-    float pitch;                                                        // +0x44
-    void rotate_fu(const float* angle);                                 // 0x40e570
-    void rotate_su(const float* angle);                                 // 0x40e670
-    void orthonormalize();                                              // 0x407ef0
-    matrix mul(const matrix& m) const;                                  // 0x40e870
-};
-struct pos3 : pos2 {
-    float roll;                                                         // +0x48
-};
-pos3* __cdecl identity_pos(pos3* out);                                   // 0x40cd00
-float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0
+
+float __cdecl frand();                                                  // 0x40e400
+float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0 (larger of the two)
 float __cdecl clamp(const float* x, const float* lo, const float* hi);  // 0x40e3d0
+matrix* __cdecl identity_pos(matrix* out);                              // 0x40cd00
 static __forceinline float clampf(float x, float lo, float hi) { return x < lo ? lo : (x >= hi ? hi : x); }
-static __forceinline vector4 vthree(float x, float y, float z) { return vector4(x, y, z); }
 static __forceinline vector4 vfour(float x, float y, float z, float w) { vector4 r(x, y, z); r.w = w; return r; }
 
-vector4* __cdecl transform_point(vector4* out, const matrix* m, const vector4& p);   // 0x408460
-matrix* __cdecl mul(matrix* out, const pos2* a, const pos2* b);         // 0x40e870
-int has_key(int agent, int key);                                        // 0x48ac50
-
-// Inline vector helpers as the original's TU had them (scalar by const reference: one float store per use)
+// Inline vector helpers as the original's TU had them (scalar by const reference: one float store per use).
+// The fourth lane of every result is left unset (the original copies whole vector4s with an unset w).
 static __forceinline vector4 vmul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
-static __forceinline vector4 vadd(const vector4& a, const vector4& b) { vector4 r(a.x + b.x, a.y + b.y, a.z + b.z); r.w = a.w; return r; }
-static __forceinline vector4 vsub(const vector4& a, const vector4& b) { vector4 r(a.x - b.x, a.y - b.y, a.z - b.z); r.w = a.w; return r; }
-static __forceinline vector4 neg(const vector4& a) { vector4 r(-a.x, -a.y, -a.z); r.w = a.w; return r; }
-static __forceinline vector4 vneg(const vector4& a) { vector4 r(-a.x, -a.y, -a.z); r.w = a.w; return r; }
+static __forceinline vector4 vmulv(const vector4& a, float s) { return vector4(a.x * s, a.y * s, a.z * s); }
+static __forceinline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+static __forceinline vector4 vneg(const vector4& a) { return vector4(-a.x, -a.y, -a.z); }
+static __forceinline void vadd_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
+static __forceinline void vsub_to(vector4& a, const vector4& b) { a.x = a.x - b.x; a.y = a.y - b.y; a.z = a.z - b.z; }
 
-// frame with the engine's matrix helpers (matrix product 0x40e870, orthonormalize 0x407ef0)
-struct matrix_frame : matrix {
-    matrix mul(const matrix& m) const;                                  // 0x40e870
+// a frame with the engine's matrix helpers
+struct frame : matrix {
+    matrix mul(const matrix& m) const;                                  // 0x40e870 (hidden return pointer)
+    void rotate_fu(const float& angle);                                 // 0x40e570
+    void rotate_su(const float& angle);                                 // 0x40e670
+    vector4 transform_point(const vector4& p) const;                    // 0x408460 (hidden return pointer)
 };
 struct vec3 { float x, y, z; };
-// 3x3 rotation part of a frame (rows s, f, u); cross2(a, b) = third row of a x b as the engine writes it
+struct pos3 : matrix { float yaw, pitch, roll; };
 struct mat3 { vector4 s, f, u; };
 static __forceinline vector4 cross2(const vector4& a, const vector4& b)
 {
@@ -58,71 +49,33 @@ static __forceinline vector4 cross2(const vector4& a, const vector4& b)
     return r;
 }
 
-// ---- agent / game records ---------------------------------------------------------------------------------------
-struct Animator {
-    char pad0[4];
-    int f4;                                                             // +0x04: +0x1140 / +0x1170 two frames
-    char pad8[0x50 - 8];
-    char ready;                                                         // +0x50
-    void ensure_updated();                                              // 0x43e740
-    char pad51[0x1140 - 0x51];
-    vector4 f1140;                                                      // +0x1140
-    char pad1150[0x1170 - 0x1150];
-    vector4 f1170;                                                      // +0x1170
+// ---- collision shapes (layouts verified in s00439100 / s0040c670; the capsule ctor is 0x433310) --------------
+struct shape_base {
+    int m4, m8, mc, min_x, min_y, max_x, max_y;
+    shape_base() : m4(-1), m8(8), mc(-1), min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
+    virtual ~shape_base() {}                                            // slot 0
+    virtual int shape_type();                                           // slot 1 (0 sphere, 1 capsule, 2 face)
 };
-struct AgentBody {
-    char pad0[0x30];
-    matrix_frame frame;                                                 // +0x30
+struct capsule : shape_base {                                           // vtable 0x54a540, size 0x64
+    vector4 p0, p1, p2, p3;
+    float radius;
+    capsule(float r, const vector4* a, const vector4* b);               // 0x433310
 };
-struct SceneEnt { char pad0[0x18]; int f18; };                           // +0x18 flags (0x100000)
-struct Scene { SceneEnt* ents; };
-struct Ctx { char pad0[8]; Scene* s8; };                                 // +8
-namespace rgl { struct shape; }
-struct level {
-    SceneEnt* f0;                                                       // +0
-    char pad4[0x30c - 4];
-    vector4 eye;                                                        // +0x30c
-    vector4 target;                                                     // +0x31c
-    char pad32c[0xaa0 - 0x32c];
-    void query_segment(const float* a, const float* b, unsigned mask, rgl::shape** out, int* count);  // 0x439870
+struct face_shape : shape_base {                                        // vtable 0x54a588, size 0xb4
+    vector4 v[8];                                                       // +0x20
+    vector4 normal;                                                     // +0xa0
+    int count;                                                          // +0xb0
 };
-// level payload behind level::f0: camera frame, its forward/body eye copies, and the level object's shape
-struct LevelObj {
-    matrix f04;                                                         // +0x04 (camera_to username/frame)
-    char pad44[0x58 - 0x44];
-    matrix_frame frame;                                                 // +0x58
-    vector4 forward_eye;                                                // +0x88
-    char pad98[0xa8 - 0x98];
-    vector4 body_eye;                                                   // +0xa8
-    char padb8[0x1f0 - 0xb8];
-    int shape;                                                          // +0x1f0
+struct contact {                                                        // 0x24 bytes
+    vector4 normal;
+    vector4 point;
+    float depth;
 };
-struct GameData {
-    char pad0[0x139e4];
-    int f139e4;                                                         // +0x139e4
-    char pad139e8[0x13a50 - 0x139e8];
-    char* f13a50;                                                       // +0x13a50 (row array, 0x494 per row)
-    char pad13a54[0x13b18 - 0x13a54];
-    int f13b18;                                                         // +0x13b18 tick index (8-byte entries)
-    unsigned f13b20;                                                    // +0x13b20 low word of the tick clock
-    int f13b24;                                                         // +0x13b24 high word
-    char pad13b28[0x1a090 - 0x13b28];
-    int f1a090;                                                         // +0x1a090: script camera active
-    char pad1a094[0x1a0b0 - 0x1a094];
-    int f1a0b0;                                                         // +0x1a0b0 zoom step
-    int f1a0b4;                                                         // +0x1a0b4 last zoom tick
-    char pad1a0b8[0x1a13c - 0x1a0b8];
-    vector4 eye;                                                        // +0x1a13c script camera eye
-    char pad1a148[0x1a150 - 0x1a148];
-    unsigned f1a150;                                                    // +0x1a150 tick index
-    char pad1a154[0x1a158 - 0x1a154];
-    unsigned f1a158;                                                    // +0x1a158 low word of the script clock
-    char pad1a15c[0x1a1a4 - 0x1a15c];
-    vector4 cam;                                                        // +0x1a1a4 script camera position
-};
-extern GameData* g_game;                                                // 0x5e2930
-extern unsigned g_ticks[];                                              // 0x5e2948 (8 bytes per tick)
+int __cdecl shape_contact_count(shape_base* a, shape_base* b, int max, void* out);   // 0x40bfe0
 
+// ---- keys / globals ---------------------------------------------------------------------------------------------
+struct KeyTable { char down(int key); };                                // 0x48ac50 (thiscall, ret 4)
+extern KeyTable g_keys;                                                 // 0xa73730
 extern int g_cam_version;                                               // 0xa17118
 extern int g_cam_down;                                                  // 0xa17518
 extern int g_cam_left;                                                  // 0xa17150
@@ -134,45 +87,97 @@ extern int g_cam_lock;                                                  // 0xa17
 extern int g_cam_lock2;                                                 // 0xa17348
 extern int g_cam_sens;                                                  // 0x5a9fdc
 extern float g_cam_dt;                                                  // 0x5a9c20
-extern level* g_scene_rows;                                             // 0x5e28f4 (legacy rows, not queried)
 extern int g_cam_fix;                                                   // 0x5a9fd8
+extern float g_screen_a;                                                // 0x5d75dc
+extern float g_screen_b;                                                // 0x5d75d8
+extern __int64 g_ticks[];                                               // 0x5e2948 (8 bytes per tick clock)
+
+// ---- agent / game records ---------------------------------------------------------------------------------------
+struct Skeleton {
+    int nbones;                                                         // +0
+    char* recs;                                                         // +4 (the matrix at +0x1140 is the head bone, +0x1170 its origin)
+    char pad8[0x50 - 8];
+    char ready;                                                         // +0x50
+    void ensure_updated();                                              // 0x43e740
+};
+struct AgentBody {
+    char pad0[0x58];
+    frame m;                                                            // +0x58 (m.o at +0x88)
+    char pad98[0x304 - 0x98];
+    Skeleton* skel;                                                     // +0x304
+};
+struct DefList { char* defs; int count; };                              // agent +0x12c: 0x30-byte records, flags at +0x18
+struct Agent {                                                          // 0x5928 bytes
+    char pad0[0x10];
+    int f10;                                                            // +0x10
+    char pad14[0x2c - 0x14];
+    int f2c;                                                            // +0x2c target / mount id, -1 = none
+    char pad30[0x50 - 0x30];
+    vector4 pos;                                                        // +0x50
+    char pad60[0x98 - 0x60];
+    float ex, ey, ez;                                                   // +0x98 eye offset
+    char pada4[0xd4 - 0xa4];
+    int fd4;                                                            // +0xd4 animation slot 0 id (the record index)
+    char padd8[0x12c - 0xd8];
+    DefList* defs;                                                      // +0x12c
+    char pad130[0x250 - 0x130];
+    AgentBody* body;                                                    // +0x250
+    char pad254[0x56e8 - 0x254];
+    float f56e8;                                                        // +0x56e8
+    char pad56ec[0x5928 - 0x56ec];
+};
+
+struct level {
+    char pad0[0x30c];
+    vector4 eye;                                                        // +0x30c
+    vector4 target;                                                     // +0x31c
+    char pad32c[0xaa0 - 0x32c];
+    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);  // 0x439870
+};
+struct GameData {
+    char pad0[0x139e4];
+    int f139e4;                                                         // +0x139e4: spectating
+    char pad139e8[0x13a50 - 0x139e8];
+    char* f13a50;                                                       // +0x13a50 (row array, 0x494 per row)
+    char pad13a54[0x13b18 - 0x13a54];
+    int f13b18, f13b1c;                                                 // +0x13b18
+    unsigned f13b20;                                                    // +0x13b20 low word of the tick clock
+    int f13b24;                                                         // +0x13b24 high word
+    char pad13b28[0x1a090 - 0x13b28];
+    int f1a090;                                                         // +0x1a090: free/script camera active
+    char pad1a094[0x1a0b0 - 0x1a094];
+    int f1a0b0;                                                         // +0x1a0b0 zoom step
+    int f1a0b4;                                                         // +0x1a0b4 last zoom tick
+    char pad1a0b8[0x1a13c - 0x1a0b8];
+    vector4 eye;                                                        // +0x1a13c script camera eye
+    char pad1a14c[0x1a150 - 0x1a14c];
+    int f1a150;                                                         // +0x1a150 tick clock index
+    char pad1a154[0x1a158 - 0x1a154];
+    __int64 f1a158;                                                     // +0x1a158 script clock start
+    char pad1a160[0x1a1a4 - 0x1a160];
+    vector4 cam;                                                        // +0x1a1a4 script camera position
+};
+extern GameData* g_game;                                                // 0x5e2930
 
 // ---- the mission's camera slot ------------------------------------------------------------------------------------
-struct CameraRec { char pad0[0x118]; };                                 // 0x4f25a0 target
-// helpers called by camera_to (0x4fa790); they are separate slices, only declared here
+extern float g_cam_near;                                                // 0x5a9c28
 extern int g_cam_ui;                                                    // 0x5e28fc
 matrix* rotate_axis(matrix* out, float* angles);                        // 0x463610: yaw, pitch, roll
 int round_half_down(float f);                                           // 0x535a64
-struct CameraSlot {
-    CameraRec* rec;                                                     // mission +0x6748
-    pos2 cur;                                                           // +0x674c
-    pos2 sway;                                                          // +0x678c
-    pos2 from;                                                          // +0x67cc
-    pos2 to;                                                            // +0x67e0
-    int num;                                                            // +0x67f0
-    float value;                                                        // +0x67f4
-    int agent;                                                          // +0x67f8
-    unsigned end;                                                       // +0x67fc
+struct CamSlot {                                                        // mission +0x6748
+    void* rec;                                                          // +0x6748 (non-null = scripted camera)
+    matrix cur;                                                         // +0x674c rows as stored: f = -forward
+    matrix sway;                                                        // +0x678c blend target
+    float zoom_cur;                                                     // +0x67cc
+    float zoom_to;                                                      // +0x67d0
+    float value;                                                        // +0x67d4 blend duration (seconds), 0 = none
+    int clock;                                                          // +0x67d8 tick clock index
+    int pad67dc;
+    __int64 start;                                                      // +0x67e0 blend start tick
+    int agent;                                                          // +0x67e8 attached agent id, -1 = none
+    int attached;                                                       // +0x67ec 1 = frame is relative to the agent's body
+    int num;                                                            // +0x67f0 smoothing strength
 };
-struct level;
-struct Agent;
-struct GameData;
-struct CameraMgr;
-struct Mission {
-    level* scene;                                                       // +0
-    char pad4[0x1c - 4];
-    Agent** pages;                                                      // +0x1c
-    char pad20[0x5c - 0x20];
-    int local_id;                                                       // +0x5c
-    char pad60[0x6624 - 0x60];
-    matrix m6624;                                                       // +0x6624 (camera_to copies the frame here)
-    char pad6664[0x6748 - 0x6664];
-    CameraSlot cam;
-    void camera_to(pos3* eye, float far_plane);                          // 0x4fa790
-    void face_level(pos3* eye, float* far_plane);                        // remainder of camera_to (level part)
-    char m6664[0x6668 - 0x6664];                                        // +0x6664 (camera index handed in below)
-};
-extern Mission* g_mission;                                              // 0x5e292c
 
 // camera delegate object: mission +0x65b8 is its target and +0x65c0 its eye owner; camera_to (0x4fa790)
 // reads/writes both.  The frame is three rows laid out at +0x58 as [f(0x58) u(0x64) s(0x70) o(0x7c)].
@@ -201,356 +206,360 @@ struct CameraNode {
     void update_render(const pos3* eye, const float* far_plane);        // 0x4fb180 (camera_to step)
     int probe_shapes();                                                 // 0x4faee0 (camera_to step)
 };
+struct Mission {
+    level* scene;                                                       // +0
+    char pad4[0x18 - 4];
+    std::vector<Agent*> pages;                                          // +0x18 (id >> 4 -> page of 16 agents; first at +0x1c)
+    char pad28[0x5c - 0x28];
+    int local_id;                                                       // +0x5c
+    char pad60[0x6624 - 0x60];
+    matrix m6624;                                                       // +0x6624 (camera_to copies the frame here)
+    char pad6664[0x6748 - 0x6664];
+    CamSlot cam;
+    void camera_to(const matrix* eye, const float& far_plane);          // 0x4fa790 (ret 8)
+    void camera_to(pos3* eye, float far_plane);                         // 0x4fa790, the partial reconstruction below
+    void face_level(pos3* eye, float* far_plane);                       // remainder of camera_to (level part)
+};
+extern Mission* g_mission;                                              // 0x5e292c
+
+static __forceinline Agent* AG(int i) { return &g_mission->pages[(unsigned)i >> 4][i & 0xf]; }
 
 // ---- the camera object thiscall'ed here ----------------------------------------------------------------------------
 struct frustum {
     char flag;                                                          // +0x00
-    char pad1[0x108 - 1];
+    char pad1[0xc8 - 1];
+    matrix frame;                                                       // +0xc8
     float f108, f10c, f110, f114;
     float f118, f11c;                                                   // +0x118 / +0x11c (the scale pair stored by init)
     void build_planes();                                                // 0x41e4f0
-    void init(float fov, float aspect, float znear, float aspect2);     // 0x4f25a0
+    void init(float fov, float aspect, float znear, float zfar);        // 0x4f25a0
 };
-// the frame struct is a matrix whose 4 rows sit at +0x58 (f), +0x64 (u), +0x70 (s), +0x7c (o)
+struct View {
+    char pad0[0x1ac];
+    frustum fr;                                                         // +0x1ac
+};
 struct Camera {
-    char pad0[0xf8];
+    char pad0[0x60];
+    View* view;                                                         // +0x60
+    char pad64[0xf8 - 0x64];
     frustum fr;                                                         // +0xf8
-    pos3 k;                                                             // +0x228
-    vector4 k_o;                                                        // +0x238
-    vector4 p_o;                                                        // +0x248
-    vector4 w_o;                                                        // +0x258
+    vector4 head;                                                       // +0x218
+    frame k;                                                            // +0x228
     float yaw;                                                          // +0x268
     float pitch;                                                        // +0x26c
+    char pad270[0x278 - 0x270];
     float f278;                                                         // +0x278
     float f27c;                                                         // +0x27c
     float f280;                                                         // +0x280
     float f284;                                                         // +0x284
     float zoom;                                                         // +0x288
-    vector4 lag_o;                                                      // +0x28c
+    vector4 lag;                                                        // +0x28c
     char pad29c[0x2ec - 0x29c];
     float f2ec;                                                         // +0x2ec
     char pad2f0[0x300 - 0x2f0];
     float f300;                                                         // +0x300
-    char pad304[0x338 - 0x304];
     void update(float dt);                                              // 0x4f8c80
 };
-
-namespace rgl {
-struct shape {                                                          // vtable 0x54a4b8, 0x20 bytes
-    int m4, m8, mc, minx, miny, maxx, maxy;
-    virtual ~shape();
-    virtual void dtor() = 0;
-    virtual const char* name() = 0; virtual void b() = 0; virtual void c() = 0; virtual void d() = 0;
-};
-struct str16 { void operator=(const str16&); };                        // rgl::string from rgl.h (no default ctor)
-}
-struct sph : rgl::shape {                                               // vtable 0x54a4f0, 0x44 bytes
-    vector4 v20, v30;
-    float radius;                                                       // +0x40
-    virtual void dtor(); virtual const char* name(); virtual void b(); virtual void c(); virtual void d();
-    virtual void e();
-};
-struct cap : sph {                                                      // vtable 0x54a610 (capsule: +0x20 = 3 floats)
-    float f20, f24, f28;
-    vector4 f2c, f3c;
-    virtual void dtor(); virtual const char* name(); virtual void b(); virtual void c(); virtual void d();
-    virtual void e();
-};
-struct Contact {
-    vector4 p;                                                          // +0x00 contact point
-    char pad10[0x10];
-};
-int shape_contact_count(rgl::shape* a, rgl::shape* b, int max, void* out);   // 0x40bfe0
-
-struct Agent {
-    char pad0[0x10];
-    int f10;                                                            // +0x10
-    char pad14[0x28 - 0x14];
-    pos3 f28;                                                           // +0x28 local frame
-    int f2c;                                                            // +0x70 (as unsigned: an agent id)
-    char pad74[0x88 - 0x74];
-    vec3 be;                                                            // +0x88 eye used by the camera slot
-    char pad94[0x98 - 0x94];
-    vec3 eye;                                                           // +0x98
-    char padA4[0x250 - 0xa4];
-    AgentBody* body;                                                    // +0x250
-    char pad254[0x304 - 0x254];
-    Animator* anim;                                                     // +0x304
-    char pad308[0x56e8 - 0x308];
-    float f56e8;                                                        // +0x56e8
-};
-
-#define AGENT_AT(m, i) (&(m)->pages[(unsigned)(i) >> 4][(i) & 0xf])
 
 // @ 0x4f8c80
 void Camera::update(float dt)
 {
-    pos3 home;
-    vector4 v, a, b, c;
-    float t, t2;
-    float radius, radial, fov;
-    rgl::shape* list[0x100];
-    int count, i;
-    Agent* ag;
-    Agent* ag2;
-    Animator* an;
-    rgl::shape* sh;
-    cap cp;
-    Contact ct;
+    float radius, zoomL;
 
     if (g_game->f1a090 != 0)
         dt = g_cam_dt;
-    k = *identity_pos(&home);
+    {
+        matrix home;
+        (matrix&)k = *identity_pos(&home);
+    }
     radius = 0.03f;
     if (g_cam_sens != 0)
         radius = 0.01f;
+    zoomL = zoom;
     if (g_game->f1a090 != 0) {
         if ((float)(g_ticks[g_game->f1a150] - g_game->f1a158) * 1e-5f < 0.0f) {
+            vector4 c;
             c.x = g_game->cam.x - g_game->eye.x;
             c.y = g_game->cam.y - g_game->eye.y;
             c.z = g_game->cam.z - g_game->eye.z;
-            t = (1.0f - dt) * c.normalize();
-            a.x = c.x * t + g_game->eye.x;
-            a.y = c.y * t + g_game->eye.y;
-            a.z = c.z * t + g_game->eye.z;
-            t = atan2(-c.y, -c.x);
+            vector4 a = vadd(g_game->eye, vmulv(c, (1.0f - dt) * c.normalize()));
+            float ya = atan2(-(-c.x), -c.y);
             if (yaw > 6.2831855f)
                 yaw = yaw - 6.2831855f;
             else if (yaw < 0.0f)
                 yaw = yaw + 6.2831855f;
-            if (t > 6.2831855f)
-                t = t - 6.2831855f;
-            else if (t < 0.0f)
-                t = t + 6.2831855f;
-            t = t - yaw;
-            if (t > 3.1415927f)
-                t = -(6.2831855f - t);
-            if (t < -3.1415927f)
-                t = t + 6.2831855f;
-            yaw = t * dt + yaw;
+            if (ya > 6.2831855f)
+                ya = ya - 6.2831855f;
+            else if (ya < 0.0f)
+                ya = ya + 6.2831855f;
+            ya = ya - yaw;
+            if (ya > 3.1415927f)
+                ya = -(6.2831855f - ya);
+            if (ya < -3.1415927f)
+                ya = ya + 6.2831855f;
+            yaw = ya * dt + yaw;
             g_game->cam = a;
         }
-        t = 1.5707964f;
-        k.rotate_fu(&t);
-        k.rotate_su(&yaw);
-        k.rotate_fu(&pitch);
-        k.rotate_su(&f284);
+    }
+    if (g_game->f1a090 != 0) {
+        // free camera: keys move g_game->cam along the camera's own axes
+        float ang, t, u;
+        ang = 1.5707964f;
+        k.rotate_fu(ang);
+        k.rotate_su(yaw);
+        k.rotate_fu(pitch);
+        k.rotate_su(f284);
         f300 = (1.0f - (dt + dt)) * f300;
         if (f300 < 0.0f)
             f300 = 0.0f;
         else if (f300 > 20.0f)
             f300 = 20.0f;
         t = f300;
-        if (g_cam_version != 0) {
-            t2 = t * (float)g_game->f1a0b0;
-            b = vmul(k.s, t2 * dt);
-            g_game->cam = vsub(g_game->cam, b);
-            f300 = dt * 25.0f + f300;
-        } else if (g_cam_down != 0) {
-            if ((int)(g_ticks[0] - g_game->f1a0b4) < 35000) {
-                g_game->f1a0b0 *= 2;
-                if (g_game->f1a0b0 > 0x20)
-                    g_game->f1a0b0 = 0x20;
+        if (g_cam_version == 0 && g_cam_down != 0) {
+            int now = (int)g_ticks[0];
+            if (now - g_game->f1a0b4 < 35000) {
+                int step = g_game->f1a0b0 * 2;
+                if (step >= 0x20)
+                    step = 0x20;
+                g_game->f1a0b0 = step;
             } else {
                 g_game->f1a0b0 = 1;
             }
-            g_game->f1a0b4 = g_ticks[0];
+            g_game->f1a0b4 = now;
+        }
+        if (g_cam_version != 0) {
+            u = (float)g_game->f1a0b0 * t;
+            vsub_to(g_game->cam, vmul(vmul(k.u, u), dt));
+            f300 = dt * 25.0f + f300;
         }
         if (g_cam_left != 0) {
-            b = vmul(p_o, t * dt);
-            g_game->cam = vadd(g_game->cam, b);
+            vadd_to(g_game->cam, vmul(vmul(k.u, t), dt));
             f300 = dt * 25.0f + f300;
         }
         if (g_cam_right != 0) {
-            b = vmul(k.s, t * dt);
-            g_game->cam = vsub(g_game->cam, b);
+            vsub_to(g_game->cam, vmul(vmul(k.s, t), dt));
             f300 = dt * 17.5f + f300;
         }
         if (g_cam_in != 0) {
-            b = vmul(k.s, t * dt);
-            g_game->cam = vadd(g_game->cam, b);
+            vadd_to(g_game->cam, vmul(vmul(k.s, t), dt));
             f300 = dt * 17.5f + f300;
         }
         if (g_cam_out != 0) {
-            g_game->cam.z += t * dt * 0.5f;
+            g_game->cam.z = t * dt * 0.5f + g_game->cam.z;
             f300 = dt * 17.5f + f300;
         }
         if (g_cam_roll != 0 && g_cam_lock == 0 && g_cam_lock2 == 0) {
-            g_game->cam.z -= t * dt * 0.5f;
+            g_game->cam.z = g_game->cam.z - t * dt * 0.5f;
             f300 = dt * 17.5f + f300;
         }
-        w_o = g_game->cam;
-        goto tail;
-    }
-    if (g_mission->cam.rec != 0) {
+        k.o = g_game->cam;
+    } else if (g_mission->cam.rec != 0) {
+        // the scripted camera slot: cur -> sway over cam.value seconds
         if (g_mission->cam.value > 0.0f) {
-            t = (float)(unsigned)(g_ticks[g_mission->cam.agent] - g_mission->cam.end) * 1e-5f / g_mission->cam.value;
+            float t = (float)(g_ticks[g_mission->cam.clock] - g_mission->cam.start) * 1e-5f / g_mission->cam.value;
             if (g_mission->cam.num > 0) {
-                t2 = (float)g_mission->cam.num;
-                t = atan2((t - 0.5f) * t2 * 3.1415927f, 1.0f);
-                t2 = t2 * 1.5707964f;
-                t = (t + t) / atan2(t2, 1.0f);
-                t = t + 0.5f;
+                float nn = (float)g_mission->cam.num;
+                t = atan((t - 0.5f) * nn * 3.1415927f) / (atan(nn * 1.5707964f) * 2.0f) + 0.5f;
             }
             if (t >= 1.0f) {
                 g_mission->cam.cur = g_mission->cam.sway;
-                g_mission->cam.from.o.w = g_mission->cam.cur.o.w;
-                p_o = neg(g_mission->cam.cur.s);
-                p_o.w = g_mission->cam.cur.s.w;
-                k_o = g_mission->cam.cur.f;
-                w_o = g_mission->cam.cur.o;
-                zoom = g_mission->cam.from.o.w;
+                g_mission->cam.zoom_cur = g_mission->cam.zoom_to;
+                k.u = vneg(g_mission->cam.cur.f);
+                k.f = g_mission->cam.cur.u;
+                k.s = g_mission->cam.cur.s;
+                k.o = g_mission->cam.cur.o;
+                zoomL = g_mission->cam.zoom_to;
                 g_mission->cam.value = 0.0f;
             } else {
-                t2 = 1.0f - t;
-                b = vadd(vmul(g_mission->cam.cur.o, t), vmul(g_mission->cam.to.o, t2));
-                p_o = neg(vadd(vmul(g_mission->cam.cur.s, t), vmul(g_mission->cam.to.s, t2)));
-                p_o.w = g_mission->cam.cur.s.w;
-                k_o = vadd(vmul(g_mission->cam.cur.f, t), vmul(g_mission->cam.to.f, t2));
-                zoom = t * g_mission->cam.cur.o.w + t2 * g_mission->cam.to.o.w;
-                w_o = b;
+                float u = 1.0f - t;
+                k.o = vadd(vmulv(g_mission->cam.sway.o, t), vmulv(g_mission->cam.cur.o, u));
+                k.u = vneg(vadd(vmulv(g_mission->cam.sway.f, t), vmulv(g_mission->cam.cur.f, u)));
+                k.f = vadd(vmulv(g_mission->cam.sway.u, t), vmulv(g_mission->cam.cur.u, u));
+                k.s = vadd(vmulv(g_mission->cam.sway.s, t), vmulv(g_mission->cam.cur.s, u));
+                zoomL = g_mission->cam.zoom_to * t + g_mission->cam.zoom_cur * u;
             }
         } else {
-            p_o = neg(g_mission->cam.cur.s);
-            p_o.w = g_mission->cam.cur.s.w;
-            k_o = g_mission->cam.cur.f;
-            w_o = g_mission->cam.cur.o;
-            zoom = g_mission->cam.cur.o.w;
+            k.u = vneg(g_mission->cam.cur.f);
+            k.f = g_mission->cam.cur.u;
+            k.s = g_mission->cam.cur.s;
+            k.o = g_mission->cam.cur.o;
+            zoomL = g_mission->cam.zoom_cur;
         }
         if (g_mission->cam.agent >= 0) {
-            ag = AGENT_AT(g_mission, g_mission->cam.agent);
-            if (g_mission->cam.end != 0) {
-                *(matrix*)&k = ag->body->frame.mul(k);
+            if (g_mission->cam.attached != 0) {
+                (matrix&)k = AG(g_mission->cam.agent)->body->m.mul(k);
                 k.orthonormalize();
-                goto tail;
+                goto pass2;
             }
-            b.x = w_o.x + ag->be.x;
-            b.y = w_o.y + ag->be.y;
-            b.z = w_o.z + ag->be.z;
-            w_o = b;
+            vector4* bo = &AG(g_mission->cam.agent)->body->m.o;
+            k.o.x = bo->x + k.o.x;
+            k.o.y = bo->y + k.o.y;
+            k.o.z = bo->z + k.o.z;
         }
         k.orthonormalize();
-        goto tail;
-    }
-    if (g_mission->local_id < 0)
-        goto tail;
-    if (g_game->f139e4 != 0) {
-        ag = AGENT_AT(g_mission, g_mission->local_id);
-        if (ag->f10 != 0) {
-            if (ag->f2c < 0)
-                goto tail;
-            ag2 = AGENT_AT(g_mission, ag->f2c);
-            if (ag2->f2c >= 0)
-                yaw = dt * AGENT_AT(g_mission, ag2->f2c)->f56e8 + yaw;
-            an = ag->anim;
-            if ((g_mission->scene->f0[ag2->f2c].f18 & 0x100000) == 0) {
-                if (!an->ready)
-                    an->ensure_updated();
-                c = vsub(an->f1170, lag_o);
-                c.w = 1.0f;
-                count = 0;
-                radial = 200.0f * dt * c.out_length();
-                t = atan2(radial, c.y);
-                t = atan2(t, -c.z);
-                b.x = radial * c.x * t + w_o.x;
-                b.y = radial * c.y * t + w_o.y;
-                b.z = radial * c.z * t + w_o.z;
-                w_o = b;
-                t = 1.5707964f;
-                k.rotate_fu(&t);
-                k.rotate_su(&yaw);
-                k.rotate_fu(&pitch);
-                transform_point(&w_o, &k, p_o);
-                b = vadd(vmul(k_o, 0.15f), vmul(p_o, 0.11f));
-                b.x += w_o.x;
-                b.y += w_o.y;
-                b.z += w_o.z;
-                w_o = b;
-                k.orthonormalize();
-                goto tail;
+    } else {
+      int id = g_mission->local_id;
+      if (id >= 0) {
+        if (g_game->f139e4 != 0 && AG(g_mission->local_id)->f10 == 0) {
+            // spectating: look through the agent this one is bound to
+            Agent* ag = AG(g_mission->local_id);
+            AgentBody* body = AG(g_mission->local_id)->body;
+            Skeleton* sk;
+            if (AG(g_mission->local_id)->f2c >= 0)
+                yaw = dt * AG(ag->f2c)->f56e8 + yaw;
+            sk = body->skel;
+            if ((*(unsigned*)(ag->defs->defs + ag->fd4 * 0x30 + 0x18) & 0x100000) != 0) {
+                float ang;
+                if (!sk->ready)
+                    sk->ensure_updated();
+                (matrix&)k = body->m.mul(*(matrix*)(sk->recs + 0x1140));
+                ang = 3.1415927f;
+                k.rotate_su(ang);
+                vadd_to(k.o, vmul(k.f, 0.15f));
+            } else {
+                float lo = 0.0f, hi = 1.0f, ang, radial;
+                vector4 c, n;
+                if (!sk->ready)
+                    sk->ensure_updated();
+                n = *(vector4*)(sk->recs + 0x1170);
+                c.x = n.x - lag.x;
+                c.y = n.y - lag.y;
+                c.z = n.z - lag.z;
+                radial = c.out_length() * dt * 200.0f;
+                vadd_to(lag, vmulv(c, clamp(&radial, &lo, &hi)));
+                k.o = body->m.transform_point(lag);
+                ang = 1.5707964f;
+                k.rotate_fu(ang);
+                k.rotate_su(yaw);
+                k.rotate_fu(pitch);
+                vadd_to(k.o, vadd(vmul(k.f, 0.15f), vmul(k.u, 0.11f)));
             }
-            if (!an->ready)
-                an->ensure_updated();
-            *(matrix*)&k = AGENT_AT(g_mission, ag->f2c)->body->frame.mul(k);
-            t = 3.1415927f;
-            k.rotate_su(&t);
-            b = vmul(k_o, 0.15f);
-            b.x += w_o.x;
-            b.y += w_o.y;
-            b.z += w_o.z;
-            w_o = b;
+        } else if (id >= 0) {
+            // third person: the player's own agent
+            Agent* ag = AG(g_mission->local_id);
+            float ang, d;
+            if (g_keys.down(0xd)) {
+                float fa = 0.8f, fb = 0.5f;
+                if (AG(g_mission->local_id)->f2c >= 0) {
+                    fb = 1.0f;
+                    fa = 1.1f;
+                }
+                f280 = (fa - f280) * dt * 3.0f + f280;
+                f27c = (fb - f27c) * dt * 3.0f + f27c;
+            } else {
+                if (AG(g_mission->local_id)->f2c >= 0) {
+                    f27c = (0.1f - f27c) * dt + f27c;
+                    d = 2.4f;
+                } else {
+                    f27c = (0.0f - f27c) * dt + f27c;
+                    d = 1.65f;
+                }
+                f280 = (d - f280) * dt + f280;
+            }
+            head = ag->pos;
+            head.z = head.z + f280;
+            ang = 1.5707964f;
+            head.x = head.x + ag->ex;
+            head.y = ag->ey + head.y;
+            head.z = ag->ez + head.z;
+            k.rotate_fu(ang);
+            k.rotate_su(yaw);
+            k.rotate_fu(pitch);
+            k.rotate_su(f284);
+            k.o = head;
+            d = (pitch < -3.0f ? -3.0f : (pitch < 3.0f ? pitch : 3.0f)) * 0.0f + f278 + f27c;
+            vadd_to(k.o, vmul(k.u, d));
+            vadd_to(k.o, vmul(vmul(k.f, 0.37f), d));
+            if (g_game->f1a090 == 0) {
+                // keep the camera out of the walls: sweep a thin capsule from the head to the camera
+                shape_base* list[0x2000];
+                contact ct;
+                int count, i;
+                float t;
+                vector4 p0 = k.o;
+                vector4 q = vsub(k.o, vmul(k.u, d));
+                vector4 c = vsub(q, p0);
+                c.normalize();
+                vector4 a = vsub(p0, vmul(c, 0.4f));
+                capsule cap(1e-5f, &q, &a);
+                g_mission->scene->query_segment(&p0.x, &q.x, 0x110, list, &count);
+                t = 1000.0f;
+                for (i = 0; i < count; i++) {
+                    if (list[i]->shape_type() == 2 && shape_contact_count(list[i], &cap, 1, &ct) != 0) {
+                        vector4 n = ((face_shape*)list[i])->normal;
+                        float dx = ct.point.x - q.x, dy = ct.point.y - q.y, dz = ct.point.z - q.z;
+                        float dist = (float)sqrt(dx * dx + dy * dy + dz * dz);
+                        float dot = n.z * c.z + n.y * c.y + n.x * c.x;
+                        if (dot > 0.0f && dist < t) {
+                            float lo = 0.1f;
+                            t = dist;
+                            d = dist - (radius * 2.5f / fmax_ref(&dot, &lo) + 0.6f);
+                            if (d < 0.25f)
+                                d = 0.25f;
+                        }
+                    }
+                }
+                f2ec = (d - f2ec) * dt * 11.0f + f2ec;
+                k.o = vadd(vmul(k.u, f2ec), q);
+            }
+        }
+      }
+    }
+pass2:
+    if (g_mission->cam.rec == 0) {
+        if (g_mission->cam.value > 0.0f) {
+            float t = (float)(g_ticks[g_mission->cam.clock] - g_mission->cam.start) * 1e-5f / g_mission->cam.value;
+            if (g_mission->cam.num > 0) {
+                float nn = (float)g_mission->cam.num;
+                t = atan((t - 0.5f) * nn * 3.1415927f) / (atan(nn * 1.5707964f) * 2.0f) + 0.5f;
+            }
+            if (t >= 1.0f) {
+                g_mission->cam.value = 0.0f;
+            } else {
+                matrix m;
+                float u;
+                m.u = vneg(g_mission->cam.sway.f);
+                m.f = g_mission->cam.sway.u;
+                m.s = g_mission->cam.sway.s;
+                m.o = g_mission->cam.sway.o;
+                if (g_mission->cam.agent >= 0) {
+                    if (g_mission->cam.attached != 0) {
+                        m = AG(g_mission->cam.agent)->body->m.mul(m);
+                    } else {
+                        vector4* bo = &AG(g_mission->cam.agent)->body->m.o;
+                        m.o.x = m.o.x + bo->x;
+                        m.o.y = m.o.y + bo->y;
+                        m.o.z = m.o.z + bo->z;
+                    }
+                }
+                u = 1.0f - t;
+                k.o = vadd(vmul(k.o, t), vmul(m.o, u));
+                k.u = vadd(vmul(k.u, t), vmul(m.u, u));
+                k.f = vadd(vmul(k.f, t), vmul(m.f, u));
+                k.s = vadd(vmul(k.s, t), vmul(m.s, u));
+                zoomL = u * g_mission->cam.zoom_to + t * zoomL;
+            }
             k.orthonormalize();
-            goto tail;
+        }
+        if (g_mission->cam.rec == 0) {
+            g_mission->cam.cur.f = vneg(k.u);
+            g_mission->cam.cur.u = k.f;
+            g_mission->cam.cur.s = vneg(k.s);
+            g_mission->cam.cur.o = k.o;
+            g_mission->cam.zoom_cur = zoomL;
         }
     }
-    ag = AGENT_AT(g_mission, g_mission->local_id);
-    t = clamp(&ag->body->frame.o.y, &f27c, &f280);
-    t2 = pitch;
-    if (t2 < -3.0f)
-        pitch = -3.0f;
-    else if (t2 >= 3.0f)
-        pitch = 3.0f;
-    t = t * 0.0f;
-    t = f278 + f27c + t;
-    b = vmul(p_o, t);
-    b.x += w_o.x;
-    b.y += w_o.y;
-    b.z += w_o.z;
-    w_o = b;
-    b = vmul(vmul(k_o, t), 0.37f);
-    b.x += w_o.x;
-    b.y += w_o.y;
-    b.z += w_o.z;
-    w_o = b;
-    if (g_game->f1a090 == 0) {
-        c = vmul(p_o, t);
-        c = vmul(c, 0.01f);
-        b.x = w_o.x + c.x;
-        b.y = w_o.y + c.y;
-        b.z = w_o.z + c.z;
-        w_o = b;
-        c = vmul(k_o, t);
-        c = vmul(c, 0.01f);
-        b.x = w_o.x + c.x;
-        b.y = w_o.y + c.y;
-        b.z = w_o.z + c.z;
-        w_o = b;
-        c.x = an ? p_o.x : p_o.x;
-    }
-    k.orthonormalize();
-    goto tail;
-free_cam:
-    ag = AGENT_AT(g_mission, g_mission->local_id);
-    cp.f20 = radius;
-    cp.f24 = radius;
-    cp.f2c = vneg(w_o);
-    cp.f3c = k_o;
-    cp.f3c = vmul(cp.f3c, 0.4f);
-    cp.f2c = vadd(cp.f2c, cp.f3c);
-    g_mission->scene->query_segment(&w_o.x, &ag->f28.o.x, 0x110, list, &count);
-    t = 1000.0f;
-    for (i = 0; i < count; i++) {
-        sh = list[i];
-        if ((int)((sph*)sh)->name()[0] != 0)
-            break;
-        if (shape_contact_count(sh, (rgl::shape*)&cp, 1, &ct) == 0)
-            break;
-        t2 = ct.p.x * k_o.x + ct.p.y * k_o.y + ct.p.z * k_o.z;
-        if (t2 <= 0.0f)
-            break;
-        if (ct.p.out_length() >= t)
-            break;
-        ct.p.out_length();
-        fmax_ref(&t, &radius);
-        t = t - 0.6f;
-        if (radius < t)
-            t = 0.25f;
-    }
-    (void)t2;
-tail:
-    fr.f10c = 1.0f;
-    fr.f108 = -1.0f * fr.f10c;
-    (void)fov;
+    // the frustum
+    float aspect = g_screen_a / g_screen_b;
+    fr.frame = k;
+    fr.build_planes();
+    float v = (float)sqrt(1.0f / aspect);
+    v = 1.17f < v ? 1.17f : v;
+    v = v * zoomL * 0.86f;
+    v = 102.0f < v ? 102.0f : v;
+    fr.init(v * 0.017453292f, aspect, radius, 800.0f);
+    view->fr = fr;
+    g_mission->camera_to(&k, 97.0f / zoomL);
 }
 
 // @ 0x4f25a0
@@ -572,7 +581,6 @@ void frustum::init(float fov, float aspect, float znear, float aspect2)
 #pragma function(tan)
 // ---- private callees of this slice -------------------------------------------------------------------------------
 // Only declared here; their bodies live in other slices.
-extern float g_cam_near;                                                // 0x5a9c28
 struct fx_state;
 void* __cdecl sub44eb00(fx_state*, rgl::string*, int, int, void*, int, int, int, int);   // 0x44eb00
 void* __cdecl sub418a70(fx_state*, rgl::string*);                       // 0x418a70

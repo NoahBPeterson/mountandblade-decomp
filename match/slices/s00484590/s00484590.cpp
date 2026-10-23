@@ -423,7 +423,7 @@ void Mission::start_setup()
             g_sky2 = (g_sky2 & ~mask) | s2;
             g_sky1 = (g_sky1 & ~mask) | s1;
 
-            unsigned seed = (unsigned)((x5 + y5 * 0xb1 + parity + *(int*)(g_game + 4) * 0x4abb + 0x8a767) * 0x1ddcf5f + 0x2f784719);
+            unsigned seed = (unsigned)((parity + *(int*)(g_game + 4) * 0x4abb + y5 * 0xb1 + x5 * 23 + 0x8a767) * 0x1ddcf5f + 0x2f784719);
             bool storm = false;
             int flag1 = 0;
             float chance = (float)(seed % 0x3dc9) * 6.322312e-05f;
@@ -563,7 +563,7 @@ void Mission::start_setup()
     m->d[0x149d] = 0;
     f4624c0(m, (void*)(si + 0x44));
     int clr = 0xff334455;
-    f462540(6.0f, 10.0f, &clr, &m->d[0x1953]);
+    f462540(-5.0f, 10.0f, &clr, &m->d[0x1953]);
     f4792d0(m->d[0x177d], m->d[0x1983], m->d[0x1985]);
 
     // ---- intro billboard mesh (0x485d..) ------------------------------------------------

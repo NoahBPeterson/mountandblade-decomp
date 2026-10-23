@@ -1,1 +1,1 @@
-0047de60 249 EChar::use_carry: complete; register allocation differs (original spills this to the push-ecx slot and keeps the strength-reduced element offset in ebp). equiv FAIL only on ecx at return: the original's final pop ecx restores this, ours pops other data  [equiv FAIL: kept partial until the harness verdict is reviewed]
+# s0047dd90: no partial functions (0047de60 moved to nonmatching.txt)

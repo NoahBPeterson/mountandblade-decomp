@@ -208,7 +208,7 @@ struct InventoryPanel {
     char slot_flag(int page, int slot, unsigned mask);  // 0x5126e0 (ret 0xc)
 
     // --- this slice ---
-    char try_place(ItemRef* item, int page, int slot);  // 0x5134c0 (ret 0xc)
+    bool try_place(ItemRef* item, int page, int slot);  // 0x5134c0 (ret 0xc)
     unsigned pop_key();                                 // 0x513b10
     void update_parties();                              // 0x513b40
 
@@ -235,9 +235,9 @@ struct CommitState233 {
 
 // ---------------------------------------------------------------------------------------------------------
 // @ 0x5134c0
-char InventoryPanel::try_place(ItemRef* item, int page, int slot)
+bool InventoryPanel::try_place(ItemRef* item, int page, int slot)
 {
-    char found = 0;
+    bool found = false;
     int id = item->id;
 
     if (id == -1)
@@ -259,7 +259,7 @@ char InventoryPanel::try_place(ItemRef* item, int page, int slot)
             return found;
         for (int i = 0; i < n; i++) {
             if (g_game->troop(idx)->items[i].id == id && (flags[1][i] & 1))
-                found = 1;
+                found = true;
         }
     }
     else {
@@ -273,12 +273,12 @@ char InventoryPanel::try_place(ItemRef* item, int page, int slot)
         if (n > 0) {
             for (int i = 0; i < n; i++) {
                 if (g_game->troop(idx)->items[i].id == id && (flags[0][i] & 1))
-                    found = 1;
+                    found = true;
             }
         }
         for (int i = 0; i < 10; i++) {
             if (g_game->troop(idx)->stash[i].id == id && (fstash[0][i] & 1))
-                found = 1;
+                found = true;
         }
     }
 

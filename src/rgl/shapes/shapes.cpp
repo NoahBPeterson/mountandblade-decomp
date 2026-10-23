@@ -540,30 +540,34 @@ void segment_closest_points(const vector4* a0, const vector4* a1, const vector4*
 }
 
 // @ 0x409ac0
-// capsule a (segment p0-p1, radius at +0x60) against sphere b (centre +0x30, radius +0x40)
+// capsule a (segment p0-p1, radius at +0x60) against sphere b (centre +0x30, radius +0x40).
+// The original reuses two vector4 slots: A holds the segment direction, then the closest point, then the contact
+// normal; B holds the unit direction, then the closest-point-to-centre vector.
 void capsule_sphere_contact(capsule* a, sphere* b, int max, contact* out, int* count)
 {
-    vector4 d(a->p1.x - a->p0.x, a->p1.y - a->p0.y, a->p1.z - a->p0.z);
-    vector4 dir;
-    normalize_ext(dir, d);
+    vector4 A(a->p1.x - a->p0.x, a->p1.y - a->p0.y, a->p1.z - a->p0.z);
+    vector4 B;
+    normalize_ext(B, A);
     vector4 v(b->center.x - a->p0.x, b->center.y - a->p0.y, b->center.z - a->p0.z);
-    float t = v.x * dir.x + (v.y * dir.y + v.z * dir.z);
-    vector4 cl;
-    if (t < 0.0f) cl = a->p0;
-    else if ((float)sqrt(d.x * d.x + (d.y * d.y + d.z * d.z)) < t) cl = a->p1;
-    else { cl = vector4(dir.x * t + a->p0.x, dir.y * t + a->p0.y, dir.z * t + a->p0.z); cl.w = dir.w; }
-    vector4 e(cl.x - b->center.x, cl.y - b->center.y, cl.z - b->center.z);
-    float depth = (a->radius + b->radius) - (float)sqrt(e.x * e.x + (e.y * e.y + e.z * e.z));
+    float t = v.x * B.x + (v.y * B.y + v.z * B.z);
+    if (t < 0.0f) A = a->p0;
+    else if ((float)sqrt(A.x * A.x + (A.y * A.y + A.z * A.z)) < t) A = a->p1;
+    else {
+        vector4 tmp(B.x * t, B.y * t, B.z * t);
+        A = vector4(tmp.x + a->p0.x, tmp.y + a->p0.y, tmp.z + a->p0.z);
+        A.w = B.w;
+    }
+    B = vector4(A.x - b->center.x, A.y - b->center.y, A.z - b->center.z);
+    float depth = (a->radius + b->radius) - (float)sqrt(B.x * B.x + (B.y * B.y + B.z * B.z));
     if (0.0f <= depth) {
         int n = ++*count;
         if (n <= max) {
-            vector4 nrm;
-            normalize_ext(nrm, e);
+            normalize_ext(A, B);
             contact c;
-            c.normal = nrm;
-            c.normal.w = cl.w;
-            c.point = vector4(nrm.x * b->radius + b->center.x, nrm.y * b->radius + b->center.y, nrm.z * b->radius + b->center.z);
-            c.point.w = dir.w;
+            c.normal = A;
+            volatile float zr = A.z * b->radius;                 // the original spills this product through a float slot
+            c.point = vector4(A.x * b->radius + b->center.x, A.y * b->radius + b->center.y, zr + b->center.z);
+            c.point.w = B.w;
             c.depth = depth;
             out[n - 1] = c;
         }
@@ -615,38 +619,42 @@ void capsule_capsule_contact(capsule* a, capsule* b, int max, contact* out, int*
 void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* count)
 {
     vector4 v[4];
+    vector4 e, ed, w;
     v[0] = a->w[0]; v[1] = a->w[1]; v[2] = a->w[2]; v[3] = a->w[3];
-    vector4 e1(v[1].x - v[0].x, v[1].y - v[0].y, v[1].z - v[0].z);
-    vector4 e2(v[2].x - v[1].x, v[2].y - v[1].y, v[2].z - v[1].z);
-    vector4 n(e1.y * e2.z - e1.z * e2.y, e1.z * e2.x - e2.z * e1.x, e2.y * e1.x - e1.y * e2.x);
+    float e1x = v[1].x - v[0].x;
+    float e1y = v[1].y - v[0].y;
+    vector4 n;
+    n.x = e1y * (v[2].z - v[1].z) - (v[1].z - v[0].z) * (v[2].y - v[1].y);
+    n.y = (v[1].z - v[0].z) * (v[2].x - v[1].x) - (v[2].z - v[1].z) * e1x;
+    n.z = (v[2].y - v[1].y) * e1x - e1y * (v[2].x - v[1].x);
     normalize_ext(n, n);
     float dist = (b->center.x - v[0].x) * n.x + ((b->center.y - v[0].y) * n.y + (b->center.z - v[0].z) * n.z);
-    if (dist > b->radius) return;
+    if (b->radius < dist)
+        return;
     float negr = -b->radius;
-    if (dist < negr) return;
+    if (dist < negr)
+        return;
 
     vector4 nn(-n.x, -n.y, -n.z);
-    bool hit = true;
     bool outside = false;
-    contact c;
-    c.normal = nn;
-    c.point = vector4(nn.x * dist + b->center.x, nn.y * dist + b->center.y, nn.z * dist + b->center.z);
-    c.point.w = nn.w;
-    c.depth = b->radius - dist;
+    bool hit = true;
+    float depth_z = nn.z * dist;
+    vector4 pt(nn.x * dist + b->center.x, nn.y * dist + b->center.y, depth_z + b->center.z);
+    pt.w = nn.w;
+    float depth = b->radius - dist;
     int cnt = a->count;
     int i = 0;
     do {
         ++i;
         int j = i % cnt;
         const vector4& s = v[i - 1];
-        vector4 e(v[j].x - s.x, v[j].y - s.y, v[j].z - s.z);
-        vector4 ed;
+        e = vector4(v[j].x - s.x, v[j].y - s.y, v[j].z - s.z);
         normalize_ext(ed, e);
-        vector4 w(b->center.x - s.x, b->center.y - s.y, b->center.z - s.z);
+        w = vector4(b->center.x - s.x, b->center.y - s.y, b->center.z - s.z);
         float cx = ed.y * w.z - ed.z * w.y;
         float cy = ed.z * w.x - w.z * ed.x;
         float cz = w.y * ed.x - ed.y * w.x;
-        if (cx * n.x + (cy * n.y + n.z * cz) < 0.0) {
+        if (cx * n.x + (cy * n.y + n.z * cz) < 0.0f) {
             outside = true;
             float t;
             if (b->radius < (float)sqrt(cx * cx + (cy * cy + cz * cz))
@@ -655,16 +663,24 @@ void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* coun
                 hit = false;
             } else {
                 hit = true;
-                vector4 p(ed.x * t + s.x, ed.y * t + s.y, ed.z * t + s.z);
-                p.w = ed.w;
-                c.point = p;
-                c.depth = b->radius - (float)sqrt((p.x - b->center.x) * (p.x - b->center.x) + ((p.y - b->center.y) * (p.y - b->center.y) + (p.z - b->center.z) * (p.z - b->center.z)));
+                float dz = ed.z * t;
+                pt = vector4(ed.x * t + s.x, ed.y * t + s.y, ed.z * t + s.z);
+                pt.w = ed.w;
+                float fx = pt.x - b->center.x, fy = pt.y - b->center.y, fz = pt.z - b->center.z;
+                depth = b->radius - (float)sqrt(fx * fx + (fy * fy + fz * fz));
+                (void)dz;
             }
         }
     } while (!outside && i < cnt);
     if (hit) {
         int k = ++*count;
-        if (k <= max) out[k - 1] = c;
+        if (k <= max) {
+            contact c;
+            c.normal = nn;
+            c.point = pt;
+            c.depth = depth;
+            out[k - 1] = c;
+        }
     }
 }
 

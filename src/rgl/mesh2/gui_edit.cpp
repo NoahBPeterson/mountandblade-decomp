@@ -308,75 +308,75 @@ void editor::free_items()
     } while (--i);
 }
 
+static inline void tidy3(void* base)
+{
+    void** q = (void**)base;
+    if (q[0])
+        operator delete(q[0]);
+    q[0] = 0;
+    q[1] = 0;
+    q[2] = 0;
+}
+
 // @ 0x4c5190
 void gui_view::set_view(const float* v)
 {
-    float bx[2];
-    float by[2];
+    vector4 lo;
+    vector4 hi;
     fx = v[0];
     fy = v[1];
     fs = 1.0f;
-    if (fx > g_f95)
+    if (fx > 0.95f)
         fx = 0.95f;
-    if (fx < g_f05)
+    if (fx < 0.05f)
         fx = 0.05f;
     if (!o568)
         return;
-    mesh_bounds(bx, by);
-    if (bx[0] + fx < g_f011) {
-        fx = g_f011 - bx[0];
-    } else if (bx[1] + fx > g_f989) {
-        fx = g_f989 - bx[1];
+    o568->bounds(&lo, &hi);
+    if (lo.x + fx < g_f011) {
+        fx = g_f011 - lo.x;
+    } else if (hi.x + fx > g_f989) {
+        fx = g_f989 - hi.x;
     }
-    if (by[0] + fy < g_f011) {
-        fy = g_f011 - by[0];
-    } else if (by[1] + fy > g_f739) {
-        fy = g_f739 - by[1];
+    if (lo.y + fy < g_f011) {
+        fy = g_f011 - lo.y;
+    } else if (hi.y + fy > g_f739) {
+        fy = g_f739 - hi.y;
     }
-    if (by[1] - by[0] > g_f728) {
-        float s = g_f728 / (by[1] - by[0]);
+    if (hi.y - lo.y > g_f728) {
+        float s = g_f728 / (hi.y - lo.y);
         fs = s;
-        fy = g_f011 - s * by[0];
+        fy = g_f011 - s * lo.y;
     }
 }
 
-// Wheel step: forward the mask to the active child (the pointer at +4), else to the last item of the object's
-// first vector; both are tail calls.
+// Wheel step: forward the mask to the active child (+0x10), else to the last element of the child vector.
 // @ 0x4c52f0
 void gui_view::wheel_step(int mask)
 {
-    gui_child* a = *(gui_child**)((char*)this + 0x10);
-    if (a) {
-        a->on_event(mask);
-    } else {
-        gui_child** first = (gui_child**)((char*)this + 4);
-        gui_child** last = (gui_child**)((char*)this + 8);
-        if (first && last - first)
-            first[last - first - 1]->on_event(mask);
+    if (active) {
+        active->on_event(mask);
+    } else if (!kids.empty()) {
+        kids[kids.size() - 1]->on_event(mask);
     }
 }
 
 // @ 0x4c5330
 void gui_view::clear_selection()
 {
-    gui_child** first = (gui_child**)((char*)this + 4);
-    gui_child** last = (gui_child**)((char*)this + 8);
-    gui_child* a = *(gui_child**)((char*)this + 0x10);
     f1708 = 1;
-    if (a) {
-        a->on_event(0x20000);
-    } else if (first && last != first) {
-        first[last - first - 1]->on_event(0x20000);
+    if (active) {
+        active->on_event(0x20000);
+    } else if (!kids.empty()) {
+        kids[kids.size() - 1]->on_event(0x20000);
     }
-    if (first && last - first) {
-        gui_child* e = first[last - first - 1];
-        if (e)
-            e->d0();
-        first[last - first - 1] = 0;
+    if (kids[kids.size() - 1] != 0) {
+        delete kids[kids.size() - 1];
+        kids[kids.size() - 1] = 0;
     }
     f1709 = 0;
-    if (first && last - first)
-        last -= 1;
+    if (!kids.empty())
+        kids.pop_back();
 }
 
 // @ 0x4c53f0
@@ -403,49 +403,47 @@ void graph_obj::select_mode(int mode, char on)
 }
 
 // @ 0x4c54f0
-int graph_obj::calc_vertex_mode(int mode)
+void graph_obj::calc_vertex_mode(int mode)
 {
-    for (unsigned i = 0; nodes && i < nodes_n(); i++)
-        nodes[i].flag = 0;
+    for (unsigned i = 0; i < nodev().size(); i++)
+        nodev()[i].flag = 0;
     if (mode == 0) {
-        for (unsigned i = 0; nodes && i < nodes_n(); i++)
-            if (nodes[i].used)
-                nodes[i].flag = 1;
+        for (unsigned i = 0; i < nodev().size(); i++)
+            if (nodev()[i].used)
+                nodev()[i].flag = 1;
     } else if (mode == 1) {
-        for (unsigned i = 0; edges && i < edges_n(); i++)
-            if (edges[i].sel) {
-                nodes[edges[i].a].flag = 1;
-                nodes[edges[i].b].flag = 1;
+        for (unsigned i = 0; i < edgev().size(); i++)
+            if (edgev()[i].sel) {
+                nodev()[edgev()[i].a].flag = 1;
+                nodev()[edgev()[i].b].flag = 1;
             }
     } else {
-        for (unsigned i = 0; faces && i < faces_n(); i++)
-            if (faces[i].used)
-                for (int k = 0; k < faces[i].count; k++)
-                    nodes[faces[i].verts[k]].flag = 1;
+        for (unsigned i = 0; i < facev().size(); i++)
+            if (facev()[i].used)
+                for (int k = 0; k < facev()[i].count; k++)
+                    nodev()[facev()[i].verts[k]].flag = 1;
     }
-    return 0;
 }
 
 // @ 0x4c5670
-int graph_obj::calc_edge_mode(int mode)
+void graph_obj::calc_edge_mode(int mode)
 {
-    for (unsigned i = 0; edges && i < edges_n(); i++)
-        edges[i].flag = 0;
+    for (unsigned i = 0; i < edgev().size(); i++)
+        edgev()[i].flag = 0;
     if (mode == 0) {
-        for (unsigned i = 0; edges && i < edges_n(); i++)
-            if (nodes[edges[i].a].used || nodes[edges[i].b].used)
-                edges[i].flag = 1;
+        for (unsigned i = 0; i < edgev().size(); i++)
+            if (nodev()[edgev()[i].a].used || nodev()[edgev()[i].b].used)
+                edgev()[i].flag = 1;
     } else if (mode == 1) {
-        for (unsigned i = 0; edges && i < edges_n(); i++)
-            if (edges[i].sel)
-                edges[i].flag = 1;
+        for (unsigned i = 0; i < edgev().size(); i++)
+            if (edgev()[i].sel)
+                edgev()[i].flag = 1;
     } else {
-        for (unsigned i = 0; faces && i < faces_n(); i++)
-            if (faces[i].used)
-                for (int k = 0; k < faces[i].count; k++)
-                    edges[faces[i].ends[k]].flag = 1;
+        for (unsigned i = 0; i < facev().size(); i++)
+            if (facev()[i].used)
+                for (int k = 0; k < facev()[i].count; k++)
+                    edgev()[facev()[i].ends[k]].flag = 1;
     }
-    return 0;
 }
 
 // @ 0x4c57d0
@@ -467,13 +465,12 @@ void graph_obj::swap_face_vertices(int a, int b)
 // @ 0x4c5840
 void graph_obj::swap_poly_normals(int a, int b)
 {
-    for (unsigned i = 0; faces && i < faces_n(); i++) {
-        face* p = faces + i;
-        for (int j = 0; j < p->count; j++) {
-            if (p->verts[j] == a)
-                p->verts[j] = b;
-            else if (p->verts[j] == b)
-                p->verts[j] = a;
+    for (unsigned i = 0; i < facev().size(); i++) {
+        for (int j = 0; j < facev()[i].count; j++) {
+            if (facev()[i].ends[j] == a)
+                facev()[i].ends[j] = b;
+            else if (facev()[i].ends[j] == b)
+                facev()[i].ends[j] = a;
         }
     }
 }
@@ -481,13 +478,12 @@ void graph_obj::swap_poly_normals(int a, int b)
 // @ 0x4c58c0
 void graph_obj::swap_poly_colors(int a, int b)
 {
-    for (unsigned i = 0; faces && i < faces_n(); i++) {
-        face* p = faces + i;
-        for (int j = 0; j < p->count; j++) {
-            if (p->ends[j] == a)
-                p->ends[j] = b;
-            else if (p->ends[j] == b)
-                p->ends[j] = a;
+    for (unsigned i = 0; i < facev().size(); i++) {
+        for (int j = 0; j < facev()[i].count; j++) {
+            if (facev()[i].verts[j] == a)
+                facev()[i].verts[j] = b;
+            else if (facev()[i].verts[j] == b)
+                facev()[i].verts[j] = a;
         }
     }
 }
@@ -495,10 +491,9 @@ void graph_obj::swap_poly_colors(int a, int b)
 // @ 0x4c5940
 void graph_obj::remove_vertex_from_polys(int v)
 {
-    for (unsigned i = 0; faces && i < faces_n(); i++) {
-        face* p = faces + i;
-        for (int k = 0; k < p->count; k++) {
-            if (p->verts[k] == v) {
+    for (unsigned i = 0; i < facev().size(); i++) {
+        for (int k = 0; k < facev()[i].count; k++) {
+            if (facev()[i].ends[k] == v) {
                 remove_face(i);
                 i--;
                 break;
@@ -506,6 +501,7 @@ void graph_obj::remove_vertex_from_polys(int v)
         }
     }
 }
+
 
 // @ 0x4c59c0
 void graph_obj::remove_vertex_from_edges(int v)
@@ -577,22 +573,19 @@ void graph_obj::update_edge_mode()
 void graph_obj::update_poly_mode()
 {
     cur = -1;
-    int np = faces_n();
-    for (int i = 0; i < np; i++)
-        faces[i].used = 0;
+    for (unsigned i = 0; i < facev().size(); i++)
+        facev()[i].used = 0;
     if (mode == 0) {
-        for (int i = 0; i < np; i++) {
-            face* p = &faces[i];
-            for (int k = 0; k < p->count; k++)
-                if (nodes[p->verts[k]].used)
-                    p->used = 1;
+        for (unsigned i = 0; i < facev().size(); i++) {
+            for (int k = 0; k < facev()[i].count; k++)
+                if (nodev()[facev()[i].verts[k]].used)
+                    facev()[i].used = 1;
         }
     } else {
-        for (int i = 0; i < np; i++) {
-            face* p = &faces[i];
-            for (int k = 0; k < p->count; k++)
-                if (edges[p->ends[k]].sel)
-                    p->used = 1;
+        for (unsigned i = 0; i < facev().size(); i++) {
+            for (int k = 0; k < facev()[i].count; k++)
+                if (edgev()[facev()[i].ends[k]].sel)
+                    facev()[i].used = 1;
         }
     }
 }
@@ -824,47 +817,40 @@ void ItemPage::reset()
     name.~tstring();
 }
 
+static inline const char* cs(char** pbuf) { return *pbuf ? *pbuf : (const char*)pbuf; }
+
 // @ 0x4c6620
 void ItemPage::format(char* out)
 {
     if (kind == 1) {
         tstring key(s_entry_point);
-        tstring* r = g_strtable.lookup(key);
-        sprintf_c(out, 0x80, r->buf ? r->buf : (char*)&r->buf, text_ptr);
+        sprintf_c(out, 0x80, g_strtable.lookup(key)->c_str(), text_ptr);
     } else if (kind == 5) {
         tstring key(s_passage);
-        tstring* r = g_strtable.lookup(key);
-        sprintf_c(out, 0x80, r->buf ? r->buf : (char*)&r->buf, text_ptr2);
+        sprintf_c(out, 0x80, g_strtable.lookup(key)->c_str(), text_ptr2);
     } else if (kind == 4) {
         if (index < 0 || index >= g_ground_spec_count) {
             sprintf_c(out, 0x80, s_invalid_plant);
             return;
         }
         tstring key(s_plant);
-        GroundSpec& gs = g_ground_specs[index];
-        tstring* r = g_strtable.lookup(key);
-        sprintf_c(out, 0x80, r->buf ? r->buf : (char*)&r->buf, gs.name ? gs.name : (char*)&gs.name);
+        sprintf_c(out, 0x80, g_strtable.lookup(key)->c_str(), cs(&g_ground_specs[index].name));
     } else if (kind == 2 || kind == 6) {
         if (index < 0 || index >= g_n_items) {
             sprintf_c(out, 0x80, s_invalid_item);
             return;
         }
         tstring key(s_item_name);
-        tstring* v = g_items[index].display_name();
-        tstring* r = g_strtable.lookup(key);
-        sprintf_c(out, 0x80, r->buf ? r->buf : (char*)&r->buf, v->buf ? v->buf : (char*)&v->buf);
+        sprintf_c(out, 0x80, g_strtable.lookup(key)->c_str(), g_items[index].display_name()->c_str());
     } else if (kind == 0) {
         tstring key(s_prop);
-        tstring* v = &field;
-        tstring* r = g_strtable.lookup(key);
-        sprintf_c(out, 0x80, r->buf ? r->buf : (char*)&r->buf, v->buf ? v->buf : (char*)&v->buf);
+        sprintf_c(out, 0x80, g_strtable.lookup(key)->c_str(), cs(&field.buf));
     } else {
         tstring key(s_unknown);
-        tstring* v = &field;
-        tstring* r = g_strtable.lookup(key);
-        sprintf_c(out, 0x80, r->buf ? r->buf : (char*)&r->buf, v->buf ? v->buf : (char*)&v->buf);
+        sprintf_c(out, 0x80, g_strtable.lookup(key)->c_str(), field.c_str());
     }
 }
+
 // @ 0x4c6860
 tstring RecC::field_name()
 {
@@ -882,19 +868,12 @@ tstring RecC::field_name()
 }
 
 // @ 0x4c6900
-void ItemPage::retire()
+void RefList::retire()
 {
-    if (!records)
-        return;
-    int n = ((int*)records)[-1];
-    RefItem* it = (RefItem*)((char*)records + n * 0x24);
-    while (n-- >= 0) {
-        it = (RefItem*)((char*)it - 0x24);
-        kf_arr_dtor((void*)&it->kf);
-        it->name.~tstring();
+    if (records) {
+        delete[] records;
+        records = 0;
     }
-    engine_free((char*)records - 4);
-    records = 0;
 }
 
 // @ 0x4c6950
@@ -905,9 +884,10 @@ RefRecord* ItemPage::fill_records(RefRecord* rec)
     rec->v54(&b);
     rec->v4c(&field);
     rec->v4c((void*)((char*)this + 0x1a0));
-    retire();
-    records = 0;
-    int n = rec_count;
+    ((RefList*)this)->retire();
+    RefList* rl = (RefList*)this;
+    rl->records = 0;
+    int n = *(int*)((char*)this + 4);
     RefItem* p = (RefItem*)engine_alloc(n * 0x24 + 4);
     if (p) {
         p = (RefItem*)((char*)p + 4);
@@ -921,9 +901,9 @@ RefRecord* ItemPage::fill_records(RefRecord* rec)
             it->f18 = 0;
         }
     }
-    records = p;
+    rl->records = p;
     for (int i = 0; i < n; i++)
-        ref_item_ctor((char*)records + i * 0x24, i, rec, i);
+        ref_item_ctor((char*)rl->records + i * 0x24, i, rec, i);
     return rec;
 }
 
@@ -931,39 +911,43 @@ RefRecord* ItemPage::fill_records(RefRecord* rec)
 void ItemPage::clear()
 {
     if (*(void**)((char*)this + 0x4)) {
-        engine_free(*(void**)((char*)this + 0x4));
+        delete[] *(char**)((char*)this + 0x4);
         *(void**)((char*)this + 0x4) = 0;
     }
-    Pad98* p = *(Pad98**)((char*)this + 0xc);
+    Pad98*& p = *(Pad98**)((char*)this + 0xc);
     if (p) {
-        int n = ((int*)p)[-1];
-        Pad98* it = (Pad98*)((char*)p + n * 0x98);
-        for (int i = n; i >= 0; i--) {
-            it = (Pad98*)((char*)it - 0x98);
-            it->name.~tstring();
-        }
-        engine_free((void*)((char*)p - 4));
-        *(void**)((char*)this + 0xc) = 0;
+        delete[] p;
+        p = 0;
     }
     if (extra)
         free_mem(extra);
     extra = 0;
     extra_end = 0;
+    extra_cap = 0;
 }
 
 // @ 0x4c6b30
+// Morph-target pose: clears the target's per-point offsets, finds the key frame nearest to the record's key time and
+// stores (frame vertex - rest vertex) for every point.
 void ItemPage::place(int e)
 {
-    void* hdr = *(void**)((char*)records + 0x38);
-    char* frames = *(char**)((char*)hdr + 0x38);
-    char* v74 = *(char**)frames;
-    unsigned n = *(unsigned*)(v74 + 0x74);
-    if (n && 0u < (unsigned)(*(int*)(v74 + 0x78) - (int)n) >> 5) {
-        for (unsigned i = 0; i < (unsigned)(*(int*)(v74 + 0x78) - (int)n) >> 5; i++) {
-            float* dst = (float*)((*(char**)((char*)records + 0x40) + e * 0x34 + 0x30) + i * 0x10);
-            dst[0] = 0.0f;
-            dst[1] = 0.0f;
-            dst[2] = 0.0f;
+    PMesh* m = *owner->mesh;
+    for (unsigned i = 0; i < m->npts(); i++) {
+        vector4 z(0.0f, 0.0f, 0.0f);
+        poses[e].vecs[i] = z;
+    }
+    float t = (float)poses[e].key;
+    int lo, hi;
+    float frac;
+    m->kf.find(&lo, &hi, &frac, &t);
+    if (!(frac < 0.5f))
+        lo = hi;
+    if (lo >= 0 && lo < m->kf.count) {
+        for (unsigned i = 0; i < m->npts(); i++) {
+            const vector4& f = m->kf.frames[lo].v[i];
+            const vector4& r = m->pts[i].a;
+            vector4 d(f.x - r.x, f.y - r.y, f.z - r.z);
+            poses[e].vecs[i] = d;
         }
     }
 }
@@ -1026,19 +1010,11 @@ void MapScreen::reset_state()
 void MapScreen::clear_objects()
 {
     for (ListObj** p = list_start; p < list_end; ++p) {
-        delete *p;
+        delete[] *p;
         *p = 0;
     }
-    if (list_start)
-        engine_delete(list_start);
-    list_start = 0;
-    list_end = 0;
-    list_cap = 0;
-    if (raw)
-        engine_delete(raw);
-    raw = 0;
-    raw_end = 0;
-    raw_cap = 0;
+    tidy3(&list_start);
+    tidy3(&raw);
 }
 
 // @ 0x4c6eb0
@@ -1156,19 +1132,20 @@ void MapScreen::refresh_list(char use_sel)
 }
 
 // @ 0x4c7290
+// (the original brackets the two SetDlgItemTextA groups with 18-byte WinLicense markers: jmp +0x10; "WL  ", 12 / 13, 0, "WL  ")
 void ConfigDialog::init()
 {
-    Settings s;
-    FILE* f = mb_open_user_file(g_rgl_name, "rb");
+    RenderConfig cfg;
+    FILE* f = mb_open_user_file(g_rgl_name, g_mode_rb);
     if (f) {
-        s.cfg.read(f);
+        cfg.read(f);
         fclose(f);
     }
-    if (*(int*)&s.cfg != 0) {
-        *(int*)&s.cfg = 0;
-        s.cfg.apply(1, NULL);
-        f = mb_open_user_file(g_rgl_name, "wb");
-        s.cfg.write(f);
+    if (cfg.first_time) {
+        cfg.first_time = 0;
+        choose_dx_settings(&cfg, true);
+        f = mb_open_user_file(g_rgl_name, g_mode_wb);
+        cfg.write(f);
         fclose(f);
     }
     SetWindowPos(hwnd, 0, 0, 0, 0x280, 0x1e0, 0x16);
@@ -1181,17 +1158,11 @@ void ConfigDialog::init()
     SetWindowPos(GetDlgItem(hwnd, 0x425), 0, 0x14, 0, 0x96, 0x46, 0x14);
     SetWindowPos(GetDlgItem(hwnd, 0x420), 0, 0xb4, 0x1c, 0x19a, 0xa, 0x14);
 
+    char skin[128];
+    sprintf(skin, ".\\Skins\\mb_skin_%s.smf", g_skin_name.c_str());
     WIN32_FIND_DATAA fd;
-    HANDLE h = FindFirstFileA(g_skin_path, &fd);
-    if (h == INVALID_HANDLE_VALUE) {
-        SetDlgItemTextA(hwnd, 0x410, text(g_ui_play));
-        SetDlgItemTextA(hwnd, 0x405, text(g_ui_configure));
-        SetDlgItemTextA(hwnd, 0x41f, text(g_ui_check_for_new_version));
-        SetDlgItemTextA(hwnd, 0x46b, text(g_ui_download_new_settings));
-        SetDlgItemTextA(hwnd, 0x406, text(g_ui_website));
-        SetDlgItemTextA(hwnd, 0x469, text(g_ui_cancel2));
-        SetDlgItemTextA(hwnd, 0x425, text(g_ui_current_setting));
-    } else {
+    HANDLE h = FindFirstFileA(skin, &fd);
+    if (h != INVALID_HANDLE_VALUE) {
         FindClose(h);
         SetDlgItemTextA(hwnd, 0x410, g_empty);
         SetDlgItemTextA(hwnd, 0x41f, g_empty);
@@ -1200,13 +1171,43 @@ void ConfigDialog::init()
         SetDlgItemTextA(hwnd, 0x406, g_empty);
         SetDlgItemTextA(hwnd, 0x469, g_empty);
         SetDlgItemTextA(hwnd, 0x425, g_empty);
+    } else {
+        {
+            tstring key(g_ui_play);
+            SetDlgItemTextA(hwnd, 0x410, g_strtable.lookup(key)->c_str());
+        }
+        {
+            tstring key(g_ui_configure);
+            SetDlgItemTextA(hwnd, 0x405, g_strtable.lookup(key)->c_str());
+        }
+        {
+            tstring key(g_ui_check_for_new_version);
+            SetDlgItemTextA(hwnd, 0x41f, g_strtable.lookup(key)->c_str());
+        }
+        {
+            tstring key(g_ui_download_new_settings);
+            SetDlgItemTextA(hwnd, 0x46b, g_strtable.lookup(key)->c_str());
+        }
+        {
+            tstring key(g_ui_website);
+            SetDlgItemTextA(hwnd, 0x406, g_strtable.lookup(key)->c_str());
+        }
+        {
+            tstring key(g_ui_cancel2);
+            SetDlgItemTextA(hwnd, 0x469, g_strtable.lookup(key)->c_str());
+        }
+        {
+            tstring key(g_ui_current_setting);
+            SetDlgItemTextA(hwnd, 0x425, g_strtable.lookup(key)->c_str());
+        }
     }
 
-    tstring file(&g_path_prefix);
+    tstring file(g_path_prefix);
     file.append(tstring(g_bmp_main));
-    HANDLE logo = LoadImageA(0, file.buf ? file.buf : (char*)&file, 0, 0, 0, LR_LOADFROMFILE);
+    HBITMAP logo = (HBITMAP)LoadImageA(0, file.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    *(HBITMAP*)((char*)this + 0x354) = logo;
     if (!logo)
-        logo = LoadImageA(0, g_bmp_main, 0, 0, 0, LR_LOADFROMFILE);
+        *(HBITMAP*)((char*)this + 0x354) = (HBITMAP)LoadImageA(0, g_bmp_main, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     if (g_show_download)
         ShowWindow(GetDlgItem(hwnd, 0x419), 5);
 }
@@ -1354,37 +1355,32 @@ void MapEditorDialog::update_objects()
 }
 
 // @ 0x4c7ee0
-void* __fastcall destroy_record_array(void* p, int, unsigned int flags)
+void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
 {
-    int* head;
-    int n;
-    if (!(flags & 2)) {
-        record_free(p);
+    Rec78* a = (Rec78*)p;
+    if (flags & 2) {
+        int* head = (int*)p - 1;
+        int n = *head;
+        for (int i = n - 1; i >= 0; i--) {
+            Rec78& e = a[i];
+            if (e.owner)
+                e.owner->deleting_dtor(1);
+            record_array_clear(e.groups);
+            if (e.buf)
+                engine_delete(e.buf);
+            e.buf = 0;
+            e.buf_end = 0;
+            e.buf_cap = 0;
+            e.name.~tstring();
+        }
         if (flags & 1)
-            engine_delete(p);
-        return p;
+            engine_free(head);
+        return head;
     }
-    n = ((RecordArrayHead*)p)[-1].count;
-    head = (int*)p - 1;
-    char* e = (char*)head + 0x48 + n * 0x78;            // &elem[n-1] + 0x48
-    for (; n > 0; n--) {
-        if (*(void**)(e - 0x30)) {                      // owner at elem+0x18
-            void** vt = *(void***)(e - 0x30);
-            ((void (__cdecl*)(void*, int))vt[0])(*(void**)(e - 0x30), 1);
-        }
-        record_array_clear(e - 0x20);                   // sub-object at elem+0x28
-        if (*(void**)(e)) {
-            engine_delete(*(void**)(e));
-            *(void**)(e) = 0;
-        }
-        *(void**)(e + 4) = 0;
-        *(void**)(e + 8) = 0;
-        ((tstring*)(e - 0x44))->~tstring();             // elem's name
-        e -= 0x78;
-    }
+    record_free(p);
     if (flags & 1)
-        engine_free(head);
-    return head;
+        engine_delete(p);
+    return p;
 }
 
 // the apron: after rebuilding the terrain, every vertex not pinned by a flag follows the drag
@@ -1412,20 +1408,19 @@ void graph_obj::update_terrain(int idx, const float* d)
 // Plane normal of the face that owns edge *e, scaled by the triangle's first edge (node b -> node a).
 rgl::vector4 graph_obj::normal(const int* e)
 {
-    int a, b;
+    int b, a;
     find_triangle(e, &a, &b);
     node* v = &nodes[b];
     node* w = &nodes[a];
-    float dx = w->x - v->x;
-    float dy = w->y - v->y;
-    float dz = w->z - v->z;
+    float dx = v->x - w->x;
+    float dy = v->y - w->y;
+    float dz = v->z - w->z;
     float* m = (float*)&faces[edges[*e].f0];
     rgl::vector4 res;
     res.x = dy * m[8] - dz * m[7];
     res.y = dz * m[6] - dx * m[8];
     res.z = dx * m[7] - dy * m[6];
     res.normalize();
-    res.w = m[9];                                       // the caller's 4th lane lands here
     return res;
 }
 
@@ -1434,27 +1429,20 @@ rgl::vector4 graph_obj::normal(const int* e)
 // @ 0x4c80c0
 void Block::clear()
 {
-    tstring* var = (tstring*)*(int*)((char*)this + 0x44);
-    int z = 0, k = 0xfffe7960;
-    this->first = z;
-    *(int*)((char*)this + 0x34) = -1;
-    *(int*)((char*)this + 0x38) = z;
-    *(int*)((char*)this + 0x3c) = -1;
-    *(int*)((char*)this + 0x08) = k;
-    *(int*)((char*)this + 0x0c) = -1;
-    *(int*)((char*)this + 0x10) = k;
-    *(int*)((char*)this + 0x14) = -1;
-    *(int*)((char*)this + 0x18) = z;
-    *(int*)((char*)this + 0x1c) = z;
-    *(int*)((char*)this + 0x20) = 100;
-    if (var)
-        engine_delete(var);
-    *(int*)((char*)this + 0x44) = 0;
-    *(int*)((char*)this + 0x48) = 0;
-    *(int*)((char*)this + 0x4c) = 0;
+    int* p = (int*)this;
+    p[0] = 0;
+    p[0xd] = -1;
+    p[0xe] = 0;
+    p[0xf] = -1;
+    p[2] = 0xfffe7960;
+    p[3] = -1;
+    p[4] = 0xfffe7960;
+    p[5] = -1;
+    p[6] = 0;
+    p[7] = 0;
+    p[8] = 100;
+    tidy3(&p[0x11]);
 }
-
-
 
 // @ 0x4c8110
 void Block::read(stream_base* stream)
@@ -1509,26 +1497,13 @@ void Block::read(stream_base* stream)
 // @ 0x4c8330
 void Block::free_materials()
 {
-    for (unsigned i = 0;; i++) {
-        char* b = *(char**)((char*)this + 0x58);
-        if (!b)
-            break;
-        unsigned n = (unsigned)(*(char**)((char*)this + 0x5c) - b) >> 2;
-        if (i >= n)
-            break;
-        char* e = *(char**)(*(char**)((char*)this + 0x58) + i * 4);
-        *(int*)(e + 0x64) = 0;                          // the block no longer owns the material
-        g_res_manager.release(e);
+    for (unsigned i = 0; i < mats().size(); i++) {
+        mats()[i]->owned = 0;                           // the block no longer owns the material
+        g_res_manager.release(mats()[i]);
     }
-    if (*(char**)((char*)this + 0x58))
-        engine_delete(*(char**)((char*)this + 0x58));
-    *(int*)((char*)this + 0x58) = 0;
-    *(int*)((char*)this + 0x5c) = 0;
-    *(int*)((char*)this + 0x60) = 0;
+    tidy3((char*)this + 0x58);
     *(int*)((char*)this + 0x64) = 0;
 }
-
-
 
 // @ 0x4c83a0
 void Block::read_terrain(stream_base* stream)
@@ -1545,21 +1520,21 @@ void Block::read_terrain(stream_base* stream)
     stream->r_float(f2);
     stream->r_float((float*)((char*)this + 0x30));
     stream->r_float((float*)((char*)this + 0x34));
-    *(float*)((char*)this + 0x28) *= 0.001f;
-    *f2 *= 0.001f;
-    *(float*)((char*)this + 0x30) *= 0.001f;
-    *(float*)((char*)this + 0x34) *= 0.001f;
-    block_read_base(this, stream);
+    *(float*)((char*)this + 0x28) *= 0.001;
+    *f2 *= 0.001;
+    *(float*)((char*)this + 0x30) *= 0.001;
+    *(float*)((char*)this + 0x34) *= 0.001;
+    ((BlockBase*)((char*)this + 0x38))->read(stream);
     char buf[0x200];
-    _snprintf(buf, 0x200, "Tableau material %s", ((tstring*)((char*)this + 0x44))->c_str());
-    tstring mat(buf);
-    ((tstring*)((char*)this + 0x44))->operator=(mat);
-    mat.~tstring();
+    _snprintf(buf, 0x200, "Tableau material %s", ((tstring*)this)->c_str());
+    {
+        tstring mat(buf);
+        ((tstring*)((char*)this + 0x44))->operator=(mat);
+    }
     if (name.len > 1) {
         if (name.differs("none"))
             *(void**)((char*)this + 0x64) = g_res_manager.get_material(name);
     }
-    name.~tstring();
 }
 
 
@@ -1610,75 +1585,61 @@ void __fastcall conv_build_scene(conv_rec* self)
     char* c = (char*)self;
     int gy = 0;
     if (*(int*)(c + 0x27c) >= 0) {
-        grid_slot* slot = (grid_slot*)(c + 0x29c);
+        tab_cell* q = (tab_cell*)(c + 0x288);
         do {
             int x = 0;
             if (*(int*)(c + 0x278) >= 0) {
                 int y16 = gy * 16;
+                tab_cell* qq = q;
                 do {
-                    int** codes = (*(world_root**)(c + 0xc3b0dc))->codes;
-                    int* cell = codes[x];
-                    *(int*)(y16 + (int)cell) = slot->f0;
-                    if (slot->f14 >= 0) {
-                        scene_vert* verts = (*(world_root**)(c + 0xc3b0dc))->sub->verts;
-                        scene_vert* v = &verts[slot->f14 * 9];
-                        v->pos = *(vector4*)((char*)slot + 4);
-                    }
+                    int* cell = (*(world_root**)(c + 0xc3b0dc))->codes->cols[x];
+                    *(int*)(y16 + (int)cell) = *(int*)&qq->v.z;
+                    if (qq->vert >= 0)
+                        (*(world_root**)(c + 0xc3b0dc))->sub->verts[qq->vert].pos = qq->v;
                     x++;
-                    slot = (grid_slot*)((char*)slot + 0x911c);
+                    qq = (tab_cell*)((char*)qq + 0x911c);
                 } while (x <= *(int*)(c + 0x278));
             }
             gy++;
-            slot = (grid_slot*)((char*)slot + 0x94);
+            q = (tab_cell*)((char*)q + 0x94);
         } while (gy <= *(int*)(c + 0x27c));
     }
     scene_sub* sub = (*(world_root**)(c + 0xc3b0dc))->sub;
-    for (unsigned k = 0;
-         sub->first != 0 && k < (unsigned)((int)((char*)sub->last - (char*)sub->first) / 0x88);
-         k++) {
-        var_rec* it = (var_rec*)((char*)sub->first + k * 0x88);
-        var_rec* r = *(var_rec**)&it->verts;
-        if (r != 0) {
-            int j = 0;
-            if (r->n > 0) {
-                scene_vert* dst = r->verts;
-                do {
-                    int t = it->idx[j];
-                    dst->pos = sub->verts[t].pos;
-                    j++;
-                    dst++;
-                } while (j < r->n);
-            }
-            matrix3 loc;
-            loc.m[0][0] = 0;
-            loc.m[0][1] = 0;
-            loc.m[0][2] = 0;
-            matrix3 m = *identity3(&loc);
-            ((void (__fastcall*)(void*, int, matrix3*))*(void**)r)(r, 0, &m);
+    for (unsigned k = 0; k < sub->items.size(); k++) {
+        scene_obj* r = sub->items[k].obj;
+        if (r) {
+            for (int j = 0; j < sub->items[k].n; j++)
+                r->pts[j] = sub->verts[sub->items[k].idx[j]].pos;
+            vector4 z0(0.0f, 0.0f, 0.0f);
+            matrix3 t;
+            matrix3* ip = identity3(&t);
+            rgl::matrix m;
+            *(matrix3*)&m = *ip;
+            m.o = z0;
+            r->set_frame(&m);
         }
     }
 }
 
 // @ 0x4c8810
-edit_vert* fill_verts(edit_vert* dst, int n, const edit_vert* src)
+edit_vert* edit_vec::ufill(edit_vert* dst, int n, const edit_vert* src)
 {
-    uninit_fill_n(dst, (unsigned)n, src, 0, src);
+    uninit_fill_n(dst, (unsigned)n, src, this, src);
     return dst + n;
 }
 
 // @ 0x4c8840
-void __fastcall conv_assign_back(conv_rec* self, int, conv_rec** out, conv_rec* first, conv_rec* last)
+tstr_iter tstr_vec::erase_range(tstring* first, tstring* lastp)
 {
-    if (first != last) {
-        tstring* end = assign_range((tstring*)first, (tstring*)last, *(tstring**)((char*)self + 8), *(tstring**)((char*)self + 8));
-        tstring* it = *(tstring**)((char*)self + 8);
-        while (end != it) {
-            ((tstring*)it)->~tstring();
-            it = (tstring*)((char*)it + 0x10);
-        }
-        *(tstring**)((char*)self + 8) = end;
+    if (first != lastp) {
+        tstring* end = assign_range(lastp, last, first, first);
+        for (tstring* it = end; it != last; it++)
+            it->~tstring();
+        last = end;
     }
-    *out = first;
+    tstr_iter r;
+    r.p = first;
+    return r;
 }
 
 // @ 0x4c88a0
@@ -1720,36 +1681,34 @@ void __stdcall loader_thread_body()
 }
 
 // @ 0x4c8980
-void* __fastcall conv_item_array_dtor(conv_rec* self, int, unsigned flag)
+void* __fastcall conv_item_array_dtor(conv_rec* self, int, unsigned char flags)
 {
-    void* p = self;
-    if (!(flag & 2)) {
-        conv_free_one(self);
-        if (flag & 1)
-            engine_delete(p);
-        return p;
+    Rec0xb0* a = (Rec0xb0*)self;
+    if (flags & 2) {
+        int* head = (int*)self - 1;
+        int n = *head;
+        Rec0xb0* p = a + n;
+        for (int i = n - 1; i >= 0; i--) {
+            --p;
+            p->buf.release();
+            p->key.~tstring();
+            p->name.~tstring();
+        }
+        if (flags & 1)
+            engine_free(head);
+        return head;
     }
-    int n = *(int*)((char*)p - 4);
-    for (int i = n - 1; i >= 0; i--) {
-        ConvItem16* e = (ConvItem16*)((char*)p + i * 0xb0);
-        if (e->a4 != 0)
-            engine_delete((void*)e->a4);
-        e->a4 = 0;
-        e->a8 = 0;
-        e->ac = 0;
-        ((tstring*)((char*)e + 0x10))->~tstring();
-        ((tstring*)e)->~tstring();
-    }
-    if (flag & 1)
-        engine_free((char*)p - 4);
-    return (char*)p - 4;
+    conv_free_one(self);
+    if (flags & 1)
+        engine_delete(self);
+    return self;
 }
 
 // @ 0x4c8a40
 void __fastcall conv_group_dtor(conv_rec* self)
 {
     char* p = (char*)self;
-    self->clear_groups();
+    record_array_clear(p + 0x228);
     int i = 16;
     char* q = p + 0x1c8;
     do {
@@ -1864,12 +1823,11 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\parties.csv", "wt+");            // 0x596034
         unsigned i = pm.first_party_id();
         while (i < pm.n_parties) {
-            PartyRec* p = pm.get_party(i);
-            if (p->f8c <= 0 && i != (unsigned)party_id_78) {
+            if (pm.get_party(i)->f8c <= 0 && i != (unsigned)party_id_78) {
                 if (translated) {
-                    tstring v = pm.get_party(i)->translated();
-                    write_row(f, pm.get_party(i)->key, v);
+                    write_row(f, pm.get_party(i)->key, pm.get_party(i)->translated());
                 } else {
+                    PartyRec* p = pm.get_party(i);
                     const tstring* v;
                     if (g_lang_on)
                         v = &p->key;
@@ -2068,7 +2026,8 @@ void GameData::save_language_files(bool translated)
                     const tstring* p = suffix_or(g_menus[i].doors[j].key, "_door",
                                                  g_menus[i].doors[j].text);
                     if (p->len > 2)
-                        write_row(f, g_menus[i].doors[j].key + tstring("_door"), *p);
+                        write_row(f, g_menus[i].doors[j].key + tstring("_door"),
+                                  *suffix_or(g_menus[i].doors[j].key, "_door", g_menus[i].doors[j].text));
                 }
             }
         }
