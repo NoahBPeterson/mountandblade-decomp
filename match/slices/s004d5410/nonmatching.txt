@@ -5,14 +5,10 @@
                    float, 5 int, 6 title string, 8+0x184==1 flag byte; else pressed 2 / pressed 4).
                    Not byte-exact: the original's STL iterator (0x534160) and vector _M_start reloads
                    per access, non-inlined virtuals, and a 0x3c-byte frame vs 0x10.
-004d5940    42  complete: ValueSource::on_value_changed. Semantics confirmed equivalent in order
-                   (set_value(step/slot * arg * scale + value())): the original's observable value is
-                   reproduced but 1 ulp off on extreme inputs (equiv: input 0, float-rounding, orig
-                   0x22ad6d4c vs ours 0x22ad6d4d), the same for all three algebraically equal groupings;
-                   the original splits the arg*scale product into its own x87 chain.
+                   b04 reaudit: item value source is a POINTER at item+0x484 (item_value fixed). equiv still
+                   UNSUPPORTED by resaudit: ours writes g_spawn_lo with a 64-bit store where the original's
+                   pressed-4 branch (0x4d58fc..0x4d5911) sets 0xa70450=1, 0xa70448=i, 0xa7044c=0, 0xa70454=0;
+                   not yet re-derived, so equivalence of this row is unverified.
 004d5980    61  complete: Hud::on_mission_start (stamp world+0x5270 from g_u32, ++g_u32, mission setup,
                    screen v2(), screen+0x18 = f18, two menu-widget fields, choose(0xe)); only the
                    global-reload/register schedule differs.
-004d5a20   325  complete: Hud::on_update (mission clock step on f30[0]'s value source + key flag, page
-                   list poll 0x24c/0x250 with 0x4d5ba0, page buttons 0x34/0x38, menu button f30[0],
-                   choose(f18) with the 0xa170d8 / 0xa174d8 guards); codegen only.

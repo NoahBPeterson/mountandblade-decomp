@@ -111,7 +111,12 @@ struct Widget {
 // the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
 // +0x178 the slot index, +0x17c the step, +0xf0 the per-slot screen values.
 struct ValueSource {
-    void* vptr;                                     // +0x00
+    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
+    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
+    virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
+    virtual void v0c(); virtual void v0d(); virtual void v0e(); virtual void v0f();
+    virtual void v10(); virtual void v11();
+    virtual void set_key_flags(int f);              // +0x48
     char  pad04[0xf0 - 0x04];
     float slot[1];                                  // +0xf0
     char  pad1[0x168 - 0xf4];
@@ -125,22 +130,8 @@ struct ValueSource {
     float value();                                  // 0x48b930
     void  on_value_changed(float arg);              // 0x4d5940
 };
-// kept out of line as in the original (0x48b930 / 0x48baa0 are real functions)
-__declspec(noinline) void ValueSource::set_value(float v) { f168 = v; }
-__declspec(noinline) float ValueSource::value()
-{
-    return (f168 - f16c) / (f170 - f16c) * (slot[idx] - step);
-}
-
 // value source reached through an item pointer (Hud+0x30 sources): only the vtable slots matter
-struct ValueWidget : ValueSource {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
-    virtual void v0c(); virtual void v0d(); virtual void v0e(); virtual void v0f();
-    virtual void v10(); virtual void v11();
-    virtual void set_key_flags(int f);              // +0x48
-};
+typedef ValueSource ValueWidget;
 
 // an item record: a Widget with the offset vector at +0xe0 (x0,y0,w,h), the mesh animation nodes at
 // +0x108, a name at +0x128 (string) and two item flags at +0x180/+0x184.
@@ -157,8 +148,8 @@ struct MissionItem : Widget {
     int          f184;                              // +0x184
 };
 
-// the per-item value source sits at item+0x484
-inline ValueWidget* item_value(MissionItem* it) { return (ValueWidget*)((char*)(void*)it + 0x484); }
+// the per-item value source is a pointer at item+0x484
+inline ValueWidget* item_value(MissionItem* it) { return *(ValueWidget**)((char*)(void*)it + 0x484); }
 
 // the item source (0x4d5410's `this`, Hud+0x30): an STL vector of MissionItem* at +0x4/+0x8/+0xc, the
 // item family at +0x10 (its sound is the family-th ItemSound), the current clock slot at +0x18 and the
@@ -190,10 +181,11 @@ struct Hud {
     char    pad14[0x18 - 0x14];
     int     f18;                                    // +0x18
     char    pad1c[0x30 - 0x1c];
-    char    src30[0x4];                             // +0x30 (the item source; passed as `this` to 0x4d5410)
+    Widget* f30;                                    // +0x30 (menu button)
     Widget* f34;                                    // +0x34
     Widget* f38;                                    // +0x38
-    char    pad3c[0x88 - 0x3c];
+    MissionItem* f3c;                               // +0x3c (the clock item; its value source is at +0x484)
+    char    pad40[0x88 - 0x40];
     int     f88;                                    // +0x88
     char    pad8c[0x24c - 0x8c];
     int     f24c;                                   // +0x24c
@@ -203,16 +195,15 @@ struct Hud {
     void on_mission_start(int arg);                 // 0x4d5980
     void on_leave(int arg);                         // 0x4d59f0
     void on_update(int arg);                        // 0x4d5a20
+    void page_fill();                               // 0x4d5ba0 (fills the page named by f250)
 };
 
 // A page object of the list at +0x254 (0x4d5ba0 fills it; only the call matters here).
-void quest_page_fill(Hud* page);                    // 0x4d5ba0
 
 // @ 0x4d5940
-void ValueSource::on_value_changed(float arg)
+__declspec(noinline) void ValueSource::on_value_changed(float arg)
 {
-    float v = value();
-    set_value(step / slot[idx] * arg * g_char_scale + v);
+    set_value((step / slot[idx] * arg) * g_char_scale + value());
 }
 
 // @ 0x4d5980
@@ -239,21 +230,15 @@ void Hud::on_leave(int arg)
 void Hud::on_update(int arg)
 {
     if (g_mission_clock) {
-        MissionItem* it = ((MissionSource*)((char*)(void*)this + 0x30))->begin[0];
-        if (it) {
-            item_value(it)->on_value_changed((float)g_mission_clock);
-            ValueWidget* u = item_value(((MissionSource*)((char*)(void*)this + 0x30))->begin[0]);
-            u->set_key_flags(0x10000);
-        }
+        ValueWidget* u = item_value(f3c);
+        float v = (u->f168 - u->f16c) / (u->f170 - u->f16c) * (u->slot[u->idx] - u->step);
+        u->set_value((float)g_mission_clock / u->slot[u->idx] * u->step * g_char_scale + v);
+        item_value(f3c)->set_key_flags(0x10000);
     }
-    {
-        Hud* self = this;
-        int n = self->f24c;
-        for (int i = 0; i < n; i++) {
-            if (self->wi[i]->used(0x10000)) {
-                self->f250 = i;
-                quest_page_fill((Hud*)(void*)self->wi[i]);
-            }
+    for (int i = 0; i < f24c; i++) {
+        if (wi[i]->used(0x10000)) {
+            f250 = i;
+            page_fill();
         }
     }
     if (f34->used(0x10000)) {
@@ -270,7 +255,7 @@ void Hud::on_update(int arg)
         }
         f04 = 1;
         g_main_menu.choose(0xd);
-    } else if (((Widget*)(void*)((MissionSource*)((char*)(void*)this + 0x30))->begin[0])->used(0x10000)) {
+    } else if (f30->used(0x10000) || (!g_a170d8 && g_a174d8)) {
         g_main_menu.choose(f18);
     }
 }
