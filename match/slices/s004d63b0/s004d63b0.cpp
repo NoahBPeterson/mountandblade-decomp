@@ -43,7 +43,6 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0
 extern "C" char* __cdecl _itoa(int, char*, int);                            // 0x5371f7
 extern "C" long __cdecl _atol(const char*);                                 // 0x53734d
 extern "C" int __cdecl fclose_(void*);                                      // 0x537168
-int ftol(double v);                                                         // 0x535a64 (x87 argument)
 
 // ---- controls ----------------------------------------------------------------------------------------
 struct Widget {
@@ -284,7 +283,7 @@ void VideoPage::update(int reason)
         g_renderer.set("output_gamma", v);
         g_renderer.set("output_gamma_inv", vi);
         char buf[0x40];
-        _itoa(ftol(gamma * *(float*)0x54ab28), buf, 10);
+        _itoa((int)(gamma * *(float*)0x54ab28), buf, 10);
         tstring text(buf);
         tstring key_state("ui_gamma");
         tstring state("");
@@ -301,7 +300,7 @@ void VideoPage::update(int reason)
     }
 
     if (w44->changed(0x10000)) {
-        int pct = ftol(w44->get_float());
+        int pct = (int)w44->get_float();
         *(int*)0x5aa03c = pct;
         char buf[0x40];
         {
@@ -329,7 +328,7 @@ void VideoPage::update(int reason)
         update_performance_caption(this);
     }
     if (w40->changed(0x10000)) {
-        int pct = ftol(w40->get_float());
+        int pct = (int)w40->get_float();
         *(int*)0x5a9f9c = pct;
         char buf[0x40];
         {

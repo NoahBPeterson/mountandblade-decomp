@@ -1,3 +1,9 @@
 slices/s004b24b0/s004b24b0.cpp  ?set_order@Party@@QAEXPAH@Z  004b2970  /O2 /MT /Gy /TP /EHsc
 slices/s004b24b0/s004b24b0.cpp  ?throw_stub@@YAXXZ  004b2514  /O2 /MT /Gy /TP
 slices/s004b24b0/s004b24b0.cpp  ?throw_stub2@@YAXXZ  004b26d6  /O2 /MT /Gy /TP
+slices/s004b24b0/s004b24b0.cpp  ?construct_elems2@@YAXPAUElem12@@I0PAUElemCopier@@Uptr_tag@@@Z  004b24b0  /O2 /MT /Gy /TP
+slices/s004b24b0/s004b24b0.cpp  ?pop_heap_elem@@YAXPAUElem12@@00U1@UHeapGt@@@Z  004b2610  /O2 /MT /Gy /TP
+slices/s004b24b0/s004b24b0.cpp  ?construct_items@@YAPAUItemRec@@PAU1@00PAUElemCopier@@Uptr_tag@@@Z  004b2670  /O2 /MT /Gy /TP
+slices/s004b24b0/s004b24b0.cpp  ?uninitialized_copy_n@ElemCopier@@QAEPAUElem12@@PAU2@I0@Z  004b26e0  /O2 /MT /Gy /TP
+slices/s004b24b0/s004b24b0.cpp  ?push_back_elem@@YAXPAUElem12@@0UHeapGt@@@Z  004b2710  /O2 /MT /Gy /TP
+slices/s004b24b0/s004b24b0.cpp  ?fill_elems@ElemCopier@@QAEPAUElem12@@PAU2@00@Z  004b25a0  /O2 /MT /Gy /TP

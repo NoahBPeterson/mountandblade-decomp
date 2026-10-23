@@ -159,6 +159,7 @@ struct BigObj : MsgLog {
     char pad7d0[0x158c - 0x570 - 0x260];
     void* p158c;                                            // +0x158c
 
+    void scene_walk(scene* s, float* t);                    // 0x4bd170 (thiscall, ret 8)
     void build();                                           // 0x4e6050
     void reset_geometry();                                  // 0x4e64b0
     void update(float dt);                                  // 0x4e6510
@@ -172,7 +173,6 @@ struct xform {
     float f38;                                              // +0x38
 };
 
-void scene_walk(void* self, scene* s, float* t);            // 0x4bd170
 
 // @ 0x4e6050
 void BigObj::build()
@@ -180,9 +180,7 @@ void BigObj::build()
     scene* s1 = (scene*)((char*)this + 0x44);
     s1->reset();                                            // 0x428f30
 
-    int h = *(int*)((char*)this + 0x548);
-    int w = *(int*)((char*)this + 0x54c);
-    float r = (float)w / h;
+    float r = (float)*(int*)((char*)this + 0x54c) / *(int*)((char*)this + 0x548);
     float sq = (float)sqrt(r);
     *(float*)((char*)this + 0x55c) = sq;
     *(float*)((char*)this + 0x558) = 1.0f / sq;
@@ -191,17 +189,17 @@ void BigObj::build()
     if (*(char*)((char*)this + 0xb0ac))
         *(int*)((char*)this + 0x1d0) |= 0x200;
 
-    *(int*)((char*)this + 0x4c) = h;
+    *(int*)((char*)this + 0x4c) = *(int*)((char*)this + 0x548);
     *(int*)((char*)this + 0x44) = 0;
     *(int*)((char*)this + 0x48) = 0;
-    *(int*)((char*)this + 0x50) = w;
+    *(int*)((char*)this + 0x50) = *(int*)((char*)this + 0x54c);
     *(int*)((char*)this + 0x54) = 0;
     *(float*)((char*)this + 0x58) = 1.0f;
 
     frustum* fr = (frustum*)((char*)this + 0x3f4);
     *(char*)fr = 0;
     *(int*)((char*)fr + 0x118) = 0;
-    *(float*)((char*)fr + 0x11c) = 500.0f;
+    *(float*)((char*)fr + 0x11c) = 501.0f;
     *(float*)((char*)fr + 0x108) = -0.5f;
     *(float*)((char*)fr + 0x10c) = 0.5f;
     *(float*)((char*)fr + 0x114) = -0.375f;
@@ -215,6 +213,7 @@ void BigObj::build()
     o.y = 0.375f;
     o.z = 400.0f;
     identity_pos(mslot);                                    // 0x40cd00
+    // o.w is never assigned (the original copies the uninitialised w slot too)
     m->o = o;
     *(rgl::matrix*)((char*)fr + 0xc8) = *m;
     fr->build_planes();
@@ -222,10 +221,10 @@ void BigObj::build()
 
     scene* s2 = (scene*)((char*)this + 0x21c);
     s2->reset();                                            // 0x428f30
-    *(int*)((char*)this + 0x228) = w;
+    *(int*)((char*)this + 0x228) = *(int*)((char*)this + 0x54c);
     *(int*)((char*)this + 0x21c) = 0;
     *(int*)((char*)this + 0x220) = 0;
-    *(int*)((char*)this + 0x224) = h;
+    *(int*)((char*)this + 0x224) = *(int*)((char*)this + 0x548);
     *(int*)((char*)this + 0x22c) = 0;
     *(float*)((char*)this + 0x230) = 1.0f;
     *(frustum*)((char*)this + 0x24c) = *fr;
@@ -236,7 +235,7 @@ void BigObj::build()
         Widget** data = *(Widget***)((char*)this + 4);
         if (!data)
             break;
-        unsigned n = (unsigned)((char*)*(void**)((char*)this + 8) - (char*)data) >> 2;
+        unsigned n = (unsigned)(*(Widget***)((char*)this + 8) - data);
         if (i >= n)
             break;
         vec2 zero(0.0f, 0.0f);
@@ -244,7 +243,7 @@ void BigObj::build()
         data[i]->build(s1, &t, &zero, &size);
     }
     t += 1.0f;
-    scene_walk(this, s2, &t);                               // 0x4bd170
+    scene_walk(s2, &t);
 
     float ident[12];
     xform* x = (xform*)mslot;

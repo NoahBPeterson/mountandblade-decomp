@@ -46,6 +46,7 @@ extern "C" void __stdcall __CxxThrowException(void*, void*);        // 0x5368e6
 extern void* g_5e2930;                          // 0x5e2930 (game-data pointer, matrix arena at +0x14014)
 struct Mission { int add_placed(const int* kind, const int* id, const int* value, const void* m, int* spawn_id); }; // 0x44f870
 
+struct ptr_tag {};                               // empty class passed by value (one slot)
 struct NodeA;
 struct UiA;
 struct PObj;
@@ -62,6 +63,8 @@ struct PVec {
     void _Insert_n(E4* where, unsigned count, const E4& x);  // 0x49b1c0
     void _Xlen() const;                         // 0x43e2a0
 };
+
+E4* __cdecl uninit_copy(E4* f, E4* l, E4* d, PVec* al, ptr_tag tag);   // 0x435a10 (trivial _Uninit_copy = memmove)
 
 // ---- class A: the panel (`this` of 0x49aca0 / 0x49ad20 / 0x49b4f0) ---------------------------------
 struct PObj {
@@ -331,45 +334,63 @@ void PVec::insert(E4** out, E4* where, const E4& x)
     *out = first + idx;
 }
 
+// byte difference shifted right by 2, as the original computes every element count (a plain pointer
+// difference lets cl assume an exact division, which differs for misaligned pointers)
+static inline int pdiff(E4* a, E4* b) { return (int)((char*)a - (char*)b) >> 2; }
+
 // @ 0x49b1c0
+// std::vector<T*>::_Insert_n (VC7.1).  The prefix/suffix copies are the out-of-line trivial _Uninit_copy
+// (0x435a10: memmove of (last - first) / 4 words, returns dest + that); the other two branches inline it as
+// memmove.  A try block guards the new buffer (catch(...) { operator delete(S); throw; }).
 void PVec::_Insert_n(E4* where, unsigned count, const E4& val)
 {
     E4 tmp = val;
-    unsigned cap = first ? (unsigned)(end - first) : 0u;
+    unsigned cap = first ? (unsigned)pdiff(end, first) : 0u;
     if (count == 0)
         return;
-    unsigned size = first ? (unsigned)(last - first) : 0u;
+    unsigned size = first ? (unsigned)pdiff(last, first) : 0u;
     if (0x3fffffffu - size < count) {
         _Xlen();
         return;
     }
-    if (cap < size + count) {
+    if (cap < (first ? (unsigned)pdiff(last, first) : 0u) + count) {
         cap = (0x3fffffffu - cap / 2 < cap) ? 0u : cap + cap / 2;
-        if (cap < size + count)
-            cap = size + count;
+        if (cap < (first ? (unsigned)pdiff(last, first) : 0u) + count)
+            cap = (first ? (unsigned)pdiff(last, first) : 0u) + count;
         E4* newvec = (E4*)::operator new(cap * sizeof(E4));
-        E4* p = newvec;
-        for (E4* q = first; q != where; ) *p++ = *q++;
-        for (unsigned k = count; k; k--) *p++ = tmp;
-        for (E4* q = where; q != last; ) *p++ = *q++;
-        count += (unsigned)(last - first);
+        ptr_tag tag;
+        try {
+            E4* q = uninit_copy(first, where, newvec, this, tag);
+            for (unsigned k = count; k > 0; --k, ++q) *q = tmp;
+            uninit_copy(where, last, q, this, tag);
+        } catch (...) {
+            ::operator delete(newvec);
+            throw;
+        }
+        count += first ? (unsigned)pdiff(last, first) : 0u;
         if (first)
             ::operator delete(first);
         end = newvec + cap;
         last = newvec + count;
         first = newvec;
-    } else if ((unsigned)(last - where) < count) {
+    } else if ((unsigned)pdiff(last, where) < count) {
         E4* oldend = last;
-        memmove(where + count, where, (unsigned)(oldend - where) * sizeof(E4));
+        memmove(where + count, where, (unsigned)pdiff(oldend, where) * sizeof(E4));
+        try {
+            E4* q = oldend;
+            for (unsigned k = count - (unsigned)pdiff(oldend, where); k > 0; --k, ++q) *q = tmp;
+        } catch (...) {
+            throw;
+        }
         last = oldend + count;
-        for (E4* q = oldend; q != last; ) *q++ = tmp;
-        for (E4* q = where; q != oldend; ) *q++ = tmp;
+        for (E4* q = where; q != oldend; ++q) *q = tmp;
     } else {
         E4* oldend = last;
         memmove(oldend, oldend - count, count * sizeof(E4));
         last = oldend + count;
-        memmove(where + count, where, (unsigned)(oldend - count - where) * sizeof(E4));
-        for (E4* q = where; q != where + count; ) *q++ = tmp;
+        int n = pdiff(oldend - count, where);
+        memmove(oldend - n, where, (unsigned)n * sizeof(E4));
+        for (E4* q = where; q != where + count; ++q) *q = tmp;
     }
 }
 
