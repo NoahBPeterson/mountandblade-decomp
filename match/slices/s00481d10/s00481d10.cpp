@@ -54,10 +54,10 @@ struct psys {                           // particle system global at 0xa70248
 };
 
 struct terrain_obj {
-    char pad000[4];
-    int seed0;                          // 0x004 mixed into the first srand
-    int seed1;                          // 0x008 mixed into the second srand
-    int seed2;                          // 0x00c height word: top bit = negative, bits 10.. = height band
+    int seed0;                          // 0x000 first srand
+    int seed1;                          // 0x004 second srand (after the layer rebuild)
+    int seed2;                          // 0x008 third srand (before the noise offsets)
+    int hword;                          // 0x00c height word: top bit = negative, bits 10.. = height band
     int f10;
     int f14;                            // 0x014 runs through the cell-scale derivation
     char pad018[0x28 - 0x18];
@@ -80,7 +80,7 @@ struct terrain_obj {
     scatter_set set2;                   // 0x5c3b8f4
     char pad_bd0c[0x843bcfc - 0x5c3b8f4 - 0x18];
     rgl::vector4 bounds;                // 0x843bcfc
-    float sun_dir[3];                   // 0x843bd0c
+    float sun_dir[4];                   // 0x843bd0c (a vector4; main_camera takes the pointer)
     float map_centre[3];                // 0x843bd1c
     char pad_bd28[0x843bd60 - 0x843bd28];
     float noise_a;                      // 0x843bd60
@@ -94,7 +94,8 @@ struct terrain_obj {
 
     // generation chain (all thiscall on the terrain object)
     void gen_reset();                                       // 0x4647e0
-    void gen_layers();                                      // 0x4713d0
+    void gen_464f10();                                      // 0x464f10 (runs before the cell loops)
+    void gen_layers();                                      // 0x4713d0 (runs after the quad loop)
     void gen_rivers();                                      // 0x46bc70
     void gen_4661e0();                                      // 0x4661e0
     void gen_flow();                                        // 0x46ad50
@@ -112,6 +113,7 @@ struct terrain_obj {
     void gen_466fa0();                                      // 0x466fa0
     void gen_473980();                                      // 0x473980
     void gen_47a460();                                      // 0x47a460
+    void gen_set_clear(scatter_set* s);                     // 0x479da0 (thiscall, ret 4)
     void gen_set_init(scatter_set* s);                      // 0x47df80
     void light_particles(scatter_set* s, int mode);         // 0x472020
     void create_water(void** out);                          // 0x480db0
@@ -128,14 +130,8 @@ extern int g_no_cam;                    // 0x5a9fb0
 extern int g_env2;                      // 0x5e28fc (shaders on)
 extern int g_water_mode;                // 0x5aa084
 
-float ftol(int dummy);                  // 0x535a64: takes its real argument on the x87 stack, returns int in eax
-int irand();                            // 0x535a9f rand()
+int irand();                            // 0x536a9f rand()
 void seed_rng(unsigned s);              // 0x536a92 srand
-void __stdcall gen_set_clear(scatter_set* s);   // 0x479da0 (__stdcall, cleans its one argument)
-
-struct scaler {                         // the double -> grid-count helper object (0x535a64 takes no `this`)
-    int count(float v) { return ftol(0); }     // v already on the x87 stack at this point
-};
 
 // ------------------------------------------------------------------------------------------------------------
 
@@ -147,15 +143,14 @@ void terrain_obj::generate(int seed, int* objs, char flag)
     unsigned scale = (f14 & (g_mask_w - 1)) + 2;
     spawn_scale = (float)scale;
     seed_rng(seed0 & (g_mask_size - 1) & (g_mask_size - 1));
-    flag_bd75 = (char)((char)(g_mask_flag - 1) & (char)(seed2 >> 31)) != 0;
-    size_x = (float)(unsigned)(seed2 & (g_mask_h - 1));                 // height band -> map extent
-    size_y = (float)(unsigned)((seed2 >> 10) & (g_mask_h - 1));
+    flag_bd75 = (char)((char)(g_mask_flag - 1) & (char)((unsigned)hword >> 31)) != 0;
+    size_x = (float)(unsigned)(hword & (g_mask_h - 1));                 // height band -> map extent
+    size_y = (float)(unsigned)(((unsigned)hword >> 10) & (g_mask_h - 1));
     world = (World*)seed;
 
     float inv = 1.0f / spawn_scale;
-    scaler sc;
-    h = sc.count(inv * size_x);
-    w = sc.count(inv * size_y);
+    h = (int)(inv * size_x);
+    w = (int)(inv * size_y);
     if (h > 250)
         h = 250;
     if (w > 250)
@@ -173,8 +168,9 @@ void terrain_obj::generate(int seed, int* objs, char flag)
     b[1] = 0.0f;
     b[2] = 0.0f;
     b[3] = 0.0f;
+    bounds = *(rgl::vector4*)b;
 
-    gen_layers();
+    gen_464f10();
 
     for (int y = 0; y <= w; y++) {
         float p[4];
@@ -191,7 +187,8 @@ void terrain_obj::generate(int seed, int* objs, char flag)
             quads[x * 250 + y].set_diag();
     }
 
-    bounds = *(rgl::vector4*)b;
+    gen_layers();
+    seed_rng(seed1 & (g_mask_size - 1));
 
     gen_rivers();
     gen_4661e0();
@@ -202,13 +199,13 @@ void terrain_obj::generate(int seed, int* objs, char flag)
     gen_466c10();
 
     if (objs != 0 && flag) {
-        if (g_no_cam == 0)
-            gen_objects_plain(objs);
-        else
+        if (g_no_cam)
             gen_objects_aligned(objs);
+        else
+            gen_objects_plain(objs);
     }
 
-    seed_rng(seed1 & (g_mask_size - 1));
+    seed_rng(seed2 & (g_mask_size - 1));
 
     noise_a = (float)(irand() % 0x3dc9) * 0.063223116f;
     noise_b = (float)(irand() % 0x3dc9) * 0.063223116f;
@@ -244,23 +241,22 @@ void terrain_obj::regenerate_water(void** out, int mode)
     gen_set_clear(&set1);
     *out = 0;
     create_water(out);
-    gen_set_init(&set0);
     gen_set_init(&set1);
+    gen_set_init(&set0);
     gen_47a460();
     if (g_env2 == 0 || g_water_mode == 0) {
-        light_particles(&set0, mode);
         light_particles(&set1, mode);
+        light_particles(&set0, mode);
     }
 
     int mask = g_mask_h - 1;
-    scaler sc;
-    int r = sc.count(size_x);
+    int r = (int)size_x;
     if ((unsigned)r > (unsigned)mask)
         r = mask;
-    seed2 = (seed2 & ~mask) | r;
+    hword = (hword & ~mask) | r;
     mask = g_mask_h - 1;
-    r = sc.count(size_y);
+    r = (int)size_y;
     if ((unsigned)r > (unsigned)mask)
         r = mask;
-    seed2 = (seed2 & ~(mask << 10)) | (r << 10);
+    hword = (hword & ~(mask << 10)) | (r << 10);
 }

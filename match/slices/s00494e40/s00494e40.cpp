@@ -41,7 +41,7 @@ extern unsigned char g_5d75e0;                     // 0x5d75e0
 // ---- game records ------------------------------------------------------------------------------------
 struct Troop {                                     // 0x508 bytes, table at game+0x13a00
     char pad0[0x30];
-    unsigned flags;                                // +0x30 (0x10 = hero)
+    unsigned __int64 flags;                        // +0x30 (0x10 = hero)
     char pad34[0x50 - 0x34];
     int f50;                                       // +0x50
     int f54;                                       // +0x54
@@ -100,6 +100,7 @@ struct GameData {                                  // 0x5e2930
     int f8c;                                       // +0x08c
     char pad90[0xf8 - 0x90];
     PartyMgr pm;                                   // +0x0f8
+    Troop* troops_() const { return *(Troop* const*)((const char*)this + 0x13a00); }   // same table as pm.troops
     int add_party_exp(int party, int amount);      // 0x4428c0 (ret 8)
     int add_random_experience(int amount);         // 0x4952a0
     void award_experience(int party, float amount, int mode);   // 0x494e40 (ret 0xc)
@@ -150,9 +151,10 @@ void GameData::award_experience(int party, float amount, int mode)
     int idx = m2.index_of(party);
     if (idx < 0)
         return;
-    Party* p = &m2.pages[idx >> 4][idx & 15];
-    if ((unsigned char)p->state != 1)
+    if (m2.pages[(unsigned)idx >> 4][idx & 15].state != 1)
         return;
+    idx = m2.index_of(party);                      // the original looks the party up a second time
+    Party* p = &m2.pages[idx >> 4][idx & 15];
     int m = mode != 0 ? mode - 1 : rand() % 2;
 
     int total = 0;
@@ -160,7 +162,7 @@ void GameData::award_experience(int party, float amount, int mode)
         Stack& s = p->stacks[i];
         if (s.flags & 1)
             break;
-        if (m2.troops[s.troop].flags & 0x10)
+        if (troops_()[s.troop].flags & 0x10)
             total = (int)((float)total + (i == 0 ? 10.0f : 3.0f));
         else
             total += s.count;
@@ -171,7 +173,7 @@ void GameData::award_experience(int party, float amount, int mode)
         Stack& s = p->stacks[i];
         if (s.flags & 1)
             break;
-        if (m2.troops[s.troop].flags & 0x10) {
+        if (troops_()[s.troop].flags & 0x10) {
             int r = rand() % 15817;
             float v = ((float)r * (1.0f / 31634.0f) + 0.75f) * per;
             if (i == 0)
@@ -189,13 +191,13 @@ void GameData::award_experience(int party, float amount, int mode)
         Stack& s = p->stacks[i];
         if (s.flags & 1)
             break;
-        if (m2.troops[s.troop].flags & 0x10)
+        if (troops_()[s.troop].flags & 0x10)
             continue;
         if (s.f14 <= 0)
             continue;
-        int lead = m2.troops[s.troop].f50;
-        if (m == 1 && (unsigned)m2.troops[s.troop].f54 > 0)
-            lead = m2.troops[s.troop].f54;
+        int lead = troops_()[s.troop].f50;
+        if (m == 1 && (unsigned)troops_()[s.troop].f54 > 0)
+            lead = troops_()[s.troop].f54;
 
         int n = 0;
         for (int j = 0; j < p->nstacks; j++) {

@@ -7,6 +7,4 @@
 004c1c20    4  TriggerRec::TriggerRec: complete; two adjacent constant stores are scheduled in the opposite order (t1.id before t0.t.hi, f0c before t2.t.hi) by the register allocator - same stores, same values, same addresses.
 004c1c90  179  TriggerVec::resize: complete; original calls the compiler array-ctor helper ?_H@ instead of an inline ctor loop. equiv: UNSUPPORTED (read_count unresolved)
 004c1e10  263  GameVec::resize: complete; array ctor loop shape (?_H helper) plus tail-element skip differs. equiv: UNSUPPORTED (read_count unresolved)
-004c1f20   62  MouseVec::clear: complete delete[] of MouseRec; original inline dtor loop shaped as a -4 header walk and it calls operator delete[] via 0x53570d (we call it via 0x535712 - same libcmt routine). equiv: FAIL only on 'import call #0' (equivalent delete[] entry points)
-004c1f70  308  MouseVec::resize: complete; inlined MouseRec ctor + tstring ctor/dtor loop not reproduced byte-exactly. equiv: UNSUPPORTED (read_count unresolved)
 004c20c0  147  read_map_icon: complete; vtable read calls / sprintf argument registers differ. equiv: UNSUPPORTED (s16 unresolved)

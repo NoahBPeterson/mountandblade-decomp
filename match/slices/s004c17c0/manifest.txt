@@ -5,3 +5,5 @@ slices/s004c17c0/s004c17c0.cpp  ?copy_block204@@YGXPAXPBX@Z  004c1b40  /O2 /MT /
 slices/s004c17c0/s004c17c0.cpp  ?stamp@TriggerVec@@QAEXH@Z  004c1d70  /O2 /MT /Gy /TP /EHa
 slices/s004c17c0/s004c17c0.cpp  ??0GameRec@@QAE@XZ  004c1de0  /O2 /MT /Gy /TP /EHa
 slices/s004c17c0/s004c17c0.cpp  ?stamp@GameVec@@QAEXH@Z  004c1ee0  /O2 /MT /Gy /TP /EHa
+slices/s004c17c0/s004c17c0.cpp  ?clear@MouseVec@@QAEXXZ  004c1f20  /O2 /MT /Gy /TP
+slices/s004c17c0/s004c17c0.cpp  ?resize@MouseVec@@QAEXAAUstream@@@Z  004c1f70  /O2 /MT /Gy /TP

@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
+#include <new>             // declares operator new[]/delete[] (0x535482/0x53570d); without it cl calls operator new/delete
 #include "../../include/rgl.h"
 
 // tstring {cursor, buf, cap, len}; the ctor at 0x42bbd0 zeroes the last three fields.
@@ -79,12 +80,10 @@ struct gfx_helpers {
     void m4bc540();                                   // 0x4bc540 per-entry component reset
     void m4bd830(void* rec, void* s, int idx, int sub);   // 0x4bd830
     void m4bd910(void* rec, void* s, int idx);            // 0x4bd910
-    void m4bd990(void* rec, int idx);                     // 0x4bd990
     void m4bdb60();                                       // 0x4bdb60
 };
 void __cdecl gfx_4bd830(void* s, int idx, int sub);              // 0x4bd830 (record = ecx)
 void __cdecl gfx_4bd910(void* s, int idx);                       // 0x4bd910 (record = ecx)
-void __cdecl gfx_4bd990(void* rec, int idx);                     // 0x4bd990
 
 struct psys_t {
     void m463bc0();                                       // 0x463bc0
@@ -104,6 +103,14 @@ struct MouseVec;
 struct stream_reader;
 struct stream {
     stream_reader* vt;
+};
+// The same stream seen as a real virtual class (vtable slot n at +4n): read_count is slot 19 (+0x4c).
+struct vstream {
+    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();
+    virtual void v05(); virtual void v06(); virtual void v07(); virtual void v08(); virtual void v09();
+    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
+    virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18();
+    virtual void read_count(int* dst);       // +0x4c (thiscall, ret 4)
 };
 struct stream_reader {
     void s0(); void s1(); void s2(); void s3(); void s4(); void s5(); void s6(); void s7();
@@ -157,12 +164,24 @@ struct GameRec {
     GameRec();              // 0x4c1de0
 };
 
-struct V2 { float x, y; };                   // 8-byte trivial object
+// 8-byte vector with an empty user ctor: the 2-element member arrays go through the compiler's array-ctor
+// helper (0x401800) with the empty ctor at 0x407c20 (`mov eax, ecx; ret`).
+struct V2 {
+    float x, y;
+    V2() {}                                  // 0x407c20
+};
 
-struct MouseRec {                            // 0xc0 bytes, ctor inlined into 0x4c1f70
-    tstring  s0;      // +0
+// tstring as a MouseRec member: the real ctor/dtor are the outlined routines 0x42bbd0 / 0x42bc40.
+struct mstr {
+    int pos; char* buf; int cap; int len;
+    mstr() throw();                          // 0x42bbd0
+    ~mstr() throw();                         // 0x42bc40
+};
+
+struct MouseRec {                            // 0xc0 bytes; ctor and dtor are inlined into 0x4c1f70 / 0x4c1f20
+    mstr     s0;      // +0
     int      v10;     // +0x10
-    tstring  s1;      // +0x14
+    mstr     s1;      // +0x14
     int      v24, v28, v2c, v30, v34, v38, v3c, v40;    // +0x24
     V2       m0[2];   // +0x44
     V2       m1[2];   // +0x54
@@ -170,6 +189,7 @@ struct MouseRec {                            // 0xc0 bytes, ctor inlined into 0x
     V2       m3[2];   // +0x74
     V2       m4[2];   // +0x84
     char     pad94[0x2c];
+    void read(stream& s);                    // 0x4bd990 (thiscall, ret 4)
 };
 
 // 0x2c-byte element of the global table at 0x8ee3c28
@@ -485,22 +505,21 @@ void MouseVec::clear()
 {
     MouseRec* q = data;
     if (q != 0)
-        delete[] q;
+        delete[] q;                          // vector deleting dtor: -4 cookie, ~mstr x2 per element, delete[]
 }
 
 // @ 0x4c1f70
 void MouseVec::resize(stream& s)
 {
-    read_count(&s, &count);
+    ((vstream&)s).read_count(&count);
     MouseRec* o = data;
     if (o != 0) {
         delete[] o;
         data = 0;
     }
-    int n = count;
-    data = new MouseRec[n];
-    for (int i = 0; i < n; i++)
-        gfx_4bd990(data + i, i);
+    data = new MouseRec[count];
+    for (int i = 0; i < count; i++)
+        data[i].read(s);
     ((gfx_helpers*)this)->m4bdb60();
 }
 

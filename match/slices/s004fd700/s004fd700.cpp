@@ -118,7 +118,6 @@ extern "C" const char tag_size[];                   // 0x599690 ("size")
 extern "C" const char tag_color[];                  // 0x599698 ("color")
 void __cdecl vec_clear(void* self);                 // 0x41f4b0 (?clear@?$vec@Umface@@@@QAEXXZ, ECX = self)
 void __cdecl font_decode(int* buf, const char* s);  // 0x487b00 (decode_utf8)
-int __cdecl grid_round();                           // 0x535a64
 void __cdecl vec_insert_n_int(vec<int>* self, int* where, unsigned n, const int* val);  // 0x43e7b0 (ECX = self)
 void __cdecl vec_push_back_a(void* self, const int* val);   // 0x4fe0b0 (ECX = self; vector<int>::push_back)
 void __cdecl vec_push_back_b(void* self, const int* val);   // 0x440b30 (ECX = self; the ICF'd twin)
@@ -178,10 +177,10 @@ MapText* Font::layout(void* out, const void* p2, const void* p3, const void* p4,
     float adv  = (xext[0] / f18) * f20;             // per-character advance
     float step = (f20 / f1c) * xext[1];             // line step
     float max_x = cx;                               // local_80cc: the running x
-    float y = 0.0f;                                 // local_80d0: the current line start
+    int y = 0;                                         // local_80d0: the current line start
     char in_tag = 0;                                // local_80d1 / byte[esp+0x12]: the '>' parity
     char tag = 0;                                   // byte[esp+0x1b]: inside a '<...>' sequence
-    float tag_start = 0.0f;                         // local_8098: the index of the '<'
+    int tag_start = 0;                         // local_8098: the index of the '<'
     int tag_index = -1;                             // local_80ac: the current tag ordinal
     float line_y = cy;                              // local_807c: the running line y
     float widest = xext[0];                         // local_80b4: the widest x reached
@@ -205,7 +204,7 @@ MapText* Font::layout(void* out, const void* p2, const void* p3, const void* p4,
     int total = (int)count_f;
     if (0 < total) {
         float inv_adv = 1.0f / adv;                 // local_8094
-        float search = y;                           // local_80a8: the end of this row
+        int search = y;                             // local_80a8: the end of this row
         do {
             search = y;
             float run_w = 0.0f;                     // local_809c
@@ -213,7 +212,7 @@ MapText* Font::layout(void* out, const void* p2, const void* p3, const void* p4,
             int cur;
             for (;;) {
                 int stop = 0;
-                int i = (int)search;
+                int i = search;
                 for (; i < total; i++) {
                     int ch = buf[i];
                     if (ch == 0x20 || ch == 10 || ch == 9) {
@@ -225,15 +224,15 @@ MapText* Font::layout(void* out, const void* p2, const void* p3, const void* p4,
                     }
                 }
                 cur = i;
-                float arg = search;
+                float arg = (float)search;
                 float m = measure(buf, total, &cur, &arg);
                 if (first != 0 || m * adv <= xext[1] - xext[0]) {
                     run_w = m * adv;
-                    search = (float)cur;
+                    search = cur;
                 } else {
                     stop = 1;
                 }
-                if (total <= (int)search)
+                if (total <= search)
                     stop = 1;
                 first = 0;
                 if (stop)
@@ -250,7 +249,7 @@ MapText* Font::layout(void* out, const void* p2, const void* p3, const void* p4,
             }
 
             float xpos = inv_adv * max_x;           // local_80b8 (the starting column)
-            for (int i2 = (int)y; i2 < (int)search; i2++) {
+            for (int i2 = y; i2 < search; i2++) {
                 if (tag != 0) {
                     if (buf[i2] != 0x3e)                    // not '>'
                         continue;
@@ -258,7 +257,7 @@ MapText* Font::layout(void* out, const void* p2, const void* p3, const void* p4,
                     if (in_tag) {                           // the '<...>' body
                         tag_index++;
                         tstring name;                       // 0x42bbd0
-                        for (int e = (int)tag_start + 1; e < i2; e++)
+                        for (int e = tag_start + 1; e < i2; e++)
                             name.push_back((char)buf[e]);
                         name.to_lower();
                         {
@@ -312,10 +311,10 @@ MapText* Font::layout(void* out, const void* p2, const void* p3, const void* p4,
                 int ch = buf[i2];
                 if (ch == 0x3c) {                           // '<'
                     tag = 1;
-                    tag_start = (float)i2;
+                    tag_start = i2;
                 } else if (ch != 10) {
                     if (ch == 9) {                          // '\t'
-                        int tab = grid_round();
+                        int tab = (int)((inv_adv * max_x - xpos) * 4.0f);   // __ftol2 (0x535a64) on the x87 stack
                         max_x = ((((float)tab + 1.0f) * 0.25f) + xpos) * adv;
                     } else {
                         const char* g;
@@ -328,7 +327,7 @@ MapText* Font::layout(void* out, const void* p2, const void* p3, const void* p4,
                             g = (hit == f4c) ? f28 : (const char*)(hit + 0xc);
                         }
                         if (in_tag) {
-                            if (i2 == (int)y) {
+                            if (i2 == y) {
                                 vec_push_back_a(a16, (const int*)a16->last - 1);
                                 vec_push_back_b(a17, (const int*)a17->last - 1);
                                 vec4_push_back(a14, *(const vector4*)&max_x);
@@ -360,11 +359,11 @@ MapText* Font::layout(void* out, const void* p2, const void* p3, const void* p4,
             max_x = xext[0];
             y = search;
             line_y -= (f20 * fr->y) * f24 * 0.9f;
-        } while ((int)search < total);
+        } while (search < total);
     }
 
     mesh_compute_normals(p5);
     ((float*)out)[0] = (widest - xext[0]) + 0.0001f;
-    ((float*)out)[1] = line_y - y;
+    ((float*)out)[1] = line_y - (float)y;
     return (MapText*)out;
 }
