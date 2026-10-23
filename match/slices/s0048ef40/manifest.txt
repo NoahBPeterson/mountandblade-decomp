@@ -1,0 +1,1 @@
+slices/s0048ef40/s0048ef40.cpp  ?free_objects@Mission@@QAEXXZ  0048ef40  /O2 /MT /Gy /TP

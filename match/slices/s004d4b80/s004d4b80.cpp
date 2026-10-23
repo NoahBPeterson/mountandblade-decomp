@@ -328,17 +328,21 @@ void Hud::handle_buttons(int arg)
 
 // ---- the world object (0x5e292c) -------------------------------------------------------------------------
 extern "C" void __cdecl free_ptr(void* p);          // 0x535712 (operator delete / free)
-void world_base_dtor(void* p);                      // 0x479160
-void dtor_6814(void* p);                            // 0x42bc40 (16-byte string at +0x6814)
-void dtor_6698(void* p);                            // 0x4cb780
-void dtor_6688(void* p);                            // 0x431a60
-void dtor_63d0(void* p);                            // 0x4be6f0
-void dtor_0030(void* p);                            // 0x4c6e30
-void dtor_0004(void* p);                            // 0x4c6e30
+// all of these are thiscall (ecx = the sub-object), see the lea ecx / call pairs in the original
+struct WorldBase { void dtor(); };                  // 0x479160
+struct Sub6814 { void dtor(); };                    // 0x42bc40 (16-byte string at +0x6814)
+struct Sub6698 { void dtor(); };                    // 0x4cb780
+struct Sub6688 { void dtor(); };                    // 0x431a60
+struct Sub63d0 { void dtor(); };                    // 0x4be6f0
+struct Sub0030 { void dtor(); };                    // 0x4c6e30
+struct Sub0004 { void dtor(); };                    // 0x4c6e30 (ICF'd with Sub0030::dtor)
 
 struct World {
     // the sub-objects the destructor tears down, in address order
-    struct Vec { void* begin; void* end; void* cap; };  // an STL vector triple
+    struct Vec {                                        // an STL vector triple
+        void* begin; void* end; void* cap;
+        void release() { if (begin) free_ptr(begin); begin = 0; end = 0; cap = 0; }
+    };
 
     void destroy();                                 // 0x4d51d0 (tail-call shape, ret 0)
 };
@@ -347,26 +351,14 @@ struct World {
 void World::destroy()
 {
     char* p = (char*)(void*)this;
-    world_base_dtor(p);
-    dtor_6814(p + 0x6814);
-    dtor_6698(p + 0x6698);
-    dtor_6688(p + 0x6688);
-    if (*(void**)(p + 0x667c))
-        free_ptr(*(void**)(p + 0x667c));
-    *(void**)(p + 0x667c) = 0;
-    *(void**)(p + 0x6680) = 0;
-    *(void**)(p + 0x6684) = 0;
-    dtor_63d0(p + 0x63d0);
-    if (*(void**)(p + 0x63c4))
-        free_ptr(*(void**)(p + 0x63c4));
-    *(void**)(p + 0x63c4) = 0;
-    *(void**)(p + 0x63c8) = 0;
-    *(void**)(p + 0x63cc) = 0;
-    if (*(void**)(p + 0x5e00))
-        free_ptr(*(void**)(p + 0x5e00));
-    dtor_0030(p + 0x30);
-    *(void**)(p + 0x5e00) = 0;
-    *(void**)(p + 0x5e04) = 0;
-    *(void**)(p + 0x5e08) = 0;
-    dtor_0004(p + 0x4);
+    ((WorldBase*)p)->dtor();
+    ((Sub6814*)(p + 0x6814))->dtor();
+    ((Sub6698*)(p + 0x6698))->dtor();
+    ((Sub6688*)(p + 0x6688))->dtor();
+    ((Vec*)(p + 0x667c))->release();
+    ((Sub63d0*)(p + 0x63d0))->dtor();
+    ((Vec*)(p + 0x63c4))->release();
+    ((Vec*)(p + 0x5e00))->release();
+    ((Sub0030*)(p + 0x30))->dtor();
+    ((Sub0004*)(p + 0x4))->dtor();
 }

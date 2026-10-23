@@ -1,6 +1,7 @@
-004ed6f0 render_shape_frame render_shape_frame        (0x4ed6f0; grid shape rendering)
-00429890 render_scene      scene render              (cell_x0, 1)
+004ed6f0 ?render_shape_frame@Ctx@@QAEXHPAUvector4@rgl@@HH@Z  (0x4ed6f0; grid shape rendering)
+00429890 ?render@Scene@@QAEXPAHD@Z  scene render              (cell_x0, 1), stdcall with ecx = scene
+0043f0a0 ?assign@Vec1c@@QAEXPBU1@@Z  vector-like operator= (thiscall), Ctx+0x310 = scene+0xb8
+00488720 ?follow@Ctx@@QAEXHPAUvector4@rgl@@HH@Z  camera follow (a, v, b, c)
 00536b10 floor             libm floor                feeds grid_count
-00488720 follow            camera follow             (a, v, b, c)
 00549cdc g_549cdc         float constant            1.0f
 00549d70 g_549d70         float constant            0.5f

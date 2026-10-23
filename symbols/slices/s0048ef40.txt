@@ -1,5 +1,5 @@
 # slice s0048ef40 evidence symbols (names provisional)
-0048ad00 ?table_slot@TableSlotAPI@@QAEHH@Z  # index of a script-agent row (thiscall: ecx = table base)
+0048ad00 ?table_slot@SlotTable@@QAEHH@Z  # index of a script-agent row (thiscall: ecx = table base)
 0048ef40 ?free_objects@Mission@@QAEXXZ  # virtual-dtor each object, free vector at +0x17c, zero begin/end/cap
 0048efa0 ?shares@Agent@@QBEHABUItemRef@@0@Z  # compare two 0x88 rider rows (sentinel 0x5f5e0ff)
 0048f020 ?cam_follow@Mission@@QAEXH@Z  # place camera from parallax offset, update_view
@@ -12,4 +12,4 @@
 0048f5a0 ?set_frustum_mat4@Mission@@QAEXPAH@Z  # store 4 dwords at object+0x490
 0048f5f0 ?delete_agent@Mission@@QAEXIH@Z  # kinds 0/1/9/6 offset, kind 7 cam_follow
 0048f6b0 ?move_agent@Mission@@QAEXIPAM@Z  # kind 7 set_pos+cam_follow, else subtract half flags
-0048f790 ?count_item@ScriptAgentTable@@QAEHHHH@Z  # key, id, only_usable; sums matching rows (rows at pages[slot>>4][slot&0xf], 0x5ac8, page table +0x138d0)
+0048f790 ?count_item@ScriptAgentTable@@QAEHHH_N@Z  # key, id, only_usable; sums matching rows (rows at pages[slot>>4][slot&0xf], 0x5ac8, page table +0x138d0)

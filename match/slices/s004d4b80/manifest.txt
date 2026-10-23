@@ -1,11 +1,11 @@
-# slice s004d4b80 - no byte-exact functions this pass.
+# slice s004d4b80 - one byte-exact function (0x4d51d0).
 #
-# 0x4d5290 (handle_buttons) and 0x4d51d0 (world destroy) compile and are reconstructed call-for-call;
-# they are recorded in nonmatching.txt, and so is 0x4d4b80 (complete, equiv WEAK).
+# 0x4d5290 (handle_buttons) compiles and is reconstructed call-for-call; it is recorded in nonmatching.txt,
+# and so is 0x4d4b80 (complete, equiv WEAK).
 #   0x4d5290 255 -> 134 diffs with the right call shape (the handler passes &arg to 0x4d5410): the
 #             original threads its "return" blocks through shared jmp targets (0x4d52ca / default
 #             epilogue) and loads 0xa7398c per statement; the source's return-per-block + reload shape
 #             does not reproduce it.
-#   0x4d51d0 173 diffs: the original keeps the six vector frees as inline test/push/call/add esp
-#             sequences without a helper call boundary; the source's extern free-pushing shape
-#             leaves frame/scheduling differences.
+#   0x4d51d0 is now byte-exact (see the row below): its sub-object destructors are thiscall
+#             members (the earlier free-function declarations pushed the object instead of ecx).
+slices/s004d4b80/s004d4b80.cpp  ?destroy@World@@QAEXXZ  004d51d0  /O2 /MT /Gy /TP

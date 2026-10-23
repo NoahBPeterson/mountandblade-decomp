@@ -1,1 +1,8 @@
 0043e7b0 ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z  # std::vector<int>::_Insert_n, the out-of-line insert used by the inline push_back of the local `found` list in 0x4d4b80 (ICF-shared at this VA with the vector<const NewtonRagDollBone*> copy)
+00479160 ?dtor@WorldBase@@QAEXXZ  # world base destructor (thiscall, ecx = world)
+0042bc40 ?dtor@Sub6814@@QAEXXZ  # string dtor at +0x6814
+004cb780 ?dtor@Sub6698@@QAEXXZ  # sub-object dtor at +0x6698
+00431a60 ?dtor@Sub6688@@QAEXXZ  # sub-object dtor at +0x6688
+004be6f0 ?dtor@Sub63d0@@QAEXXZ  # sub-object dtor at +0x63d0
+004c6e30 ?dtor@Sub0030@@QAEXXZ  # sub-object dtor at +0x30
+004c6e30 ?dtor@Sub0004@@QAEXXZ  # same code (ICF), sub-object at +0x4

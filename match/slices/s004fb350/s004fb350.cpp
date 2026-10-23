@@ -52,17 +52,17 @@ struct mesh {
     mesh* clone();                                          // 0x41c6d0
     void set_offset(const vector4& pos);                    // 0x4fb8e0
     void recalc();                                          // 0x419300 (thiscall, ret 0)
+    void transform(const struct pos* frame);                // 0x495ba0 (thiscall, ret 4)
 };
 struct resmgr { mesh* get_object(const tstring& name);      // 0x419540
                 resource* get_material(const tstring& name); };  // 0x418a70
 extern resmgr g_resmgr;                                     // 0x5d6fa0
 
-int _ftol2();                                               // 0x535a64 (lib_crt 0640_ftol2.obj: x87 -> int)
-struct pos : matrix {};
+struct pos : matrix {
+    void rotate_sf(const float* angle);                     // 0x40e770 (thiscall: rotates the side/forward rows)
+};
 pos* identity_pos(pos* out);                                // 0x40cd00 (cdecl)
 void identity3(pos* out);                                   // 0x40cd60 (cdecl)
-void matrix_rotate_sf(matrix* m, const float* angle);       // 0x40e770
-void mesh_transform(mesh* m, const pos* frame);             // 0x495ba0
 
 // ---- the mission and its agents ------------------------------------------------------------------------
 struct AgentTable {
@@ -82,8 +82,12 @@ struct Agent {
     char pad0[0x250];
     void* node;                                             // +0x250
     char pad254[0x5720 - 0x254];
-    float health;                                           // +0x5720
-    float max_health;                                       // +0x5724
+    float max_health;                                       // +0x5720
+    float health;                                           // +0x5724
+    struct Pair { int a, b; };
+    Pair attr_pair(int slot);                               // 0x432790 (thiscall, hidden 8-byte result = Agent::slot_pair)
+    void attr_vec2(int idx, int* out1, int* out2);          // 0x436810 (thiscall, ret 0xc)
+    Pair attr_vec4(int idx, int* a, int* b, int* c);        // 0x436880 (thiscall, hidden 8-byte result)
 };
 struct Game {
     char pad0[0x1a20c];
@@ -93,19 +97,25 @@ extern Game* g_game;                                        // 0x5e2930
 
 // a scene node / ui element: show/hide (0xb0/0xb4), mesh set (0x80, ret 8), visibility (0x84),
 // colour (0x98, ret 4), text (0xa4, ret 8)
-struct UiVt {
-    char pad0[0x80];
-    void* (*set_mesh)(void* self, int a, mesh* m);          // 0x80 (ret 8)
-    int (*visible)(void* self);                             // 0x84
-    char pad88[0x98 - 0x88];
-    void (*set_color)(void* self, unsigned c);              // 0x98 (ret 4)
-    char pad9c[0xa4 - 0x9c];
-    void* (*set_text)(void* self, const tstring* text);     // 0xa4 (ret 8)
-    char pada8[0xb0 - 0xa8];
-    void (*hide)(void* self);                               // 0xb0
-    void (*show)(void* self);                               // 0xb4
+struct WRet { int a, b; };                                  // set_text's hidden 8-byte result (never read here)
+struct Ui {
+    virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
+    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
+    virtual void d10(); virtual void d11(); virtual void d12(); virtual void d13(); virtual void d14();
+    virtual void d15(); virtual void d16(); virtual void d17(); virtual void d18(); virtual void d19();
+    virtual void d20(); virtual void d21(); virtual void d22(); virtual void d23(); virtual void d24();
+    virtual void d25(); virtual void d26(); virtual void d27(); virtual void d28(); virtual void d29();
+    virtual void d30(); virtual void d31();
+    virtual void set_mesh(int a, mesh* m);                  // +0x80 (ret 8)
+    virtual int visible();                                  // +0x84
+    virtual void d34(); virtual void d35(); virtual void d36(); virtual void d37();
+    virtual void set_color(const unsigned* c);              // +0x98 (ret 4)
+    virtual void d39(); virtual void d40();
+    virtual void set_text(WRet* out, const tstring* text);  // +0xa4 (ret 8, hidden result)
+    virtual void d42(); virtual void d43();
+    virtual void hide();                                    // +0xb0
+    virtual void show();                                    // +0xb4
 };
-struct Ui { UiVt* vt; };
 
 // the 0xa76630 object (layout provisional; only the members touched here)
 struct StatusWidget {
@@ -130,12 +140,8 @@ struct StatusWidget {
 
 // ammo mesh from an item def (cdecl, ret 0x8); def[0] is the item kind, def[1] the modifier
 mesh* ammo_mesh(int* def, const vector4* pos);              // 0x4fba40
-void FUN_004f3e10(const vector4* pos);                      // 0x4f3e10 (thiscall on 0xa76630)
 
 // item attribute block of an agent (pairs and 0x24-byte records)
-void attr_pair(Agent* a, int slot, int* out);               // 0x432790 (thiscall, ret 0xc)
-void attr_vec2(Agent* a, int idx, int* out1, int* out2);    // 0x436810 (thiscall, ret 0xc)
-int* attr_vec4(Agent* a, int idx, int* a2, int* a3, int* a4);  // 0x436880 (thiscall, ret 0x10)
 
 // @ 0x4fb350
 void StatusWidget::update()
@@ -145,147 +151,136 @@ void StatusWidget::update()
         return;
     Agent* ag = (Agent*)((char*)g_mission->tbl.pages[id >> 4] + (id & 0xf) * 0x5928);
     if (g_game->status_mode)
-        e_c4->vt->show(e_c4);
+        e_c4->hide();
     else
-        e_c4->vt->hide(e_c4);
-    int hp = (int)(ag->health * 1.0f);
+        e_c4->show();
+    pos frame;
+    int hp = (int)ag->health;
     if (hp != f_e0) {
         f_e0 = hp;
         m_dc->clear_geometry();
-        tstring name("status_health_bar");
-        pos mat;
-        pos* m = identity_pos(&mat);
-        mesh* obj = g_resmgr.get_object(name);
-        m_dc->append_skinned(obj, m, -1, -1, 0);
+        {
+            tstring name("status_health_bar");
+            pos* m = identity_pos(&frame);
+            mesh* obj = g_resmgr.get_object(name);
+            m_dc->append_skinned(obj, m, -1, -1, 0);
+        }
         vector4 col((float)f_e0 / ag->max_health, 1.0f, 1.0f);
         m_dc->set_color(col);
     }
 
-    // shield counts: pair (cur, max); a negative max hides the shield
-    int pair[2];
-    pair[0] = -1;
-    pair[1] = -1;
-    attr_pair(ag, 0, pair);
-    int cur = -1, flags = -1;
-    if (pair[0] >= 0) {
-        int a2, a3, a4;
-        int* p = attr_vec4(ag, -1, pair, &pair[1], &a3);
-        cur = p[0];
-        flags = p[1];
-    }
-    if (pair[0] != f_e4 || cur != f_e8) {
-        f_e4 = pair[0];
+    // shield: attr_pair(0) says whether the agent has one; attr_vec4 then gives (max, ?, ?) and the (cur, flags) pair
+    Agent::Pair pair;
+    int la = -1, lb = -1, lc;
+    Agent::Pair res;
+    res.a = -1;
+    pair = ag->attr_pair(0);
+    if (pair.a >= 0)
+        res = ag->attr_vec4(-1, &la, &lb, &lc);
+    if (la != f_e4 || res.a != f_e8) {
+        f_e4 = la;
         char buf[512];
-        sprintf(buf, "%d", pair[0]);
-        tstring t1(buf);
-        e_bc->vt->set_text(e_bc, &t1);
-        t1.~tstring();
-        tstring t2(buf);
-        e_c0->vt->set_text(e_c0, &t2);
-        t2.~tstring();
-        if (f_e4 < 0) {
-            e_cc->vt->hide(e_cc);
-            e_bc->vt->hide(e_bc);
-            e_c0->vt->hide(e_c0);
-        } else {
-            e_cc->vt->show(e_cc);
-            e_bc->vt->show(e_bc);
-            e_c0->vt->show(e_c0);
-            unsigned color = 0xffffffff;
-            if (f_e4 < 1)
-                color = 0xffb02020;
-            e_bc->vt->set_color(e_bc, color);
+        WRet wr;
+        sprintf(buf, "%d", la);
+        {
+            tstring t1(buf);
+            e_bc->set_text(&wr, &t1);
         }
-        if (cur != f_e8) {
+        {
+            tstring t2(buf);
+            e_c0->set_text(&wr, &t2);
+        }
+        if (f_e4 < 0) {
+            e_cc->hide();
+            e_bc->hide();
+            e_c0->hide();
+        } else {
+            e_cc->show();
+            e_bc->show();
+            e_c0->show();
+            unsigned color = 0xffffffff;
+            if (f_e4 <= 0)
+                color = 0xffb02020;
+            e_bc->set_color(&color);
+        }
+        if (res.a != f_e8) {
             m_d4->clear_geometry();
             m_d8->clear_geometry();
-            if (cur >= 0) {
-                int def[2];
-                pos at;
-                def[0] = cur;
-                def[1] = 0;
-                at.s.x = 0.0550000005f;
-                mesh* piece = ammo_mesh(def, (const vector4*)&at);
+            if (res.a >= 0) {
+                vector4 at;
+                at.x = 0.0550000005f;
+                mesh* piece = ammo_mesh((int*)&res, &at);
                 if (piece) {
-                    pos frame;
-                    at.s.x = 0.001f;
-                    piece->set_offset(at.s);
+                    float v;
+                    v = 0.0005f;
+                    piece->set_offset(*(const vector4*)&v);
                     identity3(&frame);
-                    at.s.x = -1.45f;
-                    matrix_rotate_sf(&frame, &at.s.x);
-                    mesh_transform(piece, &frame);
+                    float ang = -1.45f;
+                    frame.rotate_sf(&ang);
+                    piece->transform(&frame);
                     identity_pos(&frame);
-                    frame.o.x -= 10.0f;
+                    frame.o.z -= 10.0f;
                     m_d4->append_skinned(piece, &frame, -1, -1, 0);
                     m_d4->res = piece->res;
-                    frame.o.y += 0.0012f;
-                    frame.o.z -= 0.001f;
-                    frame.o.x -= 10.0f;
+                    frame.o.x += 0.0012f;
+                    frame.o.y -= 0.001f;
+                    frame.o.z -= 10.0f;
                     piece->scale(1.05f);
                     m_d8->append_skinned(piece, &frame, -1, -1, 0);
-                    tstring shadow("ui_item_shadow");
-                    m_d8->res = g_resmgr.get_material(shadow);
-                    shadow.~tstring();
+                    {
+                        tstring shadow("ui_item_shadow");
+                        m_d8->res = g_resmgr.get_material(shadow);
+                    }
                     m_d8->set_bone_index(-1);
                     m_d8->color = 0xff777777;
                     delete piece;
                 }
             }
-            f_e8 = cur;
-            f_ec = flags;
+            f_e8 = res.a;
+            f_ec = res.b;
         }
     }
 
-    // ammo count
-    int ammo_pair[2];
-    ammo_pair[0] = -1;
-    ammo_pair[1] = -1;
-    int count = -1;
-    attr_pair(ag, 1, ammo_pair);
-    if (ammo_pair[0] >= 0) {
-        int lo, hi;
-        attr_vec2(ag, -1, &lo, &hi);
-        count = lo;
-    }
-    bool shown = false;
-    if (count != f_f0) {
-        f_f0 = count;
-        if (count == -1) {
+    // ammo count: (count, capacity) from attr_vec2
+    Agent::Pair ammo_pair;
+    int lo = -1, hi = -1;
+    ammo_pair = ag->attr_pair(1);
+    if (ammo_pair.a >= 0)
+        ag->attr_vec2(-1, &lo, &hi);
+    if (lo != f_f0) {
+        f_f0 = lo;
+        if (lo == -1) {
             f_f4 = -1;
-            e_c8->vt->hide(e_c8);
-        } else {
-            int stage = (int)((float)count * 4.0f / (float)ammo_pair[1] + 0.5f);
-            if (stage != f_f4) {
-                f_f4 = stage;
-                if (stage <= 0) {
-                    e_c8->vt->hide(e_c8);
-                } else {
-                    const char* nm;
-                    if (stage == 1)
-                        nm = "status_shield_20";
-                    else if (stage == 2)
-                        nm = "status_shield_40";
-                    else if (stage == 3)
-                        nm = "status_shield_60";
-                    else if (stage == 4)
-                        nm = "status_shield_80";
-                    else
-                        nm = "status_shield_100";
-                    tstring icon(nm);
-                    mesh* obj = g_resmgr.get_object(icon);
-                    mesh* cl = obj->clone();
-                    icon.~tstring();
-                    e_c8->vt->set_mesh(e_c8, 0, cl);
-                    e_c8->vt->show(e_c8);
-                }
-            }
+            e_c8->hide();
+            return;
         }
-        shown = true;
-    }
-    if (shown && f_f0 < 0) {
-        pos at;
-        at.s.x = 0.0550000005f;
-        FUN_004f3e10((const vector4*)&at);
+        int stage = (int)((float)lo * 5.0f / (float)hi + 0.999f);
+        if (stage != f_f4) {
+            f_f4 = stage;
+            if (stage <= 0) {
+                e_c8->hide();
+                return;
+            }
+            const char* nm;
+            if (stage == 1)
+                nm = "status_shield_20";
+            else if (stage == 2)
+                nm = "status_shield_40";
+            else if (stage == 3)
+                nm = "status_shield_60";
+            else if (stage == 4)
+                nm = "status_shield_80";
+            else
+                nm = "status_shield_100";
+            mesh* cl;
+            {
+                tstring icon(nm);
+                mesh* obj = g_resmgr.get_object(icon);
+                cl = obj->clone();
+            }
+            e_c8->set_mesh(0, cl);
+            e_c8->show();
+        }
     }
 }
 

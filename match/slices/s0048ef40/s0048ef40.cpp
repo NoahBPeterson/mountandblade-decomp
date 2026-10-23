@@ -114,19 +114,31 @@ struct AgentTable {
 };
 
 // a row of the script-side agent (0x5ac8 bytes) used by count_item
+struct InvRow {
+    int amount;                                         // +0
+    int key;                                            // +4 (item id)
+    unsigned char usable;                               // +8 (bit 0 = usable flag)
+    char pad9[3];
+    int pad[5];
+};
 struct ScriptAgent {
     char pad0[0xa8];
-    int amount;                                         // +0xa8
-    int key;                                            // +0xac (item id)
-    int flags_b0;                                       // +0xb0 (bit 0)
-    char padb4[0x8a8 - 0xb4];
-    int inv_count;                                      // +0x8a8 (0x20-byte rows follow)
+    InvRow inv[64];                                     // +0xa8
+    int inv_count;                                      // +0x8a8
+    char pad8ac[0x5ac8 - 0x8ac];
+};
+struct SlotTable {
+    char pad0[0x138d0];
+    ScriptAgent** pages;                                // +0x138d0
+    int table_slot(int id);                             // 0x48ad00
+    ScriptAgent*& page(int i) { return pages[i]; }
+    ScriptAgent& row(int id) { int s = table_slot(id); return *(ScriptAgent*)((char*)page(s >> 4) + (s & 0xf) * 0x5ac8); }
 };
 struct ScriptAgentTable {
     char pad0[0x139c8];
     ScriptAgent** pages;                                // +0x139c8
 
-    int count_item(int key, int id, int only_usable);   // 0x48f790
+    int count_item(int key, int id, bool only_usable);   // 0x48f790
 };
 
 struct TableSlotAPI { int table_slot(int id); };        // 0x48ad00 (thiscall: ecx = the table base)
@@ -185,16 +197,18 @@ struct Mission {
     void set_frustum_mat4(int* m);                      // 0x48f5a0
     void delete_agent(unsigned index, int color);       // 0x48f5f0
     void move_agent(unsigned index, float* pos);        // 0x48f6b0
-    int  count_item(int key, int id, int only_usable);   // 0x48f790
+    int  count_item(int key, int id, bool only_usable);   // 0x48f790
 };
+
+struct VObj { virtual ~VObj(); };                        // slot 0: scalar deleting dtor (this, flags=1)
 
 // @ 0x48ef40
 void Mission::free_objects()
 {
     void** p = objv_begin;
     while (p != objv_end) {
-        void* o = *p;
-        if (o) (*(void (__stdcall**)(void*, int))o)(o, 1);
+        VObj* o = (VObj*)*p;
+        if (o) delete o;
         p++;
     }
     if (objv_begin) op_delete(objv_begin);
@@ -337,46 +351,22 @@ void Mission::move_agent(unsigned index, float* pos)
 }
 
 // @ 0x48f790
-// `this` is the script agent table owner: rows at +0x138d0 are 0x5ac8 bytes and the row of the current
-// agent lives at rows[table_slot(id) >> 4][table_slot(id) & 0xf].
-int ScriptAgentTable::count_item(int key, int id, int only_usable)
+// `this` is the script agent table owner: the slot table lives at +0xf8 (table_slot, thiscall) with the
+// page table at +0x138d0 of it; rows are 0x5ac8 bytes at pages[slot >> 4][slot & 0xf]. The original
+// re-evaluates the row lookup for every read (no CSE across the thiscall).
+int ScriptAgentTable::count_item(int key, int id, bool only_usable)
 {
-    TableSlotAPI* tbl = (TableSlotAPI*)((char*)this + 0xf8);
+    SlotTable* t = (SlotTable*)((char*)this + 0xf8);
     int total = 0;
-    int idx = tbl->table_slot(id);
-    ScriptAgent* a = (ScriptAgent*)((char*)pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
-    if (a->inv_count <= 0) return total;
     int i = 0;
-    for (;;) {
-        // body: re-read the row, then compare its key
-        {
-            int s = tbl->table_slot(id);
-            ScriptAgent* r = (ScriptAgent*)((char*)pages[s >> 4] + (s & 0xf) * 0x5ac8);
-            if (*(int*)((char*)r + i * 0x20 + 0xac) == key) {
-                if (only_usable) {
-                    int s2 = tbl->table_slot(id);
-                    ScriptAgent* r2 = (ScriptAgent*)((char*)pages[s2 >> 4] + (s2 & 0xf) * 0x5ac8);
-                    if (*(int*)((char*)r2 + i * 0x20 + 0xb0) & 1) {
-                        int s3 = tbl->table_slot(id);
-                        ScriptAgent* r3 = (ScriptAgent*)((char*)pages[s3 >> 4] + (s3 & 0xf) * 0x5ac8);
-                        total += *(int*)((char*)r3 + i * 0x20 + 0xa8);
-                    }
-                } else {
-                    int s2 = tbl->table_slot(id);
-                    ScriptAgent* r2 = (ScriptAgent*)((char*)pages[s2 >> 4] + (s2 & 0xf) * 0x5ac8);
-                    if (!(*(int*)((char*)r2 + i * 0x20 + 0xb0) & 1)) {
-                        int s3 = tbl->table_slot(id);
-                        ScriptAgent* r3 = (ScriptAgent*)((char*)pages[s3 >> 4] + (s3 & 0xf) * 0x5ac8);
-                        total += *(int*)((char*)r3 + i * 0x20 + 0xa8);
-                    }
-                }
+    if (t->row(id).inv_count > 0) {
+        do {
+            if (t->row(id).inv[i].key == key) {
+                if (only_usable ? (t->row(id).inv[i].usable & 1) : !(t->row(id).inv[i].usable & 1))
+                    total += t->row(id).inv[i].amount;
             }
-        }
-        // back-edge: increment, re-read the row, test its count
-        i++;
-        int s4 = tbl->table_slot(id);
-        ScriptAgent* r4 = (ScriptAgent*)((char*)pages[s4 >> 4] + (s4 & 0xf) * 0x5ac8);
-        if (i >= r4->inv_count) break;
+            i++;
+        } while (i < t->row(id).inv_count);
     }
     return total;
 }
@@ -387,7 +377,7 @@ void Mission::init_view()
     const int zero = 0;
     const float f1 = 1.0f, f01 = 0.1f, f150 = -15000.0f, f60000 = -1000000.0f, f015 = 0.15f;
     const float f05 = 0.5f, f10 = 10.0f, f1000 = -1000.0f;
-    x30_0 = zero; x30_1 = zero; x30_2 = zero; x30_3 = 0; // +0x30..+0x3c (arg at [esp+4])
+    int u_w; x30_0 = zero; x30_1 = zero; x30_2 = zero; x30_3 = u_w; // +0x30..+0x3c (arg at [esp+4])
     *(int*)((char*)this + 0x960) = zero;
     *(int*)((char*)this + 0x964) = zero;
     *(int*)((char*)this + 0x95c) = zero;

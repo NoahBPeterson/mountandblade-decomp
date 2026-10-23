@@ -7,3 +7,5 @@
 #   written; the per-face body (0x4d1940-0x4d1bc2: Block::normal accumulation, edge/slot tests, the
 #   0x40-byte position record and its push_edge) is not reconstructed.
 # Neither is close enough to be a "complete, not exact" row.
+004d1410  1094  scene_builder::build_first_pass: INCOMPLETE (ours 830 vs original 1136 bytes). Was listed byte-exact/nonmatching without ever matching (equiv FAIL 98/98 'execution'). The original also builds the direction vector by re-reading the three nodes into a stack a/b triple and spills intermediates (0x4d1722-0x4d178f) where this code keeps the cross product in registers; the two region branches share one block in the original. Not a complete reconstruction, so it is partial.
+004d1880  1263  scene_builder::build_second_pass: INCOMPLETE (ours 48 vs original 1269 bytes). Only the prologue (init_scene(1), f7c = -1) and the face-reset loop are written; the per-face body (0x4d1940-0x4d1bc2: Block::normal accumulation, edge/slot tests, the 0x40-byte position record and its push_edge) is not reconstructed (equiv FAIL 200/200 'execution' because of that).
