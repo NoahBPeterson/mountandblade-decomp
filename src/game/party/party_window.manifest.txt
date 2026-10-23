@@ -1,0 +1,9 @@
+../src/game/party/party_window.cpp  ?mouse_event@PartyWindow@@QAEDI@Z  005021b0  /O2 /MT /Gy /TP
+../src/game/party/party_window.cpp  ?destroy@UiFrame@@QAEPAXI@Z  005021f0  /O2 /MT /Gy /TP
+../src/game/party/party_window.cpp  ?make_slot@PartyWindow@@QAEPAUMissionUi@@PAUItemRef@@@Z  00502230  /O2 /MT /Gy /TP
+../src/game/party/party_window.cpp  ?refresh_event@PartyWindow@@QAEDI@Z  005022c0  /O2 /MT /Gy /TP
+../src/game/party/party_window.cpp  ?destroy@WidgetDtor@@QAEPAXE@Z  00502300  /O2 /MT /Gy /TP
+../src/game/party/party_window.cpp  ?add_strip_icon@PartyWindow@@QAEXPADABUtstring@@HH@Z  005024e0  /O2 /MT /Gy /TP
+../src/game/party/party_window.cpp  ?init_window@PartyWindow@@QAEXXZ  005025a0  /O2 /MT /Gy /TP
+../src/game/party/party_window.cpp  ?place_slot@PartyWindow@@QAEXPAUMissionUi@@PAUItemRef@@HPAHHD@Z  005029f0  /O2 /MT /Gy /TP
+../src/game/party/party_window.cpp  ?make_mesh@PartyWindow@@QAEPAUMeshOps@@PAUItemRef@@PAMH@Z  00502b80  /O2 /MT /Gy /TP

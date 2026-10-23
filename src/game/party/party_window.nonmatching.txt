@@ -1,0 +1,4 @@
+00501a20	1515	PartyWindow::make_inventory_menu: complete (includes the inv_im_equipment_menu label_refresh; pos[7] left unassigned as in the original). Large scheduling/register difference over a 1900-byte straight-line widget builder (1917 vs 1932 bytes). [equiv: UNSUPPORTED, g_strtab unresolved in the harness]
+00502320	63	PartyWindow::build_page: complete. 63 bytes of scheduling around the per-row widget setup. [equiv: UNSUPPORTED, 0/400 valid (_purecall, fault(read))]
+00502620	514	PartyWindow::refresh_armor: complete. Register allocation/scheduling (748 vs 763 bytes). [equiv: UNSUPPORTED, g_strtab unresolved in the harness]
+00502920	111	PartyWindow::refresh_page: complete. Loop layout (204 vs 193 bytes). [equiv: WEAK, no mismatch, 168 valid, 100% insns]
