@@ -1,0 +1,6 @@
+# s004d1410 -- mesh editor: split-quad (0x4d1410) and extrude-boundary-edge (0x4d1880) operations
+004d1410 ?build_first_pass@Mesh@@QAE_NXZ  # with exactly two selected vertices, split faces that contain both along the diagonal
+004d1880 ?build_second_pass@Mesh@@QAEXXZ  # extrude every selected boundary edge into a new quad
+00477c10 ?push_back@?$vector@UVtx@@V?$allocator@UVtx@@@std@@@std@@QAEXABUVtx@@@Z  # std::vector<Vtx>::push_back (24-byte elements, VC7.1 layout)
+00477d20 ?push_back@?$vector@UFace@@V?$allocator@UFace@@@std@@@std@@QAEXABUFace@@@Z  # std::vector<Face>::push_back (100-byte elements)
+00477e10 ?push_back@?$vector@UEdge@@V?$allocator@UEdge@@@std@@@std@@QAEXABUEdge@@@Z  # std::vector<Edge>::push_back (52-byte elements)
