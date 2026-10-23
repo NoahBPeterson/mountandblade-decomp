@@ -1,7 +1,7 @@
 // Slice s00504ba0: the party-bar member fill (0x504ba0), the money value label (0x504d50) and the
 // weekly-cost total (0x504e20).
 // Names and layouts are provisional; every offset comes from the disassembly of this slice.
-//   0x504ba0  party_menu::fill_member(int page, int type, int count, Party* party)   (ret 0x10)
+//   0x504ba0  party_menu::fill_member(int page, int type, int unused, int count)       (ret 0x10)
 //   0x504d50  Mission::money_label(int type, int troop)                              (ret 8)
 //   0x504e20  GameData::weekly_cost()                                                (ret)
 #include <windows.h>
@@ -90,17 +90,11 @@ struct widget {
     virtual void vc0(); virtual void vc4(); virtual void vc8(void* p);
     virtual void vcc(); virtual void vd0(); virtual void vd4(); virtual void vd8();
     virtual void vdc(); virtual void ve0(); virtual void ve4();
+    void quarter_update();                              // 0x488d50 (thiscall, no stack args)
+    char   pad4[0xe8 - 4];
     int    f_e8;                                        // +0xe8 (first float the bar reports)
     int    f_ec;                                        // +0xec
     int    f_f0;                                        // +0xf0 (second float: the bar's height)
-};
-
-// ---------------------------------------------------------------------------------------------------------
-// A row of the party-list grid (0xc bytes).
-struct ui_row {
-    widget* bar;                                        // +0
-    char    p4[4];                                      // +4
-    widget* body;                                       // +8
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -108,12 +102,13 @@ struct ui_row {
 // to that. +0xb8 is a 2x0x40 grid of rows (page * 0x100 + row * 0xc); +0x4b8 = the four per-type bar
 // totals, +0x4c0 = their offsets, +0x4c8 = the next type's totals.
 struct party_menu {
-    char   pad0[0xb8];
-    ui_row rows[2][0x40];                               // +0xb8
-    float  amount[2][4];                                // +0x4b8  (this half)
-    float  start[2][4];                                 // +0x4c0
-    float  amount_lo[2][4];                             // +0x4c8  (other half)
-    void fill_member(int type, int count, int unk, Party* party);   // 0x504ba0
+    char    pad0[0x98];
+    widget* head[4];                                    // +0x98  indexed by page * 2 + type
+    widget* tail[4];                                    // +0xa8  indexed by page * 2 + type
+    widget* rows[4][0x40];                              // +0xb8  the bar rows, one 0x40-entry group per page * 2 + type
+    float   amount[2];                                  // +0x4b8 per-type bar total (indexed by type only)
+    float   start[2];                                   // +0x4c0 per-type bar offset
+    void fill_member(int page, int type, int unused, int count);   // 0x504ba0
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -149,7 +144,6 @@ struct GameData {
 struct Mission {
     char    pad0[0x5c];
     widget* footer;                                     // +0x5c
-    void fill_bar(int type, int kind, Party* party, int count);   // 0x504ba0 (forwarder)
     void money_label(int type, int troop);              // 0x504d50
 };
 
@@ -158,59 +152,51 @@ extern int g_result;                                    // 0xa70458
 extern int g_result2;                                   // 0xa7045c
 extern float g_grow_frac;                               // 0x54a6e4 (0.2f)
 
-void quarter_update(widget* w);                         // 0x488d50
-
-// 0x504ba0 is a Mission forwarding thunk (mov ecx,[ecx+0x5c]; push edx; push eax; jmp 0x5966c0): it calls
-// the party menu sub-object at Mission+0x5c, which is why the menu's own methods use the Mission's ecx.
-extern "C" void menu_fill_thunk();                      // 0x5966c0 (the forwarder's tail target)
-
-void Mission::fill_bar(int type, int kind, Party* party, int count)   // 0x504ba0 forwarder
-{
-    (void)type; (void)kind; (void)party; (void)count;
-    menu_fill_thunk();
-}
 
 // @ 0x504ba0
-void party_menu::fill_member(int type, int count, int unk, Party* party)
+void party_menu::fill_member(int page, int type, int unused, int count)
 {
-    float unit = g_ini.get_float(tstring("party_b_member_h"));
+    (void)unused;
+    float unit;
+    {
+        tstring key("party_b_member_h");
+        unit = 0.0f;
+        int n = g_ini.find(key);
+        if (n >= 0)
+            unit = (float)atof(g_ini.entries[n].value.c_str());
+    }
     float total = (float)count * unit;
-    float limit = ((float*)amount)[type];
-    if (total < limit) {
+    if (total < amount[type]) {
         total += unit * g_grow_frac;
-        if (!(total < limit))
-            total = limit;
+        if (!(total < amount[type]))
+            total = amount[type];
     }
 
-    ui_row* row = &rows[type][0];
+    float p[2];                     // the one float pair every set_pos / set_size call below reuses
+    widget** row = rows[type + page * 2];
     for (int i = 0; i < count; i++, row++) {
-        widget* bar = row->bar;
-        float y = total - (float)(i + 1) * unit;
-        float p[2];
-        p[0] = (float)bar->f_e8;
-        p[1] = y;
+        widget* bar = *row;
+        *(int*)&p[0] = bar->f_e8;
+        p[1] = total - (float)(i + 1) * unit;
         bar->v58(p);
     }
 
-    widget* a = rows[type][0x2a - 0x40].body;
-    float pa[2];
-    pa[0] = (float)a->f_f0;
-    pa[1] = total;
-    a->v64(pa);
+    widget* a = tail[type + page * 2];
+    *(int*)&p[0] = a->f_f0;
+    p[1] = total;
+    a->v64(p);
 
-    float x = (limit < total) ? limit : total;
-    widget* b = rows[type][0x26 - 0x40].body;
-    float pb[2];
-    pb[0] = (float)b->f_f0;
-    pb[1] = x;
-    b->v64(pb);
+    float x = (amount[type] < total) ? amount[type] : total;
+    widget** pb = &head[type + page * 2];
+    *(int*)&p[0] = (*pb)->f_f0;
+    p[1] = x;
+    (*pb)->v64(p);
 
-    float pc[2];
-    pc[0] = (float)b->f_e8;
-    pc[1] = ((float*)start)[type] + limit - x;
-    b->v58(pc);
+    *(int*)&p[0] = (*pb)->f_e8;
+    p[1] = start[type] + amount[type] - x;
+    (*pb)->v58(p);
 
-    quarter_update(b);
+    (*pb)->quarter_update();
 }
 
 // @ 0x504d50

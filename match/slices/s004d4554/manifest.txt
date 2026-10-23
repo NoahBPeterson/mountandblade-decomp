@@ -1,14 +1,6 @@
-# slice s004d4554 - no byte-exact functions this pass.
-#
-# All seven functions are complete, behaviourally-equivalent VC7.1 STL helpers over three element types
-# (strides 0x50, 0x68, 0xb0) and are recorded in nonmatching.txt. 0x4d1160 / 0x4d1180 are the two
-# remaining helpers of the same family (Elem68 / ElemB0 "construct" stubs called with the range in
-# (first, last) and the destination only tested for null); they follow the dump shape, not the
-# count-bounded loop of 0x4d49c0.
-#   0x4d4554 1105  the original body is merged with the enclosing dialog procedure 0x4d3f60-0x4d49b7
-#   0x4d49c0   97  count-bounded construct loop (ctor 0x4cd080)
-#   0x4d4a28   32  destroy range (dtor 0x4cd6a0 + rethrow); unwind frame not reproducible
-#   0x4d4a50  100  fill (copy one element from *val)
-#   0x4d4ab8   32  destroy range (dtor 0x4c8ba0)
-#   0x4d4ae0  102  copy from range (ctor 0x4cd170)
-#   0x4d4b4b   33  destroy range (dtor 0x4c8ab0)
+# slice s004d4554: std::_Uninit_fill_n for three vector element types. Compiled with /EHa (the original's
+# catch funclets 0x4d4a28 / 0x4d4ab8 / 0x4d4b4b are the catch(...) bodies of 0x4d49c0 / 0x4d4a50 / 0x4d4ae0).
+# 0x4d1160 / 0x4d1180 (allocator construct) are byte-exact in slice s004d0c20.
+slices/s004d4554/s004d4554.cpp  ?uninit_fill_n_50@@YAXPAUElem50@@IABU1@AAUAlloc50@@@Z  004d49c0  /O2 /MT /Gy /TP /EHa
+slices/s004d4554/s004d4554.cpp  ?uninit_fill_n_68@@YAXPAUElem68@@IABU1@AAUAlloc68@@@Z  004d4a50  /O2 /MT /Gy /TP /EHa
+slices/s004d4554/s004d4554.cpp  ?uninit_fill_n_b0@@YAXPAUElemB0@@IABU1@AAUAllocB0@@@Z  004d4ae0  /O2 /MT /Gy /TP /EHa

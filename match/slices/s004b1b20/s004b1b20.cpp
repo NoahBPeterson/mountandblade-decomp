@@ -151,16 +151,19 @@ void __stdcall copy_item(void* dst, void* src)
 }
 
 // A container whose first member is the item-array base pointer (iterator helper).
+struct ItemIter {                           // vector iterator: non-POD, so returned through a hidden pointer
+    ItemRec* p;
+    ItemIter(ItemRec* q) : p(q) {}
+};
 struct ItemArray {
     ItemRec* base;
-    void at(ItemRec** out, int idx);        // 0x4b22b0
+    ItemIter at(int idx);                   // 0x4b22b0
 };
 
 // @ 0x4b22b0
-void ItemArray::at(ItemRec** out, int idx)
+ItemIter ItemArray::at(int idx)
 {
-    ItemRec* p = base + idx;
-    *out = p;
+    return ItemIter(base + idx);
 }
 
 __declspec(noreturn) void __stdcall throw_exception(void*, void*);  // 0x5368e6
@@ -193,36 +196,36 @@ int Party::slot_value(int idx, unsigned flags) const
     const InvSlot* slot = &inv[idx];
     if (flags & 0x20) {
         if (slot->item == g->player) {
-            return 0;
+            goto zero;
         }
     }
     if (flags & 1) {
         if (idx == 0) {
-            if (!(g->chars[slot->item].flags & 0x10)) {
-                return 0;
+            if ((g->chars[slot->item].flags & 0x10) != 0) {
+                goto zero;
             }
         }
     }
     if (flags & 2) {
-        if (!(g->chars[slot->item].flags & 0x10)) {
-            return 0;
+        if ((g->chars[slot->item].flags & 0x10) != 0) {
+            goto zero;
         }
     }
     if (flags & 4) {
         if ((g->chars[slot->item].flags & 0x10) != 0) {
             if (g->cond_ok(slot->item)) {
-                return 0;
+                goto zero;
             }
         }
     }
     if (flags & 8) {
         if ((g->chars[slot->item].flags & 0x10) == 0) {
-            return 0;
+            goto zero;
         }
     }
     if (flags & 0x10) {
         if (slot->flags8 & 1) {
-            return 0;
+            goto zero;
         }
     }
     int amount = slot->count;
@@ -232,9 +235,11 @@ int Party::slot_value(int idx, unsigned flags) const
         }
     }
     if (amount < 0) {
-        return 0;
+        goto zero;
     }
     return amount;
+zero:
+    return 0;
 }
 
 // @ 0x4b1cf0

@@ -193,7 +193,6 @@ extern int g_env_flag;              // 0x5e28fc
 
 extern const float g_row_step;      // 0x597944 = 0.00528f
 
-float f_round(float v);                     // 0x535a64
 char* f_itoa(int v, char* buf, int base);   // 0x5371f7
 
 struct Win {
@@ -271,7 +270,7 @@ void Win::init()
     done = make_button(window, tex("ui_done"), 0.24f, 0.7f, 0.76f, 0.3f);
     {   // version number, shown in place of the refresh rate
         char buf[0x100];
-        f_itoa(f_round(g_scale_x * 100.0f), buf, 10);
+        f_itoa((int)(g_scale_x * 100.0f), buf, 10);   // cl: fld; call __ftol2 (0x535a64)
         tstring version(buf);
         tstring dot(".");
         version.insert(1, dot);

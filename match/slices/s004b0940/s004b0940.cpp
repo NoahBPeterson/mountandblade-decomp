@@ -99,6 +99,7 @@ struct ScriptHolder {
     bool run_stmt(int* buf, int* buf2);                             // 0x49d7f0 (thiscall, ret 8)
     void format(tstring* out, int* buf, int line, int ok, int* lo, int* hi);   // 0x49d930
     void pop_party(int* a, int* t, int* out);                       // 0x49f7c0 (thiscall, ret 0xc)
+    void reset_script_out();                                        // 0x49dd30 (thiscall): builds the statement list / clears the output
 };
 
 // the 0x34-byte emitter records at 0xa75eb0; the script sub-object is at +0x18 and the name at +4
@@ -112,10 +113,19 @@ struct Emitter {
 extern Emitter* g_emitters;                     // 0xa75eb0
 extern int g_emitter_count;                     // 0xa75eb4
 
+// The goto/branch stack object (local_410 of emit): 0x400 bytes of entries, then the depth counter at +0x400
+// (read by 0x488e60 / 0x49d7f0 / 0x49f7c0; the emitter only tests it against 0) and one more dword. Both
+// trailing dwords are cleared in emit's prologue.
+struct ScriptStack {
+    int data[256];
+    int sp;
+    int pad;
+    void goto_stmt(int line, int val);          // 0x488e60 (thiscall, ret 8)
+};
+
 // ---- per-statement interpreter callees (not decompiled; declared for shape) -----------------------------
-void reset_script_out();                        // 0x49dd30  builds the statement list / clears the output
-void input_frame(int a);                        // 0x487930 (this = 0xa170c8, ret 4)
-void goto_stmt(int* buf2, int line, int val);   // 0x488e60 (this = buf2, ret 8)
+struct KeyState { void frame(int a); };         // 0x487930 (thiscall, ret 4)
+extern KeyState g_keyboard;                     // 0xa170c8
 char __fastcall check_script_param(int* value, int* limit);   // 0x49ccc0
 void pump_messages();                           // 0x4bb310
 void set_debug_label();                         // 0x4bb390
@@ -152,8 +162,6 @@ char ScriptHolder::run_line(int a, int* p, int which)
 // line, or the frame was opened earlier) the input frames are polled for the abort/return/continue keys.
 char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsigned tag)
 {
-    int guard = 0;                              // local_10: always 0, only tested
-    int spare = 0;                              // local_c: never read
     char last_ok = 1;                           // local_b05
     char done = 0;                              // local_b07
     char in_key = 0;                            // local_b06
@@ -173,9 +181,9 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
     long long value;                            // local_ad0 / local_acc
     ScriptHolder* self = this;                  // local_af8
     int buf[256];                               // local_a10
-    int buf2[256];                              // local_410
+    ScriptStack buf2;                           // local_410
     char msg[512];                              // local_610
-    __int64 sub[16];                            // auStack_a98 + 2
+    __declspec(align(8)) __int64 sub[16];                            // auStack_a98 + 2
     char slot0[0x10];                           // local_ac0 (a tstring the callee constructs)
     char slot1[0x10];                           // local_ab0
     char slot2[0x10];                           // local_aa0
@@ -190,8 +198,8 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
         lg.w_cstr(msg);
     }
     g_script_out = 0;
-    guard = 0;
-    spare = 0;
+    buf2.sp = 0;
+    buf2.pad = 0;
     last_ok = 1;
     g_script_flag = 0;
     idx = 0;
@@ -207,7 +215,7 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
             in_key = 1;
             first = 0;
             for (;;) {
-                input_frame(0);
+                g_keyboard.frame(0);
                 if (!first) {
                     first = 1;
                     format((tstring*)slot0, buf, idx, 1, &pr_lo, &pr_hi);
@@ -241,7 +249,7 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
 
         Elem* stmt = items + idx;
         int off  = idx * 0x98;
-        unsigned op = stmt->id & 0xfffffff;
+        int op = stmt->id & 0xfffffff;
         (void)off;
         g_lineno = idx;
         saved = idx;
@@ -251,10 +259,10 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
         if (op < 0x15 && op != 1) {
             if (stmt->id == 3) {
                 advance = 1;
-                pop_party(buf, buf2, &idx);
+                pop_party(buf, buf2.data, &idx);
             } else if (stmt->id == 4) {
                 advance = 1;
-                goto_stmt(buf2, idx, 0);
+                buf2.goto_stmt(idx, 0);
                 idx++;
             } else if (stmt->id == 5) {
                 if (advance) {
@@ -281,10 +289,10 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
                 } else {
                     mb_error("invalid opcode %d", stmt->id);
                 }
-                goto_stmt(buf2, idx, v);
+                buf2.goto_stmt(idx, v);
                 value = v;
                 stmt->set_value(buf, &value);
-                if (!run_stmt(buf, buf2)) {
+                if (!run_stmt(buf, buf2.data)) {
                     idx = stmt->f90;
                     goto step_end;
                 }
@@ -351,7 +359,7 @@ char ScriptHolder::emit(int script, int depth, int* limit, __int64* vals, unsign
         }
 
     step_end:
-        if (guard == 0)
+        if (buf2.sp == 0)
             last_ok = ok;
         if (in_key) {
             if (done) {

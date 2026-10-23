@@ -7,3 +7,5 @@ slices/s004b1b20/s004b1b20.cpp  ?throw_stub@@YAXXZ  004b21e6  /O2 /MT /Gy /TP /E
 slices/s004b1b20/s004b1b20.cpp  ?food_factor@CharRec@@QAEMXZ  004b21f0  /O2 /MT /Gy /TP
 slices/s004b1b20/s004b1b20.cpp  ?skill_bonus@Party@@QAEHXZ  004b22d0  /O2 /MT /Gy /TP
 slices/s004b1b20/s004b1b20.cpp  ?skill_bonus2@Party@@QAEHXZ  004b2330  /O2 /MT /Gy /TP
+slices/s004b1b20/s004b1b20.cpp  ?slot_value@Party@@QBEHHI@Z  004b1be0  /O2 /MT /Gy /TP
+slices/s004b1b20/s004b1b20.cpp  ?at@ItemArray@@QAE?AUItemIter@@H@Z  004b22b0  /O2 /MT /Gy /TP
