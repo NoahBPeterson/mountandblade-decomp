@@ -1,1 +1,1 @@
-# reconstruction only: this row is also listed in nonmatching.txt / partial.txt. Flags /O2 /MT /Gy /TP.
+# slice s004d0620 - no byte-exact functions (0x4d0620 is complete but carries two inline-asm data tags, see nonmatching.txt).

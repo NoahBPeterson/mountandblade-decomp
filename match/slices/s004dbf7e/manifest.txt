@@ -1,2 +1,3 @@
 slices/s004dbf7e/s004dbf7e.cpp  ??0loading_config@@QAE@ABU0@@Z  004dc030  /O2 /MT /Gy /TP
 slices/s004dbf7e/s004dbf7e.cpp  ?destroy_range_cfg@@YAXPAUloading_config@@0PBU1@@Z  004dc190  /O2 /MT /Gy /TP
+slices/s004dbf7e/s004dbf7e.cpp  ??4?$vector@UE80@@V?$allocator@UE80@@@std@@@std@@QAEAAV01@ABV01@@Z  004dc1c0  /O2 /MT /Gy /TP

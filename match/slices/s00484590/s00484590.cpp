@@ -54,17 +54,21 @@ extern char*   g_ground;       // 0x5e28f8  ground-spec names (0x20-byte tstring
 extern int     g_ground_count; // 0x5e29e8
 extern char*   g_mode_recs;    // 0x5e29dc  mode records (0x78 bytes, loaded)
 extern char*   g_level;        // 0xa732b4  (loaded, null-checked then dereferenced)
-extern unsigned g_sky0, g_sky1, g_sky2, g_sky3, g_sky4;  // 0xa76630/34/38/3c/40
+extern unsigned g_sky0;        // 0xa76630
+extern unsigned g_sky1;        // 0xa76634
+extern unsigned g_sky2;        // 0xa76638
+extern unsigned g_sky3;        // 0xa7663c
+extern unsigned g_sky4;        // 0xa76640
 extern int     g_mask_col;     // 0x5a8f60
 extern int     g_mask_cloud;   // 0x5a8e88
 extern int     g_mask_flag;    // 0x5a8e70
 extern int     g_mask_amt;     // 0x5a8ea0
 extern int     g_mask_bits;    // 0x5a8eb8
 extern int     g_rand_seed;    // 0x5d7078
-extern int     g_emit_count;   // 0x8ed5094
-extern int     g_emit_idx1;    // 0x8ed5098
-extern int     g_emit_idx2;    // 0x8ed509c
-extern float   g_emit_pos[];   // 0x8eb235c (matrix + origin for the emit table)
+extern int     g_emit_count;   // 0x08ed5094
+extern int     g_emit_idx1;    // 0x08ed5098
+extern int     g_emit_idx2;    // 0x08ed509c
+extern float   g_emit_pos[];   // 0x08eb235c (matrix + origin for the emit table)
 extern int     g_a70448;       // 0xa70448
 extern int     g_a7044c;       // 0xa7044c
 extern int     g_no_cam;       // 0x5a9fb0
@@ -76,7 +80,7 @@ extern const char g_s_end_setup[];    // 0x591a54 "end_setup"
 extern const char g_s_mesh_name[];    // 0x591ab8
 extern const char g_s_name2[];        // 0x591ac4
 extern const char g_s_cursor[];       // 0x591aa0 "edit_cursor"
-extern const char g_s_vcolor[];       // "vertex_color_add_mat"
+extern const char g_s_vcolor[];       // 0x591a8c "vertex_color_add_mat"
 extern const char g_s_fmt[];          // 0x591a60 "temper = %3.2f, humidity = %3.2f, height = %3.2f fog_far = %d"
 
 // ---------------------------------------------------------------------------
@@ -141,7 +145,18 @@ void  f4711e0(void*);                                 // 0x4711e0  ShadowMap::at
 void  f468c20(void*);                                 // 0x468c20
 void  f463cc0();                                      // 0x463cc0
 void  f47fef0();                                      // 0x47fef0
-void  log_str(const char*);                           // 0x5a9f60 vtable+0x28 (g_log write)
+struct log_base {                                     // text log stream (global object 0x5a9f60), slot 10 (+0x28) = write(cstr)
+    virtual void p00(); virtual void p01(); virtual void p02(); virtual void p03(); virtual void p04();
+    virtual void p05(); virtual void p06(); virtual void p07(); virtual void p08(); virtual void p09();
+    virtual log_base& w_cstr(const char* s);
+};
+struct log_stream : log_base {
+    virtual void p00(); virtual void p01(); virtual void p02(); virtual void p03(); virtual void p04();
+    virtual void p05(); virtual void p06(); virtual void p07(); virtual void p08(); virtual void p09();
+    virtual log_base& w_cstr(const char* s);
+};
+extern log_stream g_log;                                // 0x5a9f60
+static inline void log_str(const char* s) { ((log_base&)g_log).w_cstr(s); }
 
 // small helpers for raw-byte record access
 static inline float&  rf0(void* p, int off) { return *(float*)((char*)p + off); }
@@ -471,7 +486,7 @@ void Mission::start_setup()
                 if (!(0.0f < cb)) cb = cb - 0.99999988f;
                 cloud_cnt = (int)cb + 25;
             } else {
-                g_rand_seed = sd;                                 // 0x48564f
+                g_rand_seed = sd;                                 // at 48564f
                 float ct = (cbase * 6.32231167e-05f + 0.4f) * temp[3] * 0.45f;
                 int cti = (int)_floor((double)ct);
                 if (ct - (float)cti > 0.5f) cti++;
@@ -483,7 +498,7 @@ void Mission::start_setup()
 
             // ---- g_sky4 bits 7..13: temperature/storm amount (0x485704..0x4857d4) --------------
             sd = (int)((sd * 0x1c13 + 0xfffffffff2f67aaa) * 0x1105);   // 0x4856dc: esi = [0x5d7078], stepped again
-            g_rand_seed = sd;                                     // 0x48570d
+            g_rand_seed = sd;                                     // at 48570d
             float seed2 = (float)((unsigned)sd % 0x3dc9) * 0.000948346744f + 10.0f;
             float tt = (temp[12] + temp[11]) * 0.35f + temp[1] * 0.6f;
             if (tt < 0.0f) tt = 0.0f; else if (50.0f < tt) tt = 50.0f;

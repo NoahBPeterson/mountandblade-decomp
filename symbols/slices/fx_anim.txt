@@ -1,0 +1,19 @@
+00422e10 ??Hquaternion_x@@QBE?AUquaternion@@ABU1@@Z  # src/rgl/dynamic/fx_anim.h: ext twin of quaternion::operator+ (the callers' view; bound to the real function with /alternatename)
+00422de0 ?add@quaternion_x@@QAEXABUquaternion@@@Z  # ext twin of quaternion::add
+00423540 ?bone_quat@FxAnim_x@@QAE?AUquaternion@@HHH@Z  # ext twin of FxAnim::value, the by-value return written as its out-parameter (same ABI)
+00423010 ?dot@quaternion_x@@QBEMABUquaternion@@@Z  # ext twin of quaternion::dot
+00423040 ?dot_negative@quaternion_x@@QBE_NABUquaternion@@@Z  # ext twin of quaternion::dot_negative
+00423a50 ?find@KeyTable_x@@QAEXPAHPAM1@Z  # ext twin of KeyTable::find
+00423300 ?key_value@FxAnim_x@@QAE?AUvector4@rgl@@H@Z  # ext twin of FxAnim::key_value
+00422eb0 ?mul@quaternion_x@@QBE?AUquaternion@@ABU2@@Z  # ext twin of quaternion::mul
+00422f60 ?mul_conj@quaternion_x@@QBE?AUquaternion@@ABU2@@Z  # ext twin of quaternion::mul_conj
+00422eb0 ?mul_out@quaternion_x@@QBEPAUquaternion@@PAU2@PBU2@@Z  # ext twin of quaternion::mul with the hidden return pointer as an explicit out-parameter (FxAnim::chain)
+004239c0 ?nlerp_x@@YAXPAUquaternion@@PBU1@1PBM@Z  # ext twin of nlerp
+00422e40 ?normalize@quaternion_x@@QAEXXZ  # ext twin of quaternion::normalize
+00423b60 ?parent_quat@FxAnim_x@@QAE?AUquaternion@@HH@Z  # ext twin of FxAnim::chain, by-value return
+004231f0 ?phase@AnimRec_x@@QAEMXZ  # ext twin of AnimRec::phase
+00423160 ?quat_to_axis_angle_x@@YAXPAUvector4@rgl@@PAMPBUquaternion@@@Z  # ext twin of quat_to_axis_angle
+00423080 ?quat_to_matrix_x@@YAXPAUmatrix@rgl@@PBUquaternion@@@Z  # ext twin of quat_to_matrix
+00422db0 ?set@quaternion_x@@QAEAAUquaternion@@ABM000@Z  # ext twin of quaternion::set
+004232b0 ?shape@AnimRec_x@@QAEMM@Z  # ext twin of AnimRec::shape
+004238c0 ?slerp_x@@YAXPAUquaternion@@PBU1@1PBM@Z  # ext twin of slerp

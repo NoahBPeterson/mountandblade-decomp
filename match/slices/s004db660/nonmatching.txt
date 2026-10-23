@@ -1,10 +1,5 @@
-# s004db660 nonmatching: complete reconstructions that pass equiv.py (WEAK here only because the harness cannot
-# feed 200 valid inputs past the vector's malloc/RaiseException path - there is no behavioural mismatch).
-004db960  107  complete, 66 bytes differ.  @insert_@20 is __fastcall (ecx = vector, edx unused) with
-              (out, pos, value) on the stack and `ret 0xc`; the index is ((last-first)/0x50 via the 0x66666667
-              reciprocal with the sign fixup) then (pos-first)/0x50; 0x4d9ed0 is called thiscall with
-              (pos, 1, value); first + idx*0x50 is stored through `out` and returned in EAX.  Remaining shape
-              difference: the original spills the element count to a dead stack-parameter slot
-              (`mov [esp+0x14],eax`) and lays the idx = 0 block out as the fall-through (`jne` into the compute
-              block); cl 13.10 keeps the count in a register and inlines the compute block (103 vs 107 bytes).
-              Equiv: WEAK (146 valid inputs, 4/4 edges both sides, 100% instructions, 0 mismatches).
+# s004db660 nonmatching: complete reconstructions, not byte-exact.
+004db660  138  complete (overlay window, "ui_done" button, empty button with "ui_factions" text, add_root, f4 gate). Stack layout, argument order and call sequence match; remaining differences are register choice (edx where the original has ecx for the &tstring argument) and a split read-modify-write of f184 (`or [eax+0x184],1` memory form in the original). Fixes that got it here: set_text returns WRet through a hidden pointer; add_root takes `void* const&`; new_button takes four floats and copies each pair into a scoped vector2 temp; set_mesh(kind, mesh). equiv.py: UNSUPPORTED (400/400 inputs stop at _purecall: the widget virtual slots are stubs in the harness); resolution audit 11 agree, 1 unverified, 0 disagree.
+004dbb83  0  cold branches (spill and in-place insert) of 0x4db9d0, the same COMDAT as std::vector<E68>::_Insert_n: bytes identical (cmpdis on the whole COMDAT shows only relocations). Not a callable function.
+004dbc3f  0  catch funclet of 0x4db9d0 (destroy the constructed range, rethrow), same COMDAT as 0x4db9d0: bytes identical. Not a callable function.
+004dbebf  0  catch funclet + cold branches of 0x4dbcc0 (std::vector<E176>::_Insert_n), same COMDAT: bytes identical. Not a callable function.

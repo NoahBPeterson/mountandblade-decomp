@@ -9,3 +9,7 @@ slices/s004e8f10/s004e8f10.cpp  ?write_list_party@Game@@QAEXPAUOutStream@@@Z  00
 slices/s004e8f10/s004e8f10.cpp  ?write_list300@Game@@QAEXPAUOutStream@@@Z  004e96c0  /O2 /MT /Gy /TP
 slices/s004e8f10/s004e8f10.cpp  ?write300@Rec300@@QAEXPAUOutStream@@H@Z  004e9710  /O2 /MT /Gy /TP
 slices/s004e8f10/s004e8f10.cpp  ?write_records@Game@@QAEXPAUOutStream@@@Z  004e97e0  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write@Rec78Tag@@QAEXPAUOutStream@@@Z  004e90d0  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write@Rec5c@@QAEXPAUOutStream@@@Z  004e9460  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write8@List8@@QAEXPAUOutStream@@@Z  004e94b0  /O2 /MT /Gy /TP
+slices/s004e8f10/s004e8f10.cpp  ?write_items@Game@@QAEXPAUOutStream@@@Z  004e9790  /O2 /MT /Gy /TP

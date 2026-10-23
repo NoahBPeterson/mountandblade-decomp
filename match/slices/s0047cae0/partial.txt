@@ -1,5 +1,0 @@
-0047cae0  799  incomplete: analysed only, no compiling source (holder 3x3 box rebuild + record submit loops)
-0047ce00  204  incomplete: analysed only, no compiling source (stdcall submit loop over a mesh array, identity placement)
-0047ced0  271  incomplete: analysed only, no compiling source (walk the world's 0x1c8-byte records and submit their meshes)
-0047cfe0  822  incomplete: analysed only, no compiling source (build up to 4 item meshes from item refs)
-0047d320  183  incomplete: analysed only, no compiling source (free the carried mesh vector, set make_ranged_mesh())

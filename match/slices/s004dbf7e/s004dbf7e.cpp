@@ -55,39 +55,14 @@ struct loading_config {
     ~loading_config();
 };
 
-// std::vector<loading_config> (first at +4, last at +8, end at +0xc)
-struct VecCfg {
-    void* alloc;            // +0
-    char* first;            // +4
-    char* last;             // +8
-    char* end;              // +0xc
-    VecCfg& operator=(const VecCfg& o);                     // 0x4dc1c0
-};
-
 // ---- callees ---------------------------------------------------------------------------------------
 void* __cdecl operator new(unsigned n);                     // 0x53545e
 void  __cdecl operator delete(void* p);                     // 0x535712
 void destroy_range_cfg(loading_config* first, loading_config* last, const loading_config* src);   // 0x4dc190
-void erase_range_110(char* first, char* last, const void* src);                   // 0x4cc260
-
-// vector<T> helpers with a 0x50-byte element (see 0x4dc1c0)
-char* vec_copy(char* first, char* last, char* dst, const VecCfg* o);      // 0x4cd6e0
-char* vec_fill(char* p, char* last, VecCfg* t, const VecCfg* o);          // 0x4d10f0
-char* vec_fill_n(char* stop, char* last, char* dlast, VecCfg* t, const VecCfg* o);  // 0x4d11a0
-unsigned __fastcall vec_capacity(VecCfg* v, int unused);                   // 0x4be950
-void __fastcall vec_tidy(VecCfg* v, int unused);                           // 0x4da840
-void __fastcall vec_destroy(VecCfg* v, int unused, char* first, char* last);  // 0x4d9370
-bool __fastcall vec_buy(VecCfg* v, int unused, unsigned n);                // 0x4cbb90
-char* __fastcall vec_construct(VecCfg* v, int unused, char* first, char* last, char* dst);  // 0x4d93e0
-
 namespace rgl { struct vector2 { float x, y; vector2() {} vector2(float a, float b) : x(a), y(b) {} }; }
 
-// @ 0x4dbf7e
-void __fastcall insert_catch(char* block, int unused, int n, int count, char* last, const void* src)
-{
-    erase_range_110(block + n * 0xb0, last + count * 0xb0, src);
-    throw;
-}
+// 0x4dbf7e is the catch(...) funclet of std::vector<E176>::_Insert_n (0x4dbcc0, slice s004db660): it is part
+// of that COMDAT (the cold tail after 0x4dbebf), so it has no source of its own here.
 
 // the implicit copy ctor (0x4dc030) is emitted out of line; this wrapper forces its emission
 loading_config* copy_loading_config(loading_config* self, const loading_config* o)
@@ -103,67 +78,100 @@ void destroy_range_cfg(loading_config* first, loading_config* last, const loadin
         *first = *src;
 }
 
-// @ 0x4dc1c0
-// vector<T>::operator= for a 0x50-byte element type (VC7.1 <vector>)
-VecCfg& VecCfg::operator=(const VecCfg& o)
-{
-    if (this == &o)
-        return *this;
-    if (o.first != 0) {
-        int n = (o.last - o.first) / 0x50;
-        if (n != 0) {
-            int cap = first ? (last - first) / 0x50 : 0;
-            if ((unsigned)n <= (unsigned)cap) {
-                char* p = vec_copy(o.first, o.last, first, &o);
-                vec_fill(p, last, this, &o);
-                last = first + (o.first == 0 ? 0 : (o.last - o.first) / 0x50 * 0x50);
-                return *this;
-            }
-            int cap2 = first ? (end - first) / 0x50 : 0;
-            if ((unsigned)n <= (unsigned)cap2) {
-                char* stop = vec_capacity(this, 0) * 0x50 + o.first;
-                vec_copy(o.first, stop, first, &o);
-                last = vec_fill_n(stop, (char*)o.last, last, this, &o);
-                return *this;
-            }
-            if (first != 0) {
-                vec_destroy(this, 0, first, last);
-                operator delete(first);
-            }
-            unsigned cap3 = vec_capacity((VecCfg*)&o, 0);
-            if (!vec_buy(this, 0, cap3))
-                return *this;
-            last = vec_construct(this, 0, o.first, (char*)o.last, first);
-            return *this;
-        }
-    }
-    vec_tidy(this, 0);
-    return *this;
-}
-
-// +0x1024 holds four pointers to 16-float records
-struct Rec { float x0, y0, x8, xc, x10, x14, x18, x1c; };
-struct Frame {
-    char pad0[0x1024];
-    Rec** recs;                 // +0x1024
+// ---- std::vector<E80>::operator= (0x4dc1c0) --------------------------------------------------------
+#include <vector>
+// 0x2c-byte-element vector header at +0x40 of the 0x50-byte record (copy ctor 0x4cc350)
+struct V44 {
+    int alloc;
+    void* first; void* last; void* end;         // +4 / +8 / +0xc
+    V44(const V44& o);                          // 0x4cc350
 };
 
-// @ 0x4dc350  (construction of the frame's coordinate records from two rgl::vector2s)
-void __fastcall ctor_frame(Frame* self, int unused, const rgl::vector2* a, const rgl::vector2* b)
+// 0x50-byte element: name, twelve words, a V44 at +0x40 (copy ctor 0x4cd080, assignment 0x4cd4f0); the
+// destructor (inlined into the range destroyer 0x4d10f0) frees and clears the V44 block, then ~tstring.
+struct E80 {
+    tstring name;                               // +0
+    int f10[12];                                // +0x10
+    V44 v;                                      // +0x40
+    E80(const E80& o);                          // 0x4cd080
+    E80& operator=(const E80& o);               // 0x4cd4f0
+    ~E80()
+    {
+        if (v.first)
+            operator delete(v.first);
+        v.first = 0; v.last = 0; v.end = 0;
+    }
+};
+
+// @ 0x4dc1c0
+template std::vector<E80>& std::vector<E80>::operator=(const std::vector<E80>&);
+
+// ---- 0x4dc350: place the loading-screen frame (a quad mesh at +0xfb0 and four corner meshes) -----------
+// The object is the UI root of s0042c9b0 / s0050f440 (mesh at +0xfb0, corner meshes at +0x1210..+0x121c).
+// A mesh's position array (+0x74) holds 0x20-byte records (a vector4 pair); +0x2c is its material,
+// +0x3c a colour/id word, +0x138 a dirty flag; +0xfc/+0x100 are the uv corner the frame code moves.
+struct rec32 { rgl::vector4 p; rgl::vector4 q; };
+struct FrameMesh {
+    char pad0[0x2c];
+    void* material;                             // +0x2c
+    char pad30[0x3c - 0x30];
+    int f3c;                                    // +0x3c
+    char pad40[0x74 - 0x40];
+    rec32* pos;                                 // +0x74
+    char pad78[0xfc - 0x78];
+    float uv_x;                                 // +0xfc
+    float uv_y;                                 // +0x100
+    char pad104[0x138 - 0x104];
+    char dirty;                                 // +0x138
+    char pad139[0x22c - 0x139];
+    float c22c, c230;                           // +0x22c, +0x230
+    char pad234[0x23c - 0x234];
+    float c23c, c240;                           // +0x23c, +0x240
+    char pad244[0x260 - 0x244];
+    void ensure_local();                        // 0x412ee0
+};
+struct res_mgr {
+    void* get_material(const tstring& name);    // 0x418a70 (ret 4)
+};
+extern res_mgr g_res;                           // 0x5d6fa0
+struct FrameGui {
+    char pad0[0xfb0];
+    FrameMesh quad;                             // +0xfb0
+    FrameMesh* corner[4];                       // +0x1210
+    char pad1220[0x16e4 - 0x1220];
+    int f16e4;                                  // +0x16e4
+    void set_rect(const rgl::vector2* a, const rgl::vector2* b);    // 0x4dc350 (ret 8)
+};
+
+// @ 0x4dc350
+void FrameGui::set_rect(const rgl::vector2* a, const rgl::vector2* b)
 {
+    float sy = b->y + a->y;
     float sx = a->x + b->x;
-    float sy = a->y + b->y;
-    Rec** t = self->recs;           // +0x1024: four records of 16 floats
-    t[0]->x0 = b->x;  t[0]->y0 = b->y;  t[0]->x8 = 0.0f;  t[0]->xc = a->y;
-    t[1]->x0 = sx;    t[1]->y0 = b->y;  t[1]->x8 = 0.0f;  t[1]->xc = a->y;
-    t[2]->x0 = sx;    t[2]->y0 = sy;    t[2]->x8 = 0.0f;  t[2]->xc = a->y;
-    t[3]->x0 = b->x;  t[3]->y0 = sy;    t[3]->x8 = 0.0f;  t[3]->xc = a->y;
-    t[0]->x10 = b->x; t[0]->x14 = b->y; t[0]->x18 = 0.0f; t[0]->x1c = a->y;
-    t[1]->x10 = sx;   t[1]->x14 = b->y; t[1]->x18 = 0.0f; t[1]->x1c = a->y;
-    t[2]->x10 = sx;   t[2]->x14 = sy;   t[2]->x18 = 0.0f; t[2]->x1c = a->y;
-    t[3]->x10 = b->x; t[3]->x14 = sy;   t[3]->x18 = 0.0f; t[3]->x1c = a->y;
+    quad.ensure_local();
+    { rgl::vector4 v(a->x, a->y, 0.0f); rec32* r = quad.pos + 0; r->q = r->p = v; }
+    { rgl::vector4 v(sx, a->y, 0.0f); rec32* r = quad.pos + 1; r->q = r->p = v; }
+    { rgl::vector4 v(sx, sy, 0.0f); rec32* r = quad.pos + 2; r->q = r->p = v; }
+    { rgl::vector4 v(a->x, sy, 0.0f); rec32* r = quad.pos + 3; r->q = r->p = v; }
+    quad.f3c = f16e4;
+    quad.dirty = 1;
+    {
+        tstring n("matte");
+        quad.material = g_res.get_material(n);
+    }
+    corner[0]->uv_x = (a->x - corner[0]->c22c) - 0.003f;
+    corner[0]->uv_y = (sy - corner[0]->c240) + 0.003f;
+    corner[1]->uv_x = (sx - corner[0]->c23c) + 0.003f;
+    corner[1]->uv_y = (sy - corner[0]->c240) + 0.003f;
+    corner[2]->uv_x = (sx - corner[0]->c23c) + 0.003f;
+    corner[2]->uv_y = (a->y - corner[0]->c230) - 0.003f;
+    corner[3]->uv_x = (a->x - corner[0]->c22c) - 0.003f;
+    corner[3]->uv_y = (a->y - corner[0]->c230) - 0.003f;
+    corner[0]->f3c = -1;
+    corner[1]->f3c = -1;
+    corner[2]->f3c = -1;
+    corner[3]->f3c = -1;
 }
 
 // @ 0x4dc030 loading_config::loading_config
 
-// @ 0x4dc1c0 VecCfg::operator4

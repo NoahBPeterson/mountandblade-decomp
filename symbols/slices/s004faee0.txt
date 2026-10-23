@@ -1,2 +1,2 @@
 004faee0 ?shadow_sample@View@@QAE_NPBUvector4@rgl@@PAM@Z  # flare visibility from 9 shadow-map taps; provisional
-004fb180 ?apply_sun_light@View@@QAEXPBUvector4@rgl@@H@Z  # per-agent light intensity + fade; provisional
+004fb180 ?apply_sun_light@View@@QAEXPBUvector4@rgl@@PBM@Z  # per-agent light intensity + fade; provisional

@@ -119,9 +119,9 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
             return;
         Node24* node = (Node24*)((char*)this->f24 + found * 0x24);
         next = (node->f04 == cur) ? node->f08 : node->f04;
+        int c = *count;
+        bool dup = false;
         if (node->f0c == target) {
-            int c = *count;
-            bool dup = false;
             for (int i = 0; i < c; i++)
                 if (out[i] == node->f10)
                     dup = true;
@@ -130,9 +130,7 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
                 (*count)++;
             }
         } else {
-            int c = *count;
-            bool dup = false;
-            for (int i = 0; i < c; i++)
+            for (int i = 0; i < *count; i++)
                 if (out[i] == node->f0c)
                     dup = true;
             if (!dup) {

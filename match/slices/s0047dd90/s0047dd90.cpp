@@ -78,33 +78,34 @@ void lod_mesh::apply_anim_all(const float* t)
 // @ 0x47ddf0
 void EChar::blend_all(lod_mesh* m, void* set, const float* w)
 {
-    int i;
-    for (i = 0; i < m->count; i++) {
-        std::vector<mesh*>& v = m->lists[i].v;
-        if (v._Myfirst == 0)
-            continue;
-        if (v.size() == 0)
-            continue;
-        blend_indexed(*v._Myfirst, set, &i, w);
+    int i = 0;
+    if (0 < m->count) {
+        do {
+            int j = i;
+            if (m->lists[i].v._Myfirst != 0 && m->lists[i].v._Mylast - m->lists[i].v._Myfirst != 0)
+                blend_indexed(*m->lists[i].v._Myfirst, set, &i, w);
+            i = j + 1;
+        } while (i < m->count);
     }
 }
 
 // @ 0x47de60
 void EChar::use_carry(lod_mesh* l, const float* w)
 {
-    tstring* lname = (tstring*)((char*)l + 0xd0);
-    int idx = -1;
-    for (int i = 0; i < (int)sets.size(); i++) {
-        if (vat(sets, i).name.equals(*lname)) {
-            idx = i;
+    unsigned idx = (unsigned)-1;
+    unsigned i = 0;
+    do {
+        if (sets._Myfirst == 0 || i >= (unsigned)sets.size()) {
+            idx = sets.size();
+            unsigned n = sets.size();
+            sets.resize(n + 1, ArrSet());
+            copy_troop(&vat(sets, idx).name, l);
             break;
         }
-    }
-    if (idx == -1) {
-        idx = (int)sets.size();
-        sets.resize(sets.size() + 1, ArrSet());
-        copy_troop(&vat(sets, idx).name, l);
-    }
+        if (vat(sets, i).name.equals(*(tstring*)((char*)l + 0xd0)))
+            idx = i;
+        i++;
+    } while (idx == (unsigned)-1);
     blend_all(l, &vat(sets, idx), w);
 }
 
@@ -160,110 +161,119 @@ struct GenObj {
     char pad2[0x845d984 - 0x843bd74];
     int nx;                           // 0x845d984
     int ny;                           // 0x845d988
-    entity** ents;                    // 0x845d98c
+    entity* ents[25];                 // 0x845d98c (inline array of per-cell entities)
     void gen_set_init(scatter_set* s);    // 0x47df80
 };
 
 // @ 0x47df80
+// The record cursor `pr` points at GenRec::val (+0x64) of the current record; the original addresses every
+// field relative to it.
+#define RV(T, off) (*(T*)(pr + (off)))
 void GenObj::gen_set_init(scatter_set* s)
 {
     std::vector<mesh*> grid[25];
-
-    for (int i = 0; i < s->count; i++) {
-        GenRec* rec = (GenRec*)((char*)s + 0x04 + i * 0xa0);
-        GmEntry* ge = &g_map[rec->map_idx];
-        rec->val = (rec->val + ge->f18 * 100) % ge->f18;
-
-        std::vector<mesh*> list;
-        GmRec* gr = &ge->recs[rec->val];
-        if (gr->n > 0)
-            list = gr->items;
-
-        mat3 sm;
-        identity3(&sm);
-        sm.s.x = rec->f54;
-        sm.f.y = rec->f58;
-        sm.u.z = rec->f5c;
-        mat3 r = rec->p.rot3(*(const matrix*)&sm);
-
-        mat4 mat;
-        mat.s = r.s;
-        mat.f = r.f;
-        mat.u = r.u;
-        mat.o = rec->p.o;
-
-        rec->count = 0;
-        for (size_t k = 0; k < list.size(); k++) {
-            mesh* src = list[k];
-
-            int cx = rec->x / blk;
-            if (cx < 0)
-                cx = 0;
-            else if (cx >= nx)
-                cx = nx - 1;
-            int cy = rec->y / blk;
-            if (cy < 0 || cy >= ny)
-                cy = ny - 1;
-            int cell = cy + cx * 5;
-
-            std::vector<mesh*>& g = grid[cell];
-            int found = -1;
-            for (size_t j = 0; j < g.size(); j++) {
-                if (g[j]->res == src->res) {
-                    found = (int)j;
-                    break;
+    int ri = 0;
+    if (0 < s->count) {
+        char* pr = (char*)s + 0x68;
+        do {
+            GmEntry* ge = &g_map[RV(int, -0x64)];
+            RV(int, 0) = RV(int, 0) + ge->f18 * 100;
+            std::vector<mesh*> list;
+            RV(int, 0) = RV(int, 0) % ge->f18;
+            GmRec* gr = &ge->recs[RV(int, 0)];
+            if (gr->n > 0)
+                list = gr->items;
+            mat3 sm;
+            identity3(&sm);
+            sm.s.x = RV(float, -0x10);
+            sm.f.y = RV(float, -0xc);
+            sm.u.z = RV(float, -8);
+            mat4 mat;
+            *(mat3*)&mat = ((pos*)(pr - 0x50))->rot3(*(const matrix*)&sm);
+            mat.o = *(vector4*)(pr - 0x20);
+            RV(int, 0x38) = 0;
+            for (unsigned k = 0; k < list.size(); k++) {
+                mesh* src = list[k];
+                int cx = RV(int, -0x60) / blk;
+                if (cx < 0)
+                    cx = 0;
+                else if (cx >= nx)
+                    cx = nx - 1;
+                int cy = RV(int, -0x5c) / blk;
+                int cyy = 0;
+                if (cy >= 0) {
+                    cyy = ny - 1;
+                    if (cy < ny)
+                        cyy = cy;
+                }
+                int cell = cyy + cx * 5;
+                unsigned found = (unsigned)-1;
+                unsigned j = 0;
+                bool make = false;
+                do {
+                    if (grid[cell]._Myfirst == 0 || j >= (unsigned)grid[cell].size()) {
+                        make = true;
+                        break;
+                    }
+                    if (src->res == grid[cell][j]->res)
+                        found = j;
+                    j++;
+                } while (found == (unsigned)-1);
+                if (!make) {
+                    mesh* f = grid[cell][found];
+                    if (f->v50._Myfirst != 0 && 32000 < (unsigned)f->v50.size())
+                        make = true;
+                }
+                if (make) {
+                    mesh* nm = new mesh();
+                    nm->res = src->res;
+                    nm->mask = 0x1ffff;
+                    nm->flags |= 0x10000000;
+                    found = grid[cell].size();
+                    vpush_g(grid[cell], nm);
+                }
+                if (RV(int, 0x38) < 4) {
+                    mesh* cur = grid[cell][found];
+                    ((mesh**)(pr + 8))[RV(int, 0x38)] = cur;
+                    ((int*)(pr + 0x18))[RV(int, 0x38)] = cur->v50._Myfirst ? (int)cur->v50.size() : 0;
+                }
+                mesh* cur2 = grid[cell][found];
+                if ((ge->f10 & 0x20000) == 0)
+                    cur2->append_skinned(src, &mat, -1, -1, 0);
+                else
+                    cur2->FUN_0047aa40(src, &mat, -1);
+                if (RV(int, 0x38) < 4) {
+                    ((int*)(pr + 0x28))[RV(int, 0x38)] = cur2->v50._Myfirst ? (int)cur2->v50.size() : 0;
+                    RV(int, 0x38) = RV(int, 0x38) + 1;
                 }
             }
-            mesh* dst;
-            if (found >= 0 && !(g[found]->v50._Myfirst != 0 && g[found]->v50.size() > 32000)) {
-                dst = g[found];
-            } else {
-                dst = new mesh();
-                dst->res = src->res;
-                dst->mask = 0x1ffff;
-                dst->flags |= 0x10000000;
-                found = (int)g.size();
-                vpush_g(g, dst);
-            }
-
-            mesh* cur = g[found];
-            if (rec->count < 4) {
-                rec->meshes[rec->count] = cur;
-                rec->counts2[rec->count] = cur->v50._Myfirst ? (int)cur->v50.size() : 0;
-            }
-            if ((ge->f10 & 0x20000) == 0)
-                cur->append_skinned(src, &mat, -1, -1, 0);
-            else
-                cur->FUN_0047aa40(src, &mat, -1);
-            if (rec->count < 4) {
-                rec->counts3[rec->count] = cur->v50._Myfirst ? (int)cur->v50.size() : 0;
-                rec->count++;
-            }
-        }
+            ri++;
+            pr += 0xa0;
+        } while (ri < s->count);
     }
-
     for (int y = 0; y < ny; y++) {
-        int cell = y;
-        for (int x = 0; x < nx; x++) {
-            std::vector<mesh*>& g = grid[cell];
-            for (size_t j = 0; j < g.size(); j++) {
-                mesh* m = g[j];
-                if (g_dinput_enabled == 0 && (*(unsigned char*)((char*)m->res + 0x1c) & 0x40) == 0) {
-                    mat3 im;
-                    identity3(&im);
-                    mat4 id;
-                    id.s = im.s;
-                    id.f = im.f;
-                    id.u = im.u;
-                    id.o = vector4(0.0f, 0.0f, 0.0f);
-                    ((scene*)sc)->place_mesh(m, &id, 1);
+        int x = 0;
+        if (0 < nx) {
+            int cell = y;
+            do {
+                for (unsigned j = 0; j < grid[cell].size(); j++) {
+                    if (g_dinput_enabled == 0 && (*(unsigned char*)((char*)grid[cell][j]->res + 0x1c) & 0x40) == 0) {
+                        vector4 o(0.0f, 0.0f, 0.0f);
+                        mat3 im;
+                        mat4 id;
+                        *(mat3*)&id = *identity3(&im);
+                        id.o = o;
+                        ((scene*)sc)->place_mesh(grid[cell][j], &id, 1);
+                    }
+                    grid[cell][j]->finish_load();
+                    entity* e = ents[cell];
+                    mesh* mm = grid[cell][j];
+                    vpush_g(e->meshes, mm);
+                    e->v4();
                 }
-                m->finish_load();
-                entity* e = ents[cell];
-                vpush_g(e->meshes, m);
-                e->v4();
-            }
-            cell += 5;
+                x++;
+                cell += 5;
+            } while (x < nx);
         }
     }
 }

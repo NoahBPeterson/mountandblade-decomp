@@ -201,7 +201,7 @@ struct meta_mission {
     int   f2c0;             // +0x2c0
     int   f2c4;             // +0x2c4
     char  f2c8;             // +0x2c8
-    meta_mission();                             // 0x4be730 / 0x4be742
+    void init();   // 0x4be730 (WinLicense marker jmp) / body 0x4be742; void, not a ctor
 };
 
 // ---------- implementations ------------------------------------------------------------------
@@ -323,7 +323,7 @@ clip_slot::clip_slot()
 }
 
 // @ 0x4be730
-meta_mission::meta_mission()
+void meta_mission::init()
 {
     f014 = 0;
     f144 = 0;

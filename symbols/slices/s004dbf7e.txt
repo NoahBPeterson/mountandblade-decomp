@@ -1,6 +1,13 @@
 # s004dbf7e -- loading-screen configuration record (element of the 0x1f8-byte list) and its vector helpers
 004dc030 loading_config_copy_ctor  # element-wise copy; tstrings via 0x42c110, three 0x10-byte ranges via 0x4cca70/0x4cc750/0x4cc680, 0x1c8-byte block via 0x4da300
 004dc190 destroy_range            # _Destroy_range over the list: calls the element dtor 0x4da410 per element, stride 0x1f8, no frame
-004dc1c0 ??4VecCfg@@QAEAAU0@ABU0@@Z  # vector<loading_config>::operator=: clear / copy / reallocate / grow arms (calls 0x4da840, 0x4be950, 0x4d10f0, 0x4cd6e0, 0x4cd660, 0x4d11a0, 0x4cbb90, 0x4d93e0, 0x4d9370, 0x535712)
-004dbf7e insert_catch             # vector<loading_config>::insert catch(...) arm: append_range 0x4cd660, then delete + tstring dtor of the temporary (0x42bc40), __CxxThrowException
-004dc350 loading_config_ctor       # ~1.9 KB loading-screen config construction (widgets, tstrings, ini lookups); not reconstructed
+004dc1c0 ??4?$vector@UE80@@V?$allocator@UE80@@@std@@@std@@QAEAAV01@ABV01@@Z  # std::vector<0x50-byte record>::operator=
+004cd4f0 ??4E80@@QAEAAU0@ABU0@@Z  # E80::operator= (element assignment)
+004cd6e0 ??$_Copy_opt@PAUE80@@PAU1@@std@@YAPAUE80@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Copy_opt<E80*>
+004d10f0 ??$_Destroy_range@UE80@@V?$allocator@UE80@@@std@@@std@@YAXPAUE80@@0AAV?$allocator@UE80@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Destroy_range<E80*>
+004d93e0 ??$_Ucopy@PAUE80@@@?$vector@UE80@@V?$allocator@UE80@@@std@@@std@@IAEPAUE80@@PAU2@00@Z  # vector<E80>::_Ucopy
+004d11a0 ??$_Uninit_copy@PAUE80@@PAU1@V?$allocator@UE80@@@std@@@std@@YAPAUE80@@PAU1@00AAV?$allocator@UE80@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_copy<E80*>
+004cbb90 ?_Buy@?$vector@UE80@@V?$allocator@UE80@@@std@@@std@@IAE_NI@Z  # vector<E80>::_Buy
+004d9370 ?_Destroy@?$vector@UE80@@V?$allocator@UE80@@@std@@@std@@IAEXPAUE80@@0@Z  # vector<E80>::_Destroy
+004da840 ?clear@?$vector@UE80@@V?$allocator@UE80@@@std@@@std@@QAEXXZ  # vector<E80>::clear
+004be950 ?size@?$vector@UE80@@V?$allocator@UE80@@@std@@@std@@QBEIXZ  # vector<E80>::size (folded)

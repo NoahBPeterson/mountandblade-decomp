@@ -1,0 +1,2 @@
+0047ddf0 73 EChar::blend_all: complete; the loop counter keeps its own register copy in the original (address-taken i is stored to its home at the loop end, not reloaded after the call) and lists[i] is addressed from the lod_mesh base; equiv PASS
+0047df80 1380 GenObj::gen_set_init: complete (record cursor on val, do/while cell search, inline-array entity table at +0x845d98c, rep-movsd matrix copies); scheduling/register allocation differs. equiv WEAK (35% insns: the harness cannot synthesise rich scatter sets)

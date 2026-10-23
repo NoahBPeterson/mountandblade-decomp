@@ -33,6 +33,7 @@ struct SomeIface {
 
 struct Channel {                                            // element of the channels array
     char pad[0x1c];
+    char emit(int script, int zero, int* count, char* buf, int tag);   // 0x4b09e0 (thiscall ret 0x14: ecx = this is passed straight through)
     void play(int arg);                                     // 0x4875e0 (thiscall, ret 4)
 };
 
@@ -129,7 +130,7 @@ void Channel::play(int arg)
 {
     char buf[128];
     int n = 0;
-    report_line(arg, 0, &n, buf, -1);
+    emit(arg, 0, &n, buf, -1);
 }
 
 // @ 0x487620

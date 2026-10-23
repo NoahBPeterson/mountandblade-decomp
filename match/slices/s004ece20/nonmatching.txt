@@ -21,4 +21,6 @@
 #          factor across the four decays (one 9.8 multiply, clamp sequence replayed per store); this build
 #          recomputes each factor and splits the pan chain. The float operand order on a few commutative
 #          adds / the sqrt accumulation also come out reversed by this compiler.
-# slices/s004ece20/s004ece20.cpp  ?camera_update@Screen@@QAEXM@Z  004ece20
+# equiv.py: 0x4ece20 UNSUPPORTED (harness: the FMOD listener import and wild reads; resolution audit has no disagree after the
+#           y/z swizzle of the listener arguments was fixed: the original passes vel.x,vel.z,vel.y and dir.x,dir.z,dir.y)
+004ece20 1741 complete; see the residue notes above (x87 scheduling / CSE, and the original keeps xor eax,eax as a zero register and max_zoom live in st(0))

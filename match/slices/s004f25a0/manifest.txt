@@ -4,3 +4,4 @@ slices/s004f25a0/s004f25a0.cpp  ?set_enabled_text@TerrainPage@@QAEXPAUWidget@@@Z
 slices/s004f25a0/s004f25a0.cpp  ?set_hex3_text@TerrainPage@@QAEXH@Z  004f28f0  /O2 /MT /Gy /TP
 slices/s004f25a0/s004f25a0.cpp  ?refresh_hex@TerrainPage@@QAEXXZ  004f2960  /O2 /MT /Gy /TP
 slices/s004f25a0/s004f25a0.cpp  ?build_hex_text@BitWords@@QAEXAAUtstring@@@Z  004f29b0  /O2 /MT /Gy /TP
+slices/s004f25a0/s004f25a0.cpp  ?sync_bits@TerrainPage@@QAEXXZ  004f2ae0  /O2 /MT /Gy /TP

@@ -29,75 +29,88 @@ extern float g_k_0_2;                           // 0x54b4c8
 extern float g_k_1_20;                          // 0x54b4d0
 extern float g_k_reach;                         // 0x598e8c (36.0)
 
-struct ptype {                                  // 0x20, table at *0x5e28f8
-    char pad0[0x10];
-    unsigned flags;                             // +0x10 bit 0x20000
-    char pad14[4];
-    int nframes;                                // +0x18
-    void* frames;                               // +0x1c
+// ---- engine std::vector views (alloc, begin, end, cap): size() is inline, capacity()/resize are out of line ---
+struct mat3 { vector4 a, b, c; };
+struct mxo { mat3 r; vector4 o; };            // a matrix as three rows + origin
+struct vec96 {                                  // 0x60-byte elements (s0040ea00 vec96)
+    void* alloc;
+    char* first;
+    char* last;
+    char* end;
+    unsigned size() const { return first == 0 ? 0 : (last - first) / 0x60; }
+    unsigned capacity() const;                  // 0x40f030
+    void resize(unsigned n);                    // 0x4f46d0
 };
-extern ptype* g_ptypes;                         // 0x5e28f8
-
-// ---- an engine std::vector (alloc, begin, end, cap) ----------------------------------------------------
-struct rvec {
-    void* alloc;                                // +0
-    char* begin;                                // +4
-    char* end;                                  // +8
-    char* cap;                                  // +0xc
+struct vec32 {                                  // 0x20-byte elements (s0040ea00 vec32)
+    void* alloc;
+    char* first;
+    char* last;
+    char* end;
+    unsigned size() const { return first == 0 ? 0 : (last - first) >> 5; }
+    unsigned capacity() const;                  // 0x40f090
+    void resize(unsigned n);                    // 0x4f4860
 };
 
-struct rnode {                                  // particle mesh record, 0x18..0xa4 (s0040ea00)
+struct dmesh;
+struct dmesh {                                  // an rgl::mesh as far as this slice sees it
     char pad00[0x18];
-    rnode* master;                              // +0x18
+    dmesh* master;                              // +0x18
     char pad1c[0x50 - 0x1c];
-    rvec f50;                                   // +0x50 (0x10-byte elements)
-    rvec f60;                                   // +0x60
-    rvec f70;                                   // +0x70 (0x20-byte elements)
-    rvec f90;                                   // +0x90 (0x20-byte elements)
+    vec96 f50;                                  // +0x50 frames (0x60 bytes)
+    char pad60[0x10];                           // +0x60
+    vec32 f70;                                  // +0x70 records (0x20 bytes)
+    char pad80[0x10];                           // +0x80
+    vec32 f90;                                  // +0x90 records (0x20 bytes)
     char flag_a0;                               // +0xa0
     char flag_a1;                               // +0xa1
+    char pada2[0x1d4 - 0xa2];
+    matrix frame;                               // +0x1d4
+
+    vec96* get50_();                            // 0x40ebd0 (walks master until flag_a1; called on the master)
+    vec32* get70_();                            // 0x40eba0 (same)
+    vec32* get90_();                            // 0x40ec30 (walks master until flag_a0)
+    vec96* get50() { return flag_a1 ? &f50 : master->get50_(); }
+    vec32* get70() { return flag_a1 ? &f70 : master->get70_(); }
+    vec32* get90() { return flag_a0 ? &f90 : master->get90_(); }
+    void finish_load();                         // 0x419300
+    void append_skinned(dmesh* src, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
+    void append_shaded(dmesh* src, const matrix* m, unsigned color);                          // 0x47aa40 (ret 0xc)
 };
 
-struct frame60 {                                // 0x60: one copied frame
-    rnode* node;                                // +0x00 its chain node
-    char pad04[0x14];
-    void* owner;                                // +0x18
-    char pad1c[0x0c];
-    int count;                                  // +0x28
-    char pad2c[0x0c];
-    int mesh_count;                             // +0x38
-    char pad3c[0x0c];
-    float x;                                    // +0x48
-    float y;                                    // +0x4c
+struct vec2 {
+    float x, y;
+    vec2(float a, float b) : x(a), y(b) {}
+};
+struct frame60 {                                // 0x60: one frame of a dust mesh
+    char pad00[0x48];
+    vec2 xy;                                    // +0x48 / +0x4c
     int type_index;                             // +0x50
     char pad54[0x0c];
 };
 
-struct placeable {                              // the object behind a cell slot (list[0])
-    char pad00[0x50];
-    rvec frames;                                // +0x50 0x60-byte frames
-    char pad5c[0x14];
-    rvec recs;                                  // +0x70 0x20-byte records
-    char pad7c[0x14];
-    rvec objs;                                  // +0x90 0x20-byte records
-    char pad9c[0x1d4 - 0x9c];
-    matrix frame;                               // +0x1d4 (the tint rides in its `o` row at +0x204)
+struct AnimBox {                                // 0x48
+    char pad0[0x14];
+    dmesh** meshes;                             // +0x14
+    char pad18[0x48 - 0x18];
 };
+struct ptype {                                  // 0x20, table at *0x5e28f8
+    char pad0[0x10];
+    __int64 flags;                              // +0x10 bit 0x20000
+    int nframes;                                // +0x18
+    AnimBox* boxes;                             // +0x1c
+};
+extern ptype* g_ptypes;                         // 0x5e28f8
 
-struct dust_item {                              // 0xa0, list at +0x5c3b94c
-    char pad00[4];
-    float gx;                                   // +0x04 world x
-    float gy;                                   // +0x08 world y
-    int f0c;                                    // +0x0c
-    int f10;                                    // +0x10
+struct particle {                               // 0xa0, list at mission + 0x5c3b8f8
+    int type;                                   // +0x00
+    char pad04[0x10];
     matrix frame;                               // +0x14
     vector4 dir;                                // +0x54
     int anim;                                   // +0x64
-    int f68;                                    // +0x68
-    void* obj;                                  // +0x6c
-    int f70;                                    // +0x70
-    int f74;                                    // +0x74
-    char pad78[0x9c - 0x78];
+    char pad68[4];
+    dmesh* meshes[4];                           // +0x6c
+    int first[4];                               // +0x7c
+    int last[4];                                // +0x8c
     int nmesh;                                  // +0x9c
 };
 
@@ -108,13 +121,13 @@ struct cell_obj {                               // the scene object of one cell
     char pad[0xc4 - 4];
     vector4 pos;                                // +0xc4
     char pad_d4[0x11c - 0xd4];
-    placeable** list;                           // +0x11c
-    placeable** list_end;                       // +0x120
+    dmesh** list;                               // +0x11c
+    dmesh** list_end;                           // +0x120
     char pad124[0x140 - 0x124];
     char active;                                // +0x140
 };
 
-struct cell_rec {                               // 0x34 per (outer, inner); outer stride 0x9c0
+struct cell_rec {                               // 0x34 per cell; x stride 0x9c0
     float x, y;                                 // +0x00 / +0x04
     char pad08[8];
     float reach;                                // +0x10
@@ -124,133 +137,199 @@ struct cell_rec {                               // 0x34 per (outer, inner); oute
 // ---- the mission --------------------------------------------------------------------------------------
 struct Mission {
     char pad0[0x5c3b8f4];
-    int dust_count;                             // +0x5c3b8f4
-    char pad3[0x5c3b94c - 0x5c3b8f8];
-    dust_item dust[0x40000];                    // +0x5c3b94c (stride 0xa0)
-    char pad4[0x843bd78 - 0x5c3b94c - 0x20000 * 0xa0];
-    cell_obj* grid[0x30];                       // +0x843bd78, index outer * 0x30 + inner
-    char pad5[0x843e178 - 0x843bd78 - 0x30 * 4];
-    int emitted[0x30];                          // +0x843e178, index outer * 0x30 + inner
-    char pad6[0x845d97c - 0x843e178 - 0x30 * 4];
-    int n_inner;                                // +0x845d97c
-    int n_outer;                                // +0x845d980
+    int dust_count;                             // +0x5c3b8f4 (the list header: count, then the entries)
+    particle dust[1];                           // +0x5c3b8f8 (stride 0xa0; really 0x40000)
+    char pad1[0x843bd78 - 0x5c3b8f8 - sizeof(particle)];
+    cell_obj* grid[0x30][0x30];                 // +0x843bd78, [x][y]
+    int emitted[0x30][0x30];                    // +0x843e178, [x][y]
+    char pad2[0x8440598 - 0x843e178 - 0x900 * 4];
+    cell_rec cells[0x2f][0x30];                 // +0x8440598, [x][y] (0x34 each; the last row is cut short by n_inner)
+    char pad3[0x845d97c - 0x8440598 - 0x2f * 0x30 * 0x34];
+    int n_inner;                                // +0x845d97c (cells along x)
+    int n_outer;                                // +0x845d980 (cells along y)
 
-    void update_particles(const matrix* view);  // 0x4f3e10 (free __fastcall form below)
+    void update_particles(const matrix* view);                  // 0x4f3e10 (ret 4)
+    void emit_cell(int x, int y);                               // 0x4f4060 (ret 8)
+    vector4* ground_color(vector4* out, const float* pos);      // 0x464d50 (s00464a60, ret 8)
+    void light_particle(void* list, int idx, bool trace);       // 0x471b30 (s00471b30, ret 0xc)
 };
-extern cell_rec g_cells[];                       // +0x8440598 (a fixed address in the exe)
 
-// ---- callees ------------------------------------------------------------------------------------------
-struct node_wrap { rnode* n; };
-void* node_get50(rnode* n);                     // 0x40ebd0: { rnode* x = n; while (!x->flag_a1) x = x->master; return &x->f50; }
-void* node_get70(rnode* n);                     // 0x40eba0: same with f70
-void* node_get90(rnode* n);                     // 0x40ec30: while (!x->flag_a0) x = x->master; return &x->f90;
-int   count10(char* v);                         // (f50 count: (end - begin) / 0x10)
-int   count20(char* v);                         // (f70 / f90 count: (end - begin) / 0x20)
-unsigned cap32(const void* v);                  // 0x40f090 capacity of a 0x60-byte element vector
-unsigned cap96(const void* v);                  // 0x40f030 capacity of a 0x60-byte element vector
-int  ftol(float f);                             // 0x535a64 (float -> int)
-void terrain_color(vector4* out, const float* pos, int a);            // 0x464d50 (thiscall on terrain)
-unsigned pack_color(const float* c);                                  // 0x40e440
-void identity3(void* out);                                            // 0x40cd60
-void rot3(void* out, const matrix* m);                                // 0x40a920
-void set_matrix(placeable* o);                                        // 0x419300
-void refresh(cell_obj* o);                                            // +0x10 virtual
-void emit_shader(placeable* o, const frame60* f, unsigned color);     // 0x47aa40
-void emit_plain(placeable* o, const frame60* f, int local, unsigned color, int b);  // 0x44eb00
-void resize_frames(placeable* o, int n);                              // 0x4f4860
-void resize_recs(placeable* o, int n);                                // 0x4f46d0
-void light_item(cell_obj* o, void* list, int i, int unused);          // 0x471b30
+struct pos : matrix {
+    mat3 rot3(const matrix& m) const;                           // 0x40a920 (hidden return, ret 4)
+};
+mat3* __cdecl identity3(mat3* out);                             // 0x40cd60
+unsigned __cdecl pack_color(const float* c);                    // 0x40e440
 
-static inline int clamp_cell(int v, int n)
-{
-    if (v < 0)
-        return 0;
-    if (v >= n)
-        return n - 1;
-    return v;
-}
-// 0x4f4060: the dust re-emission of one cell (inner, outer = grid indices)
-void __fastcall emit_cell(Mission* self2, int eax_garbage, int inner, int outer);
-static inline int cell_of(float world, int n) { return clamp_cell(ftol(world * g_k_1_20), n); }
 // @ 0x4f3e10
-void __fastcall update_particles(Mission* self, int, const matrix* view)
+void Mission::update_particles(const matrix* view)
 {
-    for (int a = 0; a < self->n_outer; a++) {
-        cell_rec* rec = &g_cells[a * 0x34];
-        for (int b = 0; b < self->n_inner; b++) {
-            if (self->emitted[a * 0x30 + b] == 0) {
+    for (int a = 0; a < n_outer; a++) {
+        for (int b = 0; b < n_inner; b++) {
+            cell_rec* rec = &cells[b][a];
+            if (emitted[b][a] == 0) {
                 float dx = rec->x - view->o.x;
                 float dy = rec->y - view->o.y;
-                if ((float)sqrt(dx * dx + dy * dy) < rec->reach + 36.0f)
-                    emit_cell(self, 0, b, a);
+                if ((float)sqrt(dy * dy + dx * dx) < rec->reach + g_k_reach)
+                    emit_cell(b, a);
             }
-            cell_obj* o = self->grid[a * 0x30 + b];
-            if (o->list && (o->list_end - o->list) > 0) {
+            cell_obj* o = grid[b][a];
+            if (o->list && (o->list_end - o->list) != 0) {
                 float dx = o->pos.x - view->o.x;
                 float dy = o->pos.y - view->o.y;
-                if (o->length() + 36.0f < (float)sqrt(dx * dx + dy * dy)) {
+                if ((float)sqrt(dy * dy + dx * dx) > o->length() + g_k_reach) {
                     o->active = 0;
                 } else {
                     o->active = 1;
-                    placeable* p = o->list[0];
-                    matrix* m = &p->frame;
-                    m->s = view->s;
-                    m->f = view->f;
-                    m->u = view->u;
+                    matrix* m = &o->list[0]->frame;
+                    *(mat3*)m = *(const mat3*)view;
                     m->o.w = 1.0f;
                     m->s.w = 0.0f;
                     m->f.w = 0.0f;
                     m->u.w = 0.0f;
-                    m->s = view->s;
-                    m->f = view->f;
-                    m->u = view->u;
-                    m->s.x *= 0.2f;
-                    m->s.y *= 0.2f;
-                    m->s.z *= 0.2f;
-                    m->f.x *= 0.2f;
-                    m->f.y *= 0.2f;
-                    m->f.z *= 0.2f;
-                    m->u.x *= 0.2f;
-                    m->u.y *= 0.2f;
-                    m->u.z *= 0.2f;
-                    m->o.x = 0.5f;
-                    m->o.y = 0.5f;
-                    m->o.z = 0.5f;
-                    m->o.w = 1.0f;
+                    *(mat3*)m = *(const mat3*)view;
+                    m->s.x *= g_k_0_2;
+                    m->s.y *= g_k_0_2;
+                    m->s.z *= g_k_0_2;
+                    m->f.x *= g_k_0_2;
+                    m->f.y *= g_k_0_2;
+                    m->f.z *= g_k_0_2;
+                    m->u.x *= g_k_0_2;
+                    m->u.y *= g_k_0_2;
+                    m->u.z *= g_k_0_2;
+                    vector4 tint(0.5f, 0.5f, 0.5f);
+                    m->o = tint;
                 }
             }
         }
     }
 }
 
-// @ 0x4f4060
-void __fastcall emit_cell(Mission* self2, int eax_garbage, int inner, int outer)
+static inline int cell_clamp(int v, int n)
 {
-    Mission* s = self2;
-    s->emitted[outer * 0x30 + inner] = 1;
-    int n = s->dust_count;
-    int nf = 0, nr = 0, no = 0;
+    if (v < 0)
+        return 0;
+    return v < n ? v : n - 1;
+}
+
+// @ 0x4f4060
+void Mission::emit_cell(int x, int y)
+{
+    emitted[x][y] = 1;
+    int n = dust_count;
+    unsigned nf = 0, nr = 0, no = 0;
     if (n > 0) {
-        char* d = (char*)s->dust;
+        int i = 0;
         do {
-            int ix = cell_of(*(float*)(d - 0xc), s->n_inner);
-            int iy = cell_of(*(float*)(d - 8), s->n_outer);
-            if (ix == inner && iy == outer) {
-                frame60* f = (frame60*)*(void**)(d - 0x44);
-                rnode* nd = f->node;
-                nf += count10((char*)node_get50(nd));
-                nr += count20((char*)node_get70(nd));
-                no += count20((char*)node_get90(nd));
+            particle* p = &dust[i];
+            int ix = (int)(p->frame.o.x * g_k_1_20);
+            int cx;
+            if (ix < 0) {
+                cx = 0;
+            } else {
+                cx = n_inner - 1;
+                if (ix < n_inner)
+                    cx = ix;
             }
-            d += 0xa0;
+            int cy = (int)(p->frame.o.y * g_k_1_20);
+            if (cy < 0)
+                cy = 0;
+            else if (cy >= n_outer)
+                cy = n_outer - 1;
+            if (cx == x && cy == y) {
+                dmesh* src = g_ptypes[p->type].boxes[p->anim].meshes[0];
+                nf += src->get50()->size();
+                nr += src->get70()->size();
+                no += src->get90()->size();
+            }
+            i++;
         } while (--n);
     }
-    cell_obj* o = s->grid[outer * 0x30 + inner];
-    placeable* p = o->list[0];
-    if ((unsigned)no > cap32(&p->frames))
-        resize_frames(p, no);
-    if ((unsigned)nf > cap96(&p->recs))
-        resize_recs(p, nf);
-    if ((unsigned)nr > cap32(&p->objs))
-        resize_frames(p, nr);
+    vec32* v70 = &grid[x][y]->list[0]->f70;
+    if (nr > v70->capacity())
+        v70->resize(nr);
+    vec96* v50 = &grid[x][y]->list[0]->f50;
+    if (nf > v50->capacity())
+        v50->resize(nf);
+    vec32* v90 = &grid[x][y]->list[0]->f90;
+    if (no > v90->capacity())
+        v90->resize(no);
+    for (int i = 0; i < dust_count; i++) {
+        particle* p = &dust[i];
+        int cx = (int)(p->frame.o.x * g_k_1_20);
+        if (cx < 0)
+            cx = 0;
+        else if (cx >= n_inner)
+            cx = n_inner - 1;
+        int cy = (int)(p->frame.o.y * g_k_1_20);
+        if (cy < 0)
+            cy = 0;
+        else if (cy >= n_outer)
+            cy = n_outer - 1;
+        if (cx == x && cy == y) {
+            vector4 col;
+            ground_color(&col, &p->frame.o.x);
+            unsigned color = pack_color(&col.x) | 0xff000000;
+            mat3 m3;
+            identity3(&m3);
+            m3.a.x = p->dir.x;
+            m3.b.y = p->dir.y;
+            m3.c.z = p->dir.z;
+            mxo mm;
+            mm.r = ((pos*)&p->frame)->rot3(*(const matrix*)&m3);
+            mm.o = p->frame.o;
+            p->nmesh = 1;
+            p->meshes[0] = grid[cx][cy]->list[0];
+            p->first[0] = grid[cx][cy]->list[0]->f50.size();
+            ptype* pt = &g_ptypes[p->type];
+            p->anim = p->anim % pt->nframes;
+            dmesh* src = pt->boxes[p->anim].meshes[0];
+            if ((pt->flags & 0x20000i64) != 0)
+                grid[cx][cy]->list[0]->append_shaded(src, (const matrix*)&mm, color);
+            else
+                grid[cx][cy]->list[0]->append_skinned(src, (const matrix*)&mm, -1, color, 0);
+            p->last[0] = grid[cx][cy]->list[0]->f50.size();
+        }
+    }
+    cell_obj* o = grid[x][y];
+    if (o->list && (o->list_end - o->list) != 0) {
+        dmesh* m = o->list[0];
+        m->finish_load();
+        grid[x][y]->refresh();
+        vector4 zv(0.0f, 0.0f, 0.0f);
+        mat3 tmp;
+        mxo mm;
+        mm.r = *identity3(&tmp);
+        mm.o = zv;
+        m->frame = *(matrix*)&mm;
+        m->frame.s.w = 0.0f;
+        m->frame.f.w = 0.0f;
+        m->frame.u.w = 0.0f;
+        m->frame.o.w = 1.0f;
+        for (unsigned i = 0; m->f50.first != 0 && i < m->f50.size(); i++) {
+            frame60* fr = (frame60*)m->f50.first + i;
+            char* v = m->f70.first + (fr->type_index << 5);
+            fr->xy = vec2(*(float*)v * g_k_0_2, *(float*)(v + 4) * g_k_0_2);
+        }
+    }
+    if (g_use_shaders == 0 || g_x5aa084 != 2) {
+        for (int i = 0; i < dust_count; i++) {
+            particle* p = &dust[i];
+            int ix = (int)(p->frame.o.x * g_k_1_20);
+            int cx;
+            if (ix < 0) {
+                cx = 0;
+            } else {
+                cx = n_inner - 1;
+                if (ix < n_inner)
+                    cx = ix;
+            }
+            int cy = (int)(p->frame.o.y * g_k_1_20);
+            if (cy < 0)
+                cy = 0;
+            else if (cy >= n_outer)
+                cy = n_outer - 1;
+            if (cx == x && cy == y)
+                light_particle(&dust_count, i, false);
+        }
+    }
 }

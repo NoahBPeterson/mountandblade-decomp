@@ -1,7 +1,1 @@
-004de3e0  210  build_panel, complete (four add_point calls reusing one p[3], the normal written into the same
-  p[3], uv[2] and idx[4], four add_vertex calls, add_rec2(v1,v2,v3) and add_rec2(v1,v3,v4), f138/f164=1).
-  Not byte-exact: ours is 436 vs 460 bytes with a 0x24 vs 0x38 frame; cl assigns uv/p/idx to different
-  slots and folds the zero-vector address differently.  equiv FAIL: the original passes a 2-float uv
-  pointer to add_vertex (0x413c50), which copies 96 bytes from it (0x413c84 `mov ecx,0x18; rep movsd`),
-  i.e. it reads uninitialised stack past the 2-float array; the copied words depend on the caller's
-  exact stack layout, which ours does not reproduce.  The source logic matches the decompiled original.
+# s004de1b0 partial: nothing left.

@@ -29,21 +29,8 @@ using rgl::g_resmgr;
 
 // push_back with the inlined fast path (VC7.1 std::vector<mesh*>)
 struct MeshVec : std::vector<mesh*> {
-    iterator begin() { return _Myfirst; }
-    iterator end() { return _Mylast; }
-    size_type size() const { return _Mylast - _Myfirst; }
-    size_type capacity() const { return _Myend - _Myfirst; }
     MeshVec& operator=(const std::vector<mesh*>& o);               // 0x43f0a0
     void insert_n(iterator where, size_t n, mesh* const& v);       // 0x410610
-    void push_back(mesh* const& m)
-    {
-        if (_Myfirst != 0 && size() < capacity()) {
-            *_Mylast = m;
-            _Mylast++;
-        } else {
-            insert_n(_Mylast, 1, m);
-        }
-    }
 };
 
 // ---- the scene entity (vtable 0x54b460, size 0x15c, ctor 0x41fba0; see s004291c0 world.h) ---------------
@@ -55,7 +42,7 @@ struct ebox {                                    // 0x30-byte collision box (res
 };
 struct entity {
     virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void add_mesh(mesh* m);              // vtable +0x10
+    virtual void refresh();                      // vtable +0x10 (no arguments)
     virtual float s5();                          // vtable +0x14 (returns a float)
     virtual void s6(vector4* p);                 // vtable +0x18
     char pad04[0x2c - 4];
@@ -89,9 +76,6 @@ struct PropRec {
     char pad1b8[0x1c8 - 0x1b8];
 };
 struct PropVec : std::vector<PropRec> {
-    iterator begin() { return _Myfirst; }
-    iterator end() { return _Mylast; }
-    size_type size() const { return _Mylast - _Myfirst; }
 };
 
 struct terrain_obj {
@@ -101,7 +85,7 @@ struct terrain_obj {
     float map_y;                                 // 0x274
     char pad278[0x6688 - 0x278];
     PropVec props;                               // 0x6688 (_Myfirst at +0x668c)
-    char pad6694[0xc3b0dc - 0x6694];
+    char pad6698[0xc3b0dc - 0x6698];
     SceneRegistry* registry2;                    // 0xc3b0dc
     char pad_e0[0x845e784 - 0xc3b0e0];
     tstring name;                                // 0x845e784
@@ -124,7 +108,7 @@ void terrain_obj::build_entity()
     vector4 center;
     center.x = map_x - 10.0f;
     center.y = map_y - 10.0f;
-    center.z = (map_y + map_x) * 0.5f;
+    center.z = (map_x + map_y) * 0.5f;
     vector4 tv(10.0f, 10.0f, 0.0f);
 
     entity** e = arr;
@@ -138,8 +122,8 @@ void terrain_obj::build_entity()
         } while (--j);
     } while (--i);
 
-    for (unsigned n = 0; meshes.begin() != meshes.end() && n < meshes.size(); n++) {
-        mesh* m = meshes.begin()[n]->clone();
+    for (unsigned n = 0; n < meshes.size(); n++) {
+        mesh* m = meshes[n]->clone();
         m->set_color(center);
         m->translate(&tv);
         snap(m);
@@ -162,17 +146,17 @@ void terrain_obj::build_entity()
         entity** ep = &arr[ix * 3 + iy];
 
         m->f214 = 10;
-        (*ep)->meshes.push_back(m);
-        (*ep)->add_mesh(m);
-
         entity* e0 = *ep;
-        if (g_use_shaders == 0)
-            registry2->light_mesh(m, &e0->frame, 1);
-        else if ((((char*)m->res)[0x1c] & 0x40) != 0)
-            registry2->light_mesh(m, &e0->frame, 1);
+        e0->meshes.push_back((mesh*)m);
+        e0->refresh();
 
-        e0->box.extend((const vector4*)((char*)m + 0x22c));
-        e0->box.extend((const vector4*)((char*)m + 0x23c));
+        if (g_use_shaders == 0)
+            registry2->light_mesh(m, &(*ep)->frame, 1);
+        else if ((((char*)m->res)[0x1c] & 0x40) != 0)
+            registry2->light_mesh(m, &(*ep)->frame, 1);
+
+        (*ep)->box.extend((const vector4*)((char*)m + 0x22c));
+        (*ep)->box.extend((const vector4*)((char*)m + 0x23c));
     }
 
     entity** q = arr;
@@ -206,7 +190,8 @@ void terrain_obj::light_entities(entity** list, int count)
     for (int i = 0; i < count; i++) {
         entity* e = list[i];
         res_t* r = e->res;
-        if (((r->mat->f20 >> 7) & 1) != 0 && (*(unsigned*)((char*)r + 0x1c) & 0x700) != 0x300) {
+        bool k = (((unsigned)r->mat->f20 >> 7) & 1) != 0;
+        if (k && (*(unsigned*)((char*)r + 0x1c) & 0x700) != 0x300) {
             vector4 o(0.0f, 0.0f, 0.0f);
             mat3 ident;
             mat4 frame;
@@ -221,15 +206,14 @@ void terrain_obj::light_entities(entity** list, int count)
 // Light every mesh of the entity of every placed object whose record is not kind 4.
 void terrain_obj::light_props()
 {
-    for (unsigned i = 0; props._Myfirst != 0 && i < props.size(); i++) {
-        PropRec* r = &props._Myfirst[i];
-        if (r->kind == 4 || r->ent == 0)
+    for (unsigned i = 0; i < props.size(); i++) {
+        if (props[i].kind == 4 || props[i].ent == 0)
             continue;
-        entity* e = r->ent;
-        for (unsigned j = 0; e->meshes._Myfirst != 0 && j < e->meshes.size(); j++) {
-            mesh* m = e->meshes._Myfirst[j];
-            if (((m->res->mat->f20 >> 7) & 1) != 0 && (*(unsigned*)((char*)m->res + 0x1c) & 0x700) != 0x300)
-                registry->light_mesh(m, &e->frame, 1);
+        for (unsigned j = 0; j < props[i].ent->meshes.size(); j++) {
+            res_t* r = props[i].ent->meshes[j]->res;
+            bool k = (((unsigned)r->mat->f20 >> 7) & 1) != 0;
+            if (k && (*(unsigned*)((char*)r + 0x1c) & 0x700) != 0x300)
+                registry->light_mesh(props[i].ent->meshes[j], &props[i].ent->frame, 1);
         }
     }
 }
@@ -240,6 +224,7 @@ struct ItemRef {                                 // 8 bytes: item index + modifi
     tstring mesh_name();                                     // 0x434b20 (hidden return pointer)
     tstring mesh_name(unsigned __int64 cls);                 // 0x462900 (hidden return pointer)
 };
+struct ItemSound { int count; void play(int id); };   // 0x48add0 (thiscall on kind+0x228)
 struct ItemKind {                                // 0x238 bytes (array at 0x5e29d0)
     char pad0[0x1c8];
     int type;                                    // 0x1c8 (low byte = kind)
@@ -247,7 +232,7 @@ struct ItemKind {                                // 0x238 bytes (array at 0x5e29
     unsigned flags1d0;                           // 0x1d0
     unsigned flags1d4;                           // 0x1d4
     char pad1d8[0x228 - 0x1d8];
-    int count228;                                // 0x228
+    ItemSound snd;                               // 0x228
     char pad22c[0x238 - 0x22c];
     tstring mesh_name_for(int bit);              // 0x433bf0
     void get_carry_pos(mat4* out, int* bone_flags, int* bone);   // 0x433e40
@@ -268,84 +253,85 @@ struct lod_mesher {                              // resmgr::make_lod_mesh (0x41c
 struct Skeleton { char pad0[4]; void* elems; };
 struct AgentBody { char pad0[0x304]; Skeleton* skel; };
 struct FxElem { void add_group(void* m); char pad[0x1dc - 4]; };   // 0x4423f0, element stride 0x1dc
-struct ItemSound { void play(int id); };         // 0x48add0 (thiscall; `this` unused)
 
 struct GameData { char pad0[0x1a1f4]; };
 extern GameData* g_game;                         // 0x5e2930
-extern int g_spawn_lo, g_spawn_hi;               // 0xa70448 / 0xa7044c
-extern int g_spawn_lo2, g_spawn_hi2;             // 0xa70450 / 0xa70454
+extern __int64 g_spawn_a;                        // 0xa70448
+extern __int64 g_spawn_b;                        // 0xa70450
+
+static inline tstring item_mesh_name(ItemKind* kind, int item, unsigned m4)
+{
+    if (item < 0 || item >= g_item_count)
+        return tstring("Error: Invalid item");
+    return kind->mesh_name_for((int)m4 >> 24);
+}
 
 // @ 0x47cfe0
 // Build the carried-item display meshes of an agent body: one lod mesh per equipment slot, plus the
 // hand-carry mesh for the active item; publishes the ids/sounds for the item drop code.
-void setup_item_meshes(AgentBody* body, int flag, int troop, int* out, char* outbase, ItemRef* items, int id)
+// cdecl; the 5th argument is unused.
+void setup_item_meshes(AgentBody* body, int flag, int troop, char* outbase, int unused, ItemRef* items, int id)
 {
     if (flag != 0)
         return;
+    int i = 0;
+    ItemRef* it = items;
     int* p = (int*)(outbase + 0x10);
-    for (int i = 0; i < 4; i++) {
-        int idx = items[i].item;
-        if (idx < 0) {
-            p++;
-            continue;
-        }
-        ItemKind* kind = g_items + idx;
-        unsigned t = (unsigned)kind->type & 0xff;
-        if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11 ||
-            t == 2 || t == 3 || t == 4 || t == 7) {
-            tstring name;
-            if (idx < 0 || idx >= g_item_count)
-                name = tstring("Error: Invalid item");
-            else
-                name = kind->mesh_name_for((int)items[i].m4 >> 24);
-            lod_mesh* m = ((lod_mesher*)&g_resmgr)->make_lod_mesh(name, false);
-            *p = (int)m;
-            name.~tstring();
-            ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(m);
-            m->fcc = 0;
-            if (kind->count228 > 0) {
-                *(int*)((char*)g_game + 0x1a1f4) = id;
-                *(int*)((char*)g_game + 0x1a1f8) = troop;
-                *(int*)((char*)g_game + 0x1a204) = i;
-                *(int*)((char*)g_game + 0x1a1fc) = *p;
-                *(int*)((char*)g_game + 0x1a200) = 0;
-                g_spawn_lo = id; g_spawn_hi = id >> 31;
-                g_spawn_lo2 = troop; g_spawn_hi2 = troop >> 31;
-                ((ItemSound*)((char*)kind + 0x228))->play(-0x32);
+    do {
+        ItemRef ir = *it;
+        if (ir.item >= 0) {
+            ItemKind* kind = g_items + ir.item;
+            unsigned t = (unsigned)kind->type & 0xff;
+            if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11 ||
+                t == 2 || t == 3 || t == 4 || t == 7) {
+                {
+                    tstring name = item_mesh_name(kind, ir.item, ir.m4);
+                    *p = (int)((lod_mesher*)&g_resmgr)->make_lod_mesh(name, false);
+                }
+                ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group((void*)*p);
+                ((lod_mesh*)*p)->fcc = 0;
+                if (kind->snd.count > 0) {
+                    *(int*)((char*)g_game + 0x1a1f4) = id;
+                    *(int*)((char*)g_game + 0x1a1f8) = troop;
+                    *(int*)((char*)g_game + 0x1a204) = i;
+                    *(int*)((char*)g_game + 0x1a1fc) = *p;
+                    *(int*)((char*)g_game + 0x1a200) = 0;
+                    g_spawn_a = id;
+                    g_spawn_b = troop;
+                    kind->snd.play(-0x32);
+                }
+            } else if (t == 5 || t == 6) {
+                *p = (int)((lod_mesher*)&g_resmgr)->make_lod_mesh(ir.mesh_name(), false);
+                if ((char)kind->type == 6) {
+                    mat4 mtx;
+                    identity(&mtx);
+                    mtx.o.x = -0.01f;
+                    mtx.o.z = -0.03f;
+                    float angle = -1.5707964f;
+                    mtx.rotate_su(&angle);
+                    ((lod_mesh*)*p)->transform(mtx);
+                }
+                ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group((void*)*p);
+                ((lod_mesh*)*p)->fcc = 0;
             }
-        } else if (t == 5 || t == 6) {
-            tstring name = items[i].mesh_name();
-            lod_mesh* m = ((lod_mesher*)&g_resmgr)->make_lod_mesh(name, false);
-            *p = (int)m;
-            name.~tstring();
-            if ((char)kind->type == 6) {
-                mat4 mtx;
-                identity(&mtx);
-                mtx.o.x = -0.01f;
-                mtx.o.z = -0.03f;
-                float angle = -1.5707964f;
-                mtx.rotate_su(&angle);
-                m->transform(mtx);
+            if ((((kind->flags1d0 & 0xf0000000) | (kind->flags1d4 & 7)) != 0) &&
+                ((unsigned)kind->type & 0xff) != 7 && ((unsigned)kind->type & 0xff) != 9) {
+                tstring name = ir.mesh_name(0x3000000000000000ull);
+                if (name.len > 1) {
+                    lod_mesh* m = ((lod_mesher*)&g_resmgr)->make_lod_mesh(name, false);
+                    mat4 carry;
+                    int bone, other;
+                    kind->get_carry_pos(&carry, &bone, &other);
+                    m->frame = carry;
+                    p[8] = (int)m;
+                    ((FxElem*)((char*)body->skel->elems + bone * 0x1dc))->add_group(m);
+                }
             }
-            ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(m);
-            m->fcc = 0;
         }
-        if (((kind->flags1d0 & 0xf0000000) != 0 || (kind->flags1d4 & 7) != 0) &&
-            t != 7 && t != 9) {
-            tstring name = items[i].mesh_name(0x3000000000000000ull);
-            if (name.len > 1) {
-                lod_mesh* m = ((lod_mesher*)&g_resmgr)->make_lod_mesh(name, false);
-                mat4 carry;
-                int bone_flags, bone;
-                kind->get_carry_pos(&carry, &bone_flags, &bone);
-                memcpy((char*)m + 0x8c, &carry, 0x40);
-                p[8] = (int)m;
-                ((FxElem*)((char*)body->skel->elems + bone * 0x1dc))->add_group(m);
-            }
-            name.~tstring();
-        }
+        i++;
+        it++;
         p++;
-    }
+    } while (i < 4);
 }
 
 // ---- the agent's carried-ranged-weapon display mesh (0x47d320) ---------------------------------------------

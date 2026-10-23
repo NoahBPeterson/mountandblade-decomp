@@ -53,19 +53,19 @@ extern unsigned g_type_mask;                                // 0x5a8e88 (= 4: th
 extern unsigned g_size_mask;                                // 0x5a8e78 (= 4: the terrain size is 2 bits wide)
 
 // ---- the world / scene --------------------------------------------------------------------------------
-void frustum_build_planes(vector4* frame);                  // 0x41e4f0 builds the six planes of the 4x4 `frame`
-struct World {                                              // the page's +0x1ac
+struct Block { int d[0x48]; void build_planes(); };   // build_planes = 0x41e4f0 (thiscall)
+struct World {                                              // the page's +0x6c pointer target
     char pad00[0x1ac];
-    vector4 frame[4];                                       // +0x1ac  the map frame (copied from the page's +0x70)
+    int block[0x48];                                        // +0x1ac  the 0x120-byte map block (copy of the page's +0x70)
 };
 
 // 0x40cd00 has a hidden return pointer and returns it; the two rotation helpers are thiscall on the matrix and
 // take a pointer to the angle (thiscall, ret 4).
-vector4* identity_pos(vector4* out);                        // 0x40cd00
-struct mat_self {
+struct mat_self : rgl::matrix {
     void rotate_fu(const float* angle);                     // 0x40e570 (rows s/f about u)
     void rotate_su(const float* angle);                     // 0x40e670 (rows s/u about f)
 };
+mat_self identity_pos();                                    // 0x40cd00 (cdecl, hidden return)
 void rotate_fu(void* m, const float* angle);                // 0x40e570 (same thiscall, for callers holding a raw ptr)
 void rotate_su(void* m, const float* angle);                // 0x40e670
 
@@ -88,8 +88,9 @@ struct TerrainPage {
     int     layer_bits[3];                                  // +0x54 / +0x58 / +0x5c  random bits of the water layers
     int     terrain_type;                                   // +0x60  terrain type (index into the type table)
     int     map_size;                                       // +0x64  terrain size
-    char    pad68[0x70 - 0x68];
-    int     map_block[0x170 / 4 - 0x70 / 4];                // +0x70  the 0x120-byte map block (frustum source at
+    char    pad68[4];                                       // +0x68
+    World*  world;                                          // +0x6c
+    int     map_block[(0x138 - 0x70) / 4];                  // +0x70  the 0x120-byte map block (runs on through frame[]; frustum source at
                                                             //        +0xf8 = block+0x88; copied to world +0x1ac)
     float   frame[0x10];                                    // +0x138  the frame path() builds (from a temp)
     char    pad178[0x18];                                   // +0x178
@@ -100,8 +101,7 @@ struct TerrainPage {
     float   yaw;                                            // +0x1a0  camera heading
     float   pitch;                                          // +0x1a4  camera pitch (0.1..1.5)
     float   zoom;                                           // +0x1a8  camera zoom (1.5..400.5)
-    World*  world;                                          // +0x1ac
-    char    pad1b0[0x1b4 - 0x1b0];
+    char    pad1ac[0x1b4 - 0x1ac];
     Widget* hexbox;                                         // +0x1b4  the hex terrain text field
     char    pad1b8[0x2c0 - 0x1b8];
 
@@ -260,30 +260,27 @@ void TerrainPage::paste_clipboard()
 // @ 0x4f3cf0
 void TerrainPage::path(float dt)
 {
-    vector4 m[4];                                           // the map frame
-    vector4 pos;                                            // the eye
-    identity_pos(m);                                        // 0x40cd00
+    vector4 pos;                                            // the eye (w stays uninitialised, copied into m.o.w)
+    mat_self m = identity_pos();                            // 0x40cd00 (hidden return pointer, cdecl)
     pos.x = view_x;
     pos.y = view_y;
     pos.z = view_z;
+    m.o = pos;
     float angle = 1.5707964f;                               // +90 degrees
-    ((mat_self*)&m)->rotate_fu(&angle);                     // 0x40e570
+    m.rotate_fu(&angle);                                    // 0x40e570
     angle = -yaw;
-    ((mat_self*)&m)->rotate_su(&angle);                     // 0x40e670
+    m.rotate_su(&angle);                                    // 0x40e670
     angle = -pitch;
-    ((mat_self*)&m)->rotate_fu(&angle);
-    m[3].x = m[3].x * zoom + pos.x;
-    m[3].y = m[3].y * zoom + pos.y;
-    m[3].z = m[3].z * zoom + pos.z;
+    m.rotate_fu(&angle);
+    pos.x = m.u.x * zoom;
+    pos.y = m.u.y * zoom;
+    pos.z = m.u.z * zoom;                                   // the eye vector doubles as the temporary
+    m.o.x = pos.x + m.o.x;
+    m.o.y = m.o.y + pos.y;
+    m.o.z = m.o.z + pos.z;
 
-    vector4 local[4];                                       // the frame the renderer sees
-    for (int i = 0; i < 16; i++)
-        ((float*)local)[i] = ((float*)m)[i];
-    for (int i = 0; i < 16; i++)
-        frame[i] = ((float*)m)[i];
-    frustum_build_planes((vector4*)(map_block + 0x22));     // 0x41e4f0: thiscall on block + 0x88 (reads +0xf8)
-    World* w = world;
-    for (int i = 0; i < 0x48; i++)
-        ((int*)((char*)w + 0x1ac))[i] = map_block[i];
-    g_bits.submit_frame((const float*)local);               // 0x4f3e10
+    *(rgl::matrix*)frame = m;                               // page +0x138
+    ((Block*)map_block)->build_planes();                    // 0x41e4f0: thiscall on this+0x70
+    *(Block*)world->block = *(Block*)map_block;             // 0x120 bytes: page +0x70 -> world +0x1ac
+    g_bits.submit_frame((const float*)&m);                  // 0x4f3e10
 }

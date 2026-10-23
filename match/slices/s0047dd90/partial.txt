@@ -1,5 +1,1 @@
-0047dd90  82  incomplete: slot-apply loop recovered (owner count +0x84, 16-byte vector slots at +0x38, callee 0x47dcd0) but the fast-path pointer loop and full callee were not reproduced
-0047ddf0  106  incomplete: per-slot merge into 0x47c810, shape known, not reproduced
-0047dcd0  179  incomplete: mesh anim snapshot (0x433190, update_morph, ensure_local, v70/v50 copy, 0x419300), not reproduced
-0047de60  283  incomplete: slot lookup/create by name (0x42bdd0, resize 0x477880, insert 0x473570), not written
-0047df80  1435  incomplete: slot timer/transform update over the caller's owner arrays, not written
+0047de60 249 EChar::use_carry: complete; register allocation differs (original spills this to the push-ecx slot and keeps the strength-reduced element offset in ebp). equiv FAIL only on ecx at return: the original's final pop ecx restores this, ours pops other data  [equiv FAIL: kept partial until the harness verdict is reviewed]

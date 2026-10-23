@@ -278,12 +278,12 @@ struct World {
 
 // 0x41e4f0: thiscall on the frustum, no arguments
 struct Frustum {
-    void build_planes();
+    void build_planes();                        // 0x41e4f0
 };
 
 // 0x4624c0: thiscall on the envelope (ecx = g_scene both times), two stack args
 struct Envelope {
-    void set_fade(float* dist, const unsigned* color);
+    void set_fade(float* dist, const unsigned* color);   // 0x4624c0
 };
 
 void __fastcall scene_ctor(scene* s);                       // 0x429740
@@ -451,8 +451,9 @@ void Screen::camera_update(float dt)
     sc->f31c.w = f29c;
     if (!g_5a9fd8) {
         *(Matrix*)&g_listener.pos = frame;
-        listener_set(&g_listener.up.x, 0, g_listener.vel.x, g_listener.vel.y, g_listener.vel.z,
-                     g_listener.dir.x, g_listener.dir.y, g_listener.dir.z);
+        // FMOD wants y/z swapped (the engine is z-up)
+        listener_set(&g_listener.up.x, 0, g_listener.vel.x, g_listener.vel.z, g_listener.vel.y,
+                     g_listener.dir.x, g_listener.dir.z, g_listener.dir.y);
     }
 }
 

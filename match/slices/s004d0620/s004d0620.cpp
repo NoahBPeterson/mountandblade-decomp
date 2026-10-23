@@ -1,43 +1,37 @@
-// Slice s004d0620: creation of the unnamed mission-template trigger records (one heap object per record).
-// Every record starts with the same head: vtable 0x5947d8, a zero word at +4, the 0x63 status word at +8
-// and a tstring name at +0x1c; a derived record then writes its own (here identical) vtable on top.
-// Record 7 (+0x118) also has a second tstring at +0x2c and a frustum at +0x3c; the +0x38 record is only
-// this head. The remaining record kinds are built by constructors that belong to other slices, so this file
-// only declares them.
-// NOTE: reconstruction only; see nonmatching.txt — the original was built without RTTI, so the scalar
-// `new` calls a bare `operator new` + ctor instead of cl's `??_U@YAPAXI@Z` RTTI path emitted here.
-#include <windows.h>
-#include <d3d9.h>
-#include "rgl.h"
-#include "tstring.h"
-
-struct frustum {
-    char data[0xcc];
-};
-
-// The record head, shared by all of them (0x4c2c50 is the canonical out-of-line version).
-struct trigger_head {
-    void* vtable;       // +0 (0x5947d8)
-    int pad04;          // +4
-    int status;         // +8 (0x63)
-    char pad0c[0x10];
-    tstring name;       // +0x1c
-    trigger_head() : vtable((void*)0x5947d8), pad04(0), status(0x63) {}
-};
-
-// +0x118 record: name at +0x1c, second string at +0x2c, frustum at +0x3c.
-struct record_118 : trigger_head {
-    tstring second;     // +0x2c
-    frustum fr;         // +0x3c
-};
-
-// +0x38 record: only the head.
-struct record_38 : trigger_head {
-};
+#include "s004d0620.h"
 
 // @ 0x4d0620
 void init_mission_trigger_records()
 {
-    record_38* r = new record_38();
-    r->status = 0x63;
+    g_rec_9c = new RecCam;
+    g_main_menu = new RecMenu;
+    g_profile = new RecProfile;
+    g_rec_90 = new RecItem90;
+    g_rec_88 = new Rec98b;
+    g_rec_8c = new Rec90b;
+    g_rec_94 = new Rec80;
+    g_rec_98 = new Rec118;
+    g_rec_a0 = new Recacc;
+    g_rec_a4 = new Rec38;
+    g_rec_a8 = new Rec44;
+    g_rec_ac = new Rec34;
+    g_rec_b0 = new Rec3910;
+    g_rec_b4 = new Rec454;
+    g_rec_b8 = new RecBlocker;
+    g_rec_bc = new RecObj2;
+    g_rec_c0 = new Rec1208;
+    g_rec_c4 = new Rec3c;
+    g_rec_c8 = new Recd8;
+    g_rec_cc = new Recf0;
+    g_rec_d0 = new Rec1bc;
+    g_rec_d4 = new Rec238;
+    g_rec_d8 = new Rec23c;
+    g_rec_dc = new RecItemA;
+    g_army_state = new Rec48;
+    g_rec_e4 = new Rec58;
+    g_rec_e8 = new RecItemD;
+    g_rec_ec = new RecItemB;
+    g_rec_f0 = new RecItemC;
+    g_menu_state = new Rec428;
+    g_5e29ac = g_trial_mode;
 }

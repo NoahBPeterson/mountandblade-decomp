@@ -151,8 +151,12 @@ void Effect::animate(float dt)
 
     // --- track E (+0x78): fade +0xa8/+0xac toward +0x88/+0x8c, hand the scaled pair to +0x6c
     if (e4 < periodE) {
+        // the original spills the out1 partial products as floats (rounded) and reloads them
+        volatile float q = e4 * f8c;
+        volatile float sp = (periodE - e4) * ac;
+        volatile float sum = sp + q;
         out0 = (e4 * f88 + (periodE - e4) * a8) * (g_one / periodE);
-        out1 = ((periodE - e4) * ac + e4 * f8c) * (g_one / periodE);
+        out1 = sum * (g_one / periodE);
         pair[0] = out0 * g_k002;
         pair[1] = out1 * g_k002;
         d27(pair);

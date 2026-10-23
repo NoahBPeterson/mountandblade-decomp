@@ -38,27 +38,26 @@ struct face64 {                                 // the 0x64-byte face record of 
     int idx[8];                                 // +0x28: indices into the point vector
     int count;                                  // +0x48: corner count
     char pad4c[0x60 - 0x4c];
-    unsigned short u16;                         // +0x60: material variant flag
-    char pad62[2];
+    char flag;                                  // +0x60: material variant flag (tested as a byte)
+    char pad61[0x64 - 0x61];
 };
 
 struct mesh_t {
-    virtual ~mesh_t();
-    virtual int slot1();
-    virtual void slot2();
-    char pad0[0x14];
+    char pad0[0x1c];
     point* v70;                                 // 0x1c: points (element 0x18)
-    char pad20[0x10];
+    char pad20[0x2c - 0x20];
     face64* faces;                              // 0x2c: face records (0x64 bytes) or null
     face64* faces_end;                          // 0x30: one past the last face
     char pad34[0x78 - 0x34];
     int mode;                                   // 0x78 (2: map mesh, 1: ribbon)
-    float r, g, b;                              // 0x80, 0x84, 0x88: tint
+    char pad7c[0x80 - 0x7c];
+    float lx, ly, lz;                           // 0x80, 0x84, 0x88: light direction
     char pad8c[0x138 - 0x8c];
     char dirty138;                              // 0x138
     char pad139[0x164 - 0x139];
     char dirty164;                              // 0x164
 
+    unsigned nfaces() const { return faces == 0 ? 0 : (unsigned)(faces_end - faces); }
     void clear_geometry();                      // 0x428e80
     int add_point(const vector4* p);            // 0x412f50
     int add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c);   // 0x413c50
@@ -120,78 +119,78 @@ void mesh_t::polygon_to_mesh(mesh_t* out)
     out->clear_geometry();
     unsigned index = 0;
     int off = 0;
-    while (1) {
-        if (faces == 0)
-            break;
-        if (index >= (unsigned)((int)((char*)faces_end - (char*)faces) / 0x64))
-            break;
+    while (index < nfaces()) {
         face64* f = (face64*)((char*)faces + off);
         int size = f->count;
-        int k = 0;
-        float sx = 0.0f, sy = 0.0f, sz = 0.0f;
-        for (; k < size; k++) {
+        int k;
+        float cx = 0.0f, cy = 0.0f, cz = 0.0f;
+        for (k = 0; k < size; k++) {
             const vector4& p = v70[f->idx[k]].a;
-            sx += p.x;
-            sy += p.y;
-            sz += p.z;
+            cx += p.x;
+            cy += p.y;
+            cz += p.z;
         }
         float inv = 1.0f / (float)size;
-        sx = sx * inv;
-        sy = sy * inv;
-        sz = sz * inv;
+        cx = cx * inv;
+        cy = cy * inv;
+        cz = cz * inv;
         vector4 corners[4];
-        if (size > 0) {
-            for (k = 0; k < size; k++) {
-                const vector4& p = v70[f->idx[k]].a;
-                float dx = sx - p.x;
-                float dy = sy - p.y;
-                float dz = sz - p.z;
-                float len = sqrtf(dz * dz + dy * dy + dx * dx);
-                if (len > 1e-10f) {
-                    float rinv = 1.0f / len;
-                    dx *= rinv;
-                    dy *= rinv;
-                    dz *= rinv;
-                } else {
-                    dx = 0.0f;
-                    dy = 1.0f;
-                    dz = 0.0f;
-                }
-                corners[k] = vector4(dx * 0.1f + p.x, dy * 0.1f + p.y, dz * 0.1f + p.z);            }
+        for (k = 0; k < size; k++) {
+            const vector4& p = v70[f->idx[k]].a;
+            float dx = cx - p.x;
+            float dy = cy - p.y;
+            float dz = cz - p.z;
+            float len = sqrtf(dz * dz + dy * dy + dx * dx);
+            if (len > 1e-10f) {
+                inv = 1.0f / len;
+                dx = dx * inv;
+                dy = dy * inv;
+                dz = dz * inv;
+            } else {
+                dx = 0.0f;
+                dy = 1.0f;
+                dz = 0.0f;
+            }
+            corners[k] = vector4(dx * 0.1f + p.x, dy * 0.1f + p.y, dz * 0.1f + p.z);
         }
         vector4 normal;
         tri_normal(&normal, corners);
-        float rr, rg, rb;
-        if (mode == 2) {
-            if (f->u16 & 1) {
-                rr = 1.0f;
-                rg = 0.5f;
-                rb = 0.4f;
-            } else {
-                rr = 1.0f;
-                rg = 0.4f;
-                rb = 0.7f;
-            }
+        vector4 c;
+        if (mode == 2 && f->flag) {
+            c.x = 1.0f;
+            c.y = 0.5f;
+            c.z = 0.4f;
+            c.w = 0.7f;
+        } else if (mode == 2) {
+            c.x = 1.0f;
+            c.y = 0.9f;
+            c.z = 0.4f;
+            c.w = 0.7f;
         } else {
-            rr = 0.9f;
-            rg = 0.9f;
-            rb = 0.45f;
+            c.x = 0.9f;
+            c.y = 0.9f;
+            c.z = 0.9f;
+            c.w = 0.45f;
         }
-        float v = (normal.x * g + (normal.y * b + normal.z * r) + 1.0f) * 0.5f;
-        rr *= (1.0f - v) * 0.294f + v;
-        rg *= (1.0f - v) * 0.0f + v;
-        rb *= (1.0f - v) * 0.286f + v;
-        unsigned color = pack_color(&(vector4&)rr);
+        float v = ((normal.y * ly + normal.z * lz) + normal.x * lx + 1.0f) * 0.5f;
+        float w = 1.0f - v;
+        c.x = (w * 0.294f + v) * c.x;
+        c.y = (w * 0.0f + v) * c.y;
+        c.z = (w * 0.286f + v) * c.z;
+        unsigned color = pack_color(&c);
         int points[4];
         int verts[4];
-        k = 0;
-        for (; k < size; k++) {
-            points[k] = out->add_point(&corners[k]);
+        for (k = 0; k < f->count; k++) {
+            int zero = 0;
             vec2 uv;
             uv.x = 0.0f;
-            uv.y = 1.0f;
-            int zero = 0;
-            verts[k] = out->add_vertex(points[k], &uv, &color, &corners[k], &zero);
+            uv.y = 0.0f;
+            vector4 nn;
+            nn.x = 0.0f;
+            nn.y = 0.0f;
+            nn.z = 1.0f;
+            points[k] = out->add_point(&corners[k]);
+            verts[k] = out->add_vertex(points[k], &uv, &color, &nn, &zero);
         }
         out->add_face(verts[0], verts[1], verts[2]);
         out->add_face(verts[0], verts[2], verts[1]);

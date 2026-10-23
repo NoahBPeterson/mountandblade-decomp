@@ -15,6 +15,31 @@
 
 using rgl::vector4;
 
+// std::vector<int> as VC7.1 lays it out (allocator proxy, then first/last/end). push_back is inline with the
+// out-of-line _Insert_n (0x43e7b0, ICF'd with the other int-vector instances) as its slow path; spelled out here
+// because the resolver cannot tell the several int-vector _Insert_n copies apart by name.
+struct IntVec {
+    char alloc_proxy[4];
+    int* first;
+    int* last;
+    int* endcap;
+    IntVec() : first(0), last(0), endcap(0) {}
+    ~IntVec() { if (first) operator delete(first); }
+    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
+    unsigned capacity() const { return first == 0 ? 0 : (unsigned)(endcap - first); }
+    int& operator[](unsigned i) { return *(first + i); }
+    void _Insert_n(int* where, unsigned n, const int& v);          // 0x43e7b0
+    void push_back(const int& v)
+    {
+        if (size() < capacity()) {
+            *last = v;
+            ++last;
+        } else {
+            _Insert_n(last, 1, v);
+        }
+    }
+};
+
 // ---- the mesh object (0x4d1d80 / 0x470920 family) --------------------------------------------------------
 // Layout verified byte-exact in the neighbour slice s004d1d80: vertices first at +0x1c (0x18 bytes),
 // faces first at +0x2c (0x64 bytes), edges first at +0x3c (0x34 bytes).
@@ -69,7 +94,7 @@ struct Vec4 : vector4 {
     Vec4(float a, float b, float c) : vector4(a, b, c) {}
     float normalize_inl()
     {
-        float len = length();
+        float len = (float)sqrt(z * z + y * y + x * x);
         if (len > 1e-10f) {
             float inv = 1.0f / len;
             x *= inv; y *= inv; z *= inv;
@@ -136,24 +161,24 @@ struct Hud {
 bool Mesh::on_selection_changed()
 {
     int idx[4];
-    int count = 0;
+    int cur = 0;
     for (unsigned i = 0; i < verts.size(); i++) {
         if (verts[i].id != 0) {
-            if (count < 4)
-                idx[count] = (int)i;
-            count++;
+            if (cur < 4)
+                idx[cur] = (int)i;
+            cur++;
         }
     }
-    if (count == 3)
+    if (cur == 3)
         return add_triangle(idx);
-    if (count != 4)
+    if (cur != 4)
         return false;
 
-    std::vector<int> found;
-    for (int i = 0; i < (int)faces.size(); i++) {
-        int n = faces[i].n;
+    IntVec found;
+    for (cur = 0; (unsigned)cur < faces.size(); cur++) {
+        int n = faces[cur].n;
         int cnt = 0;
-        const int* p = faces[i].vid;
+        const int* p = faces[cur].vid;
         for (int j = 0; j < n; j++) {
             int v = *p++;
             if (v == idx[0]) cnt++;
@@ -162,7 +187,7 @@ bool Mesh::on_selection_changed()
             if (v == idx[3]) cnt++;
         }
         if (cnt > 0)
-            found.push_back(i);
+            found.push_back(cur);
         if (cnt > 2)
             return false;
     }
@@ -174,31 +199,42 @@ bool Mesh::on_selection_changed()
         ny = ny + f.normal.y;
         nz = nz + f.normal.z;
     }
-    Vec4 nrm(nx / (float)found.size(), ny / (float)found.size(), nz / (float)found.size());
-    nrm.normalize_inl();
+    nx = nx / (float)found.size();
+    ny = ny / (float)found.size();
+    nz = nz / (float)found.size();
+    float len = (float)sqrt(nz * nz + ny * ny + nx * nx);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        nx *= inv; ny *= inv; nz *= inv;
+    } else {
+        nx = 0.0f; ny = 1.0f; nz = 0.0f;
+    }
 
     const Vtx* v = &verts[idx[0]];
-    Vec4 a(v[idx[1]].x - v->x, v[idx[1]].y - v->y, v[idx[1]].z - v->z);
-    Vec4 b(v[idx[2]].x - v->x, v[idx[2]].y - v->y, v[idx[2]].z - v->z);
-    Vec4 c(v[idx[3]].x - v->x, v[idx[3]].y - v->y, v[idx[3]].z - v->z);
+    Vec4 a;
+    a = Vec4(v[idx[1]].x - v->x, v[idx[1]].y - v->y, v[idx[1]].z - v->z);
+    Vec4 b;
+    b = Vec4(v[idx[2]].x - v->x, v[idx[2]].y - v->y, v[idx[2]].z - v->z);
+    Vec4 c;
+    c = Vec4(v[idx[3]].x - v->x, v[idx[3]].y - v->y, v[idx[3]].z - v->z);
 
     int cls[3];
     cls[0] = cls[1] = cls[2] = 0;
-    if ((a.z * b.y - a.y * b.z) * nrm.x +
-        ((a.x * b.z - b.x * a.z) * nrm.y +
-         (b.x * a.y - a.x * b.y) * nrm.z) > 0.0f)
+    if ((a.z * b.y - a.y * b.z) * nx +
+        ((a.x * b.z - b.x * a.z) * ny +
+         (b.x * a.y - a.x * b.y) * nz) > 0.0f)
         cls[0] = 1;
     else
         cls[1] = 1;
-    if ((b.z * c.y - b.y * c.z) * nrm.x +
-        ((c.x * b.z - b.x * c.z) * nrm.y +
-         (b.x * c.y - c.x * b.y) * nrm.z) > 0.0f)
+    if ((c.y * b.z - c.z * b.y) * nx +
+        ((c.z * b.x - c.x * b.z) * ny +
+         (c.x * b.y - c.y * b.x) * nz) > 0.0f)
         cls[1] = cls[1] + 1;
     else
         cls[2] = 1;
-    if ((b.y * a.z - b.z * a.y) * nrm.x +
-        ((b.z * c.x - b.x * c.z) * nrm.y +
-         (b.x * c.y - c.x * b.y) * nrm.z) > 0.0f)
+    if ((c.z * a.y - c.y * a.z) * nx +
+        ((c.x * a.z - c.z * a.x) * ny +
+         (c.y * a.x - c.x * a.y) * nz) > 0.0f)
         cls[2] = cls[2] + 1;
     else
         cls[0] = cls[0] + 1;
@@ -207,7 +243,7 @@ bool Mesh::on_selection_changed()
         return false;
 
     char ok = 1;
-    int nfaces = (int)faces.size();
+    unsigned nfaces = faces.size();
     for (int i = 0; i < 3; i++) {
         if (cls[i] != 1)
             continue;
@@ -221,7 +257,7 @@ bool Mesh::on_selection_changed()
                 tri[2] = idx[j + 1];
                 ok = add_triangle(tri);
                 if (!ok) {
-                    if (nfaces < (int)faces.size()) {
+                    if (nfaces < faces.size()) {
                         delete_face((int)faces.size() - 1);
                         rebuild();
                     }
@@ -231,7 +267,7 @@ bool Mesh::on_selection_changed()
         }
     }
     if (ok) {
-        int sel;
+        int& sel = cur;
         if (cls[0] == 1)
             sel = idx[1];
         else if (cls[1] == 1)

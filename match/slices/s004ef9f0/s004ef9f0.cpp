@@ -40,43 +40,34 @@ static const char* str_text(const tstring& key)
     return r->buf ? r->buf : (const char*)&r->buf;
 }
 
-// ---- the virtual interface of the widgets seen through their vptr (0xdword slots, see s0048b760) ------
-struct UiVt {
+// ---- the virtual interface of the widgets seen through their vptr (see s0048b760) ----------------------
+// set_text (+0xa4) returns an 8-byte non-POD pair through a hidden pointer that no caller destroys.
+struct WRet { int a, b; WRet(); };
+struct vec2 {
+    float x, y;
+    vec2(float a, float b) : x(a), y(b) {}
+};
+struct UiWidget {
     virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
     virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
     virtual void d10(); virtual void d11(); virtual void d12(); virtual void d13(); virtual void d14();
-    virtual void d15(); virtual void d16(); virtual void d17();
-    virtual void set_key_flags(int f);              // +0x48
-    virtual void d19(); virtual void d20(); virtual void d21(); virtual void d22(); virtual void d23();
-    virtual void d24();
-    virtual void set_xy(float* v);                  // +0x64
-    virtual void d26();
-    virtual void set_size(float* v);                // +0x6c
-    virtual void set_pos(float* v);                 // +0x70
-    virtual void d29(); virtual void d30(); virtual void d31(); virtual void d32(); virtual void d33();
-    virtual void d34(); virtual void d35();
-    virtual void refresh();                         // +0x90
-    virtual void get_xy(float* v);                  // +0x94
-    virtual void set_color(unsigned* c);            // +0x98
-    virtual void d39(); virtual void d40();
-    virtual void get_text_size(tstring* s, float* out);  // +0xa4
+    virtual void d15(); virtual void d16(); virtual void d17(); virtual void d18(); virtual void d19();
+    virtual void d20(); virtual void d21(); virtual void d22(); virtual void d23(); virtual void d24();
+    virtual void d25(); virtual void d26(); virtual void d27(); virtual void d28(); virtual void d29();
+    virtual void d30(); virtual void d31(); virtual void d32(); virtual void d33(); virtual void d34();
+    virtual void d35(); virtual void d36(); virtual void d37(); virtual void d38(); virtual void d39();
+    virtual void d40();
+    virtual WRet set_text(const tstring& s);        // +0xa4
     virtual void d42();
-    virtual void set_text(const tstring* s, float* xy);  // +0xac
+    virtual void set_text_at(const tstring& s, const vec2& xy);   // +0xac
     virtual void hide();                            // +0xb0
     virtual void show();                            // +0xb4
-    virtual void d46(); virtual void d47(); virtual void d48(); virtual void d49(); virtual void d50();
-    virtual void update_children();                 // +0xc4
-    virtual void d53(); virtual void d54();
-};
-
-struct UiWidget {
-    UiVt* vt;                                       // +0x00
 };
 
 // ---- game records ------------------------------------------------------------------------------------
 struct TroopRec {
     char pad0[0x58];
-    int f_58[0x14];                                 // +0x58 (attributes, then proficiencies)
+    int f_58[0x13];                                 // +0x58 (attributes, then proficiencies)
     int skill_points;                               // +0xa4
     char padb0[0x508 - 0xa8];
 
@@ -89,7 +80,7 @@ struct Game {
     char pad90[0x13a00 - 0x90];
     TroopRec* troops;                               // +0x13a00
 
-    int get_prof(int troop, int idx);               // 0x437b20 (packed 4-bit rank)
+    int get_prof(int troop, int idx);               // 0x437b20 (thiscall, ret 8)
 };
 extern Game* g_game;                                // 0x5e2930
 
@@ -98,11 +89,11 @@ struct SkillRec {
     tstring desc;                                   // +0x00
     tstring name;                                   // +0x10
     tstring key;                                    // +0x20
-    int cap;                                        // +0x34
-    int attr_cap;                                   // +0x38
-    char pad3c[4];
+    int f30, f34;                                   // +0x30 / +0x34
+    int cap;                                        // +0x38 (the level cap)
+    int f3c;                                        // +0x3c
     unsigned attr;                                  // +0x40 (low nibble: 0-based attribute the skill needs)
-    tstring* translated();                          // 0x4c6190 (the key's "_desc" translation)
+    tstring* desc_name();                           // 0x4c6190 (the key's "_desc" translation)
 };
 extern SkillRec g_skills[];                         // 0x8ee3100
 #define SKILL_ATTR(id) (g_skills[id].attr & 0xf)
@@ -140,116 +131,146 @@ struct CharSheet {
 // 0x4f04f0: the proficiency group name of proficiency idx into buf (another slice)
 void prof_group_name(int idx, char* buf);           // 0x4f04f0
 
-// the skill-page hint for a row that cannot be raised
-static const char* skill_hint(TroopRec* t, int id)
+// translated text of a key (lookup, falling back to the key's own storage when the buffer is null)
+static inline const char* tr(const tstring& key)
 {
-    if (t->skill_rank(id) >= g_skills[id].cap)
-        return "ui_at_learning_limit";
-    if (t->skill_points < 1)
-        return "ui_not_enough_skill_points_to_learn";
-    return "ui_not_enough_attributetype_to_learn_this_skill";
-}
-
-// the proficiency page's explanation of group idx
-static const char* prof_explanation(int idx)
-{
-    switch (idx) {
-    case 0: return "ui_explanation_one_handed_weapon";
-    case 1: return "ui_explanation_two_handed_weapon";
-    case 2: return "ui_explanation_polearm";
-    case 3: return "ui_explanation_archery";
-    case 4: return "ui_explanation_crossbow";
-    case 5: return "ui_explanation_throwing";
-    default: return "ui_explanation_firearms";
-    }
-}
-
-// the attribute page's explanation of attribute idx
-static const char* attrib_explanation(int idx)
-{
-    switch (idx) {
-    case 0: return "ui_explanation_strength";
-    case 1: return "ui_explanation_agility";
-    case 2: return "ui_explanation_intelligence";
-    default: return "ui_explanation_charisma";
-    }
+    tstring* r = g_strtable.lookup(key);
+    return r->buf ? r->buf : (const char*)&r->buf;
 }
 
 // @ 0x4ef9f0 -------------------------------------------------------------------------------
 void CharSheet::update_detail()
 {
-    // measure the title label before its text is replaced (the result only feeds the label's layout)
-    float sz;
     {
-        tstring cur("");
-        f_4b8->vt->get_text_size(&cur, &sz);
+        tstring empty("");
+        f_4b8->set_text(empty);
     }
-    f_434->vt->hide();
+    f_434->hide();
     int row = f_2d4;
     if (row < 0)
         return;
-    char title[0x400];
+    char title[0x800];
     char body[0x200];
-    char keybuf[0x1e8];
-    if (f_2d8 != 1) {
-        if (f_2d8 == 2) {                                   // proficiencies page
-            prof_group_name(row, keybuf);
-            char expl[0x1e8];
-            strcpy(expl, str_text(tstring(prof_explanation(row))));
-            mb_snprintf(title, 0x400, "%s: %s", keybuf, expl);
-            tstring the_title(title);
-            f_4b8->vt->get_text_size(&the_title, &sz);
-            f_434->vt->hide();
-            return;
-        }
-        if (f_2d8 != 0) {
-            if (f_2d8 != 3)                                 // face page
-                return;
-            strcpy(keybuf, str_text(tstring("ui_edit_face")));
-            tstring the_title(keybuf);
-            f_4b8->vt->get_text_size(&the_title, &sz);
-            f_434->vt->hide();
-            return;
-        }
-        // attributes page
-        strcpy(keybuf, str_text(tstring(attrib_explanation(row))));
-        tstring the_title(keybuf);
-        f_4b8->vt->get_text_size(&the_title, &sz);
-        f_434->vt->hide();
-        return;
-    }
-    {                                                       // skills page: one skill row
+    char attr[0x200];
+    if (f_2d8 == 1) {
+        // skills page: one skill row
         int id = f_228[row];
         SkillRec* sk = &g_skills[id];
+        tstring sep(": ");
         tstring* name = g_strtable.find(&sk->key);
         if (!name)
             name = &sk->name;
-        tstring s = *name + *sk->translated();
+        tstring s = (*name + sep) + *sk->desc_name();
         const char* anchor = 0;
         if (id == 2)
             anchor = g_char_t_level_y;
         else if (id == 1)
             anchor = g_char_t_level_x;
-        mb_snprintf(title, 0x400, "%s: %s", s.c_str(), anchor);
-        tstring the_title(title);
-        f_4b8->vt->get_text_size(&the_title, &sz);
-        mb_snprintf(body, 0x200, "%s: %d", str_text(tstring("ui_current_level_value")),
-                    g_game->get_prof(f_14, id));
-        float xy[2];
-        xy[0] = g_config.get_float(tstring("char_t_current_level_x"));
-        xy[1] = g_config.get_float(tstring("char_t_current_level_y"));
-        tstring desc(body);
-        f_4b8->vt->set_text(&the_title, xy);
-        TroopRec* t = &g_game->troops[f_14];
-        int rank = t->skill_rank(id);
-        if (rank < sk->cap && t->skill_points >= 1 && (rank + 1) * 3 <= t->f_58[SKILL_ATTR(id)]) {
-            f_434->vt->hide();
+        mb_snprintf(title, 0x400, s.c_str(), anchor);
+        {
+            tstring tt(title);
+            f_4b8->set_text(tt);
+        }
+        mb_snprintf(body, 0x200, tr(tstring("ui_current_level_value")), g_game->get_prof(f_14, id));
+        {
+            tstring ky("char_t_current_level_y");
+            float fy = g_config.get_float(ky);
+            tstring kx("char_t_current_level_x");
+            float fx = g_config.get_float(kx);
+            tstring bt(body);
+            vec2 xy(fx, fy);
+            f_4b8->set_text_at(bt, xy);
+        }
+        mb_snprintf(body, 0x200, tr(tstring("ui_base_attribute_value")),
+                    SKILL_ATTR(id) == 0 ? tr(tstring("ui_str"))
+                    : SKILL_ATTR(id) == 1 ? tr(tstring("ui_agi"))
+                    : SKILL_ATTR(id) == 2 ? tr(tstring("ui_int")) : tr(tstring("ui_cha")));
+        {
+            tstring ky("char_t_base_attrib_y");
+            float fy = g_config.get_float(ky);
+            tstring kx("char_t_base_attrib_x");
+            float fx = g_config.get_float(kx);
+            tstring bt(body);
+            vec2 xy(fx, fy);
+            f_4b8->set_text_at(bt, xy);
+        }
+        Game* g = g_game;
+        if (f_14 != g->player) {
+            f_434->hide();
             return;
         }
-        mb_snprintf(body, 0x200, "%s", str_text(tstring(skill_hint(t, id))));
-        tstring hint(body);
-        f_434->vt->get_text_size(&hint, &sz);
-        f_434->vt->hide();
+        int maxlvl = g_skills[id].cap;
+        TroopRec* t = &g->troops[f_14];
+        if (t->skill_rank(id) < maxlvl && t->skill_points >= 1 &&
+            (g_game->troops[f_14].skill_rank(id) + 1) * 3 <= g->troops[f_14].f_58[SKILL_ATTR(id)]) {
+            f_434->hide();
+            return;
+        }
+        if (t->skill_rank(id) >= maxlvl) {
+            mb_snprintf(body, 0x200, tr(tstring("ui_at_learning_limit")));
+        } else if (t->skill_points < 1) {
+            mb_snprintf(body, 0x200, tr(tstring("ui_not_enough_skill_points_to_learn")));
+        } else {
+            if (SKILL_ATTR(id) == 0)
+                mb_snprintf(attr, 0x200, tr(tstring("ui_strength")));
+            else if (SKILL_ATTR(id) == 1)
+                mb_snprintf(attr, 0x200, tr(tstring("ui_agility")));
+            else if (SKILL_ATTR(id) == 2)
+                mb_snprintf(attr, 0x200, tr(tstring("ui_intelligence")));
+            else
+                mb_snprintf(attr, 0x200, tr(tstring("ui_charisma")));
+            mb_snprintf(body, 0x200, tr(tstring("ui_not_enough_attributetype_to_learn_this_skill")), attr);
+        }
+        {
+            tstring ht(body);
+            f_434->set_text(ht);
+        }
+        f_434->show();
         return;
+    }
+    if (f_2d8 == 2) {                                       // proficiencies page
+        prof_group_name(row, body);
+        row = f_2d4;
+        if (row == 0)
+            strcpy(attr, tr(tstring("ui_explanation_one_handed_weapon")));
+        else if (row == 1)
+            strcpy(attr, tr(tstring("ui_explanation_two_handed_weapon")));
+        else if (row == 2)
+            strcpy(attr, tr(tstring("ui_explanation_polearm")));
+        else if (row == 3)
+            strcpy(attr, tr(tstring("ui_explanation_archery")));
+        else if (row == 4)
+            strcpy(attr, tr(tstring("ui_explanation_crossbow")));
+        else if (row == 5)
+            strcpy(attr, tr(tstring("ui_explanation_throwing")));
+        else
+            strcpy(attr, tr(tstring("ui_explanation_firearms")));
+        mb_snprintf(title, 0x400, "%s: %s", body, attr);
+        {
+            tstring tt(title);
+            f_4b8->set_text(tt);
+        }
+        f_434->hide();
+        return;
+    }
+    if (f_2d8 == 0) {                                       // attributes page
+        if (row == 0)
+            strcpy(title, tr(tstring("ui_explanation_strength")));
+        else if (row == 1)
+            strcpy(title, tr(tstring("ui_explanation_agility")));
+        else if (row == 2)
+            strcpy(title, tr(tstring("ui_explanation_intelligence")));
+        else if (row == 3)
+            strcpy(title, tr(tstring("ui_explanation_charisma")));
+        {
+            tstring tt(title);
+            f_4b8->set_text(tt);
+        }
+        f_434->hide();
+        return;
+    }
+    if (f_2d8 == 3) {                                       // face page
+        f_4b8->set_text(*g_strtable.lookup(tstring("ui_edit_face")));
+        f_434->hide();
     }
 }

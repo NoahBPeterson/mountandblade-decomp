@@ -1,0 +1,12 @@
+# src/game/terrain_b: std instantiations the original calls out of line (unique type names, so exact mangled lines are safe)
+00468050 ??$_Copy_opt@PAUArrSet@@PAU1@@std@@YAPAUArrSet@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Copy_opt<ArrSet*> (terrain_b.cpp copy_arrset)
+004727a0 ??$_Destroy_range@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@YAXPAUArrSet@@0AAV?$allocator@UArrSet@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Destroy_range<ArrSet>
+00463760 ??1ArrSet@@QAE@XZ  # ArrSet::~ArrSet
+005d6fa0 ?g_resmgr@@3Uresource_manager@@A  # the resource manager global (shared resource.h spelling)
+08ed5098 ?g_emit_id@@3PAHA  # ambient emitter ids (emit.h)
+08ed50b4 ?g_fog_id_a@@3HA
+08ed50b8 ?g_fog_id_b@@3HA
+08ed50bc ?g_fog_id_c@@3HA
+00591848 ??_7MAgent@@6B@  # vtable of the 0x5928-byte mission Agent record (named MAgent here: the other slices call the 0x590b84 Rec1c8 vtable ??_7Agent@@6B@)
+0040e4e0 ?unpack_color@rgl@@YAXPAUvector4@1@PBI@Z  # rgl::unpack_color(vector4*, const unsigned*)
+0040f3f0 ?setup_material@mi_ops@@QAEXXZ  # mesh-instance setup_material (render_batch.h view struct)

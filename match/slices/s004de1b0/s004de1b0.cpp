@@ -85,6 +85,8 @@ struct Party {
     int get(int x);                             // 0x48ad00
 };
 
+struct vec4 { float x, y, z, w; };
+
 // the mesh the background is built from (rgl::mesh)
 struct Mesh {
     char pad0[0x2c];
@@ -95,8 +97,8 @@ struct Mesh {
     char f164;                                  // +0x164
     Mesh();                                     // 0x412a90 (mesh ctor, returns this)
     void mesh_ctor();                           // 0x412a90
-    int add_point(float* p);                    // 0x412f50
-    int add_vertex(int idx, float* uv, void* col, float* n, void* f);   // 0x413c50
+    int add_point(const vec4* p);               // 0x412f50
+    int add_vertex(int idx, const float* uv, const int* col, const vec4* n, const int* f5c);   // 0x413c50
     void add_rec2(int a, int b, int c);         // 0x411920
     void build_panel(float* base, float* size, float* uv0, float* uv1,
                      int* col);                 // 0x4de3e0
@@ -219,51 +221,55 @@ Mesh* make_background(float* v, int color)
 // @ 0x4de3e0
 void Mesh::build_panel(float* base, float* size, float* uv0, float* uv1, int* col)
 {
-    float p[3];
-    int idx[4];
     float uv[2];
+    int idx[4];
+    vec4 p;
+    int vv[4];
+    int f5c;
 
-    p[0] = base[0];
-    p[1] = base[1];
-    p[2] = base[2];
-    idx[0] = add_point(p);
+    p.x = base[0];
+    p.y = base[1];
+    p.z = base[2];
+    idx[0] = add_point(&p);
 
-    p[0] = base[0] + size[0];
-    p[1] = base[1];
-    p[2] = base[2];
-    idx[1] = add_point(p);
+    p.x = base[0] + size[0];
+    p.y = base[1];
+    p.z = base[2];
+    idx[1] = add_point(&p);
 
-    p[0] = base[0] + size[0];
-    p[1] = size[1] + base[1];
-    p[2] = base[2];
-    idx[2] = add_point(p);
+    p.x = base[0] + size[0];
+    p.y = size[1] + base[1];
+    p.z = base[2];
+    idx[2] = add_point(&p);
 
-    p[0] = base[0];
-    p[1] = size[1] + base[1];
-    p[2] = base[2];
-    idx[3] = add_point(p);
-
-    p[0] = 0.0f;
-    p[1] = 0.0f;
-    p[2] = 1.0f;
-    int zero = 0;
+    p.x = base[0];
+    p.y = size[1] + base[1];
+    p.z = base[2];
+    idx[3] = add_point(&p);
 
     uv[0] = uv0[0];
     uv[1] = uv0[1] - uv1[1];
-    int v1 = add_vertex(idx[0], uv, col, p, &zero);
+    p.x = 0.0f;
+    p.y = 0.0f;
+    p.z = 1.0f;
+    f5c = 0;
+    vv[0] = add_vertex(idx[0], uv, col, &p, &f5c);
 
+    f5c = 0;
     uv[0] = uv0[0] + uv1[0];
     uv[1] = uv0[1] - uv1[1];
-    int v2 = add_vertex(idx[1], uv, col, p, &zero);
+    vv[1] = add_vertex(idx[1], uv, col, &p, &f5c);
 
     uv[0] = uv0[0] + uv1[0];
     uv[1] = uv0[1];
-    int v3 = add_vertex(idx[2], uv, col, p, &zero);
+    f5c = 0;
+    vv[2] = add_vertex(idx[2], uv, col, &p, &f5c);
 
-    int v4 = add_vertex(idx[3], uv0, col, p, &zero);
+    f5c = 0;
+    vv[3] = add_vertex(idx[3], uv0, col, &p, &f5c);
 
-    add_rec2(v1, v2, v3);
-    add_rec2(v1, v3, v4);
+    add_rec2(vv[0], vv[1], vv[2]);
+    add_rec2(vv[0], vv[2], vv[3]);
 
     f138 = 1;
     f164 = 1;

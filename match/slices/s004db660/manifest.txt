@@ -1,3 +1,5 @@
-# s004db660 manifest: byte-exact functions (none).
-# All eight addresses of the slice are reconstructed in s004db660.cpp but none is byte-exact, so every address
-# is listed in nonmatching.txt (the one fully verifiable row) or in partial.txt.
+# s004db660 manifest: byte-exact functions.
+slices/s004db660/s004db660.cpp  ?new_button@@YAPAUWidget@@PAUOverlay@@ABUtstring@@MMMM@Z  004db810  /O2 /MT /Gy /TP
+slices/s004db660/s004db660.cpp  ?insert@?$vector@UE80@@V?$allocator@UE80@@@std@@@std@@QAE?AViterator@12@V312@ABUE80@@@Z  004db960  /O2 /MT /Gy /TP
+slices/s004db660/s004db660.cpp  ?_Insert_n@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@IAEXViterator@12@IABUE68@@@Z  004db9d0  /O2 /MT /Gy /TP
+slices/s004db660/s004db660.cpp  ?_Insert_n@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@IAEXViterator@12@IABUE176@@@Z  004dbcc0  /O2 /MT /Gy /TP

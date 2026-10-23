@@ -1,0 +1,20 @@
+00424220 ?add@ground_store_x@@QAEHHPBUvector4@rgl@@@Z  # src/rgl/dynamic/world_grid.cpp: ext twin of ground_store::add (the callers' view; bound to the real function with /alternatename)
+00423fc0 ?push_back@shape_vec_x@@QAEXABQAUgrid_shape@@@Z  # ext twin of shape_vec::push_back
+00425240 ?add_tree@world_grid_x@@QAEXPAUgrid_shape@@@Z  # ext twin of world_grid::add_tree
+00423ed0 ?in_rect@world_grid_x@@QAE_NPBUint2@@00@Z  # ext twin of world_grid::in_rect (a member that never reads this; the callers treat the result as a bool)
+00424650 ?face_normal_x@@YAPAUvector4@rgl@@PAU12@PBU12@11@Z  # ext twin of face_normal, the by-value return written as its out-parameter
+00423e70 ?min2_x@@YAPAUint2@@PAU1@PBU1@1@Z  # ext twin of min2
+00423ea0 ?max2_x@@YAPAUint2@@PAU1@PBU1@1@Z  # ext twin of max2
+004240d0 ?find@shape_vec@@QBEHPAUgrid_shape@@@Z  # shape_vec::find, defined on shape_vec_f (a callee defined in this object would give remove() interprocedural register information)
+004240d0 ?find@shape_vec_f@@QBEHPAUgrid_shape@@@Z  # shape_vec::find, the definition
+00424010 ?insert@shape_vec@@QAE?AUiter@1@U21@ABQAUgrid_shape@@@Z  # std::vector<T*>::insert(iterator, const value&), the instance that is shared by every pointer vector
+00424740 ?resize@V36@@QAEXIUVert@@@Z  # std::vector<ground_v36>::resize, the callers' view
+00424cc0 ?resize@V136@@QAEXIUGroup@@@Z  # std::vector<ground_g136>::resize, the callers' view (defined as vec136::resize)
+004251c0 ??$_Uninit_fill_n@PAUground_g136@@IU1@V?$allocator@Uground_g136@@@std@@@std@@YAXPAUground_g136@@IABU1@AAV?$allocator@Uground_g136@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_fill_n<ground_g136*>, called by vec136::_Insert_n
+004251c0 ?_Uninit_fill_n@std@@YAXPAUground_g136@@IABU2@AAV?$allocator@Uground_g136@@@1@U_Nonscalar_ptr_iterator_tag@1@@Z  # same
+0043e2a0 ?_Xlen@vec36@@QBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
+0043e2a0 ?_Xlen@vec136@@QBEXXZ  # same shared body, for the 0x88-byte element vector
+0041fa00 ?resize@shape_vec@@QAEXIPAUgrid_shape@@@Z  # std::vector<T*>::resize (src/game/entity.cpp)
+0041f640 ?_Insert@shape_list@@QAEXPAUnode@1@ABQAUgrid_shape@@@Z  # std::list<T*>::_Insert(where, value) (src/game/entity.cpp)
+0041f720 ?_Insert_n@?$vector@PAUitem_obj@rgl@@V?$allocator@PAUitem_obj@rgl@@@std@@@std@@IAEXViterator@12@IABQAUitem_obj@rgl@@@Z  # std::vector<T*>::_Insert_n (src/game/entity.cpp), called by the insert at 0x424010 and the push_back in entity_grid::add_shape
+00424830 ?_Insert_n@?$vector@Uground_v36@@V?$allocator@Uground_v36@@@std@@@std@@IAEXViterator@12@IABUground_v36@@@Z  # std::vector<ground_v36>::_Insert_n: the stock member that std::vector<ground_v36>::resize calls; the original's body is vec36::_Insert_n

@@ -10,6 +10,7 @@ using rgl::matrix;
 
 // ---- mission / agent table (verified: s0043bdb0, s00457b40) ---------------------------------------------
 struct Agent;
+struct Node;
 struct AgentTable {
     char pad0[0x18];
     Agent** pages;                                  // +0x18 (id >> 4 -> page of 16 agents)
@@ -32,7 +33,7 @@ struct Agent {
     char pad34[0x88 - 0x34];
     vector4 origin;                                 // +0x88
     char pad98[0x250 - 0x98];
-    void* node;                                     // +0x250 (the item's scene node / applicator)
+    Node* node;                                     // +0x250 (the agent's scene node)
 };
 
 // ---- shadow map (verified: s004640d0) --------------------------------------------------------------------
@@ -50,18 +51,18 @@ struct Frustum {
 };
 
 // ---- the applicator / scene node of an agent's item ------------------------------------------------------
-struct NodeVt {
-    char pad0[0x20];
-    void (*set_intensity)(void* self, const float* v);     // slot 0x20 (ret 4)
-};
-struct Node {
-    NodeVt* vt;
+struct Node {                                       // the agent's scene object: origin at +0x88
+    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
+    virtual void v4(); virtual void v5(); virtual void v6(); virtual void v7();
+    virtual void set_intensity(const float* v);     // +0x20 (ret 4)
+    char pad[0x88 - 4];
+    vector4 origin;                                 // +0x88
+    void set_fade(const float* v);                  // 0x4b1800 (thiscall, ret 4)
 };
 
 // ---- helpers ----------------------------------------------------------------------------------------------
 int  clamp_int(int* v, int* lo, int* hi);           // 0x432510 (cdecl: max(lo, min(v, hi-1)))
 int  round_int(float f);                            // 0x535a64 (lib_crt _ftol2)
-void set_fade(void* self, const float* v);          // 0x4b1800 (thiscall, ret 4)
 
 // ---- globals ----------------------------------------------------------------------------------------------
 extern int g_shadow_enabled;                        // 0x5e28fc
@@ -91,7 +92,7 @@ struct View {
     char pad28[0x1f0 - 0x28];
     void* sun_cam;                                  // +0x1f0
     bool shadow_sample(const vector4* p, float* out);       // 0x4faee0
-    void apply_sun_light(const vector4* pos, int scale);    // 0x4fb180
+    void apply_sun_light(const vector4* pos, const float* scale);    // 0x4fb180
 };
 
 // the pass's per-agent source slot (+0x04/+0x1c) is the agent table itself
@@ -142,53 +143,57 @@ bool View::shadow_sample(const vector4* p, float* out)
 }
 
 // @ 0x4fb180
-void View::apply_sun_light(const vector4* pos, int scale)
+void View::apply_sun_light(const vector4* pos, const float* scale)
 {
     float px = (float)(g_screen_w + g_screen_h);
     float area = (px * 0.5f) * 0.00086956524f;
-    float size = ((g_scale_a * 0.5f + 0.75f) * (float)scale) * area;
+    float size_v = ((g_scale_a * 0.5f + 0.75f) * *scale) * area;
+    float& size = *(float*)&scale;       // the original stores the result back into the (dead) parameter slot
+    size = size_v;
     if (g_flag_a17108 && (g_flag_a17148 || g_flag_a17348))
         size = 1000.0f;
     float range = g_scale_b * area;
     ViewLight* vl = (ViewLight*)((char*)this);
     AgentTable* tbl = (AgentTable*)((char*)this + 4);
-    unsigned n = *(int*)((char*)this + 4);
+    int n = *(int*)tbl;
     unsigned i = 0;
-    for (; i < n; i++) {
-        Agent* a = tbl->get(i);
-        if (a->holder)
-            break;
-    }
-    while (i < n) {
-        Agent* a = tbl->get(i);
-        if (a->node) {
-            float dx = a->origin.x - pos->x;
-            float dy = a->origin.y - pos->y;
-            float dz = a->origin.z - pos->z;
-            float d = (float)sqrt(dy * dy + (dx * dx + dz * dz));
-            float dist = d;
-            if (!(3.5f < d))
-                dist = 3.5f;
-            dist = 3.5f / dist;
-            if (!(1.0f < d))
-                d = 1.0f;
-            float intensity = (1.0f / d) * size;
-            Node* node = (Node*)a->node;
-            node->vt->set_intensity(node, &intensity);
-            const float* v;
-            float one = 1.0f;
-            if (a->slot_a == vl->local_id || a->slot_b == vl->local_id)
-                v = &one;
-            else {
-                dist = dist * range;
-                v = &dist;
-            }
-            set_fade(node, v);
-        }
-        for (i++; i < n; i++) {
-            Agent* b = tbl->get(i);
-            if (b->holder)
+    if (0 < n) {
+        do {
+            if (tbl->get(i)->holder)
                 break;
-        }
+            i++;
+        } while ((int)i < n);
+    }
+    if (i < *(unsigned*)tbl) {
+        do {
+            char** pp = &(*(char***)((char*)this + 0x1c))[i >> 4];
+            Agent* a = (Agent*)(*pp + (i & 0xf) * 0x5928);
+            if (a->node) {
+                float one = 1.0f;
+                float intensity;
+                float dx = a->node->origin.x - pos->x;
+                float dy = a->node->origin.y - pos->y;
+                float dz = a->node->origin.z - pos->z;
+                float d = (float)sqrt(dy * dy + (dx * dx + dz * dz));
+                float dist = 3.5f / (d > 3.5f ? d : 3.5f);
+                if (!(d > 1.0f))
+                    d = 1.0f;
+                intensity = (1.0f / d) * size;
+                a->node->set_intensity(&intensity);
+                const float* v;
+                if (a->slot_a == vl->local_id || a->slot_b == vl->local_id)
+                    v = &one;
+                else {
+                    dist = dist * range;
+                    v = &dist;
+                }
+                a->node->set_fade(v);
+            }
+            int n2 = *(int*)tbl;
+            for (i++; (int)i < n2; i++) {
+                if (tbl->get(i)->holder)
+                    break;
+            }
+        } while (i < *(unsigned*)tbl);
     }
 }

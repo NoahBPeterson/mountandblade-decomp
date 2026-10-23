@@ -1,2 +1,1 @@
-# s004ef9f0 partial: anything not byte-exact and not proven behaviourally equivalent.
-004ef9f0 2458 incomplete: character-panel detail page; page-switch rewrite compiles but branch/string shape differs from the original and equiv.py cannot prove equivalence (UNSUPPORTED)
+# s004ef9f0 partial: (empty)

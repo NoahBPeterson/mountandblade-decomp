@@ -1,1 +1,3 @@
+# usage: <va> <diff-bytes> <reason>
 004ef730 113 complete: item-type -> event id dispatch; the g_items pointer load is not folded into add (3 bytes extra)
+004ef7d0 8 complete: only the block order of the 3-way colour select differs (original: cmp; jle; green; jmp; red; jl; black with the flags reused, ours puts the green arm last). equiv.py: WEAK (no mismatch over 306 valid inputs; 31 edges unreachable on both sides)

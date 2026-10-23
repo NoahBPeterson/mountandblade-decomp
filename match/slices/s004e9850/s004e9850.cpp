@@ -8,6 +8,7 @@
 // stack argument.
 #include <windows.h>
 #include <new>
+#include <vector>
 #include "rgl.h"
 
 #define MB_NOTHROW throw()
@@ -70,8 +71,8 @@ struct GameRecord {
     tstring name;                                   // +0x00
     tstring title;                                  // +0x10
     int     f20, f24, f28, f2c;                     // +0x20
-    int     f30;                                    // +0x30 (bit 0x10: temporary)
-    char    pad34[0xa0 - 0x34];
+    unsigned __int64 f30;                           // +0x30 (64-bit flags; bit 0x10: temporary)
+    char    pad38[0xa0 - 0x38];
     int     fa0;                                    // +0xa0
     int     fa4, fa8, fac;                          // +0xa4
     int     fb0;                                    // +0xb0
@@ -173,6 +174,7 @@ struct Rec5ac8 {
     void write(OutStream* out);                     // 0x4e9d10 (ret 4)
 };
 
+struct Slot20 { int f0, f4, f8, fc, f10, f14, f18, f1c; };
 typedef int Quad[4];                                // the 4-int runs written at +0x8ec and +0x924
 #pragma pack(pop)
 
@@ -182,17 +184,16 @@ struct RecList {                                    // the record list of the Ga
     int      f78;                                   // +0x78 (the id whose record is walked)
     char     pad7c[0x138b8 - 0x7c];
     int      count;                                 // +0x138b8
-    char     pad13bc[0x138d0 - 0x138bc];
-    int      f138d0;                                // +0x138d0 (the current page of records)
-    int      f138d4;                                // +0x138d4 (the next page)
-    char     pad13d4[0x138dc - 0x13d4];
+    char     pad13bc[0x138cc - 0x138bc];
+    std::vector<Rec5ac8*> pages;                    // +0x138cc (VC7.1 vector: allocator word, then first/last/end) (index >> 4 -> page of 16 records)
     int      f138dc;                                // +0x138dc
     char     pad13e0[0x14050 - 0x13e0];
     int      f14050[3];
     int      f1405c[0x20];
+    int  index_of(int id);                          // 0x48ad00 (ret 4)
     void write_table(OutStream* out);               // 0x4e9c50 (ret 4)
     void flush_ids();                               // 0x4e9fe0 (ret 0)
-    int  id_remove(int id);                         // 0x4ea030 (ret 4)
+    void id_remove(int id);                         // 0x4ea030 (ret 4)
 };
 #pragma pack(pop)
 
@@ -202,15 +203,10 @@ struct RecList {                                    // the record list of the Ga
 struct OutRecList {
     char      pad00[0x78];
     int       f78;                                  // +0x78
-    char      pad7c[0x138b8 - 0x7c];
-    int       count;                                // +0x138b8
-    char      pad13bc[0x138d0 - 0x138bc];
-    int       f138d0;                               // +0x138d0 (the current page of records)
-    char      pad13d4[0x138dc - 0x13d4];
-    int       f138dc;                               // +0x138dc
-    char      pad13e0[0x14050 - 0x13e0];
-    int       f14050[3];
-    int       f1405c[0x20];                         // +0x1405c
+    char      pad7c[0x13a00 - 0x7c];
+    GameRecord* records;                            // +0x13a00 (party records, stride 0x508)
+    char      pad13a04[0x1405c - 0x13a04];
+    int       pk[0x20];                             // +0x1405c (0x20-int blocks, one per entry)
     void write_missions(OutStream* out);            // 0x4e9b50 (ret 4)
 };
 #pragma pack(pop)
@@ -222,9 +218,9 @@ struct OuterGame {
 };
 
 // ---- callees (slice s004e8f10 / others) -----------------------------------------------------------------
-void       write_soa(OutStream* out, char* base);   // 0x4e9620 (ret 0, two stack args)
+OutStream* write_soa(OutStream* out, char* base);   // 0x4e9620 (cdecl, two stack args, returns out)
 int        id_lookup(void* map, int id);            // 0x48ad00 (ret 4)
-struct IntVec { int int_remove(int& id); };         // 0x440b30 (thiscall, ret 4)
+struct IntVec { void push_back(const int& id); };    // 0x440b30: std::vector<int>::push_back (thiscall, ret 4), the free-id list at +0x138bc
 
 
 static const int kRecSize = sizeof(Rec5ac8);
@@ -237,26 +233,15 @@ static __forceinline void write_vec4(List4* v, OutStream* out)
     else
         n = (int)(v->end - v->begin);
     out->w_count(&n);
-    unsigned i = 0;
-    for (;;) {
-        int* b = v->begin;
-        if (!b)
-            break;
-        if (i >= (unsigned)(v->end - b))
-            break;
-        out->w_raw(&b[i]);
-        i++;
-    }
+    for (unsigned i = 0; i < (!v->begin ? 0u : (unsigned)(v->end - v->begin)); i++)
+        out->w_raw(&v->begin[i]);
 }
 
 // the record behind the id table. Page P's +0 word is where page P+1 lives, so walking hoists the page
 // pointer and leans on the index's scale factor.
 static Rec5ac8* rec_at(RecList* l, int i)
 {
-    char*  p = ((char**)l->f138d0)[(unsigned)i >> 4];
-    int    slot = i & 0xf;
-    Rec5ac8* r = (Rec5ac8*)(p + slot * (int)sizeof(Rec5ac8));
-    return r;
+    return &l->pages[(unsigned)i >> 4][i & 0xf];
 }
 
 // @ 0x4e9850    void GameRecord::write(OutStream* out)   (thiscall, ret 4)
@@ -361,21 +346,21 @@ void OutRecList::write_missions(OutStream* out)
     RecList* l = (RecList*)((char*)this + 0xf8);
     l->flush_ids();
     l->write_table(out);
-    int idx = id_lookup(l, ((RecList*)this)->f78);
-    char** base = *(char***)((char*)l + 0x138d0);
-    Rec5ac8* r = (Rec5ac8*)(base[idx >> 4] + (idx & 0xf) * (int)sizeof(Rec5ac8));
-    GameRecord* records = *(GameRecord**)((char*)this + 0x13a00);
-    int* pk = (int*)((char*)this + 0x1405c);
-    char* e = (char*)r + 0xc0;
-    for (int i = 0; i < r->f8a8; i++, e += 0x20) {
-        int v = *(int*)(e - 0x14);
-        // the party record (stride 0x508); bit 0x10 marks a temporary one
-        if (records[v].f30 & 0x10)
-            continue;
-        out->w_int((int*)e);
-        out->w_raw(e - 4);        for (int k = 0; k < 0x20; k++)
-            out->w_raw(pk + k);
-        pk += 0x20;
+    int idx = l->index_of(f78);
+    Rec5ac8* r = &l->pages[idx >> 4][idx & 0xf];
+    int i = 0;
+    if (r->f8a8 > 0) {
+        int* pk = this->pk;
+        char* e = (char*)r + 0xc0;
+        do {
+            if (!(records[*(int*)(e - 0x14)].f30 & 0x10)) {
+                out->w_int((int*)e);
+                out->w_raw(e - 4);
+                for (int k = 0; k < 0x20; k++)
+                    out->w_raw(pk + k);
+            }
+            i++; e += 0x20; pk += 0x20;
+        } while (i < r->f8a8);
     }
 }
 
@@ -426,17 +411,21 @@ void Rec5ac8::write(OutStream* out)
     int* pb = &b0[0];
     OutStream* sB = &out->w_int(pb);
     sB->w_int(&pb[1]);
-    OutStream* s4b = &out->w_int((int*)(p + 0x30));
-    s4b = &s4b->w_int((int*)(p + 0x34));
-    s4b->w_int((int*)(p + 0x38));
+    int* p3 = (int*)(p + 0x30);
+    out->w_int(p3).w_int(p3 + 1).w_int(p3 + 2);
     int* pq = (int*)((char*)this + 0x8a8);
     out->w_raw(pq);
-    char* b = (char*)this + 0xa8;
-    for (int j = 0; j < *pq; j++, b += 0x20) {
-        out->w_raw(b + 4);
-        out->w_raw(b);
-        out->w_raw(b + 0x10);
-        out->w_raw(b + 8);
+    int j = 0;
+    if (*pq > 0) {
+        char* b = (char*)this + 0xa8;
+        do {
+            out->w_raw(b + 4);
+            out->w_raw(b);
+            out->w_raw(b + 0x10);
+            out->w_raw(b + 8);
+            j++;
+            b += 0x20;
+        } while (j < *pq);
     }
     // the tail (offsets per 0x4e94b0 / 0x4e9620): +0x50, +0x1c (int4), +0x54 (struct), the three ints at
     // +0x7c, +0x8f4, +0x958, the raw pair +0x6c/+0x78, +0x5ab8 (int1), +0x94/+0x8c8/+0x8cc (int4), then
@@ -468,20 +457,17 @@ void RecList::flush_ids()
     unsigned i = 0;
     if (count > 0) {
         do {
-            char** base = (char**)f138d0;
-            unsigned idx = i >> 4;
-            char* page = base[idx];
-            Rec5ac8* r = (Rec5ac8*)(page + (i & 0xf) * (int)sizeof(Rec5ac8));
+            Rec5ac8* r = rec_at(this, i);
             if (r->type == 2)
                 id_remove(r->id);
             i++;
         } while ((int)i < count);
     }
 }
-// @ 0x4ea030    int RecList::id_remove(int id)   (thiscall, ret 4)   the 0x2717 open-addressed set
+// @ 0x4ea030    void RecList::id_remove(int id)   (thiscall, ret 4)   the 0x2717 open-addressed set
 //   The receiver (ecx) is the set itself -- RecList + 0x138bc. The record behind the slot is type=0'd and the
 //   slot index is passed on to int_remove (0x440b30) with the set pointer.
-int RecList::id_remove(int id)
+void RecList::id_remove(int id)
 {
     int* set = (int*)this;
     int  probe = 0;
@@ -502,6 +488,6 @@ int RecList::id_remove(int id)
         set[slot * 2] = -1;
         set[slot * 2 + 1] = -1;
         rec_at(this, idx)->type = 0;
-        return ((IntVec*)((char*)this + 0x138bc))->int_remove(idx);
+        ((IntVec*)((char*)this + 0x138bc))->push_back(idx);
     }
 }

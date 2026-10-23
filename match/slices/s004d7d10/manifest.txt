@@ -1,3 +1,6 @@
 slices/s004d7d10/s004d7d10.cpp  ?update_cursor@options_panel@@QAEXXZ  004d7de0  /O2 /MT /Gy /TP
 slices/s004d7d10/s004d7d10.cpp  ?on_key_event@options_panel@@QAEXH@Z  004d7d90  /O2 /MT /Gy /TP
 slices/s004d7d10/s004d7d10.cpp  ?refresh_texts@options_panel@@QAEXXZ  004d7e00  /O2 /MT /Gy /TP
+slices/s004d7d10/s004d7d10.cpp  ?key_binding_name@options_panel@@QAEXHPAUtstring@@PAH@Z  004d7d10  /O2 /MT /Gy /TP
+slices/s004d7d10/s004d7d10.cpp  ?draw_faction_report@options_panel@@QAEXXZ  004d7e50  /O2 /MT /Gy /TP
+slices/s004d7d10/s004d7d10.cpp  ?import_export@options_panel@@QAEXH@Z  004d8000  /O2 /MT /Gy /TP

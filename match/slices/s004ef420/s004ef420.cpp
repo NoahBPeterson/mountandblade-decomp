@@ -23,6 +23,7 @@ struct tstring {
 };
 
 // ---- the virtual interface of the widgets seen through their vptr (0xdword slots, see s0048b760) ------
+struct WRet { int a, b; WRet(); };                  // 8-byte non-POD result (hidden pointer, never destroyed by callers)
 struct UiVt {
     virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
     virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
@@ -41,10 +42,8 @@ struct UiVt {
     virtual void get_xy(float* v);                  // +0x94
     virtual void set_color(unsigned* c);            // +0x98
     virtual void d39(); virtual void d40();
-    virtual void get_text_size(tstring* s, float* out);  // +0xa4
+    virtual WRet set_text(const tstring& s);        // +0xa4
     virtual void d42(); virtual void d43();
-    virtual void set_text(const tstring* s, float* xy);  // +0xac
-    virtual void d45();
     virtual void hide();                            // +0xb0
     virtual void show();                            // +0xb4
     virtual void d46(); virtual void d47(); virtual void d48(); virtual void d49(); virtual void d50();
@@ -76,8 +75,7 @@ struct TroopRec {
     int attr_str, attr_agi;                         // +0xa8, +0xac (first two attributes)
     char padb0[0x508 - 0xb0];
 
-    int skill_rank(int idx);                        // 0x4351a0 (low +0x68 block only: idx < 0x134)
-    int skill_rank2(int idx);                       // 0x437b20 (packed 4-bit rank)
+    int skill_rank(int idx);                        // 0x4351a0
 };
 
 struct Game {
@@ -106,9 +104,9 @@ struct CharSheet {
     char pad8[0x14 - 0x8];
     int f_14;                                       // +0x14 (edited troop index)
     char pad18[0xd8 - 0x18];
-    char pad2c8[0x2c8 - 0xd8];                       // +0xd8 (skill rows, see s004eeb10)
-    int f_2c8;                                      // +0x2c8
-    int f_2cc;                                      // +0x2cc
+    UiVt* label[0x2a];                          // +0xd8  (rank text per skill row)
+    UiVt* btn[0x2a];                            // +0x180 (upgrade button per row)
+    int skill_id[0x2a];                             // +0x228 (skill id per row)
     int f_2d0;                                      // +0x2d0 (number of skill rows)
     int f_2d4;
     char pad2d8[0x4c8 - 0x2d8];
@@ -167,36 +165,54 @@ void CharSheet::apply_to_troop()
 // red when at the cap; then show the upgrade button only for a spendable row of the player's hero.
 void CharSheet::update_skill_rows()
 {
-    if (f_4c8 != 0 && f_2d0 > 0) {
+    if (f_4c8 != 0) {
         char num[512];
-        SkillRow* row = (SkillRow*)((char*)this + 0xd8);
-        for (int i = 0; i < f_2d0; i++, row++) {
-            int id = row->skill;
-            TroopRec* t = &g_game->troops[f_14];
-            int rank = t->skill_rank2(id);
-            int cap = t->f_68[id / 8] >> (id % 8 * 4) & 0xf;
-            if (cap > SKILL_MAX(id))
-                cap = SKILL_MAX(id);
+        for (int i = 0; i < f_2d0; i++) {
+            int rank;
+            int cap;
+            int id;
+            {
+                int troop = f_14;
+                id = skill_id[i];
+                cap = (int)((unsigned)((int*)g_game->troops)[troop * 0x142 + id / 8 + 0x1a] >> (id % 8 * 4)) & 0xf;
+                if (cap < 0)
+                    cap = 0;
+                else if (cap > SKILL_MAX(id))
+                    cap = SKILL_MAX(id);
+                rank = g_game->skill_rank(troop, id);
+            }
             sprintf(num, "%d", rank);
-            unsigned color;
-            if (rank < cap)
-                color = 0xff009900;
-            else if (rank > cap)
-                color = 0xff990000;
-            else
-                color = 0xff000000;
-            row->widget->vt->set_color(&color);
-            tstring str(num);
-            float sz;
-            row->widget->vt->get_text_size(&str, &sz);
-            row->widget->vt->hide();
-            if (t->skill_points > 0) {
-                int cur = t->f_68[id / 8] >> (id % 8 * 4) & 0xf;
-                if (cur > SKILL_MAX(id))
-                    cur = SKILL_MAX(id);
-                if (cur < SKILL_MAX(id) &&
-                    rank < t->f_58[SKILL_ATTR(id) & 0xf] / 3 && (id != 1 && id != 2 || f_14 == g_game->player))
-                    row->widget->vt->show();
+            {
+                unsigned color;
+                if (rank <= cap) {
+                    color = 0xff990000;
+                    if (rank >= cap)
+                        color = 0xff000000;
+                } else {
+                    color = 0xff009900;
+                }
+                label[i]->set_color(&color);
+            }
+            {
+                tstring str(num);
+                label[i]->set_text(str);
+            }
+            btn[i]->hide();
+            {
+                int troop = f_14;
+                TroopRec* t = &g_game->troops[troop];
+                id = skill_id[i];
+                if (t->skill_points > 0) {
+                    int cur = (int)((unsigned)t->f_68[id / 8] >> (id % 8 * 4)) & 0xf;
+                    if (cur < 0)
+                        cur = 0;
+                    else if (cur > SKILL_MAX(id))
+                        cur = SKILL_MAX(id);
+                    if (cur < SKILL_MAX(id) &&
+                        t->skill_rank(id) < t->f_58[SKILL_ATTR(id) & 0xf] / 3 &&
+                        (id != 1 && id != 2 || troop == g_game->player))
+                        btn[i]->show();
+                }
             }
         }
     }

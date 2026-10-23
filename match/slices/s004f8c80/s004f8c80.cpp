@@ -204,9 +204,10 @@ struct CameraNode {
 
 // ---- the camera object thiscall'ed here ----------------------------------------------------------------------------
 struct frustum {
-    char pad0[0x108];
+    char flag;                                                          // +0x00
+    char pad1[0x108 - 1];
     float f108, f10c, f110, f114;
-    char pad118[0x120 - 0x118];
+    float f118, f11c;                                                   // +0x118 / +0x11c (the scale pair stored by init)
     void build_planes();                                                // 0x41e4f0
     void init(float fov, float aspect, float znear, float aspect2);     // 0x4f25a0
 };
@@ -553,14 +554,22 @@ tail:
 }
 
 // @ 0x4f25a0
+#pragma intrinsic(tan)
 void frustum::init(float fov, float aspect, float znear, float aspect2)
 {
-    f110 = aspect;
-    f108 = -(tan(fov * 0.017453292f * 0.5f) * aspect);
-    f114 = aspect2 * aspect;
-    f10c = (tan(fov * 0.017453292f * 0.5f) * -znear) * aspect;
+    flag = 1;
+    f118 = znear;
+    double t = tan(fov * 0.5f);
+    f11c = aspect2;
+    double p = t * znear;
+    f108 = (float)-p;
+    znear = (float)(znear * t);
+    f10c = znear;
+    f114 = (float)-(p * aspect);
+    f110 = znear * aspect;
     build_planes();
 }
+#pragma function(tan)
 // ---- private callees of this slice -------------------------------------------------------------------------------
 // Only declared here; their bodies live in other slices.
 extern float g_cam_near;                                                // 0x5a9c28

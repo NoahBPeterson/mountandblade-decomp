@@ -92,8 +92,8 @@ struct ItemKind {
     char pad0[0x1c8];
     int type;                                    // 0x1c8 (low byte = kind, bits 0x?0000 = subclass)
     int f1cc;                                    // 0x1cc
-    int f1d0;                                    // 0x1d0 (bits 0xff000 = subtype)
-    char pad1d4[0x20c - 0x1d4];
+    __int64 f1d0;                                // 0x1d0 (low dword bits 0xff000 = subtype; high dword 0x1d4)
+    char pad1d8[0x20c - 0x1d8];
     int f20c;                                    // 0x20c
     char pad210[0x228 - 0x210];
     ItemSound sound;                             // 0x228
@@ -131,6 +131,7 @@ struct mesh_anim { void set_time(const float* t); };   // 0x433190
 static __forceinline float veclen(const vector4& v) { return (float)sqrt(v.x*v.x+v.y*v.y+v.z*v.z); }
 
 // constants
+extern float g_f54b3b4;        // 0x54b3b4 (0.8f: reach without an item)
 extern float g_gravity;        // 0x549ca8 == 0.0f (param_2 * 0.0f offset)
 extern float g_f54b708;        // 0x54b708 (per-tick gravity coefficient)
 extern float g_f54a6f0;        // 0x54a6f0 (0.01f)
@@ -192,43 +193,55 @@ static __forceinline vector4 subv(const vector4& a, const vector4& b) { return v
 // owning mesh's frame and apply the drag / tumble.
 void Missile::update(float dt)
 {
+    char qhit;
+    float tmp;
+    vector4 d;
+    vector4 v;
+    vector4 pa;
+    vector4 pb;
+
     start = pos;
     if (state != 0)
         return;
 
-    // v = vel*speed + (0,0,g)*dt; pos += v*dt
-    vector4 grav(0.0f, 0.0f, g_f54b708);
-    vector4 v = addv(vmul(vel, speed), vmul(grav, dt));
-    vector4 step = vmul(v, dt);
-    pos.x = step.x + pos.x;
-    pos.y = step.y + pos.y;
-    pos.z = step.z + pos.z;
+    v.x = dt * 0.0f + speed * vel.x;
+    v.y = dt * 0.0f + vel.y * speed;
+    v.z = dt * g_f54b708 + vel.z * speed;
+    pos.x = v.x * dt + pos.x;
+    pos.y = v.y * dt + pos.y;
+    pos.z = v.z * dt + pos.z;
 
-    entity* e = ent;
-    if (e->f140 == 0) {
-        vector4 d = subv(pos, prev);
-        if (d.length() > g_f590fa4)
-            e->f140 = 1;
+    if (ent->f140 == 0) {
+        float dx = pos.x - prev.x;
+        float dy = pos.y - prev.y;
+        float dz = pos.z - prev.z;
+        if ((float)sqrt(dy * dy + (dz * dz + dx * dx)) > g_f590fa4)
+            ent->f140 = 1;
     }
 
-    float reach;
     if (troop < 0)
-        reach = 0.8f;
+        d.z = g_f54b3b4;
     else
-        reach = (float)g_items[troop].f20c * g_f54a6f0;
-    vector4 dir = vmul(vel, reach);
-    vector4 pa = addv(dir, pos);
-    vector4 pb = addv(dir, start);
+        d.z = (float)g_items[troop].f20c * g_f54a6f0;
+    pb.x = d.z * vel.x;
+    d.y = d.z * vel.y;
+    d.z = d.z * vel.z;
+    pa.x = pb.x + pos.x;
+    pa.y = d.y + pos.y;
+    pa.z = d.z + pos.z;
+    pb.x = pb.x + start.x;
+    pb.y = d.y + start.y;
+    pb.z = d.z + start.z;
 
-    capsule cap(0.01f, &pb, &pa);
-    char qhit = (char)((scene_iface*)this)->query(&cap);
+    {
+        capsule cap(0.01f, &pb, &pa);
+        qhit = (char)((scene_iface*)this)->query(&cap);
+    }
     if (qhit == 0) {
         Rows rows;
         rows.init();
-        // shooter agent: mission->pages[shooter>>4] + (shooter&0xf)*0x5928, then the pointer at its head
-        void* agent = (void*)(*(char**)((char*)g_mission + 0x1c) + (shooter >> 4) * 4);
-        Agent* a = *(Agent**)agent;
-        a = (Agent*)((char*)a + (shooter & 0xf) * 0x5928);
+        // shooter agent: mission->pages[shooter>>4] + (shooter&0xf)*0x5928
+        Agent* a = (Agent*)(*(char**)(*(char**)((char*)g_mission + 0x1c) + (shooter >> 4) * 4) + (shooter & 0xf) * 0x5928);
         int r = a->swing_trace(0, this, &rows, &this->hit);
         if (r >= 3) {
             pos = ent->frame.o;
@@ -240,49 +253,53 @@ void Missile::update(float dt)
             t_start = g_time[clock * 2];
         } else {
             if (mode == 1) {
-                vector4 p = addv(vmul(v, g_f590e68), pos);
-                vector4 d = subv(g_mission->view, p);
-                if (d.x * vel.x + d.y * vel.y + d.z * vel.z < 0.0f
-                    && g_mission->view.z - 1.0f < p.z) {
+                pb.z = v.z * g_f590e68;
+                pa.x = v.x * g_f590e68 + pos.x;
+                pa.y = v.y * g_f590e68 + pos.y;
+                pa.z = pb.z + pos.z;
+                d.x = g_mission->view.x - pa.x;
+                d.y = g_mission->view.y - pa.y;
+                d.z = g_mission->view.z - pa.z;
+                if (d.x * vel.x + (d.y * vel.y + d.z * vel.z) < 0.0f
+                    && g_mission->view.z - g_f549cdc < pa.z) {
                     mode = 3;
-                    float l1 = d.out_length();
-                    if (l1 < g_f591334) {
-                        float l2 = subv(pos, prev).out_length();
+                    if (d.out_length() < g_f591334) {
+                        tmp = v.out_length();
                         int snd = 0x35;
                         int t = g_items[item].type & 0xff;
                         if (t == 9) snd = 0x30;
                         else if (t == 8) snd = 0x2f;
                         else {
-                            int sub = g_items[item].f1d0 & 0xff000;
+                            __int64 sub = g_items[item].f1d0 & 0xff000;
                             if (sub == 0x10000) snd = 0x32;
                             else if (sub == 0x30000) snd = 0x33;
                             else if (sub == 0x40000) snd = 0x31;
                             else if (sub == 0x20000) snd = 0x34;
                         }
-                        float pitch = l2 * g_f54a6f0 + frand() * g_f590c74 + g_f59190c;
-                        sound = g_sounds.play(g_sound_ids[snd], 0, &pa, pitch, 0);
+                        tmp = tmp * g_f54a6f0 + frand() * g_f590c74 + g_f59190c;
+                        sound = g_sounds.play(g_sound_ids[snd], 0, &pa, tmp, 0);
                         sound_t = (float)g_time[0] * g_f54a6d0;
                     }
                 }
             }
-            // the r == 0 path rejoins *after* the item-sound block (the original jumps straight to the
-            // code that follows the qhit block, so `item` is never dereferenced on this path).
+            // the r == 0 path rejoins after the item-sound block
             goto after_item_sound;
         }
     }
 
-    if (item >= 0) {
+    {
         int t = item;
-        if ((g_items[t].type & 0xff) != 0x0a)
-            t = troop;
-        if (t >= 0)
-            g_items[t].sound.play(-0x34);
+        if (t >= 0) {
+            if ((char)g_items[t].type != 0x0a)
+                t = troop;
+            if (t >= 0)
+                g_items[t].sound.play(-0x34);
+        }
     }
 
-after_item_sound:
     if (qhit != 0) {
         t_start = g_time[clock * 2];
-        int sub = g_items[item].f1d0 & 0xff000;
+        __int64 sub = g_items[item].f1d0 & 0xff000;
         if (sub == 0x10000 || sub == 0x80000 || sub == 0x70000) {
             state = 3;
             g_mission->remove_entity(ent->id);
@@ -293,16 +310,20 @@ after_item_sound:
             update_ranged_mesh();
         }
 
-        vector4 d = subv(g_mission->view, pos);
-        if (d.normalize() < g_f590c90) {
-            int snd = -1;
+        Mission* ms = g_mission;
+        pb.x = ms->view.x - pos.x;
+        pb.y = ms->view.y - pos.y;
+        pb.z = ms->view.z - pos.z;
+        if (pb.normalize() < g_f590c90) {
             int m = mode;
-            if (m == 1 || m == 3 || (m == 0 && shooter == g_mission->local_id)) {
-                int type = g_items[item].type & 0xff;
+            int snd = -1;
+            if (m == 1 || m == 3 || (m == 0 && shooter == ms->local_id)) {
+                ItemKind* k = &g_items[item];
+                int type = k->type & 0xff;
                 if (type == 9) snd = (-(unsigned)(m != 1) & 7) + 0x37;
                 else if (type == 8) snd = (-(unsigned)(m != 1) & 7) + 0x36;
                 else {
-                    int sub2 = g_items[item].f1d0 & 0xff000;
+                    __int64 sub2 = k->f1d0 & 0xff000;
                     if (sub2 == 0x10000) snd = (-(unsigned)(m != 1) & 7) + 0x39;
                     else if (sub2 == 0x30000) snd = (-(unsigned)(m != 1) & 7) + 0x3a;
                     else if (sub2 == 0x20000) snd = (-(unsigned)(m != 1) & 7) + 0x3b;
@@ -317,50 +338,51 @@ after_item_sound:
         }
     }
 
-    if (ent == 0) {
-        f9c = 0;
-        return;
-    }
-
-    speed = veclen(v);
-    v.normalize();
-    speed = speed - (speed * speed * dt) * g_f591908;
-    if (speed > g_f54b660) {
-        vel = v;
-        vel.normalize();
-    }
-
-    ent->frame.f = vel;
-    ent->frame.u = vector4(0.0f, 0.0f, 1.0f);
-    ((matrix&)ent->frame).orthonormalize();
-
-    if (state == 0) {
-        mesh* m = ent->meshes._Myfirst[0];
-        identity4((mat4*)((char*)m + 0xcc));
-        float a = 1.5707964f;
-        ((mat4*)((char*)m + 0xcc))->rotate_su(&a);
-        if (tumble > 0.0f) {
-            float t = ((timer_iface*)((char*)this + 0x70))->elapsed() * tumble;
-            float b = 1.5f - t;
-            ((mat4*)((char*)m + 0xcc))->rotate_sf(&b);
+after_item_sound:
+    if (ent != 0) {
+        speed = (float)sqrt(v.y * v.y + (v.z * v.z + v.x * v.x));
+        v.normalize();
+        speed = speed - (speed * speed * dt) * g_f591908;
+        if (speed > g_f54b660) {
+            vel = v;
+            vel.normalize();
         }
+
+        ent->frame.f = vel;
+        d.x = 0.0f;
+        d.y = 0.0f;
+        d.z = 1.0f;
+        ent->frame.u = d;
+        ((matrix&)ent->frame).orthonormalize();
+
+        if (state == 0) {
+            mat4 idt;
+            mesh* const& mr = ent->meshes[0];
+            mr->m_cc = *identity4(&idt);
+            tmp = 1.5707964f;
+            ent->meshes[0]->m_cc.rotate_su(&tmp);
+            if (tumble > 0.0f) {
+                tmp = g_f54b8b0 - ((timer_iface*)((char*)this + 0x70))->elapsed() * tumble;
+                ent->meshes[0]->m_cc.rotate_sf(&tmp);
+            }
+        }
+        ent->frame.o = pos;
     }
-    ent->frame.o = pos;
     f9c = 0;
 }
 
 // ---- 0x47dc50 ------------------------------------------------------------------------------------------
 
-// 0x38-byte physics record (E56: {3 ints, vector<int>, vector<int>, 3 ints}); see s0047a0c0
+// 0x38-byte physics record (E56 = PhysRec, see s0044f3c0). The stack temporary for
+// vector<E56>::resize(0, E56()) (0x47a980) zeroes f4, f8, f2c, f30 and the six vector lanes in place.
 struct E56 {
     int f0, f4, f8;                              // 0x00
     std::vector<int> a;                          // 0x0c
     std::vector<int> b;                          // 0x1c
     int f2c, f30, f34;                           // 0x2c
-    E56() : f8(0), f2c(0), f30(0) {}             // f0, f4, f34 and the allocator lanes are left uninitialised
+    E56() { f8 = 0; f2c = 0; f30 = 0; f4 = 0; }
 };
 
-// @ 0x47dc50
 // Tear down every physics world this object owns and reset its handle / vectors.
 struct phys_owner {
     std::vector<E56> worlds;                     // 0x00 (_Myfirst at +0x04)
@@ -372,17 +394,11 @@ struct phys_owner {
     void reset();                                // 0x47dc50
 };
 
+// @ 0x47dc50
 void phys_owner::reset()
 {
-    unsigned i = 0;
-    for (;;) {
-        if (worlds._Myfirst == 0)
-            break;
-        if (i >= (unsigned)(worlds._Mylast - worlds._Myfirst))
-            break;
+    for (unsigned i = 0; i < worlds.size(); i++)
         destroy_world(i);
-        i++;
-    }
     f10 = -1;
     f14 = 0;
     f18 = 0;
@@ -391,6 +407,8 @@ void phys_owner::reset()
 }
 
 // ---- 0x47dcd0 ------------------------------------------------------------------------------------------
+
+static __forceinline void vcopy(vector4* d, const vector4* s) { d->x = s->x; d->y = s->y; d->z = s->z; d->w = s->w; }
 
 // @ 0x47dcd0
 // Snapshot the animation time into the mesh, rebuild the morph targets, then fold every morph
@@ -401,13 +419,13 @@ void mesh::apply_anim(const float* t)
     update_morph();                               // 0x413320
     ensure_local();                               // 0x412ee0
 
-    for (unsigned i = 0; v70._Myfirst != 0 && i < (unsigned)(v70._Mylast - v70._Myfirst); i++) {
-        point20* p = &v70._Myfirst[i];
-        p->a = p->b;
+    for (unsigned i = 0; i < v70.size(); i++) {
+        point20* p = &vat(v70, i);
+        vcopy(&p->a, &p->b);
     }
-    for (unsigned j = 0; v50._Myfirst != 0 && j < (unsigned)(v50._Mylast - v50._Myfirst); j++) {
-        vertex60* p = &v50._Myfirst[j];
-        p->pos = p->normal;
+    for (unsigned j = 0; j < v50.size(); j++) {
+        vertex60* p = &vat(v50, j);
+        vcopy(&p->pos, &p->normal);
     }
     finish_load();                                // 0x419300
 }

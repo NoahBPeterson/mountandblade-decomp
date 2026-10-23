@@ -1,0 +1,3 @@
+# s004eeb10 nonmatching: complete reconstructions, not byte-exact.
+# usage: <va> <diff-bytes> <reason>
+004eeb10 1216 complete (rewritten from the disassembly: widget pointers are polymorphic objects, row/pressed/released flags, proficiency cost paid from +0xac, face-name copy via temp tstring, game-key branch order, troops[0] bump). Verified in a scratch copy that emits the 4 WinLicense tags (0c/0d around the trial-mode equip and the 7x bump_prof(50) blocks) with _emit (not allowed in the source): then only the original's zero register (xor ebp,ebp at entry + a dword local zeroed at [esp+0x18], all zero compares/stores use ebp) is missing, plus loop-alignment filler. equiv.py: WEAK (no mismatch over 418 valid inputs; 64 edges unreachable on both sides)

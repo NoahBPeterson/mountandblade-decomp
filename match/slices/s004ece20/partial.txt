@@ -1,4 +1,1 @@
-# s004ece20 partial: incomplete reconstructions.
-# (none: all three target functions have complete bodies)
-004ece20 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004ece20 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+# s004ece20 partial: none. 0x4ece20 has complete source (see nonmatching.txt).

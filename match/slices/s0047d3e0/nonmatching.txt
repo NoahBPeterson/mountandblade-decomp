@@ -1,0 +1,1 @@
+0047dcd0 62 mesh::apply_anim: complete; the vector4 element copies schedule their loads differently (lea src / hoisted w load); equiv PASS

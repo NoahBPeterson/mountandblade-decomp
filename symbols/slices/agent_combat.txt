@@ -1,0 +1,5 @@
+00437d60 ??4Rec1c8@@QAEAAU0@ABU0@@Z  # Rec1c8::operator= (the 0x1c8-byte record's assignment; also named by the annotation on agent_combat.h, ambiguous there with the vector<int> operator= marker 0x43f0a0)
+0042d360 ?_Destroy@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXPAUtstring@@0@Z  # std::vector<tstring>::_Destroy(first, last): ~tstring over a range (called by _Insert_n 0x43e310)
+00438a10 ??$_Copy_backward_opt@PAUtstring@@PAU1@@std@@YAPAUtstring@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  # std::copy_backward over tstring (in-place branch of _Insert_n 0x43e310)
+0054a540 ??_7capsule@@6B@  # rgl::capsule vtable stored by the inlined capsule ctor in Agent::capsule_hit
+00590b84 ??_7Rec1c8@@6B@  # vtable of the 0x1c8-byte record (copy ctor 0x437bb0), stored by its inlined destructor

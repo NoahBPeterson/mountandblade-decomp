@@ -1,4 +1,1 @@
-0047d3e0  2159  incomplete: 2159-byte area update (vector4 h = +0x30..; motion/steering, capsule query 0x472650, per-object transforms); analysed only
-0047dc50  0  incomplete: not written
-0047dcd0 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-0047dcd0 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+0047d3e0 1750 Missile::update: complete (all branches/calls of the original, frame 0xac and size 2158 vs 2159 match); scheduling/register allocation of the x87 vector math differs. equiv FAIL (5/540 inputs) only in uninitialised stack lanes: the mat4 w lanes copied from identity4()'s temp into mesh+0xcc and frame.u.w (garbage whose value depends on the exact stack-slot reuse of the original)  [equiv FAIL: kept partial until the harness verdict is reviewed]

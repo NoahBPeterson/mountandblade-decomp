@@ -1,2 +1,2 @@
-004be950 4 vec60::size: divide-by-0xc0 constant encoded as 0x2aaaaaab vs original 0x66666667; identical semantics
-004be9a0 4 vec (0xc0 stride)::size: same single constant difference as 0x4be950
+004be730 18 WinLicense start/end markers (jmp +0x10 over 16 data bytes 'WL  ') cannot be written without _emit; body 0x4be742 byte-identical (void init, ecx=this), only the end marker + ret differ
+004be742 19 interior VA of the same function as 0x4be730 (after the start marker): body byte-identical, end marker (jmp +0x10 over 'WL  ' data) is not reproducible without _emit

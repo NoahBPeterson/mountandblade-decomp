@@ -1,0 +1,9 @@
+004d9ed0 ?_Insert_n@?$vector@UE80@@V?$allocator@UE80@@@std@@@std@@IAEXViterator@12@IABUE80@@@Z  # std::vector<0x50-byte record>::_Insert_n (callee of 0x4db960)
+004d9400 ??$_Ucopy@PAUE68@@@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@IAEPAUE68@@PAU2@00@Z  # vector<E68>::_Ucopy forwarding to _Uninit_copy 0x4d1230
+0043e2a0 ?_Xlen@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@IBEXXZ  # std::_Xlen (folded)
+0048ace0 ?size@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@QBEIXZ  # vector<E68>::size (folded with other element sizes)
+004ca7e0 ??$_Destroy_range@UE176@@V?$allocator@UE176@@@std@@@std@@YAXPAUE176@@0AAV?$allocator@UE176@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Destroy_range<E176*>
+004d9420 ??$_Ucopy@PAUE176@@@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@IAEPAUE176@@PAU2@00@Z  # vector<E176>::_Ucopy forwarding to _Uninit_copy 0x4d12c0
+004cc280 ??0?$vector@MV?$allocator@M@std@@@std@@QAE@ABV01@@Z  # 4-byte-element vector copy ctor (second instance next to 0x43ed20)
+0043e2a0 ?_Xlen@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@IBEXXZ  # std::_Xlen (folded)
+004be9a0 ?size@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@QBEIXZ  # vector<E176>::size (folded)

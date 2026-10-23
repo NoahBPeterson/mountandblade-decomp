@@ -1,1 +1,2 @@
 slices/s004fd1d0/s004fd1d0.cpp  ?destroy@MWidget@@QAEPAXI@Z  004fd3b0  /O2 /MT /Gy /TP
+slices/s004fd1d0/s004fd1d0.cpp  ??1MWidget@@QAE@XZ  004fd3d0  /O2 /MT /Gy /TP

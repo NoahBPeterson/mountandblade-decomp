@@ -45,7 +45,7 @@ struct OutStream {
     virtual OutStream& w_cstr(const char* s);       // +0x28
     virtual OutStream& w_struct(const void* p);     // +0x2c
 };
-extern OutStream* g_save_writer;                    // 0x5e2950 (the 64-bit counter's writer)
+extern __int64 g_time1;                             // 0x5e2950 (the 64-bit clock counter)
 
 // the record the scalar block writes: five ints (all via w_int) then raw
 struct Rec5c {
@@ -55,21 +55,22 @@ struct Rec5c {
 };
 
 // ---- vectors / records -----------------------------------------------------------------------------------
+struct Elem8 { int a, b; };
 struct List8 {                                      // vector of 8-byte elements
     int   pad0;                                     // +0x0
-    char* begin;                                    // +0x4
-    char* end;                                      // +0x8
-    char* endcap;                                   // +0xc
-    OutStream* write8(OutStream* out);              // 0x4e94b0 (ret 4, returns out)
+    Elem8* begin;                                   // +0x4
+    Elem8* end;                                     // +0x8
+    Elem8* endcap;                                   // +0xc
+    __declspec(noinline) void write8(OutStream* out);                    // 0x4e94b0 (ret 4)
 };
-OutStream* write_vec8(List8* v, OutStream* out);    // the alias the other slices call
+void write_vec8(List8* v, OutStream* out);    // the alias the other slices call
 
 struct GameRecord {                                 // stride 0x508 (game records at +0x13a00)
     char pad0[0x3c0];
     __int64 f3c0;                                   // +0x3c0
     int  f3c8;                                      // +0x3c8
     char pad3cc[0x508 - 0x3cc];
-    void write(OutStream* out);                     // 0x4e9850 (next slice; ret 4)
+    __declspec(noinline) void write(OutStream* out);                     // 0x4e9850 (next slice; ret 4)
 };
 
 struct RecB0 {                                      // stride 0xb0 (the 0x5e29f8 array)
@@ -77,7 +78,7 @@ struct RecB0 {                                      // stride 0xb0 (the 0x5e29f8
     int   f34, f38, f3c;
     char  pad40[0xa0 - 0x40];
     List8 f_a0;                                     // +0xa0
-    void  write(OutStream* out);                    // 0x4e9510 (ret 4)
+    __declspec(noinline) void  write(OutStream* out);                    // 0x4e9510 (ret 4)
 };
 
 struct Rec138 {                                     // stride 0x138 (at +0x13a58)
@@ -90,7 +91,7 @@ struct Rec138 {                                     // stride 0x138 (at +0x13a58
     int   f114, f118, f11c;
     char  pad120[0x128 - 0x120];
     List8 f128;                                     // +0x128
-    void  write(OutStream* out);                    // 0x4e95a0 (ret 4)
+    __declspec(noinline) void  write(OutStream* out);                    // 0x4e95a0 (ret 4)
 };
 
 struct Rec300 {                                     // stride 0x300 (at +0x13a48)
@@ -103,7 +104,7 @@ struct Rec300 {                                     // stride 0x300 (at +0x13a48
     char  pad234[0x24c - 0x234];
     List8 f24c;                                     // +0x24c
     char  f25c[0xa4];                               // +0x25c (the struct-of-arrays base)
-    void  write300(OutStream* out, int n);          // 0x4e9710 (ret 8)
+    __declspec(noinline) void  write300(OutStream* out, int n);          // 0x4e9710 (ret 8)
 };
 
 struct Rec78 {                                      // stride 0x78 (at +0x139e8)
@@ -115,19 +116,20 @@ struct Rec78 {                                      // stride 0x78 (at +0x139e8)
     int   f60;
     char  pad64[0x70 - 0x64];
     int   f70;
-    void  write(OutStream* out);                    // 0x4e9110 (ret 4)
+    char  pad74[4];
+    __declspec(noinline) void  write(OutStream* out);                    // 0x4e9110 (ret 4)
 };
 
 struct Rec78Tag {                                   // count +0x0, array +0x4
     int   count;
     Rec78* array;
-    void  write(OutStream* out);                    // 0x4e90d0 (ret 4)
+    __declspec(noinline) void  write(OutStream* out);                    // 0x4e90d0 (ret 4)
 };
 
 struct Rec30Tag {                                   // count +0x0, array +0x4, stride 0x30
     int   count;
     char* array;
-    void  write(OutStream* out);                    // 0x4e9150 (ret 4)
+    __declspec(noinline) void  write(OutStream* out);                    // 0x4e9150 (ret 4)
 };
 
 // ---- the game object (see s00473a60 / s004e85d0) ---------------------------------------------------------
@@ -172,13 +174,13 @@ struct Game {
     char         pad13b64[0x1a1d8 - 0x13b64];
     int          f1a1d8, f1a1dc, f1a1e0, f1a1e4, f1a1e8, f1a1ec;
     int save_state(OutStream* out);                 // 0x4e8f10
-    int  write_clock(OutStream* out);               // 0x4e9190
-    void write_vec5c(OutStream* out);               // 0x4e93f0
-    void write_list138(OutStream* out);             // 0x4e9550
-    void write_list_party(OutStream* out);          // 0x4e9670
-    void write_list300(OutStream* out);             // 0x4e96c0
-    void write_records(OutStream* out);             // 0x4e97e0
-    void write_items(OutStream* out);               // 0x4e9790
+    __declspec(noinline) int  write_clock(OutStream* out);               // 0x4e9190
+    __declspec(noinline) void write_vec5c(OutStream* out);               // 0x4e93f0
+    __declspec(noinline) void write_list138(OutStream* out);             // 0x4e9550
+    __declspec(noinline) void write_list_party(OutStream* out);          // 0x4e9670
+    __declspec(noinline) void write_list300(OutStream* out);             // 0x4e96c0
+    __declspec(noinline) void write_records(OutStream* out);             // 0x4e97e0
+    __declspec(noinline) void write_items(OutStream* out);               // 0x4e9790
     void write_other2(OutStream* out);              // 0x4e9b50 (next slice)
 };
 
@@ -190,9 +192,10 @@ struct Table2 {                                     // the table at Game+0xcc
 extern Game* g_game;                                // 0x5e2930
 
 extern List8 g_list_a70480;                         // 0xa70480
-extern char* g_29f8;                                // 0x5e29f8 (array of 0xb0-byte records)
+extern RecB0* g_29f8;                               // 0x5e29f8 (array of 0xb0-byte records)
 extern int   g_n29fc;                               // 0x5e29fc
-extern char* g_items;                               // 0x5e29d0 (array of 0x238-byte item kinds)
+struct ItemKind { char pad0[0x30]; List8 l30; char pad40[0x238 - 0x40]; };
+extern ItemKind* g_items;                           // 0x5e29d0 (array of 0x238-byte item kinds)
 extern int   g_n_items;                             // 0x5e29d4
 
 // ---- the sub-writers ------------------------------------------------------------------------------------
@@ -201,7 +204,7 @@ OutStream* write_soa(OutStream* out, char* base);   // 0x4e9620 (free, two stack
 // @ 0x4e8f10    int Game::save_state(OutStream* out)   (thiscall, ret 4)
 int Game::save_state(OutStream* out)
 {
-    __int64 counter = *(__int64*)0x5e2950;
+    __int64 counter = g_time1;
     out->w_int8((int*)&counter);
     out->w_raw((char*)this + 4);
     out->w_raw((char*)this + 0xb4);
@@ -213,10 +216,9 @@ int Game::save_state(OutStream* out)
     write_list_party(out);
     write_list300(out);
     write_vec5c(out);
-    out->w_raw((void*)0x5e29fc);
-    int n = *(int*)0x5e29fc;
-    for (int i = 0; i < n; i++)
-        ((RecB0*)(*(char**)0x5e29f8 + i * 0xb0))->write(out);
+    out->w_raw(&g_n29fc);
+    for (int i = 0; i < g_n29fc; i++)
+        g_29f8[i].write(out);
     write_other2(out);
     ((Table2*)((char*)this + 0xcc))->write(out);
     write_records(out);
@@ -317,37 +319,28 @@ void Game::write_vec5c(OutStream* out)
         ((Rec5c*)r)->write(out);
 }
 
-// @ 0x4e9460    void Rec5c::write(OutStream* s)   (thiscall, ret 4)  five ints, then raw
+// @ 0x4e9460    void Rec5c::write(OutStream* s)   (thiscall, ret 4)
 void Rec5c::write(OutStream* s)
 {
     char* p = (char*)this;
-    s->w_int((int*)(p + 0));
-    s->w_int((int*)(p + 4));
-    s->w_int((int*)(p + 8));
+    s->w_int((int*)(p + 0)).w_int((int*)(p + 4)).w_int((int*)(p + 8));
     s->w_int((int*)(p + 0x10));
-    s->w_int((int*)(p + 0x14));
-    s->w_raw(p + 0x18);
+    s->w_int((int*)(p + 0x14)).w_raw(p + 0x18);
 }
 
-// @ 0x4e94b0    OutStream* List8::write8(OutStream* out)   (thiscall, ret 4)
-OutStream* List8::write8(OutStream* out)
+// @ 0x4e94b0    void List8::write8(OutStream* out)   (thiscall, ret 4)
+void List8::write8(OutStream* out)
 {
     int n;
     if (!begin)
         n = 0;
     else
-        n = (int)(end - begin) >> 3;
+        n = (int)(end - begin);
     out->w_count(&n);
-    for (unsigned i = 0;; i++) {
-        if (!begin)
-            break;
-        if (i >= (unsigned)((end - begin) >> 3))
-            break;
-        out->w_int1((int*)(begin + i * 8));
-    }
-    return out;
+    for (unsigned i = 0; i < (!begin ? 0u : (unsigned)(end - begin)); i++)
+        out->w_int1((int*)&begin[i]);
 }
-OutStream* write_vec8(List8* v, OutStream* out) { return v->write8(out); }
+void write_vec8(List8* v, OutStream* out) { v->write8(out); }
 
 // @ 0x4e9510    void RecB0::write(OutStream* out)   (thiscall, ret 4)
 void RecB0::write(OutStream* out)
@@ -382,14 +375,15 @@ void Rec138::write(OutStream* out)
 
 // @ 0x4e9620    OutStream* write_soa(OutStream* out, char* base)   (free function, ret 0)
 // Eight iterations: the struct at base+0x20+i*0x10, the int at base+i*4 and the block at base+0xa0.
+struct Soa8 { int v[8]; char s[8][16]; int blk[1]; };
 OutStream* write_soa(OutStream* out, char* base)
 {
-    char* p = base;
-    char* q = base;
-    for (int i = 8; i; i--, p += 0x10, q += 4) {
-        out->w_struct(p + 0x20);
-        out->w_raw(q);
-        out->w_raw(base + 0xa0);
+    Soa8* b = (Soa8*)base;
+    int* blk = b->blk;
+    for (int i = 0; i < 8; i++) {
+        out->w_struct(b->s[i]);
+        out->w_raw(&b->v[i]);
+        out->w_raw(blk);
     }
     return out;
 }
@@ -426,9 +420,9 @@ void Rec300::write300(OutStream* out, int n)
 // @ 0x4e9790    void Game::write_items(OutStream* out)   (thiscall, ret 4)   item kinds at 0x5e29d0
 void Game::write_items(OutStream* out)
 {
-    out->w_raw((void*)0x5e29d4);
-    for (int i = 0; i < *(int*)0x5e29d4; i++)
-        write_vec8((List8*)(*(char**)0x5e29d0 + i * 0x238 + 0x30), out);
+    out->w_raw(&g_n_items);
+    for (int i = 0; i < g_n_items; i++)
+        write_vec8(&g_items[i].l30, out);
 }
 
 // @ 0x4e97e0    void Game::write_records(OutStream* out)   (thiscall, ret 4)

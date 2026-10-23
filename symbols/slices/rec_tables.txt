@@ -1,0 +1,59 @@
+004c2c50 ??0C4c2c50@@QAE@XZ
+004c2cb0 ?destroy_C4c2c50@@YIPAXPAUC4c2c50@@HH@Z
+004c2cd0 ?dtor@C4c2c50@@QAEXXZ
+004c2d10 ??0C4c2d10@@QAE@XZ
+004c2dd0 ?read_block_2dd0@@YIHPAUBlk2dd0@@PAX@Z
+004c2ea0 ?fn_4c2ea0@@YIXPAX@Z
+004c2fb0 ??0C4c2fb0@@QAE@XZ
+004c3000 ?destroy_C4c2fb0@@YIPAXPAUC4c2fb0@@HH@Z
+004c3020 ?dtor@C4c2fb0@@QAEXXZ
+004c3050 ??0C4c3050@@QAE@XZ
+004c30b0 ?set_flag_5d8789@@YAXXZ
+004c30c0 ?destroy_C4c3050@@YIPAXPAUC4c3050@@HH@Z
+004c30e0 ?dtor@C4c3050@@QAEXXZ
+004c3120 ?destroy_C4c3120@@YIPAXPAXHH@Z
+004c3160 ??0C4c3160@@QAE@XZ
+004c31c0 ??0C4c31c0@@QAE@XZ
+004c3220 ?destroy_C4c31c0@@YIPAXPAUC4c31c0@@HH@Z
+004c3240 ?dtor@C4c31c0@@QAEXXZ
+004c3290 ??0C4c3290@@QAE@XZ
+004c32e0 ?destroy_C4c3290@@YIPAXPAUC4c3290@@HH@Z
+004c3300 ?dtor@C4c3290@@QAEXXZ
+004c3330 ?global_4bf870@@YAXXZ
+004c3340 ?global_4c03b0@@YAXXZ
+004c3350 ?fn_4c3350@@YAXXZ
+004c3430 ?vector_deleting_delete@elem58@@QAEPAXI@Z
+004c3510 ?renderer_setup@@YIXPAX@Z
+004c3a40 ?load@options_record@@QAEXXZ
+004c3d90 ?copy_uninit_204@@YAXPAXIPBX0@Z
+004c3e10 ?copy_uninit_4@@YAXPAXIPBX0@Z
+004c3e80 ?copy_uninit_2c@@YAPAXPAX0PBX00@Z
+004c3ef0 ?copy_uninit_4_range@@YAPAXPAX0PBX00@Z
+004c3f60 ?destroy_elem48_array@@YIXPAPAUelem48@@@Z
+004c3fb0 ?load_elem48_array@@YIXPAX0PAUstream_base@@@Z
+004c4090 ??1scenefile_obj@@QAE@XZ
+004c4100 ?tick@sound_engine@@QAIXXZ
+004c4340 ?load@music_set@@QAIXAAUstream_base@@@Z
+004c4640 ?destroy_tstring_pairs@@YIXPAPAUtstring_pair@@@Z
+004c46d0 ?load_pair_array@@YIXPAPAUtstring_pair@@PAHPAUstream_base@@@Z
+004c47d0 ?load_pair_array12@@YIXPAPAUtstring_pair@@PAHPAUstream_base@@@Z
+0040cd00 identity_pos  # fills the 4x4 out matrix (arg) with the identity rotation and zero origin, returns the out pointer (used by 0x4c2d10)
+005947d8 ??_7head_rec@@6B@  # head record base vtable stored by every ctor of this module before the own vtable
+00595740 ??_7C4c2c50@@6B@  # ctor 0x4c2c50
+00595798 ??_7C4c2fb0@@6B@  # ctor 0x4c2fb0
+005957bc ??_7C4c3050@@6B@  # ctor 0x4c3050
+00595870 ??_7C4c3160@@6B@  # ctor 0x4c3160
+00595924 ??_7C4c31c0@@6B@  # ctor 0x4c31c0
+00595a20 ??_7C4c3290@@6B@  # ctor 0x4c3290
+0042bbd0 ?ctor@tstring_ctor@@QAEXXZ  # tstring::tstring(), called on raw storage
+00431480 ?scalar_delete@RecD@@QAEPAXI@Z  # ??_ERecD deleting destructor
+005d8789 ?g_5d8789@@3EA  # g_ui_dirty
+004bf870 ?unk_4bf870@EditorObj@@QAEXXZ  # editor singleton method
+004c03b0 ?unk_4c03b0@EditorObj@@QAEXXZ  # editor singleton method
+00535482 ?engine_alloc@@YAPAXI@Z  # operator new[]
+0053545e ?engine_new@@YAPAXI@Z  # operator new
+0053570d ?engine_free@@YAXPAX@Z  # operator delete[]
+00535712 ?engine_delete@@YAXPAX@Z  # operator delete
+005e2a18 ?g_strtable@@3ULangTables@@A  # the UI string table
+005d7080 ?g_gui@@3Ugui_manager@@A  # the UI root
+0042d1b0 ?reset@gui_manager@@QAEXXZ  # gui_manager::reset

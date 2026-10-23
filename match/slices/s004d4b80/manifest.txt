@@ -1,7 +1,7 @@
 # slice s004d4b80 - no byte-exact functions this pass.
 #
 # 0x4d5290 (handle_buttons) and 0x4d51d0 (world destroy) compile and are reconstructed call-for-call;
-# they are recorded in nonmatching.txt. 0x4d4b80 is still missing and is in partial.txt.
+# they are recorded in nonmatching.txt, and so is 0x4d4b80 (complete, equiv WEAK).
 #   0x4d5290 255 -> 134 diffs with the right call shape (the handler passes &arg to 0x4d5410): the
 #             original threads its "return" blocks through shared jmp targets (0x4d52ca / default
 #             epilogue) and loads 0xa7398c per statement; the source's return-per-block + reload shape

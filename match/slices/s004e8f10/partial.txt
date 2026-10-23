@@ -1,13 +1,1 @@
-# slice s004e8f10 - one reconstruction that is NOT proven equivalent: equiv.py FAILs it, so it is filed here
-# rather than in nonmatching.txt. The source compiles to a proper `ret 4`; MSVC's register allocation differs
-# from the original, so equivalence is unproven.
-# usage: <source> <va> [flags]
-# equiv.py: 0x4e94b0 FAIL (5/5 valid inputs mismatch; first mismatch eax, ours 0x40020000 vs orig 0x1).
-# slices/s004e8f10/s004e8f10.cpp 0x4e94b0
-004e8f10 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004e90d0 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004e9190 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004e9460 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004e94b0 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004e9620 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004e9790 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+# slice s004e8f10 partial: none. Every function has complete source (see manifest.txt / nonmatching.txt).

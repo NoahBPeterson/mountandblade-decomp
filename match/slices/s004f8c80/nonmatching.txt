@@ -1,0 +1,1 @@
+004f25a0 27 frustum::init complete: flag/f118/f11c fields, #pragma intrinsic(tan) inline x87 tan, build_planes tail. Remaining diff is x87 store/op ordering. equiv PASS (400 valid).

@@ -52,7 +52,6 @@ struct UiVt {
     virtual void d39(); virtual void d40();
     virtual void get_text_size(tstring* s, float* out);  // +0xa4
     virtual void d42(); virtual void d43();
-    virtual void set_text(const tstring* s, float* xy);  // +0xac
     virtual void hide();                            // +0xb0
     virtual void show();                            // +0xb4
     virtual void enable();                          // +0xb8
@@ -61,17 +60,15 @@ struct UiVt {
     virtual void update_children();                 // +0xc4
 };
 
-struct UiWidget {
-    UiVt* vt;                                       // +0x00
-};
+typedef UiVt UiWidget;                              // widget pointers point at the polymorphic object itself
 
 // ---- game records ------------------------------------------------------------------------------------
 struct TroopRec {
     tstring name;                                   // +0x0 (record name; assigned from the portrait)
-    char pad4[0xa4 - 4];
+    char pad10[0xa4 - 0x10];
     int skill_points;                               // +0xa4
-    int attr_str;                                   // +0xa8
-    int attr_agi;                                   // +0xac
+    int attr_points;                                // +0xa8 (attribute points)
+    int prof_points;                                // +0xac (weapon proficiency points)
     char padb0[0x508 - 0xb0];                       // record is 0x508 bytes
 
     int skill_rank(int idx);                        // 0x4351a0 (packed 4-bit rank)
@@ -79,6 +76,7 @@ struct TroopRec {
     void bump_prof(int idx, float amount);          // 0x437770
     void bump_attr(int idx, int amount);            // 0x48bef0
     void auto_equip(int a, int b, int c, int d);    // 0x4687e0 (this = troops + index*0x508)
+    int steps_to_point(int idx);                    // 0x4ef6d0 (cost in proficiency points of the next point)
 };
 
 struct Game {
@@ -146,7 +144,8 @@ struct CharSheet {
     UiWidget* f_448;                                // +0x448 (next troop)
     UiWidget* f_44c[4];                             // +0x44c (attribute left buttons)
     UiWidget* f_45c[4];                             // +0x45c (attribute right buttons)
-    char pad46c[0x494 - 0x46c];
+    char pad46c[0x478 - 0x46c];
+    UiWidget* f_478[7];                             // +0x478 (proficiency number labels)
     UiWidget* f_494[7];                             // +0x494 (proficiency rows)
     char pad4b0[0x4b8 - 0x4b0];
     UiWidget* f_4b8;                                // +0x4b8 (title label)
@@ -163,7 +162,6 @@ struct CharSheet {
 
     void update(float dt);                          // 0x4eeb10
     void apply_to_troop();                          // 0x4ef420
-    int  steps_to_point(int idx);                   // 0x4ef6d0
     void update_skill_rows();                       // 0x4ef7d0
     void update_detail();                           // 0x4ef9f0
     void refresh_panels();                          // 0x4f0820
@@ -173,7 +171,8 @@ struct CharSheet {
 struct SkillRows { UiWidget* w[5]; };
 
 // ---- world / UI services -----------------------------------------------------------------------------
-struct MsgLog { void flush(); };                    // 0x5d7080 (0x4f1390)
+struct MsgLog { void flush(); };                    // 0x4f1390
+extern MsgLog g_msglog;                             // 0x5d7080
 struct MainMenu { void choose(int option); };       // 0xa73980 (0x495700)
 extern MainMenu g_main_menu;                        // 0xa73980
 extern int g_world_time;                            // 0x5d8790 (compared as an int)
@@ -215,54 +214,52 @@ extern int g_trial_mode;                            // 0x5e29c4
 static inline void menu_choose(int option) { g_main_menu.choose(option); }
 
 // @ 0x4eeb10 -------------------------------------------------------------------------------
+// The click handling of the rows is `selected |= press on either button` / `released |= release on either`;
+// a click on the right button of a row spends the corresponding points.
 void CharSheet::update(float dt)
 {
-    bool face_clicked = false;
-    bool face_visible = false;
-    bool clicked = false;
+    int zero = 0;
+    bool selected = false;
+    bool released = false;
 
-    if (f_2e4 != 0) {
+    if (f_2e4 != 0)
         ((World*)f_2e4)->step(dt);
-    }
-    MsgLog* log = (MsgLog*)0x5d7080;
-    log->flush();
-    if (f_4d4 == 0)
-        f_430->vt->hide();
+    g_msglog.flush();
+    if (f_4d4 != 0)
+        f_430->show();
     else
-        f_430->vt->show();
-    // (the show/hide slot numbers above are verified in s0048b760)
+        f_430->hide();
 
-    if (f_4c8 == 0)
-        goto prev_next;
-    {
+    if (f_4c8 != 0) {
         if (g_world_time != 0) {
             ScrollHost* host = (ScrollHost*)f_4bc;
             UiDsv* bar = host->bar;
-            float s = bar->stops[bar->f_178];
-            bar->set_value(((float)g_world_time / s) * bar->f_17c * 0.0005f +
-                           (s - bar->f_17c) * ((bar->f_168 - bar->f_16c) / (bar->f_170 - bar->f_16c)));
-            ((UiWidget*)((ScrollHost*)f_4bc)->bar)->vt->set_key_flags(0x10000);
+            bar->set_value(((float)g_world_time / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
+                           (bar->stops[bar->f_178] - bar->f_17c) *
+                               ((bar->f_168 - bar->f_16c) / (bar->f_170 - bar->f_16c)));
+            ((UiVt*)((ScrollHost*)f_4bc)->bar)->set_key_flags(0x10000);
         }
         // the skill rows: select on press, then learn a point on click
         for (int i = 0; i < f_2d0; i++) {
-            UiWidget* num = f_30[i];                   // the number label
-            UiWidget* row = f_180[i];
-            if (num->vt->clicked_on(2) || row->vt->clicked_on(2)) {
+            if (f_30[i]->clicked_on(2) || f_180[i]->clicked_on(2)) {
+                selected = true;
                 f_2d4 = i;
                 f_2d8 = 1;
                 update_detail();
             }
-            if (!num->vt->clicked_on(4))
-                row->vt->clicked_on(4);
-            if (row->vt->clicked_on(0x10000)) {
-                TroopRec* t = &g_game->troops[f_14];
+            if (f_30[i]->clicked_on(4) || f_180[i]->clicked_on(4))
+                released = true;
+            if (f_180[i]->clicked_on(0x10000)) {
+                int troop = f_14;
                 int id = f_228[i];
-                int cap = g_skill_tbl[id].cap;
-                int rank = t->skill_rank(id);
-                if (cap > rank)
-                    rank = cap;
-                t->set_skill(id, rank + 1);
-                t->skill_points--;
+                TroopRec* tb = g_game->troops;
+                int rank = (int)((unsigned)((int*)tb)[troop * 0x142 + id / 8 + 0x1a] >> (id % 8 * 4)) & 0xf;
+                if (rank < 0)
+                    rank = 0;
+                else if (rank > g_skill_tbl[id].cap)
+                    rank = g_skill_tbl[id].cap;
+                tb[troop].set_skill(id, rank + 1);
+                g_game->troops[f_14].skill_points--;
                 f_4d4 = 1;
                 update_detail();
                 update_skill_rows();
@@ -270,21 +267,20 @@ void CharSheet::update(float dt)
                 refresh_lists();
             }
         }
-        // the seven proficiency rows: train one point on click, paid with skill points
+        // the seven proficiency rows: train one point on click, paid with proficiency points
         for (int i = 0; i < 7; i++) {
-            UiWidget* num = (&f_494[0] - 7)[i];
-            UiWidget* row = f_494[i];
-            if (num->vt->clicked_on(2) || row->vt->clicked_on(2)) {
+            if (f_478[i]->clicked_on(2) || f_494[i]->clicked_on(2)) {
+                selected = true;
                 f_2d4 = i;
                 f_2d8 = 2;
                 update_detail();
             }
-            if (!num->vt->clicked_on(4))
-                row->vt->clicked_on(4);
-            if (row->vt->clicked_on(0x10000)) {
-                int cost = steps_to_point(i);
+            if (f_478[i]->clicked_on(4) || f_494[i]->clicked_on(4))
+                released = true;
+            if (f_494[i]->clicked_on(0x10000)) {
+                int cost = g_game->troops[f_14].steps_to_point(i);
                 g_game->troops[f_14].bump_prof(i, (float)cost);
-                g_game->troops[f_14].skill_points -= cost;
+                g_game->troops[f_14].prof_points -= cost;
                 f_4d4 = 1;
                 refresh_lists();
                 refresh_panels();
@@ -294,20 +290,19 @@ void CharSheet::update(float dt)
 
     // the four attribute rows
     for (int i = 0; i < 4; i++) {
-        UiWidget* left = f_44c[i];
-        UiWidget* right = f_45c[i];
-        if (left->vt->clicked_on(2) || right->vt->clicked_on(2)) {
+        if (f_44c[i]->clicked_on(2) || f_45c[i]->clicked_on(2)) {
+            selected = true;
             f_2d4 = i;
             f_2d8 = 0;
             update_detail();
         }
-        if (!left->vt->clicked_on(4))
-            right->vt->clicked_on(4);
-        if (right->vt->clicked_on(0x10000)) {
+        if (f_44c[i]->clicked_on(4) || f_45c[i]->clicked_on(4))
+            released = true;
+        if (f_45c[i]->clicked_on(0x10000)) {
             g_game->troops[f_14].bump_attr(i, 1);
-            g_game->troops[f_14].attr_str--;
+            g_game->troops[f_14].attr_points--;
             if (i == 1)
-                g_game->troops[f_14].attr_agi += 5;
+                g_game->troops[f_14].prof_points += 5;
             f_4d4 = 1;
             refresh_panels();
             update_detail();
@@ -317,27 +312,26 @@ void CharSheet::update(float dt)
     }
 
     // the face page
-prev_next:
-    if (f_52c != 0 && f_4cc != 0 && f_4cc->vt->clicked_on(2)) {
-        face_clicked = true;
+    if (f_52c != 0 && f_4cc != 0 && f_4cc->clicked_on(2)) {
+        selected = true;
         f_2d4 = 0;
         f_2d8 = 3;
         update_detail();
     }
-    if (f_52c != 0 && f_4cc != 0 && f_4cc->vt->clicked_on(4) && !face_clicked) {
+    if ((f_52c != 0 && f_4cc != 0 && f_4cc->clicked_on(4) || released) && !selected) {
         f_2d4 = -1;
         update_detail();
     }
-    if (f_14 == 0 && f_4c4->vt->clicked_on(0x10000)) {
-        g_game->troops[0].name = ((HeroEntry*)f_4c4)->name;
+    if (f_14 == 0 && f_4c4->clicked_on(0x10000)) {
+        g_game->troops[0].name = tstring(((HeroEntry*)f_4c4)->name);
         g_game->sl_query(0x18, 0, 0);
     }
 
     // previous / next troop
     int step = 0;
-    if (f_444 != 0 && f_444->vt->clicked_on(0x10000))
+    if (f_444 != 0 && f_444->clicked_on(0x10000))
         step = 1;
-    else if (f_448 != 0 && f_448->vt->clicked_on(0x10000))
+    else if (f_448 != 0 && f_448->clicked_on(0x10000))
         step = -1;
 
     if (f_2dc == 0) {
@@ -348,20 +342,20 @@ prev_next:
             return;
         }
     } else if (f_2dc == 1) {
-        TroopRec* hero = &g_game->troops[0];
-        if (hero->attr_str < 1 && hero->skill_points < 1 &&
-            (hero->attr_agi < 6 && ((HeroEntry*)f_4c4)->f181 == 0))
-            f_42c->vt->disable();
+        TroopRec* hero = g_game->troops;
+        if (hero->attr_points > 0 || hero->skill_points > 0 || hero->prof_points > 5 ||
+            ((HeroEntry*)f_4c4)->f181 != 0)
+            f_42c->enable();
         else
-            f_42c->vt->enable();
-        if (f_42c->vt->clicked_on(0x10000)) {
+            f_42c->disable();
+        if (f_42c->clicked_on(0x10000)) {
             f_2dc = -1;
             g_game->troops[g_game->player].auto_equip(-1, 0, 0, 0);
-            *g_menu_state = f_14;
+            g_menu_state[5] = f_14;
             menu_choose(0x1d);
             return;
         }
-        if (f_430->vt->clicked_on(0x10000)) {
+        if (f_430->clicked_on(0x10000)) {
             apply_to_troop();
             f_4d4 = 0;
             update_detail();
@@ -372,24 +366,25 @@ prev_next:
         }
     } else {
         if (step != 0) {
-            f_14 = (f_14 + step + g_game->troop_count) % g_game->troop_count;
+            f_14 += step;
+            f_14 = (f_14 + g_game->troop_count) % g_game->troop_count;
             f_4 = 1;
             menu_choose(0xf);
             return;
         }
-        if (f_52c != 0 && f_4cc != 0 && f_4cc->vt->clicked_on(0x10000)) {
-            *g_menu_state = f_14;
-            *(g_menu_state + 1) = 0xf;
+        if (f_52c != 0 && f_4cc != 0 && f_4cc->clicked_on(0x10000)) {
+            g_menu_state[5] = f_14;
+            g_menu_state[6] = 0xf;
             menu_choose(0x1d);
             return;
         }
-        if (f_440 != 0 && f_440->vt->clicked_on(0x10000)) {
-            *g_army_state = f_14;
-            *(g_army_state + 1) = 0xf;
+        if (f_440 != 0 && f_440->clicked_on(0x10000)) {
+            g_army_state[5] = f_14;
+            g_army_state[6] = 0xf;
             menu_choose(0x18);
             return;
         }
-        if (f_430->vt->clicked_on(0x10000)) {
+        if (f_430->clicked_on(0x10000)) {
             apply_to_troop();
             f_4d4 = 0;
             update_detail();
@@ -398,30 +393,29 @@ prev_next:
             refresh_lists();
             return;
         }
-        if (f_42c->vt->clicked_on(0x10000)) {
+        if (f_42c->clicked_on(0x10000)) {
             menu_choose(f_18);
             return;
         }
         // game keys: rest / export / learning
-        if (!(g_a170d8 != 0 || g_a174d8 == 0)) {
-            if (g_a17148 != 0 || g_a17348 != 0) {
-                if (g_a17188 != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
-                    if (g_trial_mode != 0) {
-                        g_game->equip_hero(f_14, 1000);
-                        menu_choose(0xf);
-                    }
-                    return;
-                }
-                if ((g_a17148 != 0 || g_a17348 != 0) && g_a17118 != 0 &&
-                    (g_a17518 == 0 && g_a5a9fbc != 0)) {
-                    for (int i = 0; i < 7; i++)
-                        g_game->troops[f_14].bump_prof(i, 50.0f);
-                    menu_choose(0xf);
-                    return;
-                }
-            }
-        } else {
+        if (g_a170d8 == 0 && g_a174d8 != 0) {
             menu_choose(f_18);
+        } else {
+            if (g_a17148 == 0 && g_a17348 == 0)
+                return;
+            if (g_a17188 != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
+                if (g_trial_mode != 0) {
+                    g_game->equip_hero(f_14, 1000);
+                    menu_choose(0xf);
+                }
+                return;
+            }
+            if ((g_a17148 != 0 || g_a17348 != 0) && g_a17118 != 0 && g_a17518 == 0 && g_a5a9fbc != 0) {
+                for (int i = 0; i < 7; i++)
+                    g_game->troops->bump_prof(i, 50.0f);
+                menu_choose(0xf);
+                return;
+            }
         }
     }
 }

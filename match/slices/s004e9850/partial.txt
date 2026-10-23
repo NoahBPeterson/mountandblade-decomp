@@ -1,9 +1,1 @@
-# slice s004e9850 - no incomplete reconstructions: all nine functions compile and are filed either in
-# manifest.txt (byte-exact) or nonmatching.txt (complete, not byte-exact). 0x4ea030 was moved from here to
-# nonmatching.txt once equiv.py classified it PASS.
-# usage: <source> <va> [flags]
-004e9b50 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004e9c50 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004e9d10 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004e9fe0 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
-004ea030 0 not recorded by the session (source may be missing or incomplete; added by fix_bookkeeping)
+# slice s004e9850 partial: none. Every function has complete source (see manifest.txt / nonmatching.txt).

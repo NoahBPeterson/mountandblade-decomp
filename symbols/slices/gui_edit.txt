@@ -1,0 +1,113 @@
+004c48d0 ?load@rec34_list@@QAIXAAUstream_base@@@Z
+004c49f0 ??0head_cam@@QAE@XZ
+004c4b70 ?write_stream@head_cam@@QAEXPAUw_stream@@@Z
+004c4c00 ?read_stream@head_cam@@QAEXPAUw_stream@@@Z
+004c4c90 ?head_rec_delete@@YIPAXPAUhead_rec@@PAXI@Z
+004c4cc0 ??0head_obj2@@QAE@XZ
+004c4d10 ??1Tail2@@QAE@XZ
+004c4d80 ?clear@list_int@@QAEXXZ
+004c4dc0 ?list_int_buynode@@YIPAXPAUlist_int@@@Z
+004c4e2f ?list_int_buynode_funclet@@YAXPAUlist_node_int@@@Z
+004c4e50 ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z
+004c4ebd ?list_int_make_node_funclet@@YAXPAX@Z
+004c4ee0 ??1world_obj@@QAE@XZ
+004c4f40 ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z
+004c5010 ?fill_records@@YAXPAXIPBXPAUblock_copier@@@Z
+004c5074 ?fill_records_funclet@@YAXXZ
+004c5080 ?copy_range38@@YAPAUitem38@@PAU1@PBU1@1PAUeditor@@@Z
+004c50ea ?copy_range38_catch@@YAXXZ
+004c5110 ?clear_vec38@editor@@QAEXXZ
+004c5150 ?free_items@editor@@QAEXXZ
+004c5190 ?set_view@gui_view@@QAEXPBM@Z
+004c52f0 ?wheel_step@gui_view@@QAEXH@Z
+004c5330 ?clear_selection@gui_view@@QAEXXZ
+004c53f0 ?select_mode@graph_obj@@QAEXHD@Z
+004c54f0 ?calc_vertex_mode@graph_obj@@QAEHH@Z
+004c5670 ?calc_edge_mode@graph_obj@@QAEHH@Z
+004c57d0 ?swap_face_vertices@graph_obj@@QAEXHH@Z
+004c5840 ?swap_poly_normals@graph_obj@@QAEXHH@Z
+004c58c0 ?swap_poly_colors@graph_obj@@QAEXHH@Z
+004c5940 ?remove_vertex_from_polys@graph_obj@@QAEXH@Z
+004c59c0 ?remove_vertex_from_edges@graph_obj@@QAEXH@Z
+004c5a20 ?update_vertex_mode@graph_obj@@QAEXXZ
+004c5b60 ?update_edge_mode@graph_obj@@QAEXXZ
+004c5c80 ?update_poly_mode@graph_obj@@QAEXXZ
+004c5dc0 ?refresh_selection@graph_obj@@QAEXXZ
+004c5f60 ?find_triangle@graph_obj@@QAEXPBHPAH1@Z
+004c6010 ?find@LangTables@@QAEPAUtstring@@PBU2@@Z
+004c6080 ?translated@PartyTemplate@@QAE?AUtstring@@XZ
+004c6100 ?translated@SkillRec@@QAE?AUtstring@@XZ
+004c6190 ?desc_name@SkillRec@@QAEPAUtstring@@XZ
+004c61f0 ?translated_desc@SkillRec@@QAE?AUtstring@@XZ
+004c62b0 ?translated@MenuDoor@@QAE?AUtstring@@XZ
+004c6330 ?text_by_kind@RecA@@QAE?AUtstring@@XZ
+004c63f0 ?src_text@RecA@@QAE?AUtstring@@XZ
+004c6470 ?src_id_name@RecA@@QAE?AUtstring@@XZ
+004c6530 ?name_by_state@RecB@@QAE?AUtstring@@XZ
+004c65d0 ?reset@ItemPage@@QAEXXZ
+004c6620 ?format@ItemPage@@QAEXPAD@Z
+004c6860 ?field_name@RecC@@QAE?AUtstring@@XZ
+004c6900 ?retire@ItemPage@@QAEXXZ
+004c6950 ?fill_records@ItemPage@@QAEPAURefRecord@@PAU2@@Z
+004c6aa0 ?clear@ItemPage@@QAEXXZ
+004c6b30 ?place@ItemPage@@QAEXH@Z
+004c6ca0 ?mesh_ptr@MapObject@@QAEPAUtstring@@XZ
+004c6d00 ?translated_door@MenuDoor@@QAE?AUtstring@@XZ
+004c6dc0 ?set_object_target@MapScreen@@QAEXH@Z
+004c6e00 ?reset_gui@@YAXXZ
+004c6e10 ?reset_state@MapScreen@@QAEXXZ
+004c6e30 ?clear_objects@MapScreen@@QAEXXZ
+004c6eb0 ?insert_a@MapScreen@@QAEPAUMapRecord@@PAU2@HH@Z
+004c6ee0 ?insert_b@MapScreen@@QAEPAHPAHHH@Z
+004c6f10 ?place_a@MapScreen@@QAEXPAUMapRecord@@HH@Z
+004c6f30 ?place_b@MapScreen@@QAEXPAUMapRecord@@HH@Z
+004c6f50 ?place_c@MapScreen@@QAEXPAUMapRecord@@HH@Z
+004c6f70 ?place_d@MapScreen@@QAEXPAUMapRecord@@HH@Z
+004c6f90 ?refresh_list@MapScreen@@QAEXD@Z
+004c7290 ?init@ConfigDialog@@QAEXXZ
+004c77c0 ?refresh@MapEditorDialog@@QAEXXZ
+004c7bf0 ?update_object_type@MapEditorDialog@@QAEXXZ
+004c7e20 ?update_objects@MapEditorDialog@@QAEXXZ
+004c7ee0 ?destroy_record_array@@YAPAXPAXI@Z
+004c7f90 ?update_terrain@graph_obj@@QAEXHPBM@Z
+004c8000 ?normal@graph_obj@@QAE?AUvector4@rgl@@PBH@Z
+004c80c0 ?clear@Block@@QAEXXZ
+004c8110 ?read@Block@@QAEXPAUstream_base@@@Z
+004c8330 ?free_materials@Block@@QAEXXZ
+004c83a0 ?read_terrain@Block@@QAEXPAUstream_base@@@Z
+004c84f0 ?conv_map_codes@@YIXPAUconv_rec@@@Z
+004c85e0 ?conv_free_one@@YIXPAUconv_rec@@@Z
+004c8630 ?conv_build_scene@@YIXPAUconv_rec@@@Z
+004c8810 ?fill_verts@@YAPAUedit_vert@@PAU1@HPBU1@@Z
+004c8840 ?conv_assign_back@@YIXPAUconv_rec@@HPAPAU1@00@Z
+004c88a0 ?erase_range@ptr_vec@@QAE?AUptr_iter@@PAH0@Z
+004c88e0 ?copy_range@item38_vec@@QAEXPAUitem38@@PBU2@1@Z
+004c8900 ?loader_thread_body@@YGXXZ
+004c8980 ?conv_item_array_dtor@@YIPAXPAUconv_rec@@HI@Z
+004c8a40 ?conv_group_dtor@@YIXPAUconv_rec@@@Z
+004c8ab0 ?conv_sub_dtor@@YGXPAPAX@Z
+004c8af0 ?remove_node@graph_obj@@QAEXH@Z
+004c8ba0 ?conv_list_dtor@@YIXPAUconv_rec@@@Z
+004c8bf0 ?conv_clear@@YIXPAPAX@Z
+004c8c20 ?conv_zero_node@@YIPAXPAX@Z
+004c8ca0 ?save_language_files@GameData@@QAEX_N@Z
+004ca550 ?refresh@screen_text@@QAEXH@Z
+005947d8 ??_7head_rec@@6B@  # head record base vtable (head_cam / head_obj2 ctors store it first)
+00595bd8 ??_7head_cam@@6B@  # head_cam vtable (ctor 0x4c49f0)
+00595c20 ??_7head_obj2@@6B@  # head_obj2 vtable (ctor 0x4c4cc0)
+00535482 ?engine_alloc@@YAPAXI@Z  # operator new[]
+0053545e ?engine_new@@YAPAXI@Z  # operator new
+0053570d ?engine_free@@YAXPAX@Z  # operator delete[]
+00535712 ?engine_delete@@YAXPAX@Z  # operator delete
+005e2a18 ?g_strtable@@3ULangTables@@A  # the UI string table
+005d7080 ?g_gui@@3Ugui_manager@@A  # the UI root
+0042d1b0 ?reset@gui_manager@@QAEXXZ  # gui_manager::reset
+0043a1e0 ?lookup@LangTables@@QAEPAUtstring@@ABU2@@Z  # LangTables::lookup
+00433bb0 ?hash@LangTables@@QAEIPBUtstring@@@Z  # LangTables::hash
+004bd740 ?write@LangTables@@QAEXPAU_iobuf@@ABUtstring@@1@Z  # LangTables::write
+08ee3c28 ?g_path_prefix@@3DA  # global file-name prefix
+00a17144 ?g_windowed_setting@@3HA  # windowed setting
+00a17544 ?g_windowed_other@@3HA
+00a17f28 ?g_dev_renderer@@3PAUdev_rec@@A  # current render device record
+005d75e0 ?g_5d75e0@@3EA  # device state index
+005a9f60 ?g_log@@3Ulog_stream@@A  # text log stream

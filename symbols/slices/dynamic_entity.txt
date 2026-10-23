@@ -1,0 +1,19 @@
+00426690 ?box3_b@@YA_NPBUvector4@rgl@@000@Z  # src/rgl/dynamic/dynamic_entity.cpp: bool-returning twin of box_overlap3 (the callers test al)
+00426700 ?box2_b@@YA_NPBUvector4@rgl@@000@Z  # bool-returning twin of box_overlap2
+00427ca0 ?ufill_ext@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@std@@@Z  # ext twin of std::_Uninitialized_fill_n<Contact*>
+00426e90 ?pop_heap_0_ext@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0PAPAUentity@rgl@@@Z  # ext twin of std::_Pop_heap_0
+00426a30 ?sort_range_x@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0H@Z  # ext twin of sort_range (std::sort's body; query_entities calls it)
+00427590 ?_Insert_n@contact_inl@@QAEXPAUContact@rgl@@IABU23@@Z  # ext twin of contact_ops::_Insert_n (collide_shape expands push_back inline)
+0040f880 ??Hiterator@contact_inl@@QBE?AU01@H@Z  # std::vector<Contact>::iterator::operator+ (out of line, another object)
+0041f4b0 ?clear@contact_ops@rgl@@QAEXXZ  # std::vector<Contact>::clear as the game's vec<T>::clear: frees the block (shared by every 4-byte-element vector)
+0043e2a0 ?_Xlen@contact_ops@rgl@@QBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T>
+0043e760 ?_Buy@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@IAE_NI@Z  # std::vector<T*>::_Buy (shared)
+0041f4b0 ?_Tidy@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@IAEXXZ  # std::vector<T*>::_Tidy (shared)
+0040bfe0 ?shape_contact_count@rgl@@YAHPAUcoll_shape@1@0HPAUcontact_rec@1@@Z  # shape_contact_count (src/rgl/shapes)
+00421520 ?point_velocity@coll_base@rgl@@UAEPAUvector4@2@PAU32@PBU32@@Z  # collision entity default (src/rgl/scene: collision_entity::point_velocity)
+00421540 ?apply_impulse@coll_base@rgl@@UAEXPBUvector4@2@0@Z  # collision entity default
+00421550 ?impulse_response@coll_base@rgl@@UAEMPBUvector4@2@0@Z  # collision entity default
+0048b170 ?is_dynamic@coll_base@rgl@@UAE_NXZ  # collision entity: not dynamic
+0054b668 ??_7dynamic_entity@rgl@@6B@  # vtable stored by dynamic_entity::dynamic_entity 0x425370
+00426df0 ??$_Adjust_heap@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@HPAUentity@rgl@@@std@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@HHPAUentity@rgl@@@Z  # the iterator instance of std::_Adjust_heap: folded with the pointer instance at 0x426df0 (identical code)
+00426e50 ??$_Push_heap@PAPAUentity@rgl@@HPAU12@@std@@YAXPAPAUentity@rgl@@HHPAU12@@Z  # the pointer instance of std::_Push_heap: folded with the iterator instance at 0x426e50

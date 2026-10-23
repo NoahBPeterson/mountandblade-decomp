@@ -63,6 +63,7 @@ string_table g_strings;                                 // 0x5e2a18
 // A widget: 58 virtuals (data starts at +0xe8); the two floats a bar hands to set_pos/set_size are read
 // straight out of the object with a plain mov, so they are integers here.
 // Slot +0x58 = set_pos(const float*), +0x64 = set_size(const float*), +0xa4 = set_text(out, in).
+struct WRet { int a, b; WRet(); };                       // 8-byte non-POD hidden-pointer return, never destroyed
 struct widget {
     virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
     virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
@@ -82,7 +83,7 @@ struct widget {
     virtual void v94();
     virtual void v98(const int* v);
     virtual void v9c(); virtual void va0();
-    virtual void va4(tstring* out, const tstring* s);   // +0xa4
+    virtual WRet va4(const tstring& s);                 // +0xa4 set_text
     virtual void va8();
     virtual void vac(tstring* out, const float* pos);
     virtual void vb0(); virtual void vb4(); virtual void vb8(); virtual void vbc();
@@ -221,12 +222,12 @@ void Mission::money_label(int type, int troop)
     char buf[512];
     {
         tstring key("ui_money_value");
-        tstring val = g_game->string_value(troop);
-        sprintf(buf, g_strings.find(&key)->c_str(), val.c_str());
+        sprintf(buf, g_strings.find(&key)->c_str(), g_game->string_value(troop).c_str());
     }
-    tstring text(buf);
-    tstring out;
-    footer->va4(&out, &text);
+    {
+        tstring text(buf);
+        footer->va4(text);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------

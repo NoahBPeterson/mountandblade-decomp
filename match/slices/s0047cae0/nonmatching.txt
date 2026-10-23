@@ -1,0 +1,2 @@
+0047cae0 170 build_entity: complete. Remaining diff is stack-slot layout (find_meshes hidden-return temp lands at +0x20 over center instead of +0x30 over tv), push_back reference temp stored right after clone instead of at the push_back, and fld/fadd operand order of (map_x+map_y)*0.5f; equiv UNSUPPORTED (harness stores callee return address)
+0047cfe0 539 setup_item_meshes: complete. Register roles differ (original keeps constant 0 in ebp and out-pointer in ebx, ours the reverse), redundant item<0 test and snd pointer lea ordering; equiv WEAK

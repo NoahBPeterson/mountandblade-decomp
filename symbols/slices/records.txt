@@ -1,0 +1,34 @@
+0042bc40 ??1tstring@@QAE@XZ  # frees the buffer at +4
+0042d390 ??1Tail@@QAE@XZ  # called by the 0x432010 dtor on member +0x234
+00431400 ??_GIfaceA@@UAEPAXI@Z  # slot 0 of vtable 0x5908ec
+00431420 ??_GIfaceB@@UAEPAXI@Z  # slot 0 of vtable 0x5908f8
+00431440 ??1RecD@@QAE@XZ  # destructor body of the 0x78-byte record
+00431480 ??_ERecD@@QAEPAXI@Z  # vector deleting destructor of the 0x78-byte record with two (array, name) pairs
+00431540 ??_ERecG@@QAEPAXI@Z  # vector deleting destructor of the 0x30-byte record (pair at +4)
+004315d0 ??_ERecH@@QAEPAXI@Z  # vector deleting destructor of the 0x30-byte record (name at +0, pair at +0x10)
+00431660 ??1RecI@@QAE@XZ  # destructor body of the 0x68-byte record
+004316b0 ??1NameHolder@@QAE@XZ  # one-tstring class destructor: a tail jump to tstring::~tstring (0x42bc40)
+004316c0 ??_ERecF@@UAEPAXI@Z  # vector deleting destructor of the 0x98-byte IfaceB-derived record
+00431750 ??_ERecJ@@UAEPAXI@Z  # vector deleting destructor of the 0xb0-byte IfaceB-derived record
+00431810 ??_ERecI@@QAEPAXI@Z  # vector deleting destructor of the 0x68-byte record (scalar path calls ~RecI 0x431660)
+004318c0 ??_ERecK@@QAEPAXI@Z  # vector deleting destructor of the 0x34-byte record
+00431960 ??_ERecA@@QAEPAXI@Z  # vector deleting destructor of the 0x48-byte record (name, vector<int>, owned polymorphic object at +0x24); called with flags 3 from 0x4da6f1
+00431a30 ?_Destroy@?$vector@UItem@@V?$allocator@UItem@@@std@@@std@@IAEXPAUItem@@0@Z  # std::vector<Item>::_Destroy over the 0x1c8-byte virtual-dtor Item (virtual call, flag 0)
+00431a60 ?_Tidy@?$vector@UItem@@V?$allocator@UItem@@@std@@@std@@IAEXXZ  # std::vector<Item>::_Tidy (destroy range, free, zero first/last/end); called by ~RecY
+00431ab0 ??1RecP@@QAE@XZ  # dtor of the 0x34-byte record: vector<int>, list<int>, vector<int>
+00431b10 ??1RecQ@@QAE@XZ  # non-virtual dtor body: vector at +0x128, eight names at +0x88, five names, then name at +0
+00431b90 ??1RecR@@UAE@XZ  # implicit dtor of the 0x5ac8-byte IfaceA-derived record; ends by storing vtable 0x5908ec
+00431c40 ??1RecS@@QAE@XZ  # non-virtual dtor body: vector at +0x4f4, eight names at +0x420, two names, name at +0
+00431cb0 ??_ERecR@@UAEPAXI@Z  # vector deleting dtor of RecR (calls ~RecR 0x431b90 per element)
+00431d30 ??_ERecP@@QAEPAXI@Z  # vector deleting destructor of the 0x34-byte record, called with flags 3 from 0x475c7d
+00431e10 ??1RecY@@UAE@XZ  # dtor of the 0x494-byte IfaceB-derived record (own vtable 0x590904, restores 0x5908f8)
+00431ec0 ??_ERecY@@UAEPAXI@Z  # vector deleting dtor of RecY, slot 0 of vtable 0x590904
+00431f40 ??_ERecZ@@UAEPAXI@Z  # vector deleting dtor of the 0x5928-byte IfaceB-derived record (inlined dtor: Tail2 at +0x53c0, vector<int> at +0x1c)
+00432010 ??1RecT@@QAE@XZ  # non-virtual dtor body: eight names at +0x27c, vector at +0x24c, Tail at +0x234, names at +0x14 and +0
+004c4d10 ??1Tail2@@QAE@XZ  # called by the vec deleting dtor of RecZ on member +0x53c0
+004c4d80 ?clear@?$list@HV?$allocator@H@std@@@std@@QAEXXZ  # std::list<int>::clear (out of line), called by ~RecP
+005908ec ??_7IfaceA@@6B@  # vtable stored by ~RecR (see s00431050)
+005908ec ??_7IfaceA@@6B@  # vtable stored by the scalar deleting destructor 0x431400 (3 slots: dtor, 0x477b70, 0x477b70)
+005908f8 ??_7IfaceB@@6B@  # vtable stored by ~RecY / the RecZ deleting destructor (see s00431050)
+005908f8 ??_7IfaceB@@6B@  # vtable stored by 0x431420 and, as the base-class vptr, by the vector deleting destructors 0x4316c0 and 0x431750
+00590904 ??_7RecY@@6B@  # vtable stored first by ~RecY (3 slots after IfaceB's)

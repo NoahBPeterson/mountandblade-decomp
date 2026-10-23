@@ -1,7 +1,1 @@
-# The original calls bare operator new (0x53545e) and then the record ctor; cl 13.10 with RTTI on
-# emits ??_U@YAPAXI@Z plus the RTTI name descriptor (whose text is this TU's source name), so the
-# first bytes after `mov ecx,imm` can never match. Control flow of all 20 record builds is known
-# (each: operator new -> ctor 0xa73980..0xa739f4 -> head vtable 0x5947d8 / +4=0 / +8=0x63 ->
-# derived vtable 0x595804..0x595c68), but most record kinds are built by ctors owned by other
-# slices, so only one head-style record (record_38) is written out here.
-# equiv.py: FAIL — 5/5 inputs differ at .data 0xa73980 (the other 19 record pointers).
+004d0620  883  init_mission_trigger_records: complete (all 30 record builds: operator new 0x53545e, null test, opaque ctors 0x4c49f0/0x4c2c50/0x4c3050/0x4ce870/0x4c3290/0x4c2fb0/0x4ce8d0/0x4c3160/0x4ce960/0x4c4cc0/0x4c31c0/0x4ceb30/0x4cee50/0x4cef20/0x4cef80 and 15 head_rec-derived records with inlined ctors, then 0x5e29ac = g_trial_mode). Every instruction up to the last record matches; the original brackets the body with two inline-asm data tags (jmp +0x10 over "WL  ",6,0.. at the start; jmp +0x15 over "WL  ",7,.. after the trial-mode copy) that cannot be emitted from C++ (43 bytes), and the second tag also keeps the last record's null-branch store from being tail-merged (ours merges `mov [g_menu_state],edi` into the shared epilogue, +14 bytes). Size 1499 vs 1526. Same tag precedent as 0051dbd0. equiv: UNSUPPORTED (resolution/heap model: the 15 opaque constructors of other slices are stubs, so the harness compares uninitialised record bodies).

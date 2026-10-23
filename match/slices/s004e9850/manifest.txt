@@ -3,3 +3,6 @@ slices/s004e9850/s004e9850.cpp  ?write@GameRecord@@QAEXPAUOutStream@@@Z  0x4e985
 slices/s004e9850/s004e9850.cpp  ?write@cPairs96@@QAEXPAUOutStream@@@Z  0x4e99a0  /O2 /MT /Gy /TP
 slices/s004e9850/s004e9850.cpp  ?write_table@Table@@QAEXPAUOutStream@@@Z  0x4e99d0  /O2 /MT /Gy /TP
 slices/s004e9850/s004e9850.cpp  ?write@Entry@@QAEXPAUOutStream@@@Z  0x4e9ab0  /O2 /MT /Gy /TP
+slices/s004e9850/s004e9850.cpp  ?write_missions@OutRecList@@QAEXPAUOutStream@@@Z  0x4e9b50  /O2 /MT /Gy /TP
+slices/s004e9850/s004e9850.cpp  ?write_table@RecList@@QAEXPAUOutStream@@@Z  0x4e9c50  /O2 /MT /Gy /TP
+slices/s004e9850/s004e9850.cpp  ?flush_ids@RecList@@QAEXXZ  0x4e9fe0  /O2 /MT /Gy /TP

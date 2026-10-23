@@ -1,0 +1,16 @@
+005947d8 ??_7head_rec@@6B@  # vtable of the shared record head
+00595804 ??_7Rec118@@6B@  # record vtable
+00595764 ??_7Recacc@@6B@  # record vtable
+00595828 ??_7Rec38@@6B@  # record vtable
+005957e0 ??_7Rec44@@6B@  # record vtable
+0059584c ??_7Rec34@@6B@  # record vtable
+00595894 ??_7Rec454@@6B@  # record vtable
+00595bfc ??_7Rec1208@@6B@  # record vtable
+00595948 ??_7Rec3c@@6B@  # record vtable
+005958b8 ??_7Recd8@@6B@  # record vtable
+005958dc ??_7Recf0@@6B@  # record vtable
+00595900 ??_7Rec1bc@@6B@  # record vtable
+00595c44 ??_7Rec23c@@6B@  # record vtable
+0059596c ??_7Rec48@@6B@  # record vtable
+005959fc ??_7Rec58@@6B@  # record vtable
+00595c68 ??_7Rec428@@6B@  # record vtable

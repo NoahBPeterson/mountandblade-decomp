@@ -1,1 +1,5 @@
 00484590 Mission::start_setup  # 0x484590; 12294 bytes; thiscall (ecx=this), plain ret. Reconstructed in s00484590.cpp (partial).
+08ed5094 ?g_emit_count@@3HA  # effect emitter table count (EmitTable at 0x8ed5090 +4), beyond the resolver's annotation range
+08ed5098 ?g_emit_idx1@@3HA  # emitter index 1 (+8)
+08ed509c ?g_emit_idx2@@3HA  # emitter index 2 (+0xc)
+08eb235c ?g_emit_pos@@3PAMA  # emitter position/matrix scratch (float[], beyond the annotation range)

@@ -1,5 +1,1 @@
-004d4b80     -  the ~1.5 KB routine at the slice start: a 0x18-byte-element vector walk collecting up to
-                   four indices of non-null +0x14 fields (spilled to [esp+0x30..]), then a dispatch on
-                   the count (3 / 4 seen at 0x4d4bdc) followed by long loops over 0x34-byte records
-                   (0x4d5168: matching a pair of dwords at +0/+4 and freeing one). Frame sub esp,0x70
-                   with ebx/ebp/esi/edi; no source written yet.
+# nothing partial

@@ -2,6 +2,7 @@
 // Layouts follow the verified neighbouring slices (s004d5410, s004e2ea0, s00477ea0).
 #include <windows.h>
 #include <math.h>
+#include <stdio.h>
 #include "rgl.h"
 
 #define MB_NOTHROW throw()
@@ -37,7 +38,7 @@ struct log_stream {
     virtual void s8(); virtual void s9();
     virtual void w_cstr(const char* s);                 // +0x28
 };
-extern log_stream g_log;                                // 0x5a9f60
+#define LOG(s) ((log_stream*)0x5a9f60)->w_cstr(s)          // 0x5a9f60 (virtual call through the object's vptr)
 
 bool print_and_remove(const char* path);                // 0x539023
 int  rename_file(char* from, const char* to);           // 0x538ff5
@@ -134,6 +135,8 @@ struct Game {
     __int64      clock;                                 // +0x13b20
     void load_header(SaveCtx* h);                       // 0x4e8e70 (ret 4)
     int save_state(OutStream* out);                     // 0x4e8f10 (later slice)
+    void sl_update_avg();                               // 0x48a000
+    void world_free();                                  // 0x492f40
 };
 #pragma pack(pop)
 extern Game* g_game;                                    // 0x5e2930
@@ -148,11 +151,15 @@ struct SaveCtx {
     tstring slot;                                       // +0x10
     int     flag;                                       // +0x20
     float   stamp;                                      // +0x24
+    int     pad28[3];                                   // +0x28 (unused by the writer and the header reader)
     int write(OutStream* out);                          // 0x4e8d70 (ret 4)
 };
 
 // ---- the map screen -------------------------------------------------------------------------------------
 struct MapScreen;
+struct MissionSource {
+    void pick(const int* arg);                          // 0x4d5410 (ret 4)
+};
 struct MapMesh {
     char build(void* grid, int mode);                   // 0x4785e0 (ret 8)
     void f1(int v);                                     // 0x4e75a0 (ret 4)
@@ -165,7 +172,8 @@ struct MapScreen {
     char         pad04[0x18 - 0x04];
     int          menu_sel;                              // +0x18
     char         pad1c[0x30 - 0x1c];
-    char         source[0x30];                          // +0x30
+    MissionSource source;                               // +0x30
+    char         pad31[0x60 - 0x31];
     Widget*      f60;                                   // +0x60
     Widget*      f64;                                   // +0x64
     Widget*      f68;                                   // +0x68
@@ -191,6 +199,8 @@ struct MapScreen {
     int          nchunk_rows;                           // +0x0845d984
     int          nchunk_cols;                           // +0x0845d988
 
+    char build_chunk(int slot, int type, int row, int col, float f);   // 0x47ff60 (ret 0x14)
+    void gen_objects_aligned(void* desc);               // 0x4656c0 (ret 4)
     void init(void* desc);                              // 0x4e85d0 (ret 4)
     void frame_step();                                  // 0x4e8720
     void buttons(int arg);                              // 0x4e87d0 (ret 4)
@@ -198,13 +208,9 @@ struct MapScreen {
 
 // ---- callees --------------------------------------------------------------------------------------------
 struct TerrainDesc { void init(); };                    // 0x464400 (ret 0)
-char build_chunk(MapScreen* s, int slot, int type, int row, int col, float f); // 0x47ff60 (ret 0x14)
-void gen_objects_aligned(MapScreen* s, void* desc);     // 0x4656c0 (ret 4)
-void world_sl_update_avg(Game* g);                      // 0x48a000
-void world_free(Game* g);                               // 0x492f40
-void mission_source_pick(void* src, const int* arg);    // 0x4d5410 (ret 4)
 int  save_game(int arg, tstring* name);                 // 0x4e8980
-char some_button(int v);                                // 0x487900 (this = 0xa170c8, ret 4)
+struct ButtonState { char test(int v); };               // 0x487900 (ret 4)
+extern ButtonState g_a170c8;                            // 0xa170c8
 void log_save_path();                                   // 0x4e8df0
 
 extern int      g_use_shaders;                          // 0x5e28fc
@@ -223,16 +229,18 @@ void MapScreen::init(void* desc)
         float* p = (float*)(cells + 0x84 + r * 0x94);
         int i;
         for (i = 0; i <= ncols; i++, p = (float*)((char*)p + 0x911c)) {
-            p[1] = 0.0f;
+            ((int*)p)[1] = 0;
             ((int*)p)[2] = -1;
             p[-0x1f] = p[1] + p[0];
             int* z = (int*)((char*)p - 0x2c);
-            z[0] = 0; z[1] = 0; z[2] = 0; z[3] = 0; z[4] = 0; z[5] = 0;
-            z[6] = 0; z[7] = 0; z[8] = 0; z[9] = 0; z[10] = 0;
+            int k;
+            for (k = 0; k < 11; k++)
+                z[k] = 0;
         }
     }
-    float* box = (float*)(mapview + 0x68);
-    float f = (box[2] + box[1] + box[0]) * g_chunk_scale;
+    rgl::vector4 box = *(rgl::vector4*)(mapview + 0x68);
+    float f = box.z + box.y;
+    f = (f + box.x) * g_chunk_scale;
     int row;
     for (row = 0; row < nchunk_rows; row++) {
         int col;
@@ -246,11 +254,11 @@ void MapScreen::init(void* desc)
                     else if (slot == 2)
                         continue;
                 }
-                build_chunk(this, slot, type, row, col, f);
+                build_chunk(slot, type, row, col, f);
             }
         }
     }
-    gen_objects_aligned(this, desc);
+    gen_objects_aligned(desc);
 }
 
 // @ 0x4e8720    MapScreen::frame_step()
@@ -259,14 +267,10 @@ void MapScreen::frame_step()
     if (!(*(unsigned*)(g_game->parties + f5df4 * 0x494 + 0x30) & 0x100))
         return;
     int mode = 3;
-    if ((g_mask_w - 1) & g_a76644) {
-        if ((g_a76644 & (g_mask_w - 1)) == 1)
-            mode = 2;
-        if ((g_a76644 & (g_mask_w - 1)) == 2)
-            mode = 2;
-        if (((g_mask_w - 1) & g_a76644) == 3)
-            mode = 2;
-    }
+    if (((g_mask_w - 1) & g_a76644) != 0 &&
+        ((g_a76644 & (g_mask_w - 1)) == 1 || (g_a76644 & (g_mask_w - 1)) == 2 ||
+         ((g_mask_w - 1) & g_a76644) == 3))
+        mode = 2;
     mesh.build(*(void**)((char*)view + 0x64), mode);
     mesh.f1(f672c);
     mesh.f2(f6734);
@@ -276,142 +280,171 @@ void MapScreen::frame_step()
 // @ 0x4e87d0    MapScreen::buttons(int arg)
 void MapScreen::buttons(int arg)
 {
-    mission_source_pick(source, &arg);
+    source.pick(&arg);
     bool save = false;
-    if (f64->used(0x10000)) {
+    if (!f64->used(0x10000)) {
+        if (f74 == 0 || !f74->used(0x10000)) {
+            if (f68->used(0x10000)) {
+                *(int*)(g_a739c8 + 0x18) = 5;
+                g_main_menu.choose(0x12);
+                return;
+            }
+            if (f6c != 0 && f6c->used(0x10000)) {
+                save_game(-1, 0);
+                g_msglog.add(*g_strtable.lookup(&tstring("ui_game_saved")), -1);
+                g_main_menu.choose(menu_sel);
+                return;
+            }
+            if (f70 != 0 && f70->used(0x10000)) {
+                *(int*)(g_a739d4 + 0x18) = 5;
+                g_main_menu.choose(0x15);
+                return;
+            }
+            if (f60->used(0x10000) || g_a170c8.test(1)) {
+                g_main_menu.choose(menu_sel);
+                return;
+            }
+            return;
+        }
+    } else {
         save = true;
-        goto leave;
     }
-    if (f74 && f74->used(0x10000))
-        goto leave;
-    if (f68->used(0x10000)) {
-        *(int*)(g_a739c8 + 0x18) = 5;
-        g_main_menu.choose(0x12);
-        return;
-    }
-    if (f6c && f6c->used(0x10000)) {
-        save_game(-1, 0);
-        g_msglog.add(*g_strtable.lookup(&tstring("ui_game_saved")), -1);
-        g_main_menu.choose(menu_sel);
-        return;
-    }
-    if (f70 && f70->used(0x10000)) {
-        *(int*)(g_a739d4 + 0x18) = 5;
-        g_main_menu.choose(0x15);
-        return;
-    }
-    if (f60->used(0x10000) || some_button(1)) {
-        g_main_menu.choose(menu_sel);
-        return;
-    }
-    return;
-leave:
-    world_sl_update_avg(g_game);
+    g_game->sl_update_avg();
     if (save)
         save_game(-1, 0);
     if (g_game) {
-        world_free(g_game);
-        crt_free(g_game);
+        Game* g = g_game;
+        g->world_free();
+        operator delete(g);
         g_game = 0;
     }
     g_main_menu.choose(4);
 }
 
+// ---- the file writer (stream classes of s00417850/mbbin.h: vtable 0x54a740 -> 0x54add8) ----------------
+struct stream_root {
+    virtual void reset();                               // slot 0
+    virtual void rewind();                              // slot 1
+    virtual void w_stream(void* o) = 0;                 // 2 .. 22 (declared as one block here)
+    virtual void s3() = 0; virtual void s4() = 0; virtual void s5() = 0; virtual void s6() = 0;
+    virtual void s7() = 0; virtual void s8() = 0; virtual void s9() = 0; virtual void s10() = 0;
+    virtual void s11() = 0; virtual void s12() = 0; virtual void s13() = 0; virtual void s14() = 0;
+    virtual void s15() = 0; virtual void s16() = 0; virtual void s17() = 0; virtual void s18() = 0;
+    virtual void s19() = 0; virtual void s20() = 0; virtual void s21() = 0; virtual void s22() = 0;
+    virtual bool at_end();                              // 23
+    virtual void set_autoflush(char f);                 // 24
+    virtual char get_autoflush();                       // 25
+    virtual int flush();                                // 26 (+0x68)
+    tstring name;                                       // +4
+    int state;                                          // +0x14
+    char autoflush;                                     // +0x18
+    int flushed;                                        // +0x1c
+    tstring buf;                                        // +0x20
+    stream_root() { autoflush = 0; flushed = 0; }
+};
+struct file_writer_base : stream_root {
+    FILE* fp;                                           // +0x30
+    char failed;                                        // +0x34
+    char is_open;                                       // +0x35
+    file_writer_base() { failed = 1; is_open = 0; state = 0; }
+};
+struct file_writer : file_writer_base {
+    virtual void w_stream(void* o);
+    virtual void s3(); virtual void s4(); virtual void s5(); virtual void s6();
+    virtual void s7(); virtual void s8(); virtual void s9(); virtual void s10();
+    virtual void s11(); virtual void s12(); virtual void s13(); virtual void s14();
+    virtual void s15(); virtual void s16(); virtual void s17(); virtual void s18();
+    virtual void s19(); virtual void s20(); virtual void s21(); virtual void s22();
+    virtual int flush();
+};
+struct TextOps { int open_write(const char* path); };   // 0x415320 (ret 4)
+
+#define WL_MARK(id) \
+    __asm _emit 0xEB __asm _emit 0x10 __asm _emit 0x57 __asm _emit 0x4C __asm _emit 0x20 __asm _emit 0x20 \
+    __asm _emit id __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 \
+    __asm _emit 0 __asm _emit 0x57 __asm _emit 0x4C __asm _emit 0x20 __asm _emit 0x20
+
 // @ 0x4e8980    int save_game(int version, tstring* name)
 int save_game(int version, tstring* name)
 {
+    // the five path buffers keep this relative order in the original frame
+    struct { char dirA[0x104]; char dirC[0x104]; char pathD[0x200]; char pathB[0x200]; char pathE[0x200]; } L;
+#define dirA L.dirA
+#define dirC L.dirC
+#define pathD L.pathD
+#define pathB L.pathB
+#define pathE L.pathE
+    int r;
     if (version >= 0)
         g_game->version = version;
-    g_log.w_cstr("Saving Game...");
+    LOG("Saving Game...");
     log_save_path();
-    char buf[0x884];
-    char* cur = buf + 0x80;
-    char* bak = buf + 0x80;
-    char* newn = buf + 0x280;
-    SaveWriter* w = (SaveWriter*)(buf + 0xc);
     Game* g = g_game;
+    char* ps = g->save_slot;
+    if (!ps)
+        ps = (char*)&g->save_slot;
     int ver = g->version;
-    char* slot = g->save_slot;
-    char* ps = (char*)&g->save_slot;
-    if (slot)
-        ps = slot;
-    crt_sprintf(cur, "");
-    save_dir(cur + 8);
-    mb_snprintf(buf + 0x4a8, 0x200, "%s%s\\sg%d%d.sav", ps, cur + 8, ver / 10, ver % 10);
-    w->slot = tstring();
-    w->vtbl = (OutStream*)0x54a740;
-    ((tstring*)(buf + 0x28))->tstring::tstring();
-    w->vtbl = (OutStream*)0x54add8;
-    w->failed = 0;
-    *(int*)(buf + 0x24) = 0;
-    w->closed = 1;
-    w->released = 0;
-    crt_sprintf(newn, "");
-    save_dir(newn + 8);
+    sprintf(dirA, "");
+    save_dir(dirA);
+    mb_snprintf(pathB, 0x200, "%s%s\\sg%d%d.sav", dirA, ps, ver / 10, ver % 10);
+    file_writer w;
+    sprintf(dirC, "");
+    save_dir(dirC);
     g = g_game;
-    slot = g->save_slot;
-    ps = (char*)&g->save_slot;
-    if (slot)
-        ps = slot;
-    mb_snprintf(newn + 0x108, 0x200, "%s%s\\new_game.sav", ps, newn + 8);
-    g_log.w_cstr("Creating new savegame file...");
-    int r = open_text_write(w, newn + 0x108);
-    if (r)
-        goto fail;
-    g_log.w_cstr("Saving header...");
-    SaveCtx* hdr = (SaveCtx*)(buf + 0x48);
-    hdr->title.tstring::tstring();
-    hdr->slot.tstring::tstring();
-    g_game->load_header(hdr);
-    if (name)
-        hdr->title = *name;
-    r = hdr->write((OutStream*)w);
-    hdr->slot.~tstring();
-    hdr->title.~tstring();
-    if (r)
-        goto fail;
-    g_log.w_cstr("Saving game state...");
-    r = g_game->save_state((OutStream*)w);
-    if (r)
-        goto fail;
-    g_log.w_cstr("Closing new save game file...");
-    if (!w->closed) {
-        r = w->vtbl->close();
-        if (!r)
-            crt_free(w->slot.buf);
-        w->closed = 1;
-        w->released = 0;
-    } else
-        r = 1;
-    if (r)
-        goto fail;
-    g_log.w_cstr("Backing up old file name...");
-    crt_sprintf(cur, "");
-    save_dir(cur + 8);
-    g = g_game;
-    slot = g->save_slot;
-    ps = (char*)&g->save_slot;
-    if (slot)
-        ps = slot;
-    mb_snprintf(bak + 0x600, 0x200, "%s%s\\last_savegame_backup.sav", ps, cur + 8);
-    g_log.w_cstr("Removing old backup file.");
-    print_and_remove(bak + 0x600);
-    g_log.w_cstr("Renaming old savegame to backup file.");
-    rename_file(cur + 0x400, bak + 0x600);
-    g_log.w_cstr("Renaming new savegame file.");
-    r = rename_file(buf + 0x200, bak + 0x400);
-    if (r)
-        goto fail;
-    g_log.w_cstr("Savegame succeded...");
-    g_msglog.add(*g_strtable.lookup(&tstring("ui_game_saved_successfully")), -1);
-    goto done;
-
-fail:
-    g_log.w_cstr("Savegame failed...");
-    g_msglog.add(tstring("Error: Unable to save game!!!!!"), -1000005);
+    ps = g->save_slot ? g->save_slot : (char*)&g->save_slot;
+    mb_snprintf(pathD, 0x200, "%s%s\\new_game.sav", dirC, ps);
+    LOG("Creating new savegame file...");
+    r = ((TextOps*)&w)->open_write(pathD);
+    if (!r) {
+        LOG("Saving header...");
+        {
+            SaveCtx hdr;
+            g_game->load_header(&hdr);
+            if (name)
+                hdr.title = *name;
+            r = hdr.write((OutStream*)&w);
+        }
+        if (!r) {
+            LOG("Saving game state...");
+            r = g_game->save_state((OutStream*)&w);
+            if (!r) {
+                LOG("Closing new save game file...");
+                int rc = 1;
+                if (w.is_open) {
+                    rc = ((stream_root*)&w)->flush();
+                    if (!rc)
+                        rc = fclose(w.fp);
+                    w.failed = 1;
+                    w.is_open = 0;
+                }
+                r = rc;
+                if (!r) {
+                    WL_MARK(0x0c)
+                    LOG("Backing up old file name...");
+                    sprintf(dirA, "");
+                    save_dir(dirA);
+                    g = g_game;
+                    ps = g->save_slot ? g->save_slot : (char*)&g->save_slot;
+                    mb_snprintf(pathE, 0x200, "%s%s\\last_savegame_backup.sav", dirA, ps);
+                    LOG("Removing old backup file.");
+                    remove(pathE);
+                    LOG("Renaming old savegame to backup file.");
+                    rename(pathB, pathE);
+                    LOG("Renaming new savegame file.");
+                    r = rename(pathD, pathB);
+                    WL_MARK(0x0d)
+                    if (!r) {
+                        LOG("Savegame succeded...");
+                        g_msglog.add(*g_strtable.lookup(&tstring("ui_game_saved_successfully")), -1);
+                        goto done;
+                    }
+                }
+            }
+        }
+    }
+    LOG("Savegame failed...");
+    g_msglog.add(tstring("Error: Unable to save game!!!!!"), 0xffff3333);
 done:
-    ((tstring*)(buf + 0x28))->~tstring();
-    w->slot.~tstring();
     return r;
 }
 

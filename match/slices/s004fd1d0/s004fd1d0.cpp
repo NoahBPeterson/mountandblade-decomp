@@ -14,6 +14,7 @@
 #include <windows.h>
 #include <new>
 #include <string.h>
+#include <vector>
 #include "rgl.h"
 
 using rgl::vector4;
@@ -191,27 +192,12 @@ void* MWidget::destroy(unsigned flags)
 // @ 0x4fd3d0
 MWidget::~MWidget()
 {
-    if (r1bc_first != 0)
-        ::operator delete(r1bc_first);
-    r1bc_first = 0;
-    r1bc_last = 0;
-    r1bc_end = 0;
-    if (ids_first != 0)
-        ::operator delete(ids_first);
-    ids_first = 0;
-    ids_last = 0;
-    ids_end = 0;
+    typedef std::vector<int> IV;
+    ((IV*)((char*)this + 0x1b8))->~IV();
+    ((IV*)((char*)this + 0x1a8))->~IV();
     v19c.clear();
-    if (*(void**)((char*)this + 0x18c) != 0)
-        ::operator delete(*(void**)((char*)this + 0x18c));
-    *(int*)((char*)this + 0x18c) = 0;
-    *(int*)((char*)this + 0x190) = 0;
-    *(int*)((char*)this + 0x194) = 0;
-    if (*(void**)((char*)this + 0x17c) != 0)
-        ::operator delete(*(void**)((char*)this + 0x17c));
-    *(int*)((char*)this + 0x17c) = 0;
-    *(int*)((char*)this + 0x180) = 0;
-    *(int*)((char*)this + 0x184) = 0;
+    ((IV*)((char*)this + 0x188))->~IV();
+    ((IV*)((char*)this + 0x178))->~IV();
     ((BufBase*)this)->dtor();
 }
 

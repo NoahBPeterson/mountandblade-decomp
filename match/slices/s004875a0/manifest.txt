@@ -2,3 +2,4 @@ slices/s004875a0/s004875a0.cpp  ?calc@TimeKey@@QAEXXZ  00487620  /O2 /MT /Gy /TP
 slices/s004875a0/s004875a0.cpp  ?read_keys@Slot@@QAEHXZ  00487640  /O2 /MT /Gy /TP
 slices/s004875a0/s004875a0.cpp  ?is_ready@Slot@@QAEHH@Z  00487900  /O2 /MT /Gy /TP
 slices/s004875a0/s004875a0.cpp  ??1Buffer@@UAE@XZ  00487c00  /O2 /MT /Gy /TP
+slices/s004875a0/s004875a0.cpp  ?play@Channel@@QAEXH@Z  004875e0  /O2 /MT /Gy /TP

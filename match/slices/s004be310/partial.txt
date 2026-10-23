@@ -1,23 +1,2 @@
 004be310 sound clip record read (0x210 frame, two sprintf_s path builds + tstring assigns): layout not recovered
-004be420 default ctor (tstring inits + zeroed flags): layout not confirmed
-004be470 second clip record read: same shape as 0x4be310, offsets differ
 004be520 NOT CODE - this VA lands in string data (0x4be524 begins "W L  " literal bytes)
-004be560 name-table load_used over 0x5a9ea0: inner scan shape unrecovered
-004be600 reader (tstring + int + temp tstring): field order not confirmed
-004be6b0 ctor loop over 13 x 0x18 slots: partially reconstructed
-004be6f0 dtor over 13 x 0x18 slots (free + tstring dtor): loop shape differs
-004be720 trivial ctor (tstring ctor, return this): not yet matched
-004be730 jmp 0x4be742 (tail-call alias): not yet matched
-004be742 ctor scalar init block reconstructed, slot init incomplete
-004be7c0 code_table ctor: rep stosd -1 + 37-field table reconstructed; eax setup order + implicit return differ (diff 14)
-004be920 big_table dtor: 0x1000 x 0x2c tstring-pair destructor loop; base pointer + register roles differ (diff 76)
-004be970 vec2c::size: body matches mod cmpdis branch rendering; divisor constant 0x82082083 vs 0x2e8ba2e9 (diff 5)
-004be9c0 aggregate ctor: two pointers + 8-dword copy, return-this; body written, prologue/copy shape differs (diff 98)
-004be9f0 element copy-forward: 11-dword rep movsd loop, stride 0x2c; not yet matched
-004bea20 element fill: 11-dword rep movsd loop with constant source, stride 0x2c; not yet matched
-004bea50 element copy-backward: 11-dword rep movsd loop, stride 0x2c; not yet matched
-004bea80 bulk copy: 0x81-dword rep movsd loop, stride 0x204; body written, register roles differ (diff 62)
-004beac0 not analysed (budget)
-004beaf0 not analysed (budget)
-004beb30 not analysed (budget)
-004beb50 not analysed (budget)

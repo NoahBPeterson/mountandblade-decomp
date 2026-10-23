@@ -1,0 +1,5 @@
+004f3e10 ?update_particles@Mission@@QAEXPBUmatrix@rgl@@@Z  # Mission::update_particles(view): dust grid cell emission + cell object tint
+004f4060 ?emit_cell@Mission@@QAEXHH@Z  # Mission::emit_cell(x, y): re-emit the dust of one grid cell
+0040ebd0 ?get50_@dmesh@@QAEPAUvec96@@XZ  # mesh link-chain walk (flag_a1) -> &f50
+0040eba0 ?get70_@dmesh@@QAEPAUvec32@@XZ  # mesh link-chain walk (flag_a1) -> &f70
+0040ec30 ?get90_@dmesh@@QAEPAUvec32@@XZ  # mesh link-chain walk (flag_a0) -> &f90

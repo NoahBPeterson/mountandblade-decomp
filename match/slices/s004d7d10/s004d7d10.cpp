@@ -32,17 +32,18 @@ extern const char EMPTY_TEXT[];                                     // 0x54a480 
 extern const float RENOWN_SCALE;                                    // 0x54ab28 (100.0f)
 
 // the game's localized-string table (0x5e2a18): lookup by a scratch tstring holding the text key
-tstring* strtab_lookup(tstring* key);                               // 0x43a1e0 (this = table, ret 4)
-tstring* translate_text(tstring* key);                              // 0x4c6010 (this = table, ret 4)
+struct StrTable {
+    tstring* lookup(tstring* key);                                  // 0x43a1e0 (ret 4)
+    tstring* find(tstring* key);                                    // 0x4c6010 (ret 4; null when not translated)
+};
+extern StrTable g_strtable;                                         // 0x5e2a18
 
 // the keyboard object (0xa170c8); the key-name function only passes it through
 struct ctr {
     char pad0[0x100];
+    tstring key_name(int key);                                      // 0x4d7610 (slice s004d7370; ret 8: hidden return + key)
 };
-
-// 0x4d7610 (slice s004d7370): English name of a key code, written through `out`; called with the keyboard
-// object in ECX and returning it.
-ctr* key_name(ctr* self, int key, tstring* out);                    // 0x4d7610 (ret 8)
+extern ctr g_keyboard;                                              // 0xa170c8
 
 // ---------------------------------------------------------------------------------------------------------
 // a ui control: +0x2c set_cursor(bool), +0x44 is_key_down(int)
@@ -73,29 +74,36 @@ struct text_store {
     virtual void t90(); virtual void t94(); virtual void t98(); virtual void t9c();
     virtual void ta0();
     virtual WRet set_text(const tstring& s);                        // +0xa4
-    virtual void add_text(tstring* text, float* pos);               // +0xa8
+    virtual void ta8();
+    virtual void add_text(tstring* text, float* pos);               // +0xac
 };
 
 // the local text entries of the panel's text store: drop the newest one (0x4d7e00 keeps it as a call)
 void text_store_clear_last(text_store* self);
 
-// a troop record (0x508 bytes): the name tstring at +4, the name's text key at +0x20
+// a troop record (0x508 bytes): the name tstring at +0, the name's text key at +0x20
 struct troop_rec {
-    char pad0[4];
-    tstring name;                                                   // +0x04
-    char pad14[0x0c];
-    tstring name_key;                                               // +0x20
+    tstring name;                                                   // +0x00
+    char pad10[0x10];
+    tstring key;                                                    // +0x20
     char pad30[0x508 - 0x30];
+    tstring* display_name();                                        // 0x43a480
 };
 
-// a faction record (0x300 bytes): +0x10 "name is not translated", the name at +0x14, the renown at +0x2c
+// a faction record (0x300 bytes): the displayed name at +0, a "has a translated name" flag at +0x10, the name's
+// text key at +0x14, the renown at +0x2c
 struct faction_rec {
-    char pad0[0x10];
-    int  has_name;                                                  // +0x10
-    tstring name;                                                   // +0x14
+    tstring name;                                                   // +0x00
+    char has_name;                                                  // +0x10
+    char pad11[3];
+    tstring key;                                                    // +0x14
     char pad24[0x08];
     float renown;                                                   // +0x2c
+    char tail[0x300 - 0x30];
 };
+
+struct ini_file;
+struct outfile;
 
 // the game globals (0x5e2930)
 struct game_globals {
@@ -106,13 +114,15 @@ struct game_globals {
     char pad04[0x13a48 - 0x13a04];
     faction_rec* factions;                                          // +0x13a48 (0x300 bytes each)
     int  num_factions;                                              // +0x13a4c
+    void export_character(outfile* f);                              // 0x4d86d0 (ret 4)
+    void import_apply(ini_file* table);                             // 0x4d8c20 (ret 4)
 };
-extern char g_globals_base[];                                       // 0x5e2930 (the game globals block)
-#define g_game ((game_globals*)g_globals_base)
+extern game_globals* g_game;                                        // 0x5e2930 (pointer to the game globals)
 extern int g_trial_mode;                                            // 0x5e29c4
 
-// the main menu: +0x04 "open", +0x1c title, +0x4c/+0x50 selection state, +0x68 header, +0x78/+0x88 answers
-struct main_menu {
+// the main-menu record (g_main_menu.rec): +0x04 "open", +0x1c title, +0x4c/+0x50 selection state, +0x68 header,
+// +0x78/+0x88 answers
+struct MenuRec {
     char pad0[4];
     int  open;                                                      // +0x04
     char pad08[0x1c - 0x08];
@@ -124,18 +134,24 @@ struct main_menu {
     tstring header;                                                 // +0x68
     tstring answer_yes;                                             // +0x78
     tstring answer_no;                                              // +0x88
-    void ask(const tstring* text, const tstring* title2);           // 0x48a3a0 (ret 8)
+    void setup(const tstring* hdr, const tstring* text)             // 0x48a3a0 (ret 8)
+    {
+        header = *hdr;
+        title = *text;
+        choice = 0;
+        v50 = 0;
+        open = 0;
+    }
     void ask_yes_no(const tstring* text, const tstring* yes, const tstring* no, int* result);  // 0x48a3d0 (ret 0x10)
-    void open_menu(int mode);                                       // 0x494260
-    void choose(int choice_id);                                     // 0x495700
 };
-extern char g_main_menu_obj[];                                      // 0xa73980 (the menu object itself)
-#define g_main_menu (*(main_menu*)g_main_menu_obj)
+struct MainMenu {
+    MenuRec* rec;                                                   // +0
+    void reset(int arg);                                            // 0x494260 (ret 4)
+    void choose(int choice_id);                                     // 0x495700 (ret 4)
+};
+extern MainMenu g_main_menu;                                        // 0xa73980
 
-// character-file helpers
-void  char_export_path(void* self, char* out);                      // 0x4d9260 (ECX = panel-relative object, ret 4)
-int   mb_file_exists(const char* path);                             // 0x415120
-tstring* troop_display_name(troop_rec* troop);                      // 0x43a480 (ECX = troop)
+bool mb_file_exists(const char* path);                               // 0x415120
 
 // the text records read by the import (see s004bd170 for the layout)
 struct ini_file {
@@ -143,21 +159,47 @@ struct ini_file {
     int  count;                                                     // +0x2c000
     ini_file();                                                     // 0x4c1be0
     void load(FILE* f);                                             // 0x4bd630
-    void flush();                                                   // 0x4be920
+    ~ini_file();                                                    // 0x4be920
 };
-void char_import_apply(ini_file* table);                            // 0x4d8c20 (ECX = g_game, ret 4)
 
-// the character export writer and the local file object it fills (0x4d86d0, slice s004d86d0)
-struct stream_root {
-    void* vptr;                                                     // 0x54a740
-    tstring name;                                                   // +0x10
-    tstring text;                                                   // +0x20
-    FILE* f;                                                        // +0x30
-    char  own_file;                                                 // +0x34
-    char  written;                                                  // +0x35
-    int   close();                                                  // +0x68 (virtual, returns "closed")
+// the export file object: three classes in a chain (vtables 0x54a740 / 0x595618 / 0x595990); the middle one's
+// destructor closes the file (virtual close at slot 26 = +0x68, called through the class's own vtable)
+struct outfile_a {
+    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
+    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
+    virtual void v08(); virtual void v09(); virtual void v10(); virtual void v11();
+    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
+    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
+    virtual void v20(); virtual void v21(); virtual void v22(); virtual void v23();
+    virtual void v24(); virtual void v25();
+    virtual int close();                                            // +0x68
+    tstring path;                                                   // +0x04
+    int f14;                                                        // +0x14
+    char f18;                                                       // +0x18
+    int f1c;                                                        // +0x1c
+    tstring t20;                                                    // +0x20
+    FILE* fp;                                                       // +0x30
+    char failed;                                                    // +0x34
+    char open;                                                      // +0x35
 };
-void char_export_write(void* self);                                 // 0x4d86d0 (ECX = g_game)
+struct outfile_b : outfile_a {
+    outfile_b() { f18 = 0; f1c = 0; failed = 1; open = 0; f14 = 0; }
+    void shut()
+    {
+        if (open) {
+            if (close() == 0)
+                fclose(fp);
+            failed = 1;
+            open = 0;
+        }
+    }
+    ~outfile_b() { shut(); }
+    virtual void b_dummy();
+};
+struct outfile : outfile_b {
+    outfile(const char* p) { path.assign(p); }
+    virtual void c_dummy();
+};
 
 #define MODE_RA " RA"                                               // 0x595990
 #define MODE_R  "r"                                                 // 0x54a8fc
@@ -189,6 +231,7 @@ struct options_panel {
     __declspec(noinline) void update_cursor();                      // 0x4d7de0
     __declspec(noinline) void refresh_texts();                      // 0x4d7e00
     __declspec(noinline) void draw_faction_report();                // 0x4d7e50
+    void export_path(char* out);                                    // 0x4d9260 (ret 4)
     void import_export(int);                                        // 0x4d8000
 };
 
@@ -196,13 +239,15 @@ struct options_panel {
 void options_panel::key_binding_name(int slot, tstring* out, int* translated)
 {
     const int key = (&key_menu)[slot * 2];
-    if (key >= 0) {
-        key_name((ctr*)0xa170c8, key, out);
-        *(char*)translated = 0;
-    } else {
-        tstring no_key("ui_no_key_assigned");                       // 0x59687c
-        *out = *strtab_lookup(&no_key);
+    if (key < 0) {
+        {
+            tstring no_key("ui_no_key_assigned");                   // 0x59687c
+            *out = *g_strtable.lookup(&no_key);
+        }
         *(char*)translated = 1;
+    } else {
+        *out = g_keyboard.key_name(key);
+        *(char*)translated = 0;
     }
 }
 
@@ -241,148 +286,169 @@ void options_panel::refresh_texts()
 // @ 0x4d7e50
 void options_panel::draw_faction_report()
 {
-    float row = 0.1f;
-    texts->set_text(tstring(EMPTY_TEXT));                           // 0x54a480 ""
-    tstring title("ui_factions_report");                            // 0x596bac
-    float pos[2];
-    pos[0] = 0.1f;
-    pos[1] = 0.65f;
-    texts->add_text(strtab_lookup(&title), pos);
-    row = 0.6f;
+    float row = 0.6f;
+    {
+        tstring empty(EMPTY_TEXT);                                  // 0x54a480 ""
+        texts->set_text(empty);
+    }
+    {
+        tstring title("ui_factions_report");                        // 0x596bac
+        float pos[2];
+        pos[0] = 0.1f;
+        pos[1] = 0.65f;
+        texts->add_text(g_strtable.lookup(&title), pos);
+    }
     for (int i = 0; i < g_game->num_factions; i++) {
         faction_rec* f = &g_game->factions[i];
-        float renown = f->renown * RENOWN_SCALE;                    // 0x54ab28
-        float whole = floor(renown);
-        int n = (int)whole;
-        if (renown - whole > 0.5f)                                  // 0x549d70
-            n++;
+        float renown = f->renown * 100.0f;                          // 0x54ab28
+        float whole = (float)floor(renown);
+        int base = (int)whole;
+        int n;
+        if (renown - whole <= 0.5f)                                 // 0x549d70
+            n = base;
+        else
+            n = base + 1;
+        tstring* shown = &f->name;
         if (f->has_name == 0) {
-            tstring* found = translate_text(&f->name);
+            tstring* found = g_strtable.find(&f->key);
             if (found)
-                f = (faction_rec*)found;
+                shown = found;
         }
         char text[512];
-        sprintf(text, "%s:  %d", f->name.c_str(), n);               // 0x596ba4
-        tstring line(text);
-        float xy[2];
-        xy[0] = 0.2f;
-        xy[1] = row;
-        texts->add_text(strtab_lookup(&line), xy);
+        sprintf(text, "%s:  %d", shown->c_str(), n);                // 0x596ba4
+        {
+            tstring line(text);
+            float xy[2];
+            xy[0] = 0.2f;
+            xy[1] = row;
+            texts->add_text(&line, xy);
+        }
         row -= 0.06f;                                               // 0x590e5c
     }
 }
-void options_panel_import_export(options_panel* this_, int)
-{
-// @ 0x4d8000
 
-    char path[0x280];
-    if (this_->export_pending == 0) {
-        char_export_path(this_, path);
-        this_->export_pending = -1;
-        stream_root file;
-        tstring empty;
-        file.vptr = (void*)0x54a740;
-        file.name = empty;
-        file.text = empty;
-        file.f = 0;
-        file.own_file = 0;
-        file.written = 0;
-        file.text.assign(MODE_RA);
-        file.f = fopen(path, MODE_W);
-        file.own_file = 1;
-        if (file.f)
-            file.written = 1;
-        char_export_write(g_game);
-        if (file.written) {
-            if (file.close() == 0)
-                fclose(file.f);
-            file.own_file = 1;
-            file.written = 0;
+// @ 0x4d8000
+void options_panel::import_export(int)
+{
+    char buf_a[512];
+    char buf_b[512];
+    if (export_pending == 0) {
+        export_path(buf_a);
+        export_pending = -1;
+        outfile file(buf_a);
+        file.fp = fopen(buf_a, MODE_W);
+        if (file.fp) {
+            file.failed = 0;
+            file.open = 1;
+        } else {
+            file.failed = 1;
         }
-        troop_rec* troop = &g_game->troops[g_game->player_troop];
-        tstring msg(troop_display_name(troop)->buf);                // 0x596d20
-        sprintf(path, msg.buf, troop->name.buf);
-        strtab_lookup(&msg);
-        tstring text(path);
-        tstring header("");
-        g_main_menu.ask(&text, &header);
-        g_main_menu.open_menu(0);
-        if (file.written) {
-            if (file.close() == 0)
-                fclose(file.f);
+        g_game->export_character(&file);
+        file.shut();
+        {
+            tstring msg("ui_character_playername_exported_successfully");   // 0x596d20
+            troop_rec* t = &g_game->troops[g_game->player_troop];
+            tstring* nm = g_strtable.find(&t->key);
+            if (!nm)
+                nm = &t->name;
+            sprintf(buf_b, g_strtable.lookup(&msg)->c_str(), nm->c_str());
         }
+        {
+            tstring text(buf_b);
+            tstring header("");
+            g_main_menu.rec->setup(&header, &text);
+        }
+        g_main_menu.reset(0);
         return;
     }
-    if (this_->import_pending == 0) {
-        char_export_path(this_, path);
-        this_->import_pending = -1;
+    if (import_pending == 0) {
+        export_path(buf_b);
+        import_pending = -1;
         ini_file table;
-        FILE* f = fopen(path, MODE_R);
+        FILE* f = fopen(buf_b, MODE_R);
         if (f) {
             table.load(f);
             fclose(f);
-            char_import_apply(&table);
-            troop_rec* troop = &g_game->troops[g_game->player_troop];
-            tstring msg(troop_display_name(troop)->buf);            // 0x596cf0
-            sprintf(path, msg.buf, troop->name.buf);
-            strtab_lookup(&msg);
-            tstring text(path);
-            tstring header("");
-            g_main_menu.ask(&text, &header);
-            g_main_menu.open_menu(0);
+            g_game->import_apply(&table);
+            {
+                tstring msg("ui_character_playername_imported_successfully");   // 0x596cf0
+                troop_rec* t = &g_game->troops[g_game->player_troop];
+                tstring* nm = g_strtable.find(&t->key);
+                if (!nm)
+                    nm = &t->name;
+                sprintf(buf_a, g_strtable.lookup(&msg)->c_str(), nm->c_str());
+            }
+            {
+                tstring text(buf_a);
+                tstring header("");
+                g_main_menu.rec->setup(&header, &text);
+            }
+            g_main_menu.reset(0);
         } else {
-            tstring msg("ui_unable_to_open_import_file");           // 0x596cd0
-            tstring header("");
-            g_main_menu.ask(strtab_lookup(&msg), &header);
-            g_main_menu.open_menu(0);
+            {
+                tstring msg("ui_unable_to_open_import_file");       // 0x596cd0
+                tstring header("");
+                g_main_menu.rec->setup(&header, g_strtable.lookup(&msg));
+            }
+            g_main_menu.reset(0);
         }
-        table.flush();
         return;
     }
-    if (this_->import_key->is_key_down(0x10000)) {
+    if (import_key->is_key_down(0x10000)) {
         if (g_trial_mode) {
-            tstring msg("ui_mount_and_blade_is_running_in_trial_mode_please_buy_the_game_for_importing_characters");
-            tstring header("");
-            g_main_menu.ask(strtab_lookup(&msg), &header);
-            g_main_menu.open_menu(0);
-            return;
-        }
-        char_export_path(this_, path);
-        if (mb_file_exists(path)) {
-            tstring msg("ui_are_you_sure_you_want_to_import_the_character");   // 0x596c9c
-            this_->import_pending = -1;
-            sprintf(path, "%s", strtab_lookup(&msg)->buf);
-            tstring no("ui_no");                                    // 0x596c94
-            tstring yes("ui_yes");                                  // 0x596c8c
-            tstring text(path);
-            g_main_menu.ask_yes_no(&text, &yes, &no, &this_->import_pending);
-            g_main_menu.choose(0);
+            export_path(buf_b);
+            if (mb_file_exists(buf_b)) {
+                import_pending = -1;
+                {
+                    tstring msg("ui_are_you_sure_you_want_to_import_the_character");   // 0x596c9c
+                    sprintf(buf_a, g_strtable.lookup(&msg)->c_str());
+                }
+                {
+                    tstring no("ui_no");                            // 0x596c94
+                    tstring yes("ui_yes");                          // 0x596c8c
+                    tstring text(buf_a);
+                    g_main_menu.rec->ask_yes_no(&text, g_strtable.lookup(&yes), g_strtable.lookup(&no), &import_pending);
+                }
+                g_main_menu.choose(0);
+            } else {
+                {
+                    tstring msg("ui_unable_to_find_character_import_file"); // 0x596c64
+                    tstring header("");
+                    g_main_menu.rec->setup(&header, g_strtable.lookup(&msg));
+                }
+                g_main_menu.reset(0);
+            }
         } else {
-            tstring msg("ui_unable_to_find_character_import_file"); // 0x596c64
-            tstring header("");
-            g_main_menu.ask(strtab_lookup(&msg), &header);
-            g_main_menu.open_menu(0);
+            {
+                tstring msg("ui_mount_and_blade_is_running_in_trial_mode_please_buy_the_game_for_importing_a_character");
+                tstring header("");
+                g_main_menu.rec->setup(&header, g_strtable.lookup(&msg));
+            }
+            g_main_menu.reset(0);
         }
         return;
     }
-    if (this_->cursor_control->is_key_down(0x10000)) {
-        char_export_path(this_, path);
-        if (mb_file_exists(path)) {
-            tstring msg("ui_export_file_for_character_playername_already_exists_overwrite_it"); // 0x596bc0
-            troop_rec* troop = &g_game->troops[g_game->player_troop];
-            sprintf(path, troop_display_name(troop)->buf, troop->name.buf);
-            this_->export_pending = -1;
-            tstring no("ui_no");
-            tstring yes("ui_yes");
-            tstring text(path);
-            strtab_lookup(&msg);
-            g_main_menu.ask_yes_no(&msg, &yes, &no, &this_->export_pending);
+    if (cursor_control->is_key_down(0x10000)) {
+        export_path(buf_b);
+        if (mb_file_exists(buf_b)) {
+            export_pending = -1;
+            {
+                tstring msg("ui_export_file_for_character_playername_already_exists_overwrite_it"); // 0x596bc0
+                troop_rec* t = &g_game->troops[g_game->player_troop];
+                sprintf(buf_a, g_strtable.lookup(&msg)->c_str(), t->display_name()->c_str());
+            }
+            {
+                tstring no("ui_no");
+                tstring yes("ui_yes");
+                tstring text(buf_a);
+                g_main_menu.rec->ask_yes_no(&text, g_strtable.lookup(&yes), g_strtable.lookup(&no), &export_pending);
+            }
             g_main_menu.choose(0);
         } else {
-            this_->export_pending = 0;
+            export_pending = 0;
         }
         return;
     }
-    if (this_->menu_keys->is_key_down(0x10000))
-        g_main_menu.choose(this_->menu_choice);
+    if (menu_keys->is_key_down(0x10000))
+        g_main_menu.choose(menu_choice);
 }

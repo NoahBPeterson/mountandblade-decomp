@@ -1,0 +1,3 @@
+slices/s0047cae0/s0047cae0.cpp  ?light_entities@terrain_obj@@QAEXPAPAUentity@@H@Z  0047ce00  /O2 /MT /Gy /TP
+slices/s0047cae0/s0047cae0.cpp  ?light_props@terrain_obj@@QAEXXZ  0047ced0  /O2 /MT /Gy /TP
+slices/s0047cae0/s0047cae0.cpp  ?update_ranged_mesh@agent_view@@QAEXXZ  0047d320  /O2 /MT /Gy /TP

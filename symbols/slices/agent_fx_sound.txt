@@ -1,0 +1,5 @@
+08ed5090 ?g_emit_defs@@3UEmitTable@@A  # effect emitter definition table (global object, address beyond the image sections)
+00407ca0 ??Gvector4@rgl@@QBE?AU01@ABU01@@Z  # rgl::vector4::operator- (rgl.h's comment is not at the start of the line, resolver missed it)
+00407c50 ?out_length@vector4@rgl@@QBEMXZ  # rgl::vector4::out_length (same)
+005e2948 ?g_ticks@@3PA_JA  # clock table, 1e-5 s ticks (Agent::play_sound stamp, Mission::queue_dead, Agent::on_wield_changed)
+005d6fa0 ?g_resmgr@@3Uresmgr@@A  # the resource manager object (declared in src/game/agent/item_kind.h, which the audit does not read from here)
