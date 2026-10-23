@@ -286,7 +286,7 @@ struct Block {
     void read_terrain(AccessCodeStream* stream);        // 0x4c83a0
 };
 extern void find_triangle(const int* mesh, int* a, int* b);      // 0x4c5f60
-extern void block_read_base(Block* b, AccessCodeStream* s);      // 0x4607e0
+struct ScriptBlock { void read(AccessCodeStream* s); };          // 0x4607e0 (the +0x38 member of Block; thiscall)
 extern void add_frame(AccessCodeStream* s, const char* name, int flags);   // 0x4c1e10
 
 // @ 0x4c8000
@@ -313,7 +313,6 @@ rgl::vector4 Block::normal(const int* mesh)
 // @ 0x4c80c0
 void Block::clear()
 {
-    tstring* var = (tstring*)*(int*)((char*)this + 0x44);
     int z = 0, k = 0xfffe7960;
     this->first = z;
     *(int*)((char*)this + 0x34) = -1;
@@ -326,6 +325,7 @@ void Block::clear()
     *(int*)((char*)this + 0x18) = z;
     *(int*)((char*)this + 0x1c) = z;
     *(int*)((char*)this + 0x20) = 100;
+    tstring* var = (tstring*)*(int*)((char*)this + 0x44);
     if (var)
         operator delete(var);
     *(int*)((char*)this + 0x44) = 0;
@@ -336,16 +336,9 @@ void Block::clear()
 // @ 0x4c8330
 void Block::free_materials()
 {
-    for (unsigned i = 0;; i++) {
-        char* b = *(char**)((char*)this + 0x58);
-        if (!b)
-            break;
-        unsigned n = (unsigned)(*(char**)((char*)this + 0x5c) - b) >> 2;
-        if (i >= n)
-            break;
-        char* e = *(char**)(*(char**)((char*)this + 0x58) + i * 4);
-        *(int*)(e + 0x64) = 0;                          // the block no longer owns the material
-        g_res_manager.release(e);
+    for (unsigned i = 0; *(char***)((char*)this + 0x58) && i < (unsigned)(*(char***)((char*)this + 0x5c) - *(char***)((char*)this + 0x58)); i++) {
+        *(char**)((*(char***)((char*)this + 0x58))[i] + 0x64) = 0;   // the block no longer owns the material
+        g_res_manager.release((*(char***)((char*)this + 0x58))[i]);
     }
     if (*(char**)((char*)this + 0x58))
         operator delete(*(char**)((char*)this + 0x58));
@@ -370,21 +363,21 @@ void Block::read_terrain(AccessCodeStream* stream)
     stream->f32(f2);
     stream->f32((float*)((char*)this + 0x30));
     stream->f32((float*)((char*)this + 0x34));
-    *(float*)((char*)this + 0x28) *= 0.001f;
-    *f2 *= 0.001f;
-    *(float*)((char*)this + 0x30) *= 0.001f;
-    *(float*)((char*)this + 0x34) *= 0.001f;
-    block_read_base(this, stream);
+    *(float*)((char*)this + 0x28) *= 0.001;
+    *f2 *= 0.001;
+    *(float*)((char*)this + 0x30) *= 0.001;
+    *(float*)((char*)this + 0x34) *= 0.001;
+    ((ScriptBlock*)((char*)this + 0x38))->read(stream);
     char buf[0x200];
-    _snprintf(buf, 0x200, "Tableau material %s", ((tstring*)((char*)this + 0x44))->str());
-    tstring mat(buf);
-    ((tstring*)((char*)this + 0x44))->operator=(mat);
-    mat.~tstring();
+    _snprintf(buf, 0x200, "Tableau material %s", ((tstring*)((char*)this + 0x00))->str());
+    {
+        tstring mat(buf);
+        ((tstring*)((char*)this + 0x44))->operator=(mat);
+    }
     if (name.len > 1) {
         if (name.differs("none"))
             *(void**)((char*)this + 0x64) = g_res_manager.get_material(name);
     }
-    name.~tstring();
 }
 
 // @ 0x4c8110

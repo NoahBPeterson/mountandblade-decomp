@@ -37,7 +37,6 @@ struct mesh {                                               // rgl::mesh, 0x260 
 
 matrix* identity_pos(matrix* out);                          // 0x40cd00 (cdecl)
 unsigned pack_color(const vector4* c);                      // 0x40e440 (cdecl)
-int _ftol2();                                               // 0x535a64 (lib_crt 0640_ftol2: x87 -> int)
 
 // ---- globals ---------------------------------------------------------------------------------------------
 extern int g_view_active;                                   // 0x5a9fd8 (0: the sound listener follows us)
@@ -50,7 +49,7 @@ extern float g_amp;                                         // 0x5a9c28 flare am
 extern float g_flare_fx;                                    // 0x590b50 flare direction factor
 extern float g_flare_time_scale;                            // 0x59393c
 extern float g_flare_mesh_scale;                            // 0x590b70
-extern int g_ticks[][2];                                    // 0x5e2948 (the game's 64-bit millisecond clock)
+extern __int64 g_ticks[];                                      // 0x5e2948 (the game's 64-bit millisecond clock)
 
 struct Game {
     char pad0[0x13a50];
@@ -58,8 +57,7 @@ struct Game {
     char pad54[0x13b18 - 0x13a54];
     int frame;                                              // +0x13b18 (index into g_ticks)
     char pad1c[0x13b20 - 0x13b1c];
-    int frame_lo;                                           // +0x13b20
-    int frame_hi;                                           // +0x13b24
+    __int64 frame_start;                                    // +0x13b20 (lo/hi)
     float time_of_day();                                    // 0x4356e0
 };
 extern Game* g_game;                                        // 0x5e2930
@@ -150,9 +148,7 @@ void View::update(const matrix* frame, int flags)
     Node* fl = flare_node;
     float tod = g_game->time_of_day();
     bool day = tod >= 4.0f && tod < 20.0f;
-    float t = (float)(g_ticks[g_game->frame][0] - g_game->frame_lo) * 0.001f;
-    int a = _ftol2();                                       // (int)t
-    (void)a;
+    int a = (int)((g_ticks[g_game->frame] - g_game->frame_start) * 0.001f);   // fild; fmul; call __ftol2
     vector4 dir;
     edge_pos(&dir, a % 24, day);
     fl->pos.s = dir;

@@ -90,7 +90,6 @@ void user_path(char* name);                        // 0x4bab70
 void __fastcall __user_path_probe(char* name);     // see the note on 0x4c3a40
 extern "C" double atof(const char*);               // 0x537352
 extern "C" int atoi(const char*);                  // 0x5373d0
-extern "C" int _ftol2(double);                     // 0x535a64 (double -> int, truncating)
 
 // buffer-size option names, in the order 0x4c3510 reads them (each is copied into the stack tstring)
 extern const char g_opt_dx7_regular_ffp_dynamic[]; // 0x595b68
@@ -271,6 +270,7 @@ void __fastcall renderer_setup(void* self)
     void* font = *(void**)((char*)self + 0x348);
     BOOL software_vertex_processing = *(char*)((char*)self + 0xa4);
     int height = *(int*)((char*)self + 0x22c);
+    float dflt = 0.0f;
     printf("%f", *(const double*)g_opt_dx7_regular_ffp_dynamic);
     if (software_vertex_processing)
         *(int*)((char*)self + 0x22c) = 0x4c357a;
@@ -289,34 +289,34 @@ void __fastcall renderer_setup(void* self)
         tstring key1(g_opt_dx7_regular_ffp_dynamic);
         reset_buffer_group(self);
         int idx1 = config_find(&g_config, &key1);
-        int dx7_regular_ffp_dynamic = atoi(idx1 >= 0 ? CFG_ENTRY(idx1) : "");
+        int dx7_regular_ffp_dynamic = (int)(idx1 >= 0 ? atof(CFG_ENTRY(idx1)) : (double)dflt);
         tstring key2(g_opt_dx7_regular_ffp_static);
         int idx2 = config_find(&g_config, &key2);
-        int dx7_regular_ffp_static = atoi(idx2 >= 0 ? CFG_ENTRY(idx2) : "");
+        int dx7_regular_ffp_static = (int)(idx2 >= 0 ? atof(CFG_ENTRY(idx2)) : (double)dflt);
         tstring key3(g_opt_normal_map_dynamic);
         int idx3 = config_find(&g_config, &key3);
-        int normal_map_dynamic = atoi(idx3 >= 0 ? CFG_ENTRY(idx3) : "");
+        int normal_map_dynamic = (int)(idx3 >= 0 ? atof(CFG_ENTRY(idx3)) : (double)dflt);
         tstring key4(g_opt_normal_map_static);
         int idx4 = config_find(&g_config, &key4);
-        int normal_map_static = atoi(idx4 >= 0 ? CFG_ENTRY(idx4) : "");
+        int normal_map_static = (int)(idx4 >= 0 ? atof(CFG_ENTRY(idx4)) : (double)dflt);
         tstring key5(g_opt_skinning_dynamic);
         int idx5 = config_find(&g_config, &key5);
-        int skinning_dynamic = atoi(idx5 >= 0 ? CFG_ENTRY(idx5) : "");
+        int skinning_dynamic = (int)(idx5 >= 0 ? atof(CFG_ENTRY(idx5)) : (double)dflt);
         tstring key6(g_opt_skinning_static);
         int idx6 = config_find(&g_config, &key6);
-        int skinning_static = atoi(idx6 >= 0 ? CFG_ENTRY(idx6) : "");
+        int skinning_static = (int)(idx6 >= 0 ? atof(CFG_ENTRY(idx6)) : (double)dflt);
         tstring key7(g_opt_regular_dynamic);
         int idx7 = config_find(&g_config, &key7);
-        int regular_dynamic = atoi(idx7 >= 0 ? CFG_ENTRY(idx7) : "");
+        int regular_dynamic = (int)(idx7 >= 0 ? atof(CFG_ENTRY(idx7)) : (double)dflt);
         tstring key8(g_opt_regular_static);
         int idx8 = config_find(&g_config, &key8);
-        int regular_static = atoi(idx8 >= 0 ? CFG_ENTRY(idx8) : "");
+        int regular_static = (int)(idx8 >= 0 ? atof(CFG_ENTRY(idx8)) : (double)dflt);
         tstring key9(g_opt_regular_ffp_dynamic);
         int idx9 = config_find(&g_config, &key9);
-        int regular_ffp_dynamic = atoi(idx9 >= 0 ? CFG_ENTRY(idx9) : "");
+        int regular_ffp_dynamic = (int)(idx9 >= 0 ? atof(CFG_ENTRY(idx9)) : (double)dflt);
         tstring key10(g_opt_regular_ffp_static);
         int idx10 = config_find(&g_config, &key10);
-        int regular_ffp_static = atoi(idx10 >= 0 ? CFG_ENTRY(idx10) : "");
+        int regular_ffp_static = (int)(idx10 >= 0 ? atof(CFG_ENTRY(idx10)) : (double)dflt);
         create_shader_constants(&g_render,
                                 regular_ffp_static, regular_ffp_dynamic,
                                 regular_static, regular_dynamic,

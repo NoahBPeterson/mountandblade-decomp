@@ -1,2 +1,3 @@
 # slice s004c7bf0 (0x4c7bf0..0x4c84e4): the map editor's object dialog + mesh block serializers.
 # all nine functions are implemented; none reproduces the original byte-for-byte (see nonmatching.txt).
+slices/s004c7bf0/s004c7bf0.cpp  ?read_terrain@Block@@QAEXPAUAccessCodeStream@@@Z  004c83a0  /O2 /MT /Gy /TP

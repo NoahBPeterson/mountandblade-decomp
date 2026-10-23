@@ -5,7 +5,11 @@
                 (0.1, y), y synced by -0.02/-0.005/-0.01 per level, byte-offset accumulators +0xc/+0x38 into
                 0xa73348), but cl 13.10 picks EBX/EDI for the loop counters where the original uses
                 EBX/EBP/ESI and hoists the three loop bounds differently, so 210 of 343 bytes differ.
-                Equiv: PASS (400 valid inputs, all 14 edges, 100% instructions).
+                Re-audit (b10): the sweep FAIL (`call #2 (depth 1)`: first StrTable::find argument differed) was a
+                REAL bug: Unit was only 0xa4 bytes long and the index was multiplied by 0x508 again (units[*cell*0x508],
+                a 0x508*0xa4 stride). Unit is now padded to 0x508 and the index is units[*cell]; the same padding fixes
+                units[rec->id] in 0x4db440. Equiv --fp-tol: PASS (371 valid inputs, 14/14 edges, 100% insns, 0 real
+                mismatches).
 004db440  543  complete: side -> party id (g_game->78, selection tables, per-side fallback), chunked party
                 lookup, header text selection through strtab/g_a181b8, per-unit health-percent vs (x/y) text
                 and the "%s %s" row text at (0.01, y) with y -= 0.02.  Shape-only: register allocation and the

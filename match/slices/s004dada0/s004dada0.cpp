@@ -155,6 +155,7 @@ struct Unit {                                   // a 0x508-byte game unit (table
     unsigned char f7a;                          // +0x7a (health rank, low 4 bits)
     char pad7b[0xa0 - 0x7b];
     float fa0;                                  // +0xa0 (health)
+    char pada4[0x508 - 0xa4];
 };
 struct PartyUnitRec {                           // 0x20-byte entry of a party's unit list
     int f0;                                     // +0x00
@@ -322,7 +323,7 @@ void Screen::fill_mission_grid()
         for (int j = 0; j < g_a7342c; j++) {
             int* cell = (int*)((char*)0xa73348 + kb + jb);
             for (int i = 0; i < g_a73428; i++) {
-                Unit* u = &g_game->units[*cell * 0x508];
+                Unit* u = &g_game->units[*cell];
                 const void* txt = g_strtab.find((char*)u + 0x20);
                 if (!txt)
                     txt = u;
