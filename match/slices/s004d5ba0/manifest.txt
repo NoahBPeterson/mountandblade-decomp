@@ -1,9 +1,4 @@
-# slice s004d5ba0 - no byte-exact functions this pass.
-#
-# All four functions compile and are reconstructed call-for-call from the original, but none reproduces
-# the original's code generation; each is recorded in nonmatching.txt:
-#   0x4d5ba0  fill              frame 0x220 + ebx/esi/edi with a second prologue and no epilogue on the
-#                               early-out; statement hoist order differs. best diff 749
-#   0x4d5f20  update_settings   prologue push ecx vs push esi / mov esi,ecx, and the poll scheduling. best diff 802
-#   0x4d6270  update_days       floor/_ftol2 schedule and tstring temporaries. best diff 134
-#   0x4d6300  update_difficulty localized caption lookup and tstring temporaries (178 vs 175 bytes). best diff 85
+# slice s004d5ba0: byte-exact functions (rows as chk.py prints them)
+# Not byte-exact (see nonmatching.txt): 0x4d5ba0 fill (29 diff bytes), 0x4d5f20 update_settings.
+slices/s004d5ba0/s004d5ba0.cpp  ?update_days@QuestPage@@QAEXXZ  004d6270  /O2 /MT /Gy /TP
+slices/s004d5ba0/s004d5ba0.cpp  ?update_difficulty@QuestPage@@QAEXXZ  004d6300  /O2 /MT /Gy /TP

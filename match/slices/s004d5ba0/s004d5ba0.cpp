@@ -5,7 +5,7 @@
 //   0x4d5f20  options-change handler (takes the change reason, 4 bytes on the stack): poll every settings
 //             control into the render-config globals (0x5aa0xx), re-captioning the difficulty page as it
 //             goes; the toolbar buttons (+0x38/+0x3c/+0x40) pick a main-menu option and leave the page.
-//   0x4d6270  the "days" caption: 25 + the fraction of *(float*)0x5aa07c * g_caption_scale.
+//   0x4d6270  the "days" caption: 25 + the fraction of g_difficulty_f * *(float*)0x5910fc.
 //   0x4d6300  the difficulty-rating caption ("<difficulty>%", hidden in the main menu).
 // All names provisional.
 //
@@ -25,13 +25,12 @@
 
 using rgl::vector4;
 
-// rgl::string (tstring): 16 bytes; layout verified in match/include/rgl.h (ctor 0x42bbe0).
+// rgl::string (tstring): 16 bytes {pos, buf, cap, len}; layout verified in match/include/rgl.h (ctor 0x42bbe0).
 struct tstring {
-    char* p; int size, cap, len;     // 0x0 / 0x4 / 0x8 / 0xc
+    int pos; char* p; int cap, len;  // 0x0 / 0x4 (buffer, null while empty) / 0x8 / 0xc
     tstring(const char* s);          // 0x42bbe0
-    tstring(int n);                  // 0x42bbe0 (the integer format is the string's "p" slot)
     tstring(const tstring& o);       // 0x42c110
-    tstring& operator=(const tstring& o);   // 0x42bcb0
+    tstring& operator=(const char* s);      // 0x42bcb0
     ~tstring();                      // 0x42bc40
 };
 
@@ -46,8 +45,9 @@ tstring* strtab_lookup(tstring& key);               // 0x43a1e0
 
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 extern "C" int __cdecl sprintf(char*, const char*, ...);         // 0x536f8f
-int ftol(double v);                              // 0x535a64 (x87 argument, int in eax)
 double floor_d(double v);                        // 0x536b10
+
+struct Pos2 { float x, y; };    // 8-byte position slot; the original passes an unset 8-byte stack slot
 
 // 0x5e2930: the running game object (module state); 0 == no game (main menu).
 extern int g_game;                                  // 0x5e2930
@@ -69,16 +69,16 @@ extern int* g_menu_video_entry;                     // 0xa739d0 (index at +0x18)
 extern int* g_menu_options_entry;                   // 0xa739cc (index at +0x18)
 
 // 0x5e2950 and the per-day factors next to 0x596770.
-extern double g_tick_f;                             // 0x5e2950 ((low, high) at 0x5e2948)
+extern __int64 g_time64;                            // 0x5e2950 (fild qword)
 extern float  g_tick_per_day;                       // 0x596770
 extern float  g_ticks_per_time;                     // 0x596774
-extern float  g_caption_scale;                      // 0x5910fc
+extern float  g_difficulty_f;                      // 0x5aa07c (the difficulty slider value; the days caption scales it by the constant float at 0x5910fc)
 
 // quest record (0x138 bytes; see s0049b630 Rec138)
 struct QuestRec {
     char    pad0[0x20];
     tstring text;                                   // +0x20  description
-    char    pad30[0x40 - 0x30];
+    tstring name;                                   // +0x30
     tstring title;                                  // +0x40  name
     int     f50;                                    // +0x50  (bit 0 -> progression number shown)
     char    pad54[0x64 - 0x54];
@@ -105,9 +105,9 @@ struct Widget {
     virtual void v22(); virtual void v23();
     virtual void set_default();             // +0x90
     virtual void v25(); virtual void v26(); virtual void v27(); virtual void v28();
-    virtual void set_text(const tstring& s);                        // +0xa4
+    virtual void place_text(const Pos2& pos, const tstring& s);   // +0xa4 (pos first, text second; callers pass an unset stack slot)
     virtual void v2a();
-    virtual void set_text(const tstring& s, const vector4& pos);    // +0xac
+    virtual void set_text(const tstring& s, const Pos2& pos);    // +0xac
     virtual void show();                    // +0xb0
     virtual void enable();                  // +0xb4
 };
@@ -170,7 +170,6 @@ struct QuestPage {
     Widget* wd4;                                    // +0xd4  difficulty caption
     char    pad_d8[0x250 - 0xd8];
     int     sel;                                    // +0x250 selected quest
-    int     idx[0x3c];                              // +0x254 (0x4d5ba0 reads the table at +0x4c)
 
     // the two text boxes of fill() (+0x44 name/date/description, +0x48 progression)
     Widget* box1() { return w44; }
@@ -189,7 +188,6 @@ struct localized {
     tstring* e;
 
     explicit localized(const char* k) : key(k) { e = g_string_table.lookup(key); }
-    ~localized() { key.~tstring(); }
     tstring text() const
     {
         tstring t = *e;
@@ -197,6 +195,8 @@ struct localized {
     }
     const char* c_str() const { return e->p ? e->p : (const char*)&e->p; }
 };
+
+extern char g_empty_text[];                         // 0x54a480 (an empty C string)
 
 // 0xa70464: the caption the game object's text helper writes into before it is shown.
 extern tstring g_quest_text;                        // 0xa70464
@@ -209,55 +209,55 @@ struct QuestTextHook {
 };
 
 // @ 0x4d5ba0
+// The selected quest's record: the selection indexes the int table at this+0x4c.
+#define QREC ((QuestRec*)(((Game*)g_game)->quests + ((int*)((char*)this + 0x4c))[sel] * 0x138))
+
 void QuestPage::fill()
 {
-    // the index arithmetic is hoisted to the top in the original (it computes the record before anything else)
-    int    k = idx[sel];
-    char*  recs = ((Game*)g_game)->quests;
-    QuestRec* rec = (QuestRec*)(recs + k * 0x138);
-    tstring* title = &rec->title;
-    vector4 at;
-
-    // the name of the selected quest, twice: at the default height, then just under it
-    {
-        box1()->set_text(*title, at);
-        at.x = 0.0f;
-        at.y = 0.40f;
-        box1()->set_text(*title, at);
-    }
-
     char buf[0x200];
 
-    // the day number: g_quest_text gets the date as text, then "(<days> fifteen)"-style formatting
-    tstring date(rec->f118);
-    g_quest_text = date;
     {
-        int days = ftol(((QuestRec*)(((Game*)g_game)->quests + idx[sel] * 0x138))->f11c);
-        ((QuestTextHook*)g_game)->format(0xf, days / 0x19, days);
+        Pos2 at;                                 // passed unset to the first call
+        box1()->place_text(at, QREC->name);
+        at.x = 0.0f;
+        at.y = 0.43125f;
+        box1()->set_text(QREC->title, at);
     }
+
+    // the date line: "ui_given_on_date" formatted with g_quest_text, which the game's text helper fills
     {
-        tstring formatted(g_quest_text);
-        localized key("ui_given_on_date");
-        mb_snprintf(buf, 0x200, key.c_str(), formatted.p ? formatted.p : (const char*)&formatted.p);
+        tstring key("ui_given_on_date");
+        Game* g = (Game*)g_game;
+        int days = (int)(((QuestRec*)(g->quests + ((int*)((char*)this + 0x4c))[sel] * 0x138))->f11c);
+        g_quest_text = g_empty_text;
+        ((QuestTextHook*)g)->format(0xf, days / 24, days);
         {
-            tstring text(buf);
-            vector4 at;
-            at.x = 0.0f;
-            at.y = 0.40f;
-            box1()->set_text(text, at);
+            tstring formatted(g_quest_text);
+            const char* arg = formatted.p ? formatted.p : (const char*)&formatted.p;
+            tstring* e = g_string_table.lookup(key);
+            mb_snprintf(buf, 0x200, e->p ? e->p : (const char*)&e->p, arg);
         }
-        formatted.~tstring();
     }
-    date.~tstring();
+    {
+        tstring text(buf);
+        Pos2 at;
+        at.x = 0.0f;
+        at.y = 0.38125f;
+        box1()->set_text(text, at);
+    }
 
     // "N days since given"
     {
-        localized key("ui_days_since_given");
-        int now = ftol(g_tick_f * g_tick_per_day);
-        int given = ftol(((QuestRec*)(((Game*)g_game)->quests + idx[sel] * 0x138))->f11c * g_ticks_per_time);
-        mb_snprintf(buf, 0x200, key.c_str(), now - given);
+        tstring key("ui_days_since_given");
+        tstring* e = g_string_table.lookup(key);
+        const char* fmt = e->p ? e->p : (const char*)&e->p;
+        int given = (int)(QREC->f11c * g_ticks_per_time);
+        int now = (int)(g_time64 * g_tick_per_day);
+        mb_snprintf(buf, 0x200, fmt, now - given);
+    }
+    {
         tstring text(buf);
-        vector4 at;
+        Pos2 at;
         at.x = 0.0f;
         at.y = 0.35f;
         box1()->set_text(text, at);
@@ -265,43 +265,46 @@ void QuestPage::fill()
 
     // the description
     {
-        tstring desc(((QuestRec*)(((Game*)g_game)->quests + idx[sel] * 0x138))->text);
-        vector4 at;
+        Pos2 at;
         at.x = 0.0f;
-        at.y = 0.32f;
+        at.y = 0.31875f;
+        tstring desc(QREC->text);
         box1()->set_text(desc, at);
     }
 
     // the progression number (second box) when the quest has one
-    {
-        QuestRec* q = (QuestRec*)(((Game*)g_game)->quests + idx[sel] * 0x138);
-        if (q->f50 & 1) {
-            localized key("ui_quest_progression_number");
-            mb_snprintf(buf, 0x200, key.c_str(), q->f64 & 0xff);
-            {
-                tstring text(buf);
-                box2()->set_text(text);
-            }
-            box2()->enable();
-        } else {
-            box2()->show();
+    if (QREC->f50 & 1) {
+        {
+            tstring key("ui_quest_progression_number");
+            tstring* e = g_string_table.lookup(key);
+            mb_snprintf(buf, 0x200, e->p ? e->p : (const char*)&e->p, QREC->f64 & 0xff);
         }
+        {
+            tstring text(buf);
+            Pos2 at;
+            box2()->place_text(at, text);
+        }
+        box2()->enable();
+    } else {
+        box2()->show();
     }
 }
 
 // @ 0x4d6270
 void QuestPage::update_days()
 {
-    float v = *(float*)0x5aa07c * g_caption_scale;
-    double f = floor_d(v);
-    int n = ftol(v);
-    if (v - f >= 0.5f)          // (the original compares the fraction with 0.5f at 0x549d70)
-        n++;
+    Pos2 fr;                                 // x = the float spill slot; y is never written (it is passed on to the widget)
+    float& v = fr.x;
+    v = g_difficulty_f * *(float*)0x5910fc;
+    float f = (float)floor_d(v);
+    int n = (int)f;
+    int r;
+    if (v - f <= 0.5f) r = n; else r = n + 1;     // jnp form: test ah,0x41 over fcomp [0x549d70]
+    n = r;
     char buf[0x40];
     sprintf(buf, "%d", n + 0x19);
     tstring text(buf);
-    tstring caption((const char*)0x54a0f4);
-    w34->set_text(text, *(const vector4*)&caption);            // the second argument is the 16-byte slot itself
+    w34->place_text(fr, text);
 }
 
 // @ 0x4d6300
@@ -318,11 +321,11 @@ void QuestPage::update_difficulty()
         tstring* e = g_string_table.lookup(key);
         const char* fmt = e->p ? e->p : (const char*)&e->p;
         sprintf(buf, fmt, ((GameRating*)g_game)->rating());
-        key.~tstring();
     }
     {
         tstring text((const char*)&buf[0]);
-        wd4->set_text(text, *(const vector4*)(const char*)0x54a480);
+        Pos2 slot;
+        wd4->place_text(slot, text);
     }
 }
 
@@ -336,7 +339,7 @@ void QuestPage::update_settings(int reason)
     if (w84->changed(0x10000))
         *(float*)0x5aa018 = control_float(w84);
     if (w78->changed(0x10000)) {
-        *(float*)0x5aa07c = control_float(w78);
+        g_difficulty_f = control_float(w78);
         update_difficulty();
         update_days();
     }

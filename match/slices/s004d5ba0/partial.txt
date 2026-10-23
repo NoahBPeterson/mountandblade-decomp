@@ -1,1 +1,1 @@
-# s004d5ba0: no incomplete functions; all four VAs are complete and recorded in nonmatching.txt
+# s004d5ba0: no incomplete functions; 0x4d5ba0 and 0x4d5f20 are complete and recorded in nonmatching.txt
