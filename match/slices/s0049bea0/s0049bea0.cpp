@@ -219,32 +219,25 @@ void Mission::check_slot(int id, unsigned bits)
 {
     if (id >= 0 && id < g_reinf[cur_set].count) {
         Reinf* r = &g_reinf[cur_set].recs[id];
-        char* p = (char*)this + r->idx * 0x130;
         int eax_, ebx_;
 
-        memcpy(p + 0x6b0, p + 0x6f0, 0x40);
-        *(int*)(p + 0x770) = 0;
-        *(int*)(p + 0x774) = 0;
+        memcpy((char*)this + r->idx * 0x130 + 0x6b0, (char*)this + r->idx * 0x130 + 0x6f0, 0x40);
+        *(int*)((char*)this + r->idx * 0x130 + 0x770) = 0;     // r->idx is re-read: the stores may alias it
+        *(int*)((char*)this + r->idx * 0x130 + 0x774) = 0;
         reset_group(id, bits);
         if (r->flags & 1) { slot_b = 1; return; }
         if (r->flags & 2) { slot_a = 1; return; }
-        eax_ = r->flags & 0x40;
-        ebx_ = r->flags & 0x80;
-        if (eax_ == 0 && ebx_ == 0) { slot_a = 1; return; }
-        if (eax_ != 0 && team_b == 0) { slot_a = 1; return; }
-        if (ebx_ != 0 && team_b == 1) { slot_a = 1; return; }
-        if (eax_ != 0 && team_b == 1) { slot_b = 1; return; }
-        if (ebx_ != 0 && team_b == 0) { slot_b = 1; return; }
-        if (eax_ != 0 && team_a == 1) { slot_a = 1; return; }
-        if (ebx_ != 0 && team_a != 0)
-            goto L270;
-        slot_a = 1;
-        return;
-    L270:
-        if (eax_ != 0 && team_a == 0) { slot_b = 1; return; }
-        if (ebx_ == 0) return;
-        if (team_a != 1) return;
-        slot_b = 1;
+        int a = r->flags & 0x40;
+        if (a == 0 && (r->flags & 0x80) == 0) { slot_a = 1; return; }
+        if (a != 0 && team_b == 0) { slot_a = 1; return; }
+        int b = r->flags & 0x80;
+        if (b != 0 && team_b == 1) { slot_a = 1; return; }
+        if (a != 0 && team_b == 1) { slot_b = 1; return; }
+        if (b != 0 && team_b == 0) { slot_b = 1; return; }
+        if (a != 0 && team_a == 1) { slot_a = 1; return; }
+        if (b != 0 && team_a == 0) { slot_a = 1; return; }
+        if (a != 0 && team_a == 0) { slot_b = 1; return; }
+        if (b != 0 && team_a == 1) slot_b = 1;
     } else {
         g_msglog.add(tstring("Invalid entry no for add_reinforcements"), -1);
     }

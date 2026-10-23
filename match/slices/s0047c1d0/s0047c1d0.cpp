@@ -186,7 +186,7 @@ void ground::snap(mesh* m)
 {
     m->ensure_local();
     int off = 0;
-    for (unsigned i = 0; i < m->v70.size(); i++) {
+    for (unsigned i = 0; i < m->v70.size(); i++, off += 0x20) {
         point20* p = (point20*)((char*)m->v70._Myfirst + off);
         vector4 g;
         sample(&g, &p->a);
@@ -205,7 +205,6 @@ void ground::snap(mesh* m)
             p->a = v;
             p->b = v;
         }
-        off += 0x20;
     }
 }
 

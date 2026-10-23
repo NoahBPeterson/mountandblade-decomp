@@ -60,28 +60,28 @@ extern const float g_592754;            // 0x592754  0.155f
 // The base supplies slots up to set_pos (+0x58) / set_size (+0x64); the concrete window classes insert their own
 // slots in between, so the later slots are reached through the raw vtable.
 struct widget {
-    virtual void v0();  virtual void v1();  virtual void v2();  virtual void v3();  virtual void v4();
-    virtual void v5();  virtual void v6();  virtual void v7();  virtual void v8();  virtual void v9();
+    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
+    virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
     virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
     virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21(); virtual void v22();
+    virtual void v20(); virtual void v21();
     virtual void set_pos(const float* p);               // +0x58
-    virtual void v24(); virtual void v25();
+    virtual void v23(); virtual void v24();
     virtual void set_size(const float* s);              // +0x64
-    virtual void v27(); virtual void v28();
+    virtual void v26();
     virtual void set_color(const float* c);             // +0x6c
+    virtual void v28();
     virtual void set_flags(const int* f);               // +0x74
-    virtual void v31();
+    virtual void v30();
     virtual void add_item(int slot, mesh* m);           // +0x7c
-    virtual void v33(); virtual void v34(); virtual void v35(); virtual void v36(); virtual void v37();
-    virtual void v38(); virtual void v39(); virtual void v40(); virtual void v41();
-    virtual void set_text(tstring* s, const float* p);  // +0xa4
-    virtual void v43(); virtual void v44(); virtual void v45(); virtual void v46(); virtual void v47();
+    virtual void v32(); virtual void v33(); virtual void v34(); virtual void v35(); virtual void v36();
+    virtual void v37();
     virtual void set_value_a(int* v);                   // +0x98
     virtual void set_value_b(int* v);                   // +0x9c
-    virtual void v50(); virtual void v51(); virtual void v52(); virtual void v53(); virtual void v54();
-    virtual void v55(); virtual void v56(); virtual void v57(); virtual void v58(); virtual void v59();
-    virtual void v60(); virtual void v61();
+    virtual void v40();
+    virtual void set_text(tstring* s, const float* p);  // +0xa4
+    virtual void v42(); virtual void v43(); virtual void v44(); virtual void v45(); virtual void v46();
+    virtual void v47(); virtual void v48(); virtual void v49();
     virtual void add_child(widget* c);                  // +0xc8
 };
 
@@ -91,11 +91,11 @@ struct widget {
 #define VCALLP(self, off, a)            ((void (*)(void*, const void*))((void**)*(void***)(self))[(off) / 4])(self, (a))
 #define VCALL2(self, off, a, b)         ((void (*)(void*, const void*, const void*))((void**)*(void***)(self))[(off) / 4])(self, (a), (b))
 
-widget* ctor_panel(widget* mem);                        // 0x48ae20 (in place, returns this)
-widget* ctor_window(widget* mem);                       // 0x4931a0
-widget* ctor_scrollbar(widget* mem);                    // 0x48b890
-widget* ctor_list(widget* mem);                         // 0x49deb0
-void list_setup(widget* w);                             // 0x488d50
+widget* __fastcall ctor_panel(widget* mem);                        // 0x48ae20 (in place, returns this)
+widget* __fastcall ctor_window(widget* mem);                       // 0x4931a0
+widget* __fastcall ctor_scrollbar(widget* mem);                    // 0x48b890
+widget* __fastcall ctor_list(widget* mem);                         // 0x49deb0
+void __fastcall list_setup(widget* w);                             // 0x488d50
 void gui_set_window(widget* w);                         // 0x49b120
 widget* make_text(widget* parent, tstring* s, float w, float h, float x, float y);   // 0x4dce70
 mesh* make_color(void* col, unsigned rgb);              // 0x4de320
@@ -202,7 +202,7 @@ widget* make_quest_list(widget* parent, const float* pos, const float* size, int
     *(int*)((char*)self + 0x104) |= 0x20;
     if (d)
         *(int*)((char*)self + 0x484) = d;
-    *(int*)((char*)self + 0x490) = *(int*)&pos[1];
+    *(widget**)((char*)self + 0x490) = parent;      // the owner, also handed to add_child (vtable +0xc8)
     self->add_child(parent);
     self->set_pos(pos);
     self->set_size(size);
