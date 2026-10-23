@@ -1178,20 +1178,21 @@ void weather::update(void* pass, const float* depth)
 void camera_ray::screen_to_world(vector4* near_pt, vector4* far_pt)
 {
     struct Frame {
-        float px, z;
-        float v[4];                                 // v[3] (w) is never written
-        float ox, oy;                               // only written when ortho != 0
-        float pad[2];
+        float px, hp, z, hz;
+        float v[4];
+        float ox;
     } f;
-    f.px = (g_mouse_x - vx) / vw;
-    float sy = (g_mouse_y - vy) / vh;
+    float oy;
+    struct V2 { float x, y; } d = { g_mouse_x - vx, g_mouse_y - vy };
+    f.px = d.x / vw;
+    float sy = d.y / vh;
     f.px = (zb8 - zb4) * f.px + zb4;
     float py = (zbc - zc0) * sy + zc0;
     f.z = -zc4;
     if (ortho) {
         float k = 1.0f / zc4;
         f.ox = k * zc8 * f.px;
-        f.oy = k * zc8 * py;
+        oy = k * zc8 * py;
     }
     float z2 = -zc8;
     f.v[0] = f.z * view.u.x + py * view.f.x + f.px * view.s.x + view.o.x;
@@ -1201,9 +1202,9 @@ void camera_ray::screen_to_world(vector4* near_pt, vector4* far_pt)
     near_pt->y = f.v[1];
     near_pt->z = f.v[2];
     near_pt->w = f.v[3];
-    f.v[0] = z2 * view.u.x + f.oy * view.f.x + f.ox * view.s.x + view.o.x;
-    f.v[1] = z2 * view.u.y + f.oy * view.f.y + f.ox * view.s.y + view.o.y;
-    f.v[2] = z2 * view.u.z + f.oy * view.f.z + f.ox * view.s.z + view.o.z;
+    f.v[0] = z2 * view.u.x + oy * view.f.x + f.ox * view.s.x + view.o.x;
+    f.v[1] = z2 * view.u.y + oy * view.f.y + f.ox * view.s.y + view.o.y;
+    f.v[2] = z2 * view.u.z + oy * view.f.z + f.ox * view.s.z + view.o.z;
     far_pt->x = f.v[0];
     far_pt->y = f.v[1];
     far_pt->z = f.v[2];
