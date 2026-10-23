@@ -1,0 +1,3 @@
+# Addresses the Ghidra function index (work/index/functions.csv) lists as function starts that are not functions.
+# tools/status.py drops them, so the enclosing function gets its full size. Format: <va>  # reason
+004d4554  # inside the `push imm32` at 0x4d4553 of GameApp::msg_proc 0x4d4140 (which runs to 0x4d49c0)

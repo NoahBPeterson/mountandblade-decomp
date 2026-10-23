@@ -21,7 +21,13 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 W = lambda *p: os.path.join(ROOT, *p)
 GAME_END = 0x5342A6
 
-starts = sorted(int(r["address"], 16) for r in csv.DictReader(open(W("work/index/functions.csv"))) if r["block"] == ".text")
+not_func = set()
+for line in open(W("symbols/not_functions.txt")):
+    p = line.split("#", 1)[0].split()
+    if p:
+        not_func.add(int(p[0], 16))
+starts = sorted(a for a in (int(r["address"], 16) for r in csv.DictReader(open(W("work/index/functions.csv")))
+                            if r["block"] == ".text") if a not in not_func)
 size = {a: (starts[i + 1] if i + 1 < len(starts) else a + 16) - a for i, a in enumerate(starts)}
 lib = set()
 for line in open(W("symbols/lib_names.txt")):
