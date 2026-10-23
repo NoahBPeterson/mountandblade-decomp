@@ -1,1 +1,4 @@
-# s004d6b80: no byte-exact functions (all 8 functions are recorded in nonmatching.txt)
+slices/s004d6b80/s004d6b80.cpp  ?set_enabled_text@VideoPage@@QAEXPAUWidget@@@Z  004d6dd0  /O2 /MT /Gy /TP
+slices/s004d6b80/s004d6b80.cpp  ?update@VideoPage@@QAEXH@Z  004d6e50  /O2 /MT /Gy /TP
+slices/s004d6b80/s004d6b80.cpp  ?restore@KeyTable@@QAEXXZ  004d6fd0  /O2 /MT /Gy /TP
+slices/s004d6b80/s004d6b80.cpp  ?save@KeyTable@@QAEXXZ  004d7000  /O2 /MT /Gy /TP

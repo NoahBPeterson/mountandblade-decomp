@@ -105,7 +105,7 @@ extern int g_sound_ids[];                        // 0x5aa178
 struct SoundMgr { int play(int sound, int priority, const vector4* pos, float pitch, float* out); };  // 0x442650 (ret 0x14)
 extern SoundMgr g_sounds;                        // 0x5aa128
 extern "C" int __stdcall FSOUND_StopSound(int channel);   // 0x5342a6
-extern __int64 g_time[];                         // 0x5e2948 (64-bit clock table; g_time[i*2] halves)
+extern __int64 g_time[];                         // 0x5e2948 (64-bit clock table, 8-byte entries)
 
 // capsule ctor: __thiscall, args (float r, const vector4* a, const vector4* b); 0x64-byte object
 struct shape_base { char pad[0x64]; };
@@ -250,7 +250,7 @@ void Missile::update(float dt)
             g_mission->remove_entity(ent->id);
             ent = 0;
             state = 2;
-            t_start = g_time[clock * 2];
+            t_start = g_time[clock];
         } else {
             if (mode == 1) {
                 pb.z = v.z * g_f590e68;
@@ -298,13 +298,13 @@ void Missile::update(float dt)
     }
 
     if (qhit != 0) {
-        t_start = g_time[clock * 2];
+        t_start = g_time[clock];
         __int64 sub = g_items[item].f1d0 & 0xff000;
         if (sub == 0x10000 || sub == 0x80000 || sub == 0x70000) {
             state = 3;
             g_mission->remove_entity(ent->id);
             ent = 0;
-            t_start = g_time[clock * 2];
+            t_start = g_time[clock];
         } else {
             state = 1;
             update_ranged_mesh();

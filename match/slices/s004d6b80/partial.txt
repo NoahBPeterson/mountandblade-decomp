@@ -1,1 +1,1 @@
-# s004d6b80: no incomplete functions; every VA is complete and recorded in nonmatching.txt
+# s004d6b80: no incomplete functions

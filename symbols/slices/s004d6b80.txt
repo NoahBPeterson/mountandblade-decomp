@@ -1,25 +1,6 @@
-004d6b80 0x4d6b80 update_perf  # recompute the estimated-performance caption
-004d6dd0 0x4d6dd0 set_enabled_text  # caption a control ui_enabled / ui_disabled
-004d6e50 0x4d6e50 update  # controls page update (ret 4)
-004d6f90 0x4d6f90 forget  # key table: drop every pair of a button, then bind it
-004d6fd0 0x4d6fd0 restore  # key table: copy the original pairs back
-004d7000 0x4d7000 save  # open controls.dat for writing
-004d7120 0x4d7120 refresh  # re-caption the headers and key rows, refresh the buttons
-004d7270 0x4d7270 layout_row  # lay out one key row (free function)
-005e2a18 0x5e2a18 g_string_table
-0043a1e0 0x43a1e0 lookup  # string table lookup
-0042bbe0 0x42bbe0 string_ctor
-0042bbd0 0x42bbd0 string_ctor_empty
-0042bc40 0x42bc40 string_dtor
-0042bc50 0x42bc50 string_assign
-0042bcb0 0x42bcb0 string_assign_string
-004bab70 0x4bab70 user_path  # its own path builder
-00487900 0x487900 is_bound  # keyboard scan
-004d7610 0x4d7610 key_name
-004d7370 0x4d7370 caption  # key table caption for a column
-004d7d10 0x4d7d10 column  # key table text for a row
-004be7c0 0x4be7c0 reset_defaults
-00495700 0x495700 choose  # main menu choose
-00537194 0x537194 file_open  # CRT fopen (ret 8)
-00537168 0x537168 file_close  # CRT fclose
-004baba6 0x535e0 crt_frame_helper
+0042bbd0 ??0string@rgl@@QAE@XZ  # rgl::string() (src/rgl/rgl_string.h)
+0042bbe0 ??0string@rgl@@QAE@PBD@Z  # rgl::string(const char*)
+0042bc40 ??1string@rgl@@QAE@XZ  # ~string
+0042bcb0 ?assign@string@rgl@@QAEXPBD@Z  # assign(const char*)
+004bab70 ?user_path@@YAXPAD@Z  # local copy of the byte-exact static helper (s004bab70; `out` in esi)
+00487b00 ?decode_utf8@@YAXPBUstring@rgl@@PAH1PBH@Z  # local copy (s004dc630); custom register convention

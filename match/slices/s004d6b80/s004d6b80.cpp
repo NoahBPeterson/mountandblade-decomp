@@ -4,98 +4,63 @@
 //   0x4d6e50  the page update: picks the changed key row, then either closes the key-assignment overlay
 //             or re-captions every row (0x4d7120) and handles the three page-level buttons
 //   0x4d6f90  a table of 0x25 (key, button) pairs; forgets every pair with that button and stores a new one
-//   0x4d6fd0  copies the "original" pairs (at +0x12c) back over the current ones
-//   0x4d7000  build the path of controls.dat and open it for writing
+//   0x4d6fd0  copies the "original" pairs (at +0x128) back over the current ones
+//   0x4d7000  writes the pairs to controls.dat through an inline bin_writer
 //   0x4d7120  captions the 7 column headers and the 0x25 key rows and refreshes the two buttons
-//   0x4d7270  lays out one key row of the table (row widget + the paperdoll preview + the text)
+//   0x4d7270  lays out one key row of the table (scale from the text width, position, text)
 // All names provisional.
 //
-// Control layouts (verified in s004d5ba0/s004d63b0): +0x2c activate, +0x30 get_value, +0x44 changed(flag),
-// +0x6c/+0x70 (vector2) setters, +0x98 colour, +0xa4 set_text(text[, position]), +0xb0 show / +0xb4 hide /
-// +0xb8 enable / +0xbc disable.
-//
-// Text helpers: 0x42bbe0/0x42bbd0 tstring ctors, 0x42bc40 dtor, 0x42bc50 assign, 0x42bcb0 operator=.
+// Rewritten 2026-10-22 from the disassembly: the earlier version used a widget vtable 0x44 bytes off, the
+// unverified match/include/rgl.h string layout (buffer at +0, really +4), explicit destructor calls on top of
+// the implicit ones, swapped forget() arguments, a restore() two dwords off, a performance formula missing
+// four factors, a save() that never wrote the table, and no body for 0x4d7270.
 #include <windows.h>
+#include <shlobj.h>
 #include <stdio.h>
-#include "rgl.h"
+#include "../../../src/rgl/rgl_math.h"
+#include "../../../src/rgl/stream.h"
 
 using rgl::vector4;
-
-// ---- tstring -----------------------------------------------------------------------------------------
-struct tstring : rgl::string {
-    tstring(const char* s) : rgl::string(s) {}                              // 0x42bbe0
-    tstring();                                                              // 0x42bbd0
-    tstring(const tstring& o);                                              // 0x42c110
-    tstring& operator=(const tstring& o);                                   // 0x42bcb0
-    tstring& assign(rgl::string* o);                                        // 0x42bc50
-    ~tstring();                                                             // 0x42bc40
-    const char* c_str() const { return p ? p : (const char*)&p; }
-};
+typedef rgl::string tstring;           // 0x42bbd0 / 0x42bbe0 ctors, 0x42bc40 dtor, 0x42bcb0 assign(const char*)
 
 struct StringTable {
     tstring* lookup(tstring* key);                                          // 0x43a1e0
 };
 extern StringTable g_string_table;                                          // 0x5e2a18
 
-extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0x536f8f
-extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0x536f7c
-void* file_open(const char* name, const char* mode);                        // 0x537194 (CRT fopen, ret 8)
-int   file_close(void* f);                                                  // 0x537168
-int ftol(double v);                                                         // 0x535a64 (x87 argument)
-void crt_init(int n);                                                       // 0x5363e0
-
 // ---- controls ----------------------------------------------------------------------------------------
 struct vector2 { float x, y; };
+// The +0x94 and +0xa4 slots return an 8-byte non-POD object through a hidden pointer that the callers
+// discard (same slot shape as s004d7d10 / s004dc630).
+struct WRet { int a, b; WRet(); };
 
+// Slot offsets from the calls in this slice (0x4d6b80, 0x4d6dd0, 0x4d6e50, 0x4d7120, 0x4d7270).
 struct Widget {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09();
+    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
+    virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
+    virtual void v20(); virtual void v24(); virtual void v28();
     virtual void activate(int v);                           // +0x2c
-    virtual void v0c();
     virtual int  get_value();                               // +0x30
-    virtual void v0d();
+    virtual void v34();
     virtual float get_float();                              // +0x38
-    virtual void v10(); virtual void v11();
+    virtual void v3c(); virtual void v40();
     virtual char changed(int flag);                         // +0x44
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v1a(); virtual void v1b(); virtual void v1c(); virtual void v1d();
-    virtual void v1e(); virtual void v1f(); virtual void v20(); virtual void v21();
-    virtual void v22(); virtual void v23();
-    virtual void v24(); virtual void v25();
-    virtual void v26();
-    virtual void v27(const vector2& v);                     // +0x6c
-    virtual void v28(const vector2& v);                     // +0x70
-    virtual void v29(); virtual void v2a();
-    virtual void v2b(); virtual void v2c(); virtual void v2d(); virtual void v2e();
-    virtual void v2f(); virtual void v30(); virtual void v31(); virtual void v32();
-    virtual void v33(); virtual void v34();
-    virtual void set_default();                             // +0x90
-    virtual void v36();
-    virtual void set_colour(int colour);                    // +0x98
-    virtual void v38(); virtual void v39();
-    virtual void set_text(const tstring& s);                // +0xa4
-    virtual void v3a();
-    virtual void set_text(const tstring& s, const vector4& pos);    // +0xac
+    virtual void v48(); virtual void v4c(); virtual void v50(); virtual void v54();
+    virtual void v58(); virtual void v5c(); virtual void v60(); virtual void v64();
+    virtual void v68();
+    virtual void set_scale(const vector2& v);               // +0x6c
+    virtual void set_position(const vector2& v);            // +0x70
+    virtual void v74(); virtual void v78(); virtual void v7c(); virtual void v80();
+    virtual void v84(); virtual void v88(); virtual void v8c(); virtual void v90();
+    virtual WRet set_default();                             // +0x94
+    virtual void set_colour(const unsigned& colour);        // +0x98
+    virtual void v9c(); virtual void va0();
+    virtual WRet set_text(const tstring& s);                // +0xa4
+    virtual void va8(); virtual void vac();
     virtual void show();                                    // +0xb0
     virtual void hide();                                    // +0xb4
     virtual void enable();                                  // +0xb8
     virtual void disable();                                 // +0xbc
-};
-
-static inline char w_changed(Widget* w, int f) { return w->changed(f); }
-static inline int  w_value(Widget* w) { return w->get_value(); }
-static inline void w_activate(Widget* w, int v) { w->activate(v); }
-static inline void w_set_text(Widget* w, const tstring& s) { w->set_text(s); }
-static inline void w_set_text(Widget* w, const tstring& s, const vector4& p) { w->set_text(s, p); }
-static inline void w_set_colour(Widget* w, int c) { w->set_colour(c); }
-
-// the mesh-object widget class used by the key rows (+0x180 is the mesh object)
-struct MeshWidget : Widget {
-    char    pad00[0x180];
-    void*   mesh;                                           // +0x180
-    void layout(const tstring* text, void* page, const vector4& box);   // 0x4d7270
 };
 
 // ---- symbols -----------------------------------------------------------------------------------------
@@ -103,30 +68,77 @@ struct MainMenu {
     void choose(int option);                                // 0x495700 (tail-called)
 };
 extern MainMenu g_main_menu;                                                // 0xa73980
-static inline void main_menu_choose(int option) { g_main_menu.choose(option); }
-// 0x4bab70: build the user path of a file name ("%s\\Mount&Blade" + name) into the buffer at esp.
-void user_path(char* buf);                                                  // 0x4bab70
-// 0xa170c8: the keyboard state; is_bound(n) is 0x487900, name(n) is 0x4d7610.
+// 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
 struct KeyNames {
     char is_bound(int index);                                               // 0x487900
-    tstring* name(tstring* out, int n);                                     // 0x4d7610
 };
 extern KeyNames g_key_names;                                                // 0xa170c8
-// 0x487b00: the text width in pixels of a string for a font / size pair.
-int text_width(const char* text, int size, int* chars);                     // 0x487b00
+
+// 0x4bab70 (byte-exact in s004bab70): build the user path of a file name in place. A static function in the
+// original, so cl passes `out` in esi; this is a local copy with the same body.
+static void user_path(char* out)                                            // 0x4bab70
+{
+    char path[0x104];
+    char name[0x104];
+
+    SHGetFolderPathA(0, 0x1a, 0, 0, path);              // CSIDL_APPDATA
+    sprintf(name, "%s\\Mount&Blade", path);
+    CreateDirectoryA(name, 0);
+    sprintf(name, "%s", out);
+    sprintf(out, "%s\\Mount&Blade\\%s", path, name);
+}
+
+// UTF-8 -> int code points (0x487b00; custom register convention in the original: text in edi, count out in
+// edx, buf and &capacity on the stack). Local copy from s004dc630, shaped so cl picks the same convention.
+static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int* buf, const int* maxn)   // 0x487b00
+{
+    *out_len = 0;
+    int n = s->len;
+    int i = 0;
+    if (n > 0) {
+        do {
+            if (*out_len >= *maxn)
+                break;
+            unsigned char c = s->buf[i];
+            int ch;
+            if (c >= 0xf0 && c < 0xf5) {
+                const unsigned char* q = (const unsigned char*)s->buf + i;
+                ch = (((((q[0] & 7) << 6) | (q[1] & 0x3f)) << 6 | (q[2] & 0x3f)) << 6) | (q[3] & 0x3f);
+                i += 4;
+            } else if (c >= 0xe0 && c < 0xf0) {
+                const unsigned char* q = (const unsigned char*)s->buf + i;
+                ch = ((((q[0] & 0xf) << 6) | (q[1] & 0x3f)) << 6) | (q[2] & 0x3f);
+                i += 3;
+            } else if (c >= 0xc2 && c < 0xe0) {
+                const unsigned char* q = (const unsigned char*)s->buf + i;
+                ch = (((q[0] & 0x1f) << 6) | (q[1] & 0x3f));
+                i += 2;
+            } else {
+                i++;
+                if (c >= 0x80)
+                    continue;
+                ch = (signed char)c;
+            }
+            buf[*out_len] = ch;
+            (*out_len)++;
+        } while (i < n);
+    }
+}
+
+// the file writer's ctor is inline here (0x4d7000 stores both vtables), out of line in resource_manager.cpp
+inline bin_writer::bin_writer() {}
 
 // ---- the key table (0xa73730) -------------------------------------------------------------------------
-// 0x25 rows of two dwords: {bound key, button}; +0x12c holds the "original" copy of the pairs.
+// 0x25 rows of two dwords: {bound key, button}; +0x128 holds the "original" copy of the pairs.
 struct KeyTable {
     int entry[0x25][2];                                     // +0x00
-    char pad[0x12c - 0x25 * 8];
-    int original[0x25][2];                                  // +0x12c
-    void forget(int button, int index);                     // 0x4d6f90
-    void restore();                                         // 0x4d6fd0
+    int original[0x25][2];                                  // +0x128
+    void forget(int index, int button);                     // 0x4d6f90
+    __declspec(noinline) void restore();                    // 0x4d6fd0 (kept as a call by 0x4d6e50)
     void save();                                            // 0x4d7000
     void reset_defaults();                                  // 0x4be7c0
     void caption(int index, tstring& out);                  // 0x4d7370
-    void column(int index, tstring& text, char* assigned);  // 0x4d7d10
+    void column(int index, tstring* text, char* assigned);  // 0x4d7d10
 };
 extern KeyTable g_key_table;                                                // 0xa73730
 
@@ -142,7 +154,6 @@ struct VideoPageEnd {
     Widget* w38;                                            // +0x38  defaults
     char    pad3c[0xd0 - 0x3c];
     Widget* keys[0x25];                                     // +0xd0  the key-assignment rows
-    char    pad164[0x164 - 0xd0 - 0x24];
     Widget* w164;                                           // +0x164 the key-assignment overlay
     char    pad168[0x18c - 0x168];
     Widget* captions[7];                                    // +0x18c the column headers
@@ -168,7 +179,7 @@ static inline VideoPageEnd* head(VideoPage* p) { return (VideoPageEnd*)p; }
 // @ 0x4d6b80
 void VideoPage::update_perf()
 {
-    double perf = *(float*)0x54ab28;
+    float perf = *(float*)0x54ab28;
     if (*(int*)0x5aa030)
         perf = *(float*)0x5aa090 * *(float*)0x59393c + *(float*)0x54ab28;
     perf += *(int*)0x5aa020 * 5;
@@ -179,26 +190,33 @@ void VideoPage::update_perf()
     limit = *(int*)0x5aa048;
     if (limit >= 5) limit = 5;
     perf += limit;
+    int d3d = *(int*)0x5aa034;
+    char high = *(char*)0xa17f24;
+    perf += *(int*)0x5aa03c * *(float*)0x549d7c;
+    int shadows = *(int*)0x5e28fc;
+    perf += *(float*)0x5aa08c * *(float*)0x549d74;
 
-    if (*(int*)0x5aa034) {
+    if (d3d) {
         if (*(int*)0x5aa004 >= 2)
             perf += *(float*)0x54a710;
-        if (*(int*)0x5e28fc) {
-            if (*(char*)0xa17f24) perf *= *(float*)0x54b888;
+        if (shadows) {
+            if (high) perf *= *(float*)0x54b888;
             else                  perf *= *(float*)0x590c80;
         } else {
             perf += *(float*)0x5935c8;
         }
     }
     if (*(int*)0x5aa084 == 2) {
-        if (*(int*)0x5e28fc) {
-            if (*(char*)0xa17f24) perf *= *(float*)0x54b888;
+        if (shadows) {
+            if (high) perf *= *(float*)0x54b888;
             else                  perf *= *(float*)0x590b94;
         }
     }
-    if (*(int*)0x5e28fc)
-        perf *= 1 - *(int*)0x5a9fc4 * *(float*)0x590b6c + *(float*)0x549cdc;
-    perf *= (float)*(int*)0x5aa040 * *(float*)0x54b8b4;
+    if (shadows)
+        perf *= (1 - *(int*)0x5a9fc4) * *(float*)0x590b6c + *(float*)0x549cdc;
+    perf *= *(int*)0x5aa040 * *(float*)0x54b8b4 + *(double*)0x54a5d8;
+    perf *= *(int*)0x5a9f9c + *(float*)0x590b58;
+    perf *= *(float*)0x590c78;
     int w = *(int*)0x5a9fe4;
     int h = *(int*)0x5a9fe8;
     if (w <= 0) { w = 0x500; h = 0x400; }
@@ -208,34 +226,28 @@ void VideoPage::update_perf()
     perf *= *(float*)0x596858;
 
     char buf[0x104];
-    tstring key("ui_estimated_performance");
-    tstring* e = g_string_table.lookup(&key);
-    sprintf(buf, e->c_str(), ftol(*(float*)0x596854 / perf));
-    key.~tstring();
-
-    tstring text(buf);
-    tstring pos((const char*)0x596860);
-    perf_caption->set_text(text, *(const vector4*)&pos);
-    text.~tstring();
+    {
+        tstring key("ui_estimated_performance");
+        tstring* e = g_string_table.lookup(&key);
+        sprintf(buf, e->c_str(), (int)(*(float*)0x596854 / perf));
+    }
+    {
+        tstring text(buf);
+        perf_caption->set_text(text);
+    }
     perf_caption->set_default();
 }
 
 // @ 0x4d6dd0
 void VideoPage::set_enabled_text(Widget* w)
 {
-    tstring* t;
-    if (w_value(w)) {
+    if (w->get_value()) {
         tstring key("ui_enabled");
-        t = g_string_table.lookup(&key);
-        key.~tstring();
+        w->set_text(*g_string_table.lookup(&key));
     } else {
         tstring key("ui_disabled");
-        t = g_string_table.lookup(&key);
-        key.~tstring();
+        w->set_text(*g_string_table.lookup(&key));
     }
-    tstring text(*t);
-    w->set_text(text);
-    text.~tstring();
 }
 
 // @ 0x4d6e50
@@ -245,15 +257,12 @@ void VideoPage::update(int reason)
     if (p->editing >= 0) {
         p->w164->hide();
         int pressed = -1;
-        for (int i = 0; i < 0x100; i++) {
-            if (g_key_names.is_bound(i)) {
+        for (int i = 0; i < 0x100; i++)             // the last bound key wins
+            if (g_key_names.is_bound(i))
                 pressed = i;
-                break;
-            }
-        }
         if (pressed >= 0) {
             if (pressed != 1) {
-                g_key_table.forget(pressed, p->editing);
+                g_key_table.forget(p->editing, pressed);
                 p->modified = 1;
             }
             refresh();
@@ -262,28 +271,28 @@ void VideoPage::update(int reason)
     } else {
         p->w164->show();
         for (int i = 0; i < 0x25; i++)
-            if (w_changed(p->keys[i], 0x10000))
+            if (p->keys[i]->changed(0x10000))
                 p->editing = i;
-        if (w_changed(p->w38, 0x10000)) {
+        if (p->w38->changed(0x10000)) {
             g_key_table.reset_defaults();
             p->modified = 1;
             refresh();
         }
-        if (w_changed(p->w34, 0x10000)) {
+        if (p->w34->changed(0x10000)) {
             g_key_table.restore();
             p->modified = 0;
             refresh();
         }
-        if (w_changed(p->w30, 0x10000)) {
+        if (p->w30->changed(0x10000)) {
             if (p->modified)
                 g_key_table.save();
-            main_menu_choose(p->option);
+            g_main_menu.choose(p->option);
         }
     }
 }
 
 // @ 0x4d6f90
-void KeyTable::forget(int button, int index)
+void KeyTable::forget(int index, int button)
 {
     int* p = (int*)entry;
     int loop = 0x25;
@@ -299,32 +308,48 @@ void KeyTable::forget(int button, int index)
     entry[index][0] = button;
 }
 
-// @ 0x4d6fd0
-void KeyTable::restore()
-{
-    int* dst = (int*)entry;
-    int* src = (int*)original;
-    for (int i = 0; i < 0x25; i++) {
-        dst[0] = src[1];
-        dst[1] = src[2];
-        dst += 2;
-        src += 2;
-    }
-}
-
 // @ 0x4d7000
 void KeyTable::save()
 {
-    char name[0x104];
-    sprintf(name, (const char*)0x54a72c, (const char*)0x54add8);
+    bin_writer w;
     char path[0x104];
+    sprintf(path, "controls.dat");
     user_path(path);
-    tstring line(name);
-    tstring file(path);
-    line = file;
-    FILE* f = (FILE*)file_open(line.p, "wb");
-    (void)f;
+    w.name.assign(path);
+    w.is_open = 0;
+    w.fp = fopen(path, "wb");
+    if (w.fp) {
+        w.failed = 0;
+        w.is_open = 1;
+    } else
+        w.failed = 1;
+    stream_base& s = w;
+    int n = 0x25;
+    s.w_int(&n);
+    int* e = (int*)entry;
+    for (int i = 0x25; i; i--)
+        for (int j = 2; j; j--)
+            s.w_int(e++);
+    if (w.is_open) {
+        if (s.flush() == 0)
+            fclose(w.fp);
+        w.failed = 1;
+        w.is_open = 0;
+    }
 }
+
+// @ 0x4d6fd0
+void KeyTable::restore()
+{
+    for (int i = 0; i < 0x25; i++) {
+        entry[i][0] = original[i][0];
+        entry[i][1] = original[i][1];
+    }
+}
+
+// 0x4d7270: one key row: scale the row by the box (shrunk to fit the text width), position it, set the text.
+// The box is four float arguments (the caller pushes four immediates).
+void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, float bw);
 
 // @ 0x4d7120
 void VideoPage::refresh()
@@ -333,21 +358,19 @@ void VideoPage::refresh()
     for (int k = 0; k < 7; k++) {
         tstring text;
         g_key_table.caption(k, text);
-        tstring pos;
-        w_set_text(p->captions[k], text, *(const vector4*)&pos);
-        text.~tstring();
+        p->captions[k]->set_text(text);
     }
 
     for (int i = 0; i < 0x25; i++) {
-        MeshWidget* row = (MeshWidget*)p->keys[i];
         char assigned;
         tstring text;
-        g_key_table.column(i, text, &assigned);
-        row->layout(&text, this, *(const vector4*)0x54a480);
-        if (assigned) w_set_colour(row, (int)0xffff2200);
-        else          w_set_colour(row, (int)0xff000000);
-        w_activate(row, 0);
-        text.~tstring();
+        g_key_table.column(i, &text, &assigned);
+        layout_row(p->keys[i], &text, 0.034f, 3.7f, 0.072f, 0.085f);
+        unsigned colour = 0xffff2200;
+        if (!assigned)
+            colour = 0xff000000;
+        p->keys[i]->set_colour(colour);
+        p->keys[i]->activate(0);
     }
 
     bool unassigned = false;
@@ -357,4 +380,27 @@ void VideoPage::refresh()
     else            p->w30->disable();
     if (p->modified) p->w34->disable();
     else             p->w34->enable();
+}
+
+// @ 0x4d7270
+void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, float bw)
+{
+    float s = bx * *(float*)0x590b6c;
+    int maxn = 0x800;
+    int len;
+    int buf[0x800];
+    decode_utf8(text, &len, buf, &maxn);
+    float tw = len * s * *(float*)0x54b3b0;
+    float room = bx * by - bx / bz * bw;
+    if (tw > room)
+        s *= room / tw;
+    vector2 scale;
+    scale.x = s;
+    scale.y = s;
+    row->set_scale(scale);
+    vector2 pos;
+    pos.x = 0;
+    pos.y = bx * *(float*)0x549d70 - s * *(float*)0x549d68;
+    row->set_position(pos);
+    row->set_text(*text);
 }
