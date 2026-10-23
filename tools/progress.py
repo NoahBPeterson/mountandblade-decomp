@@ -99,6 +99,10 @@ def plot_history(path):
     with open(hist_path, "w") as f:
         json.dump(dict(sorted(hist.items())), f, indent=1)
         f.write("\n")
+    # The saved runs are measured live; a committed STATUS.md can be stale (3e37956 carried a snapshot from hours
+    # earlier and drew a dip to 32% migrated). Keep commit points only from before the first saved run.
+    first = min(datetime.datetime.fromisoformat(p["when"]) for p in hist.values())
+    pts = [t for t in pts if t[0] < first]
     pts += [(datetime.datetime.fromisoformat(p["when"]), p) for p in hist.values()]   # includes this run
     pts.sort(key=lambda t: t[0])
 
