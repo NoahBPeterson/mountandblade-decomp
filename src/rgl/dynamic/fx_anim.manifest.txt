@@ -1,0 +1,15 @@
+../src/rgl/dynamic/fx_anim.cpp  ?update_envelopes@FxAnim@@QAEXM@Z  00421ef0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?update_poses@FxAnim@@QAEXXZ  00422080  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?set@quaternion@@QAEAAU1@ABM000@Z  00422db0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?add@quaternion@@QAEXABU1@@Z  00422de0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ??Hquaternion@@QBE?AU0@ABU0@@Z  00422e10  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?normalize@quaternion@@QAEXXZ  00422e40  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?dot@quaternion@@QBEMABU1@@Z  00423010  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?dot_negative@quaternion@@QBE_NABU1@@Z  00423040  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?quat_to_matrix@@YAXPAUmatrix@rgl@@PBUquaternion@@@Z  00423080  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?quat_to_axis_angle@@YAXPAUvector4@rgl@@PAMPBUquaternion@@@Z  00423160  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?phase@AnimRec@@QAEMXZ  004231f0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?shape@AnimRec@@QAEMM@Z  004232b0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?key_value@FxAnim@@QAE?AUvector4@rgl@@H@Z  00423300  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?slerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004238c0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?nlerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004239c0  /O2 /MT /Gy /TP
