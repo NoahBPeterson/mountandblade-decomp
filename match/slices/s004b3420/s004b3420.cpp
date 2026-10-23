@@ -21,15 +21,12 @@ struct NavVert {                                    // 0x24 bytes
 
 struct BigRec {                                     // 0x88-byte formation record of the world map
     int count;                                      // +0x00
-    int* verts;                                     // +0x04 (mesh vertex indices)
-    char pad8[0x14 - 8];
-    int* agents;                                    // +0x14
-    char pad18[0x24 - 0x18];
+    int verts[4];                                   // +0x04 (mesh vertex indices, inline)
+    int agents[4];                                  // +0x14
     unsigned mask;                                  // +0x24
-    int* targets;                                   // +0x28
-    char pad2c[0x38 - 0x2c];
-    float* dists;                                   // +0x38 (keep distance per agent)
-    char pad3c[0x54 - 0x3c];
+    int targets[4];                                 // +0x28
+    float dists[4];                                 // +0x38 (keep distance per agent)
+    char pad48[0x54 - 0x48];
     vector4 u;                                      // +0x54
     char pad64[0x88 - 0x64];
 };
@@ -180,50 +177,52 @@ bool WorldMap::can_move(int from, float x, float y, int to, const float* p, unsi
     float dy = p[1] - y;
     if (dx * dx + dy * dy < 0.0001f)
         return true;
-    bool vert = true;
+    int vert = 1;
     if (-0.000001f < dx && dx < 0.000001f)
-        vert = false;
+        vert = 0;
     int hops = 0;
     int prev = -1;
     bool stop = false;
-    for (;;) {
-        cur = from;
-        if (cur == to || cur < 0 || stop || hops >= max)
-            return cur == to;
-        hops++;
-        int hit = -1;
-        BigRec* r = &recs[cur];
-        int i = 0;
+    if (from != to) {
         do {
-            if (r->count <= i)
+            if (from < 0 || stop || hops >= max)
                 break;
-            if (r->agents[i] != prev) {
-                NavVert* a = &verts[r->verts[i]];
-                NavVert* b = &verts[r->verts[(i + 1) % r->count]];
-                float ex = b->x - a->x;
-                float ey = b->y - a->y;
-                float t = ((x - a->x) * dy - (y - a->y) * dx) / (ex * dy - ey * dx);
-                float s;
-                if (vert)
-                    s = ((ex * t + a->x) - x) / dx;
-                else
-                    s = ((ey * t + a->y) - y) / dy;
-                if (0.01f <= t && t <= 0.99f && 0.0f <= s && s <= 1.0f)
-                    hit = i;
+            hops++;
+            int hit = -1;
+            BigRec* r = &recs[from];
+            int i = 0;
+            while (i < r->count) {
+                if (r->agents[i] != prev) {
+                    NavVert* a = &verts[r->verts[i]];
+                    NavVert* b = &verts[r->verts[(i + 1) % r->count]];
+                    float ex = b->x - a->x;
+                    float ey = b->y - a->y;
+                    float t = ((x - a->x) * dy - (y - a->y) * dx) / (ex * dy - ey * dx);
+                    float s;
+                    if (vert)
+                        s = ((ex * t + a->x) - x) / dx;
+                    else
+                        s = ((ey * t + a->y) - y) / dy;
+                    if (0.01f <= t && t <= 0.99f && 0.0f <= s && s <= 1.0f)
+                        hit = i;
+                }
+                i++;
+                if (hit != -1)
+                    break;
             }
-            i++;
-        } while (hit == -1);
-        if (hit < 0) {
-            stop = true;
-            continue;
-        }
-        from = r->targets[hit];
-        prev = r->agents[hit];
-        if (from < 0 || 100.0f < r->dists[hit] || (recs[from].mask & flags) != flags) {
-            stop = true;
-            from = cur;
-        }
+            if (hit < 0) {
+                stop = true;
+                continue;
+            }
+            int tgt = r->targets[hit];
+            prev = r->agents[hit];
+            if (tgt < 0 || 100.0f < r->dists[hit] || (recs[tgt].mask & flags) != flags)
+                stop = true;
+            else
+                from = tgt;
+        } while (from != to);
     }
+    return from == to;
 }
 
 // @ 0x4b36a0
