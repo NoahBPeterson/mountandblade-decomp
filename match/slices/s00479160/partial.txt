@@ -1,2 +1,5 @@
-(none -- every listed VA of entry s00479160 is either in manifest.txt (byte-exact) or nonmatching.txt
-(complete, not byte-exact).)
+004792d0  1628 Mission::setup_ambient: INCOMPLETE/wrong reconstruction (moved from nonmatching.txt in the b01 re-audit): the level/spec indexing and the
+                Level/Row struct layouts in this file are wrong (g_game is dereferenced as [0] instead of
+                [g_game+0x13a50], Row stride 0x31 instead of 0x4c, boundary-store and wind-store sequences are
+                reordered by the compiler), and equiv.py FAILs (our version faults where the original returns).
+                Byte-exact judged out of reach for this entry; needs its own research pass.

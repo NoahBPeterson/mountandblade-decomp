@@ -1,6 +1,7 @@
 // Slice s004c3d90: the music/sound loader objects and the start of the camera-like objects.
 // Layouts and names are provisional.
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <new>
 #include <windows.h>
@@ -57,10 +58,14 @@ extern "C" int _sprintf(char*, const char*, ...);                         // 0x5
 
 // 64-bit clock in 100-nanosecond ticks, indexed by a slot number (8-byte entries).
 extern __int64 g_ticks[];                          // 0x5e2948
-float __fastcall elapsed_since(const __int64* t);  // 0x432c10: (now - *t) * 1e-5f
-int   __fastcall round_f(const float* f);          // 0x432540: (int)(*f + 0.5f)
+// a running timer: the g_ticks slot at +0 and the start tick at +8
+struct tick_timer {
+    int slot; int pad4; __int64 start;
+    float elapsed() const { return (float)(g_ticks[slot] - start) * 1e-5f; }   // 0x432c10 (out of line in some callers)
+};
+float __fastcall elapsed_since(const tick_timer* t);  // 0x432c10: (g_ticks[t->slot] - t->start) * 1e-5f
+int   __cdecl round_f(const float* f);                // 0x432540: floor(*f), +1 when the fraction is above 0.5
 float __cdecl clamp_float3(const float* v, const float* lo, const float* hi);  // 0x40e3d0
-int __stdcall ftol2(double d);                     // 0x535a64
 
 // FMOD 3 entry points used by the sound loader.
 struct FSOUND_SAMPLE;
@@ -76,84 +81,99 @@ extern int    g_sound_muted;    // 0x5a9fd8
 extern float  g_music_volume;   // 0x5aa010
 
 struct sound_engine {
+    int   w0;               // +0  cleared when the fade-out has run its 5 s
+    char  pad4[0x240c - 4];
     int   w240c;            // +0x240c  fade-out flag
+    char  pad2410[0x2418 - 0x2410];
+    int   slot;             // +0x2418  tick slot of the current piece
+    char  pad241c[4];
+    __int64 start_tick;     // +0x2420
+    char  pad2428[0x2438 - 0x2428];
     int   cur_index;        // +0x2438  channel driven so far (or -1)
     int   channel;          // +0x243c  channel of the current piece
     int   last_volume;      // +0x2440
-    int   slot;             // +0x2418  tick slot of the current piece
-    __int64 start_tick;     // +0x2420
-    int   w2450;            // +0x2450  tick slot of the new piece
-    __int64 w2458;          // +0x2458  its start (8 bytes)
-    __int64 w2460;          // +0x2460  fade end (read by elapsed_since)
+    char  pad2444[0x2450 - 0x2444];
+    tick_timer fade;        // +0x2450  fade-out timer of the old piece
+    tick_timer fade2;       // +0x2460  second fade timer
     int   fading;           // +0x2470
     void __fastcall advance_piece();               // 0x4c25e0
-    void __fastcall stop_piece(int idx);           // 0x4be0a0 (ret 4)
+    void stop_piece(int idx);                      // 0x4be0a0 (thiscall, ret 4)
     void __fastcall tick();                        // 0x4c4100
 };
 
-// ---- array helpers (engine template members, provisional names) -------------------------------------
-// Signature recovered from 0x4c3d90: call site pushes dst then arg and calls with `this` = ebx = 4th arg, but
-// the callee is `ret 8`, so the argument order below is what the call site actually passes; the trailing
-// `this` slot must stay live across the call (the original keeps it in a callee-saved register because it
-// has to unwind through it: the EH prologue is emitted if the function body nominally touches it).
-void __stdcall construct_204(void* dst, const void* arg);   // 0x4c1b40 (ret 8, this in ecx, may throw)
-void __stdcall construct_4(void* dst, const void* arg);     // 0x436d80 (ret 8, this in ecx, may throw)
-void __stdcall construct_2c(void* dst, const void* arg);    // 0x4c1b20 (ret 8, this in ecx, may throw)
+// ---- array helpers: the STL _Uninit_fill_n / _Uninit_copy instantiations (allocator `this` is the 4th stack
+// argument and the callee's ecx). The original has the try/catch(...) { destroy; throw; } frame (state 0 in the
+// try, funclet `push 0; push 0; call _CxxThrowException`); the element types have trivial destructors so only
+// the rethrow is left. Plain /O2 flags (no /EH switch) reproduce it byte for byte, including the loop variables
+// living in their stack slots. The catch funclets (0x4c3df7, 0x4c3e74, 0x4c3ee6, 0x4c3f56) are emitted by the
+// compiler.
+struct E204 { char b[0x204]; };
+struct E2c  { char b[0x2c]; };
+struct elem_alloc {
+    void construct_204(E204* dst, const E204& v);   // 0x4c1b40 (ret 8, ecx = this)
+    void construct_4(int* dst, const int& v);       // 0x436d80 (ret 8, ecx = this)
+    void construct_2c(E2c* dst, const E2c& v);      // 0x4c1b20 (ret 8, ecx = this)
+    void destroy_204(E204*) {}
+    void destroy_4(int*) {}
+    void destroy_2c(E2c*) {}
+};
 
 // @ 0x4c3d90
-// fill_n(dst, n, arg, this) for 0x204-byte elements: builds each element at dst+k from arg.
-void copy_uninit_204(void* dst, unsigned n, const void* arg, void* thisptr) throw(int)
+void copy_uninit_204(E204* first, unsigned n, const E204& v, elem_alloc& al)
 {
-    *((volatile void**)thisptr) = thisptr;
-    char* d = (char*)dst;
-    while (n > 0) {
-        construct_204(d, arg);
-        --n;
-        d += 0x204;
+    E204* next = first;
+    try {
+        for (; 0 < n; --n, ++first)
+            al.construct_204(first, v);
+    } catch (...) {
+        for (; next != first; ++next)
+            al.destroy_204(next);
+        throw;
     }
 }
 
 // @ 0x4c3e10
-// fill_n(dst, n, arg, this) for 4-byte elements.
-void copy_uninit_4(void* dst, unsigned n, const void* arg, void* thisptr) throw(int)
+void copy_uninit_4(int* first, unsigned n, const int& v, elem_alloc& al)
 {
-    *((volatile void**)thisptr) = thisptr;
-    char* d = (char*)dst;
-    while (n > 0) {
-        construct_4(d, arg);
-        --n;
-        d += 4;
+    int* next = first;
+    try {
+        for (; 0 < n; --n, ++first)
+            al.construct_4(first, v);
+    } catch (...) {
+        for (; next != first; ++next)
+            al.destroy_4(next);
+        throw;
     }
 }
 
 // @ 0x4c3e80
-// Uninitialized copy of the [first, last) range of 0x2c-byte elements onto dst; returns the output end.
-void* copy_uninit_2c(void* dst, void* last, const void* arg, void* first, void* thisptr) throw(int)
+E2c* copy_uninit_2c(E2c* first, E2c* last, E2c* dst, elem_alloc& al)
 {
-    *((volatile void**)thisptr) = thisptr;
-    char* d = (char*)dst;
-    char* s = (char*)first;
-    while (s != last) {
-        construct_2c(d, s);
-        d += 0x2c;
-        s += 0x2c;
+    E2c* start = dst;
+    try {
+        for (; first != last; ++dst, ++first)
+            al.construct_2c(dst, *first);
+    } catch (...) {
+        for (; start != dst; ++start)
+            al.destroy_2c(start);
+        throw;
     }
-    return d;
+    return dst;
 }
 
 // @ 0x4c3ef0
-// Uninitialized copy of the [first, last) range of 4-byte elements onto dst; returns the output end.
-void* copy_uninit_4_range(void* dst, void* last, const void* arg, void* first, void* thisptr) throw(int)
+int* copy_uninit_4_range(int* first, int* last, int* dst, elem_alloc& al)
 {
-    *((volatile void**)thisptr) = thisptr;
-    char* d = (char*)dst;
-    char* s = (char*)first;
-    while (s != last) {
-        construct_4(d, s);
-        d += 4;
-        s += 4;
+    int* start = dst;
+    try {
+        for (; first != last; ++dst, ++first)
+            al.construct_4(dst, *first);
+    } catch (...) {
+        for (; start != dst; ++start)
+            al.destroy_4(start);
+        throw;
     }
-    return d;
+    return dst;
 }
 
 // ---- element type of the 0x48-byte array destroyed by 0x4c3f60 ------------------------------------
@@ -229,38 +249,30 @@ void __fastcall load_elem48_array(void* self, void* unused, stream_base* s)
         elem48_init((elem48*)((char*)mem2 + i * 0x48), s);
 }
 
-// ---- the 0x1c034-byte scene file object (last member ends at +0x1c034) -----------------------------
-void __fastcall free_vec_4609d0(void* p, unsigned flags);   // 0x4609d0 (ret 4): vector-like delete of [this]
+// ---- the scene file object: two 0x400-entry tables of 0x1c-byte records (a tstring at +0 of each) -----
+struct vec_obj { void destroy(unsigned flags); };   // 0x4609d0 (ret 4, ecx = this): vector-like delete
 
 struct tstr_rec { tstring s; int w10, w14, w18; };   // 0x1c bytes
 
 struct scenefile_obj {
-    int* w001;
-    int* w004;               // +4   (freed first, moving to ecx for the call)
-    char pad8[0xe028 - 0xc];
-    tstring s_e028;          // +0xe028
-    tstr_rec ts2[0x400];     // +0xe050
-    tstr_rec ts3[0x400];     // +0x15050
-    tstr_rec ts4[0x400];     // +0x1c050
-    int w1c02c;              // +0x1c02c
-    tstring s_e03c;          // +0xe03c   (second live string, placed last so it can hold a callee-saved reg)
+    int w000;
+    vec_obj* w004;           // +4   (freed first, moving to ecx for the call)
+    char pad8[0x30 - 8];
+    tstr_rec tab_a[0x400];   // +0x30    (ends at 0x7030)
+    tstr_rec tab_b[0x400];   // +0x7030  (ends at 0xe030)
     ~scenefile_obj();
+    tstring& s_e028() { return *(tstring*)((char*)this + 0xe028); }   // +0xe028, overlays the tail of tab_b
 };
 
 // @ 0x4c4090
-// Destructor: frees the object at +4 (scalar delete), destroys the tstrings at +0xe028/+0xe03c and the 0x400
-// records of ts2/ts3 whose strings run back to back (cl merges the two back-to-front walks).
+// Destructor: frees the object at +4 (scalar delete) and destroys the tstring at +0xe028; the compiler then
+// runs the member destructors of tab_b and tab_a (two back-to-front loops of 0x400 tstr_rec destructors).
 scenefile_obj::~scenefile_obj()
 {
-    int* v = w004;
+    vec_obj* v = w004;
     if (v != 0)
-        free_vec_4609d0(v, 3);
-    s_e028.~tstring();
-    tstr_rec* d = &ts3[0x400];
-    for (int i = 0x400; i != 0; i--) {
-        (--d)->s.~tstring();
-        (d - 0x400)->s.~tstring();
-    }
+        v->destroy(3);
+    s_e028().~tstring();
 }
 
 // @ 0x4c4100
@@ -277,19 +289,20 @@ void __fastcall sound_engine::tick()
     }
     float vol = g_music_volume;
     if (fading != 0) {
-        if (elapsed_since(&w2458) > 5.0f) {
+        if (fade.elapsed() > 5.0f) {
             stop_piece(0);
             fading = 0;
         } else {
-            float v2 = 0.0f;
-            float v0 = 1.0f;
-            float v1 = elapsed_since(&w2458) * 0.2f;
-            vol = clamp_float3(&v0, &v1, &v2);
-            vol = (1.0f - vol) * g_music_volume;
+            float one = 1.0f;
+            float zero = 0.0f;
+            float t = elapsed_since(&fade) * 0.2f;
+            vol = (1.0f - clamp_float3(&t, &zero, &one)) * vol;
         }
     }
-    int iv = ftol2((double)(vol * 255.0f));
-    if ((float)(vol * 255.0f) - (float)iv > 0.5f)
+    vol = vol * 255.0f;
+    float fl = (float)floor((double)vol);
+    int iv = (int)fl;
+    if (!(vol - fl <= 0.5f))
         iv = iv + 1;
     int level;
     if (iv < 0)
@@ -309,8 +322,8 @@ void __fastcall sound_engine::tick()
     }
     if (cur_index >= 0 && (level != last_volume || w240c != 0)) {
         last_volume = level;
-        if (w240c != 0 && elapsed_since(&w2460) > 5.0f)
-            *(int*)this = 0;
+        if (w240c != 0 && elapsed_since(&fade2) > 5.0f)
+            w0 = 0;
         _FSOUND_SetVolume(cur_index, level);
     }
 }

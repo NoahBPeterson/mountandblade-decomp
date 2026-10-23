@@ -7,6 +7,7 @@
 //   0x49bbb0  spawn the battle icon for one 0x98-byte army record
 // Names and field names are provisional; every offset is read off the disassembly.
 // The class layout is shared with the neighbouring slices s0049bea0 / s0049c2c0 (Mission).
+#include <vector>
 #include "rgl.h"
 #include "tstring.h"
 
@@ -15,6 +16,7 @@ struct mesh {                                       // 0x260 bytes (see s004520d
     char pad[0x260];
     void clear_geometry();                          // 0x428e80
     void compute_normals();                         // 0x451c50
+    mesh* clone();                                  // 0x41c6d0
 };
 }
 
@@ -61,26 +63,22 @@ void* operator new(unsigned size);                  // 0x53545e
 // ---- scene objects -------------------------------------------------------------------------------
 struct Shape { virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
                virtual void v4(); virtual void v5(); virtual void v6(); };
-Shape* sphere_shape(Shape* mem, vector4 pos, const float* radius);   // 0x4332a0 (ret 0x14, ECX=mem)
-void  entity_attach(void* ent, mesh* m);            // 0x442110 (ret 4)
-mesh* make_body_label(void* ent);                   // 0x495b20 (ret 4)  make_label
-void  rec_bind_host(void* rec);                     // 0x4b2770
+struct SphereMem { Shape* construct(vector4 pos, const float* radius); };   // 0x4332a0 (thiscall, ret 0x14, ecx = raw memory)
+
+struct RotFrame { void rotate_sf(const float* angle); };   // 0x40e770 (thiscall): rotates the side/forward rows
 
 // a scene entity (only the offsets this slice touches are named)
 struct EntityFull {
     char pad0[0xc];
     int      f0c;                                   // +0xc   (id)
     char pad10[0x58 - 0x10];
-    matrix   frame;                                 // +0x58
+    matrix   frame;                                 // +0x58 (frame.o at +0x88 is the position)
     Shape*   shape;                                 // +0x98
-    int      f88;                                   // +0x88   (x @ +0x88)
-    int      f8c;                                   // +0x8c   (y)
-    float    f90;                                   // +0x90   (z)
-    int      f94;                                   // +0x94
-    char pad98b[0x11c - 0x98];
+    char pad9c[0x11c - 0x9c];
     void**   f11c;                                  // +0x11c (first dword -> matrix at +0xcc)
     char pad120[0x168 - 0x120];
     int      f168;                                  // +0x168  (end fall behaviour = 3)
+    void add_mesh(mesh* m);                         // 0x442110 (thiscall, ret 4)
 };
 struct EntityHost { EntityFull* create_entity(int type); };   // 0x428440 (ret 4)
 extern EntityHost* g_entity_host;                   // 0xa732b4 (points to the host object)
@@ -92,14 +90,15 @@ struct Rec98 {
     char    pad0[0x10];
     int     f10;                                    // +0x10  (=1 -> icon owner present)
     char    pad14[0x24 - 0x14];
-    int     f24;                                    // +0x24  (x)
-    int     f28;                                    // +0x28  (y)
+    float   f24;                                    // +0x24  (x)
+    float   f28;                                    // +0x28  (y)
     char    pad2c[0x3c - 0x2c];
     float   f3c;                                    // +0x3c  (z base)
     char    pad40[0x50 - 0x40];
     int     f50;                                    // +0x50  (scene entity)
     int     f54;                                    // +0x54  (agent id A)
     int     f58;                                    // +0x58  (agent id B)
+    void bind_host();                               // 0x4b2770 (thiscall)
 };
 // 0x138-byte quest record (mission+0x13a58)
 struct Rec138 {
@@ -116,23 +115,25 @@ struct Rec138 {
 struct Rec5ac8 {
     char     pad0[0x88];
     int      pmid;                                  // +0x88  (order icon id)
-    char     pad8c[0x918 - 0x8c];
+    char     pad8c[0xa0 - 0x8c];
+    unsigned __int64 flags;                         // +0xa0  (0x400 = siege)
+    char     pada8[0x918 - 0xa8];
     int      icon_type;                             // +0x918 (7 = battle icon)
-    char     pad91c[0x40];
-    unsigned flags;                                 // +0xa0  (0x400 = siege)
+    char     pad91c[0x5ac8 - 0x91c];
 };
 
 struct AgentTable {
-    char    pad0[0x138d0];
-    char**  pages;                                  // +0x138d0
+    char    pad0[0x138cc];
+    std::vector<char*> pages;                       // +0x138cc, relative to the table (page pointers, 16 records per page)
     int     index_of(int id);                       // 0x48ad00 (ret 4)
+    Rec5ac8* get(int id) { int a = index_of(id); return (Rec5ac8*)((a & 0xf) * 0x5ac8 + *(pages.begin() + (a >> 4))); }
 };
 
 // ---- Mission -------------------------------------------------------------------------------------
 struct Mission {
-    char        pad000[0xe4];
-    char**      f0e4;                               // +0xe4  page table of Rec98 records
-    char        pad0e8[0xf8 - 0xe8];
+    char        pad000[0xe0];
+    std::vector<char*> f0e0;                        // +0xe0  page table of Rec98 records
+    char        pad0f0[0xf8 - 0xf0];
     AgentTable  agents;                             // +0xf8 (0x138d4; pages at +0x139c8)
     char        pad1[0x10000 - 0x6a0];
     int         f132c;                              // +0x132c (font mesh active)
@@ -155,6 +156,7 @@ struct Mission {
     int         f158c;                              // +0x158c (font mesh visible)
 
     tstring string_value(int index);                // 0x48e9e0 (ret 4)
+    mesh* make_label(EntityFull* e);                // 0x495b20 (ret 4)
 
     void set_font_mesh(const tstring* text, int arg);                       // 0x49b630
     void add_value(int amount, int group);                                  // 0x49b720
@@ -287,65 +289,54 @@ void Mission::add_item(mesh* m, const tstring* text, char flag, int arg, const f
 // @ 0x49bbb0
 void Mission::spawn_battle_icon(unsigned id)
 {
-    Rec98* rec = (Rec98*)(f0e4[id >> 4] + (id & 0xf) * 0x98);
+    Rec98* rec = (Rec98*)((id & 0xf) * 0x98 + *(f0e0.begin() + (id >> 4)));
     EntityFull* e = g_entity_host->create_entity(9);
     rec->f50 = (int)e;
 
-    vector4 zero;
-    zero.x = 0.0f; zero.y = 0.0f; zero.z = 0.0f;
-    float radius = 0.3f;
-    Shape* shape = (Shape*)operator new(0x44);
-    if (shape != 0)
-        shape = sphere_shape(shape, zero, &radius);
+    Shape* shape;
+    void* mem = operator new(0x44);
+    if (mem != 0) {
+        float radius = 0.3f;
+        vector4 zero;
+        zero.x = 0.0f; zero.y = 0.0f; zero.z = 0.0f;
+        shape = ((SphereMem*)mem)->construct(zero, &radius);
+    } else
+        shape = 0;
     e->shape = shape;
 
-    e->frame = *identity_pos(&e->frame);
-    rec_bind_host(rec);
+    {
+        matrix tmp;
+        e->frame = *identity_pos(&tmp);
+    }
+    rec->bind_host();
 
-    char** pages;
-    int a;
     if (rec->f10 == 1) {
-        pages = agents.pages;
-        a = agents.index_of(rec->f54);
-        *(int*)(pages[a >> 4] + (a & 0xf) * 0x5ac8 + 0x918) = 7;
-        a = agents.index_of(rec->f58);
-        *(int*)(pages[a >> 4] + (a & 0xf) * 0x5ac8 + 0x918) = 7;
-        a = agents.index_of(rec->f54);
-        *(int*)(pages[a >> 4] + (a & 0xf) * 0x5ac8 + 0x88) = id;
-        a = agents.index_of(rec->f58);
-        *(int*)(pages[a >> 4] + (a & 0xf) * 0x5ac8 + 0x88) = id;
+        agents.get(rec->f54)->icon_type = 7;
+        agents.get(rec->f58)->icon_type = 7;
+        agents.get(rec->f54)->pmid = id;
+        agents.get(rec->f58)->pmid = id;
     }
 
-    if (rec->f10 != 1) {
-        e->f0c = id;
-        e->f168 = 3;
-        return;
+    if (rec->f10 == 1) {
+        {
+            tstring nm("battle_icon");
+            e->add_mesh(g_resmgr.get_object(&nm)->clone());
+        }
+        {
+            float angle = 1.5707963f;
+            ((RotFrame*)((char*)e->f11c[0] + 0xcc))->rotate_sf(&angle);
+        }
+
+        mesh* label = make_label(e);
+
+        {
+            float h = 1.0f;
+            tstring kn((agents.get(rec->f58)->flags & 0x400) ? "ui_siege" : "ui_battle");
+            add_item(label, g_strtable.lookup(kn), 1, 1, &h);
+        }
+
+        e->frame.o = vector4(rec->f24, rec->f28, rec->f3c + 0.4f);
     }
-
-    tstring nm("battle_icon");
-    mesh* icon = g_resmgr.get_object(&nm);
-    entity_attach(e, icon);
-    nm.~tstring();
-
-    float angle = 1.5707963f;
-    ((void(__fastcall*)(void*, const float*))0x40e770)((char*)e->f11c[0] + 0xcc, &angle);
-
-    mesh* label = make_body_label(e);
-
-    pages = agents.pages;
-    a = agents.index_of(rec->f58);
-    const char* key = (*(unsigned*)(pages[a >> 4] + (a & 0xf) * 0x5ac8 + 0xa0) & 0x400)
-                    ? "ui_siege" : "ui_battle";
-    float h = 1.0f;
-    tstring kn(key);
-    tstring* txt = g_strtable.lookup(kn);
-    add_item(label, txt, 1, 1, &h);
-    kn.~tstring();
-
-    e->f88 = rec->f24;
-    e->f8c = rec->f28;
-    e->f90 = rec->f3c + 0.4f;
-    e->f94 = 0;
     e->f0c = id;
     e->f168 = 3;
 }

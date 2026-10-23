@@ -187,12 +187,9 @@ void Mission::reset()
     poolJ.reset();
     f5c = -1;
     f60 = -1;
-    {
-        vector4 v(10.0f, 10.0f, 10.0f);
-        f6598 = v;
-    }
     // The store order below is the original's (the compiler keeps it), so it is reproduced verbatim.
     f65ac = 0;
+    f65a8 = 0;
     f65b8 = 0;
     f65bc = 0;
     f65c0 = 0;
@@ -207,6 +204,10 @@ void Mission::reset()
     f65cc = 0;
     f65b0 = 0;
     f6664 = -1;
+    {
+        vector4 v(10.0f, 10.0f, 10.0f);
+        f6598 = v;
+    }
     terrain.init();
     f672c = 0;
     f6730 = 0;
@@ -215,6 +216,7 @@ void Mission::reset()
     f6738 = 0;
     f6740 = 0;
     f6748 = 0;
+    blend2_from = 1.0f;
     {
         matrix tmp;
         frame_a = *identity_pos(&tmp);

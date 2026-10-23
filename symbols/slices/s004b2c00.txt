@@ -10,13 +10,13 @@
   +0x08 id                  +0x14 entries (0x88-byte)   +0x18 entries_end
   +0x64 clock64 (ms)        +0x78 f78                   +0x7c f7c (morale)
   +0x80 zoom                +0x88 f88                   +0x8c f8c
-  +0xa0 flags (qword)       +0xa8 inventory slots       +0xb4 item grid (ItemRef[16], 8 bytes each)
+  +0xa0 flags (qword)       +0xa8 inventory slots       (+0xb4 of a CharRec: the item grid, ItemRef[16])
   +0x8a8 inv_count          +0x8c8 f8c8 (owner handle)  +0x59c0 scene entity
 
 ## Callees / globals
   0x536a9f rand (LCG, %0x3dc9)      0x534b70/0x434b70 seq    0x437510 reduce
-  0x535a64 grid_round              0x41f0d0 scene release (ecx=[0xa732b4])
+  0x535a64 __ftol2 (emitted by (int) casts)   0x536b10 floor   0x41f0d0 scene release (ecx=[0xa732b4])
   0x4b2370 Party::skill            0x4b1cf0 Party::total_value
-  0x48ad00 party handle -> PartyRec*   0x462b60 grid_size
+  0x48ad00 party handle -> index (pages at +0x138cc of the pool)   0x462b60 CharRec::grid_size
   0x8ee3ac4 g_clamp_max            0x5aa054 rand modifier
   0x5e2930 g_game (zoom +0x13ad0, f13ad4)   0x5e29d0 g_items (0x238-byte kinds)

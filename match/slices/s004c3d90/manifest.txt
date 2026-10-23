@@ -1,1 +1,5 @@
-# slice s004c3d90 - no byte-exact functions (see nonmatching.txt); every function is written and compiles.
+slices/s004c3d90/s004c3d90.cpp	?copy_uninit_204@@YAXPAUE204@@IABU1@AAUelem_alloc@@@Z	004c3d90	/O2 /MT /Gy /TP
+slices/s004c3d90/s004c3d90.cpp	?copy_uninit_4@@YAXPAHIABHAAUelem_alloc@@@Z	004c3e10	/O2 /MT /Gy /TP
+slices/s004c3d90/s004c3d90.cpp	?copy_uninit_2c@@YAPAUE2c@@PAU1@00AAUelem_alloc@@@Z	004c3e80	/O2 /MT /Gy /TP
+slices/s004c3d90/s004c3d90.cpp	?copy_uninit_4_range@@YAPAHPAH00AAUelem_alloc@@@Z	004c3ef0	/O2 /MT /Gy /TP
+slices/s004c3d90/s004c3d90.cpp	??1scenefile_obj@@QAE@XZ	004c4090	/O2 /MT /Gy /TP

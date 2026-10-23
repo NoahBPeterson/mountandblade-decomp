@@ -1,18 +1,8 @@
-00479160  367  Mission::reset: complete; byte-identical except one scheduled store (`mov dword ptr [eax+0xc], edx`,
-                the dead 4th word of the f6598 = vector4(10,10,10) copy) which the original places after the
-                0x65xx block and the `f6664 = -1` store rather than immediately after `[eax+8]` (offsets 148-180
-                differ, 148 bytes total). cl's list scheduler keeps stores in source order, so the original's
-                source must interleave the members differently; not reproduced in 5 rounds. Also expected:
-                `eax` holds the float 10.0f there, not an address, so no pooling reloc is involved.
-004792d0  1628 Mission::setup_ambient: complete but a wrong reconstruction: the level/spec indexing and the
-                Level/Row struct layouts in this file are wrong (g_game is dereferenced as [0] instead of
-                [g_game+0x13a50], Row stride 0x31 instead of 0x4c, boundary-store and wind-store sequences are
-                reordered by the compiler), and equiv.py FAILs (our version faults where the original returns).
-                Byte-exact judged out of reach for this entry; needs its own research pass.
-
 # equiv.py verdicts (recorded here since docs/Papercuts.md is outside this slice's write scope):
-#   00479160 equiv.py FAIL 5/5 -- single dword of *undefined* struct state (0x65a4, the memberwise copy's 4th
-#            word): original leaves 0x3f800000, ours 0. Not a real behavioural difference; byte-exact impossible.
+#   00479160 Mission::reset is now byte-exact (manifest.txt; b01 re-audit). The recorded 'FAIL' was two real bugs, not undefined
+#            state: the original also stores f65a8 = 0 (+0x65a8) and blend2_from = 1.0f (+0x67f4), both missing from our source, and the
+#            4th word of the vector4 copy is scheduled after the f6664 store when the temp is built just before it. equiv WEAK, 238/238
+#            bit-identical (the only missed edge is the grid != 0 delete branch).
 #   004792d0 equiv.py FAIL 5/5 -- ours faults (UC_ERR_READ_UNMAPPED) where the original returns: the wrong
 #            layout above is the cause.
 #
