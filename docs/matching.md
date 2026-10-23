@@ -154,6 +154,14 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
   because it called the out-parameter `cross(r, a, b)` inline.
 - Virtual calls need a stub class with the slot at the right index. Dump the vtable from the binary first.
 - Budget: up to ~6 variant rounds per function, then keep the best complete version in nonmatching.txt.
+- **x87 code: read [`../spore-decomp/docs/codegen.md`](../../spore-decomp/docs/codegen.md) §9 first**, especially
+  §9.6 (this project's own x87 lessons: what 24-bit precision means for a difference, aligned-instruction
+  comparison instead of byte counts, `--fp-tol`, the `volatile`/aggregate/frame-struct levers, and the walls).
+  It is the shared codegen guide for cl 13.10; add new x87 findings there, not here.
+- **Judge a near-miss by aligned instructions, not the byte count:** `.venv/bin/python tools/matching/insn_align.py
+  <src.cpp> <va> [--show]` reports identical / changed / missing / extra instructions (relocations masked; a
+  second figure masks stack-slot numbers). chk.py's differing-byte count is positional and balloons when one
+  instruction shifts the rest.
 
 **No assembly transcription.** `__declspec(naked)`, `_emit`, or long `__asm` blocks never count (run_all
 prints `ASM`). A block of at most 8 instructions is allowed where the original used an asm helper.
