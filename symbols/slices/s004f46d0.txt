@@ -1,0 +1,1 @@
+0040f5b0 ?construct@?$allocator@UE96@@@std@@QAEXPAUE96@@ABU3@@Z  # std::allocator<E96>::construct (placement copy, 0x60 bytes; s0040f300 allocator_construct_elem96), called per element by _Uninit_copy 0x4f47f0

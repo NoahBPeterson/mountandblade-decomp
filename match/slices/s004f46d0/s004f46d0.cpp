@@ -1,100 +1,97 @@
-// Slice s004f46d0: the out-of-line instantiations of the engine's std::vector<0x60>/<0x20> growth helpers and
-// their exception machinery (VC7.1 with /EHsc: _Reserve does `new`, so the try/catch handler deletes the fresh
-// block and rethrows).
-//
-//   0x4f46d0  vec60::resize(n): grow the 0x60-byte element vector (begin +4, end +8, cap +0xc) when its
-//             capacity is below n: allocate n * 0x60, copy the old range with the per-element copy loop, free
-//             the old block and install the new one.
-//   0x4f47d8  the handler funclett of 0x4f46d0: delete the fresh block, rethrow.
-//   0x4f47f0  the copy loop of 0x4f46d0: uninitialized_copy(first, last, dest, src) over 0x60-byte elements.
-//   0x4f4856  the no-catch funclett: rethrow.
-//   0x4f4860  vec20::resize(n): the same for 0x20-byte elements.
-//   0x4f4947  its handler funclett: delete + rethrow.
-//   0x4f4960  its copy loop over 0x20-byte elements.
-//   0x4f49c6  the no-catch funclett: rethrow.
-// The element-wise copy is performed by the engine's copy constructors at 0x40f5b0 (0x60) / 0x40f5f0 (0x20).
-#include "rgl.h"
-#include <new>
+// Slice s004f46d0: the out-of-line instantiations of std::vector<T>::reserve and std::_Uninit_copy for the
+// engine's 0x60-byte and 0x20-byte elements (VC7.1 Dinkumware <vector>; layout: empty allocator slot, _Myfirst
+// +4, _Mylast +8, _Myend +0xc).  reserve() is the STL member written out (so _Ucopy/_Uninitialized_copy can
+// be forced inline, as in the original): max_size check -> _Xlen (0x43e2a0, shared ICF'd body), capacity() < n
+// -> allocate, _Ucopy inside try/catch(...){ deallocate; throw; }, then free the old block and install
+// first/last/end.  The 5-argument cdecl _Uninit_copy (first, last, dest, &allocator,
+// _Nonscalar_ptr_iterator_tag) calls allocator::construct (0x40f5b0 for 0x60, 0x40f5f0 for 0x20) per element.
+//   0x4f46d0  vec<E96>::reserve         0x4f47d8  its catch funclet (no symbol of its own)
+//   0x4f47f0  _Uninit_copy<E96*>        0x4f4856  its rethrow funclet
+//   0x4f4860  vec<E32>::reserve_nr        0x4f4947  its catch funclet
+//   0x4f4960  _Uninit_copy<E32*>        0x4f49c6  its rethrow funclet
+#include <vector>
+#include <memory>
 
-struct elem60 { char b[0x60]; elem60(const elem60& o); };   // 0x40f5b0
-struct elem20 { char b[0x20]; elem20(const elem20& o); };   // 0x40f5f0
+struct E96 { int v[24]; };      // 0x60
+struct E32 { int v[8]; };       // 0x20
 
-struct vec60 {                                  // begin +4, end +8, cap +0xc (alloc word at +0)
-    int alloc;
-    elem60* begin;
-    elem60* end;
-    elem60* cap;
-    void resize(unsigned n);                    // 0x4f46d0
+template<class T> struct vec {                  // std::vector<T> layout
+    std::allocator<T> al;
+    T* first;
+    T* last;
+    T* end;
+    struct iter {                               // std::vector<T>::iterator (_Ptrit)
+        T* cur;
+        iter(T* p) : cur(p) {}
+        T& operator*() const { return *cur; }
+        iter& operator++() { ++cur; return *this; }
+        bool operator!=(const iter& r) const { return cur != r.cur; }
+        bool operator==(const iter& r) const { return cur == r.cur; }
+    };
+    unsigned size() const { return first == 0 ? 0 : last - first; }
+    unsigned capacity() const { return first == 0 ? 0 : end - first; }
+    void xlen() const;                          // 0x43e2a0 (shared body, throws length_error)
+    __declspec(noreturn) void xlen_nr() const;  // same body, declared noreturn in the E32 instance's TU
+    void reserve(unsigned n);                   // 0x4f46d0 (E96): _Xlen is an ordinary call
+    void reserve_nr(unsigned n);                // 0x4f4860 (E32): same code, but cl knew _Xlen is noreturn here (n stays in edx)
 };
-struct vec20 {
-    int alloc;
-    elem20* begin;
-    elem20* end;
-    elem20* cap;
-    void resize2(unsigned n);                   // 0x4f4860
-};
 
-void* operator_new_(unsigned n);                 // 0x53545e
-void  operator_delete_(void* p);                 // 0x535712
-void  rethrow_();                                // 0x5368e6 (_CxxThrowException, no object)
-// @ 0x4f47f0  (uninitialized_copy: first, last, dest, tag)
-elem60* copy60(elem60* first, elem60* last, elem60* dest, void*)
+template<class I, class T> static __forceinline T* uninitialized_copy_(I f, I l, T* d, std::allocator<T>& a)
 {
-    for (; first != last; ++dest, ++first)
-        new (dest) elem60(*first);
-    return dest;
+    return std::_Uninit_copy(f, l, d, a, std::_Ptr_cat(f, d));   // std::_Uninitialized_copy
+}
+template<class I, class T> static __forceinline T* ucopy(I f, I l, T* d, std::allocator<T>& a)
+{
+    return uninitialized_copy_(f, l, d, a);                      // vector::_Ucopy
 }
 
+template<class T> void vec<T>::reserve(unsigned n)
+{
+    if ((unsigned)-1 / sizeof(T) < n)
+        xlen();
+    if (capacity() < n) {
+        T* p = al.allocate(n);
+        try {
+            ucopy(iter(first), iter(last), p, al);
+        } catch (...) {
+            al.deallocate(p, n);
+            throw;
+        }
+        unsigned sz = size();
+        if (first != 0)
+            al.deallocate(first, end - first);
+        end = p + n;
+        last = p + sz;
+        first = p;
+    }
+}
+
+// @ 0x4f47f0
+template E96* std::_Uninit_copy<vec<E96>::iter, E96*, std::allocator<E96> >(vec<E96>::iter, vec<E96>::iter, E96*, std::allocator<E96>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4f4960
-elem20* copy20(elem20* first, elem20* last, elem20* dest, void*)
-{
-    for (; first != last; ++dest, ++first)
-        new (dest) elem20(*first);
-    return dest;
-}
-
+template E32* std::_Uninit_copy<vec<E32>::iter, E32*, std::allocator<E32> >(vec<E32>::iter, vec<E32>::iter, E32*, std::allocator<E32>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4f46d0
-void vec60::resize(unsigned n)
-{
-    if (n > 0x2aaaaaa)
-        throw 0;
-    unsigned have = begin ? (unsigned)(end - begin) : 0;
-    if (have >= n)
-        return;
-    elem60* fresh = (elem60*)operator_new_(n * 0x60);
-    try {
-        copy60(begin, end, fresh, this);
-    } catch (...) {
-        operator_delete_(fresh);
-        throw;
-    }
-    unsigned old = begin ? (unsigned)(end - begin) : 0;
-    if (begin)
-        operator_delete_(begin);
-    cap = fresh + n;
-    end = fresh + old;
-    begin = fresh;
-}
+template void vec<E96>::reserve(unsigned);
 
-// @ 0x4f4860
-void vec20::resize2(unsigned n)
+template<class T> void vec<T>::reserve_nr(unsigned n)
 {
-    if (n > 0x7ffffff)
-        throw 0;
-    unsigned have = begin ? (unsigned)(end - begin) : 0;
-    if (have >= n)
-        return;
-    elem20* fresh = (elem20*)operator_new_(n * 0x20);
-    try {
-        copy20(begin, end, fresh, this);
-    } catch (...) {
-        operator_delete_(fresh);
-        throw;
+    if ((unsigned)-1 / sizeof(T) < n)
+        xlen_nr();
+    if (capacity() < n) {
+        T* p = al.allocate(n);
+        try {
+            ucopy(iter(first), iter(last), p, al);
+        } catch (...) {
+            al.deallocate(p, n);
+            throw;
+        }
+        unsigned sz = size();
+        if (first != 0)
+            al.deallocate(first, end - first);
+        end = p + n;
+        last = p + sz;
+        first = p;
     }
-    unsigned old = begin ? (unsigned)(end - begin) : 0;
-    if (begin)
-        operator_delete_(begin);
-    cap = fresh + n;
-    end = fresh + old;
-    begin = fresh;
 }
+// @ 0x4f4860
+template void vec<E32>::reserve_nr(unsigned);

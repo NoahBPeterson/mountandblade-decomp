@@ -1,0 +1,4 @@
+slices/s004f46d0/s004f46d0.cpp  ?reserve@?$vec@UE96@@@@QAEXI@Z  004f46d0  /O2 /MT /Gy /EHa /TP
+slices/s004f46d0/s004f46d0.cpp  ??$_Uninit_copy@Uiter@?$vec@UE96@@@@PAUE96@@V?$allocator@UE96@@@std@@@std@@YAPAUE96@@Uiter@?$vec@UE96@@@@0PAU1@AAV?$allocator@UE96@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004f47f0  /O2 /MT /Gy /EHa /TP
+slices/s004f46d0/s004f46d0.cpp  ?reserve_nr@?$vec@UE32@@@@QAEXI@Z  004f4860  /O2 /MT /Gy /EHa /TP
+slices/s004f46d0/s004f46d0.cpp  ??$_Uninit_copy@Uiter@?$vec@UE32@@@@PAUE32@@V?$allocator@UE32@@@std@@@std@@YAPAUE32@@Uiter@?$vec@UE32@@@@0PAU1@AAV?$allocator@UE32@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004f4960  /O2 /MT /Gy /EHa /TP

@@ -1,4 +1,3 @@
-004d9260  3   complete; nonmatching because the original reaches the global game state through an unresolved accessor; UNSUPPORTED in equiv (globals) expected
 004d9370  18  complete shape (this + two pointers forwarded as five stack args); register allocation in the shim differs
 004d93e0  20  complete (forwards this + two args); the original materialises `this` from the 4th stack slot, ours from the 3rd
 004d9400  20  complete (forwards this + two args); same register-allocation difference as 0x4d93e0

@@ -1,1 +1,1 @@
-# no byte-exact functions in this slice (all targets are complete and listed in nonmatching.txt)
+slices/s004d8c20/s004d8c20.cpp  ?FUN_004d9260@@YGXPAD@Z  004d9260  /O2 /MT /Gy /TP

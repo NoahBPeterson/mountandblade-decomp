@@ -24,9 +24,10 @@ struct tstring {
     void underscores_to_spaces();               // 0x42bf80
     const char* c_str() const { return buf ? buf : (char*)&buf; }
 };
-struct Cls_5e2a18;                              // the attribute-name map, 0x5e2a18 (0x1c0010 bytes)
-// name -> cell lookup on Cls_5e2a18; returns the cell with that name, or 0.  0x4c6010
-void* __stdcall Cls_5e2a18_lookup(Cls_5e2a18* self, tstring* name);
+struct Cls_5e2a18 {                             // the attribute-name map, a global object at 0x5e2a18 (0x1c0010 bytes)
+    // name -> cell lookup; returns the cell with that name, or 0.  0x4c6010 (thiscall, ret 4)
+    void* lookup(tstring* name);
+};
 // 0x4d10f0: destroys the record range in the object `thiz` (frees the tstring of each record).
 void __cdecl FUN_004d10f0(void* thiz, int a, int last, int unused, int b);
 // 0x4d11a0 / 0x4d1230 / 0x4d12c0: record-range helpers of the settings object (prov).
@@ -109,7 +110,7 @@ vec_it E68vec::erase(vec_it first, vec_it last)
 void __stdcall FUN_004d9260(char* out)
 {
     int c = *(int*)(g_game + 0x8c) * 0x508 + *(int*)(g_game + 0x13a00);
-    void* e = Cls_5e2a18_lookup((Cls_5e2a18*)0x5e2a18, (tstring*)(c + 0x20));
+    void* e = ((Cls_5e2a18*)0x5e2a18)->lookup((tstring*)(c + 0x20));
     if (e == 0) e = (void*)c;
     char* name = (char*)e + 4;
     if (*(char**)name != 0) name = *(char**)name;

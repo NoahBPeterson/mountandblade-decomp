@@ -139,7 +139,6 @@ struct MainMenu {
 };
 
 float  clamp_float(const float* x, const float* lo, const float* hi);   // 0x40e3d0
-int    round_to_int(float v);                               // 0x535a64 (x87 conversion)
 void   free_ptr(void* p);                                   // 0x535712
 
 extern int   g_size_modes[8];                               // 0x59394c terrain-type table (index 0..7)
@@ -290,8 +289,7 @@ void TerrainPage::update(float dt)
         fog = fog_slider->get_float();
         refresh_hex();
     } else if (page_changed(level_slider)) {
-        float v = level_slider->get_float() * g_0_01;
-        water_level = round_to_int(v);
+        water_level = (int)(level_slider->get_float() * g_0_01);   // fmul; call __ftol2 (0x535a64)
         refresh_hex();
     } else if (page_changed(height_slider)) {
         water_height = height_slider->get_float();

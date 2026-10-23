@@ -32,7 +32,6 @@ struct Logger { void* vt; };           // 0x5a9f60
 int __cdecl dprintf(const char* fmt, ...);                 // 0x535717
 void __cdecl free(void* p);                                // 0x53570d
 void __cdecl free2(void* p);                               // 0x535712
-int __cdecl ftol2(double v);                               // 0x535a64
 int __cdecl fmt_536f8f(char* buf, const char* fmt, ...);   // 0x536f8f
 int __cdecl file_open(int req, int flags);                 // 0x534318
 int __cdecl file_seek(int req, int pos);                   // 0x534312
@@ -482,7 +481,7 @@ void BigObj::update()
         }
         if (sum >= g_549ca8) {
             int tt = (int)(GetTickCount() % 0x3dc9);
-            int dt = ftol2((float)(tt * sum * g_54a6bc));
+            int dt = (int)(tt * sum * g_54a6bc);                // fild; fmul; fmul; call __ftol2 (0x535a64)
             for (int i = 0; i < count; i++) {
                 Entry20* e = &entries[i];
                 if (i == best)
@@ -491,7 +490,7 @@ void BigObj::update()
                     continue;
                 if (mask != 0 && (e->flags & mask) == 0)
                     continue;
-                int v = ftol2((float)dt - (now - times[i]) + g_590b50);
+                int v = (int)(dt - ((now - times[i]) + g_590b50));   // fild dt; (now - t) + g; fsubp; call __ftol2
                 if (v < g_549ca8)
                     continue;
                 first = 1;

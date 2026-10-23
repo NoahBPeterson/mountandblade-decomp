@@ -1,7 +1,7 @@
 004b3350 ??$fill@VParty@@@@YAXPAVParty@@HPAX1H@Z  # helper of 0x4b49d0: fills `count` 0x5c-byte item records (EH frame, like a template instantiation); called as (dst, count, src, this, extra)
 0048ad00 ?index_of@PartyMgr@@QAEHH@Z  # PartyMgr::index_of: page id>>4, slot id&0xf (used by 0x4b4470/0x4b4700/0x4b4800)
 0048c330 ?remove_slot@Party@@QAEXH@Z  # Party::remove_slot: shift stack row `idx` out of the table, set dirty
-0048f9f0 ?add_to_stack@Party@@QAEHHHEH@Z  # Party::add_to_stack: move `amount` of a troop into the last matching stack (full-table promotion path)
+0048f9f0 ?add_to_stack@GameData@@QAEHHHHDH@Z  # GameData::add_to_stack (this = g_game; reaudit b09: it is not a Party method): move `amount` of a troop into the last matching stack (full-table promotion path)
 00489540 ?remove_row@Party@@QAEXPAHHPAH@Z  # Party::remove_row: remove stack row `idx` plus its optional 0x80-byte companion row
 004b1b80 ?update@Party@@QAE_NXZ  # Party::update: recompute the derived party stats after the stack table changed
 004b2160 ??$copy@VParty@@@@YAXPAXABVParty@@@Z  # item-record copy used by 0x4b3350 (0x5c bytes)
