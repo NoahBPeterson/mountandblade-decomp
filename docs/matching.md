@@ -16,6 +16,17 @@ return to it the first time a function shows a diff. M&B-specific findings go in
   verified layouts: `rgl.h`), the VC7.1 CRT/STL, **Windows SDK 6.0A** (`#include <windows.h>`, `<d3d9.h>`,
   `<dinput.h>`, `<mmsystem.h>`, `<winsock2.h>` before `<windows.h>`), and the **DirectX SDK June 2010** for
   `<d3dx9.h>`. Use the real headers; do not hand-declare Win32/D3D9/D3DX.
+- **Back-end (c2.dll) switches, for experiments only** (never in a manifest): `/d2<opt>` passes `-<opt>` to c2.
+  Its option table (at 0x10866xxx in c2.dll, entries {name, global, type}) has inliner tuning knobs whose 0
+  default means "built-in value" (set at 0x10708b4b): `inlT` 74 (inline threshold), `inlS` 9, `inlfcsw` 30,
+  `inlocsa1` 45, `inlocsa4` 45, `inluserinl` 7, `inlnobr` 10, plus `inlld`, `inld`, `inlniln`, `inlnild`,
+  `inlnoln`, `inlnold`, `inlcrmax`, `inlfcsa`, `isize` (4). Use them to MEASURE: the smallest `/d2inlT<N>` at
+  which a call gets inlined is that callee's cost at that site. Example: ??_Eframe_set 0x41aee0 matches the
+  original byte for byte with `/d2inlT88` and above (??_EBone's array-path cost is 87), but a global inlT88
+  drops resmgr.cpp from 62 to 54 matches, so the original was not built with another threshold: our source
+  presents ??_EBone (or the call site) as costlier than the original's did. Replacing Bone's std::vector with a
+  minimal struct did not change the cost. The "INL:" inliner trace strings exist but print only in a PGO mode
+  (global 0x108a87d0), not reachable from a normal compile; `-db#` prints nothing.
 
 ## The binary, as it affects matching
 - **No `.reloc`.** Relocated operands are masked at the offsets of *our* object's relocations. The verifier
