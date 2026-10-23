@@ -37,12 +37,7 @@ struct IfaceA {
     virtual void slot1() {}
     virtual void slot2() {}
 };
-struct IfaceB {
-    IfaceB();
-    virtual ~IfaceB() {}
-    virtual void slot1() {}
-    virtual void slot2() {}
-};
+#include "../../include/iface.h"        // IfaceB (shared; its constructor is inline, the vtable is emitted by the first user below)
 
 // 0x78 bytes: two (array, name) pairs. ~RecD 0x431440, vector deleting destructor 0x431480.
 struct RecD {
@@ -78,14 +73,14 @@ struct NameHolder {
 };
 // IfaceB-derived, 0x98 bytes (vector deleting destructor 0x4316c0).
 struct RecF : IfaceB {
-    int pad[4];
+    int pad;
     tstring name;       // +0x14
     int tail[29];
     RecF();
 };
 // IfaceB-derived, 0xb0 bytes (vector deleting destructor 0x431750).
 struct RecJ : IfaceB {
-    int body[0x2b];
+    int body[0x2b - 3];
     RecJ();
 };
 // Owner of a heap array of RecG: frees it and clears the pointer (0x4317b0).
@@ -176,7 +171,6 @@ struct RecS {
 };
 // IfaceB-derived, 0x494 bytes, own vtable 0x590904. ~RecY 0x431e10, vector deleting dtor 0x431ec0.
 struct RecY : IfaceB {
-    char pad4[0xc];
     tstring n0;                     // +0x10
     tstring n1;                     // +0x20
     char pad30[4];
@@ -201,7 +195,7 @@ struct RecY : IfaceB {
 };
 // IfaceB-derived, 0x5928 bytes: vector<int> at +0x1c, Tail2 at +0x53c0 (vector deleting dtor 0x431f40).
 struct RecZ : IfaceB {
-    char pad4[0x18];
+    char pad10[0x18 - 0xc];
     std::vector<int> v;             // +0x1c
     char pad2c[0x53c0 - 0x2c];
     Tail2 t;                        // +0x53c0

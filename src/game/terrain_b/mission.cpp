@@ -53,6 +53,9 @@ extern ptype* g_ptypes;                         // 0x5e28f8
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../terrain_a/terrain.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);             // 0x40cd60
 matrix* __cdecl identity_pos(matrix* out);      // 0x40cd00
@@ -224,12 +227,12 @@ void Mission::reset()
     // vector<int>::resize(0, 0) below is the 2-argument overload; the original materialises the
     // value temporary in a stack slot and passes its address (cl 13.10 elides the store and passes
     // whatever is in the slot), so the source-level form is kept but cl builds its own temp.
-    v6678.resize(0, 0);
+    dead.resize(0, 0);
     blend_time = 0.0f;
     blend2_time = 0.0f;
     f67e8 = -1;
-    agents.reset();
-    poolJ.reset();
+    agent_pool(this).reset();
+    pool_j(this).reset();
     f5c = -1;
     f60 = -1;
     // The store order below is the original's (the compiler keeps it), so it is reproduced verbatim.

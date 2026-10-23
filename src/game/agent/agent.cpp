@@ -20,6 +20,13 @@
 #include "../../include/height_field.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // inline helpers: the original compiled them into the callers (no out-of-line copies in this object)
 static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)
@@ -86,7 +93,7 @@ int ItemRef::stat_1ec()
     return v;
 }
 // @ 0x434cb0
-unsigned ItemRef::stat_21x(int which)
+int ItemRef::stat_21x(int which)
 {
     if (item < 0) return 0;
     unsigned v;
@@ -362,7 +369,7 @@ void Agent_f8::set_slot(int i, float x) { v[i][0] = x; }
 bool Agent::flag_0x400_or_0x114() const
 {
     bool r = false;
-    if ((int)(fe8 & 0x1ffff) >= 100 && fd4 >= 0 && ((*f12c)[fd4].flags & 0x400) != 0 || (int)(f114 & 0x1ffff) >= 100)
+    if ((int)(anim[0].events & 0x1ffff) >= 100 && anim[0].cur >= 0 && ((*f12c)[anim[0].cur].flags & 0x400) != 0 || (int)(anim[1].events & 0x1ffff) >= 100)
         r = true;
     return r;
 }
@@ -436,7 +443,7 @@ char SoundCtl::emit_event(int id, int a, int b)
     return r;
 }
 // @ 0x435840
-char Mission::mode_flag1() const { return ((g_modes[f5df0].flags >> 1) & 1) != 0; }
+char Mission::mode_flag1() const { return ((g_modes[mode].flags >> 1) & 1) != 0; }
 // @ 0x435860
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m)
 {
@@ -444,7 +451,7 @@ void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const i
     o->reset();
     int k = *kind;
     if (k == 2 || k == 6 || k == 7) {
-        name = g_items[*id].name;
+        name = g_items[*id].key;
         o->value = *value;
     } else if (k == 4) {
         name = g_tbl20[*id].name;
@@ -505,24 +512,24 @@ int __cdecl team_field5280(const Agent* a)
 {
     int t = a->team;
     if (t < 0 || t >= 8) t = 7;
-    return g_mission->field5280[t * 0x5b];
+    return g_mission->leader_flat()[t * 0x5b];
 }
-static char mission_mode_flag1() { return ((g_modes[g_mission->f5df0].flags >> 1) & 1) != 0; }
+static char mission_mode_flag1() { return ((g_modes[g_mission->mode].flags >> 1) & 1) != 0; }
 // @ 0x435b90
 void Agent::reset_if_enemy_charged()
 {
     if (mission_mode_flag1()) {
         Mission* ms = g_mission;
         int i = 0;
-        const TeamSlot* s = ms->slots;
-        const int* rel = &ms->relation[team * 0x5b];
+        const int* s = &ms->counts[0][4];       // the per-team counters 4 and 5 (the slices' TeamSlot a, b)
+        const int* rel = &ms->rel_flat()[team * 0x5b];
         do {
-            if (*rel == -1 && (s->b > 0 || s->a > 0)) {
+            if (*rel == -1 && (s[1] > 0 || s[0] > 0)) {
                 f2c8 = 12;
                 f533c = 0;
                 return;
             }
-            i++; rel++; s++;
+            i++; rel++; s += 6;
         } while (i < 8);
     }
 }
@@ -538,7 +545,7 @@ void Agent::camera_params(CamParams* p)
         p->v40 = vector4(f80 * 0.0f + dx, f80 * 0.0f + dy, f80 * -0.2f + dz);
         p->v50 = vector4(f80 * 0.0f + dx, f80 * 0.0f + dy, f80 * 0.5f + dz);
         p->f60 = 0.37f;
-        if (body && (fe8 & 0x800000)) {
+        if (body && (anim[0].events & 0x800000)) {
             p->v50 = body->skel->bones->v1170;
             BoneRec* z = body->skel->bones;
             p->v40.x = (z->f46c + z->fa00) * 0.5f;

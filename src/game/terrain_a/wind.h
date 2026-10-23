@@ -4,15 +4,8 @@
 #define TERRAIN_A_WIND_H
 #include "./common.h"
 
-// Agent record seen only through its hit points: init_max_hp (0x461200) reads +0x1bc and writes +0x1c0. The shared
-// Agent headers (src/game/agent/agent.h, src/game/agent3/agent_types.h) do not name these two fields (agent_types.h
-// calls +0x1bc `int f1bc`), so this module declares the two it needs.
-struct Agent {
-    char pad0[0x1bc];
-    float hp;                       // +0x1bc (0x461200)
-    float max_hp;                   // +0x1c0 (0x461200)
-    void init_max_hp();             // 0x461200
-};
+// The agent record (init_max_hp 0x461200 reads +0x1bc and writes +0x1c0): src/game/agent_obj.h.
+#include "../agent_obj.h"
 
 // Wind: direction vector at +4 scaled by a fractal-noise factor driven by clock 2 (wrapped at 1e9 ticks) and a
 // random per-instance phase (0x461480 init, 0x461570 sample).

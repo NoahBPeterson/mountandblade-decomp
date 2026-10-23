@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include "./common.h"
 #include "./wind.h"
+#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 using rgl::vector4;
 

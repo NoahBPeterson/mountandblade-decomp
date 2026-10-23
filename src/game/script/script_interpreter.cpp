@@ -33,6 +33,10 @@
 #include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../slot_array.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // ==== error reporting and argument validators (static, same object) =========================================
 
@@ -689,7 +693,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::agent_set_slot:
         if (warn_agent((int)params[0]) && SLOT_OK(params[1]))
-            agent((int)params[0])->slots.set((int)params[1], params[2]);
+            agent((int)params[0])->slot_vars.set((int)params[1], params[2]);
         break;
     case op::quest_set_slot:
         if (check_quest((int)params[0]) && SLOT_OK(params[1]))
@@ -732,7 +736,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::agent_get_slot:
         if (warn_agent((int)params[1]) && SLOT_OK(params[2]))
-            SET_LV(agent((int)params[1])->slots.get((int)params[2]));
+            SET_LV(agent((int)params[1])->slot_vars.get((int)params[2]));
         else
             SET_LV(0);
         break;
@@ -777,7 +781,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_slot_eq:
         result = 0;
         if (warn_agent((int)params[0]) && SLOT_OK(params[1]))
-            result = agent((int)params[0])->slots.get((int)params[1]) == params[2];
+            result = agent((int)params[0])->slot_vars.get((int)params[1]) == params[2];
         break;
     case op::quest_slot_eq:
         result = 0;
@@ -818,7 +822,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_slot_ge:
         result = 0;
         if (warn_agent((int)params[0]) && SLOT_OK(params[1]))
-            result = agent((int)params[0])->slots.get((int)params[1]) >= params[2];
+            result = agent((int)params[0])->slot_vars.get((int)params[1]) >= params[2];
         break;
     case op::quest_slot_ge:
         result = 0;
@@ -2585,9 +2589,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             Pos* dst = &script_pos((int)params[0]);
             AgentTable* t = &mission()->agents;
             int a = (int)params[1];
-            dst->o = t->get(a)->position;
+            dst->o = t->get(a)->pos;
             if (t->get(a)->body) {
-                dst->f = t->get(a)->look_dir;
+                dst->f = *(rgl::vector4*)&t->get(a)->fx;      // the facing direction (+0x55d8)
                 dst->orthonormalize();
             }
         }
@@ -2597,16 +2601,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
             AgentTable* t = &mission()->agents;
             int a = (int)params[1];
             if (t->get(a)->body)
-                script_pos((int)params[0]) = t->get(a)->body->frame;
+                script_pos((int)params[0]) = (Pos&)t->get(a)->body->m;      // the body frame (+0x58)
             else {
                 *(Rot*)&script_pos((int)params[0]) = identity_rot();
-                script_pos((int)params[0]).o = t->get(a)->position;
+                script_pos((int)params[0]).o = t->get(a)->pos;
             }
         }
         break;
     case op::agent_set_position:
         if (check_register((int)params[1]) && warn_agent((int)params[0])) {
-            agent((int)params[0])->position = script_pos((int)params[1]).o;
+            agent((int)params[0])->pos = script_pos((int)params[1]).o;
             agent((int)params[0])->position_changed();
         }
         break;
@@ -2633,7 +2637,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_get_item_id:
         // (works only for horses, returns -1 otherwise)
         if (warn_agent((int)params[1]))
-            SET_LV((__int64)agent((int)params[1])->item);
+            SET_LV((__int64)agent((int)params[1])->f8c.item);
         break;
     case op::store_agent_hit_points:
         // [absolute] 1 = hit points, else percent of the maximum
@@ -2677,7 +2681,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 b.flags = 0x20;
                 b.f38 = 0;
                 b.attacker = attacker;
-                b.pos = t->get(victim)->position;
+                b.pos = t->get(victim)->pos;
                 int best = 0;
                 int d = (int)t->get(attacker)->slot_pair(0).stat_21x(0);
                 if (d > 0)
@@ -2742,14 +2746,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     m = mission();
                 }
             }
-            agent((int)params[0])->scripted_destination = script_pos((int)params[1]);
+            (Pos&)agent((int)params[0])->scripted_destination = script_pos((int)params[1]);
             agent((int)params[0])->scripted_mode = 1;
             agent((int)params[0])->f2c0 = 0;
         }
         break;
     case op::agent_get_scripted_destination:
         if (warn_agent((int)params[1]) && check_register((int)params[0]))
-            script_pos((int)params[0]) = agent((int)params[1])->scripted_destination;
+            script_pos((int)params[0]) = (Pos&)agent((int)params[1])->scripted_destination;
         break;
     case op::agent_clear_scripted_mode:
         if (warn_agent((int)params[0]))
@@ -2824,7 +2828,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::class_is_listening_order:
         // (class_is_listening_order, <team_no>, <sub_class>)
         if (IN_RANGE(params[0], 0, 8) && IN_RANGE(params[1], 0, 3))
-            result = mission()->teams[(int)params[0]].listening((int)params[1]) == 1;
+            result = mission()->teams[(int)params[0]].cls[(int)params[1]].use == 1;
         break;
     case op::entry_point_get_position:
         if (check_register((int)params[0]) && IN_RANGE(params[1], 0, 0x40) && g_mission)
@@ -2865,7 +2869,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::teams_are_enemies:
         if (IN_RANGE(params[0], 0, 8) && IN_RANGE(params[1], 0, 8))
-            result = mission()->teams[(int)params[0]].relations[(int)params[1]] < 0;
+            result = mission()->teams[(int)params[0]].relation[(int)params[1]] < 0;
         break;
 
     case op::team_give_order:
@@ -2919,8 +2923,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::team_set_relation:
         // (team_set_relation, <team_no>, <team_no_2>, <value>), # -1 for enemy, 1 for friend, 0 for neutral
         if (IN_RANGE(params[0], 0, 8) && IN_RANGE(params[1], 0, 8) && IN_RANGE(params[2], -1, 2)) {
-            mission()->teams[(int)params[0]].relations[(int)params[1]] = (int)params[2];
-            mission()->teams[(int)params[1]].relations[(int)params[0]] = (int)params[2];
+            mission()->teams[(int)params[0]].relation[(int)params[1]] = (int)params[2];
+            mission()->teams[(int)params[1]].relation[(int)params[0]] = (int)params[2];
         }
         break;
 
@@ -3176,7 +3180,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::spawn_item:
         // (spawn_item, <item_kind_id>, <item_modifier>): the instance id goes to reg0
         if (check_item_kind((int)params[0])) {
-            ItemRefX r;
+            ItemRef r;
             r.item = (int)params[0];
             r.set_modifier((int)params[1]);
             r.reduce(0);
@@ -4259,8 +4263,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int a = (int)params[1];
             if (t->get(a)->troop >= 0)
                 g_script.str[(int)params[0]] = *troop(t->get(a)->troop)->display_name();
-            else if (t->get(a)->item >= 0)
-                g_script.str[(int)params[0]] = *item_kind(t->get(a)->item)->display_name();
+            else if (t->get(a)->f8c.item >= 0)
+                g_script.str[(int)params[0]] = *item_kind(t->get(a)->f8c.item)->display_name();
         }
         break;
     case op::str_store_faction_name:

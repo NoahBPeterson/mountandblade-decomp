@@ -32,8 +32,7 @@ struct slot130 {                                // 0x130 bytes, array at mission
     int f0e8;                                   // 0xe8
     char padec[0x130 - 0xec];
 };
-struct ModeRec2 { char pad[0x34]; char* recs; char pad2[0x58 - 0x38]; };    // 0x58, array at 0x5e2a00; +0x34 -> 0x4c-byte records
-extern ModeRec2* g_modes2;                      // 0x5e2a00 (0x4677a0)
+#include "../mode_rec.h"                      // ModeRec2, g_modes2 0x5e2a00 (+0x34 -> 0x4c-byte spawn rules)
 struct World3 { char pad0[0x13a00]; Troop* troops; char pad1[0x13a50 - 0x13a04]; int* tbl; };   // the world object 0x5e2930
 extern World3* g_world3;                        // 0x5e2930 (0x4677a0, 0x467940)
 extern float g_speed_base;                      // 0x5aa07c (0x467740)
@@ -211,9 +210,6 @@ struct TroopEq : Troop {
 #include "../view_params.h"            // ViewParams (shared with terrain_b)
 
 // ---- an agent's equipment slots, line of fire (0x46b190, 0x46b2d0, 0x46b410) ------------------------------------------------
-struct ItemRefX : ItemRef {
-    void reduce(int n);                         // 0x437510
-};
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);    // 0x46b190
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (g_bit[i] == 1 << i)
 struct AgentEq {

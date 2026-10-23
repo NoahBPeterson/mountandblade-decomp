@@ -1253,7 +1253,7 @@ float Mission3::speed_factor(float x)
 void Mission3::add_amount(int idx, unsigned flags)
 {
     unsigned mask = flags & 0xfffffff;
-    char* rec = g_modes2[mode].recs + idx * 0x4c;
+    char* rec = (char*)g_modes2[mode].recs + idx * 0x4c;
     if (mask == 0) return;
     unsigned rf = *(unsigned*)(rec + 4);
     unsigned amount;
@@ -2062,6 +2062,7 @@ void terrain_obj::spread_flow(unsigned mask, int mode, unsigned mark)
 #include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 using rgl::mat3;
 __declspec(noinline) mat3* identity3(mat3* out);                             // 0x40cd60
 struct pos2 : rgl::matrix {
@@ -2250,7 +2251,7 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
         return *(__int64*)&g_world3->troops[troop].equip[slot];
     }
     int i = 0;
-    ItemRefX res;
+    ItemRef res;
     res.item = -1;
     res.m4 = 0;
     do {

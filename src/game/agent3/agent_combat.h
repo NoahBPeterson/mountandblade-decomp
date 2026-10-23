@@ -22,13 +22,7 @@ struct E32 { int v[8]; };                            // 0x20 (deque<E32>)
 struct E48 { int v[12]; };                           // 0x30 (vector<E48>)
 // 0x1c8-byte polymorphic record (vtable 0x590b84, copy ctor 0x437bb0, deleting dtor 0x437870; src/game/agent/agent.h
 // calls it PlacedObj). Layout reduced to what the copy / destroy paths touch.
-struct IfaceB {
-    int f4, f8, fc;
-    IfaceB() {}
-    virtual ~IfaceB() {}
-    virtual void slot1() {}
-    virtual void slot2() {}
-};
+#include "../../include/iface.h"        // IfaceB (shared)
 struct Rec1c8 : IfaceB {
     char body1[0x190 - 0x10];
     tstring name;                               // +0x190

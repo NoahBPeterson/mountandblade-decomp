@@ -10,21 +10,7 @@
 #include "../include/mat4.h"
 #include "./tstring.h"
 
-extern int g_tick_lo;                  // 0x5e2958 (g_time[2], 1e-5 s ticks)
-extern int g_tick_hi;                  // 0x5e295c
-
-// IfaceB carries three words at +4..+0xc (copied by the 0x1c8-byte record's copy constructor 0x437bb0).
-struct IfaceB {
-    int f4, f8, fc;
-    IfaceB() {}
-    virtual ~IfaceB() {}
-    virtual void slot1() {}
-    virtual void slot2() {}
-};
-struct Quad {
-    int a, b, c, d;
-    Quad() : a(2), c(g_tick_lo), d(g_tick_hi) {}
-};
+#include "../include/iface.h"        // IfaceB, Quad, g_tick_lo / g_tick_hi
 
 struct PlacedObj : IfaceB {
     int m10;                            // +0x10 (0x4352f0)

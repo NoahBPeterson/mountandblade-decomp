@@ -16,6 +16,8 @@
 #include "../../include/shape.h"
 #include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x441360
 void PhysSet::destroy_world(int idx)
@@ -137,7 +139,7 @@ void Agent::build_static_collision()
         bmax.x = body->m.o.x + 5.0f;
         bmax.y = body->m.o.y + 5.0f;
         bmax.z = body->m.o.z + 5.0f;
-        g_mission->scene->query_box(&bmin.x, &bmax.x, 0x8106, hits, &cnt);
+        g_mission->scene_L->query_box(&bmin.x, &bmax.x, 0x8106, hits, &cnt);
     }
     int i;
     for (i = 0; i < cnt; i++) {

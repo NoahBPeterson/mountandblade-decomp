@@ -33,6 +33,11 @@
 #include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../nav_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // inline vector helpers of the original: rgl's operators are out-of-line in other objects
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -182,7 +187,7 @@ bool Agent::has_weapon_for(int mode)
         else
             k1 = (g_game->chars[tr].flags & 0x4000000) ? 1 : 0;
     }
-    int ra = g_mission->teams[t1].hand[k1].a;
+    int ra = g_mission->teams[t1].cls[k1].a;
     int t2 = team;
     if (t2 < 0 || t2 >= 8) t2 = 7;
     int k2 = 0;
@@ -192,7 +197,7 @@ bool Agent::has_weapon_for(int mode)
         else
             k2 = (g_game->chars[tr].flags & 0x4000000) ? 1 : 0;
     }
-    int rb = g_mission->teams[t2].hand[k2].b;
+    int rb = g_mission->teams[t2].cls[k2].b;
     for (int i = 0; i < 4; i++) {
         if (found) return found;
         ItemRef* p = &pairs[i];
@@ -290,14 +295,14 @@ float Agent::attack_speed()
             f = (float)v * 0.12f + 1.0f;
             if (f2c != -1)
                 f = ((float)g_game->skill_level(troop, 0x17) * 0.019 + 0.8) * f;
-            if (g_mission->f6604 == 1)
+            if (g_mission->fog_dense == 1)
                 return (float)sqrt(f * 0.9f) * base * 1.2f;
         } else if (type == 10) {
             f = (float)g_game->skill_level(troop, 0x22) * 0.1f + 1.0f;
             if (f2c != -1)
                 return (float)sqrt(((float)g_game->skill_level(troop, 0x17) * 0.019 + 0.8) * f) * base * 1.2f;
         } else if (type == 9) {
-            if (g_mission->f6604 == 1) f = 0.75f;
+            if (g_mission->fog_dense == 1) f = 0.75f;
         }
     }
     return (float)sqrt(f) * base * 1.2f;
@@ -1181,9 +1186,9 @@ void Agent::hand_pos(vector4* out)
         if (f2c >= 0) h = 2;
         else h = (g_game->chars[troop].flags & 0x4000000i64) != 0 ? 1 : 0;
     }
-    HandRec* r = &g_mission->teams[c].hand[h];
-    float dy = r->dy;
-    float ndx = -r->dx;
+    ClassInfo* r = &g_mission->teams[c].cls[h];
+    float dy = r->dir.y;
+    float ndx = -r->dir.x;
     bool left = false;
     float k = 1.0f;
     if (r->mode == 1) {
@@ -1198,13 +1203,13 @@ void Agent::hand_pos(vector4* out)
     }
     if (f2c != -1) k *= 1.6f;
     *out = r->pos;
-    float nx = (r->dx * f5344) * k + out->x;
+    float nx = (r->dir.x * f5344) * k + out->x;
     out->x = nx;
-    float ny = (r->dy * f5344) * k + out->y;
+    float ny = (r->dir.y * f5344) * k + out->y;
     out->y = ny;
     if (left) {
-        out->x = nx - k * r->dx;
-        out->y = ny - k * r->dy;
+        out->x = nx - k * r->dir.x;
+        out->y = ny - k * r->dir.y;
     }
     float t8 = (dy * f5340) * k;
     float x2 = t8 + out->x;
@@ -1216,7 +1221,7 @@ void Agent::hand_pos(vector4* out)
     out->y = y2 + t4;
     float height = x2;
     face* hit;
-    g_mission->scene->floor_at(&out->x, &height, &hit);
+    g_mission->scene_level->floor_at(&out->x, &height, &hit);
     out->z = height;
 }
 
@@ -1224,7 +1229,7 @@ void Agent::hand_pos(vector4* out)
 // @ 0x43a6f0
 void Agent::release_body()
 {
-    g_mission->scene->remove_entity(body->id);
+    g_mission->scene_level->remove_entity(body->id);
     body = 0;
 }
 
@@ -1241,7 +1246,7 @@ int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base*
     unsigned mask = 0x8116;
     if (*flag)
         mask = 0x811e;
-    g_mission->scene->query_box(&mn.x, &mx.x, mask, found, &n);
+    g_mission->scene_level->query_box(&mn.x, &mx.x, mask, found, &n);
     int count = n;
     for (int i = 0; i < count; i++) {
         if (shape_contact_count(s, found[i], 1, &c) != 0) {

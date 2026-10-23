@@ -4,11 +4,8 @@
 // of each class for this directory; every offset is read or written by a function of these two modules (the
 // address is cited at the field). Names provisional.
 //
-// Known overlap with other headers (src/game/agent/agent.h, src/game/ui/mission.h, src/game/ui/item_ref.h,
-// src/game/strat/strat_entity.h): they define their own, smaller views of Agent / Mission / ItemRef / Skeleton /
-// AgentBody / world. They cannot be included together with this header (different field sets under the same
-// names); the layouts agree where they overlap (Agent.team +0x1c4, pairs +0x1d0, slots +0x22c, body +0x250;
-// Mission.scene +0, f5c/player_id +0x5c; world.cells +0x28).
+// The classes shared with the other agent modules are one definition each in src/game: Agent / AgentBody / AgentTable /
+// Threat (agent_obj.h), ItemRef (item_ref.h), Mission (mission.h), IfaceB (src/include/iface.h); this header includes them.
 #ifndef AGENT3_TYPES_H
 #define AGENT3_TYPES_H
 #include <stddef.h>
@@ -22,12 +19,7 @@
 using rgl::vector4;
 using rgl::matrix;
 
-// a frame with the operations the agent code calls (rgl::matrix + 0x40e870 / 0x40e570 / 0x408460)
-struct posm : matrix {
-    matrix mul(const matrix& m) const;                 // 0x40e870 (hidden return pointer)
-    void rotate_fu(const float& angle);                // 0x40e570
-    vector4 transform_point(const vector4& p) const;   // 0x408460
-};
+// posm (rgl::mat4 + the rotation 0x40e570) is in src/game/agent_obj.h
 
 // ---- collision shapes (vtable 0x54a4b8 shape_base, 0x54a540 capsule): src/include/shape.h ---------------------------
 #include "../../include/shape.h"
@@ -53,13 +45,6 @@ struct SkelData {
 };
 #include "../channel.h"             // Channel (shared with agent2)
 #include "../skeleton.h"                // Skeleton, Region, node_groups (shared with agent / agent2)
-struct AgentBody {
-    char pad0[0x58];
-    posm m;                                           // +0x58 (0x43f6d0, 0x43f560, 0x4406a0; m.o at +0x98: 0x443730)
-    char pad98[0x304 - 0x98];
-    Skeleton* skel;                                   // +0x304 (0x43f560, 0x43f970, 0x440e30, 0x443aa0, 0x444370)
-};
-
 // ---- the 0x38-byte record of the container instantiations: three words, two vector<int> (+0xc, +0x1c), three words
 // (the PhysRec of src/game/agent/phys_set.h) and its allocator (agent_combat.cpp 0x43f510; agent_fx_sound.cpp 0x442060)
 struct E56 {
@@ -74,185 +59,18 @@ struct alloc_e56 {
     void destroy(E56* p);                                           // 0x43e150
 };
 
-// ---- item reference (item index + packed word; src/game/agent/agent.h has the full class) --------------------
-struct ItemRef { int item; unsigned m4; };
-
 // ---- animation slot: 2 x 0x2c bytes at agent+0xd4 (0x4406a0 reads slot[1].cur at +0x100 and .scale at +0x118;
 // 0x444370 sets cur/next/events/rate through the inlined 0x4378a0) ----------------------------------------------
 #include "../anim_slot.h"          // AnimSlot (shared with agent2; set() inline here as in 0x444370)
-struct DefList { void* defs; int count; };            // +0x12c of the agent (0x444370)
-struct Threat { unsigned id; float dist; vector4 dir; };      // 0x18 bytes (0x443430)
 
 // ---- the mission object (g_mission 0x5e292c) ------------------------------------------------------------
-struct Agent;
-struct AgentTable {                                     // mission+4
-    int count;                                          // +0 (0x443270, 0x441020)
-    char pad4[0x14 - 4];
-    std::vector<Agent*> pages;                          // +0x14 (id >> 4 -> page of 16 agents; first at +0x18)
-    void next_used(unsigned* i);                        // 0x43b160
-    int first_used();                                   // 0x43b1b0
-};
-struct Mission {
-    world* scene;                                       // +0 (0x440e30, 0x442ca0)
-    AgentTable agents;                                  // +4
-    char pad28[0x5c - 0x28];
-    int player_id;                                      // +0x5c (0x43fd10, 0x440070, 0x443730, 0x443870)
-    char pad60[0x53c8 - 0x60];
-    int relation[1];                                    // +0x53c8 team x team, stride 0x5b ints, 1 = friend (0x441020, 0x443020)
-    char pad53cc[0x5df4 - 0x53cc];
-    int f5df4;                                          // +0x5df4 index into the 0x494-byte slot table of g_game (0x4435c0)
-    char pad5df8[0x62e8 - 0x5df8];
-    int time_idx;                                       // +0x62e8 (0x444370)
-    char pad62ec[4];
-    __int64 time_base;                                  // +0x62f0 (0x444370)
-    char pad62f8[0x654c - 0x62f8];
-    float f654c;                                        // +0x654c ground level (0x4435c0)
-    char pad6550[0x6555 - 0x6550];
-    bool muted;                                         // +0x6555 (0x4435c0)
-    char pad6556[0x660c - 0x6556];
-    int cam;                                            // +0x660c (0x442ca0)
-    char pad6610[0x6624 - 0x6610];
-    posm view;                                          // +0x6624 (0x43f970, 0x440070)
-    char pad6664[0x6678 - 0x6664];
-    std::vector<Agent*> dead;                           // +0x6678 (first at +0x667c) (0x442dc0)
-    bool friends(int a, int b) const
-    {
-        if (a >= 0 && a < 8 && b >= 0 && b < 8)
-            return relation[a * 0x5b + b] == 1;
-        return false;
-    }
-    void queue_dead(Agent* a);                          // 0x442dc0 (agent_fx_sound.cpp)
-    Emit* spawn_effect(int idx, const rgl::mat4* m, int duration);   // 0x442ca0 (agent_fx_sound.cpp)
-};
-extern Mission* g_mission;                              // 0x5e292c
+// ---- the agent: src/game/agent_obj.h (Agent, AgentBody, Threat, DefList; one definition for src/game) ----
+#include "../agent_obj.h"
+inline bool Agent::charged_0x48() const { return anim[1].cur == 0x48 && body->skel->chans->charge() > 0.1f; }   // 0x432470 inlined
+// AgentTable: src/game/agent_obj.h
+// Mission (g_mission 0x5e292c): src/game/mission.h
+#include "../mission.h"
 extern __int64 g_ticks[];                               // 0x5e2948 clock table (1e-5 s ticks)
-
-// ---- the agent ---------------------------------------------------------------------------------------------
-struct Agent {                                          // 0x5928 bytes
-    char pad0[8];
-    int id;                                             // +8 (0x43fd10, 0x440070, 0x441020)
-    char padc[4];
-    int f10;                                            // +0x10 (0x43f970; 1 = non-human, 0x443730)
-    int f14;                                            // +0x14 (1 = active) (0x441020, 0x442ed0)
-    char pad18[0x2c - 0x18];
-    int f2c;                                            // +0x2c target / mount id, -1 = none (0x43f970, 0x441020)
-    char pad30[0x50 - 0x30];
-    vector4 pos;                                        // +0x50 (0x43f970, 0x440070, 0x4406a0, 0x440e30)
-    vector4 vel;                                        // +0x60 blend_target's first argument (0x43f970, 0x441020)
-    char pad70[0x80 - 0x70];
-    float scale;                                        // +0x80 (0x43f6d0)
-    char pad84[0x88 - 0x84];
-    int troop;                                          // +0x88 troop index, -1 = none (0x4406a0, 0x443870)
-    char pad8c[0xac - 0x8c];
-    float fac;                                          // +0xac (0x43f970)
-    char padb0[0xb8 - 0xb0];
-    unsigned fb8;                                       // +0xb8 class bits (& 7) (0x4435c0)
-    char padbc[0xd4 - 0xbc];
-    AnimSlot anim[2];                                   // +0xd4 (stride 0x2c; anim[1].cur = +0x100, .scale = +0x118)
-    DefList* defs;                                      // +0x12c (0x444370)
-    int f130;                                           // +0x130 weapon class flags (0x444370)
-    char pad134[0x14c - 0x134];
-    Mesh* A[4];                                         // +0x14c (0x443aa0, 0x444370)
-    Mesh* B[4];                                         // +0x15c
-    Mesh* C[4];                                         // +0x16c (ammo / holster display)
-    char pad17c[0x1bc - 0x17c];
-    int f1bc;                                           // +0x1bc (0x443870)
-    char pad1c0[4];
-    int team;                                           // +0x1c4 (0x441020, 0x443020)
-    char pad1c8[0x1d0 - 0x1c8];
-    ItemRef pairs[11];                                  // +0x1d0 equipped items (0x440070, 0x443aa0, 0x444370)
-    int pad228;
-    union {
-        int slots[5];                                   // +0x22c (slots[4] at +0x23c; 0x440070)
-        struct {
-            int cur[2];                                 // +0x22c wielded item index per hand (0x443aa0, 0x444370)
-            int prev[2];                                // +0x234 (0x444370)
-            int f23c;                                   // +0x23c (0x443aa0)
-        };
-    };
-    char pad240[0x250 - 0x240];
-    AgentBody* body;                                    // +0x250
-    char pad254[0x294 - 0x254];
-    char blk294[0x2c0 - 0x294];                         // +0x294 blend_target's second argument (0x441020)
-    int f2c0;                                           // +0x2c0 (0x443140)
-    unsigned f2c4;                                      // +0x2c4 bit 0 = alarmed (0x443140)
-    char pad2c8[0x53ec - 0x2c8];
-    Threat threats[16];                                 // +0x53ec (0x443430)
-    int nthreat;                                        // +0x556c
-    char pad5570[0x55d8 - 0x5570];
-    float fx, fy, fz;                                   // +0x55d8 facing direction (0x442ed0); &fx is blend_target's second argument (0x43f970)
-    char pad55e4[4];
-    int f55e8;                                          // +0x55e8 (0x443270)
-    int snd_a, snd_b, snd_c;                            // +0x55ec / +0x55f0 / +0x55f4 shoot sound ids (0x43fd10)
-    int mode1;                                          // +0x55f8 attack direction chosen for hand 0
-    int snd2_a, snd2_b, snd2_c;                         // +0x55fc / +0x5600 / +0x5604
-    int mode2;                                          // +0x5608
-    int active;                                         // +0x560c (0x440070; 0x444370 clears it)
-    int f5610;                                          // +0x5610 (0x444370)
-    char pad5614[0x56b4 - 0x5614];
-    vector4 v56b4;                                      // +0x56b4 (0x441020)
-    int variant;                                        // +0x56c4 (0x43fd10; range table index 0x441020)
-    char pad56c8[0x57e0 - 0x56c8];
-    Timer tm;                                           // +0x57e0 (clock id, start tick) (0x442dc0)
-    char pad57f0[0x5830 - 0x57f0];
-    int state;                                          // +0x5830 (0x442dc0)
-    char pad5834[0x5858 - 0x5834];
-    int channel;                                        // +0x5858 FMOD channel (0x443870)
-    char pad585c[4];
-    int f5860;                                          // +0x5860 (0x443870)
-    char pad5864[4];
-    __int64 stamp;                                      // +0x5868 (0x443870)
-    float f5870;                                        // +0x5870
-    char pad5874[0x5928 - 0x5874];
-
-    // members of other objects
-    ItemRef slot_pair(int idx) const;                   // 0x432790 (hidden return pointer)
-    ItemRef slot_pair_inl(int idx) const                // the same body, inlined by cl at some call sites
-    {
-        const ItemRef* p = 0;
-        int i = slots[idx];
-        if (i >= 0 && (idx == 0 || slots[4] == 0)) p = &pairs[i];
-        ItemRef r;
-        r.item = -1;
-        if (p) r = *p;
-        return r;
-    }
-    bool charged_0x48() const { return anim[1].cur == 0x48 && body->skel->chans->charge() > 0.1f; }   // 0x432470 inlined
-    bool rel_a(const Agent* o);                         // 0x432350
-    bool rel_b(const Agent* o);                         // 0x4323a0
-    bool rel_c(const Agent* o);                         // 0x4323f0
-    int id_matches_dir(int id, int dir);                // 0x4326d0 (ret 8; this unused)
-    void get_dir(float* out);                           // 0x4378f0 (ret 4)
-    float duration();                                   // 0x438360
-    int find_target();                                  // 0x43b9e0
-    int pick_duel();                                    // 0x43bb80
-    void pick_sounds(int key, int mode, int* snd_a, int* snd_b, int* snd_c, int* variant);   // 0x4362e0
-    void update_quiver();                               // 0x43a800
-
-    // agent_combat.cpp
-    void aim_point_and_dir(vector4* pos_out, vector4* dir_out);     // 0x43f560
-    bool capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, int* out_bone);   // 0x43f6d0
-    int pick_attack_dir(unsigned target_id);            // 0x43f970
-    void start_shoot(int slot);                         // 0x43fd10
-    void pick_sound_ids(int* a, int* b, int* c);        // 0x440070 (ret 0xc)
-    int can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* target);   // 0x4406a0 (ret 0x14)
-    bool line_of_sight(unsigned tid, shape_base* ignore);           // 0x440e30
-    int fire_check(unsigned tid, int* out_blocker);     // 0x441020
-
-    // agent_fx_sound.cpp
-    bool can_target(unsigned aid, unsigned flags, float maxdist, float* out_dist);   // 0x442ed0 (ret 0x10)
-    bool any_hostile_near();                            // 0x443020
-    void update_alarm();                                // 0x443140
-    unsigned pick_shout_target(int flags, float maxdist);   // 0x443270
-    unsigned pick_threat();                             // 0x443430
-    void play_hit_sound(int* kind);                     // 0x4435c0
-    void play_sound_var(int* kind, float* var);         // 0x443730
-    void play_sound(int* snd);                          // 0x443870
-    void play_pain_sound(float health);                 // 0x443a00
-    void update_equipment_display();                    // 0x443aa0
-    void on_wield_changed();                            // 0x444370
-};
-
 
 // ---- game data: troop records, parties, slot table (g_game 0x5e2930) ---------------------------------------------
 struct TroopRec {                                // 0x508 bytes (array at game+0x13a00)

@@ -73,19 +73,7 @@ void __cdecl destroy_range_arrset_x(ArrSet* first, ArrSet* last, alloc_arrset& a
 void __cdecl uninit_fill_n_arrset_x(ArrSet* first, unsigned n, const ArrSet& val, alloc_arrset& al, ptr_tag tag);   // 0x4727e0 (uninit_fill_n_arrset)
 
 // ---- the 0x1c8-byte polymorphic record (vtable 0x590b84; copy ctor 0x437bb0, operator= 0x437d60, reset 0x4352f0) -----
-extern int g_tick_lo;                           // 0x5e2958 (g_ticks[2], 1e-5 s ticks)
-extern int g_tick_hi;                           // 0x5e295c
-struct IfaceB {
-    int f4, f8, fc;
-    IfaceB() {}
-    virtual ~IfaceB() {}
-    virtual void slot1() {}
-    virtual void slot2() {}
-};
-struct Quad {
-    int a, b, c, d;
-    Quad() : a(2), c(g_tick_lo), d(g_tick_hi) {}
-};
+#include "../../include/iface.h"        // IfaceB, Quad, g_tick_lo / g_tick_hi (shared)
 // The slices called it Rec1c8, MAgent, PropRec and PlacedObj (symbols/slices maps ??_7Agent@@, ??_7Rec1c8@@, ??_7PlacedObj@@).
 struct EntFlag;
 struct stream_base;

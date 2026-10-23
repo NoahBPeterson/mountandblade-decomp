@@ -50,10 +50,6 @@ extern ObjTable g_obj;                      // 0xa75f40
 MeshOps* __cdecl make_item_mesh(const ItemRef* def, const float* scale);   // 0x4fba40 (ret 0): the mesh of an item reference
 
 void __cdecl label_refresh(void* w, tstring name);          // 0x4e4c70 (cdecl, the name by value)
-struct ItemRefX : ItemRef {                 // the two ItemRef members item_ref.h lacks
-    int stat_200();                         // 0x434eb0
-    int max_amount();                       // 0x434b70
-};
 struct ItemSound {                          // the sound sub-object at ItemKind +0x228 (a TimerList, mission_ui.h)
     char pad[0x10];
     void play(int id);                      // 0x48add0 (ret 4)

@@ -285,10 +285,7 @@ enum {  // header_troops.py / header_items.py
 };
 
 // ---- slot arrays (troop / party / faction / scene / party template / agent / quest / item) -------------------------
-struct SlotArray {
-    __int64 get(const int& slot);                               // 0x48d650 (thiscall, ret 4)
-    void set(const int& slot, const __int64& value);            // 0x493d70 (thiscall, ret 8)
-};
+#include "../slot_array.h"
 
 #include "../../include/timer.h"
 
@@ -438,13 +435,8 @@ struct TroopX {
     ItemRef& slot(int n) { return n < 10 ? equipment[n] : items[n - 10]; }
 };
 void __fastcall clear_inventory_items(ItemRef* items);  // 0x489060 (the 0x60 inventory entries of a troop)
-// ItemRefX: ItemRef (agent.h) members it does not declare
-struct ItemRefX : ItemRef {
-    void set_item(int item);                // 0x48c5a0 (ret 4)
-    void set_modifier(int modifier);        // 0x438bc0 (ret 4)
-    void randomize_modifier(float quality); // 0x48c5c0 (ret 4)
-};
-inline ItemRefX& IR(ItemRef& r) { return (ItemRefX&)r; }
+// ItemRef (src/game/item_ref.h) carries the script editors set_item / set_modifier / randomize_modifier
+inline ItemRef& IR(ItemRef& r) { return r; }
 struct ItemList {                       // this = the first ItemRef; -1 item = free
     int first_free(int count);          // 0x489070
 };
@@ -747,71 +739,7 @@ extern char g_party_battle_mode;         // 0xa735c8 (set_party_battle_mode 0x4a
 extern char g_in_meta_mission;          // 0x8ee30ec (read by in_meta_mission)
 
 // ---- the mission (g_mission, 0x5e292c; Mission in agent.h) --------------------------------------------------------
-// AgentX: view of the agent record (Agent in src/game/agent/agent.h; 0x5928 bytes, pages of 16)
-struct AgentX {
-    int f0;
-    int live;                           // +4 (warn_agent 0x49d430)
-    int id;                             // +8 (agent_set_team 0x4a99c2)
-    int padc;
-    int kind;                           // +0x10 0 = human, 1 = horse (agent_is_human 0x4a8af6)
-    int state;                          // +0x14 1 = alive, 4 = wounded (agent_is_alive 0x4a8a8d)
-    char pad18[0x1c - 0x18];
-    SlotArray slots;                    // +0x1c (agent_set_slot 0x4a09f3)
-    char pad1d[0x2c - 0x1d];
-    int horse;                          // +0x2c (agent_get_horse 0x4a8dee)
-    int rider;                          // +0x30 (agent_get_rider 0x4a8e33)
-    int stand_animation;                // +0x34 (agent_set_stand_animation 0x4a9811)
-    int walk_forward_animation;         // +0x38 (0x4a9845)
-    char pad3c[0x50 - 0x3c];
-    rgl::vector4 position;              // +0x50 (agent_get_position 0x4a8d37)
-    char pad60[0x88 - 0x60];
-    int troop;                          // +0x88 (agent_get_troop_id 0x4a8ef8)
-    int item;                           // +0x8c horse item (agent_get_item_id 0x4a8f29)
-    char pad90[0x1bc - 0x90];
-    int party;                          // +0x1bc (agent_get_party_id 0x4a8e64)
-    char pad1c0[0x1d0 - 0x1c0];
-    ItemRef equipment[10];              // +0x1d0 (agent_has_item_equipped 0x4a94d8)
-    char pad220[0x250 - 0x220];
-    struct Body { char pad[0x58]; Pos frame; } *body;  // +0x250 (agent_get_position 0x4a8cf7: frame at +0x58)
-    char pad254[0x2c0 - 0x254];
-    int f2c0;                           // +0x2c0 cleared by agent_set_scripted_destination (0x4a9604)
-    char pad2c4[0x2c8 - 0x2c4];
-    int simple_behavior;                // +0x2c8 aisb_* (agent_get_simple_behavior 0x4a9737)
-    char pad2cc[0x5398 - 0x2cc];
-    int combat_state;                   // +0x5398 (agent_get_combat_state 0x4a9780)
-    char pad539c[0x5574 - 0x539c];
-    Pos scripted_destination;           // +0x5574 (agent_set_scripted_destination 0x4a95d2)
-    int scripted_mode;                  // +0x55b4
-    int always_attack_in_melee;         // +0x55b8 (0x4a970a)
-    char pad55bc[0x55c8 - 0x55bc];
-    float speed_limit;                  // +0x55c8 m/s (agent_set_speed_limit 0x4a96d2)
-    char pad55cc[0x55d8 - 0x55cc];
-    rgl::vector4 look_dir;              // +0x55d8 (agent_get_look_position 0x4a8c75)
-    char pad55e8[0x5718 - 0x55e8];
-    int entry_no;                       // +0x5718 (agent_get_entry_no 0x4a8ead)
-    char pad571c[0x5720 - 0x571c];
-    float max_health;                   // +0x5720 (heal_party 0x4a48ad)
-    float health;                       // +0x5724
-    int kill_count;                     // +0x5728 (agent_get_kill_count 0x4a9328)
-    int wounded_count;                  // +0x572c
-    char pad5730[0x5928 - 0x5730];
-    ItemRef slot_pair(int hand) const;                          // 0x432790 (ret 8: hidden return; agent.h Agent::slot_pair)
-    bool is_enemy(const AgentX* o) const;                       // 0x432350 (ret 4; game_util.h)
-    bool is_friend(const AgentX* o) const;                      // 0x4323a0 (ret 4; game_util.h)
-    int clamped_team() const;                                   // 0x435490 (agent.h)
-    int agent_class() const;                                    // 0x433140 (game_util.h hand_kind)
-    int total_ammo();                                           // 0x436a70 (agent.h total_missing_ammo)
-    void refill_ammo(int a1);                                   // 0x438520 (ret 4)
-    void position_changed();                                    // 0x4554c0
-    void deliver_blow(const struct Blow* b);                    // 0x457af0 (ret 4)
-    void update_after_blow(int a1);                             // 0x457b40 (ret 4)
-    void set_animation(int channel, int anim, int flags, float speed);   // 0x4379c0 (ret 0x10)
-    void set_animation_progress(int channel, float progress);   // 0x4354b0 (ret 8)
-    void play_sound(const int* sound);                          // 0x443870 (ret 4)
-    void set_team(const int* team);                             // 0x489a90 (ret 4)
-};
-SI_ASSERT(agent_equipment, offsetof(AgentX, equipment) == 0x1d0);
-SI_ASSERT(agent_dest, offsetof(AgentX, scripted_destination) == 0x5574);
+// The agent record is Agent (src/game/agent_obj.h; 0x5928 bytes, pages of 16): the slices' AgentX.
 // the blow record agent_deliver_damage_to_agent fills (RecZSubB in agent.h; 0x58 bytes)
 struct Blow {
     int flags;                          // +0 (0x20)
@@ -823,15 +751,7 @@ struct Blow {
     int f40, f44, f48, f4c, f50, f54;
     Blow* init();                       // 0x4353a0 (returns this)
 };
-SI_ASSERT(agent_size, sizeof(AgentX) == 0x5928);
-struct AgentTable {                     // at mission +4
-    int count;                          // +0 (warn_agent 0x49d430)
-    char pad4[0x18 - 4];
-    AgentX** pages;                     // +0x18 pages of 16 agents
-    AgentX* get(unsigned id);           // 0x43b1f0 (thiscall, ret 4)
-    int first_used();                   // 0x43b1b0
-    void next_used(unsigned* id);       // 0x43b160
-};
+SI_ASSERT(agent_size, sizeof(Agent) == 0x5928);
 struct PropInst {                       // 0x1c8-byte scene prop instance
     char pad0[0x18];
     Pos frame;                          // +0x18 (prop_instance_get_position 0x4aa404)
@@ -857,15 +777,7 @@ struct LevelX : Level {
     void set_fog(const float* a1, const float* distance, const unsigned* color);   // 0x488cd0 (ret 0xc)
 };
 struct EntryPoint { Pos pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
-struct TeamRec {                        // 0x16c bytes at mission +0x527c
-    int f0;
-    int leader;                         // +4 agent id, -1 = none (agent_set_team 0x4a99af)
-    char pad8[0x14c - 8];
-    int relations[8];                   // +0x14c (teams_are_enemies 0x4a9d5d)
-    int& listening(int sub_class) { return *(int*)((char*)this + 0x4c + sub_class * 0x6c); }   // (0x4a9a6c)
-    void set_order_position(const rgl::vector4* p, const int* face, const rgl::vector4& offset);   // 0x4898e0 (ret 0xc)
-    rgl::vector4 order_position();                              // 0x489890 (ret 4: hidden return)
-};
+// TeamRec (0x16c bytes at mission +0x5280): src/game/mission.h
 // a point light added by add_point_light (0x7c bytes)
 #include "../light.h"                   // Light (shared with agent2 / strat)
 // the trigger's scene entity (prop instance or agent body, trigger_entity 0x490430): virtual slots 25 / 27
@@ -909,13 +821,13 @@ struct MTimer {                         // clock index + start (Timer in src/rgl
 struct MissionX {
     LevelX* scene;                      // +0
     AgentTable agents;                  // +4
-    char pad20[0x5c - 0x20];
+    char pad2c[0x5c - 0x2c];            // (AgentTable is 0x28 bytes: count, free-id list, page vector, serial)
     int player_agent;                   // +0x5c (heal_party 0x4a488d)
     char pad60[0x670 - 0x60];
     EntryPoint entries[64];             // +0x670
-    char pad5270[0x527c - 0x5270];
-    TeamRec teams[8];                   // +0x527c
-    char pad5ddc[0x5df4 - 0x5ddc];
+    char pad5270[0x5280 - 0x5270];
+    TeamRec teams[8];                   // +0x5280
+    char pad5de0[0x5df4 - 0x5de0];
     int current_scene;                  // +0x5df4 (store_current_scene 0x4ad2c8)
     char pad5df8[0x6214 - 0x5df8];
     int mode;                           // +0x6214 (agent_is_defender 0x4a8b80)
@@ -986,7 +898,7 @@ struct MissionX {
     int spawn_horse(int item, int modifier);                    // 0x49f980 (ret 8)
 };
 SI_ASSERT(mission_props, offsetof(MissionX, props) == 0x6688);
-SI_ASSERT(mission_teams, offsetof(MissionX, teams) == 0x527c);
+SI_ASSERT(mission_teams, offsetof(MissionX, teams) == 0x5280);
 SI_ASSERT(mission_mode, offsetof(MissionX, mode) == 0x6214);
 SI_ASSERT(mission_fog, offsetof(MissionX, fog_distance) == 0x6610);
 SI_ASSERT(mission_cam, offsetof(MissionX, cam_frame) == 0x674c);
@@ -996,7 +908,7 @@ SI_ASSERT(prop_scale, offsetof(PropInst, scale_x) == 0x158);
 struct EnvRowX { char pad0[0x44]; unsigned fog_color; char pad48[0x4c - 0x48]; };
 extern EnvRowX* g_env_rows_x;           // 0x5e28f4 (set_fog_distance 0x4aa230)
 inline MissionX* mission() { return (MissionX*)g_mission; }
-inline AgentX* agent(int id) { return mission()->agents.get(id); }
+inline Agent* agent(int id) { return mission()->agents.get(id); }
 
 // ---- the operation record ---------------------------------------------------------------------------------------
 // Elem (dialog_manager.h): +0 opcode word (flags neg / this_or_next in the top bits), +8 operand count, +0x10 the

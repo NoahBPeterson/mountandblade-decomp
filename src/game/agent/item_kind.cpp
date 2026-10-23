@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <math.h>
 #include "./item_kind.h"
+#include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x433bf0
 tstring ItemKind::mesh_name_for(int bit)
@@ -22,7 +23,7 @@ tstring ItemKind::mesh_name_for(int bit)
         }
     }
     if (found >= 0) return meshes[found].name;
-    return name;
+    return key;
 }
 // @ 0x433cb0
 res_obj* ItemKind::mesh_for(unsigned __int64 cls, int bit)
@@ -323,6 +324,6 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
 int find_item(const tstring* name)
 {
     for (int i = 0; i < g_item_kind_count; i++)
-        if (g_items[i].name.equals(*name)) return i;
+        if (g_items[i].key.equals(*name)) return i;
     return 0;
 }

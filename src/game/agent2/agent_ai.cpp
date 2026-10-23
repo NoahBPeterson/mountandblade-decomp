@@ -24,6 +24,10 @@
 #include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../nav_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 static __forceinline float clampf(float v, float lo, float hi)
 {
@@ -99,14 +103,14 @@ static __forceinline bool hostile_to(Mission* m, int a, Agent* o)
     if (a < 0 || a >= 8) return false;
     int b = o->team;
     if (b < 0 || b >= 8) return false;
-    return m->teams[a].rel[b] == -1;
+    return m->teams[a].relation[b] == -1;
 }
 static __forceinline bool allied_to(Mission* m, int a, Agent* o)
 {
     if (a < 0 || a >= 8) return false;
     int b = o->team;
     if (b < 0 || b >= 8) return false;
-    return m->teams[a].rel[b] == 1;
+    return m->teams[a].relation[b] == 1;
 }
 
 // @ 0x43b300
@@ -535,18 +539,18 @@ int Agent::update_nav_face()
         int face = nav_face;
         nav_pos = *p;
         if (face != -1) {
-            if (g_mission->scene->nav->inside(&nav_face, &p->x))
+            if (g_mission->scene_level->nav->inside(&nav_face, &p->x))
                 return nav_face;
             if (face != -1) {
                 int mode = 2;
-                nav_face = g_mission->scene->locate_near(p, &nav_face, &mode);
+                nav_face = g_mission->scene_level->locate_near(p, &nav_face, &mode);
                 if (nav_face != -1)
                     return nav_face;
-                nav_face = g_mission->scene->nearest_face(&p->x);
+                nav_face = g_mission->scene_level->nearest_face(&p->x);
                 return nav_face;
             }
         }
-        nav_face = g_mission->scene->nearest_face(&p->x);
+        nav_face = g_mission->scene_level->nearest_face(&p->x);
     }
     return nav_face;
 }
@@ -884,7 +888,7 @@ void Agent::set_goal_near(const vector4* center, const float* radius)
         p.x = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.x;
         p.y = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.y;
         m = g_mission;
-        if (m->min_x <= p.x && p.x < m->max_x && m->min_y <= p.y && p.y < m->max_y)
+        if (m->terrain.min_x <= p.x && p.x < m->terrain.max_x && m->terrain.min_y <= p.y && p.y < m->terrain.max_y)
             break;
         i++;
         r *= 0.9f;
@@ -900,9 +904,9 @@ void Agent::set_goal_near(const vector4* center, const float* radius)
         face = cur;
     } else {
         int mode = 2;
-        if (cur >= 0 && (face = m->scene->locate_near(&p, &goal_face, &mode)) != -1) {
+        if (cur >= 0 && (face = m->scene_level->locate_near(&p, &goal_face, &mode)) != -1) {
         } else {
-            face = g_mission->scene->nearest_face(&p.x);
+            face = g_mission->scene_level->nearest_face(&p.x);
         }
     }
     set_goal_point(p, face);

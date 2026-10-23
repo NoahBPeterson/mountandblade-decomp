@@ -23,6 +23,8 @@
 #include "../../include/height_field.h"
 #include "../../game/placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../game/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../game/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../game/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // ---- Newton Game Dynamics imports (cdecl) -----------------------------------------------------------
 extern "C" {
@@ -76,14 +78,14 @@ int __cdecl group_base(int id)
 bool AgentX::is_enemy(const Agent* o) const
 {
     if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
-        return g_mission->relation[team * 0x5b + o->team] == -1;
+        return g_mission->rel_flat()[team * 0x5b + o->team] == -1;
     return false;
 }
 // @ 0x4323a0
 bool AgentX::is_friend(const Agent* o) const
 {
     if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
-        return g_mission->relation[team * 0x5b + o->team] == 1;
+        return g_mission->rel_flat()[team * 0x5b + o->team] == 1;
     return false;
 }
 // @ 0x4323f0

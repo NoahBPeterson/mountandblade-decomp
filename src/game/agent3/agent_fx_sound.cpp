@@ -21,6 +21,8 @@
 #include "../emit.h"
 #include "../anim_slot.h"
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
 template<> void std::vector<int>::push_back(const int&);
@@ -305,7 +307,7 @@ void GameData::add_experience(int troop, int amount)
 // @ 0x442ca0
 Emit* Mission::spawn_effect(int idx, const mat4* m, int duration)
 {
-    Emit* e = scene->alloc_emitter();
+    Emit* e = scene_world->alloc_emitter();
     vector4 v(0.0f, 0.0f, 0.0f);
     g_emit_defs.setup(e, idx, &v);
     e->world = *m * e->local;
@@ -331,7 +333,7 @@ void Mission::queue_dead(Agent* a)
 {
     dead.push_back(a);
     while (dead.size() > g_max_dead) {
-        dead[0]->state = 4;
+        dead[0]->f5830 = 4;
         Agent* o = dead[0];
         Timer* tm = &o->tm;
         tm->start = g_ticks[tm->clock];      // Timer::restart inlined
@@ -382,7 +384,7 @@ bool Agent::any_hostile_near()
         if (o->f14 == 1) {
             bool friendly = false;
             if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
-                friendly = m->relation[team * 0x5b + o->team] == 1;
+                friendly = m->rel_flat()[team * 0x5b + o->team] == 1;
             if (!friendly && !rel_c(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
                 vector4 d;
                 d.x = o->pos.x - pos.x;
@@ -507,7 +509,7 @@ unsigned Agent::pick_threat()
 void Agent::play_hit_sound(int* kind)
 {
     Mission* m = g_mission;
-    if (m->muted)
+    if (m->terrain.muted)
         return;
     int snd;
     if (f10 == 0) {
@@ -518,7 +520,7 @@ void Agent::play_hit_sound(int* kind)
             if (k != 3)
                 return;
             snd = 0xe;
-        } else if (!(pos.z < m->f654c)) {
+        } else if (!(pos.z < m->terrain.base_z)) {
             snd = (g_game->slots[m->f5df4].flags & 1) ? 0x10 : 0xf;
         } else {
             snd = 0x11;
@@ -528,7 +530,7 @@ void Agent::play_hit_sound(int* kind)
         unsigned c = fb8 & 7;
         if (k == 4) {
             snd = 0x61;
-        } else if (pos.z > m->f654c) {
+        } else if (pos.z > m->terrain.base_z) {
             if (c == 2 || c == 0) {
                 if (k != 0 && k != 2) return;
                 snd = 0x67;
@@ -678,9 +680,9 @@ void Agent::update_equipment_display()
     }
     int j;
     for (j = 0; j < 2; j++) {
-        int s = cur[j];
+        int s = wield[j];
         if (s >= 0 && pairs[s].item >= 0 && (j == 0 || f23c == 0)) {
-            ItemKind* ik = &g_items[pairs[cur[j]].item];
+            ItemKind* ik = &g_items[pairs[wield[j]].item];
             unsigned t = ik->type_flags & 0xff;
             int region = -1;
             if (t == 2 || t == 3 || t == 4 || t == 9 || t == 10 || t == 0x10 || t == 0x11)
@@ -699,9 +701,9 @@ void Agent::update_equipment_display()
                 M.f = vector4(-M.f.x, -M.f.y, -M.f.z);
                 M.s = vector4(-M.s.x, -M.s.y, -M.s.z);
             }
-            if (A[cur[j]] != 0) {
-                A[cur[j]]->vis = 0xffff;
-                Mesh* m = A[cur[j]];
+            if (A[wield[j]] != 0) {
+                A[wield[j]]->vis = 0xffff;
+                Mesh* m = A[wield[j]];
                 float limit = 0.0f;
                 int k = 0;
                 if (0 < m->nlists) {
@@ -710,15 +712,15 @@ void Agent::update_equipment_display()
                         k++;
                     } while (k < m->nlists);
                 }
-                attach(this, A[cur[j]], region, M);
+                attach(this, A[wield[j]], region, M);
             }
-            if (B[cur[j]] != 0) {
-                B[cur[j]]->vis = 0xffff;
-                attach(this, B[cur[j]], region, M);
+            if (B[wield[j]] != 0) {
+                B[wield[j]]->vis = 0xffff;
+                attach(this, B[wield[j]], region, M);
             }
             if ((ik->flags & itcf_carry_mask) != 0 && (ik->flags & itcf_show_holster_when_drawn) == 0)
-                slot_used[cur[j]] = 1;
-            Mesh* h = C[cur[j]];
+                slot_used[wield[j]] = 1;
+            Mesh* h = C[wield[j]];
             if (h != 0) {
                 if ((ik->flags & itcf_show_holster_when_drawn) == 0) {
                     h->vis = 0;
@@ -769,7 +771,7 @@ void Agent::update_equipment_display()
                     int bone, region;
                     ik->get_carry_pos(&M, &bone, &region);
                     if (bone == 9 || bone == 7 || bone == 8) {
-                        if (cur[0] != j && (cur[1] != j || f23c != 0)) {
+                        if (wield[0] != j && (wield[1] != j || f23c != 0)) {
                             if (A[j] != 0)
                                 A[j]->vis &= 0x2000;
                             if (B[j] != 0)
@@ -795,8 +797,8 @@ void Agent::on_wield_changed()
     int snd1 = -1;
     int j;
     for (j = 0; j < 2; j++) {
-        int c = cur[j];
-        int p = prev[j];
+        int c = wield[j];
+        int p = wield_prev[j];
         if (c != p) {
             int item;
             if (c < 0 || (item = pairs[c].item) < 0 || (j != 0 && f23c != 0)) {
@@ -875,13 +877,13 @@ void Agent::on_wield_changed()
                 }
             }
         }
-        prev[j] = c;
+        wield_prev[j] = c;
     }
     if (f23c != 0)
-        prev[1] = -1;
+        wield_prev[1] = -1;
     if (anim[1].cur == 0x7b && defs->count > -1 && anim[1].set(-1, 0x46)) {
         anim[1].rate = 1.0f;
-        int c0 = cur[0];
+        int c0 = wield[0];
         if (c0 >= 0 && pairs[c0].item >= 0)
             A[c0]->vis = 0xffff;
     }
@@ -895,7 +897,7 @@ void Agent::on_wield_changed()
     anim[1].rate = 1.0f;
     body->skel->set_rec_phase(1, 0.0f);
     {
-        int c0 = cur[0];
+        int c0 = wield[0];
         if (c0 >= 0 && pairs[c0].item >= 0)
             A[c0]->vis = 0xffff;
     }
@@ -906,7 +908,7 @@ skip:
         g_sound.play(g_sound_ids[snd2], 0, &pos.x, 1.0f, 0);
     f130 = 0;
     for (j = 0; j < 2; j++) {
-        int s = cur[j];
+        int s = wield[j];
         if (s >= 0 && pairs[s].item >= 0 && (j == 0 || f23c == 0)) {
             ItemKind* ik = &g_items[pairs[s].item];
             unsigned fl = ik->type_flags;

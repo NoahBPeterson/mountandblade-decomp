@@ -224,17 +224,8 @@ struct GroundSpec {             // 0x20-byte record (array pointer at 0x5e28f8, 
 extern GroundSpec* g_ground_specs;              // 0x5e28f8
 extern int g_ground_spec_count;                 // 0x5e29e8
 
-struct ItemKind {               // 0x238-byte record (array pointer at 0x5e29d0, count at 0x5e29d4)
-    tstring name;               // +0x00
-    tstring plural;             // +0x10
-    tstring key;                // +0x20 (also the record's own display name: 0x43a480)
-    char pad30[0x238 - 0x30];
-    tstring* display_name();                    // 0x43a480 (the record's own name, or itself when it has none)
-    tstring translated();                       // 0x4c62b0
-    tstring translated_plural();                // 0x4c6330
-    const tstring* plural_name() { return suffix_or(key, "_pl", plural); }
-};
-extern ItemKind* g_items;                       // 0x5e29d0
+#include "../../include/item_kind.h"       // ItemKind (name / plural / key at +0 / +0x10 / +0x20), g_items 0x5e29d0
+inline const tstring* ItemKind::plural_name() { return suffix_or(key, "_pl", plural); }
 extern int g_n_items;                           // 0x5e29d4
 
 // a mesh's keyframe track (a 0x24-byte record's +0x14 points at an array of these)

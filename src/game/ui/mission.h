@@ -9,16 +9,20 @@
 #include "../tstring.h"
 #include "./ui_common.h"
 
-// ---- combatant record: 0x16c bytes at Mission+0x527c; three 0x6c-byte sub-blocks ----------------------------
+// ---- the mission record is the shared src/game/mission.h (replay frames, per-team counters, per-team class blocks) ----
+#include "../mission.h"
+
+// ---- combatant record seen from +0x527c: the 0x16c-byte TeamRec (mission.h, at +0x5280) with its three ClassInfo blocks, as the
+// ui accessors address it (the displacements of their code are relative to 0x527c, so they cannot go through TeamRec) -------
 struct Blk {
     char pad0[8];
-    int k8;                                 // +0x08 kind (switch in active_kind 0x48aac0)
-    int kc;                                 // +0x0c kind (slot_mode 0x48ab30)
-    int k10;                                // +0x10 kind (slot_kind_a 0x48ab90)
-    int k14;                                // +0x14 kind (slot_kind_b 0x48abf0)
+    int k8;                                 // +0x08 = ClassInfo::kind (switch in active_kind 0x48aac0)
+    int kc;                                 // +0x0c = ClassInfo::k4 (slot_mode 0x48ab30)
+    int k10;                                // +0x10 = ClassInfo::a (slot_kind_a 0x48ab90)
+    int k14;                                // +0x14 = ClassInfo::b (slot_kind_b 0x48abf0)
     char pad18[0x4c - 0x18];
-    int use;                                // +0x4c slot in use (0x48a9e0..0x48ac50)
-    int m4;                                 // +0x50 saved copy of use (0x48a9e0, 0x48aa20)
+    int use;                                // +0x4c = ClassInfo::use (0x48a9e0..0x48ac50)
+    int m4;                                 // +0x50 = ClassInfo::saved_use (0x48a9e0, 0x48aa20)
     char pad54[0x6c - 0x54];
 };
 struct CombatRec {
@@ -26,52 +30,12 @@ struct CombatRec {
     char pad144[0x16c - 0x144];
 };
 
-struct Mission {
-    struct Pair { int a, b; } slots[1];     // +0x0 combatant-origin id pairs, indexed by combatant (0x48ac50)
-    char pad8[0x527c - 8];
-    CombatRec recs[1];                      // +0x527c combatant records (0x16c each)
-    char pad53e8[0x621c - 0x53e8];
-    int counts[8][6];                       // +0x621c per-team counters (0x48a8b0, 0x48a910)
-    char pad62dc[0x6328 - 0x62dc];
-    int clock_index;                        // +0x6328 (0x48a860)
-    int pad632c;
-    __int64 clock_start;                    // +0x6330
-    char clock_set;                         // +0x6338
-    char pad6339[0x653c - 0x6339];
-    float rect_xmin, rect_ymin, rect_xmax, rect_ymax;   // +0x653c (0x48a990)
-    char pad654c[0x674c - 0x654c];
-    rgl::matrix frame_a;                    // +0x674c replay frame A (0x48a420)
-    rgl::matrix frame_b;                    // +0x678c replay frame B
-    float blend_from, blend_to, blend_time; // +0x67cc (0x48a740)
-    int origin;                             // +0x67d8 clock index of the blend
-    char pad67dc[4];
-    __int64 start;                          // +0x67e0
-    char pad67e8[0x67f0 - 0x67e8];
-    int blend_n;                            // +0x67f0 easing steepness
-    float blend2_from, blend2_to;           // +0x67f4 (0x48a7d0)
-    char pad67fc[0x6800 - 0x67fc];
-    int origin2;                            // +0x6800
-    char pad6804[4];
-    __int64 start2;                         // +0x6808
-    float blend2_time;                      // +0x6810
-
-    void get_frame(rgl::matrix* out);       // 0x48a420
-    float blend_param();                    // 0x48a740
-    float blend2_param();                   // 0x48a7d0
-    void start_clock(int v);                // 0x48a860
-    int team_count();                       // 0x48a8b0
-    int last_team();                        // 0x48a910
-    bool point_in_rect(const float* p);     // 0x48a990
-    void slot_finish(int i);                // 0x48a9e0
-    void slot_restore(int i);               // 0x48aa20
-    void slot_set(int i, int s);            // 0x48aa60
-    int active_kind(int i);                 // 0x48aac0
-    int slot_mode(int i);                   // 0x48ab30
-    int slot_kind_a(int i);                 // 0x48ab90
-    int slot_kind_b(int i);                 // 0x48abf0
+// combatant-origin id pairs, indexed by combatant (0x48ac50, 0x48ac90). The slices lumped these two accessors into `Mission`;
+// `this` is an array of {a, b} pairs, not the mission object (whose +0 is the scene pointer).
+struct OriginPairs {
+    struct Pair { int a, b; } slots[1];
     bool has_origin(int i);                 // 0x48ac50
     bool has_free_origin(int i);            // 0x48ac90
-    CombatRec* rec(int i) { return (CombatRec*)((char*)this + 0x527c + i * 0x16c); }
 };
 extern void* g_origin_table[];              // 0xa170d4 object per origin id
 extern int g_origin_state[];                // 0xa174d4 0 = origin idle / free

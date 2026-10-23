@@ -87,8 +87,8 @@
 ../src/game/ui/mission_ui.cpp  ?slot_mode@Mission@@QAEHH@Z  0048ab30  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?slot_kind_a@Mission@@QAEHH@Z  0048ab90  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?slot_kind_b@Mission@@QAEHH@Z  0048abf0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?has_origin@Mission@@QAE_NH@Z  0048ac50  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?has_free_origin@Mission@@QAE_NH@Z  0048ac90  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?has_origin@OriginPairs@@QAE_NH@Z  0048ac50  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?has_free_origin@OriginPairs@@QAE_NH@Z  0048ac90  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?count@Vec68@@QAEHXZ  0048ace0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?lookup@Map10007@@QAEHI@Z  0048ad00  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?fill8@@YAXPAH0PBH@Z  0048ad70  /O2 /MT /Gy /TP

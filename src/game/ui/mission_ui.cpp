@@ -28,6 +28,9 @@
 #include "../../include/vec.h"
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
 static __forceinline int rnd(const float* p)
@@ -1275,6 +1278,9 @@ void NamedRec::setup2(const tstring* a, const tstring* b, const tstring* c, int 
     f04 = 1;
 }
 
+// the combatant record of team i as the accessors below address it (CombatRec: the team record seen from +0x527c)
+static __forceinline CombatRec* ui_rec(Mission* m, int i) { return (CombatRec*)((char*)m + 0x527c + i * 0x16c); }
+
 // @ 0x48a420
 void Mission::get_frame(rgl::matrix* out)
 {
@@ -1400,14 +1406,14 @@ int Mission::last_team()
 // @ 0x48a990
 bool Mission::point_in_rect(const float* p)
 {
-    return rect_xmin <= p[0] && p[0] < rect_xmax &&
-           rect_ymin <= p[1] && p[1] < rect_ymax;
+    return terrain.min_x <= p[0] && p[0] < terrain.max_x &&
+           terrain.min_y <= p[1] && p[1] < terrain.max_y;
 }
 
 // @ 0x48a9e0
 void Mission::slot_finish(int i)
 {
-    CombatRec* r = rec(i);
+    CombatRec* r = ui_rec(this, i);
     r->b[0].m4 = r->b[0].use;
     r->b[1].m4 = r->b[1].use;
     r->b[2].m4 = r->b[2].use;
@@ -1416,7 +1422,7 @@ void Mission::slot_finish(int i)
 // @ 0x48aa20
 void Mission::slot_restore(int i)
 {
-    CombatRec* r = rec(i);
+    CombatRec* r = ui_rec(this, i);
     r->b[0].use = r->b[0].m4;
     r->b[1].use = r->b[1].m4;
     r->b[2].use = r->b[2].m4;
@@ -1425,7 +1431,7 @@ void Mission::slot_restore(int i)
 // @ 0x48aa60
 void Mission::slot_set(int i, int s)
 {
-    CombatRec* r = rec(i);
+    CombatRec* r = ui_rec(this, i);
     if (s >= 0 && s < 3) {
         r->b[0].use = 0;
         r->b[1].use = 0;
@@ -1441,7 +1447,7 @@ void Mission::slot_set(int i, int s)
 // @ 0x48aac0
 int Mission::active_kind(int i)
 {
-    CombatRec* r = rec(i);
+    CombatRec* r = ui_rec(this, i);
     for (int k = 0; k < 3; k++) {
         if (r->b[k].use != 0) {
             switch (r->b[k].k8) {
@@ -1459,7 +1465,7 @@ int Mission::active_kind(int i)
 // @ 0x48ab30
 int Mission::slot_mode(int i)
 {
-    CombatRec* r = rec(i);
+    CombatRec* r = ui_rec(this, i);
     int v = 0;
     while (v < 3) {
         if (r->b[v].use != 0) {
@@ -1483,8 +1489,8 @@ int Mission::slot_kind_a(int i)
 {
     int v = -1;
     for (int k = 0; k < 3; k++) {
-        if (rec(i)->b[k].use) {
-            v = rec(i)->b[k].k10;
+        if (ui_rec(this, i)->b[k].use) {
+            v = ui_rec(this, i)->b[k].k10;
             break;
         }
     }
@@ -1500,8 +1506,8 @@ int Mission::slot_kind_b(int i)
 {
     int v = -1;
     for (int k = 0; k < 3; k++) {
-        if (rec(i)->b[k].use) {
-            v = rec(i)->b[k].k14;
+        if (ui_rec(this, i)->b[k].use) {
+            v = ui_rec(this, i)->b[k].k14;
             break;
         }
     }
@@ -1513,7 +1519,7 @@ int Mission::slot_kind_b(int i)
 }
 
 // @ 0x48ac50
-bool Mission::has_origin(int i)
+bool OriginPairs::has_origin(int i)
 {
     bool r = false;
     int a = slots[i].a;
@@ -1526,7 +1532,7 @@ bool Mission::has_origin(int i)
 }
 
 // @ 0x48ac90
-bool Mission::has_free_origin(int i)
+bool OriginPairs::has_free_origin(int i)
 {
     bool r = false;
     int a = slots[i].a;

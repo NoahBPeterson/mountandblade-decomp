@@ -50,6 +50,9 @@
 #include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../terrain_a/terrain.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 using rgl::vector4;
 using rgl::matrix;
@@ -1842,14 +1845,14 @@ static __forceinline float normalize_inline(vector4& v)
     }
     return len;
 }
-#define AGENT(m, id) ((m)->agents.pages[(id) >> 4][(id) & 0xf])
+#define AGENT(m, id) (agent_pool(m).pages[(id) >> 4][(id) & 0xf])
 
 // @ 0x474e60
 void Mission::update_team_stats()
 {
     int t, k;
     for (t = 0; t < 8; t++) {
-        Team& tm_ = teams[t];
+        TeamRec& tm_ = teams[t];
         if ((int)tm_.leader >= 0) {
             for (k = 0; k < 3; k++) {
                 ClassInfo& c = tm_.cls[k];
@@ -1871,8 +1874,8 @@ void Mission::update_team_stats()
                 teams[t].cls[k].sum = zero;
             }
 
-        unsigned i = agents.first_used();
-        while (i < (unsigned)agents.next_id) {
+        unsigned i = agent_pool(this).first_used();
+        while (i < (unsigned)agent_pool(this).next_id) {
             MAgent& a = AGENT(this, i);
             if (a.f14 == 1 && a.f10 == 0) {
                 int tid = a.team;
@@ -1886,11 +1889,11 @@ void Mission::update_team_stats()
                     teams[tid].cls[cl].sum.z = a.f50.z + teams[tid].cls[cl].sum.z;
                 }
             }
-            agents.next_used(&i);
+            agent_pool(this).next_used(&i);
         }
 
         for (t = 0; t < 8; t++) {
-            Team& tm_ = teams[t];
+            TeamRec& tm_ = teams[t];
             for (k = 0; k < 3; k++) {
                 float n = tm_.cls[k].count;
                 for (int j = 0; j < 3; j++) {
@@ -1907,8 +1910,8 @@ void Mission::update_team_stats()
             }
             if ((int)tm_.leader >= 0 && AGENT(this, tm_.leader).f14 != 1) {
                 bool found = false;
-                unsigned i2 = agents.first_used();
-                while (i2 < (unsigned)agents.next_id) {
+                unsigned i2 = agent_pool(this).first_used();
+                while (i2 < (unsigned)agent_pool(this).next_id) {
                     MAgent& a = AGENT(this, i2);
                     if (!found && a.f14 == 1 && a.f10 != 1) {
                         int tid = a.team;
@@ -1918,7 +1921,7 @@ void Mission::update_team_stats()
                             tm_.leader = i2;
                         }
                     }
-                    agents.next_used(&i2);
+                    agent_pool(this).next_used(&i2);
                 }
             }
         }
@@ -1933,8 +1936,8 @@ void Mission::update_team_stats()
         }
 
         {
-            unsigned i3 = agents.first_used();
-            while (i3 < (unsigned)agents.next_id) {
+            unsigned i3 = agent_pool(this).first_used();
+            while (i3 < (unsigned)agent_pool(this).next_id) {
                 MAgent& a = AGENT(this, i3);
                 if (a.f14 == 1 && a.f10 != 1) {
                     int tid = a.team;
@@ -1947,19 +1950,19 @@ void Mission::update_team_stats()
                         else if (tid == 0) a.view.v50e8.y = -0.7f;
                     }
                 }
-                agents.next_used(&i3);
+                agent_pool(this).next_used(&i3);
             }
         }
 
         for (t = 0; t < 8; t++) {
-            Team& tm_ = teams[t];
+            TeamRec& tm_ = teams[t];
             if ((int)tm_.leader >= 0) {
                 for (k = 0; k < 3; k++) {
                     ClassInfo& c = tm_.cls[k];
                     vector4 v;
                     v.x = 0.0f; v.y = 0.0f; v.z = 0.0f;
-                    unsigned i4 = agents.first_used();
-                    while (i4 < (unsigned)agents.next_id) {
+                    unsigned i4 = agent_pool(this).first_used();
+                    while (i4 < (unsigned)agent_pool(this).next_id) {
                         MAgent& a = AGENT(this, i4);
                         if (a.f14 == 1 && a.f10 != 1) {
                             int tid = a.team;
@@ -1980,7 +1983,7 @@ void Mission::update_team_stats()
                                 v.z = v.z + d.z * s;
                             }
                         }
-                        agents.next_used(&i4);
+                        agent_pool(this).next_used(&i4);
                     }
                     v.z = 0.0f;
                     if (v.length() > 1e-11f) {
@@ -1997,19 +2000,19 @@ void Mission::update_team_stats()
         }
 
         {
-            unsigned i5 = agents.first_used();
-            while (i5 < (unsigned)agents.next_id) {
+            unsigned i5 = agent_pool(this).first_used();
+            while (i5 < (unsigned)agent_pool(this).next_id) {
                 AGENT(this, i5).f55e8 = 0;
-                agents.next_used(&i5);
+                agent_pool(this).next_used(&i5);
             }
         }
         {
-            unsigned i6 = agents.first_used();
-            while (i6 < (unsigned)agents.next_id) {
+            unsigned i6 = agent_pool(this).first_used();
+            while (i6 < (unsigned)agent_pool(this).next_id) {
                 int o = AGENT(this, i6).view.target;
-                if (o >= 0 && o < agents.next_id && AGENT(this, o).used != 0)
+                if (o >= 0 && o < agent_pool(this).next_id && AGENT(this, o).used != 0)
                     AGENT(this, o).f55e8++;
-                agents.next_used(&i6);
+                agent_pool(this).next_used(&i6);
             }
         }
     }
@@ -2029,12 +2032,12 @@ void Mission::update_team_counts()
             src++;
         }
     }
-    unsigned i = agents.first_used();
-    while (i < (unsigned)agents.next_id) {
-        MAgent& a = agents.pages[i >> 4][i & 0xf];
+    unsigned i = agent_pool(this).first_used();
+    while (i < (unsigned)agent_pool(this).next_id) {
+        MAgent& a = agent_pool(this).pages[i >> 4][i & 0xf];
         if (a.f10 == 0 && a.team >= 0 && a.team < 8)
             counts[a.team][a.f14]++;
-        agents.next_used(&i);
+        agent_pool(this).next_used(&i);
     }
     for (int t = 0; t < 8; t++) {
         for (int j = 0; j < 6; j++)

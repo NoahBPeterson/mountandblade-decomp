@@ -19,6 +19,9 @@
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../world.h"
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // inline helpers: the original compiled them into the callers
 static __forceinline vector4 vmul(const vector4& v, const float& k) { return vector4(v.x * k, v.y * k, v.z * k); }
@@ -666,7 +669,7 @@ bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
                 return false;
         }
         if (dp > -0.3f || len < 2.0f)
-            r = g_mission->scene->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
+            r = g_mission->scene_world->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
     }
     return r;
 }

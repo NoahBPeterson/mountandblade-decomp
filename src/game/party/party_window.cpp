@@ -320,7 +320,7 @@ void PartyWindow::refresh_armor(void** labels, int t)
     float enc = 0.0f;
     int legs = 0;
     for (int i = 0; i < 8; i++) {
-        ItemRefX* r = (ItemRefX*)&EQUIP(t, i);
+        ItemRef* r = (ItemRef*)&EQUIP(t, i);
         if (r->item < 0)
             continue;
         ItemKind* it = &g_items[r->item];
