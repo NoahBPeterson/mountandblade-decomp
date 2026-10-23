@@ -1,2 +1,4 @@
 slices/s0048c0c0/s0048c0c0.cpp  ?material_type@@YAHXZ  0048c460  /O2 /MT /Gy /TP
 slices/s0048c0c0/s0048c0c0.cpp  ?set@ItemRef@@QAEXH@Z  0048c5a0  /O2 /MT /Gy /TP
+slices/s0048c0c0/s0048c0c0.cpp  ?remove_slot@Agent@@QAEXH@Z  0048c330  /O2 /MT /Gy /TP
+slices/s0048c0c0/s0048c0c0.cpp  ?set_slot@Agent@@QAEXHHH@Z  0048c7f0  /O2 /MT /Gy /TP

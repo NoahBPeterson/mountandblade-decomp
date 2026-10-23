@@ -69,10 +69,7 @@ int item_modifier_value(const ItemRef* r);      // 0x434df0 (result of a modifie
 struct ItemSlot {
     ItemRef a;                          // +0x00
     ItemRef b;                          // +0x08
-    union {
-        unsigned m10;
-        struct { unsigned char f10; unsigned char pad11[3]; };
-    };                                  // +0x10
+    int f10;                            // +0x10
     int f14;                            // +0x14
     int f18;                            // +0x18
     int f1c;                            // +0x1c
@@ -92,19 +89,18 @@ struct Agent {
     unsigned fA0;                       // +0xa0 (bit 0x100000 = has custom slots)
     char padA4[4];
     ItemSlot slots[8];                  // +0xa8 (stride 0x20, only the first 8-byte reference is used)
-    char pad1a8[0x4a4 - 0x1a8];
+    char pad1a8[0x8a8 - 0x1a8];
     int slot_count;                     // +0x8a8
     char pad8ac[0x8b4 - 0x8ac];
     unsigned char dirty;                // +0x8b4 (set whenever the slot table changes)
     int slot_begin(int slot, unsigned mask, char remove);           // 0x489620
     int slot_add(int item, int amount, unsigned mask, int mod, char merge);   // 0x48c840
-    void slot_remove(int idx, int amount, int extra, char peek);    // 0x489540
-    int slot_consume(int idx, int amount, int extra, char merge);   // 0x48c3c0
+    void slot_remove(ItemSlot* out, int idx, void* extra);          // 0x489540 (thiscall, ret 0xc)
+    int slot_consume(int idx, int amount, void* extra, char merge); // 0x48c3c0
     void remove_slot(int idx);          // 0x48c330
-    void set_slot(int idx, int item, int mod);  // 0x48c7f0
+    void set_slot(int item, int idx, int mod);  // 0x48c7f0
     int tier_base();                    // 0x462b60
     void sort_slots();                  // 0x48c0c0
-    void give_item(int item, int count);    // 0x48c9b0
 };
 
 // the agent container (only the troop array is used here)
@@ -112,6 +108,7 @@ struct World {
     char pad0[0x13a00];
     Agent* agents;                      // +0x13a00 (stride 0x508)
     void init_slots(int troop_idx, int want);   // 0x48c4c0
+    void give_item(int troop, int item, int count);     // 0x48c9b0 (ret 0xc)
 };
 extern World* g_world;                  // 0x5e2930
 
@@ -196,7 +193,7 @@ struct Event {
     int f8c;                            // +0x8c
     int f90;                            // +0x90
     Event();                            // 0x48c210
-    int init();                         // 0x48c260
+    void init();                        // 0x48c260
 };
 extern int g_cfg2950;                   // 0x5e2950
 extern int g_cfg2954;                   // 0x5e2954
@@ -217,9 +214,8 @@ Event::Event()
 }
 
 // @ 0x48c260
-int Event::init()
+void Event::init()
 {
-    int seed;
     f10 = 0;
     name.assign("An Event");
     f24 = 0;
@@ -229,8 +225,7 @@ int Event::init()
     float c = 1.0f;
     f34 = s;
     f38 = c;
-    seed = rand();
-    float a = (float)(seed % 15817) * 0.00039724255f;
+    float a = (float)(rand() % 15817) * 0.00039724255f;
     float ca = cos(a);
     float sa = sin(a);
     f38 = sa * f34 + ca * f38;
@@ -238,57 +233,56 @@ int Event::init()
     f40 = 0.3f;
     f44 = -10000.0f;
     f90 = -1;
-    return seed;
 }
 
 // ---- 0x48c330: remove slot entry idx, shifting the list down -----------------------------------------
 // @ 0x48c330
 void Agent::remove_slot(int idx)
 {
-    if ((slots[idx].f10 & 1) || idx < 1) {
+    // field at entry +8 (low byte, bit 0 = pinned): an entry that is pinned, or idx <= 0, stays where it is;
+    // otherwise it is swapped down past every pinned predecessor
+    if ((slots[idx].b.item & 1) || idx <= 0) {
         this->dirty = 1;
         return;
     }
     int i = idx;
-    ItemSlot* p = &slots[idx - 1];
-    while (1) {
-        ItemSlot t = *p;
-        *p = p[1];
-        p[1] = t;
+    do {
+        if (!(slots[i - 1].b.item & 1)) {
+            this->dirty = 1;
+            return;
+        }
+        ItemSlot t = slots[i - 1];
+        slots[i - 1] = slots[i];
+        slots[i] = t;
         i--;
-        if (i <= 1)
-            break;
-        p--;
-    }
+    } while (i > 0);
     this->dirty = 1;
 }
 
 // ---- 0x48c3c0: count a slot entry down; drop it when it runs out --------------------------------------
 // @ 0x48c3c0
-int Agent::slot_consume(int idx, int amount, int extra, char merge)
+int Agent::slot_consume(int idx, int amount, void* extra, char merge)
 {
     ItemSlot* e = &slots[idx];
-    int v = e->a.b.amount - amount;
-    e->a.b.amount = v;
+    int r = 0;
+    e->a.item -= amount;                // entry +0: the count
+    int v = e->a.item;
     if (merge) {
-        int t = e->f10 - amount;
-        e->f10 = t;
-        t = t > 0 ? t : 0;
-        e->f10 = t;
+        e->f10 -= amount;
+        e->f10 = e->f10 > 0 ? e->f10 : 0;
     } else {
         if (e->f10 > v)
             e->f10 = v;
     }
-    if (e->f18 > v)
-        e->f18 = v;
-    if (v <= 0) {
+    if (e->f14 > v)
+        e->f14 = v;
+    if (slots[idx].a.item <= 0) {       // count exhausted: drop the entry (and its 0x80-byte extra record)
         ItemSlot out;
-        slot_remove(idx, amount, extra, (char)merge);
-        this->dirty = 1;
-        return 1;
+        slot_remove(&out, idx, extra);
+        r = 1;
     }
     this->dirty = 1;
-    return 0;
+    return r;
 }
 
 // ---- 0x48c460: material type id ----------------------------------------------------------------------
@@ -426,9 +420,9 @@ void ItemRef::randomize_modifier(int kind)
 
 // ---- 0x48c7f0: set slot idx's item and modifier ------------------------------------------------------
 // @ 0x48c7f0
-void Agent::set_slot(int idx, int item, int mod)
+void Agent::set_slot(int item, int idx, int mod)
 {
-    ItemRef* r = &slots[idx].a;
+    ItemRef* r = (ItemRef*)((char*)this + 0xb4) + idx;      // 8-byte item references at agent +0xb4
     r->set(item);
     if (mod >= 0 && mod < 0x2b) {
         r->b.mod = 0;
@@ -482,19 +476,19 @@ int Agent::slot_add(int item, int amount, unsigned mask, int mod, char merge)
     return idx;
 }
 
-// ---- 0x48c9b0: give an agent copies of an item (first free slots) ------------------------------------
+// ---- 0x48c9b0: give a troop `count` copies of an item (into its first free item references) -----------
 // @ 0x48c9b0
-void Agent::give_item(int item, int count)
+void World::give_item(int troop, int item, int count)
 {
-    int n = tier_base();
-    ItemRef* s = (ItemRef*)((char*)this + 0xb4);
+    Agent* ag = (Agent*)((char*)agents + troop * 0x508);
+    int n = ag->tier_base();
     for (int i = 0; i < n; i++) {
-        if (count < 1)
+        if (count <= 0)
             return;
-        if (s[i * 4].item == -1) {
+        ItemRef* r = (ItemRef*)((char*)agents + 0xb4) + (troop * 0xa1 + i);
+        if (r->item == -1) {
             count--;
-            s[i * 4].set(item);
-            s[i * 4].reduce(0);
+            r->set(item);
         }
     }
 }
