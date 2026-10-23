@@ -3,7 +3,7 @@
 
 usage: equiv.py <slice-id> [<va> ...] [--flags "..."] [--inputs N] [--seed S] [--json out.json]
                 [--min-valid K] [--gate edges|insns] [--no-steer] [--ulp U] [--strict-calls]
-                [--budget N] [--time-limit S] [-v]
+                [--budget N] [--time-limit S] [--fp-tol] [--fp-realistic] [-v]
 
 Default VAs: the slice's nonmatching.txt. Our function is compiled (into work/difftest/obj/, never
 match/), its relocations are resolved to the ORIGINAL's addresses (tools/difftest/resolve.py), and
@@ -32,6 +32,8 @@ Verdicts:
               covered except the listed unreachable ones;
   WEAK        no mismatch, but too few valid inputs or missed edges; the reason names the side(s) and
               how many edges each misses;
+  PASS-FP / WEAK-FP  (--fp-tol only) PASS / WEAK where every mismatching input differed only by float rounding
+              (judged against the original at 64-bit precision) or was out of float range; stats in the reason;
   FAIL        a mismatch (the first one is printed, its input saved for --replay);
   UNSUPPORTED unresolved reference, symbol not found, compile error, or almost every input discarded.
 --gate insns restores the legacy gate (original's instruction coverage >= --min-cov, default 60%).
@@ -47,7 +49,7 @@ except OSError:
     pass
 import numpy as np                                 # noqa: E402
 from capstone import x86_const as CX               # noqa: E402
-from unicorn import UC_HOOK_CODE, UC_HOOK_BLOCK, UC_HOOK_MEM_READ, UC_PROT_READ, UC_PROT_WRITE    # noqa: E402
+from unicorn import UC_HOOK_CODE, UC_HOOK_BLOCK, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_PROT_READ, UC_PROT_WRITE    # noqa: E402
 from unicorn.x86_const import *                    # noqa: E402,F401,F403
 
 import slice as S                                  # noqa: E402
@@ -417,9 +419,10 @@ HOT_SLOTS = 8          # slots 0..7 hold the argument / `this` objects
 class InputGen:
     """Random inputs ('pointer soup' objects + typed arguments) and their mutations."""
 
-    def __init__(self, t, alias=0.0, nan=False, code=()):
+    def __init__(self, t, alias=0.0, nan=False, code=(), fp_real=False):
         self.t = t
         self.alias = alias
+        self.fp_real = fp_real      # --fp-realistic: float fields are finite magnitudes in [1e-3, 1e5]
         self.nan = nan
         # Generated values never point into real code (image .text, our object's code): a soup
         # "method pointer" taken from the original's immediates (a jump target inside the function
@@ -460,6 +463,10 @@ class InputGen:
             return 0
         if k == "small":
             return rng.randrange(9) if rng.random() < 0.9 else 0xFFFFFFFF
+        if k == "rand" and self.fp_real and rng.random() < 0.5:
+            return f2u(self.freal(rng))
+        if k == "float" and self.fp_real:
+            return f2u(self.freal(rng))
         if k == "float":
             r = rng.random()
             if r < 0.6:
@@ -470,6 +477,13 @@ class InputGen:
         if k == "dict":
             return rng.choice(self.dic)
         return rng.getrandbits(32)
+
+    @staticmethod
+    def freal(rng):
+        """--fp-realistic float: exact 0/+-1 (10%) or +-10^U(-3, 5), the magnitudes of camera/transform data."""
+        if rng.random() < 0.1:
+            return rng.choice((0.0, 1.0, -1.0))
+        return rng.choice((-1.0, 1.0)) * 10.0 ** rng.uniform(-3, 5)
 
     def slot_pages(self, inp, slot):
         """{page: 4 KB} for the 16 pages of one 64 KB pool slot."""
@@ -520,6 +534,12 @@ class InputGen:
             return M.POOL_BASE + slot * M.SLOT + off
         if kind == "small":
             return np.where(rng.random(n) < 0.9, rng.integers(0, 9, n), 0xFFFFFFFF)
+        if kind == "rand" and self.fp_real:
+            w = rng.integers(0, 1 << 32, n, dtype=np.int64)
+            sel = rng.random(n) < 0.5
+            return np.where(sel, self._freal_n(rng, n), w)
+        if kind == "float" and self.fp_real:
+            return self._freal_n(rng, n)
         if kind == "float":
             r = rng.random(n)
             f = np.where(r < 0.6, rng.uniform(-4, 4, n),
@@ -528,6 +548,12 @@ class InputGen:
         if kind == "dict":
             return np.array(self.dic, dtype=np.int64)[rng.integers(0, len(self.dic), n)]
         return rng.integers(0, 1 << 32, n, dtype=np.int64)
+
+    def _freal_n(self, rng, n):
+        mag = 10.0 ** rng.uniform(-3, 5, n)
+        f = np.where(rng.random(n) < 0.5, -mag, mag)
+        f = np.where(rng.random(n) < 0.1, rng.choice([0.0, 1.0, -1.0], n), f)
+        return f.astype(np.float32).view(np.uint32).astype(np.int64)
 
     def page_v1(self, inp, page):
         rng = random.Random((inp.seed << 32) ^ page)
@@ -563,6 +589,8 @@ class InputGen:
             return rng.randrange(256) if rng.random() < 0.7 else rng.choice(self.dic) & 0xFFFF
         if k == "bool":
             return rng.randrange(2)
+        if k == "float" and self.fp_real:
+            return f2u(self.freal(rng))
         if k == "float":
             r = rng.random()
             if r < 0.5:
@@ -734,7 +762,7 @@ class Runner:
         self.run_blocks = set()
         self.page_cache = {}
         code = [(a, a + n) for nm, a, n, ch in self.img.sections if ch & 0x20000000]
-        self.gen = InputGen(t, opts.alias, opts.nan, code + list(obj["code"]))
+        self.gen = InputGen(t, opts.alias, opts.nan, code + list(obj["code"]), getattr(opts, "fp_realistic", False))
         self.cov_on = False
         self.cov_side = None
         self.prev_end = None
@@ -1743,6 +1771,241 @@ def classify_pairs(pairs):
     return "float-special" if "float-special" in kinds else "float-rounding"
 
 
+# ====================================================================== --fp-tol
+
+FPCW_REF = 0x037F        # 64-bit precision: approximates exact arithmetic for the reference run
+FP_STORES = ("movss", "movaps", "movups", "movlps", "movhps", "movsd", "movapd", "movupd", "movlpd", "movhpd", "movq")
+FP_BIG = 1e30            # a differing float above this (or Inf/NaN) in the original is "out of range"
+
+
+def _f32(v):
+    return struct.unpack("<f", struct.pack("<I", v))[0]
+
+
+def _tiny(v):
+    """Denormal bit pattern (exponent 0, mantissa != 0): also what small integers look like as floats."""
+    return (v & 0x7F800000) == 0 and (v & 0x7FFFFFFF) != 0
+
+
+def fp_ulp(x, bits=24):
+    """Spacing of floats with `bits` significant bits at the magnitude of x."""
+    if x == 0 or not math.isfinite(x):
+        return 2.0 ** -149 if bits == 24 else 2.0 ** -1074
+    return max(2.0 ** (math.frexp(x)[1] - bits), 2.0 ** -149 if bits == 24 else 2.0 ** -1074)
+
+
+def fp_judge_value(fa, fb, fr, bits=24):
+    """(verdict, ulps, ratio, detail) for one differing float: orig at the game's precision (fa), ours (fb)
+    and the original at 64-bit precision (fr, the stand-in for the exact result).
+    verdict: 'oor' (the original's result or the exact result is Inf/NaN/above 1e30: a range case),
+    'real' (NaN/Inf in ours only, or ours is further from the reference than the original), 'ok'."""
+    if not math.isfinite(fa) or abs(fa) > FP_BIG or not math.isfinite(fr) or abs(fr) > FP_BIG:
+        return "oor", 0.0, None, ""
+    if not math.isfinite(fb):
+        return "inf", 0.0, None, "ours is %r, original %r (reference %r)" % (fb, fa, fr)
+    eo, eu = abs(fa - fr), abs(fb - fr)
+    ulp = fp_ulp(max(abs(fr), abs(fa), abs(fb)), bits)
+    ratio = eu / eo if eo > 0 else None
+    detail = "orig %r ours %r reference %r: err_orig %.3g err_ours %.3g (%.3g ulp)" % (fa, fb, fr, eo, eu, eu / ulp)
+    ok = eu <= max(2 * eo, 4 * ulp)
+    return ("ok" if ok else "real"), abs(fa - fb) / ulp, ratio, detail
+
+
+class FpTol:
+    """--fp-tol: judge an input where original and ours differ only in floating-point rounding. The original
+    is re-run at 64-bit precision (the reference); a differing dword is a float only if both builds and the
+    reference hold finite floats, and ours must be at most as far from the reference as twice the original
+    (or 4 ulp). Everything else (integers, pointers, call traces, status) stays a real mismatch."""
+
+    def __init__(self, runner, cmp_, opts):
+        self.r, self.c, self.opts = runner, cmp_, opts
+        self.cw = int(opts.fpcw, 16)
+        self.n_fp = self.n_oor = self.n_floats = 0
+        self.max_ulp = 0.0
+        self.max_ratio = 0.0
+
+    def stats(self, valid, mism):
+        return {"compared": valid, "bit_identical": valid - self.n_fp - self.n_oor - mism, "fp_tolerable": self.n_fp,
+                "fp_floats": self.n_floats, "max_ulp": round(self.max_ulp, 2), "max_err_ratio": round(self.max_ratio, 2),
+                "out_of_range": self.n_oor, "real_mismatches": mism}
+
+    def ref_run(self, inp):
+        m = self.r.m
+        touched = list(inp.touched)
+        m.set_fpcw(FPCW_REF)
+        self.fstore = {}        # dword address -> the last write to it was an x87/SSE float store
+        code, fvals = {}, set()
+
+        def on_write(uc, access, address, size, value, _):
+            pc = uc.reg_read(UC_X86_REG_EIP)
+            f = code.get(pc)
+            if f is None:
+                try:
+                    ins = next(_md.disasm(bytes(uc.mem_read(pc, 15)), pc))
+                    f = ins.mnemonic.startswith("fst") or ins.mnemonic in FP_STORES
+                except (StopIteration, Exception):      # noqa: BLE001
+                    f = False
+                code[pc] = f
+            if size >= 4:
+                # an integer store of a value an x87/SSE store wrote earlier is a copied float (spill, then mov to the result)
+                v = value & 0xFFFFFFFF
+                if f:
+                    fvals.add(v)
+                self.fstore[address & ~3] = f or v in fvals
+        self.huge_in = False        # the run read a dword that is a float Inf/NaN/above 1e30
+        self.denorm_in = False      # ... or a denormal float (also what small integers look like)
+
+        def on_read(uc, access, address, size, value, _):
+            if size == 4 and not (self.huge_in and self.denorm_in):
+                try:
+                    v = struct.unpack("<I", bytes(uc.mem_read(address, 4)))[0]
+                except Exception:      # noqa: BLE001
+                    return
+                e = (v >> 23) & 0xFF
+                if e >= 127 + 100:        # |x| >= 2^100 (1.27e30), Inf or NaN
+                    self.huge_in = True
+                elif e == 0 and v & 0x7FFFFF:
+                    self.denorm_in = True
+        h = m.uc.hook_add(UC_HOOK_MEM_WRITE, on_write)
+        h2 = m.uc.hook_add(UC_HOOK_MEM_READ, on_read)
+        try:
+            return self.r.run_side(self.r.orig, inp)
+        finally:
+            m.uc.hook_del(h)
+            m.uc.hook_del(h2)
+            m.set_fpcw(self.cw)
+            inp.touched = touched
+
+    def page(self, res, others, region, page, ik):
+        """The page of `region` as `res` left it (falling back to what it started with in `res` and the other
+        runs, then to the baseline); None for a pool page no run touched."""
+        m = self.r.m
+        x = res["mem"].get(region) or {}
+        p = x.get(page)
+        for o in [res] + list(others):
+            if p is None and ik and o is not None:
+                p = o.get(ik, {}).get(page)
+        if p is not None:
+            return p
+        if ik:
+            return None
+        if region == "heap":
+            return b"\0" * 0x1000
+        if region == "misc":
+            return m.misc_base_page(page)
+        return m.image_base_page(region, page)
+
+    def dword_diffs(self, a, b, ref):
+        """[(region, page|None, base_addr, dword index, va, vb, vr)] for every differing dword of a and b
+        that is not already tolerated as a stack pointer / pooled constant."""
+        out = []
+        esp = self.r.stk_hi
+        for region in sorted(set(a["mem"]) | set(b["mem"])):
+            if region == "ours_data":
+                continue
+            xa, xb = a["mem"].get(region), b["mem"].get(region)
+            if isinstance(xa, dict) or isinstance(xb, dict) or region in ("pool", "extra"):
+                ik = "pool_init" if region == "pool" else "extra_init" if region == "extra" else None
+                pages = sorted(set(xa or {}) | set(xb or {}))
+                items = [(pg, self.page(a, (b, ref), region, pg, ik), self.page(b, (a, ref), region, pg, ik),
+                          self.page(ref, (a, b), region, pg, ik) if ref else None, pg) for pg in pages]
+            else:
+                if xa == xb or xa is None or xb is None:
+                    continue
+                items = [(None, xa, xb, None, self.r.args_hi)]
+            for pg, pa, pb, pr, base in items:
+                if pa is None or pb is None:
+                    continue
+                n = min(len(pa), len(pb)) // 4
+                wa = np.frombuffer(pa[:4 * n], "<u4")
+                wb = np.frombuffer(pb[:4 * n], "<u4")
+                wr = np.frombuffer(pr[:4 * n], "<u4") if pr is not None and len(pr) >= 4 * n else None
+                for k in np.nonzero(wa != wb)[0]:
+                    va, vb = int(wa[k]), int(wb[k])
+                    if in_stack_frame(va, esp) and in_stack_frame(vb, esp):
+                        continue
+                    if self.c.same_constant(va, vb):
+                        continue
+                    out.append((region, pg, base, int(k), va, vb, int(wr[k]) if wr is not None else va))
+        return out
+
+    def judge(self, a, b, inp, t):
+        """-> ('fp' | 'oor', None) when only float rounding differs, else ('real', mismatch tuple)."""
+        ref = self.ref_run(inp)
+        if ref["status"][0] != "ok":
+            return "real", ("fp-tol", "-", "-", "reference run (original at 64-bit precision) did not complete: %s" % (ref["status"],))
+        floats = []          # (label, fa, fb, fr, bits, edit): edit = (region, page, dword index, orig dword) | "st0" | None
+        for_st0 = a["fpu_depth"] and a["fpu_depth"] == b["fpu_depth"] and a["st0"] != b["st0"]
+        if for_st0:
+            fa, fb = x87_to_float(a["st0"]), x87_to_float(b["st0"])
+            fr = x87_to_float(ref["st0"]) if ref["fpu_depth"] == a["fpu_depth"] and ref["st0"] is not None else fa
+            pc = (a["fpcw"] >> 8) & 3
+            floats.append(("st0", fa, fb, fr, 24 if pc == 0 else 53, "st0"))
+        for region, pg, base, k, va, vb, vr in self.dword_diffs(a, b, ref):
+            addr = base + 4 * k
+            lbl = "memory %s @%08x" % (region, addr)
+            if _tiny(va) or _tiny(vr):
+                if not self.fstore.get(addr):
+                    continue            # small value not stored by an x87/SSE store: an integer, left to compare()
+                floats.append((lbl, float("inf"), 0.0, 0.0, 24, (region, pg, k, va)))     # denormal result: range case
+                continue
+            floats.append((lbl, _f32(va), _f32(vb), _f32(vr), 24, (region, pg, k, va)))
+        results = []
+        for lbl, fa, fb, fr, bits, edit in floats:
+            v, ulps, ratio, detail = fp_judge_value(fa, fb, fr, bits)
+            if v == "inf":
+                # Inf/NaN only in ours: out of range if the run read a float Inf/NaN/>1e30 input (an intermediate
+                # overflowed float range in one build and stayed finite in the other's 80-bit register), else real
+                v = "oor" if self.huge_in else "real"
+            if v == "real" and self.denorm_in and max(abs(fa), abs(fb)) < 1e-30:
+                v = "oor"       # near-underflow results of denormal inputs: the inputs feeding it are range values
+            results.append((lbl, v, ulps, ratio, detail, edit))
+        # make the judged float differences invisible to the exact comparison; whatever it still finds is not a float
+        sane = dict(b)
+        sane["mem"] = {k: (dict(v) if isinstance(v, dict) else v) for k, v in b["mem"].items()}
+        edits = {}
+        for lbl, v, _u, _r, _d, edit in results:
+            if v == "real":
+                continue
+            if edit == "st0":
+                sane["st0"] = a["st0"]
+            else:
+                edits.setdefault(edit[:2], []).append(edit[2:])
+        for (region, pg), lst in edits.items():
+            if pg is None:
+                buf = bytearray(sane["mem"][region])
+            else:
+                buf = bytearray(self.page(b, (a,), region, pg, "pool_init" if region == "pool" else "extra_init" if region == "extra" else None))
+            for k, va in lst:
+                struct.pack_into("<I", buf, 4 * k, va)
+            if pg is None:
+                sane["mem"][region] = bytes(buf)
+            else:
+                sane["mem"][region][pg] = bytes(buf)
+        d = self.c.compare(a, sane, t)
+        bad = next(((l_, dt) for l_, v, _u, _r, dt, _e in results if v == "real"), None)
+        if d and bad and d[0].startswith("memory"):
+            return "real", (bad[0] + " (fp-tol)", "-", "-", bad[1])
+        if d:
+            return "real", d
+        if any(v == "oor" for _l, v, *_r in results):
+            # a range case (Inf/NaN/denormal/>1e30 in the original's own result): not judged either way
+            self.n_oor += 1
+            return "oor", None
+        if a["edges"] != ref["edges"]:
+            return "real", ("control flow", "-", "-", "the original takes a different path at 64-bit precision (precision-sensitive branch); not judged as rounding")
+        if bad:
+            return "real", (bad[0] + " (fp-tol)", "-", "-", bad[1])
+        for_stats = [(u, r) for _l, _v, u, r, _d, _e in results]
+        self.n_fp += 1
+        self.n_floats += len(results)
+        for ulps, ratio in for_stats:
+            self.max_ulp = max(self.max_ulp, ulps)
+            if ratio is not None:
+                self.max_ratio = max(self.max_ratio, ratio)
+        return "fp", None
+
+
 def x87_to_float(v):
     if v is None:
         return None
@@ -1873,6 +2136,7 @@ def _test_function(sid, va, opts, log=print):
         return out
     runner = Runner(t, opts, log)
     cmp_ = Comparer(runner, opts)
+    fpt = FpTol(runner, cmp_, opts) if getattr(opts, "fp_tol", False) else None
     rng_master = random.Random("%s:%08x:%d" % (sid, va, opts.seed))
     gen = runner.gen
     corpus = []
@@ -1986,6 +2250,9 @@ def _test_function(sid, va, opts, log=print):
                 d = ("execution", "returned normally", "%s: %s" % sb, "ours failed where the original succeeded")
             else:
                 d = cmp_.compare(a, b, t)
+                if d and fpt is not None:
+                    kind_, d_ = fpt.judge(a, b, inp, t)
+                    d = d_ if kind_ == "real" else None
             if d:
                 mism += 1
                 if first is None:
@@ -2031,6 +2298,8 @@ def _test_function(sid, va, opts, log=print):
     ecov = out["edges"] = {nm: edge_report(runner, side, opts) for nm, side in (("orig", runner.orig), ("ours", runner.ours))}
     if opts.ulp:
         out["ulp"] = opts.ulp
+    if fpt is not None:
+        out["fp_tol"] = fpt.stats(valid, mism)
     if mism and first.get("kind") == "local-address":
         v, why = "UNSUPPORTED", ("our code stores the address of its own copy of an object/vtable/constant "
                                  "where the original stores the image's (%s); map that symbol" % first["observable"])
@@ -2065,6 +2334,13 @@ def _test_function(sid, va, opts, log=print):
             if not all_insns:
                 need.append("--require-all: %d original insns never ran" % (total - len(covered)))
             v, why = "WEAK", "%s; edges %s; %.1f%% insns" % (", ".join(need), edges_txt, cov)
+    if fpt is not None and v in ("PASS", "WEAK") and fpt.n_fp + fpt.n_oor:
+        fs = out["fp_tol"]
+        v += "-FP"
+        why += ("; fp-tol: %d compared, %d bit-identical, %d fp-tolerable (max %.3g ulp, max err ratio %.3g), "
+                "%d out-of-range, %d real mismatches" % (fs["compared"], fs["bit_identical"], fs["fp_tolerable"],
+                                                         fs["max_ulp"], fs["max_err_ratio"], fs["out_of_range"],
+                                                         fs["real_mismatches"]))
     if v == "FAIL" and aud["local_copy"]:
         # our own copy of a callee ran where the original calls a real function: a call-trace FAIL may be that
         why += "; NOTE " + RA.summary(aud)
@@ -2171,6 +2447,11 @@ def parse_args(argv=None):
     ap.add_argument("--fpcw", default="%04X" % M.FPCW,
                     help="x87 control word both sides run under (hex; default %04X = 24-bit D3D device-thread state, "
                          "027F = CRT 53-bit state of worker threads)" % M.FPCW)
+    ap.add_argument("--fp-tol", action="store_true",
+                    help="judge float-only mismatches against the original re-run at 64-bit precision (0x037F): "
+                         "rounding-only differences give PASS-FP / WEAK-FP, Inf/NaN/>1e30 cases are counted as out-of-range")
+    ap.add_argument("--fp-realistic", action="store_true",
+                    help="generate float fields as finite magnitudes in [1e-3, 1e5] (both signs, plus 0/+-1) instead of random bit patterns")
     ap.add_argument("--alias", type=float, default=0.0, help="probability that a generated pointer aliases an argument object")
     ap.add_argument("--mutate", type=float, default=0.6, help="share of inputs mutated from the coverage corpus")
     ap.add_argument("--no-steer", dest="steer", action="store_false",
@@ -2236,6 +2517,8 @@ def print_result(r):
                     groups.setdefault(u["reason"], []).append(u["edge"])
                 for why, es in groups.items():
                     print("      %s unreachable (%d): %s [%s%s]" % (nm, len(es), why, " ".join(es[:4]), " ..." if len(es) > 4 else ""))
+        if r.get("fp_tol"):
+            print("    fp-tol: %s" % r["fp_tol"])
         tol = {k: v for k, v in r["tolerated"].items() if v}
         if tol:
             print("    tolerated: %s" % tol)

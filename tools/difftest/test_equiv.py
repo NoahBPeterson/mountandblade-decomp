@@ -182,3 +182,74 @@ def test_generated_values_avoid_code():
     finally:
         runner.close()
 
+
+
+# ---------------------------------------------------------------------- (g) --fp-tol
+
+CFG_SRC = os.path.join(ROOT, "src", "game", "config", "config.cpp")
+CFG_FLAGS = "/O2 /MT /Gy /TP /Isrc/game/config"
+
+
+def cfg_mutant(old, new, tag):
+    text = open(CFG_SRC).read()
+    assert old in text, old
+    os.makedirs(MUT_DIR, exist_ok=True)
+    path = os.path.join(MUT_DIR, "config_%s.cpp" % tag)
+    open(path, "w").write(text.replace(old, new, 1))
+    return path
+
+
+def test_fp_judge_value():
+    j = equiv.fp_judge_value
+    assert j(1.0, 1.0 + 2 ** -23, 1.0)[0] == "ok"                      # 1 ulp noise on a 0-error original
+    assert j(1.0, 1.001, 1.0)[0] == "real"                              # 1000 ulp from the reference
+    assert j(1.0 + 2 ** -22, 1.0, 1.0)[0] == "ok"                       # ours closer than the original
+    assert j(float("inf"), 5.0, 5.0)[0] == "oor"                        # the original overflowed
+    assert j(3e30, 3e30 * 1.0000001, 3e30)[0] == "oor"                  # magnitude above 1e30
+    assert j(5.0, float("inf"), 5.0)[0] == "inf"                        # Inf in ours only: real unless the inputs were huge
+    assert j(5.0, float("nan"), 5.0)[0] == "inf"
+
+
+def test_fp_tol_rounding_only_is_pass_fp():
+    args = ("config", "4bd2f0")
+    # a different association of the same sum: only rounding differs
+    path = cfg_mutant("f.v[0] = f.z * view.u.x + py * view.f.x + f.px * view.s.x + view.o.x;",
+                      "f.v[0] = view.o.x + f.px * view.s.x + py * view.f.x + f.z * view.u.x;", "assoc")
+    base = equiv.test_function("config", 0x4bd2f0, equiv.parse_args(list(args) + ["--src", path, "--flags", CFG_FLAGS, "--inputs", "300"]))
+    assert base["verdict"] == "FAIL", base                              # the default mode is unchanged
+    r = equiv.test_function("config", 0x4bd2f0, equiv.parse_args(list(args) + ["--src", path, "--flags", CFG_FLAGS,
+                                                                                 "--inputs", "300", "--fp-tol"]))
+    assert r["verdict"] in ("PASS-FP", "WEAK-FP"), r
+    fs = r["fp_tol"]
+    assert fs["real_mismatches"] == 0 and fs["fp_tolerable"] > 0 and fs["out_of_range"] > 0, fs
+    assert fs["bit_identical"] + fs["fp_tolerable"] + fs["out_of_range"] == fs["compared"], fs
+
+
+def test_fp_tol_value_error_stays_fail():
+    path = cfg_mutant("f.v[1] = f.z * view.u.y + py * view.f.y + f.px * view.s.y + view.o.y;",
+                      "f.v[1] = f.z * view.u.y + py * view.f.y + f.px * view.s.y + view.o.z;", "val")
+    r = equiv.test_function("config", 0x4bd2f0, equiv.parse_args(["config", "4bd2f0", "--src", path, "--flags", CFG_FLAGS,
+                                                                  "--inputs", "300", "--fp-tol"]))
+    assert r["verdict"] == "FAIL", r
+    assert r["fp_tol"]["real_mismatches"] > 0, r
+
+
+def test_fp_tol_integer_difference_stays_fail():
+    path = mutant(RECT_SID, "p[0] >= lo[0]", "p[0] > lo[0]", "fpop")
+    r = equiv.test_function(RECT_SID, RECT_VA, opts("--src", path, "--fp-tol"))
+    assert r["verdict"] == "FAIL", r
+    assert r["first_mismatch"]["observable"].startswith("eax"), r
+
+
+def test_fp_tol_byte_exact_unchanged():
+    r = equiv.test_function(ANGLE_SID, ANGLE_VA, opts("--fp-tol"))
+    assert r["verdict"] == "PASS", r
+    assert r["fp_tol"]["fp_tolerable"] == 0 and r["fp_tol"]["out_of_range"] == 0, r
+
+
+def test_fp_realistic_floats_are_finite_and_bounded():
+    import random, struct
+    rng = random.Random(3)
+    for _ in range(500):
+        f = equiv.InputGen.freal(rng)
+        assert f == 0.0 or abs(f) == 1.0 or 1e-3 * 0.999 <= abs(f) <= 1e5 * 1.001, f

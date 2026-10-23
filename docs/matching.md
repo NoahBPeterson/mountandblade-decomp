@@ -107,6 +107,36 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
     `atol` vs `atoi` (0x53734d), two messages swapped, a struct field 4 bytes off, two slices using one
     name for different globals. `local copies` in the summary means our own copy of a callee ran where the
     original calls a real function (an ICF'd template helper): map it in your symbols file.
+  - **`--fp-tol`** (default off; changes only how float mismatches are judged) and **`--fp-realistic`**
+    (generate float fields as finite magnitudes in [1e-3, 1e5], both signs, plus exact 0/+-1, instead of
+    random bit patterns). The game runs the x87 at 24-bit precision (D3D9 device thread; the default
+    `--fpcw 007F`), so a recompile that sums in another order or spills a different value to a float differs
+    from the original in rounding, and on absurd random magnitudes one build overflows float range where the
+    other keeps the value in its 80-bit register. With `--fp-tol`, for each input where the builds differ the
+    ORIGINAL is re-run at 64-bit precision (`037F`; the reference, about exact arithmetic) and the input is judged:
+    - *real mismatch* (verdict FAIL, first one printed): any differing integer/pointer dword, call trace, call
+      argument, status/register/esp/x87-depth difference, a different original path at 64-bit precision, or a
+      float that is further from the reference in ours than `max(2 * err_orig, 4 ulp)` (ulp of the largest of
+      reference/orig/ours), or NaN/Inf in ours only. A small (denormal) differing dword counts as a float only if
+      the reference run stored it with an x87/SSE store (or copied such a stored value), so small integers are
+      not mistaken for floats;
+    - *out-of-range* (counted, neither way): a differing float whose original value or reference is
+      Inf/NaN/denormal/above 1e30, or NaN/Inf in ours only while the run read an input dword that is
+      Inf/NaN/above 1.27e30. It also shadows other differences on that input;
+    - *fp-tolerable*: every differing observable is a float (memory dword, or st0 of the return) within that
+      tolerance.
+    **PASS-FP** (or **WEAK-FP** if the edge gate is short) = no real mismatch, at least one fp-tolerable or
+    out-of-range input, and the usual coverage gate passed. The reason line and `--json` (`fp_tol`) give
+    inputs compared, bit-identical, fp-tolerable (`max_ulp`, `max_err_ratio` = ours' error / the original's,
+    where the original's was nonzero), out-of-range and real mismatches. **PASS-FP is not PASS**:
+    the rows stay nonmatching/partial. It does let a row be recorded in nonmatching.txt as complete (instead of
+    "equiv FAIL") when the byte diff is a float-rounding or association-order artefact: write "equiv PASS-FP"
+    with the stats (max ulp, out-of-range count) in the reason column. A PASS-FP verdict does not excuse real
+    mismatches (uninitialised stack lanes, integer or call differences stay FAIL), and run both modes: say what
+    the default mode gives. Limits: a float stored as a double (two dwords) is judged as two float32 dwords and
+    will usually FAIL; the "inputs feed it" test is any 4-byte read of a huge value (an integer 0xFFFFFFFF
+    also qualifies); control flow of ours is not compared with the original's directly (call trace and
+    outputs are).
   - Limit is 180 s per function by default. Run it with `run_in_background` and keep working, never with a
     shell `&`.
 
