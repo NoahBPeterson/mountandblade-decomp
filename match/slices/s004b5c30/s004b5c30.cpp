@@ -69,8 +69,8 @@ extern char* g_units;                           // 0x5e29d0 (0x238-byte unit rec
 struct UnitRef { int id; int pad; };            // 8-byte entry of the troop's unit list
 struct Troop {                                  // 0x508 bytes
     char pad0[0x30];
-    unsigned flags;                             // +0x30 (bit 0x10 = has unit list)
-    char pad34[0x80 - 0x34];
+    unsigned __int64 flags;                     // +0x30 (64-bit; bit 0x10 = has unit list)
+    char pad38[0xb4 - 0x38];
     UnitRef units[1];                           // +0xb4
     int tier();                                 // 0x462b60
     float value();                              // 0x4b21f0
@@ -105,22 +105,25 @@ struct RecR {                                   // ctor 0x4934d0, dtor 0x431b90
 struct GroupObj {
     char pad0[8];
     int id;                                     // +0x08
-    char pad0c[0xa6 - 0x0c];
+    char pad0c[0x7c - 0x0c];
+    float f7c;                                  // +0x7c
+    float f80;                                  // +0x80
+    char pad84[0xa6 - 0x84];
     unsigned char nation;                       // +0xa6
     int bonus(int kind);                        // 0x4b2370
 };
 
 // @ 0x4b5c30
-float __cdecl evaluate_group(GroupObj* self, char* other)
+float __cdecl evaluate_group(GroupObj* self)
 {
     float ally_sum = 0.0f;
     float min_val = 100000.0f;
     int total = 0;
+    int bonus = self->bonus(0xe);
+    float base_power = (float)self->nation * 50.0f;
     int ally_total = 0;
     int other_sum = 0;
     int kind1 = 0;
-    int bonus = self->bonus(0xe);
-    float base_power = (float)self->nation * 50.0f;
 
     RecR rec;
     rec.count = 0;
@@ -130,8 +133,9 @@ float __cdecl evaluate_group(GroupObj* self, char* other)
     if (rec.count > 0) {
         char* troops = g_game->troops;
         char* units = g_units;
-        for (int i = 0; i < rec.count; i++) {
-            list_entry* e = &rec.entries[i];
+        list_entry* e = rec.entries;
+        int left = rec.count;
+        do {
             Troop* t = (Troop*)(troops + e->troop * 0x508);
             float v = t->value();
             int n = e->count;
@@ -156,11 +160,12 @@ float __cdecl evaluate_group(GroupObj* self, char* other)
                         kind1 = kind1 + 1;
                 }
             }
-        }
+            e++;
+        } while (--left);
     }
 
-    float fx = (*(float*)(other + 0x7c) - 0.5f) * 0.05f + 1.0f;
-    float fy = 1.0f - *(float*)(other + 0x80) * 0.1f;
+    float fx = (self->f7c - 0.5f) * 0.05f + 1.0f;
+    float fy = 1.0f - self->f80 * 0.1f;
     if (min_val > 10000.0f)
         min_val = 0.0f;
     if (ally_sum == 0.0f)
@@ -199,12 +204,15 @@ void GameData::_push_party_event(int party, const int* pos, const float* src)
     int a = 0, b = 0, c = 0, d = 0;
     r.f14 = 0;
     _collect_party_units(party, &a, &b, &c, &d);
-    r.flags.f.low = (a + c) & 0xff;
-    r.flags.f.high = rand() % 16;
+    EventFlags fl;
+    fl.all = 0;
+    fl.f.low = (a + c) & 0xff;
+    fl.f.high = rand() % 16;
     int troop = p->troop;
     if (troop == -1)
         troop = 0xff;
-    r.flags.f.mid = troop;
+    fl.f.mid = troop;
+    r.flags = fl;
     _init_event(&r);
     events.push_back(*(E92*)&r);
 }
