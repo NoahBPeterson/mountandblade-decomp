@@ -1,0 +1,12 @@
+../src/game/agent2/agent_ai.cpp  ?get_f1f0@Table1f8@@QAEHI@Z  0043b100  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?get_f1f4@Table1f8@@QAEHI@Z  0043b130  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?next_used@AgentTable@@QAEXPAI@Z  0043b160  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?first_used@AgentTable@@QAEHXZ  0043b1b0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?get@AgentTable@@QAEPAUAgent@@I@Z  0043b1f0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?lower_bound@?$_Hash@V?$_Hmap_traits@HUHashVal@@V?$hash_compare@HU?$less@H@std@@@stdext@@V?$allocator@U?$pair@$$CBHUHashVal@@@std@@@std@@$0A@@stdext@@@stdext@@QAE?AViterator@?$list@U?$pair@$$CBHUHashVal@@@std@@V?$allocator@U?$pair@$$CBHUHashVal@@@std@@@2@@std@@ABH@Z  0043b210  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?ufill@vecstr@@QAEPAUtstring@@PAU2@IABU2@@Z  0043b2b0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?ucopy@vecE1c8@@QAEPAUPlacedObj@@PAU2@00@Z  0043b2e0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?collect_enemies@Agent@@QAEXH@Z  0043b300  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?ufill@vecE1c8@@QAEPAUPlacedObj@@PAU2@IABU2@@Z  0043db60  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?deque_xlen@@YAXXZ  0043e0e0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?tidy_vec_pair@@YGXPAUVecPair2@@@Z  0043e150  /O2 /MT /Gy /TP

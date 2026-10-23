@@ -1,0 +1,10 @@
+../src/game/terrain_a/game_state.cpp  ??0ArrSet@@QAE@ABU0@@Z  004636d0  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ??1ArrSet@@QAE@XZ  00463760  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ??0Block16@@QAE@XZ  004638b0  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ?agent_low@GameState@@QAE_NH@Z  004638f0  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ?scene_path@GameState@@QAE?AUtstring@@H@Z  00463950  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ?module_path@GameState@@QAEPBDPBD@Z  004639d0  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ?release_all@ShadowMap@@QAEXXZ  00463b70  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ?create_target@ShadowMap@@QAEXPAPAUShSkin@@@Z  00463e10  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ?sync_readback@ShadowMap@@QAEXXZ  004640d0  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ?read_pixel@ShadowMap@@QAEXHHHPAI0@Z  004641a0  /O2 /MT /Gy /TP

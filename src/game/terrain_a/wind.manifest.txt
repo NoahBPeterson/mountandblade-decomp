@@ -1,0 +1,7 @@
+../src/game/terrain_a/wind.cpp  ?init_max_hp@Agent@@QAEXXZ  00461200  /O2 /MT /Gy /TP
+../src/game/terrain_a/wind.cpp  ?copy_range@@YAPAUelem24@@PAU1@00@Z  00461230  /O2 /MT /Gy /TP
+../src/game/terrain_a/wind.cpp  ?copy_backward24@@YAPAUelem24@@PAU1@00@Z  00461280  /O2 /MT /Gy /TP
+../src/game/terrain_a/wind.cpp  ?tri_normal@@YA?AUvector4@rgl@@PBU12@@Z  004612d0  /O2 /MT /Gy /TP
+../src/game/terrain_a/wind.cpp  ?pack_signed_color@@YAIPBM@Z  00461370  /O2 /MT /Gy /TP
+../src/game/terrain_a/wind.cpp  ?set_clock_step@@YAXPAHM@Z  00461420  /O2 /MT /Gy /TP
+../src/game/terrain_a/wind.cpp  ?sample@wind@@QAE?AUvector4@rgl@@XZ  00461570  /O2 /MT /Gy /TP
