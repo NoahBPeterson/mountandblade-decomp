@@ -245,13 +245,13 @@ void label_refresh(LabelWidget* self, const char* key)
 // @ 0x4e5570   the save screen's small button: "short_button" with the "short_button_down" pressed state
 struct button;
 button* make_button(void* parent, int a, int b, int c, int d,
-                    const tstring* down, const tstring* up,
+                    const tstring* normal, const tstring* pressed,
                     float h, float w, float x);         // 0x4dcc50
 void* make_short_button(void* parent, int a, int b, int c, int d)   // 0x4e5570
 {
-    tstring down("short_button_down");
-    tstring up("short_button");
-    return make_button(parent, a, b, c, d, &down, &up, 3.0f, 0.072f, 0.085f);
+    tstring pressed("short_button_down");
+    tstring normal("short_button");
+    return make_button(parent, a, b, c, d, &normal, &pressed, 3.0f, 0.072f, 0.085f);
 }
 
 // the slot records at +0x4c (see s004e4790)
@@ -264,47 +264,55 @@ struct SlotRecord {
     int f2c;                                            // +0x2c
 };
 struct Reader;
-struct SaveWindow {
+// the header 0x4e54e0 reads out of a slot file (list_saves keeps one on its stack; fields by offset)
+struct SlotHeader {
     tstring title;                                      // +0x00
     tstring body;                                       // +0x10
     int f20;                                            // +0x20 (the sub-reader's record: first word + 4 pad)
-    int recpad;                                         // +0x24
+    float time;                                         // +0x24 (game hours)
     int year;                                           // +0x28
-    int month;                                          // +0x2c
+    int month;                                          // +0x2c (the magic "WRDR" word in a valid file)
     int f30;                                            // +0x30
-    char pad34[0x4c - 0x34];
-    SlotRecord slots[9];                                // +0x4c
-    bool is_load;                                       // +0x234
     bool read_slot(Reader* r);                          // 0x4e54e0 (ret 4)
-    int  list_saves();                                  // 0x4e5270
+};
+struct SaveWindow {
+    char pad0[0x2c];
+    SlotRecord slots[9];                                // +0x2c (stride 0x30; the loop walks the +0x20 field)
+    char pad1dc[0x234 - 0x1dc];
+    bool is_load;                                       // +0x234
+    void list_saves();                                  // 0x4e5270
 };
 
 extern "C" float g_time_scale;                          // 0x590e28
-extern "C" char g_date_fmt[];                           // 0x598124
 extern int g_save_day;                                  // 0x5e29b8
 extern "C" int __cdecl sprintf(char* dst, const char* fmt, ...);    // 0x536f8f
 void mb_snprintf(char* dst, unsigned cap, const char* fmt, ...);    // 0x415100
-void save_path(char* out, const char* in);                          // 0x4dd7b0 (ret 4)
-int grid_round(double v);                                           // 0x535a64 (x87 double -> int)
+void __cdecl save_path(char* path);                                 // 0x4dd7b0 (cdecl, one argument)
 
 // the stream object 0x4e5270 builds (0x54ae48 reader -> 0x54ad68 mem_stream) and 0x4e54e0 reads
-struct stream {
+struct streambase {
     void* vptr;                                         // +0x00
+    streambase() { vptr = (void*)0x54a740; }
+};
+struct stream : streambase {
     tstring name;                                       // +0x04
-    char pad14[0xc];
+    int f14;                                            // +0x14
+    char f18;                                           // +0x18
+    int f1c;                                            // +0x1c
     tstring data;                                       // +0x20
     FILE* file;                                         // +0x30
     char failed;                                        // +0x34
+    stream()
+    {
+        f18 = 0;
+        f1c = 0;
+        failed = 1;
+        file = 0;
+        f14 = 0;
+        vptr = (void*)0x54ae48;
+    }
+    ~stream() { vptr = (void*)0x54ad68; }
     char open_read(const char* path);                   // 0x415290 (ret 4)
-};
-struct OldSave {                                        // what 0x4e54e0 fills
-    tstring a;                                          // +0x00
-    tstring b;                                          // +0x10
-    int f20;                                            // +0x20
-    int year;                                           // +0x24
-    int f28;                                            // +0x28
-    int month;                                          // +0x2c
-    int f30;                                            // +0x30
 };
 struct Reader {                                         // the 0x54ae48 reader's virtuals
     virtual void r0(); virtual void r1(); virtual void r2(); virtual void r3(); virtual void r4();
@@ -312,7 +320,7 @@ struct Reader {                                         // the 0x54ae48 reader's
     virtual void r10();
     virtual void skip(int* bytes);                      // +0x2c = entry 11
     virtual void r12(); virtual void r13();
-    virtual void at(int* out);                          // +0x38 = entry 14
+    virtual void at(float* out);                          // +0x38 = entry 14
     virtual void r15(); virtual void r16(); virtual void r17(); virtual void r18();
     virtual void get_int(int* out);                     // +0x4c = entry 19
     virtual void r25();
@@ -322,10 +330,10 @@ struct strtab2 {
     tstring* lookup(const tstring& name);               // 0x43a1e0
 };
 extern strtab2 g_strtab2;                               // 0x5e2a18
-char g_save_prefix_buf[];                               // 0x8ee3c3c
+extern tstring g_save_prefix_str;                       // 0x8ee3c38 (the save-directory prefix string)
 
-// @ 0x4e54e0   bool SaveWindow::read_slot(Reader* r): read the slot's own header into this window
-bool SaveWindow::read_slot(Reader* r)
+// @ 0x4e54e0   bool SlotHeader::read_slot(Reader* r): read the slot's own header into this window
+bool SlotHeader::read_slot(Reader* r)
 {
     r->get_int(&month);                                 // +0x2c
     r->get_int(&year);                                  // +0x28
@@ -338,52 +346,59 @@ bool SaveWindow::read_slot(Reader* r)
     inner->get_int(&f20);                               // +0x20
     if (year <= 0x3c0)
         title = body;                                   // +0x00 = +0x10
-    r->at(&recpad);                                     // +0x38 -> +0x24
+    r->at(&time);                                     // +0x38 -> +0x24
     return true;
 }
 
-// @ 0x4e5270   int SaveWindow::list_saves(): fill the nine slot records from "sgDD.sav"
-int SaveWindow::list_saves()
+// @ 0x4e5270   void SaveWindow::list_saves(): fill the nine slot records from "sgDD.sav"
+void SaveWindow::list_saves()
 {
-    tstring name;
-    tstring date;
-    char* p = g_save_prefix_buf[0] || 1 ? g_save_prefix_buf : g_save_prefix_buf;
-    SlotRecord* slot = slots;
-    for (int i = 0; i < 9; ++i, ++slot) {
-        char dir[0x100];
-        char full[0x200];
-        sprintf(dir, "%s", p);
-        save_path(dir, dir);
+    SlotHeader hdr;
+    char dir[0x104];
+    char full[0x200];
+    char text[0x200];
+    for (int i = 0; i < 9; ++i) {
+        SlotRecord* slot = &slots[i];
+        char* p = g_save_prefix_str.buf ? g_save_prefix_str.buf : (char*)&g_save_prefix_str.buf;
+        sprintf(dir, "");
+        save_path(dir);
         mb_snprintf(full, 0x200, "%s%s\\sg%d%d.sav", dir, p, i / 10, i % 10);
         stream s;
-        s.vptr = (void*)0x54ae48;
         char ok = s.open_read(full);
         slot->seconds = 0;
         if (ok) {
-            if (read_slot((Reader*)&s)) {
+            if (hdr.read_slot((Reader*)&s)) {
                 slot->seconds = 1;
-                int mins = grid_round(*(float*)(full + 0x100) * g_time_scale);
-                int hh = grid_round(*(float*)(full + 0x100)) % 0x18;
+                double tt = hdr.time;
+                int mins = (int)(tt * g_time_scale);
                 int mm = mins % 0x3c;
-                tstring key("ui_day_datedisplay");
-                tstring* e = g_strtab2.lookup(key);
-                char* v = *(char**)&e->buf;
-                char* fmt = v ? v : (char*)&e->buf;
-                int tail = 1 - grid_round(*(float*)(full + 0x100) * (double)g_date_fmt[0]);
-                sprintf(date.buf ? date.buf : (char*)&date.buf, fmt, mm / 10, mm % 10, hh, tail);
-                slot->name = name;
-                slot->year = *(int*)(full + 0x104);
-                slot->month = *(int*)(full + 0x108);
-                slot->name.assign(date.buf ? date.buf : (char*)&date.buf);
-                if (((OldSave*)full)->f20 != 0x52445257)
+                int hh = (int)hdr.time % 0x18;
+                {
+                    tstring key("ui_day_datedisplay");
+                    tstring* e = g_strtab2.lookup(key);
+                    char* v = e->buf;
+                    char* fmt = v ? v : (char*)&e->buf;
+                    int tail = 1 - (int)(hdr.time * -0.041666668f);
+                    sprintf(text, fmt, tail, hh, mm / 10, mm % 10);
+                }
+                slot->name = hdr.title;
+                slot->date.assign(text);
+                int year = hdr.year;
+                int day = hdr.f30;
+                slot->year = year;
+                slot->month = day;
+                ((char*)&slot->f2c)[0] = 0;
+                ((char*)&slot->f2c)[1] = 0;
+                ((char*)&slot->f2c)[2] = 0;
+                char magic[5] = "WRDR";
+                if (hdr.month != *(int*)magic)
                     ((char*)&slot->f2c)[0] = 1;
-                if (slot->year < 1000 || slot->year > 0x3f3)
+                if (year < 1000 || year > 0x3f3)
                     ((char*)&slot->f2c)[1] = 1;
-                if (slot->month < g_save_day)
+                if (day < g_save_day)
                     ((char*)&slot->f2c)[2] = 1;
             }
+            s.failed = 1;
         }
-        s.vptr = (void*)0x54ad68;
     }
-    return 0;
 }

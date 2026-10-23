@@ -1,0 +1,1 @@
+08ee3c38 ?g_save_prefix_str@@3Utstring@@A  # save-directory prefix tstring; list_saves reads its buf field (0x8ee3c3c) with the inline-storage fallback

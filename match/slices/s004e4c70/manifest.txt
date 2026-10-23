@@ -1,3 +1,5 @@
 slices/s004e4c70/s004e4c70.cpp  ?get_hex@config_table@@QAEHPAH@Z  004e51e0  /O2 /MT /Gy /TP
 slices/s004e4c70/s004e4c70.cpp  ?get_float@config_table@@QAEMPAH@Z  004e5230  /O2 /MT /Gy /TP
-slices/s004e4c70/s004e4c70.cpp  ?read_slot@SaveWindow@@QAE_NPAUReader@@@Z  004e54e0  /O2 /MT /Gy /TP
+slices/s004e4c70/s004e4c70.cpp  ?read_slot@SlotHeader@@QAE_NPAUReader@@@Z  004e54e0  /O2 /MT /Gy /TP
+slices/s004e4c70/s004e4c70.cpp  ?list_saves@SaveWindow@@QAEXXZ  004e5270  /O2 /MT /Gy /TP
+slices/s004e4c70/s004e4c70.cpp  ?make_short_button@@YAPAXPAXHHHH@Z  004e5570  /O2 /MT /Gy /TP
