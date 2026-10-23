@@ -2119,12 +2119,57 @@ def cpu_slot():
         time.sleep(0.5)
 
 
+CACHE_DIR = os.path.join(S.ROOT, "work", "difftest", "equiv_cache")
+_UNKEYED_OPTS = ("json", "verbose", "vas", "slice", "replay")
+_harness_hash = None
+
+
+def _cache_key(t, out, opts):
+    """Key of everything the emulation depends on: the harness sources, the compiled object (non-debug sections, their
+    relocations by symbol name, the symbol table; .debug$S carries the object's own path), the resolution of our
+    symbols into the original image, the parsed signature/layout and the options. Same key -> same verdict, so a row
+    whose code a header refactor left unchanged is not re-emulated. DIFFTEST_NO_CACHE=1 disables it."""
+    global _harness_hash
+    if os.environ.get("DIFFTEST_NO_CACHE"):
+        return None
+    import hashlib
+    if _harness_hash is None:
+        h = hashlib.sha1()
+        for f in sorted(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "*.py"))):
+            h.update(open(f, "rb").read())
+        _harness_hash = h.hexdigest()
+    c = t.coff
+    h = hashlib.sha1(_harness_hash.encode())
+    for sec in c.sections:
+        if sec.discard:
+            continue
+        h.update(repr((sec.name, sec.flags, sec.size)).encode())
+        h.update(sec.data)
+        h.update(repr([(r[0], c.syms[r[1]].name if r[1] in c.syms else r[1], r[2]) for r in sec.relocs]).encode())
+    h.update(repr([(sy.name, sy.value, sy.secno, sy.cls) for _, sy in sorted(c.syms.items())]).encode())
+    h.update(repr(sorted((c.syms[i].name if i in c.syms else str(i), a) for i, a in t.res.addr.items())).encode())
+    keep = {k: v for k, v in out.items() if k not in ("seconds",)}
+    h.update(json.dumps(keep, sort_keys=True, default=str).encode())
+    h.update(json.dumps({k: v for k, v in sorted(vars(opts).items()) if k not in _UNKEYED_OPTS},
+                        sort_keys=True, default=str).encode())
+    return h.hexdigest()
+
+
 def test_function(sid, va, opts, log=print):
     fd = cpu_slot()
     try:
         r = _test_function(sid, va, opts, log)
     finally:
         os.close(fd)
+    key = r.pop("_cache_key", None)
+    if key and not r.get("cached") and r.get("verdict") in ("PASS", "WEAK", "FAIL", "PASS-FP", "WEAK-FP"):
+        try:
+            os.makedirs(CACHE_DIR, exist_ok=True)
+            tmp = os.path.join(CACHE_DIR, "%s.%d.part" % (key, os.getpid()))
+            json.dump(r, open(tmp, "w"))
+            os.replace(tmp, os.path.join(CACHE_DIR, key + ".json"))
+        except OSError:
+            pass
     _ledger(r)
     return r
 
@@ -2181,6 +2226,15 @@ def _test_function(sid, va, opts, log=print):
     if t.abi_mismatch and not opts.ignore_abi:
         out.update(verdict="UNSUPPORTED", reason=t.abi_mismatch, seconds=round(time.time() - t0, 1))
         return out
+    key = _cache_key(t, out, opts)
+    if key:
+        try:
+            hit = json.load(open(os.path.join(CACHE_DIR, key + ".json")))
+            hit.update(cached=True, seconds=round(time.time() - t0, 1), cached_seconds=hit.get("seconds"))
+            log("  equiv cache hit (same object, resolution and options as an earlier run)")
+            return hit
+        except (OSError, ValueError):
+            out["_cache_key"] = key
     runner = Runner(t, opts, log)
     cmp_ = Comparer(runner, opts)
     fpt = FpTol(runner, cmp_, opts) if getattr(opts, "fp_tol", False) else None
