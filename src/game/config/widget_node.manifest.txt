@@ -1,0 +1,3 @@
+../src/game/config/widget_node.cpp  ?push_back@NodeVec@@QAEXABQAUNodeA@@@Z  0049b120  /O2 /MT /Gy /TP
+../src/game/config/widget_node.cpp  ?insert@NodeVec@@QAE?AViterator@?$vector@PAUNodeA@@V?$allocator@PAUNodeA@@@std@@@std@@V234@ABQAUNodeA@@@Z  0049b170  /O2 /MT /Gy /TP
+../src/game/config/widget_node.cpp  ?destroy@NodeA@@QAEPAXI@Z  0049b0f0  /O2 /MT /Gy /TP

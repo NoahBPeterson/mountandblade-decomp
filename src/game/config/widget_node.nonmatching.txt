@@ -1,0 +1,1 @@
+0049ad20	741	DropDown::create: complete (NodeA container, one UiA row per text row, registered through the out-of-line push_back). Differs in frame size and temp allocation (969 vs 965 bytes), the row count kept in a slot instead of eax, and scheduling. [equiv: UNSUPPORTED, our NodeA/UiA vtables reference unresolved MissionUi virtuals]

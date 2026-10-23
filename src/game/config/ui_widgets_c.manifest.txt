@@ -1,0 +1,2 @@
+../src/game/config/ui_widgets_c.cpp  ?set_value@UiD@@QAEXM@Z  0048baa0  /O2 /MT /Gy /TP
+../src/game/config/ui_widgets_c.cpp  ??0UiE@@QAE@XZ  0048bb10  /O2 /MT /Gy /TP

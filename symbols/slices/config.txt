@@ -1,0 +1,18 @@
+0x8ee3fc0 ?g_hwnd_dlg@@3PAUHWND__@@A  # the launcher dialog window handle (list box 0x4b0, combo 0x433)
+0x59c964 _IID_IDirectInput8A  # dinput8 interface id used by InputSet::init_devices 0x4bc430
+0x59c904 _GUID_SysKeyboard  # 0x4bc430
+0x59c8cc _c_dfDIKeyboard  # 0x4bc430
+0x59c914 _GUID_SysMouse  # 0x4bc430
+0x59c6c4 _c_dfDIMouse  # 0x4bc430
+0x5a9f98 ?g_cfg@@3UConfig@@A  # the option block (rgl_config.txt), src/rgl/core/resource_io.cpp calls it g_rgl_config
+0x5e2930 ?g_config@@3PAUGameConfig@@A  # the game object pointer
+0x8ee3cec ?g_screenshot_cropped@@3DA  # byte flag (the application object's m_bWindowed): crop a screenshot to the view rect
+0x5e28d0 ?g_edit_key@@3HA  # first value of the line being edited
+0x5e28d4 ?g_edit_value@@3HA  # second value of the line being edited
+0x590d94 ?g_line_pitch_ratio@@3MA  # 0.6f visible lines vs window height
+0x593160 _g_eq_sep  # " = " separator literal used by refresh_settings_list
+0x42bbd0 ?tstring_ctor@@YIXPAUtstring@@@Z  # tstring::tstring() called on raw slots by the clip table
+0x42bc40 ?tstring_dtor@@YIXPAUtstring@@@Z  # tstring::~tstring()
+0x5d7094 ?g_mouse_x@@3MA  # mouse position (gui_manager.h), 0x4bd2f0
+0x5d7098 ?g_mouse_y@@3MA  # 0x4bd2f0
+0x8ee3fbc ?g_hwnd_page@@3PAUHWND__@@A  # window handle of the options page (set_list_scroll 0x4bb260)
