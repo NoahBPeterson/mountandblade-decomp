@@ -1,3 +1,9 @@
 # Addresses the Ghidra function index (work/index/functions.csv) lists as function starts that are not functions.
 # tools/status.py drops them, so the enclosing function gets its full size. Format: <va>  # reason
 004d4554  # inside the `push imm32` at 0x4d4553 of GameApp::msg_proc 0x4d4140 (which runs to 0x4d49c0)
+# catch(...) funclets: emitted by cl as part of their parent's try/catch, placed right after it; no source of their own.
+004d4a28  # catch funclet of _Uninit_fill_n<Elem50> 0x4d49c0 (slice s004d4554, /EHa)
+004d4ab8  # catch funclet of _Uninit_fill_n<Elem68> 0x4d4a50 (slice s004d4554, /EHa)
+004d4b4b  # catch funclet of _Uninit_fill_n<ElemB0> 0x4d4ae0 (slice s004d4554, /EHa)
+004f47d8  # catch funclet of vec<E96>::reserve 0x4f46d0 (slice s004f46d0)
+004f4947  # catch funclet of vec<E32>::reserve_nr 0x4f4860 (slice s004f46d0)
