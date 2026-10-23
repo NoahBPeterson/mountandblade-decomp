@@ -1,0 +1,2 @@
+00416930  68  material::supported: complete. Every condition variant compiles to 109 bytes, the original is 111 (it re-tests the 0x20000000 flag after the first branch instead of threading the jump). Equivalence PASS (400 valid inputs, all edges covered both builds).
+00416d50  1  skin::save: complete. movsx byte [esi+eax] has base and index swapped in the original (SIB 06 vs 30); no source form tried flips it. Equivalence UNSUPPORTED (harness: the stream's virtual slots are called through random pointers and fault, 0/225 valid inputs).

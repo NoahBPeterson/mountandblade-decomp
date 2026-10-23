@@ -1,0 +1,32 @@
+0046e590  6512  render_batch::render_scene (7965 vs 7926 bytes): complete; frame layout and scheduling differ (not analysed further). [equiv: UNSUPPORTED, resolution audit disagrees on 2 operands (the vMaterialColor string copy, g_render); same as the slice]
+004705e0  272  Mesh::compute_face_normals: complete (357 vs 353 bytes), instruction scheduling differs. [equiv: WEAK, no mismatch, 93.5% insns]
+00470750  142  Mesh::compute_edge_creases: complete (450 vs 444 bytes); improved from 315 diff bytes in the slice. [equiv: PASS, 315 valid, all edges]
+00470920  181  Mesh::build_adjacency: complete (217 vs 225 bytes). [equiv: PASS, 281 valid, all edges]
+00470a00  464  Mesh::build_geometry: complete (512 vs 489 bytes). [equiv: WEAK, no mismatch, 9/18 edges both builds]
+00470c00  24  CellGrid::build_light_frame: complete; small diff, register allocation/scheduling not analysed. [equiv: WEAK, no mismatch, 1/2 edges]
+00470db0  343  TroopMgr::apply_group: complete (394 vs 392 bytes). [equiv: WEAK, no mismatch, 19/20 edges]
+00470f40  34  ground_height: complete; small diff, register allocation/scheduling not analysed. [equiv: WEAK, no mismatch, 1/8 edges both builds]
+00471040  341  GameData::blend: complete (408 vs 329 bytes). [equiv: WEAK, no mismatch, 3/4 edges]
+004711e0  430  ShadowMap::attach_camera: complete (482 vs 446 bytes). [equiv: PASS, 234 valid, all edges]
+004713d0  1259  Terrain::generate_heights: complete (1628 vs 1591 bytes). [equiv: WEAK, no mismatch, 41/60 edges]
+00471b30  1144  Terrain::light_particle: complete (1263 vs 1288 bytes). [equiv: WEAK, no mismatch, 29/36 edges both builds]
+00472050  154  Mission::update_prop_flags: complete (264 vs 262 bytes). [equiv: WEAK, no mismatch, 11/24 edges both builds]
+00472160  643  Mission::replace_mark: complete (762 vs 763 bytes). [equiv: WEAK, no mismatch, 172 valid, 11/14 edges]
+00472f90  1087  MAgent::reset (the slices called the class Agent/RecZ): complete (1500 vs 1482 bytes). [equiv: PASS, 400 valid, all edges]
+00473a60  1935  Mission::pick_spawn: complete (2200 vs 2174 bytes). [equiv: WEAK, no mismatch, 94/136 edges]
+00474e60  1699  Mission::update_team_stats: complete (2905 vs 2861 bytes). [equiv: WEAK, no mismatch, 163/172 edges]
+00475e50  26  ViewState::ViewState: complete; small diff, register allocation/scheduling not analysed. [equiv: PASS, 400 valid]
+004779b0  6  mesh_flip::flip_faces: complete; small diff, register allocation/scheduling not analysed. [equiv: PASS, 300 valid, all edges]
+00477a30  32  MAgent::MAgent: complete; small diff, register allocation/scheduling not analysed (the class is MAgent, not Agent: the other slices use ??_7Agent@@6B@ for the 0x590b84 Rec1c8 vtable). [equiv: PASS, 400 valid]
+00477ca0  26  vector<MPoly>::resize(n) (explicit instantiation of the 1-argument overload): complete. [equiv: PASS, 335 valid]
+00477db0  39  vector<MEdge>::resize(n): complete (was 32 diff bytes in the slice, now 39). [equiv: PASS, 342 valid]
+004785e0  42  Mesh::build: complete. [equiv: WEAK, no mismatch, 19/32 edges both builds]
+00472848  0  catch(...) funclet of uninit_fill_n_arrset (0x4727e0, std::_Uninit_fill_n for the 0x38-byte ArrSet): destroys [next, first) via ArrSet::~ArrSet (0x463760) then `throw;`; the 33 bytes are identical to the funclet that follows the function in our COMDAT (137/137 bytes incl. 0x4727e0, checked against the object), but it has no symbol of its own so run_all cannot address it. Equivalence UNSUPPORTED: not a callable function (covered by the 0x4727e0 test).
+00476111  0  catch(...) { deallocate(_Ptr); throw; } funclet of std::vector<rec36>::reserve (0x476020), at
+00476225  0  catch(...) { deallocate(_Ptr); throw; } funclet of std::vector<rec136>::reserve (0x476130), at
+00476515  0  cold partition of 0x476370 (catch funclet + reallocation path): bytes identical to the object's COMDAT tail (686-byte section, 0 diff); symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a standalone callable function.
+004767de  0  cold partition of 0x476620 (catch funclet + reallocation path): bytes identical to the object's COMDAT tail (715-byte section, 0 diff); symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a standalone callable function.
+00476a9a  0  cold partition of 0x4768f0 (catch funclet + reallocation path): bytes identical to the object's COMDAT tail (696-byte section, 0 diff); symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a standalone callable function.
+00476d51  0  cold partition of 0x476bb0 (catch funclet + reallocation path): bytes identical to the object's COMDAT tail (674-byte section, 0 diff); symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a standalone callable function.
+0047701d  0  cold partition of 0x476e60 (catch funclet + reallocation path): bytes identical to the object's COMDAT tail (758-byte section, 0 diff); symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a standalone callable function.
+004770dc  0  second cold partition of 0x476e60 (ArrSet unwind/copy path): bytes identical to the object's COMDAT tail (758-byte section, 0 diff); symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a standalone callable function.

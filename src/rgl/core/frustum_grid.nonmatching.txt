@@ -1,0 +1,1 @@
+0041ef19  0  catch(...) funclet of std::list<int>::_Buynode 0x41eeb0 (operator delete(p); throw): bytes identical (21/21 against the COMDAT tail of our 0x41eeb0, relocations masked; checked with work/migrate/scratch_rgl_core_funclet.py). Symbol-less, so run_all cannot address it. Equivalence UNSUPPORTED: not a callable function.

@@ -1,0 +1,190 @@
+// game_util.h: the classes and declarations of game_util.cpp (0x4320b0..0x43383f): key-code group tables, the
+// agent's team relation tests, scalar and 2-D / 3-D vector helpers, the Newton force callback, the tick timer,
+// the actor's weighted item pick, std::copy instantiations, the argument constructors of the sphere and capsule
+// collision shapes, collision face helpers, the message ring, the height-field sampler and the scene object's
+// placement setters. Names provisional; every offset is read or written by the function cited.
+//
+// Reused (do not redefine): src/game/agent/agent.h (Agent, ItemRef, Mission/g_mission, vec2, HeightField, HCell,
+// round_float, clamp_index), curve.h (g_time = the tick table at 0x5e2948), src/game/mat4.h (rgl::mat4::relative
+// 0x4329d0, rgl::rot3), src/game/tstring.h. What those headers lack is added by classes derived from theirs
+// (AgentX, vec2x, HeightFieldX, rot3x: no new fields, only the members this object defines) or by overlay views of
+// the raw offsets (see MIGRATION.md, "Header conflicts").
+#ifndef RGL_XMLCFG_GAME_UTIL_H
+#define RGL_XMLCFG_GAME_UTIL_H
+#include <math.h>
+#include "../../game/agent/agent.h"
+
+// ---- key-code groups (ids 0x97.., 0xc7..0xed come in triples; Module System header_triggers key_* numbering) ----
+int __cdecl not_group_base(int x);          // 0x4320b0 false for the first code of each triple group_base() returns
+int __cdecl group_base(int id);             // 0x432130 first id of the triple, -1 otherwise
+int __stdcall in_id_set(int id);            // 0x432640
+int __stdcall id_matches_dir(int id, int dir);   // 0x4326d0 (dir 0..3 = the four arrow-key groups)
+
+// ---- the agent: team relations and the actor's item pick -------------------------------------------------------
+// Agent members that agent.h does not declare. The "actor" of the s00432a50 slice is the same 0x1c8-byte record
+// (+0x2c, +0x12c agree with agent.h: f12c is the table of 0x30-byte Record entries, items at +0x10, count +0x14).
+struct SkelX {                              // what the +0x304 pointer of the body really is (0x432470)
+    char pad0[0x40];
+    struct Part { char pad[0xd8]; float charge; } *f40;     // +0x40
+};
+struct ItemRec { int pad0, pad4; unsigned flags; char pad_c[0x40 - 0xc]; };     // 0x40 bytes, flags at +8 (0x432f60)
+struct Record { char pad0[0x10]; ItemRec* items; int count; char pad18[0x30 - 0x18]; };   // 0x30, items +0x10, count +0x14
+struct ItemDef { char pad0[0x30]; __int64 flags; char pad38[0x508 - 0x38]; };    // 0x508 bytes, flags at +0x30 (0x433140)
+struct GameData { char pad[0x13a00]; ItemDef* items; };     // +0x13a00 (0x433140)
+extern GameData* g_game;                    // 0x5e2930
+
+struct AgentX : Agent {
+    Record* recs() const { return *(Record**)f12c; }        // the actor's table of 0x30-byte records (+0x12c)
+    unsigned char flags130() const { return *((const unsigned char*)this + 0x130); }   // +0x130 (0x432f60)
+    bool is_enemy(const Agent* o) const;                    // 0x432350 (relation == -1)
+    __declspec(noinline) bool is_friend(const Agent* o) const;   // 0x4323a0 (relation == 1)
+    int is_neutral(const Agent* o) const;                   // 0x4323f0
+    float speed_scale() const;                              // 0x432450
+    bool f100_is_0x48_and_charged() const;                  // 0x432470 (state +0x100 == 0x48)
+    void fill_weights(float* out, int idx, int rec);        // 0x432f60 (idx unused)
+    void fill_weights_x(float* out, int idx, int rec);      // 0x432f60 (declaration only, see pick)
+    int pick(int idx);                                      // 0x433040
+    int hand_kind() const;                                  // 0x433140
+};
+
+// ---- scalar helpers (cdecl, arguments by pointer) ----------------------------------------------------------------
+float __cdecl fmin_ref(const float* a, const float* b);     // 0x4324b0
+float __cdecl fmax_ref(const float* a, const float* b);     // 0x4324d0
+int __cdecl imax_ref(const int* a, const int* b);           // 0x4324f0
+// clamp_index (0x432510) and round_float (0x432540) are declared in agent.h
+int __cdecl rand_below(const int* n);                       // 0x432580
+float __cdecl closer_angle(const float* ref, const float* a, const float* b);   // 0x4325a0
+
+// ---- vectors -----------------------------------------------------------------------------------------------------
+struct vec2x : vec2 {                       // agent.h's vec2 only has normalize()
+    void rotate_a(float ang);               // 0x432600
+    void rotate_b(float ang);               // 0x4327f0
+};
+// 12-byte float triple with the engine's inline operators (the element of the std::copy_backward at 0x433260)
+struct Vec3 {
+    float x, y, z;
+    Vec3() {}
+    Vec3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
+    Vec3 operator-() const { return Vec3(-x, -y, -z); }
+    Vec3 operator+(const Vec3& o) const { return Vec3(x + o.x, y + o.y, z + o.z); }
+    Vec3 operator*(float s) const { return Vec3(x * s, y * s, z * s); }
+    Vec3& operator-=(const Vec3& o) { x = x - o.x; y = y - o.y; z = z - o.z; return *this; }
+    float dot(const Vec3& o) const { return x * o.x + y * o.y + z * o.z; }
+    void sub_assign(const Vec3& o);         // 0x432770
+};
+void __cdecl vec3_sub(Vec3* out, const Vec3* a, const Vec3* b);      // 0x432830
+// agent.h's slot_pair (0x432790) is defined here; rgl::rot3 (mat4.h) is the 3x3 rotation, rows padded to 4 floats.
+struct rot3x : rgl::rot3 {
+    __declspec(noinline) rot3x mul_t(const rot3x& b) const;          // 0x432860 row i, col j = dot(b.row i, this->row j)
+};
+// rgl::mat4::relative (0x4329d0) is declared in src/game/mat4.h
+
+// ---- Newton physics callback and tick timer ---------------------------------------------------------------------
+struct NewtonBody;
+void __cdecl apply_force_and_torque(const NewtonBody* body);        // 0x432a50
+// a force/torque the game wants applied to one body on the next physics step
+struct PendingForce {
+    const NewtonBody* body;                 // 0xa18210
+    vector4 force;                          // 0xa18214
+    vector4 torque;                         // 0xa18224
+};
+extern PendingForce g_pending;              // 0xa18210
+
+struct Timer {
+    int clock;                              // +0 index into g_time (0x5e2948: 64-bit counters, 100 kHz units)
+    int pad4;
+    __int64 start;                          // +8
+    char active;                            // +0x10
+    void restart();                         // 0x432bf0
+    float elapsed() const;                  // 0x432c10
+    void begin(float seconds);              // 0x432da0
+    bool expired();                         // 0x432de0
+};
+void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread);       // 0x432c40
+void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30
+
+// ---- mesh morph time clamp --------------------------------------------------------------------------------------
+// A member of the rgl::mesh of src/rgl/particles/mesh_obj.h (0x433190: +0xa1 local flag, +0xa4 key frames, +0xc8
+// c8), which cannot be included together with agent.h's rgl.h: a partial view, same offsets.
+struct keyframes12 { void* frames; int* times; int count; };
+struct mesh_node {
+    char pad0[0x18];
+    mesh_node* parent;                      // +0x18
+    char pad1c[0xa1 - 0x1c];
+    char local_a1;                          // +0xa1
+    char pada2[2];
+    keyframes12 kf;                         // +0xa4
+    char padb0[0xc8 - 0xb0];
+    float c8;                               // +0xc8
+    keyframes12& get_kf();                  // 0x40ec00 (local_a1 ? kf : parent->get_kf())
+    void clamp_c8(const float* t);          // 0x433190
+};
+
+// ---- collision shapes: only what the constructors / helpers here need (the classes are src/rgl/shapes/shapes.h's
+// shape_base, sphere, capsule, face, composite; that header cannot be included with rgl.h and lacks these members)
+struct shape_base {
+    int m4, m8, mc, min_x, min_y, max_x, max_y;
+    shape_base() : m4(-1), m8(8), mc(-1), min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
+    virtual ~shape_base();
+    virtual int shape_type();                               // 1
+    virtual void v2(); virtual void v3(); virtual void v4(); virtual void v5(); virtual void v6();
+    virtual void v7(); virtual void v8(); virtual void v9(); virtual void v10(); virtual void v11();
+    virtual void v12(); virtual void v13();
+    virtual void copy_from(const shape_base* o);            // 14 (0x54a674 in composite's vtable)
+};
+struct sphere_shape : shape_base {                          // vtable 0x54a4f0, size 0x44
+    vector4 v20, v30;                                       // +0x20 local centre, +0x30 world centre
+    float radius;                                           // +0x40
+    sphere_shape(vector4 center, const float* r);           // 0x4332a0
+};
+struct capsule : shape_base {                               // vtable 0x54a540, size 0x64
+    vector4 v20, v30, v40, v50;                             // world ends, local ends
+    float radius;                                           // +0x60
+    capsule(float r, const vector4* a, const vector4* b);   // 0x433310
+};
+struct composite : shape_base {                             // vtable 0x54a63c, size 0x28
+    shape_base** bodies; int count;
+    composite(const composite& o);                          // 0x433470
+};
+struct face {                                               // vtable 0x54a588, size 0xb4 (the vtable pointer is in hdr)
+    char hdr[0x20];
+    vector4 w[8];                                           // +0x20 world vertices (4 used, then local ones from +0x60)
+    vector4 normal;                                         // +0xa0 world normal (0x433440)
+    int count;                                              // +0xb0 vertex count (0x4333c0)
+    bool contains_xy(const float* p) const;                 // 0x4333c0
+    float plane_z(const float* p) const;                    // 0x433440
+};
+bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   // 0x4336d0
+
+// ---- message ring, height field, scene object ---------------------------------------------------------------------
+struct MsgLog {
+    char pad0[0x1714];
+    char enabled;                           // +0x1714
+    char pad1715[0xb0b8 - 0x1715];
+    struct Ring {
+        int count;                          // +0xb0b8
+        int head;                           // +0xb0bc
+        tstring names[32];                  // +0xb0c0
+        int vals[32];                       // +0xb2c0
+    } ring;
+    void push(const tstring& s, int v);     // 0x4334b0
+};
+struct HeightFieldX : HeightField {         // agent.h's HeightField has cols, w, h, cell
+    void sample(float x, float y, float* out_h, int* out_id);   // 0x433510
+};
+struct Obj3 {                               // scene object with a placement block
+    char pad0[0xe8];
+    unsigned flags;                         // +0xe8 (bit 0: pending, bit 1: timed)
+    char pade8[0x134 - 0xec];
+    matrix m134;                            // +0x134 (0x433770)
+    vector4 v174;                           // +0x174
+    vector4 v184;                           // +0x184
+    int m194;                               // +0x194
+    char pad198[4];
+    int m19c, m1a0, m1a4;                   // +0x19c (0x433810)
+    void set_v184(const vector4* v);        // 0x433740
+    void set_placement(const matrix* m, const vector4* a, const vector4* b, int c);   // 0x433770
+    void reset_pending(int v);              // 0x433810
+};
+
+#endif

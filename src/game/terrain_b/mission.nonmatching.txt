@@ -1,0 +1,5 @@
+00478a10  180  CellGrid::insert: complete (191 vs 200 bytes). [equiv: PASS, 305 valid, all edges]
+00478c50  334  CellGrid::build: complete (722 vs 702 bytes). [equiv: WEAK, no mismatch, 50/54 edges both builds]
+00479980  1082  CellGrid::build_faces: complete (928 vs 1050 bytes). [equiv: WEAK, no mismatch, 17/36 edges both builds]
+0047a0c0  570  Mission::post_spawn(MAgent*): complete (677 vs 651 bytes); rewritten from the disassembly (the slice had a wrong this). [equiv: WEAK, no mismatch, 23/24 edges]
+0047a800  312  Mission::build_interior(int, mesh**, int*): complete (384 vs 343 bytes); rewritten from the disassembly. [equiv: UNSUPPORTED, only 0/400 inputs valid (import:_purecall 269, fault(read) 130)]

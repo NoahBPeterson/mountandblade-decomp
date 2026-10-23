@@ -1,0 +1,10 @@
+../src/game/terrain_b/mission.cpp  ?init@CellGrid@@QAEXPBM0HH@Z  00478830  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ??0CellGrid@@QAE@PBM0PBH11@Z  00478ad0  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?spawn_wind@CellGrid@@QAEPAUWind@@XZ  00478f30  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?add@IdHolder@@QAEXH@Z  00478fb0  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?load@Scene@@QAEXPAUstream_base@@H@Z  00479000  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?erase@?$vector@UMRow56@@V?$allocator@UMRow56@@@std@@@std@@QAE?AViterator@12@V312@0@Z  00479930  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?spawn@EmitTable@@QAEPAUEmit@@PAHPBUvector4@rgl@@PBH@Z  00479d20  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?spawn_bodies@Terrain@@QAEXPAUSpawnSet@@@Z  00479da0  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?clone@tmesh@@QAEPAU1@XZ  0047a370  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?resize@?$vector@UMRow56@@V?$allocator@UMRow56@@@std@@@std@@QAEXIUMRow56@@@Z  0047a980  /O2 /MT /Gy /TP
