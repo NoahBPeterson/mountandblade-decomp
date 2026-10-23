@@ -26,6 +26,8 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;
 
@@ -238,7 +240,7 @@ void world::render_part(scene* view, int rem, int div)
     view->owner = this;
     view->ambient = ambient;
     view->fr.build_planes();
-    g_scene_reg.register_obj(view);
+    g_scene_registry.register_scene(view);
     render_info flag;
     flag.valid = 0;
     for (std::vector<entity*>::iterator it = ents.begin(); it < ents.end(); ++it) {

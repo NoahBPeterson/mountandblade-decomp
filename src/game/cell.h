@@ -7,8 +7,8 @@
 #include <vector>
 
 struct shape_base;
-struct Obj;
-struct enode { enode* next; int pad4; Obj* ent; };      // list node of the entities in a cell (0x442180: ent at +8)
+struct EntView;
+struct enode { enode* next; int pad4; EntView* ent; };      // list node of the entities in a cell (0x442180: ent at +8)
 struct cell {                                           // 0x34 bytes
     std::vector<shape_base*> shapes;                    // +0x00 the shapes in the cell (0x4396b0, 0x439780)
     char pad10[0x30 - 0x10];

@@ -867,19 +867,7 @@ struct TeamRec {                        // 0x16c bytes at mission +0x527c
     rgl::vector4 order_position();                              // 0x489890 (ret 4: hidden return)
 };
 // a point light added by add_point_light (0x7c bytes)
-struct Light {
-    int f0;
-    rgl::vector4 color;                 // +4
-    rgl::vector4 base_color;            // +0x14
-    rgl::vector4 v24;
-    rgl::vector4 pos;                   // +0x34
-    char pad44[0x70 - 0x44];
-    float flicker_magnitude;            // +0x70
-    float flicker_interval;             // +0x74
-    int pad78;
-    Light* init();                      // 0x461480 (ctor)
-    void update();                      // 0x487620
-};
+#include "../light.h"                   // Light (shared with agent2 / strat)
 // the trigger's scene entity (prop instance or agent body, trigger_entity 0x490430): virtual slots 25 / 27
 struct EntityMeshes {
     void attach_light(int mesh, Light* l);                      // 0x488e40 (ret 8)

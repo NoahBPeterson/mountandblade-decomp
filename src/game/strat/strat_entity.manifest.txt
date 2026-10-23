@@ -1,3 +1,3 @@
-../src/game/strat/strat_entity.cpp  ?render@StratEnt@@UAEXPAUscene@@PAUrender_info@@@Z  0042a090  /O2 /MT /Gy /TP
+../src/game/strat/strat_entity.cpp  ?render@StratEnt@@UAEXPAUscene@@PAUrender_info@rgl@@@Z  0042a090  /O2 /MT /Gy /TP
 ../src/game/strat/strat_entity.cpp  ?first_dir_light@Ctx@@QAEPAULight@@XZ  0042a1a0  /O2 /MT /Gy /TP
 ../src/game/strat/strat_entity.cpp  ?sample_lights@Ctx@@QAEXPBUvector4@rgl@@PAU23@1@Z  0042ad60  /O2 /MT /Gy /TP

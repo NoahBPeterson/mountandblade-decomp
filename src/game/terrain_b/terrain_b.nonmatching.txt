@@ -1,8 +1,8 @@
 0046e590  6512  render_batch::render_scene (7965 vs 7926 bytes): complete; frame layout and scheduling differ (not analysed further). [equiv: UNSUPPORTED, resolution audit disagrees on 2 operands (the vMaterialColor string copy, g_render); same as the slice]
-004705e0  272  Mesh::compute_face_normals: complete (357 vs 353 bytes), instruction scheduling differs. [equiv: WEAK, no mismatch, 93.5% insns]
-00470750  142  Mesh::compute_edge_creases: complete (450 vs 444 bytes); improved from 315 diff bytes in the slice. [equiv: PASS, 315 valid, all edges]
-00470920  181  Mesh::build_adjacency: complete (217 vs 225 bytes). [equiv: PASS, 281 valid, all edges]
-00470a00  464  Mesh::build_geometry: complete (512 vs 489 bytes). [equiv: WEAK, no mismatch, 9/18 edges both builds]
+004705e0  272  PolyMesh::compute_face_normals: complete (357 vs 353 bytes), instruction scheduling differs. [equiv: WEAK, no mismatch, 93.5% insns]
+00470750  142  PolyMesh::compute_edge_creases: complete (450 vs 444 bytes); improved from 315 diff bytes in the slice. [equiv: PASS, 315 valid, all edges]
+00470920  181  PolyMesh::build_adjacency: complete (217 vs 225 bytes). [equiv: PASS, 281 valid, all edges]
+00470a00  464  PolyMesh::build_geometry: complete (512 vs 489 bytes). [equiv: WEAK, no mismatch, 9/18 edges both builds]
 00470c00  24  CellGrid::build_light_frame: complete; small diff, register allocation/scheduling not analysed. [equiv: WEAK, no mismatch, 1/2 edges]
 00470db0  343  TroopMgr::apply_group: complete (394 vs 392 bytes). [equiv: WEAK, no mismatch, 19/20 edges]
 00470f40  34  ground_height: complete; small diff, register allocation/scheduling not analysed. [equiv: WEAK, no mismatch, 1/8 edges both builds]
@@ -20,7 +20,7 @@
 00477a30  32  MAgent::MAgent: complete; small diff, register allocation/scheduling not analysed (the class is MAgent, not Agent: the other slices use ??_7Agent@@6B@ for the 0x590b84 Rec1c8 vtable). [equiv: PASS, 400 valid]
 00477ca0  26  vector<MPoly>::resize(n) (explicit instantiation of the 1-argument overload): complete. [equiv: PASS, 335 valid]
 00477db0  39  vector<MEdge>::resize(n): complete (was 32 diff bytes in the slice, now 39). [equiv: PASS, 342 valid]
-004785e0  42  Mesh::build: complete. [equiv: WEAK, no mismatch, 19/32 edges both builds]
+004785e0  42  PolyMesh::build: complete. [equiv: WEAK, no mismatch, 19/32 edges both builds]
 00472848  0  catch(...) funclet of uninit_fill_n_arrset (0x4727e0, std::_Uninit_fill_n for the 0x38-byte ArrSet): destroys [next, first) via ArrSet::~ArrSet (0x463760) then `throw;`; the 33 bytes are identical to the funclet that follows the function in our COMDAT (137/137 bytes incl. 0x4727e0, checked against the object), but it has no symbol of its own so run_all cannot address it. Equivalence UNSUPPORTED: not a callable function (covered by the 0x4727e0 test).
 00476111  0  catch(...) { deallocate(_Ptr); throw; } funclet of std::vector<rec36>::reserve (0x476020), at
 00476225  0  catch(...) { deallocate(_Ptr); throw; } funclet of std::vector<rec136>::reserve (0x476130), at

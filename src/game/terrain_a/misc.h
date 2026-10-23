@@ -146,18 +146,7 @@ void __cdecl vmax3(float* a, const float* b);   // 0x468300
 void __cdecl vmin3(float* a, const float* b);   // 0x468360
 
 // ---- render-state cache calls (global object 0xa17910; the class is src/game/renderer.h's, which needs rgl.h) ---------
-struct renderer {
-    char pad[1];
-    void set_stage_colorop(int stage, int v);   // 0x461bd0  SetTextureStageState(D3DTSS_COLOROP, v & 0x1f), cached at +0x55c
-    void set_stage_alphaop(int stage, int v);   // 0x461c60  SetTextureStageState(D3DTSS_ALPHAOP, v & 0x1f), cached at +0x568
-    void set_alpha_test_mode(int mode);         // 0x461cf0  ALPHATESTENABLE + ALPHAREF 8/0x88/0xfb, cached at +0x590
-    void set_sampler_clamp(int stage, int v);   // 0x461d90  SetSamplerState ADDRESSU/V wrap or clamp (bits 0, 1), cached at +0x59c
-    void set_material_specular(float power, const float* color);     // 0x461e10
-    void set_view(const rgl::matrix* p);        // 0x461630
-    void set_lighting(bool on);                 // 0x461ba0
-    void set_blend_mode(int mode);              // 0x40e940
-};
-extern renderer g_render;                       // 0xa17910
+#include "../../include/renderer.h"       // renderer (shared)
 extern IDirect3DBaseTexture9* g_tex_cache[];    // 0xa17e5c texture bound per stage
 extern unsigned char g_rs_normalize;            // 0xa17e58 cached D3DRS_NORMALIZENORMALS
 extern unsigned char g_rs_zwrite_off;           // 0xa17e59 cached "depth write disabled" bit
@@ -177,13 +166,7 @@ struct skin_x : skin {
 };
 
 // ---- the mesh members of this object (a view of rgl::mesh) -----------------------------------------------------------
-struct mesh_x : rgl::mesh {
-    int count(int kind);                        // 0x468620 (1: faces * 3, else vertices)
-    void fill_vertices(int* p, const unsigned* fmt);    // 0x46c4f0
-    void fill_indices(unsigned short* out);     // 0x46c920
-    std::vector<rgl::face20>& get90_();         // 0x40ec30 (out-of-line call)
-    std::vector<rgl::vertex60>& get50_();       // 0x40ebd0
-};
+#include "../../rgl/mesh_x.h"             // mesh_x (shared with src/rgl/core/resmgr.h)
 struct mesh_list_x : rgl::mesh_list { void apply(rgl::matrix m); };            // 0x46c990
 struct lod_mesh_x : rgl::lod_mesh { void apply(const rgl::matrix* m); };       // 0x46c9f0
 
@@ -267,22 +250,7 @@ struct TroopEq : Troop {
 };
 
 // ---- camera-relative view parameters (0x46b940) --------------------------------------------------------------------
-struct ViewParams {
-    float f0, f4, f8;                           // +0x00 1000, -1, -100
-    int fc;                                     // +0x0c 0x384878
-    char b10;                                   // +0x10
-    float f14, f18, f1c;                        // +0x14 0.1, -1, -100
-    int f20;                                    // +0x20 0x384878
-    float f24;                                  // +0x24 -1e7
-    float f28;                                  // +0x28 0.1
-    char b2c;                                   // +0x2c
-    int f30;                                    // +0x30
-    rgl::frustum fr;                            // +0x34
-    char pad154[0x1a4 - 0x154];
-    rgl::matrix m1a4;                           // +0x1a4 (copy of identity)
-    rgl::matrix m1e4;                           // +0x1e4
-    ViewParams();                               // 0x46b940
-};
+#include "../view_params.h"            // ViewParams (shared with terrain_b)
 
 // ---- an agent's equipment slots, line of fire (0x46b190, 0x46b2d0, 0x46b410) ------------------------------------------------
 struct ItemRefX : ItemRef {
@@ -338,7 +306,7 @@ struct light_src {                              // one scene light; types 0/1/2 
     float atten0, atten1, atten2;               // 0x58
     float theta, phi;                           // 0x64
 };
-struct fog_rec {                                // fog record at Scene+0x1b0: two parameter sets selected by camera height against `level`
+struct fog_rec {                                // fog record at RenderScene+0x1b0: two parameter sets selected by camera height against `level`
     int f0;
     DWORD a_start;                              // 0x04
     DWORD a_end;                                // 0x08
@@ -350,7 +318,7 @@ struct fog_rec {                                // fog record at Scene+0x1b0: tw
     DWORD b_color;                              // 0x20  (set B: camera below the level)
     float level;                                // 0x24
 };
-struct Scene {
+struct RenderScene {                            // the render scene (rgl::scene, 0x1d8 bytes) as 0x46ca50 sees it; named Scene before (collided with party/game.h, terrain_b/scene_file.h)
     D3DVIEWPORT9 vp_local;                      // 0x00
     D3DVIEWPORT9 vp_alt;                        // 0x18
     rgl::frustum cam;                           // 0x30

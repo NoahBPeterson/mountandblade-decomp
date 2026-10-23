@@ -27,6 +27,9 @@
 #include "../../include/phys_set.h"
 #include "../../include/height_field.h"
 #include "../cell.h"
+#include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // inline vector helpers of the original: rgl's operators are out-of-line in other objects
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -45,9 +48,9 @@ PlacedObj::PlacedObj()
 // copy constructor and assignment (explicit memberwise copies; the compiler-generated ones are identical)
 // @ 0x437bb0
 PlacedObj::PlacedObj(const PlacedObj& o)
-    : IfaceB(o), m10(o.m10), m14(o.m14), a18(o.a18), a58(o.a58), a98(o.a98), ad8(o.ad8), a118(o.a118),
+    : IfaceB(o), m10(o.m10), m14(o.m14), m18(o.m18), m58(o.m58), m98(o.m98), md8(o.md8), m118(o.m118),
       v158(o.v158), m168(o.m168), f16c(o.f16c), q170(o.q170),
-      m180(o.m180), m184(o.m184), m188(o.m188), m18c(o.m18c), name(o.name), m1a0(o.m1a0), m1a4(o.m1a4),
+      m180(o.m180), m184(o.m184), kind(o.kind), id(o.id), name(o.name), value(o.value), m1a4(o.m1a4),
       m1a8(o.m1a8), m1ac(o.m1ac), m1b0(o.m1b0), m1b4(o.m1b4), m1b8(o.m1b8), m1bc(o.m1bc), m1c0(o.m1c0),
       m1c4(o.m1c4)
 {
@@ -57,12 +60,12 @@ PlacedObj& PlacedObj::operator=(const PlacedObj& o)
 {
     IfaceB::operator=(o);
     m10 = o.m10; m14 = o.m14;
-    a18 = o.a18; a58 = o.a58; a98 = o.a98; ad8 = o.ad8; a118 = o.a118;
+    m18 = o.m18; m58 = o.m58; m98 = o.m98; md8 = o.md8; m118 = o.m118;
     v158 = o.v158; m168 = o.m168; f16c = o.f16c;
     q170 = o.q170;
-    m180 = o.m180; m184 = o.m184; m188 = o.m188; m18c = o.m18c;
+    m180 = o.m180; m184 = o.m184; kind = o.kind; id = o.id;
     name = o.name;
-    m1a0 = o.m1a0; m1a4 = o.m1a4; m1a8 = o.m1a8; m1ac = o.m1ac; m1b0 = o.m1b0; m1b4 = o.m1b4;
+    value = o.value; m1a4 = o.m1a4; m1a8 = o.m1a8; m1ac = o.m1ac; m1b0 = o.m1b0; m1b4 = o.m1b4;
     m1b8 = o.m1b8; m1bc = o.m1bc; m1c0 = o.m1c0; m1c4 = o.m1c4;
     return *this;
 }
@@ -122,9 +125,9 @@ void Agent::set_order(int slot, int id, unsigned prio, float rate)
                 int k = slots[0];
                 if (k >= 0 && pairs[k].item >= 0) {
                     if (prio & 0x10000000)
-                        links[k]->f_cc = 0;
+                        links[k]->vis = 0;
                     else
-                        links[k]->f_cc = 0xffff;
+                        links[k]->vis = 0xffff;
                 }
             }
         }
@@ -1032,9 +1035,9 @@ void Skeleton::remove_shape(shape_base* s)
             std::vector<shape_base*>::iterator r;
             for (i = 0; i < nbones; i++) {
                 if (done) break;
-                r = std::remove(recs[i].shapes.begin(), recs[i].shapes.end(), s);
-                if (r != recs[i].shapes.end()) {
-                    recs[i].shapes.erase(r, recs[i].shapes.end());
+                r = std::remove(regs[i].shapes.begin(), regs[i].shapes.end(), s);
+                if (r != regs[i].shapes.end()) {
+                    regs[i].shapes.erase(r, regs[i].shapes.end());
                     done = true;
                 }
             }
@@ -1075,9 +1078,9 @@ void Skeleton::all_shapes(shape_base** out, int* n)
         }
     }
     for (int j = 0; j < nbones; j++) {
-        for (unsigned k = 0; k < recs[j].shapes.size(); k++) {
+        for (unsigned k = 0; k < regs[j].shapes.size(); k++) {
             if (*n < 0x20) {
-                out[*n] = recs[j].shapes[k];
+                out[*n] = regs[j].shapes[k];
                 (*n)++;
             }
         }
@@ -1258,7 +1261,7 @@ void Agent::update_quiver()
             if ((t == 5 || t == 6 || t == 10) && disp[i] != 0) {
                 int used = pairs[i].m4 & 0xff;
                 int n = pairs[i].max_amount() - used;
-                if (links[i] != 0 && links[i]->f_cc != 0) n--;
+                if (links[i] != 0 && links[i]->vis != 0) n--;
                 float v = (float)((n * 5 + 5) * 2);
                 disp[i]->cap_all(&v);
             }
@@ -1399,14 +1402,14 @@ void level::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, u
                     if (l->flags & 1) k = k * 0.5f;
                     float t = dp * 0.9f + 0.1f;
                     float s = k * t;
-                    float cr = s * l->r;
-                    float cg = s * l->g;
-                    float cb = s * l->b;
+                    float cr = s * l->color.x;
+                    float cg = s * l->color.y;
+                    float cb = s * l->color.z;
                     out_col->x = cr + out_col->x;
                     out_col->y = cg + out_col->y;
                     out_col->z = cb + out_col->z;
                     l = *it;
-                    float br = (l->b + l->g) + l->r;
+                    float br = (l->color.z + l->color.y) + l->color.x;
                     float ax = (d.x * k) * t;
                     float ay = (d.y * k) * t;
                     float az = (d.z * k) * t;

@@ -1,9 +1,9 @@
 // poly_mesh.h: the polygon-mesh topology object (vertices, edges, polygons) with its derived data, the 0x68-byte
 // container class (NavCore) it is built on, and the small point-set class with a bounding box. The same object is
-// the nav map of the scene (load 0x4781d0 .. build 0x4785e0) and the "Mesh" of the mesh editor
+// the nav map of the scene (load 0x4781d0 .. build 0x4785e0) and the "PolyMesh" of the mesh editor
 // (symbols/slices/s0052dfd0.txt: rebuild 0x470920). Offsets are the ones read or written by a function of
 // terrain_b.cpp (cited); records are cited at their uses. Names provisional (the slices called the record types
-// Vtx18/NavVert (vertex), Edge/NavEdge/E52 (edge), Face/NavFace/E100 (polygon), the object Mesh/NavMap).
+// Vtx18/NavVert (vertex), Edge/NavEdge/E52 (edge), Face/NavFace/E100 (polygon), the object PolyMesh/NavMap).
 #ifndef TERRAIN_B_POLY_MESH_H
 #define TERRAIN_B_POLY_MESH_H
 #include <stddef.h>
@@ -98,14 +98,14 @@ struct NavCore {
 struct stream_base;
 
 // The mesh object: two header words, the container at +8 (verts +0x18, faces +0x28, edges +0x38) and the grid step.
-struct Mesh {
+struct PolyMesh {
     int pad0, pad4;
     NavCore c;                                  // +8
     char pad70[0x90 - 0x70];
     int step;                                   // +0x90 (0x4785e0)
     void compute_face_normals();                // 0x4705e0
     void compute_edge_creases();                // 0x470750
-    void build_adjacency();                     // 0x470920 (symbols: Mesh::rebuild)
+    void build_adjacency();                     // 0x470920 (symbols: PolyMesh::rebuild)
     void build_geometry();                      // 0x470a00
     void load(stream_base* s);                  // 0x4781d0
     int add_edge(int a, int b);                 // 0x478450
@@ -123,7 +123,7 @@ struct MeshExt {
 
 struct Pt24 { vector4 pos; char pad[0x14]; };   // 0x24 bytes: position + attributes
 
-// A point array with its bounding box (a different class from Mesh: the box at 0x44 would overlap the edge array's
+// A point array with its bounding box (a different class from PolyMesh: the box at 0x44 would overlap the edge array's
 // end pointer at 0x38).
 struct PointSet {
     std::vector<Pt24> pts;      // +0x00 (first at +0x04)

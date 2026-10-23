@@ -53,7 +53,7 @@ Findings for the TU map (not applied elsewhere):
 
 ## Headers
 
-New: `fx_anim.h` (FxAnim, AnimRec, Bone, KeyTable, quaternion, with their ext twins), `world_grid.h` (world_grid, grid_cell,
+New: `fx_anim.h` (FxAnim, AnimRec, FxBone, KeyTable, quaternion, with their ext twins), `world_grid.h` (world_grid, grid_cell,
 shape_vec, ground_store, vec36/vec136), `dynamic_entity.h` (rigid_base, dynamic_entity, Contact, world_q, cell_q, contact vectors),
 `grid_shape.h` (the collision shape as the grid sees it). Existing headers used: `../rgl_math.h`, `../resource.h`,
 `../scene/{scene_math,frustum,scene,emitter,scene_entity,world,fx}.h`. Nothing outside this directory was edited. Layouts cite

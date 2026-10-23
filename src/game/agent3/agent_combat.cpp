@@ -18,6 +18,7 @@
 #include "../../include/timer.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../world.h"
+#include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // inline helpers: the original compiled them into the callers
 static __forceinline vector4 vmul(const vector4& v, const float& k) { return vector4(v.x * k, v.y * k, v.z * k); }

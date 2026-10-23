@@ -101,7 +101,7 @@ namespace rgl {
 void mesh_ext::clear_geometry()
 {
     {
-        elem30 e;
+        skin_vert e;
         v60.resize(0, e);
     }
     {
@@ -124,7 +124,7 @@ void scene::reset()
 {
     target = 0;
     f15c = 0;
-    f1a4 = 0;
+    registered = false;
     for (unsigned i = 0; i < cache.size(); i++)
         ((mesh_ext*)*(cache.begin() + i))->clear_geometry();
 }

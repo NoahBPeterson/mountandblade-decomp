@@ -14,6 +14,8 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // 0x487b00: UTF-8 decoder (another object in the original; cl gave it a custom register convention: text in EDI,
 // out_len in EDX, buffer and &capacity on the stack). A static noinline copy here reproduces that convention.

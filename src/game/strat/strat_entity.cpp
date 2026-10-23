@@ -20,6 +20,8 @@
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../cell.h"
+#include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // @ 0x42a090
 void StratEnt::render(scene* sc, render_info* out)

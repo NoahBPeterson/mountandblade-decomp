@@ -94,29 +94,7 @@ struct Wielder {
 
 // ---- placed scene object (0x1c8 bytes, vtable 0x590b84; ctor / copy ctor are in the next object). reset() is
 // called by 0x435860 (init_placed), 0x437830 (ctor) and 0x477ea0 (vector<..>::resize).
-struct PlacedObj {
-    char pad0[0x10];                    // +0 vptr, +4..+0xc IfaceB words
-    int m10;                            // +0x10 (0x4352f0)
-    int m14;                            // +0x14 (0x4352f0)
-    matrix m18;                         // +0x18 (0x435860)
-    matrix m58;                         // +0x58
-    matrix m98;                         // +0x98 (0x435860)
-    rgl::mat4 md8;                      // +0xd8 (0x4352f0)
-    char pad118[0x158 - 0x118];
-    vector4 v158;                       // +0x158 (0x4352f0)
-    int m168;                           // +0x168 (0x4352f0)
-    float f16c;                         // +0x16c (0x4352f0)
-    char pad170[0x188 - 0x170];
-    int kind;                           // +0x188 (0x435860; reset: m188)
-    int id;                             // +0x18c (0x435860; reset: m18c)
-    tstring name;                       // +0x190 (0x435860)
-    int value;                          // +0x1a0 (0x435860; reset: m1a0)
-    int m1a4;                           // +0x1a4 (0x4352f0)
-    char pad1a8[0x1b0 - 0x1a8];
-    int m1b0, m1b4, m1b8;               // +0x1b0 (0x4352f0)
-    char pad1bc[0x1c8 - 0x1bc];
-    void reset();                       // 0x4352f0
-};
+#include "../placed_obj.h"             // PlacedObj, IfaceB, Quad (shared with agent2; reset 0x4352f0)
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);   // 0x432510 (earlier object)
 extern const int g_value_max;           // 0x590a9c upper bound of a placed object's value (0x435860)
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m);   // 0x435860
@@ -194,15 +172,7 @@ struct Agent_f8 {
 
 // ---- the agent ---------------------------------------------------------------------------------------------
 struct Obj_a0 { char pad[0xa0]; vector4 d; };    // +0xa0 direction vector (0x436130)
-struct BoneRec {                                 // raw view of the skeleton record camera_params reads (0x435c10)
-    char pad0[0x46c];
-    float f46c, f470, f474;
-    char pad478[0xa00 - 0x478];
-    float fa00, fa04, fa08;
-    char pada0c[0x1170 - 0xa0c];
-    vector4 v1170;
-};
-struct Skeleton { int nbones; BoneRec* recs; };  // +0 / +4 (0x435c10)
+#include "../skeleton.h"                // BoneRec, Skeleton (shared with agent2 / agent3)
 struct AgentBody {
     char pad0[0x58];
     rgl::mat4 m;                                 // +0x58 (0x4417d0)
@@ -359,19 +329,6 @@ int __cdecl team_field5280(const Agent* a);                                   //
 
 // ---- polymorphic records derived from IfaceB (vtable 0x5908f8 = ??_7IfaceB@@6B@, s00431050). IfaceB carries three
 // words at +4..+0xc (copied by the 0x1c8-byte record's copy constructor 0x437bb0, next object).
-extern int g_tick_lo;                           // 0x5e2958 (g_time[2], 1e-5 s ticks)
-extern int g_tick_hi;                           // 0x5e295c
-struct IfaceB {
-    int f4, f8, fc;
-    IfaceB() {}
-    virtual ~IfaceB() {}
-    virtual void slot1() {}
-    virtual void slot2() {}
-};
-struct Quad {
-    int a, b, c, d;
-    Quad() : a(2), c(g_tick_lo), d(g_tick_hi) {}
-};
 // RecJ: 0xb0-byte record, vtable 0x590b78: slot 0 = vector deleting dtor 0x431750 (s00431050), slot 1 = reset().
 struct RecJ : IfaceB {
     int pad10[(0x50 - 0x10) / 4];

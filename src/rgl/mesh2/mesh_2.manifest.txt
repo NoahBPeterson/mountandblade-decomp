@@ -49,7 +49,7 @@
 ../src/rgl/mesh2/mesh_2.cpp  ?destroy@?$allocator@UE50@@@std@@QAEXPAUE50@@@Z  004cd6a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??$_Copy_opt@PAUE50@@PAU1@@std@@YAPAUE50@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004cd6e0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0Obj7a0@@QAE@XZ  004cd7a0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/mesh_2.cpp  ?fix_skeletons@@YIXPAV?$vector@USkeleton@@V?$allocator@USkeleton@@@std@@@std@@@Z  004cd850  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?fix_skeletons@@YIXPAV?$vector@URegSkeleton@@V?$allocator@URegSkeleton@@@std@@@std@@@Z  004cd850  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0LangTables@@QAE@XZ  004cda20  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0csv_row@@QAE@XZ  004cdf20  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?read@ObjectList@@QAEXPAUstream_base@@@Z  004cdfd0  /O2 /MT /Gy /TP

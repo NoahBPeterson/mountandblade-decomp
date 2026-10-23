@@ -102,33 +102,6 @@ extern char g_use_hw_shadow;                    // 0xa17f24 (0x463e10, 0x464070,
 extern IDirect3DDevice9* g_device;              // 0xa17f28 (0x4640d0, 0x4641a0)
 extern int g_mesh_quality;                      // 0x5aa084 (cleared when the read-back texture cannot be created; 0x4640d0)
 
-struct ShadowMap {
-    ShSkin* target;                             // +0 (0x463b70)
-    char pad4[4];
-    ShSkin* target2;                            // +8 (0x463b70)
-    IDirect3DSurface9* surf;                    // +0xc system-memory copy of the map (0x463b70, 0x4640d0)
-    int w, h;                                   // +0x10 / +0x14 (0x463bc0)
-    int f18, f1c;                               // +0x18 / +0x1c (0x463e90)
-    int w2, h2;                                 // +0x20 / +0x24
-    int f28;                                    // +0x28
-    float f2c;                                  // +0x2c
-    char pad30[0x48 - 0x30];
-    rgl::frustum fr;                            // +0x48 copy of the light camera frustum (0x463e90)
-    char pad168[0x17a - 0x168];
-    char valid;                                 // +0x17a
-    char pad17b[0x1f0 - 0x17b];
-    LightCam* cam;                              // +0x1f0
-    void release_all();                         // 0x463b70
-    void pick_size();                           // 0x463bc0
-    rgl::vector4 to_unit(const rgl::vector4& p);    // 0x463c20
-    void fit_bounds();                          // 0x463cc0
-    void create_target(ShSkin** slot);          // 0x463e10
-    void setup();                               // 0x463e90
-    void bind_target();                         // 0x464070
-    void sync_readback();                       // 0x4640d0
-    void read_pixel(int unused, int x, int y, unsigned* a, unsigned* b);   // 0x4641a0
-    void extend(const rgl::vector4* p);         // 0x468c20 (grow the caster bounds by a world point; terrain_a.cpp)
-    bool test(unsigned p, float* out);          // 0x468c80 (depth test of a world point; terrain_a.cpp; src/game/terrain_b calls it Probe::test)
-};
+#include "../shadow_map.h"                    // ShadowMap (shared with terrain_b)
 
 #endif // TERRAIN_A_GAME_STATE_H

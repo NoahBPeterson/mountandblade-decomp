@@ -35,17 +35,12 @@ struct mesh;
 #include "../../include/vec.h"
 // vec2 is an aggregate; strat_entity.cpp builds its uv offsets through a constructor call (a temporary, then a copy)
 struct vec2c : vec2 { vec2c(float x_, float y_) { x = x_; y = y_; } };
-struct vertex60 {                // 0x60 bytes, vector at mesh+0x50
-    vector4 pos;                 // 0x00
-    vector4 f10, f20;
-    vector4 normal;              // 0x30
-    vec2 uv;                     // 0x40
-    int f48, f4c;
-    int index;                   // 0x50: point index
-    unsigned color;              // 0x54: packed ARGB
-    int f58;
-    int f5c;
-};
+#include "../../include/mesh_parts.h"        // rgl::vertex60, frame_t, obj_c0, slot, render_info, keyframes
+using rgl::vertex60;
+using rgl::frame_t;
+using rgl::obj_c0;
+using rgl::slot;
+using rgl::render_info;
 struct elem30 { char b[0x30]; };            // vector at +0x60
 struct elem14 { int id; std::vector<int> items; };   // 0x14, vector at +0x80 (items' element type unknown)
 using rgl::face20;                           // 0x20, vector at +0x90 (src/include/mesh_prims.h)
@@ -54,12 +49,7 @@ using rgl::face20;                           // 0x20, vector at +0x90 (src/inclu
 inline vector4 vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
 inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 
-struct frame_t { std::vector<vector4> verts; std::vector<vector4> norms; };   // 0x20: morph key frame
-
-#include "../../include/keyframes.h"      // rgl::keyframes (frame_t above)
 using rgl::keyframes;
-
-struct obj_c0 { char pad[0x24]; vector4 out; vector4 in; };   // object attached at mesh+0xc0 (0x34.. read, 0x24.. written)
 
 struct mat_t { char pad[0x20]; int f20; int get_flags(); };     // int get_flags() is 0x40eab0
 struct res_obj4 { char pad[0x4c]; int f4c; };
@@ -72,16 +62,6 @@ struct res_t {
     int f5c;                     // 0x5c
     char pad3[0x68 - 0x60];
     void (*fn68)(res_t*);        // 0x68
-};
-
-struct slot_pair { int a, b; };
-inline slot_pair zero_pair() { slot_pair p; p.a = 0; p.b = 0; return p; }
-struct slot {                    // 0x2c bytes, array of 3 at mesh+0x110
-    int f0, f4, f8, fc;
-    int f10, f14;
-    slot_pair p;                 // 0x18
-    int f20, f24;
-    char f28, f29;
 };
 
 struct mesh;
@@ -197,7 +177,6 @@ OFFSET_CHECK3(scene, mask, 0x1a8);
 extern __int64 g_time[];                                // 0x5e2948 clock table (64-bit ticks, 1e-5 s)
 extern int g_shadows_on;                                // 0x5aa030
 
-struct render_info { char valid; float depth; };
 struct Psys { void update(scene* sc); };                // 0x414960
 struct FxDef { void draw(scene* sc, const matrix* m, const float* p); };   // 0x428ff0 (provisional)
 

@@ -18,6 +18,8 @@
 #include "../../include/timer.h"
 #include "../../include/vec.h"
 #include "../../include/height_field.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // inline helpers: the original compiled them into the callers (no out-of-line copies in this object)
 static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)
@@ -537,8 +539,8 @@ void Agent::camera_params(CamParams* p)
         p->v50 = vector4(f80 * 0.0f + dx, f80 * 0.0f + dy, f80 * 0.5f + dz);
         p->f60 = 0.37f;
         if (body && (fe8 & 0x800000)) {
-            p->v50 = body->skel->recs->v1170;
-            BoneRec* z = body->skel->recs;
+            p->v50 = body->skel->bones->v1170;
+            BoneRec* z = body->skel->bones;
             p->v40.x = (z->f46c + z->fa00) * 0.5f;
             p->v40.y = (z->fa04 + z->f470) * 0.5f;
             p->v40.z = (z->fa08 + z->f474) * 0.5f;

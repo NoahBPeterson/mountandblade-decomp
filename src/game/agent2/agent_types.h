@@ -37,37 +37,10 @@ extern int g_ev_b;                     // 0xa7045c
 extern int g_agent_count;              // 0x5aa050 number of agents (0x4385e0)
 
 // ---- polymorphic records derived from IfaceB (vtable 0x5908f8 = ??_7IfaceB@@6B@) --------------------------------
-struct IfaceB {
-    int f4, f8, fc;                    // +4..+0xc, copied by the copy constructor 0x437bb0
-    IfaceB() {}
-    virtual ~IfaceB() {}
-    virtual void slot1() {}
-    virtual void slot2() {}
-};
-struct Quad {
-    int a, b, c, d;
-    Quad() : a(2), c(g_tick_lo), d(g_tick_hi) {}
-};
-
+#include "../placed_obj.h"             // IfaceB, Quad, PlacedObj (shared with src/game/agent)
 // the 0x1c8-byte placed scene object (vtable 0x590b84; PlacedObj of src/game/agent/agent.h, "Rec1c8" in
 // src/game/agent3, "E1c8" in the std helper rows below). Constructor 0x437830, deleting destructor 0x437870
 // (compiler-generated), copy constructor 0x437bb0, assignment 0x437d60; reset() is 0x4352f0 (src/game/agent).
-struct PlacedObj : IfaceB {
-    int m10, m14;                      // +0x10
-    matrix a18, a58, a98, ad8, a118;   // +0x18 .. +0x157 (five 0x40-byte frames; 0x437bb0 copies each)
-    vector4 v158;                      // +0x158
-    int m168;                          // +0x168
-    float f16c;                        // +0x16c
-    Quad q170;                         // +0x170 (a = 2 on construction, c/d = clock tick)
-    int m180, m184, m188, m18c;        // +0x180
-    tstring name;                      // +0x190
-    int m1a0, m1a4, m1a8, m1ac, m1b0, m1b4, m1b8, m1bc, m1c0, m1c4;   // +0x1a0
-    PlacedObj();                       // 0x437830
-    PlacedObj(const PlacedObj& o);     // 0x437bb0
-    PlacedObj& operator=(const PlacedObj& o);   // 0x437d60
-    // implicit virtual destructor: deleting destructor 0x437870
-    void reset();                      // 0x4352f0 (src/game/agent/agent.cpp)
-};
 
 // ---- item reference (src/game/agent/agent.h has the full class): index + packed word --------------------------
 struct ItemRef {
@@ -123,17 +96,7 @@ struct NavMesh {
 
 // ---- the level (scene: first field of the mission object) -----------------------------------------------------
 #include "../cell.h"                                  // cell: one grid cell (0x34 bytes; collect_masked 0x4396b0, collect_point 0x439780)
-struct Light {
-    int type;                                           // +0 (2 = directional) (0x43ac40)
-    float r, g, b;                                      // +4 / +8 / +0xc
-    char pad10[0x24 - 0x10];
-    vector4 pos;                                        // +0x24
-    char pad34[0x44 - 0x34];
-    vector4 dir;                                        // +0x44 (directional lights)
-    float range;                                        // +0x54
-    char pad58[0x6c - 0x58];
-    unsigned flags;                                     // +0x6c (bit 0: half intensity)
-};
+#include "../light.h"                   // Light (shared with strat / script)
 struct level {
     char pad0[8];
     int dim[2];                                         // 0x08 cells per axis
@@ -222,27 +185,7 @@ struct Channel {                                        // 0xd8 bytes (Curve of 
     bool busy();                                        // 0x433840 (Curve::step_reached)
     void set_phase(float period);                       // 0x433930
 };
-struct Region {                                         // 0x1dc bytes: one bone record
-    char pad0[0x1b0];
-    std::vector<shape_base*> shapes;                    // 0x1b0
-    char pad1c0[0x1d0 - 0x1c0];
-    int f1d0;                                           // 0x1d0 (cleared by 0x43d040)
-    char pad1d4[0x1dc - 0x1d4];
-};
-struct Skeleton {                                       // the animation controller (Group of the slices)
-    int nbones;                                         // +0
-    Region* recs;                                       // +4
-    int* sel;                                           // +8 -> ints at +0x28/+0x2c/+0x30 (bone-mask selectors)
-    char pad0c[0x30 - 0xc];
-    std::vector<shape_base*> shapes;                    // +0x30 (0x439ec0)
-    Channel* chans;                                     // +0x40
-    void remove_shape(shape_base* s);                   // 0x439ec0
-    void start_anim(int idx, Anim* anim, int a, int b); // 0x439fc0 (thiscall, ret 0x10)
-    void all_shapes(shape_base** out, int* count);      // 0x43a130
-    void reset_rec(int i);                              // 0x4339d0
-    float rec_phase(int i);                             // 0x433ac0
-    void set_rec_phase(int i, float p);                 // 0x433b20
-};
+#include "../skeleton.h"                // Region, Skeleton, node_list, node_groups (shared with agent / agent3)
 
 // ---- the mesh instance's node lists (0x438d80, 0x438f90, 0x439000) ---------------------------------------------
 struct V32 { float x, y, z; float pad[5]; };            // 32-byte vertex record (x, y, z first)
@@ -266,16 +209,6 @@ struct mnode {
     void* get_ints();                                   // 0x40ec00
     void calc_bounds(vector4* mn, vector4* mx);         // 0x438d80
 };
-struct node_list {
-    int al; mnode** first; mnode** last; mnode** end;
-    void cap_all(const float* limit);                   // 0x438f90
-};
-struct node_groups {
-    char pad0[0x34];
-    node_list lists[5];                                 // 0x34 (16 bytes each)
-    int nlists;                                         // 0x84
-    void cap_all(const float* limit);                   // 0x439000
-};
 
 // ---- the agent --------------------------------------------------------------------------------------------------
 // 0x18-byte entry of the sorted nearest-enemy list (0x43b300)
@@ -298,7 +231,6 @@ struct AnimSlot {
 #include "../../include/timer.h"
 struct InputRec { unsigned bits; char pad[0x14]; unsigned lo; int hi; };   // queued input record (+0x18 time)
 struct InputState { unsigned v[6]; };
-struct Mesh { char pad[0xcc]; int f_cc; };              // quiver / holster display mesh
 struct AgentBody {
     int f0, f4;
     int id;                                             // +8 scene entity id (0x43a6f0)
@@ -331,7 +263,7 @@ struct Agent {                                          // 0x5928 bytes
     AnimSlot anim[2];                                   // +0xd4 (stride 0x2c; anim[1].cur = +0x100)
     DefList* defs;                                      // +0x12c
     char pad130[0x14c - 0x130];
-    Mesh* links[4];                                     // +0x14c (0x43a800, 0x4379c0)
+    node_groups* links[4];                                     // +0x14c (0x43a800, 0x4379c0)
     char pad15c[0x16c - 0x15c];
     node_groups* disp[4];                               // +0x16c quiver display (0x43a800)
     char pad17c[0x1c4 - 0x17c];

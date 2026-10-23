@@ -195,11 +195,9 @@ struct strategic_entity : entity {
     virtual int find_emitter(int tag);                          // 27: 0x421a50
 };
 
-// the rigid body entity (vtable 0x54b668, 0x1d8 bytes): its code is in another object; only what the factory needs
-struct dynamic_entity : collision_entity {
-    char pad170[0x1d8 - sizeof(collision_entity)];
-    dynamic_entity();                                           // 0x425370
-};
+// the rigid body entity (vtable 0x54b668, 0x1d8 bytes) is defined in ../dynamic/dynamic_entity.h (collision_entity's
+// rigid-body derivation); the entity factory (entity_types.cpp) includes that header for its constructor 0x425370.
+struct dynamic_entity;
 
 } // namespace rgl
 #endif

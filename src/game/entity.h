@@ -9,6 +9,7 @@
 #include "rgl.h"
 #include "./mat4.h"
 #include "../include/mesh_prims.h"
+#include "../include/mesh_parts.h"             // rgl::render_info (and the other mesh records)
 #include "./tstring.h"
 
 // ---- hand-written VC7.1 std::vector layout (empty allocator slot, first, last, end) -----------------------
@@ -84,7 +85,6 @@ struct frame_src {
 
 
 struct lod_mesh2;
-struct render_info { char valid; float depth; };
 
 struct entity {
     virtual ~entity();                                  // 0: 0x4214e0

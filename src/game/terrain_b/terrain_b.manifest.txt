@@ -72,7 +72,7 @@
 ../src/game/terrain_b/terrain_b.cpp  ?reset@?$Pool@URecJ@@@@QAEXXZ  00477f90  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?alloc@?$Pool@UMAgent@@@@QAEHXZ  00478020  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ??0NavCore@@QAE@XZ  00478150  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?load@Mesh@@QAEXPAUstream_base@@@Z  004781d0  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?add_edge@Mesh@@QAEHHH@Z  00478450  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?add_face@Mesh@@QAEHHHHHHHHHH@Z  004784d0  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?clear@Mesh@@QAEXXZ  00478580  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?load@PolyMesh@@QAEXPAUstream_base@@@Z  004781d0  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?add_edge@PolyMesh@@QAEHHH@Z  00478450  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?add_face@PolyMesh@@QAEHHHHHHHHHH@Z  004784d0  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?clear@PolyMesh@@QAEXXZ  00478580  /O2 /MT /Gy /TP

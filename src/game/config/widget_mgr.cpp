@@ -17,6 +17,8 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // @ 0x499830
 int widget_mgr::add_medium(int id)

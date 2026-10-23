@@ -3,9 +3,8 @@
 // pass, the std::vector<Contact> instantiations, the sort of the query result, and the collision entity's destructor.
 // One header for the classes of this object.
 //
-// rgl::collision_entity (../scene/scene_entity.h, vtable 0x54b548) is the base; scene_entity.h also declares a
-// placeholder rgl::dynamic_entity (padding only, for the entity factory), which is renamed while that header is
-// included and replaced by the full class below. The slices' names (rigid_base: the base with the state; dyn.h's Obj,
+// rgl::collision_entity (../scene/scene_entity.h, vtable 0x54b548) is the base; scene_entity.h only forward-declares
+// rgl::dynamic_entity (the entity factory in entity_types.cpp includes this header). The slices' names (rigid_base: the base with the state; dyn.h's Obj,
 // entity, cell, cell_ref, enode, contact_list) are the shared classes: the queries below are members of derived views
 // (world_q : rgl::world, cell_q : rgl::cell) because world.h cannot be extended from here.
 #ifndef RGL_DYNAMIC_DYNAMIC_ENTITY_H
@@ -20,14 +19,12 @@
 #include "../rgl_math.h"
 #include "../resource.h"
 #include "./grid_shape.h"
-#define dynamic_entity dynamic_entity_stub
 #include "../scene/scene_math.h"
 #include "../scene/frustum.h"
 #include "../scene/scene.h"
 #include "../scene/emitter.h"
 #include "../scene/scene_entity.h"
 #include "../scene/world.h"
-#undef dynamic_entity
 
 namespace rgl {
 

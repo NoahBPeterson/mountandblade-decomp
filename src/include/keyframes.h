@@ -5,8 +5,8 @@
 // Users: src/rgl/particles/mesh_obj.cpp (find, operator=), src/rgl/core/resmgr.cpp (save_keyframes 0x4194c0,
 // read_keyframes 0x41c340), the mesh headers of src/rgl and src/game/strat.
 //
-// NEEDS `frame_t` declared by the includer, in the enclosing scope of namespace rgl (rgl::frame_t in the rgl mesh
-// headers, ::frame_t in src/game/strat/strat_ext.h): the three mesh headers each define their own frame_t.
+// NEEDS `frame_t` declared by the includer, in the enclosing scope of namespace rgl: it is included by
+// src/include/mesh_parts.h right after rgl::frame_t (shared by src/rgl/mesh.h and src/game/strat/strat_ext.h).
 // Namespace rgl.
 #ifndef MB_KEYFRAMES_H
 #define MB_KEYFRAMES_H

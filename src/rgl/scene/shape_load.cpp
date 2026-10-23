@@ -23,6 +23,8 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;
 

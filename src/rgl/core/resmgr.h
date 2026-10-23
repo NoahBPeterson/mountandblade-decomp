@@ -75,12 +75,7 @@ struct skel_anim : named_object {
 
 // ---- meshes ------------------------------------------------------------------------------------------------
 // (0x30-byte "tangent frame" views of rgl::vertex60: see the header comment)
-struct mesh_x : rgl::mesh {
-    void compute_bounds();                     // 0x419300 (bounds of the points)
-    void linearise_vertex_colors();            // 0x419360 (gamma 2.2 to linear, copy to +0x58)
-    void compute_tangents();                   // 0x41ce80
-    mesh_x* clone();                           // 0x41c6d0
-};
+#include "../mesh_x.h"                   // mesh_x (shared with src/game/terrain_a)
 
 // 16-byte list of owned meshes (resource_manager's LOD groups own their meshes)
 struct mesh_owner : std::vector<rgl::mesh*> {

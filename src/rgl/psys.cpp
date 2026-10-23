@@ -16,6 +16,7 @@
 #include "../include/mat4.h"
 #include "../include/mesh_prims.h"
 #include "../include/vec.h"
+#include "../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // 0x413b60 vector::erase (std::vector<rgl::vertex60>, explicit instantiation)
 template std::vector<rgl::vertex60>::iterator std::vector<rgl::vertex60>::erase(std::vector<rgl::vertex60>::iterator, std::vector<rgl::vertex60>::iterator);

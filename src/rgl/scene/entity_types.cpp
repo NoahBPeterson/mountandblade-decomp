@@ -17,6 +17,7 @@
 #include "./scene_entity.h"
 #include "./world.h"
 #include "./fx.h"
+#include "../dynamic/dynamic_entity.h"   // dynamic_entity (the factory constructs one: 0x425370)
 #include "./shape_clone.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
@@ -25,6 +26,8 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;
 

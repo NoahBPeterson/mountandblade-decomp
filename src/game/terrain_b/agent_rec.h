@@ -9,44 +9,8 @@
 
 extern __int64 g_ticks[];                       // 0x5e2948 clock table, 1e-5 s ticks
 
-// 8-byte tick values stored as two dwords: the agent's sub-objects are not 8-byte aligned (ViewState is 0x5374 long)
-struct tick { int lo, hi; };
-inline const tick& tk(int i) { return ((const tick*)g_ticks)[i]; }
+#include "../view_state.h"           // tick, tk, Timer16, Vec4z, ViewBody, ViewState (shared with ui/troop_inv)
 struct Timed { int state; int pad; tick t; };       // 0x10: state (2 = idle) and the tick it was set
-struct Timer16 {
-    int clock;                  // +0 index into g_ticks
-    int pad4;
-    tick start;                 // +8
-    void init(int c) { clock = c; start = tk(clock); }
-};
-#include "../../include/vec.h"
-struct Vec4z { float x, y, z, w; };
-
-// The view sub-object of an agent (0x5374 bytes at agent +0x258): five timers, the target agent id and two floats
-// the team statistics write. The agent's constructor calls the timer set-up 0x475e50 (defined below as the constructor
-// of ViewState, the slices' TimedObj) explicitly, after its first stores; init() 0x463370 is the reset path.
-struct ViewBody {
-    char pad0[0x58];
-    Timer16 t58;                // +0x58
-    char pad68[0x98 - 0x68];
-    Timer16 t98;                // +0x98
-    Timer16 ta8;                // +0xa8
-    char padb8[0xc4 - 0xb8];
-    int target;                 // +0xc4 (agent +0x31c) id of another agent (0x474e60)
-    char padc8[0x50e8 - 0xc8];
-    Vec2 v50e8;                 // +0x50e8 (agent +0x5340) (0x474e60)
-    char pad50f0[0x5118 - 0x50f0];
-    Timer16 t5118;              // +0x5118
-    Timer16 t5128;              // +0x5128
-    char pad5138[0x516c - 0x5138];
-    Vec4z v516c;                // +0x516c
-    char pad517c[0x5374 - 0x517c];
-    void init_timers();         // 0x475e50
-    void init();                // 0x463370
-};
-struct ViewState : ViewBody {
-    ViewState();                // 0x475e50
-};
 // the sub-object at agent +0x563c (0x68 bytes) whose initialiser the constructor calls
 struct AgentSubB {
     char b[0x68];

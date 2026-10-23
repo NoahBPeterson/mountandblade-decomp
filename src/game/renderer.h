@@ -23,56 +23,7 @@ extern IDirect3DDevice9* g_device;          // 0xa17f28
 void mb_error(const char* fmt, ...);        // 0x42cc80
 
 // ---- render-state cache (global object 0xa17910) ----------------------------------------------------------
-struct renderer {
-    char pad000[0x500];
-    int f500;                       // 0x500                                      0x461630
-    char pad504;                    // 0x504
-    char b505;                      // 0x505  D3DRS_FOGENABLE cache               0x4617b0
-    bool b506;                      // 0x506  D3DRS_LIGHTING cache                0x4617b0, 0x461ba0
-    char light_on[64];              // 0x507  LightEnable cache                   0x4617b0
-    unsigned char b547;             // 0x547  D3DRS_SPECULARENABLE cache          0x4617b0, 0x461f80
-    unsigned char b548;             // 0x548  D3DRS_NORMALIZENORMALS cache        0x4617b0, 0x461f80
-    unsigned char b549;             // 0x549  z-write disabled                    0x4617b0, 0x461f80
-    unsigned char b54a;
-    unsigned char b54b;             // 0x54b  depth test (ZFUNC LESSEQUAL)        0x4617b0, 0x461f80
-    int f54c[3];                    // 0x54c  bound texture per stage             0x4617b0
-    IDirect3DPixelShader9* cur_ps;  // 0x558                                      0x4617b0, 0x461f20
-    int stage_color[3];             // 0x55c                                      0x461bd0
-    int stage_alpha[3];             // 0x568                                      0x461c60
-    int stage_xform[3];             // 0x574
-    int stage_texgen[3];            // 0x580
-    int blend_mode;                 // 0x58c
-    int alpha_mode;                 // 0x590  0 off, 1 (ref 8), 2 (ref 0x88), 3 (ref 0xfb)   0x461cf0
-    unsigned tex_factor;            // 0x594
-    unsigned tex_factor2;           // 0x598
-    int stage_samp[3];              // 0x59c                                      0x461d90
-    char pad5a8[0x5b4 - 0x5a8];
-    int f5b4, f5b8, f5bc, f5c0;     // 0x5b4                                      0x4617b0
-    int f5c4, f5c8, f5cc, f5d0, f5d4, f5d8, f5dc;
-    char pad5e0[0x5ec - 0x5e0];
-    float material_power;           // 0x5ec  "fMaterialPower" cache              0x4617b0, 0x461f80
-    float f5f0, f5f4, f5f8, f5fc, f600;   // 0x5f0 (reset to sentinel values)
-    float spec[3];                  // 0x604  "vSpecularColor" cache              0x4617b0, 0x461eb0
-    int f610;
-    char pad614[4];
-    IDirect3DDevice9* dev;          // 0x618
-    char pad61c[0x688 - 0x61c];
-    int max_aniso;                  // 0x688                                      0x4617b0
-    char pad68c[0x754 - 0x68c];
-    D3DMATRIX view;                 // 0x754                                      0x461630
-    D3DMATRIX view2;                // 0x794                                      0x461630
-
-    void set_view(const rgl::mat4* p);                      // 0x461630
-    void reset_state();                                     // 0x4617b0
-    void set_lighting(bool on);                             // 0x461ba0
-    void set_stage_color(int stage, int flags);             // 0x461bd0
-    void set_stage_alpha(int stage, int flags);             // 0x461c60
-    void set_alpha_mode(int mode);                          // 0x461cf0
-    void set_stage_sampler(int stage, unsigned flags);      // 0x461d90
-    void set_material(float power, const float* specular);  // 0x461e10
-    void set_specular(const float* c);                      // 0x461eb0
-};
-extern renderer g_render;                                   // 0xa17910
+#include "../include/renderer.h"                // renderer (shared: state cache here, debug drawer in src/rgl/shapes)
 
 // ---- material / mesh part ------------------------------------------------------------------------------
 struct material {

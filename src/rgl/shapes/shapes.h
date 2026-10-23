@@ -67,22 +67,7 @@ void __cdecl vmax_ext(rgl::vector4* out, const rgl::vector4* a, const rgl::vecto
 // which cannot be included here: it pulls in match/include/rgl.h, whose vector4 collides with rgl_math.h).
 //   stack/sp: world-matrix stack (translate 0x408170, pop 0x4081b0, apply 0x40a870); dev (+0x618) the D3D device;
 //   cur (+0x794) the current world matrix.
-struct renderer {
-    rgl::matrix stack[20];                  // 0x000
-    int sp;                                 // 0x500
-    char pad504[0x618 - 0x504];
-    IDirect3DDevice9* dev;                  // 0x618
-    char pad61c[0x794 - 0x61c];
-    rgl::matrix cur;                        // 0x794
-    __declspec(noinline) void translate(const rgl::vector4& t);                  // 0x408170
-    __declspec(noinline) void pop();                                             // 0x4081b0
-    __declspec(noinline) void draw_sphere(float r);                              // 0x4081f0 5x8 wireframe lat/long sphere
-    void apply(const rgl::matrix* m);                       // 0x40a870 cur = cur * m
-    void draw_capsule(float a, float b, float r);           // 0x40aa20
-    void tessellate(float* pts, int* n, float a, float b, float r, int stacks, int slices, int mode);  // 0x40ab10
-    void draw_polygon(const rgl::vector4* pts, int n);      // 0x408e60 outline of a <= 4 point polygon
-};
-extern renderer g_render;                                   // 0xa17910
+#include "../../include/renderer.h"       // renderer (shared with src/game; the debug drawer members are 0x408170.. here)
 
 // ---- shapes ------------------------------------------------------------------------------------------------
 // shape_base, sphere, capsule, face, composite, mface and contact are the shared classes of src/include/shape.h (the

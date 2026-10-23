@@ -24,6 +24,8 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;
 
@@ -400,8 +402,8 @@ void emitter::update(const float* pdt, const matrix& frame)
 // @ 0x4126a0
 void mesh::update_emitters(const float* dt, const matrix& frame)
 {
-    for (std::vector<emitter*>::iterator it = kids.begin(); it != kids.end(); ++it)
-        (*it)->update(dt, frame * m_cc);
+    for (std::vector<psys*>::iterator it = kids.begin(); it != kids.end(); ++it)
+        ((emitter*)*it)->update(dt, frame * m_cc);
 }
 
 // @ 0x412700
@@ -422,7 +424,7 @@ mesh::~mesh()
     if (p220)
         delete[] p220;
     for (unsigned i = 0; i < kids.size(); ++i) {
-        emitter* e = kids[i];
+        emitter* e = (emitter*)kids[i];
         if (e)
             delete e;
     }
@@ -733,8 +735,8 @@ int mesh::render(scene* sc, const matrix& frame)
         }
     }
 done:
-    for (std::vector<emitter*>::iterator it = kids.begin(); it != kids.end(); ++it)
-        (*it)->render_update(sc);
+    for (std::vector<psys*>::iterator it = kids.begin(); it != kids.end(); ++it)
+        ((emitter*)*it)->render_update(sc);
     if (p_c0) {
         vector4 t;
         t.x = m_cc.u.x * p_c0->in.z + m_cc.f.x * p_c0->in.y + p_c0->in.x * m_cc.s.x + m_cc.o.x;
@@ -751,7 +753,7 @@ done:
         u.y = t.z * frame.u.y + t.y * frame.f.y + t.x * frame.s.y + frame.o.y;
         u.z = t.z * frame.u.z + t.y * frame.f.z + t.x * frame.s.z + frame.o.z;
         p_c0->out = u;
-        vpush(sc->list, p_c0);
+        vpush((std::vector<void*>&)sc->list, (void*)p_c0);
     }
     return 0;
 }

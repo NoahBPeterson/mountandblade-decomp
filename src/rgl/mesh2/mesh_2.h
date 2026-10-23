@@ -331,7 +331,7 @@ struct Obj7a0 {
 // ============================================================================================================
 // 0x4cd850..0x4cdf20: skeleton fix-up and the csv row (the translation tables are LangTables, mesh2_common.h)
 // ============================================================================================================
-struct Bone {                                                   // 0x50 bytes: bone of a registered skeleton
+struct RegBone {                                                   // 0x50 bytes: bone of a registered skeleton
     tstring name;                                               // +0x00
     int idx;                                                    // +0x10
     int parent;                                                 // +0x14
@@ -341,9 +341,9 @@ struct Bone {                                                   // 0x50 bytes: b
     vector4 v30;                                                // +0x30
     std::vector<R44> m40;                                       // +0x40 (assigned with 0x4ccd80)
 };
-struct Skeleton {                                               // 0x20 bytes: one registered skeleton
+struct RegSkeleton {                                               // 0x20 bytes: one registered skeleton
     tstring model;                                              // +0x00
-    std::vector<Bone> bones;                                    // +0x10 (first +0x14, last +0x18)
+    std::vector<RegBone> bones;                                    // +0x10 (first +0x14, last +0x18)
 };
 struct SkelRes {                                                // the object 0x418cf0 returns
     char pad[0x18];
@@ -425,10 +425,10 @@ struct csv_row {                                                // 0x238 bytes (
     csv_row();                                                  // 0x4cdf20
 };
 
-extern std::vector<Skeleton> g_skeletons;                      // 0x5d6fa0 + 0x70 (provisional)
+extern std::vector<RegSkeleton> g_skeletons;                      // 0x5d6fa0 + 0x70 (provisional)
 void vec_insert_n(lang_bucket* vec, tstring* pos, unsigned n, const tstring& v);   // 0x438f00
 void vec_insert_n2(lang_bucket* vec, tstring* pos, unsigned n, const tstring& v);  // 0x43e310
-void __fastcall fix_skeletons(std::vector<Skeleton>* list);               // 0x4cd850
+void __fastcall fix_skeletons(std::vector<RegSkeleton>* list);               // 0x4cd850
 
 
 // ============================================================================================================

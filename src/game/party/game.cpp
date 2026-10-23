@@ -16,6 +16,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../int_vec.h"
 #include "../str_table.h"
+#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 extern int g_item_count;                                    // 0x5e29d4 (the audit resolves this name by annotation: another slice maps the same mangled name to 0x8ed4f88)
 

@@ -29,7 +29,7 @@ extern LogHub g_log;                            // 0x5a9f60
 
 // The scene container: records at +0x104, two embedded streams at +0x414 / +0x444, a name at +0x20 and a loaded
 // flag at +0x78.
-struct Scene {
+struct SceneFile {                              // the .sco scene file record (named Scene before; collided with party/game.h's Scene)
     char pad20[0x20];
     tstring name;                               // +0x20
     char pad30[0x78 - 0x30];

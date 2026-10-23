@@ -167,26 +167,7 @@ struct shader_res;
 struct resource_manager_x {                         // the resource manager (0x5d6fa0), shader lookup only
     shader_res* get_shader(const tstring& name);    // 0x418b30
 };
-struct render_batch {                               // ~4 MB object (src/game/terrain_b/render_batch.h has a partial view)
-    IDirect3DVertexDeclaration9* decls[5];          // +0x00 0x4bc830, 0x4bd0c0
-    buffer_pair vf[5];                              // +0x14 ten vertex records (two per format) 0x4bc5b0, 0x4bcfb0
-    buffer_pair ib;                                 // +0x30c two index records 0x4bc5b0
-    char pad3a4[0x3b4 - 0x3a4];
-    int cur_vf_a;                                   // +0x3b4 0x4bc5b0
-    int cur_ib;                                     // +0x3b8
-    int cur_vf_b;                                   // +0x3bc
-    char pad3c0[0x418818 - 0x3c0];
-    void* sh0;                                      // +0x418818 0x4bcfb0
-    void* sh1;                                      // +0x41881c
-    void* sh2;                                      // +0x418820
-    void* sh3;                                      // +0x418824
-    int counter;                                    // +0x418828
-    void init_formats();                            // 0x4bc5b0
-    int init_decls(int* a0, int* a1, int* a2, int* a3, int* a4,
-                   int* a5, int* a6, int* a7, int* a8, int* a9);   // 0x4bc830
-    void init_shaders();                            // 0x4bcfb0
-    int release_decls();                            // 0x4bd0c0
-};
+#include "../render_batch.h"                   // render_batch (shared with terrain_b)
 struct font_details {                               // seven zeroed dwords
     int a, b, c, d, e, f, g;
     font_details();                                 // 0x4bd120

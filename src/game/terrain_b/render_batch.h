@@ -36,33 +36,7 @@ struct mesh_calls : mesh {
 };
 
 // ---- renderer (global object at 0xa17910) -----------------------------------------------------------------------
-struct renderer {
-    char pad000[0x505];
-    unsigned char b505;                 // 0x505 cached D3DRS_FOGENABLE
-    char pad506[0x547 - 0x506];
-    unsigned char b547, b548, b549, b54a, b54b;     // 0x547.. cached render-state flags
-    char pad54c[0x590 - 0x54c];
-    int alpha_mode;                     // 0x590
-    unsigned color1;                    // 0x594 cached material colour 1
-    unsigned color2;                    // 0x598 cached material colour 2
-    char pad59c[0x5b8 - 0x59c];
-    void* bone_origin_cache;            // 0x5b8
-    int cull_setting;                   // 0x5bc
-    int cull_cache;                     // 0x5c0
-    void* tex_cache[5];                 // 0x5c4 diffuse, diffuse2, normal, specular, env
-    int light_count;                    // 0x5d8
-    int light_idx[4];                   // 0x5dc
-    char pad5ec[4];
-    float tex_off[2];                   // 0x5f0
-    char pad5f8[0x600 - 0x5f8];
-    float time_var;                     // 0x600
-    char pad604[0x614 - 0x604];
-    unsigned char b614;                 // 0x614
-    char pad615[3];
-    IDirect3DDevice9* dev;              // 0x618
-    void set_blend_mode(int mode);      // 0x40e940
-};
-extern renderer g_render;               // 0xa17910
+#include "../../include/renderer.h"       // renderer (shared)
 
 // ---- render records (the shared classes of src/rgl/resource.h) -----------------------------------------------------
 // `texture` (frame count at +0x28, which resource.h calls owns_texture; frame array at +0x40), `material` (the shader:
@@ -130,46 +104,16 @@ struct sky_t {
 
 struct item_ref { mesh* m; int extra; };
 
-struct scene {
-    char pad0[0x30];
-    frustum cam;                        // 0x30
-    IUnknown* rt;                       // 0x150
-    texture* env;                       // 0x154
-    scene* water;                       // 0x158
-    IUnknown* depth;                    // 0x15c
-    char b160, b161, b162, pad163;      // 0x160
-    int f164;                           // 0x164
-    char pad168;
-    char b169;                          // 0x169
-    char pad16a[2];
-    D3DXPLANE clip_plane;               // 0x16c
-    vector4 ambient;                    // 0x17c
-    char pad18c[0x194 - 0x18c];
-    std::vector<light*> lights;         // 0x194
-    char pad1a4[0x1b0 - 0x1a4];
-    sky_t* sky;                         // 0x1b0
-    std::vector<item_ref> items;        // 0x1b4
-};
+// the render scene is the shared rgl::scene (src/rgl/mesh.h); this module reads its +0x194 / +0x1b0 / +0x1b4 / +0x16c fields
+// through the types it knows: lights (vector<light*>), the sky block, the item list and the clip plane
+using rgl::scene;
+inline std::vector<light*>& scene_lights(scene* s) { return (std::vector<light*>&)s->list; }          // 0x194
+inline sky_t* scene_sky(scene* s) { return (sky_t*)s->f1b0; }                                          // 0x1b0
+inline std::vector<item_ref>& scene_items(scene* s) { return (std::vector<item_ref>&)s->queue; }       // 0x1b4
+inline D3DXPLANE& scene_clip(scene* s) { return *(D3DXPLANE*)&s->f16c; }                               // 0x16c
 
 // ---- the batch renderer object (a ~4 MB object; only the touched fields are modelled) -----------------------------
-struct vfmt {                               // 0x4c bytes: vertex format slot
-    int f0;
-    UINT stride;                            // 0x04
-    IDirect3DVertexBuffer9* vb;             // 0x08
-    char pad0c[0x48 - 0x0c];
-    IDirect3DVertexDeclaration9* decl;      // 0x48
-};
-struct render_batch {
-    char pad0[0x14];
-    vfmt vf[10];                            // 0x14
-    char pad30c[0x350 - 0x30c];
-    IDirect3DIndexBuffer9* ib0;             // 0x350 (0x4c-byte slots)
-    char pad354[0x3b4 - 0x354];
-    int cur_vf_a;                           // 0x3b4
-    int cur_ib;                             // 0x3b8
-    int cur_vf_b;                           // 0x3bc
-    void render_scene(scene* sc);           // 0x46e590
-};
+#include "../render_batch.h"                   // render_batch (shared with config.cpp)
 
 #include "../../include/mat4.h"
 using rgl::rot3;

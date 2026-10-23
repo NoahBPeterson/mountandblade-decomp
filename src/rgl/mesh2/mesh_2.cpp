@@ -599,10 +599,10 @@ Obj7a0::Obj7a0()
 }
 
 // @ 0x4cd850
-void __fastcall fix_skeletons(std::vector<Skeleton>* list)
+void __fastcall fix_skeletons(std::vector<RegSkeleton>* list)
 {
     for (unsigned i = 0; i < list->size(); i++) {
-        Skeleton* sk = &(*list)[i];
+        RegSkeleton* sk = &(*list)[i];
         SkelRes* res = g_resmgr.get_object70(sk->model);
         if (res != 0) {
 #define DST(j) ((SkelBone*)(res->bones + (j) * 0xdc))

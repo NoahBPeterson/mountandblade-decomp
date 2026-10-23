@@ -12,6 +12,8 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/quaternion.h"
 #include "../../include/vec.h"
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;
 
@@ -114,9 +116,9 @@ void FxAnim::update_poses()
 // The slice wrote this function over the members of one object; the macros give the same field reads.
 #define RC ((AnimRec*)env)
 #define nrecs nenv
-#define bones ((Bone*)elems)
+#define bones ((FxBone*)elems)
 #define nbones count
-#define BN(i) (*(Bone*)((int)elems + (i) * sizeof(Bone)))
+#define BN(i) (*(FxBone*)((int)elems + (i) * sizeof(FxBone)))
 #define dt f54
 #define X ((FxAnim_x*)this)
 

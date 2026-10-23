@@ -21,6 +21,8 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;
 
@@ -47,7 +49,7 @@ void FxDef::skin(mesh* mm, char flag)
     P->bone_src() = (const char*)res + 0x20;
     if ((int)P->res->shader->flags20 >= 0) {
         P->ensure_local();
-        std::vector<elem30>& sk = P->get60();
+        std::vector<skin_vert>& sk = P->get60();
         for (unsigned i = 0; i < P->v50.size(); i++) {
             vertex60* V = &*(P->v50.begin() + i);
             point20* Pt = &P->v70._Myfirst[V->index];

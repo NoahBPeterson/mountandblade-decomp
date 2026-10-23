@@ -18,6 +18,9 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 

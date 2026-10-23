@@ -14,6 +14,8 @@
 #include "../../include/vec.h"
 #include "../../include/phys_set.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/shape.h"
+#include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // @ 0x441360
 void PhysSet::destroy_world(int idx)

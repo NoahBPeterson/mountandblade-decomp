@@ -243,7 +243,7 @@ struct kf_track {               // (not the 12-byte rgl::keyframes of src/includ
     int* times;                 // +0x8
     int count;                  // +0xc
 };
-struct mesh_node {              // 0x98-byte record with a keyframe track at +0x84
+struct kf_node98 {              // 0x98-byte record with a keyframe track at +0x84
     char pad0[0x84];
     kf_track kf;                // +0x84
 };
@@ -784,7 +784,7 @@ struct matrix3 { vector4 s, f, u; };                         // identity3's resu
 matrix3* __cdecl identity3(matrix3* out);                    // 0x40cd60
 
 // the scene graph global (at +0xc3b0dc of the layout record)
-struct scene_sub {
+struct world_sub {
     char pad0[4];
     scene_vert* verts;                                       // +4
     char pad8[8];
@@ -795,7 +795,7 @@ struct world_root {
     char pad0[0x64];
     code_tab* codes;                                         // +0x64
     char pad68[0x48];
-    scene_sub* sub;                                          // +0xb0
+    world_sub* sub;                                          // +0xb0
 };
 
 

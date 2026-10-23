@@ -3,12 +3,12 @@
 // and the key table. One header for the classes of this object.
 //
 // FxDef and FxElem (../scene/fx.h) are the shared classes; this header only adds views of their storage:
-//   Bone     : FxElem  accessors for the quaternion fields (FxElem::q / padd4 / qe4 / vf4 are typed as raw floats there)
+//   FxBone     : FxElem  accessors for the quaternion fields (FxElem::q / padd4 / qe4 / vf4 are typed as raw floats there)
 //   AnimRec            the 0xd8-byte record of FxDef::env (fx.h calls it EnvRec: cur / target / release / attack /
 //                      k0..k2 are the same bytes seen through the envelope pass 0x421ef0 and ~EnvRec)
 //   FxAnim   : FxDef   the member functions of FxDef that fx.h does not declare (no new fields; cast `this`)
 // The slices called FxAnim "Animator" (s00422130) and "Curve" (s00422db0, s00423540), AnimRec "Rec" / "CurveRec"
-// and Bone "Bone" / "QBlock": all views of the same FxDef / FxElem / env storage.
+// and FxBone "FxBone" / "QBlock": all views of the same FxDef / FxElem / env storage.
 #ifndef RGL_DYNAMIC_FX_ANIM_H
 #define RGL_DYNAMIC_FX_ANIM_H
 #include <vector>
@@ -100,7 +100,7 @@ FA_CHECK(AnimRec, wt, 0xc0); FA_CHECK(AnimRec, offs, 0xc8);
 // FxElem::q 0xc4 (rotation), padd4 0xd4 (absolute rotation), qe4 0xe4 (delta of the last frame), vf4 0xf4 (angular
 // velocity); the key cache of FxAnim::value: t 0x104 (cur index per 2*i+j), c 0x114 (table per i), qa 0x11c / qb 0x15c
 // (sign-corrected key pair per 2*i+j).
-struct Bone : FxElem {
+struct FxBone : FxElem {
     quaternion& rot() { return *(quaternion*)&q; }
     quaternion& abs_rot() { return *(quaternion*)padd4; }
     quaternion& delta() { return *(quaternion*)&qe4; }
@@ -113,7 +113,7 @@ struct Bone : FxElem {
 
 // ---- FxDef members that fx.h does not declare ----------------------------------------------------------------------
 struct FxAnim : FxDef {
-    Bone* bone(int i) { return (Bone*)elems + i; }
+    FxBone* bone(int i) { return (FxBone*)elems + i; }
     AnimRec* rec(int i) { return (AnimRec*)env + i; }
     __declspec(noinline) void update_envelopes(float dt);   // 0x421ef0
     __declspec(noinline) void update_poses();               // 0x422080

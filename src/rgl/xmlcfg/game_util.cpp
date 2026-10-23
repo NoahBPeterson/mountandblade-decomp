@@ -21,6 +21,8 @@
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/height_field.h"
+#include "../../game/placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../game/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // ---- Newton Game Dynamics imports (cdecl) -----------------------------------------------------------
 extern "C" {

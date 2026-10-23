@@ -41,6 +41,15 @@
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/phys_set.h"
 #include "../../include/height_field.h"
+#include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../shadow_map.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../terrain_desc.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../terrain_a/terrain.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using rgl::vector4;
 using rgl::matrix;
@@ -58,11 +67,11 @@ void render_batch::render_scene(scene* sc)
     }
     bool sun_shadow = false;
     vec3 light_pos[10];
-    if (!sc->b162 && f164 == 0) {
-        sky_t* sky = sc->sky;
+    if (!sc->f162 && f164 == 0) {
+        sky_t* sky = scene_sky(sc);
         if (sky) {
-            bool lt = sc->cam.m.o.z < sky->height;
-            if (sc->b169)
+            bool lt = sc->fr.m.o.z < sky->height;
+            if (sc->f169)
                 lt = !lt;
             vector4 fog_col;
             if (lt) {
@@ -70,15 +79,15 @@ void render_batch::render_scene(scene* sc)
                 unpack_color(&fog_col, &c);
                 fog_col.w = 1.0f;
                 g_effect->SetFloat("fFogStart", sky->fog_start_a);
-                g_effect->SetFloat("fFogEnd", sc->sky->fog_end_a);
-                g_effect->SetFloat("fFogDensity", sc->sky->fog_dens_a);
+                g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_a);
+                g_effect->SetFloat("fFogDensity", scene_sky(sc)->fog_dens_a);
             } else {
                 unsigned c = sky->fog_color_b;
                 unpack_color(&fog_col, &c);
                 fog_col.w = 1.0f;
                 g_effect->SetFloat("fFogStart", sky->fog_start_b);
-                g_effect->SetFloat("fFogEnd", sc->sky->fog_end_b);
-                g_effect->SetFloat("fFogDensity", sc->sky->fog_dens_b);
+                g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_b);
+                g_effect->SetFloat("fFogDensity", scene_sky(sc)->fog_dens_b);
             }
             g_effect->SetVector("vFogColor", (D3DXVECTOR4*)&fog_col);
 
@@ -90,13 +99,13 @@ void render_batch::render_scene(scene* sc)
             pc[0] = 0.01f; pc[1] = 0.01f; pc[2] = 0.01f;
             bool found = false;
             int npoint = 0;
-            for (unsigned i = 1; i < sc->lights.size(); i++) {
-                light* l = sc->lights[i];
+            for (unsigned i = 1; i < scene_lights(sc).size(); i++) {
+                light* l = scene_lights(sc)[i];
                 if (l->type == 2) {
                     if (!found) {
                         sky_col = l->diffuse;
                         sky_col.w = 1.0f;
-                        sky_dir = sc->lights[i]->sun_dir;
+                        sky_dir = scene_lights(sc)[i]->sun_dir;
                         found = true;
                     }
                 } else {
@@ -121,11 +130,11 @@ void render_batch::render_scene(scene* sc)
             g_effect->SetValue("vSkyLightColor", &sky_col, 16);
 
             int n = 0;
-            for (unsigned i = 0; i < sc->lights.size() && n < 10; i++) {
-                if (sc->lights[i]->type == 0) {
-                    light_diffuse[n] = sc->lights[i]->sample();
+            for (unsigned i = 0; i < scene_lights(sc).size() && n < 10; i++) {
+                if (scene_lights(sc)[i]->type == 0) {
+                    light_diffuse[n] = scene_lights(sc)[i]->sample();
                     light_diffuse[n].w = 1.0f;
-                    light_pos[n] = sc->lights[i]->position;
+                    light_pos[n] = scene_lights(sc)[i]->position;
                     n++;
                 }
             }
@@ -134,11 +143,11 @@ void render_batch::render_scene(scene* sc)
 
             vector4 sun_col;
             vec3 sun_dir;
-            if (sc->lights.size() != 0 && sc->lights[0]->type == 2) {
-                sun_col = sc->lights[0]->diffuse;
+            if (scene_lights(sc).size() != 0 && scene_lights(sc)[0]->type == 2) {
+                sun_col = scene_lights(sc)[0]->diffuse;
                 sun_col.w = 0.0f;
-                sun_dir = sc->lights[0]->sun_dir;
-                if (sc->lights[0]->diffuse.length() > 0.1f && !(sc->lights[0]->flags & 2))
+                sun_dir = scene_lights(sc)[0]->sun_dir;
+                if (scene_lights(sc)[0]->diffuse.length() > 0.1f && !(scene_lights(sc)[0]->flags & 2))
                     sun_shadow = true;
                 else
                     sun_shadow = false;
@@ -149,17 +158,17 @@ void render_batch::render_scene(scene* sc)
             g_effect->SetValue("vSunDir", &sun_dir, 12);
             g_effect->SetValue("vSunColor", &sun_col, 16);
 
-            texture* st = sc->sky->shadow;
+            texture* st = scene_sky(sc)->shadow;
             if (st) {
                 IDirect3DBaseTexture9* t = tex_current(st, 0.0f);
                 g_effect->SetTexture("shadowmap_texture", t);
-                D3DXMATRIX proj = sc->sky->shadow_cam.projection();
-                D3DXMATRIX view = sc->sky->shadow_cam.view_matrix();
+                D3DXMATRIX proj = scene_sky(sc)->shadow_cam.projection();
+                D3DXMATRIX view = scene_sky(sc)->shadow_cam.view_matrix();
                 D3DXMATRIX svp = view * proj * D3DXMATRIX(0.5f, 0.0f, 0.0f, 0.0f,
                                                          0.0f, -0.5f, 0.0f, 0.0f,
                                                          0.0f, 0.0f, 1.0f, 0.0f,
-                                                         0.5f / (float)sc->sky->shadow->width + 0.5f,
-                                                         0.5f / (float)sc->sky->shadow->height + 0.5f, 0.0f, 1.0f);
+                                                         0.5f / (float)scene_sky(sc)->shadow->width + 0.5f,
+                                                         0.5f / (float)scene_sky(sc)->shadow->height + 0.5f, 0.0f, 1.0f);
                 g_effect->SetMatrixTranspose("matSunViewProj", &svp);
             }
         } else {
@@ -210,7 +219,7 @@ void render_batch::render_scene(scene* sc)
 
     // texture-space matrix for camera-space texgen: 0.5 * rotation of the camera, shifted by 0.5
     frame4 a;
-    a.rot = *(rot3*)&sc->cam.m;
+    a.rot = *(rot3*)&sc->fr.m;
     a.rot.s.x *= 0.5f; a.rot.s.y *= 0.5f; a.rot.s.z *= 0.5f;
     a.rot.f.x *= 0.5f; a.rot.f.y *= 0.5f; a.rot.f.z *= 0.5f; a.rot.f.w *= 0.5f;
     a.rot.u.y *= 0.5f; a.rot.u.z *= 0.5f; a.rot.u.w *= 0.5f;
@@ -229,12 +238,12 @@ void render_batch::render_scene(scene* sc)
     sc->ambient.w = 1.0f;
     g_effect->SetVector("vAmbientColor", (D3DXVECTOR4*)&sc->ambient);
     vector4 camp;
-    camp = sc->cam.m.o;
+    camp = sc->fr.m.o;
     camp.w = 0.0f;
     g_effect->SetVector("vCameraPos", (D3DXVECTOR4*)&camp);
 
-    D3DXMATRIX proj = sc->cam.projection();
-    D3DXMATRIX view = sc->cam.view_matrix();
+    D3DXMATRIX proj = sc->fr.projection();
+    D3DXMATRIX view = sc->fr.view_matrix();
     g_effect->SetMatrixTranspose("matView", &view);
     D3DXMATRIX viewproj = view * proj;
     g_effect->SetMatrixTranspose("matViewProj", &viewproj);
@@ -245,8 +254,8 @@ void render_batch::render_scene(scene* sc)
         g_effect->SetFloat("time_var", tv);
     }
 
-    if (sc->b161) {
-        D3DXPLANE pl(sc->clip_plane.a, sc->clip_plane.b, sc->clip_plane.c, sc->clip_plane.d);
+    if (sc->f161) {
+        D3DXPLANE pl(scene_clip(sc).a, scene_clip(sc).b, scene_clip(sc).c, scene_clip(sc).d);
         D3DXMATRIX inv;
         D3DXMatrixInverse(&inv, 0, &view);
         D3DXMatrixTranspose(&inv, &inv);
@@ -264,8 +273,8 @@ void render_batch::render_scene(scene* sc)
     AT(int, this, 0x4183d0) = 0;
     AT(int, this, 0x4183c8) = 0;
     AT(int, this, 0x4183cc) = 0;
-    std::vector<item_ref>::iterator it = sc->items.begin();
-    if (it != sc->items.end()) {
+    std::vector<item_ref>::iterator it = scene_items(sc).begin();
+    if (it != scene_items(sc).end()) {
         do {
             mesh* item = it->m;
             bool tex_ok = true;
@@ -273,10 +282,10 @@ void render_batch::render_scene(scene* sc)
             int fb = item->slots[0].f0;
             if (cur_vf_a != fa || cur_vf_b != fb) {
                 cur_vf_a = fa;
-                vfmt* v = &vf[fa + fb * 2];
+                dev_buffer* v = &((dev_buffer*)vf)[fa + fb * 2];
                 cur_vf_b = fb;
                 g_render.dev->SetVertexDeclaration(v->decl);
-                g_render.dev->SetStreamSource(0, v->vb, 0, v->stride);
+                g_render.dev->SetStreamSource(0, v->vb, 0, v->elem_size);
             }
             mesh* src = item->local_a0 ? item : item->parent;
             int ibk = src->slots[1].f4;
@@ -285,7 +294,7 @@ void render_batch::render_scene(scene* sc)
                 g_render.dev->SetIndices(AT(IDirect3DIndexBuffer9*, this, ibk * 0x4c + 0x350));
             }
             material* mat;
-            if (sc->b162 || sc->f164) {
+            if (sc->f162 || sc->f164) {
                 skin_calls* part = (skin_calls*)it->m->res;
                 material* pm = part->shader;
                 if (sc->f164) {
@@ -311,7 +320,7 @@ void render_batch::render_scene(scene* sc)
                 skin_calls* part = (skin_calls*)item->res;
                 if (AT(skin_calls*, this, 0x4183d0) != part) {
                     AT(skin_calls*, this, 0x4183d0) = part;
-                    if (sc->sky && sc->sky->fog_meshes && !(part->flags & 1)) {
+                    if (scene_sky(sc) && scene_sky(sc)->fog_meshes && !(part->flags & 1)) {
                         if (g_render.b505 != 1) {
                             g_render.b505 = 1;
                             g_render.dev->SetRenderState(D3DRS_FOGENABLE, 1);
@@ -363,7 +372,7 @@ void render_batch::render_scene(scene* sc)
                         }
                     }
                     if (part->shader->flags20 & 0x100) {
-                        t = sc->env;
+                        t = sc->rt;
                         if (t) {
                             IDirect3DBaseTexture9* cur = tex_current(t, 0.0f);
                             if (g_render.tex_cache[4] != cur) {
@@ -377,19 +386,19 @@ void render_batch::render_scene(scene* sc)
                 }
                 mat = part->shader;
                 int nsel = 0;
-                if (sc->b160 && !(mat->flags20 & 0x80)) {
+                if (sc->f160 && !(mat->flags20 & 0x80)) {
                     float lk[4];
                     int li[4];
                     int n = 0;
-                    for (unsigned i = 0; i < sc->lights.size() && n < 10; i++) {
-                        if (sc->lights[i]->type == 0) {
+                    for (unsigned i = 0; i < scene_lights(sc).size() && n < 10; i++) {
+                        if (scene_lights(sc)[i]->type == 0) {
                             mesh* im = it->m;
-                            float dx = sc->lights[i]->position.x - im->m194.o.x;
-                            float dy = sc->lights[i]->position.y - im->m194.o.y;
-                            float dz = sc->lights[i]->position.z - im->m194.o.z;
+                            float dx = scene_lights(sc)[i]->position.x - im->m194.o.x;
+                            float dy = scene_lights(sc)[i]->position.y - im->m194.o.y;
+                            float dz = scene_lights(sc)[i]->position.z - im->m194.o.z;
                             float dist = (float)sqrt(dx * dx + dy * dy + dz * dz);
-                            if (dist - im->f44 < sc->lights[i]->radius) {
-                                float key = (sc->lights[i]->diffuse.z + sc->lights[i]->diffuse.y + sc->lights[i]->diffuse.x) / dist;
+                            if (dist - im->f44 < scene_lights(sc)[i]->radius) {
+                                float key = (scene_lights(sc)[i]->diffuse.z + scene_lights(sc)[i]->diffuse.y + scene_lights(sc)[i]->diffuse.x) / dist;
                                 int p = nsel;
                                 int j = nsel - 1;
                                 bool done = false;
@@ -433,16 +442,16 @@ void render_batch::render_scene(scene* sc)
                     g_effect->SetInt("iLightPointCount", nsel);
                 }
                 mesh* im = it->m;
-                if (g_render.color1 != im->color) {
-                    g_render.color1 = im->color;
+                if (g_render.tex_factor != im->color) {
+                    g_render.tex_factor = im->color;
                     vector4 c;
-                    unpack_color(&c, &g_render.color1);
+                    unpack_color(&c, &g_render.tex_factor);
                     g_effect->SetVector("vMaterialColor", (D3DXVECTOR4*)&c);
                 }
-                if (g_render.color2 != (unsigned)im->f40) {
-                    g_render.color2 = im->f40;
+                if (g_render.tex_factor2 != (unsigned)im->f40) {
+                    g_render.tex_factor2 = im->f40;
                     vector4 c;
-                    unpack_color(&c, &g_render.color2);
+                    unpack_color(&c, &g_render.tex_factor2);
                     g_effect->SetVector("vMaterialColor2", (D3DXVECTOR4*)&c);
                 }
                 ((mi_ops*)im)->setup_material();
@@ -457,7 +466,7 @@ void render_batch::render_scene(scene* sc)
                 if ((mat->flags20 & 0x1000) && g_mesh_quality != 2) {
                     v = 3;
                 } else if (sun_shadow) {
-                    if (sc->sky && sc->sky->sun_shadows && g_x5aa034) {
+                    if (scene_sky(sc) && scene_sky(sc)->sun_shadows && g_x5aa034) {
                         v = (g_render.b614 != 0) + 1;
                     }
                 }
@@ -501,7 +510,7 @@ void render_batch::render_scene(scene* sc)
                     skin* ip = im->res;
                     if (ip->flags & 0x20000) {
                         *(rot3*)&world = *(rot3*)&im->m194;
-                        ((frame4*)&world)->o = sc->cam.m.o;
+                        ((frame4*)&world)->o = sc->fr.m.o;
                         world._43 *= 0.75f;
                     } else {
                         world = *(D3DXMATRIX*)&im->m194;
@@ -510,7 +519,7 @@ void render_batch::render_scene(scene* sc)
                     frame4 w;
                     w.o = im->m194.o;
                     w.rot.u = im->m194.u;
-                    w.rot.s = sc->cam.m.s;
+                    w.rot.s = sc->fr.m.s;
                     w.rot.f = cross_i(w.rot.u, w.rot.s);
                     float len = (float)sqrt(w.rot.u.z * w.rot.u.z + w.rot.u.y * w.rot.u.y + w.rot.u.x * w.rot.u.x);
                     if (len > 1e-10f) {
@@ -524,16 +533,16 @@ void render_batch::render_scene(scene* sc)
                 } else {
                     frame4 w;
                     w.o = im->m194.o;
-                    w.rot.s = sc->cam.m.s;
-                    w.rot.f = sc->cam.m.f;
-                    w.rot.u = sc->cam.m.u;
+                    w.rot.s = sc->fr.m.s;
+                    w.rot.f = sc->fr.m.f;
+                    w.rot.u = sc->fr.m.u;
                     world = *(D3DXMATRIX*)&w;
                 }
                 world._14 = 0.0f; world._24 = 0.0f; world._34 = 0.0f; world._44 = 1.0f;
                 D3DXMATRIX world2 = world;
-                if ((it->m->res->shader->flags20 & 0x100) && sc->water) {
-                    D3DXMATRIX wproj = sc->water->cam.projection();
-                    D3DXMATRIX wview = sc->water->cam.view_matrix();
+                if ((it->m->res->shader->flags20 & 0x100) && sc->refl) {
+                    D3DXMATRIX wproj = sc->refl->fr.projection();
+                    D3DXMATRIX wview = sc->refl->fr.view_matrix();
                     wproj = world2 * wview * wproj;
                     g_effect->SetMatrixTranspose("matWaterWorldViewProj", &wproj);
                 }
@@ -545,13 +554,13 @@ void render_batch::render_scene(scene* sc)
             }
             if (AT(material*, this, 0x4183c8)->flags20 & 0x80000000) {
                 mesh* im = it->m;
-                if (im->f220) {
+                if (im->p220) {
                     void* bo = (void*)im->f224;
                     if (g_render.bone_origin_cache != bo) {
                         g_render.bone_origin_cache = bo;
                         g_effect->SetVectorArray("matBoneOriginArray", ((vec_arr*)bo)->data, ((vec_arr*)bo)->count);
                     }
-                    g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)im->f220, im->f228);
+                    g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)im->p220, im->f228);
                 } else {
                     vec_arr* d = (vec_arr*)((char*)this + 0x4183d8);
                     if (g_render.bone_origin_cache != d) {
@@ -577,7 +586,7 @@ void render_batch::render_scene(scene* sc)
             }
           next_item:
             ++it;
-        } while (it != sc->items.end());
+        } while (it != scene_items(sc).end());
     }
     g_effect->EndPass();
     g_effect->End();
@@ -604,7 +613,7 @@ void PointSet::compute_bounds()
 }
 
 // @ 0x4705e0
-void Mesh::compute_face_normals()
+void PolyMesh::compute_face_normals()
 {
     vector4 t;                              // the normal before it is stored (its w lane is never written)
     vector4 b;
@@ -634,7 +643,7 @@ void Mesh::compute_face_normals()
 }
 
 // @ 0x470750
-void Mesh::compute_edge_creases()
+void PolyMesh::compute_edge_creases()
 {
     vector4 d, s, n;                       // direction of the edge, projected part, perpendicular part
     for (unsigned i = 0; i < c.edges.size(); i++) {
@@ -666,7 +675,7 @@ void Mesh::compute_edge_creases()
 }
 
 // @ 0x470920
-void Mesh::build_adjacency()
+void PolyMesh::build_adjacency()
 {
     for (unsigned i = 0; i < c.edges.size(); i++)
         vat(c.edges, i).nfaces = 0;
@@ -681,7 +690,7 @@ void Mesh::build_adjacency()
 }
 
 // @ 0x470a00
-void Mesh::build_geometry()
+void PolyMesh::build_geometry()
 {
     ((MeshExt*)this)->build_adjacency();
     for (unsigned i = 0; i < c.faces.size(); i++) {
@@ -752,7 +761,7 @@ void TroopMgr::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
 {
     rgl::mesh* base = *ref->base;
     int nbase = base->v70.size();
-    int n = obj->get70().size();
+    int n = obj->get70_rec().size();
     dst->cnt[idx] = n;
     dst->arr[idx] = new int[n];
     for (int i = 0; i < dst->cnt[idx]; i++) {
@@ -760,7 +769,7 @@ void TroopMgr::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
         int bi = 0;
         const rgl::point20* bp = &*base->v70.begin();
         for (int j = 0; j < nbase; j++) {
-            vector4 q = (&*obj->get70().begin())[i].a;
+            vector4 q = (&*obj->get70_rec().begin())[i].a;
             if (q.x < 0.0f) q.x = -q.x;
             float dx = q.x - bp->a.x;
             float dy = q.y - bp->a.y;
@@ -838,15 +847,15 @@ void GameData::blend(float* out, float x, float y)
 void ShadowMap::attach_camera(CellGrid* c)
 {
     // marker "WL" 12 here in the original
-    cam = c;
-    cam->view.vmin = vector4(10000.0f, 10000.0f, 10000.0f);
-    cam->view.vmax = vector4(-10000.0f, -10000.0f, -10000.0f);
-    cam->view.size = vector4(1.0f, 1.0f, 1.0f);
-    cam->view.center = vector4(0.0f, 0.0f, 0.0f);
-    cam->view.wcenter = vector4(0.0f, 0.0f, 0.0f);
-    cam->build_light_frame(&cam->view.world, &cam->shadow_amb);
+    cam = (LightCam*)c;
+    c->view.vmin = vector4(10000.0f, 10000.0f, 10000.0f);
+    c->view.vmax = vector4(-10000.0f, -10000.0f, -10000.0f);
+    c->view.size = vector4(1.0f, 1.0f, 1.0f);
+    c->view.center = vector4(0.0f, 0.0f, 0.0f);
+    c->view.wcenter = vector4(0.0f, 0.0f, 0.0f);
+    c->build_light_frame(&c->view.world, &c->shadow_amb);
     vector4 z(0.0f, 0.0f, 0.0f);
-    cam->view.world.o = z;
+    c->view.world.o = z;
     if (g_shadow_quality != g_shadow_quality_req) {
         release_all();
         g_shadow_quality = g_shadow_quality_req;
@@ -870,14 +879,14 @@ void Terrain::generate_heights()
     for (int y = 0; y <= h; y++) {
         for (int x = 0; x <= w; x++) {
             float p[3], n[3];
-            p[0] = off[0] + cell[x][y].x;
-            p[1] = off[1] + cell[x][y].y;
-            p[2] = off[2] + cell[x][y].z;
+            p[0] = off[0] + cell[x][y].px;
+            p[1] = off[1] + cell[x][y].py;
+            p[2] = off[2] + cell[x][y].pz;
             noise_fractal(noise_seed, 0.6f, 1, 0, p, n);
             float v = (n[2] + n[1] + n[0]) * fl * 9.0f;
             if (v < 0.0f) v = 0.0f;
             else if (v >= 1.0f) v = 1.0f;
-            cell[x][y].f18 = ((float)cos(v * 3.1415927f) + 1.0f) * 0.45f + 0.1f;
+            cell[x][y].weight = ((float)cos(v * 3.1415927f) + 1.0f) * 0.45f + 0.1f;
         }
     }
     // ridges along the four borders
@@ -892,22 +901,22 @@ void Terrain::generate_heights()
                     if (pass != 0) {
                         x1 = a; y1 = b; x2 = a; y2 = h - b;
                     }
-                    TCell* c1 = &cell[x1][y1];
+                    terrain_cell* c1 = &cell[x1][y1];
                     float p1[3], n1[3];
-                    p1[0] = off[0] + c1->x;
-                    p1[1] = off[1] + c1->y;
-                    p1[2] = off[2] + c1->z;
+                    p1[0] = off[0] + c1->px;
+                    p1[1] = off[1] + c1->py;
+                    p1[2] = off[2] + c1->pz;
                     noise_fractal(40.0f, 0.6f, 4, 0, p1, n1);
                     float v1 = (n1[2] + n1[2] + 0.4f) * k;
-                    if (c1->z < v1) { c1->z = v1; c1->f84 = v1; }
-                    TCell* c2 = &cell[x2][y2];
+                    if (c1->pz < v1) { c1->pz = v1; c1->h2 = v1; }
+                    terrain_cell* c2 = &cell[x2][y2];
                     float p2[3], n2[3];
-                    p2[0] = off[0] + c2->x;
-                    p2[1] = off[1] + c2->y;
-                    p2[2] = off[2] + c2->z;
+                    p2[0] = off[0] + c2->px;
+                    p2[1] = off[1] + c2->py;
+                    p2[2] = off[2] + c2->pz;
                     noise_fractal(40.0f, 0.6f, 4, 0, p2, n2);
                     float v2 = (n2[2] + n2[2] + 0.4f) * k;
-                    if (c2->z < v2) { c2->z = v2; c2->f84 = v2; }
+                    if (c2->pz < v2) { c2->pz = v2; c2->h2 = v2; }
                     if (b == 0) { c1->f90 = 0; c2->f90 = 0; }
                 }
             }
@@ -935,12 +944,12 @@ void Terrain::generate_heights()
     float lo = 10000.0f;
     for (int y = 0; y <= h; y++)
         for (int x = 0; x <= w; x++)
-            if (cell[x][y].z < lo) lo = cell[x][y].z;
+            if (cell[x][y].pz < lo) lo = cell[x][y].pz;
     for (int y = 0; y <= h; y++)
         for (int x = 0; x <= w; x++) {
-            float v = -lo + cell[x][y].z;
-            cell[x][y].z = v;
-            cell[x][y].f84 = v;
+            float v = -lo + cell[x][y].pz;
+            cell[x][y].pz = v;
+            cell[x][y].h2 = v;
         }
 }
 
@@ -951,14 +960,14 @@ float Terrain::sun_visibility(const float* p)
     vector4 d;
     {
         vector4 amb;                       // light colour: unused; its slot is shared with the scratch below
-        world->sample_lights(&a, &d, &amb);
+        grid->sample_lights(&a, &d, &amb);
     }
     vector4 s;
     s.x = d.x * 1000.0f; s.y = d.y * 1000.0f; s.z = d.z * 1000.0f;
     a.x = p[0] - s.x; a.y = p[1] - s.y; a.z = p[2] - s.z;
     s.x = d.x * 0.05f; s.y = d.y * 0.05f; s.z = d.z * 0.05f;
     d.x = p[0] - s.x; d.y = p[1] - s.y; d.z = p[2] - s.z;
-    bool vis = g_use_shaders != 0 || world->hf->line_clear(&d, &a);
+    bool vis = g_use_shaders != 0 || grid->hf->line_clear(&d, &a);
     if (vis)
         return 1.0f;
     return 0.0f;
@@ -974,9 +983,9 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
             mesh* m = p->meshes[k];
             if (m->res->flags & 0x40) {
                 float light = 1.0f;
-                if ((pt->flags & 0x80000i64) != 0 && ((int*)world->hf->cols[p->cx])[p->f0c + p->cy * 4 + 2] >= 0) {
+                if ((pt->flags & 0x80000i64) != 0 && ((int*)grid->hf->cols[p->cx])[p->f0c + p->cy * 4 + 2] >= 0) {
                     vector4 n;
-                    n.x = -sun.x; n.y = -sun.y; n.z = -sun.z;
+                    n.x = -sun_dir[0]; n.y = -sun_dir[1]; n.z = -sun_dir[2];
                     light = max2(0.0f, dot3(n, p->frame.u));
                 }
                 if (g_use_shaders == 0 || g_mesh_quality == 0) {
@@ -995,15 +1004,15 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                     pos.z = c.z + p->frame.o.z;
                     if (c.z < 1.5f) {
                         vector4 d, far_, near_;
-                        vscale_to(d, sun, 1000.0f);
+                        vscale_to(d, *(vector4*)sun_dir, 1000.0f);
                         far_.x = pos.x - d.x; far_.y = pos.y - d.y; far_.z = pos.z - d.z;
-                        vscale_to(d, sun, 0.05f);
+                        vscale_to(d, *(vector4*)sun_dir, 0.05f);
                         near_.x = pos.x - d.x; near_.y = pos.y - d.y; near_.z = pos.z - d.z;
                         bool visible;
                         if (trace)
-                            visible = world->trace(&near_, &far_, 50.0f, 0, 0) != 0;
+                            visible = grid->trace(&near_, &far_, 50.0f, 0, 0) != 0;
                         else
-                            visible = world->hf->line_clear(&near_, &far_) != 0;
+                            visible = grid->hf->line_clear(&near_, &far_) != 0;
                         if (!visible)
                             light *= 0.1f;
                     }
@@ -1025,8 +1034,8 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                     vector4 col;
                     rgl::unpack_color(&col, (const unsigned*)&v.f58);
                     vector4 t1, t2, t3, r;
-                    vscale_to(t1, sun_dif, lf);
-                    vscale_to(t2, sun_amb, 1.5f);
+                    vscale_to(t1, *(vector4*)sun_diffuse, lf);
+                    vscale_to(t2, sun_ambient, 1.5f);
                     t3.x = t2.x + t1.x; t3.y = t2.y + t1.y; t3.z = t2.z + t1.z;
                     r.x = t3.x * col.x; r.y = t3.y * col.y; r.z = t3.z * col.z;
                     v.color = rgl::pack_color(&r);
@@ -1537,8 +1546,8 @@ void Terrain::refresh_cells()
 {
     for (int y = 0; y <= h; y++) {
         for (int x = 0; x <= w; x++) {
-            TCell* c = &(&cell[0][0])[x * 251 + y];
-            c->f40 = ((TerrainExt*)this)->sun_visibility(&c->x);
+            terrain_cell* c = &(&cell[0][0])[x * 251 + y];
+            c->f40 = ((TerrainExt*)this)->sun_visibility(&c->px);
         }
     }
 }
@@ -2232,7 +2241,7 @@ template<> int Pool<MAgent>::alloc()
     return id;
 }
 
-// ---- the nav map (Mesh) ---------------------------------------------------------------------------------------------
+// ---- the nav map (PolyMesh) ---------------------------------------------------------------------------------------------
 // @ 0x478150
 NavCore::NavCore()
 {
@@ -2242,7 +2251,7 @@ NavCore::NavCore()
 }
 
 // @ 0x4781d0
-void Mesh::load(stream_base* s)
+void PolyMesh::load(stream_base* s)
 {
     int n1, n2, n3;
     s->r_int(&n1);
@@ -2276,7 +2285,7 @@ void Mesh::load(stream_base* s)
 }
 
 // @ 0x478450
-int Mesh::add_edge(int a, int b)
+int PolyMesh::add_edge(int a, int b)
 {
     raw_t raw;
     MEdge e(raw);
@@ -2293,7 +2302,7 @@ int Mesh::add_edge(int a, int b)
 }
 
 // @ 0x4784d0
-int Mesh::add_face(int n, int v0, int v1, int v2, int v3, int e0, int e1, int e2, int e3)
+int PolyMesh::add_face(int n, int v0, int v1, int v2, int v3, int e0, int e1, int e2, int e3)
 {
     raw_t raw;
     MPoly f(raw);
@@ -2309,7 +2318,7 @@ int Mesh::add_face(int n, int v0, int v1, int v2, int v3, int e0, int e1, int e2
 }
 
 // @ 0x478580
-void Mesh::clear()
+void PolyMesh::clear()
 {
     MVert v;
     v.flag = 0;
@@ -2319,7 +2328,7 @@ void Mesh::clear()
 }
 
 // @ 0x4785e0
-void Mesh::build(HeightField* hf, int step_)
+void PolyMesh::build(HeightField* hf, int step_)
 {
     step = step_;
     clear();

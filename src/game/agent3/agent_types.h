@@ -35,7 +35,7 @@ extern shape_base* g_hit_shape;                         // 0x5e246c: last shape 
 
 struct Emit;                                            // particle emitter (agent_fx_sound.h)
 struct cell;                                            // world grid cell (agent_fx_sound.h)
-struct Mesh;                                            // mesh object hanging off the agent (agent_fx_sound.h)
+struct node_groups; typedef node_groups Mesh;                              // the lod mesh hanging off the agent (agent_fx_sound.cpp 0x443aa0)
 
 // the scene (rgl world): first field of the mission object, defined once in ../world.h (members of other objects only declared)
 #include "../world.h"
@@ -52,23 +52,7 @@ struct SkelData {
     ChanRec* items;                                   // +0x1c
 };
 struct Channel { char pad0[0xd8]; float charge; };    // animation channel: charge at +0xd8 (0x4406a0, via charged_0x48)
-struct Skeleton {
-    int nbones;                                       // +0
-    char* recs;                                       // +4 (0x1dc-byte records, matrix at +0x84; +0x1140 aim bone, +0x1170 head)
-    SkelData* data;                                   // +8 (0x43f6d0)
-    char pad0c[0x40 - 0xc];
-    Channel* chans;                                   // +0x40 (0x4406a0)
-    char pad44[0x50 - 0x44];
-    char done;                                        // +0x50 (0x43e740, 0x43f260, 0x43f560, 0x43f6d0)
-    char pad51[0x64 - 0x51];
-    int has_poses;                                    // +0x64
-    void update();                                    // 0x422130
-    void update_poses();                              // 0x422080
-    void ensure_updated();                            // 0x43e740
-    char* rec(int i);                                 // 0x43f260 (animator record i, brought up to date first; matrix at +0x84)
-    void set_rec_phase(int i, float p);               // 0x433b20 (0x444370)
-    void remove_shape(Mesh* m);                       // 0x439ec0 (0x443aa0)
-};
+#include "../skeleton.h"                // Skeleton, Region, node_groups (shared with agent / agent2)
 struct AgentBody {
     char pad0[0x58];
     posm m;                                           // +0x58 (0x43f6d0, 0x43f560, 0x4406a0; m.o at +0x98: 0x443730)

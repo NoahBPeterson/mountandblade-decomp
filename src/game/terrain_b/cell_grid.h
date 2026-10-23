@@ -93,25 +93,7 @@ struct Wind {                   // 0x7c-byte effect / wind object (0x478f30, 0x4
 };
 // Viewport / light parameter block; layout and constructor (0x46b940) from the terrain object's module. The five
 // vectors after the frustum are the shadow camera's bounds (ShadowMap::attach_camera 0x4711e0).
-struct ViewParams {
-    float f0, f4, f8;
-    int fc;
-    char b10;
-    float f14, f18, f1c;
-    int f20;
-    float f24, f28;
-    char b2c;
-    int f30;
-    frustum fr;                 // +0x34
-    rgl::vector4 vmin;          // +0x154 (CellGrid +0x22c)
-    rgl::vector4 vmax;          // +0x164
-    rgl::vector4 size;          // +0x174
-    rgl::vector4 center;        // +0x184
-    rgl::vector4 wcenter;       // +0x194
-    rgl::matrix world;          // +0x1a4 (CellGrid +0x27c)
-    rgl::matrix light;          // +0x1e4 (CellGrid +0x2bc)
-    ViewParams();               // 0x46b940
-};
+#include "../view_params.h"            // ViewParams (shared with terrain_a); the five vectors after the frustum are the shadow camera bounds
 
 // ---- the container ---------------------------------------------------------------------------------------------
 // The grid part (destructor 0x475c60): dimensions, the cell array and the two page lists, the object list.
@@ -136,7 +118,7 @@ struct CellGrid : CellGridBase {
     int f9c;                                    // +0x9c
     std::vector<int> va0;                       // +0xa0
     NavData* core;                              // +0xb0 ground / nav data (0x472ed0, 0x472650, 0x479980)
-    Mesh* navmesh;                              // +0xb4 the nav mesh the grid is built from (0x478c50)
+    PolyMesh* navmesh;                              // +0xb4 the nav mesh the grid is built from (0x478c50)
     std::vector<Wind*> winds;                   // +0xb8
     std::vector<int> vc8;                       // +0xc8
     ViewParams view;                            // +0xd8 (shadow camera: +0x22c .. +0x2fc)
@@ -153,7 +135,7 @@ struct CellGrid : CellGridBase {
     CellGrid(const float* lo_, const float* hi_, const int* dimx, const int* dimy, const int* v);  // 0x478ad0
     ~CellGrid();                                                            // 0x475d50
     void cleanup();                                                         // 0x421390 (rgl::world::reset)
-    void build(Mesh* m);                                                    // 0x478c50
+    void build(PolyMesh* m);                                                    // 0x478c50
     Wind* spawn_wind();                                                     // 0x478f30
     void sample_lights(const rgl::vector4* p, rgl::vector4* dir, rgl::vector4* amb);   // 0x42ad60
     void build_light_frame(rgl::matrix* m, rgl::vector4* amb);              // 0x470c00

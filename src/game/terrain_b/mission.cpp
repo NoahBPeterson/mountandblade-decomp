@@ -48,6 +48,11 @@ extern ptype* g_ptypes;                         // 0x5e28f8
 #include "../../include/timer.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../terrain_desc.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../terrain_a/terrain.h"      // (listed directly: the resolution audit scans only the source's own includes)
 using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);             // 0x40cd60
 matrix* __cdecl identity_pos(matrix* out);      // 0x40cd00
@@ -133,7 +138,7 @@ CellGrid::CellGrid(const float* lo_, const float* hi_, const int* dimx, const in
 }
 
 // @ 0x478c50
-void CellGrid::build(Mesh* m)
+void CellGrid::build(PolyMesh* m)
 {
     navmesh = m;
     if (m == 0)
@@ -173,7 +178,7 @@ void IdHolder::add(int x)
 }
 
 // @ 0x479000
-void Scene::load(stream_base* s, int id)
+void SceneFile::load(stream_base* s, int id)
 {
     int version = 0, count = 0;
     int v;
@@ -469,7 +474,7 @@ void Terrain::spawn_bodies(SpawnSet* r)
             shape_calls* o = rs->clone_shape();
             o->transform(&e->m);
             o->or_m8(0x200);
-            world->reg(o);
+            grid->reg(o);
         }
     }
 }
@@ -641,7 +646,7 @@ void Terrain::make_grid()
             n_outer = 0x30;
         for (int x = 0; x < n_outer; x++) {
             for (int y = 0; y < n_inner; y++) {
-                gridA[y][x] = world->create_entity(9);
+                gridA[y][x] = grid->create_entity(9);
                 rgl::mesh* m = new rgl::mesh;
                 if (g_use_shaders != 0 && g_mesh_quality == 2)
                     m->res = g_resmgr.get_material(rgl::string("grass"));
@@ -652,8 +657,8 @@ void Terrain::make_grid()
                 gridA[y][x]->refresh();
             }
         }
-        for (int i = 0; i < dust_count; i++) {
-            DustEntry* d = &dust[i];
+        for (int i = 0; i < list_c.count; i++) {
+            DustEntry* d = (DustEntry*)((char*)&list_c.items[i] + 0x44);
             int iy = (int)(d->x * 0.05f);
             if (iy < 0)
                 iy = 0;

@@ -86,14 +86,7 @@ struct MarkRec {                                // 0x130 bytes; array at Mission
 };
 
 // ---- the terrain description at Mission +0x63d0 (0x1c8 bytes; init 0x464400 in terrain_a's object) -----------------
-struct TerrainDesc {
-    char pad0[0x16c];
-    float min_x, min_y, max_x, max_y;           // +0x16c play-area rectangle (0x479e20)
-    float base_z;                               // +0x17c ground height (0x47a0c0)
-    int f180;                                   // +0x180 (0x473a60)
-    char pad184[0x1c8 - 0x184];
-    void init();                                // 0x464400
-};
+#include "../terrain_desc.h"                 // TerrainDesc (shared with terrain_a; init 0x464400 is in terrain_a.cpp)
 
 struct Mission {
     CellGrid* scene;                            // +0x0000 (the slices' grid / nav / Scene)

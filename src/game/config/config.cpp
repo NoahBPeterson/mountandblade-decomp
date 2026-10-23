@@ -26,6 +26,7 @@
 #include "../dev_buffer.h"
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
+#include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // ---- imports and library functions the slices declared by hand ------------------------------------------------------
 extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(HWND hwnd, int csidl, HANDLE token, DWORD flags, char* path);   // 0x5492c0

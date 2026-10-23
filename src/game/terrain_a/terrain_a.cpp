@@ -1030,7 +1030,7 @@ void terrain_obj::emit_particle(particle_list* l, int type, const rgl::matrix* f
 {
     if (l->count < 0x40000) {
         particle* e = &l->items[l->count];
-        e->f9c = 0;
+        e->nmesh = 0;
         e->type = type;
         int c[2];
         cell_of(c, &frame->o.x);
@@ -1510,7 +1510,7 @@ void texture_x::bind(int stage, float t)
             g_device->SetTexture(stage, tex);
             g_tex_cache[stage] = tex;
         }
-        g_render.set_sampler_clamp(stage, ((int)flags >> 20) & 3);
+        g_render.set_stage_sampler(stage, ((int)flags >> 20) & 3);
     }
 }
 
@@ -1526,12 +1526,12 @@ void material_x::bind(texture** textures, const float* t)
             last = k;
             if (s->a != -1 && textures[s->a])
                 ((texture_x*)textures[s->a])->bind(k, *t);
-            g_render.set_stage_colorop(k, s->b);
-            g_render.set_stage_alphaop(k, s->c);
+            g_render.set_stage_color(k, s->b);
+            g_render.set_stage_alpha(k, s->c);
         }
     }
-    g_render.set_stage_colorop(last + 1, 1);
-    g_render.set_stage_alphaop(last + 1, 1);
+    g_render.set_stage_color(last + 1, 1);
+    g_render.set_stage_alpha(last + 1, 1);
 }
 
 // @ 0x4684d0
@@ -1551,7 +1551,7 @@ void skin_x::apply_state(const float* t)
         g_rs_zwrite_off = b;
         g_device->SetRenderState(D3DRS_ZWRITEENABLE, on);
     }
-    g_render.set_alpha_test_mode((flags >> 12) & 3);
+    g_render.set_alpha_mode((flags >> 12) & 3);
     unsigned char c = (flags >> 11) & 1;
     if (c != g_rs_normalize) {
         g_device->SetRenderState(D3DRS_NORMALIZENORMALS, c);
@@ -1567,7 +1567,7 @@ void skin_x::apply_state(const float* t)
         col.x = color.x * 0.5f;
         col.y = color.y * 0.5f;
         col.z = color.z * 0.5f;
-        g_render.set_material_specular(f44 + f44, &col.x);
+        g_render.set_material(f44 + f44, &col.x);
     }
     ((material_x*)shader)->bind(tex, t);
 }
@@ -2054,6 +2054,14 @@ void terrain_obj::spread_flow(unsigned mask, int mode, unsigned mark)
 #include "../../include/keyframes.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../shadow_map.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../terrain_desc.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 using rgl::mat3;
 __declspec(noinline) mat3* identity3(mat3* out);                             // 0x40cd60
 struct pos2 : rgl::matrix {
@@ -2127,7 +2135,7 @@ void terrain_obj::spawn_particles(particle_list* list, int unused)
                                 e->type = kind;
                                 e->cx = x;
                                 e->cy = y;
-                                e->f9c = 0;
+                                e->nmesh = 0;
                                 e->f0c = t;
                                 n++;
                                 int a = 0;
@@ -2400,8 +2408,8 @@ ViewParams::ViewParams()
     b10 = 0; b2c = 0;
     matrix tmp;
     matrix* id = rgl::identity(&tmp);
-    m1a4 = *id;
-    m1e4 = *id;
+    world = *id;
+    light = *id;
     f30 = 0;
 }
 
@@ -2699,7 +2707,7 @@ void lod_mesh_x::apply(const matrix* m)
 // ---- per-frame Direct3D 9 setup of a scene / view object -------------------------------------------------------------------------------------
 
 // @ 0x46ca50
-void Scene::apply_state()
+void RenderScene::apply_state()
 {
     D3DVIEWPORT9 vp;
     DWORD clear = 0;
@@ -2751,7 +2759,7 @@ void Scene::apply_state()
         D3DXMATRIX proj = c->projection();
         g_device->SetTransform(D3DTS_PROJECTION, &proj);
     }
-    g_render.set_view(&c->m);
+    g_render.set_view((const rgl::mat4*)&c->m);
     if (cull_flip) {
         if (g_use_hw_shadow)
             g_cull_mode = 1;
@@ -3093,7 +3101,7 @@ void drawer::draw(view_t* v)
                 g_zwrite = 1;
                 g_device->SetRenderState(D3DRS_ZWRITEENABLE, 0);
             }
-            g_render.set_stage_alphaop(0, 0x4a4);
+            g_render.set_stage_alpha(0, 0x4a4);
         } else {
             if (g_zfunc_always != 1) {
                 g_zfunc_always = 1;
@@ -3103,7 +3111,7 @@ void drawer::draw(view_t* v)
                 g_zwrite = 0;
                 g_device->SetRenderState(D3DRS_ZWRITEENABLE, 1);
             }
-            g_render.set_stage_alphaop(0, 0xa2);
+            g_render.set_stage_alpha(0, 0xa2);
         }
         if (g_b58) {
             g_device->SetRenderState(D3DRS_NORMALIZENORMALS, 0);
@@ -3113,11 +3121,11 @@ void drawer::draw(view_t* v)
             g_device->SetRenderState(D3DRS_SPECULARENABLE, 0);
             g_b57 = 0;
         }
-        g_render.set_stage_colorop(0, 0xa2);
-        g_render.set_stage_colorop(1, 2);
-        g_render.set_stage_alphaop(1, 2);
-        g_render.set_stage_colorop(2, 1);
-        g_render.set_stage_alphaop(2, 1);
+        g_render.set_stage_color(0, 0xa2);
+        g_render.set_stage_color(1, 2);
+        g_render.set_stage_alpha(1, 2);
+        g_render.set_stage_color(2, 1);
+        g_render.set_stage_alpha(2, 1);
     }
 
     matrix M;
@@ -3256,8 +3264,8 @@ L_state:
                         g_device->SetRenderState(D3DRS_ZWRITEENABLE, 1);
                     }
                     ((texture_x*)part->tex[0])->bind(0, 0.0f);
-                    g_render.set_stage_alphaop(0, 0xa2);
-                    g_render.set_stage_alphaop(1, 0xaa);
+                    g_render.set_stage_alpha(0, 0xa2);
+                    g_render.set_stage_alpha(1, 0xaa);
                 } else {
                     if (part->tex[0]) {
                         if (g_zwrite != 1) {
@@ -3265,15 +3273,15 @@ L_state:
                             g_device->SetRenderState(D3DRS_ZWRITEENABLE, 0);
                         }
                         ((texture_x*)part->tex[0])->bind(0, 0.0f);
-                        g_render.set_stage_alphaop(0, 0x4a4);
+                        g_render.set_stage_alpha(0, 0x4a4);
                     } else {
                         if (g_zwrite != 1) {
                             g_zwrite = 1;
                             g_device->SetRenderState(D3DRS_ZWRITEENABLE, 0);
                         }
-                        g_render.set_stage_alphaop(0, 0xa2);
+                        g_render.set_stage_alpha(0, 0xa2);
                     }
-                    g_render.set_stage_alphaop(1, 2);
+                    g_render.set_stage_alpha(1, 2);
                 }
             }
             if (g_e68) {

@@ -57,7 +57,7 @@ struct Poser {
 };
 
 // ---- world grid (0x442180) -----------------------------------------------------------------------------------------------
-struct Obj {                                            // entity base: virtual slots, 13 = max, 14 = min
+struct EntView {                                            // entity base: virtual slots, 13 = max, 14 = min
     virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4();
     virtual void s5(); virtual void s6(); virtual void s7(); virtual void s8(); virtual void s9();
     virtual void s10(); virtual void s11(); virtual void s12();
@@ -235,23 +235,5 @@ extern CamRec* g_cams;                                  // 0x5e28f4
 #include "../../include/mat4.h"
 using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);                     // 0x40cd60
-struct node_list {
-    int al; void** first; void** last; void** end;
-    void cap_all(const float* limit);                   // 0x438f90
-};
-struct Mesh {
-    char pad0[0x34];
-    node_list lists[5];                                 // +0x34
-    int nlists;                                         // +0x84
-    char pad88[4];
-    pos2 frame;                                         // +0x8c
-    unsigned vis;                                       // +0xcc visibility mask (0xffff shown, 0 hidden)
-};
-struct Region {                                         // 0x1dc-byte skeleton record (Skeleton::recs), as 0x443aa0 sees it
-    char pad0[0x1ac];
-    int count;                                          // +0x1ac
-    std::vector<int> meshes;                            // +0x1b0
-    char pad1c0[0x1dc - 0x1c0];
-};
 
 #endif // AGENT3_FX_SOUND_H

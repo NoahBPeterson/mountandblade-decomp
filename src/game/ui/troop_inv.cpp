@@ -15,6 +15,7 @@
 #include "./item_ref.h"
 #include "./troop_inv.h"
 #include "./party.h"
+#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
@@ -325,7 +326,7 @@ void Placed::read(stream_base* s, int version)
 #define T64(o) (*(__int64*)((char*)this + (o)))
 
 // @ 0x463370
-void ViewState::init()
+void ViewBody::init()
 {
     W(0) = 0;
     W(0x517c) = 0;
@@ -388,7 +389,7 @@ void ViewState::init()
 }
 
 // @ 0x463610
-rgl::vector4 ViewState::get_dir(int a, int b)
+rgl::vector4 ViewBody::get_dir(int a, int b)
 {
     rgl::vector4 r;
     float ang = FL(0x18) * 0.017453292f;

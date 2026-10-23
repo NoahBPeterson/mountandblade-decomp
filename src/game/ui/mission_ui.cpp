@@ -26,6 +26,8 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
 static __forceinline int rnd(const float* p)

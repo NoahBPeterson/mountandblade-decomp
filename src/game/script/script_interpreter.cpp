@@ -30,6 +30,9 @@
 #include "../../include/quaternion.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
+#include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // ==== error reporting and argument validators (static, same object) =========================================
 
@@ -3103,8 +3106,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     l->flicker_magnitude = (float)params[0] * 0.01f;
                     l->flicker_interval = (float)params[1] * 0.01f;
                     l->color = game()->current_color;
-                    l->f0 = 0;
-                    l->pos = game()->position_delta;
+                    l->type = 0;
+                    l->v34 = game()->position_delta;
                     l->base_color = l->color;
                     l->update();
                     if (mesh >= 0 && ent->meshes)

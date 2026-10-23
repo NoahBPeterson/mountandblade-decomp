@@ -23,6 +23,8 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;
 
@@ -91,13 +93,13 @@ scene::scene()
     ambient.w = 1.0f;
     f15c = 0;
     owner = 0;
-    f18c = 0;
+    flags = 0;
     f168 = 0;
     f1b0 = 0;
     f1a5 = 0;
     f169 = 0;
     f16a = 0;
-    f1ac = 1;
+    active = true;
     reset();
 }
 
@@ -139,7 +141,7 @@ void world::render_scene(scene* sc, bool reflect)
     sc->owner = this;
     sc->ambient = ambient;
     sc->fr.build_planes();
-    g_scene_reg.register_obj(sc);
+    g_scene_registry.register_scene(sc);
     for (unsigned i = 0; i < meshes.size(); i++)
         ((mesh_ext*)meshes[i])->clear_geometry();
     render_info info;
@@ -192,7 +194,7 @@ void world::render_scene(scene* sc, bool reflect)
         sc->refl->f170 = 0;
         sc->refl->f174 = 0x3f800000;
         sc->refl->f178 = -(info.depth - 0.25f);
-        sc->refl->f18c = sc->f18c;
+        sc->refl->flags = sc->flags;
         frustum f = sc->fr;
         sc->refl->f169 = 1;
         sc->refl->f16a = 0;
@@ -208,7 +210,7 @@ void world::render_scene(scene* sc, bool reflect)
     if (g_log_on)
         ((Logger*)g_log_obj)->print("RENDERING REFLECTIONS;");
     if (!g_simple_reflect)
-        sc->refl->f18c |= 0x200;
+        sc->refl->flags |= 0x200;
     matrix cam = sc->fr.m;
     cam.o.z = (info.depth + info.depth) - cam.o.z;
     cam.s.z = -cam.s.z;

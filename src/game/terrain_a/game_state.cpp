@@ -14,6 +14,7 @@
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
 #include "../../include/vec.h"
+#include "../shadow_map.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using rgl::vector4;
 using rgl::matrix;

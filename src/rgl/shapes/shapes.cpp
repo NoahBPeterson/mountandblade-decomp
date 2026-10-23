@@ -12,6 +12,7 @@
 #include "../../include/mat4.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
 using namespace rgl;
 
 // Bind the ext declarations of shapes.h to the functions they stand for (see there).

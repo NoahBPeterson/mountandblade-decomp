@@ -16,6 +16,11 @@
 #include "../../rgl/stream.h"
 
 #include "../../include/vec.h"
+#include "../../include/mesh_prims.h"       // rgl::aabb
+namespace rgl { struct mesh; }
+struct CellGrid;                                // terrain_b/cell_grid.h: the scene container (Terrain::world seen by terrain_b)
+struct Entity;                                  // terrain_b/entity_rec.h: scene entity (dust cell objects)
+struct SpawnSet;                                // terrain_b/terrain.h
 struct ivec2 { int dx, dy; };
 extern ivec2 g_nbr[];                           // 0x591340 the eight neighbour offsets (0x4666b0, 0x468fc0)
 
@@ -28,11 +33,24 @@ struct GroundType {
 extern GroundType g_ground_types[11];           // 0x8ed4df8 (beyond the annotation range: bound by symbols/slices/terrain_a.txt)
 
 // particle / ground-spec type record (table at *0x5e28f8, count 0x5e29e8, 0x20 bytes each)
+struct res_shape;
+struct AnimBox {                                // 0x48 (one frame / element of a type; terrain_b mission.cpp: spawn_bodies reads res)
+    char pad0[0x20];
+    res_shape* res;                             // +0x20 (0x479da0)
+    char pad24[4];
+    float mn[3];                                // +0x28
+    float pad34;
+    float mx[3];                                // +0x38
+    char pad44[0x48 - 0x44];
+};
 struct ptype {
     tstring name;                               // +0 (0x4650f0)
     __int64 flags;                              // +0x10 (0x400000 / 0x80000 / 0x1000000 ...; the high dword's low 16 bits are a density)
-    int nframes;                                // +0x18 (0x466cd0, 0x46a270)
-    int f1c;                                    // +0x1c
+    int nframes;                                // +0x18 (0x466cd0, 0x46a270; terrain_b 0x479da0: count of boxes)
+    union {
+        int f1c;                                // +0x1c
+        AnimBox* boxes;                         // +0x1c: nframes boxes of 0x48 bytes (terrain_b)
+    };
 };
 extern ptype* g_ptypes;                         // 0x5e28f8
 extern int g_ptype_count;                       // 0x5e29e8
@@ -64,7 +82,7 @@ struct terrain_cell {
         struct { vec2 disp; vec2 dir; };        // +0x30 / +0x38 flow displacement and unit direction (0x468fc0, 0x469a70)
         v4 v30;                                 // +0x30 (0x4644e0: (x * 0.7, y * 0.7, 0, 1))
     };
-    char pad40[4];
+    float f40;                                  // +0x40 sun visibility (terrain_b 0x473980)
     int order;                                  // +0x44 step number when the path walk visited it (-1 after init)
     union {
         float w[15];                            // +0x48 layer weights
@@ -110,8 +128,11 @@ struct particle {                               // 0xa0
     rgl::matrix frame;                          // +0x14 copy of the source frame
     rgl::vector4 dir;                           // +0x54
     int anim;                                   // +0x64
-    char f68[0x9c - 0x68];
-    int f9c;                                    // +0x9c
+    char f68[0x6c - 0x68];
+    rgl::mesh* meshes[4];                       // +0x6c particle meshes (terrain_b: Terrain::light_particle 0x471b30, spawn 0x47a460)
+    int first[4];                               // +0x7c vertex range [first, last) of each mesh
+    int last[4];                                // +0x8c
+    int nmesh;                                  // +0x9c (terrain_a: f9c)
 };
 struct scatter_src {                            // 0x20, source records after the particles (0x4650f0 writes, 0x46a270 reads)
     int kind;                                   // +0x00 index into g_ptypes
@@ -127,22 +148,7 @@ struct particle_list {                          // 0x2800408
 };
 
 // ---- the sco terrain description (0x464200..0x4644e0) --------------------------------------------------------
-struct Dims { int w, h; };
-struct TerrainDescEntry {                       // 0x18 bytes
-    tstring name;                               // +0
-    int type;                                   // +0x10 (-1: none; -0x1e71 elevation, -0x3115 leveling)
-    float* data;                                // +0x14 (420 x 420 floats, index x * 420 + y)
-    void read(stream_base* s, Dims* d);         // 0x464200
-};
-struct TerrainDesc {
-    int n;                                      // +0 (layers in use, max 13)
-    int n_minus2;                               // +4 index of the elevation entry after fill_desc
-    int n_minus1;                               // +8 index of the leveling entry
-    TerrainDescEntry layers[13];                // +0xc
-    Dims dims;                                  // +0x144 / +0x148
-    void init();                                // 0x464400
-    void read(stream_base* s);                  // 0x464440
-};
+#include "../terrain_desc.h"                 // Dims, TerrainDescEntry, TerrainDesc (shared with terrain_b)
 
 // six hex words parsed from a "0x..." string, 8 digits at a time from the right (0x4658c0)
 struct HexWords {
@@ -209,7 +215,10 @@ struct Terrain {
         terrain_cell cells[251 * 251];          // index x * 251 + y
     };
     terrain_quad quads[250 * 250];              // +0x8e48fc index x * 250 + y
-    SceneWorld* world;                          // +0xc3b0dc (0x466fa0)
+    union {
+        SceneWorld* world;                      // +0xc3b0dc (0x466fa0)
+        CellGrid* grid;                         // the same pointer as terrain_b types it (0x471a30, 0x471b30, 0x47a460)
+    };
     float scale;                                // +0xc3b0e0 world size of a cell (0x464b40, 0x468da0, 0x466c10, 0x46a270)
     particle_list list_a;                       // +0xc3b0e4 mode 1 (0x4650f0: scatter_all passes &set1)
     particle_list list_b;                       // +0x343b4ec mode 0, type flag 0x400000
@@ -228,7 +237,13 @@ struct Terrain {
     int block;                                  // +0x843bd70 cells per chunk edge (0x466fa0)
     char pad_843bd74;
     char flag843bd75;                           // +0x843bd75 (0x4664e0, 0x46bc70)
-    char pad_843bd76[0x845d984 - 0x843bd76];
+    char pad_843bd76[0x843bd78 - 0x843bd76];
+    Entity* gridA[0x30][0x30];                  // +0x843bd78 scene object of each dust cell, [inner][outer] (0x47a460)
+    Entity* gridB[0x30][0x30];                  // +0x843e178
+    rgl::aabb boxes[0x30][0x30];                // +0x8440578 per-cell dust bounds (rgl::aabb is 0x34 bytes: ends at 0x845d978)
+    char pad_845d978[4];
+    int n_inner;                                // +0x845d97c cells along the first axis (0x47a460)
+    int n_outer;                                // +0x845d980 cells along the second axis
     int nx, ny;                                 // +0x845d984 / +0x845d988 (0x466fa0)
     TEntity* ents[25];                          // +0x845d98c chunk entities, index i * 5 + j
     int arr2[25];                               // +0x845d9f0 (cleared with ents)
@@ -252,10 +267,24 @@ struct Terrain {
     void apply_brush(const float* center, float radius, float strength);    // 0x468da0
     void seed_brushes(float size, float density, float scale);              // 0x46baf0
     void reset();                                           // 0x4647e0
+    void generate_heights();                                // 0x4713d0 (terrain_b.cpp)
+    float sun_visibility(const float* p);                   // 0x471a30
+    void light_particle(particle_list* l, int idx, bool trace);     // 0x471b30
+    void light_all(particle_list* l, bool trace);           // 0x472020
+    void refresh_cells();                                   // 0x473980
+    void spawn_bodies(SpawnSet* r);                         // 0x479da0 (mission.cpp)
+    void make_grid();                                       // 0x47a460 (mission.cpp)
     float rand_avg4();                                      // 0x4659e0 (does not use this; seed_brushes calls it with ecx = this)
     terrain_cell& at(int x, int y) { return cells[x * 251 + y]; }
     terrain_quad& quad(int x, int y) { return quads[x * 250 + y]; }
 };
+
+#include <stddef.h>
+#define TERRAIN_AT(m, off) typedef char Terrain_##m##_at[(offsetof(Terrain, m) == (off)) ? 1 : -1]
+TERRAIN_AT(wx, 0x270); TERRAIN_AT(cell, 0x288); TERRAIN_AT(world, 0xc3b0dc); TERRAIN_AT(list_a, 0xc3b0e4);
+TERRAIN_AT(list_c, 0x5c3b8f4); TERRAIN_AT(sun_dir, 0x843bd0c); TERRAIN_AT(block, 0x843bd70); TERRAIN_AT(gridA, 0x843bd78);
+TERRAIN_AT(boxes, 0x8440578); TERRAIN_AT(n_inner, 0x845d97c); TERRAIN_AT(nx, 0x845d984); TERRAIN_AT(ents, 0x845d98c);
+TERRAIN_AT(arr3, 0x845da54);
 
 struct terrain_obj : Terrain {
     void smooth_heights();                  // 0x4661e0

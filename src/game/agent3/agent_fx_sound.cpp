@@ -17,6 +17,7 @@
 #include "../../include/timer.h"
 #include "../cell.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../world.h"
+#include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
 template<> void std::vector<int>::push_back(const int&);
@@ -90,7 +91,7 @@ void world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<
     for (c[0] = lo[0]; c[0] <= hi[0]; c[0]++) {
         for (c[1] = lo[1]; c[1] <= hi[1]; c[1]++) {
             for (enode* nd = cells[c[0]][c[1]].ents; nd != 0; nd = nd->next) {
-                Obj** pe = &nd->ent;
+                EntView** pe = &nd->ent;
                 if (box3_inl(bmin, bmax, (*pe)->get_min(), (*pe)->get_max()))
                     out->push_back(*(unsigned*)pe);
             }
@@ -621,10 +622,10 @@ static inline unsigned char itype(const ItemKind* k) { return *(const unsigned c
 static __forceinline void attach(Agent* a, Mesh* m, int r, const pos2& f)
 {
     Skeleton* g = a->body->skel;
-    g->remove_shape(m);
+    g->remove_shape((shape_base*)m);
     m->frame = f;
     Region& reg = ((Region*)g->recs)[r];
-    vpush(reg.meshes, (int)m);
+    vpush((std::vector<int>&)reg.shapes, (int)m);
     reg.count++;
 }
 

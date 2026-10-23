@@ -80,10 +80,6 @@ struct Placed {
     void read(stream_base* s, int version); // 0x4631c0
 };
 
-// 0x5374-byte object (a camera / view-state block; fields reached by offset in 0x463370, 0x463610)
-struct ViewState {
-    void init();                            // 0x463370
-    rgl::vector4 get_dir(int a, int b);     // 0x463610
-};
+#include "../view_state.h"            // ViewState: the 0x5374-byte object (a camera / view-state block; fields reached by offset in 0x463370, 0x463610)
 
 #endif // GAME_UI_TROOP_INV_H

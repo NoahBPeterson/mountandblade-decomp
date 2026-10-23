@@ -1602,7 +1602,7 @@ void __fastcall conv_build_scene(conv_rec* self)
             q = (tab_cell*)((char*)q + 0x94);
         } while (gy <= *(int*)(c + 0x27c));
     }
-    scene_sub* sub = (*(world_root**)(c + 0xc3b0dc))->sub;
+    world_sub* sub = (*(world_root**)(c + 0xc3b0dc))->sub;
     for (unsigned k = 0; k < sub->items.size(); k++) {
         scene_obj* r = sub->items[k].obj;
         if (r) {

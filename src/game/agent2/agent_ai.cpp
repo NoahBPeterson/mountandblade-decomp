@@ -21,6 +21,9 @@
 #include "../../include/ptr_vec.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
+#include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 static __forceinline float clampf(float v, float lo, float hi)
 {

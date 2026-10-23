@@ -81,4 +81,4 @@
 ../src/game/terrain_a/terrain_a.cpp  ??$_Upper_bound@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@UE8@@HP6A_NABU4@0@Z@std@@YA?AViterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@0@V120@0ABUE8@@P6A_N11@ZPAH@Z  0046c4a0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?apply@mesh_list_x@@QAEXUmatrix@rgl@@@Z  0046c990  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?apply@lod_mesh_x@@QAEXPBUmatrix@rgl@@@Z  0046c9f0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?apply_state@Scene@@QAEXXZ  0046ca50  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?apply_state@RenderScene@@QAEXXZ  0046ca50  /O2 /MT /Gy /TP

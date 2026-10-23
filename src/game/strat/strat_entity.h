@@ -7,16 +7,7 @@
 #include "./strat_ext.h"
 
 // ---- scene lights (record 0x70+ bytes). type 2 = directional (direction at +0x44), else a point light at +0x24.
-struct Light {
-    int type;                   // 0x00
-    vector4 color;              // 0x04
-    char pad14[0x24 - 0x14];
-    vector4 pos;                // 0x24
-    char pad34[0x44 - 0x34];
-    vector4 dir;                // 0x44
-    char pad54[0x6c - 0x54];
-    unsigned flags;             // 0x6c  (bit 0: disabled; bit 1: no shadows)
-};
+#include "../light.h"                   // Light (shared with agent2 / script)
 OFFSET_CHECK3(Light, dir, 0x44);
 OFFSET_CHECK3(Light, flags, 0x6c);
 

@@ -20,6 +20,8 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
+#include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;
 
@@ -63,9 +65,9 @@ void entity::render(scene* sc, render_info* info)
                     meshes[i]->res = g_resmgr.get_material(n);
                 }
                 if (meshes[i]->res->shader->flags20 & 0x100) {
-                    if (meshes[i]->get70().size() > 0) {
+                    if (meshes[i]->get70_rec().size() > 0) {
                         info->valid = 1;
-                        const vector4& p0 = (iter32(&*meshes[i]->get70().begin()) + 0)._Ptr->a;
+                        const vector4& p0 = (iter32(&*meshes[i]->get70_rec().begin()) + 0)._Ptr->a;
                         info->depth = local.transform_point(((const mat4&)meshes[i]->m_cc).transform_point(p0)).z;
                     }
                 }

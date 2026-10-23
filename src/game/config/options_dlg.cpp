@@ -22,6 +22,7 @@
 #include "../dev_buffer.h"
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
+#include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 extern "C" int __cdecl _isalpha(int c);                                 // 0x537f65 (CRT; the compiler's isalpha)
 extern "C" int __cdecl _isdigit(int c);                                 // 0x537fa4

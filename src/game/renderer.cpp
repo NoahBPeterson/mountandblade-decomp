@@ -37,8 +37,8 @@ static inline void to_d3d(D3DMATRIX* out, const mat4& m)
 void renderer::set_view(const mat4* p)
 {
     to_d3d(&view, rgl::identity());
-    to_d3d(&view2, rgl::identity());
-    f500 = 0;
+    to_d3d((D3DMATRIX*)&cur, rgl::identity());
+    sp = 0;
     rgl::rot3 r;
     r.s.x = 1.0f; r.s.y = 0.0f; r.s.z = 0.0f;
     r.f.x = 0.0f; r.f.y = 1.0f; r.f.z = 0.0f;
@@ -107,26 +107,26 @@ void renderer::reset_state()
     dev->SetRenderState(D3DRS_SPECULARENABLE, 0);
     b547 = 0;
     dev->SetRenderState(D3DRS_ALPHABLENDENABLE, 0);
-    f5c0 = -1;
+    cull_cache = -1;
     f5b4 = -1;
     tex_factor = 0x12345678;
     tex_factor2 = 0x12345678;
     blend_mode = 0;
-    f5bc = 2;
-    f5f0 = -1233.213134765625f;         // sentinels: no cached value matches them
-    f5f4 = 3345663.25f;
+    cull_setting = 2;
+    tex_off[0] = -1233.213134765625f;         // sentinels: no cached value matches them
+    tex_off[1] = 3345663.25f;
     f5f8 = 0.0f;
     f5fc = 0.0f;
-    f600 = -2312321280.0f;
+    time_var = -2312321280.0f;
     material_power = -12312.2138671875f;
     spec[0] = -234.23422241210938f;
     spec[1] = -234.23422241210938f;
     spec[2] = -234.23422241210938f;
     f610 = 0;
     if (g_use_shaders) {
-        f5c4 = -457; f5c8 = -457; f5cc = -457; f5d0 = -457; f5d4 = -457;
-        f5d8 = 0;
-        f5dc = 0xffbd6370;
+        tex_id[0] = -457; tex_id[1] = -457; tex_id[2] = -457; tex_id[3] = -457; tex_id[4] = -457;
+        light_count = 0;
+        light_idx[0] = 0xffbd6370;
         g_effect->SetInt("iLightPointCount", 0);
         f5b8 = 0xffffcfdf;
         float inv = 1.0f / g_gamma;
