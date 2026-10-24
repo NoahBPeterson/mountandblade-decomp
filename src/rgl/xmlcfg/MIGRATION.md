@@ -115,3 +115,13 @@ See `game_util.nonmatching.txt`; the reasons are the slices' (operand order of t
 assignment of temporaries, `add eax,ebx` vs folded index, load order in the edge products, ring index
 arithmetic, the height-field interpolation temporaries). Variants of `fill_weights` (local copies of the record
 pointer) were re-tried here and were worse.
+
+## Addendum (M4 fix-up): 0x433840 `Channel::busy` (`Curve::step_reached`)
+The function the map files in this TU (tu 40, "ti_xml_base_2") but that `src/game/agent/MIGRATION.md` argues is the first
+`Curve` method was the one function of the range without a row. It now ends `game_util.cpp` (0x4320b0..0x4338df), as the
+TU map has it, defined on the shared `Channel` record (`src/game/channel.h`, the same 0xd8-byte record as `Curve`): the
+`Timer tm` (+0x20: clock id, +0x28 start tick; `Curve::tm`) and `tbl_idx` (+0xd0, index into `g_step_tbl` 0x5a9c20) are pure
+additions to `channel.h` at offsets that were padding (proven by 0x433840: `g_time[tm.clock] - tm.start`, `g_step_tbl[tbl_idx]`).
+Nonmatching (36 bytes, block order of the final paths; equiv PASS 400/400 valid, 8/8 edges both sides, bit identical).
+`game_util.nonmatching.txt` now has the row; the module has 41 byte-exact rows (unchanged). If `Curve::step_reached` is later
+moved to `curve.cpp`, the row moves with it.

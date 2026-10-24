@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <new>
+#include <vector>
 #include "./common.h"
 #include "../tstring.h"
 #include "../../rgl/stream.h"
@@ -145,6 +146,7 @@ struct particle_list {                          // 0x2800408
     TerrainParticle items[0x40000];
     int nsrc;                                   // +0x2800004
     scatter_src src[32];                        // +0x2800008
+    particle_list() : count(0) {}               // inline in Terrain::Terrain (0x4ce720 stores 0 at +0xc3b0e4, +0x343b4ec, +0x5c3b8f4)
 };
 
 // ---- the sco terrain description (0x464200..0x4644e0) --------------------------------------------------------
@@ -194,8 +196,15 @@ struct layer_set {                              // set of sco layers handed to l
 };
 
 // ---- the object -----------------------------------------------------------------------------------------------------
+// Constructs the name tstring of each of the 15 layer records (+0x18 + 0x28 * i, 0x4ce720) when it is the FIRST member of
+// Terrain (offset 0 == the Terrain's this), so that these constructions precede the member constructions as in the original.
+void __fastcall tstring_ctor(tstring* p);       // 0x42bbd0 (tstring::tstring, called on raw slots; no placement-new null test)
+struct LayerNames {
+    LayerNames() { for (int i = 0; i < 15; i++) tstring_ctor((tstring*)((char*)this + 0x18 + i * 0x28)); }
+};
+
 struct Terrain {
-    char pad0[4];
+    LayerNames names;                           // +0 (4 bytes; the former pad0)
     int f4;                                     // +4 (sign bit tested by 0x46bc70)
     char pad8[0x10 - 8];
     unsigned flags;                             // +0x10 bits 7..13 / 21..27 / 28..31 are fields (0x464a60, 0x464ac0, 0x464d50)
@@ -248,7 +257,12 @@ struct Terrain {
     TEntity* ents[25];                          // +0x845d98c chunk entities, index i * 5 + j
     int arr2[25];                               // +0x845d9f0 (cleared with ents)
     int arr3[15][25];                           // +0x845da54
+    char pad_845e030[0x845e784 - 0x845e030];
+    tstring tail;                               // +0x845e784 constructed by Terrain::Terrain (0x4ce720, src/rgl/mesh2/mesh_2.cpp)
+    char pad_845e794[0x845e7b8 - 0x845e794];
+    std::vector<void*> v845e7b8;                // +0x845e7b8 (alloc base, first, last, end: first/last/end zeroed by Terrain::Terrain 0x4ce720); element type unknown
 
+    Terrain();                                              // 0x4ce720 (mesh_2.cpp; takes no argument, returns this)
     // ---- methods of the first Terrain slices
     void set_field_a(const float* p);                       // 0x464a60
     void set_field_b(const float* p);                       // 0x464ac0
@@ -284,7 +298,7 @@ struct Terrain {
 TERRAIN_AT(wx, 0x270); TERRAIN_AT(cell, 0x288); TERRAIN_AT(world, 0xc3b0dc); TERRAIN_AT(list_a, 0xc3b0e4);
 TERRAIN_AT(list_c, 0x5c3b8f4); TERRAIN_AT(sun_dir, 0x843bd0c); TERRAIN_AT(block, 0x843bd70); TERRAIN_AT(gridA, 0x843bd78);
 TERRAIN_AT(boxes, 0x8440578); TERRAIN_AT(n_inner, 0x845d97c); TERRAIN_AT(nx, 0x845d984); TERRAIN_AT(ents, 0x845d98c);
-TERRAIN_AT(arr3, 0x845da54);
+TERRAIN_AT(arr3, 0x845da54); TERRAIN_AT(tail, 0x845e784); TERRAIN_AT(v845e7b8, 0x845e7b8);
 
 struct terrain_obj : Terrain {
     void smooth_heights();                  // 0x4661e0

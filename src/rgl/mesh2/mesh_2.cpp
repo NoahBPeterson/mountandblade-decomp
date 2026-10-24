@@ -8,6 +8,7 @@
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"
+#include "../../game/terrain_a/terrain.h"      // Terrain (the 0x845e7c8-byte world-map terrain object): its constructor 0x4ce720 ends this object
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 
@@ -841,3 +842,18 @@ MissionRec2::MissionRec2()
     fac = 2;
 }
 
+// @ 0x4ce720  (the slices called it SceneGen::SceneGen(int); the original takes no argument and the w lanes of the two
+// colours copy an uninitialised stack word, as rgl::vector4's three-float constructor leaves w alone).
+// Two 18-byte WinLicense markers (jmp +0x10 over "WL  " data) sit inside the original; cl cannot emit them.
+Terrain::Terrain()
+{
+    sun_ambient = rgl::vector4(0.2f, 0.2f, 0.2f);
+    *(rgl::vector4*)sun_diffuse = rgl::vector4(0.6f, 0.55f, 0.5f);       // the w lane (+0x843bd48) is the uninitialised w of the temporary
+    scale = 2.0f;
+    block = 0x28;
+    flag843bd75 = 0;
+    pad_843bd74 = 0;
+    *(int*)pad280 = 0;
+    n284 = 2;
+    reset();
+}

@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// File: game_util.cpp  (0x4320b0..0x43383f)
+// File: game_util.cpp  (0x4320b0..0x4338df)
 //
 // Desc: small game-logic helpers: key-code group tables, agent team-relation tests, scalar min/max/clamp/round/
 //       rand helpers, 2-D rotate, 3x3 frame algebra, the Newton force callback, the tick timer, a random cone
@@ -25,6 +25,7 @@
 #include "../../game/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../game/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/msg_log.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../game/channel.h"      // (Channel: the 0xd8-byte animation record whose busy() 0x433840 ends this object)
 #include "../../game/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -549,4 +550,23 @@ void Obj3::reset_pending(int v)
     flags &= ~1u;
     m19c = m1a0 = v;
     m1a4 = 0;
+}
+
+// @ 0x433840  (agent/MIGRATION.md calls it Curve::step_reached; Curve and Channel are the same 0xd8-byte record)
+extern __int64 g_time[];        // 0x5e2948 clock table, 1e-5 s ticks
+extern float g_step_tbl[];      // 0x5a9c20 per-clock step (seconds)
+bool Channel::busy()
+{
+    bool r;
+    float t = (float)(g_time[tm.clock] - tm.start) * 1e-5f;
+    if (mode == 20) {
+        float inv = 1.0f / period;
+        int a = (int)((t - g_step_tbl[tbl_idx]) * inv);
+        int b = (int)(t * inv);
+        if (a < b) return true;
+        return false;
+    }
+    if (mode != 21 && mode != 22) return r;
+    if (t >= period) return true;
+    return false;
 }

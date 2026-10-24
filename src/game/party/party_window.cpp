@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// File: party_window.cpp  (0x501a20..0x502c30)
+// File: party_window.cpp  (0x501a20..0x502cc0)
 //
 // Desc: the party screen's inventory window: the equipment menu builder, the slot factory, the page builder, the
 //       armour / encumbrance refresh and the slot placement. Names provisional.
@@ -447,4 +447,16 @@ MB_NOINLINE MeshOps* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
         item_sound(&g_items[item->item])->play(-0x32);
     }
     return m;
+}
+
+// @ 0x502c30  (the last function of the object; the slice listed 0x502c30 as exact in s00502300)
+void PartyWindow::refresh_stash(int row)
+{
+    int t = g_game->cur_troop;
+    if (row != 0)
+        t = troop;
+    for (int n = 0; n < 10; n++) {
+        if (row_slot[row][n] != 0)
+            place_slot((MissionUi*)row_slot[row][n], &EQUIP(t, n), n, row_state[row], row, 1);
+    }
 }

@@ -103,3 +103,19 @@ the `LangTablesBase` inline-ctor base (forces the table clear before the string 
 - Several nonmatching rows are accepted on harness limits (user32 imports, EH `RaiseException`, pool limits): see each row.
 - `graph_obj::combine` 0x4caa40 (2293 bytes off) and `GameData::save_language_files` 0x4c8ca0 (6320 bytes, 4282 off) are carried over as
   they were; neither passes the audit.
+
+## Addendum (M4 fix-up): 0x4ce720 `Terrain::Terrain`
+The TU map ends this TU at 0x4ce870, so the constructor at 0x4ce720 (the slices' `SceneGen::SceneGen(int)`) belongs to
+`mesh_2.cpp`, as its last function. It is the constructor of the world-map `Terrain` object of `src/game/terrain_a/terrain.h`
+(`boxes` at +0x8440578 are the 0x900 `rgl::aabb`, `Terrain::reset` 0x4647e0 is the call at the end), not a class of its own, and it takes
+NO argument (the slice's `int a` was the uninitialised w of the vector4 temporaries; `ret` without pop). Nonmatching (203 bytes,
+285 bytes against 321: two 18-byte WinLicense markers inside the original; the rest differs only in two scheduling choices).
+equiv PASS (220 valid, all edges, bit identical; needs `--budget 2000000 --run-seconds 120`).
+
+`terrain.h` additions (all proven by 0x4ce720; the layout of every existing member is unchanged and terrain_a / terrain_b /
+mesh_slot / agent modules still compile and match): `particle_list() : count(0)` (the three inline stores at +0xc3b0e4,
++0x343b4ec, +0x5c3b8f4), `tail` (tstring at +0x845e784), `v845e7b8` (a `std::vector<void*>`, element type unknown, first/last/end at
++0x845e7bc.., zeroed), `Terrain();`, and `LayerNames` as the former `pad0[4]` first member: its constructor builds the 15 layer-name
+tstrings at +0x18 + 0x28 * i (calls of 0x42bbd0), which in the original run before the member constructions; being the first member it is
+constructed first. Kept trick: the ctor order (names, lists, boxes, tail, vector) is the natural member order only because of that member.
+0x4ce870 onward is `src/game/triggers/item_rec.cpp`.

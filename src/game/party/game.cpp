@@ -1021,3 +1021,25 @@ MB_NOINLINE void SpriteTable::clear()
         free_ids.push_back(i);
     }
 }
+
+// @ 0x51eaa0
+// The scene's party record of Game::f78 (0x5ac8-byte records, 16 per page; the page table is the first pointer of
+// scene.list, +0x138d0): its count at +0x8a8, entries of 0x20 bytes from +0xc0 (troop id at -0x14, a float at +0,
+// an int at -4), then 0x20 ints per entry into scene_parties (+0x1405c, 0x80 bytes per entry).
+// The slices read slot 0x38 as r_int and 0x4c as r_raw; they are r_float and r_int (stream_base slots 14 and 19).
+void Game::load_scene_parties(stream_base* s)
+{
+    scene.read(s, 1);
+    int idx = scene.lookup(f78);
+    char** pages = *(char***)(scene.list.b + 4);
+    char* rec = pages[idx >> 4] + (idx & 0xf) * 0x5ac8;
+    for (int i = 0; i < *(int*)(rec + 0x8a8); i++) {
+        char* e = rec + 0xc0 + i * 0x20;
+        if ((troops[*(int*)(e - 0x14)].flags30 & 0x10) == 0) {
+            s->r_float((float*)e);
+            s->r_int((int*)(e - 4));
+            for (int k = 0; k < 0x20; k++)
+                s->r_int((int*)(scene_parties + i * 0x80) + k);
+        }
+    }
+}

@@ -41,3 +41,10 @@ Removed: slice-local `Panel`/`Rec78Tag`/`Rec508`/`Rec300` ad-hoc types.
 - Matching is fragile: `add_strip_icon` flips 0/3 bytes with unrelated header content.
 - `make_inventory_menu` leaves `pos[7]` uninitialised, as the original does.
 - Slice corrections: `build_page` scale is (0.264, height); slice omitted `label_refresh("inv_im_equipment_menu")`.
+
+## Addendum (M4 fix-up): `PartyWindow::refresh_stash` 0x502c30 and `Game::load_scene_parties` 0x51eaa0
+- `party_window.cpp` (now 0x501a20..0x502cc0): `refresh_stash` 0x502c30 added as the last function (byte-exact, 10 manifest rows);
+  it was declared "next object" because the slice s00502300 listed it in the TU map's next range, but the TU ends at 0x502cc0.
+- `game.cpp` (now 0x51c5a0..0x51eb90): `Game::load_scene_parties` 0x51eaa0 added as the last function. Nonmatching (177 bytes, 236 vs 233:
+  the original keeps `this` in ebp with a 0xc-byte frame, ours uses edi/ebx). The slice's `r_int`/`r_raw` were slots 0x38 / 0x4c, which are
+  `stream_base::r_float` (14) and `r_int` (19); the troop-flag gate is `troops[id].flags30 & 0x10` (a 64-bit test). equiv PASS (531 valid, 8/8 edges, bit identical).

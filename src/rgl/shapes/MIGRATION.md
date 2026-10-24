@@ -207,3 +207,8 @@ Removed:
 
 `shapes.cpp`, `shapes.h`, `shapes.manifest.txt` (134 rows), `shapes.nonmatching.txt` (16 rows),
 `shapes.partial.txt` (4 rows), `MIGRATION.md`; `symbols/slices/shapes.txt`.
+
+## Addendum (M4 fix-up): `face::scale` 0x408a50
+`face::scale` was already defined in `shapes.cpp` (as `// @ 0x408a50`) but had no bookkeeping row. Added to
+`shapes.nonmatching.txt` (4 bytes: the y multiply is `fld v.y; fmul s[1]` in the original, reversed in ours; no source
+spelling changes it; equiv PASS, 326 valid, 16/16 edges both sides, bit identical). `shapes.nonmatching.txt` now has 17 rows.

@@ -111,3 +111,8 @@ globals), `../../rgl/{rgl_math.h,resource.h}`, `../../dxframework/*` (through co
 - The 6-instruction `decode_utf8` asm helper (custom register ABI of 0x487b00), as in `../ui/ui_widgets_a.cpp`.
 - `((stream_base&)g_log).w_cstr(...)`: stops cl devirtualising the call on the global.
 - `Config::value_as_int` / `split_line` are thiscall members (`this` unused): callers load ECX before each call.
+
+## Addendum (M4 fix-up): 0x4be730
+The last entry of the TU (0x4be730..0x4be742) is not a function: it is the 18-byte WinLicense entry marker (`jmp +0x10` over
+`"WL  "` data) of `MetaMission::init`, whose body and row are 0x4be742 in `src/game/triggers/trigger_vec.cpp`. Added to
+`symbols/not_functions.txt`; `config.cpp` is unchanged.
