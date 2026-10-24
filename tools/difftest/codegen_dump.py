@@ -55,7 +55,10 @@ def modules(filt):
     return out
 
 
-def fingerprint(coff, s, h, seen):
+RESOLVED = False
+
+
+def fingerprint(coff, s, h, seen, addr=None):
     """Hash what equiv can execute or read from our object for symbol s: its bytes and relocations, and,
     recursively, everything it references that the object defines (out-of-line inline helpers, COMDAT
     copies, constants, vtables). External targets enter by name; local labels ($SG..., section symbols)
@@ -80,12 +83,14 @@ def fingerprint(coff, s, h, seen):
         if t is None:
             h.update(b"?%d" % si)
         elif not t.defined:
-            h.update(norm(t.name))
+            # --resolved: an external enters by the original address the harness resolves it to, so a rename that
+            # still resolves to the same global or function leaves the fingerprint unchanged
+            h.update(b"=%x" % addr[si] if addr is not None and si in addr else norm(t.name))
         else:
-            if t.cls == 2:
+            if t.cls == 2 and addr is None:
                 h.update(norm(t.name))
             h.update(b"{")
-            fingerprint(coff, t, h, seen)
+            fingerprint(coff, t, h, seen, addr)
             h.update(b"}")
 
 
@@ -108,6 +113,15 @@ def dump_module(item, img):
         sym, how = S.find_symbol(coff, sid, int(va, 16), src, hi - lo)
         if not isinstance(sym, str):
             fp = "NO-SYMBOL " + str(how)[:80]
+        elif RESOLVED:
+            import equiv as E
+            import resolve as R
+            annots = R.source_annotations([src] + glob.glob(os.path.join(S.slice_dir(sid), "*.h")) + S.sibling_headers(src))
+            fs = coff.by_name[sym]
+            r = E.context()["res"].resolve(coff, fs, int(va, 16), annots)
+            h = hashlib.sha1(b"resolved\0")
+            fingerprint(coff, fs, h, set(), dict(r.addr))
+            fp = h.hexdigest() + ("" if not r.unresolved else " unresolved:" + ",".join(sorted(r.unresolved))[:200])
         else:
             h = hashlib.sha1(norm(sym) + b"\0")
             fingerprint(coff, coff.by_name[sym], h, set())
@@ -123,7 +137,12 @@ def main():
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--diff", nargs=2)
     ap.add_argument("--rows", action="store_true")
+    ap.add_argument("--resolved", action="store_true",
+                    help="hash externals by the original address the harness resolves them to (not by name), and leave "
+                         "the row's own symbol name out: the gate for renames")
     a = ap.parse_args()
+    global RESOLVED
+    RESOLVED = a.resolved
     if a.diff:
         x, y = (json.load(open(p)) for p in a.diff)
         changed = sorted(k for k in set(x) | set(y) if x.get(k, {}).get("fp") != y.get(k, {}).get("fp"))
