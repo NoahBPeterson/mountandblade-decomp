@@ -1,7 +1,7 @@
 # mesh_edit: names carried over from symbols/slices/s004d1410.txt (the slices stay untouched until retired)
-004d1410 ?build_first_pass@Mesh@@QAE_NXZ  # with exactly two selected vertices, split faces that contain both along the diagonal
-004d1880 ?build_second_pass@Mesh@@QAEXXZ  # extrude every selected boundary edge into a new quad
+004d1410 ?build_first_pass@EditMesh@@QAE_NXZ  # with exactly two selected vertices, split faces that contain both along the diagonal
+004d1880 ?build_second_pass@EditMesh@@QAEXXZ  # extrude every selected boundary edge into a new quad
 00477c10 ?push_back@?$vector@UMVert@@V?$allocator@UMVert@@@std@@@std@@QAEXABUMVert@@@Z  # std::vector<MVert>::push_back (24-byte elements, VC7.1 layout)
 00477d20 ?push_back@?$vector@UMPoly@@V?$allocator@UMPoly@@@std@@@std@@QAEXABUMPoly@@@Z  # std::vector<MPoly>::push_back (100-byte elements)
 00477e10 ?push_back@?$vector@UMEdge@@V?$allocator@UMEdge@@@std@@@std@@QAEXABUMEdge@@@Z  # std::vector<MEdge>::push_back (52-byte elements)
-004d2df0 ?add_quad@Mesh@@QAEXPBUvector4@rgl@@@Z  # appends a 6x6 quad: 4 vertices + 4 edges + 1 face, then build_adjacency (0x470920)
+004d2df0 ?add_quad@EditMesh@@QAEXPBUvector4@rgl@@@Z  # appends a 6x6 quad: 4 vertices + 4 edges + 1 face, then build_adjacency (0x470920)

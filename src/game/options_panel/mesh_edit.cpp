@@ -16,7 +16,7 @@ static inline vector4 vcross(const vector4& a, const vector4& b)
 }
 
 // @ 0x4d1410
-bool Mesh::build_first_pass()
+bool EditMesh::build_first_pass()
 {
     // exactly two selected vertices, otherwise nothing happens (returns false)
     int reached = 0;
@@ -103,7 +103,7 @@ bool Mesh::build_first_pass()
 }
 
 // @ 0x4d1880
-void Mesh::build_second_pass()
+void EditMesh::build_second_pass()
 {
     calc_edge_mode(1);
     *(int*)((char*)this + 0x7c) = -1;
@@ -195,7 +195,7 @@ void Mesh::build_second_pass()
 }
 
 // @ 0x4d1d80
-bool Mesh::add_triangle(int* tri)
+bool EditMesh::add_triangle(int* tri)
 {
     OwnedIntVec found;
     for (unsigned i = 0; i < c.faces.size(); i++) {
@@ -262,7 +262,7 @@ bool Mesh::add_triangle(int* tri)
 }
 
 // @ 0x4d22d0
-void Mesh::finish()
+void EditMesh::finish()
 {
     for (unsigned i = 0; i < c.edges.size(); i++)
         edge_word(vat(c.edges, i)) = 0;
@@ -334,7 +334,7 @@ void Mesh::finish()
 }
 
 // @ 0x4d27d0
-bool Mesh::split_marked_edge()
+bool EditMesh::split_marked_edge()
 {
     int cnt = 0;
     int mark = -1;
@@ -417,7 +417,7 @@ bool Mesh::split_marked_edge()
 
 // @ 0x4d2df0
 // Appends a 6 x 6 quad around p: four vertices, four edges, one face, then rebuilds the adjacency.
-void Mesh::add_quad(const vector4* p)
+void EditMesh::add_quad(const vector4* p)
 {
     NewVert a(p->x - 3.0f, p->y - 3.0f, p->z);
     NewVert b(p->x + 3.0f, p->y - 3.0f, p->z);

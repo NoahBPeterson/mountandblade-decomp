@@ -51,11 +51,7 @@ struct pos3 : rgl::matrix {
 inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->m1b4; }
 
 // the current editor entity (0xa739b8)
-struct EditorEntity {
-    void pick_entity();                                         // 0x4ed8d0
-    char pad2f9[0x2f9];
-    char f2f9;                                                  // 0x2f9
-};
+#include "../editor_entity.h"
 extern EditorEntity* g_editor;                                  // 0xa739b8
 
 // ---- Mission: the editor's view (0x5305b0) ---------------------------------------------------------------------------

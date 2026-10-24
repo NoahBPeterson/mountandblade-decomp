@@ -215,20 +215,7 @@ struct MouseRec {
     V2       m4[2];         // +0x84
     char     pad94[0x2c];
 };
-struct TriggerVec {         // trigger records of 0x78 bytes (TriggerRec, ../party/game.h)
-    int         count;      // +0
-    TriggerRec* data;       // +4
-    int         cur;        // +8
-    void resize(stream_base& s, const char* name);  // 0x4c1c90 (ret 8)
-    void stamp(int c);                          // 0x4c1d70
-};
-struct GameVec {            // trigger entries of 0x30 bytes (trigger_entry, ../config/config.h)
-    int            count;   // +0
-    trigger_entry* data;    // +4
-    int            cur;     // +8
-    int  resize(stream_base& s, const char* name, int extra);   // 0x4c1e10 (ret 0xc)
-    void stamp(int c);                          // 0x4c1ee0
-};
+#include "../trigger_vecs.h"   // TriggerVec / GameVec
 struct MapIcon {            // module-file map icon record (0x4c20c0): name, flags, mesh name, four numbers, trigger entries at +0x3c
     tstring name;           // +0x00
     int     flags;          // +0x10

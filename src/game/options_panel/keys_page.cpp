@@ -38,10 +38,7 @@ typedef rgl::string tstring;           // 0x42bbd0 / 0x42bbe0 ctors, 0x42bc40 dt
 // ---- symbols -----------------------------------------------------------------------------------------
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 // 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
-struct KeyNames {
-    char is_bound(int index);                                               // 0x487900
-};
-extern KeyNames g_key_names;                                                // 0xa170c8
+#include "../key_names.h"
 
 // 0x4bab70 (byte-exact in s004bab70): build the user path of a file name in place. A static function in the
 // original, so cl passes `out` in esi; this is a local copy with the same body.

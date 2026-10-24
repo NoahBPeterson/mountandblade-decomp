@@ -46,7 +46,7 @@ struct AgentRec {                            // 0x98
     char   pad58[0x98 - 0x58];
 };
 
-struct MapAgent {                            // a scene object returned by Picker::collect(9, ...)
+struct MapSceneObj {                         // a scene object returned by Picker::collect(9, ...) (not the 0x98 Rec98 record)
     char       pad00[0x0c];
     int        party;                        // +0x0c
     char       pad10[0x88 - 0x10];
@@ -64,7 +64,7 @@ struct BigRec {                              // 0x88  world-map cell record
     char     pad28[0x88 - 0x28];
 };
 
-struct WorldMap {
+struct LevelNav {                            // a view of NavData (terrain_b/cell_grid.h; that header cannot be included next to match/include/rgl.h): recs = cells (+0x10), zmin/zmax = e44.z / f54.z
     char     pad00[0x14];
     BigRec*  recs;                           // +0x14
     char     pad18[0x4c - 0x18];
@@ -90,37 +90,14 @@ static inline Party* party_at(GameData* g, int id)
 }
 
 // --------------------------------------------------------------------------------- view / panel -------
-struct MapView {                             // the object at MapPanel+0x30
-    virtual void v00(); virtual void v08(); virtual void v10(); virtual void v18();
-    virtual void v20(); virtual void v28(); virtual void v30(); virtual void v38();
-    virtual void v40(); virtual void v48(); virtual void v50(); virtual void v58();
-    virtual void v60(); virtual void v68(); virtual void v70(); virtual void v78();
-    virtual void v80();
-    virtual char is_key_down(int key);                              // +0x44
-    void screen_to_world(vector4* near_pt, vector4* far_pt);        // 0x4bd2f0
-};
 
-struct Mesh {
-    void calc_bounds(vector4* mn, vector4* mx);                     // 0x438d80
-};
+#include "../rgl_mesh.h"                                           // rgl::mesh (calc_bounds 0x438d80)
 
-struct MapPanel {
-    char      pad00[0x30];
-    MapView*  view;                          // +0x30
-    char      pad34[0x2d0 - 0x34];
-    float     timer;                         // +0x2d0
-    char      f2d4;                          // +0x2d4
-    char      f2d5;                          // +0x2d5  label column is being hovered
-    char      pad2d6[0x2d8 - 0x2d6];
-    int       f2d8;                          // +0x2d8  currently picked party id
-    void set_label(int id);                  // 0x51a420
-    void update(int type, int id);           // 0x51abd0
-    void update_target();                    // 0x5191e0
-};
+#include "map_panel.h"                      // MapPanel / MapView (shared with map_info.cpp)
 
 // --------------------------------------------------------------------------------- globals -------------
 extern world*    g_level;                    // 0xa732b4
-extern Mesh*     g_label_obj;                // 0x5d75ec
+extern rgl::mesh* g_label_obj;                // 0x5d75ec
 extern float     g_box_x;                    // 0x5d8778
 extern float     g_box_y;                    // 0x5d877c
 extern int       g_mouse_x;                  // 0x5d7094
@@ -277,7 +254,7 @@ void MapPanel::update_target()
     bestd += 1.0f;
 
     for (int i = 0; i < acount; i++) {
-        MapAgent* o = (MapAgent*)agents[i];
+        MapSceneObj* o = (MapSceneObj*)agents[i];
         if (!o->active) continue;
         if (!o->shape) continue;
         if (!shape_contact_count(o->shape, &cap, 0, 0)) continue;
@@ -300,20 +277,20 @@ void MapPanel::update_target()
         if (g_a17458 == 0 && g_a17858 != 0 && f2d4 == 0) {
             g_game->n_labels  = 0;
             g_game->cur_label = -1;
-            f2d8 = ((MapAgent*)bestobj)->party;
+            f2d8 = ((MapSceneObj*)bestobj)->party;
             g_game->emit_event(0x15, f2d8, 0);
             if (g_game->n_labels > 0) {
                 f2d5 = 1;
                 set_label(f2d8);
             }
         }
-        int kind = ((MapAgent*)bestobj)->kind;
+        int kind = ((MapSceneObj*)bestobj)->kind;
         if (kind == 1) {
-            int id = ((MapAgent*)bestobj)->party;
+            int id = ((MapSceneObj*)bestobj)->party;
             if (!(party_at(g_game, id)->flags_lo & 0x80000))
                 update(1, id);
         } else if (kind == 2) {
-            update(2, ((MapAgent*)bestobj)->party);
+            update(2, ((MapSceneObj*)bestobj)->party);
         }
     } else {
         // ---- 0x519a8b: ground items -----------------------------------------------------------------
@@ -344,20 +321,20 @@ void MapPanel::update_target()
     }
 
     if (bestobj) {
-        int kind = ((MapAgent*)bestobj)->kind;
+        int kind = ((MapSceneObj*)bestobj)->kind;
         if (kind == 1) {
-            if (((MapAgent*)bestobj)->party != g_game->f78) {
+            if (((MapSceneObj*)bestobj)->party != g_game->f78) {
                 // 0x519c9e..0x519cd5: both arms are the same store (the `0x400` flags test survives
                 // only as a dead select); reproduced verbatim.
-                if (party_at(g_game, ((MapAgent*)bestobj)->party)->flags_lo & 0x400)
+                if (party_at(g_game, ((MapSceneObj*)bestobj)->party)->flags_lo & 0x400)
                     party_at(g_game, g_game->f78)->action = 4;
                 else
                     party_at(g_game, g_game->f78)->action = 4;
-                party_at(g_game, g_game->f78)->target = ((MapAgent*)bestobj)->party;
+                party_at(g_game, g_game->f78)->target = ((MapSceneObj*)bestobj)->party;
                 party_at(g_game, g_game->f78)->reissue_order();
             }
         } else if (kind == 3) {
-            int id = ((MapAgent*)bestobj)->party;
+            int id = ((MapSceneObj*)bestobj)->party;
             AgentRec* rec = ((AgentRec**)g_game->agent_pages)[id >> 4] + (id & 0xf);
             if (rec->kind == 1) {
                 Party* pl = party_at(g_game, g_game->f78);

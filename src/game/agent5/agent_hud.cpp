@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "./agent_hud.h"
+#include "../gui_mgr.h"           // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../rgl/mesh_x.h"
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -126,7 +127,7 @@ void MissionHud::refresh()
     {
         MissionUi* root = frame;
         g_gui_dirty = 1;
-        g_gui.add_screen(&root);
+        g_gui.add_root(&root);
     }
     for (int i = 0; i < 3; i++) {
         MissionUi* w = new MissionUi;
@@ -1354,7 +1355,7 @@ void GameScreen::build()
     g_gui_dirty = 1;
     {
         MissionUi* root = frame;
-        g_gui.add_screen(&root);
+        g_gui.add_root(&root);
     }
 }
 
@@ -1520,7 +1521,7 @@ void LogScreen::build(bool show)
     g_gui_dirty = 1;
     {
         MissionUi* root = frame;
-        g_gui.add_screen(&root);
+        g_gui.add_root(&root);
     }
 
     // the slider's value follows the log's scroll state

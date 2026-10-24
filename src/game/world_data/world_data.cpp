@@ -6,6 +6,7 @@
 //       (game_data_2) of the TU map. Names provisional. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./world_data.h"
+#include "../rec98.h"             // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/party.h"
 #include "../../include/troop.h"
 #include "../../include/game_recs.h"

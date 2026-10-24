@@ -1,7 +1,7 @@
 // mesh_edit.h: the mesh editor's view of the polygon-mesh topology object (PolyMesh, ../terrain_b/poly_mesh.h:
 // vertices MVert at +0x18 (0x18 bytes), polygons MPoly at +0x28 (0x64), edges MEdge at +0x38 (0x34)).
 // The slices s004d1410 / s004d1d80 / s004d22d0 / s004d27d0 / s004d4b80 each declared their own Vtx / Face / Edge /
-// Mesh; they are the canonical MVert / MPoly / MEdge / PolyMesh (same offsets, cited per field below). `Mesh` adds
+// EditMesh; they are the canonical MVert / MPoly / MEdge / PolyMesh (same offsets, cited per field below). `EditMesh` adds
 // the editor's member functions (this module and hud.cpp) and no data.
 //   MVert: +0x00 pos, +0x10 flag (selected: 0x4d1410, 0x4d4b80 test it, 0x4d27d0/0x4d22d0 zero it on a new
 //          vertex), +0x14 the vertex id (pad14 in poly_mesh.h; 0x4d22d0 tags a duplicate with the source vertex,
@@ -80,7 +80,7 @@ struct OwnedIntVec : IntVec {
     int& operator[](unsigned i) { return *(_Myfirst + i); }
 };
 
-struct Mesh : PolyMesh {
+struct EditMesh : PolyMesh {
     bool build_first_pass();                        // 0x4d1410
     void build_second_pass();                       // 0x4d1880
     bool add_triangle(int* tri);                    // 0x4d1d80

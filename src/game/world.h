@@ -13,7 +13,7 @@ struct shape_base;
 struct face;                                            // src/include/shape.h
 struct SceneEnt;                                        // agent4/agent_think.h
 struct HeightField;                                     // src/include/height_field.h
-struct WorldMap;                                        // inventory_panel/map_update.cpp: the strategy-map cell table (+0xb0)
+struct LevelNav;                                        // inventory_panel/map_update.cpp: the strategy-map cell table (+0xb0)
 
 struct world {
     char pad0[0x28];
@@ -25,7 +25,7 @@ struct world {
     char pad68[0x7c - 0x68];
     std::vector<rgl::entity*> ents;                     // +0x7c (first at +0x80)              0x41f450
     char pad8c[0xb0 - 0x8c];
-    WorldMap* wmap;                                     // +0xb0 the strategy-map cell table (inventory_panel/map_update.cpp 0x5191e0: zmin / zmax / recs / linked)
+    LevelNav* wmap;                                     // +0xb0 the strategy-map cell table (inventory_panel/map_update.cpp 0x5191e0: zmin / zmax / recs / linked)
     void* nav;                                          // +0xb4 navigation mesh
     void locate(const rgl::vector4* p, int* out) const;      // 0x41ed00 (grid cell of a point)
     void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50 (0x448eb0)

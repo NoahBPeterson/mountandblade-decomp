@@ -9,16 +9,8 @@
 
 using rgl::vector4;
 
-// ---- the engine's growable arrays: empty allocator slot then begin/last/end (begin at +4) ----------------
-template<class T> struct vec {
-    char al;                                        // +0
-    T* b;                                           // +4
-    T* e;                                           // +8
-    T* cap;                                         // +0xc
-    vec() : b(0), e(0), cap(0) {}
-    unsigned size() const { return b ? (unsigned)(e - b) : 0u; }
-    T& operator[](unsigned i) { return b[i]; }
-};
+// ---- the engine's growable arrays: vec<T> (../model_b.h) -------------------------------------------------
+#include "../model_b.h"
 
 // ---- ragdoll body record (0x2c bytes) ----------------------------------------------------------------------
 #include "../rag_body.h"                           // RagBody: ctor 0x4bc170, load 0x4bc1f0 (config.cpp)
@@ -113,28 +105,6 @@ model_a::model_a()
 }
 
 // ---- 0x1f8+ record (provisional) --------------------------------------------------------------------------
-struct model_b {
-    tstring a;                                      // +0
-    char pad10[4];
-    int f14, f18, f1c, f20, f24;                    // +0x14
-    tstring b;                                      // +0x28
-    char pad38[4];
-    int f3c, f40, f44;                              // +0x3c
-    vec<int> v48;                                   // +0x48
-    vec<int> v58;                                   // +0x58
-    vec<int> v68;                                   // +0x68
-    vec<int> v78;                                   // +0x78
-    char pad88[0x19c - 0x88];
-    vec<int> v19c;                                  // +0x19c
-    vec<int> v1ac;                                  // +0x1ac
-    vec<int> v1bc;                                  // +0x1bc
-    int neg[7];                                     // +0x1cc
-    int f1e8;                                       // +0x1e8
-    float f1ec;                                     // +0x1ec
-    int f1f0, f1f4;                                 // +0x1f0
-    model_b();                                      // 0x4d3640
-};
-
 // @ 0x4d3640
 model_b::model_b()
 {

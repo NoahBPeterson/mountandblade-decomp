@@ -17,6 +17,7 @@
 #include <io.h>
 #include <new>
 #include "./trigger_vec.h"
+#include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 #include <richedit.h>
 #include "../config/core.h"
 #include "../config/config.h"
@@ -1390,8 +1391,8 @@ void MissionTemplate::read(stream_base& s)
     for (int i = 0; i < n_spawns; i++)
         spawns[i].load_extras(s);
     _snprintf(buf, 0x200, "Mission Template %s", name.c_str());
-    ((TriggerVec*)triggers_raw)->resize(s, buf);
-    ((TriggerVec*)triggers_raw)->stamp(2);
+    ((TriggerVec*)&f4c)->resize(s, buf);
+    ((TriggerVec*)&f4c)->stamp(2);
     disp->underscores_to_spaces();
 }
 

@@ -55,7 +55,7 @@ addresses), i.e. they are the members of 8 screen classes, not one `Menu` / `Mis
 | `XferWin` (party exchange window, vtable 0x59587c) | `Mission`, `Party`, `GameObj` | 0x531800 + clear_selection / get_cell / move_men / apply / swap_rows / stack_remove / set_selection all index the same grid (+0xb8), slots (+0x4c8), cursor (+0x8dc..) |
 | `PartyX : Party`, `PartyMgrX : PartyMgr`, `GameDataX : GameData` | `Party` (as the window!), `PartyMgr`, `GameObj` | only member declarations of this region; 0x532db0 `compact` is a real `Party` member; 0x532de0 runs with `this` = the game data |
 | `TickScreen` (0x595a08), `InputScreen` (0x5961cc), `EventScreen` (0x59619c), `SourceScreen` (0x5961f0 / 0x596214) | `Screen`, `GameObj` | vtable slot 0 |
-| `ListWidget : Widget` | `Widget` | `get3` 0x533a60 (+0x19c / +0x1ac arrays, +0x1cc index) |
+| `ChoiceList : Widget` | `Widget` | `get3` 0x533a60 (+0x19c / +0x1ac arrays, +0x1cc index) |
 | `FrameFlags` (0x5e291c), `KeyDown` (0xa73730), `MenuItem`, `MenuEntry`, `TplRec`, `TplOpt`, `VecIter`, `OutIntVec : IntVec` | `Flags`, `FlagSet`, `KeyTable`, ... | local, none exists elsewhere |
 
 Canonical headers included: `src/rgl/mesh2/gui_edit.h`, `src/rgl/mesh.h`, `src/rgl/scene/world.h` (`rgl::world`,
@@ -113,7 +113,7 @@ pair (now `Mission::props`); the 32-bit key word and the two-argument `set_value
 See `map_editor.nonmatching.txt` and `exchange_screens.nonmatching.txt` for the per-row measurements. Causes: x87 / call
 scheduling (0x531380, 0x5314e0, 0x5316f0, 0x5337a0: 7, 61, 47, 12 diff bytes), register allocation and frame shape (0x5305b0,
 0x5325b0, 0x532740, 0x532830, 0x533070, 0x533aa0), two 18-byte WinLicense marker blocks inside 0x532de0 (not code, not
-emittable from C++), and `lea` + `mov` element loads of `ListWidget::get3` that every source form folds.
+emittable from C++), and `lea` + `mov` element loads of `ChoiceList::get3` that every source form folds.
 
 ## Verification
 

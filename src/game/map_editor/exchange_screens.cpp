@@ -28,7 +28,7 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
-#define W(p, off) (*(ListWidget**)((char*)(p) + (off)))
+#define W(p, off) (*(ChoiceList**)((char*)(p) + (off)))
 #define V(p, off) ((OutIntVec*)((char*)(p) + (off)))
 #define GIF(off, type) (*(type*)((char*)g_game + (off)))
 #define STACK_IDS ((int*)((char*)g_game + 0x14058))   // GameData +0x14058: the per-stack random ids (0x20 per stack); +0x1405c is the tbl of game_data.h
@@ -746,7 +746,7 @@ void EventScreen::on_event(int code)
         if ((k & 0x10) == 0) {
             if (g_game->fc8 == 0 && F(this, 0xa0, int) > 0) {
                 int i = 0;
-                ListWidget** ws = (ListWidget**)((char*)this + 0x60);
+                ChoiceList** ws = (ChoiceList**)((char*)this + 0x60);
                 do {
                     if (ws[i]->changed(0x10000))
                         local = i;
@@ -955,7 +955,7 @@ void TickScreen::on_tick(int code)
 
 
 // @ 0x533a60
-void ListWidget::get3(int* a, int* b, int* c)
+void ChoiceList::get3(int* a, int* b, int* c)
 {
     int* p = F(this, 0x19c, int*);
     p += F(this, 0x1cc, int);
@@ -1004,7 +1004,7 @@ void InputScreen::on_input(int code)
     }
 
     if (W(this, 0x34)->changed(0x10000)) {
-        ListWidget* w = W(this, 0x34);
+        ChoiceList* w = W(this, 0x34);
         VecIter it;
         int* second;
         it.ptr = F(w, 0x19c, int*);
@@ -1030,7 +1030,7 @@ void InputScreen::on_input(int code)
     }
 
     if (W(this, 0x3c)->changed(0x10000)) {
-        ListWidget* w = W(this, 0x3c);
+        ChoiceList* w = W(this, 0x3c);
         VecIter it;
         int* second;
         it.ptr = F(w, 0x19c, int*);

@@ -12,6 +12,7 @@
 #include "./tstring.h"
 
 struct stream_base;
+struct tstream3;
 
 struct SpawnRec {                               // 0x4c bytes: a mission spawn rule
     int id;                                     // +0x00
@@ -53,9 +54,14 @@ struct MissionTemplate {                        // 0x58 bytes: a mission mode / 
         int f3c;                                // +0x3c (0x4c2300 r_int)
         int type;                               // inventory_panel/mission_ctx.cpp
     };
-    char pad40[0xc];
-    char triggers_raw[0xc];                     // +0x4c the TriggerVec (triggers/trigger_vec.h: count, data, cur); the sound bank for mesh_start
+    int f40, f44, f48;                          // +0x40
+    int f4c;                                    // +0x4c the TriggerVec (triggers/trigger_vec.h: count, data, cur at +0x4c / +0x50 / +0x54); the sound bank for mesh_start
+    int f50;                                    // +0x50
+    int f54;                                    // +0x54
+    MissionTemplate() : spawns(0), f3c(-1), f4c(0), f50(0), f54(0) {}   // the module loader's inline constructor (inventory_panel/module_files.cpp)
     void read(stream_base& s);                  // 0x4c2300 (ret 4)
+    void read_trigger_block(tstream3* s);       // 0x4c2300 (the module loader's spelling: inventory_panel/module_files.cpp)
+    void destroy_array(int flags);              // 0x4c3430
 };
 typedef MissionTemplate ModeRec2;               // the slices' names for the same record
 typedef ModeRec2 ModeRec;                       // agent.h's name for the same record

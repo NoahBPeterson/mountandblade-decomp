@@ -27,6 +27,7 @@
 #include "../terrain_b/terrain_b.h"
 #include "./camera.h"
 #include "./party_2.h"
+#include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 extern Font* g_font;                                // 0x5e2934
@@ -392,20 +393,6 @@ extern EntityHost* g_entity_host;                   // 0xa732b4 (points to the h
 
 // ---- records ---------------------------------------------------------------------------------------
 // 0x98-byte army/settlement record (mission+0xe4 page table; see 0x49bbb0)
-struct Rec98 {
-    char    pad0[0x10];
-    int     f10;                                    // +0x10  (=1 -> icon owner present)
-    char    pad14[0x24 - 0x14];
-    float   f24;                                    // +0x24  (x)
-    float   f28;                                    // +0x28  (y)
-    char    pad2c[0x3c - 0x2c];
-    float   f3c;                                    // +0x3c  (z base)
-    char    pad40[0x50 - 0x40];
-    int     f50;                                    // +0x50  (scene entity)
-    int     f54;                                    // +0x54  (agent id A)
-    int     f58;                                    // +0x58  (agent id B)
-    void bind_host();                               // 0x4b2770 (thiscall)
-};
 // 0x138-byte quest record (mission+0x13a58)
 struct Rec138 {
     char    pad0[0x40];

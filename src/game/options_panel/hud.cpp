@@ -12,7 +12,7 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4d4b80
-bool Mesh::on_selection_changed()
+bool EditMesh::on_selection_changed()
 {
     int idx[4];
     int cur = 0;
@@ -186,9 +186,8 @@ extern "C" void __cdecl free_ptr(void* p);          // 0x535712 (operator delete
 // all of these are thiscall (ecx = the sub-object), see the lea ecx / call pairs in the original
 struct WorldBase { void dtor(); };                  // 0x479160
 struct Sub6814 { void dtor(); };                    // 0x42bc40 (16-byte string at +0x6814)
-struct Sub6698 { void dtor(); };                    // 0x4cb780
 struct Sub6688 { void dtor(); };                    // 0x431a60
-struct Sub63d0 { void dtor(); };                    // 0x4be6f0
+#include "world_subs.h"                            // Sub63d0 / Sub6698 (dtor 0x4be6f0 / 0x4cb780)
 struct Sub0030 { void dtor(); };                    // 0x4c6e30
 struct Sub0004 { void dtor(); };                    // 0x4c6e30 (ICF'd with Sub0030::dtor)
 

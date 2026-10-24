@@ -44,11 +44,8 @@ void __cdecl build_appearance(AgentBody* b, int kind, int troop, int f94, ItemRe
 void __cdecl build_equipment(AgentBody* b, int kind, int troop, int* look, int* f130, int* items, int id);   // 0x47cfe0
 
 // ---- globals and engine objects the HUD code uses ---------------------------------------------------------------------
-struct GuiMgr {                                                   // the gui manager at 0x5d7080
-    void reset();                                                 // 0x42d1b0
-    void add_screen(MissionUi** root);                            // 0x49b120 (ret 4)
-};
-extern GuiMgr g_gui;                                              // 0x5d7080
+#include "../gui_mgr.h"                                         // GuiManager: the gui manager at 0x5d7080
+extern GuiManager g_gui;                                              // 0x5d7080
 extern char g_gui_dirty;                                          // 0x5d8788 (set after a screen was built)
 extern char g_hud_flag;                                           // 0x5e212c (set to 1 by 0x4f7f00)
 extern char g_hud_lucky;                                          // 0x5e2938 (set with 5% probability by 0x4f7f00)

@@ -1,4 +1,5 @@
 #include "./screen_init.h"
+#include "../gui_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)

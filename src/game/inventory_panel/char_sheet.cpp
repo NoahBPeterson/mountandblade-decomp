@@ -84,13 +84,11 @@ struct CharSheetWidget {
 // ---- engine globals -----------------------------------------------------------------------------------
 #include "../../include/game_data.h"
 
-#include "../res_mesh.h"                       // ResMesh (was ResMesh), ResMgr: the one definition
+#include "../res_mesh.h"                       // ResMesh (was Mesh), ResMgr: the one definition
+#include "../rgl_mesh.h"                       // rgl::mesh (clone 0x41c6d0)
 extern ResMgr g_resmgr;                         // 0x5d6fa0
 
-struct GuiManager {
-    void reset();                               // 0x42d1b0
-    void push(CharSheetWidget** w);                      // 0x49b120 (ret 4)
-};
+#include "../gui_mgr.h"
 extern GuiManager g_gui;                        // 0x5d7080
 extern char g_ui_dirty;                         // 0x5d8788
 
@@ -107,7 +105,7 @@ int sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
 void ctor_window(void* p);                      // 0x4931a0
 void ctor_widget(void* p);                      // 0x48ae20
-void mesh_scale(ResMesh* m, float f);              // 0x44f0c0
+void mesh_scale(rgl::mesh* m, float f);              // 0x44f0c0
 
 // ---- widget factories ----------------------------------------------------------------------------------
 CharSheetWidget* make_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h);        // 0x4dce70
@@ -238,14 +236,14 @@ void CharSheet::init()
         void* mesh;
         {
             tstring n("character_window");
-            mesh = ((ResMesh*)g_resmgr.get_object(&n))->clone();
+            mesh = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
         }
         w->set_mesh(0, mesh);
     }
 
     CharSheetWidget* pw = window;
     g_ui_dirty = 1;
-    g_gui.push(&pw);
+    g_gui.add_root(&pw);
 
     // reset-changes button (this+0x430) and done button (this+0x42c)
     {
@@ -525,15 +523,15 @@ void CharSheet::init()
     label_refresh(name, tstring("char_tb_character_name"));
 
     {
-        ResMesh* up;
+        rgl::mesh* up;
         {
             tstring k("party_button");
-            up = ((ResMesh*)g_resmgr.get_object(&k))->clone();
+            up = ((rgl::mesh*)g_resmgr.get_object(&k))->clone();
         }
-        ResMesh* down;
+        rgl::mesh* down;
         {
             tstring k("party_button_down");
-            down = ((ResMesh*)g_resmgr.get_object(&k))->clone();
+            down = ((rgl::mesh*)g_resmgr.get_object(&k))->clone();
         }
         mesh_scale(up, 0.6666667f);
         mesh_scale(down, 0.6666667f);
