@@ -12,7 +12,7 @@ code-generation reference (the `[13]` sections apply to us: same cl 13.10).
 
 ## Setup
 ```sh
-python3.14 -m venv .venv && .venv/bin/pip install -r requirements.txt   # pinned: unicorn/capstone versions affect equiv results
+uv sync   # .venv from pyproject.toml + uv.lock (pinned: unicorn/capstone versions affect equiv results)
 MB="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Mount and Blade"
 .venv/bin/python tools/steamstub21_analysis_image.py "$MB/mount&blade.exe" work/mb.analysis.bin work/mb.analysis.json
 # toolchain: work/toolchain/{vc71tk,vc9sp1,wineprefix} -> symlinks to ../spore-decomp/work/toolchain/*

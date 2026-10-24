@@ -1,0 +1,19 @@
+[project]
+name = "mountandblade-decomp"
+version = "0.1.0"
+description = "Tools for the Mount & Blade 1.011 decompilation (matching, equivalence harness, hybrid builds)"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    # exact pins: unicorn and capstone versions can change equivalence results
+    "capstone==5.0.9",
+    "matplotlib==3.11.2",
+    "numpy==2.5.4",
+    "pefile==2024.8.26",
+    "pillow==13.0.0",
+    "pycryptodome==4.2.0",
+    "pytest==9.1.1",
+    "unicorn==2.1.4",
+]
+
+[tool.uv]
+package = false
