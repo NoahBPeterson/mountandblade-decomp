@@ -74,7 +74,7 @@ struct resmgr_gui : resource_manager {
 #define g_resmgr_full (*(resmgr_gui*)&g_resmgr)
 
 // a 2-float vector with a constructor, for temporaries passed by pointer
-struct V2 : vec2 { V2(float a, float b) { x = a; y = b; } };
+// V2 (a vec2 with constructors) is in ../../include/vec.h
 
 // ---- the editor's scene table: 0x48-byte records, placed(i) -> mesh (0x499050, another object) ---------------
 struct scene_tbl {

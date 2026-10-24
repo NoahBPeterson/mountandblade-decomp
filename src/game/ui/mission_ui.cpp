@@ -43,7 +43,7 @@ static __forceinline int rnd(const float* p)
     return (*p - fl <= 0.5f) ? i : i + 1;
 }
 
-struct Rec80 { int v[32]; };                // the party's 0x80-byte companion records (0x489540)
+struct Blob80 { int v[32]; };               // the party's 0x80-byte companion records (0x489540)
 
 extern "C" void _ReadWriteBarrier(void);    // compiler barrier (no code emitted): pins the period store ahead of the g_ticks load
 
@@ -739,7 +739,7 @@ int* Party::remove_row(int* out, int index, int* arr)
     if (arr != 0 && index < cnt) {
         int j = index;
         do {
-            *(Rec80*)((char*)arr + j * 0x80) = *(Rec80*)((char*)arr + (j + 1) * 0x80);
+            *(Blob80*)((char*)arr + j * 0x80) = *(Blob80*)((char*)arr + (j + 1) * 0x80);
             j++;
         } while (j < nstacks);
     }
@@ -874,8 +874,8 @@ void Sel::first(int* out)
     do {
         if (*p != 0) {
             int k = i * 0x6c;
-            V4* a = (V4*)((char*)this + k + 0x18);
-            V4* o = (V4*)out;
+            Blob16* a = (Blob16*)((char*)this + k + 0x18);
+            Blob16* o = (Blob16*)out;
             o->a = a->a;
             o->b = a->b;
             o->c = a->c;
@@ -885,7 +885,7 @@ void Sel::first(int* out)
         i++;
         p += 0x1b;
     } while (i < 3);
-    V4* zo = (V4*)out;
+    Blob16* zo = (Blob16*)out;
     zo->a = 0;
     zo->b = 0;
     zo->c = 0;
@@ -895,19 +895,19 @@ void Sel::first(int* out)
 void Sel::set_vec(const int* a, const int* b, const int* c)
 {
     if (rec[0].present) {
-        *(V4*)&rec[0].a[0] = *(const V4*)a;
+        *(Blob16*)&rec[0].a[0] = *(const Blob16*)a;
         rec[0].b = *b;
-        *(V4*)&rec[0].c[0] = *(const V4*)c;
+        *(Blob16*)&rec[0].c[0] = *(const Blob16*)c;
     }
     if (rec[1].present) {
-        *(V4*)&rec[1].a[0] = *(const V4*)a;
+        *(Blob16*)&rec[1].a[0] = *(const Blob16*)a;
         rec[1].b = *b;
-        *(V4*)&rec[1].c[0] = *(const V4*)c;
+        *(Blob16*)&rec[1].c[0] = *(const Blob16*)c;
     }
     if (rec[2].present) {
-        *(V4*)&rec[2].a[0] = *(const V4*)a;
+        *(Blob16*)&rec[2].a[0] = *(const Blob16*)a;
         rec[2].b = *b;
-        *(V4*)&rec[2].c[0] = *(const V4*)c;
+        *(Blob16*)&rec[2].c[0] = *(const Blob16*)c;
     }
 }
 
@@ -986,7 +986,7 @@ void* MissionView::make(int* p)
         ((tstring*)(o + 0x20))->operator=(*(tstring*)((char*)p64 + 0x20));
         *(int*)(o + 0x1c) = *(int*)((char*)p64 + 0x1c);
         ((tstring*)(o + 0x04))->operator=(*(tstring*)((char*)p64 + 0x04));
-        *(V4*)(o + 0x34) = *(V4*)((char*)p64 + 0x34);
+        *(Blob16*)(o + 0x34) = *(Blob16*)((char*)p64 + 0x34);
         *(int*)(o + 0x44) = *(int*)((char*)p64 + 0x44);
         *(int*)(o + 0x50) = *(int*)((char*)p64 + 0x50);
         *(int*)(o + 0x4c) = *(int*)((char*)p64 + 0x4c);
@@ -1015,13 +1015,13 @@ void Ptr30::clear_all()
 }
 
 // @ 0x489c30
-tstring World::get_name()
+tstring GameData::get_name()
 {
-    return name;
+    return *(tstring*)((char*)this + 0xe028);
 }
 
 // @ 0x489c50
-int World::count_in(int id, int idx, char flag)
+int GameData::count_in(int id, int idx, char flag)
 {
     Troop* base = troops;
     int c = 0;
@@ -1052,7 +1052,7 @@ int World::count_in(int id, int idx, char flag)
 }
 
 // @ 0x489d10
-int World::sl_take(int group, int item, int want, char extras)
+int GameData::sl_take(int group, int item, int want, char extras)
 {
     int total = 0;
     Troop* t = &troops[group];
@@ -1085,7 +1085,7 @@ int World::sl_take(int group, int item, int want, char extras)
 }
 
 // @ 0x489e70
-int World::sl_roll_party(int lo, int hi)
+int GameData::sl_roll_party(int lo, int hi)
 {
     int found = -1;
     int tries = 0;
@@ -1099,7 +1099,7 @@ int World::sl_roll_party(int lo, int hi)
         else
             v = rand() % span;
         found = v + lo;
-        QuestRec* pi = (QuestRec*)(party_recs + found * 0x138);
+        QuestRec* pi = (QuestRec*)((char*)quests + found * 0x138);
         tries++;
         if (!pi->f50_active) {
             found = -1;
@@ -1116,7 +1116,7 @@ int World::sl_roll_party(int lo, int hi)
 }
 
 // @ 0x489ee0
-int World::sl_roll_other(int lo, int hi)
+int GameData::sl_roll_other(int lo, int hi)
 {
     int tries = 0;
     int span = hi - lo;
@@ -1140,7 +1140,7 @@ int World::sl_roll_other(int lo, int hi)
 // @ 0x489f40
 // Party strength factor from the difficulty and option settings, truncated to int (the x87 value is popped by the
 // _ftol call). The constants are .rdata literals of this object (0.09, 0.15, 0.2, 1.2, 0.05, 1.05, 100.01, 0.75).
-int World::sl_value_factor()
+int GameData::sl_value_factor()
 {
     float f = 1.0f;
     if (fb4)
@@ -1154,7 +1154,7 @@ int World::sl_value_factor()
 }
 
 // @ 0x48a000
-void World::sl_update_avg()
+void GameData::sl_update_avg()
 {
     float now = (float)g_ticks[0] * 1e-05f;
     float dt = now - avg_prev_time;
@@ -1167,7 +1167,7 @@ void World::sl_update_avg()
 }
 
 // @ 0x48a080
-int World::sl_pick_chain(int leader, char lancer)
+int GameData::sl_pick_chain(int leader, char lancer)
 {
     int chain[32];
     chain[0] = leader;
@@ -1196,7 +1196,7 @@ int World::sl_pick_chain(int leader, char lancer)
 }
 
 // @ 0x48a150
-int World::sl_cell_coord(int party, int cell, int)
+int GameData::template_count(int party, int cell, float)
 {
     char* base = g_cell_table + party * 0xb0;
     int roll = rand() % 0x3dc9;
@@ -1225,12 +1225,12 @@ void __stdcall sl_item_set_all(float v)
 }
 
 // @ 0x48a290
-int World::sl_party_value(int party)
+int GameData::sl_party_value(int party)
 {
     if (party >= 0) {
         g_store0 = 0;
         g_store1 = 0;
-        if (sl_query(7, party, cur_party) != 0)
+        if (emit_event(7, party, cur_party) != 0)
             return g_store0;
         Troop* r = &troops[party];
         if (((__int64)r->flags30 & 0x10) != 0)
@@ -1241,20 +1241,20 @@ int World::sl_party_value(int party)
 }
 
 // @ 0x48a320
-int World::sl_party_price(int party)
+int GameData::sl_party_price(int party)
 {
     if (party < 0)
         return 0;
     g_store0 = 0;
     g_store1 = 0;
-    if (sl_query(9, party, cur_party))
+    if (emit_event(9, party, cur_party))
         return g_store0;
     int v = sl_party_value(party);
     return (int)((float)v * 5.0f + 2.0f);
 }
 
 // @ 0x48a380
-void World::set_names(int slot, const tstring* a)
+void GameData::set_names(int slot, const tstring* a)
 {
     ((tstring*)((char*)this + (slot + 0x1a24) * 16))->operator=(*a);
 }
@@ -1596,7 +1596,7 @@ void TimerList::update(int flag)
 {
     for (int i = 0; i < count; i++) {
         items[i].tick(flag);
-        if (flag > 0 && (flag & 1) && g_world->mode == 0x12)
+        if (flag > 0 && (flag & 1) && g_game->mode == 0x12)
             return;
     }
 }

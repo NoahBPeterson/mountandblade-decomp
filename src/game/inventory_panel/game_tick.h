@@ -84,7 +84,7 @@ struct MarkerList {
     Marker* operator[](unsigned i) const { return first[i]; }
 };
 
-struct SceneEnt { void set_fade(const float* v); };   // 0x4b1800 (the map entity at Party+0x59c0)
+struct MapModel { void set_fade(const float* v); };   // 0x4b1800 (the map entity at Party+0x59c0: PartyModel::set_fade, party2/party_2.h)
 struct UpdateObj { void update(int flags); };   // game+0x139e8 (0x462760)
 struct SoundObj { void update(int flags); };    // game+0x139f4 (0x48add0)
 
@@ -117,12 +117,8 @@ struct GameG : GameDataV {
 };
 
 // the map scene object (global 0xa732b4): a colour at +0x68 (its w lane is the alpha at +0x74) and the per-frame step
-struct MapScene {
-    char pad0[0x68];
-    rgl::vector4 color;                 // +0x68
-    void step(float dt);                // 0x427f40
-};
-extern MapScene* g_map_scene;           // 0xa732b4
+#include "../scene_world.h"                  // World: the scene world (colour +0x68, alpha +0x74; step 0x427f40)
+extern World* g_map_scene;           // 0xa732b4
 // a scene object with a colour (0x517350): the sun and the entities of the cell grid
 struct ColorEnt {
     char pad0[0x3c];

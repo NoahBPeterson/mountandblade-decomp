@@ -77,9 +77,7 @@ extern SkillRec g_skills[];                         // 0x8ee3100
 #define SKILL_ATTR(id) (g_skills[id].attr & 0xf)
 
 // the ini table at 0xa44240 (0x2c-byte entries, see s004bd170)
-struct ini_file {
-    float get_float(const tstring& key);            // 0x4bd5e0
-};
+#include "../ini_file.h"
 extern ini_file g_config;                           // 0xa44240
 
 // the character texture's text anchors for the level values; the original loads the pointer stored

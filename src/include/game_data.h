@@ -35,6 +35,7 @@ struct GameData {
     union {
         int f78;                                // +0x78 (default party)   0x4428c0
         int party_id_78;
+        int cur_party;                          // +0x78   ui/mission_ui.cpp 0x48a290, 0x48a320 (the party the sl_* queries are asked for)
     };
     char pad7c[0x84 - 0x7c];
     int sel_party;                              // +0x84 the party selected on the map (inventory_panel/map_update.cpp 0x5191e0, map_info.cpp 0x51abd0; char_sheet/screen_camera.cpp 0x4ece20 follows it)
@@ -43,6 +44,7 @@ struct GameData {
     union {
         int player;                             // +0x8c (the player's troop id)   0x460160, 0x460640
         int player_troop;
+        int cur_troop;                          // +0x8c   ui/mission_ui.cpp 0x48a080, 0x489c50
     };
     char pad90[0x95 - 0x90];
     char f95;                                   // +0x95 (inventory_panel/map_update.cpp 0x5191e0)
@@ -53,8 +55,12 @@ struct GameData {
     int cnt_ko_friend;                    // +0xa4 0x457b40
     char pada8[0xb0 - 0xa8];
     int fb0;                                    // +0xb0   0x4610b0
-    char padb4[0xc8 - 0xb4];
-    int fc8;                                    // +0xc8   0x460620, 0x460d80
+    int fb4;                                    // +0xb4 (nonzero scales the party value by 0.75)   ui/mission_ui.cpp 0x489f40
+    char padb8[0xc8 - 0xb8];
+    union {
+        int fc8;                                // +0xc8   0x460620, 0x460d80
+        int mode;                               // +0xc8 screen mode (0x12 = party screen)   ui/mission_ui.cpp 0x48add0
+    };
     char padcc[0xe4 - 0xcc];                    // +0xcc a paged table of 0x98-byte scene records (16 per page); its API is 0x48ef20 slot() (map_info.cpp), see party2/camera.cpp (BattleTable)
     void** agent_pages;                         // +0xe4 its page table: first pointer of the vector at +0xe0 (map_update.cpp 0x5191e0, map_info.cpp 0x48ef20, camera.cpp)
     char pade8[0xf8 - 0xe8];
@@ -71,7 +77,9 @@ struct GameData {
         int n_chars;
         int f13a04;                             // (repeat count, mode 0x3000)
     };
-    char pad13a08[0x13a1c - 0x13a08];
+    char pad13a08[4];
+    int excluded;                               // +0x13a0c record index skipped by sl_roll_other (ui/mission_ui.cpp 0x489ee0)
+    char pad13a10[0x13a1c - 0x13a10];
     int f13a1c;                                 // +0x13a1c current repeat index   0x460d80, 0x460de0
     char pad13a20[0x13a34 - 0x13a20];
     int f13a34;                                 // +0x13a34   0x4428c0
@@ -92,12 +100,21 @@ struct GameData {
     char pad13a60[4];                           // +0x13a60 allocator word of the event / fleet vector
     char* fleet;                                // +0x13a64 first of the 0x5c-byte fleet / battle records (std::vector first; map_update.cpp 0x5191e0, map_info.cpp 0x51abd0, map_tooltip.cpp 0x51c090; party2 push_event 0x4b5fe0)
     char* fleet_end;                            // +0x13a68 its last (map_update.cpp)
-    char pad13a6c[0x13b18 - 0x13a6c];
+    char pad13a6c[0x13ae0 - 0x13a6c];
+    int range_lo;                               // +0x13ae0 random integer range of the party-template roll   ui/mission_ui.cpp 0x48a150
+    int range_hi;                               // +0x13ae4
+    char pad13ae8[0x13b18 - 0x13ae8];
     int f13b18;                                 // +0x13b18 tick index (8-byte entries) (0x4792d0)
     char pad13b1c[4];
     unsigned f13b20;                            // +0x13b20 low word of the mission tick clock
     int f13b24;                                 // +0x13b24 high word
-    char pad13b28[0x13b64 - 0x13b28];
+    char pad13b28[4];
+    int string_count;                           // +0x13b2c the string counter the report pages compare ids against (inventory_panel/note_window.cpp 0x50a1c0)
+    char pad13b30[0x13b44 - 0x13b30];
+    float avg_value;                            // +0x13b44 running party value   ui/mission_ui.cpp 0x48a000
+    float avg_weight;                           // +0x13b48
+    float avg_prev_time;                        // +0x13b4c
+    char pad13b50[0x13b64 - 0x13b50];
     float val[4][4];                            // +0x13b64 four wind anchors: four weights / values each (0x471040)
     float pos[4][2];                            // +0x13ba4 their xy positions
     int n_labels;                               // +0x13bc4 (inventory_panel/map_update.cpp 0x5191e0, map_picker.cpp)
@@ -150,6 +167,18 @@ struct GameData {
     void start_quest(int quest, int giver_troop);   // 0x49b930 (ret 8: stamps a quest record as started by the giver, logs ui_new_quest_taken)
     void fill_parties(int id, struct Party* out);   // 0x48fd60 (ret 8: merges the party and its attached parties into `out`)
     void count_units(int party, int* a, int* b, int* c, int* d);   // 0x490ce0 (ret 0x14)
+    // ---- src/game/ui (mission_ui.cpp; the slices called the object World, `sl_query` is emit_event 0x435790) ----
+    tstring get_name();                         // 0x489c30 (hidden return pointer, ret 4: the string at +0xe028)
+    int count_in(int idx, int id, char flag);   // 0x489c50
+    int sl_take(int group, int item, int want, char extras);   // 0x489d10
+    int sl_roll_party(int lo, int hi);          // 0x489e70
+    int sl_roll_other(int lo, int hi);          // 0x489ee0
+    int sl_value_factor();                      // 0x489f40 (truncated to int)
+    void sl_update_avg();                       // 0x48a000
+    int sl_pick_chain(int leader, char lancer); // 0x48a080 (walks the +0x50 link chain from leader)
+    int sl_party_value(int party);              // 0x48a290
+    int sl_party_price(int party);              // 0x48a320
+    void set_names(int slot, const tstring* a); // 0x48a380
     // ---- src/game/mission_ui2 (method declarations only) ----
     tstring event_string(int id);               // 0x48c470 (ret 8: hidden return; runs emit_event(0xf, id / 6, id), returns the result string 0xa70464)
     void init_slots(int troop, int want);       // 0x48c4c0 (ret 8: frees inventory slots of a troop until `want` are free, then compacts)
@@ -160,7 +189,7 @@ struct GameData {
     void add_template(int party, int tmpl, int reverse);   // 0x48fbd0 (ret 0xc: fills a party from a party template's six slots)
     int battle_root(int party);                 // 0x48fce0 (ret 4: the end of the attached-to chain)
     void collect_attachments(int party, Party* dest);   // 0x48ff70 (ret 8)
-    int template_count(int tmpl, int slot, float t);   // 0x48a150 (ret 0xc: member count of a party template slot at fraction t)
+    int template_count(int tmpl, int slot, float t);   // 0x48a150 (ret 0xc: member count of a party template slot; rolls between range_lo..range_hi percent of the slot's min..max; the third word is unused: ui/mission_ui.cpp)
     int count_troops(int troop, int party, char prisoners);   // 0x48f790 (ret 0xc: members of `troop` in the party's regular (prisoners 0) or prisoner stacks)
     tstring string_value(int index);            // 0x48e9e0 (ret 8: hidden return; the script string `index` of the current text table, or its fallback)
     void add_inventory(int item, int amount);   // 0x48eb50 (ret 8: the current troop receives an item; a unique item displaces a plain one)

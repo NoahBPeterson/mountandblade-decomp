@@ -18,19 +18,8 @@ extern "C" int _fltused = 0;
 #include "../tstring.h"
 
 // ---------------------------------------------------------------------------------------------------------
-// ini file: a fixed 0x1000-entry table, each entry 0x2c bytes (key, 12 unknown, value).
-struct ini_entry {
-    tstring key;                                        // +0
-    char    pad10[0xc];                                 // +0x10
-    tstring value;                                      // +0x1c
-};
-
-struct ini_file {
-    ini_entry entries[0x1000];                          // +0
-    int       count;                                    // +0x2c000
-    int  find(const tstring& key);                      // 0x4bd5a0
-    int  get_int(const tstring& key);
-};
+// ini file: a fixed 0x1000-entry table, each entry 0x2c bytes (key, 12 unknown, value): ../ini_file.h
+#include "../ini_file.h"
 
 extern "C" int atoi(const char*);                       // 0x53734d (atoi: jmp atol)
 

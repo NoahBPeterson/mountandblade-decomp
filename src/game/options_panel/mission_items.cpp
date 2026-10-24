@@ -297,17 +297,7 @@ struct SceneObj {
     void v_add4();                                              // +0xa4 (thiscall, ret 4)
 };
 
-struct snd_channel {
-    char pad[0x1c];
-    bool play(int arg);                                         // 0x4875e0 (thiscall, ret 4)
-};
-struct snd_slot {
-    char pad0[0x20];
-    int chans[0x10];                                            // +0x20 .. +0x5c: 16 channel pointers
-    float f60;
-    float f64;
-    float f68;
-};
+#include "../ui/snd_channel.h"                               // snd_channel: play 0x4875e0 (thiscall, ret 4)
 
 struct placed_rec {
     char pad0[0x20];

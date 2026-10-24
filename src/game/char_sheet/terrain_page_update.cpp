@@ -88,9 +88,9 @@ done:
         // "regenerate": reset the scene, arm the flash effect, rebuild the terrain and put the camera on it
         world->reset();
         vector4 clear_colour(0.4f, 0.4f, 0.6f);
-        world->f68 = clear_colour;
-        world->f74 = 1.0f;
-        EffObj* flash = world->create_effect();     // 0x478f30
+        world->color = clear_colour;
+        world->color.w = 1.0f;
+        EffObj* flash = ((EffMgr*)world)->create();     // 0x478f30
         flash->pos = vector4(0.9f, 0.9f, 0.9f);
         flash->f14 = vector4(1.0f, 1.0f, 1.0f);
         flash->f24 = vector4(-1000.0f, -1000.0f, 1000.0f);

@@ -208,12 +208,7 @@ struct resmgr { mesh* get_object(const tstring& n); };  // 0x419540
 extern resmgr g_alloc;                                  // 0x5d6fa0
 #include "../str_table.h"   // 0x43a1e0
 extern StrTable g_strtable;                             // 0x5e2a18
-struct config_entry { int f0; char* value; char pad[0x2c - 8]; };
-struct ini_file {
-    config_entry entries[0x1000];
-    int count;                                          // +0x2c000
-    int find(const tstring& key);                       // 0x4bd5a0
-};
+#include "../ini_file.h"
 extern ini_file g_config;                               // 0xa44240
 #define CONFIG_VALUES ((char**)0xa4425c)
 extern "C" double atof(const char* s);                  // 0x537352
@@ -253,19 +248,7 @@ void anim_track(Animator* a, int skin, int key, tstring* out);                  
 widget* new_medium_button(widget* p, tstring* label, int a, int b, tstring* n1, tstring* n2,
                           tstring* n3, float f1, float f2, float f3);           // 0x4dcc50
 
-// the 0x344-byte world (ctor 0x478ad0)
-struct World {
-    char pad0[0x68];
-    float f68;                                          // +0x68
-    float f6c;                                          // +0x6c
-    float f70;                                          // +0x70
-    float f74;                                          // +0x74
-    char pad78[0xb8 - 0x78];
-    engvec<int> tracks;                                 // +0xb8 (first at +0xbc)
-    char padc8[0x344 - 0xc8];
-    World(const float* lo, const float* hi, const int* a, const int* b, const int* c);   // 0x478ad0
-    Entity* create_entity(int type);                    // 0x428440
-};
+#include "../scene_world.h"                              // World: the 0x344-byte scene (ctor 0x478ad0)
 
 // the 0x7c-byte wind track (ctor 0x461480)
 struct wind {

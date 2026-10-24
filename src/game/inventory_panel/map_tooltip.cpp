@@ -39,14 +39,14 @@ struct PartyInfo {                                      // 0x5c bytes, vector at
     int flags;                                          // +0x18 (0x10000000 = battle, low byte = size)
     char pad1c[0x5c - 0x1c];
 };
-struct SlotRec {                                        // 0xb0 bytes at 0x5e29f8
+struct PartyCellRec {                                        // 0xb0 bytes at 0x5e29f8
     char pad0[0x10];
     tstring name;                                       // +0x10
     char pad20[0x2c - 0x20];
     int f2c;                                            // +0x2c
     char pad30[0xb0 - 0x30];
 };
-extern SlotRec* g_slotrecs;                             // 0x5e29f8
+extern PartyCellRec* g_slotrecs;                             // 0x5e29f8
 extern int g_flag_a181b0;                               // 0xa181b0
 
 struct Game {                                           // the game object (0x5e2930)
@@ -218,7 +218,7 @@ int __stdcall draw_party_line(int index)
                     if (n % 7 > 5)
                         return n / 7;
                 } else if (skill >= 10) {
-                    SlotRec* r = &g_slotrecs[n];
+                    PartyCellRec* r = &g_slotrecs[n];
                     unsigned color;
                     if (g_flag_a181b0 != 0)
                         color = *(unsigned*)&g_game->rel[r->f2c * 0xc0 + 0xa];

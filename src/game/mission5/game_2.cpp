@@ -1075,14 +1075,14 @@ void TroopFile::read_file(stream_base& s)
     s.r_int(&f4c);
     s.r_int(&f50);
     s.r_int(&f54);
-    int* pa = &pairs[0].a;
+    int* pa = &pairs[0].item;
     for (int i = 0; i < 0x40; ++i, pa += 2) {
         s.r_int(pa);
         s.r_int(pa + 1);
     }
     for (int i = 0; i < 10; ++i) {
-        p10[i].a = -1;
-        p10[i].b = 0;
+        p10[i].item = -1;
+        p10[i].m4 = 0;
     }
     for (int i = 0; i < 4; ++i)
         s.r_int(&f58[i]);
@@ -1139,8 +1139,8 @@ TroopFile::TroopFile()
     vec_ctor_iter(names_raw, 0x10, 8, (void*)0x42bbd0);
     f4a0 = -1;
     for (int i = 0; i < 10; ++i) {
-        p10[i].a = -1;
-        p10[i].b = 0;
+        p10[i].item = -1;
+        p10[i].m4 = 0;
     }
     u30 = 0;
     f3b8 = -1;
@@ -1177,7 +1177,7 @@ SceneFile::SceneFile()
 {
     b78 = 0;
     for (int i = 0; i < 0x40; ++i) {
-        pairs114[i].a = -1;
+        pairs114[i].item = -1;
         ints314[i] = 0;
     }
 }
@@ -1274,7 +1274,7 @@ static inline const char* cstr(const tstring& t)
 void SceneFile::read_file(stream_base& s)
 {
     for (int i = 0; i < 0x40; ++i) {
-        pairs114[i].a = -1;
+        pairs114[i].item = -1;
         ints314[i] = 0;
     }
     s.r_tstr(RSTR(&f10));
@@ -1322,7 +1322,7 @@ void Local::read(stream_base& s)
     int n2 = (int)size2();
     s.w_uint((unsigned*)&n2);
     for (unsigned i = 0; i < size2(); ++i) {
-        V2& e = v2_first[i];
+        Rec64& e = v2_first[i];
         s.w_int(&e.n);
         for (int k = 0; k < e.n; ++k)
             s.w_int(&e.a[k]);

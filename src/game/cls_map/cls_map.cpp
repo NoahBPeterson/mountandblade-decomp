@@ -464,8 +464,8 @@ void LoadingScreen::init()
         struct { int a, b; } ret;
         vt(text)->d41(&ret, (void*)&full);
     }
-    f3c = 0;
-    f40 = 0;
+    step = 0;
+    total = 0;
 }
 
 // @ 0x4dc190
@@ -498,7 +498,7 @@ struct DelB  { void del3(int flags); };                 // 0x4c3430
 struct DelC  { void del3(int flags); };                 // 0x4c7ee0
 struct DelD  { void del3(int flags); };                 // 0x4c8980
 struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<int>::clear)
-struct ScreenObj { virtual ~ScreenObj(); };             // the 30 entries of g_screen.items (0xa73980): deleted through slot 0
+#include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
 void options_save();                                    // 0x4181c0 (this = 0x5aa008)
 void audio_close();                                     // winmm!FSOUND_Close
 void crt_exit();                                        // 0x535458

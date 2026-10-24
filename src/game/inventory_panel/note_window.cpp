@@ -106,34 +106,16 @@ struct UiTextDb {
 };
 #define UITEXT ((UiTextDb*)0x5e2a18)
 
-struct Config {
-    int find(const tstring* key);                    // 0x4bd5a0
-};
-#define CONFIG ((Config*)0xa44240)
+#include "../ini_file.h"
+#define CONFIG ((ini_file*)0xa44240)
 
 struct ImageDb {
     void* make(void* rec, int* id);                  // 0x4991d0
 };
 #define IMAGES ((ImageDb*)0xa75f40)
 
-struct World {
-    char pad_0000[0x139c8];
-    char** party_table;         // +0x139c8
-    char pad_139cc[8];
-    int    party_count;         // +0x139d4
-    char pad_139d8[0x13a00 - 0x139d8];
-    char*  troops;              // +0x13a00
-    int    troop_count;         // +0x13a04
-    char pad_13a08[0x13a48 - 0x13a08];
-    char*  factions;            // +0x13a48
-    int    faction_count;       // +0x13a4c
-    char pad_13a50[8];
-    char*  quests;              // +0x13a58
-    int    quest_count;         // +0x13a5c
-    char pad_13a60[0x13b2c - 0x13a60];
-    int    string_count;        // +0x13b2c
-};
-#define WORLD (*(World**)0x5e2930)
+#include "../../include/game_data.h"             // GameData: the game object at 0x5e2930 (troops +0x13a00, factions +0x13a48, quests +0x13a58, parties +0xf8)
+#define WORLD g_game
 
 // map-party accessors (this = world + 0xf8)
 struct WorldMap {
@@ -176,7 +158,7 @@ static char* cfg_text(int idx)
 static float cfg_float(const char* key)
 {
     tstring k(key);
-    int i = CONFIG->find(&k);
+    int i = CONFIG->find(k);
     float v = 0.0f;
     if (i >= 0)
         v = (float)atof(cfg_text(i));
@@ -393,7 +375,7 @@ void note_window::build(int page_, int arg_)
     case 1: {
         // ---- troop report -------------------------------------------------
         int ti = page_;
-        char* troop = WORLD->troops + ti * 0x508;
+        char* troop = ((char*)WORLD->troops) + ti * 0x508;
         if (*(int*)(troop + 0x4a0) >= 0) {
             int id = ti;
             this->picture->add_image(0, IMAGES->make(troop + 0x4a0, &id));
@@ -411,7 +393,7 @@ void note_window::build(int page_, int arg_)
                 line.append(tstring("\n\n"));
             }
             line.append(*(tstring*)(slot + 0x420));
-            int sid = *(int*)(WORLD->troops + (ti * 0x142 + k) * 4 + 0x400);
+            int sid = *(int*)(((char*)WORLD->troops) + (ti * 0x142 + k) * 4 + 0x400);
             if (sid < 0)
                 continue;
             if (sid < WORLD->string_count) {
@@ -436,8 +418,8 @@ void note_window::build(int page_, int arg_)
         }
 
         // all troops that carry at least one report item
-        for (int i = 0; i < WORLD->troop_count; i++) {
-            char* rec = WORLD->troops + i * 0x508;
+        for (int i = 0; i < WORLD->ntroops; i++) {
+            char* rec = ((char*)WORLD->troops) + i * 0x508;
             for (int k = 0; k < 8; k++) {
                 if (*(int*)(rec + 0x42c + k * 0x10) > 0) {
                     vec.push_back(i);
@@ -451,7 +433,7 @@ void note_window::build(int page_, int arg_)
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            const char* nm = record_name(WORLD->troops + v * 0x508 + 0x20);
+            const char* nm = record_name(((char*)WORLD->troops) + v * 0x508 + 0x20);
             if (v == page_)
                 sprintf(link_buf, "%s\n", nm);
             else
@@ -470,7 +452,7 @@ void note_window::build(int page_, int arg_)
     case 2: {
         // ---- faction report -----------------------------------------------
         int fi = page_;
-        char* fac = WORLD->factions + fi * 0x300;
+        char* fac = ((char*)WORLD->factions) + fi * 0x300;
         if (*(int*)(fac + 0x2fc) >= 0) {
             int id = fi;
             this->picture->add_image(0, IMAGES->make(fac + 0x2fc, &id));
@@ -487,7 +469,7 @@ void note_window::build(int page_, int arg_)
             if (line.len > 0)
                 line.append(tstring("\n\n"));
             line.append(*(tstring*)(slot + 0x27c));
-            int sid = *(int*)(WORLD->factions + (fi * 0xc0 + k) * 4 + 0x25c);
+            int sid = *(int*)(((char*)WORLD->factions) + (fi * 0xc0 + k) * 4 + 0x25c);
             if (sid < 0)
                 continue;
             if (sid < WORLD->string_count) {
@@ -517,8 +499,8 @@ void note_window::build(int page_, int arg_)
             y_cur = r[1];
         }
 
-        for (int i = 0; i < WORLD->faction_count; i++) {
-            char* rec = WORLD->factions + i * 0x300;
+        for (int i = 0; i < WORLD->n_factions; i++) {
+            char* rec = ((char*)WORLD->factions) + i * 0x300;
             for (int k = 0; k < 8; k++) {
                 if (*(int*)(rec + 0x288 + k * 0x10) > 0) {
                     vec.push_back(i);
@@ -532,7 +514,7 @@ void note_window::build(int page_, int arg_)
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            const char* nm = record_name(WORLD->factions + v * 0x300 + 0x14);
+            const char* nm = record_name(((char*)WORLD->factions) + v * 0x300 + 0x14);
             if (v == page_)
                 sprintf(link_buf, "%s\n", nm);
             else
@@ -562,8 +544,8 @@ void note_window::build(int page_, int arg_)
 
         tstring line("");
         int idx = WORLDMAP->index(pi);
-        char* base = WORLD->party_table[idx >> 4] + (idx & 0xf) * 0x5ac8;
-        char* ids  = WORLD->party_table[idx >> 4] + (idx & 0xf) * 0x16b2 * 4;
+        char* base = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x5ac8;
+        char* ids  = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x16b2 * 4;
         for (int k = 0; k < 8; k++) {
             if (*(int*)(base + 0x5a34 + k * 0x10) <= 0)
                 continue;
@@ -599,9 +581,9 @@ void note_window::build(int page_, int arg_)
         // live map parties
         {
             int v = WORLDMAP->first_party();
-            while (v < WORLD->party_count) {
+            while (v < (int)WORLD->parties.n_parties) {
                 int vi = WORLDMAP->index(v);
-                char* prec = WORLD->party_table[vi >> 4] + (vi & 0xf) * 0x5ac8;
+                char* prec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
                 for (int k = 0; k < 8; k++) {
                     if (*(int*)(prec + 0x5a34 + k * 0x10) > 0) {
                         vec.push_back(v);
@@ -618,7 +600,7 @@ void note_window::build(int page_, int arg_)
             if (selected < 0)
                 selected = v;
             int vi = WORLDMAP->index(v);
-            char* rec = WORLD->party_table[vi >> 4] + (vi & 0xf) * 0x5ac8;
+            char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
             const char* nm = ts_chars(party_name(rec));
             if (v == page_)
                 sprintf(link_buf, "%s\n", nm);
@@ -638,7 +620,7 @@ void note_window::build(int page_, int arg_)
     case 4: {
         // ---- quest report -------------------------------------------------
         int qi = page_;
-        char* quest = WORLD->quests + qi * 0x138;
+        char* quest = ((char*)WORLD->quests) + qi * 0x138;
         if (*(int*)(quest + 0x108) >= 0) {
             int id = qi;
             this->picture->add_image(0, IMAGES->make(quest + 0x108, &id));
@@ -680,8 +662,8 @@ void note_window::build(int page_, int arg_)
             y_cur = r[1];
         }
 
-        for (int i = 0; i < WORLD->quest_count; i++) {
-            if (*(int*)(WORLD->quests + i * 0x138 + 0x94) > 0)
+        for (int i = 0; i < WORLD->n_quests; i++) {
+            if (*(int*)(((char*)WORLD->quests) + i * 0x138 + 0x94) > 0)
                 vec.push_back(i);
         }
         this->filter_list(&vec, 4);
@@ -709,8 +691,8 @@ void note_window::build(int page_, int arg_)
     // ---- collect the back references -------------------------------------
     this->links->get_text(&link_text);
     if (acc.len > 0) {
-        for (int i = 0; i < WORLD->troop_count; i++) {
-            char* rec = WORLD->troops + i * 0x508;
+        for (int i = 0; i < WORLD->ntroops; i++) {
+            char* rec = ((char*)WORLD->troops) + i * 0x508;
             for (int k = 0; k < 8; k++) {
                 char* slot = rec + k * 0x10;
                 if (*(int*)(slot + 0x42c) <= 0)
@@ -727,8 +709,8 @@ void note_window::build(int page_, int arg_)
                 break;
             }
         }
-        for (int i = 0; i < WORLD->faction_count; i++) {
-            char* rec = WORLD->factions + i * 0x300;
+        for (int i = 0; i < WORLD->n_factions; i++) {
+            char* rec = ((char*)WORLD->factions) + i * 0x300;
             for (int k = 0; k < 8; k++) {
                 char* slot = rec + k * 0x10;
                 if (*(int*)(slot + 0x288) <= 0)
@@ -753,9 +735,9 @@ void note_window::build(int page_, int arg_)
         }
         {
             int v = WORLDMAP->first_party();
-            while (v < WORLD->party_count) {
+            while (v < (int)WORLD->parties.n_parties) {
                 int vi = WORLDMAP->index(v);
-                char* rec = WORLD->party_table[vi >> 4] + (vi & 0xf) * 0x5ac8;
+                char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
                 for (int k = 0; k < 8; k++) {
                     if (*(int*)(rec + 0x5a34 + k * 0x10) <= 0)
                         continue;
@@ -773,7 +755,7 @@ void note_window::build(int page_, int arg_)
                 WORLDMAP->next_party(&v);
             }
         }
-        for (int i = 0; i < WORLD->quest_count; i++) {
+        for (int i = 0; i < WORLD->n_quests; i++) {
             tstring* qt = quest_text(i, 0);
             if (qt->find(acc, 0) < 0)
                 continue;

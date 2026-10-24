@@ -215,6 +215,7 @@ struct Mission {
     bool rule_accepts(SpawnRec* a, Stack* b, int p3, char p4, char p5, char p6);   // 0x467940 (thiscall, ret 0x18, ignores this)
     void pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop, int* out_side, int* out_flag, int* out_seed);   // 0x473a60
     void reset();                               // 0x479160
+    void destroy();                             // 0x4d51d0 (the destructor wrapper: tears down the sub-objects at +0x4, +0x30, +0x5e00.. +0x6814; options_panel/hud.cpp)
     void setup_ambient(int level_idx, int spec_idx, float t);                  // 0x4792d0
     void rebuild_nav(int which, int);           // 0x479e20
     void post_spawn(MAgent* a);                 // 0x47a0c0

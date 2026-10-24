@@ -102,7 +102,7 @@ void Screen::camera_update(float dt)
     f2a8 *= d2;
 
     // --- the frame: identity, +90deg, -yaw, then -pitch; the eye becomes frame.o --------------------
-    Matrix frame;
+    mat4 frame;
     identity(&frame.s);
     float ang = 1.5707964f;
     frame.rotate_fu(&ang);
@@ -155,7 +155,7 @@ void Screen::camera_update(float dt)
     sc->f31c.z = f298;
     sc->f31c.w = f29c;
     if (!g_5a9fd8) {
-        *(Matrix*)&g_listener.pos = frame;
+        *(mat4*)&g_listener.pos = frame;
         // FMOD wants y/z swapped (the engine is z-up)
         listener_set(&g_listener.up.x, 0, g_listener.vel.x, g_listener.vel.z, g_listener.vel.y,
                      g_listener.dir.x, g_listener.dir.z, g_listener.dir.y);

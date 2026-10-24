@@ -72,7 +72,7 @@ struct Rec98 {                                          // the 0x98-byte scene n
     int f58;                                            // +0x58
 };
 // ---- objects and constants of other translation units ----------------------------------------------------------------
-struct NamedRec { void setup(const tstring* a, const tstring* b); };   // 0x48a3a0 (ret 8)
+#include "../ui/named_rec.h"                            // NamedRec: setup 0x48a3a0 (ret 8)
 struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
 struct KeyNames { char bound(int key); };               // 0x487900 (ret 4)
 struct TextLog { virtual void print(const char* s); };  // +0x28 prints one line (slot index 10 in the original; the declaration order is kept)

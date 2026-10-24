@@ -2253,10 +2253,8 @@ void Mission::exec_trigger(int val)
 // ======================================================================================
 #include "../str_table.h"
 extern StrTable g_strtable;                         // 0x5e2a18
-struct MsgLogAdd {
-    void add(tstring msg, int color);               // 0x452c00 (thiscall, ret 0x14)
-};
-extern MsgLogAdd g_msglog;                          // 0x5d7080
+#include "../../include/msg_log.h"
+extern MsgLog g_msglog;                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
 extern int g_sound_holder[];                        // 0x5aa128 (sound device)
 extern float g_sound_origin[];                      // 0x5aa168 (position vector for play)
 extern int g_snd_got_value;                         // 0x5aa1a0 (sound id)

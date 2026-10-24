@@ -154,16 +154,7 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 
 // ---- 0x4daa10: the loading-screen object (a screen like the menus below: the overlay window at +0x2c, three child widgets) ----
 // (0x4da900 is gui_manager::rebuild, ../strat/gui_manager.h; this object only shares the offsets +0x568.. with it by accident of the slice)
-struct LoadingScreen {
-    char pad0[0x2c];
-    ContainerBase* overlay;                     // +0x2c the window (vtable 0x592848)
-    MissionUi* hint;                            // +0x30 the hint line (make_hint)
-    MissionUi* text;                            // +0x34 the random "ui_hint" text line (flag 0x100)
-    MissionUi* logo;                            // +0x38 the "warrider_logo" picture
-    int f3c;                                    // +0x3c
-    int f40;                                    // +0x40
-    void init();                                // 0x4daa10
-};
+#include "../loading_screen.h"        // LoadingScreen: one definition (update 0x50f390, advance 0x50f440 are in inventory_panel)
 extern int g_hint_count;                        // 0xa18140 (number of "hint_N" strings; 0 = none)
 
 // ---- widgets: this module's call sites go through vt() (../config/widget_mgr.h): slot n of the widget vtable is dNN at +4n ----

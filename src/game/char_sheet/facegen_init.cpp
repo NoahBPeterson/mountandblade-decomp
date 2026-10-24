@@ -201,10 +201,10 @@ void FaceGen::init()
     int zero = 0;
     World* w = new World(lo, hi, &zero, &zero, &zero);
     world = w;
-    w->f68 = 0.3f;
-    w->f6c = 0.3f;
-    w->f70 = 0.3f;
-    w->f74 = 1.0f;
+    w->color.x = 0.3f;
+    w->color.y = 0.3f;
+    w->color.z = 0.3f;
+    w->color.w = 1.0f;
     {
         wind* wd = new wind;
         w->tracks.push_back((int)wd);

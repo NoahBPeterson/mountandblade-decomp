@@ -36,7 +36,8 @@
 #include "rgl.h"
 
 using rgl::vector4;
-typedef rgl::matrix mat4;
+#include "../../include/mat4.h"   // rgl::mat4: the 0x40-byte frame; rotate_fu 0x40e570 / rotate_su 0x40e670 are its members
+using rgl::mat4;
 
 // ---- the 16-byte engine string -------------------------------------------------------------------------
 #include "../tstring.h"
@@ -248,26 +249,14 @@ struct Listener3D {
 };
 extern Listener3D g_listener;                   // 0x5aa138
 
-// the 0x40-byte frame the rotations act on; rotate_fu / rotate_su are member functions of it (0x40e570
-// / 0x40e670, thiscall: ecx = the matrix, one stack argument popped by the callee)
-struct Matrix {
-    vector4 s, f, u, o;
-    void rotate_fu(const float* a);             // 0x40e570
-    void rotate_su(const float* a);             // 0x40e670
-};
 
 // ---- callees ------------------------------------------------------------------------------------------
 mat4* identity(void* out);                                  // 0x40cd00 (cdecl, ret 0)
 using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl_mesh.h)
 
-struct World;                                               // the strategy world (DAT_00a732b4-ish object)
 struct Envelope;                                            // the scene-envelope object 0x4624c0 works on
 
-// 0x470f40: thiscall on the world; ecx = *0x5e2930, two stack args, callee pops 8 bytes
-struct World {
-    char pad0[0x28];
-    void scene_query(void* scene, const vector4* point, vector4* out);      // 0x470f40
-};
+#include "../scene_world.h"                              // World::scene_query 0x470f40: thiscall on the world, two stack args, callee pops 8 bytes
 
 // 0x41e4f0: thiscall on the frustum, no arguments
 struct Frustum {

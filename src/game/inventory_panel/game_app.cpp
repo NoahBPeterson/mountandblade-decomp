@@ -203,18 +203,7 @@ void global_4bf870(void*);                                   // 0x4c3330
 void global_4c03b0(void*);                                   // 0x4c3340
 
 // ---- the loading screen (0x50f440 lives in slice s0050f440; see there) ------------------------------
-struct LoadingScreen {                  // fields used by 0x50f390
-    char pad0[0x30];
-    Screen* text_widget;                // 0x30
-    char pad34[4];
-    Screen* bar_widget;                 // 0x38
-    int step;                           // 0x3c
-    int total;                          // 0x40
-    int f44;                            // 0x44
-    int f48;                            // 0x48
-    void update(int unused);            // 0x50f390
-    bool advance(int* step, int* total, tstring* text);   // 0x50f440
-};
+#include "../loading_screen.h"       // LoadingScreen: update 0x50f390 here, advance 0x50f440 in loading_screen.cpp
 
 // ---- the per-frame update ---------------------------------------------------------------------------
 // @ 0x50ec40
@@ -426,8 +415,8 @@ void LoadingScreen::update(int unused)
     bool finished = advance(&step, &total, &text);
     const char* fmt = "%d";
     _snprintf(buf, 0x100, fmt, step);
-    text_widget->set_text(tmp, &text);
-    bar_widget->set_value((float)step * 0.14285715f);
+    ((Screen*)hint)->set_text(tmp, &text);
+    ((Screen*)logo)->set_value((float)step * 0.14285715f);
     if (finished) {
         g_main_menu.choose(4);
         ((Output*)0x5a9f60)->print("Finished All...\n");

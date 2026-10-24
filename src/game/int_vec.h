@@ -39,4 +39,15 @@ struct IntVec {
     }
 };
 
+// a std::vector<T*> triple kept as raw pointers (allocator dword at +0, then first / last / end): the freshly created physics record of
+// agent4 (PhysRecInit bones / bodies, zeroed in place, no cleanup) and the map scene's material lists g_mat_vec[4] (0xa732c0, 0xa732d0,
+// 0xa732e0, 0xa732f0: stride 0x10) and the cells' mesh lists, which mission5 pushes onto through _Insert_n 0x410610 (this = the vector)
+struct RawVec {
+    int pad;                                // +0 the allocator dword
+    void** first;                           // +4
+    void** last;                            // +8
+    void** end;                             // +0xc
+    RawVec() : first(0), last(0), end(0) {}
+};
+
 #endif // GAME_INT_VEC_H

@@ -23,6 +23,13 @@ struct Vec2 {
     Vec2(float a, float b) : x(a), y(b) {}
 };
 
+// a vec2 with constructors: temporaries passed by pointer (src/game/config/widget_mgr.h, cls_map), and members whose
+// arrays go through the compiler's array-ctor helper because of the empty user ctor (src/game/triggers/trigger_vec.h MouseRec)
+struct V2 : vec2 {
+    V2() {}
+    V2(float a, float b) { x = a; y = b; }
+};
+
 struct vec3 {
     float x, y, z;
     vec3() {}

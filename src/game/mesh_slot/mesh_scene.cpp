@@ -194,10 +194,10 @@ static inline tstring item_mesh_name(ItemKind* kind, int item, unsigned m4)
 // Build the carried-item display meshes of an agent body: one lod mesh per equipment slot, plus the hand-carry mesh for
 // the active item; publishes the ids/sounds for the item drop code. cdecl; the 5th argument is unused.
 struct SkelHolder { char pad0[4]; FxElem* elems; };
-struct AgentBodyV { char pad0[0x304]; SkelHolder* skel; };
+struct SkelBodyV { char pad0[0x304]; SkelHolder* skel; };
 extern __int64 g_spawn_a;                        // 0xa70448
 extern __int64 g_spawn_b;                        // 0xa70450
-void setup_item_meshes(AgentBodyV* body, int flag, int troop, char* outbase, int unused, ItemRef* items, int id)
+void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int unused, ItemRef* items, int id)
 {
     if (flag != 0)
         return;
