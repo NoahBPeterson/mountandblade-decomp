@@ -1,0 +1,17 @@
+004f7f00	2503	MissionHud::refresh: complete (3046 vs 3134 bytes); it holds a WinLicense marker blob (an 18-byte EB 10 57 4C .. sequence at 0x4f8060) that C++ cannot emit, so it can never be byte-exact. Widget construction, inlined resource lookups and the camera / zoom set-up are scheduled differently.
+004f8c80	5927	MissionHud::update_camera: complete (6847 vs 6918 bytes). The slice was a sketch; this is ported from the disassembly (camera trace, shadow / sun updates, listener and mouse-look). x87 scheduling and register allocation differ over a 6900-byte body.
+004fa790	1526	Mission::camera_to: complete (1633 vs 1867 bytes). Listener / scene set-up through the CellGrid trace; a stack of inlined matrix products is scheduled differently.
+004faee0	566	ShadowMap::sample: complete (633 vs 660 bytes). Same difference as the slice: the PCF tap loop is unrolled differently.
+004fb180	382	Mission::apply_sun_light: complete (462 vs 454 bytes). The slice variant (234 bytes of diff) uses wrong this-pointers and constants (checked against the disassembly), so it was not kept; x87 scheduling of the flare / fade update differs.
+004fb350	1084	MissionHud::update_status: complete (1380 vs 1413 bytes). Health / shield / ammo bar updates; scheduling and register allocation of the float chain.
+004fb8e0	380	rgl::mesh::set_offset: complete (384 vs 343 bytes). Vertex loop is not unrolled the way the original is.
+004fba40	960	make_item_mesh: complete (1190 vs 1194 bytes). Item mesh builder with the inlined tstring temporaries; scheduling differs.
+004fbef0	98	rgl::mesh::darken_vertices: complete (165 vs 167 bytes). Register allocation (this in ESI instead of EDI). [equiv: 242/242 valid inputs bit-identical]
+004fbfa0	1320	GameScreen::build: complete (2158 vs 2146 bytes). The slice constants were wrong (add_image slots +0x80 / +0x7c); widget construction order and temporaries scheduled differently.
+004fc820	1724	LogScreen::build: complete (2210 vs 2239 bytes). The seven tabs are unrolled with the shared parameter lookup inlined; schedule of the float chain differs.
+004fd150	25	MWidget::MWidget: complete (116 bytes, same size). The stores of the three vector headers are scheduled one position away from the original (the push of the 0 argument for 0x4fd490 comes before them here).
+004fd1d0	384	MWidget::on_event: complete (455 vs 471 bytes). The click hit-test over the tag rectangles is reproduced; the original re-tests the vector pointer at the top of every iteration, cl keeps the loop condition at the bottom. [equiv: 365/365 valid inputs bit-identical]
+004fd4f0	449	MWidget::text_rect: complete (450 vs 519 bytes). The original keeps the two arms of the font choice (the row font override and g_font) as two calls, cl merges them into one.
+004fd700	2520	Font::layout_map: complete (2580 vs 2277 bytes). The map-text row renderer (an __usercall in the original: this in ECX, 17 stack arguments, the result written through the first). Ported from the disassembly: the tag state machine, tag codes (colour / size / font / alpha) and rectangle records are right; schedule and the register allocation of the long float chain differ.
+004fdff0	60	V4List::push_back: complete (96 vs 100 bytes). The element copy goes through 0x40df60 as in the original; register allocation differs.
+004fe060	66	V4List::insert: complete (73 vs 72 bytes). The index guard and the _Insert_n call are as in the original; register allocation differs.

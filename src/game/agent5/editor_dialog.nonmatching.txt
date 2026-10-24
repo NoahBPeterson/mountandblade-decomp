@@ -1,0 +1,1 @@
+004fe860	6961	EditorPanel::terrain_dialog: complete, functionally equivalent dialog proc (WM_INITDIALOG / WM_NOTIFY / WM_COMMAND, about 130 cases; 7972 vs 8812 bytes). The MSVC switch layout, jump-table form, register allocation and the dead / oversized frame locals differ from the original.

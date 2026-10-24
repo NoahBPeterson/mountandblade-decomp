@@ -108,9 +108,13 @@ struct PartyWindow {
     int f4;                                 // +0x04  0x502320, 0x502920
     char pad8[0x14 - 0x8];
     int troop;                              // +0x14  0x502320, 0x501a20
-    char pad18[0x3c - 0x18];
+    char pad18[0x2c - 0x18];
+    void* page_widget[2];                   // +0x2c  0x500ad0 (the page widget build_page(i) returns)
+    void* view[2];                          // +0x34  0x500ad0 (the scrolling item lists)
     void* panels[2];                        // +0x3c  0x501a20 (equipment menu panel of row idx)
-    char pad44[0x64 - 0x44];                // +0x44 the money labels (0x501940, next object)
+    void* gold[2];                          // +0x44  0x500ad0, 0x501940 (the money labels)
+    void* name[2];                          // +0x4c  0x500ad0 (the troop name labels)
+    void* hinge[4];                         // +0x54  0x500ad0 (the four window hinges)
     void* widgets[2][0x60];                 // +0x64  0x502320 (page * 0x180 + 0x64 + slot * 4)
     int flags[2][0x60];                     // +0x364 0x502920 (bit 2: the slot needs a mesh)
     int aux[2][0x60];                       // +0x664 0x502320
@@ -119,13 +123,24 @@ struct PartyWindow {
     void* container;                        // +0x96c 0x5024e0, 0x501a20
     void* row_slot[2][10];                  // +0x970 0x501a20, 0x502c30
     int row_state[2][10];                   // +0x9c0 0x501a20, 0x502c30
-    char pada10[0xa64 - 0xa10];
+    char pada10[0xa60 - 0xa10];
+    void* total_cost;                       // +0xa60 0x500ad0
     void* armor_labels[2][4];               // +0xa64 0x5025a0 (head, body, legs, encumbrance)
     void* icon_a84;                         // +0xa84 0x5029f0
     void* icon_a88;                         // +0xa88 0x5029f0
-    char pada8c[0xac0 - 0xa8c];
+    int f_a8c;                              // +0xa8c 0x500ad0 (cleared)
+    void* leave;                            // +0xa90 0x500ad0 (the leave button)
+    char pada94[0xa98 - 0xa94];
+    int f_a98;                              // +0xa98 0x500ad0 (cleared)
+    char pada9c[0xab0 - 0xa9c];
+    int f_ab0, f_ab4, f_ab8;                // +0xab0 0x500ad0 (-1)
+    char f_abc;                             // +0xabc 0x500ad0 (the other party's hero is on the list)
+    char padabd[3];
     int spec_ac0, spec_ac4;                 // +0xac0 0x5029f0
+    void* equip_bg;                         // +0xac8 0x500ad0 (mode 4: the equipment panel background)
 
+    void create();                                              // 0x500ad0 (builds the window: src/game/agent5/party_create.cpp)
+    void money_label(int which);                                // 0x501940 (ret 4: src/game/agent5/party_create.cpp)
     void* make_inventory_menu(int idx);                         // 0x501a20 (ret 4)
     char mouse_event(unsigned mask);                            // 0x5021b0 (ret 4)
     MissionUi* make_slot(ItemRef* slot);                        // 0x502230 (ret 4)
@@ -137,7 +152,7 @@ struct PartyWindow {
     void refresh_page(int page);                                // 0x502920 (ret 4)
     void place_slot(MissionUi* w, ItemRef* item, int idx, int* state, int page, char flag);   // 0x5029f0 (ret 0x18)
     MeshOps* make_mesh(ItemRef* item, float* scale, int troop); // 0x502b80 (ret 0xc)
-    void refresh_stash(int row);                                // 0x502c30 (next object)
+    void refresh_stash(int row);                                // 0x502c30
     bool base_mouse_event(unsigned mask);                       // 0x42cf50 (ret 4; the gui widget base)
 };
 

@@ -114,6 +114,22 @@ struct mesh : named_object {
     void ensure_skin();                             // 0x412700
     void build_skin();                              // 0x411d20
     void update_emitters(const float* dt, const matrix& frame);   // 0x4126a0
+    // ---- src/game/party2 (the map party's model meshes) ----
+    bool in_use() const;                            // 0x4b17d0 (a keyframe track is present: own, or the parent's)
+    void set_time(const float* t);                  // 0x433190 (ret 4)
+    void translate(const vector4* d);               // 0x44f240 (ret 4)
+    mesh* clone();                                  // 0x41c6d0 (src/game/party2: s0049aca0 / s0049b630)
+    void clear_geometry();                          // 0x428e80
+    void compute_normals();                         // 0x451c50
+    // ---- src/game/agent5 (agent_hud.cpp: the HUD's item and status meshes) ----
+    void append_skinned(mesh* other, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
+    void scale(float s);                            // 0x44f0c0 (ret 4)
+    void set_color(vector4 c);                      // 0x47af30 (ret 0x10: the colour multiplier of every vertex)
+    void set_bone_index(int i);                     // 0x47b360 (ret 4)
+    void transform(const matrix* frame);            // 0x495ba0 (ret 4)
+    void calc_bounds(vector4* lo, vector4* hi);     // 0x438d80 (ret 8)
+    void set_offset(const vector4& d);              // 0x4fb8e0 (agent_hud.cpp: shifts every point along its vertex normal)
+    void darken_vertices();                         // 0x4fbef0 (agent_hud.cpp)
 };
 
 // The game's own growable array (VC7.1 vector layout: allocator slot, first, last, end) whose clear() frees the
@@ -178,6 +194,7 @@ struct scene_registry {          // global object 0x5fe898
     std::vector<scene*> scenes;  // 0x3a4
     void register_scene(scene* s);                  // 0x412040
     void add_mesh(scene* s, mesh* m);               // 0x412100
+    bool select(scene* sc);                         // 0x47e520 (src/game/party2: render the scene into its target; false = try again)
 };
 extern scene_registry g_scene_registry;             // 0x5fe898
 

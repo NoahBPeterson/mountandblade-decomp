@@ -1,0 +1,5 @@
+../src/game/agent5/agent_vec.cpp  ?cell_fill@@YAXPAUui_cell@@IABU1@AAV?$allocator@Uui_cell@@@std@@U_Nonscalar_ptr_iterator_tag@3@@Z  004fe120  /O2 /MT /Gy /TP
+../src/game/agent5/agent_vec.cpp  ?insert@?$vector@HV?$allocator@H@std@@@std@@QAE?AViterator@12@V312@ABH@Z  004fe190  /O2 /MT /Gy /TP
+../src/game/agent5/agent_vec.cpp  ?cell_copy@@YAPAUui_cell@@PAU1@00AAV?$allocator@Uui_cell@@@std@@U_Nonscalar_ptr_iterator_tag@3@@Z  004fe4b0  /O2 /MT /Gy /TP
+../src/game/agent5/agent_vec.cpp  ?_Insert_n@?$vector@UCfgRec@@V?$allocator@UCfgRec@@@std@@@std@@IAEXViterator@12@IABUCfgRec@@@Z  004fe520  /O2 /MT /Gy /TP
+../src/game/agent5/agent_vec.cpp  ??$_Ucopy@PAURowRec@@@?$vector@URowRec@@V?$allocator@URowRec@@@std@@@std@@IAEPAURowRec@@PAU2@00@Z  004fe840  /O2 /MT /Gy /TP

@@ -1,0 +1,1 @@
+00500ad0	2826	PartyWindow::create: complete (3256 vs 3688 bytes); it holds two WinLicense marker blobs (18-byte EB 10 57 4C .. sequences at 0x500b10 and 0x500bbf) that C++ cannot emit, so it can never be byte-exact. The inlined config-table scans, widget constructions and tstring temporaries are scheduled differently.

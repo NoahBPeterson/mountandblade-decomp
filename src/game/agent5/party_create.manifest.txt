@@ -1,0 +1,1 @@
+../src/game/agent5/party_create.cpp  ?money_label@PartyWindow@@QAEXH@Z  00501940  /O2 /MT /Gy /TP

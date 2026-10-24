@@ -1,0 +1,10 @@
+../src/game/agent5/agent_hud.cpp  ?init_agent@Mission@@QAEXPAUAgent@@@Z  004f7d70  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?refresh_agent@Mission@@QAEXPAUAgent@@@Z  004f7e00  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?update_equipment@MissionHud@@QAEXXZ  004f8b40  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?hide@Agent@@QAEXXZ  004f8bc0  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?show@Agent@@QAEXXZ  004f8c20  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?build_thunk@LogScreen@@QAEXXZ  004fc810  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?destroy@TStringArray@@QAEPAXI@Z  004fd0e0  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?destroy@MWidget@@QAEPAXI@Z  004fd3b0  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ??1MWidget@@QAE@XZ  004fd3d0  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?buy@IntList@@QAE_NI@Z  004fd490  /O2 /MT /Gy /TP
