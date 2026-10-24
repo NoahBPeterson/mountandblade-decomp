@@ -153,7 +153,7 @@ void TerrainPage::path(float dt)
     m.o.z = m.o.z + pos.z;
 
     *(rgl::matrix*)frame = m;                               // page +0x138
-    ((Block*)map_block)->build_planes();                    // 0x41e4f0: thiscall on this+0x70
-    *(Block*)world->block = *(Block*)map_block;             // 0x120 bytes: page +0x70 -> world +0x1ac
+    ((FrustumBlock*)map_block)->build_planes();                    // 0x41e4f0: thiscall on this+0x70
+    *(FrustumBlock*)world->block = *(FrustumBlock*)map_block;             // 0x120 bytes: page +0x70 -> world +0x1ac
     g_bits.submit_frame((const float*)&m);                  // 0x4f3e10
 }

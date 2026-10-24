@@ -63,16 +63,7 @@ struct Game {
 extern Game* g_game;                                // 0x5e2930
 
 // skill table at 0x8ee3100, stride 0x44
-struct SkillRec {
-    tstring desc;                                   // +0x00
-    tstring name;                                   // +0x10
-    tstring key;                                    // +0x20
-    int f30, f34;                                   // +0x30 / +0x34
-    int cap;                                        // +0x38 (the level cap)
-    int f3c;                                        // +0x3c
-    unsigned attr;                                  // +0x40 (low nibble: 0-based attribute the skill needs)
-    tstring* desc_name();                           // 0x4c6190 (the key's "_desc" translation)
-};
+#include "../../include/skill_rec.h"            // SkillRec (shared with src/rgl/mesh2/gui_edit.h)
 extern SkillRec g_skills[];                         // 0x8ee3100
 #define SKILL_ATTR(id) (g_skills[id].attr & 0xf)
 

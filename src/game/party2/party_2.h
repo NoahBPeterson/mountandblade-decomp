@@ -263,9 +263,7 @@ inline BattleTable* battles() { return (BattleTable*)((char*)g_game + 0xcc); }
 inline Party* party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4))); }
 inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->index_of(id)); }
 
-struct SoundMgr {                                       // the sound object (global 0x5aa128)
-    int play(int sound, int priority, const float* pos, float pitch, float* out);   // 0x442650 (ret 0x14)
-};
+#include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
 extern SoundMgr g_sound_mgr;                            // 0x5aa128
 extern int g_sound_bank;                                // 0x5aa304 (the sound index, passed by value)
 void __stdcall stop_sound(int id);                      // 0x5342a6 (FSOUND_StopSound@4)

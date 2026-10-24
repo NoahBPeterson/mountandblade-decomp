@@ -24,6 +24,7 @@
 #include "./text_stream.h"
 #include "./mem_stream.h"
 #include "./resource_manager.h"
+#include "../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // ---- binary file streams ---------------------------------------------------------------------
 // @ 0x417bb0

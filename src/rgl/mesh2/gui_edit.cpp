@@ -17,6 +17,8 @@
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/skill_rec.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 #pragma warning(disable:4700)     // 0x4c77c0: the matrix is left unread when no record is selected
@@ -995,7 +997,7 @@ tstring MenuDoor::translated_door()
 }
 
 // @ 0x4c6dc0
-void MapScreen::set_object_target(int n)
+void MapDialog::set_object_target(int n)
 {
     MapRecord* o = &records[n];
     if (o->target)
@@ -1009,14 +1011,14 @@ void reset_gui()
 }
 
 // @ 0x4c6e10
-void MapScreen::reset_state()
+void MapDialog::reset_state()
 {
     g_gui.reset();
     f2c = 0;
 }
 
 // @ 0x4c6e30
-void MapScreen::clear_objects()
+void MapDialog::clear_objects()
 {
     for (ListObj** p = list_start; p < list_end; ++p) {
         delete[] *p;
@@ -1027,45 +1029,45 @@ void MapScreen::clear_objects()
 }
 
 // @ 0x4c6eb0
-MapRecord* MapScreen::insert_a(MapRecord* arr, int index, int z)
+MapRecord* MapDialog::insert_a(MapRecord* arr, int index, int z)
 {
     ctor_4c3d90(arr, index, z, this, z);
     return (MapRecord*)((char*)arr + index * 0x204);
 }
 
 // @ 0x4c6ee0
-int* MapScreen::insert_b(int* arr, int index, int z)
+int* MapDialog::insert_b(int* arr, int index, int z)
 {
     ctor_4c3e10((MapRecord*)arr, index, z, this, z);
     return &arr[index];
 }
 
 // @ 0x4c6f10
-void MapScreen::place_a(MapRecord* arr, int index, int z)
+void MapDialog::place_a(MapRecord* arr, int index, int z)
 {
     ctor_4c3e80(arr, index, z, this, z);
 }
 
 // @ 0x4c6f30
-void MapScreen::place_b(MapRecord* arr, int index, int z)
+void MapDialog::place_b(MapRecord* arr, int index, int z)
 {
     ctor_4c3ef0(arr, index, z, this, z);
 }
 
 // @ 0x4c6f50
-void MapScreen::place_c(MapRecord* arr, int index, int z)
+void MapDialog::place_c(MapRecord* arr, int index, int z)
 {
     ctor_524cd0(arr, index, z, this, z);
 }
 
 // @ 0x4c6f70
-void MapScreen::place_d(MapRecord* arr, int index, int z)
+void MapDialog::place_d(MapRecord* arr, int index, int z)
 {
     ctor_4c1b60(arr, index, z, this, z);
 }
 
 // @ 0x4c6f90
-void MapScreen::refresh_list(char use_sel)
+void MapDialog::refresh_list(char use_sel)
 {
     HWND hWnd = GetDlgItem(hwnd, 0x465);
     if (!hWnd)

@@ -162,7 +162,7 @@ struct Rec5ac8 {
     void write(OutStream* out);                     // 0x4e9d10 (ret 4)
 };
 
-struct Slot20 { int f0, f4, f8, fc, f10, f14, f18, f1c; };
+// (Slot20, the 0x20-byte slot of Rec3910, is defined once in src/rgl/mesh2/rec_tables.h; nothing here uses it)
 typedef int Quad[4];                                // the 4-int runs written at +0x8ec and +0x924
 #pragma pack(pop)
 

@@ -96,33 +96,7 @@ int __cdecl clamp_index(const int* v, const int* lo, const int* hi);    // 0x432
 int __cdecl round_float(const float* p);                                // 0x432540
 int __cdecl rand_below(const int* n);                                   // 0x432580
 
-struct SoundDef {                                       // 0x14 bytes
-    void* sample;                                       // +0
-    int f4;                                             // +4 (bits 4..7: distance range)
-    int id;                                             // +8
-    int freq;                                           // +0xc
-    int length;                                         // +0x10
-    float range_scale();                                // 0x4355f0 (fastcall/thiscall)
-};
-struct SoundGroup {                                     // 0x98 bytes
-    char pad0[0x10];
-    unsigned flags;                                     // +0x10 (2: looping, 4: random start, bits 8..11: volume)
-    int var[32];                                        // +0x14 variations (def indices)
-    int nvar;                                           // +0x94
-    float volume_scale();                               // 0x435620
-};
-struct SoundMgr {                                       // the sound player (g_sound 0x5aa128)
-    char pad0[4];
-    SoundDef* defs;                                     // +4
-    int ngroups;                                        // +8
-    SoundGroup* groups;                                 // +0xc
-    char pad10[0x40 - 0x10];
-    vector4 listener;                                   // +0x40
-    int slot[(0x248 - 0x50) / 4];                       // +0x50 group index by sound id
-    std::vector<int> channels;                          // +0x248 looping channels
-    int play(int idx, int flags, const float* pos, float freq, int* out_id);   // 0x442650 (ret 0x14)
-    int play_slot(int n, int flags, const float* pos, float freq, int* out_id);   // 0x4428a0
-};
+#include "../../include/sound_mgr.h"             // SoundDef, SoundGroup, SoundMgr (shared with agent5, party2, inventory_panel)
 extern SoundMgr g_sound;                                // 0x5aa128
 extern int g_sound_ids[];                               // 0x5aa178 sound id table (g_sound_ids[0x11] = pain)
 extern int g_levelup_sound;                             // 0x5aa17c

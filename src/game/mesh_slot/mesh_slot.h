@@ -11,6 +11,7 @@
 #include <new>
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/mesh_x.h"
 #include "../../rgl/scene/world.h"
 #include "../tstring.h"
 #include "../arr_set.h"
@@ -38,21 +39,7 @@ extern char* g_game_base;                       // 0x5e2930 g_game as a byte poi
 unsigned pack_signed_color(const float* c);     // 0x461370 (cdecl)
 
 // ---- members of rgl::mesh defined in this TU (0x47aa40..0x47b3b0) ------------------------------------------------
-struct mesh_x : rgl::mesh_ext {
-    // the call sites that expand one level of the parent-chain walk themselves (the out-of-line copies are 0x40ebd0, 0x40ec30)
-    std::vector<rgl::vertex60>& get50_rec() { return local_a1 ? v50 : parent->get50(); }
-    std::vector<rgl::face20>& get90_rec() { return local_a0 ? v90 : parent->get90(); }
-    void transform(rgl::mesh* src, const matrix* m, unsigned color);   // 0x47aa40 (ret 0xc)
-    void set_color(rgl::vector4 color);                                // 0x47af30 (colour by value, ret 0x10)
-    void set_bone_index(int bone);                                     // 0x47b360
-    void multiply_color(const vector4* tint);                          // 0x47b3b0
-    void flip_faces();                                                 // 0x4779b0 (terrain_b/mission.cpp)
-    void finish_load();                                                // 0x419300
-    void append_skinned(rgl::mesh* other, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00
-    void translate(const vector4* d);                                  // 0x44f240
-    void transform(matrix m);                                          // 0x44f3c0 (matrix by value, ret 0x40)
-};
-
+// mesh_x (the members above) is src/rgl/mesh_x.h
 struct mesh_ms : rgl::mesh {
     void compute_normals();                                            // 0x451c50
 };

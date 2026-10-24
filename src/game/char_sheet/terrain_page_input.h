@@ -49,7 +49,7 @@ extern unsigned g_type_mask;                                // 0x5a8e88 (= 4: th
 extern unsigned g_size_mask;                                // 0x5a8e78 (= 4: the terrain size is 2 bits wide)
 
 // ---- the world / scene --------------------------------------------------------------------------------
-struct Block { int d[0x48]; void build_planes(); };   // build_planes = 0x41e4f0 (thiscall)
+struct FrustumBlock { int d[0x48]; void build_planes(); };   // build_planes = 0x41e4f0 (thiscall)
 struct World {                                              // the page's +0x6c pointer target
     char pad00[0x1ac];
     int block[0x48];                                        // +0x1ac  the 0x120-byte map block (copy of the page's +0x70)

@@ -150,12 +150,7 @@ struct key_clip : named_object {
     key_array extra;                           // +0x28
 };
 
-// 32-entry table of zeroed 16-byte vectors (8 bytes).
-struct vec_table {
-    rgl::vector4* data;                        // +0
-    int count;                                 // +4
-    vec_table();                               // 0x417cb0
-};
+#include "../include/vec_table.h"            // vec_table (shared with src/game/char_sheet/screen.h)
 
 // vtable 0x54aeb4 (slot 0 0x41aee0, slot 1 0x49df30 returns 7), 0x34 bytes.
 struct frame_set : named_object {

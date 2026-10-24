@@ -1,5 +1,6 @@
 #include "./screen.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // @ 0x4ebc10
 // Saves the next free screenshot file, then logs "ui_screenshot_taken_to_value" with the file name, or

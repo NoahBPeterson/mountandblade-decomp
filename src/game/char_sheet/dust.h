@@ -102,7 +102,7 @@ struct ptype {                                  // 0x20, table at *0x5e28f8
 };
 extern ptype* g_ptypes;                         // 0x5e28f8
 
-struct particle {                               // 0xa0, list at mission + 0x5c3b8f8
+struct DustParticle {                               // 0xa0, list at mission + 0x5c3b8f8
     int type;                                   // +0x00
     char pad04[0x10];
     matrix frame;                               // +0x14
@@ -139,8 +139,8 @@ struct cell_rec {                               // 0x34 per cell; x stride 0x9c0
 struct DustTerrain {
     char pad0[0x5c3b8f4];
     int dust_count;                             // +0x5c3b8f4 (the list header: count, then the entries)
-    particle dust[1];                           // +0x5c3b8f8 (stride 0xa0; really 0x40000)
-    char pad1[0x843bd78 - 0x5c3b8f8 - sizeof(particle)];
+    DustParticle dust[1];                           // +0x5c3b8f8 (stride 0xa0; really 0x40000)
+    char pad1[0x843bd78 - 0x5c3b8f8 - sizeof(DustParticle)];
     cell_obj* grid[0x30][0x30];                 // +0x843bd78, [x][y]
     int emitted[0x30][0x30];                    // +0x843e178, [x][y]
     char pad2[0x8440598 - 0x843e178 - 0x900 * 4];

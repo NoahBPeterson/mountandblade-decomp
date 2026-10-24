@@ -163,10 +163,10 @@ struct ResMgr {
 };
 extern ResMgr g_resmgr;                 // 0x5d6fa0
 
-struct MissionObj {
+struct ButtonTick {
     void fn(float dt);                  // 0x487930
 };
-extern MissionObj g_a170c8;             // 0xa170c8
+extern ButtonTick g_a170c8;             // 0xa170c8
 
 struct MusicList {
     void fn();                          // 0x4c4100

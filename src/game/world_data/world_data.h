@@ -289,9 +289,9 @@ struct IntVecW {                                                // std::vector<i
 
 
 // ---- opaque records whose out-of-line destructors the game object's teardown calls (0x492a20) ---------------------------------
-struct RecS { char body[0x508]; ~RecS(); };                     // a troop record (include/troop.h Troop), destructor 0x431c40
-struct RecT { char body[0x300]; ~RecT(); };                     // a faction record (game_recs.h FactionRec), destructor 0x432010
-struct RecQ { char body[0x138]; ~RecQ(); };                     // a quest record (game_recs.h QuestRec), destructor 0x431b10
+// struct RecS : src/include/rec_dtors.h
+// struct RecT : src/include/rec_dtors.h
+// struct RecQ : src/include/rec_dtors.h
 struct RecPoly { virtual ~RecPoly(); };                         // a scene record (game_data.h Level494 behind a vtable): virtual destructor in slot 0
 
 // ---- the container / list panels (MissionUi family) ---------------------------------------------------------------------------

@@ -19,6 +19,7 @@
 #include "../../include/troop.h"
 #include "../../rgl/mesh.h"
 #include "../config/widget_mgr.h"
+#include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160

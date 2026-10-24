@@ -1,5 +1,6 @@
 #include "./cs_detail.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/skill_rec.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // @ 0x4ef9f0 -------------------------------------------------------------------------------
 void CharSheet::update_detail()

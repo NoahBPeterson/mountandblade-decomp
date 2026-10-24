@@ -491,7 +491,7 @@ struct WorldDtor { ~WorldDtor(); };                     // 0x4d51d0 (the mission
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
 struct E4C   { tstring s; char pad[0x3c]; };            // 0x4c bytes
 struct S3c   { char pad[0xb]; ~S3c(); };                // 0xc bytes at +0x3c (dtor 0x4317b0)
-struct E48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; S3c m3c; };   // 0x48 bytes
+struct Rec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; S3c m3c; };   // 0x48 bytes
 struct Item238 { char pad[0x238]; ~Item238(); };        // dtor 0x4c8a40
 struct Del   { void del3(int flags); };                 // 0x4c4f40 (ecx = object)
 struct DelB  { void del3(int flags); };                 // 0x4c3430
@@ -555,7 +555,7 @@ int shutdown()
         delete[] (E4C*)g_5e28f4;
     }
     if (g_5e29f0) {
-        delete[] (E48*)g_5e29f0;
+        delete[] (Rec48*)g_5e29f0;
     }
     if (g_5e29f8) {
         ((DelD*)g_5e29f8)->del3(3);            // 0x4c8980

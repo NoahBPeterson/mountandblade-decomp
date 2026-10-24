@@ -1,7 +1,7 @@
 // Slice s0051a2d0: seven functions from the map-screen / GUI translation unit.
 //   0x51a2d0  PlaneTrace::intersect        (segment/plane intersection, x87 inlined vector math)
 //   0x51a3a0  Picker::collect              (collect objects whose v1() bit-mask contains the key)
-//   0x51a420  MapScreen::set_label         (rebuild the map party label + tooltip)
+//   0x51a420  MapPickScreen::set_label         (rebuild the map party label + tooltip)
 //   0x51a690  Camera::project              (matrix transform + viewport mapping, 2 floats out)
 //   0x51a760  gui_manager::set_pos         (clamp a label offset inside the mesh bounds)
 //   0x51a880  gui_manager::add_label       (lay out one text row into the "ui_font" mesh)
@@ -147,7 +147,7 @@ struct Camera {
     void project(vector4* out, const vector4* in);      // 0x51a690 ret 8
 };
 
-struct MapScreen {
+struct MapPickScreen {
     char pad0[0x30];
     Camera* cam;                        // +0x30
     char pad34[0x2d0 - 0x34];
@@ -159,7 +159,7 @@ extern int g_sel_party;             // 0x5aa3ac (currently selected party id)
 extern int g_sel_label;             // 0x5aa3a8 (its label index)
 
 // @ 0x51a420
-void MapScreen::set_label(int id)
+void MapPickScreen::set_label(int id)
 {
     tstring unused_a, unused_b;
     char show = 1;

@@ -41,7 +41,7 @@ The brief expected "~90 functions": that is the exact set (92 in the slices). Th
 | graph_obj.h | `node` (0x18), `edge` (0x34), `face` (0x64), `graph_obj` (+0x08..+0x7c, 31 methods) | 0x4c5a20, 0x4c5f60, 0x4c8000, 0x4ca8c0, 0x4cb3a0, 0x4cb780 |
 | screen_cfg.h | `dev_rec`, `dev_item`, `screen_cfg`, `screen_text`, `dev_list` | 0x4ca550, 0x4ca600, 0x4ca6c0 |
 | rec_tables.h | `C4c2c50`, `C4c2fb0`, `C4c3050`, `C4c3160`, `C4c31c0`, `C4c3290` (all `: head_rec`), options loader/renderer setup, music/sound objects | 0x4c2c50..0x4c3350 |
-| gui_edit.h | records `RecA/RecB/RecC`, `ItemPage`, `MapRecord`, `MapScreen`, `MapEditorDialog`, `ConfigDialog`, `Block`, layout group (`conv_rec` ...), `GameData` and the language-export records | per function |
+| gui_edit.h | records `RecA/RecB/RecC`, `ItemPage`, `MapRecord`, `MapDialog` (was `MapScreen`; the world-map screen of 0x4e87d0 keeps that name), `MapEditorDialog`, `ConfigDialog`, `Block`, layout group (`conv_rec` ...), `GameData` and the language-export records | per function |
 | mesh_2.h | `big_holder`, `rec_2e4/1ac/178`, `big_obj`, `tvec`, vector element types `E44/E516/E56/E50/E68/E176/...`, `csv_row`, `MissionObj`, `MissionRec2`, `ObjectList` | per function |
 
 Merged class identities found on the way (names kept where `symbols/slices/*.txt` or a manifest row maps them):

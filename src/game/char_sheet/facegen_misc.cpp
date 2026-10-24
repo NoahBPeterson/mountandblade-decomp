@@ -1,5 +1,6 @@
 #include "./facegen_misc.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // @ 0x4eb270
 void FaceGen::update_view(int unused)
@@ -43,7 +44,7 @@ void Animator::randomise()
 // @ 0x4eb3c0
 void FaceGen::refresh()
 {
-    int n = g_skins_begin[skin].n - 1;
+    int n = g_skins_begin[skin].n_elems - 1;
     for (int i = 0; i < n; i++)
         (&g_dummy_mat)[i] = deform_rows[i]->value();
     f360 = sl_age->value();
@@ -270,7 +271,7 @@ void Animator::pack_state(PackedState* out)
     unsigned __int64* w = (unsigned __int64*)out;
     int bit = 0;
     float* v = values;
-    for (int i = 0; i < ((SkinSet*)((char*)skins + cur * 0x1f8))->n; i++) {
+    for (int i = 0; i < ((SkinSet*)((char*)skins + cur * 0x1f8))->n_elems; i++) {
         int sh = bit;
         int wi = 1;
         if (sh >= 0x3f) {
