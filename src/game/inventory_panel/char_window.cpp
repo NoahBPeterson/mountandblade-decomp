@@ -161,26 +161,8 @@ void char_window::fill_skills()
 
 // ---------------------------------------------------------------------------------------------------------
 // widgets (slot numbers from the call sites; see s00502300 / s004dfd50).
-struct UiWidget {
-    virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
-    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
-    virtual void d10(); virtual void d11(); virtual void d12(); virtual void d13(); virtual void d14();
-    virtual void d15(); virtual void d16(); virtual void d17(); virtual void d18(); virtual void d19();
-    virtual void d20(); virtual void d21();
-    virtual void set_xy(const float* v);                // +0x58
-    virtual void d23(); virtual void d24();
-    virtual void set_scale(const float* v);             // +0x64
-    virtual void d26();
-    virtual void set_size(const float* v);              // +0x6c
-    virtual void d28(); virtual void d29(); virtual void d30();
-    virtual void add_image(int idx, void* m);           // +0x7c
-    virtual void d32(); virtual void d33(); virtual void d34(); virtual void d35(); virtual void d36();
-    virtual void d37(); virtual void d38(); virtual void d39(); virtual void d40();
-    virtual void set_text(tstring* out, const tstring* s);// +0xa4
-    virtual void d42(); virtual void d43(); virtual void d44(); virtual void d45(); virtual void d46();
-    virtual void d47(); virtual void d48(); virtual void d49();
-    virtual void add_child(void* child);                // +0xc8
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
+typedef Widget UiWidget;                // the slice's name for it
 
 // the 0x188-byte image button (base ctor 0x48ae20, vptr 0x591d58)
 struct UiButton : UiWidget {
@@ -219,7 +201,7 @@ UiButton* make_button(UiWidget* parent, const tstring* text, float x, float y, i
         float v[2];
         v[0] = x;
         v[1] = y;
-        b->set_xy(v);
+        b->set_pos(v);
 
         v[0] = n * s;
         v[1] = s;
@@ -247,9 +229,9 @@ UiButton* make_button(UiWidget* parent, const tstring* text, float x, float y, i
         hl.append(sfx);
     }
 
-    b->add_image(2, g_resmgr.get_object(up)->clone());
-    b->add_image(1, g_resmgr.get_object(down)->clone());
-    b->add_image(3, g_resmgr.get_object(hl)->clone());
+    b->set_mesh(2, g_resmgr.get_object(up)->clone());
+    b->set_mesh(1, g_resmgr.get_object(down)->clone());
+    b->set_mesh(3, g_resmgr.get_object(hl)->clone());
 
     {
         float sz = s * 0.6f;
@@ -258,7 +240,7 @@ UiButton* make_button(UiWidget* parent, const tstring* text, float x, float y, i
         v[1] = sz;
         b->set_size(v);
 
-        b->set_text((tstring*)v, text);
+        b->set_text(v, *text);
     }
 
     parent->add_child(b);

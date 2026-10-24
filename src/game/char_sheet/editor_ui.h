@@ -53,31 +53,7 @@ struct stream_base {
 extern stream_base g_log;                       // 0x5a9f60
 
 // ---- widgets ---------------------------------------------------------------------------------------
-struct Widget {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();
-    virtual void v05(); virtual void v06(); virtual void v07(); virtual void v08(); virtual void v09();
-    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
-    virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21();
-    virtual void v22(float* p);                 // +0x58
-    virtual void v23(); virtual void v24();
-    virtual void v25(float* p);                 // +0x64
-    virtual void v26();
-    virtual void v27(float* p);                 // +0x6c
-    virtual void v28(float* p);                 // +0x70
-    virtual void v29(); virtual void v30(); virtual void v31();
-    virtual void v32(int slot, mesh* m);        // +0x80 add_image
-    virtual void v33(); virtual void v34(); virtual void v35(); virtual void v36(); virtual void v37();
-    virtual void v38(void* c);                  // +0x98
-    virtual void v39(void* c);                  // +0x9c
-    virtual void v40();
-    virtual void v41(void* out, const tstring* name);  // +0xa4
-    virtual void v42(); virtual void v43(); virtual void v44(); virtual void v45(); virtual void v46();
-    virtual void v47(); virtual void v48(); virtual void v49();
-    virtual void v50(void* child);              // +0xc8 add_child
-
-    Widget* base_ctor();                        // 0x48ae20 (returns this in eax)
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // the plain 0x178-byte widget: only the base ctor runs
 struct WidgetA : Widget {
@@ -138,7 +114,7 @@ struct EditorGame {
 };
 extern EditorGame* g_editor_game;               // 0xa739b8
 
-struct Screen {
+struct EditorApp {
     char pad[0xe8];
     HWND hwnd;                                  // +0xe8
     void refresh_dialog();

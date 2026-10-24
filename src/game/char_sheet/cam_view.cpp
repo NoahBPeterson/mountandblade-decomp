@@ -1,6 +1,8 @@
 #include "./cam_view.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../main_menu.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4eb050
 void CamView::update(float dt)

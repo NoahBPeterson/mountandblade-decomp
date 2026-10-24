@@ -65,7 +65,7 @@ void label_refresh(MissionUi* w, tstring key);  // 0x4e4c70 (cdecl, the prefix b
 __declspec(noinline) UiAInline* make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4e5570
 
 // the panel that wraps a menu block (like MainMenu / EscapeMenu): 0x4e5d80 .. 0x4e5f50
-struct SavePanel {
+struct SaveWinCtl {
     char pad0[0x2c];
     ContainerBase* win;                         // +0x2c
     BlockOwner block;                           // +0x30

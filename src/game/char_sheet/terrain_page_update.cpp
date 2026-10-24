@@ -1,4 +1,7 @@
 #include "./terrain_page_update.h"
+#include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f2d70
 void TerrainPage::update(float dt)
@@ -11,12 +14,12 @@ void TerrainPage::update(float dt)
             sync_bits();
             tstring text;
             g_bits.build_hex_text(text);
-            hexbox->put(text);
+            { char r[8]; hexbox->set_text(r, text); }
         }
         if (page_changed(bit_fields[i])) {
             tstring text;
             sync_bits();
-            bit_fields[i]->take(text);
+            bit_fields[i]->get_text(&text);
             int v;
             sscanf(text.c_str(), g_fmt_d, &v);
             int lo, hi;
@@ -79,9 +82,9 @@ void TerrainPage::update(float dt)
         map_size = size_box->get_value();
         refresh_hex();
     } else if (page_changed(copy_btn)) {
-        copy_code();
+        copy_clipboard();
     } else if (page_changed(paste_btn)) {
-        paste_code();
+        paste_clipboard();
     }
 done:
     if (page_changed(regen_btn)) {
@@ -119,10 +122,10 @@ done:
 }
 
 // @ 0x4f34c0
-void TerrainPage::copy_code()
+void TerrainPage::copy_clipboard()
 {
     tstring s;
-    hexbox->take(s);
+    hexbox->get_text(&s);
     if (OpenClipboard(0)) {
         // GMEM_MOVEABLE | GMEM_ZEROINIT; a failure just leaves the clipboard closed again
         HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, s.len + 1);

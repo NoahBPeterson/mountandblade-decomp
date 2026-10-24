@@ -1,5 +1,7 @@
 #include "./cs_panels.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f0820
 // Each looked-up string / posted line is a named tstring local (the original takes their address with lea).
@@ -13,81 +15,81 @@
         float pos[2];                                    \
         pos[0] = x;                                      \
         pos[1] = y;                                      \
-        W->set_position(t, pos);                         \
+        W->set_text_at(t, pos);                         \
     } while (0)
 
 void CharSheet::update_texts()
 {
     int i;
-    CharRec* c = (CharRec*)((char*)g_game->chars + player * 0x508);
+    Troop* c = (Troop*)((char*)g_game->chars + player * 0x508);
     char line[512];
     int* stats = (int*)((char*)c + 0x58);    // the four stat dwords at +0x58..+0x64 (str, agi, int, cha)
 
     PostSlot out;
     {
         tstring t("");
-        level_at->post_text(&out, t);
+        level_at->set_text(&out, t);
     }
     {
         tstring t("");
-        xp_bar->post_text(&out, t);
+        xp_bar->set_text(&out, t);
     }
 
-    if (name->has_label == 0) {
-        tstring* n = g_strtable.find((const tstring*)c->name);
-        if (n == 0) n = (tstring*)c->name;
+    if (((SheetWidget*)f_4c4)->has_label == 0) {
+        tstring* n = g_strtable.find(&c->key);
+        if (n == 0) n = &c->key;
         tstring t(n->c_str());
-        name->post_text(&out, t);
+        f_4c4->set_text(&out, t);
     }
 
     {
         tstring k("ui_level");
-        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), c->xp);
+        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), c->level);
     }
     POS(xp_bar, line, "char_t_level_y", "char_t_level_x");
 
     {
         tstring k("ui_xp");
-        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), c->xp_val);
+        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), c->exp);
     }
     POS(xp_bar, line, "char_t_xp_y", "char_t_xp_x");
 
     {
         tstring k("ui_next_level_at");
-        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), g_level_table[c->xp]);
+        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), g_level_table[c->level]);
     }
     POS(xp_bar, line, "char_t_next_level_y", "char_t_next_level_x");
 
-    if ((c->flags & 0x10) != 0) {
+    if ((c->flags32 & 0x10) != 0) {
         tstring k("ui_health_pyer");
-        i = c->attrib[1] & 0xf;
+        i = c->nib[3] & 0xf;
         if (i < 0) i = 0;
         else if (i > g_skill_clamp) i = g_skill_clamp;
-        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), (int)c->health, c->level_at + i * 2 + 0x23);
+        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), (int)c->hp, c->lvl58 + i * 2 + 0x23);
     } else {
         tstring k("ui_health");
-        i = c->attrib[1] & 0xf;
+        i = c->nib[3] & 0xf;
         if (i < 0) i = 0;
         else if (i > g_skill_clamp) i = g_skill_clamp;
-        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), c->level_at + i * 2 + 0x23);
+        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), c->lvl58 + i * 2 + 0x23);
     }
     POS(xp_bar, line, "char_t_health_y", "char_t_health_x");
 
     {
         tstring k("ui_attribute_points");
-        mb_sprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->health_max);
+        mb_sprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->attr_points);
     }
     POS(level_at, line, "char_t_attribut_points_y", "char_t_attribut_points_x");
 
     {
         tstring k("ui_skillts");
-        mb_sprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->hp);
+        mb_sprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->skill_points);
     }
     POS(level_at, line, "char_t_skillts_y", "char_t_skillts_x");
 
     {
         tstring k("ui_weapon_points");
-        mb_sprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->next_level_xp);
+        mb_sprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->prof_points);
     }
     POS(level_at, line, "char_t_weapon_points_y", "char_t_weapon_points_x");
 
@@ -98,11 +100,11 @@ void CharSheet::update_texts()
                    stats[i]);
         {
             tstring t(line);
-            skill_pos[i]->post_text(&out, t);
+            skill_pos[i]->set_text(&out, t);
         }
-        if (c->health_max > 0)
-            skill_val[i]->show_selected();
-        else
+        if (c->attr_points > 0)
             skill_val[i]->show();
+        else
+            skill_val[i]->hide();
     }
 }

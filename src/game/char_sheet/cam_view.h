@@ -54,25 +54,11 @@ struct World { void step(float dt); };                  // 0x427f40
 #include "../tstring.h"
 #include "../str_table.h"      // 0x43a1e0
 extern StrTable g_strtable;                             // 0x5e2a18
-struct MenuRec { void reset(int a); };                  // 0x494260
-struct main_menu {
-    char pad0[4];
-    int  open;                                          // +0x04
-    char pad08[0x1c - 0x08];
-    tstring title;                                      // +0x1c
-    char pad2c[0x4c - 0x2c];
-    int  choice;                                        // +0x4c
-    int  v50;                                           // +0x50
-    char pad54[0x68 - 0x54];
-    tstring header;                                     // +0x68
-    void reset(int a);                                  // 0x494260
-    void choose(int option);                            // 0x495700
-};
+#include "../main_menu.h"
 #define g_main_menu (*(main_menu*)0xa73980)
 
 void __cdecl mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100
-struct Animator { void randomise(); };                  // 0x4eb320
-extern Animator g_anim;                                 // 0x8ed4f60
+#include "../animator.h"                              // Animator, g_anim
 
 // a UI element; only the vtable slots this function calls are named
 struct Ctrl {

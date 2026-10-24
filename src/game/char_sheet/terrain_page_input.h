@@ -22,18 +22,13 @@
 
 using rgl::vector4;
 
-struct vector2 { float x, y; };                             // rgl::vector2 (the 2x2 camera axes, +0 = strafe)
+#include "../../include/vec.h"                      // vector2 (= Vec2)
 
 // ---- tstring / rgl::string ---------------------------------------------------------------------------
 #include "../tstring.h"
 
-// ---- controls -----------------------------------------------------------------------------------------
-// Only the accessor this slice calls is declared.  cl 13.10 numbers virtuals in declaration order, one slot per
-// declaration, but a reference parameter opens a family numbered 9 slots above the no-parameter virtuals.
-struct Widget {
-    char pad00[0xa0];
-    virtual void put(const tstring& s);                     // +0xa4  set_text
-};
+// ---- controls ----------------------------------------------------------------------------------------------
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 struct BitWords {
@@ -68,45 +63,8 @@ void rotate_su(void* m, const float* angle);                // 0x40e670
 void rotate_2x2(float* m, float angle);                     // 0x4f3b40
 void identity_2x2(float* m);                                // 0x4f3be0
 
-// ---- the page -----------------------------------------------------------------------------------------
-struct TerrainPage {
-    char    pad00[0x2c - 0x00];
-    int     terrain_on;                                     // +0x2c  "Enable terrain" checkbox
-    int     terraingen_on;                                  // +0x30  "Enable terrain generation" checkbox
-    int     water_on;                                       // +0x34  "Enable water" checkbox
-    int     river_on;                                       // +0x38  "Enable river" checkbox
-    float   camera_x;                                       // +0x3c  X position
-    float   camera_y;                                       // +0x40  Y position
-    float   camera_z;                                       // +0x44  camera height above the ground
-    float   fog;                                            // +0x48  fog (0..1)
-    float   water_height;                                   // +0x4c  water height (0..1)
-    int     water_level;                                    // +0x50  water level
-    int     layer_bits[3];                                  // +0x54 / +0x58 / +0x5c  random bits of the water layers
-    int     terrain_type;                                   // +0x60  terrain type (index into the type table)
-    int     map_size;                                       // +0x64  terrain size
-    char    pad68[4];                                       // +0x68
-    World*  world;                                          // +0x6c
-    int     map_block[(0x138 - 0x70) / 4];                  // +0x70  the 0x120-byte map block (runs on through frame[]; frustum source at
-                                                            //        +0xf8 = block+0x88; copied to world +0x1ac)
-    float   frame[0x10];                                    // +0x138  the frame path() builds (from a temp)
-    char    pad178[0x18];                                   // +0x178
-    float   view_x;                                         // +0x190  eye X (clamped to 0..250)
-    float   view_y;                                         // +0x194  eye Y (clamped to 0..250)
-    float   view_z;                                         // +0x198  eye Z
-    char    pad19c[0x1a0 - 0x19c];
-    float   yaw;                                            // +0x1a0  camera heading
-    float   pitch;                                          // +0x1a4  camera pitch (0.1..1.5)
-    float   zoom;                                           // +0x1a8  camera zoom (1.5..400.5)
-    char    pad1ac[0x1b4 - 0x1ac];
-    Widget* hexbox;                                         // +0x1b4  the hex terrain text field
-    char    pad1b8[0x2c0 - 0x1b8];
-
-    void read_fields();                                     // 0x4f3570
-    void simulate(float dt);                                // 0x4f37f0
-    void paste_clipboard();                                 // 0x4f3c30
-    void path(float dt);                                    // 0x4f3cf0
-    void update();                                          // 0x4f2730 (slice s004f25a0)
-};
+// ---- the page: src/game/terrain_page.h ------------------------------------------------------------------
+#include "../terrain_page.h"
 
 // the input flags the camera reads (0xa17xxx block; names provisional)
 extern int g_key_17204;                                     // 0xa17204  pitch down

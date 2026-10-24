@@ -27,13 +27,6 @@ extern StrTable g_strtable;                  // 0x5e2a18
 #include "../../include/shape.h"
 #include "../../include/mat4.h"
 
-struct sphere_shape : shape_base {           // 0x44, vtable 0x54a4f0 (the vptr stored into the local one)
-    vector4 v20;                             // +0x20
-    vector4 center;                          // +0x30
-    float   radius;                          // +0x40  (raw float store in the original)
-};
-
-
 matrix* identity(matrix* out);                                               // 0x40cd00
 
 // --------------------------------------------------------------------------------- map / game records --
@@ -330,7 +323,7 @@ void MapPanel::update_target()
         }
     } else {
         // ---- 0x519a8b: ground items -----------------------------------------------------------------
-        sphere_shape sh;
+        sphere sh;
         int best_item = -1;
         for (int i = 0; g_game->fleet && i < (GroundItem*)g_game->fleet_end - (GroundItem*)g_game->fleet; i++) {
             GroundItem* it = (GroundItem*)g_game->fleet + i;

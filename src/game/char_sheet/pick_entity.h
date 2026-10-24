@@ -42,10 +42,6 @@ extern tstring g_strs[];                // 0x5d7850 .. 0x5d7d50
 #include "../../include/shape.h"
 
 
-struct sphere_shape : shape_base {      // size 0x44
-    vector4 v20, v30; float radius;
-    sphere_shape(const vector4* centre, float r);           // 0x408770
-};
 using rgl::smat;
 void identity_pos(float* m);                                // 0x40cd00
 void capsule_ctor_inline(capsule* c, float r, const vector4* a, const vector4* b);  // 0x433310
@@ -66,11 +62,9 @@ struct scene_row {                      // 0x1c8 bytes
     int f1a4;                           // +0x1a4
 };
 
-struct vector2 { float x, y; };
+#include "../../include/vec.h"                      // vector2 (= Vec2)
 
-struct ViewRect {                       // this = Ctx::f60
-    void cell_rect(int c0[4], int c1[4]);        // 0x4bd2f0
-};
+#include "../view_rect.h"                    // ViewRect
 struct OverlayItf {                     // vtable 0x590064
     virtual void release(int a);
 };

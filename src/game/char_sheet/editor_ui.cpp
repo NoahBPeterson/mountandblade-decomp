@@ -1,5 +1,6 @@
 #include "./editor_ui.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f5d20
 WidgetA* __cdecl make_label(void* parent, const tstring* name, const tstring* text)
@@ -11,8 +12,8 @@ WidgetA* __cdecl make_label(void* parent, const tstring* name, const tstring* te
         w = 0;
     load_params(w, *text);
     float out[2];
-    w->v41(out, name);
-    ((Widget*)parent)->v50(w);
+    w->set_text(out, *name);
+    ((Widget*)parent)->add_child(w);
     return w;
 }
 
@@ -53,7 +54,7 @@ void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, flo
         m = g_alloc.get_object(hl)->clone();
     }
     m->scale(x / z);
-    ((Widget*)b)->v32(3, m);
+    ((Widget*)b)->set_track(3, m);
     return b;
 }
 
@@ -73,7 +74,7 @@ void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, fl
         m = g_alloc.get_object(hl)->clone();
     }
     m->scale(x / z);
-    ((Widget*)b)->v32(3, m);
+    ((Widget*)b)->set_track(3, m);
     return b;
 }
 
@@ -98,7 +99,7 @@ WidgetB* __cdecl make_slider(void* parent, const tstring* name)
         float size[2];
         size[0] = h * 0.25f;
         size[1] = h * 0.03f;
-        w->v25(size);
+        w->set_scale(size);
     }
     mesh* track = load_mesh("slider_hor");
     mesh* handle = load_mesh("handle_hor");
@@ -107,9 +108,9 @@ WidgetB* __cdecl make_slider(void* parent, const tstring* name)
         track->set_color(c);
         handle->set_color(c);
     }
-    w->v32(0, track);
-    w->v32(2, handle);
-    ((Widget*)parent)->v50(w);
+    w->set_track(0, track);
+    w->set_track(2, handle);
+    ((Widget*)parent)->add_child(w);
     return w;
 }
 
@@ -146,9 +147,9 @@ WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name)
         m2 = g_alloc.get_object(n)->clone();
         m2->set_color(col);
     }
-    w->v32(0, m1);
-    w->v32(2, m2);
-    ((Widget*)parent)->v50(w);
+    w->set_track(0, m1);
+    w->set_track(2, m2);
+    ((Widget*)parent)->add_child(w);
     return w;
 }
 
@@ -164,7 +165,7 @@ WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
     if (a3 != 0)
         w->f484 = a3;
     w->f490 = (int)parent;
-    w->v50(parent);
+    w->add_child(parent);
     load_params(w, *name);
     return w;
 }
@@ -185,10 +186,10 @@ struct RecAlloc {
 // value a second time, and the two instantiations were folded together by the linker)
 void construct_rows(TextRow* dst, unsigned n, const TextRow& v, void* ctx, const TextRow& v2);  // 0x4e5fc0
 
-struct RowVec {
+struct TextRowVec {
     TextRow* insert_n(TextRow* pos, unsigned n, const TextRow& v);
 };
-TextRow* RowVec::insert_n(TextRow* pos, unsigned n, const TextRow& v)
+TextRow* TextRowVec::insert_n(TextRow* pos, unsigned n, const TextRow& v)
 {
     construct_rows(pos, n, v, this, v);
     return pos + n;
@@ -234,7 +235,7 @@ void __cdecl destroy_range(Rec20* first, Rec20* last)
 }
 
 // @ 0x4f6390
-void Screen::refresh_dialog()
+void EditorApp::refresh_dialog()
 {
     g_editor_game->refresh();
     g_editor_game->f2f9 = 1;

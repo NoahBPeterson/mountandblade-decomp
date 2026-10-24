@@ -1,5 +1,9 @@
 #include "./conv_open.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f66e0
 void ConvScreen::open(int dialog, int* out)
@@ -12,11 +16,11 @@ void ConvScreen::open(int dialog, int* out)
         float pos[2] = { 0.0f, 0.0f };
         talk->set_pos(pos);
         float sz[2] = { 1.0f, 0.75f };
-        talk->set_size(sz);
+        talk->set_scale(sz);
     }
     {
         tstring name("conversation_window");
-        talk->set_mesh(g_alloc.get_object(name)->clone(), 0);
+        talk->set_mesh(0, g_alloc.get_object(name)->clone());
     }
     {
         int v = (int)talk;
@@ -30,23 +34,23 @@ void ConvScreen::open(int dialog, int* out)
     bar_reln = bar;
     {
         tstring name("conv_bo_board");
-        bar->configure(name);
+        label_refresh(bar, name);
     }
     talk->children.push_back(bar);
 
-    Widget* line = new Widget();
+    Widget* line = new WidgetObj();
     label_text = line;
     {
         tstring name("conv_t_partner");
-        line->configure(name);
+        label_refresh(line, name);
     }
     bar->add_child(line);
 
-    Widget* speaker = new Widget();
+    Widget* speaker = new WidgetObj();
     label_speaker = speaker;
     {
         tstring name("conv_t_utterer_name");
-        speaker->configure(name);
+        label_refresh(speaker, name);
     }
     bar->add_child(speaker);
 
@@ -59,7 +63,7 @@ void ConvScreen::open(int dialog, int* out)
     choice = ch;
     {
         tstring name("conv_bo_choices");
-        ch->configure(name);
+        label_refresh(ch, name);
     }
     {
         float zero = 0.0f;
@@ -72,16 +76,16 @@ void ConvScreen::open(int dialog, int* out)
     choice_finalize(question);
     talk->add_child(question);
 
-    Widget* input = new Widget();
+    Widget* input = new WidgetObj();
     input_label = input;
     {
         tstring name("conv_t_press_mouse");
-        input->configure(name);
+        label_refresh(input, name);
     }
     {
         tstring key("ui_press_left_mouse_button_to_continue");
         tstring out2;
-        input->set_text(g_strtable.lookup(&key), &out2);
+        input->set_text(g_strtable.lookup(&key), out2);
     }
     talk->add_child(input);
 
@@ -92,53 +96,53 @@ void ConvScreen::open(int dialog, int* out)
         float pos[2] = { 0.03f, 0.3f };
         msg->set_pos(pos);
         float sz[2] = { 0.25f, 0.21f };
-        msg->set_size(sz);
+        msg->set_scale(sz);
     }
     {
         tstring name("message_window");
-        msg->set_mesh(g_alloc.get_object(name)->clone(), 0);
+        msg->set_mesh(0, g_alloc.get_object(name)->clone());
     }
-    msg->advance();
+    msg->hide();
 
-    Widget* rbar = new Widget();
+    Widget* rbar = new WidgetObj();
     relation_bar = rbar;
     {
         float pos[2] = { 0.01f, 0.02f };
         rbar->set_pos(pos);
         float sz[2] = { 0.23f, 0.02f };
-        rbar->set_size(sz);
+        rbar->set_scale(sz);
     }
     {
         tstring name("talk_relation_bar");
-        rbar->set_mesh(g_alloc.get_object(name)->clone(), 0);
+        rbar->set_mesh(0, g_alloc.get_object(name)->clone());
     }
     msg->add_child(rbar);
 
-    Widget* rptr = new Widget();
+    Widget* rptr = new WidgetObj();
     reln_pointer = rptr;
     {
         float pos[2] = { 0.1f, 0.02f };
         rptr->set_pos(pos);
         float sz[2] = { 0.03f, 0.03f };
-        rptr->set_size(sz);
+        rptr->set_scale(sz);
     }
     {
         tstring name("talk_reln_pointer");
-        rptr->set_track(g_alloc.get_object(name)->clone(), 0);
+        rptr->set_track(0, g_alloc.get_object(name)->clone());
     }
     msg->add_child(rptr);
 
     for (int i = 0; i < 5; i++) {
-        Widget* ln = new Widget();
+        Widget* ln = new WidgetObj();
         lines[i] = ln;
         float pos[2] = { 0.01f, 0.17f - (float)i * 0.03f };
         ln->set_pos(pos);
         float sz[2] = { 0.23f, 0.03f };
-        ln->set_size(sz);
+        ln->set_scale(sz);
         int flag = 4;
         ln->set_flag(&flag);
         float sc[2] = { 0.021f, 0.021f };
-        ln->set_scale2(sc);
+        ln->set_size(sc);
         msg->add_child(ln);
     }
 
@@ -163,7 +167,7 @@ void ConvScreen::open(int dialog, int* out)
     float sz[2] = { 0.289000f, 0.452998f };
     ViewWindow* vw = (ViewWindow*)::operator new(0x358);
     if (vw)
-        vw->init();
+        new (vw) MapWidget();
     else
         vw = 0;
     window = vw;
@@ -171,12 +175,12 @@ void ConvScreen::open(int dialog, int* out)
         *(void**)((char*)vw + 0x178) = *(void**)g_mission;
         dword_copy(0x48, (char*)vw + 0x1ac, (char*)this + 0x34);
         vw->set_pos(pos);
-        vw->set_size(sz);
+        vw->set_scale(sz);
     }
 
     // the camera/frustum embedded in the screen at +0x34 (its +0xf8/+0x120 float4s and the projection fields)
     {
-        Camera* cam = (Camera*)((char*)this + 0x34);
+        ConvCamera* cam = (ConvCamera*)((char*)this + 0x34);
         float ratio = sz[1] / sz[0];
         *(unsigned char*)((char*)cam + 0) = 1;
         float* f = (float*)((char*)cam + 0xf8);      // this+0x12c

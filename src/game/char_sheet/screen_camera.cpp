@@ -1,5 +1,9 @@
 #include "./screen_camera.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ece20
 void Screen::camera_update(float dt)
@@ -139,7 +143,7 @@ void Screen::camera_update(float dt)
 
     // --- frustum planes, the frame into this+0x238, then the widget's label matrix and the scene ---
     memcpy((char*)this + 0x238, &frame, 0x40);
-    ((Frustum*)((char*)this + 0x170))->build_planes();
+    ((frustum*)((char*)this + 0x170))->build_planes();
     MapWidget* w = f30;
     float nx = -frame.f.x;
     memcpy((char*)w + 0x1ac, (char*)this + 0x170, 0x120);
@@ -169,7 +173,7 @@ MapWidget* __fastcall ctor_4ed630(MapWidget* w)
 {
     widget_ctor(w);
     *(void**)w = (void*)0x598698;
-    scene_ctor(w->get_scene());
+    scene_ctor((scene*)w->scene_bytes());
     *(char*)((char*)w + 0x2e6) = 1;
     *(vector2*)((char*)w + 0xe0) = vector2(0.0f, 0.0f);
     *(vector2*)((char*)w + 0xf0) = vector2(1.0f, 0.75f);
@@ -180,7 +184,7 @@ MapWidget* __fastcall ctor_4ed630(MapWidget* w)
 void* __fastcall dtor_4ed6b0(MapWidget* w, int, unsigned flags)
 {
     *(void**)w = (void*)0x598698;
-    scene_dtor(w->get_scene());
+    scene_dtor((scene*)w->scene_bytes());
     widget_dtor(w);
     if (flags & 1)
         operator delete(w);

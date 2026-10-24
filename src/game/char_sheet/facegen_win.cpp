@@ -1,6 +1,7 @@
 #include "./facegen_win.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/frustum.h"
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f1460
 void facegen_win::init()
@@ -22,17 +23,17 @@ void facegen_win::init()
 
     UiWindow* w = new UiWindow;
     board = w;
-    { tvec2 p = { 0.0f, 0.0f }; w->move_a(&p); }
-    { tvec2 s = { 1.0f, 0.75f }; w->move_f0(&s); }
+    { tvec2 p = { 0.0f, 0.0f }; w->set_pos((const float*)&p); }
+    { tvec2 s = { 1.0f, 0.75f }; w->set_scale((const float*)&s); }
     gui_push(g_gui, (void**)&board);
 
     UiContainer* c = new UiContainer;
     panel = c;
-    { tvec2 p = { 0.5f, 0.0f }; c->move_a(&p); }
-    { tvec2 s = { 0.5f, 0.75f }; c->move_f0(&s); }
-    c->set_mesh(load_mesh("facegen_board", 1.0f), 0);
-    { tvec2 p = { 0.017f, 0.61f }; c->set_label(tstring(""), &p); }
-    { tvec2 s = { 0.02f, 0.02f }; c->set_size(&s); }
+    { tvec2 p = { 0.5f, 0.0f }; c->set_pos((const float*)&p); }
+    { tvec2 s = { 0.5f, 0.75f }; c->set_scale((const float*)&s); }
+    c->set_mesh(0, load_mesh("facegen_board", 1.0f));
+    { tvec2 p = { 0.017f, 0.61f }; c->set_text_at(tstring(""), (const float*)&p); }
+    { tvec2 s = { 0.02f, 0.02f }; c->set_size((const float*)&s); }
 
     w218 = make_medium(panel, &tstring("Shade occluded:"), 0.24f, 0.62f, 0.7f, 0.3f,
                        &tstring("medium_button_down"), &tstring("medium_button"));
@@ -45,12 +46,12 @@ void facegen_win::init()
 
     for (i = 0; i < 3; i++) {
         seeds[i] = make_slider(panel, 0.72f, 0.22f + (float)i * 0.055f);
-        seeds[i]->set_text(&tstring(""), &tstring("randomize"));
+        seeds[i]->set_text(&tstring(""), tstring("randomize"));
     }
 
     for (i = 0; i < 6; i++) {
         sliders[i] = make_slider(panel, 0.1f, 0.83f - (float)i * 0.088f);
-        sliders[i]->set_text(&tstring(""), &tstring(""));
+        sliders[i]->set_text(&tstring(""), tstring(""));
     }
 
     region_type = make_option(panel, &tstring("region type"), 0.79f, 0.9f);

@@ -35,14 +35,7 @@ void save_dir(char* buf);                               // 0x4dd7b0
 int  open_text_write(void* stream, char* path);         // 0x415320
 
 // ---- widgets --------------------------------------------------------------------------------------------
-struct Widget {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0a(); virtual void m0b();
-    virtual void m0c(); virtual void m0d(); virtual void m0e(); virtual void m0f();
-    virtual void m10();
-    virtual char used(int flag);                        // +0x44
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 struct MainMenu {
     char pad0[0x18];
@@ -52,30 +45,8 @@ struct MainMenu {
 extern MainMenu g_main_menu;                            // 0xa73980
 
 // ---- serialisation streams ------------------------------------------------------------------------------
-struct OutStream;
-
-struct OutStream {
-    virtual void s00(); virtual void s01(); virtual void s02();
-    virtual void w_int(int* p);                         // +0xc
-    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07();
-    virtual void w_raw(const void* p);                  // +0x20
-    virtual void s09(); virtual void s0a();
-    virtual OutStream* w_struct(const void* p);         // +0x2c
-    virtual void s0d(); virtual void s0e(); virtual void s0f();
-    virtual int  close();                               // +0x3c
-    virtual void s11(); virtual void s12(); virtual void s13(); virtual void s14();
-    virtual void s15(); virtual void s16(); virtual void s17(); virtual void s18();
-    virtual void s19(); virtual void s1a(); virtual void s1b(); virtual void s1c();
-    virtual void s1d(); virtual void s1e(); virtual void s1f(); virtual void s20();
-    virtual void s21(); virtual void s22(); virtual void s23(); virtual void s24();
-    virtual void s25(); virtual void s26(); virtual void s27(); virtual void s28();
-    virtual void s29(); virtual void s2a(); virtual void s2b(); virtual void s2c();
-    virtual void s2d(); virtual void s2e(); virtual void s2f(); virtual void s30();
-    virtual void s31(); virtual void s32(); virtual void s33(); virtual void s34();
-    virtual void s35(); virtual void s36(); virtual void s37(); virtual void s38();
-    virtual void s39(); virtual void s3a();
-    virtual int  open(char* path);                      // +0x68
-};
+#include "../out_stream.h"
+#include "../../include/troop.h"          // the 0x508-byte record the slice called GameRecord
 
 struct SaveWriter {
     OutStream* vtbl;                                    // +0x00
@@ -92,15 +63,6 @@ void copy_ctor(void* dst, const void* src);             // 0x42c110
 // ---- the game object (see s00473a60) ---------------------------------------------------------------------
 struct SaveCtx;
 #pragma pack(push, 4)
-struct GameRecord {
-    tstring name;                                       // +0x00
-    char    pad10[0x20 - 0x10];
-    tstring title;                                      // +0x20
-    char    pad30[0xb0 - 0x30];
-    int     f0b0;                                       // +0xb0
-    char    padb4[0x508 - 0xb4];
-};
-
 struct Game {
     int          version;                               // +0x0
     int          pad04;                                 // +0x4
@@ -111,7 +73,7 @@ struct Game {
     char         pad24[0x8c - 0x24];
     int          f8c;                                   // +0x8c
     char         pad90[0x13a00 - 0x90];
-    GameRecord*  records;                               // +0x13a00
+    Troop*       records;                               // +0x13a00
     char         pad13a04[0x13a50 - 0x13a04];
     char*        parties;                               // +0x13a50
     char         pad13a54[0x13b18 - 0x13a54];
@@ -142,9 +104,7 @@ struct SaveCtx {
 
 // ---- the map screen -------------------------------------------------------------------------------------
 struct MapScreen;
-struct MissionSource {
-    void pick(const int* arg);                          // 0x4d5410 (ret 4)
-};
+#include "../mission_source.h"
 struct MapMesh {
     char build(void* grid, int mode);                   // 0x4785e0 (ret 8)
     void f1(int v);                                     // 0x4e75a0 (ret 4)
@@ -158,7 +118,7 @@ struct MapScreen {
     int          menu_sel;                              // +0x18
     char         pad1c[0x30 - 0x1c];
     MissionSource source;                               // +0x30
-    char         pad31[0x60 - 0x31];
+    char         pad58[0x60 - 0x58];
     Widget*      f60;                                   // +0x60
     Widget*      f64;                                   // +0x64
     Widget*      f68;                                   // +0x68

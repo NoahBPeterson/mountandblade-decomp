@@ -80,7 +80,7 @@ UiRow* __cdecl append_rows(UiRow* first, UiRow* last, UiRow* dest, RowAlloc& al)
 }
 
 // @ 0x4ebea0
-Screen::Screen()
+GuiScreen::GuiScreen()
 {
     for (int i = 0; i < 5; i++)
         ((Hint*)((char*)this + 0x14))[i].Hint::Hint();
@@ -114,7 +114,7 @@ Screen::Screen()
 // DirectInput (GetDeviceData, re-acquiring while the device is unacquired), maps the raw cursor into the
 // 0..1 view rectangle, then dispatches every record to the key-flag path (0x4c52f0) or the active
 // overlay (+0x8c), and finally fans the frame out to the screen vector, 0x4e6510 and 0x4c5330.
-void Screen::process(int param)
+void GuiScreen::process(int param)
 {
     DiObjectData buf[16];
     unsigned count;

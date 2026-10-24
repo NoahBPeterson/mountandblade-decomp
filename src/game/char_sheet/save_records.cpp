@@ -1,18 +1,19 @@
 #include "./save_records.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-// @ 0x4e9850    void GameRecord::write(OutStream* out)   (thiscall, ret 4)
-void GameRecord::write(OutStream* out)
+// @ 0x4e9850    void Troop::write_save(OutStream* out)  (the slice called the troop record GameRecord)   (thiscall, ret 4)
+void Troop::write_save(OutStream* out)
 {
     char* p = (char*)this;
-    f4f4.write8(out);
+    saved.write8(out);
     for (int i = 0; i < 4; i++)
         out->w_raw(p + 0x58 + i * 4);
     for (int i = 0; i < 7; i++)
         out->w_int((int*)(p + 0x80 + i * 4));
     for (int i = 0; i < 6; i++)
         out->w_count((int*)(p + 0x68 + i * 4));
-    out->w_int5((int*)(p + 0x30) + 0).w_raw(p + 0x3b8);
+    out->w_int8((int*)(p + 0x30) + 0).w_raw(p + 0x3b8);
     out->w_raw(p + 0x3b4).w_raw(p + 0x9c);
     out->w_int((int*)(p + 0xa0));
     out->w_raw(p + 0x4c);
@@ -26,7 +27,7 @@ void GameRecord::write(OutStream* out)
     }
     char* r5 = p + 0x3c0;
     for (int i = 0; i < 4; i++, r5 += 8)
-        out->w_int5((int*)r5);
+        out->w_int8((int*)r5);
     write_soa(out, p + 0x400);
 }
 
@@ -110,7 +111,7 @@ void OutRecList::write_missions(OutStream* out)
         int* pk = this->pk;
         char* e = (char*)r + 0xc0;
         do {
-            if (!(records[*(int*)(e - 0x14)].f30 & 0x10)) {
+            if (!(records[*(int*)(e - 0x14)].flags30 & 0x10)) {
                 out->w_int((int*)e);
                 out->w_raw(e - 4);
                 for (int k = 0; k < 0x20; k++)
@@ -151,7 +152,7 @@ void Rec5ac8::write(OutStream* out)
     char* p = (char*)this;
     out->w_struct(&f20);
     out->w_struct((char*)this + 0x0c);   // +0xc of the record body (the +0x20 struct is above it)
-    out->w_int5((int*)(p + 0xa0));
+    out->w_int8((int*)(p + 0xa0));
     out->w_raw(p + 0x90);
     out->w_raw(p + 0x8c);
     out->w_raw(p + 0x70);

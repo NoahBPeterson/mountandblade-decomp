@@ -1,5 +1,9 @@
 #include "./screen_init.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ec4d0
 void Screen::init_screen()
@@ -16,7 +20,7 @@ void Screen::init_screen()
     if (bar != 0) {
         new (bar) Overlay();
         *(void**)bar = (void*)0x592848;
-        *(char*)((char*)bar + 0x188) = 0;
+        bar->f188 = 0;
     } else {
         bar = 0;
     }
@@ -32,7 +36,7 @@ void Screen::init_screen()
     g_5d8788 = 1;
     g_gui.add_root(overlay);
     Overlay* self = overlay;
-    ((vec<Widget*>*)&self->first)->push_back3(*(Widget**)&overlay, 4);
+    self->children.push_back3(*(Widget**)&overlay, 4);
 
     Overlay* buttons = (Overlay*)operator new(0x188);
     if (buttons != 0) {
@@ -49,7 +53,7 @@ void Screen::init_screen()
     s0.y = 0.05f;
     buttons->set_scale(&s0.x);
     {
-        buttons->set_mesh(clone_41c6d0(g_resmgr.get_object(tstring("map_bar"))), 0);
+        buttons->set_mesh(0, clone_41c6d0(g_resmgr.get_object(tstring("map_bar"))));
     }
     f48 = 0;
     if (g_5a9fb0) {
@@ -63,22 +67,22 @@ void Screen::init_screen()
     f3c = new_medium_button(buttons, (void*)g_strtab.find(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
     {
         Overlay* self = (Overlay*)buttons;
-        ((vec<Widget*>*)&self->first)->push_back3(*(Widget**)&buttons, 4);
+        self->children.push_back3(*(Widget**)&buttons, 4);
     }
 
     {
         tstring none("");
         f5c = make_hint(none, 0xf, buttons, vector2(0.8f, 0.2f), vector2(0.015f, 0.05f));
         int flag = 0x11;
-        f5c->set_flag(&flag, 0);
-        f5c->f121 = 1;
+        f5c->set_flag(&flag);
+        f5c->b121 = 1;
     }
     {
         tstring none("");
         f60 = make_hint(none, 0xf, buttons, vector2(0.8f, 0.2f), vector2(0.012f, 0.05f));
         int flag = 0x11;
-        f60->set_flag(&flag, 0);
-        f60->f121 = 1;
+        f60->set_flag(&flag);
+        f60->b121 = 1;
     }
 
     MapWidget* map = (MapWidget*)operator new(0x358);
@@ -87,8 +91,8 @@ void Screen::init_screen()
     else
         map = 0;
     f30 = map;
-    map->f178 = g_a732b4;
-    memcpy(map->labels, labels, 0x120);
+    map->world = (void*)g_a732b4;
+    memcpy(&map->view, &cam, 0x120);
     vector2 mp;
     mp.x = 0.0f;
     mp.y = 0.04f;
@@ -97,7 +101,7 @@ void Screen::init_screen()
     ms.x = 1.0f;
     ms.y = 0.71f;
     map->set_scale(&ms.x);
-    ((vec<Widget*>*)&overlay->first)->push_back(*(Widget**)&map);
+    overlay->children.push_back(*(Widget**)&map);
     f54 = new_widget(0x178);
     {
         vector2 pp;
@@ -112,7 +116,7 @@ void Screen::init_screen()
         f54->set_scale(&ps.x);
     }
     {
-        int white = -1;
+        unsigned white = 0xffffffffu;
         f54->set_color(&white);
     }
     {
@@ -123,9 +127,9 @@ void Screen::init_screen()
     }
     {
         tstring name("ui_paused");
-        f54->set_text((const void*)&name, (const void*)g_strtab.find(name));
+        f54->set_text(&name, *(const tstring*)g_strtab.find(name));
     }
-    ((vec<Widget*>*)&overlay->first)->push_back2(*(Widget**)&f54);
+    overlay->children.push_back2(*(Widget**)&f54);
 
     f58 = new_widget(0x178);
     {
@@ -141,7 +145,7 @@ void Screen::init_screen()
         f58->set_scale(&ps.x);
     }
     {
-        int white = -1;
+        unsigned white = 0xffffffffu;
         f58->set_color(&white);
     }
     {
@@ -152,9 +156,9 @@ void Screen::init_screen()
     }
     {
         tstring name("ui_click_left_button_to_cancel_wait");
-        f58->set_text((const void*)&name, (const void*)g_strtab.find(name));
+        f58->set_text(&name, *(const tstring*)g_strtab.find(name));
     }
-    ((vec<Widget*>*)&overlay->first)->push_back2(*(Widget**)&f58);
+    overlay->children.push_back2(*(Widget**)&f58);
 
     {
         PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);

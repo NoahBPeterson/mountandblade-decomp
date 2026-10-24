@@ -56,27 +56,12 @@ struct GameApp : Application {
 // ---- screens: g_screens[30] (0xa73980) is the global screen table; the id stack at 0xa739f8 keeps
 //      the current screen id (a ring of 4-int blocks). ------------------------------------------------
 // ---- the engine widget interface: only the slots this slice dispatches ---------------------------------
-struct Widget {
-    virtual void w00(); virtual void w01(); virtual void w02();
-    virtual void update(float dt);                  // +0x0c
-    virtual void w04(); virtual void w05(); virtual void w06(); virtual void w07();
-    virtual void w08(); virtual void w09(); virtual void w10(); virtual void w11();
-    virtual void w12(void* a, int b);               // +0x30
-    virtual void set_value(float f);                // +0x34
-    virtual void w14(); virtual void w15(); virtual void w16(); virtual void w17();
-    virtual void w18(); virtual void w19(); virtual void w20(); virtual void w21();
-    virtual void w22(); virtual void w23(); virtual void w24(); virtual void w25();
-    virtual void w26(); virtual void w27(); virtual void w28(); virtual void w29();
-    virtual void w30(); virtual void w31(); virtual void w32(); virtual void w33();
-    virtual void w34(); virtual void w35(); virtual void w36(); virtual void w37();
-    virtual void w38(); virtual void w39(); virtual void w40();
-    virtual void set_text(void* out, const tstring* text);   // +0xa4
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
-struct Screen : Widget {
+struct ScreenObj : Widget {
     void update_all();                                       // 0x4ec460 (non-virtual)
 };
-extern Screen* g_screens[30];       // 0xa73980 (.. 0xa739f4)
+extern ScreenObj* g_screens[30];       // 0xa73980 (.. 0xa739f4)
 
 struct IdStack {                    // 0xa739f8
     int f0;                         // 0xa739f8
@@ -184,10 +169,7 @@ extern Output g_5a9f60;                 // 0x5a9f60
 struct MainMenu { void choose(int i); };                     // 0x495700
 extern MainMenu g_main_menu;            // 0xa73980
 
-struct MapEditor {
-    void update_object_type();          // 0x4c7bf0
-    void update_objects();              // 0x4c7e20
-};
+#include "../map_editor_obj.h"        // MapEditor (the object at 0x8ee3c48)
 
 // ---- free functions --------------------------------------------------------------------------------
 extern "C" void __stdcall _FSOUND_Update(void);              // 0x53433c
@@ -205,9 +187,9 @@ void global_4c03b0(void*);                                   // 0x4c3340
 // ---- the loading screen (0x50f440 lives in slice s0050f440; see there) ------------------------------
 struct LoadingScreen {                  // fields used by 0x50f390
     char pad0[0x30];
-    Screen* text_widget;                // 0x30
+    ScreenObj* text_widget;                // 0x30
     char pad34[4];
-    Screen* bar_widget;                 // 0x38
+    ScreenObj* bar_widget;                 // 0x38
     int step;                           // 0x3c
     int total;                          // 0x40
     int f44;                            // 0x44
@@ -426,7 +408,7 @@ void LoadingScreen::update(int unused)
     bool finished = advance(&step, &total, &text);
     const char* fmt = "%d";
     _snprintf(buf, 0x100, fmt, step);
-    text_widget->set_text(tmp, &text);
+    text_widget->set_text(tmp, text);
     bar_widget->set_value((float)step * 0.14285715f);
     if (finished) {
         g_main_menu.choose(4);

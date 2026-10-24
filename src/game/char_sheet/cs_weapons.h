@@ -15,19 +15,10 @@
 #include "../str_table.h"
 extern StrTable g_strtable;                         // 0x5e2a18
 
-// ---- character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) --------
-struct CharRec {
-    char pad0[0x30];
-    unsigned __int64 flags;                         // +0x30
-    char pad38[0x80 - 0x38];
-    float weapon[9];                                // +0x80 (weapon proficiency per class; [7] = +0x9c, [8] = +0xa0)
-    int health;                                     // +0xa4
-    int health_max;                                 // +0xa8
-    int next_level_xp;                              // +0xac
-    int xp;                                         // +0xb0
-    char padb4[0x508 - 0xb4];
-    int weapons_at(int index);                      // 0x4ef6d0 (grid-rounded value of the weapon experience table)
-};
+// ---- the character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) is the troop record,
+// src/include/troop.h (the slice called it CharRec): +0x30 flags30, +0x80 f80[] per-class weapon proficiency, +0xa4 skill_points,
+// +0xa8 attr_points, +0xac prof_points, +0xb0 level; weapons_at is Troop::steps_to_point (0x4ef6d0).
+#include "../../include/troop.h"
 
 #include "../../include/game_data.h"
 

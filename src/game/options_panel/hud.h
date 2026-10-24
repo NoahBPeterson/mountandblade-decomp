@@ -83,26 +83,7 @@ inline void play_family_sound(int family, int id)
 // ---- widgets -------------------------------------------------------------------------------------------
 // control widget: "activate" at vtable +0x2c, "value" at +0x30, "float" at +0x38, "used" at +0x44,
 // "key flags" at +0x48, "kind" at +0xc0 (slots cross-checked with s004cf7b0 / s004dd830).
-struct Widget {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0a();
-    virtual void activate(int v);                   // +0x2c
-    virtual void m0c();
-    virtual int  get_value();                       // +0x30
-    virtual void m0e(); virtual void m0f();
-    virtual float get_float();                      // +0x38
-    virtual char used(int flag);                    // +0x44
-    virtual void set_key_flags(int f);              // +0x48
-    virtual void m13(); virtual void m14();
-    virtual void m15(); virtual void m16(); virtual void m17(); virtual void m18();
-    virtual void m19(); virtual void m1a(); virtual void m1b(); virtual void m1c();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
-    virtual void m28(); virtual void m29(); virtual void m2a(); virtual void m2b();
-    virtual void m2c(); virtual void m2d(); virtual void m2e(); virtual void m2f();
-    virtual int  kind();                            // +0xc0
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
 // +0x178 the slot index, +0x17c the step, +0xf0 the per-slot screen values.
@@ -150,23 +131,7 @@ inline ValueWidget* item_value(MissionItem* it) { return *(ValueWidget**)((char*
 // the item source (0x4d5410's `this`, Hud+0x30): an STL vector of MissionItem* at +0x4/+0x8/+0xc, the
 // item family at +0x10 (its sound is the family-th ItemSound), the current clock slot at +0x18 and the
 // 64-bit tick the slot was entered at (+0x20/+0x24).
-struct MissionSource {
-    char           pad0[4];
-    MissionItem**  begin;                           // +0x4
-    MissionItem**  end;                             // +0x8
-    MissionItem**  cap;                             // +0xc
-    int            family;                          // +0x10
-    char           pad14[0x18 - 0x14];
-    int            slot;                            // +0x18
-    char           pad1c[0x20 - 0x1c];
-    int            tick_lo;                         // +0x20
-    int            tick_hi;                         // +0x24
-
-    // VC7.1 vector<MissionItem*>::size(): empty vector is NULL in this build
-    unsigned size() const { return begin ? (unsigned)(end - begin) : 0; }
-
-    void pick(int* arg);                            // 0x4d5410 (handle_buttons passes &arg; the callback ignores it)
-};
+#include "../mission_source.h"                  // MissionSource (pick 0x4d5410)
 
 // The item source as its callers see it (0x4d5290 calls 0x4d5410 as an ordinary external function: if cl saw the body in
 // this TU it would give the callee its own register convention).

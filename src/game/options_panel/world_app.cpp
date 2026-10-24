@@ -426,10 +426,7 @@ void TreeW::insert(void** out, void* a, void* b)
 // ---- the application object (0x4d3ec0, 0x4d4130, 0x4d4140) ----
 // ---- callees -------------------------------------------------------------------------------------------
 void* __cdecl operator new(unsigned size);          // 0x53545e
-struct CD3DFont {
-    char pad[0x67c];
-    CD3DFont(const char* name, DWORD height, DWORD flags);    // 0x404980
-};
+#include "../../dxframework/d3dfont.h"            // CD3DFont (0x67c bytes; ctor 0x404980)
 void  sub_4bec60(void* array, int* count);          // 0x4bec60
 void  keys_read(HKEY* key, const char* name, tstring* out);   // 0x4b9720
 extern "C" {

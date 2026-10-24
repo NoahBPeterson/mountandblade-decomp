@@ -13,7 +13,6 @@
 #include "rgl.h"
 
 using rgl::vector4;
-struct vector2;                                             // forward: keeps <math.h> ahead of it (see below)
 
 // NOTE (slot numbering): cl 13.10 numbers a class's virtuals in DECLARATION order, one slot per declaration,
 // but two families are numbered from a base of their own: a parameter given by reference (const vector2&)
@@ -29,7 +28,7 @@ struct vector2;                                             // forward: keeps <m
 extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0x536f7c
 
 // ---- controls (layouts verified in s004d5ba0 / s004d63b0 / s004d6b80) ---------------------------------
-struct vector2 { float x, y; };
+#include "../../include/vec.h"                      // vector2 (= Vec2)
 // How this block was measured (cl 13.10, /O2):  within one parameter family (no parameters, (int), a
 // reference argument, ...) consecutive virtuals get consecutive slots, and every reference argument family is
 // numbered 0x24 above the no-parameter family (see the note above).  The declarations below are laid out so
@@ -50,42 +49,7 @@ struct vector2 { float x, y; };
 //   0xa8  take (get_text)
 //   0xac  put (set_text with a position) -- a reference family of its own
 //   0xb0  show
-struct Widget {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09();
-    virtual void activate(int v);                           // +0x28
-    virtual void v0c();
-    virtual int  get_value();                               // +0x30
-    virtual void v0d();
-    virtual float get_float();                              // +0x38
-    virtual void v10(); virtual void v11();
-    virtual char changed(int flag);                         // +0x44
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v1a(); virtual void v1b(); virtual void v1c(); virtual void v1d();
-    virtual void v1e(); virtual void v1f(); virtual void v20(); virtual void v21();
-    virtual void v22(); virtual void v23();
-    virtual void v24(); virtual void v25();
-    virtual void v26();
-    virtual void v27(const vector2& v);                     // +0x44
-    virtual void v28(const vector2& v);                     // +0x48
-    virtual void v29(const vector2& v);                     // +0x4c
-    virtual void v2a(); virtual void v2b(); virtual void v2c(); virtual void v2d();
-    virtual void v2e(); virtual void v2f(); virtual void v30(); virtual void v31(); virtual void v32();
-    virtual void v33(); virtual void v34();
-    virtual void set_default();                             // +0x90
-    virtual void x94();                                     // +0x94 (not called by this page)
-    virtual void set_colour(int colour);                    // +0x98
-    virtual void x9c(); virtual void x9d(); virtual void x9e();     // 0x9c, 0xa0, (0xa4 in the binary)
-    virtual void put(const tstring& s);                     // +0xa4  set_text
-    virtual void take(const tstring& out);                  // +0xa8  get_text (reads into `out`)
-    virtual void put(const tstring& s, const vector4& pos); // +0xac  set_text(s, pos)
-    virtual void show();                                    // +0xb0
-    virtual void hide();                                    // +0xb4
-    virtual void enable();                                  // +0xb8
-    virtual void disable();                                 // +0xbc
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[n] = 2 << n
@@ -103,19 +67,7 @@ extern Pct g_pct;                                           // 0xa76630
 
 // ---- the world / scene --------------------------------------------------------------------------------
 // effect object created by 0x478f30 (0x7c bytes; layout from s00494e40)
-struct EffObj {
-    int f0;                                                 // +0x00
-    vector4 pos;                                            // +0x04
-    vector4 f14;                                            // +0x14
-    vector4 f24;                                            // +0x24
-    char pad34[0x44 - 0x34];
-    vector4 f44;                                            // +0x44
-    float f54;                                              // +0x54
-    char pad58[0x7c - 0x58];
-};
-struct EffMgr {
-    EffObj* create();                                       // 0x478f30
-};
+#include "../eff_obj.h"                                     // EffObj / EffMgr
 struct World {                                              // the page's +0x1ac; scene object 0x421390 resets
     char pad00[0x68];
     vector4 f68;                                            // +0x68
@@ -150,64 +102,8 @@ extern MainMenu g_main_menu;                                // 0x5e2xxx
 extern terrain_obj g_terrain_obj;                           // 0xa76630
 extern const char g_fmt_d[];                                // 0x54a0f4 "%d"
 
-// One plain virtual in the class: a class with no virtuals at all makes cl 13.10 lay out every *later*
-// polymorphic class with a vfptr+vbtable-style prefix, so the Widget slots come out 0x20 too high.
-struct Paged {
-    virtual void page_update(float dt);                     // 0x4f2d70
-};
-
-struct TerrainPage : Paged {
-    char    pad04[0x18 - 0x04];
-    int     option;                                         // +0x18 (the option the menu returns to)
-    char    pad1c[0x2c - 0x1c];
-    int     terrain_on;                                     // +0x2c  "Enable terrain" checkbox
-    int     terraingen_on;                                  // +0x30  "Enable terrain generation" checkbox
-    int     water_on;                                       // +0x34  "Enable water" checkbox
-    int     river_on;                                       // +0x38  "Enable river" checkbox
-    float   camera_x;                                       // +0x3c  X position
-    float   camera_y;                                       // +0x40  Y position
-    float   camera_z;                                       // +0x44  camera height above the ground
-    float   fog;                                            // +0x48  fog (0..1)
-    float   water_height;                                   // +0x4c  water height (0..1)
-    int     water_level;                                    // +0x50  water level
-    int     layer_bits[3];                                  // +0x54 / +0x58 / +0x5c  random bits of the water layers
-    int     terrain_type;                                   // +0x60  terrain type (index into g_size_modes)
-    int     map_size;                                       // +0x64  terrain size
-    char    pad68[0x190 - 0x68];
-    float   view_x;                                         // +0x190 (view position X)
-    float   view_y;                                         // +0x194 (view position Y)
-    char    pad198[0x1ac - 0x198];
-    World*  world;                                          // +0x1ac (the scene object the page drives)
-    char    pad1b0[0x1b4 - 0x1b0];
-    Widget* hexbox;                                         // +0x1b4  the hex terrain text field
-    Widget* copy_btn;                                       // +0x1b8  copy terrain code
-    Widget* paste_btn;                                      // +0x1bc  paste terrain code
-    Widget* x_slider;                                       // +0x1c0  X position slider
-    Widget* y_slider;                                       // +0x1c4  Y position slider
-    Widget* z_slider;                                       // +0x1c8  camera height slider
-    Widget* fog_slider;                                     // +0x1cc  fog slider
-    Widget* level_slider;                                   // +0x1d0  water level slider
-    Widget* height_slider;                                  // +0x1d4  water height slider
-    char    pad1d8[0x200 - 0x1d8];
-    Widget* bit_fields[3];                                  // +0x200  number field of terrain slot 0..2
-    Widget* layer_boxes[3];                                 // +0x20c  select checkbox of terrain slot 0..2
-    Widget* water_box;                                      // +0x218  Enable water
-    Widget* river_box;                                      // +0x21c  Enable river
-    Widget* terrain_box;                                    // +0x220  Enable terrain
-    Widget* terraingen_box;                                 // +0x224  Enable terrain generation
-    Widget* type_box;                                       // +0x228  terrain type
-    Widget* size_box;                                       // +0x22c  terrain size
-    Widget* regen_btn;                                      // +0x230  regenerate
-    Widget* back_btn;                                       // +0x234  back
-    char    pad238[0x2c0 - 0x238];
-
-    void update(float dt);                                  // 0x4f2d70
-    void read_fields();                                     // 0x4f3570
-    void simulate(float dt);                                // 0x4f37f0
-    void path(float dt);                                    // 0x4f3cf0
-    void copy_code();                                       // 0x4f34c0
-    void paste_code();                                      // 0x4f3c30
-};
+// the page: src/game/terrain_page.h (Paged, TerrainPage)
+#include "../terrain_page.h"
 
 static inline bool page_changed(Widget* w) { return w->changed(0x10000) != 0; }
 

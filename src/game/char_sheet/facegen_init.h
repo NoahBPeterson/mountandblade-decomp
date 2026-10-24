@@ -105,32 +105,12 @@ struct overlay : elem {
 };
 
 // the engine view frustum (0x120 bytes)
-struct eng_frustum {
-    unsigned char on;                                   // +0x000
-    char pad1[0xf8 - 1];
-    float f_f8[4];                                      // +0x0f8
-    float f108;                                         // +0x108
-    float f10c;                                         // +0x10c
-    float f110;                                         // +0x110
-    float f114;                                         // +0x114
-    float f118;                                         // +0x118
-    float f11c;                                         // +0x11c
-    void build_planes();                                // 0x41e4f0
-};
-
+#include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
 struct World;
 
 // the 0x358-byte camera body (ctor 0x4ed630): widget + world link + frustum copy
-struct face_body : widget {
-    World* world;                                       // +0x178
-    char pad17c[0x1ac - 0x17c];
-    eng_frustum view;                                   // +0x1ac (0x120 bytes)
-    char pad2cc[0x308 - 0x2cc];
-    unsigned flags;                                     // +0x308
-    unsigned color;                                     // +0x30c
-    char pad310[0x358 - 0x310];
-    face_body() MB_NOTHROW;                             // 0x4ed630
-};
+#include "../map_widget.h"                 // MapWidget (the slice's face_body)
+typedef MapWidget face_body;
 
 // the face-generator window, ctor 0x4f49d0
 struct FaceGen {
@@ -139,7 +119,7 @@ struct FaceGen {
     char pad18[0x2c - 0x18];
     overlay* ui;                                        // +0x2c
     face_body* body;                                    // +0x30
-    eng_frustum fr;                                     // +0x34 (0x120 bytes)
+    rgl::frustum fr;                                     // +0x34 (0x120 bytes)
     float v154[4];                                      // +0x154
     float f164;                                         // +0x164
     float f168;                                         // +0x168
@@ -183,20 +163,7 @@ struct FaceGen {
 };
 
 // ---- engine vector of ints (lead dword, then first/last/end) ---------------------------------------------
-template <class T>
-struct engvec {
-    int lead;                                           // +0x00
-    T* first;                                           // +0x04
-    T* last;                                            // +0x08
-    T* end;                                             // +0x0c
-    void insert_n(T* where, unsigned n, T const& val);  // 0x40f8a0
-    void push_back(T const& v) {
-        if (first == 0 || (unsigned)(last - first) >= (unsigned)(end - first))
-            insert_n(last, 1, v);
-        else
-            *last++ = v;
-    }
-};
+#include "../engvec.h"                                 // engvec<T>
 
 // ---- globals ---------------------------------------------------------------------------------------------
 #include "../../include/msg_log.h"
@@ -225,12 +192,7 @@ struct Game { char pad0[0x13a00]; char* chars; char pad13a04[0x1a090 - 0x13a04];
 extern Game* g_game;                                    // 0x5e2930
 extern int g_no_cam;                                    // 0x5a9fb0
 
-struct Animator {
-    char pad0[8];
-    int cur;                                            // +0x8
-    void set_anim_a(void* a);                           // 0x473800
-};
-extern Animator g_anim;                                 // 0x8ed4f60
+#include "../animator.h"                              // Animator, g_anim
 extern float g_dummy_mat;                               // 0x8ed4f8c
 extern float g_dummy0;                                  // 0x8ed5088
 extern float g_dummy1;                                  // 0x8ed508c

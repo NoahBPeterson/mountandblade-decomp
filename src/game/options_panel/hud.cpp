@@ -6,6 +6,8 @@
 #include <new>
 #include "./mesh_edit.h"
 #include "./hud.h"
+#include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4d4b80
 bool Mesh::on_selection_changed()
@@ -138,42 +140,42 @@ bool Mesh::on_selection_changed()
 void Hud::handle_buttons(int arg)
 {
     ((ItemSource*)((char*)(void*)this + 0x30))->pick(&arg);
-    if (f60->used(0x10000)) {
+    if (f60->changed(0x10000)) {
         g_menu_w1[6] = 4;
         g_menu_w1[1] = 3;
         g_menu_w1[0x8c / 4] = 0;
         g_main_menu.choose(3);
         return;
     }
-    if (f64->used(0x10000)) {
+    if (f64->changed(0x10000)) {
         g_menu_w1[1] = 0;
         g_menu_w1[0x8c / 4] = f88;
         g_main_menu.choose(3);
         return;
     }
-    if (f68->used(0x10000)) {
+    if (f68->changed(0x10000)) {
         g_menu_w5[6] = 4;
         g_main_menu.choose(0x15);
         return;
     }
-    if (f6c != 0 && f6c->used(0x10000)) {
+    if (f6c != 0 && f6c->changed(0x10000)) {
         g_menu_w1[6] = 4;
         g_menu_w1[1] = 2;
         g_menu_w1[0x8c / 4] = 0;
         g_main_menu.choose(3);
         return;
     }
-    if (f70->used(0x10000)) {
+    if (f70->changed(0x10000)) {
         g_menu_w4[6] = 4;
         g_main_menu.choose(0x12);
         return;
     }
-    if (f74->used(0x10000)) {
+    if (f74->changed(0x10000)) {
         g_menu_w6[6] = 4;
         g_main_menu.choose(0x1c);
         return;
     }
-    if (f78->used(0x10000))
+    if (f78->changed(0x10000))
         g_5e2a08 = 1;
 }
 
@@ -236,7 +238,7 @@ void Hud::on_mission_start(int arg)
 // @ 0x4d59f0
 void Hud::on_leave(int arg)
 {
-    if (f34->used(0x10000))
+    if (f34->changed(0x10000))
         g_main_menu.choose(7);
 }
 
@@ -250,26 +252,26 @@ void Hud::on_update(int arg)
         item_value(f3c)->set_key_flags(0x10000);
     }
     for (int i = 0; i < f24c; i++) {
-        if (wi[i]->used(0x10000)) {
+        if (wi[i]->changed(0x10000)) {
             f250 = i;
             page_fill();
         }
     }
-    if (f34->used(0x10000)) {
+    if (f34->changed(0x10000)) {
         if (f04 == 0) {
             f34->activate(1);
             return;
         }
         f04 = 0;
         g_main_menu.choose(0xd);
-    } else if (f38->used(0x10000)) {
+    } else if (f38->changed(0x10000)) {
         if (f04 == 1) {
             f38->activate(1);
             return;
         }
         f04 = 1;
         g_main_menu.choose(0xd);
-    } else if (f30->used(0x10000) || (!g_a170d8 && g_a174d8)) {
+    } else if (f30->changed(0x10000) || (!g_a170d8 && g_a174d8)) {
         g_main_menu.choose(f18);
     }
 }
@@ -333,7 +335,7 @@ void MissionSource::pick(int* arg)
             if ((*p)->nodes[n])
                 timer_set((*p)->nodes[n], &t);
         }
-        if ((*p)->used(0x10000)) {
+        if ((*p)->changed(0x10000)) {
             g_spawn_lo = i;
             g_spawn_hi = 0;
             int k = it->kind();
@@ -352,11 +354,11 @@ void MissionSource::pick(int* arg)
                 g_spawn_hi = it->f180 != 0;
                 play_family_sound(family, 0xc2);
             }
-        } else if (it->used(2)) {
+        } else if (it->changed(2)) {
             g_spawn_hi = 0;
             g_spawn_lo = i;
             play_family_sound(family, 0xc1);
-        } else if (it->used(4)) {
+        } else if (it->changed(4)) {
             g_spawn_hi = 1;
             g_spawn_lo = i;
             play_family_sound(family, 0xc1);

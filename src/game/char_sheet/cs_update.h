@@ -23,35 +23,8 @@ struct World { void step(float dt); };
 #include "../tstring.h"
 
 // ---- the virtual interface of the widgets seen through their vptr (0xdword slots, see s0048b760) ------
-struct UiVt {
-    virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
-    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
-    virtual void d10(); virtual void d11(); virtual void d12(); virtual void d13(); virtual void d14();
-    virtual void d15(); virtual void d16();
-    virtual char clicked_on(int which);             // +0x44 (2 press, 4 release, 0x10000 click)
-    virtual void set_key_flags(int f);              // +0x48
-    virtual void d19(); virtual void d20(); virtual void d21(); virtual void d22(); virtual void d23();
-    virtual void d24();
-    virtual void set_xy(float* v);                  // +0x64
-    virtual void d26();
-    virtual void set_size(float* v);                // +0x6c
-    virtual void set_pos(float* v);                 // +0x70
-    virtual void d29(); virtual void d30(); virtual void d31(); virtual void d32(); virtual void d33();
-    virtual void d34(); virtual void d35();
-    virtual void refresh();                         // +0x90
-    virtual void get_xy(float* v);                  // +0x94
-    virtual void set_color(unsigned* c);            // +0x98
-    virtual void d39(); virtual void d40();
-    virtual void get_text_size(tstring* s, float* out);  // +0xa4
-    virtual void d42(); virtual void d43();
-    virtual void hide();                            // +0xb0
-    virtual void show();                            // +0xb4
-    virtual void enable();                          // +0xb8
-    virtual void disable();                         // +0xbc
-    virtual void d48();
-    virtual void update_children();                 // +0xc4
-};
-
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
+typedef Widget UiVt;                    // the slice's name for it
 typedef UiVt UiWidget;                              // widget pointers point at the polymorphic object itself
 
 // ---- game records ------------------------------------------------------------------------------------
@@ -93,58 +66,7 @@ struct HeroEntry {
 };
 
 // the character sheet panel (see s004ef420 / s004ef9f0 for the detail page)
-struct CharSheet {
-    int vptr;                                       // +0x00
-    int f_4;                                        // +0x04
-    char pad8[0x14 - 0x8];
-    int f_14;                                       // +0x14 (edited troop index)
-    int f_18;                                       // +0x18 (sound / message id)
-    char pad1c[0x30 - 0x1c];
-    UiWidget* f_30[10];                             // +0x30 (skill-row number labels)
-    char pad58[0x180 - 0x58];
-    UiWidget* f_180[10];                            // +0x180 (skill rows)
-    char pad1a8[0x228 - 0x1a8];
-    int f_228[10];                                  // +0x228 (skill id of each skill row)
-    char pad250[0x2d0 - 0x250];
-    int f_2d0;                                      // +0x2d0 (number of skill rows)
-    int f_2d4;                                      // +0x2d4 (selected row, -1 = none)
-    int f_2d8;                                      // +0x2d8 (page: 0 attributes, 1 skills, 2 profs, 3 face)
-    int f_2dc;                                      // +0x2dc (done state: 0 idle, 1 waiting)
-    char pad2e0[0x2e4 - 0x2e0];
-    int f_2e4;                                      // +0x2e4 (the world stepped each frame)
-    char pad2e8[0x42c - 0x2e8];
-    UiWidget* f_42c;                                // +0x42c (done/cancel buttons)
-    UiWidget* f_430;                                // +0x430 (skills page panel)
-    UiWidget* f_434;                                // +0x434 (description box)
-    char pad438[0x440 - 0x438];
-    UiWidget* f_440;                                // +0x440 (back to the army button)
-    UiWidget* f_444;                                // +0x444 (previous troop)
-    UiWidget* f_448;                                // +0x448 (next troop)
-    UiWidget* f_44c[4];                             // +0x44c (attribute left buttons)
-    UiWidget* f_45c[4];                             // +0x45c (attribute right buttons)
-    char pad46c[0x478 - 0x46c];
-    UiWidget* f_478[7];                             // +0x478 (proficiency number labels)
-    UiWidget* f_494[7];                             // +0x494 (proficiency rows)
-    char pad4b0[0x4b8 - 0x4b0];
-    UiWidget* f_4b8;                                // +0x4b8 (title label)
-    UiWidget* f_4bc;                                // +0x4bc (scroll/slider bar)
-    char pad4c0[0x4c4 - 0x4c0];
-    UiWidget* f_4c4;                                // +0x4c4 (portrait)
-    char f_4c8;                                     // +0x4c8 (skills visible)
-    char pad4c9[0x4cc - 0x4c9];
-    UiWidget* f_4cc;                                // +0x4cc (edit face button)
-    char pad4d0[0x4d4 - 0x4d0];
-    char f_4d4;                                     // +0x4d4 (dirty flag)
-    char pad4d5[0x52c - 0x4d5];
-    char f_52c;                                     // +0x52c (face page visible)
-
-    void update(float dt);                          // 0x4eeb10
-    void apply_to_troop();                          // 0x4ef420
-    void update_skill_rows();                       // 0x4ef7d0
-    void update_detail();                           // 0x4ef9f0
-    void refresh_panels();                          // 0x4f0820
-    void refresh_lists();                           // 0x4f06f0
-};
+#include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
 // the skill rows at +0xd8 are the same widgets as +0x480 (the editor keeps them twice)
 struct SkillRows { UiWidget* w[5]; };
 
