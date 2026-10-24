@@ -23,7 +23,9 @@ struct WVt {
     virtual void d00(); virtual bool d01(); virtual void d02();
     virtual void d03();                         // +0x0c  rebuild / finish layout (0x499a20, 0x499d90)
     virtual void d04(); virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08();
-    virtual void d09(); virtual void d10(); virtual void d11(); virtual void d12();
+    virtual void d09(); virtual void d10();
+    virtual void d11(int index);                // +0x2c  select / focus an item (src/game/cls_map: 0x4e05c0)
+    virtual void d12();
     virtual void d13(float v);                  // +0x34  set value (0x499b80)
     virtual void d14(); virtual void d15(); virtual void d16(); virtual void d17(); virtual void d18();
     virtual void d19(int flags);                // +0x4c  (0x49ad20)
@@ -36,14 +38,19 @@ struct WVt {
     virtual void d27(void* v);                  // +0x6c  set_size
     virtual void d28(void* v);                  // +0x70  set_offset
     virtual void d29(void* v);                  // +0x74  (0x499830)
-    virtual void d30(); virtual void d31();
+    virtual void d30(const int* v);             // +0x78  text flags (src/game/cls_map: 0x4dc630)
+    virtual void d31(int kind, rgl::mesh* m);   // +0x7c  install a mesh (src/game/cls_map: 0x4dada0)
     virtual void d32(int slot, rgl::mesh* m);   // +0x80  install a mesh in slot 0..3 (0x499830)
-    virtual void d33(); virtual void d34(); virtual void d35(); virtual void d36(); virtual void d37();
-    virtual void d38();
+    virtual void d33(); virtual void d34(); virtual void d35(); virtual void d36();
+    virtual void d37(const void* color);        // +0x94  (src/game/cls_map: 0x4e05c0)
+    virtual void d38(const void* color);        // +0x98  (src/game/cls_map: 0x4dada0)
     virtual void d39(const void* color);        // +0x9c  (0x499830)
     virtual void d40();
     virtual void d41(void* a, void* b);         // +0xa4  (0x499830, 0x49ad20)
-    virtual void d42(); virtual void d43(); virtual void d44(); virtual void d45(); virtual void d46();
+    virtual void d42();
+    virtual void d43(void* out, const void* text);   // +0xac  (src/game/cls_map: 0x4dada0)
+    virtual void d44(); virtual void d45();
+    virtual void d46();                         // +0xb8  hide (src/game/cls_map: 0x4dcef0)
     virtual void d47();
     virtual int  kind();                        // +0xc0  widget type code, 0..9 (0x49a300)
     virtual void d49();

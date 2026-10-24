@@ -239,6 +239,9 @@ struct ini_file {
     void load(FILE* f);                             // 0x4bd630
     int  find(const tstring& key);                  // 0x4bd5a0
     float get_float(const tstring& key);            // 0x4bd5e0
+    int  get_hex(int* idx);                         // 0x4e51e0 (sscanf "%x" of entry *idx; 0 when out of range; src/game/cls_map/progress_bar.cpp)
+    float get_float(int* idx);                      // 0x4e5230 (atof of entry *idx; -1.0f when out of range)
+    int  hex_field(const tstring& key);             // 0x4e5d30 (find, then "%x" of the entry)
     void parse_line(const char* line, tstring& key, tstring& value);   // 0x4bd4d0
     void write(FILE* f, const tstring& key, const tstring& value);     // 0x4bd740
 };

@@ -137,7 +137,9 @@ struct gui_manager {
     gui_obj* o56c;                  // +0x56c  reset
     mesh m570;                      // +0x570  ctor: mesh::mesh 0x412a90 (0x260 bytes each)
     tstring lines[0x50];            // +0x7d0  set_o568 / reset (assign("")), ctor loop of tstring::tstring 0x42bbd0
-    char padcd0[0xfa0 - 0xcd0];
+    unsigned char line_wrap[0x50];  // +0xcd0  per-line flag (draw_string 0x4e43e0: the `wrap` argument; rebuild 0x4da900 replays it)
+    float line_height[0x50];        // +0xd20  per-line height argument
+    int line_arg[0x50];             // +0xe60  per-line int argument
     int fa0, fa4;                   // +0xfa0, +0xfa4  set_o568 / reset
     float fa8;                      // +0xfa8
     char padfac[0xfb0 - 0xfac];
@@ -176,5 +178,9 @@ struct gui_manager {
     void reset();                   // 0x42d1b0
     void set_o564(gui_obj* p);      // 0x42cd80
     void set_o568(gui_obj* p, bool clear_lines);   // 0x42cdb0
+    void draw_string(tstring* s, float height, int arg, char wrap);   // 0x4e43e0 (ret 0x10; src/game/cls_map/progress_bar.cpp)
+    void build_scene();             // 0x4e6050 (the frame's scene build: two viewports, the widget walk and the log / frame meshes; src/game/cls_map/progress_bar.cpp)
+    void rebuild();                 // 0x4da900 (replays the stored lines into a fresh text mesh; src/game/cls_map)
+    void add_root(void* const& window);            // 0x49b120 (ret 4: make `window` the active root window; src/game/cls_map)
 };
 #endif // GUI_MANAGER_H

@@ -1,0 +1,42 @@
+004e3eb0 ??0progress_bar@@QAE@XZ
+004e3f20 ?draw_label@progress_bar@@QAEXPAUscene@rgl@@PAMHH@Z
+004e3f60 ?set_ratio@progress_bar@@QAEXM@Z
+004e3fb0 ?update@progress_bar@@QAEXXZ
+004e4060 ?push_back@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAEXABUE50@@@Z
+004e40f0 ?resize@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@QAEXIUE68@@@Z
+004e41e0 ?resize@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@QAEXIUE176@@@Z
+004e42b0 ??$_Copy_backward_opt@PAURagModel@@PAU1@@std@@YAPAURagModel@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z
+004e42f0 ?construct@?$allocator@URagModel@@@std@@QAEXPAURagModel@@ABU3@@Z
+004e4320 ?construct@?$allocator@Uloading_config@@@std@@QAEXPAUloading_config@@ABU3@@Z
+004e4340 ??$_Uninit_copy@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@PAUloading_config@@V?$allocator@Uloading_config@@@3@@std@@YAPAUloading_config@@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@0@0PAU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
+004e43e0 ?draw_string@gui_manager@@QAEXPAUtstring@@MHD@Z
+004e4690 ?load@RagModel@@QAEXPAVTiXmlElement@@@Z
+004e4790 ?init@SaveWindow@@QAEXXZ
+004e4c70 ?label_refresh@@YAXPAUMissionUi@@Utstring@@@Z
+004e51e0 ?get_hex@ini_file@@QAEHPAH@Z
+004e5230 ?get_float@ini_file@@QAEMPAH@Z
+004e5270 ?list_saves@SaveWindow@@QAEXXZ
+004e54e0 ?read_slot@SlotHeader@@QAE_NPAUSlotReader@@@Z
+004e5570 ?make_short_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z
+004e55f0 ?slot_button@SaveWindow@@QAEXPAUContainerBase@@HPAPAUUiAInline@@@Z
+004e5d30 ?hex_field@ini_file@@QAEHABUtstring@@@Z
+004e5d80 ?create_stub@SavePanel@@QAEXXZ
+004e5d90 ?create@SavePanel@@QAEXXZ
+004e5e50 ?create_flagged@SavePanel@@QAEXXZ
+004e5e60 ?create2@SavePanel@@QAEXXZ
+004e5f50 ?_Destroy@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@IAEXPAUloading_config@@0@Z
+004e5f80 ??$fill@PAURagModel@@U1@@std@@YAXPAURagModel@@0ABU1@@Z
+004e5fc0 ??$_Uninit_fill_n@PAUloading_config@@IU1@V?$allocator@Uloading_config@@@std@@@std@@YAXPAUloading_config@@IABU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
+004e6050 ?build_scene@gui_manager@@QAEXXZ
+004e64b0 ?reset_geometry@MsgLog@@QAEXXZ
+004e6510 ?update@MsgLog@@QAEXM@Z
+004e65e0 ?build_spikes@Shape@@QAEXPAUmesh@rgl@@@Z
+004e6a70 ?build_ribbons@Shape@@QAEXPAUmesh@rgl@@@Z
+004e75a0 ?polygon_to_mesh@Shape@@QAEXPAUmesh@rgl@@@Z
+004e7a70 ?read@MapLoader@@QAEXPAUSlotReader@@@Z
+004e7b30 ?read@MapScene@@QAEXPAUmesh@rgl@@PAUMsStream@@@Z
+004e85d0 ?init@MapScreen@@QAEXPAX@Z
+004e8720 ?frame_step@MapScreen@@QAEXXZ
+
+# the progress bar widget vtable
+00597f20 ??_7progress_bar@@6B@  # the progress bar widget's vtable (stored by progress_bar::progress_bar 0x4e3eb0)

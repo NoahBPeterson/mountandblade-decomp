@@ -200,48 +200,10 @@ struct tvec {
 // ============================================================================================================
 struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared dtor: the original's
                                       // _Destroy loop survives, the call inlines away)
-struct E516 { int v[0x81]; };        // 0x204-byte record
-struct R44 { int v[11]; };           // 0x2c trivial element
-struct b16 { int v[4]; };            // 0x10 POD block
+#include "../../include/vec_elems.h"   // R44, b16, E50, E176 (shared with game/cls_map)
 
-// 0x38-byte record: a tstring followed by five raw pointers that a user destructor frees.
-struct NamePtrs56 {
-    tstring s;
-    int mid[5];
-    void* q[5];
-    ~NamePtrs56() { for (int i = 0; i < 5; ++i) free(q[i]); }
-};
-
-struct E50 {                                // 0x50
-    tstring s;                              // 0x00
-    int x0, x1, x2, x3;                     // 0x10
-    b16 y;                                  // 0x20
-    b16 z;                                  // 0x30
-    std::vector<R44> v;                     // 0x40
-    // memberwise, spelled out: the implicit one would call tstring's copy constructor, because the shared
-    // tstring::operator= returns void (src/game/tstring.h)
-    E50& operator=(const E50& o)
-    {
-        s = o.s;
-        x0 = o.x0; x1 = o.x1; x2 = o.x2; x3 = o.x3;
-        y = o.y;
-        z = o.z;
-        v = o.v;
-        return *this;
-    }
-};
 
 #include "../../include/e68.h"           // E68, M28, block_base, scalar4 (shared with game/ui/mission.h)
-
-struct E176 {                               // 0xb0
-    tstring s;                              // 0x00
-    int a;                                  // 0x10
-    int b;                                  // 0x14
-    int c;                                  // 0x18
-    std::vector<int> v;                     // 0x1c
-    b16 big[8];                             // 0x2c
-    int t;                                  // 0xac
-};
 
 // _Nonscalar_ptr_iterator_tag: an empty tag that cl 13.10 still passes as one 4-byte stack slot
 // (which is where the last `mov eax, [esp+8]` in 0x4cc260 comes from).
