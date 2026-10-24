@@ -294,4 +294,5 @@ struct terrain_obj : Terrain {
     void make_river();                      // 0x46bc70
 };
 
+extern terrain_obj g_terrain; // 0xa76630
 #endif // TERRAIN_A_TERRAIN_H

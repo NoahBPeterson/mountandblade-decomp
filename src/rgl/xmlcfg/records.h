@@ -55,7 +55,7 @@ struct RecF : IfaceB {
 struct RecGList {
     int head;
     RecG* items;        // +4
-    void clear();
+    void clear();   // 0x4317b0
 };
 // 0x34 bytes: a name at +4 and a pair at +0x18; vector deleting destructor 0x4318c0.
 struct RecK {

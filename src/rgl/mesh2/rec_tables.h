@@ -414,4 +414,7 @@ struct pair_holder {
 };
 
 
+void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al); // 0x4c3ef0
+void* copy_uninit_2c(char* first, char* last, char* dst, Alloc2c& al); // 0x4c3e80
+void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al); // 0x4c3e10
 #endif

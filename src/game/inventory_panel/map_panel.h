@@ -35,6 +35,7 @@ struct MapPanel {
     void set_label(int id);                  // 0x51a420
     void update(int type, int id);           // 0x51abd0
     void select(int id);                     // 0x51c090
+    void draw_party_line(int id); // 0x51c090
     void update_target();                    // 0x5191e0
 };
 #endif

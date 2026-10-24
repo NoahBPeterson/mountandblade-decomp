@@ -154,6 +154,7 @@ bool is_daytime();                      // 0x435700
 bool is_night();                        // 0x435740
 float __cdecl accel_factor(const float* a, const float* b, const float* c);   // 0x435ae0
 int __cdecl team_field5280(const Agent* a);                                   // 0x435b60
+int __cdecl team_leader(const Agent* a); // 0x435b60
 
 // ---- RecJ: the 0xb0-byte IfaceB-derived record (vtable 0x590b78, constructor 0x4377d0, slot1 0x437810): src/include/recj.h
 #include "../../include/recj.h"

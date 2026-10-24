@@ -37,7 +37,7 @@ struct Missile {
     int fa4;                                            // +0xa4 (init: -1)
     char pada8[0xb0 - 0xa8];
     void init();                                        // 0x467fb0
-    void make_capsule(capsule* out);                    // 0x46b410 (ret 4)
+    void make_capsule(capsule* out);                    // 0x46b410 (ret 4)  // old name of FireAgent::ray, removed after the names merge
     float ammo_scale();                                 // 0x467f80 (the carried item's length * 0.01)
 };
 typedef char missile_size_check[(sizeof(Missile) == 0xb0) ? 1 : -1];

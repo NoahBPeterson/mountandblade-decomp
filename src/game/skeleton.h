@@ -70,18 +70,18 @@ struct Skeleton {
     char f68;                                           // +0x68 (set to 1 when the agent dies; 0x457b40)
     char pad69[3];
     float rvx, rvy, rvz;                                // +0x6c root velocity, body-local (0x44fc60)
-    void update();                                      // 0x422130
+    void update();                                      // 0x422130  // old name of FxAnim::update_poses2, removed after the names merge
     void update_poses();                                // 0x422080
     void ensure_updated();                              // 0x43e740
     char* rec(int i);                                   // 0x43f260 (animator record i, brought up to date first; matrix at +0x84)
     void set_visible(char on);                          // 0x452f80 (agent4/agent_update.cpp: on the first show re-skins every psys and lod group)
     void attach_psys(int idx, struct Psys* p, const rgl::mat4* m);   // 0x442460 (ret 0xc; fx.h's FxDef::attach_psys; agent4: a stuck missile mesh)
-    void attach(int id, node_groups* l);                // 0x4424a0 (ret 8; agent4: attaches a display lod mesh to bone record id)
+    void attach(int id, node_groups* l);                // 0x4424a0 (ret 8; agent4: attaches a display lod mesh to bone record id)  // old name of FxDef::attach_group, removed after the names merge
     void remove_shape(shape_base* s);                   // 0x439ec0 (0x443aa0 passes a display mesh)
     void start_anim(int idx, Anim* anim, int a, int b); // 0x439fc0 (thiscall, ret 0x10)
     void all_shapes(shape_base** out, int* count);      // 0x43a130
     void reset_rec(int i);                              // 0x4339d0
-    float rec_phase(int i);                             // 0x433ac0
+    float rec_phase(int i);                             // 0x433ac0  // old name of Curve::rec_shaped_phase, removed after the names merge
     void set_rec_phase(int i, float p);                 // 0x433b20 (0x444370)
 };
 

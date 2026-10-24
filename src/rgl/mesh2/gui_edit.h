@@ -819,6 +819,7 @@ extern int g_n_quick_strings;                                           // 0xa75
 extern DialogRec* g_dialogs;                                            // 0x8ed50cc
 extern int g_n_dialogs;                                                 // 0x8ed50c8
 extern ModRec g_item_mods[];                                            // 0xa75f70 (43 x 0x28)
+extern ModRec g_item_modifiers[]; // 0xa75f70 (43 x 0x28)
 extern SkillRec g_skills[];                                             // 0x8ee3100 (42 x 0x44)
 extern GameMenu* g_menus;                                               // 0x5e29b0
 extern int g_n_menus;                                                   // 0x5e29b4
@@ -828,4 +829,7 @@ extern char g_lang_on;                                                  // 0xa18
 // the text log is written through its virtual w_cstr slot (+0x28), as the call sites do
 inline stream_base& log_cstr(const char* s) { return ((stream_base&)g_log).w_cstr(s); }
 
+void __fastcall conv_clear(void** self); // 0x4c8bf0
+void __fastcall conv_build_scene(conv_rec* self); // 0x4c8630
+void __fastcall conv_map_codes(conv_rec* self); // 0x4c84f0
 #endif

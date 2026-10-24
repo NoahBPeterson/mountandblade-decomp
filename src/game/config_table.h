@@ -17,7 +17,7 @@ struct ConfigTable {
     float get_float(const tstring& key);    // 0x4bd5e0 (ret 4)
     int get_int(const tstring& key);        // 0x5093d0 (ret 4)
 };
-extern ConfigTable g_config;                // 0xa44240
+extern ConfigTable g_config;                // 0xa44240  // old name of g_game_vars, removed after the names merge
 #define CONFIG_ENTRIES ((ConfigEntry*)0xa4425c)
 
 #endif // GAME_CONFIG_TABLE_H

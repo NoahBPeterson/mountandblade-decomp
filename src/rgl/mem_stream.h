@@ -12,6 +12,6 @@ stream_base& w_key_array_yzwx(stream_base& s, key_array* a);           // 0x4173
 stream_base& r_key_array_yzwx(stream_base& s, key_array* a);           // 0x4173b0 (allocates keys/data)
 stream_base& w_key_array_xyz(stream_base& s, key_array* a);            // 0x4174a0
 stream_base& r_key_array_xyz(stream_base& s, key_array* a);            // 0x417520
-void __stdcall clear_f14(named_object* r);                             // 0x4175f0
+void __stdcall clear_f14(named_object* r);                             // 0x4175f0  // old name of Mgr::release, removed after the names merge
 
 #endif

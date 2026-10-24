@@ -8,9 +8,9 @@
 #define MB_GAME_MAP_EDITOR_OBJ_H
 
 struct MapEditor {                                      // instance at 0x8ee3c48
-    void restart();                                     // 0x4c0520 (load_game_variables, trigger_vec.cpp)
-    void func_4c1a60();                                 // 0x4c1a60 (Core::InvalidateDeviceObjects)
-    void func_4c1940();                                 // 0x4c1940 (Core::RestoreDeviceObjects)
+    void restart();                                     // 0x4c0520 (load_game_variables, trigger_vec.cpp)  // old name of load_game_variables, removed after the names merge
+    void func_4c1a60();                                 // 0x4c1a60 (Core::InvalidateDeviceObjects)  // old name of Core::InvalidateDeviceObjects, removed after the names merge
+    void func_4c1940();                                 // 0x4c1940 (Core::RestoreDeviceObjects)  // old name of Core::RestoreDeviceObjects, removed after the names merge
     void update_object_type();                          // 0x4c7bf0 (MapEditorDialog::update_object_type)
     void update_objects();                              // 0x4c7e20 (MapEditorDialog::update_objects)
 };

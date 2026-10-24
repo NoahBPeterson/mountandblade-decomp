@@ -98,6 +98,7 @@ extern float g_screen_b;                                          // 0x5d75d8
 float __cdecl fmax_ref(const float* a, const float* b);           // 0x4324d0 (the larger of the two)
 MissionUi* __cdecl make_scroll_track(MissionUi* parent, float a, float b, float c, float d);   // 0x4ee910 (cdecl)
 MissionUi* __cdecl make_scroll_bar(MissionUi* content, float* a, float* b, MissionUi* track);   // 0x4eea90 (cdecl)
+MissionUi* __cdecl make_quest_list(MissionUi* content, float* a, float* b, MissionUi* track); // 0x4eea90
 float __cdecl clamp_float(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 
 // the scene's segment query and the skeleton's head bone, as the camera tick reaches them
@@ -374,6 +375,7 @@ struct IntList {                                                  // a VC7.1 vec
     int* last;
     int* end;
     void push_back(const int& v);                                 // 0x4fe0b0 (ret 4)
+    void int_push_back(const int& v); // 0x4fe0b0
     __declspec(noinline) bool buy(unsigned n);                                         // 0x4fd490 (ret 4: the allocation of the vector<int>'s first block)
     void xlen();                                                  // 0x43e2a0 (std::vector<int>::_Xlen)
     void push_back_b(const int& v);                               // 0x440b30 (the identical-code twin of push_back that the linker folded for other callers)

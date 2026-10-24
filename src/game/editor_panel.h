@@ -6,7 +6,7 @@
 #define GAME_EDITOR_PANEL_H
 #include "application.h"
 struct EditorPanel : GameApp {
-    void update_mode_checks();          // 0x4bf640
+    void update_mode_checks();          // 0x4bf640  // old name of CreateGameOptionsPage::update_checks, removed after the names merge
     void update_object_type();          // 0x4c7bf0
     LRESULT terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4fe860
 };

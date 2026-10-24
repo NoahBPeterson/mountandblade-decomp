@@ -13,4 +13,5 @@ struct Logger {
     virtual void put(const tstring* s);         // +0x2c
 };
 
+extern Logger g_debug_log; // 0x5a9f30 debug log object (slot 10 prints one line)
 #endif // MB_LOGGER_H

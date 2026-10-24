@@ -55,6 +55,7 @@ struct OptionsDlgView {
 FILE* __cdecl mb_open_user_file(const char* name, const char* mode);   // 0x415160
 void __fastcall init_options_obj(void* self);    // 0x4c3a40 (ecx = the object at 0x5aa008)
 void __cdecl worker_thread(void* arg);           // 0x4c8900
+void __cdecl loader_thread_body(void* arg); // 0x4c8900
 float __cdecl timer_op(int op);                  // 0x407660
 
 // std::list<int>::_Buynode of the glyph table's list (0x4c4dc0; ecx = the list at Font + 0x48)
@@ -399,6 +400,7 @@ struct OptionsScreen {
     MissionUi* s7c, *s80, *s84, *t88;           // +0x7c..+0x88
     MissionUi* s8c, *s90, *s94, *s98, *s9c, *sa0, *sa4, *sa8, *sac, *sb0, *sb4, *sb8, *sbc, *sc0, *sc4, *sc8, *scc, *sd0, *sd4;   // +0x8c..+0xd4
     void create();                              // 0x4d6300
+    void update_difficulty(); // 0x4d6300
     void open();                                // 0x4de6f0
 };
 

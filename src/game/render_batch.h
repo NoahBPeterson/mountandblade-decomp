@@ -30,4 +30,5 @@ struct render_batch {                               // ~4 MB object (config.cpp:
     int release_decls();                            // 0x4bd0c0
 };
 
+extern render_batch g_batch; // 0x5fe898
 #endif // GAME_RENDER_BATCH_H

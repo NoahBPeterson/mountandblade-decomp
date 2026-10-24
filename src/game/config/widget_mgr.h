@@ -179,14 +179,23 @@ struct widget_mgr {
     WVt* scene;                                 // +0x2c  vtable slot 50 adds a widget (0x499830)
 
     int add_medium(int id);                     // 0x499830
+    int create_game_button_overlay(int id); // 0x499830
     int add_xyz(int a, int b);                  // 0x499a20
+    int create_image_button_overlay(int a, int b); // 0x499a20
     int add_xyz_clicked(int a, int b);          // 0x499b50
+    int create_check_box_overlay(int a, int b); // 0x499b50
     int add_progress(int lo, int hi);           // 0x499b80
+    int create_progress_overlay(int lo, int hi); // 0x499b80
     int add_dropdown();                         // 0x499d90
+    int create_combo_button_overlay(); // 0x499d90
     int add_party();                            // 0x49a0b0
+    int create_text_box_overlay(); // 0x49a0b0
     int add_tableau_button(int pos, int rec, int key);   // 0x4b14f0 (ret 0xc; src/game/party2)
+    int create_image_button_overlay_with_tableau(int pos, int rec, int key); // 0x4b14f0
     void apply_preset(int idx, const float* pos);      // 0x49a300 (ret 8)
+    void set_size(int idx, const float* pos); // 0x49a300
     void apply_preset_b(int idx, const float* pos);    // 0x49ab80 (ret 8)
+    void set_area_size(int idx, const float* pos); // 0x49ab80
     // ---- src/game/mission_ui2: the widget setters of the script operations (overlay_set_* / overlay_animate_to_*) ----
     void* set_mesh_matrix(int idx, const void* m);      // 0x48db20 (ret 8: copies a 0x30-byte frame into the five child meshes)
     void set_color(int idx, unsigned rgb);              // 0x48dc30 (ret 8)

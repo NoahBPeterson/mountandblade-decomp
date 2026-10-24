@@ -110,12 +110,13 @@ extern EditorGame* g_editor_game;               // 0xa739b8
 struct EditorApp {
     char pad[0xe8];
     HWND hwnd;                                  // +0xe8
-    void refresh_dialog();
+    void refresh_dialog();   // 0x4f6390
 };
 
 struct FontDef { void load_fonts(tstring* path); };  // 0x4d9aa0
 FontDef* ctor_font_def(FontDef* p);             // 0x4d99d0
 void init_mission_triggers();                   // 0x4d0620
+void init_mission_trigger_records(); // 0x4d0620
 
 // ---- per-row text table of the mission-UI widget ----------------------------------------------------
 struct TextEntry {                              // 0x34 bytes

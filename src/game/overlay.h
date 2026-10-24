@@ -16,7 +16,7 @@ template <class T> struct vec {
     T* end;
     void push_back(const T& v);                 // 0x4927d0
     void push_back2(const T& v);                // 0x4936b0 (std::vector<T>::push_back)
-    void push_back3(const T& v, int size);      // 0x40f8a0 (incremental copy_push_back)
+    void push_back3(const T& v, int size);      // 0x40f8a0 (incremental copy_push_back)  // old name of fill_n, removed after the names merge
 };
 
 struct Overlay : WidgetObj {                    // ctor 0x4931a0, vtable 0x592848, 0x190 bytes

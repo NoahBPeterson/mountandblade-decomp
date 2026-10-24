@@ -179,8 +179,10 @@ struct GameW : GameData {
     int add_party_exp(int troop, int amount);                   // 0x4428c0 (ret 8)
 
     void pick_near(Vec2 pos, float r, Vec2* out);               // 0x490030 (ret 0x10)
+    void random_position_around(Vec2 pos, float r, Vec2* out); // 0x490030
     void pick_near_xy(float x, float y, float radius, float* out);    // 0x490030 (the same function, called with the pair as two floats: 0x491e50)
     char pick_near_type(Vec2 pos, float r, Vec2* out, char any);    // 0x490160 (ret 0x14)
+    char position_around(Vec2 pos, float r, Vec2* out, char any); // 0x490160
     int stack_dna(unsigned id, int stack, int a3, int a4);      // 0x4902a0 (ret 0x10)
     void mark_kind(int kind);                                   // 0x490990 (ret 4)
     void detach_party(unsigned id);                             // 0x490a30 (ret 4)
@@ -515,4 +517,5 @@ struct SceneList {
     SceneObject* push();                                        // 0x495650
 };
 
+extern WindowMgrW g_windows; // 0xa73980
 #endif // GAME_WORLD_DATA_H

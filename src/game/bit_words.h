@@ -13,12 +13,12 @@ struct BitWords {
     void set(const unsigned& lo, const int& hi, const unsigned& v);   // 0x464960
     unsigned get(const unsigned& lo, const int& hi);                  // 0x4649b0
     void set_pct(const float& f);                                     // 0x4649f0 (terrain_a.cpp; char_sheet passes &f48 as a reference)
-    void set_a(const float* p);                                       // 0x464a60 (= Terrain::set_field_a)
-    void set_b(const float* p);                                       // 0x464ac0 (= Terrain::set_field_b)
+    void set_a(const float* p);                                       // 0x464a60 (= Terrain::set_field_a)  // old name of Terrain::set_field_a, removed after the names merge
+    void set_b(const float* p);                                       // 0x464ac0 (= Terrain::set_field_b)  // old name of Terrain::set_field_b, removed after the names merge
     void build_hex_text(tstring& out);                                // 0x4f29b0 (slice s004f25a0)
-    void parse_hex(const tstring& s);                                 // 0x4658c0 fills w[0..5] from "0x..." (= HexWords::parse)
-    void submit_frame(const float* rect);                             // 0x4f3e10 (dust.cpp / terrain_page_input.cpp)
+    void parse_hex(const tstring& s);                                 // 0x4658c0 fills w[0..5] from "0x..." (= HexWords::parse)  // old name of HexWords::parse, removed after the names merge
+    void submit_frame(const float* rect);                             // 0x4f3e10 (dust.cpp / terrain_page_input.cpp)  // old name of DustTerrain::update_particles, removed after the names merge
 };
-extern BitWords g_bits;                                     // 0xa76630
+extern BitWords g_bits;                                     // 0xa76630  // old name of g_terrain, removed after the names merge
 
 #endif // GAME_BIT_WORDS_H

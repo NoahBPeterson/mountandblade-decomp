@@ -7,9 +7,13 @@
 
 struct WidgetMgrW : widget_mgr {
     int add_button(const tstring* text, unsigned flags);        // 0x494110 (ret 8)
+    int create_button_overlay(const tstring* text, unsigned flags); // 0x494110
     int add_slider(int vmin, int vmax);                         // 0x495970 (ret 8)
+    int create_slider_overlay(int vmin, int vmax); // 0x495970
     int add_mesh_widget(int index);                             // 0x4995e0 (ret 4)
+    int create_mesh_overlay(int index); // 0x4995e0
     int add_mesh_widget2(int a, int b, float c);                // 0x4996e0 (ret 0xc)
+    int create_mesh_overlay_with_tableau(int a, int b, float c); // 0x4996e0
 };
 
 #endif // GAME_WORLD_DATA_WIDGET_MGR_W_H

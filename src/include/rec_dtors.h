@@ -30,7 +30,7 @@ struct RecD {
     SubA s1;            // +0x10
     SubA s2;            // +0x2c
     int tail[12];
-    ~RecD();
+    ~RecD();   // 0x431440
     void* scalar_delete(unsigned flags);        // 0x431480 (??_ERecD, ret 4), called from rec_tables.cpp
 };
 // 0x68 bytes: three names, two pairs. ~RecI 0x431660, vector deleting destructor 0x431810.

@@ -168,4 +168,6 @@ public:
     CD3DApplication();                                             // 0x401910
 };
 
+void __stdcall vector_destructor_iterator(void* p, unsigned size, int n, void (__fastcall* dtor)(void*)); // 0x401830
+void __stdcall vector_constructor_iterator(void* p, unsigned size, int n, void (__fastcall* ctor)(void*)); // 0x401800
 #endif

@@ -14,12 +14,12 @@
 
 // ---- globals -----------------------------------------------------------------------------------------
 extern int g_use_shaders;                   // 0x5e28fc
-extern int g_use_wbuffer;                   // 0x5a9fdc
-extern int g_aniso_filter;                  // 0x5aa040
-extern float g_gamma;                       // 0x5aa088
+extern int g_use_wbuffer;                   // 0x5a9fdc  // old name of g_cfg, removed after the names merge
+extern int g_aniso_filter;                  // 0x5aa040  // old name of g_options, removed after the names merge
+extern float g_gamma;                       // 0x5aa088  // old name of g_options, removed after the names merge
 extern ID3DXEffect* g_effect;               // 0x5e293c
 extern unsigned g_stage_arg[8];             // 0x5a9c00 D3DTA_* by 3-bit code
-extern IDirect3DDevice9* g_device;          // 0xa17f28
+extern IDirect3DDevice9* g_device;          // 0xa17f28  // old name of g_render, removed after the names merge
 void mb_error(const char* fmt, ...);        // 0x42cc80
 
 // ---- render-state cache (global object 0xa17910) ----------------------------------------------------------

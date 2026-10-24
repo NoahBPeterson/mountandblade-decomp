@@ -25,4 +25,5 @@ struct StrTable {
     tstring* lookup(const tstring& key);                // 0x43a1e0
 };
 
+extern StrTable g_strtable; // 0x5e2a18
 #endif // GAME_STR_TABLE_H

@@ -60,8 +60,8 @@ struct TeamRec {                                // 0x16c bytes
     ClassInfo cls[3];                           // +0x04
     int relation[8];                            // +0x148 relation to team b: -1 hostile, 1 friend (0x43b300, 0x435b90, 0x4a9d5d)
     int pad168;
-    void set_order_position(const rgl::vector4* p, const int* face, const rgl::vector4& offset);   // 0x4898e0 (ret 0xc)
-    rgl::vector4 order_position();              // 0x489890 (ret 4: hidden return)
+    void set_order_position(const rgl::vector4* p, const int* face, const rgl::vector4& offset);   // 0x4898e0 (ret 0xc)  // old name of Sel::set_vec, removed after the names merge
+    rgl::vector4 order_position();              // 0x489890 (ret 4: hidden return)  // old name of Sel::first, removed after the names merge
 };
 typedef char TeamRec_size_check[sizeof(TeamRec) == 0x16c ? 1 : -1];
 
@@ -230,13 +230,20 @@ struct Mission {
     int team_count();                           // 0x48a8b0
     int last_team();                            // 0x48a910
     bool point_in_rect(const float* p);         // 0x48a990
-    void slot_finish(int i);                    // 0x48a9e0
-    void slot_restore(int i);                   // 0x48aa20
-    void slot_set(int i, int s);                // 0x48aa60
-    int active_kind(int i);                     // 0x48aac0
-    int slot_mode(int i);                       // 0x48ab30
-    int slot_kind_a(int i);                     // 0x48ab90
-    int slot_kind_b(int i);                     // 0x48abf0
+    void slot_finish(int i);                    // 0x48a9e0  // old name of Mission::select_team, removed after the names merge
+    void select_team(int i); // 0x48a9e0
+    void slot_restore(int i);                   // 0x48aa20  // old name of Mission::unselect_team, removed after the names merge
+    void unselect_team(int i); // 0x48aa20
+    void slot_set(int i, int s);                // 0x48aa60  // old name of Mission::select_class, removed after the names merge
+    void select_class(int i, int s); // 0x48aa60
+    int active_kind(int i);                     // 0x48aac0  // old name of Mission::movement_order, removed after the names merge
+    int movement_order(int i); // 0x48aac0
+    int slot_mode(int i);                       // 0x48ab30  // old name of Mission::riding_order, removed after the names merge
+    int riding_order(int i); // 0x48ab30
+    int slot_kind_a(int i);                     // 0x48ab90  // old name of Mission::weapon_usage_order, removed after the names merge
+    int weapon_usage_order(int i); // 0x48ab90
+    int slot_kind_b(int i);                     // 0x48abf0  // old name of Mission::hold_fire_order, removed after the names merge
+    int hold_fire_order(int i); // 0x48abf0
     // ---- src/game/mission_ui2 (the scene props at +0x668c, 0x1c8-byte Rec1c8 records) ----
     void retag_props(int from, int to);         // 0x48ed60 (ret 8: every intact prop named like tag `from` is renamed to tag `to`)
     int count_props(int tag);                   // 0x48ee20 (ret 4: intact props of tag `tag`)
@@ -256,6 +263,10 @@ struct Mission {
     void light_props();                         // 0x47ced0
     void run_spawns();                          // 0x483eb0 (mesh_slot/mesh_game.cpp: up to 100 passes spawning every pending entry)
     void frame(float dt, int spawn);            // 0x483f60 (mesh_game.cpp: the per-frame mission tick; start_setup calls it with (0.1, 1))
+    void exec_trigger(int val); // 0x49f9e0
+    void enter_trigger(int val, int ip); // 0x49f980
+    void check_slot(int id, unsigned bits); // 0x49c170
+    void spawn_battle_icon(unsigned id); // 0x49bbb0
 };
 extern Mission* g_mission;                      // 0x5e292c
 

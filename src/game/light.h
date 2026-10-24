@@ -20,8 +20,8 @@ struct Light {
     float flicker_magnitude;            // +0x70
     float flicker_interval;             // +0x74
     int phase;                          // +0x78
-    Light* init();                      // 0x461480 (ctor)
-    void update();                      // 0x487620
+    Light* init();                      // 0x461480 (ctor)  // old name of wind::wind, removed after the names merge
+    void update();                      // 0x487620  // old name of TimeKey::calc, removed after the names merge
 };
 
 #endif // GAME_LIGHT_H

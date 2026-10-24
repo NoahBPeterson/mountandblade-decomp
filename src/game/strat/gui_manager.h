@@ -154,4 +154,5 @@ struct gui_manager {
     void rebuild();                 // 0x4da900 (replays the stored lines into a fresh text mesh; src/game/cls_map)
     void add_root(void* const& window);            // 0x49b120 (ret 4: make `window` the active root window; src/game/cls_map)
 };
+extern gui_manager g_gui; // 0x5d7080
 #endif // GUI_MANAGER_H

@@ -29,4 +29,6 @@ struct ini_file {
     void write(FILE* f, const tstring& key, const tstring& value);     // 0x4bd740
 };
 
+extern ini_file g_game_vars; // 0xa44240
+extern ini_file g_module_info; // 0xa18238
 #endif // GAME_INI_FILE_H

@@ -10,5 +10,5 @@ struct skill_entry {
     unsigned flags;                                                 // +0x30 (bit 8: hidden; 0x509730)
     char pad34[0x44 - 0x34];
 };
-extern skill_entry g_skills[];                                      // 0x8ee3110
+extern skill_entry g_skills[];                                      // 0x8ee3110  // old name of g_skill_tbl, removed after the names merge
 #endif

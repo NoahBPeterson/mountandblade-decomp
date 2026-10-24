@@ -323,16 +323,17 @@ struct Mesh_s2dfd0 {
 
     void poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
                   float* dist);
-    void toggle_flag(int type, int index);
+    void toggle_flag(int type, int index);   // 0x52e510
     void scale_selected(int dummy, const rgl::vector4* scale);
-    void transform_selected(int dummy, const float* m);
-    void remove_selected();
+    void transform_selected(int dummy, const float* m);   // 0x52e6d0
+    void remove_selected();   // 0x52e870
 
     void gather_selection(int mode);    // 0x4c54f0   re-stamps the +0x14 selection field
     void delete_vert(int index);        // 0x4c8af0
     void delete_edge(int index);        // 0x4ca9b0
     void delete_poly(int index);        // 0x4cb940
     void rebuild();                     // 0x470920
+    void scale_selected(int mode, const vector4& c); // 0x52e590
 };
 
 // Ray / convex-polygon intersection.  The polygon's vertices (at most four) are gathered once,
@@ -426,6 +427,8 @@ struct Mesh_s2e960 {
     void apply_copy(const rgl::matrix& m);
 
     void rebuild();                     // 0x470920
+    void apply_copy(void* state); // 0x52edb0
+    void make_copy(void* state); // 0x52e960
 };
 
 // Duplicate every flagged polygon into polys2, mapping its vertex/edge references through
@@ -548,6 +551,7 @@ struct Map_s2f250 {
     PlacedObj_s2f250* records;                         // +0x668c  the 0x1c8 record array
     void init_placed(PlacedObj_s2f250*, const int* kind, const int* id, const int* value, const matrix*);   // 0x435860
     void build_meshes(PlacedObj_s2f250*, MeshVec_s2f250*);    // 0x5302f0
+    void build_mesh_name(PlacedObj_s2f250*, MeshVec_s2f250*); // 0x5302f0
     int add_placed(const int* kind, const int* id, const int* value, const matrix*, int* spawn);     // 0x44f870
 };
 struct IntVec_s2f250 {
@@ -796,6 +800,7 @@ struct ViewCtrl_s2fe40 {
     float yaw;                                          // +0x268
 
     void apply(char* f1, float* pos, char* f2, float* out, char* f3, float* vec, char* f4);
+    void apply(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out); // 0x52fe40
 };
 
 // rotate one width-2 row of the view matrix (the original inlines this three times)

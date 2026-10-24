@@ -15,7 +15,8 @@ struct Emitter {                                 // 0x34 bytes, array g_emitters
     EmitSub sub;                                 // +0x18
     char pad19[0x34 - 0x19];
 };
-extern Emitter* g_emitters;                      // 0xa75eb0
+extern Emitter* g_emitters;                      // 0xa75eb0  // old name of g_scripts, removed after the names merge
+extern Emitter* g_scripts; // 0xa75eb0
 extern int g_emitter_idx[];                      // 0xa75ebc
 
 #endif // MB_EMITTER_REC_H

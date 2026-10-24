@@ -58,6 +58,7 @@ extern const char* g_char_t_level_y;                // 0xa18124
 
 // 0x4f04f0: the proficiency group name of proficiency idx into buf (another slice)
 void prof_group_name(int idx, char* buf);           // 0x4f04f0
+void weapon_class_caption(int cls, char* out); // 0x4f04f0
 
 // translated text of a key (lookup, falling back to the key's own storage when the buffer is null)
 static inline const char* tr(const tstring& key)

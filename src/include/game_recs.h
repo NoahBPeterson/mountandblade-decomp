@@ -51,7 +51,7 @@ struct QuestRec {                           // 0x138 bytes
     };
     tstring* raw_title();                   // 0x48d750
     tstring* raw_text();                    // 0x48d730
-    void set_progression(int value);        // 0x489370 (ret 4)
+    void set_progression(int value);        // 0x489370 (ret 4)  // old name of Troop::set_alpha, removed after the names merge
     void read(stream_base* s);              // 0x51e170
     tstring translated();                   // 0x4c63f0
     tstring translated_text();              // 0x4c6470
@@ -84,7 +84,7 @@ struct FactionRec {                         // 0x300 bytes
     int note_times[8];                      // +0x25c (add_faction_note_from_dialog 0x4a34a8)
     tstring notes[8];                       // +0x27c (0x4a33e4)
     int note_tableau;                       // +0x2fc (add_faction_note_tableau_mesh 0x4a3152)
-    void set_name(const tstring& name);     // 0x489ab0 (ret 4)
+    void set_name(const tstring& name);     // 0x489ab0 (ret 4)  // old name of Named16::set, removed after the names merge
     tstring* display_name();                // 0x48db00
     tstring translated();                   // 0x4c6860
 };

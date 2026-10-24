@@ -136,12 +136,15 @@ extern const double g_tan_ang;                          // 0x598e90
 // ---- callees ---------------------------------------------------------------------------------------------
 void elem_fill(widget* w, tstring name);                // 0x4e4c70
 elem* new_label2(widget* p, tstring* n);                // 0x4f5fb0
+elem* make_slider(widget* p, tstring* n); // 0x4f5fb0
 elem* new_scrollbar(widget* p, tstring* n);             // 0x4f6160
 elem* new_slider(widget* p, tstring* n, elem* sl);      // 0x4f62f0
 void list_setup(void* s);                               // 0x488d50
 widget* new_key_label(widget* p, tstring* key, tstring* val);                   // 0x4f5d20
 widget* new_arrow(widget* p, int a, int b, float c, float d, float e);          // 0x4f5ed0
+widget* make_right_arrow(widget* p, int a, int b, float c, float d, float e); // 0x4f5ed0
 widget* new_arrow_l(widget* p, int a, int b, float c, float d, float e);        // 0x4f5df0
+widget* make_left_arrow(widget* p, int a, int b, float c, float d, float e); // 0x4f5df0
 void anim_track(Animator* a, int skin, int key, tstring* out);                  // 0x4f5d90
 widget* new_medium_button(widget* p, tstring* label, int a, int b, tstring* n1, tstring* n2,
                           tstring* n3, float f1, float f2, float f3);           // 0x4dcc50

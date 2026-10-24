@@ -612,6 +612,7 @@ extern const float g_f549d7c;                           // 0x549d7c = 0.1f
 // ---- plain callees ----------------------------------------------------------------------------------
 void __cdecl restore_defaults();                        // 0x4d3a50
 void __cdecl f_516a70();                                // 0x516a70 (quick save)
+void quick_save_msg(); // 0x516a70
 void __cdecl f_47ce00(void* p, int n);                  // 0x47ce00
 char __cdecl f_52b5c0(int agent, int* pair);            // 0x52b5c0
 void __cdecl op_delete(void* p);                        // 0x535712 (operator delete, ??3@YAXPAX@Z)

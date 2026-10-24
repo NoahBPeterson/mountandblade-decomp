@@ -131,6 +131,7 @@ MissionUi* __cdecl make_text(MissionUi* parent, tstring* text, int a, int b, flo
 MissionUi* __cdecl make_up(MissionUi* parent, tstring* text, int a, int b, float h);       // 0x4dcbd0
 MissionUi* __cdecl make_scrollbar(MissionUi* parent, const tstring* name);                  // 0x4f6160
 MissionUi* __cdecl make_member_list(MissionUi* parent, const tstring* name, MissionUi* sc); // 0x4f62f0
+MissionUi* __cdecl make_editor_list(MissionUi* parent, const tstring* name, MissionUi* sc); // 0x4f62f0
 MissionUi* __cdecl new_member_button(MissionUi* parent, const tstring& name, float x, int zero, float h,
                                      const tstring& text, const tstring& pressed, float width_ratio,
                                      float height, float ratio);                              // 0x4dcc50

@@ -12,7 +12,7 @@ struct PropInst;
 struct PropVec : std::vector<Rec1c8> {
     void push_back(const Rec1c8& x);                            // 0x440b80
     iterator erase(iterator where);                             // 0x531470
-    PropInst* get(int id);                                      // 0x438c10 (thiscall, ret 4)
+    PropInst* get(int id);                                      // 0x438c10 (thiscall, ret 4)  // old name of vec1c8::at, removed after the names merge
     int count() const { return (int)(((char*)_Mylast - (char*)_Myfirst) / 0x1c8); }   // the script's inline size
 };
 

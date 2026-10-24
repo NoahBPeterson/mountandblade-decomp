@@ -34,4 +34,5 @@ struct SoundMgr {                                       // the sound player (g_s
     void stop_all();                                    // 0x494310 (agent5/agent_hud.cpp)
 };
 
+extern SoundMgr g_sound_mgr; // 0x5aa128
 #endif // MB_SOUND_MGR_H

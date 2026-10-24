@@ -7,8 +7,8 @@
 #ifndef MB_IFACE_H
 #define MB_IFACE_H
 
-extern int g_tick_lo;                  // 0x5e2958 (g_time[2], 1e-5 s ticks)
-extern int g_tick_hi;                  // 0x5e295c
+extern int g_tick_lo;                  // 0x5e2958 (g_time[2], 1e-5 s ticks)  // old name of g_ticks, removed after the names merge
+extern int g_tick_hi;                  // 0x5e295c  // old name of g_ticks, removed after the names merge
 
 struct IfaceB {
     int f4, f8, fc;

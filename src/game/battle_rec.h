@@ -63,7 +63,7 @@ struct BattleTable {
     char pad14[4];
     BattleRec** pages;                                  // +0x18 (GameData +0xe4)   0x4b3910, 0x4b3bc0, 0x4b80d0
     char pad1c[0x2c - 0x1c];
-    BattleRec* get(unsigned id);                        // 0x48ef20 (thiscall, ret 4)
+    BattleRec* get(unsigned id);                        // 0x48ef20 (thiscall, ret 4)  // old name of PageTable98::slot, removed after the names merge
 };
 
 #endif // GAME_BATTLE_REC_H

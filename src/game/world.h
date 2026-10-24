@@ -27,11 +27,11 @@ struct world {
     char pad8c[0xb0 - 0x8c];
     LevelNav* wmap;                                     // +0xb0 the strategy-map cell table (inventory_panel/map_update.cpp 0x5191e0: zmin / zmax / recs / linked)
     void* nav;                                          // +0xb4 navigation mesh
-    void locate(const rgl::vector4* p, int* out) const;      // 0x41ed00 (grid cell of a point)
+    void locate(const rgl::vector4* p, int* out) const;      // 0x41ed00 (grid cell of a point)  // old name of world::to_cell, removed after the names merge
     void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50 (0x448eb0)
     SceneEnt* find_entity(int id);                      // 0x42ba50 (agent4: the entity of a prop hit)
     SceneEnt* create_entity(int type_id);               // 0x428440 (0x44be50: 9 = missile, 0x44c210)
-    void reg(shape_base* s);                            // 0x424170 (collision registry; 0x44c210)
+    void reg(shape_base* s);                            // 0x424170 (collision registry; 0x44c210)  // old name of world_grid::reg_shape, removed after the names merge
     void light_at(rgl::vector4 p, rgl::vector4 n, rgl::vector4* out_dir, rgl::vector4* out_col, unsigned flags, float scale);   // 0x43ac40 (0x44c210)
     void floor_at(const float* p, float* out_z, face** out_face);   // 0x439be0 (agent4: the floor face under a point)
     float floor_z(const float* p);                      // 0x439d40 (agent4: the floor height under a point)
@@ -41,8 +41,8 @@ struct world {
     //      the same pointer as mission +0) ----
     void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870 (map_update.cpp)
     void collect(unsigned key, shape_base** out, int* count);   // 0x51a3a0 (map_update.cpp)
-    float ground_height(const rgl::vector4* p);         // 0x439d40 (script: floor_z taking the point as a vector)
-    int face_at(const rgl::vector4* p);                 // 0x439a50 (thiscall, ret 4; script)
+    float ground_height(const rgl::vector4* p);         // 0x439d40 (script: floor_z taking the point as a vector)  // old name of level::floor_z, removed after the names merge
+    int face_at(const rgl::vector4* p);                 // 0x439a50 (thiscall, ret 4; script)  // old name of level::nearest_face, removed after the names merge
     void set_fog(const float* a1, const float* distance, const unsigned* color);   // 0x488cd0 (ret 0xc; script)
     void collect_boxed(const rgl::vector4* bmin, const rgl::vector4* bmax, std::vector<unsigned>* out);   // 0x442180 (agent_fx_sound.cpp)
     void erase_entity(rgl::entity* e);                  // 0x41f450 (entity.cpp)

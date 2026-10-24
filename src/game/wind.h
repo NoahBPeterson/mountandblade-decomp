@@ -16,7 +16,7 @@ struct wind {
     float noise_seed;               // +0x74 (0x461570: first argument of noise_fractal)
     int phase;                      // +0x78 (rand() % 0x3f9)
     wind() throw();                 // 0x461480 (the same function as init(); `new wind` in the portrait builders calls it)
-    wind* init();                   // 0x461480
+    wind* init();                   // 0x461480  // old name of wind::wind, removed after the names merge
     rgl::vector4 sample();          // 0x461570 (hidden return pointer)
 };
 

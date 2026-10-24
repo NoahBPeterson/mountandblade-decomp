@@ -116,7 +116,8 @@ struct Troop {
     };
     char pad504[4];
 
-    bool has_flag10();                      // 0x435130
+    bool has_flag10();                      // 0x435130  // old name of Troop::is_hero, removed after the names merge
+    bool is_hero(); // 0x435130
     int stat_int(int i);                    // 0x435150
     int scaled_b0();                        // 0x435170
     int nibble(int i);                      // 0x4351a0 (packed 4-bit field i of the skill words)
@@ -134,7 +135,8 @@ struct Troop {
     void set_flags_low(int v);              // 0x4892a0 (replaces the low nibble of flags30)
     void add_stat(unsigned i, int amt);     // 0x4892d0
     void set_colors(int a, int b);          // 0x489320
-    void sub_3b4(int amt);                  // 0x489340
+    void sub_3b4(int amt);                  // 0x489340  // old name of Troop::remove_gold, removed after the names merge
+    void remove_gold(int amt); // 0x489340
     void set_alpha(int a);                  // 0x489370
     void unequip(int i);                    // 0x4630d0
     bool equip_best(int seed, int slot, unsigned need, unsigned forbid, unsigned type, unsigned t2, unsigned t3, char cheapest);   // 0x463100

@@ -13,7 +13,7 @@
 // Needs `tstring` declared by the includer (game/tstring.h, or the options_panel TUs' typedef of rgl::string).
 
 struct Widget {
-    Widget* base_ctor();                                           // 0x48ae20 called as an ordinary member (returns this in eax; the slices' editor_ui)
+    Widget* base_ctor();                                           // 0x48ae20 called as an ordinary member (returns this in eax; the slices' editor_ui)  // old name of MissionUi::MissionUi, removed after the names merge
     Widget();                                                      // 0x48ae20 (the base constructor; defined in src/game/ui/mission_ui.cpp as MissionUi::MissionUi)
     virtual void  d00(int release);                                // +0x00 deleting destructor (called with push 1 by MissionUi 0x488ad0)
     virtual bool  is_active();                                     // +0x04 "is active" (tested by 0x488720)

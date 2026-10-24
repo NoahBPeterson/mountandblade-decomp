@@ -23,4 +23,5 @@ struct MenuRec {            // module-file game menu (0x4c2b20)
     void destroy_array(int flags);              // 0x4c4f40 (the vector deleting destructor; flag 3 destroys the elements and frees the cookie-prefixed block)
 };
 
+extern MenuRec* g_menus; // 0x5e29b0
 #endif // MB_GAME_MENU_REC_H

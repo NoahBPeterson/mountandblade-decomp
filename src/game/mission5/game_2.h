@@ -62,6 +62,7 @@ struct tstring_vec : tstring_alloc {
     tstring* last_pos() const { return last; }
     void _Xlen() const;                                         // 0x43e2a0
     void insert_n(tstring* pos, unsigned n, const tstring& v);  // 0x43e310
+    void _Insert_n(tstring* pos, unsigned n, const tstring& v); // 0x43e310
     void reserve(unsigned n);                                   // 0x524bc0
     void push_back(const tstring& v)
     {
@@ -239,6 +240,7 @@ extern int g_emitter_count;                         // 0xa75eb4
 
 struct SkeletonList {                               // skeleton-body table at 0xa180e8
     void load_bodies(tstring* path);                // 0x50fc60 (ret 4)
+    void load(tstring* path); // 0x50fc60
     void fix();                                     // 0x4cd850
 };
 extern SkeletonList g_skeletons;                    // 0xa180e8
@@ -324,6 +326,7 @@ extern int    g_env2;                // 0x5e28fc
 extern void*  g_resmgr_raw;          // 0x5d6fa0
 float    m5_vector4_normalize(rgl::vector4* self);                                   // 0x407d60
 void     m5_grid_scan(void* a, void* b, void* c);                                    // 0x523630
+void __stdcall scan_arrays(void* p, int unused); // 0x523630
 void*    m5_tstring_ctor0(void* self);                                               // 0x42bbd0
 void*    m5_tstring_ctor1(void* self, const char* s);                                // 0x42bbe0
 void     m5_tstring_assign(void* self, const char* s);                               // 0x42bcb0
@@ -345,6 +348,7 @@ int      m5_mb_rand();                                                          
 void     m5_scene_add_object(void* obj);                                             // 0x419300
 void     m5_mesh_set_mat(void* mesh, int type);                                      // 0x523360
 void*    m5_material_from_name(int type);                                            // 0x523390
+skin* __stdcall terrain_material(int type); // 0x523390
 void     m5_collect_near(void* mgr, int idx, int* out, int* count);                  // 0x5234e0
 void     m5_vec_insert_n(RawVec* v, void** pos, unsigned n, void** val);             // 0x410610
 

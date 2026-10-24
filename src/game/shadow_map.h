@@ -44,4 +44,5 @@ struct ShadowMap {
     bool sample(const rgl::vector4* p, float* out);    // 0x4faee0 (ret 8: nine depth taps around the point; src/game/agent5)
 };
 
+extern ShadowMap g_shadow_map; // 0xa70248
 #endif // GAME_SHADOW_MAP_H

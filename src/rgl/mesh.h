@@ -126,7 +126,7 @@ struct mesh : named_object {
     void scale(float s);                            // 0x44f0c0 (ret 4)
     void set_color(vector4 c);                      // 0x47af30 (ret 0x10: the colour multiplier of every vertex)
     void set_bone_index(int i);                     // 0x47b360 (ret 4)
-    void transform(const matrix* frame);            // 0x495ba0 (ret 4)
+    void transform(const matrix* frame);            // 0x495ba0 (ret 4)  // old name of MeshX::set_part, removed after the names merge
     void calc_bounds(vector4* lo, vector4* hi);     // 0x438d80 (ret 8)
     void set_offset(const vector4& d);              // 0x4fb8e0 (agent_hud.cpp: shifts every point along its vertex normal)
     void darken_vertices();                         // 0x4fbef0 (agent_hud.cpp)
@@ -194,9 +194,9 @@ struct scene_registry {          // global object 0x5fe898
     std::vector<scene*> scenes;  // 0x3a4
     void register_scene(scene* s);                  // 0x412040
     void add_mesh(scene* s, mesh* m);               // 0x412100
-    bool select(scene* sc);                         // 0x47e520 (src/game/party2: render the scene into its target; false = try again)
+    bool select(scene* sc);                         // 0x47e520 (src/game/party2: render the scene into its target; false = try again)  // old name of RenderPass::render, removed after the names merge
 };
-extern scene_registry g_scene_registry;             // 0x5fe898
+extern scene_registry g_scene_registry;             // 0x5fe898  // old name of g_batch, removed after the names merge
 
 struct mesh_list {               // 16 bytes: std::vector<mesh*>
     std::vector<mesh*> v;

@@ -49,6 +49,6 @@ struct string {
 
 // logging / file helpers of the string object
 void mb_error(const char* fmt, ...);           // 0x42cc80 (logs; printf-style)
-long mb_file_size(FILE* f);                    // 0x42cbc0
+long mb_file_size(FILE* f);                    // 0x42cbc0  // old name of file_length, removed after the names merge
 
 #endif

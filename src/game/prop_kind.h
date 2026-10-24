@@ -21,4 +21,5 @@ struct PropKind {                               // 0x78 bytes (array at 0x5e29dc
     char pad6c[0x78 - 0x6c];                    // +0x6c the sound set (agent4 swing_trace)
 };
 
+extern PropKind* g_propkinds; // 0x5e29dc
 #endif // GAME_PROP_KIND_H

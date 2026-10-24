@@ -4,7 +4,9 @@
 #ifndef GAME_KEY_NAMES_H
 #define GAME_KEY_NAMES_H
 struct KeyNames {
-    char is_bound(int index);                                               // 0x487900 (ret 4)
+    char is_bound(int index);                                               // 0x487900 (ret 4)  // old name of Slot::is_ready, removed after the names merge
 };
-extern KeyNames g_key_names;                                                // 0xa170c8
+extern KeyNames g_key_names;                                                // 0xa170c8  // old name of g_keyboard, removed after the names merge
+struct Keyboard;   // defined in script/script_interpreter.h until the names merge
+extern Keyboard g_keyboard; // 0xa170c8
 #endif
