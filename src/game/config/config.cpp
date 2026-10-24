@@ -21,6 +21,7 @@
 #include <math.h>
 #include <new>
 #include "./config.h"
+#include "../../tinyxml/tinyxml.h"   // TiXmlElement::QueryDoubleAttribute 0x42f190 (RagBody::load)
 #include "../../rgl/resource.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../dev_buffer.h"
@@ -760,13 +761,13 @@ void Config::set_texture_quality(int q)
     }
 }
 
-// ---- the software cursor ----------------------------------------------------------------------------------------------
+// ---- the ragdoll body record (rag_body.h) ------------------------------------------------------------------------------
 // @ 0x4bc170
-// The cursor starts at the origin with the fixed radius 0.05 and the two state bytes cleared.
-Cursor::Cursor()
+// The body starts at the origin with the fixed radius 0.05 and the two state bytes cleared.
+RagBody::RagBody()
 {
-    *(Vec4*)&pos_x = Vec4(0.0f, 0.0f, 0.0f);
-    *(Vec4*)&pos2_x = Vec4(0.0f, 0.0f, 0.0f);
+    *(vector4*)&pos_x = vector4(0.0f, 0.0f, 0.0f);      // a vector in a 16-byte slot; the 4th lane is left alone by the ctor
+    *(vector4*)&pos2_x = vector4(0.0f, 0.0f, 0.0f);
     radius = 0.05f;
     unk25 = 0;
     moving = 0;
@@ -774,17 +775,17 @@ Cursor::Cursor()
 }
 
 // @ 0x4bc1f0
-// Reads the cursor position, the target position and the radius from the settings, keeping any missing value.
-void Cursor::read(Settings* src)
+// Reads the two end points and the radius from the XML element's attributes, keeping any missing value.
+void RagBody::load(TiXmlElement* src)
 {
     double v;
-    if (src->get_float("radius", &v) == 0) radius = (float)v;
-    if (src->get_float("pos_x", &v) == 0) pos_x = (float)v;
-    if (src->get_float("pos_y", &v) == 0) pos_y = (float)v;
-    if (src->get_float("pos_z", &v) == 0) pos_z = (float)v;
-    if (src->get_float("pos2_x", &v) == 0) pos2_x = (float)v;
-    if (src->get_float("pos2_y", &v) == 0) pos2_y = (float)v;
-    if (src->get_float("pos2_z", &v) == 0) pos2_z = (float)v;
+    if (src->QueryDoubleAttribute("radius", &v) == 0) radius = (float)v;
+    if (src->QueryDoubleAttribute("pos_x", &v) == 0) pos_x = (float)v;
+    if (src->QueryDoubleAttribute("pos_y", &v) == 0) pos_y = (float)v;
+    if (src->QueryDoubleAttribute("pos_z", &v) == 0) pos_z = (float)v;
+    if (src->QueryDoubleAttribute("pos2_x", &v) == 0) pos2_x = (float)v;
+    if (src->QueryDoubleAttribute("pos2_y", &v) == 0) pos2_y = (float)v;
+    if (src->QueryDoubleAttribute("pos2_z", &v) == 0) pos2_z = (float)v;
 }
 
 // @ 0x4bc2d0

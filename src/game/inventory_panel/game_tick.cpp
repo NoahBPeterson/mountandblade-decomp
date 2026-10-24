@@ -511,7 +511,7 @@ void GameG::update_cursor(float dt)
                 }
                 if (f95 == 0) {
                     float v = (p->alpha < 0.01f) ? 0.0f : 1.0f;
-                    ((SceneEnt*)p->model)->set_fade(&v);
+                    ((MapModel*)p->model)->set_fade(&v);
                 } else {
                     p->alpha = 1.0f;
                     p->f6c = 1;

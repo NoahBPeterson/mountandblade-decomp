@@ -7,6 +7,7 @@
 #include "./mesh_edit.h"
 #include "./hud.h"
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mission.h"                               // Mission::destroy 0x4d51d0 (the world object 0x5e292c is the mission)
 
 // @ 0x4d4b80
 bool Mesh::on_selection_changed()
@@ -189,28 +190,23 @@ struct Sub63d0 { void dtor(); };                    // 0x4be6f0
 struct Sub0030 { void dtor(); };                    // 0x4c6e30
 struct Sub0004 { void dtor(); };                    // 0x4c6e30 (ICF'd with Sub0030::dtor)
 
-struct World {
-    // the sub-objects the destructor tears down, in address order
-    struct Vec {                                        // an STL vector triple
-        void* begin; void* end; void* cap;
-        void release() { if (begin) free_ptr(begin); begin = 0; end = 0; cap = 0; }
-    };
-
-    void destroy();                                 // 0x4d51d0 (tail-call shape, ret 0)
+struct WorldVec {                                       // an STL vector triple
+    void* begin; void* end; void* cap;
+    void release() { if (begin) free_ptr(begin); begin = 0; end = 0; cap = 0; }
 };
 
 // @ 0x4d51d0
-void World::destroy()
+void Mission::destroy()
 {
     char* p = (char*)(void*)this;
     ((WorldBase*)p)->dtor();
     ((Sub6814*)(p + 0x6814))->dtor();
     ((Sub6698*)(p + 0x6698))->dtor();
     ((Sub6688*)(p + 0x6688))->dtor();
-    ((Vec*)(p + 0x667c))->release();
+    ((WorldVec*)(p + 0x667c))->release();
     ((Sub63d0*)(p + 0x63d0))->dtor();
-    ((Vec*)(p + 0x63c4))->release();
-    ((Vec*)(p + 0x5e00))->release();
+    ((WorldVec*)(p + 0x63c4))->release();
+    ((WorldVec*)(p + 0x5e00))->release();
     ((Sub0030*)(p + 0x30))->dtor();
     ((Sub0004*)(p + 0x4))->dtor();
 }

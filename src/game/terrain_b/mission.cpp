@@ -497,7 +497,7 @@ struct MeshPush : std::vector<rgl::mesh*> {
         }
     }
 };
-struct V2 { float x, y; V2() {} V2(float a, float b) : x(a), y(b) {} };
+// V2 (a vec2 with constructors): ../../include/vec.h
 #define LGF(v) ((float)log((double)(v)) * 1.442695f)
 #define LOG2UP(v) ((int)(LGF(v) > 0.0f ? (float)ceil(LGF(v)) + 1e-8f : (float)ceil(LGF(v)) - 1e-8f))
 

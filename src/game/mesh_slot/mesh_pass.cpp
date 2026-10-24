@@ -304,10 +304,7 @@ OFFSET_CHECK(PolyGeom, edges, 0x20);
 OFFSET_CHECK(PolyGeom, bmin, 0x44);
 OFFSET_CHECK(PolyGeom, bmax, 0x54);
 
-struct MsgLogAdd : MsgLog {
-    void add(tstring msg, int color);           // 0x452c00 (thiscall, ret 0x14)
-};
-extern MsgLogAdd g_msglog;                                          // 0x5d7080
+extern MsgLog g_msglog;                                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
 
 // vector4::normalize(), inlined exactly as 0x407d60 does it (it returns the old length).
 static float __forceinline normalize_i(vector4& v)

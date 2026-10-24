@@ -27,10 +27,10 @@ using rgl::mesh;
 extern resmgr g_alloc;                                      // 0x5d6fa0
 
 // world / terrain object at 0xa76630 (the terrain generator)
-struct World {
+struct TerrainGen {
     void gen_reset();                                       // 0x4647e0
 };
-extern World g_world;                                       // 0xa76630
+extern TerrainGen g_terrain_gen;                            // 0xa76630
 
 // the renderer's view frustum: 0x344-byte record, ctor 0x478ad0, set_fov 0x488cd0
 struct frustum_t {

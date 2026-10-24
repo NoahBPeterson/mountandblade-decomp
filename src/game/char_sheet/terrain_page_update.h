@@ -107,14 +107,7 @@ struct EffObj {
 struct EffMgr {
     EffObj* create();                                       // 0x478f30
 };
-struct World {                                              // the page's +0x1ac; scene object 0x421390 resets
-    char pad00[0x68];
-    vector4 f68;                                            // +0x68
-    float   f74;                                            // +0x74
-    void reset();                                           // 0x421390
-    void step(float dt);                                    // 0x427f40
-    EffObj* create_effect() { return ((EffMgr*)this)->create(); }
-};
+#include "../scene_world.h"                              // World: the page's +0x1ac; scene object 0x421390 resets
 struct terrain_obj {                                        // the object at 0xa76630 (see s00481d10)
     void generate(World* w, int b, int c);                  // 0x481d10
     void regenerate_water(int a, int* out);                 // 0x482170

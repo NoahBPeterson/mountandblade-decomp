@@ -9,7 +9,7 @@ void facegen_win::init()
     int i;
     for (i = 0; i < 3; i++)
         *(int*)((char*)this + 0x54 + i * 4) = rand() % 0x1b5781;
-    g_world.gen_reset();
+    g_terrain_gen.gen_reset();
 
     *(float*)((char*)this + 0x3c) = 150.0f;
     *(float*)((char*)this + 0x40) = 150.0f;

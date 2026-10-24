@@ -117,27 +117,8 @@ struct CreateGameOptionsPage {
     void update_checks();                           // 0x4bf640 sets the page's radio / check buttons from g_config, then refresh()
 };
 
-// ---- the engine's software cursor (0x4bc170, 0x4bc1f0) ------------------------------------------------------------
-struct Settings {                                   // the named-float settings object (0x42f190)
-    int get_float(const char* name, double* out);   // 0x42f190
-};
-struct Vec4 {                                       // a vector in a 16-byte slot; the 4th lane is left alone by the ctor
-    float x, y, z, w;
-    Vec4() {}
-    Vec4(float a, float b, float c) { x = a; y = b; z = c; }
-};
-struct Cursor {
-    float pos_x, pos_y, pos_z;                      // +0x00
-    int   unk0c;                                    // +0x0c
-    float pos2_x, pos2_y, pos2_z;                   // +0x10
-    int   unk1c;                                    // +0x1c
-    float radius;                                   // +0x20 (0.05f)
-    unsigned char moving;                           // +0x24
-    unsigned char unk25;                            // +0x25
-    int   unk28;                                    // +0x28
-    Cursor();                                       // 0x4bc170
-    void read(Settings* src);                       // 0x4bc1f0
-};
+// ---- the ragdoll body record (0x4bc170, 0x4bc1f0; this header called it the software cursor): ../rag_body.h ----------
+#include "../rag_body.h"
 
 // ---- input state and device set (0x4bc2d0..0x4bc430) -------------------------------------------------------------
 struct Matrix { float m[16]; };
@@ -226,25 +207,7 @@ struct camera_ray {                                 // scene camera record
 };
 
 // ---- ini file reader (0x4bd4d0..0x4bd740) --------------------------------------------------------------------------
-struct ini_entry {
-    tstring key;                                    // +0
-    char    pad10[0xc];
-    tstring value;                                  // +0x1c
-};
-struct ini_file {
-    ini_entry entries[0x1000];                      // +0
-    int       count;                                // +0x2c000
-    ini_file();                                     // 0x4c1be0 (src/game/triggers: constructs the 0x1000 key / value string pairs, clears count)
-    ~ini_file();                                    // 0x4be920 (destroys them, last pair first)
-    void load(FILE* f);                             // 0x4bd630
-    int  find(const tstring& key);                  // 0x4bd5a0
-    float get_float(const tstring& key);            // 0x4bd5e0
-    int  get_hex(int* idx);                         // 0x4e51e0 (sscanf "%x" of entry *idx; 0 when out of range; src/game/cls_map/progress_bar.cpp)
-    float get_float(int* idx);                      // 0x4e5230 (atof of entry *idx; -1.0f when out of range)
-    int  hex_field(const tstring& key);             // 0x4e5d30 (find, then "%x" of the entry)
-    void parse_line(const char* line, tstring& key, tstring& value);   // 0x4bd4d0
-    void write(FILE* f, const tstring& key, const tstring& value);     // 0x4bd740
-};
+#include "../ini_file.h"   // ini_entry / ini_file (0x4bd4d0..0x4bd740), one definition
 
 // ---- script blocks and the module-file records (0x4bd7a0..0x4be6f0) --------------------------------------------------
 // The script block and its 0x98-byte operation record are the shared DialogBlock / Elem (read 0x4607e0, Elem::Elem 0x4607d0,

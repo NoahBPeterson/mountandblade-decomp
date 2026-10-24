@@ -195,10 +195,7 @@ extern int g_music_request_kind;        // 0xa70478
 extern int g_music_event;               // 0xa7047c one-shot jingle request (-1 none)
 extern float g_music_volume_floor;      // 0x590cd0 (0.02f) volume below which the monitor idles
 // ---- record vectors (0x4c1c20..0x4c23f0) ------------------------------------------------------------------------------------
-struct V2 {                 // 8-byte vector with an empty user ctor: arrays of it go through the compiler's array-ctor helper
-    float x, y;
-    V2() {}
-};
+#include "../../include/vec.h"   // V2: 8-byte vector with an empty user ctor: arrays of it go through the compiler's array-ctor helper
 struct mstr {               // tstring as a MouseRec member: the real ctor / dtor are the outlined 0x42bbd0 / 0x42bc40
     int pos; char* buf; int cap; int len;
     mstr() throw();

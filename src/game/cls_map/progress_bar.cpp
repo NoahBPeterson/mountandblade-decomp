@@ -1346,7 +1346,7 @@ struct front_rec {
 };
 
 // the scene object (0x4e7b30's this)
-struct MapScene {
+struct MapSceneRec {
     tstring tag;                                // +0x00 (the first string read)
     int m10[0x10];                              // +0x10: read by slot +0x40 (16 dwords)
     int v78[0x204 / 4];                         // +0x78: the copied 0x204-byte table (0x4ccf60 resizes)
@@ -1373,7 +1373,7 @@ struct MapScene {
 };
 
 // @ 0x4e7b30
-void MapScene::read(rgl::mesh* owner, MsStream* s)
+void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
 {
     tstring name;
     stream_str(s, &name);                                            // tag

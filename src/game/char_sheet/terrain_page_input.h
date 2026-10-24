@@ -42,10 +42,7 @@ extern unsigned g_size_mask;                                // 0x5a8e78 (= 4: th
 
 // ---- the world / scene --------------------------------------------------------------------------------
 struct FrustumBlock { int d[0x48]; void build_planes(); };   // build_planes = 0x41e4f0 (thiscall)
-struct World {                                              // the page's +0x6c pointer target
-    char pad00[0x1ac];
-    int block[0x48];                                        // +0x1ac  the 0x120-byte map block (copy of the page's +0x70)
-};
+#include "../scene_world.h"                              // World: the page's +0x6c pointer target (block[] +0x1ac)
 
 // 0x40cd00 has a hidden return pointer and returns it; the two rotation helpers are thiscall on the matrix and
 // take a pointer to the angle (thiscall, ret 4).

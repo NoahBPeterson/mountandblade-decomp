@@ -31,6 +31,7 @@ struct file_stream_s : stream_base {
     STREAM_SLOTS
     file_stream_s() { state = 0; }
 };
+#include "../item_ref.h"           // ItemRef (the +0x114 pairs)
 #include "../../include/iface.h"        // IfaceB (the polymorphic base of the scene record)
 struct SceneFile : IfaceB {
     tstring name10;                                             // +0x10 the scene object file's name (GameData::scene_path 0x463950)
@@ -47,7 +48,7 @@ struct SceneFile : IfaceB {
     int fc0[0x10];                                              // +0xc0
     int f100;                                                   // +0x100
     RecVector props;                                            // +0x104 (first at +0x108): the .sco prop records
-    struct { int a, b; } pairs114[0x40];                        // +0x114
+    ItemRef pairs114[0x40];                                     // +0x114 (item -1, modifier word: ItemRef)
     int ints314[0x40];                                          // +0x314
     file_stream_s s414;                                         // +0x414 ground-paint block (0x479000)
     file_stream_s s444;                                         // +0x444 terrain block

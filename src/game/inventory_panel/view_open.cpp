@@ -86,20 +86,7 @@ struct engvec {
     }
 };
 
-struct World {
-    char pad0[0x68];
-    float f68;                                              // +0x68
-    float f6c;                                              // +0x6c
-    float f70;                                              // +0x70
-    float f74;                                              // +0x74
-    char pad78[0xb8 - 0x78];
-    engvec<int> tracks;                                     // +0xb8 (first at +0xbc)
-    char padc8[0x344 - 0xc8];
-    World(const float* lo, const float* hi, const int* a, const int* b, const int* c);  // 0x478ad0
-    Entity* create_entity(int type);                        // 0x428440
-    void set_visual(const void* a, const void* b, const void* c);  // 0x488cd0
-    void destroy();                                         // 0x475d50
-};
+#include "../scene_world.h"                                   // World: ctor 0x478ad0, set_visual 0x488cd0, destroy 0x475d50
 
 // ---- the 0x358 portrait body (ctor 0x4ed630) -------------------------------------------------------------
 struct face_body : widget {
@@ -189,10 +176,10 @@ void char_window::open_view()
         int zero3 = 0;
         World* w = new World(lo, hi, &zero, &zero2, &zero3);
         world = w;
-        w->f68 = 0.23f;
-        w->f6c = 0.25f;
-        w->f70 = 0.27f;
-        w->f74 = 1.0f;
+        w->color.x = 0.23f;
+        w->color.y = 0.25f;
+        w->color.z = 0.27f;
+        w->color.w = 1.0f;
         {
             int   z2 = 0;
             float five = 5.0f;

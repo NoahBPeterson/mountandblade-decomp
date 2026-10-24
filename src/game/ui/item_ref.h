@@ -14,11 +14,7 @@ extern int g_item_count;                    // 0x5e29d4 (g_item_kind_count of sr
 int __cdecl round_float(float* f);          // 0x432540 (round to nearest: floor(x) + (x - floor(x) > 0.5))
 
 // ---- sound slots (0x4625d0..0x4627f0) --------------------------------------------------------------------
-struct snd_channel {                // 0x1c bytes
-    char pad[0x1c];
-    bool play(int arg);             // 0x4875e0 (thiscall, ret 4)
-    char emit(int idx, int zero, int* count, void* vals, int tag);   // 0x4b09e0 (thiscall, ret 0x14; mission_ui.cpp 0x488e90)
-};
+#include "./snd_channel.h"        // snd_channel: 0x1c bytes, play 0x4875e0, emit 0x4b09e0
 // One scheduler slot (0x78 bytes): state machine driven by three clock indices into g_ticks. The state and the
 // clock indices behave as volatile (the original re-reads them and never CSEs g_ticks[clk]).
 struct snd_slot {

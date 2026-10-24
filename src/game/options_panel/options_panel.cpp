@@ -486,8 +486,8 @@ void GameIo::import_apply(ini_file* imp)
     Troop* troop = &troops[cur_troop];
 
     for (int i = 0; i < imp->count; i++) {
-        import_entry* e = &imp->entries[i];
-        tstring key = e->name;
+        ini_entry* e = &imp->entries[i];
+        tstring key = e->key;
         tstring value = e->value;
 
         if (key.equals("name")) {

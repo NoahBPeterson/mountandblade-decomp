@@ -17,7 +17,7 @@
 #include "rgl.h"
 
 // the strategy world stepped at the top of the frame (0x427f40)
-struct World { void step(float dt); };
+#include "../scene_world.h"                              // World::step 0x427f40
 
 // ---- a tstring as stored in the record tables (ctor 0x42bbe0) ----------------------------------------
 #include "../tstring.h"

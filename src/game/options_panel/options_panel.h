@@ -91,19 +91,8 @@ extern OptMainMenu g_main_menu;                                     // 0xa73980
 bool mb_file_exists(const char* path);                              // 0x415120
 extern int g_trial_mode;                                            // 0x5e29c4
 
-// one "key = value" line of a character file (0x2c000 bytes for 4096 of them; see s004bd170)
-struct import_entry {
-    tstring name;                                                   // +0x00
-    char    pad10[0x0c];                                            // +0x10
-    tstring value;                                                  // +0x1c
-};
-struct ini_file {
-    import_entry entries[4096];                                     // +0
-    int  count;                                                     // +0x2c000
-    ini_file();                                                     // 0x4c1be0
-    void load(FILE* f);                                             // 0x4bd630
-    ~ini_file();                                                    // 0x4be920
-};
+// the character file is read into the shared ini table (0x2c-byte entries: key +0, value +0x1c; ctor 0x4c1be0, load 0x4bd630, dtor 0x4be920)
+#include "../ini_file.h"
 
 // the export file object: three classes in a chain (vtables 0x54a740 / 0x595618 / 0x595990); the middle one's
 // destructor closes the file (virtual close at slot 26 = +0x68, called through the class's own vtable). Slot 10

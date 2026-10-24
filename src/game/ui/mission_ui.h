@@ -192,11 +192,7 @@ struct TimerChild {
     __int64 last;                           // +0x28 last play time
     void tick(int idx);                     // 0x488e90
 };
-struct TimerList {
-    int count;                              // +0
-    TimerChild* items;                      // +4
-    void update(int flag);                  // 0x48add0
-};
+#include "./timer_list.h"                 // TimerList: count +0, items +4, update 0x48add0
 
 // free functions of the item-pair sort and the speed table
 int __fastcall sort_value(ItemRef* e);                              // 0x488f80

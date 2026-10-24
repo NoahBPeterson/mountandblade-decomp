@@ -53,7 +53,7 @@ struct Allocator { char* make(int a, int b, int c, int d); };   // 0x5d6fa0 reso
 extern Allocator g_alloc;                   // 0x5d6fa0
 extern int g_day;                           // 0x5a9f9c (day / quality threshold: 0x19, 0x3c)
 
-struct V4 { int a, b, c, d; };
+struct Blob16 { int a, b, c, d; };
 struct MissionView {
     char pad0[0x18];
     int v18[16];                            // +0x18 (width, height, then the quarter size at +0x20 / +0x24)  0x489ad0

@@ -3440,7 +3440,7 @@ int Mission::add_placed(const int* kind, const int* id, const int* value, const 
 }
 
 // the freshly created record as the original builds it: the two vectors are zeroed in place and no cleanup follows
-struct RawVec { int pad; int *first, *last, *end; RawVec() : first(0), last(0), end(0) {} };
+#include "../int_vec.h"                      // RawVec: allocator dword + first / last / end
 struct PhysRecInit {
     int f0;
     const NewtonWorld* world;
@@ -3451,7 +3451,7 @@ struct PhysRecInit {
     const NewtonBody* body;
     int material;
 };
-struct RecVec : std::vector<PhysRec> {
+struct PhysRecVec : std::vector<PhysRec> {
     void push_back(const PhysRec& x);           // 0x44fa40
 };
 
@@ -3481,7 +3481,7 @@ unsigned PhysSet::create_world()
         r.collision = 0;
         r.body = 0;
         r.world = w;
-        ((RecVec&)recs).push_back(*(const PhysRec*)&r);
+        ((PhysRecVec&)recs).push_back(*(const PhysRec*)&r);
     } else {
         recs[idx].world = w;
     }

@@ -85,7 +85,7 @@ extern int g_level_hi[];                            // 0x5937cc
 extern float g_troop_rand_scale;                    // 0x54a6bc
 extern int g_clamp_max;                             // 0x8ee3ac4
 
-struct Pair { int a; int b; };
+// (item, modifier word) pairs of the statement / troop / scene records are the shared ItemRef (../item_ref.h; item -1 = none)
 
 // triggers.txt statement (0x98-byte element, allocated with new[])
 struct StmtRec {
@@ -148,7 +148,7 @@ struct TroopFile {                  // troops.txt record (0x508 bytes); dtor 0x4
     int fa8;
     int fac;
     int fb0;
-    Pair pairs[0x60];               // 0x0b4 .. 0x3b3
+    ItemRef pairs[0x60];               // 0x0b4 .. 0x3b3
     int f3b4;                       // 0x3b4
     int f3b8;                       // 0x3b8
     unsigned __int64 u3c0[4];       // 0x3c0
@@ -156,7 +156,7 @@ struct TroopFile {                  // troops.txt record (0x508 bytes); dtor 0x4
     char pad400[0x20];              // 0x400
     char names_raw[0x80];           // 0x420 tstring[8]
     int f4a0;                       // 0x4a0
-    Pair p10[10];                   // 0x4a4
+    ItemRef p10[10];                   // 0x4a4
     tstring_vec v;                  // 0x4f4
     TroopFile();                    // 0x524710
     ~TroopFile();                   // 0x431c40
@@ -206,7 +206,7 @@ struct FactionFile {                // factions.txt record (0x300 bytes); dtor 0
 // the scene record's embedded passage / site writer stream (vtable slots 3, 7 and 8 of stream_base)
 struct V0 { int a, b, c; char pad[0xc]; };                      // 0x18
 struct V1 { int p0, p1, p2, p3, p4; char pad[0x20]; };          // 0x34
-struct V2 {                                                     // 0x64
+struct Rec64 {                                                  // 0x64
     char pad[0x28];
     int a[4];                                                   // +0x28
     int b[4];                                                   // +0x38
@@ -221,7 +221,7 @@ struct Local {
     char pad0[0x1c];
     V0* v0_first; V0* v0_last;                                  // +0x1c / +0x20
     char pad1[8];
-    V2* v2_first; V2* v2_last;                                  // +0x2c / +0x30
+    Rec64* v2_first; Rec64* v2_last;                                  // +0x2c / +0x30
     char pad2[8];
     V1* v1_first; V1* v1_last;                                  // +0x3c / +0x40
     char pad3[0x94 - 0x44];
@@ -287,7 +287,7 @@ struct MapNav {                      // NavData
     MapEdge* edges;                  // +0x24
     MapEdge* edges_end;              // +0x28
 };
-struct RawVec { void** first; void** last; void** end; };      // std::vector<T*> without its allocator word
+#include "../int_vec.h"             // RawVec: std::vector<T*> triple with its allocator dword (stride 0x10, g_mat_vec)
 // The parts of Game that game.h leaves as padding and the build_scene / build_map_trees members that use them.
 struct GameMapView {
     char   pad0[0x2c];

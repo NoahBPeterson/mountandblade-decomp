@@ -292,14 +292,7 @@ extern int   g_sound_muted;                          // 0x5a9fd8
 extern int   g_scan_module_textures;                 // 0xa18108
 extern char* g_xa44238;                              // 0xa44238
 
-struct LoadingScreen {
-    char pad0[0x3c];
-    int  step;                                       // +0x3c
-    int  total;                                      // +0x40
-    char* f44;                                       // +0x44
-    int  f48;                                        // +0x48
-    bool advance(int* step, int* total, tstring* text);   // 0x50f440
-};
+#include "../loading_screen.h"       // LoadingScreen: advance 0x50f440 here
 
 // @ 0x50f440
 bool LoadingScreen::advance(int* step, int* total, tstring* text)

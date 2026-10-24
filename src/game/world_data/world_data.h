@@ -394,12 +394,7 @@ struct SceneBaseCtor {                                          // the scene bas
 #include "./widget_mgr_w.h"
 
 // ---- the window manager (g_windows 0xa73980: 30 screen objects, the open-screen deque at +0x78) --------------------------------
-struct ScreenObj {                                              // vtable view of a screen
-    virtual void s0(); virtual void s1(); virtual char s2();
-    virtual void s3(); virtual void s4(); virtual void s5(); virtual void s6();
-    virtual char s7();                                          // +0x1c
-    virtual char s8();                                          // +0x20
-};
+#include "../screen_obj.h"                                    // ScreenObj: the vtable view of a screen (slot 0 = deleting destructor)
 struct WindowMgrW {
     ScreenObj* arr[30];                                         // +0x00
     std::deque<int> dq;                                         // +0x78 (allocator word at +0x78; map at +0x7c)

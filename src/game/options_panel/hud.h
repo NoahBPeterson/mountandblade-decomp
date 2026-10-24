@@ -60,11 +60,7 @@ void string_assign(tstring* thisp, const tstring* src); // 0x42bc50
 
 // sound holder inside a MenuKind (s0048add0): count of 0x30-byte children at +0, the child array at +4.
 // update(0xc3 / 0xc2 / 0xc1) advances the children with that flag.
-struct TimerList {
-    int  count;                                     // +0x0
-    void* items;                                    // +0x4
-    void update(int flag);                          // 0x48add0
-};
+#include "../ui/timer_list.h"                    // TimerList: count +0, items +4 (the ui module declares the children)
 struct MenuKind {                                   // 0x1c bytes (table at 0xa75f2c)
     char      pad0[0x14];
     TimerList sound;                                // +0x14

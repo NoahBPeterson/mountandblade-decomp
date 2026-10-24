@@ -21,14 +21,9 @@ template<class T> struct vec {
 };
 
 // ---- ragdoll body record (0x2c bytes) ----------------------------------------------------------------------
-struct Body {
-    vector4 v;                                      // +0
-    char pad10[0x1c];
-    Body();                                         // 0x4bc170
-    void load(TiXmlElement* e);                     // 0x4bc1f0
-};
-struct Bodyvec : vec<Body> {
-    void push_back(const Body&);                    // 0x4cefe0
+#include "../rag_body.h"                           // RagBody: ctor 0x4bc170, load 0x4bc1f0 (config.cpp)
+struct Bodyvec : vec<RagBody> {
+    void push_back(const RagBody&);                 // 0x4cefe0
 };
 
 struct RagBone {
@@ -75,7 +70,7 @@ void RagBone::load(TiXmlElement* e)
     TiXmlHandle hh = TiXmlHandle(e).FirstChild("Bodies").FirstChild();
     TiXmlElement* elem = hh.Element();
     while (elem) {
-        bodies.push_back(Body());
+        bodies.push_back(RagBody());
         bodies[bodies.size() - 1].load(elem);
         elem = elem->NextSiblingElement();
     }

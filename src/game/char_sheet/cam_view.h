@@ -47,7 +47,7 @@ extern float g_dummy1;                                  // 0x8ed508c
 #include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
 extern int g_cur;                                       // 0x8ed4f68
 
-struct World { void step(float dt); };                  // 0x427f40
+#include "../scene_world.h"                              // World::step 0x427f40
 #include "../tstring.h"
 #include "../str_table.h"      // 0x43a1e0
 extern StrTable g_strtable;                             // 0x5e2a18
