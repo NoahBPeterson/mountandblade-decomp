@@ -448,45 +448,11 @@ SI_ASSERT(troop_equipment, offsetof(TroopX, equipment) == 0x4a4);
 SI_ASSERT(troop_notes, offsetof(TroopX, notes) == 0x420);
 
 // ---- quests (0x138 bytes, array at game +0x13a58) ----------------------------------------------------------------
-struct QuestRec {
-    char pad0[0x20];
-    tstring giver;                      // +0x20 (setup_quest_giver 0x4a5530)
-    tstring title;                      // +0x30 expanded (setup_quest_text 0x4a543e)
-    tstring text;                       // +0x40
-    unsigned flags2;                    // +0x50 bit 1 tested by store_partner_quest (0x4ad370)
-    char pad54[0x64 - 0x54];
-    unsigned flags;                     // +0x64 bit 8 active, 9 finished, 10 succeeded, 11 failed, 12 concluded (0x4a062d)
-    int note_times[8];                  // +0x68 (add_quest_note_from_dialog 0x4a3753)
-    tstring notes[8];                   // +0x88 (0x4a3691)
-    int note_tableau;                   // +0x108 (add_quest_note_tableau_mesh 0x4a31f9)
-    int troop;                          // +0x10c (store_quest_troop 0x4ad55e)
-    int item;                           // +0x110 (store_quest_item 0x4ad51e)
-    int number;                         // +0x114 (store_quest_number 0x4ad500)
-    int giver_troop;                    // +0x118 (store_partner_quest 0x4ad37f)
-    char pad11c[0x128 - 0x11c];
-    SlotArray slots;                    // +0x128 (quest_set_slot 0x4a0a68)
-    char pad129[0x138 - 0x129];
-    tstring* raw_title();               // 0x48d750
-    tstring* raw_text();                // 0x48d730
-    void set_progression(int value);    // 0x489370 (ret 4)
-};
+#include "../../include/game_recs.h"   // QuestRec / FactionRec / PartyTemplate: the shared record classes (one definition for src/game and src/rgl)
 SI_ASSERT(quest_size, sizeof(QuestRec) == 0x138);
 SI_ASSERT(quest_notes, offsetof(QuestRec, notes) == 0x88);
 
 // ---- factions (0x300 bytes, game +0x13a48), scenes (0x494, game +0x13a50), party templates (0xb0, 0x5e29f8) -------
-struct FactionRec {
-    char pad0[0x28];
-    unsigned color;                     // +0x28 (faction_set_color 0x4a5262)
-    float relations[128];               // +0x2c -1..1 (set_relation 0x4a4ef7)
-    char pad22c[0x24c - 0x22c];
-    SlotArray slots;                    // +0x24c (faction_set_slot 0x4a088d)
-    char pad24d[0x25c - 0x24d];
-    int note_times[8];                  // +0x25c (add_faction_note_from_dialog 0x4a34a8)
-    tstring notes[8];                   // +0x27c (0x4a33e4)
-    int note_tableau;                   // +0x2fc (add_faction_note_tableau_mesh 0x4a3152)
-    void set_name(const tstring& name); // 0x489ab0 (ret 4)
-    tstring* display_name();            // 0x48db00
-};
 SI_ASSERT(faction_size, sizeof(FactionRec) == 0x300);
 SI_ASSERT(faction_notes, offsetof(FactionRec, notes) == 0x27c);
 struct Visitor { int troop; int dna; };     // 8 bytes (set_visitor 0x4a4bff)
@@ -499,17 +465,8 @@ struct SceneRec {
     char pad475[0x494 - 0x475];
 };
 SI_ASSERT(scene_size, sizeof(SceneRec) == 0x494);
-struct PartyTemplateRec {
-    char pad0[0x34];
-    int num_created;                    // +0x34 (store_num_parties_created 0x4ad83a)
-    int num_destroyed;                  // +0x38
-    int num_destroyed_by_player;        // +0x3c
-    char pad40[0xa0 - 0x40];
-    SlotArray slots;                    // +0xa0 (party_template_set_slot 0x4a097b)
-    char pada1[0xb0 - 0xa1];
-};
-SI_ASSERT(ptemplate_size, sizeof(PartyTemplateRec) == 0xb0);
-extern PartyTemplateRec* g_party_templates;     // 0x5e29f8
+SI_ASSERT(ptemplate_size, sizeof(PartyTemplate) == 0xb0);
+extern PartyTemplate* g_party_templates;     // 0x5e29f8 (0xb0-byte records; PartyTemplate in src/include/game_recs.h)
 // ItemKindX: view of the item kind record (ItemKind in src/game/agent/item_kind.h, array g_items 0x5e29d0)
 struct ItemKindX {
     char pad0[0x30];

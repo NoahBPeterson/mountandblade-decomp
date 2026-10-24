@@ -31,6 +31,9 @@
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
 static __forceinline int rnd(const float* p)
@@ -651,7 +654,7 @@ int Party::sum_all()
     int s = 0;
     int n = nstacks;
     if (n > 0) {
-        Stack20* p = stacks;
+        Stack* p = stacks;
         do {
             s += p->count;
             p++;
@@ -667,7 +670,7 @@ int Party::sum_head()
     int i = 0;
     int n = nstacks;
     if (n > 0) {
-        Stack20* p = stacks;
+        Stack* p = stacks;
         do {
             if (p->flags & 1)
                 return s;
@@ -685,7 +688,7 @@ int Party::sum_flagged()
     int s = 0;
     int n = nstacks;
     if (n > 0) {
-        Stack20* p = stacks;
+        Stack* p = stacks;
         do {
             if (p->flags & 1)
                 s += p->count;
@@ -717,7 +720,7 @@ int Party::count_tail()
 // @ 0x489540
 int* Party::remove_row(int* out, int index, int* arr)
 {
-    Stack20 local = stacks[index];
+    Stack local = stacks[index];
 
     int i = index;
     if (index < nstacks - 1) {
@@ -741,7 +744,7 @@ int* Party::remove_row(int* out, int index, int* arr)
         } while (j < nstacks);
     }
 
-    *(Stack20*)out = local;
+    *(Stack*)out = local;
     return out;
 }
 
@@ -755,7 +758,7 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
             have = 0;
             int m = nstacks;
             if (m > 0) {
-                Stack20* p = stacks;
+                Stack* p = stacks;
                 do {
                     if (p->flags & 1)
                         have += p->count;
@@ -776,7 +779,7 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
     int n = nstacks;
     int i = 0;
     if (n > 0) {
-        Stack20* p = stacks;
+        Stack* p = stacks;
         do {
             if (p->troop == (int)troop && ((p->flags ^ flag) & 1) == 0)
                 found = i;
@@ -1096,7 +1099,7 @@ int World::sl_roll_party(int lo, int hi)
         else
             v = rand() % span;
         found = v + lo;
-        PartyRec* pi = (PartyRec*)(party_recs + found * 0x138);
+        QuestRec* pi = (QuestRec*)(party_recs + found * 0x138);
         tries++;
         if (!pi->f50_active) {
             found = -1;

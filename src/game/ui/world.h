@@ -9,16 +9,7 @@
 #include "./item_ref.h"
 #include "./troop_inv.h"
 
-struct PartyRec {                           // 0x138 bytes, table g_party_recs (0x5e2934)
-    char pad0[0x50];
-    unsigned f50_0 : 1;                     // +0x50 (bit 1 is tested as a bit-field: shr + test)   0x489e70
-    unsigned f50_active : 1;
-    unsigned f50_rest : 30;
-    char pad54[0x64 - 0x54];
-    unsigned f64_lo : 8;                    // +0x64 (bit 8 tested)    0x489e70
-    unsigned f64_flag : 1;
-    unsigned f64_rest : 23;
-};
+#include "../../include/game_recs.h"   // QuestRec: the 0x138-byte record at game+0x13a58 (this header called it PartyRec; the bit-field views of +0x50 / +0x64 are in the shared class)
 
 struct World {
     char pad0[0x78];
@@ -36,7 +27,7 @@ struct World {
     char pad13a04[0x13a0c - 0x13a04];
     int excluded;                           // +0x13a0c record index skipped by sl_roll_other (0x489ee0)
     char pad13a10[0x13a58 - 0x13a10];
-    char* party_recs;                       // +0x13a58 PartyRec table   0x489e70
+    char* party_recs;                       // +0x13a58 QuestRec table   0x489e70
     char pad13a5c[0x13ae0 - 0x13a5c];
     int range_lo;                           // +0x13ae0 random integer range of the party roll   0x48a150
     int range_hi;                           // +0x13ae4

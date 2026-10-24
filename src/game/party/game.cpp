@@ -17,6 +17,9 @@
 #include "../int_vec.h"
 #include "../str_table.h"
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/i64_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 extern int g_item_count;                                    // 0x5e29d4 (the audit resolves this name by annotation: another slice maps the same mangled name to 0x8ed4f88)
 
@@ -784,13 +787,13 @@ void Game::load_quests(stream_base* s)
 void QuestRec::read(stream_base* s)
 {
     s->r_int(&f64);
-    s->r_int(&f118);
-    s->r_int(&f114);
+    s->r_int(&giver_troop);
+    s->r_int(&number);
     s->r_float(&f11c);
-    s->r_tstr(rs(&name40));
-    s->r_tstr(rs(&name30));
-    s->r_tstr(rs(&name20));
-    read_soa(s, &soa);
+    s->r_tstr(rs(&text));
+    s->r_tstr(rs(&title));
+    s->r_tstr(rs(&giver));
+    read_soa(s, (SoaBlock*)note_times);
     list.read(s);
 }
 
@@ -837,7 +840,7 @@ MB_NOINLINE void Faction::read(stream_base* s, int n)
     s->r_bool(&f10);
     s->r_uint(&f28);
     s->r_int(&f230);
-    read_soa(s, &soa);
+    read_soa(s, (SoaBlock*)note_times);
 }
 
 // @ 0x51e3a0

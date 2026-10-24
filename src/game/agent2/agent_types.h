@@ -135,27 +135,8 @@ float __cdecl hit_chance(int* who, Agent* a);           // 0x438cb0
 // HandRec / TeamRec / Mission (g_mission 0x5e292c): src/game/mission.h (ClassInfo is the per-weapon-class hand record)
 #include "../mission.h"
 
-struct TroopRec {                                       // 0x508 bytes (array at game+0x13a00)
-    tstring id;                                         // +0 (0x43a480)
-    char pad10[0x20 - 0x10];
-    tstring name;                                       // +0x20 (key into the translation table)
-    unsigned __int64 flags;                             // +0x30
-    char pad38[0x58 - 0x38];
-    int lvl58;                                          // +0x58
-    char pad5c[0x68 - 0x5c];
-    unsigned nib[6];                                    // +0x68 packed 4-bit skill levels, 8 per word (0x437b20)
-    float f80[8];                                       // +0x80 per-class proficiencies (0x4385e0, 0x43bdb0)
-    char pada0[0x508 - 0xa0];
-    tstring* display_name();                            // 0x43a480
-};
 #include "../skill_cap.h"                            // SkillCap, g_skill_tbl 0x8ee3100 (shared with agent)
-struct GameData {
-    char pad0[0x13a00];
-    TroopRec* chars;                                    // +0x13a00 (stride 0x508)
-    int skill_level(int troop, int skill);              // 0x437b20 (thiscall, ret 8)
-    char emit_event(int id, int a, int b);              // 0x435790 (ret 0xc; src/game/agent)
-};
-extern GameData* g_game;                                // 0x5e2930
+#include "../../include/game_data.h"                // GameData / TroopRec / g_game: the shared classes (skill_level 0x437b20, emit_event 0x435790)
 
 
 // ---- STL instantiation helpers (VC7.1 <vector>/<memory>/<algorithm> code the linker kept from this object) ------

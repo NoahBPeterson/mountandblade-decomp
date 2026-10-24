@@ -137,18 +137,7 @@ extern unsigned g_max_dead;                             // 0x5aa044
 // ---- message log (object at 0x5d7080): enabled byte at +0x1714, 32-entry ring at +0xb0b8 ------------------------------------
 #include "../str_table.h"
 extern StrTable g_strtable;                             // 0x5e2a18
-struct MsgLog {
-    char pad0[0x1714];
-    char enabled;                                       // +0x1714
-    char pad1715[0xb0b8 - 0x1715];
-    struct Ring {
-        int count;                                      // +0xb0b8
-        int head;                                       // +0xb0bc
-        tstring names[32];                              // +0xb0c0
-        int vals[32];                                   // +0xb2c0
-    } ring;
-    void push(const tstring& s, int v);                 // 0x4334b0
-};
+#include "../../include/msg_log.h"                 // MsgLog (one definition for src/game and src/rgl)
 extern MsgLog g_msglog;                                 // 0x5d7080
 
 // ---- effect spawn (0x442ca0) ---------------------------------------------------------------------------------------------------

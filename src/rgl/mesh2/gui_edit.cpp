@@ -12,6 +12,11 @@
 #include "../../include/vec.h"
 #include "../../include/phys_set.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 #pragma warning(disable:4700)     // 0x4c77c0: the matrix is left unread when no record is selected
@@ -1807,7 +1812,7 @@ void GameData::save_language_files(bool translated)
                 tstring suffix("_pl");                                  // 0x5923b0
                 g_strtable.write(f, chars[i].key + suffix, chars[i].translated_plural());
             } else {
-                g_strtable.write(f, chars[i].key, *chars[i].display_name());
+                g_strtable.write(f, chars[i].key, *find_or(chars[i].key, chars[i].name));
                 g_strtable.write(f, chars[i].key + tstring("_pl"),
                              *chars[i].plural_name());
             }
@@ -1815,15 +1820,15 @@ void GameData::save_language_files(bool translated)
         fclose(f);
     }
 
-    if (pm.n_parties != 0) {
+    if (parties.n_parties != 0) {
         FILE* f = fopen("new_language\\parties.csv", "wt+");            // 0x596034
-        unsigned i = pm.first_party_id();
-        while (i < pm.n_parties) {
-            if (pm.get_party(i)->f8c <= 0 && i != (unsigned)party_id_78) {
+        unsigned i = parties.first_party_id();
+        while (i < parties.n_parties) {
+            if (parties.get_party(i)->owner <= 0 && i != (unsigned)party_id_78) {
                 if (translated) {
-                    write_row(f, pm.get_party(i)->key, pm.get_party(i)->translated());
+                    write_row(f, parties.get_party(i)->key, parties.get_party(i)->translated());
                 } else {
-                    PartyRec* p = pm.get_party(i);
+                    Party* p = parties.get_party(i);
                     const tstring* v;
                     if (g_lang_on)
                         v = &p->key;
@@ -1831,10 +1836,10 @@ void GameData::save_language_files(bool translated)
                         v = &p->name;
                     else
                         v = find_or(p->key, p->name);
-                    write_row(f, pm.get_party(i)->key, *v);
+                    write_row(f, parties.get_party(i)->key, *v);
                 }
             }
-            pm.next_party_id(&i);
+            parties.next_party_id(&i);
         }
         fclose(f);
     }
@@ -1949,15 +1954,15 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\dialogs.csv", "wt+");            // 0x595f44
         for (int i = 0; i < g_n_dialogs; i++) {
             for (int j = 0; j < i; j++) {
-                if (g_dialogs[i].key.equals(g_dialogs[j].key))
+                if (g_dialogs[i].id.equals(g_dialogs[j].id))
                     goto next_dialog;
             }
             if (translated) {
                 tstring v = g_dialogs[i].translated();
-                write_row(f, g_dialogs[i].key, v);
+                write_row(f, g_dialogs[i].id, v);
             } else {
-                write_row(f, g_dialogs[i].key,
-                          *find_or(g_dialogs[i].key, g_dialogs[i].name));
+                write_row(f, g_dialogs[i].id,
+                          *find_or(g_dialogs[i].id, g_dialogs[i].text));
             }
         next_dialog:
             ;

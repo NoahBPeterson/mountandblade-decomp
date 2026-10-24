@@ -359,7 +359,7 @@ struct elem48_holder {
 };
 
 
-struct DialogRec { void* vdel(unsigned flags); };   // 0x4609d0 (thiscall, ret 4): vector deleting destructor
+#include "../../include/dialog_rec.h"      // DialogRec (vdel 0x4609d0: the vector deleting destructor): the shared dialog record
 struct tstr_rec { int w0, w4, w8; tstring s; };   // 0x1c bytes (the string sits at +0xc)
 
 struct scenefile_obj {

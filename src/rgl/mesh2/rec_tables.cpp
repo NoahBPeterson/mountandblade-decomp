@@ -8,6 +8,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
+#include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 

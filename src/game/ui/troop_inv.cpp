@@ -16,6 +16,8 @@
 #include "./troop_inv.h"
 #include "./party.h"
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
@@ -264,7 +266,7 @@ int Party::first_flagged()
     int r = 0;
     int i = 0;
     if (0 < nstacks) {
-        Stack20* p = stacks;
+        Stack* p = stacks;
         do {
             if ((p->flags & 1) != 0)
                 return r;

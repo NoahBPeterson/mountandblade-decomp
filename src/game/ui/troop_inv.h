@@ -11,44 +11,9 @@
 #include "./ui_common.h"
 #include "./item_ref.h"
 
-// The troop record: a 0x508-byte entry of the table behind GameData+0x13a00 (the same record as TroopRec in
-// dialog_manager.h, which only declares name / id / flags; this header declares the inventory part). The slices
-// called it `Agent` (0x462b60..0x462da0) and `Inv` (0x462e20..0x463100): both are this record.
-struct Troop {
-    char pad0[0x30];
-    unsigned __int64 flags30;               // +0x30 (bit 0x10: hero / fixed stock)      0x462b60, 0x462c80, 0x462e20
-    char pad38[0x50 - 0x38];
-    unsigned f50;                           // +0x50 linked / leader troop index (chain end 0)   0x48a080
-    char pad54[4];
-    int f58[2];                             // +0x58 skill slots                          0x462c00
-    char pad60[4];
-    unsigned f64;                           // +0x64 (low byte = alpha / colour id)        0x489370
-    char pad68[0x80 - 0x68];
-    float stat[12];                         // +0x80 attribute accumulators (clamped to 0..1000 by add_stat)   0x462c00, 0x4892d0
-    int fb0;                                // +0xb0 troop size   0x48a080, 0x48a290
-    ItemRef inv[0x60];                      // +0xb4 inventory (inv_count() slots, at most 0x60)   0x462da0, 0x462e20, 0x463030
-    int f3b4;                               // +0x3b4 (clamped at 0 by 0x489340)
-    int f3b8;                               // +0x3b8 (packed by 0x489320)
-    char pad3bc[0x4a4 - 0x3bc];
-    ItemRef equip[10];                      // +0x4a4 equipment slots                      0x4630d0, 0x463100, 0x489c50
-    char pad4f4[0x508 - 0x4f4];
-
-    int nibble(int i);                      // 0x4351a0 (packed 4-bit field i of the skill words; not in this module)
-    int inv_count();                        // 0x462b60 number of inventory slots: 90, or 30..96 by skill nibble 12 for heroes
-    int slot_value(int item);               // 0x462c00
-    bool fits_slot(ItemRef* ref, int slot); // 0x462c80
-    bool item_matches(int idx, int slot, unsigned need, unsigned forbid, int t1, int t2, int t3);   // 0x462da0
-    int pick(int seed, int slot, unsigned need, unsigned forbid, unsigned type, unsigned t2, unsigned t3, char cheapest);   // 0x462e20
-    int find_free();                        // 0x463030
-    bool add(ItemRef* s);                   // 0x463070
-    void set_flags_low(int v);              // 0x4892a0 (replaces the low nibble of flags30)
-    void add_stat(unsigned i, int amt);     // 0x4892d0
-    void set_colors(int a, int b);          // 0x489320
-    void sub_3b4(int amt);                  // 0x489340
-    void set_alpha(int a);                  // 0x489370
-    void unequip(int i);                    // 0x4630d0
-    bool equip_best(int seed, int slot, unsigned need, unsigned forbid, unsigned type, unsigned t2, unsigned t3, char cheapest);   // 0x463100
-};
+// The troop record: a 0x508-byte entry of the table behind GameData+0x13a00 (Troop in src/include/troop.h, one definition for
+// src/game and src/rgl). The slices called it `Agent` (0x462b60..0x462da0) and `Inv` (0x462e20..0x463100): both are this record.
+#include "../../include/troop.h"
 
 // A 0x78-byte record of the sprite table (g_tbl78 0x5e29dc, count 0x5e29e0)
 struct Rec78 {

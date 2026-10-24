@@ -6,7 +6,7 @@
 ../src/game/dialog_manager.cpp  ?line_flags@DialogMgr@@QAEHH@Z  004606c0  /O2 /MT /Gy /TP
 ../src/game/dialog_manager.cpp  ?expand@ScriptState@@QAE?AUtstring@@ABU2@@Z  004606d0  /O2 /MT /Gy /TP
 ../src/game/dialog_manager.cpp  ??0Elem@@QAE@XZ  004607d0  /O2 /MT /Gy /TP
-../src/game/dialog_manager.cpp  ?read@Block@@QAEXPAUstream_base@@@Z  004607e0  /O2 /MT /Gy /TP
+../src/game/dialog_manager.cpp  ?read@DialogBlock@@QAEXPAUstream_base@@@Z  004607e0  /O2 /MT /Gy /TP
 ../src/game/dialog_manager.cpp  ?read@DialogRec@@QAEXPAUstream_base@@@Z  004608d0  /O2 /MT /Gy /TP
 ../src/game/dialog_manager.cpp  ??_EDialogRec@@QAEPAXI@Z  004609d0  /O2 /MT /Gy /TP
 ../src/game/dialog_manager.cpp  ?read@DialogMgr@@QAEXPAUstream_base@@@Z  00460ab0  /O2 /MT /Gy /TP

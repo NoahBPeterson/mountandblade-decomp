@@ -36,21 +36,7 @@ int ftoi_helper(int x);                     // 0x435440
 #include "../skill_cap.h"            // SkillCap, g_skill_tbl 0x8ee3100 (shared with agent2)
 extern int g_clamp_level;               // 0x8ee3860
 extern const int g_tier_dist[];         // 0x590a70
-struct Troop {
-    char pad0[0x30];
-    unsigned __int64 flags30;           // +0x30 (0x435130: bit 0x10)
-    char pad38[0x68 - 0x38];
-    unsigned nib[6];                    // +0x68 packed 4-bit levels, 8 per word (0x4351a0); nib[3] bits 12..15 = a skill tier (0x4375b0)
-    float f80[8];                       // +0x80 per-slot values (0x435150 truncates one, 0x437770 adjusts one)
-    char padA0[0xb0 - 0xa0];
-    int b0;                             // +0xb0 (0x435170)
-    bool has_flag10();                  // 0x435130
-    int stat_int(int i);                // 0x435150
-    int scaled_b0();                    // 0x435170
-    int nibble(int i);                  // 0x4351a0
-    float falloff(float dist, float k); // 0x4375b0
-    void adjust(int i, float k);        // 0x437770
-};
+#include "../../include/troop.h"   // Troop / TroopRec: the 0x508-byte troop record (has_flag10 0x435130, stat_int 0x435150, scaled_b0 0x435170, nibble 0x4351a0, falloff 0x4375b0, adjust 0x437770)
 
 // ---- two item references at +0x80 of the record 0x4351f0 reads (a different object than Troop: ints, not floats)
 struct Wielder {
@@ -133,11 +119,7 @@ struct CamParams {                               // camera parameter block writt
 
 // ---- key-frame sampling (0x436ae0, 0x436b90)
 void slerp(quaternion* out, const quaternion* a, const quaternion* b, const float* t);      // 0x4238c0
-struct KeyTable {
-    quaternion* vals; int* keys; int count;
-    void find(int* cur, float* frac, float* key);               // 0x423a50
-    quaternion sample(int key);                                 // 0x436ae0 (hidden return pointer)
-};
+#include "../../include/key_table.h"   // KeyTable (one definition for src/game and src/rgl; find 0x423a50, sample 0x436ae0)
 struct KeyFrames {
     vector4* vals; int* keys; int count;
     void find(int* a, int* b, float* t, const float* time);     // 0x40f0d0

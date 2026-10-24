@@ -72,53 +72,8 @@ inline bool Agent::charged_0x48() const { return anim[1].cur == 0x48 && body->sk
 #include "../mission.h"
 extern __int64 g_ticks[];                               // 0x5e2948 clock table (1e-5 s ticks)
 
-// ---- game data: troop records, parties, slot table (g_game 0x5e2930) ---------------------------------------------
-struct TroopRec {                                // 0x508 bytes (array at game+0x13a00)
-    tstring id;                                  // +0 (0x4428c0)
-    char pad10[0x20 - 0x10];
-    tstring name;                                // +0x20 (0x4428c0)
-    unsigned flags;                              // +0x30 low nibble = class (0x443870)
-    char pad34[0x9c - 0x34];
-    int exp;                                     // +0x9c (0x4428c0)
-    char pada0[4];
-    int fa4, fa8, fac;                           // +0xa4 (fac += 10 per level)
-    int level;                                   // +0xb0
-    char padb4[0x508 - 0xb4];
-};
-struct Slot494 { char pad0[0x30]; unsigned char flags; char pad31[0x494 - 0x31]; };   // 0x494 bytes (0x4435c0)
-struct PartySlot { int f0; int troop; char pad8[0x18]; };      // 0x20 bytes (0x4428c0)
-struct Party {                                   // 0x5ac8 bytes
-    char pad0[0xa8];
-    PartySlot m[64];                             // +0xa8
-    int count;                                   // +0x8a8
-    char pad8ac[0x5ac8 - 0x8ac];
-};
-struct PartyMgr {
-    char pad0[0x138d0];
-    Party** pages;                               // +0x138d0 (index >> 4 -> page of 16)
-    int index_of(int id);                        // 0x48ad00
-};
-struct GameData {
-    char pad0[0x78];
-    int f78;                                     // +0x78 (0x4428c0)
-    char pad7c[0x8c - 0x7c];
-    int player;                                  // +0x8c
-    char pad90[0xf8 - 0x90];
-    PartyMgr parties;                            // +0xf8 (embedded; pages pointer at +0x139c8)
-    char pad_x[0x139e4 - 0xf8 - sizeof(PartyMgr)];
-    int f139e4;                                  // +0x139e4 (0x443aa0)
-    char pad139e8[0x13a00 - 0x139e8];
-    union {
-        TroopRec* chars;                         // +0x13a00 (0x4428c0)
-    };
-    char pad13a04[0x13a34 - 0x13a04];
-    int f13a34;                                  // +0x13a34 (0x4428c0)
-    char pad13a38[0x13a50 - 0x13a38];
-    Slot494* slots;                              // +0x13a50 (0x4435c0)
-    int skill(int troop, int id);                // 0x437b20 (thiscall, ret 8) (0x4406a0)
-    void add_experience(int troop, int amount);  // 0x4428c0 (ret 8) (agent_fx_sound.cpp)
-};
-extern GameData* g_game;                         // 0x5e2930
+// ---- game data: troop records, parties, slot table (g_game 0x5e2930): the shared classes GameData / TroopRec / Party / Stack / Level494
+#include "../../include/game_data.h"
 
 // the agent of an id (page table lookup, as the callers inline it)
 static __forceinline Agent* agent_by_id(unsigned id)

@@ -29,9 +29,7 @@ struct SkelX {                              // what the +0x304 pointer of the bo
 };
 struct ItemRec { int pad0, pad4; unsigned flags; char pad_c[0x40 - 0xc]; };     // 0x40 bytes, flags at +8 (0x432f60)
 struct Record { char pad0[0x10]; ItemRec* items; int count; char pad18[0x30 - 0x18]; };   // 0x30, items +0x10, count +0x14
-struct ItemDef { char pad0[0x30]; __int64 flags; char pad38[0x508 - 0x38]; };    // 0x508 bytes, flags at +0x30 (0x433140)
-struct GameData { char pad[0x13a00]; ItemDef* items; };     // +0x13a00 (0x433140)
-extern GameData* g_game;                    // 0x5e2930
+#include "../../include/game_data.h"      // GameData / g_game 0x5e2930: the troop table at +0x13a00 (0x433140 reads the record's flags at +0x30; this module called the record ItemDef)
 
 struct AgentX : Agent {
     Record* recs() const { return *(Record**)f12c; }        // the actor's table of 0x30-byte records (+0x12c)
@@ -107,18 +105,7 @@ struct mesh_node {
 bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   // 0x4336d0
 
 // ---- message ring, height field, scene object ---------------------------------------------------------------------
-struct MsgLog {
-    char pad0[0x1714];
-    char enabled;                           // +0x1714
-    char pad1715[0xb0b8 - 0x1715];
-    struct Ring {
-        int count;                          // +0xb0b8
-        int head;                           // +0xb0bc
-        tstring names[32];                  // +0xb0c0
-        int vals[32];                       // +0xb2c0
-    } ring;
-    void push(const tstring& s, int v);     // 0x4334b0
-};
+#include "../../include/msg_log.h"             // MsgLog (one definition for src/game and src/rgl; push 0x4334b0 is defined in game_util.cpp)
 struct HeightFieldX : HeightField {         // agent.h's HeightField has cols, w, h, cell
     void sample(float x, float y, float* out_h, int* out_id);   // 0x433510
 };

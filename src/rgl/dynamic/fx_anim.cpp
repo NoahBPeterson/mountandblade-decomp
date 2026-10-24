@@ -13,6 +13,7 @@
 #include "../../include/quaternion.h"
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/key_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;

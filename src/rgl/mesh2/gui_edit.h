@@ -362,18 +362,8 @@ struct ItemPage {
 
 struct QuickString { tstring name; tstring key; tstring translated(); };   // translated 0x4c6080
 struct GameString { tstring name; tstring key; tstring translated(); };    // translated 0x4c6080
-struct PartyTemplate {
-    tstring name;                                                       // +0x00
-    tstring key;                                                        // +0x10
-    char pad20[0xb0 - 0x20];
-    tstring translated();                                               // 0x4c6080
-};
-struct DialogRec {
-    tstring name;                                                       // +0x00
-    tstring key;                                                        // +0x10
-    char pad20[0x64 - 0x20];
-    tstring translated();                                               // 0x4c6080
-};
+#include "../../include/game_recs.h"       // PartyTemplate (translated 0x4c6080), QuestRec, FactionRec: the shared record classes
+#include "../../include/dialog_rec.h"      // DialogRec (translated 0x4c6080): the shared dialog record
 struct SkinElem {
     tstring name;                                                       // +0x00
     tstring key;                                                        // +0x10
@@ -542,7 +532,7 @@ struct ConfigDialog {
 };
 
 // the settings snapshot taken by the dialog: 0x230 bytes + 0x20 = a 0x250-byte frame
-struct Settings {
+struct SettingsSnapshot {
     char data[0x230];
     RenderConfig cfg;                                   // 0x230
 };
@@ -841,88 +831,8 @@ struct item38_vec {
 // ============================================================================================================
 // 0x4c8ca0: GameData::save_language_files and the records it walks
 // ============================================================================================================
-struct PartyRec;
-struct TroopRec;
-struct FactionRec;
-struct QuestRec;
-
-struct PartyMgr {
-    char pad0[0x138d0];
-    PartyRec** pages;                                                   // +0x138d0
-    char pad2[8];
-    unsigned n_parties;                                                 // +0x138dc (GameData+0x139d4)
-    unsigned first_party_id();                                          // 0x460d20
-    void next_party_id(unsigned* id);                                   // 0x460ca0
-    int find(unsigned id);                                              // 0x48ad00
-    PartyRec* get_party(unsigned id);
-};
-
-struct GameData {
-    char pad0[0x78];
-    int party_id_78;                                                    // +0x78
-    char pad7c[0x10];
-    int player_troop;                                                   // +0x8c
-    char pad90[0x68];
-    PartyMgr pm;                                                        // +0xf8
-    char pad_after_pm[0x13a00 - 0x139d8];
-    TroopRec* chars;                                                    // +0x13a00
-    int n_chars;                                                        // +0x13a04
-    char pad_a08[0x40];
-    FactionRec* factions;                                               // +0x13a48
-    int n_factions;                                                     // +0x13a4c
-    char pad_a50[8];
-    QuestRec* quests;                                                   // +0x13a58
-    int n_quests;                                                       // +0x13a5c
-    void save_language_files(bool translated);                          // 0x4c8ca0
-};
-
-struct TroopRec {
-    tstring name;                                                       // +0x00
-    tstring plural;                                                     // +0x10
-    tstring key;                                                        // +0x20
-    char pad30[0x508 - 0x30];
-    tstring translated();                                               // 0x4c62b0
-    tstring translated_plural();                                        // 0x4c6330
-    tstring* plural_name();                                             // 0x48d6d0
-    const tstring* display_name() { return find_or(key, name); }
-};
-
-struct PartyRec {
-    char pad0[0xc];
-    tstring name;                                                       // +0x0c
-    bool flag;                                                          // +0x1c
-    char pad1d[3];
-    tstring key;                                                        // +0x20
-    char pad30[0x8c - 0x30];
-    int f8c;                                                            // +0x8c
-    char pad90[0x5ac8 - 0x90];
-    tstring translated();                                               // 0x4c6530
-};
-inline PartyRec* PartyMgr::get_party(unsigned id)
-{
-    int idx = find(id);
-    return (PartyRec*)((char*)pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
-}
-
-struct FactionRec {
-    tstring name;                                                       // +0x00
-    bool flag;                                                          // +0x10
-    char pad11[3];
-    tstring key;                                                        // +0x14
-    char pad24[0x300 - 0x24];
-    tstring translated();                                               // 0x4c6860
-};
-
-struct QuestRec {
-    tstring name;                                                       // +0x00
-    tstring text;                                                       // +0x10
-    char pad20[0x54 - 0x20];
-    tstring key;                                                        // +0x54
-    char pad64[0x138 - 0x64];
-    tstring translated();                                               // 0x4c63f0
-    tstring translated_text();                                          // 0x4c6470
-    const tstring* text_name() { return suffix_or(key, "_text", text); }
-};
+#include "../../include/game_data.h"      // GameData (save_language_files 0x4c8ca0), TroopRec, Party, PartyMgr, QuestRec, FactionRec: the shared classes
+inline const tstring* QuestRec::text_name() { return suffix_or(key, "_text", desc); }
 
 extern PartyTemplate* g_party_templates;                                // 0x5e29f8
 extern int g_n_party_templates;                                         // 0x5e29fc

@@ -26,7 +26,9 @@
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/key_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // inline helpers: the original compiled them into the callers (no out-of-line copies in this object)
 static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)
@@ -866,9 +868,9 @@ quaternion KeyTable::sample(int key)
     int cur = 0;
     float frac;
     find(&cur, &frac, &k);
-    if (key == keys[cur]) return vals[cur];
+    if (key == keys[cur]) return ((quaternion*)vals)[cur];
     quaternion tmp;
-    slerp(&tmp, &vals[cur], &vals[cur + 1], &frac);
+    slerp(&tmp, &((quaternion*)vals)[cur], &((quaternion*)vals)[cur + 1], &frac);
     return tmp;
 }
 // @ 0x436b90

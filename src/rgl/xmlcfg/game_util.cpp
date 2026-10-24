@@ -24,7 +24,10 @@
 #include "../../game/placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../game/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../game/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/msg_log.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../game/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // ---- Newton Game Dynamics imports (cdecl) -----------------------------------------------------------
 extern "C" {
@@ -404,7 +407,7 @@ int AgentX::hand_kind() const
     if (item >= 0) {
         if (f2c >= 0) r = 2;
         else {
-            if (g_game->items[item].flags & 0x4000000i64) r = 1;
+            if (g_game->troops[item].flags30s & 0x4000000i64) r = 1;
             else r = 0;
         }
     }

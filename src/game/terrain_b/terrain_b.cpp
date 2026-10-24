@@ -53,6 +53,9 @@
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 using rgl::vector4;
 using rgl::matrix;
@@ -1465,7 +1468,7 @@ void MAgent::reset()
 }
 
 // @ 0x473570
-void TroopMgr::copy_troop(ArrSet* dst, const TroopRec* r)
+void TroopMgr::copy_troop(ArrSet* dst, const MeshGroupRec* r)
 {
     dst->name = r->name;
     for (int i = 0; i < r->ngroups; i++) {
@@ -1676,11 +1679,11 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
                 for (int j = 0; j < nfirst; j++) {
                     Stack* s = &p2->stacks[j];
                     Troop* t = &g_game->troops[s->troop];
-                    if ((t->flags & 0x10) == 0 && s->count > s->wounded + s->spawned) {
+                    if ((t->flags30s & 0x10) == 0 && s->count > s->wounded + s->spawned) {
                         done[idx] = 0;
-                        if ((t->flags & 0x1000000) && (r->flags2 & 0x100) == 0)
+                        if ((t->flags30s & 0x1000000) && (r->flags2 & 0x100) == 0)
                             x5 = 1;
-                        else if (t->flags & 0x4000000)
+                        else if (t->flags30s & 0x4000000)
                             x4 = 1;
                         else
                             x3 = 1;
@@ -1707,7 +1710,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
                     break;
                 Stack* s = &party->stacks[k];
                 Troop* t = &g_game->troops[s->troop];
-                __int64 hero = t->flags & 0x10;
+                __int64 hero = t->flags30s & 0x10;
                 if ((hero != 0 && s->spawned == 0 && t->used == 0 && (s->troop == g_game->player || !g_game->agent_low(s->troop)))
                     || (hero == 0 && s->count > s->wounded + s->spawned)) {
                     if (rule_accepts(r, s, k, x3, x4, x5)) {
@@ -1719,7 +1722,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
                         }
                         *out_stack = k;
                         *out_troop = s->troop;
-                        if ((g_game->troops[s->troop].flags & 0x10) == 0) {
+                        if ((g_game->troops[s->troop].flags30s & 0x10) == 0) {
                             *out_seed = rand();
                             if (s->spawned >= 0 && s->spawned < 32) {
                                 if (*out_party == g_game->f78)
@@ -1736,7 +1739,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
     }
     if (*out_troop >= 0) {
         g_game->troops[*out_troop].used = 1;
-        if (g_game->troops[*out_troop].flags & 0x10)
+        if (g_game->troops[*out_troop].flags30s & 0x10)
             *out_seed = -1;
     }
     if (*out_side == -1)

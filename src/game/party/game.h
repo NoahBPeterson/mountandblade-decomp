@@ -60,15 +60,7 @@ struct Rec10 {
     Rec10();                                // 0x4638b0
 };
 
-// vector of 8-byte integers (std::vector<__int64>): resize is the out-of-line instance 0x493090
-struct I64Vec {
-    int pad0;                               // +0
-    __int64* _Myfirst;                      // +4   0x51e0b0 (element i read at _Myfirst + i)
-    __int64* _Mylast;                       // +8
-    __int64* _Myend;                        // +0xc
-    void resize(unsigned n, __int64 val);   // 0x493090 (ret 0xc)
-    void read(stream_base* s);              // 0x51e0b0
-};
+#include "../../include/i64_vec.h"          // I64Vec: vector of 8-byte integers (std::vector<__int64>); resize is the out-of-line instance 0x493090
 
 #include "../int_vec.h"
 
@@ -109,45 +101,12 @@ struct SimpleTag {                          // Game +0x139f4 (inline ctor stores
     void read(stream_base* s);              // 0x51de00
 };
 
-struct QuestRec {                           // 0x138 bytes: element of Game::quests
-    char pad0[0x20];
-    tstring name20;                         // +0x20  0x51e170 (r_tstr)
-    tstring name30;                         // +0x30
-    tstring name40;                         // +0x40
-    char pad50[0x64 - 0x50];
-    int f64;                                // +0x64  0x51e170 (r_int)
-    SoaBlock soa;                           // +0x68  0x51e170 (read_soa)
-    char pad10c[0x114 - 0x10c];
-    int f114;                               // +0x114
-    int f118;                               // +0x118
-    float f11c;                             // +0x11c (r_float)
-    char pad120[0x128 - 0x120];
-    I64Vec list;                            // +0x128 0x51e170
-    void read(stream_base* s);              // 0x51e170
-};
+#include "../../include/game_recs.h"        // QuestRec (0x138 bytes, read 0x51e170), FactionRec, PartyTemplate (0xb0 bytes, read 0x51e410): the shared record classes
 
-struct Faction {                            // 0x300 bytes: element of Game::factions (Rec300 in the slices)
-    tstring name;                           // +0      0x51e320 (r_tstr)
-    char f10;                               // +0x10   (r_bool)
-    char pad11[0x28 - 0x11];
-    unsigned f28;                           // +0x28   (r_uint)
-    float rel[129];                         // +0x2c   one float per faction (r_float, n of them)
-    int f230;                               // +0x230  (r_int)
-    char pad234[0x24c - 0x234];
-    I64Vec list;                            // +0x24c
-    SoaBlock soa;                           // +0x25c
+struct Faction : FactionRec {               // 0x300 bytes: element of Game::factions (Rec300 in the slices); the layout is FactionRec's
     __declspec(noinline) void read(stream_base* s, int n);     // 0x51e320 (ret 8)
 };
 
-struct PartyTemplate {                      // 0xb0 bytes: element of the table at 0x5e29f8 (Rec0B0)
-    char pad0[0x34];
-    int f34;                                // +0x34  0x51e410 (r_int)
-    int f38;                                // +0x38
-    int f3c;                                // +0x3c
-    char pad40[0xa0 - 0x40];
-    I64Vec list;                            // +0xa0
-    __declspec(noinline) void read(stream_base* s);        // 0x51e410
-};
 
 // 0x60 item pairs read pair by pair (the Troop inventory, Troop +0xb4)
 struct ItemPairs {                          // 0x300 bytes

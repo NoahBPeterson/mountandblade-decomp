@@ -38,6 +38,9 @@
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../nav_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // inline vector helpers of the original: rgl's operators are out-of-line in other objects
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -185,7 +188,7 @@ bool Agent::has_weapon_for(int mode)
         if (f2c >= 0)
             k1 = 2;
         else
-            k1 = (g_game->chars[tr].flags & 0x4000000) ? 1 : 0;
+            k1 = (g_game->chars[tr].flags30 & 0x4000000) ? 1 : 0;
     }
     int ra = g_mission->teams[t1].cls[k1].a;
     int t2 = team;
@@ -195,7 +198,7 @@ bool Agent::has_weapon_for(int mode)
         if (f2c >= 0)
             k2 = 2;
         else
-            k2 = (g_game->chars[tr].flags & 0x4000000) ? 1 : 0;
+            k2 = (g_game->chars[tr].flags30 & 0x4000000) ? 1 : 0;
     }
     int rb = g_mission->teams[t2].cls[k2].b;
     for (int i = 0; i < 4; i++) {
@@ -1158,7 +1161,7 @@ void ui_weapon_class_name_user(int t, int x, char* q)
 // @ 0x43a480
 tstring* TroopRec::display_name()
 {
-    tstring* t = g_strtable.find(&name);
+    tstring* t = g_strtable.find(&key);
     return t ? t : (tstring*)this;
 }
 
@@ -1184,7 +1187,7 @@ void Agent::hand_pos(vector4* out)
     int h = 0;
     if (troop >= 0) {
         if (f2c >= 0) h = 2;
-        else h = (g_game->chars[troop].flags & 0x4000000i64) != 0 ? 1 : 0;
+        else h = (g_game->chars[troop].flags30 & 0x4000000i64) != 0 ? 1 : 0;
     }
     ClassInfo* r = &g_mission->teams[c].cls[h];
     float dy = r->dir.y;

@@ -22,7 +22,11 @@
 #include "../anim_slot.h"
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/msg_log.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
 template<> void std::vector<int>::push_back(const int&);
@@ -277,13 +281,13 @@ void GameData::add_experience(int troop, int amount)
             PartyMgr* pm = &parties;
             int p = pm->index_of(f78);
             int i = 0;
-            if (pm->pages[p >> 4][p & 0xf].count > 0) {
+            if (pm->pages._Myfirst[p >> 4][p & 0xf].count > 0) {
                 do {
                     int q = pm->index_of(f78);
-                    if (pm->pages[q >> 4][q & 0xf].m[i].troop == troop) {
+                    if (pm->pages._Myfirst[q >> 4][q & 0xf].stacks[i].troop == troop) {
                         {
                             tstring key("ui_value_has_advanced_to_level_number");
-                            tstring* nm = g_strtable.find(&c->name);
+                            tstring* nm = g_strtable.find(&c->key);
                             if (nm == 0)
                                 nm = (tstring*)c;
                             sprintf(buf3, g_strtable.lookup(&key)->c_str(), nm->c_str(), c->level);
@@ -295,7 +299,7 @@ void GameData::add_experience(int troop, int amount)
                     }
                     i++;
                     int r = pm->index_of(f78);
-                    if (!(i < pm->pages[r >> 4][r & 0xf].count))
+                    if (!(i < pm->pages._Myfirst[r >> 4][r & 0xf].count))
                         break;
                 } while (1);
             }
@@ -521,7 +525,7 @@ void Agent::play_hit_sound(int* kind)
                 return;
             snd = 0xe;
         } else if (!(pos.z < m->terrain.base_z)) {
-            snd = (g_game->slots[m->f5df4].flags & 1) ? 0x10 : 0xf;
+            snd = (g_game->slots[m->f5df4].flags8 & 1) ? 0x10 : 0xf;
         } else {
             snd = 0x11;
         }
@@ -588,7 +592,7 @@ void Agent::play_sound(int* snd)
         }
         float pitch = 1.0f;
         Mission* m = g_mission;
-        if (f10 == 0 && (g_game->chars[troop].flags & 0xf) != 1 && id != m->player_id) {
+        if (f10 == 0 && (g_game->chars[troop].flags32 & 0xf) != 1 && id != m->player_id) {
             float v = ((float)(((f1bc * 0x244ad + (id + 0x1d) * 0x14fd + troop * 0x76ef) % 0x1b41) * 0x51f % 0x367)
                        * 0.0011481056f - 0.5f) * 0.3f;
             if (v > 0.001f)

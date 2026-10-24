@@ -34,12 +34,7 @@ extern int g_use_slerp;                     // 0xa171dc
 
 // ---- key tables ------------------------------------------------------------------------------------------------
 // One table: values (vector4 or quaternion records), key array (ints), key count. KeyTable::find 0x423a50.
-struct KeyTable {
-    void* vals; int* keys; int count;
-    __declspec(noinline) void find(int* cur, float* frac, float* key);                      // 0x423a50
-    rgl::vector4* v4() const { return (rgl::vector4*)vals; }
-    quaternion* qv() const { return (quaternion*)vals; }
-};
+#include "../../include/key_table.h"   // KeyTable (one definition for src/game and src/rgl; find 0x423a50 is defined in fx_anim.cpp)
 // the table object an AnimRec points to: +0x1c one KeyTable per bone (quaternion keys), +0x28 one table (vector keys)
 struct KeyObj {
     char pad0[0x1c];

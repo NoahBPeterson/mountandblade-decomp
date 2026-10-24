@@ -2,7 +2,7 @@
 // File: dialog_manager.cpp  (0x460160..0x461200)
 //
 // Desc: the conversation manager. The {token} expander of the string registers (ScriptState::expand_token /
-//       expand), DialogMgr's accessors, the script-block reader (Block::read, with the Elem constructor the
+//       expand), DialogMgr's accessors, the script-block reader (DialogBlock::read, with the Elem constructor the
 //       `new Elem[]` passes to the vector constructor iterator), the dialog records read from the module file
 //       (DialogRec::read, DialogMgr::read), the availability test, line collection (up to 0x400 lines), and the
 //       start / advance loops. Game code. Names provisional (Module System: dialogs, dlga_ ids, repeat_for_*
@@ -16,6 +16,10 @@
 #include "./dialog_manager.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "./str_table.h"
+#include "../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x460160
 tstring ScriptState::expand_token(const tstring& tok_)
@@ -88,7 +92,7 @@ tstring ScriptState::expand_token(const tstring& tok_)
             mb_snprintf(buf, 0x10000, "TOKEN EXCEEDS MAX REGISTERS: <%s>", tok.c_str());
     } else if (tok.equals("playername")) {
         TroopRec* p = &g_game->chars[g_game->player];
-        tstring* t = g_strtable.find(&p->id);
+        tstring* t = g_strtable.find(&p->key);
         if (!t)
             t = (tstring*)p;
         mb_snprintf(buf, 0x10000, "%s", t->c_str());
@@ -98,7 +102,7 @@ tstring ScriptState::expand_token(const tstring& tok_)
             if (tok.buf[k] == '/')
                 slash = k;
         if (slash >= 0) {
-            if ((g_game->chars[g_game->player].flags & 0xf) != 1)
+            if ((g_game->chars[g_game->player].flags32 & 0xf) != 1)
                 mb_snprintf(buf, 0x10000, "%s", tok.substr(0, slash).c_str());
             else
                 mb_snprintf(buf, 0x10000, "%s", tok.substr(slash + 1, tok.len).c_str());
@@ -187,10 +191,10 @@ tstring ScriptState::expand(const tstring& in)
     return out;
 }
 
-// 0x4607d0 Elem::Elem (defined inline in dialog_manager.h; emitted for the vector constructor iterator of Block::read)
+// 0x4607d0 Elem::Elem (defined inline in dialog_manager.h; emitted for the vector constructor iterator of DialogBlock::read)
 
 // @ 0x4607e0
-void Block::read(stream_base* s)
+void DialogBlock::read(stream_base* s)
 {
     done = 0;
     if (items) {
@@ -296,23 +300,23 @@ void DialogMgr::refresh_text()
 void PartyMgr::next_party_id(int* id)
 {
     unsigned i = index_of(*id) + 1;
-    while ((int)i < count && pages[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         *id = deflt;
     else
-        *id = pages[i >> 4][i & 0xf].id;
+        *id = pages._Myfirst[i >> 4][i & 0xf].id;
 }
 
 // @ 0x460d20
 int PartyMgr::first_party_id()
 {
     unsigned i = 0;
-    while ((int)i < count && pages[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         return deflt;
-    return pages[i >> 4][i & 0xf].id;
+    return pages._Myfirst[i >> 4][i & 0xf].id;
 }
 
 // @ 0x460d80

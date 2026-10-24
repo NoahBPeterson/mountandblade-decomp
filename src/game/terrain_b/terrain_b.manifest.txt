@@ -20,7 +20,7 @@
 ../src/game/terrain_b/terrain_b.cpp  ?clamp_rec@PhysSet@@QAEXH@Z  00472c50  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?update@PhysSet@@QAEXM@Z  00472dc0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?update_probes@CellGrid@@QAEXI@Z  00472ed0  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?copy_troop@TroopMgr@@QAEXPAUArrSet@@PBUTroopRec@@@Z  00473570  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?copy_troop@TroopMgr@@QAEXPAUArrSet@@PBUMeshGroupRec@@@Z  00473570  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?relax@FaceRace@@QAEXHPAM@Z  004735e0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?unpack@FaceGen@@QAEPAUFaceRace@@PB_K@Z  00473800  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?refresh_cells@Terrain@@QAEXXZ  00473980  /O2 /MT /Gy /TP

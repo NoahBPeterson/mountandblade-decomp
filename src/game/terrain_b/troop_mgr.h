@@ -8,7 +8,7 @@
 #include "./records.h"
 
 struct MeshRef { char pad[0x38]; rgl::mesh** base; };       // base: pointer to the base mesh pointer at +0x38 (0x470db0)
-struct TroopRec {                                           // reduced
+struct MeshGroupRec {                                       // reduced: the record copy_troop reads (NOT the 0x508-byte troop record, Troop in src/include/troop.h: +0x34.. holds five vectors where Troop has f50 / f58 / nib)
     char pad0[0x34];
     std::vector<int> groups[5];                             // +0x34 (first at +0x38): mesh handles per group (0x473570)
     int ngroups;                                            // +0x84
@@ -19,7 +19,7 @@ struct TroopMgr {
     char pad0[0x38];
     MeshRef* ref;                                           // +0x38 (0x470db0)
     void apply_group(ArrSet* dst, int idx, rgl::mesh* obj); // 0x470db0 (thiscall, ret 0xc): nearest base point per point of obj
-    void copy_troop(ArrSet* dst, const TroopRec* r);        // 0x473570
+    void copy_troop(ArrSet* dst, const MeshGroupRec* r);        // 0x473570
 };
 // copy_troop calls apply_group through the same address from outside its own definition: cl must not assume its
 // register use (the slice compiled them apart).
