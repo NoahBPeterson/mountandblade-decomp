@@ -1,0 +1,2 @@
+../src/game/inventory_panel/party_screen.cpp  ?money_label@PartyScreen@@QAEXHH@Z  00504d50  /O2 /MT /Gy /TP
+../src/game/inventory_panel/party_screen.cpp  ?show_selected_character@PartyScreen@@QAEXHH@Z  00507310  /O2 /MT /Gy /TP

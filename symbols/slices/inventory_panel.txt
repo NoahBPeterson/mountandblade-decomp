@@ -1,0 +1,7 @@
+# globals and callees src/game/inventory_panel/*.cpp reference by their decorated names (the modules declare them in inv_common.h / party_screen.h)
+005e2a18 ?g_strtable@@3UStrTable@@A  # string table (StrTable::lookup 0x43a1e0)
+0054a6d0 ?g_tick_scale@@3MA  # 1e-5f, the tick table's scale
+08ee3c48 ?g_editor_dialog@@3UEditorDialog@@A  # EditorDialog (loading_screen.cpp)
+08ee3c48 ?g_panel@@3UEditorPanel@@A  # the same object seen as EditorPanel (widget_text.cpp dialog_thunk)
+004e4c70 ?label_refresh@@YAXPAXUtstring@@@Z  # cdecl, name by value
+004991d0 ?make_mesh_from@ObjTable@@QAEPAURMesh@@PBHPBX@Z  # g_obj_inv.make_mesh_from(index, from)

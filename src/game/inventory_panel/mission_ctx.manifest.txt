@@ -1,0 +1,8 @@
+../src/game/inventory_panel/mission_ctx.cpp  ?pop_key@MissionCtx@@QAEIXZ  00513b10  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?init@Team@@QAEXH@Z  00514670  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?init@Sub3@@QAEXXZ  005146f0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?start_scene@MissionCtx@@QAEXHHH@Z  005147e0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?autosave_notice@@YAXXZ  00514830  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?start_battle@MissionCtx@@QAEXHHHH@Z  00514c00  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ??0mat2@@QAE@PBM0@Z  00516220  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?data_ready@PartyV@@QAEHXZ  005166a0  /O2 /MT /Gy /TP

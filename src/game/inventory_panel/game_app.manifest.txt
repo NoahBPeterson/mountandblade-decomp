@@ -1,0 +1,2 @@
+../src/game/inventory_panel/game_app.cpp  ?MsgProc@GameApp@@QAEHPAUHWND__@@III@Z  0050f130  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_app.cpp  ?update@LoadingScreen@@QAEXH@Z  0050f390  /O2 /MT /Gy /TP

@@ -1,0 +1,9 @@
+../src/game/inventory_panel/inventory_panel.cpp  ?set_slot_flag@InventoryPanel@@QAEXHHID@Z  00510850  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?place_slot@InventoryPanel@@QAEXPAUMissionUi@@PAUItemRef@@HH@Z  00510f50  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?emit_event4@GameDataV@@QAEDHHHH@Z  00512620  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?test_slot_flag@InventoryPanel@@QAEDHHI@Z  005126e0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?name@ItemRef@@QAEXPAD@Z  00512730  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?attribute_name@@YAXHPAD@Z  00512840  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?compute@InventoryPanel@@QAEXPAHH@Z  00512960  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?set_slot_value@InventoryPanel@@QAEXHHH@Z  005132e0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?or_slot_flag@InventoryPanel@@QAEXHH@Z  00513320  /O2 /MT /Gy /TP

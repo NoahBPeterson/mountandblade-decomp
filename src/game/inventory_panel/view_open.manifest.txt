@@ -1,0 +1,1 @@
+../src/game/inventory_panel/view_open.cpp  ?reset@view_obj@@QAEXXZ  0050a140  /O2 /MT /Gy /TP

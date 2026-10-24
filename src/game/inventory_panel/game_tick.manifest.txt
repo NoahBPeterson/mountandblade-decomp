@@ -1,0 +1,7 @@
+../src/game/inventory_panel/game_tick.cpp  ?resume_strings@GameG@@QAEXPAUtstring@@0@Z  00517110  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_tick.cpp  ?sun_color@GameG@@QAEPAUvector4@rgl@@PAU23@@Z  005176e0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_tick.cpp  ?fog_color@GameG@@QAEPAUvector4@rgl@@PAU23@@Z  00517820  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_tick.cpp  ?set_grid_color@GameG@@QAEXPAI@Z  005178d0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_tick.cpp  ?first@GamePool@@QAEHXZ  005179b0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_tick.cpp  ?skill_plus_8@GameG@@QAEMXZ  00518940  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_tick.cpp  ?shift_over@Vec5c@@QAEPAPAURec5c@@PAPAU2@PAU2@1@Z  00518990  /O2 /MT /Gy /TP

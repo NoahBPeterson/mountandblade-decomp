@@ -1,0 +1,4 @@
+../src/game/inventory_panel/widget_text.cpp  ?flag1@widget@@QBEIXZ  0050cc60  /O2 /MT /Gy /TP
+../src/game/inventory_panel/widget_text.cpp  ??0text_box@@QAE@XZ  0050d0b0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/widget_text.cpp  ?dialog_thunk@@YGJPAUHWND__@@IIJ@Z  0050d250  /O2 /MT /Gy /TP
+../src/game/inventory_panel/widget_text.cpp  ?_Insert_n@vec_named@@QAEXPAUnamed_vec@@IABU2@@Z  0050d260  /O2 /MT /Gy /TP

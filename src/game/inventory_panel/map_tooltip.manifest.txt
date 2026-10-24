@@ -1,0 +1,1 @@
+../src/game/inventory_panel/map_tooltip.cpp  ?dist_is_zero@@YI_NPAUDistObj@@@Z  0051be20  /O2 /MT /Gy /TP
