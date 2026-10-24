@@ -1,0 +1,2 @@
+../src/game/options_panel/quest_page.cpp  ?update_days@QuestPage@@QAEXXZ  004d6270  /O2 /MT /Gy /TP
+../src/game/options_panel/quest_page.cpp  ?update_difficulty@QuestPage@@QAEXXZ  004d6300  /O2 /MT /Gy /TP

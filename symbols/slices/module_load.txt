@@ -1,0 +1,7 @@
+# module_load: the module-system record loaders and the container helpers next to them
+004d0c20 ?load_module_files@@YAXXZ  # loads item_modifiers / flora_kinds / ground_specs / skyboxes / mission_types
+004d10f0 ?item_modifier_array_dtor@@YAXPAUitem_modifier@@0@Z  # destroys a range of 0x28-byte item modifier records
+004d1140 ?construct@flora_alloc@@QAEXPAUflora_kind@@ABU2@@Z  # allocator construct (copy_from 0x4cd080)
+004d1160 ?construct@ground_alloc@@QAEXPAUground_spec@@ABU2@@Z  # allocator construct (copy_from 0x4cd100)
+004d1180 ?construct@mission_alloc@@QAEXPAUmission_type@@ABU2@@Z  # allocator construct (copy_from 0x4cd170)
+004d1360 ??0growable_array@@QAE@XZ  # one range at +8 and six 0x10-byte ranges at +0x1c, vector4 (1,1,1) normalised at +0x80

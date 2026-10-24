@@ -1,0 +1,365 @@
+// hud.cpp: the mesh editor's selection handler (the last editor function), the mission object's destructor
+// wrapper, and the mission screen's button handler and mission-item callbacks (0x4d4b80..0x4d5ba0). Names
+// provisional.
+#include <windows.h>
+#include <math.h>
+#include <new>
+#include "./mesh_edit.h"
+#include "./hud.h"
+
+// @ 0x4d4b80
+bool Mesh::on_selection_changed()
+{
+    int idx[4];
+    int cur = 0;
+    for (unsigned i = 0; i < c.verts.size(); i++) {
+        if (c.verts[i].pad14 != 0) {
+            if (cur < 4)
+                idx[cur] = (int)i;
+            cur++;
+        }
+    }
+    if (cur == 3)
+        return add_triangle(idx);
+    if (cur != 4)
+        return false;
+
+    OwnedIntVec found;
+    for (cur = 0; (unsigned)cur < c.faces.size(); cur++) {
+        int n = c.faces[cur].n;
+        int cnt = 0;
+        const int* p = c.faces[cur].vid;
+        for (int j = 0; j < n; j++) {
+            int v = *p++;
+            if (v == idx[0]) cnt++;
+            if (v == idx[1]) cnt++;
+            if (v == idx[2]) cnt++;
+            if (v == idx[3]) cnt++;
+        }
+        if (cnt > 0)
+            found.push_back(cur);
+        if (cnt > 2)
+            return false;
+    }
+
+    float nx = 0.0f, ny = 0.0f, nz = 0.0f;
+    for (unsigned i = 0; i < found.size(); i++) {
+        MPoly& f = c.faces[found[i]];
+        nx = nx + f.normal.x;
+        ny = ny + f.normal.y;
+        nz = nz + f.normal.z;
+    }
+    nx = nx / (float)found.size();
+    ny = ny / (float)found.size();
+    nz = nz / (float)found.size();
+    float len = (float)sqrt(nz * nz + ny * ny + nx * nx);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        nx *= inv; ny *= inv; nz *= inv;
+    } else {
+        nx = 0.0f; ny = 1.0f; nz = 0.0f;
+    }
+
+    const MVert* v = &c.verts[0];   // the original indexes from the first vertex (verts begin loaded once)
+    Vec4 a;
+    a = Vec4(v[idx[1]].pos.x - v[idx[0]].pos.x, v[idx[1]].pos.y - v[idx[0]].pos.y, v[idx[1]].pos.z - v[idx[0]].pos.z);
+    Vec4 b;
+    b = Vec4(v[idx[2]].pos.x - v[idx[0]].pos.x, v[idx[2]].pos.y - v[idx[0]].pos.y, v[idx[2]].pos.z - v[idx[0]].pos.z);
+    Vec4 cc;
+    cc = Vec4(v[idx[3]].pos.x - v[idx[0]].pos.x, v[idx[3]].pos.y - v[idx[0]].pos.y, v[idx[3]].pos.z - v[idx[0]].pos.z);
+
+    int cls[3];
+    cls[0] = cls[1] = cls[2] = 0;
+    if ((a.z * b.y - a.y * b.z) * nx +
+        ((a.x * b.z - b.x * a.z) * ny +
+         (b.x * a.y - a.x * b.y) * nz) > 0.0f)
+        cls[0] = 1;
+    else
+        cls[1] = 1;
+    if ((cc.y * b.z - cc.z * b.y) * nx +
+        ((cc.z * b.x - cc.x * b.z) * ny +
+         (cc.x * b.y - cc.y * b.x) * nz) > 0.0f)
+        cls[1] = cls[1] + 1;
+    else
+        cls[2] = 1;
+    if ((cc.z * a.y - cc.y * a.z) * nx +
+        ((cc.x * a.z - cc.z * a.x) * ny +
+         (cc.y * a.x - cc.x * a.y) * nz) > 0.0f)
+        cls[2] = cls[2] + 1;
+    else
+        cls[0] = cls[0] + 1;
+
+    if (cls[0] == 1 && cls[1] == 1 && cls[2] == 1)
+        return false;
+
+    char ok = 1;
+    unsigned nfaces = c.faces.size();
+    for (int i = 0; i < 3; i++) {
+        if (cls[i] != 1)
+            continue;
+        for (int j = 0; j < 3; j++) {
+            if (cls[j] == 1)
+                continue;
+            if (ok) {
+                int tri[3];
+                tri[0] = idx[0];
+                tri[1] = idx[i + 1];
+                tri[2] = idx[j + 1];
+                ok = add_triangle(tri);
+                if (!ok) {
+                    if (nfaces < c.faces.size()) {
+                        delete_face((int)c.faces.size() - 1);
+                        build_adjacency();
+                    }
+                    return false;
+                }
+            }
+        }
+    }
+    if (ok) {
+        int& sel = cur;
+        if (cls[0] == 1)
+            sel = idx[1];
+        else if (cls[1] == 1)
+            sel = idx[2];
+        else
+            sel = idx[3];
+        for (unsigned i = 0; i < c.edges.size(); i++) {
+            MEdge& e = c.edges[i];
+            if ((e.v0 == idx[0] && e.v1 == sel) || (e.v1 == idx[0] && e.v0 == sel))
+                break;
+        }
+    }
+    return true;
+}
+
+
+// @ 0x4d5290
+void Hud::handle_buttons(int arg)
+{
+    ((ItemSource*)((char*)(void*)this + 0x30))->pick(&arg);
+    if (f60->used(0x10000)) {
+        g_menu_w1[6] = 4;
+        g_menu_w1[1] = 3;
+        g_menu_w1[0x8c / 4] = 0;
+        g_main_menu.choose(3);
+        return;
+    }
+    if (f64->used(0x10000)) {
+        g_menu_w1[1] = 0;
+        g_menu_w1[0x8c / 4] = f88;
+        g_main_menu.choose(3);
+        return;
+    }
+    if (f68->used(0x10000)) {
+        g_menu_w5[6] = 4;
+        g_main_menu.choose(0x15);
+        return;
+    }
+    if (f6c != 0 && f6c->used(0x10000)) {
+        g_menu_w1[6] = 4;
+        g_menu_w1[1] = 2;
+        g_menu_w1[0x8c / 4] = 0;
+        g_main_menu.choose(3);
+        return;
+    }
+    if (f70->used(0x10000)) {
+        g_menu_w4[6] = 4;
+        g_main_menu.choose(0x12);
+        return;
+    }
+    if (f74->used(0x10000)) {
+        g_menu_w6[6] = 4;
+        g_main_menu.choose(0x1c);
+        return;
+    }
+    if (f78->used(0x10000))
+        g_5e2a08 = 1;
+}
+
+// ---- the world object (0x5e292c) -------------------------------------------------------------------------
+extern "C" void __cdecl free_ptr(void* p);          // 0x535712 (operator delete / free)
+// all of these are thiscall (ecx = the sub-object), see the lea ecx / call pairs in the original
+struct WorldBase { void dtor(); };                  // 0x479160
+struct Sub6814 { void dtor(); };                    // 0x42bc40 (16-byte string at +0x6814)
+struct Sub6698 { void dtor(); };                    // 0x4cb780
+struct Sub6688 { void dtor(); };                    // 0x431a60
+struct Sub63d0 { void dtor(); };                    // 0x4be6f0
+struct Sub0030 { void dtor(); };                    // 0x4c6e30
+struct Sub0004 { void dtor(); };                    // 0x4c6e30 (ICF'd with Sub0030::dtor)
+
+struct World {
+    // the sub-objects the destructor tears down, in address order
+    struct Vec {                                        // an STL vector triple
+        void* begin; void* end; void* cap;
+        void release() { if (begin) free_ptr(begin); begin = 0; end = 0; cap = 0; }
+    };
+
+    void destroy();                                 // 0x4d51d0 (tail-call shape, ret 0)
+};
+
+// @ 0x4d51d0
+void World::destroy()
+{
+    char* p = (char*)(void*)this;
+    ((WorldBase*)p)->dtor();
+    ((Sub6814*)(p + 0x6814))->dtor();
+    ((Sub6698*)(p + 0x6698))->dtor();
+    ((Sub6688*)(p + 0x6688))->dtor();
+    ((Vec*)(p + 0x667c))->release();
+    ((Sub63d0*)(p + 0x63d0))->dtor();
+    ((Vec*)(p + 0x63c4))->release();
+    ((Vec*)(p + 0x5e00))->release();
+    ((Sub0030*)(p + 0x30))->dtor();
+    ((Sub0004*)(p + 0x4))->dtor();
+}
+
+// @ 0x4d5940
+__declspec(noinline) void ValueSource::on_value_changed(float arg)
+{
+    set_value((step / slot[idx] * arg) * g_char_scale + value());
+}
+
+// @ 0x4d5980
+void Hud::on_mission_start(int arg)
+{
+    *(int*)((char*)(void*)g_world + 0x5270) = g_u32;
+    g_u32 = g_u32 + 1;
+    mission_start_setup((void*)(void*)g_world);
+    g_screen->v2();
+    g_screen->f18 = f18;
+    g_menu_w3[1] = 0;
+    g_menu_w3[0x18 / 4] = f18;
+    g_main_menu.choose(0xe);
+}
+
+// @ 0x4d59f0
+void Hud::on_leave(int arg)
+{
+    if (f34->used(0x10000))
+        g_main_menu.choose(7);
+}
+
+// @ 0x4d5a20
+void Hud::on_update(int arg)
+{
+    if (g_mission_clock) {
+        ValueWidget* u = item_value(f3c);
+        float v = (u->f168 - u->f16c) / (u->f170 - u->f16c) * (u->slot[u->idx] - u->step);
+        u->set_value((float)g_mission_clock / u->slot[u->idx] * u->step * g_char_scale + v);
+        item_value(f3c)->set_key_flags(0x10000);
+    }
+    for (int i = 0; i < f24c; i++) {
+        if (wi[i]->used(0x10000)) {
+            f250 = i;
+            page_fill();
+        }
+    }
+    if (f34->used(0x10000)) {
+        if (f04 == 0) {
+            f34->activate(1);
+            return;
+        }
+        f04 = 0;
+        g_main_menu.choose(0xd);
+    } else if (f38->used(0x10000)) {
+        if (f04 == 1) {
+            f38->activate(1);
+            return;
+        }
+        f04 = 1;
+        g_main_menu.choose(0xd);
+    } else if (f30->used(0x10000) || (!g_a170d8 && g_a174d8)) {
+        g_main_menu.choose(f18);
+    }
+}
+
+// @ 0x4d5410
+void MissionSource::pick(int* arg)
+{
+    float t;
+    if (family >= 0) {
+        __int64 now = *(__int64*)(g_ticks_ + slot * 2);
+        __int64 d = now - ((__int64)tick_hi << 32) - (unsigned)tick_lo;
+        g_spawn_lo = (__int64)(int)((double)d * g_tick_scale * g_day_scale);
+        play_family_sound(family, 0xc3);
+        t = (float)(int)(fmod((double)*(__int64*)g_ticks_ * g_tick_scale, g_day_period) * g_hour_scale
+                         + g_hour_base);
+    }
+    if (g_mission_clock) {
+        float best_d = 1.0e5f;
+        int best = -1;
+        for (unsigned i = 0; i < (unsigned)size(); i++) {
+            MissionItem* it = begin[i];
+            if (it->kind() != 7)
+                continue;
+            float dx;
+            if (it->rect[0] + it->rect[2] <= g_mouse_x && g_mouse_x < it->rect[0] + it->rect[2]) {
+                dx = 0.0f;
+            } else {
+                dx = ABS(g_mouse_x - (it->rect[0] + it->rect[2]));
+                float alt = ABS(g_mouse_x - (it->rect[0] + it->rect[2]));
+                if (alt < dx)
+                    dx = alt;
+            }
+            float dy;
+            if (it->rect[1] + it->rect[3] <= g_mouse_y && g_mouse_y < it->rect[1] + it->rect[3]) {
+                dy = 0.0f;
+            } else {
+                dy = ABS(g_mouse_y - (it->rect[1] + it->rect[3]));
+                float alt = ABS(g_mouse_y - (it->rect[1] + it->rect[3]));
+                if (alt < dy)
+                    dy = alt;
+            }
+            float dist = (float)sqrt(dx * dx + dy * dy);
+            if (dist < best_d) {
+                best = i;
+                best_d = dist;
+            }
+        }
+        if (best >= 0) {
+            int idx = best;
+            ValueSource* u = item_value(begin[idx]);
+            u->on_value_changed((float)g_mission_clock);
+            ValueWidget* w = item_value(begin[best]);
+            w->set_key_flags(0x10000);
+        }
+    }
+
+    for (unsigned i = 0; i < (unsigned)size(); i++) {
+        MissionItem* it = begin[i];
+        MissionItem** p = &begin[i];
+        for (int n = 0; n < 5; n++) {
+            if ((*p)->nodes[n])
+                timer_set((*p)->nodes[n], &t);
+        }
+        if ((*p)->used(0x10000)) {
+            g_spawn_lo = i;
+            g_spawn_hi = 0;
+            int k = it->kind();
+            if (k == 2 || k == 3) {
+                g_spawn_hi = (__int64)(int)it->get_float();
+                play_family_sound(family, 0xc2);
+            } else if (k == 5) {
+                g_spawn_hi = (__int64)it->get_value();
+                play_family_sound(family, 0xc2);
+            } else if (k == 6) {
+                string_assign(&g_mission_title, &it->name);
+                play_family_sound(family, 0xc2);
+            } else if (k != 8 || it->f184 != 1) {
+                play_family_sound(family, 0xc2);
+            } else {
+                g_spawn_hi = it->f180 != 0;
+                play_family_sound(family, 0xc2);
+            }
+        } else if (it->used(2)) {
+            g_spawn_hi = 0;
+            g_spawn_lo = i;
+            play_family_sound(family, 0xc1);
+        } else if (it->used(4)) {
+            g_spawn_hi = 1;
+            g_spawn_lo = i;
+            play_family_sound(family, 0xc1);
+        }
+    }
+}

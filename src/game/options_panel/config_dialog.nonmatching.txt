@@ -1,0 +1,3 @@
+004cf100  1501  complete; tree too far off (frame 0x588, 0x4cc680 result-copy shape unresolved); diff-test unsupported (D3D renderer vtable singleton)
+004cf7b0  2086  complete; per-key tstring temporaries cannot be reproduced byte-exactly by MSVC 13.10 (frame 0x54/0x80 vs 0x60, per-block key temps at [esp+0x34]); diff-test UNSUPPORTED (0/400 valid inputs, import GetDlgItem not modelled in the emulator)
+004d0240  813  complete; tree too far off (size 710 vs 991: switch jump table, shared 0x208 epilogue and the WM_COMMAND tail are not reproduced by the compiler, so the tail is spelled with inline asm); diff-test WEAK (400/400 valid, 7.4% coverage: only the two zero/one dispatch cases are exercised, the 0x111/0x114 paths stay unreachable behind unmodelled imports)

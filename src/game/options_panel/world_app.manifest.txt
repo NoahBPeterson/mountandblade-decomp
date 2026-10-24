@@ -1,0 +1,5 @@
+../src/game/options_panel/world_app.cpp  ?restore_defaults@@YAXXZ  004d3a50  /O2 /MT /Gy /TP
+../src/game/options_panel/world_app.cpp  ?wndproc_thunk@@YGHPAUHWND__@@IIJ@Z  004d4130  /O2 /MT /Gy /TP
+../src/game/options_panel/world_app.cpp  ?uninit_fill_n_50@@YAXPAUElem50@@IABU1@AAUAlloc50@@@Z  004d49c0  /O2 /MT /Gy /TP
+../src/game/options_panel/world_app.cpp  ?uninit_fill_n_68@@YAXPAUElem68@@IABU1@AAUAlloc68@@@Z  004d4a50  /O2 /MT /Gy /TP
+../src/game/options_panel/world_app.cpp  ?uninit_fill_n_b0@@YAXPAUElemB0@@IABU1@AAUAllocB0@@@Z  004d4ae0  /O2 /MT /Gy /TP

@@ -1,0 +1,1 @@
+# config_dialog: no byte-exact function (every row of config_dialog.cpp is in config_dialog.nonmatching.txt). Flags /O2 /MT /Gy /TP.

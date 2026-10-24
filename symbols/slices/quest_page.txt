@@ -1,0 +1,5 @@
+# quest_page: names carried over from symbols/slices/s004d5ba0.txt (the slices stay untouched until retired)
+004d5ba0 0x4d5ba0 fill  # quest box fill: name, given-on date, days since given, description, progression
+004d5f20 0x4d5f20 update_settings  # options-change handler for the quest/settings page (ret 4)
+004d6270 0x4d6270 update_days  # "today" day-number caption
+004d6300 0x4d6300 update_difficulty  # difficulty rating caption

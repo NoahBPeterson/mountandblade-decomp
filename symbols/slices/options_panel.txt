@@ -1,0 +1,15 @@
+# options_panel: names carried over from symbols/slices/s004d7370.txt, s004d7d10.txt, s004d86d0.txt, s004d8c20.txt (the slices stay untouched until retired)
+004d7300  dummy  # nothing lives here: this placeholder only exists so the equivalence resolver sees a symbol with a `// 0x…` comment for the two free functions below (chk.py cannot pair two VAs with one C++ member name, so 0x4d7370/0x4d7610 are written as free functions taking the keyboard object / panel first)
+004d7d10  options_panel::key_binding_name  ?key_binding_name@options_panel@@QAEXHPAUtstring@@PAH@Z
+004d7d90  options_panel::on_key_event  ?on_key_event@options_panel@@QAEXH@Z
+004d7de0  options_panel::update_cursor  ?update_cursor@options_panel@@QAEXXZ
+004d7e00  options_panel::refresh_texts  ?refresh_texts@options_panel@@QAEXXZ
+004d7e50  options_panel::draw_faction_report  ?draw_faction_report@options_panel@@QAEXXZ
+004d8000  options_panel::import_export  ?import_export@options_panel@@QAEXH@Z
+0054a740 ??_7outfile_a@@6B@  # vtable of the export file base class (stored by its inline ctor in 0x4d8000)
+00595618 ??_7outfile_b@@6B@  # vtable of the middle class whose dtor closes the file (slot 26 at 0x595680)
+00595990 ??_7outfile@@6B@  # vtable of the most-derived export file object
+004d86d0  char_export_write  ?char_export_write@@YAXPAUstream_text@@@Z
+004d8c20 FUN_004d8c20  # character-import text reader (called from the character/save loader; per-key tstring compares)
+004d9260 FUN_004d9260  # builds "CharExport\\%s.txt" for the active character
+00596ba4 ??_C@_07NMOAIEL@?$CFs?3?5?5?$CFd?$AA@  # the "%s:  %d" literal of 0x4d7e50 (draw_faction_report); the 0x598ac0 mapping of symbols/slices/s004f0820.txt holds "%s: %d" (one space), a different string

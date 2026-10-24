@@ -1,0 +1,8 @@
+../src/game/options_panel/options_panel.cpp  ?key_name@ctr@@QAE?AUtstring@@H@Z  004d7610  /O2 /MT /Gy /TP
+../src/game/options_panel/options_panel.cpp  ?key_binding_name@options_panel@@QAEXHPAUtstring@@PAH@Z  004d7d10  /O2 /MT /Gy /TP
+../src/game/options_panel/options_panel.cpp  ?on_key_event@options_panel@@QAEXH@Z  004d7d90  /O2 /MT /Gy /TP
+../src/game/options_panel/options_panel.cpp  ?update_cursor@options_panel@@QAEXXZ  004d7de0  /O2 /MT /Gy /TP
+../src/game/options_panel/options_panel.cpp  ?refresh_texts@options_panel@@QAEXXZ  004d7e00  /O2 /MT /Gy /TP
+../src/game/options_panel/options_panel.cpp  ?draw_faction_report@options_panel@@QAEXXZ  004d7e50  /O2 /MT /Gy /TP
+../src/game/options_panel/options_panel.cpp  ?import_export@options_panel@@QAEXH@Z  004d8000  /O2 /MT /Gy /TP
+../src/game/options_panel/options_panel.cpp  ?export_path@options_panel@@QAEXPAD@Z  004d9260  /O2 /MT /Gy /TP

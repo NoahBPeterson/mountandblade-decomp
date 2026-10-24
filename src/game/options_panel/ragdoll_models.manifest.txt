@@ -1,0 +1,2 @@
+../src/game/options_panel/ragdoll_models.cpp  ??0model_a@@QAE@XZ  004d3580  /O2 /MT /Gy /TP
+../src/game/options_panel/ragdoll_models.cpp  ??0model_b@@QAE@XZ  004d3640  /O2 /MT /Gy /TP

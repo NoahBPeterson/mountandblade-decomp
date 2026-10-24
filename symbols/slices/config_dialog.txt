@@ -1,0 +1,4 @@
+# config_dialog: the launcher configuration dialog
+004cf100 ?FUN_004cf100@@YA?AV?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@XZ  # builds the sorted list of display-mode names ("WxH 16/32 bits") from the renderer's adapters
+004cf7b0 ?fill_video_tab@Dialog@@QAEXXZ  # fills the tab control, the mode list, the quality / DirectX lists and every caption of the configuration dialog
+004d0240 ?proc@Dialog@@QAEJPAUHWND__@@IIJ@Z  # the configuration dialog's window procedure (init / ok / cancel / apply / refresh rate / mode list)

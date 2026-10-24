@@ -1,0 +1,4 @@
+# ragdoll_models: names carried over from symbols/slices/s004d2df0.txt
+004d3330 ?load@RagBone@@QAEXPAVTiXmlElement@@@Z  # TinyXML: name attribute, ten QueryDoubleAttribute scalars, socket_dir length/normalize, Bodies child loop
+004d3580 ??0model_a@@QAE@XZ  # 0x2ebc-byte record ctor: init_base 0x4c80c0 then field clears
+004d3640 ??0model_b@@QAE@XZ  # 0x1f8-byte record ctor, seven -1 fields and 1.0f flag

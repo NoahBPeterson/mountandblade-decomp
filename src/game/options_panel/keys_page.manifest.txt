@@ -1,0 +1,4 @@
+../src/game/options_panel/keys_page.cpp  ?set_enabled_text@KeysPage@@QAEXPAUWidget@@@Z  004d6dd0  /O2 /MT /Gy /TP
+../src/game/options_panel/keys_page.cpp  ?update@KeysPage@@QAEXH@Z  004d6e50  /O2 /MT /Gy /TP
+../src/game/options_panel/keys_page.cpp  ?restore@ControlKeyTable@@QAEXXZ  004d6fd0  /O2 /MT /Gy /TP
+../src/game/options_panel/keys_page.cpp  ?save@ControlKeyTable@@QAEXXZ  004d7000  /O2 /MT /Gy /TP

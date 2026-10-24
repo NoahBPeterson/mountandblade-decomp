@@ -1,0 +1,15 @@
+# world_app: names carried over from symbols/slices/s004d3720.txt, s004d3ec0.txt, s004d4554.txt (the slices stay untouched until retired)
+004d3720 Big::destroy  # vecdel f040, delete[] f044 (0x18 stride), v1bc/v78/v68/v58/v48 clear, Tail dtors f1ac/f19c, tstring f028 and *this
+004d3880 Big::init  # 0x40 x 0x130 block ctors, repeated {2, g_5e2958, g_5e295c} triples, Sub63d0/Sub6698 init, tstring f6814 ctor
+004d3a50 restore_defaults  # clears game f1a090..f1a0c4, world node flags, and conditionally the UI change-question dialog
+004d3c00 hash_table::insert  # rehash walk with sentinel rotation, bucket fixups, key lookup, node copy/alloc, ret 8 {node, inserted}
+004d3e50 TreeW::erase  # range dtor wrapper 0x4cd570(first,last,this,last)
+004d3e70 TreeW::insert  # 0x4cd620 copy -> 0x4ca7e0 destroy -> f8 = new, then *out = first
+004d3ec0  ?GameApp@@QAE@XZ  GameApp::GameApp  # game application ctor: base 0x401910, vtable 0x5948e0, 0x20 tstrings at +0x390, font, registry last_module, module path, Big, FSOUND init
+004d4130  wndproc_thunk  # __stdcall thunk: ecx=0x8ee3c48, tail jmp 0x4d0240
+004d4140  ?msg_proc@GameApp@@QAEHPAUHWND__@@IIJ@Z  GameApp::msg_proc  # main window/dialog proc: WM_PAINT, WM_INITDIALOG, WM_COMMAND cases 2/405/406/410/41f/420/469/46b
+8ee3c38  ?g_module@@3Utstring@@A  g_module  # selected module name tstring global (used by the ctor and msg_proc)
+8ee3c28  ?g_path@@3Utstring@@A  g_path  # "Modules\\<name>\\" path tstring global (used by the ctor and msg_proc)
+004d49c0 uninit_fill_n_50  # std::_Uninit_fill_n(first, count, val, alloc): 0x50-byte elements; catch funclet 0x4d4a28 (destroy loop + rethrow) is part of it; /EHa
+004d4a50 uninit_fill_n_68  # same, 0x68-byte elements; catch funclet 0x4d4ab8
+004d4ae0 uninit_fill_n_b0  # same, 0xb0-byte elements; catch funclet 0x4d4b4b

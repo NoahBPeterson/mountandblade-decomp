@@ -1,0 +1,7 @@
+# keys_page: names carried over from symbols/slices/s004d6b80.txt (the slices stay untouched until retired)
+0042bbd0 ??0string@rgl@@QAE@XZ  # rgl::string() (src/rgl/rgl_string.h)
+0042bbe0 ??0string@rgl@@QAE@PBD@Z  # rgl::string(const char*)
+0042bc40 ??1string@rgl@@QAE@XZ  # ~string
+0042bcb0 ?assign@string@rgl@@QAEXPBD@Z  # assign(const char*)
+004bab70 ?user_path@@YAXPAD@Z  # local copy of the byte-exact static helper (s004bab70; `out` in esi)
+00487b00 ?decode_utf8@@YAXPBUstring@rgl@@PAH1PBH@Z  # local copy (s004dc630); custom register convention
