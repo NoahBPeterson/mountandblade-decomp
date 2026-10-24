@@ -109,6 +109,26 @@ def manifest_targets(paths):
     out = []
     for path in paths:
         path = os.path.abspath(path)
+        if path.endswith(".nonmatching.txt"):
+            # this project's module layout: src/<area>/<dir>/<stem>.nonmatching.txt next to <stem>.cpp; the module stem
+            # is the id equiv.py and the sweeps use for it (slice.choose_flags reads <stem>.manifest.txt)
+            src = path[:-len(".nonmatching.txt")] + ".cpp"
+            sid = os.path.basename(src)[:-4]
+            for line in open(path):
+                p = line.split("#")[0].split()
+                try:
+                    va = int(p[0], 16) if p else None
+                except ValueError:
+                    va = None
+                if va is None:
+                    continue
+                vs = "%08x" % va
+                flags, _how = S.choose_flags(sid, va)
+                if SRC_INC not in flags:
+                    flags = flags + [SRC_INC]
+                HOOK_SRC[(sid, vs)] = (src, flags, None)
+                out.append((sid, vs))
+            continue
         base = os.path.join(os.path.dirname(os.path.dirname(path)), os.path.basename(os.path.dirname(path)) + ".cpp")
         for line in open(path):
             p = line.split("#")[0].split()
@@ -654,8 +674,9 @@ def main():
     ap.add_argument("--no-patches", action="store_true")
     ap.add_argument("--hook", default="none", help="pass | none | FILE of '<slice> <va>' lines")
     ap.add_argument("--hook-manifest", nargs="+", metavar="NONMATCHING",
-                    help="hook the functions of migrated module TUs (src/game/<dir>/<Stem>/nonmatching.txt)")
-    ap.add_argument("--manifest-verdicts", choices=("pass", "all"), default="pass",
+                    help="hook the functions of module TUs: src/**/<stem>.nonmatching.txt files, or 'all' for every "
+                         "one (the older src/game/<dir>/<Stem>/nonmatching.txt layout is still read)")
+    ap.add_argument("--manifest-verdicts", choices=("pass", "weak", "all"), default="pass",
                     help="--hook-manifest rows to hook: 'pass' (default) = those whose latest strict equiv verdict in "
                          "work/difftest/*_shard*.json is PASS, the rule of --hook pass; 'all' = every row. Rows whose "
                          "equivalence was never established (WEAK/FAIL/UNSUPPORTED slice-era verdicts) carried source "
@@ -685,13 +706,24 @@ def main():
     if a.hook != "none" or a.hook_manifest:
         targets = [] if a.hook == "none" else pass_targets() if a.hook == "pass" else file_targets(a.hook)
         if a.hook_manifest:
+            if a.hook_manifest == ["all"]:
+                a.hook_manifest = sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True))
             mt = manifest_targets(a.hook_manifest)
             print("%d manifest targets from %d file(s)" % (len(mt), len(a.hook_manifest)))
-            if a.manifest_verdicts == "pass":
-                pass_vas = {v for _s, v in pass_targets()}
+            if a.manifest_verdicts != "all":
+                # latest verdicts per module row: docs/equiv_verdicts.json (tools/difftest/verdicts.py); the slice-era
+                # work/difftest/*_shard*.json files of --hook pass if that is missing
+                keep = {"pass": ("pass",), "weak": ("pass", "weak")}[a.manifest_verdicts]
+                try:
+                    ev = json.load(open(os.path.join(ROOT, "docs", "equiv_verdicts.json")))["rows"]
+                    pass_vas = {va for va, r in ev.items() if r["category"] in keep}
+                    src_of = "docs/equiv_verdicts.json"
+                except (OSError, ValueError, KeyError):
+                    pass_vas, src_of = {v for _s, v in pass_targets()}, "work/difftest shards"
                 dropped = [t for t in mt if t[1] not in pass_vas]
                 mt = [t for t in mt if t[1] in pass_vas]
-                print("%d rows without a PASS verdict left out (--manifest-verdicts all to hook them)" % len(dropped))
+                print("%d rows outside %s by %s left out (--manifest-verdicts all to hook them)"
+                      % (len(dropped), "/".join(keep).upper(), src_of))
             targets = [t for t in targets if t not in set(mt)] + mt
         # tools/hybrid/known_bad.txt: hooks the hybrid disproved whose fix is not in the source yet
         ex = {v for _s, v in file_targets(os.path.join(os.path.dirname(os.path.abspath(__file__)), "known_bad.txt"))}
