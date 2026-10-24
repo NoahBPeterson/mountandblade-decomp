@@ -1,0 +1,2 @@
+0041f4b0 ?clear@VecView@@QAEXXZ  # std::vector<...>::clear (ICF-folded with every other element type), called from 0x51f40a and 0x51f43a
+00462790 ?randomize@snd_bank@@QAEXXZ  # snd_bank::randomize (src/game/ui/item_ref.h)

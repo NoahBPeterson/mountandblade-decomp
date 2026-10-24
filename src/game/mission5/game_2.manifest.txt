@@ -1,0 +1,8 @@
+../src/game/mission5/game_2.cpp  ?build_map@Game@@QAEXXZ  00520b20  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ?release_orders@Game@@QAEXXZ  005213a0  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ?set_nibble@NibbleObj@@QAEXH@Z  00523360  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ?init@TriggerStmt@@QAEXHH@Z  00524360  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ?read_skill@@YAAAUstream_base@@AAU1@AAUSkillFile@@@Z  005243c0  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ?read_file@QuestFile@@QAEXAAUstream_base@@@Z  00524690  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ??0SceneFile@@QAE@XZ  005248e0  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ?uninit_copy_str@@YAPAUtstring@@PAU1@00AAUtstring_alloc@@Uptr_tag@@@Z  00524cd0  /O2 /MT /Gy /TP

@@ -1,0 +1,20 @@
+0054a740 ??_7stream_base@@6B@  # stream root vtable, stored first by the inlined stream ctor in 0x520b20
+0054a890 ??_7file_text_b@@6B@  # text stream class (vtable 0x54a890), vptr restored by the user-declared dtor stage of the inlined reader
+0054ac88 ??_7file_text@@6B@  # text reader (final vptr store of the inlined ctor)
+00478150 ??0MapStore@@QAE@XZ  # the map object's constructor (ICF-folded with NavCore's)
+0042bbd0 ??0string@rgl@@QAE@XZ  # tstring::tstring()
+0042bc40 ??1string@rgl@@QAE@XZ  # tstring::~tstring()
+0053545e ??2@YAPAXI@Z  # operator new
+004639d0 ?module_path@Game@@QAEPBDPBD@Z  # Game::module_path
+00415d60 ?open_read_text@file_text@@QAE_NPBD@Z  # text_stream::open_read_text (the reader class has no member of its own)
+0042cc80 ?mb_error@@YAXPBDZZ  # mb_error(const char*, ...)
+00520c00 ?read_map@@YAPAUstream_base@@PAU1@PAUMapStore@@@Z  # this module: the map reader
+00a732b8 ?g_map@@3PAUMapStore@@A  # the global map object
+00590904 ??_7SceneFile@@6B@  # scenes.txt record vtable, stored first by ~SceneFile / the scene record constructor
+00419540 ?get_object@resmgr_ext@rgl@@QAEPAUmesh_ext@2@PBUstring@2@@Z  # resource manager: a mesh resource by name (callers clone it)
+0041c6d0 ?clone@mesh_ext@rgl@@QAEPAUmesh@2@XZ  # mesh::clone
+00415930 ?r_int@file_text@@UAEAAUstream_base@@PAH@Z  # text_stream::r_int, vtable 0x54ac88 slot 19 (ICF)
+00415880 ?r_tstr@file_text@@UAEAAUstream_base@@PAUstring@rgl@@@Z  # text_stream::r_tstr, vtable 0x54ac88 slot 21 (ICF)
+08ee3100 ?g_08ee3100@@3PAUSkillFile@@A  # the skill table (42 entries of 0x44 bytes), named by address for the resolver
+004c6010 ?find@NameMgr@@QAEPAUtstring@@PAU2@@Z  # NameMgr::find (the string table at 0x5e2a18)
+08ee3ac4 ?g_clamp_max@@3HA  # rank / skill clamp (g_skin_cap in the other modules)

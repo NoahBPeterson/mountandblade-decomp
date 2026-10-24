@@ -1,0 +1,15 @@
+../src/game/mission5/mission_5.cpp  ?save_scene@GameData_s27c90@@QAEXH@Z  00527c90  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?save@SceneObj_s27c90@@QAEXPAUstream_base@@@Z  00527ef0  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?save_scene_data@Mission_s27c90@@QAEXXZ  00527f90  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?save@GridSet_s27c90@@QAEXPAUstream_base@@@Z  00528000  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?release@ResourceOwner_s27c90@@QAEXXZ  00528470  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?refresh_markers@MissionHud_s29130@@QAEXXZ  00529600  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?fn_529b70@Mission_s29840@@QAEXPAUAgent_s29840@@@Z  00529b70  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?fn_529bc0@@YGXPAUAgent_s29840@@H@Z  00529bc0  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?fn_529d00@Mission_s29840@@QAEXPAUAgent_s29840@@@Z  00529d00  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?order_tick@Screen_s2ae70@@QAEXXZ  0052b300  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?draw_order_menu@Screen_s2ae70@@QAEXXZ  0052b3c0  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?update_cursor@Mission_s2b5c0@@QAEXXZ  0052bc80  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?clear@Terrain_s2bf40@@QAEXXZ  0052c290  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?clear@Elem_s2ce00@@QAEXXZ  0052ce00  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?put@Elem_s2ce00@@QAEXPAH00@Z  0052ce70  /O2 /MT /Gy /TP

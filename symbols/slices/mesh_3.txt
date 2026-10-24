@@ -1,0 +1,57 @@
+0052da20 ?pick_vert@Mesh_s2da20@@QAEIABUvector4@rgl@@0@Z  # this slice: nearest vertex to the ray within the pick radius (equivalent, 8-byte arg-setup rotation)
+0052dae0 ?vert_ray@Mesh_s2da20@@QAEXABUvector4@rgl@@0AAIPAM2@Z  # this slice: ray vs vertex -> (distance, |hit-p|); equivalent at --ulp 1
+0052dae0 ?vert_ray@MeshImpl_s2da20@@QAEXABUvector4@rgl@@0AAIPAM2@Z  # opaque view the pickers call, so cl cannot summarise/hoist the callee body; same body as Mesh::vert_ray
+0052dc00 ?pick_edge@Mesh_s2da20@@QAEIABUvector4@rgl@@0@Z  # this slice: nearest edge (equivalent)
+0052dcc0 ?edge_ray@Mesh_s2da20@@QAEXABUvector4@rgl@@0AAIPAM2@Z  # this slice: ray vs edge (reconstruction is NOT verified against the original)
+0052dcc0 ?edge_ray@MeshImpl_s2da20@@QAEXABUvector4@rgl@@0AAIPAM2@Z  # opaque view used by pick_edge
+0052df40 ?pick_poly@Mesh_s2da20@@QAEIABUvector4@rgl@@0@Z  # this slice: nearest polygon (equiv PASS)
+0052dfd0 ?poly_ray@Mesh_s2da20@@QAEXABUvector4@rgl@@0AAIPAM@Z  # this slice: ray vs polygon (defined in s0052dfd0, called through the opaque view here)
+0052dfd0 ?poly_ray@MeshImpl_s2da20@@QAEXABUvector4@rgl@@0AAIPAM@Z  # opaque view used by pick_poly
+00432830 ?sub@rgl@@YAXAAUvector4@1@ABU21@1@Z  # rgl::sub(out, a, b): out = a - b, xyz only
+0041f4b0 ?clear@?$vec_s2da20@Umface_s2da20@@@@QAEXXZ  # vec<mface>::clear (ICF-folded with every other element type)
+0041f4b0 ?clear@?$vec_s2da20@Uvector4@rgl@@@@QAEXXZ  # same folded body
+00477c10 ?push_back@?$vec_s2da20@Umface_s2da20@@@@QAEXABUmface_s2da20@@@Z  # vec<mface>::push_back
+0052dfd0 ?poly_ray@Mesh_s2dfd0@@QAEXABUvector4@rgl@@0AAIPAM@Z  # this slice: ray vs polygon, writes the hit distance (complete, not byte-exact)
+0052e510 ?toggle_flag@Mesh_s2dfd0@@QAEXHH@Z  # this slice: flip the selection flag of vertex/edge/polygon `index` (equivalent)
+0052e590 ?scale_selected@Mesh_s2dfd0@@QAEXHPBUvector4@rgl@@@Z  # this slice: scale the selection about its centroid (equiv PASS)
+0052e6d0 ?transform_selected@Mesh_s2dfd0@@QAEXHPBM@Z  # this slice: rotate the selection about its centroid by a 4x4 float block (equiv PASS at --ulp 1)
+0052e870 ?remove_selected@Mesh_s2dfd0@@QAEXXZ  # this slice: delete the selected elements, then rebuild (equiv PASS)
+004c54f0 Mesh_s2dfd0::gather_selection  # re-stamps the mface/medge/mpoly +0x14/+0x10 selection fields from `mode`
+004c8af0 Mesh_s2dfd0::delete_vert  # remove a vertex and fix the referencing faces
+004ca9b0 Mesh_s2dfd0::delete_edge  # remove an edge
+004cb940 Mesh_s2dfd0::delete_poly  # remove a polygon
+00470920 Mesh_s2dfd0::rebuild  # rebuild the derived adjacency data after an edit
+00432830 rgl::sub  # sub(out, a, b): out = a - b, xyz only
+00407eb0 rgl::cross  # cross(out, a, b) out-of-line form
+00407d60 rgl::vector4::normalize  # normalise in place, returns the old length
+00407f70 rgl::matrix::transform_point_to_local  # (ret 8) out = (p - o) dotted with s/f/u
+0041f4b0 vec_s2dfd0<mface>::clear  # ICF-folded with every other vec element type
+0041f4b0 vec_s2dfd0<medge>::clear  # same folded body
+0041f4b0 vec_s2dfd0<mpoly>::clear  # same folded body
+00477c10 vec_s2dfd0<mface>::push_back
+00477d20 vec_s2dfd0<mpoly>::push_back
+00477e10 vec_s2dfd0<medge>::push_back
+0041f4b0 ?clear@?$vec_s2e960@Umface_s2e960@@@@QAEXXZ  # vec<mface>::clear (ICF-folded with the other element types)
+0041f4b0 ?clear@?$vec_s2e960@Umedge_s2e960@@@@QAEXXZ  # vec<medge>::clear (same folded body)
+0041f4b0 ?clear@?$vec_s2e960@Umpoly_s2e960@@@@QAEXXZ  # vec<mpoly>::clear (same folded body)
+00477c10 ?push_back@?$vec_s2e960@Umface_s2e960@@@@QAEXABUmface_s2e960@@@Z  # vec<mface>::push_back
+00477d20 ?push_back@?$vec_s2e960@Umpoly_s2e960@@@@QAEXABUmpoly_s2e960@@@Z  # vec<mpoly>::push_back
+00477e10 ?push_back@?$vec_s2e960@Umedge_s2e960@@@@QAEXABUmedge_s2e960@@@Z  # vec<medge>::push_back
+00407d60 ?normalize@vector4@rgl@@QAEMXZ  # rgl::vector4::normalize (out-of-line, matches the original)
+00407f70 ?transform_point_to_local@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z  # matrix::transform_point_to_local (ret 8)
+00470920 rebuild_mesh  # Mesh::rebuild: rebuild the derived vertex/edge/polygon data after edits
+0052e960 ?make_copy@Mesh_s2e960@@QAEXABUmatrix@rgl@@@Z  # this slice: duplicate flagged polygons through the basis (not byte-exact)
+0052ebc0 ?vertex_index@Mesh_s2e960@@QAEHHABUmatrix@rgl@@@Z  # this slice: find-or-create the copy of a vertex (equivalent, one dead edge)
+0052eca0 ?edge_index@Mesh_s2e960@@QAEHHABUmatrix@rgl@@@Z  # this slice: find-or-create the copy of an edge (equivalent, one dead edge)
+0052edb0 ?apply_copy@Mesh_s2e960@@QAEXABUmatrix@rgl@@@Z  # this slice: flatten the copy buffers back into the mesh (not byte-exact)
+0052f250 ?update@MapEditor_s2f250@@QAEXXZ  # map editor per-frame placement update: key repeat into adjust_mode 0x4bb260, preview rebuild (clear / init_placed 0x435860 / build_meshes 0x5302f0 / mesh::clone 0x41c6d0), adjust 0x52fe40, find_position 0x52bdb0, commit through Mission::add_placed 0x44f870 then dialog update/refresh 0x4c7e20/0x4c77c0
+008ee3c48 ?g_editor_dialog@@3UMapEditorDialog@@A  # map-editor dialog singleton: the object 0x52f250 calls update_objects 0x4c7e20 and refresh 0x4c77c0 on (also the this-pointer of the settings WndProc 0x4d9440)
+008ee3d30 ?g_editor_hwnd@@3PAUHWND__@@A  # map-editor main window: SetFocus target at the end of the placement commit in 0x52f250
+005d70b4 ?g_cursor_x@@3HA  # map-editor cursor x, saved to 0x5e2130 before SetCursorPos in 0x52f250
+005d70b8 ?g_cursor_y@@3HA  # map-editor cursor y, saved to 0x5e2134 before SetCursorPos in 0x52f250
+005e2130 ?g_saved_x@@3HA  # cursor x stored when the placement is confirmed (0x52fd95 path)
+005e2134 ?g_saved_y@@3HA  # cursor y stored when the placement is confirmed (0x52fd95 path)
+0052fe40 ViewCtrl_s2fe40::apply  # seven flag out-params: integrate the look axes into the eye position, build the view matrix (identity/fu/su/sf/heading) and scale the velocity vector (layout from s005284a0)
+005302f0 build_mesh_name  # choose the mesh list for the selected object kind and look it up in resmgr (0x41b960)
+005302f0 0x43f0a0  # std::vector<rgl::mesh*>::operator= (inline copy; the original calls the out-of-line ICF'd helper)
+08ee3c48 ?g_editor_dialog@@3PADA  # map-editor dialog singleton, raw byte-array declaration: the object 0x52f250 calls update_objects 0x4c7e20 and refresh 0x4c77c0 on

@@ -1,0 +1,24 @@
+00525160 ?handle_event@Game_s25160@@QAEXH@Z  # Game::handle_event(int code) - per-frame event handler / menu dispatch
+005257f0 ?update@ViewObj_s257f0@@QAEXXZ  # per-tick dialogue look-at / frame-blend update of the object passed in ecx; ViewObj is a provisional name
+00526070 ?find_speaker_agent@@YAHXZ  # last used agent whose troop (+0x88) equals DialogMgr::speaker, else g_player_agent
+00526130 ?find_listener_agent@@YAHXZ  # declared here, defined in slice s00526130
+08ed50c8 ?g_n_dialogs@@3UDialogMgr_s257f0@@A  # dialogue manager singleton (speaker 0x460640 / listener 0x460670)
+00526130 ?find_listener_agent@@YAHXZ  # last used agent whose troop (+0x88) equals DialogMgr::listener, else -1
+08ed50c8 ?g_n_dialogs@@3UDialogMgr_s26130@@A  # dialogue manager singleton (listener 0x460670)
+00527c90 GameData_s27c90::save_scene  # opens Modules\<mod>\SceneObj\<name>.sco via bin_writer and serialises one 0x494-byte scene record
+00527da0 SceneObjRec_s27c90::save  # writes version tag -0x2cd, tag 4, the filtered object list, then both embedded streams
+00527ef0 SceneObj_s27c90::save  # serialises one 0x1c8-byte scene object (ids, matrix, name, tail floats)
+00527f90 Mission_s27c90::save_scene_data  # resets the live scene's two memory streams and serialises grids / sub-record
+00528000 GridSet_s27c90::save  # writes grid count + dimensions then every 0x18-byte grid
+00528060 Grid_s27c90::save  # run-length encodes one grid, quantising floats to bytes
+00528410 Mission_s27c90::release_item  # releases the resource in one per-item slot and removes its entity
+00528470 ResourceOwner_s27c90::release  # marks every owned sub-resource with flag 0x8000
+0054a740 ??_7stream_base@@6B@  # stream root vtable
+0054add8 ??_7bin_writer@@6B@  # file binary writer vtable
+005e292c g_mission  # current Mission*
+005e2930 g_game  # current GameData*
+00529ec0 Screen_s29ec0::f_529ec0  # per-frame interaction probe: 10.5 m facing capsule -> level face hit, 0.1 m capsule over collect_entities(9) for talk/mount/chest/baggage/map-object/equip/border targets, validates distance and riding skill, resets the HUD line cache (0x5d7850..) and draws the localised "name" (+" action"), then stores mode/selection/valid into Screen+0x2c8/+0x2cc/+0x2d4
+00513710 ?m@Mgr513710_s25160@@QAEXPAX@Z  # the map-flags commit (0x5e291c object), ret 4
+00495700 ?open@Dlg_s25160@@QAEXH@Z  # the main menu: open dialog n (0xa73980 object), ret 4
+08ed50c8 ?g_n_dialogs@@3PADA  # dialogue manager singleton, raw byte-array declaration (speaker 0x460640 / listener 0x460670)
+08ee3c48 ?g_editor@@3PADA  # the map editor object (raw declaration)

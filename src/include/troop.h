@@ -96,6 +96,13 @@ struct TroopRec : Troop {
     tstring translated();                   // 0x4c62b0
     tstring translated_plural();            // 0x4c6330
     tstring* plural_name();                 // 0x48d6d0
+    // ---- src/game/mission5/troop_rec.cpp (method declarations only: no layout change) ----
+    void auto_equip(int a, int b, int c, int d);   // 0x4687e0 (ret 0x10)
+    __declspec(noinline) void reset_items(int all);   // 0x51ff90 (re-initialises the item slots)
+    __declspec(noinline) void apply_items();   // 0x520110
+    __declspec(noinline) void level_up();   // 0x520270 (recomputes the two point budgets from the level, then spends them)
+    __declspec(noinline) void raise_skills();   // 0x520420
+    __declspec(noinline) void raise_stats();   // 0x5204d0
 };
 
 #endif // MB_TROOP_H

@@ -99,6 +99,7 @@ struct SimpleTag {                          // Game +0x139f4 (inline ctor stores
     int one;                                // +8   0x51cfa0
     SimpleTag() { count = 0; array = 0; one = 1; }
     void read(stream_base* s);              // 0x51de00
+    void arm();                             // 0x51f7c0 (src/game/mission5: re-arms the 0x30-byte delay items, timer at +0x20)
 };
 
 #include "../../include/game_recs.h"        // QuestRec (0x138 bytes, read 0x51e170), FactionRec, PartyTemplate (0xb0 bytes, read 0x51e410): the shared record classes
@@ -195,6 +196,12 @@ struct Scene {
     int f138dc, f138e0;                     // +0x138dc 0x51d250
     char pad138e4[0x138ec - 0x138e4];
     Scene();                                // 0x51d250
+    // ---- src/game/mission5/troop_rec.cpp (method declarations only: no layout change) ----
+    int lookup(int id);                     // 0x48ad00 (ret 4: id -> record index through the hash at +0)
+    void add_page();                        // 0x493830 (grows the party table by one page of 16 records)
+    __declspec(noinline) void clear();      // 0x51eda0
+    __declspec(noinline) void read(stream_base* s, int flag);   // 0x51eb90 (ret 8)
+    __declspec(noinline) struct PartyRecIO* get(int id);        // 0x51ee50 (ret 4)
 };
 
 // ---- the game object -----------------------------------------------------------------------------------
@@ -394,7 +401,16 @@ struct Game {
     void load_items(stream_base* s);        // 0x51e450
     void load_troops(stream_base* s);       // 0x51e4c0
     void load_tracks(stream_base* s);       // 0x51e6c0
-    void load_scene_parties(stream_base* s);       // 0x51eaa0 (next object)
+    void load_scene_parties(stream_base* s);       // 0x51eaa0
+    // ---- src/game/mission5 (method declarations only: no layout change) ----
+    const char* module_path(const char* sub);      // 0x4639d0 (ret 4)
+    void start_new_game();                  // 0x51f1a0 (the "GameStep4" of the new-game sequence)
+    void more_start();                      // 0x51f800
+    void build_map();                       // 0x520b20 (loads map.txt into the global map object)
+    void build_scene();                     // 0x520d60
+    __declspec(noinline) void release_orders();   // 0x5213a0 (destroys the 0x5c-byte orders of the array at +0x13a64)
+    void build_map_trees();                 // 0x5213d0 (rebuilds the campaign-map tree meshes)
+    void load_game_data(int extra_triggers);   // 0x5236f0 (ret 4: opens the Data\*.txt tables in turn)
 };
 extern Game* g_game;                        // 0x5e2930
 extern I64Vec g_list_a70480;                // 0xa70480 (read first by 0x51dbd0 after the clock)

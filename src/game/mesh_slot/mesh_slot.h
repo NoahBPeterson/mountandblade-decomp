@@ -168,6 +168,8 @@ struct Animator {
     void collect(char flag, rgl::lod_mesh** a, rgl::lod_mesh** b, rgl::lod_mesh** c);   // 0x47fb10
     void set_anim_a(void* a);                    // 0x473800
     void set_anim_b(void* a, void* b, int kind); // 0x4746e0
+    void end_anim(void* a);                      // 0x4eb660 (ret 4; src/game/mission5: the closing call of reset)
+    void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
 };
 typedef char animator_weights_check[(offsetof(Animator, scale) == 0x128) ? 1 : -1];
 extern Animator g_anim;          // 0x8ed4f60

@@ -1,0 +1,4 @@
+../src/game/mission5/troop_rec.cpp  ?arm@SimpleTag@@QAEXXZ  0051f7c0  /O2 /MT /Gy /TP
+../src/game/mission5/troop_rec.cpp  ?reset_items@TroopRec@@QAEXH@Z  0051ff90  /O2 /MT /Gy /TP
+../src/game/mission5/troop_rec.cpp  ?apply_items@TroopRec@@QAEXXZ  00520110  /O2 /MT /Gy /TP
+../src/game/mission5/troop_rec.cpp  ?raise_stats@TroopRec@@QAEXXZ  005204d0  /O2 /MT /Gy /TP
