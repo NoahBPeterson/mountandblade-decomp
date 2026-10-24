@@ -1,0 +1,50 @@
+{
+  "game": "Mount & Blade",
+  "wikidata": "Q901362",
+  "system": "PC (Windows)",
+  "type": "decomp",
+  "status": "in-progress",
+  "original": [
+    {
+      "revision": "1.011 (Steam)",
+      "sha1": "43fd8eb4e44c30fd34493ec049583ce9c2e20cab"
+    }
+  ],
+  "project": "mountandblade-decomp",
+  "targets": [
+    "Windows"
+  ],
+  "toolchain": [
+    "MSVC 7.1 (cl 13.10)",
+    "Ghidra",
+    "Unicorn"
+  ],
+  "approach": "Matching decompilation: C++ compiled with the original VC++ .NET 2003 compiler, each function verified byte-exact or by differential emulation against the original",
+  "maintainers": [
+    {
+      "name": "NoahBPeterson",
+      "link": "https://github.com/NoahBPeterson"
+    }
+  ],
+  "notes": "All 3,270 game functions (static CRT excluded) have compilable source, organised as one .cpp per original translation unit. 2,183 are byte-identical to the original (66.8% of functions, 27.3% of code size); the rest are tested for equivalence by running the original and our code on the same inputs under emulation. Hybrid builds splice our non-identical functions into the original exe to playtest them.",
+  "help": [
+    "Matching the remaining equivalent functions byte-exact (cl 13.10 codegen: register allocation, scheduling, frame layout)"
+  ],
+  "tags": [
+    "matching",
+    "x87",
+    "msvc",
+    "taleworlds",
+    "differential-testing"
+  ],
+  "links": [
+    {
+      "label": "Repository",
+      "url": "https://github.com/NoahBPeterson/mountandblade-decomp"
+    },
+    {
+      "label": "Contributing",
+      "url": "https://github.com/NoahBPeterson/mountandblade-decomp/blob/main/CONTRIBUTING.md"
+    }
+  ]
+}
