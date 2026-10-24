@@ -1,0 +1,8 @@
+capstone==5.0.9
+matplotlib==3.11.2
+numpy==2.5.4
+pefile==2024.8.26
+pillow==13.0.0
+pycryptodome==4.2.0
+pytest==9.1.1
+unicorn==2.1.4
