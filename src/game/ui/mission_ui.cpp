@@ -611,7 +611,7 @@ int sub_4893b0(unsigned x)
 }
 
 // @ 0x4893e0
-void RecA::reset()
+void NamedSelRec::reset()
 {
     f0 = 0;
     f4 = -1;
@@ -623,7 +623,7 @@ void RecA::reset()
 }
 
 // @ 0x489400
-void RecA::set_name(const tstring* s)
+void NamedSelRec::set_name(const tstring* s)
 {
     name = *s;
     flag1c = 1;
@@ -941,7 +941,7 @@ void Sel::bump(int d)
 }
 
 // @ 0x489a90
-void RecA::set_sel(const int* src)
+void NamedSelRec::set_sel(const int* src)
 {
     int v = *src;
     if (v < 0 || v >= 8)

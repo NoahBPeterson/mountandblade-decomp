@@ -33,14 +33,7 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 // ============================================================================================================
 // 0x4c48d0: the 0x34-byte record list loader
 // ============================================================================================================
-struct rec34 {
-    tstring name;        // +0
-    int     w10, w14;    // +0x10, +0x14
-    tstring path;        // +0x1c
-    char    flag;        // +0x2c
-    char    pad2d[3];
-    int     w30;         // +0x30
-};
+#include "../../include/rec34.h"      // rec34 (shared with game/config/config.h; the loader 0x4be470 is rec34::read)
 void __fastcall free_vec_4318c0(rec34* p, unsigned flags);   // 0x4318c0 (ret 4)
 char __stdcall rec34_load(rec34* r, stream_base* s);         // 0x4be470 (ret 4, this in ecx): 1 on success
 void __fastcall rec34_list_finish(void* self);               // 0x4be560
@@ -55,19 +48,9 @@ struct rec34_list {
 // ============================================================================================================
 // 0x4c4d10..0x4c5074: the Tail2 record, std::list<int> helpers, the world object destructor, element deleters
 // ============================================================================================================
-struct RecI {
-    void* destroy(unsigned flags);                              // 0x431810  ??_ERecI deleting destructor
-};
+#include "../../include/rec_dtors.h"    // RecI (destroy 0x431810 = ??_ERecI deleting destructor), shared with rgl/xmlcfg/records.h
 
-struct Tail2 {
-    void*        vec;      // +0
-    void**       arr;      // +4  array of owned pointers
-    unsigned int count;    // +8
-    int          refbase;  // +0xc
-    int          refcap;   // +0x10
-    void release() { if (refcap != 0) { refcap = refcap - 1; if (refcap == 0) refbase = 0; } }
-    ~Tail2();              // 0x4c4d10
-};
+#include "../../include/tail2.h"      // Tail2 (shared with rgl/xmlcfg/records.h)
 
 struct list_node_int {
     list_node_int* next;
@@ -643,11 +626,8 @@ struct Rec78Tail {                                      // the sub-object at +0x
         b->release();
     }
 };
-struct Rec78 {                                          // the 0x78-byte element of the array (destructor = 0x4c65d0)
-    tstring name;                                       // +0
-    char pad10[0x34];
-    Rec78Tail tail;                                     // +0x44
-};
+#include "../../include/rec78.h"                        // Rec78: the 0x78-byte element of the array (shared); its raw tail[] at +0x44 is a Rec78Tail
+inline Rec78Tail& rec78_tail(Rec78* r) { return *(Rec78Tail*)r->tail; }
 
 // a block of the map's mesh: name (+0x00), a second name (+0x10), variation count (+0x44), material
 // variations (+0x58 array of 0x18-byte entries), the read pose (+0x1c8..), flags (+0x21c)

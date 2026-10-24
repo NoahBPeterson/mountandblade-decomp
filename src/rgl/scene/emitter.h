@@ -11,7 +11,7 @@
 #include "../rgl_math.h"
 #include "./scene_math.h"
 
-struct E100 { int v[25]; };                                     // 0x64-byte particle record
+#include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 struct skin;                                                    // ../resource.h (global)
 
 namespace rgl {

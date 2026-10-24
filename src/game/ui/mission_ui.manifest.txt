@@ -48,8 +48,8 @@
 ../src/game/ui/mission_ui.cpp  ?set_alpha@Troop@@QAEXH@Z  00489370  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?cursor_check@@YAHI@Z  00489390  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sub_4893b0@@YAHI@Z  004893b0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?reset@RecA@@QAEXXZ  004893e0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_name@RecA@@QAEXPBUtstring@@@Z  00489400  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?reset@NamedSelRec@@QAEXXZ  004893e0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?set_name@NamedSelRec@@QAEXPBUtstring@@@Z  00489400  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_id@Party@@QAEXH@Z  00489420  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?scale@Party@@QAEMXZ  00489460  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sum_all@Party@@QAEHXZ  00489490  /O2 /MT /Gy /TP
@@ -60,7 +60,7 @@
 ../src/game/ui/mission_ui.cpp  ?set_v@Sel@@QAEXH@Z  00489860  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_vec@Sel@@QAEXPBH00@Z  004898e0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?bump@Sel@@QAEXH@Z  004899e0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_sel@RecA@@QAEXPBH@Z  00489a90  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?set_sel@NamedSelRec@@QAEXPBH@Z  00489a90  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set@Named16@@QAEXPBUtstring@@@Z  00489ab0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?quarter@MissionView@@QAEXXZ  00489ad0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?make@MissionView@@QAEPAXPAH@Z  00489b20  /O2 /MT /Gy /TP

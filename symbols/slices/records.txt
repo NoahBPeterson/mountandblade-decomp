@@ -12,7 +12,7 @@
 00431750 ??_ERecJ@@UAEPAXI@Z  # vector deleting destructor of the 0xb0-byte IfaceB-derived record
 00431810 ??_ERecI@@QAEPAXI@Z  # vector deleting destructor of the 0x68-byte record (scalar path calls ~RecI 0x431660)
 004318c0 ??_ERecK@@QAEPAXI@Z  # vector deleting destructor of the 0x34-byte record
-00431960 ??_ERecA@@QAEPAXI@Z  # vector deleting destructor of the 0x48-byte record (name, vector<int>, owned polymorphic object at +0x24); called with flags 3 from 0x4da6f1
+00431960 ??_EOwnedRec48@@QAEPAXI@Z  # vector deleting destructor of the 0x48-byte record (name, vector<int>, owned polymorphic object at +0x24); called with flags 3 from 0x4da6f1
 00431a30 ?_Destroy@?$vector@UItem@@V?$allocator@UItem@@@std@@@std@@IAEXPAUItem@@0@Z  # std::vector<Item>::_Destroy over the 0x1c8-byte virtual-dtor Item (virtual call, flag 0)
 00431a60 ?_Tidy@?$vector@UItem@@V?$allocator@UItem@@@std@@@std@@IAEXXZ  # std::vector<Item>::_Tidy (destroy range, free, zero first/last/end); called by ~RecY
 00431ab0 ??1RecP@@QAE@XZ  # dtor of the 0x34-byte record: vector<int>, list<int>, vector<int>

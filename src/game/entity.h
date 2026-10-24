@@ -160,7 +160,7 @@ template<class T> struct pool {
 
 // ---- element types of the STL instantiations (only their identity matters: these are the names the
 // neighbouring slices registered for the ICF-folded callees, so the resolver maps them) -------------------
-struct E100 { int v[25]; };                                 // 0x64-byte particle (std::vector<E100>, s0040f9a0)
+#include "../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 
 // ---- the world's entity list (vector at +0x7c; the rest of the world object is in the previous TU) ----------
 namespace rgl { struct entity; }

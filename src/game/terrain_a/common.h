@@ -9,12 +9,10 @@
 
 // ---- plain element types of the vector<T> instantiations (sizes verified by the stride of the helpers) ----------
 struct elem24 { int a[6]; };               // 0x18: copy 0x461230, copy_backward 0x461280, fill 0x467ba0, uninit_copy 0x4681b0
-struct rec36 { int a[9]; };                // 0x24: fill 0x467b40, copy_backward 0x467b70, uninit_copy 0x46b6e0
+#include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 struct elem52 { int a[13]; };              // 0x34: fill 0x467bf0, copy_backward 0x467c20, uninit_copy 0x468290
 struct particle100 { int a[25]; };         // 0x64: uninit_copy 0x468220 (not the 0xa0-byte terrain particle)
-struct rec136 { int a[34]; };              // 0x88: uninit_copy 0x46b750
 struct s516 { int a[129]; };               // 0x204: vec516::size 0x467b20
-struct E8 { int a, b; };                   // 0x8: element of the stable_sort'ed vector (0x46b7d0..0x46c4a0)
 typedef bool (*Pr8)(const E8&, const E8&);
 
 // ---- engine globals ---------------------------------------------------------------------------------------------

@@ -73,26 +73,7 @@ void __cdecl destroy_range_arrset_x(ArrSet* first, ArrSet* last, alloc_arrset& a
 void __cdecl uninit_fill_n_arrset_x(ArrSet* first, unsigned n, const ArrSet& val, alloc_arrset& al, ptr_tag tag);   // 0x4727e0 (uninit_fill_n_arrset)
 
 // ---- the 0x1c8-byte polymorphic record (vtable 0x590b84; copy ctor 0x437bb0, operator= 0x437d60, reset 0x4352f0) -----
-#include "../../include/iface.h"        // IfaceB, Quad, g_tick_lo / g_tick_hi (shared)
 // The slices called it Rec1c8, MAgent, PropRec and PlacedObj (symbols/slices maps ??_7Agent@@, ??_7Rec1c8@@, ??_7PlacedObj@@).
-struct EntFlag;
-struct stream_base;
-struct Rec1c8 : IfaceB {
-    int m10;                                    // +0x10 (0x479000 stores the scene id)
-    char body1[0x170 - 0x14];
-    Quad q170;                                  // +0x170 (constructed by the inlined constructor 0x437830)
-    char body2[0x188 - 0x180];
-    int destroyed;                              // +0x188 (0 intact, 1 / 5 special states) (0x472050)
-    int kind;                                   // +0x18c (0x472050)
-    tstring name;                               // +0x190
-    char body3[0x1b4 - 0x1a0];
-    EntFlag* ent;                               // +0x1b4 scene entity of the prop (0x472050)
-    char body4[0x1c8 - 0x1b8];
-    Rec1c8() { reset(); }                       // 0x437830 (inlined)
-    void reset();                               // 0x4352f0
-    Rec1c8(const Rec1c8& o);                    // 0x437bb0
-    Rec1c8& operator=(const Rec1c8& o);         // 0x437d60
-    void read(stream_base* s, int version);     // 0x4631c0 (the slices' Placed::read)
-};
+#include "../../include/rec1c8.h"      // Rec1c8, IfaceB, Quad (shared)
 
 #endif // TERRAIN_B_RECORDS_H

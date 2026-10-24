@@ -24,6 +24,7 @@ struct DialogBlock {                                             // 0x1c bytes
     char done;                                             // +8
     tstring text;                                          // +0xc (debug text)
     DialogBlock() { count = 0; items = 0; done = 0; }
+    DialogBlock(const DialogBlock& o);                     // 0x4bd7a0 (src/game/config/config.cpp)
     ~DialogBlock() { if (items) delete[] items; }
     void read(stream_base* s);                             // 0x4607e0
     char exec(int mode);                                   // 0x4875e0 (thiscall, ret 4)

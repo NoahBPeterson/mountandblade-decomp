@@ -44,10 +44,7 @@ void __fastcall rec34_list::load(stream_base& s)
         *(int*)((char*)r - 4) = n;
         for (int i = 0; i < n; i++) {
             new (&r[i].name) tstring();
-            new (&r[i].path) tstring();
-            r[i].w14 = 0;
-            r[i].w10 = 0;
-            r[i].flag = 0;
+            new (&r[i].body) DialogBlock();
         }
     } else
         r = 0;
@@ -1374,7 +1371,7 @@ void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
         Rec78* cur = (Rec78*)p + n;
         while (--n >= 0) {
             --cur;
-            cur->tail.~Rec78Tail();
+            rec78_tail(cur).~Rec78Tail();
             cur->name.~tstring();
         }
         if (flags & 1)

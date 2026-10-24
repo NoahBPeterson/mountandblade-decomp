@@ -141,7 +141,7 @@ float __cdecl hit_chance(int* who, Agent* a);           // 0x438cb0
 
 // ---- STL instantiation helpers (VC7.1 <vector>/<memory>/<algorithm> code the linker kept from this object) ------
 #include "../../include/ptr_tag.h"
-struct E12 { int a[3]; };                                // 12-byte element
+#include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 struct hnode {                                           // 12-byte heap node (key float at +8); user-written copy (load order)
     int a, b; float key;
     hnode() {}

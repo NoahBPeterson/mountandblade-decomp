@@ -275,7 +275,7 @@ struct options_record {
 };
 
 // ---- element type of the 0x58-byte arrays (0x4c3430) ------------------------------------------------------------
-struct RecD { void* scalar_delete(unsigned flags); };  // 0x431480 (??_ERecD, ret 4)
+#include "../../include/rec_dtors.h"                  // RecD (scalar_delete 0x431480 = ??_ERecD, ret 4), shared with rgl/xmlcfg/records.h
 void __stdcall RecD_free_array(void* p, unsigned size, int n, void (__stdcall* d)(void* const*));  // 0x401830
 void __stdcall RecD_dtor(void* const* p);             // 0x431440 (the pointer is in ecx: (void*, unused) call)
 

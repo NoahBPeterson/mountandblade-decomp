@@ -23,10 +23,10 @@
 ../src/rgl/mesh2/mesh_2.cpp  ??0?$vector@UE44@@V?$allocator@UE44@@@std@@@std@@QAE@ABV01@@Z  004cc350  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?_Insert_n@?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@IAEXViterator@12@IABUscalar4@@@Z  004cc430  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAE@ABV01@@Z  004cc680  /O2 /MT /Gy /TP
-../src/rgl/mesh2/mesh_2.cpp  ??0?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QAE@ABV01@@Z  004cc750  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ??0?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@QAE@ABV01@@Z  004cc750  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0?$vector@UE516@@V?$allocator@UE516@@@std@@@std@@QAE@ABV01@@Z  004cc830  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??4?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAEAAV01@ABV01@@Z  004cc910  /O2 /MT /Gy /TP
-../src/rgl/mesh2/mesh_2.cpp  ??4?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QAEAAV01@ABV01@@Z  004cca70  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ??4?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@QAEAAV01@ABV01@@Z  004cca70  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??4?$vector@UE516@@V?$allocator@UE516@@@std@@@std@@QAEAAV01@ABV01@@Z  004ccc00  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??4?$vector@UR44@@V?$allocator@UR44@@@std@@@std@@QAEAAV01@ABV01@@Z  004ccd80  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?insert@?$vector@UR44@@V?$allocator@UR44@@@std@@@std@@QAE?AViterator@12@V312@ABUR44@@@Z  004ccef0  /O2 /MT /Gy /TP

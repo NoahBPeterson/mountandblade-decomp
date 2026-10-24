@@ -29,7 +29,7 @@
 ../src/game/config/config.cpp  ?get_float@ini_file@@QAEMABUtstring@@@Z  004bd5e0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load@ini_file@@QAEXPAU_iobuf@@@Z  004bd630  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?write@ini_file@@QAEXPAU_iobuf@@ABUtstring@@1@Z  004bd740  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ??0Block@@QAE@ABU0@@Z  004bd7a0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ??0DialogBlock@@QAE@ABU0@@Z  004bd7a0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@trigger_rec@@QAEXAAUstream_base@@PBDH@Z  004bd830  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@trigger_entry@@QAEXAAUstream_base@@PBDH@Z  004bd910  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_extras@psys_record@@QAEXAAUstream_base@@@Z  004bdd50  /O2 /MT /Gy /TP

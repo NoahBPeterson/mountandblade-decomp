@@ -79,7 +79,7 @@ struct NamedRec {
 };
 
 // a record with a name at +0xc and a selector at +0x1c4 (0x4893e0, 0x489400, 0x489a90)
-struct RecA {
+struct NamedSelRec {
     int f0, f4, f8;
     tstring name;                           // +0x0c
     char flag1c;                            // +0x1c

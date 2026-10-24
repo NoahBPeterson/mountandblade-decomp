@@ -201,31 +201,15 @@ struct tvec {
 struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared dtor: the original's
                                       // _Destroy loop survives, the call inlines away)
 struct E516 { int v[0x81]; };        // 0x204-byte record
-struct scalar4 { int v; };           // 4-byte scalar element
 struct R44 { int v[11]; };           // 0x2c trivial element
 struct b16 { int v[4]; };            // 0x10 POD block
 
 // 0x38-byte record: a tstring followed by five raw pointers that a user destructor frees.
-struct E56 {
+struct NamePtrs56 {
     tstring s;
     int mid[5];
     void* q[5];
-    ~E56() { for (int i = 0; i < 5; ++i) free(q[i]); }
-};
-
-// empty base of E68 with the out-of-line 0x4c8330 (Block::free_materials in gui_edit.h is the same address)
-struct block_base { void free_materials(); };    // 0x4c8330
-
-struct M28 {                                // 0x1c member of E68
-    char* p;                                // 0x00
-    int n;                                  // 0x04
-    char c;                                 // 0x08
-    tstring s;                              // 0x0c
-    M28() {}                                // needed by vector<E68>(size_type)
-    M28(const M28&);                        // 0x4bd7a0
-    ~M28() { if (p) delete[] p; }
-    M28& operator=(const M28& o)
-        { p = o.p; n = o.n; c = o.c; s = o.s; return *this; }
+    ~NamePtrs56() { for (int i = 0; i < 5; ++i) free(q[i]); }
 };
 
 struct E50 {                                // 0x50
@@ -247,15 +231,7 @@ struct E50 {                                // 0x50
     }
 };
 
-struct E68 : block_base {                   // 0x68
-    tstring s;                              // 0x00
-    int b0, b1, b2, b3, b4;                 // 0x10
-    int b5, b6, b7, b8, b9;                 // 0x24
-    M28 m;                                  // 0x38
-    std::vector<scalar4> v;                 // 0x54
-    int t;                                  // 0x64
-    ~E68() { free_materials(); }
-};
+#include "../../include/e68.h"           // E68, M28, block_base, scalar4 (shared with game/ui/mission.h)
 
 struct E176 {                               // 0xb0
     tstring s;                              // 0x00

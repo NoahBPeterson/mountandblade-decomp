@@ -27,11 +27,7 @@ template<class T> struct Pool {
     int alloc();
 };
 
-// 0xb0-byte record (the slices' RecJ / PoolElem): +4 in-use flag, +8 id, +0xc serial number.
-struct RecJ {
-    int f0, used, id, serial;
-    char pad[0xb0 - 0x10];
-    RecJ();                                     // 0x4377d0
-};
+// The 0xb0-byte record of Pool<RecJ> is the shared RecJ (src/include/recj.h): IfaceB's f4 is the in-use flag, f8 the id, fc the serial.
+#include "../../include/recj.h"
 
 #endif // TERRAIN_B_POOL_H

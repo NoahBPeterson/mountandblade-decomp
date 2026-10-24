@@ -29,11 +29,7 @@
 using namespace rgl;
 
 // logging globals of another object
-struct Logger {                                         // debug log object at 0x5a9f30 (vptr first)
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4();
-    virtual void s5(); virtual void s6(); virtual void s7(); virtual void s8(); virtual void s9();
-    virtual void print(const char* msg);                // slot 10 (+0x28)
-};
+#include "../../include/logger.h"                       // Logger (shared with game/terrain_b/scene_file.h)
 extern char g_log_obj[];                                // 0x5a9f30 (a Logger)
 extern int g_log_on;                                    // 0x5a9fb0
 extern int g_simple_reflect;                            // 0x5a9fc4: the reflection pass renders only the backdrop entity
@@ -208,7 +204,7 @@ void world::render_scene(scene* sc, bool reflect)
         return;
     sc->refl->reset();
     if (g_log_on)
-        ((Logger*)g_log_obj)->print("RENDERING REFLECTIONS;");
+        ((Logger*)g_log_obj)->get("RENDERING REFLECTIONS;");
     if (!g_simple_reflect)
         sc->refl->flags |= 0x200;
     matrix cam = sc->fr.m;

@@ -12,13 +12,7 @@ struct RecVector : std::vector<Rec1c8> {
     void resize_n(unsigned n);                  // 0x477ea0
 };
 
-struct Logger {
-    virtual void l0(); virtual void l1(); virtual void l2(); virtual void l3();
-    virtual void l4(); virtual void l5(); virtual void l6(); virtual void l7();
-    virtual void l8(); virtual void l9();
-    virtual Logger* get(const char* msg);       // +0x28
-    virtual void put(const tstring* s);         // +0x2c
-};
+#include "../../include/logger.h"   // Logger (shared with rgl/scene/render_scene.cpp)
 struct LogHub {
     virtual void h0(); virtual void h1(); virtual void h2(); virtual void h3();
     virtual void h4(); virtual void h5(); virtual void h6(); virtual void h7();

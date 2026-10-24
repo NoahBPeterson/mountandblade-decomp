@@ -113,7 +113,7 @@ void deleting_dtor_standin2(texture* a, effect_set* b)
 // Element types of these instantiations are unknown (the code that used them is not in this object's
 // surviving functions): a pointer-sized list element and an 8-byte vector element.
 struct res_obj;
-struct E8 { int v[2]; };
+#include "../include/pod_elems.h"   // E8 (shared)
 
 namespace std {
 // 0x4180d0 std::_Copy_opt

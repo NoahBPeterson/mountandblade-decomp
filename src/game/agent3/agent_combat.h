@@ -17,19 +17,12 @@
 #include "../font.h"
 
 // ---- element types of the container instantiations -----------------------------------------------------------
-struct E12 { int v[3]; };                            // 0x0c (vector<E12>)
+#include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 struct E32 { int v[8]; };                            // 0x20 (deque<E32>)
 struct E48 { int v[12]; };                           // 0x30 (vector<E48>)
-// 0x1c8-byte polymorphic record (vtable 0x590b84, copy ctor 0x437bb0, deleting dtor 0x437870; src/game/agent/agent.h
-// calls it PlacedObj). Layout reduced to what the copy / destroy paths touch.
-#include "../../include/iface.h"        // IfaceB (shared)
-struct Rec1c8 : IfaceB {
-    char body1[0x190 - 0x10];
-    tstring name;                               // +0x190
-    char body2[0x1c8 - 0x1a0];
-    Rec1c8(const Rec1c8& o);                    // 0x437bb0
-    Rec1c8& operator=(const Rec1c8& o);         // 0x437d60
-};
+// 0x1c8-byte polymorphic record (vtable 0x590b84, copy ctor 0x437bb0, deleting dtor 0x437870): the shared Rec1c8
+// (src/include/rec1c8.h; src/game/agent/agent.h calls it PlacedObj).
+#include "../../include/rec1c8.h"
 
 // ---- id pool: records handed out from pages of 16 (the agent table's allocator) ----------------------------------
 // 0xb0-byte record: +4 in-use flag, +8 id, +0xc serial number (ctor at 0x4377d0)

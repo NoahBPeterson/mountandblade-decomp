@@ -15,13 +15,8 @@
 // src/game and src/rgl). The slices called it `Agent` (0x462b60..0x462da0) and `Inv` (0x462e20..0x463100): both are this record.
 #include "../../include/troop.h"
 
-// A 0x78-byte record of the sprite table (g_tbl78 0x5e29dc, count 0x5e29e0)
-struct Rec78 {
-    tstring name;                           // +0     0x4631c0
-    char pad10[4];
-    int f14;                                // +0x14  0x4631c0
-    char pad18[0x78 - 0x18];
-};
+// A 0x78-byte record of the sprite table (g_tbl78 0x5e29dc, count 0x5e29e0): src/include/rec78.h
+#include "../../include/rec78.h"
 extern Rec78* g_tbl78;                      // 0x5e29dc
 extern int g_tbl78_count;                   // 0x5e29e0
 int find_in_table78(const tstring* name);   // 0x4352a0 (cdecl)

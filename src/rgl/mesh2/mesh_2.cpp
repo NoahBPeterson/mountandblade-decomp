@@ -568,7 +568,7 @@ template class std::vector<E44>;
 template class std::vector<E516>;
 template class std::vector<scalar4>;
 template class std::vector<tstring>;
-template class std::vector<E56>;
+template class std::vector<NamePtrs56>;
 template class std::vector<R44>;
 template class std::vector<E50>;
 template class std::vector<E68>;

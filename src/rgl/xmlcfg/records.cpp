@@ -55,7 +55,7 @@ void delete_reci_array(RecI* p) { delete[] p; }
 void delete_reck_array(RecK* p) { delete[] p; }
 
 // @ 0x431960
-void delete_reca_array(RecA* p) { delete[] p; }
+void delete_reca_array(OwnedRec48* p) { delete[] p; }
 // @ 0x431ab0
 RecP::~RecP() {}
 // @ 0x431b10

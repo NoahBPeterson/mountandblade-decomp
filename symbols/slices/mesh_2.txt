@@ -28,10 +28,10 @@
 004cc350 ??0?$vector@UE44@@V?$allocator@UE44@@@std@@@std@@QAE@ABV01@@Z
 004cc430 ?_Insert_n@?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@IAEXViterator@12@IABUscalar4@@@Z
 004cc680 ??0?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAE@ABV01@@Z
-004cc750 ??0?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QAE@ABV01@@Z
+004cc750 ??0?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@QAE@ABV01@@Z
 004cc830 ??0?$vector@UE516@@V?$allocator@UE516@@@std@@@std@@QAE@ABV01@@Z
 004cc910 ??4?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAEAAV01@ABV01@@Z
-004cca70 ??4?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QAEAAV01@ABV01@@Z
+004cca70 ??4?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@QAEAAV01@ABV01@@Z
 004ccc00 ??4?$vector@UE516@@V?$allocator@UE516@@@std@@@std@@QAEAAV01@ABV01@@Z
 004ccd80 ??4?$vector@UR44@@V?$allocator@UR44@@@std@@@std@@QAEAAV01@ABV01@@Z
 004ccef0 ?insert@?$vector@UR44@@V?$allocator@UR44@@@std@@@std@@QAE?AViterator@12@V312@ABUR44@@@Z
@@ -63,11 +63,11 @@
 004ce2a0 ??0MissionObj@@QAE@XZ
 004ce360 ?read@MissionObj@@QAEXPAUstream_base@@@Z
 004ce680 ??0MissionRec2@@QAE@XZ
-004727a0 ??$_Destroy_range@UE56@@V?$allocator@UE56@@@std@@@std@@YAXPAUE56@@0AAV?$allocator@UE56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded with the identical instance elsewhere
-00474350 ??$_Ucopy@PAUE56@@@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEPAUE56@@PAU2@00@Z  # ICF-folded
-00475b60 ?_Destroy@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEXPAUE56@@0@Z  # ICF-folded
+004727a0 ??$_Destroy_range@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@YAXPAUNamePtrs56@@0AAV?$allocator@UNamePtrs56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded with the identical instance elsewhere
+00474350 ??$_Ucopy@PAUNamePtrs56@@@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@IAEPAUNamePtrs56@@PAU2@00@Z  # ICF-folded
+00475b60 ?_Destroy@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@IAEXPAUNamePtrs56@@0@Z  # ICF-folded
 004cc280 ??0?$vector@HV?$allocator@H@std@@@std@@QAE@ABV01@@Z  # identical to the vector<scalar4> copy ctor (ICF)
-0046c1d0 ??$_Uninit_copy@PAUE56@@PAU1@V?$allocator@UE56@@@std@@@std@@YAPAUE56@@PAU1@00AAV?$allocator@UE56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded
+0046c1d0 ??$_Uninit_copy@PAUNamePtrs56@@PAU1@V?$allocator@UNamePtrs56@@@std@@@std@@YAPAUNamePtrs56@@PAU1@00AAV?$allocator@UNamePtrs56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded
 00a73980 ?g_screen@@3Uscreen_cfg@@A  # screen/device queue object
 005d7080 ?g_gui@@3Ugui_manager@@A  # the UI root
 004c8840 ?erase@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAE?AViterator@12@V312@0@Z  # ICF-folded: the original calls this address (audit local copy)
@@ -86,20 +86,20 @@
 004c6ee0 ?_Ufill@?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@IAEPAUscalar4@@PAU3@IABU3@@Z  # ICF-folded: the original calls this address (audit local copy)
 004c6f50 ??$_Ucopy@Vconst_iterator@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEPAUtstring@@Vconst_iterator@01@0PAU2@@Z  # ICF-folded: the original calls this address (audit local copy)
 0043e2a0 ?_Xlen@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IBEXXZ  # ICF-folded: the original calls this address (audit local copy)
-004c88e0 ??$_Ucopy@Vconst_iterator@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEPAUE56@@Vconst_iterator@01@0PAU2@@Z  # ICF-folded: the original calls this address (audit local copy)
-0043e2a0 ?_Xlen@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IBEXXZ  # ICF-folded: the original calls this address (audit local copy)
+004c88e0 ??$_Ucopy@Vconst_iterator@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@IAEPAUNamePtrs56@@Vconst_iterator@01@0PAU2@@Z  # ICF-folded: the original calls this address (audit local copy)
+0043e2a0 ?_Xlen@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@IBEXXZ  # ICF-folded: the original calls this address (audit local copy)
 004c6f70 ??$_Ucopy@Vconst_iterator@?$vector@UE516@@V?$allocator@UE516@@@std@@@std@@@?$vector@UE516@@V?$allocator@UE516@@@std@@@std@@IAEPAUE516@@Vconst_iterator@01@0PAU2@@Z  # ICF-folded: the original calls this address (audit local copy)
 0043a4d0 ??$_Ucopy@PAUtstring@@@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEPAUtstring@@PAU2@00@Z  # ICF-folded: the original calls this address (audit local copy)
 00438a10 ??$_Uninit_copy@PAUtstring@@PAU1@V?$allocator@Utstring@@@std@@@std@@YAPAUtstring@@PAU1@00AAV?$allocator@Utstring@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded: the original calls this address (audit local copy)
 0042d570 ?_Buy@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAE_NI@Z  # ICF-folded: the original calls this address (audit local copy)
-00468050 ??$_Copy_opt@PAUE56@@PAU1@@std@@YAPAUE56@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded: the original calls this address (audit local copy)
-004727a0 ??$_Destroy_range@UE56@@V?$allocator@UE56@@@std@@@std@@YAXPAUE56@@0AAV?$allocator@UE56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded: the original calls this address (audit local copy)
-00474350 ??$_Ucopy@PAUE56@@@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEPAUE56@@PAU2@00@Z  # ICF-folded: the original calls this address (audit local copy)
-0046c1d0 ??$_Uninit_copy@PAUE56@@PAU1@V?$allocator@UE56@@@std@@@std@@YAPAUE56@@PAU1@00AAV?$allocator@UE56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded: the original calls this address (audit local copy)
-004cbbe0 ?_Buy@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAE_NI@Z  # ICF-folded: the original calls this address (audit local copy)
-00475b60 ?_Destroy@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEXPAUE56@@0@Z  # ICF-folded: the original calls this address (audit local copy)
-004cb6b0 ?clear@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QAEXXZ  # ICF-folded: the original calls this address (audit local copy)
-00435990 ?size@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@QBEIXZ  # ICF-folded: the original calls this address (audit local copy)
+00468050 ??$_Copy_opt@PAUNamePtrs56@@PAU1@@std@@YAPAUNamePtrs56@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded: the original calls this address (audit local copy)
+004727a0 ??$_Destroy_range@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@YAXPAUNamePtrs56@@0AAV?$allocator@UNamePtrs56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded: the original calls this address (audit local copy)
+00474350 ??$_Ucopy@PAUNamePtrs56@@@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@IAEPAUNamePtrs56@@PAU2@00@Z  # ICF-folded: the original calls this address (audit local copy)
+0046c1d0 ??$_Uninit_copy@PAUNamePtrs56@@PAU1@V?$allocator@UNamePtrs56@@@std@@@std@@YAPAUNamePtrs56@@PAU1@00AAV?$allocator@UNamePtrs56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded: the original calls this address (audit local copy)
+004cbbe0 ?_Buy@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@IAE_NI@Z  # ICF-folded: the original calls this address (audit local copy)
+00475b60 ?_Destroy@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@IAEXPAUNamePtrs56@@0@Z  # ICF-folded: the original calls this address (audit local copy)
+004cb6b0 ?clear@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@QAEXXZ  # ICF-folded: the original calls this address (audit local copy)
+00435990 ?size@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@QBEIXZ  # ICF-folded: the original calls this address (audit local copy)
 004c1b60 ??$_Uninit_copy@PAUE516@@PAU1@V?$allocator@UE516@@@std@@@std@@YAPAUE516@@PAU1@00AAV?$allocator@UE516@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded: the original calls this address (audit local copy)
 004bea80 ??$copy@PAUE516@@PAU1@@std@@YAPAUE516@@PAU1@00@Z  # ICF-folded: the original calls this address (audit local copy)
 004cbc30 ?_Buy@?$vector@UE516@@V?$allocator@UE516@@@std@@@std@@IAE_NI@Z  # ICF-folded: the original calls this address (audit local copy)

@@ -14,20 +14,7 @@
 #include <list>
 #include "../../game/tstring.h"
 
-// A heap array pointer followed by two words and a name (0x1c bytes). Two destructor flavours occur: a
-// null-checked free (SubA: 0x431440, 0x431480) and a bare `delete[]` (SubB: 0x4315d0), so two source types.
-struct SubA {
-    int* ptr;           // +0
-    int a, b;
-    tstring name;       // +0xc
-    ~SubA() { if (ptr) delete[] ptr; }
-};
-struct SubB {
-    int* ptr;
-    int a, b;
-    tstring name;
-    ~SubB() { delete[] ptr; }
-};
+#include "../../include/rec_dtors.h"   // SubA, SubB (the (array, name) pairs), RecD, RecI (shared)
 
 // Two abstract-looking bases (vtables 0x5908ec and 0x5908f8; slots 1 and 2 are the empty function 0x477b70).
 // Their scalar deleting destructors are slot 0 (0x431400, 0x431420).
@@ -39,14 +26,6 @@ struct IfaceA {
 };
 #include "../../include/iface.h"        // IfaceB (shared; its constructor is inline, the vtable is emitted by the first user below)
 
-// 0x78 bytes: two (array, name) pairs. ~RecD 0x431440, vector deleting destructor 0x431480.
-struct RecD {
-    int pad[4];
-    SubA s1;            // +0x10
-    SubA s2;            // +0x2c
-    int tail[12];
-    ~RecD();
-};
 // 0x30 bytes, one pair at +4: vector deleting destructor 0x431540.
 struct RecG {
     int head;
@@ -58,13 +37,6 @@ struct RecH {
     tstring name;       // +0
     SubB s;             // +0x10
     int tail;
-};
-// 0x68 bytes: three names, two pairs. ~RecI 0x431660, vector deleting destructor 0x431810.
-struct RecI {
-    tstring n0, n1, n2; // +0, +0x10, +0x20
-    SubA s1;            // +0x30
-    SubA s2;            // +0x4c
-    ~RecI();
 };
 // A class whose only member is a tstring: its destructor is a tail jump to 0x42bc40 (0x4316b0).
 struct NameHolder {
@@ -78,11 +50,7 @@ struct RecF : IfaceB {
     int tail[29];
     RecF();
 };
-// IfaceB-derived, 0xb0 bytes (vector deleting destructor 0x431750).
-struct RecJ : IfaceB {
-    int body[0x2b - 3];
-    RecJ();
-};
+#include "../../include/recj.h"        // RecJ (IfaceB-derived, 0xb0 bytes, vector deleting destructor 0x431750; shared)
 // Owner of a heap array of RecG: frees it and clears the pointer (0x4317b0).
 struct RecGList {
     int head;
@@ -107,12 +75,12 @@ struct Item {
 };
 // out-of-line destructors of later objects, called on members
 struct Tail  { char body[0x18]; ~Tail(); };     // 0x42d390 (the std::vector<tstring> tidy of gui_manager)
-struct Tail2 { char body[0x20]; ~Tail2(); };    // 0x4c4d10
+#include "../../include/tail2.h"             // Tail2 (0x20 bytes, ~Tail2 0x4c4d10)
 
 struct Owner { Poly* p; ~Owner() { delete p; } };
 
 // 0x48 bytes: name, vector<int> at +0x10, owned polymorphic object at +0x24. Vector deleting dtor 0x431960.
-struct RecA {
+struct OwnedRec48 {
     tstring name;               // +0
     std::vector<int> v;         // +0x10
     int pad20;

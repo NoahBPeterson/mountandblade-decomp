@@ -13,6 +13,7 @@
 #include "./frustum.h"
 #include "./render_batch.h"
 #include "./poly_mesh.h"
+#include "../../include/rec1c8.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "./cell_grid.h"
 #include "./terrain.h"
 #include "./records.h"
@@ -1751,7 +1752,7 @@ template<> void Pool<RecJ>::next_used(unsigned* i)
 {
     ++*i;
     while (valid(*i)) {
-        if (pages[*i >> 4][*i & 15].used != 0)
+        if (pages[*i >> 4][*i & 15].f4 != 0)
             return;
         ++*i;
     }
@@ -2221,7 +2222,7 @@ template<> void Pool<RecJ>::reset()
 {
     free_ids.resize(0, 0);
     for (int i = 0; i < next_id; i++) {
-        pages[(unsigned)i >> 4][i & 0xf].used = 0;
+        pages[(unsigned)i >> 4][i & 0xf].f4 = 0;
         free_ids.push_back(i);
     }
 }

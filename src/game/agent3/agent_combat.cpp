@@ -21,6 +21,7 @@
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/rec1c8.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)

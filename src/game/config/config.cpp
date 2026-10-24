@@ -1314,15 +1314,15 @@ void ini_file::write(FILE* f, const tstring& key, const tstring& value)
 
 // ---- script blocks and trigger records ----------------------------------------------------------------------------------
 // @ 0x4bd7a0
-Block::Block(const Block& o) : name()
+DialogBlock::DialogBlock(const DialogBlock& o) : text()
 {
     count = o.count;
-    data = 0;
-    loaded = 0;
+    items = 0;
+    done = 0;
     if (count) {
-        data = new Elem[count];
+        items = new Elem[count];
         for (int i = 0; i < count; i++)
-            data[i] = o.data[i];
+            items[i] = o.items[i];
     }
 }
 
@@ -1338,12 +1338,12 @@ void trigger_rec::read(stream_base& s, const char* name, int idx)
     _snprintf(buf, 0x200, "%s trigger no: %d conditions", name, idx);
     {
         tstring tmp(buf);
-        cond.name = tmp;
+        cond.text = tmp;
     }
     _snprintf(buf, 0x200, "%s trigger no: %d consequences", name, idx);
     {
         tstring tmp(buf);
-        cons.name = tmp;
+        cons.text = tmp;
     }
 }
 
@@ -1356,7 +1356,7 @@ void trigger_entry::read(stream_base& s, const char* name, int idx)
     _snprintf(buf, 0x200, "%s trigger no: %d", name, idx);
     {
         tstring tmp(buf);
-        block.name = tmp;
+        block.text = tmp;
     }
 }
 
@@ -1624,7 +1624,7 @@ void menu_item::read(stream_base* s, const tstring* menu)
     _snprintf(buf, 0x200, "menu %s item %s condition", menu->c_str(), f20.c_str());
     {
         tstring tmp(buf);
-        cond.name = tmp;
+        cond.text = tmp;
     }
     RS(*s, &name);
     name.underscores_to_spaces();
@@ -1632,7 +1632,7 @@ void menu_item::read(stream_base* s, const tstring* menu)
     _snprintf(buf, 0x200, "menu %s item %s consequence", menu->c_str(), f20.c_str());
     {
         tstring tmp(buf);
-        conseq.name = tmp;
+        conseq.text = tmp;
     }
     RS(*s, &f10);
     f10.underscores_to_spaces();
@@ -1651,7 +1651,7 @@ int rec34::read(stream_base* s)
     s->r_float(&f14);
     body.read(s);
     _snprintf(buf, 0x200, "script: %s", name.c_str());
-    body.name = buf;
+    body.text = buf;
     return f14 >= 0.0f;
 }
 

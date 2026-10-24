@@ -22,7 +22,7 @@ int slot_class(int item, int flag);     // 0x4350c0 (register convention, define
 
 // named record tables (0x435260, 0x4352a0)
 struct Rec20 { tstring name; char pad[0x10]; };      // 0x20-byte named record (table g_tbl20)
-struct Rec78 { tstring name; char pad[0x68]; };      // 0x78-byte named record (table g_tbl78)
+#include "../../include/rec78.h"    // Rec78: the 0x78-byte named record (table g_tbl78), shared with ui/troop_inv and rgl/mesh2
 extern Rec20* g_tbl20;                  // 0x5e28f8
 extern int g_tbl20_count;               // 0x5e29e8
 extern Rec78* g_tbl78;                  // 0x5e29dc
@@ -137,8 +137,7 @@ struct Vec1c8 { int pad; char* first; char* last; int size() const; };  // 0x1c8
 struct Triple { int a, b, c; };
 
 // ---- STL instantiations of the object (std::allocator<T>::construct, std::_Uninit_copy), element types provisional
-struct rec36 { int a[9]; };         // 0x24 bytes
-struct rec136 { int a[34]; };       // 0x88 bytes
+#include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 struct int3 { int a, b, c; };       // 12 bytes
 struct int1 { int a; };
 struct alloc_int3;
@@ -168,22 +167,7 @@ bool is_night();                        // 0x435740
 float __cdecl accel_factor(const float* a, const float* b, const float* c);   // 0x435ae0
 int __cdecl team_field5280(const Agent* a);                                   // 0x435b60
 
-// ---- polymorphic records derived from IfaceB (vtable 0x5908f8 = ??_7IfaceB@@6B@, s00431050). IfaceB carries three
-// words at +4..+0xc (copied by the 0x1c8-byte record's copy constructor 0x437bb0, next object).
-// RecJ: 0xb0-byte record, vtable 0x590b78: slot 0 = vector deleting dtor 0x431750 (s00431050), slot 1 = reset().
-struct RecJ : IfaceB {
-    int pad10[(0x50 - 0x10) / 4];
-    int m50;                                    // +0x50 (0x437810)
-    int pad54[(0x70 - 0x54) / 4];
-    Quad q70;                                   // +0x70 (a = 2, c/d = clock tick copied from g_time[2]; ctor 0x4377d0)
-    int m80;                                    // +0x80 (0x437810)
-    int pad84;
-    int m88;                                    // +0x88 (0x437810)
-    int pad8c[(0x98 - 0x8c) / 4];
-    int m98;                                    // +0x98 (0x437810)
-    int pad9c[(0xb0 - 0x9c) / 4];
-    RecJ();                                     // 0x4377d0
-    virtual void slot1();                       // reset: 0x437810
-};
+// ---- RecJ: the 0xb0-byte IfaceB-derived record (vtable 0x590b78, constructor 0x4377d0, slot1 0x437810): src/include/recj.h
+#include "../../include/recj.h"
 
 #endif // AGENT_AGENT_H

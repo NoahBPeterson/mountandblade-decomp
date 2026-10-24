@@ -224,32 +224,19 @@ struct ini_file {
 };
 
 // ---- script blocks and the module-file records (0x4bd7a0..0x4be6f0) --------------------------------------------------
-// Same classes as ../dialog_manager.h (Block::read 0x4607e0, Elem::Elem 0x4607d0); that header defines its own
-// stream_base and cannot be included next to gui_manager.h, so the 0x1c-byte block is repeated here with the copy
-// constructor of 0x4bd7a0 (see MIGRATION.md).
-struct Elem {
-    char data[0x98];
-    Elem();                                         // 0x4607d0
-};
-struct Block {
-    Elem*   data;                                   // +0
-    int     count;                                  // +4
-    char    loaded;                                 // +8
-    tstring name;                                   // +0xc (debug text)
-    Block() { count = 0; data = 0; loaded = 0; }
-    Block(const Block& o);                          // 0x4bd7a0
-    void read(stream_base* s);                      // 0x4607e0
-};
+// The script block and its 0x98-byte operation record are the shared DialogBlock / Elem (read 0x4607e0, Elem::Elem 0x4607d0,
+// copy constructor 0x4bd7a0, defined in config.cpp): one definition, src/include/dialog_rec.h.
+#include "../../include/dialog_rec.h"
 struct trigger_rec {                                // three floats then the condition and consequence blocks
     float f0, f4, f8;                               // +0, +4, +8 (vtable +0x38 reads)
     char  pad_c[4];
-    Block cond;                                     // +0x10
-    Block cons;                                     // +0x2c
+    DialogBlock cond;                                     // +0x10
+    DialogBlock cons;                                     // +0x2c
     void read(stream_base& s, const char* name, int idx);   // 0x4bd830
 };
 struct trigger_entry {
     float f0;                                       // +0
-    Block block;                                    // +4
+    DialogBlock block;                                    // +4
     void read(stream_base& s, const char* name, int idx);   // 0x4bd910
 };
 
@@ -327,18 +314,12 @@ struct menu_item {                                  // 0x68 bytes
     tstring name;                                   // +0x00
     tstring f10;                                    // +0x10
     tstring f20;                                    // +0x20
-    Block   cond;                                   // +0x30
-    Block   conseq;                                 // +0x4c
+    DialogBlock   cond;                                   // +0x30
+    DialogBlock   conseq;                                 // +0x4c
     void read(stream_base* s, const tstring* menu); // 0x4be310
     menu_item();                                    // 0x4be420
 };
-struct rec34 {                                      // 0x34 bytes
-    int     f00;                                    // +0x00
-    tstring name;                                   // +0x04
-    float   f14;                                    // +0x14
-    Block   body;                                   // +0x18
-    int read(stream_base* s);                       // 0x4be470
-};
+#include "../../include/rec34.h"                 // rec34 (shared with rgl/mesh2/gui_edit.h)
 struct rec_table {                                  // {records, count} pair of the module-file tables (globals 0xa75eb0, 0xa75f2c, 0x8ed4f58)
     void* records;                                  // +0
     int   count;                                    // +4
