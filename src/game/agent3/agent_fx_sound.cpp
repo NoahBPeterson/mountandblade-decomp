@@ -235,11 +235,11 @@ int SoundMgr::play_slot(int n, int flags, const float* pos, float freq, int* out
 // the ring-buffer append that this TU inlines (colour 0xfff000)
 static __forceinline void log_add(const tstring& s)
 {
-    if (g_msglog.enabled && g_msglog.ring.count < 32) {
-        int idx = (g_msglog.ring.head + g_msglog.ring.count) % 32;
-        g_msglog.ring.names[idx] = s;
-        g_msglog.ring.vals[idx] = 0xfff000;
-        g_msglog.ring.count++;
+    if (g_gui.enabled && g_gui.ring.count < 32) {
+        int idx = (g_gui.ring.head + g_gui.ring.count) % 32;
+        g_gui.ring.names[idx] = s;
+        g_gui.ring.vals[idx] = 0xfff000;
+        g_gui.ring.count++;
     }
 }
 
@@ -258,7 +258,7 @@ void GameData::add_experience(int troop, int amount)
         }
         {
             tstring msg(buf1);
-            g_msglog.push(msg, -1);
+            g_gui.push(msg, -1);
         }
     }
     TroopRec* c = &chars[troop];
@@ -269,7 +269,7 @@ void GameData::add_experience(int troop, int amount)
         c->fac += 10;
         c->level++;
         if (troop == player) {
-            g_sound.play(g_levelup_sound, 1, g_levelup_pos, 1.0f, 0);
+            g_sound_mgr.play(g_levelup_sound, 1, g_levelup_pos, 1.0f, 0);
             {
                 tstring key("ui_you_have_advanced_to_level_number");
                 sprintf(buf2, g_strtable.lookup(&key)->c_str(), c->level);
@@ -317,7 +317,7 @@ Emit* Mission::spawn_effect(int idx, const mat4* m, int duration)
     g_emit_defs.setup(e, idx, &v);
     e->world = *m * e->local;
     if (e->res != 0 && (e->res->flags & 0x40)) {
-        CamRec* c = &g_cams[cam];
+        CamRec* c = &g_env_rows[cam];
         vector4 t;
         t.x = c->dx * 0.3f;
         t.y = c->dy * 0.3f;
@@ -557,7 +557,7 @@ void Agent::play_hit_sound(int* kind)
     }
     int r = rand();
     float pitch = (float)(r % 0x3dc9) * 2.5289246e-05f + 0.8f;
-    g_sound.play(g_sound_ids[snd], 0, &body->m.o.x, pitch, 0);
+    g_sound_mgr.play(g_sound_ids[snd], 0, &body->m.o.x, pitch, 0);
 }
 
 // @ 0x443730
@@ -579,7 +579,7 @@ void Agent::play_sound_var(int* kind, float* var)
         vector4 p = body->m.o;
         float h = (f10 == 0 && f2c != -1) ? 2.4f : 1.5f;
         p.z = (h - 0.3f) + p.z;
-        g_sound.play(g_sound_ids[*kind], own, &p.x, pitch, (int*)&pitch);
+        g_sound_mgr.play(g_sound_ids[*kind], own, &p.x, pitch, (int*)&pitch);
     }
 }
 
@@ -606,7 +606,7 @@ void Agent::play_sound(int* snd)
         int own = 0;
         if (id == m->player_id)
             own = 1;
-        int ch = g_sound.play(*snd, own, &body->m.o.x, pitch, (int*)&pitch);
+        int ch = g_sound_mgr.play(*snd, own, &body->m.o.x, pitch, (int*)&pitch);
         if (ch >= 0) {
             channel = ch;
             stamp = g_ticks[f5860];
@@ -622,7 +622,7 @@ void Agent::play_pain_sound(float health)
     float v = (health < 0.0f) ? 0.0f : ((health >= 0.5f) ? 0.5f : health);
     int r = rand();
     float pitch = (float)(r % 0x3dc9) * 6.3223115e-06f + (v + 0.95f);
-    g_sound.play(g_sound_ids[0x11], 0, &body->m.o.x, pitch, 0);
+    g_sound_mgr.play(g_sound_ids[0x11], 0, &body->m.o.x, pitch, 0);
 }
 
 // ---- the equipment display ----------------------------------------------------------------------------------------------------------------
@@ -908,9 +908,9 @@ void Agent::on_wield_changed()
     }
 skip:
     if (snd1 != -1 && (float)(g_ticks[g_mission->time_idx] - g_mission->time_base) * 1e-05f > 1.0f)
-        g_sound.play(g_sound_ids[snd1], 0, &pos.x, 1.0f, 0);
+        g_sound_mgr.play(g_sound_ids[snd1], 0, &pos.x, 1.0f, 0);
     if (snd2 != -1 && (float)(g_ticks[g_mission->time_idx] - g_mission->time_base) * 1e-05f > 1.0f)
-        g_sound.play(g_sound_ids[snd2], 0, &pos.x, 1.0f, 0);
+        g_sound_mgr.play(g_sound_ids[snd2], 0, &pos.x, 1.0f, 0);
     f130 = 0;
     for (j = 0; j < 2; j++) {
         int s = wield[j];

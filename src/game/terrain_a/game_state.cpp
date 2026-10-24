@@ -79,8 +79,8 @@ Block16::Block16() : p(0.0f, 0.5f)
 bool GameData::agent_low(int idx)
 {
     if (idx == player)
-        return troops[idx].hp < g_thr_self;
-    return troops[idx].hp < g_thr_other;
+        return troops[idx].hp < g_player_wounded_treshold;
+    return troops[idx].hp < g_hero_wounded_treshold;
 }
 
 // @ 0x463950

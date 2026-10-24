@@ -68,7 +68,7 @@
 00475b60 ?_Destroy@?$vector@UNamePtrs56@@V?$allocator@UNamePtrs56@@@std@@@std@@IAEXPAUNamePtrs56@@0@Z  # ICF-folded
 004cc280 ??0?$vector@HV?$allocator@H@std@@@std@@QAE@ABV01@@Z  # identical to the vector<scalar4> copy ctor (ICF)
 0046c1d0 ??$_Uninit_copy@PAUNamePtrs56@@PAU1@V?$allocator@UNamePtrs56@@@std@@@std@@YAPAUNamePtrs56@@PAU1@00AAV?$allocator@UNamePtrs56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # ICF-folded
-00a73980 ?g_screen@@3Uscreen_cfg@@A  # screen/device queue object
+00a73980 ?g_windows@@3Uscreen_cfg@@A  # screen/device queue object
 005d7080 ?g_gui@@3Ugui_manager@@A  # the UI root
 004c8840 ?erase@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAE?AViterator@12@V312@0@Z  # ICF-folded: the original calls this address (audit local copy)
 004c6f10 ??$_Ucopy@PAUE44@@@?$vector@UE44@@V?$allocator@UE44@@@std@@@std@@IAEPAUE44@@PAU2@00@Z  # ICF-folded: the original calls this address (audit local copy)

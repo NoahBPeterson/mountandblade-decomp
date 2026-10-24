@@ -7,11 +7,7 @@
 #include <stdio.h>
 #include "../../game/tstring.h"
 
-void* __cdecl engine_alloc(size_t size);                        // 0x535482  operator new[] (size at [p-4])
-void* __cdecl engine_new(size_t size);                          // 0x53545e  operator new (scalar)
-void  __cdecl engine_free(void* p);                             // 0x53570d  operator delete[] (the "free" slot)
-void  __cdecl engine_delete(void* p);                           // 0x535712  operator delete (scalar)
-char* __cdecl sub_536f8f(char* buf, const char* fmt, ...);      // 0x536f8f (sprintf)
+#include "../../include/crt.h"   // canonical: operator new (0x53545e)
 
 // The UI string table (global at 0x5e2a18): 0xdf3 hash buckets of tstring vectors, keys in one half and the
 // translations in the other (find 0x4c6010 returns the translation of `key`, or null).
@@ -63,7 +59,7 @@ struct LangTables : LangTablesBase {
     tstring notfound;                                           // +0x1be60 "STR NOT FOUND"
     tstring language;                                           // +0x1be70
     LangTables();                                               // 0x4cda20
-    unsigned hash(const tstring* key);                          // 0x433bb0 (thiscall, ret 4)
+    unsigned hash_string(const tstring* key);                          // 0x433bb0 (thiscall, ret 4)
     tstring* find(const tstring* key) throw();                  // 0x4c6010 (null when absent)
     tstring* lookup(const tstring& key) throw();                // 0x43a1e0 (never null: a shared "ui_unknown..." entry on a miss)
     void write(FILE* f, const tstring& key, const tstring& value);   // 0x4bd740 ("key|value\n" row of a language file)

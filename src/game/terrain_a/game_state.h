@@ -27,8 +27,8 @@ struct Block16 {                                // 16-byte default block (0, 0.5
 // ---- game state (global object 0x5e2930 = GameData, src/include/game_data.h: its path helpers agent_low 0x4638f0, scene_path 0x463950,
 // module_path 0x4639d0 are defined in game_state.cpp) ----
 #include "../../include/game_data.h"
-extern float g_thr_self;                        // 0xa1813c (0x4638f0)
-extern float g_thr_other;                       // 0xa18138 (0x4638f0)
+extern float g_player_wounded_treshold;                        // 0xa1813c (0x4638f0)
+extern float g_hero_wounded_treshold;                       // 0xa18138 (0x4638f0)
 extern char g_path_buf[];                       // 0x5e2480 (0x4639d0)
 
 

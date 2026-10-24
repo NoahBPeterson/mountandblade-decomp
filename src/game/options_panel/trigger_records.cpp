@@ -4,7 +4,7 @@
 void init_mission_trigger_records()
 {
     g_rec_9c = new RecCam;
-    g_main_menu = new RecMenu;
+    g_windows = new RecMenu;
     g_profile = new RecProfile;
     g_rec_90 = new RecItem90;
     g_rec_88 = new Rec98b;

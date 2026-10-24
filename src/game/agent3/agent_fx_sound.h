@@ -97,7 +97,7 @@ int __cdecl round_float(const float* p);                                // 0x432
 int __cdecl rand_below(const int* n);                                   // 0x432580
 
 #include "../../include/sound_mgr.h"             // SoundDef, SoundGroup, SoundMgr (shared with agent5, party2, inventory_panel)
-extern SoundMgr g_sound;                                // 0x5aa128
+extern SoundMgr g_sound_mgr;                                // 0x5aa128
 extern int g_sound_ids[];                               // 0x5aa178 sound id table (g_sound_ids[0x11] = pain)
 extern int g_levelup_sound;                             // 0x5aa17c
 extern float g_levelup_pos[];                           // 0x5aa168
@@ -112,7 +112,7 @@ extern unsigned g_max_dead;                             // 0x5aa044
 #include "../str_table.h"
 extern StrTable g_strtable;                             // 0x5e2a18
 #include "../../include/msg_log.h"                 // MsgLog (one definition for src/game and src/rgl)
-extern MsgLog g_msglog;                                 // 0x5d7080
+extern MsgLog g_gui;                                 // 0x5d7080
 
 // ---- effect spawn (0x442ca0) ---------------------------------------------------------------------------------------------------
 struct CamRec {                                         // 0x4c bytes, array behind the pointer at 0x5e28f4
@@ -122,7 +122,7 @@ struct CamRec {                                         // 0x4c bytes, array beh
     float px, py, pz;                                   // +0x30
     char pad3c[0x4c - 0x3c];
 };
-extern CamRec* g_cams;                                  // 0x5e28f4
+extern CamRec* g_env_rows;                                  // 0x5e28f4
 
 // ---- mesh objects hanging off the agent (0x443aa0, 0x444370) ----------------------------------------------------------------------
 #include "../../include/mat4.h"

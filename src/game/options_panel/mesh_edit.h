@@ -91,15 +91,15 @@ struct EditMesh : PolyMesh {
     int calc_edge_mode(int mode);                   // 0x4c5670
     void find_triangle(const int* edge, int* a, int* b);   // 0x4c5f60
     vector4 normal(const int* edge);                // 0x4c8000
-    void delete_face(int i);                        // 0x4cb940
-    void rebuild();                                 // 0x4cb840
-    void set_slot(int kind, vector4* dir);          // 0x4c7f90
+    void remove_face(int i);                        // 0x4cb940
+    void clean();                                 // 0x4cb840
+    void update_terrain(int kind, vector4* dir);          // 0x4c7f90
 };
 // The callees as seen from their callers: compiled without bodies, so cl must not assume their register use.
 struct MeshCalls {
     void build_adjacency();                         // 0x470920
-    void set_slot(int kind, vector4* dir);          // 0x4c7f90
-    void rebuild();                                 // 0x4cb840
-    void delete_face(int i);                        // 0x4cb940
+    void update_terrain(int kind, vector4* dir);          // 0x4c7f90
+    void clean();                                 // 0x4cb840
+    void remove_face(int i);                        // 0x4cb940
 };
 #endif

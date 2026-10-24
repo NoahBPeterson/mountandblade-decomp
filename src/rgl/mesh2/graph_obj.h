@@ -122,7 +122,7 @@ struct graph_obj {
     void clear_vecs();                           // 0x4cb780
     void clean();                                // 0x4cb840
     void remove_face(int i);                     // 0x4cb940
-    void finish();                               // 0x470920
+    void build_adjacency();                               // 0x470920
     rgl::vector4 normal(const int* e);           // 0x4c8000 (hidden return pointer)
     void update_terrain(int idx, const float* d);   // 0x4c7f90
 };

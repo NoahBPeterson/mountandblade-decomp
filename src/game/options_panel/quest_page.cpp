@@ -32,11 +32,11 @@ using rgl::vector4;
 // 0x43a1e0 (thiscall on the table at 0x5e2a18, arg pushed, ret 4): localized text of a table key.
 #include "./str_table_rgl.h"                                              // StrTableRgl (was StringTable here): the one definition
 
-tstring* strtab_lookup(tstring& key);               // 0x43a1e0
+tstring* lookup(tstring& key);               // 0x43a1e0
 
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 extern "C" int __cdecl sprintf(char*, const char*, ...);         // 0x536f8f
-double floor_d(double v);                        // 0x536b10
+#include "../../include/crt.h"   // canonical: floor (0x536b10)
 
 struct Pos2 { float x, y; };    // 8-byte position slot; the original passes an unset 8-byte stack slot
 
@@ -135,7 +135,7 @@ struct localized {
     tstring key;
     tstring* e;
 
-    explicit localized(const char* k) : key(k) { e = g_string_table.lookup(key); }
+    explicit localized(const char* k) : key(k) { e = g_strtable.lookup(key); }
     tstring text() const
     {
         tstring t = *e;
@@ -153,7 +153,7 @@ extern tstring g_quest_text;                        // 0xa70464
 struct QuestTextHook {
     char    pad0[0x1a068];
     int     on;                                     // +0x1a068
-    void    format(int event, int a, int b);        // 0x435790
+    void    emit_event(int event, int a, int b);        // 0x435790
 };
 
 // @ 0x4d5ba0
@@ -178,11 +178,11 @@ void QuestPage::fill()
         Game* g = g_game;
         int days = (int)(g->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
         g_quest_text.assign(g_empty_text);
-        ((QuestTextHook*)g)->format(0xf, days / 24, days);
+        ((QuestTextHook*)g)->emit_event(0xf, days / 24, days);
         {
             tstring formatted(g_quest_text);
             const char* arg = formatted.buf ? formatted.buf : (const char*)&formatted.buf;
-            tstring* e = g_string_table.lookup(key);
+            tstring* e = g_strtable.lookup(key);
             mb_snprintf(buf, 0x200, e->buf ? e->buf : (const char*)&e->buf, arg);
         }
     }
@@ -197,7 +197,7 @@ void QuestPage::fill()
     // "N days since given"
     {
         tstring key("ui_days_since_given");
-        tstring* e = g_string_table.lookup(key);
+        tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
         int given = (int)(QREC->f11c * g_ticks_per_time);
         int now = (int)(g_time64 * g_tick_per_day);
@@ -224,7 +224,7 @@ void QuestPage::fill()
     if (QREC->f50_0) {
         {
             tstring key("ui_quest_progression_number");
-            tstring* e = g_string_table.lookup(key);
+            tstring* e = g_strtable.lookup(key);
             mb_snprintf(buf, 0x200, e->buf ? e->buf : (const char*)&e->buf, QREC->f64_lo);
         }
         {
@@ -244,7 +244,7 @@ void QuestPage::update_days()
     Pos2 fr;                                 // x = the float spill slot; y is never written (it is passed on to the widget)
     float& v = fr.x;
     v = g_difficulty_f * *(float*)0x5910fc;
-    float f = (float)floor_d(v);
+    float f = (float)floor(v);
     int n = (int)f;
     int r;
     if (v - f <= 0.5f) r = n; else r = n + 1;     // jnp form: test ah,0x41 over fcomp [0x549d70]
@@ -266,7 +266,7 @@ void QuestPage::update_difficulty()
     {
         // the localized caption is the format; the rating is the argument
         tstring key((const char*)0x5967a0);
-        tstring* e = g_string_table.lookup(key);
+        tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
         sprintf(buf, fmt, ((GameRating*)g_game)->rating());
     }

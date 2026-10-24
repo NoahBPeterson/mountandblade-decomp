@@ -103,7 +103,7 @@ struct Rec428 : head_rec {   // vtable 0x595c68
 };
 
 extern RecCam* g_rec_9c;   // 0xa7399c
-extern RecMenu* g_main_menu;   // 0xa73980
+extern RecMenu* g_windows;   // 0xa73980
 extern RecProfile* g_profile;   // 0xa73984
 extern RecItem90* g_rec_90;   // 0xa73990
 extern Rec98b* g_rec_88;   // 0xa73988

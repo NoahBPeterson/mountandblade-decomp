@@ -75,7 +75,7 @@ struct screen_cfg {
     char pad4[0x74];
     std::deque<int> req;                         // +0x78 the request queue (VC7.1 deque of 4-int blocks)
 };
-extern screen_cfg g_screen;                      // 0xa73980
+extern screen_cfg g_windows;                      // 0xa73980
 
 // a gadget with the current-mode flag at +0x0c and the name text at +0x24
 struct screen_gadget {

@@ -6,7 +6,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?clear@list_int@@QAEXXZ  004c4d80  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1world_obj@@QAE@XZ  004c4ee0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z  004c4f40  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?fill_records@@YAXPAXIPBXPAUblock_copier@@@Z  004c5010  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?uninit_fill_n@@YAXPAXIPBXPAUblock_copier@@@Z  004c5010  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?clear_vec38@editor@@QAEXXZ  004c5110  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?free_items@editor@@QAEXXZ  004c5150  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?set_view@gui_view@@QAEXPBM@Z  004c5190  /O2 /MT /Gy /TP
@@ -22,12 +22,12 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?desc_name@SkillRec@@QAEPAUtstring@@XZ  004c6190  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated_desc@SkillRec@@QAE?AUtstring@@XZ  004c61f0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated@MenuDoor@@QAE?AUtstring@@XZ  004c62b0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?text_by_kind@RecA@@QAE?AUtstring@@XZ  004c6330  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?src_text@RecA@@QAE?AUtstring@@XZ  004c63f0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?src_id_name@RecA@@QAE?AUtstring@@XZ  004c6470  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?name_by_state@RecB@@QAE?AUtstring@@XZ  004c6530  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?translated_plural@RecA@@QAE?AUtstring@@XZ  004c6330  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?translated@RecA@@QAE?AUtstring@@XZ  004c63f0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?translated_text@RecA@@QAE?AUtstring@@XZ  004c6470  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?translated@RecB@@QAE?AUtstring@@XZ  004c6530  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?reset@ItemPage@@QAEXXZ  004c65d0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?field_name@RecC@@QAE?AUtstring@@XZ  004c6860  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?translated@RecC@@QAE?AUtstring@@XZ  004c6860  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?retire@RefList@@QAEXXZ  004c6900  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?clear@ItemPage@@QAEXXZ  004c6aa0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?mesh_ptr@MapObject@@QAEPAUtstring@@XZ  004c6ca0  /O2 /MT /Gy /TP

@@ -259,7 +259,7 @@ bool Agent::plan_path()
 void Agent::play_class_sound(const int* kind)
 {
     unsigned cls = (unsigned)g_game->troops[troop].flags30 & 0xf;
-    int snd = g_voices.sound(cls, *kind);
+    int snd = g_anim_table.sound(cls, *kind);
     if (snd >= 0)
         play_sound(&snd);
 }
@@ -549,7 +549,7 @@ float __cdecl fmin_ref(const float* a, const float* b);                 // 0x432
 float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0
 extern float g_dt_scale;                                                // 0x5a9bf0
 extern int g_int_5aa04c;                                                // 0x5aa04c
-extern unsigned g_flags_5e2470;                                         // 0x5e2470
+extern unsigned g_input_flags;                                         // 0x5e2470
 extern int g_player_agent;                                              // 0x8ed50dc
 
 __forceinline ClassInfo* Agent::class_rec()
@@ -1224,7 +1224,7 @@ void Agent::update_ai()
     } else if (mode_ == 3) {
         reset_act();
         if (fac < 0.5f && f2c != -1)
-            g_flags_5e2470 |= 0x10000;
+            g_input_flags |= 0x10000;
     } else if (mode_ == 2) {
         if (f2c == -1) {
             int c = f2cc;
@@ -1255,7 +1255,7 @@ void Agent::update_ai()
                     float r0 = 0.0f;
                     set_goal_near(&q, &r0);
                 } else {
-                    g_flags_5e2470 |= 0x20000;
+                    g_input_flags |= 0x20000;
                     flag_a = false;
                     target = c;
                     f533c = 2;
@@ -1295,8 +1295,8 @@ done:
                 attack_delay() = 0.0f;
         }
         if ((float)(rand() % 0x3dc9) * (1.0f / 15817.0f) < 0.6f) {
-            g_flags_5e2470 = g_flags_5e2470 & 0xffffff;
-            g_flags_5e2470 = g_flags_5e2470 | 0x1000000;
+            g_input_flags = g_input_flags & 0xffffff;
+            g_input_flags = g_input_flags | 0x1000000;
         }
     }
 
@@ -1930,7 +1930,7 @@ set7:
                     float x = (dist + 70.0f) * 0.01f;
                     float lo = 0.7f;
                     float hi = 1.2f;
-                    float cl = clamp_float(&x, &lo, &hi);
+                    float cl = clamp(&x, &lo, &hi);
                     float delay = (((frand() + 2.5f) * cl) * 35.0f) / (float)(g_game->troops[troop].fb0 + 0x23);
                     if (itype == itp_type_thrown)
                         delay = delay * 0.5f;
@@ -2394,7 +2394,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     if (m) {
         res_obj* c = m->clone();
         c->xform = ident;
-        e->add_mesh(c);
+        e->add_extra(c);
     }
     e->local.f = *dir;
     e->local.u = vector4(0.0f, 0.0f, 1.0f);
@@ -2521,7 +2521,7 @@ after:
         SceneEnt* e = scene_world->create_entity(7);
         res_obj** first = meshes._Myfirst;
         for (unsigned i = 0; first != 0 && i < (unsigned)(meshes._Mylast - first); i++)
-            e->add_mesh(first[i]->clone());
+            e->add_extra(first[i]->clone());
         if (shape_res)
             e->shape = shape_res->clone_shape();
         e->local = r->m98;
@@ -2553,7 +2553,7 @@ after:
                 m->f10c = 0x1ffff;
             if (r->v158.z * r->v158.y * r->v158.x < 0.0f)
                 m->f4c = 1;
-            e->add_mesh(m);
+            e->add_extra(m);
         }
         if (shape_res) {
             if (r->kind == 3 || r->kind == 5 ||
@@ -4151,7 +4151,7 @@ void Agent::refresh_carried(Missile* other)
 }
 
 // ---- Agent::drop_held, the text layout wrapper, the message log, the animator visibility switch, Agent::get_label_box -----------
-extern MsgLog g_msglog;                                 // 0x5d7080
+extern MsgLog g_gui;                                 // 0x5d7080
 extern StrTable g_strtable;                             // 0x5e2a18
 extern Font* g_font;                                    // 0x5e2934
 // the animator's inline accessor of a bone record's world frame (brings the poses up to date first)
@@ -4296,7 +4296,7 @@ void Skeleton::set_visible(char on)
 // @ 0x453020
 void __stdcall log_message(const tstring* s, int unused)
 {
-    g_msglog.add(*s, -261);
+    g_gui.add(*s, -261);
 }
 
 // box above the agent's head (two corner vectors and a scale), for its label
@@ -4327,7 +4327,7 @@ void Agent::get_label_box(void* out_)
         out->b = body->m.transform_point(*(vector4*)(body->skel->recs + 0x1170));
         out->scale = f80 * 0.33f;
     } else {
-        g_msglog.add(tstring("WARNING:CHECK INVALID ENTITY"), -1);
+        g_gui.add(tstring("WARNING:CHECK INVALID ENTITY"), -1);
         float z;
         if (f2c == -1)
             z = pos.z + 0.8f;
@@ -4383,7 +4383,7 @@ void Agent::shield_hit(int damage)
                             int m = s->b.mod;
                             if (m == 1) {
                                 if (frand() < 0.2f) {
-                                    { tstring key("ui_shield_broken"); g_msglog.add(*g_strtable.lookup(&key), 0xddbbbb); }
+                                    { tstring key("ui_shield_broken"); g_gui.add(*g_strtable.lookup(&key), 0xddbbbb); }
                                     
                                     if (s->item == STORED(g_game->player, old).item && pairs[old].m4 == STORED(g_game->player, old).m4)
                                         STORED(g_game->player, old).item = -1;
@@ -4392,12 +4392,12 @@ void Agent::shield_hit(int damage)
                             } else if (m == 5) {
                                 if (!(frand() < 0.2f))
                                     return;
-                                { tstring key("ui_shield_cracked"); g_msglog.add(*g_strtable.lookup(&key), 0xddbbbb); }
+                                { tstring key("ui_shield_cracked"); g_gui.add(*g_strtable.lookup(&key), 0xddbbbb); }
                                 bits = 0x1000000;
                             } else {
                                 if (!(frand() < 0.2f))
                                     return;
-                                { tstring key("ui_shield_deformed"); g_msglog.add(*g_strtable.lookup(&key), 0xddbbbb); }
+                                { tstring key("ui_shield_deformed"); g_gui.add(*g_strtable.lookup(&key), 0xddbbbb); }
                                 bits = 0x5000000;
                             }
                             
@@ -4509,7 +4509,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             float y = A.y - missile->p40.y * missile->f5c;
             spd = (float)sqrt(x * x + y * y + (A.z - z) * (A.z - z));
         }
-        *out_dmg = (float)pow((double)(spd / missile->f60), (double)g_pow_a) * missile->f64 * *scale;
+        *out_dmg = (float)pow((double)(spd / missile->f60), (double)g_missile_damage_speed_power) * missile->f64 * *scale;
     } else {
         int st = hand ? mode2 : mode1;
         unsigned fl = (st == 0);
@@ -4526,12 +4526,12 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             *out_dmg = (*out_dmg + 5.0f) * (float)pow((double)len, (double)1.8f);
             vector4 q = body->m.rot_ext(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
             q.normalize();
-            *out_dmg = ((0.2f - (q.x * d.x + q.y * d.y + q.z * d.z)) * *out_dmg) * g_lance_scale * 0.2f;
+            *out_dmg = ((0.2f - (q.x * d.x + q.y * d.y + q.z * d.z)) * *out_dmg) * g_couched_lance_damage_multiplier * 0.2f;
             if (g_ui_enabled) {
                 if (id == g_mission->player_id)
-                    g_msglog.add(*lk(tstring("ui_delivered_couched_lance_damage")), 0xffd03030);
+                    g_gui.add(*lk(tstring("ui_delivered_couched_lance_damage")), 0xffd03030);
                 else if (victim == (unsigned)g_mission->player_id)
-                    g_msglog.add(*lk(tstring("ui_received_couched_lance_damage")), 0xffd03030);
+                    g_gui.add(*lk(tstring("ui_received_couched_lance_damage")), 0xffd03030);
             }
         } else {
             if (mode1 == 3)
@@ -4576,7 +4576,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                 float x = (h - 0.65f) * -25.000025f;
                 t = 1.0f;
                 float lo = 0.0f;
-                t = clamp_float(&x, &lo, &t);
+                t = clamp(&x, &lo, &t);
             }
             float w = (float)sp.stat_1f0a() * 0.154f;
             if (m == 0)
@@ -4593,7 +4593,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                     t = 0.3f;
                 else if (t > 3.0f)
                     t = 3.0f;
-                float p = (float)pow((double)t, (double)g_pow_b);
+                float p = (float)pow((double)t, (double)g_melee_damage_speed_power);
                 *out_dmg = p * *out_dmg;
                 float bonus = (p - 1.0f) * 100.0f;
                 int n = round_float(&bonus);
@@ -4603,7 +4603,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                         sprintf(msg, lk(tstring("ui_speed_bonus_plus"))->c_str(), n);
                     else
                         sprintf(msg, lk(tstring("ui_speed_bonus"))->c_str(), n);
-                    g_msglog.add(tstring(msg), -1);
+                    g_gui.add(tstring(msg), -1);
                 }
             }
         }
@@ -4701,7 +4701,7 @@ void Agent::ragdoll_update()
                                 lim = 0.35f;
                             if (!f58c4 && !f58d8 && hold.o.z - w->o.z < 0.0f &&
                                 w->o.z - g_mission->scene_world->floor_z(&w->o.x) < lim) {
-                                g_sound.play(g_sound_blood, 0, (const float*)&body->m.o, frand() * 0.4f + 0.8f, 0);
+                                g_sound_mgr.play(g_sound_blood, 0, (const float*)&body->m.o, frand() * 0.4f + 0.8f, 0);
                                 f58d8 = 1;
                             }
                             hold = *w;
@@ -4887,7 +4887,7 @@ void Agent::reduce_blow(Blow* b)
                     armor_v = (float)bonus + armor_v;
                     if (id == g_mission->player_id) {
                         tstring key("ui_hit_shield_on_back");
-                        g_msglog.add(*g_strtable.lookup(&key), -1);
+                        g_gui.add(*g_strtable.lookup(&key), -1);
                     }
                 }
             }
@@ -4895,14 +4895,14 @@ void Agent::reduce_blow(Blow* b)
     }
     float x, y;
     if (b->kind == 0) {
-        x = g_armor_a[0] * armor_v;
-        armor_v = g_armor_b[0] * armor_v;
+        x = g_armor_soak_factor_against_cut[0] * armor_v;
+        armor_v = g_armor_reduction_factor_against_cut[0] * armor_v;
     } else if (b->kind == 1) {
-        x = g_armor_a[1] * armor_v;
-        armor_v = g_armor_b[1] * armor_v;
+        x = g_armor_soak_factor_against_cut[1] * armor_v;
+        armor_v = g_armor_reduction_factor_against_cut[1] * armor_v;
     } else {
-        x = g_armor_a[2] * armor_v;
-        armor_v = g_armor_b[2] * armor_v;
+        x = g_armor_soak_factor_against_cut[2] * armor_v;
+        armor_v = g_armor_reduction_factor_against_cut[2] * armor_v;
     }
     y = ((float)(rand() % 0x3dc9) * 3.4772715e-05f + 0.45f) * x;
     x = dmg - y;
@@ -5320,9 +5320,9 @@ void Agent::update_controls(float dt)
                               ((float)tr->f58[1] * 0.06666667f + (float)ath2 * 0.2f) + 1.0f)) * dt) * 10.0f;
                 float nstep = -step;
                 float nstep2 = nstep;
-                float nvx = clamp_float(&v.x, &nstep, &step) + vel_xy.x;
+                float nvx = clamp(&v.x, &nstep, &step) + vel_xy.x;
                 vel_xy.x = nvx;
-                float nvy = clamp_float(&v.y, &nstep2, &step) + vel_xy.y;
+                float nvy = clamp(&v.y, &nstep2, &step) + vel_xy.y;
                 vel_xy.y = nvy;
                 unsigned band = fb8 & 7;
                 float spd = (float)sqrt(vel_xy.y * vel_xy.y + vel_xy.x * vel_xy.x);
@@ -5686,11 +5686,11 @@ extern int g_opt_shot_difficulty;                   // 0x5aa064
 extern int g_opt_kill_msgs;                         // 0x5aa068
 extern int g_opt_blood;                             // 0x5aa020
 extern int g_opt_hit_fx;                            // 0x5a9fc0
-extern float g_k_a18178;                            // 0xa18178
-extern float g_k_a1811c;                            // 0xa1811c
-extern float g_k_a1812c;                            // 0xa1812c
-extern float g_k_a18130;                            // 0xa18130
-extern float g_k_a18134;                            // 0xa18134
+extern float g_damage_interrupt_attack_treshold;                            // 0xa18178
+extern float g_blood_multiplier;                            // 0xa1811c
+extern float g_player_xp_multiplier;                            // 0xa1812c
+extern float g_hero_xp_multiplier;                            // 0xa18130
+extern float g_regulars_xp_multiplier;                            // 0xa18134
 extern int g_voice_default_a;                       // 0x8ed50a0
 extern int g_voice_default_b;                       // 0x8ed50a4
 struct AnimInfo { char pad0[0x3c]; float length; }; // +0x3c
@@ -5783,7 +5783,7 @@ after_rider:
             dmg = dmg * 1.75f;
             if (attacker == m->player_id && g_opt_damage_msgs != 0) {
                 tstring k("ui_head_shot");
-                g_msglog.add(*g_strtable.lookup(&k), 0xffffdd11);
+                g_gui.add(*g_strtable.lookup(&k), 0xffffdd11);
                 m = g_mission;
             }
         }
@@ -5819,7 +5819,7 @@ after_rider:
             }
             {
                 tstring t(msgbuf);
-                g_msglog.add(t, -261);
+                g_gui.add(t, -261);
             }
         } else {
             int lid = m->player_id;
@@ -5853,7 +5853,7 @@ after_rider:
                         tstring k(key);
                         sprintf(hbuf, g_strtable.lookup(&k)->c_str(), round_float(&dmg));
                     }
-                    g_msglog.add(tstring(hbuf), 0xffe0c0c0);
+                    g_gui.add(tstring(hbuf), 0xffe0c0c0);
                 }
             }
         }
@@ -5947,14 +5947,14 @@ after_rider:
                 if ((horse->m4 & 0xff000000) == (unsigned)imod_lame << 24) {
                     if (frand() < 0.2f) {
                         tstring k("ui_horse_fell_dead");
-                        g_msglog.add(*g_strtable.lookup(&k), 0xffdd6655);
+                        g_gui.add(*g_strtable.lookup(&k), 0xffdd6655);
                         horse->item = -1;
                     }
                 } else {
                     if (frand() < 0.2f) {
                         {
                             tstring k("ui_horse_crippled");
-                            g_msglog.add(*g_strtable.lookup(&k), 0xffeebbbb);
+                            g_gui.add(*g_strtable.lookup(&k), 0xffeebbbb);
                         }
                         horse->b.mod = 0;
                         horse->m4 |= (unsigned)imod_lame << 24;
@@ -6069,7 +6069,7 @@ after_rider:
             if (!(last_blow().dmg_in < r)) goto bee;
         } else {
         bee:
-            if (!(dmg < g_k_a18178)) goto c25;
+            if (!(dmg < g_damage_interrupt_attack_treshold)) goto c25;
         }
         if (last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 0)
             stunned = true;
@@ -6249,11 +6249,11 @@ common:
             if (chars[g_mission->agents.get(atk_rider)->troop].has_flag10()) {
                 GameData* g = g_game;
                 if (atk_troop == g->player)
-                    g->add_experience(atk_troop, (int)((float)xp * g_k_a1812c));
+                    g->add_experience(atk_troop, (int)((float)xp * g_player_xp_multiplier));
                 else
-                    g->add_experience(atk_troop, (int)((float)xp * g_k_a18130));
+                    g->add_experience(atk_troop, (int)((float)xp * g_hero_xp_multiplier));
             } else {
-                g_mission->agents.get(atk_rider)->xp_pool += (int)((float)xp * g_k_a18134);
+                g_mission->agents.get(atk_rider)->xp_pool += (int)((float)xp * g_regulars_xp_multiplier);
             }
         }
     }
@@ -6291,7 +6291,7 @@ common:
                         sprintf(msgbuf, g_strtable.lookup(&k)->c_str(), (double)sd);
                     }
                     {
-                        g_msglog.add(tstring(msgbuf), 0xffaaaaaa);
+                        g_gui.add(tstring(msgbuf), 0xffaaaaaa);
                     }
                 }
                 w = tt * amount;
@@ -6312,7 +6312,7 @@ common:
                     tstring k("ui_your_proficiency_in_value_has_improved_by_number_to_number");
                     sprintf(msgbuf, g_strtable.lookup(&k)->c_str(), namebuf, diff, nw);
                 }
-                g_msglog.add(tstring(msgbuf), 0xffffdf44);
+                g_gui.add(tstring(msgbuf), 0xffffdf44);
             }
         }
     }
@@ -6321,16 +6321,16 @@ common:
     if (dmg > 1.0f && !(g_mission->terrain.f158 & 1) && g_opt_hit_fx != 0) {
         float hi = 50.0f;
         float lo = 1.0f;
-        float k = ((dmg + 5.0f) * g_k_a1811c) * 0.1f + 1.0f;
-        float ef = clamp_float(&k, &lo, &hi);
+        float k = ((dmg + 5.0f) * g_blood_multiplier) * 0.1f + 1.0f;
+        float ef = clamp(&k, &lo, &hi);
         matrix m2;
         m2.o = last_blow().pos;
         m2.f = vector4(-last_blow().dir.x, -last_blow().dir.y, -last_blow().dir.z + 0.5f);
         m2.u = vector4(0.0f, 0.0f, 1.0f);
         m2.orthonormalize();
         int vi = (int)(g_game->chars[troop].flags30 & 0xf);
-        int e1 = g_voices.get_f1f0(vi);
-        int e2 = g_voices.get_f1f4(vi);
+        int e1 = g_anim_table.get_f1f0(vi);
+        int e2 = g_anim_table.get_f1f4(vi);
         if (e1 == 0)
             e1 = g_voice_default_a;
         if (e2 == 0)
@@ -6396,7 +6396,7 @@ common:
                 else if (lid >= 0 && m->agents.get(lid)->is_friend(this))
                     color = 0xffce1180;
             }
-            g_msglog.add(tstring(msgbuf), color);
+            g_gui.add(tstring(msgbuf), color);
         }
         draw_name();
         return;
@@ -6438,7 +6438,7 @@ common:
                 else if (lid >= 0 && m->agents.get(lid)->is_friend(this))
                     color = 0xffb26fdd;
             }
-            g_msglog.add(tstring(namebuf), color);
+            g_gui.add(tstring(namebuf), color);
         }
         draw_name();
         return;
@@ -6457,10 +6457,10 @@ common:
 
 // ---- Agent::swing_trace: the melee swing / missile hit test ------------------------------------------------------------------------
 struct AgentCall {                                  // the member calls the original makes with a (here unused) agent in ecx
-    bool charged_0x48() const;                      // 0x432470 (out of line at the damage-doubling site; inlined as couching())
-    int probe_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);   // 0x43a720 (ret 0x10)
+    bool f100_is_0x48_and_charged() const;                      // 0x432470 (out of line at the damage-doubling site; inlined as couching())
+    int probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);   // 0x43a720 (ret 0x10)
 };
-extern char* g_prop_kinds;                          // 0x5e29dc (PropKind, 0x78 bytes: flags at +0x10, the sound set at +0x6c)
+extern char* g_propkinds;                          // 0x5e29dc (PropKind, 0x78 bytes: flags at +0x10, the sound set at +0x6c)
 extern rgl::matrix g_last_hit_frame;                // 0xa708d0
 static __forceinline int round_inl(const float& x)
 {
@@ -6531,10 +6531,10 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
         pc.radius = 0.0f;
         if (missile == 0 && mode1 != 0) {
             can = 1;
-            probed = ((AgentCall*)this)->probe_contact(&pc, &bB, &found, &can);
+            probed = ((AgentCall*)this)->probe_shape_contact(&pc, &bB, &found, &can);
         } else {
             can = 0;
-            probed = ((AgentCall*)this)->probe_contact(&pc, &bB, &found, &can);
+            probed = ((AgentCall*)this)->probe_shape_contact(&pc, &bB, &found, &can);
         }
     }
     int ncand = 0;
@@ -6650,7 +6650,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             unsigned wf = ms.item < 0 ? 0 : g_items[ms.item].type_flags;
                             if ((wf & 0x4000000) != 0)
                                 dmg = dmg + dmg;
-                            if (((const AgentCall*)this)->charged_0x48())
+                            if (((const AgentCall*)this)->f100_is_0x48_and_charged())
                                 dmg = dmg + dmg;
                             if (missile != 0 && ((unsigned)g_items[missile->launcher.item].flags & 0xff000) != 0x10000)
                                 o->refresh_carried(missile);
@@ -6693,7 +6693,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             if (result != 0 && sw_vlen(hv) < maxdist) {
                                 hit_flag = true;
                                 if (id == g_mission->player_id && is_friend(o)) {
-                                    g_msglog.add(*g_strtable.lookup(&tstring("ui_you_hit_a_friendly_troop")),
+                                    g_gui.add(*g_strtable.lookup(&tstring("ui_you_hit_a_friendly_troop")),
                                                  0xffff0000);
                                 }
                                 out->flags = 0;
@@ -6827,7 +6827,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                     PlacedObj* pr = &((PlacedObj*)((Vec1c8*)&g_mission->props)->first)[pi];
                     prop_done = 1;
                     if (pr->kind == 0) {
-                        unsigned kf = prop_flags(g_prop_kinds + pr->id * 0x78) & 0x8000;
+                        unsigned kf = prop_flags(g_propkinds + pr->id * 0x78) & 0x8000;
                         if ((kf != 0 && 0.0f < pr->hp()) || kf == 0) {
                             float dmg = 0.0f;
                             int flg = 0;
@@ -6835,7 +6835,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 hit_damage(0, missile, &dmg, (unsigned*)&flg, 0xffffffff, scale);
                                 pr->hp() = pr->hp() - dmg;
                             }
-                            char* kind = g_prop_kinds + pr->id * 0x78;
+                            char* kind = g_propkinds + pr->id * 0x78;
                             g_game->set_matrix(&pr->m18);
                             g_game->f1a1f0 = pi;
                             g_a70448 = pi;
@@ -6855,7 +6855,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                         *(rgl::mat3*)&fm2 = *(rgl::mat3*)&frame;
                                         fm2.o = o2;
                                         *(rgl::matrix*)&m->m_cc = ((::pos*)&e->local)->relative(fm2);
-                                        e->add_mesh((res_obj*)m);
+                                        e->add_extra((res_obj*)m);
                                         ragdoll = true;
                                     }
                                 }
@@ -7116,7 +7116,7 @@ void Agent::update_attack(float dt)
                         f5620 = 0x7b;
                     } else if (ik->type_flags & itp_cant_reload_on_horseback) {
                         if (id == g_mission->player_id) {
-                            g_msglog.add(*g_strtable.lookup(&tstring("ui_cant_reload_this_weapon_on_horseback")), -1);
+                            g_gui.add(*g_strtable.lookup(&tstring("ui_cant_reload_this_weapon_on_horseback")), -1);
                         }
                     } else {
                         f5620 = 0x7c;
@@ -7176,7 +7176,7 @@ void Agent::update_attack(float dt)
                     float x = (PROG - 0.46f) * 2.5f;
                     float hi = 1.0f;
                     float lo = 0.0f;
-                    float var = clamp_float(&x, &lo, &hi) * 100.0f;
+                    float var = clamp(&x, &lo, &hi) * 100.0f;
                     links[wield[0]]->cap_all(&var);
                 }
                 links[slot]->vis = 0xffff;
@@ -7286,7 +7286,7 @@ void Agent::update_attack(float dt)
                 float x = (PROG - lo2) / (hi2 - lo2);
                 float hi = 1.0f;
                 float lo = 0.0f;
-                float var = clamp_float(&x, &lo, &hi) * 100.0f;
+                float var = clamp(&x, &lo, &hi) * 100.0f;
                 links[wield[0]]->cap_all(&var);
             }
         } else if (S == 3) {
@@ -7374,7 +7374,7 @@ struct SceneObjV : shape_base {                         // a scene object return
 struct PartV { char pad0[0xc]; float f0c; char pad10[0x2c - 0x10]; vector4 v2c; char pad3c[4]; };   // 0x40 bytes: a part of an animation record (AnimDef::subs)
 struct AnimSlotCall { bool set(int id, unsigned prio); };   // 0x4378a0 out of line (agent_stats.cpp)
 vector4* __cdecl bounce(vector4* out, vector4* v, const vector4* n);                    // 0x432e30
-extern float g_kick_scale;                              // 0xa1819c
+extern float g_horse_charge_damage_multiplier;                              // 0xa1819c
 static __forceinline float elapsed_inl(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
 static __forceinline void mv_vadd_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
 struct MV3 { float x, y, z; MV3() {} MV3(float a, float b, float c) : x(a), y(b), z(c) {} };
@@ -7524,7 +7524,7 @@ void Agent::move_step(float dt)
                             vector4 nn(-contact.normal.x, -contact.normal.y, -contact.normal.z);
                             b.bone = 7;
                             int s2 = f8c.stat_214() + 5;
-                            float dmg = (((nn.z * v56a4.z + nn.y * v56a4.y + nn.x * v56a4.x) + 0.1f) * (float)s2 * g_kick_scale) * vel_xy.y * 0.015f;
+                            float dmg = (((nn.z * v56a4.z + nn.y * v56a4.y + nn.x * v56a4.x) + 0.1f) * (float)s2 * g_horse_charge_damage_multiplier) * vel_xy.y * 0.015f;
                             if (dmg < 0.0f)
                                 dmg = 0.0f;
                             b.dmg_in = dmg;
@@ -7864,12 +7864,12 @@ void Agent::update(float dt)
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound.play(g_snd_230, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_snd_230, 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound.play(g_snd_224, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_snd_224, 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     }
                 } else if (k == 1) {
@@ -7878,12 +7878,12 @@ void Agent::update(float dt)
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound.play(g_snd_22c, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_snd_22c, 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.4f + 0.8f;
-                        g_sound.play(g_snd_228, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_snd_228, 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     }
                 }
@@ -7920,7 +7920,7 @@ void Agent::update(float dt)
                         case 0x1a3:
                         case 0x1a4: {
                             pitch = frand() * 0.4f + 0.8f;
-                            g_sound.play(g_snd_2e0, 0, (const float*)&body->m.o, pitch, 0);
+                            g_sound_mgr.play(g_snd_2e0, 0, (const float*)&body->m.o, pitch, 0);
                         }
                         }
                     }

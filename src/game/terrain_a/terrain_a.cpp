@@ -1421,7 +1421,7 @@ void Missile::init()
 }
 
 // @ 0x468050
-elem56* __cdecl copy56(elem56* f, elem56* l, elem56* d) { for (; f != l; ++f, ++d) *d = *f; return d; }
+elem56* __cdecl copy_arrset(elem56* f, elem56* l, elem56* d) { for (; f != l; ++f, ++d) *d = *f; return d; }
 
 // @ 0x4680c0
 elem56* __cdecl copy_backward56(elem56* f, elem56* l, elem56* d) { while (f != l) *--d = *--l; return d; }
@@ -1619,7 +1619,7 @@ void EnvRec::reset()
 }
 
 // @ 0x468770
-int Rec468770::level_index()
+int Rec468770::max_hit_points()
 {
     int base = f58;
     int v = b7a & 0xf;
@@ -2066,7 +2066,7 @@ void terrain_obj::spread_flow(unsigned mask, int mode, unsigned mark)
 using rgl::mat3;
 __declspec(noinline) mat3* identity3(mat3* out);                             // 0x40cd60
 struct pos2 : rgl::matrix {
-    void rotate_sf(const float* angle);     // 0x40e770
+    void rotate_about_u(const float* angle);     // 0x40e770
 };
 static __forceinline rgl::vector4 t_mul(const rgl::vector4& a, const float& s) { return rgl::vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline rgl::vector4 t_add(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
@@ -2171,7 +2171,7 @@ void terrain_obj::spawn_particles(particle_list* list, int unused)
                                     m.s = t_cross(m.f, m.u);
                                 }
                                 float ang = (float)(rand() % 0x3dc9) * 0.00039724255f;
-                                ((pos2*)&m)->rotate_sf(&ang);
+                                ((pos2*)&m)->rotate_about_u(&ang);
                                 e->frame = m;
                                 float sc = (float)(rand() % 0x3dc9) * 4.425618e-05f + 0.65f;
                                 e->dir = rgl::vector4(((float)(rand() % 0x3dc9) * 1.2644623e-05f + 0.9f) * sc,
@@ -2381,7 +2381,7 @@ rec36* __cdecl uninit_copy36(rec36* first, rec36* last, rec36* dest, alloc36& al
 }
 
 // @ 0x46b750 (+ catch(...) funclet 0x46b7bc)
-rec136* __cdecl uninit_copy136(rec136* first, rec136* last, rec136* dest, alloc136& al, std::_Nonscalar_ptr_iterator_tag tag)
+rec136* __cdecl uninit_copy_arrset(rec136* first, rec136* last, rec136* dest, alloc136& al, std::_Nonscalar_ptr_iterator_tag tag)
 {
     rec136* next = dest;
     try {
@@ -2590,7 +2590,7 @@ elem52* vec52::_Ucopy(elem52* f, elem52* l, elem52* d) { return uninit_copy52(f,
 // ---- _Uninit_copy of the 0x38-byte ArrSet records (the 0x46c23a funclet destroys the constructed prefix, then rethrows) ----------------
 
 // @ 0x46c1d0 (+ catch(...) funclet 0x46c23a: ~ArrSet over the constructed prefix, then rethrow)
-ArrSet* __cdecl uninit_copy_arrset(ArrSet* first, ArrSet* last, ArrSet* dest, allocArr& al)
+ArrSet* __cdecl uninit_copy_arrset2(ArrSet* first, ArrSet* last, ArrSet* dest, allocArr& al)
 {
     ArrSet* next = dest;
     try {
@@ -2891,7 +2891,7 @@ void RenderScene::apply_state()
         ls = &ls->w_int(pcap);                                                                \
         ls->w_cstr("\n");                                                                          \
         *pcap = *pcap / 32 * 32;                                                             \
-        g_buffers_dirty = 1;                                                                       \
+        g_scene_dirty = 1;                                                                       \
         return 0xfff3ebc3;                                                                         \
     } while (0)
 

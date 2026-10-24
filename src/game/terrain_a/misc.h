@@ -146,7 +146,7 @@ struct Rec468770 {
     int f58;                                    // +0x58
     char pad5c[0x7a - 0x5c];
     unsigned char b7a;                          // +0x7a (low nibble = level)
-    int level_index();                          // 0x468770
+    int max_hit_points();                          // 0x468770
 };
 
 // ---- troop auto-equip (0x4687a0 / 0x4687e0; a view of Troop) ---------------------------------------------------------
@@ -274,7 +274,7 @@ struct GeomBuffer {
     IDirect3DIndexBuffer9* ib;                  // 0x44
     int upload(void* scratch, void* tag);       // 0x46d060
 };
-extern char g_buffers_dirty;                    // 0x5e2938 (set when a buffer must be recreated larger)
+extern char g_scene_dirty;                    // 0x5e2938 (set when a buffer must be recreated larger)
 
 // ---- shadow-view draw pass (0x46d8c0) ------------------------------------------------------------------------------------
 struct light_t {

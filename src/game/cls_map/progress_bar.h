@@ -121,7 +121,7 @@ struct Shape {
     void build_spikes(rgl::mesh* owner);        // 0x4e65e0
     void build_ribbons(rgl::mesh* owner);       // 0x4e6a70
     void polygon_to_mesh(rgl::mesh* out);       // 0x4e75a0
-    void finish();                              // 0x4705e0
+    void compute_face_normals();                              // 0x4705e0
 };
 
 // ---- 0x4e7a70: the map loader's block-list reader ----------------------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ struct MapBlock : E68 {                         // the map block (0x68 bytes): i
 };
 struct MapLoader {
     std::vector<E68> blocks;                    // +0x00 (first at +4)
-    void map_layouts();                         // 0x4c84f0
+    void conv_map_codes();                         // 0x4c84f0
     void read(SlotReader* stream);              // 0x4e7a70 (ret 4)
 };
 
@@ -157,8 +157,8 @@ struct MapScreen {
     char padview[0x845d984 - 0xc3b0dc - 4];
     int nchunk_rows;                            // +0x0845d984
     int nchunk_cols;                            // +0x0845d988
-    char build_chunk(int slot, int type, int row, int col, float f);   // 0x47ff60 (ret 0x14)
-    void gen_objects_aligned(void* desc);       // 0x4656c0 (ret 4)
+    char emit_particle(int slot, int type, int row, int col, float f);   // 0x47ff60 (ret 0x14)
+    void fill_desc_named(void* desc);       // 0x4656c0 (ret 4)
     void init(void* desc);                      // 0x4e85d0 (ret 4)
     void frame_step();                          // 0x4e8720
 };
