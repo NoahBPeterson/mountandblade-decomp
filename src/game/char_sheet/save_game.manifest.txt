@@ -1,0 +1,3 @@
+../src/game/char_sheet/save_game.cpp  ?write@SaveCtx@@QAEHPAUOutStream@@@Z  004e8d70  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_game.cpp  ?log_save_path@@YAXXZ  004e8df0  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_game.cpp  ?load_header@Game@@QAEXPAUSaveCtx@@@Z  004e8e70  /O2 /MT /Gy /TP

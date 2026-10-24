@@ -1,0 +1,1 @@
+../src/game/char_sheet/facegen_misc.cpp  ?destroy@BigArray@@QAEXXZ  004eb810  /O2 /MT /Gy /TP

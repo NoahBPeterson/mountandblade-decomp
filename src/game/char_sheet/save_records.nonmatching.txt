@@ -1,0 +1,3 @@
+# save_records nonmatching: complete source, not byte-exact (diff bytes against the original; reasons from the slice notes)
+004e9d10  2  complete; only the register of the write_soa argument differs (lea eax,[edi+0x5a08] in the original, ecx here). equiv.py: UNSUPPORTED (harness cannot model the OutStream vtable-call chain: fault(fetch)/fault(read))
+004ea030  6  complete; the spill of the pushed index (mov [esp+0xc],eax) is scheduled before 'mov edx,eax' here, after it in the original. equiv.py: WEAK (no mismatch over 369 valid inputs, 100% insns, 1 edge each side uncovered)

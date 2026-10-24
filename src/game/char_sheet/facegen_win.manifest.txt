@@ -1,0 +1,1 @@
+../src/game/char_sheet/facegen_win.cpp  ?region_name@@YAXHPAD@Z  004f2610  /O2 /MT /Gy /TP

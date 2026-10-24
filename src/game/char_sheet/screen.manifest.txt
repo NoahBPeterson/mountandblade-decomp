@@ -1,0 +1,5 @@
+../src/game/char_sheet/screen.cpp  ?take_screenshot@@YAXXZ  004ebc10  /O2 /MT /Gy /TP
+../src/game/char_sheet/screen.cpp  ?dtor_ui_row@@YGXPAUUiRow@@@Z  004ebdc0  /O2 /MT /Gy /TP
+../src/game/char_sheet/screen.cpp  ?append_rows@@YAPAUUiRow@@PAU1@00AAURowAlloc@@@Z  004ebe10  /O2 /MT /Gy /TP
+../src/game/char_sheet/screen.cpp  ??0Screen@@QAE@XZ  004ebea0  /O2 /MT /Gy /TP
+../src/game/char_sheet/screen.cpp  ?frame_hook@@YAXXZ  004ec460  /O2 /MT /Gy /TP

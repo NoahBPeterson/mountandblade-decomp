@@ -1,0 +1,2 @@
+# cam_view nonmatching: complete source, not byte-exact (diff bytes against the original; reasons from the slice notes)
+004ea8e0  1419  complete reconstruction; register allocation (cl uses ebx zero-reg + edi vs orig ecx) and 65-byte size delta; equiv UNSUPPORTED (resolver picks ~tstring 0x42bc40 for operator= 0x42bc50 at 0x4eaee4)

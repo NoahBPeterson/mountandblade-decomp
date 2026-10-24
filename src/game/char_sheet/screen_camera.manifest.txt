@@ -1,0 +1,2 @@
+../src/game/char_sheet/screen_camera.cpp  ?ctor_4ed630@@YIPAUMapWidget@@PAU1@@Z  004ed630  /O2 /MT /Gy /TP
+../src/game/char_sheet/screen_camera.cpp  ?dtor_4ed6b0@@YIPAXPAUMapWidget@@HI@Z  004ed6b0  /O2 /MT /Gy /TP

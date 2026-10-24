@@ -1,0 +1,2 @@
+# screen_camera nonmatching: complete source, not byte-exact (diff bytes against the original; reasons from the slice notes)
+004ece20  1741  complete; see the residue notes above (x87 scheduling / CSE, and the original keeps xor eax,eax as a zero register and max_zoom live in st(0))

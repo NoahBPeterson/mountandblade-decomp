@@ -1,0 +1,4 @@
+# save_state nonmatching: complete source, not byte-exact (diff bytes against the original; reasons from the slice notes)
+004e8f10  341  complete; byte-exact except the two 18-byte WinLicense tag pairs (jmp +0x10; "WL  ",0x0c/0x0d,0,0,"WL  ") the original brackets the counter writes and the Table2 write with (verified byte-exact in a scratch copy that emits them with _emit; the rules forbid _emit). equiv.py: UNSUPPORTED (harness: malloc import / fake-arity)
+004e9190  577  complete; byte-exact except the two WinLicense tags (0x0c at entry, 0x0d before w_int1(+0x13a88)); verified byte-exact in a scratch copy that emits them. equiv.py: UNSUPPORTED (harness: malloc import / fake-arity)
+004e9620  31  complete; one extra 4-byte frame slot in the original (push ecx / pop ecx, the base+0xa0 temporary gets its own local instead of the dead argument home); ~8 source shapes tried. equiv.py: UNSUPPORTED (fake-arity)

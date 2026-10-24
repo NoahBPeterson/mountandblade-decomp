@@ -28,6 +28,7 @@ struct frustum {
     float left, right, top, bottom, nearz, farz;    // +0x108   0x4620d0, 0x4621f0
     frustum();                  // 0x41ef60
     void build_planes();        // 0x41e4f0
+    void init(float fov, float aspect, float znear, float zfar);   // 0x4f25a0 (src/game/char_sheet/facegen_win.cpp): perspective from a field of view
     D3DXMATRIX projection();    // 0x4620d0 (hidden return pointer)
     D3DXMATRIX view_matrix();   // 0x462170 (hidden return pointer; src/game/renderer.cpp defines it as frustum_view::view_matrix, a mat4 result)
     vector4 to_clip(const vector4& p);              // 0x4621f0 (hidden return pointer)

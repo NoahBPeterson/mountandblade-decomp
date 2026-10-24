@@ -1,0 +1,7 @@
+../src/game/char_sheet/save_records.cpp  ?write@GameRecord@@QAEXPAUOutStream@@@Z  004e9850  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_records.cpp  ?write@cPairs96@@QAEXPAUOutStream@@@Z  004e99a0  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_records.cpp  ?write_table@Table@@QAEXPAUOutStream@@@Z  004e99d0  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_records.cpp  ?write@Entry@@QAEXPAUOutStream@@@Z  004e9ab0  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_records.cpp  ?write_missions@OutRecList@@QAEXPAUOutStream@@@Z  004e9b50  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_records.cpp  ?write_table@RecList@@QAEXPAUOutStream@@@Z  004e9c50  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_records.cpp  ?flush_ids@RecList@@QAEXXZ  004e9fe0  /O2 /MT /Gy /TP

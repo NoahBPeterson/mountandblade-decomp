@@ -1,0 +1,3 @@
+# facegen_win nonmatching: complete source, not byte-exact (diff bytes against the original; reasons from the slice notes)
+004f1460  3868  complete source, not byte-exact (window base ctor from another slice, cl 13.10 register/loop shape); difftest UNSUPPORTED: resolution audit disagrees because the widget ctor/dtor inlining gates put non-equivalent call operands in (no import models for the D3D/window vtables)
+004f25a0  27  rgl::frustum::init, complete: x87 store/op ordering of the four clip floats differs; equiv PASS (400 valid inputs) in the slice s004f8c80

@@ -1,0 +1,2 @@
+../src/game/char_sheet/cs_troop.cpp  ?apply_to_troop@CharSheet@@QAEXXZ  004ef420  /O2 /MT /Gy /TP
+../src/game/char_sheet/cs_troop.cpp  ?steps_to_point@CharSheet@@QAEHH@Z  004ef6d0  /O2 /MT /Gy /TP

@@ -1,0 +1,1 @@
+../src/game/char_sheet/cam_view.cpp  ?update@CamView@@QAEXM@Z  004eb050  /O2 /MT /Gy /TP

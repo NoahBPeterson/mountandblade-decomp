@@ -1,0 +1,2 @@
+../src/game/char_sheet/msg_log_ui.cpp  ?flush@MsgLog@@QAEXXZ  004f1390  /O2 /MT /Gy /TP
+../src/game/char_sheet/msg_log_ui.cpp  ?pop@Ring@MsgLog@@QAEXAAUtstring@@AAH@Z  004f13f0  /O2 /MT /Gy /TP
