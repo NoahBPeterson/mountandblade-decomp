@@ -269,13 +269,15 @@ def compile_obj(src, flags):
     flags = resolve_include_flags(flags)
     os.makedirs(OBJDIR, exist_ok=True)
     h = hashlib.md5()
+    # paths enter the key relative to the repo, so git worktrees of the repo share compiled objects
+    # (no source uses __FILE__, so the object's code does not depend on where the tree lives)
     for f in _quoted_includes(src):
-        h.update(f.encode())
+        h.update(os.path.relpath(f, ROOT).encode())
         h.update(open(f, "rb").read())
     for hdr in sorted(os.listdir(os.path.dirname(src))):
         if hdr.endswith((".h", ".hpp", ".inl")):
             h.update(open(os.path.join(os.path.dirname(src), hdr), "rb").read())
-    h.update(" ".join(flags).encode())
+    h.update(" ".join(flags).replace(winpath(ROOT), "<ROOT>").encode())
     # the shared slice headers (match/include, on cl.sh's include path): an edit there must invalidate too
     for f in sorted(glob.glob(os.path.join(ROOT, "match", "include", "*.h"))):
         h.update(open(f, "rb").read())
