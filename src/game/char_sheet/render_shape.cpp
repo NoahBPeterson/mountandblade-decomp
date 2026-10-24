@@ -1,4 +1,5 @@
 #include "./render_shape.h"
+#include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ed6f0
 void GuiCtx::render_shape_frame(int a, vector4* v, int b, int c)

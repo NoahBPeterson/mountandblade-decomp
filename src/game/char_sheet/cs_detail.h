@@ -30,24 +30,9 @@ static const char* str_text(const tstring& key)
 
 // ---- the virtual interface of the widgets seen through their vptr (see s0048b760) ----------------------
 // set_text (+0xa4) returns an 8-byte non-POD pair through a hidden pointer that no caller destroys.
-#include "../wret.h"
 #include "../../include/vec.h"
-struct UiWidget {
-    virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
-    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
-    virtual void d10(); virtual void d11(); virtual void d12(); virtual void d13(); virtual void d14();
-    virtual void d15(); virtual void d16(); virtual void d17(); virtual void d18(); virtual void d19();
-    virtual void d20(); virtual void d21(); virtual void d22(); virtual void d23(); virtual void d24();
-    virtual void d25(); virtual void d26(); virtual void d27(); virtual void d28(); virtual void d29();
-    virtual void d30(); virtual void d31(); virtual void d32(); virtual void d33(); virtual void d34();
-    virtual void d35(); virtual void d36(); virtual void d37(); virtual void d38(); virtual void d39();
-    virtual void d40();
-    virtual WRet set_text(const tstring& s);        // +0xa4
-    virtual void d42();
-    virtual void set_text_at(const tstring& s, const vec2& xy);   // +0xac
-    virtual void hide();                            // +0xb0
-    virtual void show();                            // +0xb4
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
+typedef Widget UiWidget;                // the slice's name for it
 
 // ---- game records ------------------------------------------------------------------------------------
 #include "../../include/troop.h"
@@ -69,23 +54,7 @@ extern const char* g_char_t_level_x;                // 0xa18120
 extern const char* g_char_t_level_y;                // 0xa18124
 
 // the character sheet panel (full layout in s004eeb10)
-struct CharSheet {
-    int vptr;                                       // +0x00
-    int f_4;
-    char pad8[0x14 - 0x8];
-    int f_14;                                       // +0x14 (edited troop index)
-    char pad18[0x228 - 0x18];
-    int f_228[10];                                  // +0x228 (row id of each skill/attribute row)
-    char pad250[0x2d4 - 0x250];
-    int f_2d4;                                      // +0x2d4 (selected row, -1 = none)
-    int f_2d8;                                      // +0x2d8 (page: 0 attributes, 1 skills, 2 profs, 3 face)
-    char pad2dc[0x434 - 0x2dc];
-    UiWidget* f_434;                                // +0x434 (description box)
-    char pad438[0x4b8 - 0x438];
-    UiWidget* f_4b8;                                // +0x4b8 (title label above the list)
-
-    void update_detail();                           // 0x4ef9f0
-};
+#include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
 
 // 0x4f04f0: the proficiency group name of proficiency idx into buf (another slice)
 void prof_group_name(int idx, char* buf);           // 0x4f04f0

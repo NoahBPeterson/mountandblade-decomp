@@ -39,21 +39,8 @@ struct GamePool {
     MapRec* slot(unsigned index);       // 0x48ef20
 };
 
-// a tracking record of the party-track ribbons (0x5c bytes, vector at game+0x13a60)
-struct Rec5c {
-    float x, y, z;                      // +0x00
-    char pad0c[0x14 - 0x0c];
-    float f14;                          // +0x14 (age / timer)
-    union {
-        unsigned int flags;             // +0x18 (0x20000000 visible, 0x10000000 battle track)
-        struct {
-            unsigned short w18;         // +0x18
-            unsigned char f1a;          // +0x1a
-            unsigned char b1b;          // +0x1b
-        };
-    };
-    char pad1c[0x5c - 0x1c];
-};
+// a tracking record of the party-track ribbons (0x5c bytes, vector at game+0x13a60): src/game/rec5c.h
+#include "../rec5c.h"
 struct RecArray {                       // the iterator helper on a bare base pointer (0x4b22b0)
     Rec5c* base;
     Rec5c** at(Rec5c** out, int idx);   // 0x4b22b0 (ret 8, returns out)

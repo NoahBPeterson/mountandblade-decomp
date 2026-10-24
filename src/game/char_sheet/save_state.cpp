@@ -1,6 +1,9 @@
 #include "./save_state.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../list8.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
 int GameData::save_state(OutStream* out)
@@ -231,7 +234,7 @@ void GameData::write_records(OutStream* out)
 {
     out->w_raw(&nrecords);
     for (int i = 0; i < nrecords; i++)
-        records[i].write(out);
+        records[i].write_save(out);
     char* q = (char*)0x8ee3138;
     int   qend = 0x8ee3c60;
     while ((int)q < qend) {

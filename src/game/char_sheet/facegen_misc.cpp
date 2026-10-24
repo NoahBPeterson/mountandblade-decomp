@@ -17,7 +17,7 @@ void FaceGen::update_view(int unused)
     m.o.x = t.x + m.o.x;
     m.o.y = t.y + m.o.y;
     m.o.z = t.z + m.o.z;
-    eng_frustum* f = &fr;
+    rgl::frustum* f = &fr;
     *(mat4*)((char*)f + 0xc8) = m;
     f->build_planes();
     body->view = *f;
@@ -27,7 +27,7 @@ void FaceGen::update_view(int unused)
 void Animator::randomise()
 {
     int n = 0x3f;
-    float* out = values;
+    float* out = weights;
     do {
         int r1 = rand() % 0x3dc9;
         float first = (float)r1 * 6.322312e-05f;
@@ -37,9 +37,9 @@ void Animator::randomise()
         --n;
     } while (n != 0);
     int r = rand() % 0x3dc9;
-    f12c = (float)r * 6.322312e-05f;
+    time = (float)r * 6.322312e-05f;
     SkinSet* base = (SkinSet*)((char*)skins + cur * 0x1f8);
-    base->regen(-1, values);
+    base->regen(-1, weights);
 }
 
 // @ 0x4eb3c0
@@ -47,23 +47,23 @@ void FaceGen::refresh()
 {
     int n = g_skins_begin[skin].n_elems - 1;
     for (int i = 0; i < n; i++)
-        (&g_dummy_mat)[i] = deform_rows[i]->value();
-    f360 = sl_age->value();
-    f364 = sl_hair_color->value();
+        (&g_dummy_mat)[i] = deform_rows[i]->get_float();
+    f360 = sl_age->get_float();
+    f364 = sl_hair_color->get_float();
     ((UiVt*)ent)->refresh_anim();
     int flags = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
     int zero = 0;
     g_cur = gen_face_seed(&flags, &zero, &g_char_count);
     g_dummy1 = f364;
     g_dummy0 = f360;
-    g_anim.f14 = f35c;
-    g_anim.f0 = f350 - 1;
-    g_anim.f4 = f354 - 1;
+    g_anim.material = f35c;
+    g_anim.set = f350 - 1;
+    g_anim.item = f354 - 1;
     int r = f358 % g_skins_begin[g_cur].div;
-    g_anim.f0c = r;
+    g_anim.variant = r;
     g_anim.f10 = r;
     void *a, *b, *c;
-    g_anim.collect(g_xa181ac != 0, &a, &b, &c);
+    g_anim.collect(g_xa181ac != 0, (rgl::lod_mesh**)&a, (rgl::lod_mesh**)&b, (rgl::lod_mesh**)&c);
     void* p;
     p = a;
     ent->lods.push_back(p);
@@ -91,34 +91,30 @@ void FaceGen::refresh()
         sprintf(buf, "k=%s%s%s%s", keys[0], keys[1], keys[2], keys[3]);
         tstring text(buf);
         vector2 pos;
-        cam_btn->set_text(&pos, &text);
+        cam_btn->set_text(&pos, text);
     }
 }
 
 // ---- skin-record array helpers (0x4eb810/0x4eb860, used by the map editor) -------------------------------
-struct Big {
-    char pad0[0x1f8];
-    void destroy();                                     // 0x4d3720
-};
 struct BigArray {
     char pad0[4];
-    Big* begin;                                         // +4
-    Big* end;                                           // +8
-    Big* cap;                                           // +0xc
+    SkinSet* begin;                                         // +4
+    SkinSet* end;                                           // +8
+    SkinSet* cap;                                           // +0xc
     void destroy();
-    void erase(Big** out, Big* first, Big* last);       // 0x4eb860
+    void erase(SkinSet** out, SkinSet* first, SkinSet* last);       // 0x4eb860
 };
-Big* __cdecl array_copy_range(Big* start, Big* end, Big* dest, Big* out);  // 0x4da880
+SkinSet* __cdecl array_copy_range(SkinSet* start, SkinSet* end, SkinSet* dest, SkinSet* out);  // 0x4da880
 
 // @ 0x4eb810
 void BigArray::destroy()
 {
     if (begin) {
-        Big* p = begin;
-        Big* stop = end;
+        SkinSet* p = begin;
+        SkinSet* stop = end;
         while (p != stop) {
             p->destroy();
-            p = (Big*)((char*)p + 0x1f8);
+            p = (SkinSet*)((char*)p + 0x1f8);
         }
         operator delete(begin);
     }
@@ -128,15 +124,15 @@ void BigArray::destroy()
 }
 
 // @ 0x4eb860
-void BigArray::erase(Big** out, Big* first, Big* last)
+void BigArray::erase(SkinSet** out, SkinSet* first, SkinSet* last)
 {
-    Big** fp = &first;
+    SkinSet** fp = &first;
     if (*fp != last) {
-        Big* p = array_copy_range(last, this->end, *fp, *fp);
-        Big* e = this->end;
+        SkinSet* p = array_copy_range(last, this->end, *fp, *fp);
+        SkinSet* e = this->end;
         while (p != e) {
             p->destroy();
-            p = (Big*)((char*)p + 0x1f8);
+            p = (SkinSet*)((char*)p + 0x1f8);
         }
         this->end = p;
     }
@@ -263,15 +259,15 @@ int SaveLoadUi::run()
 void Animator::pack_state(PackedState* out)
 {
     out->a = out->b = out->c = out->d = 0;
-    out->a = (unsigned __int64)(f4 + 1);
-    out->a |= (unsigned __int64)(f0 + 1) << 6;
-    out->a |= (unsigned __int64)f14 << 12;
-    out->a |= (unsigned __int64)f0c << 18;
-    out->a |= (unsigned __int64)(int)(f12c * 63.0f) << 24;
-    out->a |= (unsigned __int64)(int)(values[63] * 63.0f) << 30;
+    out->a = (unsigned __int64)(item + 1);
+    out->a |= (unsigned __int64)(set + 1) << 6;
+    out->a |= (unsigned __int64)material << 12;
+    out->a |= (unsigned __int64)variant << 18;
+    out->a |= (unsigned __int64)(int)(time * 63.0f) << 24;
+    out->a |= (unsigned __int64)(int)(scale * 63.0f) << 30;
     unsigned __int64* w = (unsigned __int64*)out;
     int bit = 0;
-    float* v = values;
+    float* v = weights;
     for (int i = 0; i < ((SkinSet*)((char*)skins + cur * 0x1f8))->n_elems; i++) {
         int sh = bit;
         int wi = 1;
@@ -289,11 +285,11 @@ void Animator::pack_state(PackedState* out)
 
 // @ 0x4ebb80
 extern int g_no_cam;                                    // 0x5a9fb0
-struct main_menu {
-    char pad0[0x4c];
-    int choice;                                         // +0x4c
-    void choose(int option);                            // 0x495700
-};
+#include "../main_menu.h"
+#include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../map_editor_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 extern main_menu g_main_menu;                           // 0xa73980
 struct MenuVars {
     char pad0[4];

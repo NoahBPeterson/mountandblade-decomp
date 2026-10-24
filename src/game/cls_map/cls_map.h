@@ -176,7 +176,7 @@ extern unsigned char g_ui_changed;              // 0x5d8788 (set to 1 whenever a
 
 // ---- 0x4dada0..0x4db660: the campaign diary screens (mission window, meeting window, "done" window) --------------------
 // The screen manager (`this` of 0x4db020..0x4db660, 0x4de1b0..): one of the screen objects, a window pointer table.
-struct Screen {
+struct MissionScreen {
     virtual void s00(int);                      // (vptr at +0)
     int f4;                                     // +0x04 dynamic pass selector (0x4db660: 0 runs 0x4d7e50)
     char pad8[0x20 - 8];

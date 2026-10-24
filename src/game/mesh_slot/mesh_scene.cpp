@@ -5,6 +5,7 @@
 #include "../../include/fx.h"
 #include "../../include/phys_set.h"
 #include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through troop_mgr.h) declares a global ::vat with the same signature

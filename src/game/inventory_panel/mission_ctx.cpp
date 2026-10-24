@@ -16,6 +16,10 @@
 #include "../../include/party.h"
 #include "../../include/troop.h"
 #include "../../include/msg_log.h"
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #define SCENE ((MissionV*)g_mission)
 
@@ -79,7 +83,7 @@ struct Psys {
     int* f48;                                           // +0x48
     void reset();                                       // 0x47fef0
 };
-struct Renderer { virtual void set_frame(const rgl::matrix* m); };   // +0x54 (the slot index is not reproduced: only the call shape matters here)
+struct FrameRenderer { virtual void set_frame(const rgl::matrix* m); };   // +0x54 (the slot index is not reproduced: only the call shape matters here)
 struct PosV : rgl::matrix {
     rgl::vector4 transform_point(const rgl::vector4& p) const;   // 0x408460
 };
@@ -706,15 +710,15 @@ void Screen::frame_update(float dt)
         && g_a70438 == g_scene_idx && g_use_shaders != 0)
         g_psys->reset();
 
-    cam.f0 = 1;
-    cam.f118 = 0.2f;
-    cam.f11c = 300.0f;
-    cam.f108 = g_view_a * -0.1f;
-    cam.f10c = g_view_a * 0.1f;
-    cam.f114 = g_view_b * -0.095f;
-    cam.f110 = g_view_b * 0.095f;
+    cam.perspective = 1;
+    cam.nearz = 0.2f;
+    cam.farz = 300.0f;
+    cam.left = g_view_a * -0.1f;
+    cam.right = g_view_a * 0.1f;
+    cam.bottom = g_view_b * -0.095f;
+    cam.top = g_view_b * 0.095f;
     cam.build_planes();
-    *(Cam*)((char*)f30 + 0x1ac) = cam;
+    f30->view = cam;
 
     __int64 cur = g_time[GD_I(0x13b18)];
     __int64 ref = *(__int64*)((char*)g_game + 0x13b20);
@@ -976,10 +980,10 @@ no_party:
         float vx = 0.0175f - g_view_a * 0.1975f;
         float vy = 0.015f - g_view_b * 0.18f;
         rgl::vector4 v(vx, vy, -0.4f);
-        rgl::vector4 p = ((PosV*)&cam.frame)->transform_point(v);
+        rgl::vector4 p = ((PosV*)&cam.m)->transform_point(v);
         m.o = p;
     }
-    (*(Renderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
+    (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
     if (g_no_cam != 0 && (g_a17148 != 0 || g_a17348 != 0) && g_key_names.bound(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);

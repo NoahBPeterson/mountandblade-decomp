@@ -46,34 +46,8 @@ struct tvec2 {
     float x, y;
 };
 
-struct UiWidget {
-    virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
-    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
-    virtual void d10(); virtual void d11(); virtual void d12(); virtual void d13(); virtual void d14();
-    virtual void d15(); virtual void d16(); virtual void d17(); virtual void d18(); virtual void d19();
-    virtual void d20(); virtual void d21();
-    virtual bool is_clicked();                              // +0x30
-    virtual void d23(); virtual void d24(); virtual void d25();
-    virtual void move_a(tvec2* p);                          // +0x58
-    virtual void d27(); virtual void d28();
-    virtual void move_f0(tvec2* p);                         // +0x64
-    virtual void d30();
-    virtual void set_value(float v);                        // +0x68
-    virtual void set_size(tvec2* p);                        // +0x6c
-    virtual void set_pos(tvec2* p);                         // +0x70
-    virtual void d33(); virtual void d34(); virtual void d35();
-    virtual void set_mesh(mesh* m, int layer);              // +0x7c
-    virtual void set_track(int i, void* p);                 // +0x80
-    virtual void d38(); virtual void d39(); virtual void d40(); virtual void d41(); virtual void d42();
-    virtual void d43(); virtual void d44(); virtual void d45(); virtual void d46(); virtual void d47();
-    virtual void d48(); virtual void d49(); virtual void d50(); virtual void d51(); virtual void d52();
-    virtual void d53(); virtual void d54(); virtual void d55(); virtual void d56();
-    virtual void set_label(const tstring& s, tvec2* pos);   // +0xa0
-    virtual void set_text(void* out, const tstring* name);  // +0xa4
-    virtual void d58(); virtual void d59(); virtual void d60(); virtual void d61(); virtual void d62();
-    virtual void d63(); virtual void d64(); virtual void d65(); virtual void d66();
-    virtual void add_child(void* child);                    // +0xc8
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
+typedef Widget UiWidget;                // the slice's name for it
 
 // slider (ctor 0x48b4b0, 0x188 bytes; see s0048add0)
 struct UiSlider : UiWidget {

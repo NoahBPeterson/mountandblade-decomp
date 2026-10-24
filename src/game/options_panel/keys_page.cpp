@@ -27,39 +27,13 @@ typedef rgl::string tstring;           // 0x42bbd0 / 0x42bbe0 ctors, 0x42bc40 dt
 #include "./str_table_rgl.h"                                              // StrTableRgl (was StringTable here): the one definition
 
 // ---- controls ----------------------------------------------------------------------------------------
-struct vector2 { float x, y; };
+#include "../../include/vec.h"                      // vector2 (= Vec2)
 // The +0x94 and +0xa4 slots return an 8-byte non-POD object through a hidden pointer that the callers
 // discard (same slot shape as s004d7d10 / s004dc630).
 #include "../wret.h"
 
 // Slot offsets from the calls in this slice (0x4d6b80, 0x4d6dd0, 0x4d6e50, 0x4d7120, 0x4d7270).
-struct Widget {
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
-    virtual void v20(); virtual void v24(); virtual void v28();
-    virtual void activate(int v);                           // +0x2c
-    virtual int  get_value();                               // +0x30
-    virtual void v34();
-    virtual float get_float();                              // +0x38
-    virtual void v3c(); virtual void v40();
-    virtual char changed(int flag);                         // +0x44
-    virtual void v48(); virtual void v4c(); virtual void v50(); virtual void v54();
-    virtual void v58(); virtual void v5c(); virtual void v60(); virtual void v64();
-    virtual void v68();
-    virtual void set_scale(const vector2& v);               // +0x6c
-    virtual void set_position(const vector2& v);            // +0x70
-    virtual void v74(); virtual void v78(); virtual void v7c(); virtual void v80();
-    virtual void v84(); virtual void v88(); virtual void v8c(); virtual void v90();
-    virtual WRet set_default();                             // +0x94
-    virtual void set_colour(const unsigned& colour);        // +0x98
-    virtual void v9c(); virtual void va0();
-    virtual WRet set_text(const tstring& s);                // +0xa4
-    virtual void va8(); virtual void vac();
-    virtual void show();                                    // +0xb0
-    virtual void hide();                                    // +0xb4
-    virtual void enable();                                  // +0xb8
-    virtual void disable();                                 // +0xbc
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // ---- symbols -----------------------------------------------------------------------------------------
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
@@ -228,9 +202,9 @@ void KeysPage::update_perf()
     }
     {
         tstring text(buf);
-        perf_caption->set_text(text);
+        { char r[8]; perf_caption->set_text(r, text); }
     }
-    perf_caption->set_default();
+    { char r[8]; perf_caption->get_xy(r); }
 }
 
 // @ 0x4d6dd0
@@ -238,10 +212,10 @@ void KeysPage::set_enabled_text(Widget* w)
 {
     if (w->get_value()) {
         tstring key("ui_enabled");
-        w->set_text(*g_string_table.lookup(&key));
+        { char r[8]; w->set_text(r, *g_string_table.lookup(&key)); }
     } else {
         tstring key("ui_disabled");
-        w->set_text(*g_string_table.lookup(&key));
+        { char r[8]; w->set_text(r, *g_string_table.lookup(&key)); }
     }
 }
 
@@ -250,7 +224,7 @@ void KeysPage::update(int reason)
 {
     KeysPageView* p = head(this);
     if (p->editing >= 0) {
-        p->w164->hide();
+        p->w164->show();
         int pressed = -1;
         for (int i = 0; i < 0x100; i++)             // the last bound key wins
             if (g_key_names.is_bound(i))
@@ -264,7 +238,7 @@ void KeysPage::update(int reason)
             p->editing = -1;
         }
     } else {
-        p->w164->show();
+        p->w164->hide();
         for (int i = 0; i < 0x25; i++)
             if (p->keys[i]->changed(0x10000))
                 p->editing = i;
@@ -353,7 +327,7 @@ void KeysPage::refresh()
     for (int k = 0; k < 7; k++) {
         tstring text;
         g_key_table.caption(k, text);
-        p->captions[k]->set_text(text);
+        { char r[8]; p->captions[k]->set_text(r, text); }
     }
 
     for (int i = 0; i < 0x25; i++) {
@@ -364,7 +338,7 @@ void KeysPage::refresh()
         unsigned colour = 0xffff2200;
         if (!assigned)
             colour = 0xff000000;
-        p->keys[i]->set_colour(colour);
+        p->keys[i]->set_color(&colour);
         p->keys[i]->activate(0);
     }
 
@@ -392,10 +366,10 @@ void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, 
     vector2 scale;
     scale.x = s;
     scale.y = s;
-    row->set_scale(scale);
+    row->set_size((const float*)&scale);
     vector2 pos;
     pos.x = 0;
     pos.y = bx * *(float*)0x549d70 - s * *(float*)0x549d68;
-    row->set_position(pos);
-    row->set_text(*text);
+    row->set_offset((const float*)&pos);
+    { char r[8]; row->set_text(r, *text); }
 }

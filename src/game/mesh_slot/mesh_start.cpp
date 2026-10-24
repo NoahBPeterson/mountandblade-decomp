@@ -35,7 +35,7 @@ struct matrix {                                              // 4 rows; row 3 = 
     void orthonormalize();                                   // 0x407ef0 (rgl::matrix)
     void rotate_sf(float* angle);                            // 0x40e770
 };
-struct Rect { float x0, y0, x1, y1; };
+struct RectF { float x0, y0, x1, y1; };
 mat3* __cdecl identity3(mat3* out);                          // 0x40cd60
 unsigned __cdecl pack_color(float* c);                       // 0x40e440
 float __cdecl frand();                                       // 0x40e400
@@ -528,11 +528,11 @@ void Mission::start_setup()
             else if (ri >= 100) ri = 99;
             put(g_terrain.s4, g_mask_amt - 1, 21, ri);
         }
-        at<Rect>(0x652c).x0 = 0.0f;
-        at<Rect>(0x652c).y0 = 0.0f;
+        at<RectF>(0x652c).x0 = 0.0f;
+        at<RectF>(0x652c).y0 = 0.0f;
         at<float>(0x6534) = (float)(g_terrain.s3 & (g_mask_bits - 1));
         at<float>(0x6538) = (float)((g_terrain.s3 >> 10) & (g_mask_bits - 1));
-        at<Rect>(0x653c) = at<Rect>(0x652c);
+        at<RectF>(0x653c) = at<RectF>(0x652c);
         at<float>(0x654c) = -0.300000012f;
     } else {
         at<int>(0x654c) = lrec->at<int>(0x64);
@@ -560,7 +560,7 @@ void Mission::start_setup()
                    RAWAT(float, p, 0x20) * k->f58) + RAWAT(float, p, 0x50);
             vector4 hi = v;
             v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
-            Rect& box = at<Rect>(0x652c);
+            RectF& box = at<RectF>(0x652c);
             box.x0 = box.x0 < v.x ? box.x0 : v.x;
             box.y0 = box.y0 < v.y ? box.y0 : v.y;
             box.x1 = box.x1 > hi.x ? box.x1 : hi.x;
@@ -579,7 +579,7 @@ void Mission::start_setup()
                    RAWAT(float, p, 0x30) * k->f5c) + RAWAT(float, p, 0x50);
             vector4 hi = v;
             v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
-            Rect& box = at<Rect>(0x652c);
+            RectF& box = at<RectF>(0x652c);
             box.x0 = box.x0 < v.x ? box.x0 : v.x;
             box.y0 = box.y0 < v.y ? box.y0 : v.y;
             box.x1 = box.x1 > hi.x ? box.x1 : hi.x;

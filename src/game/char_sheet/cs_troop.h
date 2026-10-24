@@ -17,37 +17,8 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);    // 0x536f8f
 #include "../tstring.h"
 
 // ---- the virtual interface of the widgets seen through their vptr (0xdword slots, see s0048b760) ------
-#include "../wret.h"
-struct UiVt {
-    virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
-    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
-    virtual void d10(); virtual void d11(); virtual void d12(); virtual void d13(); virtual void d14();
-    virtual void d15(); virtual void d16(); virtual void d17();
-    virtual void set_key_flags(int f);              // +0x48
-    virtual void d19(); virtual void d20(); virtual void d21(); virtual void d22(); virtual void d23();
-    virtual void d24();
-    virtual void set_xy(float* v);                  // +0x64
-    virtual void d26();
-    virtual void set_size(float* v);                // +0x6c
-    virtual void set_pos(float* v);                 // +0x70
-    virtual void d29(); virtual void d30(); virtual void d31(); virtual void d32(); virtual void d33();
-    virtual void d34(); virtual void d35();
-    virtual void refresh();                         // +0x90
-    virtual void get_xy(float* v);                  // +0x94
-    virtual void set_color(unsigned* c);            // +0x98
-    virtual void d39(); virtual void d40();
-    virtual WRet set_text(const tstring& s);        // +0xa4
-    virtual void d42(); virtual void d43();
-    virtual void hide();                            // +0xb0
-    virtual void show();                            // +0xb4
-    virtual void d46(); virtual void d47(); virtual void d48(); virtual void d49(); virtual void d50();
-    virtual void update_children();                 // +0xc4
-    virtual void d53(); virtual void d54();
-};
-
-struct UiWidget {
-    UiVt* vt;                                       // +0x00
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
+typedef Widget UiVt;                    // the slice's name for it
 
 // the item kind table (0x5e29d0, 0x238-byte records): include/item_kind.h
 #include "../../include/item_kind.h"
@@ -62,38 +33,7 @@ struct UiWidget {
 #define SKILL_ATTR(id) (*(int*)(0x8ee3140 + (id) * 0x44))
 
 // ---- panel -------------------------------------------------------------------------------------------
-struct SkillRow {
-    UiWidget* widget;                               // +0x00
-    int skill;                                      // +0x04 (skill id)
-};
-
-struct CharSheet {
-    int vptr;                                       // +0x00
-    int f_4;
-    char pad8[0x14 - 0x8];
-    int f_14;                                       // +0x14 (edited troop index)
-    char pad18[0xd8 - 0x18];
-    UiVt* label[0x2a];                          // +0xd8  (rank text per skill row)
-    UiVt* btn[0x2a];                            // +0x180 (upgrade button per row)
-    int skill_id[0x2a];                             // +0x228 (skill id per row)
-    int f_2d0;                                      // +0x2d0 (number of skill rows)
-    int f_2d4;
-    char pad2d8[0x4c8 - 0x2d8];
-    char f_4c8;                                     // +0x4c8 (skills visible)
-    char pad4c9[0x4d4 - 0x4c9];
-    char f_4d4;                                     // +0x4d4 (skills page)
-    char pad4d5[0x4d8 - 0x4d5];
-    int f_4d8, f_4dc, f_4e0, f_4e4, f_4e8, f_4ec, f_4f0, f_4f4, f_4f8, f_4fc;
-    int f_500;
-    int f_504;                                      // +0x504 (level)
-    int f_508;                                      // +0x508 (skill points)
-    int f_50c;                                      // +0x50c (strength)
-    int f_510;                                      // +0x510 (agility)
-    int f_514, f_518, f_51c, f_520, f_524, f_528;   // +0x514 (skill values, see s004eeb10)
-
-    void apply_to_troop();                          // 0x4ef420
-    void update_skill_rows();                       // 0x4ef7d0
-};
+#include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
 
 // ---- 0x535a64: float -> int (_ftol), emitted by the (int) casts below -------------------------------
 

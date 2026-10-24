@@ -82,20 +82,7 @@ extern char* g_save_dialog;                                     // 0xa7398c
 extern char g_main_menu_obj[];                                  // 0xa73980
 
 // main menu layout (see s004d7d10)
-struct main_menu {
-    char pad0[4];
-    int  open;                                                  // +0x04
-    char pad08[0x1c - 0x08];
-    tstring title;                                              // +0x1c
-    char pad2c[0x4c - 0x2c];
-    int  choice;                                                // +0x4c
-    int  v50;                                                   // +0x50
-    char pad54[0x68 - 0x54];
-    tstring header;                                             // +0x68
-    tstring answer_yes;                                         // +0x78
-    tstring answer_no;                                          // +0x88
-    void choose(int option);                                    // 0x495700
-};
+#include "../main_menu.h"
 #define g_main_menu (*(main_menu*)g_main_menu_obj)
 
 static const char* text_of(const tstring* s)

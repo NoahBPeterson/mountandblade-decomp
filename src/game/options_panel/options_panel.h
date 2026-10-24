@@ -57,36 +57,8 @@ struct text_store {
     virtual void add_text(tstring* text, float* pos);               // +0xac
 };
 
-// the main-menu record (g_main_menu.rec): +0x04 "open", +0x1c title, +0x4c/+0x50 selection state, +0x68 header,
-// +0x78/+0x88 answers
-struct MenuRec {
-    char pad0[4];
-    int  open;                                                      // +0x04
-    char pad08[0x1c - 0x08];
-    tstring title;                                                  // +0x1c
-    char pad2c[0x4c - 0x2c];
-    int  choice;                                                    // +0x4c
-    int  v50;                                                       // +0x50
-    char pad54[0x68 - 0x54];
-    tstring header;                                                 // +0x68
-    tstring answer_yes;                                             // +0x78
-    tstring answer_no;                                              // +0x88
-    void setup(const tstring* hdr, const tstring* text)             // 0x48a3a0 (ret 8)
-    {
-        header = *hdr;
-        title = *text;
-        choice = 0;
-        v50 = 0;
-        open = 0;
-    }
-    void ask_yes_no(const tstring* text, const tstring* yes, const tstring* no, int* result);  // 0x48a3d0 (ret 0x10)
-};
-struct OptMainMenu {
-    MenuRec* rec;                                                   // +0
-    void reset(int arg);                                            // 0x494260 (ret 4)
-    void choose(int choice_id);                                     // 0x495700 (ret 4)
-};
-extern OptMainMenu g_main_menu;                                     // 0xa73980
+#include "../main_menu.h"                                   // main_menu (the slice called it MenuRec: g_main_menu.rec, 0xa73980)
+// g_main_menu (0xa73980, `rec` at +0 is the dialog box record): main_menu, ../main_menu.h
 
 bool mb_file_exists(const char* path);                              // 0x415120
 extern int g_trial_mode;                                            // 0x5e29c4

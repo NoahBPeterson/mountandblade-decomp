@@ -13,8 +13,8 @@
 ../src/game/cls_map/progress_bar.cpp  ?read_slot@SlotHeader@@QAE_NPAUSlotReader@@@Z  004e54e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?make_short_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z  004e5570  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?hex_field@ini_file@@QAEHABUtstring@@@Z  004e5d30  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?create_stub@SavePanel@@QAEXXZ  004e5d80  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?create_flagged@SavePanel@@QAEXXZ  004e5e50  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?create_stub@SaveWinCtl@@QAEXXZ  004e5d80  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?create_flagged@SaveWinCtl@@QAEXXZ  004e5e50  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?_Destroy@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@IAEXPAUloading_config@@0@Z  004e5f50  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ??$fill@PAURagModel@@U1@@std@@YAXPAURagModel@@0ABU1@@Z  004e5f80  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ??$_Uninit_fill_n@PAUloading_config@@IU1@V?$allocator@Uloading_config@@@std@@@std@@YAXPAUloading_config@@IABU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004e5fc0  /O2 /MT /Gy /TP

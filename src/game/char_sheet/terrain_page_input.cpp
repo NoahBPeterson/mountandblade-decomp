@@ -1,4 +1,6 @@
 #include "./terrain_page_input.h"
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f3570
 void TerrainPage::read_fields()
@@ -121,7 +123,7 @@ void TerrainPage::paste_clipboard()
         const char* p = (const char*)GlobalLock(h);
         if (p) {
             g_bits.parse_hex(tstring(p));
-            hexbox->put(tstring(p));
+            { char r[8]; hexbox->set_text(r, tstring(p)); }
             GlobalUnlock(h);
         }
     }
@@ -154,6 +156,6 @@ void TerrainPage::path(float dt)
 
     *(rgl::matrix*)frame = m;                               // page +0x138
     ((FrustumBlock*)map_block)->build_planes();                    // 0x41e4f0: thiscall on this+0x70
-    *(FrustumBlock*)world->block = *(FrustumBlock*)map_block;             // 0x120 bytes: page +0x70 -> world +0x1ac
+    *(FrustumBlock*)world6c->block = *(FrustumBlock*)map_block;             // 0x120 bytes: page +0x70 -> world +0x1ac
     g_bits.submit_frame((const float*)&m);                  // 0x4f3e10
 }

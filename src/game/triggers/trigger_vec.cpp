@@ -24,6 +24,7 @@
 #include "../../rgl/xmlcfg/records.h"     // (listed directly: the resolution audit scans only the source's own includes)
 #include "../meta_mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../menu_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 void __fastcall tstring_ctor(tstring* p);                   // 0x42bbd0 (tstring::tstring, called on raw slots)
 void __fastcall tstring_dtor(tstring* p);                   // 0x42bc40

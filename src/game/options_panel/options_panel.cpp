@@ -5,6 +5,7 @@
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include <string.h>
 #include <stdlib.h>
+#include "../main_menu.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #define UI_NO_KEY_ASSIGNED  "ui_no_key_assigned"                    // 0x59687c
 

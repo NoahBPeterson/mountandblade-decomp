@@ -683,13 +683,13 @@ int ini_file::hex_field(const tstring& key)
 extern int g_menu_kind_sel;                     // 0xa75f3c (the menu kind create2 builds; g_menu_kind_count is 0xa75f38)
 
 // @ 0x4e5d80 (a jump to 0x4e5d90; not reproducible from source, see the partial list)
-void SavePanel::create_stub()
+void SaveWinCtl::create_stub()
 {
     create();
 }
 
 // @ 0x4e5d90
-void SavePanel::create()
+void SaveWinCtl::create()
 {
     g_gui.reset();
     NEW_OVERLAY_WINDOW(w)
@@ -708,14 +708,14 @@ void SavePanel::create()
 }
 
 // @ 0x4e5e50
-void SavePanel::create_flagged()
+void SaveWinCtl::create_flagged()
 {
     g_window_flags = 0x400000;
     create2();
 }
 
 // @ 0x4e5e60
-void SavePanel::create2()
+void SaveWinCtl::create2()
 {
     g_gui.reset();
     NEW_OVERLAY_WINDOW(w)
@@ -754,7 +754,7 @@ extern int g_pending;                           // 0x5e2a14
 extern char g_pending_text[];                   // 0x5e25b0
 
 // the 12-float basis + three scalars the scene build hands to mesh::render
-struct xform {
+struct RenderXform {
     float m[12];                                // +0x00
     float f30;                                  // +0x30
     float f34;                                  // +0x34
@@ -837,7 +837,7 @@ void gui_manager::build_scene()
     ((SceneWalk*)this)->scene_walk(s2, &t);
 
     float ident[12];
-    xform* x = (xform*)mslot;
+    RenderXform* x = (RenderXform*)mslot;
 
     if (*(void**)((char*)this + 0x158c)) {
         t += 1.0f;

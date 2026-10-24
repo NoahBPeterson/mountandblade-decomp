@@ -1,6 +1,8 @@
 #include "./cs_troop.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ef420 -------------------------------------------------------------------------------
 void CharSheet::apply_to_troop()
@@ -63,7 +65,7 @@ void CharSheet::update_skill_rows()
             }
             {
                 tstring str(num);
-                label[i]->set_text(str);
+                { char r[8]; label[i]->set_text(r, str); }
             }
             btn[i]->hide();
             {

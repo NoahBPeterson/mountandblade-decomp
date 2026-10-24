@@ -1,5 +1,6 @@
 #include "./pick_entity.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ed8d0
 // ------------------------------------------------------------------------------------------------------------
@@ -10,7 +11,7 @@ void __fastcall pick_entity(GuiCtx* self)
     *(char*)(sc->f65dc + 0x140) = 0;
     if (g_menu_mode) {
         self->reset_all(1);
-        vector2 pp = { 0.5f, 0.23f };
+        vector2 pp(0.5f, 0.23f);
         self->set_pair(&pp);
         set_junk = 0;
         return;
@@ -33,10 +34,10 @@ void __fastcall pick_entity(GuiCtx* self)
     identity_pos(idpos);
     smat probe = *(smat*)idpos;
     float sphbuf[0x44 / 4];
-    sphere_shape* sphere = (sphere_shape*)sphbuf;
-    sphere->v20 = lo;
-    sphere->radius = g_4e6e6b28;
-    sphere->v30 = lo;
+    sphere* sph = (sphere*)sphbuf;
+    sph->local_center = lo;
+    sph->radius = g_4e6e6b28;
+    sph->center = lo;
 
     float best = g_4e6e6b28;
     int best_i = -1;
@@ -83,8 +84,8 @@ void __fastcall pick_entity(GuiCtx* self)
                 hit->transform((const pos*)&m2);
             }
         }
-        if (shape_contact_count((shape_base*)capbuf, sphere, 1, &row->mat[1])) {
-            if (hit == 0 || shape_contact_count(hit, sphere, 1, &row->mat[1])) {
+        if (shape_contact_count((shape_base*)capbuf, sph, 1, &row->mat[1])) {
+            if (hit == 0 || shape_contact_count(hit, sph, 1, &row->mat[1])) {
                 vector4 d;
                 d.x = lo.x - centre.x;
                 d.y = lo.y - centre.y;
@@ -111,7 +112,7 @@ void __fastcall pick_entity(GuiCtx* self)
     g_list0 = 0;
     g_list1 = 0;
     g_sel_ent = 0;
-    vector2 pair = { 0.1f, 0.13f };
+    vector2 pair(0.1f, 0.13f);
     self->set_pair(&pair);
     if (self->f2cc == -1) {
         self->f2c8 = -1;

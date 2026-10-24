@@ -2,6 +2,7 @@
 // spawn_one, run_spawns) and the per-frame mission tick. The object is the Mission of src/game/mission.h. See MIGRATION.md.
 #include "./mesh_slot.h"
 #include "../terrain_b/mission.h"
+#include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature

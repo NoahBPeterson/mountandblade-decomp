@@ -23,6 +23,7 @@ struct SkinSet {
     int div;                                        // +0x194
     char pad198[0x1f8 - 0x198];
     void regen(int arg, float* values);             // 0x4735e0 (thiscall, ret 8)
+    void destroy();                                 // 0x4d3720 (element destructor of the 0x1f8-byte skin records; the slice called them Big)
 };
 extern SkinSet* g_skins_begin;                      // 0x8ed4f7c
 extern SkinSet* g_skins_end;                        // 0x8ed4f80

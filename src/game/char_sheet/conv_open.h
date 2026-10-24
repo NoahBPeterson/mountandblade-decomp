@@ -76,9 +76,6 @@ struct resmgr {
     base_mesh* get_object(const tstring& name);          // 0x419540
 };
 extern resmgr g_alloc;                                   // 0x5d6fa0
-struct base_mesh {
-    base_mesh* clone();                                  // 0x41c6d0
-};
 
 extern rgl::matrix identity3();                          // 0x40cd60 (0x40 bytes by value)
 void build_camera_planes(void* cam);                     // 0x41e4f0 (frustum::build_planes)
@@ -93,50 +90,15 @@ void choice_finalize(void* box);                         // 0x488d50
 extern StrTable g_strtable;                              // 0x5e2a18
 
 // ---- widget slots used here (s004f73c0 / s0042d360 gui.h) ----------------------------------------------
-struct Widget {
-    virtual void w00(); virtual void w01(); virtual void w02(); virtual void w03();
-    virtual void w04(); virtual void w05(); virtual void w06(); virtual void w07();
-    virtual void w08(); virtual void w09(); virtual void w10(); virtual void w11();
-    virtual void w12(); virtual void w13(); virtual void w14(); virtual void w15();
-    virtual void w16(); virtual void w17(); virtual void w18(); virtual void w19();
-    virtual void w20(); virtual void w21();
-    virtual void set_pos(const float* p);                // +0x58 (idx 22)
-    virtual void w23(); virtual void w24();
-    virtual void set_size(const float* p);               // +0x64 (idx 25)
-    virtual void set_y(const float* p);                  // +0x68 (idx 26)
-    virtual void set_scale2(const float* p);             // +0x6c (idx 27)
-    virtual void w28();                                  // +0x70 (idx 28)
-    virtual void set_flag(const int* f);                 // +0x74 (idx 29)
-    virtual void w30();                                  // +0x78 (idx 30)
-    virtual void set_mesh(void* m, int zero);            // +0x7c (idx 31)
-    virtual void set_track(void* m, int zero);           // +0x80 (idx 32)
-    virtual void w33(); virtual void w34(); virtual void w35(); virtual void w36();
-    virtual void w37(); virtual void w38(); virtual void w39(); virtual void w40();
-    virtual void set_text(const tstring* in, tstring* out);  // +0xa4 (idx 41)
-    virtual void w42(); virtual void w43();
-    virtual void advance();                              // +0xb0 (idx 44)
-    virtual void w45(); virtual void w46(); virtual void w47(); virtual void w48();
-    virtual void w49();
-    virtual void add_child(Widget* c);                   // +0xc8 (idx 50)
-    void configure(const tstring& s);                    // 0x4e4c70 (out of line in the original)
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // ---- widget classes -------------------------------------------------------------------------------------
-struct Panel;
-struct TextBox : Widget {                                // vtable 0x597050, ctor 0x4931a0, 0x188 bytes
-    char pad178[0x188 - 0x178];
-};
-struct Panel : Widget {                                  // vtable 0x592848, ctor 0x4931a0, 0x190 bytes
-    std::vector<Widget*> children;                       // +0x178
-    unsigned char f188;                                  // +0x188
-};
-struct Choices : Widget {                                // vtable 0x5924a0, ctor 0x48ae20, 0x188 bytes
-    int f17c, f180, f184;                                // +0x17c/+0x180/+0x184
-};
-struct ViewWindow : Widget {                             // +0x30, ctor 0x4ed630, vtable 0x598698, 0x358 bytes
-    char pad178[0x358 - 0x178];
-    void init();                                         // 0x4ed630
-};
+#include "../overlay.h"                       // Overlay (the slice's Panel), TextBox
+typedef Overlay Panel;                         // the slice's name for it
+#include "../map_widget.h"                       // MapWidget (the slice's ViewWindow: ctor 0x4ed630, vtable 0x598698, 0x358 bytes)
+typedef MapWidget ViewWindow;
+
+void __cdecl label_refresh(Widget* w, tstring name);       // 0x4e4c70 (cdecl, the name by value; the slice declared it as Widget::configure)
 
 // factory helpers (parent is the last argument)
 Widget* make_bar(Widget* talk, const tstring& name);                         // 0x4f6160
@@ -146,32 +108,7 @@ Widget* make_body_button(Widget* parent, const tstring& a, const tstring& b, con
                          float f7, float f8);                                // 0x4dcc50
 
 // ---- the conversation screen (`this` of 0x4f66e0, 0x4f73c0, 0x4f7d70) --------------------------------
-struct ConvScreen {
-    char pad0[0x2c];
-    Panel* talk;                                         // +0x2c
-    ViewWindow* window;                                  // +0x30
-    char pad34[0x174 - 0x34];
-    Widget* label_speaker;                               // +0x174
-    Widget* label_text;                                  // +0x178
-    Widget* input_label;                                 // +0x17c
-    TextBox* bar_reln;                                   // +0x180
-    char pad184[0x188 - 0x184];
-    Widget* question;                                    // +0x188
-    Choices* choice;                                     // +0x18c
-    Widget* buttons[0x400];                              // +0x190
-    int n_lines;                                         // +0x1190
-    rgl::matrix world;                                   // +0x1194 (camera world transform, 0x40)
-    int quest_mode;                                      // +0x11d4
-    char started;                                        // +0x11d8 (byte flag)
-    char pad11d9[0x11e0 - 0x11d9];
-    TextBox* msg_window;                                 // +0x11e0
-    Widget* reln_pointer;                                // +0x11e4
-    Widget* relation_bar;                                // +0x11e8
-    Widget* lines[5];                                    // +0x11ec
-    int target;                                          // +0x1200
-    void open(int dialog, int* out);
-    void refresh(int sel, int* out);                     // 0x4f73c0
-};
+#include "../conv_screen.h"                      // ConvScreen, Choices, base_mesh
 
 // ---- mission / agent list helpers ---------------------------------------------------------------------
 #include "../mission.h"
@@ -184,7 +121,7 @@ void screen_refresh(int mode, int* out);                 // 0x4f73c0 (ecx = scre
 
 // the dialogue camera (0x358 bytes, ctor 0x4ed630, vtable 0x598698). Field offsets other than the ones
 // written by 0x4f66e0 are unknown, so this is a flat provisional layout, not a widget-derived one.
-struct Camera {
+struct ConvCamera {
     char data[0x358];
     void init();                                         // 0x4ed630
     void configure(const tstring& s);                    // 0x4e4c70

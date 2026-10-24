@@ -24,6 +24,8 @@
 #include "../../include/dialog_rec.h"
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
 #define W(p, off) (*(ListWidget**)((char*)(p) + (off)))
@@ -36,7 +38,7 @@ void StartMenu::select(int arg)
 {
     int idx = -1;
     for (int i = 0; i < count; i++)
-        if (buttons[i]->used(0x10000))
+        if (buttons[i]->changed(0x10000))
             idx = i;
     if (idx != -1)
     {
@@ -105,13 +107,13 @@ void ContinueMenu::update(int arg)
     if (f4 == 0)
     {
         char b;
-        if (buttons[0]->used(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
+        if (buttons[0]->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
             g_flags.commit(&b);
     }
     else
     {
         char b;
-        if (buttons[0]->used(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
+        if (buttons[0]->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
             g_flags.commit(&b);
     }
 }
@@ -196,13 +198,13 @@ after_scroll:
     for (r = 0; r < rows; r++) {
         for (c = 0; c < 2; c++) {
             for (i = 0; i < 64; i++) {
-                if (grid[r][c][i]->used(0x10000))
+                if (grid[r][c][i]->changed(0x10000))
                     set_selection(r, c, i);
             }
         }
     }
 
-    if (w50->used(0x10000)) {
+    if (w50->changed(0x10000)) {
         slot = slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
         pid = f8dc != 0 ? sel_party : g_game->f78;
         cmp_party = f8dc != 0 ? g_game->f78 : sel_party;
@@ -244,8 +246,8 @@ after_scroll:
         fn_503a50();
     }
 
-    c48 = w48->used(0x10000);
-    c4c = w4c->used(0x10000);
+    c48 = w48->changed(0x10000);
+    c4c = w4c->changed(0x10000);
     if (c48 || c4c) {
         slot = slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
         pid = f8dc != 0 ? sel_party : g_game->f78;
@@ -373,8 +375,8 @@ tail:
         fn_503a50();
     }
 
-    c54 = w54->used(0x10000);
-    c58 = w58->used(0x10000);
+    c54 = w54->changed(0x10000);
+    c58 = w58->changed(0x10000);
     if (c54 || c58) {
         int d = c54 ? -1 : 1;
         swap_rows(d);
@@ -383,8 +385,8 @@ tail:
         refresh_party_window();
     }
 
-    if (!w30->used(0x10000) && (g_a170d8 != 0 || g_a174d8 == 0)) {
-        if (w34->used(0x10000)) {
+    if (!w30->changed(0x10000) && (g_a170d8 != 0 || g_a174d8 == 0)) {
+        if (w34->changed(0x10000)) {
             apply(0);
             apply(1);
             clear_selection();
@@ -394,7 +396,7 @@ tail:
             fn_503a50();
             return;
         }
-        if (!w44->used(0x10000))
+        if (!w44->changed(0x10000))
             goto close_menu;
         if (f8e4 < 0)
             return;
@@ -746,7 +748,7 @@ void EventScreen::on_event(int code)
                 int i = 0;
                 ListWidget** ws = (ListWidget**)((char*)this + 0x60);
                 do {
-                    if (ws[i]->used(0x10000))
+                    if (ws[i]->changed(0x10000))
                         local = i;
                     i++;
                 } while (i < F(this, 0xa0, int));
@@ -892,9 +894,9 @@ dispatch:
 // @ 0x5337a0
 void TickScreen::on_tick(int code)
 {
-    if (W(this, 0x40)->used(0x10000))
+    if (W(this, 0x40)->changed(0x10000))
         method_4fc820(1);
-    if (W(this, 0x44)->used(0x10000))
+    if (W(this, 0x44)->changed(0x10000))
         method_4fc820(0);
 
     if (g_mission_clock != 0) {
@@ -904,7 +906,7 @@ void TickScreen::on_tick(int code)
         vs2->set_key_flags(0x10000);
     }
 
-    if (W(this, 0x30)->used(0x10000)) {
+    if (W(this, 0x30)->changed(0x10000)) {
         int a, b, c;
         W(this, 0x30)->get3(&a, &b, &c);
         g_a739e8->f18 = g_a739e4->f18;
@@ -913,35 +915,35 @@ void TickScreen::on_tick(int code)
         g_main_menu.choose(0x1a);
         return;
     }
-    if (W(this, 0x48)->used(0x10000)) {
+    if (W(this, 0x48)->changed(0x10000)) {
         g_a739e8->f18 = g_a739e4->f18;
         GIF(0x13b08, int) = 1;
         GIF(0x13b0c, int) = 0;
         g_main_menu.choose(0x1a);
         return;
     }
-    if (W(this, 0x4c)->used(0x10000)) {
+    if (W(this, 0x4c)->changed(0x10000)) {
         g_a739e8->f18 = g_a739e4->f18;
         GIF(0x13b08, int) = 3;
         GIF(0x13b0c, int) = 0;
         g_main_menu.choose(0x1a);
         return;
     }
-    if (W(this, 0x50)->used(0x10000)) {
+    if (W(this, 0x50)->changed(0x10000)) {
         g_a739e8->f18 = g_a739e4->f18;
         GIF(0x13b08, int) = 2;
         GIF(0x13b0c, int) = 0;
         g_main_menu.choose(0x1a);
         return;
     }
-    if (W(this, 0x54)->used(0x10000)) {
+    if (W(this, 0x54)->changed(0x10000)) {
         g_a739e8->f18 = g_a739e4->f18;
         GIF(0x13b08, int) = 4;
         GIF(0x13b0c, int) = 0;
         g_main_menu.choose(0x1a);
         return;
     }
-    if (W(this, 0x3c)->used(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
+    if (W(this, 0x3c)->changed(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
             g_flags.commit(&slot);
@@ -983,7 +985,7 @@ void InputScreen::on_input(int code)
         }
     }
 
-    if (W(this, 0x6c)->used(0x10000)) {
+    if (W(this, 0x6c)->changed(0x10000)) {
         set_anim((TickScreen*)this, 0x88, 0x78);
         if (F(this, 0xa8, int) == F(this, 0x98, int)) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
@@ -992,7 +994,7 @@ void InputScreen::on_input(int code)
         refresh_anim(F(this, 0xa8, int), F(this, 0x9c, int));
     }
 
-    if (W(this, 0x70)->used(0x10000)) {
+    if (W(this, 0x70)->changed(0x10000)) {
         set_anim((TickScreen*)this, 0x78, 0x88);
         if (F(this, 0xa8, int) == F(this, 0xa0, int)) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
@@ -1001,7 +1003,7 @@ void InputScreen::on_input(int code)
         refresh_anim(F(this, 0xa8, int), F(this, 0xa4, int));
     }
 
-    if (W(this, 0x34)->used(0x10000)) {
+    if (W(this, 0x34)->changed(0x10000)) {
         ListWidget* w = W(this, 0x34);
         VecIter it;
         int* second;
@@ -1027,7 +1029,7 @@ void InputScreen::on_input(int code)
         refresh_anim(iv2, iv1);
     }
 
-    if (W(this, 0x3c)->used(0x10000)) {
+    if (W(this, 0x3c)->changed(0x10000)) {
         ListWidget* w = W(this, 0x3c);
         VecIter it;
         int* second;
@@ -1053,41 +1055,41 @@ void InputScreen::on_input(int code)
         refresh_anim(iv2, iv1);
     }
 
-    if (W(this, 0x58)->used(0x10000)) {
+    if (W(this, 0x58)->changed(0x10000)) {
         clear_anim((TickScreen*)this);
         refresh_anim(1, 0);
     }
-    if (W(this, 0x60)->used(0x10000)) {
+    if (W(this, 0x60)->changed(0x10000)) {
         clear_anim((TickScreen*)this);
         refresh_anim(2, 0);
     }
-    if (W(this, 0x64)->used(0x10000)) {
+    if (W(this, 0x64)->changed(0x10000)) {
         clear_anim((TickScreen*)this);
         refresh_anim(3, 0);
     }
-    if (W(this, 0x5c)->used(0x10000)) {
+    if (W(this, 0x5c)->changed(0x10000)) {
         clear_anim((TickScreen*)this);
         refresh_anim(4, 0);
     }
-    if (W(this, 0x50)->used(0x10000)) {
+    if (W(this, 0x50)->changed(0x10000)) {
         g_a739e4->f18 = g_a739e8->f18;
         g_a739e4->f4 = 1;
         g_main_menu.choose(0x19);
         return;
     }
-    if (W(this, 0x74)->used(0x10000)) {
+    if (W(this, 0x74)->changed(0x10000)) {
         GIF(0x88, char) = 1;
         GIF(0x84, int) = F(this, 0xac, int);
         g_main_menu.choose(F(this, 0x18, int));
         return;
     }
-    if (W(this, 0x54)->used(0x10000)) {
+    if (W(this, 0x54)->changed(0x10000)) {
         g_a739e4->f18 = g_a739e8->f18;
         g_a739e4->f4 = 0;
         g_main_menu.choose(0x19);
         return;
     }
-    if (W(this, 0x68)->used(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
+    if (W(this, 0x68)->changed(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
             g_flags.commit(&slot);

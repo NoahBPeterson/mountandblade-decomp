@@ -3,31 +3,34 @@
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4e87d0    MapScreen::buttons(int arg)
 void MapScreen::buttons(int arg)
 {
     source.pick(&arg);
     bool save = false;
-    if (!f64->used(0x10000)) {
-        if (f74 == 0 || !f74->used(0x10000)) {
-            if (f68->used(0x10000)) {
+    if (!f64->changed(0x10000)) {
+        if (f74 == 0 || !f74->changed(0x10000)) {
+            if (f68->changed(0x10000)) {
                 *(int*)(g_a739c8 + 0x18) = 5;
                 g_main_menu.choose(0x12);
                 return;
             }
-            if (f6c != 0 && f6c->used(0x10000)) {
+            if (f6c != 0 && f6c->changed(0x10000)) {
                 save_game(-1, 0);
                 g_msglog.add(*g_strtable.lookup(&tstring("ui_game_saved")), -1);
                 g_main_menu.choose(menu_sel);
                 return;
             }
-            if (f70 != 0 && f70->used(0x10000)) {
+            if (f70 != 0 && f70->changed(0x10000)) {
                 *(int*)(g_a739d4 + 0x18) = 5;
                 g_main_menu.choose(0x15);
                 return;
             }
-            if (f60->used(0x10000) || g_a170c8.test(1)) {
+            if (f60->changed(0x10000) || g_a170c8.test(1)) {
                 g_main_menu.choose(menu_sel);
                 return;
             }
@@ -182,7 +185,7 @@ int SaveCtx::write(OutStream* out)
     out->w_raw(&version);
     out->w_raw(&g_5e29c0);
     out->w_struct(this);
-    out->w_struct(&slot)->w_raw(&flag);
+    out->w_struct(&slot).w_raw(&flag);
     out->w_int((int*)&stamp);
     return 0;
 }
@@ -202,8 +205,8 @@ void log_save_path()
 // @ 0x4e8e70    void GameData::load_header(SaveCtx* h)   (thiscall: this = g, ret 4)
 void GameData::load_header(SaveCtx* h)
 {
-    GameRecord* rec = records + f8c;
-    tstring* name = g_strtable.find(&rec->title);
+    Troop* rec = records + f8c;
+    tstring* name = g_strtable.find(&rec->key);
     if (!name)
         name = &rec->name;
     h->slot = *name;
@@ -211,6 +214,6 @@ void GameData::load_header(SaveCtx* h)
         h->title = h->slot;
     else
         h->title = title;
-    h->flag = rec->f0b0;
+    h->flag = rec->fb0;
     h->stamp = (float)(g_ticks[f13b18] - clock) * g_54a6d0;
 }

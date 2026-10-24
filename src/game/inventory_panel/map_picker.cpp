@@ -132,22 +132,12 @@ void Picker::collect(unsigned key, Pickable** out, int* count)
 }
 
 // ---- 0x51a420 -------------------------------------------------------------------------------------------
-struct Camera {
-    char pad0[0xe0];
-    float f0e0, f0e4;                   // +0xe0, +0xe4 (screen origin)
-    char pade8[0xf0 - 0xe8];
-    float f0f0, f0f4;                   // +0xf0, +0xf4 (world extent)
-    char padf8[0x1ac - 0xf8];
-    char f1ac;                          // +0x1ac (perspective flag)
-    char pad1ad[0x274 - 0x1ad];
-    matrix m274;                        // +0x274 (view matrix)
-    float f2b4, f2b8, f2bc, f2c0, f2c4; // +0x2b4 (viewport rect + 1/z scale)
-    void project(vector4* out, const vector4* in);      // 0x51a690 ret 8
-};
+#include "../map_widget.h"                 // MapWidget (the slice's Camera: offsets +0xe0 rect, +0x1ac frustum, +0x274 its frame)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 struct MapPickScreen {
     char pad0[0x30];
-    Camera* cam;                        // +0x30
+    MapWidget* cam;                     // +0x30
     char pad34[0x2d0 - 0x34];
     float f2d0;                         // +0x2d0 (label fade timer)
     void set_label(int id);             // 0x51a420 ret 4
@@ -214,19 +204,19 @@ void MapPickScreen::set_label(int id)
 
 // ---- 0x51a690 -------------------------------------------------------------------------------------------
 // @ 0x51a690
-void Camera::project(vector4* out, const vector4* in)
+void MapWidget::project(vector4* out, const vector4* in)
 {
-    vector4 p = m274.transform_point_to_local(*in);
+    vector4 p = view.m.transform_point_to_local(*in);
     volatile float x, y;
-    if (f1ac) {
-        x = -((1.0f / p.z) * f2c4 * p.x);
-        y = -((1.0f / p.z) * f2c4 * p.y);
+    if (view.perspective) {
+        x = -((1.0f / p.z) * view.nearz * p.x);
+        y = -((1.0f / p.z) * view.nearz * p.y);
     } else {
         x = p.x;
         y = p.y;
     }
-    out->x = ((x - f2b4) * f0f0) / (f2b8 - f2b4) + f0e0;
-    out->y = ((y - f2c0) * f0f4) / (f2bc - f2c0) + f0e4;
+    out->x = ((x - view.left) * size_x) / (view.right - view.left) + rect_x;
+    out->y = ((y - view.bottom) * size_y) / (view.top - view.bottom) + rect_y;
 }
 
 // ---- 0x51a760 -------------------------------------------------------------------------------------------

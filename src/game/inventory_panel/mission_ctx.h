@@ -71,47 +71,7 @@ struct Team {                                           // the team record seen 
 };
 
 // the map screen (`this` of 0x514d40 / 0x515d80)
-struct Cam {                                            // 0x120 bytes at Screen+0x170
-    unsigned char f0;                                   // +0x0
-    char pad1[0xc8 - 1];
-    rgl::matrix frame;                                  // +0xc8
-    float f108, f10c, f110, f114, f118, f11c;           // +0x108
-    void build_planes();                                // 0x41e4f0
-};
-struct Screen {
-    char pad0[0x30];
-    void* f30;                                          // +0x30 (the map widget whose scene receives the frame)
-    char pad34[0x38 - 0x34];
-    MissionUi* f38;                                     // +0x38
-    MissionUi* f3c;                                     // +0x3c
-    MissionUi* f40;                                     // +0x40
-    MissionUi* f44;                                     // +0x44
-    MissionUi* f48;                                     // +0x48
-    MissionUi* f4c;                                     // +0x4c
-    MissionUi* f50;                                     // +0x50
-    MissionUi* f54;                                     // +0x54
-    MissionUi* f58;                                     // +0x58
-    MissionUi* f5c;                                     // +0x5c
-    MissionUi* f60;                                     // +0x60
-    char f64;                                           // +0x64
-    char pad65[0x170 - 0x65];
-    Cam cam;                                            // +0x170
-    char pad290[0x2b0 - 0x290];
-    float yaw;                                          // +0x2b0 (0x515d80)
-    float speed;                                        // +0x2b4
-    float height;                                       // +0x2b8
-    float x;                                            // +0x2bc
-    float z;                                            // +0x2c0
-    float vy;                                           // +0x2c4
-    float y;                                            // +0x2c8
-    float f2cc;                                         // +0x2cc
-    float f2d0;                                         // +0x2d0
-    char f2d4;                                          // +0x2d4
-    void frame_update(float dt);                        // 0x514d40 (ret 4)
-    void camera_update(float dt);                       // 0x4ece20 (ret 4)
-    void camera_move(float dt);                         // 0x515d80 (ret 4)
-    void f5191e0();                                     // 0x5191e0
-};
+#include "../campaign_screen.h"            // Screen (the campaign map screen; its Cam is rgl::frustum)
 
 // the mission start-up object (global g_mission_ctx, 0xa73300)
 struct MissionCtx {

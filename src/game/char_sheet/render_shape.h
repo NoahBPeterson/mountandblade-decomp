@@ -27,12 +27,10 @@ extern int g_view_z;                    // 0x5d75c8  width factor
 extern int g_view_w;                    // 0x5d75cc  height factor
 extern float g_div;                     // 0x5d7594  1/radius
 
-struct vector2 { float x, y; };
+#include "../../include/vec.h"                      // vector2 (= Vec2)
 
 // ---- the render context (`this` = the global at 0x5d7080) ---------------------------------------------------
-struct ViewRect {                       // the view rectangle of the current frame (this = &GuiCtx::f0e0)
-    void cell_rect(int c0[4], int c1[4]);       // 0x4bd2f0
-};
+#include "../view_rect.h"                    // ViewRect
 
 #include "./gui_ctx.h"                // GuiCtx (was Ctx), Vec1c
 

@@ -112,24 +112,7 @@ struct MapPoint {
 };
 
 // menus.txt element (0x60 bytes): ctor is inlined, load 0x4c2b20, array reject 0x4c4f40.
-struct MenuRec {
-    tstring a;                   // +0x00
-    tstring b;                   // +0x10
-    int f20;                     // +0x20
-    int f24;                     // +0x24
-    tstring c;                   // +0x28
-    int f38;                     // +0x38
-    int f3c;                     // +0x3c
-    char f40;                    // +0x40
-    char pad41[3];
-    tstring d;                   // +0x44
-    int f54;                     // +0x54
-    int f58;                     // +0x58
-    int f5c;                     // +0x5c
-    MenuRec() : f38(0), f3c(0), f40(0), f58(0) {}
-    int load(tstream3* s);                        // 0x4c2b20
-    void destroy_array(int flags);                   // 0x4c4f40
-};
+#include "../menu_rec.h"           // MenuRec (menus.txt element, 0x60 bytes)
 
 // map_icons.txt element (0x48 bytes): inline ctor, read 0x4c20c0.
 struct MapIcon {
@@ -165,14 +148,14 @@ struct ModeRec {
 };
 
 // party_templates.txt element (0xb0 bytes): inline ctor, read 0x4bdff0, array reject 0x4c8980.
-struct PartyRec {
+struct PartyTplRec {
     tstring a;                   // +0x00
     tstring b;                   // +0x10
     char pad20[0x84];            // +0x20
     int fA4;                     // +0xa4
     int fA8;                     // +0xa8
     int fAC;                     // +0xac
-    PartyRec() : fA4(0), fA8(0), fAC(0) {}
+    PartyTplRec() : fA4(0), fA8(0), fAC(0) {}
     void read(tstream3* s);                       // 0x4bdff0
     void destroy_array(int flags);                   // 0x4c8980
 };
@@ -244,7 +227,7 @@ extern int g_mode_count;                             // 0x5e2a04
 extern ModeRec* g_modes;                             // 0x5e2a00
 
 extern int g_party_template_count;                   // 0x5e29fc
-extern PartyRec* g_party_templates;                  // 0x5e29f8
+extern PartyTplRec* g_party_templates;                  // 0x5e29f8
 
 // ---------------------------------------------------------------- loader
 
@@ -313,7 +296,7 @@ void load_module_files()
     }
     g_menus = new MenuRec[g_menu_count];
     for (int i = 0; i < g_menu_count; i++)
-        g_menus[i].load(&s_menus);
+        g_menus[i].read(*(stream_base*)&s_menus);
     s_menus.failed = 1;
 
     // tableau_materials.txt
@@ -427,7 +410,7 @@ void load_module_files()
         g_party_templates->destroy_array(3);
         g_party_templates = 0;
     }
-    g_party_templates = new PartyRec[g_party_template_count];
+    g_party_templates = new PartyTplRec[g_party_template_count];
     for (int i = 0; i < g_party_template_count; i++)
         g_party_templates[i].read(&s_party);
     s_party.failed = 1;

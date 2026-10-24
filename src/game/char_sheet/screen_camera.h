@@ -42,78 +42,10 @@ using rgl::mat4;
 // ---- the 16-byte engine string -------------------------------------------------------------------------
 #include "../tstring.h"
 
-// ---- widgets and overlays (see s004dada0 / s004ec4d0) --------------------------------------------------
-struct Widget {
-    Widget();                                   // 0x48ae20
-    virtual void w00(int); virtual void w01(int); virtual void w02(int); virtual void w03(int);
-    virtual void w04(int); virtual void w05(int); virtual void w06(int); virtual void w07(int);
-    virtual void w08(int); virtual void w09(int); virtual void w10(int); virtual void w11(int);
-    virtual void w12(int); virtual void w13(int); virtual void w14(int); virtual void w15(int);
-    virtual void w16(int); virtual void w17(int); virtual void w18(int); virtual void w19(int);
-    virtual void w20(int); virtual void w21(int);
-    virtual void set_pos(const float* p);       // +0x58
-    virtual void w23(int); virtual void w24(int);
-    virtual void set_scale(const float* p);     // +0x64
-    virtual void w26(int); virtual void w27(int);
-    virtual void set_size(const float* p);      // +0x6c
-    virtual void w29(int);
-    virtual void set_flag(const int* f, int extra);   // +0x74
-    virtual void w31(int);
-    virtual void set_mesh(void* m, int kind);   // +0x7c
-    virtual void w33(int); virtual void w34(int); virtual void w35(int); virtual void w36(int);
-    virtual void w37(int); virtual void w38(int); virtual void w39(int); virtual void w40(int);
-    virtual void w41(int); virtual void w42(int); virtual void w43(int); virtual void w44(int);
-    virtual void w45(int); virtual void w46(int); virtual void w47(int); virtual void w48(int);
-    virtual void w49(int);
-    virtual void set_color(const int* c);       // +0x98
-    virtual void w51(int); virtual void w52(int);
-    virtual void set_text(const void* a, const void* b);    // +0xa4
-};
-
-struct Overlay {
-    Overlay();                                  // 0x4931a0
-    virtual void n00(int); virtual void n01(int); virtual void n02(int); virtual void n03(int);
-    virtual void n04(int); virtual void n05(int); virtual void n06(int); virtual void n07(int);
-    virtual void n08(int); virtual void n09(int); virtual void n10(int); virtual void n11(int);
-    virtual void n12(int); virtual void n13(int); virtual void n14(int); virtual void n15(int);
-    virtual void n16(int); virtual void n17(int); virtual void n18(int); virtual void n19(int);
-    virtual void n20(int); virtual void n21(int);
-    virtual void set_pos(const float* p);       // +0x58
-    virtual void n23(int); virtual void n24(int);
-    virtual void set_scale(const float* p);     // +0x64
-    virtual void n26(int); virtual void n27(int);
-    virtual void set_size(const float* p);      // +0x6c
-    virtual void n29(int); virtual void n30(int); virtual void n31(int);
-    virtual void set_mesh(void* m, int kind);   // +0x7c
-    virtual void n33(int); virtual void n34(int); virtual void n35(int); virtual void n36(int);
-    virtual void n37(int); virtual void n38(int); virtual void n39(int); virtual void n40(int);
-    virtual void n41(int); virtual void n42(int); virtual void n43(int); virtual void n44(int);
-    virtual void n45(int); virtual void n46(int); virtual void n47(int); virtual void n48(int);
-    virtual void n49(int);
-    virtual void set_color(const int* c);       // +0x98
-    virtual void n51(int); virtual void n52(int);
-    virtual void set_text(const void* a, const void* b);    // +0xa4
-    virtual void n54(int);
-    virtual void n55(int); virtual void n56(int); virtual void n57(int); virtual void n58(int);
-    virtual void n59(int); virtual void n60(int); virtual void n61(int); virtual void n62(int);
-    virtual void n63(int); virtual void n64(int); virtual void n65(int); virtual void n66(int);
-    virtual void n67(int); virtual void n68(int); virtual void n69(int); virtual void n70(int);
-    virtual void n71(int); virtual void n72(int); virtual void n73(int); virtual void n74(int);
-    virtual void n75(int); virtual void n76(int); virtual void n77(int); virtual void n78(int);
-    virtual void n79(int); virtual void n80(int); virtual void n81(int); virtual void n82(int);
-    virtual void n83(int); virtual void n84(int); virtual void n85(int); virtual void n86(int);
-    virtual void n87(int); virtual void n88(int); virtual void n89(int); virtual void n90(int);
-    virtual void n91(int); virtual void n92(int);
-    virtual void set_text2(const void* a, const void* b);   // +0xac
-    virtual void add_child(void* c);            // +0xc8
-};
-
-template <class T> struct vec {
-    void* alloc;
-    T* first;
-    T* last;
-    T* end;
-};
+// ---- widgets and overlays (src/game/ui_widget.h, overlay.h, map_widget.h) -----------------------------------
+#include "../ui_widget.h"
+#include "../overlay.h"
+#include "../map_widget.h"
 
 // ---- the render scene (0x1d8 bytes, ctor 0x429740; see s00428240/world.h) ------------------------------
 #include "../../include/frustum.h"
@@ -136,59 +68,15 @@ struct WorldCam {
     int f350;                                   // +0x350
 };
 
-// the map widget: 0x358-byte widget with its embedded scene at +0x17c.  (Written with raw arrays so the
-// layout does not depend on how the compiler treats `scene` as a member; see MapView below.)
-struct MapWidget : Widget {
-    char pad178[0x358 - 0x178];                 // +0x178 (all fields are addressed through get_scene()/offsets)
-    scene* get_scene() { return (scene*)((char*)this + 0x17c); }
-};
-
 // ---- the campaign screen (`this` of 0x4ece20) ----------------------------------------------------------
-struct Screen {
-    virtual void s00(int); virtual void s01(int); virtual void s02(int); virtual void s03(int);
-    virtual void s04(int); virtual void s05(int); virtual void s06(int); virtual void s07(int);
-    virtual void s08(int); virtual void s09(int);
-    int f4;                                     // +0x4
-    char pad8[0x2c - 8];
-    Overlay* overlay;                           // +0x2c   map bar
-    MapWidget* f30;                             // +0x30   the map widget
-    void* f34;                                  // +0x34
-    void* f38;                                  // +0x38
-    char pad3c[0x170 - 0x3c];
-    vector4 camera_pos;                         // +0x170  the frame this screen renders the map with
-    vector4 camera_dir;                         // +0x180
-    vector4 camera_up;                          // +0x190
-    float f1a0;                                 // +0x1a0
-    char pad1a4[0x290 - 0x1a4];
-    float f290;                                 // +0x290  camera target x
-    float f294;                                 // +0x294  camera target y
-    float f298;                                 // +0x298  camera target z
-    float f29c;                                 // +0x29c
-    float f2a0;                                 // +0x2a0  velocity x
-    float f2a4;                                 // +0x2a4  velocity y
-    float f2a8;                                 // +0x2a8  velocity z
-    float f2ac;                                 // +0x2ac
-    float f2b0;                                 // +0x2b0  yaw (rad)
-    float f2b4;                                 // +0x2b4  pitch (rad)
-    float f2b8;                                 // +0x2b8  zoom / height
-    float f2bc;                                 // +0x2bc  pan rate x
-    float f2c0;                                 // +0x2c0  pan rate y
-    float f2c4;                                 // +0x2c4  yaw rate
-    float f2c8;                                 // +0x2c8  zoom rate
-    void camera_mark_entities();                // 0x4ecce0
-    void camera_update(float dt);               // 0x4ece20
-};
+#include "../campaign_screen.h"            // Screen (the campaign map screen)
 
 // 0x4903e0 / 0x48ad00: thiscall on the party manager (g_game + 0xf8), one argument each
 #include "../../include/party.h"
 
 // ---- game objects -------------------------------------------------------------------------------------
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
-struct PartyRec {                               // 0x5ac8-byte party record
-    char pad0[0x30];
-    vector4 rect;                               // +0x30  map rectangle
-};
-
+// (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
 // ---- globals ------------------------------------------------------------------------------------------
 extern WorldCam* g_scene;                       // 0xa732b4
 extern int g_a17148;                            // 0xa17148
@@ -247,10 +135,7 @@ struct Envelope;                                            // the scene-envelop
 
 #include "../scene_world.h"                              // World::scene_query 0x470f40: thiscall on the world, two stack args, callee pops 8 bytes
 
-// 0x41e4f0: thiscall on the frustum, no arguments
-struct Frustum {
-    void build_planes();                        // 0x41e4f0
-};
+// 0x41e4f0: rgl::frustum::build_planes (src/include/frustum.h), thiscall on the frustum, no arguments
 
 // 0x4624c0: thiscall on the envelope (ecx = g_scene both times), two stack args
 struct Envelope {
@@ -262,7 +147,7 @@ void __fastcall scene_dtor(scene* s);                       // 0x41f4e0
 void __fastcall widget_dtor(void* w);                       // 0x487c00
 extern "C" void __fastcall widget_ctor(void* w);            // 0x48ae20 (this in ECX)
 
-struct vector2 { float x, y; vector2(float a, float b) { x = a; y = b; } };
+#include "../../include/vec.h"                      // vector2 (= Vec2)
 void __stdcall listener_set(float* pos, float* vel,
                             float dx, float dy, float dz,
                             float ux, float uy, float uz);  // 0x5342dc (FMOD 3; 8 args)

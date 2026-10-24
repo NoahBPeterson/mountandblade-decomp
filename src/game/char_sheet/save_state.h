@@ -18,48 +18,16 @@
 // ---- tstring (see s0042aaf0 / s004e2ea0) ----------------------------------------------------------------
 #include "../tstring.h"
 
-// ---- the writer ------------------------------------------------------------------------------------------
-struct OutStream {
-    virtual OutStream& dec();                       // +0x0
-    virtual OutStream& inc();                       // +0x4
-    virtual OutStream& niy8();                      // +0x8
-    virtual OutStream& w_int(int* p);               // +0xc
-    virtual OutStream& w_int4(int* p);              // +0x10
-    virtual OutStream& w_int8(int* p);              // +0x14
-    virtual OutStream& w_int1(int* p);              // +0x18
-    virtual OutStream& w_count(int* p);             // +0x1c
-    virtual OutStream& w_raw(const void* p);        // +0x20
-    virtual OutStream& niy24();                     // +0x24
-    virtual OutStream& w_cstr(const char* s);       // +0x28
-    virtual OutStream& w_struct(const void* p);     // +0x2c
-};
+// ---- the writer: src/game/out_stream.h ---------------------------------------------------------------------
+#include "../out_stream.h"
 extern __int64 g_time1;                             // 0x5e2950 (the 64-bit clock counter)
 
-// the record the scalar block writes: five ints (all via w_int) then raw
-struct Rec5c {
-    int  f0, f4, f8;
-    int  f10, f14;
-    __declspec(noinline) void write(OutStream* s);  // 0x4e9460 (ret 4)
-};
-
-// ---- vectors / records -----------------------------------------------------------------------------------
-struct Elem8 { int a, b; };
-struct List8 {                                      // vector of 8-byte elements
-    int   pad0;                                     // +0x0
-    Elem8* begin;                                   // +0x4
-    Elem8* end;                                     // +0x8
-    Elem8* endcap;                                   // +0xc
-    __declspec(noinline) void write8(OutStream* out);                    // 0x4e94b0 (ret 4)
-};
+// the record the scalar block writes: src/game/rec5c.h; the 8-byte element vector: src/game/list8.h; the 0x508-byte
+// game record (GameRecord in the slices) is the troop record, src/include/troop.h
+#include "../rec5c.h"
+#include "../list8.h"
+#include "../../include/troop.h"
 void write_vec8(List8* v, OutStream* out);    // the alias the other slices call
-
-struct GameRecord {                                 // stride 0x508 (game records at +0x13a00)
-    char pad0[0x3c0];
-    __int64 f3c0;                                   // +0x3c0
-    int  f3c8;                                      // +0x3c8
-    char pad3cc[0x508 - 0x3cc];
-    __declspec(noinline) void write(OutStream* out);                     // 0x4e9850 (next slice; ret 4)
-};
 
 struct RecB0 {                                      // stride 0xb0 (the 0x5e29f8 array)
     char  pad0[0x34];

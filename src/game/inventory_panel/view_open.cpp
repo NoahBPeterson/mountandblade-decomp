@@ -1,7 +1,7 @@
 // Slice s00509980: the character-sheet window's 3D portrait view.
 //   0x509980  char_window::open_view  - build the portrait world (3D view) or the flat shadow fallback
 //   0x50a140  view_obj::reset         - clear the selection, drop the buffers, rebuild the view
-// The widget slots, tstring / eng_frustum / face-body / world / wind layouts and the callee conventions
+// The widget slots, tstring / rgl::frustum / face-body / world / wind layouts and the callee conventions
 // follow the verified neighbours s004f49d0 (the same 0x358 face body, 0x344 world and 0x7c wind trio),
 // s004f8c80 (frustum) and s00502300 (widget vtables).  Names are provisional; every offset comes from
 // this slice's disassembly.
@@ -37,12 +37,7 @@ extern char g_vt_591ee8[];                                  // 0x591ee8
 void elem_fill(widget* w, tstring name);                    // 0x4e4c70 (tstring by value)
 
 // ---- frustum (0x120 bytes) -------------------------------------------------------------------------------
-struct eng_frustum {
-    char b[0x120];
-    void build_planes();                                    // 0x41e4f0
-    void init(float fov, float aspect, float znear, float far);  // 0x4f25a0
-};
-
+#include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
 // ---- frame / matrix --------------------------------------------------------------------------------------
 struct frame : rgl::matrix {
     void rotate_fu(const float* angle);                     // 0x40e570
@@ -70,35 +65,13 @@ struct ResList {
 #include "../wind.h"                              // wind (shared with terrain_a/wind.cpp)
 
 // ---- the world (0x344 bytes) -----------------------------------------------------------------------------
-template<class T>
-struct engvec {
-    int lead;                                               // +0
-    T*  first;                                              // +4
-    T*  last;                                               // +8
-    T*  end;                                                // +0xc
-    void insert_n(T* where, unsigned n, const T& val);      // 0x410610
-    void push_back(const T& v)
-    {
-        if (first == 0 || (unsigned)(last - first) >= (unsigned)(end - first))
-            insert_n(last, 1, v);
-        else
-            *last++ = v;
-    }
-};
+#include "../engvec.h"                                     // engvec<T>
 
 #include "../scene_world.h"                                   // World: ctor 0x478ad0, set_visual 0x488cd0, destroy 0x475d50
 
 // ---- the 0x358 portrait body (ctor 0x4ed630) -------------------------------------------------------------
-struct face_body : widget {
-    World* world;                                           // +0x178
-    char pad17c2[0x1ac - 0x17c];
-    eng_frustum view;                                       // +0x1ac (0x120)
-    char pad2cc[0x308 - 0x2cc];
-    unsigned flags;                                         // +0x308
-    unsigned color;                                         // +0x30c
-    char pad310[0x358 - 0x310];
-    face_body() MB_NOTHROW;                                 // 0x4ed630
-};
+#include "../map_widget.h"                 // MapWidget (the slice's face_body)
+typedef MapWidget face_body;
 
 // ---- the object table and the resource manager -----------------------------------------------------------
 struct obj_tbl {
@@ -110,13 +83,8 @@ extern obj_tbl g_obj;                                       // 0xa75f40
 extern resmgr g_resmgr;                                     // 0x5d6fa0
 
 // ---- the global animator ---------------------------------------------------------------------------------
-struct Animator {
-    char pad0[8];
-    int cur;                                                // +0x08 (0x8ed4f68)
-    void set_anim_a(void* rec);                             // 0x473800
-    void collect(int flag, void** a, void** b, void** c);   // 0x47fb10
-};
-extern Animator g_anim;                                     // 0x8ed4f60
+#include "../animator.h"                                  // Animator, g_anim
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 extern int g_char_count;                                    // 0x8ed4f88
 int gen_face_seed(int* skin, int* flags, int* count);       // 0x432510
 
@@ -139,7 +107,7 @@ struct char_window {
     char pad2e0[0x2e4 - 0x2e0];
     World* world;                                           // +0x2e4
     char pad2e8[0x2ec - 0x2e8];
-    eng_frustum fr;                                         // +0x2ec (0x120; the frame sits at +0xc8)
+    rgl::frustum fr;                                         // +0x2ec (0x120; the frame sits at +0xc8)
     float rect[4];                                          // +0x40c
     float f41c;                                             // +0x41c
     float f420;                                             // +0x420
@@ -159,7 +127,7 @@ void char_window::open_view()
     if (g_a75f64 < 0) {
         // ---- 3D portrait: build the body, the world, the wind tracks and the camera ----
         face_body* b = new face_body;
-        elem_fill(b, tstring("char_i_character"));
+        elem_fill((widget*)b, tstring("char_i_character"));
         if (world != 0) {
             world->destroy();
             free_535712(world);
@@ -208,9 +176,9 @@ void char_window::open_view()
         }
         b->world = w;
         b->flags |= 0x1200;
-        b->color = 0xff221815;
+        b->clear_color = 0xff221815;
         // the camera frame: the body's aspect scaled by the global fov factor
-        float aspect = b->y1 / b->x1 * g_fov_k;
+        float aspect = b->size_y / b->size_x * g_fov_k;
         fr.init(0.2617994f, aspect, 0.01f, 20.0f);
         frame mat;
         identity_pos(&mat);
@@ -243,7 +211,7 @@ void char_window::open_view()
         ang = 0.1f;
         m2.rotate_fu(&ang);
         e->set_matrix(&m2);
-        ui->add_child(b);
+        ui->add_child((widget*)b);
         if (f2dc == -1) {
             // seed the body's face from the troop record and start the idle animation
             char* rec = g_game->chars_c + troop * 0x508;
@@ -254,7 +222,7 @@ void char_window::open_view()
             void* ra = 0;
             void* rb = 0;
             void* rc = 0;
-            g_anim.collect(g_a181ac != 0, &ra, &rb, &rc);
+            g_anim.collect(g_a181ac != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
             e->on_anim_end();
             ResList* rl = (ResList*)((char*)e + 0x108);
             rl->release(&ra);

@@ -27,29 +27,7 @@ extern "C" long __cdecl _atol(const char*);                                 // 0
 extern "C" int __cdecl fclose_(void*);                                      // 0x537168
 
 // ---- controls ----------------------------------------------------------------------------------------
-struct Widget {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09();
-    virtual void activate(int v);                           // +0x2c
-    virtual void v0c();
-    virtual int  get_value();                               // +0x30
-    virtual void v0d();
-    virtual float get_float();                              // +0x38
-    virtual void v10(); virtual void v11();
-    virtual char changed(int flag);                         // +0x44
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v1a(); virtual void v1b(); virtual void v1c(); virtual void v1d();
-    virtual void v1e(); virtual void v1f(); virtual void v20(); virtual void v21();
-    virtual void v22(); virtual void v23();
-    virtual void v24(); virtual void v25();
-    virtual void set_default();                             // +0x90
-    virtual void v26(); virtual void v27(); virtual void v28();
-    virtual void set_text(const tstring& s);                // +0xa4
-    virtual void v2a();
-    virtual void set_text(const tstring& s, const vector4& pos);    // +0xac
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // sliders keep their value labels at +0x190: rows of 16 bytes, copied with the tstring copy ctor.
 static inline const tstring* value_label(Widget* w, int index)
@@ -61,12 +39,10 @@ static inline const tstring* value_label(Widget* w, int index)
 static inline int settings_value(Widget* w) { return w->get_value(); }
 static inline char w_changed(Widget* w, int f) { return w->changed(f); }
 static inline float w_float(Widget* w) { return w->get_float(); }
-static inline void w_set_text(Widget* w, const tstring& s) { w->set_text(s); }
-static inline void w_set_text(Widget* w, const tstring& s, const vector4& p) { w->set_text(s, p); }
-static inline void w_set_default(Widget* w) { w->set_default(); }
+static inline void w_set_text(Widget* w, const tstring& s) { char r[8]; w->set_text(r, s); }
+static inline void w_set_default(Widget* w) { char r[8]; w->get_xy(r); }
 
 // ---- other pages / objects ---------------------------------------------------------------------------
-struct MainMenu;                                                            // 0xa73980
 struct Game;                                                                // 0x5e2930
 
 // 0x5d6fa0: the graphics resource manager (rebuild its two halves).
@@ -83,7 +59,7 @@ struct RenderConfig {
 extern RenderConfig g_render_config;                                        // 0x5a9f98
 
 // 0x5e293c: the renderer; set(name, value) at +0x88.
-struct Renderer {
+struct RenderParams {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
     virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
     virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
@@ -95,7 +71,7 @@ struct Renderer {
     virtual void v20();
     virtual void set(const char* name, const vector4& v);   // +0x88  0x?
 };
-extern Renderer g_renderer;                                                 // 0x5e293c
+extern RenderParams g_renderer;                                                 // 0x5e293c
 extern Game* g_game;                                                        // 0x5e2930
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
@@ -264,8 +240,8 @@ void VideoPage::update(int reason)
             state = *g_string_table.lookup(k);
             k.~tstring();
         }
-        w98->set_text(state, *(const vector4*)&state);
-        w98->set_default();
+        { char r[8]; w98->set_text(r, state); }
+        { char r[8]; w98->get_xy(r); }
         text.~tstring();
     }
 
@@ -281,10 +257,10 @@ void VideoPage::update(int reason)
         }
         tstring text(buf);
         tstring key2("ui_percentage_value");
-        wa0->set_text(text, *(const vector4*)&key2);
+        { char r[8]; wa0->set_text(r, text); }
         key2.~tstring();
         text.~tstring();
-        wa0->set_default();
+        { char r[8]; wa0->get_xy(r); }
         changed_config = 1;
         update_performance_caption(this);
     }
@@ -309,10 +285,10 @@ void VideoPage::update(int reason)
         }
         tstring text(buf);
         tstring key2("ui_percentage_value");
-        w80->set_text(text, *(const vector4*)&key2);
+        { char r[8]; w80->set_text(r, text); }
         key2.~tstring();
         text.~tstring();
-        w80->set_default();
+        { char r[8]; w80->get_xy(r); }
         update_performance_caption(this);
     }
 

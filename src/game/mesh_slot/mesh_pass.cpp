@@ -4,6 +4,7 @@
 #include "../../include/pod_elems.h"
 #include "../../include/msg_log.h"
 #include "../../include/renderer.h"
+#include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature

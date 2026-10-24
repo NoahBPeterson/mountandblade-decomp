@@ -30,32 +30,7 @@ extern "C" double atof(const char* s);                       // 0x537352
 // widgets -- only the vtable slots touched by this function are named
 // ---------------------------------------------------------------------------
 
-struct Widget {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v10();
-    virtual void set_down(int on);                       // +0x2c
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21();
-    virtual void set_xy(const float* p);                 // +0x58
-    virtual void v23(); virtual void v24();
-    virtual void set_scale(const float* p);              // +0x64
-    virtual void v26(); virtual void v27(); virtual void v28(); virtual void v29();
-    virtual void v30(); virtual void v31();
-    virtual void add_image(int slot, void* image);       // +0x80
-    virtual void v33(); virtual void v34(); virtual void v35(); virtual void v36();
-    virtual void v37(); virtual void v38(); virtual void v39(); virtual void v40();
-    virtual float* set_text(float* out, const tstring& text);  // +0xa4
-    virtual void  get_text(tstring* out);                // +0xa8
-    virtual void  v43();                                 // +0xac
-    virtual void  focus();                               // +0xb0
-    virtual void  layout();                              // +0xb4
-    virtual void  set_on();                              // +0xb8
-    virtual void  set_off();                             // +0xbc
-    virtual void  v48(); virtual void v49();
-    virtual void  add_child(void* child);                // +0xc8
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 struct NotePanel : Widget { char pad[0x190 - 4]; NotePanel(); };   // 0x4931a0
 struct UiText2   : Widget { char pad[0x178 - 4]; UiText2(); };     // 0x48ae20
@@ -281,7 +256,7 @@ void note_window::build(int page_, int arg_)
         float v[2];
         v[0] = 0.0f;
         v[1] = 0.0f;
-        panel->set_xy(v);
+        panel->set_pos(v);
         v[0] = 1.0f;
         v[1] = 0.75f;
         panel->set_scale(v);
@@ -289,13 +264,13 @@ void note_window::build(int page_, int arg_)
     {
         tstring key("note_window");
         void* item = THEME->lookup(&key);       // 0x419540
-        panel->add_image(0, ((ThemeItem*)item)->image());   // 0x41c6d0
+        panel->set_track(0, ((ThemeItem*)item)->image());   // 0x41c6d0
     }
 
     // ---- title picture ---------------------------------------------------
     this->picture = new UiText2;
     open_menu(this->picture, tstring("note_i_picture"));
-    this->picture->focus();
+    this->picture->hide();
 
     // ---- report text -----------------------------------------------------
     this->report = new UiList;
@@ -329,22 +304,22 @@ void note_window::build(int page_, int arg_)
         open_menu(this->btn_forward, tstring("note_b_forward"));
         this->btn_map = make_map_button(panel, tr_obj("ui_display_on_map"), 0.0f, 0.0f, small_h);
         open_menu(this->btn_map, tstring("note_b_map_follow"));
-        this->btn_map->focus();
+        this->btn_map->hide();
     }
 
     if (this->back_end == 0) {
-        this->btn_back->set_on();
+        this->btn_back->enable();
     } else {
         this->back_sel_a = this->back_end[-2];
         this->back_sel_b = this->back_end[-1];
-        this->btn_back->set_off();
+        this->btn_back->disable();
     }
     if (this->fwd_end == 0) {
-        this->btn_forward->set_on();
+        this->btn_forward->enable();
     } else {
         this->fwd_sel_a = this->fwd_end[-2];
         this->fwd_sel_b = this->fwd_end[-1];
-        this->btn_forward->set_off();
+        this->btn_forward->disable();
     }
 
     // ---- page link key + candidate list ----------------------------------
@@ -357,7 +332,7 @@ void note_window::build(int page_, int arg_)
     float y_cur = 0.0f;         // [esp+0x24]
     bool  any = true;           // [esp+0x1b]
     int   selected = -1;        // [esp+0x58]
-    this->picture->focus();
+    this->picture->hide();
 
     switch (page_) {
     case 0: {
@@ -375,8 +350,8 @@ void note_window::build(int page_, int arg_)
         char* troop = ((char*)WORLD->troops) + ti * 0x508;
         if (*(int*)(troop + 0x4a0) >= 0) {
             int id = ti;
-            this->picture->add_image(0, IMAGES->make(troop + 0x4a0, &id));
-            this->picture->layout();
+            this->picture->set_track(0, IMAGES->make(troop + 0x4a0, &id));
+            this->picture->show();
         }
         sprintf(buf, "<trp=%d>", ti);
         acc.assign(buf);
@@ -404,13 +379,13 @@ void note_window::build(int page_, int arg_)
         if (line.len > 0) {
             float sz[2];
             this->title->set_text(sz, tstring(record_name(troop + 0x20)));
-            float* r = this->links->set_text(sz, line);
+            float* r = (float*)this->links->set_text(sz, line);
             y_cur = r[1];
             line.clear();
             any = false;
         } else {
             float sz[2];
-            float* r = this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
+            float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
             y_cur = r[1];
         }
 
@@ -452,8 +427,8 @@ void note_window::build(int page_, int arg_)
         char* fac = ((char*)WORLD->factions) + fi * 0x300;
         if (*(int*)(fac + 0x2fc) >= 0) {
             int id = fi;
-            this->picture->add_image(0, IMAGES->make(fac + 0x2fc, &id));
-            this->picture->layout();
+            this->picture->set_track(0, IMAGES->make(fac + 0x2fc, &id));
+            this->picture->show();
         }
         sprintf(buf, "<fac=%d>", fi);
         acc.assign(buf);
@@ -486,13 +461,13 @@ void note_window::build(int page_, int arg_)
                     nm = s;
             }
             this->title->set_text(sz, *nm);
-            float* r = this->links->set_text(sz, line);
+            float* r = (float*)this->links->set_text(sz, line);
             y_cur = r[1];
             line.clear();
             any = false;
         } else {
             float sz[2];
-            float* r = this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
+            float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
             y_cur = r[1];
         }
 
@@ -533,8 +508,8 @@ void note_window::build(int page_, int arg_)
         void* party = WORLDMAP->party(pi);
         if (*(int*)((char*)party + 0x5aa8) >= 0) {
             int id = pi;
-            this->picture->add_image(0, IMAGES->make((char*)party + 0x5aa8, &id));
-            this->picture->layout();
+            this->picture->set_track(0, IMAGES->make((char*)party + 0x5aa8, &id));
+            this->picture->show();
         }
         sprintf(buf, "<p=%d>", pi);
         acc.assign(buf);
@@ -563,15 +538,15 @@ void note_window::build(int page_, int arg_)
         if (line.len > 0) {
             float sz[2];
             if (this->menu_id == 7)
-                this->btn_map->layout();
+                this->btn_map->show();
             this->title->set_text(sz, *party_name(base));
-            float* r = this->links->set_text(sz, line);
+            float* r = (float*)this->links->set_text(sz, line);
             y_cur = r[1];
             line.clear();
             any = false;
         } else {
             float sz[2];
-            float* r = this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
+            float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
             y_cur = r[1];
         }
 
@@ -620,8 +595,8 @@ void note_window::build(int page_, int arg_)
         char* quest = ((char*)WORLD->quests) + qi * 0x138;
         if (*(int*)(quest + 0x108) >= 0) {
             int id = qi;
-            this->picture->add_image(0, IMAGES->make(quest + 0x108, &id));
-            this->picture->layout();
+            this->picture->set_track(0, IMAGES->make(quest + 0x108, &id));
+            this->picture->show();
         }
         sprintf(buf, "<qst=%d>", qi);
         acc.assign(buf);
@@ -649,13 +624,13 @@ void note_window::build(int page_, int arg_)
             float sz[2];
             tstring* qt = quest_text(qi, 0);
             this->title->set_text(sz, *qt);
-            float* r = this->links->set_text(sz, line);
+            float* r = (float*)this->links->set_text(sz, line);
             y_cur = r[1];
             line.clear();
             any = false;
         } else {
             float sz[2];
-            float* r = this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
+            float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
             y_cur = r[1];
         }
 
@@ -778,7 +753,7 @@ void note_window::build(int page_, int arg_)
         t.append(*tr_obj("ui_other_pages_that_link_here"));
         t.append(other);
         float sz[2];
-        float* r = this->links->set_text(sz, t);
+        float* r = (float*)this->links->set_text(sz, t);
         y_cur = r[1];
     }
 
@@ -808,7 +783,7 @@ void note_window::build(int page_, int arg_)
         float v[2];
         v[0] = right;
         v[1] = a[0] - b[0];
-        this->picture->set_xy(v);
+        this->picture->set_pos(v);
     }
 
     {
@@ -835,7 +810,7 @@ void note_window::build(int page_, int arg_)
             h = 0.0f;
         v[0] = fld(this->keys_scroll, 0xe0);
         v[1] = h + fld(this->keys_scroll, 0xe4);
-        this->keys_scroll->set_xy(v);
+        this->keys_scroll->set_pos(v);
 
         v[1] = (y_cur <= fld(this->keys_scroll, 0xf4)) ? y_cur
                                                        : fld(this->keys_scroll, 0xf4);
@@ -863,7 +838,7 @@ void note_window::build(int page_, int arg_)
             h = 0.0f;
         v[0] = fld(this->data_scroll, 0xe0);
         v[1] = h + fld(this->data_scroll, 0xe4);
-        this->data_scroll->set_xy(v);
+        this->data_scroll->set_pos(v);
 
         v[1] = (x_cur <= fld(this->data_scroll, 0xf4)) ? x_cur
                                                        : fld(this->data_scroll, 0xf4);
@@ -899,20 +874,20 @@ void note_window::build(int page_, int arg_)
     // ---- highlight the active page button --------------------------------
     switch (page_) {
     case 1:
-        this->btn_troops->set_down(1);
-        this->btn_troops->set_on();
+        this->btn_troops->activate(1);
+        this->btn_troops->enable();
         break;
     case 2:
-        this->btn_factions->set_down(1);
-        this->btn_factions->set_on();
+        this->btn_factions->activate(1);
+        this->btn_factions->enable();
         break;
     case 3:
-        this->btn_locations->set_down(1);
-        this->btn_locations->set_on();
+        this->btn_locations->activate(1);
+        this->btn_locations->enable();
         break;
     case 4:
-        this->btn_quests->set_down(1);
-        this->btn_quests->set_on();
+        this->btn_quests->activate(1);
+        this->btn_quests->enable();
         break;
     default:
         break;

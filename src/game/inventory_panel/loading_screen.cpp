@@ -29,7 +29,7 @@ struct Rec {
     __declspec(noinline) void read(Src* src);   // 0x50f840
 };
 
-struct Table {
+struct MusicTable {
     char pad0[4];
     int count;                          // +4
     Rec rec[0x100];                     // +8
@@ -54,7 +54,7 @@ extern ResMgr2 g_res;                   // 0x5d6fa0
 
 // ---------------------------------------------------------------- 0x50f7e0
 // @ 0x50f7e0
-void Table::build(Src* src)
+void MusicTable::build(Src* src)
 {
     src->out_int(&count);
     if (count > 0x100)
@@ -103,7 +103,7 @@ void Frame570::build_quad()
 }
 
 // ---------------------------------------------------------------- 0x50f930
-struct Screen {
+struct LoadingMeshes {
     char pad0[0xfb0];
     Mesh* f1210;                        // +0x1210
     Mesh* f1214;                        // +0x1214
@@ -124,7 +124,7 @@ static void set_frame_color(Mesh* m)
 }
 
 // @ 0x50f930
-void Screen::build_frames()
+void LoadingMeshes::build_frames()
 {
     {
         Mesh* m = (Mesh*)((char*)this + 0xfb0);
@@ -190,7 +190,7 @@ void Screen::build_frames()
 }
 
 // ---------------------------------------------------------------- 0x50fbf0
-struct Entry {
+struct TrackEntry {
     char b[0x20];
 };
 
@@ -198,17 +198,17 @@ void uninit_fill(void* dst, unsigned n, const void* val, void* self, const void*
 
 struct Entries {
     void* alloc;                        // +0
-    Entry* first;                       // +4
-    Entry* last;                        // +8
-    Entry* end;                         // +0xc
+    TrackEntry* first;                       // +4
+    TrackEntry* last;                        // +8
+    TrackEntry* end;                         // +0xc
     unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
     unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
-    void insert_n(Entry* where, unsigned n, const Entry& val);   // 0x50d260
-    void add(const Entry& val);         // 0x50fbf0
+    void insert_n(TrackEntry* where, unsigned n, const TrackEntry& val);   // 0x50d260
+    void add(const TrackEntry& val);         // 0x50fbf0
 };
 
 // @ 0x50fbf0
-void Entries::add(const Entry& val)
+void Entries::add(const TrackEntry& val)
 {
     if (size() < capacity()) {
         uninit_fill(last, 1, &val, this, &val);
@@ -262,8 +262,8 @@ struct text_stream {
     bool open_read_text(const char* path);           // 0x415d60
 };
 
-struct Table2;                                       // built by Table::build below (0x50f7e0)
-extern Table g_music_table;                          // 0xa73a10
+struct Table2;                                       // built by MusicTable::build below (0x50f7e0)
+extern MusicTable g_music_table;                          // 0xa73a10
 
 struct ModInfo {
     void load(FILE* f);                              // 0x4bd630

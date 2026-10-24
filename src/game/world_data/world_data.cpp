@@ -27,6 +27,7 @@
 #include "../../rgl/mesh.h"
 #include "./tableau.h"
 #include "./widget_mgr_w.h"
+#include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 
 // ==== 0x490030: a random position around a point ===========================================================

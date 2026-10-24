@@ -27,22 +27,19 @@ extern "C" int _fltused = 0;
 // ---- engine string (16 bytes) ---------------------------------------------------------------------------
 #include "../tstring.h"
 
-struct vector2 {
-    float x, y;
-    vector2() {}
-};
+#include "../../include/vec.h"                      // vector2 (= Vec2)
 
 // ---- widgets ------------------------------------------------------------------------------------------
 // Slot offsets used here: +0x58 set_rect(vector2*), +0x64 set_scale(vector2*),
 // +0x6c set_text_size(vector2*), +0x80 set_mesh(int, void*), +0x98 set_color(int),
 // +0xa4 set_text(vector2* out, const tstring& text) (0x488b50, ret 8), +0xb0 show(),
-// +0xc8 add_child(Widget*).  Field offsets are the ones this function reads and writes.
-struct Widget {
+// +0xc8 add_child(CharSheetWidget*).  Field offsets are the ones this function reads and writes.
+struct CharSheetWidget {
     char pad00[0x10];
-    Widget* plus10;                             // +0x10 (attribute row '+' label)
-    Widget* plus1c;                             // +0x1c (weapon row '+' label)
+    CharSheetWidget* plus10;                             // +0x10 (attribute row '+' label)
+    CharSheetWidget* plus1c;                             // +0x1c (weapon row '+' label)
     char pad20[0xa8 - 0x20];
-    Widget* levels;                             // +0xa8 (skill row level text)
+    CharSheetWidget* levels;                             // +0xa8 (skill row level text)
     char pad_ac[0xe8 - 0xac];
     float px;                                   // +0xe8
     float py;                                   // +0xec
@@ -51,7 +48,7 @@ struct Widget {
     char b121;                                  // +0x121
     char pad122[0x14c - 0x122];
     int color;                                  // +0x14c
-    Widget* plus150;                            // +0x150 (skill row '+' label)
+    CharSheetWidget* plus150;                            // +0x150 (skill row '+' label)
     char pad154[0x178 - 0x154];
     int f178;                                   // +0x178
     char b180;                                  // +0x180
@@ -81,7 +78,7 @@ struct Widget {
     virtual void v42(); virtual void v43();
     virtual void show();                                            // +0xb0  (slot 44)
     virtual void v45(); virtual void v46(); virtual void v47(); virtual void v48(); virtual void v49();
-    virtual void add_child(Widget* child);                          // +0xc8  (slot 50)
+    virtual void add_child(CharSheetWidget* child);                          // +0xc8  (slot 50)
 };
 
 // ---- engine globals -----------------------------------------------------------------------------------
@@ -92,7 +89,7 @@ extern ResMgr g_resmgr;                         // 0x5d6fa0
 
 struct GuiManager {
     void reset();                               // 0x42d1b0
-    void push(Widget** w);                      // 0x49b120 (ret 4)
+    void push(CharSheetWidget** w);                      // 0x49b120 (ret 4)
 };
 extern GuiManager g_gui;                        // 0x5d7080
 extern char g_ui_dirty;                         // 0x5d8788
@@ -113,62 +110,21 @@ void ctor_widget(void* p);                      // 0x48ae20
 void mesh_scale(ResMesh* m, float f);              // 0x44f0c0
 
 // ---- widget factories ----------------------------------------------------------------------------------
-Widget* make_button(Widget* parent, tstring* caption, int a, int b, float h);        // 0x4dce70
-Widget* make_short_button(Widget* parent, tstring* caption, int a, int b, float h);  // 0x4e5570
-Widget* make_medium_button(Widget* parent, tstring* caption, int a, int b, float h,
+CharSheetWidget* make_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h);        // 0x4dce70
+CharSheetWidget* make_short_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h);  // 0x4e5570
+CharSheetWidget* make_medium_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h,
                            tstring* up, tstring* down,
                            float a8, float a9, float a10);                           // 0x4dcc50
-Widget* make_label(Widget* parent, tstring* text, float x, float y, float sx, float sy);  // 0x4dada0
-Widget* make_text(Widget* parent, tstring* text, float x, float y, int flag, float sy);   // 0x509770
-void label_refresh(Widget* w, tstring key);                                          // 0x4e4c70
-Widget* make_panel(Widget* parent, tstring* key);                                    // 0x4f6160
-Widget* make_panel_child(Widget* parent, tstring* key, Widget* child);               // 0x4f62f0
-void widget_f488d50(Widget* w);                                                      // 0x488d50
+CharSheetWidget* make_label(CharSheetWidget* parent, tstring* text, float x, float y, float sx, float sy);  // 0x4dada0
+CharSheetWidget* make_text(CharSheetWidget* parent, tstring* text, float x, float y, int flag, float sy);   // 0x509770
+void label_refresh(CharSheetWidget* w, tstring key);                                          // 0x4e4c70
+CharSheetWidget* make_panel(CharSheetWidget* parent, tstring* key);                                    // 0x4f6160
+CharSheetWidget* make_panel_child(CharSheetWidget* parent, tstring* key, CharSheetWidget* child);               // 0x4f62f0
+void widget_f488d50(CharSheetWidget* w);                                                      // 0x488d50
 
 // ---- character sheet ------------------------------------------------------------------------------------
-struct CharSheet {
-    char pad04[4];
-    int flag4;                                  // +0x4  (a record was supplied by the caller)
-    int flag8;                                  // +0x8  (already initialised once)
-    char pad0c[0x14 - 0xc];
-    int player;                                 // +0x14
-    char pad18[0x2c - 0x18];
-    Widget* window;                             // +0x2c (the 0x190-byte panel)
-    Widget* skill_row[7];                       // +0x30 (num_skills rows actually used)
-    char pad4c[0x2d0 - 0x4c];
-    int num_skills;                             // +0x2d0
-    int f2d4;                                   // +0x2d4 (set to -1)
-    int f2d8;                                   // +0x2d8
-    int mode;                                   // +0x2dc (0 = new game, 1 = tutorial)
-    char pad2e0[0x42c - 0x2e0];
-    Widget* done;                               // +0x42c
-    Widget* reset;                              // +0x430
-    Widget* explanation;                        // +0x434
-    char pad438[0x440 - 0x438];
-    Widget* stats;                              // +0x440
-    Widget* next;                               // +0x444
-    Widget* prev;                               // +0x448
-    Widget* attrib_row[4];                      // +0x44c
-    char pad45c[0x46c - 0x45c];
-    Widget* weapon_title;                       // +0x46c
-    Widget* attrib_title;                       // +0x470
-    Widget* skill_title;                        // +0x474
-    Widget* weapon_row[7];                      // +0x478
-    char pad494[0x4b0 - 0x494];
-    Widget* attribs;                            // +0x4b0
-    Widget* general;                            // +0x4b4
-    Widget* skill_desc;                         // +0x4b8
-    Widget* skills_outer;                       // +0x4bc
-    Widget* skills;                             // +0x4c0
-    Widget* name;                               // +0x4c4
-    char f4c8;                                  // +0x4c8
-    char pad4c9[0x4d4 - 0x4c9];
-    char f4d4;                                  // +0x4d4
-    char pad4d5[0x52c - 0x4d5];
-    char f52c;                                  // +0x52c
-
-    void init();                                // 0x507400
-};
+#include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 extern int g_game_mode;                         // 0x5a9fb0
 extern int g_weapon_available[7];               // 0x5e2900
@@ -260,7 +216,7 @@ void CharSheet::init()
     stats = 0;
 
     // the panel: 0x190-byte container, vtable 0x592848, "character_window" mesh
-    Widget* w = (Widget*)::operator new(0x190);
+    CharSheetWidget* w = (CharSheetWidget*)::operator new(0x190);
     if (w != 0) {
         ctor_window(w);
         *(void**)w = (void*)0x592848;
@@ -287,7 +243,7 @@ void CharSheet::init()
         w->set_mesh(0, mesh);
     }
 
-    Widget* pw = window;
+    CharSheetWidget* pw = window;
     g_ui_dirty = 1;
     g_gui.push(&pw);
 
@@ -329,7 +285,7 @@ void CharSheet::init()
     }
 
     // ---- the skill column -------------------------------------------------------------------------
-    Widget* sk = (Widget*)::operator new(0x188);
+    CharSheetWidget* sk = (CharSheetWidget*)::operator new(0x188);
     if (sk != 0) {
         ctor_window(sk);
         *(void**)sk = (void*)0x597050;
@@ -345,7 +301,7 @@ void CharSheet::init()
 
     if (num_skills > 0) {
         for (i = 0; i < num_skills; i++) {
-            Widget* row = (Widget*)::operator new(0x188);
+            CharSheetWidget* row = (CharSheetWidget*)::operator new(0x188);
             if (row != 0) {
                 ctor_widget(row);
                 row->f178 = 0;
@@ -416,7 +372,7 @@ void CharSheet::init()
 
     // the framed "skills" outer panel
     sheet_4ef7d0(this);
-    Widget* inner;
+    CharSheetWidget* inner;
     {
         tstring ks("char_s_skills");
         inner = make_panel(window, &ks);
@@ -430,7 +386,7 @@ void CharSheet::init()
 
     // ---- the three column headings -----------------------------------------------------------------
     {
-        Widget* t = (Widget*)::operator new(0x178);
+        CharSheetWidget* t = (CharSheetWidget*)::operator new(0x178);
         if (t != 0) {
             ctor_widget(t);
         } else {
@@ -446,7 +402,7 @@ void CharSheet::init()
     window->add_child(weapon_title);
 
     {
-        Widget* t = (Widget*)::operator new(0x178);
+        CharSheetWidget* t = (CharSheetWidget*)::operator new(0x178);
         if (t != 0) {
             ctor_widget(t);
         } else {
@@ -462,7 +418,7 @@ void CharSheet::init()
     window->add_child(attrib_title);
 
     {
-        Widget* t = (Widget*)::operator new(0x178);
+        CharSheetWidget* t = (CharSheetWidget*)::operator new(0x178);
         if (t != 0) {
             ctor_widget(t);
         } else {
@@ -479,7 +435,7 @@ void CharSheet::init()
 
     // ---- the seven weapon-proficiency rows ----------------------------------------------------------
     for (i = 0; i < 7; i++) {
-        Widget* row = (Widget*)::operator new(0x188);
+        CharSheetWidget* row = (CharSheetWidget*)::operator new(0x188);
         if (row != 0) {
             ctor_widget(row);
             row->f178 = 0;
@@ -527,7 +483,7 @@ void CharSheet::init()
 
     // ---- the attributes / general-info columns -----------------------------------------------------
     {
-        Widget* a = (Widget*)::operator new(0x188);
+        CharSheetWidget* a = (CharSheetWidget*)::operator new(0x188);
         if (a != 0) {
             ctor_window(a);
             *(void**)a = (void*)0x597050;
@@ -539,7 +495,7 @@ void CharSheet::init()
     label_refresh(attribs, tstring("char_bo_attribs"));
 
     {
-        Widget* g = (Widget*)::operator new(0x188);
+        CharSheetWidget* g = (CharSheetWidget*)::operator new(0x188);
         if (g != 0) {
             ctor_window(g);
             *(void**)g = (void*)0x597050;
@@ -552,7 +508,7 @@ void CharSheet::init()
 
     // the character-name button
     {
-        Widget* n = (Widget*)::operator new(0x188);
+        CharSheetWidget* n = (CharSheetWidget*)::operator new(0x188);
         if (n != 0) {
             ctor_widget(n);
             n->f178 = 0;
@@ -613,7 +569,7 @@ void CharSheet::init()
 
     // ---- the four attribute rows -------------------------------------------------------------------
     for (i = 0; i < 4; i++) {
-        Widget* row = (Widget*)::operator new(0x188);
+        CharSheetWidget* row = (CharSheetWidget*)::operator new(0x188);
         if (row != 0) {
             ctor_widget(row);
             row->f178 = 0;
@@ -706,7 +662,7 @@ void CharSheet::init()
 
     // ---- the skill-description panel ---------------------------------------------------------------
     {
-        Widget* d = (Widget*)::operator new(0x188);
+        CharSheetWidget* d = (CharSheetWidget*)::operator new(0x188);
         if (d != 0) {
             ctor_window(d);
             *(void**)d = (void*)0x597050;
@@ -719,7 +675,7 @@ void CharSheet::init()
     window->add_child(skill_desc);
 
     {
-        Widget* e = (Widget*)::operator new(0x178);
+        CharSheetWidget* e = (CharSheetWidget*)::operator new(0x178);
         if (e != 0) {
             ctor_widget(e);
         } else {

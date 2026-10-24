@@ -18,29 +18,12 @@
 // ---- tstring (see s0042aaf0 / s004e2ea0) ----------------------------------------------------------------
 #include "../tstring.h"
 
-// ---- the writer (vtable slots as used in this range) -----------------------------------------------------
-struct OutStream {
-    virtual OutStream& v00();                       // +0x0
-    virtual OutStream& v04();                       // +0x4
-    virtual OutStream& v08();                       // +0x8
-    virtual OutStream& w_int(int* p);               // +0xc
-    virtual OutStream& w_int4(int* p);              // +0x10
-    virtual OutStream& w_int5(int* p);              // +0x14
-    virtual OutStream& w_int1(int* p);              // +0x18
-    virtual OutStream& w_count(int* p);             // +0x1c
-    virtual OutStream& w_raw(const void* p);        // +0x20
-    virtual OutStream& v24();                       // +0x24
-    virtual OutStream& w_cstr(const char* s);       // +0x28
-    virtual OutStream& w_struct(const void* p);     // +0x2c
-};
+// ---- the writer / the 8-byte vector / the troop record (the slices' GameRecord) --------------------------
+#include "../out_stream.h"
+#include "../list8.h"
+#include "../../include/troop.h"
 
 // ---- vectors --------------------------------------------------------------------------------------------
-struct List8 {                                      // vector of 8-byte elements
-    char* begin;                                    // +0x0
-    char* end;                                      // +0x4
-    char* endcap;                                   // +0x8
-    void write8(OutStream* out);                    // 0x4e94b0 (thiscall, ret 4)
-};
 struct List4 {                                      // vector of 4-byte ints
     int* begin;                                     // +0x0
     int* end;                                       // +0x4
@@ -52,24 +35,6 @@ struct cPairs96 {                                   // the 0x60 8-byte pairs of 
     char raw[8 * 0x60];
     __declspec(noinline) void write(OutStream* out); // 0x4e99a0 (ret 4)
 };
-
-// ---- game records (stride 0x508) ------------------------------------------------------------------------
-#pragma pack(push, 4)
-struct GameRecord {
-    tstring name;                                   // +0x00
-    tstring title;                                  // +0x10
-    int     f20, f24, f28, f2c;                     // +0x20
-    unsigned __int64 f30;                           // +0x30 (64-bit flags; bit 0x10: temporary)
-    char    pad38[0xa0 - 0x38];
-    int     fa0;                                    // +0xa0
-    int     fa4, fa8, fac;                          // +0xa4
-    int     fb0;                                    // +0xb0
-    char    padb4[0x4f4 - 0xb4];
-    List8   f4f4;                                   // +0x4f4 (vector of 8-byte elements)
-    char    pad500[8];
-    void write(OutStream* out);                     // 0x4e9850 (thiscall, ret 4)
-};
-#pragma pack(pop)
 
 // ---- the sparse page table at Game+0xcc ----------------------------------------------------------------
 #pragma pack(push, 4)
@@ -152,8 +117,8 @@ struct Rec5ac8 {
     char     pad92c[0x958 - 0x92c];
     int      f958;                                  // +0x958
     char     pad95c[0x59d8 - 0x95c];
-    List8    f59d8;                                 // +0x59d8 (vector of 8-byte elements)
-    char     pad59e4[0x59f8 - 0x59e4];
+    List8    f59d8;                                 // +0x59d8 (vector of 8-byte elements, 0x10 bytes with the allocator word)
+    char     pad59e8[0x59f8 - 0x59e8];
     List4    f59f8;                                 // +0x59f8 (vector of ints)
     char     pad5a04[0x5a08 - 0x5a04];
     char     f5a08[0xb0];                           // +0x5a08 (the struct-of-arrays block)
@@ -192,7 +157,7 @@ struct OutRecList {
     char      pad00[0x78];
     int       f78;                                  // +0x78
     char      pad7c[0x13a00 - 0x7c];
-    GameRecord* records;                            // +0x13a00 (party records, stride 0x508)
+    Troop* records;                            // +0x13a00 (party records, stride 0x508)
     char      pad13a04[0x1405c - 0x13a04];
     int       pk[0x20];                             // +0x1405c (0x20-int blocks, one per entry)
     void write_missions(OutStream* out);            // 0x4e9b50 (ret 4)
@@ -202,7 +167,7 @@ struct OutRecList {
 // ---- the outer game object (only the record array is touched here) --------------------------------------
 struct OuterGame {
     char        pad00[0x13a00];
-    GameRecord* records;                            // +0x13a00
+    Troop* records;                            // +0x13a00
 };
 
 // ---- callees (slice s004e8f10 / others) -----------------------------------------------------------------

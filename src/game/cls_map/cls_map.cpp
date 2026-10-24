@@ -612,7 +612,7 @@ MissionUi* make_hint(ContainerBase* o, const tstring& text, float x, float y, fl
 }
 
 // @ 0x4db020
-void Screen::fill_single_mission()
+void MissionScreen::fill_single_mission()
 {
     float pos[2];
     {
@@ -623,7 +623,7 @@ void Screen::fill_single_mission()
 }
 
 // @ 0x4db090
-void Screen::fill_mission_grid()
+void MissionScreen::fill_mission_grid()
 {
     float y = 0.7f;
     {
@@ -702,7 +702,7 @@ void Screen::fill_mission_grid()
     vt(overlay)->d50(row[2]);
 
 // @ 0x4dae40
-void Screen::init_mission_window()
+void MissionScreen::init_mission_window()
 {
     row[4] = 0;
     NEW_OVERLAY("mission_window")
@@ -715,7 +715,7 @@ void Screen::init_mission_window()
 }
 
 // @ 0x4db1f0
-void Screen::init_meeting_window()
+void MissionScreen::init_meeting_window()
 {
     NEW_OVERLAY_BASE("meeting_window")
     for (int i = 0; i < 16; i++) {
@@ -754,7 +754,7 @@ void Screen::init_meeting_window()
 }
 
 // @ 0x4db440
-void Screen::fill_mission_row(int side)
+void MissionScreen::fill_mission_row(int side)
 {
     int id;
     if (side == 0)
@@ -810,7 +810,7 @@ void Screen::fill_mission_row(int side)
 }
 
 // @ 0x4db660
-void Screen::init_done_window()
+void MissionScreen::init_done_window()
 {
     g_gui.reset();
     { NEW_OVERLAY_WINDOW(p_) overlay = p_; }

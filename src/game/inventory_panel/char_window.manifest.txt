@@ -1,4 +1,4 @@
 ../src/game/inventory_panel/char_window.cpp  ?get_int@ini_file@@QAEHABUtstring@@@Z  005093d0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/char_window.cpp  ?init@char_window@@QAEXABUtstring@@HPBD11111@Z  00509410  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/char_window.cpp  ?fill_skills@char_window@@QAEXXZ  00509730  /O2 /MT /Gy /TP
-../src/game/inventory_panel/char_window.cpp  ?make_button@@YAPAUUiButton@@PAUUiWidget@@PBUtstring@@MMHM@Z  00509770  /O2 /MT /Gy /TP
+../src/game/inventory_panel/char_window.cpp  ?make_button@@YAPAUUiButton@@PAUWidget@@PBUtstring@@MMHM@Z  00509770  /O2 /MT /Gy /TP

@@ -58,28 +58,7 @@ extern float  g_ticks_per_time;                     // 0x596774
 extern float  g_difficulty_f;                      // 0x5aa07c (the difficulty slider value; the days caption scales it by the constant float at 0x5910fc)
 
 // ---- control stub -----------------------------------------------------------------------------------
-struct Widget {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
-    virtual int  get_value();               // +0x30
-    virtual void v0d(); virtual void v0e();
-    virtual int  float_value();             // +0x38 get_float
-    virtual void v10();
-    virtual char changed(int flag);         // +0x44
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v1a(); virtual void v1b(); virtual void v1c(); virtual void v1d();
-    virtual void v1e(); virtual void v1f(); virtual void v20(); virtual void v21();
-    virtual void v22(); virtual void v23();
-    virtual void set_default();             // +0x90
-    virtual void v25(); virtual void v26(); virtual void v27(); virtual void v28();
-    virtual void place_text(const Pos2& pos, const tstring& s);   // +0xa4 (pos first, text second; callers pass an unset stack slot)
-    virtual void v2a();
-    virtual void set_text(const tstring& s, const Pos2& pos);    // +0xac
-    virtual void show();                    // +0xb0
-    virtual void enable();                  // +0xb4
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // The settings-tab view of the same controls that 0x4d5f20's polls go through: changed() at +0x30, the
 // integer value at +0x34 and the float at +0x38.
@@ -187,10 +166,10 @@ void QuestPage::fill()
 
     {
         Pos2 at;                                 // passed unset to the first call
-        box1()->place_text(at, QREC->title);
+        box1()->set_text(&at, QREC->title);
         at.x = 0.0f;
         at.y = 0.43125f;
-        box1()->set_text(QREC->text, at);
+        box1()->set_text_at(QREC->text, &at.x);
     }
 
     // the date line: "ui_given_on_date" formatted with g_quest_text, which the game's text helper fills
@@ -212,7 +191,7 @@ void QuestPage::fill()
         Pos2 at;
         at.x = 0.0f;
         at.y = 0.38125f;
-        box1()->set_text(text, at);
+        box1()->set_text_at(text, &at.x);
     }
 
     // "N days since given"
@@ -229,7 +208,7 @@ void QuestPage::fill()
         Pos2 at;
         at.x = 0.0f;
         at.y = 0.35f;
-        box1()->set_text(text, at);
+        box1()->set_text_at(text, &at.x);
     }
 
     // the description
@@ -238,7 +217,7 @@ void QuestPage::fill()
         at.x = 0.0f;
         at.y = 0.31875f;
         tstring desc(QREC->giver);
-        box1()->set_text(desc, at);
+        box1()->set_text_at(desc, &at.x);
     }
 
     // the progression number (second box) when the quest has one
@@ -251,11 +230,11 @@ void QuestPage::fill()
         {
             tstring text(buf);
             Pos2 at;
-            box2()->place_text(at, text);
+            box2()->set_text(&at, text);
         }
-        box2()->enable();
+        box2()->show();   // slot +0xb4 (the slice called it enable)
     } else {
-        box2()->show();
+        box2()->hide();   // slot +0xb0 (the slice called it show)
     }
 }
 
@@ -273,14 +252,14 @@ void QuestPage::update_days()
     char buf[0x40];
     sprintf(buf, "%d", n + 0x19);
     tstring text(buf);
-    w34->place_text(fr, text);
+    w34->set_text(&fr, text);
 }
 
 // @ 0x4d6300
 void QuestPage::update_difficulty()
 {
     if (g_game == 0) {
-        wd4->show();
+        wd4->hide();   // slot +0xb0 (the slice called it show)
         return;
     }
     char buf[0x80];
@@ -294,7 +273,7 @@ void QuestPage::update_difficulty()
     {
         tstring text((const char*)&buf[0]);
         Pos2 slot;
-        wd4->place_text(slot, text);
+        wd4->set_text(&slot, text);
     }
 }
 

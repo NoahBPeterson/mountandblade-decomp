@@ -479,19 +479,7 @@ struct CarryBody {
 void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430
 
 // ---- 0x4952f0: the effect object the mission's scene container hands out (the wind / light record, 0x7c bytes) ----------------------------
-struct EffObj {
-    int f0;                                                     // +0x00
-    rgl::vector4 pos;                                           // +0x04
-    rgl::vector4 f14;                                           // +0x14
-    rgl::vector4 f24;                                           // +0x24
-    char pad34[0x54 - 0x34];
-    float f54;                                                  // +0x54
-    char pad58[0x70 - 0x58];
-    int f70;                                                    // +0x70
-    int f74;                                                    // +0x74
-    char pad78[0x7c - 0x78];
-};
-struct EffMgr { EffObj* create(); };                            // 0x478f30 (CellGrid::spawn_wind)
+#include "../eff_obj.h"                                         // EffObj / EffMgr
 
 // ---- the particle-system table and the emitter control (0x4955e0) -----------------------------------------------------------------------------
 struct Emitter;
@@ -515,15 +503,12 @@ struct EmitterCtl {
 };
 
 // ---- 0x495650: the scene list ------------------------------------------------------------------------------------------------------
-struct Frustum {
-    char d[0x134];
-    Frustum();                                                  // 0x41ef60
-};
+#include "../../include/frustum.h"                              // rgl::frustum (0x120 bytes; the ctor 0x41ef60); the stand-in "Frustum" was 0x134 bytes with 0x14 unknown after it
 struct SceneBase {
     char d[0x36c];
     SceneBase();                                                // 0x493ab0 (defined here as SceneBaseCtor::construct, kept opaque)
 };
-struct SceneObject : SceneBase { Frustum frustum; };            // 0x4a0 total
+struct SceneObject : SceneBase { rgl::frustum frustum; char tail[0x14]; };   // 0x4a0 total
 struct SceneList {
     char pad0[0x10];
     std::vector<SceneObject*> v;                                // +0x10

@@ -17,6 +17,7 @@
 #include "../../include/troop.h"
 #include "../../include/msg_log.h"
 #include "../../rgl/mesh.h"
+#include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
 #define FLD(T, off) (*(T*)((char*)this + (off)))

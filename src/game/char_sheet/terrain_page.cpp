@@ -1,34 +1,36 @@
 #include "./terrain_page.h"
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f2730
 void TerrainPage::update()
 {
-    w218->activate(enabled3);
-    set_enabled_text(w218);
-    w21c->activate(water2);
-    set_enabled_text(w21c);
-    w220->activate(enabled1);
-    set_enabled_text(w220);
-    w224->activate(enabled2);
-    set_enabled_text(w224);
+    water_box->activate(water_on);
+    set_enabled_text(water_box);
+    river_box->activate(river_on);
+    set_enabled_text(river_box);
+    terrain_box->activate(terrain_on);
+    set_enabled_text(terrain_box);
+    terraingen_box->activate(terraingen_on);
+    set_enabled_text(terraingen_box);
 
     int mode = -1;
     for (int i = 0; mode == -1; i++) {
         if (i >= 8)
             break;
-        if (g_size_modes[i] == type)
+        if (g_size_modes[i] == terrain_type)
             mode = i;
     }
     if (mode >= 0)
-        w228->activate(mode);
-    w22c->activate(size);
+        type_box->activate(mode);
+    size_box->activate(map_size);
 
-    btn1c0->set_value((f3c - g_140) * g_00143);
-    btn1c4->set_value((f40 - g_140) * g_00143);
-    btn1c8->set_value((f44 - g_10) * g_01);
-    btn1cc->set_value(f48);
-    btn1d0->set_value((float)water_level * g_01);
-    btn1d4->set_value(f4c);
+    x_slider->set_value((camera_x - g_140) * g_00143);
+    y_slider->set_value((camera_y - g_140) * g_00143);
+    z_slider->set_value((camera_z - g_10) * g_01);
+    fog_slider->set_value(fog);
+    level_slider->set_value((float)water_level * g_01);
+    height_slider->set_value(water_height);
 
     set_hex3_text(0);
     set_hex3_text(1);
@@ -38,18 +40,18 @@ void TerrainPage::update()
 void TerrainPage::set_enabled_text(Widget* w)
 {
     if (w->get_value())
-        w->set_text(tstring("Enabled"));
+        { char r[8]; w->set_text(r, tstring("Enabled")); }
     else
-        w->set_text(tstring("Disabled"));
+        { char r[8]; w->set_text(r, tstring("Disabled")); }
 }
 
 // @ 0x4f28f0
 void TerrainPage::set_hex3_text(int i)
 {
     char buf[512];
-    sprintf(buf, g_fmt_d, hex3[i]);
+    sprintf(buf, g_fmt_d, layer_bits[i]);
     tstring text(buf);
-    num2[i]->set_text(text);
+    { char r[8]; bit_fields[i]->set_text(r, text); }
 }
 
 // @ 0x4f2960
@@ -58,7 +60,7 @@ void TerrainPage::refresh_hex()
     sync_bits();
     tstring text;
     g_bits.build_hex_text(text);            // 0x4f29b0, this = the bit-word object at 0xa76630
-    hexbox->set_text(text);
+    { char r[8]; hexbox->set_text(r, text); }
 }
 
 // @ 0x4f29b0
@@ -87,19 +89,19 @@ void format_hex(unsigned v, char* out)
 // @ 0x4f2ae0
 void TerrainPage::sync_bits()
 {
-    g_bits.set(0x7e, 0x7e, enabled3 != 0);
-    g_bits.set(0xa2, 0xa3, water2);
-    g_bits.set(0x7f, 0x7f, enabled1 != 0);
-    g_bits.set(0x3f, 0x3f, enabled2 != 0);
-    g_bits.set(0x60, 0x69, (unsigned)(int)f3c);
-    g_bits.set(0x6a, 0x73, (unsigned)(int)f40);
-    g_bits.set_a(&f44);
-    g_bits.set_pct(f48);
-    g_bits.set(0, 0x1e, hex3[0]);
-    g_bits.set(0x20, 0x3e, hex3[1]);
-    g_bits.set(0x40, 0x5e, hex3[2]);
+    g_bits.set(0x7e, 0x7e, water_on != 0);
+    g_bits.set(0xa2, 0xa3, river_on);
+    g_bits.set(0x7f, 0x7f, terrain_on != 0);
+    g_bits.set(0x3f, 0x3f, terraingen_on != 0);
+    g_bits.set(0x60, 0x69, (unsigned)(int)camera_x);
+    g_bits.set(0x6a, 0x73, (unsigned)(int)camera_y);
+    g_bits.set_a(&camera_z);
+    g_bits.set_pct(fog);
+    g_bits.set(0, 0x1e, layer_bits[0]);
+    g_bits.set(0x20, 0x3e, layer_bits[1]);
+    g_bits.set(0x40, 0x5e, layer_bits[2]);
     g_bits.set(0x8e, 0x94, water_level);
-    g_bits.set_b(&f4c);
-    g_bits.set(0x9c, 0x9f, type);
-    g_bits.set(0xa0, 0xa1, size);
+    g_bits.set_b(&water_height);
+    g_bits.set(0x9c, 0x9f, terrain_type);
+    g_bits.set(0xa0, 0xa1, map_size);
 }

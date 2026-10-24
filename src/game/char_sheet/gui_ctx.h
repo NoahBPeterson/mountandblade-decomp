@@ -9,7 +9,7 @@
 
 struct tstring;
 struct scene_row;
-struct vector2;
+#include "../../include/vec.h"       // vector2 (= Vec2)
 struct RenderScene;
 struct Vec1c { char b[0x1c]; void assign(const Vec1c* o); };   // 0x43f0a0 (thiscall operator=, 28-byte vector-like)
 

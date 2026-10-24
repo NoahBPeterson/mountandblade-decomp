@@ -258,14 +258,5 @@ struct PresentationRec {    // module-file presentation (0x4c23f0)
     int     f20;            // +0x20
     void read(stream_base& s);                  // 0x4c23f0 (ret 4)
 };
-struct MenuRec {            // module-file game menu (0x4c2b20)
-    tstring text;           // +0x00 (underscores become spaces)
-    tstring id;             // +0x10
-    __int64 flags;          // +0x20
-    tstring mesh;           // +0x28
-    DialogBlock ops;        // +0x38 operations (text +0x44)
-    int     count;          // +0x54
-    menu_item* items;       // +0x58
-    void read(stream_base& s);                  // 0x4c2b20 (ret 4)
-};
+#include "../menu_rec.h"      // MenuRec (module-file game menu 0x4c2b20)
 #endif // GAME_TRIGGERS_TRIGGER_VEC_H

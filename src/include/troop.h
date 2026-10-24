@@ -13,6 +13,7 @@
 #include "../game/tstring.h"
 #include "../game/item_ref.h"
 #include "../game/slot_array.h"
+#include "../game/list8.h"
 
 struct Troop {
     tstring name;                           // +0x00 (the first member: 0x51c720 reads the record as a tstring; agent2 / agent3 called it `id`, 0x43a480, 0x4428c0)
@@ -98,7 +99,9 @@ struct Troop {
         unsigned u3b8;                      // +0x3b8 (low 16 = party/side id, bits 16..23 = rule id)
     };
     int used;                               // +0x3bc
-    char pad3c0[0x400 - 0x3c0];
+    __int64 f3c0;                           // +0x3c0 (64-bit stamp: char_sheet/save_state 0x4e8f10 writes it with w_int8; 0x4e9850 walks four 8-byte values from here)
+    int f3c8;                               // +0x3c8 (0x4e8f10)
+    char pad3cc[0x400 - 0x3cc];
     int note_times[8];                      // +0x400 (script add_troop_note_from_dialog 0x4a3351; -1 = hidden)
     tstring notes[8];                       // +0x420 (script 0x4a328b)
     int note_tableau;                       // +0x4a0 (script add_troop_note_tableau_mesh 0x4a30fe)
@@ -107,8 +110,11 @@ struct Troop {
         ItemRef equipment[10];              // +0x4a4 (script troop_has_item_equipped 0x4a050e, ek_horse = +0x4e4)
         struct { char pad4a4[0x40]; int f4e4; };    // +0x4e4 (equip[8].item)
     };
-    SlotArray slots;                        // +0x4f4 (script troop_set_slot 0x4a079a)
-    char pad4f5[0x508 - 0x4f5];
+    union {
+        SlotArray slots;                    // +0x4f4 (script troop_set_slot 0x4a079a)
+        List8 saved;                        // +0x4f4 vector of 8-byte elements (0x4e9850 passes this+0x4f4 to List8::write8 0x4e94b0): the slot storage
+    };
+    char pad504[4];
 
     bool has_flag10();                      // 0x435130
     int stat_int(int i);                    // 0x435150
@@ -140,6 +146,8 @@ struct Troop {
     void add_skill(int id, int delta);      // 0x48c090 (ret 8)
     void sort_inv();                        // 0x48c0c0 (compacts the inventory, then a bubble pass by item value)
     void set_slot(int item, int idx, int mod);   // 0x48c7f0 (ret 0xc)
+    // ---- src/game/char_sheet/save_records.cpp ----
+    void write_save(OutStream* out);        // 0x4e9850 (save-file serialiser of the record; the slice called the record GameRecord)
 };
 
 struct TroopRec : Troop {

@@ -40,44 +40,8 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 // ---- controls (layouts verified in s004d5ba0 / s004d63b0 / s004d6b80) --------------------------------
 // set_text returns an 8-byte object through a hidden pointer that no caller destroys: a non-POD pair (a user
 // constructor, no destructor). 0x4f28a0/0x4f28f0/0x4f2960 reserve exactly 8 bytes for it.
-#include "../wret.h"
-struct Widget {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v0a();
-    virtual void activate(int v);                           // +0x2c (index 11)
-    virtual int  get_value();                               // +0x30 (index 12)
-    virtual void v0d();                                     // +0x34 (index 13)
-    virtual float get_float();                              // +0x38 (index 14)
-    virtual void v0f(); virtual void v10();                 // indices 15, 16
-    virtual char changed(int flag);                         // +0x44 (index 17)
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v1a();
-    virtual void set_pos(const vector4& v);                 // +0x6c (index 27)
-    virtual void set_size(const vector4& v);                // +0x70 (index 28)
-    virtual void v1d(); virtual void v1e(); virtual void v1f(); virtual void v20();
-    virtual void v21(); virtual void v22(); virtual void v23();
-    virtual void set_default();                             // +0x90 (index 36)
-    virtual void v25();                                     // index 37
-    virtual void set_colour(int colour);                    // +0x98 (index 38)
-    virtual void v27(); virtual void v28();                 // indices 39, 40
-    virtual WRet set_text(const tstring& s);                // +0xa4 (index 41)
-    virtual void set_text2(const tstring& s, const vector4& pos);  // +0xa8 (index 42)
-    virtual void v2b();                                     // index 43
-    virtual void show_v();                                  // +0xb0 (index 44)
-    virtual void hide_v();                                  // +0xb4 (index 45)
-    virtual void enable_v();                                // +0xb8 (index 46)
-    virtual void disable_v();                               // +0xbc (index 47)
-};
-// the range widget: +0x34 is the value setter (index 13)
-struct RangeWidget {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
-    virtual void v0c();
-    virtual void set_value(float v);                        // +0x34 (index 13)
-};
+#include "../ui_widget.h"                 // Widget (the UI widget interface; the range widgets are Widgets too: set_value is slot +0x34)
+typedef Widget RangeWidget;
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[n] = 2 << n
@@ -88,60 +52,8 @@ extern const int g_type_mask[1];                            // 0x5a8e88 (= 4: th
 extern int g_env2;                                          // 0x5e28fc (shaders on)
 extern int g_size_modes[8];                                 // 0x59394c terrain-size mode table (only [0] is ours)
 
-// ---- the page -----------------------------------------------------------------------------------------
-struct TerrainPage {
-    char    pad00[0x18];
-    int     option;                                         // +0x18 (the option the menu returns to)
-    char    pad1c[0x2c - 0x1c];
-    int     enabled1;                                       // +0x2c  "Enable terrain" checkbox
-    int     enabled2;                                       // +0x30  "Enable terrain generation" checkbox
-    int     enabled3;                                       // +0x34  "Enable water" checkbox
-    int     water2;                                         // +0x38  "Enable river" checkbox
-    float   f3c;                                            // +0x3c  X position
-    float   f40;                                            // +0x40  Y position
-    float   f44;                                            // +0x44  camera height above the ground
-    float   f48;                                            // +0x48  fog (0..1)
-    float   f4c;                                            // +0x4c  water height (0..1)
-    int     water_level;                                    // +0x50  water level, written into bits 0x8e..0x94
-    int     hex3[3];                                        // +0x54 / +0x58 / +0x5c  random bits of the water layers
-    int     type;                                           // +0x60  terrain type (4 bits)
-    int     size;                                           // +0x64  terrain size (2 bits)
-    char    pad68[0x1ac - 0x68];
-    int*    obj1ac;                                         // +0x1ac (the world object, used by FUN_004f2d70 only)
-    int     f1b0;                                           // +0x1b0 (unknown; 0x4f2960 reads the text box at +0x1b4)
-    Widget* hexbox;                                         // +0x1b4  the hex terrain text field
-    char    pad1b8[0x1c0 - 0x1b8];
-    RangeWidget* btn1c0;                                    // +0x1c0  X position
-    RangeWidget* btn1c4;                                    // +0x1c4  Y position
-    RangeWidget* btn1c8;                                    // +0x1c8  camera height
-    RangeWidget* btn1cc;                                    // +0x1cc  fog
-    RangeWidget* btn1d0;                                    // +0x1d0  water height
-    RangeWidget* btn1d4;                                    // +0x1d4  water level
-    char    pad1d8[0x200 - 0x1d8];
-    Widget* num2[3];                                        // +0x200  number fields for hex3[0..2]
-    Widget* box3[3];                                        // +0x20c  the bit-field strips of hex3[0..2]
-    Widget* w218;                                           // +0x218  Enable water
-    Widget* w21c;                                           // +0x21c  Enable river
-    Widget* w220;                                           // +0x220  Enable terrain
-    Widget* w224;                                           // +0x224  Enable terrain generation
-    Widget* w228;                                           // +0x228  terrain size
-    Widget* w22c;                                           // +0x22c  terrain type
-    Widget* w230;                                           // +0x230  regenerate
-    Widget* w234;                                           // +0x234  back
-    char    pad238[0x2c0 - 0x238];
-
-    void update();                                          // 0x4f2730
-    __declspec(noinline) void set_enabled_text(Widget* w);                       // 0x4f28a0
-    __declspec(noinline) void set_hex3_text(int i);                              // 0x4f28f0
-    void refresh_hex();                                     // 0x4f2960
-    bool changed(Widget* w) { return w->changed(0x10000); } // +0x44 (the page's change flag)
-    void sync_bits();                                       // 0x4f2ae0
-    void copy_clipboard();                                  // 0x4f34c0
-    void paste_clipboard();                                 // 0x4f3c30
-    void read_fields();                                     // 0x4f3570
-    void simulate(float dt);                                // 0x4f37f0
-    void path(float dt);                                    // 0x4f3cf0
-};
+// ---- the page: src/game/terrain_page.h ------------------------------------------------------------------
+#include "../terrain_page.h"
 
 void format_hex(unsigned v, char* out);                     // 0x4f2a10 (argument order recovered from the codegen)
 void f4f3570(TerrainPage* p);                               // 0x4f3570

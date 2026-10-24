@@ -119,28 +119,7 @@ struct EChar : TroopMgr {
 // the colour ramp / material record of the character owner (0xb0 bytes, ramp.h: Ramp; terrain_a/game_state.h includes it too)
 #include "../ramp.h"
 
-// the animation state (global object at 0x8ed4f60)
-struct Animator {
-    int set;                     // 0x00
-    int item;                    // 0x04
-    int cur;                     // 0x08
-    int variant;                 // 0x0c
-    char pad10[4];
-    int material;                // 0x14
-    char pad18[4];
-    EChar* chars;                // 0x1c
-    char pad20[0xc];
-    float weights[63];           // 0x2c (one weight per bone, up to +0x128)
-    float scale;                 // 0x128
-    float time;                  // 0x12c
-    void collect(char flag, rgl::lod_mesh** a, rgl::lod_mesh** b, rgl::lod_mesh** c);   // 0x47fb10
-    void set_anim_a(void* a);                    // 0x473800
-    void set_anim_b(void* a, void* b, int kind); // 0x4746e0
-    void end_anim(void* a);                      // 0x4eb660 (ret 4; src/game/mission5: the closing call of reset)
-    void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
-};
-typedef char animator_weights_check[(offsetof(Animator, scale) == 0x128) ? 1 : -1];
-extern Animator g_anim;          // 0x8ed4f60
+#include "../animator.h"       // Animator, g_anim (the animation state, global object at 0x8ed4f60)
 
 
 // ---- members of Terrain (src/game/terrain_a/terrain.h) defined in this TU --------------------------------------------

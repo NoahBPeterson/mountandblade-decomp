@@ -16,7 +16,6 @@ namespace rgl { struct mesh; }
 
 // record types of the save-game writer (char_sheet/save_state.h defines them), the party-info record of the map tooltip and the
 // serialisation streams: only pointers to them are members / parameters here
-struct GameRecord;
 struct Rec300;
 struct RecB0;
 struct Rec138;
@@ -97,7 +96,7 @@ struct GameData {
     union {
         Troop* troops;                          // +0x13a00 (stride 0x508)
         TroopRec* chars;                        // +0x13a00   0x460160, 0x4428c0
-        GameRecord* records;                    // +0x13a00 (char_sheet/save_state.cpp 0x4e97e0)
+        Troop* records;                         // +0x13a00 (char_sheet/save_state.cpp 0x4e97e0)
         char* chars_c;                          // +0x13a00 as bytes (inventory_panel/view_open.cpp, char_sheet/facegen*.cpp: records are indexed by 0x508)
     };
     union {

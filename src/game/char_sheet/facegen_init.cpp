@@ -3,6 +3,10 @@
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../engvec.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f49d0
 void FaceGen::init()
@@ -55,7 +59,7 @@ void FaceGen::init()
         elem* b = new elem;
         buttons = b;
         elem_fill(b, tstring("face_bo_button"));
-        push_item(ui, b);
+        push_item(ui, (widget*)b);
     }
     tstring btn_text;
     {
@@ -261,28 +265,28 @@ void FaceGen::init()
     float s2[2];
     s2[0] = 0.4585f;
     s2[1] = 0.44f;
-    b->set_size(s2);
+    b->set_scale(s2);
     b->flags |= 0x300;
-    b->color = 0xff201815;
+    b->clear_color = 0xff201815;
 
     // ---- the camera frustum (16:9 fit around the body) ---------------------------------------------
-    float ratio = b->y1 / b->x1 * g_fov_k;
+    float ratio = b->size_y / b->size_x * g_fov_k;
     float tanv = (float)tan(g_tan_ang);
-    fr.on = 1;
-    fr.f118 = 0.01f;
-    fr.f11c = 20.0f;
-    fr.f108 = -(0.01f * tanv);
-    fr.f10c = 0.01f * tanv;
-    fr.f114 = -(ratio * (0.01f * tanv));
-    fr.f110 = ratio * (0.01f * tanv);
+    fr.perspective = 1;
+    fr.nearz = 0.01f;
+    fr.farz = 20.0f;
+    fr.left = -(0.01f * tanv);
+    fr.right = 0.01f * tanv;
+    fr.bottom = -(ratio * (0.01f * tanv));
+    fr.top = ratio * (0.01f * tanv);
     fr.build_planes();
 
-    push_item(ui, b);
+    push_item(ui, (widget*)b);
 
-    fr.f_f8[0] = 0.0f;
-    fr.f_f8[1] = 0.0f;
-    fr.f_f8[2] = 10.0f;
-    fr.f_f8[3] = 0.0f;
+    fr.m.o.x = 0.0f;
+    fr.m.o.y = 0.0f;
+    fr.m.o.z = 10.0f;
+    fr.m.o.w = 0.0f;
     v154[0] = 0.0f;
     v154[1] = 0.0f;
     v154[2] = 0.0f;

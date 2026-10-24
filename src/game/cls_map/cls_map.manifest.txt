@@ -17,7 +17,7 @@
 ../src/game/cls_map/cls_map.cpp  ?copy_configs_backward@@YAPAUloading_config@@PAU1@00@Z  004da8c0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ??1TwoVec@@QAE@XZ  004da9c0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?make_hint@@YAPAUMissionUi@@PAUContainerBase@@ABUtstring@@MMMM@Z  004dada0  /O2 /MT /Gy /TP
-../src/game/cls_map/cls_map.cpp  ?fill_single_mission@Screen@@QAEXXZ  004db020  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?fill_single_mission@MissionScreen@@QAEXXZ  004db020  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?new_button@@YAPAUUiAInline@@PAUContainerBase@@ABUtstring@@MMMM@Z  004db810  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?insert@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAE?AViterator@12@V312@ABUE50@@@Z  004db960  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?_Insert_n@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@IAEXViterator@12@IABUE68@@@Z  004db9d0  /O2 /MT /Gy /TP

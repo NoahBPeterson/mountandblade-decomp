@@ -17,25 +17,10 @@
 #include "../str_table.h"
 extern StrTable g_strtable;                         // 0x5e2a18
 
-// ---- character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) --------
-// Only the fields this panel reads are named; the record is reached through a byte pointer + 0x508 index,
-// so the unread tail (0xb4..0x508) does not change the code.
-struct CharRec {
-    char pad0[0x20];
-    char name[0x10];                                // +0x20 (tstring, passed whole to find)
-    int flags;                                      // +0x30 (bit 0x10 selects the "player" variant)
-    char pad34[0x58 - 0x34];
-    int level_at;                                   // +0x58 (index into the 0x5937cc level table)
-    char pad5c[0x74 - 0x5c];
-    int attrib[2];                                  // +0x74, +0x78 (the sheet's first %s: %d line)
-    char pad7c[0x9c - 0x7c];
-    int xp_val;                                     // +0x9c (the ui_xp line's value)
-    float health;                                   // +0xa0 (float, shown truncated by the ui_health_pyer line)
-    int hp;                                         // +0xa4 (health shown as an integer)
-    int health_max;                                 // +0xa8 (attribute points)
-    int next_level_xp;                              // +0xac (weapon points)
-    int xp;                                         // +0xb0 (experience)
-};
+// ---- the character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) is the troop record,
+// src/include/troop.h (the slice called it CharRec): +0x20 key, +0x30 flags32, +0x58 attrs / lvl58, +0x78 nib[3], +0x9c exp,
+// +0xa0 hp, +0xa4 skill_points, +0xa8 attr_points, +0xac prof_points, +0xb0 level.
+#include "../../include/troop.h"
 
 #include "../../include/game_data.h"
 
@@ -63,40 +48,15 @@ static __forceinline float config_float(const tstring& key)
 // uninitialised 16-byte result slot), +0xac set_position(text, &pos) (ret 8), +0xb0 show, +0xb4
 // show_selected.  The label flag is the byte at +0x181 (the vptr takes +0).
 struct PostSlot { int a, b, c, d; };
-struct Widget {
-    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03(); virtual void s04();
-    virtual void s05(); virtual void s06(); virtual void s07(); virtual void s08(); virtual void s09();
-    virtual void s10(); virtual void s11(); virtual void s12(); virtual void s13(); virtual void s14();
-    virtual void s15(); virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
-    virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23(); virtual void s24();
-    virtual void s25(); virtual void s26(); virtual void s27(); virtual void s28(); virtual void s29();
-    virtual void s30(); virtual void s31(); virtual void s32(); virtual void s33(); virtual void s34();
-    virtual void s35(); virtual void s36(); virtual void s37(); virtual void s38(); virtual void s39();
-    virtual void s40();
-    virtual void post_text(PostSlot* out, const tstring& text);       // +0xa4
-    virtual void s42();
-    virtual void set_position(const tstring& text, float* pos);      // +0xac
-    virtual void show();                                             // +0xb0
-    virtual void show_selected();                                    // +0xb4
+#include "../ui_widget.h"                 // Widget (the UI widget interface)
+struct SheetWidget : Widget {
     char pad[0x181 - 4];
     char has_label;                                                  // +0x181
 };
-typedef Widget ColorText;
-typedef Widget SkillRow;
+typedef SheetWidget ColorText;
+typedef SheetWidget SkillLine;
 
 // ---- the character-sheet panel (only the slots this function touches) -----------------------------------
-struct CharSheet {
-    char pad0[0x14];
-    int player;                                     // +0x14
-    char pad18[0x44c - 0x18];
-    SkillRow* skill_pos[4];                         // +0x44c (position widgets of the four skill lines)
-    SkillRow* skill_val[4];                         // +0x45c (text widgets of the four skill lines)
-    char pad46c[0x4b0 - 0x46c];
-    ColorText* level_at;                            // +0x4b0 (next-level / level / attribute lines)
-    ColorText* xp_bar;                              // +0x4b4 (experience bar)
-    char pad4b8[0x4c4 - 0x4b8];
-    ColorText* name;                                // +0x4c4
-    void update_texts();                            // 0x4f0820
-};
+#include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
 
 #endif

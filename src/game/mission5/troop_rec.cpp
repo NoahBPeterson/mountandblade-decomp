@@ -22,6 +22,7 @@
 #include "../../include/item_kind.h"
 #include "../../include/game_recs.h"
 #include "../mesh_slot/mesh_slot.h"
+#include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 extern float g_scene_rate;                          // 0x59bfec (rdata: scales the byte at +0xa6 of a party record)
 
@@ -683,5 +684,5 @@ void Animator::reset(void* a, void* b)
         pf += 9;
     }
 
-    end_anim(a);
+    pack_state((PackedState*)a);
 }

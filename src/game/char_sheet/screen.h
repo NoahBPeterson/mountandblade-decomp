@@ -6,9 +6,9 @@
 //   0x4ebdc0 ~UiRow            destroys one 0x20-byte row (units array 0x4d10f0 + free, tstring at +0).
 //   0x4ebe10 append_rows       copy-constructs [first,last) into dest (0x4e42f0), returning the new end.
 //   0x4ebe7a unwind_rows       the EH cleanup of append_rows: calls ~UiRow on [saved, current) then rethrows.
-//   0x4ebea0 Screen::Screen    ctor of the screen object (1.1 MB: 6 "hint" vector tables, 3 std::vectors,
+//   0x4ebea0 GuiScreen::GuiScreen    ctor of the screen object (1.1 MB: 6 "hint" vector tables, 3 std::vectors,
 //                              vec_table 0x417cb0, rgl::mesh, scene, a 0x800-byte matrix array).
-//   0x4ebfd0 Screen::process   per-frame mouse/camera update and key-message dispatch.
+//   0x4ebfd0 GuiScreen::process   per-frame mouse/camera update and key-message dispatch.
 //   0x4ec460 frame_hook        the engine's end-of-frame callback: screenshot / leave-mission triggers.
 // Names and field names are provisional; offsets come from this function and the neighbouring slices.
 #include <windows.h>
@@ -136,7 +136,7 @@ struct ClickRec {
     float elapsed();                    // 0x432c10 (seconds since the record was touched)
 };
 
-struct Screen {
+struct GuiScreen {
     void* vptr;                         // +0x00
     CurObj** obj_first;                 // +0x04 (std::vector<CurObj*> first/last/end)
     CurObj** obj_last;                  // +0x08
@@ -177,21 +177,21 @@ struct Screen {
     void post(int param);                                   // 0x4e6510
     void finish();                                          // 0x4c5330
 
-    Screen();                                               // 0x4ebea0
+    GuiScreen();                                               // 0x4ebea0
     void process(int param);                                // 0x4ebfd0
 };
 
 // the two inlined std::vector idioms, kept as free helpers so `this` stays in ESI.
-static __forceinline int vec_size(Screen* s)
+static __forceinline int vec_size(GuiScreen* s)
 {
     return s->obj_first ? (int)(s->obj_last - s->obj_first) : 0;
 }
-static __forceinline CurObj* vec_back(Screen* s)
+static __forceinline CurObj* vec_back(GuiScreen* s)
 {
     return s->obj_first[vec_size(s) - 1];
 }
 
-// every element of the Screen::obj vector exposes the per-frame update at vtable slot +0x8.
+// every element of the GuiScreen::obj vector exposes the per-frame update at vtable slot +0x8.
 struct ScreenVT {
     virtual void s0(int); virtual void s1(int); virtual void update(int);
 };
