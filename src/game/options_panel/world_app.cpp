@@ -9,6 +9,7 @@
 #include <new>
 #include "../tstring.h"
 #include "../party/game.h"
+#include "../application.h"
 
 struct Tail {                                       // 0x10-byte string tail record
     int a, b, c, d;
@@ -41,14 +42,7 @@ struct Block {
 };
 void  sub_4be6b0(void* p);                          // 0x4be6b0
 void  sub_4d1360(void* p);                          // 0x4d1360
-struct Sub63d0 {
-    char pad[0x667c - 0x63d0];
-    void init();                                    // 0x4be6b0
-};
-struct Sub6698 {
-    char pad[0x67d8 - 0x6698];
-    void init();                                    // 0x4d1360
-};
+#include "world_subs.h"                           // Sub63d0 / Sub6698
 struct TStr {
     void ctor();                                    // 0x42bbd0
     ~TStr();                                        // 0x42bc40
@@ -57,9 +51,9 @@ void  ui_open_close(int flag);                      // 0x494260
 struct StrTab { const tstring* lookup(const tstring& s); };   // 0x43a1e0
 struct UiObj { void open(int flag); };                         // 0x494260
 
-struct Rec34 {
+struct Pair34 {                                     // 0x34-byte element (two tstrings at +0 / +0x10, a heap pointer at +0x30); not the vtable-0x59584c Rec34 of trigger_records.h
     char pad[0x10];
-    void vecdel(unsigned flags);                    // 0x401870  ??_ERec34@@QAEPAXI@Z
+    void vecdel(unsigned flags);                    // 0x401870  vector deleting destructor (the symbol file calls it ??_ERec34@@QAEPAXI@Z)
 };
 
 struct OwnedVec {                                      // allocator dword, begin/last/end
@@ -112,7 +106,7 @@ struct Big {
     int  f010; int f014; int f018; int f01c;
     int  f020; int f024; int f028; int f02c;
     int  f030; int f034; int f038; int f03c;
-    Rec34* f040;                                    // +0x40
+    Pair34* f040;                                    // +0x40
     Rec18* f044;                                    // +0x44
     OwnedVec v48;                                       // +0x48
     OwnedVec v58;                                       // +0x58
@@ -448,37 +442,9 @@ extern Big* g_5e292c;                               // 0x5e292c
 extern int g_5a9fd8;                                // 0x5a9fd8
 extern int g_5e27c8[0x40];                          // 0x5e27c8
 
-struct LogStream {
-    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
-    virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
-    virtual void w_cstr(const char* msg);           // slot 10 (+0x28)
-};
+#include "../log_stream.h"                       // LogStream: slot 10 (+0x28) is w_cstr
 
-// ---- the Direct3D application base class (layout from s00401910) --------------------------------------
-struct Application {
-    char pad[0x350];
-    Application();                                  // 0x401910
-};
-
-// +0x350..+0x590: the game application's own fields, with the module-string array at +0x390
-struct GameApp : Application {
-    char   f350;                                    // +0x350
-    char   pad0[0x354 - 0x351];
-    HBITMAP hbmp;                                   // +0x354
-    char   pad1a[0x364 - 0x358];
-    HWND   hwnd;                                    // +0x364
-    char   pad1[0x374 - 0x368];
-    int    f374;                                    // +0x374
-    int    f378;                                    // +0x378
-    int    f37c;                                    // +0x37c
-    char   pad2[0x38c - 0x380];
-    int    f38c;                                    // +0x38c
-    char   arr[0x200];                              // +0x390: 0x20 tstrings
-    GameApp();
-    int  msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp);   // 0x4d4140
-    tstring* mod(int i) { return ((tstring*)arr) + i; }
-};
-
+// ---- the application object: Application / GameApp (../application.h) --------------------------------
 // @ 0x4d3ec0
 GameApp::GameApp()
 {
@@ -551,8 +517,8 @@ GameApp::GameApp()
 
     *(tstring*)0xa75e8c = *(tstring*)0x8ee3c28;
     *(int*)((char*)this + 0x364) = 0;
-    f374 = 0;
-    f378 = 0;
+    m_hMapEditorDlg = 0;
+    m_hScriptDlg = 0;
     f37c = 0;
 }
 

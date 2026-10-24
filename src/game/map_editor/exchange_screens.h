@@ -205,7 +205,7 @@ struct XferWin {
 };
 
 // ---- the screens with raw layouts -------------------------------------------------------------------------------------
-struct ListWidget : Widget {                // a scroll list: current index +0x1cc into the arrays at +0x19c / +0x1ac
+struct ChoiceList : Widget {                // a choice list (was ListWidget; not agent5's 0x4a8-byte ListWidget, ctor 0x49deb0, whose +0x188 holds a scene): current index +0x1cc into the arrays at +0x19c / +0x1ac
     __declspec(noinline) void get3(int* a, int* b, int* c);      // 0x533a60 (ret 0xc)
 };
 

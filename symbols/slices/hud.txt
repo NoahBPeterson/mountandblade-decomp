@@ -13,7 +13,7 @@
 004d59f0 Hud::on_leave  # "leave" button -> menu option 7 (byte-exact; this = Hud, button at +0x34)
 004d5a20 Hud::on_update  # per-frame: mission-clock step, page list/buttons, menu button
 0xa75f2c g_menu_kinds  # menu-kind table, element stride 0x1c, timer-list sound holder at +0x14
-004d4b80 ?on_selection_changed@Mesh@@QAE_NXZ  # mesh editor: three or four selected vertices -> add_triangle (orientation classes by the average face normal)
+004d4b80 ?on_selection_changed@EditMesh@@QAE_NXZ  # mesh editor: three or four selected vertices -> add_triangle (orientation classes by the average face normal)
 004d51d0 ?destroy@World@@QAEXXZ  # mission object destructor (tail-call shape): world base, string, sub-objects and vectors
 004d5290 ?handle_buttons@Hud@@QAEXH@Z  # mission screen buttons: item source pick, then used-flag tests open menu options
 004d5410 ?pick@MissionSource@@QAEXPAH@Z  # (same function as the line above, mangled name)

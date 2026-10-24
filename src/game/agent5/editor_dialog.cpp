@@ -113,15 +113,7 @@ struct EditorSceneView {
 
 static inline EditorTerrainView* terrain(int i) { return (EditorTerrainView*)((char*)g_editor->world + i * 0x1c8); }
 
-struct EditorPanel {
-    char pad0[0x358];
-    HINSTANCE hinst;        // +0x358
-    char pad35c[0x374 - 0x35c];
-    HWND view_hwnd;         // +0x374
-    void update_mode_checks();          // 0x4bf640
-    void update_object_type();          // 0x4c7bf0
-    LRESULT terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4fe860
-};
+#include "../editor_panel.h"       // EditorPanel : GameApp (hinst = m_hInstance +0x358, m_hMapEditorDlg = m_hMapEditorDlg +0x374)
 
 // @ 0x4fe860
 LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -132,7 +124,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (msg == WM_NOTIFY) {
             switch (wParam & 0xffff) {
             case 0x472: {
-                LRESULT v = SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_GETPOS, 0, 0);
+                LRESULT v = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_GETPOS, 0, 0);
                 float f = (float)v;
                 double d;
                 if (g_game->mode == 2) {
@@ -147,11 +139,11 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                 }
                 char buf[512];
                 _sprintf(buf, "%1.0f", d);
-                SetWindowTextA(GetDlgItem(view_hwnd, 0x47f), buf);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
                 return 0;
             }
             case 0x473: {
-                LRESULT v = SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_GETPOS, 0, 0);
+                LRESULT v = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_GETPOS, 0, 0);
                 float f = (float)v * 0.01f;
                 double d;
                 if (g_game->mode == 2) {
@@ -166,11 +158,11 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                 }
                 char buf[512];
                 _sprintf(buf, "%1.2f", d);
-                SetWindowTextA(GetDlgItem(view_hwnd, 0x480), buf);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
                 return 0;
             }
             case 0x477: {
-                LRESULT v = SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_GETPOS, 0, 0);
+                LRESULT v = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_GETPOS, 0, 0);
                 float f = (float)v * 0.01f;
                 double d;
                 if (g_game->mode == 2) {
@@ -185,30 +177,30 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                 }
                 char buf[512];
                 _sprintf(buf, "%1.2f", d);
-                SetWindowTextA(GetDlgItem(view_hwnd, 0x482), buf);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
                 return 0;
             }
             case 0x4c8:
             case 0x4c9:
             case 0x4ca: {
-                int r = (int)SendMessageA(GetDlgItem(view_hwnd, 0x4c8), TBM_GETPOS, 0, 0);
-                int g = (int)SendMessageA(GetDlgItem(view_hwnd, 0x4c9), TBM_GETPOS, 0, 0);
-                int b = (int)SendMessageA(GetDlgItem(view_hwnd, 0x4ca), TBM_GETPOS, 0, 0);
+                int r = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_GETPOS, 0, 0);
+                int g = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_GETPOS, 0, 0);
+                int b = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_GETPOS, 0, 0);
                 char num[64];
                 char text[64];
                 _itoa(r, num, 10);
-                GetDlgItemTextA(view_hwnd, 0x4cd, text, 0x40);
+                GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
                 if (_stricmp(num, text) != 0)
-                    SetDlgItemTextA(view_hwnd, 0x4cd, num);
+                    SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, num);
                 _itoa(g, num, 10);
-                GetDlgItemTextA(view_hwnd, 0x4cf, text, 0x40);
+                GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
                 if (_stricmp(num, text) != 0)
-                    SetDlgItemTextA(view_hwnd, 0x4cf, num);
+                    SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, num);
                 _itoa(b, num, 10);
-                GetDlgItemTextA(view_hwnd, 0x4ce, text, 0x40);
+                GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
                 if (_stricmp(num, text) != 0)
-                    SetDlgItemTextA(view_hwnd, 0x4ce, num);
-                SendMessageA(GetDlgItem(view_hwnd, 0x4cb), 0x443,
+                    SetDlgItemTextA(m_hMapEditorDlg, 0x4ce, num);
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4cb), 0x443,
                              (WPARAM)(((b & 0xff) << 16) | (r & 0xff) | ((g & 0xff) << 8)), 0);
                 g_game->col_r = (float)r * g_color_unit;
                 g_game->col_g = (float)g * g_color_unit;
@@ -222,7 +214,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             return 1;
         if (msg != WM_INITDIALOG)
             return 0;
-        view_hwnd = hDlg;
+        m_hMapEditorDlg = hDlg;
         update_mode_checks();
         SendMessageA(GetDlgItem(hDlg, 0x46e), LB_RESETCONTENT, 0, 0);
         CheckRadioButton(hDlg, 0x474, 0x476, g_game->axis + 0x474);
@@ -277,18 +269,18 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     switch (wParam & 0xffff) {
     case 2:
         reset_view_action();
-        ShowWindow(view_hwnd, SW_HIDE);
+        ShowWindow(m_hMapEditorDlg, SW_HIDE);
         return 1;
     case 0x433:
         if (HIWORD(lParam) != 2) {
-            HWND c = GetDlgItem(view_hwnd, 0x433);
+            HWND c = GetDlgItem(m_hMapEditorDlg, 0x433);
             g_game->combo_sel = (int)SendMessageA(c, CB_GETITEMDATA, SendMessageA(c, CB_GETCURSEL, 0, 0), 0);
             return 1;
         }
         g_game->flag_c8 = 1;
         return 1;
     case 0x434: {
-        LRESULT v = SendMessageA(GetDlgItem(view_hwnd, 0x434), BM_GETCHECK, 0, 0);
+        LRESULT v = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x434), BM_GETCHECK, 0, 0);
         g_game->rt_flag = (v == 1);
         g_game->rt_x = g_one;
         g_game->rt_y = g_one;
@@ -356,13 +348,13 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             return 1;
         {
             BOOL ok;
-            UINT v = GetDlgItemInt(view_hwnd, 0x43a, &ok, FALSE);
+            UINT v = GetDlgItemInt(m_hMapEditorDlg, 0x43a, &ok, FALSE);
             if (ok != 0 && g_game->sel_index >= 0 && v < 0x40) {
                 terrain(g_game->sel_index)->field_1a0 = v;
                 g_game->dirty = 1;
                 return 1;
             }
-            SetDlgItemTextA(view_hwnd, 0x43a, "");
+            SetDlgItemTextA(m_hMapEditorDlg, 0x43a, "");
         }
         return 1;
     case 0x43b:
@@ -370,20 +362,20 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             return 1;
         {
             BOOL ok;
-            UINT v = GetDlgItemInt(view_hwnd, 0x43b, &ok, FALSE);
+            UINT v = GetDlgItemInt(m_hMapEditorDlg, 0x43b, &ok, FALSE);
             if (ok != 0 && g_game->sel_index >= 0 && v < 0x40) {
                 terrain(g_game->sel_index)->field_1a4 = v;
                 g_game->dirty = 1;
                 return 1;
             }
-            SetDlgItemTextA(view_hwnd, 0x43a, "");
+            SetDlgItemTextA(m_hMapEditorDlg, 0x43a, "");
         }
         return 1;
     case 0x453:
-        g_game->opt_cc = SendMessageA(GetDlgItem(view_hwnd, 0x453), BM_GETCHECK, 0, 0) == 1;
+        g_game->opt_cc = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x453), BM_GETCHECK, 0, 0) == 1;
         return 1;
     case 0x454:
-        g_game->opt_d0 = SendMessageA(GetDlgItem(view_hwnd, 0x454), BM_GETCHECK, 0, 0) == 1;
+        g_game->opt_d0 = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x454), BM_GETCHECK, 0, 0) == 1;
         return 1;
     case 0x431:
         if (HIWORD(lParam) != 1)
@@ -398,15 +390,15 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         {
             float v1 = g_game->my, v2 = g_game->sy, v3 = g_game->ty;
             char buf[512];
-            SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
             _sprintf(buf, "%1.0f", (double)v1);
-            SetWindowTextA(GetDlgItem(view_hwnd, 0x47f), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v2);
-            SetWindowTextA(GetDlgItem(view_hwnd, 0x480), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v3);
-            SetWindowTextA(GetDlgItem(view_hwnd, 0x482), buf);
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
         }
         return 1;
     case 0x46f:
@@ -423,15 +415,15 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         {
             float v1 = g_game->mx, v2 = g_game->sx, v3 = g_game->tx;
             char buf[512];
-            SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
             _sprintf(buf, "%1.0f", (double)v1);
-            SetWindowTextA(GetDlgItem(view_hwnd, 0x47f), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v2);
-            SetWindowTextA(GetDlgItem(view_hwnd, 0x480), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v3);
-            SetWindowTextA(GetDlgItem(view_hwnd, 0x482), buf);
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
         }
         return 1;
     case 0x471:
@@ -442,31 +434,31 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         {
             float v1 = g_game->mz, v2 = g_game->sz, v3 = g_game->tz;
             char buf[512];
-            SendMessageA(GetDlgItem(view_hwnd, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
             _sprintf(buf, "%1.0f", (double)v1);
-            SetWindowTextA(GetDlgItem(view_hwnd, 0x47f), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v2);
-            SetWindowTextA(GetDlgItem(view_hwnd, 0x480), buf);
-            SendMessageA(GetDlgItem(view_hwnd, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
             _sprintf(buf, "%1.2f", (double)v3);
-            SetWindowTextA(GetDlgItem(view_hwnd, 0x482), buf);
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
         }
         return 1;
     case 0x474:
         g_game->axis = 0;
-        CheckRadioButton(view_hwnd, 0x474, 0x476, g_game->axis + 0x474);
+        CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game->axis + 0x474);
         return 1;
     case 0x475:
         g_game->axis = 1;
-        CheckRadioButton(view_hwnd, 0x474, 0x476, g_game->axis + 0x474);
+        CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game->axis + 0x474);
         return 1;
     case 0x476:
         g_game->axis = 2;
-        CheckRadioButton(view_hwnd, 0x474, 0x476, g_game->axis + 0x474);
+        CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game->axis + 0x474);
         return 1;
     case 0x489:
-        DialogBoxParamA(hinst, (LPCSTR)0xde, view_hwnd, options_dialog_proc, 0);
+        DialogBoxParamA(m_hInstance, (LPCSTR)0xde, m_hMapEditorDlg, options_dialog_proc, 0);
         return 1;
     case 0x491:
     case 0x492:
@@ -520,7 +512,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         }
         return 1;
     case 0x494:
-        if (MessageBoxA(view_hwnd, "Are you sure?", "Warning", 1) != 1)
+        if (MessageBoxA(m_hMapEditorDlg, "Are you sure?", "Warning", 1) != 1)
             return 1;
         reset_all_action();
         return 1;
@@ -528,7 +520,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (HIWORD(lParam) != 1)
             return 1;
         {
-            HWND lst = GetDlgItem(view_hwnd, 0x46e);
+            HWND lst = GetDlgItem(m_hMapEditorDlg, 0x46e);
             *(int*)((char*)g_editor + 0x651c) = (int)SendMessageA(lst, LB_GETITEMDATA,
                                                   SendMessageA(lst, LB_GETCURSEL, 0, 0), 0);
         }
@@ -576,7 +568,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         return 1;
     case 0x49d:
         if (!action_49d_check()) {
-            MessageBoxA(view_hwnd, "Action not performed. You must select only 1 edge that has a neighborhood of 2 triangular faces.", "Warning", 0);
+            MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge that has a neighborhood of 2 triangular faces.", "Warning", 0);
             return 1;
         }
         g_game->dirty = 1;
@@ -616,7 +608,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         return 1;
     case 0x4a7:
         if (!action_4a7_check()) {
-            MessageBoxA(view_hwnd, "Action not performed. You must select only 2 vertices that are members of a face and do not have any edge neighborhood.", "Warning", 0);
+            MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of a face and do not have any edge neighborhood.", "Warning", 0);
             return 1;
         }
         g_game->dirty = 1;
@@ -633,7 +625,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         return 1;
     case 0x4aa:
         if (!action_4aa_check()) {
-            MessageBoxA(view_hwnd, "Action not performed. You must select only 3 or 4 vertices (or edges that has 3 or 4 different edges) that are not a member of the same face and that are not members of any edges with 2 faces.", "Warning", 0);
+            MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 3 or 4 vertices (or edges that has 3 or 4 different edges) that are not a member of the same face and that are not members of any edges with 2 faces.", "Warning", 0);
             return 1;
         }
         g_game->dirty = 1;
@@ -644,9 +636,9 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x4ac:
         if (!action_4ac_check()) {
             if (g_editor->sel_count2 != 0)
-                MessageBoxA(view_hwnd, "Action not performed. You must select only 1 edge.", "Warning", 0);
+                MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
             else
-                MessageBoxA(view_hwnd, "Action not performed. You must select only 2 vertices that are members of the same edge or that are members of any edge having a neighborhood to only one face.", "Warning", 0);
+                MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of the same edge or that are members of any edge having a neighborhood to only one face.", "Warning", 0);
             return 1;
         }
         g_game->dirty = 1;
@@ -656,7 +648,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         return 1;
     case 0x4ad:
         if (!action_4ad_check()) {
-            MessageBoxA(view_hwnd, "Action not performed. You must select only 1 edge.", "Warning", 0);
+            MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
             return 1;
         }
         g_game->dirty = 1;
@@ -672,7 +664,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4af:
-        if (MessageBoxA(view_hwnd, "This action will clear all texture and height data of the terrain that are added manually. Are you sure?", "Warning", 1) == 1) {
+        if (MessageBoxA(m_hMapEditorDlg, "This action will clear all texture and height data of the terrain that are added manually. Are you sure?", "Warning", 1) == 1) {
             clear_manual_terrain();
             g_game->dirty = 1;
             refresh_terrain_view();
@@ -681,24 +673,24 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x4c8:
     case 0x4c9:
     case 0x4ca: {
-        int r = (int)SendMessageA(GetDlgItem(view_hwnd, 0x4c8), TBM_GETPOS, 0, 0);
-        int g = (int)SendMessageA(GetDlgItem(view_hwnd, 0x4c9), TBM_GETPOS, 0, 0);
-        int b = (int)SendMessageA(GetDlgItem(view_hwnd, 0x4ca), TBM_GETPOS, 0, 0);
+        int r = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_GETPOS, 0, 0);
+        int g = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_GETPOS, 0, 0);
+        int b = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_GETPOS, 0, 0);
         char num[64];
         char text[64];
         _itoa(r, num, 10);
-        GetDlgItemTextA(view_hwnd, 0x4cd, text, 0x40);
+        GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
         if (_stricmp(num, text) != 0)
-            SetDlgItemTextA(view_hwnd, 0x4cd, num);
+            SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, num);
         _itoa(g, num, 10);
-        GetDlgItemTextA(view_hwnd, 0x4cf, text, 0x40);
+        GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
         if (_stricmp(num, text) != 0)
-            SetDlgItemTextA(view_hwnd, 0x4cf, num);
+            SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, num);
         _itoa(b, num, 10);
-        GetDlgItemTextA(view_hwnd, 0x4ce, text, 0x40);
+        GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
         if (_stricmp(num, text) != 0)
-            SetDlgItemTextA(view_hwnd, 0x4ce, num);
-        SendMessageA(GetDlgItem(view_hwnd, 0x4cb), 0x443,
+            SetDlgItemTextA(m_hMapEditorDlg, 0x4ce, num);
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4cb), 0x443,
                      (WPARAM)(((b & 0xff) << 16) | (r & 0xff) | ((g & 0xff) << 8)), 0);
         g_game->col_r = (float)r * g_color_unit;
         g_game->col_g = (float)g * g_color_unit;
@@ -711,7 +703,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             return 1;
         char text[0x40];
         long v;
-        GetDlgItemTextA(view_hwnd, 0x4cd, text, 0x40);
+        GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
         if (text[0] == 0)
             v = 0;
         else {
@@ -722,8 +714,8 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                 v = 0xff;
         }
         _itoa(v, text, 10);
-        SetDlgItemTextA(view_hwnd, 0x4cd, text);
-        SendMessageA(GetDlgItem(view_hwnd, 0x4c8), TBM_SETPOS, TRUE, (LPARAM)v);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text);
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_SETPOS, TRUE, (LPARAM)v);
         return 1;
     }
     case 0x4cf: {
@@ -731,7 +723,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             return 1;
         char text[0x40];
         long v;
-        GetDlgItemTextA(view_hwnd, 0x4cf, text, 0x40);
+        GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
         if (text[0] == 0)
             v = 0;
         else {
@@ -742,8 +734,8 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                 v = 0xff;
         }
         _itoa(v, text, 10);
-        SetDlgItemTextA(view_hwnd, 0x4cf, text);
-        SendMessageA(GetDlgItem(view_hwnd, 0x4c9), TBM_SETPOS, TRUE, (LPARAM)v);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text);
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_SETPOS, TRUE, (LPARAM)v);
         return 1;
     }
     case 0x4ce: {
@@ -751,12 +743,12 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             return 1;
         char text[0x40];
         long v;
-        GetDlgItemTextA(view_hwnd, 0x4ce, text, 0x40);
+        GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
         if (text[0] == 0 || (v = _atol(text)) < 0)
             v = 0;
         else if (v > 0xff)
             v = 0xff;
-        SendMessageA(GetDlgItem(view_hwnd, 0x4ca), TBM_SETPOS, TRUE, (LPARAM)v);
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_SETPOS, TRUE, (LPARAM)v);
         return 1;
     }
     }

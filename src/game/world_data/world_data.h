@@ -349,7 +349,7 @@ struct PtrStack14 {                                             // an object wit
 };
 
 // ---- the party pool (0x98-byte records, pages of 16) and the cache group (E68 members) ----------------------------------------
-struct Rec98 { int pad0; int f4; int f8; int fc; char pad10[0x98 - 0x10]; Rec98(); ~Rec98(); };   // 0x98-byte pool record: constructor 0x48c210
+#include "../rec98.h"                                             // Rec98: the 0x98-byte pool record, constructor 0x48c210
 struct RecPool {                                                // an object with the free-id vector at +4 and the page vector at +0x14
     int next_id;                                                // +0
     std::vector<int> free_ids;                                  // +4 (allocator word, first at +8)

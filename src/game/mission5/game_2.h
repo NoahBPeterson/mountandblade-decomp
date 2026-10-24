@@ -273,20 +273,13 @@ struct SkeletonList {                               // skeleton-body table at 0x
 extern SkeletonList g_skeletons;                    // 0xa180e8
 
 // trigger vectors at Game +0x139e8 / +0x139f4 (game.h: TriggerTag / SimpleTag, whose padding these resize)
-struct TriggerVec {
-    int count; void* array; int f8;
-    void resize(stream_base* s, const char* name);                  // 0x4c1c90 (ret 8)
-};
-struct GameVec {
-    int count; void* array; int f8;
-    int resize(stream_base* s, const char* name, int extra);        // 0x4c1e10 (ret 0xc)
-};
+#include "../trigger_vecs.h"           // TriggerVec / GameVec
 
 
 // ---- the campaign map's tree builder (0x5213d0) -------------------------------------------------------------------
 // Views of the ground graph (CellGrid::core, a NavData): NavVert / NavCell of cell_grid.h with the flat field names this
 // function reads, and the third vector (+0x20, 0x24-byte edge records) that NavData declares as ints.
-struct MapPoint {                    // 0x24 bytes = NavVert
+struct MapNavVert {                    // 0x24 bytes = NavVert
     float x, y, z;                   // +0x00
     char  pad0c[4];
     float nx, ny, nz;                // +0x10 normal
@@ -307,8 +300,8 @@ struct MapEdge {                     // 0x24 bytes
 };
 struct MapNav {                      // NavData
     int      pad0;
-    MapPoint* pts;                   // +0x04
-    MapPoint* pts_end;               // +0x08
+    MapNavVert* pts;                   // +0x04
+    MapNavVert* pts_end;               // +0x08
     char     padc[8];
     MapNode* nodes;                  // +0x14
     MapNode* nodes_end;              // +0x18

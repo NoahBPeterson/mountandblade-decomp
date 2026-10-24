@@ -94,10 +94,7 @@ struct ThemeItem {
 // globals
 // ---------------------------------------------------------------------------
 
-struct GuiManager {
-    void init();                                     // 0x42d1b0
-    void set_active(Widget* w);                      // 0x50d0e0
-};
+#include "../gui_mgr.h"
 #define GUI ((GuiManager*)0x5d7080)
 
 struct UiTextDb {
@@ -135,14 +132,9 @@ struct World {
 };
 #define WORLD (*(World**)0x5e2930)
 
-// map-party accessors (this = world + 0xf8)
-struct WorldMap {
-    void* party(int id);                             // 0x51ee50
-    int   index(int id);                             // 0x48ad00
-    int   first_party();                             // 0x460d20
-    void  next_party(int* idx);                      // 0x460ca0
-};
-#define WORLDMAP ((WorldMap*)((char*)WORLD + 0xf8))
+// map-party accessors (this = world + 0xf8: the party manager, include/party.h; the slice called it WorldMap)
+#include "../../include/party.h"
+#define WORLDMAP ((PartyMgr*)((char*)WORLD + 0xf8))
 
 extern "C" tstring* quest_text(int quest, int idx);  // 0x42c5d0
 
@@ -292,7 +284,7 @@ void note_window::build(int page_, int arg_)
 
     this->page = page_;
     this->arg = arg_;
-    GUI->init();
+    GUI->reset();
 
     // ---- main panel ------------------------------------------------------
     NotePanel* panel = new NotePanel;
@@ -551,7 +543,7 @@ void note_window::build(int page_, int arg_)
     case 3: {
         // ---- map party (location) report ----------------------------------
         int pi = page_;
-        void* party = WORLDMAP->party(pi);
+        void* party = WORLDMAP->get(pi);
         if (*(int*)((char*)party + 0x5aa8) >= 0) {
             int id = pi;
             this->picture->add_image(0, IMAGES->make((char*)party + 0x5aa8, &id));
@@ -561,7 +553,7 @@ void note_window::build(int page_, int arg_)
         acc.assign(buf);
 
         tstring line("");
-        int idx = WORLDMAP->index(pi);
+        int idx = WORLDMAP->index_of(pi);
         char* base = WORLD->party_table[idx >> 4] + (idx & 0xf) * 0x5ac8;
         char* ids  = WORLD->party_table[idx >> 4] + (idx & 0xf) * 0x16b2 * 4;
         for (int k = 0; k < 8; k++) {
@@ -598,9 +590,9 @@ void note_window::build(int page_, int arg_)
 
         // live map parties
         {
-            int v = WORLDMAP->first_party();
+            int v = WORLDMAP->first_party_id();
             while (v < WORLD->party_count) {
-                int vi = WORLDMAP->index(v);
+                int vi = WORLDMAP->index_of(v);
                 char* prec = WORLD->party_table[vi >> 4] + (vi & 0xf) * 0x5ac8;
                 for (int k = 0; k < 8; k++) {
                     if (*(int*)(prec + 0x5a34 + k * 0x10) > 0) {
@@ -608,7 +600,7 @@ void note_window::build(int page_, int arg_)
                         break;
                     }
                 }
-                WORLDMAP->next_party(&v);
+                WORLDMAP->next_party_id(&v);
             }
         }
         this->filter_list(&vec, 3);
@@ -617,7 +609,7 @@ void note_window::build(int page_, int arg_)
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            int vi = WORLDMAP->index(v);
+            int vi = WORLDMAP->index_of(v);
             char* rec = WORLD->party_table[vi >> 4] + (vi & 0xf) * 0x5ac8;
             const char* nm = ts_chars(party_name(rec));
             if (v == page_)
@@ -752,9 +744,9 @@ void note_window::build(int page_, int arg_)
             }
         }
         {
-            int v = WORLDMAP->first_party();
+            int v = WORLDMAP->first_party_id();
             while (v < WORLD->party_count) {
-                int vi = WORLDMAP->index(v);
+                int vi = WORLDMAP->index_of(v);
                 char* rec = WORLD->party_table[vi >> 4] + (vi & 0xf) * 0x5ac8;
                 for (int k = 0; k < 8; k++) {
                     if (*(int*)(rec + 0x5a34 + k * 0x10) <= 0)
@@ -770,7 +762,7 @@ void note_window::build(int page_, int arg_)
                     }
                     break;
                 }
-                WORLDMAP->next_party(&v);
+                WORLDMAP->next_party_id(&v);
             }
         }
         for (int i = 0; i < WORLD->quest_count; i++) {

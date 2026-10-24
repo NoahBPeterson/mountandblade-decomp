@@ -22,11 +22,11 @@
 extern "C" int _fltused = 0;                 // static-CRT float marker
 
 // ---------------------------------------------------------------------------------- record layouts --
-struct Pos4 { float x, y, z, w; };
+
+#include "map_panel.h"                      // MapPanel / MapView / Pos4 (shared with map_update.cpp)
 
 struct RecR;
 struct Faction;
-struct MapAgent;
 
 #include "../../include/game_data.h"
 
@@ -74,33 +74,14 @@ struct Faction {                             // 0x300
     char                pad30[0x300 - 0x30];
 };
 
-struct MapAgent {                            // 0x98
-    char pad00[0x54];
-    int  a;                                  // +0x54
-    int  b;                                  // +0x58
-    char pad5c[0x98 - 0x5c];
-};
+#include "../rec98.h"                       // Rec98 (this slice called it MapAgent): the 0x98-byte record, a = f54, b = f58
 
 struct AgentPages {                          // lives at GameData+0xcc
     char      pad00[0x18];
     void**    pages;                         // +0x18  (GameData+0xe4)
-    MapAgent* slot(unsigned idx);            // 0x48ef20
+    Rec98* slot(unsigned idx);            // 0x48ef20
 };
 
-
-struct MapView {
-    char  pad00[0x274];                      // +0x274 = view/projection matrix used by to_screen
-    int*  to_screen(RecR** entity, const Pos4& pos);   // 0x51a690
-};
-
-struct MapPanel {
-    char      pad00[0x30];
-    MapView*  view;                          // +0x30
-    char      pad34[0x2cc - 0x34];
-    float     timer;                         // +0x2cc  redraw cooldown
-    void      update(int type, int id);      // 0x51abd0
-    void      select(int id);                // 0x51c090
-};
 
 struct gui_manager {
     void draw_string(const tstring& s, float arg, unsigned color, int centered);  // 0x4e43e0
@@ -112,7 +93,6 @@ struct gui_manager {
 
 // ---- layout guards (MSVC 13 has no static_assert: a mismatch is a negative array size) -------------
 // Sizes: every record's stride appears in the original as an `imul ..., <stride>` immediate.
-typedef char assert_MapAgent_98  [(sizeof(MapAgent)   == 0x98)    ? 1 : -1];
 typedef char assert_Faction_300  [(sizeof(Faction)    == 0x300)   ? 1 : -1];
 typedef char assert_RecR_5ac8    [(sizeof(RecR)       == 0x5ac8)  ? 1 : -1];
 typedef char assert_AgentPages   [(sizeof(AgentPages) == 0x1c)    ? 1 : -1];
@@ -136,12 +116,12 @@ typedef char assert_Faction_key  [(offsetof(Faction, key)    == 0x14)    ? 1 : -
 typedef char assert_Faction_f24  [(offsetof(Faction, f24)    == 0x24)    ? 1 : -1];
 typedef char assert_Faction_color[(offsetof(Faction, color)  == 0x28)    ? 1 : -1];
 typedef char assert_Faction_rel  [(offsetof(Faction, rel)    == 0x2c)    ? 1 : -1];
-typedef char assert_MapAgent_a   [(offsetof(MapAgent, a)     == 0x54)    ? 1 : -1];
-typedef char assert_MapAgent_b   [(offsetof(MapAgent, b)     == 0x58)    ? 1 : -1];
+typedef char assert_Rec98_a      [(offsetof(Rec98, f54)      == 0x54)    ? 1 : -1];
+typedef char assert_Rec98_b      [(offsetof(Rec98, f58)      == 0x58)    ? 1 : -1];
 typedef char assert_AgPages_ptr  [(offsetof(AgentPages, pages)   == 0x18)    ? 1 : -1];
 typedef char assert_Panel_view   [(offsetof(MapPanel, view)         == 0x30)    ? 1 : -1];
 typedef char assert_Panel_timer  [(offsetof(MapPanel, timer)        == 0x2cc)   ? 1 : -1];
-typedef char assert_View_matrix  [(offsetof(MapView, pad00)         == 0x0)     ? 1 : -1];
+typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     ? 1 : -1];
 
 // ------------------------------------------------------------------------------------- globals ------
 extern gui_manager g_gui;                    // 0x5d7080
@@ -167,9 +147,9 @@ static RecR* party_by_id(int id)
     return party_at(&g_game->parties, g_game->parties.index_of(id));
 }
 static AgentPages* agents_of() { return (AgentPages*)((char*)g_game + 0xcc); }   // GameData +0xcc (0x48ef20 is its slot())
-static MapAgent* agent_at(int idx)
+static Rec98* agent_at(int idx)
 {
-    return (MapAgent*)g_game->agent_pages[idx >> 4] + (idx & 0xf);
+    return (Rec98*)g_game->agent_pages[idx >> 4] + (idx & 0xf);
 }
 
 // a record's display string: the key's string-table entry when the key is a token (0x51afb6, 0x51b2cb)
@@ -248,8 +228,8 @@ void MapPanel::update(int type, int id)
                 agent = id;
                 if (ncols > 1) {
                     RecR*     r    = party_by_id(id);
-                    MapAgent* slot = agent_at(r->agent);
-                    agent = (c == 0) ? slot->b : slot->a;
+                    Rec98* slot = agent_at(r->agent);
+                    agent = (c == 0) ? slot->f58 : slot->f54;
                 }
                 if (c > 0) {
                     g_gui.draw_string(tstring(" "), 0.01f, 0xffffffff, 1);
@@ -369,8 +349,8 @@ void MapPanel::update(int type, int id)
                     case 7: {
                         int a = rec->agent;
                         if (a >= 0) {
-                            MapAgent* slot = agents_of()->slot(a);         // 0x48ef20
-                            int other = (slot->a == agent) ? slot->b : slot->a;
+                            Rec98* slot = agents_of()->slot(a);         // 0x48ef20
+                            int other = (slot->f54 == agent) ? slot->f58 : slot->f54;
                             if (other >= 0) {
                                 label = *g_strtable.lookup(tstring("ui_fighting_against"));
                                 label.append(*g_game->parties.get(other)->display_name());

@@ -20,11 +20,7 @@ struct Gui {
 };
 extern Gui g_gui;                                       // 0x5d7080
 
-struct LogStream {                                      // the engine text log at 0x5a9f60 (slot 10 = w_cstr)
-    virtual void l00(); virtual void l01(); virtual void l02(); virtual void l03(); virtual void l04();
-    virtual void l05(); virtual void l06(); virtual void l07(); virtual void l08(); virtual void l09();
-    virtual void w_cstr(const char* s);                 // +0x28
-};
+#include "../log_stream.h"                       // LogStream: the engine text log at 0x5a9f60 (slot 10 = w_cstr)
 struct MainMenu { void choose(int option); };           // 0x495700 (thiscall, ret 4)
 struct FlagBlock { void apply(void* p); };              // 0x513710 (thiscall on 0x5e291c, ret 4)
 

@@ -25,7 +25,7 @@ struct TplSlot {
     int f8;                                     // +0x08
     int flags;                                  // +0x0c
 };
-struct TplRec {
+struct PartyTemplateSlots {                     // the slot block of a PartyTemplate (game_recs.h, 0xb0 bytes); not the 0x20-byte mission template TplRec of map_editor/exchange_screens.h
     char pad0[0x40];
     TplSlot slots[6];                           // +0x40 (0x48fbd0)
 };
@@ -114,7 +114,7 @@ int GameData::remove_troops(int party, int troop, int count, char prisoners, int
 #define TEMPLATE_T ((float)troops[player].level * 0.033f + (float)g_ticks[1] * 1e-09f)
 void GameData::add_template(int party, int tmpl, int reverse)
 {
-    TplRec* r = (TplRec*)&g_party_templates[tmpl];
+    PartyTemplateSlots* r = (PartyTemplateSlots*)&g_party_templates[tmpl];
     Party* p = PARTY(party);
     for (int i = 0; i < 6; i++) {
         TplSlot* s = &r->slots[i];

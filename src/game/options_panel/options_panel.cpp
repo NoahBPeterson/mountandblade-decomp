@@ -13,11 +13,7 @@
 #define TROOP_I64(t, off)  (*(unsigned __int64*)((char*)(t) + (off)))
 
 // ---- the skill table: 42 records of 0x44 bytes, name (tstring) first (0x8ee3110 .. 0x8ee3c38) ----
-struct skill_entry {
-    tstring name;                                                   // +0
-    char pad10[0x44 - 0x10];
-};
-extern skill_entry g_skills[];                                      // 0x8ee3110
+#include "../skill_entry.h"
 extern int g_xp_table[];                                            // 0x5937c8
 void mb_snprintf(char* buf, unsigned int n, const char* fmt, ...);  // 0x415100
 // 0x432510: clamp *v into [*lo, *hi) and return it.

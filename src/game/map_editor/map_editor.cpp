@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 #include <math.h>
 #include "./map_editor.h"
+#include "../editor_entity.h"     // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../rgl/mesh2/gui_edit.h"
 #include "../../rgl/scene/world.h"

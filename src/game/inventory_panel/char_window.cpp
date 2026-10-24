@@ -133,27 +133,24 @@ void char_window::load_troop()
 
 // ---------------------------------------------------------------------------------------------------------
 // the skill attribute table at 0x8ee3140, 0x44-byte records.
-struct skill_entry {
-    unsigned flags;                                     // +0 (bit 8: hidden)
-    char     pad4[0x44 - 4];
-};
+#include "../skill_entry.h"
 
 // @ 0x509730
 void char_window::fill_skills()
 {
     int n = 0;
     int i = 0;
-    skill_entry* se = (skill_entry*)0x8ee3140;
+    unsigned* se = &((skill_entry*)0x8ee3110)->flags;           // 0x8ee3140: the flags word of record 0
     int* out = skill_ids;
     do {
-        unsigned char c = (unsigned char)(se->flags >> 8);
+        unsigned char c = (unsigned char)(*se >> 8);
         c = ~c;
         if (c & 1) {
             *out = i;
             n++;
             out++;
         }
-        se++;
+        se = (unsigned*)((char*)se + sizeof(skill_entry));
         i++;
     } while ((int)se < 0x8ee3c68);
     skill_count = n;

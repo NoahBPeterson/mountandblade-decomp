@@ -6,7 +6,10 @@
 #ifndef GAME_MODE_REC_H
 #define GAME_MODE_REC_H
 
+#include "tstring.h"
+
 struct stream_base;
+struct tstream3;
 
 struct SpawnRec {                               // 0x4c bytes: a mission spawn rule
     int id;                                     // +0x00
@@ -20,13 +23,26 @@ struct SpawnRec {                               // 0x4c bytes: a mission spawn r
     char pad20[0x4c - 0x20];
     void load_extras(stream_base& s);           // 0x4bdd50 (triggers/trigger_vec.cpp, the mission_templates loader; config.cpp declares it on psys_record)
 };
+// The record as the module loader (inventory_panel/module_files.cpp, load_module_files 0x50d5e0: `new ModeRec[n]`, the inline
+// constructor, read_trigger_block 0x4c2300, array delete 0x4c3430) builds it, merged with the views of the other TUs: the
+// loader's tstrings at +0 / +0x10 / +0x24 and the ints from +0x34 on (f34 = recs, f38 = nrecs, f3c = -1 at start, f4c..f54 =
+// the triggers vector of trigger_vec.h's MissionTemplate: count / data / cursor at +0x4c / +0x50 / +0x54). The users that
+// only dereference g_modes see the same offsets.
 struct ModeRec2 {                               // 0x58 bytes
-    char pad0[0x20];
+    tstring name;                               // +0x00
+    tstring f10;                                // +0x10
     unsigned flags;                             // +0x20 bit 1 = mode_flag1 (0x435840)
-    char pad24[0x34 - 0x24];
+    tstring display;                            // +0x24
     SpawnRec* recs;                             // +0x34 -> 0x4c-byte records (0x473a60, 0x4677a0)
     int nrecs;                                  // +0x38 (script: MissionTemplate::num_entries)
-    char pad3c[0x58 - 0x3c];
+    int f3c;                                    // +0x3c (-1 at start)
+    int f40, f44, f48;                          // +0x40
+    int f4c;                                    // +0x4c
+    int f50;                                    // +0x50
+    int f54;                                    // +0x54
+    ModeRec2() : recs(0), f3c(-1), f4c(0), f50(0), f54(0) {}
+    void read_trigger_block(tstream3* s);       // 0x4c2300
+    void destroy_array(int flags);              // 0x4c3430
 };
 typedef ModeRec2 ModeRec;                       // agent.h's name for the same record
 extern ModeRec2* g_modes2;                      // 0x5e2a00 (g_modes of agent.h, g_mission_templates of script)

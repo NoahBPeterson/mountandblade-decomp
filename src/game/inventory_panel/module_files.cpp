@@ -145,24 +145,8 @@ struct MapIcon {
 // item_kinds1.txt element (0x238 bytes): ctor 0x4cdf20, dtor 0x4c8a40, read 0x4c8110.
 #include "../../include/item_kind.h"
 
-// mission_templates.txt element (0x58 bytes): inline ctor, read 0x4c2300, array reject 0x4c3430.
-struct ModeRec {
-    tstring a;                   // +0x00
-    tstring b;                   // +0x10
-    tstring c;                   // +0x24
-    int f34;                     // +0x34
-    int f38;                     // +0x38
-    int f3c;                     // +0x3c
-    int f40;                     // +0x40
-    int f44;                     // +0x44
-    int f48;                     // +0x48
-    int f4c;                     // +0x4c
-    int f50;                     // +0x50
-    int f54;                     // +0x54
-    ModeRec() : f34(0), f3c(-1), f4c(0), f50(0), f54(0) {}
-    void read_trigger_block(tstream3* s);         // 0x4c2300
-    void destroy_array(int flags);                   // 0x4c3430
-};
+// mission_templates.txt element (0x58 bytes): inline ctor, read 0x4c2300, array reject 0x4c3430 (../mode_rec.h: ModeRec).
+#include "../mode_rec.h"
 
 // party_templates.txt element (0xb0 bytes): inline ctor, read 0x4bdff0, array reject 0x4c8980.
 struct PartyRec {

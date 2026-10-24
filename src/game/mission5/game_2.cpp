@@ -12,6 +12,7 @@
 //       kept: 0x5236f0 calls 0x524360..0x524d60 in turn and they are its record helpers (see MIGRATION.md).
 //-----------------------------------------------------------------------------
 #include "./game_2.h"
+#include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../party/game.h"
 #include "../party/externs.h"
@@ -279,7 +280,7 @@ void Game::build_map_trees()
 
     // ---- B: per-point view dot --------------------------------------------
     for (int i = 0; i < npts; i++) {
-        MapPoint* p = &mgr->pts[i];
+        MapNavVert* p = &mgr->pts[i];
         float s = dir.x * p->nx + dir.y * p->ny + dir.z * p->nz;
         p->s = s;
         if (g_env2 != 0) p->s = s * s;
@@ -319,7 +320,7 @@ void Game::build_map_trees()
     m5_grid_scan(scratch, (void*)((char*)scratch + 0x40), self);                // 0x523630
 
     for (int i = 0; i < npts; i++) {
-        MapPoint* p = &mgr->pts[i];
+        MapNavVert* p = &mgr->pts[i];
         if (p->x < g_minx) g_minx = p->x;
         if (g_maxx < p->x) g_maxx = p->x;
         if (p->y < g_miny) g_miny = p->y;
@@ -425,7 +426,7 @@ void Game::build_map_trees()
 
                 for (int ni = 0; ni < nnodes; ni++) {
                     MapNode* nd = &mgr->nodes[ni];
-                    MapPoint* p0 = &mgr->pts[nd->idx[0]];
+                    MapNavVert* p0 = &mgr->pts[nd->idx[0]];
                     if (!(x0 <= p0->x && p0->x < x1 && y0 <= p0->y && p0->y < y1))
                         continue;
 
@@ -979,7 +980,7 @@ void Game::load_game_data(int extra_triggers)
     s_triggers.r_tstr(RSTR(&str1));
     s_triggers.r_tstr(RSTR(&str2));
     s_triggers.r_int(&version);
-    ((TriggerVec*)&triggers)->resize(&s_triggers, "Game Triggers");
+    ((TriggerVec*)&triggers)->resize(s_triggers, "Game Triggers");
     s_triggers.failed = 1;
 
     // ---- simple_triggers.txt ----------------------------------------------------------------------------
@@ -992,7 +993,7 @@ void Game::load_game_data(int extra_triggers)
     s_simple.r_tstr(RSTR(&str1));
     s_simple.r_tstr(RSTR(&str2));
     s_simple.r_int(&version);
-    int first = ((GameVec*)&simple)->resize(&s_simple, "Simple trigger", extra_triggers);
+    int first = ((GameVec*)&simple)->resize(s_simple, "Simple trigger", extra_triggers);
     s_simple.failed = 1;
 
     // one extra simple trigger per script emitter whose delay is non-negative

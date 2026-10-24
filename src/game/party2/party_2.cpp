@@ -2027,7 +2027,7 @@ float __cdecl march_time(Party* self)
     return r;
 }
 
-struct Pos4 { int x, y, z, w; };
+struct Pos4i { int x, y, z, w; };
 union EventFlags {                                   // the dword at event+0x18
     unsigned all;
     struct {
@@ -2039,7 +2039,7 @@ union EventFlags {                                   // the dword at event+0x18
     } f;
 };
 struct event_rec {                                   // 0x5c (E92)
-    Pos4 p;                                          // +0x00
+    Pos4i p;                                          // +0x00
     float angle;                                     // +0x10 (random facing or supplied heading)
     int f14;                                         // +0x14
     EventFlags flags;                                // +0x18
@@ -2050,7 +2050,7 @@ struct event_rec {                                   // 0x5c (E92)
 void GameData::push_event(const int* pos, unsigned nation)
 {
     event_rec r;
-    r.p = *(const Pos4*)pos;
+    r.p = *(const Pos4i*)pos;
     r.angle = (float)(game_rand() % 15817) * 0.00039724255f;
     r.f14 = 0;
     r.flags.all = (nation & 0xff) | 0x10000000;
@@ -2065,7 +2065,7 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
     int idx = pm->index_of(party);
     Party* p = pm->pages._Myfirst[idx >> 4] + (idx & 0xf);
     event_rec r;
-    r.p = *(const Pos4*)pos;
+    r.p = *(const Pos4i*)pos;
     r.angle = *src;
     int a = 0, b = 0, c = 0, d = 0;
     r.f14 = 0;
@@ -2325,7 +2325,7 @@ extern float g_vis;         // 0x54a6f0 = 0.01f
 extern float g_scale;       // 0x54a6d0 = 1e-5f
 extern float g_nav_jitter_chance;                    // 0x54b3c4 (0.35)
 
-struct MapVert { char pad0[0x14]; float x, y, z, w; };   // the 0x24-byte detail vertices of the map mesh (NavData +0x24)
+struct DetailVert { char pad0[0x14]; float x, y, z, w; };   // the 0x24-byte detail vertices of the map mesh (NavData +0x24)
 #define OPEN_BEGIN (*(OpenItem**)&v30.first)         // the open list: a vector<E12> at +0x30 (allocator word, first, last, end)
 #define OPEN_END (*(OpenItem**)&v30.last)
 
@@ -2485,7 +2485,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
             }
             int v = RECS[prev].agents()[idx];
             prev = path[i];
-            MapVert* vv = &((MapVert*)v20.first)[v];
+            DetailVert* vv = &((DetailVert*)v20.first)[v];
             detail[i * 4 + 0] = vv->x;
             detail[i * 4 + 1] = vv->y;
             detail[i * 4 + 2] = vv->z;

@@ -27,30 +27,7 @@ int __fastcall container_size(void* p);             // 0x40f010 (count = (last-f
 
 // ---- text log stream (views of the canonical stream_base / text_stream of src/rgl/stream.h, which cannot be included with match/include/rgl.h) ----
 // text log stream at 0x5a9f60 (see s00418a70): slot 10 (+0x28) is w_cstr
-struct LogStreamBase {
-    virtual void reset();
-    virtual void rewind();
-    virtual LogStreamBase& w_stream(void* o) = 0;
-    virtual LogStreamBase& w_float(void* v) = 0;
-    virtual LogStreamBase& w_bool(void* v) = 0;
-    virtual LogStreamBase& w_u64(void* v) = 0;
-    virtual LogStreamBase& w_i64(void* v) = 0;
-    virtual LogStreamBase& w_uint(void* v) = 0;
-    virtual LogStreamBase& w_int(int* v) = 0;
-    virtual LogStreamBase& w_byte(void* v) = 0;
-    virtual LogStreamBase& w_cstr(const char* s) = 0;
-};
-struct LogStream : LogStreamBase {
-    virtual LogStreamBase& w_stream(void* o);
-    virtual LogStreamBase& w_float(void* v);
-    virtual LogStreamBase& w_bool(void* v);
-    virtual LogStreamBase& w_u64(void* v);
-    virtual LogStreamBase& w_i64(void* v);
-    virtual LogStreamBase& w_uint(void* v);
-    virtual LogStreamBase& w_int(int* v);
-    virtual LogStreamBase& w_byte(void* v);
-    virtual LogStreamBase& w_cstr(const char* s);
-};
+#include "../log_stream.h"
 extern LogStream g_log;                        // 0x5a9f60
 
 // keyboard state: per-scan-code ints, held state at 0xa17000 and this frame's press at 0xa17400 (see s0052cf60)

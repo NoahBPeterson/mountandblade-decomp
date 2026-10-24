@@ -18,7 +18,7 @@ void mb_error(const char* msg);                     // 0x42cc80 (cdecl)
 struct bone {
     char b[1];
 };
-struct junk_tag { int pad; junk_tag() {} };
+#include "../junk_tag.h"
 void destroy_items(bone* first, bone* last, void* self, junk_tag tag);       // 0x4d10f0
 
 // engine vector: allocator dword then first/last/end (we only need the destructor, 0x50cc60's model).

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "./agent_hud.h"
+#include "../gui_mgr.h"           // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../rgl/mesh_x.h"
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
@@ -124,7 +125,7 @@ void MissionHud::refresh()
     {
         MissionUi* root = frame;
         g_gui_dirty = 1;
-        g_gui.add_screen(&root);
+        g_gui.add_root(&root);
     }
     for (int i = 0; i < 3; i++) {
         MissionUi* w = new MissionUi;
@@ -1352,7 +1353,7 @@ void GameScreen::build()
     g_gui_dirty = 1;
     {
         MissionUi* root = frame;
-        g_gui.add_screen(&root);
+        g_gui.add_root(&root);
     }
 }
 
@@ -1518,7 +1519,7 @@ void LogScreen::build(bool show)
     g_gui_dirty = 1;
     {
         MissionUi* root = frame;
-        g_gui.add_screen(&root);
+        g_gui.add_root(&root);
     }
 
     // the slider's value follows the log's scroll state

@@ -70,10 +70,7 @@ struct MainMenu {
 };
 extern MainMenu g_main_menu;                                                // 0xa73980
 // 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
-struct KeyNames {
-    char is_bound(int index);                                               // 0x487900
-};
-extern KeyNames g_key_names;                                                // 0xa170c8
+#include "../key_names.h"
 
 // 0x4bab70 (byte-exact in s004bab70): build the user path of a file name in place. A static function in the
 // original, so cl passes `out` in esi; this is a local copy with the same body.

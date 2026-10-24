@@ -24,10 +24,8 @@ struct item50 {
     void* tail;                                     // +0x44
 };
 
-// Scratch argument the folded STL helpers take by value. cl materialises one stack slot per call site and
-// never writes it (the original's slots at -0x2c/-0x30/-0x34/-0x38/-0x3c are all read-only); the user
-// ctor keeps cl from zero-initialising the temporary (a plain empty class gets a byte store).
-struct junk_tag { int pad; junk_tag() {} };
+// Scratch argument the folded STL helpers take by value (the original's slots at -0x2c/-0x30/-0x34/-0x38/-0x3c are read-only).
+#include "../junk_tag.h"
 
 void destroy_items(item50* first, item50* last, void* self, junk_tag tag);   // 0x4d10f0
 
@@ -74,22 +72,7 @@ struct vec_named {                                  // vector<named_vec>
 void vec_named::_Xlen() const { throw std::length_error("vector<T> too long"); }
 
 // ------------------------------------------------------------------ the 0x1f8 model record ---------------
-struct model_b {
-    tstring name;                                   // +0
-    char pad10[0x18];
-    tstring tex;                                    // +0x28
-    char pad38[0x8];
-    char* f40;                                      // +0x40
-    char* f44;                                      // +0x44
-    char pad48[0x30];
-    void* morph_first;                              // +0x7c
-    void* morph_last;                               // +0x80
-    char rest[0x1f8 - 0x80];
-    model_b();                                      // 0x4d3640
-    ~model_b();                                     // 0x4d3720
-    void relax(int skip, float* v);                 // 0x4735e0
-    void read(void* stream);                        // 0x4e7b30
-};
+#include "../model_b.h"
 
 struct vec_model {                                  // vector<model_b>
     void* alloc;                                    // +0
@@ -135,7 +118,7 @@ void  tstring_dtor(tstring* s);                                          // 0x42
 char* g_game;                                       // 0x5e2930
 char  g_flag_a181b8;                                // 0xa181b8
 
-struct NameTable { const tstring* find(const tstring& k); };    // 0x4c6010 (ecx = 0x5e2a18)
+#include "../str_table.h"                                       // StrTable: the translated-string table 0x5e2a18 (find 0x4c6010)
 struct PartyTable { int find(int id); };                        // 0x48ad00
 struct AccessStream {
     virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
@@ -205,7 +188,7 @@ static inline const char* name_of_1(int id)
 {
     char* base = *(char**)(g_game + 0x13a00);
     char* rec = base + id * 0x508;
-    const tstring* t = ((NameTable*)0x5e2a18)->find(*(const tstring*)(rec + 0x20));
+    const tstring* t = ((StrTable*)0x5e2a18)->find((const tstring*)(rec + 0x20));
     if (t == 0)
         t = (const tstring*)rec;
     return t->c_str();
@@ -217,7 +200,7 @@ static inline const char* name_of_2(int id)
     char* rec = base + id * 0x300;
     const tstring* t = (const tstring*)rec;
     if (rec[0x10] == 0) {
-        const tstring* q = ((NameTable*)0x5e2a18)->find(*(const tstring*)(rec + 0x14));
+        const tstring* q = ((StrTable*)0x5e2a18)->find((const tstring*)(rec + 0x14));
         if (q != 0)
             t = q;
     }
@@ -233,7 +216,7 @@ static inline const char* name_of_3(int id)
     if (g_flag_a181b8) {
         t = (const tstring*)(rec + 0x20);
     } else if (rec[0x1c] == 0) {
-        const tstring* q = ((NameTable*)0x5e2a18)->find(*(const tstring*)(rec + 0x20));
+        const tstring* q = ((StrTable*)0x5e2a18)->find((const tstring*)(rec + 0x20));
         if (q != 0)
             t = q;
     }
@@ -285,10 +268,7 @@ void __stdcall sort_list(sel_list* l, int mode)
 }
 
 // ------------------------------------------------------------------ the dialog thunk -----------------------
-struct EditorPanel {
-    char pad0[0x358];
-    LRESULT terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4fe860
-};
+#include "../editor_panel.h"
 extern EditorPanel g_panel;                         // 0x8ee3c48
 
 // @ 0x50d250 dialog_thunk

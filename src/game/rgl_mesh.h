@@ -138,6 +138,7 @@ struct mesh : mesh_base {
     void clear_geometry();                          // 0x428e80
     void calc_bounds(vector4* mn, vector4* mx);     // 0x438d80
     void finish_load();                             // 0x419300
+    void build_panel(float* base, float* size, float* uv0, float* uv1, int* col);   // 0x4de3e0 (loading_screen.cpp: the frame quads)
     void compute_normals();                         // 0x451c50
     void append_plain(mesh* other, const mat4* m);  // 0x4520b0 (ret 8, tail of append_skinned)
     void set_color(vector4 c);                      // 0x47af30 (ret 0x10: the colour multiplier of every vertex; char_sheet/editor_ui.cpp, quest_log.cpp)

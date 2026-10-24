@@ -17,6 +17,7 @@
 #include <io.h>
 #include <new>
 #include "./trigger_vec.h"
+#include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 #include <richedit.h>
 #include "../config/core.h"
 #include "../config/config.h"

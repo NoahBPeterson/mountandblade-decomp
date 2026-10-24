@@ -164,14 +164,14 @@ struct Game {
     int f1a090;                                 // +0x1a090
 };
 
-struct GuiMgr { void reset(); void add_root(void* p); };
+#include "../gui_mgr.h"
 struct ResMgr { void* get_object(const tstring& n); };
 struct StrTab {                                 // 0x5e2a18
     char pad0[0xdf34];
     const void* find(const tstring& name);      // 0x43a1e0
 };
 
-#define g_gui     (*(GuiMgr*)0x5d7080)
+#define g_gui     (*(GuiManager*)0x5d7080)
 #define g_resmgr  (*(ResMgr*)0x5d6fa0)
 #define g_strtab  (*(StrTab*)0x5e2a18)
 

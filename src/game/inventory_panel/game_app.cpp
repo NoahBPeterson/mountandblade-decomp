@@ -19,39 +19,8 @@ static __forceinline const char* c_str(const tstring* s)
     return p;
 }
 
-// ---- CD3DApplication (verified layout: s00401010/s00401010.h) -----------------------------------------
-// only the data members are modelled; the base vtable is never dispatched through here (MsgProc is
-// called non-virtually at 0x403120).
-struct Application {
-    char pad0[4];
-    char f4;                            // 0x4 (a flag set when 0x5e2a08 is set)
-    char pad5[0xa4 - 5];
-    char m_bWindowed;                   // 0xa4
-    bool m_bActive;                     // 0xa5
-    char padA6[0xe8 - 0xa6];
-    HWND m_hWnd;                        // 0xe8
-    char padEC[0xc];                    // 0xec
-    IDirect3DDevice9* m_pd3dDevice;     // 0xf8
-    char padFC[0x278 - 0xfc];
-    float m_fElapsedTime;               // 0x278
-    char pad27C[0x344 - 0x27c];
-    char m_bShowCursorWhenFullscreen;   // 0x344
-    char pad345[0x34c - 0x345];
-    int  m_34c;                         // 0x34c (last char / key; -1 when consumed)
-    char pad350[0x358 - 0x350];
-    HINSTANCE m_hInstance;              // 0x358
-    char pad35C[0x374 - 0x35c];
-    HWND m_hMapEditorDlg;               // 0x374
-    HWND m_hScriptDlg;                  // 0x378
-
-    int MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam);   // 0x403120 (base)
-};
-
-// the derived application class the two functions above belong to
-struct GameApp : Application {
-    int MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam);   // 0x50f130
-    int Update();                                                            // 0x50ec40
-};
+// ---- CD3DApplication / GameApp: one definition (../application.h) -----------------------------------
+#include "../application.h"
 
 // ---- screens: g_screens[30] (0xa73980) is the global screen table; the id stack at 0xa739f8 keeps
 //      the current screen id (a ring of 4-int blocks). ------------------------------------------------
@@ -144,18 +113,11 @@ struct IDev9 {
 extern IDev9* g_a17f28;                 // 0xa17f28 (the Direct3D device)
 extern char  g_a739b8[];                // 0xa739b8 (current editor entity)
 // the current editor entity (a pointer at 0xa739b8)
-struct EditorEntity {
-    void pick();                        // 0x4ed8d0
-    char pad2f9[0x2f9];
-    char f2f9;                          // 0x2f9
-};
+#include "../editor_entity.h"
 extern EditorEntity* g_entity;          // 0xa739b8
 
 // gui manager object (0x5d7080) and a few of its member functions
-struct GuiManager {
-    void frame(float dt);               // 0x4ebfd0
-    void add_log(tstring s, int type);  // 0x452c00 (tstring by value, then the type)
-};
+#include "../gui_mgr.h"
 extern GuiManager g_gui_manager;        // 0x5d7080
 
 struct ResMgr {
@@ -301,7 +263,7 @@ int GameApp::Update()
                             }
                         }
                     }
-                    g_entity->pick();
+                    g_entity->pick_entity();
                     g_entity->f2f9 = 1;
                     SetFocus(m_hWnd);
                     g_game->f1a1c8 = 0;

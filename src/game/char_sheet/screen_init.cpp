@@ -1,4 +1,5 @@
 #include "./screen_init.h"
+#include "../gui_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ec4d0

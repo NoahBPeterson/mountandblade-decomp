@@ -40,7 +40,6 @@ struct MissionTemplate {                                // 0x58 bytes, array at 
 extern MissionTemplate* g_templates;                    // 0x5e2a00
 extern int g_template_count;                            // 0x5e2a04
 
-struct Row { float x, y, z, w; };
 using rgl::mat3;
 mat3* identity3(mat3* m);                               // 0x40cd60 (cdecl)
 struct Placement { mat3 m; int a, b, c, d; };           // 0x40 bytes (rotation + position)
@@ -64,17 +63,11 @@ struct DialogMgrV {                                     // the dialog manager at
 
 int count_hero_items();                                 // 0x513e10
 static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(&k); }
-struct Rec98 {                                          // the 0x98-byte scene node record (pages at game+0xe4)
-    char pad0[0x10];
-    int f10;                                            // +0x10
-    char pad14[0x54 - 0x14];
-    int f54;                                            // +0x54
-    int f58;                                            // +0x58
-};
+#include "../rec98.h"                                  // Rec98: the 0x98-byte scene node record (pages at game+0xe4)
 // ---- objects and constants of other translation units ----------------------------------------------------------------
 struct NamedRec { void setup(const tstring* a, const tstring* b); };   // 0x48a3a0 (ret 8)
 struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
-struct KeyNames { char bound(int key); };               // 0x487900 (ret 4)
+#include "../key_names.h"
 struct TextLog { virtual void print(const char* s); };  // +0x28 prints one line (slot index 10 in the original; the declaration order is kept)
 struct ItemSound { void play(int id); };                // 0x48add0 (ret 4)
 struct Psys {
@@ -96,7 +89,6 @@ extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x
 extern tstring g_scratch;                               // 0xa70464
 extern TextLog g_textlog;                               // 0x5a9f30
 extern UiKeyState g_keys;                                 // 0xa73730
-extern KeyNames g_key_names;                            // 0xa170c8
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
 extern Psys* g_psys;                                    // 0xa70248
 extern int g_a170c0;            // 0xa170c0
@@ -984,7 +976,7 @@ no_party:
     }
     (*(Renderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_no_cam != 0 && (g_a17148 != 0 || g_a17348 != 0) && g_key_names.bound(0x12))
+    if (g_no_cam != 0 && (g_a17148 != 0 || g_a17348 != 0) && g_key_names.is_bound(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {

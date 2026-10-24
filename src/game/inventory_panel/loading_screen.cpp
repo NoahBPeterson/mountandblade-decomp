@@ -37,18 +37,13 @@ struct Table {
     void build(Src* src);               // 0x50f7e0
 };
 
-struct vector4 { float x, y, z, w; };
-
-struct Mesh {
-    void build_panel(float* base, float* size, float* uv0, float* uv1, int* col);  // 0x4de3e0
-    void compute_normals();             // 0x451c50
-    void finish_load();                 // 0x419300
-    void set_color(vector4 c);          // 0x47af30
-    Mesh* clone();                      // 0x41c6d0
-};
+#include "rgl.h"
+#include "../rgl_mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
+using rgl::vector4;
+using rgl::mesh;
 
 struct ResMgr2 {
-    Mesh* get_object(const tstring& name);  // 0x419540
+    mesh* get_object(const tstring& name);  // 0x419540
 };
 extern ResMgr2 g_res;                   // 0x5d6fa0
 
@@ -87,7 +82,7 @@ struct Frame570 {
 // @ 0x50f8a0
 void Frame570::build_quad()
 {
-    Mesh* m = (Mesh*)((char*)this + 0x570);
+    mesh* m = (mesh*)((char*)this + 0x570);
     int color = 0xff000000;
     float uv1[2] = { 0.1f, 1.0f };
     float uv0[2] = { 0.0f, 0.0f };
@@ -105,14 +100,14 @@ void Frame570::build_quad()
 // ---------------------------------------------------------------- 0x50f930
 struct Screen {
     char pad0[0xfb0];
-    Mesh* f1210;                        // +0x1210
-    Mesh* f1214;                        // +0x1214
-    Mesh* f1218;                        // +0x1218
-    Mesh* f121c;                        // +0x121c
+    mesh* f1210;                        // +0x1210
+    mesh* f1214;                        // +0x1214
+    mesh* f1218;                        // +0x1218
+    mesh* f121c;                        // +0x121c
     void build_frames();
 };
 
-static void set_frame_color(Mesh* m)
+static void set_frame_color(mesh* m)
 {
     vector4 c;
     c.x = 0.65f;
@@ -127,7 +122,7 @@ static void set_frame_color(Mesh* m)
 void Screen::build_frames()
 {
     {
-        Mesh* m = (Mesh*)((char*)this + 0xfb0);
+        mesh* m = (mesh*)((char*)this + 0xfb0);
         int color = 0xa0ffffff;
         float uv1[2] = { 0.1f, 1.0f };
         float uv0[2] = { 0.0f, 0.0f };
@@ -275,12 +270,8 @@ struct EditorDialog {
 };
 extern EditorDialog g_editor_dialog;                 // 0x8ee3c48
 
-struct GuiMgr {
-    char pad0[0x570];
-    void build_frames();                             // 0x50f930 (this+0x570)
-    void build_quad();                               // 0x50f8a0
-};
-extern GuiMgr g_gui;                                 // 0x5d7080
+#include "../gui_mgr.h"
+extern GuiManager g_gui;                                 // 0x5d7080
 
 struct ResMgr3 {
     int load_all(int check_exists, tstring* root);   // 0x41c540
