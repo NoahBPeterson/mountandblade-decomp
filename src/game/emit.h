@@ -24,6 +24,12 @@ struct res_obj {                                        // resource returned by 
     unsigned flags;                                     // +0x1c
     char pad20[0x2c - 0x20];
     EmitRes* f2c;                                       // +0x2c (0x4424c0)
+    char pad30[0x4c - 0x30];
+    int f4c;                                            // +0x4c mirrored flag (0x44c210)
+    char pad50[0xcc - 0x50];
+    rgl::matrix xform;                                  // +0xcc local transform of a mesh object (0x44be50)
+    int f10c;                                           // +0x10c collision mask (0x44c210)
+    res_obj* clone();                                   // 0x41c6d0 (mesh objects)
 };
 struct EmitDef {                                        // 0xc0-byte definition record
     char pad0[0x10];
@@ -74,6 +80,8 @@ struct Emit {                                           // particle emitter (0x1
     int owner;                                          // +0x1b8
     Emit(const int* o) { f10 = 0; f14 = 0; f18 = 0; owner = *o; init(); }
     void init();                                        // 0x420b40
+    void reset_pending(int v);                          // 0x433810 (ret 4; agent4: the dust / splash emitters of a footstep)
+    void set_v184(const rgl::vector4* v);               // 0x433740 (agent4: the velocity of an impact particle)
     void set_placement(const rgl::mat4* m, const rgl::vector4* a, const rgl::vector4* b, int c);   // 0x433770
 };
 struct EmitTable {

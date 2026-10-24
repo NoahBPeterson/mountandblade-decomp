@@ -28,7 +28,8 @@ struct level;                                   // agent2/agent_types.h: the sce
 struct Level;                                   // agent/agent.h: the scene as agent sees it
 struct Emit;
 struct Wind;
-struct Rec1c8;                                  // the 0x1c8-byte prop record (terrain_b/records.h, agent3/agent_combat.h)
+struct Rec1c8;
+struct PlacedObj;                                  // the 0x1c8-byte prop record (terrain_b/records.h, agent3/agent_combat.h)
 struct MAgent;                                  // terrain_b/agent_rec.h: the agent slot as the pool sees it
 struct RecJ;
 struct SpawnRec;
@@ -118,7 +119,8 @@ struct Mission {
     int f6218;                                  // +0x6218
     int counts[8][6];                           // +0x621c per-team counters (0x4759c0, 0x48a8b0, 0x48a910; 0x435b90 reads [t][4], [t][5])
     float changed_at;                           // +0x62dc
-    char pad62e0[0x62e8 - 0x62e0];
+    int dismount_count;                         // +0x62e0 riders thrown off the player's horse (at most 4 per mission; 0x457b40)
+    char pad62e4[0x62e8 - 0x62e4];
     int time_idx;                               // +0x62e8 clock index (0x444370)
     char pad62ec[4];
     __int64 time_base;                          // +0x62f0 (0x444370)
@@ -150,7 +152,8 @@ struct Mission {
     int fog_dense;                              // +0x6604 fog mode: 0 dense, 1 thin (0x47a0c0)
     int f6608;                                  // +0x6608
     int cam;                                    // +0x660c index of the camera row (0x47a0c0, 0x442ca0)
-    char pad6610[0x6624 - 0x6610];
+    float f6610;                                // +0x6610 (agent4/agent_think.cpp 0x44e2b0: the view distance scale of the aim error)
+    char pad6614[0x6624 - 0x6614];
     posm view;                                  // +0x6624 (0x43f970, 0x440070)
     int f6664;                                  // +0x6664
     char pad6668[0x6678 - 0x6668];
@@ -197,6 +200,13 @@ struct Mission {
     void queue_dead(Agent* a);                  // 0x442dc0 (agent_fx_sound.cpp)
     Emit* spawn_effect(int idx, const rgl::mat4* m, int duration);   // 0x442ca0 (agent_fx_sound.cpp)
 
+    // ---- agent4 (agent_think.cpp) ----
+    int spawn_missile(const rgl::vector4* pos, const rgl::vector4* dir, ItemRef* launcher, ItemRef* ammo, unsigned shooter_id);   // 0x44be50
+    void spawn_prop(int* idx, int* id);         // 0x44c210
+    void init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (ret 0x14; the call sites here load ecx = the mission, unused by the body)
+    void blood_burst(float x, float y, float z, int unused, float amount);   // 0x4525a0 (ret 0x14)
+    int add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn_id);   // 0x44f870
+
     // ---- terrain_b ----
     void update_prop_flags();                   // 0x472050
     void update_team_stats();                   // 0x474e60 (fastcall)
@@ -230,6 +240,11 @@ struct Mission {
     void retag_props(int from, int to);         // 0x48ed60 (ret 8: every intact prop named like tag `from` is renamed to tag `to`)
     int count_props(int tag);                   // 0x48ee20 (ret 4: intact props of tag `tag`)
     int find_prop(int tag, int nth);            // 0x48ee90 (ret 8: index of the nth intact prop of tag `tag`, -1 when none)
+    // ---- src/game/agent5 (agent_hud.cpp) ----
+    void init_agent(Agent* a);                  // 0x4f7d70 (ret 4: pick the agent's equipment slots, refresh its look, re-wield the hand slots)
+    void refresh_agent(Agent* a);               // 0x4f7e00 (ret 4; this unused: rebuild the agent's appearance and equipment bodies)
+    void camera_to(const rgl::matrix* eye, const float* far_plane);   // 0x4fa790 (ret 8: store the camera frame, move the listener, the sun and the flare)
+    void apply_sun_light(const rgl::vector4* pos, const float* scale);   // 0x4fb180 (ret 8: the per-agent sun intensity and fade)
 };
 extern Mission* g_mission;                      // 0x5e292c
 

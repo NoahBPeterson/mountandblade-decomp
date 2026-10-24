@@ -3,6 +3,7 @@
 // src/include/item_kind.h, included here. Names provisional.
 #ifndef AGENT_ITEM_KIND_H
 #define AGENT_ITEM_KIND_H
+#include <vector>
 #include "rgl.h"
 #include "../tstring.h"
 #include "../../include/item_kind.h"
@@ -13,7 +14,13 @@ using rgl::vector4;
 // with the 0x419420 object (src/rgl/resource.h does not declare get_object yet, and defines g_resmgr with its own
 // type, so that header cannot be included here).
 struct res_obj;
-struct resmgr { res_obj* get_object(const tstring* name); };   // 0x419540
+struct res_shape;
+struct resmgr {
+    res_obj* get_object(const tstring* name);                       // 0x419540
+    std::vector<res_obj*> find_meshes(const tstring* prefix);       // 0x41b960 (agent4: the meshes whose names start with prefix)
+    void* get_material(const tstring* name);                        // 0x418a70 (agent4: a material by name)
+    res_shape* get_object60(const tstring* name);                   // 0x418c10 (agent4: a body resource)
+};
 extern resmgr g_resmgr;                                         // 0x5d6fa0
 
 // local frame of a carried item: matrix plus the three rotation members of 0x40e570 / 0x40e670 / 0x40e770

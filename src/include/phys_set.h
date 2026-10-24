@@ -31,6 +31,7 @@ struct PhysSet {
                                       const float* lim_min, const float* lim_max, const float* lim_twist);   // 0x4413e0 (ret 0xa4)
     void begin_static_build(int idx);             // 0x441610
     NewtonBody* add_capsule_body(int idx, const float* radius, const float* height, const float* mass, rgl::matrix* m0, rgl::matrix* m1, bool list);   // 0x4416c0 (ret 0x1c)
+    unsigned create_world();                      // 0x44fad0 (src/game/agent4/agent_update.cpp: first free record or a new one)
     bool none_sleeping(int idx);                  // 0x43a8a0 (src/game/agent2/agent_stats.cpp)
     void rebuild_static_body(int idx);            // 0x43a900 (src/game/agent2/agent_stats.cpp)
     void clamp_rec(int i);                        // 0x472c50 (thiscall, ret 4; src/game/terrain_b/terrain_b.cpp)

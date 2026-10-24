@@ -30,6 +30,8 @@ struct MsgLog {
     std::vector<tstring> lines;                         // +0xb340 (first at +0xb344) the line history (0x452c00)
     void push(const tstring& s, int v);                 // 0x4334b0
     void add(tstring msg, int color);                   // 0x452c00 (thiscall, ret 0x14)
+    void reset_geometry();                              // 0x4e64b0 (src/game/cls_map/progress_bar.cpp: clear the 32+32 meshes, the ages to 1e6, the heights to 0.1)
+    void update(float dt);                              // 0x4e6510 (flush the pending text, age the lines, fade the total height)
     void flush();                                       // 0x4f1390 (char_sheet/msg_log_ui.cpp): pops the ring into add()
 };
 

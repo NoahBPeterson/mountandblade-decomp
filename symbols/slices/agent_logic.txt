@@ -1,0 +1,7 @@
+0040e870 ??Dmat4@rgl@@QBE?AU01@ABU01@@Z  # rgl::mat4::operator* (this = left operand, hidden return): the game-side mat4 of agent_logic.cpp (drop_held, refresh_carried, process_blow, update_attack)
+0042ba50 ?find_entity@world@@QAEPAUSceneEnt@@H@Z  # world::find_entity(id): the scene entity of an id (swing_trace prop hit)
+00439be0 ?floor_at@world@@QAEXPBMPAMPAPAUface@@@Z  # world::floor_at(p, out_z, out_face)
+00439d40 ?floor_z@world@@QAEMPBM@Z  # world::floor_z(p)
+005e2958 ?g_tick_lo@@3HA  # g_time[2] low dword (iface.h Quad)
+005e295c ?g_tick_hi@@3HA  # g_time[2] high dword
+004378a0 ?set@AnimSlotCall@@QAE_NHI@Z  # AnimSlot::set out of line (agent_stats.cpp), called from move_step

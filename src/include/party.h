@@ -8,6 +8,10 @@
 #define MB_PARTY_H
 #include <vector>
 #include "../game/tstring.h"
+#include "./timer.h"
+#include "./ptr_vec.h"
+namespace rgl { struct mesh; }
+struct PartyV4 { float x, y, z, w; };       // a plain 4-float vector (no constructors: the party record is built by memory copies)
 
 struct Stack {                              // 0x20 bytes, array at party+0xa8
     union {
@@ -35,9 +39,25 @@ struct Party {                              // 0x5ac8 bytes
     bool flag;                              // +0x1c
     char pad1d[3];
     tstring key;                            // +0x20   0x4c6530
-    char pad30[0x8c - 0x30];
+    PartyV4 pos;                            // +0x30 map position (x, y, z, w)   0x4b2880 place_on_map, 0x4b3910, 0x4b80d0
+    float dirx, diry;                       // +0x40 heading   0x4b3ce0, 0x4b80d0
+    float oldx, oldy;                       // +0x48 previous heading   0x4b80d0
+    float angle;                            // +0x50 facing angle   0x4b3ce0, 0x4b80d0
+    char pad54[0x64 - 0x54];
+    float radius;                           // +0x64 0x4b80d0
+    float alpha;                            // +0x68 map-model opacity   0x4b80d0
+    int f6c;                                // +0x6c 0x4b7e50
+    int f70;                                // +0x70 troop index into the harvest table   0x4b4a00
+    unsigned f74;                           // +0x74 packed nibbles (low 4: aggression, 0x100: flag)   0x4b4a00
+    float f78;                              // +0x78 0x4b4a00 (alt score weight), 0x4b2c00
+    float f7c;                              // +0x7c 0x4b2c00 (morale), 0x4b5c30
+    float zoom;                             // +0x80 0x4b2c00 (zoom easing), 0x4b5c30
+    char pad84[0x88 - 0x84];
+    int f88;                                // +0x88 battle record index, -1 = none   0x4b1fa0, 0x4b3910, 0x4b4a00
     int owner;                              // +0x8c   0x460b90
-    char pad90[0xa0 - 0x90];
+    char pad90[0x94 - 0x90];
+    int f94;                                // +0x94 rider troop (type table index)   0x4b7840
+    char pad98[0xa0 - 0x98];
     int flags_lo;                           // +0xa0 (64-bit flag word; low byte = id)   0x489420, 0x489460 (0x3000 = size class)
     int flags_hi;                           // +0xa4
     Stack stacks[64];                       // +0xa8
@@ -45,9 +65,84 @@ struct Party {                              // 0x5ac8 bytes
         int nstacks;                        // +0x8a8
         int count;
     };
-    char pad8ac[0x8b4 - 0x8ac];
+    float f8ac;                             // +0x8ac 0x4b20b0 (speed factor)
+    float f8b0;                             // +0x8b0 0x4b2120 (set from perk 0x1a), 0x4b20b0
     char dirty;                             // +0x8b4
-    char pad8b5[0x5ac8 - 0x8b5];
+    char f8b5;                              // +0x8b5 0x4b7e50 (kill-feed visible)
+    char pad8b6[2];
+    ptr_vec attached;                       // +0x8b8 std::vector<int> of attached party ids (allocator word, first, last, end)   0x4b4800, 0x4b6180
+    int f8c8;                               // +0x8c8 attached-to party, -1 = none   0x4b2c00, 0x4b3910
+    char f8cc;                              // +0x8cc in mission   0x4b6180
+    char pad8cd[0x8d0 - 0x8cd];
+    Timer clk8d0;                           // +0x8d0 re-plan timer   0x4b80d0
+    float interval;                         // +0x8e0 re-plan interval   0x4b80d0, 0x4b3ce0
+    int state;                              // +0x8e4 pending action   0x4b4a00
+    int state_target;                       // +0x8e8
+    int state_f8ec;                         // +0x8ec
+    int state_f8f0;                         // +0x8f0
+    float f8f4;                             // +0x8f4 0x4b3ce0
+    int f8f8;                               // +0x8f8 clock index   0x4b3ce0
+    char pad8fc[4];
+    int f900;                               // +0x900 0x4b3ce0 (clock lo)
+    int f904;                               // +0x904 (clock hi)
+    Timer clk908;                           // +0x908 footstep timer   0x4b80d0
+    int action;                             // +0x918 map order (ai behaviour)   0x4b3910, 0x4b3ce0, 0x4b4a00
+    int target;                             // +0x91c order target   0x4b3ce0
+    int f920;                               // +0x920
+    union {
+        PartyV4 order_pos;                  // +0x924 order position   0x4b3bc0, 0x4b3ce0
+        struct { int f924, f928; float vx, vy; };    // 0x4b4a00 (int copies), 0x4b7460 (velocity jitter)
+    };
+    union {
+        int order_state;                    // +0x934 0x4b3bc0
+        float t934;                         // 0x4b80d0 (next order-plan delay)
+    };
+    int idx938;                             // +0x938 clock index   0x4b80d0
+    char pad93c[4];
+    __int64 t940;                           // +0x940 0x4b80d0
+    Timer clk948;                           // +0x948 0x4b80d0
+    float f958;                             // +0x958 aggression scale   0x4b4a00
+    union {
+        struct { float goal_x, goal_y; };   // +0x95c path goal (start_path 0x4b73c0, step_route 0x4b4320)
+        struct { int goal_xi, goal_yi; };   // 0x4b2880 (int copies)
+    };
+    union {
+        struct { float dest_x, dest_y; };   // +0x964 current destination   0x4b80d0, 0x4b7460
+        struct { int dest_xi, dest_yi; };   // 0x4b4320 / 0x4b2880 (int copies)
+    };
+    int path[0x400];                        // +0x96c node-id chain   0x4b73c0, 0x4b6b40
+    float detail[0x400 * 4];                // +0x196c per-node positions
+    int cursor;                             // +0x596c path cursor   0x4b4320
+    int npath;                              // +0x5970 path length
+    struct face* mesh;                      // +0x5974 current nav-mesh face   0x4b2880, 0x4b80d0
+    unsigned map_mask;                      // +0x5978 map record mask under the party   0x4b2880, 0x4b3910
+    float f597c;                            // +0x597c 0x4b2880
+    int moving;                             // +0x5980
+    int f5984;                              // +0x5984 map record index the party is on
+    int f5988;                              // +0x5988 needs repath
+    int f598c;                              // +0x598c
+    float f5990, f5994;                     // +0x5990 0x4b2ab0
+    int kind;                               // +0x5998 order kind   0x4b2970
+    union {
+        int target_pos[2];                  // +0x599c 0x4b2970 (int copies)
+        struct { float lx, ly; };           // 0x4b7460
+    };
+    struct face* tgt;                       // +0x59a4 target face   0x4b2970
+    int tgt_id;                             // +0x59a8 target party id   0x4b2ab0
+    char pad59ac[0x59c0 - 0x59ac];
+    struct PartyModel* model;               // +0x59c0 0x4b32f0 (release), 0x4b80d0
+    float trail_len;                        // +0x59c4 0x4b80d0
+    PartyV4 trail;                          // +0x59c8 last event position   0x4b2880, 0x4b80d0
+    char pad59d8[0x59e8 - 0x59d8];
+    rgl::mesh* label;                       // +0x59e8 rgl::mesh* of the hud label   0x4b7e50, 0x49bea0
+    rgl::mesh* e59ec;                       // +0x59ec 0x4b7840, 0x4b80d0
+    rgl::mesh* e59f0;                       // +0x59f0
+    ptr_vec deferred;                       // +0x59f4 std::vector<int> (allocator word; first at +0x59f8) emitter ids   0x4b7840
+    char f5a04;                             // +0x5a04
+    char pad5a05[0x5ab0 - 0x5a05];
+    Timer ignore_timer;                     // +0x5ab0 (script: party_ignore_player 0x4a7b0c)   0x4b4a00
+    int visited;                            // +0x5ac0 nodes visited by the last path search   0x4b73c0
+    char pad5ac4[0x5ac8 - 0x5ac4];
 
     int sum_stat(int what);                 // 0x4b1cf0 (thiscall, ret 4)
     tstring translated();                   // 0x4c6530
@@ -70,6 +165,37 @@ struct Party {                              // 0x5ac8 bytes
     tstring* display_name();                // 0x48d7b0 (the key's translation, or the name)
     void init();                            // 0x48f180 (resets the map party's order, path, speed and per-frame state)
     void clear_particle_systems();          // 0x48d7e0 (frees the id list at +0x59f4, then calls slot 0x68 of the model at +0x59c0)
+    // ---- src/game/party2 (0x4b1160..0x4b8f40): the map party's economy, orders, navigation and per-frame update ----
+    bool update();                          // 0x4b1b80
+    int slot_value(int idx, unsigned flags) const;      // 0x4b1be0 (ret 8)
+    int find_worth(int value, unsigned flags) const;    // 0x4b1d30 (ret 8)
+    void add_xp_to_stack(int idx, int amount);          // 0x4b1d80 (ret 8)
+    void prepare();                         // 0x4b1eb0 (heroes first)
+    void rotate_stacks(int from, int to);   // 0x4b1710 (ret 8: move stack `to` down to `from`)
+    float strength();                       // 0x4b1fa0
+    float speed_factor();                   // 0x4b20b0
+    void set_speed_from_stat();             // 0x4b2120
+    int skill_level(int skill);             // 0x4b2370 (ret 4)
+    float map_speed();                      // 0x4b25c0
+    void place_on_map();                    // 0x4b2880
+    void set_order_face(int* pos, struct face* f);      // 0x4b1780 (ret 8)
+    void set_order_pos(int* pos);           // 0x4b2970 (ret 4)
+    void set_order_party(int* id);          // 0x4b29d0 (ret 4)
+    void set_order_agent(int* id);          // 0x4b2ab0 (ret 4)
+    void tick_stats();                      // 0x4b2c00
+    void clear_map_flag();                  // 0x4b32f0
+    void collect_targets(int* out, int* max, int* count);   // 0x4b3910 (ret 0xc)
+    void reissue_order();                   // 0x4b3bc0
+    void plan_order();                      // 0x4b3ce0
+    void step_route();                      // 0x4b4320
+    int force_add_members(int troop, int count, unsigned flags, int f10);   // 0x4b4470 (ret 0x10)
+    void think();                           // 0x4b4a00
+    void leave_battle();                    // 0x4b6ae0
+    int start_path(int from, float tx, float ty);       // 0x4b73c0 (ret 0xc)
+    void update_nav();                      // 0x4b7460
+    void update_flags();                    // 0x4b7840
+    void update_hud_text();                 // 0x4b7e50
+    void tick(float dt);                    // 0x4b80d0 (ret 4)
 };
 
 struct PartyMgr {                           // 0x138e0 bytes, embedded in the game data at +0xf8
@@ -89,6 +215,7 @@ struct PartyMgr {                           // 0x138e0 bytes, embedded in the ga
     void next_party_id(int* id);            // 0x460ca0
     void next_party_id(unsigned* id);       // 0x460ca0
     int first_party_id();                   // 0x460d20
+    bool is_live(int id);                   // 0x4903e0 (thiscall, ret 4: id names a live party) (src/game/party2)
 };
 
 #endif // MB_PARTY_H

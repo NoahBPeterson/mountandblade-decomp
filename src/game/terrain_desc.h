@@ -21,11 +21,13 @@ struct TerrainDesc {
     int n_minus1;                               // +8 index of the leveling entry
     TerrainDescEntry layers[13];                // +0xc
     Dims dims;                                  // +0x144 / +0x148
-    char pad14c[0x16c - 0x14c];
+    char pad14c[0x158 - 0x14c];
+    unsigned char f158;                         // +0x158 mission flag byte (Mission +0x6528; 0x448eb0 tests bit 0, 0x4556d0)
+    char pad159[0x16c - 0x159];
     float min_x, min_y, max_x, max_y;           // +0x16c play-area rectangle (0x479e20)
     float base_z;                               // +0x17c ground height (0x47a0c0)
     int f180;                                   // +0x180 (0x473a60)
-    char pad184;
+    char f184;                                  // +0x184 (Mission +0x6554; 0x4465e0, 0x448eb0)
     bool muted;                                 // +0x185 (0x4435c0)
     char pad186[0x1c8 - 0x186];
     void init();                                // 0x464400

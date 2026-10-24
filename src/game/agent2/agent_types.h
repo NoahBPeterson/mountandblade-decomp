@@ -11,6 +11,7 @@
 // (nav_mesh.h), SkillCap (skill_cap.h); this header includes them. Curve (src/game/agent/curve.h) is the 0xd8-byte Channel here.
 #ifndef AGENT2_AGENT_TYPES_H
 #define AGENT2_AGENT_TYPES_H
+#define HNODE_LOAD_ORDER_COPY                    // hnode.h: agent_stats.cpp 0x438b10 needs the user-written copy (before mission.h pulls hnode.h in)
 #include <stddef.h>
 #include <math.h>
 #include <vector>
@@ -142,12 +143,7 @@ float __cdecl hit_chance(int* who, Agent* a);           // 0x438cb0
 // ---- STL instantiation helpers (VC7.1 <vector>/<memory>/<algorithm> code the linker kept from this object) ------
 #include "../../include/ptr_tag.h"
 #include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
-struct hnode {                                           // 12-byte heap node (key float at +8); user-written copy (load order)
-    int a, b; float key;
-    hnode() {}
-    hnode(const hnode& o) : a(o.a), b(o.b), key(o.key) {}
-    hnode& operator=(const hnode& o) { a = o.a; b = o.b; key = o.key; return *this; }
-};
+#include "../hnode.h"                             // hnode / node_gt (shared with agent4: NavMesh::open)
 typedef PlacedObj E1c8;                                  // the 0x1c8-byte polymorphic record
 struct allocE12  { void construct(E12* p, const E12& v); };             // 0x436cf0
 struct allocstr  { void construct(tstring* p, const tstring& v); };     // 0x436c90
@@ -179,7 +175,6 @@ struct vec_int {
     int al; int* first; int* last; int* end;
     int* fill_ptr(int* f, unsigned n, const int& x);    // 0x438c30
 };
-struct node_gt { bool operator()(const hnode& a, const hnode& b) const { return a.key > b.key; } };
 // vector<E12>::_Ucopy -> std::_Uninit_copy over the 12-byte records of the next object (0x436d10, src/game/agent)
 E12* __cdecl uninit_copy12(E12* f, E12* l, E12* d, void* al, ptr_tag tag);
 void __cdecl push_heap_node(hnode* first, int hole, int top, hnode val, node_gt pred);   // 0x4b2520

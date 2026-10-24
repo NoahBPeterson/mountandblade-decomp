@@ -14,6 +14,7 @@ struct vec2 {
     float x, y;                                  // stays an aggregate: terrain_a embeds it in an anonymous struct and
                                                  // agent.cpp initialises it with a brace list
     float normalize();                           // 0x4367c0 (returns the old length; (0,1) if <= 0)
+    void rotate_b(float ang);                    // 0x4327f0 (src/rgl/xmlcfg/game_util.cpp; agent4 calls it on a vec2 view of the heading)
 };
 
 struct Vec2 {

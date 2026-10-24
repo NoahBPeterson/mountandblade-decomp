@@ -13,6 +13,7 @@
 #include "./item_kind.h"
 #include "./curve.h"        // quaternion (w, x, y, z)
 
+namespace rgl { struct mesh; }
 using rgl::vector4;
 using rgl::matrix;
 
@@ -43,6 +44,7 @@ struct Wielder {
     char pad0[0x80];
     ItemRef a, b;                       // +0x80 / +0x88
     ItemRef ranged_ref();               // 0x4351f0
+    rgl::mesh* make_ranged_mesh();      // 0x44f6a0 (agent4/agent_update.cpp: clones the display mesh of the carried ranged / thrown item)
 };
 
 // ---- placed scene object (0x1c8 bytes, vtable 0x590b84; ctor / copy ctor are in the next object). reset() is

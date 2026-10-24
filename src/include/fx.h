@@ -19,7 +19,7 @@
 #include "./rgl_base.h"
 #include "./mat4.h"
 
-namespace rgl { struct mesh; struct lod_mesh2; struct psys; struct scene; }
+namespace rgl { struct lod_mesh; struct mesh; struct lod_mesh2; struct psys; struct scene; }
 struct Psys;                                                    // src/game/agent3/agent_fx_sound.h (a particle mesh as the game sees it)
 struct PsysGroup;
 extern __int64 g_ticks[];                                       // 0x5e2948 clock table, 1e-5 s ticks (indexed by a clock id)
@@ -174,6 +174,7 @@ struct FxDef {                                                  // 0x7c bytes
     void init(FxRes* r);                                        // 0x4288c0
     void render(rgl::scene* sc, const rgl::matrix* frame, const float* dist);   // 0x428ff0
     void skin(rgl::mesh* p, char flag);                         // 0x4291c0
+    void skin_lods(rgl::lod_mesh* g, int flag);                 // 0x452530 (ret 8; agent4/agent_update.cpp: skin every mesh of every list of a lod mesh)
     void skin_group(rgl::lod_mesh2* g);                         // 0x4296f0
     void attach_psys(int idx, Psys* p, const rgl::mat4* m);     // 0x442460 (agent_fx_sound.cpp)
     void attach_group(int idx, PsysGroup* g);                   // 0x4424a0 (agent_fx_sound.cpp)

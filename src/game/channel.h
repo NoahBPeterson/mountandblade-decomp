@@ -5,13 +5,16 @@
 #ifndef GAME_CHANNEL_H
 #define GAME_CHANNEL_H
 #include "../include/rgl_base.h"
+#include "../include/timer.h"
 struct Anim;
 struct Channel {                                        // 0xd8 bytes
     char pad0[8];
     unsigned flags;                                     // +8 (bone mask set)
     int fc;                                             // +0xc
     unsigned mask_lo, mask_hi;                          // +0x10 / +0x14 (bone mask bits)
-    char pad18[0x38 - 0x18];
+    char pad18[0x20 - 0x18];
+    Timer tm;                                           // +0x20 clock id, +0x28 start tick (busy() 0x433840; Curve::tm of agent/curve.h)
+    char pad30[0x38 - 0x30];
     float blend;                                        // +0x38 (0x43a980)
     int f3c;                                            // +0x3c
     char pad40[0x44 - 0x40];
@@ -27,11 +30,15 @@ struct Channel {                                        // 0xd8 bytes
     float period;                                       // +0xa0
     char pada4[4];
     int mode;                                           // +0xa8
-    char padac[0xc0 - 0xac];
+    char padac[0xb4 - 0xac];
+    int curve;                                          // +0xb4 blend curve of the phase (1 linear, 2 sine, 4 square, 5 square root; 0x45f660)
+    char padb8[0xc0 - 0xb8];
     float w0, w1;                                       // +0xc0 / +0xc4
     char padc8[0xcc - 0xc8];
     int rate;                                           // +0xcc
-    char padd0[0xd8 - 0xd0];
+    int tbl_idx;                                        // +0xd0 index into g_step_tbl (busy() 0x433840)
+    char padd4[0xd8 - 0xd4];
+    float phase();                                      // 0x4231f0 (the phase after the curve's input; 0x45f660)
     bool busy();                                        // 0x433840 (Curve::step_reached)
     void set_phase(float period);                       // 0x433930
     // agent_combat.cpp 0x4406a0 (Agent::charged_0x48, inlined) compares the float at +0xd8 of the first channel with 0.1

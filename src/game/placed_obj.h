@@ -31,12 +31,14 @@ struct PlacedObj : IfaceB {
     int value;                          // +0x1a0 (0x435860)
     int m1a4, m1a8, m1ac;               // +0x1a4 (0x4352f0)
     int m1b0, m1b4, m1b8;               // +0x1b0 (0x4352f0)
-    int m1bc, m1c0, m1c4;               // +0x1bc
+    int m1bc, m1c0, m1c4;               // +0x1bc (m1c0 is the prop's hit points as a float: hp())
     PlacedObj();                        // 0x437830
     PlacedObj(const PlacedObj& o);      // 0x437bb0
     PlacedObj& operator=(const PlacedObj& o);   // 0x437d60
     // implicit virtual destructor: deleting destructor 0x437870
+    float& hp() { return *(float*)&m1c0; }   // +0x1c0 as a float: the prop's hit points (0x45a170; update_1c0 0x461200)
     void reset();                       // 0x4352f0 (src/game/agent/agent.cpp)
+    void update_1c0();                  // 0x461200 (agent4/agent_think.cpp spawn_prop; ICF-folded with Agent::init_max_hp)
 };
 
 #endif // GAME_PLACED_OBJ_H

@@ -34,8 +34,18 @@ struct node_groups; typedef node_groups Mesh;                              // th
 
 // ---- animation channels / skeleton (the animator at body+0x304) ---------------------------------------------
 struct CapDef { vector4 a; vector4 b; float r; int pad[2]; };     // 0x2c bytes (0x43f6d0)
+#include "../agent_obj.h"                              // posm
 struct ChanRec {                                      // 0xdc bytes (0x43f6d0: items[i] stride)
-    char pad0[0xcc];
+    char pad0[4];
+    int parent;                                       // +4 parent bone, -1 = root (0x44fc60)
+    char pad8[4];
+    posm m;                                           // +0xc local frame (0x44fc60)
+    char pad4c[0x9c - 0x4c];
+    float mass;                                       // +0x9c (0x44fc60)
+    float lim_min, lim_max, lim_twist;                // +0xa0 / +0xa4 / +0xa8 (degrees)
+    float rot_x, rot_y, rot_z;                        // +0xac / +0xb0 / +0xb4 (degrees)
+    char padb8[4];
+    rgl::vector4 cone;                                // +0xbc (x, y, z of the limit cone direction)
     std::vector<CapDef> caps;                         // +0xcc (first +0xd0, last +0xd4)
 };
 struct SkelData {

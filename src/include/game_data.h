@@ -8,9 +8,11 @@
 #ifndef MB_GAME_DATA_H
 #define MB_GAME_DATA_H
 #include "../game/tstring.h"
+namespace rgl { struct matrix; }
 #include "./troop.h"
 #include "./party.h"
 #include "./game_recs.h"
+namespace rgl { struct mesh; }
 
 // The 0x494-byte level / scene-object record (table at game+0x13a50).
 struct Level494 {
@@ -39,7 +41,12 @@ struct GameData {
         int player;                             // +0x8c (the player's troop id)   0x460160, 0x460640
         int player_troop;
     };
-    char pad90[0xb0 - 0x90];
+    char pad90[0x98 - 0x90];
+    int cnt_killed;                    // +0x98 0x457b40 (kills of the player)
+    int cnt_killed_friend;                    // +0x9c 0x457b40
+    int cnt_ko;                    // +0xa0 0x457b40 (knock-outs by the player)
+    int cnt_ko_friend;                    // +0xa4 0x457b40
+    char pada8[0xb0 - 0xa8];
     int fb0;                                    // +0xb0   0x4610b0
     char padb4[0xc8 - 0xb4];
     int fc8;                                    // +0xc8   0x460620, 0x460d80
@@ -87,7 +94,14 @@ struct GameData {
     int tbl[64][32];                            // +0x1405c (0x473a60)
     char pad1605c[0x1a090 - (0x1405c + 64 * 32 * 4)];
     int f1a090;                                 // +0x1a090 (0x472050)
-    char pad1a094[0x1a20c - 0x1a094];
+    char pad1a094[0x1a1f0 - 0x1a094];
+    int f1a1f0;                    // +0x1a1f0 0x44c210 (Mission::spawn_prop: the sound-event context: prop index)
+    int f1a1f4;                    // +0x1a1f4 0x44c210 (agent id)
+    int f1a1f8;                    // +0x1a1f8 0x44c210 (its troop)
+    int f1a1fc;                    // +0x1a1fc 0x44c210
+    int f1a200;                    // +0x1a200 0x44c210 (first mesh of the entity)
+    int f1a204;                    // +0x1a204 0x44c210
+    char pad1a208[0x1a20c - 0x1a208];
     int f1a20c;                                 // +0x1a20c
     char pad1a210[0x1a23c - 0x1a210];
     int f1a23c;                                 // +0x1a23c   0x4610b0
@@ -95,14 +109,32 @@ struct GameData {
     int skill_level(int troop, int skill);      // 0x437b20 (thiscall, ret 8)
     int skill(int troop, int id);               // 0x437b20 (thiscall, ret 8) (0x4406a0)
     char emit_event(int id, int a, int b);      // 0x435790 (ret 0xc)
+    void set_matrix(const rgl::matrix* m);      // 0x435650 (agent4: sound-event context frame)
     void add_experience(int troop, int amount); // 0x4428c0 (ret 8) (agent_fx_sound.cpp)
     bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4)
     void blend(float* out, float x, float y);   // 0x471040 (wind / sky blend over the anchors)
     void save_language_files(bool translated);  // 0x4c8ca0
+    // ---- src/game/party2 (method declarations only; fields at the offsets noted are reached by offset there) ----
     struct face* find_at(const float* p);       // 0x48ea80 (nav-mesh face under a map position; other object)
+    void init_event(struct E92* r);             // 0x4b36a0 (ret 4: orient an event record on the map)
+    float party_value(unsigned id);             // 0x4b4800 (ret 4)
+    void refresh_party(unsigned id);            // 0x4b4700 (ret 4)
+    void push_event(const int* pos, unsigned nation);       // 0x4b5fe0 (ret 8: events vector at +0x13a60)
+    void push_party_event(int party, const int* pos, const float* heading);   // 0x4b6070 (ret 0xc)
+    unsigned color_of(float relation, int flag);           // 0x4b1930 (ret 8: relation colour ramp)
+    bool is_night();                            // 0x435740 (the slices' not_afternoon)
     int remove_troops(int party, int troop, int count, char prisoners, int a5);   // 0x48f9f0 (ret 0x14: count removed)
     float relation(int a, int b);               // 0x48ffa0 (ret 8: party relation, -1..1)
+    void list_members(int id, unsigned* out, unsigned* n);   // 0x490fa0 (ret 0xc: the party and its attached parties)
+    void on_member_killed(int id);              // 0x490a30 (ret 4)
+    void remove_party(int party);               // 0x4915d0 (ret 4)
+    void label_text(rgl::mesh* m, const tstring* text, char flag, int arg, const float* h);   // 0x49baa0 (ret 0x14: lays text out into a label mesh)
+    bool deploy_party(int a, int b);            // 0x49f060 (ret 8)
+    void add_gold(int gold, int troop);         // 0x49b720 (ret 8: adds to the troop's gold (+0x3b4) and, for the player, logs ui_you_got_value)
+    void remove_gold(int gold, int troop);      // 0x49b820 (ret 8: subtracts (clamped at 0) and logs ui_you_lost_value)
+    void start_quest(int quest, int giver_troop);   // 0x49b930 (ret 8: stamps a quest record as started by the giver, logs ui_new_quest_taken)
     void fill_parties(int id, struct Party* out);   // 0x48fd60 (ret 8: merges the party and its attached parties into `out`)
+    void count_units(int party, int* a, int* b, int* c, int* d);   // 0x490ce0 (ret 0x14)
     // ---- src/game/mission_ui2 (method declarations only) ----
     tstring event_string(int id);               // 0x48c470 (ret 8: hidden return; runs emit_event(0xf, id / 6, id), returns the result string 0xa70464)
     void init_slots(int troop, int want);       // 0x48c4c0 (ret 8: frees inventory slots of a troop until `want` are free, then compacts)
