@@ -41,7 +41,7 @@ print(table(["Source tree", "Functions", "Share", "Code size", "Share (size)"],
             [row("Migrated into src/", migrated), row("Compilable, still only in match/slices", done - migrated)]))
 
 # Equivalence evidence for the equivalent-only rows (tools/difftest/verdicts.py, from the latest sweep)
-EV_CATS = (("pass", "PASS: matched, every edge covered"), ("weak", "WEAK: matched, some edges unreached"),
+EV_CATS = (("pass", "PASS: matched, every branch outcome taken"), ("weak", "WEAK: matched, some branch outcomes never taken"),
            ("fail", "FAIL: a mismatch (see the row's note)"), ("inputs", "Untestable: random inputs invalid"),
            ("harness", "Untestable: harness limitation"), ("funclet", "Funclet / cold tail (tested with parent)"),
            ("not_run", "Not run"))

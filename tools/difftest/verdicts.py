@@ -8,8 +8,9 @@ usage: verdicts.py --from DIR [DIR ...]      # write docs/equiv_verdicts.json + 
 A sweep directory holds equiv.py --json results named <id>_<va>.json (tools/difftest/sweep_nonmatching.py --out DIR).
 With --from, every current src module nonmatching row takes its result from the LAST directory
 that has one; rows without a result count as "not run". Categories (each row exactly one):
-  pass        PASS / PASS-FP: outputs matched on every valid input and every edge of both sides was covered
-  weak        WEAK / WEAK-FP: outputs matched, but some edges were never reached
+  pass        PASS / PASS-FP: outputs matched on every valid input and every control-flow edge (each branch's taken
+              and fall-through side, each jump-table target) of both sides was exercised
+  weak        WEAK / WEAK-FP: outputs matched, but some edges never ran (instruction coverage can still be 100%)
   fail        FAIL: a mismatch on some input (the row's note says whether it is a harness artifact)
   inputs      UNSUPPORTED because random inputs were mostly invalid (virtual calls on soup objects, faults, ...)
   harness     UNSUPPORTED for a harness reason (resolution audit, own copies of constants, unresolved symbols, ...)
