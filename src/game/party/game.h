@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <new>
 #include "../tstring.h"
+#include "../../include/dialog_rec.h"      // DialogBlock (TriggerRec)
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../ui/ui_common.h"
@@ -73,16 +74,15 @@ struct SoaBlock {
 };
 stream_base* read_soa(stream_base* s, SoaBlock* b);        // 0x51e1f0 (cdecl, returns the stream)
 
-struct TriggerRec {                         // 0x78 bytes: element of the trigger list (+0x139e8)
-    char pad0[0xc];
-    int f0c;                                // +0x0c  0x51ddc0 (r_int)
-    char pad10[0x50 - 0x10];
-    __int64 f50;                            // +0x50  0x51ddc0 (r_i64)
-    char pad58[0x60 - 0x58];
-    __int64 f60;                            // +0x60
-    char pad68[0x70 - 0x68];
-    __int64 f70;                            // +0x70
-    char pad78[0x78 - 0x78];
+struct TriggerRec {                         // 0x78 bytes: element of the trigger list (+0x139e8); the module-file trigger record
+    float f0, f4, f8;                       // +0x00  (the vtable +0x38 reads of trigger_rec::read 0x4bd830, src/game/config)
+    int f0c;                                // +0x0c  0x51ddc0 (r_int), 0x4c1c20 (cleared last)
+    DialogBlock cond;                       // +0x10  condition block: items +0x10, count +0x14, done +0x18, text +0x1c (ctor 0x4c1c20)
+    DialogBlock cons;                       // +0x2c  consequence block: items +0x2c, count +0x30, done +0x34, text +0x38
+    int f48; int pad4c; __int64 f50;        // +0x48  (clock index, 64-bit reading) pair: f50 is read by 0x51ddc0 (r_i64), stamped by 0x4c1d70
+    int f58; int pad5c; __int64 f60;        // +0x58
+    int f68; int pad6c; __int64 f70;        // +0x68
+    TriggerRec();                           // 0x4c1c20 (src/game/triggers/trigger_vec.cpp)
     __declspec(noinline) void read(stream_base* s);        // 0x51ddc0
 };
 struct TriggerTag {                         // Game +0x139e8: capacity, array, constant 1 (inline ctor stores +4, +8, +0)

@@ -1,0 +1,5 @@
+0042bbd0 ??0mstr@@QAE@XZ  # MouseRec's string member (src/game/triggers): the outlined tstring constructor
+0042bc40 ??1mstr@@QAE@XZ  # the outlined tstring destructor
+08ee3fc4 ?g_dlg_options@@3PAXA  # the options dialog window, written by options_dlg_proc 0x4bf5f0
+08ee3c38 ?g_module_name@@3Utstring@@A  # the selected module name (0x4c0520 appends it to "Modules\")
+005aa010 ?g_music_volume@@3MA  # music volume (rec_tables.h declares it; the music monitor 0x4c25e0 reads it)

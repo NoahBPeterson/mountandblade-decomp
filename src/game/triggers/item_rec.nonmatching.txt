@@ -1,0 +1,2 @@
+004ce870	25	ItemRec::ItemRec: complete; the derived vtable store sits after the status word in the original, the optimizer here moves it behind the zeroing stores.
+004ce8d0	25	ItemRec2::ItemRec2: same as 0x4ce870 with vtable 0x596148.

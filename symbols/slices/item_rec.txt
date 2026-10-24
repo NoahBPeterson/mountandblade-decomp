@@ -1,0 +1,1 @@
+005947d8 ??_7item_head@@6B@  # head record vtable (slot 0 = deleting destructor 0x4c4c90), stored by the inline base destructor of 0x4ce930

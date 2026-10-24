@@ -51,6 +51,7 @@ struct tstring {
     void trim();                                // 0x42c7a0
     tstring operator+(const tstring& o) const;  // 0x42c840
     void insert(int at, const tstring& s);      // 0x42c900
+    void read_from(struct _iobuf* f, unsigned n);   // 0x4151e0 read n bytes of the file (a FILE*) into the string (src/rgl/text_stream.cpp; used by src/game/triggers)
 };
 int min_int(const int& a, const int& b);       // 0x42c0f0
 

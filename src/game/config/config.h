@@ -90,14 +90,23 @@ void __fastcall unescape(tstring* s);               // 0x4bac70
 
 // ---- the create-game options page (0x4b9e70) ---------------------------------------------------------------------
 struct GameConfig {
-    char pad0[0x1a080];
-    tstring settings_text;                          // +0x1a080 the settings page text    0x4bb3f0
+    char pad0[0x1a060];
+    int  debug_file;                                // +0x1a060 the script debugger's file slot (cleared by 0x4bf870 when a script file is missing)
+    char pad_d[4];                                  // +0x1a064
+    int  paused;                                    // +0x1a068 "Stop"/"Debug" toggle of the script debugger  0x4bf870
+    tstring script_text;                            // +0x1a06c text of the selected script    0x4bf870
+    int  script_index;                              // +0x1a07c selected index (CB_GETITEMDATA)   0x4bf870
+    tstring settings_text;                          // +0x1a080 the settings page text    0x4bb3f0 (the script debugger's module_scripts.py text, 0x4bf870)
     char pad_g[4];                                  // +0x1a090
     int  game_mode;                                 // +0x1a094 selected game mode (0 campaign, 1 quick, 2 custom, 3 client, 4 host)  0x4b9e70
-    char pad_a[0x1a0b8 - 0x1a098];
+    int  check_a098;                                // +0x1a098 BM_SETCHECK source of control 0x434   0x4bf640
+    char pad_a[0x1a0b8 - 0x1a09c];
     int  list_top;                                  // +0x1a0b8 top-visible list entry    0x4bb260
     int  list_sel;                                  // +0x1a0bc selected entry            0x4bb260
-    char pad_b[0x1a1d0 - 0x1a0c0];
+    char pad_b[0x1a0cc - 0x1a0c0];
+    int  check_a0cc;                                // +0x1a0cc control 0x453   0x4bf640
+    int  check_a0d0;                                // +0x1a0d0 control 0x454   0x4bf640
+    char pad_c[0x1a1d0 - 0x1a0d4];
     int  sub_option;                                // +0x1a1d0 selected sub-option of the host page   0x4b9e70
 };
 extern GameConfig* g_config;                        // 0x5e2930
@@ -105,6 +114,7 @@ struct CreateGameOptionsPage {
     char pad[0x374];
     HWND hDlg;                                      // +0x374 dialog window of the page
     void refresh();                                 // 0x4b9e70
+    void update_checks();                           // 0x4bf640 sets the page's radio / check buttons from g_config, then refresh()
 };
 
 // ---- the engine's software cursor (0x4bc170, 0x4bc1f0) ------------------------------------------------------------
@@ -164,9 +174,17 @@ void __fastcall release_input_devices(InputSet* self);  // 0x4bc3d0
 // ---- the render batch's buffer table (0x4bc540..0x4bd0c0): dev_buffer / buffer_pair
 #include "../dev_buffer.h"
 struct shader_res;
-struct resource_manager_x {                         // the resource manager (0x5d6fa0), shader lookup only
+struct resource_manager_x {                         // the resource manager (0x5d6fa0), shader lookup only (calls added for src/game/triggers)
     shader_res* get_shader(const tstring& name);    // 0x418b30
+    struct texture* get_texture(const tstring& name);   // 0x418870 (rgl/resource.h texture; its d3d_tex at +0x40)
+    int  reload_textures();                         // 0x418da0
+    void reset_effect_sets();                       // 0x418fb0
+    int  restore(ID3DXEffect* fx);                  // 0x419580 (device reset: textures, effects)
+    int  invalidate();                              // 0x4195e0 (device lost)
+    void linearise_meshes();                        // 0x419640 (called "finalize" by module_info.txt's loader)
+    void load_pack(const tstring& name, int user);  // 0x41e150
 };
+extern resource_manager_x g_resmgr_x;               // 0x5d6fa0
 #include "../render_batch.h"                   // render_batch (shared with terrain_b)
 struct font_details {                               // seven zeroed dwords
     int a, b, c, d, e, f, g;
@@ -216,6 +234,8 @@ struct ini_entry {
 struct ini_file {
     ini_entry entries[0x1000];                      // +0
     int       count;                                // +0x2c000
+    ini_file();                                     // 0x4c1be0 (src/game/triggers: constructs the 0x1000 key / value string pairs, clears count)
+    ~ini_file();                                    // 0x4be920 (destroys them, last pair first)
     void load(FILE* f);                             // 0x4bd630
     int  find(const tstring& key);                  // 0x4bd5a0
     float get_float(const tstring& key);            // 0x4bd5e0
@@ -237,6 +257,10 @@ struct trigger_rec {                                // three floats then the con
 struct trigger_entry {
     float f0;                                       // +0
     DialogBlock block;                                    // +4
+    int clock;                                      // +0x20 clock index (ctor 0x4c1de0, stamp 0x4c1ee0)
+    int pad24;
+    __int64 t;                                      // +0x28 the clock reading taken at it
+    trigger_entry();                                // 0x4c1de0 (src/game/triggers)
     void read(stream_base& s, const char* name, int idx);   // 0x4bd910
 };
 
@@ -254,6 +278,8 @@ struct loaded_psys_table {
     int count;                                      // +0x04
     int used[11];                                   // +0x08
     void load_used();                               // 0x4bdb60
+    void clear();                                   // 0x4c1f20 (src/game/triggers: deletes the record array)
+    void resize(stream_base& s);                    // 0x4c1f70 (reads the count and every record)
 };
 struct prsnt_record {                               // 0x24 bytes + extras
     tstring tex;                                    // +0x00
@@ -308,6 +334,8 @@ struct music_player {
     int w[0x26];                                    // +0x2408 state block: per-slot arrays (state, FMOD streams at +0x2428, record index +0x2430...)
     void stop(int i);                               // 0x4be0a0
     void play(int rec, int* slot);                  // 0x4be0e0
+    music_player();                                 // 0x4c24c0 (src/game/triggers: constructs the 0x100 record names, the three clocks, the monitor state)
+    void update();                                  // 0x4c25e0 per-frame monitor of the two stream slots and the track selection
 };
 
 struct menu_item {                                  // 0x68 bytes
