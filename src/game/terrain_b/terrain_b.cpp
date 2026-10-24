@@ -1069,7 +1069,7 @@ void Mission::update_prop_flags()
         for (unsigned i = 0; i < props.size(); i++) {
             Rec1c8& e = props[i];
             if (e.destroyed == 0) {
-                if ((g_propkinds[e.kind].flags & 0x40) == 0)
+                if ((g_propkinds[e.kind].flags11 & 0x40) == 0)
                     continue;
             } else {
                 if (e.destroyed != 1 && e.destroyed != 5)
@@ -1517,7 +1517,7 @@ void FaceRace::relax(int skip, float* v)
 }
 
 // @ 0x473800
-FaceRace* FaceGen::unpack(const unsigned __int64* key)
+FaceRace* FaceGenome::unpack(const unsigned __int64* key)
 {
     pick_b = ((unsigned)key[0] & (g_mask64 - 1)) - 1;
     pick_a = ((unsigned)(key[0] >> 6) & (g_mask64 - 1)) - 1;
@@ -1789,7 +1789,7 @@ static __forceinline int lerp_int(int a, const int& b)
 #define MIX(k) { RAND(); float lo = save[i + k]; morph[i + k] = (morph[i + k] - lo) * ((float)(RAND() % 0x3dc9) * 0.00012644623f) * 0.5f + lo; }
 
 // @ 0x4746e0
-void FaceGen::breed(const unsigned __int64* a, const unsigned __int64* b, int seed)
+void FaceGenome::breed(const unsigned __int64* a, const unsigned __int64* b, int seed)
 {
     g_rand_seed = (seed + 0x8a767) * 0x1ddcf5f + 0x2f784719;
     ((FaceGenExt*)this)->unpack(a);

@@ -19,69 +19,8 @@ struct mesh;                                            // 0x260 bytes
 mesh* mesh_clone(mesh* m);                              // 0x41c6d0
 struct Entity;
 
-// the UI element base (0x178 bytes, ctor 0x48ae20)
-struct widget {
-    widget() MB_NOTHROW;                                // 0x48ae20
-    char pad0[0x85];
-    unsigned char dirty;                                // +0x85
-    char pad86[0xe8 - 0x86];
-    float ex;                                           // +0xe8 (text/widget flavour)
-    float ey;                                           // +0xec
-    float pex;                                          // +0xf0 (panel flavour)
-    float pey;                                          // +0xf4
-    char padf8[0x178 - 0xf8];
-    virtual void v00();                                 // +0x00
-    virtual void v04();                                 // +0x04
-    virtual void v08();                                 // +0x08
-    virtual void v0c();                                 // +0x0c
-    virtual void v10();                                 // +0x10
-    virtual void v14();                                 // +0x14
-    virtual void v18();                                 // +0x18
-    virtual void v1c();                                 // +0x1c
-    virtual void v20();                                 // +0x20
-    virtual void v24();                                 // +0x24
-    virtual void v28();                                 // +0x28
-    virtual void v2c();                                 // +0x2c
-    virtual void v30();                                 // +0x30
-    virtual void v34(float v);                          // +0x34
-    virtual void v38();                                 // +0x38
-    virtual void v3c();                                 // +0x3c
-    virtual void v40();                                 // +0x40
-    virtual void v44();                                 // +0x44
-    virtual void v48();                                 // +0x48
-    virtual void v4c();                                 // +0x4c
-    virtual void v50();                                 // +0x50
-    virtual void v54();                                 // +0x54
-    virtual void v58(const float* ab);                  // +0x58
-    virtual void v5c();                                 // +0x5c
-    virtual void v60();                                 // +0x60
-    virtual void v64(const float* ab);                  // +0x64
-    virtual void v68();                                 // +0x68
-    virtual void v6c(const float* ab);                  // +0x6c
-    virtual void v70();                                 // +0x70
-    virtual void v74();                                 // +0x74
-    virtual void v78();                                 // +0x78
-    virtual void v7c(mesh* m);                          // +0x7c
-    virtual void v80(int n, mesh* m);                   // +0x80
-    virtual void v84();                                 // +0x84
-    virtual void v88();                                 // +0x88
-    virtual void v8c();                                 // +0x8c
-    virtual void v90();                                 // +0x90
-    virtual void v94();                                 // +0x94
-    virtual void v98(const int* v);                     // +0x98
-    virtual void v9c();                                 // +0x9c
-    virtual void va0();                                 // +0xa0
-    virtual void va4(tstring* out, tstring* s);         // +0xa4
-    virtual void va8();                                 // +0xa8
-    virtual void vac();                                 // +0xac
-    virtual void vb0();                                 // +0xb0
-    virtual void vb4();                                 // +0xb4
-    virtual void vb8();                                 // +0xb8
-    virtual void vbc();                                 // +0xbc
-    virtual void vc0();                                 // +0xc0
-    virtual void vc4();                                 // +0xc4
-    virtual void vc8(widget* o);                        // +0xc8
-};
+// the UI element base (0x178 bytes, ctor 0x48ae20): src/game/widget.h
+#include "../widget.h"
 
 // engine vector of UI elements: {lead, first, last, end}
 struct objvec {
@@ -268,17 +207,7 @@ struct World {
 };
 
 // the 0x7c-byte wind track (ctor 0x461480)
-struct wind {
-    int type;                                           // +0x00
-    float v04[4];                                       // +0x04
-    float v14[4];                                       // +0x14
-    float v24[4];                                       // +0x24
-    char pad34[0x44 - 0x34];
-    float v44[4];                                       // +0x44
-    float f54;                                          // +0x54
-    char pad58[0x7c - 0x58];
-    wind() MB_NOTHROW;                                  // 0x461480
-};
+#include "../wind.h"                              // wind (shared with terrain_a/wind.cpp)
 
 static void push_item(elem* w, widget* o)
 {

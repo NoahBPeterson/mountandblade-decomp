@@ -83,14 +83,7 @@ struct E1c8 {                                   // 0x1c8-byte polymorphic record
 };
 
 // ---- timed transform tween of a scene prop (0x467c50) -------------------------------------------------------
-struct PropEnt {                                // the scene entity the prop drives (vtable slot 23 takes the new frame)
-    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
-    virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
-    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
-    virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21(); virtual void v22();
-    virtual void set_frame(const rgl::matrix* m, const void* extra);     // slot 23 (+0x5c)
-};
+#include "../prop_ent.h"                 // PropEnt (the scene entity the prop drives; shared with mission_ui2)
 struct Prop {
     char pad0[0x18];
     rgl::matrix cur;                            // +0x18
@@ -112,33 +105,7 @@ struct Prop {
 // ---- missile (pool record; 0x467f80, 0x467fb0) --------------------------------------------------------------------
 struct MissionCam { char pad[0x6654]; float cam[3]; };      // the mission object's camera position (+0x6654)
 extern MissionCam* g_mission;                   // 0x5e292c
-struct Missile {
-    char pad0[0x20];
-    rgl::vector4 p20;                           // +0x20
-    char pad30[0x40 - 0x30];
-    rgl::vector4 p40;                           // +0x40
-    char pad50[4];
-    float f54;                                  // +0x54
-    char pad58[0x68 - 0x58];
-    int f68;                                    // +0x68
-    char pad6c[4];
-    int clock;                                  // +0x70
-    char pad74[4];
-    __int64 t0;                                 // +0x78
-    char pad80[8];
-    int ammo_item;                              // +0x88
-    char pad8c[4];
-    char f90;                                   // +0x90
-    char pad91[3];
-    float f94;                                  // +0x94
-    char pad98[4];
-    char f9c;                                   // +0x9c
-    char pad9d[3];
-    int fa0;                                    // +0xa0
-    int fa4;                                    // +0xa4
-    float ammo_scale();                         // 0x467f80
-    void init();                                // 0x467fb0
-};
+#include "../missile.h"                 // Missile (shared with agent4)
 
 // per-component max / min of two 3-vectors (0x468300, 0x468360)
 void __cdecl vmax3(float* a, const float* b);   // 0x468300
@@ -166,21 +133,11 @@ struct skin_x : skin {
 
 // ---- the mesh members of this object (a view of rgl::mesh) -----------------------------------------------------------
 #include "../../rgl/mesh_x.h"             // mesh_x (shared with src/rgl/core/resmgr.h)
-struct mesh_list_x : rgl::mesh_list { void apply(rgl::matrix m); };            // 0x46c990
-struct lod_mesh_x : rgl::lod_mesh { void apply(const rgl::matrix* m); };       // 0x46c9f0
+#include "../lod_mesh_x.h"            // mesh_list_x::apply 0x46c990, lod_mesh_x::apply 0x46c9f0 (shared with mesh_slot)
 
 // ---- effect slot record (0xd8 bytes; reset 0x4686a0, inline ctor / dtor in 0x46b9d0) --------------------------------
 #include "../../include/fx.h"           // Quad4, EnvRec (shared with src/rgl/scene)
-struct FxDef2 {
-    int count;                                  // +0
-    char pad4[0x40 - 4];
-    EnvRec* env;                                // +0x40
-    int nenv;                                   // +0x44
-    int* envidx;                                // +0x48
-    char pad4c[0x60 - 0x4c];
-    int clock;                                  // +0x60
-    void set_env_count(int n);                  // 0x46b9d0
-};
+// (the record is FxDef of include/fx.h: FxDef::set_env_count is defined in terrain_a.cpp)
 
 // ---- level index of a record (0x468770) ----------------------------------------------------------------------------
 extern int g_lod_max;                           // 0x8ee3ac4
@@ -328,7 +285,7 @@ struct light_t {
     float range;                                // 0x54
 };
 struct flag_obj { char pad[0x10]; char on; };
-struct entry { rgl::mesh* m; int extra; };      // 8 bytes
+struct mesh_entry { rgl::mesh* m; int extra; };      // 8 bytes
 #include "../../include/mat4.h"
 using rgl::rot3;
 struct view_t {
@@ -345,7 +302,7 @@ struct view_t {
     std::vector<light_t*> lights;               // 0x194
     char pad1a4[0x1b0 - 0x1a4];
     flag_obj* p1b0;
-    std::vector<entry> ents;                    // 0x1b4
+    std::vector<mesh_entry> ents;                    // 0x1b4
 };
 struct vb_slot {                                // 0x4c bytes
     char pad0[4];

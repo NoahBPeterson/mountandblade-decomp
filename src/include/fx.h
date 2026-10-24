@@ -9,7 +9,7 @@
 //          destructor 0x421680, init 0x4288c0, update 0x421df0, render 0x428ff0, skin 0x4291c0 (src/rgl/scene);
 //          attach_psys / attach_group 0x442460 / 0x4424a0 (src/game/agent3/agent_fx_sound.cpp).
 //   EnvRec (0xd8 bytes): one envelope record. alloc 0x428c60 (rgl), the inline constructor / destructor and reset 0x4686a0
-//          (src/game/terrain_a/terrain_a.cpp, FxDef2::set_env_count 0x46b9d0 allocates the array; the vector deleting
+//          (src/game/terrain_a/terrain_a.cpp, FxDef::set_env_count 0x46b9d0 allocates the array; the vector deleting
 //          destructor ??_E is 0x41ed70).
 // Offsets cite the function that reads or writes them. Needs rgl::vector4 / rgl::matrix (rgl_base.h picks the module's own).
 // The slices' names: Slot, NodeOwner, slotarr (FxElem, FxDef).
@@ -155,13 +155,13 @@ struct FxDef {                                                  // 0x7c bytes
     std::vector<rgl::lod_mesh2*> groups;    // 0x30 (first at 0x34)
     EnvRec* env;                // 0x40
     int nenv;                   // 0x44
-    int* ints;                  // 0x48
+    int* envidx;                // 0x48 one index per envelope record (set_env_count 0x46b9d0)
     int f4c;                    // 0x4c
     bool b50;                   // 0x50 pose valid
     float f54;                  // 0x54 elapsed time
     bool b58;                   // 0x58 frozen
     int f5c;                    // 0x5c
-    int f60;                    // 0x60
+    int clock;                  // 0x60 clock id of the envelope records (the constructor argument; set_env_count 0x46b9d0)
     void* p64;                  // 0x64 second pose source
     char b68;                   // 0x68
     rgl::vector4 v6c;           // 0x6c
@@ -169,6 +169,9 @@ struct FxDef {                                                  // 0x7c bytes
     FxDef(int a);                                               // 0x428820
     ~FxDef();                                                   // 0x421680
     void clear_defs();                                          // 0x420ec0
+    void set_env_count(int n);                                  // 0x46b9d0 (ret 4; src/game/terrain_a/terrain_a.cpp: allocates the envelope array)
+    void set_group0(int g, int id, int a, int b);               // 0x439fc0 (ret 0x14; party2/camera.cpp)
+    void link_group(int g);                                     // 0x4339d0 (ret 4; party2/camera.cpp)
     void set_color(int c);                                      // 0x4218e0
     void update(float dt, const rgl::matrix* m);                // 0x421df0
     void init(FxRes* r);                                        // 0x4288c0

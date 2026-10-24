@@ -6,4 +6,4 @@
 004ceec0  48  ItemD_vt::~ItemD_vt - free calls and the trailing tstring dtor are scheduled differently through the self cast; equiv UNSUPPORTED (own-copy vtable 30001000 vs image 005947d8).
 004cef20  25  ItemB::ItemB - same shape as 0x4ceb30 with vtable 0x5961e4; equiv UNSUPPORTED (own-copy vtable 30001004 vs image 005961e4).
 004cef80  25  ItemC::ItemC - same shape as 0x4ceb30 with vtable 0x596208; equiv UNSUPPORTED (own-copy vtable 30001004 vs image 00596208).
-004cefe0  49  vec2c::push_back - the 0x4c5010 fill call reuses one register for the two v arguments where the original reloads v from its home slot (128 vs 129 bytes); equiv PASS.
+004cefe0  49  vec44::push_back - the 0x4c5010 fill call reuses one register for the two v arguments where the original reloads v from its home slot (128 vs 129 bytes); equiv PASS.

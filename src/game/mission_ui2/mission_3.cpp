@@ -396,11 +396,11 @@ int __fastcall trigger_item(int key)
         int i = ((SiteKeys*)g_game)->cur;
         if (i >= 0) {
             Rec1c8* m = &g_mission->props._Myfirst[i];
-            EntVec* v = &((PropEnt*)m->ent)->a;
+            PropEnt::Vec* v = &((PropEnt*)m->ent)->lods;
             if (v->first != 0) {
                 unsigned n = v->last - v->first;
                 if (n > 0)
-                    r = *((PropEnt*)m->ent)->a.first;
+                    r = *((PropEnt*)m->ent)->lods.first;
             }
         }
     } else if (key == -0x32 || key == -0x33)
@@ -416,11 +416,11 @@ int __fastcall trigger_mesh_obj(int key)
         int i = ((SiteKeys*)g_game)->cur;
         if (i >= 0) {
             Rec1c8* m = &g_mission->props._Myfirst[i];
-            EntVec* v = &((PropEnt*)m->ent)->b;
+            PropEnt::Vec* v = &((PropEnt*)m->ent)->meshes;
             if (v->first != 0) {
                 unsigned n = v->last - v->first;
                 if (n > 0)
-                    r = *((PropEnt*)m->ent)->b.first;
+                    r = *((PropEnt*)m->ent)->meshes.first;
             }
         }
     } else if (key == -0x32 || key == -0x46)

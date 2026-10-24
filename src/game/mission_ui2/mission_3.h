@@ -18,18 +18,8 @@ struct SiteKeys {
     int key_a;                              // +0x1a1fc (0x48cec0: contexts -0x32, -0x33)
     int key_b;                              // +0x1a200 (0x48cf40: contexts -0x32, -0x46)
 };
-// A prop record's scene entity (Rec1c8::ent, an EntFlag* in src/include/rec1c8.h): two int vectors, begin/end at +4/+8 inside each 0x10-byte header.
-struct EntVec {
-    int pad0;                               // +0x00
-    int* first;                             // +0x04
-    int* last;                              // +0x08
-    int* cap;                               // +0x0c
-};
-struct PropEnt {
-    char pad0[0x108];
-    EntVec a;                               // +0x108 (0x48cec0)
-    EntVec b;                               // +0x118 (0x48cf40)
-};
+// A prop record's scene entity (Rec1c8::ent, an EntFlag* in src/include/rec1c8.h): src/game/prop_ent.h (two int vectors at +0x108 / +0x118).
+#include "../prop_ent.h"
 
 // ---- 0x48cfc0: a container of object lists ------------------------------------------------------------------------------
 struct Owned {

@@ -16,7 +16,9 @@ namespace rgl { struct mesh; }
 
 // The 0x494-byte level / scene-object record (table at game+0x13a50).
 struct Level494 {
-    char pad0[0x30];
+    char pad0[0x10];
+    tstring name10;                             // +0x10 the scene object file's name (scene_path 0x463950: "SceneObj\\<name>.sco")
+    char pad20[0x30 - 0x20];
     union {
         unsigned flags;                         // +0x30 (0x100: flat level, 0x1: no fog sheet) (0x479e20, 0x47a0c0, 0x4792d0)
         unsigned char flags8;                   // +0x30 as a byte (0x4435c0)
@@ -31,7 +33,9 @@ struct Level494 {
 struct GameData {
     char pad0[4];
     int f4;                                     // +0x04 (0x473a60)
-    char pad8[0x78 - 8];
+    char pad8[0x1c - 8];
+    tstring module;                             // +0x1c the module name (module_path 0x4639d0: "Modules\\<name>\\" + sub)
+    char pad2c[0x78 - 0x2c];
     union {
         int f78;                                // +0x78 (default party)   0x4428c0
         int party_id_78;
@@ -126,7 +130,10 @@ struct GameData {
     void set_matrix(const rgl::matrix* m);      // 0x435650 (agent4: sound-event context frame)
     void add_experience(int troop, int amount); // 0x4428c0 (ret 8) (agent_fx_sound.cpp)
     void party_counts(int id, int* extra, int* wounded, int* size);   // 0x51be60 (inventory_panel/map_tooltip.cpp, called by map_info.cpp 0x51abd0: counts a party's heroes and wounded)
-    bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4)
+    bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4: the hit points of troop idx are below the agent-low threshold)
+    tstring scene_path(int idx);                // 0x463950 (ret 8: hidden return)
+    const char* module_path(const char* sub);   // 0x4639d0
+    void load_scene(int idx);                   // 0x47fbd0 (mesh_slot/mesh_char.cpp: reads the scene object file of level idx)
     void blend(float* out, float x, float y);   // 0x471040 (wind / sky blend over the anchors)
     void save_language_files(bool translated);  // 0x4c8ca0
     // ---- src/game/party2 (method declarations only; fields at the offsets noted are reached by offset there) ----

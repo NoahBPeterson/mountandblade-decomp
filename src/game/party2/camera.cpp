@@ -20,6 +20,7 @@
 #include "../tstring.h"
 #include "../font.h"
 #include "../../include/game_data.h"
+#include "../../include/fx.h"          // FxDef (the effect definition of a scene entity)
 #include "../../include/dialog_rec.h"
 #include "../../rgl/mesh.h"
 #include "../../include/party.h"
@@ -2023,22 +2024,10 @@ struct SceneObj {
     float f_cc;                                                                   // +0xcc
     int f_d0;                                                                     // +0xd0
     char pad_d4[0x304 - 0xd4];
-    struct FxDef2* skel;                                                          // +0x304
+    struct FxDef* skel;                                                          // +0x304
     char pad308[0x31c - 0x308];
 };
-struct FxDef2 {                                                                   // 0x7c bytes (created by world::create_entity(2))
-    FxDef2(int kind);                                                             // 0x428820 (ret 4)
-    char pad0[0x40];
-    unsigned char* f40;                                                           // +0x40
-    char pad44[0x5c - 0x44];
-    int f5c;                                                                      // +0x5c
-    char pad60[0x7c - 0x60];
-    void set_env_count(int n);                                                    // 0x46b9d0 (ret 4)
-    void set_skeleton(void* p);                                                   // 0x4288c0 (ret 4)
-    void set_group0(int g, int id, int a, int b);                                 // 0x439fc0 (ret 0x14)
-    void link_group(int g);                                                       // 0x4339d0 (ret 4)
-    void set_blend(float f, const void* m);                                       // 0x421df0 (ret 8)
-};
+// (the effect definition 0x7c bytes created by world::create_entity(2) is FxDef of include/fx.h)
 struct PickArg { char pad[0x400]; };                                              // the v[] argument of 0x482240
 struct SiteRec {                                                                  // 0x1dc bytes, one per scene site
     char pad0[0x34];
@@ -2175,7 +2164,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     float dist = 0.0f;
     char scratch = 0;
 
-    FxDef2* def = new FxDef2(2);
+    FxDef* def = new FxDef(2);
     e->skel = def;
     def->set_env_count(2);
     def->f5c = 0;
@@ -2183,12 +2172,12 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     ItemRef items[10];
     int count;
     if (party < 0) {
-        def->set_skeleton(g_restable.find(&tstring("skel_horse")));
+        def->init((FxRes*)g_restable.find(&tstring("skel_horse")));
         count = 1;
     } else {
         unsigned t = (unsigned)g_game->chars[party].flags & 0xf;
-        def->set_skeleton(t < (unsigned)g_body_count
-                              ? *(void**)((char*)g_body_table + 0x1e8 + t * 0x1f8) : 0);
+        def->init((FxRes*)(t < (unsigned)g_body_count
+                              ? *(void**)((char*)g_body_table + 0x1e8 + t * 0x1f8) : 0));
         int level = g_game->chars[party].level;
         for (int i = 0; i < 10; i++)
             *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->f344, world->f348,
@@ -2216,8 +2205,8 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         int* src = g->src;
         e->skel->set_group0(0, src[0], src[4], src[5]);
         e->skel->link_group(0);
-        *(int*)e->skel->f40 = 0x3f800000;
-        e->skel->set_blend(0.05f, e->m);
+        *(int*)e->skel->env = 0x3f800000;
+        e->skel->update(0.05f, (const rgl::matrix*)e->m);
     }
     *(V4c*)&e->f_c4 = V4c(0.0f, 0.0f, 1.1f);
     dist = 100000.0f;

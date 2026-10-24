@@ -475,7 +475,7 @@ void Terrain::spawn_bodies(SpawnSet* r)
         e->counter = c;
         res_shape* rs = ty->boxes[c].res;
         if (rs) {
-            shape_calls* o = rs->clone_shape();
+            shape_calls* o = (shape_calls*)rs->clone_shape();
             o->transform(&e->m);
             o->or_m8(0x200);
             grid->reg(o);
@@ -519,9 +519,9 @@ void Mission::rebuild_nav(int which, int)
             tstring* nm = &cs->name44;
             mb_error("Unable to find body %s", nm->c_str());
         }
-        r->shape->get_max(&hi.x);
+        ((shape_calls*)r->sh)->get_max(&hi.x);
         hi = V2(hi.x + 1.0f, hi.y + 1.0f);
-        r->shape->get_min(&lo.x);
+        ((shape_calls*)r->sh)->get_min(&lo.x);
         lo = V2(lo.x - 1.0f, lo.y - 1.0f);
     }
     int lod1 = LOG2UP((hi.x - lo.x) * (1.0f / 3.0f));
@@ -530,7 +530,7 @@ void Mission::rebuild_nav(int which, int)
     scene = s;
     if ((sl->flags & 0x100) == 0) {
         s->build_faces(core_);
-        shape_calls* o = r->clone_shape();
+        shape_calls* o = (shape_calls*)r->clone_shape();
         matrix m;
         identity_pos(&m);
         o->transform(&m);

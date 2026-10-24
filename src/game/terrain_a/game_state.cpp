@@ -9,6 +9,7 @@
 #include <string.h>
 #include <new>
 #include "./game_state.h"
+#include "../../include/game_data.h"   // GameData (the game state object 0x5e2930; listed directly for the resolution tools)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"
 #include "../../include/frustum.h"
@@ -75,18 +76,18 @@ Block16::Block16() : p(0.0f, 0.5f)
 }
 
 // @ 0x4638f0
-bool GameState::agent_low(int idx)
+bool GameData::agent_low(int idx)
 {
-    if (idx == cur_agent)
-        return agents[idx].f_a0 < g_thr_self;
-    return agents[idx].f_a0 < g_thr_other;
+    if (idx == player)
+        return troops[idx].hp < g_thr_self;
+    return troops[idx].hp < g_thr_other;
 }
 
 // @ 0x463950
-tstring GameState::scene_path(int idx)
+tstring GameData::scene_path(int idx)
 {
     tstring s("SceneObj\\");
-    s.append(sceneobjs[idx].name);
+    s.append(levels[idx].name10);
     {
         tstring ext(".sco");
         s.append(ext);
@@ -95,7 +96,7 @@ tstring GameState::scene_path(int idx)
 }
 
 // @ 0x4639d0
-const char* GameState::module_path(const char* sub)
+const char* GameData::module_path(const char* sub)
 {
     tstring s("Modules\\");
     s.append(module);

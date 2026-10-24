@@ -143,7 +143,7 @@ struct SndBank {                                             // at mode record +
 struct SndRec : Raw {                                        // 0x4c bytes, array g_snd
     char b[0x4c];
 };
-struct PropKind : Raw { char b[0x78]; };                     // g_map_points records
+#include "../prop_kind.h"                                    // PropKind (g_map_points records, 0x78 bytes; shared with terrain_b)
 
 #include "../../include/party.h"
 
@@ -153,10 +153,7 @@ struct LevelBits {                                           // Level +0x30 flag
 struct Level : Raw {                                         // 0x494-byte level record
     char pad0[0x30]; LevelBits flags; char rest[0x494 - 0x34];
 };
-struct GameState : Raw {
-    void load_scene(int idx);                                // 0x47fbd0
-    void blend(float* out, float x, float y);                // 0x471040
-};
+#include "../../include/game_data.h"                           // GameData (g_game 0x5e2930; was a local GameState view with load_scene / blend)
 #include "../../include/phys_set.h"
 
 struct log_base {
@@ -192,7 +189,6 @@ struct Slot {                                                // 0x130 bytes, 64 
 // Globals
 // ---------------------------------------------------------------------------
 extern __int64    g_time[];       // 0x5e2948  tick table (8-byte entries)
-extern GameState* g_game;         // 0x5e2930
 extern ModeRec*   g_modes;        // 0x5e2a00  mode table (0x58-byte records)
 static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)((char*)m + 0x4c); }   // the sound bank at mode record +0x4c
 extern SndRec*    g_snd;          // 0x5e28f4  sound slot records (0x4c bytes)
@@ -267,7 +263,7 @@ static inline Party* party_rec(PartyMgr* pm, int id)
     return (Party*)((char*)pg + (i & 0xf) * 0x5ac8);
 }
 
-#define LV (*(Level*)(g_game->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494))
+#define LV (*(Level*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494))
 
 // ---------------------------------------------------------------------------
 // @ 0x484590
@@ -289,16 +285,16 @@ void Mission::start_setup()
     g_phys.reset();
 
     ModeRec* mrec = (ModeRec*)((char*)g_modes + at<int>(0x5df0) * 0x58);
-    Level* lrec = (Level*)(g_game->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494);
+    Level* lrec = (Level*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494);
     at<int>(0x6550) = 0;
     bank_of(mrec)->randomize();
     if (lrec->at<char>(0x78) == 0)
         g_game->load_scene(at<int>(0x5df4));
 
     // ---- camera party + neighbour temperature accumulation ---------------------------------
-    PartyMgr* pm = (PartyMgr*)(g_game->at<char*>(0xf8));
+    PartyMgr* pm = (PartyMgr*)(RAWAT(char*, g_game, 0xf8));
     pm = (PartyMgr*)((char*)g_game + 0xf8);
-    int pid = g_game->at<int>(0x78);
+    int pid = RAWAT(int, g_game, 0x78);
     Party* pa = party_rec(pm, pid);
     ptype = RAWAT(int, party_rec(pm, pid), 0x5978);
     volatile float temp[16];
@@ -340,13 +336,13 @@ void Mission::start_setup()
     if (temper < 0.0f) temper = 0.0f;
     else if (temper >= 1.0f) temper = 1.0f;
 
-    in.x = (float)g_game->at<int>(4) * 0.1f;
+    in.x = (float)RAWAT(int, g_game, 4) * 0.1f;
     in.z = 0.0f;
     in.y = g_time[1] * 1e-5f;
     noise_fractal(96.0f, 0.7f, 4, 0, &in.x, &out.x);
     float f14 = (out.z + out.y + out.x) * 5.0f;
     v.z = 700.0f;
-    v.x = (float)g_game->at<int>(4) * 0.1f;
+    v.x = (float)RAWAT(int, g_game, 4) * 0.1f;
     v.y = g_time[1] * 1e-5f;
     in = v;
     noise_fractal(72.0f, 0.7f, 4, 0, &in.x, &out.x);
@@ -361,18 +357,18 @@ void Mission::start_setup()
     at<int>(0x6600) = 0;
     at<int>(0x6604) = 0;
 
-    at<int>(0x65fc) = iround(((temper + 1.5f) * g_game->at<float>(0x13b3c)) * 1.5f);
+    at<int>(0x65fc) = iround(((temper + 1.5f) * RAWAT(float, g_game, 0x13b3c)) * 1.5f);
 
-    float fog = ((g_game->at<float>(0x13b3c) + 0.3f) * (temper + 0.5f)) * g_game->at<float>(0x13b40) *
-                g_game->at<float>(0x13b40) * 0.00800000038f + 9.99999975e-05f;
+    float fog = ((RAWAT(float, g_game, 0x13b3c) + 0.3f) * (temper + 0.5f)) * RAWAT(float, g_game, 0x13b40) *
+                RAWAT(float, g_game, 0x13b40) * 0.00800000038f + 9.99999975e-05f;
     at<float>(0x6614) = fog;
-    if (g_game->at<float>(0x13b40) > 0.899999976f) {
+    if (RAWAT(float, g_game, 0x13b40) > 0.899999976f) {
         fog = fog * 1.29999995f + 0.0259999987f;
         at<float>(0x6614) = fog;
-        if (g_game->at<float>(0x13b40) > 0.939999998f) {
+        if (RAWAT(float, g_game, 0x13b40) > 0.939999998f) {
             fog = fog * 1.20000005f + 0.0240000002f;
             at<float>(0x6614) = fog;
-            if (g_game->at<float>(0x13b40) > 0.980000019f)
+            if (RAWAT(float, g_game, 0x13b40) > 0.980000019f)
                 at<float>(0x6614) = fog + 0.00999999978f;
         }
     }
@@ -381,8 +377,8 @@ void Mission::start_setup()
     if (at<float>(0x65e8) > 3.0f && at<float>(0x65e8) < 10.0f)
         at<float>(0x6610) = (RND() * 4.42561795e-05f + 0.300000012f) * at<float>(0x6610);
 
-    if (g_game->at<float>(0x13b3c) > 0.600000024f) {
-        if (humidity * 0.100000001f + ((RND() * 6.32231167e-05f) * 0.0500000007f + g_game->at<float>(0x13b3c) * 0.200000003f) +
+    if (RAWAT(float, g_game, 0x13b3c) > 0.600000024f) {
+        if (humidity * 0.100000001f + ((RND() * 6.32231167e-05f) * 0.0500000007f + RAWAT(float, g_game, 0x13b3c) * 0.200000003f) +
             fo > 0.460000008f) {
             if (ptype == 4 || ptype == 0xc)
                 at<int>(0x6604) = 2;
@@ -453,15 +449,15 @@ void Mission::start_setup()
 
     // ---- sky / cloud / fog bit fields -------------------------------------------------------
     if (LV.flags.b8) {
-        g_terrain.f4658c0((char*)(g_game->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494) + 0x68);
-        GameState* gg = g_game;
-        if (((Level*)(gg->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494))->flags.b9) {
+        g_terrain.f4658c0((char*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494) + 0x68);
+        GameData* gg = g_game;
+        if (((Level*)(RAWAT(char*, gg, 0x13a50) + at<int>(0x5df4) * 0x494))->flags.b9) {
             PartyMgr* pm2 = (PartyMgr*)((char*)gg + 0xf8);
-            int pid2 = gg->at<int>(0x78);
+            int pid2 = RAWAT(int, gg, 0x78);
             int x = (int)party_rec(pm2, pid2)->pos.x;
             int y = (int)party_rec(pm2, pid2)->pos.y;
             int parity = at<int>(0x5270) % 3;
-            int fr = gg->at<int>(4);
+            int fr = RAWAT(int, gg, 4);
             unsigned a = (fr * 0x1b0b + parity + y * 0x230b + x * 17) & 0x7fffff;
             unsigned c = (fr * 0xf4d + parity + y * 0x16a1 + x * 19) & 0x7fffff;
             unsigned b = (y * 0x19c9 + parity + fr * 0x1e6f + x * 31) & 0x7fffff;
@@ -470,7 +466,7 @@ void Mission::start_setup()
             put(g_terrain.s2, mc, 0, c);
             put(g_terrain.s1, mc, 0, b);
 
-            unsigned seed = (at<int>(0x5270) % 3 + g_game->at<int>(4) * 0x4abb + y * 0xb1 + x * 0x17 + 0x8a767) *
+            unsigned seed = (at<int>(0x5270) % 3 + RAWAT(int, g_game, 4) * 0x4abb + y * 0xb1 + x * 0x17 + 0x8a767) *
                             0x1ddcf5f + 0x2f784719;
             int storm = 0;
             float chance = RNDU(seed) * 6.32231167e-05f;
@@ -562,14 +558,14 @@ void Mission::start_setup()
         Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
             PropKind* k = &g_map_points[RAWAT(int, p, 0x18c)];
-            v.x = (RAWAT(float, p, 0x28) * k->at<float>(0x5c) + RAWAT(float, p, 0x38) * k->at<float>(0x60) +
-                   RAWAT(float, p, 0x18) * k->at<float>(0x58)) + RAWAT(float, p, 0x48);
-            v.y = (RAWAT(float, p, 0x2c) * k->at<float>(0x5c) + RAWAT(float, p, 0x3c) * k->at<float>(0x60) +
-                   RAWAT(float, p, 0x1c) * k->at<float>(0x58)) + RAWAT(float, p, 0x4c);
-            v.z = (RAWAT(float, p, 0x30) * k->at<float>(0x5c) + RAWAT(float, p, 0x40) * k->at<float>(0x60) +
-                   RAWAT(float, p, 0x20) * k->at<float>(0x58)) + RAWAT(float, p, 0x50);
+            v.x = (RAWAT(float, p, 0x28) * k->f5c + RAWAT(float, p, 0x38) * k->f60 +
+                   RAWAT(float, p, 0x18) * k->f58) + RAWAT(float, p, 0x48);
+            v.y = (RAWAT(float, p, 0x2c) * k->f5c + RAWAT(float, p, 0x3c) * k->f60 +
+                   RAWAT(float, p, 0x1c) * k->f58) + RAWAT(float, p, 0x4c);
+            v.z = (RAWAT(float, p, 0x30) * k->f5c + RAWAT(float, p, 0x40) * k->f60 +
+                   RAWAT(float, p, 0x20) * k->f58) + RAWAT(float, p, 0x50);
             vector4 hi = v;
-            v.x -= k->at<float>(0x68); v.y -= k->at<float>(0x68); hi.x += k->at<float>(0x68); hi.y += k->at<float>(0x68);
+            v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
             Rect& box = at<Rect>(0x652c);
             box.x0 = box.x0 < v.x ? box.x0 : v.x;
             box.y0 = box.y0 < v.y ? box.y0 : v.y;
@@ -581,14 +577,14 @@ void Mission::start_setup()
         Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
             PropKind* k = &g_map_points[RAWAT(int, p, 0x18c)];
-            v.x = (RAWAT(float, p, 0x38) * k->at<float>(0x60) + RAWAT(float, p, 0x28) * k->at<float>(0x5c) +
-                   RAWAT(float, p, 0x18) * k->at<float>(0x58)) + RAWAT(float, p, 0x48);
-            v.y = (RAWAT(float, p, 0x1c) * k->at<float>(0x58) + RAWAT(float, p, 0x3c) * k->at<float>(0x60) +
-                   RAWAT(float, p, 0x2c) * k->at<float>(0x5c)) + RAWAT(float, p, 0x4c);
-            v.z = (RAWAT(float, p, 0x20) * k->at<float>(0x58) + RAWAT(float, p, 0x40) * k->at<float>(0x60) +
-                   RAWAT(float, p, 0x30) * k->at<float>(0x5c)) + RAWAT(float, p, 0x50);
+            v.x = (RAWAT(float, p, 0x38) * k->f60 + RAWAT(float, p, 0x28) * k->f5c +
+                   RAWAT(float, p, 0x18) * k->f58) + RAWAT(float, p, 0x48);
+            v.y = (RAWAT(float, p, 0x1c) * k->f58 + RAWAT(float, p, 0x3c) * k->f60 +
+                   RAWAT(float, p, 0x2c) * k->f5c) + RAWAT(float, p, 0x4c);
+            v.z = (RAWAT(float, p, 0x20) * k->f58 + RAWAT(float, p, 0x40) * k->f60 +
+                   RAWAT(float, p, 0x30) * k->f5c) + RAWAT(float, p, 0x50);
             vector4 hi = v;
-            v.x -= k->at<float>(0x68); v.y -= k->at<float>(0x68); hi.x += k->at<float>(0x68); hi.y += k->at<float>(0x68);
+            v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
             Rect& box = at<Rect>(0x652c);
             box.x0 = box.x0 < v.x ? box.x0 : v.x;
             box.y0 = box.y0 < v.y ? box.y0 : v.y;
@@ -615,8 +611,8 @@ void Mission::start_setup()
     }
     sun->v4();
     {
-        GameState* g1 = g_game;
-        int secs = (int)((g_time[g1->at<int>(0x13b18)] - g1->at<__int64>(0x13b20)) * 1e-5f);
+        GameData* g1 = g_game;
+        int secs = (int)((g_time[RAWAT(int, g1, 0x13b18)] - RAWAT(__int64, g1, 0x13b20)) * 1e-5f);
         int h = secs % 24;
         float angle = g_snd[at<int>(0x660c)].at<float>(0x14) * 0.0174532924f -
                       (float)(h - 12) * 0.0174532924f * 15.0;
@@ -635,7 +631,7 @@ void Mission::start_setup()
         s414->v1();
         if (s414->v23() == 0) {
             if (LV.flags.b8) {
-                Streamer* s2 = (Streamer*)(g_game->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494 + 0x414);
+                Streamer* s2 = (Streamer*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494 + 0x414);
                 s2->v1();
                 at<TerrainDesc>(0x63d0).read((stream_base*)s2);
             }
@@ -963,8 +959,8 @@ void Mission::start_setup()
             for (int i = 0; i < cnts[sd]; i++)
                 reset_spawned(lists[sd * 128 + i]);
     }
-    for (int i = 0; i < g_game->at<int>(0x13a04); i++)
-        *(int*)(g_game->at<char*>(0x13a00) + i * 0x508 + 0x3bc) = 0;
+    for (int i = 0; i < RAWAT(int, g_game, 0x13a04); i++)
+        *(int*)(RAWAT(char*, g_game, 0x13a00) + i * 0x508 + 0x3bc) = 0;
     memset(&at<char>(0x6824), 0, 0x40);
     for (int i = 0; i < mrec->nrecs; i++) {
         mrec->recs[i].f18 = 0;
@@ -982,7 +978,7 @@ void Mission::start_setup()
     // ---- placed-prop jitter + ground snap ----------------------------------------------------------
     for (unsigned i = 0; i < props.size(); i++) {
         Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
-        if (RAWAT(int, p, 0x188) == 0 && (g_map_points[RAWAT(int, p, 0x18c)].at<unsigned>(0x10) & 0x1000)) {
+        if (RAWAT(int, p, 0x188) == 0 && (g_map_points[RAWAT(int, p, 0x18c)].flags & 0x1000)) {
             float outY;
             void* sink;
             v = at<vector4>(0x6598);

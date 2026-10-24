@@ -94,7 +94,7 @@ void TerrainPage::sync_bits()
     g_bits.set(0x60, 0x69, (unsigned)(int)f3c);
     g_bits.set(0x6a, 0x73, (unsigned)(int)f40);
     g_bits.set_a(&f44);
-    g_bits.set_pct(&f48);
+    g_bits.set_pct(f48);
     g_bits.set(0, 0x1e, hex3[0]);
     g_bits.set(0x20, 0x3e, hex3[1]);
     g_bits.set(0x40, 0x5e, hex3[2]);

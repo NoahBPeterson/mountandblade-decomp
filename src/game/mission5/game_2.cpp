@@ -1175,7 +1175,7 @@ QuestFile::QuestFile()
 // @ 0x5248e0
 SceneFile::SceneFile()
 {
-    b78 = 0;
+    loaded = 0;
     for (int i = 0; i < 0x40; ++i) {
         pairs114[i].a = -1;
         ints314[i] = 0;
@@ -1277,8 +1277,8 @@ void SceneFile::read_file(stream_base& s)
         pairs114[i].a = -1;
         ints314[i] = 0;
     }
-    s.r_tstr(RSTR(&f10));
-    s.r_tstr(RSTR(&f20));
+    s.r_tstr(RSTR(&name10));
+    s.r_tstr(RSTR(&name));
     s.r_int(&f30);
     s.r_tstr(RSTR(&f34));
     s.r_tstr(RSTR(&f44));
@@ -1288,7 +1288,7 @@ void SceneFile::read_file(stream_base& s)
     s.r_tstr(RSTR(&f68));
     s.r_int(&fbc);
     if (fbc > 0x10)
-        mb_error("Number of passages for site %s exceeds %d.", cstr(f10), 0x10);
+        mb_error("Number of passages for site %s exceeds %d.", cstr(name10), 0x10);
     for (int i = 0; i < fbc; ++i)
         s.r_int(&f7c[i]);
     s.r_int(&f100);

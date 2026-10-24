@@ -1,7 +1,7 @@
 // face_gen.h: the face generator: the race table (FaceRace, 0x1f8 bytes per race: morph count, the morph
-// constraints and their relaxation, the pick counts, the hair records) and the face record (FaceGen) that unpacks
+// constraints and their relaxation, the pick counts, the hair records) and the face record (FaceGenome) that unpacks
 // a 3 x 64-bit key into picks and morph values (0x473800) and blends two parents (breed 0x4746e0).
-// The slices called FaceRace MorphSolver / FaceRaceRec, FaceGen's pick fields f0 f1 f3 f5 and its age fields age /
+// The slices called FaceRace MorphSolver / FaceRaceRec, FaceGenome's pick fields f0 f1 f3 f5 and its age fields age /
 // age2 (this header uses the unpack names: weight +0x128, age +0x12c).
 #ifndef TERRAIN_B_FACE_GEN_H
 #define TERRAIN_B_FACE_GEN_H
@@ -19,7 +19,7 @@ struct FaceHairRec {                            // 0xb0 bytes
     IntVec list;                                // +0x1c candidate values (0x4746e0)
     char pad2c[0xb0 - 0x2c];
 };
-struct FaceRace {                               // 0x1f8 bytes, table at FaceGen +0x1c
+struct FaceRace {                               // 0x1f8 bytes, table at FaceGenome +0x1c
     char pad0[0x3c];
     int nmorph;                                 // +0x3c (0x473800)
     char pad40[0x78 - 0x40];
@@ -38,7 +38,7 @@ struct FaceRace {                               // 0x1f8 bytes, table at FaceGen
     int size() const { return first == 0 ? 0 : (int)(last - first); }   // vector<Constraint>::size (cf. 0x467b20)
     void relax(int skip, float* v);             // 0x4735e0
 };
-struct FaceGen {
+struct FaceGenome {
     int pick_a;                                 // +0x00 (key bits 6..11, minus 1)
     int pick_b;                                 // +0x04 (key bits 0..5, minus 1)
     int race;                                   // +0x08

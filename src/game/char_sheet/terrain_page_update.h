@@ -89,17 +89,8 @@ struct Widget {
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[n] = 2 << n
-struct BitWords {
-    unsigned w[8];
-    void set(const unsigned& lo, const int& hi, const unsigned& v);   // 0x464960
-    unsigned get(const unsigned& lo, const int& hi);                  // 0x4649b0
-    void build_hex_text(tstring& out);                                // 0x4f29b0
-};
-extern BitWords g_bits;                                     // 0xa76630
+#include "../bit_words.h"
 void terrain_set_a(const float* p);                         // 0x464a60
-struct Pct { char pad0[0x10]; unsigned bits; void set_pct(const float& f); };   // 0x4649f0
-// 0x4649f0 is a method of this object (the percentage field rides in the low 7 bits of bits at +0x10)
-extern Pct g_pct;                                           // 0xa76630
 
 // ---- the world / scene --------------------------------------------------------------------------------
 // effect object created by 0x478f30 (0x7c bytes; layout from s00494e40)

@@ -76,7 +76,7 @@ void DustTerrain::emit_cell(int x, int y)
             else if (cy >= n_outer)
                 cy = n_outer - 1;
             if (cx == x && cy == y) {
-                dmesh* src = g_ptypes[p->type].boxes[p->anim].meshes[0];
+                dmesh* src = (dmesh*)g_ptypes[p->type].boxes[p->anim].meshes[0];
                 nf += src->get50()->size();
                 nr += src->get70()->size();
                 no += src->get90()->size();
@@ -122,7 +122,7 @@ void DustTerrain::emit_cell(int x, int y)
             p->first[0] = grid[cx][cy]->list[0]->f50.size();
             ptype* pt = &g_ptypes[p->type];
             p->anim = p->anim % pt->nframes;
-            dmesh* src = pt->boxes[p->anim].meshes[0];
+            dmesh* src = (dmesh*)pt->boxes[p->anim].meshes[0];
             if ((pt->flags & 0x20000i64) != 0)
                 grid[cx][cy]->list[0]->append_shaded(src, (const matrix*)&mm, color);
             else

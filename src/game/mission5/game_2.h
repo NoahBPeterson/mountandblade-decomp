@@ -215,36 +215,7 @@ struct V2 {                                                     // 0x64
     int c;                                                      // +0x5c
     char pad3[4];
 };
-// the embedded file stream of the scene record (0x30 bytes: vptr, name, state, autoflush, flushed, buf; inline ctor)
-struct file_stream_s : stream_base {
-    STREAM_SLOTS
-    file_stream_s() { state = 0; }
-};
-struct SceneFile : IfaceB {         // scenes.txt record (0x494 bytes, vtable 0x590904, dtor 0x431e10); polymorphic
-    tstring f10;                                                // +0x10
-    tstring f20;                                                // +0x20
-    int f30;                                                    // +0x30
-    tstring f34;                                                // +0x34
-    tstring f44;                                                // +0x44
-    float f54, f58, f5c, f60, f64;                              // +0x54
-    tstring f68;                                                // +0x68
-    char b78;                                                   // +0x78
-    char pad79[3];
-    int f7c[0x10];                                              // +0x7c
-    int fbc;                                                    // +0xbc
-    int fc0[0x10];                                              // +0xc0
-    int f100;                                                   // +0x100
-    tstring_vec v104;                                           // +0x104
-    Pair pairs114[0x40];                                        // +0x114
-    int ints314[0x40];                                          // +0x314
-    file_stream_s s414;                                         // +0x414
-    file_stream_s s444;                                         // +0x444
-    tstring_vec v474;                                           // +0x474
-    tstring f484;                                               // +0x484
-    SceneFile();                                                // 0x5248e0
-    virtual ~SceneFile();                                       // 0x431e10
-    void read_file(stream_base& s);                             // 0x524d60
-};
+#include "../terrain_b/scene_file.h"       // SceneFile (the 0x494-byte scene record; shared with terrain_b/mission.cpp)
 // the temporary collection SceneRec::read fills through the embedded stream (0x524f00)
 struct Local {
     char pad0[0x1c];

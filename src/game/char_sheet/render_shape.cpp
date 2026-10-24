@@ -1,7 +1,7 @@
 #include "./render_shape.h"
 
 // @ 0x4ed6f0
-void Ctx::render_shape_frame(int a, vector4* v, int b, int c)
+void GuiCtx::render_shape_frame(int a, vector4* v, int b, int c)
 {
     if (f354) {
         f354 = 0;

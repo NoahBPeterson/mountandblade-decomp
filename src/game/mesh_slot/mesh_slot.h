@@ -72,14 +72,7 @@ struct resmgr_ms : resource_manager {
 #define g_rms (*(resmgr_ms*)&g_resmgr)
 
 // ---- the lod mesh and its lists: members defined here -------------------------------------------------------------
-struct mesh_list_x : rgl::mesh_list {
-    void append(rgl::mesh_list* src, int bone, const matrix* m, const unsigned* color);   // 0x47b480
-};
-struct lod_mesh_x : rgl::lod_mesh {
-    void set_color(unsigned color);                                    // 0x47b5b0 (sets the bone index of every mesh)
-    void transform(const matrix& m);                                   // 0x47b610
-    void append(rgl::lod_mesh* src, int bone, const matrix* m, const unsigned* color);   // 0x47b690
-};
+#include "../lod_mesh_x.h"             // mesh_list_x / lod_mesh_x (shared with terrain_a/misc.h)
 
 // ---- the scene container's lighting pass --------------------------------------------------------------------------
 struct Geom_t;
@@ -126,7 +119,7 @@ struct EChar : TroopMgr {
     char pad1a4[0xc];
     tstring* names_b;            // 0x1b0
     char pad1b4[0xc];
-    void* mats;                  // 0x1c0 (MatRec*, 0xb0 bytes each)
+    void* mats;                  // 0x1c0 (Ramp*, 0xb0 bytes each)
     char pad1c4[0x1f8 - 0x1c4];
 
     void blend(rgl::mesh* m, int unused, const float* weights);                 // 0x47c6b0
@@ -136,20 +129,8 @@ struct EChar : TroopMgr {
     void use_carry(rgl::lod_mesh* l, const float* weights);                     // 0x47de60
 };
 
-// the colour ramp / material record of the character owner (0xb0 bytes): terrain_a/game_state.h's Ramp is its tail view
-struct MatRec {
-    char pad0[0x10];
-    skin* res0;                  // 0x10
-    skin* res1;                  // 0x14
-    char pad18[0x20 - 0x18];
-    int* vals;                   // 0x20
-    int* vals_end;               // 0x24
-    char pad28[0x2c - 0x28];
-    struct Stop { float c[3]; float pad; } stops[8];   // 0x2c
-    int n;                       // 0xac
-    unsigned eval(float* t);     // 0x463790
-};
-typedef char matrec_size_check[(sizeof(MatRec) == 0xb0) ? 1 : -1];
+// the colour ramp / material record of the character owner (0xb0 bytes, ramp.h: Ramp; terrain_a/game_state.h includes it too)
+#include "../ramp.h"
 
 // the animation state (global object at 0x8ed4f60)
 struct Animator {

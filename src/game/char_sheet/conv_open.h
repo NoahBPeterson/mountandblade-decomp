@@ -30,9 +30,9 @@ using rgl::vector4;
 
 // ---- string / tables -----------------------------------------------------------------------------------
 #include "../tstring.h"
-struct entry { int f0; char* value; char pad[0x2c - 8]; };  // config-table entry (0xa4425c + 0x2c*i)
+struct cfg_entry { int f0; char* value; char pad[0x2c - 8]; };  // config-table entry (0xa4425c + 0x2c*i)
 extern int g_n_strings;                                  // 0xa70240
-extern entry g_strings;                                  // 0xa44240 (indexed from 0xa4425c)
+extern cfg_entry g_strings;                                  // 0xa44240 (indexed from 0xa4425c)
 extern tstring g_empty_string;                           // 0x8ee30f0
 struct ConfigTable {
     int find(const tstring& key);                        // 0x4bd5a0 (ordered search)
@@ -47,7 +47,7 @@ static float config_float(const char* name)
     int idx = g_config.find(key);
     float r = 0.0f;
     if (idx >= 0) {
-        entry* e = (entry*)((char*)&g_strings + 0x1c) + idx;
+        cfg_entry* e = (cfg_entry*)((char*)&g_strings + 0x1c) + idx;
         r = (float)atof(e->value ? e->value : (char*)&e->value);
     }
     return r;
@@ -68,7 +68,7 @@ static float scan_float(const char* name)
     } while (idx == -1);
     float r = 0.0f;
     if (idx >= 0) {
-        entry* e = (entry*)((char*)&g_strings + 0x1c) + idx;
+        cfg_entry* e = (cfg_entry*)((char*)&g_strings + 0x1c) + idx;
         r = (float)atof(e->value ? e->value : (char*)&e->value);
     }
     return r;

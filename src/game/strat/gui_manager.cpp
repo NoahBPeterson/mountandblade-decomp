@@ -85,7 +85,7 @@ void gui_timer::set_delay(float seconds)
 }
 
 // @ 0x42cd60
-char widget::refresh_all(unsigned mask)
+char gui_window::refresh_all(unsigned mask)
 {
     on_input(mask);
     refresh();
@@ -123,7 +123,7 @@ void gui_manager::set_o568(gui_obj* p, bool clear_lines)
 }
 
 // @ 0x42ce50
-void widget::wheel_step()
+void gui_window::wheel_step()
 {
     if (pending & enabled_mask) {
         int w = wheel;
@@ -137,7 +137,7 @@ void widget::wheel_step()
 }
 
 // @ 0x42cec0
-void widget::wheel_focus()
+void gui_window::wheel_focus()
 {
     if ((pending & enabled_mask) && (wheel & 4) && focus) {
         unsigned top = (unsigned)-1;
@@ -153,7 +153,7 @@ void widget::wheel_focus()
 }
 
 // @ 0x42cf50
-char widget::mouse_event(unsigned mask)
+char gui_window::mouse_event(unsigned mask)
 {
     char r = 0;
     if (flags & 3) return 0;
@@ -195,7 +195,7 @@ char widget::mouse_event(unsigned mask)
 }
 
 // @ 0x42d170
-char widget::handle_event(unsigned mask)
+char gui_window::handle_event(unsigned mask)
 {
     if (mouse_event(mask)) return 1;
     if (wants_redraw && (mask & 0x10)) {

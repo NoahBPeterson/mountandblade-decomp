@@ -50,31 +50,7 @@ extern const float g_592754;            // 0x592754  0.155f
 // ---- the gui widget ------------------------------------------------------------------------------------------
 // The base supplies slots up to set_pos (+0x58) / set_size (+0x64); the concrete window classes insert their own
 // slots in between, so the later slots are reached through the raw vtable.
-struct widget {
-    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
-    virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
-    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
-    virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21();
-    virtual void set_pos(const float* p);               // +0x58
-    virtual void v23(); virtual void v24();
-    virtual void set_size(const float* s);              // +0x64
-    virtual void v26();
-    virtual void set_color(const float* c);             // +0x6c
-    virtual void v28();
-    virtual void set_flags(const int* f);               // +0x74
-    virtual void v30();
-    virtual void add_item(int slot, mesh* m);           // +0x7c
-    virtual void v32(); virtual void v33(); virtual void v34(); virtual void v35(); virtual void v36();
-    virtual void v37();
-    virtual void set_value_a(int* v);                   // +0x98
-    virtual void set_value_b(int* v);                   // +0x9c
-    virtual void v40();
-    virtual void set_text(tstring* s, const float* p);  // +0xa4
-    virtual void v42(); virtual void v43(); virtual void v44(); virtual void v45(); virtual void v46();
-    virtual void v47(); virtual void v48(); virtual void v49();
-    virtual void add_child(widget* c);                  // +0xc8
-};
+#include "../widget.h"                        // widget (the 0x178-byte UI element; shared with facegen_init.h, view_open.cpp, widget_text.cpp, strat/gui_manager.h)
 
 // slots addressed by byte offset: ((void**)self[0])[off / 4]
 #define VCALL0(self, off)               ((void (*)(void*))((void**)*(void***)(self))[(off) / 4])(self)

@@ -14,12 +14,7 @@
 #include "../arr_set.h"
 
 // ---- colour ramp: n stops (3 floats each, stride 0x10) from +0x2c, count at +0xac -----------------------------------
-struct Ramp {
-    char pad0[0x2c];
-    struct Stop { float c[3]; float pad; } stops[8];    // +0x2c (0x463790)
-    int n;                                      // +0xac (0x463790)
-    unsigned eval(float* t);                    // 0x463790
-};
+#include "../ramp.h"                      // Ramp (the 0xb0-byte colour-ramp / material record; shared with mesh_slot)
 extern int g_use_shaders;                       // 0x5e28fc (0: colours are gamma-corrected on output; 0x463790)
 extern float g_ramp_gamma;                      // 0x5a9bfc (0x463790)
 
@@ -29,34 +24,13 @@ struct Block16 {                                // 16-byte default block (0, 0.5
     Block16();                                  // 0x4638b0
 };
 
-// ---- game state (global object 0x5e2930 seen through its path helpers) --------------------------------------------------
-struct AgentLow {                               // 0x508-byte agent record: only +0xa0 is read (0x4638f0)
-    char pad0[0xa0];
-    float f_a0;                                 // +0xa0
-    char pad_a4[0x508 - 0xa4];
-};
-struct SceneObjRec {                            // 0x494-byte record: name at +0x10 (0x463950)
-    char pad0[0x10];
-    tstring name;                               // +0x10
-    char pad20[0x494 - 0x20];
-};
+// ---- game state (global object 0x5e2930 = GameData, src/include/game_data.h: its path helpers agent_low 0x4638f0, scene_path 0x463950,
+// module_path 0x4639d0 are defined in game_state.cpp) ----
+#include "../../include/game_data.h"
 extern float g_thr_self;                        // 0xa1813c (0x4638f0)
 extern float g_thr_other;                       // 0xa18138 (0x4638f0)
 extern char g_path_buf[];                       // 0x5e2480 (0x4639d0)
 
-struct GameState {
-    char pad0[0x1c];
-    tstring module;                             // +0x1c (0x4639d0)
-    char pad2c[0x8c - 0x2c];
-    int cur_agent;                              // +0x8c (0x4638f0)
-    char pad90[0x13a00 - 0x90];
-    AgentLow* agents;                           // +0x13a00 (0x4638f0)
-    char pad13a04[0x13a50 - 0x13a04];
-    SceneObjRec* sceneobjs;                     // +0x13a50 (0x463950)
-    bool agent_low(int idx);                    // 0x4638f0
-    tstring scene_path(int idx);                // 0x463950
-    const char* module_path(const char* sub);   // 0x4639d0
-};
 
 rgl::vector4 __stdcall wind_noise();            // 0x463a80 (hidden return pointer, ret 4)
 

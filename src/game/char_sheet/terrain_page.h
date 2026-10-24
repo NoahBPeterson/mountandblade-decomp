@@ -83,16 +83,7 @@ struct RangeWidget {
 extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[n] = 2 << n
 extern const int g_mask_w[1];                               // 0x5a8e78 (= 2: the terrain size is 2 bits wide)
 extern const int g_type_mask[1];                            // 0x5a8e88 (= 4: the terrain type is 4 bits wide)
-struct BitWords {
-    unsigned w[8];
-    void set(const unsigned& lo, const int& hi, const unsigned& v);   // 0x464960
-    unsigned get(const unsigned& lo, const int& hi);                  // 0x4649b0
-    void set_pct(const float* p);                                     // 0x4649f0
-    void set_a(const float* p);                                       // 0x464a60
-    void set_b(const float* p);                                       // 0x464ac0
-    void build_hex_text(tstring& out);                                // 0x4f29b0
-};
-extern BitWords g_bits;                                     // 0xa76630
+#include "../bit_words.h"
 
 extern int g_env2;                                          // 0x5e28fc (shaders on)
 extern int g_size_modes[8];                                 // 0x59394c terrain-size mode table (only [0] is ours)

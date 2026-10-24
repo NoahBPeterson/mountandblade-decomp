@@ -22,7 +22,7 @@
 ../src/game/terrain_b/terrain_b.cpp  ?update_probes@CellGrid@@QAEXI@Z  00472ed0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?copy_troop@TroopMgr@@QAEXPAUArrSet@@PBUMeshGroupRec@@@Z  00473570  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?relax@FaceRace@@QAEXHPAM@Z  004735e0  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?unpack@FaceGen@@QAEPAUFaceRace@@PB_K@Z  00473800  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?unpack@FaceGenome@@QAEPAUFaceRace@@PB_K@Z  00473800  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?refresh_cells@Terrain@@QAEXXZ  00473980  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?reset_spawned@@YGXH@Z  004739f0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?next_used@?$Pool@URecJ@@@@QAEXPAI@Z  00474300  /O2 /MT /Gy /TP
@@ -30,7 +30,7 @@
 ../src/game/terrain_b/terrain_b.cpp  ??$_Insertion_sort@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@P6A_NABUP8@@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@0P6A_NABUP8@@1@Z@Z  00474370  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ??$_Buffered_merge@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HUP8@@P6A_NABU4@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@00HHAAV?$_Temp_iterator@UP8@@@0@P6A_NABUP8@@2@Z@Z  00474410  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ??$_Chunked_merge@PAUP8@@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HP6A_NABU1@0@Z@std@@YAXPAUP8@@0Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@HHP6A_NABU1@2@Z@Z  00474650  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?breed@FaceGen@@QAEXPB_K0H@Z  004746e0  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?breed@FaceGenome@@QAEXPB_K0H@Z  004746e0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?update_team_counts@Mission@@QAEXXZ  004759c0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?destroy@vecArrS@@QAEXPAUArrSet@@0@Z  00475b60  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?ufill@vecArrS@@QAEPAUArrSet@@PAU2@IABU2@@Z  00475b80  /O2 /MT /Gy /TP

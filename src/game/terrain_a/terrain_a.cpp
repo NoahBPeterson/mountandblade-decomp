@@ -253,7 +253,7 @@ unsigned BitWords::get(const unsigned& lo, const int& hi)
 }
 
 // @ 0x4649f0
-void Pct::set_pct(const float& f)
+void BitWords::set_pct(const float& f)
 {
     float x = f * 100.0f;
     float fl = (float)floor(x);
@@ -267,7 +267,7 @@ void Pct::set_pct(const float& f)
     unsigned mask = g_field_mask - 1;
     if ((unsigned)i > mask)
         i = mask;
-    bits = (~mask & bits) | i;
+    w[4] = (~mask & w[4]) | i;      // the percentage rides in the low bits of w[4] (+0x10 = Terrain::flags)
 }
 
 // ---- the ground generator -----------------------------------------------------------------------------------------
@@ -1399,8 +1399,8 @@ static inline int item_f20c(int i) { return *(int*)((char*)&g_items[i] + 0x20c);
 // @ 0x467f80
 float Missile::ammo_scale()
 {
-    if (ammo_item >= 0)
-        return (float)item_f20c(ammo_item) * 0.01f;
+    if (ammo.item >= 0)
+        return (float)item_f20c(ammo.item) * 0.01f;
     return 0.8f;
 }
 
@@ -1410,7 +1410,7 @@ void Missile::init()
     f54 = 0.01f;
     f68 = 0;
     t0 = g_ticks[clock];
-    f90 = 0;
+    spent = 0;
     fa0 = 0;
     f94 = 1.0f;
     fa4 = -1;
@@ -2415,7 +2415,7 @@ ViewParams::ViewParams()
 }
 
 // @ 0x46b9d0
-void FxDef2::set_env_count(int n)
+void FxDef::set_env_count(int n)
 {
     if (env != 0) {
         delete[] env;
@@ -2573,8 +2573,8 @@ void terrain_obj::make_river()
 
 // ---- std::list<int>::_Buynode() (12-byte node, head links to itself); the 0x46c12f funclet frees the node and rethrows -----------------
 
-struct IntList { std::list<int> l; };
-IntList* make_int_list() { return new IntList; }
+struct IntNodeList { std::list<int> l; };
+IntNodeList* make_int_list() { return new IntNodeList; }
 
 // ---- _Ucopy thunks: vector<T>::_Ucopy(first, last, dest) -> _Uninit_copy(first, last, dest, _Alval, tag) --------------------------------
 
@@ -3145,7 +3145,7 @@ void drawer::draw(view_t* v)
     cur_mat = 0;
     M.s.w = 0.0f; M.f.w = 0.0f; M.u.w = 0.0f; M.o.w = 1.0f;
 
-    entry* p = v->ents._Myfirst;
+    mesh_entry* p = v->ents._Myfirst;
     if (p == v->ents._Mylast) return;
     do {
         skin_x* part = (skin_x*)p->m->res;
