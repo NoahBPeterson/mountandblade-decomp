@@ -1,0 +1,4 @@
+../src/game/world_data/mesh_hud.cpp  ?copy_of@MeshX@@QAEPAU1@XZ  004958f0  /O2 /MT /Gy /TP
+../src/game/world_data/mesh_hud.cpp  ?normalize_uv@MeshX@@QAEXPAU1@@Z  00495fa0  /O2 /MT /Gy /TP
+../src/game/world_data/mesh_hud.cpp  ?rebuild_frame@HudBar@@QAEXXZ  00497d10  /O2 /MT /Gy /TP
+../src/game/world_data/mesh_hud.cpp  ?scale_lane@HudBar@@QAEXM@Z  00498390  /O2 /MT /Gy /TP

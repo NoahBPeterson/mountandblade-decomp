@@ -1,0 +1,3 @@
+../src/game/world_data/obj_tbl.cpp  ?spawn@TableauTbl@@QAEXHHPBUmatrix@rgl@@PBUvector4@3@@Z  004992b0  /O2 /MT /Gy /TP
+../src/game/world_data/obj_tbl.cpp  ?spawn_scaled@TableauTbl@@QAEXHPBUmatrix@rgl@@PBUvector4@3@PBMPBI@Z  00499390  /O2 /MT /Gy /TP
+../src/game/world_data/obj_tbl.cpp  ?spawn_scaled2@TableauTbl@@QAEXHPBUmatrix@rgl@@PBM@Z  00499540  /O2 /MT /Gy /TP
