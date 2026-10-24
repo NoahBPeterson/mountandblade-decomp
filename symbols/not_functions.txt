@@ -11,3 +11,6 @@
 00524d3a  # catch funclet of uninit_copy_str 0x524cd0 (slice s00524cd0)
 00524cb6  # catch funclet of tstring_vec::reserve 0x524bc0 (slice s00524360)
 004be730  # entry marker of MetaMission::init: the 18-byte WinLicense jmp +0x10 over "WL  " data (index entry thunk_FUN_004be742); the function is 0x4be742 (src/game/triggers/trigger_vec.cpp, nonmatching row 004be742, 123 bytes with the marker pair)
+# cold tails / catch funclets inside a parent's COMDAT (verified byte-for-byte with the parent; src/game/world_data)
+00492930  # cold copy loops + catch(...) funclets of 0x4927d0
+00492c96  # __catch funclet + non-reallocating insert branches of 0x492b30

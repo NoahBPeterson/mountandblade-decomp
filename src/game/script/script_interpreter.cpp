@@ -54,7 +54,19 @@ static __declspec(noinline) void report(const char* msg)
     g_script_error = 1;
 }
 
-// 0x49ccc0 check_script_param: used by the block runner only (s0049cc60).
+// @ 0x49ccc0
+char __fastcall check_script_param(int* value, int* limit)
+{
+    char buf[512];
+    int v = *value;
+    char r = 1;
+    if (v < 0 || v >= *limit) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Script Parameter ID: %d", g_cur_opcode, v);
+        report(buf);
+        r = 0;
+    }
+    return r;
+}
 
 // @ 0x49cd00
 static __declspec(noinline) char check_register(const int& value)

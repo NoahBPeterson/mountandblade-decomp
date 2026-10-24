@@ -1,4 +1,5 @@
 ../src/game/script/script_interpreter.cpp  ?report@@YAXPBD@Z  0049cc60  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_script_param@@YIDPAH0@Z  0049ccc0  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?check_troop@@YIDABH@Z  0049cee0  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?check_quest@@YIDABH@Z  0049cf30  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?check_faction@@YIDABH@Z  0049cf80  /O2 /MT /Gy /TP
