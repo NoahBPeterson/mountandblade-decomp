@@ -28,8 +28,10 @@ struct WidgetOps {
     virtual void vc0(); virtual void vc4();
     virtual void add_child(void* child);               // +0xc8 (0x501a20, 0x502320, 0x5024e0)
     // plain members of the widget base (src/game/inventory_panel/note_window.cpp reaches them through the same cast)
-    void relayout();                                   // 0x488d50 (this = widget)
-    int  visible();                                    // 0x50cc60 (this = widget)
+    void draw();                                   // 0x488d50 (this = widget)
+    void relayout();                                   // 0x488d50 (this = widget)  // old name of draw, removed after the names merge
+    int  flag1();                                    // 0x50cc60 (this = widget)
+    int  visible();                                    // 0x50cc60 (this = widget)  // old name of flag1, removed after the names merge
 };
 #define WOPS(w) ((WidgetOps*)(w))
 

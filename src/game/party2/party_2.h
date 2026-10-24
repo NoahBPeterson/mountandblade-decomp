@@ -13,6 +13,8 @@
 #include <stddef.h>
 #include <vector>
 #include "../terrain_b/terrain_b.h"
+#include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
+#include "../game_globals.h"      // canonical g_skill_leadership_bonus
 #include "../ui/mission_ui.h"
 #include "../emit.h"
 #include "../config/widget_mgr.h"
@@ -33,21 +35,12 @@ using rgl::vector4;
 #define GDP(T, off) (*(T*)((char*)g_game + (off)))
 
 // ---- engine services and constants (other objects) ---------------------------------------------------------------------
-__declspec(noreturn) void __stdcall throw_exception(void*, void*);     // 0x5368e6 (_CxxThrowException)
 void mb_warning(const char* fmt, ...);                  // 0x42cb80 (logs a message)
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (printf-style log)
-int __cdecl game_rand();                                // 0x536a9f (CRT rand)
 float __cdecl frand();                                  // 0x40e400 (rand() % 15817 / 15817, in st0)
 extern int g_level_exp[];                               // 0x5934bc experience needed per level
-extern int g_perk_a;                                    // 0xa18120
-extern int g_perk_b;                                    // 0xa18124
-extern int g_perk_c;                                    // 0xa18128
-extern float g_perk_d;                                  // 0xa18138
-extern float g_perk_e;                                  // 0xa1813c
-extern float g_skill_speed_k;                           // 0xa18114
-extern __int64 g_script_result;                         // 0xa70458 (the perk / event result word of the script state)
-extern int g_ev_a;                                      // 0xa70458 (low dword of the same word)
-extern int g_ev_b;                                      // 0xa7045c (high dword)
+struct ScriptState;
+extern ScriptState g_script;                // 0xa70440 (dialog_manager.h cannot be included here)
 
 // ---- 0x5c-byte records and their helpers (vector<E92>: the game's event / track records) ------------------------------
 struct E92 { int v[23]; ~E92() {} };                    // 0x5c: event record (events vector at GameData +0x13a60; party/game.h TrackRec); the empty destructor keeps _Tidy's loop
@@ -68,7 +61,7 @@ struct PartyTmp : Party {
     ~PartyTmp();                                        // 0x431b90
 };
 struct vec2r : vec2 {
-    void rotate(float ang);                             // 0x432600 (replace by the unit vector at `ang`)
+    void rotate_a(float ang);                             // 0x432600 (replace by the unit vector at `ang`)
 };
 // an event record seen field by field (E92 is the same 0x5c bytes): written by GameData::push_event / init_event
 struct EventRec {
@@ -112,7 +105,7 @@ struct TabRec {                                         // a 0x68-byte tableau r
     char pad28[0x38 - 0x28];
     char holder[0x30];                                  // +0x38 ScriptHolder   0x4b1160
     char pad68[0x68 - 0x68];
-    TabSpawn* spawn(const int* key);                    // 0x493df0 (ret 4: find or create the material)
+    TabSpawn* find_or_create(const int* key);                    // 0x493df0 (ret 4: find or create the material)
 };
 struct TabWorld;                                        // a tableau's private world (0x495650 appends one)
 struct TabTable {                                       // the tableau object (global 0xa75f40)
@@ -126,7 +119,7 @@ struct TabTable {                                       // the tableau object (g
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (ret 8)
     void add_spawned(const int* tableau, const int* instance);       // 0x4b14b0 (ret 8)
 };
-extern TabTable g_obj;                                  // 0xa75f40
+extern TabTable g_tableaus;                                  // 0xa75f40
 extern int g_5a75f60;                                   // 0xa75f60
 void scene_step(int material);                          // 0x4b1160 (the render callback stored in TabSpawn::step)
 
@@ -146,11 +139,11 @@ struct TabWorld : CellGrid {                            // a tableau world: the 
 // ---- the map party's model (an rgl entity of type 9) and the meshes it carries ---------------------------------------------
 struct Rot3 {                                           // the three rows of a frame (side, forward, up)
     vector4 s, f, u;
-    void rotate_sf(const float* angle);                 // 0x40e770 (ret 4: rows s and f about u)
+    void rotate_about_u(const float* angle);                 // 0x40e770 (ret 4: rows s and f about u)
 };
 Rot3* __cdecl identity3(Rot3* out);                     // 0x40cd60
 struct MeshRes : rgl::mesh {                            // the master mesh the resource manager hands out for a name
-    rgl::mesh* get();                                   // 0x4958f0
+    rgl::mesh* copy_of();                                   // 0x4958f0
     rgl::mesh* clone();                                 // 0x41c6d0
 };
 // the party's map model (Party::model, an rgl entity of type 9): the slots, fields and members the update code uses
@@ -178,7 +171,7 @@ struct PartyModel {
     float f164;                                         // +0x164
     char pad168[0x294 - 0x168];
     float f294;                                         // +0x294  0x4b7840, 0x4b80d0
-    void add_mesh(rgl::mesh* m);                        // 0x442110 (ret 4)
+    void add_extra(rgl::mesh* m);                        // 0x442110 (ret 4)
     void set_fade(const float* p);                      // 0x4b1800 (ret 4)
 };
 // a std::vector of 0x5c-byte records (allocator word, first, last, end)
@@ -213,11 +206,11 @@ inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->index_of(id)
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
 extern SoundMgr g_sound_mgr;                            // 0x5aa128
 extern int g_sound_bank;                                // 0x5aa304 (the sound index, passed by value)
-void __stdcall stop_sound(int id);                      // 0x5342a6 (FSOUND_StopSound@4)
+extern "C" void __stdcall FSOUND_StopSound(int id);                      // 0x5342a6 (FSOUND_StopSound@4)
 
 struct resmgr_tab : resmgr_gui {                        // the resource manager (0x5d6fa0) as the tableau code uses it
-    texture* make_texture(int w, int h, int fmt);       // 0x41c400
-    void release_res(void* p);                          // 0x4175f0
+    texture* get_texture(int w, int h, int fmt);       // 0x41c400
+    void release(void* p);                          // 0x4175f0
 };
 #define g_resmgr_tab (*(resmgr_tab*)&g_resmgr)
 

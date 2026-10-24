@@ -21,7 +21,7 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
-extern char g_ui_dirty;                         // 0x5d8788 set when the widget list changed (0x49ad20)
+#include "../strat/gui_manager.h"            // g_gui 0x5d7080
 
 // the UI root's widget vector sits at the start of the sound object (0x5d7080; handle at +0x170c). Its push_back
 // is the out-of-line instance the original calls (0x49b120): the wrapper keeps it from being inlined.
@@ -67,7 +67,7 @@ NodeA* DropDown::create()
     sz[1] = (float)ROWS() * wh[1];
     vt(b)->d25(sz);
 
-    g_ui_dirty = 1;
+    g_gui.pad1708 = 1;
     NodeA* tmp = b;
     g_root_widgets.push_back(tmp);
     vt(b)->d19(0x20000);
@@ -94,11 +94,11 @@ NodeA* DropDown::create()
         vt(c)->d28(m2);
 
         vt(c)->d32(2, clone_gui(m1a4));
-        ((gui_mesh*)c->tracks[2])->set_scale(vector4(fD8, fDC * 0.5f, 1.0f));
+        ((gui_mesh*)c->tracks[2])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
         vt(c)->d32(1, clone_gui(m1a0));
-        ((gui_mesh*)c->tracks[1])->set_scale(vector4(fD8, fDC * 0.5f, 1.0f));
+        ((gui_mesh*)c->tracks[1])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
         vt(c)->d32(3, clone_gui(m1a8));
-        ((gui_mesh*)c->tracks[3])->set_scale(vector4(fD8, fDC * 0.5f, 1.0f));
+        ((gui_mesh*)c->tracks[3])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
 
         float e[2];
         vt(c)->d41(e, rows_first + u);

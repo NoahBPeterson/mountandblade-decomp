@@ -13,6 +13,7 @@
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
+#include "../game_globals.h"      // g_bit 0x5a8e68
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "./agent_ai.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -367,7 +368,7 @@ void Agent::update_aim_error()
             d.y = fy - prev_facing.y;
             d.z = fz - prev_facing.z;
             float spd = 0.0f;
-            if (g_step > 0.0f) spd = d.length() / g_step;
+            if (g_step_tbl[0] > 0.0f) spd = d.length() / g_step_tbl[0];
             spd = spd * 0.0f;
             if (spd > 1.0f) spd = 1.0f;
             prev_facing = *(vector4*)&fx;
@@ -489,8 +490,8 @@ void Agent::update_aim_error()
             }
         }
     }
-    double rate = g_step * 5.0f;
-    if (!active) rate = g_step;
+    double rate = g_step_tbl[0] * 5.0f;
+    if (!active) rate = g_step_tbl[0];
     if (aim_error < v) rate = rate + rate;
     if (rate > 1.0) rate = 1.0f;
     aim_error = (float)(rate * v + (1.0 - rate) * aim_error);
@@ -610,9 +611,7 @@ static inline Agent* AGENT(unsigned id)
 }
 
 // Bone-mask bits (64-bit values stored in .data; provisional names)
-extern __int64 g_mask_a0;       // 0x5a8ea0
 extern __int64 g_mask_a8;       // 0x5a8ea8
-extern __int64 g_mask_e68;      // 0x5a8e68
 extern __int64 g_mask_ed0;      // 0x5a8ed0
 extern __int64 g_mask_ef8;      // 0x5a8ef8
 extern __int64 g_mask_f18;      // 0x5a8f18
@@ -749,8 +748,8 @@ void Agent::update_anims(int unused)
                 q.z = (float)sin(h);
                 q.x = (float)cos(h);
                 *(vector4*)(body->skel->chans[i].xform + 0x70 / 4) = q;
-                body->skel->chans[i].mask_lo |= (unsigned)g_mask_a0;
-                body->skel->chans[i].mask_hi |= (unsigned)(g_mask_a0 >> 32);
+                body->skel->chans[i].mask_lo |= (unsigned)((__int64)g_bit[7]);
+                body->skel->chans[i].mask_hi |= (unsigned)(((__int64)g_bit[7]) >> 32);
                 *(vector4*)(body->skel->chans[i].xform + 0x80 / 4) = q;
                 *(__int64*)&body->skel->chans[i].mask_lo |= g_mask_a8;
             }
@@ -764,8 +763,8 @@ void Agent::update_anims(int unused)
                 q.y = (float)sin(h);
                 q.x = (float)cos(h);
                 *(vector4*)body->skel->chans[i].xform = q;
-                body->skel->chans[i].mask_lo |= (unsigned)g_mask_e68;
-                body->skel->chans[i].mask_hi |= (unsigned)(g_mask_e68 >> 32);
+                body->skel->chans[i].mask_lo |= (unsigned)((__int64)g_bit[0]);
+                body->skel->chans[i].mask_hi |= (unsigned)(((__int64)g_bit[0]) >> 32);
                 double a = -f56cc;
                 double c1 = cos(a);
                 if (f56cc < 0.0f) {
@@ -776,8 +775,8 @@ void Agent::update_anims(int unused)
                     t.z = (float)(sin(a) * -0.89f);
                 }
                 *(vector4*)body->skel->chans[i].v6c = t;
-                body->skel->chans[i].mask_lo |= (unsigned)g_mask_e68;
-                body->skel->chans[i].mask_hi |= (unsigned)(g_mask_e68 >> 32);
+                body->skel->chans[i].mask_lo |= (unsigned)((__int64)g_bit[0]);
+                body->skel->chans[i].mask_hi |= (unsigned)(((__int64)g_bit[0]) >> 32);
                 q.y = -q.y;
                 *(vector4*)(body->skel->chans[i].xform + 0x80 / 4) = q;
                 body->skel->chans[i].mask_lo |= (unsigned)g_mask_a8;
@@ -821,8 +820,8 @@ void Agent::update_anims(int unused)
             c->v6c[1] = -y * sc;
             c->v6c[2] = -z * sc;
             c->v6c[3] = w;
-            c->mask_lo |= (unsigned)g_mask_e68;
-            c->mask_hi |= (unsigned)(g_mask_e68 >> 32);
+            c->mask_lo |= (unsigned)((__int64)g_bit[0]);
+            c->mask_hi |= (unsigned)(((__int64)g_bit[0]) >> 32);
         }
     }
 }

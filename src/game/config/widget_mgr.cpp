@@ -21,7 +21,7 @@
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // @ 0x499830
-int widget_mgr::add_medium(int id)
+int widget_mgr::create_game_button_overlay(int id)
 {
     MediumButton* w = new MediumButton;
 
@@ -76,7 +76,7 @@ int widget_mgr::add_medium(int id)
 }
 
 // @ 0x499a20
-int widget_mgr::add_xyz(int a, int b)
+int widget_mgr::create_image_button_overlay(int a, int b)
 {
     XyzButton* w = new XyzButton;
 
@@ -89,8 +89,8 @@ int widget_mgr::add_xyz(int a, int b)
         vt(w)->d29(&v);
     }
 
-    vt(w)->d32(2, g_scene.placed(a));
-    vt(w)->d32(1, g_scene.placed(b));
+    vt(w)->d32(2, g_meshes.placed(a));
+    vt(w)->d32(1, g_meshes.placed(b));
     vt(w)->d03();
 
     scene->d50(w);
@@ -99,15 +99,15 @@ int widget_mgr::add_xyz(int a, int b)
 }
 
 // @ 0x499b50
-int widget_mgr::add_xyz_clicked(int a, int b)
+int widget_mgr::create_check_box_overlay(int a, int b)
 {
-    int i = add_xyz(a, b);
+    int i = create_image_button_overlay(a, b);
     ((XyzButton*)widgets[i])->set_flag();
     return i;
 }
 
 // @ 0x499b80
-int widget_mgr::add_progress(int lo, int hi)
+int widget_mgr::create_progress_overlay(int lo, int hi)
 {
     UiC* w = new UiC;
 
@@ -125,7 +125,7 @@ int widget_mgr::add_progress(int lo, int hi)
             rgl::string n("progressbar");
             vt(w)->d32(0, clone_gui(g_resmgr_full.get_object(&n)));
         }
-        ((gui_mesh*)w->tracks[0])->set_scale(sc);
+        ((gui_mesh*)w->tracks[0])->set_color(sc);
 
         {
             rgl::string n("handle_hor");
@@ -157,7 +157,7 @@ int widget_mgr::add_progress(int lo, int hi)
 }
 
 // @ 0x499d90
-int widget_mgr::add_dropdown()
+int widget_mgr::create_combo_button_overlay()
 {
     DropDown* w = new DropDown;
 
@@ -174,7 +174,7 @@ int widget_mgr::add_dropdown()
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[2])->set_scale(c);
+        ((gui_mesh*)w->tracks[2])->set_color(c);
     }
 
     {
@@ -183,7 +183,7 @@ int widget_mgr::add_dropdown()
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[1])->set_scale(c);
+        ((gui_mesh*)w->tracks[1])->set_color(c);
     }
 
     {
@@ -192,7 +192,7 @@ int widget_mgr::add_dropdown()
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[3])->set_scale(c);
+        ((gui_mesh*)w->tracks[3])->set_color(c);
     }
 
     {
@@ -230,7 +230,7 @@ int widget_mgr::add_dropdown()
 }
 
 // @ 0x49a0b0
-int widget_mgr::add_party()
+int widget_mgr::create_text_box_overlay()
 {
     UiE* w = new UiE(0);
 
@@ -260,7 +260,7 @@ int widget_mgr::add_party()
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[2])->set_scale(c);
+        ((gui_mesh*)w->tracks[2])->set_color(c);
     }
 
     {
@@ -269,7 +269,7 @@ int widget_mgr::add_party()
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[1])->set_scale(c);
+        ((gui_mesh*)w->tracks[1])->set_color(c);
 
         vt(w)->d03();
 
@@ -289,10 +289,10 @@ int widget_mgr::add_party()
 #define STORE_SIZE() \
     do { WItem* it_ = ITEM; it_->fD8 = pos[0]; it_->fDC = pos[1]; } while (0)
 #define SCALE_BY_OLD(t) \
-    ((gui_mesh*)ITEM->tracks[t])->set_scale(vector4(pos[0] / ITEM->fD8, pos[1] / ITEM->fDC, 1.0f))
+    ((gui_mesh*)ITEM->tracks[t])->set_color(vector4(pos[0] / ITEM->fD8, pos[1] / ITEM->fDC, 1.0f))
 
 // @ 0x49a300
-void widget_mgr::apply_preset(int idx, const float* pos)
+void widget_mgr::set_size(int idx, const float* pos)
 {
     float sz[4];                                // out of slot 41 (text size), never read
     if (vt(ITEM)->kind() == 0 || vt(ITEM)->kind() == 1)
@@ -368,11 +368,11 @@ base:
 #undef ITEM
 
 // @ 0x49ab80
-void widget_mgr::apply_preset_b(int idx, const float* pos)
+void widget_mgr::set_area_size(int idx, const float* pos)
 {
 #define ITEM ((WItem*)widgets[idx])
     if (vt(ITEM)->kind() == 7)
-        ITEM->terrain_refresh_mesh(pos);
+        ITEM->scroll_refresh(pos);
 #undef ITEM
 }
 

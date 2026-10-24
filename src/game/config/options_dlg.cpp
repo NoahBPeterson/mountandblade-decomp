@@ -15,6 +15,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "./options_dlg.h"
+#include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "./core.h"
 #include "./config.h"
 #include "../strat/gui_manager.h"
@@ -269,7 +270,6 @@ extern const GUID IID_IDxDiagProvider;      // 0x59c8e4
 long __stdcall container_prop_string_impl(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap);
 
 
-long __cdecl _atol(const char*);                                        // 0x53734d (atoi/atol)
 
 
 // @ 0x4b9aa0
@@ -281,7 +281,7 @@ long __cdecl get_latest_version()
     body[2] = 0;
     if (http_fetch("http://www.taleworlds.com/mb_version.txt", 0, 0, 0, (int)body) > 0)
         return -1;
-    return _atol((const char*)body[2]);
+    return atoi((const char*)body[2]);
 }
 
 // @ 0x4b9790

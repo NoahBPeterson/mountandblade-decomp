@@ -6,6 +6,7 @@
 //       (obj_tbl) of the TU map. Names provisional. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./obj_tbl.h"
+#include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/widget_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../ui/mission_ui.h"
 #include "./tableau.h"
@@ -52,7 +53,7 @@ rgl::mesh* scene_tbl::placed(int index)
     a = r->rz * 0.017453292f;
     frame.rotate_about_u(&a);
     if (r->sx != g_one || r->sy != g_one || r->sz != g_one)
-        m->set_scale(sc);
+        m->set_color(sc);
     m->set_part(*(rgl::matrix*)&frame);
     if (pos.z * pos.z + pos.y * pos.y + pos.x * pos.x != g_zero)
         m->translate(&pos);
@@ -79,7 +80,7 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
     b.z = 0.0f;
     a.z = 0.0f;
     m->add_quad(&a, &b, &uv0, &uv1, &color);
-    skin* nr = make(index, (const int*)from);
+    skin* nr = add_spawned(index, (const int*)from);
     if (m->res)
         --*(int*)((char*)m->res + 0x64);
     m->res = nr;
@@ -97,8 +98,8 @@ void TableauTbl::spawn(int index, int from, const rgl::matrix* frame, const rgl:
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
        && 0.99999f <= scale->y && scale->y < 1.00001f
        && 0.99999f <= scale->z && scale->z < 1.00001f))
-        m->set_scale(*scale);
-    e->add_mesh(m);
+        m->set_color(*scale);
+    e->add_extra(m);
     e->local = *frame;
 }
 
@@ -108,20 +109,20 @@ void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::ve
 {
     TableauWorld* w = worlds[worlds.size() - 1];
     TableauEntity* e = w->create_entity(9);
-    MeshY* m = (MeshY*)g_scene.placed(index);
+    MeshY* m = (MeshY*)g_meshes.placed(index);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
        && 0.99999f <= scale->y && scale->y < 1.00001f
        && 0.99999f <= scale->z && scale->z < 1.00001f))
-        m->set_scale(*scale);
+        m->set_color(*scale);
     if (*color != 0xffffffffu) {
         vector4 c;
         rgl::unpack_color(&c, color);
-        if (g_gamma_flag) {
+        if (g_use_shaders) {
             c.x = pow((double)c.x, (double)2.2f);
             c.y = pow((double)c.y, (double)2.2f);
             c.z = pow((double)c.z, (double)2.2f);
         }
-        m->set_color(rgl::pack_color(&c));
+        m->set_bone_index(rgl::pack_color(&c));
     }
     if (*alpha < 0.99f) {
         float a;
@@ -133,7 +134,7 @@ void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::ve
             a = *alpha;
         m->set_alpha(a);
     }
-    e->add_mesh(m);
+    e->add_extra(m);
     e->local = *frame;
 }
 
@@ -142,15 +143,15 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
 {
     TableauWorld* w = worlds[worlds.size() - 1];
     TableauEntity* e = w->create_entity(9);
-    MeshY* m = (MeshY*)((MeshX*)((gui_mesh*)g_resmgr_full.get_object((rgl::string*)((char*)g_mesh_recs + index * 0x48 + 0x14))))->copy_of();
+    MeshY* m = (MeshY*)((MeshX*)((gui_mesh*)g_resmgr_full.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
-    e->add_mesh(m);
+    e->add_extra(m);
     e->local = *frame;
 }
 
 // @ 0x4995e0
-int WidgetMgrW::add_mesh_widget(int index)
+int WidgetMgrW::create_mesh_overlay(int index)
 {
     MeshWidget* w = new MeshWidget;
     vec2 v;
@@ -159,7 +160,7 @@ int WidgetMgrW::add_mesh_widget(int index)
     ((MeshWidgetVt*)w)->w22(&v);
     *(int*)&v.x = 0x700;
     ((MeshWidgetVt*)w)->w29(&v);
-    ((MeshWidgetVt*)w)->w32(0, g_scene.placed(index));
+    ((MeshWidgetVt*)w)->w32(0, g_meshes.placed(index));
     ((MeshWidgetVt*)w)->w3();
     scene->d50(w);
     widgets.push_back(w);
@@ -167,7 +168,7 @@ int WidgetMgrW::add_mesh_widget(int index)
 }
 
 // @ 0x4996e0
-int WidgetMgrW::add_mesh_widget2(int a, int b, float c)
+int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
 {
     MeshWidget* w = new MeshWidget;
     vec2 v;
@@ -177,8 +178,8 @@ int WidgetMgrW::add_mesh_widget2(int a, int b, float c)
     *(int*)&v.x = 0x700;
     ((MeshWidgetVt*)w)->w29(&v);
     if (a >= 0) {
-        MeshY* m = (MeshY*)g_scene.placed(a);
-        skin* nr = g_tableaus.make(&a, &b);
+        MeshY* m = (MeshY*)g_meshes.placed(a);
+        skin* nr = g_tableaus.add_spawned(&a, &b);
         if (m->res)
             --*(int*)((char*)m->res + 0x64);
         m->res = nr;

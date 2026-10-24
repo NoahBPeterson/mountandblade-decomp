@@ -8,7 +8,7 @@
 #include "../../rgl/stream.h"
 
 #include "../str_table.h"
-extern StrTable g_strtab;                   // 0x5e2a18
+extern StrTable g_strtab;                   // 0x5e2a18  // old name of g_strtable, removed after the names merge
 
 // the engine log (global 0x5a9f60): stream slot 10 (+0x28) writes a C string
 inline stream_base* log_stream_ptr() { return (stream_base*)0x5a9f60; }

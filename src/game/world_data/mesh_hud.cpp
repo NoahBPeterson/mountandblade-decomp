@@ -60,7 +60,7 @@ struct SliderW : MissionUi {                                    // 0x188 bytes
     int f184;                                                   // +0x184
 };
 // @ 0x495970
-int WidgetMgrW::add_slider(int vmin, int vmax)
+int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
 {
     SliderW* w = new SliderW;
     w->f178 = 0;
@@ -192,9 +192,9 @@ void MeshX::set_alpha(float a)
         unsigned packed = base[i].color;
         rgl::vertex60* p = &base[i];
         rgl::vector4 v;
-        v = from_packed_colour(&packed);
+        v = unpack_color(&packed);
         v.w = a;
-        p->color = to_packed_colour(&v);
+        p->color = rgl::pack_color(&v);
     }
 }
 
@@ -253,13 +253,13 @@ void HudBar::update_1(int)
         float x = (e2 * f88 + (dur(4) - e2) * a8) * k;
         float y = ((dur(4) - e2) * ac + e2 * f8c) * k;
         rgl::vector4 v(x / fD8, y / fDC, 1.0f);
-        msh(0)->set_scale(v);
+        msh(0)->set_color(v);
         s03();
         fD8 = x;
         fDC = y;
     } else if (c4) {
         c4 = 0;
-        msh(0)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(0)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         s03();
         fD8 = f88;
         fDC = f8c;
@@ -321,15 +321,15 @@ void HudBar::update_2(int)
         float k = 1.0f / dur(4);
         float x = (e2 * f88 + (dur(4) - e2) * a8) * k;
         float y = ((dur(4) - e2) * ac + e2 * f8c) * k;
-        msh(2)->set_scale(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(1)->set_scale(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        msh(2)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        msh(1)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         s03();
         fD8 = x;
         fDC = y;
     } else if (c4) {
         c4 = 0;
-        msh(2)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(1)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(2)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(1)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         s03();
         fD8 = f88;
         fDC = f8c;
@@ -401,9 +401,9 @@ void HudBar::update_3(int)
         float k = 1.0f / dur(4);
         float x = (e4 * f88 + (dur(4) - e4) * a8) * k;
         float y = ((dur(4) - e4) * ac + e4 * f8c) * k;
-        msh(2)->set_scale(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(1)->set_scale(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(3)->set_scale(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        msh(2)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        msh(1)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        msh(3)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         float sy = y * 0.02f;
         rgl::vector4 v(sy, sy, 1.0f);
         s27(&v);
@@ -415,9 +415,9 @@ void HudBar::update_3(int)
         fDC = y;
         dirty = 1;
     } else if (c4) {
-        msh(2)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(1)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(3)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(2)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(1)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(3)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         float sy = f8c * 0.02f;
         rgl::vector4 w(sy, sy, 1.0f);
         s27(&w);
@@ -532,8 +532,8 @@ void HudBar::update_4(int)
         float x = (t4 * f88 + (dur(4) - t4) * a8) * k;
         float y = (t4 * f8c + (dur(4) - t4) * ac) * k;
         rgl::vector4 v(x / fD8, y / fDC, 1.0f);
-        msh(0)->set_scale(v);
-        msh(2)->set_scale(v);
+        msh(0)->set_color(v);
+        msh(2)->set_color(v);
         s03();
         v.x = x * 0.25f;
         v.y = screen[1];
@@ -543,8 +543,8 @@ void HudBar::update_4(int)
     } else if (c4) {
         rgl::vector4 v(f88 / fD8, f8c / fDC, 1.0f);
         c4 = 0;
-        msh(0)->set_scale(v);
-        msh(2)->set_scale(v);
+        msh(0)->set_color(v);
+        msh(2)->set_color(v);
         s03();
         v.x = f88 * 0.25f;
         v.y = screen[1];
@@ -595,8 +595,8 @@ void HudBar::update_5(int)
         f194 = -23234124.0f;                     // 0xcbb14326: never a real frame, so refresh rebuilds
         rgl::vector4 c(x * 0.38940808f, y, 1.0f);
         v198 = c;
-        msh(0)->set_scale(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(2)->set_scale(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        msh(0)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        msh(2)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         s03();
         rgl::vector4 s(x * 0.25f, screen[1], 1.0f);
         s25(&s);
@@ -607,8 +607,8 @@ void HudBar::update_5(int)
         v198 = c;
         c4 = 0;
         f194 = -23234124.0f;
-        msh(0)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(2)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(0)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(2)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         s03();
         rgl::vector4 s(f88 * 0.25f, screen[1], 1.0f);
         s25(&s);
@@ -664,8 +664,8 @@ void HudBar::update_full(int)
         float k = 1.0f / dur(4);
         float x = (t4 * f88 + (dur(4) - t4) * a8) * k;
         float y = (t4 * f8c + (dur(4) - t4) * ac) * k;
-        msh(2)->set_scale(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(1)->set_scale(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        msh(2)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        msh(1)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         rgl::vector4 v(y * 0.02f, y * 0.02f, 1.0f);
         s27(&v);
         v.x = 0.0f;
@@ -677,8 +677,8 @@ void HudBar::update_full(int)
         changed = true;
     } else if (c4) {
         c4 = 0;
-        msh(2)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(1)->set_scale(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(2)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        msh(1)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         rgl::vector4 v(f8c * 0.02f, f8c * 0.02f, 1.0f);
         s27(&v);
         v.x = 0.0f;
@@ -792,7 +792,7 @@ void HudBar::rebuild_frame()
         vector4 col = v198;
         ((float*)&col)[idx] = ((1.0f - 2.0f * f) * ((v168 - f16c) / (f170 - f16c)) + f) * ((float*)&col)[idx];
         tracks[1] = m;
-        m->set_scale(col);
+        m->set_color(col);
         tracks[1]->color = (tracks[1]->color & 0xffffff) | mask;
         f17c = v198.x * 0.020544001f;            // 0x59272c (0.020544f rounds one ulp short)
     }
@@ -805,7 +805,7 @@ void HudBar::scale_lane(float arg)
     if (tracks[2]) {
         vector4 v(1.0f, 1.0f, 1.0f);
         ((float*)&v)[idx] = screen[idx] / f17c * arg;
-        ((gui_mesh*)tracks[2])->set_scale(v);
+        ((gui_mesh*)tracks[2])->set_color(v);
         f17c = arg * screen[idx];
     }
 }
@@ -835,12 +835,12 @@ void HudOuter::scroll_refresh(vector4* arg)
     vector4 scale(0.5f, arg->y * 1.5576323f, 1.0f);
     rgl::string a_name("scrollbar");
     gui_mesh* a = ((gui_mesh*)g_resmgr_full.get_object(&a_name))->clone();
-    a->set_scale(scale);
+    a->set_color(scale);
     rgl::string b_name("scrollbar_handle");
     gui_mesh* b = ((gui_mesh*)g_resmgr_full.get_object(&b_name))->clone();
-    b->set_scale(scale);
+    b->set_color(scale);
     bar->s32(0, a);
     bar->s32(2, b);
 
-    on_scroll();
+    update();
 }

@@ -5,25 +5,26 @@
 #ifndef MB_CAMERA_H
 #define MB_CAMERA_H
 #include "../../include/dialog_rec.h"
+#include "../game_globals.h"      // canonical g_script_error
 #include "../../include/game_data.h"
 
 extern unsigned g_reg_lo[];                         // 0xa70490 (register pair table: 8 bytes apart)
 extern int g_reg_hi[];                              // 0xa70494
 struct VarTable {
     int get(int id);                                // 0x48d690
-    void set(int id, int v);                        // 0x493db0
+    void set40(int id, int v);                        // 0x493db0
 };
-extern VarTable g_vartab;                           // 0xa70440
+struct ScriptState;
+extern ScriptState g_script;                        // 0xa70440 (seen through VarTable below)
 extern int g_cur_opcode;                            // 0x5e25a0
 extern int g_cur_param;                             // 0x5e2590
-extern int g_script_output;                         // 0x5a9fb0
+struct Config;
+extern Config g_cfg;                        // 0x5a9f98 (config.h cannot be included here)
 extern int g_lineno;                                // 0x5e2598  script line number
-extern int g_script_out;                            // 0x5e259c  "script produced output" flag
-extern int g_script_flag;                           // 0x5e25a4  "aborted/returned" latch cleared each run
 // mb_error(const char* msg): the message string reaches it in ecx (__fastcall), so it builds its own
 // tstring and prints; call sites load the address directly into ecx.
 void __fastcall report(const char* msg);            // 0x49cc60
-int __fastcall container_size(void* p);             // 0x40f010 (count = (last-first)>>2)
+int __fastcall size(void* p);             // 0x40f010 (count = (last-first)>>2)
 
 // ---- text log stream (views of the canonical stream_base / text_stream of src/rgl/stream.h, which cannot be included with match/include/rgl.h) ----
 // text log stream at 0x5a9f60 (see s00418a70): slot 10 (+0x28) is w_cstr
@@ -50,7 +51,7 @@ struct ScriptEmitter {
     DialogBlock script;                         // +0x18
     char pad34[0x34 - 0x18 - sizeof(DialogBlock)];
 };
-extern ScriptEmitter* g_emitters;               // 0xa75eb0
+extern ScriptEmitter* g_scripts;               // 0xa75eb0
 extern int g_emitter_count;                     // 0xa75eb4
 
 // The goto/branch stack object (local_410 of emit): 0x400 bytes of entries, then the depth counter at +0x400
@@ -60,12 +61,12 @@ struct ScriptStack {
     int data[256];
     int sp;
     int pad;
-    void goto_stmt(int line, int val);          // 0x488e60 (thiscall, ret 8)
+    void push(int line, int val);          // 0x488e60 (thiscall, ret 8)
 };
 
 // ---- per-statement interpreter callees (not decompiled; declared for shape) -----------------------------
 struct ScriptStmt {                             // statement pointer in ECX
-    char run(int stmt, int which, int* out);    // 0x49fa10 (thiscall, ret 0xc)
+    char execute(int stmt, int which, int* out);    // 0x49fa10 (thiscall, ret 0xc)
 };
 struct KeyState { void frame(int a); };         // 0x487930 (thiscall, ret 4)
 extern KeyState g_keyboard;                     // 0xa170c8

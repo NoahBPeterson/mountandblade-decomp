@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <new>
 #include "./party_window.h"
+#include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../int_vec.h"
 #include "../str_table.h"
@@ -30,12 +31,14 @@
 #define EQUIP(t, k) (g_game->troops[(t)].equip[(k)])
 #define INV(t, k) (g_game->troops[(t)].inv[(k)])
 
+struct ini_file;
+extern ini_file g_game_vars;                // 0xa44240 (viewed as the ConfigTable of config_table.h)
 // the config lookup every equipment key goes through: a missing key yields 0. The key is a temporary of the
 // caller's expression (it is destroyed after the value is stored).
 static __forceinline float cfg(const tstring& n)
 {
     float r = 0.0f;
-    int i = g_config.find(n);
+    int i = ((ConfigTable&)g_game_vars).find(n);
     if (i >= 0)
         r = (float)atof(CONFIG_ENTRIES[i].value ? CONFIG_ENTRIES[i].value : (char*)&CONFIG_ENTRIES[i].value);
     return r;
@@ -44,7 +47,7 @@ static __forceinline float cfg(const tstring& n)
 // the string-table lookup with a named key (a temporary of the caller's expression)
 static inline tstring* lookup(const tstring& k)
 {
-    return g_strtab.lookup(&k);
+    return g_strtable.lookup(&k);
 }
 
 // (x, y) pair handed to the widget methods
@@ -146,7 +149,7 @@ void* PartyWindow::make_inventory_menu(int idx)
         }
         WOPS(panel)->add_child(w);
     }
-    if (idx == 0 && g_a181a8 == 0) {
+    if (idx == 0 && g_disable_food_slot == 0) {
         MissionUi* w = new MissionUi;
         {
             Vec2 v(pos[9].x, pos[9].y + 0.095f);
@@ -171,7 +174,7 @@ void* PartyWindow::make_inventory_menu(int idx)
     if (idx != 0)
         troop_idx = troop;
     for (int i = 0; i < 10; i++) {
-        if ((idx < 1 && g_a181a8 == 0) || i != 9) {
+        if ((idx < 1 && g_disable_food_slot == 0) || i != 9) {
             MissionUi* slot = make_slot(&EQUIP(troop_idx, i));
             row_slot[idx][i] = slot;
             if (i != 9)
@@ -297,7 +300,7 @@ void PartyWindow::add_strip_icon(char* slot, const tstring& name, int troop, int
     }
     WOPS(*(void**)slot)->add_image(0, 0);
     int idx = *(volatile int*)&kind + troop * 4;
-    WOPS(*(void**)slot)->add_image(0, g_obj.make_mesh_from(&sel, &idx));
+    WOPS(*(void**)slot)->add_image(0, g_tableaus.make_mesh_from(&sel, &idx));
 }
 
 // @ 0x5025a0
@@ -440,9 +443,9 @@ MB_NOINLINE ResMesh* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
         g_game->f1a204 = -10000;
         g_game->f1a200 = (int)m;
         g_game->f1a1fc = 0;
-        g_sliders.lo = -1;
-        g_sliders.hi = -1;
-        g_sliders.pos = t;
+        (*(SpawnSliders*)((char*)&g_script + 8)).lo = -1;
+        (*(SpawnSliders*)((char*)&g_script + 8)).hi = -1;
+        (*(SpawnSliders*)((char*)&g_script + 8)).pos = t;
         item_sound(&g_items[item->item])->play(-0x32);
     }
     return m;

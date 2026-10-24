@@ -68,11 +68,9 @@ extern HWND g_hwnd_dlg;                             // 0x8ee3fc0 the launcher's 
 extern HWND g_hwnd_page;                            // 0x8ee3fbc the options page window (list 0x431, combo 0x433), set_list_scroll
 extern int g_view_x;                                // 0x5d75d4 view rectangle (0x4bace0)
 extern int g_view_y;                                // 0x5d75d0
-extern int g_view_w;                                // 0x5d75c8
-extern int g_view_h;                                // 0x5d75cc
 extern char g_screenshot_cropped;                   // 0x8ee3cec (the Core's m_bWindowed byte, see core.h)
-extern IDirect3DDevice9* g_d3d_device;              // 0xa17f28
-extern int g_dinput_enabled;                        // 0x5e28fc (also g_use_shaders)
+#include "../../include/renderer.h"            // g_render 0xa17910 (dev at +0x618 = 0xa17f28)
+extern int g_use_shaders;                        // 0x5e28fc (also g_use_shaders)
 extern int g_edit_key;                              // 0x5e28d0 first value of the line being edited
 extern int g_edit_value;                            // 0x5e28d4 second value of the line being edited
 extern float g_line_pitch_ratio;                    // 0x590d94 0.6f: visible lines vs window height
@@ -109,12 +107,12 @@ struct GameConfig {
     char pad_c[0x1a1d0 - 0x1a0d4];
     int  sub_option;                                // +0x1a1d0 selected sub-option of the host page   0x4b9e70
 };
-extern GameConfig* g_config;                        // 0x5e2930
+// g_config: the view ((GameConfig*)g_game) of the game-data pointer g_game (0x5e2930, declared by game_data.h / party/game.h in the including source)
 struct CreateGameOptionsPage {
     char pad[0x374];
     HWND hDlg;                                      // +0x374 dialog window of the page
     void refresh();                                 // 0x4b9e70
-    void update_checks();                           // 0x4bf640 sets the page's radio / check buttons from g_config, then refresh()
+    void update_checks();                           // 0x4bf640 sets the page's radio / check buttons from ((GameConfig*)g_game), then refresh()
 };
 
 // ---- the ragdoll body record (0x4bc170, 0x4bc1f0; this header called it the software cursor): ../rag_body.h ----------
@@ -122,7 +120,7 @@ struct CreateGameOptionsPage {
 
 // ---- input state and device set (0x4bc2d0..0x4bc430) -------------------------------------------------------------
 struct Matrix { float m[16]; };
-Matrix* __cdecl make_matrix(Matrix* out);           // 0x40cd00 fills out and returns it
+Matrix* __cdecl identity_pos(Matrix* out);           // 0x40cd00 fills out and returns it
 struct DisplayState {                               // the input state prefix of InputSet plus two view matrices
     char unk000[0x618];
     int  unk618;                                    // +0x618 (cleared by 0x4bc2d0, 0x4bc350 reads +0x74c)
@@ -165,7 +163,8 @@ struct resource_manager_x {                         // the resource manager (0x5
     void linearise_meshes();                        // 0x419640 (called "finalize" by module_info.txt's loader)
     void load_pack(const tstring& name, int user);  // 0x41e150
 };
-extern resource_manager_x g_resmgr_x;               // 0x5d6fa0
+#include "../../rgl/resource.h"          // resource_manager g_resmgr 0x5d6fa0 (the one declaration)
+#define g_resmgr_x (*(resource_manager_x*)&g_resmgr)   // the 0x5d6fa0 object seen through the shader / texture view above
 #include "../render_batch.h"                   // render_batch (shared with terrain_b)
 struct font_details {                               // seven zeroed dwords
     int a, b, c, d, e, f, g;
@@ -301,7 +300,7 @@ struct music_player {
     void stop(int i);                               // 0x4be0a0
     void play(int rec, int* slot);                  // 0x4be0e0
     music_player();                                 // 0x4c24c0 (src/game/triggers: constructs the 0x100 record names, the three clocks, the monitor state)
-    void update();                                  // 0x4c25e0 per-frame monitor of the two stream slots and the track selection
+    void advance_piece();                                  // 0x4c25e0 per-frame monitor of the two stream slots and the track selection
 };
 
 struct menu_item {                                  // 0x68 bytes

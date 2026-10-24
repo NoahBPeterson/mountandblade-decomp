@@ -17,6 +17,7 @@
 #include <io.h>
 #include <new>
 #include "./trigger_vec.h"
+#include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 #include <richedit.h>
 #include "../config/core.h"
@@ -29,7 +30,7 @@
 
 void __fastcall tstring_ctor(tstring* p);                   // 0x42bbd0 (tstring::tstring, called on raw slots)
 void __fastcall tstring_dtor(tstring* p);                   // 0x42bc40
-void __cdecl free_mem(void* p);                             // 0x53570d (operator delete[])
+void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
 
 // @ 0x4be742
 void MetaMission::init()
@@ -311,7 +312,7 @@ void Core::show_options()
             s.append(h);
         }
         {
-            tstring b(g_opt_5aa0fc == 0x10 ? " 16 bits" : " 32 bits");
+            tstring b(g_dlg_display_bits == 0x10 ? " 16 bits" : " 32 bits");
             s.append(b);
         }
         SendMessageA(GetDlgItem(options_hwnd, 0x45f), 0x14d, 0,
@@ -353,9 +354,9 @@ void Core::read_options()
         g_opt_5aa0f8 = 0;
         int md = mode.Format;
         if (md == 0x17 || md == 0x19 || md == 0x1a || md == 0x18 || md == 0x1e)
-            g_opt_5aa0fc = 0x10;
+            g_dlg_display_bits = 0x10;
         else
-            g_opt_5aa0fc = 0x20;
+            g_dlg_display_bits = 0x20;
     } else {
         // the edit box holds "<width>x<height> <bits>"
         char buf[100];
@@ -367,23 +368,23 @@ void Core::read_options()
         int isp = s.find(cs, 0);
         g_opt_5aa0f4 = atoi(s.substr(0, ix).c_str());
         g_opt_5aa0f8 = atoi(s.substr(ix + 1, isp).c_str());
-        g_opt_5aa0fc = atoi(s.substr(isp + 1, isp + 3).c_str());
+        g_dlg_display_bits = atoi(s.substr(isp + 1, isp + 3).c_str());
     }
-    g_opt_5aa100 = SendMessageA(GetDlgItem(options_hwnd, 0x465), CB_GETCURSEL, 0, 0);
-    g_opt_5aa100 = SendMessageA(GetDlgItem(options_hwnd, 0x465), CB_GETITEMDATA, g_opt_5aa100, 0);
+    g_dlg_multisample = SendMessageA(GetDlgItem(options_hwnd, 0x465), CB_GETCURSEL, 0, 0);
+    g_dlg_multisample = SendMessageA(GetDlgItem(options_hwnd, 0x465), CB_GETITEMDATA, g_dlg_multisample, 0);
     g_opt_5aa110 = SendMessageA(GetDlgItem(options_hwnd, 0x467), CB_GETITEMDATA,
                                SendMessageA(GetDlgItem(options_hwnd, 0x467), CB_GETCURSEL, 0, 0), 0);
     int m;
-    if (g_opt_5aa0fc == 0x10)
+    if (g_dlg_display_bits == 0x10)
         m = 0x17;
-    else if (g_opt_5aa0fc == 0x20)
+    else if (g_dlg_display_bits == 0x20)
         m = 0x16;
     else
         m = mode.Format;
-    if (g_opt_5aa100 > 1) {
+    if (g_dlg_multisample > 1) {
         DWORD q;
         if (m_pD3D->CheckDeviceMultiSampleType(0, D3DDEVTYPE_HAL, (D3DFORMAT)m, FALSE,
-                                               g_opt_5aa100 != 2 ? D3DMULTISAMPLE_4_SAMPLES : D3DMULTISAMPLE_2_SAMPLES, &q) >= 0) {
+                                               g_dlg_multisample != 2 ? D3DMULTISAMPLE_4_SAMPLES : D3DMULTISAMPLE_2_SAMPLES, &q) >= 0) {
             g_opt_5aa104 = q - 1;
             return;
         }
@@ -485,17 +486,17 @@ INT_PTR CALLBACK options_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lPar
 // (the original sets the first five buttons with BM_SETSTATE, 0x474 / 0x497..0x499 as well)
 void CreateGameOptionsPage::update_checks()
 {
-    SendMessageA(GetDlgItem(hDlg, 0x470), BM_SETSTATE, g_config->game_mode == 1, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x46d), BM_SETSTATE, g_config->game_mode == 2, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x471), BM_SETSTATE, g_config->game_mode == 3, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x49a), BM_SETSTATE, g_config->game_mode == 4, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x46f), BM_SETSTATE, g_config->game_mode == 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x434), BM_SETCHECK, g_config->check_a098 != 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x453), BM_SETCHECK, g_config->check_a0cc != 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x454), BM_SETCHECK, g_config->check_a0d0 != 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x497), BM_SETSTATE, g_config->game_mode == 4 && g_config->sub_option == 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x498), BM_SETSTATE, g_config->game_mode == 4 && g_config->sub_option == 1, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x499), BM_SETSTATE, g_config->game_mode == 4 && g_config->sub_option == 2, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x470), BM_SETSTATE, ((GameConfig*)g_game)->game_mode == 1, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x46d), BM_SETSTATE, ((GameConfig*)g_game)->game_mode == 2, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x471), BM_SETSTATE, ((GameConfig*)g_game)->game_mode == 3, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x49a), BM_SETSTATE, ((GameConfig*)g_game)->game_mode == 4, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x46f), BM_SETSTATE, ((GameConfig*)g_game)->game_mode == 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x434), BM_SETCHECK, ((GameConfig*)g_game)->check_a098 != 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x453), BM_SETCHECK, ((GameConfig*)g_game)->check_a0cc != 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x454), BM_SETCHECK, ((GameConfig*)g_game)->check_a0d0 != 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x497), BM_SETSTATE, ((GameConfig*)g_game)->game_mode == 4 && ((GameConfig*)g_game)->sub_option == 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x498), BM_SETSTATE, ((GameConfig*)g_game)->game_mode == 4 && ((GameConfig*)g_game)->sub_option == 1, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x499), BM_SETSTATE, ((GameConfig*)g_game)->game_mode == 4 && ((GameConfig*)g_game)->sub_option == 2, 0);
     refresh();
 }
 
@@ -536,7 +537,7 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
         }
         FILE* f = fopen(path.c_str(), "r");
         if (f == 0) {
-            g_config->debug_file = (int)f;
+            ((GameConfig*)g_game)->debug_file = (int)f;
             sprintf(msgbuf,
                 "File %s could not be found. Please set the correct module system folder by choosing \"Set Debug Mode Folder\" on the menu.", path.c_str());
             MessageBoxA(0, msgbuf, "ERROR", 0);
@@ -571,29 +572,29 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
             if (HIWORD(wParam) == 9) {
                 SendMessageA(GetDlgItem(script_dlg, 0x4bb), CB_GETLBTEXT,
                              SendMessageA(GetDlgItem(script_dlg, 0x4bb), CB_GETCURSEL, 0, 0), (LPARAM)buf);
-                g_config->script_text.assign(buf);
+                ((GameConfig*)g_game)->script_text.assign(buf);
                 LRESULT ix = SendMessageA(GetDlgItem(script_dlg, 0x46c), CB_GETCURSEL, 0, 0);
                 if (ix >= 0)
-                    g_config->script_index = SendMessageA(GetDlgItem(script_dlg, 0x46c), CB_GETITEMDATA, ix, 0);
+                    ((GameConfig*)g_game)->script_index = SendMessageA(GetDlgItem(script_dlg, 0x46c), CB_GETITEMDATA, ix, 0);
                 else
-                    g_config->script_index = 0;
+                    ((GameConfig*)g_game)->script_index = 0;
                 return 0;
             }
             break;
         case 2:
-            g_config->debug_file = 0;
-            g_config->settings_text.assign("");
+            ((GameConfig*)g_game)->debug_file = 0;
+            ((GameConfig*)g_game)->settings_text.assign("");
             return 0;
         case 0x4b3:
-            g_config->paused = 1 - g_config->paused;
-            if (g_config->paused)
+            ((GameConfig*)g_game)->paused = 1 - ((GameConfig*)g_game)->paused;
+            if (((GameConfig*)g_game)->paused)
                 SetDlgItemTextA(script_dlg, 0x4b3, "Stop");
             else
                 SetDlgItemTextA(script_dlg, 0x4b3, "Debug");
             return 0;
         case 0x4bb:
             if (HIWORD(wParam) == 9) {
-                if (g_config->settings_text.len == 0) {
+                if (((GameConfig*)g_game)->settings_text.len == 0) {
                     tstring path;
                     HKEY key;
                     open_keys_key(&key);
@@ -608,7 +609,7 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
                     }
                     FILE* f = fopen(path.c_str(), "r");
                     if (f == 0) {
-                        g_config->debug_file = (int)f;
+                        ((GameConfig*)g_game)->debug_file = (int)f;
                         sprintf(msgbuf,
                             "File %s could not be found. Please set the correct module system folder by choosing \"Set Debug Mode Folder\" on the menu.", path.c_str());
                         MessageBoxA(0, msgbuf, "ERROR", 0);
@@ -631,7 +632,7 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
                             break;
                         text.erase_range(end, q);
                     }
-                    g_config->settings_text = text;
+                    ((GameConfig*)g_game)->settings_text = text;
                     SetDlgItemTextA(script_dlg, 0x4b0, text.c_str());
                     tstring quote("\"");
                     FINDTEXTEXA ft;
@@ -667,8 +668,8 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
                 }
                 SendMessageA(GetDlgItem(script_dlg, 0x4bb), CB_GETLBTEXT,
                              SendMessageA(GetDlgItem(script_dlg, 0x4bb), CB_GETCURSEL, 0, 0), (LPARAM)buf);
-                g_config->script_text.assign(buf);
-                g_config->script_index = 0;
+                ((GameConfig*)g_game)->script_text.assign(buf);
+                ((GameConfig*)g_game)->script_index = 0;
                 tstring want("\"");
                 {
                     tstring name(buf);
@@ -678,16 +679,16 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
                     tstring q("\"");
                     want.append(q);
                 }
-                int a = g_config->settings_text.find(want, 0);
+                int a = ((GameConfig*)g_game)->settings_text.find(want, 0);
                 if (a > 0) {
                     char lb = '[';
-                    int b = g_config->settings_text.find(lb, a) + 1;
+                    int b = ((GameConfig*)g_game)->settings_text.find(lb, a) + 1;
                     char rb = ']';
-                    int c = g_config->settings_text.find(rb, b);
+                    int c = ((GameConfig*)g_game)->settings_text.find(rb, b);
                     if (b > 0 && c > 0) {
                         HWND list = GetDlgItem(h, 0x46c);
                         SendMessageA(list, CB_RESETCONTENT, 0, 0);
-                        tstring body = g_config->settings_text.substr(b, c);
+                        tstring body = ((GameConfig*)g_game)->settings_text.substr(b, c);
                         int j = 0, k = 0, idx = 0;
                         while (k >= 0) {
                             char lp = '(';
@@ -1010,22 +1011,22 @@ void parse_module_info()
             g_starting_day = atoi(val.c_str());
         }
         else if (msg.equals("enable_quick_battles")) {
-            g_xa181a4 = atoi(val.c_str());
+            g_enable_quick_battles = atoi(val.c_str());
         }
         else if (msg.equals("disable_food_slot")) {
-            g_xa181a8 = atoi(val.c_str());
+            g_disable_food_slot = atoi(val.c_str());
         }
         else if (msg.equals("limit_hair_colors")) {
-            g_xa181ac = atoi(val.c_str());
+            g_limit_hair_colors = atoi(val.c_str());
         }
         else if (msg.equals("show_faction_color")) {
-            g_xa181b0 = atoi(val.c_str());
+            g_show_faction_color = atoi(val.c_str());
         }
         else if (msg.equals("show_quest_notes")) {
-            g_xa181b4 = atoi(val.c_str());
+            g_show_quest_notes = atoi(val.c_str());
         }
         else if (msg.equals("show_party_ids_instead_of_names")) {
-            g_xa181b8 = atoi(val.c_str()) != 0;
+            g_show_party_ids_instead_of_names = atoi(val.c_str()) != 0;
         }
         else if (msg.equals("main_menu_font_color_red")) {
             g_main_menu_font_color_red = atoi(val.c_str());
@@ -1056,7 +1057,7 @@ HRESULT build_shader()
         g_effect->Release();
         g_effect = 0;
     }
-    tstring path(g_path_prefix);
+    tstring path(g_module_path);
     {
         tstring name("mb.fx");
         path.append(name);
@@ -1067,15 +1068,15 @@ HRESULT build_shader()
         FindClose(h);
     else
         path.assign("mb.fxo");
-    HRESULT hr = D3DXCreateEffectFromFileA(g_d3d_device, path.c_str(), 0, 0, 0x800, 0, &g_effect, 0);
+    HRESULT hr = D3DXCreateEffectFromFileA(g_render.dev, path.c_str(), 0, 0, 0x800, 0, &g_effect, 0);
     if (hr >= 0) {
         g_resmgr_x.reset_effect_sets();
         g_shadow_map.pick_size();
         g_effect->SetFloat("fShadowMapNextPixel", 1.0f / (float)g_shadow_map.w);
         g_effect->SetFloat("fShadowMapSize", (float)g_shadow_map.w);
-        float inv = 1.0f / g_gamma;
+        float inv = 1.0f / (*(float*)((char*)&g_options + 0x80));
         D3DXVECTOR4 gv, iv;
-        gv.x = g_gamma; gv.y = g_gamma; gv.z = g_gamma; gv.w = g_gamma;
+        gv.x = (*(float*)((char*)&g_options + 0x80)); gv.y = (*(float*)((char*)&g_options + 0x80)); gv.z = (*(float*)((char*)&g_options + 0x80)); gv.w = (*(float*)((char*)&g_options + 0x80));
         iv.x = inv; iv.y = inv; iv.z = inv; iv.w = inv;
         g_effect->SetVector("output_gamma", &gv);
         g_effect->SetVector("output_gamma_inv", &iv);
@@ -1091,18 +1092,18 @@ HRESULT Core::RestoreDeviceObjects()
     m_pd3dDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
     update_view_rect();
     IDirect3DDevice9* dev = m_pd3dDevice;
-    g_d3d_device = dev;
+    g_render.dev = dev;
     dev->GetDeviceCaps(&g_caps);
     g_renderer_vsync = -1;
-    g_renderer_flag = 0;
+    g_render.pad504 = 0;
     if (g_use_shaders) {
         if (build_shader() < 0)
             mb_error("Unable to compile the effect file.");
     }
     g_batch.init_shaders();
     g_resmgr_x.restore(g_effect);
-    if (g_d3d_device)
-        g_d3d_device->ShowCursor(g_cursor_flag);
+    if (g_render.dev)
+        g_render.dev->ShowCursor(((unsigned char)g_gui.f560));
     IDirect3DTexture9* tex;
     {
         tstring name("cursor");
@@ -1110,7 +1111,7 @@ HRESULT Core::RestoreDeviceObjects()
     }
     IDirect3DSurface9* surf;
     tex->GetSurfaceLevel(0, &surf);
-    g_d3d_device->SetCursorProperties(1, 1, surf);
+    g_render.dev->SetCursorProperties(1, 1, surf);
     if (surf)
         surf->Release();
     return 0;
@@ -1451,7 +1452,7 @@ void MenuRec::read(stream_base& s)
 // name tstring at +0x18; start time of the last play at +0x2008 + 4 * i (config.h music_player::play stamps it).
 // Two stream slots: w[0..] = (active, ended, stream, track, result) per slot as music_player::play sets them.
 #define TRACK(i, off) (*(int*)((char*)this + 0x20 * (i) + (off)))
-extern "C" short __stdcall FSOUND_Stream_Close_(void* stream);
+extern "C" short __stdcall FSOUND_Stream_Close(void* stream);
 
 // @ 0x4c24c0
 // (the original brackets the monitor initialisation with two 18-byte WinLicense markers, at 0x4c2542 and 0x4c25c1)
@@ -1478,7 +1479,7 @@ music_player::music_player()
 // Slot 0 plays the current piece, slot 1 the one being faded in / out. Each slot first waits for its stream to open,
 // then watches it until its end; with no piece in slot 0 the track is chosen: a script request wins, else the tracks
 // matching the situation `mode` (and the category `mask`) compete by how long ago they were played.
-void music_player::update()
+void music_player::advance_piece()
 {
     char buf[0x200];
     int& mode = *(int*)this;
@@ -1498,11 +1499,11 @@ void music_player::update()
     } else if (w[0] != 0) {
         int len = FSOUND_Stream_GetLengthMs((void*)w[8]);
         int pos = FSOUND_Stream_GetTime((void*)w[8]);
-        int a = g_music_request;
-        int b = g_music_request_kind;
+        int a = (*(int*)((char*)&g_script + 0x34));
+        int b = (*(int*)((char*)&g_script + 0x38));
         if (a >= 0 && a == w[10] && b > 0) {
             a = -1;
-            g_music_request = a;
+            (*(int*)((char*)&g_script + 0x34)) = a;
         }
         bool done = true;
         if (pos < len) {
@@ -1523,7 +1524,7 @@ void music_player::update()
             }
         }
         if (done) {
-            FSOUND_Stream_Close_((void*)w[8]);
+            FSOUND_Stream_Close((void*)w[8]);
             w[8] = 0;
             w[0] = 0;
             w[12] = -1;
@@ -1532,9 +1533,9 @@ void music_player::update()
         int forced = 0;
         int sel = -1;
         int best = -1;
-        int a = g_music_request;
+        int a = (*(int*)((char*)&g_script + 0x34));
         if (a >= 0) {
-            g_music_request = -1;
+            (*(int*)((char*)&g_script + 0x34)) = -1;
             forced = 1;
             if (a != -1)
                 sel = a;
@@ -1598,16 +1599,16 @@ void music_player::update()
             int len = FSOUND_Stream_GetLengthMs((void*)w[9]);
             if (FSOUND_Stream_GetTime((void*)w[9]) < len)
                 return;
-            FSOUND_Stream_Close_((void*)w[9]);
+            FSOUND_Stream_Close((void*)w[9]);
             w[9] = 0;
             w[1] = 0;
             w[13] = -1;
         }
-    } else if (g_music_event >= 0) {
+    } else if ((*(int*)((char*)&g_script + 0x3c)) >= 0) {
         if (g_music_volume > g_music_volume_floor) {
             int slot = 1;
-            play(g_music_event, &slot);
+            play((*(int*)((char*)&g_script + 0x3c)), &slot);
         }
-        g_music_event = -1;
+        (*(int*)((char*)&g_script + 0x3c)) = -1;
     }
 }
