@@ -2,6 +2,7 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../rgl/mesh2/mesh2_common.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // @ 0x4f5d20
 WidgetA* __cdecl make_label(void* parent, const tstring* name, const tstring* text)
@@ -28,7 +29,7 @@ void TextPart::get_text(int row, int index, tstring* out)
 {
     if (index < rows[row].count) {
         TextEntry* e = &rows[row].entries[index];
-        tstring* t = g_lang.lookup(e->text);
+        tstring* t = g_strtable.find(&e->text);
         if (t == 0)
             t = (tstring*)e;
         *out = *t;
@@ -284,7 +285,7 @@ int __cdecl engine_init()
         tstring n("core_pictures");
         g_alloc.load_pack(n, 0);
     }
-    g_lang.load(g_path_prefix_chars);
+    g_strtable.load(g_path_prefix_chars);
     {
         FontDef* p = (FontDef*)::operator new(0x386c);
         if (p != 0)

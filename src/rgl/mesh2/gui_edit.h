@@ -347,33 +347,14 @@ struct QuickString { tstring name; tstring key; tstring translated(); };   // tr
 struct GameString { tstring name; tstring key; tstring translated(); };    // translated 0x4c6080
 #include "../../include/game_recs.h"       // PartyTemplate (translated 0x4c6080), QuestRec, FactionRec: the shared record classes
 #include "../../include/dialog_rec.h"      // DialogRec (translated 0x4c6080): the shared dialog record
-struct SkinElem {
-    tstring name;                                                       // +0x00
-    tstring key;                                                        // +0x10
-    char pad20[0x34 - 0x20];
-    tstring translated();                                               // 0x4c6080
-};
-struct SkinSet {
-    char pad0[0x3c];
-    int n_elems;                                                        // +0x3c
-    SkinElem* elems;                                                    // +0x40
-    char pad44[0x1f8 - 0x44];
-};
+#include "../../include/skin_set.h"              // SkinSet, SkinElem, g_skins_begin (shared with src/game/char_sheet)
 struct ModRec {
     tstring name;                                                       // +0x00
     tstring key;                                                        // +0x10
     char pad20[0x28 - 0x20];
     tstring translated();                                               // 0x4c6080
 };
-struct SkillRec {
-    tstring desc;                                                       // +0x00
-    tstring name;                                                       // +0x10
-    tstring key;                                                        // +0x20
-    char pad30[0x44 - 0x30];
-    tstring translated();                                               // 0x4c6100
-    tstring* desc_name();                                               // 0x4c6190
-    tstring translated_desc();                                          // 0x4c61f0
-};
+#include "../../include/skill_rec.h"                         // SkillRec (shared with src/game/char_sheet/cs_detail.h)
 struct MenuDoor {
     tstring name;                                                       // +0x00
     tstring text;                                                       // +0x10
@@ -443,15 +424,15 @@ struct ListObj {
     virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
 };
 
-struct MapScreen;
-void ctor_4c3d90(MapRecord* base, int index, int z, MapScreen* self, int h);  // 0x4c3d90
-void ctor_4c3e10(MapRecord* base, int index, int z, MapScreen* self, int h);  // 0x4c3e10
-void ctor_4c3e80(MapRecord* base, int index, int z, MapScreen* self, int h);  // 0x4c3e80
-void ctor_4c3ef0(MapRecord* base, int index, int z, MapScreen* self, int h);  // 0x4c3ef0
-void ctor_524cd0(MapRecord* base, int index, int z, MapScreen* self, int h);  // 0x524cd0
-void ctor_4c1b60(MapRecord* base, int index, int z, MapScreen* self, int h);  // 0x4c1b60
+struct MapDialog;
+void ctor_4c3d90(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3d90
+void ctor_4c3e10(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3e10
+void ctor_4c3e80(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3e80
+void ctor_4c3ef0(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3ef0
+void ctor_524cd0(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x524cd0
+void ctor_4c1b60(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c1b60
 
-struct MapScreen {
+struct MapDialog {
     char pad0[0x8];
     void* raw;                                          // +0x8
     void* raw_end;                                      // +0xc
@@ -837,8 +818,6 @@ extern QuickString* g_quick_strings;                                    // 0xa75
 extern int g_n_quick_strings;                                           // 0xa75eac
 extern DialogRec* g_dialogs;                                            // 0x8ed50cc
 extern int g_n_dialogs;                                                 // 0x8ed50c8
-extern SkinSet* g_skins_begin;                                          // 0x8ed4f7c
-extern SkinSet* g_skins_end;                                            // 0x8ed4f80
 extern ModRec g_item_mods[];                                            // 0xa75f70 (43 x 0x28)
 extern SkillRec g_skills[];                                             // 0x8ee3100 (42 x 0x44)
 extern GameMenu* g_menus;                                               // 0x5e29b0

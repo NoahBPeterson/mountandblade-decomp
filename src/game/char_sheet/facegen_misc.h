@@ -86,15 +86,7 @@ struct Entity {                                         // 0x34c entity (EChar-l
 struct vector2 { float x, y; };
 
 // ---- skin record table (0x8ed4f7c, 0x1f8-byte records) -------------------------------------------------
-struct SkinSet {
-    char pad0[0x3c];
-    int n;                                              // +0x3c number of deform keys
-    char pad40[0x194 - 0x40];
-    int div;                                            // +0x194
-    char pad198[0x1f8 - 0x198];
-    void regen(int arg, float* values);                 // 0x4735e0 (ret 8)
-};
-extern SkinSet* g_skins_begin;                          // 0x8ed4f7c
+#include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
 
 // ---- face-gen window (ctor 0x4f49d0) --------------------------------------------------------------------
 struct PackedState { unsigned __int64 a, b, c, d; };

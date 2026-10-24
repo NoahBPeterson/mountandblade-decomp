@@ -18,7 +18,6 @@
 
 // ---- element types of the container instantiations -----------------------------------------------------------
 #include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
-struct E32 { int v[8]; };                            // 0x20 (deque<E32>)
 struct E48 { int v[12]; };                           // 0x30 (vector<E48>)
 // 0x1c8-byte polymorphic record (vtable 0x590b84, copy ctor 0x437bb0, deleting dtor 0x437870): the shared Rec1c8
 // (src/include/rec1c8.h; src/game/agent/agent.h calls it PlacedObj).

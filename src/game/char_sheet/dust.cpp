@@ -60,7 +60,7 @@ void DustTerrain::emit_cell(int x, int y)
     if (n > 0) {
         int i = 0;
         do {
-            particle* p = &dust[i];
+            DustParticle* p = &dust[i];
             int ix = (int)(p->frame.o.x * g_k_1_20);
             int cx;
             if (ix < 0) {
@@ -94,7 +94,7 @@ void DustTerrain::emit_cell(int x, int y)
     if (no > v90->capacity())
         v90->resize(no);
     for (int i = 0; i < dust_count; i++) {
-        particle* p = &dust[i];
+        DustParticle* p = &dust[i];
         int cx = (int)(p->frame.o.x * g_k_1_20);
         if (cx < 0)
             cx = 0;
@@ -154,7 +154,7 @@ void DustTerrain::emit_cell(int x, int y)
     }
     if (g_use_shaders == 0 || g_x5aa084 != 2) {
         for (int i = 0; i < dust_count; i++) {
-            particle* p = &dust[i];
+            DustParticle* p = &dust[i];
             int ix = (int)(p->frame.o.x * g_k_1_20);
             int cx;
             if (ix < 0) {

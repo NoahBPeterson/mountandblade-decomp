@@ -9,11 +9,9 @@
 #include <new>
 #include "../tstring.h"
 #include "../party/game.h"
+#include "../../include/rec_dtors.h"
 
-struct Tail {                                       // 0x10-byte string tail record
-    int a, b, c, d;
-    ~Tail();                                        // 0x42d390
-};
+// Tail (0x10 bytes, dtor 0x42d390) is src/include/rec_dtors.h
 
 struct Rec18 {                                      // 0x18-byte record with a tstring-style dtor
     char pad[0x18];
@@ -35,7 +33,7 @@ void* copy_4cd620(void* first, void* last, void* self, void* out);        // 0x4
 // build keeps the same live registers. Its argument order is the original's (node, hint, key) with an unused 4th.
 __declspec(noinline) void* list_int_make_node(void* node, void* hint, void* key, void* pad);   // 0x4c4e50
 void  block_4c2d10(void* p);                        // 0x4c2d10 (0x130-byte block ctor)
-struct Block {
+struct Block130 {
     char pad[0x130];
     void init();                                    // 0x4c2d10
 };
@@ -176,7 +174,7 @@ Big* Big::init()
     p->f030 = 0;
     p->v48.end = 0; p->v58.alloc = 0;
     for (int i = 0; i < 0x40; i++)
-        ((Block*)(p->blocks + i * 0x130))->init();
+        ((Block130*)(p->blocks + i * 0x130))->init();
 
     p->f5de0 = 2;
     p->f5de8 = g_5e2958;

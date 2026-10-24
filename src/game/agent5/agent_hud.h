@@ -149,10 +149,7 @@ struct MissionDust {                                              // the mission
     void update_particles(const matrix* view);                    // 0x4f3e10 (ret 4)
 };
 extern MissionDust g_mission_obj;                                 // 0xa76630 (the mission object itself; g_mission points to it)
-struct SoundMgr {                                                 // the sound manager at 0x5aa128 (agent_fx_sound.h's SoundMgr)
-    int start(int kind, int mode, const float* pos, float volume, int flag);   // 0x4428a0 (ret 0x14)
-    void stop_all();                                              // 0x494310
-};
+#include "../../include/sound_mgr.h"                             // SoundMgr (play_slot 0x4428a0, stop_all 0x494310)
 extern SoundMgr g_sound;                                          // 0x5aa128
 extern int g_listener_off;                                        // 0x5a9fd8 (nonzero: the sound listener does not follow the camera)
 extern matrix g_listener;                                         // 0x5aa138 (s, f, u rows and the position o at 0x5aa168)

@@ -33,8 +33,8 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?mesh_ptr@MapObject@@QAEPAUtstring@@XZ  004c6ca0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated_door@MenuDoor@@QAE?AUtstring@@XZ  004c6d00  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?reset_gui@@YAXXZ  004c6e00  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?reset_state@MapScreen@@QAEXXZ  004c6e10  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?clear_objects@MapScreen@@QAEXXZ  004c6e30  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?reset_state@MapDialog@@QAEXXZ  004c6e10  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?clear_objects@MapDialog@@QAEXXZ  004c6e30  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?clear@Block@@QAEXXZ  004c80c0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?free_materials@Block@@QAEXXZ  004c8330  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?read_terrain@Block@@QAEXPAUstream_base@@@Z  004c83a0  /O2 /MT /Gy /TP

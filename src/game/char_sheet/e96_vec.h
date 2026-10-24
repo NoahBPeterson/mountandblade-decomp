@@ -15,7 +15,7 @@
 #include <memory>
 
 struct E96 { int v[24]; };      // 0x60
-struct E32 { int v[8]; };       // 0x20
+#include "../../include/pod_elems.h"   // E32 (shared with agent3/agent_combat.h)
 
 template<class T> struct vec {                  // std::vector<T> layout
     std::allocator<T> al;

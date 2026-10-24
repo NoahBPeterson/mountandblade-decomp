@@ -143,10 +143,10 @@ extern GuiManager g_gui_manager;        // 0x5d7080
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                 // 0x5d6fa0
 
-struct MissionObj {
+struct ButtonTick {
     void fn(float dt);                  // 0x487930
 };
-extern MissionObj g_a170c8;             // 0xa170c8
+extern ButtonTick g_a170c8;             // 0xa170c8
 
 struct MusicList {
     void fn();                          // 0x4c4100

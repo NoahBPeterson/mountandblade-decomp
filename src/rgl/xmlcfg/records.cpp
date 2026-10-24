@@ -10,6 +10,7 @@
 #include "records.h"
 #include "../../include/poly.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/rec_dtors.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 template class std::vector<Item>;       // 0x431a30 _Destroy, 0x431a60 _Tidy
 

@@ -10,4 +10,6 @@ struct E100 { int v[25]; };               // 0x64: the particle record, std::vec
 struct rec36 { int a[9]; };               // 0x24: fill 0x467b40, copy_backward 0x467b70, uninit_copy 0x46b6e0 (terrain_a); alloc_rec36::construct in agent.cpp
 struct rec136 { int a[34]; };             // 0x88: uninit_copy 0x46b750 (terrain_a); alloc_rec136::construct in agent.cpp
 
+struct E32 { int v[8]; };                 // 0x20: deque<E32> (agent_combat), vec<E32> (char_sheet/e96_vec.h: 0x4f4860 reserve_nr, 0x4f4960 _Uninit_copy)
+
 #endif // MB_POD_ELEMS_H

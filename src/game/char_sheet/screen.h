@@ -93,10 +93,7 @@ void __fastcall RowModel::erase_all(int unused)   // 0x4d10f0
         ((tstring*)((char*)this - 0x10))->~tstring();
     }
 }
-struct vec_table {                      // ctor 0x417cb0
-    char pad0[0x260];
-    vec_table();                        // 0x417cb0
-};
+#include "../../include/vec_table.h"     // vec_table (8 bytes: data, count; ctor 0x417cb0). It was a 0x260-byte stand-in here.
 
 // a matrix-array entry of the screen: 3 identity rows + a 4th scale vector (0x40 bytes).
 struct xform {

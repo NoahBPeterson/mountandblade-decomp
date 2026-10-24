@@ -27,8 +27,8 @@ struct SkelX {                              // what the +0x304 pointer of the bo
     char pad0[0x40];
     struct Part { char pad[0xd8]; float charge; } *f40;     // +0x40
 };
-struct ItemRec { int pad0, pad4; unsigned flags; char pad_c[0x40 - 0xc]; };     // 0x40 bytes, flags at +8 (0x432f60)
-struct Record { char pad0[0x10]; ItemRec* items; int count; char pad18[0x30 - 0x18]; };   // 0x30, items +0x10, count +0x14
+struct ActorItemRec { int pad0, pad4; unsigned flags; char pad_c[0x40 - 0xc]; };     // 0x40 bytes, flags at +8 (0x432f60)
+struct Record { char pad0[0x10]; ActorItemRec* items; int count; char pad18[0x30 - 0x18]; };   // 0x30, items +0x10, count +0x14
 #include "../../include/game_data.h"      // GameData / g_game 0x5e2930: the troop table at +0x13a00 (0x433140 reads the record's flags at +0x30; this module called the record ItemDef)
 
 struct AgentX : Agent {

@@ -13,6 +13,7 @@
 #include "./agent_hud.h"
 #include "../../rgl/mesh_x.h"
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
 // ---- the mission's agent (re)initialisation ------------------------------------------------------------------
@@ -715,7 +716,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         sun->pos.s.normalize();
         sun->pos.f = cross(sun->pos.u, sun->pos.s);
         if (f6664 < 0 && fog_dense == 1)
-            f6664 = g_sound.start(8, 3, &g_listener.o.x, 1.0f, 0);
+            f6664 = g_sound.play_slot(8, 3, &g_listener.o.x, 1.0f, 0);
     }
     FrameNode* flare = (FrameNode*)f65c0;
     if (!flare)

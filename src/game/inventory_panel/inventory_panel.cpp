@@ -22,9 +22,7 @@
 #define GRID(t, k)   (((ItemRef*)((char*)g_game->troops + 0x4a4))[(t) * 0xa1 + (k)])
 #define ITYPE(i) (*(unsigned char*)&g_items[i].type_flags)
 
-struct SoundMgr {
-    int play(int idx, int flags, const float* pos, float vol, int* out);   // 0x442650 (ret 0x14)
-};
+#include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
 #define SOUNDMGR ((SoundMgr*)0x5aa128)                  // 0x5aa128
 
 // ---- globals and callees of other translation units -----------------------------------------------------------------

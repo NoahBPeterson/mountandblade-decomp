@@ -14,7 +14,7 @@
 #include <list>
 #include "../../game/tstring.h"
 
-#include "../../include/rec_dtors.h"   // SubA, SubB (the (array, name) pairs), RecD, RecI (shared)
+#include "../../include/rec_dtors.h"   // SubA, SubB (the (array, name) pairs), RecD, RecI, Tail, RecQ, RecS, RecT (shared)
 
 // Two abstract-looking bases (vtables 0x5908ec and 0x5908f8; slots 1 and 2 are the empty function 0x477b70).
 // Their scalar deleting destructors are slot 0 (0x431400, 0x431420).
@@ -74,7 +74,6 @@ struct Item {
     char body[0x1c4];
 };
 // out-of-line destructors of later objects, called on members
-struct Tail  { char body[0x18]; ~Tail(); };     // 0x42d390 (the std::vector<tstring> tidy of gui_manager)
 #include "../../include/tail2.h"             // Tail2 (0x20 bytes, ~Tail2 0x4c4d10)
 
 struct Owner { Poly* p; ~Owner() { delete p; } };
@@ -96,17 +95,6 @@ struct RecP {
     int tail;
     ~RecP();
 };
-// Non-virtual destructor body 0x431b10: vector at +0x128, eight names at +0x88, five names, name at +0.
-struct RecQ {
-    tstring n0, n1, n2, n3, n4;     // +0 .. +0x40
-    int pad50;
-    tstring n5;                     // +0x54
-    char pad64[0x88 - 0x64];
-    tstring names[8];               // +0x88
-    char pad108[0x128 - 0x108];
-    std::vector<int> v;             // +0x128
-    ~RecQ();
-};
 // IfaceA-derived, 0x5ac8 bytes. ~RecR 0x431b90 (implicit), vector deleting destructor 0x431cb0.
 struct RecR : IfaceA {
     char pad4[8];
@@ -125,17 +113,6 @@ struct RecR : IfaceA {
     tstring names[8];               // +0x5a28
     char tail[0x5ac8 - 0x5aa8];
     RecR();
-};
-// Non-virtual destructor body 0x431c40: vector at +0x4f4, eight names at +0x420, two names, name at +0.
-struct RecS {
-    tstring n0;                     // +0
-    tstring n1;                     // +0x10
-    tstring n2;                     // +0x20
-    char pad30[0x420 - 0x30];
-    tstring names[8];               // +0x420
-    char pad4a0[0x4f4 - 0x4a0];
-    std::vector<int> v;             // +0x4f4
-    ~RecS();
 };
 // IfaceB-derived, 0x494 bytes, own vtable 0x590904. ~RecY 0x431e10, vector deleting dtor 0x431ec0.
 struct RecY : IfaceB {
@@ -169,19 +146,6 @@ struct RecZ : IfaceB {
     Tail2 t;                        // +0x53c0
     char tail[0x5928 - 0x53e0];
     RecZ();
-};
-// Non-virtual destructor body 0x432010: eight names at +0x27c, vector at +0x24c, Tail at +0x234, names at +0x14, +0.
-struct RecT {
-    tstring n0;                     // +0
-    int pad10;
-    tstring n1;                     // +0x14
-    char pad24[0x234 - 0x24];
-    Tail t;                         // +0x234
-    std::vector<int> v;             // +0x24c
-    char pad25c[0x20];
-    tstring names[8];               // +0x27c
-    char pad2fc[0x5330 - 0x2fc];
-    ~RecT();
 };
 // 0x5340-byte object: the reset at 0x432080 clears five fields (offsets as stored there).
 struct BigObj {

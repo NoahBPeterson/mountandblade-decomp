@@ -35,11 +35,7 @@ __forceinline mesh* load_mesh(const char* name)
 }
 
 // ---- language / text tables (0x5e2a18) -------------------------------------------------------------
-struct LangTables {
-    tstring* lookup(const tstring& key);        // 0x4c6010 (null when missing)
-    void load(const char* root);                // 0x4cda90
-};
-extern LangTables g_lang;                       // 0x5e2a18
+#include "../../rgl/mesh2/mesh2_common.h"   // LangTables (shared: find 0x4c6010, load 0x4cda90) and its global g_strtable 0x5e2a18
 
 // ---- text log stream (0x5a9f60, see s004bd990) -----------------------------------------------------
 struct stream_base {
