@@ -1,9 +1,9 @@
 #!/bin/sh
 # Run the Visual C++ Toolkit 2003 compiler (cl 13.10.3052, VC .NET 2003) under wine.
 # mount&blade.exe was linked by link 7.10; the Rich header is gone (Valve's VLV block), so the exact
-# cl 13.10 build is inferred from matches. Toolchain: work/toolchain/vc71tk (symlink to spore-decomp's
-# copy, extracted from VCToolkitSetup.exe). Headers: vc71tk CRT/STL + Windows SDK 6.0A (from vc9sp1)
-# for windows.h / d3d9.h / dinput.h.
+# cl 13.10 build is inferred from matches. Toolchain: work/toolchain/vc71tk, extracted from your own
+# VCToolkitSetup.exe by tools/setup_toolchain.py (which also sets up the headers below and the wine prefix).
+# Headers: vc71tk CRT/STL + Windows SDK 6.0A (from vc9sp1) for windows.h / d3d9.h / dinput.h.
 # Wine prefix: work/toolchain/wineprefix-mb, our own (create with `WINEPREFIX=$PWD/work/toolchain/wineprefix-mb
 # wineboot -i`). Sharing spore-decomp's prefix meant one wineserver for both projects' waves: a one-line
 # file took 6.5-14.6 s to compile; in our own prefix it takes ~2 s. Keep it warm during waves with

@@ -1,9 +1,9 @@
 # Matching (byte-exact decompilation)
 
-Procedure and rules for matching `mount&blade.exe`. The **mechanism reference** is spore-decomp's
-[`docs/codegen.md`](../../spore-decomp/docs/codegen.md): read its untagged and **`[13]`** sections (cl 13.10,
-the compiler that built *all* of this binary); ignore `[15]`, `[LTCG]` and `[DDK]`. Skim it during setup and
-return to it the first time a function shows a diff. M&B-specific findings go in this file.
+Procedure and rules for matching `mount&blade.exe`. The **mechanism reference** is
+[`codegen.md`](codegen.md): how cl 13.10 (the compiler that built *all* of this binary) turns source into native
+shapes. Skim it during setup and return to it the first time a function shows a diff. Procedure and bookkeeping go
+in this file, compiler mechanisms in codegen.md. Setup for new contributors: [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 ## Toolchain
 - `tools/matching/cl.sh` runs **cl 13.10.3052** (Visual C++ Toolkit 2003) under wine. The game was built with
@@ -51,7 +51,7 @@ return to it the first time a function shows a diff. M&B-specific findings go in
 - The script interpreter (`0x49fa10`, 70 KB, `switch (op - 30)` over 2356 cases) is a separate track,
   not part of normal waves.
 
-## Slices and bookkeeping (same as spore-decomp)
+## Slices and bookkeeping
 Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`). Output, all under the slice:
 - `match/slices/<id>/<id>.cpp` (+ optional `<id>.h`): source for **every** function in the slice, each
   preceded by `// @ 0x<va>`.
@@ -173,10 +173,9 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
   because it called the out-parameter `cross(r, a, b)` inline.
 - Virtual calls need a stub class with the slot at the right index. Dump the vtable from the binary first.
 - Budget: up to ~6 variant rounds per function, then keep the best complete version in nonmatching.txt.
-- **x87 code: read [`../spore-decomp/docs/codegen.md`](../../spore-decomp/docs/codegen.md) §9 first**, especially
-  §9.6 (this project's own x87 lessons: what 24-bit precision means for a difference, aligned-instruction
-  comparison instead of byte counts, `--fp-tol`, the `volatile`/aggregate/frame-struct levers, and the walls).
-  It is the shared codegen guide for cl 13.10; add new x87 findings there, not here.
+- **x87 code: read [`codegen.md`](codegen.md) §9 first** (what 24-bit precision means for a difference,
+  aligned-instruction comparison instead of byte counts, `--fp-tol`, the `volatile`/aggregate/frame-struct levers,
+  and the walls). Add new x87 findings there, not here.
 - **Judge a near-miss by aligned instructions, not the byte count:** `.venv/bin/python tools/matching/insn_align.py
   <src.cpp> <va> [--show]` reports identical / changed / missing / extra instructions (relocations masked; a
   second figure masks stack-slot numbers). chk.py's differing-byte count is positional and balloons when one

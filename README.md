@@ -7,15 +7,16 @@ original DLLs (Newton, FMOD 3, D3D9/D3DX9, DirectInput 8, SkinMagic). A native m
 **This repository contains no game code or data.** Binary-derived artifacts live in `work/` (git-ignored)
 and are produced locally from your own copy of the game.
 
-Sister project: `../spore-decomp`. Most tools here are ported from it; its `docs/codegen.md` is the
-code-generation reference (the `[13]` sections apply to us: same cl 13.10).
+Sister project: spore-decomp (Spore), whose tools this project's are ported from. **To contribute, start with
+[`CONTRIBUTING.md`](CONTRIBUTING.md)**; `docs/codegen.md` is the cl 13.10 code-generation reference.
 
 ## Setup
 ```sh
 uv sync   # .venv from pyproject.toml + uv.lock (pinned: unicorn/capstone versions affect equiv results)
 MB="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Mount and Blade"
 .venv/bin/python tools/steamstub21_analysis_image.py "$MB/mount&blade.exe" work/mb.analysis.bin work/mb.analysis.json
-# toolchain: work/toolchain/{vc71tk,vc9sp1,wineprefix} -> symlinks to ../spore-decomp/work/toolchain/*
+# toolchain from your own installers (verified by hash): see CONTRIBUTING.md
+.venv/bin/python tools/setup_toolchain.py vctoolkit VCToolkitSetup.exe   # + winsdk, dxsdk, wine, check
 export GHIDRA_INSTALL_DIR=$(ls -d /opt/homebrew/Cellar/ghidra/*/libexec | tail -1) PY=/opt/homebrew/opt/python@3.11/bin/python3.11
 $PY tools/ghidra/index.py new work/mb.analysis.bin work/ghidra mb 0x5390ba work/index/functions.csv  # ~5 min
 $PY tools/ghidra/fixups.py work/mb.analysis.bin work/ghidra mb          # jump tables, missed functions
