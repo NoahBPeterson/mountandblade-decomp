@@ -40,6 +40,23 @@ print()
 print(table(["Source tree", "Functions", "Share", "Code size", "Share (size)"],
             [row("Migrated into src/", migrated), row("Compilable, still only in match/slices", done - migrated)]))
 
+# Equivalence evidence for the equivalent-only rows (tools/difftest/verdicts.py, from the latest sweep)
+EV_CATS = (("pass", "PASS: matched, every edge covered"), ("weak", "WEAK: matched, some edges unreached"),
+           ("fail", "FAIL: a mismatch (see the row's note)"), ("inputs", "Untestable: random inputs invalid"),
+           ("harness", "Untestable: harness limitation"), ("funclet", "Funclet / cold tail (tested with parent)"),
+           ("not_run", "Not run"))
+try:
+    ev = json.load(open(W("docs", "equiv_verdicts.json")))
+except (OSError, ValueError):
+    ev = None
+if ev:
+    s = ev["summary"]
+    tot, tsz = sum(s[c] for c, _ in EV_CATS), sum(s[c + "_sz"] for c, _ in EV_CATS)
+    print()
+    print("Equivalence evidence for the %d equivalent-only module rows (sweep of %s, commit %s):" % (tot, ev["when"][:16].replace("T", " "), ev["commit"]))
+    print(table(["Verdict", "Rows", "Share", "Code size", "Share (size)"],
+                [[lab, s[c], pc(s[c], tot), "%.1f KB" % (s[c + "_sz"] / 1024), pc(s[c + "_sz"], tsz)] for c, lab in EV_CATS if s[c]]))
+
 rows = []
 for bf in sorted(glob.glob(W("work", "batches", "*.json")), key=os.path.getmtime):
     sl = json.load(open(bf))
@@ -111,7 +128,34 @@ def plot_history(path):
     SURFACE, INK, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e6e5e0"
     top = max([p[k] for _, p in pts for k in ("comp", "comp_sz") if p.get(k) is not None] + [0])
     ymax = 100 if top > 40 else max(5, round(top * 1.4 + 0.5))
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), dpi=150, sharey=True, sharex=True)
+    try:
+        evh = sorted(json.load(open(W("docs", "equiv_history.json"))).values(), key=lambda p: p["when"])
+    except (OSError, ValueError):
+        evh = []
+
+    def style(ax, title, times):
+        ax.set_facecolor(SURFACE)
+        ax.set_title(title, loc="left", fontsize=11, color=INK)
+        ax.yaxis.set_major_formatter(PercentFormatter(decimals=0))
+        ax.grid(axis="y", color=GRID, lw=1)
+        ax.set_axisbelow(True)
+        for s in ("top", "right", "left"):
+            ax.spines[s].set_visible(False)
+        ax.spines["bottom"].set_color(GRID)
+        ax.tick_params(colors=MUTED, labelsize=9, length=0)
+        # Calendar dates only, never hours: one label per local calendar day, under the middle of that day's points
+        # (every Nth day once the history passes 8 days). Day locators would put ticks at UTC midnights, and a day
+        # whose midnight lies outside the plotted range would get no label at all.
+        byday = {}
+        for t in times:
+            byday.setdefault(t.astimezone(now.tzinfo).date(), []).append(t)
+        days = sorted(byday)[::max(1, -(-len(byday) // 8))]
+        ax.set_xticks([min(byday[d]) + (max(byday[d]) - min(byday[d])) / 2 for d in days])
+        ax.set_xticklabels([d.strftime("%b %-d") for d in days])
+        ax.margins(x=0.08)
+
+    fig, grid = plt.subplots(2 if evh else 1, 2, figsize=(12, 9.4 if evh else 4.6), dpi=150, squeeze=False)
+    axes = grid[0]
     fig.patch.set_facecolor(SURFACE)
     for ax, (title, ke, kc, km) in zip(axes, (("Share of functions", "exact", "comp", "mig"),
                                               ("Share of code size", "exact_sz", "comp_sz", "mig_sz"))):
@@ -127,33 +171,45 @@ def plot_history(path):
             ax.plot(xs, ys, color=color, lw=2, marker="o", ms=4, label=label, solid_capstyle="round")
             ax.annotate("%.1f%%" % ys[-1], (xs[-1], ys[-1]), xytext=(6, 0), textcoords="offset points",
                         va="center", fontsize=9, color=INK)
-        ax.set_title(title, loc="left", fontsize=11, color=INK)
         ax.set_ylim(0, ymax)
-        ax.yaxis.set_major_formatter(PercentFormatter(decimals=0))
-        ax.grid(axis="y", color=GRID, lw=1)
-        ax.set_axisbelow(True)
-        for s in ("top", "right", "left"):
-            ax.spines[s].set_visible(False)
-        ax.spines["bottom"].set_color(GRID)
-        ax.tick_params(colors=MUTED, labelsize=9, length=0)
-        # Calendar dates only, never hours: one label per local calendar day, under the middle of that day's points
-        # (every Nth day once the history passes 8 days). Day locators would put ticks at UTC midnights, and a day
-        # whose midnight lies outside the plotted range would get no label at all.
-        byday = {}
-        for t, _ in pts:
-            byday.setdefault(t.astimezone(now.tzinfo).date(), []).append(t)
-        days = sorted(byday)[::max(1, -(-len(byday) // 8))]
-        ax.set_xticks([min(byday[d]) + (max(byday[d]) - min(byday[d])) / 2 for d in days])
-        ax.set_xticklabels([d.strftime("%b %-d") for d in days])
-        ax.margins(x=0.08)
+        style(ax, title, [t for t, _ in pts])
+    axes[1].tick_params(labelleft=False)
     axes[0].legend(loc="upper left", frameon=False, fontsize=9, labelcolor=INK)
+    if evh:
+        # Equivalence evidence of the equivalent-only rows, stacked bottom-up from strongest to none. Verdicts are
+        # states, so they wear the reserved status colors (good / warning / critical) and grays for "no evidence".
+        EVC = {"pass": "#0ca30c", "weak": "#fab219", "fail": "#d03b3b", "inputs": "#898781", "harness": "#b4b2ab",
+               "funclet": "#d9d7d0", "not_run": "#efeee9"}
+        xs = [datetime.datetime.fromisoformat(p["when"]) for p in evh]
+        for ax, suffix, title in ((grid[1][0], "", "Equivalent-only rows by test verdict (share of rows)"),
+                                  (grid[1][1], "_sz", "... by code size")):
+            keys = [c for c, _ in EV_CATS if any(p.get(c + "_sz") for p in evh) or c == "funclet" and any(p.get(c) for p in evh)]
+            tot = [sum(p.get(c + suffix, 0) for c, _ in EV_CATS) or 1 for p in evh]
+            ys = [[100.0 * p.get(c + suffix, 0) / t for p, t in zip(evh, tot)] for c in keys]
+            ax.stackplot(xs, ys, colors=[EVC[c] for c in keys], edgecolor=SURFACE, linewidth=1.5,
+                         labels=[dict(EV_CATS)[c] for c in keys])
+            base = 0.0
+            for c, y in zip(keys, ys):          # direct labels at the latest point for bands >= 4 %
+                if y[-1] >= 4:
+                    ax.annotate("%.0f%%" % y[-1], (xs[-1], base + y[-1] / 2), xytext=(6, 0), textcoords="offset points",
+                                va="center", fontsize=9, color=INK)
+                base += y[-1]
+            ax.set_ylim(0, 100)
+            style(ax, title, xs)
+        grid[1][1].tick_params(labelleft=False)
+        h, l = grid[1][0].get_legend_handles_labels()
+        fig.legend(h, l, loc="lower center", ncol=3, frameon=False, fontsize=8.5, labelcolor=INK,
+                   bbox_to_anchor=(0.5, 0.075))
     fig.suptitle("Mount & Blade 1.011 decompilation progress (%d game functions, %.2f MB; static CRT excluded)" % (G, B / 1e6),
                  x=0.01, ha="left", fontsize=12, color=INK)
     fig.text(0.01, 0.01, "One point per committed docs/STATUS.md and one per --plot run. "
              "Equivalent = complete compilable source, not yet byte-identical.\nMigrated = moved from match/slices "
              "into one .cpp per original translation unit (0%% before the first migration).%s" %
-             ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax), fontsize=8, color=MUTED)
-    fig.tight_layout(rect=(0, 0.09, 1, 0.95))
+             ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax) +
+             ("\nVerdicts: one point per full equivalence sweep (tools/difftest/verdicts.py); a sweep tests the original and "
+              "our function\non the same random inputs under emulation. The first point also counted pre-migration slice rows."
+              if evh else ""), fontsize=8, color=MUTED)
+    fig.tight_layout(rect=(0, 0.15 if evh else 0.09, 1, 0.95))
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d snapshots)" % (os.path.relpath(path, ROOT), len(pts)))
 
