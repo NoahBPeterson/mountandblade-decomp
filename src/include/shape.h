@@ -107,6 +107,7 @@ struct face : shape_base {
     int count;                              // +0xb0  vertex count (0x4333c0)
     face() : shape_base(inline_init()), count(0) {}         // 0x408980
     face(const face& o);                                    // 0x40ae70
+    void intersect(rgl::vector4* out, const rgl::vector4* a, const rgl::vector4* b);   // 0x51a2d0 (ret 0xc; inventory_panel/map_update.cpp 0x5191e0 calls it after a shape_type() == 2 test: the point where the segment a..b meets the face)
     bool contains_xy(const float* p) const;                 // 0x4333c0 (src/rgl/xmlcfg/game_util.cpp)
     float plane_z(const float* p) const;                    // 0x433440 (height of the plane at p; same file)
     virtual int shape_type();                               // 1  0x48b590 (another object)

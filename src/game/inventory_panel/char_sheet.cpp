@@ -25,19 +25,7 @@
 extern "C" int _fltused = 0;
 
 // ---- engine string (16 bytes) ---------------------------------------------------------------------------
-struct tstring {
-    int pos;                                    // +0
-    char* buf;                                  // +4
-    int cap;                                    // +8
-    int len;                                    // +0xc
-    tstring();                                  // 0x42bbd0
-    tstring(const char* s);                     // 0x42bbe0
-    ~tstring();                                 // 0x42bc40
-    tstring& operator=(const tstring& o);       // 0x42bc50
-    char equals(const tstring& o) const;        // 0x42bdd0 (ret 4)
-    char equals(const char* s) const;           // 0x42bd10
-    const char* c_str() const { return buf ? buf : (const char*)&buf; }
-};
+#include "../tstring.h"
 
 struct vector2 {
     float x, y;
@@ -97,13 +85,7 @@ struct Widget {
 };
 
 // ---- engine globals -----------------------------------------------------------------------------------
-struct GameData {
-    char pad0[0x8c];
-    int player;                                 // +0x8c
-    char pad90[0x13a00 - 0x90];
-    char* chars;                                // +0x13a00 (records of 0x508 bytes, name tstring at +0x20)
-};
-extern GameData* g_game;                        // 0x5e2930
+#include "../../include/game_data.h"
 
 struct Mesh { Mesh* clone(); };                 // 0x41c6d0
 struct ResMgr { Mesh* get_object(const tstring* name); };               // 0x419540 (ret 4)
@@ -116,10 +98,7 @@ struct GuiManager {
 extern GuiManager g_gui;                        // 0x5d7080
 extern char g_ui_dirty;                         // 0x5d8788
 
-struct StrTable {
-    tstring* lookup(const tstring& key);        // 0x43a1e0 (ret 4, never null)
-    tstring* find(const tstring* key);          // 0x4c6010 (null when absent)
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                     // 0x5e2a18
 
 // settings table at 0xa44240: 0x2c-byte records, key tstring at +0, text pointer at +0x20
@@ -220,11 +199,11 @@ struct MainMenuHolder {
     void set(int v);                            // 0x494260
 };
 extern MainMenuHolder g_menu;                   // 0xa73980
-struct DialogMgr {
+struct PopupDialogMgr {                          // the message-box object behind the pointer at 0xa73984 (renamed from DialogMgr: not the conversation manager 0x8ed50c8 of dialog_manager.h)
     void open(tstring* msg, int type, const char* a, const char* b,
               const char* c, const char* d, const char* e, const char* f);   // 0x509410
 };
-extern DialogMgr* g_dialog;                     // 0xa73984 (pointer variable)
+extern PopupDialogMgr* g_dialog;                     // 0xa73984 (pointer variable)
 
 void sheet_509730(CharSheet* s);                // 0x509730
 void sheet_4ef7d0(CharSheet* s);                // 0x4ef7d0
@@ -613,7 +592,7 @@ void CharSheet::init()
     }
 
     {
-        char* rec = g_game->chars + (unsigned)player * 0x508;
+        char* rec = (char*)g_game->chars + (unsigned)player * 0x508;
         tstring* nm = g_strtable.find((tstring*)(rec + 0x20));
         if (nm == 0)
             nm = (tstring*)rec;

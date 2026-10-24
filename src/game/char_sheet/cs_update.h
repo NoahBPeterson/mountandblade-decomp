@@ -55,21 +55,7 @@ struct UiVt {
 typedef UiVt UiWidget;                              // widget pointers point at the polymorphic object itself
 
 // ---- game records ------------------------------------------------------------------------------------
-struct TroopRec {
-    tstring name;                                   // +0x0 (record name; assigned from the portrait)
-    char pad10[0xa4 - 0x10];
-    int skill_points;                               // +0xa4
-    int attr_points;                                // +0xa8 (attribute points)
-    int prof_points;                                // +0xac (weapon proficiency points)
-    char padb0[0x508 - 0xb0];                       // record is 0x508 bytes
-
-    int skill_rank(int idx);                        // 0x4351a0 (packed 4-bit rank)
-    void set_skill(int idx, int val);               // 0x48bf90
-    void bump_prof(int idx, float amount);          // 0x437770
-    void bump_attr(int idx, int amount);            // 0x48bef0
-    void auto_equip(int a, int b, int c, int d);    // 0x4687e0 (this = troops + index*0x508)
-    int steps_to_point(int idx);                    // 0x4ef6d0 (cost in proficiency points of the next point)
-};
+#include "../../include/troop.h"
 
 struct Game {
     char pad8c[0x8c];
@@ -87,7 +73,7 @@ struct Game {
 extern Game* g_game;                                // 0x5e2930
 
 // skill table at 0x8ee3100, stride 0x44; the max rank of a skill is at +0x34
-struct SkillCap { char pad[0x34]; int cap; char pad2[0x44 - 0x38]; };
+#include "../skill_cap.h"
 extern SkillCap g_skill_tbl[];                      // 0x8ee3100
 
 // the character portrait: its face-page visibility check and the name buffer at +0x128
@@ -163,7 +149,7 @@ struct CharSheet {
 struct SkillRows { UiWidget* w[5]; };
 
 // ---- world / UI services -----------------------------------------------------------------------------
-struct MsgLog { void flush(); };                    // 0x4f1390
+#include "../../include/msg_log.h"
 extern MsgLog g_msglog;                             // 0x5d7080
 struct MainMenu { void choose(int option); };       // 0xa73980 (0x495700)
 extern MainMenu g_main_menu;                        // 0xa73980

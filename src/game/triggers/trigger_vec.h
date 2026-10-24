@@ -285,7 +285,7 @@ struct TriggerEntryVec {
     void dtor();                                // 0x4c2200
 };
 int __cdecl entry_vec_resize(stream_base* s, TriggerEntryVec* self);   // 0x4c2250 (cdecl: the stream is the first stack argument, the vector the second)
-struct SpawnRec { char d[0x4c]; void load_extras(stream_base& s); };   // 0x4bdd50 (config.cpp declares it on psys_record)
+#include "../mode_rec.h"
 struct MissionTemplate {    // module-file mission template (0x4c2300)
     tstring name;           // +0x00
     tstring f10;            // +0x10

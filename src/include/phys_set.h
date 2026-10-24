@@ -19,12 +19,18 @@ struct PhysRec {                                  // 0x38 bytes
     const NewtonCollision* collision;             // +0x2c (0x441610, 0x4417d0, 0x43a900)
     const NewtonBody* body;                       // +0x30
     int material;                                 // +0x34
+    // the temporary of vector<PhysRec>::resize(0, PhysRec()) in PhysSet::reset 0x47dc50 (game/mesh_slot/mesh_scene.cpp) zeroes f4, f8, f2c, f30
+    // and the six vector lanes in place, in this order
+    PhysRec() { ragdoll = 0; collision = 0; body = 0; world = 0; }
 };
 
 struct PhysSet {
     std::vector<PhysRec> recs;                    // +0 (first at +4)
-    char pad10[0x3c - 0x10];
-    int nworlds;                                  // +0x3c (0x441360)
+    int f10;                                      // +0x10 (0x47dc50 sets it to -1)
+    int f14, f18;                                 // +0x14, +0x18 (cleared by 0x47dc50)
+    char pad1c[0x3c - 0x1c];
+    int nworlds;                                  // +0x3c (0x441360; cleared by 0x47dc50)
+    void reset();                                 // 0x47dc50 (game/mesh_slot/mesh_scene.cpp: destroys every world, resets the handle and the vector)
     void destroy_world(int idx);                  // 0x441360
     const NewtonRagDollBone* add_bone(int idx, const NewtonRagDollBone* parent, const float* mass, rgl::matrix m0,
                                       const float* radius, const float* height, rgl::matrix m1, const float* cone_dir,

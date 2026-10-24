@@ -138,7 +138,7 @@ struct MapLoader {
 // ---- 0x4e85d0 / 0x4e8720: the world-map screen's terrain build and per-frame mesh refresh -----------------------------------------------
 // A partial view of the MapScreen class of src/game/char_sheet/save_game.h (0x4e87d0 buttons, which that module owns; its header
 // cannot be included here: it pulls match/include/rgl.h). Only the members these two functions touch are named.
-struct TerrainDesc { void init(); };            // 0x464400
+#include "../terrain_desc.h"
 struct MapScreen {
     void* view;                                 // +0x00
     char pad04[0x60 - 0x04];

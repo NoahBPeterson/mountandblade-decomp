@@ -14,10 +14,7 @@
 #include "../tstring.h"
 
 // translation table object at 0x5e2a18
-struct StrTable {
-    tstring* lookup(const tstring& key);            // 0x43a1e0 (never null)
-    tstring* find(const tstring* key);              // 0x4c6010 (null when absent)
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                         // 0x5e2a18
 
 // ---- character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) --------
@@ -40,13 +37,7 @@ struct CharRec {
     int xp;                                         // +0xb0 (experience)
 };
 
-struct GameData {
-    char pad0[0x90];
-    int player;                                     // +0x90
-    char pad94[0x13a00 - 0x94];
-    CharRec* chars;                                 // +0x13a00
-};
-extern GameData* g_game;                            // 0x5e2930
+#include "../../include/game_data.h"
 
 // settings table at 0xa44240: find() returns an entry index or -1; entries are 0x2c bytes from 0xa4425c
 // with the string pointer at +4 (a null pointer there means the field itself holds the text).

@@ -196,16 +196,9 @@ struct vector2 { float x, y; vector2() {} vector2(float a, float b) { x = a; y =
 Widget* make_hint(const tstring& text, int a, Overlay* o, vector2 p, vector2 s);   // 0x4dada0
 void __fastcall ctor_4ed630(MapWidget* w);       // 0x4ed630
 
-// the party manager at g_game+0xf8
-struct PartyMgr {
-    int first_id();                             // 0x460d20 (first live party handle)
-    void next(unsigned* id);                    // 0x460ca0 (advance *id)
-    int index_of(int id);                       // 0x48ad00 (handle -> dense index)
-    char* at(int idx) {                         // block table at +0x138d0, 0x5ac8-byte records
-        void** page = *(void***)((char*)this + 0x138d0);
-        return (char*)page[idx >> 4] + (idx & 0xf) * 0x5ac8;
-    }
-};
+// the party manager at g_game+0xf8 (include/party.h)
+#include "../../include/party.h"
+
 struct PartyRec {                               // 0x5ac8-byte party record
     char pad0[0xa0];
     long long flags;                            // +0xa0

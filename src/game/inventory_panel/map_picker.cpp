@@ -14,18 +14,11 @@ using rgl::vector4;
 using rgl::matrix;
 
 // ---- engine types ---------------------------------------------------------------------------------------
-struct tstring {                        // 16 bytes (see work: s0049b630/tstring.h)
-    int pos; char* buf; int cap; int len;
-    tstring();                          // 0x42bbd0
-    tstring(const char* s);             // 0x42bbe0
-    ~tstring();                         // 0x42bc40
-};
+#include "../tstring.h"
 
 void* operator new(unsigned size);      // 0x53545e
 
-struct StrTable {                       // 0x5e2a18
-    const tstring* find(const tstring* key);        // 0x4c6010
-};
+#include "../str_table.h"
 extern StrTable g_strtable;             // 0x5e2a18
 
 struct ResMgr {                         // 0x5d6fa0
@@ -33,28 +26,14 @@ struct ResMgr {                         // 0x5d6fa0
 };
 extern ResMgr g_resmgr;                 // 0x5d6fa0
 
-struct mesh;
-struct Font {                           // font object at 0x5e2934
-    void layout_text(float* out, const tstring* text, const vector4* pos_in, const float* scale_in,
-                     mesh* m, int arg, const float* xmin, const float* xmax, unsigned flags);  // 0x4520d0 ret 0x24
-};
+#include "../font.h"
 extern Font* g_font;                    // 0x5e2934
 
 // ---- the 0x260-byte mesh instance (vtable 0x54a6f4, ctor 0x412a90) ---------------------------------------
-struct point20 { vector4 a, b; };       // 0x20 bytes, vector at mesh+0x70
-struct mesh {
-    char pad0[0x28];                    // vptr at 0, then base fields
-    void* res;                          // +0x2c (material pointer)
-    char pad30[0x70 - 0x30];
-    std::vector<point20> v70;           // +0x70 (rest/current points), _Myfirst at +0x74
-    char pad80[0x138 - 0x80];
-    char dirty;                         // +0x138 (slots[0] dirty flag)
-    char pad139[0x260 - 0x139];
-    mesh();                             // 0x412a90
-    virtual ~mesh();
-    void ensure_local();                // 0x412ee0
-    void calc_bounds(vector4* mn, vector4* mx);     // 0x438d80 ret 8
-};
+#include "../../include/mesh_prims.h"
+using rgl::point20;
+#include "../rgl_mesh.h"
+using rgl::mesh;
 
 // ---- globals --------------------------------------------------------------------------------------------
 extern int   g_5d8784;          // 0x5d8784 (zeroed with the current label object)
@@ -82,29 +61,12 @@ struct gui_manager {
 extern gui_manager g_gui;           // 0x5d7080
 
 // ---- game data ------------------------------------------------------------------------------------------
-struct PartyPool {                  // lives at g_game + 0xf8
-    int index_of(int id);                               // 0x48ad00 ret 4
-};
-struct GameData {
-    char pad0[0x78];
-    int f78;                                            // +0x78 (main party id)
-    char pad7c[0xf8 - 0x7c];
-    char pool[0x138d0];                                 // +0xf8 (PartyPool)
-    char** pages;                                       // +0x139c8 (party page table)
-    char pad_13a48[0x13a48 - 0x139cc];
-    char* ui;                                           // +0x13a48 (per-party-kind UI data, 0x300 per entry)
-    char pad_13bc4[0x13bc4 - 0x13a4c];
-    int n_labels;                                       // +0x13bc4
-    int cur_label;                                      // +0x13bc8
-    tstring labels[1];                                  // +0x13bcc (0x10 each)
 
-    float relation(int a, int b);                       // 0x48ffa0 (ECX = g_game, reads the globals itself)
-    unsigned color_of(float v, int troop);              // 0x4b1930 ret 8
-};
-extern GameData* g_game;            // 0x5e2930
+#include "../../include/game_data.h"
 
 // ---- 0x51a2d0 -------------------------------------------------------------------------------------------
-// a plane record: point at +0x20, normal at +0xa0
+// a plane record: point at +0x20, normal at +0xa0 (it is the face shape of include/shape.h, whose intersect() is the same function;
+// kept as this local view because the harness cannot build a polymorphic `this` for the verified PASS row of 0x51a2d0)
 struct PlaneTrace {
     char pad0[0x20];
     vector4 pt;                         // +0x20
@@ -216,9 +178,9 @@ void MapScreen::set_label(int id)
     if (id < 0)
         return;
 
-    PartyPool* pool = (PartyPool*)((char*)g_game + 0xf8);
+    PartyMgr* pool = &g_game->parties;
     int idx = pool->index_of(id);
-    char* rec = (char*)g_game->pages[idx >> 4] + (idx & 0xf) * 0x5ac8;
+    char* rec = (char*)g_game->parties.pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8;
     vector4 pos = *(vector4*)(rec + 0x30);
 
     unsigned color;
@@ -227,12 +189,12 @@ void MapScreen::set_label(int id)
         color = g_game->color_of(rel, 1);
     } else {
         int idx2 = pool->index_of(id);
-        char* rec2 = (char*)g_game->pages[idx2 >> 4] + (idx2 & 0xf) * 0x5ac8;
-        color = *(unsigned*)(g_game->ui + *(int*)(rec2 + 0x70) * 0x300 + 0x28);
+        char* rec2 = (char*)g_game->parties.pages._Myfirst[idx2 >> 4] + (idx2 & 0xf) * 0x5ac8;
+        color = *(unsigned*)((char*)g_game->factions + *(int*)(rec2 + 0x70) * 0x300 + 0x28);
     }
 
     int idx3 = pool->index_of(id);
-    char* rec3 = (char*)g_game->pages[idx3 >> 4] + (idx3 & 0xf) * 0x5ac8;
+    char* rec3 = (char*)g_game->parties.pages._Myfirst[idx3 >> 4] + (idx3 & 0xf) * 0x5ac8;
     const tstring* name;
     if (g_ui_mode)
         name = (const tstring*)(rec3 + 0x20);
@@ -306,7 +268,7 @@ void gui_manager::add_label(const tstring* text, float h, int color)
     }
     {
         tstring name("ui_font");
-        o56c->res = g_resmgr.get_material(name);
+        o56c->res = (rgl::res_t*)g_resmgr.get_material(name);
     }
     {
         float out[2];
@@ -359,9 +321,9 @@ void gui_manager::set_quad(const float* origin, const float* size)
     v.x = origin[0];
     v.y = sy;
     m570.v70[3].a = m570.v70[3].b = v;
-    m570.dirty = 1;
+    m570.slots[0].f28 = 1;
     {
         tstring name("matte");
-        m570.res = g_resmgr.get_material(name);
+        m570.res = (rgl::res_t*)g_resmgr.get_material(name);
     }
 }

@@ -14,25 +14,11 @@
 extern "C" int _fltused = 0;
 
 // ---- engine string (16 bytes) ----------------------------------------------------------------------------
-struct tstring {
-    int pos;                                                // +0x00
-    char* buf;                                              // +0x04
-    int cap;                                                // +0x08
-    int len;                                                // +0x0c
-    tstring() MB_NOTHROW;                                   // 0x42bbd0
-    tstring(const char* s) MB_NOTHROW;                      // 0x42bbe0 (ret 4)
-    tstring(const tstring& o) MB_NOTHROW;                   // 0x42c110 (ret 4)
-    ~tstring() MB_NOTHROW;                                  // 0x42bc40
-};
+#include "../tstring.h"
 
 // ---- engine mesh -----------------------------------------------------------------------------------------
-namespace rgl { struct mesh; }
+#include "../rgl_mesh.h"
 using rgl::mesh;
-namespace rgl {
-struct mesh {
-    mesh* clone();                                          // 0x41c6d0
-};
-}
 
 // ---- widgets ---------------------------------------------------------------------------------------------
 // 0x178-byte widget base (ctor 0x48ae20 installs vptr 0x591c80).  The slots used here are add_image (+0x7c),

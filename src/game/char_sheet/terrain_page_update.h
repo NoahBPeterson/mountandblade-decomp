@@ -24,14 +24,7 @@ struct vector2;                                             // forward: keeps <m
 // the block below so that the emitted offsets match the binary (see the comments).
 
 // ---- tstring / rgl::string (layouts verified in s004d6b80 / s004f25a0) --------------------------------
-struct tstring : rgl::string {
-    tstring(const char* s) : rgl::string(s) {}                              // 0x42bbe0
-    tstring();                                                              // 0x42bbd0
-    tstring(const tstring& o);                                              // 0x42c110
-    tstring& operator=(const tstring& o);                                   // 0x42bcb0
-    ~tstring();                                                             // 0x42bc40
-    const char* c_str() const { return p ? p : (const char*)&p; }
-};
+#include "../tstring.h"
 
 extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0x536f7c
 

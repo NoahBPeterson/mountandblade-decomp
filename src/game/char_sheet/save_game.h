@@ -14,9 +14,7 @@
 #include "../str_table.h"
 extern StrTable g_strtable;                             // 0x5e2a18
 
-struct MsgLog {
-    void add(tstring msg, int color);                   // 0x452c00 (ret 0x14)
-};
+#include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 
 struct log_stream {
@@ -194,7 +192,7 @@ struct MapScreen {
 };
 
 // ---- callees --------------------------------------------------------------------------------------------
-struct TerrainDesc { void init(); };                    // 0x464400 (ret 0)
+#include "../terrain_desc.h"
 int  save_game(int arg, tstring* name);                 // 0x4e8980
 struct ButtonState { char test(int v); };               // 0x487900 (ret 4)
 extern ButtonState g_a170c8;                            // 0xa170c8

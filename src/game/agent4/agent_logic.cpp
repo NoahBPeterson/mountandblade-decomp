@@ -23,7 +23,7 @@
 #include <algorithm>
 #include "rgl.h"
 #include "./agent_logic.h"
-#include "./agent_mesh.h"
+#include "../rgl_mesh.h"
 #include "../agent3/agent_types.h"
 #include "../agent3/agent_fx_sound.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -148,7 +148,6 @@ bool NavMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int*
     out_pos[*out_count - 1] = faces[out_faces[*out_count - 1]].c;
     return true;
 }
-
 
 
 // ---- NavMesh::reachable: can the goal face be reached within `max_steps` hops? -----------------------------------------------

@@ -81,7 +81,7 @@ void ConvScreen::open(int dialog, int* out)
     {
         tstring key("ui_press_left_mouse_button_to_continue");
         tstring out2;
-        input->set_text(g_strtable.find(&key), &out2);
+        input->set_text(g_strtable.lookup(&key), &out2);
     }
     talk->add_child(input);
 
@@ -214,14 +214,14 @@ void ConvScreen::open(int dialog, int* out)
 
     if (target >= 0) {
         int i = 0;
-        while (i < g_mission->agents->count && g_mission->agents->get(i)->agent_id == 0)
+        while (i < g_mission->agents.count && g_mission->agents.get(i)->troop == 0)
             i++;
-        while (i < g_mission->agents->count) {
-            Agent* a = g_mission->agents->get(i);
-            if (a->agent_id == target)
-                agent_reveal(a);
+        while (i < g_mission->agents.count) {
+            Agent* a = g_mission->agents.get(i);
+            if (a->troop == target)
+                g_mission->init_agent(a);
             i++;
-            while (i < g_mission->agents->count && g_mission->agents->get(i)->agent_id == 0)
+            while (i < g_mission->agents.count && g_mission->agents.get(i)->troop == 0)
                 i++;
         }
         target = -1;

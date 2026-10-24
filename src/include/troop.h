@@ -26,20 +26,43 @@ struct Troop {
     unsigned f50;                           // +0x50 linked / leader troop index (chain end 0)   0x48a080
     char pad54[4];
     union {
-        int f58[2];                         // +0x58 skill slots   0x462c00
-        int lvl58;                          // +0x58
+        struct {
+            union {
+                int f58[2];                 // +0x58 skill slots   0x462c00
+                int lvl58;                  // +0x58
+            };
+            char pad60[4];
+            unsigned f64;                   // +0x64 (low byte = alpha / colour id)   0x489370
+        };
+        int attrs[4];                       // +0x58 strength / agility / intelligence / charisma (char_sheet 0x4ef420 copies the sheet's four attribute fields to +0x58..+0x64; cs_detail 0x4ef9f0 indexes them)
     };
-    char pad60[4];
-    unsigned f64;                           // +0x64 (low byte = alpha / colour id)   0x489370
-    unsigned nib[6];                        // +0x68 packed 4-bit skill levels, 8 per word (0x4351a0, 0x437b20); nib[3] bits 12..15 = a skill tier (0x4375b0)
+    union {
+        unsigned nib[6];                    // +0x68 packed 4-bit skill levels, 8 per word (0x4351a0, 0x437b20); nib[3] bits 12..15 = a skill tier (0x4375b0)
+        unsigned char nib_b[24];            // +0x68 the same bytes (inventory_panel/map_info.cpp 0x51abd0 reads the byte at +0x7a)
+    };
     union {
         float stat[12];                     // +0x80 attribute accumulators (clamped to 0..1000 by add_stat)   0x462c00, 0x4892d0
         float f80[8];                       // +0x80 per-slot / per-class values (0x435150 truncates one, 0x437770 adjusts one, 0x4385e0, 0x43bdb0)
+        int istat[12];                      // +0x80 the same words as ints (char_sheet 0x4ef420 copies the sheet's weapon proficiencies to +0x80..+0x98)
         struct {
             char pad80[0x1c];
             int exp;                        // +0x9c   0x4428c0
-            float hp;                       // +0xa0 heroes
-            int fa4, fa8, fac;              // +0xa4 (fac += 10 per level)   0x4428c0
+            union {
+                float hp;                   // +0xa0 heroes
+                int fa0;                    // +0xa0 as an int (char_sheet 0x4ef420 stores a sheet word here; its slice called it level)
+            };
+            union {
+                int fa4;                    // +0xa4 (0x4428c0 adds one per level)
+                int skill_points;           // +0xa4 unspent skill points (0x4ef420, 0x4eeb10)
+            };
+            union {
+                int fa8;                    // +0xa8 (0x4428c0)
+                int attr_points;            // +0xa8 unspent attribute points (0x4eeb10)
+            };
+            union {
+                int fac;                    // +0xac (fac += 10 per level)   0x4428c0
+                int prof_points;            // +0xac unspent weapon proficiency points (0x4eeb10)
+            };
         };
     };
     union {
@@ -66,6 +89,7 @@ struct Troop {
     int scaled_b0();                        // 0x435170
     int nibble(int i);                      // 0x4351a0 (packed 4-bit field i of the skill words)
     float falloff(float dist, float k);     // 0x4375b0
+    int steps_to_point(int idx);            // 0x4ef6d0 (char_sheet/cs_troop.cpp; this = the troop record: falloff steps until stat[idx] rounds up one point, at most 1000)
     void adjust(int i, float k);            // 0x437770
     int inv_count();                        // 0x462b60 number of inventory slots: 90, or 30..96 by skill nibble 12 for heroes
     int slot_value(int item);               // 0x462c00

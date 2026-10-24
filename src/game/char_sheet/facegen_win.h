@@ -19,10 +19,8 @@ using std::vector;
 #include "../tstring.h"
 
 // cloned rgl mesh; only the members this slice reaches
-struct mesh {
-    mesh* clone();                                          // 0x41c6d0
-    void scale(float f);                                    // 0x44f0c0
-};
+#include "../rgl_mesh.h"
+using rgl::mesh;
 
 // resource manager object at 0x5d6fa0
 struct resmgr {

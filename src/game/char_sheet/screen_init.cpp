@@ -184,20 +184,27 @@ void Screen::init_screen()
         g_psys.reset();
     }
 }
+
+// the 0x5ac8-byte record of dense index idx (page table at PartyMgr +0x138d0), as the original indexes it
+static char* party_bytes(PartyMgr* mgr, int idx)
+{
+    return (char*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8;
+}
+
 // @ 0x4ecce0
 void Screen::camera_mark_entities()
 {
     g_game->f13acc = (f2b8 * g_590bb8 + g_549cdc) * g_54b3b4;
     PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
-    for (unsigned id = (unsigned)mgr->first_id(); id < (unsigned)g_game->parties_end; mgr->next(&id)) {
+    for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties_end; mgr->next_party_id(&id)) {
         int idx = mgr->index_of(id);
-        if (*(int*)(mgr->at(idx) + 0x59c0)) {
+        if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
             idx = mgr->index_of(id);
-            if (*(long long*)(mgr->at(idx) + 0xa0) & 0x400) {
+            if (*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x400) {
                 idx = mgr->index_of(id);
-                if (!(*(long long*)(mgr->at(idx) + 0xa0) & 0x80000)) {
+                if (!(*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x80000)) {
                     idx = mgr->index_of(id);
-                    mgr->at(idx)[0x8b5] = 1;
+                    party_bytes(mgr, idx)[0x8b5] = 1;
                 }
             }
         }

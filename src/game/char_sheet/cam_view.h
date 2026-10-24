@@ -9,10 +9,9 @@
 
 using rgl::vector4;
 
-struct mat4 {
-    vector4 s, f, u, o;
-};
-struct mat3 { vector4 s, f, u; };
+#include "../../include/mat4.h"
+using rgl::mat4;
+using rgl::mat3;
 
 mat4* identity_pos(mat4* out);                          // 0x40cd00 (cdecl; returns out)
 struct mat4_self {

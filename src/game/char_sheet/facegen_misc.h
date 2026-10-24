@@ -13,10 +13,8 @@
 using rgl::vector4;
 
 // ---- engine matrix / frustum (s004f49d0, s004291c0) -----------------------------------------------------
-struct mat4 {
-    vector4 s, f, u, o;
-    void rotate_fu(const float* angle);                 // 0x40e570 (thiscall, ret 4)
-};
+#include "../../include/mat4.h"
+using rgl::mat4;
 mat4* identity_pos(mat4* out);                          // 0x40cd00 (cdecl)
 
 struct eng_frustum {
@@ -34,10 +32,7 @@ struct eng_frustum {
 
 // ---- tstring --------------------------------------------------------------------------------------------
 #include "../tstring.h"
-struct MsgLog {
-    void add(tstring msg, int color);                   // 0x452c00
-    void func_4e6050();                                 // 0x4e6050
-};
+#include "../../include/msg_log.h"
 
 // ---- save/load menu interfaces --------------------------------------------------------------------------
 struct CD3DFont { void DrawText(float, float, unsigned long, const char*, unsigned long); }; // 0x404f00

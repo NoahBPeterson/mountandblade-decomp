@@ -116,7 +116,7 @@ Screen::Screen()
 // overlay (+0x8c), and finally fans the frame out to the screen vector, 0x4e6510 and 0x4c5330.
 void Screen::process(int param)
 {
-    InputRec buf[16];
+    DiObjectData buf[16];
     unsigned count;
     unsigned i;
     int acc0, acc1;

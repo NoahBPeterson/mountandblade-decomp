@@ -95,18 +95,7 @@ struct Rec300 {                                     // stride 0x300 (at +0x13a48
     __declspec(noinline) void  write300(OutStream* out, int n);          // 0x4e9710 (ret 8)
 };
 
-struct Rec78 {                                      // stride 0x78 (at +0x139e8)
-    char  pad0[0xc];
-    int   f0c;
-    char  pad10[0x50 - 0x10];
-    int   f50;
-    char  pad54[0x60 - 0x54];
-    int   f60;
-    char  pad64[0x70 - 0x64];
-    int   f70;
-    char  pad74[4];
-    __declspec(noinline) void  write(OutStream* out);                    // 0x4e9110 (ret 4)
-};
+#include "../../include/rec78.h"
 
 struct Rec78Tag {                                   // count +0x0, array +0x4
     int   count;
@@ -182,7 +171,7 @@ extern Game* g_game;                                // 0x5e2930
 extern List8 g_list_a70480;                         // 0xa70480
 extern RecB0* g_29f8;                               // 0x5e29f8 (array of 0xb0-byte records)
 extern int   g_n29fc;                               // 0x5e29fc
-struct ItemKind { char pad0[0x30]; List8 l30; char pad40[0x238 - 0x40]; };
+#include "../../include/item_kind.h"
 extern ItemKind* g_items;                           // 0x5e29d0 (array of 0x238-byte item kinds)
 extern int   g_n_items;                             // 0x5e29d4
 

@@ -67,7 +67,7 @@ void CharSheet::update(float dt)
                 released = true;
             if (f_494[i]->clicked_on(0x10000)) {
                 int cost = g_game->troops[f_14].steps_to_point(i);
-                g_game->troops[f_14].bump_prof(i, (float)cost);
+                g_game->troops[f_14].adjust(i, (float)cost);
                 g_game->troops[f_14].prof_points -= cost;
                 f_4d4 = 1;
                 refresh_lists();
@@ -87,7 +87,7 @@ void CharSheet::update(float dt)
         if (f_44c[i]->clicked_on(4) || f_45c[i]->clicked_on(4))
             released = true;
         if (f_45c[i]->clicked_on(0x10000)) {
-            g_game->troops[f_14].bump_attr(i, 1);
+            g_game->troops[f_14].add_attr(i, 1);
             g_game->troops[f_14].attr_points--;
             if (i == 1)
                 g_game->troops[f_14].prof_points += 5;
@@ -200,7 +200,7 @@ void CharSheet::update(float dt)
             }
             if ((g_a17148 != 0 || g_a17348 != 0) && g_a17118 != 0 && g_a17518 == 0 && g_a5a9fbc != 0) {
                 for (int i = 0; i < 7; i++)
-                    g_game->troops->bump_prof(i, 50.0f);
+                    g_game->troops->adjust(i, 50.0f);
                 menu_choose(0xf);
                 return;
             }

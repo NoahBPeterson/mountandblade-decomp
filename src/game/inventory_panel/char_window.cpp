@@ -15,22 +15,7 @@ extern "C" int _fltused = 0;
 
 // ---------------------------------------------------------------------------------------------------------
 // tstring (16 bytes): read cursor / heap buffer / capacity / length.
-struct tstring {
-    int   pos;                                          // +0
-    char* buf;                                          // +4
-    int   cap;                                          // +8
-    int   len;                                          // +0xc
-    tstring() MB_NOTHROW;                               // 0x42bbd0
-    tstring(const char* s) MB_NOTHROW;                  // 0x42bbe0
-    ~tstring() MB_NOTHROW;                              // 0x42bc40
-    void operator=(const tstring& o) MB_NOTHROW;        // 0x42bc50
-    void clear() MB_NOTHROW;                            // 0x42be50
-    void push_back(char c) MB_NOTHROW;                  // 0x42be70
-    void assign(const char* s) MB_NOTHROW;              // 0x42bcb0
-    void append(const tstring& o) MB_NOTHROW;           // 0x42c1e0
-    bool equals(const tstring& o) const;                // 0x42bdd0
-    const char* c_str() const { return buf ? buf : (const char*)&buf; }
-};
+#include "../tstring.h"
 
 // ---------------------------------------------------------------------------------------------------------
 // ini file: a fixed 0x1000-entry table, each entry 0x2c bytes (key, 12 unknown, value).
@@ -69,11 +54,7 @@ struct TroopView {
     int  fa0, fa4, fa8, fac;
 };
 
-struct GameData {
-    char       pad0[0x13a00];
-    char*      troops;                                  // +0x13a00 (stride 0x508)
-};
-extern GameData* g_game;                                // 0x5e2930
+#include "../../include/game_data.h"
 
 #define TROOP_FIELD(i, off) (*(int*)((char*)g_game->troops + (i) * 0x508 + (off)))
 

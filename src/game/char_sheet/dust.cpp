@@ -1,7 +1,7 @@
 #include "./dust.h"
 
 // @ 0x4f3e10
-void Mission::update_particles(const matrix* view)
+void DustTerrain::update_particles(const matrix* view)
 {
     for (int a = 0; a < n_outer; a++) {
         for (int b = 0; b < n_inner; b++) {
@@ -52,7 +52,7 @@ static inline int cell_clamp(int v, int n)
 }
 
 // @ 0x4f4060
-void Mission::emit_cell(int x, int y)
+void DustTerrain::emit_cell(int x, int y)
 {
     emitted[x][y] = 1;
     int n = dust_count;
@@ -111,9 +111,9 @@ void Mission::emit_cell(int x, int y)
             unsigned color = pack_color(&col.x) | 0xff000000;
             mat3 m3;
             identity3(&m3);
-            m3.a.x = p->dir.x;
-            m3.b.y = p->dir.y;
-            m3.c.z = p->dir.z;
+            m3.s.x = p->dir.x;
+            m3.f.y = p->dir.y;
+            m3.u.z = p->dir.z;
             mxo mm;
             mm.r = ((pos*)&p->frame)->rot3(*(const matrix*)&m3);
             mm.o = p->frame.o;
@@ -148,7 +148,8 @@ void Mission::emit_cell(int x, int y)
         for (unsigned i = 0; m->f50.first != 0 && i < m->f50.size(); i++) {
             frame60* fr = (frame60*)m->f50.first + i;
             char* v = m->f70.first + (fr->type_index << 5);
-            fr->xy = vec2(*(float*)v * g_k_0_2, *(float*)(v + 4) * g_k_0_2);
+            vec2 t = { *(float*)v * g_k_0_2, *(float*)(v + 4) * g_k_0_2 };
+            fr->xy = t;
         }
     }
     if (g_use_shaders == 0 || g_x5aa084 != 2) {

@@ -1,7 +1,8 @@
 #ifndef DUST_H
 #define DUST_H
-// Slice s004f3e10: the "dust grid" particle pass of the mission object (same giant object as s0047a0c0:
-// dust list at +0x5c3b8f4, cell scene objects at +0x843bd78, extents +0x845d97c / +0x845d980).
+// Slice s004f3e10: the "dust grid" particle pass of the terrain object (g_terrain, 0xa76630: update_particles 0x4f3e10 is a
+// thiscall on it, see match/slices/s004fa790; the slices called it Mission, which is the 0x5e292c object of mission.h and
+// has nothing at these offsets): dust list at +0x5c3b8f4, cell scene objects at +0x843bd78, extents +0x845d97c / +0x845d980.
 //
 //   0x4f3e10  update_particles(view): for every grid cell (outer a < +0x845d980, inner b < +0x845d97c):
 //             - the cell's 0x34-byte record holds (x, y) (+0/+4) and a reach (+0x10); when the cell has not been
@@ -32,7 +33,8 @@ extern float g_k_1_20;                          // 0x54b4d0
 extern float g_k_reach;                         // 0x598e8c (36.0)
 
 // ---- engine std::vector views (alloc, begin, end, cap): size() is inline, capacity()/resize are out of line ---
-struct mat3 { vector4 a, b, c; };
+#include "../../include/mat4.h"
+using rgl::mat3;
 struct mxo { mat3 r; vector4 o; };            // a matrix as three rows + origin
 struct vec96 {                                  // 0x60-byte elements (s0040ea00 vec96)
     void* alloc;
@@ -79,10 +81,7 @@ struct dmesh {                                  // an rgl::mesh as far as this s
     void append_shaded(dmesh* src, const matrix* m, unsigned color);                          // 0x47aa40 (ret 0xc)
 };
 
-struct vec2 {
-    float x, y;
-    vec2(float a, float b) : x(a), y(b) {}
-};
+#include "../../include/vec.h"
 struct frame60 {                                // 0x60: one frame of a dust mesh
     char pad00[0x48];
     vec2 xy;                                    // +0x48 / +0x4c
@@ -136,8 +135,8 @@ struct cell_rec {                               // 0x34 per cell; x stride 0x9c0
     char pad14[0x20];
 };
 
-// ---- the mission --------------------------------------------------------------------------------------
-struct Mission {
+// ---- the terrain object (0xa76630) --------------------------------------------------------------------------------------
+struct DustTerrain {
     char pad0[0x5c3b8f4];
     int dust_count;                             // +0x5c3b8f4 (the list header: count, then the entries)
     particle dust[1];                           // +0x5c3b8f8 (stride 0xa0; really 0x40000)
@@ -156,9 +155,7 @@ struct Mission {
     void light_particle(void* list, int idx, bool trace);       // 0x471b30 (s00471b30, ret 0xc)
 };
 
-struct pos : matrix {
-    mat3 rot3(const matrix& m) const;                           // 0x40a920 (hidden return, ret 4)
-};
+
 mat3* __cdecl identity3(mat3* out);                             // 0x40cd60
 unsigned __cdecl pack_color(const float* c);                    // 0x40e440
 

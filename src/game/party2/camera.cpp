@@ -331,7 +331,6 @@ namespace c49b630 {
 // (tstring.h inlined below)
 
 
-
 using rgl::vector4;
 using rgl::matrix;
 using rgl::mesh;
@@ -2252,7 +2251,7 @@ void Mission::exec_trigger(int val)
 // GameData members of slice s0049b630 (the slices called the game-data object `Mission`): the value counters, the quest
 // "taken" stamp and the label text layout. Fields not in game_data.h are reached by offset.
 // ======================================================================================
-struct StrTable { tstring* lookup(const tstring& key); };   // 0x43a1e0
+#include "../str_table.h"
 extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLogAdd {
     void add(tstring msg, int color);               // 0x452c00 (thiscall, ret 0x14)

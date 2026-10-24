@@ -18,10 +18,7 @@ extern "C" void __cdecl mb_snprintf(char*, unsigned, const char*, ...);    // 0x
 // ---- a tstring as stored in the record tables (ctor 0x42bbe0) ----------------------------------------
 #include "../tstring.h"
 
-struct StrTable {
-    tstring* find(const tstring* key);              // 0x4c6010 (null when absent)
-    tstring* lookup(const tstring& key);            // 0x43a1e0 (never null; null buffer for a missing key)
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                         // 0x5e2a18
 
 // translated text of a key (lookup, falling back to the empty string stored in place)
@@ -34,10 +31,7 @@ static const char* str_text(const tstring& key)
 // ---- the virtual interface of the widgets seen through their vptr (see s0048b760) ----------------------
 // set_text (+0xa4) returns an 8-byte non-POD pair through a hidden pointer that no caller destroys.
 #include "../wret.h"
-struct vec2 {
-    float x, y;
-    vec2(float a, float b) : x(a), y(b) {}
-};
+#include "../../include/vec.h"
 struct UiWidget {
     virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
     virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
@@ -56,14 +50,7 @@ struct UiWidget {
 };
 
 // ---- game records ------------------------------------------------------------------------------------
-struct TroopRec {
-    char pad0[0x58];
-    int f_58[0x13];                                 // +0x58 (attributes, then proficiencies)
-    int skill_points;                               // +0xa4
-    char padb0[0x508 - 0xa8];
-
-    int skill_rank(int idx);                        // 0x4351a0 (packed 4-bit rank of proficiency idx)
-};
+#include "../../include/troop.h"
 
 struct Game {
     char pad8c[0x8c];

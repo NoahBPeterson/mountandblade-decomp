@@ -208,7 +208,7 @@ struct OuterGame {
 // ---- callees (slice s004e8f10 / others) -----------------------------------------------------------------
 OutStream* write_soa(OutStream* out, char* base);   // 0x4e9620 (cdecl, two stack args, returns out)
 int        id_lookup(void* map, int id);            // 0x48ad00 (ret 4)
-struct IntVec { void push_back(const int& id); };    // 0x440b30: std::vector<int>::push_back (thiscall, ret 4), the free-id list at +0x138bc
+#include "../int_vec.h"
 
 
 static const int kRecSize = sizeof(Rec5ac8);

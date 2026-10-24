@@ -81,7 +81,7 @@ of canonical bytes are accessor inlines (`f294()`, `move_dir()`, `ai_ta()`, `pre
 
 New in `agent4/`: `agent_logic.h` (the troop-class voice table `VoiceTable`, the scene entity / missile / blow / label
 views `SceneEnt`, `EntVec`, `MeshVec`, `Missile` (0xb0 bytes), `Blow` (0x58), `HitInfo`, `AgentFx`, `AgentBodyV`, the Newton
-Game Dynamics 1.x imports, `BoneW`, `res_shape`, globals), `agent_mesh.h` (below).
+Game Dynamics 1.x imports, `BoneW`, `res_shape`, globals), `rgl_mesh.h` (below).
 
 Pure additions to canonical headers (all at offsets proven by a function of this module; the Agent fields cite it in the
 line comment):
@@ -106,7 +106,7 @@ line comment):
 Not merged / deliberate local views (reported):
 
 - `rgl::mesh`: the canonical class (src/rgl/mesh.h) is in the `rgl_math.h` universe; the game code includes
-  `match/include/rgl.h`; the two `vector4` declarations cannot be included together. `agent_mesh.h` declares the same
+  `match/include/rgl.h`; the two `vector4` declarations cannot be included together. `rgl_mesh.h` declares the same
   0x260-byte layout in the game universe (trimmed to the members this object uses; offsets from src/rgl/mesh.h).
 - `Blow` (agent_logic.h) vs the terrain_b `RecZSubB`; `Missile` (agent_logic.h, 0xb0) vs the terrain_a pool record
   view and agent/agent.h `Wielder` (the same record): three universes, one layout each, noted in the headers.

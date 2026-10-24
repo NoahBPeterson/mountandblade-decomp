@@ -199,7 +199,7 @@ struct engvec {
 };
 
 // ---- globals ---------------------------------------------------------------------------------------------
-struct MsgLog { void reset(); };                        // 0x42d1b0
+#include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 extern unsigned char g_msg_tick;                        // 0x5d8788
 struct gui_mgr { void set_window(widget** w); };        // 0x49b120

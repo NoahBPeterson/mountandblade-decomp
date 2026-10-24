@@ -2167,7 +2167,7 @@ void EmitterCtl::add(int e)
     tmp[1] = 0.0f;
     tmp[2] = 0.0f;
     tmp[3] = 0.0f;
-    Emitter* em = g_emit_defs.setup(&e, (int*)&tmp[1], (int*)&tmp[0]);
+    Emitter* em = (Emitter*)g_emit_defs.spawn(&e, (const rgl::vector4*)&tmp[1], (const int*)&tmp[0]);   // pos = the zeroed quad tmp[1..4], owner = tmp[0] (0x479d20)
     if (em != 0) {
         target->add(em);
         list.push_back(e);

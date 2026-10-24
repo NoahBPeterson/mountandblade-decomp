@@ -23,6 +23,9 @@
 using rgl::vector4;
 
 // ---- tstring / rgl::string ---------------------------------------------------------------------------
+// Kept as this derived view (not src/game/tstring.h): the byte-exact rows of this module (set_enabled_text 0x4f28a0,
+// build_hex_text 0x4f29b0) need the inline constructor wrapper `tstring(const char*) : rgl::string(s) {}`; with the
+// canonical out-of-line constructor cl hoists the widget's vptr load above the constructor call (56 / 21 bytes differ).
 struct tstring : rgl::string {
     tstring(const char* s) : rgl::string(s) {}                              // 0x42bbe0
     tstring();                                                              // 0x42bbd0

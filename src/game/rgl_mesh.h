@@ -1,22 +1,22 @@
-// agent_mesh.h: the 0x260-byte mesh object (rgl::mesh, vtable 0x54a6f4, ctor 0x412a90) as the game-side code of
+// rgl_mesh.h (was agent4/agent_mesh.h): the 0x260-byte mesh object (rgl::mesh, vtable 0x54a6f4, ctor 0x412a90) as the game-side code of
 // agent4/agent_update.cpp sees it: the member functions that sit in this object (add_quad 0x44e970, append_skinned
 // 0x44eb00, scale 0x44f0c0, translate 0x44f240, transform 0x44f3c0, compute_normals 0x451c50, append_plain 0x4520b0)
 // need the class in the match/include/rgl.h universe. src/rgl/mesh.h is the same class in the rgl_math.h universe
-// (the two vector4 declarations cannot be included together), so this is a second declaration of the same layout, trimmed
-// to the members this object touches; the shared records (vertex60, frame_t, keyframes, slot, aabb, point20, face20) come
+// (the two vector4 declarations cannot be included together), so this is the declaration of the same layout for every src/game module in
+// the rgl.h universe (agent4, char_sheet, inventory_panel), trimmed to the members those modules touch; the shared records (vertex60, frame_t, keyframes, slot, aabb, point20, face20) come
 // from src/include. Offsets: src/rgl/mesh.h. Names provisional.
-#ifndef AGENT4_MESH_H
-#define AGENT4_MESH_H
+#ifndef GAME_RGL_MESH_H
+#define GAME_RGL_MESH_H
 #include <vector>
 #include "rgl.h"
-#include "../../include/vec.h"
-#include "../../include/mesh_parts.h"
-#include "../../include/mesh_prims.h"
-#include "../../include/mat4.h"                  // rgl::mat4 (the shared frame; rotate_su / rotate_sf are pos2 members, agent/item_kind.h)
+#include "../include/vec.h"
+#include "../include/mesh_parts.h"
+#include "../include/mesh_prims.h"
+#include "../include/mat4.h"                  // rgl::mat4 (the shared frame; rotate_su / rotate_sf are pos2 members, agent/item_kind.h)
 
 namespace rgl {
 
-struct vec2 { float x, y; };                     // rgl::vec2 (the mangled names of add_quad / add_vertex carry it; the shared vertex60 stores the global ::vec2, same layout)
+using ::vec2;                                   // the global vec2 of include/vec.h (psys.manifest binds add_vertex 0x413c50 with ::vec2; the slice's own rgl::vec2 had the same layout)
 
 // 16-byte rgl string (see rgl::string in rgl.h); this one also has the default ctor and dtor.
 struct mstr {
@@ -140,7 +140,10 @@ struct mesh : mesh_base {
     void finish_load();                             // 0x419300
     void compute_normals();                         // 0x451c50
     void append_plain(mesh* other, const mat4* m);  // 0x4520b0 (ret 8, tail of append_skinned)
+    void set_color(vector4 c);                      // 0x47af30 (ret 0x10: the colour multiplier of every vertex; char_sheet/editor_ui.cpp, quest_log.cpp)
 };
+
+typedef char mesh_size_check[sizeof(mesh) == 0x260 ? 1 : -1];
 
 struct scene {
     char pad0[0x194];
@@ -150,7 +153,11 @@ struct scene {
     char pad2[0x1c8 - 0x1ac];
     std::vector<mesh*> cache;    // 0x1c8: one mesh per resource
     mesh* get_mesh(res_t* r);                       // 0x412c30
+    scene();                                        // 0x429740 (char_sheet/screen.cpp: the Screen constructor builds one at +0x...)
+    ~scene();                                       // 0x41f4e0
 };
+
+typedef char scene_size_check[sizeof(scene) == 0x1d8 ? 1 : -1];
 
 struct mesh_list {               // 16 bytes: std::vector<mesh*>
     std::vector<mesh*> v;
@@ -177,4 +184,4 @@ struct mesh_pool {
 };
 
 } // namespace rgl
-#endif // AGENT4_MESH_H
+#endif // GAME_RGL_MESH_H

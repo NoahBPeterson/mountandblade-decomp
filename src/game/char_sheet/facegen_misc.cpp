@@ -201,7 +201,7 @@ int SaveLoadUi::run()
     void* panel = *(void**)((char*)this + 0xf8);
     ((PanelCall7)(*(void***)panel)[0xac / 4])(panel, 0, 0, 2, 0x302010, 1.0f, 0);
 
-    g_msglog.func_4e6050();
+    g_msglog.build_scene();
     g_renderer.func_47e520(0);
 
     if (g_5a9fa0 != 0) {

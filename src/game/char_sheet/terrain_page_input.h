@@ -25,13 +25,7 @@ using rgl::vector4;
 struct vector2 { float x, y; };                             // rgl::vector2 (the 2x2 camera axes, +0 = strafe)
 
 // ---- tstring / rgl::string ---------------------------------------------------------------------------
-struct tstring : rgl::string {
-    tstring(const char* s) : rgl::string(s) {}                              // 0x42bbe0
-    tstring();                                                              // 0x42bbd0
-    tstring(const tstring& o);                                              // 0x42c110
-    ~tstring();                                                             // 0x42bc40
-    const char* c_str() const { return p ? p : (const char*)&p; }
-};
+#include "../tstring.h"
 
 // ---- controls -----------------------------------------------------------------------------------------
 // Only the accessor this slice calls is declared.  cl 13.10 numbers virtuals in declaration order, one slot per

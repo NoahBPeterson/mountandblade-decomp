@@ -2,6 +2,7 @@
 // character import / export flow, the character file writer (0x4d86d0), the character import reader (0x4d8c20)
 // and the export path builder (0x4d9260). Names provisional; see options_panel.h.
 #include "./options_panel.h"
+#include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include <string.h>
 #include <stdlib.h>
 

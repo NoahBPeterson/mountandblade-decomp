@@ -18,23 +18,19 @@
 
 using rgl::vector4;
 
-struct mat4 { vector4 s, f, u, o; };
-struct mat3 { vector4 s, f, u; };
+#include "../../include/mat4.h"
+using rgl::mat4;
+using rgl::mat3;
 mat3* identity3(mat3* out);             // 0x40cd60 (cdecl; returns out; 12 dwords)
 
-struct mesh {                           // 0x260-byte mesh instance, ctor 0x412a90
-    char pad[0x260];
-    mesh();
-};
+#include "../rgl_mesh.h"
+using rgl::mesh;
 
 #include "../tstring.h"
 
-struct StrTable {
-    tstring* lookup(const tstring& key);                // 0x43a1e0
-    tstring* at(int i) { return (tstring*)this + i; }
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                             // 0x5e2a18
-struct MsgLog { void add(tstring msg, int color); };    // 0x452c00 (thiscall, ret 0x14)
+#include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 
 bool __cdecl save_screenshot(const char* file_name, int flag);  // 0x4bb9c0 (2-arg cdecl)
@@ -129,10 +125,7 @@ __declspec(noinline) static void screenshots_path(char* out)
     _sprintf(out, "%s\\Mount&Blade Screenshots\\%s", home, path);
 }
 
-struct scene {
-    char pad0[0x1d8];
-    scene();                            // 0x429740
-};
+using rgl::scene;
 
 // the active overlay (vtable slot +0x8c receives key codes, +0x40 resets it).
 struct CurObj;
@@ -252,7 +245,7 @@ struct DiDev { DiVtbl* vtbl; };
 extern DiDev* g_a170d0;                 // 0xa170d0 (input device, may be null)
 
 // input records handed back by GetDeviceData (DIDEVICEOBJECTDATA, 0x14 bytes each).
-struct InputRec {
+struct DiObjectData {
     unsigned ofs;                       // +0x0 (the input object: 0/4/8 accumulate, 0xc/0xd/0xe are keys)
     unsigned data;                      // +0x4 (low byte signed: < 0 means the key went down)
     unsigned time;                      // +0x8

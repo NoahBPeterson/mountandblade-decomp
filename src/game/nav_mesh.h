@@ -61,6 +61,11 @@ struct NavMesh {
     bool find_path(int from, int to, int* out_faces, vector4* out_pos, int* out_count, int* out_steps,
                    const float* w0, const float* w1, const float* w2);      // 0x444c50 (agent4/agent_think.cpp)
     bool reachable(const int* from, const int* to, const int* max_steps);   // 0x4452f0 (agent4/agent_think.cpp)
+    // ---- mesh_slot/mesh_start.cpp (Mission::start_setup, nav mesh at Mission +0x6698; roles not yet named) ----
+    void f4781d0(void* stream);                         // 0x4781d0 (called with the level sub-object stream after the terrain description is read)
+    void f470a00();                                     // 0x470a00
+    void f4785e0(int a, int b);                         // 0x4785e0
+    void f470750();                                     // 0x470750
 };
 
 

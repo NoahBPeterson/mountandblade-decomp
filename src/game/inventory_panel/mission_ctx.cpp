@@ -41,7 +41,7 @@ extern MissionTemplate* g_templates;                    // 0x5e2a00
 extern int g_template_count;                            // 0x5e2a04
 
 struct Row { float x, y, z, w; };
-struct mat3 { Row s, f, u; };
+using rgl::mat3;
 mat3* identity3(mat3* m);                               // 0x40cd60 (cdecl)
 struct Placement { mat3 m; int a, b, c, d; };           // 0x40 bytes (rotation + position)
 struct SceneTmp {                                       // 0x1c8 bytes, ctor 0x437830
@@ -73,7 +73,7 @@ struct Rec98 {                                          // the 0x98-byte scene n
 };
 // ---- objects and constants of other translation units ----------------------------------------------------------------
 struct NamedRec { void setup(const tstring* a, const tstring* b); };   // 0x48a3a0 (ret 8)
-struct KeyTable { char down(int key); };                // 0x48ac90 (ret 4)
+struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
 struct KeyNames { char bound(int key); };               // 0x487900 (ret 4)
 struct TextLog { virtual void print(const char* s); };  // +0x28 prints one line (slot index 10 in the original; the declaration order is kept)
 struct ItemSound { void play(int id); };                // 0x48add0 (ret 4)
@@ -95,7 +95,7 @@ int save_game(int arg, char* name);                     // 0x4e8980
 extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x87 args)
 extern tstring g_scratch;                               // 0xa70464
 extern TextLog g_textlog;                               // 0x5a9f30
-extern KeyTable g_keys;                                 // 0xa73730
+extern UiKeyState g_keys;                                 // 0xa73730
 extern KeyNames g_key_names;                            // 0xa170c8
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
 extern Psys* g_psys;                                    // 0xa70248

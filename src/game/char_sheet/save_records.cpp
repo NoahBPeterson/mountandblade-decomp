@@ -245,6 +245,6 @@ void RecList::id_remove(int id)
         set[slot * 2] = -1;
         set[slot * 2 + 1] = -1;
         rec_at(this, idx)->type = 0;
-        ((IntVec*)((char*)this + 0x138bc))->push_back(idx);
+        ((IntVec*)((char*)this + 0x138bc))->push_back_out(idx);
     }
 }

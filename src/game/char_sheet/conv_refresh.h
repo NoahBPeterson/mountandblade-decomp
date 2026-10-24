@@ -50,25 +50,15 @@ static float setting_float(const char* name)
 }
 
 // ---- game data --------------------------------------------------------------------------------------
-struct TroopRec {
-    tstring name;                                        // +0
-    char pad10[0x10];
-    tstring id;                                          // +0x20
-    char pad30[0x508 - 0x30];
-};
-struct GameData {
-    char pad0[0x13a00];
-    TroopRec* chars;                                     // +0x13a00
-};
-#include "../str_table.h"
-extern GameData* g_game;                                 // 0x5e2930
+#include "../dialog_manager.h"
+
 extern StrTable g_strtable;                              // 0x5e2a18
 
 // the troop's translated id, falling back to its name (the original's inlined 0x4c6010 use)
 static const char* troop_text(int id)
 {
     TroopRec* t = &g_game->chars[id];
-    tstring* r = g_strtable.find(&t->id);
+    tstring* r = g_strtable.find(&t->key);
     if (!r)
         r = &t->name;
     char* v = r->buf;
@@ -76,32 +66,9 @@ static const char* troop_text(int id)
 }
 
 // ---- dialog manager (layout verified in s0045ff30) --------------------------------------------------
-struct DialogRec { char pad0[0x20]; unsigned flags; char pad24[0x40]; };
-struct rawline {                                         // one dialog line, 0x1c bytes
-    int dialog;
-    int idx;
-    unsigned flags;                                      // +8
-    tstring text;                                        // +0xc
-};
-struct DialogMgr {
-    int count;                                           // +0
-    DialogRec* recs;                                     // +4
-    int f8;                                              // +8
-    int fc;                                              // +0xc
-    char pad10[8];
-    int cur;                                             // +0x18
-    char pad1c[8];
-    rawline list[0x400];                                 // +0x24
-    void select(rawline* l);                             // 0x460d80
-    int get_c8();                                        // 0x460620
-    int speaker();                                       // 0x460640
-    void advance();                                      // 0x460ff0
-    void advance_all(int* n);                            // 0x461140
-    tstring line_text(int i);                            // 0x4606a0 (ret 8)
-    int line_flags(int i);                               // 0x4606c0
-};
+
+
 extern DialogMgr g_n_dialogs;                            // 0x8ed50c8 (?g_n_dialogs@@3UDialogMgr@@A)
-extern rawline* g_dlg_lines;                             // 0x8ed50ec (?g_dlg_lines@@3PAUrawline@@A)
 
 // ---- widget slots (see s004dfd50 / s004e05c0) -------------------------------------------------------
 // used slots: 0x58/0x64/0x68/0x6c/0x70 pos & scale, 0x74 flag, 0x80 track, 0xa4 text, 0xb0 advance, 0xb4 clear

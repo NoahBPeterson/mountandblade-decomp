@@ -222,7 +222,7 @@ void Game::write_items(OutStream* out)
 {
     out->w_raw(&g_n_items);
     for (int i = 0; i < g_n_items; i++)
-        write_vec8(&g_items[i].l30, out);
+        write_vec8((List8*)g_items[i].l30, out);
 }
 
 // @ 0x4e97e0    void Game::write_records(OutStream* out)   (thiscall, ret 4)

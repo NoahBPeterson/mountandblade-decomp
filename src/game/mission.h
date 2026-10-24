@@ -245,6 +245,16 @@ struct Mission {
     void refresh_agent(Agent* a);               // 0x4f7e00 (ret 4; this unused: rebuild the agent's appearance and equipment bodies)
     void camera_to(const rgl::matrix* eye, const float* far_plane);   // 0x4fa790 (ret 8: store the camera frame, move the listener, the sun and the flare)
     void apply_sun_light(const rgl::vector4* pos, const float* scale);   // 0x4fb180 (ret 8: the per-agent sun intensity and fade)
+    // ---- src/game/mesh_slot (mesh_start.cpp: Mission::start_setup addresses the object by displacement) ----
+    template<class T> T& at(int off) { return *(T*)((char*)this + off); }
+    void start_setup();                         // 0x484590 (the per-mission start-up sequence: level + mode, weather, sky/cloud/fog bits, sun, the 64-slot light table, props and spawns)
+    void copy_slot(int k);                      // 0x4676e0 (terrain_a/misc.h: copies a mark slot)
+    void add_amount(int i, unsigned n);         // 0x4677a0 (terrain_a: spawn-rule amount; the script calls it add_visitors)
+    void reset_spawned(int id);                 // 0x4739f0 (terrain_b/terrain_b.cpp)
+    void light_entities(rgl::mesh** list, int count);   // 0x47ce00 (mesh_slot/mesh_scene.cpp)
+    void light_props();                         // 0x47ced0
+    void run_spawns();                          // 0x483eb0 (mesh_slot/mesh_game.cpp: up to 100 passes spawning every pending entry)
+    void frame(float dt, int spawn);            // 0x483f60 (mesh_game.cpp: the per-frame mission tick; start_setup calls it with (0.1, 1))
 };
 extern Mission* g_mission;                      // 0x5e292c
 

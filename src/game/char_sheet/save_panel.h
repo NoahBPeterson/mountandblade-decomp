@@ -16,25 +16,15 @@ using rgl::vector4;
 #include "../tstring.h"
 
 // ---- matrices / mesh (rgl) ------------------------------------------------------------------------------
-struct mat4;
-struct mat3 {
-    vector4 s, f, u;
-    mat4 operator*(const mat4& b) const;               // 0x40e870
-};
-struct mat4 {
-    vector4 s, f, u, o;
-    mat4 operator*(const mat4& b) const;               // 0x40e870 (this = left operand)
-};
+#include "../../include/mat4.h"
+using rgl::mat3;
+using rgl::mat4;
+
 mat3* identity3(mat3* out);                             // 0x40cd60 (cdecl; returns out)
 
 struct vertex60;
-struct mesh {
-    char pad0[0x18];
-    int  geo;                                           // +0x18 (geometry record)
-    char pad1c[0x260 - 0x1c];
-    void clear_geometry();                              // 0x428e80
-    void append_skinned(mesh* other, const mat4* m, int bone, unsigned color, char flip);  // 0x44eb00
-};
+#include "../rgl_mesh.h"
+using rgl::mesh;
 struct skin_rec {
     mesh* m;                                            // +0
     char pad4[0xcc - 4];

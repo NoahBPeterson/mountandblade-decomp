@@ -249,7 +249,7 @@ struct BattleW {
 
 
 // ---- vectors of 8-byte integers, 4-byte-integer vectors (VC7.1 layout: allocator word first) -----------------------------
-struct E8 { int a, b; };                                        // one 8-byte element (copied as two dwords)
+#include "../../include/pod_elems.h"
 struct FPair { float a, b; };
 
 struct I64VecW : I64Vec {                                       // include/i64_vec.h; the slot-array / quest-record vector
@@ -510,12 +510,7 @@ struct EmitTarget {                                             // virtual objec
     virtual void s24();
     virtual void add(Emitter* e);                               // +0x64
 };
-struct EmitTable {                                              // global at 0x8ed5090
-    int f0;
-    int count;                                                  // +4
-    Emitter* setup(int* idx, int* out, int* out2);              // 0x479d20 (thiscall, ret 0xc)
-};
-extern EmitTable g_emit_defs;                                   // 0x8ed5090
+#include "../emit.h"
 struct EmitterCtl {
     char pad0[0x59c0];
     EmitTarget* target;                                         // +0x59c0

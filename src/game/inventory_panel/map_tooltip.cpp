@@ -10,22 +10,9 @@
 #include <math.h>
 
 // ---- rgl string (16 bytes) ---------------------------------------------------------------------------
-struct tstring {
-    int pos;
-    char* buf;
-    int cap;
-    int len;
-    tstring();                                          // 0x42bbd0
-    tstring(const char* s);                             // 0x42bbe0
-    ~tstring();                                         // 0x42bc40
-    void assign(const char* s);                         // 0x42bcb0
-    const char* c_str() const { return buf ? buf : (const char*)&buf; }
-};
+#include "../tstring.h"
 
-struct StrTable {
-    tstring* lookup(const tstring* key);                // 0x43a1e0 (never null)
-    tstring* find(const tstring* key);                  // 0x4c6010 (null when absent)
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                             // 0x5e2a18
 
 struct Gui {
@@ -42,35 +29,10 @@ struct MainMenu { void choose(int option); };           // 0x495700 (thiscall, r
 struct FlagBlock { void apply(void* p); };              // 0x513710 (thiscall on 0x5e291c, ret 4)
 
 // ---- party records -----------------------------------------------------------------------------------
-struct Stack {                                          // 0x20 bytes, array at party+0xa8
-    int count;                                          // +0x00
-    int troop;                                          // +0x04
-    int flags;                                          // +0x08
-    int spawned;                                        // +0x0c
-    int wounded;                                        // +0x10
-    int f14, f18, f1c;
-};
-struct Party {                                          // 0x5ac8 bytes
-    char pad0[4];
-    int state;                                          // +0x04 (1 = live)
-    char pad8[0xa8 - 8];
-    Stack stacks[64];                                   // +0xa8
-    int nstacks;                                        // +0x8a8
-    int skill(int n);                                   // 0x4b2370 (thiscall, ret 4)
-};
-struct PartyMgr {                                       // the manager at game+0xf8
-    char pad0[0x138d0];
-    char** pages;                                       // +0x138d0
-    char pad138d4[0x138dc - 0x138d4];
-    int next_id;                                        // +0x138dc
-    int index_of(int id);                               // 0x48ad00 (thiscall, ret 4)
-    Party* get(int id) { int i = index_of(id); return (Party*)(pages[i >> 4] + (i & 0xf) * 0x5ac8); }
-};
-struct Troop {                                          // 0x508 bytes, table at game+0x13a00
-    char pad0[0x30];
-    __int64 flags;                                      // +0x30 (0x10 = hero)
-    char pad38[0x508 - 0x38];
-};
+#include "../../include/party.h"
+#include "../../include/troop.h"
+
+
 struct PartyInfo {                                      // 0x5c bytes, vector at game+0x13a64
     char pad0[0x14];
     float f14;                                          // +0x14
@@ -129,26 +91,26 @@ void Game::counts(unsigned id, int* num, int* num2, int* wounded)
     *num = 0;
     *num2 = 0;
     *wounded = 0;
-    if (id >= (unsigned)mgr.next_id)
+    if (id >= (unsigned)mgr.n_parties)
         return;
     int idx = mgr.index_of(id);
     if (idx < 0)
         return;
-    Party* p = (Party*)(mgr.pages[(unsigned)idx >> 4] + (idx & 0xf) * 0x5ac8);
-    if (p->state != 1)
+    Party* p = (Party*)((char*)mgr.pages._Myfirst[(unsigned)idx >> 4] + (idx & 0xf) * 0x5ac8);
+    if (p->type != 1)
         return;
-    for (int i = 0; i < mgr.get(id)->nstacks; i++) {
-        if (mgr.get(id)->stacks[i].flags & 1) {
-            *wounded += mgr.get(id)->stacks[i].count;
+    for (int i = 0; i < mgr.get_party(id)->nstacks; i++) {
+        if (mgr.get_party(id)->stacks[i].flags & 1) {
+            *wounded += mgr.get_party(id)->stacks[i].count;
         } else {
-            int t = mgr.get(id)->stacks[i].troop;
-            if (troops[t].flags & 0x10) {
+            int t = mgr.get_party(id)->stacks[i].troop;
+            if (troops[t].flags30s & 0x10) {
                 (*num)++;
-                if (agent_low(mgr.get(id)->stacks[i].troop))
+                if (agent_low(mgr.get_party(id)->stacks[i].troop))
                     (*num2)++;
             } else {
-                *num += mgr.get(id)->stacks[i].count;
-                *num2 += mgr.get(id)->stacks[i].wounded;
+                *num += mgr.get_party(id)->stacks[i].count;
+                *num2 += mgr.get_party(id)->stacks[i].wounded;
             }
         }
     }
@@ -157,7 +119,7 @@ void Game::counts(unsigned id, int* num, int* num2, int* wounded)
 // @ 0x51c090
 int __stdcall draw_party_line(int index)
 {
-    int skill = g_game->mgr.get(g_game->main_party)->skill(0x10);
+    int skill = g_game->mgr.get_party(g_game->main_party)->skill_level(0x10);
     PartyInfo* info = &g_game->party_info[index];
     int flags = info->flags;
     if (flags & 0x10000000) {

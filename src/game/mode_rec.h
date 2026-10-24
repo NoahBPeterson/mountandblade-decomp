@@ -6,13 +6,19 @@
 #ifndef GAME_MODE_REC_H
 #define GAME_MODE_REC_H
 
+struct stream_base;
+
 struct SpawnRec {                               // 0x4c bytes: a mission spawn rule
     int id;                                     // +0x00
     int flags;                                  // +0x04 (see rule_accepts / pick_spawn)
     unsigned flags2;                            // +0x08
-    int padc[4];
+    union {
+        int padc[4];
+        struct { int f0c, f10, f14, f18; };     // +0x0c (mesh_slot/mesh_start.cpp 0x484590 reads f14, f18)
+    };
     int f1c;                                    // +0x1c
     char pad20[0x4c - 0x20];
+    void load_extras(stream_base& s);           // 0x4bdd50 (triggers/trigger_vec.cpp, the mission_templates loader; config.cpp declares it on psys_record)
 };
 struct ModeRec2 {                               // 0x58 bytes
     char pad0[0x20];

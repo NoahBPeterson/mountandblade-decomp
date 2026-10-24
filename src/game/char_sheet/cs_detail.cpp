@@ -41,7 +41,7 @@ void CharSheet::update_detail()
             tstring kx("char_t_current_level_x");
             float fx = g_config.get_float(kx);
             tstring bt(body);
-            vec2 xy(fx, fy);
+            vec2 xy = { fx, fy };
             f_4b8->set_text_at(bt, xy);
         }
         mb_snprintf(body, 0x200, tr(tstring("ui_base_attribute_value")),
@@ -54,7 +54,7 @@ void CharSheet::update_detail()
             tstring kx("char_t_base_attrib_x");
             float fx = g_config.get_float(kx);
             tstring bt(body);
-            vec2 xy(fx, fy);
+            vec2 xy = { fx, fy };
             f_4b8->set_text_at(bt, xy);
         }
         Game* g = g_game;
@@ -64,12 +64,12 @@ void CharSheet::update_detail()
         }
         int maxlvl = g_skills[id].cap;
         TroopRec* t = &g->troops[f_14];
-        if (t->skill_rank(id) < maxlvl && t->skill_points >= 1 &&
-            (g_game->troops[f_14].skill_rank(id) + 1) * 3 <= g->troops[f_14].f_58[SKILL_ATTR(id)]) {
+        if (t->nibble(id) < maxlvl && t->skill_points >= 1 &&
+            (g_game->troops[f_14].nibble(id) + 1) * 3 <= g->troops[f_14].attrs[SKILL_ATTR(id)]) {
             f_434->hide();
             return;
         }
-        if (t->skill_rank(id) >= maxlvl) {
+        if (t->nibble(id) >= maxlvl) {
             mb_snprintf(body, 0x200, tr(tstring("ui_at_learning_limit")));
         } else if (t->skill_points < 1) {
             mb_snprintf(body, 0x200, tr(tstring("ui_not_enough_skill_points_to_learn")));

@@ -5,15 +5,7 @@
 #include "skeleton_tinyxml.h"
 
 // ------------------------------------------------------------------ tstring -------------------------------
-struct tstring {
-    int pos;            // +0
-    char* buf;          // +4
-    int cap;            // +8
-    int len;            // +0xc
-    tstring();                                      // 0x42bbd0
-    ~tstring();                                     // 0x42bc40
-    const char* c_str() const { return buf ? buf : (const char*)&buf; }
-};
+#include "../tstring.h"
 
 // ------------------------------------------------------------------ externals -----------------------------
 void mb_error(const char* msg);                     // 0x42cc80 (cdecl)

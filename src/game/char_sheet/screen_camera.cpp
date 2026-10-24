@@ -65,9 +65,9 @@ void Screen::camera_update(float dt)
 
     // --- follow the selected party while the map is live -------------------------------------------
     if (g_game->f88) {
-        if (g_game->parties()->is_slot(g_game->selected)) {
-            PartyRec* p = (PartyRec*)g_game->parties()->index_of(g_game->selected);
-            vector4 rect = p->rect;
+        if (g_game->parties()->is_live(g_game->selected)) {
+            Party* p = g_game->parties()->get_party(g_game->selected);   // the slice cast the dense index to a pointer; 0x48ad00 returns the index, the page arithmetic is get_party
+            vector4 rect = *(vector4*)&p->pos;
             rect.z = rect.z + C_549CDC;
             float dx = rect.x - f290;
             float dy = rect.y - f294;
@@ -145,7 +145,7 @@ void Screen::camera_update(float dt)
     memcpy((char*)w + 0x1ac, (char*)this + 0x170, 0x120);
     float ny = -frame.f.y;
     float nz = -frame.f.z;
-    scene* sc = (scene*)g_scene;
+    WorldCam* sc = g_scene;
     sc->f30c.x = nx;
     sc->f30c.y = ny;
     sc->f30c.z = nz;

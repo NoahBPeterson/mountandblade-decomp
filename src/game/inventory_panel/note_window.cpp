@@ -22,22 +22,7 @@
 // string object (0x42bbd0 family)
 // ---------------------------------------------------------------------------
 
-struct tstring {
-    int   pos;      // +0x00
-    char* buf;      // +0x04
-    int   cap;      // +0x08
-    int   len;      // +0x0c
-
-    tstring();                                  // 0x42bbd0
-    tstring(const char* s);                     // 0x42bbe0
-    ~tstring();                                 // 0x42bc40
-    void assign(const char* s);                 // 0x42bcb0
-    tstring& operator+=(const tstring& o);      // 0x42c1e0
-    void clear();                               // 0x42be50
-    void erase(int start, int count);           // 0x42bea0
-    bool operator==(const tstring& o) const;    // 0x42bdd0
-    int  find(const tstring& sub, int start) const; // 0x42c440
-};
+#include "../tstring.h"
 
 extern "C" int sprintf(char* dst, const char* fmt, ...);     // 0x536f8f
 extern "C" double atof(const char* s);                       // 0x537352
@@ -423,17 +408,17 @@ void note_window::build(int page_, int arg_)
             if (*(int*)(slot + 0x42c) <= 0)
                 continue;
             if (line.len > 0) {
-                line += tstring("\n\n");
+                line.append(tstring("\n\n"));
             }
-            line += *(tstring*)(slot + 0x420);
+            line.append(*(tstring*)(slot + 0x420));
             int sid = *(int*)(WORLD->troops + (ti * 0x142 + k) * 4 + 0x400);
             if (sid < 0)
                 continue;
             if (sid < WORLD->string_count) {
                 sprintf(buf2, tr("ui_report_is_value_days_old"), WORLD->string_count - sid);
-                line += tstring(buf2);
+                line.append(tstring(buf2));
             } else {
-                line += tstring(tr("ui_report_is_current"));
+                line.append(tstring(tr("ui_report_is_current")));
             }
         }
 
@@ -471,7 +456,7 @@ void note_window::build(int page_, int arg_)
                 sprintf(link_buf, "%s\n", nm);
             else
                 sprintf(link_buf, "<trp=%d>%s</>\n", v, nm);
-            line += tstring(link_buf);
+            line.append(tstring(link_buf));
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
@@ -500,16 +485,16 @@ void note_window::build(int page_, int arg_)
             if (*(int*)(slot + 0x288) <= 0)
                 continue;
             if (line.len > 0)
-                line += tstring("\n\n");
-            line += *(tstring*)(slot + 0x27c);
+                line.append(tstring("\n\n"));
+            line.append(*(tstring*)(slot + 0x27c));
             int sid = *(int*)(WORLD->factions + (fi * 0xc0 + k) * 4 + 0x25c);
             if (sid < 0)
                 continue;
             if (sid < WORLD->string_count) {
                 sprintf(buf2, tr("ui_report_is_value_days_old"), WORLD->string_count - sid);
-                line += tstring(buf2);
+                line.append(tstring(buf2));
             } else {
-                line += tstring(tr("ui_report_is_current"));
+                line.append(tstring(tr("ui_report_is_current")));
             }
         }
 
@@ -552,7 +537,7 @@ void note_window::build(int page_, int arg_)
                 sprintf(link_buf, "%s\n", nm);
             else
                 sprintf(link_buf, "<fac=%d>%s</>\n", v, nm);
-            line += tstring(link_buf);
+            line.append(tstring(link_buf));
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
@@ -583,16 +568,16 @@ void note_window::build(int page_, int arg_)
             if (*(int*)(base + 0x5a34 + k * 0x10) <= 0)
                 continue;
             if (line.len > 0)
-                line += tstring("\n\n");
-            line += *(tstring*)(base + 0x5a28 + k * 0x10);
+                line.append(tstring("\n\n"));
+            line.append(*(tstring*)(base + 0x5a28 + k * 0x10));
             int sid = *(int*)(ids + 0x5a08 + k * 4);
             if (sid < 0)
                 continue;
             if (sid < WORLD->string_count) {
                 sprintf(buf2, tr("ui_report_is_value_days_old"), WORLD->string_count - sid);
-                line += tstring(buf2);
+                line.append(tstring(buf2));
             } else {
-                line += tstring(tr("ui_report_is_current"));
+                line.append(tstring(tr("ui_report_is_current")));
             }
         }
 
@@ -639,7 +624,7 @@ void note_window::build(int page_, int arg_)
                 sprintf(link_buf, "%s\n", nm);
             else
                 sprintf(link_buf, "<p=%d>%s</>\n", v, nm);
-            line += tstring(link_buf);
+            line.append(tstring(link_buf));
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
@@ -668,16 +653,16 @@ void note_window::build(int page_, int arg_)
             if (*(int*)(slot + 0x94) <= 0)
                 continue;
             if (line.len > 0)
-                line += tstring("\n\n");
-            line += *(tstring*)(slot + 0x88);
+                line.append(tstring("\n\n"));
+            line.append(*(tstring*)(slot + 0x88));
             int sid = *(int*)(quest + 0x68);
             if (sid < 0)
                 continue;
             if (sid < WORLD->string_count) {
                 sprintf(buf2, tr("ui_report_is_value_days_old"), WORLD->string_count - sid);
-                line += tstring(buf2);
+                line.append(tstring(buf2));
             } else {
-                line += tstring(tr("ui_report_is_current"));
+                line.append(tstring(tr("ui_report_is_current")));
             }
         }
 
@@ -706,7 +691,7 @@ void note_window::build(int page_, int arg_)
             if (selected < 0)
                 selected = v;
             sprintf(link_buf, "<qst=%d>%s</>\n", v, quest_text(v, 0)->buf);
-            line += tstring(link_buf);
+            line.append(tstring(link_buf));
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
@@ -736,8 +721,8 @@ void note_window::build(int page_, int arg_)
                 tstring entry(buf);
                 if (other.find(entry, 0) < 0) {
                     if (other.len > 0)
-                        other += tstring(", ");
-                    other += entry;
+                        other.append(tstring(", "));
+                    other.append(entry);
                 }
                 break;
             }
@@ -760,8 +745,8 @@ void note_window::build(int page_, int arg_)
                 tstring entry(buf);
                 if (other.find(entry, 0) < 0) {
                     if (other.len > 0)
-                        other += tstring(", ");
-                    other += entry;
+                        other.append(tstring(", "));
+                    other.append(entry);
                 }
                 break;
             }
@@ -780,8 +765,8 @@ void note_window::build(int page_, int arg_)
                     tstring entry(buf);
                     if (other.find(entry, 0) < 0) {
                         if (other.len > 0)
-                            other += tstring(", ");
-                        other += entry;
+                            other.append(tstring(", "));
+                        other.append(entry);
                     }
                     break;
                 }
@@ -796,8 +781,8 @@ void note_window::build(int page_, int arg_)
             tstring entry(buf);
             if (other.find(entry, 0) < 0) {
                 if (other.len > 0)
-                    other += tstring(", ");
-                other += entry;
+                    other.append(tstring(", "));
+                other.append(entry);
             }
         }
     }
@@ -805,14 +790,14 @@ void note_window::build(int page_, int arg_)
     if (other.len > 0) {
         tstring t("");
         this->links->get_text(&t);
-        if (t == *tr_obj("ui_click_button_to_view_note")) {
+        if (t.equals(*tr_obj("ui_click_button_to_view_note"))) {
             float sz[2];
             this->links->set_text(sz, *tr_obj("ui_this_page_contains_no_information"));
             this->links->get_text(&t);
         }
-        t += tstring("\n\n");
-        t += *tr_obj("ui_other_pages_that_link_here");
-        t += other;
+        t.append(tstring("\n\n"));
+        t.append(*tr_obj("ui_other_pages_that_link_here"));
+        t.append(other);
         float sz[2];
         float* r = this->links->set_text(sz, t);
         y_cur = r[1];

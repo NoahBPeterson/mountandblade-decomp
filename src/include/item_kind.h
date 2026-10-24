@@ -33,6 +33,7 @@ enum {
 
 struct res_obj;
 struct pos2;
+struct tstream3;
 
 // one mesh variant of an item: name + 64-bit flags (top nibble = class, low bits = modifier mask)
 struct ItemMesh { tstring name; unsigned __int64 flags; };      // 0x18 (0x433bf0, 0x433cb0, 0x462820)
@@ -41,7 +42,8 @@ struct ItemKind {                       // 0x238 bytes
     tstring name;                       // +0x00 (gui_edit.cpp: the record's name in the language export, 0x4c62b0)
     tstring plural;                     // +0x10 (0x4c6330)
     tstring key;                        // +0x20 (0x433bf0 fallback name, 0x434ad0 find_item compares it; 0x43a480 display name)
-    char pad30[0x44 - 0x30];
+    char l30[0x10];                     // +0x30 a std::vector of 8-byte elements (allocator word, first, last, end): char_sheet/save_state.cpp writes it (0x4e94b0 via write_vec8)
+    char pad40[0x44 - 0x40];
     int mesh_count;                     // +0x44 (0x433bf0, 0x433cb0, 0x462820)
     ItemMesh meshes[1];                 // +0x48 entries of 0x18 (0x433bf0, 0x433cb0, 0x462820)
     char pad60[0x1c8 - 0x60];
@@ -64,6 +66,9 @@ struct ItemKind {                       // 0x238 bytes
     float f224;                         // +0x224 (set for every kind by 0x48a250)
     char pad228[0x238 - 0x228];         // +0x228 the item's sound sub-object (party_window.cpp item_sound)
 
+    ItemKind();                                             // 0x4cdf20 (inventory_panel/module_files.cpp: g_items = new ItemKind[count])
+    ~ItemKind();                                            // 0x4c8a40
+    void read(tstream3* s, int version);                    // 0x4c8110 (module_files.cpp: the item_kinds.txt loader)
     tstring mesh_name_for(int bit);                         // 0x433bf0
     res_obj* mesh_for(unsigned __int64 cls, int bit);       // 0x433cb0
     bool is_ranged();                                       // 0x433d90

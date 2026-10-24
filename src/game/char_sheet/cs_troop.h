@@ -49,28 +49,11 @@ struct UiWidget {
     UiVt* vt;                                       // +0x00
 };
 
-struct ItemRec {                                    // 0x238 bytes, table at 0x5e29d0
-    char pad0[0x1c8];
-    unsigned type;                                  // +0x1c8 (low byte = item type)
-    char pad1[0x238 - 0x1cc];
-};
-extern ItemRec* g_items;                            // 0x5e29d0
+// the item kind table (0x5e29d0, 0x238-byte records): include/item_kind.h
+#include "../../include/item_kind.h"
 
 // ---- game records ------------------------------------------------------------------------------------
-struct TroopRec {
-    char pad0[0x58];
-    int f_58[4];                                    // +0x58 (weapon proficiencies / attributes)
-    int f_68[6];                                    // +0x68 (skill ranks, packed 4-bit)
-    int f_80, f_84, f_88, f_8c;                     // +0x80
-    int f_90, f_94, f_98;                           // +0x90
-    char pad9c[0xa0 - 0x9c];
-    int level;                                      // +0xa0
-    int skill_points;                               // +0xa4
-    int attr_str, attr_agi;                         // +0xa8, +0xac (first two attributes)
-    char padb0[0x508 - 0xb0];
-
-    int skill_rank(int idx);                        // 0x4351a0
-};
+#include "../../include/troop.h"
 
 struct Game {
     char pad8c[0x8c];
@@ -118,7 +101,6 @@ struct CharSheet {
 
     void apply_to_troop();                          // 0x4ef420
     void update_skill_rows();                       // 0x4ef7d0
-    int  steps_to_point(int idx);                   // 0x4ef6d0
 };
 
 // ---- 0x535a64: float -> int (_ftol), emitted by the (int) casts below -------------------------------

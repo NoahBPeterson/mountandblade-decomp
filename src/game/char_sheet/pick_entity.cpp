@@ -6,7 +6,7 @@
 void __fastcall pick_entity(Ctx* self)
 {
     int set_junk = 0;
-    scene* sc = (scene*)g_tasks;
+    Mission* sc = (Mission*)g_tasks;
     *(char*)(sc->f65dc + 0x140) = 0;
     if (g_menu_mode) {
         self->reset_all(1);
@@ -41,9 +41,9 @@ void __fastcall pick_entity(Ctx* self)
     float best = g_4e6e6b28;
     int best_i = -1;
     int i = 0;
-    int n = (sc->f6690 - sc->f668c) / 0x1c8;
+    int n = ((int)sc->props._Mylast - (int)sc->props._Myfirst) / 0x1c8;
     while (i < n) {
-        scene_row* row = (scene_row*)(sc->f668c + i * 0x1c8);
+        scene_row* row = (scene_row*)((int)sc->props._Myfirst + i * 0x1c8);
         vector4 o = row->origin;
         shape_base* hit = 0;
         vector4 centre = lo;
@@ -67,7 +67,7 @@ void __fastcall pick_entity(Ctx* self)
                     hit = *(shape_base**)(pr + 0x24);
                     smat m2 = probe;
                     m2.scale_rows(&row->mat[0]);
-                    hit->s2(&m2);
+                    hit->transform((const pos*)&m2);
                 }
             }
         } else if (row->kind == 5) {
@@ -80,7 +80,7 @@ void __fastcall pick_entity(Ctx* self)
             if (hit) {
                 smat m2 = probe;
                 m2.scale_rows(&row->mat[0]);
-                hit->s2(&m2);
+                hit->transform((const pos*)&m2);
             }
         }
         if (shape_contact_count((shape_base*)capbuf, sphere, 1, &row->mat[1])) {
@@ -121,7 +121,7 @@ void __fastcall pick_entity(Ctx* self)
     if (self->f2cc == g_sel_entity) {
         color = 0xffaaff22;
     }
-    scene_row* sel = (scene_row*)(sc->f668c + self->f2cc * 0x1c8);
+    scene_row* sel = (scene_row*)((int)sc->props._Myfirst + self->f2cc * 0x1c8);
     tstring s_kind, s_info, s_info2;
     switch (sel->kind) {
     case 4:

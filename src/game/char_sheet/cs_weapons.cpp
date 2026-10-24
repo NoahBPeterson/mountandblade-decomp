@@ -67,13 +67,13 @@ struct CharSheet {
 // @ 0x4f06f0
 void CharSheet::update_weapons()
 {
-    CharRec* c = &g_game->chars[player];
+    CharRec* c = (CharRec*)&g_game->chars[player];
     int i = 0;
     do {
         char line[512];
         char caption[512];
         weapon_class_caption(i, caption);
-        sprintf(line, "%s:  %d", caption, (int)g_game->chars[player].weapon[i]);
+        sprintf(line, "%s:  %d", caption, (int)((CharRec*)&g_game->chars[player])->weapon[i]);
         {
             tstring text(line);
             char unset[8];                          // the original passes the address of 8 uninitialised bytes

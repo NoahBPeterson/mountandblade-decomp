@@ -5,26 +5,26 @@
 void CharSheet::apply_to_troop()
 {
     { TroopRec* t = &g_game->troops[f_14]; t->skill_points = f_508; }
-    { TroopRec* t = &g_game->troops[f_14]; t->attr_str = f_50c; }
-    { TroopRec* t = &g_game->troops[f_14]; t->attr_agi = f_510; }
-    { TroopRec* t = &g_game->troops[f_14]; t->level = f_504; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_58[0] = f_4d8; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_58[1] = f_4dc; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_58[2] = f_4e0; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_58[3] = f_4e4; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_68[0] = f_514; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_68[1] = f_518; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_68[2] = f_51c; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_68[3] = f_520; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_68[4] = f_524; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_68[5] = f_528; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_80 = f_4e8; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_84 = f_4ec; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_88 = f_4f0; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_8c = f_4f4; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_90 = f_4f8; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_94 = f_4fc; }
-    { TroopRec* t = &g_game->troops[f_14]; t->f_98 = f_500; }
+    { TroopRec* t = &g_game->troops[f_14]; t->attr_points = f_50c; }
+    { TroopRec* t = &g_game->troops[f_14]; t->prof_points = f_510; }
+    { TroopRec* t = &g_game->troops[f_14]; t->fa0 = f_504; }
+    { TroopRec* t = &g_game->troops[f_14]; t->attrs[0] = f_4d8; }
+    { TroopRec* t = &g_game->troops[f_14]; t->attrs[1] = f_4dc; }
+    { TroopRec* t = &g_game->troops[f_14]; t->attrs[2] = f_4e0; }
+    { TroopRec* t = &g_game->troops[f_14]; t->attrs[3] = f_4e4; }
+    { TroopRec* t = &g_game->troops[f_14]; t->nib[0] = f_514; }
+    { TroopRec* t = &g_game->troops[f_14]; t->nib[1] = f_518; }
+    { TroopRec* t = &g_game->troops[f_14]; t->nib[2] = f_51c; }
+    { TroopRec* t = &g_game->troops[f_14]; t->nib[3] = f_520; }
+    { TroopRec* t = &g_game->troops[f_14]; t->nib[4] = f_524; }
+    { TroopRec* t = &g_game->troops[f_14]; t->nib[5] = f_528; }
+    { TroopRec* t = &g_game->troops[f_14]; t->istat[0] = f_4e8; }
+    { TroopRec* t = &g_game->troops[f_14]; t->istat[1] = f_4ec; }
+    { TroopRec* t = &g_game->troops[f_14]; t->istat[2] = f_4f0; }
+    { TroopRec* t = &g_game->troops[f_14]; t->istat[3] = f_4f4; }
+    { TroopRec* t = &g_game->troops[f_14]; t->istat[4] = f_4f8; }
+    { TroopRec* t = &g_game->troops[f_14]; t->istat[5] = f_4fc; }
+    { TroopRec* t = &g_game->troops[f_14]; t->istat[6] = f_500; }
 }
 
 // @ 0x4ef7d0 -------------------------------------------------------------------------------
@@ -70,13 +70,13 @@ void CharSheet::update_skill_rows()
                 TroopRec* t = &g_game->troops[troop];
                 id = skill_id[i];
                 if (t->skill_points > 0) {
-                    int cur = (int)((unsigned)t->f_68[id / 8] >> (id % 8 * 4)) & 0xf;
+                    int cur = (int)((unsigned)t->nib[id / 8] >> (id % 8 * 4)) & 0xf;
                     if (cur < 0)
                         cur = 0;
                     else if (cur > SKILL_MAX(id))
                         cur = SKILL_MAX(id);
                     if (cur < SKILL_MAX(id) &&
-                        t->skill_rank(id) < t->f_58[SKILL_ATTR(id) & 0xf] / 3 &&
+                        t->nibble(id) < t->attrs[SKILL_ATTR(id) & 0xf] / 3 &&
                         (id != 1 && id != 2 || troop == g_game->player))
                         btn[i]->show();
                 }
@@ -87,13 +87,13 @@ void CharSheet::update_skill_rows()
 
 // @ 0x4ef6d0 -------------------------------------------------------------------------------
 // Number of falloff steps needed before the proficiency value rounds up one point (max 1000).
-int CharSheet::steps_to_point(int idx)
+int Troop::steps_to_point(int idx)
 {
-    float v = ((float*)this)[0x80 / 4 + idx];
+    float v = stat[idx];
     int r = (int)v;
     int i = 0;
     do {
-        v = ((TroopExt*)this)->falloff(v, 1.0f);
+        v = falloff(v, 1.0f);
         i++;
         int cur = (int)v;
         if (cur > r)
@@ -111,7 +111,7 @@ void item_events(int item, int* a, int* b, int* c)
     *c = -1;
     if (item < 0)
         return;
-    unsigned t = g_items[item].type & 0xff;
+    unsigned t = g_items[item].type_flags & 0xff;
     if (t == 2 || t == 3 || t == 4 || t == 9) {
         *a = 0;
         return;

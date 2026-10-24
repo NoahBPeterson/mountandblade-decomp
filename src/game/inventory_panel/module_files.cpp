@@ -16,17 +16,7 @@
 // ---------------------------------------------------------------- basics
 
 // rgl string with a read cursor (16 bytes).
-struct tstring {
-    int pos;                     // +0x00
-    char* buf;                   // +0x04
-    int cap;                     // +0x08
-    int len;                     // +0x0c
-    tstring();                                       // 0x42bbd0
-    ~tstring();                                      // 0x42bc40
-    void to_lower();                                 // 0x42c020
-    bool differs(const char* s) const;               // 0x42bdb0
-    const char* c_str() const { return buf ? buf : (const char*)&buf; }
-};
+#include "../tstring.h"
 
 void mb_error(const char* fmt, ...);                 // 0x42cc80
 
@@ -153,12 +143,7 @@ struct MapIcon {
 };
 
 // item_kinds1.txt element (0x238 bytes): ctor 0x4cdf20, dtor 0x4c8a40, read 0x4c8110.
-struct ItemKind {
-    char data[0x238];
-    ItemKind();                                      // 0x4cdf20
-    ~ItemKind();                                     // 0x4c8a40
-    void read(tstream3* s, int version);          // 0x4c8110
-};
+#include "../../include/item_kind.h"
 
 // mission_templates.txt element (0x58 bytes): inline ctor, read 0x4c2300, array reject 0x4c3430.
 struct ModeRec {
@@ -200,9 +185,7 @@ struct SoundTable {                                  // 0x5aa128
     int* p4;                                         // +0x04  -> sound count
     void load(tstream3* s, int count, tstring* path);  // 0x4c4340
 };
-struct EmitTable {                                   // 0x8ed5090
-    void read(tstream3* s);                          // 0x4c1f70
-};
+#include "../emit.h"
 struct AnimTable {                                   // 0x8ed4f60
     void load(tstream3* s);                          // 0x50d520
 };

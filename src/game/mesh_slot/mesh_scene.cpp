@@ -3,6 +3,7 @@
 // the character owner. See MIGRATION.md.
 #include "./mesh_slot.h"
 #include "../../include/fx.h"
+#include "../../include/phys_set.h"
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through troop_mgr.h) declares a global ::vat with the same signature
@@ -506,37 +507,18 @@ after_item_sound:
 // ---- 0x47dc50 ----------------------------------------------------------------------------------------------------
 
 // 0x38-byte physics record: the stack temporary of vector<MRow56>::resize(0, MRow56()) (0x47a980) zeroes f4, f8, f2c, f30
-// and the six vector lanes in place. MRow56 (src/game/terrain_b/records.h) is the same record; its constructor is
-// not the inline one here, so the owner is declared with this view.
-struct PhysRec {
-    int f0, f4, f8;                              // 0x00
-    std::vector<int> a;                          // 0x0c
-    std::vector<int> b;                          // 0x1c
-    int f2c, f30, f34;                           // 0x2c
-    PhysRec() { f8 = 0; f2c = 0; f30 = 0; f4 = 0; }
-};
-
-// Tear down every physics world this object owns and reset its handle / vectors.
-struct phys_owner {
-    std::vector<PhysRec> worlds;                 // 0x00 (_Myfirst at +0x04)
-    int f10;                                     // 0x10 (set to -1)
-    int f14, f18;                                // 0x14, 0x18 (cleared)
-    char pad1c[0x3c - 0x1c];
-    int f3c;                                     // 0x3c (cleared)
-    void destroy_world(int idx);                 // 0x441360
-    void reset();                                // 0x47dc50
-};
-
+// and the six vector lanes in place. MRow56 (src/game/terrain_b/records.h) is the same record; PhysRec (include/phys_set.h)
+// carries that constructor. This function is PhysSet::reset (the slices called the owner phys_owner).
 // @ 0x47dc50
-void phys_owner::reset()
+void PhysSet::reset()
 {
-    for (unsigned i = 0; i < worlds.size(); i++)
+    for (unsigned i = 0; i < recs.size(); i++)
         destroy_world(i);
     f10 = -1;
     f14 = 0;
     f18 = 0;
-    worlds.resize(0, PhysRec());
-    f3c = 0;
+    recs.resize(0, PhysRec());
+    nworlds = 0;
 }
 
 // ---- 0x47dcd0 / 0x47dd90 -------------------------------------------------------------------------------------------

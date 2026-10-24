@@ -8,7 +8,7 @@ void ConvScreen::refresh(int sel, int* out)
     if (n_lines > 1) {
         if (sel < 0)
             goto tail;
-        g_n_dialogs.select(&g_dlg_lines[sel]);
+        g_n_dialogs.select(&g_n_dialogs.list[sel]);
         *out = g_n_dialogs.get_c8();
         g_n_dialogs.advance();
     } else {
@@ -16,7 +16,7 @@ void ConvScreen::refresh(int sel, int* out)
             if (sel != -2)
                 goto tail;
         } else {
-            g_n_dialogs.select(g_dlg_lines);
+            g_n_dialogs.select(g_n_dialogs.list);
             goto tail;
         }
         *out = g_n_dialogs.get_c8();

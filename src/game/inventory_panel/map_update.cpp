@@ -16,32 +16,16 @@ using rgl::matrix;
 extern "C" int _fltused = 0;                 // static-CRT float marker
 
 // ---------------------------------------------------------------------------------- small engine types --
-struct tstring {                             // 16 bytes (see s004bd170)
-    int   pos;                               // +0x00
-    char* buf;                               // +0x04
-    int   cap;                               // +0x08
-    int   len;                               // +0x0c
-    tstring(const char* s);                  // 0x42bbe0
-    ~tstring();                              // 0x42bc40
-    void operator=(const tstring& o);        // 0x42bc50
-};
+#include "../tstring.h"
 
-struct StrTable {
-    tstring* lookup(const tstring& key);     // 0x43a1e0
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                  // 0x5e2a18
 
 // --------------------------------------------------------------------------------- collision shapes ----
 // shape_base: 0x20 bytes; slot 0 dtor, slot 1 shape_type (the picker's `v1() != 2` mask key).
 // Layout and engine names are the ones verified in s00439100.h.
-struct shape_base {
-    int m4, m8, mc, min_x, min_y, max_x, max_y;
-    shape_base() : m4(-1), m8(8), mc(-1),
-                   min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
-    virtual ~shape_base() {}                                                  // slot 0   0x40a540 (??_G)
-    virtual int shape_type();                                                 // slot 1   0x408020
-    void intersect(vector4* out, const vector4* a, const vector4* b);         // 0x51a2d0
-};
+#include "../../include/shape.h"
+#include "../../include/mat4.h"
 
 struct sphere_shape : shape_base {           // 0x44, vtable 0x54a4f0 (the vptr stored into the local one)
     vector4 v20;                             // +0x20
@@ -49,47 +33,16 @@ struct sphere_shape : shape_base {           // 0x44, vtable 0x54a4f0 (the vptr 
     float   radius;                          // +0x40  (raw float store in the original)
 };
 
-struct capsule : shape_base {                // 0x64, vtable 0x54a540
-    char    geom[0x44];                      // +0x20  filled in by the ctor
-    capsule(float r, const vector4* a, const vector4* b);   // 0x433310
-    void transform(const matrix* m);                        // 0x408770
-};
 
-int  shape_contact_count(shape_base* a, shape_base* b, int max, void* out);  // 0x40bfe0
 matrix* identity(matrix* out);                                               // 0x40cd00
 
 // --------------------------------------------------------------------------------- map / game records --
 struct shape_base;
 
-struct Party;                                // 0x5ac8  party record (see s0051abd0)
 struct AgentRec;                             // 0x98    agent record
 
-struct PartyMgr {                            // embedded in GameData at +0xf8
-    char     pad0[0x138d0];
-    Party**  pages;                          // +0x138d0
-    int      index_of(int id);               // 0x48ad00
-    Party*   get(int id);                    // 0x51ee50
-};
+#include "../../include/game_data.h"
 
-struct Party {                               // 0x5ac8
-    char      pad00[0x30];
-    vector4   pos;                           // +0x30
-    char      pad40[0x68 - 0x40];
-    float     f68;                           // +0x68
-    char      pad6c[0xa0 - 0x6c];
-    unsigned  flags;                         // +0xa0
-    char      pada4[0x8c8 - 0xa4];
-    int       f8c8;                          // +0x8c8
-    char      pad8cc[0x918 - 0x8cc];
-    int       state;                         // +0x918
-    int       target;                        // +0x91c
-    char      pad920[0x924 - 0x920];
-    vector4   order_pos;                     // +0x924
-    char      pad934[0x5974 - 0x934];
-    char*     f5974;                         // +0x5974  (pointer to a sub-record; +4 is its group)
-    char      pad5978[0x5ac8 - 0x5978];
-    void      reissue_order();               // 0x4b3bc0
-};
 
 struct AgentRec {                            // 0x98
     char   pad00[0x10];
@@ -142,28 +95,6 @@ struct GroundItem {                          // 0x5c  fleet entry
     char     pad1c[0x5c - 0x1c];
 };
 
-struct GameData {
-    char      pad00[0x78];
-    int       player_party;                  // +0x78
-    char      pad7c[0x84 - 0x7c];
-    int       f84;                           // +0x84
-    char      f88;                           // +0x88
-    char      pad89[0x95 - 0x89];
-    char      f95;                           // +0x95
-    char      pad96[0xe4 - 0x96];
-    AgentRec** agent_pages;                  // +0xe4
-    char      pad_e8[0xf8 - 0xe8];
-    PartyMgr  parties;                       // +0xf8
-    char      pad1[0x13a64 - 0x139cc];
-    GroundItem* fleet;                       // +0x13a64
-    GroundItem* fleet_end;                   // +0x13a68
-    char      pad2[0x13bc4 - 0x13a6c];
-    int       n_labels;                      // +0x13bc4
-    int       cur_label;                     // +0x13bc8
-    tstring   labels[50];                    // +0x13bcc
-    int       label_target[64];              // +0x13eec
-    void      event(int a, int b, int c);    // 0x435790
-};
 
 static inline Party* party_at(GameData* g, int id)
 {
@@ -201,7 +132,6 @@ struct MapPanel {
 };
 
 // --------------------------------------------------------------------------------- globals -------------
-extern GameData* g_game;                     // 0x5e2930
 extern Level*    g_level;                    // 0xa732b4
 extern Mesh*     g_label_obj;                // 0x5d75ec
 extern float     g_box_x;                    // 0x5d8778
@@ -251,15 +181,15 @@ void MapPanel::update_target()
                         int sel = g_game->label_target[g_game->cur_label];
                         if (sel == -7) {
                             // "my own party" marker: retarget the player's party
-                            if (f2d8 != g_game->player_party) {
-                                g_game->f88 = 1;
-                                g_game->f84 = g_game->player_party;
-                                g_game->parties.get(g_game->player_party)->state  = 4;
-                                g_game->parties.get(g_game->player_party)->target = f2d8;
-                                g_game->parties.get(g_game->player_party)->reissue_order();
+                            if (f2d8 != g_game->f78) {
+                                g_game->map_live = 1;
+                                g_game->sel_party = g_game->f78;
+                                g_game->parties.get(g_game->f78)->action = 4;
+                                g_game->parties.get(g_game->f78)->target = f2d8;
+                                g_game->parties.get(g_game->f78)->reissue_order();
                             }
                         } else {
-                            g_game->event(0x16, f2d8, sel);
+                            g_game->emit_event(0x16, f2d8, sel);
                         }
                     }
                 }
@@ -310,7 +240,7 @@ void MapPanel::update_target()
     // ---- 0x51969b: thin capsule around the clipped segment -----------------------------------------
     capsule cap(0.0f, &np, &fp);
     matrix mtx;
-    cap.transform(identity(&mtx));
+    cap.transform((const pos*)identity(&mtx));
 
     // The sweep endpoints are built component-wise and only x/y of each are ever written; the third
     // lane is whatever the stack slot already held (reproduced verbatim -- see the notes).
@@ -334,7 +264,7 @@ void MapPanel::update_target()
         if (o->shape_type() != 2) continue;
         if (!shape_contact_count(o, &cap, 0, 0)) continue;
         vector4 hp;
-        o->intersect(&hp, &np, &fp);
+        ((face*)o)->intersect(&hp, &np, &fp);
         float ddx = hp.x - nearp.x;
         float ddy = hp.y - nearp.y;
         float ddz = hp.z - nearp.z;
@@ -370,10 +300,10 @@ void MapPanel::update_target()
         float d = sqrtf(ddx * ddx + ddy * ddy + ddz * ddz);
         if (o->kind == 1) {
             d -= 0.4f;
-            if (o->party == g_game->player_party) d += 0.35f;
+            if (o->party == g_game->f78) d += 0.35f;
         }
         if (!(d < bestd)) continue;
-        if (o->kind == 1 && (party_at(g_game, o->party)->flags & 0x80100)) continue;
+        if (o->kind == 1 && (party_at(g_game, o->party)->flags_lo & 0x80100)) continue;
         bestd   = d;
         bestobj = (shape_base*)o;
     }
@@ -384,7 +314,7 @@ void MapPanel::update_target()
             g_game->n_labels  = 0;
             g_game->cur_label = -1;
             f2d8 = ((MapAgent*)bestobj)->party;
-            g_game->event(0x15, f2d8, 0);
+            g_game->emit_event(0x15, f2d8, 0);
             if (g_game->n_labels > 0) {
                 f2d5 = 1;
                 set_label(f2d8);
@@ -393,7 +323,7 @@ void MapPanel::update_target()
         int kind = ((MapAgent*)bestobj)->kind;
         if (kind == 1) {
             int id = ((MapAgent*)bestobj)->party;
-            if (!(party_at(g_game, id)->flags & 0x80000))
+            if (!(party_at(g_game, id)->flags_lo & 0x80000))
                 update(1, id);
         } else if (kind == 2) {
             update(2, ((MapAgent*)bestobj)->party);
@@ -402,8 +332,8 @@ void MapPanel::update_target()
         // ---- 0x519a8b: ground items -----------------------------------------------------------------
         sphere_shape sh;
         int best_item = -1;
-        for (int i = 0; g_game->fleet && i < g_game->fleet_end - g_game->fleet; i++) {
-            GroundItem* it = g_game->fleet + i;
+        for (int i = 0; g_game->fleet && i < (GroundItem*)g_game->fleet_end - (GroundItem*)g_game->fleet; i++) {
+            GroundItem* it = (GroundItem*)g_game->fleet + i;
             if (!(g_game->f95 || (it->flags & 0x20000000))) continue;
             float ddx = it->pos.x - nearp.x;
             float ddy = it->pos.y - nearp.y;
@@ -422,33 +352,33 @@ void MapPanel::update_target()
 
     // ---- 0x519c01: post-selection -----------------------------------------------------------------
     if (!f2d5 && view->is_key_down(8)) {
-        g_game->f88 = 1;
-        g_game->f84 = g_game->player_party;
+        g_game->map_live = 1;
+        g_game->sel_party = g_game->f78;
     }
 
     if (bestobj) {
         int kind = ((MapAgent*)bestobj)->kind;
         if (kind == 1) {
-            if (((MapAgent*)bestobj)->party != g_game->player_party) {
+            if (((MapAgent*)bestobj)->party != g_game->f78) {
                 // 0x519c9e..0x519cd5: both arms are the same store (the `0x400` flags test survives
                 // only as a dead select); reproduced verbatim.
-                if (party_at(g_game, ((MapAgent*)bestobj)->party)->flags & 0x400)
-                    party_at(g_game, g_game->player_party)->state = 4;
+                if (party_at(g_game, ((MapAgent*)bestobj)->party)->flags_lo & 0x400)
+                    party_at(g_game, g_game->f78)->action = 4;
                 else
-                    party_at(g_game, g_game->player_party)->state = 4;
-                party_at(g_game, g_game->player_party)->target = ((MapAgent*)bestobj)->party;
-                party_at(g_game, g_game->player_party)->reissue_order();
+                    party_at(g_game, g_game->f78)->action = 4;
+                party_at(g_game, g_game->f78)->target = ((MapAgent*)bestobj)->party;
+                party_at(g_game, g_game->f78)->reissue_order();
             }
         } else if (kind == 3) {
             int id = ((MapAgent*)bestobj)->party;
-            AgentRec* rec = g_game->agent_pages[id >> 4] + (id & 0xf);
+            AgentRec* rec = ((AgentRec**)g_game->agent_pages)[id >> 4] + (id & 0xf);
             if (rec->kind == 1) {
-                Party* pl = party_at(g_game, g_game->player_party);
+                Party* pl = party_at(g_game, g_game->f78);
                 pl->state  = 4;
                 pl->target = rec->party;
                 pl->reissue_order();
             } else if (rec->kind == 2) {
-                Party* pl = party_at(g_game, g_game->player_party);
+                Party* pl = party_at(g_game, g_game->f78);
                 pl->state  = 9;
                 pl->target = id;
                 pl->reissue_order();
@@ -456,35 +386,35 @@ void MapPanel::update_target()
         }
     } else if (best >= 0) {
         if (g_a17148 && g_5a9fbc) {
-            party_at(g_game, g_game->player_party)->pos = bestpt;
+            *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
         } else if (!g_level->world->linked(&rec_index,
-                                           (const int*)(party_at(g_game, g_game->player_party)->f5974 + 4))) {
+                                           (const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
             return;
         }
-        party_at(g_game, g_game->player_party)->state = 6;
+        party_at(g_game, g_game->f78)->action = 6;
         {
-            Party* pl = party_at(g_game, g_game->player_party);
+            Party* pl = party_at(g_game, g_game->f78);
             pl->order_pos.x = bestpt.x;
             pl->order_pos.y = bestpt.y;
         }
-        party_at(g_game, g_game->player_party)->reissue_order();
+        party_at(g_game, g_game->f78)->reissue_order();
     }
 
     // ---- 0x519fe8: drop the order if the target vanished -------------------------------------------
-    if (party_at(g_game, g_game->player_party)->state != 4) return;
-    if (party_at(g_game, g_game->player_party)->target < 0) return;
+    if (party_at(g_game, g_game->f78)->action != 4) return;
+    if (party_at(g_game, g_game->f78)->target < 0) return;
 
     bool lost;
     {
-        Party* tgt = party_at(g_game, party_at(g_game, g_game->player_party)->target);
+        Party* tgt = party_at(g_game, party_at(g_game, g_game->f78)->target);
         // 0x51a099: f68 < 0.01 -> lost; 0x51a0fc: f8c8 >= 0 -> lost; 0x51a10f: (flags & 0x1080100)
         // nonzero -> lost.  All three tests jump *into* the body, i.e. the body runs unless
         // f68 >= 0.01 && f8c8 < 0 && the flags are clear.
-        lost = tgt->f68 < 0.01f ||
+        lost = tgt->alpha < 0.01f ||
                tgt->f8c8 >= 0 ||
-               (tgt->flags & 0x1080100) != 0;
+               (tgt->flags_lo & 0x1080100) != 0;
         if (lost) {
-            Party* pl = party_at(g_game, g_game->player_party);
+            Party* pl = party_at(g_game, g_game->f78);
             pl->state       = 6;
             pl->order_pos.x = tgt->pos.x;
             pl->order_pos.y = tgt->pos.y;
@@ -503,5 +433,5 @@ void MapPanel::update_target()
         }
     }
 
-    party_at(g_game, g_game->player_party)->reissue_order();
+    party_at(g_game, g_game->f78)->reissue_order();
 }

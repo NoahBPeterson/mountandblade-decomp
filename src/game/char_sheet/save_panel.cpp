@@ -65,9 +65,9 @@ struct SavePanel {
     void select(int idx);
 };
 
-struct StrTable { const tstring* lookup(const tstring* key); };    // 0x43a1e0
+#include "../str_table.h"
 extern StrTable g_strtable;                                     // 0x5e2a18
-struct MsgLog { void add(const tstring& msg, int color); };     // 0x452c00
+#include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                         // 0x5d7080
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);  // 0x415100
 int  __cdecl crt_sprintf(char* buf, const char* fmt, ...);      // 0x536f8f

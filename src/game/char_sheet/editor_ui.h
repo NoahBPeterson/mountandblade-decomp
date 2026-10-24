@@ -20,11 +20,8 @@
 #include "../tstring.h"
 
 // ---- resource manager (0x5d6fa0) -------------------------------------------------------------------
-struct mesh {
-    mesh* clone();                              // 0x41c6d0
-    void set_color(rgl::vector4 c);             // 0x47af30 (four floats by value)
-    void scale(float s);                        // 0x44f0c0
-};
+#include "../rgl_mesh.h"
+using rgl::mesh;
 
 struct resmgr {
     mesh* get_object(const tstring& name);      // 0x419540

@@ -16,10 +16,7 @@ extern const char EMPTY_TEXT[];                                     // 0x54a480 
 extern const float RENOWN_SCALE;                                    // 0x54ab28 (100.0f)
 
 // the game's localized-string table (0x5e2a18): lookup by a scratch tstring holding the text key
-struct StrTable {
-    tstring* lookup(tstring* key);                                  // 0x43a1e0 (ret 4)
-    tstring* find(tstring* key);                                    // 0x4c6010 (ret 4; null when not translated)
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                                         // 0x5e2a18
 
 // the keyboard object (0xa170c8); the key-name function only passes it through

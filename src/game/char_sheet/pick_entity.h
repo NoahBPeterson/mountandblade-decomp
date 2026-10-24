@@ -39,42 +39,20 @@ extern int g_sel_ent;                   // 0x5d8780
 #include "../tstring.h"
 extern tstring g_strs[];                // 0x5d7850 .. 0x5d7d50
 
-struct shape_base {                     // collision shape base
-    int m4, m8, mc, min_x, min_y, max_x, max_y;
-    virtual ~shape_base() {}
-    virtual int shape_type();
-    virtual void s2(void* m);           // set transform
-    virtual void s3(); virtual void s4(); virtual void s5(); virtual void s6();
-    virtual void s7(); virtual void s8(); virtual void s9();
-    virtual vector4* get_min(vector4* out);
-    virtual vector4* get_max(vector4* out);
-};
-struct shape_ext : shape_base { shape_ext(); };
-struct capsule : shape_ext {            // size 0x64
-    vector4 p0, p1, p2, p3;
-    float radius;
-    capsule(float r, const vector4* a, const vector4* b);    // 0x433310
-};
+#include "../../include/shape.h"
+
+
 struct sphere_shape : shape_base {      // size 0x44
     vector4 v20, v30; float radius;
     sphere_shape(const vector4* centre, float r);           // 0x408770
 };
-struct smat : rgl::matrix {
-    void scale_rows(const vector4* k);                      // 0x41fee0
-};
+using rgl::smat;
 void identity_pos(float* m);                                // 0x40cd00
 void capsule_ctor_inline(capsule* c, float r, const vector4* a, const vector4* b);  // 0x433310
 int __cdecl shape_contact_count(shape_base* a, void* b, int max, void* out);    // 0x40bfe0
 void __stdcall make_contact_box(void* out);                 // 0x408420
 
-struct scene {
-    char pad000[0x65dc];
-    int f65dc;                          // +0x65dc entity being built
-    int f65e0;                          // +0x65e0 entity list
-    char pad5e4[0x668c - 0x65e4];
-    int f668c;                          // +0x668c scene objects
-    int f6690;                          // +0x6690 end
-};
+#include "../mission.h"
 struct scene_row {                      // 0x1c8 bytes
     char pad000[0x18];
     vector4 mat[4];                     // +0x18 transform

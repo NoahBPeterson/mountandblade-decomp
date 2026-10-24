@@ -125,15 +125,15 @@ void TerrainPage::copy_code()
     hexbox->take(s);
     if (OpenClipboard(0)) {
         // GMEM_MOVEABLE | GMEM_ZEROINIT; a failure just leaves the clipboard closed again
-        HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, s.size + 1);
+        HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, s.len + 1);
         if (h) {
             EmptyClipboard();
             char* p = (char*)GlobalLock(h);
-            const char* src = s.p;
+            const char* src = s.buf;
             if (src == 0)
-                src = (const char*)&s.p;            // an empty string reads as the string object itself
-            memcpy(p, src, s.size);
-            p[s.size] = 0;
+                src = (const char*)&s.buf;            // an empty string reads as the string object itself
+            memcpy(p, src, s.len);
+            p[s.len] = 0;
             GlobalUnlock(h);
             SetClipboardData(CF_TEXT, h);
         }

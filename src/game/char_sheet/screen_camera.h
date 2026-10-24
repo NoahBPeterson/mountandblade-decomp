@@ -115,11 +115,14 @@ template <class T> struct vec {
 };
 
 // ---- the render scene (0x1d8 bytes, ctor 0x429740; see s00428240/world.h) ------------------------------
-struct frustum {
-    char b[0x120];
-    void build_planes();                        // 0x41e4f0
-};
-struct scene {
+#include "../../include/frustum.h"
+using rgl::frustum;
+#include "../rgl_mesh.h"
+using rgl::scene;
+// the scene-container object g_scene (0xa732b4, Mission +0) as the camera tick sees it: the slice called it `scene` because its first
+// 0x150 bytes are laid out like a render scene (frustum at +0x30), but it is much larger (the inverse frame at +0x30c); renamed so that
+// `scene` is only the 0x1d8-byte render scene (rgl_mesh.h) that the map widget embeds at +0x17c.
+struct WorldCam {
     int f0, f4, f8, fc, f10;                    // 0x00
     float f14;                                  // 0x14
     int f18, f1c, f20, f24, f28;                // 0x18
@@ -130,7 +133,6 @@ struct scene {
     vector4 f31c;                               // +0x31c  the eye
     char pad32c[0x350 - 0x32c];
     int f350;                                   // +0x350
-    scene();                                    // 0x429740
 };
 
 // the map widget: 0x358-byte widget with its embedded scene at +0x17c.  (Written with raw arrays so the
@@ -177,10 +179,7 @@ struct Screen {
 };
 
 // 0x4903e0 / 0x48ad00: thiscall on the party manager (g_game + 0xf8), one argument each
-struct PartyMgr {
-    int is_slot(int slot);                      // 0x4903e0
-    void* index_of(int slot);                   // 0x48ad00
-};
+#include "../../include/party.h"
 
 // ---- game objects -------------------------------------------------------------------------------------
 struct Game {
@@ -201,7 +200,7 @@ struct PartyRec {                               // 0x5ac8-byte party record
 
 // ---- globals ------------------------------------------------------------------------------------------
 extern Game* g_game;                            // 0x5e2930
-extern scene* g_scene;                          // 0xa732b4
+extern WorldCam* g_scene;                       // 0xa732b4
 extern int g_a17148;                            // 0xa17148
 extern int g_a1717c;                            // 0xa1717c
 extern int g_5a9fbc;                            // 0x5a9fbc
@@ -259,7 +258,7 @@ struct Matrix {
 
 // ---- callees ------------------------------------------------------------------------------------------
 mat4* identity(void* out);                                  // 0x40cd00 (cdecl, ret 0)
-unsigned pack_color(const vector4* c);                      // 0x40e440 (cdecl, ret 0)
+using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl_mesh.h)
 
 struct World;                                               // the strategy world (DAT_00a732b4-ish object)
 struct Envelope;                                            // the scene-envelope object 0x4624c0 works on

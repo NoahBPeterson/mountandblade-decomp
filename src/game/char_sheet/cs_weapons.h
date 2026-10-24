@@ -12,9 +12,7 @@
 #include "../tstring.h"
 
 // translation table object at 0x5e2a18
-struct StrTable {
-    tstring* lookup(const tstring& key) MB_NOTHROW; // 0x43a1e0
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                         // 0x5e2a18
 
 // ---- character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) --------
@@ -31,14 +29,7 @@ struct CharRec {
     int weapons_at(int index);                      // 0x4ef6d0 (grid-rounded value of the weapon experience table)
 };
 
-struct GameData {
-    char pad0[0x90];
-    int player;                                     // +0x90
-    char pad94[0x13a00 - 0x94];
-    CharRec* chars;                                 // +0x13a00
-    int skill_level(int troop, int skill);          // 0x437b20 (ret 8)
-};
-extern GameData* g_game;                            // 0x5e2930
+#include "../../include/game_data.h"
 
 extern int g_weapon_xp[];                           // 0x5938c8[9] (experience needed per weapon class)
 extern const char* g_weapon_xp_cats[];              // 0x5e2900[7] (per-class glyph category)

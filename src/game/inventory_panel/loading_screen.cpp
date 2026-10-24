@@ -2,19 +2,7 @@
 // All six functions belong to the module-loading state machine object.
 #include <stdio.h>
 
-struct tstring {
-    int pos;                            // +0
-    char* buf;                          // +4
-    int cap;                            // +8
-    int len;                            // +0xc
-    tstring();
-    tstring(const char* s);             // 0x42bbe0
-    tstring(const tstring& o);          // 0x42c110
-    ~tstring();                         // 0x42bc40
-    void assign(const char* s);         // 0x42bcb0
-    void append(const tstring& o);      // 0x42c1e0
-    const char* c_str() const { return buf ? buf : (const char*)&buf; }
-};
+#include "../tstring.h"
 
 // source record stream: the readers call three virtual slots
 struct Src {
@@ -236,9 +224,7 @@ void Entries::add(const Entry& val)
 // It translates the current phase name into `text`, runs the phase's work and bumps the step
 // (the caller is done when it returns true).  `total` is unused here.
 
-struct StrTable {
-    tstring* lookup(const tstring& key);             // 0x43a1e0
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                          // 0x5e2a18
 extern tstring  g_module_path;                       // 0x8ee3c28 (the module directory)
 

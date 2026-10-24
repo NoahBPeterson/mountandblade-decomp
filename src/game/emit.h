@@ -11,6 +11,8 @@
 #include "../include/mat4.h"
 #include "./tstring.h"
 
+struct tstream3;
+
 // plain 4-float vector for the members that share bytes with other views (rgl::vector4 has constructors)
 struct EmitVec4 { float x, y, z, w; };
 struct EmitPair { int a, b; };
@@ -79,6 +81,7 @@ struct Emit {                                           // particle emitter (0x1
     int f1b0, f1b4;                                     // +0x1b0
     int owner;                                          // +0x1b8
     Emit(const int* o) { f10 = 0; f14 = 0; f18 = 0; owner = *o; init(); }
+    Emit() { f10 = 0; f14 = 0; f18 = 0; owner = 0; init(); }   // mesh_slot/mesh_start.cpp 0x484590: `new Emit` for the scene fog / layer emitters
     void init();                                        // 0x420b40
     void reset_pending(int v);                          // 0x433810 (ret 4; agent4: the dust / splash emitters of a footstep)
     void set_v184(const rgl::vector4* v);               // 0x433740 (agent4: the velocity of an impact particle)
@@ -87,8 +90,10 @@ struct Emit {                                           // particle emitter (0x1
 struct EmitTable {
     EmitDef* defs;                                      // +0
     int count;                                          // +4
+    int idx1, idx2;                                     // +8, +0xc the definition indices of the two scene emitters (mesh_slot/mesh_start.cpp 0x484590)
     void setup(Emit* e, int idx, const rgl::vector4* pos);                  // 0x4424c0
     Emit* spawn(int* idx, const rgl::vector4* pos, const int* owner);       // 0x479d20 (mission.cpp)
+    void read(tstream3* s);                                                 // 0x4c1f70 (inventory_panel/module_files.cpp: the particle-system file loader)
 };
 extern EmitTable g_emit_defs;                           // 0x8ed5090
 #endif // GAME_EMIT_H

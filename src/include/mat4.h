@@ -16,12 +16,15 @@
 
 namespace rgl {
 
+struct mat4;
 struct rot3 { vector4 s, f, u; };                                   // 3x3 rotation, rows padded to 4 floats
 
 struct mat3 {                                                       // same rows as rot3
     vector4 s, f, u;
     mat3() {}
     __forceinline mat3(const vector4& s_, const vector4& f_, const vector4& u_) : s(s_), f(f_), u(u_) {}
+    mat4 operator*(const mat4& b) const;                    // 0x40e870 (the same function as mat4::operator*; char_sheet/save_panel.cpp 0x4ea0c0 calls it
+                                                            // with a mat3 left operand, the 0x30-byte identity3 result, so the caller passes &mat3 in ECX)
 };
 
 struct mat4 : matrix {                                      // no constructors: the rgl scene code keeps it an aggregate
@@ -30,6 +33,8 @@ struct mat4 : matrix {                                      // no constructors: 
     mat3 rot3(const matrix& m) const;                       // 0x40a920 (rotation part of this * m; hidden mat3 return)
     mat3* rot_t(mat3* out) const;                           // 0x429670 (transposed rotation of this, returns out)
     mat4 relative(const mat4& base) const;                  // 0x4329d0 (hidden return + base)
+    void rotate_fu(const float* angle);                     // 0x40e570 (thiscall, ret 4: char_sheet/facegen_misc.cpp, cam_view.cpp)
+    void rotate_su(const float* angle);                     // 0x40e670 (thiscall, ret 4: char_sheet/cam_view.cpp)
 };
 
 // a frame whose rows can be scaled in place (entity::local)

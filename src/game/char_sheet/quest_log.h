@@ -25,10 +25,8 @@ using rgl::vector4;
 
 // ---- engine helpers -----------------------------------------------------------------------------------------
 #include "../tstring.h"
-struct mesh {                           // a resource object (0x41c6d0 clone / 0x47af30 set_color)
-    mesh* clone();
-    int set_color(vector4 c);
-};
+#include "../rgl_mesh.h"
+using rgl::mesh;
 struct resmgr {                         // global at 0x5d6fa0
     mesh* get_object(tstring* name);    // 0x419540
 };

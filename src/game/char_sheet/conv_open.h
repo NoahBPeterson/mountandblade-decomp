@@ -92,9 +92,7 @@ struct gui_manager_s {
 };
 extern gui_manager_s* g_gui;                             // 0x5d7080
 void choice_finalize(void* box);                         // 0x488d50
-struct StrTable {
-    tstring* find(const tstring* key);                   // 0x43a1e0
-};
+#include "../str_table.h"
 extern StrTable g_strtable;                              // 0x5e2a18
 
 // ---- widget slots used here (s004f73c0 / s0042d360 gui.h) ----------------------------------------------
@@ -179,23 +177,10 @@ struct ConvScreen {
 };
 
 // ---- mission / agent list helpers ---------------------------------------------------------------------
-struct Agent {
-    char pad[0x88];
-    int agent_id;                                        // +0x88
-};
-struct AgentTable {
-    char pad0[4];
-    int count;                                           // +4
-    Agent* get(int i);                                   // 0x43b1f0
-};
-struct Mission {
-    char pad0[4];
-    AgentTable* agents;                                  // +4
-    char pad8[0x1c - 8];
-    Agent** pages;                                       // +0x1c
-};
+#include "../mission.h"
+
+
 extern Mission* g_mission;                               // 0x5e292c
-void agent_reveal(Agent* a);                             // 0x4f7d70
 void screen_refresh(int mode, int* out);                 // 0x4f73c0 (ecx = screen)
 
 #define PI_OVER_EIGHT 0.39269909262657166   // 0x599200 (read as a double constant by fptan)

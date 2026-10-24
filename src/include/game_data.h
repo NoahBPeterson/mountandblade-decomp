@@ -36,12 +36,17 @@ struct GameData {
         int f78;                                // +0x78 (default party)   0x4428c0
         int party_id_78;
     };
-    char pad7c[0x8c - 0x7c];
+    char pad7c[0x84 - 0x7c];
+    int sel_party;                              // +0x84 the party selected on the map (inventory_panel/map_update.cpp 0x5191e0, map_info.cpp 0x51abd0; char_sheet/screen_camera.cpp 0x4ece20 follows it)
+    char map_live;                              // +0x88 the map is live (0x5191e0, 0x4ece20)
+    char pad89[0x8c - 0x89];
     union {
         int player;                             // +0x8c (the player's troop id)   0x460160, 0x460640
         int player_troop;
     };
-    char pad90[0x98 - 0x90];
+    char pad90[0x95 - 0x90];
+    char f95;                                   // +0x95 (inventory_panel/map_update.cpp 0x5191e0)
+    char pad96[0x98 - 0x96];
     int cnt_killed;                    // +0x98 0x457b40 (kills of the player)
     int cnt_killed_friend;                    // +0x9c 0x457b40
     int cnt_ko;                    // +0xa0 0x457b40 (knock-outs by the player)
@@ -50,7 +55,9 @@ struct GameData {
     int fb0;                                    // +0xb0   0x4610b0
     char padb4[0xc8 - 0xb4];
     int fc8;                                    // +0xc8   0x460620, 0x460d80
-    char padcc[0xf8 - 0xcc];
+    char padcc[0xe4 - 0xcc];                    // +0xcc a paged table of 0x98-byte scene records (16 per page); its API is 0x48ef20 slot() (map_info.cpp), see party2/camera.cpp (BattleTable)
+    void** agent_pages;                         // +0xe4 its page table: first pointer of the vector at +0xe0 (map_update.cpp 0x5191e0, map_info.cpp 0x48ef20, camera.cpp)
+    char pade8[0xf8 - 0xe8];
     PartyMgr parties;                           // +0xf8 .. +0x139d8 (gui_edit.cpp called it `pm`)
     char pad139d8[0x139e4 - 0x139d8];
     int f139e4;                                 // +0x139e4 (0x443aa0)
@@ -82,7 +89,10 @@ struct GameData {
     char pad13a54[4];
     QuestRec* quests;                           // +0x13a58   0x4c8ca0
     int n_quests;                               // +0x13a5c
-    char pad13a60[0x13b18 - 0x13a60];
+    char pad13a60[4];                           // +0x13a60 allocator word of the event / fleet vector
+    char* fleet;                                // +0x13a64 first of the 0x5c-byte fleet / battle records (std::vector first; map_update.cpp 0x5191e0, map_info.cpp 0x51abd0, map_tooltip.cpp 0x51c090; party2 push_event 0x4b5fe0)
+    char* fleet_end;                            // +0x13a68 its last (map_update.cpp)
+    char pad13a6c[0x13b18 - 0x13a6c];
     int f13b18;                                 // +0x13b18 tick index (8-byte entries) (0x4792d0)
     char pad13b1c[4];
     unsigned f13b20;                            // +0x13b20 low word of the mission tick clock
@@ -90,7 +100,11 @@ struct GameData {
     char pad13b28[0x13b64 - 0x13b28];
     float val[4][4];                            // +0x13b64 four wind anchors: four weights / values each (0x471040)
     float pos[4][2];                            // +0x13ba4 their xy positions
-    char pad13bc4[0x1405c - 0x13bc4];
+    int n_labels;                               // +0x13bc4 (inventory_panel/map_update.cpp 0x5191e0, map_picker.cpp)
+    int cur_label;                              // +0x13bc8
+    tstring labels[50];                         // +0x13bcc the map label texts (0x10 each)
+    int label_target[64];                       // +0x13eec the party id of each label (map_update.cpp)
+    char pad13fec[0x1405c - 0x13fec];
     int tbl[64][32];                            // +0x1405c (0x473a60)
     char pad1605c[0x1a090 - (0x1405c + 64 * 32 * 4)];
     int f1a090;                                 // +0x1a090 (0x472050)
@@ -111,6 +125,7 @@ struct GameData {
     char emit_event(int id, int a, int b);      // 0x435790 (ret 0xc)
     void set_matrix(const rgl::matrix* m);      // 0x435650 (agent4: sound-event context frame)
     void add_experience(int troop, int amount); // 0x4428c0 (ret 8) (agent_fx_sound.cpp)
+    void party_counts(int id, int* extra, int* wounded, int* size);   // 0x51be60 (inventory_panel/map_tooltip.cpp, called by map_info.cpp 0x51abd0: counts a party's heroes and wounded)
     bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4)
     void blend(float* out, float x, float y);   // 0x471040 (wind / sky blend over the anchors)
     void save_language_files(bool translated);  // 0x4c8ca0

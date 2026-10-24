@@ -9,18 +9,7 @@
 #include <math.h>
 
 // ---- tstring (0x10 bytes: read cursor, buffer, capacity, length) -------------------------------------
-struct tstring {
-    int pos;                                        // +0
-    char* buf;                                      // +4
-    int cap;                                        // +8
-    int len;                                        // +0xc
-    tstring();                                      // 0x42bbd0
-    tstring(const char* s);                         // 0x42bbe0
-    tstring(const tstring& o);                      // 0x42c110
-    ~tstring();                                     // 0x42bc40
-    void assign(const char* s);                     // 0x42bcb0
-    void clear();                                   // 0x42be50
-};
+#include "../tstring.h"
 
 // the engine's "null or pointer" read used all over the code base (buf == 0 -> the field itself)
 static __forceinline const char* c_str(const tstring* s)

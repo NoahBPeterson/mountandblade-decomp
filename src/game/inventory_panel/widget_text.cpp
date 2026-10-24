@@ -14,17 +14,7 @@
 #include "rgl.h"
 
 // ------------------------------------------------------------------ engine string (0x10 bytes) -----------
-struct tstring {
-    int pos;            // +0  read cursor
-    char* buf;          // +4
-    int cap;            // +8
-    int len;            // +0xc
-    tstring();                                      // 0x42bbd0
-    tstring(const tstring& o);                      // 0x42c110
-    ~tstring();                                     // 0x42bc40
-    const char* c_str() const { return buf ? buf : (const char*)&buf; }
-    tstring strip_tags() const;                     // 0x42c5d0
-};
+#include "../tstring.h"
 
 // ------------------------------------------------------------------ records --------------------------------
 // 0x50-byte item stored inside `named_vec::items` (name + tail pointer, see 0x4d10f0).
