@@ -1,0 +1,1 @@
+0040cd60 ?identity3@rgl@@YAPAUmat3@1@PAU21@@Z  # 3x3 identity into out (scene_math.h declares it in namespace rgl; the shapes module defines the global spelling)

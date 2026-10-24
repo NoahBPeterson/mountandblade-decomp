@@ -530,12 +530,27 @@ extern Pawn* g_edited_object;                           // 0x5e292c+0x65e4 (the 
 #include "../../include/vec.h"
 
 // the map editor's object dialog
+namespace rgl { struct mesh; struct mat3; }
 struct MapEditorDialog {
-    char pad[0x374];
+    char pad[0x248];
+    float cam_x;                                        // 0x248 camera direction (0x5305b0 negates the three into the editor frame)
+    float cam_y;                                        // 0x24c
+    float cam_z;                                        // 0x250
+    char pad254[0x2cc - 0x254];
+    int picked;                                         // 0x2cc picked record index (0x5305b0)
+    char pad2d0[0x2f8 - 0x2d0];
+    char f2f8;                                          // 0x2f8 (0x5305b0: cleared before handle_input, which sets it)
+    char f2f9;                                          // 0x2f9 (0x5305b0: selection markers need a rebuild)
+    char pad2fa[0x374 - 0x2fa];
     HWND hwnd;                                          // 0x374
     void refresh();                                     // 0x4c77c0
     void update_object_type();                          // 0x4c7bf0
     void update_objects();                              // 0x4c7e20
+    // ---- src/game/map_editor (map_editor.cpp, 0x5305b0..0x531590); the argument types are the callers' views ----
+    void update();                                      // 0x5305b0
+    void add_selected(rgl::mesh* m, const rgl::matrix* frame, void* rec, unsigned color);   // 0x5314e0 (ret 0x10)
+    void select_entity(rgl::mesh* m, void* rec, unsigned color);    // 0x4ea0c0 (ret 0xc)
+    void handle_input(bool& moved, rgl::vector4& pos, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag);   // 0x52fe40 (ret 0x1c)
 };
 
 // a game frame's camera: +0x1a098 the edited map-object index, +0x1a09c the eye position, +0x1a0ac the

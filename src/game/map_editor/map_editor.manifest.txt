@@ -1,0 +1,2 @@
+../src/game/map_editor/map_editor.cpp  ?remove_prop@MapMission@@QAEXH@Z  005313c0  /O2 /MT /Gy /TP
+../src/game/map_editor/map_editor.cpp  ?erase@PropVec@@QAE?AViterator@?$vector@URec1c8@@V?$allocator@URec1c8@@@std@@@std@@V234@@Z  00531470  /O2 /MT /Gy /TP

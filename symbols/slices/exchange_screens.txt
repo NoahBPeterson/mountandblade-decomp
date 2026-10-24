@@ -1,0 +1,2 @@
+00513710 ?commit@FrameFlags@@QAEXPAX@Z  # the framed command block at 0x5e291c (called with char* / int* / char[] out arguments)
+00535712 ??3@YAXPAX@Z  # operator delete (libcmt thunk, jmp _free): clear_anim / the page-step blocks of 0x533aa0 call it, not free
