@@ -60,7 +60,7 @@ void ItemRef::compact(int n)
 // Views of members defined in this file as an object that does not know them (an undefined declaration): the original
 // calls set_attr (from add_attr) and compact (from sort_inv) with `this` kept in a callee-saved register, as for a callee
 // outside the translation unit; a same-file callee lets cl assume its register use and inline part of it.
-struct TroopExt { void set_attr(int idx, int val); };     // 0x48be70
+#include "../troop_ext.h"      // TroopExt: the one definition (falloff 0x4375b0, set_attr 0x48be70)
 struct ItemRefExt { void compact(int n); };               // 0x48be00
 
 // the attribute words (+0x58) and the packed skill words (+0x68) as the setters index them

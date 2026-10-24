@@ -25,6 +25,7 @@
 #include "../view_state.h"
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
+#include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // ---- layout proofs of the members this object added to PartyWindow ---------------------------------------------------------
 typedef char chk_page_widget[offsetof(PartyWindow, page_widget) == 0x2c ? 1 : -1];
@@ -49,11 +50,7 @@ static __forceinline float cfg(const tstring& n)
     return r;
 }
 
-struct v2 {
-    float x, y;
-    v2() {}
-    v2(float a, float b) : x(a), y(b) {}
-};
+// (x, y) pair handed to the widget methods: Vec2 of include/vec.h (was Vec2 here)
 
 extern "C" int sprintf(char* dst, const char* fmt, ...);    // 0x536f8f
 
@@ -129,16 +126,16 @@ void PartyWindow::create()
     InvWindow* win = new InvWindow;
     container = win;
     {
-        v2 p(0.0f, 0.0f);
+        Vec2 p(0.0f, 0.0f);
         WOPS(win)->set_pos(&p.x);
     }
     {
-        v2 s(1.0f, 0.75f);
+        Vec2 s(1.0f, 0.75f);
         WOPS(win)->set_scale(&s.x);
     }
     {
         tstring n("inventory_window_b");
-        MeshOps* m = g_resmgr_party.get_object(&n)->clone();
+        ResMesh* m = g_resmgr_party.get_object(&n)->clone();
         WOPS(win)->add_image(0, m);
     }
 
@@ -219,11 +216,11 @@ void PartyWindow::create()
 
         float m = rows_h < visible ? rows_h : visible;
         {
-            v2 p(v->fE8, v->fEC - m);
+            Vec2 p(v->fE8, v->fEC - m);
             WOPS(v)->set_pos(&p.x);
         }
         {
-            v2 s(v->screen[0], m);
+            Vec2 s(v->screen[0], m);
             WOPS(v)->set_scale(&s.x);
         }
         ((ViewOps*)v)->layout();
@@ -290,7 +287,7 @@ void PartyWindow::create()
         float step = cfg(tstring("inv_t_armor_y_a"));
         float ry = (float)r;
         {
-            v2 p(a->fE8, a->fEC - step * ry);
+            Vec2 p(a->fE8, a->fEC - step * ry);
             WOPS(a)->set_pos(&p.x);
         }
         WOPS(container)->add_child(a);
@@ -300,7 +297,7 @@ void PartyWindow::create()
             label_refresh(a2, tstring("inv_t_armor_base2"));
             float step2 = cfg(tstring("inv_t_armor_y_a"));
             {
-                v2 p(a2->fE8, a2->fEC - step2 * ry);
+                Vec2 p(a2->fE8, a2->fEC - step2 * ry);
                 WOPS(a2)->set_pos(&p.x);
             }
             WOPS(container)->add_child(a2);

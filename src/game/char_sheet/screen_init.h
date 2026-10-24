@@ -151,31 +151,16 @@ struct MapWidget : Widget {
 struct Rect {                                   // the 0x10-byte region copied into Screen+0x290
     int x, y, w, h;
 };
-struct Game {
-    char pad0[0x78];
-    int side_party;                             // +0x78
-    char pad7c[0x88 - 0x7c];
-    char f88;                                   // +0x88
-    char pad89[0x139d4 - 0x89];
-    int parties_end;                            // +0x139d4 (party-list end handle)
-    char pad139d8[0x13acc - 0x139d8];
-    float f13acc;                               // +0x13acc (scaled zoom)
-    char pad13ad0[0x1a090 - 0x13ad0];
-    int f1a090;                                 // +0x1a090
-};
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 struct GuiMgr { void reset(); void add_root(void* p); };
 struct ResMgr { void* get_object(const tstring& n); };
-struct StrTab {                                 // 0x5e2a18
-    char pad0[0xdf34];
-    const void* find(const tstring& name);      // 0x43a1e0
-};
+#include "../str_table.h"                      // StrTable (0x5e2a18; was StrTab here: find(name) was lookup 0x43a1e0)
 
 #define g_gui     (*(GuiMgr*)0x5d7080)
 #define g_resmgr  (*(ResMgr*)0x5d6fa0)
-#define g_strtab  (*(StrTab*)0x5e2a18)
+#define g_strtab  (*(StrTable*)0x5e2a18)
 
-extern Game* g_game;                            // 0x5e2930
 extern char g_5e212c;                           // 0x5e212c
 extern char g_5d8788;                           // 0x5d8788
 extern int g_5a9fb0;                            // 0x5a9fb0 (no terrain camera)

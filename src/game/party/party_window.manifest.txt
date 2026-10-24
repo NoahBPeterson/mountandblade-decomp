@@ -6,5 +6,5 @@
 ../src/game/party/party_window.cpp  ?add_strip_icon@PartyWindow@@QAEXPADABUtstring@@HH@Z  005024e0  /O2 /MT /Gy /TP
 ../src/game/party/party_window.cpp  ?init_window@PartyWindow@@QAEXXZ  005025a0  /O2 /MT /Gy /TP
 ../src/game/party/party_window.cpp  ?place_slot@PartyWindow@@QAEXPAUMissionUi@@PAUItemRef@@HPAHHD@Z  005029f0  /O2 /MT /Gy /TP
-../src/game/party/party_window.cpp  ?make_mesh@PartyWindow@@QAEPAUMeshOps@@PAUItemRef@@PAMH@Z  00502b80  /O2 /MT /Gy /TP
+../src/game/party/party_window.cpp  ?make_mesh@PartyWindow@@QAEPAUResMesh@@PAUItemRef@@PAMH@Z  00502b80  /O2 /MT /Gy /TP
 ../src/game/party/party_window.cpp  ?refresh_stash@PartyWindow@@QAEXH@Z  00502c30  /O2 /MT /Gy /TP

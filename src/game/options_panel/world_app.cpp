@@ -54,7 +54,7 @@ struct TStr {
     ~TStr();                                        // 0x42bc40
 };
 void  ui_open_close(int flag);                      // 0x494260
-struct StrTab { const tstring* lookup(const tstring& s); };   // 0x43a1e0
+#include "../str_table.h"                                      // StrTable (0x5e2a18; was StrTab here: lookup 0x43a1e0)
 struct UiObj { void open(int flag); };                         // 0x494260
 
 struct Rec34 {
@@ -262,9 +262,9 @@ void restore_defaults()
             tstring s1("ui_no_discard_changes");
             tstring s2("ui_yes_save");
             tstring s3("ui_question_save_changes");
-            const tstring* r1 = ((StrTab*)0x5e2a18)->lookup(s1);
-            const tstring* r2 = ((StrTab*)0x5e2a18)->lookup(s2);
-            const tstring* r3 = ((StrTab*)0x5e2a18)->lookup(s3);
+            const tstring* r1 = ((StrTable*)0x5e2a18)->lookup(s1);
+            const tstring* r2 = ((StrTable*)0x5e2a18)->lookup(s2);
+            const tstring* r3 = ((StrTable*)0x5e2a18)->lookup(s3);
             char* ui = g_ui;
             ((tstring*)(ui + 0x68))->clear();
             *(tstring*)(ui + 0x1c) = *r3;

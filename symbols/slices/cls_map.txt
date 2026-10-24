@@ -43,7 +43,7 @@
 004dcbd0 ?new_long_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z
 004dcc50 ?new_sized_button@@YAPAUUiAInline@@PAUMissionUi@@ABUtstring@@MMM11MMM@Z
 004dce70 ?new_medium_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z
-004dcef0 ?create@MainMenu@@QAEXXZ
+004dcef0 ?create@MainMenuScreen@@QAEXXZ
 004dd6e0 ?scan_saves@@YAXHPAH0PBD@Z
 004dd7b0 ?save_path@@YAXPAD@Z
 004dd830 ?build_row@@YAPAUUiAInline@@PAUContainerBase@@PBUtstring@@MMMM@Z

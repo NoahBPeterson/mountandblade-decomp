@@ -102,8 +102,8 @@ void PartyScreen::open_party_window()
 
     {
         tstring key("party_window_b");
-        RMesh* m = g_resmgr_inv.get_object(key);
-        RMesh* c = m->clone();
+        ResMesh* m = g_resmgr_inv.get_object(key);
+        ResMesh* c = m->clone();
         PSO(win)->add_image(0, c);
     }
     g_ui_changed = 1;

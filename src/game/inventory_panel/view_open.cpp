@@ -151,9 +151,7 @@ struct obj_tbl {
 };
 extern obj_tbl g_obj;                                       // 0xa75f40
 
-struct resmgr {
-    mesh* get_object(const tstring& n);                     // 0x419540 (ret 4)
-};
+#include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                                     // 0x5d6fa0
 
 // ---- the global animator ---------------------------------------------------------------------------------
@@ -168,14 +166,7 @@ extern int g_char_count;                                    // 0x8ed4f88
 int gen_face_seed(int* skin, int* flags, int* count);       // 0x432510
 
 // ---- the game singleton ----------------------------------------------------------------------------------
-struct Game {
-    char pad0[0x13a00];
-    char* chars;                                            // +0x13a00 (troop records, stride 0x508)
-    char pad13a04[0x13b08 - 0x13a04];
-    int f13b08;                                             // +0x13b08
-    int f13b0c;                                             // +0x13b0c
-};
-extern Game* g_game;                                        // 0x5e2930
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 extern float g_fov_k;                                       // 0x5e20a8
 extern int g_a181ac;                                        // 0xa181ac
 extern int g_a75f64;                                        // 0xa75f64
@@ -300,7 +291,7 @@ void char_window::open_view()
         ui->add_child(b);
         if (f2dc == -1) {
             // seed the body's face from the troop record and start the idle animation
-            char* rec = g_game->chars + troop * 0x508;
+            char* rec = g_game->chars_c + troop * 0x508;
             int skin = *(int*)(rec + 0x30) & 0xf;
             int flags = 0;
             g_anim.cur = gen_face_seed(&skin, &flags, &g_char_count);

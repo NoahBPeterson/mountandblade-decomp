@@ -171,10 +171,7 @@ struct vec1c8 {
     int al; E1c8* first; E1c8* last; E1c8* end;
     E1c8* at(int i);                                    // 0x438c10
 };
-struct vec_int {
-    int al; int* first; int* last; int* end;
-    int* fill_ptr(int* f, unsigned n, const int& x);    // 0x438c30
-};
+#include "../int_vec.h"                                 // IntVec (was vec_int here: fill_ptr 0x438c30)
 // vector<E12>::_Ucopy -> std::_Uninit_copy over the 12-byte records of the next object (0x436d10, src/game/agent)
 E12* __cdecl uninit_copy12(E12* f, E12* l, E12* d, void* al, ptr_tag tag);
 void __cdecl push_heap_node(hnode* first, int hole, int top, hnode val, node_gt pred);   // 0x4b2520

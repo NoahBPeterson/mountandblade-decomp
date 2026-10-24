@@ -137,9 +137,6 @@ struct FrameNode {                                                // a scene nod
     char pad0[0x58];
     matrix pos;
 };
-struct GameClock {                                                // the game object's time of day
-    float time_of_day();                                          // 0x4356e0
-};
 struct SunBody {                                                  // an agent's scene body as the sun pass reaches it (AgentBody's vtable slot 8 and member 0x4b1800)
     virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4(); virtual void s5(); virtual void s6();
     virtual void s7();

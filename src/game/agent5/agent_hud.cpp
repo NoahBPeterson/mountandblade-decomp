@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include "./agent_hud.h"
 #include "../../rgl/mesh_x.h"
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
 // ---- the mission's agent (re)initialisation ------------------------------------------------------------------
@@ -719,7 +720,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     FrameNode* flare = (FrameNode*)f65c0;
     if (!flare)
         return;
-    float tod = ((GameClock*)g_game)->time_of_day();
+    float tod = g_game->time_of_day();
     bool day = tod >= 4.0f && tod < 20.0f;
     int step = (int)((g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f);
     vector4 dir = g_env_rows[cam_row].get_dir(step % 24, day);

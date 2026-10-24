@@ -44,12 +44,7 @@ struct Widget {
     virtual char used(int flag);                        // +0x44
 };
 
-struct MainMenu {
-    char pad0[0x18];
-    int  sel;                                           // +0x18
-    void choose(int option);                            // 0x495700 (this = 0xa73980, ret 4)
-};
-extern MainMenu g_main_menu;                            // 0xa73980
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 // ---- serialisation streams ------------------------------------------------------------------------------
 struct OutStream;
@@ -91,6 +86,7 @@ void copy_ctor(void* dst, const void* src);             // 0x42c110
 
 // ---- the game object (see s00473a60) ---------------------------------------------------------------------
 struct SaveCtx;
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 #pragma pack(push, 4)
 struct GameRecord {
     tstring name;                                       // +0x00
@@ -101,30 +97,7 @@ struct GameRecord {
     char    padb4[0x508 - 0xb4];
 };
 
-struct Game {
-    int          version;                               // +0x0
-    int          pad04;                                 // +0x4
-    tstring      title;                                 // +0x8
-    int          unk18;                                 // +0x18
-    char         pad1c[0x20 - 0x1c];
-    char*        save_slot;                             // +0x20
-    char         pad24[0x8c - 0x24];
-    int          f8c;                                   // +0x8c
-    char         pad90[0x13a00 - 0x90];
-    GameRecord*  records;                               // +0x13a00
-    char         pad13a04[0x13a50 - 0x13a04];
-    char*        parties;                               // +0x13a50
-    char         pad13a54[0x13b18 - 0x13a54];
-    int          f13b18;                                // +0x13b18
-    char         pad13b1c[0x13b20 - 0x13b1c];
-    __int64      clock;                                 // +0x13b20
-    void load_header(SaveCtx* h);                       // 0x4e8e70 (ret 4)
-    int save_state(OutStream* out);                     // 0x4e8f10 (later slice)
-    void sl_update_avg();                               // 0x48a000
-    void world_free();                                  // 0x492f40
-};
 #pragma pack(pop)
-extern Game* g_game;                                    // 0x5e2930
 extern __int64 g_ticks[2];                              // 0x5e2948
 extern float g_54a6d0;                                  // 0x54a6d0
 extern int   g_59811c;                                  // 0x59811c ("WRDR")

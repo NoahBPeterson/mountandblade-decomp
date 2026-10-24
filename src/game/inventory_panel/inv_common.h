@@ -68,23 +68,9 @@ struct GuiRoot {
 extern GuiRoot g_gui_root;                          // 0x5d7080
 
 // the main menu / screen manager (0xa73980)
-struct MainMenu {
-    int f0;                                         // +0x00
-    int f4;                                         // +0x04
-    void ask(tstring* question, tstring* yes, tstring* no, int* result);   // 0x48a3d0 (ret 0x10)
-    void reset(int n);                              // 0x494260 (ret 4)
-    void go(int n);                                 // 0x495700 (ret 4)
-};
-extern MainMenu g_main_menu;                        // 0xa73980
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
-struct MapFlags {                                   // the commit-state block at 0x5e291c (0x513710)
-    char f0, f1, f2;                                // 0x5e291c, 0x5e291d, 0x5e291e
-    char pad3;
-    int f4;                                         // 0x5e2920
-    int f8;                                         // 0x5e2924
-    void commit(char* out);                         // 0x513710 (ret 4)
-};
-extern MapFlags g_map_flags;                        // 0x5e291c
+#include "../map_flags.h"                             // MapFlags (0x5e291c): the one definition
 #define GD_I(off) (*(int*)((char*)g_game + (off)))
 #define GD_F(off) (*(float*)((char*)g_game + (off)))
 #define GD_C(off) (*(char*)((char*)g_game + (off)))
@@ -150,9 +136,8 @@ static inline Party* party_index(int id)
 #define PARTIES (&g_game->parties)
 
 // the rgl mesh/resource objects reached through the resource manager (0x5d6fa0)
-struct RMesh { RMesh* clone(); };                   // 0x41c6d0
-struct RResMgr { RMesh* get_object(const tstring& name); };   // 0x419540
-extern RResMgr g_resmgr_inv;                        // 0x5d6fa0
+#include "../res_mesh.h"                       // ResMesh (was RMesh), ResMgr (was RResMgr), ObjTable: the one definition
+extern ResMgr g_resmgr_inv;                        // 0x5d6fa0
 
 void __cdecl label_refresh(void* w, tstring name);  // 0x4e4c70 (cdecl, the name by value: sets a freshly built widget up from its ini keys)
 

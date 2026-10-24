@@ -39,6 +39,15 @@
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../int_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../string_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../world.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // ==== error reporting and argument validators (static, same object) =========================================
 
@@ -313,7 +322,7 @@ static __declspec(noinline) char warn_scene_prop_instance(const int& value)
     char buf[512];
     int id = value;
     if (g_mission && id >= 0) {
-        if (mission()->props.first && id < mission()->props.size())
+        if (mission()->props._Myfirst && id < mission()->props.count())
             return 1;
     }
     sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Scene_prop Instance ID: %d", g_cur_opcode, id);
@@ -458,7 +467,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         result = 0;
         if ((__int64)party(game->main_party)->ai_object == params[0] &&
             party(game->main_party)->ai_behavior == ai_bhvr_attack_party) {
-            float dist = (party(party(game->main_party)->ai_object)->pos - party(game->main_party)->pos).out_length();
+            float dist = (party_pos(party(party(game->main_party)->ai_object)) - party_pos(party(game->main_party))).out_length();
             if (party(game->main_party)->radius * 2.3f >= dist)
                 result = 1;
         }
@@ -614,7 +623,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             result = party((int)params[0])->ai_behavior == ai_bhvr_in_town;
         break;
     case op::party_is_active:
-        if (game()->parties.is_party((int)params[0]) &&
+        if (game()->parties.is_live((int)params[0]) &&
             (party((int)params[0])->flags & 0x1080100) == 0)   // pf_disabled | 0x80000 | 0x1000000
             result = 1;
         else
@@ -1552,7 +1561,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                         float hp = (float)troops[((PartyX*)pm->get(main))->stacks[i].troop].max_hit_points();
                         troops[((PartyX*)pm->get(main))->stacks[i].troop].hit_points = hp;
                     } else
-                        ((PartyX*)pm->get(main))->stacks[i].num_wounded = 0;
+                        ((PartyX*)pm->get(main))->stacks[i].wounded = 0;
                     g = game();
                 }
                 main = g->main_party;
@@ -1577,7 +1586,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::add_companion_party:
         // (add_companion_party, <troop_id_hero>)
         if (check_troop((int)params[0])) {
-            int np = game()->create_companion_party((int)params[0], party(game()->main_party)->pos);
+            int np = game()->create_companion_party((int)params[0], party_pos(party(game()->main_party)));
             party(np)->faction = 0;
             party(np)->flags |= 0x100000;                   // pf_limit_members
             party(np)->f8e4 = 6;
@@ -2079,7 +2088,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             else
                 party((int)params[0])->flags &= ~params[1];
             party((int)params[0])->update_flags();
-            party((int)params[0])->dirty = 1;
+            party((int)params[0])->f8b5 = 1;
         }
         break;
     case op::party_set_extra_text:
@@ -2156,11 +2165,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     !(((PartyX*)pm->get(p))->stacks[i].flags & 1))
                     found = i;
             if (found >= 0) {
-                int w = ((PartyX*)pm->get(p))->stacks[found].num_wounded + (int)params[2];
+                int w = ((PartyX*)pm->get(p))->stacks[found].wounded + (int)params[2];
                 int v = min_int(w, ((PartyX*)pm->get(p))->stacks[found].count);
                 if (v < 0)
                     v = 0;
-                ((PartyX*)pm->get(p))->stacks[found].num_wounded = v;
+                ((PartyX*)pm->get(p))->stacks[found].wounded = v;
             }
         }
         break;
@@ -2172,7 +2181,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_set_faction:
         if (check_party((int)params[0]) && check_faction((int)params[1])) {
             party((int)params[0])->faction = (int)params[1];
-            party((int)params[0])->dirty = 1;
+            party((int)params[0])->f8b5 = 1;
         }
         break;
 
@@ -2187,12 +2196,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_get_position:
         if (check_register((int)params[0]) && check_party((int)params[1])) {
             *(Rot*)&script_pos((int)params[0]) = identity_rot();
-            script_pos((int)params[0]).o = party((int)params[1])->pos;
+            script_pos((int)params[0]).o = party_pos(party((int)params[1]));
         }
         break;
     case op::party_set_position:
         if (check_party((int)params[0]) && check_register((int)params[1])) {
-            party((int)params[0])->pos = script_pos((int)params[1]).o;
+            party_pos(party((int)params[0])) = script_pos((int)params[1]).o;
             party((int)params[0])->position_changed();
         }
         break;
@@ -2317,7 +2326,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_stack_get_num_wounded:
         if (check_party((int)params[1]) && IN_RANGE(params[2], 0, 0x40))
-            SET_LV((__int64)party((int)params[1])->stacks[(int)params[2]].num_wounded);
+            SET_LV((__int64)party((int)params[1])->stacks[(int)params[2]].wounded);
         break;
     case op::party_stack_get_troop_dna:
         // the main party's stacks keep their dna in the game's stack rows
@@ -2507,7 +2516,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         {
             int n = 0;
             if (check_party((int)params[1]))
-                n = party((int)params[1])->attached.size();
+                n = ((IntVec&)party((int)params[1])->attached).size();
             SET_LV((__int64)n);
         }
         break;
@@ -2518,9 +2527,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (check_party((int)params[1])) {
                 PartyMgr* pm = &game()->parties;
                 int p = (int)params[1];
-                unsigned n = ((PartyX*)pm->get(p))->attached.size();
+                unsigned n = ((IntVec&)((PartyX*)pm->get(p))->attached).size();
                 if (params[2] < (__int64)n)
-                    v = ((PartyX*)pm->get(p))->attached.first[(int)params[2]];
+                    v = ((IntVec&)((PartyX*)pm->get(p))->attached)._Myfirst[(int)params[2]];
             }
             SET_LV((__int64)v);
         }
@@ -2693,7 +2702,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 b.init();
                 int attacker = (int)params[0];
                 b.flags = 0x20;
-                b.f38 = 0;
+                b.bone = 0;
                 b.attacker = attacker;
                 b.pos = t->get(victim)->pos;
                 int best = 0;
@@ -2709,7 +2718,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 d = (int)agent((int)params[0])->slot_pair(1).stat_21x(1);
                 if (best < d)
                     best = d;
-                b.damage = (float)best;
+                b.dmg_in = (float)best;
                 agent((int)params[1])->deliver_blow(&b);
                 agent((int)params[1])->update_after_blow(0);
             }
@@ -3085,7 +3094,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_mission_template((int)params[0]) && params[1] >= 0 &&
             params[1] < (__int64)g_mission_templates[(int)params[0]].num_entries &&
             check_item_kind((int)params[2])) {
-            MTEntry* e = &g_mission_templates[(int)params[0]].entries[(int)params[1]];
+            SpawnRec* e = &g_mission_templates[(int)params[0]].entries[(int)params[1]];
             int n = e->num_override_items;
             if (n < 8) {
                 e->override_items[n] = (int)params[2];
@@ -3974,7 +3983,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                             total += (int)ceil_float_comdat(
                                 (mhp - troops[((PartyX*)pm->get(mp))->stacks[k].troop].hit_points) * 0.15f);
                         } else
-                            total += ((PartyX*)pm->get(mp))->stacks[k].num_wounded;
+                            total += ((PartyX*)pm->get(mp))->stacks[k].wounded;
                     }
                     ++k;
                 } while (k < party(game()->main_party)->num_stacks);
@@ -4114,8 +4123,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (store_distance_to_party_from_party, <destination>, <party_id>, <party_id>): map distance, rounded
         if (check_party((int)params[1]) && check_party((int)params[2])) {
             PartyMgr* pm = &game()->parties;
-            const rgl::vector4& b = ((PartyX*)pm->get((int)params[2]))->pos;
-            SET_LV((__int64)round_float(rgl::length(((PartyX*)pm->get((int)params[1]))->pos - b)));
+            const rgl::vector4& b = party_pos((PartyX*)pm->get((int)params[2]));
+            SET_LV((__int64)round_float(rgl::length(party_pos((PartyX*)pm->get((int)params[1])) - b)));
         }
         break;
     case op::get_party_ai_behavior:

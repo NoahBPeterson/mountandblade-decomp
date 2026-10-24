@@ -57,20 +57,7 @@ typedef UiVt UiWidget;                              // widget pointers point at 
 // ---- game records ------------------------------------------------------------------------------------
 #include "../../include/troop.h"
 
-struct Game {
-    char pad8c[0x8c];
-    int player;                                     // +0x8c (hero troop index)
-    char pad90[0xb4 - 0x90];
-    int f_b4;                                       // +0xb4 (set from the profile's +0x50)
-    char padb8[0x13a00 - 0xb8];
-    TroopRec* troops;                               // +0x13a00
-    int troop_count;                                // +0x13a04
-
-    void step(float dt);                            // 0x427f40
-    char sl_query(int kind, int troop, int arg);    // 0x435790 (this = g_game)
-    char equip_hero(int troop, int amount);         // 0x4428c0 (this = g_game; extra args unused)
-};
-extern Game* g_game;                                // 0x5e2930
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // skill table at 0x8ee3100, stride 0x44; the max rank of a skill is at +0x34
 #include "../skill_cap.h"
@@ -151,8 +138,7 @@ struct SkillRows { UiWidget* w[5]; };
 // ---- world / UI services -----------------------------------------------------------------------------
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                             // 0x5d7080
-struct MainMenu { void choose(int option); };       // 0xa73980 (0x495700)
-extern MainMenu g_main_menu;                        // 0xa73980
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 extern int g_world_time;                            // 0x5d8790 (compared as an int)
 
 // scroll bar / slider (0x48baa0 set_value)

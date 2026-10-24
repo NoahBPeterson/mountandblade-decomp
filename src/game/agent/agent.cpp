@@ -1150,7 +1150,7 @@ float Troop::falloff(float dist, float k)
 }
 
 // The same function seen from outside this TU (cl must not assume the register use of the body above).
-struct TroopExt { float falloff(float dist, float k); };   // 0x4375b0
+#include "../troop_ext.h"      // TroopExt: the one definition (falloff 0x4375b0, set_attr 0x48be70)
 // @ 0x437770
 void Troop::adjust(int i, float k)
 {

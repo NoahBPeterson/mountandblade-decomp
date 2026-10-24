@@ -183,16 +183,16 @@ struct SpriteTable {
 };
 
 // ---- the scene object (Game +0xf8, up to +0x139e4): only what the constructor 0x51d250 touches ------------------
-struct SceneList {                          // +0x138cc: a vector built by 0x4fd490(0); its first pointer (+0x138d0) is read by 0x51eaa0
+struct PageVec {                            // +0x138cc (was SceneList; world_data.h SceneList is another object): a vector built by 0x4fd490(0); its first pointer (+0x138d0) is read by 0x51eaa0
     char b[0x10];
-    SceneList(int n);                       // 0x4fd490 (ret 4)
+    PageVec(int n);                         // 0x4fd490 (ret 4)
 };
 struct Scene {
     int cells[0x2717 * 2];                  // +0       0x51d250 (pairs of -1)
     int f138b8;                             // +0x138b8 0x51d250
     char pad138bc[4];
     Zero3 f138c0;                           // +0x138c0 0x51d250
-    SceneList list;                         // +0x138cc
+    PageVec list;                           // +0x138cc
     int f138dc, f138e0;                     // +0x138dc 0x51d250
     char pad138e4[0x138ec - 0x138e4];
     Scene();                                // 0x51d250

@@ -28,16 +28,7 @@
 #define GI(off) (*(int*)((char*)g_game + (off)))
 #define GF(off) (*(float*)((char*)g_game + (off)))
 
-struct PartyX : Party {                     // the party record plus the members called from this region
-    void fn_4b1d80();                       // 0x4b1d80 (Party::add_xp_to_stack in src/game/party2: here its caller passes no argument)
-    int ext_4b1700();                       // 0x4b1700
-    void remove_slot(int slot);             // 0x48c330 (ret 4)
-    int total_value(unsigned flags);        // 0x4b1cf0 (ret 4)
-    int* remove_row(int* out, int slot, int* table);    // 0x489540 (ret 0xc)
-    int find_row(int troop, int type, int flag);        // 0x489620 (ret 0xc)
-    int add_row(int troop, int a, int b, int c, int d); // 0x48c840 (ret 0x14)
-    __declspec(noinline) void compact();    // 0x532db0
-};
+#include "../party_x.h"                   // PartyX : Party: the one definition (map_editor and script)
 
 struct PartyMgrX : PartyMgr {
     PartyX* get3(int party, int slot, int kind);        // 0x51ee50 (the call site of 0x531800 pushes three words; the callee returns with ret 4)

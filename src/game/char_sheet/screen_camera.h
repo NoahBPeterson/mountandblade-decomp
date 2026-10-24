@@ -182,24 +182,13 @@ struct Screen {
 #include "../../include/party.h"
 
 // ---- game objects -------------------------------------------------------------------------------------
-struct Game {
-    char pad0[0x58];
-    vector4 fog_color;                          // +0x58  fog colour passed to 0x40e440
-    char pad68[0x84 - 0x68];
-    int selected;                               // +0x84  selected party
-    char f88;                                   // +0x88  map live
-    char pad89[0x13b3c - 0x89];
-    float f13b3c;                               // +0x13b3c
-    float f13b40;                               // +0x13b40
-    PartyMgr* parties() { return (PartyMgr*)((char*)this + 0xf8); }   // +0xf8
-};
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 struct PartyRec {                               // 0x5ac8-byte party record
     char pad0[0x30];
     vector4 rect;                               // +0x30  map rectangle
 };
 
 // ---- globals ------------------------------------------------------------------------------------------
-extern Game* g_game;                            // 0x5e2930
 extern WorldCam* g_scene;                       // 0xa732b4
 extern int g_a17148;                            // 0xa17148
 extern int g_a1717c;                            // 0xa1717c

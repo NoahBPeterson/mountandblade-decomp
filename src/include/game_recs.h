@@ -66,7 +66,7 @@ struct FactionRec {                         // 0x300 bytes
     };
     char pad11[3];
     tstring key;                            // +0x14   0x4c6860
-    char pad24[4];
+    int f24;                                // +0x24   set = no tag drawn (inventory_panel/map_info.cpp 0x51abd0)
     union {
         unsigned color;                     // +0x28 (faction_set_color 0x4a5262)
         unsigned f28;                       // +0x28   (r_uint)

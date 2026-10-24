@@ -149,8 +149,7 @@ struct FaceGen {
     void update_view(int unused);                       // 0x4eb270 (ret 4)
     void refresh();                                     // 0x4eb3c0
 };
-struct Game { char pad0[0x13a00]; char* chars; };
-extern Game* g_game;                                    // 0x5e2930
+#include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
 
 // the global character-builder/animation state (0x8ed4f60; s0047f650, s004f49d0)
 struct Animator {

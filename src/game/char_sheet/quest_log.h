@@ -27,9 +27,7 @@ using rgl::vector4;
 #include "../tstring.h"
 #include "../rgl_mesh.h"
 using rgl::mesh;
-struct resmgr {                         // global at 0x5d6fa0
-    mesh* get_object(tstring* name);    // 0x419540
-};
+#include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 
 void __cdecl mb_error(const tstring* s);                // 0x42cc80
 void __cdecl mb_snprintf(char* buf, int size, const char* fmt, ...);   // 0x415100

@@ -19,10 +19,7 @@
 
 using rgl::vector4;
 
-struct StringTable {
-    tstring* lookup(tstring& key);                                          // 0x43a1e0
-};
-extern StringTable g_string_table;                                          // 0x5e2a18
+#include "./str_table_rgl.h"                                              // StrTableRgl (was StringTable here): the one definition
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0x536f8f
 extern "C" char* __cdecl _itoa(int, char*, int);                            // 0x5371f7
@@ -102,19 +99,7 @@ extern Renderer g_renderer;                                                 // 0
 extern Game* g_game;                                                        // 0x5e2930
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
-struct MainMenu {
-    char    pad0[4];
-    int     f04;                                            // +0x4
-    char    pad8[0x18 - 8];
-    int     option;                                         // +0x18
-    char    pad1c[0x4c - 0x1c];
-    int     f4c;                                            // +0x4c
-    int     f50;                                            // +0x50
-    void    set_texts(const tstring* explanation, const tstring* name);     // 0x48a3a0 (record at +0x68/+0x1c)
-    void    reset(int);                                     // 0x494260
-    void    choose(int option);                             // 0x495700
-};
-extern MainMenu g_main_menu;                                                // 0xa73980
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 // 0x415160: open a user file ("rgl_config.txt").
 void* open_user_file(const char* name, const char* mode);
@@ -200,7 +185,7 @@ void VideoPage::update(int reason)
         m.set_texts(&explanation, e);
         m.f4c = 0;
         m.f50 = 0;
-        m.f04 = 0;
+        m.f4 = 0;
         name.~tstring();
         explanation.~tstring();
         m.reset(0);

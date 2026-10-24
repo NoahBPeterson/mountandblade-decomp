@@ -30,10 +30,7 @@ using rgl::vector4;
 
 // 0x43a1e0: localized text of a table key; the returned object's `p` is the text (0 -> the object itself).
 // 0x43a1e0 (thiscall on the table at 0x5e2a18, arg pushed, ret 4): localized text of a table key.
-struct StringTable {
-    tstring* lookup(tstring& key);                  // 0x43a1e0
-};
-extern StringTable g_string_table;                  // 0x5e2a18
+#include "./str_table_rgl.h"                                              // StrTableRgl (was StringTable here): the one definition
 
 tstring* strtab_lookup(tstring& key);               // 0x43a1e0
 
@@ -47,10 +44,9 @@ struct Pos2 { float x, y; };    // 8-byte position slot; the original passes an 
 struct GameRating { int rating(); };                // 0x489f40
 
 // 0x495700 (thiscall on 0xa73980, ret 4; see s00494e40): choose a main-menu option by index.
-struct MainMenu { int pad[0x4c]; void choose(int option); };     // choose: 0x495700 (thiscall, ret 4)
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 // 0xa73980: the main menu.
-extern MainMenu g_main_menu;                        // 0xa73980
 // 0xa739d0 / 0xa739cc: menu entries whose +0x18 index the video/options buttons set.
 extern int* g_menu_video_entry;                     // 0xa739d0 (index at +0x18)
 extern int* g_menu_options_entry;                   // 0xa739cc (index at +0x18)

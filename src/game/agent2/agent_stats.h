@@ -7,15 +7,8 @@
 
 // ---- the translation table (object at 0x5e2a18) ----------------------------------------------------------------
 unsigned __stdcall hash_string(const tstring* s);               // 0x433bb0
-struct StrBucket { std::vector<tstring> v; };                   // 16 bytes
-struct StrTab {
-    StrBucket keys[0xdf3];             // +0x0000 (0x43a1e0)
-    StrBucket vals[0xdf3];             // +0xdf30
-    tstring notfound;                  // +0x1be60
-    tstring* lookup(const tstring& key);        // 0x43a1e0
-    tstring* find(const tstring* key);          // 0x4c6010 (null when absent; later object)
-};
-extern StrTab g_strtable;              // 0x5e2a18
+#include "../str_table.h"                               // StrTable (was StrTab here: the layout and lookup 0x43a1e0)
+extern StrTable g_strtable;            // 0x5e2a18
 
 // ---- collision shapes: shape_base, sphere (0x40c030 copy), capsule (0x40a580, 0x433310), face (0x40ae70, contains_xy
 // 0x4333c0), composite (0x433470) and contact are src/include/shape.h's. manifold is a view: build_composite 0x40cb60

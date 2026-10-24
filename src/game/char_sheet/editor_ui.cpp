@@ -1,5 +1,7 @@
 #include "./editor_ui.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4f5d20
 WidgetA* __cdecl make_label(void* parent, const tstring* name, const tstring* text)
@@ -170,7 +172,7 @@ WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
 }
 
 // @ 0x4f6360
-struct Rec20 {
+struct NameVecRec {                             // 0x20 bytes: a name and a vector (renamed from Rec20: agent/agent.h Rec20 is the g_tbl20 record)
     tstring name;                               // +0x00
     void* vec_begin;                            // +0x10
     int vec_end;                                // +0x14
@@ -178,8 +180,8 @@ struct Rec20 {
     void* f1c;                                  // +0x1c
 };
 struct RecAlloc {
-    void construct(Rec20* dst, const Rec20& src);   // 0x4e42f0
-    void destroy(Rec20* p);                         // 0x4ebdc0
+    void construct(NameVecRec* dst, const NameVecRec& src);   // 0x4e42f0
+    void destroy(NameVecRec* p);                         // 0x4ebdc0
 };
 // the 0x1f8-byte row copier (4e5fc0 itself only reads the first four arguments; the caller passes the
 // value a second time, and the two instantiations were folded together by the linker)
@@ -195,9 +197,9 @@ TextRow* RowVec::insert_n(TextRow* pos, unsigned n, const TextRow& v)
 }
 
 // @ 0x4f65f0
-void construct_n(Rec20* first, unsigned n, const Rec20& v, RecAlloc* a)
+void construct_n(NameVecRec* first, unsigned n, const NameVecRec& v, RecAlloc* a)
 {
-    Rec20* start = first;
+    NameVecRec* start = first;
     try {
         while (n > 0) {
             a->construct(first, v);
@@ -218,7 +220,7 @@ void construct_n(Rec20* first, unsigned n, const Rec20& v, RecAlloc* a)
 // arguments (the two range pointers), the caller passes the sub-object and the range start as well
 // (the extra parameters were folded away by the linker).
 void free_elem_vec(void* p, void* end, void* sub, void* ctx);   // 0x4d10f0
-void __cdecl destroy_range(Rec20* first, Rec20* last)
+void __cdecl destroy_range(NameVecRec* first, NameVecRec* last)
 {
     for (; first != last; ++first) {
         void** v = (void**)((char*)first + 0x14);

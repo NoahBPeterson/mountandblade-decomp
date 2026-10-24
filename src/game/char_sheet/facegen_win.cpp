@@ -1,6 +1,7 @@
 #include "./facegen_win.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/frustum.h"
+#include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4f1460
 void facegen_win::init()

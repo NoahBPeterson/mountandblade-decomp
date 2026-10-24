@@ -8,12 +8,7 @@
 #include "../tstring.h"
 
 // 0x495700 (thiscall, ret 4) on 0xa73980: pick a main-menu option.
-struct MainMenu {
-    char pad0[0x18];
-    int  sel;                                       // +0x18
-    void choose(int option);                        // 0x495700
-};
-extern MainMenu g_main_menu;                        // 0xa73980
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 // the widgets the menu options write back into (each int* is a widget: +0x4 = option index, +0x18 = a second
 // index, +0x8c = value)

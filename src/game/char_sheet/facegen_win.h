@@ -23,9 +23,7 @@ using std::vector;
 using rgl::mesh;
 
 // resource manager object at 0x5d6fa0
-struct resmgr {
-    mesh* get_object(const tstring& name);                  // 0x419540 (ret 4)
-};
+#include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_alloc;                                      // 0x5d6fa0
 
 // world / terrain object at 0xa76630 (the terrain generator)

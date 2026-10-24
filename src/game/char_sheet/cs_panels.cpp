@@ -1,5 +1,6 @@
 #include "./cs_panels.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4f0820
 // Each looked-up string / posted line is a named tstring local (the original takes their address with lea).

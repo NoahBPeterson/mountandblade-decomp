@@ -129,9 +129,7 @@ struct terrain_obj {                                        // the object at 0xa
     void regenerate_water(int a, int* out);                 // 0x482170
     void destroy_water();                                   // 0x4814a0
 };
-struct MainMenu {
-    void choose(int option);                                // 0x495700
-};
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 float  clamp_float(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 void   free_ptr(void* p);                                   // 0x535712
@@ -146,7 +144,6 @@ extern float g_half;                                        // 0x549d70 (0.5f)
 extern int   g_env2;                                        // 0x5e28fc (shaders on)
 extern void* g_a17110;                                      // 0xa17110
 extern void* g_a17510;                                      // 0xa17510
-extern MainMenu g_main_menu;                                // 0x5e2xxx
 extern terrain_obj g_terrain_obj;                           // 0xa76630
 extern const char g_fmt_d[];                                // 0x54a0f4 "%d"
 

@@ -268,10 +268,7 @@ extern MenuKindRec* g_menu_kinds;               // 0xa75f2c
 extern int g_menu_kind_count;                   // 0xa75f38
 // the menu block: a widget (vtable 0x5924a0, 0x188 bytes) that owns a vector (alloc +0x178, first +0x17c, last, end). The UiFrame of
 // ../party/party_window.h (destroying destructor 0x5021f0); that header conflicts with game_data.h on g_game, so this is its view here.
-struct UiFrame : MissionUi {
-    int f178;                                   // +0x178 (the vector's allocator word)
-    int f17c, f180, f184;                       // +0x17c (0x4dd920 clears them)
-};
+#include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
 struct MissionUiCtor { void ctor(); };          // 0x48ae20 (MissionUi's constructor on raw memory)
 // a menu block owner: the selected kind, its value and a tick (embedded at +0x30 of the main / escape menu)
 struct BlockOwner {
@@ -291,7 +288,7 @@ void mb_snprintf(char* dest, unsigned size, const char* fmt, ...);   // 0x415100
 void scan_saves(int ids, int* count, int* first, const char* prefix);   // 0x4dd6e0
 void save_path(char* out);                                              // 0x4dd7b0
 
-struct MainMenu {
+struct MainMenuScreen {
     char pad0[0x2c];
     ContainerBase* win;                         // +0x2c
     BlockOwner block;                           // +0x30

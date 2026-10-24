@@ -35,15 +35,7 @@ extern int g_mesh_count;                // 0x8ed4f5c (check_mesh)
 extern int g_menu_count;                // 0x5e29b4 (check_menu 0x49ce90)
 extern int g_mission_template_count;    // 0x5e2a04 (0x49d070)
 // mission templates (0x58-byte records at 0x5e2a00) and their 0x4c-byte entry points
-struct MTEntry {
-    char pad0[8];
-    int override_flags;                 // +8 (mission_tpl_entry_set_override_flags 0x4aa79a)
-    char padc[0x24 - 0xc];
-    int num_override_items;             // +0x24
-    int override_items[8];              // +0x28
-    int pad48;
-};
-struct MissionTemplate { char pad0[0x34]; MTEntry* entries; int num_entries; char pad3c[0x58 - 0x3c]; };
+#include "../mode_rec.h"             // MissionTemplate (the 0x58-byte records at 0x5e2a00) and SpawnRec (its 0x4c-byte entries): the one definition
 extern MissionTemplate* g_mission_templates;   // 0x5e2a00
 extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
 extern int g_map_icon_count;            // 0x5e29f4 (0x49d110)
@@ -97,15 +89,7 @@ inline const char* CS(const tstring* s) { return ((const tstr*)s)->c_str_(); }
 #define UI(id) CS(g_ui_strings.lookup(&tstring(id)))
 
 // ---- string tables (object 0xa75ea0) ----------------------------------------------------------------------------
-struct StringTable {
-    struct Str { tstring id; tstring text; };                   // 0x20 bytes
-    Str* strings;                       // +0  s_* strings
-    Str* quick;                         // +4  quick strings
-    int count;                          // +8  (check_string_arg 0x49cda0)
-    int quick_count;                    // +0xc
-    tstring get(int id, int type);      // 0x48e8f0 (thiscall, ret 0xc: hidden return; type 0 = register, 0x16 = quick)
-};
-extern StringTable g_strings;           // 0xa75ea0
+#include "../string_table.h"           // StringTable (0xa75ea0): the one definition (script and inventory_panel/module_files)
 extern tstring g_result_string;         // 0xa70464 (set_result_string 0x49fce6)
 
 // ---- input ---------------------------------------------------------------------------------------------------------
@@ -172,13 +156,7 @@ inline Pos& script_pos(int i) { return ((Pos*)((char*)&g_script + 0x450))[i]; }
 extern int g_fixed_point_multiplier;    // 0xa70460 (g_script + 0x20; position_get_x 0x4a1d65)
 
 // std::vector<int> (VC7.1: allocator word, then first / last / end)
-struct IntVector {
-    int alloc;
-    int* first;
-    int* last;
-    int* end;
-    unsigned size() const;              // 0x40f010 (out-of-line instance)
-};
+#include "../int_vec.h"                 // IntVec (was IntVector here: size() 0x40f010)
 
 // ---- tableaus (object 0xa75f40): vector of 0x68-byte records ----------------------------------------------------
 struct TableauVec {
@@ -186,7 +164,7 @@ struct TableauVec {
     char* first;                        // +4 (warn_tableau 0x49d360)
     char* last;                         // +8
     int padc;
-    IntVector stack;                    // +0x10 tableaus being rendered (cur_tableau_* 0x4aadca: none = no-op)
+    IntVec stack;                       // +0x10 tableaus being rendered (cur_tableau_* 0x4aadca: none = no-op)
     int alpha_mask;                     // +0x20 (cur_tableau_render_as_alpha_mask 0x4ab022)
     int size() const { return (last - first) / 0x68; }
     struct Current {                    // the state of the tableau being rendered
@@ -290,147 +268,34 @@ enum {  // header_troops.py / header_items.py
 #include "../../include/timer.h"
 
 // ---- parties (0x5ac8 bytes; pages at PartyMgr +0x138d0) ----------------------------------------------------------
-struct PartyStack {                     // 0x20 bytes (0x463190, 0x4894b0)
-    int count;                          // +0  troops in the stack
-    int troop;                          // +4  (main_party_has_troop 0x4a0368)
-    unsigned flags;                     // +8  bit 0 = prisoner stack (pmf_is_prisoner)
-    int padc;
-    int num_wounded;                    // +0x10 (heal_party 0x4a4842)
-    char pad14[0x20 - 0x14];
-    void clear();                       // 0x4893e0
-};
-// PartyX: view of the party record (Party in src/game/dialog_manager.h)
-struct PartyX {
-    int f0;
-    int type;                           // +4  1 = live party (check_party 0x49d160)
-    int id;                             // +8
-    char padc[0x30 - 0xc];
-    vector4 pos;                        // +0x30 map position (entering_town 0x49fbcf)
-    char pad40[0x54 - 0x40];
-    tstring extra_text;                 // +0x54 (party_set_extra_text 0x4a6d03)
-    float radius;                       // +0x64 (entering_town 0x49fc11)
-    char pad68[0x70 - 0x68];
-    int faction;                        // +0x70 (party_set_faction 0x4a73ab)
-    char pad74[0x78 - 0x74];
-    float bandit_attraction;            // +0x78 (party_set_bandit_attraction 0x4a7b59)
-    float morale;                       // +0x7c 0..1 (party_set_morale 0x4a8387; copied from the main party 0x4a4a50)
-    int f80;                            // +0x80 (0x4a4a76)
-    char pad84[0x88 - 0x84];
-    int battle;                         // +0x88 battle record index, -1 = none (0x4a814d)
-    int template_id;                    // +0x8c (party_get_template_id 0x4a6d9f)
-    char pad90[0x94 - 0x90];
-    int banner_icon;                    // +0x94 (party_set_banner_icon 0x4a854a)
-    char pad98[0xa0 - 0x98];
-    union {
-        unsigned __int64 flags;         // +0xa0 pf_* (party_is_active 0x4a0462)
-        struct { char flags_lo[7]; unsigned char carry_gold; };     // +0xa7 pf_carry_gold_mask byte (0x4a2d0f)
-    };
-    PartyStack stacks[64];              // +0xa8
-    int num_stacks;                     // +0x8a8 (main_party_has_troop 0x4a0349)
-    char pad8ac[0x8b5 - 0x8ac];
-    char dirty;                         // +0x8b5 (party_set_flags 0x4a6c77)
-    char pad8b6[0x8b8 - 0x8b6];
-    IntVector attached;                 // +0x8b8 attached party ids (party_get_num_attached_parties 0x4a881b)
-    int attached_to;                    // +0x8c8 (party_get_attached_to 0x4a87e2)
-    char f8cc;                          // +0x8cc cleared on party_attach_to_party (0x4a7fc8)
-    char pad8cd[0x8e0 - 0x8cd];
-    int ai_state;                       // +0x8e0 (party_set_ai_behavior 0x4a79bb)
-    int f8e4;                           // +0x8e4 scripted ai behaviour (add_companion_party: 6; party_set_ai_behavior)
-    int ai_target_object;               // +0x8e8 (party_set_ai_object 0x4a7a12)
-    float ai_target_x, ai_target_y;     // +0x8ec (party_set_ai_target_position 0x4a7a6e)
-    float ai_patrol_radius;             // +0x8f4 (party_set_ai_patrol_radius 0x4a7abc)
-    char pad8f8[0x918 - 0x8f8];
-    int ai_behavior;                    // +0x918 ai_bhvr_* (party_is_in_town 0x4a03d1)
-    int ai_object;                      // +0x91c (entering_town 0x49fb99)
-    char pad920[0x958 - 0x920];
-    float ai_initiative;                // +0x958 (party_set_ai_initiative 0x4a7921)
-    char pad95c[0x5978 - 0x95c];
-    int current_terrain;                // +0x5978 (party_get_current_terrain 0x4a6d53)
-    char pad597c[0x59d8 - 0x597c];
-    SlotArray slots;                    // +0x59d8 (party_set_slot 0x4a0815)
-    char pad59d9[0x5a08 - 0x59d9];
-    int note_times[8];                  // +0x5a08 (add_party_note_from_dialog 0x4a35fb)
-    tstring notes[8];                   // +0x5a28 (0x4a353c)
-    int note_tableau;                   // +0x5aa8 (add_party_note_tableau_mesh 0x4a31a6)
-    int pad5aac;
-    Timer ignore_player_timer;         // +0x5ab0 (party_ignore_player 0x4a7b0c)
-    char pad5ac0[0x5ac8 - 0x5ac0];
-    int max_stacks();                   // 0x4b1700 (always 32)
-    int num_members();                  // 0x489490
-    int num_regular_stacks();           // 0x463190
-    int num_prisoner_stacks();          // 0x489510
-    int num_regular_members();          // 0x4894b0
-    int num_prisoner_members();         // 0x4894e0
-    int party_size_limit();             // 0x4b22d0 (game script 0x11 may override it)
-    int prisoner_limit();               // 0x4b2330 (game script 0x12 may override it)
-    tstring* display_name();            // 0x48d7b0
-    int add_members(int troop, int count, char prisoners, int a4, int a5);  // 0x48c840 (ret 0x14)
-    PartyStack remove_stack(int index, void* rows);                       // 0x489540 (ret 0xc: hidden return)
-    void update_flags();                                                    // 0x4b7840
-    void force_add_members(int troop, int count, char prisoners, int a4);   // 0x4b4470 (ret 0x10)
-    void position_changed();                                                // 0x4b2880
-    void leave_battle();                                                    // 0x4b6ae0
-    void set_name(const tstring& name);                                     // 0x489400 (ret 4)
-    void add_xp_to_stack(int stack, int xp);                                // 0x4b1d80 (ret 8)
-    void set_icon(int icon);                                                // 0x489420 (ret 4)
-    void add_particle_system(int psys);                                     // 0x4955e0 (ret 4)
-    void clear_particle_systems();                                          // 0x48d7e0
-    int skill_level(int skill);                                             // 0x4b2370 (ret 4)
-};
+// the 0x20-byte troop stacks are Stack of include/party.h (clear 0x4893e0 declared there)
+#include "../party_x.h"                // PartyX : Party (aliases in party.h, member names of the interpreter): the one definition (map_editor and script)
 SI_ASSERT(party_size, sizeof(PartyX) == 0x5ac8);
 SI_ASSERT(party_stacks, offsetof(PartyX, stacks) == 0xa8);
 SI_ASSERT(party_ai, offsetof(PartyX, ai_behavior) == 0x918);
 SI_ASSERT(party_notes, offsetof(PartyX, notes) == 0x5a28);
 // PartyMgrX: the members of the party table (PartyMgr in dialog_manager.h) the interpreter adds
-struct PartyMgrX : PartyMgr {
-    int is_party(int id);               // 0x4903e0 (thiscall, ret 4: live party id)
-};
+// PartyMgr::is_live 0x4903e0 of include/party.h replaces the PartyMgrX view
 
 // ---- troops (0x508 bytes, array at game +0x13a00) ----------------------------------------------------------------
 // TroopX: view of the troop record (TroopRec in dialog_manager.h, Troop in agent.h)
-struct TroopX {
-    tstring name;                       // +0
-    char pad10[0x20 - 0x10];
-    tstring id;                         // +0x20
-    unsigned __int64 flags;             // +0x30 tf_* (troop_is_guarantee_horse 0x4a05f0)
-    char pad38[0x4c - 0x38];
-    int faction;                        // +0x4c (troop_set_faction 0x4a6948)
-    int upgrade_troop[2];               // +0x50 (troop_get_upgrade_troop 0x4a6ac0)
-    int attributes[4];                  // +0x58 (store_attribute_level 0x4ace05)
-    char pad68[0x9c - 0x68];
-    int xp;                             // +0x9c (troop_get_xp 0x4a5949)
-    float hit_points;                   // +0xa0 heroes (heal_party 0x4a4834)
-    char pada4[0xac - 0xa4];
-    int proficiency_points;             // +0xac (troop_add_proficiency_points 0x4a5b9a)
-    int level;                          // +0xb0 (troop_loot_troop)
-    ItemRef items[1];                   // +0xb4 inventory (player_has_item 0x4a04a6)
-    char padbc[0x3b4 - 0xbc];
-    int gold;                           // +0x3b4 (store_troop_gold 0x4ac9da)
-    int site;                           // +0x3b8 (remove_troop_from_site 0x4a4af1)
-    char pad3bc[0x400 - 0x3bc];
-    int note_times[8];                  // +0x400 (add_troop_note_from_dialog 0x4a3351; -1 = hidden)
-    tstring notes[8];                   // +0x420 (0x4a328b)
-    int note_tableau;                   // +0x4a0 (add_troop_note_tableau_mesh 0x4a30fe)
-    ItemRef equipment[10];              // +0x4a4 (troop_has_item_equipped 0x4a050e, ek_horse = +0x4e4)
-    SlotArray slots;                    // +0x4f4 (troop_set_slot 0x4a079a)
-    char pad4f5[0x508 - 0x4f5];
-    int num_inventory_slots();          // 0x462b60
-    tstring* display_name();            // 0x43a480
-    tstring* plural_name();             // 0x48d6d0
-    char is_hero();                     // 0x435130 (tf_hero)
+// TroopX: the troop record (TroopRec, include/troop.h) with the interpreter's names for its members; the fields are aliases in
+// anonymous unions of troop.h (script operations cited there)
+struct TroopX : TroopRec {
+    int num_inventory_slots();          // 0x462b60 (TroopRec::inv_count)
+    char is_hero();                     // 0x435130 (tf_hero; Troop::has_flag10)
     int max_hit_points();               // 0x468770
-    int proficiency(int p);             // 0x435150 (ret 4)
-    void set_site(int scene, int entry);    // 0x489320 (ret 8)
-    void set_type(int skin);            // 0x4892a0 (ret 4)
-    void sort_inventory();              // 0x48c0c0
-    void raise_attribute(int attribute, int value);     // 0x48bef0 (ret 8)
-    void raise_skill(int skill, int value);             // 0x48c090 (ret 8)
-    void raise_proficiency(int proficiency, float value);   // 0x437770 (ret 8; agent.h Troop::adjust)
-    void raise_proficiency_linear(int proficiency, int value);  // 0x4892d0 (ret 8)
-    void remove_gold(int gold);         // 0x489340 (ret 4)
-    int first_free_inventory_slot();    // 0x463030
-    void set_item(int item, int slot, int modifier);    // 0x48c7f0 (ret 0xc)
-    void auto_equip(int a, int b, int c, int d);        // 0x4687e0 (ret 0x10)
+    int proficiency(int p);             // 0x435150 (ret 4; Troop::stat_int)
+    void set_site(int scene, int entry);    // 0x489320 (ret 8; Troop::set_colors)
+    void set_type(int skin);            // 0x4892a0 (ret 4; Troop::set_flags_low)
+    void sort_inventory();              // 0x48c0c0 (Troop::sort_inv)
+    void raise_attribute(int attribute, int value);     // 0x48bef0 (ret 8; Troop::add_attr)
+    void raise_skill(int skill, int value);             // 0x48c090 (ret 8; Troop::add_skill)
+    void raise_proficiency(int proficiency, float value);   // 0x437770 (ret 8; Troop::adjust)
+    void raise_proficiency_linear(int proficiency, int value);  // 0x4892d0 (ret 8; Troop::add_stat)
+    void remove_gold(int gold);         // 0x489340 (ret 4; Troop::sub_3b4)
+    int first_free_inventory_slot();    // 0x463030 (Troop::find_free)
+    void set_item(int item, int slot, int modifier);    // 0x48c7f0 (ret 0xc; Troop::set_slot)
     // inventory slot n: 0..9 are the equipment, 10.. the inventory
     ItemRef& slot(int n) { return n < 10 ? equipment[n] : items[n - 10]; }
 };
@@ -486,26 +351,13 @@ struct ItemKindX {
 SI_ASSERT(itemkind_size, sizeof(ItemKindX) == 0x238);
 inline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; }
 
-struct GameClock {                      // a time stamp in 1e-5 s ticks
-    __int64 start;
-    float elapsed() const;              // 0x432c10 (seconds since start)
-};
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
 extern int g_text_log_enabled;          // 0x5a9fb0 (display_message 0x4a305a)
 extern char g_show_messages;            // 0x5d8794 (set_show_messages 0x4a30a0)
 
 // ---- map battles (table at game +0xcc) ---------------------------------------------------------------------------
-struct BattleRec {
-    char pad0[0x54];
-    int party_a, party_b;               // +0x54 the two sides' root parties (party_get_battle_opponent 0x4a867b)
-    char pad5c[0x70 - 0x5c];
-    float next_simulation_time;         // +0x70 hours (0x4a8181)
-};
-struct BattleTable {
-    char pad0[0x2c];
-    BattleRec* get(int id);             // 0x48ef20 (thiscall, ret 4)
-};
+#include "../battle_rec.h"            // BattleRec, BattleTable: the one definition (party2 and script)
 
 // ---- the game object (g_game, 0x5e2930; GameData in dialog_manager.h) --------------------------------------------
 struct GameX {
@@ -527,7 +379,7 @@ struct GameX {
     char padb4[0xc8 - 0xb4];
     int next_window;                    // +0xc8 window to switch to (0xf = presentation; start_presentation 0x4a20d5)
     BattleTable battles;                // +0xcc (party_set_next_battle_simulation_time 0x4a8172)
-    PartyMgrX parties;                  // +0xf8 .. +0x139d8 (PartyMgr, dialog_manager.h)
+    PartyMgr parties;                   // +0xf8 .. +0x139d8 (PartyMgr, dialog_manager.h)
     char pad139d8[0x13a00 - 0x139d8];
     TroopX* troops;                     // +0x13a00
     int num_troops;                     // +0x13a04 (check_troop 0x49cee0)
@@ -571,8 +423,7 @@ struct GameX {
     char talk_enabled;                  // +0x13b10 (mission_enable_talk 0x4aa721)
     char talk_disabled;                 // +0x13b11 (mission_disable_talk 0x4aa732)
     char pad13b12[0x13b18 - 0x13b12];
-    GameClock clock;                    // +0x13b18 (display_log_message 0x4a2edc)
-    char pad13b20[0x13b28 - 0x13b20];
+    Timer clock;                        // +0x13b18 (display_log_message 0x4a2edc; Timer::elapsed 0x432c10 reads the clock index at +0 and the start at +0x13b20)
     int current_hours;                  // +0x13b28 (store_current_hours 0x4ad57e)
     int note_time;                      // +0x13b2c the current day: time stamp of an added note (0x4a3330, store_current_day)
     char pad13b30[0x13b3c - 0x13b30];
@@ -669,6 +520,7 @@ SI_ASSERT(game_menu, offsetof(GameX, context_menu_values) == 0x13eec);
 SI_ASSERT(game_tpos, offsetof(GameX, trigger_object_pos) == 0x14014);
 inline GameX* game() { return (GameX*)g_game; }
 inline PartyX* party(int id) { return (PartyX*)g_game->parties.get(id); }
+inline rgl::vector4& party_pos(PartyX* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
 inline TroopX* troop(int id) { return &game()->troops[id]; }
 inline QuestRec* quest(int id) { return &game()->quests[id]; }
 inline FactionRec* faction(int id) { return &game()->factions[id]; }
@@ -697,17 +549,7 @@ extern char g_in_meta_mission;          // 0x8ee30ec (read by in_meta_mission)
 
 // ---- the mission (g_mission, 0x5e292c; Mission in agent.h) --------------------------------------------------------
 // The agent record is Agent (src/game/agent_obj.h; 0x5928 bytes, pages of 16): the slices' AgentX.
-// the blow record agent_deliver_damage_to_agent fills (RecZSubB in agent.h; 0x58 bytes)
-struct Blow {
-    int flags;                          // +0 (0x20)
-    int attacker;                       // +4
-    rgl::vector4 pos;                   // +8
-    rgl::vector4 v18, v28;
-    int f38;                            // +0x38
-    float damage;                       // +0x3c
-    int f40, f44, f48, f4c, f50, f54;
-    Blow* init();                       // 0x4353a0 (returns this)
-};
+#include "../blow.h"                // Blow (agent_deliver_damage_to_agent fills it; the one definition, shared with agent4)
 SI_ASSERT(agent_size, sizeof(Agent) == 0x5928);
 struct PropInst {                       // 0x1c8-byte scene prop instance
     char pad0[0x18];
@@ -720,19 +562,8 @@ struct PropInst {                       // 0x1c8-byte scene prop instance
     void set_position(const Pos* p);                            // 0x489820 (ret 4)
     void animate_to(const Pos* p, const float* seconds, const float* a3);   // 0x4897a0 (ret 0xc)
 };
-struct PropVec {                        // vector of 0x1c8-byte scene prop instances
-    int pad0;
-    char* first;                        // +0 of the pair (mission +0x668c)
-    char* last;                         // (mission +0x6690)
-    int size() const { return (last - first) / 0x1c8; }
-    PropInst* get(int id);                                      // 0x438c10 (thiscall, ret 4)
-};
-// LevelX: the scene object at mission +0 (Level in agent.h)
-struct LevelX : Level {
-    float ground_height(const rgl::vector4* p);                 // 0x439d40 (thiscall, ret 4)
-    int face_at(const rgl::vector4* p);                         // 0x439a50 (thiscall, ret 4)
-    void set_fog(const float* a1, const float* distance, const unsigned* color);   // 0x488cd0 (ret 0xc)
-};
+#include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
+// the scene object at mission +0 is `world` (src/game/world.h; Level in agent.h)
 struct EntryPoint { Pos pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
 // TeamRec (0x16c bytes at mission +0x5280): src/game/mission.h
 // a point light added by add_point_light (0x7c bytes)
@@ -776,7 +607,7 @@ struct MTimer {                         // clock index + start (Timer in src/rgl
     float elapsed() const;              // 0x432c10 (seconds)
 };
 struct MissionX {
-    LevelX* scene;                      // +0
+    world* scene;                       // +0
     AgentTable agents;                  // +4
     char pad2c[0x5c - 0x2c];            // (AgentTable is 0x28 bytes: count, free-id list, page vector, serial)
     int player_agent;                   // +0x5c (heal_party 0x4a488d)
@@ -806,8 +637,8 @@ struct MissionX {
     char pad6614[0x6620 - 0x6614];
     int conversation;                   // +0x6620 (start_mission_conversation 0x4aa6ff)
     char pad6624[0x6688 - 0x6624];
-    PropVec props;                      // +0x6688 (first +0x668c, last +0x6690; warn_scene_prop_instance 0x49d290)
-    char pad6694[0x6748 - 0x6694];
+    PropVec props;                      // +0x6688 (first +0x668c, last +0x6690, end +0x6694; warn_scene_prop_instance 0x49d290)
+    char pad6698[0x6748 - 0x6698];
     int cam_mode;                       // +0x6748 0 automatic, 1 manual (mission_cam_set_mode 0x4ab858)
     Pos cam_frame;                      // +0x674c (ui/mission.h frame_a)
     Pos cam_target_frame;               // +0x678c (frame_b)

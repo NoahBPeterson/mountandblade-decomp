@@ -1,6 +1,7 @@
 #include "./facegen_init.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4f49d0
 void FaceGen::init()
@@ -13,7 +14,7 @@ void FaceGen::init()
     f35c = 0;
     skin = 0;
     if (troop >= 0)
-        skin = *(int*)(g_game->chars + troop * 0x508 + 0x30) & 0xf;
+        skin = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
     int keys = g_skins_begin[skin].n1 - 1;
     g_msglog.reset();
     g_game->f1a090 = 0;
@@ -293,7 +294,7 @@ void FaceGen::init()
 
     // ---- hook the face up to the troop's anim table ------------------------------------------------
     if (troop >= 0) {
-        char* rec = g_game->chars + troop * 0x508;
+        char* rec = g_game->chars_c + troop * 0x508;
         int sk = *(int*)(rec + 0x30) & 0xf;
         int flags = 0;
         g_anim.cur = gen_face_seed(&sk, &flags, &g_char_count);

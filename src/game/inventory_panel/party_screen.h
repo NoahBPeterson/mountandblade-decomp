@@ -123,7 +123,6 @@ extern float g_skill_points_ok;                     // 0xa18138
 extern float g_skill_points_full;                   // 0xa1813c
 extern char g_use_alt_name;                         // 0xa181b8
 extern int g_item_sel;                              // 0xa75f6c (the selected item index; negative = nothing selected)
-struct ObjTable { RMesh* make_mesh_from(const int* index, const void* from); };   // 0x4991d0 (ret 8)
 extern ObjTable g_obj_inv;                          // 0xa75f40
 void __fastcall window_ctor(void* p);               // 0x4931a0
 void __fastcall panel_ctor(void* p);                // 0x48ae20

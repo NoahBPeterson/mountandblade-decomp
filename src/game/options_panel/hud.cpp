@@ -6,6 +6,7 @@
 #include <new>
 #include "./mesh_edit.h"
 #include "./hud.h"
+#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4d4b80
 bool Mesh::on_selection_changed()

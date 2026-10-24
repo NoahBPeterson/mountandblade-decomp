@@ -55,15 +55,7 @@ struct UiWidget {
 // ---- game records ------------------------------------------------------------------------------------
 #include "../../include/troop.h"
 
-struct Game {
-    char pad8c[0x8c];
-    int player;                                     // +0x8c (hero troop index)
-    char pad90[0x13a00 - 0x90];
-    TroopRec* troops;                               // +0x13a00
-
-    int skill_rank(int troop, int idx);             // 0x437b20 (packed 4-bit rank)
-};
-extern Game* g_game;                                // 0x5e2930
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // skill table at 0x8ee3100, stride 0x44: max rank / attribute index at +0x34 / +0x3c / +0x40
 #define SKILL_MAX(id)  (*(int*)(0x8ee3134 + (id) * 0x44))
@@ -105,9 +97,5 @@ struct CharSheet {
 
 // ---- 0x535a64: float -> int (_ftol), emitted by the (int) casts below -------------------------------
 
-// 0x4375b0: distance falloff of one proficiency value
-struct TroopExt {
-    float falloff(float dist, float k);             // 0x4375b0
-};
 
 #endif

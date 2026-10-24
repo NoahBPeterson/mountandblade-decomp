@@ -25,7 +25,7 @@
 struct CellGrid;                                // terrain_b/cell_grid.h: the scene container terrain_b sees
 struct world;                                   // world.h: the scene as agent3 sees it
 struct level;                                   // agent2/agent_types.h: the scene as agent2 sees it
-struct Level;                                   // agent/agent.h: the scene as agent sees it
+typedef world Level;                              // world.h: the scene as agent sees it (agent.h, script, inventory_panel/map_update.cpp call it Level)
 struct Emit;
 struct Wind;
 struct Rec1c8;

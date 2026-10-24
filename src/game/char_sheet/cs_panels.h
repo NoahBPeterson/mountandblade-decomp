@@ -41,15 +41,7 @@ struct CharRec {
 
 // settings table at 0xa44240: find() returns an entry index or -1; entries are 0x2c bytes from 0xa4425c
 // with the string pointer at +4 (a null pointer there means the field itself holds the text).
-struct ConfigTable {
-    int find(const tstring& key);                   // 0x4bd5a0 (ret 4)
-};
-extern ConfigTable g_config;                        // 0xa44240
-struct ConfigEntry {
-    int f0;                                         // +0
-    const char* value;                              // +4
-    char pad[0x2c - 8];
-};
+#include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
 extern "C" double atof(const char* s);              // 0x537352
 
 extern int g_level_table[];                         // 0x5937cc (char_t_next_level_at_ values)

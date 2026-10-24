@@ -36,7 +36,7 @@ struct ViewRect {                       // the view rectangle of the current fra
 
 struct Vec1c { char b[0x1c]; void assign(const Vec1c* o); };   // 0x43f0a0 (thiscall operator=, 28-byte vector-like)
 
-struct Scene {                          // the scene object at Ctx+0x178
+struct RenderScene {                    // the scene object at Ctx+0x178 (renamed from Scene: party/game.h Scene is the party manager at game+0xf8)
     char pad000[0xb8];
     Vec1c fb8;                          // +0xb8 (copied into Ctx+0x310)
     void render(int* cells, char a);              // 0x429890 renders the +0x17c extent
@@ -50,7 +50,7 @@ struct Ctx {
     char pad0e8[0xf0 - 0xe8];
     float f0f0, f0f4;                   // +0xf0, +0xf4
     char pad0f8[0x178 - 0xf8];
-    Scene* f178;                        // +0x178 scene object
+    RenderScene* f178;                      // +0x178 scene object
     int cell_x0, cell_y0, cell_x1, cell_y1;     // +0x17c..+0x188 grid extent
     int f18c;                           // +0x18c
     float f190;                         // +0x190

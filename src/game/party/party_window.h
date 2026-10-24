@@ -24,36 +24,15 @@
 #include "./externs.h"
 
 // ---- objects of other translation units ----------------------------------------------------------------
-struct ConfigEntry {                        // 0x2c bytes, table at 0xa4425c
-    int f0;
-    char* value;                            // +4 (null: the field itself holds the text)  0x501a20
-    char pad8[0x2c - 8];
-};
-struct ConfigTable {
-    int find(const tstring& key);           // 0x4bd5a0 (ret 4): the entry index, or -1
-};
-extern ConfigTable g_config;                // 0xa44240
-#define CONFIG_ENTRIES ((ConfigEntry*)0xa4425c)
+#include "../config_table.h"               // ConfigEntry, ConfigTable, g_config, CONFIG_ENTRIES: the one definition
 
-struct MeshOps {                            // a resource mesh (rgl::mesh): the two members the window calls
-    MeshOps* clone();                       // 0x41c6d0
-    void translate(const rgl::vector4* v);  // 0x44f240 (ret 4)
-};
-struct ResMgr {
-    MeshOps* get_object(const tstring* name);   // 0x419540 (ret 4)
-};
+#include "../res_mesh.h"               // ResMesh (was ResMesh), ResMgr, ObjTable: the one definition
 extern ResMgr g_resmgr_party;               // 0x5d6fa0
-struct ObjTable {
-    MeshOps* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (ret 8): a display mesh for (selected, slot)
-};
 extern ObjTable g_obj;                      // 0xa75f40
-MeshOps* __cdecl make_item_mesh(const ItemRef* def, const float* scale);   // 0x4fba40 (ret 0): the mesh of an item reference
+ResMesh* __cdecl make_item_mesh(const ItemRef* def, const float* scale);   // 0x4fba40 (ret 0): the mesh of an item reference
 
 void __cdecl label_refresh(void* w, tstring name);          // 0x4e4c70 (cdecl, the name by value)
-struct ItemSound {                          // the sound sub-object at ItemKind +0x228 (a TimerList, mission_ui.h)
-    char pad[0x10];
-    void play(int id);                      // 0x48add0 (ret 4)
-};
+#include "../item_sound.h"               // ItemSound (ItemKind +0x228): the one definition
 inline float item_f208(ItemKind* k) { return *(float*)((char*)k + 0x208); }       // +0x208 base armour value   0x502620
 inline ItemSound* item_sound(ItemKind* k) { return (ItemSound*)((char*)k + 0x228); }   // 0x502b80
 
@@ -79,12 +58,7 @@ struct PartySlot : MissionUi {              // vtable 0x599d28, size 0x178 (the 
 struct StripIcon : UiA {                    // vtable 0x591ee8, size 0x188 (constructor 0x48b1c0 of UiA)
     StripIcon() { *(void**)this = (void*)0x591ee8; }
 };
-struct UiFrame : MissionUi {                // vtable 0x5924a0: the container the window owns (destroying destructor 0x5021f0)
-    int f178;                               // +0x178 (a vector: freed by 0x41f4b0)
-    char pad17c[0x188 - 0x17c];
-    void release();                         // 0x48ef40
-    void* destroy(unsigned flags);          // 0x5021f0 (ret 4)
-};
+#include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
 // the widget base's destructor body (0x487c00) and the scalar deleting destructor built on it (0x502300, the shared
 // slot 0 of vtable 0x591c80; mission_ui.h declares that slot as d00(int) without a body)
 struct WidgetDtor {
@@ -151,7 +125,7 @@ struct PartyWindow {
     void refresh_armor(void** labels, int troop);               // 0x502620 (ret 8)
     void refresh_page(int page);                                // 0x502920 (ret 4)
     void place_slot(MissionUi* w, ItemRef* item, int idx, int* state, int page, char flag);   // 0x5029f0 (ret 0x18)
-    MeshOps* make_mesh(ItemRef* item, float* scale, int troop); // 0x502b80 (ret 0xc)
+    ResMesh* make_mesh(ItemRef* item, float* scale, int troop); // 0x502b80 (ret 0xc)
     void refresh_stash(int row);                                // 0x502c30
     bool base_mouse_event(unsigned mask);                       // 0x42cf50 (ret 4; the gui widget base)
 };

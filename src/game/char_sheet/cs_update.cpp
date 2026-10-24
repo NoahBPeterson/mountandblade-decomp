@@ -1,5 +1,7 @@
 #include "./cs_update.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4eeb10 -------------------------------------------------------------------------------
 // The click handling of the rows is `selected |= press on either button` / `released |= release on either`;
@@ -40,14 +42,14 @@ void CharSheet::update(float dt)
             if (f_180[i]->clicked_on(0x10000)) {
                 int troop = f_14;
                 int id = f_228[i];
-                TroopRec* tb = g_game->troops;
+                TroopRec* tb = g_game->chars;
                 int rank = (int)((unsigned)((int*)tb)[troop * 0x142 + id / 8 + 0x1a] >> (id % 8 * 4)) & 0xf;
                 if (rank < 0)
                     rank = 0;
                 else if (rank > g_skill_tbl[id].cap)
                     rank = g_skill_tbl[id].cap;
                 tb[troop].set_skill(id, rank + 1);
-                g_game->troops[f_14].skill_points--;
+                g_game->chars[f_14].skill_points--;
                 f_4d4 = 1;
                 update_detail();
                 update_skill_rows();
@@ -66,9 +68,9 @@ void CharSheet::update(float dt)
             if (f_478[i]->clicked_on(4) || f_494[i]->clicked_on(4))
                 released = true;
             if (f_494[i]->clicked_on(0x10000)) {
-                int cost = g_game->troops[f_14].steps_to_point(i);
-                g_game->troops[f_14].adjust(i, (float)cost);
-                g_game->troops[f_14].prof_points -= cost;
+                int cost = g_game->chars[f_14].steps_to_point(i);
+                g_game->chars[f_14].adjust(i, (float)cost);
+                g_game->chars[f_14].prof_points -= cost;
                 f_4d4 = 1;
                 refresh_lists();
                 refresh_panels();
@@ -87,10 +89,10 @@ void CharSheet::update(float dt)
         if (f_44c[i]->clicked_on(4) || f_45c[i]->clicked_on(4))
             released = true;
         if (f_45c[i]->clicked_on(0x10000)) {
-            g_game->troops[f_14].add_attr(i, 1);
-            g_game->troops[f_14].attr_points--;
+            g_game->chars[f_14].add_attr(i, 1);
+            g_game->chars[f_14].attr_points--;
             if (i == 1)
-                g_game->troops[f_14].prof_points += 5;
+                g_game->chars[f_14].prof_points += 5;
             f_4d4 = 1;
             refresh_panels();
             update_detail();
@@ -111,8 +113,8 @@ void CharSheet::update(float dt)
         update_detail();
     }
     if (f_14 == 0 && f_4c4->clicked_on(0x10000)) {
-        g_game->troops[0].name = tstring(((HeroEntry*)f_4c4)->name);
-        g_game->sl_query(0x18, 0, 0);
+        g_game->chars[0].name = tstring(((HeroEntry*)f_4c4)->name);
+        g_game->emit_event(0x18, 0, 0);
     }
 
     // previous / next troop
@@ -124,13 +126,13 @@ void CharSheet::update(float dt)
 
     if (f_2dc == 0) {
         if (g_profile->troop != -1) {
-            g_game->f_b4 = g_profile->troop;
+            g_game->fb4 = g_profile->troop;
             f_2dc++;
             menu_choose(0xf);
             return;
         }
     } else if (f_2dc == 1) {
-        TroopRec* hero = g_game->troops;
+        TroopRec* hero = g_game->chars;
         if (hero->attr_points > 0 || hero->skill_points > 0 || hero->prof_points > 5 ||
             ((HeroEntry*)f_4c4)->f181 != 0)
             f_42c->enable();
@@ -138,7 +140,7 @@ void CharSheet::update(float dt)
             f_42c->disable();
         if (f_42c->clicked_on(0x10000)) {
             f_2dc = -1;
-            g_game->troops[g_game->player].auto_equip(-1, 0, 0, 0);
+            g_game->chars[g_game->player].auto_equip(-1, 0, 0, 0);
             g_menu_state[5] = f_14;
             menu_choose(0x1d);
             return;
@@ -155,7 +157,7 @@ void CharSheet::update(float dt)
     } else {
         if (step != 0) {
             f_14 += step;
-            f_14 = (f_14 + g_game->troop_count) % g_game->troop_count;
+            f_14 = (f_14 + g_game->ntroops) % g_game->ntroops;
             f_4 = 1;
             menu_choose(0xf);
             return;
@@ -193,14 +195,14 @@ void CharSheet::update(float dt)
                 return;
             if (g_a17188 != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
                 if (g_trial_mode != 0) {
-                    g_game->equip_hero(f_14, 1000);
+                    g_game->add_experience(f_14, 1000);
                     menu_choose(0xf);
                 }
                 return;
             }
             if ((g_a17148 != 0 || g_a17348 != 0) && g_a17118 != 0 && g_a17518 == 0 && g_a5a9fbc != 0) {
                 for (int i = 0; i < 7; i++)
-                    g_game->troops->adjust(i, 50.0f);
+                    g_game->chars->adjust(i, 50.0f);
                 menu_choose(0xf);
                 return;
             }

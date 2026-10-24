@@ -200,31 +200,7 @@ extern int g_ui_enabled;                // 0x5aa060
 
 // ---- the blow record (0x58 bytes; agent/agent.h calls it RecZSubB with the fields m0..m54 and the initialiser 0x4353a0, which the
 // manifests bind by that name, so this is the second declaration of the same record, with the names the blow code uses) ----
-struct HitInfo {                                    // what Blow::hit points to (0x4543a0 family)
-    char pad0[0x20];
-    float px, py, pz;                               // +0x20
-    char pad2c[0x40 - 0x2c];
-    float dx, dy, dz;                               // +0x40
-};
-struct Blow {
-    unsigned flags;                                 // +0 (m0)
-    unsigned attacker;                              // +4 (m4)
-    rgl::vector4 pos;                               // +8
-    rgl::vector4 dir;                               // +0x18
-    rgl::vector4 dir2;                              // +0x28
-    int bone;                                       // +0x38 hit location / damage class
-    float dmg_in;                                   // +0x3c
-    float dmg_out;                                  // +0x40
-    int absorbed;                                   // +0x44
-    int kind;                                       // +0x48 (0 cut, 1 pierce, 2 blunt)
-    int item;                                       // +0x4c
-    unsigned item_mod;                              // +0x50
-    union {
-        struct Missile* missile;                    // +0x54
-        HitInfo* hit;
-    };
-    Blow* init();                                   // 0x4353a0 (returns this)
-};
+#include "../blow.h"                                // Blow, HitInfo: the one definition (agent4 and script)
 
 // the per-agent text / label state (*(agent+0x190))
 struct AgentFx {

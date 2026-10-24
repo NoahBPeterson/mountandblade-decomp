@@ -64,10 +64,7 @@ struct RecZSubB {
 
 // ---- scene and mission ----------------------------------------------------------------------------------
 struct shape_base;
-struct Level {                          // the scene: first field of the mission object (0x4417d0 reads it at +0)
-    void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50
-    int trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60
-};
+#include "../world.h"                         // world / Level: the scene, first field of the mission object (0x4417d0 reads it at +0); Level = world
 #include "../mission.h"                       // Mission, TeamRec, g_mission (one definition for src/game); ModeRec: mode_rec.h
 #include "../mode_rec.h"
 extern ModeRec* g_modes;                         // 0x5e2a00

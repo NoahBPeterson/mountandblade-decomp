@@ -19,6 +19,7 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 #include "../tstring.h"
 
 #include "../str_table.h"
+#include "../world.h"                          // world (= Level): the scene object g_level points to
 extern StrTable g_strtable;                  // 0x5e2a18
 
 // --------------------------------------------------------------------------------- collision shapes ----
@@ -80,13 +81,6 @@ struct WorldMap {
     bool     linked(const int* from, const int* to);   // 0x48efa0
 };
 
-struct Level {                               // the level/picker singleton at 0xa732b4
-    char       pad00[0xb0];
-    WorldMap*  world;                        // +0xb0
-    void query_segment(const float* a, const float* b, unsigned mask,
-                       shape_base** out, int* count);      // 0x439870
-    void collect(unsigned key, shape_base** out, int* count);  // 0x51a3a0
-};
 
 struct GroundItem {                          // 0x5c  fleet entry
     vector4  pos;                            // +0x00
@@ -132,7 +126,7 @@ struct MapPanel {
 };
 
 // --------------------------------------------------------------------------------- globals -------------
-extern Level*    g_level;                    // 0xa732b4
+extern world*    g_level;                    // 0xa732b4
 extern Mesh*     g_label_obj;                // 0x5d75ec
 extern float     g_box_x;                    // 0x5d8778
 extern float     g_box_y;                    // 0x5d877c
@@ -216,9 +210,9 @@ void MapPanel::update_target()
     vector4 fp = farp;
 
     // ---- 0x519517: clip against the world's z range ------------------------------------------------
-    if (g_level->world) {
-        float zmin = g_level->world->zmin;
-        float zmax = g_level->world->zmax;
+    if (g_level->wmap) {
+        float zmin = g_level->wmap->zmin;
+        float zmax = g_level->wmap->zmax;
         if (np.z < zmin) {
             float t = fabsf((zmin - np.z) / dir.z);
             np.x += dir.x * t; np.y += dir.y * t; np.z += dir.z * t;
@@ -279,7 +273,7 @@ void MapPanel::update_target()
     int rec_mask  = -1;
     if (best >= 0) {
         rec_index = hits[best]->m4;
-        rec_mask  = (int)g_level->world->recs[rec_index].mask;
+        rec_mask  = (int)g_level->wmap->recs[rec_index].mask;
     }
 
     // ---- 0x519829: party agents under the cursor ---------------------------------------------------
@@ -387,7 +381,7 @@ void MapPanel::update_target()
     } else if (best >= 0) {
         if (g_a17148 && g_5a9fbc) {
             *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
-        } else if (!g_level->world->linked(&rec_index,
+        } else if (!g_level->wmap->linked(&rec_index,
                                            (const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
             return;
         }

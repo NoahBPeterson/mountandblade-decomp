@@ -22,6 +22,8 @@
 #include "../int_vec.h"
 #include "../str_table.h"
 #include "../../include/dialog_rec.h"
+#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
 #define W(p, off) (*(ListWidget**)((char*)(p) + (off)))

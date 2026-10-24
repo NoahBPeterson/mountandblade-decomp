@@ -52,15 +52,7 @@ struct UiWidget {
 // ---- game records ------------------------------------------------------------------------------------
 #include "../../include/troop.h"
 
-struct Game {
-    char pad8c[0x8c];
-    int player;                                     // +0x8c (hero troop index)
-    char pad90[0x13a00 - 0x90];
-    TroopRec* troops;                               // +0x13a00
-
-    int get_prof(int troop, int idx);               // 0x437b20 (thiscall, ret 8)
-};
-extern Game* g_game;                                // 0x5e2930
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // skill table at 0x8ee3100, stride 0x44
 struct SkillRec {

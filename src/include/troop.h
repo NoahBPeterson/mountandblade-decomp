@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include "../game/tstring.h"
 #include "../game/item_ref.h"
+#include "../game/slot_array.h"
 
 struct Troop {
     tstring name;                           // +0x00 (the first member: 0x51c720 reads the record as a tstring; agent2 / agent3 called it `id`, 0x43a480, 0x4428c0)
@@ -19,12 +20,19 @@ struct Troop {
     tstring key;                            // +0x20 translation key (0x460160, 0x4c62b0; agent2 / agent3 called it `name`)
     union {
         unsigned __int64 flags30;           // +0x30 (bit 0x10: hero / fixed stock)   0x435130, 0x462b60, 0x462c80, 0x462e20
+        unsigned __int64 flags;             // +0x30 (script: tf_* flags, troop_is_guarantee_horse 0x4a05f0)
         __int64 flags30s;                   // +0x30 as signed (0x10 = hero, 0x1000000 / 0x4000000 = troop class bits)   0x473a60
         unsigned flags32;                   // +0x30 low dword (low nibble 1 = female, low nibble = class)   0x460160, 0x443870
     };
-    char pad38[0x50 - 0x38];
-    unsigned f50;                           // +0x50 linked / leader troop index (chain end 0)   0x48a080
-    char pad54[4];
+    char pad38[0x4c - 0x38];
+    int faction;                            // +0x4c (script troop_set_faction 0x4a6948)
+    union {
+        struct {
+            unsigned f50;                   // +0x50 linked / leader troop index (chain end 0)   0x48a080
+            char pad54[4];
+        };
+        int upgrade_troop[2];               // +0x50 (script troop_get_upgrade_troop 0x4a6ac0)
+    };
     union {
         struct {
             union {
@@ -34,6 +42,7 @@ struct Troop {
             char pad60[4];
             unsigned f64;                   // +0x64 (low byte = alpha / colour id)   0x489370
         };
+        int attributes[4];                  // +0x58 (script store_attribute_level 0x4ace05)
         int attrs[4];                       // +0x58 strength / agility / intelligence / charisma (char_sheet 0x4ef420 copies the sheet's four attribute fields to +0x58..+0x64; cs_detail 0x4ef9f0 indexes them)
     };
     union {
@@ -46,9 +55,13 @@ struct Troop {
         int istat[12];                      // +0x80 the same words as ints (char_sheet 0x4ef420 copies the sheet's weapon proficiencies to +0x80..+0x98)
         struct {
             char pad80[0x1c];
-            int exp;                        // +0x9c   0x4428c0
+            union {
+                int exp;                    // +0x9c   0x4428c0
+                int xp;                     // +0x9c (script troop_get_xp 0x4a5949)
+            };
             union {
                 float hp;                   // +0xa0 heroes
+                float hit_points;           // +0xa0 (script heal_party 0x4a4834)
                 int fa0;                    // +0xa0 as an int (char_sheet 0x4ef420 stores a sheet word here; its slice called it level)
             };
             union {
@@ -62,6 +75,7 @@ struct Troop {
             union {
                 int fac;                    // +0xac (fac += 10 per level)   0x4428c0
                 int prof_points;            // +0xac unspent weapon proficiency points (0x4eeb10)
+                int proficiency_points;     // +0xac (script troop_add_proficiency_points 0x4a5b9a)
             };
         };
     };
@@ -70,19 +84,31 @@ struct Troop {
         int b0;                             // +0xb0   0x435170
         int level;                          // +0xb0
     };
-    ItemRef inv[0x60];                      // +0xb4 inventory (inv_count() slots, at most 0x60)   0x462da0, 0x462e20, 0x463030
-    int f3b4;                               // +0x3b4 (clamped at 0 by 0x489340)
+    union {
+        ItemRef inv[0x60];                  // +0xb4 inventory (inv_count() slots, at most 0x60)   0x462da0, 0x462e20, 0x463030
+        ItemRef items[0x60];                // +0xb4 (script player_has_item 0x4a04a6)
+    };
+    union {
+        int f3b4;                           // +0x3b4 (clamped at 0 by 0x489340)
+        int gold;                           // +0x3b4 (script store_troop_gold 0x4ac9da)
+    };
     union {
         int f3b8;                           // +0x3b8 (packed by 0x489320)
+        int site;                           // +0x3b8 (script remove_troop_from_site 0x4a4af1)
         unsigned u3b8;                      // +0x3b8 (low 16 = party/side id, bits 16..23 = rule id)
     };
     int used;                               // +0x3bc
-    char pad3c0[0x4a4 - 0x3c0];
+    char pad3c0[0x400 - 0x3c0];
+    int note_times[8];                      // +0x400 (script add_troop_note_from_dialog 0x4a3351; -1 = hidden)
+    tstring notes[8];                       // +0x420 (script 0x4a328b)
+    int note_tableau;                       // +0x4a0 (script add_troop_note_tableau_mesh 0x4a30fe)
     union {
         ItemRef equip[10];                  // +0x4a4 equipment slots   0x4630d0, 0x463100, 0x489c50
+        ItemRef equipment[10];              // +0x4a4 (script troop_has_item_equipped 0x4a050e, ek_horse = +0x4e4)
         struct { char pad4a4[0x40]; int f4e4; };    // +0x4e4 (equip[8].item)
     };
-    char pad4f4[0x508 - 0x4f4];
+    SlotArray slots;                        // +0x4f4 (script troop_set_slot 0x4a079a)
+    char pad4f5[0x508 - 0x4f5];
 
     bool has_flag10();                      // 0x435130
     int stat_int(int i);                    // 0x435150
@@ -91,6 +117,7 @@ struct Troop {
     float falloff(float dist, float k);     // 0x4375b0
     int steps_to_point(int idx);            // 0x4ef6d0 (char_sheet/cs_troop.cpp; this = the troop record: falloff steps until stat[idx] rounds up one point, at most 1000)
     void adjust(int i, float k);            // 0x437770
+    int max_hit_points();                   // 0x468770 (script)
     int inv_count();                        // 0x462b60 number of inventory slots: 90, or 30..96 by skill nibble 12 for heroes
     int slot_value(int item);               // 0x462c00
     bool fits_slot(ItemRef* ref, int slot); // 0x462c80
@@ -128,5 +155,7 @@ struct TroopRec : Troop {
     __declspec(noinline) void raise_skills();   // 0x520420
     __declspec(noinline) void raise_stats();   // 0x5204d0
 };
+
+typedef char mb_troop_size_chk[sizeof(Troop) == 0x508 && sizeof(TroopRec) == 0x508 ? 1 : -1];
 
 #endif // MB_TROOP_H

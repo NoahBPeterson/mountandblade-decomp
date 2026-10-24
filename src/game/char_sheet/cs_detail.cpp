@@ -1,5 +1,6 @@
 #include "./cs_detail.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4ef9f0 -------------------------------------------------------------------------------
 void CharSheet::update_detail()
@@ -34,7 +35,7 @@ void CharSheet::update_detail()
             tstring tt(title);
             f_4b8->set_text(tt);
         }
-        mb_snprintf(body, 0x200, tr(tstring("ui_current_level_value")), g_game->get_prof(f_14, id));
+        mb_snprintf(body, 0x200, tr(tstring("ui_current_level_value")), g_game->skill_level(f_14, id));
         {
             tstring ky("char_t_current_level_y");
             float fy = g_config.get_float(ky);
@@ -57,15 +58,15 @@ void CharSheet::update_detail()
             vec2 xy = { fx, fy };
             f_4b8->set_text_at(bt, xy);
         }
-        Game* g = g_game;
+        GameData* g = g_game;
         if (f_14 != g->player) {
             f_434->hide();
             return;
         }
         int maxlvl = g_skills[id].cap;
-        TroopRec* t = &g->troops[f_14];
+        TroopRec* t = &g->chars[f_14];
         if (t->nibble(id) < maxlvl && t->skill_points >= 1 &&
-            (g_game->troops[f_14].nibble(id) + 1) * 3 <= g->troops[f_14].attrs[SKILL_ATTR(id)]) {
+            (g_game->chars[f_14].nibble(id) + 1) * 3 <= g->chars[f_14].attrs[SKILL_ATTR(id)]) {
             f_434->hide();
             return;
         }

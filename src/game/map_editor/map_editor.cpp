@@ -17,6 +17,7 @@
 #include "../mission.h"
 #include "../placed_obj.h"
 #include "../int_vec.h"
+#include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // the map's records (0x1c8 bytes each) are Mission::props (+0x668c / +0x6690)
 inline int record_count()

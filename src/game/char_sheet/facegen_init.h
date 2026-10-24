@@ -221,8 +221,7 @@ extern "C" double atof(const char* s);                  // 0x537352
 struct SkinSet { char pad0[0x3c]; int n1; char pad40[0x40]; char* keys; char pad44[0x88 - 0x44];
                  char* first_face; };
 extern SkinSet* g_skins_begin;                          // 0x8ed4f7c
-struct Game { char pad0[0x13a00]; char* chars; char pad13a04[0x1a090 - 0x13a04]; int f1a090; };
-extern Game* g_game;                                    // 0x5e2930
+#include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
 extern int g_no_cam;                                    // 0x5a9fb0
 
 struct Animator {

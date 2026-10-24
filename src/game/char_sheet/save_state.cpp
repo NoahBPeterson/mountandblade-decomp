@@ -1,8 +1,9 @@
 #include "./save_state.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
-// @ 0x4e8f10    int Game::save_state(OutStream* out)   (thiscall, ret 4)
-int Game::save_state(OutStream* out)
+// @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
+int GameData::save_state(OutStream* out)
 {
     __int64 counter = g_time1;
     out->w_int8((int*)&counter);
@@ -57,19 +58,19 @@ void Rec30Tag::write(OutStream* out)
         out->w_int1((int*)(array + i * 0x30 + 0x28));
 }
 
-// @ 0x4e9190    int Game::write_clock(OutStream* out)   (thiscall, ret 4)
-int Game::write_clock(OutStream* out)
+// @ 0x4e9190    int GameData::write_clock(OutStream* out)   (thiscall, ret 4)
+int GameData::write_clock(OutStream* out)
 {
     char* p = (char*)this;
-    out->w_int1(&f13b20);
+    out->w_int1((int*)&f13b20);
     out->w_raw(p + 0x13b28);
     out->w_raw(p + 0x13b2c);
     out->w_raw(p + 0x13b30);
     out->w_raw(p + 0x13b34);
     out->w_raw(p + 0x13b38);
     out->w_raw(p + 0x13b60);
-    out->w_int(&f13b3c);
-    out->w_int(&f13b40);
+    out->w_int(&i13b3c);
+    out->w_int(&i13b40);
     out->w_int(&f13b44);
     out->w_int(&f13b48);
     out->w_struct(p + 0x13a70);
@@ -106,8 +107,8 @@ int Game::write_clock(OutStream* out)
     return 0;
 }
 
-// @ 0x4e93f0    void Game::write_vec5c(OutStream* out)   (thiscall, ret 4)   vector at +0x13a64, stride 0x5c
-void Game::write_vec5c(OutStream* out)
+// @ 0x4e93f0    void GameData::write_vec5c(OutStream* out)   (thiscall, ret 4)   vector at +0x13a64, stride 0x5c
+void GameData::write_vec5c(OutStream* out)
 {
     int n;
     if (!f13a64)
@@ -151,8 +152,8 @@ void RecB0::write(OutStream* out)
     f_a0.write8(out);
 }
 
-// @ 0x4e9550    void Game::write_list138(OutStream* out)   (thiscall, ret 4)
-void Game::write_list138(OutStream* out)
+// @ 0x4e9550    void GameData::write_list138(OutStream* out)   (thiscall, ret 4)
+void GameData::write_list138(OutStream* out)
 {
     out->w_raw(&n13a5c);
     for (int i = 0; i < n13a5c; i++)
@@ -188,16 +189,16 @@ OutStream* write_soa(OutStream* out, char* base)
     return out;
 }
 
-// @ 0x4e9670    void Game::write_list_party(OutStream* out)   (thiscall, ret 4)
-void Game::write_list_party(OutStream* out)
+// @ 0x4e9670    void GameData::write_list_party(OutStream* out)   (thiscall, ret 4)
+void GameData::write_list_party(OutStream* out)
 {
     out->w_raw(&nparties);
     for (int i = 0; i < nparties; i++)
-        ((List8*)((char*)parties + i * 0x494 + 0x474))->write8(out);
+        ((List8*)((char*)party_recs + i * 0x494 + 0x474))->write8(out);
 }
 
-// @ 0x4e96c0    void Game::write_list300(OutStream* out)   (thiscall, ret 4)
-void Game::write_list300(OutStream* out)
+// @ 0x4e96c0    void GameData::write_list300(OutStream* out)   (thiscall, ret 4)
+void GameData::write_list300(OutStream* out)
 {
     out->w_raw(&n13a4c);
     for (int i = 0; i < n13a4c; i++)
@@ -217,16 +218,16 @@ void Rec300::write300(OutStream* out, int n)
     write_soa(out, (char*)this + 0x25c);
 }
 
-// @ 0x4e9790    void Game::write_items(OutStream* out)   (thiscall, ret 4)   item kinds at 0x5e29d0
-void Game::write_items(OutStream* out)
+// @ 0x4e9790    void GameData::write_items(OutStream* out)   (thiscall, ret 4)   item kinds at 0x5e29d0
+void GameData::write_items(OutStream* out)
 {
     out->w_raw(&g_n_items);
     for (int i = 0; i < g_n_items; i++)
         write_vec8((List8*)g_items[i].l30, out);
 }
 
-// @ 0x4e97e0    void Game::write_records(OutStream* out)   (thiscall, ret 4)
-void Game::write_records(OutStream* out)
+// @ 0x4e97e0    void GameData::write_records(OutStream* out)   (thiscall, ret 4)
+void GameData::write_records(OutStream* out)
 {
     out->w_raw(&nrecords);
     for (int i = 0; i < nrecords; i++)

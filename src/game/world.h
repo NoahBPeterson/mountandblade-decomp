@@ -13,6 +13,7 @@ struct shape_base;
 struct face;                                            // src/include/shape.h
 struct SceneEnt;                                        // agent4/agent_think.h
 struct HeightField;                                     // src/include/height_field.h
+struct WorldMap;                                        // inventory_panel/map_update.cpp: the strategy-map cell table (+0xb0)
 
 struct world {
     char pad0[0x28];
@@ -23,7 +24,8 @@ struct world {
     HeightField* hf;                                    // +0x64 (agent4/agent_think.cpp 0x4465e0)
     char pad68[0x7c - 0x68];
     std::vector<rgl::entity*> ents;                     // +0x7c (first at +0x80)              0x41f450
-    char pad8c[0xb4 - 0x8c];
+    char pad8c[0xb0 - 0x8c];
+    WorldMap* wmap;                                     // +0xb0 the strategy-map cell table (inventory_panel/map_update.cpp 0x5191e0: zmin / zmax / recs / linked)
     void* nav;                                          // +0xb4 navigation mesh
     void locate(const rgl::vector4* p, int* out) const;      // 0x41ed00 (grid cell of a point)
     void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50 (0x448eb0)
@@ -35,8 +37,17 @@ struct world {
     float floor_z(const float* p);                      // 0x439d40 (agent4: the floor height under a point)
     Emit* alloc_emitter();                              // 0x427ea0 (0x442ca0)
     int trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60 (0x440e30)
+    // ---- the other views of the scene object (agent.h / script_interpreter.h `Level`, inventory_panel/map_update.cpp `Level` = g_level 0xa732b4,
+    //      the same pointer as mission +0) ----
+    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870 (map_update.cpp)
+    void collect(unsigned key, shape_base** out, int* count);   // 0x51a3a0 (map_update.cpp)
+    float ground_height(const rgl::vector4* p);         // 0x439d40 (script: floor_z taking the point as a vector)
+    int face_at(const rgl::vector4* p);                 // 0x439a50 (thiscall, ret 4; script)
+    void set_fog(const float* a1, const float* distance, const unsigned* color);   // 0x488cd0 (ret 0xc; script)
     void collect_boxed(const rgl::vector4* bmin, const rgl::vector4* bmax, std::vector<unsigned>* out);   // 0x442180 (agent_fx_sound.cpp)
     void erase_entity(rgl::entity* e);                  // 0x41f450 (entity.cpp)
 };
+
+typedef world Level;                                    // agent/agent.h, script and map_update named the scene `Level`
 
 #endif // GAME_WORLD_H

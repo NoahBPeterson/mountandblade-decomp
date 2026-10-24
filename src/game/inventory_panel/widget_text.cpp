@@ -101,15 +101,7 @@ struct vec_model {                                  // vector<model_b>
     void resize(unsigned n, model_b val = model_b());   // 0x50d170
 };
 
-struct vec_int {                                    // vector<int>
-    void* alloc;                                    // +0
-    int* first;                                     // +4
-    int* last;                                      // +8
-    int* end;                                       // +0xc
-    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
-    void insert_n(int* pos, unsigned n, const int* val);   // 0x49b1c0
-};
+#include "../int_vec.h"                                 // IntVec (was vec_int here)
 
 struct vec_widget {                                 // vector<widget*> (allocator word not initialised)
     void* alloc;                                    // +0
@@ -179,7 +171,7 @@ text_box::text_box()
 
 // ------------------------------------------------------------------ the selection list ----------------------
 struct sel_list {
-    vec_int v;                                      // +0
+    IntVec v;                                       // +0
     char pad[0x1708 - 0x10];
     char dirty;                                     // +0x1708
     void add(int val);                              // 0x50d0e0
@@ -189,12 +181,12 @@ struct sel_list {
 void sel_list::add(int val)
 {
     dirty = 1;
-    if (v.size() < v.capacity()) {
-        int* p = v.last;
+    if (v.count() < v.capacity()) {
+        int* p = v._Mylast;
         *p = val;
-        v.last = p + 1;
+        v._Mylast = p + 1;
     } else {
-        v.insert_n(v.last, 1, &val);
+        v.insert_n_49b1c0(v._Mylast, 1, &val);
     }
 }
 
@@ -251,32 +243,32 @@ static inline const tstring& name_of_4(int id)
 
 static inline void swap_index(sel_list* l, unsigned i, unsigned j)
 {
-    int t = l->v.first[i];
-    l->v.first[i] = l->v.first[j];
-    l->v.first[j] = t;
+    int t = l->v._Myfirst[i];
+    l->v._Myfirst[i] = l->v._Myfirst[j];
+    l->v._Myfirst[j] = t;
 }
 
 // @ 0x50cc70 sel_list::sort
 void __stdcall sort_list(sel_list* l, int mode)
 {
-    for (unsigned i = 0; i < l->v.size(); i++) {
-        for (unsigned j = i + 1; j < l->v.size(); j++) {
+    for (unsigned i = 0; i < l->v.count(); i++) {
+        for (unsigned j = i + 1; j < l->v.count(); j++) {
             switch (mode) {
             case 1:
-                if (strcmp(name_of_1(l->v.first[i]), name_of_1(l->v.first[j])) > 0)
+                if (strcmp(name_of_1(l->v._Myfirst[i]), name_of_1(l->v._Myfirst[j])) > 0)
                     swap_index(l, i, j);
                 break;
             case 2:
-                if (strcmp(name_of_2(l->v.first[i]), name_of_2(l->v.first[j])) > 0)
+                if (strcmp(name_of_2(l->v._Myfirst[i]), name_of_2(l->v._Myfirst[j])) > 0)
                     swap_index(l, i, j);
                 break;
             case 3:
-                if (strcmp(name_of_3(l->v.first[i]), name_of_3(l->v.first[j])) > 0)
+                if (strcmp(name_of_3(l->v._Myfirst[i]), name_of_3(l->v._Myfirst[j])) > 0)
                     swap_index(l, i, j);
                 break;
             case 4:
-                if (strcmp(name_of_4(l->v.first[i]).strip_tags().c_str(),
-                           name_of_4(l->v.first[j]).strip_tags().c_str()) > 0)
+                if (strcmp(name_of_4(l->v._Myfirst[i]).strip_tags().c_str(),
+                           name_of_4(l->v._Myfirst[j]).strip_tags().c_str()) > 0)
                     swap_index(l, i, j);
                 break;
             }

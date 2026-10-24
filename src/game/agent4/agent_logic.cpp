@@ -50,6 +50,7 @@
 #include "../../include/mesh_prims.h"
 #include "../hnode.h"
 #include "../../include/height_field.h"
+#include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // inline vector helpers of the original object
 static inline vector4 a_vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
@@ -3403,9 +3404,7 @@ mesh* Wielder::make_ranged_mesh()
     return build_ranged(i, ranged_ref());
 }
 
-struct PropVec : std::vector<Rec1c8> {
-    void push_back(const Rec1c8& x);                    // 0x440b80
-};
+#include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
 
 // @ 0x44f870
 int Mission::add_placed(const int* kind, const int* id, const int* value, const matrix* m, int* spawn_id)

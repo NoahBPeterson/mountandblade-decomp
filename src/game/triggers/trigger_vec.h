@@ -49,39 +49,7 @@ extern int g_opt_5aa110;    // 0x5aa110  control 0x467 item data
 
 // ---- meta mission (global object at 0xa73300, 0x4be742: called as MetaMission::init; the original brackets it with an
 // 18-byte WinLicense marker pair at 0x4be730 / before 0x4be7c0) ---------------------------------------------------
-struct MetaMission {
-    int   f000;             // +0x000
-    int   f004;             // +0x004
-    int   f008;             // +0x008
-    int   f00c;             // +0x00c
-    int   f010;             // +0x010
-    int   f014;             // +0x014
-    int   f018;             // +0x018
-    int   f01c;             // +0x01c
-    int   f020;             // +0x020
-    int   f024;             // +0x024
-    char  pad028[0x14];
-    int   f03c;             // +0x03c
-    char  f040;             // +0x040
-    char  pad041[0xf7];
-    int   f138;             // +0x138
-    int   f13c;             // +0x13c
-    int   f140;             // +0x140
-    int   f144;             // +0x144
-    int   f148;             // +0x148
-    int   pad14c;
-    int   f150;
-    int   f154;             // +0x154
-    int   f158;             // +0x158
-    int   f15c;             // +0x15c
-    char  pad160[8];
-    int   f168;             // +0x168
-    char  pad16c[0x154];
-    int   f2c0;             // +0x2c0
-    int   f2c4;             // +0x2c4
-    char  f2c8;             // +0x2c8
-    void init();            // 0x4be742 (entered at 0x4be730 through the marker jump)
-};
+#include "../meta_mission.h"      // MetaMission (0xa73300): the one definition (triggers and party)
 
 // ---- script-code table (0x4a ints, every second one named: 0x4be7c0, also called as a bare function by rgl/mesh2) ---
 struct code_table {
@@ -286,18 +254,6 @@ struct TriggerEntryVec {
 };
 int __cdecl entry_vec_resize(stream_base* s, TriggerEntryVec* self);   // 0x4c2250 (cdecl: the stream is the first stack argument, the vector the second)
 #include "../mode_rec.h"
-struct MissionTemplate {    // module-file mission template (0x4c2300)
-    tstring name;           // +0x00
-    tstring f10;            // +0x10
-    int     f20;            // +0x20
-    tstring display;        // +0x24
-    SpawnRec* spawns;       // +0x34
-    int     n_spawns;       // +0x38
-    int     f3c;            // +0x3c
-    char    pad40[0xc];
-    TriggerVec triggers;    // +0x4c
-    void read(stream_base& s);                  // 0x4c2300 (ret 4)
-};
 struct PresentationRec {    // module-file presentation (0x4c23f0)
     tstring name;           // +0x00
     int     flags;          // +0x10

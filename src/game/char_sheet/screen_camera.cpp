@@ -1,5 +1,6 @@
 #include "./screen_camera.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4ece20
 void Screen::camera_update(float dt)
@@ -65,8 +66,8 @@ void Screen::camera_update(float dt)
 
     // --- follow the selected party while the map is live -------------------------------------------
     if (g_game->f88) {
-        if (g_game->parties()->is_live(g_game->selected)) {
-            Party* p = g_game->parties()->get_party(g_game->selected);   // the slice cast the dense index to a pointer; 0x48ad00 returns the index, the page arithmetic is get_party
+        if (g_game->parties.is_live(g_game->selected)) {
+            Party* p = g_game->parties.get_party(g_game->selected);   // the slice cast the dense index to a pointer; 0x48ad00 returns the index, the page arithmetic is get_party
             vector4 rect = *(vector4*)&p->pos;
             rect.z = rect.z + C_549CDC;
             float dx = rect.x - f290;
@@ -134,7 +135,7 @@ void Screen::camera_update(float dt)
                 fogdist = fogdist * C_54B8B0;
         }
     }
-    unsigned fog = pack_color(&g_game->fog_color);
+    unsigned fog = pack_color((const vector4*)g_game->fog_color);
     ((Envelope*)g_scene)->set_fade(&fogdist, &fog);
 
     // --- frustum planes, the frame into this+0x238, then the widget's label matrix and the scene ---

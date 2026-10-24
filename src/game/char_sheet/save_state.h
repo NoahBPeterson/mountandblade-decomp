@@ -110,63 +110,14 @@ struct Rec30Tag {                                   // count +0x0, array +0x4, s
 };
 
 // ---- the game object (see s00473a60 / s004e85d0) ---------------------------------------------------------
-#pragma pack(push, 4)
-struct Game {
-    int          version;                           // +0x0
-    char         pad04[0x8c - 0x4];
-    int          f8c;                               // +0x8c (index of the current party)
-    char         pad90[0x13a00 - 0x90];
-    GameRecord*  records;                           // +0x13a00
-    int          nrecords;                          // +0x13a04
-    char         pad13a08[0x13a20 - 0x13a08];
-    int          f13a20;
-    char         pad13a24[0x13a48 - 0x13a24];
-    Rec300*      f13a48;                            // +0x13a48 (array of 0x300-byte entries)
-    int          n13a4c;                            // +0x13a4c
-    RecB0*       parties;                           // +0x13a50 (array of 0x494-byte records)
-    int          nparties;                          // +0x13a54
-    Rec138*      f13a58;                            // +0x13a58 (array of 0x138-byte entries)
-    int          n13a5c;                            // +0x13a5c
-    char         pad13a60[0x13a64 - 0x13a60];
-    char*        f13a64;                            // +0x13a64 (array of 0x5c-byte entries)
-    char*        f13a68;                            // +0x13a68
-    char         pad13a6c[4];
-    char*        f13a70;                            // +0x13a70
-    char         pad13a74[0x13a88 - 0x13a74];
-    int          f13a88;
-    char         pad13a8c[0x13aa0 - 0x13a8c];
-    int          f13aa0;
-    char         pad13aa4[0x13ad0 - 0x13aa4];
-    int          f13ad0, f13ad4, f13ad8, f13adc;
-    int          f13ae0, f13ae4, f13ae8, f13aec;
-    int          f13af0;
-    int          f13af4, f13af8, f13afc;
-    char         pad13b00[0x13b20 - 0x13b00];
-    int          f13b20;
-    char         pad13b24[4];
-    int          f13b28, f13b2c, f13b30, f13b34, f13b38, f13b3c, f13b40, f13b44, f13b48;
-    char         pad13b4c[0x13b50 - 0x13b4c];
-    tstring      f13b50;
-    int          f13b60;
-    char         pad13b64[0x1a1d8 - 0x13b64];
-    int          f1a1d8, f1a1dc, f1a1e0, f1a1e4, f1a1e8, f1a1ec;
-    int save_state(OutStream* out);                 // 0x4e8f10
-    __declspec(noinline) int  write_clock(OutStream* out);               // 0x4e9190
-    __declspec(noinline) void write_vec5c(OutStream* out);               // 0x4e93f0
-    __declspec(noinline) void write_list138(OutStream* out);             // 0x4e9550
-    __declspec(noinline) void write_list_party(OutStream* out);          // 0x4e9670
-    __declspec(noinline) void write_list300(OutStream* out);             // 0x4e96c0
-    __declspec(noinline) void write_records(OutStream* out);             // 0x4e97e0
-    __declspec(noinline) void write_items(OutStream* out);               // 0x4e9790
-    void write_other2(OutStream* out);              // 0x4e9b50 (next slice)
-};
 
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
+#pragma pack(push, 4)
 struct Table2 {                                     // the table at Game+0xcc
     void write(OutStream* out);                     // 0x4e99d0 (next slice)
 };
 #pragma pack(pop)
 
-extern Game* g_game;                                // 0x5e2930
 
 extern List8 g_list_a70480;                         // 0xa70480
 extern RecB0* g_29f8;                               // 0x5e29f8 (array of 0xb0-byte records)

@@ -188,11 +188,9 @@ struct UiButton : UiWidget {
 };
 
 // engine mesh + resource manager
-namespace rgl { struct mesh { rgl::mesh* clone(); }; } // 0x41c6d0
+
 using rgl::mesh;
-struct resmgr {
-    mesh* get_object(const tstring& name);              // 0x419540
-};
+#include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                                 // 0x5d6fa0
 
 void* alloc_53545e(unsigned size);                      // 0x53545e  operator new

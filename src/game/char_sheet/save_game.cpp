@@ -1,6 +1,8 @@
 #include "./save_game.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4e87d0    MapScreen::buttons(int arg)
 void MapScreen::buttons(int arg)
@@ -38,7 +40,7 @@ void MapScreen::buttons(int arg)
     if (save)
         save_game(-1, 0);
     if (g_game) {
-        Game* g = g_game;
+        GameData* g = g_game;
         g->world_free();
         operator delete(g);
         g_game = 0;
@@ -104,7 +106,7 @@ int save_game(int version, tstring* name)
         g_game->version = version;
     LOG("Saving Game...");
     log_save_path();
-    Game* g = g_game;
+    GameData* g = g_game;
     char* ps = g->save_slot;
     if (!ps)
         ps = (char*)&g->save_slot;
@@ -200,8 +202,8 @@ void log_save_path()
     CreateDirectoryA(path, NULL);
 }
 
-// @ 0x4e8e70    void Game::load_header(SaveCtx* h)   (thiscall: this = g, ret 4)
-void Game::load_header(SaveCtx* h)
+// @ 0x4e8e70    void GameData::load_header(SaveCtx* h)   (thiscall: this = g, ret 4)
+void GameData::load_header(SaveCtx* h)
 {
     GameRecord* rec = records + f8c;
     tstring* name = g_strtable.find(&rec->title);

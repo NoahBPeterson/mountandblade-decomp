@@ -198,10 +198,7 @@ struct PresentationTable {                           // 0xa75f2c
 struct ScriptTable {                                 // 0xa75eb0
     void load(tstream3* s);                          // 0x4c48d0
 };
-struct StringTable {                                 // 0xa75ea0
-    void load(tstream3* s);                          // 0x4c46d0
-    void load_quick(tstream3* s);                    // 0x4c47d0
-};
+#include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
 struct MeshTable {                                   // 0x8ed4f58
     void load(tstream3* s);                          // 0x4c3fb0
 };
@@ -215,7 +212,6 @@ extern AnimTable g_anims;                            // 0x8ed4f60
 extern TableauTable g_tableau;                       // 0xa75f40
 extern PresentationTable g_presentations;            // 0xa75f2c
 extern ScriptTable g_scripts;                        // 0xa75eb0
-extern StringTable g_strings;                        // 0xa75ea0
 extern MeshTable g_meshes;                           // 0x8ed4f58
 extern DialogTable g_dialogs;                        // 0x8ed50c8
 

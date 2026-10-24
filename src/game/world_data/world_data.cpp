@@ -1865,10 +1865,6 @@ void GameW::set_quest_cancelled(int quest)
     g_sound.play(g_quest_sounds[4], 1, g_sound_pos, 1.0f, 0);
 }
 
-// std::vector<int> whose _Insert_n is reachable (the original's inline push_back calls it out of line)
-struct IntVector : std::vector<int> {
-    void _Insert_n(iterator where, size_type count, const int& value) { std::vector<int>::_Insert_n(where, count, value); }
-};
 
 // ==== 0x4949d0, 0x494ad0: party objectives =================================================================================
 // @ 0x4949d0

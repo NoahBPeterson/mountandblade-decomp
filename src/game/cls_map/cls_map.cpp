@@ -19,6 +19,7 @@
 #include <process.h>
 #include <shlobj.h>
 #include "../../tinyxml/tinyxml.h"
+#include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
 extern "C" void __stdcall SkinMagic_Init(HINSTANCE, const char*, int, int);   // 0x535452 (ordinal 1)
@@ -1149,7 +1150,7 @@ UiAInline* new_medium_button(MissionUi* parent, const tstring* text, float a, fl
 
 // ---- 0x4dcef0..0x4ddf80: the main menu, the save scan, the menu rows, the block owner and the escape / message menus ----
 // @ 0x4dcef0
-void MainMenu::create()
+void MainMenuScreen::create()
 {
     char text[0x200];
     int ids[9];

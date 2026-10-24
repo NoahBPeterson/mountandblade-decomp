@@ -1,6 +1,7 @@
 #include "./quest_log.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4ee840
 void __fastcall quest_window::refresh()

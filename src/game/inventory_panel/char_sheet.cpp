@@ -87,8 +87,7 @@ struct Widget {
 // ---- engine globals -----------------------------------------------------------------------------------
 #include "../../include/game_data.h"
 
-struct Mesh { Mesh* clone(); };                 // 0x41c6d0
-struct ResMgr { Mesh* get_object(const tstring* name); };               // 0x419540 (ret 4)
+#include "../res_mesh.h"                       // ResMesh (was ResMesh), ResMgr: the one definition
 extern ResMgr g_resmgr;                         // 0x5d6fa0
 
 struct GuiManager {
@@ -102,12 +101,7 @@ extern char g_ui_dirty;                         // 0x5d8788
 extern StrTable g_strtable;                     // 0x5e2a18
 
 // settings table at 0xa44240: 0x2c-byte records, key tstring at +0, text pointer at +0x20
-struct ConfigTable {
-    int find(const tstring& key);               // 0x4bd5a0 (ret 4)
-    float get_float(const tstring& key);        // 0x4bd5e0 (ret 4)
-    int get_int(const tstring& key);            // 0x5093d0 (ret 4)
-};
-extern ConfigTable g_config;                    // 0xa44240
+#include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
 extern int g_config_count;                      // 0xa70240
 
 extern "C" double atof(const char* s);          // 0x537352
@@ -116,7 +110,7 @@ int sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
 void ctor_window(void* p);                      // 0x4931a0
 void ctor_widget(void* p);                      // 0x48ae20
-void mesh_scale(Mesh* m, float f);              // 0x44f0c0
+void mesh_scale(ResMesh* m, float f);              // 0x44f0c0
 
 // ---- widget factories ----------------------------------------------------------------------------------
 Widget* make_button(Widget* parent, tstring* caption, int a, int b, float h);        // 0x4dce70
@@ -181,7 +175,7 @@ extern int g_weapon_available[7];               // 0x5e2900
 extern char g_skill_table[];                    // 0x8ee3100 (records of 0x44 bytes)
 
 // the two mode/tutorial objects touched at the end
-struct MainMenu {
+struct TutorialMenuRec {                        // the menu record the holder's first dword points to (renamed from MainMenu: 0xa73980 itself is main_menu.h's MainMenu)
     char pad4[0x4];
     int f4;                                     // +0x4
     char pad8[0x1c - 0x8];
@@ -195,7 +189,7 @@ struct MainMenu {
 // 0xa73980 is the menu holder object itself; its first dword points at the menu the tutorial
 // branch fills in (tstrings at +0x1c and +0x68, the three ints at +4/+0x4c/+0x50).
 struct MainMenuHolder {
-    MainMenu* target;                           // +0
+    TutorialMenuRec* target;                    // +0
     void set(int v);                            // 0x494260
 };
 extern MainMenuHolder g_menu;                   // 0xa73980
@@ -288,7 +282,7 @@ void CharSheet::init()
         void* mesh;
         {
             tstring n("character_window");
-            mesh = ((Mesh*)g_resmgr.get_object(&n))->clone();
+            mesh = ((ResMesh*)g_resmgr.get_object(&n))->clone();
         }
         w->set_mesh(0, mesh);
     }
@@ -575,15 +569,15 @@ void CharSheet::init()
     label_refresh(name, tstring("char_tb_character_name"));
 
     {
-        Mesh* up;
+        ResMesh* up;
         {
             tstring k("party_button");
-            up = ((Mesh*)g_resmgr.get_object(&k))->clone();
+            up = ((ResMesh*)g_resmgr.get_object(&k))->clone();
         }
-        Mesh* down;
+        ResMesh* down;
         {
             tstring k("party_button_down");
-            down = ((Mesh*)g_resmgr.get_object(&k))->clone();
+            down = ((ResMesh*)g_resmgr.get_object(&k))->clone();
         }
         mesh_scale(up, 0.6666667f);
         mesh_scale(down, 0.6666667f);
@@ -760,7 +754,7 @@ void CharSheet::init()
         tstring k2("ui_tutorial");
         tstring* gen = g_strtable.lookup(k1);
         tstring* tut = g_strtable.lookup(k2);
-        MainMenu* m = g_menu.target;
+        TutorialMenuRec* m = g_menu.target;
         m->b = *tut;
         m->a = *gen;
         m->f4c = 0;

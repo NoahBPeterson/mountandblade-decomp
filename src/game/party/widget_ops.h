@@ -27,6 +27,9 @@ struct WidgetOps {
     virtual void va8(); virtual void vac(); virtual void vb0(); virtual void vb4(); virtual void vb8(); virtual void vbc();
     virtual void vc0(); virtual void vc4();
     virtual void add_child(void* child);               // +0xc8 (0x501a20, 0x502320, 0x5024e0)
+    // plain members of the widget base (src/game/inventory_panel/note_window.cpp reaches them through the same cast)
+    void relayout();                                   // 0x488d50 (this = widget)
+    int  visible();                                    // 0x50cc60 (this = widget)
 };
 #define WOPS(w) ((WidgetOps*)(w))
 

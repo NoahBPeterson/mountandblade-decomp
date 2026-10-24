@@ -1,5 +1,6 @@
 #include "./facegen_misc.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4eb270
 void FaceGen::update_view(int unused)
@@ -49,7 +50,7 @@ void FaceGen::refresh()
     f360 = sl_age->value();
     f364 = sl_hair_color->value();
     ((UiVt*)ent)->refresh_anim();
-    int flags = *(int*)(g_game->chars + troop * 0x508 + 0x30) & 0xf;
+    int flags = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
     int zero = 0;
     g_cur = gen_face_seed(&flags, &zero, &g_char_count);
     g_dummy1 = f364;

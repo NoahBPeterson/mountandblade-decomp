@@ -10,6 +10,7 @@
 #include "../game/tstring.h"
 #include "./timer.h"
 #include "./ptr_vec.h"
+#include "../game/slot_array.h"
 namespace rgl { struct mesh; }
 struct PartyV4 { float x, y, z, w; };       // a plain 4-float vector (no constructors: the party record is built by memory copies)
 
@@ -29,6 +30,7 @@ struct Stack {                              // 0x20 bytes, array at party+0xa8
         int f10;
     };
     int f14, f18, f1c;
+    void clear();                           // 0x4893e0 (script: party_remove_members_of_troop / clear paths)
 };
 
 struct Party {                              // 0x5ac8 bytes
@@ -43,27 +45,55 @@ struct Party {                              // 0x5ac8 bytes
     float dirx, diry;                       // +0x40 heading   0x4b3ce0, 0x4b80d0
     float oldx, oldy;                       // +0x48 previous heading   0x4b80d0
     float angle;                            // +0x50 facing angle   0x4b3ce0, 0x4b80d0
-    char pad54[0x64 - 0x54];
+    tstring extra_text;                     // +0x54 (script party_set_extra_text 0x4a6d03)
     float radius;                           // +0x64 0x4b80d0
     float alpha;                            // +0x68 map-model opacity   0x4b80d0
     int f6c;                                // +0x6c 0x4b7e50
-    int f70;                                // +0x70 troop index into the harvest table   0x4b4a00
+    union {
+        int f70;                            // +0x70 troop index into the harvest table   0x4b4a00
+        int faction;                        // +0x70 (script party_set_faction 0x4a73ab)
+    };
     unsigned f74;                           // +0x74 packed nibbles (low 4: aggression, 0x100: flag)   0x4b4a00
-    float f78;                              // +0x78 0x4b4a00 (alt score weight), 0x4b2c00
-    float f7c;                              // +0x7c 0x4b2c00 (morale), 0x4b5c30
-    float zoom;                             // +0x80 0x4b2c00 (zoom easing), 0x4b5c30
+    union {
+        float f78;                          // +0x78 0x4b4a00 (alt score weight), 0x4b2c00
+        float bandit_attraction;            // +0x78 (script party_set_bandit_attraction 0x4a7b59)
+    };
+    union {
+        float f7c;                          // +0x7c 0x4b2c00 (morale), 0x4b5c30
+        float morale;                       // +0x7c 0..1 (script party_set_morale 0x4a8387)
+    };
+    union {
+        float zoom;                         // +0x80 0x4b2c00 (zoom easing), 0x4b5c30
+        int f80;                            // +0x80 (script 0x4a4a76)
+    };
     char pad84[0x88 - 0x84];
-    int f88;                                // +0x88 battle record index, -1 = none   0x4b1fa0, 0x4b3910, 0x4b4a00
-    int owner;                              // +0x8c   0x460b90
+    union {
+        int f88;                            // +0x88 battle record index, -1 = none   0x4b1fa0, 0x4b3910, 0x4b4a00
+        int battle;                         // +0x88 (script 0x4a814d)
+    };
+    union {
+        int owner;                          // +0x8c   0x460b90
+        int template_id;                    // +0x8c (script party_get_template_id 0x4a6d9f)
+    };
     char pad90[0x94 - 0x90];
-    int f94;                                // +0x94 rider troop (type table index)   0x4b7840
+    union {
+        int f94;                            // +0x94 rider troop (type table index)   0x4b7840
+        int banner_icon;                    // +0x94 (script party_set_banner_icon 0x4a854a)
+    };
     char pad98[0xa0 - 0x98];
-    int flags_lo;                           // +0xa0 (64-bit flag word; low byte = id)   0x489420, 0x489460 (0x3000 = size class)
-    int flags_hi;                           // +0xa4
+    union {
+        struct {
+            int flags_lo;                   // +0xa0 (64-bit flag word; low byte = id)   0x489420, 0x489460 (0x3000 = size class)
+            int flags_hi;                   // +0xa4
+        };
+        unsigned __int64 flags;             // +0xa0 pf_* (script party_is_active 0x4a0462)
+        struct { char flags_lo7[7]; unsigned char carry_gold; };    // +0xa7 pf_carry_gold_mask byte (script 0x4a2d0f)
+    };
     Stack stacks[64];                       // +0xa8
     union {
         int nstacks;                        // +0x8a8
         int count;
+        int num_stacks;                     // +0x8a8 (script main_party_has_troop 0x4a0349)
     };
     float f8ac;                             // +0x8ac 0x4b20b0 (speed factor)
     float f8b0;                             // +0x8b0 0x4b2120 (set from perk 0x1a), 0x4b20b0
@@ -71,23 +101,50 @@ struct Party {                              // 0x5ac8 bytes
     char f8b5;                              // +0x8b5 0x4b7e50 (kill-feed visible)
     char pad8b6[2];
     ptr_vec attached;                       // +0x8b8 std::vector<int> of attached party ids (allocator word, first, last, end)   0x4b4800, 0x4b6180
-    int f8c8;                               // +0x8c8 attached-to party, -1 = none   0x4b2c00, 0x4b3910
+    union {
+        int f8c8;                           // +0x8c8 attached-to party, -1 = none   0x4b2c00, 0x4b3910
+        int attached_to;                    // +0x8c8 (script party_get_attached_to 0x4a87e2)
+    };
     char f8cc;                              // +0x8cc in mission   0x4b6180
     char pad8cd[0x8d0 - 0x8cd];
     Timer clk8d0;                           // +0x8d0 re-plan timer   0x4b80d0
-    float interval;                         // +0x8e0 re-plan interval   0x4b80d0, 0x4b3ce0
-    int state;                              // +0x8e4 pending action   0x4b4a00
-    int state_target;                       // +0x8e8
-    int state_f8ec;                         // +0x8ec
-    int state_f8f0;                         // +0x8f0
-    float f8f4;                             // +0x8f4 0x4b3ce0
+    union {
+        float interval;                     // +0x8e0 re-plan interval   0x4b80d0, 0x4b3ce0
+        int ai_state;                       // +0x8e0 (script party_set_ai_behavior 0x4a79bb)
+    };
+    union {
+        int state;                          // +0x8e4 pending action   0x4b4a00
+        int f8e4;                           // +0x8e4 scripted ai behaviour (script add_companion_party: 6)
+    };
+    union {
+        int state_target;                   // +0x8e8
+        int ai_target_object;               // +0x8e8 (script party_set_ai_object 0x4a7a12)
+    };
+    union {
+        int state_f8ec;                     // +0x8ec
+        float ai_target_x;                  // +0x8ec (script party_set_ai_target_position 0x4a7a6e)
+    };
+    union {
+        int state_f8f0;                     // +0x8f0
+        float ai_target_y;                  // +0x8f0
+    };
+    union {
+        float f8f4;                         // +0x8f4 0x4b3ce0
+        float ai_patrol_radius;             // +0x8f4 (script party_set_ai_patrol_radius 0x4a7abc)
+    };
     int f8f8;                               // +0x8f8 clock index   0x4b3ce0
     char pad8fc[4];
     int f900;                               // +0x900 0x4b3ce0 (clock lo)
     int f904;                               // +0x904 (clock hi)
     Timer clk908;                           // +0x908 footstep timer   0x4b80d0
-    int action;                             // +0x918 map order (ai behaviour)   0x4b3910, 0x4b3ce0, 0x4b4a00
-    int target;                             // +0x91c order target   0x4b3ce0
+    union {
+        int action;                         // +0x918 map order (ai behaviour)   0x4b3910, 0x4b3ce0, 0x4b4a00
+        int ai_behavior;                    // +0x918 ai_bhvr_* (script party_is_in_town 0x4a03d1)
+    };
+    union {
+        int target;                         // +0x91c order target   0x4b3ce0
+        int ai_object;                      // +0x91c (script entering_town 0x49fb99)
+    };
     int f920;                               // +0x920
     union {
         PartyV4 order_pos;                  // +0x924 order position   0x4b3bc0, 0x4b3ce0
@@ -101,7 +158,10 @@ struct Party {                              // 0x5ac8 bytes
     char pad93c[4];
     __int64 t940;                           // +0x940 0x4b80d0
     Timer clk948;                           // +0x948 0x4b80d0
-    float f958;                             // +0x958 aggression scale   0x4b4a00
+    union {
+        float f958;                         // +0x958 aggression scale   0x4b4a00
+        float ai_initiative;                // +0x958 (script party_set_ai_initiative 0x4a7921)
+    };
     union {
         struct { float goal_x, goal_y; };   // +0x95c path goal (start_path 0x4b73c0, step_route 0x4b4320)
         struct { int goal_xi, goal_yi; };   // 0x4b2880 (int copies)
@@ -115,7 +175,10 @@ struct Party {                              // 0x5ac8 bytes
     int cursor;                             // +0x596c path cursor   0x4b4320
     int npath;                              // +0x5970 path length
     struct face* mesh;                      // +0x5974 current nav-mesh face   0x4b2880, 0x4b80d0
-    unsigned map_mask;                      // +0x5978 map record mask under the party   0x4b2880, 0x4b3910
+    union {
+        unsigned map_mask;                  // +0x5978 map record mask under the party   0x4b2880, 0x4b3910
+        int current_terrain;                // +0x5978 (script party_get_current_terrain 0x4a6d53)
+    };
     float f597c;                            // +0x597c 0x4b2880
     int moving;                             // +0x5980
     int f5984;                              // +0x5984 map record index the party is on
@@ -133,14 +196,22 @@ struct Party {                              // 0x5ac8 bytes
     struct PartyModel* model;               // +0x59c0 0x4b32f0 (release), 0x4b80d0
     float trail_len;                        // +0x59c4 0x4b80d0
     PartyV4 trail;                          // +0x59c8 last event position   0x4b2880, 0x4b80d0
-    char pad59d8[0x59e8 - 0x59d8];
+    SlotArray slots;                        // +0x59d8 (script party_set_slot 0x4a0815)
+    char pad59d9[0x59e8 - 0x59d9];
     rgl::mesh* label;                       // +0x59e8 rgl::mesh* of the hud label   0x4b7e50, 0x49bea0
     rgl::mesh* e59ec;                       // +0x59ec 0x4b7840, 0x4b80d0
     rgl::mesh* e59f0;                       // +0x59f0
     ptr_vec deferred;                       // +0x59f4 std::vector<int> (allocator word; first at +0x59f8) emitter ids   0x4b7840
     char f5a04;                             // +0x5a04
-    char pad5a05[0x5ab0 - 0x5a05];
-    Timer ignore_timer;                     // +0x5ab0 (script: party_ignore_player 0x4a7b0c)   0x4b4a00
+    char pad5a05[0x5a08 - 0x5a05];
+    int note_times[8];                      // +0x5a08 (script add_party_note_from_dialog 0x4a35fb)
+    tstring notes[8];                       // +0x5a28 (script 0x4a353c)
+    int note_tableau;                       // +0x5aa8 (script add_party_note_tableau_mesh 0x4a31a6)
+    int pad5aac;
+    union {
+        Timer ignore_timer;                 // +0x5ab0 (script: party_ignore_player 0x4a7b0c)   0x4b4a00
+        Timer ignore_player_timer;
+    };
     int visited;                            // +0x5ac0 nodes visited by the last path search   0x4b73c0
     char pad5ac4[0x5ac8 - 0x5ac4];
 
@@ -217,5 +288,7 @@ struct PartyMgr {                           // 0x138e0 bytes, embedded in the ga
     int first_party_id();                   // 0x460d20
     bool is_live(int id);                   // 0x4903e0 (thiscall, ret 4: id names a live party) (src/game/party2)
 };
+
+typedef char mb_party_size_chk[sizeof(Party) == 0x5ac8 ? 1 : -1];
 
 #endif // MB_PARTY_H

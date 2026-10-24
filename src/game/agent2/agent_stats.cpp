@@ -41,6 +41,8 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../int_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // inline vector helpers of the original: rgl's operators are out-of-line in other objects
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -517,7 +519,7 @@ void ptr_vec::pop_back_if()
 E1c8* vec1c8::at(int i) { return first + i; }
 
 // @ 0x438c30
-int* vec_int::fill_ptr(int* f, unsigned n, const int& x)
+int* IntVec::fill_ptr(int* f, unsigned n, const int& x)
 {
     unsigned c = n;
     int* p = f;
@@ -1100,7 +1102,7 @@ void Skeleton::all_shapes(shape_base** out, int* n)
 
 // ---- string table ("STR NOT FOUND: ") ---------------------------------------------------------------------------------------------------
 // @ 0x43a1e0
-tstring* StrTab::lookup(const tstring& key)
+tstring* StrTable::lookup(const tstring& key)
 {
     unsigned h = hash_string(&key);
     unsigned n = keys[h].v.size();

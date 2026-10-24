@@ -24,10 +24,7 @@
 using rgl::vector4;
 typedef rgl::string tstring;           // 0x42bbd0 / 0x42bbe0 ctors, 0x42bc40 dtor, 0x42bcb0 assign(const char*)
 
-struct StringTable {
-    tstring* lookup(tstring* key);                                          // 0x43a1e0
-};
-extern StringTable g_string_table;                                          // 0x5e2a18
+#include "./str_table_rgl.h"                                              // StrTableRgl (was StringTable here): the one definition
 
 // ---- controls ----------------------------------------------------------------------------------------
 struct vector2 { float x, y; };
@@ -65,10 +62,7 @@ struct Widget {
 };
 
 // ---- symbols -----------------------------------------------------------------------------------------
-struct MainMenu {
-    void choose(int option);                                // 0x495700 (tail-called)
-};
-extern MainMenu g_main_menu;                                                // 0xa73980
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 // 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
 struct KeyNames {
     char is_bound(int index);                                               // 0x487900

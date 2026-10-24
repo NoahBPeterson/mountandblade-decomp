@@ -19,6 +19,7 @@
 #include "../../include/troop.h"
 #include "../../rgl/mesh.h"
 #include "../config/widget_mgr.h"
+#include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160
@@ -778,7 +779,7 @@ void BattleRec::bind_host()
     int clk = born.clock;
     ((int*)&born.start)[0] = ((int*)&g_ticks[clk])[0];
     ((int*)&born.start)[1] = ((int*)&g_ticks[clk])[1];
-    wait = 1.0f;
+    next_simulation_time = 1.0f;
     opacity = -10000.0f;
     f74 = 0.0f;
     sound = -1;
@@ -2533,8 +2534,8 @@ void BattleRec::update_nav_anim(int)
         {
             __int64 elapsed = g_ticks[born.clock] - born.start;
             float secs = (float)elapsed * g_scale;
-            if (wait < secs) {
-                wait = frand() + g_one;
+            if (next_simulation_time < secs) {
+                next_simulation_time = frand() + g_one;
                 born.start = g_ticks[born.clock];
                 commit();
             }

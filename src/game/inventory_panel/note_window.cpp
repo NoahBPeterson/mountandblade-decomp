@@ -72,10 +72,7 @@ extern "C" Widget* make_scroll(Widget* parent, const tstring* name);        // 0
 extern "C" Widget* make_scroll2(Widget* parent, const tstring* name,
                                 Widget* other);                            // 0x4f62f0
 
-struct WidgetOps {
-    void relayout();                                 // 0x488d50 (this = widget)
-    int  visible();                                  // 0x50cc60 (this = widget)
-};
+#include "../party/widget_ops.h"            // WidgetOps: the one definition (relayout 0x488d50, visible 0x50cc60)
 struct TextLayout {
     void measure(float* a, float* b);                // 0x438d80 (this = font object)
 };

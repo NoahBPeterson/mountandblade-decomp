@@ -30,9 +30,6 @@ struct DragMesh {                                       // the mesh carried by t
 };
 extern DragMesh* g_drag;                                // 0x5d75e4
 
-struct TroopX : Troop {                                 // view of the troop record: the method 0x4687e0 the canonical header lacks
-    Troop* auto_equip(int a, int b, int c, int d);      // 0x4687e0 (ret 0x10)
-};
 
 struct InventoryPanel {
     int vptr;                                           // +0x00

@@ -25,7 +25,6 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 struct Pos4 { float x, y, z, w; };
 
 struct RecR;
-struct Faction;
 struct MapAgent;
 
 #include "../../include/game_data.h"
@@ -63,16 +62,6 @@ struct RecR {                                // 0x5ac8  party / roster record
 };
 
 
-struct Faction {                             // 0x300
-    tstring             name;                // +0x00
-    char                f10;                 // +0x10
-    char                pad11[3];
-    tstring             key;                 // +0x14
-    int                 f24;                 // +0x24  set = no tag drawn
-    unsigned            color;               // +0x28
-    float               rel;                 // +0x2c  relation to the player
-    char                pad30[0x300 - 0x30];
-};
 
 struct MapAgent {                            // 0x98
     char pad00[0x54];
@@ -113,7 +102,7 @@ struct gui_manager {
 // ---- layout guards (MSVC 13 has no static_assert: a mismatch is a negative array size) -------------
 // Sizes: every record's stride appears in the original as an `imul ..., <stride>` immediate.
 typedef char assert_MapAgent_98  [(sizeof(MapAgent)   == 0x98)    ? 1 : -1];
-typedef char assert_Faction_300  [(sizeof(Faction)    == 0x300)   ? 1 : -1];
+typedef char assert_Faction_300  [(sizeof(FactionRec)    == 0x300)   ? 1 : -1];
 typedef char assert_RecR_5ac8    [(sizeof(RecR)       == 0x5ac8)  ? 1 : -1];
 typedef char assert_AgentPages   [(sizeof(AgentPages) == 0x1c)    ? 1 : -1];
 // Field offsets: taken straight from the original's displacements (see the header comment).
@@ -131,11 +120,11 @@ typedef char assert_RecR_stacks  [(offsetof(RecR, stacks)    == 0xa8)    ? 1 : -
 typedef char assert_RecR_count   [(offsetof(RecR, count)     == 0x8a8)   ? 1 : -1];
 typedef char assert_RecR_state   [(offsetof(RecR, state)     == 0x918)   ? 1 : -1];
 typedef char assert_RecR_target  [(offsetof(RecR, target)    == 0x91c)   ? 1 : -1];
-typedef char assert_Faction_f10  [(offsetof(Faction, f10)    == 0x10)    ? 1 : -1];
-typedef char assert_Faction_key  [(offsetof(Faction, key)    == 0x14)    ? 1 : -1];
-typedef char assert_Faction_f24  [(offsetof(Faction, f24)    == 0x24)    ? 1 : -1];
-typedef char assert_Faction_color[(offsetof(Faction, color)  == 0x28)    ? 1 : -1];
-typedef char assert_Faction_rel  [(offsetof(Faction, rel)    == 0x2c)    ? 1 : -1];
+typedef char assert_Faction_f10  [(offsetof(FactionRec, f10)    == 0x10)    ? 1 : -1];
+typedef char assert_Faction_key  [(offsetof(FactionRec, key)    == 0x14)    ? 1 : -1];
+typedef char assert_Faction_f24  [(offsetof(FactionRec, f24)    == 0x24)    ? 1 : -1];
+typedef char assert_Faction_color[(offsetof(FactionRec, color)  == 0x28)    ? 1 : -1];
+typedef char assert_Faction_rel  [(offsetof(FactionRec, rel)    == 0x2c)    ? 1 : -1];
 typedef char assert_MapAgent_a   [(offsetof(MapAgent, a)     == 0x54)    ? 1 : -1];
 typedef char assert_MapAgent_b   [(offsetof(MapAgent, b)     == 0x58)    ? 1 : -1];
 typedef char assert_AgPages_ptr  [(offsetof(AgentPages, pages)   == 0x18)    ? 1 : -1];
@@ -313,7 +302,7 @@ void MapPanel::update(int type, int id)
 
                 // ---- faction tag -------------------------------------------------------------------
                 if ((rec->flags & 0x400000) && rec->faction >= 0) {
-                    Faction* f = (Faction*)&g_game->factions[rec->faction];
+                    FactionRec* f = &g_game->factions[rec->faction];
                     if (f->f24 == 0) {
                         tstring* fn = &f->name;
                         if (f->f10 == 0) {
@@ -324,8 +313,8 @@ void MapPanel::update(int type, int id)
                         mb_snprintf(buf, 0x200, "(%s)", fn->c_str());        // 0x415100
                         unsigned fcol = g_use_faction_colors
                                       ? f->color
-                                      : f->rel < -0.001f ? 0xffff4422u
-                                      : f->rel >  0.001f ? 0xff44ff22u : 0xffffffffu;
+                                      : f->rel[0] < -0.001f ? 0xffff4422u
+                                      : f->rel[0] >  0.001f ? 0xff44ff22u : 0xffffffffu;
                         g_gui.draw_string(tstring(buf), 0.011f, fcol, 1);
                     }
                 }

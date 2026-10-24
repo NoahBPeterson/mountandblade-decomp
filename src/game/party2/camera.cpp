@@ -2252,6 +2252,7 @@ void Mission::exec_trigger(int val)
 // "taken" stamp and the label text layout. Fields not in game_data.h are reached by offset.
 // ======================================================================================
 #include "../str_table.h"
+#include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLogAdd {
     void add(tstring msg, int color);               // 0x452c00 (thiscall, ret 0x14)

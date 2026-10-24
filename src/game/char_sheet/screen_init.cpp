@@ -1,5 +1,7 @@
 #include "./screen_init.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4ec4d0
 void Screen::init_screen()
@@ -53,14 +55,14 @@ void Screen::init_screen()
     }
     f48 = 0;
     if (g_5a9fb0) {
-        f48 = (int)ui_terrain_quad(buttons, (void*)g_strtab.find(tstring("ui_terrain")));
+        f48 = (int)ui_terrain_quad(buttons, (void*)g_strtab.lookup(tstring("ui_terrain")));
     }
-    f4c = new_medium_button(buttons, (void*)g_strtab.find(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
-    f38 = new_medium_button(buttons, (void*)g_strtab.find(tstring("ui_reports")), 0.18f, 0.006f, 0.03f);
-    f50 = new_medium_button(buttons, (void*)g_strtab.find(tstring("ui_quests")), 0.33f, 0.006f, 0.03f);
-    f40 = new_medium_button(buttons, (void*)g_strtab.find(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
-    f44 = new_medium_button(buttons, (void*)g_strtab.find(tstring("ui_character")), 0.5625f, 0.006f, 0.03f);
-    f3c = new_medium_button(buttons, (void*)g_strtab.find(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
+    f4c = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
+    f38 = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_reports")), 0.18f, 0.006f, 0.03f);
+    f50 = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_quests")), 0.33f, 0.006f, 0.03f);
+    f40 = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
+    f44 = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_character")), 0.5625f, 0.006f, 0.03f);
+    f3c = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
     {
         Overlay* self = (Overlay*)buttons;
         ((vec<Widget*>*)&self->first)->push_back3(*(Widget**)&buttons, 4);
@@ -123,7 +125,7 @@ void Screen::init_screen()
     }
     {
         tstring name("ui_paused");
-        f54->set_text((const void*)&name, (const void*)g_strtab.find(name));
+        f54->set_text((const void*)&name, (const void*)g_strtab.lookup(name));
     }
     ((vec<Widget*>*)&overlay->first)->push_back2(*(Widget**)&f54);
 
@@ -152,7 +154,7 @@ void Screen::init_screen()
     }
     {
         tstring name("ui_click_left_button_to_cancel_wait");
-        f58->set_text((const void*)&name, (const void*)g_strtab.find(name));
+        f58->set_text((const void*)&name, (const void*)g_strtab.lookup(name));
     }
     ((vec<Widget*>*)&overlay->first)->push_back2(*(Widget**)&f58);
 
@@ -196,7 +198,7 @@ void Screen::camera_mark_entities()
 {
     g_game->f13acc = (f2b8 * g_590bb8 + g_549cdc) * g_54b3b4;
     PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
-    for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties_end; mgr->next_party_id(&id)) {
+    for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties.n_parties; mgr->next_party_id(&id)) {
         int idx = mgr->index_of(id);
         if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
             idx = mgr->index_of(id);

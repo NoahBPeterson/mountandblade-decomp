@@ -25,15 +25,8 @@ extern int g_item_count;                                    // 0x5e29d4 (the aud
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
-struct MainMenu { void choose(int option); };               // 0x495700 (ret 4)
-struct MapFlags {                                           // 0x5e291c
-    char f0, f1, f2;                                        // 0x5e291c, 0x5e291d, 0x5e291e
-    char pad3;
-    int f4, f8;                                             // 0x5e2920, 0x5e2924
-    void commit(char* p);                                   // 0x513710 (ret 4)
-};
-extern MapFlags g_map_flags;                                // 0x5e291c
-extern MainMenu g_main_menu;                                // 0xa73980
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../map_flags.h"                                     // MapFlags (0x5e291c): the one definition
 extern char* g_menu_state;                                  // 0xa739bc (+0x14 cleared)
 extern char* g_menu_sub;                                    // 0xa739dc (+0x18 set)
 extern int g_save_kind;                                     // 0x5e29bc
@@ -44,7 +37,7 @@ struct GameStep2 { void call(int v); };                     // 0x5236f0 (this = 
 struct GameStep4 { void call(); };                          // 0x51f1a0
 struct GameStep4b { void call(); };                         // 0x520b20
 struct GameStep6 { void call(); };                          // 0x520d60
-struct MetaMission { void init(); };                        // 0x4be730 (this = 0xa73300)
+#include "../meta_mission.h"                                 // MetaMission (0xa73300): the one definition (init 0x4be742, entered through 0x4be730)
 
 // @ 0x51c5a0
 void LoadingPanel::update(int arg)

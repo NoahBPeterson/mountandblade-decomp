@@ -4,4 +4,4 @@
 ../src/game/char_sheet/editor_ui.cpp  ?make_right_arrow@@YAPAXPAXHHMHM@Z  004f5ed0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ?make_editor_list@@YAPAUWidgetC@@PAXPBUtstring@@H@Z  004f62f0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ?refresh_dialog@Screen@@QAEXXZ  004f6390  /O2 /MT /Gy /TP
-../src/game/char_sheet/editor_ui.cpp  ?construct_n@@YAXPAURec20@@IABU1@PAURecAlloc@@@Z  004f65f0  /O2 /MT /Gy /TP
+../src/game/char_sheet/editor_ui.cpp  ?construct_n@@YAXPAUNameVecRec@@IABU1@PAURecAlloc@@@Z  004f65f0  /O2 /MT /Gy /TP

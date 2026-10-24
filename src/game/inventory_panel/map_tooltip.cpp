@@ -25,7 +25,7 @@ struct LogStream {                                      // the engine text log a
     virtual void l05(); virtual void l06(); virtual void l07(); virtual void l08(); virtual void l09();
     virtual void w_cstr(const char* s);                 // +0x28
 };
-struct MainMenu { void choose(int option); };           // 0x495700 (thiscall, ret 4)
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 struct FlagBlock { void apply(void* p); };              // 0x513710 (thiscall on 0x5e291c, ret 4)
 
 // ---- party records -----------------------------------------------------------------------------------
@@ -49,21 +49,7 @@ struct SlotRec {                                        // 0xb0 bytes at 0x5e29f
 extern SlotRec* g_slotrecs;                             // 0x5e29f8
 extern int g_flag_a181b0;                               // 0xa181b0
 
-struct Game {                                           // the game object (0x5e2930)
-    char pad0[0x78];
-    int main_party;                                     // +0x78
-    char pad7c[0xf8 - 0x7c];
-    PartyMgr mgr;                                       // +0xf8
-    char pad139d8[0x13a00 - 0x139d8];
-    Troop* troops;                                      // +0x13a00
-    char pad13a04[0x13a48 - 0x13a04];
-    float* rel;                                         // +0x13a48 (0xc0 floats per troop)
-    char pad13a4c[0x13a64 - 0x13a4c];
-    PartyInfo* party_info;                              // +0x13a64
-    bool agent_low(int idx);                            // 0x4638f0 (thiscall, ret 4)
-    void counts(unsigned id, int* a, int* b, int* c);   // 0x51be60
-};
-extern Game* g_game;                                    // 0x5e2930
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 unsigned __stdcall tint_color(float t, int flag);       // 0x4b1930
 
@@ -86,31 +72,31 @@ bool __fastcall dist_is_zero(DistObj* o)
 }
 
 // @ 0x51be60
-void Game::counts(unsigned id, int* num, int* num2, int* wounded)
+void GameData::party_counts(unsigned id, int* num, int* num2, int* wounded)
 {
     *num = 0;
     *num2 = 0;
     *wounded = 0;
-    if (id >= (unsigned)mgr.n_parties)
+    if (id >= (unsigned)parties.n_parties)
         return;
-    int idx = mgr.index_of(id);
+    int idx = parties.index_of(id);
     if (idx < 0)
         return;
-    Party* p = (Party*)((char*)mgr.pages._Myfirst[(unsigned)idx >> 4] + (idx & 0xf) * 0x5ac8);
+    Party* p = (Party*)((char*)parties.pages._Myfirst[(unsigned)idx >> 4] + (idx & 0xf) * 0x5ac8);
     if (p->type != 1)
         return;
-    for (int i = 0; i < mgr.get_party(id)->nstacks; i++) {
-        if (mgr.get_party(id)->stacks[i].flags & 1) {
-            *wounded += mgr.get_party(id)->stacks[i].count;
+    for (int i = 0; i < parties.get_party(id)->nstacks; i++) {
+        if (parties.get_party(id)->stacks[i].flags & 1) {
+            *wounded += parties.get_party(id)->stacks[i].count;
         } else {
-            int t = mgr.get_party(id)->stacks[i].troop;
+            int t = parties.get_party(id)->stacks[i].troop;
             if (troops[t].flags30s & 0x10) {
                 (*num)++;
-                if (agent_low(mgr.get_party(id)->stacks[i].troop))
+                if (agent_low(parties.get_party(id)->stacks[i].troop))
                     (*num2)++;
             } else {
-                *num += mgr.get_party(id)->stacks[i].count;
-                *num2 += mgr.get_party(id)->stacks[i].wounded;
+                *num += parties.get_party(id)->stacks[i].count;
+                *num2 += parties.get_party(id)->stacks[i].wounded;
             }
         }
     }
@@ -119,7 +105,7 @@ void Game::counts(unsigned id, int* num, int* num2, int* wounded)
 // @ 0x51c090
 int __stdcall draw_party_line(int index)
 {
-    int skill = g_game->mgr.get_party(g_game->main_party)->skill_level(0x10);
+    int skill = g_game->parties.get_party(g_game->main_party)->skill_level(0x10);
     PartyInfo* info = &g_game->party_info[index];
     int flags = info->flags;
     if (flags & 0x10000000) {

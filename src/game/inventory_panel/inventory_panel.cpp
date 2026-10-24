@@ -85,6 +85,7 @@ extern Modifier g_modifiers[];                          // 0xa75f70
 
 // script emitter record (0x34 bytes, array pointer at 0xa75eb0, parallel index array at 0xa75ebc)
 #include "../emitter_rec.h"
+#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x50fe20
 void InventoryPanel::refresh_transaction(int unused)
@@ -184,7 +185,7 @@ void InventoryPanel::refresh_transaction(int unused)
                     pay.~tstring();
                     think.~tstring();
                     g_main_menu.f4 = 2;
-                    g_main_menu.go(0);
+                    g_main_menu.choose(0);
                 }
             } else if (worn > 0) {
                 q_dump = -1;
@@ -208,7 +209,7 @@ void InventoryPanel::refresh_transaction(int unused)
                 yes.~tstring();
                 no.~tstring();
                 g_main_menu.f4 = 2;
-                g_main_menu.go(0);
+                g_main_menu.choose(0);
             } else {
                 eaten = 1;
             }
@@ -232,7 +233,7 @@ void InventoryPanel::refresh_transaction(int unused)
                 msg.~tstring();
                 yes.~tstring();
                 no.~tstring();
-                g_main_menu.go(0);
+                g_main_menu.choose(0);
                 eaten = 0;
             }
         }
@@ -269,12 +270,12 @@ equip:
         spare = spare;
         if ((f & 0x10) == 0 || (f & 0x1000) == 0) {
             if (mode == 4)
-                ((TroopX*)rec)->auto_equip(-1, 0x100e, 0, 0);
+                ((TroopRec*)rec)->auto_equip(-1, 0x100e, 0, 0);
         }
     }
 
     if (next_menu != 0x64)
-        g_main_menu.go(next_menu);
+        g_main_menu.choose(next_menu);
     else
         g_map_flags.commit(&eaten);
 }

@@ -97,25 +97,7 @@ static __forceinline int current_screen_id()
 }
 
 // ---- game (0x5e2930).  Only the members touched here. ------------------------------------------------
-struct Game {
-    char pad0[0x1a060];
-    int f1a060;                         // 0x1a060  script dialog requested
-    int f1a064;                         // 0x1a064  script dialog shown
-    int f1a068;                         // 0x1a068
-    void fn_4c8ca0(int which);          // 0x4c8ca0 (ECX = this)
-    char pad1a06c[0x1a090 - 0x1a06c];
-    int f1a090;                         // 0x1a090  map editor active
-    char pad1a094[0x1a160 - 0x1a094];
-    int f1a160;                         // 0x1a160  map editor dialog shown
-    char pad1a164[0x1a1b4 - 0x1a164];
-    int f1a1b4;                         // 0x1a1b4
-    char pad1a1b8[0x1a1bc - 0x1a1b8];
-    int* f1a1bc;                        // 0x1a1bc  int vector begin
-    int* f1a1c0;                        // 0x1a1c0  int vector end
-    char pad1a1c4[0x1a1c8 - 0x1a1c4];
-    int f1a1c8;                         // 0x1a1c8  map editor list needs rebuilding
-};
-extern Game* g_game;                    // 0x5e2930
+#include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // ---- globals ------------------------------------------------------------------------------------------
 extern int   g_counter;                 // 0x5e28cc
@@ -158,10 +140,8 @@ struct GuiManager {
 };
 extern GuiManager g_gui_manager;        // 0x5d7080
 
-struct ResMgr {
-    void fn(int id);                    // 0x418ff0
-};
-extern ResMgr g_resmgr;                 // 0x5d6fa0
+#include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
+extern resmgr g_resmgr;                 // 0x5d6fa0
 
 struct MissionObj {
     void fn(float dt);                  // 0x487930
@@ -181,8 +161,7 @@ struct Output {
 };
 extern Output g_5a9f60;                 // 0x5a9f60
 
-struct MainMenu { void choose(int i); };                     // 0x495700
-extern MainMenu g_main_menu;            // 0xa73980
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 struct MapEditor {
     void update_object_type();          // 0x4c7bf0
@@ -248,7 +227,7 @@ int GameApp::Update()
             } else {
                 g_gui_manager.add_log(tstring("Effect file recompiled."), -1);
             }
-            g_resmgr.fn(g_5e293c);
+            g_resmgr.unload(g_5e293c);
         }
     }
     if (g_no_cam) {
@@ -363,7 +342,7 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
         switch ((unsigned short)wparam) {
         case 0x9c5b:
             if (g_game) {
-                g_game->fn_4c8ca0(0);
+                g_game->save_language_files(0);
                 MessageBoxA(0, "Language Template Files Generated Under new_language directory!",
                             "INFO", 0);
             } else {
@@ -373,7 +352,7 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
             break;
         case 0x9c5c:
             if (g_game) {
-                g_game->fn_4c8ca0(1);
+                g_game->save_language_files(1);
                 MessageBoxA(0, "Language Template Files Generated Under new_language directory! "
                                "Non-translated texts are marked with a {***} sign. You can use this "
                                "as the search keyword.", "INFO", 0);

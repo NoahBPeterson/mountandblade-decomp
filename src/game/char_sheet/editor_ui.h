@@ -23,10 +23,7 @@
 #include "../rgl_mesh.h"
 using rgl::mesh;
 
-struct resmgr {
-    mesh* get_object(const tstring& name);      // 0x419540
-    void load_pack(const tstring& name, int user);  // 0x41e150
-};
+#include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_alloc;                          // 0x5d6fa0
 
 // resource lookup + clone, as the factories do it (the original inlines this twice, giving the two
@@ -130,7 +127,7 @@ extern void* g_font_def;                        // 0x5e2934
 
 struct Startup { void init(); };                // 0x5fe898
 struct GuiState { void init_widgets(); };       // 0x5d7080
-struct MainMenu { void choose(int i); };        // 0xa73980
+#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 struct EditorGame {
     void refresh();
     char pad[0x2f9];

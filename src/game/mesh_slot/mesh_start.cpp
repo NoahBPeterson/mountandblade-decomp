@@ -150,7 +150,7 @@ struct PropKind : Raw { char b[0x78]; };                     // g_map_points rec
 struct LevelBits {                                           // Level +0x30 flags (bit fields: tested with test ah,n)
     unsigned b0 : 1; unsigned pad1 : 7; unsigned b8 : 1; unsigned b9 : 1; unsigned b10 : 1; unsigned pad11 : 21;
 };
-struct Level : Raw {                                         // 0x494-byte level record
+struct LevelRaw : Raw {                                      // 0x494-byte level record (game_data.h Level494 cannot be included here: g_game is a GameState view; renamed from Level)
     char pad0[0x30]; LevelBits flags; char rest[0x494 - 0x34];
 };
 struct GameState : Raw {
@@ -267,7 +267,7 @@ static inline Party* party_rec(PartyMgr* pm, int id)
     return (Party*)((char*)pg + (i & 0xf) * 0x5ac8);
 }
 
-#define LV (*(Level*)(g_game->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494))
+#define LV (*(LevelRaw*)(g_game->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494))
 
 // ---------------------------------------------------------------------------
 // @ 0x484590
@@ -289,7 +289,7 @@ void Mission::start_setup()
     g_phys.reset();
 
     ModeRec* mrec = (ModeRec*)((char*)g_modes + at<int>(0x5df0) * 0x58);
-    Level* lrec = (Level*)(g_game->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494);
+    LevelRaw* lrec = (LevelRaw*)(g_game->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494);
     at<int>(0x6550) = 0;
     bank_of(mrec)->randomize();
     if (lrec->at<char>(0x78) == 0)
@@ -455,7 +455,7 @@ void Mission::start_setup()
     if (LV.flags.b8) {
         g_terrain.f4658c0((char*)(g_game->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494) + 0x68);
         GameState* gg = g_game;
-        if (((Level*)(gg->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494))->flags.b9) {
+        if (((LevelRaw*)(gg->at<char*>(0x13a50) + at<int>(0x5df4) * 0x494))->flags.b9) {
             PartyMgr* pm2 = (PartyMgr*)((char*)gg + 0xf8);
             int pid2 = gg->at<int>(0x78);
             int x = (int)party_rec(pm2, pid2)->pos.x;

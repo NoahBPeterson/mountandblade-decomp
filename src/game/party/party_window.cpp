@@ -21,6 +21,9 @@
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../item_sound.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
@@ -45,11 +48,7 @@ static inline tstring* lookup(const tstring& k)
 }
 
 // (x, y) pair handed to the widget methods
-struct v2 {
-    float x, y;
-    v2() {}
-    v2(float a, float b) : x(a), y(b) {}
-};
+// (x, y) pair handed to the widget methods: Vec2 of include/vec.h (was Vec2 here)
 
 // @ 0x501a20
 void* PartyWindow::make_inventory_menu(int idx)
@@ -62,23 +61,23 @@ void* PartyWindow::make_inventory_menu(int idx)
     float f_ax = cfg(tstring("inv_armor_x"));
     float f_hy = cfg(tstring("inv_horse_y"));
 
-    v2 pos[11];
-    pos[0] = v2(f_x, f_y);
-    pos[1] = v2(f_x, f_y - 0.088f);
-    pos[2] = v2(f_x, f_y - 0.176f);
-    pos[3] = v2(f_x, f_y - 0.264f);
-    pos[4] = v2(f_ax, f_y);
-    pos[5] = v2(f_ax, f_y - 0.088f);
-    pos[6] = v2(f_ax, f_y - 0.176f);
-    pos[8] = v2(f_ax - 0.088f, f_y - 0.088f);
-    pos[9] = v2(f_ax - 0.088f, f_hy);
-    pos[10] = v2(f_y, f_hy - 0.088f);
+    Vec2 pos[11];
+    pos[0] = Vec2(f_x, f_y);
+    pos[1] = Vec2(f_x, f_y - 0.088f);
+    pos[2] = Vec2(f_x, f_y - 0.176f);
+    pos[3] = Vec2(f_x, f_y - 0.264f);
+    pos[4] = Vec2(f_ax, f_y);
+    pos[5] = Vec2(f_ax, f_y - 0.088f);
+    pos[6] = Vec2(f_ax, f_y - 0.176f);
+    pos[8] = Vec2(f_ax - 0.088f, f_y - 0.088f);
+    pos[9] = Vec2(f_ax - 0.088f, f_hy);
+    pos[10] = Vec2(f_y, f_hy - 0.088f);
 
     PartyPanel* panel = new PartyPanel;
     panels[idx] = panel;
     label_refresh(panel, tstring("inv_im_equipment_menu"));
     {
-        v2 v(f_1 + panel->fE0, panel->fE4);
+        Vec2 v(f_1 + panel->fE0, panel->fE4);
         WOPS(panel)->set_pos(&v.x);
     }
     {
@@ -90,15 +89,15 @@ void* PartyWindow::make_inventory_menu(int idx)
     {
         MissionUi* w = new MissionUi;
         {
-            v2 v(pos[4].x - 0.044f, pos[4].y + 0.095f);
+            Vec2 v(pos[4].x - 0.044f, pos[4].y + 0.095f);
             WOPS(w)->set_pos(&v.x);
         }
         {
-            v2 v(0.088f, 0.04f);
+            Vec2 v(0.088f, 0.04f);
             WOPS(w)->set_scale(&v.x);
         }
         {
-            v2 v(16.0f, 0.0f);
+            Vec2 v(16.0f, 0.0f);
             WOPS(w)->set_xyz(&v.x);
         }
         {
@@ -110,15 +109,15 @@ void* PartyWindow::make_inventory_menu(int idx)
     {
         MissionUi* w = new MissionUi;
         {
-            v2 v(pos[0].x, pos[0].y + 0.095f);
+            Vec2 v(pos[0].x, pos[0].y + 0.095f);
             WOPS(w)->set_pos(&v.x);
         }
         {
-            v2 v(0.088f, 0.04f);
+            Vec2 v(0.088f, 0.04f);
             WOPS(w)->set_scale(&v.x);
         }
         {
-            v2 v(16.0f, 0.0f);
+            Vec2 v(16.0f, 0.0f);
             WOPS(w)->set_xyz(&v.x);
         }
         {
@@ -130,15 +129,15 @@ void* PartyWindow::make_inventory_menu(int idx)
     {
         MissionUi* w = new MissionUi;
         {
-            v2 v(pos[8].x, pos[8].y + 0.095f);
+            Vec2 v(pos[8].x, pos[8].y + 0.095f);
             WOPS(w)->set_pos(&v.x);
         }
         {
-            v2 v(0.088f, 0.04f);
+            Vec2 v(0.088f, 0.04f);
             WOPS(w)->set_scale(&v.x);
         }
         {
-            v2 v(16.0f, 0.0f);
+            Vec2 v(16.0f, 0.0f);
             WOPS(w)->set_xyz(&v.x);
         }
         {
@@ -150,15 +149,15 @@ void* PartyWindow::make_inventory_menu(int idx)
     if (idx == 0 && g_a181a8 == 0) {
         MissionUi* w = new MissionUi;
         {
-            v2 v(pos[9].x, pos[9].y + 0.095f);
+            Vec2 v(pos[9].x, pos[9].y + 0.095f);
             WOPS(w)->set_pos(&v.x);
         }
         {
-            v2 v(0.088f, 0.04f);
+            Vec2 v(0.088f, 0.04f);
             WOPS(w)->set_scale(&v.x);
         }
         {
-            v2 v(16.0f, 0.0f);
+            Vec2 v(16.0f, 0.0f);
             WOPS(w)->set_xyz(&v.x);
         }
         {
@@ -178,7 +177,7 @@ void* PartyWindow::make_inventory_menu(int idx)
             if (i != 9)
                 slot->b11c[0] = 0;
             {
-                v2 v(pos[i].x, pos[i].y);
+                Vec2 v(pos[i].x, pos[i].y);
                 WOPS(slot)->set_pos(&v.x);
             }
             WOPS(panels[idx])->add_child(slot);
@@ -270,14 +269,14 @@ void* PartyWindow::build_page(int page)
         n = g->troops[t].inv_count();
     float h = (float)((n + 2) / 3) * 0.088f;
     PartyPanel* p = new PartyPanel;
-    { v2 v(0.0f, 0.0f); WOPS(p)->set_pos(&v.x); }
-    { v2 v(0.264f, h); WOPS(p)->set_scale(&v.x); }
+    { Vec2 v(0.0f, 0.0f); WOPS(p)->set_pos(&v.x); }
+    { Vec2 v(0.264f, h); WOPS(p)->set_scale(&v.x); }
     int col = 0, row = 1;
     void** wp = widgets[page];
     for (int i = 0; i < n; i++, wp++) {
         MissionUi* w = make_slot(&INV(t, i));
         *wp = w;
-        { v2 v((float)col * 0.088f, h - (float)row * 0.088f); WOPS(w)->set_pos(&v.x); }
+        { Vec2 v((float)col * 0.088f, h - (float)row * 0.088f); WOPS(w)->set_pos(&v.x); }
         col++; if (col >= 3) { col = 0; row++; }
         WOPS(p)->add_child(*wp);
         wp[0xc0] = (void*)2; wp[0x180] = (void*)0x12fd1;
@@ -410,7 +409,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
             t = troop;
         }
         volatile float sc = 0.088f;     // (volatile: make_mesh ignores its scale argument, which would otherwise drop this store)
-        MeshOps* m = make_mesh(item, (float*)&sc, t);
+        ResMesh* m = make_mesh(item, (float*)&sc, t);
         rgl::vector4 off(0.044f, 0.044f, 0.0f);
         m->translate(&off);
         WOPS(w)->add_image(2, m);
@@ -430,9 +429,9 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
 }
 
 // @ 0x502b80
-MB_NOINLINE MeshOps* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
+MB_NOINLINE ResMesh* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
 {
-    MeshOps* m = 0;
+    ResMesh* m = 0;
     if (item->item >= 0) {
         float s = 0.088f;
         m = make_item_mesh(item, &s);
