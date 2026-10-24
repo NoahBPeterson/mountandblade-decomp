@@ -10,15 +10,11 @@
 #include <string.h>
 #include <new>     // declares operator new[]/delete[]: without it cl 13.10 calls the scalar operators (the original calls 0x535482/0x53570d)
 
-// ../tstring.h needs two fixes that cannot be made from this directory; they are applied here through macros
-// that rewrite single declarations while the header is included, so the class stays defined in ONE header:
-//  - it lacks tstring::split (0x42c9b0): `tstring* split(const char& sep, int& count) const;` is injected;
-//  - range_equals (0x42c160) returns `char` (mangled ...QBEDABH0ABU1@@Z: D), the header says bool.
-// (Both reported to the orchestrator: fix src/game/tstring.h.)
-#define rewind rewind(); tstring* split(const char& sep, int& count) const; void rewind_unused
+// ../tstring.h says range_equals (0x42c160) returns bool, but it returns `char` (mangled ...QBEDABH0ABU1@@Z: D);
+// the declaration is rewritten through a macro while the header is included, so the class stays defined in ONE
+// header. (tstring::split 0x42c9b0 used to be injected the same way; the header declares it now.)
 #define range_equals range_equals_hdr(const int& a, const int& b, const tstring& c) const; char range_equals
 #include "../tstring.h"
-#undef rewind
 #undef range_equals
 
 int   g_str_grow_add;    // 0x5a8e60
