@@ -2,7 +2,7 @@
 #define PICK_ENTITY_H
 // Slice s004ed8d0: the cursor pick.
 //   0x4ed8d0  pick_entity - one contact test per scene object against the view cell; the nearest hit is
-//             selected (Ctx::f2cc) and its label drawn.
+//             selected (GuiCtx::f2cc) and its label drawn.
 // Class and member names are provisional.
 #include <stdio.h>
 #include <string.h>
@@ -68,43 +68,13 @@ struct scene_row {                      // 0x1c8 bytes
 
 struct vector2 { float x, y; };
 
-struct ViewRect {                       // this = Ctx::f60
+struct ViewRect {                       // this = GuiCtx::f60
     void cell_rect(int c0[4], int c1[4]);        // 0x4bd2f0
 };
 struct OverlayItf {                     // vtable 0x590064
     virtual void release(int a);
 };
-struct Ctx {
-    char pad000[0x60];
-    int f60;
-    char pad064[0xe0 - 0x64];
-    float f0e0, f0e4, f0f0, f0f4;
-    char pad0f8[0x178 - 0xf8];
-    int f178;
-    int cell_x0, cell_y0, cell_x1, cell_y1;
-    int f18c;
-    float f190;
-    char pad194[0x2c8 - 0x194];
-    int f2c8, f2cc;
-    char pad2d0[0x2dc - 0x2d0];
-    char f2dc;
-    char pad2dd[0x2f8 - 0x2dd];
-    char f2f8;
-    char pad2f9[0x310 - 0x2f9];
-    int f310;
-    char pad314[0x32c - 0x314];
-    int f32c;
-    char pad330[0x354 - 0x330];
-    char f354;
-    char pad355[0x568 - 0x355];
-    void* f568;
-    char pad56c[0x16e8 - 0x56c];
-    float f16e8, f16ec, f16f0;
-    void __fastcall draw_string(tstring* s, float a, int color, char b);    // 0x4e43e0
-    void __fastcall select_entity(scene_row* row, int ent, int flags);      // 0x4ea0c0
-    void __fastcall reset_all(char reinit);                                 // 0x42cdb0
-    void __fastcall set_pair(const vector2* p);                             // 0x4c5190
-};
+#include "./gui_ctx.h"                // GuiCtx (was Ctx; shared with render_shape.h)
 
 // ------------------------------------------------------------------------------------------------------------
 #endif

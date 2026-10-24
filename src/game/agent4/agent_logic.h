@@ -108,13 +108,8 @@ struct MeshVec : std::vector<res_obj*> {
     void push_back(res_obj* const& x);                      // 0x4119d0
 };
 
-// the body resource of a prop (0x44c210): the shape at +0x18, cloned by 0x4285e0 / copied by 0x439100
-struct res_shape {
-    char pad[0x18];
-    shape_base* sh;                                     // +0x18
-    shape_base* clone_shape();                          // 0x4285e0
-    shape_base* copy_shape();                           // 0x439100
-};
+// the body resource of a prop (0x44c210): src/game/res_shape.h (shared with terrain_b)
+#include "../res_shape.h"
 
 // a list of sound events (count + array of 0x30-byte records): ItemKind +0x228, Rec78 +0x6c (0x44c210)
 struct SoundSet {
@@ -134,31 +129,8 @@ void __cdecl rand_cone_dir(rgl::vector4* out, rgl::vector4 dir, float spread);  
 extern __int64 g_a70448;                                // 0xa70448 (sound-event context)
 extern __int64 g_a70450;                                // 0xa70450
 
-// ---- the flying missile record (0xb0 bytes, 16 per page of the pool at Mission+0x30; agent3 Pool / PoolRec are the same pool:
-// +4 in-use flag, +8 id, +0xc serial). terrain_a/misc.h has a partial view (its header cannot be included with this universe).
-struct Missile {
-    char pad0[0x10];
-    rgl::vector4 p10;                                   // +0x10 (0x44be50)
-    rgl::vector4 p20;                                   // +0x20
-    char pad30[0x40 - 0x30];
-    rgl::vector4 p40;                                   // +0x40
-    SceneEnt* ent;                                      // +0x50
-    char pad54[0x58 - 0x54];
-    unsigned shooter;                                   // +0x58
-    float f5c;                                          // +0x5c
-    float f60;                                          // +0x60
-    float f64;                                          // +0x64
-    char pad68[0x80 - 0x68];
-    ItemRef launcher;                                   // +0x80
-    ItemRef ammo;                                       // +0x88
-    char spent;                                         // +0x90 the missile already hit (0x45a170)
-    char pad91[0x98 - 0x91];
-    float f98;                                          // +0x98 (6.0 for itcf_throw_axe, 12.0 for itcf_throw_knife, else 0) (0x44e2b0)
-    char pad9c[0xb0 - 0x9c];
-    void init();                                        // 0x467fb0
-    void make_capsule(capsule* out);                    // 0x46b410 (ret 4)
-    float ammo_scale();                                 // 0x467f80 (the carried item's length * 0.01; terrain_a/misc.h Missile::ammo_scale)
-};
+// ---- the flying missile record (0xb0 bytes, src/game/missile.h: shared with terrain_a/misc.h)
+#include "../missile.h"
 
 
 // ---- the second half of the object (formerly agent_update.h) ------------------------------------------------------------------------

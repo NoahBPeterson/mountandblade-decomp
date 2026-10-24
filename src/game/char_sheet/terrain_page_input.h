@@ -36,15 +36,7 @@ struct Widget {
 };
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
-struct BitWords {
-    unsigned w[8];                                          // w[0..5] are the six hex words
-    void set(const unsigned& lo, const int& hi, const unsigned& v);   // 0x464960
-    unsigned get(const unsigned& lo, const int& hi);                  // 0x4649b0
-    void build_hex_text(tstring& out);                                // 0x4f29b0 (slice s004f25a0)
-    void parse_hex(const tstring& s);                                 // 0x4658c0 fills w[0..5] from "0x..."
-    void submit_frame(const float* rect);                             // 0x4f3e10 (next slice)
-};
-extern BitWords g_bits;                                     // 0xa76630
+#include "../bit_words.h"
 extern unsigned g_type_mask;                                // 0x5a8e88 (= 4: the terrain type is 4 bits wide)
 extern unsigned g_size_mask;                                // 0x5a8e78 (= 4: the terrain size is 2 bits wide)
 

@@ -99,7 +99,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
     color = -1;
     color2 = alpha | 0xffffff;
 
-    MatRec* mrecs = (MatRec*)mats;
+    Ramp* mrecs = (Ramp*)mats;
     if (material >= 0) {
         m->res = mrecs[material].res0;
         if ((*out_a)->count > 1) {
@@ -154,8 +154,8 @@ void Animator::collect(char flag, lod_mesh** a, lod_mesh** b, lod_mesh** c)
 
     int v = variant;
     if (flag != 0) {
-        int* vals = ((MatRec*)chars[cur].mats)[material].vals;
-        unsigned n = vals ? ((MatRec*)chars[cur].mats)[material].vals_end - vals : 0;
+        int* vals = ((Ramp*)chars[cur].mats)[material].vals;
+        unsigned n = vals ? ((Ramp*)chars[cur].mats)[material].vals_end - vals : 0;
         v = vals[(unsigned)variant % n];
     }
 
@@ -204,18 +204,15 @@ struct bin_reader_o {
     }
     bool open_read(const char* path);            // 0x415290
 };
-struct GameStateL : GameState {
-    void load_scene(int idx);                    // 0x47fbd0
-};
-void GameStateL::load_scene(int idx)
+void GameData::load_scene(int idx)
 {
     tstring path = scene_path(idx);
     bin_reader_o s;
     if (!s.open_read(module_path(path.c_str()))) {
         g_msglog.add("Unable to load scene objects!", 0xffff0000);
-        g_msglog.add(sceneobjs[idx].name, 0xffff0000);
+        g_msglog.add(levels[idx].name10, 0xffff0000);
     } else {
-        ((SceneFile*)&sceneobjs[idx])->load((stream_base*)&s, 0);
+        ((SceneFile*)&levels[idx])->load((stream_base*)&s, 0);
         s.failed = 1;
     }
 }

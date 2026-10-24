@@ -23,7 +23,7 @@
 #include "../../include/vec.h"
 
 // @ 0x428820
-FxDef::FxDef(int a) : psys(), groups(), f60(a)
+FxDef::FxDef(int a) : psys(), groups(), clock(a)
 {
     v0c = vector4(0.0f, 0.0f, 0.0f);
     nenv = 0;

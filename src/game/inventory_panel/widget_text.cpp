@@ -139,14 +139,7 @@ struct AccessStream {
 };
 
 // ------------------------------------------------------------------ the widget base ------------------------
-struct widget {
-    virtual void v1();                              // vtable 0x591c80 -> vptr at +0
-    char pad4[0x100];
-    unsigned flags;                                 // +0x104
-    char pad108[0x178 - 0x108];
-    widget();                                       // 0x48ae20
-    unsigned flag1() const;                         // 0x50cc60
-};
+#include "../widget.h"                              // widget (the 0x178-byte base, vptr 0x591c80, ctor 0x48ae20, flag1 0x50cc60; shared)
 
 // @ 0x50cc60 widget::flag1
 unsigned widget::flag1() const

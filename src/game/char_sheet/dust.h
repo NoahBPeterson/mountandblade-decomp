@@ -89,18 +89,7 @@ struct frame60 {                                // 0x60: one frame of a dust mes
     char pad54[0x0c];
 };
 
-struct AnimBox {                                // 0x48
-    char pad0[0x14];
-    dmesh** meshes;                             // +0x14
-    char pad18[0x48 - 0x18];
-};
-struct ptype {                                  // 0x20, table at *0x5e28f8
-    char pad0[0x10];
-    __int64 flags;                              // +0x10 bit 0x20000
-    int nframes;                                // +0x18
-    AnimBox* boxes;                             // +0x1c
-};
-extern ptype* g_ptypes;                         // 0x5e28f8
+#include "../ptype.h"                      // AnimBox (meshes at +0x14) / ptype / g_ptypes (shared with terrain_a, terrain_b)
 
 struct particle {                               // 0xa0, list at mission + 0x5c3b8f8
     int type;                                   // +0x00

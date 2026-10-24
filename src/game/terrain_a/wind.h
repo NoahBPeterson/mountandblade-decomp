@@ -7,18 +7,7 @@
 // The agent record (init_max_hp 0x461200 reads +0x1bc and writes +0x1c0): src/game/agent_obj.h.
 #include "../agent_obj.h"
 
-// Wind: direction vector at +4 scaled by a fractal-noise factor driven by clock 2 (wrapped at 1e9 ticks) and a
-// random per-instance phase (0x461480 init, 0x461570 sample).
-struct wind {
-    int f0;                         // +0x00
-    rgl::vector4 v4, v14, v24, v34, v44;    // +0x04.. (0x461480 clears the first four, v44 = (0, 1, 0))
-    float f54, f58, f5c, f60, f64, f68, f6c;   // +0x54.. (f5c = 1.0)
-    float strength;                 // +0x70 (0x461570)
-    float noise_seed;               // +0x74 (0x461570: first argument of noise_fractal)
-    int phase;                      // +0x78 (rand() % 0x3f9)
-    wind* init();                   // 0x461480
-    rgl::vector4 sample();          // 0x461570 (hidden return pointer)
-};
+#include "../wind.h"                         // wind (the 0x7c-byte wind track; shared with char_sheet and inventory_panel)
 
 elem24* __cdecl copy_range(elem24* first, elem24* last, elem24* dest);          // 0x461230
 elem24* __cdecl copy_backward24(elem24* first, elem24* last, elem24* dest);     // 0x461280

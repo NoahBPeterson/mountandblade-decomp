@@ -26,7 +26,9 @@ struct SaveCtx;
 
 // The 0x494-byte level / scene-object record (table at game+0x13a50).
 struct Level494 {
-    char pad0[0x30];
+    char pad0[0x10];
+    tstring name10;                             // +0x10 the scene object file's name (scene_path 0x463950: "SceneObj\\<name>.sco")
+    char pad20[0x30 - 0x20];
     union {
         unsigned flags;                         // +0x30 (0x100: flat level, 0x1: no fog sheet) (0x479e20, 0x47a0c0, 0x4792d0)
         unsigned char flags8;                   // +0x30 as a byte (0x4435c0)
@@ -43,9 +45,8 @@ struct GameData {
     int f4;                                     // +0x04 (0x473a60)
     tstring title;                               // +0x08 the save's name (char_sheet/save_game.cpp 0x4e8980)
     int unk18;                                  // +0x18 (char_sheet/save_game.cpp)
-    char pad1c[0x20 - 0x1c];
-    char* save_slot;                            // +0x20 the save slot name (char_sheet/save_game.cpp: null = the field itself holds the text)
-    char pad24[0x58 - 0x24];
+    tstring module;                             // +0x1c the module name (module_path 0x4639d0: "Modules\\<name>\\" + sub); also the save slot name: save_game.cpp 0x4e8980 reads its buf at +0x20 (null = the text is inline)
+    char pad2c[0x58 - 0x2c];
     float fog_color[4];                          // +0x58 the fog colour, passed by value to the colour packer 0x40e440 (char_sheet/screen_camera.cpp 0x4ece20)
     char pad68[0x78 - 0x68];
     union {
@@ -254,7 +255,10 @@ struct GameData {
     void set_matrix(const rgl::matrix* m);      // 0x435650 (agent4: sound-event context frame)
     void add_experience(int troop, int amount); // 0x4428c0 (ret 8) (agent_fx_sound.cpp)
     void party_counts(unsigned id, int* extra, int* wounded, int* size);   // 0x51be60 (inventory_panel/map_tooltip.cpp, called by map_info.cpp 0x51abd0: counts a party's heroes and wounded)
-    bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4)
+    bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4: the hit points of troop idx are below the agent-low threshold)
+    tstring scene_path(int idx);                // 0x463950 (ret 8: hidden return)
+    const char* module_path(const char* sub);   // 0x4639d0
+    void load_scene(int idx);                   // 0x47fbd0 (mesh_slot/mesh_char.cpp: reads the scene object file of level idx)
     void blend(float* out, float x, float y);   // 0x471040 (wind / sky blend over the anchors)
     void save_language_files(bool translated);  // 0x4c8ca0
     // ---- src/game/party2 (method declarations only; fields at the offsets noted are reached by offset there) ----

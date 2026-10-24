@@ -23,29 +23,7 @@ using rgl::mesh;
 // ---- widgets ---------------------------------------------------------------------------------------------
 // 0x178-byte widget base (ctor 0x48ae20 installs vptr 0x591c80).  The slots used here are add_image (+0x7c),
 // add_image2 (+0x80) and add_child (+0xc8); the rest are placeholders that keep the offsets honest.
-struct widget {
-    char pad0[0xe8 - 4];
-    float ex;                                               // +0xe8
-    float ey;                                               // +0xec
-    float pex;                                              // +0xf0
-    float pey;                                              // +0xf4
-    char padf8[0x178 - 0xf8];
-    widget() MB_NOTHROW;                                    // 0x48ae20
-    virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
-    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
-    virtual void d10(); virtual void d11(); virtual void d12(); virtual void d13(); virtual void d14();
-    virtual void d15(); virtual void d16(); virtual void d17(); virtual void d18(); virtual void d19();
-    virtual void d20(); virtual void d21(); virtual void d22(); virtual void d23(); virtual void d24();
-    virtual void d25(); virtual void d26(); virtual void d27(); virtual void d28(); virtual void d29();
-    virtual void d30();
-    virtual void add_image(int idx, void* m);               // +0x7c
-    virtual void add_image2(int idx, void* m);              // +0x80
-    virtual void d33(); virtual void d34(); virtual void d35(); virtual void d36(); virtual void d37();
-    virtual void d38(); virtual void d39(); virtual void d40(); virtual void d41(); virtual void d42();
-    virtual void d43(); virtual void d44(); virtual void d45(); virtual void d46(); virtual void d47();
-    virtual void d48(); virtual void d49();
-    virtual void add_child(void* child);                    // +0xc8
-};
+#include "../widget.h"                                  // widget (shared with char_sheet and strat)
 
 // the 0x188 icon element (ctor 0x48b1c0 calls the widget base, then the caller installs vptr 0x591ee8)
 struct elem2 : widget {
@@ -89,17 +67,7 @@ struct ResList {
 };
 
 // ---- wind track (0x7c bytes) -----------------------------------------------------------------------------
-struct wind {
-    int   type;                                             // +0x00
-    rgl::vector4 v04;                                       // +0x04
-    rgl::vector4 v14;                                       // +0x14
-    rgl::vector4 v24;                                       // +0x24
-    char  pad34[0x44 - 0x34];
-    rgl::vector4 v44;                                       // +0x44
-    float f54;                                              // +0x54
-    char  pad58[0x7c - 0x58];
-    wind() MB_NOTHROW;                                      // 0x461480
-};
+#include "../wind.h"                              // wind (shared with terrain_a/wind.cpp)
 
 // ---- the world (0x344 bytes) -----------------------------------------------------------------------------
 template<class T>
@@ -255,7 +223,7 @@ void char_window::open_view()
         b->flags |= 0x1200;
         b->color = 0xff221815;
         // the camera frame: the body's aspect scaled by the global fov factor
-        float aspect = b->pey / b->pex * g_fov_k;
+        float aspect = b->y1 / b->x1 * g_fov_k;
         fr.init(0.2617994f, aspect, 0.01f, 20.0f);
         frame mat;
         identity_pos(&mat);
@@ -318,7 +286,7 @@ void char_window::open_view()
                 tstring nm("character_window_shadow");
                 mesh* m = g_resmgr.get_object(nm);
                 m = m->clone();
-                a->add_image(0, m);
+                a->add_item(0, m);
             }
             ui->add_child(a);
             elem2* c = new elem2;
@@ -326,7 +294,7 @@ void char_window::open_view()
             f4cc = c;
             elem_fill(c, tstring("char_i_character"));
             mesh* m2 = g_obj.make_mesh_from(&mode, &troop);
-            c->add_image2(0, m2);
+            c->add_item2(0, m2);
             ui->add_child(c);
         }
     }

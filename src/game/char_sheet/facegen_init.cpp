@@ -25,15 +25,15 @@ void FaceGen::init()
     float f2[2];
     f2[0] = 0.0f;
     f2[1] = 0.0f;
-    o->v58(f2);
+    o->set_pos(f2);
     f2[0] = 1.0f;
     f2[1] = 0.75f;
-    o->v64(f2);
+    o->set_size(f2);
     {
         tstring n("face_gen_window");
         mesh* m = g_alloc.get_object(n);
         mesh* c = mesh_clone(m);
-        o->v80(0, c);
+        o->add_item2(0, (rgl::mesh*)c);
     }
     {
         widget* w = ui;
@@ -46,9 +46,9 @@ void FaceGen::init()
         elem* d = new elem;
         deform = d;
         elem_fill(d, tstring("face_bo_deform"));
-        ab[0] = d->pex;
-        ab[1] = (float)keys * deform_k + d->pey;
-        d->v64(ab);
+        ab[0] = d->x1;
+        ab[1] = (float)keys * deform_k + d->y1;
+        d->set_size(ab);
     }
     {
         elem* b = new elem;
@@ -59,7 +59,7 @@ void FaceGen::init()
     tstring btn_text;
     {
         tstring empty("");
-        buttons->va4(&btn_text, &empty);
+        buttons->set_text(&btn_text, &empty);
     }
     for (int i = 0; i < keys; i++) {
         tstring row_name("face_sl_deform_key_base");
@@ -68,7 +68,7 @@ void FaceGen::init()
         float y = (float)i * deform_k + row->ey;
         ab[0] = row->ex;
         ab[1] = y;
-        row->v58(ab);
+        row->set_pos(ab);
         tstring kt;
         anim_track(&g_anim, skin, i, &kt);
         widget* lab = new widget;
@@ -76,9 +76,9 @@ void FaceGen::init()
         elem_fill(lab, tstring("face_t_deform_key_base"));
         ab[0] = lab->ex;
         ab[1] = y + lab->ey;
-        lab->v58(ab);
-        lab->va4(&btn_text, &kt);
-        deform->vc8(lab);
+        lab->set_pos(ab);
+        lab->set_text(&btn_text, &kt);
+        deform->add_child(lab);
     }
     {
         tstring t("face_s_deform");
@@ -96,7 +96,7 @@ void FaceGen::init()
         tstring b2("medium_button");
         tstring t1("");
         cam_btn = (elem*)new_medium_button(ui, &t, 0, 0, &a, &b2, &t1, 0.014f, 0.5f, 0.72f);
-        cam_btn->vb0();
+        cam_btn->sb0();
     }
     float arrow_h = config_float("face_button_h");
     (void)arrow_h;
@@ -154,9 +154,9 @@ void FaceGen::init()
         t_hair_color = new_key_label(buttons, kv, &t);
     }
     if (g_skins_begin[skin].first_face == 0) {
-        b_next_beard->vb0();
-        b_prev_beard->vb0();
-        t_change_beard->vb0();
+        b_next_beard->sb0();
+        b_prev_beard->sb0();
+        t_change_beard->sb0();
     }
     {
         tstring v("ui_randomize");
@@ -209,46 +209,46 @@ void FaceGen::init()
     {
         wind* wd = new wind;
         w->tracks.push_back((int)wd);
-        wd->v04[0] = 0.1f;
-        wd->v04[1] = 0.15f;
-        wd->v04[2] = 0.2f;
-        wd->v04[3] = 0.0f;
-        wd->v14[0] = 0.2f;
-        wd->v14[1] = 0.2f;
-        wd->v14[2] = 0.2f;
-        wd->v14[3] = 0.0f;
-        wd->v24[0] = -2.0f;
-        wd->v24[1] = -2.0f;
-        wd->v24[2] = 12.0f;
-        wd->v24[3] = 0.0f;
+        wd->v04.x = 0.1f;
+        wd->v04.y = 0.15f;
+        wd->v04.z = 0.2f;
+        wd->v04.w = 0.0f;
+        wd->v14.x = 0.2f;
+        wd->v14.y = 0.2f;
+        wd->v14.z = 0.2f;
+        wd->v14.w = 0.0f;
+        wd->v24.x = -2.0f;
+        wd->v24.y = -2.0f;
+        wd->v24.z = 12.0f;
+        wd->v24.w = 0.0f;
         wd->type = 2;
         wd->f54 = 20.0f;
-        wd->v44[0] = -0.5f;
-        wd->v44[1] = 0.0f;
-        wd->v44[2] = -1.0f;
-        wd->v44[3] = 0.0f;
+        wd->v44.x = -0.5f;
+        wd->v44.y = 0.0f;
+        wd->v44.z = -1.0f;
+        wd->v44.w = 0.0f;
     }
     {
         wind* wd = new wind;
         w->tracks.push_back((int)wd);
-        wd->v04[0] = 1.0f;
-        wd->v04[1] = 1.0f;
-        wd->v04[2] = 1.0f;
-        wd->v04[3] = 0.0f;
-        wd->v14[0] = 1.0f;
-        wd->v14[1] = 1.0f;
-        wd->v14[2] = 1.0f;
-        wd->v14[3] = 0.0f;
-        wd->v24[0] = -2.0f;
-        wd->v24[1] = -2.0f;
-        wd->v24[2] = 2.0f;
-        wd->v24[3] = 0.0f;
+        wd->v04.x = 1.0f;
+        wd->v04.y = 1.0f;
+        wd->v04.z = 1.0f;
+        wd->v04.w = 0.0f;
+        wd->v14.x = 1.0f;
+        wd->v14.y = 1.0f;
+        wd->v14.z = 1.0f;
+        wd->v14.w = 0.0f;
+        wd->v24.x = -2.0f;
+        wd->v24.y = -2.0f;
+        wd->v24.z = 2.0f;
+        wd->v24.w = 0.0f;
         wd->type = 2;
         wd->f54 = 20.0f;
-        wd->v44[0] = 1.0f;
-        wd->v44[1] = 1.0f;
-        wd->v44[2] = -1.0f;
-        wd->v44[3] = 0.0f;
+        wd->v44.x = 1.0f;
+        wd->v44.y = 1.0f;
+        wd->v44.z = -1.0f;
+        wd->v44.w = 0.0f;
     }
     ent = w->create_entity(9);
     b->world = w;
@@ -256,16 +256,16 @@ void FaceGen::init()
     float p2[2];
     p2[0] = 0.0513f;
     p2[1] = 0.2669f;
-    b->v58(p2);
+    b->set_pos(p2);
     float s2[2];
     s2[0] = 0.4585f;
     s2[1] = 0.44f;
-    b->v64(s2);
+    b->set_size(s2);
     b->flags |= 0x300;
     b->color = 0xff201815;
 
     // ---- the camera frustum (16:9 fit around the body) ---------------------------------------------
-    float ratio = b->pey / b->pex * g_fov_k;
+    float ratio = b->y1 / b->x1 * g_fov_k;
     float tanv = (float)tan(g_tan_ang);
     fr.on = 1;
     fr.f118 = 0.01f;
@@ -308,9 +308,9 @@ void FaceGen::init()
         f354++;
         f350++;
         for (int i = 0; i < keys; i++)
-            deform_rows[i]->v34((&g_dummy_mat)[i]);
-        sl_age->v34(g_dummy0);
-        sl_hair_color->v34(g_dummy1);
+            deform_rows[i]->s34((&g_dummy_mat)[i]);
+        sl_age->s34(g_dummy0);
+        sl_hair_color->s34(g_dummy1);
     }
     refresh();
 }

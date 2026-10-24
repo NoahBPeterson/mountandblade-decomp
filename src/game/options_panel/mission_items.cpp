@@ -429,7 +429,7 @@ void walkb0(recb0* begin, recb0* end, void* arg)
 }
 
 // 0x4cefe0: append one element (stride 0x2c) with the capacity check.
-struct vec2c {
+struct vec44 {
     char pad0[4];
     char* begin;                                                // +0x04
     char* end;                                                  // +0x08
@@ -440,10 +440,10 @@ struct vec2c {
     void grow(char** out, char* at, char* v);                   // 0x4ccef0 (thiscall)
 };
 
-extern char* fill_2c(char* dst, int n, char* src, vec2c* self, char* src2);   // 0x4c5010
+extern char* fill_2c(char* dst, int n, char* src, vec44* self, char* src2);   // 0x4c5010
 
 // @ 0x4cefe0
-void vec2c::push_back(char* v)
+void vec44::push_back(char* v)
 {
     int n = size();
     if (begin && (unsigned)n < capacity()) {

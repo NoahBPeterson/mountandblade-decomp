@@ -11,6 +11,7 @@
 #include "rgl.h"
 #include "../mat4.h"
 #include "../tstring.h"
+#include "../rgl_mesh.h"                    // rgl::res_t / mat_t / res_obj4 / elem30 / elem14 / mesh_base (one definition for the rgl.h universe)
 #include "../../include/mesh_prims.h"
 #include "../../include/frustum.h"
 
@@ -41,39 +42,24 @@ using rgl::frame_t;
 using rgl::obj_c0;
 using rgl::slot;
 using rgl::render_info;
-struct elem30 { char b[0x30]; };            // vector at +0x60
-struct elem14 { int id; std::vector<int> items; };   // 0x14, vector at +0x80 (items' element type unknown)
+using rgl::elem30;                           // 0x30, vector at +0x60 (src/game/rgl_mesh.h)
+using rgl::elem14;                           // 0x14, vector at +0x80 (items' element type unknown)
 using rgl::face20;                           // 0x20, vector at +0x90 (src/include/mesh_prims.h)
 
-// inline vector helpers used by the mesh code (distinct from the out-of-line rgl::operator* in rgl.h)
-inline vector4 vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
-inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+// inline vector helpers used by the mesh code (src/game/rgl_mesh.h; distinct from the out-of-line rgl::operator* in rgl.h)
+using rgl::vscale;
+using rgl::vadd;
 
 using rgl::keyframes;
 
-struct mat_t { char pad[0x20]; int f20; int get_flags(); };     // int get_flags() is 0x40eab0
-struct res_obj4 { char pad[0x4c]; int f4c; };
-struct res_t {
-    char pad0[0x30];
-    mat_t* mat;                  // 0x30
-    char pad1[0x48 - 0x34];
-    res_obj4* p48;               // 0x48
-    char pad2[0x5c - 0x4c];
-    int f5c;                     // 0x5c
-    char pad3[0x68 - 0x60];
-    void (*fn68)(res_t*);        // 0x68
-};
+using rgl::mat_t;
+using rgl::res_obj4;
+using rgl::res_t;
 
 struct mesh;
 struct scene;
 
-struct mesh_base {
-    virtual ~mesh_base() = 0;                   // vtable 0x54a6c8: slot 0 = _purecall
-    virtual int base_slot1() { return 0; }      // 0x408020
-    tstring name;                                  // 0x04
-    int f14;
-    __forceinline mesh_base() { f14 = 0; }
-};
+using rgl::mesh_base;                 // vtable 0x54a6c8 (src/game/rgl_mesh.h)
 
 struct mesh : mesh_base {
     mesh* parent;                // 0x18

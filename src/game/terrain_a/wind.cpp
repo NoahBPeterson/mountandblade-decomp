@@ -76,9 +76,9 @@ void set_clock_step(int* clock, float step)
 wind* wind::init()
 {
     vector4 z(0.0f, 0.0f, 0.0f);
-    v4 = z; v14 = z; v24 = z; v34 = z;
+    v04 = z; v14 = z; v24 = z; v34 = z;
     v44 = vector4(0.0f, 1.0f, 0.0f);
-    f0 = 0;
+    type = 0;
     f54 = 0.0f; f58 = 0.0f; f5c = 1.0f; f60 = 0.0f; f64 = 0.0f; f68 = 0.0f; f6c = 0.0f;
     strength = 0.0f;
     noise_seed = 0.0f;
@@ -95,6 +95,6 @@ vector4 wind::sample()
     vector4 n;
     noise_fractal(noise_seed, 0.6f, 3, 0, &in.x, &n.x);
     float k = n.x * strength * 15.0f + 1.0f;
-    n.x = k * v4.x; n.y = k * v4.y; n.z = k * v4.z;
+    n.x = k * v04.x; n.y = k * v04.y; n.z = k * v04.z;
     return n;
 }

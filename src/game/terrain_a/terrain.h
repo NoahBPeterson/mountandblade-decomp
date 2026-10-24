@@ -33,28 +33,8 @@ struct GroundType {
 };
 extern GroundType g_ground_types[11];           // 0x8ed4df8 (beyond the annotation range: bound by symbols/slices/terrain_a.txt)
 
-// particle / ground-spec type record (table at *0x5e28f8, count 0x5e29e8, 0x20 bytes each)
-struct res_shape;
-struct AnimBox {                                // 0x48 (one frame / element of a type; terrain_b mission.cpp: spawn_bodies reads res)
-    char pad0[0x20];
-    res_shape* res;                             // +0x20 (0x479da0)
-    char pad24[4];
-    float mn[3];                                // +0x28
-    float pad34;
-    float mx[3];                                // +0x38
-    char pad44[0x48 - 0x44];
-};
-struct ptype {
-    tstring name;                               // +0 (0x4650f0)
-    __int64 flags;                              // +0x10 (0x400000 / 0x80000 / 0x1000000 ...; the high dword's low 16 bits are a density)
-    int nframes;                                // +0x18 (0x466cd0, 0x46a270; terrain_b 0x479da0: count of boxes)
-    union {
-        int f1c;                                // +0x1c
-        AnimBox* boxes;                         // +0x1c: nframes boxes of 0x48 bytes (terrain_b)
-    };
-};
-extern ptype* g_ptypes;                         // 0x5e28f8
-extern int g_ptype_count;                       // 0x5e29e8
+// particle / ground-spec type record (table at *0x5e28f8, count 0x5e29e8, 0x20 bytes each) and its 0x48-byte boxes
+#include "../ptype.h"
 
 extern unsigned g_field_mask;                   // 0x5a8ea0 (field values are clamped to g_field_mask - 1)
 extern unsigned g_sel_mask;                     // 0x5a8e78 (0x46a270: second flag field)
@@ -158,17 +138,8 @@ struct HexWords {
     void parse(const tstring& s);               // 0x4658c0
 };
 
-// bit-field accessors: word array at this, widths from the power-of-two table at 0x5a8e70
-struct BitWords {
-    unsigned w[8];
-    void set(const unsigned& lo, const int& hi, const unsigned& v);   // 0x464960
-    unsigned get(const unsigned& lo, const int& hi);                  // 0x4649b0
-};
-struct Pct {
-    char pad0[0x10];
-    unsigned bits;                              // +0x10
-    void set_pct(const float& f);               // 0x4649f0
-};
+// bit-field accessors: word array at this, widths from the power-of-two table at 0x5a8e70 (0x464960, 0x4649b0, 0x4649f0)
+#include "../bit_words.h"
 
 // ---- the terrain layers (0x28 bytes each, from +0x28) ------------------------------------------------------------
 struct TerrainLayer {

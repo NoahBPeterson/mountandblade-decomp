@@ -107,9 +107,7 @@ int save_game(int version, tstring* name)
     LOG("Saving Game...");
     log_save_path();
     GameData* g = g_game;
-    char* ps = g->save_slot;
-    if (!ps)
-        ps = (char*)&g->save_slot;
+    const char* ps = g->module.c_str();
     int ver = g->version;
     sprintf(dirA, "");
     save_dir(dirA);
@@ -118,7 +116,7 @@ int save_game(int version, tstring* name)
     sprintf(dirC, "");
     save_dir(dirC);
     g = g_game;
-    ps = g->save_slot ? g->save_slot : (char*)&g->save_slot;
+    ps = g->module.c_str();
     mb_snprintf(pathD, 0x200, "%s%s\\new_game.sav", dirC, ps);
     LOG("Creating new savegame file...");
     r = ((TextOps*)&w)->open_write(pathD);
@@ -151,7 +149,7 @@ int save_game(int version, tstring* name)
                     sprintf(dirA, "");
                     save_dir(dirA);
                     g = g_game;
-                    ps = g->save_slot ? g->save_slot : (char*)&g->save_slot;
+                    ps = g->module.c_str();
                     mb_snprintf(pathE, 0x200, "%s%s\\last_savegame_backup.sav", dirA, ps);
                     LOG("Removing old backup file.");
                     remove(pathE);
@@ -197,8 +195,7 @@ void log_save_path()
     crt_sprintf(dir, "");
     save_dir(dir);
     CreateDirectoryA(dir, NULL);
-    char* slot = g_game->save_slot;
-    mb_snprintf(path, 0x200, "%s%s", dir, slot ? slot : (char*)&g_game->save_slot);
+    mb_snprintf(path, 0x200, "%s%s", dir, g_game->module.c_str());
     CreateDirectoryA(path, NULL);
 }
 

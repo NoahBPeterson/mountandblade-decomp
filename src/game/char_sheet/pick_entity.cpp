@@ -3,7 +3,7 @@
 
 // @ 0x4ed8d0
 // ------------------------------------------------------------------------------------------------------------
-void __fastcall pick_entity(Ctx* self)
+void __fastcall pick_entity(GuiCtx* self)
 {
     int set_junk = 0;
     Mission* sc = (Mission*)g_tasks;

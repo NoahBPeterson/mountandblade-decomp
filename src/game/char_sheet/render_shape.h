@@ -1,7 +1,7 @@
 #ifndef RENDER_SHAPE_H
 #define RENDER_SHAPE_H
-// Slice s004ed6f0: the render context `Ctx` (global object at 0x5d7080).
-//   0x4ed6f0  Ctx::render_shape_frame - grid cell extents from the frame size, then one render of the extent
+// Slice s004ed6f0: the render context `GuiCtx` (global object at 0x5d7080).
+//   0x4ed6f0  GuiCtx::render_shape_frame - grid cell extents from the frame size, then one render of the extent
 //             (with the caller's clock value +1) and the follow pass.
 // Class and member names are provisional.
 #include <math.h>
@@ -30,39 +30,17 @@ extern float g_div;                     // 0x5d7594  1/radius
 struct vector2 { float x, y; };
 
 // ---- the render context (`this` = the global at 0x5d7080) ---------------------------------------------------
-struct ViewRect {                       // the view rectangle of the current frame (this = &Ctx::f0e0)
+struct ViewRect {                       // the view rectangle of the current frame (this = &GuiCtx::f0e0)
     void cell_rect(int c0[4], int c1[4]);       // 0x4bd2f0
 };
 
-struct Vec1c { char b[0x1c]; void assign(const Vec1c* o); };   // 0x43f0a0 (thiscall operator=, 28-byte vector-like)
+#include "./gui_ctx.h"                // GuiCtx (was Ctx), Vec1c
 
-struct RenderScene {                    // the scene object at Ctx+0x178 (renamed from Scene: party/game.h Scene is the party manager at game+0xf8)
+struct RenderScene {                    // the scene object at GuiCtx+0x178 (renamed from Scene: party/game.h Scene is the party manager at game+0xf8)
     char pad000[0xb8];
-    Vec1c fb8;                          // +0xb8 (copied into Ctx+0x310)
+    Vec1c fb8;                          // +0xb8 (copied into GuiCtx+0x310)
     void render(int* cells, char a);              // 0x429890 renders the +0x17c extent
 };
 
-struct Ctx {
-    char pad000[0x60];
-    int f60;                            // +0x60 owner of the view rectangle (f0e0)
-    char pad064[0xe0 - 0x64];
-    float f0e0, f0e4;                   // +0xe0, +0xe4
-    char pad0e8[0xf0 - 0xe8];
-    float f0f0, f0f4;                   // +0xf0, +0xf4
-    char pad0f8[0x178 - 0xf8];
-    RenderScene* f178;                      // +0x178 scene object
-    int cell_x0, cell_y0, cell_x1, cell_y1;     // +0x17c..+0x188 grid extent
-    int f18c;                           // +0x18c
-    float f190;                         // +0x190
-    char pad194[0x2dc - 0x194];
-    char f2dc;                          // +0x2dc
-    char pad2dd[0x310 - 0x2dd];
-    Vec1c f310;                         // +0x310
-    int f32c;                           // +0x32c
-    char pad330[0x354 - 0x330];
-    char f354;                          // +0x354  "next frame does nothing" flag
-    void follow(int a, vector4* v, int b, int c);  // 0x488720
-    void render_shape_frame(int a, vector4* v, int b, int c);   // 0x4ed6f0
-};
 
 #endif

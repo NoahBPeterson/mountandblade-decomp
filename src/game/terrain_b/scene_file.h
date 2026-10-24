@@ -21,19 +21,42 @@ struct LogHub {
 };
 extern LogHub g_log;                            // 0x5a9f60
 
-// The scene container: records at +0x104, two embedded streams at +0x414 / +0x444, a name at +0x20 and a loaded
-// flag at +0x78.
-struct SceneFile {                              // the .sco scene file record (named Scene before; collided with party/game.h's Scene)
-    char pad20[0x20];
-    tstring name;                               // +0x20
-    char pad30[0x78 - 0x30];
-    char loaded;                                // +0x78
-    char pad79[0x104 - 0x79];
-    RecVector props;                            // +0x104 (first at +0x108)
-    char pad114[0x414 - 0x114];
-    mem_stream s414;                            // +0x414 (0x30 bytes)
-    mem_stream s444;                            // +0x444
-    void load(stream_base* s, int id);          // 0x479000
+// The scene record (0x494 bytes, table at GameData::levels / game+0x13a50; vtable 0x590904, dtor 0x431e10): the scenes.txt fields
+// (mission5/game_2.cpp read_file 0x524d60, ctor 0x5248e0), the .sco file's prop records at +0x104 with the two embedded streams
+// at +0x414 / +0x444 and a loaded flag at +0x78 (terrain_b/mission.cpp load 0x479000). ONE definition for src/game: terrain_b
+// (named Scene before; collided with party/game.h's Scene) and mission5 (the full record) each saw one half of it; GameData's
+// Level494 (src/include/game_data.h) is the same record seen without the vtable.
+// the embedded file stream of the scene record (0x30 bytes: vptr, name, state, autoflush, flushed, buf; inline ctor)
+struct file_stream_s : stream_base {
+    STREAM_SLOTS
+    file_stream_s() { state = 0; }
+};
+#include "../../include/iface.h"        // IfaceB (the polymorphic base of the scene record)
+struct SceneFile : IfaceB {
+    tstring name10;                                             // +0x10 the scene object file's name (GameData::scene_path 0x463950)
+    tstring name;                                               // +0x20 (the .sco warning 0x479000 prints it)
+    int f30;                                                    // +0x30 flags (Level494::flags)
+    tstring f34;                                                // +0x34
+    tstring f44;                                                // +0x44
+    float f54, f58, f5c, f60, f64;                              // +0x54
+    tstring f68;                                                // +0x68
+    char loaded;                                                // +0x78 the .sco was read (0x479000)
+    char pad79[3];
+    int f7c[0x10];                                              // +0x7c
+    int fbc;                                                    // +0xbc
+    int fc0[0x10];                                              // +0xc0
+    int f100;                                                   // +0x100
+    RecVector props;                                            // +0x104 (first at +0x108): the .sco prop records
+    struct { int a, b; } pairs114[0x40];                        // +0x114
+    int ints314[0x40];                                          // +0x314
+    file_stream_s s414;                                         // +0x414 ground-paint block (0x479000)
+    file_stream_s s444;                                         // +0x444 terrain block
+    std::vector<tstring> v474;                                  // +0x474
+    tstring f484;                                               // +0x484
+    SceneFile();                                                // 0x5248e0
+    virtual ~SceneFile();                                       // 0x431e10
+    void read_file(stream_base& s);                             // 0x524d60
+    void load(stream_base* s, int id);                          // 0x479000
 };
 
 // A tiny owner with a std::vector<int> at +0x30 (unrelated to the grid).

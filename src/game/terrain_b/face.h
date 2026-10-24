@@ -21,11 +21,6 @@ struct shape_calls {
     virtual void or_m8(int v);                      // 13 (set_flags)
 };
 
-// a body part (name + collision shape; resource.h's body_part): the shape pointer at +0x18 and its out-of-line clone
-struct res_shape {
-    char pad[0x18];
-    shape_calls* shape;                             // +0x18
-    shape_calls* clone_shape();                     // 0x4285e0
-};
+#include "../res_shape.h"                // res_shape: a body part (name + collision shape; shared with agent4)
 
 #endif // TERRAIN_B_FACE_H

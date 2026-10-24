@@ -5,7 +5,7 @@
 ../src/game/terrain_a/terrain_a.cpp  ?kind@terrain_cell@@QAEHXZ  004646b0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?init@terrain_quad@@QAEXXZ  00464760  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?get@BitWords@@QAEIABIABH@Z  004649b0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?set_pct@Pct@@QAEXABM@Z  004649f0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?set_pct@BitWords@@QAEXABM@Z  004649f0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?set_field_a@Terrain@@QAEXPBM@Z  00464a60  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?set_field_b@Terrain@@QAEXPBM@Z  00464ac0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?cell_of@Terrain@@QAEPAHPAHPBM@Z  00464b40  /O2 /MT /Gy /TP
@@ -66,7 +66,7 @@
 ../src/game/terrain_a/terrain_a.cpp  ?uninit_copy136@@YAPAUrec136@@PAU1@00AAUalloc136@@U_Nonscalar_ptr_iterator_tag@std@@@Z  0046b750  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ??$_Copy_opt@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@V?$_Temp_iterator@UE8@@@3@@std@@YA?AV?$_Temp_iterator@UE8@@@0@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@0@0V10@U_Nonscalar_ptr_iterator_tag@0@@Z  0046b7d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ??$_Rotate@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@HUE8@@@std@@YAXViterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@0@00PAHPAUE8@@@Z  0046b860  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?set_env_count@FxDef2@@QAEXH@Z  0046b9d0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?set_env_count@FxDef@@QAEXH@Z  0046b9d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?_Buynode@?$list@HV?$allocator@H@std@@@std@@IAEPAU_Node@?$_List_nod@HV?$allocator@H@std@@@2@XZ  0046c0c0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?_Ucopy@vec36@@QAEPAUrec36@@PAU2@00@Z  0046c150  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?_Ucopy@vec24@@QAEPAUelem24@@PAU2@00@Z  0046c170  /O2 /MT /Gy /TP

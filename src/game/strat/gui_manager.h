@@ -60,40 +60,11 @@ struct gui_timer {                  // 16 bytes: clock index, value (gui_manager
     void rewind() { t = g_time[clock] - 100000; }   // inline: one second in the past
 };
 
-// Base of the UI controls (vtable slot numbers from the call sites). Size > 0x189.
-struct widget {
-    virtual ~widget();                          // 0
-    virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4();
-    virtual void s5(); virtual void s6(); virtual void s7(); virtual void s8();
-    virtual void s9(); virtual void s10();
-    virtual void set_focus(int index);          // 11 (0x2c)   wheel_focus 0x42cec0
-    virtual void s12(); virtual void s13(); virtual void s14();
-    virtual char hit_test(unsigned mask);       // 15 (0x3c)   wheel_focus 0x42cec0
-    virtual void s16(); virtual void s17();
-    virtual void on_input(unsigned mask);       // 18 (0x48)   refresh_all 0x42cd60, mouse_event 0x42cf50
-    virtual void s19(); virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23();
-    virtual void s24(); virtual void s25(); virtual void s26(); virtual void s27(); virtual void s28();
-    virtual void s29(); virtual void s30(); virtual void s31(); virtual void s32(); virtual void s33();
-    virtual void s34();
-    virtual char on_event(unsigned mask);       // 35 (0x8c)   wheel_focus, mouse_event
-    virtual void refresh();                     // 36 (0x90)   refresh_all, mouse_event
-    char pad4[0xcc - 4];
-    int pending;                                // +0xcc  wheel_step 0x42ce50
-    int enabled_mask;                           // +0xd0  wheel_step
-    int wheel;                                  // +0xd4  bit0 up, bit1 down, bit2 focus-on-top (wheel_step, wheel_focus)
-    char padd8[0xe0 - 0xd8];
-    float x0, y0;                               // +0xe0, +0xe4  (mouse_event: origin added to the child's rectangle)
-    char pade8[0xf0 - 0xe8];
-    float x1, y1, x_lo, y_lo;                   // +0xf0, +0xf4, +0xf8, +0xfc
-    char pad100[0x104 - 0x100];
-    unsigned flags;                             // +0x104 (bits 0-1: hidden/disabled; mouse_event)
-    char pad108[0x121 - 0x108];
-    char hover;                                 // +0x121 (mouse_event)
-    char pad122[0x158 - 0x122];
-    widget* focus;                              // +0x158 (wheel_focus)
-    int sel;                                    // +0x15c (wheel_step)
-    int sel_lo, sel_hi;                         // +0x160, +0x164
-    char pad168[0x178 - 0x168];
+// The UI element base is src/game/widget.h (shared with char_sheet / inventory_panel). The container classes (elem 0x188, overlay
+// 0x190: ctor 0x4931a0 zeroes +0x17c..+0x184) add the child vector at +0x178; the base vtable's slots 35 / 36 (refresh_all 0x42cd60,
+// wheel_step 0x42ce50) and the input dispatch of this file work on it (this view was named `widget` here).
+#include "../widget.h"
+struct gui_window : widget {
     std::vector<widget*> children;              // +0x178 (mouse_event, wheel_focus)
     char wants_redraw;                          // +0x188 (handle_event 0x42d170; the vector is 0x10 bytes)
 

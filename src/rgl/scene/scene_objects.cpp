@@ -365,7 +365,7 @@ FxDef::~FxDef()
     if (count && elems) delete[] elems;
     if (env) {
         delete[] env;
-        delete[] ints;
+        delete[] envidx;
     }
 }
 
