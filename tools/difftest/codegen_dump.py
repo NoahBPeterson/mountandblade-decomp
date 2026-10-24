@@ -23,6 +23,13 @@ import slice as S          # noqa: E402
 from coff import Coff      # noqa: E402
 
 VA = re.compile(r"\b([0-9a-fA-F]{8})\b")
+# anonymous-namespace names carry a hash of the source path (?A0x101b409b): the same code compiled in another
+# worktree must fingerprint the same
+ANON = re.compile(r"\?A0x[0-9a-f]{8}")
+
+
+def norm(name):
+    return ANON.sub("?A0x", name).encode()
 
 
 def modules(filt):
@@ -73,10 +80,10 @@ def fingerprint(coff, s, h, seen):
         if t is None:
             h.update(b"?%d" % si)
         elif not t.defined:
-            h.update(t.name.encode())
+            h.update(norm(t.name))
         else:
             if t.cls == 2:
-                h.update(t.name.encode())
+                h.update(norm(t.name))
             h.update(b"{")
             fingerprint(coff, t, h, seen)
             h.update(b"}")
@@ -102,7 +109,7 @@ def dump_module(item, img):
         if not isinstance(sym, str):
             fp = "NO-SYMBOL " + str(how)[:80]
         else:
-            h = hashlib.sha1(sym.encode() + b"\0")
+            h = hashlib.sha1(norm(sym) + b"\0")
             fingerprint(coff, coff.by_name[sym], h, set())
             fp = h.hexdigest()
         res["%s %s" % (sid, va)] = {"src": rel, "kind": kind, "fp": fp}
