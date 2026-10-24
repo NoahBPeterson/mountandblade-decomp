@@ -13,14 +13,7 @@
 
 void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 
-struct head_rec {
-    virtual void vfunc();               // only the vptr store matters (vtable 0x5947d8)
-    int w04;                            // +4
-    int w08;                            // +8
-    char pad0c[0x10];
-    tstring name;                       // +0x1c
-    head_rec() { w04 = 0; w08 = 0x63; }
-};
+#include "../head_rec.h"
 struct RecCam { char body[0x2dc]; RecCam(); };   // ctor 0x4c49f0
 struct RecMenu { char body[0x98]; RecMenu(); };   // ctor 0x4c2c50
 struct RecProfile { char body[0xcc]; RecProfile(); };   // ctor 0x4c3050

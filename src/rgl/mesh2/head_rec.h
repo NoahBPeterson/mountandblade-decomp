@@ -13,14 +13,7 @@
 #include "../scene/frustum.h"
 #include "./mesh2_common.h"
 
-struct head_rec {
-    virtual void vfunc();      // slot 0 (only the vptr store matters)
-    int     w04;               // +4     0x4c2c50
-    int     w08;               // +8     0x63
-    char    pad0c[0x10];       // +0xc
-    tstring name;              // +0x1c
-    head_rec() { w04 = 0; w08 = 0x63; }
-};
+#include "../../game/head_rec.h"
 
 // The camera-like object of 0x4c49f0 (vtable 0x595bd8), written/read by 0x4c4b70 / 0x4c4c00. The slices called it
 // head_cam (s004c46d0) and particle_cam (s004c3d90).

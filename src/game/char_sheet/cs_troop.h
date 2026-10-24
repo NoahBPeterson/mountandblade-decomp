@@ -17,7 +17,7 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);    // 0x536f8f
 #include "../tstring.h"
 
 // ---- the virtual interface of the widgets seen through their vptr (0xdword slots, see s0048b760) ------
-struct WRet { int a, b; WRet(); };                  // 8-byte non-POD result (hidden pointer, never destroyed by callers)
+#include "../wret.h"
 struct UiVt {
     virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
     virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();

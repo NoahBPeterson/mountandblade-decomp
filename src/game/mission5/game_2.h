@@ -263,12 +263,7 @@ struct Local {
 };
 
 // ---- script emitters (0xa75eb0 array, count 0xa75eb4) ------------------------------------------------------------
-struct Emitter {                                    // 0x34 bytes
-    char pad0[0x14];
-    float f14;                                      // +0x14
-    char pad18[0x34 - 0x18];
-};
-extern Emitter* g_emitters;                         // 0xa75eb0
+#include "../emitter_rec.h"
 extern int g_emitter_count;                         // 0xa75eb4
 
 struct SkeletonList {                               // skeleton-body table at 0xa180e8

@@ -52,7 +52,7 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
     }
 }
 
-struct WRet { int a, b; WRet(); };
+#include "../wret.h"
 // view of MissionUi's vtable for the +0xa4 slot: it returns an 8-byte non-POD through a hidden pointer, which the
 // header's get_text_size(s, out) does not express
 struct TextSizeView {

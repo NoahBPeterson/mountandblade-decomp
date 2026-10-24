@@ -33,7 +33,7 @@ extern StringTable g_string_table;                                          // 0
 struct vector2 { float x, y; };
 // The +0x94 and +0xa4 slots return an 8-byte non-POD object through a hidden pointer that the callers
 // discard (same slot shape as s004d7d10 / s004dc630).
-struct WRet { int a, b; WRet(); };
+#include "../wret.h"
 
 // Slot offsets from the calls in this slice (0x4d6b80, 0x4d6dd0, 0x4d6e50, 0x4d7120, 0x4d7270).
 struct Widget {

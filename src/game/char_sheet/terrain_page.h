@@ -37,7 +37,7 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 // ---- controls (layouts verified in s004d5ba0 / s004d63b0 / s004d6b80) --------------------------------
 // set_text returns an 8-byte object through a hidden pointer that no caller destroys: a non-POD pair (a user
 // constructor, no destructor). 0x4f28a0/0x4f28f0/0x4f2960 reserve exactly 8 bytes for it.
-struct WRet { int a, b; WRet(); };
+#include "../wret.h"
 struct Widget {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
     virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();

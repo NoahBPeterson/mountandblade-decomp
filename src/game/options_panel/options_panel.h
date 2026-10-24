@@ -41,7 +41,7 @@ struct ui_control {
 };
 
 // set_text returns an 8-byte object through a hidden pointer that no caller destroys (a non-POD pair)
-struct WRet { int a, b; WRet(); };
+#include "../wret.h"
 // the panel's text store
 struct text_store {
     virtual void t00(); virtual void t04(); virtual void t08(); virtual void t0c();

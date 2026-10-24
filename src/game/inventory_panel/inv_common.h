@@ -129,7 +129,7 @@ struct PsOps : PsFill {
     virtual void fc0(); virtual void fc4();
     virtual void add_child(void* child);            // +0xc8
 };
-struct WRet { int a, b; WRet(); };                  // 8-byte non-POD result returned through a hidden pointer (never read)
+#include "../wret.h"
 struct PsOpsW : PsFill {                            // the same widget, slot +0xa4 as the money label calls it (0x504d50)
     virtual WRet set_text_w(const tstring& s);      // +0xa4
 };

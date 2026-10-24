@@ -33,7 +33,7 @@ static const char* str_text(const tstring& key)
 
 // ---- the virtual interface of the widgets seen through their vptr (see s0048b760) ----------------------
 // set_text (+0xa4) returns an 8-byte non-POD pair through a hidden pointer that no caller destroys.
-struct WRet { int a, b; WRet(); };
+#include "../wret.h"
 struct vec2 {
     float x, y;
     vec2(float a, float b) : x(a), y(b) {}
