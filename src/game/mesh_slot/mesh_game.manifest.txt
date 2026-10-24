@@ -1,0 +1,2 @@
+../src/game/mesh_slot/mesh_game.cpp  ?create@MissionG@@QAEHPBUmatrix@rgl@@PBUItemStackG@@H@Z  004836e0  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_game.cpp  ?spawn_one@MissionG@@QAE_NH@Z  00483de0  /O2 /MT /Gy /TP

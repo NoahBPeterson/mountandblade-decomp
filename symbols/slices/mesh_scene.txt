@@ -1,0 +1,2 @@
+# src/game/mesh_slot/mesh_scene.cpp: the std instantiation the original calls out of line (terrain_b/mission.cpp's vector<MRow56>::resize, same record)
+0047a980 ?resize@?$vector@UPhysRec@@V?$allocator@UPhysRec@@@std@@@std@@QAEXIUPhysRec@@@Z  # vector<PhysRec>::resize(n, val) = vector<MRow56>::resize

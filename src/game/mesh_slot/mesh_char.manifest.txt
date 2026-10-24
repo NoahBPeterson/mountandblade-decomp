@@ -1,0 +1,3 @@
+../src/game/mesh_slot/mesh_char.cpp  ?load_scene@GameStateL@@QAEXH@Z  0047fbd0  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_char.cpp  ?build_hw@ShadowMapP@@QAEXXZ  0047fce0  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_char.cpp  ?render@ShadowMapP@@QAEXXZ  0047fef0  /O2 /MT /Gy /TP

@@ -1,0 +1,4 @@
+../src/game/mesh_slot/mesh_ops.cpp  ?set_bone_index@mesh_x@@QAEXH@Z  0047b360  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_ops.cpp  ?append@mesh_list_x@@QAEXPAUmesh_list@rgl@@HPBUmatrix@3@PBI@Z  0047b480  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_ops.cpp  ?set_color@lod_mesh_x@@QAEXI@Z  0047b5b0  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_ops.cpp  ?transform@lod_mesh_x@@QAEXABUmatrix@rgl@@@Z  0047b610  /O2 /MT /Gy /TP

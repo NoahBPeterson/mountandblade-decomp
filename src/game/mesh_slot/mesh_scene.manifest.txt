@@ -1,0 +1,5 @@
+../src/game/mesh_slot/mesh_scene.cpp  ?light_entities@TerrainX@@QAEXPAPAUmesh@rgl@@H@Z  0047ce00  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_scene.cpp  ?light_props@TerrainX@@QAEXXZ  0047ced0  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_scene.cpp  ?update_ranged_mesh@MissileU@@QAEXXZ  0047d320  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_scene.cpp  ?reset@phys_owner@@QAEXXZ  0047dc50  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_scene.cpp  ?apply_anim_all@lod_mesh_a@@QAEXPBM@Z  0047dd90  /O2 /MT /Gy /TP

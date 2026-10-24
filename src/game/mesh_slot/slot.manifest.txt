@@ -1,0 +1,5 @@
+../src/game/mesh_slot/slot.cpp  ?play@SlotChan@@QAEXH@Z  004875e0  /O2 /MT /Gy /TP
+../src/game/mesh_slot/slot.cpp  ?calc@TimeKey@@QAEXXZ  00487620  /O2 /MT /Gy /TP
+../src/game/mesh_slot/slot.cpp  ?read_keys@Slot@@QAEHXZ  00487640  /O2 /MT /Gy /TP
+../src/game/mesh_slot/slot.cpp  ?is_ready@Slot@@QAEHH@Z  00487900  /O2 /MT /Gy /TP
+../src/game/mesh_slot/slot.cpp  ??1Buffer@@UAE@XZ  00487c00  /O2 /MT /Gy /TP

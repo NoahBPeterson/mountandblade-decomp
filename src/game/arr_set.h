@@ -12,6 +12,7 @@ struct ArrSet {
     tstring name;                               // +0
     int cnt[5];                                 // +0x10
     int* arr[5];                                // +0x24
+    ArrSet() { for (int i = 0; i < 5; i++) { arr[i] = 0; cnt[i] = 0; } }   // inline (vector<ArrSet>::resize(n) in 0x47de60)
     ArrSet(const ArrSet& o);                    // 0x4636d0
 #ifdef ARRSET_DTOR_OUT_OF_LINE
     ~ArrSet();                                  // 0x463760
