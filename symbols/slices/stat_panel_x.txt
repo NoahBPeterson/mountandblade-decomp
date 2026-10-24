@@ -1,0 +1,3 @@
+# src/game/mission_ui2/stat_panel_x.cpp (0x48be00..0x48c330): names the resolution audit cannot read from an annotation
+08ee3ac4 ?g_skin_cap@@3HA  # int, highest skill rank / tier (outside the loaded image, so no // 0x annotation can cover it); same global as s00483870's g_skin_cap
+005922cc ??_7Event@@6B@  # Event vtable: stored by Event::Event (0x48c210); slot 1 is Event::init (0x48c260)

@@ -1,0 +1,2 @@
+0048f9f0	45	remove_troops: loop structure and register choice differ
+0048fce0	55	battle_root: page-pointer hoisting differs; equiv PASS

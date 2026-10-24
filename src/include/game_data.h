@@ -61,7 +61,8 @@ struct GameData {
     int f13a1c;                                 // +0x13a1c current repeat index   0x460d80, 0x460de0
     char pad13a20[0x13a34 - 0x13a20];
     int f13a34;                                 // +0x13a34   0x4428c0
-    char pad13a38[0x13a48 - 0x13a38];
+    float f13a38;                               // +0x13a38 item quality for generated loot (0x48cc40: passed to ItemRef::randomize_modifier)
+    char pad13a3c[0x13a48 - 0x13a3c];
     FactionRec* factions;                       // +0x13a48   0x4c8ca0
     union {
         int n_factions;                         // +0x13a4c
@@ -98,6 +99,24 @@ struct GameData {
     bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4)
     void blend(float* out, float x, float y);   // 0x471040 (wind / sky blend over the anchors)
     void save_language_files(bool translated);  // 0x4c8ca0
+    struct face* find_at(const float* p);       // 0x48ea80 (nav-mesh face under a map position; other object)
+    int remove_troops(int party, int troop, int count, char prisoners, int a5);   // 0x48f9f0 (ret 0x14: count removed)
+    float relation(int a, int b);               // 0x48ffa0 (ret 8: party relation, -1..1)
+    void fill_parties(int id, struct Party* out);   // 0x48fd60 (ret 8: merges the party and its attached parties into `out`)
+    // ---- src/game/mission_ui2 (method declarations only) ----
+    tstring event_string(int id);               // 0x48c470 (ret 8: hidden return; runs emit_event(0xf, id / 6, id), returns the result string 0xa70464)
+    void init_slots(int troop, int want);       // 0x48c4c0 (ret 8: frees inventory slots of a troop until `want` are free, then compacts)
+    void give_item(int troop, int item, int count);   // 0x48c9b0 (ret 0xc)
+    int pick_random_item(int t0, int t1, int t2, int t3);   // 0x48ca30 (ret 0x10)
+    void spawn_items(int type, int want, int troop);   // 0x48cc40 (ret 0xc)
+    int add_members(int party, int troop, int count, char prisoners);   // 0x48f8f0 (ret 0x10: returns how many members were added)
+    void add_template(int party, int tmpl, int reverse);   // 0x48fbd0 (ret 0xc: fills a party from a party template's six slots)
+    int battle_root(int party);                 // 0x48fce0 (ret 4: the end of the attached-to chain)
+    void collect_attachments(int party, Party* dest);   // 0x48ff70 (ret 8)
+    int template_count(int tmpl, int slot, float t);   // 0x48a150 (ret 0xc: member count of a party template slot at fraction t)
+    int count_troops(int troop, int party, char prisoners);   // 0x48f790 (ret 0xc: members of `troop` in the party's regular (prisoners 0) or prisoner stacks)
+    tstring string_value(int index);            // 0x48e9e0 (ret 8: hidden return; the script string `index` of the current text table, or its fallback)
+    void add_inventory(int item, int amount);   // 0x48eb50 (ret 8: the current troop receives an item; a unique item displaces a plain one)
 };
 extern GameData* g_game;                        // 0x5e2930
 

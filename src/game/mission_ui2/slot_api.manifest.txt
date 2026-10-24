@@ -1,0 +1,9 @@
+../src/game/mission_ui2/slot_api.cpp  ?animate_pos@widget_mgr@@QAEXHMH@Z  0048e5d0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?animate_color@widget_mgr@@QAEXHMH@Z  0048e650  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?animate_alpha@widget_mgr@@QAEXHMH@Z  0048e6d0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?animate_hilight_color@widget_mgr@@QAEXHMH@Z  0048e750  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?animate_hilight_alpha@widget_mgr@@QAEXHMH@Z  0048e7d0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?animate_size@widget_mgr@@QAEXHMH@Z  0048e850  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?resolve@NameRec@@QAEPAUtstring@@XZ  0048e8d0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?get_string@NameTable@@QAE?AUtstring@@HH@Z  0048e8f0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?string_value@GameData@@QAE?AUtstring@@H@Z  0048e9e0  /O2 /MT /Gy /TP

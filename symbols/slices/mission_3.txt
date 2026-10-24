@@ -1,0 +1,2 @@
+# src/game/mission_ui2/mission_3.cpp (0x48c330..0x48e5d0)
+0048d830 ?unit_class_name@@YAXIPAD@Z  # force-class name: file-static helper with cl's register convention (class in eax, buffer in esi); ForceLabel::make_label 0x48d940 calls this one

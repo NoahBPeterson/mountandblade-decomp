@@ -226,6 +226,10 @@ struct Mission {
     int slot_mode(int i);                       // 0x48ab30
     int slot_kind_a(int i);                     // 0x48ab90
     int slot_kind_b(int i);                     // 0x48abf0
+    // ---- src/game/mission_ui2 (the scene props at +0x668c, 0x1c8-byte Rec1c8 records) ----
+    void retag_props(int from, int to);         // 0x48ed60 (ret 8: every intact prop named like tag `from` is renamed to tag `to`)
+    int count_props(int tag);                   // 0x48ee20 (ret 4: intact props of tag `tag`)
+    int find_prop(int tag, int nth);            // 0x48ee90 (ret 8: index of the nth intact prop of tag `tag`, -1 when none)
 };
 extern Mission* g_mission;                      // 0x5e292c
 

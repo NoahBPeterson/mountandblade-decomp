@@ -1,0 +1,3 @@
+../src/game/mission_ui2/party.cpp  ?count_troops@GameData@@QAEHHHD@Z  0048f790  /O2 /MT /Gy /TP
+../src/game/mission_ui2/party.cpp  ?add_members@GameData@@QAEHHHHD@Z  0048f8f0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/party.cpp  ?add_template@GameData@@QAEXHHH@Z  0048fbd0  /O2 /MT /Gy /TP

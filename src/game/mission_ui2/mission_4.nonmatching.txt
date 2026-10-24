@@ -1,0 +1,8 @@
+0048efa0	102	semantically equivalent body; cl register choice / instruction order differs from the original
+0048f020	32	semantically equivalent body; cl register choice / instruction order differs from the original
+0048f120	29	semantically equivalent body; cl register choice / instruction order differs from the original
+0048f180	613	Party::init: original stores in a different order; equiv PASS
+0048f480	24	semantically equivalent body; cl register choice / instruction order differs from the original
+0048f4c0	149	semantically equivalent body; cl register choice / instruction order differs from the original
+0048f5a0	38	semantically equivalent body; cl register choice / instruction order differs from the original
+0048f6b0	154	semantically equivalent body; cl register choice / instruction order differs from the original

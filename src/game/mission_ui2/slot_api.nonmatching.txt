@@ -1,0 +1,6 @@
+0048ea80	164	semantically equivalent body; cl register choice / instruction order differs from the original
+0048eb50	406	semantically equivalent body; cl register choice / instruction order differs from the original
+0048ed60	160	semantically equivalent body; cl register choice / instruction order differs from the original
+0048ee20	104	semantically equivalent body; cl register choice / instruction order differs from the original
+0048ee90	127	semantically equivalent body; cl register choice / instruction order differs from the original
+0048ef20	7	semantically equivalent body; cl register choice / instruction order differs from the original

@@ -49,7 +49,8 @@ struct ItemKind {                       // 0x238 bytes
     char pad1cc[4];
     unsigned __int64 flags;             // +0x1d0 itcf_* capability flags, 64 bit (0x433e40, 0x4362e0, 0x435520)
     int value;                          // +0x1d8 price / sort value (0x462e20, 0x488f80, 0x489d10)
-    char pad1dc[0x1e8 - 0x1dc];
+    char pad1dc[4];
+    unsigned f1e0, f1e4;                // +0x1e0 / +0x1e4 modifier usage bits, low / high word (0x48c5c0 tests them against g_bit[imod])
     int f1e8, f1ec, f1f0, f1f4;         // +0x1e8 stat bases adjusted by the modifier (0x434c50, 0x434d70, 0x434df0, 0x434f60)
     char pad1f8[4];
     int f1fc;                           // +0x1fc (0x462960)
@@ -59,7 +60,7 @@ struct ItemKind {                       // 0x238 bytes
     int f210;                           // +0x210 stack size (0x434b70)
     unsigned f214, f218;                // +0x214 low byte used (0x435040, 0x434cb0)
     float f21c;                         // +0x21c (set to 1.0 for every kind by 0x48a210)
-    char pad220[4];
+    int f220;                           // +0x220 (0x48cc40: loot weight, times f224)
     float f224;                         // +0x224 (set for every kind by 0x48a250)
     char pad228[0x238 - 0x228];         // +0x228 the item's sound sub-object (party_window.cpp item_sound)
 

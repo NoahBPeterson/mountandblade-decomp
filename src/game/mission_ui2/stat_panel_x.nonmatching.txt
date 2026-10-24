@@ -1,0 +1,6 @@
+0048be00	26	loop register allocation and sort_sel tail differ
+0048be70	11	clamp/compare instruction order differs (register naming)
+0048bef0	3	loop register naming differs
+0048bf90	8	register naming and clamp order differ
+0048c0c0	135	bubble pass codegen differs (rounding inline, register choice); equiv harness error with the random item table
+0048c260	178	the original builds the vec2 pairs through stack temporaries; the rotation arithmetic is scheduled differently

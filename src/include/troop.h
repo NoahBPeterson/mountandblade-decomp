@@ -81,6 +81,13 @@ struct Troop {
     void set_alpha(int a);                  // 0x489370
     void unequip(int i);                    // 0x4630d0
     bool equip_best(int seed, int slot, unsigned need, unsigned forbid, unsigned type, unsigned t2, unsigned t3, char cheapest);   // 0x463100
+    // ---- src/game/mission_ui2 (method declarations only: no layout change) ----
+    void set_attr(int idx, int val);        // 0x48be70 (attribute idx 0..3 at +0x58.. clamped to 0..100; then the +0xa0 minimum is raised)
+    void add_attr(int idx, int delta);      // 0x48bef0 (ret 8; steps by one through set_attr)
+    void set_skill(int idx, int val);       // 0x48bf90 (packed 4-bit skill idx in the words at +0x68)
+    void add_skill(int id, int delta);      // 0x48c090 (ret 8)
+    void sort_inv();                        // 0x48c0c0 (compacts the inventory, then a bubble pass by item value)
+    void set_slot(int item, int idx, int mod);   // 0x48c7f0 (ret 0xc)
 };
 
 struct TroopRec : Troop {

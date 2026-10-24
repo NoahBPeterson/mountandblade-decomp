@@ -1,0 +1,23 @@
+0048c3c0	11	shl ecx,5 / lea index setup and argument push order for remove_row differ; equiv PASS
+0048c4c0	10	jump polarity of n>1 ? rand()%n : 0 differs
+0048c5c0	477	float/random-item selection codegen differs (large body, register allocation)
+0048c840	11	Party::add_members is byte-identical to the original 357-byte symbol; the Ghidra function index splits it at 0x48c849 (9-byte entry), so it cannot verify (index artifact)
+0048c849	296	second Ghidra function start inside Party::add_members (0x48c840, byte-identical to its 357-byte symbol); suggest symbols/not_functions.txt
+0048ca30	366	large body, register allocation and scheduling differ
+0048cc40	476	large body, register allocation and scheduling differ
+0048cec0	60	semantically equivalent body; cl register choice / instruction order differs from the original
+0048cf40	79	semantically equivalent body; cl register choice / instruction order differs from the original
+0048d020	703	FieldPanel::update_bounds: original uses different stack slots and register choice for the vec2 temporaries
+0048d350	8	ecx/edx register swap; equiv UNSUPPORTED (fake-arity)
+0048d3c0	9	ecx/edx register swap; equiv UNSUPPORTED (fake-arity)
+0048d470	328	semantically equivalent body; cl register choice / instruction order differs from the original
+0048d5f0	90	semantically equivalent body; cl register choice / instruction order differs from the original
+0048d650	4	temp register eax vs ecx; sweep mismatch signature is only "ecx (untouched by the original)": we clobber ecx, the 10 callers never read it (benign, as documented in the slice); results equal
+0048d690	10	one extra dead stack store in the original; otherwise identical
+0048d6d0	45	semantically equivalent body; cl register choice / instruction order differs from the original
+0048d750	45	semantically equivalent body; cl register choice / instruction order differs from the original
+0048d7e0	36	semantically equivalent body; cl register choice / instruction order differs from the original
+0048db20	223	semantically equivalent body; cl register choice / instruction order differs from the original
+0048dc30	166	semantically equivalent body; cl register choice / instruction order differs from the original
+0048de00	677	semantically equivalent body; cl register choice / instruction order differs from the original
+0048e340	261	semantically equivalent body; cl register choice / instruction order differs from the original

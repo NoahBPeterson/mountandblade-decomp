@@ -1,0 +1,4 @@
+../src/game/mission_ui2/mission_4.cpp  ?release@FrameBox@@QAEXXZ  0048ef40  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_4.cpp  ?current@TableauStack@@QAEPAUTabCurrent@@XZ  0048f450  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_4.cpp  ?set_background_color@TableauStack@@QAEXH@Z  0048f570  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_4.cpp  ?set_text@widget_mgr@@QAEXHPBUtstring@@@Z  0048f5f0  /O2 /MT /Gy /TP

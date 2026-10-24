@@ -63,6 +63,13 @@ struct Party {                              // 0x5ac8 bytes
     int max_members();                      // 0x4b22d0
     int max_prisoners();                    // 0x4b2330
     int max_4b1700();                       // 0x4b1700
+    // ---- src/game/mission_ui2 (0x48c330..0x48d7e0; method declarations only) ----
+    void remove_slot(int index);            // 0x48c330 (ret 4: moves a non-prisoner stack up behind the prisoner stacks)
+    int consume_stack(int index, int amount, int* rows, char keep);   // 0x48c3c0 (ret 0x10: takes `amount` from stack `index`, removes it when empty)
+    int add_members(int troop, int count, int flags, int wounded, char force);   // 0x48c840 (ret 0x14)
+    tstring* display_name();                // 0x48d7b0 (the key's translation, or the name)
+    void init();                            // 0x48f180 (resets the map party's order, path, speed and per-frame state)
+    void clear_particle_systems();          // 0x48d7e0 (frees the id list at +0x59f4, then calls slot 0x68 of the model at +0x59c0)
 };
 
 struct PartyMgr {                           // 0x138e0 bytes, embedded in the game data at +0xf8

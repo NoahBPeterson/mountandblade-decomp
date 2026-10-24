@@ -1,0 +1,2 @@
+../src/game/mission_ui2/game_data.cpp  ?collect_attachments@GameData@@QAEXHPAUParty@@@Z  0048ff70  /O2 /MT /Gy /TP
+../src/game/mission_ui2/game_data.cpp  ?relation@GameData@@QAEMHH@Z  0048ffa0  /O2 /MT /Gy /TP
