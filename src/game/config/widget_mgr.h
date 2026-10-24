@@ -184,6 +184,7 @@ struct widget_mgr {
     int add_progress(int lo, int hi);           // 0x499b80
     int add_dropdown();                         // 0x499d90
     int add_party();                            // 0x49a0b0
+    int add_tableau_button(int pos, int rec, int key);   // 0x4b14f0 (ret 0xc; src/game/party2)
     void apply_preset(int idx, const float* pos);      // 0x49a300 (ret 8)
     void apply_preset_b(int idx, const float* pos);    // 0x49ab80 (ret 8)
     // ---- src/game/mission_ui2: the widget setters of the script operations (overlay_set_* / overlay_animate_to_*) ----

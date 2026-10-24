@@ -191,7 +191,7 @@ struct Party {                              // 0x5ac8 bytes
     int force_add_members(int troop, int count, unsigned flags, int f10);   // 0x4b4470 (ret 0x10)
     void think();                           // 0x4b4a00
     void leave_battle();                    // 0x4b6ae0
-    int start_path(int from, float tx, float ty);       // 0x4b73c0 (ret 0xc)
+    bool start_path(int from, float tx, float ty);      // 0x4b73c0 (ret 0xc)
     void update_nav();                      // 0x4b7460
     void update_flags();                    // 0x4b7840
     void update_hud_text();                 // 0x4b7e50

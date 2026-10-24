@@ -17,6 +17,8 @@ struct Elem {                                              // 0x98 bytes: one op
     int f90;                                               // +0x90 (-1)
     int pad94;
     Elem() : f90(-1) {}                                    // 0x4607d0
+    __int64 get_operand(__int64* locals, int* i, int* type);       // 0x49d650 (thiscall, ret 0xc; src/game/party2)
+    void set_lvalue(__int64* locals, const __int64& value);        // 0x49d500 (thiscall, ret 8; src/game/party2)
 };
 struct DialogBlock {                                             // 0x1c bytes
     Elem* items;                                           // +0
@@ -28,6 +30,13 @@ struct DialogBlock {                                             // 0x1c bytes
     ~DialogBlock() { if (items) delete[] items; }
     void read(stream_base* s);                             // 0x4607e0
     char exec(int mode);                                   // 0x4875e0 (thiscall, ret 4)
+    // ---- src/game/party2 (camera.cpp: the script block runner of the mission script interpreter; method declarations only) ----
+    char run_line(int locals, int* idx, int script);       // 0x4b0940 (ret 0xc: runs one statement through the interpreter)
+    char emit(int script, int depth, int* limit, __int64* vals, unsigned tag);   // 0x4b09e0 (ret 0x14: the block runner)
+    bool step_less(int locals, int* stack);                // 0x49d7f0 (ret 8: the loop test of try_for_range / for_parties ...)
+    tstring renumber(int locals, int index, int use_var, int* pvar, int* pend);   // 0x49d930 (ret 0x18: statement text with the operand values)
+    void link();                                           // 0x49dd30 (links else_try / try_end to their branch targets)
+    void pop_try(int locals, int* stack, int* out);        // 0x49f7c0 (ret 0xc: pops / advances the loop entry on top of the try stack)
 };
 
 struct DialogRec {                                         // 0x64 bytes

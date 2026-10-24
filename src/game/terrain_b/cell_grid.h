@@ -52,6 +52,12 @@ struct NavData {                // 0x68 bytes
     int m64;                    // +0x64
     NavData();                  // 0x478150 (same constructor as NavCore's, ICF-folded)
     ~NavData();                 // 0x41f5d0 (four_vecs::~four_vecs)
+    // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----
+    bool linked(const int* a, const int* b);    // 0x48efa0 (other object)
+    bool can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max);   // 0x4b3420 (ret 0x1c)
+    void reset();                               // 0x4b33c0 (new search generation: m64)
+    bool find_path(int from, int to, int* path, float* detail, int* count, int* visited, int* guard,
+                  unsigned* mask_req, unsigned* mask_ban, char* avoid);       // 0x4b6b40 (ret 0x28)
 };
 
 // ---- smaller records ----------------------------------------------------------------------------------------------
@@ -147,6 +153,7 @@ struct CellGrid : CellGridBase {
     void post(void* o);                                                     // 0x425240
     Entity* create_entity(int type_id);                                     // 0x428440
     void build_faces(NavData* map);                                         // 0x479980
+    void remove_entity(int id);                                             // 0x41f0d0 (ret 4; src/game/party2 clear_map_flag)
 };
 
 #endif // TERRAIN_B_CELL_GRID_H

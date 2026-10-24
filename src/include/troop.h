@@ -81,6 +81,7 @@ struct Troop {
     void set_alpha(int a);                  // 0x489370
     void unequip(int i);                    // 0x4630d0
     bool equip_best(int seed, int slot, unsigned need, unsigned forbid, unsigned type, unsigned t2, unsigned t3, char cheapest);   // 0x463100
+    float food_factor();                    // 0x4b21f0 (food consumption factor; heroes by +0x4e4, perks 0x18 / 0x19) (src/game/party2)
     // ---- src/game/mission_ui2 (method declarations only: no layout change) ----
     void set_attr(int idx, int val);        // 0x48be70 (attribute idx 0..3 at +0x58.. clamped to 0..100; then the +0xa0 minimum is raised)
     void add_attr(int idx, int delta);      // 0x48bef0 (ret 8; steps by one through set_attr)
