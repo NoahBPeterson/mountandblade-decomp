@@ -155,7 +155,8 @@ def main():
     rep = {"when": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
            "commit": subprocess.run(["git", "-C", ROOT, "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip(),
            "objects": len(objs), "compile_failures": len(fails), "unresolved": len(syms), "duplicates": len(dups),
-           "linked": linked, "by_category": {c: len(by[c]) for c in CATS}}
+           "linked": linked, "by_category": {c: len(by[c]) for c in CATS},
+           "glue": bool(a.glue), "counts_lnk2001": True}
     if a.json:
         json.dump(dict(rep, symbols={c: sorted(by[c]) for c in CATS}, duplicate_symbols=dups), open(a.json, "w"), indent=1)
     if a.record:

@@ -51,6 +51,28 @@
    "third-party": 70,
    "CRT": 16,
    "other": 0
-  }
+  },
+  "counts_lnk2001": true,
+  "glue": false
+ },
+ "2026-10-25T10:07:52-05:00": {
+  "when": "2026-10-25T10:07:52-05:00",
+  "commit": "d8043ad",
+  "objects": 171,
+  "compile_failures": 0,
+  "unresolved": 75,
+  "duplicates": 13,
+  "linked": false,
+  "by_category": {
+   "name mismatch": 35,
+   "global data": 6,
+   "no annotation": 32,
+   "missing body": 1,
+   "third-party": 0,
+   "CRT": 1,
+   "other": 0
+  },
+  "glue": true,
+  "counts_lnk2001": true
  }
 }

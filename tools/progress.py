@@ -190,7 +190,17 @@ def plot_history(path):
         ax.set_xticklabels([d.strftime("%b %-d") for d in days])
         ax.margins(x=0.08)
 
-    fig, grid = plt.subplots(2 if evh else 1, 2, figsize=(12, 9.4 if evh else 4.6), dpi=150, squeeze=False)
+    try:
+        rlh = sorted(json.load(open(W("docs", "relink_history.json"))).values(), key=lambda p: p["when"])
+    except (OSError, ValueError):
+        rlh = []
+    try:
+        dch = sorted(json.load(open(W("docs", "data_history.json"))).values(), key=lambda p: p["when"])
+    except (OSError, ValueError):
+        dch = []
+    link_row = bool(rlh or dch)
+    nrows = 1 + bool(evh) + link_row
+    fig, grid = plt.subplots(nrows, 2, figsize=(12, 4.4 * nrows + 1.6), dpi=150, squeeze=False)
     axes = grid[0]
     fig.patch.set_facecolor(SURFACE)
     for ax, (title, ke, kc, km) in zip(axes, (("Share of functions", "exact", "comp", "mig"),
@@ -234,8 +244,52 @@ def plot_history(path):
             style(ax, title, xs)
         grid[1][1].tick_params(labelleft=False)
         h, l = grid[1][0].get_legend_handles_labels()
-        fig.legend(h, l, loc="lower center", ncol=3, frameon=False, fontsize=8.5, labelcolor=INK,
-                   bbox_to_anchor=(0.5, 0.075))
+        grid[1][0].legend(h, l, loc="upper center", ncol=3, frameon=False, fontsize=8.5, labelcolor=INK,
+                          bbox_to_anchor=(1.07, -0.09))
+    if link_row:
+        ax = grid[nrows - 1][0]
+        for glue, color, label in ((False, ORANGE, "Our objects alone"), (True, BLUE, "With glue (original data, aliases)")):
+            ps = [p for p in rlh if bool(p.get("glue")) == glue]
+            if not ps:
+                continue
+            xs = [datetime.datetime.fromisoformat(p["when"]) for p in ps]
+            ys = [p["unresolved"] for p in ps]
+            full_pts = [(x, y) for x, y, p in zip(xs, ys, ps) if p.get("counts_lnk2001")]
+            # the line joins only complete counts: an undercount followed by a full count is not a regression
+            ax.plot([x for x, _ in full_pts], [y for _, y in full_pts], color=color, lw=2, label=label,
+                    solid_capstyle="round")
+            for x, y, p in zip(xs, ys, ps):       # hollow: an early point that missed the LNK2001 symbols
+                full = p.get("counts_lnk2001")
+                ax.plot([x], [y], marker="o", ms=5, color=color, mfc=color if full else SURFACE, mew=1.5)
+            ax.annotate("%d" % ys[-1], (xs[-1], ys[-1]), xytext=(6, 0), textcoords="offset points", va="center",
+                        fontsize=9, color=INK)
+        style(ax, "Standalone build: unresolved symbols at link", [datetime.datetime.fromisoformat(p["when"]) for p in rlh] or [now])
+        ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _p: "%d" % v))
+        ax.set_ylim(bottom=0)
+        ax.legend(loc="upper center", ncol=2, frameon=False, fontsize=8.5, labelcolor=INK, bbox_to_anchor=(0.5, -0.09))
+        ax = grid[nrows - 1][1]
+        DCC = (("defined in source", AQUA), ("generated from source", BLUE), ("borrowed from image", ORANGE),
+               ("reached through tables", "#b4b2ab"))
+        if dch:
+            xs = [datetime.datetime.fromisoformat(p["when"]) for p in dch]
+            span = (max(xs) - min(xs)).total_seconds() / 86400
+            width = max(span / (3 * len(xs)), 0.03)
+            base = [0.0] * len(dch)
+            for c, color in DCC:
+                tot = [sum(p["items"][k] for k, _ in DCC) or 1 for p in dch]
+                ys = [100.0 * p["items"].get(c, 0) / t for p, t in zip(dch, tot)]
+                ax.bar(xs, ys, width=width, bottom=base, color=color, edgecolor=SURFACE, linewidth=1.5, label=c)
+                if ys[-1] >= 4:
+                    ax.annotate("%.0f%%" % ys[-1], (xs[-1], base[-1] + ys[-1] / 2), xytext=(4 + 300 * width, 0),
+                                textcoords="offset points", va="center", fontsize=9, color=INK)
+                base = [b + y for b, y in zip(base, ys)]
+            ax.set_ylim(0, 100)
+            style(ax, "Static data items, by where the link gets them", xs)
+            pad = datetime.timedelta(days=max(span * 0.1, 0.25))
+            ax.set_xlim(min(xs) - pad, max(xs) + pad)
+            ax.legend(loc="upper center", ncol=2, frameon=False, fontsize=8.5, labelcolor=INK, bbox_to_anchor=(0.5, -0.09))
+        else:
+            ax.set_visible(False)
     fig.suptitle("Mount & Blade 1.011 decompilation progress (%d game functions, %.2f MB; static CRT excluded)" % (G, B / 1e6),
                  x=0.01, ha="left", fontsize=12, color=INK)
     fig.text(0.01, 0.01, "One point per committed docs/STATUS.md and one per --plot run. "
@@ -244,8 +298,15 @@ def plot_history(path):
              ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax) +
              ("\nVerdicts: one point per full equivalence sweep (tools/difftest/verdicts.py); a sweep tests the original and "
               "our function\non the same random inputs under emulation. The first point also counted pre-migration slice rows."
-              if evh else ""), fontsize=8, color=MUTED)
-    fig.tight_layout(rect=(0, 0.15 if evh else 0.09, 1, 0.95))
+              if evh else "") +
+             ("\nStandalone build: tools/relink/trial_link.py --record (hollow points counted only LNK2019, missing the symbols "
+              "referenced from data). Static data: tools/relink/data_coverage.py --record;\nitems are recovered from their uses "
+              "in the original (it has no symbols); string literals, constants and vtables count as generated from source."
+              if link_row else ""), fontsize=8, color=MUTED)
+    # a fixed layout: tight_layout shrinks the axes to fit legends placed below them
+    h_in = fig.get_figheight()
+    fig.subplots_adjust(left=0.06, right=0.93, top=1 - 0.75 / h_in, bottom=(1.15 + 0.35 * nrows) / h_in,
+                        wspace=0.14, hspace=0.42)
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d snapshots)" % (os.path.relpath(path, ROOT), len(pts)))
 
