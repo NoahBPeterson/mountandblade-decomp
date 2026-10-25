@@ -30,14 +30,76 @@ using rgl::vector4;                                          // the engine's vec
 #include "../../include/vec.h"
 #include "../../include/mat4.h"
 using rgl::mat3;
+// ---- the defining classes of the callees below ------------------------------------------------------------------------------
+// This slice carries its own views (Mesh, Entity, World, terrain_obj, Psys, ...) of objects whose classes live in other modules and cannot
+// be included here; the calls go to the members of the classes that define them, which are declared (members only) in this block.
+struct skin; struct face; struct CellGrid; struct BodyRecC;
+namespace rgl {
+struct entity; struct scene;
+struct mesh { mesh(); void scale(float s); };                // 0x412a90 / 0x44f0c0 (src/rgl/mesh.h)
+struct world {
+    entity* create_entity(int type_id);   // 0x428440 (src/rgl/scene/world.h)
+};
+unsigned __cdecl pack_color(const vector4* c);               // 0x40e440
+}
+struct mesh_x {
+    mesh_x* clone();   // 0x41c6d0 (src/rgl/mesh_x.h)
+};
+struct Poser {
+    void add_extra(int val);   // 0x442110 (agent3/agent_fx_sound.h)
+};
+struct resmgr {
+    rgl::mesh* get_object(const rgl::string* name);   // 0x419540 (src/rgl/core/resmgr.h)
+};
+struct resource_manager {
+    skin* get_material(const rgl::string& name);   // 0x418a70 (src/rgl/resource.h)
+};
+struct ShadowMap {                                           // terrain_a/game_state.h, terrain_b/shadow_map.h
+    void attach_camera(CellGrid* c);                         // 0x4711e0
+    void extend(const vector4* p);                           // 0x468c20
+    void fit_bounds();                                       // 0x463cc0
+};
+struct ShadowMapP {
+    void render();   // 0x47fef0 (mesh_char.cpp)
+};
+struct TerrainX {                                            // mesh_slot/mesh_slot.h (mesh_terrain.cpp, mesh_scene.cpp)
+    void generate(int seed, int* objs, char flag);           // 0x481d10
+    void regenerate_water(void** out, int mode);             // 0x482170
+    void destroy_water(int a);                               // 0x4814a0
+    void light_entities(rgl::mesh** list, int count);        // 0x47ce00
+    void light_props();                                      // 0x47ced0
+};
+struct HexWords {
+    void parse(const struct tstring& s);   // 0x4658c0 (terrain_a/terrain_a.cpp)
+};
+struct PolyMesh { void build_geometry(); void compute_edge_creases(); };    // 0x470a00 / 0x470750 (terrain_b/poly_mesh.h)
+struct Mission3 {
+    void copy_slot(int i);   // 0x4676e0 (terrain_a/misc.h)
+};
+struct MissionG {
+    void run_spawns();   // 0x483eb0 (mesh_game.cpp)
+};
+struct level {
+    void floor_at(const float* p, float* out_z, face** out_face);   // 0x439be0 (agent2/agent_types.h)
+};
+struct envelope {
+    void set_params(float a, float t, const int* b, const int* c);   // 0x462540 (renderer.cpp)
+};
+struct snd_slot {
+    void update(int arg);   // 0x4625d0 (ui/item_ref.cpp)
+};
+struct snd_bank {
+    void randomize();   // 0x462790 (ui/item_ref.cpp)
+};
+void __stdcall reset_spawned(int party_id);                  // 0x4739f0 (terrain_b/terrain_b.cpp: a free function)
+
 struct matrix {                                              // 4 rows; row 3 = position
     vector4 r[4];
-    void orthonormalize();                                   // 0x407ef0 (rgl::matrix)
-    void rotate_sf(float* angle);                            // 0x40e770
+    void orthonormalize() { ((rgl::matrix*)this)->orthonormalize(); }              // 0x407ef0 (rgl::matrix)
+    void rotate_sf(float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); }   // 0x40e770
 };
 struct RectF { float x0, y0, x1, y1; };
 mat3* __cdecl identity3(mat3* out);                          // 0x40cd60
-unsigned __cdecl pack_color(float* c);                       // 0x40e440
 float __cdecl frand();                                       // 0x40e400
 void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out);   // 0x414fc0
 
@@ -59,9 +121,9 @@ struct BodyVec {
 
 struct Mesh : Raw {                                          // rgl::mesh, 0x260 bytes
     char b[0x260];
-    Mesh();                                                  // 0x412a90
-    Mesh* clone();                                           // 0x41c6d0
-    void scale(float s);                                     // 0x44f0c0
+    Mesh() { ((rgl::mesh*)this)->rgl::mesh::mesh(); }        // 0x412a90
+    Mesh* clone() { return (Mesh*)((mesh_x*)this)->clone(); }   // 0x41c6d0
+    void scale(float s) { ((rgl::mesh*)this)->scale(s); }    // 0x44f0c0
 };
 #include "../emit.h"
 
@@ -76,7 +138,7 @@ struct Entity : Raw {                                        // scene entity (vt
     virtual void v17(); virtual void v18(); virtual void v19(); virtual void v20(); virtual void v21();
     virtual void v22(); virtual void v23(); virtual void v24();
     virtual void v25(Emit* e);
-    void add_extra(Mesh* m);                                  // 0x442110
+    void add_extra(Mesh* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
 };
 struct Streamer {                                            // level sub-object with a vtable (+0x414, +0x444)
     virtual void v0();
@@ -102,35 +164,35 @@ struct PropObj {                                             // object at prop +
 #include "../terrain_desc.h"
 struct terrain_obj {                                         // global at 0xa76630 (sky/terrain generator)
     unsigned s0, s1, s2, s3, s4;
-    void parse(void* spec);                                // 0x4658c0
-    void generate(World* w, void* desc, char flag);          // 0x481d10
+    void parse(void* spec) { ((HexWords*)this)->parse(*(const tstring*)spec); }      // 0x4658c0
+    void generate(World* w, void* desc, char flag) { ((TerrainX*)this)->generate((int)w, (int*)desc, flag); }   // 0x481d10
     int count_low_quads();                                   // 0x467530
-    void emit_by_type(int idx, const matrix* m, const vector4* p, int what);   // 0x466d90
-    void regenerate_water(void** out, char flag);            // 0x482170
-    void destroy_water(void* p);                             // 0x4814a0
+    void emit_by_type(int idx, const rgl::matrix* m, const rgl::vector4* p, int what);   // 0x466d90
+    void regenerate_water(void** out, char flag) { ((TerrainX*)this)->regenerate_water(out, flag); }     // 0x482170
+    void destroy_water(void* p) { ((TerrainX*)this)->destroy_water((int)p); }          // 0x4814a0
 };
 extern terrain_obj g_terrain;                                // 0xa76630
 struct Psys {
-    void attach_camera(World* w);                                  // 0x4711e0
-    void extend(BodyRec* b);                                   // 0x468c20
-    void fit_bounds();                                          // 0x463cc0
-    void render();                                            // 0x47fef0
+    void attach_camera(World* w) { ((ShadowMap*)this)->attach_camera((CellGrid*)w); }       // 0x4711e0
+    void extend(BodyRec* b) { ((ShadowMap*)this)->extend((const vector4*)b); }          // 0x468c20
+    void fit_bounds() { ((ShadowMap*)this)->fit_bounds(); }                              // 0x463cc0
+    void render() { ((ShadowMapP*)this)->render(); }                                    // 0x47fef0
 };
 extern Psys g_shadow_map;                                          // 0xa70248
 struct ResMgr {
-    Mesh* get_object(const tstring& name);                   // 0x419540
-    Mesh* get_object(void* name);
-    void* get_material(tstring* name);                       // 0x418a70
+    Mesh* get_object(const tstring& name) { return (Mesh*)((::resmgr*)this)->get_object((const rgl::string*)&name); }     // 0x419540
+    Mesh* get_object(void* name) { return (Mesh*)((::resmgr*)this)->get_object((const rgl::string*)name); }
+    void* get_material(tstring* name) { return ((resource_manager*)this)->get_material(*(const rgl::string*)name); }   // 0x418a70
 };
 extern ResMgr g_resmgr;                                      // 0x5d6fa0
 
 struct SndSlot {                                             // 0x78 bytes, array in the mode record bank
     char pad0[0xc]; int f0c; char pad10[0x78 - 0x10];
-    void update(int what);                                   // 0x4625d0
+    void update(int what) { ((snd_slot*)this)->update(what); }         // 0x4625d0
 };
 struct SndBank {                                             // at mode record +0x4c
     int count; SndSlot* recs; int pad8;
-    void randomize();                                        // 0x462790
+    void randomize() { ((snd_bank*)this)->randomize(); }               // 0x462790
 };
 #include "../mode_rec.h"
 
@@ -589,10 +651,10 @@ void Mission::start_setup()
     at<int>(0x5274) = 0;
     at<World*>(0)->set_fade(&at<float>(0x6614), (char*)&g_env_rows[at<int>(0x660c)] + 0x44);
     unsigned color = 0xff334455;
-    at<World*>(0)->set_params(-5.0f, 10.0f, &color, &at<float>(0x654c));
+    ((envelope*)at<World*>(0))->set_params(-5.0f, 10.0f, (const int*)&color, (const int*)&at<float>(0x654c));     // 0x462540
     setup_ambient(at<int>(0x5df4), at<int>(0x660c), at<float>(0x6614));
 
-    Entity* sun = at<World*>(0)->create_entity(9);
+    Entity* sun = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
     Mesh* sm = g_resmgr.get_object(&g_env_rows[at<int>(0x660c)]) ->clone();
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
@@ -636,13 +698,13 @@ void Mission::start_setup()
     s444->v1();
     NavMesh& nav = at<NavMesh>(0x6698);
     nav.load(s444);
-    nav.build_geometry();
+    ((PolyMesh*)&nav)->build_geometry();
     {
         LevelBits f2 = LV.flags;
         if (f2.b9 && f2.b8 && g_terrain.count_low_quads() > 10) {
             nav.build(RAWAT(int, at<World*>(0), 0x64), 1);
-            nav.build_geometry();
-            nav.compute_edge_creases();
+            ((PolyMesh*)&nav)->build_geometry();
+            ((PolyMesh*)&nav)->compute_edge_creases();
         }
     }
     at<World*>(0)->build(&nav);
@@ -735,7 +797,7 @@ void Mission::start_setup()
                     goto found;
             j = 0;
         found:
-            g_terrain.emit_by_type(j, &RAWAT(matrix, p, 0x18), &RAWAT(vector4, p, 0x158), RAWAT(int, p, 0x1a0));
+            g_terrain.emit_by_type(j, (const rgl::matrix*)&RAWAT(matrix, p, 0x18), &RAWAT(vector4, p, 0x158), RAWAT(int, p, 0x1a0));
             pi++;
         } else {
             int foundv = -1;
@@ -749,9 +811,9 @@ void Mission::start_setup()
         if (f.b8)
             g_terrain.regenerate_water(&at<void*>(0x65a8), f.b9 == 0);
     }
-    light_props();
+    ((TerrainX*)this)->light_props();
     if (!LV.flags.b8)
-        light_entities((rgl::mesh**)&at<Mesh*>(0x6340), at<int>(0x633c));
+        ((TerrainX*)this)->light_entities((rgl::mesh**)&at<Mesh*>(0x6340), at<int>(0x633c));
     at<int>(0x65bc) = 0;
     at<int>(0x65b8) = 0;
 
@@ -760,7 +822,7 @@ void Mission::start_setup()
         SndRec* sr = &g_env_rows[at<int>(0x660c)];
         u = sr->at<vector4>(0x30);
         float scale = (u.x * 3.0f + 1.0f) * 0.400000006f;
-        Entity* fx = at<World*>(0)->create_entity(9);
+        Entity* fx = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
         at<Entity*>(0x65b8) = fx;
         u.x = 0.0f; u.y = 0.0f; u.z = 30.0f;
         fx->at<vector4>(0x88) = u;
@@ -829,7 +891,7 @@ void Mission::start_setup()
     at<int>(0x65c4) = 0;
     at<int>(0x65c8) = 0;
     if (!lrec->flags.b0 && (*(int*)((char*)&g_options + 0x20)) != 0) {
-        Entity* eb = at<World*>(0)->create_entity(9);
+        Entity* eb = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
         at<Entity*>(0x65c0) = eb;
         float two = 2.0f;
         eb->v6(&two);
@@ -851,7 +913,7 @@ void Mission::start_setup()
         at<Mesh*>(0x65c8)->at<int>(0x140) = 1;
         float c = (1.0f - 150.0f / (at<float>(0x6610) + 150.0f)) * g_env_rows[at<int>(0x660c)].at<float>(0x1c) * 0.899999976f;
         u.x = u.y = u.z = c;
-        at<Mesh*>(0x65c8)->at<unsigned>(0x3c) = pack_color(&u.x);
+        at<Mesh*>(0x65c8)->at<unsigned>(0x3c) = rgl::pack_color(&u);
         at<Mesh*>(0x65c8)->at<unsigned>(0x3c) |= 0xff000000;
         at<Mesh*>(0x65c8)->at<unsigned>(0x10c) &= 0xfffeffff;
         at<Mesh*>(0x65c8)->scale(50.0f);
@@ -865,7 +927,7 @@ void Mission::start_setup()
 
     // ---- cursor / vertex-colour helper entities -------------------------------------------------
     at<int>(0x65d0) = 0;
-    at<Entity*>(0x65d0) = at<World*>(0)->create_entity(9);
+    at<Entity*>(0x65d0) = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
     {
         float f290 = 290.5f;
         at<Entity*>(0x65d0)->v6(&f290);
@@ -887,7 +949,7 @@ void Mission::start_setup()
     }
     at<Entity*>(0x65d0)->add_extra(at<Mesh*>(0x65d8));
     at<int>(0x65dc) = 0;
-    at<Entity*>(0x65dc) = at<World*>(0)->create_entity(9);
+    at<Entity*>(0x65dc) = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
     {
         float f33 = 33.5f;
         at<Entity*>(0x65dc)->v6(&f33);
@@ -898,7 +960,7 @@ void Mission::start_setup()
         at<Mesh*>(0x65e0)->at<void*>(0x2c) = g_resmgr.get_material(&nm);
     }
     at<Entity*>(0x65dc)->add_extra(at<Mesh*>(0x65e0));
-    at<Entity*>(0x65e4) = at<World*>(0)->create_entity(9);
+    at<Entity*>(0x65e4) = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
     {
         float f33 = 33.5f;
         at<Entity*>(0x65e4)->v6(&f33);
@@ -921,7 +983,7 @@ void Mission::start_setup()
         s->face = 0;
         int n = 0;
         do {
-            at<World*>(0)->floor_at(&s->B.r[3].x, &outY, &s->face);
+            ((level*)at<World*>(0))->floor_at(&s->B.r[3].x, &outY, (face**)&s->face);     // 0x439be0
             if (s->face == 0) {
                 s->B.r[3].x = (frand() - 0.5f) * 0.01f + s->B.r[3].x;
                 s->B.r[3].y = (frand() - 0.5f) * 0.01f + s->B.r[3].y;
@@ -939,7 +1001,7 @@ void Mission::start_setup()
         s->D = s->B;
         s->start = g_ticks[s->clock];
         s->f120 = 0;
-        copy_slot(k);
+        ((Mission3*)this)->copy_slot(k);
     }
 
     // ---- party spawn counters, troops, mode records ----------------------------------------------
@@ -948,7 +1010,7 @@ void Mission::start_setup()
         int* cnts = &at<int>(0x620c);
         for (int sd = 0; sd < 2; sd++)
             for (int i = 0; i < cnts[sd]; i++)
-                reset_spawned(lists[sd * 128 + i]);
+                ::reset_spawned(lists[sd * 128 + i]);
     }
     for (int i = 0; i < RAWAT(int, g_game, 0x13a04); i++)
         *(int*)(RAWAT(char*, g_game, 0x13a00) + i * 0x508 + 0x3bc) = 0;
@@ -959,7 +1021,7 @@ void Mission::start_setup()
     }
     for (int i = 0; i < mrec->nrecs; i++)
         add_amount(i, mrec->recs[i].f14);
-    run_spawns();
+    ((MissionG*)this)->run_spawns();
     char buf[0x50];
     sprintf(buf, "temper = %3.2f, humidity = %3.2f, height = %3.2f fog_far = %d",
             (double)at<float>(0x65f0), (double)at<float>(0x65f4), (double)at<float>(0x65f8), (int)at<float>(0x6610));
@@ -975,7 +1037,7 @@ void Mission::start_setup()
             v = at<vector4>(0x6598);
             v.x = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.x;
             v.y = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.y;
-            at<World*>(0)->floor_at(&v.x, &outY, &sink);
+            ((level*)at<World*>(0))->floor_at(&v.x, &outY, (face**)&sink);
             v.z = outY;
             RAWAT(vector4, p, 0x48) = v;
             if (RAWAT(PropObj*, p, 0x1b4) != 0)

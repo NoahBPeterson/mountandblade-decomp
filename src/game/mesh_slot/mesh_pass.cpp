@@ -5,14 +5,32 @@
 #include "../../include/msg_log.h"
 #include "../../include/renderer.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../dev_buffer.h"    // buffer_pair (restore_all 0x4623c0): the canonical class of the device buffer pairs
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
 extern char g_scene_dirty;                      // 0x5e2938 (set when the device must be rebuilt before the next pass)
-void gfx_restore();                             // 0x4c1b00
-bool __cdecl rec_less(const E8& a, const E8& b);   // 0x4622a0 (sort predicate of the queue records)
+long __cdecl gfx_restore();                     // 0x4c1b00 (HRESULT: triggers/trigger_vec.cpp)
+struct sort_rec;
+bool __cdecl rec_less(sort_rec* const* a, sort_rec* const* b);   // 0x4622a0 (renderer.cpp: sort predicate of the queue records, taken by pointer)
+
+// The callees below are members of the classes that define them (terrain_a/misc.h, terrain_b, game/render_batch.h); those headers bring other
+// layouts than this TU's, so only the members are declared, each under the defining class.
+struct RenderScene {
+    void apply_state();   // 0x46ca50 (terrain_a/misc.h: the render scene, rgl::scene seen by the setup code)
+};
+struct view_t;
+struct drawer {
+    void draw(view_t* v);   // 0x46d8c0 (terrain_a/misc.h: the fixed-function drawer)
+};
+struct GeomBuffer {
+    int upload(void* scratch, void* tag);   // 0x46d060 (terrain_a/misc.h: vertex / index buffer uploader)
+};
+struct render_batch {
+    void render_scene(rgl::scene* sc);   // 0x46e590 (terrain_b.cpp; game/render_batch.h declares the scene parameter as another type)
+};
 
 // ---- the registry object's render pass ---------------------------------------------------------------------------
 // A 0x4c-byte device buffer record seen by its per-record item list (+0x34) and the uploader 0x46d060.
@@ -20,11 +38,11 @@ struct bucket_ms {
     char pad0[0x34];
     std::vector<int> v;                         // +0x34
     char pad44[0x4c - 0x44];
-    int upload(void* geom, int count);          // 0x46d060
+    int upload(void* geom, int count) { return ((GeomBuffer*)this)->upload(geom, (void*)count); }     // 0x46d060 (the record is a GeomBuffer)
 };
 struct geompair_ms {                            // 0x98 (src/game/dev_buffer.h's buffer_pair)
     bucket_ms b[2];
-    void restore_all();                         // 0x4623c0
+    void restore_all() { ((buffer_pair*)this)->restore_all(); }     // 0x4623c0
 };
 
 
@@ -49,14 +67,14 @@ struct RenderPass {
     int f418828;                                // +0x418828 (render_batch::counter)
 
     bool render(int pass);                      // 0x47e520
-    void register_scene(scene* o);                // 0x412040 (scene_registry::register_scene)
-    void render_scene(scene* o);                      // 0x46e590 (render_batch::render_scene)
-    void draw(scene* o);                      // 0x46d8c0 (the fixed-function drawer)
+    void register_scene(scene* o) { ((scene_registry*)this)->register_scene(o); }     // 0x412040 (scene_registry::register_scene, src/rgl/mesh.h)
+    void render_scene(scene* o) { ((render_batch*)this)->render_scene(o); }           // 0x46e590 (render_batch::render_scene)
+    void draw(scene* o) { ((drawer*)this)->draw((view_t*)o); }                        // 0x46d8c0 (the fixed-function drawer)
 };
 
 // 0x46ca50: the per-frame Direct3D setup of a scene (src/game/terrain_a: RenderScene::apply_state)
 struct scene_ms : scene {
-    void apply_state();                         // 0x46ca50
+    void apply_state() { ((RenderScene*)this)->apply_state(); }     // 0x46ca50
 };
 
 static __forceinline E8 mk_e8(int a, int b) { E8 e; e.a = a; e.b = b; return e; }
@@ -155,7 +173,7 @@ again:
             }
             ((mesh*)Q(*s)[k].a)->compute_sortkey();                // 0x412980 (slot 2 of the vtable)
         }
-        std::stable_sort(Q(*s).begin(), Q(*s).end(), rec_less);
+        std::stable_sort(Q(*s).begin(), Q(*s).end(), (bool (__cdecl*)(const E8&, const E8&))rec_less);   // the predicate is the definition's: the same function taking the record pointers
     }
 
     IDirect3DSurface9* rt = 0;
@@ -285,7 +303,7 @@ struct PolyGeom {
     vector4 bmin;                       // +0x44
     vector4 bmax;                       // +0x54
     void build();                       // 0x47ee60
-    void compute_bounds();              // 0x4704b0
+    void compute_bounds() { ((PointSet*)this)->compute_bounds(); }     // 0x4704b0 (PointSet: terrain_b/poly_mesh.h)
 };
 
 #define OFFSET_CHECK(T, m, off) typedef char T##_##m##_at_##off[(offsetof(T, m) == (off)) ? 1 : -1]

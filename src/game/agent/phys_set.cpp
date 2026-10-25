@@ -7,6 +7,11 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "./phys_set.h"
+// the scene object under its defining name (src/game/strat/strat_entity.h `Ctx`; the mission's `Level` is the same object): query_box 0x42aa50.
+// strat_entity.h needs another header family, so only the member is declared.
+struct Ctx {
+    void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50
+};
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/mat4.h"
 #include "../../include/quaternion.h"
@@ -139,7 +144,7 @@ void Agent::build_static_collision()
         bmax.x = body->m.o.x + 5.0f;
         bmax.y = body->m.o.y + 5.0f;
         bmax.z = body->m.o.z + 5.0f;
-        g_mission->scene_L->query_box(&bmin.x, &bmax.x, 0x8106, hits, &cnt);
+        ((Ctx*)g_mission->scene_L)->query_box(&bmin.x, &bmax.x, 0x8106, hits, &cnt);   // scene_L is the scene object Ctx (strat/strat_entity.h)
     }
     int i;
     for (i = 0; i < cnt; i++) {

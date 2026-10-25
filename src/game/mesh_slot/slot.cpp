@@ -13,6 +13,7 @@
 
 #define NOINL __declspec(noinline)     // keeps the definition's name visible to tools/difftest/slice.py's marker scan
 #include "../../include/fx.h"
+#include "../../include/dialog_rec.h"   // DialogBlock: the 0x1c-byte script block, whose runner emit 0x4b09e0 the channel play calls
 
 // DirectInput-style device interface (vtable: +0x1c poll/acquire, +0x24 GetDeviceState).
 struct SomeIface {
@@ -30,7 +31,6 @@ struct SomeIface {
 
 struct SlotChan {                                            // element of the channels array
     char pad[0x1c];
-    char emit(int script, int zero, int* count, char* buf, int tag);   // 0x4b09e0 (thiscall ret 0x14: ecx = this is passed straight through)
     void play(int arg);                                     // 0x4875e0 (thiscall, ret 4)
 };
 
@@ -109,14 +109,13 @@ struct Buffer {                                             // vtable 0x591c80
     tstring name;                                           // +0x128
 };
 
-void __stdcall emit(int idx, int a, int* flag, char* buf, int last);   // 0x4b09e0
-
 // @ 0x4875e0
 void SlotChan::play(int arg)
 {
     char buf[128];
     int n = 0;
-    emit(arg, 0, &n, buf, -1);
+    // a channel is a DialogBlock (0x1c bytes; its play is 0x4875e0, which runs the block through emit 0x4b09e0 with `this` passed straight through)
+    ((DialogBlock*)this)->emit(arg, 0, &n, (__int64*)buf, -1);
 }
 
 // @ 0x487620

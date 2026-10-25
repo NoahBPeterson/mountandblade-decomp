@@ -30,6 +30,16 @@
 #include "../config/ui_widgets_c.h"
 #include "../../include/game_data.h"
 
+// 0x43a1e0 is StrTable::lookup (agent2/agent_stats.cpp; the table g_strtable 0x5e2a18 seen by mesh2_common.h as LangTables), which takes its key by reference:
+// only the member is declared, under the defining class
+struct StrTable {
+    tstring* lookup(const tstring& key);   // 0x43a1e0
+};
+#define g_strtable_c (*(StrTable*)&g_strtable)
+struct Map10007 {
+    int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party pool, ret 4)
+};
+
 // ---- 0x4d92c0..0x4d9450: the glyph hash table's helpers ---------------------------------------------------
 // result of GlyphMap::insert (0x4d3c00): the node and whether it was new
 struct HOut { GlyphNode* node; char inserted; };
@@ -48,25 +58,38 @@ extern unsigned char g_mt_inited;                // 0x5e2a09
 extern void*     g_mt_event;                     // 0x5e28d8
 extern CRITICAL_SECTION g_mt_cs;                 // 0x5e28dc
 extern int       g_video_played;                 // 0x5e2a10
-// the options dialog's method on the application object: the choice of the DirectX settings from the option block
-struct OptionsDlgView {
-    void choose_dx_settings(Config* cfg, bool overwrite);   // 0x4b9b90
-};
+// (the options dialog's choose_dx_settings 0x4b9b90 is OptionsDlg's own member, ../config/options_dlg.h; DXUtil_Timer 0x407660 is dxframework/dxutil.h's)
 FILE* __cdecl mb_open_user_file(const char* name, const char* mode);   // 0x415160
-void __fastcall load(void* self);    // 0x4c3a40 (ecx = the object at 0x5aa008)
-void __cdecl loader_thread_body(void* arg);           // 0x4c8900
-void __cdecl loader_thread_body(void* arg); // 0x4c8900
-float __cdecl DXUtil_Timer(int op);                  // 0x407660
-
-// std::list<int>::_Buynode of the glyph table's list (0x4c4dc0; ecx = the list at Font + 0x48)
-void* __fastcall list_int_buynode(void* self);   // 0x4c4dc0
+// 0x4c3a40 is options_record::load (rgl/mesh2/rec_tables.cpp: the record at 0x5aa008, ecx = the object) and 0x4c8900 the stdcall thread body of
+// rgl/mesh2/gui_edit.cpp; 0x4c4dc0 is the fastcall std::list<int>::_Buynode of the glyph table's list (ecx = the list at Font + 0x48)
+struct options_record {
+    void load();   // 0x4c3a40
+};
+void __stdcall loader_thread_body();             // 0x4c8900
+struct list_int;
+void* __fastcall list_int_buynode(list_int* self);   // 0x4c4dc0
 
 // ---- 0x4d9e80: the object whose teardown calls 0x4c54f0 on its +0x78 member and then the editor selection handler 0x4d4b80
+// 0x4c54f0 is graph_obj::calc_vertex_mode (rgl/mesh2/gui_edit.cpp) and 0x4d4b80 EditMesh::on_selection_changed (options_panel/hud.cpp): this object
+// is that editor (both members run on it); only the members are declared, under their classes
+struct graph_obj {
+    void calc_vertex_mode(int mode);   // 0x4c54f0
+};
+struct EditMesh {
+    bool on_selection_changed();   // 0x4d4b80
+};
+// the options-screen pages (options_panel/keys_page.cpp, quest_page.cpp, options_panel.cpp): the screens below are those objects; members only
+struct Widget;
+struct options_panel { void key_name(int which, tstring* out); void draw_faction_report(); };      // 0x4d7370 / 0x4d7e50
+struct KeysPage { void refresh(); void update_perf(); void set_enabled_text(Widget* w); };        // 0x4d7120 / 0x4d6b80 / 0x4d6dd0
+struct QuestPage {
+    void update_difficulty();   // 0x4d6300
+};
 struct TearObj {
     char pad0[0x78];
     void* f78;                                  // +0x78
-    void calc_vertex_mode(void*);                        // 0x4c54f0
-    void on_selection_changed();                             // 0x4d4b80
+    void calc_vertex_mode(void* mode) { ((graph_obj*)this)->calc_vertex_mode((int)mode); }       // 0x4c54f0
+    void on_selection_changed() { ((EditMesh*)this)->on_selection_changed(); }               // 0x4d4b80
     void teardown();                            // 0x4d9e80
 };
 
@@ -101,6 +124,10 @@ void destroy_range_cfg(loading_config* first, loading_config* last, const loadin
 
 // ---- 0x4da840..0x4da9c0: element types of the global arrays the shutdown routine tears down ------------------------
 // RecA is deleted through its vector deleting destructor 0x431960 (flags 3)
+// 0x431960 is OwnedRec48's scalar vector deleting destructor (rgl/xmlcfg/records.cpp, thiscall, ret 4)
+struct OwnedRec48 {
+    void* vdel(unsigned flags);   // ??_EOwnedRec48 0x431960 (mangled as the destructor below)
+};
 struct DelA { void del3(int flags); };          // 0x431960
 struct E20b {                                   // 0x20 bytes: a name and a deletable record at +0x1c (the slice's E20b)
     tstring s;                                  // +0x00
@@ -137,7 +164,7 @@ struct FrameMesh {
     char pad234[0x23c - 0x234];
     float c23c, c240;                           // +0x23c, +0x240
     char pad244[0x260 - 0x244];
-    void ensure_local();                        // 0x412ee0
+    void ensure_local();                        // 0x412ee0 (rgl::mesh::ensure_local: defined as the call of it in cls_map.cpp)
 };
 
 // A view of gui_manager (g_gui): the quad mfb0 at +0xfb0, the corner meshes o1210..o121c, the colour word f16e4.
@@ -165,13 +192,26 @@ extern int g_num_hints;                        // 0xa18140 (number of "hint_N" s
 //   +0x80 d32 install mesh(slot)   +0x98 d38 colour   +0x9c d39 highlight colour   +0xa4 d41 set text (out, text)
 //   +0xac d43 set text (text, pos): 0x4db090   +0xb8 d46 hide: 0x4dcef0   +0xc8 d50 add child
 // The overlay window (vtable 0x592848, 0x190 bytes): the base constructor 0x4931a0 (ContainerBase), then the vptr and the byte at +0x188.
-void __fastcall ctor_4931a0(void* p);           // 0x4931a0 (ecx = object)
+struct ContainerW {
+    void* construct();   // 0x4931a0: the base constructor of the overlay window (world_data/world_data.cpp ContainerW::construct, returns this)
+};
 #define NEW_OVERLAY_WINDOW(var) \
     ContainerBase* var; \
     { ContainerBase* np_ = (ContainerBase*)operator new(0x190); \
-      var = np_ != 0 ? (ctor_4931a0(np_), *(void**)np_ = (void*)0x592848, np_->f188 = 0, np_) : 0; }
+      var = np_ != 0 ? (((ContainerW*)np_)->construct(), *(void**)np_ = (void*)0x592848, np_->f188 = 0, np_) : 0; }
 // the resource manager's get_object (0x419540) for tstring keys, and the UI globals
-inline gui_mesh* res_get(const tstring& name) { return (gui_mesh*)g_resmgr_full.get_object((const rgl::string*)&name); }
+// 0x419540 is resmgr::get_object (rgl/core/resmgr.h), which cannot be included next to resource.h: only the member is declared
+// 0x49b120 is NodeVec::push_back (config/widget_node.cpp: the UI root vector at the start of g_gui / g_ui_sound), not gui_manager::add_root:
+// only the member is declared under the defining class, the root window pointer is taken by NodeA* const&
+struct NodeVec {
+    void push_back(NodeA* const& x);   // 0x49b120
+};
+#define ADD_ROOT_REF(w) ((NodeVec*)&g_gui)->push_back((NodeA* const&)(w))   // a void* variable passed by reference as the original does
+#define ADD_ROOT(w) do { NodeA* root_ = (NodeA*)(w); ((NodeVec*)&g_gui)->push_back(root_); } while (0)
+struct lod_group;
+struct resmgr { rgl::mesh* get_object(const rgl::string* name);      // 0x419540
+                lod_group* get_lod_mesh(const rgl::string& name); };   // 0x41cdc0 (rgl/core/resmgr.h)
+inline gui_mesh* res_get(const tstring& name) { return (gui_mesh*)((resmgr*)&g_resmgr)->get_object((const rgl::string*)&name); }
 extern gui_manager g_gui;                       // 0x5d7080
 extern unsigned char g_ui_changed;              // 0x5d8788 (set to 1 whenever a window was installed)
 
@@ -194,7 +234,7 @@ struct MissionScreen {
     void init_meeting_window();                 // 0x4db1f0
     void fill_mission_row(int side);            // 0x4db440
     void init_done_window();                    // 0x4db660
-    void draw_faction_report();                        // 0x4d7e50
+    void draw_faction_report() { ((options_panel*)this)->draw_faction_report(); }      // 0x4d7e50 (options_panel/options_panel.cpp)
 };
 // the hint bar / label maker (0x4dada0) and the 0x4db810 button maker
 MissionUi* __cdecl make_hint(ContainerBase* o, const tstring& text, float x, float y, float w, float h);   // 0x4dada0
@@ -397,14 +437,14 @@ struct OptionsScreen {
     MissionUi* d78;                             // +0x78 framerate slider
     MissionUi* s7c, *s80, *s84, *t88;           // +0x7c..+0x88
     MissionUi* s8c, *s90, *s94, *s98, *s9c, *sa0, *sa4, *sa8, *sac, *sb0, *sb4, *sb8, *sbc, *sc0, *sc4, *sc8, *scc, *sd0, *sd4;   // +0x8c..+0xd4
-    void update_difficulty(); // 0x4d6300
+    void update_difficulty() { ((QuestPage*)this)->update_difficulty(); } // 0x4d6300 (options_panel/quest_page.cpp)
     void open();                                // 0x4de6f0
 };
 
 // ---- 0x4e05c0: the options screen ("Win" of the slice) ---------------------------------------------------------------------------------
 // a display mode of the mode list (0x4cf100): "WxH ... 16 bits / 32 bits"
 struct DisplayMode { tstring name; int w, h, bpp; };
-void list_modes(std::vector<DisplayMode>* out);   // 0x4cf100
+std::vector<tstring> list_modes();                // 0x4cf100 (options_panel/config_dialog.cpp; hidden return pointer; a DisplayMode starts with its name)
 struct OptionsWin {
     char pad0[0x2c];
     ContainerBase* window;                      // +0x2c
@@ -492,8 +532,8 @@ struct OptionsMenu {
     int f1b8;                                   // +0x1b8 the row being assigned, -1 for none
     void init();                                // 0x4e25a0
     void copy_slots();                          // 0x4e2cb0
-    void refresh();                           // 0x4d7120 (thiscall)
-    void key_name(int i, tstring* out);    // 0x4d7370 (thiscall, ret 8)
+    void refresh() { ((KeysPage*)this)->refresh(); }                           // 0x4d7120 (thiscall; options_panel/keys_page.cpp)
+    void key_name(int i, tstring* out) { ((options_panel*)this)->key_name(i, out); }    // 0x4d7370 (thiscall, ret 8; options_panel/options_panel.cpp)
     tstring* key_text(tstring* out, int i);     // 0x4e2ce0 (ret 8)
     tstring* slot_text(tstring* out, int i);    // 0x4e2ea0 (ret 8)
 };

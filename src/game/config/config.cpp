@@ -37,9 +37,7 @@ extern "C" IDirect3D9* __stdcall Direct3DCreate9(UINT);     // 0x534342
 typedef void* FMOD_STREAM;
 extern "C" short __stdcall FSOUND_Stream_Close(FMOD_STREAM s);                                              // 0x5342e2
 extern "C" FMOD_STREAM __stdcall FSOUND_Stream_Open(const char* name, unsigned mode, int offset, int length);   // 0x5342e8
-rgl::matrix identity_pos();                                 // 0x40cd00 (cdecl, hidden return pointer)
-void __fastcall tstring_ctor(tstring* p);                   // 0x42bbd0 (tstring::tstring, called on raw slots)
-void __fastcall tstring_dtor(tstring* p);                   // 0x42bc40
+pos* __cdecl identity_pos(pos* out);                         // 0x40cd00 fills out and returns it (the definition's own declaration)
 bool ConfirmDeviceHelper(D3DCAPS9* pCaps, VertexProcessingType vp, D3DFORMAT adapterFormat, D3DFORMAT backBufferFormat);   // 0x401010
 
 // ---- 0x4b9e70 ----------------------------------------------------------------------------------------------------------
@@ -797,13 +795,13 @@ DisplayState::DisplayState()
     Matrix* m;
     unk618 = 0;
     unk74c = 0;
-    mat1 = *identity_pos(&tmp);
+    mat1 = *(Matrix*)identity_pos((pos*)&tmp);
     m = &mat1;
     m->m[3] = 0;
     m->m[7] = 0;
     m->m[11] = 0;
     m->m[15] = 1.0f;
-    mat2 = *identity_pos(&tmp);
+    mat2 = *(Matrix*)identity_pos((pos*)&tmp);
     m = &mat2;
     m->m[3] = 0;
     m->m[7] = 0;
@@ -1144,11 +1142,16 @@ font_details::font_details()
     a = 0; b = 0; c = 0; d = 0; e = 0; f = 0; g = 0;
 }
 
+// A particle mesh is an rgl::mesh (0x260 bytes, rgl/mesh.h; 0x413750 is rgl::mesh::render): only the member is declared here (config.h is
+// included next to rgl/mesh.h by world_data.cpp).
+namespace rgl { struct scene; struct mesh { int render(scene* sc, const matrix& frame); }; }    // 0x413750
+
 // ---- ambient particle ring ----------------------------------------------------------------------------------------------
 // @ 0x4bd170
 void weather::update(void* pass, const float* depth)
 {
-    rgl::matrix m = identity_pos();
+    rgl::matrix m;
+    identity_pos((pos*)&m);
     float alpha = 0.2f - fade;
     m.o.x = 0.002f;
     m.o.z = *depth;
@@ -1170,8 +1173,8 @@ void weather::update(void* pass, const float* depth)
                 b = 254;
             first[idx].color = (a << 24) | (col & 0xffffff);
             second[idx].color = ((b | 0xffffff00) << 8 | b) << 8 | b;
-            first[idx].render(pass, &m);
-            second[idx].render(pass, &m);
+            ((rgl::mesh*)&first[idx])->render((rgl::scene*)pass, m);       // 0x413750: a particle mesh is an rgl::mesh (0x260 bytes)
+            ((rgl::mesh*)&second[idx])->render((rgl::scene*)pass, m);
         }
     }
 }
@@ -1707,7 +1710,7 @@ clip_table::clip_table()
     clip_slot_raw* p = slots;
     int n = 13;
     do {
-        tstring_ctor((tstring*)&p->name);                       // 0x42bbd0
+        ((tstring*)&p->name)->tstring::tstring();               // 0x42bbd0 (explicit constructor call on the raw slot: no placement-new null test)
         p->v14 = 0;
         ++p;
     } while (--n);
@@ -1727,12 +1730,12 @@ clip_table::~clip_table()
         --p;
         if (p->v14)
             operator delete[](p->v14);
-        tstring_dtor((tstring*)&p->name);                       // 0x42bc40
+        ((tstring*)&p->name)->~tstring();                       // 0x42bc40
     } while (--n);
 }
 
 // @ 0x4be720
 clip_slot::clip_slot()
 {
-    tstring_ctor((tstring*)&name);                              // 0x42bbd0
+    ((tstring*)&name)->tstring::tstring();                      // 0x42bbd0 (explicit constructor call on the raw slot)
 }

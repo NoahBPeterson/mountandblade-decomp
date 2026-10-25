@@ -56,11 +56,13 @@ struct Buf3 {                               // +0x1a1bc: a heap block and two mo
     Buf3() { p = 0; b = 0; c = 0; }
 };
 
-// 0x10-byte record built by the out-of-line constructor 0x4638b0 (four of them at +0x13b64)
-struct Rec10 {
+// 0x10-byte record built by the out-of-line constructor 0x4638b0 (four of them at +0x13b64): terrain_a/game_state.h calls it Block16
+// (the default colour-ramp block, 0, 0.5, 0, 0), which is the name of the definition.
+struct Block16 {
     char b[0x10];
-    Rec10();                                // 0x4638b0
+    Block16();                              // 0x4638b0
 };
+typedef Block16 Rec10;
 
 #include "../../include/i64_vec.h"          // I64Vec: vector of 8-byte integers (std::vector<__int64>); resize is the out-of-line instance 0x493090
 
@@ -124,6 +126,19 @@ struct TrackRec {                           // 0x5c bytes: a game track (Rec5c)
     char pad1c[0x5c - 0x1c];
     __declspec(noinline) void read(stream_base* s);        // 0x51e750
 };
+// TrackVec is the vector of event / track records at Game+0x13a60 that other objects name by their own record type: the callees below are
+// declared by their definitions' classes (only the members are declared here; the headers of those classes bring other layouts).
+struct Rec5c;                               // src/game/rec5c.h: the 0x5c-byte record (TrackRec is the same record)
+struct Vec5c {
+    Rec5c** shift_over(Rec5c** out, Rec5c* dst, Rec5c* src);   // 0x518990 (ret 0xc; inventory_panel/game_tick.h)
+};
+struct E92 { int v[23]; ~E92() {} };        // 0x5c: the same record as party2/party_2.h E92 (same definition)
+// std::vector<E92>::_Insert_n (0x4b54a0, party2/party_2.cpp) is a template member that stays out of line; its explicit specialization is only
+// declared. It is protected, so E92Vec (never constructed) reaches it.
+template<> void std::vector<E92>::_Insert_n(std::vector<E92>::iterator, size_t, const E92&);   // 0x4b54a0
+struct E92Vec : std::vector<E92> {
+    void insert_n(E92* where, unsigned count, const E92& val) { _Insert_n(where, count, val); }
+};
 struct TrackVec {                           // Game +0x13a60 (std::vector<TrackRec>)
     int pad0;                               // +0
     TrackRec* _Myfirst;                     // +4
@@ -131,11 +146,11 @@ struct TrackVec {                           // Game +0x13a60 (std::vector<TrackR
     TrackRec* _Myend;                       // +0xc
     TrackVec() { buy(0); }
     __declspec(noinline) bool buy(unsigned count);            // 0x51d1c0 (_Buy: 0x5c-byte elements, max 0x2c8590b)
-    void _Xlen() const;                                       // 0x43e2a0
     int size() const { if (_Myfirst == 0) return 0; return (int)(_Mylast - _Myfirst); }
     __declspec(noinline) void resize(unsigned n, TrackRec val);     // 0x51e7a0 (ret 0x60)
-    void insert_n(TrackRec* where, unsigned count, const TrackRec* val);   // 0x4b54a0
-    void shift_over(TrackRec** out, TrackRec* first, TrackRec* last);      // 0x518990
+    void _Xlen() const;                                       // 0x43e2a0 (thiscall: the caller loads ecx; the definition, agent3/agent_combat.cpp, is a free cdecl vec_xlen, so this row stays open)
+    void insert_n(TrackRec* where, unsigned count, const TrackRec* val) { ((E92Vec*)this)->insert_n((E92*)where, count, *(const E92*)val); }   // 0x4b54a0
+    void shift_over(TrackRec** out, TrackRec* first, TrackRec* last) { ((Vec5c*)this)->shift_over((Rec5c**)out, (Rec5c*)first, (Rec5c*)last); }   // 0x518990
 };
 
 // The Troop record's loader (0x51e540). Troop (ui/troop_inv.h) declares the inventory and equipment; the other
@@ -163,13 +178,20 @@ struct SpriteRec {                          // 0x98 bytes
     char pad74[0x98 - 0x74];
     __declspec(noinline) void read(stream_base* s, int arg);   // 0x51e970 (ret 8)
 };
+// 0x43e760 is std::vector<int>::_Buy (agent3/agent_combat.cpp), which the folded pointer vectors share; its explicit specialization is only
+// declared, and VecIntBuy (never constructed) reaches the protected member.
+template<> bool std::vector<int, std::allocator<int> >::_Buy(size_t);      // 0x43e760
+struct VecIntBuy : std::vector<int> { bool buy(unsigned n) { return _Buy(n); } };
 struct PtrVec {                             // std::vector<char*> (the page list)
     int pad0;
     char** _Myfirst;                        // +4
     char** _Mylast;                         // +8
     char** _Myend;                          // +0xc
     PtrVec() { _Buy(0); }
-    bool _Buy(unsigned n);                   // 0x43e760 (_Buy)
+    bool _Buy(unsigned n) { return ((VecIntBuy*)this)->buy(n); }     // 0x43e760 (std::vector<int>::_Buy, shared by every pointer vector)
+};
+struct RecPool {
+    void alloc_record();   // 0x493700 (world_data/world_data.h)
 };
 struct SpriteTable {
     int count;                              // +0     0x51e840
@@ -177,16 +199,19 @@ struct SpriteTable {
     PtrVec pages;                           // +0x14  0x51d220 (_Buy(0)); its _Myfirst (+0x18) is read by 0x51e840 / 0x51ea10
     int f24, f28;                           // +0x24  0x51e840 (r_int at +0x24)
     SpriteTable();                          // 0x51d220
-    int alloc_id();                         // 0x493700
+    void alloc_id() { ((RecPool*)this)->alloc_record(); }      // 0x493700 (RecPool::alloc_record, world_data/world_data.h: the same pool object; ret 0, no result)
     __declspec(noinline) void clear();                      // 0x51ea10
     void read(stream_base* s, int arg);                     // 0x51e840 (ret 8)
     SpriteRec* at(int i) { return (SpriteRec*)(pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x98); }
 };
 
 // ---- the scene object (Game +0xf8, up to +0x139e4): only what the constructor 0x51d250 touches ------------------
+struct IntList {
+    bool buy(unsigned n);   // 0x4fd490 (agent5/agent_hud.h: the first allocation of a vector<int>-shaped list)
+};
 struct PageVec {                            // +0x138cc (was SceneList; world_data.h SceneList is another object): a vector built by 0x4fd490(0); its first pointer (+0x138d0) is read by 0x51eaa0
     char b[0x10];
-    PageVec(int n);                         // 0x4fd490 (ret 4)
+    PageVec(int n) { ((IntList*)this)->buy(n); }     // 0x4fd490 (ret 4)
 };
 struct Scene {
     int cells[0x2717 * 2];                  // +0       0x51d250 (pairs of -1)

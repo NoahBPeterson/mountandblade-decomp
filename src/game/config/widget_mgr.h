@@ -60,10 +60,11 @@ struct WVt {
 
 // ---- mesh members the shared headers lack (same object as rgl::mesh) ----------------------------------------
 // (src/rgl/core/resmgr.h has mesh_x::clone but cannot be included with ../ui/mission_ui.h: both define rgl::mesh.)
+#include "../../rgl/mesh_x.h"      // mesh_x::set_color 0x47af30
 struct gui_mesh : rgl::mesh {
     gui_mesh* clone();                          // 0x41c6d0
     void scale(float s);                        // 0x44f0c0
-    void set_color(vector4 v);                  // 0x47af30 (v by value; .w is copied uninitialised)
+    void set_color(vector4 v) { ((mesh_x*)this)->set_color(v); }     // 0x47af30 (mesh_x::set_color, rgl/mesh_x.h; v by value, .w is copied uninitialised)
 };
 #define clone_gui(m) (((gui_mesh*)(m))->clone())
 
@@ -158,7 +159,7 @@ struct DropDown : MissionUi {                   // ctor 0x4931d0 (installs its o
 // ---- widget items as set_size sees them ---------------------------------------------------------------------
 struct WItem : MissionUi {
     void terrain_refresh(const float* pos);     // 0x48f120 (ret 4)
-    void scroll_refresh(const float* pos);   // 0x498420 (ret 4)
+    void scroll_refresh(const float* pos);   // 0x498420 (ret 4; the definition is HudOuter::scroll_refresh, world_data/mesh_hud.h: widget_mgr.cpp calls that)
 };
 
 // MissionUi::layout_text_to (0x49abc0) lives in this object; ../ui/mission_ui.h lacks it

@@ -20,6 +20,14 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
+// canonical owners of two callees (member-only stubs under the defining name; the link needs it in the mangled name)
+struct DropDownW {
+    DropDownW* construct();   // 0x4931d0 (world_data/world_data.cpp: the drop-down's constructor body, returns this)
+};
+struct resmgr {
+    rgl::mesh* get_object(const rgl::string* name);   // 0x419540 (rgl/core/resmgr.cpp)
+};
+
 // @ 0x499830
 int widget_mgr::create_game_button_overlay(int id)
 {
@@ -38,7 +46,7 @@ int widget_mgr::create_game_button_overlay(int id)
         gui_mesh* m;
         {
             rgl::string n("medium_button");
-            m = clone_gui(g_resmgr_full.get_object(&n));
+            m = clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n));
         }
         m->scale(0.5555556f);
         vt(w)->d32(2, m);
@@ -47,7 +55,7 @@ int widget_mgr::create_game_button_overlay(int id)
         gui_mesh* m;
         {
             rgl::string n("medium_button_down");
-            m = clone_gui(g_resmgr_full.get_object(&n));
+            m = clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n));
         }
         m->scale(0.5555556f);
         vt(w)->d32(1, m);
@@ -123,17 +131,17 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
 
         {
             rgl::string n("progressbar");
-            vt(w)->d32(0, clone_gui(g_resmgr_full.get_object(&n)));
+            vt(w)->d32(0, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
         }
         ((gui_mesh*)w->tracks[0])->set_color(sc);
 
         {
             rgl::string n("handle_hor");
-            vt(w)->d32(2, clone_gui(g_resmgr_full.get_object(&n)));
+            vt(w)->d32(2, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
         }
         {
             rgl::string n("progressbar_handle");
-            w->f18c = (int)g_resmgr_full.get_object(&n);
+            w->f18c = (int)((resmgr*)&g_resmgr_full)->get_object(&n);
         }
         *(vector4*)&w->f198 = sc;
     }
@@ -159,7 +167,8 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
 // @ 0x499d90
 int widget_mgr::create_combo_button_overlay()
 {
-    DropDown* w = new DropDown;
+    void* raw = operator new(sizeof(DropDown));
+    DropDown* w = raw ? (DropDown*)((DropDownW*)raw)->construct() : 0;
 
     {
         vec2 v;
@@ -170,7 +179,7 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop");
-        vt(w)->d32(2, clone_gui(g_resmgr_full.get_object(&n)));
+        vt(w)->d32(2, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
@@ -179,7 +188,7 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop_clicked");
-        vt(w)->d32(1, clone_gui(g_resmgr_full.get_object(&n)));
+        vt(w)->d32(1, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
@@ -188,7 +197,7 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop_hl");
-        vt(w)->d32(3, clone_gui(g_resmgr_full.get_object(&n)));
+        vt(w)->d32(3, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
@@ -197,15 +206,15 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop_child");
-        w->m1a4 = g_resmgr_full.get_object(&n);
+        w->m1a4 = ((resmgr*)&g_resmgr_full)->get_object(&n);
     }
     {
         rgl::string n("button_drop_child_clicked");
-        w->m1a0 = g_resmgr_full.get_object(&n);
+        w->m1a0 = ((resmgr*)&g_resmgr_full)->get_object(&n);
     }
     {
         rgl::string n("button_drop_child_hl");
-        w->m1a8 = g_resmgr_full.get_object(&n);
+        w->m1a8 = ((resmgr*)&g_resmgr_full)->get_object(&n);
     }
 
     vt(w)->d03();
@@ -256,7 +265,7 @@ int widget_mgr::create_text_box_overlay()
 
     {
         rgl::string n("party_button");
-        vt(w)->d32(2, clone_gui(g_resmgr_full.get_object(&n)));
+        vt(w)->d32(2, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
@@ -265,7 +274,7 @@ int widget_mgr::create_text_box_overlay()
 
     {
         rgl::string n("party_button_down");
-        vt(w)->d32(1, clone_gui(g_resmgr_full.get_object(&n)));
+        vt(w)->d32(1, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
@@ -367,12 +376,18 @@ base:
 }
 #undef ITEM
 
+// 0x498420 is HudOuter::scroll_refresh (world_data/mesh_hud.h; its header defines the world_data widget classes over this one's, so only the
+// member is declared here, under the defining class)
+struct HudOuter {
+    void scroll_refresh(rgl::vector4* arg);   // 0x498420 (ret 4)
+};
+
 // @ 0x49ab80
 void widget_mgr::set_area_size(int idx, const float* pos)
 {
 #define ITEM ((WItem*)widgets[idx])
     if (vt(ITEM)->kind() == 7)
-        ITEM->scroll_refresh(pos);
+        ((HudOuter*)ITEM)->scroll_refresh((rgl::vector4*)pos);         // 0x498420 (kind 7 is the outer HUD that owns the scrollbar)
 #undef ITEM
 }
 

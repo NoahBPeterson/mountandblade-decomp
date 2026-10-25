@@ -25,9 +25,16 @@ extern char g_cfg[]; // 0x5a9f98
 struct TerrainW : TerrainX {                     // members of the world map object past the end of Terrain
 };
 
-// the water mesh builder's helpers
-struct mesh_w : mesh {
-    void compute_tangents();                     // 0x41ce80
+// 0x4746e0 / 0x473800 are FaceGenome::breed / unpack (terrain_b/face_gen.h), which g_anim_view (animator.h) sees as Animator members: the
+// stubs name the defining class (the header would bring the Animator's other layout)
+struct FaceRace;
+struct FaceGenome {
+    FaceRace* unpack(const unsigned __int64* key);   // 0x473800 (returns the race record, left in EAX)
+    void breed(const unsigned __int64* a, const unsigned __int64* b, int seed);   // 0x4746e0
+};
+// 0x42ad60 is Ctx::sample_lights (strat/strat_entity.h): the scene object's light sampling
+struct Ctx {
+    void sample_lights(const vector4* p, vector4* dir, vector4* amb);   // 0x42ad60
 };
 
 // ---- 0x480db0 -------------------------------------------------------------------------------------------------------
@@ -36,7 +43,7 @@ struct mesh_w : mesh {
 // type, and the "river" mesh over the wet triangles
 void TerrainX::create_water(void** out)
 {
-    Entity* e = grid->create_entity(9);
+    Entity* e = (Entity*)((rgl::world*)grid)->create_entity(9);       // CellGrid is the rgl::world of src/rgl/scene/world.h (its reset 0x421390 is rgl::world::reset)
     float cmap = (*(float*)((char*)this + 0x843bd1c) + *(float*)((char*)this + 0x843bd20) + *(float*)((char*)this + 0x843bd24)) * 0.33f;
     rgl::world* wo = (rgl::world*)world;
     float cz = (wo->ambient.x + wo->ambient.y + wo->ambient.z) * 0.3f;
@@ -127,7 +134,7 @@ void TerrainX::create_water(void** out)
     id.s.w = 0.0f; id.f.w = 0.0f; id.u.w = 0.0f;
     id.o.x = 0.0f; id.o.y = 0.0f; id.o.z = 0.0f; id.o.w = 1.0f;
     m->m1d4 = id;
-    ((mesh_w*)m)->compute_tangents();
+    ((mesh_x*)m)->compute_tangents();
     ((mesh_x*)m)->compute_bounds();
     ((rgl::entity*)e)->meshes.push_back(m);
     ((rgl::entity*)e)->recalc();
@@ -157,8 +164,6 @@ void TerrainX::destroy_water(int a)
 
 // ---- 0x481570: re-tessellation ----------------------------------------------------------------------------------------
 
-struct vec4d { double x, y, z, w; };    // 0x20: what tri_normal returns
-
 struct geom_pt {                        // 0x24, std::vector<geom_pt> at Geom+0
     float px, py, wet;                  // 0x00 / 0x04 / 0x08
     int f0c;                            // 0x0c
@@ -179,34 +184,38 @@ struct geom_elem {                      // 0x88, std::vector<geom_elem> at Geom+
     char pad74[0x84 - 0x74];
     int f84;                            // 0x84
 };
-// the polygon container built here (NavCore of terrain_b/poly_mesh.h has the same container offsets with its own element types)
-struct Geom_t {                                     // 0x68
-    std::vector<geom_pt> pts;                       // 0x00 (reserve 0x476020 / push_back 0x4772f0 on Geom+0, tessellate)
-    std::vector<geom_elem> elems;                   // 0x10 (reserve 0x476130 / push_back 0x477380 on Geom+0x10)
-    char pad20[0x68 - 0x20];
-    Geom_t();                                       // 0x478150
-    void build();                                   // 0x47ee60
-    void compute_bounds();                          // 0x4704b0
+// 0x47ee60 is PolyGeom::build (mesh_pass.cpp, the polygon-topology rebuild of this container)
+struct PolyGeom { void build(); };
+// the polygon container built here: a NavCore (terrain_b/poly_mesh.h, constructor 0x478150: folded with the constructors of the same
+// container over other element types) whose first two vectors hold geom_pt and geom_elem records
+struct Geom_t : NavCore {                           // 0x68
+    std::vector<geom_pt>& pts() { return *(std::vector<geom_pt>*)this; }              // 0x00 (reserve 0x476020 / push_back 0x4772f0 on Geom+0, tessellate)
+    std::vector<geom_elem>& elems() { return *(std::vector<geom_elem>*)((char*)this + 0x10); }   // 0x10 (reserve 0x476130 / push_back 0x477380 on Geom+0x10)
+    void build() { ((PolyGeom*)this)->build(); }                    // 0x47ee60
+    void compute_bounds() { ((PointSet*)this)->compute_bounds(); }  // 0x4704b0 (PointSet: poly_mesh.h)
 };
 // one table of 16-byte records per cell column: terrain_b's HeightField (src/include/height_field.h) with its allocator
+struct cell_rows {
+    void alloc(const int* dim);   // 0x462420 (renderer.h: the allocator of the HeightField)
+};
 struct cell_rows_t {                    // 0x20
     int** rows;                         // 0x00 (h + 1 rows)
     vector4 bounds;                     // 0x04
     int h;                              // 0x14
     int w;                              // 0x18
     float scale;                        // 0x1c
-    void alloc(const int* nums);        // 0x462420 (nums[0] = cells along x, nums[1] = along y)
+    void alloc(const int* nums) { ((cell_rows*)this)->alloc(nums); }       // 0x462420 (nums[0] = cells along x, nums[1] = along y)
 };
 struct world_t {                        // the scene object at terrain_obj+0xc3b0dc (CellGrid of terrain_b)
     char pad0[0x64];
     cell_rows_t* cells;                 // 0x64 current cell-row table
-    void build_faces(Geom_t* g);           // 0x479980
-    void update_probes(int use_shaders);      // 0x472ed0
+    void build_faces(Geom_t* g) { ((CellGrid*)this)->build_faces((NavData*)g); }       // 0x479980 (CellGrid::build_faces, terrain_b/cell_grid.h)
+    void update_probes(int use_shaders) { ((CellGrid*)this)->update_probes(use_shaders); }      // 0x472ed0
 };
 Geom_t* g_geom;                         // the mesh being rebuilt (ours: the original keeps it in a local of tessellate, so no address)
 
-// 0x4612d0 (cdecl): normal of the triangle spanned by the three 16-byte records at *tri
-vec4d* tri_normal(vec4d* out, const void* tri);
+// 0x4612d0 (cdecl): normal of the triangle spanned by the three 16-byte records at *tri (terrain_a/wind.h; hidden return pointer)
+rgl::vector4 tri_normal(const rgl::vector4* tri);
 // light-slot table at terrain+0x258; the cell lum[] entries are only used for slots flagged in 0x8ed4e14
 extern unsigned char g_x8ed4e14[];              // 0x8ed4e14, 0x20-byte records, bit 1 = affects terrain
 
@@ -236,8 +245,8 @@ void TerrainX::tessellate()
         }
     }
 
-    g_geom->elems.reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
-    g_geom->pts.reserve((w + 2) * (h + 2));
+    g_geom->elems().reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
+    g_geom->pts().reserve((w + 2) * (h + 2));
 
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
@@ -255,11 +264,7 @@ void TerrainX::tessellate()
                     cell[m * 4 + 2] = c->pz;
                     *(int*)&cell[m * 4 + 3] = c->ntype;
                 }
-                vec4d n = *tri_normal(&n, cell);
-                nrm[k].x = (float)n.x;
-                nrm[k].y = (float)n.y;
-                nrm[k].z = (float)n.z;
-                nrm[k].w = (float)n.w;
+                nrm[k] = tri_normal((const vector4*)cell);
             }
 
             int ncorner = 4;
@@ -292,21 +297,21 @@ void TerrainX::tessellate()
                 rec.f6c = 0;
                 rec.f70 = 0;
                 rec.f84 = 0;
-                int vbase = g_geom->elems.size();
+                int vbase = g_geom->elems().size();
                 float acc = 0.0f;
 
                 int* cid = tri + qn * 8;
                 for (int k = 0; k < ncorner; k++) {
                     terrain_cell* c = &at(cid[0], cid[1]);
                     if (c->f14 == -1) {
-                        c->f14 = g_geom->pts.size();
+                        c->f14 = g_geom->pts().size();
                         geom_pt pt;
                         *(int*)&pt.px = *(int*)&c->px;
                         *(int*)&pt.py = *(int*)&c->py;
                         *(int*)&pt.wet = *(int*)&c->pz;
                         pt.f0c = c->ntype;
                         pt.f20 = 1.0f;
-                        g_geom->pts.push_back(pt);
+                        g_geom->pts().push_back(pt);
                     }
 
                     int* slot = (int*)((char*)this + 0x258);
@@ -326,7 +331,7 @@ void TerrainX::tessellate()
                 rec.flags |= 0x10;
                 if (acc > 1.5f)
                     rec.flags |= 0x4000;
-                g_geom->elems.push_back(rec);
+                g_geom->elems().push_back(rec);
 
                 int* row = rows->rows[x];
                 *(int*)((char*)row + y * 16 + 8 + qn * 4) = vbase;
@@ -375,9 +380,9 @@ EChar* append_mesh(int colour, int kind, void** a, void** b, void** c, char carr
         g_cur = colour;
 
     if (kind == -1)
-        g_anim_view.unpack(a);
+        ((FaceGenome*)&g_anim_view)->unpack((const unsigned __int64*)a);        // 0x473800
     else
-        g_anim_view.breed(a, b, kind);
+        ((FaceGenome*)&g_anim_view)->breed((const unsigned __int64*)a, (const unsigned __int64*)b, kind);     // 0x4746e0
     if (carried)
         g_x8ed4f64 = -1;
     g_anim_view.collect((char)g_limit_hair_colors, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
@@ -488,7 +493,7 @@ void TerrainX::generate(int seed, int* objs, char flag)
     v[0] = 0.0f;
     v[1] = 0.0f;
     v[2] = 0.0f;
-    ((CellGrid*)world)->sample_lights((vector4*)v, (vector4*)sun_dir, (vector4*)((char*)this + 0x843bd1c));
+    ((Ctx*)world)->sample_lights((vector4*)v, (vector4*)sun_dir, (vector4*)((char*)this + 0x843bd1c));     // the scene object (Ctx / CellGrid)
     tessellate();
     refresh_cells();
 }
@@ -506,8 +511,8 @@ void TerrainX::regenerate_water(void** out, int mode)
     gen_set_init(&list_b);
     make_grid();
     if (g_use_shaders == 0 || (*(int*)((char*)&g_options + 0x7c)) == 0) {
-        light_all(&list_a, mode);
-        light_all(&list_b, mode);
+        light_all(&list_a, mode != 0);
+        light_all(&list_b, mode != 0);
     }
 
 #define hword (*(int*)((char*)this + 0xc))
@@ -750,7 +755,7 @@ void TerrainX::emit_particle(int layerno, int blend, int cx, int cy, float z)
         m->mask = 0xffff;
     } else {
         if (g_use_shaders) {
-            ((mesh_w*)m)->compute_tangents();
+            ((mesh_x*)m)->compute_tangents();
             ((world_x*)world)->light_mesh(m, (matrix*)((char*)ents[cx * 5 + cy] + 0x58), 1);
         }
         arr3[layerno][cx * 5 + cy] = (int)m;

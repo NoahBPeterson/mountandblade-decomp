@@ -4,35 +4,43 @@
 #include "../../include/troop.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
+#include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
+
+namespace rgl { struct mat3; }
+rgl::mat3* __cdecl identity3(rgl::mat3* out);     // 0x40cd60 (rgl/shapes/shapes.cpp: the global function; fills the 3x3 and returns out)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
 // ---- views of shared classes (members defined elsewhere in the image) --------------------------------------------------
+// The members below are the ones of the classes that define them, which this TU's headers do not declare (or declare under another layout):
+// lod_group (src/rgl/core/resmgr.h, the 0xe0-byte lod record; ctor 0x41c2a0), Poser (agent3/agent_fx_sound.h: the object with five int lists,
+// add_to_list 0x441ff0), tmesh (clone 0x47a370, declared in mesh_slot.h), lod_mesh_x (game/lod_mesh_x.h: set_color / transform / append / apply),
+// lod_mesh_a (mesh_scene.cpp, apply_anim_all 0x47dd90), IdHolder (terrain_b/scene_file.h, add 0x478fb0) and TimerList (ui/timer_list.h, update
+// 0x48add0). Only the members are declared; lod2_a forwards to them.
+struct lod_group {
+    lod_group();   // 0x41c2a0
+};
+struct Poser {
+    void add_to_list(int idx, int val);   // 0x441ff0
+};
+struct lod_mesh_a {
+    void apply_anim_all(const float* t);   // 0x47dd90
+};
+struct IdHolder {
+    void add(int x);   // 0x478fb0
+};
 struct lod2_a : lod_mesh2 {                      // the 0xe0-byte lod record
-    lod2_a();                                    // 0x41c2a0
-    void add_to_list(int level, mesh* m);                // 0x441ff0 (thiscall, ret 8)
-    lod_mesh2* clone();                          // 0x47a370
-    void set_color(unsigned color);              // 0x47b5b0 (ret 4)
-    void transform(const matrix* m);             // 0x47b610 (ret 4)
-    void append(lod_mesh2* src, int bone, const matrix* m, const unsigned* color);   // 0x47b690 (ret 16)
-    void apply(const matrix* m);                 // 0x46c9f0 (ret 4)
-    void apply_anim_all(const void* color);      // 0x47dd90 (ret 4)
+    void add_to_list(int level, mesh* m) { ((Poser*)this)->add_to_list(level, (int)m); }     // 0x441ff0 (thiscall, ret 8)
+    lod_mesh2* clone() { return (lod_mesh2*)((tmesh*)this)->clone(); }                        // 0x47a370
+    void set_color(unsigned color) { ((lod_mesh_x*)this)->set_color(color); }                 // 0x47b5b0 (ret 4)
+    void transform(const matrix* m) { ((lod_mesh_x*)this)->transform(*m); }                  // 0x47b610 (ret 4)
+    void append(lod_mesh2* src, int bone, const matrix* m, const unsigned* color) { ((lod_mesh_x*)this)->append((lod_mesh*)src, bone, m, color); }   // 0x47b690 (ret 16)
+    void apply(const matrix* m) { ((lod_mesh_x*)this)->apply(m); }                           // 0x46c9f0 (ret 4)
+    void apply_anim_all(const void* color) { ((lod_mesh_a*)this)->apply_anim_all((const float*)color); }   // 0x47dd90 (ret 4)
 };
-struct ItemKindA : ItemKind {
-    void mesh_name_for(tstring* out, int modifier);    // 0x433bf0 (thiscall, ret 8; the hidden-return mesh_name_for)
-};
-struct ItemSndA {
-    void play(int id);                           // 0x48add0 (this = &ItemKind + 0x228)
-};
-struct FxDefA : FxDef {
-    void add(lod_mesh2* l);                   // 0x478fb0 (thiscall, ret 4: pushes onto the int list at +0x30)
-};
-struct EChar_a : EChar {
-    void use_carry(lod_mesh2* l, const float* m);   // 0x47de60 (ret 8)
-};
-void append_mesh(int colour, int kind, lod_mesh2** ap, ItemRef* a, ItemRef* b, int carried, int* out);   // 0x481c40
+EChar* append_mesh(int colour, int kind, void** ap, void** a, void** b, char carried, int* out);   // 0x481c40 (mesh_terrain.cpp)
 extern int g_item_kind_count;                         // g_item_kind_count 0x5e29d4
 extern int g_cur;                                // 0x8ed4f68
 extern EChar* g_skins_begin;                           // 0x8ed4f7c
@@ -68,7 +76,7 @@ template<class T> __forceinline void vpush_i(std::vector<T>& v, const T& x)
 static __forceinline void item_name(tstring* out, ItemRef* r, int modifier)
 {
     if (r->item >= 0 && r->item < g_item_kind_count)
-        ((ItemKindA*)&g_items[r->item])->mesh_name_for(out, modifier);
+        *out = g_items[r->item].mesh_name_for(modifier);                   // 0x433bf0 (hidden return pointer)
     else
         *out = tstring("Error: Invalid item");
 }
@@ -128,7 +136,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     }
     body->mask = 1;
 
-    lod2_a* rec = new lod2_a;
+    lod2_a* rec = (lod2_a*)operator new(0xe0);
+    if (rec)
+        ((lod_group*)rec)->lod_group::lod_group();      // 0x41c2a0 (the lod record's constructor)
     rec->add_to_list(0, body);
     vpush_i(a->lods, (lod_mesh2*)rec);
     ap[21] = rec;
@@ -139,7 +149,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         // ---- only the hand-held weapon ------------------------------------------------------------
         tstring nm;
         if (hweapon->item >= 0 && hweapon->item < g_item_kind_count)
-            ((ItemKindA*)&g_items[hweapon->item])->mesh_name_for(&nm, ((signed char*)hweapon)[7]);
+            nm = g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7]);         // 0x433bf0
         else
             nm = tstring("Error: Invalid item");
         lod_mesh2* l = g_rms.make_lod_mesh(nm, false);
@@ -170,11 +180,11 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         char* tr = *(char**)(((char*)g_game) + 0x13a00) + troop * 0x508;
         int colour = *(unsigned*)(tr + 0x30) & 0xf;
-        append_mesh(colour, kind, ap, (ItemRef*)(tr + 0x3c0), (ItemRef*)(tr + 0x3c0 + 4 * 8), carried, &mesh_color);
+        append_mesh(colour, kind, (void**)ap, (void**)(tr + 0x3c0), (void**)(tr + 0x3c0 + 4 * 8), (char)carried, &mesh_color);
 
         // the identity's 3x3, scaled by 0.95 (the item mesh frame)
         float mtx[16];
-        identity3((mat3*)mtx);
+        ::identity3((rgl::mat3*)mtx);
         mtx[12] = mtx[13] = mtx[14] = mtx[15] = 0.0f;
         mtx[0] *= g_lod_scale;  mtx[1] *= g_lod_scale;  mtx[2]  *= g_lod_scale;
         mtx[4] *= g_lod_scale;  mtx[5] *= g_lod_scale;  mtx[6]  *= g_lod_scale;
@@ -196,10 +206,10 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             lod_mesh2* wl = make_item_lod(w, w->m4 >> 24);
             unsigned wflags = g_items[w->item].type_flags;
             if ((wflags & 0x80000000) == 0)
-                ((EChar_a*)&g_skins_begin[g_cur])->use_carry(wl, &g_dummy_mat);
+                g_skins_begin[g_cur].use_carry((lod_mesh*)wl, &g_dummy_mat);      // 0x47de60
             ((lod2_a*)wl)->apply((matrix*)mtx);
             if ((wflags & 0xf00) == 0xf00)
-                ((FxDefA*)a->fx)->add(wl);
+                ((IdHolder*)a->fx)->add((int)wl);           // 0x478fb0 (IdHolder::add: pushes onto the int list at +0x30)
             else
                 ELEM(9)->add_group((int)wl);
             int c3 = (wflags & 0x80000000) ? 1 : legs_covered;
@@ -231,7 +241,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 stats[1] += h->stat_200();
                 stats[2] += h->stat_204();
             }
-            lod2_a* body_rec = new lod2_a;
+            lod2_a* body_rec = (lod2_a*)operator new(0xe0);
+            if (body_rec)
+                ((lod_group*)body_rec)->lod_group::lod_group();      // 0x41c2a0
             *out_body = body_rec;
 
             if (h->item < 0) {
@@ -258,7 +270,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     *(int*)(((char*)g_game) + 0x1a200) = 0;
                     (*(__int64*)((char*)&g_script + 0x8)) = hit_troop;
                     (*(__int64*)((char*)&g_script + 0x10)) = troop;
-                    ((ItemSndA*)((char*)&g_items[h->item] + 0x228))->play(-50);
+                    ((TimerList*)((char*)&g_items[h->item] + 0x228))->update(-50);      // 0x48add0 (the item's sound holder)
                 }
                 vpush_i(a->fx->groups, hl);
             }
@@ -355,7 +367,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     ((lod2_a*)*out_body)->append(R, b2, (matrix*)((char*)a->fx->elems + 4 + b2 * 0x1dc), &col);
                 } else {
                     lod_mesh2* c = ((lod2_a*)g_rms.get_lod_mesh(nm))->clone();
-                    ((FxDefA*)a->fx)->add(c);
+                    ((IdHolder*)a->fx)->add((int)c);
                 }
             }
         }

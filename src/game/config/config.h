@@ -120,7 +120,7 @@ struct CreateGameOptionsPage {
 
 // ---- input state and device set (0x4bc2d0..0x4bc430) -------------------------------------------------------------
 struct Matrix { float m[16]; };
-Matrix* __cdecl identity_pos(Matrix* out);           // 0x40cd00 fills out and returns it
+struct pos;                                          // src/include/mat4.h: the frame type the definition of 0x40cd00 names (config.cpp declares the function)
 struct DisplayState {                               // the input state prefix of InputSet plus two view matrices
     char unk000[0x618];
     int  unk618;                                    // +0x618 (cleared by 0x4bc2d0, 0x4bc350 reads +0x74c)
@@ -177,7 +177,7 @@ struct part {                                       // one particle mesh (0x260 
     char     pad0[0x3c];
     unsigned color;                                 // +0x3c
     char     pad40[0x260 - 0x40];
-    void render(void* pass, const rgl::matrix* m);  // 0x413750
+    void render(void* pass, const rgl::matrix* m);  // 0x413750 (the definition is rgl::mesh::render, rgl/mesh.h: config.cpp calls that)
 };
 struct weather {
     char     pad0[0x171c];

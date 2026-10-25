@@ -84,7 +84,9 @@ template class std::vector<loading_config>;
 
 // ---- 0x4e43e0: gui_manager::draw_string (add one line of text to the loading screen's text mesh) -----------------------------------
 // the lines are kept (line_wrap / line_height / line_arg at +0xcd0 / +0xd20 / +0xe60) so that gui_manager::rebuild (0x4da900) can replay them
-struct MeshBounds { void bounds(rgl::vector4* lo, rgl::vector4* hi); };          // 0x438d80 (thiscall, ret 8: the mesh's min / max corners)
+struct mnode {
+    void calc_bounds(rgl::vector4* mn, rgl::vector4* mx);   // 0x438d80 (thiscall, ret 8: the mesh's min / max corners; agent2/agent_stats.cpp)
+};
 struct PanelView { void set_view(const int* v); };                                // 0x4c5190 (thiscall, ret 4: the view state pair)
 extern const float g_half_ratio;                // 0x549d78
 extern const float g_ratio_a;                   // 0x597fec
@@ -134,7 +136,7 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     scale[1] = height;
     g_font->layout_text(out, s, &pos, scale, self->o568, zero, &xmin, &xmax, flags);
     pen = pen - out[1];
-    ((MeshBounds*)self->o568)->bounds(&lo, &hi);
+    ((mnode*)self->o568)->calc_bounds(&lo, &hi);
     float w = hi.x - pos.x;
     float h = hi.y - pos.y;
     float sz[2];
@@ -170,6 +172,14 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
 }
 
 // ---- 0x4e4690: the ragdoll model record's loader ---------------------------------------------------------------------------------
+// E50's constructor 0x4cd7a0 is Obj7a0::Obj7a0 (rgl/mesh2/mesh_2.cpp) and its loader 0x4d3330 RagBone::load (options_panel/ragdoll_models.cpp): the
+// record is that class; only the members are declared, under the defining classes
+struct Obj7a0 {
+    Obj7a0();   // 0x4cd7a0
+};
+struct RagBone {
+    void load(TiXmlElement* e);   // 0x4d3330
+};
 // @ 0x4e4690
 void RagModel::load(TiXmlElement* e)
 {
@@ -179,9 +189,9 @@ void RagModel::load(TiXmlElement* e)
     TiXmlElement* elem = TiXmlHandle(e).FirstChild("Bones").FirstChild().Element();
     while (elem != 0) {
         char raw[sizeof(E50)];
-        bones.push_back(*ctor_4cd7a0(raw));
+        bones.push_back(*(E50*)new (raw) Obj7a0);         // 0x4cd7a0: the constructor of E50 is Obj7a0::Obj7a0 (rgl/mesh2/mesh_2.cpp); it returns this
         ((E50*)raw)->~E50();
-        bones[bones.size() - 1].load(elem);
+        ((RagBone*)&bones[bones.size() - 1])->load(elem);      // 0x4d3330
         elem = elem->NextSiblingElement();
     }
 }
@@ -264,12 +274,12 @@ void SaveWindow::init()
         tstring h("save_b_done_h");
         tstring caption("ui_save");
         float f = config_value(config_index(h));
-        btn_done = make_short_button(window, g_strtable.lookup(caption), 0.0f, 0.0f, f);
+        btn_done = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     } else {
         tstring h("save_b_done_h");
         tstring caption("ui_restore");
         float f = config_value(config_index(h));
-        btn_done = make_short_button(window, g_strtable.lookup(caption), 0.0f, 0.0f, f);
+        btn_done = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh(btn_done, "save_b_done");
     vt(btn_done)->d46();
@@ -278,14 +288,14 @@ void SaveWindow::init()
         tstring h("save_b_cancel_h");
         tstring caption("ui_cancel");
         float f = config_value(config_index(h));
-        btn_cancel = make_short_button(window, g_strtable.lookup(caption), 0.0f, 0.0f, f);
+        btn_cancel = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh(btn_cancel, "save_b_cancel");
     {
         tstring h("save_b_delete_h");
         tstring caption("ui_delete");
         float f = config_value(config_index(h));
-        btn_delete = make_short_button(window, g_strtable.lookup(caption), 0.0f, 0.0f, f);
+        btn_delete = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh(btn_delete, "save_b_delete");
     vt(btn_delete)->d46();
@@ -293,7 +303,7 @@ void SaveWindow::init()
     {
         void* root = window;
         g_ui_changed = 1;
-        g_gui.add_root(root);
+        ADD_ROOT_REF(root);
     }
 }
 
@@ -465,7 +475,7 @@ struct SlotStream : SlotStreamBase {
         vptr = (void*)0x54ae48;
     }
     ~SlotStream() { vptr = (void*)0x54ad68; }
-    char open_read(const char* path);           // 0x415290 (ret 4)
+    char open_read(const char* path) { return ((text_stream*)this)->open_read(path); }     // 0x415290 (ret 4; the folded text_stream::open_read)
 };
 struct SlotReader {                             // the 0x54ae48 reader's virtuals
     virtual void r0(); virtual void r1(); virtual void r2(); virtual void r3(); virtual void r4();
@@ -505,7 +515,7 @@ void SaveWindow::list_saves()
                 int hh = (int)hdr.time % 0x18;
                 {
                     tstring key("ui_day_datedisplay");
-                    tstring* e = g_strtable.lookup(key);
+                    tstring* e = g_strtable_c.lookup(key);
                     char* v = e->buf;
                     char* fmt = v ? v : (char*)&e->buf;
                     int tail = 1 - (int)(hdr.time * -0.041666668f);
@@ -634,7 +644,7 @@ void SaveWindow::slot_button(ContainerBase* parent, int slot, UiAInline** out)
     if (is_load != 0 && rec->seconds == 0) {
         tstring k("ui_empty_slot");
         float p[2] = { name_x, name_y };
-        vt(*out)->d43(g_strtable.lookup(k), p);
+        vt(*out)->d43(g_strtable_c.lookup(k), p);
         return;
     }
     {
@@ -704,7 +714,7 @@ void SaveWinCtl::create()
     block.init(win, *(int*)((char*)g_game + 0x13b04));
     void* root = win;
     g_ui_changed = 1;
-    g_gui.add_root(root);
+    ADD_ROOT_REF(root);
 }
 
 // @ 0x4e5e50
@@ -734,7 +744,7 @@ void SaveWinCtl::create2()
     }
     void* root = win;
     g_ui_changed = 1;
-    g_gui.add_root(root);
+    ADD_ROOT_REF(root);
 }
 
 // ---- 0x4e5f50..0x4e6050: the std::vector<loading_config> / std::fill<RagModel> helpers the linker placed here ---------------------------
@@ -742,7 +752,8 @@ void SaveWinCtl::create2()
 // (its catch(...) funclet 0x4e602b is emitted inside the body's COMDAT): all emitted by the explicit instantiations above.
 
 // ---- 0x4e6050: gui_manager::build_scene ----------------------------------------------------------------------------------------------
-void* identity3(void* m);                       // 0x40cd60 (fills 0x30 bytes, returns m)
+namespace rgl { struct mat3; }
+rgl::mat3* __cdecl identity3(rgl::mat3* m);     // 0x40cd60 (fills 0x30 bytes, returns m; the definition, rgl/shapes/shapes.cpp, takes the rgl::mat3 frame)
 // the widget slot +0x28 of the polymorphic children (gui_manager::objs)
 struct GuiChild {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();
@@ -841,7 +852,7 @@ void gui_manager::build_scene()
 
     if (*(void**)((char*)this + 0x158c)) {
         t += 1.0f;
-        memcpy(x->m, identity3(ident), 0x30);
+        memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
         x->f38 = t;
         x->f30 = 0.5f;
         x->f34 = 0.65f;
@@ -850,7 +861,7 @@ void gui_manager::build_scene()
     }
     if (*(void**)((char*)this + 0x568)) {
         t += 1.0f;
-        memcpy(x->m, identity3(ident), 0x30);
+        memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
         float k = *(float*)((char*)this + 0x16f0);
         for (int r = 0; r < 3; ++r) {
             x->m[r * 4 + 0] *= k;
@@ -867,7 +878,7 @@ void gui_manager::build_scene()
     }
     if (*(void**)((char*)this + 0x56c)) {
         t += 1.0f;
-        memcpy(x->m, identity3(ident), 0x30);
+        memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
         x->f30 = *(float*)((char*)this + 0x16f8);
         x->f34 = *(float*)((char*)this + 0x16fc);
         x->f38 = t;
@@ -876,7 +887,7 @@ void gui_manager::build_scene()
     }
     if (*(void**)((char*)this + 0x564)) {
         t += 1.0f;
-        memcpy(x->m, identity3(ident), 0x30);
+        memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
         x->f30 = *(float*)((char*)this + 0x14);
         x->f34 = *(float*)((char*)this + 0x18);
         x->f38 = t;
@@ -1074,7 +1085,7 @@ void Shape::build_ribbons(rgl::mesh* owner)
 // ---- 0x4e75a0: Shape::polygon_to_mesh -----------------------------------------------------------------------------------------------------------
 // map polygon mesh -> render mesh: per 0x64-byte face record, the centroid, the corners pulled 0.1 towards it, the face normal, the tint
 // from the light direction (+0x80) and the mode, then one vertex per corner and two (four for a quad) triangles per side.
-void tri_normal(rgl::vector4* n, const rgl::vector4* tri);          // 0x4612d0: n = (p1-p0) x (p2-p0), normalized
+rgl::vector4 tri_normal(const rgl::vector4* tri);          // 0x4612d0 (terrain_a/wind.h; hidden return pointer): n = (p1-p0) x (p2-p0), normalized
 
 // @ 0x4e75a0
 void Shape::polygon_to_mesh(rgl::mesh* out)
@@ -1117,7 +1128,7 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
             corners[k] = rgl::vector4(dx * 0.1f + p.x, dy * 0.1f + p.y, dz * 0.1f + p.z);
         }
         rgl::vector4 normal;
-        tri_normal(&normal, corners);
+        normal = tri_normal(corners);
         rgl::vector4 c;
         if (mode == 2 && f->flag) {
             c.x = 1.0f;
@@ -1260,7 +1271,7 @@ void MapScreen::frame_step()
 // allocations (scenery list, materials, cell grid) are walked through the pointers the offsets show. Names provisional.
 void mb_error(const char* fmt, ...);            // 0x42cc80
 #include "../../include/crt.h"   // canonical: operator new[] (0x535482)
-void unpack_color_swap(rgl::vector4* out, const unsigned* argb);   // 0x40e4e0 (cdecl)
+namespace rgl { vector4 unpack_color(const unsigned* argb); }       // 0x40e4e0 (cdecl, hidden return pointer: shapes.cpp)
 
 // a lod-mesh resource: +0x38 -> the lod object; its first mesh list hangs off +0x38 and +0x84 is 0 when the mesh is missing
 struct MsLodMesh {
@@ -1274,9 +1285,9 @@ struct MsLodRes {
     MsLodMesh* f38;                             // +0x38
 };
 struct MapResMgr {                              // the resource manager's lod / object getters (the object is g_resmgr)
-    MsLodRes* get_lod_mesh(tstring* name);      // 0x41cdc0
-    MsLodRes* get_material(tstring* name);            // 0x418a70
-    void* get_object70(tstring* name);          // 0x418cf0
+    MsLodRes* get_lod_mesh(tstring* name) { return (MsLodRes*)((::resmgr*)this)->get_lod_mesh(*(const rgl::string*)name); }       // 0x41cdc0
+    MsLodRes* get_material(tstring* name) { return (MsLodRes*)((resource_manager*)this)->get_material(*(const rgl::string*)name); }   // 0x418a70
+    void* get_object70(tstring* name) { return ((resource_manager*)this)->get_object70(*(const rgl::string*)name); }   // 0x418cf0
 };
 #define MAP_RESMGR ((MapResMgr*)&g_resmgr)
 
@@ -1290,7 +1301,6 @@ void stream_str(MsStream* s, tstring* v);
 
 // a 0x10-byte string record kept in the [0x19c] / [0x1ac] vectors (0x4cbb10 resizes them)
 struct str16 { tstring s; };
-void resize_str16(std::vector<str16>* v, int n);            // 0x4cbb10
 
 // a 0x18-byte material entry of the [0x44] array (name at +0x00, resource at +0x14)
 struct entry18 {
@@ -1298,13 +1308,25 @@ struct entry18 {
     void* res14;                                // +0x14
 };
 
-// a 0x38-byte record shared by the column and material lists: 0x477880 initialises one per element and 0x473570 gives it points
+// a 0x38-byte record shared by the column and material lists (ArrSet of terrain_b/arr_set.h): 0x477880 is std::vector<ArrSet>::resize, whose fill value
+// ArrSet() zeroes the ten words at +0x10..+0x37 (init spells that fill out for one record); 0x473570 is TroopMgr::copy_troop(ArrSet* dst, MeshGroupRec* r)
+// (terrain_b/terrain_b.cpp), which gives the record its points. 0x4ccf60 is std::vector<E516>::resize and 0x4cbb10 std::vector<tstring>::resize
+// (rgl/mesh2/mesh_2.cpp): the explicit specializations are only declared, and the vector reaches them through a cast.
+struct ArrSet {
+    int d[14];   // 0x38
+};
+struct MeshGroupRec;
+struct TroopMgr {
+    void copy_troop(ArrSet* dst, const MeshGroupRec* r);   // 0x473570
+};
+template<> void std::vector<ArrSet>::resize(size_t, ArrSet);     // 0x477880
+template<> void std::vector<E516>::resize(size_t, E516);         // 0x4ccf60
+template<> void std::vector<tstring>::resize(size_t, tstring);   // 0x4cbb10
 struct rec38 {
     char pad0[0x38];
-    void init(void* src);                       // 0x477880 (self, argument)
-    void copy_troop(rgl::mesh* m, int count);         // 0x473570
+    void init(void* src) { for (int o = 0x10; o < 0x38; o += 4) *(int*)(pad0 + o) = 0; }     // the ArrSet() fill of 0x477880 (src is not read)
+    void copy_troop(rgl::mesh* m, int count) { ((TroopMgr*)this)->copy_troop((ArrSet*)m, (const MeshGroupRec*)count); }     // 0x473570
 };
-void resize_rec38(int* dst, int n);             // 0x4ccf60 (element size 0x38, behind a count word)
 
 // a 0x34-byte scenery entry of the [0x40] allocation (names at +0x00/+0x10, the mesh list at +0x30)
 struct lod_entry {
@@ -1316,8 +1338,8 @@ struct lod_entry {
     void* mesh30;                               // +0x30
 };
 
-// a 0xb0-byte grid cell (0x4ce680 ctor)
-struct cell_b0 {
+// a 0xb0-byte grid cell (0x4ce680 ctor): MissionRec2 of rgl/mesh2/mesh_2.cpp, whose name it carries
+struct MissionRec2 {
     float f00, f04, f08;                        // +0x00..: material fields
     char pad0c[4];
     tstring res10;                              // +0x10: the material resource
@@ -1326,7 +1348,7 @@ struct cell_b0 {
     char pad28[4];
     rgl::vector4 tiles[8];                      // +0x2c: 8 sixteen-byte blocks
     int n_ac;                                   // +0xac
-    cell_b0();                                  // 0x4ce680
+    MissionRec2();                              // 0x4ce680
 };
 
 // a 0x204-byte block-face record of the [0x78] array: an entry count (at most 0x3f) and 8-byte uv entries
@@ -1360,7 +1382,7 @@ struct MapSceneRec {
     std::vector<str16> v19c;                    // +0x19c
     tstring name198;                            // +0x198 (overlaps the head of v19c)
     std::vector<str16> v1ac;                    // +0x1ac
-    cell_b0* cells;                             // +0x1bc
+    MissionRec2* cells;                             // +0x1bc
     char pad1c0[0x1cc - 0x1c0];
     int slot1cc[8];                             // +0x1cc (indexed by the stream int)
     int obj1e8;                                 // +0x1e8
@@ -1449,7 +1471,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
         }
         n88 = ncol;
         rec38* cols = colrec;
-        resize_rec38(v78, ncol);
+        { ArrSet z; memset(&z, 0, sizeof z); ((std::vector<ArrSet>*)v78)->resize(ncol, z); }      // 0x477880
         for (int i = 0; i < ncol; i++) {
             cols[i].init(colrec[i].pad0);
         }
@@ -1481,7 +1503,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
                     ((rec38*)(mr + 4 + i * 0x38))->init(mats[i].name.buf);
                 }
             }
-            resize_rec38(v78 + 1, nmat);                            // the material records' list
+            { ArrSet z; memset(&z, 0, sizeof z); ((std::vector<ArrSet>*)(v78 + 1))->resize(nmat, z); }     // 0x477880: the material records' list
         }
         for (int i = 0; i < nmat; i++) {
             stream_str(s, &mats[i].name);
@@ -1497,13 +1519,13 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
     int n1 = 0;
     {
         stream_i(s, &n1);
-        resize_str16(&v19c, n1);
+        ((std::vector<tstring>*)&v19c)->resize(n1, tstring());      // 0x4cbb10
         for (int i = 0; i < n1; i++) {
             stream_str(s, (tstring*)((char*)v19c._Myfirst + i * 0x10));
         }
         int n2 = 0;
         stream_i(s, &n2);
-        resize_str16(&v1ac, n2);
+        ((std::vector<tstring>*)&v1ac)->resize(n2, tstring());
         for (int i = 0; i < n2; i++) {
             stream_str(s, (tstring*)((char*)v1ac._Myfirst + i * 0x10));
         }
@@ -1512,17 +1534,17 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
         int ncell = 0;
         stream_i(s, &ncell);
         n190 = ncell;
-        cell_b0* c = (cell_b0*)operator new[](ncell * 0xb0 + 4);
+        MissionRec2* c = (MissionRec2*)operator new[](ncell * 0xb0 + 4);
         if (c != 0) {
             ((int*)c)[0] = ncell;
-            c = (cell_b0*)((char*)c + 4);
+            c = (MissionRec2*)((char*)c + 4);
             for (int i = ncell - 1; i >= 0; i--) {
-                new (&c[i]) cell_b0();
+                new (&c[i]) MissionRec2();
             }
         }
         cells = c;
         for (int i = 0; i < ncell; i++) {
-            cell_b0* cl = &cells[i];
+            MissionRec2* cl = &cells[i];
             tstring nil;
             stream_str(s, &nil);                                     // the cell's name
             MAP_RESMGR->get_material(&nil);                                // the material resource at +0x10
@@ -1530,7 +1552,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
             if (g_use_shaders) {
                 rgl::vector4 col;
                 col.x = 0.0f; col.y = 0.0f; col.z = 0.0f; col.w = 0.0f;
-                unpack_color_swap(&col, (const unsigned*)&cl->f04);
+                col = rgl::unpack_color((const unsigned*)&cl->f04);
                 col.x *= col.x;
                 col.y *= col.y;
                 col.z *= col.z;
@@ -1570,7 +1592,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
             for (int j = 0; j < n4; j++) {
                 rgl::vector4 v;
                 stream_block(s, &v);
-                unpack_color_swap(&cl->tiles[j], (const unsigned*)&v);
+                cl->tiles[j] = rgl::unpack_color((const unsigned*)&v);
             }
         }
     }
@@ -1606,7 +1628,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
         int scratch[0x81];
         memset(scratch, 0, 0x204);
         stream_block(s, scratch);
-        resize_rec38(v78, scratch[0x80]);                           // 0x4ccf60: the table is sized to scratch[0x80]
+        { E516 z; memset(&z, 0, sizeof z); ((std::vector<E516>*)v78)->resize(scratch[0x80], z); }      // 0x4ccf60: the table is sized to scratch[0x80]
         int nface = 0;
         stream_i(s, &nface);
         for (int i = 0; i < nface; i++) {
