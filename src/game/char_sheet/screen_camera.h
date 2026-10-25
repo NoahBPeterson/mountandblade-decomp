@@ -78,15 +78,15 @@ struct WorldCam {
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
 // ---- globals ------------------------------------------------------------------------------------------
-extern WorldCam* g_scene;                       // 0xa732b4
+extern WorldCam* g_level;                       // 0xa732b4
 extern int g_a17148;                            // 0xa17148
 extern int g_a1717c;                            // 0xa1717c
 extern int g_5a9fbc;                            // 0x5a9fbc
 extern int g_5a9fd8;                            // 0x5a9fd8  listener already set
-extern int g_5aa120;                            // 0x5aa120  map min x (-50)
-extern int g_5aa118;                            // 0x5aa118  map max x ( 50)
-extern int g_5aa124;                            // 0x5aa124  map min y (-50)
-extern int g_5aa11c;                            // 0x5aa11c  map max y ( 50)
+extern int g_map_min_x;                            // 0x5aa120  map min x (-50)
+extern int g_map_max_x;                            // 0x5aa118  map max x ( 50)
+extern int g_map_min_y;                            // 0x5aa124  map min y (-50)
+extern int g_map_max_y;                            // 0x5aa11c  map max y ( 50)
 extern char g_world0[0x28];                     // the strategy world whose +0x28 cell table 0x470f40 reads
 
 // the by-name float constants (the originals live in the read-only pools noted here)

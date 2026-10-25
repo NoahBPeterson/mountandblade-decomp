@@ -35,7 +35,7 @@ void __fastcall quest_window::refresh()
 }
 
 // @ 0x4ee910   (parent, x, y, h, w)
-widget* make_scrollbar(widget* parent, float x, float y, float h, float w)
+widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
 {
     widget* mem = (widget*)operator new(0x188);
     widget* self = mem ? ctor_scrollbar(mem) : 0;
@@ -80,14 +80,14 @@ widget* make_quest_list(widget* parent, const float* pos, const float* size, int
     self->add_child(parent);
     self->set_pos(pos);
     self->set_size(size);
-    list_setup(self);
+    draw(self);
     return self;
 }
 
 // @ 0x4ee230
 void __fastcall quest_window::build()
 {
-    gui_reset();
+    reset();
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared
     widget* win = (widget*)operator new(0x190);
     win = win ? ctor_window(win) : 0;
@@ -134,15 +134,15 @@ void __fastcall quest_window::build()
     // the three texts
     {
         tstring key("ui_done");
-        done = make_text(win, g_strtable.lookup(&key), 0.7f, 0.075f, 0.075f, 0.36f);
+        done = new_medium_button(win, g_strtable.lookup(&key), 0.7f, 0.075f, 0.075f, 0.36f);
     }
     {
         tstring key("ui_active_quests");
-        active_tab = make_text(win, g_strtable.lookup(&key), 0.1f, 0.075f, 0.075f, 0.075f);
+        active_tab = new_medium_button(win, g_strtable.lookup(&key), 0.1f, 0.075f, 0.075f, 0.075f);
     }
     {
         tstring key("ui_finished_quests");
-        finished_tab = make_text(win, g_strtable.lookup(&key), 0.28f, 0.075f, 0.075f, 0.075f);
+        finished_tab = new_medium_button(win, g_strtable.lookup(&key), 0.28f, 0.075f, 0.075f, 0.075f);
     }
     *(int*)((char*)active_tab + 0x184) = 1;
     *(int*)((char*)finished_tab + 0x184) = 1;
@@ -173,7 +173,7 @@ void __fastcall quest_window::build()
     fsize[0] = 0.32f;
     fsize[1] = h;
     frame->set_size(fsize);
-    frame->add_item(0, make_color((char*)frame + 0xf0, 0xff000000));
+    frame->add_item(0, make_background((char*)frame + 0xf0, 0xff000000));
 
     // one row per listed quest
     for (int i = 0; i < count; i++) {
@@ -216,7 +216,7 @@ void __fastcall quest_window::build()
         VCALL1(row, 0x9c, (int)&b);
         frame->add_child(row);
     }
-    make_scrollbar(window, 0.48f, 0.1f, 0.02f, 0.6f);
+    make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f);
     float lpos[2];
     lpos[0] = -0.02f;
     lpos[1] = 0.58f;

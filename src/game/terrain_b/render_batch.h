@@ -132,7 +132,7 @@ rot3* __cdecl identity3(rot3* out);        // 0x40cd60
 struct m4 {
     vector4 s, f, u, o;
     m4 operator*(const m4& b) const;        // 0x40e870 (this = left operand)
-    void rotate_fu(const float* angle);     // 0x40e570
+    void rotate_about_s(const float* angle);     // 0x40e570
 };
 
 #define AT(T, base, off) (*(T*)((char*)(base) + (off)))

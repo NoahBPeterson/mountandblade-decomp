@@ -142,11 +142,11 @@ void TerrainPage::path(float dt)
     pos.z = view_z;
     m.o = pos;
     float angle = 1.5707964f;                               // +90 degrees
-    m.rotate_fu(&angle);                                    // 0x40e570
+    m.rotate_about_s(&angle);                                    // 0x40e570
     angle = -yaw;
-    m.rotate_su(&angle);                                    // 0x40e670
+    m.rotate_about_f(&angle);                                    // 0x40e670
     angle = -pitch;
-    m.rotate_fu(&angle);
+    m.rotate_about_s(&angle);
     pos.x = m.u.x * zoom;
     pos.y = m.u.y * zoom;
     pos.z = m.u.z * zoom;                                   // the eye vector doubles as the temporary

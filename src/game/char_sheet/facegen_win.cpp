@@ -10,7 +10,7 @@ void facegen_win::init()
     int i;
     for (i = 0; i < 3; i++)
         *(int*)((char*)this + 0x54 + i * 4) = rand() % 0x1b5781;
-    g_terrain_gen.gen_reset();
+    g_terrain_gen.reset();
 
     *(float*)((char*)this + 0x3c) = 150.0f;
     *(float*)((char*)this + 0x40) = 150.0f;
@@ -20,7 +20,7 @@ void facegen_win::init()
     *(float*)((char*)this + 0x4c) = 0.8f;
     *(int*)((char*)this + 0x60) = 3;
 
-    gui_reset(g_gui);
+    reset(g_gui);
 
     UiWindow* w = new UiWindow;
     board = w;
@@ -55,8 +55,8 @@ void facegen_win::init()
         sliders[i]->set_text(&tstring(""), tstring(""));
     }
 
-    region_type = make_option(panel, &tstring("region type"), 0.79f, 0.9f);
-    region_detail = make_option(panel, &tstring("region detail"), 0.79f, 0.9f);
+    region_type = make_dropdown(panel, &tstring("region type"), 0.79f, 0.9f);
+    region_detail = make_dropdown(panel, &tstring("region detail"), 0.79f, 0.9f);
     (void)region_detail;
 
     key = make_short(panel, &tstring("key"), 0.79f, 0.697f, 0.1f, 0.5f, &tstring(""),

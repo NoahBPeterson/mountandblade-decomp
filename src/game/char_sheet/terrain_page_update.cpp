@@ -58,11 +58,11 @@ void TerrainPage::update(float dt)
         refresh_hex();
     } else if (page_changed(x_slider)) {
         float v = x_slider->get_float() * g_500 + g_140;
-        camera_x = clamp_float(&v, &g_clamp_lo, &g_140);
+        camera_x = clamp(&v, &g_clamp_lo, &g_140);
         refresh_hex();
     } else if (page_changed(y_slider)) {
         float v = y_slider->get_float() * g_500 + g_140;
-        camera_y = clamp_float(&v, &g_clamp_lo, &g_140);
+        camera_y = clamp(&v, &g_clamp_lo, &g_140);
         refresh_hex();
     } else if (page_changed(z_slider)) {
         camera_z = z_slider->get_float() * g_0_01 + g_one;

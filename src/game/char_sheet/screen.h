@@ -104,7 +104,7 @@ struct xform {
 
 // ---- the module's string table heads (the 0x8ee3c3c slot read by 0x4ebc10) --------------------------
 extern char* g_save_prefix;             // 0x8ee3c3c (the capture-file prefix; null before init)
-extern int g_8ee3c38;                   // 0x8ee3c38
+extern int g_module_name;                   // 0x8ee3c38
 
 // 0x4babf0 is a file-local helper: cl's register convention for `static` functions hands it its out
 // pointer in ESI. Defining it here (body shape taken from 0x4babf0) makes the caller emit
@@ -173,9 +173,9 @@ struct GuiScreen {
     int cur_mx;                         // +0xb0b0 (GetCursorPos)
     int cur_my;                         // +0xb0b4
 
-    void key_flag(int code);                                // 0x4c52f0 (records a key in the hint tables)
+    void wheel_step(int code);                                // 0x4c52f0 (records a key in the hint tables)
     void post(int param);                                   // 0x4e6510
-    void finish();                                          // 0x4c5330
+    void clear_selection();                                          // 0x4c5330
 
     GuiScreen();                                               // 0x4ebea0
     void process(int param);                                // 0x4ebfd0
@@ -216,7 +216,7 @@ extern GameMgr g_game;                  // 0x5e2930
 // ---- globals --------------------------------------------------------------------------------------------
 extern int g_screenshots_counter;       // 0xa70440
 
-extern int g_8ee3c38;                   // 0x8ee3c38
+extern int g_module_name;                   // 0x8ee3c38
 extern int g_5a9fb0;                    // 0x5a9fb0 (camera enabled)
 extern int g_a17148;                    // 0xa17148 (0 when the mission screen owns the input)
 extern int g_a17348;                    // 0xa17348
@@ -250,7 +250,7 @@ struct DiObjectData {
     unsigned app;                       // +0x10
 };
 
-extern float g_5e2948[];                // 0x5e2948 (float pairs: x at [i*2], y at [i*2+1])
+extern float g_ticks[];                // 0x5e2948 (float pairs: x at [i*2], y at [i*2+1])
 extern float g_four_tenths;             // 0x54b3b8  0.4f
 
 extern float zero;                      // 0x549ca8  0.0f

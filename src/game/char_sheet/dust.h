@@ -43,7 +43,7 @@ struct vec96 {                                  // 0x60-byte elements (s0040ea00
     char* end;
     unsigned size() const { return first == 0 ? 0 : (last - first) / 0x60; }
     unsigned capacity() const;                  // 0x40f030
-    void resize(unsigned n);                    // 0x4f46d0
+    void reserve(unsigned n);                    // 0x4f46d0
 };
 struct vec32 {                                  // 0x20-byte elements (s0040ea00 vec32)
     void* alloc;
@@ -52,7 +52,7 @@ struct vec32 {                                  // 0x20-byte elements (s0040ea00
     char* end;
     unsigned size() const { return first == 0 ? 0 : (last - first) >> 5; }
     unsigned capacity() const;                  // 0x40f090
-    void resize(unsigned n);                    // 0x4f4860
+    void reserve_nr(unsigned n);                    // 0x4f4860
 };
 
 struct dmesh;
@@ -76,9 +76,9 @@ struct dmesh {                                  // an rgl::mesh as far as this s
     vec96* get50() { return flag_a1 ? &f50 : master->get50_(); }
     vec32* get70() { return flag_a1 ? &f70 : master->get70_(); }
     vec32* get90() { return flag_a0 ? &f90 : master->get90_(); }
-    void finish_load();                         // 0x419300
+    void compute_bounds();                         // 0x419300
     void append_skinned(dmesh* src, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
-    void append_shaded(dmesh* src, const matrix* m, unsigned color);                          // 0x47aa40 (ret 0xc)
+    void transform(dmesh* src, const matrix* m, unsigned color);                          // 0x47aa40 (ret 0xc)
 };
 
 #include "../../include/vec.h"

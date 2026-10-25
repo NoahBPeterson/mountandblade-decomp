@@ -31,8 +31,8 @@ extern "C" int __cdecl crt_sprintf(char* buf, const char* fmt, ...);   // 0x536f
 extern "C" void __cdecl crt_free(void* p);              // 0x537168
 extern "C" int _fltused = 0;
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100
-void save_dir(char* buf);                               // 0x4dd7b0
-int  open_text_write(void* stream, char* path);         // 0x415320
+void save_path(char* buf);                               // 0x4dd7b0
+int  open_write(void* stream, char* path);         // 0x415320
 
 // ---- widgets --------------------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
@@ -64,7 +64,7 @@ extern __int64 g_ticks[2];                              // 0x5e2948
 extern float g_54a6d0;                                  // 0x54a6d0
 extern int   g_59811c;                                  // 0x59811c ("WRDR")
 extern char  g_598120;                                  // 0x598120
-extern int   g_5e29c0;                                  // 0x5e29c0
+#include "../game_globals.h"
 
 struct SaveCtx {
     tstring title;                                      // +0x0
@@ -80,9 +80,9 @@ struct MapScreen;
 #include "../mission_source.h"
 struct MapMesh {
     char build(void* grid, int mode);                   // 0x4785e0 (ret 8)
-    void f1(int v);                                     // 0x4e75a0 (ret 4)
-    void f2(int v);                                     // 0x4e6a70 (ret 4)
-    void f3(int v);                                     // 0x4e65e0 (ret 4)
+    void polygon_to_mesh(int v);                                     // 0x4e75a0 (ret 4)
+    void build_ribbons(int v);                                     // 0x4e6a70 (ret 4)
+    void build_spikes(int v);                                     // 0x4e65e0 (ret 4)
 };
 
 struct MapScreen {
@@ -117,8 +117,8 @@ struct MapScreen {
     int          nchunk_rows;                           // +0x0845d984
     int          nchunk_cols;                           // +0x0845d988
 
-    char build_chunk(int slot, int type, int row, int col, float f);   // 0x47ff60 (ret 0x14)
-    void gen_objects_aligned(void* desc);               // 0x4656c0 (ret 4)
+    char emit_particle(int slot, int type, int row, int col, float f);   // 0x47ff60 (ret 0x14)
+    void fill_desc_named(void* desc);               // 0x4656c0 (ret 4)
     void init(void* desc);                              // 0x4e85d0 (ret 4)
     void frame_step();                                  // 0x4e8720
     void buttons(int arg);                              // 0x4e87d0 (ret 4)
@@ -128,7 +128,7 @@ struct MapScreen {
 #include "../terrain_desc.h"
 int  save_game(int arg, tstring* name);                 // 0x4e8980
 struct ButtonState { char test(int v); };               // 0x487900 (ret 4)
-extern ButtonState g_a170c8;                            // 0xa170c8
+extern ButtonState g_keyboard;                            // 0xa170c8
 void log_save_path();                                   // 0x4e8df0
 
 extern int      g_use_shaders;                          // 0x5e28fc

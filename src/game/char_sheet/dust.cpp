@@ -86,13 +86,13 @@ void DustTerrain::emit_cell(int x, int y)
     }
     vec32* v70 = &grid[x][y]->list[0]->f70;
     if (nr > v70->capacity())
-        v70->resize(nr);
+        v70->reserve_nr(nr);
     vec96* v50 = &grid[x][y]->list[0]->f50;
     if (nf > v50->capacity())
-        v50->resize(nf);
+        v50->reserve(nf);
     vec32* v90 = &grid[x][y]->list[0]->f90;
     if (no > v90->capacity())
-        v90->resize(no);
+        v90->reserve_nr(no);
     for (int i = 0; i < dust_count; i++) {
         DustParticle* p = &dust[i];
         int cx = (int)(p->frame.o.x * g_k_1_20);
@@ -124,7 +124,7 @@ void DustTerrain::emit_cell(int x, int y)
             p->anim = p->anim % pt->nframes;
             dmesh* src = (dmesh*)pt->boxes[p->anim].meshes[0];
             if ((pt->flags & 0x20000i64) != 0)
-                grid[cx][cy]->list[0]->append_shaded(src, (const matrix*)&mm, color);
+                grid[cx][cy]->list[0]->transform(src, (const matrix*)&mm, color);
             else
                 grid[cx][cy]->list[0]->append_skinned(src, (const matrix*)&mm, -1, color, 0);
             p->last[0] = grid[cx][cy]->list[0]->f50.size();
@@ -133,7 +133,7 @@ void DustTerrain::emit_cell(int x, int y)
     cell_obj* o = grid[x][y];
     if (o->list && (o->list_end - o->list) != 0) {
         dmesh* m = o->list[0];
-        m->finish_load();
+        m->compute_bounds();
         grid[x][y]->refresh();
         vector4 zv(0.0f, 0.0f, 0.0f);
         mat3 tmp;

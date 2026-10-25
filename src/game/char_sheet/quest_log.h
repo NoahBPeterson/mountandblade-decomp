@@ -31,7 +31,7 @@ using rgl::mesh;
 
 void __cdecl mb_error(const tstring* s);                // 0x42cc80
 void __cdecl mb_snprintf(char* buf, int size, const char* fmt, ...);   // 0x415100
-void gui_reset();                                       // 0x42d1b0 gui_manager::reset (0x5d7080)
+void reset();                                       // 0x42d1b0 gui_manager::reset (0x5d7080)
 #include "../str_table.h"
 extern StrTable g_strtable;
 extern resmgr g_resmgr;
@@ -60,10 +60,10 @@ widget* __fastcall ctor_panel(widget* mem);                        // 0x48ae20 (
 widget* __fastcall ctor_window(widget* mem);                       // 0x4931a0
 widget* __fastcall ctor_scrollbar(widget* mem);                    // 0x48b890
 widget* __fastcall ctor_list(widget* mem);                         // 0x49deb0
-void __fastcall list_setup(widget* w);                             // 0x488d50
+void __fastcall draw(widget* w);                             // 0x488d50
 void gui_set_window(widget* w);                         // 0x49b120
-widget* make_text(widget* parent, tstring* s, float w, float h, float x, float y);   // 0x4dce70
-mesh* make_color(void* col, unsigned rgb);              // 0x4de320
+widget* new_medium_button(widget* parent, tstring* s, float w, float h, float x, float y);   // 0x4dce70
+mesh* make_background(void* col, unsigned rgb);              // 0x4de320
 
 // ---- the quest database (g_game = 0x5e2930) ----------------------------------------------------------------
 extern int g_game[];                                    // 0x5e2930

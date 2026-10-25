@@ -12,26 +12,26 @@ void ConvScreen::refresh(int sel, int* out)
     if (n_lines > 1) {
         if (sel < 0)
             goto tail;
-        g_n_dialogs.select(&g_n_dialogs.list[sel]);
-        *out = g_n_dialogs.get_c8();
-        g_n_dialogs.advance();
+        g_dialogs.select(&g_dialogs.list[sel]);
+        *out = g_dialogs.get_c8();
+        g_dialogs.advance();
     } else {
         if (n_lines != 1) {
             if (sel != -2)
                 goto tail;
         } else {
-            g_n_dialogs.select(g_n_dialogs.list);
+            g_dialogs.select(g_dialogs.list);
             goto tail;
         }
-        *out = g_n_dialogs.get_c8();
-        g_n_dialogs.advance();
+        *out = g_dialogs.get_c8();
+        g_dialogs.advance();
     }
     {
         static float one = 1.0f;
         float y_a = 0.0f;                                // original: [esp+0x24] (int slot reused as float)
         float text_px = 0.0f;                            // original: [esp+0x20]
 tail:
-        speaker_id = g_n_dialogs.speaker();
+        speaker_id = g_dialogs.speaker();
         {
             tstring name(troop_text(speaker_id));        // original: snprintf("%s:") into [esp+0x140]
             tstring tmp;
@@ -45,14 +45,14 @@ tail:
         for (int i = 0; i < 0x400; i++)
             buttons[i]->hide();
         int n = n_lines;                                 // original: pre-advance count stays in [esp+0x10]
-        g_n_dialogs.advance_all(&n_lines);
+        g_dialogs.advance_all(&n_lines);
         if (n > 1) {
             input_label->hide();
             y_a = setting_float("conv_sentence_y_a");
             for (int i = 0; i < n_lines; i++) {
                 buttons[i]->show();
-                tstring text = g_n_dialogs.line_text(i).strip_tags();
-                unsigned flags = g_n_dialogs.line_flags(i);
+                tstring text = g_dialogs.line_text(i).strip_tags();
+                unsigned flags = g_dialogs.line_flags(i);
                 float ratio = setting_float("conv_sentence_width_ratio");
                 (void)setting_float("conv_sentence_button_height");
                 float size_y = setting_float("conv_sentence_size_y");

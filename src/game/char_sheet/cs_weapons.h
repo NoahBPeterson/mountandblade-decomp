@@ -23,7 +23,7 @@ extern StrTable g_strtable;                         // 0x5e2a18
 #include "../../include/game_data.h"
 
 extern int g_weapon_xp[];                           // 0x5938c8[9] (experience needed per weapon class)
-extern const char* g_weapon_xp_cats[];              // 0x5e2900[7] (per-class glyph category)
+extern const char* g_display_wp_one_handed[];              // 0x5e2900[7] (per-class glyph category)
 
 void mb_vsprintf(char* out, const char* fmt, va_list args);   // 0x536f8f (used by the inlined sprintf)
 

@@ -15,7 +15,7 @@
 
 using rgl::vector4;
 
-extern __int64 g_time[];            // 0x5e2948 table of 64-bit clocks (1e-5 s units)
+#include "../../include/fx.h"
 
 // sized stand-ins (see above); ctor/dtor addresses are what the gui_manager ctor/dtor call
 struct scene {
@@ -55,9 +55,9 @@ struct gui_timer {                  // 16 bytes: clock index, value (gui_manager
     int clock;                      // +0   set_delay 0x42cd20
     int pad4;
     __int64 t;                      // +8   set_delay 0x42cd20, reset 0x42d1b0
-    gui_timer() { clock = 0; t = g_time[0]; }
+    gui_timer() { clock = 0; t = g_ticks[0]; }
     void set_delay(float seconds);  // 0x42cd20 (thiscall, ret 4)
-    void rewind() { t = g_time[clock] - 100000; }   // inline: one second in the past
+    void rewind() { t = g_ticks[clock] - 100000; }   // inline: one second in the past
 };
 
 // The UI element base is src/game/widget.h (shared with char_sheet / inventory_panel). The container classes (elem 0x188, overlay

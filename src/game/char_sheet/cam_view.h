@@ -15,8 +15,8 @@ using rgl::mat3;
 
 mat4* identity_pos(mat4* out);                          // 0x40cd00 (cdecl; returns out)
 struct mat4_self {
-    void rotate_fu(const float* angle);                 // 0x40e570 (thiscall, ret 4)
-    void rotate_su(const float* angle);                 // 0x40e670 (thiscall, ret 4)
+    void rotate_about_s(const float* angle);                 // 0x40e570 (thiscall, ret 4)
+    void rotate_about_f(const float* angle);                 // 0x40e670 (thiscall, ret 4)
 };
 
 // key state / settings globals

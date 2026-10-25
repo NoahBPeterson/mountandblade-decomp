@@ -72,9 +72,9 @@ void ConvScreen::open(int dialog, int* out)
         ch->set_y(v);
     }
 
-    Widget* reln = make_bar(talk, tstring("conv_s_choices"));
-    question = make_question(ch, tstring("conv_sc_choices"), reln);
-    choice_finalize(question);
+    Widget* reln = make_scrollbar(talk, tstring("conv_s_choices"));
+    question = make_editor_list(ch, tstring("conv_sc_choices"), reln);
+    draw(question);
     talk->add_child(question);
 
     Widget* input = new WidgetObj();
@@ -200,7 +200,7 @@ void ConvScreen::open(int dialog, int* out)
         *(int*)((char*)cam + 0x130) = 0;             // this+0x164
         *(int*)((char*)cam + 0x134) = 0;             // this+0x168
         *(float*)((char*)cam + 0x138) = 1.0f;        // this+0x16c
-        build_camera_planes(cam);
+        build_planes(cam);
     }
 
     quest_mode = 0;
@@ -215,7 +215,7 @@ void ConvScreen::open(int dialog, int* out)
 
     n_lines = 0;
 
-    screen_refresh(-1, out);
+    refresh(-1, out);
 
     if (target >= 0) {
         int i = 0;

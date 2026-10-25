@@ -52,25 +52,25 @@ extern int g_warnings_off_b;            // 0x5a9fd8 (0x49d310, 0x49d3d0)
 struct MsgLogX {
     void add(tstring msg, unsigned color);                      // 0x452c00 (thiscall, ret 0x14: text by value)
     void push(const tstring& s, int v);                         // 0x4334b0
-    void tutorial_message(const tstring& text, int color);      // 0x49b630 (ret 8)
+    void set_font_mesh(const tstring& text, int color);      // 0x49b630 (ret 8)
 };
 extern MsgLogX g_msglog;                // 0x5d7080
-extern char g_log_obj[];                // 0x5a9f60 the text log stream (a stream_base; slot 10 = w_cstr)
+extern char g_log[];                // 0x5a9f60 the text log stream (a stream_base; slot 10 = w_cstr)
 
 // ---- conversations and the window manager -------------------------------------------------------------------------
 // DialogMgrX: DialogMgr (dialog_manager.h) members it does not declare
 struct DialogMgrX : DialogMgr {
-    tstring current_text();             // 0x489c30 (copy of cur_text, +0xe028)
+    tstring get_name();             // 0x489c30 (copy of cur_text, +0xe028)
 };
 extern DialogMgrX g_dialogs;            // 0x8ed50c8
 struct DialogBox {
     void show(const tstring& title, const tstring& text);                   // 0x48a3a0 (ret 8)
-    void ask(const tstring& text, const tstring& yes, const tstring& no, int* answer);   // 0x48a3d0 (ret 0x10)
+    void setup2(const tstring& text, const tstring& yes, const tstring& no, int* answer);   // 0x48a3d0 (ret 0x10)
 };
 struct WindowMgr {
     DialogBox* dialog_box;              // +0 window 0 (tutorial_box 0x4a3baa)
     void open(int window);              // 0x494260 (thiscall, ret 4)
-    void close_all();                   // 0x489be0 (change_screen_quit 0x4ac332)
+    void clear_all();                   // 0x489be0 (change_screen_quit 0x4ac332)
     void set_state(int state);          // 0x495700 (ret 4)
 };
 extern WindowMgr g_windows;             // 0xa73980
@@ -82,9 +82,9 @@ struct StrTableX : StrTable {
 #define g_ui_strings (*(StrTableX*)&g_strtable)
 // tstring.h's c_str() is inline; the interpreter calls the out-of-line copy (rgl::string::c_str, 0x407c10)
 struct tstr : tstring {
-    const char* c_str_() const;             // 0x407c10
+    const char* get() const;             // 0x407c10
 };
-inline const char* CS(const tstring* s) { return ((const tstr*)s)->c_str_(); }
+inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
 // the translated text of a UI string id
 #define UI(id) CS(g_ui_strings.lookup(&tstring(id)))
 
@@ -96,7 +96,7 @@ extern tstring g_result_string;         // 0xa70464 (set_result_string 0x49fce6)
 struct Keyboard {
     char pad0[0xc];
     int down[256];                      // +0xc (key_is_down 0x49fd8c)
-    char clicked(int key);              // 0x487900 (thiscall, ret 4)
+    char is_ready(int key);              // 0x487900 (thiscall, ret 4)
 };
 extern Keyboard g_keyboard;             // 0xa170c8
 struct GameKeys {
@@ -120,7 +120,7 @@ struct vec4 : rgl::vector4 {
     vec4& set(const float& x_, const float& y_, const float& z_);   // 0x407c30 (rgl_math.h)
     vec4 operator*(const float& s) const;                       // 0x407cd0 (hidden return)
     void operator+=(const rgl::vector4& o);                     // 0x40e420 (thiscall, ret 4)
-    void rotate_z(float angle);                                 // 0x4327f0 (x / y about the z axis)
+    void rotate_b(float angle);                                 // 0x4327f0 (x / y about the z axis)
 };
 inline vec4& V(rgl::vector4& v) { return (vec4&)v; }
 // Pos: a frame (Module System `pos`: rows s(ide) f(orward) u(p), origin o), with the members the interpreter calls
@@ -128,16 +128,16 @@ inline vec4& V(rgl::vector4& v) { return (vec4&)v; }
 struct Pos {
     vec4 s, f, u, o;
     Pos operator*(const Pos& b) const;                          // 0x40e870 (to parent: this * b)
-    Pos to_local(const Pos& b) const;                           // 0x4329d0 (b in the frame of this)
-    void rotate_x(const float* angle);                          // 0x40e570 (rows f and u about s)
-    void rotate_y(const float* angle);                          // 0x40e670 (rows s and u about f)
-    void rotate_z(const float* angle);                          // 0x40e770 (rows s and f about u)
+    Pos relative(const Pos& b) const;                           // 0x4329d0 (b in the frame of this)
+    void rotate_about_s(const float* angle);                          // 0x40e570 (rows f and u about s)
+    void rotate_about_f(const float* angle);                          // 0x40e670 (rows s and u about f)
+    void rotate_about_u(const float* angle);                          // 0x40e770 (rows s and f about u)
     void orthonormalize();                                      // 0x407ef0 (rgl_math.h: keeps f)
 };
 struct Rot { vec4 s, f, u; };                                   // the rotation part of a Pos
-Rot identity_rot();                                             // 0x40cd60 (cdecl, hidden return)
+Rot identity3();                                             // 0x40cd60 (cdecl, hidden return)
 Pos identity_frame();                                           // 0x40cd00 (cdecl, hidden return; item_kind.h: identity_pos)
-float __cdecl clamp_float(const float* v, const float* lo, const float* hi);    // 0x40e3d0
+float __cdecl clamp(const float* v, const float* lo, const float* hi);    // 0x40e3d0
 // by-reference spellings of the clamp helpers (same ABI as the pointer declarations in agent.h / game_util.h);
 // the original passes temporaries
 int __cdecl clamp_index(const int& v, const int& lo, const int& hi);   // 0x432510 (result in [lo, hi - 1])
@@ -174,8 +174,8 @@ struct TableauVec {
         int override_items[1];          // +0x34c (no bound check in cur_tableau_add_override_item)
     };
     Current* current();                                                     // 0x48f450
-    void add_tableau_mesh(int tableau, int value, const Pos* p, const rgl::vector4& scale);   // 0x4992b0 (ret 0x10)
-    void* material(const int* tableau, const int* instance_code);          // 0x4b14b0 (ret 8)
+    void spawn(int tableau, int value, const Pos* p, const rgl::vector4& scale);   // 0x4992b0 (ret 0x10)
+    void* add_spawned(const int* tableau, const int* instance_code);          // 0x4b14b0 (ret 8)
     void set_background_color(int color);                                   // 0x48f570 (ret 4)
     void set_ambient_light(const rgl::vector4& c);                          // 0x48f5a0 (ret 4)
     void set_camera_position(const Pos* p);                                 // 0x48f480 (ret 4)
@@ -183,17 +183,17 @@ struct TableauVec {
                                const float* far_);                          // 0x48f4c0 (ret 0x14)
     void add_point_light(const Pos* p, const rgl::vector4& c);             // 0x493f80 (ret 8)
     void add_sun_light(const Pos* p, const rgl::vector4& c);               // 0x494020 (ret 8)
-    void add_mesh(int mesh, const Pos* p, const rgl::vector4& scale, const float* alpha, const int* color);   // 0x499390 (ret 0x14)
-    void add_map_icon(int icon, const Pos* p, const float* scale);          // 0x499540 (ret 0xc)
+    void spawn_scaled(int mesh, const Pos* p, const rgl::vector4& scale, const float* alpha, const int* color);   // 0x499390 (ret 0x14)
+    void spawn_scaled2(int icon, const Pos* p, const float* scale);          // 0x499540 (ret 0xc)
 };
 extern TableauVec g_tableaus;           // 0xa75f40
 void __cdecl tableau_add_agent(int troop, int horse_item, const Pos* p, const int* animation, const int* instance);   // 0x49f3d0
 // the item / scene object of a trigger context (ti_on_init_item -50, scene prop -40, map icon -70)
 struct TriggerItem {
-    void set_tableau_material(void* m); // 0x48cfc0 (ret 4)
+    void set_owner(void* m); // 0x48cfc0 (ret 4)
 };
 struct TriggerMeshObj {
-    void set_tableau_material(void* m); // 0x4620b0 (ret 4)
+    void set_part(void* m); // 0x4620b0 (ret 4)
 };
 TriggerItem* __fastcall trigger_item(int context);                         // 0x48cec0
 TriggerMeshObj* __fastcall trigger_mesh_obj(int context);                  // 0x48cf40
@@ -237,9 +237,9 @@ struct Presentation {
     void set_size(int overlay, const rgl::vector4* size);               // 0x49a300
     void set_position(int overlay, const rgl::vector4* pos);            // 0x48f6b0
     void set_val(int overlay, int value);                               // 0x48e340
-    void set_boundaries(int overlay, int min_value, int max_value);     // 0x48e4c0 (ret 0xc)
+    void set_limits(int overlay, int min_value, int max_value);     // 0x48e4c0 (ret 0xc)
     void set_area_size(int overlay, const rgl::vector4* size);          // 0x49ab80
-    void set_mesh_rotation(int overlay, const Pos* pos);                // 0x48db20
+    void set_mesh_matrix(int overlay, const Pos* pos);                // 0x48db20
     void add_item(int overlay, const tstring& text);                    // 0x48e590
     void animate_to_color(int overlay, float duration, int color);      // 0x48e650 (ret 0xc)
     void animate_to_alpha(int overlay, float duration, int alpha);      // 0x48e6d0
@@ -282,28 +282,28 @@ SI_ASSERT(party_notes, offsetof(PartyX, notes) == 0x5a28);
 // TroopX: the troop record (TroopRec, include/troop.h) with the interpreter's names for its members; the fields are aliases in
 // anonymous unions of troop.h (script operations cited there)
 struct TroopX : TroopRec {
-    int num_inventory_slots();          // 0x462b60 (TroopRec::inv_count)
+    int inv_count();          // 0x462b60 (TroopRec::inv_count)
     char is_hero();                     // 0x435130 (tf_hero; Troop::has_flag10)
     int max_hit_points();               // 0x468770
-    int proficiency(int p);             // 0x435150 (ret 4; Troop::stat_int)
-    void set_site(int scene, int entry);    // 0x489320 (ret 8; Troop::set_colors)
-    void set_type(int skin);            // 0x4892a0 (ret 4; Troop::set_flags_low)
-    void sort_inventory();              // 0x48c0c0 (Troop::sort_inv)
-    void raise_attribute(int attribute, int value);     // 0x48bef0 (ret 8; Troop::add_attr)
-    void raise_skill(int skill, int value);             // 0x48c090 (ret 8; Troop::add_skill)
-    void raise_proficiency(int proficiency, float value);   // 0x437770 (ret 8; Troop::adjust)
-    void raise_proficiency_linear(int proficiency, int value);  // 0x4892d0 (ret 8; Troop::add_stat)
+    int stat_int(int p);             // 0x435150 (ret 4; Troop::stat_int)
+    void set_colors(int scene, int entry);    // 0x489320 (ret 8; Troop::set_colors)
+    void set_flags_low(int skin);            // 0x4892a0 (ret 4; Troop::set_flags_low)
+    void sort_inv();              // 0x48c0c0 (Troop::sort_inv)
+    void add_attr(int attribute, int value);     // 0x48bef0 (ret 8; Troop::add_attr)
+    void add_skill(int skill, int value);             // 0x48c090 (ret 8; Troop::add_skill)
+    void adjust(int proficiency, float value);   // 0x437770 (ret 8; Troop::adjust)
+    void add_stat(int proficiency, int value);  // 0x4892d0 (ret 8; Troop::add_stat)
     void remove_gold(int gold);         // 0x489340 (ret 4; Troop::sub_3b4)
-    int first_free_inventory_slot();    // 0x463030 (Troop::find_free)
-    void set_item(int item, int slot, int modifier);    // 0x48c7f0 (ret 0xc; Troop::set_slot)
+    int find_free();    // 0x463030 (Troop::find_free)
+    void set_slot(int item, int slot, int modifier);    // 0x48c7f0 (ret 0xc; Troop::set_slot)
     // inventory slot n: 0..9 are the equipment, 10.. the inventory
     ItemRef& slot(int n) { return n < 10 ? equipment[n] : items[n - 10]; }
 };
-void __fastcall clear_inventory_items(ItemRef* items);  // 0x489060 (the 0x60 inventory entries of a troop)
+void __fastcall clear_slots(ItemRef* items);  // 0x489060 (the 0x60 inventory entries of a troop)
 // ItemRef (src/game/item_ref.h) carries the script editors set_item / set_modifier / randomize_modifier
 inline ItemRef& IR(ItemRef& r) { return r; }
 struct ItemList {                       // this = the first ItemRef; -1 item = free
-    int first_free(int count);          // 0x489070
+    int check_slots(int count);          // 0x489070
 };
 float frand();                                      // 0x40e400 (0..1)
 int __cdecl rand_below(const int* n);               // 0x432580 (0 when *n < 2, else rand() % *n)
@@ -457,60 +457,60 @@ struct GameX {
     char talk_line_set[5];              // +0x1a290 (talk_info_set_line 0x4abf70)
     // thiscall on the game object
     ~GameX();                                                               // 0x492f40
-    void set_talk_line(int line, const tstring& text);                      // 0x48a380 (ret 8)
-    char party_can_join_party(int joiner, int host, char flip_prisoners);   // 0x4918d0 (ret 0xc)
-    void update_average_difficulty();                                       // 0x48a000
-    void add_xp_to_troop(int troop, int xp);                                // 0x4428c0 (ret 8)
-    void add_gold_as_xp(int gold);                                          // 0x4952a0 (ret 4)
-    void add_xp_as_reward(int xp);                                          // 0x4957d0 (ret 4)
+    void set_names(int line, const tstring& text);                      // 0x48a380 (ret 8)
+    char can_transfer(int joiner, int host, char flip_prisoners);   // 0x4918d0 (ret 0xc)
+    void sl_update_avg();                                       // 0x48a000
+    void add_experience(int troop, int xp);                                // 0x4428c0 (ret 8)
+    void add_random_experience(int gold);                                          // 0x4952a0 (ret 4)
+    void spread_party_experience(int xp);                                          // 0x4957d0 (ret 4)
     int spawn_around(float x, float y, int party_template, float radius);   // 0x49f020 (ret 0x10)
-    tstring format_time(int seconds);                                       // 0x48c470 (ret 8: hidden return)
-    void reset_price_rates();                                               // 0x48a210
-    void transfer_stacks(int from, int to, char as_prisoners);              // 0x492530 (ret 0xc)
+    tstring event_string(int seconds);                                       // 0x48c470 (ret 8: hidden return)
+    void sl_item_flag_all();                                               // 0x48a210
+    void transfer_stack(int from, int to, char as_prisoners);              // 0x492530 (ret 0xc)
     int remove_troops(int party, int troop, int count, char prisoners, int a5);   // 0x48f9f0 (ret 0x14: count removed)
     void remove_party(int party);                                           // 0x4915d0 (ret 4)
     int create_companion_party(int troop, rgl::vector4 pos);                // 0x49ef00 (ret 0x14)
-    void update_faction_parties(int faction);                               // 0x490990 (ret 4)
+    void mark_kind(int faction);                               // 0x490990 (ret 4)
     void start_quest(int quest, int giver_troop);                           // 0x49b930 (ret 8)
-    void complete_quest(int quest);                                         // 0x494410 (ret 4)
-    void succeed_quest(int quest);                                          // 0x494560
-    void fail_quest(int quest);                                             // 0x494680
-    void cancel_quest(int quest);                                           // 0x4948c0
-    void conclude_quest(int quest);                                         // 0x4947a0
-    void start_encounter(int party, int other);                             // 0x49f060 (ret 8)
-    void set_item_probabilities(float rate);                                // 0x48a250 (ret 4)
-    char troop_is_wounded(int troop);                                       // 0x4638f0 (ret 4)
-    void ensure_inventory_space(int troop, int value);                      // 0x48c4c0 (ret 8)
-    void add_merchandise(int item_type, int value, int troop);              // 0x48cc40 (ret 0xc)
+    void quest_done(int quest);                                         // 0x494410 (ret 4)
+    void quest_succeeded(int quest);                                          // 0x494560
+    void quest_failed(int quest);                                             // 0x494680
+    void set_quest_cancelled(int quest);                                           // 0x4948c0
+    void set_quest_concluded(int quest);                                         // 0x4947a0
+    void deploy_party(int party, int other);                             // 0x49f060 (ret 8)
+    void sl_item_set_all(float rate);                                // 0x48a250 (ret 4)
+    char agent_low(int troop);                                       // 0x4638f0 (ret 4)
+    void init_slots(int troop, int value);                      // 0x48c4c0 (ret 8)
+    void spawn_items(int item_type, int value, int troop);              // 0x48cc40 (ret 0xc)
     void add_gold(int gold, int troop);                                     // 0x49b720 (ret 8)
-    void remove_player_gold(int gold, int a2);                              // 0x49b820 (ret 8)
-    void player_add_item(int item, int modifier);                           // 0x48eb50 (ret 8)
-    void add_items(int troop, int item, int count);                         // 0x48c9b0 (ret 0xc)
-    int remove_items(int troop, int item, int count, char a4);              // 0x489d10 (ret 0x10: value removed)
+    void remove_gold(int gold, int a2);                              // 0x49b820 (ret 8)
+    void add_inventory(int item, int modifier);                           // 0x48eb50 (ret 8)
+    void give_item(int troop, int item, int count);                         // 0x48c9b0 (ret 0xc)
+    int sl_take(int troop, int item, int count, char a4);              // 0x489d10 (ret 0x10: value removed)
     int add_members(int party, int troop, int count, char prisoners);       // 0x48f8f0 (ret 0x10: number added)
-    void relocate_near(float x, float y, int party, float radius);          // 0x491e50 (ret 0x10)
+    void set_pos(float x, float y, int party, float radius);          // 0x491e50 (ret 0x10)
     void random_position_around(float x, float y, float radius, rgl::vector4* out);           // 0x490030 (ret 0x10)
     char position_around(float x, float y, float radius, rgl::vector4* out, char water);      // 0x490160 (ret 0x14)
     int count_troops(int troop, int party, char prisoners);                 // 0x48f790 (ret 0xc)
     int stack_dna(int party, int stack, int a3, int a4);                    // 0x4902a0 (ret 0x10)
-    int item_count(int item, int troop, char count_items);                  // 0x489c50 (ret 0xc; item -1, 0: free slots)
-    int troop_skill_level(int troop, int skill);                            // 0x437b20 (ret 8)
-    int troop_value(int troop);                                             // 0x48a320 (ret 4)
-    int random_quest(int lo, int hi);                                       // 0x489e70 (ret 8)
-    int random_troop(int a1, char to_capture);                              // 0x48a080 (ret 8)
-    int random_party(int lo, int hi);                                       // 0x489ee0 (ret 8)
-    int random_item(int type1, int type2, int type3, int type4);            // 0x48ca30 (ret 0x10)
+    int count_in(int item, int troop, char count_items);                  // 0x489c50 (ret 0xc; item -1, 0: free slots)
+    int skill_level(int troop, int skill);                            // 0x437b20 (ret 8)
+    int sl_party_price(int troop);                                             // 0x48a320 (ret 4)
+    int sl_roll_party(int lo, int hi);                                       // 0x489e70 (ret 8)
+    int sl_pick_chain(int a1, char to_capture);                              // 0x48a080 (ret 8)
+    int sl_roll_other(int lo, int hi);                                       // 0x489ee0 (ret 8)
+    int pick_random_item(int type1, int type2, int type3, int type4);            // 0x48ca30 (ret 0x10)
     char is_night();                                                        // 0x435740
-    void attach_party(int party, int host);                                 // 0x4949d0 (ret 8)
+    void set_objective(int party, int host);                                 // 0x4949d0 (ret 8)
     void detach_party(int party);                                           // 0x490a30 (ret 4)
     void collect_attachments(int party, PartyX* dest);                      // 0x48ff70 (ret 8)
-    void quick_attach_to_battle(int party, int side);                       // 0x494ad0 (ret 8)
-    void upgrade_with_xp(int party, float xp, int path);                    // 0x494e40 (ret 0xc)
-    void party_add_xp(int party, float xp);                                 // 0x494b60 (ret 8)
+    void switch_objective(int party, int side);                       // 0x494ad0 (ret 8)
+    void award_experience(int party, float xp, int path);                    // 0x494e40 (ret 0xc)
+    void share_experience(int party, float xp);                                 // 0x494b60 (ret 8)
     void add_template(int party, int party_template, int reverse_prisoners);   // 0x48fbd0 (ret 0xc)
     int battle_root(int party);                                             // 0x48fce0 (ret 4)
-    void inflict_casualties(int party, int rounds, PartyX* dest);           // 0x4910a0 (ret 0xc)
-    void distribute_party(PartyX* party, int root);                         // 0x491430 (ret 8)
+    void recruit(int party, int rounds, PartyX* dest);           // 0x4910a0 (ret 0xc)
+    void handout(PartyX* party, int root);                         // 0x491430 (ret 8)
 };
 SI_ASSERT(game_troops, offsetof(GameX, troops) == 0x13a00);
 SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139d8 - 0xf8);
@@ -531,9 +531,9 @@ extern int g_encountered_party;         // 0x8ed50d8 (g_dialogs +0x10; party_can
 extern int g_siege_attack;              // 0xa73438 (store_defender_count 0x4ae36e)
 extern int g_conversation_agent;        // 0x8ed50dc (g_dialogs +0x14; store_conversation_agent)
 struct MissionUiX {
-    void select_enemy(int side);        // 0x492750 (thiscall, ret 4)
+    void select_side(int side);        // 0x492750 (thiscall, ret 4)
 };
-extern MissionUiX g_mission_ui;         // 0xa73300
+extern MissionUiX g_mission_ctx;         // 0xa73300
 extern int g_battle_advantage;           // 0xa7331c (set_battle_advantage 0x4a87af)
 extern int g_passage_menu;              // 0xa735c4 (set_passage_menu 0x4a55f3)
 extern int g_menu_b;                    // 0x5e2924 (jump_to_menu 0x4ac3a0)
@@ -570,12 +570,12 @@ struct EntryPoint { Pos pos; char pad40[0x130 - 0x40]; };      // mission +0x670
 #include "../light.h"                   // Light (shared with agent2 / strat)
 // the trigger's scene entity (prop instance or agent body, trigger_entity 0x490430): virtual slots 25 / 27
 struct EntityMeshes {
-    void attach_light(int mesh, Light* l);                      // 0x488e40 (ret 8)
-    void attach_particle_system(int mesh, void* ps);            // 0x488e20 (ret 8)
+    void call1(int mesh, Light* l);                      // 0x488e40 (ret 8)
+    void call0(int mesh, void* ps);            // 0x488e20 (ret 8)
     struct PSys* find_particle_system(int mesh, int psys);      // 0x48d5f0 (ret 8)
 };
 struct PSys {
-    void emit(int count);               // 0x433810 (ret 4; game_util.h reset_pending)
+    void reset_pending(int count);               // 0x433810 (ret 4; game_util.h reset_pending)
 };
 struct SceneEntity {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();
@@ -595,9 +595,9 @@ struct SceneEntity {
 // EAX (a static of the s004902a0 object, agent_of); declared here as a plain call.
 int trigger_item_mesh(int context);     // 0x4904a0
 struct ParticleMgr {
-    void* create(const int* psys, const rgl::vector4* pos, const int* a3);  // 0x479d20 (ret 0xc)
+    void* spawn(const int* psys, const rgl::vector4* pos, const int* a3);  // 0x479d20 (ret 0xc)
 };
-extern ParticleMgr g_particle_mgr;      // 0x8ed5090
+extern ParticleMgr g_emit_defs;      // 0x8ed5090
 
 struct MTimer {                         // clock index + start (Timer in src/rgl/xmlcfg/game_util.h)
     int clock;
@@ -654,11 +654,11 @@ struct MissionX {
     int pad67fc;
     MTimer time_speed_timer;            // +0x6800
     float time_speed_anim_time;         // +0x6810
-    char all_enemies_defeated(int team);                        // 0x4920e0 (thiscall, ret 4)
-    void visitors_changed();                                    // 0x4676c0
-    void add_visitors(int entry, int count);                    // 0x4677a0 (ret 8)
-    int num_active_teams();                                     // 0x48a8b0
-    char main_hero_fallen();                                    // 0x492170
+    char all_defeated(int team);                        // 0x4920e0 (thiscall, ret 4)
+    void clear_done();                                    // 0x4676c0
+    void add_amount(int entry, int count);                    // 0x4677a0 (ret 8)
+    int team_count();                                     // 0x48a8b0
+    char hero_down();                                    // 0x492170
     int last_team();                                            // 0x48a910 (ui/mission.h)
     int count_agents(int team);                                 // 0x491f50 (ret 4)
     void select_team(int team);                                 // 0x48a9e0 (ret 4)
@@ -668,22 +668,22 @@ struct MissionX {
     int riding_order(int team);                                 // 0x48ab30 (ret 4)
     int weapon_usage_order(int team);                           // 0x48ab90 (ret 4)
     int hold_fire_order(int team);                              // 0x48abf0 (ret 4)
-    void give_order(int team, int order);                       // 0x49c2c0 (ret 8)
+    void order(int team, int order);                       // 0x49c2c0 (ret 8)
     char point_in_rect(const rgl::vector4* p);                  // 0x48a990 (ret 4; ui/mission.h)
-    int num_prop_instances(int prop);                           // 0x48ee20 (ret 4)
-    int prop_instance(int prop, int n);                         // 0x48ee90 (ret 8: -1 = none)
-    void replace_props(int old_prop, int new_prop);             // 0x48ed60 (ret 8)
-    void finish(int a1);                                        // 0x48a860 (ret 4)
-    Pos cam_current_frame();                                    // 0x48a420 (ret 4: hidden return; ui/mission.h get_frame)
-    float cam_current_aperture();                               // 0x48a740 (blend_param)
-    float current_time_speed();                                 // 0x48a7d0 (blend2_param)
-    int start_conversation(int troop);                          // 0x4921b0 (ret 4)
-    void add_reinforcements(int entry, int count);              // 0x49c170 (ret 8)
-    void add_point_light(float flicker_magnitude, float flicker_interval);   // 0x4952f0 (ret 8)
-    void burst(int psys, const Pos* p, int strength);           // 0x442ca0 (ret 0xc)
-    int spawn_item(const ItemRef* item);                        // 0x49b4b0 (ret 4)
-    int spawn_agent(int troop);                                 // 0x49f9e0 (ret 4)
-    int spawn_horse(int item, int modifier);                    // 0x49f980 (ret 8)
+    int count_props(int prop);                           // 0x48ee20 (ret 4)
+    int find_prop(int prop, int n);                         // 0x48ee90 (ret 8: -1 = none)
+    void retag_props(int old_prop, int new_prop);             // 0x48ed60 (ret 8)
+    void start_clock(int a1);                                        // 0x48a860 (ret 4)
+    Pos get_frame();                                    // 0x48a420 (ret 4: hidden return; ui/mission.h get_frame)
+    float blend_param();                               // 0x48a740 (blend_param)
+    float blend2_param();                                 // 0x48a7d0 (blend2_param)
+    int find_agent_by_troop(int troop);                          // 0x4921b0 (ret 4)
+    void check_slot(int entry, int count);              // 0x49c170 (ret 8)
+    void add_wind_effect(float flicker_magnitude, float flicker_interval);   // 0x4952f0 (ret 8)
+    void spawn_effect(int psys, const Pos* p, int strength);           // 0x442ca0 (ret 0xc)
+    int place(const ItemRef* item);                        // 0x49b4b0 (ret 4)
+    int exec_trigger(int troop);                                 // 0x49f9e0 (ret 4)
+    int enter_trigger(int item, int modifier);                    // 0x49f980 (ret 8)
 };
 SI_ASSERT(mission_props, offsetof(MissionX, props) == 0x6688);
 SI_ASSERT(mission_teams, offsetof(MissionX, teams) == 0x5280);
@@ -694,7 +694,7 @@ SI_ASSERT(mission_speed, offsetof(MissionX, time_speed_anim_time) == 0x6810);
 SI_ASSERT(prop_scale, offsetof(PropInst, scale_x) == 0x158);
 // the 0x4c-byte environment rows (EnvRow in src/game/terrain_b/emit.h)
 struct EnvRowX { char pad0[0x44]; unsigned fog_color; char pad48[0x4c - 0x48]; };
-extern EnvRowX* g_env_rows_x;           // 0x5e28f4 (set_fog_distance 0x4aa230)
+extern EnvRowX* g_env_rows;           // 0x5e28f4 (set_fog_distance 0x4aa230)
 inline MissionX* mission() { return (MissionX*)g_mission; }
 inline Agent* agent(int id) { return mission()->agents.get(id); }
 

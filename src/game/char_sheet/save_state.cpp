@@ -20,11 +20,11 @@ int GameData::save_state(OutStream* out)
     write_list_party(out);
     write_list300(out);
     write_vec5c(out);
-    out->w_raw(&g_n29fc);
-    for (int i = 0; i < g_n29fc; i++)
-        g_29f8[i].write(out);
+    out->w_raw(&g_party_template_count);
+    for (int i = 0; i < g_party_template_count; i++)
+        g_party_templates[i].write(out);
     write_other2(out);
-    ((Table2*)((char*)this + 0xcc))->write(out);
+    ((Table2*)((char*)this + 0xcc))->write_table(out);
     write_records(out);
     write_items(out);
     out->w_int8((int*)&records[f8c].f3c0);
@@ -224,8 +224,8 @@ void Rec300::write300(OutStream* out, int n)
 // @ 0x4e9790    void GameData::write_items(OutStream* out)   (thiscall, ret 4)   item kinds at 0x5e29d0
 void GameData::write_items(OutStream* out)
 {
-    out->w_raw(&g_n_items);
-    for (int i = 0; i < g_n_items; i++)
+    out->w_raw(&g_item_kind_count);
+    for (int i = 0; i < g_item_kind_count; i++)
         write_vec8((List8*)g_items[i].l30, out);
 }
 

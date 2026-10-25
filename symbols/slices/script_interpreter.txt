@@ -7,6 +7,6 @@
 08ed50dc ?g_conversation_agent@@3HA
 08ed4f88 ?g_skin_count@@3HA
 08ed4f58 ?g_meshes@@3PAUMeshRec@@A
-08ed5090 ?g_particle_mgr@@3UParticleMgr@@A
+08ed5090 ?g_emit_defs@@3UParticleMgr@@A
 08ed4f5c ?g_mesh_count@@3HA
 08ed5094 ?g_particle_system_count@@3HA

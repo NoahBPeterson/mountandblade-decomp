@@ -78,24 +78,24 @@ void CharSheet::update_texts()
 
     {
         tstring k("ui_attribute_points");
-        mb_sprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->attr_points);
+        mb_snprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->attr_points);
     }
     POS(level_at, line, "char_t_attribut_points_y", "char_t_attribut_points_x");
 
     {
         tstring k("ui_skillts");
-        mb_sprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->skill_points);
+        mb_snprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->skill_points);
     }
     POS(level_at, line, "char_t_skillts_y", "char_t_skillts_x");
 
     {
         tstring k("ui_weapon_points");
-        mb_sprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->prof_points);
+        mb_snprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->prof_points);
     }
     POS(level_at, line, "char_t_weapon_points_y", "char_t_weapon_points_x");
 
     for (i = 0; i < 4; i++) {
-        mb_sprintf(line, 0x200, "%s:  %d",
+        mb_snprintf(line, 0x200, "%s:  %d",
                    g_strtable.lookup(i == 0 ? tstring("ui_str") : i == 1 ? tstring("ui_agi")
                                      : i == 2 ? tstring("ui_int") : tstring("ui_cha"))->c_str(),
                    stats[i]);

@@ -54,7 +54,7 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[n] = 2 << n
 #include "../bit_words.h"
-void terrain_set_a(const float* p);                         // 0x464a60
+void set_field_a(const float* p);                         // 0x464a60
 
 // ---- the world / scene --------------------------------------------------------------------------------
 // effect object created by 0x478f30 (0x7c bytes; layout from s00494e40)
@@ -67,7 +67,7 @@ struct terrain_obj {                                        // the object at 0xa
 };
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
-float  clamp_float(const float* x, const float* lo, const float* hi);   // 0x40e3d0
+float  clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 void   free_ptr(void* p);                                   // 0x535712
 
 extern int   g_size_modes[8];                               // 0x59394c terrain-type table (index 0..7)
@@ -77,7 +77,7 @@ extern float g_140;                                         // 0x598e6c (140.0f)
 extern float g_0_01;                                        // 0x54ab28 (0.01f)
 extern float g_one;                                         // 0x549d74 (1.0f)
 extern float g_half;                                        // 0x549d70 (0.5f)
-extern int   g_env2;                                        // 0x5e28fc (shaders on)
+#include "../renderer.h"
 extern void* g_a17110;                                      // 0xa17110
 extern void* g_a17510;                                      // 0xa17510
 extern terrain_obj g_terrain_obj;                           // 0xa76630

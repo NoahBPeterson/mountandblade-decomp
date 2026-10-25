@@ -51,14 +51,14 @@ void Screen::camera_update(float dt)
     f2c8 *= d;
 
     // --- keep the camera over the map --------------------------------------------------------------
-    if (f290 < *(float*)&g_5aa120)
-        f290 = *(float*)&g_5aa120;
-    else if (f290 > *(float*)&g_5aa118)
-        f290 = *(float*)&g_5aa118;
-    if (f294 < *(float*)&g_5aa124)
-        f294 = *(float*)&g_5aa124;
-    else if (f294 > *(float*)&g_5aa11c)
-        f294 = *(float*)&g_5aa11c;
+    if (f290 < *(float*)&g_map_min_x)
+        f290 = *(float*)&g_map_min_x;
+    else if (f290 > *(float*)&g_map_max_x)
+        f290 = *(float*)&g_map_max_x;
+    if (f294 < *(float*)&g_map_min_y)
+        f294 = *(float*)&g_map_min_y;
+    else if (f294 > *(float*)&g_map_max_y)
+        f294 = *(float*)&g_map_max_y;
 
     // --- the pitch follows the zoom ----------------------------------------------------------------
     f2b4 = f2b8 * C_590F7C + C_590E68;
@@ -123,7 +123,7 @@ void Screen::camera_update(float dt)
     float hx = f290 - frame.u.x * C_549D70;
     float hy = f294 - frame.u.y * C_549D70;
     float q = 0.0f;
-    ((World*)g_game)->scene_query(g_scene, (vector4*)&hx, (vector4*)&q);
+    ((World*)g_game)->scene_query(g_level, (vector4*)&hx, (vector4*)&q);
     q = q + C_549D70;
     if (f298 < q)
         f298 = q;
@@ -140,7 +140,7 @@ void Screen::camera_update(float dt)
         }
     }
     unsigned fog = pack_color((const vector4*)g_game->fog_color);
-    ((Envelope*)g_scene)->set_fade(&fogdist, &fog);
+    ((Envelope*)g_level)->set_fade(&fogdist, &fog);
 
     // --- frustum planes, the frame into this+0x238, then the widget's label matrix and the scene ---
     memcpy((char*)this + 0x238, &frame, 0x40);
@@ -150,7 +150,7 @@ void Screen::camera_update(float dt)
     memcpy((char*)w + 0x1ac, (char*)this + 0x170, 0x120);
     float ny = -frame.f.y;
     float nz = -frame.f.z;
-    WorldCam* sc = g_scene;
+    WorldCam* sc = g_level;
     sc->f30c.x = nx;
     sc->f30c.y = ny;
     sc->f30c.z = nz;

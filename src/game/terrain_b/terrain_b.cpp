@@ -237,7 +237,7 @@ void render_batch::render_scene(scene* sc)
         b.rot = *identity3(&idt);
         b.o = vector4(0.0f, 0.0f, 0.0f);
         float ang = 1.5707964f;
-        ((m4*)&b)->rotate_fu(&ang);
+        ((m4*)&b)->rotate_about_s(&ang);
         a = *(frame4*)&(*(m4*)&b * *(m4*)&a);
     }
     a.rot.s.w = 0.0f; a.rot.f.w = 0.0f; a.rot.u.w = 0.0f; a.o.w = 1.0f;
@@ -801,7 +801,7 @@ bool __stdcall ground_height(CellGrid* lv, const float* p, float* out)
     q.y = p[1];
     q.z = 0.0f;
     use3d = 0;
-    lv->locate(&q.x, cellxy);
+    lv->to_cell(&q.x, cellxy);
     count = 0;
     Cell* col = lv->cells[cellxy[0]];
     col[cellxy[1]].collect_point(&q.x, &use3d, 0x104, hits, &count);
@@ -1017,7 +1017,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                         near_.x = pos.x - d.x; near_.y = pos.y - d.y; near_.z = pos.z - d.z;
                         bool visible;
                         if (trace)
-                            visible = grid->trace(&near_, &far_, 50.0f, 0, 0) != 0;
+                            visible = grid->trace_ray(&near_, &far_, 50.0f, 0, 0) != 0;
                         else
                             visible = grid->hf->line_clear(&near_, &far_) != 0;
                         if (!visible)
@@ -1034,7 +1034,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                         wp.y = q.x * m->m_cc.s.y + (q.z * m->m_cc.u.y + q.y * m->m_cc.f.y) + m->m_cc.o.y;
                         wp.z = q.x * m->m_cc.s.z + (q.z * m->m_cc.u.z + q.y * m->m_cc.f.z) + m->m_cc.o.z;
                         float occ;
-                        g_probe.test((unsigned)&wp, &occ);
+                        g_shadow_map.test((unsigned)&wp, &occ);
                         lf = occ * light;
                     }
                     vertex60& v = m->v50[j];
@@ -1121,7 +1121,7 @@ void Mission::replace_mark(int idx)
                 from.z = from.z + 0.7f;
                 vector4 to = b;
                 to.z = to.z + 0.7f;
-                if (scene->trace(&from, &to, 15.0f, 0, 0)) {
+                if (scene->trace_ray(&from, &to, 15.0f, 0, 0)) {
                     *ov = b;
                     goto done;
                 }
@@ -1150,7 +1150,7 @@ void PList::free_values()
 MRow36* vecMRow36::ufill(MRow36* f, unsigned n, const MRow36& v)
 {
     ptr_tag t;
-    uninit_fill_n_24(f, n, v, *this, t);
+    uninit_fill_n36(f, n, v, *this, t);
     return f + n;
 }
 
@@ -1158,7 +1158,7 @@ MRow36* vecMRow36::ufill(MRow36* f, unsigned n, const MRow36& v)
 MVert* vec18::ufill(MVert* f, unsigned n, const MVert& v)
 {
     ptr_tag t;
-    uninit_fill_n_18(f, n, v, *this, t);
+    uninit_fill_n24(f, n, v, *this, t);
     return f + n;
 }
 
@@ -1166,7 +1166,7 @@ MVert* vec18::ufill(MVert* f, unsigned n, const MVert& v)
 MPoly* vec64::ufill(MPoly* f, unsigned n, const MPoly& v)
 {
     ptr_tag t;
-    uninit_fill_n_64(f, n, v, *this, t);
+    uninit_fill_n100(f, n, v, *this, t);
     return f + n;
 }
 
@@ -1174,7 +1174,7 @@ MPoly* vec64::ufill(MPoly* f, unsigned n, const MPoly& v)
 MEdge* vec34::ufill(MEdge* f, unsigned n, const MEdge& v)
 {
     ptr_tag t;
-    uninit_fill_n_34(f, n, v, *this, t);
+    uninit_fill_n52(f, n, v, *this, t);
     return f + n;
 }
 
@@ -1575,8 +1575,8 @@ void __stdcall reset_spawned(int party_id)
 inline bool agent_low_inl(int idx)
 {
     if (idx == g_game->player)
-        return g_game->troops[idx].hp < g_thr_self;
-    return g_game->troops[idx].hp < g_thr_other;
+        return g_game->troops[idx].hp < g_player_wounded_treshold;
+    return g_game->troops[idx].hp < g_hero_wounded_treshold;
 }
 inline Party* get_party(int id)
 {
@@ -1884,7 +1884,7 @@ void Mission::update_team_stats()
             if (a.f14 == 1 && a.f10 == 0) {
                 int tid = a.team;
                 if (tid < 0 || tid >= 8) tid = 7;
-                int cl = a.troop_class();
+                int cl = a.agent_class();
                 a.head_count = (int)(teams[tid].cls[cl].count > 0.0f ? teams[tid].cls[cl].count : teams[tid].cls[cl].count - 0.99999988f);
                 if (tid >= 0 && tid < 8 && cl >= 0 && cl < 3) {
                     teams[tid].cls[cl].count = teams[tid].cls[cl].count + 1.0f;
@@ -1946,7 +1946,7 @@ void Mission::update_team_stats()
                 if (a.f14 == 1 && a.f10 != 1) {
                     int tid = a.team;
                     if (tid < 0 || tid >= 8) tid = 7;
-                    int cl = a.troop_class();
+                    int cl = a.agent_class();
                     if (tid >= 0) {
                         a.view.v50e8.x = (float)a.head_count - teams[tid].cls[cl].count * 0.5f;
                         if (tid == 2) a.view.v50e8.y = 1.2f;
@@ -1971,7 +1971,7 @@ void Mission::update_team_stats()
                         if (a.f14 == 1 && a.f10 != 1) {
                             int tid = a.team;
                             if (tid < 0 || tid >= 8) tid = 7;
-                            a.troop_class();
+                            a.agent_class();
                             if (teams[t].relation[tid] == -1) {
                                 vector4 d;
                                 d.x = a.f50.x - c.pos.x;
@@ -2082,7 +2082,7 @@ __declspec(noinline) CellGridBase::~CellGridBase()
 // @ 0x475d50
 CellGrid::~CellGrid()
 {
-    cleanup();
+    reset();
 }
 
 // @ 0x475e50

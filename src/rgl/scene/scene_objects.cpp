@@ -31,7 +31,7 @@
 
 using namespace rgl;
 
-extern __int64 g_time[];                                        // 0x5e2948 clock table (64-bit ticks)
+#include "../../include/fx.h"
 
 namespace rgl {
 
@@ -373,7 +373,7 @@ namespace rgl {
 
 // @ 0x421720
 strategic_entity::strategic_entity()
-    : f2a0(0), t2a8(g_time[0]), f2b0(0), t2b8(g_time[0]), f2c0(0)
+    : f2a0(0), t2a8(g_ticks[0]), f2b0(0), t2b8(g_ticks[0]), f2c0(0)
 {
     f168 = 0;
     matrix tmp;

@@ -37,7 +37,7 @@ void FaceGen::init()
     {
         tstring n("face_gen_window");
         mesh* m = g_alloc.get_object(n);
-        mesh* c = mesh_clone(m);
+        mesh* c = clone(m);
         o->add_item2(0, (rgl::mesh*)c);
     }
     {
@@ -50,7 +50,7 @@ void FaceGen::init()
     {
         elem* d = new elem;
         deform = d;
-        elem_fill(d, tstring("face_bo_deform"));
+        label_refresh(d, tstring("face_bo_deform"));
         ab[0] = d->x1;
         ab[1] = (float)keys * deform_k + d->y1;
         d->set_size(ab);
@@ -58,7 +58,7 @@ void FaceGen::init()
     {
         elem* b = new elem;
         buttons = b;
-        elem_fill(b, tstring("face_bo_button"));
+        label_refresh(b, tstring("face_bo_button"));
         push_item(ui, (widget*)b);
     }
     tstring btn_text;
@@ -68,7 +68,7 @@ void FaceGen::init()
     }
     for (int i = 0; i < keys; i++) {
         tstring row_name("face_sl_deform_key_base");
-        elem* row = new_label2(deform, &row_name);
+        elem* row = make_slider(deform, &row_name);
         deform_rows[i] = row;
         float y = (float)i * deform_k + row->ey;
         ab[0] = row->ex;
@@ -78,7 +78,7 @@ void FaceGen::init()
         anim_track(&g_anim, skin, i, &kt);
         widget* lab = new widget;
         key_labels[i] = lab;
-        elem_fill(lab, tstring("face_t_deform_key_base"));
+        label_refresh(lab, tstring("face_t_deform_key_base"));
         ab[0] = lab->ex;
         ab[1] = y + lab->ey;
         lab->set_pos(ab);
@@ -87,11 +87,11 @@ void FaceGen::init()
     }
     {
         tstring t("face_s_deform");
-        elem* sc = new_scrollbar(ui, &t);
+        elem* sc = make_scrollbar(ui, &t);
         tstring t2("face_sc_deform");
-        elem* sl = new_slider(deform, &t2, sc);
+        elem* sl = make_editor_list(deform, &t2, sc);
         slider = sl;
-        list_setup(sl);
+        draw(sl);
         push_item(ui, sl);
     }
     cam_btn = 0;
@@ -108,18 +108,18 @@ void FaceGen::init()
     float arrow_h2 = config_float("face_button_arrow_h");
     float arrow_w = config_float("arrow_button_height");
     float arrow_r = config_float("arrow_button_width_ratio");
-    b_next_face = new_arrow(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
-    elem_fill(b_next_face, tstring("face_b_next_face"));
-    b_next_beard = new_arrow(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
-    elem_fill(b_next_beard, tstring("face_b_next_beard"));
-    b_next_hair = new_arrow(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
-    elem_fill(b_next_hair, tstring("face_b_next_hair"));
-    b_prev_face = new_arrow_l(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
-    elem_fill(b_prev_face, tstring("face_b_prev_face"));
-    b_prev_beard = new_arrow_l(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
-    elem_fill(b_prev_beard, tstring("face_b_prev_beard"));
-    b_prev_hair = new_arrow_l(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
-    elem_fill(b_prev_hair, tstring("face_b_prev_hair"));
+    b_next_face = make_right_arrow(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    label_refresh(b_next_face, tstring("face_b_next_face"));
+    b_next_beard = make_right_arrow(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    label_refresh(b_next_beard, tstring("face_b_next_beard"));
+    b_next_hair = make_right_arrow(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    label_refresh(b_next_hair, tstring("face_b_next_hair"));
+    b_prev_face = make_left_arrow(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    label_refresh(b_prev_face, tstring("face_b_prev_face"));
+    b_prev_beard = make_left_arrow(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    label_refresh(b_prev_beard, tstring("face_b_prev_beard"));
+    b_prev_hair = make_left_arrow(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    label_refresh(b_prev_hair, tstring("face_b_prev_hair"));
     {
         tstring t("face_t_change_beard");
         tstring v("ui_change_beard");
@@ -140,7 +140,7 @@ void FaceGen::init()
     }
     {
         tstring n("face_sl_age");
-        sl_age = new_label2(buttons, &n);
+        sl_age = make_slider(buttons, &n);
     }
     {
         tstring t("face_t_age");
@@ -150,7 +150,7 @@ void FaceGen::init()
     }
     {
         tstring n("face_sl_hair_color");
-        sl_hair_color = new_label2(buttons, &n);
+        sl_hair_color = make_slider(buttons, &n);
     }
     {
         tstring t("face_t_hair_color");
@@ -170,7 +170,7 @@ void FaceGen::init()
         tstring b2("medium_button");
         widget* btn = new_medium_button(buttons, kv, 0, 0, &a, &b2, &btn_text, 0.014f, 0.72f, 3.7f);
         b_randomize = btn;
-        elem_fill(btn, tstring("face_b_randomize"));
+        label_refresh(btn, tstring("face_b_randomize"));
     }
     {
         tstring v("ui_reset");
@@ -179,7 +179,7 @@ void FaceGen::init()
         tstring b2("medium_button");
         widget* btn = new_medium_button(buttons, kv, 0, 0, &a, &b2, &btn_text, 0.014f, 0.72f, 3.7f);
         b_reset = btn;
-        elem_fill(btn, tstring("face_b_reset"));
+        label_refresh(btn, tstring("face_b_reset"));
     }
     {
         tstring v("ui_done");
@@ -188,7 +188,7 @@ void FaceGen::init()
         tstring b2("medium_button");
         widget* btn = new_medium_button(buttons, kv, 0, 0, &a, &b2, &btn_text, 0.014f, 0.72f, 3.7f);
         b_done = btn;
-        elem_fill(btn, tstring("face_b_done"));
+        label_refresh(btn, tstring("face_b_done"));
     }
 
     // ---- face body, world and wind tracks ----------------------------------------------------------

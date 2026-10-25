@@ -42,12 +42,12 @@ struct FrustumBlock { int d[0x48]; void build_planes(); };   // build_planes = 0
 // 0x40cd00 has a hidden return pointer and returns it; the two rotation helpers are thiscall on the matrix and
 // take a pointer to the angle (thiscall, ret 4).
 struct mat_self : rgl::matrix {
-    void rotate_fu(const float* angle);                     // 0x40e570 (rows s/f about u)
-    void rotate_su(const float* angle);                     // 0x40e670 (rows s/u about f)
+    void rotate_about_s(const float* angle);                     // 0x40e570 (rows s/f about u)
+    void rotate_about_f(const float* angle);                     // 0x40e670 (rows s/u about f)
 };
 mat_self identity_pos();                                    // 0x40cd00 (cdecl, hidden return)
-void rotate_fu(void* m, const float* angle);                // 0x40e570 (same thiscall, for callers holding a raw ptr)
-void rotate_su(void* m, const float* angle);                // 0x40e670
+void rotate_about_s(void* m, const float* angle);                // 0x40e570 (same thiscall, for callers holding a raw ptr)
+void rotate_about_f(void* m, const float* angle);                // 0x40e670
 
 void rotate_2x2(float* m, float angle);                     // 0x4f3b40
 void identity_2x2(float* m);                                // 0x4f3be0

@@ -47,7 +47,7 @@ void __cdecl destroy_row_range(void* first, void* model, void* last, void* self)
 
 // The member at +0x10 is the row's model: [0]=first, [4]=buffer (freed), [8]=last.
 // @ 0x4ebdc0
-void __stdcall dtor_ui_row(UiRow* param)
+void __stdcall destroy(UiRow* param)
 {
     UiRow* self = param;
     int* l = &self->pad10;
@@ -218,50 +218,50 @@ void GuiScreen::process(int param)
             switch (type) {
             case 0xc:
                 if ((char)rec[0] < 0) {
-                    this->key_flag(0x10);
+                    this->wheel_step(0x10);
                     cr = &this->click3;
                     if (cr->elapsed() < g_four_tenths) {
-                        this->key_flag(0x200);
+                        this->wheel_step(0x200);
                     }
                     else {
-                        cr->x = g_5e2948[cr->idx * 2];
-                        cr->y = g_5e2948[cr->idx * 2 + 1];
+                        cr->x = g_ticks[cr->idx * 2];
+                        cr->y = g_ticks[cr->idx * 2 + 1];
                     }
                 }
                 else {
-                    this->key_flag(8);
+                    this->wheel_step(8);
                 }
                 break;
             case 0xd:
                 if ((char)rec[0] < 0) {
-                    this->key_flag(0x40);
+                    this->wheel_step(0x40);
                     cr = &this->click2;
                     if (cr->elapsed() < g_four_tenths) {
-                        this->key_flag(0x400);
+                        this->wheel_step(0x400);
                     }
                     else {
-                        cr->x = g_5e2948[cr->idx * 2];
-                        cr->y = g_5e2948[cr->idx * 2 + 1];
+                        cr->x = g_ticks[cr->idx * 2];
+                        cr->y = g_ticks[cr->idx * 2 + 1];
                     }
                 }
                 else {
-                    this->key_flag(0x20);
+                    this->wheel_step(0x20);
                 }
                 break;
             case 0xe:
                 if ((char)rec[0] < 0) {
-                    this->key_flag(0x100);
+                    this->wheel_step(0x100);
                     cr = &this->click1;
                     if (cr->elapsed() < g_four_tenths) {
-                        this->key_flag(0x800);
+                        this->wheel_step(0x800);
                     }
                     else {
-                        cr->x = g_5e2948[cr->idx * 2];
-                        cr->y = g_5e2948[cr->idx * 2 + 1];
+                        cr->x = g_ticks[cr->idx * 2];
+                        cr->y = g_ticks[cr->idx * 2 + 1];
                     }
                 }
                 else {
-                    this->key_flag(0x80);
+                    this->wheel_step(0x80);
                 }
                 break;
             }
@@ -285,7 +285,7 @@ void GuiScreen::process(int param)
 
     this->post(param);
     if (this->f1709)
-        this->finish();
+        this->clear_selection();
 }
 
 // @ 0x4ec460

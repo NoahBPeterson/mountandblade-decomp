@@ -76,7 +76,7 @@ struct WidgetC : Widget {
 };
 
 // ---- helpers declared elsewhere --------------------------------------------------------------------
-void load_params(Widget* w, tstring name);      // 0x4e4c70 (tstring by value)
+void label_refresh(Widget* w, tstring name);      // 0x4e4c70 (tstring by value)
 void* make_medium_button(void* parent, const tstring* text, int a2, int a3, float a4,
                          const tstring* up, const tstring* down, int a5, float a6, float k);  // 0x4dcc50
 
@@ -94,8 +94,8 @@ extern tstring g_5d705c;                        // 0x5d705c
 extern unsigned char g_5d706c;                  // 0x5d706c
 extern unsigned char g_5d706d;                  // 0x5d706d
 extern int g_5e29a4;                            // 0x5e29a4
-extern int g_5e29c4;                            // 0x5e29c4
-extern void* g_font_def;                        // 0x5e2934
+#include "../game_globals.h"
+extern void* g_font;                        // 0x5e2934
 
 struct Startup { void init(); };                // 0x5fe898
 struct GuiState { void init_widgets(); };       // 0x5d7080
@@ -115,7 +115,7 @@ struct EditorApp {
 
 struct FontDef { void load_fonts(tstring* path); };  // 0x4d9aa0
 FontDef* ctor_font_def(FontDef* p);             // 0x4d99d0
-void init_mission_triggers();                   // 0x4d0620
+void init_mission_trigger_records();                   // 0x4d0620
 void init_mission_trigger_records(); // 0x4d0620
 
 // ---- per-row text table of the mission-UI widget ----------------------------------------------------

@@ -6,14 +6,14 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f5d20
-WidgetA* __cdecl make_label(void* parent, const tstring* name, const tstring* text)
+WidgetA* __cdecl new_key_label(void* parent, const tstring* name, const tstring* text)
 {
     WidgetA* w = (WidgetA*)::operator new(0x178);
     if (w != 0)
         w = (WidgetA*)w->base_ctor();
     else
         w = 0;
-    load_params(w, *text);
+    label_refresh(w, *text);
     float out[2];
     w->set_text(out, *name);
     ((Widget*)parent)->add_child(w);
@@ -96,7 +96,7 @@ WidgetB* __cdecl make_slider(void* parent, const tstring* name)
     } else {
         w = 0;
     }
-    load_params(w, *name);
+    label_refresh(w, *name);
     float h = *(float*)((char*)w + 0xf0);
     {
         float size[2];
@@ -132,7 +132,7 @@ WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name)
     } else {
         w = 0;
     }
-    load_params(w, *name);
+    label_refresh(w, *name);
     float a = *(float*)((char*)w + 0xf0) * 50.0f;
     w->f178 = 1;
     float b = *(float*)((char*)w + 0xf4) * 1.5576323f;
@@ -169,7 +169,7 @@ WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
         w->f484 = a3;
     w->f490 = (int)parent;
     w->add_child(parent);
-    load_params(w, *name);
+    label_refresh(w, *name);
     return w;
 }
 
@@ -199,7 +199,7 @@ TextRow* TextRowVec::insert_n(TextRow* pos, unsigned n, const TextRow& v)
 }
 
 // @ 0x4f65f0
-void construct_n(NameVecRec* first, unsigned n, const NameVecRec& v, RecAlloc* a)
+void uninit_fill(NameVecRec* first, unsigned n, const NameVecRec& v, RecAlloc* a)
 {
     NameVecRec* start = first;
     try {
@@ -291,15 +291,15 @@ int __cdecl engine_init()
         FontDef* p = (FontDef*)::operator new(0x386c);
         if (p != 0)
             p = ctor_font_def(p);
-        g_font_def = p;
+        g_font = p;
     }
     {
         tstring n("Data\\font_data.xml");
-        ((FontDef*)g_font_def)->load_fonts(&n);
+        ((FontDef*)g_font)->load_fonts(&n);
     }
     ((GuiState*)0x5d7080)->init_widgets();
-    init_mission_triggers();
-    g_5e29a4 = g_5e29c4;
+    init_mission_trigger_records();
+    g_5e29a4 = g_trial_mode;
     ((MainMenu*)0xa73980)->choose(2);
     return 0;
 }

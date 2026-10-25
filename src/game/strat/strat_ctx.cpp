@@ -41,7 +41,7 @@ void StratEnt::shadow_tick()
         if (p288 == 0) return;
         p288->file.assign("shadow_shader");
         skin* sk = p288;
-        sk->f30 = g_resmgr.lookup_file(&sk->file);
+        sk->f30 = g_resmgr.resolve_shader(&sk->file);
         p288->id = 0x108;
         p288->refs[0]->f24 = 0x300000;
     }

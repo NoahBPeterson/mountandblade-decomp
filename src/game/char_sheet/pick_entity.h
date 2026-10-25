@@ -24,9 +24,9 @@ extern const float g_3ac49ba6;          // 1.5e-3f (capsule radius)
 extern int g_menu_mode;                 // 0x5e2930+0x1a20c
 extern int g_sel_entity;                // 0x5e2930+0x1a1b4
 extern int g_tasks[];                   // 0x5e292c scene (0x65dc)
-extern int g_map_rows[];                // 0x5e28f8 map rows (0x20 bytes)
-extern int g_map_count;                 // 0x5e29e8
-extern int g_point_rows[];              // 0x5e29dc point rows (0x78 bytes)
+extern int g_ptypes[];                // 0x5e28f8 map rows (0x20 bytes)
+extern int g_ptype_count;                 // 0x5e29e8
+extern int g_propkinds[];              // 0x5e29dc point rows (0x78 bytes)
 extern void* g_overlay;                 // 0x5d75e8
 extern int g_cursor_id;                 // 0x5d8760
 extern int g_cursor_color;              // 0x5d8764
