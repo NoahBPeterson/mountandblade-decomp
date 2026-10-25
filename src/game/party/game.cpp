@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <stdio.h>
 #include "./game.h"
+#include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "./nav_graph.h"
 #include "./loading_panel.h"
 #include "./externs.h"
@@ -21,17 +22,16 @@
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/i64_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
-extern int g_item_count;                                    // 0x5e29d4 (the audit resolves this name by annotation: another slice maps the same mangled name to 0x8ed4f88)
+#include "../../include/item_kind.h"      // g_item_kind_count 0x5e29d4 (canonical; the audit resolves it by this annotation)
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 #include "../map_flags.h"                                     // MapFlags (0x5e291c): the one definition
-extern char* g_menu_state;                                  // 0xa739bc (+0x14 cleared)
-extern char* g_menu_sub;                                    // 0xa739dc (+0x18 set)
+struct WindowMgrW;
+extern WindowMgrW g_windows;                                // 0xa73980 (screen slot 15 = 0xa739bc: +0x14 cleared; slot 23 = 0xa739dc: +0x18 set)
 extern int g_save_kind;                                     // 0x5e29bc
 extern int g_a75eb8;                                        // 0xa75eb8
-extern tstring g_hero_default;                              // 0x8ee3c38
 
 struct GameStep2 { void call(int v); };                     // 0x5236f0 (this = g_game)
 struct GameStep4 { void call(); };                          // 0x51f1a0
@@ -58,13 +58,13 @@ void LoadingPanel::update(int arg)
         if (m == 0) {
             log_stream_ptr()->w_cstr("Switching to menu window...\n");
             g_game->f13aec = 0;
-            *(int*)(g_menu_state + 0x14) = 0;
-            *(int*)(g_menu_sub + 0x18) = 0xf;
-            g_main_menu.choose(0x17);
+            *(int*)(*(char**)((char*)&g_windows + 0x3c) + 0x14) = 0;
+            *(int*)(*(char**)((char*)&g_windows + 0x5c) + 0x18) = 0xf;
+            (*(main_menu*)&g_windows).choose(0x17);
             return;
         }
         if (m == 1) {
-            g_main_menu.choose(7);
+            (*(main_menu*)&g_windows).choose(7);
             return;
         }
         if (m == 2) {
@@ -96,23 +96,23 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
             save = sg;
             if (!((SaveOps*)sg)->open_read(path.c_str()))
                 mb_error("Unable to open found savegame!!!");
-            header.load(save);
+            header.read_slot(save);
             g_save_kind = header.f28;
         }
         *counter = *counter + 1;
         tstring k("ui_creating_game");
-        out->assign(g_strtab.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(&k)->c_str());
         return r;
     }
     if (step == 1) {
         Game* g = new Game;
         g_game = g;
         g->reset();
-        g_game->init(g_hero_default, header.f34, mode == 2 || mode == 3);
+        g_game->init(g_module_name, header.f34, mode == 2 || mode == 3);
         g_game->f1a05c = 1;
         *counter = *counter + 1;
         tstring k("ui_loading_setting_data");
-        out->assign(g_strtab.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(&k)->c_str());
         return false;
     }
     if (step == 2) {
@@ -127,7 +127,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         }
         *counter = *counter + 1;
         tstring k("ui_loading_savegame_file");
-        out->assign(g_strtab.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(&k)->c_str());
         return false;
     }
     if (step == 3) {
@@ -142,7 +142,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         }
         *counter = *counter + 1;
         tstring k("ui_loading_map_file");
-        out->assign(g_strtab.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(&k)->c_str());
         return false;
     }
     if (step == 4) {
@@ -152,7 +152,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
             if (m == 2 || m == 3) {
                 Game* g = g_game;
                 tstring key("ui_player");
-                tstring name(*g_strtab.lookup(&key));
+                tstring name(*g_strtable.lookup(&key));
                 troop_name(&g->troops[g->cur_troop]) = name;
             }
         }
@@ -161,7 +161,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         log_stream_ptr()->w_cstr("load_map_data complete.\n");
         *counter = *counter + 1;
         tstring k("ui_initializing_map");
-        out->assign(g_strtab.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(&k)->c_str());
         return false;
     }
     if (step == 5) {
@@ -169,7 +169,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
             g_game->init_map();
         *counter = *counter + 1;
         tstring k("ui_launching_game");
-        out->assign(g_strtab.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(&k)->c_str());
         log_stream_ptr()->w_cstr("Init_map complete.\n");
         return false;
     }
@@ -183,7 +183,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         log_stream_ptr()->w_cstr("launch complete.\n");
         *counter = *counter + 1;
         tstring k("ui_finished");
-        out->assign(g_strtab.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(&k)->c_str());
         return false;
     }
     return true;
@@ -392,8 +392,8 @@ MB_NOINLINE Scene::Scene() : list(0)
 // the map objects reached through globals
 struct SceneInit { int Init(int a, int b, int* c, int* d, int* e); };      // 0x478ad0 (this = the new 0x344-byte scene)
 struct MapReset { void run(); };                                            // 0x4704b0 (this = g_nav)
-struct MapBuild { void build(int world); };                                 // 0x479980 (this = g_scene)
-extern MapBuild* g_scene;                                                   // 0xa732b4
+struct MapBuild { void build(int world); };                                 // 0x479980 (this = g_level)
+extern MapBuild* g_level;                                                   // 0xa732b4
 
 // @ 0x51d2b0
 void Game::init_map()
@@ -409,9 +409,9 @@ void Game::init_map()
         t.b = 5;
         t.c = 5;
         t.a = 0;
-        g_scene = (MapBuild*)((SceneInit*)mem)->Init((int)g_nav + 0x44, (int)g_nav + 0x54, &t.c, &t.b, &t.a);
+        g_level = (MapBuild*)((SceneInit*)mem)->Init((int)g_nav + 0x44, (int)g_nav + 0x54, &t.c, &t.b, &t.a);
     } else {
-        g_scene = 0;
+        g_level = 0;
     }
     t.c = 1;
     t.b = 0;
@@ -421,7 +421,7 @@ void Game::init_map()
     t.b = 0;
     t.a = 7;
     g_nav->solve(&t.a, &t.b, &t.c);
-    g_scene->build((int)g_nav);
+    g_level->build((int)g_nav);
 }
 
 // @ 0x51d3a0
@@ -656,7 +656,7 @@ void Game::load_state(stream_base* s)
     unsigned __int64 tick;
     s->r_u64(&tick);
     g_tick1_hi = *((int*)&tick + 1);
-    g_tick1_lo = *(int*)&tick;
+    ((int*)g_ticks)[2] = *(int*)&tick;
     s->r_int(&f4);
     s->r_int(&fb4);
     load_clock(s);
@@ -841,8 +841,8 @@ void Game::load_party_templates(stream_base* s)
 {
     int n;
     s->r_int(&n);
-    if (n > g_n_party_templates)
-        mb_error("Load error: Number of party_templates in file: %d, exceeds %d", n, g_n_party_templates);
+    if (n > g_party_template_count)
+        mb_error("Load error: Number of party_templates in file: %d, exceeds %d", n, g_party_template_count);
     for (int i = 0; i < n; i++)
         g_party_templates[i].read(s);
 }
@@ -861,7 +861,7 @@ void Game::load_items(stream_base* s)
 {
     int n;
     s->r_int(&n);
-    if (n < 0 || n >= g_item_count + 1)
+    if (n < 0 || n >= g_item_kind_count + 1)
         mb_error("Load error: Invalid number of item kinds: %d", n);
     for (int i = 0; i < n; i++)
         ((I64Vec*)((char*)&g_items[i] + 0x30))->read(s);
@@ -952,7 +952,7 @@ MB_NOINLINE void TrackVec::resize(unsigned n, TrackRec val)
     }
     if (_Myfirst && n < (unsigned)size()) {
         TrackRec* it;
-        erase_tail(&it, _Myfirst + n, _Mylast);
+        shift_over(&it, _Myfirst + n, _Mylast);
     }
 }
 
@@ -1023,7 +1023,7 @@ MB_NOINLINE void SpriteTable::clear()
 void Game::load_scene_parties(stream_base* s)
 {
     scene.read(s, 1);
-    int idx = scene.lookup(f78);
+    int idx = scene.index_of(f78);
     char** pages = *(char***)(scene.list.b + 4);
     char* rec = pages[idx >> 4] + (idx & 0xf) * 0x5ac8;
     for (int i = 0; i < *(int*)(rec + 0x8a8); i++) {

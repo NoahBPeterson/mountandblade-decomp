@@ -15,6 +15,7 @@
 #ifndef GAME_PARTY_PARTY_WINDOW_H
 #define GAME_PARTY_PARTY_WINDOW_H
 #include "../tstring.h"
+#include "../game_globals.h"      // canonical g_disable_food_slot
 #include "../../rgl/rgl_math.h"
 #include "../ui/item_ref.h"
 #include "../ui/troop_inv.h"
@@ -27,8 +28,9 @@
 #include "../config_table.h"               // ConfigEntry, ConfigTable, g_config, CONFIG_ENTRIES: the one definition
 
 #include "../res_mesh.h"               // ResMesh (was ResMesh), ResMgr, ObjTable: the one definition
-extern ResMgr g_resmgr_party;               // 0x5d6fa0
-extern ObjTable g_obj;                      // 0xa75f40
+#include "../../rgl/resource.h"          // resource_manager g_resmgr 0x5d6fa0
+#define g_resmgr_party (*(ResMgr*)&g_resmgr)   // the 0x5d6fa0 object seen as the pack-lookup view ResMgr
+extern ObjTable g_tableaus;                      // 0xa75f40
 ResMesh* __cdecl make_item_mesh(const ItemRef* def, const float* scale);   // 0x4fba40 (ret 0): the mesh of an item reference
 
 void __cdecl label_refresh(void* w, tstring name);          // 0x4e4c70 (cdecl, the name by value)
@@ -36,13 +38,13 @@ void __cdecl label_refresh(void* w, tstring name);          // 0x4e4c70 (cdecl, 
 inline float item_f208(ItemKind* k) { return *(float*)((char*)k + 0x208); }       // +0x208 base armour value   0x502620
 inline ItemSound* item_sound(ItemKind* k) { return (ItemSound*)((char*)k + 0x228); }   // 0x502b80
 
-extern int g_a181a8;                        // 0xa181a8 (non-zero: no food slot)  0x501a20
 extern int g_equip_page;                    // 0xa75f68 (negative: nothing selected)  0x5024e0
 struct SpawnSliders {                       // 0xa70448: reset by 0x502b80
     int lo, hi;                             // 0xa70448, 0xa7044c
     __int64 pos;                            // 0xa70450 (lo word = troop, hi word = its sign)
 };
-extern SpawnSliders g_sliders;              // 0xa70448
+struct ScriptState;
+extern ScriptState g_script;                // 0xa70440 (dialog_manager.h; its g_game clashes with game.h)
 
 // ---- widgets -------------------------------------------------------------------------------------------
 struct UiWindow : MissionUi {               // 0x188 bytes, constructor 0x4931a0

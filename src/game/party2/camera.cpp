@@ -12,6 +12,8 @@
 #include <new>
 #include <string.h>
 #include "../../rgl/rgl_math.h"
+#include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
+#include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include <vector>
 #include <windows.h>
 #include <stdio.h>
@@ -27,6 +29,7 @@
 #include "../terrain_b/terrain_b.h"
 #include "./camera.h"
 #include "./party_2.h"
+#include "../../include/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
 #include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
@@ -58,10 +61,8 @@ struct E16 { int a, b, c, d; };                 // one 16-byte text-row record
 // ---- external callees ----------------------------------------------------------------------------
 void __fastcall base_ctor_4931a0(void* o);      // 0x4931a0 (ecx = object)
 void __fastcall base_ctor_48ae20(void* o);      // 0x48ae20 (ecx = object)
-void __fastcall base_dtor_490520(void* o);      // 0x490520 (ecx = object)
-void __fastcall play_sound_48b2d0(void* m);     // 0x48b2d0
-extern "C" void __stdcall __CxxThrowException(void*, void*);        // 0x5368e6
-extern void* g_5e2930;                          // 0x5e2930 (game-data pointer, matrix arena at +0x14014)
+void __fastcall dtor_common(void* o);      // 0x490520 (ecx = object)
+void __fastcall play_sound(void* m);     // 0x48b2d0
 struct Mission { int add_placed(const int* kind, const int* id, const int* value, const void* m, int* spawn_id); }; // 0x44f870
 
 struct ptr_tag {};                               // empty class passed by value (one slot)
@@ -209,7 +210,7 @@ struct UiA {
     int f184;                                   // +0x184
 };
 
-extern PVec g_5d7080;                           // 0x5d7080 (the container list)
+extern PVec g_gui;                           // 0x5d7080 (the container list)
 
 // ---- function definitions (in VA order) ----------------------------------------------------------
 
@@ -281,7 +282,7 @@ void PObj::place(int* p)
 {
     int a = -1;
     int b = 6;
-    ((Mission*)this)->add_placed(&b, p, p + 1, (const void*)((char*)g_5e2930 + 0x14014), &a);
+    ((Mission*)this)->add_placed(&b, p, p + 1, (const void*)((char*)g_game + 0x14014), &a);
 }
 
 // @ 0x49b4f0
@@ -341,10 +342,8 @@ using rgl::mesh;
 struct StrTable { tstring* lookup(const tstring& key); };   // 0x43a1e0
 extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };        // 0x452c00 (thiscall, ret 0x14)
-extern MsgLog g_msglog;                             // 0x5d7080
+extern MsgLog g_gui;                             // 0x5d7080
 
-extern int g_sound_holder[];                        // 0x5aa128 (sound device)
-extern float g_sound_origin[];                      // 0x5aa168 (position vector for play)
 extern int g_snd_got_value;                         // 0x5aa1a0 (sound id)
 extern int g_snd_lost_value;                        // 0x5aa19c
 extern int g_snd_new_quest;                         // 0x5aa180
@@ -365,14 +364,13 @@ extern TickPair g_ticks[];                          // 0x5e2948
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);        // 0x536f8f
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);  // 0x415100
-void* operator new(unsigned size);                  // 0x53545e
 
 // ---- scene objects -------------------------------------------------------------------------------
 struct Shape { virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
                virtual void v4(); virtual void v5(); virtual void v6(); };
 struct SphereMem { Shape* construct(vector4 pos, const float* radius); };   // 0x4332a0 (thiscall, ret 0x14, ecx = raw memory)
 
-struct RotFrame { void rotate_sf(const float* angle); };   // 0x40e770 (thiscall): rotates the side/forward rows
+struct RotFrame { void rotate_about_u(const float* angle); };   // 0x40e770 (thiscall): rotates the side/forward rows
 
 // a scene entity (only the offsets this slice touches are named)
 struct EntityFull {
@@ -385,10 +383,10 @@ struct EntityFull {
     void**   f11c;                                  // +0x11c (first dword -> matrix at +0xcc)
     char pad120[0x168 - 0x120];
     int      f168;                                  // +0x168  (end fall behaviour = 3)
-    void add_mesh(mesh* m);                         // 0x442110 (thiscall, ret 4)
+    void add_extra(mesh* m);                         // 0x442110 (thiscall, ret 4)
 };
 struct EntityHost { EntityFull* create_entity(int type); };   // 0x428440 (ret 4)
-extern EntityHost* g_entity_host;                   // 0xa732b4 (points to the host object)
+extern EntityHost* g_level;                   // 0xa732b4 (points to the host object)
 
 
 // ---- records ---------------------------------------------------------------------------------------
@@ -449,11 +447,10 @@ struct Mission {
     int         f158c;                              // +0x158c (font mesh visible)
 
     tstring string_value(int index);                // 0x48e9e0 (ret 4)
-    mesh* make_label(EntityFull* e);                // 0x495b20 (ret 4)
+    mesh* build_legend_mesh(EntityFull* e);                // 0x495b20 (ret 4)
 
     void spawn_battle_icon(unsigned id);                                    // 0x49bbb0
 };
-extern Mission* g_mission;                          // 0x5e2930
 
 // the UI root object (global 0x5d7080, the same object the message log hangs off): the font mesh at +0x1480 and its "on" flag
 struct HudRoot {
@@ -493,7 +490,7 @@ void HudRoot::set_font_mesh(const tstring* text, int arg)
 void Mission::spawn_battle_icon(unsigned id)
 {
     Rec98* rec = (Rec98*)((id & 0xf) * 0x98 + *(f0e0.begin() + (id >> 4)));
-    EntityFull* e = g_entity_host->create_entity(9);
+    EntityFull* e = g_level->create_entity(9);
     rec->f50 = (int)e;
 
     Shape* shape;
@@ -523,14 +520,14 @@ void Mission::spawn_battle_icon(unsigned id)
     if (rec->f10 == 1) {
         {
             tstring nm("battle_icon");
-            e->add_mesh(g_resmgr.get_object(&nm)->clone());
+            e->add_extra(g_resmgr.get_object(&nm)->clone());
         }
         {
             float angle = 1.5707963f;
-            ((RotFrame*)((char*)e->f11c[0] + 0xcc))->rotate_sf(&angle);
+            ((RotFrame*)((char*)e->f11c[0] + 0xcc))->rotate_about_u(&angle);
         }
 
-        mesh* label = make_label(e);
+        mesh* label = build_legend_mesh(e);
 
         {
             float h = 1.0f;
@@ -566,12 +563,11 @@ struct StrTable {                                   // 0x5e2a18
 };
 extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };                    // 0x452c00 (thiscall, ret 0x14)
-extern MsgLog g_msglog;                             // 0x5d7080
+extern MsgLog g_gui;                             // 0x5d7080
 
 struct vector4 { float x, y, z, w; };
 struct matrix { float m[4][4]; };
 matrix* identity_pos(matrix* out);                  // 0x40cd00 (cdecl; returns out)
-void* operator new(unsigned size);                  // 0x53545e
 
 // sprite (0x6c bytes, reference counted at +0x64); a "+0x2c slot" object also ref-counted
 struct Sprite { char pad[0x64]; int refs; };
@@ -610,7 +606,7 @@ struct OrderObj {
     int f_a4;                                       // +0xa4
     char pada8[0x168 - 0xa8];
     int fade;                                       // +0x168
-    void refresh();                                 // 0x4b7840
+    void update_flags();                                 // 0x4b7840
 };
 
 struct OrderEntry {                                 // 0x5ac8-byte order/agent record
@@ -626,7 +622,7 @@ struct OrderEntry {                                 // 0x5ac8-byte order/agent r
     OrderObj* obj;                                  // +0x59c0
     char pad59c4[0x59e8 - 0x59c4];
     Sprite* label;                                  // +0x59e8 (text mesh)
-    void finalize();                                // 0x4b2880
+    void place_on_map();                                // 0x4b2880
 };
 
 struct Reinf {                                      // 0x4c-byte reinforcement record
@@ -639,7 +635,7 @@ struct ReinfSet {                                   // 0x58-byte reinforcement p
     int count;                                      // +0x38
     char pad3c[0x58 - 0x3c];
 };
-extern ReinfSet* g_reinf;                           // 0x5e2a00
+extern ReinfSet* g_mission_templates;                           // 0x5e2a00
 
 struct Unit {                                       // 0x130-byte leader/unit record inside Mission
     char pad0[0x6b0];
@@ -667,13 +663,13 @@ struct MissionAgents {
 struct OrderObjHost {
     virtual OrderObj* create_entity(int type);       // 0x428440 (ret 4)
 };
-extern void* g_obj_host;                            // 0xa732b4 (pointer to the host object)
+extern void* g_level;                            // 0xa732b4 (pointer to the host object)
 
 struct Mission {
     char pad0[0x527c];
     char orders[8 * 0x16c];                         // +0x527c (order groups, 0x16c each)
     char pad5df0[0x5df0 - 0x527c - 8 * 0x16c];
-    int cur_set;                                    // +0x5df0 (index into g_reinf)
+    int cur_set;                                    // +0x5df0 (index into g_mission_templates)
     char pad5df4[0x6214 - 0x5df4];
     int team_b;                                     // +0x6214
     int team_a;                                     // +0x6218
@@ -683,13 +679,12 @@ struct Mission {
     char pad666a[2];
     Unit units[1];                                  // +0x666c (0x130 each)
 
-    void reset_group(int a, int b);                 // 0x4677a0 (ret 8)
-    int add_item(Sprite* label, const char* name, int a, int b, const float* h);   // 0x49baa0 (ret 0x14)
-    Sprite* make_label(OrderObj* o);                // 0x495b20 (ret 4)
+    void add_amount(int a, int b);                 // 0x4677a0 (ret 8)
+    int label_text(Sprite* label, const char* name, int a, int b, const float* h);   // 0x49baa0 (ret 0x14)
+    Sprite* build_legend_mesh(OrderObj* o);                // 0x495b20 (ret 4)
     void check_slot(int id, unsigned bits);         // 0x49c170 (ret 8)
 };
-extern Mission* g_mission;                          // 0x5e2930
-extern char g_ui_mode;                              // 0xa181b8
+extern char g_show_party_ids_instead_of_names;                              // 0xa181b8
 struct ResMgr { Sprite* material(const char* name); };  // 0x418a70
 extern ResMgr g_resmgr;                             // 0x5d6fa0
 
@@ -715,12 +710,12 @@ void MissionAgents::add_order_arrow(int id, int mode)
     o->shape = shape;
     e->obj = o;
     o->frame = *identity_pos(&o->frame);
-    e->obj->refresh();
-    e->label = g_mission->make_label(e->obj);
+    e->obj->update_flags();
+    e->label = ((Mission*)g_game)->build_legend_mesh(e->obj);
     h = (float)e->f_a4;
     if (e->flags & 0x80000) {
         name = "";
-        g_mission->add_item(e->label, name, 0, 1, &h);
+        ((Mission*)g_game)->label_text(e->label, name, 0, 1, &h);
     } else if (e->flags & 0x400) {
         if ((e->flags & 0x3000) == 0)
             h = 0.5f;
@@ -728,13 +723,13 @@ void MissionAgents::add_order_arrow(int id, int mode)
             h = 0.75f;
         else
             h = 1.0f;
-        if (g_ui_mode)
+        if (g_show_party_ids_instead_of_names)
             name = (const char*)&e->text;
         else if (e->flag1c == 0 && (name = g_strtable.find(&e->text)) != 0)
             ;
         else
             name = e->name;
-        g_mission->add_item(e->label, name, 1, (int)h, &h);
+        ((Mission*)g_game)->label_text(e->label, name, 1, (int)h, &h);
         ((RefSlot*)e->label)->sprite = g_resmgr.material("map_legend_outline");
     } else {
         if ((e->flags & 0x3000) == 0)
@@ -743,32 +738,32 @@ void MissionAgents::add_order_arrow(int id, int mode)
             h = 0.75f;
         else
             h = 1.0f;
-        if (g_ui_mode)
+        if (g_show_party_ids_instead_of_names)
             name = (const char*)&e->text;
         else if (e->flag1c == 0 && (name = g_strtable.find(&e->text)) != 0)
             ;
         else
             name = e->name;
-        g_mission->add_item(e->label, name, 0, (int)h, &h);
+        ((Mission*)g_game)->label_text(e->label, name, 0, (int)h, &h);
     }
     o->mode = mode;
     o->fade = 1;
     if (!(o->param() > 0.0f))
         o->set_param(&h);
-    e->finalize();
+    e->place_on_map();
 }
 
 // @ 0x49c170
 void Mission::check_slot(int id, unsigned bits)
 {
-    if (id >= 0 && id < g_reinf[cur_set].count) {
-        Reinf* r = &g_reinf[cur_set].recs[id];
+    if (id >= 0 && id < g_mission_templates[cur_set].count) {
+        Reinf* r = &g_mission_templates[cur_set].recs[id];
         int eax_, ebx_;
 
         memcpy((char*)this + r->idx * 0x130 + 0x6b0, (char*)this + r->idx * 0x130 + 0x6f0, 0x40);
         *(int*)((char*)this + r->idx * 0x130 + 0x770) = 0;     // r->idx is re-read: the stores may alias it
         *(int*)((char*)this + r->idx * 0x130 + 0x774) = 0;
-        reset_group(id, bits);
+        add_amount(id, bits);
         if (r->flags & 1) { slot_b = 1; return; }
         if (r->flags & 2) { slot_a = 1; return; }
         int a = r->flags & 0x40;
@@ -783,7 +778,7 @@ void Mission::check_slot(int id, unsigned bits)
         if (a != 0 && team_a == 0) { slot_b = 1; return; }
         if (b != 0 && team_a == 1) slot_b = 1;
     } else {
-        g_msglog.add(tstring("Invalid entry no for add_reinforcements"), -1);
+        g_gui.add(tstring("Invalid entry no for add_reinforcements"), -1);
     }
 }
 
@@ -807,7 +802,7 @@ namespace c49c2c0 {
 struct StrTable { tstring* lookup(const tstring& key); };   // 0x43a1e0 (lookup)
 extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };        // 0x452c00 (thiscall, ret 0x14)
-extern MsgLog g_msglog;                             // 0x5d7080
+extern MsgLog g_gui;                             // 0x5d7080
 
 struct vector4 { float x, y, z, w; };
 
@@ -850,7 +845,7 @@ struct Agent {
     char    pad2c4[0x56b4 - 0x2c4];
     vector4 alt;            // +0x56b4
     char    pad56c4[0x5928 - 0x56c4];
-    int     nav_face();     // 0x43cb30 (thiscall) -> eax
+    int     update_nav_face();     // 0x43cb30 (thiscall) -> eax
 };
 
 struct Level { int nearest_face(vector4* p); };     // 0x439a50 (thiscall) -> face index
@@ -866,23 +861,22 @@ struct Mission {
     Leader      leaders[3];                 // +0x527c
     char        pad6c20[0x40];
 
-    int  bounds_test(vector4* p);           // 0x48a990 (thiscall) -> al
-    void set_order(int index, int on);      // 0x492230 (ret 8)
-    void set_fire(int index, int mode);     // 0x492350 (ret 8)
+    int  point_in_rect(vector4* p);           // 0x48a990 (thiscall) -> al
+    void set_weapon_order_1(int index, int on);      // 0x492230 (ret 8)
+    void set_weapon_order_2(int index, int mode);     // 0x492350 (ret 8)
     void order(int index, int order);
 };
 extern Mission* g_mission;                  // 0x5e292c
 
 // order-leader helpers (all thiscall on the Leader record)
-void leader_set_targets(Leader* L, vector4* pos, vector4* a, vector4* b);   // 0x4898e0
-void leader_set_mode(Leader* L, int v);                                     // 0x489860
-void leader_set_mode2(Leader* L, int v);                                    // 0x4899e0
-void order_text(Leader* L, char* buf);                                      // 0x48d940
+void set_vec(Leader* L, vector4* pos, vector4* a, vector4* b);   // 0x4898e0
+void set_v(Leader* L, int v);                                     // 0x489860
+void bump(Leader* L, int v);                                    // 0x4899e0
+void make_label(Leader* L, char* buf);                                      // 0x48d940
 
 struct TickPair { int a; int b; };
 extern TickPair g_ticks[];                  // 0x5e2948
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
-extern "C" int __cdecl rand(void);                         // 0x536a9f
 
 static Agent* agent_by_id(Mission* m, int id) {
     void** dir = m->agent_pages;
@@ -911,9 +905,9 @@ void Mission::order(int index, int order) {
             return;
         Agent* a = agent_by_id(this, L->agent_id);
         vector4 zero = { 0, 0, 0, 0 };
-        int f = a->nav_face();
+        int f = a->update_nav_face();
         (void)f;
-        leader_set_targets(L, &a->pos, &zero, &zero);
+        set_vec(L, &a->pos, &zero, &zero);
         if (L->sub[0].mode) L->sub[0].state = 1;
         if (L->sub[1].mode) L->sub[1].state = 1;
         if (L->sub[2].mode) L->sub[2].state = 1;
@@ -928,9 +922,9 @@ void Mission::order(int index, int order) {
         if (L->sub[2].mode) L->sub[2].state = 2;
         Agent* a = agent_by_id(this, L->agent_id);
         vector4 zero = { 0, 0, 0, 0 };
-        int f = a->nav_face();
+        int f = a->update_nav_face();
         (void)f;
-        leader_set_targets(L, &a->pos, &a->alt, &zero);
+        set_vec(L, &a->pos, &a->alt, &zero);
         strcpy(ordstr, order_string("ui_follow_me_e_"));
         break;
     }
@@ -949,22 +943,22 @@ void Mission::order(int index, int order) {
         break;
     }
     case 3: {                                   // mount horses
-        leader_set_mode(L, 1);
+        set_v(L, 1);
         strcpy(ordstr, order_string("ui_mount_horses_e_"));
         break;
     }
     case 4: {                                   // dismount
-        leader_set_mode(L, 2);
+        set_v(L, 2);
         strcpy(ordstr, order_string("ui_dismount_e_"));
         break;
     }
     case 7: {                                   // stand closer
-        leader_set_mode2(L, -1);
+        bump(L, -1);
         strcpy(ordstr, order_string("ui_stand_closer_e_"));
         break;
     }
     case 8: {                                   // spread out
-        leader_set_mode2(L, 1);
+        bump(L, 1);
         strcpy(ordstr, order_string("ui_spread_out_e_"));
         break;
     }
@@ -980,7 +974,7 @@ void Mission::order(int index, int order) {
             p.y = s->oy * 7.0f + s->target.y;
             p.z = s->oz * 7.0f + s->target.z;
             p.w = 0.0f;
-            if (!bounds_test(&p))
+            if (!point_in_rect(&p))
                 continue;
             s->target = p;
             s->target.w = 0.0f;
@@ -1010,7 +1004,7 @@ void Mission::order(int index, int order) {
             p.y = s->target.y - s->oy * 7.0f;
             p.z = s->target.z - s->oz * 7.0f;
             p.w = 0.0f;
-            if (!bounds_test(&p))
+            if (!point_in_rect(&p))
                 continue;
             s->target = p;
             s->target.w = 0.0f;
@@ -1025,22 +1019,22 @@ void Mission::order(int index, int order) {
         break;
     }
     case 9: {                                   // use blunt weapons
-        set_order(index, 1);
+        set_weapon_order_1(index, 1);
         strcpy(ordstr, order_string("ui_use_blunt_weapons_e_"));
         break;
     }
     case 10: {                                  // use any weapon
-        set_order(index, 0);
+        set_weapon_order_1(index, 0);
         strcpy(ordstr, order_string("ui_use_any_weapon_e_"));
         break;
     }
     case 12: {                                  // hold fire
-        set_fire(index, 1);
+        set_weapon_order_2(index, 1);
         strcpy(ordstr, order_string("ui_hold_fire_e_"));
         break;
     }
     case 13: {                                  // fire at will
-        set_fire(index, 0);
+        set_weapon_order_2(index, 0);
         strcpy(ordstr, order_string("ui_fire_at_will_e_"));
         break;
     }
@@ -1055,9 +1049,9 @@ void Mission::order(int index, int order) {
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
-            order_text(L, ordtxt);
+            make_label(L, ordtxt);
             sprintf(msg, ordstr, ordtxt);
-            g_msglog.add(tstring(msg), 0xfffffefb);
+            g_gui.add(tstring(msg), 0xfffffefb);
         }
     }
 
@@ -1095,8 +1089,7 @@ namespace c49deb0 {
 using rgl::vector4;
 
 // ---- callees that live in other slices -----------------------------------------------------------
-void make_identity(float* m);                   // 0x40cd00  out-only 4x4 identity (cdecl)
-extern "C" double _floor(double v);             // 0x536b10  lib_crt::_floor
+void identity_pos(float* m);                   // 0x40cd00  out-only 4x4 identity (cdecl)
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
 float g_tick_scale = 1e-5f;                    // 0x54a6d0  1e-05f  (tick -> seconds)
@@ -1106,8 +1099,8 @@ extern const float g_549d70;                    // 0x549d70  0.5f
 extern const float g_590cd0;                    // 0x590cd0  0.02f
 
 // int globals: the view's z/w scale factors (zero in the image, set at startup by the game).
-extern int g_view_z;                            // 0x5d75c8
-extern int g_view_w;                            // 0x5d75cc
+struct gui_manager;
+extern gui_manager g_gui;                   // 0x5d7080 (strat/gui_manager.h: +0x548 / +0x54c = the view width / height factors 0x5d75c8 / 0x5d75cc)
 // tick counters, 8 bytes each; timers index this array through their own key field.
 extern __int64 g_ticks[];                       // 0x5e2948
 // ---- stub interfaces for the virtual calls -------------------------------------------------------
@@ -1190,7 +1183,7 @@ struct Frustum {                                // the box frustum, 0x120 bytes 
     char  pad1[0x108 - 0x1];
     float box[6];                               // +0x108  half extents + the far plane
     void ctor();                                // 0x41ef60
-    void build();                               // 0x41e4f0  recompute the 6 planes
+    void build_planes();                               // 0x41e4f0  recompute the 6 planes
     // the box setter (inline): left, right, bottom, top, near, far
     void set_box(float l, float r, float b, float t, float n, float f)
     {
@@ -1255,12 +1248,12 @@ struct Object {
     int     sub0, sub1, sub2;                   // +0x17c
 
     void base_ctor();                           // 0x48ae20
-    void base_dtor();                           // 0x490520
-    void reset_timer_a();                       // 0x48d470
-    void reset_timer_b(void* p);                // 0x48f120  (p = &w20)
-    void reset_timer_c(unsigned v);             // 0x48d350
-    void reset_timer_d(unsigned v);             // 0x48d3c0
-    void scene_render(void* scene, float* pos, void* c, void* d);   // 0x490710
+    void dtor_common();                         // 0x490520
+    void update();                       // 0x48d470
+    void terrain_refresh(void* p);                // 0x48f120  (p = &w20)
+    void set_color(unsigned v);             // 0x48d350
+    void set_alpha(unsigned v);             // 0x48d3c0
+    void bounds_of(void* scene, float* pos, void* c, void* d);   // 0x490710
 };
 
 // ---- the view itself -----------------------------------------------------------------------------
@@ -1386,10 +1379,10 @@ void Camera::update(int)
         (*target->sub)->s27(&v);
         f_d8 = x;
         f_dc = y;
-        reset_timer_a();
+        Object::update();
     } else if (flag2) {
         flag2 = 0;
-        reset_timer_b(&w20);
+        terrain_refresh(&w20);
     }
 
     // colour: the three level bytes blended from the target levels and packed under the inherited
@@ -1404,15 +1397,15 @@ void Camera::update(int)
         (*target->sub)->s37(&v);
     } else if (flag0) {
         flag0 = 0;
-        reset_timer_c(colour ^ ((colour ^ *(unsigned*)lv) & 0xffffff));
+        set_color(colour ^ ((colour ^ *(unsigned*)lv) & 0xffffff));
     }
 
     // level
     if (d1 < lim[1]) {
-        reset_timer_d(blend_i(lim[1], d1, le[7], lv[7]));
+        set_alpha(blend_i(lim[1], d1, le[7], lv[7]));
     } else if (flag1) {
         flag1 = 0;
-        reset_timer_d(lv[7]);
+        set_alpha(lv[7]);
     }
 
     // shake: blend toward the far weights and hand the offset to the object
@@ -1422,10 +1415,10 @@ void Camera::update(int)
         v.x = (d5 * w40 + rest * w42) * inv;
         v.y = (d5 * w41 + rest * w43) * inv;
         ((view_iface*)this)->s22(&v);
-        reset_timer_a();
+        Object::update();
     } else if (flag3) {
         ((view_iface*)this)->s22(&w40);
-        reset_timer_a();
+        Object::update();
         flag3 = 0;
     }
 }
@@ -1434,7 +1427,7 @@ void Camera::update(int)
 void* Camera::destroy(unsigned flags)
 {
     scene.dtor();
-    base_dtor();
+    Object::dtor_common();
     if (flags & 1)
         ::operator delete(this);
     return this;
@@ -1449,28 +1442,28 @@ struct V4 { float x, y, z, w; };
 void Camera::render(int a, float* pos, void* c, void* d)
 {
     scene.reset();
-    scene.viewport[0] = (int)((float)g_view_z * px);
-    scene.viewport[1] = (int)((0.75f - (py + h)) * (float)g_view_w * 1.3333334f);
-    scene.viewport[2] = (int)((float)g_view_z * w);
-    scene.viewport[3] = (int)((float)g_view_w * h * 1.3333334f);
+    scene.viewport[0] = (int)((float)(*(int*)((char*)&g_gui + 0x548)) * px);
+    scene.viewport[1] = (int)((0.75f - (py + h)) * (float)(*(int*)((char*)&g_gui + 0x54c)) * 1.3333334f);
+    scene.viewport[2] = (int)((float)(*(int*)((char*)&g_gui + 0x548)) * w);
+    scene.viewport[3] = (int)((float)(*(int*)((char*)&g_gui + 0x54c)) * h * 1.3333334f);
     scene.f14 = 1.0f;
     scene.f10 = 0;
     scene.flags |= 0x1000;
     Frustum* f = &fr;
     f->set_box(w * -0.5f, w * 0.5f, h * -0.5f, h * 0.5f, 0, 501.0f);
-    f->build();
+    f->build_planes();
     float m[16];
-    make_identity(m);
+    identity_pos(m);
     V4 v;
     v.z = 400.0f;
     v.x = w * 0.5f + px;
     v.y = h * 0.5f + py;
     *(V4*)&m[12] = v;
     memcpy((char*)f + 0xc8, m, 0x40);
-    f->build();
+    f->build_planes();
     memcpy((char*)this + 0x1b8, f, 0x120);
     *pos = *pos + 1.0f;
-    scene_render(&scene, pos, c, d);
+    bounds_of(&scene, pos, c, d);
 }
 
 } // namespace c49deb0
@@ -1482,11 +1475,11 @@ namespace c49e780 {
 // Slice s0049e780: view construction (0x49e780) and the "party sprite" wrappers that hang a party's
 // character record on the view's scene graph (0x49e9c0..0x49f020).
 //
-//   0x49e780  View::create(int arg, int flags)            -> index of the new child in the view's list
-//   0x49e9c0  Party::attach_sprite(float2*, int, int)     -> sprite record id
+//   0x49e780  View::create_text_overlay(int arg, int flags)   -> index of the new child in the view's list
+//   0x49e9c0  Party::attach_party_center(float2*, int, int)     -> sprite record id
 //   0x49ebd0  Party::add_sprite(int x, int y, int troop)  -> sprite record id
-//   0x49ef00  Party::add_member_sprite(int slot, int x, int y, int a) -> sprite record id
-//   0x49f020  Party::add_sprite_at(int x, int y, int troop, int a)
+//   0x49ef00  Party::create_companion_party(int slot, int x, int y, int a) -> sprite record id
+//   0x49f020  Party::spawn_around(int x, int y, int troop, int a)
 //
 // The party object keeps a free-id list at +0xcc, a paged pool of 0x98-byte sprite records at +0xe4 and
 // the embedded scene at +0xf8.  The scene holds paged 0x5ac8-byte object records at +0x138d0 (party
@@ -1500,16 +1493,14 @@ struct float2 {
 
 
 // ---- engine services that live in other slices -----------------------------------------------------
-void* __cdecl operator_new(unsigned int n);              // 0x53545e (operator new)
-int   __cdecl _rand();                                   // 0x536a9f (CRT)
 struct scene_api;                                        // 0x498420 (thiscall scene position, below)
 
 extern float g_rand_scale;                               // 0x54a6e0 (angle per rand() step)
-extern void* g_troop_base;                               // 0x5e29f8 (0xb0-byte troop record table)
+extern void* g_party_templates;                               // 0x5e29f8 (0xb0-byte troop record table)
 
 // The global string table (this = 0x5e2a18) and its lookup (0 when absent).
 struct Golist {
-    tstring* get(tstring* key);                          // 0x4c6010
+    tstring* find(tstring* key);                          // 0x4c6010
 };
 
 
@@ -1589,8 +1580,8 @@ struct ObjRec {
     int f918;                                            // +0x918
     char pad91c[0x5ac8 - 0x91c];
 
-    void setup();                                        // 0x48f180 (thiscall, no args)
-    void set_record(tstring* n, int a, int b, int c, int d); // 0x48c840
+    void init();                                        // 0x48f180 (thiscall, no args)
+    void add_members(tstring* n, int a, int b, int c, int d); // 0x48c840
 };
 
 // The 0x508-byte character record.
@@ -1628,11 +1619,11 @@ struct Scene {
     char pad1[0x13908 - 0x138d4];
     CharRec** chars;                                     // +0x13908 (party +0x13a00)
 
-    int obj_index(int key);                              // 0x48ad00 (thiscall, key -> object id)
-    int last();                                          // 0x493960 (thiscall, back object id)
+    int index_of(int key);                              // 0x48ad00 (thiscall, key -> object id)
+    int add_slot();                                          // 0x493960 (thiscall, back object id)
     ObjRec* obj(int key)
     {
-        int id = obj_index(key);
+        int id = index_of(key);
         return objects[id >> 4] + (id & 0xf);
     }
 };
@@ -1649,19 +1640,19 @@ struct Party {
     CharRec* chars() { return *scene.chars; }
     SpriteRec* sprite(int id) { return sprites[id >> 4] + (id & 0xf); }
 
-    int attach_sprite(float2* pos, int a, int b);        // 0x49e9c0
+    int attach_party_center(float2* pos, int a, int b);        // 0x49e9c0
     int add_sprite(int x, int y, int troop);             // 0x49ebd0
-    int add_member_sprite(int slot, int x, int y, int a);  // 0x49ef00
-    void add_sprite_at(int x, int y, int troop, int a);   // 0x49f020
+    int create_companion_party(int slot, int x, int y, int a);  // 0x49ef00
+    void spawn_around(int x, int y, int troop, int a);   // 0x49f020
 
-    void count_dims(int troop, int* h, int* d, int* w, int* o); // 0x490ce0
-    void slot_setup(int id, int troop, int a);           // 0x48fbd0
-    void sprite_hook(int id);                            // 0x49bbb0
-    void sprite_flag(int id);                            // 0x49bea0
-    void pick(int x, int y, int a, int* out);            // 0x490030
+    void count_units(int troop, int* h, int* d, int* w, int* o); // 0x490ce0
+    void add_template(int id, int troop, int a);           // 0x48fbd0
+    void spawn_battle_icon(int id);                            // 0x49bbb0
+    void add_order_arrow(int id);                            // 0x49bea0
+    void random_position_around(int x, int y, int a, int* out);            // 0x490030
 };
 
-inline TroopRec* troop_rec(int troop) { return (TroopRec*)((char*)g_troop_base + 0xb0 * troop); }
+inline TroopRec* troop_rec(int troop) { return (TroopRec*)((char*)g_party_templates + 0xb0 * troop); }
 
 // The view (`this`) seen from here: the child list object at +0x2c and its own vector at +4/+8.
 struct View {
@@ -1671,16 +1662,16 @@ struct View {
     char pad_c[0x2c - 0xc];
     scene_obj* list;                                     // +0x2c
 
-    int create(int arg, int flags);                      // 0x49e780
+    int create_text_overlay(int arg, int flags);                      // 0x49e780
     void push(void** obj);                               // 0x4936b0 (thiscall push_back)
 };
 
 // ---- @ 0x49e780 -----------------------------------------------------------------------------------
 // Build the scene object for `flags` (attribute bits flags&0x381c | 0x700, scale 0.9 x 0.75) and, for
 // the "3d" flag 0x2000, the particle system + camera + group around it.
-int View::create(int arg, int flags)
+int View::create_text_overlay(int arg, int flags)
 {
-    scene_obj* o = (scene_obj*)operator_new(0x178);
+    scene_obj* o = (scene_obj*)operator new(0x178);
     if (o)
         o = base_ctor(o);                                // 0x48ae20
     else
@@ -1697,7 +1688,7 @@ int View::create(int arg, int flags)
     o->set_rot(&r);                                      // +0x64
     o->attach((void*)arg, *(int*)&r.y);                  // +0xa4 (operand pair of the original)
     if (flags & 0x2000) {
-        scene_obj* ps = (scene_obj*)operator_new(0x188);
+        scene_obj* ps = (scene_obj*)operator new(0x188);
         if (ps)
             ps = ps_ctor(ps);                            // 0x48b890
         else
@@ -1708,14 +1699,14 @@ int View::create(int arg, int flags)
         z.y = 0;
         ps->set_pos(&z);                                 // +0x58
         this->list->add_child(ps);                       // +0xc8
-        scene_obj* cam = (scene_obj*)operator_new(0x4a8);
+        scene_obj* cam = (scene_obj*)operator new(0x4a8);
         if (cam)
             cam = cam_ctor(cam);                         // 0x49deb0
         else
             cam = 0;
         *(int*)((char*)cam + 0x104) |= 0x20;
         *(scene_obj**)((char*)cam + 0x484) = ps;
-        scene_obj* grp = (scene_obj*)operator_new(0x188);
+        scene_obj* grp = (scene_obj*)operator new(0x188);
         if (grp) {
             grp = base_ctor(grp);                        // 0x48ae20
             *(void**)grp = (void*)0x5924a0;
@@ -1758,7 +1749,7 @@ int View::create(int arg, int flags)
 // Build a sprite record for troop types `a` and `b` at `pos`: the party's free list hands out the
 // record id, the record takes the position, both troop ids and the summed heights, and both troop
 // objects point at it.
-int Party::attach_sprite(float2* pos, int a, int b)
+int Party::attach_party_center(float2* pos, int a, int b)
 {
     int id = list.pop_front();                           // 0x493700
     sprite(id)->alive = 1;
@@ -1769,19 +1760,19 @@ int Party::attach_sprite(float2* pos, int a, int b)
     sprite(id)->height = 0;
     if (a >= 0) {
         int d[4] = { 0, 0, 0, 0 };
-        count_dims(a, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
+        count_units(a, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
         sprite(id)->height += d[0];
     }
     if (b >= 0) {
         int d[4] = { 0, 0, 0, 0 };
-        count_dims(b, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
+        count_units(b, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
         sprite(id)->height += d[0];
     }
     scene.obj(a)->f918 = 7;
     scene.obj(b)->f918 = 7;
     scene.obj(a)->sprite = id;
     scene.obj(b)->sprite = id;
-    sprite_hook(id);                                     // 0x49bbb0
+    spawn_battle_icon(id);                                     // 0x49bbb0
     return id;
 }
 
@@ -1791,14 +1782,14 @@ int Party::attach_sprite(float2* pos, int a, int b)
 int Party::add_sprite(int x, int y, int troop)
 {
     TroopRec* tr = troop_rec(troop);                     // 0x5e29f8 + 0xb0 * troop
-    int id = scene.last();                               // 0x493960
-    scene.obj(id)->setup();                              // 0x48f180
+    int id = scene.add_slot();                               // 0x493960
+    scene.obj(id)->init();                              // 0x48f180
     scene.obj(id)->f8c = troop;
     scene.obj(id)->f30 = x;
     scene.obj(id)->f34 = y;
     scene.obj(id)->rot.x = 1.0f;
     scene.obj(id)->rot.y = 0;
-    float ang = (float)(_rand() % 0x3dc9) * g_rand_scale; // 0x536a9f / 0x54a6e0
+    float ang = (float)(rand() % 0x3dc9) * g_rand_scale; // 0x536a9f / 0x54a6e0
     float c = (float)cos(ang);
     float s = (float)sin(ang);
     ObjRec* ro = scene.obj(id);
@@ -1806,7 +1797,7 @@ int Party::add_sprite(int x, int y, int troop)
     float ox = ro->rot.x;
     ro->rot.y = c * oy + s * ox;
     ro->rot.x = c * ox - s * oy;
-    tstring* n = ((Golist*)0x5e2a18)->get(&tr->name);    // 0x4c6010
+    tstring* n = ((Golist*)0x5e2a18)->find(&tr->name);    // 0x4c6010
     if (n == 0)
         n = (tstring*)tr;
     scene.obj(id)->name = *n;
@@ -1820,8 +1811,8 @@ int Party::add_sprite(int x, int y, int troop)
     scene.obj(id)->f8e4 = 2;
     scene.obj(id)->f8ec = x;
     scene.obj(id)->f8f0 = y;
-    slot_setup(id, troop, 0);                            // 0x48fbd0
-    sprite_flag(id);                                     // 0x49bea0
+    add_template(id, troop, 0);                            // 0x48fbd0
+    add_order_arrow(id);                                     // 0x49bea0
     tr->f34 += 1;
     return id;
 }
@@ -1829,24 +1820,24 @@ int Party::add_sprite(int x, int y, int troop)
 // ---- @ 0x49ef00 -----------------------------------------------------------------------------------
 // Add the sprite for character record `slot` at (x, y): name it after the character and move it to the
 // character's own position field.
-int Party::add_member_sprite(int slot, int x, int y, int a)
+int Party::create_companion_party(int slot, int x, int y, int a)
 {
     int id = add_sprite(x, y, 3);                        // 0x49ebd0
-    tstring* n = ((Golist*)0x5e2a18)->get(&chars()[slot].name); // 0x4c6010
+    tstring* n = ((Golist*)0x5e2a18)->find(&chars()[slot].name); // 0x4c6010
     if (n == 0)
         n = &chars()[slot].name;
     scene.obj(id)->name = *n;
     scene.obj(id)->flag1c = 1;
     scene.obj(id)->f70 = chars()[slot].f4c;
-    scene.obj(id)->set_record(n, 1, 0, 0, 0);            // 0x48c840
+    scene.obj(id)->add_members(n, 1, 0, 0, 0);            // 0x48c840
     return id;
 }
 
 // ---- @ 0x49f020 -----------------------------------------------------------------------------------
 // Pick the on-screen position for troop `troop` (x is adjusted in place) and add its sprite there.
-void Party::add_sprite_at(int x, int y, int troop, int a)
+void Party::spawn_around(int x, int y, int troop, int a)
 {
-    pick(x, y, a, &x);                                   // 0x490030
+    random_position_around(x, y, a, &x);                                   // 0x490030
     add_sprite(x, y, troop);                             // 0x49ebd0
 }
 
@@ -1863,7 +1854,7 @@ namespace c49f060 {
 
 // ---- the resource manager (0x5d6fa0; the slice called it the string table) ----
 struct ResTable { tstring* find(const tstring* key); };                         // 0x418cf0 (ret 4, null when absent)
-extern ResTable g_restable;                                                           // 0x5d6fa0
+extern ResTable g_resmgr;                                                           // 0x5d6fa0
 
 // ---- the game data ---------------------------------------------------------------------------------------
 struct Party;                                                                     // 0x5ac8 bytes
@@ -1944,9 +1935,9 @@ struct GameData {
     {
         return (Receiver*)((idx & 0xf) * 0x98 + *(nodes.begin() + (idx >> 4)));
     }
-    int last_leader(int id);                                                      // 0x48fce0 (ret 4)
-    float party_relation(int a, int b);                                           // 0x48ffa0 (ret 8)
-    void attach_party(int a, int b);                                              // 0x4949d0 (ret 8)
+    int battle_root(int id);                                                      // 0x48fce0 (ret 4)
+    float relation(int a, int b);                                           // 0x48ffa0 (ret 8)
+    void set_objective(int a, int b);                                              // 0x4949d0 (ret 8)
     void attach_party_center(const V2& pt, int a, int b);                         // 0x49e9c0 (ret 0xc)
     bool deploy_party(int a, int b);                                              // 0x49f060 (ret 8)
 };
@@ -1978,17 +1969,17 @@ struct Mission {
     float f13ad0;                                                                 // +0x13ad0
     int f13ad4;                                                                   // +0x13ad4
 
-    Party* first_party(int id);                                                   // 0x48fce0 (this = mission-4; ret 4)
-    float party_relation(int a, int b);                                           // 0x48ffa0 (this = mission-4; ret 8)
-    void attach_party(int a, int b);                                              // 0x4949d0 (this = mission-4; ret 8)
+    Party* battle_root(int id);                                                   // 0x48fce0 (this = mission-4; ret 4)
+    float relation(int a, int b);                                           // 0x48ffa0 (this = mission-4; ret 8)
+    void set_objective(int a, int b);                                              // 0x4949d0 (this = mission-4; ret 8)
     void attach_party_center(const float* pt, int a, int b);                      // 0x49e9c0 (this = mission-4; ret 0xc)
-    void set_trigger_value(int val, long long* out);                              // 0x49d500 (this = mission-4; ret 8)
-    int add_party_to_trigger(int a, int* b, int* c);                              // 0x49d650 (this = mission-4; ret 0xc)
-    bool trigger_step(int a, void* t);                                            // 0x49d7f0 (ret 8)
+    void set_lvalue(int val, long long* out);                              // 0x49d500 (this = mission-4; ret 8)
+    int get_operand(int a, int* b, int* c);                              // 0x49d650 (this = mission-4; ret 0xc)
+    bool step_less(int a, void* t);                                            // 0x49d7f0 (ret 8)
     void enter_trigger(int val, int ip);                                          // 0x49f980 (ret 8)
     void exec_trigger(int val);                                                   // 0x49f9e0 (ret 4)
     // trigger-block builders (thiscall, the block handle is the first argument)
-    void block_add(void* block, const void* pos, int one);                        // 0x4836e0 (ret 0xc)
+    void create(void* block, const void* pos, int one);                        // 0x4836e0 (ret 0xc)
     void block_exec(void* block, int val, int a, int b, int c, int d, int e, int f,
                     int g, char* out);                                            // 0x483870 (ret 0x28)
 };
@@ -2027,9 +2018,9 @@ struct Group {                                                                  
     int count;                                                                    // +0x14
     char pad18[0x30 - 0x18];
 };
-extern Group* g_groups;                                                           // 0xa76628
-extern int* g_body_table;                                                         // 0x8ed4f7c (vector<int>, entry ptr at +0x1e8)
-extern unsigned g_body_count;                                                     // 0x8ed4f88
+extern Group* g_anims;                                                           // 0xa76628
+extern int* g_skins_begin;                                                         // 0x8ed4f7c (vector<int>, entry ptr at +0x1e8)
+extern unsigned g_skin_count;                                                     // 0x8ed4f88
 
 // @ 0x49f060
 // Decide whether party `a` can be attached to `b`, and where the join point is. When the leader of `b` is not
@@ -2038,7 +2029,7 @@ extern unsigned g_body_count;                                                   
 // the party standing next to it.
 bool GameData::deploy_party(int a, int b)
 {
-    int lead = last_leader(b);
+    int lead = battle_root(b);
     if (parties.get(lead)->f88 >= 0) {
         if (a == f78) {
             f13a0c = node(parties.get(lead)->f88)->f58;
@@ -2051,14 +2042,14 @@ bool GameData::deploy_party(int a, int b)
         int x = nd->f58;
         if (x == lead)
             x = nd->f54;
-        if (party_relation(x, a) < -0.01f)
+        if (relation(x, a) < -0.01f)
             return 0;
-        attach_party(a, x);
+        set_objective(a, x);
         parties.get(a)->f8cc = 1;
         return 1;
     }
     if (a == f78) {
-        lead = last_leader(b);
+        lead = battle_root(b);
         f13a0c = lead;
         f13a10 = -100000;
         f13a14 = 0;
@@ -2070,7 +2061,7 @@ bool GameData::deploy_party(int a, int b)
     if (b == f78) {
         if (0.0f < f13ad0 && f13ad4 != 0)
             return 0;
-        int la = last_leader(a);
+        int la = battle_root(a);
         f13a0c = la;
         f13a10 = -100000;
         f13a14 = 1;
@@ -2124,7 +2115,7 @@ void build_appearance(SceneObj* e, int count, int party, int arg, PartyStack* s,
                       void* sixty, float* dist, void* bc, ItemRef* items, int one); // 0x482240 (cdecl)
 void build_agent(SceneObj* e, int count, int party, void* b8, float* dist, ItemRef* items,
                  int one);                                                        // 0x47cfe0 (cdecl, ret 0x1c)
-void link_appearance(SceneObj* e, ItemRef* items, void* b8);                       // 0x495430 (ret 0xc)
+void place_scene_agents(SceneObj* e, ItemRef* items, void* b8);                       // 0x495430 (ret 0xc)
 
 // @ 0x49f3d0
 // Spawn the scene object of party `party` (negative = its horse) and build its full appearance: create the
@@ -2159,12 +2150,12 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     ItemRef items[10];
     int count;
     if (party < 0) {
-        def->init((FxRes*)g_restable.find(&tstring("skel_horse")));
+        def->init((FxRes*)g_resmgr.find(&tstring("skel_horse")));
         count = 1;
     } else {
         unsigned t = (unsigned)g_game->chars[party].flags & 0xf;
-        def->init((FxRes*)(t < (unsigned)g_body_count
-                              ? *(void**)((char*)g_body_table + 0x1e8 + t * 0x1f8) : 0));
+        def->init((FxRes*)(t < (unsigned)g_skin_count
+                              ? *(void**)((char*)g_skins_begin + 0x1e8 + t * 0x1f8) : 0));
         int level = g_game->chars[party].level;
         for (int i = 0; i < 10; i++)
             *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->f344, world->f348,
@@ -2175,7 +2166,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     build_appearance(e, count, party, *args, &s, &area.b8, name, &area.f60, &dist, &area.bc, items, -1);
     if (party >= 0) {
         build_agent(e, count, party, &area.b8, &dist, items, -1);
-        link_appearance(e, items, &area.b8);
+        place_scene_agents(e, items, &area.b8);
         if (area.f74 != 0) {
             dist = 20.0f;
             for (int i = 0; i < *(int*)(area.f74 + 0x84); i++)
@@ -2187,7 +2178,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
                 ((MeshNodeList*)(area.f70 + 0x34 + i * 0x10))->cap_all(&dist);
         }
     }
-    Group* g = &g_groups[*group];
+    Group* g = &g_anims[*group];
     if (g->count > 0) {
         int* src = g->src;
         e->skel->set_group0(0, src[0], src[4], src[5]);
@@ -2211,7 +2202,7 @@ void Mission::enter_trigger(int val, int ip)
         s.val = (s.val & 0xffffff) | (ip << 24);
         s.reduce(0);
     }
-    block_add((void*)((char*)g_game + 0x14014), &s, 1);
+    create((void*)((char*)g_game + 0x14014), &s, 1);
 }
 
 // @ 0x49f9e0
@@ -2231,13 +2222,10 @@ void Mission::exec_trigger(int val)
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 extern StrTable g_strtable;                         // 0x5e2a18
 #include "../../include/msg_log.h"
-extern MsgLog g_msglog;                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
-extern int g_sound_holder[];                        // 0x5aa128 (sound device)
-extern float g_sound_origin[];                      // 0x5aa168 (position vector for play)
+extern MsgLog g_gui;                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
 extern int g_snd_got_value;                         // 0x5aa1a0 (sound id)
 extern int g_snd_lost_value;                        // 0x5aa19c
 extern int g_snd_new_quest;                         // 0x5aa180
-struct SoundPlayer { int play(int idx, int flags, const float* pos, float freq, int* out); };  // 0x442650
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);  // 0x415100
 
 // ---- shared log tail of 0x49b720 / 0x49b820 (inlined in both; the source of the original
@@ -2249,8 +2237,8 @@ static __forceinline void value_message(GameData* m, int amount, const char* key
         tstring s(key);
         sprintf(buf, g_strtable.lookup(s)->c_str(), m->string_value(amount).c_str());
     }
-    g_msglog.add(tstring(buf), -1);
-    ((SoundPlayer*)g_sound_holder)->play(*sound_id, 1, g_sound_origin, 1.0f, 0);
+    g_gui.add(tstring(buf), -1);
+    g_sound_mgr.play(*sound_id, 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
 }
 
 // @ 0x49b720
@@ -2288,8 +2276,8 @@ void GameData::start_quest(int quest, int giver_troop)
             tstring* f = g_strtable.lookup(key);
             mb_snprintf(buf, 0x200, f->c_str(), n);
         }
-        g_msglog.add(tstring(buf), 0xffd0f0c8);
-        ((SoundPlayer*)g_sound_holder)->play(g_snd_new_quest, 1, g_sound_origin, 1.0f, 0);
+        g_gui.add(tstring(buf), 0xffd0f0c8);
+        g_sound_mgr.play(g_snd_new_quest, 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
         rec->flags = 0x100;
     }
 }
@@ -2381,7 +2369,7 @@ void Elem::set_lvalue(__int64* locals, const __int64& value)
             report("illegal variable no.");
             return;
         } else {
-            g_vartab.set(idx, v[0]);
+            (*(VarTable*)&g_script).set40(idx, v[0]);
             return;
         }
     } else if (kind == 0x11) {
@@ -2428,7 +2416,7 @@ __int64 Elem::get_operand(__int64* locals, int* i, int* type)
     }
     if (kind == 2) {
         if (r == 0 && (unsigned)p < 0x10000u) {
-            int v = g_vartab.get(p);
+            int v = (*(VarTable*)&g_script).get(p);
             return (__int64)v;
         }
         sprintf(buf, "Invalid variable no in operation = %d, param0 = %d param1 = %d", id, ((int*)vals)[0], ((int*)vals)[2]);
@@ -2481,7 +2469,7 @@ bool DialogBlock::step_less(int locals, int* stack)
         int v = (int)ins->get_operand((__int64*)locals, &one, &kind);
         if (check_party(&v)) {
             Party* party = g_game->parties.get(v);
-            return left < container_size(&party->attached);
+            return left < size(&party->attached);
         }
         return left < -1;
     }
@@ -2606,7 +2594,7 @@ void DialogBlock::link()
                 }
             } else if (op == 3) {
                 if (depth <= 0) {
-                    if (g_script_output) report("Warning: Unmatched try_end");
+                    if ((*(int*)((char*)&g_cfg + 0x18))) report("Warning: Unmatched try_end");
                 } else {
                     for (int j = try_end[depth - 1]; j < i; j++)
                         if (items[j].f90 < 0)
@@ -2681,11 +2669,11 @@ void DialogBlock::pop_try(int locals, int* stack, int* out)
 char DialogBlock::run_line(int locals, int* idx, int script)
 {
     int out;
-    char ok = ((ScriptStmt*)(items + *idx))->run(locals, script, &out);
+    char ok = ((ScriptStmt*)(items + *idx))->execute(locals, script, &out);
     if (out > 0) {
         char buf[512];
         _snprintf(buf, 0x200, "At %s.", text.c_str());
-        g_msglog.add(tstring(buf), 0xffff5555);
+        g_gui.add(tstring(buf), 0xffff5555);
         LogStreamBase& lg = g_log;
         lg.w_cstr(buf);
     }
@@ -2721,20 +2709,20 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
     char msg[512];                              // local_610
     __declspec(align(8)) __int64 sub[16];                            // auStack_a98 + 2
 
-    g_script_out = 0;
+    g_script_error = 0;
     link();
-    if (g_script_out > 0) {
+    if (g_script_error > 0) {
         const char* q = text.c_str();
         _snprintf(msg, 0x200, "At %s.", q);
-        g_msglog.add(tstring(msg), 0xffff5555);
+        g_gui.add(tstring(msg), 0xffff5555);
         LogStreamBase& lg = g_log;
         lg.w_cstr(msg);
     }
-    g_script_out = 0;
+    g_script_error = 0;
     buf2.sp = 0;
     buf2.pad = 0;
     last_ok = 1;
-    g_script_flag = 0;
+    g_or_latch = 0;
     idx = 0;
     in_key = 0;
     done = 0;
@@ -2765,7 +2753,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                     done = 1;
                 } else if (g_key_a[0x39] && !g_key_b[0x39]) {
                     int e = (int)tag >> 16;
-                    if (g_emitters[e].name.equals(EMIT_AUDIO.name))
+                    if (g_scripts[e].name.equals(EMIT_AUDIO.name))
                         tag = ((unsigned)e << 16) | (unsigned)EMIT_AUDIO.tag;
                     done = 1;
                 } else if (g_key_a[0x38] && !g_key_b[0x38]) {
@@ -2794,7 +2782,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 pop_try((int)buf, buf2.data, &idx);
             } else if (stmt->id == 4) {
                 advance = 1;
-                buf2.goto_stmt(idx, 0);
+                buf2.push(idx, 0);
                 idx++;
             } else if (stmt->id == 5) {
                 if (advance) {
@@ -2821,7 +2809,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 } else {
                     mb_error("invalid opcode %d", stmt->id);
                 }
-                buf2.goto_stmt(idx, v);
+                buf2.push(idx, v);
                 value = v;
                 stmt->set_lvalue((__int64*)buf, value);
                 if (!step_less((int)buf, buf2.data)) {
@@ -2848,12 +2836,12 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 unsigned t;
                 if (brk)
                     t = 0;
-                else if (EMIT_AUDIO.id != 0 && g_emitters[id].name.equals(EMIT_AUDIO.name))
+                else if (EMIT_AUDIO.id != 0 && g_scripts[id].name.equals(EMIT_AUDIO.name))
                     t = ((unsigned)id << 16) | (unsigned)EMIT_AUDIO.tag;
                 else
                     t = 0xffffffff;
                 nsub = stmt->n - 1;
-                ok = g_emitters[id].script.emit(script, depth + 1, &nsub, sub, t);
+                ok = g_scripts[id].script.emit(script, depth + 1, &nsub, sub, t);
                 if (!ok) {
                     advance = 0;
                     idx = stmt->f90;
@@ -2903,10 +2891,10 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
             set_progress_range(range_lo, range_hi);
             refresh_settings_list(&s1, 0);
         }
-        if (g_script_out > 0) {
+        if (g_script_error > 0) {
             const char* q = self->text.c_str();
             _snprintf(msg, 0x200, "At %s.", q);
-            g_msglog.add(tstring(msg), 0xffff5555);
+            g_gui.add(tstring(msg), 0xffff5555);
             LogStreamBase& lg = g_log;
             lg.w_cstr(msg);
         }

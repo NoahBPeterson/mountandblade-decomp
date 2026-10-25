@@ -17,6 +17,10 @@
 #include "rgl.h"
 #include "./mat4.h"
 #include "./renderer.h"
+struct Config;
+extern Config g_cfg;                        // 0x5a9f98 (config/config.h: use_wbuffer = +0x44)
+struct options;
+extern options g_options;                   // 0x5aa008 (rgl/resource_manager.h: i38 = +0x38, f80 = +0x80)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "./dev_buffer.h"
 #include "../include/frustum.h"
@@ -55,7 +59,7 @@ void renderer::set_view(const mat4* p)
 void renderer::reset_state()
 {
     dev->SetRenderState(D3DRS_ZENABLE, 1);
-    if (g_use_wbuffer) dev->SetRenderState(D3DRS_ZENABLE, D3DZB_USEW);
+    if (*(int*)((char*)&g_cfg + 0x44)) dev->SetRenderState(D3DRS_ZENABLE, D3DZB_USEW);
     alpha_mode = 0;
     dev->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
     dev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
@@ -85,7 +89,7 @@ void renderer::reset_state()
         f54c[i] = 0;
         stage_color[i] = -1;
         stage_alpha[i] = -1;
-        if (g_aniso_filter) {
+        if (*(int*)((char*)&g_options + 0x38)) {
             dev->SetSamplerState(i, D3DSAMP_MIPFILTER, D3DTEXF_ANISOTROPIC);
             dev->SetSamplerState(i, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
         } else {
@@ -129,8 +133,8 @@ void renderer::reset_state()
         light_idx[0] = 0xffbd6370;
         g_effect->SetInt("iLightPointCount", 0);
         f5b8 = 0xffffcfdf;
-        float inv = 1.0f / g_gamma;
-        D3DXVECTOR4 gamma(g_gamma, g_gamma, g_gamma, g_gamma);
+        float inv = 1.0f / *(float*)((char*)&g_options + 0x80);
+        D3DXVECTOR4 gamma(*(float*)((char*)&g_options + 0x80), *(float*)((char*)&g_options + 0x80), *(float*)((char*)&g_options + 0x80), *(float*)((char*)&g_options + 0x80));
         D3DXVECTOR4 ginv(inv, inv, inv, inv);
         g_effect->SetVector("output_gamma", &gamma);
         g_effect->SetVector("output_gamma_inv", &ginv);
@@ -349,11 +353,11 @@ HRESULT dev_buffer::restore()
 {
     HRESULT hr;                     // never assigned on the fall-through path (the original returns garbage)
     if (type == 0 && count != 0) {
-        hr = g_device->CreateVertexBuffer(elem_size * count, D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, fvf, D3DPOOL_DEFAULT, &vb, 0);
+        hr = g_render.dev->CreateVertexBuffer(elem_size * count, D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, fvf, D3DPOOL_DEFAULT, &vb, 0);
         if (hr < 0) mb_error("Unable to restore vertex buffer.");
         else loaded = count;
     } else if (type == 1 && count != 0) {
-        hr = g_device->CreateIndexBuffer(count * 2, D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &ib, 0);
+        hr = g_render.dev->CreateIndexBuffer(count * 2, D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &ib, 0);
         if (hr < 0) mb_error("Unable to restore index buffer.");
         else loaded = count;
     }

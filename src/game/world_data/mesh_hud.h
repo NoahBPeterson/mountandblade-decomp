@@ -27,8 +27,7 @@ struct MeshX : gui_mesh {
     void set_alpha(float a);                                    // 0x495f00 (ret 4)
     void normalize_uv(MeshX* src);                              // 0x495fa0 (ret 4)
 };
-rgl::vector4 from_packed_colour(const unsigned* c);                   // 0x40e4e0 (unpack_color: the colour by value, hidden return pointer)
-unsigned to_packed_colour(const rgl::vector4* v);               // 0x40e440 (pack_color)
+rgl::vector4 unpack_color(const unsigned* c);                   // 0x40e4e0 (unpack_color: the colour by value, hidden return pointer)
 
 union Color4 {
     unsigned dword;
@@ -113,7 +112,7 @@ struct HudOuter : WItem {
     float f49c;                                                 // +0x49c
     float f4a0;                                                 // +0x4a0
     void scroll_refresh(vector4* arg);                          // 0x498420 (ret 4)
-    void on_scroll();                                           // 0x48d470
+    void update();                                           // 0x48d470
 };
 
 #endif // GAME_WORLD_DATA_MESH_HUD_H

@@ -21,6 +21,8 @@
 #include <math.h>
 #include <new>
 #include "./config.h"
+#include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/game_data.h"      // g_game 0x5e2930 (g_config is a view of it)
 #include "../../tinyxml/tinyxml.h"   // TiXmlElement::QueryDoubleAttribute 0x42f190 (RagBody::load)
 #include "../../rgl/resource.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -31,7 +33,6 @@
 
 // ---- imports and library functions the slices declared by hand ------------------------------------------------------
 extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(HWND hwnd, int csidl, HANDLE token, DWORD flags, char* path);   // 0x5492c0
-extern "C" int _atoi(const char* str);                      // 0x53734d (atoi: jmp _atol)
 extern "C" IDirect3D9* __stdcall Direct3DCreate9(UINT);     // 0x534342
 typedef void* FMOD_STREAM;
 extern "C" short __stdcall FSOUND_Stream_Close(FMOD_STREAM s);                                              // 0x5342e2
@@ -58,96 +59,96 @@ enum GameMode {
 void CreateGameOptionsPage::refresh()
 {
     // Quick-battle only.
-    ShowWindow(GetDlgItem(hDlg, 0x46e), g_config->game_mode == MODE_QUICK ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x46e), ((GameConfig*)g_game)->game_mode == MODE_QUICK ? SW_SHOW : SW_HIDE);
 
     // Custom battle only.
-    ShowWindow(GetDlgItem(hDlg, 0x474), g_config->game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x475), g_config->game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x476), g_config->game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x474), ((GameConfig*)g_game)->game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x475), ((GameConfig*)g_game)->game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x476), ((GameConfig*)g_game)->game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
 
     // Shared by quick battle, custom battle and the multiplayer client.
-    ShowWindow(GetDlgItem(hDlg, 0x472), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x47d), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x47f), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x473), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x47e), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x480), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x477), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x481), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x482), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x4af), g_config->game_mode == MODE_QUICK || g_config->game_mode == MODE_CUSTOM || g_config->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x472), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x47d), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x47f), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x473), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x47e), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x480), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x477), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x481), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x482), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x4af), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
 
     // Multiplayer client (join) only.
-    ShowWindow(GetDlgItem(hDlg, 0x4cd), g_config->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4c8), g_config->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4cf), g_config->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4c9), g_config->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ce), g_config->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ca), g_config->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4cb), g_config->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4cd), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4c8), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4cf), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4c9), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ce), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ca), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4cb), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
 
     // Single-player campaign only.
-    ShowWindow(GetDlgItem(hDlg, 0x439), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x43a), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x43b), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x44e), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x44f), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x435), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x436), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x437), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x478), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x479), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x47a), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48b), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48c), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48d), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48e), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48f), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x490), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x491), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x492), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x493), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x438), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x431), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x434), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x433), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x47b), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x47c), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x453), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x454), g_config->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x439), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x43a), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x43b), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x44e), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x44f), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x435), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x436), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x437), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x478), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x479), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x47a), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48b), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48c), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48d), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48e), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48f), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x490), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x491), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x492), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x493), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x438), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x431), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x434), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x433), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x47b), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x47c), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x453), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x454), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
 
     // Multiplayer host (create server) only.
-    ShowWindow(GetDlgItem(hDlg, 0x494), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ae), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x497), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x498), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x499), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a5), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a3), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a4), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x49b), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4aa), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a7), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a6), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a8), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x49d), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ac), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ad), g_config->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x494), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ae), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x497), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x498), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x499), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a5), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a3), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a4), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x49b), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4aa), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a7), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a6), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a8), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x49d), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ac), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ad), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
 
     // Sub-option buttons of the host page. The first three are the radio buttons: the selected one is disabled
     // (you cannot re-select it), every other one enabled.
-    EnableWindow(GetDlgItem(hDlg, 0x4a5), g_config->game_mode == MODE_MULTIPLAYER_HOST && g_config->sub_option == 0 ? FALSE : TRUE);
-    EnableWindow(GetDlgItem(hDlg, 0x4a3), g_config->game_mode == MODE_MULTIPLAYER_HOST && g_config->sub_option == 1 ? FALSE : TRUE);
-    EnableWindow(GetDlgItem(hDlg, 0x4a4), g_config->game_mode == MODE_MULTIPLAYER_HOST && g_config->sub_option == 2 ? FALSE : TRUE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a5), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 0 ? FALSE : TRUE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a3), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 1 ? FALSE : TRUE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a4), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 2 ? FALSE : TRUE);
     // The rest are only usable with the matching sub-option selected.
-    EnableWindow(GetDlgItem(hDlg, 0x49b), g_config->game_mode == MODE_MULTIPLAYER_HOST && g_config->sub_option == 1 ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4aa), g_config->game_mode == MODE_MULTIPLAYER_HOST && (g_config->sub_option == 0 || g_config->sub_option == 1) ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4a7), g_config->game_mode == MODE_MULTIPLAYER_HOST && g_config->sub_option == 0 ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4a6), !(g_config->game_mode != MODE_MULTIPLAYER_HOST));
-    EnableWindow(GetDlgItem(hDlg, 0x4a8), g_config->game_mode == MODE_MULTIPLAYER_HOST && g_config->sub_option == 2 ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x49d), g_config->game_mode == MODE_MULTIPLAYER_HOST && g_config->sub_option == 1 ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4ac), g_config->game_mode == MODE_MULTIPLAYER_HOST && (g_config->sub_option == 0 || g_config->sub_option == 1) ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4ad), g_config->game_mode == MODE_MULTIPLAYER_HOST && g_config->sub_option == 1 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x49b), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 1 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4aa), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && (((GameConfig*)g_game)->sub_option == 0 || ((GameConfig*)g_game)->sub_option == 1) ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a7), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 0 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a6), !(((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST));
+    EnableWindow(GetDlgItem(hDlg, 0x4a8), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 2 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x49d), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 1 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4ac), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && (((GameConfig*)g_game)->sub_option == 0 || ((GameConfig*)g_game)->sub_option == 1) ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4ad), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 1 ? TRUE : FALSE);
 }
 
 // ---- 0x4bab70 user folders ---------------------------------------------------------------------------------------------
@@ -222,8 +223,8 @@ void Core::update_view_rect()
         g_view_x = 0;
         g_view_y = 0;
     }
-    g_view_w = m_d3dsdBackBuffer.Width;
-    g_view_h = m_d3dsdBackBuffer.Height;
+    (*(int*)((char*)&g_gui + 0x548)) = m_d3dsdBackBuffer.Width;
+    (*(int*)((char*)&g_gui + 0x54c)) = m_d3dsdBackBuffer.Height;
 }
 
 // @ 0x4bad70
@@ -384,14 +385,14 @@ void set_list_scroll(int delta)
 {
     HWND list = GetDlgItem(g_hwnd_page, 0x431);
     HWND combo = GetDlgItem(g_hwnd_page, 0x433);
-    g_config->list_top = SendMessageA(list, 0x150, SendMessageA(list, 0x147, 0, 0), 0);
+    ((GameConfig*)g_game)->list_top = SendMessageA(list, 0x150, SendMessageA(list, 0x147, 0, 0), 0);
     int cur = SendMessageA(combo, 0x188, 0, 0);             // CB_GETCOUNT
     int count = SendMessageA(combo, 0x18b, 0, 0);
     cur += delta;
     if (cur < 0) cur = 0;
     else if (cur > count) cur = count;
     SendMessageA(combo, 0x186, (WPARAM)cur, 0);             // CB_SETCURSEL
-    g_config->list_sel = SendMessageA(combo, 0x199, SendMessageA(combo, 0x188, 0, 0), 0);
+    ((GameConfig*)g_game)->list_sel = SendMessageA(combo, 0x199, SendMessageA(combo, 0x188, 0, 0), 0);
 }
 
 // @ 0x4bb310
@@ -442,8 +443,8 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
     char quote;
 
     SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x434, 0, (LPARAM)&item);
-    g_config->settings_text.erase_range(item.left, item.right);
-    g_config->settings_text.insert(item.left, *page);
+    ((GameConfig*)g_game)->settings_text.erase_range(item.left, item.right);
+    ((GameConfig*)g_game)->settings_text.insert(item.left, *page);
 
     tstring sel_text;
     SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x43e, 0, (LPARAM)text);
@@ -498,8 +499,8 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
                 if (e < 0) {
                     e = page->len;
                 }
-                long l = _atoi(page->substr(first, k).c_str());
-                long r = _atoi(page->substr(key_end, e).c_str());
+                long l = atoi(page->substr(first, k).c_str());
+                long r = atoi(page->substr(key_end, e).c_str());
                 if (l != r) {
                     goto mark;
                 }
@@ -548,16 +549,16 @@ bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format)
     RECT rect;
     IDirect3DSurface9* surface = 0;
 
-    g_d3d_device->GetDisplayMode(0, &dmode);
-    g_d3d_device->CreateOffscreenPlainSurface(dmode.Width, dmode.Height, D3DFMT_A8R8G8B8,
+    g_render.dev->GetDisplayMode(0, &dmode);
+    g_render.dev->CreateOffscreenPlainSurface(dmode.Width, dmode.Height, D3DFMT_A8R8G8B8,
                                               D3DPOOL_SYSTEMMEM, &surface, 0);
     bool ok = false;
-    if (SUCCEEDED(g_d3d_device->GetFrontBufferData(0, surface))) {
+    if (SUCCEEDED(g_render.dev->GetFrontBufferData(0, surface))) {
         if (g_screenshot_cropped) {
             rect.left = g_view_x;
-            rect.right = g_view_x + g_view_w;
+            rect.right = g_view_x + (*(int*)((char*)&g_gui + 0x548));
             rect.top = g_view_y;
-            rect.bottom = g_view_y + g_view_h;
+            rect.bottom = g_view_y + (*(int*)((char*)&g_gui + 0x54c));
             ok = SUCCEEDED(D3DXSaveSurfaceToFileA(file_name, format, surface, 0, &rect));
         } else {
             ok = SUCCEEDED(D3DXSaveSurfaceToFileA(file_name, format, surface, 0, 0));
@@ -618,7 +619,7 @@ int Config::value_as_int(const tstring& s)
 {
     int r = 1;
     if (s.len != 0) {
-        r = _atoi(s.c_str());
+        r = atoi(s.c_str());
     }
     return r;
 }
@@ -796,13 +797,13 @@ DisplayState::DisplayState()
     Matrix* m;
     unk618 = 0;
     unk74c = 0;
-    mat1 = *make_matrix(&tmp);
+    mat1 = *identity_pos(&tmp);
     m = &mat1;
     m->m[3] = 0;
     m->m[7] = 0;
     m->m[11] = 0;
     m->m[15] = 1.0f;
-    mat2 = *make_matrix(&tmp);
+    mat2 = *identity_pos(&tmp);
     m = &mat2;
     m->m[3] = 0;
     m->m[7] = 0;
@@ -818,7 +819,7 @@ void __fastcall apply_input_settings(InputSet* self)
     typedef int (__stdcall *SetupFn)(void*, int, int, void*, int, int, int);
     self->exclusive_ok = 0;
     self->background_ok = 0;
-    if (g_dinput_enabled != 0) {
+    if (g_use_shaders != 0) {
         HRESULT hr = (*(SetupFn*)(*(int*)self->unk74c + 0x28))((void*)self->unk74c, 0, 1, (void*)self->unk750, 2, 3, 0x4b);
         if (hr >= 0) {
             self->exclusive_ok = 1;
@@ -969,7 +970,7 @@ void render_batch::init_formats()
 int render_batch::init_decls(int* a0, int* a1, int* a2, int* a3, int* a4,
                              int* a5, int* a6, int* a7, int* a8, int* a9)
 {
-    if (g_dinput_enabled) {
+    if (g_use_shaders) {
         int c1 = *a1 ? *a1 : 16000;
         int c0 = *a0;
         vf[0].bufs[1].count = c1;
@@ -1074,15 +1075,15 @@ int render_batch::init_decls(int* a0, int* a1, int* a2, int* a3, int* a4,
     normalmap_skin[8].Stream = 0xff; normalmap_skin[8].Offset = 0; normalmap_skin[8].Type = D3DDECLTYPE_UNUSED;
     normalmap_skin[8].Method = 0; normalmap_skin[8].Usage = 0; normalmap_skin[8].UsageIndex = 0;
 
-    if (g_d3d_device->CreateVertexDeclaration(ffp, &decls[0]) < 0)
+    if (g_render.dev->CreateVertexDeclaration(ffp, &decls[0]) < 0)
         mb_error("Unable to create vertex declaration.");
-    if (g_d3d_device->CreateVertexDeclaration(regular, &decls[1]) < 0)
+    if (g_render.dev->CreateVertexDeclaration(regular, &decls[1]) < 0)
         mb_error("Unable to create vertex declaration.");
-    if (g_d3d_device->CreateVertexDeclaration(normalmap, &decls[2]) < 0)
+    if (g_render.dev->CreateVertexDeclaration(normalmap, &decls[2]) < 0)
         mb_error("Unable to create vertex declaration.");
-    if (g_d3d_device->CreateVertexDeclaration(skinning, &decls[3]) < 0)
+    if (g_render.dev->CreateVertexDeclaration(skinning, &decls[3]) < 0)
         mb_error("Unable to create vertex declaration.");
-    if (g_d3d_device->CreateVertexDeclaration(normalmap_skin, &decls[4]) < 0)
+    if (g_render.dev->CreateVertexDeclaration(normalmap_skin, &decls[4]) < 0)
         mb_error("Unable to create vertex declaration.");
 
     vf[0].bufs[0].decl = decls[0];

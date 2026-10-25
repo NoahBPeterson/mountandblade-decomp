@@ -9,6 +9,8 @@
 //-----------------------------------------------------------------------------
 #include "../tstring.h"
 #include "./ui_widgets_c.h"
+struct gui_manager;
+extern gui_manager g_gui;                   // 0x5d7080 (f1718 = last keyboard character; strat/gui_manager.h clashes with the mesh stubs here)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/keyframes.h"
 #include "../../include/mat4.h"
@@ -101,7 +103,7 @@ char UiE::key(unsigned p)
             char buf[0x2000];
             int out_len[2];
             b = 1;
-            int ch = g_last_char;
+            int ch = (*(int*)((char*)&g_gui + 0x1718));
             int maxn = 0x800;
             decode_utf8(&name, out_len, (int*)buf, &maxn);
             if (ch >= 0x20 && out_len[0] < f184) {
@@ -135,7 +137,7 @@ char UiE::key(unsigned p)
                 }
                 get_xy((float*)out_len);
             }
-            if (g_last_char == 0xd)
+            if ((*(int*)((char*)&g_gui + 0x1718)) == 0xd)
                 goto leave_edit;
         } else if (p == 0x10) {
 leave_edit:

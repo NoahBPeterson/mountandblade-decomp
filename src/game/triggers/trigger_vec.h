@@ -15,6 +15,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include "../tstring.h"
+#include "../game_globals.h"      // canonical g_module_path
 #include "../strat/gui_manager.h"
 #include "../config/core.h"
 #include "../config/config.h"
@@ -41,8 +42,6 @@ extern int g_opt_5aa0e4;    // 0x5aa0e4  0x446
 extern int g_opt_5aa0e8;    // 0x5aa0e8  0x452
 extern int g_opt_5aa0f4;    // 0x5aa0f4  resolution width
 extern int g_opt_5aa0f8;    // 0x5aa0f8  resolution height
-extern int g_opt_5aa0fc;    // 0x5aa0fc  colour depth (0x10 / 0x20)
-extern int g_opt_5aa100;    // 0x5aa100  control 0x465 item data
 extern int g_opt_5aa104;    // 0x5aa104  multisample type found by the probe (0x4bf170)
 extern int g_opt_5aa108;    // 0x5aa108  0x487
 extern int g_opt_5aa110;    // 0x5aa110  control 0x467 item data
@@ -100,17 +99,16 @@ extern ID3DXEffect* g_effect;           // 0x5e293c
 extern int g_use_shaders;               // 0x5e28fc
 extern D3DCAPS9 g_caps;                 // 0xa17f2c (GetDeviceCaps fills it)
 extern int  g_renderer_vsync;           // 0xa180e4
-extern char g_renderer_flag;            // 0xa17e14
-extern unsigned char g_cursor_flag;     // 0x5d75e0 ShowCursor argument
-extern float g_gamma;                   // 0x5aa088
-extern tstring g_path_prefix;           // 0x8ee3c28 shader directory prefix
+#include "../../include/renderer.h"            // g_render 0xa17910
+struct options;
+extern options g_options;                   // 0x5aa008 (rgl/resource_manager.h clashes with the log declarations here)
 extern tstring g_module_name;           // 0x8ee3c38 the selected module (load_game_variables)
 extern tstring g_module_info_name;      // 0xa180f8 module_name directive of module_info.txt
 extern render_batch g_batch;            // 0x5fe898
 extern ShadowMap g_shadow_map;          // 0xa70248 (w at +0x10 = 0xa70258, surf at +0xc = 0xa70254)
 extern ini_file g_module_info;          // 0xa18238 module_info.txt table (count at 0xa44238)
 extern ini_file g_game_vars;            // 0xa44240 game_variables.txt table (rec_tables.h views it as ini_file_x g_ini)
-extern resource_manager_x g_resmgr_x;   // declared in config.h (0x5d6fa0)
+// g_resmgr_x: the view of g_resmgr (0x5d6fa0) declared in config.h
 extern int g_display_wp_one_handed;          // 0x5e2900
 extern int g_display_wp_two_handed;          // 0x5e2904
 extern int g_display_wp_polearms;            // 0x5e2908
@@ -168,12 +166,6 @@ extern float g_map_min_x;                    // 0x5aa120
 extern float g_map_min_y;                    // 0x5aa124
 extern float g_map_max_x;                    // 0x5aa118
 extern float g_map_max_y;                    // 0x5aa11c
-extern int g_xa181a4;                        // 0xa181a4
-extern int g_xa181a8;                        // 0xa181a8
-extern int g_xa181ac;                        // 0xa181ac
-extern int g_xa181b0;                        // 0xa181b0
-extern int g_xa181b4;                        // 0xa181b4
-extern unsigned char g_xa181b8;              // 0xa181b8
 extern int g_missile_damage_speed_power_int; // 0x5e29c8 (provisional)
 
 HRESULT build_shader();                                                     // 0x4c17c0
@@ -189,10 +181,9 @@ extern "C" int   __stdcall FSOUND_Stream_GetOpenState(void* stream);    // 0x534
 extern "C" int   __stdcall FSOUND_Stream_Play(int channel, void* stream);   // 0x534312
 extern "C" int   __stdcall FSOUND_Stream_GetLengthMs(void* stream);     // 0x53430c
 extern "C" int   __stdcall FSOUND_Stream_GetTime(void* stream);         // 0x534306
-extern "C" short __stdcall FSOUND_Stream_Close_(void* stream);          // 0x5342e2 (config.cpp: FSOUND_Stream_Close)
-extern int g_music_request;             // 0xa70474 track requested by the scripts (-1 none)
-extern int g_music_request_kind;        // 0xa70478
-extern int g_music_event;               // 0xa7047c one-shot jingle request (-1 none)
+extern "C" short __stdcall FSOUND_Stream_Close(void* stream);          // 0x5342e2 (config.cpp: FSOUND_Stream_Close)
+struct ScriptState;
+extern ScriptState g_script;                // 0xa70440 (dialog_manager.h clashes with game.h)
 extern float g_music_volume_floor;      // 0x590cd0 (0.02f) volume below which the monitor idles
 // ---- record vectors (0x4c1c20..0x4c23f0) ------------------------------------------------------------------------------------
 #include "../../include/vec.h"   // V2: 8-byte vector with an empty user ctor: arrays of it go through the compiler's array-ctor helper

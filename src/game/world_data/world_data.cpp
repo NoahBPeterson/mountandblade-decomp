@@ -6,6 +6,8 @@
 //       (game_data_2) of the TU map. Names provisional. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./world_data.h"
+#include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
+#include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../rec98.h"             // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/party.h"
 #include "../../include/troop.h"
@@ -33,7 +35,7 @@
 
 // ==== 0x490030: a random position around a point ===========================================================
 // @ 0x490030
-void GameW::pick_near(Vec2 pos, float r, Vec2* out)
+void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
 {
     Vec2 np;
     float dx, dy;
@@ -59,14 +61,14 @@ void GameW::pick_near(Vec2 pos, float r, Vec2* out)
             FaceId* g = find_at(&out->x);
             if (g != 0) {
                 gi = g->m4;
-                ok = g_level_ref->obj->overlap(&first, &gi);
+                ok = g_level->obj->shares(&first, &gi);
             }
         }
     }
 }
 
 // @ 0x490160
-char GameW::pick_near_type(Vec2 pos, float r, Vec2* out, char any)
+char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
 {
     Vec2 np;
     float dx, dy;
@@ -84,7 +86,7 @@ char GameW::pick_near_type(Vec2 pos, float r, Vec2* out, char any)
         FaceId* f = find_at(&out->x);
         if (f == 0)
             continue;
-        int kind = *(int*)(g_level_ref->obj->kinds + f->m4 * 0x88 + 0x24);
+        int kind = *(int*)(g_level->obj->kinds + f->m4 * 0x88 + 0x24);
         int low = kind & 7;
         if (any)
             ok = low == 0 || kind == 7;
@@ -148,7 +150,7 @@ void PartyMgrW::clear()
 }
 
 // @ 0x4903e0
-int PartyMgrW::is_slot(unsigned id)
+int PartyMgrW::is_live(unsigned id)
 {
     if (id < limit()) {
         int i = index_of(id);
@@ -190,7 +192,7 @@ int trigger_item_mesh(int c)
     int id = *(int*)((char*)g_mission->agents.pages[idx >> 4] + off * 8 + 0x1d0);
     if (id < 0)
         return -1;
-    return agent_id((char*)g_agents + id * 0x238);
+    return ammo_skill((char*)g_items + id * 0x238);
 }
 
 // ==== 0x490520: the container widget (children vector at +0x17c) =================================================
@@ -198,7 +200,7 @@ int trigger_item_mesh(int c)
 void ContainerW::dtor_common()
 {
     *(void**)this = (void*)0x5924a0;
-    dtor_body();
+    release();
     if (ents_first() != 0)
         operator delete(ents_first());
     ents_first() = 0;
@@ -278,7 +280,7 @@ void ContainerW::bounds_of(int* a, float* p3, float* p4, float* p5)
     struct __declspec(align(8)) Locals {
         float z, y0, hy, ly, mx, my;
     } l;
-    bounds_init(a, p3, p4, p5);
+    render(a, p3, p4, p5);
     l.mx = p4[0];
     l.y0 = p3[0];
     l.my = p4[1];
@@ -329,7 +331,7 @@ void ContainerW::update_all(int p)
 ContainerW* ContainerW::destroy(unsigned flag)
 {
     *(void**)this = (void*)0x5924a0;
-    dtor_body();
+    release();
     if (ents_first() != 0)
         operator delete(ents_first());
     ents_first() = 0;
@@ -391,7 +393,7 @@ void GameW::detach_party(unsigned id)
 
 // ==== 0x490ce0: total a party's stacks (and its followers') into counters ========================================
 // @ 0x490ce0
-void GameW::count_party(unsigned id, int* a, int* b, int* c, int* d)
+void GameW::count_units(unsigned id, int* a, int* b, int* c, int* d)
 {
     PartyMgrW* m = &pm();
     if (id >= m->limit())
@@ -424,12 +426,12 @@ void GameW::count_party(unsigned id, int* a, int* b, int* c, int* d)
         } while (n < m->at(m->index_of(id))->nstacks);
     }
     for (unsigned j = 0; j < m->at(m->index_of(id))->list().size(); j++)
-        count_party(m->at(m->index_of(id))->list()[j], a, b, c, d);
+        count_units(m->at(m->index_of(id))->list()[j], a, b, c, d);
 }
 
 // ==== 0x490fa0: a party and, recursively, its followers ===========================================================
 // @ 0x490fa0
-void GameW::collect_party(unsigned id, int* out, int* n)
+void GameW::list_members(unsigned id, int* out, int* n)
 {
     PartyMgrW* m = &pm();
     if (id >= m->limit())
@@ -444,7 +446,7 @@ void GameW::collect_party(unsigned id, int* out, int* n)
     out[*n] = (int)id;
     (*n)++;
     for (unsigned j = 0; j < m->at(m->index_of(id))->list().size(); j++)
-        collect_party(m->at(m->index_of(id))->list()[j], out, n);
+        list_members(m->at(m->index_of(id))->list()[j], out, n);
 }
 
 // ==== 0x4910a0: casualties of a battle: turn some of a party's troops into prisoners / dead =====================
@@ -462,9 +464,9 @@ void GameW::recruit(int id, int count, PartyW* dest)
 
     int n = 0;
     int members[128];
-    collect_party(id, members, &n);
+    list_members(id, members, &n);
     int a = 0, b = 0, c = 0, d = 0;
-    count_party(id, &a, &b, &c, &d);
+    count_units(id, &a, &b, &c, &d);
     if (dest != 0)
         dest->nstacks = 0;
     int total = a - b;
@@ -496,7 +498,7 @@ void GameW::recruit(int id, int count, PartyW* dest)
                 base += sum;
                 if (pick < base) {
                     found = true;
-                    Stack* st = &mp->stacks[mp->find_stack(pick - (base - sum), 0x134)];
+                    Stack* st = &mp->stacks[mp->find_worth(pick - (base - sum), 0x134)];
                     int troop = st->troop;
                     Troop* tr = &troops[troop];
                     int hp = tr->level + 10;
@@ -509,20 +511,20 @@ void GameW::recruit(int id, int count, PartyW* dest)
                                 || (troops[troop].flags30 & 0x80) != 0) {
                                 st->count--;
                                 if (dest != 0)
-                                    dest->add(troop, 1, 0, 0, 0);
+                                    dest->add_members(troop, 1, 0, 0, 0);
                             } else {
                                 st->wounded++;
                                 if (dest != 0)
-                                    dest->add(troop, 1, 0, 1, 0);
+                                    dest->add_members(troop, 1, 0, 1, 0);
                             }
                         } else {
-                            if (troops[troop].hp > g_thr_self)
-                                troops[troop].hp = g_thr_self;
+                            if (troops[troop].hp > g_player_wounded_treshold)
+                                troops[troop].hp = g_player_wounded_treshold;
                             troops[troop].hp -= g_k15;
                             if (troops[troop].hp < 0.0f)
                                 troops[troop].hp = 0.0f;
                             if (dest != 0)
-                                dest->add(troop, 1, 0, 1, 0);
+                                dest->add_members(troop, 1, 0, 1, 0);
                         }
                         total--;
                     }
@@ -542,7 +544,7 @@ void GameW::handout(PartyW* p, int id)
     int members[128];
     int cum[128];
     int total = 0;
-    collect_party(id, members, &n);
+    list_members(id, members, &n);
     PartyMgrW* m = &pm();
     for (int i = 0; i < n; i++) {
         total += m->at(m->index_of(members[i]))->sum_stat(0x100);
@@ -562,14 +564,14 @@ void GameW::handout(PartyW* p, int id)
             int k = 0;
             while (k < n && pick >= cum[k])
                 k++;
-            m->at(m->index_of(members[k]))->add(p->stacks[i].troop, 1, p->stacks[i].flags, 0, 0);
+            m->at(m->index_of(members[k]))->add_members(p->stacks[i].troop, 1, p->stacks[i].flags, 0, 0);
         }
     }
 }
 
-// ==== 0x4915d0: dissolve a party =================================================================================
+// ==== 0x4915d0: remove_party a party =================================================================================
 // @ 0x4915d0
-void GameW::dissolve(int id)
+void GameW::remove_party(int id)
 {
     if ((unsigned)id >= parties.n_parties)
         return;
@@ -583,7 +585,7 @@ void GameW::dissolve(int id)
     idx = m->index_of(id);
     PartyW* p = m->at(idx);
     if (p->leader() >= 0) {
-        if (m->is_slot(p->leader()))
+        if (m->is_live(p->leader()))
             detach_party(id);
         p->leader() = -1;
     }
@@ -607,8 +609,8 @@ void GameW::dissolve(int id)
         p->fol_end() = 0;
     }
     if (p->owner >= 0)
-        *(int*)(g_party_table + p->owner * 0xb0 + 0x38) += 1;
-    p->clear_map();
+        *(int*)(g_party_templates + p->owner * 0xb0 + 0x38) += 1;
+    p->clear_map_flag();
 
     idx = m->index_of(id);
     if (idx >= 0 && idx < parties.count)
@@ -640,7 +642,7 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
     int idx = mgr->index_of(id);
     if (idx < 0) return false;
     if (mgr->atu((unsigned)idx)->type != 1) return false;
-    if (!mgr->is_slot(other)) return false;
+    if (!mgr->is_live(other)) return false;
     int ia = mgr->index_of(id);
     PartyW* a = mgr->at(ia);
     int ib = mgr->index_of(other);
@@ -655,9 +657,9 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
         }
     }
     int p190 = b->first_flagged();
-    int d1 = b->max_4b1700() - p190;
+    int d1 = b->max_stacks() - p190;
     int p510 = b->count_tail();
-    int d2 = b->max_4b1700() - p510;
+    int d2 = b->max_stacks() - p510;
     int na = a->nstacks;
     int c1 = 0, c2 = 0;
     Troop* chars = troops;
@@ -692,7 +694,7 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     if (p2 < parties.n_parties) {
         int i = mgr->index_of(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
-            count_party(p2, &a, &b, &c, &d);
+            count_units(p2, &a, &b, &c, &d);
         }
     }
     float f1 = (float)(a - b);
@@ -705,9 +707,9 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
         }
     }
     float f3 = 0.0f;
-    if (p3 >= 0 && mgr->is_slot(p3)) {
+    if (p3 >= 0 && mgr->is_live(p3)) {
         a = b = c = d = 0;
-        count_party(p3, &a, &b, &c, &d);
+        count_units(p3, &a, &b, &c, &d);
         f3 = (float)(a - b);
     }
     float n = f3 + f2;
@@ -726,13 +728,13 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
         int i = mgr->index_of(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             int j = mgr->index_of(p1);
-            r += mgr->atu((unsigned)j)->f4b2370(0xf) / 2;
+            r += mgr->atu((unsigned)j)->skill_level(0xf) / 2;
         }
     }
     if (p2 < parties.n_parties) {
         int i = mgr->index_of(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
-            r -= mgr->atu((unsigned)i)->f4b2370(0xf) / 2;
+            r -= mgr->atu((unsigned)i)->skill_level(0xf) / 2;
         }
     }
     if (r < -0x14) return -0x14;
@@ -744,7 +746,7 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
 // @ 0x491e50
 void GameW::set_pos(float x, float y, int id, float radius) {
     PartyMgrW* m = &pm();
-    pick_near(Vec2(x, y), radius, (Vec2*)&x);
+    random_position_around(Vec2(x, y), radius, (Vec2*)&x);
     if ((unsigned)id >= parties.n_parties) return;
     int i = m->index_of(id);
     if (i < 0) return;
@@ -754,7 +756,7 @@ void GameW::set_pos(float x, float y, int id, float radius) {
     p->x30() = x;
     p->y34() = y;
     i = m->index_of(id);
-    m->at(i)->f4b2880();
+    m->at(i)->place_on_map();
 }
 
 // ==== 0x491f20 ======================================================================================================
@@ -802,7 +804,7 @@ bool MissionW::all_defeated(int a)
     for (int k = 0; k < 8; k++, p++, h += 6) {
         if (*p == -1 && *h > 0) return false;
     }
-    return (float)g_5e2958 * 1e-05f - changed_at >= (float)a;
+    return (float)g_ticks[2] * 1e-05f - changed_at >= (float)a;
 }
 
 // @ 0x492170
@@ -952,7 +954,7 @@ void GameW::transfer_stack(int a, int b, char flag)
             else
                 f |= 1;
         }
-        int r = pb->add(s->troop, s->count, f, 0, 0);
+        int r = pb->add_members(s->troop, s->count, f, 0, 0);
         if (b == f78 && r >= 0) {
             int shift = s->count;
             if (shift < 0x20) {
@@ -980,7 +982,7 @@ void GameW::transfer_stack(int a, int b, char flag)
             }
         }
     }
-    dissolve(a);
+    remove_party(a);
 }
 
 // @ 0x492750
@@ -1065,7 +1067,7 @@ struct CursorObj { void reset(); };                             // 0x492a20 (Gam
 struct Obj4317b0 { void reset(); };                             // 0x4317b0
 struct Obj4c6e30 { void release(); };                           // 0x4c6e30
 // @ 0x492f40
-void GameW::dtor()
+void GameW::world_free()
 {
     char* self = (char*)this;
     if (scene_open() != 0)
@@ -1190,7 +1192,7 @@ void ListPanelW::set_mode()
         *(char*)(self + 0x11e) = 0;
         *(char*)(self + 0x11d) = 1;
     }
-    update();
+    render();
 }
 
 // @ 0x493300
@@ -1305,15 +1307,14 @@ void ListPanelW::append(const tstring* _name)
 }
 
 // ==== 0x4934d0: the party record constructor and its page / hash management ========================================
-void* __cdecl alloc_arr_535482(unsigned size);                  // 0x535482 (operator new[])
-void __stdcall vec_ctor_iter_401800(void* first, unsigned size, unsigned count, void* fn);   // 0x401800
+void __stdcall vector_constructor_iterator(void* first, unsigned size, unsigned count, void* fn);   // 0x401800
 void elem_ctor_48c210(void* self);                              // 0x48c210
 struct ListNode { void* _Buynode(); };                          // 0x46c0c0 (thiscall)
 
 // @ 0x4936a0
 void PartyW::thunk_4936a0()
 {
-    init_48f180();
+    init();
 }
 
 // @ 0x4934d0
@@ -1369,7 +1370,7 @@ PartyW* PartyW::construct()
     *(int*)(self + 0x5ab0) = 1;
     *(__int64*)(self + 0x5ab8) = g_ticks[1];
 
-    init_48f180();
+    init();
 
     *(__int64*)(self + 0x59b8) = g_ticks[*(int*)(self + 0x59b0)] - 100000;
     *(char*)(self + 0x5a04) = 0;
@@ -1498,7 +1499,7 @@ SceneBaseCtor* SceneBaseCtor::construct()
     {
         float _x[2] = { 1000.0f, 1000.0f };
         float _y[2] = { -1000.0f, -1000.0f };
-        set_478830(_y, _x, 0, 0);
+        init(_y, _x, 0, 0);
     }
 
     *(float*)(self + 0x30c) = 1.0f;
@@ -1599,7 +1600,7 @@ void E68W::purge()
             if (slots()[_i]->refs <= 0) {
                 slots()[_i]->f5c = -1;
                 slots()[_i]->key = -1;
-                g_res_rel.release(slots()[_i]);
+                g_resmgr_rel.release(slots()[_i]);
                 slots()[_i] = slots()[_last];
                 --_last;
             } else
@@ -1651,7 +1652,7 @@ void TableauTbl::add_sun_light(const rgl::matrix* p, const rgl::vector4& c)
 
 // ==== 0x494110: add a button widget to the manager ===================================================================
 // @ 0x494110
-int WidgetMgrW::add_button(const tstring* text, unsigned flags)
+int WidgetMgrW::create_button_overlay(const tstring* text, unsigned flags)
 {
     UiAInline* w = new UiAInline;
 
@@ -1696,11 +1697,11 @@ void WindowMgrW::open(int _idx)
     int* _row = *(int**)(*(int*)(self + 0x7c) + _q * 4);
     int _elem = *(int*)((char*)_row + _r * 4);
     int _bl = (unsigned char)arr[_elem]->s8();
-    if (g_a17f28 != 0) {
-        PanelFn _fn = (PanelFn)(*(void***)g_a17f28)[12];
-        _fn((void*)g_a17f28, (unsigned char)_bl);
+    if (g_render.dev != 0) {
+        PanelFn _fn = (PanelFn)(*(void***)g_render.dev)[12];
+        _fn((void*)g_render.dev, (unsigned char)_bl);
     }
-    g_ui_byte = (char)_bl;
+    g_gui.f560 = (char)_bl;
 }
 
 // ==== 0x4942f0, 0x494310: the sound player ================================================================================
@@ -1715,11 +1716,11 @@ void SoundW::play_ui(int _a, unsigned _b)
 // @ 0x494310
 void SoundW::stop_all()
 {
-    if (g_5a9fd8 != 0)
+    if (g_cfg.disable_sound != 0)
         return;
 
     for (unsigned _i = 0; _i < channels.size(); ++_i)
-        fsound_stop_5342a6(channels[_i]);
+        FSOUND_StopSound(channels[_i]);
 
     channels.resize(0, 0);
 
@@ -1727,13 +1728,13 @@ void SoundW::stop_all()
     _pos.x = 0.0f;
     _pos.y = 0.0f;
     _pos.z = 0.0f;
-    RotRows _rot = identity_rot_40cd60();
+    RotRows _rot = identity3();
     rgl::matrix _m;
     *(RotRows*)&_m = _rot;
     _m.o = _pos;
-    if (g_5a9fd8 == 0) {
+    if (g_cfg.disable_sound == 0) {
         listener_frame() = _m;
-        fsound_listener_5342dc(&listener, 0, *(int*)((char*)this + 0x20), *(int*)((char*)this + 0x28), *(int*)((char*)this + 0x24),
+        FSOUND_3D_Listener_SetAttributes(&listener, 0, *(int*)((char*)this + 0x20), *(int*)((char*)this + 0x28), *(int*)((char*)this + 0x24),
                                *(int*)((char*)this + 0x30), *(int*)((char*)this + 0x38), *(int*)((char*)this + 0x34));
     }
 }
@@ -1764,7 +1765,7 @@ void GameW::quest_done(int _idx)
                 tstring _txt(_buf);
                 g_msglog.push(_txt, 0xffd0f0c8);
             }
-            g_sound.play(g_quest_sounds[0], 1, g_sound_pos, 1.0f, 0);
+            g_sound_mgr.play(g_quest_sounds[0], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
         }
         if ((*(unsigned*)(_e + 0x50) >> 1 & 1) == 0)
             *(unsigned*)(_e + 0x64) |= 0x200;
@@ -1792,7 +1793,7 @@ void GameW::quest_succeeded(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xff90ff28);
     }
-    g_sound.play(g_quest_sounds[1], 1, g_sound_pos, 1.0f, 0);
+    g_sound_mgr.play(g_quest_sounds[1], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
 }
 
 // @ 0x494680
@@ -1814,7 +1815,7 @@ void GameW::quest_failed(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    g_sound.play(g_quest_sounds[3], 1, g_sound_pos, 1.0f, 0);
+    g_sound_mgr.play(g_quest_sounds[3], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
 }
 
 // ==== 0x4947a0, 0x4948c0: quest concluded / cancelled ====================================================================
@@ -1845,7 +1846,7 @@ void GameW::set_quest_concluded(int quest, int value)
         tstring msg(buf);
         g_msglog.push(msg, 0xffd02028);
     }
-    g_sound.play(g_quest_sounds[2], 1, g_sound_pos, 1.0f, 0);
+    g_sound_mgr.play(g_quest_sounds[2], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
 }
 
 // @ 0x4948c0
@@ -1864,7 +1865,7 @@ void GameW::set_quest_cancelled(int quest)
         tstring msg(buf);
         g_msglog.push(msg, 0xffd02028);
     }
-    g_sound.play(g_quest_sounds[4], 1, g_sound_pos, 1.0f, 0);
+    g_sound_mgr.play(g_quest_sounds[4], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
 }
 
 
@@ -1941,9 +1942,9 @@ void GameW::share_experience(int party, float amount)
             int troop = s.troop;
             char hero = (troops[troop].flags32 & 0x10) != 0;
             if (hero)
-                add_party_exp(troop, (int)(per * (idx2 == 0 ? 10.0f : 3.0f)));
+                add_experience(troop, (int)(per * (idx2 == 0 ? 10.0f : 3.0f)));
             else
-                p->clear_exp_share(idx2, (int)((float)s.count * per));
+                p->add_xp_to_stack(idx2, (int)((float)s.count * per));
         }
     }
     float fl = floorf(amount);
@@ -1964,7 +1965,7 @@ void GameW::share_experience(int party, float amount)
 }
 
 // ==== 0x494e40: award experience to the troop stacks of a party and fold the share-in counters ===========================
-extern int max_scene_slots();                                   // 0x4b1700 (== 0x20)
+extern int max_stacks();                                   // 0x4b1700 (== 0x20)
 // @ 0x494e40
 void GameW::award_experience(int party, float amount, int mode)
 {
@@ -2000,13 +2001,13 @@ void GameW::award_experience(int party, float amount, int mode)
             int r = rand() % 15817;
             float v = ((float)r * (1.0f / 31634.0f) + 0.75f) * per;
             if (i == 0)
-                add_party_exp(s.troop, (int)(v * 10.0f));
+                add_experience(s.troop, (int)(v * 10.0f));
             else
-                add_party_exp(s.troop, (int)(v * 3.0f));
+                add_experience(s.troop, (int)(v * 3.0f));
         } else {
             int r = rand() % 15817;
             float v = (((float)r * (1.0f / 15817.0f)) * 0.5f + 0.75f) * (float)s.count * per;
-            p->clear_exp_share(i, (int)v);
+            p->add_xp_to_stack(i, (int)v);
         }
     }
 
@@ -2064,11 +2065,11 @@ void GameW::award_experience(int party, float amount, int mode)
                         break;
                     n2++;
                 }
-                if (n2 < max_scene_slots()) {
+                if (n2 < max_stacks()) {
                     int x = (s.f14 - s.count) + s.wounded;
                     if (x < 0)
                         x = 0;
-                    p->add(lead, s.f14, 0, x, 0);
+                    p->add_members(lead, s.f14, 0, x, 0);
                     s.count -= s.f14;
                     int c = s.count;
                     if (s.wounded < c)
@@ -2086,7 +2087,7 @@ void GameW::award_experience(int party, float amount, int mode)
 int GameW::add_random_experience(int amount)
 {
     int r = rand() % 15817;
-    return add_party_exp(player, (int)(((float)r * (1.0f / 15817.0f) + 0.5f) * amount));
+    return add_experience(player, (int)(((float)r * (1.0f / 15817.0f) + 0.5f) * amount));
 }
 
 // ==== 0x4952f0: put a light / wind object at the trigger frame ======================================================
@@ -2121,7 +2122,7 @@ void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ct
         int id = table[i].item;
         if (id < 0)
             continue;
-        CarryKind* it = &g_carry_items[id];
+        CarryKind* it = (CarryKind*)&g_items[id];
         if (((it->f1d0 & 0xf0000000) | (it->f1d4 & 7)) == 0)
             continue;
         rgl::matrix M;
@@ -2185,15 +2186,15 @@ SceneObject* SceneList::push()
 // @ 0x495700
 void WindowMgrW::set_state(int idx)
 {
-    GlobVec* g = (GlobVec*)g_presentation_list;
+    GlobVec* g = (GlobVec*)g_presentation;
     if (g != 0) {
-        g_presentation_list = 0;
+        g_presentation = 0;
         if (g->first != 0)
             operator delete(g->first);
         g->first = 0;
         g->f8 = 0;
         g->fc = 0;
-        g_presentation_list = 0;
+        g_presentation = 0;
     }
     g_gui.set_o568(0, 1);
     if (arr[idx]->s7()) {
@@ -2210,7 +2211,7 @@ void WindowMgrW::set_state(int idx)
 // @ 0x4957d0
 void GameW::spread_party_experience(int amount)
 {
-    add_party_exp(player, amount);
+    add_experience(player, amount);
     PartyMgrW* m = &pm();
     PartyW* p = m->at(m->index_of(f78));
     int live = 0;
@@ -2232,6 +2233,6 @@ void GameW::spread_party_experience(int amount)
     for (int i = 1; i < live; i++) {
         int troop = p->stacks[i].troop;
         if (troops[troop].flags32 & 0x10)
-            add_party_exp(troop, amount / heroes);
+            add_experience(troop, amount / heroes);
     }
 }

@@ -1,7 +1,7 @@
 ../src/game/world_data/world_data.cpp  ?stack_dna@GameW@@QAEHIHHH@Z  004902a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?back@?$deque@HV?$allocator@H@std@@@std@@QAEAAHXZ  00490310  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?clear@PartyMgrW@@QAEXXZ  00490340  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?is_slot@PartyMgrW@@QAEHI@Z  004903e0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?is_live@PartyMgrW@@QAEHI@Z  004903e0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?trigger_entity@@YIHH@Z  00490430  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?dtor_common@ContainerW@@QAEXXZ  00490520  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?activate_all@ContainerW@@QAEXXZ  004906b0  /O2 /MT /Gy /TP
@@ -9,7 +9,7 @@
 ../src/game/world_data/world_data.cpp  ?update_all@ContainerW@@QAEXH@Z  004908c0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?destroy@ContainerW@@QAEPAU1@I@Z  00490930  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?detach_party@GameW@@QAEXI@Z  00490a30  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?collect_party@GameW@@QAEXIPAH0@Z  00490fa0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?list_members@GameW@@QAEXIPAH0@Z  00490fa0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?token_lookup@GameW@@QAEHHHHH@Z  00491f20  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?hero_down@MissionW@@QAE_NXZ  00492170  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_weapon_order_1@MissionW@@QAEXHI@Z  00492230  /O2 /MT /Gy /TP
@@ -18,7 +18,7 @@
 ../src/game/world_data/world_data.cpp  ?free_arrays@GameW@@QAEXXZ  00492a20  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?_Insert_n@?$vector@_JV?$allocator@_J@std@@@std@@IAEXViterator@12@IAB_J@Z  00492b30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?_Growmap@?$deque@HV?$allocator@H@std@@@std@@IAEXI@Z  00492d80  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?dtor@GameW@@QAEXXZ  00492f40  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?world_free@GameW@@QAEXXZ  00492f40  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?resize@?$vector@_JV?$allocator@_J@std@@@std@@QAEXI_J@Z  00493090  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?push_back@?$deque@HV?$allocator@H@std@@@std@@QAEXABH@Z  00493120  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?panel_count_493300@@YAHXZ  00493300  /O2 /MT /Gy /TP

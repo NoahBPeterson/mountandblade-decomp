@@ -22,7 +22,7 @@ struct SaveHeader {
     int f2c;                                // +0x2c
     int f30;                                // +0x30
     int f34;                                // +0x34  (panel +0x8c) the value handed to Game::init   0x51c720 step 1
-    void load(bin_reader* r);               // 0x4e54e0
+    void read_slot(bin_reader* r);               // 0x4e54e0
 };
 
 struct LoadingPanel {

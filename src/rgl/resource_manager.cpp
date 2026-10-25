@@ -23,6 +23,9 @@
 #include "./resource.h"
 #include "./text_stream.h"
 #include "./mem_stream.h"
+#include "../include/renderer.h"      // g_render 0xa17910 (dev = g_render.dev 0xa17f28)
+struct Config;
+extern Config g_cfg;                        // 0x5a9f98 (saved through rgl_config::save)
 #include "./resource_manager.h"
 #include "../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
@@ -219,7 +222,7 @@ int texture::create()
     level0 = 0;
     used_format = format;
     if (kind == 2) {
-        HRESULT hr = g_device->CreateDepthStencilSurface(width, height, (D3DFORMAT)format, D3DMULTISAMPLE_NONE, 0, TRUE, &surface, 0);
+        HRESULT hr = g_render.dev->CreateDepthStencilSurface(width, height, (D3DFORMAT)format, D3DMULTISAMPLE_NONE, 0, TRUE, &surface, 0);
         if (hr >= 0)
             goto done;
         int alt = format;
@@ -232,7 +235,7 @@ int texture::create()
         else if (format == D3DFMT_R16F)
             alt = D3DFMT_R32F;
         if (alt != format) {
-            hr = g_device->CreateDepthStencilSurface(width, height, (D3DFORMAT)alt, D3DMULTISAMPLE_NONE, 0, TRUE, &surface, 0);
+            hr = g_render.dev->CreateDepthStencilSurface(width, height, (D3DFORMAT)alt, D3DMULTISAMPLE_NONE, 0, TRUE, &surface, 0);
             if (hr >= 0)
                 used_format = alt;
         }
@@ -244,7 +247,7 @@ int texture::create()
                 g_shadow_quality = g_shadow_quality - 1;
                 mb_error("Unable to create depth stencil surface width=%d height=%d. Shadowmap quality will be reduced next time you start the game.", width, height);
                 FILE* f = mb_open_user_file("rgl_config.txt", "w");
-                g_rgl_config.save(f);
+                ((rgl_config&)g_cfg).save(f);
                 fclose(f);
                 return 0;
             }
@@ -262,9 +265,9 @@ int texture::create()
         }
         HRESULT hr;
         if (format == D3DFMT_D24S8 || format == D3DFMT_D24X8 || format == D3DFMT_D16)
-            hr = D3DXCreateTexture(g_device, width, height, 1, D3DUSAGE_DEPTHSTENCIL, (D3DFORMAT)format, D3DPOOL_DEFAULT, d3d_tex);
+            hr = D3DXCreateTexture(g_render.dev, width, height, 1, D3DUSAGE_DEPTHSTENCIL, (D3DFORMAT)format, D3DPOOL_DEFAULT, d3d_tex);
         else
-            hr = D3DXCreateTexture(g_device, width, height, mipmaps == 0, (mipmaps != 0 ? D3DUSAGE_AUTOGENMIPMAP : 0) + D3DUSAGE_RENDERTARGET, (D3DFORMAT)format, D3DPOOL_DEFAULT, d3d_tex);
+            hr = D3DXCreateTexture(g_render.dev, width, height, mipmaps == 0, (mipmaps != 0 ? D3DUSAGE_AUTOGENMIPMAP : 0) + D3DUSAGE_RENDERTARGET, (D3DFORMAT)format, D3DPOOL_DEFAULT, d3d_tex);
         if (hr < 0) {
             loaded = 0;
             if (width <= 0x400) {
@@ -276,7 +279,7 @@ int texture::create()
                 g_shadow_quality = g_shadow_quality - 1;
                 mb_error("Unable to create render target texture width=%d height=%d. Shadowmap quality will be reduced next time you start the game.", width, height);
                 FILE* f = mb_open_user_file("rgl_config.txt", "w");
-                g_rgl_config.save(f);
+                ((rgl_config&)g_cfg).save(f);
                 fclose(f);
                 return 0;
             }

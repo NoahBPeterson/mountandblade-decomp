@@ -5,13 +5,14 @@
 #define GAME_WORLD_DATA_OBJ_TBL_H
 #include <math.h>
 #include "./mesh_hud.h"
+#include "../game_globals.h"      // canonical g_map_icons
 #include "./tableau.h"
 #include "./widget_mgr_w.h"
 
 // ---- mesh members the shared headers lack (same object as rgl::mesh) ---------------------------------------------------------------------
 struct MeshY : MeshX {
     void translate(const vector4* d);                           // 0x44f240
-    void set_color(unsigned c);                                 // 0x47b360
+    void set_bone_index(unsigned c);                                 // 0x47b360
     void add_quad(const vector4* a, const vector4* b, const vec2* uv0, const vec2* uv1, const unsigned* color);   // 0x44e970
 };
 
@@ -29,7 +30,7 @@ struct TableauEntity {
     void* vptr;                                                 // +0x00
     char pad4[0x58 - 4];
     rgl::matrix local;                                          // +0x58 (0x4992b0: the frame copied into the new entity)
-    void add_mesh(rgl::mesh* m);                                // 0x442110 (thiscall, ret 4)
+    void add_extra(rgl::mesh* m);                                // 0x442110 (thiscall, ret 4)
 };
 struct TableauWorld {
     TableauEntity* create_entity(int type_id);                  // 0x428440 (thiscall, ret 4)
@@ -47,7 +48,6 @@ struct SceneRec48 {
 
 extern float g_one;                                             // 0x549cdc (1.0f)
 extern float g_zero;                                            // 0x549ca8 (0.0f)
-extern int g_gamma_flag;                                        // 0x5e28fc (non-zero: gamma on colours)
-extern void* g_mesh_recs;                                       // 0x5e29f0 (the 0x48-stride mesh records: name at +0x14)
+extern int g_use_shaders;                                        // 0x5e28fc (non-zero: gamma on colours)
 
 #endif // GAME_WORLD_DATA_OBJ_TBL_H

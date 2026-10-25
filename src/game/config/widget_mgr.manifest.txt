@@ -1,7 +1,7 @@
-../src/game/config/widget_mgr.cpp  ?add_medium@widget_mgr@@QAEHH@Z  00499830  /O2 /MT /Gy /TP
-../src/game/config/widget_mgr.cpp  ?add_xyz@widget_mgr@@QAEHHH@Z  00499a20  /O2 /MT /Gy /TP
-../src/game/config/widget_mgr.cpp  ?add_xyz_clicked@widget_mgr@@QAEHHH@Z  00499b50  /O2 /MT /Gy /TP
-../src/game/config/widget_mgr.cpp  ?add_progress@widget_mgr@@QAEHHH@Z  00499b80  /O2 /MT /Gy /TP
-../src/game/config/widget_mgr.cpp  ?add_dropdown@widget_mgr@@QAEHXZ  00499d90  /O2 /MT /Gy /TP
-../src/game/config/widget_mgr.cpp  ?add_party@widget_mgr@@QAEHXZ  0049a0b0  /O2 /MT /Gy /TP
-../src/game/config/widget_mgr.cpp  ?apply_preset_b@widget_mgr@@QAEXHPBM@Z  0049ab80  /O2 /MT /Gy /TP
+../src/game/config/widget_mgr.cpp  ?create_game_button_overlay@widget_mgr@@QAEHH@Z  00499830  /O2 /MT /Gy /TP
+../src/game/config/widget_mgr.cpp  ?create_image_button_overlay@widget_mgr@@QAEHHH@Z  00499a20  /O2 /MT /Gy /TP
+../src/game/config/widget_mgr.cpp  ?create_check_box_overlay@widget_mgr@@QAEHHH@Z  00499b50  /O2 /MT /Gy /TP
+../src/game/config/widget_mgr.cpp  ?create_progress_overlay@widget_mgr@@QAEHHH@Z  00499b80  /O2 /MT /Gy /TP
+../src/game/config/widget_mgr.cpp  ?create_combo_button_overlay@widget_mgr@@QAEHXZ  00499d90  /O2 /MT /Gy /TP
+../src/game/config/widget_mgr.cpp  ?create_text_box_overlay@widget_mgr@@QAEHXZ  0049a0b0  /O2 /MT /Gy /TP
+../src/game/config/widget_mgr.cpp  ?set_area_size@widget_mgr@@QAEXHPBM@Z  0049ab80  /O2 /MT /Gy /TP

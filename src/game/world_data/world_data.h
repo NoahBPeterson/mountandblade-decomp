@@ -17,6 +17,7 @@
 #include <string.h>
 #include <math.h>
 #include "../tstring.h"
+#include "../game_globals.h"      // canonical g_player_wounded_treshold
 #include "../str_table.h"
 #include "../../rgl/rgl_math.h"
 #include "../../include/vec.h"
@@ -48,15 +49,15 @@ struct PartyW : Party {
     int& f8e8() { return WD_FLD(int, 0x8e8); }                  // +0x8e8
     int& f918() { return WD_FLD(int, 0x918); }                  // +0x918
     int& f91c() { return WD_FLD(int, 0x91c); }                  // +0x91c
-    int add(int troop, int amount, int flag, int a4, int a5);   // 0x48c840 (thiscall, ret 0x14)
-    int find_stack(int amount, int what);                       // 0x4b1d30 (thiscall, ret 8)
-    void clear_map();                                           // 0x4b32f0 (thiscall, ret 0)
-    int f4b2370(int a);                                         // 0x4b2370 (thiscall, ret 4)
-    void f4b2880();                                             // 0x4b2880 (thiscall, ret 0)
-    void clear_exp_share(int slot, int amount);                 // 0x4b1d80 (thiscall, ret 8)
+    int add_members(int troop, int amount, int flag, int a4, int a5);   // 0x48c840 (thiscall, ret 0x14)
+    int find_worth(int amount, int what);                       // 0x4b1d30 (thiscall, ret 8)
+    void clear_map_flag();                                           // 0x4b32f0 (thiscall, ret 0)
+    int skill_level(int a);                                         // 0x4b2370 (thiscall, ret 4)
+    void place_on_map();                                             // 0x4b2880 (thiscall, ret 0)
+    void add_xp_to_stack(int slot, int amount);                 // 0x4b1d80 (thiscall, ret 8)
     PartyW* construct();                                        // 0x4934d0 (the constructor: returns this)
     void thunk_4936a0();                                        // 0x4936a0 (tail jump to the reset 0x48f180)
-    void init_48f180();                                         // 0x48f180
+    void init();                                         // 0x48f180
 };
 
 // ---- the party manager embedded in the game object at +0xf8 (include/party.h PartyMgr) --------------------------------
@@ -65,7 +66,7 @@ struct PartyMgrW : PartyMgr {
     PartyW* at(int idx) { return (PartyW*)((char*)pages[idx >> 4] + (idx & 0xf) * 0x5ac8); }
     PartyW* atu(unsigned idx) { return (PartyW*)((char*)pages[idx >> 4] + (idx & 0xf) * 0x5ac8); }
     PartyW* get_w(unsigned id) { int i = index_of(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
-    int is_slot(unsigned id);                                   // 0x4903e0 (thiscall, ret 4)
+    int is_live(unsigned id);                                   // 0x4903e0 (thiscall, ret 4)
     void clear();                                               // 0x490340 (thiscall, ret 0)
     std::vector<int>& free_ids() { return WD_FLD(std::vector<int>, 0x138bc); }   // +0x138bc free party indices (first at +0x138c0)
     PartyMgrW* grow();                                          // 0x493830 (thiscall, ret 0)
@@ -113,9 +114,9 @@ struct ContainerW : ContainerBase {
     void**& ents_first() { return WD_FLD(void**, 0x17c); }      // +0x17c std::vector<child*> (0x4906b0, 0x490520)
     void**& ents_last() { return WD_FLD(void**, 0x180); }       // +0x180
     void**& ents_end() { return WD_FLD(void**, 0x184); }        // +0x184
-    void dtor_body();                                           // 0x48ef40 (thiscall, ret 0)
+    void release();                                           // 0x48ef40 (thiscall, ret 0)
     void dtor_base();                                           // 0x487c00 (thiscall, ret 0)
-    void bounds_init(int* a, float* p3, float* p4, float* p5);  // 0x488720 (MissionUi::render; ret 0x10)
+    void render(int* a, float* p3, float* p4, float* p5);  // 0x488720 (MissionUi::render; ret 0x10)
     void dtor_common();                                         // 0x490520 (~ContainerBase)
     void place(int* a);                                         // 0x490570 (ret 4)
     void track_bounds(void* p);                                 // 0x4905c0 (ret 4)
@@ -135,13 +136,13 @@ struct LevelObj {                                               // g_level->obj 
     char pad0[0x14];
     char* kinds;                                                // +0x14 0x88-byte face records (+0x24: surface kind)
     char pad18[0xb0 - 0x18];
-    bool overlap(int* a, int* b);                               // 0x48efa0 (thiscall, ret 8)
+    bool shares(int* a, int* b);                               // 0x48efa0 (thiscall, ret 8)
 };
 struct LevelRef {
     char pad0[0xb0];
     LevelObj* obj;                                              // +0xb0 (0x490030)
 };
-extern LevelRef* g_level_ref;                                   // 0xa732b4 (terrain_b.h calls it g_level)
+extern LevelRef* g_level;                                   // 0xa732b4 (terrain_b.h calls it g_level)
 struct FaceId {
     int m0;
     int m4;                                                     // +4 face index (-1: none)
@@ -149,14 +150,11 @@ struct FaceId {
 
 int __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
 int trigger_item_mesh(int context);                             // 0x4904a0 (context in EAX in the original: a static function with a register convention)
-int agent_id(void* rec);                                        // 0x433df0 (ret 4; ecx = the agent record)
-extern void* g_agents;                                          // 0x5e29d0 (the 0x238-byte item-kind table: script_interpreter.h g_items)
+int ammo_skill(void* rec);                                        // 0x433df0 (ret 4; ecx = the agent record)
 
-extern char* g_party_table;                                     // 0x5e29f8 (0xb0-byte party-template rows, +0x38 counter: 0x4915d0)
+extern char* g_party_templates;                                     // 0x5e29f8 (0xb0-byte party-template rows, +0x38 counter: 0x4915d0)
 extern float g_k15;                                             // 0x590da0 (15.0f)
 extern float g_k065;                                            // 0x590b6c (0.65f)
-extern float g_thr_self;                                        // 0xa1813c
-extern __int64 g_5e2958;                                        // 0x5e2958 (the second game clock, int64: 0x4920e0)
 
 struct GameW : GameData {
     rgl::vector4& cur_color() { return WD_FLD(rgl::vector4, 0x13fb4); }     // +0x13fb4 (0x4952f0)
@@ -173,31 +171,27 @@ struct GameW : GameData {
     PartyW* party(int id) { PartyMgrW& m = pm(); return m.at(m.index_of(id)); }
 
     FaceId* find_at(float* p);                                  // 0x48ea80 (thiscall, ret 4)
-    void get_prisoners_a(int id, int* a, int* b, int* c, int* d);   // 0x490ce0 (ret 0x14)
-    void collect(int id, int* out, int* n);                     // 0x490fa0 (ret 0xc)
     bool agent_low(int idx);                                    // 0x4638f0 (ret 4)
-    int add_party_exp(int troop, int amount);                   // 0x4428c0 (ret 8)
+    int add_experience(int troop, int amount);                   // 0x4428c0 (ret 8)
 
-    void pick_near(Vec2 pos, float r, Vec2* out);               // 0x490030 (ret 0x10)
-    void random_position_around(Vec2 pos, float r, Vec2* out); // 0x490030
-    void pick_near_xy(float x, float y, float radius, float* out);    // 0x490030 (the same function, called with the pair as two floats: 0x491e50)
-    char pick_near_type(Vec2 pos, float r, Vec2* out, char any);    // 0x490160 (ret 0x14)
-    char position_around(Vec2 pos, float r, Vec2* out, char any); // 0x490160
+    void random_position_around(Vec2 pos, float r, Vec2* out);               // 0x490030 (ret 0x10)
+    char position_around(Vec2 pos, float r, Vec2* out, char any);    // 0x490160 (ret 0x14)
+    void random_position_around(float x, float y, float radius, float* out);    // 0x490030 (the same function, called with the pair as two floats: 0x491e50)
     int stack_dna(unsigned id, int stack, int a3, int a4);      // 0x4902a0 (ret 0x10)
     void mark_kind(int kind);                                   // 0x490990 (ret 4)
     void detach_party(unsigned id);                             // 0x490a30 (ret 4)
-    void count_party(unsigned id, int* a, int* b, int* c, int* d);  // 0x490ce0 (ret 0x14)
-    void collect_party(unsigned id, int* out, int* n);          // 0x490fa0 (ret 0xc)
+    void count_units(unsigned id, int* a, int* b, int* c, int* d);  // 0x490ce0 (ret 0x14)
+    void list_members(unsigned id, int* out, int* n);          // 0x490fa0 (ret 0xc)
     void recruit(int id, int count, PartyW* dest);              // 0x4910a0 (ret 0xc)
     void handout(PartyW* p, int id);                            // 0x491430 (ret 8)
-    void dissolve(int id);                                      // 0x4915d0 (ret 4)
+    void remove_party(int id);                                      // 0x4915d0 (ret 4)
     bool can_transfer(unsigned id, int other, char flag);       // 0x4918d0 (ret 0xc)
     int gate_rating(unsigned p1, unsigned p2, int p3);          // 0x491b20 (ret 0xc)
     void set_pos(float x, float y, int id, float radius);       // 0x491e50 (ret 0x10)
     int token_lookup(int a, int b, int c, int d);               // 0x491f20 (ret 0x10)
     void transfer_stack(int a, int b, char flag);               // 0x492530 (ret 0xc)
     void free_arrays();                                         // 0x492a20 (ret 0)
-    void dtor();                                                // 0x492f40 (ret 0)
+    void world_free();                                          // 0x492f40 (ret 0)
     void quest_done(int quest);                                 // 0x494410 (ret 4)
     void quest_succeeded(int quest);                            // 0x494560 (ret 4)
     void quest_failed(int quest);                               // 0x494680 (ret 4)
@@ -282,7 +276,7 @@ struct IntVecW {                                                // std::vector<i
     int* _Myend;
     unsigned size() const { return _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst); }
     void insert_a(int* where, unsigned count, const int& val);     // 0x4927d0 (the instance below; also used for pointer vectors)
-    void insert_b(int* where, unsigned count, const int& val);     // 0x43e7b0
+    void insert_n(int* where, unsigned count, const int& val);     // 0x43e7b0
     void insert_c(int* where, unsigned count, const int& val);     // 0x41a2c0
     void resize(unsigned n, int v);                                 // 0x43f310
     void kill_range(int n, int pad);                                // 0x41ad20
@@ -329,7 +323,7 @@ struct ListPanelW : MissionUi {                                 // the text list
     void reset_tail();                                          // 0x4933b0
     void* destroy(unsigned flags);                              // 0x4933d0 (scalar deleting destructor, ret 4)
     void append(const tstring* name);                           // 0x493400 (ret 4)
-    void update();                                              // 0x488720 (MissionUi::render reached with the frame the caller built)
+    void render();                                              // 0x488720 (MissionUi::render reached with the frame the caller built)
 };
 struct DropDownW : DropDown {
     DropDownW* construct();                                     // 0x4931d0 (the constructor body: returns this)
@@ -367,7 +361,8 @@ struct PartyNew {                                               // a party recor
 struct ResRelease {                                             // the resource manager (global 0x5d6fa0)
     void release(void* res);                                    // 0x4175f0 (clears field +0x14 of the resource)
 };
-extern ResRelease g_res_rel;                                    // 0x5d6fa0
+#include "../../rgl/resource.h"                               // resource_manager g_resmgr 0x5d6fa0
+#define g_resmgr_rel (*(ResRelease*)&g_resmgr)                 // the resource manager seen through release()
 struct ResSlot {                                                // a resource slot of the cache group (0x493df0, 0x493e90)
     char pad0[0x5c];
     int f5c;                                                    // +0x5c
@@ -387,7 +382,7 @@ struct Vec68W : Vec68 {
 struct ViewParamsCtor { void ctor(); };                         // 0x46b940
 struct SceneBaseCtor {                                          // the scene base object (0x36c bytes): its constructor body, kept opaque from 0x495650
     SceneBaseCtor* construct();                                 // 0x493ab0 (returns this)
-    void set_478830(float* a, float* b, int c, int d);          // 0x478830 (thiscall)
+    void init(float* a, float* b, int c, int d);          // 0x478830 (thiscall)
 };
 
 // ---- the tableau table (g_tableaus 0xa75f40; the shared header tableau.h has the whole class) -------------------------------------
@@ -409,9 +404,9 @@ struct GlobVec {                                                // the running p
     int f8;                                                     // +8
     int fc;                                                     // +0xc
 };
-extern GlobVec* g_presentation_list;                            // 0x5e299c
+extern GlobVec* g_presentation;                            // 0x5e299c
 
-// ---- the sound player (g_sound 0x5aa128; agent3/agent_fx_sound.h has the full class under src/rgl-based headers) ----------------
+// ---- the sound player (g_sound_mgr 0x5aa128; agent3/agent_fx_sound.h has the full class under src/rgl-based headers) ----------------
 struct SoundW {
     char pad0[0x40];
     rgl::vector4 listener;                                      // +0x40
@@ -422,25 +417,19 @@ struct SoundW {
     void play_ui(int sound, unsigned flags);                    // 0x4942f0 (ret 8)
     void stop_all();                                            // 0x494310
 };
-extern SoundW g_sound;                                          // 0x5aa128
-extern float g_sound_pos[];                                     // 0x5aa168
+extern SoundW g_sound_mgr;                                          // 0x5aa128
 extern int g_quest_sounds[];                                    // 0x5aa184 .. (completed 0x5aa184, succeeded 0x5aa188, concluded 0x5aa18c, failed 0x5aa190, cancelled 0x5aa194)
 
-extern MsgLog g_msglog;                                         // 0x5d7080 (the on-screen message log)
+#define g_msglog (*(MsgLog*)&g_gui)                          // the on-screen message log view of the UI root g_gui (0x5d7080)
 extern StrTable g_strtable;                                     // 0x5e2a18
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100
-struct UiHost {                                                 // the UI root object at 0x5d7080
-    void set_o568(int a, int b);                                // 0x42cdb0 (thiscall)
-    void reset();                                               // 0x42d1b0
-};
-extern UiHost g_gui;                                            // 0x5d7080
-extern char g_ui_byte;                                          // 0x5d75e0
-extern int g_a17f28;                                            // 0xa17f28 (the device pointer: slot 12 is called with the byte)
-extern int g_5a9fd8;                                            // 0x5a9fd8
+#include "../config/config.h"                                  // g_cfg 0x5a9f98
+#include "../strat/gui_manager.h"                             // gui_manager g_gui 0x5d7080 (UI root: set_o568, reset, f560)
+#include "../../include/renderer.h"                              // g_render 0xa17910 (dev at +0x618 = 0xa17f28)
 struct RotRows { rgl::vector4 s, f, u; };                       // the rotation part of a frame (0x30 bytes)
-RotRows identity_rot_40cd60();                                  // 0x40cd60 (cdecl, hidden return: the identity rotation)
-void __stdcall fsound_stop_5342a6(int handle);                            // 0x5342a6 _FSOUND_StopSound@4
-void __stdcall fsound_listener_5342dc(void* pos, int, int, int, int, int, int, int);   // 0x5342dc _FSOUND_3D_Listener_SetAttributes@32
+RotRows identity3();                                  // 0x40cd60 (cdecl, hidden return: the identity rotation)
+extern "C" void __stdcall FSOUND_StopSound(int handle);                            // 0x5342a6 _FSOUND_StopSound@4
+extern "C" void __stdcall FSOUND_3D_Listener_SetAttributes(void* pos, int, int, int, int, int, int, int);   // 0x5342dc _FSOUND_3D_Listener_SetAttributes@32
 
 // ---- the carried-item placement of an agent body (0x495430): views of the item kind, mesh, skeleton ---------------------------------------
 struct CarryKind {                                              // include/item_kind.h ItemKind (0x238 bytes, g_items 0x5e29d0)
@@ -452,7 +441,6 @@ struct CarryKind {                                              // include/item_
     char pad1d8[0x238 - 0x1d8];
     void get_carry_pos(rgl::matrix* out, int* attach, int* bone);   // 0x433e40 (thiscall, ret 0xc)
 };
-extern CarryKind* g_carry_items;                                // 0x5e29d0
 struct CarryMesh {                                              // rgl::mesh seen by the placement: visibility mask and local frame
     char pad0[0x8c];
     rgl::matrix frame;                                          // +0x8c (m_cc)

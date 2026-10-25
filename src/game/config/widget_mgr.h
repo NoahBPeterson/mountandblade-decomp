@@ -63,7 +63,8 @@ struct WVt {
 struct gui_mesh : rgl::mesh {
     gui_mesh* clone();                          // 0x41c6d0
     void scale(float s);                        // 0x44f0c0
-    void set_scale(vector4 v);                  // 0x47af30 (v by value; .w is copied uninitialised)
+    void set_color(vector4 v);                  // 0x47af30 (v by value; .w is copied uninitialised)
+    void set_scale(vector4 v);                  // 0x47af30 (v by value; .w is copied uninitialised)  // old name of set_color, removed after the names merge
 };
 #define clone_gui(m) (((gui_mesh*)(m))->clone())
 
@@ -81,7 +82,8 @@ struct scene_tbl {
     void* recs;                                 // +0
     rgl::mesh* placed(int index);               // 0x499050
 };
-extern scene_tbl g_scene;                       // 0x8ed4f58
+extern scene_tbl g_meshes;                       // 0x8ed4f58
+extern scene_tbl g_scene;                       // 0x8ed4f58  // old name of g_meshes, removed after the names merge
 
 // ---- widget classes (vtable addresses in the comments) ---------------------------------------------------------
 // The field initialisation of these sits in an intermediate base whose inline constructor the concrete classes
@@ -154,10 +156,10 @@ struct DropDown : MissionUi {                   // ctor 0x4931d0 (installs its o
     NodeA* create();                     // 0x49ad20
 };
 
-// ---- widget items as apply_preset sees them ---------------------------------------------------------------------
+// ---- widget items as set_size sees them ---------------------------------------------------------------------
 struct WItem : MissionUi {
     void terrain_refresh(const float* pos);     // 0x48f120 (ret 4)
-    void terrain_refresh_mesh(const float* pos);   // 0x498420 (ret 4)
+    void scroll_refresh(const float* pos);   // 0x498420 (ret 4)
 };
 
 // MissionUi::layout_text_to (0x49abc0) lives in this object; ../ui/mission_ui.h lacks it
@@ -178,24 +180,15 @@ struct widget_mgr {
     float busy_until;                           // +0x28  seconds until the running animations have finished (0x48e5d0..)
     WVt* scene;                                 // +0x2c  vtable slot 50 adds a widget (0x499830)
 
-    int add_medium(int id);                     // 0x499830
-    int create_game_button_overlay(int id); // 0x499830
-    int add_xyz(int a, int b);                  // 0x499a20
-    int create_image_button_overlay(int a, int b); // 0x499a20
-    int add_xyz_clicked(int a, int b);          // 0x499b50
-    int create_check_box_overlay(int a, int b); // 0x499b50
-    int add_progress(int lo, int hi);           // 0x499b80
-    int create_progress_overlay(int lo, int hi); // 0x499b80
-    int add_dropdown();                         // 0x499d90
-    int create_combo_button_overlay(); // 0x499d90
-    int add_party();                            // 0x49a0b0
-    int create_text_box_overlay(); // 0x49a0b0
-    int add_tableau_button(int pos, int rec, int key);   // 0x4b14f0 (ret 0xc; src/game/party2)
-    int create_image_button_overlay_with_tableau(int pos, int rec, int key); // 0x4b14f0
-    void apply_preset(int idx, const float* pos);      // 0x49a300 (ret 8)
-    void set_size(int idx, const float* pos); // 0x49a300
-    void apply_preset_b(int idx, const float* pos);    // 0x49ab80 (ret 8)
-    void set_area_size(int idx, const float* pos); // 0x49ab80
+    int create_game_button_overlay(int id);                     // 0x499830
+    int create_image_button_overlay(int a, int b);                  // 0x499a20
+    int create_check_box_overlay(int a, int b);          // 0x499b50
+    int create_progress_overlay(int lo, int hi);           // 0x499b80
+    int create_combo_button_overlay();                         // 0x499d90
+    int create_text_box_overlay();                            // 0x49a0b0
+    int create_image_button_overlay_with_tableau(int pos, int rec, int key);   // 0x4b14f0 (ret 0xc; src/game/party2)
+    void set_size(int idx, const float* pos);      // 0x49a300 (ret 8)
+    void set_area_size(int idx, const float* pos);    // 0x49ab80 (ret 8)
     // ---- src/game/mission_ui2: the widget setters of the script operations (overlay_set_* / overlay_animate_to_*) ----
     void* set_mesh_matrix(int idx, const void* m);      // 0x48db20 (ret 8: copies a 0x30-byte frame into the five child meshes)
     void set_color(int idx, unsigned rgb);              // 0x48dc30 (ret 8)

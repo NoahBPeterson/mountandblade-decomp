@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <stdexcept>
 #define ANIM_SLOT_SET_OUT_OF_LINE   // AnimSlot::set 0x4378a0 stays a real function in this TU
+#include "../dialog_manager.h"      // g_script 0xa70440 (g_ev_a / g_ev_b live in it; listed directly: the resolution audit reads only the source's own includes)
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "./agent_stats.h"
 #include "../anim_slot.h"      // (named here too for the resolution audit)
@@ -153,10 +154,10 @@ int GameData::skill_level(int agent, int skill)
 {
     unsigned w = chars[agent].nib[skill / 8];
     int lvl = (w >> (skill % 8 * 4)) & 0xf;
-    g_ev_a = 0;
-    g_ev_b = 0;
+    (*(int*)((char*)&g_script + 0x18)) = 0;
+    (*(int*)((char*)&g_script + 0x1c)) = 0;
     emit_event(0x17, agent, skill);
-    lvl += g_ev_a;
+    lvl += (*(int*)((char*)&g_script + 0x18));
     if (lvl < 0)
         return 0;
     int cap = g_skill_tbl[skill].cap;
@@ -414,7 +415,7 @@ void Agent::smooth_turn(float dt)
     if (*(float*)(g_range_tbl + o) <= v && v < *(float*)(g_range_tbl + o + 4))
         c = v;
     else
-        c = clamp_ref(&v, (float*)(g_range_tbl + o), (float*)(g_range_tbl + o + 4));
+        c = closer_angle(&v, (float*)(g_range_tbl + o), (float*)(g_range_tbl + o + 4));
     float d = c - cur;
     if (!(fabs(d) < 0.8f))
         c = d * dt * 9.0f + cur;
@@ -956,7 +957,7 @@ void level::floor_at(const float* p, float* out_z, face** out_face)
     {
         int use3d = 0;
         int ci[2];
-        locate(p, ci);
+        to_cell(p, ci);
         count = 0;
         cells[ci[0]][ci[1]].collect_point(p, &use3d, 0x304, shapes, &count);
     }
@@ -1068,12 +1069,12 @@ void Skeleton::start_anim(int rec, Anim* poly, int a, int b)
         chans[rec].k48 = 0x33;
         chans[rec].k4c = a;
         chans[rec].k50 = b;
-        chans[rec].va = poly->point(a);
-        chans[rec].vb = poly->point(b);
+        chans[rec].va = poly->sample(a);
+        chans[rec].vb = poly->sample(b);
         chans[rec].anim = poly;
         for (int i = 0; i < nbones; i++) {
-            chans[rec].pa[i] = poly->elems[i].point(a);
-            chans[rec].pb[i] = poly->elems[i].point(b);
+            chans[rec].pa[i] = poly->elems[i].sample(a);
+            chans[rec].pb[i] = poly->elems[i].sample(b);
         }
     }
 }

@@ -25,7 +25,7 @@ struct TableauTbl {
     std::vector<TableauWorld*> worlds;                          // +0x10 (first at +0x14)
     void add_point_light(const rgl::matrix* p, const rgl::vector4& c);   // 0x493f80 (thiscall, ret 8)
     void add_sun_light(const rgl::matrix* p, const rgl::vector4& c);     // 0x494020 (thiscall, ret 8)
-    skin* make(const int* index, const int* from);         // 0x4b14b0 (thiscall, ret 8)
+    skin* add_spawned(const int* index, const int* from);         // 0x4b14b0 (thiscall, ret 8)
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (thiscall, ret 8)
     void spawn(int index, int from, const rgl::matrix* frame, const rgl::vector4* scale);   // 0x4992b0 (ret 0x10)
     void spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale, const float* alpha, const unsigned* color);   // 0x499390 (ret 0x14)

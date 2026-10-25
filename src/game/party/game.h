@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <new>
 #include "../tstring.h"
+#include "../game_globals.h"      // canonical g_party_template_count
 #include "../../include/dialog_rec.h"      // DialogBlock (TriggerRec)
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
@@ -22,7 +23,7 @@
 // ---- globals -----------------------------------------------------------------------------------------
 // the second element of the clock table g_ticks (ui_common.h, 0x5e2948) as two dwords: the original reads and
 // writes the halves separately (0x51cfa0 copies lo then hi; 0x51dbd0 stores them from the loaded value)
-extern int g_tick1_lo;                      // 0x5e2950
+#include "../../include/fx.h"            // g_ticks 0x5e2948
 extern int g_tick1_hi;                      // 0x5e2954
 extern float g_tick_scale;                  // 0x54a6d0 1e-5f (0x51cc80: g_ticks[0] * scale)
 extern char g_new_game_done;                // 0xa73090 (0x51d2b0 returns at once when set; 0x51c720 step 6 sets it)
@@ -134,7 +135,7 @@ struct TrackVec {                           // Game +0x13a60 (std::vector<TrackR
     int size() const { if (_Myfirst == 0) return 0; return (int)(_Mylast - _Myfirst); }
     __declspec(noinline) void resize(unsigned n, TrackRec val);     // 0x51e7a0 (ret 0x60)
     void insert_n(TrackRec* where, unsigned count, const TrackRec* val);   // 0x4b54a0
-    void erase_tail(TrackRec** out, TrackRec* first, TrackRec* last);      // 0x518990
+    void shift_over(TrackRec** out, TrackRec* first, TrackRec* last);      // 0x518990
 };
 
 // The Troop record's loader (0x51e540). Troop (ui/troop_inv.h) declares the inventory and equipment; the other
@@ -167,8 +168,8 @@ struct PtrVec {                             // std::vector<char*> (the page list
     char** _Myfirst;                        // +4
     char** _Mylast;                         // +8
     char** _Myend;                          // +0xc
-    PtrVec() { buy(0); }
-    bool buy(unsigned n);                   // 0x43e760 (_Buy)
+    PtrVec() { _Buy(0); }
+    bool _Buy(unsigned n);                   // 0x43e760 (_Buy)
 };
 struct SpriteTable {
     int count;                              // +0     0x51e840
@@ -197,8 +198,10 @@ struct Scene {
     char pad138e4[0x138ec - 0x138e4];
     Scene();                                // 0x51d250
     // ---- src/game/mission5/troop_rec.cpp (method declarations only: no layout change) ----
-    int lookup(int id);                     // 0x48ad00 (ret 4: id -> record index through the hash at +0)
-    void add_page();                        // 0x493830 (grows the party table by one page of 16 records)
+    int index_of(int id);                     // 0x48ad00 (ret 4: id -> record index through the hash at +0)
+    int lookup(int id);                     // 0x48ad00 (ret 4: id -> record index through the hash at +0)  // old name of index_of, removed after the names merge
+    void grow();                        // 0x493830 (grows the party table by one page of 16 records)
+    void add_page();                        // 0x493830 (grows the party table by one page of 16 records)  // old name of grow, removed after the names merge
     __declspec(noinline) void clear();      // 0x51eda0
     __declspec(noinline) void read(stream_base* s, int flag);   // 0x51eb90 (ret 8)
     __declspec(noinline) struct PartyRecIO* get(int id);        // 0x51ee50 (ret 4)
@@ -415,7 +418,7 @@ struct Game {
 extern Game* g_game;                        // 0x5e2930
 extern I64Vec g_list_a70480;                // 0xa70480 (read first by 0x51dbd0 after the clock)
 extern PartyTemplate* g_party_templates;    // 0x5e29f8 (0xb0-byte records)
-extern int g_n_party_templates;             // 0x5e29fc
+extern int g_n_party_templates;             // 0x5e29fc  // old name of g_party_template_count, removed after the names merge
 extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 bytes, up to 0x8ee3c60; the first dword of each is saved)
 
 // ---- layout checks (a wrong pad above is a compile error here) ----

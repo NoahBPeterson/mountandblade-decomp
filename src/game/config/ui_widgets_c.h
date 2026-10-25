@@ -9,7 +9,7 @@
 #define GAME_CONFIG_UI_WIDGETS_C_H
 #include "../ui/ui_widgets.h"
 
-extern int g_last_char;                     // 0x5d8798 last keyboard character (0x48bb50)
+// g_last_char: the UI root's f1718 (g_gui, 0x5d7080), read through g_gui in ui_widgets_c.cpp
 
 struct UiEBase : MissionUi {
     int f178;                               // +0x178 "not editing" (0x48bb10 clears, 0x48bda0 sets)

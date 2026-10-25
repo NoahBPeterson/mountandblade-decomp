@@ -27,12 +27,10 @@ using rgl::matrix;
 struct shape_base; struct face; struct capsule; struct contact;
 
 // ---- globals ------------------------------------------------------------------------------------------------
-extern int g_tick_lo;                  // 0x5e2958 (g_time[2], 1e-5 s ticks)
-extern int g_tick_hi;                  // 0x5e295c
 extern __int64 g_ticks[];              // 0x5e2948 clock table, 8 bytes per clock (0x43c9c0: g_ticks[2] is "now")
-extern float g_step;                   // 0x5a9c20 frame step (0x43bdb0)
-extern int g_ev_a;                     // 0xa70458 event result slots (0x437b20)
-extern int g_ev_b;                     // 0xa7045c
+#include "../../include/fx.h"            // g_step_tbl 0x5a9c20 (entry 0 is the frame step)
+extern float g_step_tbl[]; // 0x5a9c20 per-clock step (seconds; fx.h; named again here for the resolution audit, which reads only the headers a source includes itself)
+#include "../dialog_manager.h"            // g_script 0xa70440
 extern int g_agent_count;              // 0x5aa050 number of agents (0x4385e0)
 
 // ---- polymorphic records derived from IfaceB (vtable 0x5908f8 = ??_7IfaceB@@6B@) --------------------------------
@@ -46,7 +44,7 @@ extern int g_agent_count;              // 0x5aa050 number of agents (0x4385e0)
 // ---- 2-D helpers --------------------------------------------------------------------------------------------
 #include "../../include/vec.h"
 float __cdecl signed_angle(const vec2* a, const vec2* b);       // 0x4381e0 (also the "blend_target" of the slices)
-float __cdecl clamp_ref(const float* v, const float* lo, const float* hi);   // 0x4325a0 (earlier object)
+float __cdecl closer_angle(const float* v, const float* lo, const float* hi);   // 0x4325a0 (earlier object)
 float __cdecl fmin_ref(const float* a, const float* b);         // 0x4324b0
 float __cdecl fmax_ref(const float* a, const float* b);         // 0x4324d0
 void __cdecl noise_gradient(float scale, const float* in, float* out);   // 0x414ae0
@@ -74,7 +72,7 @@ struct level {
     Light** lights_first;                               // 0xbc
     Light** lights_last;                                // 0xc0
     void walk(const float* a, const float* b, int (*cells)[2], int* count);        // 0x437290 (src/game/agent)
-    void locate(const float* p, int* out) const;                                    // 0x41ed00
+    void to_cell(const float* p, int* out) const;                                    // 0x41ed00
     void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50
     void remove_entity(int id);                                                     // 0x41f0d0
     void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870
@@ -91,12 +89,12 @@ struct level {
 // ---- animation: the animator at body+0x304 (Skeleton), its channels (Curve in src/game/agent/curve.h) ---------------
 struct Elem12 {                                         // 12-byte element of an animation's track list
     int a[3];
-    vector4 point(int idx) const;                       // 0x436ae0
+    vector4 sample(int idx) const;                       // 0x436ae0
 };
 struct Anim {                                           // object with a list of 12-byte tracks at +0x1c (0x439fc0)
     char pad0[0x18];
     std::vector<Elem12> elems;                          // 0x18 (first at 0x1c)
-    vector4 point(int idx) const;                       // 0x436b90
+    vector4 sample(int idx) const;                       // 0x436b90
 };
 // SubAnim, AnimDef, DefList: src/game/agent_obj.h
 #include "../channel.h"             // Channel (shared with agent3)
