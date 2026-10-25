@@ -183,6 +183,34 @@ def string_mask(b):
     return mask
 
 
+def call_conv(name):
+    """The calling convention a mangled C++ function name encodes (cdecl / stdcall / fastcall / thiscall), or None
+    for a C name or data."""
+    m = re.match(r"\?[^@?]+(?:@[^@]+)*@@([A-Z])([A-Z])([A-Z])?", name)
+    if not m:
+        return None
+    if m[1] in "YZSKC":                          # free function / static member: the code is the next letter
+        cc = m[2]
+    elif m[1] in "AEIMQU" and m[3]:              # instance member: a this-qualifier letter, then the code
+        cc = m[3]
+    else:
+        return None
+    return {"A": "cdecl", "E": "thiscall", "G": "stdcall", "I": "fastcall"}.get(cc)
+
+
+def conv_mismatches(aliases):
+    """Aliases whose two names pass arguments differently: a cdecl caller of a thiscall definition (or stdcall /
+    cdecl) hands the callee its arguments in the wrong places (read_psys_rec -> psys_record::read wrote floats through
+    a garbage record pointer). thiscall / fastcall pairs both pass the first argument in ecx (the fastcall stand-ins
+    for deleting destructors and adjustors), and a function without parameters (XZ) cannot disagree."""
+    out = {}
+    for a, t in aliases.items():
+        ca, ct = call_conv(a), call_conv(t)
+        if ca and ct and ca != ct and {ca, ct} != {"thiscall", "fastcall"} and not (a.endswith("XZ") and t.endswith("XZ")):
+            out[a] = "%s -> %s %s" % (ca, ct, t)
+    return out
+
+
 def section_of(va):
     for s in (RDATA, DATA, BSS):
         if s[1] <= va < s[2]:
@@ -429,12 +457,15 @@ def main():
     obj.write(os.path.join(a.out, "mb_data.obj"))
     report["labels"] = len(labels)
     report["aliases"] = aliases
+    report["conv_mismatch"] = conv_mismatches(aliases)
     report["traps"] = {"%08x" % v: "int 3 at _mb_trap_%08x" % v for v in sorted(traps)}
     report["pointers"] = dict(report["pointers"])
     json.dump(report, open(os.path.join(a.out, "glue.json"), "w"), indent=1)
     print("unresolved in: %d; data labels %d, aliases %d, left unresolved %d (conflicts resolved by row count: %d)"
           % (len(unres), len(labels), len(aliases), len(report["unresolved"]), len(report["conflicts"])))
     print("pointers relocated: %s; traps for %d code addresses without a definition" % (report["pointers"], len(traps)))
+    if report["conv_mismatch"]:
+        print("WARNING: %d aliases join different calling conventions (glue.json conv_mismatch)" % len(report["conv_mismatch"]))
     return 0
 
 

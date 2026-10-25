@@ -183,7 +183,7 @@ HRESULT build_shader();                                                     // 0
 HRESULT gfx_restore();                                                      // 0x4c1b00
 char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a); // 0x4c1b60 (catch funclet 0x4c1bcc)
 void* __fastcall dialog_mgr_ctor(void* self);                               // 0x4c2470 (DialogMgr::DialogMgr)
-void* __cdecl read_psys_rec(stream_base* s, char* o);                       // 0x4bdc00 (cdecl; config.h declares it as a member)
+void* __cdecl read_psys_rec(stream_base* s, char* o);                       // 0x4bdc00 (cdecl; config.h declares it as the static member psys_record::read)
 
 // ---- FMOD stream calls of the music monitor (0x4c25e0), stdcall thunks into fmod.dll -----------------------------------------
 extern "C" int   __stdcall FSOUND_Stream_GetOpenState(void* stream);    // 0x534318 (0 ready, -2 still loading)

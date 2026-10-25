@@ -15,8 +15,9 @@
 #include "../../rgl/mesh2/gui_edit.h"  // MapDialog
 #include "../../rgl/text_stream.h"     // mb_open_user_file
 
-// 0x43a1e0: string-table lookup on 0x8ee3c48 (key -> localized text; the empty case falls back to that address).
-const char* strtab_lookup(tstring& key);
+// 0x43a1e0: the string table's lookup (thiscall on g_strtable 0x5e2a18, key -> localized text)
+// (g_strtable is mesh2_common.h's LangTables, through gui_edit.h)
+static __forceinline const char* strtab_lookup(tstring& key) { return g_strtable.lookup(key)->c_str(); }
 
 // 0x08ee3d3c: renderer display-mode enumerator. Verified call offsets: +0x10 adapter count,
 // +0x14 adapter display mode, +0x18 mode count, +0x1c enumerate mode.

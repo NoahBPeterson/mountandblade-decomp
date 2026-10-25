@@ -121,7 +121,6 @@ struct Map10007 {
     int lookup(unsigned id);   // 0x48ad00 (game/ui/mission.h): the party-id hash at the head of the manager (PartyMgr::index_of)
 };
 
-extern "C" tstring* strip_tags(int quest, int idx);  // 0x42c5d0
 
 // ---------------------------------------------------------------------------
 // small helpers
@@ -161,6 +160,13 @@ static float cfg_float(const char* key)
 }
 
 // name of a game record (troop/party/faction), key stored in a tstring
+// a quest's title without its markup: the tstring at +0x40 of the 0x138-byte quest record, strip_tags 0x42c5d0
+// (thiscall, returns by value)
+static __forceinline tstring quest_title(int q)
+{
+    return ((const tstring*)(((char*)WORLD->quests) + q * 0x138 + 0x40))->strip_tags();
+}
+
 static const char* record_name(void* key)
 {
     tstring* s = UITEXT->find((tstring*)key);
@@ -646,8 +652,8 @@ void note_window::build(int page_, int arg_)
 
         if (line.len > 0) {
             float sz[2];
-            tstring* qt = strip_tags(qi, 0);
-            this->title->set_text(sz, *qt);
+            tstring qt = quest_title(qi);
+            this->title->set_text(sz, qt);
             float* r = (float*)this->links->set_text(sz, line);
             y_cur = r[1];
             line.clear();
@@ -668,7 +674,7 @@ void note_window::build(int page_, int arg_)
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            sprintf(link_buf, "<qst=%d>%s</>\n", v, strip_tags(v, 0)->buf);
+            sprintf(link_buf, "<qst=%d>%s</>\n", v, quest_title(v).c_str());
             line.append(tstring(link_buf));
         }
         if (line.len > 0)
@@ -752,10 +758,10 @@ void note_window::build(int page_, int arg_)
             }
         }
         for (int i = 0; i < WORLD->n_quests; i++) {
-            tstring* qt = strip_tags(i, 0);
-            if (qt->find(acc, 0) < 0)
+            tstring qt = quest_title(i);
+            if (qt.find(acc, 0) < 0)
                 continue;
-            sprintf(buf, "<qst=%d>%s</>", i, qt->buf ? qt->buf : (char*)&qt->buf);
+            sprintf(buf, "<qst=%d>%s</>", i, qt.c_str());
             tstring entry(buf);
             if (other.find(entry, 0) < 0) {
                 if (other.len > 0)

@@ -133,12 +133,12 @@ struct MissionCtx {
 };
 extern MissionCtx g_mission_ctx;                        // 0xa73300
 
-void rotate_2x2(float* m, float angle);                     // 0x4f3b40 (game/char_sheet/terrain_page_input)
+struct rot2 { float m[4]; void rotate_2x2(float angle); };  // 0x4f3b40 (game/char_sheet/terrain_page_input: thiscall, ret 4)
 // a 2x2 matrix (0x516220)
 struct mat2 {
     float m[4];
     mat2(const float* a, const float* b);               // 0x516220
-    __forceinline void rotate_2x2(float angle) { ::rotate_2x2(m, angle); }   // 0x4f3b40
+    __forceinline void rotate_2x2(float angle) { ((rot2*)m)->rotate_2x2(angle); }   // 0x4f3b40
 };
 
 #endif // GAME_INVENTORY_PANEL_MISSION_CTX_H

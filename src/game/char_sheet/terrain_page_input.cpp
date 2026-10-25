@@ -38,7 +38,7 @@ void TerrainPage::simulate(float dt)
     vector2 m[2];                                           // the camera frame: m[0] = strafe axis, m[1] = forward
     identity_2x2(&m[0].x);                                  // 0x4f3be0
     float a = -yaw;
-    rotate_2x2(&m[0].x, a);                                 // 0x4f3b40 turns m[0].xy / m[1].xy
+    ((rot2*)&m[0].x)->rotate_2x2(a);                        // 0x4f3b40 turns m[0].xy / m[1].xy
 
     if (g_key_1714c) {
         view_x = view_x - (m[0].x * 50.0f) * dt;
@@ -85,7 +85,7 @@ void TerrainPage::simulate(float dt)
 }
 
 // @ 0x4f3b40
-void rotate_2x2(float* m, float angle)
+void rot2::rotate_2x2(float angle)
 {
     float s = 0, c = 0;                                     // x87 inline sin/cos (the original has no CRT call)
     __asm {

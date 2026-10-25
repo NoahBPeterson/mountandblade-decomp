@@ -98,6 +98,9 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
             if t not in img.start_set or name is None or name not in symmap:
                 continue
             want, have = symmap[name], exe.u32(ours + 4 * k)
+            if have == symmap.get("__purecall") and want != have:
+                plan.append((k, want))       # a class one source declares abstract: no evidence against the match
+                continue
             comparable += 1
             agree += want == have
             if want != have:

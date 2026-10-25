@@ -526,7 +526,7 @@ void* __fastcall destroy_record_array(void* p, int unused, unsigned char flags);
 void* __fastcall conv_item_array_dtor(conv_rec* self, int unused, unsigned char flags);        // 0x4c8980
 struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<int>::clear)
 #include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
-void audio_close();                                     // winmm!FSOUND_Close
+void __stdcall FSOUND_Close();                          // fmod!FSOUND_Close (import)
 void crt_exit();                                        // 0x535458
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern char* g_5e29d0;                                  // 0x5e29d0
@@ -547,7 +547,7 @@ extern FILE* g_log_file;                                  // 0x5a9f90
 // @ 0x4da5b0
 int shutdown()
 {
-    audio_close();
+    FSOUND_Close();
     ((text_stream*)&g_log)->text_stream::w_cstr("Saving options...");     // 0x4153a0 (the log is a text_stream: called directly)
     g_options.save();
     if (((void*)g_game)) {

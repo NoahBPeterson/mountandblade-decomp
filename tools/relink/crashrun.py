@@ -28,16 +28,20 @@ def main():
                     ">= 50%%), break in and report where, then end it")
     ap.add_argument("--cmds", default="", help="extra winedbg commands run at the fault (';'-separated), e.g. "
                     "'x /4x $ecx' (their output is in dbg.log)")
+    ap.add_argument("--break", dest="brk", action="append", default=[], help="stop at this address (hex or a map "
+                    "symbol, e.g. __purecall) and report as for a fault")
     a = ap.parse_args()
     game = os.path.join(ROOT, "game")
     shutil.copyfile(a.exe, os.path.join(game, "mb_standalone.exe"))
     log_path = os.path.join(ROOT, "work", "relink", "standalone", "dbg.log")
-    report = "info reg\nbt 40\nx /512x $esp\n" + "".join(c.strip() + "\n" for c in a.cmds.split(";") if c.strip())
+    report = "info reg\nbt 40\nx /3072x $esp\n" + "".join(c.strip() + "\n" for c in a.cmds.split(";") if c.strip())
     hung = False
     with open(log_path, "w") as log:
         p = subprocess.Popen([CX, "--bottle", a.bottle, "--cx-app", "winedbg", WINPATH], cwd=game,
                              stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT, text=True,
                              env=dict(os.environ, WINEDEBUG="-all"))
+        for b in a.brk:
+            p.stdin.write("break *0x%x\n" % symbol_address(b))
         p.stdin.write("cont\n")
         p.stdin.flush()
         if a.play:
@@ -45,9 +49,9 @@ def main():
         t0 = time.time()
         while p.poll() is None and time.time() - t0 < a.timeout:
             time.sleep(1)
-            if "Unhandled exception" in open(log_path, errors="replace").read():
+            if stopped(open(log_path, errors="replace").read()):
                 break
-        if p.poll() is None and "Unhandled exception" not in open(log_path, errors="replace").read():
+        if p.poll() is None and not stopped(open(log_path, errors="replace").read()):
             # still going: if it is spinning, break in (SIGINT to winedbg, as Ctrl-C) and read where it is
             cpu = "0"
             for line in subprocess.run(["ps", "-axo", "pcpu=,command="], capture_output=True, text=True).stdout.splitlines():
@@ -71,6 +75,18 @@ def main():
         except subprocess.TimeoutExpired:
             p.kill()
     return report_text(open(log_path, errors="replace").read())
+
+
+def stopped(text):
+    return "Unhandled exception" in text or "Stopped on breakpoint" in text
+
+
+def symbol_address(s):
+    try:
+        return int(s, 16)
+    except ValueError:
+        import build
+        return build.read_map(os.path.join(ROOT, "work", "relink", "standalone", "mb_standalone.map"))[s]
 
 
 def press_play(limit):
@@ -136,9 +152,9 @@ def hang_dump(a, game, log_path):
 
 def report_text(text, hung=False):
     """Name the fault (or, for a hang, each thread's position) and the code addresses on each stack."""
-    m = re.search(r"Unhandled exception: (.*)", text)
+    m = re.search(r"Unhandled exception: (.*)|(Stopped on breakpoint.*)", text)
     if not hung:
-        print(m[1] if m else "exited without an exception")
+        print((m[1] or m[2]) if m else "exited without an exception")
     tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "addr2sym.py")
     blocks = [b for b in re.split(r"(?=EIP:[0-9a-f]{8})", text) if b.startswith("EIP:")]
     for blk in blocks:
@@ -154,7 +170,7 @@ def report_text(text, hung=False):
                     if 0x401000 <= v < 0x560000:
                         walk.append((int(mm[1], 16) + 4 * i, v))
         bt = re.findall(r"^\s*=?>?\s*\d+ 0x0*([0-9a-f]+) in mb_standalone", blk, re.M)
-        names = subprocess.run([sys.executable, tool, eip] + bt + ["%x" % v for _a, v in walk[:25]],
+        names = subprocess.run([sys.executable, tool, eip] + bt + ["%x" % v for _a, v in walk[:60]],
                                capture_output=True, text=True).stdout.splitlines()
         regs = re.search(r"EAX:.*\n.*ESI:.*", blk)
         print("thread at %s" % names[0] if names else eip)
@@ -162,7 +178,7 @@ def report_text(text, hung=False):
             print("  " + regs[0].replace("\n", "\n  "))
         for n in names[1:1 + len(bt)]:
             print("  bt  " + n)
-        for (at, _v), n in zip(walk[:25], names[1 + len(bt):]):
+        for (at, _v), n in zip(walk[:60], names[1 + len(bt):]):
             print("  [%08x] %s" % (at, n))
     return 1
 

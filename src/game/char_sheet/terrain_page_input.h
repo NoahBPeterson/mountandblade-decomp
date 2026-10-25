@@ -49,7 +49,9 @@ struct DustTerrain {
 // take a pointer to the angle (thiscall, ret 4).
 struct mat_self : rgl::matrix {};                            // (rotate_about_s 0x40e570 / rotate_about_f 0x40e670 are rgl::matrix's; identity_pos 0x40cd00: cs_mat.h)
 
-void rotate_2x2(float* m, float angle);                     // 0x4f3b40
+// 0x4f3b40 is thiscall on the four floats of a 2x2 matrix (ret 4: the angle); mesh_3.h's two matrix views and
+// mission_ctx.h's mat2 call the same function
+struct rot2 { float m[4]; void rotate_2x2(float angle); };  // 0x4f3b40
 void identity_2x2(float* m);                                // 0x4f3be0
 
 // ---- the page: src/game/terrain_page.h ------------------------------------------------------------------

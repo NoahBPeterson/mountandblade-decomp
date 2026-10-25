@@ -566,7 +566,7 @@ void __cdecl    keys_write_value(HKEY* key, const char* name, const tstring* val
 struct ini_file {
     void load(FILE* f);   // config/config.h: the module.ini reader (0x4bd630)
 };
-void __cdecl    SkinDialog(HWND h, const char* s);       // 0x535446
+int __stdcall   SkinDialog(HWND h, const char* s);       // 0x535446 (SkinMagic SetSingleDialogSkin: stdcall, the callers do not pop)
 
 extern tstring g_module_name;                                      // 0x8ee3c38
 extern tstring g_module_path;                                        // 0x8ee3c28
