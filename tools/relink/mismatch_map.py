@@ -92,9 +92,11 @@ def main():
     log = open(a.log, errors="replace").read()
     refs = collections.defaultdict(set)
     pretty = {}
-    for m in re.finditer(r'^(\S+?\.obj) : error LNK2019: unresolved external symbol (.*?) \((\S+)\) referenced', log, re.M):
-        refs[m[3]].add(module_of_obj(m[1]))
-        pretty[m[3]] = m[2]
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from trial_link import parse_unresolved
+    for sym, (pr, objs) in parse_unresolved(log).items():
+        refs[sym] |= {module_of_obj(o) for o in objs}
+        pretty[sym] = pr
     defs = defined_symbols()
     by_name = {}
     for va, (sym, stem) in defs.items():

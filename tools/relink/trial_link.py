@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """trial_link.py: link every src/ module into an exe and measure what is still missing for a standalone build.
 
-usage: trial_link.py [--record] [--list CATEGORY] [--json OUT]
+usage: trial_link.py [--record] [--list CATEGORY] [--json OUT] [--glue [DIR]] [--dir OUT_DIR]
 
 Compiles each src/**/*.cpp with its manifest flags (cached, as compile_all), links all objects with link.exe 7.10
 (the original's linker version) against the VC7.1 static runtime (libcmt, libcpmt), the Windows SDK 6.0A import
@@ -51,18 +51,36 @@ def objects():
     return objs, fails
 
 
-def link(objs, out_dir):
+def link(objs, out_dir, glue=None):
+    libs = LIBS
+    if glue:        # tools/relink/glue.py: the original's data, aliases, and import libraries for the shipped DLLs
+        objs = objs + [os.path.join(glue, "mb_data.obj")]
+        own = sorted(glob.glob(os.path.join(glue, "imports", "*.lib")))
+        libs = [l for l in LIBS if l != "d3dx9.lib"] + [winpath(l) for l in own]
     rsp = os.path.join(out_dir, "objs.rsp")
     open(rsp, "w").write("\n".join('"%s"' % winpath(o) for o in objs) + "\n")
     env = dict(os.environ, WINEPREFIX=os.path.join(TC, "wineprefix-mb"), WINEDEBUG="-all",
                LIB=";".join(winpath(p) for p in (os.path.join(TC, "vc71tk", "lib"), os.path.join(TC, "vc9sp1", "WinSDK", "Lib"),
                                                    os.path.join(ROOT, "work", "ext", "dxsdk_jun10", "DXSDK", "Lib", "x86"))))
     cmd = ["wine", os.path.join(TC, "vc71tk", "bin", "link.exe"), "/NOLOGO", "/OUT:" + winpath(os.path.join(out_dir, "trial.exe")),
-           "/SUBSYSTEM:WINDOWS", "/MACHINE:X86", "/FORCE:MULTIPLE", "/OPT:REF", "/OPT:ICF", "@" + winpath(rsp)] + LIBS
+           "/SUBSYSTEM:WINDOWS", "/MACHINE:X86", "/FORCE:MULTIPLE", "/OPT:REF", "/OPT:ICF", "@" + winpath(rsp)] + libs
     with tempfile.TemporaryFile("w+") as f:      # never the caller's pipes: wine services inherit stdio
         subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=f, stderr=subprocess.STDOUT, env=env)
         f.seek(0)
         return f.read()
+
+
+UNRES = re.compile(r'^(\S+?\.obj) : error LNK20(?:19|01): unresolved external symbol (?:"(.*?)" \((\S+)\)|(\S+))', re.M)
+
+
+def parse_unresolved(log):
+    """{decorated name: (readable name, {referencing object})} from LNK2019 (from code) and LNK2001 (from data,
+    e.g. a vtable slot) lines."""
+    out = {}
+    for m in UNRES.finditer(log):
+        sym = m[3] or m[4]
+        out.setdefault(sym, (m[2] or sym, set()))[1].add(os.path.basename(m[1]))
+    return out
 
 
 def annotations():
@@ -106,6 +124,8 @@ def main():
     ap.add_argument("--record", action="store_true")
     ap.add_argument("--list", metavar="CATEGORY")
     ap.add_argument("--json")
+    ap.add_argument("--glue", nargs="?", const=os.path.join(ROOT, "work", "relink", "glue"),
+                    help="also link tools/relink/glue.py's output (default work/relink/glue)")
     ap.add_argument("--dir", help="output directory for trial.exe and link.log (default work/relink); worktrees share "
                                   "work/, so parallel runs need their own")
     a = ap.parse_args()
@@ -113,13 +133,9 @@ def main():
     out_dir = os.path.abspath(a.dir) if a.dir else os.path.join(ROOT, "work", "relink")
     os.makedirs(out_dir, exist_ok=True)
     objs, fails = objects()
-    log = link(objs, out_dir)
+    log = link(objs, out_dir, a.glue)
     open(os.path.join(out_dir, "link.log"), "w").write(log)
-    syms = {}
-    for m in re.finditer(r'unresolved external symbol (.*?) \((\S+)\) referenced in function', log):
-        syms.setdefault(m[2], m[1])
-    for m in re.finditer(r'unresolved external symbol (\S+) referenced', log):
-        syms.setdefault(m[1], m[1])
+    syms = {k: '"%s"' % v[0] if v[0] != k else k for k, v in parse_unresolved(log).items()}
     dups = sorted(set(re.findall(r'LNK4006: (.*?) already defined', log)))
     ann, defined = annotations()
     by = collections.defaultdict(list)
