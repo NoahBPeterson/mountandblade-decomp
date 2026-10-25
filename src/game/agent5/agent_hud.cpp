@@ -1690,8 +1690,8 @@ MapText MWidget::text_rect()
         f->layout_map(&out, &u->name, &rc, &u->f140, u->tracks[4], &col[2], &col[1], &col[0], &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
     else
         g_font->layout_map(&out, &u->name, &rc, &u->f140, u->tracks[4], &col[2], &col[1], &col[0], &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
-    int idx = -1;
-    u->get_xy((float*)&idx);
+    unsigned white = 0xffffffff;
+    u->set_color(&white);                   // +0x98 (0x4fd6df)
     return out;
 }
 

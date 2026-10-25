@@ -95,7 +95,14 @@ struct ShadowMapP {
     int* f48;                                           // +0x48
     void render();                                       // 0x47fef0 (game/mesh_slot)
 };
-struct FrameRenderer { virtual void set_frame(const rgl::matrix* m); };   // +0x54 (the slot index is not reproduced: only the call shape matters here)
+// the compass entity (game+0x1a2a8, an rgl::entity): slot 21 (+0x54) is entity::set_local_dirty (0x41fe70)
+struct FrameRenderer {
+    virtual void s00(); virtual void s04(); virtual void s08(); virtual void s0c(); virtual void s10(); virtual void s14();
+    virtual void s18(); virtual void s1c(); virtual void s20(); virtual void s24(); virtual void s28(); virtual void s2c();
+    virtual void s30(); virtual void s34(); virtual void s38(); virtual void s3c(); virtual void s40(); virtual void s44();
+    virtual void s48(); virtual void s4c(); virtual void s50();
+    virtual void set_frame(const rgl::matrix* m);   // +0x54
+};
 struct MapPanel {
     void update_target();   // 0x5191e0 (inventory_panel/map_panel.h)
 };

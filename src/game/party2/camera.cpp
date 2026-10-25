@@ -1635,7 +1635,6 @@ struct scene_obj {
     virtual void attach(void* v, int n);                 // +0xa4
     virtual void s42(); virtual void s43(); virtual void s44(); virtual void s45();
     virtual void s46(); virtual void s47(); virtual void s48(); virtual void s49();
-    virtual void s50(); virtual void s51(); virtual void s52();
     virtual void add_child(void* v);                     // +0xc8
 };
 // the constructors work on the raw memory and return it (explicit constructor calls of the defining classes: no null test, no allocation)

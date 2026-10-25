@@ -11,8 +11,8 @@
 //
 // Control layouts. The captions use the verified order (s004cf7b0): +0x30 get_value, +0x38 get_float,
 // +0x44 changed(flag), +0x94 set_default, +0xa4 set_text(text), +0xac set_text(text, position), +0xb0 show,
-// +0xb4 enable. 0x4d5f20 polls changed() and reads the control's value/float through the settings view
-// below (changed at +0x30), whose changed/get_value slots are the +0x10 shift its calls show.
+// +0xb4 enable. 0x4d5f20 polls changed() (+0x44) and reads the control's value (+0x30) / float (+0x38)
+// through the settings view below.
 //
 // Text values. The original builds the texts it hands to set_text from 16-byte globals (0xa70464 and the
 // string-table entries), copying with 0x42bcb0 (tstring::operator=); localized::text() is that copy.
@@ -62,14 +62,14 @@ extern float  g_ticks_per_time;                     // 0x596774
 // ---- control stub -----------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
-// The settings-tab view of the same controls that 0x4d5f20's polls go through: changed() at +0x30, the
-// integer value at +0x34 and the float at +0x38.
+// The settings-tab view of the same controls that 0x4d5f20's polls go through (changed() is Widget's +0x44):
+// the integer value at +0x30 (Widget::get_value) and the float at +0x38 (Widget::get_float).
 struct SettingsControl {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
     virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
     virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
-    virtual char changed(int flag);         // +0x30
-    virtual int  value();                   // +0x34
+    virtual int  value();                   // +0x30
+    virtual void v0d();                     // +0x34 (Widget::set_value)
     virtual int  float_value();             // +0x38
 };
 

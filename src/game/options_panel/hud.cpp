@@ -247,7 +247,7 @@ void Hud::on_mission_start(int arg)
     *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_u32;
     g_u32 = g_u32 + 1;
     g_mission->start_setup();
-    g_screen->v2();
+    g_screen->v4();                                 // +0x10 (0x4d59ad)
     g_screen->f18 = f18;
     g_menu_w3[1] = 0;
     g_menu_w3[0x18 / 4] = f18;

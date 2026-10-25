@@ -1254,10 +1254,10 @@ void PartyScreen::refresh_selection()
             PSO(action_btn)->enable();
             locked = 1;
         } else {
-            PSO(action_btn)->clear();
+            PSO(action_btn)->act_b4();              // +0xb4 (0x5072c6)
         }
     } else {
-        PSO(action_btn)->clear();
+        PSO(action_btn)->act_b4();                  // +0xb4 (0x5072d0)
     }
 }
 

@@ -1143,7 +1143,7 @@ UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, flo
     }
     {
         int col = 0xff007700;
-        vt(p)->d38(&col);
+        vt(p)->d39(&col);                       // +0x9c highlight colour (0x4dcd7f)
     }
     float v = c * g_590b6c;
     int len;
