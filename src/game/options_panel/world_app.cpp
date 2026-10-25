@@ -240,11 +240,11 @@ void restore_defaults()
     g_game->f1a0c0 = -1;
     g_game->f1a0c4 = -1;
 
-    *(char*)(*(int*)((*(char**)&g_mission) + 0x65d0) + 0x140) = 0;
-    *(char*)(*(int*)((*(char**)&g_mission) + 0x65dc) + 0x140) = 0;
-    *(char*)(*(int*)((*(char**)&g_mission) + 0x65e4) + 0x140) = 0;
-    if (*(int*)((*(char**)&g_mission) + 0x6738)) *(char*)(*(int*)((*(char**)&g_mission) + 0x6738) + 0x140) = 0;
-    if (*(int*)((*(char**)&g_mission) + 0x6740)) *(char*)(*(int*)((*(char**)&g_mission) + 0x6740) + 0x140) = 0;
+    *(char*)(*(int*)(((char*)g_mission) + 0x65d0) + 0x140) = 0;
+    *(char*)(*(int*)(((char*)g_mission) + 0x65dc) + 0x140) = 0;
+    *(char*)(*(int*)(((char*)g_mission) + 0x65e4) + 0x140) = 0;
+    if (*(int*)(((char*)g_mission) + 0x6738)) *(char*)(*(int*)(((char*)g_mission) + 0x6738) + 0x140) = 0;
+    if (*(int*)(((char*)g_mission) + 0x6740)) *(char*)(*(int*)(((char*)g_mission) + 0x6740) + 0x140) = 0;
 
     if (g_game->f1a1cc) {
         g_game->f1a1cc = 0;

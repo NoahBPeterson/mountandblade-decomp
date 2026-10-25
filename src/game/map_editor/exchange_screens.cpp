@@ -42,9 +42,9 @@ void StartMenu::select(int arg)
             idx = i;
     if (idx != -1)
     {
-        g_mission_ctx.setup_entry(&entries[idx]);
+        g_mui.setup_entry(&entries[idx]);
         char b;
-        g_map_flags.commit(&b);
+        g_flags.commit(&b);
     }
 }
 
@@ -103,18 +103,18 @@ int MenuCtl::weight(unsigned flags)
 // @ 0x531780
 void ContinueMenu::update(int arg)
 {
-    g_gui.flush();
+    g_msglog.flush();
     if (f4 == 0)
     {
         char b;
         if (buttons[0]->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
-            g_map_flags.commit(&b);
+            g_flags.commit(&b);
     }
     else
     {
         char b;
         if (buttons[0]->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
-            g_map_flags.commit(&b);
+            g_flags.commit(&b);
     }
 }
 
@@ -189,7 +189,7 @@ after_scroll:
         pid = f8dc != 0 ? sel_party : g_game->f78;
         PartyX* p = party_mgr()->get3(pid, slot, 0xd2);
         p->fn_4b1d80();
-        refresh_selection();
+        refresh_party_window();
     }
 
     rows = 2;
@@ -218,7 +218,7 @@ after_scroll:
             troop = party_index(pid)->stacks[slot].troop;
             v = 0;
             if (state == 3) {
-                v = gx()->sl_party_price(troop);
+                v = gx()->fn_48a320(troop);
             } else if (state == 2 && troop >= 0) {
                 g_a70458 = 0;
                 g_a7045c = 0;
@@ -232,18 +232,18 @@ after_scroll:
             if (state == 3 || state == 2)
                 move_men(v);
             stack_remove(pid, slot, cmp_party, &out, &flag);
-            refresh_selection();
+            refresh_party_window();
             if (flag)
                 clear_selection();
-            refresh_party_members(0);
-            refresh_party_members(1);
+            fn_503ed0(0);
+            fn_503ed0(1);
         }
-        refresh_selection();
+        refresh_party_window();
         if (flag)
             clear_selection();
-        refresh_party_members(0);
-        refresh_party_members(1);
-        refresh_morale();
+        fn_503ed0(0);
+        fn_503ed0(1);
+        fn_503a50();
     }
 
     c48 = w48->changed(0x10000);
@@ -364,15 +364,15 @@ overflow_path:
             p = party_index(pid);
             if (p->stacks[ni].count < 0x20)
                 STACK_IDS[ni * 0x20 + p->stacks[ni].count] = rnd;
-            refresh_selection();
+            refresh_party_window();
         }
         if (overflow)
             clear_selection();
 
 tail:
-        refresh_selection();
-        refresh_party_members(0);
-        refresh_morale();
+        refresh_party_window();
+        fn_503ed0(0);
+        fn_503a50();
     }
 
     c54 = w54->changed(0x10000);
@@ -381,8 +381,8 @@ tail:
         int d = c54 ? -1 : 1;
         swap_rows(d);
         set_selection(f8dc, f8e0, f8e4 + d);
-        refresh_party_members(0);
-        refresh_selection();
+        fn_503ed0(0);
+        refresh_party_window();
     }
 
     if (!w30->changed(0x10000) && (g_a170d8 != 0 || g_a174d8 == 0)) {
@@ -390,10 +390,10 @@ tail:
             apply(0);
             apply(1);
             clear_selection();
-            refresh_party_members(0);
-            refresh_party_members(1);
-            refresh_selection();
-            refresh_morale();
+            fn_503ed0(0);
+            fn_503ed0(1);
+            refresh_party_window();
+            fn_503a50();
             return;
         }
         if (!w44->changed(0x10000))
@@ -405,7 +405,7 @@ tail:
         if (party_index(a)->stacks[b].flags & 1)
             action = 0xe;
         troop = party_index(a)->stacks[b].troop;
-        g_mission_ctx.build_hero_table(troop, STACK_IDS[1 + b * 0x80],
+        g_mui.show_item(troop, STACK_IDS[1 + b * 0x80],
                     g_game->f78, action);
         g_menu_data[6] = 0xc;
         g_main_menu.choose(0x10);
@@ -416,7 +416,7 @@ close_menu:
     if (state == 4 && g_a735c4 < 1)
         gx()->update_party_sprites();
     if (f18 == 100) {
-        g_map_flags.commit(commit_out + 3);
+        g_flags.commit(commit_out + 3);
         return;
     }
     g_main_menu.choose(f18);
@@ -643,7 +643,7 @@ void XferWin::set_selection(int a, int b, int c)
         Widget* w = ((Widget**)grid)[(b + a * 2) * 0x40 + c];
         w->activate(1);
     }
-    refresh_selection();
+    refresh_party_window();
 }
 
 static __forceinline float anim_value(ValueSource* vs)
@@ -658,8 +658,8 @@ static __forceinline float anim_value(ValueSource* vs)
 static __forceinline void set_anim(TickScreen* s, int push_off, int resize_off)
 {
     OutIntVec* v = V(s, push_off);
-    v->push_back_out(F(s, 0xa8, int));
-    v->push_back_out(F(s, 0xac, int));
+    v->push_back_call(F(s, 0xa8, int));
+    v->push_back_call(F(s, 0xac, int));
     OutIntVec* d = V(s, resize_off);
     unsigned n = d->_Myfirst ? (unsigned)(d->_Mylast - d->_Myfirst) : 0;
     d->resize(n - 2, 0);
@@ -686,7 +686,7 @@ void EventScreen::on_event(int code)
     int slot = (int)this;
     ((MissionSource*)((char*)this + 0x30))->pick(&slot);
 
-    char* rec = g_menus + *(int*)((char*)g_game + 0x13aec) * 0x60;
+    char* rec = g_menu_rows + *(int*)((char*)g_game + 0x13aec) * 0x60;
     int local = -1;
 
     if (g_mission_clock != 0) {
@@ -707,24 +707,24 @@ void EventScreen::on_event(int code)
     unsigned __int64 k = *(unsigned __int64*)(rec + 0x20);
 
 #define CTRL ((k & 0x200) == 0 && (k & 0x100) != 0)
-    if (CTRL && g_game_keys.down(0x10)) {
+    if (CTRL && g_a73730.down(0x10)) {
         g_a739a0->f18 = 0x17;
         g_a739a0->f4 = 0;
         g_main_menu.choose(8);
     }
-    else if (CTRL && g_game_keys.down(0x11)) {
+    else if (CTRL && g_a73730.down(0x11)) {
         g_a739b0->f18 = 0x17;
         g_a739b0->f4 = 0;
         g_main_menu.choose(0xc);
     }
-    else if (CTRL && g_game_keys.down(0xf)) {
+    else if (CTRL && g_a73730.down(0xf)) {
         g_a739bc->f18 = 0x17;
         g_a739bc->f4 = 0;
         g_a739bc->f14 = g_game->player;
         g_main_menu.choose(0xf);
     }
-    else if (CTRL && g_game_keys.down(0x12)) {
-        if (g_show_quest_notes == 0) {
+    else if (CTRL && g_a73730.down(0x12)) {
+        if (g_a181b4 == 0) {
             g_a739b4->f18 = 0x17;
             g_a739b4->f4 = 0;
             g_main_menu.choose(0xd);
@@ -735,7 +735,7 @@ void EventScreen::on_event(int code)
             g_main_menu.choose(0x1a);
         }
     }
-    else if ((k & 0x200) == 0 && g_game_keys.down(0x13)) {
+    else if ((k & 0x200) == 0 && g_a73730.down(0x13)) {
         g_a739e4->f18 = 0x17;
         g_a739e4->f4 = 0;
         g_main_menu.choose(0x19);
@@ -783,7 +783,7 @@ dispatch:
             if (F(this, 0x18, int) != 100)
                 return;
             g_a7333c |= 0x400;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         if (st == 1) {
@@ -791,35 +791,35 @@ dispatch:
             if (F(this, 0x18, int) == 100) {
                 GI(0xa8) |= 1;
             } else {
-                g_mission_ctx.update_parties();
+                g_mui.reset();
                 g_main_menu.choose(F(this, 0x18, int));
                 return;
             }
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         if (st == 0x11) {
             g_game->fc8 = 0;
-            g_mission_ctx.update_parties();
+            g_mui.reset();
             g_main_menu.choose(7);
             return;
         }
         if (st == 0xd) {
             g_game->fc8 = 0;
             g_a7333c |= 8;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         if (st == 2) {
             g_game->fc8 = 0;
             g_a7333c |= 0x80;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         if (st == 0xe) {
             g_game->fc8 = 0;
             g_a7333c |= 0x800;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         if (st == 0xf) {
@@ -830,7 +830,7 @@ dispatch:
                 return;
             }
             g_a7333c |= 0x1000;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         if (st == 0x10) {
@@ -841,7 +841,7 @@ dispatch:
                 return;
             }
             g_a7333c |= 0x2000;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         if (st == 0x12) {
@@ -852,7 +852,7 @@ dispatch:
                 return;
             }
             g_a7333c |= 0x400;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         if (st == 4) {
@@ -865,7 +865,7 @@ dispatch:
         if (st == 8) {
             g_game->fc8 = 0;
             g_a7333c |= 0x100;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         if (st == 5 || st == 7 || st == 6) {
@@ -895,9 +895,9 @@ dispatch:
 void TickScreen::on_tick(int code)
 {
     if (W(this, 0x40)->changed(0x10000))
-        build(1);
+        method_4fc820(1);
     if (W(this, 0x44)->changed(0x10000))
-        build(0);
+        method_4fc820(0);
 
     if (g_mission_clock != 0) {
         ValueSource* vs = *(ValueSource**)((char*)W(this, 0x38) + 0x484);
@@ -946,7 +946,7 @@ void TickScreen::on_tick(int code)
     if (W(this, 0x3c)->changed(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         g_main_menu.choose(F(this, 0x18, int));
@@ -991,7 +991,7 @@ void InputScreen::on_input(int code)
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
             F(this, 0xb0, float) = anim_value(vs);
         }
-        build(F(this, 0xa8, int), F(this, 0x9c, int));
+        refresh_anim(F(this, 0xa8, int), F(this, 0x9c, int));
     }
 
     if (W(this, 0x70)->changed(0x10000)) {
@@ -1000,7 +1000,7 @@ void InputScreen::on_input(int code)
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
             F(this, 0xb0, float) = anim_value(vs);
         }
-        build(F(this, 0xa8, int), F(this, 0xa4, int));
+        refresh_anim(F(this, 0xa8, int), F(this, 0xa4, int));
     }
 
     if (W(this, 0x34)->changed(0x10000)) {
@@ -1019,14 +1019,14 @@ void InputScreen::on_input(int code)
         F(this, 0x94, void*) = 0;
         if (F(this, 0xa8, int) >= 0
             && (F(this, 0xa8, int) != iv2 || F(this, 0xac, int) != iv1)) {
-            V(this, 0x78)->push_back_out(F(this, 0xa8, int));
-            V(this, 0x78)->push_back_out(F(this, 0xac, int));
+            V(this, 0x78)->push_back_call(F(this, 0xa8, int));
+            V(this, 0x78)->push_back_call(F(this, 0xac, int));
         }
         if (F(this, 0xa8, int) == iv2) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
             F(this, 0xb0, float) = anim_value(vs);
         }
-        build(iv2, iv1);
+        refresh_anim(iv2, iv1);
     }
 
     if (W(this, 0x3c)->changed(0x10000)) {
@@ -1045,31 +1045,31 @@ void InputScreen::on_input(int code)
         F(this, 0x94, void*) = 0;
         if (F(this, 0xa8, int) >= 0
             && (F(this, 0xa8, int) != iv2 || F(this, 0xac, int) != iv1)) {
-            V(this, 0x78)->push_back_out(F(this, 0xa8, int));
-            V(this, 0x78)->push_back_out(F(this, 0xac, int));
+            V(this, 0x78)->push_back_call(F(this, 0xa8, int));
+            V(this, 0x78)->push_back_call(F(this, 0xac, int));
         }
         if (F(this, 0xa8, int) == iv2) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
             F(this, 0xb0, float) = anim_value(vs);
         }
-        build(iv2, iv1);
+        refresh_anim(iv2, iv1);
     }
 
     if (W(this, 0x58)->changed(0x10000)) {
         clear_anim((TickScreen*)this);
-        build(1, 0);
+        refresh_anim(1, 0);
     }
     if (W(this, 0x60)->changed(0x10000)) {
         clear_anim((TickScreen*)this);
-        build(2, 0);
+        refresh_anim(2, 0);
     }
     if (W(this, 0x64)->changed(0x10000)) {
         clear_anim((TickScreen*)this);
-        build(3, 0);
+        refresh_anim(3, 0);
     }
     if (W(this, 0x5c)->changed(0x10000)) {
         clear_anim((TickScreen*)this);
-        build(4, 0);
+        refresh_anim(4, 0);
     }
     if (W(this, 0x50)->changed(0x10000)) {
         g_a739e4->f18 = g_a739e8->f18;
@@ -1092,7 +1092,7 @@ void InputScreen::on_input(int code)
     if (W(this, 0x68)->changed(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
-            g_map_flags.commit(&slot);
+            g_flags.commit(&slot);
             return;
         }
         g_main_menu.choose(F(this, 0x18, int));
@@ -1113,7 +1113,7 @@ void SourceScreen::hook_a(int arg)
     if ((float)(g_ticks[src.slot] - *(__int64*)&src.tick_lo) * 1e-5f > interval) {
         int id = f18;
         if (id == 100) {
-            g_map_flags.commit(&arg);
+            g_flags.commit(&arg);
             return;
         }
         g_main_menu.choose(id);
@@ -1132,7 +1132,7 @@ void SourceScreen::hook_b(int arg)
     if ((float)(g_ticks[src.slot] - *(__int64*)&src.tick_lo) * 1e-5f > interval) {
         int id = f18;
         if (id == 100) {
-            g_map_flags.commit(&arg);
+            g_flags.commit(&arg);
             return;
         }
         g_main_menu.choose(id);

@@ -23,7 +23,8 @@ using rgl::vector4;
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0x536f8f
 extern "C" char* __cdecl _itoa(int, char*, int);                            // 0x5371f7
-#include "../../include/crt.h"   // canonical: fclose (0x537168)
+extern "C" long __cdecl _atol(const char*);                                 // 0x53734d
+extern "C" int __cdecl fclose_(void*);                                      // 0x537168
 
 // ---- controls ----------------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
@@ -46,16 +47,16 @@ struct Game;                                                                // 0
 
 // 0x5d6fa0: the graphics resource manager (rebuild its two halves).
 struct Resources {
-    void unload_textures();                                                        // 0x418e10
-    void load_textures();                                                        // 0x418d60
+    void rebuild1();                                                        // 0x418e10
+    void rebuild2();                                                        // 0x418d60
 };
-extern Resources g_resmgr;                                               // 0x5d6fa0
+extern Resources g_resources;                                               // 0x5d6fa0
 
 // 0x5a9f98: the render config (write-out helper 0x415fb0).
 struct RenderConfig {
-    void save(void* file);                                                 // 0x415fb0
+    void write(void* file);                                                 // 0x415fb0
 };
-extern RenderConfig g_cfg;                                        // 0x5a9f98
+extern RenderConfig g_render_config;                                        // 0x5a9f98
 
 // 0x5e293c: the renderer; set(name, value) at +0x88.
 struct RenderParams {
@@ -70,7 +71,7 @@ struct RenderParams {
     virtual void v20();
     virtual void set(const char* name, const vector4& v);   // +0x88  0x?
 };
-extern RenderParams g_effect;                                                 // 0x5e293c
+extern RenderParams g_renderer;                                                 // 0x5e293c
 extern Game* g_game;                                                        // 0x5e2930
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
@@ -97,11 +98,11 @@ static inline void update_performance_caption(VideoPage* p)
 static inline void set_enabled_text_local(Widget* w, void* page) { ((VideoPage2*)page)->set_enabled_text(w); }
 
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index.
-void set_triple_buffering(int v);                                                   // 0x4bc090
-void set_texture_quality(int v);                                                   // 0x4bc100
+void set_quality1(int v);                                                   // 0x4bc090
+void set_quality2(int v);                                                   // 0x4bc100
 static inline void set_quality(int v, int which)
 {
-    if (which) set_texture_quality(v); else set_triple_buffering(v);
+    if (which) set_quality2(v); else set_quality1(v);
 }
 
 // ---- the page ----------------------------------------------------------------------------------------
@@ -155,7 +156,7 @@ void VideoPage::update(int reason)
         // switching the renderer: replace the two menu captions and always return to the main menu
         tstring explanation("ui_change_directx_explanation");
         tstring name("DirectX");
-        tstring* e = g_strtable.lookup(name);
+        tstring* e = g_string_table.lookup(name);
         MainMenu& m = g_main_menu;
         m.set_texts(&explanation, e);
         m.f4c = 0;
@@ -225,8 +226,8 @@ void VideoPage::update(int reason)
         vector4 v, vi;
         v.x = v.y = v.z = v.w = gamma;
         vi.x = vi.y = vi.z = vi.w = inv;
-        g_effect.set("output_gamma", v);
-        g_effect.set("output_gamma_inv", vi);
+        g_renderer.set("output_gamma", v);
+        g_renderer.set("output_gamma_inv", vi);
         char buf[0x40];
         _itoa((int)(gamma * *(float*)0x54ab28), buf, 10);
         tstring text(buf);
@@ -236,7 +237,7 @@ void VideoPage::update(int reason)
         key_state.~tstring();
         if (text.equals("ui_default")) {
             tstring k("ui_default");
-            state = *g_strtable.lookup(k);
+            state = *g_string_table.lookup(k);
             k.~tstring();
         }
         { char r[8]; w98->set_text(r, state); }
@@ -250,7 +251,7 @@ void VideoPage::update(int reason)
         char buf[0x40];
         {
             tstring key("ui_percentage_value");
-            tstring* e = g_strtable.lookup(key);
+            tstring* e = g_string_table.lookup(key);
             sprintf(buf, e->c_str(), pct);
             key.~tstring();
         }
@@ -278,7 +279,7 @@ void VideoPage::update(int reason)
         char buf[0x40];
         {
             tstring key("ui_percentage_value");
-            tstring* e = g_strtable.lookup(key);
+            tstring* e = g_string_table.lookup(key);
             sprintf(buf, e->c_str(), pct);
             key.~tstring();
         }
@@ -298,10 +299,10 @@ void VideoPage::update(int reason)
         int a = label.find('x', 0);
         int b = label.find(' ', 0);
         tstring left = label.substr(0, a);
-        *(int*)0x5a9fe4 = atoi(left.c_str());
+        *(int*)0x5a9fe4 = _atol(left.c_str());
         left.~tstring();
         tstring right = label.substr(a + 1, b);
-        *(int*)0x5a9fe8 = atoi(right.c_str());
+        *(int*)0x5a9fe8 = _atol(right.c_str());
         right.~tstring();
         settings_refresh();
         update_performance_caption(this);
@@ -311,16 +312,16 @@ void VideoPage::update(int reason)
     if (w30->changed(0x10000)) {
         apply_requested = 1;
         if (applied_value != *(int*)0x5a9f9c) {
-            g_resmgr.unload_textures();
-            g_resmgr.load_textures();
+            g_resources.rebuild1();
+            g_resources.rebuild2();
         }
         void* f = open_user_file("rgl_config.txt", (const char*)0x54b048);
-        g_cfg.save(f);
-        fclose((FILE*)f);
+        g_render_config.write(f);
+        fclose_(f);
         if (changed_config) {
             tstring explanation("ui_change_graphics_settings_explanation");
             tstring pos((const char*)0x54a480);
-            tstring* e = g_strtable.lookup(pos);
+            tstring* e = g_string_table.lookup(pos);
             g_main_menu.set_texts(&explanation, e);
             pos.~tstring();
             explanation.~tstring();

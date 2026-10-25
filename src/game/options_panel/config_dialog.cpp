@@ -36,7 +36,7 @@ struct ModeList {
 };
 
 // @ 0x4cf100
-std::vector<tstring> list_modes()
+std::vector<tstring> FUN_004cf100()
 {
     std::vector<tstring> mode_names;
     std::vector<int> widths;
@@ -127,8 +127,8 @@ std::vector<tstring> list_modes()
     return result;
 }
 
-void refresh_list(int v);      // 0x4c6f90
-void set_active_tab(int v);      // 0x4b9790
+void FUN_004c6f90(int v);      // 0x4c6f90
+void FUN_004b9790(int v);      // 0x4b9790
 
 const float g_width_scale = 0.0023752970155328512f;    // 0x59642c
 const float g_height_scale = 0.0020833334419876337f;   // 0x596430
@@ -136,16 +136,17 @@ const float g_height_scale = 0.0020833334419876337f;   // 0x596430
 // skinmagic ordinal 9: skins a dialog window with a registered skin class name.
 int __stdcall SkinDialog(HWND hwnd, const char* cls);    // SkinMagic ord9, thunk 0x535446
 
-#include "../../include/crt.h"   // canonical: sprintf (0x536f8f)
+char* _sprintf(char* buf, const char* fmt, ...);         // 0x536f8f
+int _fclose(void* file);                                  // 0x537168
 
 void user_path(char* out);                       // 0x4bab70
 bool mb_file_exists(const char* path);           // 0x415120
 void* mb_open_user_file(const char* name, const char* mode);   // 0x415160
-void load_file(void* file);                       // 0x4bbf70 (thiscall on &g_render_cfg)
-void save(void* file);                       // 0x415fb0 (thiscall on &g_render_cfg)
-void choose_dx_settings(int reset);                        // 0x4b9b90 (thiscall on &g_render_cfg)
-void show_options(int dummy);                       // 0x4bee10 (fastcall on this)
-void read_options();                                // 0x4bf170 (fastcall on this)
+void cfg_load(void* file);                       // 0x4bbf70 (thiscall on &g_render_cfg)
+void cfg_save(void* file);                       // 0x415fb0 (thiscall on &g_render_cfg)
+void cfg_init(int reset);                        // 0x4b9b90 (thiscall on &g_render_cfg)
+void gfx_query(int dummy);                       // 0x4bee10 (fastcall on this)
+void cfg_apply();                                // 0x4bf170 (fastcall on this)
 
 const char k_config[] = "rgl_config.txt";        // 0x54b048
 
@@ -198,7 +199,7 @@ void Dialog::fill_video_tab()
     HWND modes = GetDlgItem(m_hwnd, 0x45f);
     if (modes) {
         SendMessageA(modes, 0x14b, 0, 0);
-        std::vector<tstring> list = list_modes();
+        std::vector<tstring> list = FUN_004cf100();
         for (unsigned i = 0; i < list.size(); i++)
             SendMessageA(modes, 0x14a, i, (LPARAM)list[i].buf);
     }
@@ -226,7 +227,7 @@ void Dialog::fill_video_tab()
         SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x151, i, 0);
     }
 
-    refresh_list(1);
+    FUN_004c6f90(1);
 
     {
         tstring caption(key_text("ui_configure_caption").text);
@@ -259,7 +260,7 @@ void Dialog::fill_video_tab()
     SetDlgItemTextA(m_hwnd, 0x45e, key_text("ui_auto_adjust").text);
 
     m_ctrl = SendMessageA(GetDlgItem(m_hwnd, 0x43e), 0x406, 0, 0x64000a);
-    set_active_tab(m_ctrl);
+    FUN_004b9790(m_ctrl);
 }
 
 // @ 0x4d0240
@@ -270,23 +271,23 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         m_hwnd = hwnd;
         SkinDialog(hwnd, "Dialog");
         char path[256];
-        sprintf(path, "%s", k_config);
+        _sprintf(path, "%s", k_config);
         user_path(path);
         if (mb_file_exists(path)) {
             void* f = mb_open_user_file(k_config, "r");
-            load_file(f);
-            fclose((FILE*)f);
+            cfg_load(f);
+            _fclose(f);
         } else {
             *(int*)0x5aa0ac = 0x46;
         }
-        choose_dx_settings(0);
+        cfg_init(0);
         fill_video_tab();
-        show_options(0);
+        gfx_query(0);
         return 1;
     case 0x114: {
         int v = (int)SendMessageA(GetDlgItem(m_hwnd, 0x43e), 0x400, 0, 0);
         char text[256];
-        sprintf(text, "%d", v);
+        _sprintf(text, "%d", v);
         SetWindowTextA(GetDlgItem(m_hwnd, 0x450), text);
         return 1;
     }
@@ -298,14 +299,14 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             __asm add esp, 208h
             __asm ret 10h
         }
-        set_active_tab((int)SendMessageA(GetDlgItem(m_hwnd, 0x43d), 0x130b, 0, 0));
+        FUN_004b9790((int)SendMessageA(GetDlgItem(m_hwnd, 0x43d), 0x130b, 0, 0));
         // falls through to the control dispatch: a tab notification also runs it
         switch (wParam & 0xffff) {
         case 1: {               // ok: write the config back
-            read_options();
+            cfg_apply();
             void* f = mb_open_user_file(k_config, "w");
-            save(f);
-            fclose((FILE*)f);
+            cfg_save(f);
+            _fclose(f);
             EndDialog(hwnd, 2);
             return 1;
         }
@@ -324,14 +325,14 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             return 1;
         case 0x45e:             // auto adjust: re-detect and re-read the config
-            read_options();
+            cfg_apply();
             *(int*)0x5aa0a8 = 0;
-            choose_dx_settings(1);
-            show_options(0);
+            cfg_init(1);
+            gfx_query(0);
             return 1;
         case 0x45f:             // display-mode list changed
             if ((wParam >> 16) == 9) {
-                refresh_list(0);
+                FUN_004c6f90(0);
                 return 1;
             }
             break;

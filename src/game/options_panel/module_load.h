@@ -37,7 +37,7 @@ struct flora_kind {
 // ground spec record (0x4c bytes): detail in s004bddf0.
 struct ground_spec {
     char pad0[0x4c];
-    void load_extras(text_reader_l* s);              // 0x4bddf0
+    void read(text_reader_l* s);              // 0x4bddf0
     void copy_from(const ground_spec* src); // 0x4cd100
     void destroy();                         // 0x4c8ba0
 };
@@ -59,7 +59,7 @@ struct mission_alloc { void construct(mission_type* dst, const mission_type& src
 // "ttype" record (0x20 bytes, array at 0x8ed4df8).
 struct ttype {
     char pad0[0x20];
-    void read(text_reader_l* s);  // 0x4be600
+    void read_ground_spec(text_reader_l* s);  // 0x4be600
 };
 
 // Destroy helpers (thiscall, `this` = the element).

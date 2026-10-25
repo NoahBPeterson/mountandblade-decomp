@@ -221,9 +221,9 @@ __declspec(noinline) void ValueSource::on_value_changed(float arg)
 // @ 0x4d5980
 void Hud::on_mission_start(int arg)
 {
-    *(int*)((char*)(void*)(*(void**)&g_mission) + 0x5270) = g_u32;
+    *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_u32;
     g_u32 = g_u32 + 1;
-    start_setup((void*)(void*)(*(void**)&g_mission));
+    start_setup((void*)(void*)((void*)g_mission));
     g_screen->v2();
     g_screen->f18 = f18;
     g_menu_w3[1] = 0;

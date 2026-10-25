@@ -12,7 +12,7 @@
 004c4ebd ?list_int_make_node_funclet@@YAXPAX@Z
 004c4ee0 ??1world_obj@@QAE@XZ
 004c4f40 ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z
-004c5010 ?uninit_fill_n@@YAXPAXIPBXPAUblock_copier@@@Z
+004c5010 ?fill_records@@YAXPAXIPBXPAUblock_copier@@@Z
 004c5074 ?fill_records_funclet@@YAXXZ
 004c5080 ?copy_range38@@YAPAUitem38@@PAU1@PBU1@1PAUeditor@@@Z
 004c50ea ?copy_range38_catch@@YAXXZ
@@ -40,13 +40,13 @@
 004c6190 ?desc_name@SkillRec@@QAEPAUtstring@@XZ
 004c61f0 ?translated_desc@SkillRec@@QAE?AUtstring@@XZ
 004c62b0 ?translated@MenuDoor@@QAE?AUtstring@@XZ
-004c6330 ?translated_plural@RecA@@QAE?AUtstring@@XZ
-004c63f0 ?translated@RecA@@QAE?AUtstring@@XZ
-004c6470 ?translated_text@RecA@@QAE?AUtstring@@XZ
-004c6530 ?translated@RecB@@QAE?AUtstring@@XZ
+004c6330 ?text_by_kind@RecA@@QAE?AUtstring@@XZ
+004c63f0 ?src_text@RecA@@QAE?AUtstring@@XZ
+004c6470 ?src_id_name@RecA@@QAE?AUtstring@@XZ
+004c6530 ?name_by_state@RecB@@QAE?AUtstring@@XZ
 004c65d0 ?reset@ItemPage@@QAEXXZ
 004c6620 ?format@ItemPage@@QAEXPAD@Z
-004c6860 ?translated@RecC@@QAE?AUtstring@@XZ
+004c6860 ?field_name@RecC@@QAE?AUtstring@@XZ
 004c6900 ?retire@ItemPage@@QAEXXZ
 004c6950 ?fill_records@ItemPage@@QAEPAURefRecord@@PAU2@@Z
 004c6aa0 ?clear@ItemPage@@QAEXXZ

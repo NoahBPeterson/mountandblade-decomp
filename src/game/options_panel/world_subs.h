@@ -12,6 +12,6 @@ struct Sub63d0 {
 struct Sub6698 {
     char pad[0x67d8 - 0x6698];
     void init();                                    // 0x4d1360
-    void clear_vecs();                                    // 0x4cb780
+    void dtor();                                    // 0x4cb780
 };
 #endif

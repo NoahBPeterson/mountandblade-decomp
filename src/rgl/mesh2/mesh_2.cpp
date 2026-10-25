@@ -23,9 +23,9 @@ void screen_cfg::apply()
     req.pop_back();
     if (!req.empty()) {
         unsigned char v = items[req.back()]->index();
-        if (g_render.dev)
-            g_render.dev->ShowCursor(v);
-        g_gui.f560 = v;
+        if (g_dev_renderer)
+            g_dev_renderer->ShowCursor(v);
+        g_5d75e0 = v;
     }
 }
 
@@ -41,8 +41,8 @@ void dev_list::select_windowed(int a)
     }
     if (found != -1) {
         dev[6] = (dev_rec*)found;
-        found = (int)&g_windows;
-        g_windows.apply();
+        found = (int)&g_screen;
+        g_screen.apply();
     }
 }
 
@@ -57,7 +57,7 @@ void LangTables::release_strings()
         if (p->myfirst) {
             for (tstring* s = p->myfirst; s != p->mylast; s++)
                 s->~tstring();
-            operator delete(p->myfirst);
+            engine_delete(p->myfirst);
         }
         p->myfirst = 0;
         p->mylast = 0;
@@ -72,7 +72,7 @@ void LangTables::release_strings()
         if (p->myfirst) {
             for (tstring* s = p->myfirst; s != p->mylast; s++)
                 s->~tstring();
-            operator delete(p->myfirst);
+            engine_delete(p->myfirst);
         }
         p->myfirst = 0;
         p->mylast = 0;
@@ -93,9 +93,9 @@ void big_holder::release()
     v3a8 = 0;
     v3ac = 0;
     v3b0 = 0;
-    tail.free_items();
+    tail.clear();
     for (int i = 4; i >= 0; i--)
-        vector_destructor_iterator(&rows[i], 0x4c, 2, &clear_vec38);
+        vec_dtor_iter(&rows[i], 0x4c, 2, &item_dtor);
 }
 
 // @ 0x4ca8c0
@@ -298,7 +298,7 @@ again:
             }
         }
     }
-    build_adjacency();
+    finish();
     return true;
 }
 
@@ -362,7 +362,7 @@ bool graph_obj::split_edge(int e)
     f0->ends[3] = ys[3];
     f0->count = 4;
     remove_edge(e);
-    build_adjacency();
+    finish();
     return true;
 }
 
@@ -374,7 +374,7 @@ void rec_2e4::release()
     res_rec* r = p;
     if (r) {
         r->remove();
-        operator delete(r);
+        engine_delete(r);
         p = 0;
     }
 }
@@ -387,7 +387,7 @@ void rec_1ac::release()
     res_rec* r = p;
     if (r) {
         r->remove();
-        operator delete(r);
+        engine_delete(r);
     }
 }
 
@@ -400,7 +400,7 @@ void rec_178::release()
     res_rec* r = ((rec_178*)self)->p;
     if (r) {
         r->remove();
-        operator delete(r);
+        engine_delete(r);
     }
 }
 
@@ -411,7 +411,7 @@ void vec3_holder::clear()
     ptr_tag tag;
     if (begin) {
         obj_free(begin, end, (void*)pad0, tag);
-        operator delete(begin);
+        delete_obj(begin);
     }
     begin = 0;
     end = 0;
@@ -473,7 +473,7 @@ void big_obj::release()
     res_rec* r = p2e74;
     if (r) {
         r->remove();
-        operator delete(r);
+        engine_delete(r);
     }
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
@@ -694,15 +694,15 @@ void LangTables::load(const char* root)
                     } else {
                         lang_bucket* kb = &keys[hash];
                         if (kb->size() < (unsigned)(kb->myend - kb->myfirst))
-                            uninit_fill_n_str(kb, kb->mylast, 1, key);
+                            vec_insert_n(kb, kb->mylast, 1, key);
                         else
-                            _Insert_n(kb, kb->mylast, 1, key);
+                            vec_insert_n2(kb, kb->mylast, 1, key);
                         kb->mylast++;
                         lang_bucket* vb = &vals[hash];
                         if (vb->size() < (unsigned)(vb->myend - vb->myfirst))
-                            uninit_fill_n_str(vb, vb->mylast, 1, value);
+                            vec_insert_n(vb, vb->mylast, 1, value);
                         else
-                            _Insert_n(vb, vb->mylast, 1, value);
+                            vec_insert_n2(vb, vb->mylast, 1, value);
                         vb->mylast++;
                     }
                     len = text.len;
@@ -751,7 +751,7 @@ void ObjectList::read(stream_base* s)
         vector4 big(10000000.0f, 10000000.0f, 10000000.0f);
         vector4 neg(-10000000.0f, -10000000.0f, -10000000.0f);
         s->r_tstr((rgl::string*)&entries[i].name);
-        entries[i].nodes.assign(g_resmgr.find_meshes(&entries[i].name));
+        entries[i].nodes.assign(g_resmgr.find_meshes_tmp(&entries[i].name));
         entries[i].mn = big;
         entries[i].mx = neg;
         for (unsigned j = 0; j < entries[i].nodev().size(); j++) {
@@ -764,7 +764,7 @@ void ObjectList::read(stream_base* s)
         if (buf.equals("0")) {
             entries[i].shape = 0;
         } else {
-            entries[i].shape = g_resmgr.get_object60(&buf);
+            entries[i].shape = g_resmgr.get_mesh(&buf);
             entries[i].body = body_copy_shape(entries[i].shape);
         }
     }
@@ -798,15 +798,15 @@ void MissionObj::read(stream_base* s)
         g_resmgr.find_meshes(&nodes, &t0);
         vec_assign_43f0a0(&nodes_, &nodes);
         if (nodes.begin)
-            operator delete(nodes.begin);
+            engine_delete(nodes.begin);
         unsigned j = 0;
         while (1) {
             if (nodes_.begin == 0 || (nodes_.end - nodes_.begin) <= (int)j)
                 break;
             vector4 a, b;
             mesh_node_bounds(nodes_.begin[j], &a, &b);
-            vmax(&mx, &mx, &b);
-            vmin(&mn, &mn, &a);
+            vmax_ext(&mx, &mx, &b);
+            vmin_ext(&mn, &mn, &a);
             j++;
         }
         v58.x = (mn.x + mx.x) * HALF;
@@ -817,11 +817,11 @@ void MissionObj::read(stream_base* s)
     }
     s->r_tstr((rgl::string*)&t1);
     if (t1.len > 1) {
-        shape = g_resmgr.get_object60(&t1);
+        shape = g_resmgr.get_mesh(&t1);
         body = body_copy_shape(shape);
         vector4 b;
-        vmax(&mx, &mx, body->get_bounds_max(&b));
-        vmin(&mn, &mn, body->get_bounds_min(&b));
+        vmax_ext(&mx, &mx, body->get_bounds_max(&b));
+        vmin_ext(&mn, &mn, body->get_bounds_min(&b));
         v58.x = (mn.x + mx.x) * HALF;
         v58.y = (mn.y + mx.y) * HALF;
         v58.z = (mn.z + mx.z) * HALF;

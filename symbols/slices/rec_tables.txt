@@ -20,7 +20,7 @@
 004c32e0 ?destroy_C4c3290@@YIPAXPAUC4c3290@@HH@Z
 004c3300 ?dtor@C4c3290@@QAEXXZ
 004c3330 ?global_4bf870@@YAXXZ
-004c3340 ?script_dialog_proc@@YAXXZ
+004c3340 ?global_4c03b0@@YAXXZ
 004c3350 ?fn_4c3350@@YAXXZ
 004c3430 ?vector_deleting_delete@elem58@@QAEPAXI@Z
 004c3510 ?renderer_setup@@YIHPAUGameAppView@@@Z

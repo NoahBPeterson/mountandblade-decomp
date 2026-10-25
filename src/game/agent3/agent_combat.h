@@ -45,7 +45,7 @@ struct Pool {
 // ---- blend / range tables and helpers called by the agent code ------------------------------------------------------
 struct RangePair { float lo, hi; };
 extern RangePair g_range_tbl[];                         // 0x590aac (indexed by Agent::variant)
-float __cdecl signed_angle(void* a, void* b);           // 0x4381e0
+float __cdecl blend_target(void* a, void* b);           // 0x4381e0
 float __cdecl accel_factor(const float* a, const float* b, const float* c);   // 0x435ae0
 extern int g_ctl_mode;                                  // 0x5aa074 (0 = target, 1 = mouse, 2 = mirrored mouse)
 extern int g_stick_mode;                                // 0x5aa078 (0 = none, 1 = stick)

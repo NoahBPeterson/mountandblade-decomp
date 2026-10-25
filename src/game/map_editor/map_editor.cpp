@@ -198,7 +198,7 @@ refresh_list:
         bool moved;
         bool rotated;
         bool drag;
-        apply(moved, dragged, rotated, frame, drag, dir, f2f8);
+        handle_input(moved, dragged, rotated, frame, drag, dir, f2f8);
 
         pos3 basis;
         basis.o = dragged;

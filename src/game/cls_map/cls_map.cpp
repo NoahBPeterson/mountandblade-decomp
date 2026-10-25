@@ -525,12 +525,12 @@ int shutdown()
     audio_close();
     g_log.w_cstr("Saving options...");
     save();
-    if ((*(void**)&g_game)) {
-        delete (GameDtor*)(*(void**)&g_game);
+    if (((void*)g_game)) {
+        delete (GameDtor*)((void*)g_game);
         (*(void**)&g_game) = 0;
     }
-    if ((*(void**)&g_mission)) {
-        delete (WorldDtor*)(*(void**)&g_mission);
+    if (((void*)g_mission)) {
+        delete (WorldDtor*)((void*)g_mission);
         (*(void**)&g_mission) = 0;
     }
     if (g_5e29d0) {
@@ -618,7 +618,7 @@ void MissionScreen::fill_single_mission()
         tstring none("");
         vt(overlay)->d41(pos, &none);
     }
-    vt(row[2])->d41(pos, (void*)((const char*)g_mission_templates + *(int*)((char*)(*(void**)&g_mission) + 0x5df0) * 0x58 + 0x24));
+    vt(row[2])->d41(pos, (void*)((const char*)g_mission_templates + *(int*)((char*)((void*)g_mission) + 0x5df0) * 0x58 + 0x24));
 }
 
 // @ 0x4db090

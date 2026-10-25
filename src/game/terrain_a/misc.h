@@ -34,7 +34,8 @@ struct slot130 {                                // 0x130 bytes, array at mission
 };
 #include "../mode_rec.h"                      // ModeRec2, g_modes2 0x5e2a00 (+0x34 -> 0x4c-byte spawn rules)
 struct World3 { char pad0[0x13a00]; Troop* troops; char pad1[0x13a50 - 0x13a04]; int* tbl; };   // the world object 0x5e2930
-#include "../../include/game_data.h"   // canonical: g_game (0x5e2930)
+extern World3* g_world3;                        // 0x5e2930 (0x4677a0, 0x467940)
+extern float g_speed_base;                      // 0x5aa07c (0x467740)
 
 struct Mission3 {
     char pad0[0x6b0];
@@ -113,6 +114,10 @@ void __cdecl vmin3(float* a, const float* b);   // 0x468360
 // ---- render-state cache calls (global object 0xa17910; the class is src/game/renderer.h's, which needs rgl.h) ---------
 #include "../../include/renderer.h"       // renderer (shared)
 extern IDirect3DBaseTexture9* g_tex_cache[];    // 0xa17e5c texture bound per stage
+extern unsigned char g_rs_normalize;            // 0xa17e58 cached D3DRS_NORMALIZENORMALS
+extern unsigned char g_rs_zwrite_off;           // 0xa17e59 cached "depth write disabled" bit
+extern unsigned char g_rs_specular;             // 0xa17e57 cached D3DRS_SPECULARENABLE
+extern unsigned char g_rs_zfunc_le;             // 0xa17e5b cached "depth test on" bit
 
 // ---- texture / shader / skin: the members the binders add (views of src/rgl/resource.h's classes) ---------------------
 struct texture_x : texture {
@@ -135,13 +140,13 @@ struct skin_x : skin {
 // (the record is FxDef of include/fx.h: FxDef::set_env_count is defined in terrain_a.cpp)
 
 // ---- level index of a record (0x468770) ----------------------------------------------------------------------------
-#include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3ac4)
+extern int g_lod_max;                           // 0x8ee3ac4
 struct Rec468770 {
     char pad0[0x58];
     int f58;                                    // +0x58
     char pad5c[0x7a - 0x5c];
     unsigned char b7a;                          // +0x7a (low nibble = level)
-    int max_hit_points();                          // 0x468770
+    int level_index();                          // 0x468770
 };
 
 // ---- troop auto-equip (0x4687a0 / 0x4687e0; a view of Troop) ---------------------------------------------------------
@@ -248,6 +253,10 @@ struct RenderScene {                            // the render scene (rgl::scene,
     fog_rec* fog;                               // 0x1b0
     void apply_state();                         // 0x46ca50
 };
+extern int g_lights_enabled;                    // 0x5aa024
+extern int g_cull_mode;                         // 0xa17ecc (cached D3DCULL_* of the next draw)
+extern unsigned char g_fog_on;                  // 0xa17e15 cached D3DRS_FOGENABLE
+extern unsigned char g_lighting_on;             // 0xa17e16 cached D3DRS_LIGHTING
 
 // ---- vertex / index buffer uploader (0x46d060) -------------------------------------------------------------------------
 struct GeomBuffer {
@@ -265,7 +274,7 @@ struct GeomBuffer {
     IDirect3DIndexBuffer9* ib;                  // 0x44
     int upload(void* scratch, void* tag);       // 0x46d060
 };
-extern char g_scene_dirty;                    // 0x5e2938 (set when a buffer must be recreated larger)
+extern char g_buffers_dirty;                    // 0x5e2938 (set when a buffer must be recreated larger)
 
 // ---- shadow-view draw pass (0x46d8c0) ------------------------------------------------------------------------------------
 struct light_t {
@@ -316,7 +325,13 @@ struct drawer {
     IDirect3DIndexBuffer9* ib(int i) { return *(IDirect3DIndexBuffer9**)((char*)this + 0x350 + i * 0x4c); }
     void draw(view_t* v);                       // 0x46d8c0
 };
+extern char g_lighting;                         // 0xa17e16 cached D3DRS_LIGHTING
+extern char g_b15;                              // 0xa17e15 cached D3DRS_FOGENABLE
 extern char g_light_on[64];                     // 0xa17e17 per-light enable cache
+extern char g_b57;                              // 0xa17e57 cached D3DRS_SPECULARENABLE
+extern char g_b58;                              // 0xa17e58 cached D3DRS_NORMALIZENORMALS
+extern char g_zwrite;                           // 0xa17e59 cached D3DRS_ZWRITEENABLE
+extern char g_zfunc_always;                     // 0xa17e5b
 extern int g_e68;                               // 0xa17e68 pixel shader bound
 extern int g_tss_a;                             // 0xa17e6c
 extern int g_tss_b;                             // 0xa17e70
@@ -324,6 +339,7 @@ extern int g_tss_c;                             // 0xa17e78
 extern int g_tss_d;                             // 0xa17e7c
 extern int g_alpha_test;                        // 0xa17ea0
 extern int g_texfactor;                         // 0xa17ea4
+extern int g_cull_base;                         // 0xa17ecc
 extern int g_cull_cur;                          // 0xa17ed0
 extern unsigned g_stage_arg[8];                 // 0x5a9c00 D3DTA_* by 3-bit code
 

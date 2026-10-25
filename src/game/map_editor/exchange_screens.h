@@ -59,7 +59,7 @@ inline PartyX* party_index(GameData* g, int id)
 }
 
 struct GameDataX : GameData {               // the game object with the members this region calls
-    int sl_party_price(int troop);               // 0x48a320 (ret 4)
+    int fn_48a320(int troop);               // 0x48a320 (ret 4)
     __declspec(noinline) void update_party_sprites();            // 0x532de0
     int add_sprite(int a, int b, int kind); // 0x49ebd0 (ret 0xc)
 };
@@ -70,8 +70,8 @@ inline int troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }
 
 // ---- small objects ----------------------------------------------------------------------------------------------------
 struct FrameFlags { void commit(void* out); };      // 0x513710 (ret 4): the framed command block at 0x5e291c
-extern FrameFlags g_map_flags;                          // 0x5e291c
-extern MsgLog g_gui;                             // 0x5d7080
+extern FrameFlags g_flags;                          // 0x5e291c
+extern MsgLog g_msglog;                             // 0x5d7080
 
 // the menu / mission controller object at 0xa73300 (the slices called it MissionUi, Screen and AuxObj)
 struct MenuCtl {
@@ -87,12 +87,12 @@ struct MenuCtl {
     char pad40[0x160 - 0x40];
     int f160;                               // +0x160
     void setup(unsigned flags, int delta);  // 0x513f80 (ret 8)
-    void update_parties();                           // 0x513b40
-    void build_hero_table(int a, int b, int c, int d);     // 0x514890 (ret 0x10)
+    void reset();                           // 0x513b40
+    void show_item(int a, int b, int c, int d);     // 0x514890 (ret 0x10)
     __declspec(noinline) void setup_entry(struct MenuEntry* e);  // 0x531600
     __declspec(noinline) int weight(unsigned flags);             // 0x5316f0
 };
-extern MenuCtl g_mission_ctx;                       // 0xa73300
+extern MenuCtl g_mui;                       // 0xa73300
 
 // one menu option (8 bytes, array at Menu+0x94)
 struct MenuEntry { int id; int value; };
@@ -183,9 +183,9 @@ struct XferWin {
     char f3908;                             // +0x3908
 
     void update(int);                       // 0x531800
-    void refresh_selection();            // 0x5063e0
-    void refresh_party_members(int);                    // 0x503ed0
-    void refresh_morale();                       // 0x503a50
+    void refresh_party_window();            // 0x5063e0
+    void fn_503ed0(int);                    // 0x503ed0
+    void fn_503a50();                       // 0x503a50
     __declspec(noinline) void clear_selection();                 // 0x5324d0
     __declspec(noinline) void get_cell(int a, int b, int c, int* main, int* cell);   // 0x532520
     __declspec(noinline) void move_men(int amount);              // 0x532560
@@ -201,7 +201,7 @@ struct ChoiceList : Widget {                // a choice list (was ListWidget; no
 };
 
 struct OutIntVec : IntVec {                 // a std::vector<int> embedded in a screen (src/game/int_vec.h) whose push_back the original calls out of line
-    void push_back_out(const int& v);      // 0x440b30 (ret 4)
+    void push_back_call(const int& v);      // 0x440b30 (ret 4)
 };
 
 struct VecIter {                            // VC7.1 vector<int>::iterator + n, in the out-parameter form
@@ -215,8 +215,8 @@ struct ScreenBase {                         // what the raw-layout screens share
 };
 struct TickScreen : ScreenBase {            // vtable 0x595a08
     void on_tick(int code);                 // 0x5337a0 (ret 4)
-    void build(int a, int b);        // 0x50a1c0 (ret 8)
-    void build(int arg);            // 0x4fc820 (ret 4)
+    void refresh_anim(int a, int b);        // 0x50a1c0 (ret 8)
+    void method_4fc820(int arg);            // 0x4fc820 (ret 4)
 };
 struct EventScreen : ScreenBase {           // vtable 0x59619c
     void on_event(int code);                // 0x533070 (ret 4)
@@ -244,10 +244,10 @@ extern int g_trial_mode;                    // 0x5e29c4
 extern int g_a735c4;                        // 0xa735c4
 extern int g_a70458;                        // 0xa70458
 extern int g_a7045c;                        // 0xa7045c
-extern int g_show_quest_notes;                        // 0xa181b4
+extern int g_a181b4;                        // 0xa181b4
 extern int g_a7333c;                        // 0xa7333c
 extern int* g_menu_data;                    // 0xa739c0
-extern char* g_menus;                   // 0x5e29b0 (GameMenu* in rgl/mesh2/gui_edit.h; the rows of 0x60 bytes are read raw here)
+extern char* g_menu_rows;                   // 0x5e29b0 (GameMenu* in rgl/mesh2/gui_edit.h; the rows of 0x60 bytes are read raw here)
 extern float g_k59c48c;                     // 0x59c48c (weight ramp constant)
 extern float g_half;                        // 0x549d70 (0.5f)
 extern float g_033;                         // 0x54b894 (0.33f)
@@ -259,7 +259,7 @@ extern MenuItem* g_a739e4;                  // 0xa739e4
 extern MenuItem* g_a739e8;                  // 0xa739e8
 extern MenuItem* g_a739ec;                  // 0xa739ec
 struct KeyDown { bool down(int key); };     // 0x48ac90 (ret 4): the key state object at 0xa73730
-extern KeyDown g_game_keys;                    // 0xa73730
+extern KeyDown g_a73730;                    // 0xa73730
 #define STR_TABLE ((StrTable*)0x5e2a18)     // the localized string table (str_table.h)
 
 #endif // GAME_MAP_EDITOR_PARTY_SCREEN_H

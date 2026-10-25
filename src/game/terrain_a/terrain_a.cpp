@@ -1262,7 +1262,7 @@ void Mission3::add_amount(int idx, unsigned flags)
     } else if (rf & 8) {
         amount = 1;
     } else if (rf & 0x10) {
-        amount = (*(World3**)&g_game)->tbl[0xc5 + f5df4 * 0x125 + idx];
+        amount = ((World3*)g_game)->tbl[0xc5 + f5df4 * 0x125 + idx];
     } else {
         int v;
         if ((rf & 1) || ((rf & 0x40) && f6214 == 1) || ((rf & 0x80) && f6214 == 0)
@@ -1292,11 +1292,11 @@ bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, ch
     bool ok = true;
     if (b->f8 & 1) ok = false;
     unsigned fl = a->flags;
-    if ((fl & 0x400) && ((*(World3**)&g_game)->troops[b->troop].flags30 & 0x10) == 0)
+    if ((fl & 0x400) && (((World3*)g_game)->troops[b->troop].flags30 & 0x10) == 0)
         ok = false;
-    if ((fl & 0x200) && p3 != 0 && ((*(World3**)&g_game)->troops[b->troop].flags30 & 0x10) != 0)
+    if ((fl & 0x200) && p3 != 0 && (((World3*)g_game)->troops[b->troop].flags30 & 0x10) != 0)
         ok = false;
-    if ((fl & 0x100) && p3 == 0 && ((*(World3**)&g_game)->troops[b->troop].flags30 & 0x10) != 0)
+    if ((fl & 0x100) && p3 == 0 && (((World3*)g_game)->troops[b->troop].flags30 & 0x10) != 0)
         return false;
     if (ok && (fl & 0x70000)) {
         Troop* t = &(*(World3**)&g_game)->troops[b->troop];
@@ -2246,7 +2246,7 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
     *found = 0;
     if (((__int64)mask & g_bit[slot]) == 0 &&
         ((mask & 0x200) == 0 || (g_bit[slot] & 0x10) == 0 ||
-         (int)g_items[(*(World3**)&g_game)->troops[troop].equip[slot].item].type_flags >= 0)) {
+         (int)g_items[((World3*)g_game)->troops[troop].equip[slot].item].type_flags >= 0)) {
         *found = 1;
         return *(__int64*)&(*(World3**)&g_game)->troops[troop].equip[slot];
     }
@@ -2261,7 +2261,7 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
         r.m4 = 0;
         if (v >= 0) {
             r.item = v;
-            if ((*(World3**)&g_game)->troops[troop].fits_slot(&r, slot)) {
+            if (((World3*)g_game)->troops[troop].fits_slot(&r, slot)) {
                 res.item = v;
                 res.m4 = 0;
                 res.reduce(0);

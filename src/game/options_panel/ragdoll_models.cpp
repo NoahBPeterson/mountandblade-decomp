@@ -87,7 +87,7 @@ struct model_a {
     vec<int> v2e8c;                                 // 0x2e8c
     vec<int> v2e9c;                                 // 0x2e9c
     vec<int> v2eac;                                 // 0x2eac
-    void clear();                               // 0x4c80c0
+    void init_base();                               // 0x4c80c0
     model_a();                                      // 0x4d3580
 };
 
@@ -95,7 +95,7 @@ struct model_a {
 model_a::model_a()
 {
     f2c50 = 0;
-    clear();
+    init_base();
     f2e74 = 0;
     for (int i = 0; i < 8; i++)
         for (int j = 0; j < 8; j++) {

@@ -1,4 +1,4 @@
-08ed4f60 ?g_voices@@3UVoiceTable@@A  # troop-class voice record table object (0x1f8-byte records from +0x1c, count at +0x28), read by 0x4459c0; address beyond the resolver's annotation range
+08ed4f60 ?g_anim_table@@3UVoiceTable@@A  # troop-class voice record table object (0x1f8-byte records from +0x1c, count at +0x28), read by 0x4459c0; address beyond the resolver's annotation range
 00445700 ??$_Ucopy@PAUE56@@@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEPAUE56@@PAU2@00@Z  # std::vector<E56>::_Ucopy<E56*> (-> _Uninit_copy 0x442080)
 00442080 ??$_Uninit_copy@PAUE56@@PAU1@V?$allocator@UE56@@@std@@@std@@YAPAUE56@@PAU1@00AAV?$allocator@UE56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_copy<E56*> (called by _Ucopy 0x445700; s004417d0)
 004452f0 NavMesh::reachable  # A*-style search over navmesh faces with a hop limit; true when the goal face got stamped (provisional name)

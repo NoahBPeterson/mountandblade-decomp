@@ -252,7 +252,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = f2c;
         if (f < 0)
             goto done;
-        float v = signed_angle(&vel, &fx);
+        float v = blend_target(&vel, &fx);
         if (1.0f < agent_by_id_raw(f)->fac) {
             if (v < -0.2f && dir == 2) {
                 dir = 1;
@@ -305,7 +305,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = f2c;
         if (f < 0)
             goto done;
-        float v = signed_angle(&vel, &fx);
+        float v = blend_target(&vel, &fx);
         if (1.0f < agent_by_id_raw(f)->fac) {
             alt = 0;
             dir = (v < 0.0f) ? 1 : 2;
@@ -357,7 +357,7 @@ void Agent::start_shoot(int slot)
         flags = g_items[sp.item].flags;
     int dir, alt;
     if (f2c >= 0) {
-        float v = signed_angle(&vel, &fx);
+        float v = blend_target(&vel, &fx);
         if (v < 0.0f)
             dir = 1;
         else
@@ -683,7 +683,7 @@ int Agent::fire_check(unsigned tid, int* out_blocker)
     g_hit_shape = 0;
     *out_blocker = -1;
     if (f2c != -1) {
-        float v = signed_angle(&vel, blk294);
+        float v = blend_target(&vel, blk294);
         if (!(g_range_tbl[variant].lo <= v) || !(v < g_range_tbl[variant].hi))
             return 3;
     }

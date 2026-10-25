@@ -79,8 +79,8 @@ Block16::Block16() : p(0.0f, 0.5f)
 bool GameData::agent_low(int idx)
 {
     if (idx == player)
-        return troops[idx].hp < g_player_wounded_treshold;
-    return troops[idx].hp < g_hero_wounded_treshold;
+        return troops[idx].hp < g_thr_self;
+    return troops[idx].hp < g_thr_other;
 }
 
 // @ 0x463950
@@ -276,9 +276,9 @@ void ShadowMap::sync_readback()
         if (g_use_hw_shadow)
             fmt = D3DFMT_R16F;
         IDirect3DTexture9* tex = 0;
-        HRESULT hr = g_render.dev->CreateTexture(w, h, 1, D3DUSAGE_DYNAMIC, fmt, D3DPOOL_SYSTEMMEM, &tex, 0);
+        HRESULT hr = g_device->CreateTexture(w, h, 1, D3DUSAGE_DYNAMIC, fmt, D3DPOOL_SYSTEMMEM, &tex, 0);
         if (hr < 0) {
-            g_options.i7c = 0;
+            g_mesh_quality = 0;
             surf = 0;
         } else {
             tex->GetSurfaceLevel(0, &surf);
@@ -291,7 +291,7 @@ void ShadowMap::sync_readback()
     if (target != 0) {
         IDirect3DSurface9* src;
         (*target->refs[0]->tex)->GetSurfaceLevel(0, &src);
-        g_render.dev->GetRenderTargetData(src, surf);
+        g_device->GetRenderTargetData(src, surf);
         src->Release();
     }
 }

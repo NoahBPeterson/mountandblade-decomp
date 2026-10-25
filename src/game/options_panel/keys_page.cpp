@@ -102,11 +102,11 @@ struct ControlKeyTable {
     void forget(int index, int button);                     // 0x4d6f90
     __declspec(noinline) void restore();                    // 0x4d6fd0 (kept as a call by 0x4d6e50)
     void save();                                            // 0x4d7000
-    void init();                                  // 0x4be7c0
-    void key_name(int index, tstring& out);                  // 0x4d7370
-    void key_binding_name(int index, tstring* text, char* assigned);  // 0x4d7d10
+    void reset_defaults();                                  // 0x4be7c0
+    void caption(int index, tstring& out);                  // 0x4d7370
+    void column(int index, tstring* text, char* assigned);  // 0x4d7d10
 };
-extern ControlKeyTable g_game_keys;                                                // 0xa73730
+extern ControlKeyTable g_key_table;                                                // 0xa73730
 
 // ---- the page ----------------------------------------------------------------------------------------
 // The page is read from both ends: the two button objects sit at +0x30 (apply / restore) and the widget
@@ -194,7 +194,7 @@ void KeysPage::update_perf()
     char buf[0x104];
     {
         tstring key("ui_estimated_performance");
-        tstring* e = g_strtable.lookup(&key);
+        tstring* e = g_string_table.lookup(&key);
         sprintf(buf, e->c_str(), (int)(*(float*)0x596854 / perf));
     }
     {
@@ -209,10 +209,10 @@ void KeysPage::set_enabled_text(Widget* w)
 {
     if (w->get_value()) {
         tstring key("ui_enabled");
-        { char r[8]; w->set_text(r, *g_strtable.lookup(&key)); }
+        { char r[8]; w->set_text(r, *g_string_table.lookup(&key)); }
     } else {
         tstring key("ui_disabled");
-        { char r[8]; w->set_text(r, *g_strtable.lookup(&key)); }
+        { char r[8]; w->set_text(r, *g_string_table.lookup(&key)); }
     }
 }
 
@@ -228,7 +228,7 @@ void KeysPage::update(int reason)
                 pressed = i;
         if (pressed >= 0) {
             if (pressed != 1) {
-                g_game_keys.forget(p->editing, pressed);
+                g_key_table.forget(p->editing, pressed);
                 p->modified = 1;
             }
             refresh();
@@ -240,18 +240,18 @@ void KeysPage::update(int reason)
             if (p->keys[i]->changed(0x10000))
                 p->editing = i;
         if (p->w38->changed(0x10000)) {
-            g_game_keys.init();
+            g_key_table.reset_defaults();
             p->modified = 1;
             refresh();
         }
         if (p->w34->changed(0x10000)) {
-            g_game_keys.restore();
+            g_key_table.restore();
             p->modified = 0;
             refresh();
         }
         if (p->w30->changed(0x10000)) {
             if (p->modified)
-                g_game_keys.save();
+                g_key_table.save();
             g_main_menu.choose(p->option);
         }
     }
@@ -323,14 +323,14 @@ void KeysPage::refresh()
     KeysPageView* p = head(this);
     for (int k = 0; k < 7; k++) {
         tstring text;
-        g_game_keys.key_name(k, text);
+        g_key_table.caption(k, text);
         { char r[8]; p->captions[k]->set_text(r, text); }
     }
 
     for (int i = 0; i < 0x25; i++) {
         char assigned;
         tstring text;
-        g_game_keys.key_binding_name(i, &text, &assigned);
+        g_key_table.column(i, &text, &assigned);
         layout_row(p->keys[i], &text, 0.034f, 3.7f, 0.072f, 0.085f);
         unsigned colour = 0xffff2200;
         if (!assigned)
@@ -341,7 +341,7 @@ void KeysPage::refresh()
 
     bool unassigned = false;
     for (int i = 0; i < 0x25; i++)
-        if (g_game_keys.entry[i][0] == -1) unassigned = true;
+        if (g_key_table.entry[i][0] == -1) unassigned = true;
     if (unassigned) p->w30->enable();
     else            p->w30->disable();
     if (p->modified) p->w34->disable();

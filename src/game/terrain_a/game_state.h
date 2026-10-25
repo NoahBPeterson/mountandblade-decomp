@@ -27,8 +27,8 @@ struct Block16 {                                // 16-byte default block (0, 0.5
 // ---- game state (global object 0x5e2930 = GameData, src/include/game_data.h: its path helpers agent_low 0x4638f0, scene_path 0x463950,
 // module_path 0x4639d0 are defined in game_state.cpp) ----
 #include "../../include/game_data.h"
-extern float g_player_wounded_treshold;                        // 0xa1813c (0x4638f0)
-extern float g_hero_wounded_treshold;                       // 0xa18138 (0x4638f0)
+extern float g_thr_self;                        // 0xa1813c (0x4638f0)
+extern float g_thr_other;                       // 0xa18138 (0x4638f0)
 extern char g_path_buf[];                       // 0x5e2480 (0x4639d0)
 
 
@@ -73,9 +73,8 @@ extern int g_shadow_quality;                    // 0x5aa000 (0x463bc0)
 extern int g_max_tex_w;                         // 0xa17f84 (0x463bc0)
 extern int g_max_tex_h;                         // 0xa17f88 (0x463bc0)
 extern char g_use_hw_shadow;                    // 0xa17f24 (0x463e10, 0x464070, 0x4640d0)
-#include "../../include/renderer.h"   // canonical: g_render.dev (0xa17f28)
-#include "../../rgl/resource_manager.h"   // canonical: g_options.i7c (0x5aa084), g_resmgr (0x5d6fa0)
-#define g_resmgr_sh (*(ShResMgr*)&g_resmgr)       // ShResMgr: the calls game_state.cpp makes on the resource manager (a view of resource.h's g_resmgr)
+extern IDirect3DDevice9* g_device;              // 0xa17f28 (0x4640d0, 0x4641a0)
+extern int g_mesh_quality;                      // 0x5aa084 (cleared when the read-back texture cannot be created; 0x4640d0)
 
 #include "../shadow_map.h"                    // ShadowMap (shared with terrain_b)
 
