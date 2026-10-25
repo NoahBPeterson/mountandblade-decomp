@@ -5,6 +5,7 @@
 #ifndef GAME_MISSION_UI2_SLOT_API_H
 #define GAME_MISSION_UI2_SLOT_API_H
 #include "../tstring.h"
+#include "../../include/msg_log.h"     // MsgLog (push 0x4334b0)
 
 // A widget as the overlay animators see it: the animation slots of its vtable take (seconds, value).
 struct AnimVt {
@@ -35,10 +36,12 @@ struct NameTable {
 
 // The level (global 0xa732b4): the grid of collision cells (src/game/cell.h) at +0x28 and the point locator.
 struct cell;
+// The level is the engine's rgl::world (src/rgl/scene/world.h: rows at +0x28 is this cell table, to_cell 0x41ed00); that header's
+// own `cell` is another class than the game's cell.h, so only the one member this module calls is declared here.
+namespace rgl { struct world { void to_cell(const float* p, int* out); }; }     // 0x41ed00 (grid cell of a point)
 struct LevelGrid {
     char pad0[0x28];
     cell** cells;                           // +0x28 (0x48ea80: cells[row] + col * 0x34)
-    void to_cell(const float* p, int* out);  // 0x41ed00 (grid cell of a point)
 };
 
 // A table of pages of 0x98-byte records: pages at +0x18 (16 records per page).
@@ -49,10 +52,7 @@ struct PageTable98 {
 };
 
 // The message log (global 0x5d7080, the same object as the UI sound host g_ui_sound in ui_widgets.h) and the error reporter.
-struct MsgLogV {
-    void push(const tstring& s, int colour);    // 0x4334b0
-};
-extern MsgLogV g_gui;                    // 0x5d7080
+extern MsgLog g_gui;                     // 0x5d7080
 void mb_error(const char* fmt, ...);        // 0x42cc80 (cdecl)
 
 #endif // GAME_MISSION_UI2_SLOT_API_H

@@ -16,6 +16,7 @@
 #include <math.h>
 #include <io.h>
 #include <new>
+#include "../../rgl/rgl_string.h"      // rgl::string::read_from (0x4151e0)
 #include "./trigger_vec.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
@@ -28,8 +29,6 @@
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../menu_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-void __fastcall tstring_ctor(tstring* p);                   // 0x42bbd0 (tstring::tstring, called on raw slots)
-void __fastcall tstring_dtor(tstring* p);                   // 0x42bc40
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
 
 // @ 0x4be742
@@ -544,7 +543,7 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
         } else {
             int n = (int)file_length(f);
             tstring text;
-            text.read_from(f, n);
+            ((rgl::string*)&text)->read_from(f, n);       // rgl::string is tstring (same 16 bytes): rgl_string.h read_from 0x4151e0
             fclose(f);
             HWND combo = GetDlgItem(h, 0x4bb);
             SendMessageA(combo, CB_RESETCONTENT, 0, 0);
@@ -617,7 +616,7 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
                     }
                     int n = (int)file_length(f);
                     tstring text;
-                    text.read_from(f, n);
+                    ((rgl::string*)&text)->read_from(f, n);       // rgl::string is tstring (same 16 bytes): rgl_string.h read_from 0x4151e0
                     fclose(f);
                     // strip the comment lines ("#" up to the next line feed), last to first
                     int end = n - 1;
@@ -805,11 +804,11 @@ void parse_module_info()
         }
         if (msg.equals("load_resource")) {
             ((stream_base&)g_log).w_cstr("Loading Resource ").w_tstr((rgl::string*)&val).w_cstr("\n");
-            g_resmgr_x.load_pack(val, 0);
+            g_resmgr_full.load_pack((const rgl::string&)val, 0);
         }
         else if (msg.equals("load_mod_resource") || msg.equals("load_module_resource")) {
             ((stream_base&)g_log).w_cstr("Loading Module Resource ").w_tstr((rgl::string*)&val).w_cstr("\n");
-            g_resmgr_x.load_pack(val, 1);
+            g_resmgr_full.load_pack((const rgl::string&)val, 1);
         }
         else if (msg.equals("time_multiplier")) {
             g_time_multiplier = (float)atof(val.c_str());
@@ -843,14 +842,14 @@ void parse_module_info()
             float x = (float)atof(val.c_str());
             float lo = 2.0f;
             float hi = 1.0f;
-            g_missile_damage_speed_power = clamp(x, hi, lo);
+            g_missile_damage_speed_power = clamp(&x, &hi, &lo);
             ((stream_base&)g_log).w_cstr("Setting missile_damage_speed_power = ").w_float(&g_missile_damage_speed_power).w_cstr("\n");
         }
         else if (msg.equals("melee_damage_speed_power")) {
             float x = (float)atof(val.c_str());
             float lo = 2.0f;
             float hi = 1.0f;
-            g_melee_damage_speed_power = clamp(x, hi, lo);
+            g_melee_damage_speed_power = clamp(&x, &hi, &lo);
             ((stream_base&)g_log).w_cstr("Setting melee_damage_speed_power = ").w_float(&g_melee_damage_speed_power).w_cstr("\n");
         }
         else if (msg.equals("damage_interrupt_attack_treshold") || msg.equals("damage_interrupt_attack_threshold")) {
@@ -893,7 +892,7 @@ void parse_module_info()
             float x = (float)atof(val.c_str());
             float lo = 10.0f;
             float hi = 1.0f;
-            g_player_xp_multiplier = clamp(x, hi, lo);
+            g_player_xp_multiplier = clamp(&x, &hi, &lo);
             ((stream_base&)g_log).w_cstr("Setting player_xp_multiplier = ").w_float(&g_player_xp_multiplier).w_cstr("\n");
         }
         else if (msg.equals("hero_xp_multiplier")) {
@@ -1046,7 +1045,7 @@ void parse_module_info()
         else if (n > 1)
             ((stream_base&)g_log).w_cstr("Unrecognized Module_info directive = ").w_tstr((rgl::string*)&msg).w_cstr(". Skipping.\n");
     }
-    g_resmgr_x.linearise_meshes();
+    g_resmgr_full.linearise_meshes();
 }
 
 // ---- shader and device-object handlers (virtual overrides of the application object, vtable 0x5948e0) ------------------
@@ -1070,7 +1069,7 @@ HRESULT build_shader()
         path.assign("mb.fxo");
     HRESULT hr = D3DXCreateEffectFromFileA(g_render.dev, path.c_str(), 0, 0, 0x800, 0, &g_effect, 0);
     if (hr >= 0) {
-        g_resmgr_x.reset_effect_sets();
+        g_resmgr.reset_effect_sets();
         g_shadow_map.pick_size();
         g_effect->SetFloat("fShadowMapNextPixel", 1.0f / (float)g_shadow_map.w);
         g_effect->SetFloat("fShadowMapSize", (float)g_shadow_map.w);
@@ -1125,7 +1124,7 @@ HRESULT Core::InvalidateDeviceObjects()
         g_effect->Release();
         g_effect = 0;
     }
-    g_resmgr_x.reload_textures();
+    g_resmgr.reload_textures();
     if (g_shadow_map.surf != 0) {
         g_shadow_map.surf->Release();
         g_shadow_map.surf = 0;
@@ -1140,7 +1139,7 @@ HRESULT Core::InvalidateDeviceObjects()
 HRESULT Core::DeleteDeviceObjects()
 {
     font->DeleteDeviceObjects();
-    g_resmgr_x.invalidate();
+    g_resmgr_full.invalidate();
     g_batch.release_decls();
     return 0;
 }
@@ -1343,8 +1342,8 @@ void TriggerEntryVec::dtor()
     for (int i = n - 1; i >= 0; i--) {
         e--;
         delete[] e->s.ptr;
-        tstring_dtor(&e->s.name);
-        tstring_dtor(&e->name);
+        e->s.name.~tstring();
+        e->name.~tstring();
     }
     delete[] base;
 }
@@ -1355,7 +1354,7 @@ int __cdecl entry_vec_resize(stream_base* sp, TriggerEntryVec* self)
     stream_base& s = *sp;
     TriggerEntryVec* t = self;
     if (t->data != 0)
-        ((RecHVdel*)t->data)->vdel(3);
+        delete[] t->data;                  // RecH's vector deleting destructor 0x4315d0 (??_ERecH, rgl/xmlcfg/records.cpp: the same delete[])
     s.r_int(&t->count);
     int n = t->count;
     int* blk = (int*)operator new[](n * sizeof(RecH) + 4);
@@ -1364,8 +1363,8 @@ int __cdecl entry_vec_resize(stream_base* sp, TriggerEntryVec* self)
         p = (RecH*)(blk + 1);
         blk[0] = n;
         for (int i = 0; i < n; i++) {
-            tstring_ctor(&p[i].name);
-            tstring_ctor(&p[i].s.name);
+            new (&p[i].name) tstring();
+            new (&p[i].s.name) tstring();
             p[i].s.ptr = 0;
         }
     } else {
@@ -1459,14 +1458,14 @@ extern "C" short __stdcall FSOUND_Stream_Close(void* stream);
 music_player::music_player()
 {
     for (int i = 0; i < 0x100; i++)
-        tstring_ctor((tstring*)((char*)this + 0x18 + i * 0x20));
+        ((tstring*)((char*)this + 0x18 + i * 0x20))->tstring::tstring();
     TimedVal* t = (TimedVal*)&w[4];                 // +0x2418 / +0x2420
     t->id = 0; t->t = g_ticks[0];
     t = (TimedVal*)&w[18];                          // +0x2450 / +0x2458
     t->id = 0; t->t = g_ticks[0];
     t = (TimedVal*)&w[22];                          // +0x2460 / +0x2468
     t->id = 0; t->t = g_ticks[0];
-    tstring_ctor((tstring*)((char*)this + 0x247c));
+    ((tstring*)((char*)this + 0x247c))->tstring::tstring();
     ((int*)this)[1] = 0;
     w[8] = 0;  w[0] = 0;  w[12] = -1;  w[2] = 0;  w[10] = -1;  w[14] = 1000;  w[26] = 0;
     w[9] = 0;  w[1] = 0;  w[13] = -1;  w[3] = 0;  w[11] = -1;  w[15] = 1000;  w[27] = 0;

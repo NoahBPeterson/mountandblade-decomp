@@ -44,7 +44,7 @@ void Game_s25160::handle_event(int code)
                 * (*pa - *(float*)(o + 0x17c))
                 + (float)*(int*)0x5d8790 / *pa * *(float*)(o + 0x17c)
                   * *(float*)0x590d7c;
-        set_value(v);
+        ((UiD*)o)->set_value(v);   // 0x48baa0: UiD::set_value, this = the object o (ecx is still o at the call)
         ((VObj_s25160*)o)->v18(0x10000);
     }
 
@@ -557,7 +557,7 @@ void Screen_s261e0::tick(float dt)
         g_game_s261e0->f1a090 = 1;
         *(int*)((char*)g_game_s261e0 + 0x1a20c) = 0;
         g_game_s261e0->f1a1b4 = -1;
-        ((VectorInt_s261e0*)((char*)g_game_s261e0 + 0x1a1b8))->resize(0, 0);
+        ((std::vector<int>*)((char*)g_game_s261e0 + 0x1a1b8))->resize(0, 0);
         *(int*)((char*)g_game_s261e0 + 0x1a1cc) = 0;
         init_order_markers();
     }
@@ -756,7 +756,7 @@ void Screen_s261e0::tick(float dt)
             int pair[2];
             pair[0] = *(int*)((char*)g_mission_s261e0->f668c + off + 0x18c);
             pair[1] = *(int*)((char*)g_mission_s261e0->f668c + off + 0x1a0);
-            if (order_agent(g_mission_s261e0->local_id, pair)) {
+            if (((Mission_s2b5c0*)g_mission_s261e0)->order_agent(g_mission_s261e0->local_id, (ItemRef_s2b5c0*)pair)) {   // 0x52b5c0 is the thiscall member; this = the mission
                 g_mission_s261e0->release_item(f2cc);
                 update_equipment();
             }
@@ -788,7 +788,7 @@ void Screen_s261e0::tick(float dt)
     }
 
     if ((*(int*)((char*)&g_cfg + 0x18)) && ((int*)((char*)&g_keyboard + 0xc))[56] && ((int*)((char*)&g_keyboard + 0xc))[38] == 0 && ((int*)((char*)&g_keyboard + 0x40c))[38] != 0)
-        light_entities((char*)g_mission_s261e0 + 0x6340, g_mission_s261e0->f633c);
+        ((TerrainX*)g_mission_s261e0)->light_entities((rgl::mesh**)((char*)g_mission_s261e0 + 0x6340), g_mission_s261e0->f633c);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
 
     if (f2d8 == 0) {
         b6 = false;
@@ -1041,7 +1041,7 @@ void GameData_s27c90::save_scene(int idx)
     tstring path = scene_path(idx);
     bin_writer_i w;
     const char* p = module_path(path.c_str());
-    w.name.assign(p);
+    ((tstring*)&w.name)->assign(p);
     w.is_open = 0;
     w.fp = fopen(p, "wb");
     if (w.fp) {
@@ -1098,7 +1098,7 @@ void SceneObj_s27c90::save(stream_base* s)
     s->w_int(&f18c);
     int tmp;
     s->w_int(&tmp);
-    w_matrix(s, &mat[0]);
+    w_matrix(*s, (rgl::matrix*)&mat[0]);
     s->w_tstr((const rgl::string*)&name);
     s->w_int(&f1a0);
     s->w_int(&f1a4);
@@ -1261,9 +1261,9 @@ int Mission_s27c90::release_item(int idx)
     if (*(void**)(p + 0x1b4)) {
         (*(ResourceOwner_s27c90**)(p + 0x1b4))->release();
         int id = *(int*)((char*)*(void**)(item_array + off + 0x1b4) + 8);
-        int r = ((MissionHdr_s27c90*)this)->world->remove_entity(id);
+        ((MissionHdr_s27c90*)this)->world->remove_entity(id);
         *(void**)(item_array + off + 0x1b4) = 0;
-        return r;
+        return (int)p;   // rgl::world::remove_entity is void; see mission_5.nonmatching.txt (0x528410): the original leaves item_array+off in EAX
     }
     return (int)p;
 }
@@ -1812,7 +1812,7 @@ void Mission_s29840::fn_529d00(Agent_s29840* a)
     if (a->f1bc >= 0) {
         int slot = a->f1c0;
         if (slot >= 0) {
-            Party_s29840* p = party_mgr_s29840()->get(a->f1bc);
+            Party_s29840* p = (Party_s29840*)((Scene*)party_mgr_s29840())->get(a->f1bc);
             int* v = (int*)p->stacks + slot * 8 + 4;
             (*v)++;
         }
@@ -1827,17 +1827,17 @@ void Mission_s29840::fn_529d80()
     Scene_s29840* sc = (Scene_s29840*)(*(char**)((char*)g_game_s29840 + 0x13a50) + f5df4 * 0x494);
     for (unsigned i = 0; i < records.size(); i++) {
         Rec1c8_s29840* r = &records[i];
-        if (r->f10 == 0 && r->f14 >= 0) {
-            r->f18c = sc->recs[r->f14].f18c;
-            r->name = sc->recs[r->f14].name;
+        if (r->m10 == 0 && r->m14 >= 0) {
+            r->id = sc->recs[r->m14].id;
+            r->name = sc->recs[r->m14].name;
         }
     }
     sc->recs.resize(0);
     for (unsigned i = 0; i < records.size(); i++) {
         Rec1c8_s29840* r = &records[i];
-        if (r->f10 == 0) {
+        if (r->m10 == 0) {
             sc->recs.push_back(*r);
-            r->f14 = (int)sc->recs.size() - 1;
+            r->m14 = (int)sc->recs.size() - 1;
         }
     }
 }
@@ -1887,7 +1887,7 @@ void Screen_s29ec0::f_529ec0()
     capsule_s29ec0 cap(1e-4f, &back, &front);
     matrix ident;
     identity_pos(&ident);
-    cap.transform(&ident);
+    cap.transform((const ::pos*)&ident);
 
     shape_base_s29ec0* found[0x2000];
     int count = 0;
@@ -1897,8 +1897,8 @@ void Screen_s29ec0::f_529ec0()
         shape_base_s29ec0* s = found[i];
         if (s->shape_type() != 2)
             continue;
-        contact_s29ec0 c;
-        if (!shape_contact_count(s, &cap, 1, &c))
+        contact c;
+        if (!shape_contact_count((shape_base*)s, &cap, 1, &c))
             continue;
         vector4 hit = c.point;
         vector4 d = hit - back;
@@ -1924,8 +1924,8 @@ void Screen_s29ec0::f_529ec0()
         SceneEntity_s29ec0* e = (SceneEntity_s29ec0*)found[i];
         if (!e->shape)
             continue;
-        contact_s29ec0 c;
-        if (!shape_contact_count(e->shape, &cap, 1, &c))
+        contact c;
+        if (!shape_contact_count((shape_base*)e->shape, &cap, 1, &c))
             continue;
 
         vector4 d = c.point - back;
@@ -2215,9 +2215,9 @@ void Screen_s2ae70::init_order_markers()
         float scale = 100000.0f;
         f6738->set_scale(&scale);
 
-        f6730 = new rgl::mesh_s2ae70;
-        f6734 = new rgl::mesh_s2ae70;
-        f672c = new rgl::mesh_s2ae70;
+        f6730 = (rgl::mesh_s2ae70*)new rgl::mesh;
+        f6734 = (rgl::mesh_s2ae70*)new rgl::mesh;
+        f672c = (rgl::mesh_s2ae70*)new rgl::mesh;
 
         {
             tstring name("vertex_color_blend_mat");
@@ -2243,7 +2243,7 @@ void Screen_s2ae70::init_order_markers()
     if (f6740 == 0) {
         f6740 = world->create_entity(9);
 
-        f673c = new rgl::mesh_s2ae70;
+        f673c = (rgl::mesh_s2ae70*)new rgl::mesh;
         {
             tstring name("vertex_color_blend_mat");
             f673c->res = g_resmgr_s2ae70.get_material(&name);
@@ -2322,7 +2322,7 @@ void Screen_s2ae70::draw_order_menu()
 
     {
         tstring s("ui_order_group");
-        g_gui_s2ae70.draw_string(g_strtable_s2ae70.lookup(s), 0.035f, 0xfff0e0d0, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.035f, 0xfff0e0d0, 1);
     }
 
     unsigned base = (f29c == 1) ? 0xffffffff : 0xff50ff60;
@@ -2331,31 +2331,31 @@ void Screen_s2ae70::draw_order_menu()
     c = (f2a0 == 0) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_hold_position");
-        g_gui_s2ae70.draw_string(g_strtable_s2ae70.lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 1) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_follow");
-        g_gui_s2ae70.draw_string(g_strtable_s2ae70.lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 2) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_charge");
-        g_gui_s2ae70.draw_string(g_strtable_s2ae70.lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 3) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_mount");
-        g_gui_s2ae70.draw_string(g_strtable_s2ae70.lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 4) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_dismount");
-        g_gui_s2ae70.draw_string(g_strtable_s2ae70.lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
     }
 }
 
@@ -2482,7 +2482,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
     else if (k == 7)
         agent->f230 = chosen;
 
-    refresh_agent(agent);
+    ((Mission*)this)->refresh_agent((Agent*)agent);   // 0x4f7e00: Mission::refresh_agent(Agent*), this = the saved this
     agent->on_wield_reset();
     return true;
 }
@@ -2707,7 +2707,7 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
 
     capsule_s2b5c0 cap(0.0f, &near_pt, &far_pt);
     matrix m;
-    cap.transform(identity(&m));
+    cap.transform((const ::pos*)identity(&m));
 
     vector4 p;
     p.x = near_pt.x;
@@ -2723,7 +2723,7 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
 
     for (int i = 0; i < count; i++) {
         shape_base_s2b5c0* s = shapes[i];
-        if (s->shape_type() == 2 && shape_contact_count(s, &cap, 0, 0)) {
+        if (s->shape_type() == 2 && shape_contact_count((shape_base*)s, &cap, 0, 0)) {
             s->intersect(&p, &near_pt, &far_pt);
             float dx = p.x - near_pt.x;
             float dy = p.y - near_pt.y;
@@ -3038,7 +3038,7 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
             unsigned argb = 0xffffffff;
             if (E->v) argb = *(unsigned*)&E->v[ci];
             float col[4];
-            unpack_color(col, &argb);
+            new ((void*)col) rgl::vector4(rgl::unpack_color(&argb));   // constructed in place (hidden return pointer = col)
             float k = 1.0f - amount;
             float out[4];
             out[0] = col[0] * k + amount * *(float*)(g_game_c + 0x1a0f8);
@@ -3082,7 +3082,7 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
             unsigned argb = 0xffffffff;
             if (E->v) argb = *(unsigned*)&E->v[ci];
             float col[4];
-            unpack_color(col, &argb);
+            new ((void*)col) rgl::vector4(rgl::unpack_color(&argb));   // constructed in place (hidden return pointer = col)
             float k = 1.0f - amount;
             float out[4];
             out[0] = col[0] * k + amount;

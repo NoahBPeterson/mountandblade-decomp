@@ -12,14 +12,21 @@
 #include <math.h>
 #include <new>
 #include "../party/game.h"
+#include "../std_vec_out_of_line.h"           // std::vector<int>::_Insert_n (int_stdvec), resize
 #include "../../include/iface.h"        // IfaceB (the polymorphic base of the scene record)
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/mesh_x.h"            // mesh_x::compute_bounds (0x419300)
+#include "../../rgl/stream.h"            // text_stream::open_read_text (0x415d60)
+#include "../wind.h"                     // wind::init (0x461480)
 #include "../../rgl/scene/scene_entity.h"
 #include "../terrain_b/cell_grid.h"      // CellGrid (the level, 0xa732b4), NavData, Wind
 #include "../../rgl/scene/world.h"            // rgl::world
 
 void __cdecl mb_error(const char* fmt, ...);        // 0x42cc80
+
+// 0x415d60 is text_stream::open_read_text (rgl/stream.h); the readers here have the same file fields (fp +0x30, failed +0x34)
+#define OPEN_READ_TEXT(s, path) (((text_stream*)&(s))->open_read_text(path))
 
 #define RSTR(p) ((rgl::string*)(p))                 // the stream's string slot takes rgl::string* (same 16-byte tstring)
 
@@ -38,19 +45,30 @@ struct file_text_base : file_text_b {
 struct file_text : file_text_base {                 // vtable 0x54ac88: text reader
     __forceinline file_text() {}
     STREAM_SLOTS
-    bool open_read_text(const char* path);          // 0x415d60 (ret 4)
 };
 
 // ---- std::vector<tstring> internals (VC7.1, 0x10-byte element) ---------------------------------------------------
 #include "../../include/ptr_tag.h"             // ptr_tag: std::_Nonscalar_ptr_iterator_tag (empty, passed by value)
+// The out-of-line instances of std::vector<tstring> / std::vector<int> that other objects define (agent_combat.cpp 0x43e310 and 0x43e2a0,
+// gui_manager 0x42d360, mesh_obj.cpp 0x410610) are called through their std:: names: an explicit specialization declared without a
+// definition makes every use a call. The accessors below reach the protected members from the hand-written vector views.
+namespace std {
+template<> void vector<tstring, allocator<tstring> >::_Insert_n(vector<tstring, allocator<tstring> >::iterator, size_t, const tstring&);   // 0x43e310
+template<> void vector<tstring, allocator<tstring> >::_Destroy(tstring*, tstring*);                                                        // 0x42d360
+}
+void vec_xlen();                                    // 0x43e2a0 (agent_combat.cpp: std::vector<tstring>::_Xlen)
+struct allocstr { void construct(tstring* p, const tstring& v); };          // 0x436c90 (agent_stats.h's allocator view; uninit_fill_n_str takes it)
+struct alloc_tstring { void construct(tstring* p, const tstring& v); };     // 0x436c90 (agent/agent.h; the definition's name)
+struct tstring_stdvec : std::vector<tstring> {
+    __forceinline void destroy_range(tstring* f, tstring* l) { _Destroy(f, l); }
+    __forceinline void insert_n(tstring* p, size_t n, const tstring& v) { _Insert_n(iterator(p), n, v); }
+};
 struct tstring_alloc {
     int pad;                                        // +0 allocator subobject
-    void destroy(tstring* f, tstring* l);           // 0x42d360
-    void construct(tstring* p, const tstring& v);   // 0x436c90
 };
-void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, tstring_alloc& al, ptr_tag tag);   // 0x438f00
+void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, allocstr& al, ptr_tag tag);   // 0x438f00 (agent_stats.cpp)
 tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_alloc& al, ptr_tag tag);       // 0x524cd0
-void __stdcall vector_constructor_iterator(void* dst, unsigned size, unsigned count, void* ctorfn);                       // 0x401800
+void __stdcall vector_constructor_iterator(void* dst, unsigned size, int count, void (__fastcall *ctorfn)(void*));        // 0x401800
 
 struct tstring_vec : tstring_alloc {
     tstring* first;                                 // +4
@@ -60,25 +78,25 @@ struct tstring_vec : tstring_alloc {
     unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
     unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
     tstring* last_pos() const { return last; }
-    void _Xlen() const;                                         // 0x43e2a0
-    void _Insert_n(tstring* pos, unsigned n, const tstring& v);  // 0x43e310
     void reserve(unsigned n);                                   // 0x524bc0
     void push_back(const tstring& v)
     {
         if (size() < capacity()) {
             ptr_tag t;
             tstring* p = last;
-            uninit_fill_n_str(p, 1, v, *this, t);
+            uninit_fill_n_str(p, 1, v, *(allocstr*)this, t);
             last = p + 1;
         } else {
             tstring* pos = last_pos();
-            _Insert_n(pos, 1, v);
+            ((tstring_stdvec*)this)->insert_n(pos, 1, v);
         }
     }
 };
 
 // ---- the data tables and their globals ---------------------------------------------------------------------------
-struct NameMgr { tstring* find(tstring* key); };    // 0x4c6010
+struct LangTables { tstring* find(const tstring* key); };    // 0x4c6010 (rgl/mesh2/mesh2_common.h; the string table g_strtable 0x5e2a18)
+struct GameData { const char* module_path(const char* sub); void init_event(struct E92* r); };   // 0x4639d0, 0x4b36a0 (include/game_data.h: Game is the game-data object)
+#define MODULE_PATH(sub) (((GameData*)this)->module_path(sub))
 extern int g_level_lo[];                            // 0x5937c8
 extern int g_level_hi[];                            // 0x5937cc
 extern float g_troop_rand_scale;                    // 0x54a6bc
@@ -215,7 +233,9 @@ struct Rec64 {                                                  // 0x64
 };
 #include "../terrain_b/scene_file.h"       // SceneFile (the 0x494-byte scene record; shared with terrain_b/mission.cpp)
 // the temporary collection SceneRec::read fills through the embedded stream (0x524f00)
-struct Local {
+struct growable_array { growable_array(); };                  // 0x4d1360 (options_panel/module_load.h: the same 0x94-byte object; only its constructor is called here)
+struct Local : growable_array {
+    __forceinline Local() {}
     char pad0[0x1c];
     V0* v0_first; V0* v0_last;                                  // +0x1c / +0x20
     char pad1[8];
@@ -226,7 +246,6 @@ struct Local {
     unsigned size0() const { return v0_first == 0 ? 0 : (unsigned)(v0_last - v0_first); }
     unsigned size1() const { return v1_first == 0 ? 0 : (unsigned)(v1_last - v1_first); }
     unsigned size2() const { return v2_first == 0 ? 0 : (unsigned)(v2_last - v2_first); }
-    Local();                                                    // 0x4d1360
     ~Local();                                                   // 0x4cb780
     void read(stream_base& s);                                  // 0x524f00
 };
@@ -235,11 +254,10 @@ struct Local {
 #include "../emitter_rec.h"
 extern int g_emitter_count;                         // 0xa75eb4
 
-struct SkeletonList {                               // skeleton-body table at 0xa180e8
-    void load(tstring* path);                // 0x50fc60 (ret 4)
-    void fix_skeletons();                                     // 0x4cd850
-};
-extern SkeletonList g_skeletons;                    // 0xa180e8
+struct SkeletonBody { void load(const tstring& path); };           // 0x50fc60 (inventory_panel/skeleton_load.cpp; ret 4)
+struct RegSkeleton;
+void __fastcall fix_skeletons(std::vector<RegSkeleton>* list);       // 0x4cd850 (rgl/mesh2/mesh_2.cpp)
+extern char g_skeletons[];                          // 0xa180e8 skeleton-body table
 
 // trigger vectors at Game +0x139e8 / +0x139f4 (game.h: TriggerTag / SimpleTag, whose padding these resize)
 #include "../trigger_vecs.h"           // TriggerVec / GameVec
@@ -296,13 +314,12 @@ struct GameMapView {
     Wind*  wind;                     // +0x139dc (the fog / sun object; +0x44 = its direction)
     char   pad139e0[0x1a2a8 - 0x139e0];
     rgl::entity* compass;            // +0x1a2a8
-    rgl::vector4* sun_color(rgl::vector4* out);           // 0x5176e0
-    rgl::vector4* fog_color(rgl::vector4* out);           // 0x517820
-    void add_order_arrow(int id);                           // 0x49bea0
-    void spawn_battle_icon(int id);                                 // 0x49bbb0
-    void emit_event(int a, int b, int c);                     // 0x435790
-    void init_event(void* p);                            // 0x4b36a0
 };
+struct GameG { rgl::vector4* sun_color(rgl::vector4* out); rgl::vector4* fog_color(rgl::vector4* out); };   // 0x5176e0, 0x517820 (inventory_panel/game_tick.h: the game object)
+namespace c49bea0 { struct MissionAgents { void add_order_arrow(int id, int mode); }; }     // 0x49bea0 (party2/camera.cpp; the original passes only the id)
+namespace c49b630 { struct Mission { void spawn_battle_icon(unsigned id); }; }              // 0x49bbb0 (party2/camera.cpp)
+struct SoundCtl { char emit_event(int id, int a, int b); };                               // 0x435790 (agent/agent.h)
+struct E92;
 extern char g_map_pages[];           // 0xa73094 page grid of the map (cell = 0x20 bytes per column, 4 per row)
 extern int  g_page_cols;             // 0xa73294
 extern int  g_page_rows;             // 0xa73298
@@ -320,32 +337,10 @@ extern RawVec g_mat_vec[4];          // 0xa732c0 / 0xa732d0 / 0xa732e0 / 0xa732f
 #define g_map_river_direction_i (*(int*)&g_map_river_direction)
 extern unsigned __int64 g_bit[]; // 0x5a8e68
 extern int    g_use_shaders;                // 0x5e28fc
-float    normalize(rgl::vector4* self);                                   // 0x407d60
-void     scan_arrays(void* a, void* b, void* c);                                    // 0x523630
 void __stdcall scan_arrays(void* p, int unused); // 0x523630
-void*    m5_tstring_ctor0(void* self);                                               // 0x42bbd0
-void*    m5_tstring_ctor1(void* self, const char* s);                                // 0x42bbe0
-void     assign(void* self, const char* s);                               // 0x42bcb0
-void     push_back(void* self, char c);                                   // 0x42be70
-void     m5_tstring_dtor(void* self);                                                // 0x42bc40
-void*    get_object(void* resmgr, void* name);                             // 0x419540
-void*    get_material(void* resmgr, void* name);                           // 0x418a70
-void*    create_entity(int type);                                                 // 0x428440
-void*    m5_mesh_ctor(void* p);                                                      // 0x412a90
-int      add_point(void* self, void* p);                                          // 0x412f50
-int      add_vertex(void* self, int idx, void* uv, void* color, void* pos, void* f5c); // 0x413c50
-int      add_face(void* self, int a, int b, int c);                               // 0x411920
-void     append_skinned(void* self, void* other, const void* m, int bone, unsigned color, char flag); // 0x44eb00
 void     noise_fractal(float a, float b, int c, int d, const float* in, float* out); // 0x414fc0
-unsigned pack_color(const float* rgba);                                           // 0x40e440
-void*    identity3();                                                             // 0x40cd60
-void     rotate_about_u(void* m, float* ang);                                   // 0x40e770
 int      rand();                                                               // 0x536a9f
-void     compute_bounds(void* obj);                                             // 0x419300
-void     set_nibble(void* mesh, int type);                                      // 0x523360
 skin* __stdcall terrain_material(int type); // 0x523390
-void     build_chain(void* mgr, int idx, int* out, int* count);                  // 0x5234e0
-void     _Insert_n(RawVec* v, void** pos, unsigned n, void** val);             // 0x410610
 
 // ---- 0x523360..0x523630: the nibble setter, the terrain material table, the chain builder, the array scan ---------------
 struct FlagNode { char pad[0x1c]; unsigned f1c; };              // +0x1c: bits 24..27 are a 4-bit colour / alpha nibble
@@ -375,14 +370,20 @@ struct SceneArrays {
 };
 
 // ---- thin views for build_scene (0x520d60) -------------------------------------------------------------------------
-struct WorldX : rgl::world { void destroy_obj(void* o); };          // 0x41f450 (ret 4)
-struct EntityX : rgl::entity { void add_mesh(rgl::mesh* m); };      // 0x442110 (ret 4)
-struct PartyMgrView {                                               // Game +0xf8 (game.h Scene)
-    int first_party_id();                                           // 0x460d20
-    void next_party_id(int* id);                                    // 0x460ca0 (ret 4)
-};
-struct SpriteNext { void next(int* idx); };                         // 0x517960 (ret 4: SpriteTable at Game +0xcc)
+struct world { void erase_entity(rgl::entity* e); };                // 0x41f450 (rgl/dynamic/entity.cpp's global `world`; ret 4)
+struct Poser { void add_extra(int x); };                            // 0x442110 (agent3/agent_fx_sound.cpp; ret 4: the mesh pointer is its argument)
+#include "../../include/party.h"                                    // PartyMgr (Game +0xf8, game.h's Scene): first_party_id 0x460d20, next_party_id 0x460ca0
+struct GamePool { void next(int* idx); };                           // 0x517960 (inventory_panel/game_tick.h; ret 4: SpriteTable at Game +0xcc)
 extern CellGrid* g_level;                                           // 0xa732b4 (terrain_b.h declares it too; that header cannot be included next to game.h)
+// the resource manager (object 0x5d6fa0) as rgl/core/resmgr.h's `resmgr` defines get_object (that header cannot be included here)
+struct resmgr { rgl::mesh* get_object(const rgl::string* name); };       // 0x419540
+#include "../../rgl/scene/scene_math.h"   // rgl::identity3 (0x40cd60)
+// a tstring temporary handed to the resource manager as the rgl::string it is (rgl_string.h declares the same 16 bytes; its own constructor and
+// destructor are not defined anywhere: tstring's, 0x42bbe0 / 0x42bc40, are)
+struct RStr : tstring {
+    RStr(const char* s) : tstring(s) {}
+    operator const rgl::string&() const { return *(const rgl::string*)this; }
+};
 extern rgl::string* g_env_rows;                                 // 0x5e28f4
 
 #endif // MISSION5_GAME_2_H

@@ -27,6 +27,7 @@ struct mstr {
 };
 
 vector4* unpack_color(vector4* out, const unsigned* argb);   // 0x40e4e0 (cdecl; returns out)
+vector4 unpack_color(const unsigned* argb);                  // 0x40e4e0 (cdecl, hidden return pointer: the definition's signature)
 unsigned pack_color(const vector4* c);                       // 0x40e440 (cdecl)
 
 // std::vector helpers: the original inlines push_back's fast path and indexes through &*begin()

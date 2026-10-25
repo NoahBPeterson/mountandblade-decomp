@@ -1108,7 +1108,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
 
     if (kind == 2) {
         int idx = find_item(&o->name);
-        name = g_items_s2fe40[idx].mesh_name_for(0);
+        name = ((ItemKind*)&g_items_s2fe40[idx])->mesh_name_for(0);
     } else if (kind == 6) {
         int idx = find_item(&o->name);
         int var = o->f1a0;
@@ -1129,7 +1129,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
             }
         }
         {
-            name = ref.mesh_name();
+            name = ((ItemRef*)&ref)->mesh_name();
         }
     } else if (kind == 4) {
         int i;
@@ -1142,7 +1142,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
         o->f1a0 = o->f1a0 % g_map_pts_s2fe40[i].count;
         name = *(tstring*)((char*)g_map_pts_s2fe40[i].names + o->f1a0 * 0x48);
     } else if (kind == 7) {
-        name = g_items_s2fe40[o->f18c].mesh_name_for(o->f1a0);
+        name = ((ItemKind*)&g_items_s2fe40[o->f18c])->mesh_name_for(o->f1a0);
     } else if (kind == 0) {
         int pi = find_in_table78(&o->name);
         if (pi < 0)
@@ -1166,7 +1166,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
 
 done:
     if (name.len > 0) {
-        std::vector<rgl::mesh*> tmp = g_resmgr_s2fe40.find_meshes(&name);
+        std::vector<rgl::mesh*> tmp = ((resmgr*)&g_resmgr_s2fe40)->find_meshes((const rgl::string*)&name);
         *out = tmp;
     }
 }

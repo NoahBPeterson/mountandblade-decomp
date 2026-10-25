@@ -33,7 +33,8 @@ __declspec(dllimport) void __cdecl NewtonBodySetMatrix(const NewtonBody* b, cons
 __declspec(dllimport) int __cdecl NewtonBodyGetSleepingState(const NewtonBody* b);                                    // 0x549290
 __declspec(dllimport) NewtonBody* __cdecl NewtonRagDollBoneGetBody(const NewtonRagDollBone* b);                       // 0x549294
 }
-matrix* __cdecl identity_pos(matrix* out);              // 0x40cd00 (cdecl; writes the identity frame to *out and returns it)
+struct pos;                                             // rgl shapes.h: the identity frame record
+pos* __cdecl identity_pos(pos* out);                    // 0x40cd00 (cdecl; writes the identity frame to *out and returns it)
 #include "../../include/phys_set.h"      // PhysRec, PhysSet (none_sleeping 0x43a8a0, rebuild_static_body 0x43a900)
 
 int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);  // 0x43a720

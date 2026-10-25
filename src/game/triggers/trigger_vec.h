@@ -23,8 +23,18 @@
 #include "../../rgl/xmlcfg/records.h"
 #define REC_TABLES_NO_GAME_VARS   // g_game_vars is declared below with the ini_file view
 #include "../../rgl/mesh2/rec_tables.h"       // Alloc2c / Alloc204 (0x4c1b20 / 0x4c1b40), sound_engine
+float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0 (the definition's signature, rgl/shapes/shapes.h; rec_tables.h declares it by reference)
 #include "../../rgl/resource.h"             // texture
 #include "../shadow_map.h"
+// The resource manager (object 0x5d6fa0) as rgl/core/resmgr.h's `resmgr` defines it; that header cannot be included next to
+// rec_tables.h (g_log), so this is its declaration of the three members the module loader calls (resmgr.cpp 0x4195e0 / 0x419640 / 0x41e150).
+// g_resmgr_full of resmgr.h is the same object as resource.h's g_resmgr.
+struct resmgr {
+    int invalidate();                                               // 0x4195e0 (device lost)
+    void linearise_meshes();                                        // 0x419640
+    void load_pack(const rgl::string& name, int user);              // 0x41e150
+};
+#define g_resmgr_full (*(resmgr*)&g_resmgr)
 #include "../render_batch.h"
 
 // ---- the options dialog's persistent values (0x4bf170 reads them, 0x4bee10 writes them back) -------------------------
@@ -172,8 +182,6 @@ extern int g_missile_damage_speed_power_int; // 0x5e29c8 (provisional)
 HRESULT build_shader();                                                     // 0x4c17c0
 HRESULT gfx_restore();                                                      // 0x4c1b00
 char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a); // 0x4c1b60 (catch funclet 0x4c1bcc)
-void __fastcall tstring_ctor(tstring* p);                                   // 0x42bbd0
-void __fastcall tstring_dtor(tstring* p);                                   // 0x42bc40
 void* __fastcall dialog_mgr_ctor(void* self);                               // 0x4c2470 (DialogMgr::DialogMgr)
 void* __cdecl read_psys_rec(stream_base* s, char* o);                       // 0x4bdc00 (cdecl; config.h declares it as a member)
 
@@ -188,11 +196,7 @@ extern ScriptState g_script;                // 0xa70440 (dialog_manager.h clashe
 extern float g_music_volume_floor;      // 0x590cd0 (0.02f) volume below which the monitor idles
 // ---- record vectors (0x4c1c20..0x4c23f0) ------------------------------------------------------------------------------------
 #include "../../include/vec.h"   // V2: 8-byte vector with an empty user ctor: arrays of it go through the compiler's array-ctor helper
-struct mstr {               // tstring as a MouseRec member: the real ctor / dtor are the outlined 0x42bbd0 / 0x42bc40
-    int pos; char* buf; int cap; int len;
-    mstr() throw();
-    ~mstr() throw();
-};
+typedef tstring mstr;       // a tstring as a MouseRec member: its ctor / dtor are the outlined 0x42bbd0 / 0x42bc40
 // The 0xc0-byte particle-system record of config.h (psys_record) with the members its array constructor and destructor
 // touch (inlined into 0x4c1f70 / 0x4c1f20); the exact bytes need the outlined tstring ctor / dtor of `mstr`.
 struct MouseRec {
@@ -218,10 +222,6 @@ struct MapIcon {            // module-file map icon record (0x4c20c0): name, fla
     char    pad38[4];
     GameVec triggers;       // +0x3c
     void read(stream_base& s);                  // 0x4c20c0 (ret 4)
-};
-// the vector deleting destructor of RecH (??_ERecH, ret 4), emitted in rgl/xmlcfg/records.cpp
-struct RecHVdel {
-    void* vdel(unsigned flags);                 // 0x4315d0
 };
 struct TriggerEntryVec {
     RecH* data;             // +0 (RecH: ../../rgl/xmlcfg/records.h, name +0, SubB pair +0x10 = records / count / flags / name, tail +0x2c)

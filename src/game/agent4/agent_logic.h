@@ -10,14 +10,52 @@
 #include "../item_ref.h"
 #include "../../include/rgl_base.h"
 
+// ---- canonical declarations -----------------------------------------------------------------------------------------------
+// Members this module calls that other objects define, under the defining classes' names (the views below and the call sites in the .cpp
+// reach them through these; each cites the evidence that the object is that class: same layout / the shared out-of-line code).
+struct Poser;                                            // agent3/agent_fx_sound.h: scene entity and lod mesh share add_extra 0x442110 / add_to_list 0x441ff0
+struct Table1f8 { int get_f1f0(unsigned i); int get_f1f4(unsigned i); };   // 0x43b100, 0x43b130 (agent2/agent_ai.cpp)
+struct TimerList { void update(int id); };               // 0x48add0 (the sound-event list of PropKind / ItemKind is walked by it)
+struct FireRay;
+struct FireAgent { void ray(FireRay* r); };            // 0x46b410 (terrain_a/terrain_a.cpp: Missile::ray is the same code)
+struct Obj3 { void set_v184(const rgl::vector4* v); void reset_pending(int v); };   // 0x433740, 0x433810 (rgl/xmlcfg/game_util.cpp; Emit's code is the same function)
+struct gui_timer { void set_delay(float seconds); };     // 0x42cd20 (strat/gui_manager.cpp; Timer::set_delay)
+struct AnimRec { float phase(); };                       // 0x4231f0 (the animation channel's phase: Channel::phase)
+struct mnode { void calc_bounds(rgl::vector4* mn, rgl::vector4* mx); };   // 0x438d80 (agent2/agent_stats.cpp)
+namespace rgl {
+struct mesh_ext { void clear_geometry(); };              // 0x428e80 (rgl/scene/scene.h)
+struct entity;
+struct world { entity* create_entity(int type_id); };    // 0x428440 (rgl/scene/world.h; the game's `world` is the same object)
+struct aabb;
+struct box_ext { void extend_box(const aabb* other, const matrix* m); };   // 0x4201b0 (rgl/scene/entity_render.cpp)
+}
+struct shape_base;
+struct shape_resource { shape_base* clone_shape(); };    // 0x4285e0 (the body resource of a prop: res_shape.h's res_shape)
+struct body_res { shape_base* copy_shape(); };           // 0x439100 (agent2/agent_stats.cpp)
+struct grid_shape;
+struct world_grid { void reg_shape(grid_shape* s); };    // 0x424170 (rgl/dynamic/world_grid.cpp)
+struct level {                                           // agent2/agent_types.h: the scene as the agent code calls it
+    void floor_at(const float* p, float* out_z, struct face** out_face);   // 0x439be0
+    float floor_z(const float* p);                       // 0x439d40
+    void light_at(rgl::vector4 p, rgl::vector4 n, rgl::vector4* out_dir, rgl::vector4* out_col, unsigned flags, float scale);   // 0x43ac40
+};
+struct StratEnt;
+struct Ctx { StratEnt* find_entity(int id); };           // 0x42ba50 (strat/strat_entity.cpp)
+struct lod_group { char pad[0xe0]; lod_group(); };       // 0x41c2a0 (rgl/core/resmgr.cpp; the lod mesh of rgl_mesh.h is 0xe0 bytes)
+bool is_night();                                         // 0x435740 (agent/agent.cpp)
+struct PlacedObj;
+void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (agent/agent.cpp)
+#include "../std_vec_out_of_line.h"
+// 0x43e7b0: the out-of-line std::vector<int>::_Insert_n shared by the pointer vectors
+
 // 0x1f8-byte voice records (table object at 0x8ed4f60: records at +0x1c, count at +0x28; 0x4459c0 reads snd[kind] at +0x1cc)
 struct VoiceRec { char pad[0x1cc]; int snd[1]; char pad1d0[0x1f8 - 0x1d0]; };
 struct VoiceTable {
     char pad0[0x18];
     std::vector<VoiceRec> recs;                         // +0x18 (first at +0x1c); element size 0x1f8
     unsigned count;                                     // +0x28
-    int get_f1f0(unsigned i);                           // 0x43b100 (agent2/agent_ai.h)
-    int get_f1f4(unsigned i);                           // 0x43b130
+    __forceinline int get_f1f0(unsigned i) { return ((Table1f8*)this)->get_f1f0(i); }   // 0x43b100 (agent2/agent_ai.h)
+    __forceinline int get_f1f4(unsigned i) { return ((Table1f8*)this)->get_f1f4(i); }   // 0x43b130
     int sound(unsigned cls, int kind)
     {
         if (cls < count)
@@ -81,7 +119,7 @@ struct SceneEnt {
     rgl::vector4 v1ac;                                  // +0x1ac
     char pad1bc[0x1d4 - 0x1bc];
     char f1d4;                                          // +0x1d4 (0x44c210)
-    void add_extra(res_obj* m);                          // 0x442110
+    __forceinline void add_extra(res_obj* m);            // 0x442110 (Poser::add_extra; defined in the .cpp)
 };
 struct EntVec {                                         // std::vector<SceneEnt*> layout (VC7.1), freed by hand (0x448eb0); Mission +0x63c0 (0x44c210)
     int alloc_pad;
@@ -90,7 +128,8 @@ struct EntVec {                                         // std::vector<SceneEnt*
     SceneEnt** end;
     unsigned size() const { return first == 0 ? 0 : last - first; }
     unsigned capacity() const { return first == 0 ? 0 : end - first; }
-    void insert_n(SceneEnt** where, unsigned n, SceneEnt* const& v);       // 0x43e7b0 (ICF-folded with vector<int>::_Insert_n)
+    __forceinline void insert_n(SceneEnt** where, unsigned n, SceneEnt* const& v)       // 0x43e7b0 (ICF-folded with vector<int>::_Insert_n)
+    { ((int_stdvec*)this)->insert_n((int*)where, n, *(const int*)&v); }
     void push_back(SceneEnt* const& x)                  // VC7.1: inline fast path, out-of-line _Insert_n
     {
         if (size() < capacity()) {
@@ -104,8 +143,8 @@ struct EntVec {                                         // std::vector<SceneEnt*
 
 // std::vector<res_obj*> whose assignment and push_back stay out of line (pointer vectors fold with vector<int>) (0x44c210)
 struct MeshVec : std::vector<res_obj*> {
-    MeshVec& operator=(const std::vector<res_obj*>& o);     // 0x43f0a0
-    void push_back(res_obj* const& x);                      // 0x4119d0
+    __forceinline MeshVec& operator=(const std::vector<res_obj*>& o);     // 0x43f0a0 (std::vector<int>::operator=; defined in the .cpp)
+    __forceinline void push_back(res_obj* const& x);                      // 0x4119d0 (std::vector<rgl::scene*>::push_back; defined in the .cpp)
 };
 
 // the body resource of a prop (0x44c210): src/game/res_shape.h (shared with terrain_b)
@@ -114,7 +153,7 @@ struct MeshVec : std::vector<res_obj*> {
 // a list of sound events (count + array of 0x30-byte records): ItemKind +0x228, Rec78 +0x6c (0x44c210)
 struct SoundSet {
     int count; char* items;
-    void play(int id);                                  // 0x48add0
+    __forceinline void play(int id) { ((TimerList*)this)->update(id); }     // 0x48add0
 };
 
 // one 0x1dc-byte bone record of the animator (Skeleton::recs): the world frame at +0x84 (0x44e2b0)
@@ -123,7 +162,7 @@ struct BoneW {
     rgl::matrix world;                                  // +0x84 (origin at +0xb4)
     char pad_c4[0x1dc - 0xc4];
 };
-rgl::vector4* __cdecl rotate_scale_xy(rgl::vector4* out, const rgl::vector4* in, const float* angle, const rgl::vector4* scale);   // 0x436210
+void __cdecl rotate_scale_xy(rgl::vector4* out, const rgl::vector4* in, const float* angle, const rgl::vector4* scale);   // 0x436210 (the result is *out)
 void __cdecl rand_cone_dir(rgl::vector4* out, rgl::vector4 dir, float spread);   // 0x432c40
 
 extern __int64 g_a70448;                                // 0xa70448 (sound-event context)

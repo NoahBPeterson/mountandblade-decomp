@@ -78,14 +78,6 @@ static __forceinline float eval_curve(float t, const curve4& c)
     return (c.v1 - c.v0) * ((t - c.t0) / (c.t1 - c.t0)) + c.v0;
 }
 
-// the out-of-line chain accessors (0x40eba0, 0x40ebd0, 0x40ec30): emit tests the local flag itself and calls them on
-// the parent (mesh.h's inline get70() would expand one level more)
-struct mesh_acc : rgl::mesh {
-    std::vector<point20>& get70_();     // 0x40eba0
-    std::vector<vertex60>& get50_();    // 0x40ebd0
-    std::vector<face20>& get90_();      // 0x40ec30
-};
-
 // out-of-line std::vector<vertex60> append (push_back's slow path), called by the original
 struct vertex_vec : std::vector<vertex60> { void push_ext(const vertex60& v); };   // 0x411420
 
@@ -186,7 +178,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
         m->o = p->pos;
         int npoints = out->v70.size();
         int nverts = out->v50.size();
-        std::vector<point20>& pts = src->local_a1 ? src->v70 : ((mesh_acc*)src->parent)->get70_();
+        std::vector<point20>& pts = src->local_a1 ? src->v70 : (src->parent->*&mesh::get70)();
         for (unsigned i = 0; i < pts.size(); i++) {
             float k = size * p->scale;
             float x = k * pts[i].a.x;
@@ -197,7 +189,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             c.col[2] = (y * m->f.z + (z * m->u.z + x * m->s.z)) + m->o.z;
             out->add_point((const vector4*)c.col);
         }
-        std::vector<vertex60>& vts = src->local_a1 ? src->v50 : ((mesh_acc*)src->parent)->get50_();
+        std::vector<vertex60>& vts = src->local_a1 ? src->v50 : (src->parent->*&mesh::get50)();
         for (unsigned i = 0; i < vts.size(); i++) {
             vertex60 vx = vts[i];
             float dx = m->s.x * vts[i].pos.x + (m->f.x * vts[i].pos.y + m->u.x * vts[i].pos.z);
@@ -211,7 +203,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             vx.color = color;
             ((vertex_vec*)&out->v50)->push_ext(vx);
         }
-        std::vector<face20>& fcs = src->local_a0 ? src->v90 : ((mesh_acc*)src->parent)->get90_();
+        std::vector<face20>& fcs = src->local_a0 ? src->v90 : (src->parent->*&mesh::get90)();
         for (unsigned i = 0; i < fcs.size(); i++)
             out->add_face(fcs[i].a + nverts, fcs[i].b + nverts, fcs[i].c + nverts);
     } else {

@@ -25,6 +25,7 @@
 #include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent/curve.h"      // Curve: the canonical class of the Skeleton / Channel records (Curve::recs +0x40 is Skeleton::chans)
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -718,7 +719,7 @@ void Agent::update_anims(int unused)
         if (act[i]) {
             AnimDef* d = &defs->defs[anim[i].cur];
             if ((d->flags & 1) != 0 && f2c >= 0)
-                body->skel->set_rec_phase(i, AGENT(f2c)->anim[0].scale);
+                ((Curve*)body->skel)->set_rec_phase(i, AGENT(f2c)->anim[0].scale);
             if ((d->flags & 0x1000) == 0) {
                 body->skel->chans[i].w1 = 0.0f;
                 body->skel->chans[i].w0 = 1.0f;
@@ -798,12 +799,12 @@ void Agent::update_anims(int unused)
     do {
         AnimSlot* s = &anim[i];
         if ((s->events & 0x100000) != 0)
-            body->skel->chans[i].set_phase(s->f1c);
+            ((Curve*)&body->skel->chans[i])->set_phase(s->f1c);
         unsigned ev = s->events;
         if ((ev & 0x3000000) == 0 || (body->skel->chans[i].busy() && (ev & 0x2000000) == 0))
             s->events = 0;
         if (!(s->phase < 0.0f)) {
-            body->skel->set_rec_phase(i, s->phase);
+            ((Curve*)body->skel)->set_rec_phase(i, s->phase);
             s->phase = -1.0f;
         }
         i++;

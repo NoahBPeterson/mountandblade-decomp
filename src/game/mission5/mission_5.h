@@ -45,6 +45,9 @@ extern char g_mission_ctx[]; // 0xa73300
 extern void* g_items; // 0x5e29d0
 extern char g_game_keys[]; // 0xa73730
 extern char g_keyboard[]; // 0xa170c8
+#include "../placed_obj.h"
+#include "../../include/shape.h"
+#include "../std_vec_out_of_line.h"
 #include "../prop_kind.h"
 #include "../menu_rec.h"
 extern void* g_mission_templates; // 0x5e2a00
@@ -89,14 +92,13 @@ struct VObj_s25160 {
     virtual void v45();                                         // 0xb4
 };
 
-struct Mgr_s25160 { void update(); };                                  // 0x4f1390
-struct Dlg_s25160 { void open(int a); };                               // 0x495700
+struct Mgr_s25160 { __forceinline void update(); };                                  // 0x4f1390
+struct Dlg_s25160 { __forceinline void open(int a); };                               // 0x495700
 struct Mgr513710_s25160 { void m(void* p); };                           // 0x513710
 struct Chunk_s25160 { void m_4464d0(int a); void m_4f8bc0(); };
 struct Troop_s25160 { void m_4630d0(int i); };
 struct Big5e292c_s25160 { void m_483f60(int a, int b); };
 
-void __stdcall set_value(float v);                               // 0x48baa0
 
 #define g_mgr       (*(Mgr_s25160*)0x5d7080)
 #define g_dlg       (*(Dlg_s25160*)0xa73980)
@@ -123,8 +125,8 @@ struct Game_s25160 {
     VObj_s25160* f11ec[5];                                             // +0x11ec
     int f1200;                                                  // +0x1200
     int f1204;                                                  // +0x1204
-    void refresh(int i, int* out);                             // 0x4f73c0
-    void update();                                            // 0x5257f0
+    __forceinline void refresh(int i, int* out);                             // 0x4f73c0
+    __forceinline void update();                                            // 0x5257f0
     void handle_event(int code);                                // 0x525160
 };
 
@@ -159,15 +161,15 @@ struct Agent_s257f0 {                                      // 0x5928 bytes
     int troop;                                      // +0x88 (troop / character id)
     char pad8c[0x250 - 0x8c];
     AgentBody_s257f0* body;                                // +0x250
-    float speed_scale() const;                      // 0x432450: 1.5, or 2.4 while standing and not deleted
+    __forceinline float speed_scale() const;                      // 0x432450: 1.5, or 2.4 while standing and not deleted
     char pad254[0x5928 - 0x254];
 };
 struct AgentTable_s257f0 {                                 // mission+4
     int count;                                      // +0x00
     char pad4[0x14];
     Agent_s257f0** pages;                                  // +0x18 (mission+0x1c)
-    int first_used();                               // 0x43b1b0
-    void next_used(unsigned* i);                    // 0x43b160
+    __forceinline int first_used();                               // 0x43b1b0
+    __forceinline void next_used(unsigned* i);                    // 0x43b160
 };
 #define AGENT(id) (g_mission_s257f0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 
@@ -180,7 +182,7 @@ struct Mission_s257f0 {
     matrix m6624;                                   // +0x6624
     char pad6664[0x6748 - 0x6664];
     char cam[0x100];                                // +0x6748
-    void camera_to(matrix* eye, float& far_plane);  // 0x4fa790
+    __forceinline void camera_to(matrix* eye, float& far_plane);  // 0x4fa790
 };
 
 
@@ -199,7 +201,7 @@ struct Game_s257f0 {
 
 struct DialogMgr_s257f0 {
     char pad0[0x8000];
-    int speaker();                                  // 0x460640
+    __forceinline int speaker();                                  // 0x460640
 };
 
 
@@ -217,12 +219,12 @@ struct ViewObj_s257f0 {
     matrix m;                                       // +0x1194 (s, f, u, o)
     float blend;                                    // +0x11d4
     char started;                                   // +0x11d8
-    void update();                                  // 0x5257f0
+    __declspec(noinline) void update();                                  // 0x5257f0
 };
 
 struct vec3_s257f0 {
     float x, y, z;
-    void sub_assign(const vec3_s257f0& o);                 // 0x432770
+    __forceinline void sub_assign(const vec3_s257f0& o);                 // 0x432770
 };
 
 static __forceinline float clamp01_s257f0(float x)
@@ -257,8 +259,8 @@ struct AgentTable_s26130 {                                 // mission+4
     int count;                                      // +0x00
     char pad4[0x14];
     Agent_s26130** pages;                                  // +0x18 (mission+0x1c)
-    int first_used();                               // 0x43b1b0
-    void next_used(unsigned* i);                    // 0x43b160
+    __forceinline int first_used();                               // 0x43b1b0
+    __forceinline void next_used(unsigned* i);                    // 0x43b160
 };
 struct Mission_s26130 {
     char pad0[4];
@@ -281,7 +283,7 @@ struct Game_s26130 {
 
 struct DialogMgr_s26130 {
     char pad0[0x8000];
-    int listener();                                 // 0x460670
+    __forceinline int listener();                                 // 0x460670
 };
 
 
@@ -327,7 +329,7 @@ struct DialogMgr_s26130 {
 
 
 struct StrTable_s261e0 {
-    tstring* lookup(tstring* key);                      // 0x43a1e0 (thiscall, ret 4)
+    __forceinline tstring* lookup(tstring* key);                      // 0x43a1e0 (thiscall, ret 4)
 };
 
 
@@ -335,10 +337,10 @@ struct StrTable_s261e0 {
 // message log (global object 0x5d7080) -- see s004f1390 / s004529e0
 struct MsgLog_s261e0 {
     char pad0[0xb0b8];
-    void add(tstring msg, int color);                   // 0x452c00 (ret 0x14)
-    void flush();                                       // 0x4f1390
-    void set_o568(int a, int b);                        // 0x42cdb0
-    void set_view(float* v);                            // 0x4c5190
+    __forceinline void add(tstring msg, int color);                   // 0x452c00 (ret 0x14)
+    __forceinline void flush();                                       // 0x4f1390
+    __forceinline void set_o568(int a, int b);                        // 0x42cdb0
+    __forceinline void set_view(float* v);                            // 0x4c5190
 };
 
 
@@ -346,12 +348,12 @@ struct MsgLog_s261e0 {
 // key tables: two 256-entry int arrays at 0xa170d4 (down) and 0xa174d4 (up); 0x480 apart.
 
 struct KeyTable_s261e0 {
-    char clicked(int key);                                 // 0x48ac90 (thiscall, ret 4)
+    __forceinline char clicked(int key);                                 // 0x48ac90 (thiscall, ret 4)
 };
 
 
 struct KeyReady_s261e0 {
-    char is_ready(int key);                             // 0x487900 (thiscall, ret 4)
+    __forceinline char is_ready(int key);                             // 0x487900 (thiscall, ret 4)
 };
 
 
@@ -370,8 +372,8 @@ struct Agent_s261e0;
 struct AgentTable_s261e0 {
     int  count;                                         // +0
     char pad4[0x0c];
-    int  first_used();                                  // 0x43b1b0
-    void next_used(unsigned* i);                        // 0x43b160 (ret 4)
+    __forceinline int  first_used();                                  // 0x43b1b0
+    __forceinline void next_used(unsigned* i);                        // 0x43b160 (ret 4)
 };
 
 struct Agent_s261e0 {
@@ -384,15 +386,15 @@ struct Agent_s261e0 {
     int  f88;                                           // +0x88
     char pad8c[0x1c4 - 0x8c];
     int  f1c4;                                          // +0x1c4 (kind)
-    bool is_enemy(const Agent_s261e0* o) const;                // 0x432350 (ret 4)
+    __forceinline bool is_enemy(const Agent_s261e0* o) const;                // 0x432350 (ret 4)
 };
 
 struct MissionSub_s261e0 {
-    float elapsed() const;                              // 0x432c10 (when this = mission+0x6328)
-    void  build_geometry();                             // 0x470a00 (when this = mission+0x6698)
+    __forceinline float elapsed() const;                              // 0x432c10 (when this = mission+0x6328)
+    __forceinline void  build_geometry();                             // 0x470a00 (when this = mission+0x6698)
 };
 struct LabelSub_s261e0 {
-    void make_label(char* out);                         // 0x48d940 (ret 4)
+    __forceinline void make_label(char* out);                         // 0x48d940 (ret 4)
 };
 
 // mission object 0x5e292c
@@ -436,11 +438,11 @@ struct Mission_s261e0 {
     __int64 f6808;                                      // +0x6808
     float f6810;                                        // +0x6810
     void  mode_flag1_stub();
-    bool  mode_flag1() const;                           // 0x435840
-    void  save_scene_data();                                   // 0x527f90
-    void  fn_529d80();                                   // 0x529d80
-    void  release_item(int arg);                            // 0x528410 (ret 4)
-    void  frame(float dt, char spawn);                  // 0x483f60
+    __forceinline bool  mode_flag1() const;                           // 0x435840
+    __forceinline void  save_scene_data();                                   // 0x527f90
+    __forceinline void  fn_529d80();                                   // 0x529d80
+    __forceinline void  release_item(int arg);                            // 0x528410 (ret 4)
+    __forceinline void  frame(float dt, char spawn);                  // 0x483f60
 };
 
 
@@ -479,7 +481,7 @@ struct GameData_s261e0 {
     char  pad1a1b8[0x1a208 - 0x1a1b8];                  // +0x1a1b8 vector<int>
     int   f1a208;                                       // +0x1a208
     int   f1a20c;                                       // +0x1a20c
-    void  save_scene(int arg);                            // 0x527c90 (ret 4)
+    __forceinline void  save_scene(int arg);                            // 0x527c90 (ret 4)
 };
 
 
@@ -489,17 +491,17 @@ struct VectorInt_s261e0 {
 
 // mission-source subobject at Hud+0x30 (slice s004d5410)
 struct Src_s261e0 {
-    void pick(int* arg);                                // 0x4d5410 (ret 4)
-    void init(int a, int b);                            // 0x4dd920 (ret 8)
+    __forceinline void pick(int* arg);                                // 0x4d5410 (ret 4)
+    __forceinline void init(int a, int b);                            // 0x4dd920 (ret 8)
 };
 
 // menu + widgets (slice s004d5410 / s00494e40)
 struct MainMenu_s261e0 {
     char pad0[0x18];
     int  sel;                                           // +0x18
-    void set_state(int option);                            // 0x495700 (ret 4)
-    void open(int idx);                             // 0x494260 (ret 4)
-    void setup2(tstring* a, tstring* b, tstring* c, int* v);  // 0x48a3d0 (ret 0x10)
+    __forceinline void set_state(int option);                            // 0x495700 (ret 4)
+    __forceinline void open(int idx);                             // 0x494260 (ret 4)
+    __forceinline void setup2(tstring* a, tstring* b, tstring* c, int* v);  // 0x48a3d0 (ret 0x10)
 };
 
 
@@ -521,7 +523,7 @@ struct Widget_s261e0 {
 
 
 struct DialogMgr_s261e0 {
-    void start(int a, int b, int c, int d, char f);     // 0x4610b0 (ret 0x14)
+    __forceinline void start(int a, int b, int c, int d, char f);     // 0x4610b0 (ret 0x14)
 };
 // The dialog manager is a fixed object at 0x8ed50c8 (outside the tool's annotation range, so it is
 // named through a literal cast here).
@@ -530,18 +532,18 @@ struct DialogMgr_s261e0 {
 struct Flags5e291c_s261e0 {
     char b0, b1, b2, pad3;
     int  f4, f8;
-    void commit(char* out);                             // 0x513710 (ret 4)
+    __forceinline void commit(char* out);                             // 0x513710 (ret 4)
 };
 
 
 struct SoundSlot_s261e0 {
-    void update(int arg);                               // 0x4625d0 (ret 4)
+    __forceinline void update(int arg);                               // 0x4625d0 (ret 4)
 };
 struct SoundBank_s261e0 {
-    void update_all(int arg);                           // 0x462760 (ret 4)
+    __forceinline void update_all(int arg);                           // 0x462760 (ret 4)
 };
 struct EmitSub_s261e0 {
-    char play(int idx);                          // 0x4875e0 (ret 4)
+    __forceinline void play(int idx);                          // 0x4875e0 (ret 4)
 };
 
 // ---- plain globals ----------------------------------------------------------------------------------
@@ -586,8 +588,6 @@ extern const float g_f549d7c;                           // 0x549d7c = 0.1f
 void __cdecl restore_defaults();                        // 0x4d3a50
 void __cdecl quick_save_msg();                                // 0x516a70 (quick save)
 void quick_save_msg(); // 0x516a70
-void __cdecl light_entities(void* p, int n);                  // 0x47ce00
-char __cdecl order_agent(int agent, int* pair);            // 0x52b5c0
 void __cdecl operator delete(void* p);                        // 0x535712 (operator delete, ??3@YAXPAX@Z)
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 
@@ -661,15 +661,15 @@ struct Screen_s261e0 {
     int   f324;                                         // +0x324
 
     void tick(float dt);                                // 0x5261e0
-    void update(float dt);                            // 0x5284a0 (ret 4)
-    void update_marks();                                    // 0x529130
-    void order_tick();                                    // 0x52b300
-    void f_529ec0();                                    // 0x529ec0
-    void update_ui();                                    // 0x52ba10
-    void init_order_markers();                                    // 0x52ae70
-    void update_equipment();                                     // 0x4f8b40 (ignores this, but takes ecx)
-    void update_camera(float dt);                       // 0x4f8c80 (ret 4)
-    void update_status();                        // 0x4fb350
+    __forceinline void update(float dt);                            // 0x5284a0 (ret 4)
+    __forceinline void update_marks();                                    // 0x529130
+    __forceinline void order_tick();                                    // 0x52b300
+    __forceinline void f_529ec0();                                    // 0x529ec0
+    __forceinline void update_ui();                                    // 0x52ba10
+    __forceinline void init_order_markers();                                    // 0x52ae70
+    __forceinline void update_equipment();                                     // 0x4f8b40 (ignores this, but takes ecx)
+    __forceinline void update_camera(float dt);                       // 0x4f8c80 (ret 4)
+    __forceinline void update_status();                        // 0x4fb350
 };
 
 // vtable of the object at Screen_s261e0+0x5c: only slot 0xc4 (index 49) is called here.
@@ -717,9 +717,9 @@ struct SceneObjRec_s27c90;
 struct GameData_s27c90 {
     char pad0[0x13a50];
     SceneObjRec_s27c90* scenes;                    // +0x13a50
-    tstring scene_path(int idx);            // 0x463950 (returns by hidden pointer; ret 8)
-    const char* module_path(const char* sub);   // 0x4639d0 (ret 4)
-    void save_scene(int idx);               // 0x527c90 (ret 4)
+    __forceinline tstring scene_path(int idx);            // 0x463950 (returns by hidden pointer; ret 8)
+    __forceinline const char* module_path(const char* sub);   // 0x4639d0 (ret 4)
+    __declspec(noinline) void save_scene(int idx);               // 0x527c90 (ret 4)
 };
 
 
@@ -773,7 +773,7 @@ struct SceneObj_s27c90 {
     void save(stream_base* s);              // 0x527ef0 (ret 4)
 };
 
-void w_matrix(stream_base* s, void* m);     // 0x415ef0 (cdecl)
+stream_base& w_matrix(stream_base& s, rgl::matrix* m);     // 0x415ef0 (cdecl)
 
 // ---- grid container (Mission_s27c90+0x63d0) -------------------------------------------------------------------
 struct Grid_s27c90 {
@@ -799,7 +799,7 @@ struct MissionSub_s27c90 {
     int count;                              // +0x1c
     char* first;                            // +0x20
     char* last;                             // +0x24
-    void read(stream_base* s);              // 0x524f00 (ret 4)
+    __forceinline void read(stream_base* s);              // 0x524f00 (ret 4)
 };
 
 struct Mission_s27c90 {
@@ -811,13 +811,13 @@ struct Mission_s27c90 {
     char* item_array;                       // +0x668c (per-item array, 0x1c8 apart)
     char pad6690[0x6698 - 0x6690];
     MissionSub_s27c90 other;                       // +0x6698
-    void save_scene_data();                 // 0x527f90
-    int release_item(int idx);              // 0x528410 (ret 4)
+    __declspec(noinline) void save_scene_data();                 // 0x527f90
+    __declspec(noinline) int release_item(int idx);              // 0x528410 (ret 4)
 };
 
 // ---- world (Mission_s27c90+0) ---------------------------------------------------------------------------------
 struct World_s27c90 {
-    int remove_entity(int id);              // 0x41f0d0 (ret 4)
+    __forceinline void remove_entity(int id);              // 0x41f0d0 (ret 4)
 };
 
 struct MissionHdr_s27c90 {
@@ -851,14 +851,11 @@ struct ItemKind_s284a0 {                                       // 0x238 bytes, a
 };
 
 
-struct ItemRef_s284a0 {                                        // item index + packed amount/modifier
-    int item;
-    unsigned m4;
-};
+struct ItemRef; typedef ItemRef ItemRef_s284a0;   // sig s1: canonical ItemRef (src/game/item_ref.h: item, m4)
 
 // ---- the blow record (0x58 bytes, ctor 0x4353a0) -----------------------------------------------------
 struct Blow_s284a0 {
-    Blow_s284a0();                                             // 0x4353a0
+    __forceinline Blow_s284a0();                                             // 0x4353a0 (== RecZSubB::init)
     char pad0[4];
     int attacker;                                       // +0x04
     vector4 pos;                                        // +0x08 (position of the agent hit)
@@ -876,8 +873,8 @@ struct AgentTable_s284a0 {
     int count;                                          // +0x00
     char pad4[0x18 - 4];
     Agent_s284a0** pages;                                      // +0x18 (first page pointer; mission+0x1c)
-    void next_used(unsigned* i);                        // 0x43b160
-    int first_used();                                   // 0x43b1b0
+    __forceinline void next_used(unsigned* i);                        // 0x43b160
+    __forceinline int first_used();                                   // 0x43b1b0
     Agent_s284a0* get(unsigned id);                            // 0x43b1f0
 };
 
@@ -923,12 +920,12 @@ struct Agent_s284a0 {                                          // 0x5928 bytes
     int f5724;                                          // +0x5724
     char pad5728[0x5928 - 0x5728];
 
-    ItemRef_s284a0 slot_pair(int idx);                         // 0x432790 (ret 8)
-    bool is_enemy(Agent_s284a0* o);                          // 0x432350 (ret 4)
-    bool is_friend(Agent_s284a0* o);                         // 0x4323a0 (ret 4)
-    void note_blow(Blow_s284a0* b);                            // 0x457af0 (ret 4)
-    void cycle_slot(int slot);                          // 0x44bc30 (ret 4)
-    void on_wield_reset();                              // 0x445a20
+    __forceinline ItemRef_s284a0 slot_pair(int idx);                         // 0x432790 (ret 8)
+    __forceinline bool is_enemy(Agent_s284a0* o);                          // 0x432350 (ret 4)
+    __forceinline bool is_friend(Agent_s284a0* o);                         // 0x4323a0 (ret 4)
+    __forceinline void note_blow(Blow_s284a0* b);                            // 0x457af0 (ret 4)
+    __forceinline void cycle_slot(int slot);                          // 0x44bc30 (ret 4)
+    __forceinline void on_wield_reset();                              // 0x445a20
 };
 
 struct Mission_s284a0 {
@@ -967,25 +964,25 @@ struct ViewCtrl_s284a0 {
     char pad2d8[0x2fc - 0x2d8];
     int snap;                                           // +0x2fc (frames left to snap the view)
 
-    void update(float dt);                              // 0x5284a0
-    void update_equipment();                       // 0x4f8b40
+    __declspec(noinline) void update(float dt);                              // 0x5284a0
+    __forceinline void update_equipment();                       // 0x4f8b40
 };
 
 // a view of rgl::matrix with the engine's rotation helpers (thiscall, ecx = matrix)
 struct MatrixExt_s284a0 {
-    void rotate_sf(float* angle);                       // 0x40e770
-    void rotate_fu(float* angle);                       // 0x40e570
+    __forceinline void rotate_sf(float* angle);                       // 0x40e770
+    __forceinline void rotate_fu(float* angle);                       // 0x40e570
 };
 void identity3(matrix* m);                              // 0x40cd60
 
 // ---- key tables -------------------------------------------------------------------------------------
 struct KeyTable_s284a0 {                                       // 0xa73730
-    char clicked(int key);                      // 0x48ac90 (ret 4)
-    char is_down(int key);                           // 0x48ac50 (ret 4)
+    __forceinline char clicked(int key);                      // 0x48ac90 (ret 4)
+    __forceinline char is_down(int key);                           // 0x48ac50 (ret 4)
 };
 
 struct KeyNames_s284a0 {                                       // 0xa170c8
-    char is_ready(int action);                             // 0x487900 (ret 4)
+    __forceinline char is_ready(int action);                             // 0x487900 (ret 4)
 };
 
 
@@ -1058,7 +1055,7 @@ struct AgentTable_s29130 {
     char pad4[0x18 - 4];
     Agent_s29130** pages;                                            // +0x18 (id >> 4 -> page of 16)
 };
-struct ItemRef_s29130 { int item; unsigned m4; };
+typedef ItemRef ItemRef_s29130;
 struct Agent_s29130 {
     char pad0[0x10];
     int f10;                                                  // +0x10
@@ -1092,10 +1089,10 @@ struct Agent_s29130 {
     int f5730;                                                // +0x5730
     char pad5734[0x5928 - 0x5734];
 
-    ItemRef_s29130 slot_pair(int idx) const;                         // 0x432790 (thiscall, ret 8)
-    bool f100_is_0x48_and_charged() const;                                // 0x432470 (thiscall)
-    int pick_front();                                        // 0x43b9e0 (fastcall)
-    int pick_attack_dir(unsigned target);                     // 0x43f970 (thiscall, ret 4)
+    __forceinline ItemRef_s29130 slot_pair(int idx) const;                         // 0x432790 (thiscall, ret 8)
+    __forceinline bool f100_is_0x48_and_charged() const;                                // 0x432470 (thiscall)
+    __forceinline int pick_front();                                        // 0x43b9e0 (fastcall)
+    __forceinline int pick_attack_dir(unsigned target);                     // 0x43f970 (thiscall, ret 4)
 };
 
 // ---- mission (the object at 0x5e292c: agent table at +4, current agent at +0x5c) ------------------------
@@ -1106,7 +1103,7 @@ struct Mission_s29130 {
     unsigned cur_agent_s29130;                                       // +0x5c
     char pad60[0x6524 - 0x60];
     int f6524;                                                // +0x6524
-    void fn_529840(int mode);                                 // 0x529840 (thiscall, ret 4)
+    __forceinline void fn_529840(int mode);                                 // 0x529840 (thiscall, ret 4)
 };
 
 // ---- party stack (0x20 bytes, array at party+0xa8; layout from s00490a30) --------------------------------
@@ -1125,7 +1122,7 @@ struct Party_s29130 {
 struct PartyMgr_s29130 {
     char pad0[0x138d0];
     Party_s29130** pages;                                            // +0x138d0
-    int index_of(unsigned id);                                // 0x48ad00 (thiscall, ret 4)
+    __forceinline int index_of(unsigned id);                                // 0x48ad00 (thiscall, ret 4)
 };
 struct Troop_s29130 {
     char pad0[0x30];
@@ -1139,7 +1136,7 @@ struct GameData_s29130 {
     int cur_party;                                            // +0x78
     char pad7c[0x8c - 0x7c];
     int cur_troop;                                            // +0x8c
-    void more_start();                                         // 0x51f800 (thiscall)
+    __forceinline void more_start();                                         // 0x51f800 (thiscall)
 };
 
 // ---- the HUD object -----------------------------------------------------------------------------------
@@ -1159,7 +1156,7 @@ struct MissionHud_s29130 {
     char pad28c[0x2c8 - 0x28c];
     char f2c8;                                                // +0x2c8
 
-    void update_marks();                                      // 0x529130
+    __declspec(noinline) void update_marks();                                      // 0x529130
     void tick();                                              // 0x5295a0
     void refresh_markers();                                   // 0x529600
     void reset_party_heroes(int party);                       // 0x529670
@@ -1204,8 +1201,8 @@ struct AgentTable_s29840 {
     char pad4[0x18 - 4];
     Agent_s29840** pages;                                            // +0x18 (id >> 4 -> page of 16)
 
-    unsigned first_used();                                    // 0x43b1b0 (thiscall)
-    void next_used(unsigned* p);                              // 0x43b160 (thiscall, ret 4)
+    __forceinline unsigned first_used();                                    // 0x43b1b0 (thiscall)
+    __forceinline void next_used(unsigned* p);                              // 0x43b160 (thiscall, ret 4)
 };
 struct Agent_s29840 {
     char pad0[0x10];
@@ -1248,15 +1245,15 @@ struct Party_s29840 {
     int nstacks;                                              // +0x8a8
     char pad8ac[0x5ac8 - 0x8ac];
 
-    void add_xp_to_stack(int slot, int value);                // 0x4b1d80 (thiscall, ret 8)
-    int skill_level(int n);                                         // 0x4b2370 (thiscall, ret 4)
+    __forceinline void add_xp_to_stack(int slot, int value);                // 0x4b1d80 (thiscall, ret 8)
+    __forceinline int skill_level(int n);                                         // 0x4b2370 (thiscall, ret 4)
 };
 struct PartyMgr_s29840 {
     char pad0[0x138d0];
     Party_s29840** pages;                                            // +0x138d0
 
-    int index_of(unsigned id);                                // 0x48ad00 (thiscall, ret 4)
-    Party_s29840* get(int id);                                       // 0x51ee50 (thiscall, ret 4)
+    __forceinline int index_of(unsigned id);                                // 0x48ad00 (thiscall, ret 4)
+    __forceinline Party_s29840* get(int id);                                       // 0x51ee50 (thiscall, ret 4)
     Party_s29840* at(int idx) { return &pages[idx >> 4][idx & 0xf]; }
 };
 
@@ -1289,18 +1286,8 @@ struct IfaceB_s29840 {
     virtual void slot1() {}
     virtual void slot2() {}
 };
-struct Rec1c8_s29840 : IfaceB_s29840 {
-    int f10;                                                  // +0x10
-    int f14;                                                  // +0x14
-    char body1[0x18c - 0x18];
-    int f18c;                                                 // +0x18c
-    tstring name;                                             // +0x190
-    char body2[0x1c8 - 0x1a0];
-
-    Rec1c8_s29840();                                                 // 0x437830
-    Rec1c8_s29840(const Rec1c8_s29840& o);                                  // 0x437bb0
-    Rec1c8_s29840& operator=(const Rec1c8_s29840& o);                       // 0x437d60
-};
+// sig s1: the 0x1c8 record is the canonical PlacedObj (ctor 0x437830, copy 0x437bb0, operator= 0x437d60 in agent_stats.cpp)
+typedef PlacedObj Rec1c8_s29840;
 
 // ---- scene record list (the std::vector is at scene+0x104) ---------------------------------------------
 struct Scene_s29840 {
@@ -1320,11 +1307,11 @@ struct Mission_s29840 {
     char pad5df8[0x6688 - 0x5df8];
     std::vector<Rec1c8_s29840> records;                              // +0x6688
 
-    void fn_529840(int mode);                                 // 0x529840 (thiscall, ret 4)
+    __declspec(noinline) void fn_529840(int mode);                                 // 0x529840 (thiscall, ret 4)
     void fn_529b70(Agent_s29840* a);                                 // 0x529b70 (thiscall, ret 4)
     void fn_529c30(int* hist, int party, int slot, int value, int flag); // 0x529c30 (thiscall, ret 0x14)
     void fn_529d00(Agent_s29840* a);                                 // 0x529d00 (thiscall, ret 4)
-    void fn_529d80();                                         // 0x529d80 (thiscall)
+    __declspec(noinline) void fn_529d80();                                         // 0x529d80 (thiscall)
 };
 
 // ---- externals -----------------------------------------------------------------------------------------
@@ -1379,8 +1366,8 @@ using rgl::matrix;
 
 // ---- gui manager (0x5d7080) --------------------------------------------------------------------------
 struct gui_manager_s29ec0 {
-    void set_view(const float* v);                              // 0x4c5190 (ret 4)
-    void draw_string(const tstring* s, float y, unsigned color, int centered);  // 0x4e43e0 (ret 0x10)
+    __forceinline void set_view(const float* v);                              // 0x4c5190 (ret 4)
+    __forceinline void draw_string(const tstring* s, float y, unsigned color, int centered);  // 0x4e43e0 (ret 0x10)
 };
 
 
@@ -1391,8 +1378,8 @@ struct hud_panel_s29ec0 {
 
 // ---- localisation tables (0x5e2a18) ------------------------------------------------------------------
 struct StrTable_s29ec0 {
-    tstring* find(const tstring* key);                          // 0x4c6010 (null when absent, ret 4)
-    tstring* lookup(const tstring& key);                        // 0x43a1e0 (ret 4)
+    __forceinline tstring* find(const tstring* key);                          // 0x4c6010 (null when absent, ret 4)
+    __forceinline tstring* lookup(const tstring& key);                        // 0x43a1e0 (ret 4)
 };
 
 
@@ -1406,17 +1393,11 @@ struct shape_base_s29ec0 {
     virtual vector4* get_min(vector4* out);                     // slot 10
     virtual vector4* get_max(vector4* out);                     // slot 11
 };
-struct capsule_s29ec0 : shape_base_s29ec0 {                                   // vtable 0x54a540, size 0x64
-    vector4 p0, p1, p2, p3;                                     // 0x20 / 0x30 / 0x40 / 0x50
-    float radius;                                               // 0x60
-    capsule_s29ec0(float r, const vector4* a, const vector4* b);       // 0x433310 (ret 0xc)
-    void transform(const matrix* m);                       // 0x408770 (ret 4)
-};
+typedef capsule capsule_s29ec0;   // sig s1: the canonical capsule (src/include/shape.h; ctor 0x433310, transform 0x408770)
 struct contact_s29ec0 {                                                // 0x20 bytes
     vector4 pos;                                                // 0x00
     vector4 point;                                              // 0x10
 };
-int shape_contact_count(shape_base_s29ec0* a, shape_base_s29ec0* b, int max, contact_s29ec0* out);   // 0x40bfe0 (cdecl)
 matrix* identity_pos(matrix* out);                              // 0x40cd00 (cdecl)
 
 // ---- level / scene -----------------------------------------------------------------------------------
@@ -1430,12 +1411,12 @@ struct SceneEntity_s29ec0 {
     shape_base_s29ec0* shape;                                          // +0x98
 };
 struct Scene_s29ec0 {
-    void query_segment(const float* a, const float* b, unsigned mask,
+    __forceinline void query_segment(const float* a, const float* b, unsigned mask,
                        shape_base_s29ec0** out, int* count);           // 0x439870 (ret 0x14)
     char pad4[0x80 - 0x04];
     SceneEntity_s29ec0** ent_begin;                                    // +0x80
     SceneEntity_s29ec0** ent_end;                                      // +0x84
-    void collect(int type, SceneEntity_s29ec0** out, int* count);   // 0x51a3a0 (ret 0xc)
+    __forceinline void collect(int type, SceneEntity_s29ec0** out, int* count);   // 0x51a3a0 (ret 0xc)
 };
 
 // ---- items (s00434ad0 / s0043b5d0) -------------------------------------------------------------------
@@ -1452,8 +1433,8 @@ struct ItemKind_s29ec0 {                                               // 0x238,
 struct ItemRef_s29ec0 {
     int item;                                                   // +0x0
     unsigned m4;                                                // +0x4 (modifier in byte +7)
-    int stat_1ec();                                             // 0x434c50 (thiscall)
-    void name(char* out);                                       // 0x512730 (thiscall, ret 4)
+    __forceinline int stat_1ec();                                             // 0x434c50 (thiscall)
+    __forceinline void name(char* out);                                       // 0x512730 (thiscall, ret 4)
 };
 
 // ---- agents (0x5928 bytes) ---------------------------------------------------------------------------
@@ -1477,9 +1458,9 @@ struct Agent_s29ec0 {
     int f5830;                                                  // +0x5830 action state (2 = mounted)
     char pad5834[0x5928 - 0x5834];
 
-    float speed_scale();                                             // 0x432450 (thiscall, no arg)
-    bool is_enemy(Agent_s29ec0* o);                                    // 0x432350 (ret 4)
-    bool is_friend(Agent_s29ec0* o);                                   // 0x4323a0 (ret 4)
+    __forceinline float speed_scale();                                             // 0x432450 (thiscall, no arg)
+    __forceinline bool is_enemy(Agent_s29ec0* o);                                    // 0x432350 (ret 4)
+    __forceinline bool is_friend(Agent_s29ec0* o);                                   // 0x4323a0 (ret 4)
 };
 
 // ---- game data (0x5e2930) ----------------------------------------------------------------------------
@@ -1493,7 +1474,7 @@ struct GameData_s29ec0 {
     char pad13a58[0x13b10 - 0x13a58];
     char f13b10;                                                // +0x13b10
     char f13b11;                                                // +0x13b11
-    int skill_level(int troop, int skill);                      // 0x437b20 (ret 8)
+    __forceinline int skill_level(int troop, int skill);                      // 0x437b20 (ret 8)
 };
 
 
@@ -1545,7 +1526,7 @@ struct MapObject_s29ec0 {                                              // 0x68 b
     char pad0[0x10];
     tstring name;                                               // +0x10
     tstring mesh;                                               // +0x20
-    tstring* mesh_ptr();                                        // 0x4c6ca0 (thiscall)
+    __forceinline tstring* mesh_ptr();                                        // 0x4c6ca0 (thiscall)
 };
 struct MapObjList_s29ec0 {                                             // 0x60 bytes
     char pad0[0x54];
@@ -1574,7 +1555,7 @@ struct Screen_s29ec0 {
     int f2cc;                                                   // +0x2cc selection id
     char pad2d0[0x2d4 - 0x2d0];
     int f2d4;                                                   // +0x2d4 selection valid
-    void f_529ec0();                                            // 0x529ec0
+    __declspec(noinline) void f_529ec0();                                            // 0x529ec0
 };
 
 // ======================================================= slice s0052ae70: classes, globals, helpers
@@ -1601,21 +1582,21 @@ struct Screen_s29ec0 {
 // ---- resolved material_s2ae70 / resource manager (0x5d6fa0) ---------------------------------------------------
 struct material_s2ae70;
 struct resmgr_s2ae70 {
-    material_s2ae70* get_material(tstring* name);              // 0x418a70 (thiscall, ret 4)
+    __forceinline material_s2ae70* get_material(tstring* name);              // 0x418a70 (thiscall, ret 4)
 };
 
 
 // ---- gui manager (0x5d7080) ----------------------------------------------------------------------------
 struct gui_manager_s2ae70 {
-    void set_o568(void* obj, int on);                   // 0x42cdb0
-    void set_view(const float* v);                      // 0x4c5190
-    void draw_string(const tstring* s, float y, unsigned color, int centered);   // 0x4e43e0
+    __forceinline void set_o568(void* obj, int on);                   // 0x42cdb0
+    __forceinline void set_view(const float* v);                      // 0x4c5190
+    __forceinline void draw_string(const tstring* s, float y, unsigned color, int centered);   // 0x4e43e0
 };
 
 
 // ---- localisation table (0x5e2a18) ---------------------------------------------------------------------
 struct StrTable_s2ae70 {
-    tstring* lookup(const tstring& key);                // 0x43a1e0 (thiscall, ret 4)
+    __forceinline tstring* lookup(const tstring& key);                // 0x43a1e0 (thiscall, ret 4)
 };
 
 
@@ -1624,7 +1605,6 @@ namespace rgl {
 struct vec2_s2ae70 { float x, y; vec2_s2ae70() {} vec2_s2ae70(float a, float b) : x(a), y(b) {} };
 
 struct mesh_s2ae70 {
-    mesh_s2ae70();                                             // 0x412a90
     char pad0[0x2c];
     material_s2ae70* res;                                      // +0x2c
     char pad30[0x138 - 0x30];
@@ -1632,10 +1612,10 @@ struct mesh_s2ae70 {
     char pad139[0x164 - 0x139];
     char f164;                                          // +0x164 (dirty flag)
     char pad165[0x260 - 0x165];
-    int add_point(const vector4* p);                    // 0x412f50
-    int add_vertex(int index, const vec2_s2ae70* uv, const unsigned* color, const vector4* pos,
+    __forceinline int add_point(const vector4* p);                    // 0x412f50
+    __forceinline int add_vertex(int index, const vec2_s2ae70* uv, const unsigned* color, const vector4* pos,
                    const int* f5c);                     // 0x413c50 (ret 0x14)
-    int add_face(int a, int b, int c);                  // 0x411920
+    __forceinline int add_face(int a, int b, int c);                  // 0x411920
 };
 } // namespace rgl
 
@@ -1646,19 +1626,19 @@ struct Entity_s2ae70 {
     virtual void set_scale(const float* s);             // vtable +0x18
     char pad[0x140 - 4];
     unsigned char f140;                                 // +0x140 visible flag
-    void add_extra(rgl::mesh_s2ae70* m);                        // 0x442110 (thiscall, ret 4)
+    __forceinline void add_extra(rgl::mesh_s2ae70* m);                        // 0x442110 (thiscall, ret 4)
 };
 
 struct World_s2ae70 {
-    Entity_s2ae70* create_entity(int type);                    // 0x428440 (thiscall, ret 4)
+    __forceinline Entity_s2ae70* create_entity(int type);                    // 0x428440 (thiscall, ret 4)
 };
 
 // the shape owned by the Screen_s2ae70 at +0x6698 (0x94 bytes; see s004e65e0 / s004e6a70)
 struct Shape_s2ae70 {
     char pad[0x94];
-    void polygon_to_mesh(rgl::mesh_s2ae70* m);                       // 0x4e75a0 (thiscall, ret 4)
-    void build_ribbons(rgl::mesh_s2ae70* m);                    // 0x4e6a70 (thiscall, ret 4)
-    void build_spikes(rgl::mesh_s2ae70* m);                     // 0x4e65e0 (thiscall, ret 4)
+    __forceinline void polygon_to_mesh(rgl::mesh_s2ae70* m);                       // 0x4e75a0 (thiscall, ret 4)
+    __forceinline void build_ribbons(rgl::mesh_s2ae70* m);                    // 0x4e6a70 (thiscall, ret 4)
+    __forceinline void build_spikes(rgl::mesh_s2ae70* m);                     // 0x4e65e0 (thiscall, ret 4)
 };
 
 // ---- mission (0x5e292c) and the game clock -------------------------------------------------------------
@@ -1672,7 +1652,7 @@ struct Mission_s2ae70 {
     std::vector<Agent_s2ae70*> pages;                          // +0x18 (std::vector; data at +0x1c)
     char pad2c[0x5c - 0x28];
     int local_id;                                       // +0x5c (-1 when no local agent)
-    void order(int id, int arg);                        // 0x49c2c0
+    __forceinline void order(int id, int arg);                        // 0x49c2c0
 };
 
 
@@ -1699,8 +1679,8 @@ struct Screen_s2ae70 {
     rgl::mesh_s2ae70* f673c;                                   // +0x673c
     Entity_s2ae70*    f6740;                                   // +0x6740
 
-    void init_order_markers();                          // 0x52ae70
-    void order_tick();                                  // 0x52b300
+    __declspec(noinline) void init_order_markers();                          // 0x52ae70
+    __declspec(noinline) void order_tick();                                  // 0x52b300
     void draw_order_menu();                             // 0x52b3c0
 };
 
@@ -1732,15 +1712,15 @@ using rgl::matrix;
 
 
 struct StrTable_s2b5c0 {
-    tstring* lookup(const tstring& key);                // 0x43a1e0 (thiscall, ret 4)
+    __forceinline tstring* lookup(const tstring& key);                // 0x43a1e0 (thiscall, ret 4)
 };
 
 
 // ---- gui / message log (one big object at 0x5d7080) ---------------------------------------------------
 struct Gui_s2b5c0 {
-    void set_o568(void* obj, int on);                   // 0x42cdb0
-    void set_view(const float* v);                      // 0x4c5190
-    void add(tstring text, int flag);                   // 0x452c00
+    __forceinline void set_o568(void* obj, int on);                   // 0x42cdb0
+    __forceinline void set_view(const float* v);                      // 0x4c5190
+    __forceinline void add(tstring text, int flag);                   // 0x452c00
 };
 
 
@@ -1755,8 +1735,8 @@ struct ItemKind_s2b5c0 {
 struct ItemRef_s2b5c0 {
     int id;                                             // +0x00
     int count;                                          // +0x04
-    int max_amount();                                   // 0x434b70 (thiscall)
-    void name(char* out);                               // 0x512730 (thiscall, ret 4)
+    __forceinline int max_amount();                                   // 0x434b70 (thiscall)
+    __forceinline void name(char* out);                               // 0x512730 (thiscall, ret 4)
 };
 
 // ---- agents -------------------------------------------------------------------------------------------
@@ -1776,9 +1756,8 @@ struct Agent_s2b5c0 {
     char pad234[0x1c];
     AgentFrame_s2b5c0* frame;                                  // +0x250
     char pad254[0x5928 - 0x254];
-    void on_wield_reset();                              // 0x445a20 (thiscall)
+    __forceinline void on_wield_reset();                              // 0x445a20 (thiscall)
 };
-void __stdcall refresh_agent(Agent_s2b5c0* agent);             // 0x4f7e00
 
 // ---- collision world (mission->f0) --------------------------------------------------------------------
 struct shape_base_s2b5c0 {
@@ -1787,25 +1766,20 @@ struct shape_base_s2b5c0 {
                    min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
     virtual ~shape_base_s2b5c0() {}
     virtual int shape_type();                           // slot 1, 0x408020
-    void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0
+    __forceinline void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0
 };
-struct capsule_s2b5c0 : shape_base_s2b5c0 {
-    char geom[0x44];
-    capsule_s2b5c0(float r, const vector4* a, const vector4* b);               // 0x433310
-    void transform(const matrix* m);                                    // 0x408770
-};
-int shape_contact_count(shape_base_s2b5c0* a, shape_base_s2b5c0* b, int max, void* out);  // 0x40bfe0
+typedef capsule capsule_s2b5c0;
 matrix* identity(matrix* out);                                              // 0x40cd00
 
 struct Scene_s2b5c0 {
     char pad[0x64];
     int f64;                                            // +0x64
-    void query_segment(const float* a, const float* b, unsigned mask,
+    __forceinline void query_segment(const float* a, const float* b, unsigned mask,
                        shape_base_s2b5c0** out, int* count);   // 0x439870
 };
 
 struct Camera_s2b5c0 {
-    void screen_to_world(vector4* near_pt, vector4* far_pt);    // 0x4bd2f0
+    __forceinline void screen_to_world(vector4* near_pt, vector4* far_pt);    // 0x4bd2f0
 };
 
 // ---- terrain (0xa76630) -------------------------------------------------------------------------------
@@ -1826,8 +1800,8 @@ struct Terrain_s2b5c0 {
     char f845e030[0x64];                                // +0x845e030
     char f845e094[0x10000];                             // +0x845e094
     void clear();                                       // 0x52c290
-    void update(int* objs, vector4* pos, int sel, int mode, int flag);  // 0x52bf40
-    void conv_build_scene();                                       // 0x4c8630
+    __forceinline void update(int* objs, vector4* pos, int sel, int mode, int flag);  // 0x52bf40
+    __forceinline void conv_build_scene();                                       // 0x4c8630 (fastcall free function conv_build_scene(conv_rec*))
     void emit_particle(int layer, int blend, int cx, int cy, float h);     // 0x47ff60
     void load_layer(int* objs, int index);                              // 0x467250
     void brush(int* objs, int* sel, int* col, float* d, int* mode, int* flag, char* place); // 0x52c2b0
@@ -1885,23 +1859,23 @@ struct Mission_s2b5c0 {
     char pad65e8[0x6738 - 0x65e8];
     UiObj_s2b5c0* f6738;                                       // +0x6738
 
-    bool order_agent(unsigned agent_id, ItemRef_s2b5c0* order); // 0x52b5c0
-    void update_ui();                                   // 0x52ba10
-    void update_ui_continue();                          // 0x52ba1d (interior continuation)
+    __declspec(noinline) bool order_agent(unsigned agent_id, ItemRef_s2b5c0* order); // 0x52b5c0
+    __declspec(noinline) void update_ui();                                   // 0x52ba10
+    __declspec(noinline) void update_ui_continue();                          // 0x52ba1d (interior continuation)
     void update_cursor();                               // 0x52bc80
-    void find_position(char* ok, vector4* pos);         // 0x52bdb0
-    int add_placed(const int* kind, const int* id, const int* value,
+    __declspec(noinline) void find_position(char* ok, vector4* pos);         // 0x52bdb0
+    __forceinline int add_placed(const int* kind, const int* id, const int* value,
                    const matrix* m, int* spawn_id);     // 0x44f870
-    void update_map();                                  // 0x52f250
-    void update_dialog();                               // 0x5305b0
-    void update_mode4();                                // 0x52cf60
-    void pick_entity();                                 // 0x4ed8d0
+    __forceinline void update_map();                                  // 0x52f250
+    __forceinline void update_dialog();                               // 0x5305b0
+    __forceinline void update_mode4();                                // 0x52cf60
+    __forceinline void pick_entity();                                 // 0x4ed8d0 (fastcall free function pick_entity(GuiCtx*))
 };
 
 
 struct Editor_s2b5c0 {
-    void update_checks();                        // 0x4bf640
-    void refresh();                                     // 0x4c77c0
+    __forceinline void update_checks();                        // 0x4bf640
+    __forceinline void refresh();                                     // 0x4c77c0
 };
 
 
@@ -1961,10 +1935,10 @@ struct Terrain_s2bf40 {
     char f845e094[0x10000];                             // +0x845e094
 
     __declspec(noinline) void clear();                  // 0x52c290
-    void update(int* objs, vector4* pos, int sel, int mode, int flag);  // 0x52bf40
-    void load_layer(int* objs, int index);                              // 0x467250
-    void brush(int* objs, int* sel, int* col, float* d, int* mode, int* flag, char* place); // 0x52c2b0
-    void emit_particle(int layer, int blend, int cx, int cy, float h);     // 0x47ff60
+    __declspec(noinline) void update(int* objs, vector4* pos, int sel, int mode, int flag);  // 0x52bf40
+    __forceinline void load_layer(int* objs, int index);                              // 0x467250
+    __forceinline void brush(int* objs, int* sel, int* col, float* d, int* mode, int* flag, char* place); // 0x52c2b0
+    __forceinline void emit_particle(int layer, int blend, int cx, int cy, float h);     // 0x47ff60
 };
 
 
@@ -1994,7 +1968,6 @@ extern double g_001;                 // 0x59c480  unused here (other slices)
 
 void* __cdecl operator new[](uint size);      // 0x535482  ??_U@YAPAXI@Z operator new[]
 unsigned __cdecl pack_color(const float* c);           // 0x40e440
-float* __cdecl unpack_color(float* out, const unsigned* argb);  // 0x40e4e0
 
 // ---------------------------------------------------------------------------------------------------
 // brush element record: 24 bytes. The array header (arg1) is {int count; ...}, element i starts at
@@ -2002,8 +1975,8 @@ float* __cdecl unpack_color(float* out, const unsigned* argb);  // 0x40e4e0
 struct BrushElem_s2c2b0 {
     int    f0, f1, f2, f3, f4;
     float* v;                        // +0x14  0xac440-byte value block (0x1a4*0x2a1 dwords), or 0
-    void clear();                     // 0x52ce00  clear the whole block
-    void put(int* a, int* b, int* value);   // 0x52ce70  lazy-alloc + store one cell
+    __forceinline void clear();                     // 0x52ce00  clear the whole block
+    __forceinline void put(int* a, int* b, int* value);   // 0x52ce70  lazy-alloc + store one cell
 };
 
 struct SceneBrush_s2c2b0 {
@@ -2012,8 +1985,8 @@ struct SceneBrush_s2c2b0 {
     int  h;                          // 0x27c  grid height
     char pad280[0x30c - 0x280];
     // per-cell terrain records (0x94 bytes, x stride 0xfb rows) live at +0x30c; two floats used.
-    void clamp(int* out, int* in);   // 0x52cef0  scale a cell coordinate into the grid
-    void brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB);  // 0x52c2b0
+    __forceinline void clamp(int* out, int* in);   // 0x52cef0  scale a cell coordinate into the grid
+    __declspec(noinline) void brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB);  // 0x52c2b0
 };
 
 // ======================================================= slice s0052ce00: classes, globals, helpers
@@ -2036,13 +2009,349 @@ struct Elem_s2ce00 {
     int f3;
     int f4;
     float* v;                                            // +0x14  0xac440-byte value block
-    void clear();                                        // 0x52ce00
-    void put(int* ix, int* iy, int* value);              // 0x52ce70
+    __declspec(noinline) void clear();                                        // 0x52ce00
+    __declspec(noinline) void put(int* ix, int* iy, int* value);              // 0x52ce70
 };
 
 struct Scene_s2ce00 {
-    int* clamp(int* out, int* in);                       // 0x52cef0
+    __declspec(noinline) int* clamp(int* out, int* in);                       // 0x52cef0
 };
 
+
+
+
+// ---- sig s1: canonical declarations (minimal) and forwarders from the per-slice view classes to them.
+namespace rgl {
+vector4 unpack_color(const unsigned* argb);   // 0x40e4e0
+}
+struct conv_rec; struct GuiCtx;
+void __fastcall conv_build_scene(conv_rec*);   // 0x4c8630
+void __fastcall pick_entity(GuiCtx*);   // 0x4ed8d0
+struct SlotChan {
+    void play(int);   // 0x4875e0
+};
+struct UiD {
+    void set_value(float);   // 0x48baa0
+};
+struct level {
+    void query_segment(const float*, const float*, unsigned, shape_base**, int*);   // 0x439870
+};
+struct RecZSubB {
+    RecZSubB* init();   // 0x4353a0
+};
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct ConvScreen; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionHud; struct MissionSource; struct MsgLog; struct NamedRec; struct OriginPairs; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct TerrainX; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct conv_rec; struct gui_manager; struct gui_obj; struct gui_view; struct level; struct pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct terrain_obj; struct tstring; struct vec2;
+namespace rgl { struct entity; }
+
+struct ItemRef;
+struct Agent {
+    int pick_attack_dir(unsigned);   // 0x43f970
+    unsigned pick_front();   // 0x43b9e0
+    void cycle_slot(int);   // 0x44bc30
+    void note_blow(Blow*);   // 0x457af0
+    void on_wield_reset();   // 0x445a20
+    ItemRef slot_pair(int) const;   // 0x432790
+};
+struct AgentTable {
+    int first_used();   // 0x43b1b0
+    void next_used(unsigned*);   // 0x43b160
+};
+struct AgentX {
+    bool f100_is_0x48_and_charged() const;   // 0x432470
+    bool is_enemy(Agent const*) const;   // 0x432350
+    bool is_friend(Agent const*) const;   // 0x4323a0
+    float speed_scale() const;   // 0x432450
+};
+struct BlockOwner {
+    void init(ContainerBase*, int);   // 0x4dd920
+};
+struct ConvScreen {
+    void refresh(int, int*);   // 0x4f73c0
+};
+struct CreateGameOptionsPage {
+    void update_checks();   // 0x4bf640
+};
+struct DialogMgr {
+    int listener();   // 0x460670
+    int speaker();   // 0x460640
+    void start(int, int, int, int, char);   // 0x4610b0
+};
+struct ForceLabel {
+    void make_label(char*);   // 0x48d940
+};
+struct Game {
+    void more_start();   // 0x51f800
+};
+struct GameData {
+    char const* module_path(char const*);   // 0x4639d0
+    int skill_level(int, int);   // 0x437b20
+    tstring scene_path(int);   // 0x463950
+};
+struct ItemRef {
+    int item;
+    unsigned m4;
+    int max_amount() const;   // 0x434b70
+    int stat_1ec();   // 0x434c50
+    void name(char*);   // 0x512730
+};   // layout of src/game/item_ref.h ItemRef (8 bytes: item, m4); that header clashes with this file's g_items
+struct LangTables {
+    tstring* find(tstring const*);   // 0x4c6010
+};
+struct Local {
+    void read(stream_base&);   // 0x524f00
+};
+struct Map10007 {
+    int lookup(unsigned);   // 0x48ad00
+};
+struct MapEditorDialog {
+    void refresh();   // 0x4c77c0
+    void update();   // 0x5305b0
+};
+struct MapEditor_s2cf60 {
+    void update();   // 0x52cf60
+};
+struct MapEditor_s2f250 {
+    void update();   // 0x52f250
+};
+struct MapFlags {
+    void commit(char*);   // 0x513710
+};
+struct MapObject {
+    tstring* mesh_ptr();   // 0x4c6ca0
+};
+struct Mission {
+    char mode_flag1() const;   // 0x435840
+    void camera_to(rgl::matrix const*, float const*);   // 0x4fa790
+    int add_placed(const int*, const int*, const int*, rgl::matrix const*, int*);   // 0x44f870
+    void refresh_agent(Agent*);   // 0x4f7e00
+};
+struct MissionG {
+    void frame(float, bool);   // 0x483f60
+};
+struct MissionHud {
+    void update_camera(float);   // 0x4f8c80
+    void update_equipment();   // 0x4f8b40
+    void update_status();   // 0x4fb350
+};
+struct MissionSource {
+    void pick(int*);   // 0x4d5410
+};
+struct MsgLog {
+    void add(tstring, int);   // 0x452c00
+    void flush();   // 0x4f1390
+};
+struct NamedRec {
+    void setup2(tstring const*, tstring const*, tstring const*, int);   // 0x48a3d0
+};
+struct OriginPairs {
+    bool clicked(int);   // 0x48ac90
+    bool is_down(int);   // 0x48ac50
+};
+struct Party {
+    int skill_level(int);   // 0x4b2370
+    void add_xp_to_stack(int, int);   // 0x4b1d80
+};
+struct Picker {
+    void collect(unsigned, Pickable**, int*);   // 0x51a3a0
+};
+struct PlaneTrace {
+    void intersect(rgl::vector4*, rgl::vector4 const*, rgl::vector4 const*);   // 0x51a2d0
+};
+struct PolyMesh {
+    void build_geometry();   // 0x470a00
+};
+struct Poser {
+    void add_extra(int);   // 0x442110
+};
+struct Scene {
+    PartyRecIO* get(int);   // 0x51ee50
+};
+struct Shape {
+    void build_ribbons(rgl::mesh*);   // 0x4e6a70
+    void build_spikes(rgl::mesh*);   // 0x4e65e0
+    void polygon_to_mesh(rgl::mesh*);   // 0x4e75a0
+};
+struct Slot {
+    int is_ready(int);   // 0x487900
+};
+struct StrTable {
+    tstring* lookup(tstring const&);   // 0x43a1e0
+};
+struct TerrainX {
+    void emit_particle(int, int, int, int, float);   // 0x47ff60
+    void light_entities(rgl::mesh**, int);   // 0x47ce00
+};
+struct Timer {
+    float elapsed() const;   // 0x432c10
+};
+struct WindowMgrW {
+    void open(int);   // 0x494260
+    void set_state(int);   // 0x495700
+};
+namespace c49c2c0 {
+struct Mission {
+    void order(int, int);   // 0x49c2c0
+};
+}
+struct camera_ray {
+    void screen_to_world(rgl::vector4*, rgl::vector4*);   // 0x4bd2f0
+};
+struct gui_manager {
+    void draw_string(tstring*, float, int, char);   // 0x4e43e0
+    void set_o568(gui_obj*, bool);   // 0x42cdb0
+};
+struct gui_view {
+    void set_view(float const*);   // 0x4c5190
+};
+namespace rgl {
+struct world {
+    rgl::entity* create_entity(int);   // 0x428440
+    void remove_entity(int);   // 0x41f0d0
+};
+}
+struct snd_bank {
+    void update_all(int);   // 0x462760
+};
+struct snd_slot {
+    void update(int);   // 0x4625d0
+};
+struct terrain_obj {
+    void load_layer(int*, int);   // 0x467250
+};
+__forceinline void Gui_s2b5c0::add(tstring a0, int a1) { ((MsgLog*)this)->add(a0, a1); }
+__forceinline void MsgLog_s261e0::add(tstring a0, int a1) { ((MsgLog*)this)->add(a0, a1); }
+__forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((Poser*)this)->add_extra((int)a0); }
+__forceinline int rgl::mesh_s2ae70::add_face(int a0, int a1, int a2) { return ((rgl::mesh*)this)->add_face(a0, a1, a2); }
+__forceinline int rgl::mesh_s2ae70::add_point(rgl::vector4 const* a0) { return ((rgl::mesh*)this)->add_point(a0); }
+__forceinline void Party_s29840::add_xp_to_stack(int a0, int a1) { ((Party*)this)->add_xp_to_stack(a0, a1); }
+__forceinline void Terrain_s2bf40::brush(int* a0, int* a1, int* a2, float* a3, int* a4, int* a5, char* a6) { ((SceneBrush_s2c2b0*)this)->brush(a0, a1, a2, a3, a4, a5, a6); }
+__forceinline void MissionSub_s261e0::build_geometry() { ((PolyMesh*)this)->build_geometry(); }
+__forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_ribbons((rgl::mesh*)a0); }
+__forceinline void Shape_s2ae70::build_spikes(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_spikes((rgl::mesh*)a0); }
+__forceinline void Mission_s257f0::camera_to(rgl::matrix* a0, float& a1) { ((Mission*)this)->camera_to((rgl::matrix const*)a0, (float const*)&a1); }
+__forceinline void SceneBrush_s2c2b0::clamp(int* a0, int* a1) { ((Scene_s2ce00*)this)->clamp(a0, a1); }
+__forceinline void BrushElem_s2c2b0::clear() { ((Elem_s2ce00*)this)->clear(); }
+__forceinline char KeyTable_s261e0::clicked(int a0) { return (char)((OriginPairs*)this)->clicked(a0); }
+__forceinline char KeyTable_s284a0::clicked(int a0) { return (char)((OriginPairs*)this)->clicked(a0); }
+__forceinline void Scene_s29ec0::collect(int a0, SceneEntity_s29ec0** a1, int* a2) { ((Picker*)this)->collect((unsigned)a0, (Pickable**)a1, a2); }
+__forceinline void Flags5e291c_s261e0::commit(char* a0) { ((MapFlags*)this)->commit(a0); }
+__forceinline Entity_s2ae70* World_s2ae70::create_entity(int a0) { return (Entity_s2ae70*)((rgl::world*)this)->create_entity(a0); }
+__forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot(a0); }
+__forceinline void gui_manager_s29ec0::draw_string(tstring const* a0, float a1, unsigned a2, int a3) { ((gui_manager*)this)->draw_string((tstring*)a0, a1, (int)a2, (char)a3); }
+__forceinline void gui_manager_s2ae70::draw_string(tstring const* a0, float a1, unsigned a2, int a3) { ((gui_manager*)this)->draw_string((tstring*)a0, a1, (int)a2, (char)a3); }
+__forceinline float MissionSub_s261e0::elapsed() const { return ((Timer*)this)->elapsed(); }
+__forceinline void Terrain_s2bf40::emit_particle(int a0, int a1, int a2, int a3, float a4) { ((TerrainX*)this)->emit_particle(a0, a1, a2, a3, a4); }
+__forceinline bool Agent_s29130::f100_is_0x48_and_charged() const { return ((AgentX*)this)->f100_is_0x48_and_charged(); }
+__forceinline void Screen_s261e0::f_529ec0() { ((Screen_s29ec0*)this)->f_529ec0(); }
+__forceinline tstring* StrTable_s29ec0::find(tstring const* a0) { return ((LangTables*)this)->find(a0); }
+__forceinline int AgentTable_s257f0::first_used() { return ((AgentTable*)this)->first_used(); }
+__forceinline int AgentTable_s26130::first_used() { return ((AgentTable*)this)->first_used(); }
+__forceinline int AgentTable_s261e0::first_used() { return ((AgentTable*)this)->first_used(); }
+__forceinline int AgentTable_s284a0::first_used() { return ((AgentTable*)this)->first_used(); }
+__forceinline unsigned AgentTable_s29840::first_used() { return (unsigned)((AgentTable*)this)->first_used(); }
+__forceinline void MsgLog_s261e0::flush() { ((MsgLog*)this)->flush(); }
+__forceinline void Mission_s29130::fn_529840(int a0) { ((Mission_s29840*)this)->fn_529840(a0); }
+__forceinline void Mission_s261e0::fn_529d80() { ((Mission_s29840*)this)->fn_529d80(); }
+__forceinline void Mission_s261e0::frame(float a0, char a1) { ((MissionG*)this)->frame(a0, (bool)a1); }
+__forceinline Party_s29840* PartyMgr_s29840::get(int a0) { return (Party_s29840*)((Scene*)this)->get(a0); }
+__forceinline material_s2ae70* resmgr_s2ae70::get_material(tstring* a0) { return (material_s2ae70*)((resource_manager*)this)->get_material(*(rgl::string const*)a0); }
+__forceinline int PartyMgr_s29130::index_of(unsigned a0) { return ((Map10007*)this)->lookup(a0); }
+__forceinline int PartyMgr_s29840::index_of(unsigned a0) { return ((Map10007*)this)->lookup(a0); }
+__forceinline void Src_s261e0::init(int a0, int a1) { ((BlockOwner*)this)->init((ContainerBase*)a0, a1); }
+__forceinline void Screen_s261e0::init_order_markers() { ((Screen_s2ae70*)this)->init_order_markers(); }
+__forceinline void shape_base_s2b5c0::intersect(rgl::vector4* a0, rgl::vector4 const* a1, rgl::vector4 const* a2) { ((PlaneTrace*)this)->intersect(a0, a1, a2); }
+__forceinline char KeyTable_s284a0::is_down(int a0) { return (char)((OriginPairs*)this)->is_down(a0); }
+__forceinline bool Agent_s261e0::is_enemy(Agent_s261e0 const* a0) const { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
+__forceinline bool Agent_s284a0::is_enemy(Agent_s284a0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
+__forceinline bool Agent_s29ec0::is_enemy(Agent_s29ec0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
+__forceinline bool Agent_s284a0::is_friend(Agent_s284a0* a0) { return ((AgentX*)this)->is_friend((Agent const*)a0); }
+__forceinline bool Agent_s29ec0::is_friend(Agent_s29ec0* a0) { return ((AgentX*)this)->is_friend((Agent const*)a0); }
+__forceinline char KeyNames_s284a0::is_ready(int a0) { return (char)((Slot*)this)->is_ready(a0); }
+__forceinline char KeyReady_s261e0::is_ready(int a0) { return (char)((Slot*)this)->is_ready(a0); }
+__forceinline int DialogMgr_s26130::listener() { return ((DialogMgr*)this)->listener(); }
+__forceinline void Terrain_s2bf40::load_layer(int* a0, int a1) { ((terrain_obj*)this)->load_layer(a0, a1); }
+__forceinline tstring* StrTable_s261e0::lookup(tstring* a0) { return ((StrTable*)this)->lookup(*(tstring const*)a0); }
+__forceinline tstring* StrTable_s29ec0::lookup(tstring const& a0) { return ((StrTable*)this)->lookup(a0); }
+__forceinline tstring* StrTable_s2ae70::lookup(tstring const& a0) { return ((StrTable*)this)->lookup(a0); }
+__forceinline tstring* StrTable_s2b5c0::lookup(tstring const& a0) { return ((StrTable*)this)->lookup(a0); }
+__forceinline void LabelSub_s261e0::make_label(char* a0) { ((ForceLabel*)this)->make_label(a0); }
+__forceinline int ItemRef_s2b5c0::max_amount() { return ((ItemRef*)this)->max_amount(); }
+__forceinline tstring* MapObject_s29ec0::mesh_ptr() { return ((MapObject*)this)->mesh_ptr(); }
+__forceinline bool Mission_s261e0::mode_flag1() const { return (bool)((Mission*)this)->mode_flag1(); }
+__forceinline char const* GameData_s27c90::module_path(char const* a0) { return ((GameData*)this)->module_path(a0); }
+__forceinline void GameData_s29130::more_start() { ((Game*)this)->more_start(); }
+__forceinline void ItemRef_s29ec0::name(char* a0) { ((ItemRef*)this)->name(a0); }
+__forceinline void ItemRef_s2b5c0::name(char* a0) { ((ItemRef*)this)->name(a0); }
+__forceinline void AgentTable_s257f0::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
+__forceinline void AgentTable_s26130::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
+__forceinline void AgentTable_s261e0::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
+__forceinline void AgentTable_s284a0::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
+__forceinline void AgentTable_s29840::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
+__forceinline void Agent_s284a0::note_blow(Blow_s284a0* a0) { ((Agent*)this)->note_blow((Blow*)a0); }
+__forceinline void Agent_s284a0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
+__forceinline void Agent_s2b5c0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
+__forceinline void MainMenu_s261e0::open(int a0) { ((WindowMgrW*)this)->open(a0); }
+__forceinline void Mission_s2ae70::order(int a0, int a1) { ((c49c2c0::Mission*)this)->order(a0, a1); }
+__forceinline void Screen_s261e0::order_tick() { ((Screen_s2ae70*)this)->order_tick(); }
+__forceinline void Src_s261e0::pick(int* a0) { ((MissionSource*)this)->pick(a0); }
+__forceinline int Agent_s29130::pick_attack_dir(unsigned a0) { return ((Agent*)this)->pick_attack_dir(a0); }
+__forceinline int Agent_s29130::pick_front() { return (int)((Agent*)this)->pick_front(); }
+__forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((Shape*)this)->polygon_to_mesh((rgl::mesh*)a0); }
+__forceinline void BrushElem_s2c2b0::put(int* a0, int* a1, int* a2) { ((Elem_s2ce00*)this)->put(a0, a1, a2); }
+__forceinline void MissionSub_s27c90::read(stream_base* a0) { ((Local*)this)->read(*(stream_base*)a0); }
+__forceinline void Editor_s2b5c0::refresh() { ((MapEditorDialog*)this)->refresh(); }
+__forceinline void Game_s25160::refresh(int a0, int* a1) { ((ConvScreen*)this)->refresh(a0, a1); }
+__forceinline void Mission_s261e0::release_item(int a0) { ((Mission_s27c90*)this)->release_item(a0); }
+__forceinline void MatrixExt_s284a0::rotate_fu(float* a0) { ((rgl::matrix*)this)->rotate_about_s((float const*)a0); }
+__forceinline void MatrixExt_s284a0::rotate_sf(float* a0) { ((rgl::matrix*)this)->rotate_about_u((float const*)a0); }
+__forceinline void GameData_s261e0::save_scene(int a0) { ((GameData_s27c90*)this)->save_scene(a0); }
+__forceinline void Mission_s261e0::save_scene_data() { ((Mission_s27c90*)this)->save_scene_data(); }
+__forceinline tstring GameData_s27c90::scene_path(int a0) { return ((GameData*)this)->scene_path(a0); }
+__forceinline void Camera_s2b5c0::screen_to_world(rgl::vector4* a0, rgl::vector4* a1) { ((camera_ray*)this)->screen_to_world(a0, a1); }
+__forceinline void Gui_s2b5c0::set_o568(void* a0, int a1) { ((gui_manager*)this)->set_o568((gui_obj*)a0, (bool)a1); }
+__forceinline void MsgLog_s261e0::set_o568(int a0, int a1) { ((gui_manager*)this)->set_o568((gui_obj*)a0, (bool)a1); }
+__forceinline void gui_manager_s2ae70::set_o568(void* a0, int a1) { ((gui_manager*)this)->set_o568((gui_obj*)a0, (bool)a1); }
+__forceinline void MainMenu_s261e0::set_state(int a0) { ((WindowMgrW*)this)->set_state(a0); }
+__forceinline void Gui_s2b5c0::set_view(float const* a0) { ((gui_view*)this)->set_view(a0); }
+__forceinline void MsgLog_s261e0::set_view(float* a0) { ((gui_view*)this)->set_view((float const*)a0); }
+__forceinline void gui_manager_s29ec0::set_view(float const* a0) { ((gui_view*)this)->set_view(a0); }
+__forceinline void gui_manager_s2ae70::set_view(float const* a0) { ((gui_view*)this)->set_view(a0); }
+__forceinline void MainMenu_s261e0::setup2(tstring* a0, tstring* a1, tstring* a2, int* a3) { ((NamedRec*)this)->setup2((tstring const*)a0, (tstring const*)a1, (tstring const*)a2, (int)a3); }
+__forceinline int GameData_s29ec0::skill_level(int a0, int a1) { return ((GameData*)this)->skill_level(a0, a1); }
+__forceinline int Party_s29840::skill_level(int a0) { return ((Party*)this)->skill_level(a0); }
+__forceinline int DialogMgr_s257f0::speaker() { return ((DialogMgr*)this)->speaker(); }
+__forceinline float Agent_s257f0::speed_scale() const { return ((AgentX*)this)->speed_scale(); }
+__forceinline float Agent_s29ec0::speed_scale() { return ((AgentX*)this)->speed_scale(); }
+__forceinline void DialogMgr_s261e0::start(int a0, int a1, int a2, int a3, char a4) { ((DialogMgr*)this)->start(a0, a1, a2, a3, a4); }
+__forceinline int ItemRef_s29ec0::stat_1ec() { return ((ItemRef*)this)->stat_1ec(); }
+__forceinline void vec3_s257f0::sub_assign(vec3_s257f0 const& a0) { ((Vec3*)this)->sub_assign((Vec3 const&)a0); }
+__forceinline void Game_s25160::update() { ((ViewObj_s257f0*)this)->update(); }
+__forceinline void Screen_s261e0::update(float a0) { ((ViewCtrl_s284a0*)this)->update(a0); }
+__forceinline void SoundSlot_s261e0::update(int a0) { ((snd_slot*)this)->update(a0); }
+__forceinline void Terrain_s2b5c0::update(int* a0, rgl::vector4* a1, int a2, int a3, int a4) { ((Terrain_s2bf40*)this)->update(a0, a1, a2, a3, a4); }
+__forceinline void SoundBank_s261e0::update_all(int a0) { ((snd_bank*)this)->update_all(a0); }
+__forceinline void Screen_s261e0::update_camera(float a0) { ((MissionHud*)this)->update_camera(a0); }
+__forceinline void Editor_s2b5c0::update_checks() { ((CreateGameOptionsPage*)this)->update_checks(); }
+__forceinline void Mission_s2b5c0::update_dialog() { ((MapEditorDialog*)this)->update(); }
+__forceinline void Screen_s261e0::update_equipment() { ((MissionHud*)this)->update_equipment(); }
+__forceinline void ViewCtrl_s284a0::update_equipment() { ((MissionHud*)this)->update_equipment(); }
+__forceinline void Mission_s2b5c0::update_map() { ((MapEditor_s2f250*)this)->update(); }
+__forceinline void Screen_s261e0::update_marks() { ((MissionHud_s29130*)this)->update_marks(); }
+__forceinline void Mission_s2b5c0::update_mode4() { ((MapEditor_s2cf60*)this)->update(); }
+__forceinline void Screen_s261e0::update_status() { ((MissionHud*)this)->update_status(); }
+__forceinline void Screen_s261e0::update_ui() { ((Mission_s2b5c0*)this)->update_ui(); }
+
+__forceinline ItemRef Agent_s284a0::slot_pair(int a0) { return ((Agent*)this)->slot_pair(a0); }
+__forceinline ItemRef Agent_s29130::slot_pair(int a0) const { return ((Agent*)this)->slot_pair(a0); }
+__forceinline Blow_s284a0::Blow_s284a0() { ((RecZSubB*)this)->init(); }
+__forceinline int rgl::mesh_s2ae70::add_vertex(int a0, const vec2_s2ae70* a1, const unsigned* a2, const vector4* a3, const int* a4) { return ((rgl::mesh*)this)->add_vertex(a0, (const vec2*)a1, a2, a3, a4); }
+__forceinline int Mission_s2b5c0::add_placed(const int* a0, const int* a1, const int* a2, const matrix* a3, int* a4) { return ((Mission*)this)->add_placed(a0, a1, a2, a3, a4); }
+__forceinline void Scene_s29ec0::query_segment(const float* a0, const float* a1, unsigned a2, shape_base_s29ec0** a3, int* a4) { ((level*)this)->query_segment(a0, a1, a2, (shape_base**)a3, a4); }
+__forceinline void Scene_s2b5c0::query_segment(const float* a0, const float* a1, unsigned a2, shape_base_s2b5c0** a3, int* a4) { ((level*)this)->query_segment(a0, a1, a2, (shape_base**)a3, a4); }
+__forceinline void Mgr_s25160::update() { ((MsgLog*)this)->flush(); }
+__forceinline void Dlg_s25160::open(int a0) { ((WindowMgrW*)this)->set_state(a0); }
+__forceinline void EmitSub_s261e0::play(int a0) { ((SlotChan*)this)->play(a0); }
+__forceinline void World_s27c90::remove_entity(int a0) { ((rgl::world*)this)->remove_entity(a0); }
+__forceinline void Terrain_s2b5c0::conv_build_scene() { ::conv_build_scene((conv_rec*)this); }
+__forceinline void Mission_s2b5c0::pick_entity() { ::pick_entity((GuiCtx*)this); }
 
 #endif // MISSION5_MISSION_5_H
