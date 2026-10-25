@@ -20,7 +20,7 @@ struct FireRay;
 struct FireAgent { void ray(FireRay* r); };            // 0x46b410 (terrain_a/terrain_a.cpp: Missile::ray is the same code)
 struct Obj3;   // members in agent3/agent_types.h (set_v184 0x433740, reset_pending 0x433810)
 struct gui_timer { void set_delay(float seconds); };     // 0x42cd20 (strat/gui_manager.cpp; Timer::set_delay)
-struct AnimRec { float phase(); };                       // 0x4231f0 (the animation channel's phase: Channel::phase)
+// AnimRec::phase 0x4231f0: agent/curve.h
 struct mnode { void calc_bounds(rgl::vector4* mn, rgl::vector4* mx); };   // 0x438d80 (agent2/agent_stats.cpp)
 namespace rgl {
 struct mesh_ext { void clear_geometry(); };              // 0x428e80 (rgl/scene/scene.h)

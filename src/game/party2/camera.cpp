@@ -58,9 +58,7 @@ struct Sel {                                                                    
 struct ForceLabel {
     void make_label(char* out);   // 0x48d940 mission_ui2/mission_3.cpp
 };
-struct level {
-    int nearest_face(const float* p);   // 0x439a50 agent2/agent_stats.cpp
-};
+// level::nearest_face 0x439a50 (agent2/agent_stats.cpp): terrain_b/cell_grid.h
 struct PartyMgrW {
     int add_slot();   // 0x493960 world_data/world_data.cpp
 };

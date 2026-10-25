@@ -59,10 +59,16 @@ struct lod_mesh2 {              // 0xe0 bytes; the record of mesh.h's lod_mesh w
 
 // resource-manager members the scene code calls that ../resource.h does not declare (no new fields): the definitions are
 // rgl/core/resmgr.cpp's `resmgr` (global class), which derives from resource.h's resource_manager the same way
+struct lod_group;
 struct resmgr : resource_manager {
     // (release 0x4175f0, which clears field +0x14 of the resource, is the free stdcall clear_f14: CALL_STDCALL_ON below)
     rgl::mesh* get_object(const rgl::string* name);             // 0x419540 (a mesh resource by name; callers clone it)
     texture* get_render_target(int w, int h, int fmt, int ext, int f34);   // 0x41b7d0
+    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);      // 0x41b960 (hidden return pointer, ret 4)
+    lod_group* make_lod_mesh(const rgl::string& pat, bool copy);         // 0x41ca60 (ret 8)
+    lod_group* get_lod_mesh(const rgl::string& name);                    // 0x41cdc0
+    texture* get_texture(int w, int h, int fmt);                           // 0x41c400
+    skin* get_shadow_skin(int w, int h, int fmt, int f34);                 // 0x41c420
 };
 #include "../../game/world_data/thiscall_free.h"                    // CALL_STDCALL_ON
 struct named_object;

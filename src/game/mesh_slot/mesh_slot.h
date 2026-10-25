@@ -53,15 +53,7 @@ struct scene_ms2 : rgl::scene {
 // resource-manager members this TU calls (the lookups of src/rgl/resource.h plus the ones core/resmgr.h defines)
 // The manager's own class is `resmgr` (src/rgl/core/resmgr.h, global 0x5d6fa0), which cannot be included next to resource.h: only the members
 // this TU calls are declared, under that name (the definitions' signatures: rgl::string keys, the lod group as `lod_group`).
-struct lod_group;
-struct resmgr {
-    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);      // 0x41b960 (hidden return pointer, ret 4)
-    lod_group* make_lod_mesh(const rgl::string& pat, bool copy);         // 0x41ca60 (ret 8)
-    lod_group* get_lod_mesh(const rgl::string& name);                    // 0x41cdc0
-    texture* get_render_target(int w, int h, int fmt, int ext, int f34);   // 0x41b7d0
-    texture* get_texture(int w, int h, int fmt);                           // 0x41c400
-    skin* get_shadow_skin(int w, int h, int fmt, int f34);                 // 0x41c420
-};
+// (resmgr: rgl/scene/scene.h declares these members: find_meshes 0x41b960, make_lod_mesh 0x41ca60, get_lod_mesh 0x41cdc0, get_render_target 0x41b7d0, get_texture 0x41c400, get_shadow_skin 0x41c420)
 #define g_resmgr_c ((::resmgr*)&g_resmgr)
 // (a tstring is an rgl::string, and the lod group is the rgl::lod_mesh2 record of the callers)
 struct resmgr_ms : resource_manager {
