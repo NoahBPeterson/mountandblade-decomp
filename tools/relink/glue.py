@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """glue.py: generate what the standalone link needs besides our module objects.
 
-usage: glue.py [--out work/relink/glue]    (run tools/relink/trial_link.py and resolve_map.py first)
+usage: glue.py [--out work/relink/glue] [--log work/relink/link.log] [--map work/relink/resolve_map.json]
+       (run tools/relink/trial_link.py and resolve_map.py first)
 
 Reads the last trial link's unresolved symbols (work/relink/link.log) and the resolution map
 (work/relink/resolve_map.json: the original address the equivalence harness gives every symbol a module references),
@@ -251,13 +252,15 @@ def patch_import_names(lib, patch):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "relink", "glue"))
+    ap.add_argument("--log", default=os.path.join(ROOT, "work", "relink", "link.log"), help="a trial link's log (without --glue)")
+    ap.add_argument("--map", default=os.path.join(ROOT, "work", "relink", "resolve_map.json"))
     a = ap.parse_args()
     os.chdir(ROOT)
     import resolve as R
     img = R.Image()
     os.makedirs(a.out, exist_ok=True)
-    unres = unresolved_symbols(open(os.path.join(ROOT, "work", "relink", "link.log"), errors="replace").read())
-    rmap = json.load(open(os.path.join(ROOT, "work", "relink", "resolve_map.json")))
+    unres = unresolved_symbols(open(a.log, errors="replace").read())
+    rmap = json.load(open(a.map))
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
     # data our modules define, by address (a name the resolver mapped to a data VA while defined in that object)
     our_data = {}
