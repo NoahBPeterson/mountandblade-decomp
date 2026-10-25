@@ -15,10 +15,10 @@
 #include "../str_table.h"
 extern StrTable g_strtable;                             // 0x5e2a18
 
-struct Gui {
-    int draw_string(const tstring* s, float y, int color, char b);   // 0x4e43e0
+struct gui_manager {                                    // game/strat/gui_manager.h (cannot be included next to this slice's types)
+    void draw_string(tstring* s, float height, int color, char wrap);   // 0x4e43e0 (ret 0x10)
 };
-extern Gui g_gui;                                       // 0x5d7080
+extern gui_manager g_gui;                               // 0x5d7080
 
 #include "../log_stream.h"                       // LogStream: the engine text log at 0x5a9f60 (slot 10 = w_cstr)
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
@@ -47,7 +47,6 @@ extern int g_show_faction_color;                               // 0xa181b0
 
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
-unsigned __stdcall color_of(float t, int flag);       // 0x4b1930
 
 // ---- the two points the distance test reads -----------------------------------------------------------
 struct DistObj {
@@ -98,6 +97,7 @@ void GameData::party_counts(unsigned id, int* num, int* num2, int* wounded)
     }
 }
 
+#pragma warning(disable:4715)     // draw_party_line returns draw_string's eax on its last path
 // @ 0x51c090
 int __stdcall draw_party_line(int index)
 {
@@ -106,10 +106,10 @@ int __stdcall draw_party_line(int index)
     int flags = info->flags;
     if (flags & 0x10000000) {
         tstring k("ui_battleground");
-        g_gui.draw_string(g_strtable.lookup(&k), 0.02f, 0xfff0e0d0, 1);
+        g_gui.draw_string(g_strtable.lookup(k), 0.02f, 0xfff0e0d0, 1);
     } else {
         tstring k("ui_tracks");
-        g_gui.draw_string(g_strtable.lookup(&k), 0.02f, 0xfff0e0d0, 1);
+        g_gui.draw_string(g_strtable.lookup(k), 0.02f, 0xfff0e0d0, 1);
     }
 
     char buf[512];
@@ -134,14 +134,14 @@ int __stdcall draw_party_line(int index)
         if (lo == hi) {
             if (lo < 2) {
                 tstring k("ui_1_hour");
-                sprintf(buf, g_strtable.lookup(&k)->c_str());
+                sprintf(buf, g_strtable.lookup(k)->c_str());
             } else {
                 tstring k("ui_n_hours");
-                sprintf(buf, g_strtable.lookup(&k)->c_str(), lo);
+                sprintf(buf, g_strtable.lookup(k)->c_str(), lo);
             }
         } else {
             tstring k("ui_between_hours");
-            sprintf(buf, g_strtable.lookup(&k)->c_str(), lo, hi);
+            sprintf(buf, g_strtable.lookup(k)->c_str(), lo, hi);
         }
         {
             tstring s(buf);
@@ -162,13 +162,13 @@ int __stdcall draw_party_line(int index)
             hi2 = 1;
         if (info->flags & 0x10000000) {
             tstring k("ui_combatants");
-            sprintf(buf, g_strtable.lookup(&k)->c_str(), size);
+            sprintf(buf, g_strtable.lookup(k)->c_str(), size);
         } else if (lo2 == hi2) {
             tstring k("ui_party_size");
-            sprintf(buf, g_strtable.lookup(&k)->c_str(), size);
+            sprintf(buf, g_strtable.lookup(k)->c_str(), size);
         } else {
             tstring k("ui_party_size_between");
-            sprintf(buf, g_strtable.lookup(&k)->c_str(), lo2, hi2);
+            sprintf(buf, g_strtable.lookup(k)->c_str(), lo2, hi2);
         }
         {
             tstring s(buf);
@@ -205,11 +205,11 @@ int __stdcall draw_party_line(int index)
                     if (g_show_faction_color != 0)
                         color = *(unsigned*)&g_game->rel[r->f2c * 0xc0 + 0xa];
                     else
-                        color = color_of(g_game->rel[r->f2c * 0xc0 + 0xb], 1);
+                        color = g_game->color_of(g_game->rel[r->f2c * 0xc0 + 0xb], 1);   // 0x4b1930
                     const tstring* name = g_strtable.find((const tstring*)((char*)r + 0x10));
                     if (name == 0)
                         name = (const tstring*)r;
-                    return g_gui.draw_string(name, 0.025f, color, 1);
+                    g_gui.draw_string((tstring*)name, 0.025f, color, 1);   // the function ends here: eax stays draw_string's result (the original returns it)
                 }
             }
         }

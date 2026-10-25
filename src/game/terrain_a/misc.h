@@ -120,7 +120,6 @@ struct texture_x : texture {
 };
 struct material_x : material {
     void bind(texture** textures, const float* t);      // 0x468440
-    void bind_pixel_shader();                   // 0x461f20
 };
 struct skin_x : skin {
     void apply_state(const float* t);           // 0x4684d0 (flags +0x1c, shader +0x30, specular colour +0x34, power +0x44)
@@ -195,7 +194,6 @@ struct FireAgent {
     void ray(FireRay* r);                       // 0x46b410
 };
 
-struct ProjView { void project(float* out, unsigned p); };    // 0x4621f0 (the frustum's clip projection of a point; the frustum is the one at cam+0x10c)
 
 // ---- scene view setup (0x46ca50) -------------------------------------------------------------------------------------
 struct light_src {                              // one scene light; types 0/1/2 map to D3DLIGHT_POINT/SPOT/DIRECTIONAL

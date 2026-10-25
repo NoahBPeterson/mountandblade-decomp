@@ -20,6 +20,10 @@ __forceinline vector4 operator+(const vector4& a, const vector4& b) { return vec
 vector4 unpack_color(const unsigned* argb);                         // 0x40e4e0
 
 matrix* identity(matrix* out);                                          // 0x40cd00 (cdecl, returns out)
+} // namespace rgl
+struct pos;                                                             // include/mat4.h: the Module System position (an rgl::matrix)
+pos* __cdecl identity_pos(pos* out);                                    // 0x40cd00 (cdecl, returns out; rgl/shapes/shapes.h)
+namespace rgl {
 
 // the matrix operations that rgl_math.h does not declare (callers: emitter::spawn 0x40ec90)
 struct frame_ops : matrix {

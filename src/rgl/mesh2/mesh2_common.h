@@ -54,12 +54,13 @@ struct LangTablesBase {
     }
 };
 
+unsigned __stdcall hash_string(const tstring* key);   // 0x433bb0 (game/agent/curve.h): a free stdcall function
+
 // The translation table: the UI string table (global at 0x5e2a18) and the language tables (0x5a8e68) are instances of it.
 struct LangTables : LangTablesBase {
     tstring notfound;                                           // +0x1be60 "STR NOT FOUND"
     tstring language;                                           // +0x1be70
     LangTables();                                               // 0x4cda20
-    unsigned hash_string(const tstring* key);                          // 0x433bb0 (thiscall, ret 4)
     tstring* find(const tstring* key) throw();                  // 0x4c6010 (null when absent)
     tstring* lookup(const tstring& key) throw();                // 0x43a1e0 (never null: a shared "ui_unknown..." entry on a miss)
     void write(FILE* f, const tstring& key, const tstring& value);   // 0x4bd740 ("key|value\n" row of a language file)

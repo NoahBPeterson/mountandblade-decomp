@@ -103,22 +103,47 @@ extern "C" double atof(const char* s);          // 0x537352
 void* __cdecl operator new(unsigned n);         // 0x53545e
 int sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
-void ctor_window(void* p);                      // 0x4931a0
-void MissionUi(void* p);                      // 0x48ae20
-void scale(rgl::mesh* m, float f);              // 0x44f0c0
+// The definitions behind the helpers below live in other modules under their own declarations; the declarations here are
+// theirs (class stubs carry only the member this file calls), and the CharSheetWidget views reach them through casts.
+struct MissionUi {
+    MissionUi();   // 0x48ae20 (the widget base constructor: ui/mission_ui.cpp)
+};
+struct ContainerW {
+    void* construct();   // 0x4931a0 (the list container's constructor body: world_data)
+};
+struct MissionPanel {
+    void draw();   // 0x488d50 (ui/mission_ui.cpp)
+};
+struct ContainerBase; struct UiAInline; struct UiButton; struct WidgetB; struct WidgetC;
+
+static __forceinline void ctor_window(void* p) { ((ContainerW*)p)->construct(); }       // 0x4931a0
+static __forceinline void init_mission_ui(void* p) { new (p) MissionUi; }                // 0x48ae20
+static __forceinline void draw(CharSheetWidget* w) { ((MissionPanel*)w)->draw(); }     // 0x488d50
 
 // ---- widget factories ----------------------------------------------------------------------------------
-CharSheetWidget* new_medium_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h);        // 0x4dce70
-CharSheetWidget* make_short_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h);  // 0x4e5570
+UiAInline* make_short_button(MissionUi* parent, const tstring* caption, float a, float b, float h);  // 0x4e5570
+UiAInline* new_medium_button(MissionUi* parent, const tstring* caption, float a, float b, float h);  // 0x4dce70
 CharSheetWidget* make_medium_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h,
                            tstring* up, tstring* down,
                            float a8, float a9, float a10);                           // 0x4dcc50
-CharSheetWidget* make_hint(CharSheetWidget* parent, tstring* text, float x, float y, float sx, float sy);  // 0x4dada0
-CharSheetWidget* make_button(CharSheetWidget* parent, tstring* text, float x, float y, int flag, float sy);   // 0x509770
-void label_refresh(CharSheetWidget* w, tstring key);                                          // 0x4e4c70
-CharSheetWidget* make_scrollbar(CharSheetWidget* parent, tstring* key);                                    // 0x4f6160
-CharSheetWidget* make_editor_list(CharSheetWidget* parent, tstring* key, CharSheetWidget* child);               // 0x4f62f0
-void draw(CharSheetWidget* w);                                                      // 0x488d50
+MissionUi* make_hint(ContainerBase* parent, const tstring& text, float x, float y, float sx, float sy);  // 0x4dada0
+UiButton* make_button(Widget* parent, const tstring* text, float x, float y, int flag, float sy);   // 0x509770
+void label_refresh(MissionUi* w, tstring key);                                                    // 0x4e4c70
+WidgetB* make_scrollbar(void* parent, const tstring* key);                                       // 0x4f6160
+WidgetC* make_editor_list(void* parent, const tstring* key, int child);                          // 0x4f62f0
+#define label_refresh(w, key) label_refresh((MissionUi*)(w), key)
+static __forceinline CharSheetWidget* new_medium_button(CharSheetWidget* p, tstring* c, int a, int b, float h)
+{ return (CharSheetWidget*)new_medium_button((MissionUi*)p, c, (float)a, (float)b, h); }
+static __forceinline CharSheetWidget* make_short_button(CharSheetWidget* p, tstring* c, int a, int b, float h)
+{ return (CharSheetWidget*)make_short_button((MissionUi*)p, c, (float)a, (float)b, h); }
+static __forceinline CharSheetWidget* make_hint(CharSheetWidget* p, tstring* t, float x, float y, float sx, float sy)
+{ return (CharSheetWidget*)make_hint((ContainerBase*)p, *t, x, y, sx, sy); }
+static __forceinline CharSheetWidget* make_button(CharSheetWidget* p, tstring* t, float x, float y, int flag, float sy)
+{ return (CharSheetWidget*)make_button((Widget*)p, t, x, y, flag, sy); }
+static __forceinline CharSheetWidget* make_scrollbar(CharSheetWidget* p, tstring* k)
+{ return (CharSheetWidget*)make_scrollbar((void*)p, k); }
+static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstring* k, CharSheetWidget* c)
+{ return (CharSheetWidget*)make_editor_list((void*)p, k, (int)c); }
 
 // ---- character sheet ------------------------------------------------------------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
@@ -143,24 +168,20 @@ struct TutorialMenuRec {                        // the menu record the holder's 
 };
 // 0xa73980 is the menu holder object itself; its first dword points at the menu the tutorial
 // branch fills in (tstrings at +0x1c and +0x68, the three ints at +4/+0x4c/+0x50).
-struct MainMenuHolder {
+struct WindowMgrW {
     TutorialMenuRec* target;                    // +0
     void open(int v);                           // 0x494260
 };
-extern MainMenuHolder g_menu;                   // 0xa73980
-struct PopupDialogMgr {                          // the message-box object behind the pointer at 0xa73984 (renamed from DialogMgr: not the conversation manager 0x8ed50c8 of dialog_manager.h)
-    void open(tstring* msg, int type, const char* a, const char* b,
-              const char* c, const char* d, const char* e, const char* f);   // 0x509410
-};
-extern PopupDialogMgr* g_dialog;                     // 0xa73984 (pointer variable)
+extern WindowMgrW g_menu;                   // 0xa73980
 
-void fill_skills(CharSheet* s);                // 0x509730
-void update_skill_rows(CharSheet* s);                // 0x4ef7d0
-void open_view(CharSheet* s);                // 0x509980
-void update_detail(CharSheet* s);                // 0x4ef9f0
-void refresh_panels(CharSheet* s);                // 0x4f0820
-void update_weapons(CharSheet* s);                // 0x4f06f0
-void load_troop(CharSheet* s);                // 0x5094a0
+// the character window's methods (src/game/inventory_panel/char_window.cpp) run on this same object
+struct char_window {
+    void fill_skills();                         // 0x509730
+    void load_troop();                          // 0x5094a0
+    void open_view();                           // 0x509980
+    void init(const tstring& msg, int type, const char* a, const char* b, const char* c, const char* d, const char* e, const char* f);   // 0x509410 (the message box)
+};
+extern char_window* g_dialog;                     // 0xa73984 (pointer variable)
 
 // ---- settings access ------------------------------------------------------------------------------------
 static const char* config_text(int i)
@@ -263,7 +284,7 @@ void CharSheet::init()
     }
     label_refresh(done, tstring("char_b_done"));
 
-    fill_skills(this);
+    ((char_window*)this)->fill_skills();
 
     f4c8 = 1;
     f2d4 = -1;
@@ -302,7 +323,7 @@ void CharSheet::init()
         for (i = 0; i < num_skills; i++) {
             CharSheetWidget* row = (CharSheetWidget*)::operator new(0x188);
             if (row != 0) {
-                MissionUi(row);
+                init_mission_ui(row);
                 row->f178 = 0;
                 row->b121 = 0;
                 *(void**)row = (void*)0x591d58;
@@ -370,7 +391,7 @@ void CharSheet::init()
     }
 
     // the framed "skills" outer panel
-    ::update_skill_rows(this);
+    update_skill_rows();
     CharSheetWidget* inner;
     {
         tstring ks("char_s_skills");
@@ -387,7 +408,7 @@ void CharSheet::init()
     {
         CharSheetWidget* t = (CharSheetWidget*)::operator new(0x178);
         if (t != 0) {
-            MissionUi(t);
+            init_mission_ui(t);
         } else {
             t = 0;
         }
@@ -403,7 +424,7 @@ void CharSheet::init()
     {
         CharSheetWidget* t = (CharSheetWidget*)::operator new(0x178);
         if (t != 0) {
-            MissionUi(t);
+            init_mission_ui(t);
         } else {
             t = 0;
         }
@@ -419,7 +440,7 @@ void CharSheet::init()
     {
         CharSheetWidget* t = (CharSheetWidget*)::operator new(0x178);
         if (t != 0) {
-            MissionUi(t);
+            init_mission_ui(t);
         } else {
             t = 0;
         }
@@ -436,7 +457,7 @@ void CharSheet::init()
     for (i = 0; i < 7; i++) {
         CharSheetWidget* row = (CharSheetWidget*)::operator new(0x188);
         if (row != 0) {
-            MissionUi(row);
+            init_mission_ui(row);
             row->f178 = 0;
             row->b121 = 0;
             *(void**)row = (void*)0x591d58;
@@ -509,7 +530,7 @@ void CharSheet::init()
     {
         CharSheetWidget* n = (CharSheetWidget*)::operator new(0x188);
         if (n != 0) {
-            MissionUi(n);
+            init_mission_ui(n);
             n->f178 = 0;
             n->b121 = 0;
             *(void**)n = (void*)0x592208;
@@ -534,8 +555,8 @@ void CharSheet::init()
             tstring k("party_button_down");
             down = ((rgl::mesh*)g_resmgr.get_object(&k))->clone();
         }
-        scale(up, 0.6666667f);
-        scale(down, 0.6666667f);
+        up->scale(0.6666667f);
+        down->scale(0.6666667f);
         name->set_mesh(2, up);
         name->set_mesh(1, down);
     }
@@ -570,7 +591,7 @@ void CharSheet::init()
     for (i = 0; i < 4; i++) {
         CharSheetWidget* row = (CharSheetWidget*)::operator new(0x188);
         if (row != 0) {
-            MissionUi(row);
+            init_mission_ui(row);
             row->f178 = 0;
             row->b121 = 0;
             *(void**)row = (void*)0x591d58;
@@ -676,7 +697,7 @@ void CharSheet::init()
     {
         CharSheetWidget* e = (CharSheetWidget*)::operator new(0x178);
         if (e != 0) {
-            MissionUi(e);
+            init_mission_ui(e);
         } else {
             e = 0;
         }
@@ -687,11 +708,11 @@ void CharSheet::init()
     explanation->show();
 
     // ---- the layout passes -------------------------------------------------------------------------
-    open_view(this);
-    ::update_detail(this);
-    ::refresh_panels(this);
-    ::update_weapons(this);
-    load_troop(this);
+    ((char_window*)this)->open_view();
+    update_detail();
+    refresh_panels();
+    update_weapons();
+    ((char_window*)this)->load_troop();
 
     f4d4 = 0;
 
@@ -701,7 +722,7 @@ void CharSheet::init()
         tstring k3("ui_question_saving_policy");
         const char* nonreal = g_strtable.lookup(k1)->c_str();
         const char* real = g_strtable.lookup(k2)->c_str();
-        g_dialog->open(g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
+        g_dialog->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
         g_menu.open(1);
         return;
     } else if (mode == 1) {

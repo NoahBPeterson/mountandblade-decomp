@@ -60,10 +60,10 @@ extern unsigned g_rand_seed;                    // 0x5d7078
 
 // breed calls unpack and relax through the same addresses from outside their definitions
 struct FaceGenExt {
-    FaceRace* unpack(const unsigned __int64* key);   // 0x473800
+    __forceinline FaceRace* unpack(const unsigned __int64* key) { return ((FaceGenome*)this)->unpack(key); }   // 0x473800
 };
 struct FaceRaceExt {
-    void relax(int skip, float* v);             // 0x4735e0
+    __forceinline void relax(int skip, float* v) { ((FaceRace*)this)->relax(skip, v); }   // 0x4735e0
 };
 
 #endif // TERRAIN_B_FACE_GEN_H

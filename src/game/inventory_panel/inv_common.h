@@ -29,22 +29,54 @@ extern ini_file g_game_vars;                      // 0xa44240 (the option table:
 extern int g_store0;                        // 0xa70458 (first out-slot of GameData::emit_event / sl_query)
 extern int g_store1;                        // 0xa7045c
 
+// ---- classes of other modules whose definitions own methods the game data view calls --------------------------------------
+// (the definitions carry these class names; a call through GameData / PartyMgr would name a symbol nothing defines)
+struct GameW {                                          // game/world_data: GameData's methods of 0x490ce0..0x491f20
+    void remove_party(int id);                          // 0x4915d0
+    void count_units(unsigned id, int* a, int* b, int* c, int* d);   // 0x490ce0
+    int gate_rating(unsigned p1, unsigned p2, int p3);  // 0x491b20 (ret 0xc)
+    int token_lookup(int party, int a, int b, int c);   // 0x491f20 (ret 0x10)
+    void list_members(unsigned id, int* out, int* n);   // 0x490fa0 (ret 0xc)
+};
+struct BattleW {                                        // game/world_data: the battle / order object (g_mission_ctx 0xa73300)
+    void refresh_rating();                              // 0x492470
+    void select_side(int side);                         // 0x492750 (ret 4)
+};
+namespace rgl { struct string; }
+struct resmgr {
+    rgl::mesh* get_object(const rgl::string* name);   // 0x419540 (rgl/core/resmgr.h: the resource manager object 0x5d6fa0, g_resmgr_inv)
+};
+struct PartyMgrW {
+    int is_live(unsigned id);   // 0x4903e0 (game/world_data; ret 4)
+};
+struct SoundCtl {
+    char emit_event(int id, int a, int b);   // 0x435790 (ret 0xc; game/agent)
+};
+namespace c49e780 {                                     // game/camera
+    struct float2;
+    struct Party {
+        int attach_party_center(float2* pt, int a, int b);   // 0x49e9c0 (ret 0xc)
+    };
+}
+
 // ---- the game data (g_game) with the members these modules call ----------------------------------------------------
 struct GameDataV : GameData {
-    tstring* string_value(tstring* out, int value);   // 0x48e9e0 (ret 8; GameData::string_value with the hidden result pointer spelled out)
+    __forceinline tstring* string_value(tstring* out, int value)   // 0x48e9e0 (ret 8): GameData::string_value (hidden result), built in place in *out
+    {
+        new (out) tstring(GameData::string_value(value));
+        return out;
+    }
     char emit_event4(int id, int a, int b, int c);          // 0x512620 (ret 0x10)
     int price(ItemRef* item, int idx, char adjust, char plain, char scaled);   // 0x5129d0 (ret 0x14)
     void clear_hero_ammo(unsigned id);                      // 0x513eb0 (ret 4: zeroes the f10 word of the hero stacks of a party)
-    int gate_rating(unsigned p1, unsigned p2, int p3);      // 0x491b20 (ret 0xc)
-    int token_lookup(int party, int a, int b, int c);            // 0x491f20 (ret 0x10)
+    __forceinline int gate_rating(unsigned p1, unsigned p2, int p3) { return ((GameW*)this)->gate_rating(p1, p2, p3); }   // 0x491b20 (ret 0xc)
+    __forceinline int token_lookup(int party, int a, int b, int c) { return ((GameW*)this)->token_lookup(party, a, b, c); }   // 0x491f20 (ret 0x10)
     void fill_ids(int* out, int id);                        // 0x5168e0 (ret 8)
     __declspec(noinline) void reset_trade_ids();            // 0x5168b0
-    void attach_party_center(const float* pt, int a, int b);   // 0x49e9c0 (ret 0xc)
-    void tick(float dt);                                 // 0x516ac0 (ret 4)
+    __forceinline void attach_party_center(const float* pt, int a, int b)   // 0x49e9c0 (ret 0xc)
+    { ((c49e780::Party*)this)->attach_party_center((c49e780::float2*)pt, a, b); }
     int weekly_cost();                      // 0x504e20 (thiscall, no args: the weekly wage of the player's party)
-    int sl_party_value(int party);          // 0x48a290 (ret 4)
-    int sl_party_price(int party);          // 0x48a320 (ret 4)
-    int sl_query(int kind, int troop, int arg);   // 0x435790 (ret 0xc; the same function as GameData::emit_event, int-returning view)
+    __forceinline int sl_query(int kind, int troop, int arg) { return ((SoundCtl*)this)->emit_event(kind, troop, arg); }   // 0x435790 (ret 0xc; SoundCtl::emit_event)
 };
 #define GV ((GameDataV*)g_game)
 
@@ -56,14 +88,26 @@ struct tstring_buffer {
 };
 
 // the UI root object (0x5d7080)
+struct UiSoundHost;
+struct NodeA;
+struct NodeVec {
+    void push_back(NodeA* const& x);   // 0x49b120 (ret 4; game/cls_map widget_node)
+};
+void __fastcall play_sound(UiSoundHost* m);         // 0x48b2d0 (ui/ui_widgets.h)
+struct gui_view {
+    void set_view(const float* v);   // 0x4c5190 (rgl/mesh2/gui_edit.h): the same object as g_gui
+};
+// The UI root as these modules call it: every method forwards to the canonical class (gui_manager, gui_view, the click
+// sound), so the call sites keep their spelling and the linked symbol is the one the definition exports.
 struct GuiRoot {
-    void reset();                                   // 0x42d1b0
-    void play_sound();                                    // 0x48b2d0
-    void set_o564(int flag);                          // 0x42cd80 (ret 4)
-    void add_root(MissionUi** w);                 // 0x49b120 (ret 4)
-    void set_o568(void* o, bool clear_lines);       // 0x42cdb0 (ret 8)
-    void set_view(float* pt);                       // 0x4c5190 (ret 4)
-    void draw_string(const tstring* s, float y, int color, char b);   // 0x4e43e0 (ret 0x10)
+    __forceinline void reset() { ((gui_manager*)this)->reset(); }                                // 0x42d1b0
+    __forceinline void add_root(MissionUi** w) { ((NodeVec*)this)->push_back(*(NodeA* const*)w); }   // 0x49b120 (ret 4): NodeVec::push_back
+    __forceinline void play_sound() { ::play_sound((UiSoundHost*)this); }                     // 0x48b2d0
+    __forceinline void set_o564(int flag) { ((gui_manager*)this)->set_o564((gui_obj*)flag); }   // 0x42cd80 (ret 4)
+    __forceinline void set_o568(void* o, bool clear_lines) { ((gui_manager*)this)->set_o568((gui_obj*)o, clear_lines); }   // 0x42cdb0 (ret 8)
+    __forceinline void set_view(float* pt) { ((gui_view*)this)->set_view(pt); }                // 0x4c5190 (ret 4)
+    __forceinline void draw_string(const tstring* s, float y, int color, char b)               // 0x4e43e0 (ret 0x10)
+    { ((gui_manager*)this)->draw_string((tstring*)s, y, color, b); }
 };
 extern GuiRoot g_gui_root;                          // 0x5d7080
 
@@ -122,6 +166,10 @@ struct PsOpsW : PsFill {                            // the same widget, slot +0x
 #define PSO(w) ((PsOps*)(w))
 
 // ---- helpers every module here uses -------------------------------------------------------------------------------
+// PartyMgr::index_of is the party-id hash lookup 0x48ad00 (game/ui/mission.h: Map10007::lookup)
+struct Map10007 {
+    int lookup(unsigned id);   // 0x48ad00
+};
 // the party record behind a page-table index (PartyMgr::pages, pages of 16 records of 0x5ac8 bytes)
 static inline Party* party_at(PartyMgr* m, int idx)
 {
@@ -131,7 +179,7 @@ static inline Party* party_at(PartyMgr* m, int idx)
 static inline Party* party_index(int id)
 {
     PartyMgr* m = &g_game->parties;
-    return party_at(m, m->index_of(id));
+    return party_at(m, ((Map10007*)m)->lookup(id));
 }
 #define PARTIES (&g_game->parties)
 
@@ -139,6 +187,7 @@ static inline Party* party_index(int id)
 #include "../res_mesh.h"                       // ResMesh (was RMesh), ResMgr (was RResMgr), ObjTable: the one definition
 extern ResMgr g_resmgr_inv;                        // 0x5d6fa0
 
-void __cdecl label_refresh(void* w, tstring name);  // 0x4e4c70 (cdecl, the name by value: sets a freshly built widget up from its ini keys)
+void __cdecl label_refresh(MissionUi* w, tstring name);  // 0x4e4c70 (cdecl, the name by value: sets a freshly built widget up from its ini keys)
+#define label_refresh(w, name) label_refresh((MissionUi*)(w), name)
 
 #endif // INV_COMMON_H

@@ -81,6 +81,7 @@ struct material : named_object {
     virtual void save(stream_base* s);         // 0x416b10
     bool supported();                          // 0x416930
     int get_flags();                           // 0x40eab0
+    void bind_pixel_shader();                  // 0x461f20 (src/game/renderer.cpp; terrain_a.cpp binds the material's pixel shader)
 };
 
 // ---- materials (`skin`) ------------------------------------------------------------------------------

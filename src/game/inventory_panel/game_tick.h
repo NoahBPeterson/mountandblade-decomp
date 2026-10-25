@@ -28,7 +28,7 @@ struct MapRec {                         // 0x98 bytes
     __int64 stamp;                      // +0x88
     int sound;                          // +0x90
     char pad94[4];
-    void update_nav_anim(float speed);  // 0x4b71e0
+    // update_nav_anim (0x4b71e0) is BattleRec's (battle_rec.h), called through a cast in game_tick.cpp
 };
 struct GamePool {
     int count;                          // +0x00
@@ -36,14 +36,18 @@ struct GamePool {
     char** pages;                       // +0x18 (page = 16 records of 0x98 bytes)
     void next(int* index);              // 0x517960
     int first();                        // 0x5179b0
-    MapRec* slot(unsigned index);       // 0x48ef20
+    // slot (0x48ef20) is PageTable98::slot (game/slot_api), called through a cast in game_tick.cpp
 };
 
 // a tracking record of the party-track ribbons (0x5c bytes, vector at game+0x13a60): src/game/rec5c.h
 #include "../rec5c.h"
-struct RecArray {                       // the iterator helper on a bare base pointer (0x4b22b0)
+struct ItemIter {                       // party2/party_2.h's result of ItemArray::at (a constructor makes it a hidden-return class)
+    Rec5c* p;
+    ItemIter(Rec5c* q) : p(q) {}
+};
+struct ItemArray {                      // the iterator helper on a bare base pointer (0x4b22b0, party2/party_2.h)
     Rec5c* base;
-    Rec5c** at(Rec5c** out, int idx);   // 0x4b22b0 (ret 8, returns out)
+    ItemIter at(int idx);               // 0x4b22b0 (ret 8, hidden return pointer)
 };
 struct Vec5c {                          // vector of Rec5c at game+0x13a60
     int pad0;                           // +0x0
@@ -72,8 +76,10 @@ struct MarkerList {
 };
 
 struct MapModel { void set_fade(const float* v); };   // 0x4b1800 (the map entity at Party+0x59c0: PartyModel::set_fade, party2/party_2.h)
-struct UpdateObj { void update(int flags); };   // game+0x139e8 (0x462760)
-struct SoundObj { void update(int flags); };    // game+0x139f4 (0x48add0)
+// the objects at game+0x139e8 (snd_bank::update_all 0x462760, ui/item_ref.h) and game+0x139f4 (TimerList::update 0x48add0,
+// ui/timer_list.h) are called through those classes
+#include "../ui/item_ref.h"
+#include "../ui/timer_list.h"
 
 struct GameG : GameDataV {
     void tick(float dt);                            // 0x516ac0 (ret 4)
@@ -92,12 +98,10 @@ struct GameG : GameDataV {
     void update_tracks();                           // 0x5189e0
     void train_troops();                            // 0x518d70
     // helpers of the game object this region calls
-    bool is_daytime();                              // 0x435700
-    void remove_party(int id);                          // 0x4915d0 (ret 4: GameData::remove_party)
     Party* player_party()
     {
         PartyMgr* mgr = &parties;
-        int i = mgr->index_of(f78);
+        int i = ((Map10007*)mgr)->lookup(f78);
         Party** pp = mgr->pages._Myfirst + (i >> 4);
         return *pp + (i & 0xf);
     }

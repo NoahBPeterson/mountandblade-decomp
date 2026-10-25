@@ -31,9 +31,23 @@ using rgl::unpack_color;                    // 0x40e4e0 (cdecl)
 
 // parent-chain accessors of rgl::mesh that stay out of line here (the header inlines one level of get50/get90)
 struct mesh_calls : mesh {
-    std::vector<vertex60>& get50_();                // 0x40ebd0
-    std::vector<face20>& get90_();                  // 0x40ec30
+    __forceinline std::vector<vertex60>& get50_() { return get50(); }       // 0x40ebd0
+    __forceinline std::vector<face20>& get90_() { return get90(); }         // 0x40ec30
 };
+
+// frustum::view_matrix 0x462170: the definition (src/game/renderer.cpp, frustum_view) builds an rgl::mat4; src/include/frustum.h declares
+// the same hidden-return function with a D3DXMATRIX result. The call goes to the definition's symbol and the result is
+// read as the D3DXMATRIX it is (the same 64 bytes written through the same hidden pointer).
+struct frustum_view {
+    rgl::mat4 view_matrix();   // 0x462170
+};
+union frustum_view_fn { rgl::mat4 (frustum_view::*as_mat4)(); D3DXMATRIX (frustum_view::*as_d3dx)(); };
+static __forceinline D3DXMATRIX frustum_view_matrix(const void* fr)
+{
+    frustum_view_fn f;
+    f.as_mat4 = &frustum_view::view_matrix;
+    return (((frustum_view*)fr)->*f.as_d3dx)();
+}
 
 // ---- renderer (global object at 0xa17910) -----------------------------------------------------------------------
 #include "../../include/renderer.h"       // renderer (shared)
@@ -59,8 +73,11 @@ inline IDirect3DBaseTexture9* tex_current(const texture* t, const float& tm)    
 struct tech_tbl { char pad[0x1c]; D3DXHANDLE tech[4]; };
 inline tech_tbl* mat_techs(const material* m) { return (tech_tbl*)m->fc0; }     // 0xc0
 inline unsigned mat_texgen(const material* m) { return (unsigned)m->stages[0].d; }   // 0x74
+struct mesh_part {
+    void set_state();   // 0x461f80 (src/game/renderer.cpp: the material record's state setup)
+};
 struct skin_calls : skin {
-    void set_state();                   // 0x461f80 (mesh_part::set_state in renderer.h)
+    __forceinline void set_state() { ((mesh_part*)this)->set_state(); }     // 0x461f80
 };
 
 #include "../../include/vec.h"
@@ -70,6 +87,9 @@ static __forceinline vector4 make4(float a, float b, float c, float d)
     v.x = a; v.y = b; v.z = c; v.w = d;
     return v;
 }
+struct wind {
+    vector4 sample();   // 0x461570 (src/game/wind.h: the same 0x7c-byte record)
+};
 struct light {                          // 0x7c bytes (layout from s00461280)
     int type;                           // 0: point/dir with flicker, 2: sun
     vector4 diffuse;                    // 0x04
@@ -82,7 +102,7 @@ struct light {                          // 0x7c bytes (layout from s00461280)
     char pad58[0x6c - 0x58];
     unsigned flags;                     // 0x6c
     char pad70[0x7c - 0x70];
-    vector4 sample();                   // 0x461570
+    __forceinline vector4 sample() { return ((wind*)this)->sample(); }   // 0x461570 (wind::sample, src/game/wind.h)
 };
 
 struct sky_t {
@@ -126,13 +146,14 @@ static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
     return r;
 }
 struct vec_arr { D3DXVECTOR4* data; UINT count; };
-struct mi_ops { void setup_material(); };   // 0x40f3f0 (mesh instance, thiscall)
+struct mi_ops { __forceinline void setup_material() { ((mesh*)this)->setup_material(); } };   // 0x40f3f0 (rgl::mesh::setup_material, thiscall)
 struct frame4 { rot3 rot; vector4 o; };
-rot3* __cdecl identity3(rot3* out);        // 0x40cd60
+using rgl::mat3;
+mat3* __cdecl identity3(mat3* out);        // 0x40cd60
 struct m4 {
     vector4 s, f, u, o;
     m4 operator*(const m4& b) const;        // 0x40e870 (this = left operand)
-    void rotate_about_s(const float* angle);     // 0x40e570
+    __forceinline void rotate_about_s(const float* angle) { ((matrix*)this)->rotate_about_s(angle); }     // 0x40e570
 };
 
 #define AT(T, base, off) (*(T*)((char*)(base) + (off)))

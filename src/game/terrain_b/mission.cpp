@@ -18,6 +18,7 @@
 #include "./agent_rec.h"
 #include "./mission.h"
 #include "./cell_grid.h"
+#include "./cell_world.h"
 #include "./poly_mesh.h"
 #include "./records.h"
 #include "./game_data.h"
@@ -61,12 +62,29 @@ using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);             // 0x40cd60
 matrix* __cdecl identity_pos(matrix* out);      // 0x40cd00
 // resource-manager members this object calls that rgl/resource.h does not declare (no new fields)
-struct resmgr_x : resource_manager {
-    std::vector<rgl::mesh*> find_meshes(const tstring* prefix);   // 0x41b960 (hidden return pointer)
+struct resmgr : resource_manager {
+    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (hidden return pointer)
 };
-struct mesh_clone : rgl::mesh {
-    rgl::mesh* clone();                         // 0x41c6d0 (a copy of the mesh)
+struct mesh_x : rgl::mesh {
+    mesh_x* clone();                            // 0x41c6d0 (a copy of the mesh)
 };
+struct lod_group {
+    char data[0xe0];
+    lod_group();   // 0x41c2a0 (the interior record's constructor: tmesh() is the same code)
+};
+static __forceinline const rgl::string& rs(const tstring& t) { return (const rgl::string&)t; }   // tstring is the 16-byte string the engine's code constructs
+template<> void std::vector<Rec1c8>::resize(size_t);   // 0x477ea0 (terrain_b.cpp)
+// vector<int>::_Insert_n (0x410610) and vector<rgl::Obj*>::_Insert_n (0x41f720) are the instances the pointer vectors share (rgl/particles
+// and rgl/scene): declared here, never instantiated; the views reach them through classes that make the protected member public
+namespace std { template<> void vector<int>::_Insert_n(iterator, size_type, const int&); }   // 0x410610
+struct IntVecPub : std::vector<int> { using std::vector<int>::_Insert_n; };
+namespace rgl { struct Obj; }
+namespace std { template<> void vector<rgl::Obj*>::_Insert_n(iterator, size_type, rgl::Obj* const&); }   // 0x41f720
+struct ObjPtrVecPub : std::vector<rgl::Obj*> { using std::vector<rgl::Obj*>::_Insert_n; };
+__forceinline void MeshVec::insert_n(iterator where, size_t n, rgl::mesh* const& v)
+{ ((IntVecPub*)this)->_Insert_n(std::vector<int>::iterator((int*)&*where), n, *(const int*)&v); }
+__forceinline void ObjVec::insert_n(iterator where, size_t count, void* const& val)
+{ ((ObjPtrVecPub*)this)->_Insert_n(std::vector<rgl::Obj*>::iterator((rgl::Obj**)&*where), count, *(rgl::Obj* const*)&val); }
 template<> void Pool<MAgent>::reset();          // 0x477f00 (terrain_b.cpp)
 template<> void Pool<RecJ>::reset();           // 0x477f90
 
@@ -194,7 +212,7 @@ void SceneFile::load(stream_base* s, int id)
         count = v;
     }
     int n = (int)props.size();
-    props.resize_n(n + count);
+    props.resize(n + count);
     for (int i = 0; i < count; i++) {
         props[n + i].read(s, version);
         props[n + i].m10 = id;
@@ -486,7 +504,8 @@ void Terrain::spawn_bodies(SpawnSet* r)
 // the stock VC7.1 vector::push_back for the mesh pointers (separate null tests in size() and capacity()); its growth path is the
 // shared out-of-line _Insert_n at 0x410610 (declared with a plain pointer for the iterator)
 struct MeshPush : std::vector<rgl::mesh*> {
-    void ins(rgl::mesh** where, size_t n, rgl::mesh* const& v);     // 0x410610
+    __forceinline void ins(rgl::mesh** where, size_t n, rgl::mesh* const& v)     // 0x410610
+    { ((IntVecPub*)this)->_Insert_n(std::vector<int>::iterator((int*)where), n, *(const int*)&v); }
     void push(rgl::mesh* const& x)
     {
         if (size() < capacity()) {
@@ -513,7 +532,7 @@ void Mission::rebuild_nav(int which, int)
         lo = V2(terrain.min_x - 1.0f, terrain.min_y - 1.0f);
         hi = V2(terrain.max_x + 1.0f, terrain.max_y + 1.0f);
     } else {
-        core_ = new NavData;
+        core_ = (NavData*)new NavCore;   // 0x478150 (NavData() is the same constructor, ICF-folded)
         r = (res_shape*)g_resmgr.get_object60(*(rgl::string*)&cs->name44);
         if (r == 0) {
             tstring* nm = &cs->name44;
@@ -617,14 +636,14 @@ layers:
 // @ 0x47a370
 tmesh* tmesh::clone()
 {
-    tmesh* c = new tmesh;
+    tmesh* c = (tmesh*)new lod_group;   // 0x41c2a0 (tmesh() is the same constructor)
     c->name = name;
     c->count = count;
     for (int i = 0; i < count; i++) {
         rgl::mesh* zero = 0;
         c->lists[i].resize(lists[i].size(), zero);
         for (unsigned j = 0; j < lists[i].size(); j++)
-            c->lists[i][j] = ((mesh_clone*)lists[i][j])->clone();
+            c->lists[i][j] = ((mesh_x*)lists[i][j])->clone();
     }
     return c;
 }
@@ -653,9 +672,9 @@ void Terrain::make_grid()
                 gridA[y][x] = grid->create_entity(9);
                 rgl::mesh* m = new rgl::mesh;
                 if (g_use_shaders != 0 && g_mesh_quality == 2)
-                    m->res = g_resmgr.get_material(rgl::string("grass"));
+                    m->res = g_resmgr.get_material(rs(tstring("grass")));
                 else
-                    m->res = g_resmgr.get_material(rgl::string("grass_no_shadow"));
+                    m->res = g_resmgr.get_material(rs(tstring("grass_no_shadow")));
                 m->flags |= 0x10000000;
                 ((MeshPush*)&gridA[y][x]->meshes)->push(m);
                 gridA[y][x]->refresh();
@@ -698,13 +717,13 @@ void Mission::build_interior(int which, rgl::mesh** out, int* n)
 {
     Level494* es = &g_game->levels[which];
     MeshVec meshes;
-    meshes = ((resmgr_x*)&g_resmgr)->find_meshes(&es->name34);
+    meshes = ((resmgr*)&g_resmgr)->find_meshes((const rgl::string*)&es->name34);
     if (meshes.size() == 0)
         mb_error("Error unable to find interior mesh %s", es->name34.c_str());
     Entity* e = scene->create_entity(9);
     *n = (int)meshes.size();
     for (int i = 0; i < *n; i++) {
-        rgl::mesh* m = ((mesh_clone*)meshes[i])->clone();
+        rgl::mesh* m = ((mesh_x*)meshes[i])->clone();
         out[i] = m;
         e->meshes.push_back(m);
         e->refresh();

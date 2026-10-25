@@ -49,11 +49,22 @@ struct ViewObj {                            // interface at +0x1b4 (virtual 23 =
     virtual void d20(); virtual void d21(); virtual void d22();
     virtual void slot23(void* src, void* dst);
 };
-struct Allocator { char* make(int a, int b, int c, int d); };   // 0x5d6fa0 resource manager (ECX = &g_alloc)
-extern Allocator g_alloc;                   // 0x5d6fa0
+// The resource manager object (0x5d6fa0, ECX = &g_alloc): the shadow-map render target factory is resmgr::get_shadow_skin (rgl/core/resmgr.h)
+struct skin;
+struct resmgr {
+    skin* get_shadow_skin(int w, int h, int fmt, int f34);   // 0x41c420
+};
+
+extern resmgr g_alloc;                       // 0x5d6fa0
 extern int g_day;                           // 0x5a9f9c (day / quality threshold: 0x19, 0x3c)
 
 struct Blob16 { int a, b, c, d; };
+struct Prop {
+    void update(int x);   // 0x467c50 (game/terrain_a: the prop record's per-frame update)
+};
+struct EmptySlot {
+    virtual void slot();   // 0x477b70 (game/terrain_b: the empty slot of the IfaceB-style records)
+};
 struct MissionView {
     char pad0[0x18];
     int v18[16];                            // +0x18 (width, height, then the quarter size at +0x20 / +0x24)  0x489ad0
@@ -73,8 +84,8 @@ struct MissionView {
     char pad184[0x1b4 - 0x184];
     ViewObj* obj1b4;                        // +0x1b4
 
-    void ext_467c50(int);                   // 0x467c50 (thiscall, one stack argument)
-    void ext_477b70();                      // 0x477b70
+    __forceinline void ext_467c50(int x) { ((Prop*)this)->update(x); }              // 0x467c50 (thiscall, one stack argument: Prop::update, terrain_a)
+    __forceinline void ext_477b70() { ((EmptySlot*)this)->EmptySlot::slot(); }       // 0x477b70 (EmptySlot::slot, terrain_b: called directly, not through the vtable)
     void setup(void* src, int* b, int* c);  // 0x4897a0
     void set(void* src);                    // 0x489820
     void quarter();                         // 0x489ad0

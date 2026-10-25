@@ -6,6 +6,8 @@
 #ifndef GAME_INVENTORY_PANEL_INVENTORY_PANEL_H
 #define GAME_INVENTORY_PANEL_INVENTORY_PANEL_H
 #include "./inv_common.h"
+#include "../ui/ui_widgets.h"                           // UiD (the scroll bar's class)
+#include "../tstring.h"
 
 // the scroll bar the inventory view owns (0x48baa0 set_value; slot +0x48 set_key_flags)
 struct InvBar : PsOps {
@@ -17,7 +19,7 @@ struct InvBar : PsOps {
     float f174;                                         // +0x174
     int stop;                                           // +0x178 current stop
     float scale;                                        // +0x17c
-    void set_value(float v);                            // 0x48baa0 (ret 4)
+    __forceinline void set_value(float v) { ((UiD*)this)->set_value(v); }   // 0x48baa0 (ret 4): UiD::set_value (this view is a UiD)
 };
 struct InvView {                                        // the inventory view: its scroll bar is at +0x484 (0x50fe20)
     char pad0[0x484];
@@ -26,11 +28,20 @@ struct InvView {                                        // the inventory view: i
 
 struct DragMesh {                                       // the mesh carried by the mouse (global g_drag 0x5d75e4); slot 0 = release(int)
     virtual void release(int flag);                     // +0x00 (0x512c80)
-    void scale(float f);                                // 0x44f0c0 (ret 4)
+    __forceinline void scale(float f) { ((rgl::mesh*)this)->scale(f); }   // 0x44f0c0 (ret 4): rgl::mesh::scale
 };
 extern DragMesh* g_drag;                                // 0x5d75e4
 
 
+// The party window (src/game/party/party_window.h, the same object seen through the Game header: the two headers cannot be
+// included together) owns four of the methods this screen calls; only those are declared here.
+struct PartyWindow {
+    void money_label(int which);                                    // 0x501940 (ret 4)
+    void init_window();                                             // 0x5025a0
+    void add_strip_icon(char* slot, const tstring& name, int troop, int kind);   // 0x5024e0 (ret 0x10)
+    ResMesh* make_mesh(ItemRef* item, float* scale, int t);         // 0x502b80 (ret 0xc)
+};
+#pragma warning(disable:4715)
 struct InventoryPanel {
     int vptr;                                           // +0x00
     int mode;                                           // +0x04 (0 own, 1 loot, 2 trade, 3 / 4 exchange: 0x50fe20, 0x512960, 0x512c80)
@@ -71,9 +82,10 @@ struct InventoryPanel {
     char padabd[3];
     int spec_ac0, spec_ac4;                             // +0xac0 / +0xac4 character strip specs
 
-    void money_label(void* arg);                                    // 0x501940 (ret 4)
-    void init_window();                                             // 0x5025a0
-    void* add_strip_icon(char* slot, const tstring& name, int troop, int kind);   // 0x5024e0 (ret 0x10)
+    __forceinline void money_label(void* arg) { ((PartyWindow*)this)->money_label((int)arg); }   // 0x501940 (ret 4)
+    __forceinline void init_window() { ((PartyWindow*)this)->init_window(); }                     // 0x5025a0
+    __forceinline void add_strip_icon(char* slot, const tstring& name, int troop, int kind)       // 0x5024e0 (ret 0x10)
+    { ((PartyWindow*)this)->add_strip_icon(slot, name, troop, kind); }
     void refresh_transaction(int unused);                           // 0x50fe20 (ret 4)
     void set_slot_flag(int page, int idx, unsigned mask, char on);  // 0x510850 (ret 0x10)
     void refresh_lists(int unused);                                 // 0x5108d0 (ret 4)
@@ -81,14 +93,20 @@ struct InventoryPanel {
     void place_slot_mesh(ItemRef* slot, float* pt, int page, int index);   // 0x510fa0 (ret 0x10)
     char test_slot_flag(int page, int slot, unsigned mask);         // 0x5126e0 (ret 0xc)
     void compute(int* item, int mode);                              // 0x512960 (ret 8; the price stays in eax)
-    int compute_price(int* item, int mode);                         // 0x512960 (the same function, declared with the result the callers use)
+    __forceinline int compute_price(int* item, int mode)   // 0x512960 (the same function; the price stays in eax: compute is called through its address read as an int-returning member)
+    {
+        union { void (InventoryPanel::*v)(int*, int); int (InventoryPanel::*i)(int*, int); } c;
+        c.v = &InventoryPanel::compute;
+        return (this->*c.i)(item, mode);
+    }
     void transfer_slot(ItemRef* item, int page, int slot);          // 0x512c80 (ret 0xc)
     char can_transfer(ItemRef* item, int mode, int flag);           // 0x513230 (ret 0xc)
     void set_slot_value(int page, int slot, int value);             // 0x5132e0 (ret 0xc)
     void or_slot_flag(int page, int slot);                          // 0x513320 (ret 8)
     void add_cost(int delta);                                       // 0x513360 (ret 4)
     bool try_place(ItemRef* item, int page, int slot);              // 0x5134c0 (ret 0xc)
-    DragMesh* make_mesh(ItemRef* item, int* out, int troop);       // 0x502b80 (ret 0xc)
+    __forceinline DragMesh* make_mesh(ItemRef* item, int* out, int troop)   // 0x502b80 (ret 0xc)
+    { return (DragMesh*)((PartyWindow*)this)->make_mesh(item, (float*)out, troop); }
 };
 
 #endif // GAME_INVENTORY_PANEL_INVENTORY_PANEL_H

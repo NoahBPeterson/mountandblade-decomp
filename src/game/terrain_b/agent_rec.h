@@ -12,9 +12,9 @@ extern __int64 g_ticks[];                       // 0x5e2948 clock table, 1e-5 s 
 #include "../view_state.h"           // tick, tk, Timer16, Vec4z, ViewBody, ViewState (shared with ui/troop_inv)
 struct Timed { int state; int pad; tick t; };       // 0x10: state (2 = idle) and the tick it was set
 // the sub-object at agent +0x563c (0x68 bytes) whose initialiser the constructor calls
-struct AgentSubB {
+struct RecZSubB {
     char b[0x68];
-    AgentSubB* init();          // 0x4353a0 (returns this)
+    RecZSubB* init();          // 0x4353a0 (returns this)
 };
 struct EmptySlot { virtual void slot(); };      // 0x477b70: the empty slot 1 / 2 of the IfaceB-style records
 
@@ -151,7 +151,7 @@ struct MAgent {
     rgl::vector4 f5624;   // +0x5624
     int f5634;   // +0x5634
     int f5638;   // +0x5638
-    AgentSubB subB;   // +0x563c (0x477a30)
+    RecZSubB subB;   // +0x563c (0x477a30)
     rgl::vector4 f56a4;   // +0x56a4
     rgl::vector4 f56b4;   // +0x56b4
     int f56c4;   // +0x56c4
@@ -219,8 +219,8 @@ struct MAgent {
     Timed t5918;   // +0x5918 (0x477a30)
     MAgent();                    // 0x477a30
     void reset();               // 0x472f90
-    int agent_class();          // 0x433140 (0 infantry, 1 archer, 2 cavalry)
-    int update_nav_face();      // 0x43cb30
+    int agent_class();          // 0x433140 (0 infantry, 1 archer, 2 cavalry; forwards to AgentX::agent_class, defined in mission.h)
+    int update_nav_face();      // 0x43cb30 (forwards to Agent::update_nav_face, defined in mission.h)
 };
 
 #include <stddef.h>

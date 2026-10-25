@@ -32,7 +32,7 @@ struct SpawnSet { int count; SpawnEntry entries[1]; };      // +0x00 count, +0x0
 // refresh_cells reaches sun_visibility through the same address without seeing its body (the slices compiled them
 // apart): cl must not assume its register use.
 struct TerrainExt {
-    float sun_visibility(const float* p);                           // 0x471a30
+    __forceinline float sun_visibility(const float* p) { return ((Terrain*)this)->sun_visibility(p); }   // 0x471a30
 };
 
 #endif // TERRAIN_B_TERRAIN_H

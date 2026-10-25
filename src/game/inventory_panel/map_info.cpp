@@ -29,13 +29,12 @@ struct RecR;
 struct FactionRec;
 
 #include "../../include/game_data.h"
+#include "../../include/party.h"      // Party::prepare / speed_factor (listed directly: the resolution audit reads only the source's own includes)
 
 struct RecR {                                // 0x5ac8  party / roster record
     RecR();                                  // 0x4934d0
     ~RecR();                                 // 0x431b90
-    void   prepare();                        // 0x4b1eb0
-    int    dist_is_zero();                      // 0x51be20
-    float  speed_factor();                          // 0x4b20b0
+    // prepare (0x4b1eb0) and speed_factor (0x4b20b0) are Party's (include/party.h); dist_is_zero is the free function below
     tstring* display_name();                 // 0x48d7b0  (the name used when appending an order)
 
     char     pad00[0x0c];
@@ -66,18 +65,35 @@ struct RecR {                                // 0x5ac8  party / roster record
 
 #include "../rec98.h"                       // Rec98 (this slice called it MapAgent): the 0x98-byte record, a = f54, b = f58
 
-struct AgentPages {                          // lives at GameData+0xcc
+struct PageTable98 {                         // lives at GameData+0xcc (the page table slot_api.cpp defines slot() for)
     char      pad00[0x18];
     void**    pages;                         // +0x18  (GameData+0xe4)
-    Rec98* slot(unsigned idx);            // 0x48ef20
+    void* slot(unsigned idx);             // 0x48ef20
 };
+typedef PageTable98 AgentPages;
 
 
+struct gui_obj;
 struct gui_manager {
-    void draw_string(const tstring& s, float arg, unsigned color, int centered);  // 0x4e43e0
-    void set_o568(void* obj, bool on);                                     // 0x42cdb0
-    void set_view(const float* v);                                         // 0x4c5190
+    void draw_string(tstring* s, float height, int arg, char wrap);        // 0x4e43e0 (ret 0x10; game/strat/gui_manager.h)
+    __forceinline void draw_string(const tstring& s, float arg, unsigned color, int centered)   // the callers' by-reference form
+    {
+        draw_string((tstring*)&s, arg, (int)color, (char)centered);
+    }
+    void set_o568(gui_obj* obj, bool on);                                  // 0x42cdb0
 };
+struct gui_view {
+    void set_view(const float* v);   // 0x4c5190 (rgl/mesh2/gui_edit.h): the same object as g_gui
+};
+struct MapWidget {
+    void project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (inventory_panel/map_picker.cpp)
+};
+struct GameW {
+    void list_members(unsigned id, int* out, int* n);   // 0x490fa0 (game/world_data)
+};
+struct DistObj;
+bool __fastcall dist_is_zero(DistObj* o);                                 // 0x51be20 (map_tooltip.cpp)
+int __stdcall draw_party_line(int id);                                    // 0x51c090 (map_tooltip.cpp)
 
 #include "../str_table.h"
 #include "../skill_cap.h"
@@ -125,7 +141,7 @@ extern char       g_show_party_ids_instead_of_names;               // 0xa181b8
 extern unsigned   g_panel_color;             // 0x5d8760  name colour of the left column
 extern unsigned   g_panel_bg;                // 0x5d8764  background tint for the left column
 
-int mb_snprintf(char* buf, size_t n, const char* fmt, ...);   // 0x415100
+void mb_snprintf(char* buf, size_t n, const char* fmt, ...);   // 0x415100
 
 // ------------------------------------------------------------------------------------- helpers ------
 // party page lookup, exactly as inlined at 0x51ac38 / 0x51aed3: pages[idx >> 4] + (idx & 15)
@@ -246,7 +262,7 @@ void MapPanel::update(int type, int id)
                 } else {
                     int members[128];                                        // [E+0x8e0]
                     int count = 0;                                           // [E+0x18]
-                    g_game->list_members(agent, (unsigned*)members, (unsigned*)&count);                 // 0x490fa0
+                    ((GameW*)g_game)->list_members(agent, members, &count);                 // 0x490fa0
                     for (int i = 0; i < count; i++) {
                         int      m    = members[i];
                         float    mrel = g_game->relation(m, g_game->f78);
@@ -279,7 +295,7 @@ void MapPanel::update(int type, int id)
 
                     roster.count = 0;
                     g_game->fill_parties(agent, (Party*)&roster);                    // 0x48fd60
-                    roster.prepare();                                        // 0x4b1eb0
+                    ((Party*)&roster)->prepare();                                        // 0x4b1eb0
                 }
 
                 // ---- faction tag -------------------------------------------------------------------
@@ -334,13 +350,13 @@ void MapPanel::update(int type, int id)
                         label.append(*g_game->parties.get(rec->target)->display_name());
                         break;
                     case 6:
-                        label = *(rec->dist_is_zero() ? g_strtable.lookup(tstring("ui_holding"))
+                        label = *(dist_is_zero((DistObj*)rec) ? g_strtable.lookup(tstring("ui_holding"))
                                                    : g_strtable.lookup(tstring("ui_travelling")));
                         break;
                     case 7: {
                         int a = rec->agent;
                         if (a >= 0) {
-                            Rec98* slot = agents_of()->slot(a);         // 0x48ef20
+                            Rec98* slot = (Rec98*)agents_of()->slot(a);         // 0x48ef20
                             int other = (slot->f54 == agent) ? slot->f58 : slot->f54;
                             if (other >= 0) {
                                 label = *g_strtable.lookup(tstring("ui_fighting_against"));
@@ -359,10 +375,10 @@ void MapPanel::update(int type, int id)
 
                     if (!(rec->flags & 0x400)) {
                         g_gui.draw_string(label, 0.021f, 0xffc0b0a0, 1);
-                        if (!rec->dist_is_zero()) {
+                        if (!dist_is_zero((DistObj*)rec)) {
                             char buf[0x200];
                             const char* fmt = g_strtable.lookup(tstring("ui_speed_equals"))->c_str();
-                            sprintf(buf, fmt, (double)rec->speed_factor());
+                            sprintf(buf, fmt, (double)((Party*)rec)->speed_factor());
                             g_gui.draw_string(tstring(buf), 0.021f, 0xffb0a090, 1);
                         }
                     }
@@ -400,13 +416,15 @@ void MapPanel::update(int type, int id)
                 }
             }                                    // for (c ...)
         } else if (type == 3) {
-            draw_party_line(id);
+            ::draw_party_line(id);
         }
 
         // ---- move the panel to the selection's screen position --------------------------------------
-        int* xy = view->project(&rec, pos);                     // 0x51a690
+        float xyv[4];                                           // project's output (a vector4; the original reads it back through eax)
+        ((MapWidget*)view)->project((rgl::vector4*)xyv, (const rgl::vector4*)&pos);   // 0x51a690
+        int* xy = (int*)xyv;
         int  screen[2] = { xy[0], xy[1] };
-        g_gui.set_view((const float*)screen);                     // 0x4c5190
+        ((gui_view*)&g_gui)->set_view((const float*)screen);      // 0x4c5190
     }
 
     g_sel_type = type;

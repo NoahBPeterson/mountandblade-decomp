@@ -20,6 +20,7 @@
 #include "../../game/tstring.h"
 #include "../../game/strat/gui_manager.h"
 #include "./mesh2_common.h"
+#include "../xmlcfg/records.h"            // RecK (vector delete 0x4318c0), RecGList (clear 0x4317b0)
 #include "./head_rec.h"
 #include "./graph_obj.h"
 #include "./screen_cfg.h"
@@ -34,9 +35,6 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 // 0x4c48d0: the 0x34-byte record list loader
 // ============================================================================================================
 #include "../../include/rec34.h"      // rec34 (shared with game/config/config.h; the loader 0x4be470 is rec34::read)
-void __fastcall free_vec_4318c0(rec34* p, unsigned flags);   // 0x4318c0 (ret 4)
-char __stdcall read(rec34* r, stream_base* s);         // 0x4be470 (ret 4, this in ecx): 1 on success
-void __fastcall load_used(void* self);               // 0x4be560
 
 struct rec34_list {
     rec34* v;        // +0
@@ -64,7 +62,6 @@ struct list_int {
     int            count;  // +8
     void clear();          // 0x4c4d80
 };
-void __fastcall list_node_init_4be9c0(void* node, void*, void* a, void* b, void* c);  // 0x4be9c0
 
 // 0x28-byte record carrying a string first.
 struct tstr28 {
@@ -107,7 +104,8 @@ struct block_copier {
 // ============================================================================================================
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 struct item38 { char d[0x38]; };               // 0x38-byte record (tstring at +0x24)
-void copy_item38(item38* dst, const item38* src);  // 0x46b6c0 (plain args: [esp+4] dst, [esp+8] src)
+struct ArrSet;
+void __stdcall construct_arrset(ArrSet* p, const ArrSet& v);   // 0x46b6c0 (game/terrain_a/terrain_a.cpp; the call site loads the unused allocator into ecx)
 
 // The vertex-editor object: a tstring at +0x18, a cleared vector at +0x38, then two 0x4c-byte items
 // (tstring at item+0x18, vector at item+0x38) at +0x88 and +0xd4.
@@ -142,7 +140,7 @@ struct gui_child {                               // polymorphic child (deleted t
     virtual char on_event(unsigned mask);        // slot 35 (0x8c)
 };
 
-struct mesh_bnd { void bounds(vector4* lo, vector4* hi); };   // 0x438d80 (thiscall, ret 8: min/max corners)
+struct mesh_bnd {};   // the scene node whose min/max corners come from mnode::calc_bounds (0x438d80, thiscall, ret 8)
 extern const float g_f95;                        // 0x54b890 = 0.95
 extern const float g_f05;                        // 0x54b4d0 = 0.05
 extern const float g_f011;                       // 0x595c98 = 0.011
@@ -190,9 +188,6 @@ extern const char s_plant[];                    // 0x595d0c "ui_plant_plantname"
 extern const char s_passage[];                  // 0x595d20 "ui_passage_menu_item_passagename"
 extern const char s_entry_point[];              // 0x595d44 "ui_entry_point_entrypointname"
 
-void __fastcall kf_arr_dtor(void* k);                                       // 0x4317b0 (an array of keyframe tracks)
-void read(void* item, int i, void* rec, int k);         // 0x4c23f0
-void* find(void* kf, const float* t, int* lo, int* hi, float* frac);   // 0x40f0d0
 struct RefRecord;                                                // below
 
 // ---- the record classes of the language export (save_language_files 0x4c8ca0) -----------------------------
@@ -226,7 +221,7 @@ struct RefItem {                // 0x24-byte entry of the record array
     void* refs;                 // +0x10
     void* kf;                   // +0x14 (an array of keyframes, freed with the item)
     int f18, f1c, f20;
-    ~RefItem() { kf_arr_dtor(&kf); }
+    ~RefItem() { ((RecGList*)&kf)->clear(); }   // 0x4317b0: the keyframe track array is a RecGList-style owner
 };
 struct RefList {                // the object whose record array sits at +0 (fill_records 0x4c6950 / retire 0x4c6900)
     RefItem* records;           // +0
@@ -295,7 +290,7 @@ struct PTrack {                 // keyframes (12 bytes)
     PFrame* frames;
     int* times;
     int count;
-    void find(int* lo, int* hi, float* frac, const float* t);   // 0x40f0d0 (thiscall, ret 0x10)
+    // find is rgl::keyframes::find (0x40f0d0, thiscall, ret 0x10): PTrack is a view of keyframes (frames, times, count)
 };
 struct PPoint { vector4 a, b; };   // 0x20 (rest, current)
 struct PMesh {
@@ -424,12 +419,11 @@ struct ListObj {
 };
 
 struct MapDialog;
-void ctor_4c3d90(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3d90
-void copy_uninit_4(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3e10
-void copy_uninit_2c(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3e80
-void copy_uninit_4_range(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3ef0
-void uninit_copy_str(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x524cd0
-void uninit_copy_204(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c1b60
+// (the _Uninit_copy helpers 0x4c3d90 .. 0x4c3ef0, 0x4c1b60 are declared by gui_edit.cpp from rec_tables.h's declarations: their definitions
+// have no trailing tag parameter, which MapDialog's callers still push)
+#include "../../include/ptr_tag.h"      // ptr_tag: std::_Nonscalar_ptr_iterator_tag (empty, passed by value)
+struct tstring_alloc;
+tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_alloc& al, ptr_tag tag);       // 0x524cd0 (game/mission5/game_2.h)
 
 struct MapDialog {
     char pad0[0x8];
@@ -473,10 +467,7 @@ extern int g_dlg_multisample;                                 // 0x5aa100
 struct RenderConfig {                                   // game/config/config.h `Config`, 0x70 bytes
     int first_time;                                     // +0 (set when the file was missing or fresh)
     char data[0x70 - 4];
-    RenderConfig();                                     // 0x4bc020 (Config::init_defaults)
-    void load_file(FILE* f);                                 // 0x4bbf70 (Config::load_file)
-    void save(FILE* f);                                // 0x415fb0 (rgl_config::save)
-};
+};   // the methods are Config's init_defaults 0x4bc020 / load_file 0x4bbf70 and rgl_config::save 0x415fb0 (called through casts in gui_edit.cpp)
 
 extern tstring g_skin_name;                             // 0x5fe888 (the skin name; buf at 0x5fe88c)
 extern int g_trial_mode;                             // 0x5e29c4 (show the download button)
@@ -491,7 +482,7 @@ struct ConfigDialog {
     HWND hwnd;                                          // 0x364
     char pad368[0x380 - 0x368];
     void init();                                        // 0x4c7290
-    void choose_dx_settings(RenderConfig* cfg, bool overwrite);   // 0x4b9b90 (OptionsDlg, game/config/options_dlg.h)
+    // choose_dx_settings (0x4b9b90) is OptionsDlg's (game/config/options_dlg.h): this dialog is the same object
 };
 
 // the settings snapshot taken by the dialog: 0x230 bytes + 0x20 = a 0x250-byte frame
@@ -586,8 +577,13 @@ inline const char* text(const char* key)
 // the resource manager (global at 0x5d6fa0)
 struct res_manager {
     void* get_material(const tstring& name);            // 0x418a70
-    void release(void* res);                            // 0x4175f0
+    void release(void* res);                            // 0x4175f0 (the call shape only: the definition is the stdcall clear_f14, see below)
 };
+// 0x4175f0 is rgl/mem_stream.cpp's stdcall clear_f14(named_object*), which ignores ecx; the original loads ecx = the manager before the call:
+// the call goes to that symbol through the member type of the original's call
+struct named_object;
+void __stdcall clear_f14(named_object* r);              // 0x4175f0
+union ReleaseFn { void (res_manager::*as_member)(void*); void (__stdcall *clear_f14)(named_object*); };
 extern res_manager g_res_manager;                       // 0x5d6fa0
 
 // the array's elements are 0x78 bytes: +0x00 the pointer to the element's name, +0x18 the owner, +0x28 the
@@ -596,8 +592,6 @@ extern res_manager g_res_manager;                       // 0x5d6fa0
 struct RecordArrayHead {
     int count;                                          // -4
 };
-void __fastcall record_array_clear(void* r);            // 0x4317b0 (thiscall)
-void __fastcall reset(void* r);                   // 0x4c65d0 (thiscall: = ItemPage::reset)
 struct Rec78Buf {                                       // three owned pointers (begin, end, cap)
     char* p;
     char* e;
@@ -616,7 +610,7 @@ struct Rec78Tail {                                      // the sub-object at +0x
         Rec78Buf* b = &buf;
         if (owner)
             owner->deleting_dtor(1);
-        record_array_clear(groups);
+        ((RecGList*)groups)->clear();   // 0x4317b0 (thiscall)
         b->release();
     }
 };
@@ -650,8 +644,6 @@ struct Block {
     void free_materials();                              // 0x4c8330
     void read_terrain(stream_base* stream);             // 0x4c83a0
 };
-struct BlockBase { void read(stream_base* s); };        // 0x4607e0 (thiscall on block+0x38)
-void resize(stream_base* s, const char* name, int flags);   // 0x4c1e10
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/strat/gui_manager.h)
 
 
@@ -774,12 +766,12 @@ struct edit_vert {
 
 
 struct edit_vec;
-void uninit_fill_n(edit_vert* dst, unsigned n, const edit_vert* src, edit_vec* self, const edit_vert* src2);  // 0x4c5010
 struct edit_vec {                                       // the vector<edit_vert> whose _Ufill is 0x4c8810 (this = allocator)
     edit_vert* ufill(edit_vert* dst, int n, const edit_vert* src);   // 0x4c8810 (thiscall, ret 0xc)
 };
-tstring* assign_range(tstring* first, tstring* last, tstring* dst, tstring* dst2);  // 0x4331e0 (self, first, last)
-extern item38* copy_range38(item38* dst, const item38* first, const item38* last, conv_rec* self, const item38* last2);  // 0x4c5080
+namespace std {   // 0x4331e0: the forward copy of tstring ranges is the instance std::_Copy_opt<tstring*, tstring*> of rgl/xmlcfg/game_util.cpp
+template<> tstring* _Copy_opt<tstring*, tstring*>(tstring*, tstring*, tstring*, _Nonscalar_ptr_iterator_tag);   // 0x4331e0
+}
 void __fastcall conv_free_one(conv_rec* self);            // 0x4c85e0
 
 

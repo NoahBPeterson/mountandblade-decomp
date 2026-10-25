@@ -23,6 +23,10 @@ extern StrTable g_strtable;             // 0x5e2a18
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                 // 0x5d6fa0
+struct skin;
+struct resource_manager {
+    skin* get_material(const rgl::string& name);   // 0x418a70 (rgl/resource.h): the same object as g_resmgr
+};
 
 #include "../font.h"
 extern Font* g_font;                    // 0x5e2934
@@ -256,7 +260,7 @@ void gui_manager::add_label(const tstring* text, float h, int color)
     }
     {
         tstring name("ui_font");
-        o56c->res = (rgl::res_t*)g_resmgr.get_material(name);
+        o56c->res = (rgl::res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
     }
     {
         float out[2];
@@ -312,6 +316,6 @@ void gui_manager::set_quad(const float* origin, const float* size)
     m570.slots[0].f28 = 1;
     {
         tstring name("matte");
-        m570.res = (rgl::res_t*)g_resmgr.get_material(name);
+        m570.res = (rgl::res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
     }
 }

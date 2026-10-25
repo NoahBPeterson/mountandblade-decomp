@@ -48,17 +48,25 @@ extern "C" Widget* make_scroll2(Widget* parent, const tstring* name,
                                 Widget* other);                            // 0x4f62f0
 
 #include "../party/widget_ops.h"            // WidgetOps: the one definition (relayout 0x488d50, visible 0x50cc60)
-struct TextLayout {
-    void calc_bounds(float* a, float* b);                // 0x438d80 (this = font object)
+struct MissionPanel {
+    void draw();   // 0x488d50 (game/ui/mission_ui.h): WidgetOps::draw is the same code
 };
-struct ScrollBar {
+struct mnode {                                       // game/agent2/agent_types.h: the font object's bounds are mnode::calc_bounds
+    void calc_bounds(rgl::vector4* a, rgl::vector4* b);                // 0x438d80 (this = font object)
+    __forceinline void calc_bounds(float* a, float* b) { calc_bounds((rgl::vector4*)a, (rgl::vector4*)b); }
+};
+struct UiD {                                         // game/ui (ui_widgets_c.cpp): the scroll bar's value setter
     void set_value(float pos);                       // 0x48baa0 (this = scroll bar)
 };
-struct ThemeDb {
-    void* get_object(const tstring* key);            // 0x419540
+namespace rgl { struct mesh; }
+struct resmgr {
+    rgl::mesh* get_object(const rgl::string* name);   // 0x419540 (rgl/core/resmgr.h)
 };
-struct ThemeItem {
-    void* clone();                                   // 0x41c6d0
+struct ThemeDb {
+    __forceinline void* get_object(const tstring* key) { return ((resmgr*)this)->get_object((const rgl::string*)key); }   // 0x419540
+};
+struct mesh_x {
+    mesh_x* clone();   // 0x41c6d0 (rgl/mesh_x.h)
 };
 #define THEME ((ThemeDb*)0x5d6fa0)
 
@@ -69,19 +77,26 @@ struct ThemeItem {
 #include "../gui_mgr.h"
 #define GUI ((GuiManager*)0x5d7080)
 
-struct UiTextDb {
-    tstring* lookup(const tstring* key);             // 0x43a1e0
-    tstring* find(const tstring* key);               // 0x4c6010
+struct StrTable {
+    tstring* lookup(const tstring& key);   // 0x43a1e0 (game/str_table.h)
+};
+struct LangTables {
+    tstring* find(const tstring* key);   // 0x4c6010 (rgl/mesh2/gui_edit.cpp)
+};
+struct UiTextDb {                                            // the UI string table at 0x5e2a18, as both classes call it
+    __forceinline tstring* lookup(const tstring* key) { return ((StrTable*)this)->lookup(*key); }
+    __forceinline tstring* find(const tstring* key) { return ((LangTables*)this)->find(key); }
 };
 #define UITEXT ((UiTextDb*)0x5e2a18)
 
 #include "../ini_file.h"
 #define CONFIG ((ini_file*)0xa44240)
 
-struct ImageDb {
-    void* make_mesh_from(void* rec, int* id);                  // 0x4991d0
+struct TableauTbl {                                          // world_data/obj_tbl.h: the image table at 0xa75f40
+    rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0
+    __forceinline void* make_mesh_from(void* rec, int* id) { return make_mesh_from((const int*)rec, (const void*)id); }
 };
-#define IMAGES ((ImageDb*)0xa75f40)
+#define IMAGES ((TableauTbl*)0xa75f40)
 
 #include "../../include/game_data.h"             // GameData: the game object at 0x5e2930 (troops +0x13a00, factions +0x13a48, quests +0x13a58, parties +0xf8)
 #define WORLD g_game
@@ -89,6 +104,9 @@ struct ImageDb {
 // map-party accessors (this = world + 0xf8: the party manager, include/party.h; the slice called it WorldMap)
 #include "../../include/party.h"
 #define WORLDMAP ((PartyMgr*)((char*)WORLD + 0xf8))
+struct Map10007 {
+    int lookup(unsigned id);   // 0x48ad00 (game/ui/mission.h): the party-id hash at the head of the manager (PartyMgr::index_of)
+};
 
 extern "C" tstring* strip_tags(int quest, int idx);  // 0x42c5d0
 
@@ -223,9 +241,10 @@ struct note_window {
     float  scroll_pos;         // +0xb0
 
     void build(int page, int arg);              // 0x50a1c0
-    void sort_list(int_vector* vec, int kind); // 0x50cc70
 };
 
+struct sel_list;
+void __stdcall sort_list(sel_list* l, int mode);       // 0x50cc70 (inventory_panel/widget_text.cpp)
 static float fld(void* p, int off) { return *(float*)((char*)p + off); }
 static void  fst(void* p, int off, float v) { *(float*)((char*)p + off) = v; }
 
@@ -256,7 +275,7 @@ void note_window::build(int page_, int arg_)
     {
         tstring key("note_window");
         void* item = THEME->get_object(&key);       // 0x419540
-        panel->set_track(0, ((ThemeItem*)item)->clone());   // 0x41c6d0
+        panel->set_track(0, ((mesh_x*)item)->clone());   // 0x41c6d0
     }
 
     // ---- title picture ---------------------------------------------------
@@ -391,7 +410,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        this->sort_list(&vec, 1);
+        ::sort_list((sel_list*)&vec, 1);
 
         for (int i = 0; i < vec.size(); i++) {
             int v = vec[i];
@@ -472,7 +491,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        this->sort_list(&vec, 2);
+        ::sort_list((sel_list*)&vec, 2);
 
         for (int i = 0; i < vec.size(); i++) {
             int v = vec[i];
@@ -507,7 +526,7 @@ void note_window::build(int page_, int arg_)
         acc.assign(buf);
 
         tstring line("");
-        int idx = WORLDMAP->index_of(pi);
+        int idx = ((Map10007*)WORLDMAP)->lookup(pi);
         char* base = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x5ac8;
         char* ids  = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x16b2 * 4;
         for (int k = 0; k < 8; k++) {
@@ -546,7 +565,7 @@ void note_window::build(int page_, int arg_)
         {
             int v = WORLDMAP->first_party_id();
             while (v < (int)WORLD->parties.n_parties) {
-                int vi = WORLDMAP->index_of(v);
+                int vi = ((Map10007*)WORLDMAP)->lookup(v);
                 char* prec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
                 for (int k = 0; k < 8; k++) {
                     if (*(int*)(prec + 0x5a34 + k * 0x10) > 0) {
@@ -557,13 +576,13 @@ void note_window::build(int page_, int arg_)
                 WORLDMAP->next_party_id(&v);
             }
         }
-        this->sort_list(&vec, 3);
+        ::sort_list((sel_list*)&vec, 3);
 
         for (int i = 0; i < vec.size(); i++) {
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            int vi = WORLDMAP->index_of(v);
+            int vi = ((Map10007*)WORLDMAP)->lookup(v);
             char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
             const char* nm = ts_chars(party_name(rec));
             if (v == page_)
@@ -630,7 +649,7 @@ void note_window::build(int page_, int arg_)
             if (*(int*)(((char*)WORLD->quests) + i * 0x138 + 0x94) > 0)
                 vec.push_back(i);
         }
-        this->sort_list(&vec, 4);
+        ::sort_list((sel_list*)&vec, 4);
 
         for (int i = 0; i < vec.size(); i++) {
             int v = vec[i];
@@ -700,7 +719,7 @@ void note_window::build(int page_, int arg_)
         {
             int v = WORLDMAP->first_party_id();
             while (v < (int)WORLD->parties.n_parties) {
-                int vi = WORLDMAP->index_of(v);
+                int vi = ((Map10007*)WORLDMAP)->lookup(v);
                 char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
                 for (int k = 0; k < 8; k++) {
                     if (*(int*)(rec + 0x5a34 + k * 0x10) <= 0)
@@ -766,7 +785,7 @@ void note_window::build(int page_, int arg_)
 
     if (((WidgetOps*)this->picture)->flag1() == 0) {
         float a[2], b[2];
-        ((TextLayout*)(*(void**)((char*)this->picture + 0x108)))->calc_bounds(a, b);
+        ((mnode*)(*(void**)((char*)this->picture + 0x108)))->calc_bounds(a, b);
         float h = b[1] - a[1];
         float border = cfg_float("note_image_border");
         float right = (border + h) + x_cur;
@@ -808,12 +827,12 @@ void note_window::build(int page_, int arg_)
                                                        : fld(this->keys_scroll, 0xf4);
         v[0] = fld(this->keys_scroll, 0xf0);
         this->keys_scroll->set_scale(v);
-        ((WidgetOps*)this->keys_scroll)->draw();       // 0x488d50
+        ((MissionPanel*)this->keys_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->keys_scroll);
     }
 
     if (this->scroll_pos >= -0.0001f) {
-        ((ScrollBar*)*(void**)((char*)this->keys_scroll + 0x484))->set_value(this->scroll_pos);
+        ((UiD*)*(void**)((char*)this->keys_scroll + 0x484))->set_value(this->scroll_pos);
         this->scroll_pos = -1.0f;
     }
 
@@ -836,7 +855,7 @@ void note_window::build(int page_, int arg_)
                                                        : fld(this->data_scroll, 0xf4);
         v[0] = fld(this->data_scroll, 0xf0);
         this->data_scroll->set_scale(v);
-        ((WidgetOps*)this->data_scroll)->draw();       // 0x488d50
+        ((MissionPanel*)this->data_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->data_scroll);
     }
 

@@ -13,9 +13,17 @@
 #include "./terrain.h"
 #include "./game_state.h"
 #include "./misc.h"
+#include "./wind.h"                          // tri_normal (0x4612d0)
+#include "../../include/frustum.h"            // rgl::frustum (to_clip 0x4621f0)
+#include "../../include/mat4.h"               // pos (identity_pos 0x40cd00)
 
 using rgl::vector4;
 using rgl::matrix;
+
+namespace rgl { struct entity; struct world { entity* create_entity(int type_id); }; }   // 0x428440 (rgl/scene/world.h)
+struct render_cache {
+    void set_blend_mode(int mode);   // 0x40e940 (rgl/particles/render_cache.h; that header's g_render clashes with renderer.h's)
+};
 
 // 0x466cd0 (emit_particle) calls the cell lookup as a function with a void result; terrain.h declares that view as
 // terrain_obj::cell_of, which is the function Terrain::cell_of (0x464b40) defined below.
@@ -1134,7 +1142,7 @@ void terrain_obj::create_chunk_entities()
     for (int j = 0; j < ny; j++) {
         for (int i = 0; i < nx; i++) {
             TEntity** slot = &ents[i * 5 + j];
-            *slot = world->create_entity(9);
+            *slot = (TEntity*)((rgl::world*)world)->create_entity(9);   // 0x428440: SceneWorld is the rgl::world
             int ch = block;
             int cw = ch;
             if (i == nx - 1) {
@@ -1576,10 +1584,10 @@ void skin_x::apply_state(const float* t)
 int mesh_x::count(int kind)
 {
     if (kind == 1) {
-        std::vector<rgl::face20>& f = local_a0 ? v90 : ((mesh_x*)parent)->get90_();
+        std::vector<rgl::face20>& f = local_a0 ? v90 : parent->get90();
         return f.size() * 3;
     }
-    std::vector<rgl::vertex60>& v = local_a1 ? v50 : ((mesh_x*)parent)->get50_();
+    std::vector<rgl::vertex60>& v = local_a1 ? v50 : parent->get50();
     return v.size();
 }
 
@@ -1751,8 +1759,7 @@ bool ShadowMap::test(unsigned p, float* out)
     *o = 1.0f;
     bool result = true;
     if (cam) {
-        vector4 pt;
-        ((ProjView*)&cam->fr)->project(&pt.x, p);
+        vector4 pt = ((rgl::frustum*)&cam->fr)->to_clip(*(const vector4*)p);   // 0x4621f0 (hidden return pointer = &pt)
         if (!(0.0f <= pt.x)) return true;
         if (!(pt.x < 1.0f)) return true;
         if (!(0.0f <= pt.y)) return true;
@@ -2065,9 +2072,6 @@ void terrain_obj::spread_flow(unsigned mask, int mode, unsigned mark)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 using rgl::mat3;
 __declspec(noinline) mat3* identity3(mat3* out);                             // 0x40cd60
-struct pos2 : rgl::matrix {
-    void rotate_about_u(const float* angle);     // 0x40e770
-};
 static __forceinline rgl::vector4 t_mul(const rgl::vector4& a, const float& s) { return rgl::vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline rgl::vector4 t_add(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline rgl::vector4 t_subf(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -2171,7 +2175,7 @@ void terrain_obj::spawn_particles(particle_list* list, int unused)
                                     m.s = t_cross(m.f, m.u);
                                 }
                                 float ang = (float)(rand() % 0x3dc9) * 0.00039724255f;
-                                ((pos2*)&m)->rotate_about_u(&ang);
+                                m.rotate_about_u(&ang);
                                 e->frame = m;
                                 float sc = (float)(rand() % 0x3dc9) * 4.425618e-05f + 0.65f;
                                 e->dir = rgl::vector4(((float)(rand() % 0x3dc9) * 1.2644623e-05f + 0.9f) * sc,
@@ -2187,7 +2191,6 @@ void terrain_obj::spawn_particles(particle_list* list, int unused)
     }
 }
 
-vector4* tri_normal(vector4* out, const vector4* p);     // 0x4612d0 (cdecl, returns out)
 
 // @ 0x46ad50
 void terrain_obj::compute_normals()
@@ -2203,7 +2206,7 @@ void terrain_obj::compute_normals()
                 tri[0] = at(ab[0], ab[1]).P();
                 tri[1] = at(ab[2], ab[3]).P();
                 tri[2] = at(ab[4], ab[5]).P();
-                quad(x, y).nrm[flip] = *tri_normal(&n, tri);
+                quad(x, y).nrm[flip] = *((vector4* (__cdecl*)(vector4*, const vector4*))tri_normal)(&n, tri);   // 0x4612d0: cdecl, hidden result pointer = &n, returned in eax
             }
         }
     }
@@ -2407,8 +2410,8 @@ ViewParams::ViewParams()
     f0 = 1000.0f; f8 = -100.0f; f4 = -1.0f;
     f18 = -1.0f; f1c = -100.0f; f24 = -1.0e7f;
     b10 = 0; b2c = 0;
-    matrix tmp;
-    matrix* id = rgl::identity(&tmp);
+    pos tmp;
+    matrix* id = identity_pos(&tmp);
     world = *id;
     light = *id;
     f30 = 0;
@@ -2676,7 +2679,7 @@ void mesh_x::fill_vertices(int* p, const unsigned* fmt)
 // @ 0x46c920
 void mesh_x::fill_indices(unsigned short* out)
 {
-    std::vector<rgl::face20>& fs = local_a0 ? v90 : ((mesh_x*)parent)->get90_();
+    std::vector<rgl::face20>& fs = local_a0 ? v90 : parent->get90();
     for (unsigned i = 0; i < fs.size(); i++) {
         *out++ = (unsigned short)(&fs[i].b)[-1];
         *out++ = (unsigned short)(&fs[i].b)[0];
@@ -3092,7 +3095,7 @@ void drawer::draw(view_t* v)
         if (g_alpha_test)
             g_render.dev->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
         g_alpha_test = 0;
-        g_render.set_blend_mode(2);
+        ((render_cache*)&g_render)->set_blend_mode(2);   // 0x40e940: render_cache (rgl/particles/render_cache.h) is the same object as renderer
         if (v->f164) {
             if (g_render.b54b) {
                 g_render.b54b = 0;
@@ -3137,7 +3140,7 @@ void drawer::draw(view_t* v)
     M.f.x *= 0.5f; M.f.y *= 0.5f; M.f.z *= 0.5f;
     M.u.x *= 0.5f; M.u.y *= 0.5f; M.u.z *= 0.5f;
     matrix A;
-    rgl::identity(&A);
+    identity_pos((pos*)&A);                      // pos adds no data to rgl::matrix
     float ang = 1.5707964f;
     A.rotate_about_s(&ang);
     M = A * M;
@@ -3169,7 +3172,7 @@ void drawer::draw(view_t* v)
                 cur_part = part;
                 part->apply_state((const float*)&p->m->f48);
                 if (cur_mat != part->shader) {
-                    ((material_x*)part->shader)->bind_pixel_shader();
+                    ((material*)part->shader)->bind_pixel_shader();   // 0x461f20, material's (src/game/renderer.cpp)
                     cur_mat = part->shader;
                 }
             }
@@ -3332,9 +3335,9 @@ L_state:
         A.s.w = 0.0f; A.f.w = 0.0f; A.u.w = 0.0f; A.o.w = 1.0f;
         g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x100, (const D3DMATRIX*)&A);
 
-        std::vector<rgl::face20>& fv = node->local_a0 ? node->v90 : ((mesh_x*)node->parent)->get90_();
+        std::vector<rgl::face20>& fv = node->local_a0 ? node->v90 : node->parent->get90();
         int nf = fv.size();
-        std::vector<rgl::vertex60>& vv = p->m->local_a1 ? p->m->v50 : ((mesh_x*)p->m->parent)->get50_();
+        std::vector<rgl::vertex60>& vv = p->m->local_a1 ? p->m->v50 : p->m->parent->get50();
         int nv = vv.size();
         g_render.dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, p->m->slots[0].f8, 0, nv, node->slots[1].f8, (nf * 3) / 3);
         p++;

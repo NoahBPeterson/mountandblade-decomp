@@ -42,10 +42,15 @@ struct MusicTable {
 using rgl::vector4;
 using rgl::mesh;
 
-struct ResMgr2 {
-    mesh* get_object(const tstring& name);  // 0x419540
+struct resmgr {                                       // rgl/core/resmgr.h (the object at 0x5d6fa0)
+    mesh* get_object(const rgl::string* name);      // 0x419540
+    int load_all(int check_exists, rgl::string* root);   // 0x41c540
 };
-extern ResMgr2 g_res;                   // 0x5d6fa0
+extern resmgr g_res;                    // 0x5d6fa0
+// rgl::mesh::build_panel is declared with float* arguments by rgl_mesh.h; the function at 0x4de3e0 is PanelMesh::build_panel
+struct PanelMesh {
+    void build_panel(const float* a, const float* b, const float* c, const float* d, int* color);   // 0x4de3e0 (game/cls_map)
+};
 
 // ---------------------------------------------------------------- 0x50f7e0
 // @ 0x50f7e0
@@ -93,7 +98,7 @@ void Frame570::build_quad()
     z[3] = 0.0f;
     z[4] = 0.0f;
 
-    m->build_panel(&z[2], z, uv0, uv1, &color);
+    ((PanelMesh*)m)->build_panel(&z[2], z, uv0, uv1, &color);
     m->compute_normals();
 }
 
@@ -131,13 +136,13 @@ void LoadingMeshes::build_frames()
 
         z[0] = 0.1f;
         z[1] = 1.0f;
-        m->build_panel(base, z, uv0, uv1, &color);
+        ((PanelMesh*)m)->build_panel(base, z, uv0, uv1, &color);
         m->compute_normals();
     }
 
     {
         tstring n("frame_corner_a");
-        f1210 = g_res.get_object(n)->clone();
+        f1210 = g_res.get_object((const rgl::string*)&n)->clone();
     }
     {
         vector4 c;
@@ -149,7 +154,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_b");
-        f1214 = g_res.get_object(n)->clone();
+        f1214 = g_res.get_object((const rgl::string*)&n)->clone();
     }
     {
         vector4 c;
@@ -161,7 +166,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_c");
-        f1218 = g_res.get_object(n)->clone();
+        f1218 = g_res.get_object((const rgl::string*)&n)->clone();
     }
     {
         vector4 c;
@@ -173,7 +178,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_d");
-        f121c = g_res.get_object(n)->clone();
+        f121c = g_res.get_object((const rgl::string*)&n)->clone();
     }
     {
         vector4 c;
@@ -189,7 +194,14 @@ struct TrackEntry {
     char b[0x20];
 };
 
-void uninit_fill(void* dst, unsigned n, const void* val, void* self, const void* val2);  // 0x4f65f0
+// 0x4f65f0 (game/editor_ui.cpp) is cdecl and its definition has no trailing parameter; the original pushes the value's address once more
+struct NameVecRec; struct RecAlloc;
+void __cdecl uninit_fill(NameVecRec* dst, unsigned n, const NameVecRec& val, RecAlloc* al);   // 0x4f65f0
+typedef void (__cdecl *uninit_fill_t)(NameVecRec*, unsigned, const NameVecRec&, RecAlloc*, const void*);
+struct named_vec;
+struct vec_named {
+    void _Insert_n(named_vec* where, unsigned n, const named_vec& val);   // 0x50d260 (inventory_panel/widget_text.cpp): Entries is the same 0x20-byte-element vector
+};
 
 struct Entries {
     void* alloc;                        // +0
@@ -198,7 +210,6 @@ struct Entries {
     TrackEntry* end;                         // +0xc
     unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
     unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
-    void insert_n(TrackEntry* where, unsigned n, const TrackEntry& val);   // 0x50d260
     void add(const TrackEntry& val);         // 0x50fbf0
 };
 
@@ -206,10 +217,10 @@ struct Entries {
 void Entries::add(const TrackEntry& val)
 {
     if (size() < capacity()) {
-        uninit_fill(last, 1, &val, this, &val);
+        ((uninit_fill_t)uninit_fill)((NameVecRec*)last, 1, *(const NameVecRec*)&val, (RecAlloc*)this, &val);
         last++;
     } else {
-        insert_n(last, 1, val);
+        ((vec_named*)this)->_Insert_n((named_vec*)last, 1, (const named_vec&)val);
     }
 }
 
@@ -260,23 +271,17 @@ struct text_stream {
 struct Table2;                                       // built by MusicTable::build below (0x50f7e0)
 extern MusicTable g_music_situation;                          // 0xa73a10
 
-struct ModInfo {
-    void load(FILE* f);                              // 0x4bd630
-};
-extern ModInfo g_module_info;                           // 0xa18238
+#include "../ini_file.h"                          // ini_file (load 0x4bd630) and g_module_info (0xa18238)
 
-struct EditorDialog {
-    void load_game_variables();                                  // 0x4c0520
-};
+// 0x4c0520 is a cdecl function without parameters (game/triggers/trigger_vec.cpp); the original calls it with ecx = the application object,
+// which it ignores: the call goes to that symbol through the fastcall type of the original's call
+void load_game_variables();                                      // 0x4c0520
+struct EditorDialog {};
 extern EditorDialog g_app_obj;                 // 0x8ee3c48
 
 #include "../gui_mgr.h"
 extern GuiManager g_gui;                                 // 0x5d7080
 
-struct ResMgr3 {
-    int load_all(int check_exists, tstring* root);   // 0x41c540
-};
-extern ResMgr3 g_resmgr2;                            // 0x5d6fa0
 
 extern int   g_sound_paused;                         // 0x5a9fd4
 extern int   g_sound_muted;                          // 0x5a9fd8
@@ -296,7 +301,7 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         { tstring key("ui_loading_module_info_file"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 1) {
-        g_app_obj.load_game_variables();
+        ((void (__fastcall*)(void*))load_game_variables)(&g_app_obj);
         tstring path(g_module_path);
         { tstring ini("module.ini"); path.append(ini); }
         FILE* f = fopen(path.c_str(), "r");
@@ -311,8 +316,8 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         (*step)++;
     } else if (*step == 2) {
         parse_module_info();
-        g_gui.build_frames();
-        g_gui.build_quad();
+        ((LoadingMeshes*)&g_gui)->build_frames();   // 0x50f930: the gui object at 0x5d7080 holds the loading meshes
+        ((Frame570*)&g_gui)->build_quad();          // 0x50f8a0
         { tstring key("ui_loading_music"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 3) {
@@ -344,7 +349,7 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         (*step)++;
     } else if (*step == 7) {
         g_log << "Loading Textures...\n";
-        g_resmgr2.load_all(g_scan_module_textures, &g_module_path);
+        g_res.load_all(g_scan_module_textures, (rgl::string*)&g_module_path);
         g_log << "Finished Loading Textures...\n";
         { tstring key("ui_finished"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;

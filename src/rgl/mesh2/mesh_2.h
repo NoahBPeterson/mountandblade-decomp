@@ -52,15 +52,15 @@ struct row {
 struct rec {
     item a;                                      // +0x00
     item b;                                      // +0x4c
-    void free_items();                                // 0x4c5150
+    // free_items is editor::free_items (0x4c5150, rgl/mesh2/gui_edit.h): rec is the same item pair
 };
 
 void free_items(void* p, int n);             // 0x4c5150
 void free_items(void* p);                   // 0x4c5150
 // the CRT __eh_vector_destructor_iterator (0x401830, ret 0x10): destroys `n` elements of `size` bytes
 // from p onwards, backwards, invoking the out-of-line destructor `d` (thiscall, element in ecx).
-void __stdcall vector_destructor_iterator(void* p, unsigned size, int n, void (*d)(void*));  // 0x401830
-void clear_vec38(void* p);                         // 0x4c5110 (same as ~item)
+void __stdcall vector_destructor_iterator(void* p, unsigned size, int n, void (__fastcall* d)(void*));  // 0x401830 (dxframework/d3dapp.h)
+// 0x4c5110 (same as ~item) is editor::clear_vec38 (gui_edit.cpp); its address is taken through a pointer to member (union below)
 #include "../../include/crt.h"   // canonical: operator delete[] (0x53570d)
 
 struct mesh_sub {                                // rgl::mesh (0x260 bytes), dtor 0x4127f0
@@ -107,7 +107,11 @@ struct res_rec {
 // the lib's 4-arg _Destroy_range (0x4727a0) takes (first, last, allocator&, tag): the tag is an empty
 // class passed by value, so the call materialises a local `ptr_tag` before the branch.
 #include "../../include/ptr_tag.h"
-void obj_free(void* first, void* last, void* al, ptr_tag tag); // 0x4727a0
+// The definition (game/terrain_b: destroy_arrsets) is cdecl with two parameters; the callers push the allocator and the tag as well
+// (the caller pops), so it is called through the original's four-parameter type.
+struct ArrSet;
+void __cdecl destroy_arrsets(ArrSet* first, ArrSet* last); // 0x4727a0
+typedef void (__cdecl *obj_free_t)(ArrSet*, ArrSet*, void*, ptr_tag);
 
 struct rec_2e4 {
     void release();                              // 0x4cb610
@@ -180,6 +184,8 @@ struct big_obj {
     void tidy(void* base) { void** q = (void**)base; if (q[0]) operator delete(q[0]); q[0] = 0; q[1] = 0; q[2] = 0; }
 };
 
+__declspec(noreturn) void vec_xlen();                                       // 0x43e2a0 (game/agent3/agent_combat.cpp)
+typedef __declspec(noreturn) void (__fastcall *XlenFn)(const void*);
 struct tvec {
     char pad0[4];
     tstring* begin;                              // +0x04
@@ -190,8 +196,10 @@ struct tvec {
     bool reserve_38(unsigned n);                 // 0x4cbbe0
     bool reserve_204(unsigned n);                // 0x4cbc30
     bool reserve_b0(unsigned n);                 // 0x4cbc80
-    // the lib's _Xlen (0x43e2a0): thiscall, no arguments, never returns
-    __declspec(noreturn) void _Xlen() const;                                 // 0x43e2a0
+    // the lib's _Xlen (0x43e2a0): never returns. The original loads ecx = this before the call, while the definition (agent_combat.cpp
+    // vec_xlen) is a free cdecl function without parameters (?vec_xlen@@YAXXZ): the call goes to that symbol through the fastcall type
+    // that the original's `mov ecx, this; call` stands for
+    __forceinline void _Xlen() const { ((XlenFn)vec_xlen)(this); }           // 0x43e2a0
 };
 
 // ============================================================================================================
@@ -207,8 +215,8 @@ struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared 
 // _Nonscalar_ptr_iterator_tag: an empty tag that cl 13.10 still passes as one 4-byte stack slot
 // (which is where the last `mov eax, [esp+8]` in 0x4cc260 comes from).
 struct nonscalar_tag {};
-// 0x4ca7e0: std::_Destroy_range for the 0xb0-byte record E176 (frees +0x20, then destroys the string at +0)
-void __cdecl destroy_110(void* first, void* last, void* v, nonscalar_tag tag);   // 0x4ca7e0
+// 0x4ca7e0: std::_Destroy_range for the 0xb0-byte record E176 (frees +0x20, then destroys the string at +0), defined in this object
+
 
 // two game constructors the linker placed between the vector members
 struct U4c {                                // 0x4c repeated sub-object
@@ -314,14 +322,19 @@ struct mesh_vector_tmp : mesh_vector {
     ~mesh_vector_tmp() { if (begin) operator delete(begin); begin = 0; end = 0; cap = 0; }
 };
 
-struct resmgr {                                                 // global at 0x5d6fa0
-    SkelRes* get_object70(const tstring& name);                 // 0x418cf0 (ret 4)
-    mesh* get_object60(const tstring* name);                        // 0x418c10 (provisional)
-    // hidden-return form of the std::vector<mesh*> result: at the call site the buffer is a raw 0x10-byte block
-    mesh_vector* find_meshes(mesh_vector* ret, tstring* prefix);   // 0x41b960 (ret 8)
-    mesh_vector_tmp find_meshes(tstring* prefix);              // 0x41b960 (hidden return pointer first, ret 8)
+struct named_object;
+namespace rgl { struct mesh; }
+// global at 0x5d6fa0: two classes of the original name it (rgl/resource_manager.cpp's resource_manager owns the lookups,
+// rgl/core/resmgr.h's resmgr owns find_meshes); the object is the same
+struct resource_manager {
+    named_object* get_object70(const rgl::string& name);          // 0x418cf0 (ret 4): the skeleton resource
+    named_object* get_object60(const rgl::string& name);          // 0x418c10 (ret 4): the mesh
+};
+struct resmgr {
+    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (hidden return pointer first, ret 8)
 };
 extern resmgr g_resmgr;                                         // 0x5d6fa0
+inline const mesh_vector& as_mesh_vector(const std::vector<rgl::mesh*>& v) { return *(const mesh_vector*)&v; }   // the same 0x10 bytes (allocator word, first, last, end)
 
 // the 0x18-byte alternative-text record: its implicit ctor only builds the leading tstring
 struct alt_rec {
@@ -363,8 +376,12 @@ struct csv_row {                                                // 0x238 bytes (
 };
 
 extern std::vector<RegSkeleton> g_skeletons;                      // 0x5d6fa0 + 0x70 (provisional)
-void uninit_fill_n_str(lang_bucket* vec, tstring* pos, unsigned n, const tstring& v);   // 0x438f00
-void _Insert_n(lang_bucket* vec, tstring* pos, unsigned n, const tstring& v);  // 0x43e310
+struct allocstr {
+    void construct(tstring* p, const tstring& v);   // 0x436c90 (game/agent2/agent_types.h)
+};
+void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, allocstr& al, ptr_tag tag);   // 0x438f00 (agent_stats.cpp)
+// std::vector<tstring>::_Insert_n (0x43e310, protected): reached through a class that makes it public
+struct tstring_vec_pub : std::vector<tstring> { using std::vector<tstring>::_Insert_n; };
 void __fastcall fix_skeletons(std::vector<RegSkeleton>* list);               // 0x4cd850
 
 
@@ -379,16 +396,20 @@ struct shape_res {                                              // the body shap
     virtual vector4* get_bounds_min(vector4* out);              // 10 (+0x28)
     virtual vector4* get_bounds_max(vector4* out);              // 11 (+0x2c)
 };
-struct mesh_body_t { shape_res* copy_shape(); };                // 0x439100 (thiscall: mesh -> body shape)
-inline shape_res* body_copy_shape(mesh* m) { return ((mesh_body_t*)m)->copy_shape(); }
-struct mesh_bounds_t { void bounds(vector4* mn, vector4* mx); };   // 0x438d80 (thiscall, ret 8)
-inline void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx) { ((mesh_bounds_t*)node)->bounds(mn, mx); }
+struct shape_base;
+struct body_res {
+    shape_base* copy_shape();   // 0x439100 (game/agent2/agent_stats.h; thiscall: mesh -> body shape)
+};
+inline shape_res* body_copy_shape(mesh* m) { return (shape_res*)((body_res*)m)->copy_shape(); }
+struct mnode {
+    void calc_bounds(vector4* mn, vector4* mx);   // 0x438d80 (game/agent2/agent_types.h; thiscall, ret 8)
+};
+inline void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx) { ((mnode*)node)->calc_bounds(mn, mx); }
 void vmin(vector4* r, const vector4* a, const vector4* b);  // 0x40af80
 void vmax(vector4* r, const vector4* a, const vector4* b);  // 0x40b080
 
 struct game_vec {                                               // the 12-byte record at MissionObj +0x6c
-    void resize(void* owner, const char* name, int f);          // 0x4c1e10
-    void stamp(int f);                                          // 0x4c1ee0
+    // resize (0x4c1e10) and stamp (0x4c1ee0) are GameVec's (game/trigger_vecs.h): this is the same {count, data, cursor} record
     void clear();
     int v[3];
     game_vec() { v[0] = 0; v[1] = 0; v[2] = 0; }

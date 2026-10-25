@@ -7,6 +7,7 @@
 // this slice's disassembly.
 #include <windows.h>
 #include <new>
+#include <vector>
 #include "rgl.h"
 
 #define MB_NOTHROW throw()
@@ -16,6 +17,9 @@ extern "C" int _fltused = 0;
 // ---- engine string (16 bytes) ----------------------------------------------------------------------------
 #include "../tstring.h"
 
+struct MissionUi {
+    void set_fog(const float* a, const float* b, const float* c);   // 0x488cd0 (game/ui/mission_ui.h): World::set_fog is the same code
+};
 // ---- engine mesh -----------------------------------------------------------------------------------------
 #include "../rgl_mesh.h"
 using rgl::mesh;
@@ -43,7 +47,7 @@ struct frame : rgl::matrix {
     void rotate_about_s(const float* angle);                     // 0x40e570
     void rotate_about_f(const float* angle);                     // 0x40e670
 };
-frame* identity_pos(frame* out);                            // 0x40cd00 (cdecl, returns out)
+pos* identity_pos(pos* out);                                // 0x40cd00 (cdecl, returns out)
 
 // ---- entities --------------------------------------------------------------------------------------------
 struct Entity {
@@ -57,9 +61,8 @@ struct Entity {
 };
 
 // entity +0x108: the resource list the animation collect fills
-struct ResList {
-    void release(void** p);                                 // 0x41b750
-};
+struct named_object;
+template<> void std::vector<named_object*, std::allocator<named_object*> >::push_back(named_object* const&);   // 0x41b750 (rgl/core/resmgr.cpp's instance; the entity's +0x108 list is a std::vector<named_object*>)
 
 // ---- wind track (0x7c bytes) -----------------------------------------------------------------------------
 #include "../wind.h"                              // wind (shared with terrain_a/wind.cpp)
@@ -74,10 +77,10 @@ struct ResList {
 typedef MapWidget face_body;
 
 // ---- the object table and the resource manager -----------------------------------------------------------
-struct obj_tbl {
-    mesh* make_mesh_from(const int* def, const int* troop); // 0x4991d0
+struct TableauTbl {                                             // the image table at 0xa75f40 (world_data/obj_tbl.h)
+    mesh* make_mesh_from(const int* def, const void* troop); // 0x4991d0
 };
-extern obj_tbl g_tableaus;                                       // 0xa75f40
+extern TableauTbl g_tableaus;                                    // 0xa75f40
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                                     // 0x5d6fa0
@@ -152,7 +155,7 @@ void char_window::open_view()
             int   z2 = 0;
             float five = 5.0f;
             int   col = (int)0xff221815;
-            w->set_fog(&z2, &five, &col);
+            ((MissionUi*)w)->set_fog((const float*)&z2, (const float*)&five, (const float*)&col);   // 0x488cd0
         }
         {
             wind* wd = new wind;
@@ -181,7 +184,7 @@ void char_window::open_view()
         float aspect = b->size_y / b->size_x * g_fov_k;
         fr.init(0.2617994f, aspect, 0.01f, 20.0f);
         frame mat;
-        identity_pos(&mat);
+        identity_pos((pos*)&mat);
         // identity_pos (0x40cd00) has its worker 0x40cd60 copy its OWN stack locals into the matrix' w
         // lanes, so u.w (and s.w/f.w) hold whatever the deepest previous callee left on the stack rather
         // than 0.  In the original build frustum::init's prologue spilled the 0x1200 flags value into that
@@ -204,7 +207,7 @@ void char_window::open_view()
         b->view = fr;
         Entity* e = w->create_entity(9);
         frame m2;
-        identity_pos(&m2);
+        identity_pos((pos*)&m2);
         m2.o.y = -0.12f;
         float ang = -0.2f;
         m2.rotate_about_f(&ang);
@@ -224,12 +227,12 @@ void char_window::open_view()
             void* rc = 0;
             g_anim.collect(g_limit_hair_colors != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
             e->on_anim_end();
-            ResList* rl = (ResList*)((char*)e + 0x108);
-            rl->release(&ra);
+            std::vector<named_object*>* rl = (std::vector<named_object*>*)((char*)e + 0x108);
+            rl->push_back((named_object*&)ra);
             if (rc)
-                rl->release(&rc);
+                rl->push_back((named_object*&)rc);
             if (rb)
-                rl->release(&rb);
+                rl->push_back((named_object*&)rb);
         }
     } else {
         // ---- flat fallback: a shadow image plus the empty character icon ----
@@ -257,6 +260,9 @@ void char_window::open_view()
 
 // ---- the portrait view state (a different class from char_window: +0x7c/+0x8c are heap buffers, not
 //      tstrings) --------------------------------------------------------------------------------------------
+struct note_window {
+    void build(int a, int b);   // 0x50a1c0 (inventory_panel/note_window.cpp): the same object
+};
 struct view_obj {
     char pad0[0x7c];
     int*  p7c;                                              // +0x7c (heap buffer)
@@ -270,7 +276,6 @@ struct view_obj {
     int   fa8;                                              // +0xa8
     int   fac;                                              // +0xac
     float fb0;                                              // +0xb0
-    void  build(int a, int b);                         // 0x50a1c0
     void  reset();                                          // 0x50a140
 };
 
@@ -291,5 +296,5 @@ void view_obj::reset()
     fb0 = -1.0f;
     clear_buffer(p7c, f80, f84);
     clear_buffer(p8c, f90, f94);
-    build(g_game->f13b08, g_game->f13b0c);
+    ((note_window*)this)->build(g_game->f13b08, g_game->f13b0c);
 }
