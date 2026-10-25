@@ -13,7 +13,18 @@ struct text_reader_l : file_reader_base {
     text_reader_l() {}
 };
 
-// item modifier record (0x28 bytes): name, value string, hidden flag, one id array and one value array.
+// the item modifier table (Data\item_modifiers.txt): 43 records of 0x28 bytes at 0xa75f70, read by 0x4d0c20; the
+// game reads name / key as src/rgl/mesh2/gui_edit.h's ModRec, the two factors from +0x20 (item_ref.h's g_sort_val)
+struct item_mod {
+    tstring name;       // +0     (underscores shown as spaces)
+    tstring key;        // +0x10  read first
+    float price;        // +0x20
+    float rarity;       // +0x24
+};
+extern item_mod g_item_mods[43];     // 0xa75f70
+
+// the record type of item_modifier_array_dtor (0x4d10f0, shared by identical-code folding): a name, a string, a
+// flag and an id / value array pair. Not the item modifier table above.
 struct item_modifier {
     tstring name;       // +0
     tstring value;      // +0x10

@@ -12,11 +12,6 @@
 int find_string(const char* s);                  // 0x4230f0 (this = 0x8ed3c0)
 
 // ---- module-system record arrays -------------------------------------------------------------------------
-// item modifiers: 0x28-byte records, 0xf02e slots at 0xa75f80; name at +0, modifier value at +0x10,
-// hidden flag at +0x20, one id array at +0x24 and a value array at +0x28.
-item_modifier g_item_modifiers[0xf02e];          // 0xa75f80
-int g_num_item_modifiers;                        // 0xa76042
-
 // flora kinds: count (0x5e29e8) + heap array of 0x20-byte records (+0 name, +0x18/+0x1c ints).
 flora_kind* g_flora_kinds;                       // 0x5e28f8
 int g_num_flora_kinds;                           // 0x5e29e8
@@ -148,13 +143,12 @@ void load_data_files()
         text_reader_l ts;
         if (!((text_stream*)&ts)->open_read_text("Data\\item_modifiers.txt"))
             mb_error("Unable to open %s", "Data\\item_modifiers.txt");
-        g_num_item_modifiers = 0;
-        for (item_modifier* m = g_item_modifiers; m < &g_item_modifiers[0xf02e]; m++) {
+        for (item_mod* m = g_item_mods; m < &g_item_mods[43]; m++) {
+            ts.r_tstr((rgl::string*)&m->key);
             ts.r_tstr((rgl::string*)&m->name);
-            ts.r_tstr((rgl::string*)&m->value);
-            m->value.underscores_to_spaces();
-            ts.r_int(m->ids);
-            ts.r_int(m->values);
+            m->name.underscores_to_spaces();
+            ts.r_float(&m->price);
+            ts.r_float(&m->rarity);
         }
     }
     {

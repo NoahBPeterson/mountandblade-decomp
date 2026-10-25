@@ -216,7 +216,8 @@ def main():
     import literal_addrs as L
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
     keep = sorted({defined_at[int(st["value"], 16)] for st in L.scan() if int(st["value"], 16) in defined_at})
-    link_extra = ["/MAP:" + T.winpath(map_path)] + ["/INCLUDE:" + k for k in keep]
+    # the original's stack (reserve = commit = 0x3e8480): mesh::build_skin alone has a 1 MB frame
+    link_extra = ["/MAP:" + T.winpath(map_path), "/STACK:0x3e8480,0x3e8480"] + ["/INCLUDE:" + k for k in keep]
     steps["keep"] = "%d functions reached only through literal addresses kept (/INCLUDE)" % len(keep)
     log = T.link(objs, out, os.path.join(out, "glue"), extra=link_extra, name="mb_standalone.exe", icf=False)
     # A symbol two objects define (a view header's inline copy, or an out-of-line forwarder, next to the row's own
