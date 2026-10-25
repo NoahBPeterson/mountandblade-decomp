@@ -11,6 +11,7 @@ there. A name that resolved to two addresses is a conflict: glue.py refuses to a
 
 Vtables: our compiled vtables reference virtual functions no function body names, so their slots are mapped by
 position: our ??_7X@@6B@ resolved to the original vtable at V, so slot i stands for the dword at V + 4i.
+"vtables" lists each of our vtables with its original address and its slot count (for build.py's slot fix-up).
 """
 import argparse, collections, glob, json, multiprocessing, os, re, sys
 
@@ -126,7 +127,13 @@ def one_module(job):
                     continue
                 target = img.read(a + 4 * k, 4)
                 slots.append((coff.syms[si].name, int.from_bytes(target, "little"), vt, k))
-    return {"src": os.path.relpath(src, ROOT), "refs": refs, "defined": defined, "slots": slots, "errors": errors}
+    ours = {}
+    for vt, a in vtables:
+        vs = coff.by_name.get(vt)
+        if vs is not None and vs.defined:
+            ours[vt] = (a, coff.section_of(vs).size // 4)
+    return {"src": os.path.relpath(src, ROOT), "refs": refs, "defined": defined, "slots": slots, "errors": errors,
+            "vtables": ours}
 
 
 def main():
@@ -141,6 +148,7 @@ def main():
     names = collections.defaultdict(lambda: collections.defaultdict(lambda: {"methods": set(), "rows": set(), "defined": False}))
     defs = {}
     slots = collections.defaultdict(set)
+    vtmap = collections.defaultdict(lambda: {"orig": set(), "slots": 0})
     errors = []
     for r in results:
         if "error" in r:
@@ -157,10 +165,14 @@ def main():
         for name, va, vt, k in r["slots"]:
             slots[name].add(("%08x" % va, "%s[%d]" % (vt, k)))
         errors += ["%s %s" % (r["src"], e) for e in r["errors"]]
+        for vt, (va, n) in r["vtables"].items():
+            vtmap[vt]["orig"].add("%08x" % va)
+            vtmap[vt]["slots"] = max(vtmap[vt]["slots"], n)
     out = {"names": {n: {va: {"methods": sorted(e["methods"]), "rows": sorted(e["rows"])[:6], "nrows": len(e["rows"]),
                                "defined": e["defined"]} for va, e in d.items()} for n, d in sorted(names.items())},
            "defined_at": dict(sorted(defs.items())),
            "vtable_slots": {n: sorted(v) for n, v in sorted(slots.items())},
+           "vtables": {n: {"orig": sorted(v["orig"]), "slots": v["slots"]} for n, v in sorted(vtmap.items())},
            "errors": errors}
     json.dump(out, open(a.out, "w"), indent=1)
     conflicts = sum(1 for d in out["names"].values() if len(d) > 1)

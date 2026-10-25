@@ -51,7 +51,7 @@ def objects():
     return objs, fails
 
 
-def link(objs, out_dir, glue=None):
+def link(objs, out_dir, glue=None, extra=(), name="trial.exe"):
     libs = LIBS
     if glue:        # tools/relink/glue.py: the original's data, aliases, and import libraries for the shipped DLLs
         objs = objs + [os.path.join(glue, "mb_data.obj")]
@@ -62,8 +62,8 @@ def link(objs, out_dir, glue=None):
     env = dict(os.environ, WINEPREFIX=os.path.join(TC, "wineprefix-mb"), WINEDEBUG="-all",
                LIB=";".join(winpath(p) for p in (os.path.join(TC, "vc71tk", "lib"), os.path.join(TC, "vc9sp1", "WinSDK", "Lib"),
                                                    os.path.join(ROOT, "work", "ext", "dxsdk_jun10", "DXSDK", "Lib", "x86"))))
-    cmd = ["wine", os.path.join(TC, "vc71tk", "bin", "link.exe"), "/NOLOGO", "/OUT:" + winpath(os.path.join(out_dir, "trial.exe")),
-           "/SUBSYSTEM:WINDOWS", "/MACHINE:X86", "/FORCE:MULTIPLE", "/OPT:REF", "/OPT:ICF", "@" + winpath(rsp)] + libs
+    cmd = ["wine", os.path.join(TC, "vc71tk", "bin", "link.exe"), "/NOLOGO", "/OUT:" + winpath(os.path.join(out_dir, name)),
+           "/SUBSYSTEM:WINDOWS", "/MACHINE:X86", "/FORCE:MULTIPLE", "/OPT:REF", "/OPT:ICF"] + list(extra) + ["@" + winpath(rsp)] + libs
     with tempfile.TemporaryFile("w+") as f:      # never the caller's pipes: wine services inherit stdio
         subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=f, stderr=subprocess.STDOUT, env=env)
         f.seek(0)
