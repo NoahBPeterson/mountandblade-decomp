@@ -26,7 +26,7 @@ void CharSheet::update(float dt)
         if (g_world_time != 0) {
             ScrollHost* host = (ScrollHost*)f_4bc;
             UiDsv* bar = host->bar;
-            bar->set_value(((float)g_world_time / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
+            ((UiD*)(void*)bar)->set_value(((float)g_world_time / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
                            (bar->stops[bar->f_178] - bar->f_17c) *
                                ((bar->f_168 - bar->f_16c) / (bar->f_170 - bar->f_16c)));
             ((UiVt*)((ScrollHost*)f_4bc)->bar)->set_key_flags(0x10000);
@@ -116,7 +116,7 @@ void CharSheet::update(float dt)
     }
     if (f_14 == 0 && f_4c4->changed(0x10000)) {
         g_game->chars[0].name = tstring(((HeroEntry*)f_4c4)->name);
-        g_game->emit_event(0x18, 0, 0);
+        ((SoundCtl*)g_game)->emit_event(0x18, 0, 0);
     }
 
     // previous / next troop
@@ -142,7 +142,7 @@ void CharSheet::update(float dt)
             f_42c->disable();
         if (f_42c->changed(0x10000)) {
             f_2dc = -1;
-            g_game->chars[g_game->player].auto_equip(-1, 0, 0, 0);
+            ((TroopEq*)&g_game->chars[g_game->player])->auto_equip(-1, 0, 0, 0);
             g_menu_state[5] = f_14;
             menu_choose(0x1d);
             return;

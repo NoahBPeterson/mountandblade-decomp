@@ -10,7 +10,9 @@
 #include <math.h>
 #include <stddef.h>
 #include "./widget_mgr_w.h"
+#include "./raw_place.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/mesh_x.h"        // mesh_x: compute_bounds 0x419300, set_bone_index 0x47b360
 #include "../../rgl/rgl_math.h"
 #include "../ui/mission_ui.h"
 
@@ -21,13 +23,18 @@ using rgl::vector4;
 // ---- rgl::mesh members the shared header lacks (same object, 0x260 bytes) -------------------------------------------------------
 struct MeshX : gui_mesh {
     float& uv(int i) { return WD_FLD(float, 0xf0 + 4 * i); }    // +0xf0 .. +0xfc the uv rectangle (0x495fa0)
-    void compute_bounds();                                      // 0x419300 (thiscall: bounds of the points)
     MeshX* copy_of();                                           // 0x4958f0 (thiscall, ret 0)
     void set_part(const rgl::matrix& mtx);                      // 0x495ba0 (ret 4)
     void set_alpha(float a);                                    // 0x495f00 (ret 4)
     void normalize_uv(MeshX* src);                              // 0x495fa0 (ret 4)
 };
-rgl::vector4 unpack_color(const unsigned* c);                   // 0x40e4e0 (unpack_color: the colour by value, hidden return pointer)
+namespace rgl { vector4 unpack_color(const unsigned* c); }      // 0x40e4e0 (shapes.cpp: the colour by value, hidden return pointer)
+extern char vtbl_5922e8[];                                     // 0x5922e8 (the mesh widget's vtable)
+extern char vtbl_591fb0[];                                     // 0x591fb0 (UiB's vtable: the slider widget)
+// mission_ui2's FieldPanel::update (0x48d470), what the outer HUD's refresh calls
+struct FieldPanel { void update(); };
+// the resource manager's mesh lookup (0x419540, resmgr::get_object of rgl/core/resmgr.h; widget_mgr.h calls its view resmgr_gui)
+struct resmgr { rgl::mesh* get_object(const rgl::string* name); };
 
 union Color4 {
     unsigned dword;
@@ -42,7 +49,10 @@ static inline int round_float(float* p)
     return (*p - fl <= 0.5f) ? i : i + 1;
 }
 
-struct ColourOwner { void set_colour_on(rgl::mesh* m); };        // 0x442110 (thiscall, ret 4)
+struct ColourOwner {};
+struct Poser {
+    void add_extra(int m);   // 0x442110 (thiscall, ret 4)
+};
 rgl::mesh* build_legend_mesh(ColourOwner* parent);              // 0x495b20
 
 // ---- the HUD bar widget (MissionUi-derived; the fields past +0x178 are the slider-like frame state) ---------------------------------
@@ -112,7 +122,6 @@ struct HudOuter : WItem {
     float f49c;                                                 // +0x49c
     float f4a0;                                                 // +0x4a0
     void scroll_refresh(vector4* arg);                          // 0x498420 (ret 4)
-    void update();                                           // 0x48d470
 };
 
 #endif // GAME_WORLD_DATA_MESH_HUD_H

@@ -14,8 +14,10 @@ using rgl::vector4;
 
 // ---- ragdoll body record (0x2c bytes) ----------------------------------------------------------------------
 #include "../rag_body.h"                           // RagBody: ctor 0x4bc170, load 0x4bc1f0 (config.cpp)
+#include "./vec44.h"                               // vec44: push_back 0x4cefe0 (mission_items.cpp)
 struct Bodyvec : vec<RagBody> {
-    void push_back(const RagBody&);                 // 0x4cefe0
+    // the element-appending helper is vec44::push_back (a RagBody is 0x2c bytes); the vec<RagBody> layout is vec44's
+    __forceinline void push_back(const RagBody& b) { ((vec44*)(void*)this)->push_back((char*)&b); }
 };
 
 struct RagBone {
@@ -68,6 +70,12 @@ void RagBone::load(TiXmlElement* e)
     }
 }
 
+// Block (rgl/mesh2/gui_edit.h, the editor's map-object block): its clear() 0x4c80c0 is what this record's constructor calls on
+// itself; that header's types clash with this TU's, so the member is repeated under the class name.
+struct Block {
+    void clear();   // 0x4c80c0
+};
+
 // ---- 0x2ebc-byte model record (provisional layout from its ctor) -------------------------------------------
 struct model_a {
     char pad0[0x24];
@@ -87,7 +95,6 @@ struct model_a {
     vec<int> v2e8c;                                 // 0x2e8c
     vec<int> v2e9c;                                 // 0x2e9c
     vec<int> v2eac;                                 // 0x2eac
-    void clear();                               // 0x4c80c0
     model_a();                                      // 0x4d3580
 };
 
@@ -95,7 +102,7 @@ struct model_a {
 model_a::model_a()
 {
     f2c50 = 0;
-    clear();
+    ((Block*)(void*)this)->clear();
     f2e74 = 0;
     for (int i = 0; i < 8; i++)
         for (int j = 0; j < 8; j++) {

@@ -30,9 +30,45 @@
 
 #include "../party_x.h"                   // PartyX : Party: the one definition (map_editor and script)
 
-struct PartyMgrX : PartyMgr {
-    PartyX* get3(int party, int slot, int kind);        // 0x51ee50 (the call site of 0x531800 pushes three words; the callee returns with ret 4)
+struct PartyMgrX : PartyMgr {};
+// the party-by-id getter 0x51ee50 (Scene::get(int), ret 4) and the other canonical classes the exchange screens call
+struct PartyRecIO;
+struct Scene {
+    PartyRecIO* get(int id);   // 0x51ee50 (the party manager's by-id getter)
 };
+namespace c49e780 {
+struct Party {
+    int add_sprite(int a, int b, int kind);   // 0x49ebd0 (ret 0xc)
+};
+}
+struct Map10007 {
+    int lookup(unsigned id);   // 0x48ad00 (ui/mission.h: the id hash table that opens the party manager)
+};
+struct SoundCtl {
+    char emit_event(int id, int a, int b);   // 0x435790 (agent/agent.h)
+};
+struct PartyScreen {
+    void refresh_selection();   // 0x5063e0
+    void refresh_party_members(int);   // 0x503ed0
+    void refresh_morale();   // 0x503a50
+};
+struct MissionCtx {
+    void setup(unsigned flags, int delta);   // 0x513f80
+    void update_parties();   // 0x513b40
+    void build_hero_table(int a, int b, int c, int d);   // 0x514890
+};
+struct note_window {
+    void build(int a, int b);   // 0x50a1c0 (ret 8)
+};
+struct LogScreen {
+    void build(bool arg);   // 0x4fc820 (ret 4)
+};
+namespace std {
+template<> void vector<int, allocator<int> >::push_back(const int& x);        // 0x440b30
+}
+namespace std {
+template<> void vector<int, allocator<int> >::resize(size_type n, int x);     // 0x43f310
+}
 
 inline PartyMgrX* party_mgr() { return (PartyMgrX*)&g_game->parties; }
 
@@ -46,7 +82,7 @@ inline PartyX* party_at(PartyMgrX* m, int id)
 inline PartyX* party_index(int id)
 {
     PartyMgrX* m = party_mgr();
-    int idx = m->index_of(id);
+    int idx = ((Map10007*)(void*)m)->lookup(id);   // 0x48ad00
     return party_at(m, idx);
 }
 
@@ -54,14 +90,14 @@ inline PartyX* party_index(int id)
 inline PartyX* party_index(GameData* g, int id)
 {
     PartyMgrX* m = (PartyMgrX*)&g->parties;
-    int idx = m->index_of(id);
+    int idx = ((Map10007*)(void*)m)->lookup(id);   // 0x48ad00
     return party_at(m, idx);
 }
 
 struct GameDataX : GameData {               // the game object with the members this region calls
-    int sl_party_price(int troop);               // 0x48a320 (ret 4)
+    // (sl_party_price 0x48a320 is GameData's)
     __declspec(noinline) void update_party_sprites();            // 0x532de0
-    int add_sprite(int a, int b, int kind); // 0x49ebd0 (ret 0xc)
+    // (add_sprite 0x49ebd0 is c49e780::Party's)
 };
 inline GameDataX* gx() { return (GameDataX*)g_game; }
 
@@ -69,7 +105,10 @@ inline GameDataX* gx() { return (GameDataX*)g_game; }
 inline int troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }
 
 // ---- small objects ----------------------------------------------------------------------------------------------------
-struct FrameFlags { void commit(void* out); };      // 0x513710 (ret 4): the framed command block at 0x5e291c
+struct FrameFlags {};                                   // the framed command block at 0x5e291c: MapFlags
+struct MapFlags {
+    void commit(char* out);   // 0x513710 (ret 4)
+};
 extern FrameFlags g_map_flags;                          // 0x5e291c
 extern MsgLog g_gui;                             // 0x5d7080
 
@@ -86,9 +125,7 @@ struct MenuCtl {
     int f3c;                                // +0x3c
     char pad40[0x160 - 0x40];
     int f160;                               // +0x160
-    void setup(unsigned flags, int delta);  // 0x513f80 (ret 8)
-    void update_parties();                           // 0x513b40
-    void build_hero_table(int a, int b, int c, int d);     // 0x514890 (ret 0x10)
+    // (setup 0x513f80, update_parties 0x513b40, build_hero_table 0x514890 are MissionCtx's)
     __declspec(noinline) void setup_entry(struct MenuEntry* e);  // 0x531600
     __declspec(noinline) int weight(unsigned flags);             // 0x5316f0
 };
@@ -183,9 +220,7 @@ struct XferWin {
     char f3908;                             // +0x3908
 
     void update(int);                       // 0x531800
-    void refresh_selection();            // 0x5063e0
-    void refresh_party_members(int);                    // 0x503ed0
-    void refresh_morale();                       // 0x503a50
+    // (refresh_selection 0x5063e0, refresh_party_members 0x503ed0, refresh_morale 0x503a50 are PartyScreen's)
     __declspec(noinline) void clear_selection();                 // 0x5324d0
     __declspec(noinline) void get_cell(int a, int b, int c, int* main, int* cell);   // 0x532520
     __declspec(noinline) void move_men(int amount);              // 0x532560
@@ -200,8 +235,7 @@ struct ChoiceList : Widget {                // a choice list (was ListWidget; no
     __declspec(noinline) void get3(int* a, int* b, int* c);      // 0x533a60 (ret 0xc)
 };
 
-struct OutIntVec : IntVec {                 // a std::vector<int> embedded in a screen (src/game/int_vec.h) whose push_back the original calls out of line
-    void push_back_out(const int& v);      // 0x440b30 (ret 4)
+struct OutIntVec : IntVec {                 // a std::vector<int> embedded in a screen (src/game/int_vec.h) whose push_back the original calls out of line (std::vector<int>::push_back 0x440b30, ret 4)
 };
 
 struct VecIter {                            // VC7.1 vector<int>::iterator + n, in the out-parameter form
@@ -215,8 +249,7 @@ struct ScreenBase {                         // what the raw-layout screens share
 };
 struct TickScreen : ScreenBase {            // vtable 0x595a08
     void on_tick(int code);                 // 0x5337a0 (ret 4)
-    void build(int a, int b);        // 0x50a1c0 (ret 8)
-    void build(int arg);            // 0x4fc820 (ret 4)
+    // (build(a, b) 0x50a1c0 is note_window's, build(arg) 0x4fc820 is LogScreen's)
 };
 struct EventScreen : ScreenBase {           // vtable 0x59619c
     void on_event(int code);                // 0x533070 (ret 4)
@@ -258,7 +291,10 @@ extern MenuItem* g_a739bc;                  // 0xa739bc
 extern MenuItem* g_a739e4;                  // 0xa739e4
 extern MenuItem* g_a739e8;                  // 0xa739e8
 extern MenuItem* g_a739ec;                  // 0xa739ec
-struct KeyDown { bool down(int key); };     // 0x48ac90 (ret 4): the key state object at 0xa73730
+struct KeyDown {};                          // the key state object at 0xa73730: OriginPairs
+struct OriginPairs {
+    bool clicked(int key);   // 0x48ac90 (ret 4)
+};
 extern KeyDown g_game_keys;                    // 0xa73730
 #define STR_TABLE ((StrTable*)0x5e2a18)     // the localized string table (str_table.h)
 

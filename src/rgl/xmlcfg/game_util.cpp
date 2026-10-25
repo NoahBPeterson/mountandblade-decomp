@@ -415,10 +415,16 @@ int AgentX::agent_class() const
     return r;
 }
 
+namespace rgl {
+struct keyframes;
+struct mesh {
+    keyframes& get_kf();   // 0x40ec00
+};
+}
 // @ 0x433190
 void mesh_node::set_time(const float* t)
 {
-    keyframes12& k = local_a1 ? kf : parent->get_kf();
+    keyframes12& k = local_a1 ? kf : (keyframes12&)((rgl::mesh*)parent)->get_kf();   // 0x40ec00 (rgl::mesh::get_kf: the parent walk)
     if (k.count > 0) {
         if (*t > (float)k.times[k.count - 1]) c8 = (float)k.times[k.count - 1];
         else c8 = *t;

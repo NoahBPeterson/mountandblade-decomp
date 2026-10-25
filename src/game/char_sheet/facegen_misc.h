@@ -9,13 +9,16 @@
 #include <stdlib.h>
 #include <math.h>
 #include "rgl.h"
+#define CS_REAL_FACEGEN                                 // (this header defines FaceGen)
+#include "./cs_common.h"
+#include "./cs_mat.h"
 
 using rgl::vector4;
 
 // ---- engine matrix / frustum (s004f49d0, s004291c0) -----------------------------------------------------
 #include "../../include/mat4.h"
 using rgl::mat4;
-mat4* identity_pos(mat4* out);                          // 0x40cd00 (cdecl)
+// (identity_pos 0x40cd00 is cs_common.h's)
 
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
 // ---- the animation state ----
@@ -27,7 +30,10 @@ mat4* identity_pos(mat4* out);                          // 0x40cd00 (cdecl)
 
 // ---- save/load menu interfaces --------------------------------------------------------------------------
 #include "../../dxframework/d3dfont.h"               // CD3DFont (DrawText 0x404f00)
-struct SceneRegistry { void func_47e520(int); };             // 0x47e520, instance at 0x5fe898
+struct SceneRegistry {};                                       // the render-pass object at 0x5fe898: RenderPass
+struct RenderPass {
+    bool render(int pass);   // 0x47e520
+};
 extern SceneRegistry g_renderer;                             // 0x5fe898
 #include "../map_editor_obj.h"                      // MapEditor, instance at 0x8ee3c48
 #define g_editor (*(MapEditor*)0x8ee3c48)
@@ -45,7 +51,7 @@ typedef MapWidget face_body;
 
 struct ui_vec {                                         // engine vector of void*
     int lead; void** first; void** last; void** end;
-    void push_back(void* const& v);                     // 0x41b750 (ret 4)
+    // (push_back 0x41b750 is std::vector<named_object*>::push_back, cs_common.h)
 };
 struct Entity {                                         // 0x34c entity (EChar-like)
     UiVt* vt;                                           // +0x000
@@ -118,7 +124,7 @@ extern int g_char_count;                                // 0x8ed4f88
 extern float g_dummy_mat;                               // 0x8ed4f8c
 extern float g_dummy0;                                  // 0x8ed5088
 extern float g_dummy1;                                  // 0x8ed508c
-int gen_face_seed(int* flags, int* zero, int* count);   // 0x432510 (cdecl)
+// (0x432510 is clamp_index, cs_common.h)
 
 extern unsigned g_xa181ac;                              // 0xa181ac (shader-on flag)
 extern const float g_590c54;                            // 0x590c54 = 7.0f

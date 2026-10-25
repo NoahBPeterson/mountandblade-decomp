@@ -10,6 +10,7 @@
 #include <string.h>
 #include <math.h>
 #include <new>
+#include <vector>
 #include "../../rgl/rgl_math.h"
 #include "../../include/frustum.h"
 #include "../tstring.h"
@@ -19,24 +20,28 @@ using rgl::vector4;
 extern int g_ticks[];                                           // 0x5e2948 / 0x5e294c (two-dword clock)
 extern char* g_game;                                            // 0x5e2930 (the GameData instance)
 extern char* g_menus;                                           // 0x5e29b0 (the menu array)
-extern char* g_strtable;                                        // 0x5e2a18 (LangTable)
 extern int g_5e2930_dummy;
 
-struct LangTable {
+// The string table object (0x5e2a18) as the map editor's LangTables (rgl/mesh2/gui_edit.h, mesh2_common.h: find 0x4c6010) and the
+// script state (0xa70440) as dialog_manager.h's ScriptState (expand 0x4606d0, thiscall, ret 8: hidden return + token). Those
+// headers declare g_game and friends in other types than this TU's, so the two members are repeated under the class names.
+struct LangTables {
     tstring* find(const tstring* key);                          // 0x4c6010
 };
-struct expander {
-    tstring expand(const tstring& in);                          // 0x4606d0 (ret 8: hidden ret + in)
+extern LangTables g_strtable;                                   // 0x5e2a18
+struct ScriptState {
+    tstring expand(const tstring& in);                          // 0x4606d0
 };
-extern expander g_5a70440;
+extern ScriptState g_script;                                    // 0xa70440
 
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 void conv_clear(void* p);                                    // 0x4c8bf0 (releases an owned block)
 
 // opaque record types used by the loops at the end of the slice
-struct rec50 { int pad[0x50 / 4]; void read(void* p); };       // reader 0x4cd270, stride 0x50
-struct rec68 { int pad[0x68 / 4]; void read(void* p); };       // reader 0x4cd2f0, stride 0x68
-struct recb0 { int pad[0xb0 / 4]; void read(void* p); };       // reader 0x4cd380, stride 0xb0
+struct rec50 { int pad[0x50 / 4]; };       // E50 (stride 0x50)
+struct rec68 { int pad[0x68 / 4]; };       // E68 (stride 0x68)
+struct recb0 { int pad[0xb0 / 4]; };       // E176 (stride 0xb0)
+#include "./elem_calls.h"                                       // E50 / E68 / E176: the out-of-line copy assignments
 
 // ---- 0x60-byte item base (vtbl 0x5947d8, id 99, tstring at +0x1c) ----------------------------------------
 // A polymorphic base so MSVC emits the base-vtable store; the ctor puts id 99 in place after the name ctor.
@@ -317,6 +322,9 @@ struct scene_group {
     void v64(float a, float b);                                 // +0x64
 };
 
+// FieldPanel (mission_ui2/field_panel.h, which this TU's headers clash with): the scene widget's relayout 0x48f020 (thiscall, ret 4)
+struct FieldPanel { void relayout(const tstring* text); };
+
 struct scene_handler {
     virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
     virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
@@ -324,7 +332,6 @@ struct scene_handler {
     virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
     virtual void v20(); virtual void v21(); virtual void v22(); virtual void v23(); virtual void v24();
     virtual void v25(); virtual void v26();
-    void relayout(const tstring& s);                          // 0x48f020 (thiscall, ret 4)
     void v_add8(int* out);                                      // +0xa4 (thiscall, ret 8)
     virtual void v64(float a, float b);                         // +0x64
 };
@@ -345,11 +352,11 @@ void MissionUpdater::update()
 {
     int i = *(int*)(g_game + 0x13aec);
     scene_group* g = (scene_group*)(i * 0x60 + (int)g_menus);
-    tstring* t = ((LangTable*)g_strtable)->find((tstring*)((char*)g + 0x10));
+    tstring* t = g_strtable.find((tstring*)((char*)g + 0x10));
     if (t == 0)
         t = (tstring*)g;
-    tstring tmp = g_5a70440.expand(*t);
-    scene->relayout(tmp.strip_tags());
+    tstring tmp = g_script.expand(*t);
+    { tstring stripped = tmp.strip_tags(); ((FieldPanel*)(void*)scene)->relayout(&stripped); }
     tmp.~tstring();
     for (int k = 0; k < 16; k++) {
         mission_obj_vt* o = (mission_obj_vt*)items[k];
@@ -363,10 +370,10 @@ void MissionUpdater::update()
         snd_channel* ch = (snd_channel*)((char*)g->recs + idx * 0x68 + 0x30);
         if (ch->play(8)) {
             SceneObj* obj = (SceneObj*)((char*)g->recs + idx * 0x68);
-            tstring* nm = ((LangTable*)g_strtable)->find((tstring*)((char*)obj + 0x20));
+            tstring* nm = g_strtable.find((tstring*)((char*)obj + 0x20));
             if (nm == 0)
                 nm = (tstring*)obj;
-            tstring tmp2 = g_5a70440.expand(*nm);
+            tstring tmp2 = g_script.expand(*nm);
             tstring tmp3 = tmp2.strip_tags();
             scene_handler* h = scene;
             h->v_add8((int*)&obj);
@@ -401,45 +408,42 @@ void MissionUpdater::update()
 void walk50(rec50* begin, rec50* end, void* arg)
 {
     for (; begin != end; begin++)
-        begin->read(arg);
+        ((E50*)begin)->operator=(*(const E50*)arg);
 }
 
 // @ 0x4cf0a0
 void walk68(rec68* begin, rec68* end, void* arg)
 {
     for (; begin != end; begin++)
-        begin->read(arg);
+        ((E68*)begin)->operator=(*(const E68*)arg);
 }
 
 // @ 0x4cf0d0
 void walkb0(recb0* begin, recb0* end, void* arg)
 {
     for (; begin != end; begin++)
-        begin->read(arg);
+        ((E176*)begin)->operator=(*(const E176*)arg);
 }
 
-// 0x4cefe0: append one element (stride 0x2c) with the capacity check.
-struct vec44 {
-    char pad0[4];
-    char* begin;                                                // +0x04
-    char* end;                                                  // +0x08
-    char* cap;                                                  // +0x0c
-    int size() { if (!begin) return 0; return (int)((end - begin) / (ptrdiff_t)0x2c); }
-    unsigned capacity() { if (!begin) return 0; return (unsigned)((cap - begin) / (ptrdiff_t)0x2c); }
-    void push_back(char* v);                                    // 0x4cefe0 (ret 4)
-    void grow(char** out, char* at, char* v);                   // 0x4ccef0 (thiscall)
-};
+#include "./vec44.h"                                         // vec44: push_back 0x4cefe0 (defined below)
 
-extern char* uninit_fill_n(char* dst, int n, char* src, vec44* self, char* src2);   // 0x4c5010
+// The vector is a std::vector<R44> (include/vec_elems.h R44, 0x2c trivial; repeated here because vec_elems.h defines E50's
+// operator= inline): its insert (0x4ccef0) stays out of line, as the original keeps it.
+struct R44 { int v[11]; };
+namespace std { template<> vector<R44>::iterator vector<R44>::insert(vector<R44>::iterator _P, const R44& _X); }   // 0x4ccef0
+// block_copier (rgl/mesh2/gui_edit.h): the fill helper 0x4c5010 takes (first, n, src, copier); the original pushes a fifth,
+// unread word (the empty iterator-tag argument of std::_Uninit_fill_n), which the 4-parameter definition cannot express
+struct block_copier;
+void __cdecl uninit_fill_n(void* first, unsigned n, const void* src, block_copier* cop);   // 0x4c5010
 
 // @ 0x4cefe0
 void vec44::push_back(char* v)
 {
     int n = size();
     if (begin && (unsigned)n < capacity()) {
-        uninit_fill_n(end, 1, v, this, v);
+        uninit_fill_n(end, 1, v, (block_copier*)(void*)this);
         end += 0x2c;
         return;
     }
-    grow(&v, end, v);
+    ((std::vector<R44>*)(void*)this)->insert(std::vector<R44>::iterator((R44*)end), *(const R44*)v);
 }

@@ -81,8 +81,11 @@ struct Rec30Tag {                                   // count +0x0, array +0x4, s
 
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 #pragma pack(push, 4)
-struct Table2 {                                     // the table at Game+0xcc
-    void write_table(OutStream* out);                     // 0x4e99d0 (next slice)
+struct Table {                                      // the table at Game+0xcc
+    void write_table(OutStream* out);                     // 0x4e99d0 (save_records.cpp)
+};
+struct OutRecList {
+    void write_missions(OutStream* out);   // 0x4e9b50 (save_records.cpp: the game object's mission records)
 };
 #pragma pack(pop)
 

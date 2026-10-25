@@ -7,9 +7,9 @@
 void FaceGen::update_view(int unused)
 {
     mat4 m;
-    identity_pos(&m);
+    identity_pos((pos*)&m);
     float angle = 1.5707964f;
-    m.rotate_about_s(&angle);
+    ((rgl::matrix*)&m)->rotate_about_s(&angle);
     vector4 t;
     t.x = m.u.x * f16c;
     t.y = m.u.y * f16c;
@@ -39,7 +39,7 @@ void Animator::randomise()
     int r = rand() % 0x3dc9;
     time = (float)r * 6.322312e-05f;
     SkinSet* base = (SkinSet*)((char*)skins + cur * 0x1f8);
-    base->relax(-1, weights);
+    ((FaceRace*)base)->relax(-1, weights);
 }
 
 // @ 0x4eb3c0
@@ -53,7 +53,7 @@ void FaceGen::refresh()
     ((UiVt*)ent)->refresh_anim();
     int flags = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
     int zero = 0;
-    g_cur = gen_face_seed(&flags, &zero, &g_char_count);
+    g_cur = clamp_index(&flags, &zero, &g_char_count);
     g_dummy1 = f364;
     g_dummy0 = f360;
     g_anim.material = f35c;
@@ -66,13 +66,13 @@ void FaceGen::refresh()
     g_anim.collect(g_xa181ac != 0, (rgl::lod_mesh**)&a, (rgl::lod_mesh**)&b, (rgl::lod_mesh**)&c);
     void* p;
     p = a;
-    ent->lods.push_back(p);
+    ((std::vector<named_object*>*)&ent->lods)->push_back((named_object* const&)p);
     p = b;
     if (p)
-        ent->lods.push_back(p);
+        ((std::vector<named_object*>*)&ent->lods)->push_back((named_object* const&)p);
     p = c;
     if (p)
-        ent->lods.push_back(p);
+        ((std::vector<named_object*>*)&ent->lods)->push_back((named_object* const&)p);
     g_anim.pack_state(&state);
     char* kp = keys[0] + 16;
     for (int i = 0; i < 4; i++) {
@@ -104,7 +104,7 @@ struct BigArray {
     void destroy();
     void erase(SkinSet** out, SkinSet* first, SkinSet* last);       // 0x4eb860
 };
-SkinSet* __cdecl array_copy_range(SkinSet* start, SkinSet* end, SkinSet* dest, SkinSet* out);  // 0x4da880
+// (array_copy_range 0x4da880 is copy_configs_forward, cs_common.h)
 
 // @ 0x4eb810
 void BigArray::destroy()
@@ -128,7 +128,7 @@ void BigArray::erase(SkinSet** out, SkinSet* first, SkinSet* last)
 {
     SkinSet** fp = &first;
     if (*fp != last) {
-        SkinSet* p = array_copy_range(last, this->end, *fp, *fp);
+        SkinSet* p = (SkinSet*)copy_configs_forward((loading_config*)last, (loading_config*)this->end, (loading_config*)*fp);
         SkinSet* e = this->end;
         while (p != e) {
             p->destroy();
@@ -143,12 +143,12 @@ void BigArray::erase(SkinSet** out, SkinSet* first, SkinSet* last)
 struct Forwarder {
     void forward(int a, int b, int c);                  // 0x4eb8c0
 };
-void __cdecl func_4e4340(int a, int b, int c, void* self, int e);   // 0x4e4340
+// (func_4e4340 is std::_Uninit_copy<loading_config>, cs_common.h)
 
 // @ 0x4eb8c0
 void Forwarder::forward(int a, int b, int c)
 {
-    func_4e4340(a, b, c, this, c);
+    std::_Uninit_copy(std::vector<loading_config>::const_iterator((loading_config*)a), std::vector<loading_config>::const_iterator((loading_config*)b), (loading_config*)c, *(std::allocator<loading_config>*)this, std::_Nonscalar_ptr_iterator_tag());   // 0x4e4340
 }
 
 // @ 0x4eb8e0 save-load UI entry (whole body reconstructed at 0x4eb8e0; 0x4eb8ed is its interior
@@ -176,7 +176,7 @@ typedef void (__stdcall* PanelCall1)(void*);
 
 struct SaveLoadUi {
     int run();                                          // 0x4eb8e0
-    void update_view_rect();                                       // 0x4bace0
+    // (update_view_rect 0x4bace0 is Core's, cs_common.h)
 };
 
 int SaveLoadUi::run()
@@ -188,7 +188,7 @@ int SaveLoadUi::run()
     }
     ++g_5e28c8;
     ++g_a16c58;
-    update_view_rect();
+    ((Core*)(void*)this)->update_view_rect();   // 0x4bace0 (the Core object is g_app_obj 0x8ee3c48)
 
     Viewport vp;
     vp.x = 0; vp.y = 0;
@@ -200,7 +200,7 @@ int SaveLoadUi::run()
     ((PanelCall7)(*(void***)panel)[0xac / 4])(panel, 0, 0, 2, 0x302010, 1.0f, 0);
 
     g_msglog.build_scene();
-    g_renderer.func_47e520(0);
+    ((RenderPass*)&g_renderer)->render(0);   // 0x47e520
 
     if (g_5a9fa0 != 0) {
         void* w = *(void**)((char*)this + 0xf8);
@@ -304,7 +304,7 @@ void __cdecl menu_variables_loaded(char flag)
 {
     if (!flag && !g_no_cam)
         return;
-    g_editor.load_game_variables();
+    load_game_variables();   // 0x4c0520
     if (flag)
         return;
     unsigned u = g_a73a08 + g_a73a04 - 1;

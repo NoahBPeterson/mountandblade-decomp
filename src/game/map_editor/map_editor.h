@@ -41,7 +41,7 @@ extern HWND g_editor_hwnd;              // 0x8ee3d30
 // pos3: a frame with the engine's "advance along forward" helper (matrix::move_forward, 0x531380). The multiplication
 // is rgl::mat4::operator* (0x40e870), the relative transform pos::relative (0x4329d0).
 struct pos3 : rgl::matrix {
-    rgl::matrix mul(const rgl::matrix& m) const;    // 0x40e870 (rgl::mat4::operator*, hidden return)
+    // (the multiplication is rgl::matrix::operator*, 0x40e870)
     void move_forward(const float& d);              // 0x531380 (ret 4): o += f * d
 };
 

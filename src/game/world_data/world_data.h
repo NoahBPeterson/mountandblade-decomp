@@ -26,8 +26,11 @@
 #include "../config/widget_mgr.h"
 #include "../ui/mission.h"
 #include "../../include/rec_dtors.h"
+#include "../../include/fx.h"        // FxElem (add_group 0x4423f0)
 #include "../mission.h"
 #include "../../include/rec1c8.h"
+
+#include "./raw_place.h"            // raw_place: constructing a canonical class in raw storage
 
 // raw field of a view class
 #define WD_FLD(T, off) (*(T*)((char*)this + (off)))
@@ -49,15 +52,10 @@ struct PartyW : Party {
     int& f8e8() { return WD_FLD(int, 0x8e8); }                  // +0x8e8
     int& f918() { return WD_FLD(int, 0x918); }                  // +0x918
     int& f91c() { return WD_FLD(int, 0x91c); }                  // +0x91c
-    int add_members(int troop, int amount, int flag, int a4, int a5);   // 0x48c840 (thiscall, ret 0x14)
-    int find_worth(int amount, int what);                       // 0x4b1d30 (thiscall, ret 8)
-    void clear_map_flag();                                           // 0x4b32f0 (thiscall, ret 0)
-    int skill_level(int a);                                         // 0x4b2370 (thiscall, ret 4)
-    void place_on_map();                                             // 0x4b2880 (thiscall, ret 0)
-    void add_xp_to_stack(int slot, int amount);                 // 0x4b1d80 (thiscall, ret 8)
+    // add_members 0x48c840, find_worth 0x4b1d30, clear_map_flag 0x4b32f0, skill_level 0x4b2370, place_on_map 0x4b2880,
+    // add_xp_to_stack 0x4b1d80, init 0x48f180 and max_stacks 0x4b1700 are Party's own (include/party.h)
     PartyW* construct();                                        // 0x4934d0 (the constructor: returns this)
     void thunk_4936a0();                                        // 0x4936a0 (tail jump to the reset 0x48f180)
-    void init();                                         // 0x48f180
 };
 
 // ---- the party manager embedded in the game object at +0xf8 (include/party.h PartyMgr) --------------------------------
@@ -67,6 +65,8 @@ struct PartyMgrW : PartyMgr {
     PartyW* atu(unsigned idx) { return (PartyW*)((char*)pages[idx >> 4] + (idx & 0xf) * 0x5ac8); }
     PartyW* get_w(unsigned id) { int i = index_of(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
     int is_live(unsigned id);                                   // 0x4903e0 (thiscall, ret 4)
+    // PartyMgr::index_of(int) (include/party.h) is declared but not defined: the lookup 0x48ad00 is ui/mission.h's
+    // Map10007::lookup(unsigned) (the id -> index hash table at the start of the manager), called as ((Map10007*)mgr)->lookup(id)
     void clear();                                               // 0x490340 (thiscall, ret 0)
     std::vector<int>& free_ids() { return WD_FLD(std::vector<int>, 0x138bc); }   // +0x138bc free party indices (first at +0x138c0)
     PartyMgrW* grow();                                          // 0x493830 (thiscall, ret 0)
@@ -114,9 +114,7 @@ struct ContainerW : ContainerBase {
     void**& ents_first() { return WD_FLD(void**, 0x17c); }      // +0x17c std::vector<child*> (0x4906b0, 0x490520)
     void**& ents_last() { return WD_FLD(void**, 0x180); }       // +0x180
     void**& ents_end() { return WD_FLD(void**, 0x184); }        // +0x184
-    void release();                                           // 0x48ef40 (thiscall, ret 0)
-    void dtor_base();                                           // 0x487c00 (thiscall, ret 0)
-    void render(int* a, float* p3, float* p4, float* p5);  // 0x488720 (MissionUi::render; ret 0x10)
+    // release 0x48ef40 is mission_ui2's FrameBox::release; the base destructor 0x487c00 is Buffer's (see world_data.cpp)
     void dtor_common();                                         // 0x490520 (~ContainerBase)
     void place(int* a);                                         // 0x490570 (ret 4)
     void track_bounds(void* p);                                 // 0x4905c0 (ret 4)
@@ -132,11 +130,12 @@ struct ContainerW : ContainerBase {
 inline int& troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }   // +0x54 second upgrade troop (0x494e40)
 
 // ---- the game object (include/game_data.h GameData) -----------------------------------------------------------------
+// mission_4's RiderTable::shares (0x48efa0) is what the level object's face-sharing check calls
+struct RiderTable { int shares(const int& a, const int& b) const; };
 struct LevelObj {                                               // g_level->obj (CellGrid +0xb0)
     char pad0[0x14];
     char* kinds;                                                // +0x14 0x88-byte face records (+0x24: surface kind)
     char pad18[0xb0 - 0x18];
-    bool shares(int* a, int* b);                               // 0x48efa0 (thiscall, ret 8)
 };
 struct LevelRef {
     char pad0[0xb0];
@@ -150,7 +149,6 @@ struct FaceId {
 
 int __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
 int trigger_item_mesh(int context);                             // 0x4904a0 (context in EAX in the original: a static function with a register convention)
-int ammo_skill(void* rec);                                        // 0x433df0 (ret 4; ecx = the agent record)
 
 extern char* g_party_templates;                                     // 0x5e29f8 (0xb0-byte party-template rows, +0x38 counter: 0x4915d0)
 extern float g_k15;                                             // 0x590da0 (15.0f)
@@ -170,9 +168,9 @@ struct GameW : GameData {
         PartyMgrW& pm() { return *(PartyMgrW*)&parties; }
     PartyW* party(int id) { PartyMgrW& m = pm(); return m.at(m.index_of(id)); }
 
-    FaceId* find_at(float* p);                                  // 0x48ea80 (thiscall, ret 4)
-    bool agent_low(int idx);                                    // 0x4638f0 (ret 4)
-    int add_experience(int troop, int amount);                   // 0x4428c0 (ret 8)
+    // find_at 0x48ea80, agent_low 0x4638f0 and add_experience 0x4428c0 are GameData's own (include/game_data.h). add_experience is
+    // void there, but add_random_experience (0x4952a0, a byte-exact row returning int) returns the callee's eax: that one call
+    // goes through GameData::add_experience viewed as returning int (a pointer-to-member of the same function, see there)
 
     void random_position_around(Vec2 pos, float r, Vec2* out);               // 0x490030 (ret 0x10)
     char position_around(Vec2 pos, float r, Vec2* out, char any);    // 0x490160 (ret 0x14)
@@ -208,13 +206,11 @@ struct GameW : GameData {
 // ---- the mission object (game/mission.h Mission) and its agent records -----------------------------------------------
 struct AgentW : Agent {
     int& f56d4() { return WD_FLD(int, 0x56d4); }                // +0x56d4 weapon mode (0x492230)
-    void set_weapon_mode(int mode);                             // 0x4461e0 (thiscall, ret 4)
 };
 struct MissionW : Mission {
     Agent**& pages_raw() { return WD_FLD(Agent**, 0x1c); }      // +0x1c the agent page table as a raw pointer (0x492230)
     int& f6520() { return WD_FLD(int, 0x6520); }                // +0x6520 (0x491f50: the signed speed term)
     AgentW* rec(unsigned i) { return (AgentW*)((char*)agents.pages[i >> 4] + (i & 0xf) * 0x5928); }   // agent record i (page of 16, no validity check)
-    float speed_factor(float x);                                // 0x467740 (thiscall, ret 4; ignores this)
     int count_agents(int team);                                 // 0x491f50 (ret 4)
     bool all_defeated(int team);                                // 0x4920e0 (ret 4)
     bool hero_down();                                           // 0x492170
@@ -255,7 +251,7 @@ struct I64VecW : I64Vec {                                       // include/i64_v
     unsigned size() const { return *(E8* const*)((const char*)this + 4) == 0 ? 0 : (unsigned)(*(E8* const*)((const char*)this + 8) - *(E8* const*)((const char*)this + 4)); }
     unsigned capacity() const { return (unsigned)(*(E8* const*)((const char*)this + 0xc) - *(E8* const*)((const char*)this + 4)); }
     unsigned max_size() const { return (unsigned)(-1) / sizeof(E8); }
-    void reserve(int* newsize);                                 // 0x493c40 (thiscall, ret 4)
+    __declspec(noinline) void reserve(int* newsize);            // 0x493c40 (thiscall, ret 4; callers keep it a call)
 };
 struct I64VecOp {                                               // the same vector as an opaque callee (the callers reload size after reserve)
     int pad0;
@@ -315,7 +311,6 @@ struct Vec16W {                                                 // the 16-byte-e
     E16* _Mylast;
     E16* _Myend;
     unsigned size() const { return _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst); }
-    void push_back(const tstring& name);                        // 0x43f2a0 (vector<tstring>::push_back)
 };
 struct ListPanelW : MissionUi {                                 // the text list panel (vector of rows at +0x18c)
     void set_mode();                                            // 0x4932a0
@@ -323,13 +318,13 @@ struct ListPanelW : MissionUi {                                 // the text list
     void reset_tail();                                          // 0x4933b0
     void* destroy(unsigned flags);                              // 0x4933d0 (scalar deleting destructor, ret 4)
     void append(const tstring* name);                           // 0x493400 (ret 4)
-    void render();                                              // 0x488720 (MissionUi::render reached with the frame the caller built)
 };
 struct DropDownW : DropDown {
     DropDownW* construct();                                     // 0x4931d0 (the constructor body: returns this)
 };
-struct TailDtor { void dtor(); };                               // 0x42d390 (the vector at +0x18c)
-struct PanelBase { void* init(); };                             // 0x48ae20 (MissionUi::MissionUi, called with this in ecx)
+// the vector<tstring> at ListPanelW+0x18c: its out-of-line _Tidy (0x42d390, protected: reached through a derived class)
+namespace std { template<> void vector<tstring, allocator<tstring> >::_Tidy(); }   // 0x42d390
+struct TailVec : std::vector<tstring> { using std::vector<tstring>::_Tidy; };
 int panel_count_493300();                                       // 0x493300 (returns 5)
 extern char vtbl_5924a0[];                                      // 0x5924a0
 extern char vtbl_592570[];                                      // 0x592570
@@ -353,16 +348,19 @@ struct RecPool {                                                // an object wit
     int serial;                                                 // +0x24
     void alloc_record();                                        // 0x493700 (thiscall, ret 0)
 };
-struct PartyNew {                                               // a party record as `new Party[16]` builds it: vtable 0x592644 at +0, constructor 0x4934d0 (nothrow)
-    virtual ~PartyNew();
-    char body[0x5ac8 - 4];
-    PartyNew() throw();                                         // 0x4934d0
+// The pool record's constructor is stat_panel_x's Event::Event (0x48c210), declared under the defining class's name; a party record
+// as `new Party[16]` builds it: vtable 0x592644 at +0, constructor 0x4934d0 (nothrow), whose body is PartyW::construct below (the
+// constructor forwards to it, so the array new binds to the one definition).
+struct Event : Rec98 {
+    Event();   // 0x48c210
 };
-struct ResRelease {                                             // the resource manager (global 0x5d6fa0)
-    void release(void* res);                                    // 0x4175f0 (clears field +0x14 of the resource)
+struct PartyNew {
+    ~PartyNew();                                                // (non-virtual here: the vtable is stored by PartyW::construct; the destructor only makes `new[]` keep a count cookie)
+    char body[0x5ac8];
+    PartyNew() throw() { ((PartyW*)(void*)this)->construct(); }   // 0x4934d0 (forwards to PartyW::construct)
 };
+#include "./thiscall_free.h"
 #include "../../rgl/resource.h"                               // resource_manager g_resmgr 0x5d6fa0
-#define g_resmgr_rel (*(ResRelease*)&g_resmgr)                 // the resource manager seen through release()
 struct ResSlot {                                                // a resource slot of the cache group (0x493df0, 0x493e90)
     char pad0[0x5c];
     int f5c;                                                    // +0x5c
@@ -373,16 +371,16 @@ struct E68W : E68 {
     std::vector<ResSlot*>& slots() { return WD_FLD(std::vector<ResSlot*>, 0x54); }   // +0x54 (first at +0x58)                                             // the vector at +0x54 holds resource slots (refcount at +0x64)
     void purge();                                               // 0x493e90 (thiscall, ret 0)
     void* find_or_create(int* key);                             // 0x493df0 (thiscall, ret 4)
-    void* make(int* key);                                       // 0x489b20 (thiscall, ret 4)
 };
 struct Vec68W : Vec68 {
     void purge_all();                                           // 0x493f30 (thiscall, ret 0)
 };
 
-struct ViewParamsCtor { void ctor(); };                         // 0x46b940
+struct ViewParams {
+    ViewParams();   // 0x46b940
+};
 struct SceneBaseCtor {                                          // the scene base object (0x36c bytes): its constructor body, kept opaque from 0x495650
     SceneBaseCtor* construct();                                 // 0x493ab0 (returns this)
-    void init(float* a, float* b, int c, int d);          // 0x478830 (thiscall)
 };
 
 // ---- the tableau table (g_tableaus 0xa75f40; the shared header tableau.h has the whole class) -------------------------------------
@@ -407,12 +405,13 @@ struct GlobVec {                                                // the running p
 extern GlobVec* g_presentation;                            // 0x5e299c
 
 // ---- the sound player (g_sound_mgr 0x5aa128; agent3/agent_fx_sound.h has the full class under src/rgl-based headers) ----------------
+// agent3/agent_fx_sound.h's SoundMgr::play (0x442650); the header does not go with this one
+struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int* out_id); };
 struct SoundW {
     char pad0[0x40];
     rgl::vector4 listener;                                      // +0x40
     char pad50[0x248 - 0x50];
     std::vector<int> channels;                                  // +0x248 looping channels (allocator word, first at +0x24c)
-    int play(int idx, int flags, const float* pos, float freq, int* out_id);   // 0x442650 (ret 0x14)
     rgl::matrix& listener_frame() { return WD_FLD(rgl::matrix, 0x10); }   // +0x10 the listener frame (position at +0x40: 0x494310)
     void play_ui(int sound, unsigned flags);                    // 0x4942f0 (ret 8)
     void stop_all();                                            // 0x494310
@@ -427,7 +426,8 @@ void mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100
 #include "../strat/gui_manager.h"                             // gui_manager g_gui 0x5d7080 (UI root: set_o568, reset, f560)
 #include "../../include/renderer.h"                              // g_render 0xa17910 (dev at +0x618 = 0xa17f28)
 struct RotRows { rgl::vector4 s, f, u; };                       // the rotation part of a frame (0x30 bytes)
-RotRows identity3();                                  // 0x40cd60 (cdecl, hidden return: the identity rotation)
+#include "../../include/mat4.h"                              // rgl::mat3
+rgl::mat3* __cdecl identity3(rgl::mat3* out);                  // 0x40cd60 (cdecl; returns out)
 extern "C" void __stdcall FSOUND_StopSound(int handle);                            // 0x5342a6 _FSOUND_StopSound@4
 extern "C" void __stdcall FSOUND_3D_Listener_SetAttributes(void* pos, int, int, int, int, int, int, int);   // 0x5342dc _FSOUND_3D_Listener_SetAttributes@32
 
@@ -439,7 +439,6 @@ struct CarryKind {                                              // include/item_
     unsigned f1d0;                                              // +0x1d0
     unsigned f1d4;                                              // +0x1d4
     char pad1d8[0x238 - 0x1d8];
-    void get_carry_pos(rgl::matrix* out, int* attach, int* bone);   // 0x433e40 (thiscall, ret 0xc)
 };
 struct CarryMesh {                                              // rgl::mesh seen by the placement: visibility mask and local frame
     char pad0[0x8c];
@@ -453,14 +452,22 @@ struct CarryCtx {                                               // the agent's t
     CarryMesh* c2[4];                                           // +0x20
     CarryMesh* c3[4];                                           // +0x30
 };
-struct CarryElem {                                              // 0x1dc-byte runtime state of one bone (include/fx.h)
+struct CarryElem {                                              // 0x1dc-byte runtime state of one bone (include/fx.h FxElem: add_group 0x4423f0)
     char pad0[0x1dc];
-    void add_group(CarryMesh* m);                               // 0x4423f0 (thiscall, ret 4)
 };
-struct CarrySkel {                                              // game/skeleton.h Skeleton
+struct CarrySkel {                                              // game/skeleton.h Skeleton (remove_shape 0x439ec0)
     int count;                                                  // +0
     CarryElem* elems;                                           // +4
-    void remove_shape(CarryMesh* m);                            // 0x439ec0 (thiscall, ret 4)
+};
+// The members the placement calls, on the classes that define them (the headers game/skeleton.h and include/shape.h do not go with
+// this one): include/fx.h FxElem::add_group(int) (fx.h is included), game/skeleton.h Skeleton::remove_shape(shape_base*), include/item_kind.h
+// ItemKind::get_carry_pos, rgl/xmlcfg/game_util.h AgentX::agent_class.
+struct shape_base;
+struct Skeleton {
+    void remove_shape(shape_base* s);   // 0x439ec0
+};
+struct AgentX {
+    int agent_class() const;   // 0x433140
 };
 struct CarryBody {
     char pad0[0x304];
@@ -496,13 +503,25 @@ struct EmitterCtl {
 #include "../../include/frustum.h"                              // rgl::frustum (0x120 bytes; the ctor 0x41ef60); the stand-in "Frustum" was 0x134 bytes with 0x14 unknown after it
 struct SceneBase {
     char d[0x36c];
-    SceneBase();                                                // 0x493ab0 (defined here as SceneBaseCtor::construct, kept opaque)
+    inline SceneBase();                                         // 0x493ab0 (forwards to SceneBaseCtor::construct, the one definition)
 };
+inline SceneBase::SceneBase() { ((SceneBaseCtor*)this)->construct(); }
 struct SceneObject : SceneBase { rgl::frustum frustum; char tail[0x14]; };   // 0x4a0 total
 struct SceneList {
     char pad0[0x10];
     std::vector<SceneObject*> v;                                // +0x10
     SceneObject* push();                                        // 0x495650
+};
+
+// Views of classes defined in other translation units, declared here under the defining class's name (their headers do not go with this
+// one): terrain_a's Mission3::speed_factor (0x467740, ignores this), terrain_b's
+// CellGrid::spawn_wind (0x478f30).
+struct Mission3 { float speed_factor(float x); };
+struct Wind;
+struct CellGrid {
+    ~CellGrid();   // 0x475d50
+    Wind* spawn_wind();   // 0x478f30
+    void init(const float* lo, const float* hi, int dimx, int dimy);   // 0x478830
 };
 
 extern WindowMgrW g_windows; // 0xa73980

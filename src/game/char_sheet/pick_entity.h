@@ -9,6 +9,8 @@
 #include <math.h>
 #include <vector>
 #include "rgl.h"
+#include "./cs_common.h"
+#include "./cs_mat.h"
 
 using rgl::vector4;
 
@@ -43,10 +45,12 @@ extern tstring g_strs[];                // 0x5d7850 .. 0x5d7d50
 
 
 using rgl::smat;
-void identity_pos(float* m);                                // 0x40cd00
-void capsule_ctor_inline(capsule* c, float r, const vector4* a, const vector4* b);  // 0x433310
-int __cdecl shape_contact_count(shape_base* a, void* b, int max, void* out);    // 0x40bfe0
-void __stdcall make_contact_box(void* out);                 // 0x408420
+// (identity_pos 0x40cd00: cs_mat.h; capsule::capsule(float, const vector4*, const vector4*) 0x433310 and sphere::transform 0x408420: shape.h)
+struct contact;
+int __cdecl shape_contact_count(shape_base* a, shape_base* b, int max, contact* out);    // 0x40bfe0
+struct camera_ray {
+    void screen_to_world(rgl::vector4* a, rgl::vector4* b);   // 0x4bd2f0 (the view rectangle's owner at GuiCtx+0x60)
+};
 
 #include "../mission.h"
 struct scene_row {                      // 0x1c8 bytes

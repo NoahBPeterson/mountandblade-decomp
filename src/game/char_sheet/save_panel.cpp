@@ -1,10 +1,15 @@
 #include "./save_panel.h"
+namespace rgl {
+struct mesh_ext {                                   // rgl/scene/scene.h: the mesh object with the scene-side members
+    void clear_geometry();                          // 0x428e80
+};
+}
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ea0c0
 void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
 {
-    m->clear_geometry();
+    ((rgl::mesh_ext*)m)->clear_geometry();   // 0x428e80
     if (!o->skins)
         return;
     float prod = o->f160;
@@ -73,7 +78,7 @@ void mb_snprintf(char* out, unsigned size, const char* fmt, ...);  // 0x415100
 int  __cdecl crt_sprintf(char* buf, const char* fmt, ...);      // 0x536f8f
 int  __cdecl crt_remove(const char* path);                      // 0x539023
 void save_path(char* out);                                      // 0x4dd7b0
-int  save_game(int arg, char* name);                            // 0x4e8980
+int  save_game(int arg, tstring* name);                         // 0x4e8980
 extern char* g_save_prefix;                                     // 0x8ee3c3c (prefix string pointer)
 extern char* g_game;                                            // 0x5e2930
 extern int g_a17420;                                            // 0xa17420
@@ -105,13 +110,13 @@ void SavePanel::update(int)
         if (deleting) {
         *(int*)((char*)this + 0x220) = -1;
         tstring title("ui_set_save_file_name");
-        const tstring* r = g_strtable.lookup(&title);
+        const tstring* r = g_strtable.lookup(title);
         mb_snprintf(name, 0x200, "%s", text_of(r));
         tstring cancel("ui_cancel");
         tstring ok("ui_ok");
         tstring title2(name);
-        const tstring* rc = g_strtable.lookup(&cancel);
-        const tstring* ro = g_strtable.lookup(&ok);
+        const tstring* rc = g_strtable.lookup(cancel);
+        const tstring* ro = g_strtable.lookup(ok);
         g_main_menu.header.clear();
         g_main_menu.title = *rc;
         g_main_menu.answer_yes = *ro;
@@ -167,30 +172,30 @@ void SavePanel::update(int)
                         selected / 10, selected % 10);
             if (crt_remove(name) != 0) {
                 tstring err("ui_error_removing_file");
-                g_msglog.add(*g_strtable.lookup(&err), -1);
+                g_msglog.add(*g_strtable.lookup(err), -1);
             }
             g_main_menu.set_state(0x15);
             return;
         }
         if (*(int*)((char*)this + 0x220) != 0)
             return;
-        save_game(selected, (char*)this + 0x224);
+        save_game(selected, (tstring*)((char*)this + 0x224));
         ((tstring*)(g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
         tstring ok("ui_game_saved");
-        g_msglog.add(*g_strtable.lookup(&ok), -1);
+        g_msglog.add(*g_strtable.lookup(ok), -1);
         g_main_menu.set_state(*(int*)((char*)this + 0x18));
         return;
     }
 confirm_delete:
     *(int*)((char*)this + 0x21c) = -1;
     tstring title("ui_confirm_delete_game");
-    const tstring* r = g_strtable.lookup(&title);
+    const tstring* r = g_strtable.lookup(title);
     mb_snprintf(name, 0x200, "%s", text_of(r));
     tstring no("ui_no");
     tstring yes("ui_yes");
     tstring title2(name);
-    const tstring* rn = g_strtable.lookup(&no);
-    const tstring* ry = g_strtable.lookup(&yes);
+    const tstring* rn = g_strtable.lookup(no);
+    const tstring* ry = g_strtable.lookup(yes);
     g_main_menu.header.clear();
     g_main_menu.title = *rn;
     g_main_menu.answer_yes = *ry;

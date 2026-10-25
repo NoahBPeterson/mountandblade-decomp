@@ -14,14 +14,18 @@
 #include <windows.h>
 #include <stdio.h>
 #include <new>
+#include <d3d9.h>
+#include <d3dx9.h>
 #include "rgl.h"
+#include "./cs_common.h"
+#include "./cs_mat.h"
 
 using rgl::vector4;
 
 #include "../../include/mat4.h"
 using rgl::mat4;
 using rgl::mat3;
-mat3* identity3(mat3* out);             // 0x40cd60 (cdecl; returns out; 12 dwords)
+// (identity3 0x40cd60: cs_mat.h)
 
 #include "../rgl_mesh.h"
 using rgl::mesh;
@@ -33,24 +37,23 @@ extern StrTable g_strtable;                             // 0x5e2a18
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 
-bool __cdecl save_screenshot(const char* file_name, int flag);  // 0x4bb9c0 (2-arg cdecl)
+bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format);  // 0x4bb9c0 (2-arg cdecl)
 void take_screenshot(void);
-void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
-void free_rows(void* first, void* last);                // 0x4d10f0
-void __cdecl destroy_row_range(void* first, void* model, void* last, void* self);   // 0x4d10f0
-void copy_row(void* dst, const void* src);              // 0x4e42f0 (thiscall, ret 8)
+#include "../../rgl/text_stream.h"                  // mb_snprintf 0x415100
+// (0x4d10f0 is item_modifier_array_dtor, 0x4e42f0 allocator<RagModel>::construct: cs_common.h)
 void __cdecl __CxxThrowException(void* p, void* info);  // 0x5368e6
 // the MSVC 7.1 formulation of _AddressOfReturnAddress
 #define _AddressOfReturnAddress() ((void*)((char*)&_AddressOfReturnAddress_ + 4))
 int _AddressOfReturnAddress_;
 
 // 0x98-byte "hint" element of the six vector tables (ctor 0x4cd720).
-struct Hint {
+struct Obj720 {                         // (the slice's Hint)
     char pad0[0x3c];
     tstring name;                       // +0x3c
     char pad4c[0x98 - 0x4c];
-    Hint();                             // 0x4cd720
+    Obj720();                           // 0x4cd720
 };
+typedef Obj720 Hint;
 
 // 0x20-byte row of the screen's unit list.
 struct UiRow {
@@ -68,7 +71,7 @@ struct UiRow {
 // the vector's allocator (an empty class): both members are the out-of-line template instantiations.
 struct RowAlloc {
     void construct(UiRow* dst, const UiRow& src);   // 0x4e42f0
-    void destroy(UiRow* p);                         // 0x4ebdc0
+    // (destroy 0x4ebdc0 is the free stdcall function of screen.cpp)
 };
 
 // the row's 0x10-byte model record (reached as this+0x10) and its deallocator 0x4d10f0: `zero` is the
@@ -102,6 +105,10 @@ struct xform {
 };
 #define MAT_XFORM(d) ((xform*)((char*)*(xform**)((char*)this + 0x4183d4) + (d)))
 
+struct Timer {
+    float elapsed() const;   // 0x432c10 (seconds since the record was touched; include/timer.h)
+};
+
 // ---- the module's string table heads (the 0x8ee3c3c slot read by 0x4ebc10) --------------------------
 extern char* g_save_prefix;             // 0x8ee3c3c (the capture-file prefix; null before init)
 extern int g_module_name;                   // 0x8ee3c38
@@ -133,7 +140,7 @@ struct ClickRec {
     int pad4;                           // +0x4
     float x;                            // +0x8
     float y;                            // +0xc
-    float elapsed();                    // 0x432c10 (seconds since the record was touched)
+    // (elapsed 0x432c10, seconds since the record was touched, is Timer's: cs_common.h)
 };
 
 struct GuiScreen {
@@ -173,9 +180,7 @@ struct GuiScreen {
     int cur_mx;                         // +0xb0b0 (GetCursorPos)
     int cur_my;                         // +0xb0b4
 
-    void wheel_step(int code);                                // 0x4c52f0 (records a key in the hint tables)
-    void post(int param);                                   // 0x4e6510
-    void clear_selection();                                          // 0x4c5330
+    // (wheel_step 0x4c52f0 and clear_selection 0x4c5330 are gui_view's, post 0x4e6510 is MsgLog::update: cs_common.h / msg_log.h)
 
     GuiScreen();                                               // 0x4ebea0
     void process(int param);                                // 0x4ebfd0
@@ -259,6 +264,6 @@ extern float g_eps;                     // 0x54a6f0  0.01f
 extern float g_ninety_nine;             // 0x54a5cc  0.99f
 extern float g_seventy_four;            // 0x5985f4  0.74f
 
-void __cdecl leave_module(char flag);       // 0x4ebb80
+// (leave_module 0x4ebb80 is menu_variables_loaded: cs_common.h)
 
 #endif

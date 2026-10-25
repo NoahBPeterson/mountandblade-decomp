@@ -105,7 +105,7 @@ bool EditMesh::build_first_pass()
 // @ 0x4d1880
 void EditMesh::build_second_pass()
 {
-    calc_edge_mode(1);
+    graph(this)->calc_edge_mode(1);
     *(int*)((char*)this + 0x7c) = -1;
 
     for (unsigned i = 0; i < c.edges.size(); i++)
@@ -125,7 +125,7 @@ void EditMesh::build_second_pass()
             int count = 1;
             vector4 sum;
             {
-                vector4 nn = normal(&i);
+                vector4 nn = graph(this)->normal(&i);
                 sum.x = pv->pos.x + nn.x;
                 sum.y = nn.y + pv->pos.y;
                 sum.z = nn.z + pv->pos.z;
@@ -149,7 +149,7 @@ void EditMesh::build_second_pass()
                 if (!edge_word(g))
                     continue;
                 MVert* q = &c.verts[(&c.edges[i].v0)[k]];
-                vector4 nj = normal(&j);
+                vector4 nj = graph(this)->normal(&j);
                 count++;
                 float tx = nj.x + q->pos.x, ty = nj.y + q->pos.y, tz = nj.z + q->pos.z;
                 sum.x += tx;
@@ -170,7 +170,7 @@ void EditMesh::build_second_pass()
         int p, q;
         PartFace nf;
         nf.n = 4;
-        find_triangle(&i, &p, &q);
+        graph(this)->find_triangle(&i, &p, &q);
         nf.eid[2] = (int)c.edges.size();
         nf.vid[0] = q;
         nf.vid[1] = p;
@@ -257,7 +257,7 @@ bool EditMesh::add_triangle(int* tri)
         face.eid[j] = eid[j];
     }
     c.faces.push_back(face);
-    ((MeshCalls*)this)->build_adjacency();
+    build_adjacency();
     return true;
 }
 
@@ -323,14 +323,14 @@ void EditMesh::finish()
             }
         }
     }
-    ((MeshCalls*)this)->build_adjacency();
+    build_adjacency();
     float inv = 1.0f / (float)cnt;
     n.x = n.x * inv;
     n.y = n.y * inv;
     n.z = n.z * inv;
     n.normalize_inl();
-    ((MeshCalls*)this)->update_terrain(2, &n);
-    ((MeshCalls*)this)->clean();
+    graph(this)->update_terrain(2, (const float*)&n);
+    graph(this)->clean();
 }
 
 // @ 0x4d27d0
@@ -411,7 +411,7 @@ bool EditMesh::split_marked_edge()
     }
     vat(c.edges, mark).v0 = (int)c.verts.size();
     c.verts.push_back(v);
-    ((MeshCalls*)this)->build_adjacency();
+    build_adjacency();
     return true;
 }
 
@@ -455,5 +455,5 @@ void EditMesh::add_quad(const vector4* p)
     c.edges.push_back(e2);
     c.edges.push_back(e3);
     c.faces.push_back(face);
-    ((MeshCalls*)this)->build_adjacency();
+    build_adjacency();
 }

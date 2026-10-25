@@ -9,9 +9,11 @@
 // @ 0x4f66e0
 void ConvScreen::open(int dialog, int* out)
 {
-    g_gui->reset();
+    ((gui_manager*)g_gui)->reset();   // 0x42d1b0 (g_gui is the gui_manager)
 
-    Panel* panel = new Panel();
+    Panel* panel = (Panel*)new_container(0x190, vtbl_592848);
+    if (panel)
+        panel->f188 = 0;
     talk = panel;
     {
         float pos[2] = { 0.0f, 0.0f };
@@ -21,37 +23,37 @@ void ConvScreen::open(int dialog, int* out)
     }
     {
         tstring name("conversation_window");
-        talk->set_mesh(0, g_alloc.get_object(name)->clone());
+        talk->set_mesh(0, (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone());
     }
     {
-        int v = (int)talk;
+        NodeA* v = (NodeA*)talk;
         g_ui_dirty = 1;
-        g_gui->add(&v);
+        ((NodeVec*)(void*)g_gui)->push_back(v);   // 0x49b120
     }
 
     float sentence_y_a = config_float("conv_sentence_y_a");
 
-    TextBox* bar = new TextBox();
+    TextBox* bar = (TextBox*)new_container(0x188, vtbl_597050);
     bar_reln = bar;
     {
         tstring name("conv_bo_board");
-        label_refresh(bar, name);
+        label_refresh((MissionUi*)bar, name);
     }
     talk->children.push_back(bar);
 
-    Widget* line = new WidgetObj();
+    Widget* line = (WidgetObj*)new_widget_base(0x178);
     label_text = line;
     {
         tstring name("conv_t_partner");
-        label_refresh(line, name);
+        label_refresh((MissionUi*)line, name);
     }
     bar->add_child(line);
 
-    Widget* speaker = new WidgetObj();
+    Widget* speaker = (WidgetObj*)new_widget_base(0x178);
     label_speaker = speaker;
     {
         tstring name("conv_t_utterer_name");
-        label_refresh(speaker, name);
+        label_refresh((MissionUi*)speaker, name);
     }
     bar->add_child(speaker);
 
@@ -60,11 +62,11 @@ void ConvScreen::open(int dialog, int* out)
     float min_y = config_float("conv_choices_min_y");
     sentence_y_a = (scaled > min_y) ? scaled : min_y;
 
-    Choices* ch = new Choices();
+    Choices* ch = (Choices*)new_container(0x188, 0);   // 0x4931a0 (vtable 0x5924a0, the three ints cleared)
     choice = ch;
     {
         tstring name("conv_bo_choices");
-        label_refresh(ch, name);
+        label_refresh((MissionUi*)ch, name);
     }
     {
         float zero = 0.0f;
@@ -72,26 +74,28 @@ void ConvScreen::open(int dialog, int* out)
         ch->set_y(v);
     }
 
-    Widget* reln = make_scrollbar(talk, tstring("conv_s_choices"));
-    question = make_editor_list(ch, tstring("conv_sc_choices"), reln);
-    draw(question);
+    tstring scroll_name("conv_s_choices");
+    Widget* reln = (Widget*)make_scrollbar(talk, &scroll_name);
+    tstring list_name("conv_sc_choices");
+    question = (Widget*)make_editor_list(ch, &list_name, (int)reln);
+    ((MissionPanel*)question)->draw();   // 0x488d50
     talk->add_child(question);
 
-    Widget* input = new WidgetObj();
+    Widget* input = (WidgetObj*)new_widget_base(0x178);
     input_label = input;
     {
         tstring name("conv_t_press_mouse");
-        label_refresh(input, name);
+        label_refresh((MissionUi*)input, name);
     }
     {
         tstring key("ui_press_left_mouse_button_to_continue");
         tstring out2;
-        input->set_text(g_strtable.lookup(&key), out2);
+        input->set_text(g_strtable.lookup(key), out2);
     }
     talk->add_child(input);
 
     // the message window (+0x11e0): a TextBox at 0.03/0.3, 0.25/0.21, mesh "message_window"
-    TextBox* msg = new TextBox();
+    TextBox* msg = (TextBox*)new_container(0x188, vtbl_597050);
     msg_window = msg;
     {
         float pos[2] = { 0.03f, 0.3f };
@@ -101,11 +105,11 @@ void ConvScreen::open(int dialog, int* out)
     }
     {
         tstring name("message_window");
-        msg->set_mesh(0, g_alloc.get_object(name)->clone());
+        msg->set_mesh(0, (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone());
     }
     msg->hide();
 
-    Widget* rbar = new WidgetObj();
+    Widget* rbar = (WidgetObj*)new_widget_base(0x178);
     relation_bar = rbar;
     {
         float pos[2] = { 0.01f, 0.02f };
@@ -115,11 +119,11 @@ void ConvScreen::open(int dialog, int* out)
     }
     {
         tstring name("talk_relation_bar");
-        rbar->set_mesh(0, g_alloc.get_object(name)->clone());
+        rbar->set_mesh(0, (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone());
     }
     msg->add_child(rbar);
 
-    Widget* rptr = new WidgetObj();
+    Widget* rptr = (WidgetObj*)new_widget_base(0x178);
     reln_pointer = rptr;
     {
         float pos[2] = { 0.1f, 0.02f };
@@ -129,12 +133,12 @@ void ConvScreen::open(int dialog, int* out)
     }
     {
         tstring name("talk_reln_pointer");
-        rptr->set_track(0, g_alloc.get_object(name)->clone());
+        rptr->set_track(0, (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone());
     }
     msg->add_child(rptr);
 
     for (int i = 0; i < 5; i++) {
-        Widget* ln = new WidgetObj();
+        Widget* ln = (WidgetObj*)new_widget_base(0x178);
         lines[i] = ln;
         float pos[2] = { 0.01f, 0.17f - (float)i * 0.03f };
         ln->set_pos(pos);
@@ -168,7 +172,7 @@ void ConvScreen::open(int dialog, int* out)
     float sz[2] = { 0.289000f, 0.452998f };
     ViewWindow* vw = (ViewWindow*)::operator new(0x358);
     if (vw)
-        new (vw) MapWidget();
+        ctor_4ed630((MapWidget*)vw);   // MapWidget::MapWidget is declared at 0x4ed630; the definition is this fastcall constructor
     else
         vw = 0;
     window = vw;
@@ -200,12 +204,13 @@ void ConvScreen::open(int dialog, int* out)
         *(int*)((char*)cam + 0x130) = 0;             // this+0x164
         *(int*)((char*)cam + 0x134) = 0;             // this+0x168
         *(float*)((char*)cam + 0x138) = 1.0f;        // this+0x16c
-        build_planes(cam);
+        ((rgl::frustum*)cam)->build_planes();   // 0x41e4f0 (the camera block is a frustum)
     }
 
     quest_mode = 0;
     {
-        rgl::matrix id = identity3();
+        rgl::matrix id;
+        identity3((rgl::mat3*)&id);
         dword_copy(16, &world, &id);          // +0x1194: the screen's world transform
     }
 

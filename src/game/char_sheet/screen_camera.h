@@ -128,24 +128,22 @@ extern Listener3D g_listener;                   // 0x5aa138
 
 
 // ---- callees ------------------------------------------------------------------------------------------
-mat4* identity(void* out);                                  // 0x40cd00 (cdecl, ret 0)
+#include "./cs_common.h"
+#include "./cs_mat.h"                                      // identity_pos 0x40cd00
 using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl_mesh.h)
 
-struct Envelope;                                            // the scene-envelope object 0x4624c0 works on
+struct envelope;                                            // the scene-envelope object 0x4624c0 works on
 
 #include "../scene_world.h"                              // World::scene_query 0x470f40: thiscall on the world, two stack args, callee pops 8 bytes
 
 // 0x41e4f0: rgl::frustum::build_planes (src/include/frustum.h), thiscall on the frustum, no arguments
 
 // 0x4624c0: thiscall on the envelope (ecx = g_scene both times), two stack args
-struct Envelope {
-    void set_fade(float* dist, const unsigned* color);   // 0x4624c0
+struct envelope {
+    void set_fade(const float* dist, const int* color);   // 0x4624c0
 };
 
-void __fastcall scene_ctor(scene* s);                       // 0x429740
-void __fastcall scene_dtor(scene* s);                       // 0x41f4e0
-void __fastcall widget_dtor(void* w);                       // 0x487c00
-extern "C" void __fastcall widget_ctor(void* w);            // 0x48ae20 (this in ECX)
+// (scene() 0x429740 and ~scene() 0x41f4e0 are rgl_mesh.h's, the widget base constructor 0x48ae20 is MissionUi's, its destructor 0x487c00 Buffer's: cs_common.h)
 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 void __stdcall listener_set(float* pos, float* vel,

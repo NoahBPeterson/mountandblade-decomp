@@ -13,6 +13,12 @@
 #include "./stream.h"
 #include "./resource.h"
 #include "./text_stream.h"
+#include "../game/tstring.h"
+// rgl::string (rgl_string.h) declares members whose definitions are tstring's (game/tstring.cpp); the objects are the same 16 bytes, so the
+// calls go through the defining class
+#define TS(x) (*(tstring*)&(x))
+
+__int64 file_length(FILE* f);                                   // 0x42cbc0 (game/strat/gui_manager.cpp; rgl_string.h calls it mb_file_size)
 
 // @ 0x4150f0
 named_object::~named_object() {}
@@ -60,12 +66,12 @@ void rgl::string::read_from(FILE* f, size_t n)
 // @ 0x415220
 void stream_base::reset()
 {
-    buf.clear();
-    buf.rewind();
+    TS(buf).clear();
+    TS(buf).rewind();
 }
 
 // @ 0x415240
-void stream_base::rewind() { buf.rewind(); }
+void stream_base::rewind() { TS(buf).rewind(); }
 
 // @ 0x415250
 bool stream_base::at_end() { return buf.pos >= buf.len; }
@@ -82,14 +88,14 @@ int stream_base::flush() { return 0; }
 // @ 0x415290
 bool text_stream::open_read(const char* path)
 {
-    name.assign(path);
+    TS(name).assign(path);
     fp = fopen(path, "rb");
     if (fp)
         failed = 0;
     else
         failed = 1;
     if (!failed) {
-        size_t n = mb_file_size(fp);
+        size_t n = (size_t)file_length(fp);
         buf.read_from(fp, n);
         fclose(fp);
     }
@@ -101,7 +107,7 @@ bool text_stream::open_read(const char* path)
 // @ 0x415320
 int text_stream::open_write(const char* path)
 {
-    name.assign(path);
+    TS(name).assign(path);
     is_open = 0;
     fp = fopen(path, "wb");
     if (fp) {
@@ -129,8 +135,8 @@ int text_stream::close()
 // @ 0x4153a0
 stream_base& text_stream::w_cstr(const char* s)
 {
-    { rgl::string t(s); buf.append(t); }
-    { rgl::string t(" "); buf.append(t); }
+    { tstring t(s); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
     if (autoflush)
         flush();
     return *this;
@@ -139,8 +145,8 @@ stream_base& text_stream::w_cstr(const char* s)
 // @ 0x415410
 stream_base& text_stream::w_tstr(const rgl::string* s)
 {
-    buf.append(*s);
-    { rgl::string t(" "); buf.append(t); }
+    TS(buf).append(TS(*s));
+    { tstring t(" "); TS(buf).append(t); }
     if (autoflush)
         flush();
     return *this;
@@ -151,8 +157,8 @@ stream_base& text_stream::w_byte(unsigned char* v)
 {
     char tmp[128];
     _itoa(*v, tmp, 10);
-    { rgl::string t(tmp); buf.append(t); }
-    { rgl::string t(" "); buf.append(t); }
+    { tstring t(tmp); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
     if (autoflush)
         flush();
     return *this;
@@ -164,8 +170,8 @@ stream_base& text_stream::w_int(int* v)
 {
     char tmp[128];
     _itoa(*v, tmp, 10);
-    { rgl::string t(tmp); buf.append(t); }
-    { rgl::string t(" "); buf.append(t); }
+    { tstring t(tmp); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
     if (autoflush)
         flush();
     return *this;
@@ -174,7 +180,7 @@ stream_base& text_stream::w_int(int* v)
 // @ 0x415590
 stream_base& text_stream::w_i64(__int64* v)
 {
-    rgl::string s;
+    tstring s;
     int digits[32];
     bool neg = false;
     __int64 x = *v;
@@ -199,7 +205,7 @@ stream_base& text_stream::w_i64(__int64* v)
         s.push_back((char)(digits[n - 1] + '0'));
         n--;
     }
-    w_tstr(&s);
+    w_tstr((const rgl::string*)&s);
     if (autoflush)
         flush();
     return *this;
@@ -208,7 +214,7 @@ stream_base& text_stream::w_i64(__int64* v)
 // @ 0x415670
 stream_base& text_stream::w_u64(unsigned __int64* v)
 {
-    rgl::string s;
+    tstring s;
     int digits[32];
     int n = 0;
     unsigned __int64 u = *v;
@@ -224,7 +230,7 @@ stream_base& text_stream::w_u64(unsigned __int64* v)
         s.push_back((char)(digits[n - 1] + '0'));
         n--;
     }
-    w_tstr(&s);
+    w_tstr((const rgl::string*)&s);
     if (autoflush)
         flush();
     return *this;
@@ -234,9 +240,9 @@ stream_base& text_stream::w_u64(unsigned __int64* v)
 stream_base& text_stream::w_bool(char* v)
 {
     if (*v)
-        { rgl::string t("1 "); buf.append(t); }
+        { tstring t("1 "); TS(buf).append(t); }
     else
-        { rgl::string t("0 "); buf.append(t); }
+        { tstring t("0 "); TS(buf).append(t); }
     if (autoflush)
         flush();
     return *this;
@@ -247,7 +253,7 @@ stream_base& text_stream::w_float(float* v)
 {
     char tmp[128];
     mb_snprintf(tmp, 128, "%f ", (double)*v);
-    { rgl::string t(tmp); buf.append(t); }
+    { tstring t(tmp); TS(buf).append(t); }
     if (autoflush)
         flush();
     return *this;
@@ -258,8 +264,8 @@ stream_base& text_stream::w_stream(stream_base* o)
 {
     int len = o->buf.len;
     w_int(&len);
-    { rgl::string t(" "); buf.append(t); }
-    buf.append(o->buf);
+    { tstring t(" "); TS(buf).append(t); }
+    TS(buf).append(TS(o->buf));
     if (autoflush)
         flush();
     return *this;
@@ -272,15 +278,15 @@ stream_base& text_stream::slot12(void* v) { return *this; }
 // @ 0x415880
 stream_base& text_stream::r_tstr(rgl::string* v)
 {
-    rgl::string tmp;
+    tstring tmp;
     expect_token();
     if (state == 1) {
-        buf.get_string(tmp);
-        if (!tmp.equals(*v))
+        TS(buf).get_string(tmp);
+        if (!tmp.equals(TS(*v)))
             mb_error("format broken");
         state = 0;
         return *this;
     }
-    buf.get_string(*v);
+    TS(buf).get_string(TS(*v));
     return *this;
 }

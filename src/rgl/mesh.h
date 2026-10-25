@@ -126,6 +126,7 @@ struct mesh : named_object {
     // ---- src/game/agent5 (agent_hud.cpp: the HUD's item and status meshes) ----
     void append_skinned(mesh* other, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
     void append_skinned(mesh* other, const mat4* m, int bone, unsigned color, char flip);     // 0x44eb00 (ret 0x14): the spelling of the definition (src/game/agent4/agent_logic.cpp)
+    void add_quad(const vector4* p0, const vector4* p1, const vec2* uv0, const vec2* uv1, const unsigned* color);   // 0x44e970 (ret 0x14: a two-point quad; world_data/obj_tbl.cpp)
     void scale(float s);                            // 0x44f0c0 (ret 4)
     void set_color(vector4 c);                      // 0x47af30 (ret 0x10: the colour multiplier of every vertex)
     void set_bone_index(int i);                     // 0x47b360 (ret 4)

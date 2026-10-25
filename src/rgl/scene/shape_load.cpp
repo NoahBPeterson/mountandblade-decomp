@@ -5,6 +5,7 @@
 #include <vector>
 #include <new>
 #include "../rgl_string.h"
+#include "../../game/tstring.h"   // tstring: the string locals below (rgl::string's constructors are its 0x42bbd0 / 0x42bbe0)
 #include "../rgl_math.h"
 #include "../stream.h"
 #include "../resource.h"
@@ -58,12 +59,12 @@ void strategic_entity::load(stream_base* s) { entity::load(s); }
 void skeleton_entity::load(stream_base* s)
 {
     entity::load(s);
-    string a;
-    string b;
-    s->r_tstr(&a);
-    if (a != "none") {
+    tstring a;
+    tstring b;
+    s->r_tstr((string*)&a);
+    if (a.differs("none")) {
         fx = new FxDef(0);
-        fx->init((FxRes*)g_resmgr.get_object70(a));
+        fx->init((FxRes*)g_resmgr.get_object70(*(string*)&a));
     }
     if (fx) {
         s->r_int(&nfx);
@@ -71,9 +72,9 @@ void skeleton_entity::load(stream_base* s)
             int idx;
             mesh* m;
             s->r_int(&idx);
-            s->r_tstr(&a);
-            if (a != "none")
-                m = resmgr().get_object(&a)->clone();
+            s->r_tstr((string*)&a);
+            if (a.differs("none"))
+                m = ((mesh_x*)resmgr().get_object((string*)&a))->clone();
             fx->elems[idx].psys.push_back((particle_mesh*)m);
         }
     }

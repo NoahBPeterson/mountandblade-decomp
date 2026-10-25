@@ -14,19 +14,14 @@ void Screen::init_screen()
     g_gui.reset();
     g_game->f1a090 = 0;
     g_5e212c = 1;
-    stop_all((void*)0x5aa128);
+    ((SoundW*)0x5aa128)->stop_all();   // 0x494310
     g_game->f88 = 1;
     f2d4 = 0;
     f2d5 = 0;
 
-    Overlay* bar = (Overlay*)operator new(0x190);
-    if (bar != 0) {
-        new (bar) Overlay();
-        *(void**)bar = (void*)0x592848;
+    Overlay* bar = (Overlay*)new_container(0x190, vtbl_592848);   // 0x4931a0, then vptr 0x592848
+    if (bar != 0)
         bar->f188 = 0;
-    } else {
-        bar = 0;
-    }
     overlay = bar;
     vector2 p0;
     p0.x = 0.0f;
@@ -37,17 +32,11 @@ void Screen::init_screen()
     s0.y = 0.75f;
     overlay->set_scale(&s0.x);
     g_5d8788 = 1;
-    g_gui.add_root(overlay);
+    ((NodeVec*)0x5d7080)->push_back((NodeA* const&)overlay);   // 0x49b120
     Overlay* self = overlay;
     self->children.fill_n(*(Widget**)&overlay, 4);
 
-    Overlay* buttons = (Overlay*)operator new(0x188);
-    if (buttons != 0) {
-        new (buttons) Overlay();
-        *(void**)buttons = (void*)0x597050;
-    } else {
-        buttons = 0;
-    }
+    Overlay* buttons = (Overlay*)new_container(0x188, vtbl_597050);   // 0x4931a0, then vptr 0x597050
     f34 = (Widget*)buttons;
     p0.x = 0.0f;
     p0.y = 0.0f;
@@ -56,18 +45,19 @@ void Screen::init_screen()
     s0.y = 0.05f;
     buttons->set_scale(&s0.x);
     {
-        buttons->set_mesh(0, clone(g_resmgr.get_object(tstring("map_bar"))));
+        tstring map_bar("map_bar");
+        buttons->set_mesh(0, (void*)((mesh_x*)g_alloc.get_object((const rgl::string*)&map_bar))->clone());
     }
     f48 = 0;
     if (g_5a9fb0) {
-        f48 = (int)make_short_button(buttons, (void*)g_strtab.lookup(tstring("ui_terrain")));
+        f48 = (int)make_short_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_terrain")), 0.002f, 0.006f, 0.03f);
     }
-    f4c = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
-    f38 = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_reports")), 0.18f, 0.006f, 0.03f);
-    f50 = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_quests")), 0.33f, 0.006f, 0.03f);
-    f40 = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
-    f44 = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_character")), 0.5625f, 0.006f, 0.03f);
-    f3c = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
+    f4c = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
+    f38 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_reports")), 0.18f, 0.006f, 0.03f);
+    f50 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_quests")), 0.33f, 0.006f, 0.03f);
+    f40 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
+    f44 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_character")), 0.5625f, 0.006f, 0.03f);
+    f3c = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
     {
         Overlay* self = (Overlay*)buttons;
         self->children.fill_n(*(Widget**)&buttons, 4);
@@ -75,14 +65,14 @@ void Screen::init_screen()
 
     {
         tstring none("");
-        f5c = make_hint(none, 0xf, buttons, vector2(0.8f, 0.2f), vector2(0.015f, 0.05f));
+        f5c = (WidgetObj*)make_hint((ContainerBase*)buttons, none, 0.8f, -0.006f, 0.2f, 0.027f);
         int flag = 0x11;
         f5c->set_flag(&flag);
         f5c->b121 = 1;
     }
     {
         tstring none("");
-        f60 = make_hint(none, 0xf, buttons, vector2(0.8f, 0.2f), vector2(0.012f, 0.05f));
+        f60 = (WidgetObj*)make_hint((ContainerBase*)buttons, none, 0.8f, 0.015f, 0.2f, 0.027f);
         int flag = 0x11;
         f60->set_flag(&flag);
         f60->b121 = 1;
@@ -165,7 +155,7 @@ void Screen::init_screen()
 
     {
         PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
-        int rec = mgr->index_of(g_game->side_party);
+        int rec = ((Map10007*)(void*)mgr)->lookup(g_game->side_party);   // 0x48ad00
         Rect* r = (Rect*)((char*)mgr + (rec >> 4) * 4 + *(int*)((char*)mgr + 0x138d0) + (rec & 0xf) * 0x5ac8 + 0x30);
         *(Rect*)((char*)this + 0x290) = *r;
     }
@@ -180,15 +170,15 @@ void Screen::init_screen()
     camera_mark_entities();
 
     if (g_level != g_a70438 && g_use_shaders) {
-        g_psys.attach_camera(g_level);
+        ((ShadowMap*)g_psys)->attach_camera((CellGrid*)g_level);   // 0x4711e0
         void* scene_objs = *(void**)((char*)g_level + 0xb0);
         int count = (*(int*)((char*)scene_objs + 8) - *(int*)((char*)scene_objs + 4)) / 0x24;
         char* p = *(char**)((char*)scene_objs + 4);
         for (int i = 0; i < count; i++, p += 0x24) {
-            g_psys.extend(p);
+            ((ShadowMap*)g_psys)->extend((const rgl::vector4*)p);   // 0x468c20
         }
-        g_psys.fit_bounds();
-        g_psys.render();
+        ((ShadowMap*)g_psys)->fit_bounds();   // 0x463cc0
+        ((ShadowMapP*)g_psys)->render();   // 0x47fef0
     }
 }
 
@@ -203,14 +193,14 @@ void Screen::camera_mark_entities()
 {
     g_game->f13acc = (f2b8 * g_590bb8 + g_549cdc) * g_54b3b4;
     PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
-    for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties.n_parties; mgr->next_party_id(&id)) {
-        int idx = mgr->index_of(id);
+    for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties.n_parties; mgr->next_party_id((int*)&id)) {
+        int idx = ((Map10007*)(void*)mgr)->lookup(id);
         if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
-            idx = mgr->index_of(id);
+            idx = ((Map10007*)(void*)mgr)->lookup(id);
             if (*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x400) {
-                idx = mgr->index_of(id);
+                idx = ((Map10007*)(void*)mgr)->lookup(id);
                 if (!(*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x80000)) {
-                    idx = mgr->index_of(id);
+                    idx = ((Map10007*)(void*)mgr)->lookup(id);
                     party_bytes(mgr, idx)[0x8b5] = 1;
                 }
             }

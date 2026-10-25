@@ -20,6 +20,8 @@
 #include "../ui_widget.h"
 #include "../overlay.h"
 #include "../map_widget.h"
+#include "./cs_common.h"
+#include "./cs_res.h"
 
 // ---- the campaign screen (`this` of 0x4ec4d0 / 0x4ecce0) -----------------------------------------------
 #include "../campaign_screen.h"            // Screen (the campaign map screen)
@@ -31,11 +33,9 @@ struct Rect {                                   // the 0x10-byte region copied i
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 #include "../gui_mgr.h"
-struct ResMgr { void* get_object(const tstring& n); };
 #include "../str_table.h"                      // StrTable (0x5e2a18; was StrTab here: find(name) was lookup 0x43a1e0)
 
 #define g_gui     (*(GuiManager*)0x5d7080)
-#define g_resmgr  (*(ResMgr*)0x5d6fa0)
 #define g_strtab  (*(StrTable*)0x5e2a18)
 
 extern char g_5e212c;                           // 0x5e212c
@@ -49,35 +49,18 @@ extern float g_549cdc;                          // 0x549cdc (1.0f)
 extern float g_54b3b4;                          // 0x54b3b4
 
 // ---- callees -------------------------------------------------------------------------------------------
-void ctor_4931a0(void* p);                      // 0x4931a0 (ecx = object)
-void __fastcall stop_all(void* p);           // 0x494310 (ecx = 0x5aa128: the campaign UI root)
-void* clone(void* m);                    // 0x41c6d0
-void* __fastcall make_short_button(Overlay* o, void* name);   // 0x4e5570
-Widget* new_medium_button(Overlay* o, void* text, float x, float y, float z);   // 0x4dce70
+// (stop_all 0x494310, clone 0x41c6d0, make_short_button 0x4e5570, new_medium_button 0x4dce70, make_hint 0x4dada0, ctor_4ed630: cs_common.h / cs_res.h)
 #include "../../include/vec.h"                      // vector2 (= Vec2)
-WidgetObj* make_hint(const tstring& text, int a, Overlay* o, vector2 p, vector2 s);   // 0x4dada0
-void __fastcall ctor_4ed630(MapWidget* w);       // 0x4ed630
 
 // the party manager at g_game+0xf8 (include/party.h)
 #include "../../include/party.h"
 
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
-struct GameScene {                              // g_psys (0xa70248)
-    void attach_camera(int scene);                     // 0x4711e0
-    void extend(void* p);                // 0x468c20
-    void fit_bounds();                               // 0x463cc0
-    void render();                               // 0x47fef0
-};
-#define g_psys (*(GameScene*)0xa70248)
+#define g_psys 0xa70248                         // the shadow / particle system (ShadowMap, ShadowMapP: cs_common.h)
 
 static Widget* new_widget(int size)
 {
-    Widget* w = (Widget*)operator new(size);
-    if (w != 0)
-        new (w) Widget();
-    else
-        w = 0;
-    return w;
+    return (Widget*)new_widget_base(size);   // operator new, then the widget base constructor 0x48ae20
 }
 
 #endif

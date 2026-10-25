@@ -22,9 +22,9 @@
 #include "../../rgl/stream.h"
 
 using rgl::vector4;
-typedef rgl::string tstring;           // 0x42bbd0 / 0x42bbe0 ctors, 0x42bc40 dtor, 0x42bcb0 assign(const char*)
+#include "../tstring.h"               // tstring: 0x42bbd0 / 0x42bbe0 ctors, 0x42bc40 dtor, 0x42bcb0 assign(const char*)
 
-#include "./str_table_rgl.h"                                              // StrTableRgl (was StringTable here): the one definition
+#include "../str_table.h"                                                 // StrTable g_strtable (0x5e2a18)
 
 // ---- controls ----------------------------------------------------------------------------------------
 #include "../../include/vec.h"                      // vector2 (= Vec2)
@@ -102,9 +102,21 @@ struct ControlKeyTable {
     void forget(int index, int button);                     // 0x4d6f90
     __declspec(noinline) void restore();                    // 0x4d6fd0 (kept as a call by 0x4d6e50)
     void save();                                            // 0x4d7000
-    void init();                                  // 0x4be7c0
-    void key_name(int index, tstring& out);                  // 0x4d7370
-    void key_binding_name(int index, tstring* text, char* assigned);  // 0x4d7d10
+};
+// The key table object is also seen by three other classes, all defined in other TUs of the module group (same 0x128 bytes of
+// {key, button} pairs): trigger_vec.h's code_table (init 0x4be7c0 fills v[0..0x4a)), options_panel.h's options_panel (key_name
+// 0x4d7370 and key_binding_name 0x4d7d10 read the pairs through key_menu.. at +0), and mesh_slot/slot.cpp's Slot (0x487900
+// is_ready, called on the keyboard 0xa170c8). Their headers do not fit this TU's, so the members are repeated under the class names.
+struct code_table {
+    int v[0x4a];
+    void init();   // 0x4be7c0
+};
+struct options_panel {
+    void key_name(int which, tstring* out);                               // 0x4d7370
+    void key_binding_name(int slot, tstring* out, int* translated);       // 0x4d7d10
+};
+struct Slot {
+    int is_ready(int index);   // 0x487900
 };
 extern ControlKeyTable g_game_keys;                                                // 0xa73730
 
@@ -194,7 +206,7 @@ void KeysPage::update_perf()
     char buf[0x104];
     {
         tstring key("ui_estimated_performance");
-        tstring* e = g_strtable.lookup(&key);
+        tstring* e = g_strtable.lookup(key);
         sprintf(buf, e->c_str(), (int)(*(float*)0x596854 / perf));
     }
     {
@@ -209,10 +221,10 @@ void KeysPage::set_enabled_text(Widget* w)
 {
     if (w->get_value()) {
         tstring key("ui_enabled");
-        { char r[8]; w->set_text(r, *g_strtable.lookup(&key)); }
+        { char r[8]; w->set_text(r, *g_strtable.lookup(key)); }
     } else {
         tstring key("ui_disabled");
-        { char r[8]; w->set_text(r, *g_strtable.lookup(&key)); }
+        { char r[8]; w->set_text(r, *g_strtable.lookup(key)); }
     }
 }
 
@@ -224,7 +236,7 @@ void KeysPage::update(int reason)
         p->w164->show();
         int pressed = -1;
         for (int i = 0; i < 0x100; i++)             // the last bound key wins
-            if (g_key_names.is_bound(i))
+            if ((char)((Slot*)(void*)&g_key_names)->is_ready(i))   // the caller tests al only
                 pressed = i;
         if (pressed >= 0) {
             if (pressed != 1) {
@@ -240,7 +252,7 @@ void KeysPage::update(int reason)
             if (p->keys[i]->changed(0x10000))
                 p->editing = i;
         if (p->w38->changed(0x10000)) {
-            g_game_keys.init();
+            ((code_table*)(void*)&g_game_keys)->init();
             p->modified = 1;
             refresh();
         }
@@ -281,7 +293,7 @@ void ControlKeyTable::save()
     char path[0x104];
     sprintf(path, "controls.dat");
     user_path(path);
-    w.name.assign(path);
+    ((tstring*)&w.name)->assign(path);   // 0x42bcb0 (bin_writer::name is an rgl::string, the same object)
     w.is_open = 0;
     w.fp = fopen(path, "wb");
     if (w.fp) {
@@ -323,14 +335,14 @@ void KeysPage::refresh()
     KeysPageView* p = head(this);
     for (int k = 0; k < 7; k++) {
         tstring text;
-        g_game_keys.key_name(k, text);
+        ((options_panel*)(void*)&g_game_keys)->key_name(k, &text);
         { char r[8]; p->captions[k]->set_text(r, text); }
     }
 
     for (int i = 0; i < 0x25; i++) {
         char assigned;
         tstring text;
-        g_game_keys.key_binding_name(i, &text, &assigned);
+        ((options_panel*)(void*)&g_game_keys)->key_binding_name(i, &text, (int*)&assigned);   // stores one byte
         layout_row(p->keys[i], &text, 0.034f, 3.7f, 0.072f, 0.085f);
         unsigned colour = 0xffff2200;
         if (!assigned)

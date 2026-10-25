@@ -62,7 +62,12 @@ struct SliderW : MissionUi {                                    // 0x188 bytes
 // @ 0x495970
 int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
 {
-    SliderW* w = new SliderW;
+    // built by hand: SliderW's constructor would emit a vtable of unresolved MissionUi slots (the real one is 0x591fb0, UiB's)
+    SliderW* w = (SliderW*)operator new(sizeof(SliderW));
+    if (w) {
+        new ((void*)w, raw_place()) MissionUi;                  // 0x48ae20
+        *(void**)w = (void*)vtbl_591fb0;
+    }
     w->f178 = 0;
     w->f17c = 0.3f;
     w->v168 = 1.0f;
@@ -73,14 +78,14 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
         ((SliderVt*)w)->s22(&range[0]);
     }
     {
-        rgl::string n("slider_hor");
-        gui_mesh* m = (gui_mesh*)g_resmgr_full.get_object(&n);
+        tstring n("slider_hor");
+        gui_mesh* m = (gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&n);
         void* object = m->clone();
         ((SliderVt*)w)->s32(0, object);
     }
     {
-        rgl::string n("handle_hor");
-        gui_mesh* m = (gui_mesh*)g_resmgr_full.get_object(&n);
+        tstring n("handle_hor");
+        gui_mesh* m = (gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&n);
         void* object = m->clone();
         ((SliderVt*)w)->s32(2, object);
     }
@@ -115,7 +120,7 @@ rgl::mesh* build_legend_mesh(ColourOwner* parent)
     m->mask = 1;
     m->slots[0].f4 = 1;
     m->slots[1].f4 = 1;
-    parent->set_colour_on(m);
+    ((Poser*)parent)->add_extra((int)m);   // 0x442110
     return m;
 }
 
@@ -176,7 +181,7 @@ void MeshX::set_part(const rgl::matrix& mtx)
         }
     }
     slots[0].f28 = 1;
-    compute_bounds();
+    ((mesh_x*)(void*)this)->compute_bounds();            // 0x419300
 }
 
 // ==== 0x495f00: set the alpha of every vertex record ===========================================================
@@ -192,7 +197,7 @@ void MeshX::set_alpha(float a)
         unsigned packed = base[i].color;
         rgl::vertex60* p = &base[i];
         rgl::vector4 v;
-        v = unpack_color(&packed);
+        v = rgl::unpack_color(&packed);
         v.w = a;
         p->color = rgl::pack_color(&v);
     }
@@ -833,14 +838,14 @@ void HudOuter::scroll_refresh(vector4* arg)
     bar->tracks[2] = 0;
 
     vector4 scale(0.5f, arg->y * 1.5576323f, 1.0f);
-    rgl::string a_name("scrollbar");
-    gui_mesh* a = ((gui_mesh*)g_resmgr_full.get_object(&a_name))->clone();
+    tstring a_name("scrollbar");
+    gui_mesh* a = ((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&a_name))->clone();
     a->set_color(scale);
-    rgl::string b_name("scrollbar_handle");
-    gui_mesh* b = ((gui_mesh*)g_resmgr_full.get_object(&b_name))->clone();
+    tstring b_name("scrollbar_handle");
+    gui_mesh* b = ((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&b_name))->clone();
     b->set_color(scale);
     bar->s32(0, a);
     bar->s32(2, b);
 
-    update();
+    ((FieldPanel*)(void*)this)->update();            // 0x48d470
 }

@@ -20,6 +20,11 @@
 #include "../int_vec.h"
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
+struct skin_owner;
+void __stdcall select_entity(rgl::mesh* m, skin_owner* o, unsigned color);   // 0x4ea0c0 (char_sheet/save_panel.cpp)
+struct GuiCtx;
+void __fastcall pick_entity(GuiCtx* self);                                 // 0x4ed8d0 (char_sheet/pick_entity.cpp)
+
 // the map's records (0x1c8 bytes each) are Mission::props (+0x668c / +0x6690)
 inline int record_count()
 {
@@ -135,7 +140,7 @@ refresh_list:
         vector4 dir(-cam_x, -cam_y, -cam_z);
         pos3 m;
         rgl::mat3 idtmp;
-        *(rgl::mat3*)&m = *identity3(&idtmp);
+        *(rgl::mat3*)&m = *::identity3(&idtmp);
         m.o = ed_pos(g_game);
         cross3(m.s, dir, m.u);
         normalize_vec(m.s);
@@ -153,7 +158,7 @@ refresh_list:
 
         if (f2f9) {
             f2f9 = 0;
-            select_entity(g_map_mission()->mesh_a(), rec_at(ed_selected(g_game)), 0xa0dd7711);
+            ::select_entity(g_map_mission()->mesh_a(), (skin_owner*)rec_at(ed_selected(g_game)), 0xa0dd7711);   // 0x4ea0c0 (a free stdcall function, save_panel.cpp)
             for (unsigned i = 0; i < ed_sel_list(g_game).size() - 1; i++)
                 add_selected(g_map_mission()->mesh_a(), &frame_of(g_map_mission()->cursor()),
                              rec_at(ed_sel_list(g_game)[i]), 0x70886611);
@@ -178,7 +183,7 @@ refresh_list:
         ed_selected(g_game) = -1;
         ed_sel_list(g_game).resize(0, 0);
         ((MapEditorDialog*)0x8ee3c48)->update_objects();
-        g_editor->pick_entity();
+        pick_entity((GuiCtx*)(void*)g_editor);   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
         g_editor->f2f9 = 1;
         SetFocus(g_editor_hwnd);
     }
@@ -219,8 +224,8 @@ refresh_list:
             }
 
             if (rotated) {
-                matrix rel = old.relative(r->m18);
-                matrix res = basis.mul(rel);
+                matrix rel = ((const rgl::mat4*)&old)->relative((const rgl::mat4&)r->m18);   // 0x4329d0
+                matrix res = (const matrix&)basis * rel;   // 0x40e870 (rgl::matrix::operator*)
                 r->m18 = res;
                 r->m18.orthonormalize();
                 ent_of(r)->f141 = 1;
@@ -315,7 +320,7 @@ void MapEditorDialog::add_selected(rgl::mesh* target, const rgl::matrix* frame, 
     for (unsigned i = 0; i < ent_of(prop)->meshes.size(); i++)
     {
         rgl::mesh* msh = ent_of(prop)->meshes[i];
-        matrix m = ((const pos*)frame)->relative(ent_of(prop)->local);
-        target->append_skinned(msh, &m, -1, color, flip);
+        matrix m = ((const rgl::mat4*)frame)->relative((const rgl::mat4&)ent_of(prop)->local);   // 0x4329d0
+        target->append_skinned(msh, (const rgl::mat4*)&m, -1, color, flip);   // 0x44eb00
     }
 }

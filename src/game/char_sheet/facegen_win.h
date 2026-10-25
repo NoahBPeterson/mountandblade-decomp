@@ -17,6 +17,7 @@ using std::vector;
 // ---- engine types -----------------------------------------------------------------------------------
 // rgl::string: 16 bytes { pos, buf, cap, len }; ctor 0x42bbd0 zeroes the four words.
 #include "../tstring.h"
+#include "./cs_common.h"                                // new_container, MissionUi, gui_manager, NodeVec, vtbl_*
 
 // cloned rgl mesh; only the members this slice reaches
 #include "../rgl_mesh.h"
@@ -28,7 +29,7 @@ extern resmgr g_alloc;                                      // 0x5d6fa0
 
 // world / terrain object at 0xa76630 (the terrain generator)
 struct TerrainGen {
-    void reset();                                       // 0x4647e0
+    void reset();                                       // 0x4647e0 (Terrain::reset: no symbol of that class exists in src; see cs_common.h)
 };
 extern TerrainGen g_terrain_gen;                            // 0xa76630
 
@@ -59,7 +60,7 @@ struct UiSlider : UiWidget {
 static __forceinline mesh* load_mesh(const char* name, float s)
 {
     tstring n(name);
-    mesh* m = g_alloc.get_object(n)->clone();
+    mesh* m = g_alloc.get_object((const rgl::string*)&n)->clone();
     m->scale(s);
     return m;
 }
@@ -107,16 +108,16 @@ struct FaceBoard : UiWidget {                               // ctor 0x4931a0 (+ 
 
 // ---- helpers / globals ------------------------------------------------------------------------------
 extern char g_gui[];                                        // 0x5d7080 (the GUI root object)
-void reset(char* g);                                    // 0x42d1b0
-void gui_push(char* g, void** w);                           // 0x49b120 (appends to the root widget list)
+// (reset 0x42d1b0 is gui_manager::reset, gui_push 0x49b120 is NodeVec::push_back: cs_common.h)
 extern unsigned char g_gui_dirty;                           // 0x5d8788
 extern int g_region_names[];                                // 0x59394c, 8 entries ending at 0x59396c
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);    // 0x536f8f
 extern "C" int __cdecl rand(void);                          // 0x536a9f
 
-UiSlider* make_slider(void* parent, float x, float y);                                  // 0x4dfd50
-UiWidget* make_dropdown(void* parent, const tstring* name, float x, float y);             // 0x4dfec0
+struct UiB; struct DropDown;
+UiB* make_slider(MissionUi* parent, float x, float y, float k);                          // 0x4dfd50 (cls_map)
+DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y);       // 0x4dfec0 (cls_map)
 UiWidget* make_medium(void* parent, tstring* a, float x, float y, float w, float h,
                       tstring* b, tstring* c);                                          // 0x4dcc50
 UiWidget* make_short(void* parent, tstring* a, float x, float y, float w, float h,

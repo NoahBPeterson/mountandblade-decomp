@@ -127,8 +127,14 @@ struct MapScreen {
 // ---- callees --------------------------------------------------------------------------------------------
 #include "../terrain_desc.h"
 int  save_game(int arg, tstring* name);                 // 0x4e8980
-struct ButtonState { char test(int v); };               // 0x487900 (ret 4)
+struct Slot {
+    int is_ready(int v);   // 0x487900 (ret 4; ui/slot.cpp: the keyboard 0xa170c8 is a Slot)
+};
+struct ButtonState;
 extern ButtonState g_keyboard;                            // 0xa170c8
+struct GameW {
+    void world_free();   // 0x492f40 (world_data/world_data.h)
+};
 void log_save_path();                                   // 0x4e8df0
 
 extern int      g_use_shaders;                          // 0x5e28fc

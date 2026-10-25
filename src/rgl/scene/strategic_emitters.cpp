@@ -77,7 +77,7 @@ void strategic_entity::update(float dt)
         v9c = shape->get_a();
     }
     for (std::vector<psys*>::iterator it = emitters.begin(); it != emitters.end(); ++it) {
-        (*it)->update(&dt, local);
+        ((emitter*)*it)->update(&dt, local);
         if (radius < (*it)->radius) radius = (*it)->radius;
     }
     float dx = last_pos.x - local.o.x;
@@ -94,7 +94,7 @@ void strategic_entity::update(float dt)
     f141 = false;
     for (std::vector<mesh*>::iterator it = meshes.begin(); it < meshes.end(); ++it)
         ((mesh_ext*)*it)->update_emitters(&dt, local);
-    if (is_dirty()) {
+    if ((char)is_dirty()) {                             // the original tests the flag byte (al)
         for (unsigned i = 0; i < items.size(); ++i) {
             matrix m = local;
             m.orthonormalize();
@@ -103,7 +103,7 @@ void strategic_entity::update(float dt)
         }
     }
     if (p288 && f31c && !f170) {
-        resmgr().release(p288);
+        CALL_STDCALL_ON(clear_f14, &resmgr(), p288);   // 0x4175f0 (the resource manager in ecx)
         p288 = 0;
     }
     f31c = 0;

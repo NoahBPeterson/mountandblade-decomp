@@ -23,6 +23,7 @@
 #include <windows.h>
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"
+#include "./quest_page.h"
 #include "../party/game.h"
 #include "../../include/game_recs.h"
 
@@ -30,9 +31,7 @@ using rgl::vector4;
 
 // 0x43a1e0: localized text of a table key; the returned object's `p` is the text (0 -> the object itself).
 // 0x43a1e0 (thiscall on the table at 0x5e2a18, arg pushed, ret 4): localized text of a table key.
-#include "./str_table_rgl.h"                                              // StrTableRgl (was StringTable here): the one definition
-
-tstring* lookup(tstring& key);               // 0x43a1e0
+#include "../str_table.h"                                                 // StrTable g_strtable (0x5e2a18)
 
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 extern "C" int __cdecl sprintf(char*, const char*, ...);         // 0x536f8f
@@ -40,8 +39,11 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);         // 0x536f8f
 
 struct Pos2 { float x, y; };    // 8-byte position slot; the original passes an unset 8-byte stack slot
 
-// 0x489f40 (thiscall on the game object): the game's difficulty rating (percent).
-struct GameRating { int rating(); };                // 0x489f40
+// 0x489f40 (thiscall on the game object): the game's difficulty rating (percent). GameData (include/game_data.h) cannot be
+// included next to party/game.h, so the member is repeated under the class name.
+struct GameData {
+    int sl_value_factor();   // 0x489f40
+};
 
 // 0x495700 (thiscall on 0xa73980, ret 4; see s00494e40): choose a main-menu option by index.
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
@@ -85,49 +87,7 @@ static inline float control_float(Widget* w)
     return *(float*)&v;
 }
 
-// 0x4d6dd0: caption the control's number as enabled/disabled (s004d6b80).
-void set_enabled_text(Widget* w);                   // 0x4d6dd0
 
-struct QuestPage {
-    char    pad00[0x18];
-    int     menu_option;                            // +0x18 (the option the "back" button picks)
-    char    pad1c[0x34 - 0x1c];
-    Widget* w34;                                    // +0x34  day caption
-    Widget* w38;                                    // +0x38  toolbar: video
-    Widget* w3c;                                    // +0x3c  toolbar: options
-    Widget* w40;                                    // +0x40  toolbar: back
-    Widget* w44;                                    // +0x44
-    Widget* w48;                                    // +0x48
-    Widget* w4c;                                    // +0x4c
-    Widget* w50;                                    // +0x50
-    Widget* w54;                                    // +0x54
-    Widget* w58;                                    // +0x58
-    Widget* w5c;                                    // +0x5c
-    Widget* w60;                                    // +0x60
-    Widget* w64;                                    // +0x64
-    Widget* w68;                                    // +0x68
-    Widget* w6c;                                    // +0x6c
-    Widget* w70;                                    // +0x70
-    Widget* w74;                                    // +0x74
-    Widget* w78;                                    // +0x78  a slider (its float is the day scale)
-    Widget* w7c;                                    // +0x7c
-    Widget* w80;                                    // +0x80
-    Widget* w84;                                    // +0x84
-    Widget* w88;                                    // +0x88
-    char    pad8c[0xd4 - 0x8c];
-    Widget* wd4;                                    // +0xd4  difficulty caption
-    char    pad_d8[0x250 - 0xd8];
-    int     sel;                                    // +0x250 selected quest
-
-    // the two text boxes of fill() (+0x44 name/date/description, +0x48 progression)
-    Widget* box1() { return w44; }
-    Widget* box2() { return w48; }
-
-    void fill();
-    void update_days();
-    void update_difficulty();
-    void update_settings(int reason);
-};
 
 // The text handed to set_text: the key object built from the caption's literal, looked up in the string
 // table, and the entry copied into the caller's slot (tstring::operator=).
@@ -149,12 +109,13 @@ extern char g_empty_text[];                         // 0x54a480 (an empty C stri
 // 0xa70464: the caption the game object's text helper writes into before it is shown.
 extern tstring g_quest_text;                        // 0xa70464
 
-// 0x435790 (thiscall on the game, ret 0xc).
-struct QuestTextHook {
-    char    pad0[0x1a068];
-    int     on;                                     // +0x1a068
-    void    emit_event(int event, int a, int b);        // 0x435790
+// 0x435790 (thiscall on the game, ret 0xc): SoundCtl of agent/agent.h, the game object's event emitter (the header cannot be
+// included here).
+struct SoundCtl {
+    char emit_event(int id, int a, int b);   // 0x435790
 };
+// 0x4d6dd0: KeysPage::set_enabled_text (keys_page.cpp); the page calls it on itself.
+struct KeysPage { void set_enabled_text(Widget* w); };
 
 // @ 0x4d5ba0
 // The selected quest's record: the selection indexes the int table at this+0x4c.
@@ -178,7 +139,7 @@ void QuestPage::fill()
         Game* g = g_game;
         int days = (int)(g->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
         g_quest_text.assign(g_empty_text);
-        ((QuestTextHook*)g)->emit_event(0xf, days / 24, days);
+        ((SoundCtl*)g)->emit_event(0xf, days / 24, days);
         {
             tstring formatted(g_quest_text);
             const char* arg = formatted.buf ? formatted.buf : (const char*)&formatted.buf;
@@ -268,7 +229,7 @@ void QuestPage::update_difficulty()
         tstring key((const char*)0x5967a0);
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
-        sprintf(buf, fmt, ((GameRating*)g_game)->rating());
+        sprintf(buf, fmt, ((GameData*)g_game)->sl_value_factor());
     }
     {
         tstring text((const char*)&buf[0]);
@@ -317,35 +278,35 @@ void QuestPage::update_settings(int reason)
     }
     if (w5c->changed(0x10000)) {
         *(int*)0x5aa06c = control_value(w5c);
-        set_enabled_text(w5c);
+        ((KeysPage*)(void*)this)->set_enabled_text(w5c);
     }
     if (w60->changed(0x10000)) {
         *(int*)0x5aa070 = control_value(w60);
-        set_enabled_text(w60);
+        ((KeysPage*)(void*)this)->set_enabled_text(w60);
     }
     if (w64->changed(0x10000)) {
         *(int*)0x5aa05c = control_value(w64);
-        set_enabled_text(w64);
+        ((KeysPage*)(void*)this)->set_enabled_text(w64);
     }
     if (w68->changed(0x10000)) {
         *(int*)0x5aa060 = control_value(w68);
-        set_enabled_text(w68);
+        ((KeysPage*)(void*)this)->set_enabled_text(w68);
     }
     if (w6c->changed(0x10000)) {
         *(int*)0x5aa064 = control_value(w6c);
-        set_enabled_text(w6c);
+        ((KeysPage*)(void*)this)->set_enabled_text(w6c);
     }
     if (w70->changed(0x10000)) {
         *(int*)0x5aa068 = control_value(w70);
-        set_enabled_text(w70);
+        ((KeysPage*)(void*)this)->set_enabled_text(w70);
     }
     if (w74->changed(0x10000)) {
         *(int*)0x5aa080 = control_value(w74);
-        set_enabled_text(w74);
+        ((KeysPage*)(void*)this)->set_enabled_text(w74);
     }
     if (w88->changed(0x10000)) {
         *(int*)0x5aa01c = control_value(w88);
-        set_enabled_text(w88);
+        ((KeysPage*)(void*)this)->set_enabled_text(w88);
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)
     if (w40->changed(0x10000)) {

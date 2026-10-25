@@ -90,11 +90,11 @@ void TerrainPage::update(float dt)
 done:
     if (page_changed(regen_btn)) {
         // "regenerate": reset the scene, arm the flash effect, rebuild the terrain and put the camera on it
-        world->reset();
+        ((Terrain*)(void*)world)->reset();   // 0x4647e0
         vector4 clear_colour(0.4f, 0.4f, 0.6f);
         world->color = clear_colour;
         world->color.w = 1.0f;
-        EffObj* flash = ((EffMgr*)world)->create();     // 0x478f30
+        EffObj* flash = (EffObj*)((CellGrid*)(void*)world)->spawn_wind();     // 0x478f30
         flash->pos = vector4(0.9f, 0.9f, 0.9f);
         flash->f14 = vector4(1.0f, 1.0f, 1.0f);
         flash->f24 = vector4(-1000.0f, -1000.0f, 1000.0f);
@@ -103,11 +103,11 @@ done:
         vector4 dir(1.0f, 1.0f, -1.0f);
         flash->f44 = dir;
         sync_bits();
-        g_terrain_obj.generate(world, 0, 0);
+        ((TerrainX*)(void*)&g_terrain_obj)->generate((int)world, (int*)0, 0);   // 0x481d10
         vector4 owner;                              // 16 zeroed bytes; lane 1 is what 0x4814a0 hands back
         owner.x = 0.0f; owner.y = 0.0f; owner.z = 0.0f; owner.w = 0.0f;
-        g_terrain_obj.regenerate_water(0, (int*)&owner.y);
-        g_terrain_obj.destroy_water();
+        ((TerrainX*)(void*)&g_terrain_obj)->regenerate_water((void**)&owner.y, 0);   // 0x482170
+        ((TerrainX*)(void*)&g_terrain_obj)->destroy_water((int)&owner);   // 0x4814a0
         float x = camera_x * g_half;
         view_x = x;
         float y = camera_y * g_half;

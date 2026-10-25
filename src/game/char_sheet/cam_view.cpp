@@ -40,12 +40,12 @@ check_follow:
     else if (zoom > 2.0f)
         zoom = 2.0f;
     mat4 m;
-    identity_pos(&m);
+    identity_pos((pos*)&m);
     float angle = 1.5707964f;
-    ((mat4_self*)&m)->rotate_about_s(&angle);
-    ((mat4_self*)&m)->rotate_about_f(&yaw);
+    ((rgl::matrix*)&m)->rotate_about_s(&angle);
+    ((rgl::matrix*)&m)->rotate_about_f(&yaw);
     angle = -pitch;
-    ((mat4_self*)&m)->rotate_about_s(&angle);
+    ((rgl::matrix*)&m)->rotate_about_s(&angle);
     m.o.z = -0.1f;
     *(mat4*)((char*)ent + 0x58) = m;
 }
@@ -72,7 +72,7 @@ void CamView::update_model(float dt)
         float* arr = (float*)((char*)sl + *(int*)((char*)sl + 0x178) * 4 + 0xf0);
         float v = (a / b) * (arr[0] - *(float*)((char*)sl + 0x17c))
                 + ((float)g_world_time / arr[0]) * *(float*)((char*)sl + 0x17c) * g_scroll;
-        sl->set_value(v);
+        ((UiD*)(void*)sl)->set_value(v);
         sl->v48(0x10000);
     }
 
@@ -106,7 +106,7 @@ void CamView::update_model(float dt)
         if (row->v44(0x10000)) {
             g_dummy_mat_arr[i] = row->v38();
             SkinSet* set = (SkinSet*)((char*)g_skins_begin + g_cur * 0x1f8);
-            set->relax(i, g_dummy_mat_arr);
+            ((FaceRace*)set)->relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
                 rows[j]->v34(g_dummy_mat_arr[j]);
             flag = 1;
@@ -161,7 +161,7 @@ void CamView::update_model(float dt)
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
         SkinSet* set = (SkinSet*)((char*)g_skins_begin + g_cur * 0x1f8);
-        set->relax(-1, g_dummy_mat_arr);
+        ((FaceRace*)set)->relax(-1, g_dummy_mat_arr);
         flag = 1;
         for (int i = 0; i < n; i++)
             rows[i]->v34(g_dummy_mat_arr[i]);
@@ -172,24 +172,24 @@ void CamView::update_model(float dt)
     f35c = f35c % SKIN_INT(0x190);
 
     if (flag)
-        refresh();
+        ((FaceGen*)(void*)this)->refresh();
 
     update(dt);
     world->step(dt);
-    setup(dt);
+    ((FaceGen*)(void*)this)->update_view(*(int*)&dt);
 
     if (state == 0) {
         state = 1;
         tstring t1("ui_tutorial_face_generator");
         tstring t2("ui_tutorial");
-        const tstring* r1 = g_strtable.lookup(&t1);
-        const tstring* r2 = g_strtable.lookup(&t2);
+        const tstring* r1 = g_strtable.lookup(t1);
+        const tstring* r2 = g_strtable.lookup(t2);
         g_main_menu.header = *r2;
         g_main_menu.title = *r1;
         g_main_menu.choice = 0;
         g_main_menu.v50 = 0;
         g_main_menu.open = 0;
-        g_main_menu.reset(0);
+        ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         return;
     }
 

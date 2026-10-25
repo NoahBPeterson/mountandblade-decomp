@@ -78,8 +78,8 @@ static const char* troop_text(int id)
 #include "../conv_screen.h"                      // ConvScreen (full layout), base_mesh
 
 struct base_mesh;
-struct resmgr { base_mesh* get_object(const tstring& name); };   // 0x419540
-extern resmgr g_alloc;                                   // 0x5d6fa0
+#include "./cs_common.h"
+#include "./cs_res.h"                             // resmgr g_alloc (get_object 0x419540), mesh_x::clone 0x41c6d0
 
 float decode_utf8(const tstring* s, int* out_count, const void* font);   // 0x487b00 (pixel width)
 

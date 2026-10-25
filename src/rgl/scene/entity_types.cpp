@@ -85,7 +85,7 @@ void world::step(float dt)
         }
     }
     for (psys** it = emitters._Myfirst; it < emitters._Mylast; ++it)
-        (*it)->update(&dt, (*it)->mf4);
+        ((emitter*)*it)->update(&dt, (*it)->mf4);
     partition_items();
     for (int* it = removed.first; it < removed.last; ++it)
         remove_entity(*it);
@@ -115,7 +115,7 @@ strategic_entity::~strategic_entity()
         f290 = 0;
     }
     if (p288 != 0) {
-        resmgr().release(p288);
+        CALL_STDCALL_ON(clear_f14, &resmgr(), p288);   // 0x4175f0 (the resource manager in ecx)
         p288 = 0;
     }
     for (unsigned i = 0; i < emitters.size(); i++) {
@@ -166,7 +166,7 @@ void entity::load(stream_base* s)
         if (!(nm == "none"))
         {
             mesh*& slot = *(meshes.begin() + i);
-            slot = resmgr().get_object(&nm)->clone();
+            slot = ((mesh_x*)resmgr().get_object(&nm))->clone();
         }
     }
 }

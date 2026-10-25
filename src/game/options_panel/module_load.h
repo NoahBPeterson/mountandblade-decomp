@@ -31,23 +31,16 @@ struct flora_kind {
     int f14;            // +0x14
     int f18;            // +0x18
     int f1c;            // +0x1c
-    void copy_from(const flora_kind* src);  // 0x4cd080
 };
 
 // ground spec record (0x4c bytes): detail in s004bddf0.
 struct ground_spec {
     char pad0[0x4c];
-    void load_extras(text_reader_l* s);              // 0x4bddf0
-    void copy_from(const ground_spec* src); // 0x4cd100
-    void destroy();                         // 0x4c8ba0
 };
 
 // mission type record (0x20 bytes): detail in 0x4c2dd0.
 struct mission_type {
     char pad0[0x20];
-    void read(text_reader_l* s);              // 0x4c2dd0
-    void copy_from(const mission_type* src);    // 0x4cd170
-    void destroy();                         // 0x4c8ab0
 };
 
 // The allocators of the three record vectors: construct (0x4d1140/0x4d1160/0x4d1180) copy-constructs one
@@ -59,13 +52,22 @@ struct mission_alloc { void construct(mission_type* dst, const mission_type& src
 // "ttype" record (0x20 bytes, array at 0x8ed4df8).
 struct ttype {
     char pad0[0x20];
-    void read(text_reader_l* s);  // 0x4be600
 };
 
-// Destroy helpers (thiscall, `this` = the element).
-void flora_kind_destroy(flora_kind* self);      // 0x4cd6a0
-void ground_spec_destroy(ground_spec* self);    // 0x4c8ba0
-void mission_type_destroy(mission_type* self);  // 0x4c8ab0
+// The record classes of the readers the loaders call (the engine's own names; mesh_2.cpp / rec_tables.cpp / config.cpp define
+// them, headers that cannot be included next to this one's stream.h): the mission-type table entry is rec_tables.cpp's Blk2dd0
+// (read 0x4c2dd0), the ttype entry config.cpp's rec20 (read 0x4be600), the ground spec config.cpp's prsnt_record (load_extras
+// 0x4bddf0), and the flora kind mesh_2.cpp's ObjectList (read 0x4cdfd0).
+struct Blk2dd0 { void read(stream_base* s); };
+struct rec20 { void read(stream_base* s); };
+struct prsnt_record { void load_extras(stream_base& s); };
+struct ObjectList { void read(stream_base* s); };
+
+// Destroy helpers: 0x4c8ba0 is gui_edit.cpp's conv_list_dtor (fastcall, the element in ecx), 0x4c8ab0 its conv_sub_dtor
+// (stdcall, the element pushed).
+struct conv_rec;
+void __fastcall conv_list_dtor(conv_rec* self);     // 0x4c8ba0
+void __stdcall conv_sub_dtor(void** self);          // 0x4c8ab0
 
 // A three-pointer range (the engine's arrays are built from these).
 struct ptr_range {

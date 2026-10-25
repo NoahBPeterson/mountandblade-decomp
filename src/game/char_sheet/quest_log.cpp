@@ -9,7 +9,8 @@ void __fastcall quest_window::refresh()
     if (QUEST_COUNT > 0x80) {
         tstring s;
         s.assign("ui_too_many_quests");
-        mb_error(g_strtable.lookup(&s));
+        tstring* msg = g_strtable.lookup(s);
+        mb_error(msg->buf ? msg->buf : (char*)&msg->buf);
     }
     count = 0;
     char* q = QUESTS;
@@ -38,7 +39,7 @@ void __fastcall quest_window::refresh()
 widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
 {
     widget* mem = (widget*)operator new(0x188);
-    widget* self = mem ? ctor_scrollbar(mem) : 0;
+    widget* self = mem ? (widget*)new (mem, raw_place()) UiD : 0;
     float pos[2];
     pos[0] = x;
     pos[1] = y;
@@ -51,7 +52,7 @@ widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
     *(float*)((char*)self + 0x17c) = w * g_592754;
     tstring s1;
     s1.assign("ui_scrollbar");
-    mesh* m1 = g_resmgr.get_object(&s1)->clone();
+    mesh* m1 = g_resmgr.get_object((const rgl::string*)&s1)->clone();
     vector4 col;
     col.x = x;
     col.y = y;
@@ -60,7 +61,7 @@ widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
     m1->set_color(col);
     tstring s2;
     s2.assign("ui_scrollbar_handle");
-    mesh* m2 = g_resmgr.get_object(&s2)->clone();
+    mesh* m2 = g_resmgr.get_object((const rgl::string*)&s2)->clone();
     m2->set_color(col);
     VCALL1(self, 0x80, 0);
     VCALL1(self, 0x80, 2);
@@ -72,7 +73,7 @@ widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
 widget* make_quest_list(widget* parent, const float* pos, const float* size, int d)
 {
     widget* mem = (widget*)operator new(0x4a8);
-    widget* self = mem ? ctor_list(mem) : 0;
+    widget* self = mem ? (widget*)new (mem, raw_place()) c49deb0::Camera : 0;
     *(int*)((char*)self + 0x104) |= 0x20;
     if (d)
         *(int*)((char*)self + 0x484) = d;
@@ -80,17 +81,17 @@ widget* make_quest_list(widget* parent, const float* pos, const float* size, int
     self->add_child(parent);
     self->set_pos(pos);
     self->set_size(size);
-    draw(self);
+    ((MissionPanel*)self)->draw();   // 0x488d50
     return self;
 }
 
 // @ 0x4ee230
 void __fastcall quest_window::build()
 {
-    reset();
+    ((gui_manager*)0x5d7080)->reset();   // 0x42d1b0
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared
     widget* win = (widget*)operator new(0x190);
-    win = win ? ctor_window(win) : 0;
+    win = win ? (widget*)((ContainerW*)win)->construct() : 0;
     window = win;
     float pos[2];
     pos[0] = 0.0f;
@@ -101,13 +102,13 @@ void __fastcall quest_window::build()
     size[1] = 0.75f;
     win->set_size(size);
     tstring bg("ui_quests_window");
-    win->add_item(0, g_resmgr.get_object(&bg)->clone());
+    win->add_item(0, g_resmgr.get_object((const rgl::string*)&bg)->clone());
     g_frame_flag = 1;
-    gui_set_window(win);
+    ((NodeVec*)0x5d7080)->push_back((NodeA* const&)win);   // 0x49b120
 
     // the two panels behind the tabs
     widget* p1 = (widget*)operator new(0x178);
-    panel1 = p1 ? ctor_panel(p1) : 0;
+    panel1 = p1 ? (widget*)new (p1, raw_place()) MissionUi : 0;
     pos[0] = 0.58f;
     pos[1] = 0.21875f;
     panel1->set_pos(pos);
@@ -123,7 +124,7 @@ void __fastcall quest_window::build()
     win->add_child(panel1);
 
     widget* p2 = (widget*)operator new(0x178);
-    panel2 = p2 ? ctor_panel(p2) : 0;
+    panel2 = p2 ? (widget*)new (p2, raw_place()) MissionUi : 0;
     panel2->set_pos(pos);
     panel2->set_size(size);
     flags = 0x10;
@@ -134,15 +135,15 @@ void __fastcall quest_window::build()
     // the three texts
     {
         tstring key("ui_done");
-        done = new_medium_button(win, g_strtable.lookup(&key), 0.7f, 0.075f, 0.075f, 0.36f);
+        done = (widget*)new_medium_button((MissionUi*)win, g_strtable.lookup(key), 0.7f, 0.09f, 0.04f);
     }
     {
         tstring key("ui_active_quests");
-        active_tab = new_medium_button(win, g_strtable.lookup(&key), 0.1f, 0.075f, 0.075f, 0.075f);
+        active_tab = (widget*)new_medium_button((MissionUi*)win, g_strtable.lookup(key), 0.1f, 0.04f, 0.04f);
     }
     {
         tstring key("ui_finished_quests");
-        finished_tab = new_medium_button(win, g_strtable.lookup(&key), 0.28f, 0.075f, 0.075f, 0.075f);
+        finished_tab = (widget*)new_medium_button((MissionUi*)win, g_strtable.lookup(key), 0.28f, 0.04f, 0.04f);
     }
     *(int*)((char*)active_tab + 0x184) = 1;
     *(int*)((char*)finished_tab + 0x184) = 1;
@@ -159,7 +160,7 @@ void __fastcall quest_window::build()
         h = 0.56f;
     widget* fr = (widget*)operator new(0x188);
     if (fr) {
-        fr = ctor_panel(fr);
+        fr = (widget*)new (fr, raw_place()) MissionUi;
         *(void**)fr = (void*)0x5924a0;
         *(int*)((char*)fr + 0x17c) = 0;
         *(int*)((char*)fr + 0x180) = 0;
@@ -173,7 +174,7 @@ void __fastcall quest_window::build()
     fsize[0] = 0.32f;
     fsize[1] = h;
     frame->set_size(fsize);
-    frame->add_item(0, make_background((char*)frame + 0xf0, 0xff000000));
+    frame->add_item(0, make_background((float*)((char*)frame + 0xf0), (int)0xff000000));
 
     // one row per listed quest
     for (int i = 0; i < count; i++) {
@@ -190,7 +191,7 @@ void __fastcall quest_window::build()
         }
         widget* row = (widget*)operator new(0x188);
         if (row) {
-            row = ctor_panel(row);
+            row = (widget*)new (row, raw_place()) MissionUi;
             *(int*)((char*)row + 0x178) = 0;
             *((char*)row + 0x121) = 0;
             *(void**)row = (void*)0x591d58;

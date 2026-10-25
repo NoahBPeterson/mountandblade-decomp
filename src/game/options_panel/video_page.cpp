@@ -19,7 +19,7 @@
 
 using rgl::vector4;
 
-#include "./str_table_rgl.h"                                              // StrTableRgl (was StringTable here): the one definition
+#include "../str_table.h"                                                 // StrTable g_strtable (0x5e2a18)
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0x536f8f
 extern "C" char* __cdecl _itoa(int, char*, int);                            // 0x5371f7
@@ -44,18 +44,17 @@ static inline void w_set_default(Widget* w) { char r[8]; w->get_xy(r); }
 // ---- other pages / objects ---------------------------------------------------------------------------
 struct Game;                                                                // 0x5e2930
 
-// 0x5d6fa0: the graphics resource manager (rebuild its two halves).
-struct Resources {
-    void unload_textures();                                                        // 0x418e10
-    void load_textures();                                                        // 0x418d60
+// 0x5d6fa0: the graphics resource manager (rebuild its two halves): rgl/resource.h's resource_manager, g_resmgr.
+#include "../../rgl/resource.h"
+// 0x5a9f98: the render config (write-out helper 0x415fb0): rgl/resource_manager.h's rgl_config, repeated here (that header's
+// g_log clashes with this TU's). The member is the one the dialog's `save` of config_dialog.cpp calls too.
+struct rgl_config {
+    void save(FILE* f);   // 0x415fb0
 };
-extern Resources g_resmgr;                                               // 0x5d6fa0
-
-// 0x5a9f98: the render config (write-out helper 0x415fb0).
-struct RenderConfig {
-    void save(void* file);                                                 // 0x415fb0
-};
-extern RenderConfig g_cfg;                                        // 0x5a9f98
+extern rgl_config g_cfg;                                        // 0x5a9f98
+// 0x4bc090 / 0x4bc100: Config's (config/config.h, whose headers clash with this TU's) quality setters, called on the options
+// block at 0x5aa008 (ecx = 0x5aa008 at 0x4d6610 / 0x4d6642).
+struct Config { void set_triple_buffering(int t); void set_texture_quality(int q); };
 
 // 0x5e293c: the renderer; set(name, value) at +0x88.
 struct RenderParams {
@@ -77,31 +76,33 @@ extern Game* g_game;                                                        // 0
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 // 0x415160: open a user file ("rgl_config.txt").
-void* open_user_file(const char* name, const char* mode);
+#include "../../rgl/text_stream.h"             // mb_open_user_file (0x415160)
 // 0x4b99c0: settings refresh.
-void settings_refresh();
+void run_settings_probe();                            // 0x4b99c0 (options_dlg.h; that header's winsock2.h cannot follow windows.h)
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index (clamped to 5).
 struct GraphicsQuality { int a; int b; };
 extern GraphicsQuality g_graphics_quality;                                  // 0x5aa008
 
 // 0x4d6b80 and 0x4d6dd0 live in slice s004d6b80.
+// WindowMgrW (world_data/world_data.h; main_menu.h's `reset` is its old name): open(n) 0x494260 on the main menu object
+struct WindowMgrW { void open(int n); };
 struct VideoPage;
-struct VideoPage2 {
+// the keys page (keys_page.cpp) and this page share these two members: the page calls them on itself
+struct KeysPage {
     void update_perf();                                     // 0x4d6b80 (thiscall)
     void set_enabled_text(Widget* w);                       // 0x4d6dd0 (thiscall, widget pushed)
 };
 static inline void update_performance_caption(VideoPage* p)
 {
-    ((VideoPage2*)p)->update_perf();
+    ((KeysPage*)p)->update_perf();
 }
-static inline void set_enabled_text_local(Widget* w, void* page) { ((VideoPage2*)page)->set_enabled_text(w); }
+static inline void set_enabled_text_local(Widget* w, void* page) { ((KeysPage*)page)->set_enabled_text(w); }
 
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index.
-void set_triple_buffering(int v);                                                   // 0x4bc090
-void set_texture_quality(int v);                                                   // 0x4bc100
 static inline void set_quality(int v, int which)
 {
-    if (which) set_texture_quality(v); else set_triple_buffering(v);
+    Config* c = (Config*)(void*)&g_graphics_quality;
+    if (which) c->set_texture_quality(v); else c->set_triple_buffering(v);
 }
 
 // ---- the page ----------------------------------------------------------------------------------------
@@ -163,7 +164,7 @@ void VideoPage::update(int reason)
         m.f4 = 0;
         name.~tstring();
         explanation.~tstring();
-        m.reset(0);
+        ((WindowMgrW*)(void*)&m)->open(0);
     }
 
     if (w64->changed(0x10000)) {
@@ -303,7 +304,7 @@ void VideoPage::update(int reason)
         tstring right = label.substr(a + 1, b);
         *(int*)0x5a9fe8 = atoi(right.c_str());
         right.~tstring();
-        settings_refresh();
+        run_settings_probe();
         update_performance_caption(this);
         label.~tstring();
     }
@@ -314,8 +315,8 @@ void VideoPage::update(int reason)
             g_resmgr.unload_textures();
             g_resmgr.load_textures();
         }
-        void* f = open_user_file("rgl_config.txt", (const char*)0x54b048);
-        g_cfg.save(f);
+        void* f = mb_open_user_file("rgl_config.txt", (const char*)0x54b048);
+        g_cfg.save((FILE*)f);
         fclose((FILE*)f);
         if (changed_config) {
             tstring explanation("ui_change_graphics_settings_explanation");
@@ -324,7 +325,7 @@ void VideoPage::update(int reason)
             g_main_menu.setup(&explanation, e);
             pos.~tstring();
             explanation.~tstring();
-            g_main_menu.reset(0);
+            ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         }
     }
 

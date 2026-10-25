@@ -29,6 +29,11 @@ struct float_pair {                      // two floats built through a stack tem
     float_pair(float a, float b) : u(a), v(b) {}
 };
 
+// rgl/particles/mesh_obj.h's emitter (that header does not go with this one): the member the per-frame step is
+struct emitter {
+    void update(const float* dt, const matrix& frame);   // 0x412150
+};
+
 struct psys {
     mesh* cache;                    // 0x00 (zeroed by init 0x420b40)
     skin* res;                      // 0x04
@@ -63,7 +68,7 @@ struct psys {
     int noise_index;                // 0x1b8 (world::alloc_emitter 0x427ea0 stores the world's counter)
     psys(const int& idx) : particles() { noise_index = idx; init(); }   // inline in world::alloc_emitter
     void init();                                    // 0x420b40
-    void update(const float* dt, const matrix& frame);      // 0x412150 (per-frame step)
+    // (the per-frame step 0x412150 is rgl/particles/mesh_obj.h's emitter::update, called as ((emitter*)p)->update(&dt, frame))
     void update(scene* sc);                         // 0x414960 (render-time update, ../psys.cpp)
     void emit(particle* p, matrix* m, mesh* out, const float* ref);   // 0x413e50 (../psys.cpp)
 };

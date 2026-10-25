@@ -16,8 +16,8 @@ void GuiCtx::render_shape_frame(int a, vector4* v, int b, int c)
     f18c = 0;
     f190 = 1.0f;
     f2dc = 1;
-    f310.assign(&f178->fb8);
-    f178->render_scene(&cell_x0, 1);
+    *(std::vector<int>*)&f310 = *(const std::vector<int>*)&f178->fb8;   // 0x43f0a0 (vector<int>::operator=)
+    ((rgl::world*)f178)->render_scene((rgl::scene*)&cell_x0, true);   // 0x429890
     v->x += 1.0f;
-    follow(a, v, b, c);
+    ((MissionUi*)(void*)this)->render((rgl::scene*)a, (float*)v, b, c);   // 0x488720
 }

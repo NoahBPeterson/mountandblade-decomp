@@ -85,13 +85,13 @@ void DustTerrain::emit_cell(int x, int y)
         } while (--n);
     }
     vec32* v70 = &grid[x][y]->list[0]->f70;
-    if (nr > v70->capacity())
+    if (nr > v70->capacity_pt())
         v70->reserve_nr(nr);
     vec96* v50 = &grid[x][y]->list[0]->f50;
     if (nf > v50->capacity())
         v50->reserve(nf);
     vec32* v90 = &grid[x][y]->list[0]->f90;
-    if (no > v90->capacity())
+    if (no > v90->capacity_face())
         v90->reserve_nr(no);
     for (int i = 0; i < dust_count; i++) {
         DustParticle* p = &dust[i];
@@ -107,8 +107,8 @@ void DustTerrain::emit_cell(int x, int y)
             cy = n_outer - 1;
         if (cx == x && cy == y) {
             vector4 col;
-            ground_color(&col, &p->frame.o.x);
-            unsigned color = pack_color(&col.x) | 0xff000000;
+            ((Terrain*)this)->ground_color(&col, &p->frame.o.x);
+            unsigned color = rgl::pack_color(&col) | 0xff000000;
             mat3 m3;
             identity3(&m3);
             m3.s.x = p->dir.x;
@@ -124,16 +124,16 @@ void DustTerrain::emit_cell(int x, int y)
             p->anim = p->anim % pt->nframes;
             dmesh* src = (dmesh*)pt->boxes[p->anim].meshes[0];
             if ((pt->flags & 0x20000i64) != 0)
-                grid[cx][cy]->list[0]->transform(src, (const matrix*)&mm, color);
+                ((mesh_x*)grid[cx][cy]->list[0])->transform((rgl::mesh*)src, (const matrix*)&mm, color);
             else
-                grid[cx][cy]->list[0]->append_skinned(src, (const matrix*)&mm, -1, color, 0);
+                ((rgl::mesh*)grid[cx][cy]->list[0])->append_skinned((rgl::mesh*)src, (const rgl::mat4*)&mm, -1, color, 0);
             p->last[0] = grid[cx][cy]->list[0]->f50.size();
         }
     }
     cell_obj* o = grid[x][y];
     if (o->list && (o->list_end - o->list) != 0) {
         dmesh* m = o->list[0];
-        m->compute_bounds();
+        ((mesh_x*)m)->compute_bounds();
         grid[x][y]->refresh();
         vector4 zv(0.0f, 0.0f, 0.0f);
         mat3 tmp;
@@ -170,7 +170,7 @@ void DustTerrain::emit_cell(int x, int y)
             else if (cy >= n_outer)
                 cy = n_outer - 1;
             if (cx == x && cy == y)
-                light_particle(&dust_count, i, false);
+                ((Terrain*)this)->light_particle((particle_list*)&dust_count, i, false);
         }
     }
 }

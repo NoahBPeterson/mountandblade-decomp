@@ -10,14 +10,14 @@ void __fastcall pick_entity(GuiCtx* self)
     Mission* sc = (Mission*)g_tasks;
     *(char*)(sc->f65dc + 0x140) = 0;
     if (g_menu_mode) {
-        self->set_o568(1);
+        ((gui_manager*)0x5d7080)->set_o568(0, true);   // 0x42cdb0
         vector2 pp(0.5f, 0.23f);
-        self->set_view(&pp);
+        ((gui_view*)0x5d7080)->set_view((const float*)&pp);   // 0x4c5190
         set_junk = 0;
         return;
     }
     int rect0[4], rect1[4];
-    ((ViewRect*)(self->f60))->screen_to_world(rect0, rect1);
+    ((camera_ray*)(self->f60))->screen_to_world((rgl::vector4*)rect0, (rgl::vector4*)rect1);   // 0x4bd2f0
     vector4 lo, hi;
     lo.x = *(float*)&rect0[0];
     lo.y = *(float*)&rect0[1];
@@ -29,9 +29,9 @@ void __fastcall pick_entity(GuiCtx* self)
     hi.w = *(float*)&rect1[3];
 
     float capbuf[0x64 / 4];
-    capsule_ctor_inline((capsule*)capbuf, g_3ac49ba6, &lo, &hi);
+    new (capbuf, raw_place()) capsule(g_3ac49ba6, &lo, &hi);   // 0x433310
     float idpos[16];
-    identity_pos(idpos);
+    identity_pos((pos*)idpos);
     smat probe = *(smat*)idpos;
     float sphbuf[0x44 / 4];
     sphere* sph = (sphere*)sphbuf;
@@ -50,7 +50,7 @@ void __fastcall pick_entity(GuiCtx* self)
         vector4 centre = lo;
         centre.w = 0.0f;
         float rad = g_3f000000;
-        make_contact_box(&row->mat[0]);
+        sph->sphere::transform((const pos*)&row->mat[0]);   // 0x408420
         if (row->kind == 2) {
             rad = row->mat[3].length() * 0.5f;
         } else if (row->kind == 1) {
@@ -84,8 +84,8 @@ void __fastcall pick_entity(GuiCtx* self)
                 hit->transform((const pos*)&m2);
             }
         }
-        if (shape_contact_count((shape_base*)capbuf, sph, 1, &row->mat[1])) {
-            if (hit == 0 || shape_contact_count(hit, sph, 1, &row->mat[1])) {
+        if (shape_contact_count((shape_base*)capbuf, (shape_base*)sph, 1, (contact*)&row->mat[1])) {
+            if (hit == 0 || shape_contact_count(hit, (shape_base*)sph, 1, (contact*)&row->mat[1])) {
                 vector4 d;
                 d.x = lo.x - centre.x;
                 d.y = lo.y - centre.y;
@@ -113,7 +113,7 @@ void __fastcall pick_entity(GuiCtx* self)
     g_list1 = 0;
     g_sel_ent = 0;
     vector2 pair(0.1f, 0.13f);
-    self->set_view(&pair);
+    ((gui_view*)0x5d7080)->set_view((const float*)&pair);   // 0x4c5190
     if (self->f2cc == -1) {
         self->f2c8 = -1;
         return;
@@ -165,11 +165,11 @@ void __fastcall pick_entity(GuiCtx* self)
         s_info = *(tstring*)sel->caption;
         break;
     }
-    if (s_kind.len) self->draw_string(&s_kind, 0.03f, color, 1);
-    if (s_info.len) self->draw_string(&s_info, 0.0269f, 0xffdf4f, 1);
-    if (s_info2.len) self->draw_string(&s_info2, 0.0269f, 0xffdf4f, 1);
+    if (s_kind.len) ((gui_manager*)0x5d7080)->draw_string(&s_kind, 0.03f, color, 1);
+    if (s_info.len) ((gui_manager*)0x5d7080)->draw_string(&s_info, 0.0269f, 0xffdf4f, 1);
+    if (s_info2.len) ((gui_manager*)0x5d7080)->draw_string(&s_info2, 0.0269f, 0xffdf4f, 1);
     memcpy((void*)(sc->f65dc + 0x58), &sel->origin, 16);
-    self->select_entity(sel, sc->f65e0, 0x80229933);
+    select_entity((rgl::mesh*)sc->f65e0, (skin_owner*)sel, 0x80229933);   // 0x4ea0c0
     if (!self->f2f8 && !g_menu_mode)
         *(char*)(sc->f65dc + 0x140) = 1;
     self->f2c8 = -1;

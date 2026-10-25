@@ -95,13 +95,13 @@ void TerrainPage::sync_bits()
     g_bits.set(0x3f, 0x3f, terraingen_on != 0);
     g_bits.set(0x60, 0x69, (unsigned)(int)camera_x);
     g_bits.set(0x6a, 0x73, (unsigned)(int)camera_y);
-    g_bits.set_field_a(&camera_z);
+    ((Terrain*)(void*)&g_bits)->set_field_a(&camera_z);   // 0x464a60
     g_bits.set_pct(fog);
     g_bits.set(0, 0x1e, layer_bits[0]);
     g_bits.set(0x20, 0x3e, layer_bits[1]);
     g_bits.set(0x40, 0x5e, layer_bits[2]);
     g_bits.set(0x8e, 0x94, water_level);
-    g_bits.set_field_b(&water_height);
+    ((Terrain*)(void*)&g_bits)->set_field_b(&water_height);   // 0x464ac0
     g_bits.set(0x9c, 0x9f, terrain_type);
     g_bits.set(0xa0, 0xa1, map_size);
 }

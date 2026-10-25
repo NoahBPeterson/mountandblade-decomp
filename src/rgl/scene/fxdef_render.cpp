@@ -34,7 +34,7 @@ void FxDef::render(scene* sc, const matrix* frame, const float* dist)
             }
             for (unsigned j = 0; j < elems[i].groups.size(); j++) {
                 elems[i].groups[j]->select(dist);
-                elems[i].groups[j]->render(sc, m);
+                ((lod_mesh*)elems[i].groups[j])->render(sc, m);   // 0x413b00
             }
         }
         for (unsigned j = 0; j < psys.size(); j++) {
@@ -46,7 +46,7 @@ void FxDef::render(scene* sc, const matrix* frame, const float* dist)
             groups[j]->select(dist);
             if (!b58)
                 skin_group(groups[j]);
-            groups[j]->render(sc, *frame);
+            ((lod_mesh*)groups[j])->render(sc, *frame);   // 0x413b00
         }
     }
 }
