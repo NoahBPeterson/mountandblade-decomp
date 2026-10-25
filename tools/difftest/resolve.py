@@ -42,6 +42,21 @@ LOCAL_CONST_PREFIXES = ("__real@", "__xmm@", "__mask@", "__int64@", "??_C@", "__
 # the hex run must end the identifier or be followed by '_' (FUN_00abcdef, Fn9467b0, g_01582df8_x): a run followed by a
 # letter is part of a word ("??_7CD3DApplication" read as 0x7cd3da, a vtable mapped into .rdata garbage)
 HEX_RE = re.compile(r"(?<![0-9A-Fa-f])(?:0x)?([0-9A-Fa-f]{6,8})(?![0-9A-Za-z])")
+def _image_end(path=os.path.join(ROOT, "work", "mb.analysis.bin")):
+    """End of the analysed image (ImageBase + SizeOfImage), the upper bound for an address annotation. The bound
+    was a fixed 0x1900000 (inherited from spore-decomp, whose image ends there); mount&blade.exe's .data/.bss run to
+    0x8ee5b94, so every annotation above 0x1900000 was silently ignored and such globals resolved only through
+    symbols/ entries (Papercuts, names-n2)."""
+    try:
+        h = open(path, "rb").read(0x1000)
+        pe = struct.unpack_from("<I", h, 0x3c)[0]
+        opt = pe + 24
+        return struct.unpack_from("<I", h, opt + 28)[0] + struct.unpack_from("<I", h, opt + 56)[0]
+    except (OSError, struct.error):
+        return 0x1900000
+
+
+IMAGE_END = _image_end()
 ADDR_IN_COMMENT = re.compile(r"(?:\b0x([0-9A-Fa-f]{6,8})|(?:\b|DAT_|FUN_|PTR_|LAB_|g_|_)([0-9A-Fa-f]{8}))\b")
 
 _md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
@@ -273,7 +288,7 @@ def source_annotations(paths):
             va = None
             for m in ADDR_IN_COMMENT.finditer(comment):
                 v = int(m.group(1) or m.group(2), 16)
-                if 0x401000 <= v < 0x1900000:
+                if 0x401000 <= v < IMAGE_END:
                     va = v
                     break
             if re.search(r"@\s*0x[0-9A-Fa-f]{6,8}", comment) and not code.strip():
@@ -639,7 +654,7 @@ class Resolver:
             if not re.search(r"\d", s):
                 continue
             va = int(s, 16)
-            if 0x401000 <= va < 0x1900000 and self.plausible(va, want_func):
+            if 0x401000 <= va < IMAGE_END and self.plausible(va, want_func):
                 return va
         return None
 

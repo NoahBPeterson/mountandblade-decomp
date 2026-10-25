@@ -159,13 +159,13 @@ void TerrainX::destroy_water(int a)
 
 struct vec4d { double x, y, z, w; };    // 0x20: what tri_normal returns
 
-struct geom_pt {                        // 0x24, std::vector<geom_pt> at Geom+0x10
+struct geom_pt {                        // 0x24, std::vector<geom_pt> at Geom+0
     float px, py, wet;                  // 0x00 / 0x04 / 0x08
     int f0c;                            // 0x0c
     char pad10[0x10];                   // 0x10
     float f20;                          // 0x20 = 1.0 (w)
 };
-struct geom_elem {                      // 0x88, std::vector<geom_elem> at Geom+0
+struct geom_elem {                      // 0x88, std::vector<geom_elem> at Geom+0x10
     int n;                              // 0x00 corner count
     int ids[4];                         // 0x04 point ids
     char pad14[0x24 - 0x14];            // 0x14
@@ -181,8 +181,8 @@ struct geom_elem {                      // 0x88, std::vector<geom_elem> at Geom+
 };
 // the polygon container built here (NavCore of terrain_b/poly_mesh.h has the same container offsets with its own element types)
 struct Geom_t {                                     // 0x68
-    std::vector<geom_elem> elems;                   // 0x00
-    std::vector<geom_pt> pts;                       // 0x10
+    std::vector<geom_pt> pts;                       // 0x00 (reserve 0x476020 / push_back 0x4772f0 on Geom+0, tessellate)
+    std::vector<geom_elem> elems;                   // 0x10 (reserve 0x476130 / push_back 0x477380 on Geom+0x10)
     char pad20[0x68 - 0x20];
     Geom_t();                                       // 0x478150
     void build();                                   // 0x47ee60
@@ -203,7 +203,7 @@ struct world_t {                        // the scene object at terrain_obj+0xc3b
     void build_faces(Geom_t* g);           // 0x479980
     void update_probes(int use_shaders);      // 0x472ed0
 };
-Geom_t* g_geom;                         // the mesh being rebuilt (a local in 0x481570)
+Geom_t* g_geom;                         // the mesh being rebuilt (ours: the original keeps it in a local of tessellate, so no address)
 
 // 0x4612d0 (cdecl): normal of the triangle spanned by the three 16-byte records at *tri
 vec4d* tri_normal(vec4d* out, const void* tri);
@@ -236,8 +236,8 @@ void TerrainX::tessellate()
         }
     }
 
+    g_geom->elems.reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
     g_geom->pts.reserve((w + 2) * (h + 2));
-    g_geom->elems.reserve((w + 1) * (h + 1) * 2);
 
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
