@@ -166,18 +166,16 @@ void load_data_files()
             mb_error("Unable to open %s", "data\\ground_specs.txt");
         for (ttype* t = g_ttypes; t < &g_ttypes[6]; t++)
             ((rec20*)t)->read(&ts);           // 0x4be600
-        g_ground_specs = new ground_spec[g_num_ground_specs];
-        for (int i = 0; i < g_num_ground_specs; i++)
-            ((prsnt_record*)&g_ground_specs[i])->load_extras(ts);        // 0x4bddf0
     }
     {
+        // data\skyboxes.txt: a count, then that many 0x4c-byte records (the table at 0x5e28f4 / 0x5e29ec)
         text_reader_l ts;
         if (!((text_stream*)&ts)->open_read_text("data\\skyboxes.txt"))
             mb_error("Unable to open %s", "data\\skyboxes.txt");
-        {
-            text_stream2 ts2;
-            load_skyboxes();
-        }
+        ts.r_int(&g_num_ground_specs);
+        g_ground_specs = new ground_spec[g_num_ground_specs];
+        for (int i = 0; i < g_num_ground_specs; i++)
+            ((prsnt_record*)&g_ground_specs[i])->load_extras(ts);        // 0x4bddf0
     }
     {
         text_reader_l ts;
@@ -186,4 +184,5 @@ void load_data_files()
         for (mission_type* m = g_mission_types; m < &g_mission_types[12]; m++)
             ((Blk2dd0*)m)->read(&ts);                       // 0x4c2dd0
     }
+    load_skyboxes();                                        // 0x4c3350: the module's own skyboxes.txt
 }

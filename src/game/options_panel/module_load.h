@@ -8,10 +8,8 @@
 
 // vtable 0x54ac88 (stream.h: tstream3) with its constructor inline, as 0x4d0c20 builds it on the stack (the
 // same device as text_reader in src/rgl/core/resmgr.h). open_read_text (0x415d60) is text_stream's member.
-struct text_reader_l : file_reader_base {
-    STREAM_SLOTS
-    text_reader_l() {}
-};
+// (derived without overrides: its vtable holds tstream3's members, which src/rgl/core/resource_io.cpp defines)
+struct text_reader_l : tstream3 {};
 
 // the item modifier table (Data\item_modifiers.txt): 43 records of 0x28 bytes at 0xa75f70, read by 0x4d0c20; the
 // game reads name / key as src/rgl/mesh2/gui_edit.h's ModRec, the two factors from +0x20 (item_ref.h's g_sort_val)
