@@ -57,6 +57,19 @@ if ev:
     print(table(["Verdict", "Rows", "Share", "Code size", "Share (size)"],
                 [[lab, s[c], pc(s[c], tot), "%.1f KB" % (s[c + "_sz"] / 1024), pc(s[c + "_sz"], tsz)] for c, lab in EV_CATS if s[c]]))
 
+# Standalone build: the latest trial link of every src/ module (tools/relink/trial_link.py --record)
+try:
+    rl = sorted(json.load(open(W("docs", "relink_history.json"))).values(), key=lambda p: p["when"])[-1]
+except (OSError, ValueError, IndexError):
+    rl = None
+if rl:
+    print()
+    print("Standalone build (trial link of %d objects, %s, commit %s): %s" % (
+        rl["objects"], rl["when"][:16].replace("T", " "), rl["commit"],
+        "LINKS" if rl["linked"] else "%d unresolved symbols, %d duplicate definitions" % (rl["unresolved"], rl["duplicates"])))
+    if not rl["linked"]:
+        print(table(["Unresolved, by cause", "Symbols"], [[k, v] for k, v in rl["by_category"].items() if v]))
+
 rows = []
 for bf in sorted(glob.glob(W("work", "batches", "*.json")), key=os.path.getmtime):
     sl = json.load(open(bf))
