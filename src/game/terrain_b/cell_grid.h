@@ -26,6 +26,7 @@ struct level {
     void floor_at(const float* p, float* out_z, face** out_face);           // 0x439be0 (ret 0xc)
     void light_at(rgl::vector4 p, rgl::vector4 n, rgl::vector4* out_dir, rgl::vector4* out_col, unsigned flags, float scale);   // 0x43ac40 (ret 0x30)
     bool trace_ray(const float* from, const float* to, float maxlen, shape_base** hit, int a);   // 0x439d60 (ret 0x14)
+    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870
 };
 struct world_grid {
     void reg_shape(grid_shape* o);                                          // 0x424170

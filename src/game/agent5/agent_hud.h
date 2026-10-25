@@ -57,10 +57,7 @@ struct HudOuter { void scroll_refresh(vector4* v); };              // 0x498420 (
 struct PartyModel { void set_fade(const float* v); };              // 0x4b1800 (party2/party_2.cpp)
 struct UiD { void set_value(float v); };                           // 0x48baa0 (ui/ui_widgets_c.cpp)
 struct SoundW { void stop_all(); };                                // 0x494310 (world_data.cpp)
-struct level {                                                     // agent2/agent_stats.cpp: the scene's queries
-    bool trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60
-    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870
-};
+// level (trace_ray 0x439d60, query_segment 0x439870): terrain_b/cell_grid.h
 float __cdecl time_of_day();                                       // 0x4356e0 (agent.cpp)
 pos* __cdecl identity_pos(pos* out);                               // 0x40cd00 (shapes.cpp; rgl::identity_pos(matrix*) of the scene headers is the same function)
 rgl::mat3* __cdecl identity3(rgl::mat3* out);                      // 0x40cd60 (shapes.cpp)
