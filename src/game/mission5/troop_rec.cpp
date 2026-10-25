@@ -178,26 +178,17 @@ void PartyRecIO::read(stream_base* s, int flag)
 }
 
 // the globals the start-up resets (the spawn / slider block at 0xa70440 and the free list behind it)
-extern int g_a70440;                                // 0xa70440
-extern int g_spawn_lo;                              // 0xa70448
+extern int g_script;                                // 0xa70440
 extern int g_spawn_hi;                              // 0xa7044c
-extern int g_a70450;                                // 0xa70450
 extern int g_a70454;                                // 0xa70454
-extern int g_result;                                // 0xa70458
-extern int g_store1;                                // 0xa7045c
-extern int g_a70460;                                // 0xa70460
-extern int g_a70474;                                // 0xa70474
-extern int g_a70478;                                // 0xa70478
-extern int g_a7047c;                                // 0xa7047c
 extern void* g_a70484;                              // 0xa70484
 extern void* g_a70488;                              // 0xa70488
 extern void* g_a7048c;                              // 0xa7048c
-extern void* g_menu_ptrs[];                         // 0xa73980 (30 menu pointers)
-extern int g_skin_cap;                              // 0x8ee3ac4 (rank / weapon-point clamp)
+extern void* g_windows[];                         // 0xa73980 (30 menu pointers)
 
 static inline int clamp_rank(int v)
 {
-    return v < 0 ? 0 : (v > g_skin_cap ? g_skin_cap : v);
+    return v < 0 ? 0 : (v > g_skill_tbl[36].cap ? g_skill_tbl[36].cap : v);
 }
 
 // @ 0x51f1a0
@@ -206,17 +197,17 @@ void Game::start_new_game()
     tstring a;                                      // [esp+0x28] -- first parties.txt string
     tstring b;                                      // [esp+0x18] -- second parties.txt string
 
-    g_spawn_lo = -100000;                           // 0xa70448
-    g_a70450 = -100000;                             // 0xa70450
-    g_a70440 = 0;                                   // 0xa70440
-    g_a70474 = -1;                                  // 0xa70474
-    g_a70478 = 0;                                   // 0xa70478
-    g_a7047c = -1;                                  // 0xa7047c
+    (*(int*)((char*)&g_script + 0x8)) = -100000;                           // 0xa70448
+    (*(int*)((char*)&g_script + 0x10)) = -100000;                             // 0xa70450
+    g_script = 0;                                   // 0xa70440
+    (*(int*)((char*)&g_script + 0x34)) = -1;                                  // 0xa70474
+    (*(int*)((char*)&g_script + 0x38)) = 0;                                   // 0xa70478
+    (*(int*)((char*)&g_script + 0x3c)) = -1;                                  // 0xa7047c
     g_spawn_hi = -1;                                // 0xa7044c
     g_a70454 = -1;                                  // 0xa70454
-    g_result = 0;                                   // 0xa70458
-    g_store1 = 0;                                   // 0xa7045c
-    g_a70460 = 100;                                 // 0xa70460
+    (*(int*)((char*)&g_script + 0x18)) = 0;                                   // 0xa70458
+    (*(int*)((char*)&g_script + 0x1c)) = 0;                                   // 0xa7045c
+    (*(int*)((char*)&g_script + 0x20)) = 100;                                 // 0xa70460
     if (g_a70484)
         operator delete(g_a70484);
     g_a70484 = 0;
@@ -233,9 +224,9 @@ void Game::start_new_game()
 
     timer1a298.t = g_ticks[timer1a298.clock];
 
-    if (g_mode == 0) {
+    if (g_cfg.skip_tutorial == 0) {
         for (int i = 0; i < 30; i++)
-            *(int*)((char*)g_menu_ptrs[i] + 8) = 0;
+            *(int*)((char*)g_windows[i] + 8) = 0;
     }
 
     f13b28 = -1;
@@ -296,7 +287,7 @@ void Game::start_new_game()
 
     ((tstring*)&TROOP(cur_troop))[0] = "";
 
-    if (g_mode != 0) {
+    if (g_cfg.skip_tutorial != 0) {
         int a1 = g_skill_tbl[1].cap < 3 ? g_skill_tbl[1].cap : 3;
         ((NibWord*)&TROOP(cur_troop).nib[0])->n1 = a1;
         int y = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;

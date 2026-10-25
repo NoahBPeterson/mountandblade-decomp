@@ -5,7 +5,7 @@
 // placement setters. Names provisional; every offset is read or written by the function cited.
 //
 // Reused (do not redefine): src/game/agent/agent.h (Agent, ItemRef, Mission/g_mission, vec2, HeightField, HCell,
-// round_float, clamp_index), curve.h (g_time = the tick table at 0x5e2948), src/game/mat4.h (rgl::mat4::relative
+// round_float, clamp_index), curve.h (g_ticks = the tick table at 0x5e2948), src/game/mat4.h (rgl::mat4::relative
 // 0x4329d0, rgl::rot3), src/game/tstring.h. What those headers lack is added by classes derived from theirs
 // (AgentX, vec2x, HeightFieldX, rot3x: no new fields, only the members this object defines) or by overlay views of
 // the raw offsets (see MIGRATION.md, "Header conflicts").
@@ -42,7 +42,7 @@ struct AgentX : Agent {
     void fill_weights(float* out, int idx, int rec);        // 0x432f60 (idx unused)
     void fill_weights_x(float* out, int idx, int rec);      // 0x432f60 (declaration only, see pick)
     int pick(int idx);                                      // 0x433040
-    int hand_kind() const;                                  // 0x433140
+    int agent_class() const;                                  // 0x433140
 };
 
 // ---- scalar helpers (cdecl, arguments by pointer) ----------------------------------------------------------------
@@ -96,7 +96,7 @@ struct mesh_node {
     char padb0[0xc8 - 0xb0];
     float c8;                               // +0xc8
     keyframes12& get_kf();                  // 0x40ec00 (local_a1 ? kf : parent->get_kf())
-    void clamp_c8(const float* t);          // 0x433190
+    void set_time(const float* t);          // 0x433190
 };
 
 // ---- collision shapes: shape_base, sphere (0x4332a0), capsule (0x433310), face (0x4333c0, 0x433440) and composite

@@ -6,6 +6,7 @@
 #include "../../include/phys_set.h"
 #include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through troop_mgr.h) declares a global ::vat with the same signature
@@ -34,7 +35,7 @@ struct SoundPlayer {
     int play(int sound, int priority, const vector4* pos, float pitch, float* out);   // 0x442650 (ret 0x14)
 };
 }
-extern ms::SoundPlayer g_sounds;                 // 0x5aa128
+extern ms::SoundPlayer g_sound_mgr;                 // 0x5aa128
 extern int g_sound_ids[];                        // 0x5aa178
 extern "C" int __stdcall FSOUND_StopSound(int channel);   // 0x5342a6
 float frand();                                   // 0x40e400
@@ -197,8 +198,7 @@ static inline tstring item_mesh_name(ItemKind* kind, int item, unsigned m4)
 // the active item; publishes the ids/sounds for the item drop code. cdecl; the 5th argument is unused.
 struct SkelHolder { char pad0[4]; FxElem* elems; };
 struct SkelBodyV { char pad0[0x304]; SkelHolder* skel; };
-extern __int64 g_spawn_a;                        // 0xa70448
-extern __int64 g_spawn_b;                        // 0xa70450
+extern char g_script[]; // 0xa70440
 void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int unused, ItemRef* items, int id)
 {
     if (flag != 0)
@@ -221,13 +221,13 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                 ((lod_mesh*)*p)->mask = 0;
                 ms::ItemSnd* snd = (ms::ItemSnd*)((char*)kind + 0x228);
                 if (snd->count > 0) {
-                    *(int*)(g_game_base + 0x1a1f4) = id;
-                    *(int*)(g_game_base + 0x1a1f8) = troop;
-                    *(int*)(g_game_base + 0x1a204) = i;
-                    *(int*)(g_game_base + 0x1a1fc) = *p;
-                    *(int*)(g_game_base + 0x1a200) = 0;
-                    g_spawn_a = id;
-                    g_spawn_b = troop;
+                    *(int*)(((char*)g_game) + 0x1a1f4) = id;
+                    *(int*)(((char*)g_game) + 0x1a1f8) = troop;
+                    *(int*)(((char*)g_game) + 0x1a204) = i;
+                    *(int*)(((char*)g_game) + 0x1a1fc) = *p;
+                    *(int*)(((char*)g_game) + 0x1a200) = 0;
+                    (*(__int64*)((char*)&g_script + 0x8)) = id;
+                    (*(__int64*)((char*)&g_script + 0x10)) = troop;
                     snd->play(-0x32);
                 }
             } else if (t == 5 || t == 6) {
@@ -412,7 +412,7 @@ void MissileU::update(float dt)
                             else if (sub == 0x20000) snd = 0x34;
                         }
                         tmp = tmp * g_f54a6f0 + frand() * g_f590c74 + g_f59190c;
-                        sound = g_sounds.play(g_sound_ids[snd], 0, &pa, tmp, 0);
+                        sound = g_sound_mgr.play(g_sound_ids[snd], 0, &pa, tmp, 0);
                         sound_t = (float)g_ticks[0] * g_f54a6d0;
                     }
                 }
@@ -469,7 +469,7 @@ void MissileU::update(float dt)
             if (sound >= 0 && (float)g_ticks[0] * g_f54a6d0 - g_f590d94 < sound_t)
                 FSOUND_StopSound(sound);
             if (snd >= 0)
-                g_sounds.play(g_sound_ids[snd], 0, &pos, 1.0f, 0);
+                g_sound_mgr.play(g_sound_ids[snd], 0, &pos, 1.0f, 0);
         }
     }
 
@@ -551,7 +551,7 @@ void mesh_anim_x::apply_anim(const float* t)
         vertex60* p = &vat(v50, j);
         vcopy(&p->pos, &p->normal);
     }
-    finish_load();                                // 0x419300
+    compute_bounds();                                // 0x419300
 }
 
 // @ 0x47dd90

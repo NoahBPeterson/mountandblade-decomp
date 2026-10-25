@@ -17,7 +17,7 @@ __forceinline vector4 operator+(const vector4& a, const vector4& b) { return vec
 
 // 0x40e4e0 as setup_material calls it: the hidden return pointer form of rgl_math.h's unpack_color(out, argb)
 // (same cdecl call, but the result is copied out of a temporary)
-vector4 unpack_color_ret(const unsigned* argb);                         // 0x40e4e0
+vector4 unpack_color(const unsigned* argb);                         // 0x40e4e0
 
 matrix* identity(matrix* out);                                          // 0x40cd00 (cdecl, returns out)
 
@@ -81,12 +81,12 @@ struct emitter {
     float radius;                // +0x1ac
     float spin_scale;            // +0x1b0
     float spin_drag;             // +0x1b4
-    int noise_index;             // +0x1b8 (indexes g_noise_table)
+    int noise_index;             // +0x1b8 (indexes g_ticks)
     void update(const float* dt, const matrix& frame);      // 0x412150
     void spawn(emitter_particle* out);                      // 0x40ec90
-    void render_update(scene* sc);                          // 0x414960 (src/rgl/psys.cpp: psys::update)
+    void update(scene* sc);                          // 0x414960 (src/rgl/psys.cpp: psys::update)
 };
-extern __int64 g_noise_table[];                             // 0x5e2948
+extern __int64 g_ticks[];                             // 0x5e2948
 
 } // namespace rgl
 

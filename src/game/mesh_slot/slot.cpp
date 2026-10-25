@@ -12,7 +12,7 @@
 
 
 #define NOINL __declspec(noinline)     // keeps the definition's name visible to tools/difftest/slice.py's marker scan
-extern __int64 g_time[];        // 0x5e2948: 1e-5 s clock table (g_ticks elsewhere)
+#include "../../include/fx.h"
 
 // DirectInput-style device interface (vtable: +0x1c poll/acquire, +0x24 GetDeviceState).
 struct SomeIface {
@@ -109,7 +109,7 @@ struct Buffer {                                             // vtable 0x591c80
     tstring name;                                           // +0x128
 };
 
-void __stdcall report_line(int idx, int a, int* flag, char* buf, int last);   // 0x4b09e0
+void __stdcall emit(int idx, int a, int* flag, char* buf, int last);   // 0x4b09e0
 
 // @ 0x4875e0
 void SlotChan::play(int arg)
@@ -166,13 +166,13 @@ int Slot::read_state()
             f814 = (float)buf[2];
             key[0xef] = 0;
             if (buf[2] > 0) {
-                if ((float)(g_time[clock830] - t838) * 0.00001f > 0.5f) {
-                    t838 = g_time[clock830];
+                if ((float)(g_ticks[clock830] - t838) * 0.00001f > 0.5f) {
+                    t838 = g_ticks[clock830];
                     key[0xee] = 1;
                 }
             } else if (buf[2] < 0) {
-                if ((float)(g_time[clock830] - t838) * 0.00001f > 0.5f) {
-                    t838 = g_time[clock830];
+                if ((float)(g_ticks[clock830] - t838) * 0.00001f > 0.5f) {
+                    t838 = g_ticks[clock830];
                     key[0xef] = 1;
                 }
             }
@@ -212,11 +212,11 @@ void Slot::update(float dt)
             ch = true;
     }
     if (ch)
-        t828 = g_time[clock820] + 80000;
+        t828 = g_ticks[clock820] + 80000;
     b840 = 0;
-    if ((float)(g_time[clock820] - t828) * 0.00001f > 0.0f) {
+    if ((float)(g_ticks[clock820] - t828) * 0.00001f > 0.0f) {
         b840 = 1;
-        t828 = g_time[clock820] + 15000;
+        t828 = g_ticks[clock820] + 15000;
     }
 }
 
@@ -270,7 +270,7 @@ Buffer::~Buffer()
 }
 
 // ---- the animated effect (0x150-byte object, vtable of 40 slots): 0x487c40 ----------------------------------------------
-extern "C" double _floor(double v);     // 0x536b10 CRT floor (x87 double arg on the stack)
+extern "C" double floor(double v);     // 0x536b10 CRT floor (x87 double arg on the stack)
 
 // float constants in the image's read-only data (each 4 bytes, cited by address).
 extern const float g_one;               // 0x549cdc 1.0f
@@ -322,8 +322,8 @@ struct Effect {
     virtual void d37(void* p);          // +0x94  finish/refresh
     virtual void d38(void* p);          // +0x98  colour word
     virtual void d39(void* p);          // +0x9c  colour word (second palette)
-    int clock0;                         // +0x08  g_time index of track 0
-    __int64 t0;                         // +0x10  g_time[clock0] start stamp
+    int clock0;                         // +0x08  g_ticks index of track 0
+    __int64 t0;                         // +0x10  g_ticks[clock0] start stamp
     int clock1;                         // +0x18
     __int64 t1;                         // +0x20
     int clock2;                         // +0x28
@@ -378,12 +378,12 @@ void Effect::animate(float dt)
 {
     (void)dt;
 
-    float e0 = (float)(g_time[clock0] - t0) * g_tick_scale;
-    float e1 = (float)(g_time[clock1] - t1) * g_tick_scale;
-    float e2 = (float)(g_time[clock2] - t2) * g_tick_scale;
-    float e3 = (float)(g_time[clock3] - t3) * g_tick_scale;
-    float e4 = (float)(g_time[clock4] - t4) * g_tick_scale;
-    float e5 = (float)(g_time[clock5] - t5) * g_tick_scale;
+    float e0 = (float)(g_ticks[clock0] - t0) * g_tick_scale;
+    float e1 = (float)(g_ticks[clock1] - t1) * g_tick_scale;
+    float e2 = (float)(g_ticks[clock2] - t2) * g_tick_scale;
+    float e3 = (float)(g_ticks[clock3] - t3) * g_tick_scale;
+    float e4 = (float)(g_ticks[clock4] - t4) * g_tick_scale;
+    float e5 = (float)(g_ticks[clock5] - t5) * g_tick_scale;
 
     bool changed = false;
 
@@ -421,21 +421,21 @@ void Effect::animate(float dt)
         int c;
 
         p = ((float)(srcA & 0xff) * (periodA - e0) + (float)(valA & 0xff) * e0) * (g_one / periodA);
-        fl = _floor((double)p);
+        fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col = (unsigned)c;
 
         p = ((float)ss[1] * (periodA - e0) + (float)vs[1] * e0) * (g_one / periodA);
-        fl = _floor((double)p);
+        fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col += (unsigned)c << 8;
 
         p = ((float)ss[2] * (periodA - e0) + (float)vs[2] * e0) * (g_one / periodA);
-        fl = _floor((double)p);
+        fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
@@ -456,7 +456,7 @@ void Effect::animate(float dt)
         unsigned char* ss = (unsigned char*)&srcB;
         unsigned char* vs = (unsigned char*)&valB;
         float p = ((float)ss[3] * (periodB - e1) + (float)vs[3] * e1) * (g_one / periodB);
-        double fl = _floor((double)p);
+        double fl = floor((double)p);
         int c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
@@ -479,21 +479,21 @@ void Effect::animate(float dt)
         int c;
 
         p = ((float)(srcC & 0xff) * (periodC - e2) + (float)(valC & 0xff) * e2) * (g_one / periodC);
-        fl = _floor((double)p);
+        fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col = (unsigned)c;
 
         p = ((float)ss[1] * (periodC - e2) + (float)vs[1] * e2) * (g_one / periodC);
-        fl = _floor((double)p);
+        fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col += (unsigned)c << 8;
 
         p = ((float)ss[2] * (periodC - e2) + (float)vs[2] * e2) * (g_one / periodC);
-        fl = _floor((double)p);
+        fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
@@ -514,7 +514,7 @@ void Effect::animate(float dt)
         unsigned char* ss = (unsigned char*)&srcD;
         unsigned char* vs = (unsigned char*)&valD;
         float p = ((float)ss[3] * (periodD - e3) + (float)vs[3] * e3) * (g_one / periodD);
-        double fl = _floor((double)p);
+        double fl = floor((double)p);
         int c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;

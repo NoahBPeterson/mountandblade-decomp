@@ -6,7 +6,7 @@
 #include "../tstring.h"
 
 // highest skill rank / tier, read by Troop::set_attr and Troop::set_skill (bound through symbols/slices/stat_panel_x.txt: outside the image)
-extern int g_skin_cap;                      // 0x8ee3ac4
+#include "../skill_cap.h"
 
 // A scripted-event placeholder (vtable 0x5922cc, size 0x94): a name, a position/size record and the two clock readings.
 // Constructor 0x48c210; init() is the object's vtable slot 1 (0x5922d0, no direct callers).

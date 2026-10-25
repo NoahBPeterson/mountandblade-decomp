@@ -25,7 +25,7 @@ int slot_class(int item, int flag);     // 0x4350c0 (register convention, define
 struct Rec20 { tstring name; char pad[0x10]; };      // 0x20-byte named record (table g_tbl20)
 #include "../../include/rec78.h"    // Rec78: the 0x78-byte named record (table g_tbl78), shared with ui/troop_inv and rgl/mesh2
 extern Rec20* g_tbl20;                  // 0x5e28f8
-extern int g_tbl20_count;               // 0x5e29e8
+#include "../ptype.h"
 extern Rec78* g_tbl78;                  // 0x5e29dc
 extern int g_tbl78_count;               // 0x5e29e0
 int find_in_table20(const tstring* name);   // 0x435260 (cdecl)
@@ -67,7 +67,7 @@ struct shape_base;
 #include "../world.h"                         // world / Level: the scene, first field of the mission object (0x4417d0 reads it at +0); Level = world
 #include "../mission.h"                       // Mission, TeamRec, g_mission (one definition for src/game); ModeRec: mode_rec.h
 #include "../mode_rec.h"
-extern ModeRec* g_modes;                         // 0x5e2a00
+extern ModeRec* g_mission_templates;                         // 0x5e2a00
 // object with a placement block at +0x13fb4 (set by 0x45a170 / 0x44c210: the scene's spawn data; provisional)
 struct Placement {
     char pad0[0x13fb4];
@@ -153,7 +153,7 @@ float time_of_day();                    // 0x4356e0
 bool is_daytime();                      // 0x435700
 bool is_night();                        // 0x435740
 float __cdecl accel_factor(const float* a, const float* b, const float* c);   // 0x435ae0
-int __cdecl team_field5280(const Agent* a);                                   // 0x435b60
+int __cdecl team_leader(const Agent* a);                                   // 0x435b60
 int __cdecl team_leader(const Agent* a); // 0x435b60
 
 // ---- RecJ: the 0xb0-byte IfaceB-derived record (vtable 0x590b78, constructor 0x4377d0, slot1 0x437810): src/include/recj.h

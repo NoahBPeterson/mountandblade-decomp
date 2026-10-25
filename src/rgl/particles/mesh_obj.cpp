@@ -327,7 +327,7 @@ void emitter::update(const float* pdt, const matrix& frame)
         pv[0] = gd.z + pv[0];
         if (noise_amount > 0.01f) {
             vector4 in = *(vector4*)&pv[-6];
-            float w = (float)pow((double)((float)g_noise_table[noise_index] * 1e-5f), 4000.0);
+            float w = (float)pow((double)((float)g_ticks[noise_index] * 1e-5f), 4000.0);
             in.z = w * noise_scale * 0.2f + in.z;
             vector4 out;
             noise_gradient(noise_scale, &in.x, &out.x);
@@ -628,31 +628,31 @@ void mesh::setup_material()
     unsigned fl = res->flags;
     unsigned bm = fl & 0x700;
     if (f38) {
-        g_render_cache.set_blend_mode(1);
+        g_render.set_blend_mode(1);
     } else if (bm == 0x700 && (color & 0xff000000) == 0xff000000) {
-        if (g_render_cache.blend_mode) {
-            g_render_cache.blend_mode = 0;
-            g_render_cache.dev->SetRenderState(D3DRS_ALPHABLENDENABLE, 0);
+        if (g_render.blend_mode) {
+            g_render.blend_mode = 0;
+            g_render.dev->SetRenderState(D3DRS_ALPHABLENDENABLE, 0);
         }
     } else if (bm == 0x700) {
-        g_render_cache.set_blend_mode(1);
+        g_render.set_blend_mode(1);
     } else {
-        g_render_cache.set_blend_mode((fl >> 8) & 7);
+        g_render.set_blend_mode((fl >> 8) & 7);
     }
     material* m = res->shader;
     int i = 0;
     if (0 < m->nstages) {
         do {
-            g_render_cache.set_texcoord_gen(i, m->stages[i].d & 0xff);
+            g_render.set_texcoord_gen(i, m->stages[i].d & 0xff);
             if (res->shader->stages[i].d & 0x100) {
-                if (g_render_cache.stage_xform[i] != 1) {
-                    g_render_cache.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
-                    g_render_cache.stage_xform[i] = 1;
+                if (g_render.stage_xform[i] != 1) {
+                    g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+                    g_render.stage_xform[i] = 1;
                 }
-                g_render_cache.dev->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + i), (const D3DMATRIX*)&m1d4);
-            } else if (g_render_cache.stage_xform[i] != 0) {
-                g_render_cache.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
-                g_render_cache.stage_xform[i] = 0;
+                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + i), (const D3DMATRIX*)&m1d4);
+            } else if (g_render.stage_xform[i] != 0) {
+                g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                g_render.stage_xform[i] = 0;
             }
             m = res->shader;
             ++i;
@@ -660,15 +660,15 @@ void mesh::setup_material()
     }
     if (res && (res->shader->flags20 & 0x10000000)) {
         vector4 c;
-        c = unpack_color_ret(&color);
+        c = unpack_color(&color);
         float* tmp = &c.x;
-        g_render_cache.dev->SetPixelShaderConstantF(0, tmp, 1);
+        g_render.dev->SetPixelShaderConstantF(0, tmp, 1);
         return;
     }
     unsigned col = color;
-    if (g_render_cache.tex_factor != col) {
-        g_render_cache.tex_factor = col;
-        g_render_cache.dev->SetRenderState(D3DRS_TEXTUREFACTOR, col);
+    if (g_render.tex_factor != col) {
+        g_render.tex_factor = col;
+        g_render.dev->SetRenderState(D3DRS_TEXTUREFACTOR, col);
     }
 }
 
@@ -736,7 +736,7 @@ int mesh::render(scene* sc, const matrix& frame)
     }
 done:
     for (std::vector<psys*>::iterator it = kids.begin(); it != kids.end(); ++it)
-        ((emitter*)*it)->render_update(sc);
+        ((emitter*)*it)->update(sc);
     if (p_c0) {
         vector4 t;
         t.x = m_cc.u.x * p_c0->in.z + m_cc.f.x * p_c0->in.y + p_c0->in.x * m_cc.s.x + m_cc.o.x;

@@ -32,9 +32,8 @@
 #include "../../include/game_data.h"
 
 extern StrTable g_strtable;                     // 0x5e2a18
-extern tstring g_result_string;                 // 0xa70464 the last formatted script string
-extern tstring g_string_registers[128];         // 0xa72890 the script's string registers
-extern LevelGrid* g_level_grid;                 // 0xa732b4
+extern char g_script[]; // 0xa70440
+extern LevelGrid* g_level;                 // 0xa732b4
 extern Rec78* g_tbl78;                          // 0x5e29dc the scene prop kinds (0x78-byte records)
 
 // the animators fold the clock delta since the last start into the busy time: (g_ticks[clock] - stamp) * 1e-5 + seconds + 1
@@ -48,37 +47,37 @@ extern Rec78* g_tbl78;                          // 0x5e29dc the scene prop kinds
 // @ 0x48e5d0
 void widget_mgr::animate_pos(int idx, float t, int v)
 {
-    ANIMATE(v24, v)
+    ANIMATE(animate_pos, v)
 }
 
 // @ 0x48e650
 void widget_mgr::animate_color(int idx, float t, int rgb)
 {
-    ANIMATE(v10, rgb)
+    ANIMATE(animate_color, rgb)
 }
 
 // @ 0x48e6d0
 void widget_mgr::animate_alpha(int idx, float t, int a)
 {
-    ANIMATE(v14, a << 24)
+    ANIMATE(animate_alpha, a << 24)
 }
 
 // @ 0x48e750
 void widget_mgr::animate_hilight_color(int idx, float t, int rgb)
 {
-    ANIMATE(v18, rgb)
+    ANIMATE(animate_hilight_color, rgb)
 }
 
 // @ 0x48e7d0
 void widget_mgr::animate_hilight_alpha(int idx, float t, int a)
 {
-    ANIMATE(v1c, a << 24)
+    ANIMATE(animate_hilight_alpha, a << 24)
 }
 
 // @ 0x48e850
 void widget_mgr::animate_size(int idx, float t, int v)
 {
-    ANIMATE(v20, v)
+    ANIMATE(animate_size, v)
 }
 
 // @ 0x48e8d0
@@ -93,7 +92,7 @@ tstring NameTable::get_string(int index, int kind)
 {
     if (kind == 0) {
         if (index >= 0 && index < 0x80)
-            return g_string_registers[index];
+            return ((tstring*)((char*)&g_script + 0x2450))[index];
         return tstring("Invalid String-register!");
     }
     if (kind == 0x16) {
@@ -112,7 +111,7 @@ tstring NameTable::get_string(int index, int kind)
 // @ 0x48e9e0
 tstring GameData::string_value(int index)
 {
-    g_result_string.assign("");
+    (*(tstring*)((char*)&g_script + 0x24)).assign("");
     if (!emit_event(0x10, index, 0)) {
         char buf[0x200];
         {
@@ -120,9 +119,9 @@ tstring GameData::string_value(int index)
             tstring* value = g_strtable.lookup(&key);
             sprintf(buf, value->c_str(), index);
         }
-        g_result_string.assign(buf);
+        (*(tstring*)((char*)&g_script + 0x24)).assign(buf);
     }
-    return g_result_string;
+    return (*(tstring*)((char*)&g_script + 0x24));
 }
 
 // @ 0x48ea80
@@ -136,9 +135,9 @@ face* GameData::find_at(const float* p)
 
     q[0] = p[0];
     q[1] = p[1];
-    g_level_grid->locate(q, idx);
+    g_level->to_cell(q, idx);
     flag = 0;
-    cell* c = &g_level_grid->cells[idx[0]][idx[1]];
+    cell* c = &g_level->cells[idx[0]][idx[1]];
     c->collect_point(q, &flag, 0x100, cand, &count);
     for (int k = 0; k < count; k++) {
         shape_base* s = cand[k];
@@ -179,7 +178,7 @@ void GameData::add_inventory(int item, int amount)
         }
         {
             tstring msg(buf);
-            g_msglog.push(msg, (int)0xff80ff80);
+            g_gui.push(msg, (int)0xff80ff80);
         }
         return;
     }

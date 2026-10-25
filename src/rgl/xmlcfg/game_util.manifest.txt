@@ -26,8 +26,8 @@
 ../src/rgl/xmlcfg/game_util.cpp  ?begin@ActiveTimer@@QAEXM@Z  00432da0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?expired@ActiveTimer@@QAE_NXZ  00432de0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?pick@AgentX@@QAEHH@Z  00433040  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/game_util.cpp  ?hand_kind@AgentX@@QBEHXZ  00433140  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/game_util.cpp  ?clamp_c8@mesh_node@@QAEXPBM@Z  00433190  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/game_util.cpp  ?agent_class@AgentX@@QBEHXZ  00433140  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/game_util.cpp  ?set_time@mesh_node@@QAEXPBM@Z  00433190  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ??$_Copy_opt@PAUtstring@@PAU1@@std@@YAPAUtstring@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004331e0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ??$_Copy_backward_opt@PAUtstring@@PAU1@@std@@YAPAUtstring@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00433220  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ??$_Copy_backward_opt@PAUVec3@@PAU1@@std@@YAPAUVec3@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00433260  /O2 /MT /Gy /TP

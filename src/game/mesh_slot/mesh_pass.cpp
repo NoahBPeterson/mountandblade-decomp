@@ -10,9 +10,7 @@ using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
-extern IDirect3DDevice9* g_device;              // 0xa17f28
 extern char g_scene_dirty;                      // 0x5e2938 (set when the device must be rebuilt before the next pass)
-extern char g_scene_open;                       // 0xa17e14 (BeginScene issued)
 void gfx_restore();                             // 0x4c1b00
 bool __cdecl rec_less(const E8& a, const E8& b);   // 0x4622a0 (sort predicate of the queue records)
 
@@ -51,9 +49,9 @@ struct RenderPass {
     int f418828;                                // +0x418828 (render_batch::counter)
 
     bool render(int pass);                      // 0x47e520
-    void register_obj(scene* o);                // 0x412040 (scene_registry::register_scene)
-    void draw_a(scene* o);                      // 0x46e590 (render_batch::render_scene)
-    void draw_b(scene* o);                      // 0x46d8c0 (the fixed-function drawer)
+    void register_scene(scene* o);                // 0x412040 (scene_registry::register_scene)
+    void render_scene(scene* o);                      // 0x46e590 (render_batch::render_scene)
+    void draw(scene* o);                      // 0x46d8c0 (the fixed-function drawer)
 };
 
 // 0x46ca50: the per-frame Direct3D setup of a scene (src/game/terrain_a: RenderScene::apply_state)
@@ -88,7 +86,7 @@ bool RenderPass::render(int pass)
             ((mesh*)SC(*it)->cache[i])->slots[1].f4 = 1;
             ((mesh*)SC(*it)->cache[i])->slots[2].f4 = 1;
             if (SC(*it)->registered == 0 && SC(*it)->active != 0)
-                register_obj(SC(*it));
+                register_scene(SC(*it));
             Q(*it).push_back(mk_e8((int)SC(*it)->cache[i], 0));
         }
     }
@@ -162,9 +160,9 @@ again:
 
     IDirect3DSurface9* rt = 0;
     IDirect3DSurface9* ds = 0;
-    if (g_device->GetRenderTarget(0, &rt) < 0)
+    if (g_render.dev->GetRenderTarget(0, &rt) < 0)
         mb_error("GetRenderTarget failed");
-    if (g_device->GetDepthStencilSurface(&ds) < 0)
+    if (g_render.dev->GetDepthStencilSurface(&ds) < 0)
         mb_error("GetDepthStencilSurface failed");
     f3b4 = -1;
     f3b8 = -1;
@@ -173,59 +171,59 @@ again:
     for (std::vector<int>::iterator d = tmp.begin(); d != tmp.end(); ++d) {
         scene_ms* o = SC(*d);
         if (o->target != (texture*)&g_render || o->f15c != 0) {
-            if (g_scene_open)
-                g_device->EndScene();
-            g_device->BeginScene();
-            g_scene_open = 1;
+            if (g_render.pad504)
+                g_render.dev->EndScene();
+            g_render.dev->BeginScene();
+            g_render.pad504 = 1;
         }
         if (o->target != (texture*)&g_render) {
             if (o->target != 0) {
                 texture* t = o->target;
                 IDirect3DSurface9* surf = t->kind == 1 ? t->level0 : t->surface;
-                if (g_device->SetRenderTarget(0, surf) < 0)
+                if (g_render.dev->SetRenderTarget(0, surf) < 0)
                     mb_error("Unable to set render target texture! Try turning off shadows");
                 o->target->f50 = f418828;
             } else {
-                g_device->SetRenderTarget(0, rt);
+                g_render.dev->SetRenderTarget(0, rt);
             }
         }
         last_tex = o->target;
         float bias = 0.0f;
-        g_device->SetRenderState((D3DRENDERSTATETYPE)0xc3, *(unsigned*)&bias);
-        g_device->SetRenderState((D3DRENDERSTATETYPE)0xaf, *(unsigned*)&bias);
+        g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xc3, *(unsigned*)&bias);
+        g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xaf, *(unsigned*)&bias);
         if (o->f15c != 0 && ((texture*)o->f15c)->loaded != 0) {
             texture* d2 = (texture*)o->f15c;
             if (d2->kind == 2) {
-                g_device->SetDepthStencilSurface(d2->surface);
+                g_render.dev->SetDepthStencilSurface(d2->surface);
             } else {
                 IDirect3DSurface9* surf = d2->kind == 1 ? d2->level0 : d2->surface;
-                g_device->SetDepthStencilSurface(surf);
+                g_render.dev->SetDepthStencilSurface(surf);
                 bias = 0.0002f;
-                g_device->SetRenderState((D3DRENDERSTATETYPE)0xc3, *(unsigned*)&bias);
+                g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xc3, *(unsigned*)&bias);
                 bias = 2.0f;
-                g_device->SetRenderState((D3DRENDERSTATETYPE)0xaf, *(unsigned*)&bias);
+                g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xaf, *(unsigned*)&bias);
             }
             ds = (IDirect3DSurface9*)o->f15c;
         }
         o->apply_state();
         if (g_use_shaders)
-            draw_a(o);
+            render_scene(o);
         else
-            draw_b(o);
+            draw(o);
     }
 
     if (last_tex)
-        g_device->SetRenderTarget(0, rt);
+        g_render.dev->SetRenderTarget(0, rt);
     rt->Release();
 
     if (ds)
-        g_device->SetDepthStencilSurface(ds);
+        g_render.dev->SetDepthStencilSurface(ds);
     ds->Release();
 
-    g_device->SetStreamSource(0, 0, 0, 0);
-    if (g_scene_open)
-        g_device->EndScene();
-    g_scene_open = 0;
+    g_render.dev->SetStreamSource(0, 0, 0, 0);
+    if (g_render.pad504)
+        g_render.dev->EndScene();
+    g_render.pad504 = 0;
 
     for (std::vector<int>::iterator e = tmp.begin(); e != tmp.end(); ++e) {
         scene_ms* o = SC(*e);
@@ -238,7 +236,7 @@ again:
     if (pass == 0)
         v3a4.resize(0);
     for (int i = 0; i < 3; i++)
-        g_device->SetTexture(i, 0);
+        g_render.dev->SetTexture(i, 0);
     return true;
 }
 #undef SC
@@ -305,7 +303,7 @@ OFFSET_CHECK(PolyGeom, edges, 0x20);
 OFFSET_CHECK(PolyGeom, bmin, 0x44);
 OFFSET_CHECK(PolyGeom, bmax, 0x54);
 
-extern MsgLog g_msglog;                                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
+extern MsgLog g_gui;                                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
 
 // vector4::normalize(), inlined exactly as 0x407d60 does it (it returns the old length).
 static float __forceinline normalize_i(vector4& v)
@@ -376,7 +374,7 @@ void PolyGeom::build()
                     edges[idx].count = 1;
                     elems[fi].e[k] = idx;
                 } else if (!warned) {
-                    g_msglog.add(tstring("WARNING: neighbour faces exceeds the maximum in manifold"), 0xffff8888);
+                    g_gui.add(tstring("WARNING: neighbour faces exceeds the maximum in manifold"), 0xffff8888);
                     warned = 1;
                 }
             }

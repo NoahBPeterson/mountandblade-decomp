@@ -55,7 +55,7 @@ struct VecView { void* v0; void* v1; void* v2; void clear(); };         // std::
 extern float g_inv_gain;                            // 0x590b10 (0.13f)
 extern float g_half;                                // 0x549d70 (0.5f)
 extern float g_start_time;                          // 0x59bffc
-extern int g_mode;                                  // 0x5a9fac
+#include "../config/config.h"
 
 // the 4-bit skill fields of a troop's first word (+0x68), as the start-up writes them
 struct NibWord {

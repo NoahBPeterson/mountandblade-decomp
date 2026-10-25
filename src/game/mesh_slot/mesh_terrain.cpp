@@ -11,14 +11,11 @@ using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
-int irand();                            // 0x536a9f rand()
+int rand();                            // 0x536a9f rand()
 void seed_rng(unsigned s);              // 0x536a92 srand
-extern int g_mask_w;                    // 0x5a8e78 (g_sel_mask in terrain_a)
-extern int g_mask_h;                    // 0x5a8eb8
-extern int g_mask_size;                 // 0x5a8f60
-extern int g_mask_flag;                 // 0x5a8e70
-extern int g_no_cam;                    // 0x5a9fb0
-extern int g_x5aa034;                   // 0x5aa034 water quality toggle
+extern char g_bit[]; // 0x5a8e68
+extern char g_cfg[]; // 0x5a9f98
+extern char g_options[]; // 0x5aa008
 
 // Naming note: the slices called the +0x278 extent `h` and the +0x27c extent `w`; terrain_a/terrain.h has them the other
 // way round (w = last cell index in x, h = last in y). The terrain cell of terrain_a/terrain.h is the record these
@@ -58,13 +55,13 @@ void TerrainX::create_water(void** out)
     }
 
     int n = 0xf;
-    if (g_x5aa034 && g_use_shaders == 0)
+    if ((*(int*)((char*)&g_options + 0x2c)) && g_use_shaders == 0)
         n = 0x10;
     for (int t = 0; t < n; t++) {
         if (t < 0xf && layer[t].type < 0)
             continue;
         if (t == 0xf)
-            g_probe.fit_bounds();                // 0x463cc0
+            g_shadow_map.fit_bounds();                // 0x463cc0
         for (int y = 0; y < ny; y++) {
             for (int x = 0; x < nx; x++) {
                 int v = -1;
@@ -78,7 +75,7 @@ void TerrainX::create_water(void** out)
             }
         }
     }
-    g_probe.fit_bounds();
+    g_shadow_map.fit_bounds();
     *out = 0;
 
     vector4 col;
@@ -141,18 +138,18 @@ void TerrainX::create_water(void** out)
 void TerrainX::destroy_water(int a)
 {
     if (g_use_shaders) {
-        ((ShadowMapP*)&g_probe)->render();
-        if (g_mesh_quality == 1 && g_use_shaders) {
+        ((ShadowMapP*)&g_shadow_map)->render();
+        if ((*(int*)((char*)&g_options + 0x7c)) == 1 && g_use_shaders) {
             light_all(&list_a, 1);
             light_all(&list_b, 0);
         }
-    } else if (g_x5aa034) {
-        ((ShadowMapP*)&g_probe)->render();
+    } else if ((*(int*)((char*)&g_options + 0x2c))) {
+        ((ShadowMapP*)&g_shadow_map)->render();
         for (int x = 0; x < nx; x++) {
             for (int y = 0; y < ny; y++) {
                 rgl::mesh* p = (rgl::mesh*)arr2[x * 5 + y];
                 if (p)
-                    p->res = (skin*)g_probe.target;
+                    p->res = (skin*)g_shadow_map.target;
             }
         }
     }
@@ -203,8 +200,8 @@ struct cell_rows_t {                    // 0x20
 struct world_t {                        // the scene object at terrain_obj+0xc3b0dc (CellGrid of terrain_b)
     char pad0[0x64];
     cell_rows_t* cells;                 // 0x64 current cell-row table
-    void set_geom(Geom_t* g);           // 0x479980
-    void relight(int use_shaders);      // 0x472ed0
+    void build_faces(Geom_t* g);           // 0x479980
+    void update_probes(int use_shaders);      // 0x472ed0
 };
 Geom_t* g_geom;                         // the mesh being rebuilt (a local in 0x481570)
 
@@ -341,7 +338,7 @@ void TerrainX::tessellate()
 
     g_geom->build();
     g_geom->compute_bounds();
-    ((world_t*)world)->set_geom(g_geom);
+    ((world_t*)world)->build_faces(g_geom);
 
     cell_rows_t* old = ((world_t*)world)->cells;
     if (old) {
@@ -353,39 +350,39 @@ void TerrainX::tessellate()
         delete old;
     }
     ((world_t*)world)->cells = cr;
-    ((world_t*)world)->relight(g_use_shaders != 0);
+    ((world_t*)world)->update_probes(g_use_shaders != 0);
 }
 
 // ---- 0x481c40 ----------------------------------------------------------------------------------------------------------
 
-extern Animator g_anim;                 // 0x8ed4f60
+extern Animator g_anim_table;                 // 0x8ed4f60
 extern int g_cur;                       // 0x8ed4f68
 extern int g_x8ed4f64;                  // 0x8ed4f64
 extern int g_x8ed4f74;                  // 0x8ed4f74
-extern EChar* g_chars;                  // 0x8ed4f7c
-extern int g_char_count;                // 0x8ed4f88
-extern int g_xa181ac;                   // 0xa181ac
+extern EChar* g_skins_begin;                  // 0x8ed4f7c
+extern int g_skin_count;                // 0x8ed4f88
+extern int g_limit_hair_colors;                   // 0xa181ac
 
 // @ 0x481c40 -- append a character mesh to the world: select the character, set up the animator, collect the lod meshes
-// and return &g_chars[g_cur] with the mesh count written to *out
+// and return &g_skins_begin[g_cur] with the mesh count written to *out
 EChar* append_mesh(int colour, int kind, void** a, void** b, void** c, char carried, int* out)
 {
     if (colour < 0)
         g_cur = 0;
-    else if (colour >= g_char_count)
-        g_cur = g_char_count - 1;
+    else if (colour >= g_skin_count)
+        g_cur = g_skin_count - 1;
     else
         g_cur = colour;
 
     if (kind == -1)
-        g_anim.set_anim_a(a);
+        g_anim_table.set_anim_a(a);
     else
-        g_anim.set_anim_b(a, b, kind);
+        g_anim_table.set_anim_b(a, b, kind);
     if (carried)
         g_x8ed4f64 = -1;
-    g_anim.collect((char)g_xa181ac, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
+    g_anim_table.collect((char)g_limit_hair_colors, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
 
-    EChar* ec = &g_chars[g_cur];
+    EChar* ec = &g_skins_begin[g_cur];
     int* rec = (int*)((char*)ec->mats + g_x8ed4f74 * 0xb0 + 0x18);
     int* slot = out;
     *slot = *rec;
@@ -402,12 +399,12 @@ void TerrainX::generate(int seed, int* objs, char flag)
 {
     reset();
 
-    unsigned cell = (flags14 & (g_mask_w - 1)) + 2;
+    unsigned cell = (flags14 & ((*(int*)((char*)&g_bit + 0x10)) - 1)) + 2;
     scale = (float)cell;
-    seed_rng(*(int*)this & (g_mask_size - 1) & (g_mask_size - 1));
-    flag843bd75 = (char)((char)(g_mask_flag - 1) & (char)((unsigned)hword >> 31)) != 0;
-    wx = (float)(unsigned)(hword & (g_mask_h - 1));                 // height band -> map extent
-    wy = (float)(unsigned)(((unsigned)hword >> 10) & (g_mask_h - 1));
+    seed_rng(*(int*)this & ((*(int*)((char*)&g_bit + 0xf8)) - 1) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
+    flag843bd75 = (char)((char)((*(int*)((char*)&g_bit + 0x8)) - 1) & (char)((unsigned)hword >> 31)) != 0;
+    wx = (float)(unsigned)(hword & ((*(int*)((char*)&g_bit + 0x50)) - 1));                 // height band -> map extent
+    wy = (float)(unsigned)(((unsigned)hword >> 10) & ((*(int*)((char*)&g_bit + 0x50)) - 1));
     world = (SceneWorld*)seed;
 
     float inv = 1.0f / scale;
@@ -450,7 +447,7 @@ void TerrainX::generate(int seed, int* objs, char flag)
     }
 
     generate_heights();
-    seed_rng(*(int*)((char*)this + 4) & (g_mask_size - 1));
+    seed_rng(*(int*)((char*)this + 4) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
 
     ((terrain_obj*)this)->make_river();
     ((terrain_obj*)this)->smooth_heights();
@@ -461,17 +458,17 @@ void TerrainX::generate(int seed, int* objs, char flag)
     ((terrain_obj*)this)->erode();
 
     if (objs != 0 && flag) {
-        if (g_no_cam)
+        if ((*(int*)((char*)&g_cfg + 0x18)))
             fill_desc_named((TerrainDesc*)objs);
         else
             fill_desc_none((TerrainDesc*)objs);
     }
 
-    seed_rng(*(int*)((char*)this + 8) & (g_mask_size - 1));
+    seed_rng(*(int*)((char*)this + 8) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
 
-    off_b[0] = (float)(irand() % 0x3dc9) * 0.063223116f;
-    off_b[1] = (float)(irand() % 0x3dc9) * 0.063223116f;
-    off_b[2] = (float)(irand() % 0x3dc9) * 0.063223116f;
+    off_b[0] = (float)(rand() % 0x3dc9) * 0.063223116f;
+    off_b[1] = (float)(rand() % 0x3dc9) * 0.063223116f;
+    off_b[2] = (float)(rand() % 0x3dc9) * 0.063223116f;
 
     if (objs != 0) {
         for (int i = 0; i < *objs; i++)
@@ -486,7 +483,7 @@ void TerrainX::generate(int seed, int* objs, char flag)
     spawn_particles(&list_a, 0);
     spawn_particles(&list_c, 2);
     ((terrain_obj*)this)->create_chunk_entities();
-    g_probe.attach_camera((CellGrid*)world);
+    g_shadow_map.attach_camera((CellGrid*)world);
     float v[3];
     v[0] = 0.0f;
     v[1] = 0.0f;
@@ -508,18 +505,18 @@ void TerrainX::regenerate_water(void** out, int mode)
     gen_set_init(&list_a);
     gen_set_init(&list_b);
     make_grid();
-    if (g_use_shaders == 0 || g_mesh_quality == 0) {
-        light_particles(&list_a, mode);
-        light_particles(&list_b, mode);
+    if (g_use_shaders == 0 || (*(int*)((char*)&g_options + 0x7c)) == 0) {
+        light_all(&list_a, mode);
+        light_all(&list_b, mode);
     }
 
 #define hword (*(int*)((char*)this + 0xc))
-    int mask = g_mask_h - 1;
+    int mask = (*(int*)((char*)&g_bit + 0x50)) - 1;
     int r = (int)wx;
     if ((unsigned)r > (unsigned)mask)
         r = mask;
     hword = (hword & ~mask) | r;
-    mask = g_mask_h - 1;
+    mask = (*(int*)((char*)&g_bit + 0x50)) - 1;
     r = (int)wy;
     if ((unsigned)r > (unsigned)mask)
         r = mask;
@@ -598,18 +595,18 @@ void TerrainX::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         }
                         vis[k] = v;
                         if (layerno == 0) {          // the first layer extends the light camera's bounds
-                            float dx = c->px - g_probe.cam->world.o.x;
-                            float dy = c->py - g_probe.cam->world.o.y;
-                            float dz = c->pz - g_probe.cam->world.o.z;
-                            float lx = dz * g_probe.cam->world.s.z + dy * g_probe.cam->world.s.y + dx * g_probe.cam->world.s.x;
-                            float ly = dz * g_probe.cam->world.f.z + dy * g_probe.cam->world.f.y + dx * g_probe.cam->world.f.x;
-                            float lz = dz * g_probe.cam->world.u.z + dy * g_probe.cam->world.u.y + dx * g_probe.cam->world.u.x;
-                            if (!(g_probe.cam->vmin.x < lx)) g_probe.cam->vmin.x = lx;
-                            if (!(g_probe.cam->vmin.y < ly)) g_probe.cam->vmin.y = ly;
-                            if (!(g_probe.cam->vmin.z < lz)) g_probe.cam->vmin.z = lz;
-                            if (!(lx < g_probe.cam->vmax.x)) g_probe.cam->vmax.x = lx;
-                            if (!(ly < g_probe.cam->vmax.y)) g_probe.cam->vmax.y = ly;
-                            if (!(lz < g_probe.cam->vmax.z)) g_probe.cam->vmax.z = lz;
+                            float dx = c->px - g_shadow_map.cam->world.o.x;
+                            float dy = c->py - g_shadow_map.cam->world.o.y;
+                            float dz = c->pz - g_shadow_map.cam->world.o.z;
+                            float lx = dz * g_shadow_map.cam->world.s.z + dy * g_shadow_map.cam->world.s.y + dx * g_shadow_map.cam->world.s.x;
+                            float ly = dz * g_shadow_map.cam->world.f.z + dy * g_shadow_map.cam->world.f.y + dx * g_shadow_map.cam->world.f.x;
+                            float lz = dz * g_shadow_map.cam->world.u.z + dy * g_shadow_map.cam->world.u.y + dx * g_shadow_map.cam->world.u.x;
+                            if (!(g_shadow_map.cam->vmin.x < lx)) g_shadow_map.cam->vmin.x = lx;
+                            if (!(g_shadow_map.cam->vmin.y < ly)) g_shadow_map.cam->vmin.y = ly;
+                            if (!(g_shadow_map.cam->vmin.z < lz)) g_shadow_map.cam->vmin.z = lz;
+                            if (!(lx < g_shadow_map.cam->vmax.x)) g_shadow_map.cam->vmax.x = lx;
+                            if (!(ly < g_shadow_map.cam->vmax.y)) g_shadow_map.cam->vmax.y = ly;
+                            if (!(lz < g_shadow_map.cam->vmax.z)) g_shadow_map.cam->vmax.z = lz;
                         }
                     } else {
                         vis[k] = 1;
@@ -639,7 +636,7 @@ void TerrainX::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         uu = (c->px * 0.025f) * *(float*)&L->f14;
                         vv = t * *(float*)&L->f14;
                     } else {
-                        vector4 pu = g_probe.to_unit(*(const vector4*)c);
+                        vector4 pu = g_shadow_map.to_unit(*(const vector4*)c);
                         uu = pu.x;
                         vv = pu.y;
                     }

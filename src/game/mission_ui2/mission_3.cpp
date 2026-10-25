@@ -36,13 +36,13 @@
 #include "../../include/game_data.h"
 
 extern StrTable g_strtable;                     // 0x5e2a18
-extern char g_lang_on;                          // 0xa181b8 (non-zero: show the raw keys)
+#include "../game_globals.h"
 struct PartyModelV { virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c(); virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c(); virtual void v20(); virtual void v24(); virtual void v28(); virtual void v2c(); virtual void v30(); virtual void v34(); virtual void v38(); virtual void v3c(); virtual void v40(); virtual void v44(); virtual void v48(); virtual void v4c(); virtual void v50(); virtual void v54(); virtual void v58(); virtual void v5c(); virtual void v60(); virtual void v64(); virtual void release(); };   // the party's map model: slot +0x68 (0x48d7e0)
 extern unsigned __int64 g_bit[];                // 0x5a8e68 g_bit[i] == 1 << i
 extern int g_item_kind_count;                   // 0x5e29d4 (item_kind.h)
 
 // custom-ABI helpers and other-object callees
-extern tstring g_result_string;                 // 0xa70464 the last formatted script string (also the script interpreter's result string)
+extern char g_script[]; // 0xa70440
 
 // @ 0x48c330
 void Party::remove_slot(int index)
@@ -101,9 +101,9 @@ int material_type()
 // @ 0x48c470
 tstring GameData::event_string(int id)
 {
-    g_result_string.assign("");
+    (*(tstring*)((char*)&g_script + 0x24)).assign("");
     emit_event(0xf, id / 0x18, id);
-    return g_result_string;
+    return (*(tstring*)((char*)&g_script + 0x24));
 }
 
 // @ 0x48c4c0
@@ -613,7 +613,7 @@ tstring* QuestRec::raw_title()
 // @ 0x48d7b0
 tstring* Party::display_name()
 {
-    if (g_lang_on)
+    if (g_show_party_ids_instead_of_names)
         return &key;
     if (flag == 0) {
         tstring* r = g_strtable.find(&key);
@@ -859,8 +859,8 @@ void widget_mgr::set_limits(int idx, int lo, int hi)
 {
     if (OW(idx)->type() != 2 && OW(idx)->type() != 3)
         return;
-    OW(idx)->lo16c = (float)lo / g_fixed_point_multiplier;
-    OW(idx)->hi170 = (float)hi / g_fixed_point_multiplier;
+    OW(idx)->lo16c = (float)lo / (*(int*)((char*)&g_script + 0x20));
+    OW(idx)->hi170 = (float)hi / (*(int*)((char*)&g_script + 0x20));
     if (OW(idx)->v168 < OW(idx)->lo16c) {
         OW(idx)->v168 = OW(idx)->lo16c;
         return;

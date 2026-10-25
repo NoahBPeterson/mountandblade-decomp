@@ -31,7 +31,7 @@ void Curve::set_phase(float p)
     else v = 0.0f;
     period = p;
     int ticks = (int)(unshape(v) * p * 100000.0f);
-    tm.start = g_time[tm.clock] - ticks;
+    tm.start = g_ticks[tm.clock] - ticks;
 }
 // @ 0x4339d0
 void Curve::reset_rec(int i)
@@ -39,7 +39,7 @@ void Curve::reset_rec(int i)
     if (f5c == 0) recs[i].m0 = 0;
     recs[i].m30 = 1.0f;
     Timer* t = &recs[i].tm;
-    t->start = g_time[t->clock];
+    t->start = g_ticks[t->clock];
     recs[i].mac = 1;
     recs[i].m10 = 0;
     recs[i].v6c = vector4(0.0f, 0.0f, 0.0f);
@@ -58,7 +58,7 @@ void Curve::set_rec_phase(int i, float p)
     else if (p > 1.0f) p = 1.0f;
     Curve* r = &recs[i];
     int ticks = (int)(r->unshape(p) * r->period * 100000.0f);
-    r->tm.start = g_time[r->tm.clock] - ticks;
+    r->tm.start = g_ticks[r->tm.clock] - ticks;
 }
 // @ 0x433bb0
 unsigned __stdcall hash_string(const tstring* s)

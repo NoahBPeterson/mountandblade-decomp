@@ -44,7 +44,7 @@ void Game_s25160::handle_event(int code)
                 * (*pa - *(float*)(o + 0x17c))
                 + (float)*(int*)0x5d8790 / *pa * *(float*)(o + 0x17c)
                   * *(float*)0x590d7c;
-        f_48baa0(v);
+        set_value(v);
         ((VObj_s25160*)o)->v18(0x10000);
     }
 
@@ -123,15 +123,15 @@ shown:
                 continue;
             if (i >= f1190)
                 continue;
-            m_4f73c0(i, &res);
+            refresh(i, &res);
         }
     }
     else if (*(int*)0xa17454 == 0 && *(int*)0xa17854 != 0)
     {
-        m_4f73c0(-2, &res);
+        refresh(-2, &res);
     }
 
-    m_5257f0();
+    update();
 
     int v = res;
 
@@ -254,7 +254,7 @@ case1:
 #undef g_game_s257f0
 #define g_game_s257f0 (*(Game_s257f0**)&g_game)
 #undef g_n_dialogs_s257f0
-#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)g_n_dialogs)
+#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)g_dialogs)
 #undef AGENT
 #define AGENT(id) (g_mission_s257f0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 // @ 0x526070 -------------------------------------------------------------------------------------------
@@ -262,7 +262,7 @@ int find_speaker_agent()
 {
     unsigned found = (unsigned)-1;
     int speaker = g_n_dialogs_s257f0.speaker();
-    if ((g_game_s257f0->chars[speaker].flags & 0x10) || g_player_agent == -1) {
+    if ((g_game_s257f0->chars[speaker].flags & 0x10) || (*(int*)((char*)&g_dialogs + 0x14)) == -1) {
         AgentTable_s257f0* t = &g_mission_s257f0->agents;
         Agent_s257f0** pages = t->pages;
         int any = 0;
@@ -275,7 +275,7 @@ int find_speaker_agent()
         if (any)
             return found;
     }
-    return g_player_agent;
+    return (*(int*)((char*)&g_dialogs + 0x14));
 }
 
 // @ 0x5257f0 -------------------------------------------------------------------------------------------
@@ -291,7 +291,7 @@ void ViewObj_s257f0::update()
     vector4 F;
     G.z = a->speed_scale() + G.z;
 
-    if (target == (unsigned)g_player_agent) {
+    if (target == (unsigned)(*(int*)((char*)&g_dialogs + 0x14))) {
         Agent_s257f0* sel = AGENT(g_mission_s257f0->selected);
         vector4 dir;
         dir.x = sel->pos.x - a->pos.x;
@@ -359,13 +359,13 @@ void ViewObj_s257f0::update()
               (m->o.z - G.z) * (m->o.z - G.z)) > 0.3f ||
         sqrtf((m->u.x - F.x) * (m->u.x - F.x) + (m->u.y - F.y) * (m->u.y - F.y) +
               (m->u.z - F.z) * (m->u.z - F.z)) > 0.1f) {
-        blend = blend - g_look_rate * g_dt;
+        blend = blend - g_look_rate * g_step_tbl[2];
     }
 
     float t = clamp01_s257f0(1.0f - blend);
     if (!started) {
         started = 1;
-        t = t * g_dt * 1.5f;
+        t = t * g_step_tbl[2] * 1.5f;
     }
     t = clamp01_s257f0(t);
     float inv = 1.0f - t;
@@ -394,7 +394,7 @@ void ViewObj_s257f0::update()
     struct Pose { char b[0x120]; };
     *(Pose*)((char*)f30 + 0x1ac) = *(Pose*)((char*)this + 0x34);
 
-    blend = blend + (g_dt + g_dt);
+    blend = blend + (g_step_tbl[2] + g_step_tbl[2]);
     blend = clamp01_s257f0(blend);
 }
 
@@ -404,13 +404,13 @@ void ViewObj_s257f0::update()
 #undef g_game_s26130
 #define g_game_s26130 (*(Game_s26130**)&g_game)
 #undef g_n_dialogs_s26130
-#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)g_n_dialogs)
+#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)g_dialogs)
 // @ 0x526130 -------------------------------------------------------------------------------------------
 int find_listener_agent()
 {
     int found = -1;
     int listener = g_n_dialogs_s26130.listener();
-    if ((g_game_s26130->chars[listener].flags & 0x10) | (g_player_agent == -1)) {
+    if ((g_game_s26130->chars[listener].flags & 0x10) | ((*(int*)((char*)&g_dialogs + 0x14)) == -1)) {
         AgentTable_s26130* t = &g_mission_s26130->agents;
         unsigned i = t->first_used();
         Agent_s26130** pages = t->pages;
@@ -429,39 +429,39 @@ int find_listener_agent()
 #undef g_gui_s261e0
 #define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
 #undef g_keytable_s261e0
-#define g_keytable_s261e0 (*(KeyTable_s261e0*)g_keytable)
+#define g_keytable_s261e0 (*(KeyTable_s261e0*)g_game_keys)
 #undef g_keyready_s261e0
-#define g_keyready_s261e0 (*(KeyReady_s261e0*)g_keyready)
+#define g_keyready_s261e0 (*(KeyReady_s261e0*)g_keyboard)
 #undef g_mission_s261e0
 #define g_mission_s261e0 (*(Mission_s261e0**)&g_mission)
 #undef g_game_s261e0
 #define g_game_s261e0 (*(GameData_s261e0**)&g_game)
 #undef g_main_menu_s261e0
-#define g_main_menu_s261e0 (*(MainMenu_s261e0*)g_main_menu)
+#define g_main_menu_s261e0 (*(MainMenu_s261e0*)g_windows)
 #undef g_w_a739a0_s261e0
-#define g_w_a739a0_s261e0 (*(Widget_s261e0**)&g_w_a739a0)
+#define g_w_a739a0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x20)))
 #undef g_w_a739bc_s261e0
-#define g_w_a739bc_s261e0 (*(Widget_s261e0**)&g_w_a739bc)
+#define g_w_a739bc_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x3c)))
 #undef g_w_a739b0_s261e0
-#define g_w_a739b0_s261e0 (*(Widget_s261e0**)&g_w_a739b0)
+#define g_w_a739b0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x30)))
 #undef g_w_a739b4_s261e0
-#define g_w_a739b4_s261e0 (*(Widget_s261e0**)&g_w_a739b4)
+#define g_w_a739b4_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x34)))
 #undef g_w_a739e8_s261e0
-#define g_w_a739e8_s261e0 (*(Widget_s261e0**)&g_w_a739e8)
+#define g_w_a739e8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x68)))
 #undef g_w_a739e4_s261e0
-#define g_w_a739e4_s261e0 (*(Widget_s261e0**)&g_w_a739e4)
+#define g_w_a739e4_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x64)))
 #undef g_w_a73994_s261e0
-#define g_w_a73994_s261e0 (*(Widget_s261e0**)&g_w_a73994)
+#define g_w_a73994_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x14)))
 #undef g_w_a739c8_s261e0
-#define g_w_a739c8_s261e0 (*(Widget_s261e0**)&g_w_a739c8)
+#define g_w_a739c8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x48)))
 #undef g_w_a739c0_s261e0
-#define g_w_a739c0_s261e0 (*(Widget_s261e0**)&g_w_a739c0)
+#define g_w_a739c0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x40)))
 #undef g_flags_s261e0
-#define g_flags_s261e0 (*(Flags5e291c_s261e0*)g_flags)
+#define g_flags_s261e0 (*(Flags5e291c_s261e0*)g_map_flags)
 #undef g_a73300_s261e0
-#define g_a73300_s261e0 (*(Obj73300_s261e0*)g_a73300)
+#define g_a73300_s261e0 (*(Obj73300_s261e0*)g_mission_ctx)
 #undef g_deque_s261e0
-#define g_deque_s261e0 (*(IntDeque_s261e0*)g_deque)
+#define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 #undef g_dialogmgr
 #define g_dialogmgr (*(DialogMgr_s261e0*)0x8ed50c8)
 #undef g_clamp_max
@@ -476,14 +476,14 @@ void Screen_s261e0::tick(float dt)
 
     sdt = dt;
 
-    if (g_lock_enabled)
-        EnterCriticalSection(&g_cs);
+    if (g_mt_inited)
+        EnterCriticalSection(&g_mt_cs);
 
     // ---- key toggles (slow-motion / pause) ----------------------------------------------------------
-    if (g_a5a9fbc) {
-        if ((g_key_a[29] || g_key_a[157]) && g_key_a[67] && !g_key_b[67])
+    if ((*(int*)((char*)&g_cfg + 0x24))) {
+        if ((((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[67] && !((int*)((char*)&g_keyboard + 0x40c))[67])
             f2e1 = (unsigned char)!f2e1;
-        if (g_a5a9fbc && (g_key_a[29] || g_key_a[157]) && g_key_a[87] && !g_key_b[87])
+        if ((*(int*)((char*)&g_cfg + 0x24)) && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[87] && !((int*)((char*)&g_keyboard + 0x40c))[87])
             f2e0 = (unsigned char)!f2e0;
     }
     if (f2e0)
@@ -492,7 +492,7 @@ void Screen_s261e0::tick(float dt)
         sdt = dt * g_f54a6e4;
 
     // ---- scene time-scale blend --------------------------------------------------------------------
-    if (g_a5a9fbc) {
+    if ((*(int*)((char*)&g_cfg + 0x24))) {
         Mission_s261e0* m = g_mission_s261e0;
         if (m->f6810 > 0.0f) {
             __int64 d = g_ticks[m->f6800] - *(__int64*)((char*)m + 0x6808);
@@ -513,30 +513,30 @@ void Screen_s261e0::tick(float dt)
     {
         char c7 = g_keyready_s261e0.is_ready(0xd0);
         unsigned char c8 = g_a17908;
-        if (c7 || (g_a17414 != 0 && c8 != 0))
-            g_a5a9c34 -= 5;
+        if (c7 || ((*(int*)((char*)&g_keyboard + 0x34c)) != 0 && c8 != 0))
+            g_vert_budget -= 5;
         c7 = g_keyready_s261e0.is_ready(0xc8);
-        if (c7 || (g_a173f4 != 0 && c8 != 0))
-            g_a5a9c34 += 5;
+        if (c7 || ((*(int*)((char*)&g_keyboard + 0x32c)) != 0 && c8 != 0))
+            g_vert_budget += 5;
     }
 
-    f_5284a0(sdt);
+    update(sdt);
     g_mission_s261e0->b6554 = 0;
     g_mission_s261e0->frame(sdt, 1);
     if (g_mission_s261e0->local_id >= 0) {
-        status_widget_update();
-        f_529130();
+        update_status();
+        update_marks();
     }
-    camera_update(sdt);
+    update_camera(sdt);
     g_gui_s261e0.flush();
 
     // ---- no-camera position save -------------------------------------------------------------------
-    if (g_no_cam && (g_key_a[29] || g_key_a[157]) && g_key_a[18] && !g_key_b[18]) {
+    if ((*(int*)((char*)&g_cfg + 0x18)) && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[18] && !((int*)((char*)&g_keyboard + 0x40c))[18]) {
         if (g_game_s261e0->f1a090 != 0) {
             restore_defaults();
-            if (g_lock_enabled) {
-                LeaveCriticalSection(&g_cs);
-                SetEvent(g_event);
+            if (g_mt_inited) {
+                LeaveCriticalSection(&g_mt_cs);
+                SetEvent(g_mt_event);
             }
             return;
         }
@@ -559,13 +559,13 @@ void Screen_s261e0::tick(float dt)
         g_game_s261e0->f1a1b4 = -1;
         ((VectorInt_s261e0*)((char*)g_game_s261e0 + 0x1a1b8))->resize(0, 0);
         *(int*)((char*)g_game_s261e0 + 0x1a1cc) = 0;
-        f_52ae70();
+        init_order_markers();
     }
     if (g_game_s261e0->f1a090 != 0) {
-        f_52ba10();
-        if (g_lock_enabled) {
-            LeaveCriticalSection(&g_cs);
-            SetEvent(g_event);
+        update_ui();
+        if (g_mt_inited) {
+            LeaveCriticalSection(&g_mt_cs);
+            SetEvent(g_mt_event);
         }
         return;
     }
@@ -587,43 +587,43 @@ void Screen_s261e0::tick(float dt)
             b6 = (blk[sub] == 0);
         }
     }
-    if (g_a5a9f18 != -1) {
-        if (g_a5a9f18 == 0) {
+    if (g_pending_action != -1) {
+        if (g_pending_action == 0) {
             ((MissionSub_s261e0*)((char*)g_mission_s261e0 + 0x6698))->build_geometry();
-            g_mission_s261e0->f_527f90();
-            g_mission_s261e0->f_529d80();
-            g_game_s261e0->f_527c90(g_mission_s261e0->f5df4);
+            g_mission_s261e0->save_scene_data();
+            g_mission_s261e0->fn_529d80();
+            g_game_s261e0->save_scene(g_mission_s261e0->f5df4);
         } else {
             b6 = false;
         }
-        g_a5a9f18 = -1;
+        g_pending_action = -1;
     }
 
     // ---- mission-editor key block ------------------------------------------------------------------
     if (g_mission_s261e0->local_id >= 0) {
-        if (g_key_a[29] == 0 && g_key_a[157] == 0) {
-            if (g_keytable_s261e0.down(0x15)) {
+        if (((int*)((char*)&g_keyboard + 0xc))[29] == 0 && ((int*)((char*)&g_keyboard + 0xc))[157] == 0) {
+            if (g_keytable_s261e0.clicked(0x15)) {
                 f2a0 = 0;
-                f_52b300();
-            } else if (g_keytable_s261e0.down(0x16)) {
+                order_tick();
+            } else if (g_keytable_s261e0.clicked(0x16)) {
                 f2a0 = 1;
-                f_52b300();
-            } else if (g_keytable_s261e0.down(0x17)) {
+                order_tick();
+            } else if (g_keytable_s261e0.clicked(0x17)) {
                 f2a0 = 2;
-                f_52b300();
-            } else if (g_keytable_s261e0.down(0x1a)) {
+                order_tick();
+            } else if (g_keytable_s261e0.clicked(0x1a)) {
                 f2a0 = 5;
-                f_52b300();
-            } else if (g_keytable_s261e0.down(0x1b)) {
+                order_tick();
+            } else if (g_keytable_s261e0.clicked(0x1b)) {
                 f2a0 = 6;
-                f_52b300();
-            } else if (g_keytable_s261e0.down(0x1c)) {
+                order_tick();
+            } else if (g_keytable_s261e0.clicked(0x1c)) {
                 f2a0 = 7;
-                f_52b300();
-            } else if (g_keytable_s261e0.down(0x1d)) {
+                order_tick();
+            } else if (g_keytable_s261e0.clicked(0x1d)) {
                 f2a0 = 8;
-                f_52b300();
-            } else if (g_keytable_s261e0.down(0x18)) {
+                order_tick();
+            } else if (g_keytable_s261e0.clicked(0x18)) {
                 if (g_mission_s261e0->f6674 == 0) {
                     f2a0 = 4;
                     g_mission_s261e0->f6674 = 1;
@@ -631,8 +631,8 @@ void Screen_s261e0::tick(float dt)
                     f2a0 = 3;
                     g_mission_s261e0->f6674 = 0;
                 }
-                f_52b300();
-            } else if (g_keytable_s261e0.down(0x1e)) {
+                order_tick();
+            } else if (g_keytable_s261e0.clicked(0x1e)) {
                 if (g_mission_s261e0->f666c == 0) {
                     f2a0 = 9;
                     g_mission_s261e0->f666c = 1;
@@ -640,8 +640,8 @@ void Screen_s261e0::tick(float dt)
                     f2a0 = 10;
                     g_mission_s261e0->f666c = 0;
                 }
-                f_52b300();
-            } else if (g_keytable_s261e0.down(0x19)) {
+                order_tick();
+            } else if (g_keytable_s261e0.clicked(0x19)) {
                 if (g_mission_s261e0->f6670 == 0) {
                     f2a0 = 0xc;
                     g_mission_s261e0->f6670 = 1;
@@ -649,12 +649,12 @@ void Screen_s261e0::tick(float dt)
                     f2a0 = 0xd;
                     g_mission_s261e0->f6670 = 0;
                 }
-                f_52b300();
+                order_tick();
             }
         }
-        if (g_keytable_s261e0.down(0x1f) || g_keytable_s261e0.down(0x20) || g_keytable_s261e0.down(0x21) ||
-            g_keytable_s261e0.down(0x22) || g_keytable_s261e0.down(0x23)) {
-            bool b3 = (g_key_a[29] || g_key_a[157] || g_key_a[42] || g_key_a[54]);
+        if (g_keytable_s261e0.clicked(0x1f) || g_keytable_s261e0.clicked(0x20) || g_keytable_s261e0.clicked(0x21) ||
+            g_keytable_s261e0.clicked(0x22) || g_keytable_s261e0.clicked(0x23)) {
+            bool b3 = (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157] || ((int*)((char*)&g_keyboard + 0xc))[42] || ((int*)((char*)&g_keyboard + 0xc))[54]);
             if (b3)
                 *(int*)((char*)g_game_s261e0 + 0x1a1d4) = 1;
             else
@@ -665,7 +665,7 @@ void Screen_s261e0::tick(float dt)
                 kind = 7;
             char* base = (char*)g_mission_s261e0 + 0x527c + kind * 0x16c;
 
-            if (g_keytable_s261e0.down(0x23)) {
+            if (g_keytable_s261e0.clicked(0x23)) {
                 bool changed = false;
                 for (int i = 0; i < 3; i++) {
                     int* p = (int*)(base + 0x4c + i * 0x6c);
@@ -680,7 +680,7 @@ void Screen_s261e0::tick(float dt)
                     for (int i = 0; i < 3; i++)
                         *(int*)(base + 0x4c + i * 0x6c) = 1;
                 }
-            } else if (g_keytable_s261e0.down(0x1f)) {
+            } else if (g_keytable_s261e0.clicked(0x1f)) {
                 for (int i = 0; i < 3; i++)
                     *(int*)(base + 0x4c + i * 0x6c) = 1;
             } else {
@@ -689,11 +689,11 @@ void Screen_s261e0::tick(float dt)
                         *(int*)(base + 0x4c + i * 0x6c) = 0;
                 }
                 int idx = 0;
-                if (g_keytable_s261e0.down(0x20))
+                if (g_keytable_s261e0.clicked(0x20))
                     idx = 0;
-                else if (g_keytable_s261e0.down(0x21))
+                else if (g_keytable_s261e0.clicked(0x21))
                     idx = 1;
-                else if (g_keytable_s261e0.down(0x22))
+                else if (g_keytable_s261e0.clicked(0x22))
                     idx = 2;
                 *(int*)(base + 0x4c + idx * 0x6c) = 1;
             }
@@ -710,7 +710,7 @@ void Screen_s261e0::tick(float dt)
                 ((LabelSub_s261e0*)base)->make_label(label);
                 const char* fmt = g_strtable_s261e0.lookup(&tstring("ui_str_hear_me"))->c_str();
                 char buf[512];
-                _sprintf(buf, fmt, label, buf);
+                sprintf(buf, fmt, label, buf);
                 g_gui_s261e0.add(tstring(buf), 0xffddee88);
             }
         }
@@ -756,9 +756,9 @@ void Screen_s261e0::tick(float dt)
             int pair[2];
             pair[0] = *(int*)((char*)g_mission_s261e0->f668c + off + 0x18c);
             pair[1] = *(int*)((char*)g_mission_s261e0->f668c + off + 0x1a0);
-            if (f_52b5c0(g_mission_s261e0->local_id, pair)) {
-                g_mission_s261e0->f_528410(f2cc);
-                refresh();
+            if (order_agent(g_mission_s261e0->local_id, pair)) {
+                g_mission_s261e0->release_item(f2cc);
+                update_equipment();
             }
         } else if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 5 && f2d4 != 0) {
             int v = *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a0);
@@ -771,24 +771,24 @@ void Screen_s261e0::tick(float dt)
         } else if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 6 && f2d4 != 0) {
             int idx = *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a0);
             g_game_s261e0->f13af8 = idx;
-            char* obj = *(char**)((char*)g_rec58 + g_a735c4 * 0x60 + 0x58);
+            char* obj = *(char**)((char*)g_mission_templates + (*(int*)((char*)&g_mission_ctx + 0x2c4)) * 0x60 + 0x58);
             ((EmitSub_s261e0*)(obj + *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a4) * 0x68 + 0x4c))
-                ->emit_simple(0x10);
+                ->play(0x10);
         }
 
         if (any_pressed_s261e0(g_keys_73b0, 2)) {
-            g_result = 0;
-            g_store1 = 0;
+            (*(int*)((char*)&g_script + 0x18)) = 0;
+            (*(int*)((char*)&g_script + 0x1c)) = 0;
             int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
             for (int i = 0; i < *slots; i++)
                 ((SoundSlot_s261e0*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x16);
-            if (g_result != 0 || g_store1 != 0)
+            if ((*(int*)((char*)&g_script + 0x18)) != 0 || (*(int*)((char*)&g_script + 0x1c)) != 0)
                 flag13 = 1;
         }
     }
 
-    if (g_no_cam && g_key_a[56] && g_key_a[38] == 0 && g_key_b[38] != 0)
-        f_47ce00((char*)g_mission_s261e0 + 0x6340, g_mission_s261e0->f633c);
+    if ((*(int*)((char*)&g_cfg + 0x18)) && ((int*)((char*)&g_keyboard + 0xc))[56] && ((int*)((char*)&g_keyboard + 0xc))[38] == 0 && ((int*)((char*)&g_keyboard + 0x40c))[38] != 0)
+        light_entities((char*)g_mission_s261e0 + 0x6340, g_mission_s261e0->f633c);
 
     if (f2d8 == 0) {
         b6 = false;
@@ -799,17 +799,17 @@ void Screen_s261e0::tick(float dt)
         b6 = false;
     }
 
-    if (any_pressed_s261e0(g_keys_7388, 2) && g_key_a[56] == 0 && g_key_a[184] == 0) {
-        g_result = 0;
-        g_store1 = 0;
+    if (any_pressed_s261e0(g_keys_7388, 2) && ((int*)((char*)&g_keyboard + 0xc))[56] == 0 && ((int*)((char*)&g_keyboard + 0xc))[184] == 0) {
+        (*(int*)((char*)&g_script + 0x18)) = 0;
+        (*(int*)((char*)&g_script + 0x1c)) = 0;
         ((SoundBank_s261e0*)rec_base_s261e0(g_mission_s261e0->cur_rec))->update_all(-0x15);
-        if (g_result != 0 || g_store1 != 0)
+        if ((*(int*)((char*)&g_script + 0x18)) != 0 || (*(int*)((char*)&g_script + 0x1c)) != 0)
             b6 = false;
     }
 
     if (g_game_s261e0->f1a208 >= 0) {
         int v = g_game_s261e0->f1a208;
-        g_spawn_lo = v;
+        (*(__int64*)((char*)&g_script + 0x8)) = v;
         int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
         for (int i = 0; i < *slots; i++)
             ((SoundSlot_s261e0*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-8);
@@ -818,12 +818,12 @@ void Screen_s261e0::tick(float dt)
 
     // ---- "leave area" / agent selection ------------------------------------------------------------
     if ((g_mission_s261e0->f6528 & 1) == 0) {
-        int flags20 = *(int*)((char*)g_rec58 + g_mission_s261e0->cur_rec * 0x58 + 0x20);
+        int flags20 = *(int*)((char*)g_mission_templates + g_mission_s261e0->cur_rec * 0x58 + 0x20);
         if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 8 &&
             (((flags20 >> 1) & 1) == 0 || g_mission_s261e0->f6524 > 0)) {
             f2dc = 0;
         } else if (((flags20 >> 1) & 1) != 0 && g_mission_s261e0->local_id >= 0 &&
-                   g_keytable_s261e0.down(4) && f2c8 == 8) {
+                   g_keytable_s261e0.clicked(4) && f2c8 == 8) {
             AgentTable_s261e0* table = (AgentTable_s261e0*)((char*)g_mission_s261e0 + 4);
             float best = 10000.0f;
             unsigned id = (unsigned)table->first_used();
@@ -840,7 +840,7 @@ void Screen_s261e0::tick(float dt)
                 }
                 table->next_used(&id);
             }
-            if (g_keytable_s261e0.down(4) && f2c8 == 8) {
+            if (g_keytable_s261e0.clicked(4) && f2c8 == 8) {
                 if (best > 8.0f) {
                     f2dc = -1;
                     g_main_menu_s261e0.setup2(
@@ -848,7 +848,7 @@ void Screen_s261e0::tick(float dt)
                         g_strtable_s261e0.lookup(&tstring("ui_yes")),
                         g_strtable_s261e0.lookup(&tstring("ui_no")),
                         &f2dc);
-                    g_main_menu_s261e0.activate(0);
+                    g_main_menu_s261e0.open(0);
                 } else {
                     g_gui_s261e0.add(*g_strtable_s261e0.lookup(&tstring("ui_cant_retreat_there_are_enemies_nearby")),
                               0xffff3344);
@@ -865,28 +865,28 @@ void Screen_s261e0::tick(float dt)
         g_game_s261e0->fc8 = 0;
         f324 = g_game_s261e0->f13b04;
     }
-    if (f324 >= 0 && g_a5e299c == 0) {
+    if (f324 >= 0 && g_presentation == 0) {
         ((Src_s261e0*)((char*)this + 0x30))->init(f2c, f324);
         if ((flags44 & 1) == 0) {
-            if (g_a17f28 != 0)
-                ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_a17f28 + 0x30))(g_a17f28, 1);
-            g_5d75e0 = 1;
+            if (g_render.dev != 0)
+                ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 1);
+            (*(unsigned char*)((char*)&g_gui + 0x560)) = 1;
         }
     }
-    if (g_a5e299c != 0) {
+    if (g_presentation != 0) {
         ((Src_s261e0*)((char*)this + 0x30))->pick((int*)&val14);
         __int64 d = g_ticks[f48] - f50;
         if ((float)d * g_f54a6d0 > f58) {
-            g_a5e299c = 0;
+            g_presentation = 0;
             if (f34 != 0)
-                op_delete(f34);
+                operator delete(f34);
             f34 = 0;
             f38 = 0;
             f3c = 0;
             ((SrcVtbl_s261e0*)f5c)->v49();
-            if (g_a17f28 != 0)
-                ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_a17f28 + 0x30))(g_a17f28, 0);
-            g_5d75e0 = 0;
+            if (g_render.dev != 0)
+                ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 0);
+            (*(unsigned char*)((char*)&g_gui + 0x560)) = 0;
             f324 = -1;
         }
     }
@@ -898,18 +898,18 @@ void Screen_s261e0::tick(float dt)
             g_w_a739a0_s261e0->f18 = 0xe;
             if (val14 < 0) {
                 g_w_a739a0_s261e0->f4 = 0;
-                g_main_menu_s261e0.choose(8);
+                g_main_menu_s261e0.set_state(8);
             } else {
                 g_w_a739a0_s261e0->f4 = 3;
                 g_w_a739a0_s261e0->f14 = val14;
                 if (g_w_a739a0_s261e0->f14 < 0) {
                     g_w_a739a0_s261e0->f14 = 0;
-                    g_main_menu_s261e0.choose(8);
+                    g_main_menu_s261e0.set_state(8);
                 } else {
                     int lim = g_game_s261e0->f13a04 - 1;
                     if (g_w_a739a0_s261e0->f14 > lim)
                         g_w_a739a0_s261e0->f14 = lim;
-                    g_main_menu_s261e0.choose(8);
+                    g_main_menu_s261e0.set_state(8);
                 }
             }
             goto after;
@@ -925,31 +925,31 @@ void Screen_s261e0::tick(float dt)
             g_w_a739bc_s261e0->f18 = 0xe;
             g_w_a739bc_s261e0->f4 = 0;
             g_w_a739bc_s261e0->f14 = g_game_s261e0->f8c;
-            g_main_menu_s261e0.choose(0xf);
+            g_main_menu_s261e0.set_state(0xf);
             goto after;
         }
 
         {
-            int flags20 = *(int*)((char*)g_rec58 + g_mission_s261e0->cur_rec * 0x58 + 0x20);
+            int flags20 = *(int*)((char*)g_mission_templates + g_mission_s261e0->cur_rec * 0x58 + 0x20);
             if (any_pressed_s261e0(g_keys_73b8, 2) && g_game_s261e0->b18 == 0 &&
                 (((flags20 >> 1) & 1) == 0)) {
                 g_w_a739b0_s261e0->f18 = 0xe;
                 g_w_a739b0_s261e0->f4 = 5;
-                g_main_menu_s261e0.choose(0xc);
+                g_main_menu_s261e0.set_state(0xc);
                 goto after;
             }
         }
 
         if (any_pressed_s261e0(g_keys_73c0, 2) && g_game_s261e0->b18 == 0) {
-            if (g_a181b4 == 0) {
+            if (g_show_quest_notes == 0) {
                 g_w_a739b4_s261e0->f18 = 0xe;
                 g_w_a739b4_s261e0->f4 = 0;
-                g_main_menu_s261e0.choose(0xd);
+                g_main_menu_s261e0.set_state(0xd);
             } else {
                 g_w_a739e8_s261e0->f18 = 0xe;
                 *(int*)((char*)g_game_s261e0 + 0x13b08) = 4;
                 *(int*)((char*)g_game_s261e0 + 0x13b0c) = 0;
-                g_main_menu_s261e0.choose(0x1a);
+                g_main_menu_s261e0.set_state(0x1a);
             }
             goto after;
         }
@@ -957,7 +957,7 @@ void Screen_s261e0::tick(float dt)
         if (any_pressed_s261e0(g_keys_73c8, 2) && g_game_s261e0->b18 == 0) {
             g_w_a739e4_s261e0->f18 = 0xe;
             g_w_a739e4_s261e0->f4 = 0;
-            g_main_menu_s261e0.choose(0x19);
+            g_main_menu_s261e0.set_state(0x19);
             goto after;
         }
 
@@ -965,17 +965,17 @@ void Screen_s261e0::tick(float dt)
             char c = g_mission_s261e0->mode_flag1();
             if (c == 0) {
                 g_w_a73994_s261e0->f18 = 0xe;
-                g_main_menu_s261e0.choose(5);
+                g_main_menu_s261e0.set_state(5);
             } else {
                 g_w_a739c8_s261e0->f18 = 0xe;
-                g_main_menu_s261e0.choose(0x12);
+                g_main_menu_s261e0.set_state(0x12);
             }
             goto after;
         }
 
-        if (g_game_s261e0->b18 == 0 && g_keytable_s261e0.down(0x24)) {
+        if (g_game_s261e0->b18 == 0 && g_keytable_s261e0.clicked(0x24)) {
             if (!g_mission_s261e0->mode_flag1() && g_game_s261e0->b18 == 0) {
-                f_516a70();
+                quick_save_msg();
             } else {
                 g_gui_s261e0.add(*g_strtable_s261e0.lookup(&tstring("ui_cant_quick_save")), 0xffffffff);
             }
@@ -994,7 +994,7 @@ void Screen_s261e0::tick(float dt)
             g_dialogmgr.start(dialog_id, (int)id, -1, 0, 0);
             g_mission_s261e0->f6558 = a->f88;
             g_game_s261e0->f13a08 = a->f88;
-            g_main_menu_s261e0.choose(0x10);
+            g_main_menu_s261e0.set_state(0x10);
             goto after;
         }
 
@@ -1010,13 +1010,13 @@ void Screen_s261e0::tick(float dt)
     g_a73300_s261e0.f_5295a0();
     if (f18 != 100) {
         if (g_game_s261e0->f13ad0 > 0.0f && g_game_s261e0->f13ad4 != 0)
-            g_main_menu_s261e0.choose(7);
+            g_main_menu_s261e0.set_state(7);
         else
-            g_main_menu_s261e0.choose(f18);
+            g_main_menu_s261e0.set_state(f18);
         goto unlock;
     }
-    if (0 < g_a735c4) {
-        int f = *(int*)((char*)g_5e29b0 + g_a735c4 * 0x60 + 0x20);
+    if (0 < (*(int*)((char*)&g_mission_ctx + 0x2c4))) {
+        int f = *(int*)((char*)g_menus + (*(int*)((char*)&g_mission_ctx + 0x2c4)) * 0x60 + 0x20);
         if ((f & 0x10) != 0)
             g_game_s261e0->fa8 |= 1;
     }
@@ -1024,9 +1024,9 @@ void Screen_s261e0::tick(float dt)
 
 after:
 unlock:
-    if (g_lock_enabled) {
-        LeaveCriticalSection(&g_cs);
-        SetEvent(g_event);
+    if (g_mt_inited) {
+        LeaveCriticalSection(&g_mt_cs);
+        SetEvent(g_mt_event);
     }
 }
 
@@ -1115,7 +1115,7 @@ void Mission_s27c90::save_scene_data()
         grids.save(&rec->stream_a);
     }
     rec->stream_b.reset();
-    other.save(&rec->stream_b);
+    other.read(&rec->stream_b);
 }
 
 // @ 0x528000
@@ -1288,9 +1288,9 @@ void ResourceOwner_s27c90::release()
 #undef g_game_s284a0
 #define g_game_s284a0 (*(Game_s284a0**)&g_game)
 #undef g_keys_s284a0
-#define g_keys_s284a0 (*(KeyTable_s284a0*)g_keys)
+#define g_keys_s284a0 (*(KeyTable_s284a0*)g_game_keys)
 #undef g_key_names_s284a0
-#define g_key_names_s284a0 (*(KeyNames_s284a0*)g_key_names)
+#define g_key_names_s284a0 (*(KeyNames_s284a0*)g_keyboard)
 #undef AGENT
 #define AGENT(id) (g_mission_s284a0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 // @ 0x5284a0 ------------------------------------------------------------------------------------------
@@ -1303,15 +1303,15 @@ void ViewCtrl_s284a0::update(float dt)
         if (g_a1712c) return;
         if (g_a17190) return;
         if (g_a1715c) return;
-        if (g_a17124) return;
+        if ((*(int*)((char*)&g_keyboard + 0x5c))) return;
         if (g_game_s284a0->f1a090)
-            dt = g_step;
+            dt = g_step_tbl[0];
     }
-    float k = expf(g_time_scale * 4.0f) * 0.04f;
+    float k = expf(g_options.f10 * 4.0f) * 0.04f;
 
     // ---- aiming at an agent while a melee weapon (or the fists) is out is slower ---------------------
     if (!g_game_s284a0->f1a090) {
-        if (g_5e299c == 0 || (flags44 & 1)) {
+        if (g_presentation == 0 || (flags44 & 1)) {
             if (g_mission_s284a0->selected >= 0) {
                 Agent_s284a0* a = AGENT(g_mission_s284a0->selected);
                 ItemRef_s284a0 w0 = a->slot_pair(0);
@@ -1323,7 +1323,7 @@ void ViewCtrl_s284a0::update(float dt)
                     int t = g_items_s284a0[w0.item].type_flags & 0xff;
                     hand0 = (t == 2 || t == 3 || t == 4);
                 }
-                if (((hand0 && a->f560c == 1 && g_ctl_mode > 0 && a->f100 == a->f55ec) ||
+                if (((hand0 && a->f560c == 1 && g_options.i6c > 0 && a->f100 == a->f55ec) ||
                      (w1.item < 0 && a->f5610 > 0 && g_stick_mode > 0 && a->f100 == a->f5614)) &&
                     a->f118 < 0.6f)
                     k *= 0.1f;
@@ -1333,24 +1333,24 @@ void ViewCtrl_s284a0::update(float dt)
 
     // ---- look input ---------------------------------------------------------------------------------
     float look_x, look_y;
-    if (g_5e299c == 0 || (flags44 & 1)) {
-        look_x = g_analog_x;
-        look_y = g_analog_y;
+    if (g_presentation == 0 || (flags44 & 1)) {
+        look_x = (*(float*)((char*)&g_keyboard + 0x80c));
+        look_y = (*(float*)((char*)&g_keyboard + 0x810));
     } else {
         look_x = 0.0f;
         look_y = 0.0f;
-        if (g_axis_x <= 0.01f)
+        if ((*(float*)((char*)&g_gui + 0x14)) <= 0.01f)
             look_x = dt * -400.0f;
-        else if (g_axis_x >= 0.99f)
+        else if ((*(float*)((char*)&g_gui + 0x14)) >= 0.99f)
             look_x = dt * 400.0f;
-        if (g_axis_y <= 0.01f)
+        if ((*(float*)((char*)&g_gui + 0x18)) <= 0.01f)
             look_y = dt * 400.0f;
-        if (g_axis_y >= 0.74f)
+        if ((*(float*)((char*)&g_gui + 0x18)) >= 0.74f)
             look_y = dt * -400.0f;
     }
 
     // ---- damp the view rates and integrate them into yaw / pitch ------------------------------------
-    if (!g_game_s284a0->f1a090 || g_a17454 != 0) {
+    if (!g_game_s284a0->f1a090 || (*(int*)((char*)&g_keyboard + 0x38c)) != 0) {
         float r = 1.0f - dt * 20.0f;
         if (r < 0.0f)
             r = 0.0f;
@@ -1386,8 +1386,8 @@ void ViewCtrl_s284a0::update(float dt)
         ((MatrixExt_s284a0*)&m)->rotate_fu(&pitch);
 
         a = AGENT(g_mission_s284a0->selected);
-        bool looking = (g_a73798 >= 0 && g_key_down[g_a73798] != 0);
-        if ((g_a7379c < 0 || g_key_down[g_a7379c] == 0) && !looking)
+        bool looking = ((*(int*)((char*)&g_game_keys + 0x68)) >= 0 && ((int*)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x68))] != 0);
+        if (((*(int*)((char*)&g_game_keys + 0x6c)) < 0 || ((int*)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x6c))] == 0) && !looking)
             a->dir55d8 = m.f;
     }
 
@@ -1403,67 +1403,67 @@ void ViewCtrl_s284a0::update(float dt)
     if (!g_game_s284a0->f1a090) {
         if (g_a1717c == 0)
             a->in_flags = 0x200000;
-        if (g_keys_s284a0.has_free_origin(5))
+        if (g_keys_s284a0.clicked(5))
             a->in_flags |= 0x100000;
 
         if (a->mount_id < 0) {
-            if (g_keys_s284a0.has_origin(0))
+            if (g_keys_s284a0.is_down(0))
                 a->in_flags |= 1;
-            else if (g_keys_s284a0.has_origin(1))
+            else if (g_keys_s284a0.is_down(1))
                 a->in_flags |= 2;
-            if (g_keys_s284a0.has_origin(3))
+            if (g_keys_s284a0.is_down(3))
                 a->in_flags |= 4;
-            else if (g_keys_s284a0.has_origin(2))
+            else if (g_keys_s284a0.is_down(2))
                 a->in_flags |= 8;
-            if (g_keys_s284a0.has_free_origin(4) && mode == 2 && aim_valid != 0) {
+            if (g_keys_s284a0.clicked(4) && mode == 2 && aim_valid != 0) {
                 a->in_flags |= 0x20000;
                 a->target_id = target;
             }
         } else {
-            if (g_keys_s284a0.has_free_origin(0))
+            if (g_keys_s284a0.clicked(0))
                 a->in_flags |= 0x80000;
-            if (g_keys_s284a0.has_origin(0))
+            if (g_keys_s284a0.is_down(0))
                 a->in_flags |= 0x10;
-            else if (g_keys_s284a0.has_origin(1))
+            else if (g_keys_s284a0.is_down(1))
                 a->in_flags |= 0x20;
-            if (g_keys_s284a0.has_origin(3))
+            if (g_keys_s284a0.is_down(3))
                 a->in_flags |= 0x40;
-            else if (g_keys_s284a0.has_origin(2))
+            else if (g_keys_s284a0.is_down(2))
                 a->in_flags |= 0x80;
-            if (g_keys_s284a0.has_free_origin(4) && mode == 3)
+            if (g_keys_s284a0.clicked(4) && mode == 3)
                 a->in_flags |= 0x10000;
-            if (g_key_names_s284a0.bound(0x24) && (g_a17148 != 0 || g_a17348 != 0))
+            if (g_key_names_s284a0.is_ready(0x24) && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0))
                 a->in_flags |= 0x40000;
         }
 
-        if (g_5e299c == 0 || (flags44 & 1)) {
-            if (g_keys_s284a0.has_origin(6))
+        if (g_presentation == 0 || (flags44 & 1)) {
+            if (g_keys_s284a0.is_down(6))
                 a->in_flags |= 0x100;
-            if (g_keys_s284a0.has_free_origin(6))
+            if (g_keys_s284a0.clicked(6))
                 a->in_flags |= 0x400;
-            if (g_keys_s284a0.has_origin(7))
+            if (g_keys_s284a0.is_down(7))
                 a->in_flags |= 0x200;
         }
 
-        if (g_keys_s284a0.has_free_origin(8)) {
+        if (g_keys_s284a0.clicked(8)) {
             a->cycle_slot(0);
-        } else if (g_keys_s284a0.has_free_origin(9)) {
+        } else if (g_keys_s284a0.clicked(9)) {
             a->cycle_slot(1);
-        } else if (g_keys_s284a0.has_free_origin(10)) {
+        } else if (g_keys_s284a0.clicked(10)) {
             a->wield_a = -1;
             a->on_wield_reset();
         }
     }
 
-    if (g_keys_s284a0.has_free_origin(0xe)) {
+    if (g_keys_s284a0.clicked(0xe)) {
         g_game_s284a0->f139e4 = (g_game_s284a0->f139e4 == 0);
-        update_weapon_display();
+        update_equipment();
     }
     AGENT(g_mission_s284a0->selected)->f55d4 = (g_game_s284a0->f139e4 != 0);
 
     // ---- field of view ------------------------------------------------------------------------------
-    bool zoom_key = (g_a73790 >= 0 && g_key_down[g_a73790] != 0);
-    if ((g_a73794 >= 0 && g_key_down[g_a73794] != 0) || zoom_key)
+    bool zoom_key = (g_a73790 >= 0 && ((int*)((char*)&g_keyboard + 0xc))[g_a73790] != 0);
+    if ((g_a73794 >= 0 && ((int*)((char*)&g_keyboard + 0xc))[g_a73794] != 0) || zoom_key)
         fov = fov - dt * 350.0f;
     else
         fov = fov + dt * 350.0f;
@@ -1475,19 +1475,19 @@ void ViewCtrl_s284a0::update(float dt)
         fov = limit;
 
     // ---- the "use / attack" keys walk the agent table and hit the agent under the crosshair ---------
-    if (g_5a9fbc != 0 && (g_a17148 != 0 || g_a17348 != 0) && g_a171d0 != 0 && g_a175d0 == 0) {
+    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) && g_a171d0 != 0 && g_a175d0 == 0) {
         Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
         int old = t->f7c;
         t->f7c = (old == 2) ? 1 : 2;
     }
 
-    if (g_5a9fbc != 0 && g_a17148 != 0 && g_key_names_s284a0.bound(0x3e)) {
+    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_key_names_s284a0.is_ready(0x3e)) {
         AgentTable_s284a0* t = &g_mission_s284a0->agents;
         bool done = false;
         unsigned i = t->first_used();
         while (i < (unsigned)t->count && !done) {
             Agent_s284a0* o = AGENT(i);
-            if (o->f14 == 1 && o->f10 == 0 && AGENT(g_mission_s284a0->selected)->can_attack(o)) {
+            if (o->f14 == 1 && o->f10 == 0 && AGENT(g_mission_s284a0->selected)->is_enemy(o)) {
                 Blow_s284a0 b;
                 b.f48 = 2;
                 b.f38 = 0;
@@ -1502,14 +1502,14 @@ void ViewCtrl_s284a0::update(float dt)
         }
     }
 
-    if (g_5a9fbc != 0 && g_a17148 != 0 && g_a171d4 != 0 && g_a175d4 == 0) {
+    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171d4 != 0 && g_a175d4 == 0) {
         AgentTable_s284a0* t = &g_mission_s284a0->agents;
         bool done = false;
         unsigned i = t->first_used();
         while (i < (unsigned)t->count && !done) {
             Agent_s284a0* o = AGENT(i);
             if (i != (unsigned)g_mission_s284a0->selected && o->f14 == 1 && o->f10 == 0 &&
-                AGENT(g_mission_s284a0->selected)->can_attack2(o)) {
+                AGENT(g_mission_s284a0->selected)->is_friend(o)) {
                 Blow_s284a0 b;
                 b.f48 = 2;
                 b.f38 = 0;
@@ -1524,7 +1524,7 @@ void ViewCtrl_s284a0::update(float dt)
         }
     }
 
-    if (g_5a9fbc != 0 && g_a17148 != 0 && g_a171c8 != 0 && g_a175c8 == 0) {
+    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171c8 != 0 && g_a175c8 == 0) {
         Blow_s284a0 b;
         b.f48 = 2;
         b.f38 = 0;
@@ -1534,8 +1534,8 @@ void ViewCtrl_s284a0::update(float dt)
         AGENT(g_mission_s284a0->selected)->note_blow(&b);
     }
 
-    if (g_a17148 != 0 || g_a17348 != 0) {
-        if (g_a17160 != 0 && g_a17560 == 0 && g_5a9fbc != 0) {
+    if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) {
+        if (g_a17160 != 0 && g_a17560 == 0 && (*(int*)((char*)&g_cfg + 0x24)) != 0) {
             Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
             t->f5724 = t->f5720;
         }
@@ -1544,7 +1544,7 @@ void ViewCtrl_s284a0::update(float dt)
 
 // ======================================================= slice s00529130: functions
 #undef g_scene_s29130
-#define g_scene_s29130 (*(Mission_s29130**)&g_scene)
+#define g_scene_s29130 (*(Mission_s29130**)&(*(void**)((char*)&g_mission + 0x0)))
 #undef g_game_s29130
 #define g_game_s29130 (*(GameData_s29130**)&g_game)
 #undef g_items_s29130
@@ -1593,15 +1593,15 @@ void MissionHud_s29130::update_marks()
     float target[7] = {0, 0, 0, 0, 0, 0, 0};
 
     ItemRef_s29130 pair = a->slot_pair(0);
-    float aim = blend_target(a->blk60, &a->facing);
+    float aim = signed_angle(a->blk60, &a->facing);
 
     if (pair.item >= 0) {
         bool other = false;
-        if (g_sel0 >= 0 && g_objs[g_sel0]) other = true;
-        if ((g_sel1 < 0 || g_objs[g_sel1] == 0) && !other) {
+        if ((*(int*)((char*)&g_game_keys + 0x68)) >= 0 && ((void**)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x68))]) other = true;
+        if (((*(int*)((char*)&g_game_keys + 0x6c)) < 0 || ((void**)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x6c))] == 0) && !other) {
             int type = g_items_s29130[pair.item].type & 0xff;
             if ((type == 8 || type == 9 || type == 10 || type == 16 || type == 17) && g_flag5aa06c) {
-                if (!cur_agent_s29130()->charged_0x48()) {
+                if (!cur_agent_s29130()->f100_is_0x48_and_charged()) {
                     Agent_s29130* a2 = cur_agent_s29130();
                     bool in_range = true;
                     if (a2->mount != -1) {
@@ -1615,8 +1615,8 @@ void MissionHud_s29130::update_marks()
                     }
                 }
             } else if (type == 2 || type == 3 || type == 4) {
-                if (g_flag5aa070 || !g_flag5aa074) {
-                    int t = a->find_target();
+                if (g_flag5aa070 || !g_options.i6c) {
+                    int t = a->pick_front();
                     if (t >= 0) {
                         int dir = a->pick_attack_dir(t);
                         if (dir >= 0 && dir < 4) {
@@ -1636,7 +1636,7 @@ void MissionHud_s29130::update_marks()
     }
 
     for (int i = 0; i < 7; i++) {
-        float step = g_step01 * (i < 3 ? 0.5f : 2.5f);
+        float step = g_step_tbl[0] * (i < 3 ? 0.5f : 2.5f);
         if (target[i] > color[i]) {
             color[i] += step * g_1p2;
             if (color[i] > target[i]) color[i] = target[i];
@@ -1662,8 +1662,8 @@ void MissionHud_s29130::update_marks()
 // @ 0x5295a0
 void MissionHud_s29130::tick()
 {
-    g_game_s29130->fn_51f800();
-    if (f2c8 != 0 || (f154 >= 0 && (g_party_tbl[f154 * 0x58 + 0x20] & 0x10))) {
+    g_game_s29130->more_start();
+    if (f2c8 != 0 || (f154 >= 0 && (((char*)g_mission_templates)[f154 * 0x58 + 0x20] & 0x10))) {
         refresh_markers();
     }
 }
@@ -1709,7 +1709,7 @@ void MissionHud_s29130::reset_party_heroes(int party_id)
 
 // ======================================================= slice s00529840: functions
 #undef g_scene_s29840
-#define g_scene_s29840 (*(Mission_s29840**)&g_scene)
+#define g_scene_s29840 (*(Mission_s29840**)&(*(void**)((char*)&g_mission + 0x0)))
 #undef g_game_s29840
 #define g_game_s29840 (*(GameData_s29840**)&g_game)
 // @ 0x529840
@@ -1730,13 +1730,13 @@ void Mission_s29840::fn_529840(int)
                         xp = xp * g_exp_rate;
                     }
                     int v = (int)xp;
-                    party_mgr_s29840()->get(a->f1bc)->clear_exp_share(a->f1c0, v);
+                    party_mgr_s29840()->get(a->f1bc)->add_xp_to_stack(a->f1c0, v);
                 }
                 t = &troop_tbl_s29840()[a->troop];
                 if (t->flags & 0x10) {
                     t->f_a0 = a->f5724;
                     Party_s29840* p = party_mgr_s29840()->at(party_mgr_s29840()->index_of(a->f1bc));
-                    int skill = p->skill(9);
+                    int skill = p->skill_level(9);
                     float v = a->f571c - a->f5724;
                     if (v < 0.0f) v = 0.0f;
                     troop_tbl_s29840()[a->troop].f_a0 += (skill * 0.05f + 0.1f) * v;
@@ -1753,7 +1753,7 @@ void Mission_s29840::fn_529840(int)
                     t->f_a0 = a->f5724;
                     if (a->troop == g_game_s29840->cur_troop) {
                         Party_s29840* p = party_mgr_s29840()->at(party_mgr_s29840()->index_of(g_game_s29840->cur_party));
-                        int skill = p->skill(9);
+                        int skill = p->skill_level(9);
                         float v = a->f571c - a->f5724;
                         if (v < 0.0f) v = 0.0f;
                         troop_tbl_s29840()[a->troop].f_a0 += (skill * 0.05f + 0.1f) * v;
@@ -1852,15 +1852,15 @@ void Mission_s29840::fn_529d80()
 #undef g_game_s29ec0
 #define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
 #undef g_prop_kinds_s29ec0
-#define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_prop_kinds)
+#define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_propkinds)
 #undef g_mission_s29ec0
 #define g_mission_s29ec0 (*(Mission_s29ec0**)&g_mission)
 #undef g_mapobjs_s29ec0
-#define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_mapobjs)
+#define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
 #undef g_areas_s29ec0
-#define g_areas_s29ec0 (*(Area_s29ec0**)&g_areas)
+#define g_areas_s29ec0 (*(Area_s29ec0**)&g_mission_templates)
 #undef g_panel_s29ec0
-#define g_panel_s29ec0 (*(hud_panel_s29ec0**)&g_panel)
+#define g_panel_s29ec0 (*(hud_panel_s29ec0**)&(*(void**)((char*)&g_gui + 0x568)))
 // @ 0x529ec0
 void Screen_s29ec0::f_529ec0()
 {
@@ -1874,7 +1874,7 @@ void Screen_s29ec0::f_529ec0()
     float second = 1e9f;
 
     // ---- phase A: cast the thin probe 10.5 m ahead and find the nearest face hit ----------------------
-    float eye_z = me->height() + pos.z;
+    float eye_z = me->speed_scale() + pos.z;
     vector4 front(pos.x + me->facing.x * 10.5f,
                   pos.y + me->facing.y * 10.5f,
                   eye_z + me->facing.z * 10.5f);
@@ -1887,7 +1887,7 @@ void Screen_s29ec0::f_529ec0()
     capsule_s29ec0 cap(1e-4f, &back, &front);
     matrix ident;
     identity_pos(&ident);
-    cap.compute_bounds(&ident);
+    cap.transform(&ident);
 
     shape_base_s29ec0* found[0x2000];
     int count = 0;
@@ -1919,7 +1919,7 @@ void Screen_s29ec0::f_529ec0()
     cap.radius = 0.1f;
     best += 1.0f;
 
-    m->scene->collect_entities(9, (SceneEntity_s29ec0**)found, &count);
+    m->scene->collect(9, (SceneEntity_s29ec0**)found, &count);
     for (int i = 0; i < count; i++) {
         SceneEntity_s29ec0* e = (SceneEntity_s29ec0*)found[i];
         if (!e->shape)
@@ -1978,7 +1978,7 @@ void Screen_s29ec0::f_529ec0()
                     keep = true;
                 }
             } else if (p->destroyed == 5) {
-                if (g_mapobj_idx <= 0 || p->obj < 0 || p->obj >= g_mapobjs_s29ec0[g_mapobj_idx].count) {
+                if ((*(int*)((char*)&g_mission_ctx + 0x2c4)) <= 0 || p->obj < 0 || p->obj >= g_mapobjs_s29ec0[(*(int*)((char*)&g_mission_ctx + 0x2c4))].count) {
                     keep = true;
                 } else {
                     mode = 6;
@@ -2075,15 +2075,15 @@ no_selection:
 
     if (g_panel_s29ec0)
         g_panel_s29ec0->reset(1);
-    g_panel_mode = -1;
-    g_panel_color = 0xff101010;
+    (*(int*)((char*)&g_gui + 0x16e0)) = -1;
+    (*(int*)((char*)&g_gui + 0x16e4)) = 0xff101010;
     for (int i = 0; i < 80; i++)
-        g_hud_lines[i].assign("");
-    g_hud_line_count = 0;
-    g_hud_line_dy = -0.03f;
-    g_hud_line_x = 0;
+        ((tstring*)((char*)&g_gui + 0x7d0))[i].assign("");
+    (*(int*)((char*)&g_gui + 0xfa4)) = 0;
+    (*(float*)((char*)&g_gui + 0xfa8)) = -0.03f;
+    (*(int*)((char*)&g_gui + 0xfa0)) = 0;
     g_panel_s29ec0 = 0;
-    g_hud_flag = 0;
+    (*(int*)((char*)&g_gui + 0x1700)) = 0;
     float view[2];
     view[0] = 0.5f;
     view[1] = 0.23f;
@@ -2159,7 +2159,7 @@ no_selection:
         }
     } else if (mode == 6) {
         SceneProp_s29ec0* p = &m->props[target];
-        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[g_mapobj_idx].objs + p->obj * 0x68);
+        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[(*(int*)((char*)&g_mission_ctx + 0x2c4))].objs + p->obj * 0x68);
         name = *o->mesh_ptr();
         if (ok) {
             tstring k("ui_go");
@@ -2226,14 +2226,14 @@ void Screen_s2ae70::init_order_markers()
         f6734->res = f6730->res;
         f672c->res = f6730->res;
 
-        f6738->add_mesh(f6730);
-        f6738->add_mesh(f6734);
-        f6738->add_mesh(f672c);
+        f6738->add_extra(f6730);
+        f6738->add_extra(f6734);
+        f6738->add_extra(f672c);
 
         Shape_s2ae70* s = &shape;
-        s->build_tri(f672c);
-        s->build_ribbon(f6734);
-        s->build_tetra(f6730);
+        s->polygon_to_mesh(f672c);
+        s->build_ribbons(f6734);
+        s->build_spikes(f6730);
 
         scale = 100000.0f;
         f6738->set_scale(&scale);
@@ -2248,7 +2248,7 @@ void Screen_s2ae70::init_order_markers()
             tstring name("vertex_color_blend_mat");
             f673c->res = g_resmgr_s2ae70.get_material(&name);
         }
-        f6740->add_mesh(f673c);
+        f6740->add_extra(f673c);
 
         rgl::vector4 p;
         p.x = -1000.0f; p.y = -1000.0f; p.z = f654c;
@@ -2297,7 +2297,7 @@ void Screen_s2ae70::order_tick()
     int kind = a->kind;
     if (kind < 0 || kind >= 8)
         kind = 7;
-    if (g_a5a9fbc && g_a1717c && g_a17148)
+    if ((*(int*)((char*)&g_cfg + 0x24)) && g_a1717c && (*(int*)((char*)&g_keyboard + 0x80)))
         kind = 1;
 
     m->order(kind, f2a0);
@@ -2373,7 +2373,7 @@ void Screen_s2ae70::draw_order_menu()
 #undef g_mission_s2b5c0
 #define g_mission_s2b5c0 (*(Mission_s2b5c0**)&g_mission)
 #undef g_editor_s2b5c0
-#define g_editor_s2b5c0 (*(Editor_s2b5c0*)g_editor)
+#define g_editor_s2b5c0 (*(Editor_s2b5c0*)g_app_obj)
 // @ 0x52b5c0
 bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
 {
@@ -2482,7 +2482,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
     else if (k == 7)
         agent->f230 = chosen;
 
-    agent_refresh(agent);
+    refresh_agent(agent);
     agent->on_wield_reset();
     return true;
 }
@@ -2527,7 +2527,7 @@ void Mission_s2b5c0::update_ui()
         g_game_s2b5c0->color = v;
     }
     g_game_s2b5c0->f1a0ac = 0;
-    g_editor_s2b5c0.update_option_checks();
+    g_editor_s2b5c0.update_checks();
     if (g_game_s2b5c0->f1a098 == 0) {
         g_editor_s2b5c0.refresh();
         goto L_bb21;
@@ -2548,11 +2548,11 @@ L_bb21:
 
 L_bbc5:
     if (g_game_s2b5c0->game_mode == 0 && g_game_s2b5c0->f1a098 == 0) {
-        long long now = g_timestamps[this->f2b8];
+        long long now = g_ticks[this->f2b8];
         long long prev = this->f2c0;
         if ((float)(now - prev) * 1e-05f > 0.05f) {
             this->pick_entity();
-            this->f2c0 = g_timestamps[this->f2b8];
+            this->f2c0 = g_ticks[this->f2b8];
         }
     }
     if (this->f2cc == -1) {
@@ -2605,7 +2605,7 @@ void Mission_s2b5c0::update_ui_continue()
         g_game_s2b5c0->color = v;
     }
     g_game_s2b5c0->f1a0ac = 0;
-    g_editor_s2b5c0.update_option_checks();
+    g_editor_s2b5c0.update_checks();
     if (g_game_s2b5c0->f1a098 == 0) {
         g_editor_s2b5c0.refresh();
         goto L_bb21;
@@ -2626,11 +2626,11 @@ L_bb21:
 
 L_bbc5:
     if (g_game_s2b5c0->game_mode == 0 && g_game_s2b5c0->f1a098 == 0) {
-        long long now = g_timestamps[this->f2b8];
+        long long now = g_ticks[this->f2b8];
         long long prev = this->f2c0;
         if ((float)(now - prev) * 1e-05f > 0.05f) {
             this->pick_entity();
-            this->f2c0 = g_timestamps[this->f2b8];
+            this->f2c0 = g_ticks[this->f2b8];
         }
     }
     if (this->f2cc == -1) {
@@ -2656,10 +2656,10 @@ void Mission_s2b5c0::update_cursor()
     // union reproduces both the byte store and the dword load.
     union { bool b; int i; } f;
 
-    if (g_a17458 == 0 && g_a1745c == 0)
+    if ((*(int*)((char*)&g_keyboard + 0x390)) == 0 && g_a1745c == 0)
         goto L_bd6f;
 
-    if (g_a178d8 != 0.0f || g_a178d4 != 0.0f) {
+    if ((*(float*)((char*)&g_keyboard + 0x810)) != 0.0f || (*(float*)((char*)&g_keyboard + 0x80c)) != 0.0f) {
         this->find_position(&ok, &pos);
         f.b = (g_a1745c != 0);
         if (ok) {
@@ -2676,11 +2676,11 @@ void Mission_s2b5c0::update_cursor()
         }
     }
 
-    if (g_a17458 != 0)
+    if ((*(int*)((char*)&g_keyboard + 0x390)) != 0)
         goto L_bd78;
 
 L_bd6f:
-    if (g_a17858 != 0)
+    if ((*(int*)((char*)&g_keyboard + 0x790)) != 0)
         goto L_bd8a;
 L_bd78:
     if (g_a1745c != 0)
@@ -2689,7 +2689,7 @@ L_bd78:
         return;
 L_bd8a:
     if (this->f2f0 != 0) {
-        g_terrain_s2b5c0.reset();
+        g_terrain_s2b5c0.conv_build_scene();
         this->f2f0 = 0;
     }
 }
@@ -2820,15 +2820,15 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
                     } while (j <= this->f845d984);
                 }
                 if (found)
-                    this->gen_object(objs, i);
+                    this->load_layer(objs, i);
                 i++;
                 rowbase += 5;
             } while (i < objs[0] - 2);
         }
     } else if (m == 1) {
-        this->gen_object(objs, objs[1]);
+        this->load_layer(objs, objs[1]);
     } else if (m == 2) {
-        this->gen_object(objs, objs[2]);
+        this->load_layer(objs, objs[2]);
     }
 
     char* rec = (char*)this->f_c3b0dc;
@@ -2844,13 +2844,13 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
                     for (int layer = 0; layer < 0xf; layer++) {
                         if (this->f845e030[by + (bx + layer * 5) * 5] != 0) {
                             int blend = -1;
-                            if (g_5e28fc != 0 && this->f60 != 0) {
+                            if (g_use_shaders != 0 && this->f60 != 0) {
                                 if (layer == 1)
                                     blend = 2;
                                 else if (layer == 2)
                                     continue;
                             }
-                            this->build_chunk(layer, blend, bx, by, h);
+                            this->emit_particle(layer, blend, bx, by, h);
                         }
                     }
                 }
@@ -2927,16 +2927,16 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
 
             if (any) {
                 if (E->v == 0) {
-                    E->v = (float*)mb_new_array(0xac440);
-                    E->zero();
+                    E->v = (float*)operator new[](0xac440);
+                    E->clear();
                 }
                 E->v[ci] = 1.0f;
             } else {
                 if (*fB == 0) goto done;
                 if (E->v == 0) {
                     if (!(v > 0.0f)) goto decayed;
-                    E->v = (float*)mb_new_array(0xac440);
-                    E->zero();
+                    E->v = (float*)operator new[](0xac440);
+                    E->clear();
                 }
                 E->v[ci] = v;
             }
@@ -2952,8 +2952,8 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
                             else if (nv > old) nv = old;
                             if (e[i].v == 0) {
                                 if (!(nv > 0.0f)) continue;
-                                e[i].v = (float*)mb_new_array(0xac440);
-                                e[i].zero();
+                                e[i].v = (float*)operator new[](0xac440);
+                                e[i].clear();
                             }
                             e[i].v[ci] = nv;
                         }
@@ -3029,8 +3029,8 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
             }
             if (E->v == 0) {
                 if (!(v > 0.0f)) goto done;
-                E->v = (float*)mb_new_array(0xac440);
-                E->zero();
+                E->v = (float*)operator new[](0xac440);
+                E->clear();
             }
             E->v[ci] = v;
         } else if (*op == 2) {
@@ -3059,8 +3059,8 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
                 }
                 if (e[i].v == 0) {
                     if (!(v > 0.0f)) continue;
-                    e[i].v = (float*)mb_new_array(0xac440);
-                    e[i].zero();
+                    e[i].v = (float*)operator new[](0xac440);
+                    e[i].clear();
                 }
                 e[i].v[ci] = v;
             }
@@ -3073,8 +3073,8 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
             if (nv < 0.0f) nv = 0.0f;
             if (E->v == 0) {
                 if (!(nv > 0.0f)) goto done;
-                E->v = (float*)mb_new_array(0xac440);
-                E->zero();
+                E->v = (float*)operator new[](0xac440);
+                E->clear();
             }
             E->v[ci] = nv;
         } else if (*op == 2) {
@@ -3130,7 +3130,7 @@ void Elem_s2ce00::put(int* ix, int* iy, int* value)
     if (v == 0) {
         if (*value == -1)
             return;
-        v = (float*)alloc_arr_535482(0xac440);
+        v = (float*)operator new[](0xac440);
         for (int x = 0; x < 0x1a4; x++)
             for (int y = 0; y < 0x1a4; y++)
                 ((int*)v)[x * 0x1a4 + y] = -1;

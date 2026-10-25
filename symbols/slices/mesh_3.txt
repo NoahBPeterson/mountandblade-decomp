@@ -55,3 +55,7 @@
 005302f0 build_mesh_name  # choose the mesh list for the selected object kind and look it up in resmgr (0x41b960)
 005302f0 0x43f0a0  # std::vector<rgl::mesh*>::operator= (inline copy; the original calls the out-of-line ICF'd helper)
 08ee3c48 ?g_editor_dialog@@3PADA  # map-editor dialog singleton, raw byte-array declaration: the object 0x52f250 calls update_objects 0x4c7e20 and refresh 0x4c77c0 on
+08ee3c48 ?g_app_obj@@3PADA  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+005e29e0 ?g_propkind_count@@3HA  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+005e29dc ?g_propkinds@@3PAUPropKind@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+005e28f8 ?g_ptypes@@3PAUptype@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)

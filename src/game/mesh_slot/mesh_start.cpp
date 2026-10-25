@@ -76,7 +76,7 @@ struct Entity : Raw {                                        // scene entity (vt
     virtual void v17(); virtual void v18(); virtual void v19(); virtual void v20(); virtual void v21();
     virtual void v22(); virtual void v23(); virtual void v24();
     virtual void v25(Emit* e);
-    void add_mesh(Mesh* m);                                  // 0x442110
+    void add_extra(Mesh* m);                                  // 0x442110
 };
 struct Streamer {                                            // level sub-object with a vtable (+0x414, +0x444)
     virtual void v0();
@@ -102,7 +102,7 @@ struct PropObj {                                             // object at prop +
 #include "../terrain_desc.h"
 struct terrain_obj {                                         // global at 0xa76630 (sky/terrain generator)
     unsigned s0, s1, s2, s3, s4;
-    void f4658c0(void* spec);                                // 0x4658c0
+    void parse(void* spec);                                // 0x4658c0
     void generate(World* w, void* desc, char flag);          // 0x481d10
     int count_low_quads();                                   // 0x467530
     void emit_by_type(int idx, const matrix* m, const vector4* p, int what);   // 0x466d90
@@ -111,12 +111,12 @@ struct terrain_obj {                                         // global at 0xa766
 };
 extern terrain_obj g_terrain;                                // 0xa76630
 struct Psys {
-    void f4711e0(World* w);                                  // 0x4711e0
-    void f468c20(BodyRec* b);                                   // 0x468c20
-    void f463cc0();                                          // 0x463cc0
-    void reset();                                            // 0x47fef0
+    void attach_camera(World* w);                                  // 0x4711e0
+    void extend(BodyRec* b);                                   // 0x468c20
+    void fit_bounds();                                          // 0x463cc0
+    void render();                                            // 0x47fef0
 };
-extern Psys g_psys;                                          // 0xa70248
+extern Psys g_shadow_map;                                          // 0xa70248
 struct ResMgr {
     Mesh* get_object(const tstring& name);                   // 0x419540
     Mesh* get_object(void* name);
@@ -134,10 +134,10 @@ struct SndBank {                                             // at mode record +
 };
 #include "../mode_rec.h"
 
-struct SndRec : Raw {                                        // 0x4c bytes, array g_snd
+struct SndRec : Raw {                                        // 0x4c bytes, array g_env_rows
     char b[0x4c];
 };
-#include "../prop_kind.h"                                    // PropKind (g_map_points records, 0x78 bytes; shared with terrain_b)
+#include "../prop_kind.h"                                    // PropKind (g_propkinds records, 0x78 bytes; shared with terrain_b)
 
 #include "../../include/party.h"
 
@@ -164,7 +164,7 @@ extern log_stream g_log;                                     // 0x5a9f60
 extern vector4 g_emit_pos[2];                                // 0x8eb235c
 
 struct SceneObjRec : Raw { char b[0x88]; };
-struct SceneObjs { char pad0[0x14]; SceneObjRec* first; SceneObjRec* last; };    // g_scene +0xb0
+struct SceneObjs { char pad0[0x14]; SceneObjRec* first; SceneObjRec* last; };    // g_level +0xb0
 struct Scene { char pad0[0xb0]; SceneObjs* objs; };
 
 struct SceneSlot {                                                // 0x130 bytes, 64 at Mission +0x670
@@ -182,24 +182,20 @@ struct SceneSlot {                                                // 0x130 bytes
 // ---------------------------------------------------------------------------
 // Globals
 // ---------------------------------------------------------------------------
-extern __int64    g_time[];       // 0x5e2948  tick table (8-byte entries)
-extern ModeRec*   g_modes;        // 0x5e2a00  mode table (0x58-byte records)
+#include "../../include/fx.h"
+extern ModeRec*   g_mission_templates;        // 0x5e2a00  mode table (0x58-byte records)
 static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)((char*)m + 0x4c); }   // the sound bank at mode record +0x4c
-extern SndRec*    g_snd;          // 0x5e28f4  sound slot records (0x4c bytes)
+extern SndRec*    g_env_rows;          // 0x5e28f4  sound slot records (0x4c bytes)
 extern int        g_snd_count;    // 0x5e29ec
-extern tstring*   g_map;          // 0x5e28f8  ground-spec names
-extern int        g_map_count;    // 0x5e29e8
-extern PropKind*  g_map_points;   // 0x5e29dc  prop kind records (0x78 bytes)
-extern int        g_dinput_enabled;   // 0x5e28fc
-extern __int64    g_spawn;        // 0xa70448
-extern Scene*     g_scene;        // 0xa732b4
-extern int        g_env_on;       // 0x5aa028
-extern int        g_no_cam;       // 0x5a9fb0
-extern unsigned   g_mask_col;     // 0x5a8f60
-extern unsigned   g_mask_cloud;   // 0x5a8e88
-extern unsigned   g_mask_flag;    // 0x5a8e70
-extern unsigned   g_mask_amt;     // 0x5a8ea0
-extern unsigned   g_mask_bits;    // 0x5a8eb8
+extern tstring*   g_ptypes;          // 0x5e28f8  ground-spec names
+extern int        g_ptype_count;    // 0x5e29e8
+#include "../prop_kind.h"
+extern int        g_use_shaders;   // 0x5e28fc
+extern char g_script[]; // 0xa70440
+extern Scene*     g_level;        // 0xa732b4
+extern char g_options[]; // 0x5aa008
+extern char g_cfg[]; // 0x5a9f98
+extern char g_bit[]; // 0x5a8e68
 extern unsigned   g_rand_seed;    // 0x5d7078
 
 #include "../mission.h"
@@ -271,14 +267,14 @@ void Mission::start_setup()
 
     WL_MARK(4);
     reset();
-    at<__int64>(0x62f0) = g_time[at<int>(0x62e8)];
-    at<__int64>(0x6300) = g_time[at<int>(0x62f8)];
-    at<__int64>(0x6310) = g_time[at<int>(0x6308)];
-    at<__int64>(0x6320) = g_time[at<int>(0x6318)];
+    at<__int64>(0x62f0) = g_ticks[at<int>(0x62e8)];
+    at<__int64>(0x6300) = g_ticks[at<int>(0x62f8)];
+    at<__int64>(0x6310) = g_ticks[at<int>(0x6308)];
+    at<__int64>(0x6320) = g_ticks[at<int>(0x6318)];
     ((log_base&)g_log).w_cstr("begin_setup");
     g_phys.reset();
 
-    ModeRec* mrec = (ModeRec*)((char*)g_modes + at<int>(0x5df0) * 0x58);
+    ModeRec* mrec = (ModeRec*)((char*)g_mission_templates + at<int>(0x5df0) * 0x58);
     LevelRaw* lrec = (LevelRaw*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494);
     at<int>(0x6550) = 0;
     bank_of(mrec)->randomize();
@@ -298,8 +294,8 @@ void Mission::start_setup()
     temp[12] = 0.0f; temp[13] = 0.0f; temp[14] = 0.0f; temp[15] = 0.0f;
     u = *(vector4*)&party_rec(pm, pid)->pos;
 
-    if (g_scene != 0) {
-        for (unsigned p = (unsigned)g_scene->objs->first; p < (unsigned)g_scene->objs->last; p += 0x88) {
+    if (g_level != 0) {
+        for (unsigned p = (unsigned)g_level->objs->first; p < (unsigned)g_level->objs->last; p += 0x88) {
             float dx = *(float*)(p + 0x74) - u.x;
             float dy = *(float*)(p + 0x78) - u.y;
             float d2 = dy * dy + dx * dx;
@@ -320,7 +316,7 @@ void Mission::start_setup()
 
     WL_MARK(5);
     // ---- day time, anchor blend, weather ---------------------------------------------------
-    at<float>(0x65e8) = (float)fmod((double)(g_time[1] * 1e-5f), 24.0);
+    at<float>(0x65e8) = (float)fmod((double)(g_ticks[1] * 1e-5f), 24.0);
     g_game->blend(&u.x, pa->pos.x, pa->pos.y);
     WL_MARK(0xc);
 
@@ -332,12 +328,12 @@ void Mission::start_setup()
 
     in.x = (float)RAWAT(int, g_game, 4) * 0.1f;
     in.z = 0.0f;
-    in.y = g_time[1] * 1e-5f;
+    in.y = g_ticks[1] * 1e-5f;
     noise_fractal(96.0f, 0.7f, 4, 0, &in.x, &out.x);
     float f14 = (out.z + out.y + out.x) * 5.0f;
     v.z = 700.0f;
     v.x = (float)RAWAT(int, g_game, 4) * 0.1f;
-    v.y = g_time[1] * 1e-5f;
+    v.y = g_ticks[1] * 1e-5f;
     in = v;
     noise_fractal(72.0f, 0.7f, 4, 0, &in.x, &out.x);
     float fo = (out.z + out.y + out.x) * 5.0f;
@@ -411,15 +407,15 @@ void Mission::start_setup()
         RAWAT(unsigned, pe, 0x14) = i;
     }
 
-    g_spawn = ptype;
+    (*(__int64*)((char*)&g_script + 0x8)) = ptype;
 
     {
-        SndBank* b = bank_of(&g_modes[at<int>(0x5df0)]);
+        SndBank* b = bank_of(&g_mission_templates[at<int>(0x5df0)]);
         for (int i = 0; i < b->count; i++)
             b->recs[i].f0c = 0;
     }
     {
-        SndBank* b = bank_of(&g_modes[at<int>(0x5df0)]);
+        SndBank* b = bank_of(&g_mission_templates[at<int>(0x5df0)]);
         for (int i = 0; i < b->count; i++)
             b->recs[i].update(-0x13);
     }
@@ -427,7 +423,7 @@ void Mission::start_setup()
 
     // ---- ambient sound slot selection -------------------------------------------------------
     for (int i = 0; i < g_snd_count; i++) {
-        SndRec* s = &g_snd[i];
+        SndRec* s = &g_env_rows[i];
         float r = RND() * 6.32231149e-07f;
         s->at<float>(0x48) = r;
         if ((at<float>(0x65e8) > 7.0f && at<float>(0x65e8) < 17.0f) ? (s->at<int>(0x10) & 3) == 0 :
@@ -438,12 +434,12 @@ void Mission::start_setup()
     }
     at<int>(0x660c) = 0;
     for (int i = 1; i < g_snd_count; i++)
-        if (g_snd[i].at<float>(0x48) > g_snd[at<int>(0x660c)].at<float>(0x48))
+        if (g_env_rows[i].at<float>(0x48) > g_env_rows[at<int>(0x660c)].at<float>(0x48))
             at<int>(0x660c) = i;
 
     // ---- sky / cloud / fog bit fields -------------------------------------------------------
     if (LV.flags.b8) {
-        g_terrain.f4658c0((char*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494) + 0x68);
+        g_terrain.parse((char*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494) + 0x68);
         GameData* gg = g_game;
         if (((LevelRaw*)(RAWAT(char*, gg, 0x13a50) + at<int>(0x5df4) * 0x494))->flags.b9) {
             PartyMgr* pm2 = (PartyMgr*)((char*)gg + 0xf8);
@@ -455,7 +451,7 @@ void Mission::start_setup()
             unsigned a = (fr * 0x1b0b + parity + y * 0x230b + x * 17) & 0x7fffff;
             unsigned c = (fr * 0xf4d + parity + y * 0x16a1 + x * 19) & 0x7fffff;
             unsigned b = (y * 0x19c9 + parity + fr * 0x1e6f + x * 31) & 0x7fffff;
-            unsigned mc = g_mask_col - 1;
+            unsigned mc = (*(unsigned*)((char*)&g_bit + 0xf8)) - 1;
             put(g_terrain.s0, mc, 0, a);
             put(g_terrain.s2, mc, 0, c);
             put(g_terrain.s1, mc, 0, b);
@@ -472,9 +468,9 @@ void Mission::start_setup()
             } else if ((ptype == 3 || ptype == 0xb) && chance < 0.150000006f) {
                 storm = 1;
             }
-            put(g_terrain.s4, g_mask_cloud - 1, 28, ptype);
-            put(g_terrain.s3, g_mask_flag - 1, 31, storm != 0);
-            put(g_terrain.s3, g_mask_flag - 1, 30, 0);
+            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x20)) - 1, 28, ptype);
+            put(g_terrain.s3, (*(unsigned*)((char*)&g_bit + 0x8)) - 1, 31, storm != 0);
+            put(g_terrain.s3, (*(unsigned*)((char*)&g_bit + 0x8)) - 1, 30, 0);
             seed = lcg(seed);
             g_rand_seed = seed;
             float ff = RNDU(seed) * 6.32231149e-06f + 0.449999988f;
@@ -494,7 +490,7 @@ void Mission::start_setup()
             int ai = iround(ff * 100.0f);
             if (ai < 0) ai = 0;
             else if (ai >= 100) ai = 99;
-            put(g_terrain.s4, g_mask_amt - 1, 0, ai);
+            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 0, ai);
 
             seed = lcg(g_rand_seed);
             int cc = (int)(RNDU(seed) * 0.00126446225f + 12.0f);
@@ -508,7 +504,7 @@ void Mission::start_setup()
                 cc += iround((RNDU(seed) * 6.32231167e-05f + 0.400000006f) * temp[1] * 0.449999988f);
             }
             if (cc > 0x41) cc = 0x41;
-            put(g_terrain.s4, g_mask_amt - 1, 14, cc);
+            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 14, cc);
 
             seed = lcg(seed);
             g_rand_seed = seed;
@@ -521,17 +517,17 @@ void Mission::start_setup()
             int ti = ifloor(tot);
             if (ti < 0) ti = 0;
             else if (ti >= 0x80) ti = 0x7f;
-            put(g_terrain.s4, g_mask_amt - 1, 7, ti);
+            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 7, ti);
 
             int ri = iround((RND() * 1.2644623e-05f + 0.800000012f) * 100.0f);
             if (ri < 0) ri = 0;
             else if (ri >= 100) ri = 99;
-            put(g_terrain.s4, g_mask_amt - 1, 21, ri);
+            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 21, ri);
         }
         at<RectF>(0x652c).x0 = 0.0f;
         at<RectF>(0x652c).y0 = 0.0f;
-        at<float>(0x6534) = (float)(g_terrain.s3 & (g_mask_bits - 1));
-        at<float>(0x6538) = (float)((g_terrain.s3 >> 10) & (g_mask_bits - 1));
+        at<float>(0x6534) = (float)(g_terrain.s3 & ((*(unsigned*)((char*)&g_bit + 0x50)) - 1));
+        at<float>(0x6538) = (float)((g_terrain.s3 >> 10) & ((*(unsigned*)((char*)&g_bit + 0x50)) - 1));
         at<RectF>(0x653c) = at<RectF>(0x652c);
         at<float>(0x654c) = -0.300000012f;
     } else {
@@ -551,7 +547,7 @@ void Mission::start_setup()
     for (unsigned i = 0; i < props.size(); i++) {
         Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
-            PropKind* k = &g_map_points[RAWAT(int, p, 0x18c)];
+            PropKind* k = &g_propkinds[RAWAT(int, p, 0x18c)];
             v.x = (RAWAT(float, p, 0x28) * k->f5c + RAWAT(float, p, 0x38) * k->f60 +
                    RAWAT(float, p, 0x18) * k->f58) + RAWAT(float, p, 0x48);
             v.y = (RAWAT(float, p, 0x2c) * k->f5c + RAWAT(float, p, 0x3c) * k->f60 +
@@ -570,7 +566,7 @@ void Mission::start_setup()
     for (unsigned i = 0; i < props.size(); i++) {
         Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
-            PropKind* k = &g_map_points[RAWAT(int, p, 0x18c)];
+            PropKind* k = &g_propkinds[RAWAT(int, p, 0x18c)];
             v.x = (RAWAT(float, p, 0x38) * k->f60 + RAWAT(float, p, 0x28) * k->f5c +
                    RAWAT(float, p, 0x18) * k->f58) + RAWAT(float, p, 0x48);
             v.y = (RAWAT(float, p, 0x1c) * k->f58 + RAWAT(float, p, 0x3c) * k->f60 +
@@ -590,13 +586,13 @@ void Mission::start_setup()
     // ---- fade, params, ambient, sun ---------------------------------------------------------
     rebuild_nav(at<int>(0x5df4), at<int>(0x5df0));
     at<int>(0x5274) = 0;
-    at<World*>(0)->set_fade(&at<float>(0x6614), (char*)&g_snd[at<int>(0x660c)] + 0x44);
+    at<World*>(0)->set_fade(&at<float>(0x6614), (char*)&g_env_rows[at<int>(0x660c)] + 0x44);
     unsigned color = 0xff334455;
     at<World*>(0)->set_params(-5.0f, 10.0f, &color, &at<float>(0x654c));
     setup_ambient(at<int>(0x5df4), at<int>(0x660c), at<float>(0x6614));
 
     Entity* sun = at<World*>(0)->create_entity(9);
-    Mesh* sm = g_resmgr.get_object(&g_snd[at<int>(0x660c)]) ->clone();
+    Mesh* sm = g_resmgr.get_object(&g_env_rows[at<int>(0x660c)]) ->clone();
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
     {
@@ -606,9 +602,9 @@ void Mission::start_setup()
     sun->v4();
     {
         GameData* g1 = g_game;
-        int secs = (int)((g_time[RAWAT(int, g1, 0x13b18)] - RAWAT(__int64, g1, 0x13b20)) * 1e-5f);
+        int secs = (int)((g_ticks[RAWAT(int, g1, 0x13b18)] - RAWAT(__int64, g1, 0x13b20)) * 1e-5f);
         int h = secs % 24;
-        float angle = g_snd[at<int>(0x660c)].at<float>(0x14) * 0.0174532924f -
+        float angle = g_env_rows[at<int>(0x660c)].at<float>(0x14) * 0.0174532924f -
                       (float)(h - 12) * 0.0174532924f * 15.0;
         sun->at<matrix>(0x58).rotate_sf(&angle);
         angle = 1.0e8f;
@@ -731,10 +727,10 @@ void Mission::start_setup()
     for (pi = 0; pi < (int)props.size(); ) {
         Rec1c8* p = &at<Rec1c8*>(0x668c)[pi];
         RAWAT(int, p, 0x1b4) = 0;
-        if (g_no_cam == 0 && RAWAT(int, p, 0x188) == 4 && LV.flags.b8) {
+        if ((*(int*)((char*)&g_cfg + 0x18)) == 0 && RAWAT(int, p, 0x188) == 4 && LV.flags.b8) {
             int j;
-            for (j = 0; j < g_map_count; j++)
-                if (g_map[j].equals(RAWAT(tstring, p, 0x190)))
+            for (j = 0; j < g_ptype_count; j++)
+                if (g_ptypes[j].equals(RAWAT(tstring, p, 0x190)))
                     goto found;
             j = 0;
         found:
@@ -759,8 +755,8 @@ void Mission::start_setup()
     at<int>(0x65b8) = 0;
 
     // ---- scene effect object (rain / snow emitter) ---------------------------------------------
-    if (g_env_on != 0 && !lrec->flags.b0 && at<int>(0x6604) > 0) {
-        SndRec* sr = &g_snd[at<int>(0x660c)];
+    if ((*(int*)((char*)&g_options + 0x20)) != 0 && !lrec->flags.b0 && at<int>(0x6604) > 0) {
+        SndRec* sr = &g_env_rows[at<int>(0x660c)];
         u = sr->at<vector4>(0x30);
         float scale = (u.x * 3.0f + 1.0f) * 0.400000006f;
         Entity* fx = at<World*>(0)->create_entity(9);
@@ -831,7 +827,7 @@ void Mission::start_setup()
     at<int>(0x65c0) = 0;
     at<int>(0x65c4) = 0;
     at<int>(0x65c8) = 0;
-    if (!lrec->flags.b0 && g_env_on != 0) {
+    if (!lrec->flags.b0 && (*(int*)((char*)&g_options + 0x20)) != 0) {
         Entity* eb = at<World*>(0)->create_entity(9);
         at<Entity*>(0x65c0) = eb;
         float two = 2.0f;
@@ -852,7 +848,7 @@ void Mission::start_setup()
         }
         at<Mesh*>(0x65c8)->at<int>(0x114) = 1;
         at<Mesh*>(0x65c8)->at<int>(0x140) = 1;
-        float c = (1.0f - 150.0f / (at<float>(0x6610) + 150.0f)) * g_snd[at<int>(0x660c)].at<float>(0x1c) * 0.899999976f;
+        float c = (1.0f - 150.0f / (at<float>(0x6610) + 150.0f)) * g_env_rows[at<int>(0x660c)].at<float>(0x1c) * 0.899999976f;
         u.x = u.y = u.z = c;
         at<Mesh*>(0x65c8)->at<unsigned>(0x3c) = pack_color(&u.x);
         at<Mesh*>(0x65c8)->at<unsigned>(0x3c) |= 0xff000000;
@@ -888,7 +884,7 @@ void Mission::start_setup()
         tstring nm("vertex_color_add_mat");
         at<Mesh*>(0x65d8)->at<void*>(0x2c) = g_resmgr.get_material(&nm);
     }
-    at<Entity*>(0x65d0)->add_mesh(at<Mesh*>(0x65d8));
+    at<Entity*>(0x65d0)->add_extra(at<Mesh*>(0x65d8));
     at<int>(0x65dc) = 0;
     at<Entity*>(0x65dc) = at<World*>(0)->create_entity(9);
     {
@@ -900,7 +896,7 @@ void Mission::start_setup()
         tstring nm("vertex_color_add_mat");
         at<Mesh*>(0x65e0)->at<void*>(0x2c) = g_resmgr.get_material(&nm);
     }
-    at<Entity*>(0x65dc)->add_mesh(at<Mesh*>(0x65e0));
+    at<Entity*>(0x65dc)->add_extra(at<Mesh*>(0x65e0));
     at<Entity*>(0x65e4) = at<World*>(0)->create_entity(9);
     {
         float f33 = 33.5f;
@@ -914,7 +910,7 @@ void Mission::start_setup()
     for (int i = 0; i < 8; i++)
         for (int j = 0; j < 6; j++) {
             at<int>(0x621c + (i * 6 + j) * 4) = 0;
-            at<float>(0x62dc) = g_time[2] * 1e-5f;
+            at<float>(0x62dc) = g_ticks[2] * 1e-5f;
         }
     at<int>(0x6524) = 0;
     at<char>(0x6338) = 0;
@@ -940,7 +936,7 @@ void Mission::start_setup()
         s->B.r[3].z = outY;
         s->C = s->B;
         s->D = s->B;
-        s->start = g_time[s->clock];
+        s->start = g_ticks[s->clock];
         s->f120 = 0;
         copy_slot(k);
     }
@@ -972,7 +968,7 @@ void Mission::start_setup()
     // ---- placed-prop jitter + ground snap ----------------------------------------------------------
     for (unsigned i = 0; i < props.size(); i++) {
         Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
-        if (RAWAT(int, p, 0x188) == 0 && (g_map_points[RAWAT(int, p, 0x18c)].flags & 0x1000)) {
+        if (RAWAT(int, p, 0x188) == 0 && (g_propkinds[RAWAT(int, p, 0x18c)].flags & 0x1000)) {
             float outY;
             void* sink;
             v = at<vector4>(0x6598);
@@ -991,12 +987,12 @@ void Mission::start_setup()
         LevelBits f3 = LV.flags;
         if (f3.b8) {
             g_terrain.destroy_water(&at<char>(0x63c0));
-        } else if (!f3.b0 && g_dinput_enabled) {
-            g_psys.f4711e0(at<World*>(0));
+        } else if (!f3.b0 && g_use_shaders) {
+            g_shadow_map.attach_camera(at<World*>(0));
             for (unsigned i = 0; i < RAWAT(BodyVec*, at<World*>(0), 0xb0)->size(); i++)
-                g_psys.f468c20(&RAWAT(BodyVec*, at<World*>(0), 0xb0)->first[i]);
-            g_psys.f463cc0();
-            g_psys.reset();
+                g_shadow_map.extend(&RAWAT(BodyVec*, at<World*>(0), 0xb0)->first[i]);
+            g_shadow_map.fit_bounds();
+            g_shadow_map.render();
         }
     }
     ((log_base&)g_log).w_cstr("end_setup");
