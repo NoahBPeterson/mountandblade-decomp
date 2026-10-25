@@ -77,12 +77,18 @@ void __stdcall tidy_vec_pair(VecPair2* p);                          // 0x43e150
 struct Map10007 { int lookup(unsigned id); };                       // 0x48ad00 (src/game/ui/mission.h): PartyMgr's first 0x138b8 bytes are this 0x2717-entry table
 struct AgentX {                                                     // src/rgl/xmlcfg/game_util.h: the agent record's team relation tests
     bool is_friend(const Agent* o) const;                           // 0x4323a0
+    bool f100_is_0x48_and_charged() const;                          // 0x432470
     int is_neutral(const Agent* o) const;                           // 0x4323f0 (returns int; the callers test only al: (char) at the call)
 };
-struct Obj3 { void set_placement(const matrix* m, const vector4* a, const vector4* b, int c); };   // 0x433770 (game_util.h: scene object with a placement block; Emit's)
+struct Obj3 {
+    void set_v184(const vector4* v);                                // 0x433740 (rgl/xmlcfg/game_util.cpp; Emit's code is the same function)
+    void reset_pending(int v);                                      // 0x433810
+    void set_placement(const matrix* m, const vector4* a, const vector4* b, int c);   // 0x433770 (game_util.h: scene object with a placement block; Emit's)
+};
 namespace rgl {
 struct entity; struct psys;
 struct world {                                                      // src/rgl/scene (the global `world` of world.h is this class)
+    entity* create_entity(int type_id);                             // 0x428440 (rgl/scene/world.h)
     psys* alloc_emitter();                                          // 0x427ea0
     void to_cell(const float* p, int* out);                         // 0x41ed00 (frustum_grid.cpp)
 };

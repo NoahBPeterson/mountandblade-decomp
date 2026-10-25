@@ -18,14 +18,14 @@ struct Table1f8 { int get_f1f0(unsigned i); int get_f1f4(unsigned i); };   // 0x
 struct TimerList { void update(int id); };               // 0x48add0 (the sound-event list of PropKind / ItemKind is walked by it)
 struct FireRay;
 struct FireAgent { void ray(FireRay* r); };            // 0x46b410 (terrain_a/terrain_a.cpp: Missile::ray is the same code)
-struct Obj3 { void set_v184(const rgl::vector4* v); void reset_pending(int v); };   // 0x433740, 0x433810 (rgl/xmlcfg/game_util.cpp; Emit's code is the same function)
+struct Obj3;   // members in agent3/agent_types.h (set_v184 0x433740, reset_pending 0x433810)
 struct gui_timer { void set_delay(float seconds); };     // 0x42cd20 (strat/gui_manager.cpp; Timer::set_delay)
 struct AnimRec { float phase(); };                       // 0x4231f0 (the animation channel's phase: Channel::phase)
 struct mnode { void calc_bounds(rgl::vector4* mn, rgl::vector4* mx); };   // 0x438d80 (agent2/agent_stats.cpp)
 namespace rgl {
 struct mesh_ext { void clear_geometry(); };              // 0x428e80 (rgl/scene/scene.h)
 struct entity;
-struct world { entity* create_entity(int type_id); };    // 0x428440 (rgl/scene/world.h; the game's `world` is the same object)
+struct world;   // members in agent3/agent_types.h (create_entity 0x428440)
 struct aabb;
 struct box_ext { void extend_box(const aabb* other, const matrix* m); };   // 0x4201b0 (rgl/scene/entity_render.cpp)
 }
@@ -34,11 +34,7 @@ struct shape_resource { shape_base* clone_shape(); };    // 0x4285e0 (the body r
 struct body_res { shape_base* copy_shape(); };           // 0x439100 (agent2/agent_stats.cpp)
 struct grid_shape;
 struct world_grid { void reg_shape(grid_shape* s); };    // 0x424170 (rgl/dynamic/world_grid.cpp)
-struct level {                                           // agent2/agent_types.h: the scene as the agent code calls it
-    void floor_at(const float* p, float* out_z, struct face** out_face);   // 0x439be0
-    float floor_z(const float* p);                       // 0x439d40
-    void light_at(rgl::vector4 p, rgl::vector4 n, rgl::vector4* out_dir, rgl::vector4* out_col, unsigned flags, float scale);   // 0x43ac40
-};
+struct level;   // members in agent3/agent_combat.h (floor_at 0x439be0, floor_z 0x439d40, light_at 0x43ac40)
 struct StratEnt;
 struct Ctx { StratEnt* find_entity(int id); };           // 0x42ba50 (strat/strat_entity.cpp)
 struct lod_group { char pad[0xe0]; lod_group(); };       // 0x41c2a0 (rgl/core/resmgr.cpp; the lod mesh of rgl_mesh.h is 0xe0 bytes)

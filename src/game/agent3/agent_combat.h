@@ -27,7 +27,12 @@ typedef stdext::_Hash<stdext::_Hmap_traits<int, HashVal, stdext::hash_compare<in
 // function, whose definition is under the other class (declared here with the defining class's name, so the call binds
 // its symbol; the object is cast at the call).
 struct FxAnim { void update_poses(); void update_poses2(); };   // 0x422080 / 0x422130: src/rgl/dynamic/fx_anim.h (Skeleton::update_poses of skeleton.h is the same code)
-struct level { bool trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused); };   // 0x439d60: agent2/agent_types.h (world::trace_ray of world.h)
+struct level {
+    void floor_at(const float* p, float* out_z, struct face** out_face);   // 0x439be0
+    float floor_z(const float* p);                       // 0x439d40
+    void light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale);   // 0x43ac40
+    bool trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60: agent2/agent_types.h (world::trace_ray of world.h)
+};
 #include "../../include/mat4.h"   // pos (transform_point 0x408460; posm's frame is the same 64-byte pos)
 
 // ---- element types of the container instantiations -----------------------------------------------------------

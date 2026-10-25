@@ -65,9 +65,6 @@ struct resmgr {                                                 // rgl/core/resm
     rgl::mesh* get_object(const rgl::string* name);             // 0x419540
     std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960
 };
-struct FxAnim {                                                 // rgl/dynamic/fx_anim.h
-    void update_poses2();                                       // 0x422130 (Skeleton::update_poses2 of skeleton.h is the same function)
-};
 struct skin; struct named_object;
 struct resource_manager {                                       // rgl/resource.h
     skin* get_material(const rgl::string& name);                // 0x418a70
@@ -6493,7 +6490,7 @@ common:
 }
 
 // ---- Agent::swing_trace: the melee swing / missile hit test ------------------------------------------------------------------------
-struct AgentX { bool f100_is_0x48_and_charged() const; };       // 0x432470 (agent3: out of line at the damage-doubling site; inlined as couching()); the agent calls it with an unused agent in ecx
+// AgentX::f100_is_0x48_and_charged 0x432470: declared in agent3/agent_types.h (agent3: out of line at the damage-doubling site; inlined as couching()); the agent calls it with an unused agent in ecx
 int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);   // 0x43a720 (agent2/agent_stats.cpp)
 extern char* g_propkinds;                          // 0x5e29dc (PropKind, 0x78 bytes: flags at +0x10, the sound set at +0x6c)
 extern rgl::matrix g_last_hit_frame;                // 0xa708d0
