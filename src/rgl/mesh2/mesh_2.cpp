@@ -691,8 +691,10 @@ void LangTables::load(const char* root)
                 text = text.substr(3, text.len);
             int i = 0;
             int len = text.len;
-            while (i < len) {
+            bool done = false;                  // the line is split at its first '|' only ([esp+0x12] in the original)
+            while (i < len && !done) {
                 if (text.buf[i] == '|') {
+                    done = true;
                     int a = 0;
                     int stop = i;
                     int kstart = i + 1;
@@ -711,20 +713,20 @@ void LangTables::load(const char* root)
                         *found = value;
                     } else {
                         lang_bucket* kb = &keys[hash];
-                        if (kb->size() < (unsigned)(kb->myend - kb->myfirst))
+                        if (kb->size() < (unsigned)(kb->myend - kb->myfirst)) {
                             uninit_fill_n_str(kb->mylast, 1, key, *(allocstr*)kb, tag);
-                        else
-                            ((tstring_vec_pub*)((char*)kb + 4))->_Insert_n(std::vector<tstring>::iterator(kb->mylast), 1, key);   // the vector sits at +4 of the bucket
-                        kb->mylast++;
+                            kb->mylast++;
+                        } else {                    // the bucket is the vector (ecx = bucket); _Insert_n moves mylast itself
+                            ((tstring_vec_pub*)kb)->_Insert_n(std::vector<tstring>::iterator(kb->mylast), 1, key);
+                        }
                         lang_bucket* vb = &vals[hash];
-                        if (vb->size() < (unsigned)(vb->myend - vb->myfirst))
+                        if (vb->size() < (unsigned)(vb->myend - vb->myfirst)) {
                             uninit_fill_n_str(vb->mylast, 1, value, *(allocstr*)vb, tag);
-                        else
-                            ((tstring_vec_pub*)((char*)vb + 4))->_Insert_n(std::vector<tstring>::iterator(vb->mylast), 1, value);
-                        vb->mylast++;
+                            vb->mylast++;
+                        } else {                    // the bucket is the vector (ecx = bucket); _Insert_n moves mylast itself
+                            ((tstring_vec_pub*)vb)->_Insert_n(std::vector<tstring>::iterator(vb->mylast), 1, value);
+                        }
                     }
-                    len = text.len;
-                    i = -1;
                 }
                 i++;
             }

@@ -94,31 +94,37 @@ void Blk2dd0::read(stream_base* s)
     s->r_int(&v14);
 }
 
+// The key-binding file: a bin_reader built inline on the stack (vtable 0x54ae48; the original inlines its
+// constructor 0x417c50), the name made per-user by user_path, read with the file readers' shared open 0x415290.
+// 0x25 bindings of two ints each, or the default table (code_table::init) when the file is missing or wrong.
+static void user_path(char* name);                  // below (a local copy; its argument travels in ESI)
+struct code_table { void init(); };                 // 0x4be7c0 (game/triggers/trigger_vec.cpp)
+extern const char g_key_file[];                     // 0x595788 the key file's name
+
 // @ 0x4c2ea0
 void __fastcall fn_4c2ea0(void* self)
 {
-    tstr_ll a((const char*)0x595788);
-    tstr_ll b((const char*)0x595788);
-    char buf[0x28];
-    sprintf(buf, (const char*)0x595788);
-    ((void (__cdecl*)(char*))0x4bab70)(buf);
-    ((void (__cdecl*)(tstring*, char*))0x415290)(&a.s, buf);
-    if (((unsigned char*)&b)[0x14] != 0) {
-        ((void (__cdecl*)(void*))0x4be7c0)(self);
+    bin_reader r;
+    char path[0x104];
+    sprintf(path, g_key_file);
+    user_path(path);
+    ((text_stream*)&r)->open_read(path);
+    if (r.failed) {
+        ((code_table*)self)->init();
     } else {
-        int v = 0;
-        st_int(&a, &v);
-        if (v != 0x25) {
-            ((void (__cdecl*)(void*))0x4be7c0)(self);
+        int n = 0;
+        r.r_int(&n);
+        if (n != 0x25) {
+            ((code_table*)self)->init();
         } else {
-            char* d = (char*)self;
+            int* d = (int*)self;
             for (int i = 0; i < 0x25; i++)
-                for (int j = 0; j < 2; j++, d += 4)
-                    st_int(&a, (int*)d);
+                for (int j = 0; j < 2; j++)
+                    r.r_int(d++);
         }
-        ((unsigned char*)&b)[0x14] = 1;
+        r.failed = 1;
     }
-}
+}                                                   // ~bin_reader: the two strings (inlined in the original)
 
 // @ 0x4c2fb0
 C4c2fb0::C4c2fb0()
@@ -311,17 +317,27 @@ void script_dialog_proc()
     (((EditorObj*)0x8ee3c48)->*f.thunk)();
 }
 
+// skyboxes.txt of the module: a tstream3 text reader (vtable 0x54ac88; constructor 0x4172d0 inlined in the
+// original) over <module path> + the file name; an error box when it cannot be opened; then the sky box table
+// (0xa76628) reads itself from it (entry_vec_resize 0x4c2250).
+struct TriggerEntryVec;
+int entry_vec_resize(stream_base* s, TriggerEntryVec* v);   // 0x4c2250 (game/triggers/trigger_vec.cpp)
+void mb_error(const char* fmt, ...);                // 0x42cc80
+extern const char g_skyboxes_file[];                // 0x595a44
+extern const char g_cant_open_fmt[];                // 0x594580
+extern char g_skyboxes[];                           // 0xa76628
+
 // @ 0x4c3350
 void load_skyboxes()
 {
-    tstr_ll a(*(const tstring*)0x8ee3c28);
-    tstr_ll b((const char*)0x595a44);
-    a.s.append(b.s);
-    b.s.~tstring();
-    const char* nm = a.text();
-    ((char (__cdecl*)(tstring*, const char*))0x415d60)(&a.s, nm);
-    ((void (__cdecl*)(const char*, const char*))0x42cc80)((const char*)0x594580, nm);
-    ((int (__cdecl*)(void*, void*))0x4c2250)(&a.s, (void*)0xa76628);
+    tstream3 r;
+    tstring path(g_module_path);
+    path.append(tstring(g_skyboxes_file));
+    const char* nm = path.buf ? path.buf : (const char*)&path.buf;
+    if (!((text_stream*)&r)->open_read_text(nm))
+        mb_error(g_cant_open_fmt, nm);
+    entry_vec_resize(&r, (TriggerEntryVec*)g_skyboxes);
+    r.failed = 1;
 }
 // @ 0x4c3430
 void* elem58::vector_deleting_delete(unsigned flags)

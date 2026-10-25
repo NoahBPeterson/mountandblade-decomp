@@ -84,7 +84,7 @@ def one_module(job):
         return {"src": src, "error": "compile failed"}
     coff = Coff(o)
     annots = R.source_annotations([src] + glob.glob(os.path.join(os.path.dirname(src), "*.h")) + S.sibling_headers(src))
-    refs, defined, vtables, errors = [], [], [], []
+    refs, defined, vtables, errors, statics = [], [], [], [], []
     for va in vas:
         try:
             lo, hi = img.func_extent(va)
@@ -94,6 +94,8 @@ def one_module(job):
                 sym = E.best_by_size(coff, ext, hi - lo) if ext else None
             if sym is None or coff.by_name[sym].cls != 2:     # a static has no name another object can bind to
                 errors.append("%08x: %s" % (va, "static symbol %s" % sym if sym else "symbol not found"))
+                if sym:
+                    statics.append((va, sym))
                 continue
             if False:
                 errors.append("%08x: symbol not found" % va)
@@ -133,7 +135,7 @@ def one_module(job):
         if vs is not None and vs.defined:
             ours[vt] = (a, coff.section_of(vs).size // 4)
     return {"src": os.path.relpath(src, ROOT), "refs": refs, "defined": defined, "slots": slots, "errors": errors,
-            "vtables": ours}
+            "vtables": ours, "statics": statics}
 
 
 def main():
@@ -147,6 +149,7 @@ def main():
         results = pool.map(one_module, jobs, chunksize=1)
     names = collections.defaultdict(lambda: collections.defaultdict(lambda: {"methods": set(), "rows": set(), "defined": False}))
     defs = {}
+    statics = {}
     slots = collections.defaultdict(set)
     vtmap = collections.defaultdict(lambda: {"orig": set(), "slots": 0})
     errors = []
@@ -157,6 +160,8 @@ def main():
         stem = os.path.basename(r["src"])[:-4]
         for va, sym in r["defined"]:
             defs.setdefault("%08x" % va, [sym, stem])
+        for va, sym in r["statics"]:
+            statics.setdefault("%08x" % va, [sym, stem])
         for name, va, how, isdef, row in r["refs"]:
             e = names[name]["%08x" % va]
             e["methods"].add(how.split("(")[0])
@@ -171,6 +176,7 @@ def main():
     out = {"names": {n: {va: {"methods": sorted(e["methods"]), "rows": sorted(e["rows"])[:6], "nrows": len(e["rows"]),
                                "defined": e["defined"]} for va, e in d.items()} for n, d in sorted(names.items())},
            "defined_at": dict(sorted(defs.items())),
+           "static_at": dict(sorted(statics.items())),
            "vtable_slots": {n: sorted(v) for n, v in sorted(slots.items())},
            "vtables": {n: {"orig": sorted(v["orig"]), "slots": v["slots"]} for n, v in sorted(vtmap.items())},
            "errors": errors}

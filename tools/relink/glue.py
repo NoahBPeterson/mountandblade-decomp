@@ -405,6 +405,8 @@ def main():
         obj.add_sym("_mb_trap_%08x" % v, o, tsec, 0x20)
     for name, (sec, off) in sorted(labels.items()):
         obj.add_sym(name, off, secno[sec[0]])
+    for sec, base in ((RDATA, "_mb_rdata_base"), (DATA, "_mb_data_base"), (BSS, "_mb_bss_base")):
+        obj.add_sym(base, 0, secno[sec[0]])       # where each copied section lands (build.py's literal fix-up)
     # every relocation target that is not a section or a label is an external
     for s in obj.sections:
         for _off, t in s["relocs"]:
