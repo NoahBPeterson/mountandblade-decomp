@@ -65,8 +65,8 @@ struct ScriptStack {
 };
 
 // ---- per-statement interpreter callees (not decompiled; declared for shape) -----------------------------
-struct ScriptStmt {                             // statement pointer in ECX
-    char execute(int stmt, int which, int* out);    // 0x49fa10 (thiscall, ret 0xc)
+struct Operation {                              // statement pointer in ECX (the interpreter's own class, script/script_interpreter.cpp)
+    char execute(__int64* locals, int* context, int* error);    // 0x49fa10 (thiscall, ret 0xc)
 };
 struct KeyState { void frame(int a); };         // 0x487930 (thiscall, ret 4)
 extern KeyState g_keyboard;                     // 0xa170c8

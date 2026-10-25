@@ -26,6 +26,9 @@
 #include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
+// the definition (cls_map/progress_bar.cpp) takes the widget: this module calls it under that signature (the header keeps the void* spelling other modules use)
+void __cdecl label_refresh(MissionUi* w, tstring name);      // 0x4e4c70 (cdecl, the name by value)
+
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
 #define EQUIP(t, k) (g_game->troops[(t)].equip[(k)])
@@ -78,7 +81,7 @@ void* PartyWindow::make_inventory_menu(int idx)
 
     PartyPanel* panel = new PartyPanel;
     panels[idx] = panel;
-    label_refresh(panel, tstring("inv_im_equipment_menu"));
+    label_refresh((MissionUi*)panel, tstring("inv_im_equipment_menu"));
     {
         Vec2 v(f_1 + panel->fE0, panel->fE4);
         WOPS(panel)->set_pos(&v.x);
@@ -212,7 +215,7 @@ void* UiFrame::destroy(unsigned flags)
 {
     *(void**)this = (void*)0x5924a0;
     release();
-    vec_clear(&f178);
+    ((vec<mface>*)&f178)->clear();               // 0x41f4b0
     ((WidgetDtor*)this)->base_dtor();
     if (flags & 1)
         ::operator delete(this);
@@ -295,7 +298,7 @@ void PartyWindow::add_strip_icon(char* slot, const tstring& name, int troop, int
         return;
     if (*(void**)slot == 0) {
         *(void**)slot = new StripIcon;
-        label_refresh(*(void**)slot, name);
+        label_refresh(*(MissionUi**)slot, name);
         WOPS(container)->add_child(*(void**)slot);
     }
     WOPS(*(void**)slot)->add_image(0, 0);
@@ -414,7 +417,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
         volatile float sc = 0.088f;     // (volatile: make_mesh ignores its scale argument, which would otherwise drop this store)
         ResMesh* m = make_mesh(item, (float*)&sc, t);
         rgl::vector4 off(0.044f, 0.044f, 0.0f);
-        m->translate(&off);
+        ((rgl::mesh*)m)->translate(&off);        // ResMesh is the view of rgl::mesh (rgl/mesh.h)
         WOPS(w)->add_image(2, m);
         w->b11c[2] = 1;
         if (flag != 0 && idx < 9)
@@ -437,7 +440,7 @@ MB_NOINLINE ResMesh* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
     ResMesh* m = 0;
     if (item->item >= 0) {
         float s = 0.088f;
-        m = make_item_mesh(item, &s);
+        m = (ResMesh*)make_item_mesh(item, &s);
         g_game->f1a1f4 = -1;
         g_game->f1a1f8 = t;
         g_game->f1a204 = -10000;

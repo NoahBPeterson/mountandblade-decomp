@@ -25,6 +25,7 @@
 #include "../../include/shape.h"
 #include "../../include/dialog_rec.h"
 #include "../../include/vec.h"
+#include "../hnode.h"     // hnode / node_gt: adjust_heap_node 0x438b10 (agent2/agent_stats.cpp) takes the open-list node and comparator under these names
 
 using rgl::vector4;
 
@@ -42,14 +43,88 @@ extern int g_level_exp[];                               // 0x5934bc experience n
 struct ScriptState;
 extern ScriptState g_script;                // 0xa70440 (dialog_manager.h cannot be included here)
 
+// ---- the callees' own classes: member-only stubs under the name of the class that defines them (the link needs the defining owner in the
+// mangled name); the view classes below forward to them with `this` cast, which compiles to the same call ----------------------------
+struct PartyW {
+    PartyW* construct();   // 0x4934d0 (world_data.cpp: the party record's constructor body, returns this)
+};
+struct Poser {
+    void add_extra(int val);   // 0x442110 (agent3/agent_fx_sound.cpp, ret 4)
+};
+#include "../../rgl/mesh_x.h"      // mesh_x::clone 0x41c6d0 (the canonical class)
+struct int3 { int v[3]; };
+struct alloc_int3 {
+    void construct(int3* p, const int3& v);   // 0x436cf0 (agent/agent.cpp, ret 8)
+};
+struct MeshX {
+    MeshX* copy_of();   // 0x4958f0 (world_data/mesh_hud.cpp)
+};
+#ifndef MB_CAMERA_TU        // (camera.cpp defines the class itself)
+namespace c49f060 { struct GameData { bool deploy_party(int a, int b); }; }   // 0x49f060 (camera.cpp: the party attach decision, ret 8)
+#endif
+struct GameW {                                                   // world_data/world_data.cpp
+    void detach_party(unsigned id);                              // 0x490a30 (ret 4)
+    void remove_party(int id);                                   // 0x4915d0 (ret 4)
+    void count_units(unsigned id, int* a, int* b, int* c, int* d);   // 0x490ce0 (ret 0x14)
+    void set_objective(int party, int value);                    // 0x4949d0 (ret 8)
+    void random_position_around(Vec2 pos, float r, Vec2* out);   // 0x490030 (ret 0x10)
+};
+struct RecPool {
+    void alloc_record();   // 0x493700 (world_data.cpp; declared void, the new id is left in eax)
+};
+struct E68W {
+    void* find_or_create(int* key);   // 0x493df0 (world_data.cpp, ret 4)
+};
+struct PageTable98 {
+    void* slot(unsigned index);   // 0x48ef20 (mission_ui2/slot_api.cpp, ret 4: the battle table's record by index)
+};
+struct Cont690 {
+    int get(unsigned index);   // 0x48d690 (mission_ui2/mission_3.cpp: the first dword of the record)
+};
+struct TableauTbl {
+    rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (world_data/obj_tbl.cpp, ret 8)
+};
+struct PtrStack14 {
+    void pop_back_delete();   // 0x492ee0 (world_data.cpp)
+};
+struct Vec68W {
+    void purge_all();   // 0x493f30 (world_data.cpp)
+};
+struct SceneObject;
+struct SceneList {
+    SceneObject* push();   // 0x495650 (world_data.cpp: append a fresh world)
+};
+struct vec2x {
+    void rotate_a(float ang);   // 0x432600 (rgl/xmlcfg/game_util.cpp)
+};
+struct mesh_node {
+    void set_time(const float* t);   // 0x433190 (rgl/xmlcfg/game_util.cpp, ret 4)
+};
+struct RiderTable {
+    int shares(const int& a, const int& b) const;   // 0x48efa0 (mission_ui2/mission_4.cpp, ret 8)
+};
+namespace rgl { struct scene; struct mesh; struct entity;
+                struct world {
+                    void step(float dt);                                  // 0x427f40
+                    void render_scene(scene* sc, bool reflect);           // 0x429890
+                    void remove_entity(int id);                           // 0x41f0d0
+                    entity* create_entity(int type_id);                   // 0x428440
+                    void reset();                                         // 0x421390
+                };
+              }
+struct Map10007 {
+    int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party / agent / scene pools, ret 4)
+};
+
 // ---- 0x5c-byte records and their helpers (vector<E92>: the game's event / track records) ------------------------------
 struct E92 { int v[23]; ~E92() {} };                    // 0x5c: event record (events vector at GameData +0x13a60; party/game.h TrackRec); the empty destructor keeps _Tidy's loop
 // a 0xc-byte heap element (min-heap on dist): the world-map search's open list, vector<E12>
 struct OpenItem { int node; float cost; float dist; };  // 0x4b24b0.., 0x4b6b40
 
 struct ElemCopier {                                     // the allocator-like context of the copy helpers (thiscall copy / fill)
-    void copy(OpenItem* dst, OpenItem* src);            // 0x436cf0 (agent_stats.cpp, ret 8)
-    void copy_event(void* dst, void* src);              // 0x4b2160 (ret 8, ignores this)
+    void copy_event(void* dst, void* src);              // 0x4b2160 (ret 8, ignores this: called as the member the original source had; the definition is the TU's stdcall copy_item, whose
+                                                        // direct call is not spellable: cl would give the caller the TU-local callee's register knowledge)
+    void copy(OpenItem* dst, OpenItem* src) { ((alloc_int3*)this)->construct((int3*)dst, *(const int3*)src); }   // 0x436cf0 (agent/agent.cpp, ret 8)
     OpenItem* fill_elems(OpenItem* first, OpenItem* last, OpenItem* dst);          // 0x4b25a0 (_Uninit_copy)
     OpenItem* fill_n_elems(OpenItem* dst, unsigned count, OpenItem* val);          // 0x4b26e0 (_Uninit_fill_n)
     void* fill_n_events(void* dst, int count, const void* val);                   // 0x4b49d0 (E92 version)
@@ -57,11 +132,11 @@ struct ElemCopier {                                     // the allocator-like co
 };
 // a party record used as a scratch block (constructed by 0x4934d0, destroyed by 0x431b90)
 struct PartyTmp : Party {
-    PartyTmp();                                         // 0x4934d0
+    PartyTmp() { ((PartyW*)this)->construct(); }        // 0x4934d0
     ~PartyTmp();                                        // 0x431b90
 };
 struct vec2r : vec2 {
-    void rotate_a(float ang);                             // 0x432600 (replace by the unit vector at `ang`)
+    void rotate_a(float ang) { ((vec2x*)this)->rotate_a(ang); }       // 0x432600 (replace by the unit vector at `ang`)
 };
 // an event record seen field by field (E92 is the same 0x5c bytes): written by GameData::push_event / init_event
 struct EventRec {
@@ -72,6 +147,7 @@ struct EventRec {
     rgl::matrix pos;                                    // +0x1c frame built from the target and the face under it   0x4b36a0
 };
 struct HeapGt { bool operator()(const OpenItem& a, const OpenItem& b) const { return a.dist > b.dist; } };
+void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, node_gt pred);     // 0x438b10 (agent2/agent_stats.cpp)
 
 // the vector iterator of an E92 array, returned through a hidden pointer (non-POD)
 struct ItemIter {
@@ -105,7 +181,7 @@ struct TabRec {                                         // a 0x68-byte tableau r
     char pad28[0x38 - 0x28];
     char holder[0x30];                                  // +0x38 ScriptHolder   0x4b1160
     char pad68[0x68 - 0x68];
-    TabSpawn* find_or_create(const int* key);                    // 0x493df0 (ret 4: find or create the material)
+    TabSpawn* find_or_create(const int* key) { return (TabSpawn*)((E68W*)this)->find_or_create((int*)key); }    // 0x493df0 (ret 4: find or create the material)
 };
 struct TabWorld;                                        // a tableau's private world (0x495650 appends one)
 struct TabTable {                                       // the tableau object (global 0xa75f40)
@@ -113,10 +189,10 @@ struct TabTable {                                       // the tableau object (g
     TabRec* recs;                                       // +4 (0x68-byte records)   0x4b14b0, 0x4b1160
     char pad8[0x10 - 8];
     std::vector<void*> worlds;                          // +0x10 (first at +0x14)
-    TabWorld* push();                                   // 0x495650 (append a fresh world)
-    void purge_all();                                   // 0x493f30
-    void pop_back_delete();                             // 0x492ee0
-    rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (ret 8)
+    TabWorld* push() { return (TabWorld*)((SceneList*)this)->push(); }                 // 0x495650 (append a fresh world)
+    void purge_all() { ((Vec68W*)this)->purge_all(); }                                 // 0x493f30
+    void pop_back_delete() { ((PtrStack14*)this)->pop_back_delete(); }                 // 0x492ee0
+    rgl::mesh* make_mesh_from(const int* index, const void* from) { return ((TableauTbl*)this)->make_mesh_from(index, from); }   // 0x4991d0 (ret 8)
     void add_spawned(const int* tableau, const int* instance);       // 0x4b14b0 (ret 8)
 };
 extern TabTable g_tableaus;                                  // 0xa75f40
@@ -131,20 +207,21 @@ struct TabWorld : CellGrid {                            // a tableau world: the 
     int f344, f348;                                     // +0x344   0x4b1160
     char pad34c[0x36c - 0x34c];
     TabFrustum fr;                                      // +0x36c
-    void step(float dt);                                // 0x427f40
-    void render_scene(rgl::scene* sc, bool reflect);    // 0x429890
+    void step(float dt) { ((rgl::world*)this)->step(dt); }                              // 0x427f40
+    void render_scene(rgl::scene* sc, bool reflect) { ((rgl::world*)this)->render_scene(sc, reflect); }   // 0x429890
 };
 
 // ---- map-party visuals ---------------------------------------------------------------------------------------------
 // ---- the map party's model (an rgl entity of type 9) and the meshes it carries ---------------------------------------------
 struct Rot3 {                                           // the three rows of a frame (side, forward, up)
     vector4 s, f, u;
-    void rotate_about_u(const float* angle);                 // 0x40e770 (ret 4: rows s and f about u)
+    void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); }   // 0x40e770 (ret 4: rows s and f about u)
 };
-Rot3* __cdecl identity3(Rot3* out);                     // 0x40cd60
+namespace rgl { struct mat3; mat3* __cdecl identity3(mat3* out); }     // 0x40cd60 (rgl/shapes/shapes.cpp)
+inline Rot3* identity3(Rot3* out) { return (Rot3*)rgl::identity3((rgl::mat3*)out); }
 struct MeshRes : rgl::mesh {                            // the master mesh the resource manager hands out for a name
-    rgl::mesh* copy_of();                                   // 0x4958f0
-    rgl::mesh* clone();                                 // 0x41c6d0
+    rgl::mesh* copy_of() { return (rgl::mesh*)((MeshX*)this)->copy_of(); }              // 0x4958f0
+    rgl::mesh* clone() { return (rgl::mesh*)((mesh_x*)this)->clone(); }                 // 0x41c6d0
 };
 // the party's map model (Party::model, an rgl entity of type 9): the slots, fields and members the update code uses
 struct PartyModel {
@@ -171,7 +248,7 @@ struct PartyModel {
     float f164;                                         // +0x164
     char pad168[0x294 - 0x168];
     float f294;                                         // +0x294  0x4b7840, 0x4b80d0
-    void add_extra(rgl::mesh* m);                        // 0x442110 (ret 4)
+    void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra((int)m); }       // 0x442110 (ret 4)
     void set_fade(const float* p);                      // 0x4b1800 (ret 4)
 };
 // a std::vector of 0x5c-byte records (allocator word, first, last, end)
@@ -200,23 +277,29 @@ inline NavRec* nav_recs() { return (NavRec*)g_level->core->cells.first; }       
 
 #include "../battle_rec.h"            // BattleObj, BattleRec, BattleTable: the one definition (party2 and script)
 inline BattleTable* battles() { return (BattleTable*)((char*)g_game + 0xcc); }
+inline BattleRec* battle_get(unsigned i) { return (BattleRec*)((PageTable98*)battles())->slot(i); }     // 0x48ef20
 inline Party* party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4))); }
-inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->index_of(id)); }
+inline Party* party_of(PartyMgr* m, int id) { return party_at(m, ((Map10007*)m)->lookup(id)); }
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
 extern SoundMgr g_sound_mgr;                            // 0x5aa128
 extern int g_sound_bank;                                // 0x5aa304 (the sound index, passed by value)
 extern "C" void __stdcall FSOUND_StopSound(int id);                      // 0x5342a6 (FSOUND_StopSound@4)
 
+struct resmgr { texture* get_texture(int w, int h, int fmt);      // 0x41c400 (rgl/core/resmgr.cpp)
+                rgl::mesh* get_object(const rgl::string* name); };   // 0x419540
+struct named_object;
+void __stdcall clear_f14(named_object* r);                // 0x4175f0 (rgl/mem_stream.cpp: clears field +0x14)
 struct resmgr_tab : resmgr_gui {                        // the resource manager (0x5d6fa0) as the tableau code uses it
-    texture* get_texture(int w, int h, int fmt);       // 0x41c400
-    void release(void* p);                          // 0x4175f0
+    texture* get_texture(int w, int h, int fmt) { return ((::resmgr*)this)->get_texture(w, h, fmt); }       // 0x41c400
+    void release(void* p) { clear_f14((named_object*)p); }                                                    // 0x4175f0
 };
 #define g_resmgr_tab (*(resmgr_tab*)&g_resmgr)
 
 // ---- callees of other objects, declared with the argument lists the call sites push (see MIGRATION.md) ----------------------
-void adjust_heap(OpenItem* first, int hole, int len, OpenItem value, HeapGt comp);        // 0x438b10 (_Adjust_heap)
-void push_back_ext(OpenItem* first, OpenItem* last, int pred);                            // 0x4b2710
-void __fastcall vec_push_back(std::vector<E12>* v, int unused, const OpenItem* item);      // 0x4b5bb0 (vector<E12>::push_back, thiscall)
+inline void adjust_heap(OpenItem* first, int hole, int len, OpenItem value, HeapGt comp)         // 0x438b10 (_Adjust_heap)
+{
+    adjust_heap_node((hnode*)first, hole, len, *(hnode*)&value, *(node_gt*)&comp);
+}
 
 #endif // GAME_PARTY2_PARTY_2_H

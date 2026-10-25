@@ -26,13 +26,21 @@ static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
     return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 }
 
-// std::vector<int>::operator= taken as the plain assign at 0x411630 (this = dst vector, arg = src vector)
-struct intvec {
-    int al; int* first; int* last; int* end;
-    void assign(intvec* src);                       // 0x411630 (thiscall)
+// 0x411630 is std::vector<point20>::operator= (src/rgl/particles/mesh_obj.cpp); the vectors of 0x20-byte records share it (folded), so the
+// vector<face20> v90 is assigned through it. 0x411420 is std::vector<vertex60>::push_back. Both are templates the original calls out of line:
+// their explicit specializations are only declared here.
+template<> std::vector<point20>& std::vector<point20>::operator=(const std::vector<point20>&);     // 0x411630
+template<> void std::vector<vertex60>::push_back(const vertex60&);                                // 0x411420
+
+// 0x4779b0 is mesh_flip::flip_faces (terrain_b/terrain_b.h): only the member is declared
+struct mesh_flip {
+    void flip_faces();   // 0x4779b0
 };
-struct vvec {
-    void push_back(const vertex60& v);              // 0x411420 (thiscall, callee pops 4): std::vector<vertex60>::push_back
+
+// 0x43ac40 is level::light_at (game/agent2/agent_types.h, agent_stats.cpp): the scene object (world_x here) under the name agent2 gives it.
+// agent_types.h brings another layout than this TU's, so only the member is declared.
+struct level {
+    void light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale);   // 0x43ac40
 };
 
 // @ 0x47aa40 -- append a transformed copy of `src` to this mesh: the matrix rows are re-orthogonalised against +Z
@@ -42,7 +50,7 @@ struct vvec {
 void mesh_x::transform(mesh* src, const matrix* m, unsigned color)
 {
     if (!local_a0) {
-        ((intvec*)&v90)->assign((intvec*)&parent->v90);
+        *(std::vector<point20>*)&v90 = *(std::vector<point20>*)&parent->v90;      // 0x411630
         local_a0 = 1;
     }
     ensure_local();
@@ -88,7 +96,7 @@ void mesh_x::transform(mesh* src, const matrix* m, unsigned color)
         vector4 c = *UNPACK_COLOR(&uc, &vt.color);
         c.x *= tint.x;  c.y *= tint.y;  c.z *= tint.z;  c.w *= tint.w;
         vt.color = pack_color(&c);
-        ((vvec*)&v50)->push_back(vt);
+        v50.push_back(vt);                        // 0x411420
     }
 
     std::vector<face20>& faces = ((mesh_x*)src)->get90_rec();
@@ -133,7 +141,7 @@ void mesh_x::set_color(vector4 color)
     if (color.y < 0.0f) nneg++;
     if (color.z < 0.0f) nneg++;
     if (nneg == 1 || nneg == 3)
-        flip_faces();                               // 0x4779b0
+        ((mesh_flip*)this)->flip_faces();                // 0x4779b0 (mesh_flip: terrain_b/terrain_b.h, the polygon winding reversal)
 
     slots[0].f28 = 1;
     bounds.min.x *= color.x;  bounds.min.y *= color.y;  bounds.min.z *= color.z;
@@ -195,7 +203,7 @@ void mesh_list_x::append(mesh_list* src, int bone, const matrix* m, const unsign
             if (nw)
                 nw->f64++;
             vpush(v, c);
-            ((mesh_x*)c)->append_skinned(*it, m, bone, *color, 0);
+            ((mesh*)c)->append_skinned(*it, (const mat4*)m, bone, *color, 0);      // 0x44eb00 (rgl::mesh::append_skinned, the rgl::mat4 frame)
         }
     }
 }
@@ -258,7 +266,7 @@ void world_x::light_mesh(mesh* m, const matrix* frame, unsigned flags)
     // Flat-lit resources: no per-vertex work, just combine the scene light colour with the tint.
     if (m->res->flags & 0x40) {
         vector4 dir, col;
-        light_at(lm.o, lm.u, &dir, &col, flags, 1.0f);
+        ((level*)this)->light_at(lm.o, lm.u, &dir, &col, flags, 1.0f);
         vector4 c;
         c.x = col.x * 0.7f + tint.x;
         c.y = col.y * 0.7f + tint.y;
@@ -304,10 +312,10 @@ void world_x::light_mesh(mesh* m, const matrix* frame, unsigned flags)
 
         vector4 dir, col, dir2, col2;
         if (!g_use_shaders) {
-            light_at(pos, nrm, &dir, &col, flags, alpha);
+            ((level*)this)->light_at(pos, nrm, &dir, &col, flags, alpha);
         } else {
-            light_at(pos, nrm, &dir, &col, flags | 2, 1.0f);
-            light_at(pos, nrm, &dir2, &col2, flags | 4, 1.0f);
+            ((level*)this)->light_at(pos, nrm, &dir, &col, flags | 2, 1.0f);
+            ((level*)this)->light_at(pos, nrm, &dir2, &col2, flags | 4, 1.0f);
         }
 
         if (tangent || flat) {

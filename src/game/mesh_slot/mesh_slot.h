@@ -39,21 +39,34 @@ unsigned pack_signed_color(const float* c);     // 0x461370 (cdecl)
 
 // ---- members of rgl::mesh defined in this TU (0x47aa40..0x47b3b0) ------------------------------------------------
 // mesh_x (the members above) is src/rgl/mesh_x.h
-struct mesh_ms : rgl::mesh {
-    void compute_normals();                                            // 0x451c50
+// (compute_normals 0x451c50 is rgl::mesh's own member, reset 0x428f30 rgl::scene's; clone 0x47a370 is tmesh::clone, terrain_b/tmesh.h: only that
+// member is declared, under its class, because the header brings another layout)
+struct tmesh {
+    tmesh* clone();   // 0x47a370
 };
 struct lod_mesh_ms : rgl::lod_mesh {
-    rgl::lod_mesh* clone();                                            // 0x47a370 (src/game/terrain_b/mission.cpp)
+    rgl::lod_mesh* clone() { return (rgl::lod_mesh*)((tmesh*)this)->clone(); }     // 0x47a370
 };
 struct scene_ms2 : rgl::scene {
-    void reset();                                                      // 0x428f30
 };
 
 // resource-manager members this TU calls (the lookups of src/rgl/resource.h plus the ones core/resmgr.h defines)
+// The manager's own class is `resmgr` (src/rgl/core/resmgr.h, global 0x5d6fa0), which cannot be included next to resource.h: only the members
+// this TU calls are declared, under that name (the definitions' signatures: rgl::string keys, the lod group as `lod_group`).
+struct lod_group;
+struct resmgr {
+    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);      // 0x41b960 (hidden return pointer, ret 4)
+    lod_group* make_lod_mesh(const rgl::string& pat, bool copy);         // 0x41ca60 (ret 8)
+    lod_group* get_lod_mesh(const rgl::string& name);                    // 0x41cdc0
+    texture* get_render_target(int w, int h, int fmt, int ext, int f34);   // 0x41b7d0
+    texture* get_texture(int w, int h, int fmt);                           // 0x41c400
+    skin* get_shadow_skin(int w, int h, int fmt, int f34);                 // 0x41c420
+};
+#define g_resmgr_c ((::resmgr*)&g_resmgr)
+// (a tstring is an rgl::string, and the lod group is the rgl::lod_mesh2 record of the callers)
 struct resmgr_ms : resource_manager {
-    std::vector<rgl::mesh*> find_meshes(const tstring* prefix);          // 0x41b960 (hidden return pointer, ret 4)
-    rgl::lod_mesh2* make_lod_mesh(const tstring& pat, bool copy);        // 0x41ca60 (ret 8)
-    rgl::lod_mesh2* get_lod_mesh(const tstring& name);                   // 0x41cdc0
+    rgl::lod_mesh2* make_lod_mesh(const tstring& pat, bool copy) { return (rgl::lod_mesh2*)((::resmgr*)this)->make_lod_mesh((const rgl::string&)pat, copy); }   // 0x41ca60
+    rgl::lod_mesh2* get_lod_mesh(const tstring& name) { return (rgl::lod_mesh2*)((::resmgr*)this)->get_lod_mesh((const rgl::string&)name); }                 // 0x41cdc0
 };
 #define g_rms (*(resmgr_ms*)&g_resmgr)
 
@@ -62,12 +75,11 @@ struct resmgr_ms : resource_manager {
 
 // ---- the scene container's lighting pass --------------------------------------------------------------------------
 struct Geom_t;
+// (create_entity 0x428440 is rgl::world's own member, src/rgl/scene/world.h; light_at 0x43ac40 is level::light_at of agent2/agent_types.h, see mesh_ops.cpp)
 struct world_x : rgl::world {
-    rgl::entity* create_entity(int id);                                                                    // 0x428440
     void build_faces(void* g);                                                                                  // 0x479980
     void update_probes(int use_shaders);                                                                           // 0x472ed0
     void sample_lights(float* v, const float* sun_dir, const float* centre);                                   // 0x42ad60
-    void light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale);   // 0x43ac40
     void light_mesh(rgl::mesh* m, const matrix* frame, unsigned flags);                                    // 0x47b7b0
 };
 
@@ -143,7 +155,6 @@ struct TerrainX : terrain_obj {
     void light_entities(rgl::mesh** list, int count);   // 0x47ce00
     void light_props();                              // 0x47ced0
     void gen_set_init(particle_list* s);             // 0x47df80
-    void light_all(particle_list* l, int mode);   // 0x472020 (Terrain::light_all with the flag as an int)
     void create_water(void** out);                   // 0x480db0
     void destroy_water(int a);                       // 0x4814a0
     void emit_particle(int type, int v, int x, int y, float z);   // 0x47ff60

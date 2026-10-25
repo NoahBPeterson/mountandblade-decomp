@@ -110,7 +110,7 @@ void slerp(quaternion* out, const quaternion* a, const quaternion* b, const floa
 #include "../../include/key_table.h"   // KeyTable (one definition for src/game and src/rgl; find 0x423a50, sample 0x436ae0)
 struct KeyFrames {
     vector4* vals; int* keys; int count;
-    void find(int* a, int* b, float* t, const float* time);     // 0x40f0d0
+    void find(int* a, int* b, float* t, const float* time);     // 0x40f0d0 (agent.cpp: forwards to rgl::keyframes::find)
 };
 struct KeyHolder {
     char pad0[0x28];

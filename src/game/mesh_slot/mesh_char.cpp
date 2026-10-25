@@ -10,24 +10,17 @@ using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
-// the resource manager as this TU calls it (the shared resource_manager of src/rgl/resource.h has the lookups)
-struct resmgr_c : resource_manager {
-    texture* get_render_target(int w, int h, int fmt, int ext, int f34);   // 0x41b7d0
-    texture* get_texture(int w, int h, int fmt);                           // 0x41c400
-    ShSkin* get_shadow_skin(int w, int h, int fmt, int f34);               // 0x41c420
-    int resolve_shader(tstring* name);                                     // 0x418e90
-    void release(void* p);                                                 // 0x4175f0
-};
-#define g_rm (*(resmgr_c*)&g_resmgr)
+// the resource manager as this TU calls it: `resmgr` (mesh_slot.h) for the lookups of core/resmgr.h, the resource_manager of src/rgl/resource.h
+// for resolve_shader (0x418e90); 0x4175f0 is the free stdcall clear_f14 of rgl/mem_stream.cpp (the folded release(res), which ignores ecx)
+#define g_rm (*(::resmgr*)&g_resmgr)
+void __stdcall clear_f14(named_object* r);                                 // 0x4175f0
 
-struct MsgLogC : MsgLog {
-    void add(tstring text, int color);          // 0x452c00 (ret 0x14)
+extern MsgLog g_gui;                          // 0x5d7080 (MsgLog::add 0x452c00, ret 0x14, is the message log's own member)
+// 0x47e520 is RenderPass::render (mesh_pass.cpp), the pass driver of the scene registry object g_batch (0x5fe898)
+struct RenderPass {
+    bool render(int pass);   // 0x47e520
 };
-extern MsgLogC g_gui;                         // 0x5d7080
-struct SceneRegC {
-    void render(scene* sc);                     // 0x47e520 (RenderPass::render)
-};
-extern SceneRegC g_batch;                    // 0x5fe898
+extern RenderPass g_batch;                   // 0x5fe898
 
 // EChar::collect lives next to its caller (the original's tail call)
 struct EChar_c : EChar {
@@ -85,7 +78,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
         build_mirror((*out_b)->lists[0].v[0], remap, &color2, 0);
     }
 
-    ((mesh_ms*)m)->compute_normals();
+    m->compute_normals();
     build_mirror(m, remap, &color2, 1);
 
     unsigned alpha = ((unsigned)(scale * scale * 255.0f)) << 24;
@@ -119,7 +112,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
         else if (variant > variant_count - 1)
             variant = variant_count - 1;
 
-        (*out_c)->lists[0].v[0]->res = g_rm.get_material(*(rgl::string*)&names_a[variant]);
+        (*out_c)->lists[0].v[0]->res = g_resmgr.get_material(*(rgl::string*)&names_a[variant]);
         (*out_c)->lists[0].v[0]->color = color;
         (*out_c)->lists[0].v[0]->f40 = color2;
         if ((*out_c)->count > 1) {
@@ -133,7 +126,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
 
     if (*out_b != 0 && set >= 0 && v >= 0) {
         tstring name(names_b[v]);
-        (*out_b)->lists[0].v[0]->res = g_rm.get_material(*(rgl::string*)&name);
+        (*out_b)->lists[0].v[0]->res = g_resmgr.get_material(*(rgl::string*)&name);
         (*out_b)->lists[0].v[0]->color = color;
         (*out_b)->lists[0].v[0]->f40 = color2;
         if ((*out_b)->count > 1) {
@@ -170,8 +163,8 @@ struct btstr {
     char* buf;                   // +4
     int cap;                     // +8
     int len;                     // +0xc
-    void ctor();                 // 0x42bbd0 (tstring::tstring)
-    void dtor();                 // 0x42bc40 (tstring::~tstring)
+    void ctor() { ((tstring*)this)->tstring::tstring(); }      // 0x42bbd0 (tstring::tstring)
+    void dtor() { ((tstring*)this)->~tstring(); }              // 0x42bc40 (tstring::~tstring)
 };
 struct bin_reader_o {
     void* vt;                    // 0x00
@@ -201,7 +194,7 @@ struct bin_reader_o {
         buf.dtor();
         name.dtor();
     }
-    bool open_read(const char* path);            // 0x415290
+    bool open_read(const char* path) { return ((text_stream*)this)->open_read(path); }     // 0x415290 (the folded text_stream::open_read)
 };
 void GameData::load_scene(int idx)
 {
@@ -220,10 +213,6 @@ void GameData::load_scene(int idx)
 // The ShadowMap (src/game/shadow_map.h) embeds the render scene of its light pass at +0x18 (scene is 0x1d8 bytes: the
 // object's fields +0x18..+0x1f0 are that scene's; shadow_map.h names the fields of the same bytes its own modules read).
 #define SC (*(scene_ms2*)((char*)this + 0x18))
-struct LightCamP {
-    void render_part(scene* view, int rem, int div); // 0x421110
-    void render_scene(scene* sc, bool reflect); // 0x429890
-};
 extern char g_use_hw_shadow;                     // 0xa17f24
 
 // @ 0x47fce0
@@ -249,8 +238,8 @@ NOINL void ShadowMapP::build_hw()
         SC.active = 0;
         for (int i = 0; i < 4; i++) {
             SC.flags = i ? 1 : 0x301;
-            ((LightCamP*)cam)->render_part(&SC, i, 4);
-            g_batch.render(&SC);
+            ((rgl::world*)cam)->render_part(&SC, i, 4);      // 0x421110
+            g_batch.render((int)&SC);
         }
     }
 }
@@ -261,10 +250,10 @@ NOINL void ShadowMapP::build_sw()
     g_batch.render(0);
     SC.reset();
     if (g_use_shaders == 0 && (*(int*)((char*)&g_options + 0x2c)) != 0 && target == 0) {
-        target = g_rm.get_shadow_skin(w, h, 0x1c, 0);
+        target = (ShSkin*)g_rm.get_shadow_skin(w, h, 0x1c, 0);
         if (target != 0) {
             target->file.assign("shadow_shader");
-            target->shader = g_rm.resolve_shader(&target->file);
+            target->shader = (int)g_resmgr.resolve_shader(*(rgl::string*)&target->file);      // 0x418e90
             target->id = 0x108;
             target->refs[0]->f24 = 0x300000;
         }
@@ -277,11 +266,11 @@ NOINL void ShadowMapP::build_sw()
         SC.target = (texture*)target->refs[0];
         SC.f15c = (int)target2;
         SC.active = 0;
-        ((LightCamP*)cam)->render_scene(&SC, 0);
-        g_batch.render(&SC);
+        ((rgl::world*)cam)->render_scene(&SC, 0);        // 0x429890
+        g_batch.render((int)&SC);
     }
     if (target2 != 0) {
-        g_rm.release(target2);
+        clear_f14((named_object*)target2);          // 0x4175f0
         target2 = 0;
     }
 }

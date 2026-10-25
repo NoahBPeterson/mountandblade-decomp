@@ -9,6 +9,7 @@
 //   - GameData members (add_gold, remove_gold, start_quest, label_text) on the canonical GameData (include/game_data.h).
 //   - the script block runner (DialogBlock / Elem, include/dialog_rec.h, camera.h): set_lvalue, get_operand, step_less,
 //     renumber, link, pop_try, run_line, emit. The slices viewed these as `Interp`, `Mission` and `ScriptHolder`.
+#define MB_CAMERA_TU
 #include <new>
 #include <string.h>
 #include "../../rgl/rgl_math.h"
@@ -30,11 +31,85 @@
 #include "./camera.h"
 #include "./party_2.h"
 #include "../../include/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
+#include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
 #include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 extern Font* g_font;                                // 0x5e2934
 
+// ---- the canonical owners of the callees ---------------------------------------------------------------------------------------
+// The namespaced views below (one namespace per slice) declare the engine functions they call under their own class names, which
+// the linker cannot resolve: the mangled name has to carry the class that DEFINES the function. These are member-only stubs under
+// the defining name (only their `// 0x...` callee is declared); the views forward to them with `this` cast, which compiles to the
+// same call. Each comment names the defining source.
+void vec_xlen();                                                                    // 0x43e2a0 agent3/agent_combat.cpp (the vector's _Xlen: throws length_error)
+struct Mission3 {
+    void add_amount(int idx, unsigned flags);   // 0x4677a0 terrain_a/terrain_a.cpp (ret 8)
+};
+struct MissionW {                                                                   // 0x492230 / 0x492350 world_data/world_data.cpp (ret 8)
+    void set_weapon_order_1(int team, unsigned value);
+    void set_weapon_order_2(int team, unsigned value);
+};
+struct Sel {                                                                        // ui/mission_ui.cpp: the order leader's selection record
+    void set_v(int v);                                                              // 0x489860
+    void set_vec(const int* a, const int* b, const int* c);                         // 0x4898e0
+    void bump(int d);                                                               // 0x4899e0
+};
+struct ForceLabel {
+    void make_label(char* out);   // 0x48d940 mission_ui2/mission_3.cpp
+};
+struct level {
+    int nearest_face(const float* p);   // 0x439a50 agent2/agent_stats.cpp
+};
+struct PartyMgrW {
+    int add_slot();   // 0x493960 world_data/world_data.cpp
+};
+struct ContainerW {                                                                 // world_data/world_data.cpp
+    void bounds_of(int* a, float* p3, float* p4, float* p5);                        // 0x490710 (ret 0x10)
+    void dtor_common();                                                             // 0x490520
+};
+struct SlotHolder40 {
+    void set40(int idx, int val);   // 0x493db0 world_data/world_data.cpp
+};
+struct HudOuter {
+    void scroll_refresh(rgl::vector4* arg);   // 0x498420 world_data/mesh_hud.cpp
+};
+struct FieldPanel {                                                                 // mission_ui2/mission_3.cpp
+    void update();                                                                  // 0x48d470
+    void set_color(unsigned rgb);                                                   // 0x48d350
+    void set_alpha(unsigned a);                                                     // 0x48d3c0
+};
+struct LangTables {
+    tstring* find(const tstring* key);   // 0x4c6010 rgl/mesh2/gui_edit.cpp (the string table's find)
+};
+struct SphereC {
+    SphereC(rgl::vector4 c, const float* r);   // 0x4332a0 rgl/xmlcfg/game_util.cpp (named `sphere` there)
+};
+struct Anim;
+struct Skeleton {
+    void start_anim(int rec, Anim* poly, int a, int b);   // 0x439fc0 agent2/agent_stats.cpp (ret 0x10; FxDef::start_anim in include/fx.h)
+};
+struct Curve {
+    void reset_rec(int i);   // 0x4339d0 agent/curve.cpp (FxDef::reset_rec in include/fx.h)
+};
+struct ColourOwner;
+rgl::mesh* build_legend_mesh(ColourOwner* parent);                                  // 0x495b20 world_data/mesh_hud.cpp
+struct pos;
+pos* __cdecl identity_pos(pos* out);                                                // 0x40cd00 rgl/shapes/shapes.cpp
+__int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
+struct CarryBody; struct CarryRef; struct CarryCtx;
+void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
+struct MissionG {
+    int create(const rgl::matrix* m, const struct ItemStackG* it, int troop);   // 0x4836e0 mesh_slot/mesh_game.cpp (ret 0xc)
+};
+
+
+// camera.h's views of the interpreter's callees forward to the defining classes
+template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 world_data/world_data.cpp (out-of-line instance: only declared)
+template<> size_t std::vector<int>::size() const;                                   // 0x40f010 rgl/particles/mesh_obj.cpp (out-of-line instance: only declared)
+__forceinline void ScriptStack::push(int line, int val) { ((PairStack*)this)->push(line, val); }                // 0x488e60
+__forceinline int VarTable::get(int id) { return ((Cont690*)this)->get((unsigned)id); }                          // 0x48d690
+__forceinline void VarTable::set40(int id, int v) { ((SlotHolder40*)this)->set40(id, v); }                       // 0x493db0
 
 // ======================================================================================
 // slice s0049aca0 (namespace c49aca0)
@@ -52,7 +127,7 @@ using rgl::vector4;
 // ---- shared engine types -------------------------------------------------------------------------
 using rgl::mesh;
 
-struct resmgr { void* lookup(const tstring& name); };                  // 0x418a70
+struct resmgr { void* lookup(const tstring& name) { return ((::resource_manager*)this)->get_material(*(const rgl::string*)&name); } };   // 0x418a70
 struct Fadeable { void fade_scale(vector4 v); };                    // 0x47af30
 
 struct R8 { int a, b; };                        // an 8-byte returned rect (2 floats)
@@ -63,7 +138,6 @@ void __fastcall base_ctor_4931a0(void* o);      // 0x4931a0 (ecx = object)
 void __fastcall base_ctor_48ae20(void* o);      // 0x48ae20 (ecx = object)
 void __fastcall dtor_common(void* o);      // 0x490520 (ecx = object)
 void __fastcall play_sound(void* m);     // 0x48b2d0
-struct Mission { int add_placed(const int* kind, const int* id, const int* value, const void* m, int* spawn_id); }; // 0x44f870
 
 struct ptr_tag {};                               // empty class passed by value (one slot)
 struct NodeA;
@@ -80,10 +154,15 @@ struct PVec {
     __declspec(noinline) void push_back(const E4& x);   // 0x49b120
     void insert(E4** out, E4* where, const E4& x);      // 0x49b170
     void _Insert_n(E4* where, unsigned count, const E4& x);  // 0x49b1c0
-    void _Xlen() const;                         // 0x43e2a0
+    void _Xlen() const { ::vec_xlen(); }        // 0x43e2a0 (the lib's _Xlen: agent3/agent_combat.cpp vec_xlen)
 };
 
-E4* __cdecl uninit_copy(E4* f, E4* l, E4* d, PVec* al, ptr_tag tag);   // 0x435a10 (trivial _Uninit_copy = memmove)
+// 0x435a10 is the int* instance of std::_Copy_opt (agent/agent.cpp; trivial _Uninit_copy = memmove). cl 13.10 takes an ICE on an explicit
+// specialization declaration of it, so the instance is the library's own (same mangled name)
+inline E4* uninit_copy(E4* f, E4* l, E4* d, PVec*, ptr_tag)
+{
+    return (E4*)std::_Copy_opt((int*)f, (int*)l, (int*)d, std::_Scalar_ptr_iterator_tag());
+}
 
 // ---- class A: the panel (`this` of 0x49aca0 / 0x49ad20 / 0x49b4f0) ---------------------------------
 struct PObj {
@@ -282,7 +361,7 @@ void PObj::place(int* p)
 {
     int a = -1;
     int b = 6;
-    ((Mission*)this)->add_placed(&b, p, p + 1, (const void*)((char*)g_game + 0x14014), &a);
+    ((::Mission*)this)->add_placed(&b, p, p + 1, (const rgl::matrix*)((char*)g_game + 0x14014), &a);
 }
 
 // @ 0x49b4f0
@@ -339,7 +418,7 @@ using rgl::matrix;
 using rgl::mesh;
 
 // ---- engine tables / globals ---------------------------------------------------------------------
-struct StrTable { tstring* lookup(const tstring& key); };   // 0x43a1e0
+struct StrTable { tstring* lookup(const tstring& key) { return ((::StrTable*)this)->lookup(key); } };   // 0x43a1e0
 extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };        // 0x452c00 (thiscall, ret 0x14)
 extern MsgLog g_gui;                             // 0x5d7080
@@ -350,8 +429,8 @@ extern int g_snd_new_quest;                         // 0x5aa180
 struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int* out); };  // 0x442650
 
 struct ResMgr {
-    void*  get_material(const tstring& name);       // 0x418a70
-    mesh*  get_object(tstring* name);               // 0x419540 (ret 4)
+    void*  get_material(const tstring& name) { return ((::resource_manager*)this)->get_material(*(const rgl::string*)&name); }       // 0x418a70
+    mesh*  get_object(tstring* name) { return ((::resmgr*)this)->get_object((const rgl::string*)name); }                      // 0x419540 (ret 4)
 };
 extern ResMgr g_resmgr;                             // 0x5d6fa0
 
@@ -368,9 +447,17 @@ void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);  // 0x415100
 // ---- scene objects -------------------------------------------------------------------------------
 struct Shape { virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
                virtual void v4(); virtual void v5(); virtual void v6(); };
-struct SphereMem { Shape* construct(vector4 pos, const float* radius); };   // 0x4332a0 (thiscall, ret 0x14, ecx = raw memory)
+struct SphereMem {
+    Shape* construct(vector4 pos, const float* radius)   // 0x4332a0 (thiscall, ret 0x14, ecx = raw memory): the constructor of ::sphere (game_util.cpp)
+    {
+        rgl::vector4 c;
+        c.x = pos.x; c.y = pos.y; c.z = pos.z; c.w = pos.w;
+        new ((void*)this) ::sphere(c, radius);
+        return (Shape*)this;
+    }
+};
 
-struct RotFrame { void rotate_about_u(const float* angle); };   // 0x40e770 (thiscall): rotates the side/forward rows
+struct RotFrame { void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); } };   // 0x40e770 (thiscall): rotates the side/forward rows
 
 // a scene entity (only the offsets this slice touches are named)
 struct EntityFull {
@@ -383,9 +470,9 @@ struct EntityFull {
     void**   f11c;                                  // +0x11c (first dword -> matrix at +0xcc)
     char pad120[0x168 - 0x120];
     int      f168;                                  // +0x168  (end fall behaviour = 3)
-    void add_extra(mesh* m);                         // 0x442110 (thiscall, ret 4)
+    void add_extra(mesh* m) { ((Poser*)this)->add_extra((int)m); }                         // 0x442110 (thiscall, ret 4)
 };
-struct EntityHost { EntityFull* create_entity(int type); };   // 0x428440 (ret 4)
+struct EntityHost { EntityFull* create_entity(int type) { return (EntityFull*)((rgl::world*)this)->create_entity(type); } };   // 0x428440 (ret 4)
 extern EntityHost* g_level;                   // 0xa732b4 (points to the host object)
 
 
@@ -416,7 +503,7 @@ struct Rec5ac8 {
 struct AgentTable {
     char    pad0[0x138cc];
     std::vector<char*> pages;                       // +0x138cc, relative to the table (page pointers, 16 records per page)
-    int     index_of(int id);                       // 0x48ad00 (ret 4)
+    int     index_of(int id) { return ((Map10007*)this)->lookup(id); }   // 0x48ad00 (ret 4)
     Rec5ac8* get(int id) { int a = index_of(id); return (Rec5ac8*)((a & 0xf) * 0x5ac8 + *(pages.begin() + (a >> 4))); }
 };
 
@@ -447,7 +534,7 @@ struct Mission {
     int         f158c;                              // +0x158c (font mesh visible)
 
     tstring string_value(int index);                // 0x48e9e0 (ret 4)
-    mesh* build_legend_mesh(EntityFull* e);                // 0x495b20 (ret 4)
+    mesh* build_legend_mesh(EntityFull* e) { return ::build_legend_mesh((ColourOwner*)e); }                // 0x495b20 (ret 4)
 
     void spawn_battle_icon(unsigned id);                                    // 0x49bbb0
 };
@@ -508,7 +595,7 @@ void Mission::spawn_battle_icon(unsigned id)
         matrix tmp;
         e->frame = *identity_pos(&tmp);
     }
-    rec->bind_host();
+    ((BattleRec*)rec)->bind_host();
 
     if (rec->f10 == 1) {
         agents.get(rec->f54)->icon_type = 7;
@@ -558,8 +645,8 @@ namespace c49bea0 {
 #define MB_NOTHROW throw()
 
 struct StrTable {                                   // 0x5e2a18
-    tstring* lookup(const tstring& key);                    // 0x43a1e0
-    char* find(const tstring* key);                         // 0x4c6010
+    tstring* lookup(const tstring& key) { return ((::StrTable*)this)->lookup(key); }                    // 0x43a1e0
+    char* find(const tstring* key) { return (char*)((::LangTables*)this)->find(key); }                  // 0x4c6010 (LangTables::find)
 };
 extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };                    // 0x452c00 (thiscall, ret 0x14)
@@ -567,7 +654,7 @@ extern MsgLog g_gui;                             // 0x5d7080
 
 struct vector4 { float x, y, z, w; };
 struct matrix { float m[4][4]; };
-matrix* identity_pos(matrix* out);                  // 0x40cd00 (cdecl; returns out)
+inline matrix* identity_pos(matrix* out) { return (matrix*)::identity_pos((::pos*)out); }   // 0x40cd00 (cdecl; returns out)
 
 // sprite (0x6c bytes, reference counted at +0x64); a "+0x2c slot" object also ref-counted
 struct Sprite { char pad[0x64]; int refs; };
@@ -584,7 +671,13 @@ struct Shape {
     matrix m20;                                     // +0x20
     int m40;                                        // +0x40 (the float* arg, copied)
 };
-Shape* sphere_shape(Shape* mem, vector4 pos, const float* radius);  // 0x4332a0 (ret 0x14, ECX=mem)
+inline Shape* sphere_shape(Shape* mem, vector4 pos, const float* radius)   // 0x4332a0 (ret 0x14, ECX=mem): the constructor of ::sphere on the raw memory
+{
+    rgl::vector4 c;
+    c.x = pos.x; c.y = pos.y; c.z = pos.z; c.w = pos.w;
+    new ((void*)mem) ::sphere(c, radius);
+    return mem;
+}
 
 // scene object for one order entry (the mission order contour)
 struct OrderObj {
@@ -606,7 +699,7 @@ struct OrderObj {
     int f_a4;                                       // +0xa4
     char pada8[0x168 - 0xa8];
     int fade;                                       // +0x168
-    void update_flags();                                 // 0x4b7840
+    void update_flags() { ((::Party*)this)->update_flags(); }                                 // 0x4b7840
 };
 
 struct OrderEntry {                                 // 0x5ac8-byte order/agent record
@@ -622,7 +715,7 @@ struct OrderEntry {                                 // 0x5ac8-byte order/agent r
     OrderObj* obj;                                  // +0x59c0
     char pad59c4[0x59e8 - 0x59c4];
     Sprite* label;                                  // +0x59e8 (text mesh)
-    void place_on_map();                                // 0x4b2880
+    void place_on_map() { ((::Party*)this)->place_on_map(); }                                // 0x4b2880
 };
 
 struct Reinf {                                      // 0x4c-byte reinforcement record
@@ -651,13 +744,13 @@ struct AgentTable {
     struct Pair { int id; int slot; } direct[0x2717];   // +0 (id -> slot, direct-mapped)
     char pad138b8[0x138d0 - 0x138b8];
     char** pages;                                   // +0x138d0 (page table of records)
-    int index_of(int id);                           // 0x48ad00 (ret 4)
+    int index_of(int id) { return ((Map10007*)this)->lookup(id); }                           // 0x48ad00 (ret 4)
 };
 
 struct MissionAgents {
     char pad0[0xf8];
     AgentTable table;                               // +0xf8
-    void add_order_arrow(int id, int mode);         // 0x49bea0 (ret 4)
+    void add_order_arrow(int id);                   // 0x49bea0 (ret 4)
 };
 
 struct OrderObjHost {
@@ -679,13 +772,17 @@ struct Mission {
     char pad666a[2];
     Unit units[1];                                  // +0x666c (0x130 each)
 
-    void add_amount(int a, int b);                 // 0x4677a0 (ret 8)
-    int label_text(Sprite* label, const char* name, int a, int b, const float* h);   // 0x49baa0 (ret 0x14)
-    Sprite* build_legend_mesh(OrderObj* o);                // 0x495b20 (ret 4)
+    void add_amount(int a, int b) { ((Mission3*)this)->add_amount(a, (unsigned)b); }                 // 0x4677a0 (ret 8)
+    int label_text(Sprite* label, const char* name, int a, int b, const float* h)   // 0x49baa0 (ret 0x14)
+    {
+        ((::GameData*)this)->label_text((rgl::mesh*)label, (const tstring*)name, (char)a, b, h);
+        return 0;
+    }
+    Sprite* build_legend_mesh(OrderObj* o) { return (Sprite*)::build_legend_mesh((ColourOwner*)o); }                // 0x495b20 (ret 4)
     void check_slot(int id, unsigned bits);         // 0x49c170 (ret 8)
 };
 extern char g_show_party_ids_instead_of_names;                              // 0xa181b8
-struct ResMgr { Sprite* material(const char* name); };  // 0x418a70
+struct ResMgr { Sprite* material(const char* name) { return (Sprite*)((::resource_manager*)this)->get_material(*(const rgl::string*)name); } };  // 0x418a70
 extern ResMgr g_resmgr;                             // 0x5d6fa0
 
 // 0xa732b4 holds a pointer; its object creates the scene object for orders.
@@ -695,7 +792,7 @@ static OrderObj* order_create_entity(int type)
 }
 
 // @ 0x49bea0
-void MissionAgents::add_order_arrow(int id, int mode)
+void MissionAgents::add_order_arrow(int id)
 {
     vector4 zero = { 0, 0, 0, 0 };
     float radius = 0.3f;
@@ -746,7 +843,7 @@ void MissionAgents::add_order_arrow(int id, int mode)
             name = e->name;
         ((Mission*)g_game)->label_text(e->label, name, 0, (int)h, &h);
     }
-    o->mode = mode;
+    o->mode = id;                                   // (+0xc takes the argument again: [esp+0x70] is [esp+0x60] after the pushes)
     o->fade = 1;
     if (!(o->param() > 0.0f))
         o->set_param(&h);
@@ -799,7 +896,7 @@ namespace c49c2c0 {
 
 #define MB_NOTHROW throw()
 
-struct StrTable { tstring* lookup(const tstring& key); };   // 0x43a1e0 (lookup)
+struct StrTable { tstring* lookup(const tstring& key) { return ((::StrTable*)this)->lookup(key); } };   // 0x43a1e0 (lookup)
 extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };        // 0x452c00 (thiscall, ret 0x14)
 extern MsgLog g_gui;                             // 0x5d7080
@@ -828,8 +925,8 @@ struct Leader {             // this + 0x527c + index*0x16c
 
 struct AgentTable {         // mission + 4
     unsigned count;                         // +0
-    unsigned first_used();                  // 0x43b1b0
-    void     next_used(unsigned* id);       // 0x43b160
+    unsigned first_used() { return ((::AgentTable*)this)->first_used(); }                  // 0x43b1b0
+    void     next_used(unsigned* id) { ((::AgentTable*)this)->next_used(id); }       // 0x43b160
 };
 
 struct Agent {
@@ -845,10 +942,10 @@ struct Agent {
     char    pad2c4[0x56b4 - 0x2c4];
     vector4 alt;            // +0x56b4
     char    pad56c4[0x5928 - 0x56c4];
-    int     update_nav_face();     // 0x43cb30 (thiscall) -> eax
+    int     update_nav_face() { return ((::Agent*)this)->update_nav_face(); }     // 0x43cb30 (thiscall) -> eax
 };
 
-struct Level { int nearest_face(vector4* p); };     // 0x439a50 (thiscall) -> face index
+struct Level { int nearest_face(vector4* p) { return ((::level*)this)->nearest_face((const float*)p); } };     // 0x439a50 (thiscall) -> face index
 
 struct Mission {
     Level*      level;                      // +0x00
@@ -861,18 +958,18 @@ struct Mission {
     Leader      leaders[3];                 // +0x527c
     char        pad6c20[0x40];
 
-    int  point_in_rect(vector4* p);           // 0x48a990 (thiscall) -> al
-    void set_weapon_order_1(int index, int on);      // 0x492230 (ret 8)
-    void set_weapon_order_2(int index, int mode);     // 0x492350 (ret 8)
+    int  point_in_rect(vector4* p) { return ((::Mission*)this)->point_in_rect((const float*)p); }           // 0x48a990 (thiscall) -> al
+    void set_weapon_order_1(int index, int on) { ((MissionW*)this)->set_weapon_order_1(index, (unsigned)on); }      // 0x492230 (ret 8)
+    void set_weapon_order_2(int index, int mode) { ((MissionW*)this)->set_weapon_order_2(index, (unsigned)mode); }     // 0x492350 (ret 8)
     void order(int index, int order);
 };
 extern Mission* g_mission;                  // 0x5e292c
 
 // order-leader helpers (all thiscall on the Leader record)
-void set_vec(Leader* L, vector4* pos, vector4* a, vector4* b);   // 0x4898e0
-void set_v(Leader* L, int v);                                     // 0x489860
-void bump(Leader* L, int v);                                    // 0x4899e0
-void make_label(Leader* L, char* buf);                                      // 0x48d940
+inline void set_vec(Leader* L, vector4* pos, vector4* a, vector4* b) { ((Sel*)L)->set_vec((const int*)pos, (const int*)a, (const int*)b); }   // 0x4898e0
+inline void set_v(Leader* L, int v) { ((Sel*)L)->set_v(v); }                                     // 0x489860
+inline void bump(Leader* L, int v) { ((Sel*)L)->bump(v); }                                    // 0x4899e0
+inline void make_label(Leader* L, char* buf) { ((ForceLabel*)L)->make_label(buf); }                                      // 0x48d940
 
 struct TickPair { int a; int b; };
 extern TickPair g_ticks[];                  // 0x5e2948
@@ -1089,7 +1186,7 @@ namespace c49deb0 {
 using rgl::vector4;
 
 // ---- callees that live in other slices -----------------------------------------------------------
-void identity_pos(float* m);                   // 0x40cd00  out-only 4x4 identity (cdecl)
+inline void identity_pos(float* m) { ::identity_pos((::pos*)m); }                   // 0x40cd00  out-only 4x4 identity (cdecl)
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
 float g_tick_scale = 1e-5f;                    // 0x54a6d0  1e-05f  (tick -> seconds)
@@ -1173,17 +1270,17 @@ struct Scene {                                  // the scene subobject, 0x1d8 by
     char  pad18[0x18c - 0x18];
     int   flags;                                // +0x18c
     char  tail[0x1d8 - 0x190];
-    void ctor();                                // 0x429740
-    void dtor();                                // 0x41f4e0
-    void reset();                               // 0x428f30
+    void ctor() { ((rgl::scene*)this)->rgl::scene::scene(); }      // 0x429740
+    void dtor() { ((rgl::scene*)this)->~scene(); }                   // 0x41f4e0
+    void reset() { ((rgl::scene*)this)->reset(); }                   // 0x428f30
 };
 
 struct Frustum {                                // the box frustum, 0x120 bytes at +0x360
     unsigned char first;                        // +0x000
     char  pad1[0x108 - 0x1];
     float box[6];                               // +0x108  half extents + the far plane
-    void ctor();                                // 0x41ef60
-    void build_planes();                               // 0x41e4f0  recompute the 6 planes
+    void ctor() { ((rgl::frustum*)this)->rgl::frustum::frustum(); }      // 0x41ef60
+    void build_planes() { ((rgl::frustum*)this)->build_planes(); }       // 0x41e4f0  recompute the 6 planes
     // the box setter (inline): left, right, bottom, top, near, far
     void set_box(float l, float r, float b, float t, float n, float f)
     {
@@ -1247,13 +1344,13 @@ struct Object {
     int     f174, f178;                         // +0x174
     int     sub0, sub1, sub2;                   // +0x17c
 
-    void base_ctor();                           // 0x48ae20
-    void dtor_common();                         // 0x490520
-    void update();                       // 0x48d470
-    void terrain_refresh(void* p);                // 0x48f120  (p = &w20)
-    void set_color(unsigned v);             // 0x48d350
-    void set_alpha(unsigned v);             // 0x48d3c0
-    void bounds_of(void* scene, float* pos, void* c, void* d);   // 0x490710
+    void base_ctor() { ((MissionUi*)this)->MissionUi::MissionUi(); }                 // 0x48ae20
+    void dtor_common() { ((ContainerW*)this)->dtor_common(); }                         // 0x490520
+    void update() { ((FieldPanel*)this)->update(); }                       // 0x48d470
+    void terrain_refresh(void* p) { ((WItem*)this)->terrain_refresh((const float*)p); }                // 0x48f120  (p = &w20)
+    void set_color(unsigned v) { ((FieldPanel*)this)->set_color(v); }             // 0x48d350
+    void set_alpha(unsigned v) { ((FieldPanel*)this)->set_alpha(v); }             // 0x48d3c0
+    void bounds_of(void* scene, float* pos, void* c, void* d) { ((ContainerW*)this)->bounds_of((int*)scene, pos, (float*)c, (float*)d); }   // 0x490710
 };
 
 // ---- the view itself -----------------------------------------------------------------------------
@@ -1500,7 +1597,7 @@ extern void* g_party_templates;                               // 0x5e29f8 (0xb0-
 
 // The global string table (this = 0x5e2a18) and its lookup (0 when absent).
 struct Golist {
-    tstring* find(tstring* key);                          // 0x4c6010
+    tstring* find(tstring* key) { return ((LangTables*)this)->find(key); }                          // 0x4c6010
 };
 
 
@@ -1543,12 +1640,13 @@ struct scene_obj {
     virtual void s50(); virtual void s51(); virtual void s52();
     virtual void add_child(void* v);                     // +0xc8
 };
-scene_obj* base_ctor(scene_obj* p);                      // 0x48ae20
-scene_obj* ps_ctor(scene_obj* p);                        // 0x48b890
-scene_obj* cam_ctor(scene_obj* p);                       // 0x49deb0
+// the constructors work on the raw memory and return it (explicit constructor calls of the defining classes: no null test, no allocation)
+inline scene_obj* base_ctor(scene_obj* p) { ((MissionUi*)p)->MissionUi::MissionUi(); return p; }      // 0x48ae20 (MissionUi::MissionUi)
+inline scene_obj* ps_ctor(scene_obj* p) { ((UiD*)p)->UiD::UiD(); return p; }                        // 0x48b890 (UiD::UiD)
+inline scene_obj* cam_ctor(scene_obj* p) { new ((void*)p) c49deb0::Camera(); return p; }             // 0x49deb0 (c49deb0::Camera::Camera, above)
 
 // 0x498420: a free thiscall position setter (argument in ecx, one pointer argument).
-struct scene_api { void set_pos(float2* p); };
+struct scene_api { void set_pos(float2* p) { ((HudOuter*)this)->scroll_refresh((rgl::vector4*)p); } };   // (HudOuter::scroll_refresh)
 
 // The 0x5ac8-byte object record (only the fields the sprite wrappers touch).
 struct ObjRec {
@@ -1580,8 +1678,8 @@ struct ObjRec {
     int f918;                                            // +0x918
     char pad91c[0x5ac8 - 0x91c];
 
-    void init();                                        // 0x48f180 (thiscall, no args)
-    void add_members(tstring* n, int a, int b, int c, int d); // 0x48c840
+    void init() { ((::Party*)this)->init(); }                                        // 0x48f180 (thiscall, no args)
+    void add_members(tstring* n, int a, int b, int c, int d) { ((::Party*)this)->add_members((int)n, a, b, c, (char)d); } // 0x48c840
 };
 
 // The 0x508-byte character record.
@@ -1609,7 +1707,13 @@ struct SpriteRec {
 
 // The child-id list at party+0xcc.
 struct ChildList {
-    int pop_front();                                     // 0x493700 (thiscall)
+    int pop_front()
+    {   // RecPool::alloc_record is defined (and mangled) as returning void, but leaves the new id in eax: the same function through a
+        // pointer to a member of the same address that returns it
+        union { void (RecPool::*decl)(); int (ChildList::*call)(); } f;
+        f.decl = &RecPool::alloc_record;
+        return (this->*f.call)();
+    }                                    // 0x493700 (thiscall; RecPool::alloc_record is declared void, the id is its eax)
 };
 
 // The scene embedded at party+0xf8.
@@ -1619,8 +1723,8 @@ struct Scene {
     char pad1[0x13908 - 0x138d4];
     CharRec** chars;                                     // +0x13908 (party +0x13a00)
 
-    int index_of(int key);                              // 0x48ad00 (thiscall, key -> object id)
-    int add_slot();                                          // 0x493960 (thiscall, back object id)
+    int index_of(int key) { return ((Map10007*)this)->lookup(key); }                              // 0x48ad00 (thiscall, key -> object id)
+    int add_slot() { return ((PartyMgrW*)this)->add_slot(); }                                          // 0x493960 (thiscall, back object id)
     ObjRec* obj(int key)
     {
         int id = index_of(key);
@@ -1645,11 +1749,14 @@ struct Party {
     int create_companion_party(int slot, int x, int y, int a);  // 0x49ef00
     void spawn_around(int x, int y, int troop, int a);   // 0x49f020
 
-    void count_units(int troop, int* h, int* d, int* w, int* o); // 0x490ce0
-    void add_template(int id, int troop, int a);           // 0x48fbd0
-    void spawn_battle_icon(int id);                            // 0x49bbb0
-    void add_order_arrow(int id);                            // 0x49bea0
-    void random_position_around(int x, int y, int a, int* out);            // 0x490030
+    void count_units(int troop, int* h, int* d, int* w, int* o) { ((GameW*)this)->count_units(troop, h, d, w, o); } // 0x490ce0
+    void add_template(int id, int troop, int a) { ((::GameData*)this)->add_template(id, troop, a); }           // 0x48fbd0
+    void spawn_battle_icon(int id) { ((c49b630::Mission*)this)->spawn_battle_icon(id); }                            // 0x49bbb0
+    void add_order_arrow(int id) { ((c49bea0::MissionAgents*)this)->add_order_arrow(id); }                            // 0x49bea0
+    void random_position_around(int x, int y, int a, int* out)            // 0x490030 (the slice typed the float pairs as ints: the same bytes)
+    {
+        ((GameW*)this)->random_position_around(*(Vec2*)&x /* x, y */, *(float*)&a, (Vec2*)out);
+    }
 };
 
 inline TroopRec* troop_rec(int troop) { return (TroopRec*)((char*)g_party_templates + 0xb0 * troop); }
@@ -1663,7 +1770,7 @@ struct View {
     scene_obj* list;                                     // +0x2c
 
     int create_text_overlay(int arg, int flags);                      // 0x49e780
-    void push(void** obj);                               // 0x4936b0 (thiscall push_back)
+    void push(void** obj) { ((std::vector<int>*)this)->push_back(*(const int*)obj); }                               // 0x4936b0 (thiscall push_back)
 };
 
 // ---- @ 0x49e780 -----------------------------------------------------------------------------------
@@ -1853,7 +1960,7 @@ namespace c49f060 {
 // trigger block. Module System names: parties, party_tpl, triggers. Names provisional.
 
 // ---- the resource manager (0x5d6fa0; the slice called it the string table) ----
-struct ResTable { tstring* find(const tstring* key); };                         // 0x418cf0 (ret 4, null when absent)
+struct ResTable { tstring* find(const tstring* key) { return (tstring*)((::resource_manager*)this)->get_object70(*(const rgl::string*)key); } };   // 0x418cf0 (ret 4, null when absent)
 extern ResTable g_resmgr;                                                           // 0x5d6fa0
 
 // ---- the game data ---------------------------------------------------------------------------------------
@@ -1862,7 +1969,7 @@ struct PartyMgr {                                                               
     char pad0[0x138cc];
     std::vector<char*> pages;                                                     // +0x138cc (page pointers, 16 parties per page)
     int deflt;                                                                    // +0x138dc (never read here)
-    int index_of(int id);                                                         // 0x48ad00 (thiscall, ret 4)
+    int index_of(int id) { return ((Map10007*)this)->lookup(id); }                // 0x48ad00 (thiscall, ret 4)
     Party* get(int id)                                                            // 0x51ee50 (thiscall, ret 4): out of line when the caller is too big
     {
         int k = index_of(id);
@@ -1935,17 +2042,21 @@ struct GameData {
     {
         return (Receiver*)((idx & 0xf) * 0x98 + *(nodes.begin() + (idx >> 4)));
     }
-    int battle_root(int id);                                                      // 0x48fce0 (ret 4)
-    float relation(int a, int b);                                           // 0x48ffa0 (ret 8)
-    void set_objective(int a, int b);                                              // 0x4949d0 (ret 8)
-    void attach_party_center(const V2& pt, int a, int b);                         // 0x49e9c0 (ret 0xc)
+    int battle_root(int id) { return ((::GameData*)this)->battle_root(id); }                                // 0x48fce0 (ret 4)
+    float relation(int a, int b) { return ((::GameData*)this)->relation(a, b); }                            // 0x48ffa0 (ret 8)
+    void set_objective(int a, int b) { ((GameW*)this)->set_objective(a, b); }                                // 0x4949d0 (ret 8)
+    void attach_party_center(const V2& pt, int a, int b)                          // 0x49e9c0 (ret 0xc; defined above as c49e780::Party::attach_party_center)
+    {
+        c49e780::float2 p(pt.x, pt.y);
+        ((c49e780::Party*)this)->attach_party_center(&p, a, b);
+    }
     bool deploy_party(int a, int b);                                              // 0x49f060 (ret 8)
 };
 extern GameData* g_game;                                                          // 0x5e2930
 
 
 // ---- the mission -----------------------------------------------------------------------------------------
-struct PartyStack { int id; int val; void reduce(int n); };                       // 8 bytes, mission+0x404
+struct PartyStack { int id; int val; void reduce(int n) { ((::ItemRef*)this)->reduce(n); } };                       // 8 bytes, mission+0x404
 // PartyStack::reduce is 0x437510 (ItemStack::reduce: take `n` off the stack).
 struct TriggerStack {                                                             // the party trigger stack
     PartyStack sp[0x80];                                                          // +0 (depth i reads sp[i-1])
@@ -1969,17 +2080,20 @@ struct Mission {
     float f13ad0;                                                                 // +0x13ad0
     int f13ad4;                                                                   // +0x13ad4
 
-    Party* battle_root(int id);                                                   // 0x48fce0 (this = mission-4; ret 4)
-    float relation(int a, int b);                                           // 0x48ffa0 (this = mission-4; ret 8)
-    void set_objective(int a, int b);                                              // 0x4949d0 (this = mission-4; ret 8)
-    void attach_party_center(const float* pt, int a, int b);                      // 0x49e9c0 (this = mission-4; ret 0xc)
+    Party* battle_root(int id) { return (Party*)((::GameData*)this)->battle_root(id); }                       // 0x48fce0 (this = mission-4; ret 4)
+    float relation(int a, int b) { return ((::GameData*)this)->relation(a, b); }                              // 0x48ffa0 (this = mission-4; ret 8)
+    void set_objective(int a, int b) { ((GameW*)this)->set_objective(a, b); }                                  // 0x4949d0 (this = mission-4; ret 8)
+    void attach_party_center(const float* pt, int a, int b)                       // 0x49e9c0 (this = mission-4; ret 0xc)
+    {
+        ((c49e780::Party*)this)->attach_party_center((c49e780::float2*)pt, a, b);
+    }
     void set_lvalue(int val, long long* out);                              // 0x49d500 (this = mission-4; ret 8)
     int get_operand(int a, int* b, int* c);                              // 0x49d650 (this = mission-4; ret 0xc)
     bool step_less(int a, void* t);                                            // 0x49d7f0 (ret 8)
     void enter_trigger(int val, int ip);                                          // 0x49f980 (ret 8)
     void exec_trigger(int val);                                                   // 0x49f9e0 (ret 4)
     // trigger-block builders (thiscall, the block handle is the first argument)
-    void create(void* block, const void* pos, int one);                        // 0x4836e0 (ret 0xc)
+    void create(void* block, const void* pos, int one) { ((MissionG*)this)->create((const rgl::matrix*)block, (const ItemStackG*)pos, one); }   // 0x4836e0 (ret 0xc)
     void block_exec(void* block, int val, int a, int b, int c, int d, int e, int f,
                     int g, char* out);                                            // 0x483870 (ret 0x28)
 };
@@ -2099,7 +2213,7 @@ struct World {
     int f344;                                                                     // +0x344
     int f348;                                                                     // +0x348
     int f34c;                                                                     // +0x34c
-    SceneObj* create_entity(int kind);                                            // 0x428440 (ret 4)
+    SceneObj* create_entity(int kind) { return (SceneObj*)((rgl::world*)this)->create_entity(kind); }      // 0x428440 (ret 4)
 };
 struct PtrVec {                                                                   // a vector of pointers (begin/end)
     void** begin;                                                                 // +0 (0xa75f54)
@@ -2110,12 +2224,12 @@ extern PtrVec g_world_list;                                                     
 struct MeshNodeList { void cap_all(float* v); };                                  // 0x438f90 (ret 4)
 
 // appearance / agent builders (other slices; the argument lists are taken from the disassembly)
-__int64 pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);       // 0x46b190 (cdecl, ret 0x1c)
+inline __int64 pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g) { return ::pick_slot_item(a, b, c, d, e, f, g); }       // 0x46b190 (cdecl, ret 0x1c)
 void build_appearance(SceneObj* e, int count, int party, int arg, PartyStack* s, void* b8, void* name,
                       void* sixty, float* dist, void* bc, ItemRef* items, int one); // 0x482240 (cdecl)
 void build_agent(SceneObj* e, int count, int party, void* b8, float* dist, ItemRef* items,
                  int one);                                                        // 0x47cfe0 (cdecl, ret 0x1c)
-void place_scene_agents(SceneObj* e, ItemRef* items, void* b8);                       // 0x495430 (ret 0xc)
+inline void place_scene_agents(SceneObj* e, ItemRef* items, void* b8) { ::place_scene_agents((CarryBody*)e, (CarryRef*)items, (CarryCtx*)b8); }   // 0x495430 (ret 0xc)
 
 // @ 0x49f3d0
 // Spawn the scene object of party `party` (negative = its horse) and build its full appearance: create the
@@ -2181,8 +2295,8 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     Group* g = &g_anims[*group];
     if (g->count > 0) {
         int* src = g->src;
-        e->skel->start_anim(0, src[0], src[4], src[5]);
-        e->skel->reset_rec(0);
+        ((Skeleton*)e->skel)->start_anim(0, (Anim*)src[0], src[4], src[5]);
+        ((Curve*)e->skel)->reset_rec(0);
         *(int*)e->skel->env = 0x3f800000;
         e->skel->update(0.05f, (const rgl::matrix*)e->m);
     }
@@ -2218,9 +2332,7 @@ void Mission::exec_trigger(int val)
 // GameData members of slice s0049b630 (the slices called the game-data object `Mission`): the value counters, the quest
 // "taken" stamp and the label text layout. Fields not in game_data.h are reached by offset.
 // ======================================================================================
-#include "../str_table.h"
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-extern StrTable g_strtable;                         // 0x5e2a18
 #include "../../include/msg_log.h"
 extern MsgLog g_gui;                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
 extern int g_snd_got_value;                         // 0x5aa1a0 (sound id)
@@ -2324,7 +2436,7 @@ static __declspec(noinline) bool check_party(int* id)
     int v = *id;
     PartyMgr* pm = &g_game->parties;
     if ((unsigned)v < pm->n_parties) {
-        int r = pm->index_of(v);
+        int r = ((Map10007*)pm)->lookup(v);
         if (r >= 0) {
             Party* base = pm->pages._Myfirst[r >> 4];
             if (base[r & 0xf].type == 1)
@@ -2469,7 +2581,7 @@ bool DialogBlock::step_less(int locals, int* stack)
         int v = (int)ins->get_operand((__int64*)locals, &one, &kind);
         if (check_party(&v)) {
             Party* party = g_game->parties.get(v);
-            return left < size(&party->attached);
+            return left < (int)((std::vector<int>*)&party->attached)->size();
         }
         return left < -1;
     }
@@ -2669,7 +2781,7 @@ void DialogBlock::pop_try(int locals, int* stack, int* out)
 char DialogBlock::run_line(int locals, int* idx, int script)
 {
     int out;
-    char ok = ((ScriptStmt*)(items + *idx))->execute(locals, script, &out);
+    char ok = ((Operation*)(items + *idx))->execute((__int64*)locals, (int*)script, &out);
     if (out > 0) {
         char buf[512];
         _snprintf(buf, 0x200, "At %s.", text.c_str());

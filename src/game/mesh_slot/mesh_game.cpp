@@ -2,6 +2,9 @@
 // spawn_one, run_spawns) and the per-frame mission tick. The object is the Mission of src/game/mission.h. See MIGRATION.md.
 #include "./mesh_slot.h"
 #include "../terrain_b/mission.h"
+#include "../terrain_b/pool.h"          // Pool<RecJ>::next_used 0x474300
+#include "../../include/fx.h"           // FxDef (the skeleton of an agent entity: ctor 0x428820, init 0x4288c0, set_env_count 0x46b9d0, f5c)
+#include "../../include/phys_set.h"     // PhysSet::update 0x472dc0
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 using namespace rgl;
@@ -80,15 +83,16 @@ struct AgentS {
     float f5724;                        // +0x5724
     char pad5728[0x5928 - 0x5728];
 
-    void reset();                       // 0x472f90
-    float equipment_value() const;      // 0x436050
-    void spawn_corpse();                // 0x4554c0
-    void cycle_slot(int i);             // 0x44bc30
-    void on_wield_reset();              // 0x445a20
-    bool is_enemy(AgentS* a);  // 0x432350 (ecx = commander record)
-    bool is_friend(AgentS* a);   // 0x4323a0 (ecx = commander record)
-    void update(float dt);              // 0x45f660
-    void tick();                        // 0x45ff30
+    // the members are the ones of Agent (game/agent_obj.h) and MAgent (terrain_b/agent_rec.h), which name the same bytes
+    void reset() { ((MAgent*)this)->reset(); }                              // 0x472f90
+    float equipment_value() const { return ((const Agent*)this)->equipment_value(); }      // 0x436050
+    void spawn_corpse() { ((Agent*)this)->spawn_corpse(); }                 // 0x4554c0
+    void cycle_slot(int i) { ((Agent*)this)->cycle_slot(i); }               // 0x44bc30
+    void on_wield_reset() { ((Agent*)this)->on_wield_reset(); }             // 0x445a20
+    bool is_enemy(AgentS* a) { return ((Agent*)this)->is_enemy((const Agent*)a); }    // 0x432350 (ecx = commander record)
+    bool is_friend(AgentS* a) { return ((Agent*)this)->is_friend((const Agent*)a); }  // 0x4323a0 (ecx = commander record)
+    void update(float dt) { ((Agent*)this)->update(dt); }                   // 0x45f660
+    void tick() { ((Agent*)this)->tick(); }                                 // 0x45ff30
 };
 typedef char agents_size_check[(sizeof(AgentS) == 0x5928) ? 1 : -1];
 
@@ -102,10 +106,14 @@ template<class T> struct PoolS {
 };
 
 // ---- the objects behind the game pointer ---------------------------------------------------------------------------
+// 0x48ad00 is Map10007::lookup (ui/mission.h, ui/mission_ui.cpp: the id -> record index hash at the start of the pool object)
+struct Map10007 {
+    int lookup(unsigned id);   // 0x48ad00
+};
 struct PartyMgrS {                      // the object at g_game+0xf8 (index_of 0x48ad00)
     char pad0[0x138d0];
     char** page_table;                  // +0x138d0
-    int index_of(int id);               // 0x48ad00 (thiscall, ret 4)
+    int index_of(int id) { return ((Map10007*)this)->lookup(id); }     // 0x48ad00 (thiscall, ret 4)
 };
 struct Skeleton96 {                     // the 0x5ac8-byte character record of the party page table
     char pad0[0x80];
@@ -131,9 +139,13 @@ struct TroopRecS {                      // the 0x508-byte troop record (g_game+0
     char pad_a4[0x508 - 0xa4];
     void auto_equip_dummy();
 };
+// 0x4625d0 is snd_slot::update (ui/item_ref.cpp, the sound slot of a wave record); the header (ui/mission_ui.h) brings another layout, so only the member
+struct snd_slot {
+    void update(int arg);   // 0x4625d0 (thiscall, ret 4)
+};
 struct SndSlotS {
     int pad0[0x78 / 4];
-    void update(int n);                 // 0x4625d0 (thiscall, ret 4)
+    void update(int n) { ((snd_slot*)this)->update(n); }       // 0x4625d0 (thiscall, ret 4)
 };
 struct SpawnRecG {                      // a 0x4c-byte wave entry
     int f0;                             // +0
@@ -161,23 +173,21 @@ struct ItemKindT {                      // the item-kind table entry the spawner
     float f1ec;                         // +0x1ec
     char pad1f0[8];
 };
-struct Inv {
-    void auto_equip(int a, int b, int c, int d);    // 0x4687e0 (thiscall, ret 0x14)
+// 0x4687e0 is TroopEq::auto_equip (terrain_a/misc.h: the troop record seen by the auto-equip code); only the member is declared
+struct TroopEq {
+    void auto_equip(int seed, int unused, char civilian, char no_helmet);   // 0x4687e0
 };
+struct Inv {
+    void auto_equip(int a, int b, int c, int d) { ((TroopEq*)this)->auto_equip(a, b, (char)c, (char)d); }    // 0x4687e0 (thiscall, ret 0x14)
+};
+// an item reference (ItemRef, game/item_ref.h): 0x434df0 is ItemRef::stat_1e8, 0x434eb0 ItemRef::stat_200
 struct ItemStackG {
     unsigned a, b;
-    int value() const;                  // 0x434df0
+    int value() const { return ((ItemRef*)this)->stat_1e8(); }        // 0x434df0
 };
 struct ItemStack2 {
     unsigned a, b;
-    int value() const;                  // 0x434eb0
-};
-struct AgentSkel {
-    char pad0[0x5c];
-    int f5c;                            // +0x5c
-    AgentSkel(int n) throw();           // 0x428820 (FxDef::FxDef)
-    void init(int obj);           // 0x4288c0
-    void set_env_count(int n);          // 0x46b9d0
+    int value() const { return ((ItemRef*)this)->stat_200(); }        // 0x434eb0
 };
 struct EntityG {                        // the 0x30c-byte script entity (rgl::strategic_entity)
     char pad0[0xc];
@@ -186,15 +196,18 @@ struct EntityG {                        // the 0x30c-byte script entity (rgl::st
     char pad14[0x98 - 0x14];
     void* shape;                        // +0x98
     char pad9c[0x304 - 0x9c];
-    AgentSkel* skel;                    // +0x304
+    FxDef* skel;                        // +0x304
 };
-struct Body {
-    void cap_all(float* r);          // 0x439000
+// 0x439000 is node_groups::cap_all (agent2/agent_types.h: the display mesh's node lists of a body)
+struct node_groups {
+    void cap_all(const float* limit);   // 0x439000
 };
-void AgentEq_pick_slots(AgentS* a);      // 0x46b2d0 (__stdcall, ret 4)
+struct AgentEq;                          // terrain_a/misc.h: the agent's equipment slots as 0x46b2d0 sees them
+void __stdcall AgentEq_pick_slots(AgentEq* a);      // 0x46b2d0 (ret 4)
+struct SkelBodyV;                        // 0x47cfe0 (mesh_scene.cpp) names the body it builds the item meshes of
 void agent_equip_fill(EntityG* e, int kind, int troop, int f94, void* s0, void* inv, void* f240, void* f194,
                       void* f1a4, void* f1a8, void* slots, int id);   // 0x482240 (__stdcall, ret 0x34)
-void build_equipment(EntityG* e, int kind, int troop, void* inv, void* f130, void* slots, int id);  // 0x47cfe0
+void setup_item_meshes(SkelBodyV* body, int kind, int troop, char* inv, int f130, ItemRef* slots, int id);  // 0x47cfe0 (cdecl)
 extern char* g_mission_templates;                // 0x5e2a00 (the mission mode table base)
 extern char g_script[]; // 0xa70440
 extern int g_spawn_hi;                  // 0xa7044c
@@ -206,13 +219,11 @@ extern int g_msg_count;                 // 0x5e2138
 extern int g_msg_base;                  // 0x5e213c
 extern tstring g_msg_text[32];          // 0x5e2140
 extern int g_msg_id[32];                // 0x5e2340
-extern tstring* t2;                     // reused temporary for the strtable lookup
-struct StrTableG {
+struct StrTable {                       // game/str_table.h (the translation table; its lookup takes the key by reference)
     tstring* lookup(const tstring& key);    // 0x43a1e0
 };
-extern StrTableG g_strtable;            // 0x5e2a18
+extern StrTable g_strtable;             // 0x5e2a18
 long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
-void __stdcall replace_mark(int v);          // 0x472160
 
 // the mission object as the spawner sees it
 struct MissionG : Mission {
@@ -221,9 +232,8 @@ struct MissionG : Mission {
     NOINL bool spawn_one(int id);                           // 0x483de0
     void run_spawns();                                      // 0x483eb0
     NOINL int spawn_full(const matrix* m, int troop, int a, int b, int c, int d, int e, int f, int cnt, int* arr);  // 0x483870
-    void pick_spawn(int idx, int* a, int* b, int* c, int* d, int* e, int* f);   // 0x473a60
     void frame(float dt, bool spawn);                       // 0x483f60
-    void post_spawn(AgentS* a);                           // 0x47a0c0
+    // (pick_spawn 0x473a60 and post_spawn 0x47a0c0 are Mission's own members, game/mission.h)
 };
 #define POOL (*(PoolS<AgentS>*)&MAT(char, 4))
 
@@ -272,7 +282,7 @@ NOINL void MissionG::spawn(AgentS* a)
     e->type = 0xb;
     a->ent = e;
     void* mem = operator new(0x7c);
-    e->skel = mem ? new (mem) AgentSkel(2) : 0;
+    e->skel = mem ? new (mem) FxDef(2) : 0;
     e->skel->set_env_count(2);
     e->skel->f5c = 0;
     shape_base* shp;
@@ -281,7 +291,7 @@ NOINL void MissionG::spawn(AgentS* a)
         int obj = 0;
         if (skin_i < (unsigned)g_skin_count)
             obj = g_skins_begin[skin_i].f1e8;
-        e->skel->init(obj);
+        e->skel->init((FxRes*)obj);
         skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         float h;
         if (skin_i < (unsigned)g_skin_count)
@@ -297,7 +307,7 @@ NOINL void MissionG::spawn(AgentS* a)
             shp = 0;
     } else if (a->kind == 1) {
         tstring name("skel_horse");
-        e->skel->init((int)g_resmgr.get_object70(*(rgl::string*)&name));
+        e->skel->init((FxRes*)g_resmgr.get_object70(*(rgl::string*)&name));
         name.~tstring();
         if ((mem = operator new(0x64)) != 0) {
             vector4 b(0.0f, 0.8f, 0.8f);
@@ -309,20 +319,20 @@ NOINL void MissionG::spawn(AgentS* a)
         return;
     }
     e->shape = shp;
-    AgentEq_pick_slots(a);
+    AgentEq_pick_slots((AgentEq*)a);
     agent_equip_fill(e, a->kind, a->troop, a->f94, &a->item_a, &a->inv[0], &a->f240, &a->f194, &a->f1a4,
                      &a->f1a8, &a->slots[0], a->id);
-    build_equipment(e, a->kind, a->troop, &a->inv[0], &a->f130, &a->slots[0], a->id);
+    setup_item_meshes((SkelBodyV*)e, a->kind, a->troop, &a->inv[0], (int)&a->f130, (ItemRef*)&a->slots[0], a->id);
     a->f24c = a->equipment_value();
-    this->post_spawn(a);
+    this->post_spawn((MAgent*)a);
     if (a->kind == 0) {
         if (a->body_a) {
             float r = 20.0f;
-            ((Body*)a->body_a)->cap_all(&r);
+            ((node_groups*)a->body_a)->cap_all(&r);
         }
         if (a->body_b) {
             float r = 20.0f;
-            ((Body*)a->body_b)->cap_all(&r);
+            ((node_groups*)a->body_b)->cap_all(&r);
         }
     }
     a->spawn_corpse();
@@ -469,7 +479,7 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
         }
         if (lit != 0) {
             tstring msg(lit);
-            t2 = g_strtable.lookup(msg);
+            tstring* t2 = g_strtable.lookup(msg);
             if ((*(char*)((char*)&g_gui + 0x1714)) && g_msg_count < 0x20) {
                 int k3 = (g_msg_base + g_msg_count) % 0x20;
                 g_msg_text[k3] = *t2;
@@ -517,7 +527,7 @@ void MissionG::run_spawns()
             if (r->cur > 0 && this->done[i] == 0 && this->spawn_one(i)) {
                 r->cur--;
                 r->next++;
-                ::replace_mark(r->f0);
+                replace_mark(r->f0);
                 done = 0;
             }
         }
@@ -527,6 +537,13 @@ void MissionG::run_spawns()
 
 // ---- 0x483f60: the per-frame mission tick ----------------------------------------------------------------------------------
 // the 0xb0-byte prop record of the pool at Mission+0x30 (RecJ, src/include/recj.h, as this tick sees it)
+// 0x47d3e0 is MissileU::update (mesh_scene.cpp: the flying projectile record of the prop pool); 0x467c50 is Prop::update (terrain_a/terrain_a.cpp)
+struct MissileU {
+    void update(float dt);   // 0x47d3e0
+};
+struct Prop {
+    void update(int unused);   // 0x467c50
+};
 struct PropRecF {
     char pad0[4];
     int used;                           // +0x04 (0 = the prop retires this frame)
@@ -541,8 +558,8 @@ struct PropRecF {
     char pad74[4];
     long long start;                    // +0x78
     char pad80[0xb0 - 0x80];
-    void update(float dt);              // 0x47d3e0 (thiscall, ret 4)
-    void next_used(unsigned* i);        // 0x474300 (thiscall)
+    void update(float dt) { ((MissileU*)this)->update(dt); }        // 0x47d3e0 (thiscall, ret 4)
+    void next_used(unsigned* i) { ((Pool<RecJ>*)this)->next_used(i); }       // 0x474300 (thiscall; Pool<RecJ> serves the agent pool too: the folded instance)
 };
 struct PtrTableF {                      // the paged pointer table (count; the page vector's first member sits at +0x18)
     int count;                          // +0
@@ -553,7 +570,7 @@ struct PtrTableF {                      // the paged pointer table (count; the p
 typedef char assert_ptrtable[(sizeof(PtrTableF) == 0x20) ? 1 : -1];
 struct PropAnim {                       // the 0x1c8-byte prop tween record (Rec1c8)
     char pad0[0x1c8];
-    void update(float dt);              // 0x467c50 (thiscall, ret 4)
+    void update(float dt) { ((Prop*)this)->update((int)dt); }       // 0x467c50 (thiscall, ret 4)
 };
 struct CarryRec {                       // the carried-item records copied by the frame&0xf sweep (0x130 bytes, 0x40 of them at +0x6b0)
     matrix m0;                          // +0x00
@@ -583,18 +600,7 @@ extern unsigned char g_mt_inited;                   // 0x5e2a09
 extern float g_paused_time;             // 0x5e2a0c
 #include "../../include/fx.h"
 extern int g_psys_scene;                // 0xa170c0
-extern char g_phys[];             // 0xa181f8 (the time-scale object 0x472dc0 is called on)
-struct TimeScale {
-    void update(float dt);               // 0x472dc0
-};
 extern "C" int rand();                 // 0x536a9f
-struct WorldF {
-    void step(float dt);                // 0x427f40
-    void remove_entity(int id);                // 0x41f0d0
-};
-struct Terrain_w {
-    void destroy_water(int* w);         // 0x4814a0 (TerrainX::destroy_water)
-};
 
 // @ 0x483f60 -- the per-frame mission tick: the shadow-object upkeep, the 100 kHz frame clock, the carried-item sweep, the
 // spawn pass, the wave sound slots, the prop pool (per-entry update + retire, list overflow cull), the prop tweens, three agent
@@ -607,14 +613,14 @@ void MissionG::frame(float dt, bool spawn)
         unsigned flags = *(unsigned*)(*(char**)(((char*)g_game) + 0x13a50) + f5df4 * 0x494 + 0x30);
         int* water = (int*)&MAT(int, 0x63c0);
         if (flags & 0x100) {
-            ((Terrain_w*)&g_terrain)->destroy_water(water);
+            ((TerrainX*)&g_terrain)->destroy_water((int)water);        // 0x4814a0
         } else if (!(flags & 1)) {
             ((ShadowMapP*)ps)->render();
         }
     }
 
     if (!g_mt_inited && dt > 0.0f)
-        ((TimeScale*)g_phys)->update(dt);
+        g_phys.update(dt);                       // 0x472dc0 (g_phys 0xa181f8)
 
     long long t = (long long)(dt * 100000.0f);
     g_tick_cur = t;
@@ -688,7 +694,7 @@ void MissionG::frame(float dt, bool spawn)
         unsigned n = (unsigned)retire_list.size();
         unsigned k = n > 1 ? (unsigned)rand() % n : 0;
         int id = *(int*)(retire_list[k] + 8);
-        ((WorldF*)scene_world)->remove_entity(id);
+        ((rgl::world*)scene_world)->remove_entity(id);       // 0x41f0d0
         unsigned last = (unsigned)retire_list.size();
         retire_list[k] = retire_list[last - 1];
         retire_list.resize(last - 1);
@@ -741,7 +747,7 @@ void MissionG::frame(float dt, bool spawn)
     }
 
     update_team_stats();
-    ((WorldF*)scene_world)->step(dt);
+    ((rgl::world*)scene_world)->step(dt);                  // 0x427f40
     update_team_counts();
     MAT(unsigned, 0x6550)++;
     if (g_mt_inited)

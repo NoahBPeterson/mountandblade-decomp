@@ -16,6 +16,12 @@ using rgl::vector4;
 #include "../../include/fx.h"
 extern float g_step_tbl[];      // 0x5a9c20 (step_reached)
 
+// The canonical class of this record: AnimRec (src/rgl/dynamic/fx_anim.h), whose AnimRec::phase is the function at 0x4231f0. That header
+// cannot be included next to rgl.h (it brings the src/rgl family of rgl_math.h), so only the member is declared, under its own name.
+struct AnimRec {
+    float phase();   // 0x4231f0
+};
+
 struct Curve {
     void* m0;                   // +0x00 (0x4339d0 clears it for records of a curve without f5c)
     char pad4[0x10 - 4];
@@ -42,7 +48,9 @@ struct Curve {
     int tbl_idx;                // +0xd0 (step_reached)
     char padd4[0xd8 - 0xd4];
 
-    float phase();                                          // 0x4231f0 (earlier object)
+    // Curve is the 0xd8-byte AnimRec seen from the other side (cur +0x1c, clock +0x20, start +0x28, period +0xa0, shape_mode +0xb4
+    // are the same fields as in fx_anim.h), so phase() is AnimRec::phase.
+    float phase() { return ((AnimRec*)this)->phase(); }
     float shape(float x)                                    // inlined by 0x433930 / 0x433ac0
     {
         if (shape_mode == 1) return x;

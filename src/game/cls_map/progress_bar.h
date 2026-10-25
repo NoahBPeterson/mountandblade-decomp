@@ -32,7 +32,6 @@ struct RagModel {
     RagModel& operator=(const RagModel& o) { name = o.name; bones = o.bones; return *this; }
     void load(TiXmlElement* e);                 // 0x4e4690
 };
-E50* __fastcall ctor_4cd7a0(void* p);           // 0x4cd7a0 (E50's constructor lives in src/rgl/mesh2: Obj7a0)
 
 // ---- 0x4e4790..0x4e5d90: the save / load screen -----------------------------------------------------------------------------------
 // the nine slot records (list_saves 0x4e5270 fills them from "sgDD.sav"); also read by slot_button 0x4e55f0
@@ -99,6 +98,9 @@ struct ShapeFace {                              // 0x64 bytes (0x4e75a0)
     char flag;                                  // +0x60 material variant flag
     char pad61[0x64 - 0x61];
 };
+// 0x4785e0 / 0x4705e0 are PolyMesh::build / compute_face_normals (terrain_b/poly_mesh.h): the polygon set below is that class; only the members are declared
+struct HeightField;
+struct PolyMesh { void build(HeightField* hf, int step); void compute_face_normals(); };
 struct Shape {
     char pad0[0x1c];
     ShapePt* pts;                               // +0x1c (a std::vector's first; the allocator word is +0x18)
@@ -117,21 +119,27 @@ struct Shape {
     rgl::mesh* poly_mesh;                       // +0x94 the render meshes the three builders fill (MapScreen +0x672c / +0x6730 / +0x6734)
     rgl::mesh* spike_mesh;                      // +0x98
     rgl::mesh* ribbon_mesh;                     // +0x9c
-    char build(void* grid, int mode);           // 0x4785e0 (ret 8; src/game/terrain_b)
+    void build(void* grid, int mode) { ((PolyMesh*)this)->build((HeightField*)grid, mode); }     // 0x4785e0 (ret 8; src/game/terrain_b)
     void build_spikes(rgl::mesh* owner);        // 0x4e65e0
     void build_ribbons(rgl::mesh* owner);       // 0x4e6a70
     void polygon_to_mesh(rgl::mesh* out);       // 0x4e75a0
-    void compute_face_normals();                              // 0x4705e0
+    void compute_face_normals() { ((PolyMesh*)this)->compute_face_normals(); }       // 0x4705e0
 };
 
 // ---- 0x4e7a70: the map loader's block-list reader ----------------------------------------------------------------------------------------------
 struct SlotReader;
+// 0x4c83a0 is Block::read_terrain and 0x4c84f0 the fastcall conv_map_codes (rgl/mesh2/gui_edit.cpp: the map block and the loader that owns them)
+struct Block {
+    void read_terrain(stream_base* stream);   // 0x4c83a0
+};
+struct conv_rec;
+void __fastcall conv_map_codes(conv_rec* self);               // 0x4c84f0 (ecx = the loader)
 struct MapBlock : E68 {                         // the map block (0x68 bytes): its terrain reader
-    void read_terrain(SlotReader* stream);      // 0x4c83a0
+    void read_terrain(SlotReader* stream) { ((Block*)this)->read_terrain((stream_base*)stream); }      // 0x4c83a0
 };
 struct MapLoader {
     std::vector<E68> blocks;                    // +0x00 (first at +4)
-    void conv_map_codes();                         // 0x4c84f0
+    void conv_map_codes() { ::conv_map_codes((conv_rec*)this); }       // 0x4c84f0
     void read(SlotReader* stream);              // 0x4e7a70 (ret 4)
 };
 
@@ -139,6 +147,12 @@ struct MapLoader {
 // A partial view of the MapScreen class of src/game/char_sheet/save_game.h (0x4e87d0 buttons, which that module owns; its header
 // cannot be included here: it pulls match/include/rgl.h). Only the members these two functions touch are named.
 #include "../terrain_desc.h"
+struct TerrainX {
+    void emit_particle(int layerno, int blend, int cx, int cy, float z);   // 0x47ff60 (mesh_slot/mesh_slot.h)
+};
+struct Terrain {
+    void fill_desc_named(TerrainDesc* d);   // 0x4656c0 (terrain_a/terrain.h)
+};
 struct MapScreen {
     void* view;                                 // +0x00
     char pad04[0x60 - 0x04];
@@ -157,8 +171,9 @@ struct MapScreen {
     char padview[0x845d984 - 0xc3b0dc - 4];
     int nchunk_rows;                            // +0x0845d984
     int nchunk_cols;                            // +0x0845d988
-    char emit_particle(int slot, int type, int row, int col, float f);   // 0x47ff60 (ret 0x14)
-    void fill_desc_named(void* desc);       // 0x4656c0 (ret 4)
+    // 0x47ff60 is TerrainX::emit_particle (mesh_slot/mesh_terrain.cpp), 0x4656c0 Terrain::fill_desc_named (terrain_a): this object is that terrain
+    void emit_particle(int slot, int type, int row, int col, float f) { ((TerrainX*)this)->emit_particle(slot, type, row, col, f); }   // 0x47ff60 (ret 0x14)
+    void fill_desc_named(void* desc) { ((Terrain*)this)->fill_desc_named((TerrainDesc*)desc); }       // 0x4656c0 (ret 4)
     void init(void* desc);                      // 0x4e85d0 (ret 4)
     void frame_step();                          // 0x4e8720
 };

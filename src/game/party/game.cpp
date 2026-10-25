@@ -39,6 +39,8 @@ struct GameStep4b { void call(); };                         // 0x520b20
 struct GameStep6 { void call(); };                          // 0x520d60
 #include "../meta_mission.h"                                 // MetaMission (0xa73300): the one definition (init 0x4be742, entered through 0x4be730)
 
+template<> void std::vector<int>::resize(size_t, int);       // 0x43f310 (agent3/agent_combat.cpp: the out-of-line instance, only declared)
+
 // @ 0x51c5a0
 void LoadingPanel::update(int arg)
 {
@@ -94,7 +96,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         if (mode == 1) {
             bin_reader* sg = new bin_reader;
             save = sg;
-            if (!((SaveOps*)sg)->open_read(path.c_str()))
+            if (!((text_stream*)sg)->open_read(path.c_str()))
                 mb_error("Unable to open found savegame!!!");
             header.read_slot(save);
             g_save_kind = header.f28;
@@ -135,7 +137,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
             g_game->load_state(save);
             save->failed = 1;
             if (save) {
-                ((SaveOps*)save)->destroy();
+                ((mem_stream*)save)->mem_stream::~mem_stream();   // 0x417c90, called directly (the stream base destructor)
                 ::operator delete(save);
             }
             save = 0;
@@ -967,7 +969,7 @@ void SpriteTable::read(stream_base* s, int arg)
     for (int i = 0; i < n; i++)
         alloc_id();
     clear();
-    free_ids.resize(0, 0);
+    ((std::vector<int>*)&free_ids)->resize(0, 0);
     for (int i = 0; i < n; i++) {
         SpriteRec* e = at(i);
         int flag;
@@ -1007,7 +1009,7 @@ MB_NOINLINE void SpriteRec::read(stream_base* s, int arg)
 // @ 0x51ea10
 MB_NOINLINE void SpriteTable::clear()
 {
-    free_ids.resize(0, 0);
+    ((std::vector<int>*)&free_ids)->resize(0, 0);
     for (int i = 0; i < count; i++) {
         SpriteRec* e = at(i);
         e->live = 0;

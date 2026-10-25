@@ -123,6 +123,7 @@ struct mesh : named_object {
     void compute_normals();                         // 0x451c50
     // ---- src/game/agent5 (agent_hud.cpp: the HUD's item and status meshes) ----
     void append_skinned(mesh* other, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
+    void append_skinned(mesh* other, const struct mat4* m, int bone, unsigned color, char flip);   // 0x44eb00: the definition (agent4/agent_logic.cpp) takes the frame as rgl::mat4
     void scale(float s);                            // 0x44f0c0 (ret 4)
     void set_color(vector4 c);                      // 0x47af30 (ret 0x10: the colour multiplier of every vertex)
     void set_bone_index(int i);                     // 0x47b360 (ret 4)

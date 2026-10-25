@@ -31,7 +31,8 @@
 #include "../../rgl/resource.h"          // resource_manager g_resmgr 0x5d6fa0
 #define g_resmgr_party (*(ResMgr*)&g_resmgr)   // the 0x5d6fa0 object seen as the pack-lookup view ResMgr
 extern ObjTable g_tableaus;                      // 0xa75f40
-ResMesh* __cdecl make_item_mesh(const ItemRef* def, const float* scale);   // 0x4fba40 (ret 0): the mesh of an item reference
+namespace rgl { struct mesh; }
+rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 0x4fba40 (ret 0): the mesh of an item reference (the definition, agent5/agent_hud.cpp, returns rgl::mesh*)
 
 void __cdecl label_refresh(void* w, tstring name);          // 0x4e4c70 (cdecl, the name by value)
 #include "../item_sound.h"               // ItemSound (ItemKind +0x228): the one definition
@@ -63,11 +64,18 @@ struct StripIcon : UiA {                    // vtable 0x591ee8, size 0x188 (cons
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
 // the widget base's destructor body (0x487c00) and the scalar deleting destructor built on it (0x502300, the shared
 // slot 0 of vtable 0x591c80; mission_ui.h declares that slot as d00(int) without a body)
+// 0x487c00 is Buffer::~Buffer (mesh_slot/slot.cpp, virtual; called here as the base destructor, so qualified)
+struct Buffer { virtual ~Buffer(); };
 struct WidgetDtor {
-    void base_dtor();                       // 0x487c00
+    void base_dtor() { ((Buffer*)this)->Buffer::~Buffer(); }      // 0x487c00
     void* destroy(unsigned char flag);      // 0x502300 (ret 4)
 };
-void __fastcall vec_clear(int* v);          // 0x41f4b0
+// 0x41f4b0 is vec<mface>::clear (rgl/shapes/shapes.h: the vector's out-of-line clear, shared by every pointer vector); only the member is declared
+struct mface;
+template <class T> struct vec { void clear(); };
+
+// 0x42cf50 is gui_window::mouse_event (strat/gui_manager.h): the base class's handler of the window below
+struct gui_window { char mouse_event(unsigned mask); };
 
 // ---- the window ---------------------------------------------------------------------------------------
 struct PartyWindow {
@@ -129,7 +137,7 @@ struct PartyWindow {
     void place_slot(MissionUi* w, ItemRef* item, int idx, int* state, int page, char flag);   // 0x5029f0 (ret 0x18)
     ResMesh* make_mesh(ItemRef* item, float* scale, int troop); // 0x502b80 (ret 0xc)
     void refresh_stash(int row);                                // 0x502c30
-    bool base_mouse_event(unsigned mask);                       // 0x42cf50 (ret 4; the gui widget base)
+    char base_mouse_event(unsigned mask) { return ((gui_window*)this)->mouse_event(mask); }     // 0x42cf50 (ret 4; the gui widget base)
 };
 
 #endif // GAME_PARTY_PARTY_WINDOW_H

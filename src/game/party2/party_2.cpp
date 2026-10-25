@@ -65,7 +65,7 @@ void scene_step(int material)
     o->fr.mat4[3] = 1.0f;
     o->f344 = 0;
     o->f348 = 0;
-    o->reset();
+    ((rgl::world*)o)->reset();
 
     o->fr.perspective = 0;
     o->fr.nplanes = 0;
@@ -1054,7 +1054,7 @@ void Party::clear_map_flag()
         return;
     }
     if (model != 0) {
-        g_level->remove_entity(((int*)model)[2]);
+        ((rgl::world*)g_level)->remove_entity(((int*)model)[2]);
     }
     unsigned __int64 flags = *(unsigned __int64*)&flags_lo | 0x100;
     model = 0;
@@ -1114,7 +1114,7 @@ static __forceinline vector4 crossv(const vector4& a, const vector4& b)
 // (0.01 <= t <= 0.99, 0 <= s <= 1), honouring the order-target mask and the per-edge keep distance.
 bool NavData::can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max)
 {
-    if (!shares(&from, &to))
+    if (!((RiderTable*)this)->shares(from, to))
         return false;
     int cur = -1;
     if (from < 0 || to < 0)
@@ -1226,7 +1226,7 @@ void Party::collect_targets(int* out, int* max, int* count)
     while (id < (unsigned)parties()->deflt) {
         if (*count >= *max)
             return;
-        int idx = parties()->index_of((int)id);
+        int idx = ((Map10007*)parties())->lookup((unsigned)id);
         Party* p = &parties()->pages[idx >> 4][idx & 0xf];
         if (p->f8c8 >= 0)
             goto next;
@@ -1250,7 +1250,7 @@ void Party::collect_targets(int* out, int* max, int* count)
         {
             int ag = p->f88;
             if (ag >= 0 && parties()->is_live(battles()->pages[ag >> 4][ag & 0xf].party_b)) {
-                if (parties()->get(battles()->get((unsigned)ag)->party_b)->flags_lo & 0x400)
+                if (parties()->get(battle_get((unsigned)ag)->party_b)->flags_lo & 0x400)
                     goto next;
             }
         }
@@ -1298,8 +1298,8 @@ void Party::reissue_order()
 
 
 // ---- the map-order planner ----------------------------------------------------------------------------------------------
-char __cdecl terrain_is_road(int kind);              // 0x489390 (is-farm/road terrain kind)
-char __cdecl terrain_is_water(int kind);             // 0x4893b0 (is-water terrain kind)
+int __cdecl terrain_is_road(unsigned kind);              // 0x489390 (is-farm/road terrain kind)
+int __cdecl terrain_is_water(unsigned kind);             // 0x4893b0 (is-water terrain kind)
 
 // @ 0x4b3ce0
 // Act on the current map order: finish a move, chase a party or an agent, or sample a random walkable spot around the
@@ -1360,14 +1360,14 @@ void Party::plan_order()
             }
             if (a) {
                 NavData* w = g_level->core;
-                if (w->shares(&a->m4, &mesh->m4)) {
+                if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                     unsigned k2 = nav_recs()[a->m4].mask();
                     if (flags_lo & 0x200) {
-                        if (terrain_is_road(k2)) {
+                        if ((char)terrain_is_road(k2)) {
                             set_order_face((int*)&p, a);
                             return;
                         }
-                    } else if (terrain_is_water(k2)) {
+                    } else if ((char)terrain_is_water(k2)) {
                         set_order_face((int*)&p, a);
                         return;
                     }
@@ -1461,14 +1461,14 @@ chase:
         }
         if (a) {
             NavData* w = g_level->core;
-            if (w->shares(&a->m4, &mesh->m4)) {
+            if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                 unsigned k2 = nav_recs()[a->m4].mask();
                 if (flags_lo & 0x200) {
                     if (k2 == 7 || (k2 & 7) == 0) {
                         set_order_face((int*)&p, a);
                         return;
                     }
-                } else if (terrain_is_water(k2)) {
+                } else if ((char)terrain_is_water(k2)) {
                     set_order_face((int*)&p, a);
                     return;
                 }
@@ -1622,13 +1622,13 @@ void GameData::refresh_party(unsigned id)
     PartyMgr* m = &parties;
     if (id >= parties.n_parties)
         return;
-    int idx = m->index_of(id);
+    int idx = ((Map10007*)m)->lookup(id);
     if (idx < 0)
         return;
     Party** pp = &m->pages[(unsigned)idx >> 4];
     if ((*pp)[idx & 0xf].type != 1)
         return;
-    int j = m->index_of(id);
+    int j = ((Map10007*)m)->lookup(id);
     Party** pq = &m->pages[j >> 4];
     Party* p = &(*pq)[j & 0xf];
     for (int i = 0; i < p->nstacks; i++) {
@@ -1652,12 +1652,12 @@ float GameData::party_value(unsigned id)
     float total = 0.0f;
     if (id >= parties.n_parties)
         return total;
-    int idx = parties.index_of(id);
+    int idx = ((Map10007*)&parties)->lookup(id);
     if (idx < 0)
         return total;
     if (parties.pages[idx >> 4][idx & 0xf].type != 1)
         return total;
-    int j = parties.index_of(id);
+    int j = ((Map10007*)&parties)->lookup(id);
     Party* p = &parties.pages[j >> 4][j & 0xf];
     for (int i = 0; i < p->nstacks; i++) {
         Stack& s = p->stacks[i];
@@ -1674,11 +1674,11 @@ float GameData::party_value(unsigned id)
         }
     }
     for (int i = 0;; i++) {
-        int idx2 = parties.index_of(id);
+        int idx2 = ((Map10007*)&parties)->lookup(id);
         Party* q = &parties.pages[idx2 >> 4][idx2 & 0xf];
         if (q->attached.first == 0 || (unsigned)(q->attached.last - q->attached.first) <= (unsigned)i)
             break;
-        int idx3 = parties.index_of(id);
+        int idx3 = ((Map10007*)&parties)->lookup(id);
         int copy = parties.pages[idx3 >> 4][idx3 & 0xf].attached.first[i];
         total = party_value(copy) + total;
     }
@@ -1731,7 +1731,7 @@ void Party::think()
         }
         for (int i = 0; i < n; i++) {
             int tid = ids[i];
-            int pi = g_game->parties.index_of(tid);
+            int pi = ((Map10007*)&g_game->parties)->lookup(tid);
             if (pi < 0)
                 continue;
             Party* p = (Party*)((char*)g_game->parties.pages[pi >> 4]
@@ -1751,7 +1751,7 @@ void Party::think()
                     other = (unsigned)b->party_a;
                 int oi = -1;
                 if (other < g_game->parties.n_parties)
-                    oi = g_game->parties.index_of((int)other);
+                    oi = ((Map10007*)&g_game->parties)->lookup((int)other);
                 if (oi >= 0) {
                     Party* op = (Party*)((char*)g_game->parties.pages[oi >> 4]
                                          + (oi & 0xf) * sizeof(Party));
@@ -1783,7 +1783,7 @@ void Party::think()
 
         for (int i = 0; i < n; i++) {
             int tid = ids[i];
-            int pi = g_game->parties.index_of(tid);
+            int pi = ((Map10007*)&g_game->parties)->lookup(tid);
             if (pi < 0)
                 continue;
             Party* p = (Party*)((char*)g_game->parties.pages[pi >> 4]
@@ -1891,16 +1891,16 @@ void Party::think()
     if (state == 4) {
         unsigned pid = (unsigned)state_target;
         if (pid < g_game->parties.n_parties) {
-            int oi = g_game->parties.index_of((int)pid);
+            int oi = ((Map10007*)&g_game->parties)->lookup((int)pid);
             if (oi >= 0) {
                 Party* pp = (Party*)((char*)g_game->parties.pages[oi >> 4]
                                      + (oi & 0xf) * sizeof(Party));
                 if (pp->type == 1) {
-                    int oi2 = g_game->parties.index_of((int)pid);
+                    int oi2 = ((Map10007*)&g_game->parties)->lookup((int)pid);
                     Party* pp2 = (Party*)((char*)g_game->parties.pages[oi2 >> 4]
                                           + (oi2 & 0xf) * sizeof(Party));
                     if (pp2->f8c8 < 0 && (pp2->flags_lo & 0x1080100) == 0) {
-                        int oi3 = g_game->parties.index_of((int)pid);
+                        int oi3 = ((Map10007*)&g_game->parties)->lookup((int)pid);
                         Party* pp3 = (Party*)((char*)g_game->parties.pages[oi3 >> 4]
                                               + (oi3 & 0xf) * sizeof(Party));
                         pending_bad = pp3->action == 8;
@@ -2064,7 +2064,7 @@ void GameData::push_event(const int* pos, unsigned nation)
 void GameData::push_party_event(int party, const int* pos, const float* src)
 {
     PartyMgr* pm = &parties;
-    int idx = pm->index_of(party);
+    int idx = ((Map10007*)pm)->lookup(party);
     Party* p = pm->pages._Myfirst[idx >> 4] + (idx & 0xf);
     event_rec r;
     r.p = *(const Pos4i*)pos;
@@ -2113,7 +2113,7 @@ void BattleRec::detach()
         int i, j, k, m;
 
         if (pm->is_live(party_a)) {
-            i = pm->index_of(party_a);
+            i = ((Map10007*)pm)->lookup(party_a);
             Party* q = pm->pages[i >> 4] + (i & 15);
             q->action = 0;
             q->interval = 0.4f;
@@ -2123,10 +2123,10 @@ void BattleRec::detach()
 
             for (k = (q->attached.first ? (int)(q->attached.last - q->attached.first) : 0) - 1; k >= 0; k--) {
                 int mid = q->attached.first[k];
-                j = pm->index_of(mid);
+                j = ((Map10007*)pm)->lookup(mid);
                 if ((pm->pages[j >> 4] + (j & 15))->f8cc) {
-                    g_game->detach_party(mid);
-                    m = pm->index_of(q->attached.first[k]);
+                    ((GameW*)g_game)->detach_party(mid);
+                    m = ((Map10007*)pm)->lookup(q->attached.first[k]);
                     (pm->pages[m >> 4] + (m & 15))->action = 0;
                 }
             }
@@ -2135,9 +2135,9 @@ void BattleRec::detach()
         {
             unsigned uid = party_b;
             if (uid < g_game->parties.n_parties) {
-                j = pm->index_of(uid);
+                j = ((Map10007*)pm)->lookup(uid);
                 if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                    i = pm->index_of(party_b);
+                    i = ((Map10007*)pm)->lookup(party_b);
                     Party* q = pm->pages[i >> 4] + (i & 15);
                     q->action = 0;
                     q->interval = 0.1f;
@@ -2156,10 +2156,10 @@ void BattleRec::detach()
 
                     for (k = (q->attached.first ? (int)(q->attached.last - q->attached.first) : 0) - 1; k >= 0; k--) {
                         int mid = q->attached.first[k];
-                        j = pm->index_of(mid);
+                        j = ((Map10007*)pm)->lookup(mid);
                         if ((pm->pages[j >> 4] + (j & 15))->f8cc) {
-                            g_game->detach_party(mid);
-                            m = pm->index_of(q->attached.first[k]);
+                            ((GameW*)g_game)->detach_party(mid);
+                            m = ((Map10007*)pm)->lookup(q->attached.first[k]);
                             (pm->pages[m >> 4] + (m & 15))->action = 0;
                         }
                     }
@@ -2177,7 +2177,7 @@ void BattleRec::detach()
 
         {
             int cur_id = g_game->f78;
-            i = pm->index_of(cur_id);
+            i = ((Map10007*)pm)->lookup(cur_id);
             Party* cur = pm->pages[i >> 4] + (i & 15);
             int st = (*(int*)((char*)&g_mission_ctx + 0x138));
             char is1, is2;
@@ -2194,9 +2194,9 @@ void BattleRec::detach()
             for (i = 0; i < n2; i++) {
                 unsigned id = list2[i];
                 if (id < g_game->parties.n_parties) {
-                    j = pm->index_of(id);
+                    j = ((Map10007*)pm)->lookup(id);
                     if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                        j = pm->index_of(id);
+                        j = ((Map10007*)pm)->lookup(id);
                         Party* p = pm->pages[j >> 4] + (j & 15);
                         if ((p->flags_lo & 0x400) == 0) {
                             m = 0;
@@ -2209,7 +2209,7 @@ void BattleRec::detach()
                             if (m <= 0) {
                                 if (is1 && p->owner >= 0)
                                     g_party_templates[p->owner].num_destroyed_by_player++;
-                                g_game->remove_party(list2[i]);
+                                ((GameW*)g_game)->remove_party(list2[i]);
                             }
                         }
                     }
@@ -2219,9 +2219,9 @@ void BattleRec::detach()
             for (i = 0; i < n1; i++) {
                 unsigned id = list1[i];
                 if (id < g_game->parties.n_parties) {
-                    j = pm->index_of(id);
+                    j = ((Map10007*)pm)->lookup(id);
                     if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                        j = pm->index_of(id);
+                        j = ((Map10007*)pm)->lookup(id);
                         Party* p = pm->pages[j >> 4] + (j & 15);
                         if ((p->flags_lo & 0x400) == 0) {
                             m = 0;
@@ -2234,7 +2234,7 @@ void BattleRec::detach()
                             if (m <= 0) {
                                 if (is2 && p->owner >= 0)
                                     g_party_templates[p->owner].num_destroyed_by_player++;
-                                g_game->remove_party(list1[i]);
+                                ((GameW*)g_game)->remove_party(list1[i]);
                             }
                         }
                     }
@@ -2246,7 +2246,7 @@ void BattleRec::detach()
 tail:
     {
         BattleObj* o = obj;
-        g_level->remove_entity(o->id);
+        ((rgl::world*)g_level)->remove_entity(o->id);
         obj = 0;
 
         unsigned rid = rec_id;
@@ -2275,10 +2275,10 @@ void BattleRec::commit()
     for (int i = 0; i < n2; i++) {
         unsigned id = list2[i];
         if (id < g_game->parties.n_parties) {
-            int j = g_game->parties.index_of(id);
+            int j = ((Map10007*)&g_game->parties)->lookup(id);
             if (j >= 0 && (g_game->parties.pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
                 g_game->refresh_party(id);
-                int m = g_game->parties.index_of(list2[i]);
+                int m = ((Map10007*)&g_game->parties)->lookup(list2[i]);
                 (g_game->parties.pages[m >> 4] + (m & 15))->dirty = 1;
             }
         }
@@ -2287,10 +2287,10 @@ void BattleRec::commit()
     for (int i = 0; i < n1; i++) {
         unsigned id = list1[i];
         if (id < g_game->parties.n_parties) {
-            int j = g_game->parties.index_of(id);
+            int j = ((Map10007*)&g_game->parties)->lookup(id);
             if (j >= 0 && (g_game->parties.pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
                 g_game->refresh_party(id);
-                int m = g_game->parties.index_of(list1[i]);
+                int m = ((Map10007*)&g_game->parties)->lookup(list1[i]);
                 (g_game->parties.pages[m >> 4] + (m & 15))->dirty = 1;
             }
         }
@@ -2312,7 +2312,7 @@ void Party::leave_battle()
             b->detach();
         }
     } else {
-        g_game->detach_party(id);
+        ((GameW*)g_game)->detach_party(id);
     }
 }
 
@@ -2368,9 +2368,9 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
         root.node = from;
         root.cost = 0.0f;
         root.dist = 0.0f;
-        vec_push_back((std::vector<E12>*)&v30, 0, &root);
+        ((std::vector<E12>*)&v30)->push_back(*(const E12*)&root);
     }
-    push_back_ext(OPEN_BEGIN, OPEN_END, *(unsigned char*)&m40);
+    push_back_elem(OPEN_BEGIN, OPEN_END, *(HeapGt*)&m40);
     *visited = 0;
     float best = 0.0f;
     float limit = 10000.0f;
@@ -2437,7 +2437,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
                             add.node = nbr;
                             add.cost = cost;
                             add.dist = (d_to / d_from + 1.0f) * cost;
-                            vec_push_back((std::vector<E12>*)&v30, 0, &add);
+                            ((std::vector<E12>*)&v30)->push_back(*(const E12*)&add);
                             if (OPEN_BEGIN != OPEN_END && (int)(OPEN_END - 1 - OPEN_BEGIN) > 0) {
                                 OpenItem last = OPEN_END[-1];
                                 push_heap_elem(OPEN_BEGIN, (int)(OPEN_END - 1 - OPEN_BEGIN), 0, last, hg);
@@ -2702,7 +2702,7 @@ struct PartyTypeDef {                                // 0x48-byte map party type
     TimerList frames;                                // +0x3c keyframe voices   0x4b7840
     char pad44[4];
 };
-vector4* __cdecl unpack_color_p(vector4* out, const unsigned* argb);   // 0x40e4e0 (returns out)
+namespace rgl { vector4 unpack_color(const unsigned* argb); }   // 0x40e4e0 (cdecl, hidden return pointer: shapes.cpp)
 
 #define SCALE_ROWS(m, a) \
     (m)->m_cc.s.x *= (a); (m)->m_cc.s.y *= (a); (m)->m_cc.s.z *= (a); \
@@ -2728,7 +2728,7 @@ void Party::update_flags()
     rgl::mesh* m2 = 0;
     int rider = f94;
     PartyTypeDef* d = (PartyTypeDef*)((char*)g_map_icons + def);
-    rgl::mesh* m = ((MeshRes*)g_resmgr_full.get_object((const rgl::string*)&d->name))->copy_of();
+    rgl::mesh* m = ((MeshRes*)((::resmgr*)&g_resmgr_full)->get_object((const rgl::string*)&d->name))->copy_of();
     float a = d->scale;
     SCALE_ROWS(m, a);
     GDP(rgl::mesh*, 0x1a200) = m;
@@ -2737,7 +2737,7 @@ void Party::update_flags()
     d->frames.update(-0x46);
     if (rider > 0) {
         PartyTypeDef* r = (PartyTypeDef*)((char*)g_map_icons + (unsigned)rider * 0x48);
-        m2 = ((MeshRes*)g_resmgr_full.get_object((const rgl::string*)&r->name))->clone();
+        m2 = ((MeshRes*)((::resmgr*)&g_resmgr_full)->get_object((const rgl::string*)&r->name))->clone();
         m2->translate(&d->pos);
         if (!(flags_lo & 0x400)) {
             float b = r->scale;
@@ -2839,8 +2839,8 @@ void Party::update_hud_text()
     if (g_show_faction_color != 0) {
         t.x = *(float*)((char*)g->factions + f70 * 0x300 + 0x28);
         if (f6c != 0) {
-            vector4 tmp;
-            vector4* p = unpack_color_p(&tmp, (unsigned*)&t.x);
+            vector4 tmp = rgl::unpack_color((unsigned*)&t.x);
+            vector4* p = &tmp;
             t.x = p->x * 1.2f;
             t.y = p->y * 1.2f;
             t.z = p->z * 1.2f;
@@ -3002,10 +3002,10 @@ void Party::tick(float dt)
     face* node = g_game->find_at(&px);
     if (node != 0) {
         unsigned animfield = nav_recs()[node->m4].mask();
-        bool adjacent = g_level->core->shares(&node->m4, &mesh->m4) != 0;
+        bool adjacent = ((RiderTable*)g_level->core)->shares(node->m4, mesh->m4) != 0;
         bool commit = false;
         if (flags_lo & 0x200) {
-            if (terrain_is_road(animfield)) {
+            if ((char)terrain_is_road(animfield)) {
                 commit = true;
             } else if (animfield != 0xf && id == g_game->f78 && 0.05f < GDP(Timer, 0x13a90).elapsed()) {
                 g_emit_pos.x = px;
@@ -3051,9 +3051,9 @@ void Party::tick(float dt)
             Party* o3 = g_game->parties.get(target);
             if (id == g_game->f78 && !(o3->flags_lo & 0x400) && o3->f88 < 0 &&
                 o3->action == 4 && o3->target == id) {
-                g_game->deploy_party(target, id);
+                ((c49f060::GameData*)g_game)->deploy_party(target, id);
             } else {
-                g_game->deploy_party(id, target);
+                ((c49f060::GameData*)g_game)->deploy_party(id, target);
             }
             Party* o4 = g_game->parties.get(target);
             o4->kind = 0;
@@ -3074,13 +3074,13 @@ void Party::tick(float dt)
         float ad = sqrtf(ax * ax + ay * ay);
         float cr = *(float*)(rec + 0x40);
         if (ad < cr + radius) {
-            BattleRec* n = battles()->get(cell);
+            BattleRec* n = battle_get(cell);
             pos.x = n->x1;
             pos.y = n->y1;
-            pos.z = battles()->get(cell)->z;
-            mesh = battles()->get(cell)->face1;
+            pos.z = battle_get(cell)->z;
+            mesh = battle_get(cell)->face1;
             flags_lo |= 0x200;
-            battles()->get(cell)->detach();
+            battle_get(cell)->detach();
             action = 0;
             kind = 0;
             moving = 0;
@@ -3161,12 +3161,12 @@ void Party::tick(float dt)
     if (!moved) {
         if (e1 != 0 && e1->in_use()) {
             float one = 1.0f;
-            e1->set_time(&one);
+            ((mesh_node*)e1)->set_time(&one);
         }
     } else {
         if (e1 != 0 && e1->in_use()) {
             float ph = (float)fmod(((double)g_ticks[0] * 1e-05f + (double)id) * 2.3f, 1.0) * 40.0f + 100.0f;
-            e1->set_time(&ph);
+            ((mesh_node*)e1)->set_time(&ph);
             *(int*)((char*)e59ec + 0x114) = 1;
             if (clk908.elapsed() > 0.5f && dt > 0.0f) {
                 clk908.start = g_ticks[clk908.clock];
@@ -3191,7 +3191,7 @@ void Party::tick(float dt)
     if (!(dd < 2000.0f))
         return;
     float ph2 = (float)fmod((double)id * 0.05f + (double)g_ticks[0] * 1e-05f, 1.0) * 40.0f + 100.0f;
-    e2->set_time(&ph2);
+    ((mesh_node*)e2)->set_time(&ph2);
     *(int*)((char*)e59f0 + 0x114) = 1;
 }
 

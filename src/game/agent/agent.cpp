@@ -36,6 +36,10 @@ static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)
 inline vector4 vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
 inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 
+// 0x40cd00 as the definition declares it (src/rgl/shapes/shapes.cpp): writes the identity frame to `out` and returns it (cdecl). The by-value
+// rgl::identity_pos of include/mat4.h is the same function seen through its hidden return pointer; a call that must link to the definition names this one.
+pos* __cdecl identity_pos(pos* out);                                // 0x40cd00
+
 // @ 0x434b20
 tstring ItemRef::mesh_name()
 {
@@ -320,7 +324,8 @@ void PlacedObj::reset()
     m1b4 = 0;
     m1b8 = 0;
     m168 = m14 = -1;
-    md8 = rgl::identity_pos();
+    rgl::mat4 ident;
+    md8 = *(rgl::mat4*)identity_pos((pos*)&ident);      // 0x40cd00 (global pos* identity_pos(pos*), declared above)
     f16c = 1.0f;
     v158 = vector4(1.0f, 1.0f, 1.0f);
 }
@@ -861,6 +866,12 @@ int Agent::total_missing_ammo()
     }
     return sum;
 }
+// 0x40f0d0 is rgl::keyframes::find (src/include/keyframes.h, 12 bytes: frames, integer times, count; it reads only times and count). That header
+// needs rgl::frame_t of the src/rgl family, so the member is declared here under its own name; KeyFrames has the same three fields and
+// forwards to it.
+namespace rgl { struct keyframes { void find(int* lo, int* hi, float* frac, const float* t); }; }   // 0x40f0d0
+inline void KeyFrames::find(int* a, int* b, float* t, const float* time) { ((rgl::keyframes*)this)->find(a, b, t, time); }
+
 // @ 0x436ae0
 quaternion KeyTable::sample(int key)
 {

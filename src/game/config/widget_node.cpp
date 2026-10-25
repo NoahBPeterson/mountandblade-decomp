@@ -46,6 +46,13 @@ struct NodeVec : std::vector<NodeA*> {
 
 #define ROWS() (rows_first ? (unsigned)(rows_last - rows_first) : 0u)       // the row vector's size(), re-read at each use
 
+// The base constructor 0x4931a0 is ContainerW::construct (world_data/world_data.cpp; the "constructor body", returns this). world_data.h defines
+// ContainerW over this header, so only the member is declared here, and ContainerBase's constructor is defined as the call of it.
+struct ContainerW {
+    void* construct();   // 0x4931a0
+};
+inline ContainerBase::ContainerBase() { ((ContainerW*)this)->construct(); }
+
 // @ 0x49ad20
 NodeA* DropDown::create()
 {

@@ -10,6 +10,8 @@
 #include "./item_kind.h"
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
+pos* __cdecl identity_pos(pos* out);        // 0x40cd00 (cdecl: writes the identity rotation and a zero origin to out, returns out; the definition's own declaration)
+
 // @ 0x433bf0
 tstring ItemKind::mesh_name_for(int bit)
 {
@@ -90,7 +92,8 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
     vector4 v;
     float a;
     *bone = 0;
-    *out = identity_pos();
+    pos2 ident;
+    *out = *(pos2*)identity_pos((pos*)&ident);
     __int64 carry = flags & itcf_carry_mask;
     *bone_flags = 0;
     if (carry == itcf_carry_sword_left_hip) {

@@ -6,11 +6,11 @@
 #include "../../rgl/stream.h"
 #include "./widget_ops.h"
 
-// the save-game reader is the bin_reader of src/rgl/stream.h (0x38 bytes, constructor 0x417c50); the panel calls
-// two functions on it that stream.h does not declare. SaveOps is a view laid over the stream with a cast.
-struct SaveOps {
-    bool open_read(const char* path);       // 0x415290
-    void destroy();                         // 0x417c90 (the stream base destructor, called directly before the free)
+// the save-game reader is the bin_reader of src/rgl/stream.h (0x38 bytes, constructor 0x417c50); the panel calls two functions that the
+// folded stream classes share: text_stream::open_read (0x415290) and mem_stream::~mem_stream (0x417c90), both through a cast (see game.cpp).
+struct SlotReader;
+struct SlotHeader {
+    bool read_slot(SlotReader* r);   // 0x4e54e0 (cls_map/progress_bar.cpp: the slot's own header)
 };
 
 // header of a save game, read by 0x4e54e0 into the panel at +0x58
@@ -22,7 +22,7 @@ struct SaveHeader {
     int f2c;                                // +0x2c
     int f30;                                // +0x30
     int f34;                                // +0x34  (panel +0x8c) the value handed to Game::init   0x51c720 step 1
-    void read_slot(bin_reader* r);               // 0x4e54e0
+    void read_slot(bin_reader* r) { ((SlotHeader*)this)->read_slot((SlotReader*)r); }     // 0x4e54e0
 };
 
 struct LoadingPanel {

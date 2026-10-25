@@ -7,40 +7,38 @@
 #include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
+#include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
+#include "../../include/sound_mgr.h"   // SoundMgr, g_sound_mgr 0x5aa128 (play 0x442650)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through troop_mgr.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
-namespace ms {
-// resource-manager members this TU calls (the shared classes of src/rgl/resource.h / core/resmgr.h are not co-includable)
-struct resmgr_m : resource_manager {
-    std::vector<mesh*> find_meshes(const tstring* prefix);          // 0x41b960 (hidden return pointer, ret 4)
-    lod_mesh* make_lod_mesh(const tstring& pat, bool copy);          // 0x41ca60
+// The callees below are members of the classes that define them (the resource manager's `resmgr` is in mesh_slot.h). The header of game/agent/agent.h
+// brings another layout than this TU's, so only the member is declared, under the defining class.
+struct Wielder {
+    rgl::mesh* make_ranged_mesh();   // 0x44f6a0 (game/agent/agent.h: the carried-weapon holder, whose record the missile is)
 };
-// the item's sound sub-object at ItemKind+0x228 (party_window.cpp's item_sound): `count` entries, play() 0x48add0
-struct ItemSnd { int count; void play(int id); };
-// the shooter agent of a missile (Agent::swing_trace 0x45a170, ecx = agent)
-struct AgentSwing { int swing_trace(int hand, void* missile, void* blow, float* scale); };
+struct RecZSubB {
+    RecZSubB* init();   // 0x4353a0 (game/agent/agent.h; blow.h calls it Blow: returns this)
+};
+namespace ms {
 // three-row placeholder record initialised by 0x4353a0
 struct Rows {
     int m0, m4;
     vector4 v8, v18, v28;
     int m38, m3c, m40, m44, m48, m4c, m50, m54;
-    Rows* init();                                // 0x4353a0 (returns this)
+    Rows* init() { return (Rows*)((RecZSubB*)this)->init(); }     // 0x4353a0 (returns this)
 };
 // the scene query for a swept capsule (0x472650, ecx = the missile)
 struct SceneQuery { int query(capsule* c); };
-struct SoundPlayer {
-    int play(int sound, int priority, const vector4* pos, float pitch, float* out);   // 0x442650 (ret 0x14)
-};
 }
-extern ms::SoundPlayer g_sound_mgr;                 // 0x5aa128
+struct mesh_node {
+    void set_time(const float* t);   // 0x433190 (rgl/xmlcfg/game_util.cpp: sets the morph time)
+};
 extern int g_sound_ids[];                        // 0x5aa178
 extern "C" int __stdcall FSOUND_StopSound(int channel);   // 0x5342a6
 float frand();                                   // 0x40e400
-// 0x433190: rgl::mesh member of the animation code (sets the morph time)
-struct mesh_anim { void set_time(const float* t); };
 
 // constants of the projectile code
 extern float g_f54b3b4;        // 0x54b3b4 (0.8f: reach without an item)
@@ -66,7 +64,7 @@ void TerrainX::build_entity()
 {
     if (name.len < 4)
         return;
-    smeshes = ((ms::resmgr_m*)&g_resmgr)->find_meshes(&name);
+    smeshes = g_resmgr_c->find_meshes((const rgl::string*)&name);
 
     vector4 center;
     center.x = wx - 10.0f;
@@ -88,7 +86,7 @@ void TerrainX::build_entity()
     for (unsigned n = 0; n < smeshes.size(); n++) {
         mesh* m = ((mesh_x*)smeshes[n])->clone();
         ((mesh_x*)m)->set_color(center);
-        ((mesh_x*)m)->translate(&tv);
+        ((mesh*)m)->translate(&tv);
         ((TerrainX*)this)->snap(m);
         ((mesh_x*)m)->compute_bounds();
 
@@ -215,11 +213,11 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                 t == 2 || t == 3 || t == 4 || t == 7) {
                 {
                     tstring name = item_mesh_name(kind, ir.item, ir.m4);
-                    *p = (int)((ms::resmgr_m*)&g_resmgr)->make_lod_mesh(name, false);
+                    *p = (int)g_resmgr_c->make_lod_mesh((const rgl::string&)name, false);
                 }
                 ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
-                ms::ItemSnd* snd = (ms::ItemSnd*)((char*)kind + 0x228);
+                TimerList* snd = (TimerList*)((char*)kind + 0x228);      // the item's sound holder (ItemKind+0x228)
                 if (snd->count > 0) {
                     *(int*)(((char*)g_game) + 0x1a1f4) = id;
                     *(int*)(((char*)g_game) + 0x1a1f8) = troop;
@@ -228,10 +226,10 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                     *(int*)(((char*)g_game) + 0x1a200) = 0;
                     (*(__int64*)((char*)&g_script + 0x8)) = id;
                     (*(__int64*)((char*)&g_script + 0x10)) = troop;
-                    snd->play(-0x32);
+                    snd->update(-0x32);                    // 0x48add0
                 }
             } else if (t == 5 || t == 6) {
-                *p = (int)((ms::resmgr_m*)&g_resmgr)->make_lod_mesh(ir.mesh_name(), false);
+                *p = (int)g_resmgr_c->make_lod_mesh((const rgl::string&)ir.mesh_name(), false);
                 if ((char)kind->type_flags == 6) {
                     matrix mtx;
                     identity_pos(&mtx);
@@ -248,7 +246,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                 ((unsigned)kind->type_flags & 0xff) != 7 && ((unsigned)kind->type_flags & 0xff) != 9) {
                 tstring name = ir.mesh_name(0x3000000000000000ull);
                 if (name.len > 1) {
-                    lod_mesh* m = ((ms::resmgr_m*)&g_resmgr)->make_lod_mesh(name, false);
+                    lod_mesh* m = (lod_mesh*)g_resmgr_c->make_lod_mesh((const rgl::string&)name, false);
                     matrix carry;
                     int bone, other;
                     kind->get_carry_pos((pos2*)&carry, &bone, &other);
@@ -296,7 +294,7 @@ struct MissileU {
     int sound;                                   // 0xa4
     float sound_t;                               // 0xa8
 
-    mesh* make_ranged_mesh();                    // 0x44f6a0
+    mesh* make_ranged_mesh() { return ((Wielder*)this)->make_ranged_mesh(); }     // 0x44f6a0 (Wielder::make_ranged_mesh, agent/agent.h)
     void update(float dt);                       // 0x47d3e0
     void update_ranged_mesh();                   // 0x47d320
 };
@@ -376,8 +374,8 @@ void MissileU::update(float dt)
         ms::Rows rows;
         rows.init();
         // shooter agent: mission->pages[shooter>>4] + (shooter&0xf)*0x5928
-        ms::AgentSwing* a = (ms::AgentSwing*)(*(char**)(*(char**)((char*)g_mission + 0x1c) + (shooter >> 4) * 4) + (shooter & 0xf) * 0x5928);
-        int r = a->swing_trace(0, this, &rows, &this->hit);
+        Agent* a = (Agent*)(*(char**)(*(char**)((char*)g_mission + 0x1c) + (shooter >> 4) * 4) + (shooter & 0xf) * 0x5928);
+        int r = a->swing_trace(0, (Missile*)this, (Blow*)&rows, &this->hit);
         if (r >= 3) {
             pos = ent->local.o;
             qhit = 1;
@@ -412,7 +410,7 @@ void MissileU::update(float dt)
                             else if (sub == 0x20000) snd = 0x34;
                         }
                         tmp = tmp * g_f54a6f0 + frand() * g_f590c74 + g_f59190c;
-                        sound = g_sound_mgr.play(g_sound_ids[snd], 0, &pa, tmp, 0);
+                        sound = g_sound_mgr.play(g_sound_ids[snd], 0, &pa.x, tmp, 0);
                         sound_t = (float)g_ticks[0] * g_f54a6d0;
                     }
                 }
@@ -428,7 +426,7 @@ void MissileU::update(float dt)
             if ((char)g_items[t].type_flags != 0x0a)
                 t = troop;
             if (t >= 0)
-                ((ms::ItemSnd*)((char*)&g_items[t] + 0x228))->play(-0x34);
+                ((TimerList*)((char*)&g_items[t] + 0x228))->update(-0x34);      // 0x48add0
         }
     }
 
@@ -469,7 +467,7 @@ void MissileU::update(float dt)
             if (sound >= 0 && (float)g_ticks[0] * g_f54a6d0 - g_f590d94 < sound_t)
                 FSOUND_StopSound(sound);
             if (snd >= 0)
-                g_sound_mgr.play(g_sound_ids[snd], 0, &pos, 1.0f, 0);
+                g_sound_mgr.play(g_sound_ids[snd], 0, &pos.x, 1.0f, 0);
         }
     }
 
@@ -539,7 +537,7 @@ struct lod_mesh_a : lod_mesh {
 // (v50, 0x60-byte) record back onto its source, and re-upload.
 void mesh_anim_x::apply_anim(const float* t)
 {
-    ((mesh_anim*)this)->set_time(t);              // 0x433190
+    ((mesh_node*)this)->set_time(t);              // 0x433190 (mesh_node::set_time, rgl/xmlcfg/game_util.cpp)
     update_morph();                               // 0x413320
     ensure_local();                               // 0x412ee0
 
@@ -704,7 +702,7 @@ void TerrainX::gen_set_init(particle_list* s)
                 }
                 mesh* cur2 = grid[cell][found];
                 if ((ge->flags & 0x20000) == 0)
-                    ((mesh_x*)cur2)->append_skinned(src, &mat, -1, -1, 0);
+                    ((mesh*)cur2)->append_skinned(src, (const mat4*)&mat, -1, -1, 0);
                 else
                     ((mesh_x*)cur2)->transform(src, &mat, -1);
                 if (RV(int, 0x38) < 4) {
