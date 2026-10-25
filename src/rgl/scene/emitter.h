@@ -30,9 +30,11 @@ struct float_pair {                      // two floats built through a stack tem
 };
 
 // rgl/particles/mesh_obj.h's emitter (that header does not go with this one): the member the per-frame step is
+#ifndef RGL_MESH_OBJ_H   // (mesh_obj.h, when included first, has the full class)
 struct emitter {
     void update(const float* dt, const matrix& frame);   // 0x412150
 };
+#endif
 
 struct psys {
     mesh* cache;                    // 0x00 (zeroed by init 0x420b40)

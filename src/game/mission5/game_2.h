@@ -376,7 +376,7 @@ struct Poser { void add_extra(int x); };                            // 0x442110 
 struct GamePool { void next(int* idx); };                           // 0x517960 (inventory_panel/game_tick.h; ret 4: SpriteTable at Game +0xcc)
 extern CellGrid* g_level;                                           // 0xa732b4 (terrain_b.h declares it too; that header cannot be included next to game.h)
 // the resource manager (object 0x5d6fa0) as rgl/core/resmgr.h's `resmgr` defines get_object (that header cannot be included here)
-struct resmgr { rgl::mesh* get_object(const rgl::string* name); };       // 0x419540
+struct resmgr;       // get_object 0x419540: declared by rgl/scene/scene.h (resmgr : resource_manager)
 #include "../../rgl/scene/scene_math.h"   // rgl::identity3 (0x40cd60)
 // a tstring temporary handed to the resource manager as the rgl::string it is (rgl_string.h declares the same 16 bytes; its own constructor and
 // destructor are not defined anywhere: tstring's, 0x42bbe0 / 0x42bc40, are)
