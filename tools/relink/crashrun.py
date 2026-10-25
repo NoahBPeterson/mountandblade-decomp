@@ -100,7 +100,7 @@ def press_play(limit):
             subprocess.run(["osascript", "-e", 'tell application "System Events" to set frontmost of (first process '
                             'whose name contains "mb_standalone") to true', "-e", "delay 0.5", "-e",
                             # only into the game: a Return sent while another app kept the focus lands there
-                            'tell application "System Events" to if name of first process whose frontmost is true '
+                            'tell application "System Events" to if (name of (first process whose frontmost is true)) '
                             'contains "mb_standalone" then key code 36'], capture_output=True)
             return True
         time.sleep(2)

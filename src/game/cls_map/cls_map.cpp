@@ -504,7 +504,8 @@ loading_config* copy_loading_config(loading_config* self, const loading_config* 
     return self;
 }
 
-// @ 0x4dc030 loading_config::loading_config
+// (the copy constructor itself, ??0loading_config@@QAE@ABU0@@Z at 0x4dc030, is the manifest row; no marker here: a
+// marker with no definition after it binds to the next declaration)
 
 // ---- 0x4da5b0: the end-of-game shutdown routine -------------------------------------------------------------------
 // Views of foreign classes, reduced to the destructor / element sizes this routine needs.
@@ -526,7 +527,7 @@ void* __fastcall destroy_record_array(void* p, int unused, unsigned char flags);
 void* __fastcall conv_item_array_dtor(conv_rec* self, int unused, unsigned char flags);        // 0x4c8980
 struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<int>::clear)
 #include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
-void __stdcall FSOUND_Close();                          // fmod!FSOUND_Close (import)
+void __stdcall FSOUND_Close();                          // 0x534336 (the import thunk of fmod!FSOUND_Close)
 void crt_exit();                                        // 0x535458
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern char* g_5e29d0;                                  // 0x5e29d0
