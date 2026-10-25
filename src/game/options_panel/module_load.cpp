@@ -3,8 +3,10 @@
 // (stream_base vtable 0x54a740, tstream2 0x54a890, tstream3 0x54ac88; see mbbin.h) and the item-kind array.
 // Names provisional; class names follow the Module System's record names.
 #include <windows.h>
+#include <new>
 #include <d3d9.h>
 #include "./module_load.h"
+#include "./elem_calls.h"      // E50 / E68 / E176: the copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170
 
 // ---- string table (Data/strings.txt lookup, ctor 0x4230f0) ----
 int find_string(const char* s);                  // 0x4230f0 (this = 0x8ed3c0)
@@ -28,8 +30,7 @@ mission_type g_mission_types[(0xa73730 - 0xa735d0) / 0x20];   // 0xa735d0
 
 ttype g_ttypes[(0x8ed4f58 - 0x8ed4df8) / 0x20];  // 0x8ed4df8
 
-void load_skyboxes(stream_base* s);              // 0x4c3350
-text_reader_l* read(text_reader_l* s, flora_kind* f);    // 0x4cdfd0
+void load_skyboxes();                            // 0x4c3350
 
 // @ 0x4d10f0
 void item_modifier_array_dtor(item_modifier* first, item_modifier* last)
@@ -52,21 +53,21 @@ void item_modifier_array_dtor(item_modifier* first, item_modifier* last)
 __declspec(noinline) void flora_alloc::construct(flora_kind* dst, const flora_kind& src)
 {
     if (dst != 0)
-        dst->copy_from(&src);                   // 0x4cd080
+        new ((void*)dst) E50(*(const E50*)&src);   // 0x4cd080
 }
 
 // @ 0x4d1160 (the allocator's construct: thiscall, `this` = the allocator, unused; callee pops 8)
 __declspec(noinline) void ground_alloc::construct(ground_spec* dst, const ground_spec& src)
 {
     if (dst != 0)
-        dst->copy_from(&src);                   // 0x4cd100
+        new ((void*)dst) E68(*(const E68*)&src);   // 0x4cd100
 }
 
 // @ 0x4d1180 (the allocator's construct: thiscall, `this` = the allocator, unused; callee pops 8)
 __declspec(noinline) void mission_alloc::construct(mission_type* dst, const mission_type& src)
 {
     if (dst != 0)
-        dst->copy_from(&src);                   // 0x4cd170
+        new ((void*)dst) E176(*(const E176*)&src); // 0x4cd170
 }
 
 // @ 0x4d1360
@@ -112,7 +113,7 @@ ground_spec* uninitialized_copy_ground(ground_spec* first, ground_spec* last, gr
 void destroy_range_and_rethrow(ground_spec* first, ground_spec* last)
 {
     for (; first != last; first++)
-        ground_spec_destroy(first);
+        conv_list_dtor((conv_rec*)first);
     throw;
 }
 
@@ -120,7 +121,7 @@ void destroy_range_and_rethrow(ground_spec* first, ground_spec* last)
 void destroy_range_ground(ground_spec* first, ground_spec* last)
 {
     for (; first != last; first++)
-        ground_spec_destroy(first);             // 0x4c8ba0 takes the element as its only argument
+        conv_list_dtor((conv_rec*)first);       // 0x4c8ba0 takes the element as its only argument
 }
 
 // @ 0x4d12c0 (returns the advanced destination, as std::_Uninit_copy does)
@@ -135,7 +136,7 @@ mission_type* uninitialized_copy_mission(mission_type* first, mission_type* last
 void destroy_range_mission(mission_type* first, mission_type* last)
 {
     for (; first != last; first++)
-        mission_type_destroy(first);            // 0x4c8ab0 takes the element as its only argument
+        conv_sub_dtor((void**)first);           // 0x4c8ab0 takes the element as its only argument
 }
 
 // @ 0x4d0c20
@@ -161,17 +162,17 @@ void load_module_files()
         ts.r_int(&g_num_flora_kinds);
         g_flora_kinds = new flora_kind[g_num_flora_kinds];
         for (int i = 0; i < g_num_flora_kinds; i++)
-            read(&ts, &g_flora_kinds[i]);
+            ((ObjectList*)&g_flora_kinds[i])->read(&ts);   // 0x4cdfd0
     }
     {
         text_reader_l ts;
         if (!((text_stream*)&ts)->open_read_text("data\\ground_specs.txt"))
             mb_error("Unable to open %s", "data\\ground_specs.txt");
         for (ttype* t = g_ttypes; t < &g_ttypes[6]; t++)
-            t->read(&ts);           // 0x4be600
+            ((rec20*)t)->read(&ts);           // 0x4be600
         g_ground_specs = new ground_spec[g_num_ground_specs];
         for (int i = 0; i < g_num_ground_specs; i++)
-            g_ground_specs[i].load_extras(&ts);        // 0x4bddf0
+            ((prsnt_record*)&g_ground_specs[i])->load_extras(ts);        // 0x4bddf0
     }
     {
         text_reader_l ts;
@@ -179,7 +180,7 @@ void load_module_files()
             mb_error("Unable to open %s", "data\\skyboxes.txt");
         {
             text_stream2 ts2;
-            load_skyboxes(&ts2);
+            load_skyboxes();
         }
     }
     {
@@ -187,6 +188,6 @@ void load_module_files()
         if (!((text_stream*)&ts)->open_read_text("Data\\mission_types.txt"))
             mb_error("Unable to open %s", "Data\\mission_types.txt");
         for (mission_type* m = g_mission_types; m < &g_mission_types[12]; m++)
-            m->read(&ts);                       // 0x4c2dd0
+            ((Blk2dd0*)m)->read(&ts);                       // 0x4c2dd0
     }
 }

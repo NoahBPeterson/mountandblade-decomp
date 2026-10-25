@@ -15,6 +15,7 @@
 #include <vector>
 #include "../terrain_b/poly_mesh.h"
 #include "../int_vec.h"
+#include "../../rgl/mesh2/graph_obj.h"   // graph_obj: the editor-object methods 0x4c5670.. (see GraphCalls below)
 
 inline int& edge_word(MEdge& e) { return *(int*)&e.crease[2]; }          // +0x20 (0x4d22d0, 0x4d1880)
 
@@ -88,18 +89,10 @@ struct EditMesh : PolyMesh {
     bool split_marked_edge();                       // 0x4d27d0
     void add_quad(const vector4* p);                // 0x4d2df0
     bool on_selection_changed();                    // 0x4d4b80 (hud.cpp)
-    int calc_edge_mode(int mode);                   // 0x4c5670
-    void find_triangle(const int* edge, int* a, int* b);   // 0x4c5f60
-    vector4 normal(const int* edge);                // 0x4c8000
-    void remove_face(int i);                        // 0x4cb940
-    void clean();                                 // 0x4cb840
-    void update_terrain(int kind, vector4* dir);          // 0x4c7f90
 };
-// The callees as seen from their callers: compiled without bodies, so cl must not assume their register use.
-struct MeshCalls {
-    void build_adjacency();                         // 0x470920
-    void update_terrain(int kind, vector4* dir);          // 0x4c7f90
-    void clean();                                 // 0x4cb840
-    void remove_face(int i);                        // 0x4cb940
-};
+// The editor's calls into the map editor's mesh graph (rgl/mesh2/graph_obj.h graph_obj: calc_edge_mode 0x4c5670, find_triangle
+// 0x4c5f60, normal 0x4c8000, update_terrain 0x4c7f90, clean 0x4cb840, remove_face 0x4cb940). graph_obj and PolyMesh are the same
+// object: graph_obj's node / face / edge tables at +0x18 / +0x28 / +0x38 are PolyMesh's MVert / MPoly / MEdge vectors, and the
+// editor passes its own `this` to these functions. They are only declared (no bodies), so cl cannot see their register use.
+inline graph_obj* graph(EditMesh* m) { return (graph_obj*)(void*)m; }
 #endif

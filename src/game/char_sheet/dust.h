@@ -34,16 +34,30 @@ extern float g_k_reach;                         // 0x598e8c (36.0)
 
 // ---- engine std::vector views (alloc, begin, end, cap): size() is inline, capacity()/resize are out of line ---
 #include "../../include/mat4.h"
+#include "./cs_common.h"
+#include "./cs_res.h"
+#include <vector>
+#include "../../include/mesh_parts.h"             // rgl::vertex60
+#include "../../include/mesh_prims.h"             // rgl::point20, rgl::face20
 using rgl::mat3;
 struct mxo { mat3 r; vector4 o; };            // a matrix as three rows + origin
+// the out-of-line std::vector<T>::capacity() instances (mesh_obj: 0x40f030 vertex60, 0x40f090 point20, face20) stay calls
+namespace std {
+template<> size_t vector<rgl::vertex60, allocator<rgl::vertex60> >::capacity() const;
+template<> size_t vector<rgl::point20, allocator<rgl::point20> >::capacity() const;
+template<> size_t vector<rgl::face20, allocator<rgl::face20> >::capacity() const;
+}
+// vec<E96>::reserve (0x4f46d0) and vec<E32>::reserve_nr (0x4f4860) are e96_vec.cpp's out-of-line instances (bodies: e96_vec.h)
+struct E96; struct E32;
+template<class T> struct vec { void reserve(unsigned n); void reserve_nr(unsigned n); };
 struct vec96 {                                  // 0x60-byte elements (s0040ea00 vec96)
     void* alloc;
     char* first;
     char* last;
     char* end;
     unsigned size() const { return first == 0 ? 0 : (last - first) / 0x60; }
-    unsigned capacity() const;                  // 0x40f030
-    void reserve(unsigned n);                    // 0x4f46d0
+    unsigned capacity() const { return ((const std::vector<rgl::vertex60>*)this)->capacity(); }   // 0x40f030
+    void reserve(unsigned n) { ((vec<E96>*)this)->reserve(n); }                                     // 0x4f46d0
 };
 struct vec32 {                                  // 0x20-byte elements (s0040ea00 vec32)
     void* alloc;
@@ -51,10 +65,19 @@ struct vec32 {                                  // 0x20-byte elements (s0040ea00
     char* last;
     char* end;
     unsigned size() const { return first == 0 ? 0 : (last - first) >> 5; }
-    unsigned capacity() const;                  // 0x40f090
-    void reserve_nr(unsigned n);                    // 0x4f4860
+    unsigned capacity_pt() const { return ((const std::vector<rgl::point20>*)this)->capacity(); }    // 0x40f090 (the +0x70 list)
+    unsigned capacity_face() const { return ((const std::vector<rgl::face20>*)this)->capacity(); }   // the +0x90 list: face20's instance
+    void reserve_nr(unsigned n) { ((vec<E32>*)this)->reserve_nr(n); }                                // 0x4f4860
 };
 
+namespace rgl {                                 // the rgl::mesh members this slice calls (the class has other members and is larger)
+struct mesh {
+    std::vector<vertex60>& get50();             // 0x40ebd0
+    std::vector<point20>& get70();              // 0x40eba0
+    std::vector<face20>& get90();               // 0x40ec30
+    void append_skinned(mesh* src, const mat4* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
+};
+}
 struct dmesh;
 struct dmesh {                                  // an rgl::mesh as far as this slice sees it
     char pad00[0x18];
@@ -70,15 +93,11 @@ struct dmesh {                                  // an rgl::mesh as far as this s
     char pada2[0x1d4 - 0xa2];
     matrix frame;                               // +0x1d4
 
-    vec96* get50_();                            // 0x40ebd0 (walks master until flag_a1; called on the master)
-    vec32* get70_();                            // 0x40eba0 (same)
-    vec32* get90_();                            // 0x40ec30 (walks master until flag_a0)
-    vec96* get50() { return flag_a1 ? &f50 : master->get50_(); }
-    vec32* get70() { return flag_a1 ? &f70 : master->get70_(); }
-    vec32* get90() { return flag_a0 ? &f90 : master->get90_(); }
-    void compute_bounds();                         // 0x419300
-    void append_skinned(dmesh* src, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
-    void transform(dmesh* src, const matrix* m, unsigned color);                          // 0x47aa40 (ret 0xc)
+    // the parent walks are rgl::mesh::get50 / get70 / get90 (0x40ebd0, 0x40eba0, 0x40ec30; called on the master)
+    vec96* get50() { return flag_a1 ? &f50 : (vec96*)&((rgl::mesh*)master)->get50(); }
+    vec32* get70() { return flag_a1 ? &f70 : (vec32*)&((rgl::mesh*)master)->get70(); }
+    vec32* get90() { return flag_a0 ? &f90 : (vec32*)&((rgl::mesh*)master)->get90(); }
+    // (compute_bounds 0x419300 and transform 0x47aa40 are mesh_x's, append_skinned 0x44eb00 is rgl::mesh's: cs_common.h / above)
 };
 
 #include "../../include/vec.h"
@@ -140,12 +159,11 @@ struct DustTerrain {
 
     void update_particles(const matrix* view);                  // 0x4f3e10 (ret 4)
     void emit_cell(int x, int y);                               // 0x4f4060 (ret 8)
-    vector4* ground_color(vector4* out, const float* pos);      // 0x464d50 (s00464a60, ret 8)
-    void light_particle(void* list, int idx, bool trace);       // 0x471b30 (s00471b30, ret 0xc)
+    // (ground_color 0x464d50 and light_particle 0x471b30 are Terrain's, cs_common.h)
 };
 
 
 mat3* __cdecl identity3(mat3* out);                             // 0x40cd60
-unsigned __cdecl pack_color(const float* c);                    // 0x40e440
+namespace rgl { unsigned pack_color(const vector4* c); }       // 0x40e440
 
 #endif

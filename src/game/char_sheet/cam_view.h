@@ -13,11 +13,8 @@ using rgl::vector4;
 using rgl::mat4;
 using rgl::mat3;
 
-mat4* identity_pos(mat4* out);                          // 0x40cd00 (cdecl; returns out)
-struct mat4_self {
-    void rotate_about_s(const float* angle);                 // 0x40e570 (thiscall, ret 4)
-    void rotate_about_f(const float* angle);                 // 0x40e670 (thiscall, ret 4)
-};
+#include "./cs_common.h"
+#include "./cs_mat.h"                                // identity_pos, UiD, WindowMgrW, FaceRace, FaceGen
 
 // key state / settings globals
 extern int g_a17204;                                    // 0xa17204
@@ -54,7 +51,7 @@ extern StrTable g_strtable;                             // 0x5e2a18
 #include "../main_menu.h"
 #define g_main_menu (*(main_menu*)0xa73980)
 
-void __cdecl mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100
+#include "../../rgl/text_stream.h"                    // mb_snprintf (0x415100)
 #include "../animator.h"                              // Animator, g_anim
 
 // a UI element; only the vtable slots this function calls are named
@@ -77,7 +74,7 @@ struct Ctrl {
     virtual void va8(); virtual void vac();
     virtual void vb0();                                 // +0xb0
     virtual void vb4();                                 // +0xb4
-    void set_value(float v);                            // 0x48baa0
+    // (set_value 0x48baa0 is UiD's: ((UiD*)ctrl)->set_value(v))
 };
 
 // the character-sheet / face-generator preview (ctor 0x4f49d0); offsets from this range
@@ -128,8 +125,7 @@ struct CamView {
     char buf400[0x10];                                  // +0x400
 
     void update(float dt);                              // 0x4eb050
-    void setup(float dt);                               // 0x4eb270
-    void refresh();                                     // 0x4eb3c0
+    // (setup 0x4eb270 and refresh 0x4eb3c0 are FaceGen's update_view / refresh, cs_common.h)
     void update_model(float dt);
 };
 

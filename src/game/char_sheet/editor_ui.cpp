@@ -1,4 +1,5 @@
 #include "./editor_ui.h"
+#include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -11,10 +12,10 @@ WidgetA* __cdecl new_key_label(void* parent, const tstring* name, const tstring*
 {
     WidgetA* w = (WidgetA*)::operator new(0x178);
     if (w != 0)
-        w = (WidgetA*)w->base_ctor();
+        w = (WidgetA*)new (w, raw_place()) MissionUi;   // 0x48ae20
     else
         w = 0;
-    label_refresh(w, *text);
+    label_refresh((MissionUi*)w, *text);
     float out[2];
     w->set_text(out, *name);
     ((Widget*)parent)->add_child(w);
@@ -55,7 +56,7 @@ void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, flo
     mesh* m;
     {
         tstring hl("left_arrow_hl");
-        m = g_alloc.get_object(hl)->clone();
+        m = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&hl))->clone();
     }
     m->scale(x / z);
     ((Widget*)b)->set_track(3, m);
@@ -75,7 +76,7 @@ void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, fl
     mesh* m;
     {
         tstring hl("right_arrow_hl");
-        m = g_alloc.get_object(hl)->clone();
+        m = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&hl))->clone();
     }
     m->scale(x / z);
     ((Widget*)b)->set_track(3, m);
@@ -87,7 +88,7 @@ WidgetB* __cdecl make_slider(void* parent, const tstring* name)
 {
     WidgetB* w = (WidgetB*)::operator new(0x188);
     if (w != 0) {
-        w->base_ctor();
+        new (w, raw_place()) MissionUi;   // 0x48ae20
         *(void**)w = (void*)0x591fb0;
         w->f178 = 0;
         w->f17c = 0.008f;
@@ -97,7 +98,7 @@ WidgetB* __cdecl make_slider(void* parent, const tstring* name)
     } else {
         w = 0;
     }
-    label_refresh(w, *name);
+    label_refresh((MissionUi*)w, *name);
     float h = *(float*)((char*)w + 0xf0);
     {
         float size[2];
@@ -123,7 +124,7 @@ WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name)
 {
     WidgetB* w = (WidgetB*)::operator new(0x188);
     if (w != 0) {
-        w->base_ctor();
+        new (w, raw_place()) MissionUi;   // 0x48ae20
         *(void**)w = (void*)0x592140;
         w->f178 = 0;
         w->f17c = 0.1f;
@@ -133,7 +134,7 @@ WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name)
     } else {
         w = 0;
     }
-    label_refresh(w, *name);
+    label_refresh((MissionUi*)w, *name);
     float a = *(float*)((char*)w + 0xf0) * 50.0f;
     w->f178 = 1;
     float b = *(float*)((char*)w + 0xf4) * 1.5576323f;
@@ -142,13 +143,13 @@ WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name)
     mesh* m1;
     {
         tstring n("scrollbar");
-        m1 = g_alloc.get_object(n)->clone();
+        m1 = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&n))->clone();
         m1->set_color(col);
     }
     mesh* m2;
     {
         tstring n("scrollbar_handle");
-        m2 = g_alloc.get_object(n)->clone();
+        m2 = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&n))->clone();
         m2->set_color(col);
     }
     w->set_track(0, m1);
@@ -162,7 +163,7 @@ WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
 {
     WidgetC* w = (WidgetC*)::operator new(0x4a8);
     if (w != 0)
-        w = w->ctor();
+        w = (WidgetC*)new (w, raw_place()) c49deb0::Camera;   // 0x49deb0
     else
         w = 0;
     w->f104 |= 0x20;
@@ -170,7 +171,7 @@ WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
         w->f484 = a3;
     w->f490 = (int)parent;
     w->add_child(parent);
-    label_refresh(w, *name);
+    label_refresh((MissionUi*)w, *name);
     return w;
 }
 
@@ -182,20 +183,17 @@ struct NameVecRec {                             // 0x20 bytes: a name and a vect
     int vec_cap;                                // +0x18
     void* f1c;                                  // +0x1c
 };
-struct RecAlloc {
-    void construct(NameVecRec* dst, const NameVecRec& src);   // 0x4e42f0
-    void destroy(NameVecRec* p);                         // 0x4ebdc0
-};
-// the 0x1f8-byte row copier (4e5fc0 itself only reads the first four arguments; the caller passes the
-// value a second time, and the two instantiations were folded together by the linker)
-void construct_rows(TextRow* dst, unsigned n, const TextRow& v, void* ctx, const TextRow& v2);  // 0x4e5fc0
+struct RecAlloc {};
+struct UiRow;
+void __stdcall destroy(UiRow* row);                          // 0x4ebdc0 (screen.cpp: a free stdcall function; the allocator is loaded into ecx first)
+// (the 0x1f8-byte row copier 0x4e5fc0 is std::_Uninit_fill_n<loading_config*,...>, editor_ui.h; the two instantiations were folded together by the linker)
 
 struct TextRowVec {
     TextRow* insert_n(TextRow* pos, unsigned n, const TextRow& v);
 };
 TextRow* TextRowVec::insert_n(TextRow* pos, unsigned n, const TextRow& v)
 {
-    construct_rows(pos, n, v, this, v);
+    std::_Uninit_fill_n((loading_config*)pos, n, (const loading_config&)v, *(std::allocator<loading_config>*)this, std::_Nonscalar_ptr_iterator_tag());
     return pos + n;
 }
 
@@ -205,13 +203,13 @@ void uninit_fill(NameVecRec* first, unsigned n, const NameVecRec& v, RecAlloc* a
     NameVecRec* start = first;
     try {
         while (n > 0) {
-            a->construct(first, v);
+            ((std::allocator<RagModel>*)(void*)a)->construct((RagModel*)first, (const RagModel&)v);
             --n;
             ++first;
         }
     } catch (...) {
         for (; start != first; ++start)
-            a->destroy(start);
+            CALL_STDCALL_ON(destroy, a, start);   // 0x4ebdc0
         throw;
     }
 }
@@ -222,13 +220,13 @@ void uninit_fill(NameVecRec* first, unsigned n, const NameVecRec& v, RecAlloc* a
 // 0x4d10f0 is the out-of-line array destructor for 0x50-byte records; it only reads its first two
 // arguments (the two range pointers), the caller passes the sub-object and the range start as well
 // (the extra parameters were folded away by the linker).
-void free_elem_vec(void* p, void* end, void* sub, void* ctx);   // 0x4d10f0
+// (0x4d10f0 is item_modifier_array_dtor, editor_ui.h)
 void __cdecl destroy_range(NameVecRec* first, NameVecRec* last)
 {
     for (; first != last; ++first) {
         void** v = (void**)((char*)first + 0x14);
         if (*v != 0) {
-            free_elem_vec(*v, v[1], (char*)first + 0x10, first);
+            item_modifier_array_dtor((item_modifier*)*v, (item_modifier*)v[1]);
             ::operator delete(*v);
         }
         *v = 0;
@@ -241,7 +239,7 @@ void __cdecl destroy_range(NameVecRec* first, NameVecRec* last)
 // @ 0x4f6390
 void EditorApp::refresh_dialog()
 {
-    g_editor_game->refresh();
+    ((FaceGen*)g_editor_game)->refresh();   // 0x4eb3c0 (the editor game is the FaceGen)
     g_editor_game->f2f9 = 1;
     SetFocus(hwnd);
 }
@@ -250,7 +248,7 @@ void EditorApp::refresh_dialog()
 int __cdecl engine_init()
 {
     srand(timeGetTime());
-    ((Startup*)0x5fe898)->init();
+    ((render_batch*)0x5fe898)->init_formats();   // 0x4bc5b0
     g_log_path.assign("rgl_log.txt");
     FILE* f = fopen("rgl_log.txt", "w");
     g_log_file = f;
@@ -262,41 +260,41 @@ int __cdecl engine_init()
         g_log_flag94 = ok;
     }
     g_log_flag78 = ok;
-    g_log.w_cstr("Starting new log file.\n");
+    ((text_stream*)(void*)&g_log)->text_stream::w_cstr("Starting new log file.\n");   // 0x4153a0 (g_log is a text_stream)
     g_5d705c = g_path_prefix;
     bool b = g_no_cam != 0;
     g_5d706c = b;
     g_5d706d = b;
     {
         tstring n("core_shaders");
-        g_alloc.load_pack(n, 0);
+        g_alloc.load_pack((const rgl::string&)n, 0);
     }
     {
         tstring n("core_textures");
-        g_alloc.load_pack(n, 0);
+        g_alloc.load_pack((const rgl::string&)n, 0);
     }
     {
         tstring n("core_materials");
-        g_alloc.load_pack(n, 0);
+        g_alloc.load_pack((const rgl::string&)n, 0);
     }
     {
         tstring n("core_ui_meshes");
-        g_alloc.load_pack(n, 0);
+        g_alloc.load_pack((const rgl::string&)n, 0);
     }
     {
         tstring n("core_pictures");
-        g_alloc.load_pack(n, 0);
+        g_alloc.load_pack((const rgl::string&)n, 0);
     }
     g_strtable.load(g_path_prefix_chars);
     {
         FontDef* p = (FontDef*)::operator new(0x386c);
         if (p != 0)
-            p = ctor_font_def(p);
+            p = (FontDef*)new (p, raw_place()) Font;   // 0x4d99d0
         g_font = p;
     }
     {
         tstring n("Data\\font_data.xml");
-        ((FontDef*)g_font)->load_fonts(&n);
+        ((Font*)g_font)->load((const char*)&n);   // 0x4d9aa0
     }
     ((GuiState*)0x5d7080)->init_widgets();
     init_mission_trigger_records();

@@ -10,10 +10,15 @@
 #include "../rgl_math.h"
 #include "../../include/mat4.h"
 
+// The writers are global-scope functions (rgl/shapes/shapes.cpp defines identity3 as `rgl::mat3* identity3(rgl::mat3*)` and identity_pos
+// on the global `pos`, mat4.h); the rgl:: spellings the scene code uses forward to them.
+rgl::mat3* __cdecl identity3(rgl::mat3* out);                   // 0x40cd60 (cdecl; returns out)
+pos* __cdecl identity_pos(pos* out);                            // 0x40cd00 (cdecl; returns out)
+
 namespace rgl {
 
-mat3* identity3(mat3* out);                                     // 0x40cd60 (cdecl; returns out)
-matrix* identity_pos(matrix* out);                              // 0x40cd00 (cdecl; returns out)
+// (identity3 has no rgl:: spelling: callers inside namespace rgl or under `using namespace rgl` find the global writer above)
+__forceinline matrix* identity_pos(matrix* out) { return (matrix*)::identity_pos((pos*)out); }
 
 // the point transform of a frame as the callers inline it
 inline vector4 tp(const matrix& m, const vector4& p)

@@ -70,8 +70,10 @@ void Screen::camera_update(float dt)
 
     // --- follow the selected party while the map is live -------------------------------------------
     if (g_game->f88) {
-        if (g_game->parties.is_live(g_game->selected)) {
-            Party* p = g_game->parties.get_party(g_game->selected);   // the slice cast the dense index to a pointer; 0x48ad00 returns the index, the page arithmetic is get_party
+        if (((PartyMgrW*)(void*)&g_game->parties)->is_live(g_game->selected)) {
+            // get_party (include/party.h) expanded: the id's dense index is Map10007::lookup (0x48ad00), then the page arithmetic
+            int pidx = ((Map10007*)(void*)&g_game->parties)->lookup(g_game->selected);
+            Party* p = (Party*)((char*)g_game->parties.pages._Myfirst[pidx >> 4] + (pidx & 0xf) * 0x5ac8);
             vector4 rect = *(vector4*)&p->pos;
             rect.z = rect.z + C_549CDC;
             float dx = rect.x - f290;
@@ -108,13 +110,13 @@ void Screen::camera_update(float dt)
 
     // --- the frame: identity, +90deg, -yaw, then -pitch; the eye becomes frame.o --------------------
     mat4 frame;
-    identity(&frame.s);
+    identity_pos((pos*)&frame.s);
     float ang = 1.5707964f;
-    frame.rotate_about_s(&ang);
+    ((rgl::matrix*)&frame)->rotate_about_s(&ang);
     ang = -f2b0;
-    frame.rotate_about_f(&ang);
+    ((rgl::matrix*)&frame)->rotate_about_f(&ang);
     ang = -f2b4;
-    frame.rotate_about_s(&ang);
+    ((rgl::matrix*)&frame)->rotate_about_s(&ang);
     f29c = 0.0f;
     f290 = frame.f.x * f2b8 + f290;
     f294 = frame.f.y * f2b8 + f294;
@@ -140,7 +142,7 @@ void Screen::camera_update(float dt)
         }
     }
     unsigned fog = pack_color((const vector4*)g_game->fog_color);
-    ((Envelope*)g_level)->set_fade(&fogdist, &fog);
+    ((envelope*)g_level)->set_fade(&fogdist, (const int*)&fog);
 
     // --- frustum planes, the frame into this+0x238, then the widget's label matrix and the scene ---
     memcpy((char*)this + 0x238, &frame, 0x40);
@@ -172,9 +174,9 @@ MapWidget* __fastcall ctor_4ed630(MapWidget* w);   // 0x4ed630 (ecx = object)
 // @ 0x4ed630
 MapWidget* __fastcall ctor_4ed630(MapWidget* w)
 {
-    widget_ctor(w);
+    ((MissionUi*)w)->MissionUi::MissionUi();   // 0x48ae20
     *(void**)w = (void*)0x598698;
-    scene_ctor((scene*)w->scene_bytes());
+    ((scene*)w->scene_bytes())->scene::scene();   // 0x429740
     *(char*)((char*)w + 0x2e6) = 1;
     *(vector2*)((char*)w + 0xe0) = vector2(0.0f, 0.0f);
     *(vector2*)((char*)w + 0xf0) = vector2(1.0f, 0.75f);
@@ -185,8 +187,8 @@ MapWidget* __fastcall ctor_4ed630(MapWidget* w)
 void* __fastcall dtor_4ed6b0(MapWidget* w, int, unsigned flags)
 {
     *(void**)w = (void*)0x598698;
-    scene_dtor((scene*)w->scene_bytes());
-    widget_dtor(w);
+    ((scene*)w->scene_bytes())->scene::~scene();   // 0x41f4e0
+    ((Buffer*)w)->Buffer::~Buffer();   // 0x487c00
     if (flags & 1)
         operator delete(w);
     return w;

@@ -173,6 +173,7 @@ struct OuterGame {
 // ---- callees (slice s004e8f10 / others) -----------------------------------------------------------------
 OutStream* write_soa(OutStream* out, char* base);   // 0x4e9620 (cdecl, two stack args, returns out)
 int        id_lookup(void* map, int id);            // 0x48ad00 (ret 4)
+#include "./cs_common.h"                       // Map10007, std::vector<int>::push_back
 #include "../int_vec.h"
 
 

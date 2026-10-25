@@ -11,7 +11,7 @@ struct tstring;
 struct scene_row;
 #include "../../include/vec.h"       // vector2 (= Vec2)
 struct RenderScene;
-struct Vec1c { char b[0x1c]; void assign(const Vec1c* o); };   // 0x43f0a0 (thiscall operator=, 28-byte vector-like)
+struct Vec1c { char b[0x1c]; };   // 28 bytes: a std::vector<int> (operator= 0x43f0a0, cs_common.h) and 12 more
 
 struct GuiCtx {
     char pad000[0x60];
@@ -40,12 +40,9 @@ struct GuiCtx {
     void* f568;                         // +0x568
     char pad56c[0x16e8 - 0x56c];
     float f16e8, f16ec, f16f0;          // +0x16e8
-    void follow(int a, rgl::vector4* v, int b, int c);  // 0x488720
     void render_shape_frame(int a, rgl::vector4* v, int b, int c);   // 0x4ed6f0
-    void __fastcall draw_string(tstring* s, float a, int color, char b);    // 0x4e43e0
-    void __fastcall select_entity(scene_row* row, int ent, int flags);      // 0x4ea0c0
-    void __fastcall set_o568(char reinit);                                 // 0x42cdb0
-    void __fastcall set_view(const vector2* p);                             // 0x4c5190
+    // (follow 0x488720 is MissionUi::render, draw_string 0x4e43e0 / set_o568 0x42cdb0 are gui_manager's, set_view 0x4c5190 is gui_view's,
+    // select_entity 0x4ea0c0 is a free stdcall function: cs_common.h)
 };
 
 #endif // CHAR_SHEET_GUI_CTX_H

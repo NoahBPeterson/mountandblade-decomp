@@ -32,7 +32,6 @@ extern MenuScreen* g_screen;                        // 0xa739b8
 
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern int   g_u32;                                 // 0xa735c0
-void start_setup(void* m);                  // 0x484590 (this = g_world)
 extern float g_char_scale;                          // 0x590d7c
 
 // the strings the mission items write and the numbers their sounds depend on
@@ -53,8 +52,6 @@ extern int g_a174d8;                                // 0xa174d8
 
 extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 #include "../../include/crt.h"   // canonical: ftol2 (0x535a64)
-void set_time(void* node, const float* t);         // 0x433190 (mesh_node::clamp_c8)
-void string_assign(tstring* thisp, const tstring* src); // 0x42bc50
 
 #define ABS(x) ((float)fabs(x))
 
@@ -78,6 +75,12 @@ inline void play_family_sound(int family, int id)
 
 // the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
 // +0x178 the slot index, +0x17c the step, +0xf0 the per-slot screen values.
+// UiD (ui/ui_widgets.h, whose g_tick_scale clashes with this header's): the progress bar (vtable 0x592140) that ValueSource views
+// (+0x178 index, +0x17c step); the two members the sources call.
+struct UiD {
+    float value();   // 0x48b930
+    void set_value(float x);   // 0x48baa0
+};
 struct ValueSource {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
     virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
@@ -94,8 +97,8 @@ struct ValueSource {
     char  pad2[0x178 - 0x174];
     int   idx;                                      // +0x178
     float step;                                     // +0x17c
-    void  set_value(float v);                       // 0x48baa0
-    float value();                                  // 0x48b930
+    __forceinline float value() { return ((UiD*)(void*)this)->value(); }                    // UiD::value 0x48b930
+    __forceinline void  set_value(float v) { ((UiD*)(void*)this)->set_value(v); }           // UiD::set_value 0x48baa0
     void  on_value_changed(float arg);              // 0x4d5940
 };
 // value source reached through an item pointer (Hud+0x30 sources): only the vtable slots matter
@@ -124,11 +127,6 @@ inline ValueWidget* item_value(MissionItem* it) { return *(ValueWidget**)((char*
 // 64-bit tick the slot was entered at (+0x20/+0x24).
 #include "../mission_source.h"                  // MissionSource (pick 0x4d5410)
 
-// The item source as its callers see it (0x4d5290 calls 0x4d5410 as an ordinary external function: if cl saw the body in
-// this TU it would give the callee its own register convention).
-struct ItemSource {
-    void pick(int* arg);                            // 0x4d5410 (MissionSource::pick)
-};
 
 // ---- the screen object owning the callbacks -------------------------------------------------------------
 struct Hud {
@@ -162,7 +160,6 @@ struct Hud {
     void on_mission_start(int arg);                 // 0x4d5980
     void on_leave(int arg);                         // 0x4d59f0
     void on_update(int arg);                        // 0x4d5a20
-    void page_fill();                               // 0x4d5ba0 (fills the page named by f250)
 };
 
 // A page object of the list at +0x254 (0x4d5ba0 fills it; only the call matters here).

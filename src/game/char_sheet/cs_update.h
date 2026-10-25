@@ -15,6 +15,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include "rgl.h"
+#include "./cs_common.h"
 
 // the strategy world stepped at the top of the frame (0x427f40)
 #include "../scene_world.h"                              // World::step 0x427f40
@@ -73,7 +74,7 @@ struct UiDsv {
     float f_174;                                    // +0x174
     int f_178;                                      // +0x178 (stop index)
     float f_17c;                                    // +0x17c
-    void set_value(float v);                        // 0x48baa0
+    // (set_value 0x48baa0 is UiD's, cs_common.h)
 };
 struct ScrollHost { char pad[0x484]; UiDsv* bar; }; // +0x484
 

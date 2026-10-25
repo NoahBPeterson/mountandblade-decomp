@@ -28,10 +28,13 @@ extern resmgr g_alloc;                          // 0x5d6fa0
 
 // resource lookup + clone, as the factories do it (the original inlines this twice, giving the two
 // tstring temporaries separate stack slots)
+struct mesh_x {
+    mesh_x* clone();   // 0x41c6d0 (rgl/mesh_x.h)
+};
 __forceinline mesh* load_mesh(const char* name)
 {
     tstring n(name);
-    return g_alloc.get_object(n)->clone();
+    return (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&n))->clone();
 }
 
 // ---- language / text tables (0x5e2a18) -------------------------------------------------------------
@@ -41,7 +44,10 @@ __forceinline mesh* load_mesh(const char* name)
 struct stream_base {
     virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03(); virtual void s04();
     virtual void s05(); virtual void s06(); virtual void s07(); virtual void s08(); virtual void s09();
-    virtual void w_cstr(const char* s);         // +0x28 (slot 10)
+    virtual stream_base& w_cstr(const char* s); // +0x28 (slot 10)
+};
+struct text_stream : stream_base {
+    virtual stream_base& w_cstr(const char* s);   // 0x4153a0 (rgl/text_stream.h: the class of g_log)
 };
 extern stream_base g_log;                       // 0x5a9f60
 
@@ -72,11 +78,18 @@ struct WidgetC : Widget {
     int f484;                                   // +0x484
     char pad2[0x490 - 0x488];
     int f490;                                   // +0x490
-    WidgetC* ctor();                            // 0x49deb0 (returns this)
+    // (the constructor 0x49deb0 is c49deb0::Camera::Camera, below)
 };
 
 // ---- helpers declared elsewhere --------------------------------------------------------------------
-void label_refresh(Widget* w, tstring name);      // 0x4e4c70 (tstring by value)
+#include "./cs_common.h"                        // label_refresh(MissionUi*, tstring) 0x4e4c70, MissionUi, make_scrollbar / make_editor_list
+struct Font {
+    Font();   // 0x4d99d0 (FontDef's constructor)
+    void load(const char* path);   // 0x4d9aa0 (the original hands it a tstring)
+};
+struct render_batch {
+    void init_formats();   // 0x4bc5b0 (terrain_b/render_batch.h; the object at 0x5fe898 the start-up sequence initialises)
+};
 void* make_medium_button(void* parent, const tstring* text, int a2, int a3, float a4,
                          const tstring* up, const tstring* down, int a5, float a6, float k);  // 0x4dcc50
 
@@ -97,11 +110,11 @@ extern int g_5e29a4;                            // 0x5e29a4
 #include "../game_globals.h"
 extern void* g_font;                        // 0x5e2934
 
-struct Startup { void init(); };                // 0x5fe898
-struct GuiState { void init_widgets(); };       // 0x5d7080
+struct GuiState {
+    void init_widgets();   // 0x5d7080
+};
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 struct EditorGame {
-    void refresh();
     char pad[0x2f9];
     unsigned char f2f9;                         // +0x2f9
 };
@@ -113,8 +126,8 @@ struct EditorApp {
     void refresh_dialog();   // 0x4f6390
 };
 
-struct FontDef { void load_fonts(tstring* path); };  // 0x4d9aa0
-FontDef* ctor_font_def(FontDef* p);             // 0x4d99d0
+struct FontDef {};                              // the font object at g_font: Font
+
 void init_mission_trigger_records();                   // 0x4d0620
 void init_mission_trigger_records(); // 0x4d0620
 

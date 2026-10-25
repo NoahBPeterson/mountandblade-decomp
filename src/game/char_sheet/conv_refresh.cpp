@@ -95,14 +95,14 @@ tail:
                 buttons[i]->set_offset(mv);
                 {
                     tstring name("dlg_button");
-                    base_mesh* bm = g_alloc.get_object(name)->clone();
+                    base_mesh* bm = (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone();
                     float col[4] = { one, text_px, 0.0f, one };   // original: four 1.0f at +0x8c..+0xa4
                     bm->set_color(col);
                     buttons[i]->set_track(2, bm);
                 }
                 {
                     tstring name("dlg_button_down");
-                    base_mesh* bm = g_alloc.get_object(name)->clone();
+                    base_mesh* bm = (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone();
                     float col[4] = { one, text_px, 0.0f, one };
                     bm->set_color(col);
                     buttons[i]->set_track(1, bm);

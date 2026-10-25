@@ -21,7 +21,7 @@ void MapScreen::buttons(int arg)
             }
             if (f6c != 0 && f6c->changed(0x10000)) {
                 save_game(-1, 0);
-                g_msglog.add(*g_strtable.lookup(&tstring("ui_game_saved")), -1);
+                g_msglog.add(*g_strtable.lookup(tstring("ui_game_saved")), -1);
                 g_main_menu.set_state(menu_sel);
                 return;
             }
@@ -30,7 +30,7 @@ void MapScreen::buttons(int arg)
                 g_main_menu.set_state(0x15);
                 return;
             }
-            if (f60->changed(0x10000) || g_keyboard.test(1)) {
+            if (f60->changed(0x10000) || (char)((Slot*)(void*)&g_keyboard)->is_ready(1)) {
                 g_main_menu.set_state(menu_sel);
                 return;
             }
@@ -44,7 +44,7 @@ void MapScreen::buttons(int arg)
         save_game(-1, 0);
     if (g_game) {
         GameData* g = g_game;
-        g->world_free();
+        ((GameW*)g)->world_free();   // 0x492f40
         operator delete(g);
         g_game = 0;
     }
@@ -87,7 +87,9 @@ struct file_writer : file_writer_base {
     virtual void s19(); virtual void s20(); virtual void s21(); virtual void s22();
     virtual int flush();
 };
-struct TextOps { int open_write(const char* path); };   // 0x415320 (ret 4)
+struct text_stream {
+    int open_write(const char* path);   // 0x415320 (ret 4; rgl/text_stream.h)
+};
 
 #define WL_MARK(id) \
     __asm _emit 0xEB __asm _emit 0x10 __asm _emit 0x57 __asm _emit 0x4C __asm _emit 0x20 __asm _emit 0x20 \
@@ -122,7 +124,7 @@ int save_game(int version, tstring* name)
     ps = g->module.c_str();
     mb_snprintf(pathD, 0x200, "%s%s\\new_game.sav", dirC, ps);
     LOG("Creating new savegame file...");
-    r = ((TextOps*)&w)->open_write(pathD);
+    r = ((text_stream*)&w)->open_write(pathD);
     if (!r) {
         LOG("Saving header...");
         {
@@ -163,7 +165,7 @@ int save_game(int version, tstring* name)
                     WL_MARK(0x0d)
                     if (!r) {
                         LOG("Savegame succeded...");
-                        g_msglog.add(*g_strtable.lookup(&tstring("ui_game_saved_successfully")), -1);
+                        g_msglog.add(*g_strtable.lookup(tstring("ui_game_saved_successfully")), -1);
                         goto done;
                     }
                 }

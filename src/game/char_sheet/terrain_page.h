@@ -19,6 +19,7 @@
 #include <math.h>
 #pragma intrinsic(sqrt, fabs, sin, cos, tan, fsin, fcos, fptan)
 #include "rgl.h"
+#include "./cs_common.h"
 
 using rgl::vector4;
 
@@ -29,8 +30,8 @@ using rgl::vector4;
 struct tstring : rgl::string {
     tstring(const char* s) : rgl::string(s) {}                              // 0x42bbe0
     tstring();                                                              // 0x42bbd0
-    tstring& assign(const char* s);                                         // 0x42bcb0 (the const char* assignment)
-    tstring& append(const tstring& o);                                      // 0x42c1e0
+    void assign(const char* s);                                             // 0x42bcb0 (the const char* assignment)
+    void append(const tstring& o);                                          // 0x42c1e0
     ~tstring();                                                             // 0x42bc40
     const char* c_str() const { return p ? p : (const char*)&p; }
 };

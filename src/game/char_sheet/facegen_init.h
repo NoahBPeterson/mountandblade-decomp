@@ -6,6 +6,9 @@
 #include <new>
 #include <math.h>
 #include "rgl.h"
+#define CS_REAL_FACEGEN                                 // (this header defines FaceGen)
+#include "./cs_common.h"                                // widget constructors, make_* / label_refresh / new_button ..., FaceGenome, TextPart
+#include "./cs_res.h"                                   // resmgr g_alloc, mesh_x
 
 #define MB_NOTHROW throw()
 
@@ -15,8 +18,6 @@ extern "C" int _fltused = 0;
 #include "../tstring.h"
 
 // ---- widgets ---------------------------------------------------------------------------------------------
-struct mesh;                                            // 0x260 bytes
-mesh* clone(mesh* m);                              // 0x41c6d0
 struct Entity;
 
 // the UI element base (0x178 bytes, ctor 0x48ae20): src/game/widget.h
@@ -28,7 +29,7 @@ struct objvec {
     widget** first;                                     // +0x04
     widget** last;                                      // +0x08
     widget** end;                                       // +0x0c
-    void insert_n(widget** where, unsigned n, widget* const& val);   // 0x4927d0
+    // (insert_n 0x4927d0 is std::vector<SceneObject*>::_Insert_n, cs_common.h)
 };
 
 // the 0x188-byte UI element (ctor 0x4931a0; "deform"/"buttons" vptr 0x597050)
@@ -108,10 +109,10 @@ struct FaceGen {
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 extern unsigned char g_msg_tick;                        // 0x5d8788
-struct gui_mgr { void set_window(widget** w); };        // 0x49b120
+struct gui_mgr {
+    void set_window(widget** w);   // 0x49b120
+};
 extern gui_mgr g_gui;                                   // 0x5d7080
-struct resmgr { mesh* get_object(const tstring& n); };  // 0x419540
-extern resmgr g_alloc;                                  // 0x5d6fa0
 #include "../str_table.h"   // 0x43a1e0
 extern StrTable g_strtable;                             // 0x5e2a18
 #include "../ini_file.h"
@@ -128,37 +129,38 @@ extern float g_dummy_mat;                               // 0x8ed4f8c
 extern float g_dummy0;                                  // 0x8ed5088
 extern float g_dummy1;                                  // 0x8ed508c
 extern int g_char_count;                                // 0x8ed4f88
-int gen_face_seed(int* skin, int* flags, int* count);   // 0x432510
 extern float g_k0_01;                                   // 0x54a6f0 = 0.01f
 extern float g_fov_k;                                   // 0x5e20a8
 extern const double g_tan_ang;                          // 0x598e90
 
-// ---- callees ---------------------------------------------------------------------------------------------
-void label_refresh(widget* w, tstring name);                // 0x4e4c70
-elem* make_slider(widget* p, tstring* n);                // 0x4f5fb0
-elem* make_slider(widget* p, tstring* n); // 0x4f5fb0
-elem* make_scrollbar(widget* p, tstring* n);             // 0x4f6160
-elem* make_editor_list(widget* p, tstring* n, elem* sl);      // 0x4f62f0
-void draw(void* s);                               // 0x488d50
-widget* new_key_label(widget* p, tstring* key, tstring* val);                   // 0x4f5d20
-widget* make_right_arrow(widget* p, int a, int b, float c, float d, float e);          // 0x4f5ed0
-widget* make_right_arrow(widget* p, int a, int b, float c, float d, float e); // 0x4f5ed0
-widget* make_left_arrow(widget* p, int a, int b, float c, float d, float e);        // 0x4f5df0
-widget* make_left_arrow(widget* p, int a, int b, float c, float d, float e); // 0x4f5df0
-void anim_track(Animator* a, int skin, int key, tstring* out);                  // 0x4f5d90
-widget* new_medium_button(widget* p, tstring* label, int a, int b, tstring* n1, tstring* n2,
-                          tstring* n3, float f1, float f2, float f3);           // 0x4dcc50
+struct TextPart {
+    void get_text(int row, int index, tstring* out);   // 0x4f5d90 (editor_ui.cpp; the animator's text table at 0x8ed4f60)
+};
 
+// ---- callees: label_refresh, make_slider / make_scrollbar / make_editor_list, new_key_label, make_*_arrow, new_button, new_sized_button,
+// clamp_index, TextPart::get_text are the definitions' own declarations (cs_common.h)
 #include "../scene_world.h"                              // World: the 0x344-byte scene (ctor 0x478ad0)
 
 // the 0x7c-byte wind track (ctor 0x461480)
 #include "../wind.h"                              // wind (shared with terrain_a/wind.cpp)
 
+// World::tracks (scene_world.h TrackVec) is a std::vector<int>: its push_back's out-of-line _Insert_n is vector<int>::_Insert_n (0x410610,
+// protected: reached through a derived class), not the TrackVec view's
+namespace std { template<> void vector<int, allocator<int> >::_Insert_n(iterator where, size_type n, const int& v); }   // 0x410610
+struct IntVecIns : std::vector<int> { using std::vector<int>::_Insert_n; };
+static void push_track(World::TrackVec& t, int v)
+{
+    if (t.first == 0 || (unsigned)(t.last - t.first) >= (unsigned)(t.end - t.first))
+        ((IntVecIns*)&t)->_Insert_n(IntVecIns::iterator(t.last), 1, v);
+    else
+        *t.last++ = v;
+}
+
 static void push_item(elem* w, widget* o)
 {
     if (w->items.first == 0 ||
         (unsigned)(w->items.last - w->items.first) >= (unsigned)(w->items.end - w->items.first))
-        w->items.insert_n(w->items.last, 1, o);
+        ((SceneObjVec*)&w->items)->_Insert_n(SceneObjVec::iterator((SceneObject**)w->items.last), 1, (SceneObject* const&)o);   // 0x4927d0
     else
         *w->items.last++ = o;
 }

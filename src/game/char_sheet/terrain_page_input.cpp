@@ -122,7 +122,7 @@ void TerrainPage::paste_clipboard()
     if (h) {
         const char* p = (const char*)GlobalLock(h);
         if (p) {
-            g_bits.parse(tstring(p));
+            ((HexWords*)(void*)&g_bits)->parse(tstring(p));   // 0x4658c0
             { char r[8]; hexbox->set_text(r, tstring(p)); }
             GlobalUnlock(h);
         }
@@ -136,17 +136,18 @@ void TerrainPage::paste_clipboard()
 void TerrainPage::path(float dt)
 {
     vector4 pos;                                            // the eye (w stays uninitialised, copied into m.o.w)
-    mat_self m = identity_pos();                            // 0x40cd00 (hidden return pointer, cdecl)
+    mat_self m;
+    identity_pos((::pos*)&m);                                 // 0x40cd00 (cdecl, returns its argument)
     pos.x = view_x;
     pos.y = view_y;
     pos.z = view_z;
     m.o = pos;
     float angle = 1.5707964f;                               // +90 degrees
-    m.rotate_about_s(&angle);                                    // 0x40e570
+    ((rgl::matrix*)&m)->rotate_about_s(&angle);             // 0x40e570
     angle = -yaw;
-    m.rotate_about_f(&angle);                                    // 0x40e670
+    ((rgl::matrix*)&m)->rotate_about_f(&angle);             // 0x40e670
     angle = -pitch;
-    m.rotate_about_s(&angle);
+    ((rgl::matrix*)&m)->rotate_about_s(&angle);
     pos.x = m.u.x * zoom;
     pos.y = m.u.y * zoom;
     pos.z = m.u.z * zoom;                                   // the eye vector doubles as the temporary
@@ -155,7 +156,7 @@ void TerrainPage::path(float dt)
     m.o.z = m.o.z + pos.z;
 
     *(rgl::matrix*)frame = m;                               // page +0x138
-    ((FrustumBlock*)map_block)->build_planes();                    // 0x41e4f0: thiscall on this+0x70
+    ((rgl::frustum*)map_block)->build_planes();                    // 0x41e4f0: thiscall on this+0x70
     *(FrustumBlock*)world6c->block = *(FrustumBlock*)map_block;             // 0x120 bytes: page +0x70 -> world +0x1ac
-    g_bits.update_particles((const float*)&m);                  // 0x4f3e10
+    ((DustTerrain*)(void*)&g_bits)->update_particles(&m);        // 0x4f3e10
 }

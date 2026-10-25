@@ -28,10 +28,10 @@ using rgl::vector4;
 #include "../rgl_mesh.h"
 using rgl::mesh;
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
+#include "./cs_common.h"                        // widget constructors, gui_manager, NodeVec, MissionPanel, new_medium_button, ...
 
-void __cdecl mb_error(const tstring* s);                // 0x42cc80
-void __cdecl mb_snprintf(char* buf, int size, const char* fmt, ...);   // 0x415100
-void reset();                                       // 0x42d1b0 gui_manager::reset (0x5d7080)
+void __cdecl mb_error(const char* fmt, ...);            // 0x42cc80
+#include "../../rgl/text_stream.h"                // mb_snprintf 0x415100
 #include "../str_table.h"
 extern StrTable g_strtable;
 extern resmgr g_resmgr;
@@ -56,14 +56,9 @@ extern const float g_592754;            // 0x592754  0.155f
 #define VCALLP(self, off, a)            ((void (*)(void*, const void*))((void**)*(void***)(self))[(off) / 4])(self, (a))
 #define VCALL2(self, off, a, b)         ((void (*)(void*, const void*, const void*))((void**)*(void***)(self))[(off) / 4])(self, (a), (b))
 
-widget* __fastcall ctor_panel(widget* mem);                        // 0x48ae20 (in place, returns this)
-widget* __fastcall ctor_window(widget* mem);                       // 0x4931a0
-widget* __fastcall ctor_scrollbar(widget* mem);                    // 0x48b890
-widget* __fastcall ctor_list(widget* mem);                         // 0x49deb0
-void __fastcall draw(widget* w);                             // 0x488d50
-void gui_set_window(widget* w);                         // 0x49b120
-widget* new_medium_button(widget* parent, tstring* s, float w, float h, float x, float y);   // 0x4dce70
-mesh* make_background(void* col, unsigned rgb);              // 0x4de320
+// (the constructors 0x48ae20 MissionUi, 0x4931a0 ContainerW::construct, 0x48b890 UiD, 0x49deb0 c49deb0::Camera, draw 0x488d50, 0x49b120 NodeVec::push_back,
+// new_medium_button 0x4dce70 are cs_common.h's)
+mesh* make_background(float* col, int rgb);              // 0x4de320
 
 // ---- the quest database (g_game = 0x5e2930) ----------------------------------------------------------------
 extern int g_game[];                                    // 0x5e2930

@@ -13,7 +13,11 @@
 #include "./tstring.h"
 #include "./rgl_mesh.h"
 
+namespace rgl { struct string; }
 struct resmgr {
+    // (added: the definition's own signatures, core/resmgr.cpp; the const tstring& views below name no symbol that exists)
+    rgl::mesh* get_object(const rgl::string* name);         // 0x419540 (ret 4)
+    void load_pack(const rgl::string& name, int user);      // 0x41e150
     rgl::mesh* get_object(const tstring& name);             // 0x419540 (ret 4)
     rgl::mesh* get_object(tstring* name);                   // 0x419540 (ret 4)
     void* get_material(const tstring& name);                // 0x418a70

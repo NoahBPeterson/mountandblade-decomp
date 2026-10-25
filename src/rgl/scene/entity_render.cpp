@@ -12,6 +12,7 @@
 #include "./scene.h"
 #include "./emitter.h"
 #include "./scene_entity.h"
+#include "../../game/tstring.h"      // the string constructor 0x42bbe0 is tstring's (rgl::string declares it but nothing defines that name)
 #include "./world.h"
 #include "./fx.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -61,14 +62,14 @@ void entity::render(scene* sc, render_info* info)
         for (unsigned i = 0; i < meshes.size(); i++) {
             if (meshes[i]) {
                 if (!meshes[i]->res) {
-                    string n("default");
-                    meshes[i]->res = g_resmgr.get_material(n);
+                    tstring n("default");
+                    meshes[i]->res = g_resmgr.get_material(*(const string*)&n);
                 }
                 if (meshes[i]->res->shader->flags20 & 0x100) {
                     if (meshes[i]->get70_rec().size() > 0) {
                         info->valid = 1;
                         const vector4& p0 = (iter32(&*meshes[i]->get70_rec().begin()) + 0)._Ptr->a;
-                        info->depth = local.transform_point(((const mat4&)meshes[i]->m_cc).transform_point(p0)).z;
+                        info->depth = ((const pos&)local).transform_point(((const pos&)meshes[i]->m_cc).transform_point(p0)).z;
                     }
                 }
                 mesh_render(meshes[i], sc, local);
@@ -79,12 +80,12 @@ void entity::render(scene* sc, render_info* info)
                 lods[i]->select(&f144);
                 if (lods[i]->count != 0 && lods[i]->lists[0].v.size() != 0 &&
                     (lods[i]->lists[0].v[0]->res->shader->flags20 & 0x100) != 0) {
-                    if (((mesh_ext*)lods[i]->lists[0].v[0])->get70_().size() > 0) {
+                    if (((mesh_ext*)lods[i]->lists[0].v[0])->get70().size() > 0) {
                         info->valid = 1;
-                        info->depth = local.transform_point(((const mat4&)lods[i]->m8c).transform_point(((v70_view&)((mesh_ext*)lods[i]->lists[0].v[0])->get70_()).at(0).a)).z;
+                        info->depth = ((const pos&)local).transform_point(((const pos&)lods[i]->m8c).transform_point(((const std::vector<point20>&)((mesh_ext*)lods[i]->lists[0].v[0])->get70())[0].a)).z;
                     }
                 }
-                lods[i]->render(sc, local);
+                ((lod_mesh*)lods[i])->render(sc, local);
             }
         }
     }

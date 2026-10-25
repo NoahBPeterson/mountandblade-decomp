@@ -5,6 +5,9 @@
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include <string.h>
 #include <stdlib.h>
+#include "../ui/named_rec.h"   // NamedRec: the dialog box record (setup 0x48a3a0, setup2 0x48a3d0)
+// WindowMgrW (world_data/world_data.h; main_menu.h's `reset` is its old name): open(n) 0x494260 on the main menu object
+struct WindowMgrW { void open(int n); };
 #include "../main_menu.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #define UI_NO_KEY_ASSIGNED  "ui_no_key_assigned"                    // 0x59687c
@@ -35,28 +38,28 @@ void options_panel::key_name(int which, tstring* out)
         return;
     case 0:
         if (key_menu < 0) {
-            *out = *g_strtable.lookup(&tstring(UI_NO_KEY_ASSIGNED));
+            *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
             return;
         }
         *out = g_keyboard.key_name(key_menu);
         return;
     case 1:
         if (key_prev < 0) {
-            *out = *g_strtable.lookup(&tstring(UI_NO_KEY_ASSIGNED));
+            *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
             return;
         }
         *out = g_keyboard.key_name(key_prev);
         return;
     case 2:
         if (key_select < 0) {
-            *out = *g_strtable.lookup(&tstring(UI_NO_KEY_ASSIGNED));
+            *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
             return;
         }
         *out = g_keyboard.key_name(key_select);
         return;
     case 3:
         if (key_next < 0) {
-            *out = *g_strtable.lookup(&tstring(UI_NO_KEY_ASSIGNED));
+            *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
             return;
         }
         *out = g_keyboard.key_name(key_next);
@@ -188,7 +191,7 @@ void options_panel::key_binding_name(int slot, tstring* out, int* translated)
     if (key < 0) {
         {
             tstring no_key("ui_no_key_assigned");                   // 0x59687c
-            *out = *g_strtable.lookup(&no_key);
+            *out = *g_strtable.lookup(no_key);
         }
         *(char*)translated = 1;
     } else {
@@ -242,7 +245,7 @@ void options_panel::draw_faction_report()
         float pos[2];
         pos[0] = 0.1f;
         pos[1] = 0.65f;
-        texts->add_text(g_strtable.lookup(&title), pos);
+        texts->add_text(g_strtable.lookup(title), pos);
     }
     for (int i = 0; i < g_game->nfactions; i++) {
         Faction* f = &g_game->factions[i];
@@ -297,14 +300,14 @@ void options_panel::import_export(int)
             tstring* nm = g_strtable.find(&t->key);
             if (!nm)
                 nm = &t->name;
-            sprintf(buf_b, g_strtable.lookup(&msg)->c_str(), nm->c_str());
+            sprintf(buf_b, g_strtable.lookup(msg)->c_str(), nm->c_str());
         }
         {
             tstring text(buf_b);
             tstring header("");
             g_main_menu.rec->setup(&header, &text);
         }
-        g_main_menu.reset(0);
+        ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         return;
     }
     if (import_pending == 0) {
@@ -322,21 +325,21 @@ void options_panel::import_export(int)
                 tstring* nm = g_strtable.find(&t->key);
                 if (!nm)
                     nm = &t->name;
-                sprintf(buf_a, g_strtable.lookup(&msg)->c_str(), nm->c_str());
+                sprintf(buf_a, g_strtable.lookup(msg)->c_str(), nm->c_str());
             }
             {
                 tstring text(buf_a);
                 tstring header("");
                 g_main_menu.rec->setup(&header, &text);
             }
-            g_main_menu.reset(0);
+            ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         } else {
             {
                 tstring msg("ui_unable_to_open_import_file");       // 0x596cd0
                 tstring header("");
-                g_main_menu.rec->setup(&header, g_strtable.lookup(&msg));
+                g_main_menu.rec->setup(&header, g_strtable.lookup(msg));
             }
-            g_main_menu.reset(0);
+            ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         }
         return;
     }
@@ -347,30 +350,30 @@ void options_panel::import_export(int)
                 import_pending = -1;
                 {
                     tstring msg("ui_are_you_sure_you_want_to_import_the_character");   // 0x596c9c
-                    sprintf(buf_a, g_strtable.lookup(&msg)->c_str());
+                    sprintf(buf_a, g_strtable.lookup(msg)->c_str());
                 }
                 {
                     tstring no("ui_no");                            // 0x596c94
                     tstring yes("ui_yes");                          // 0x596c8c
                     tstring text(buf_a);
-                    g_main_menu.rec->ask_yes_no(&text, g_strtable.lookup(&yes), g_strtable.lookup(&no), &import_pending);
+                    ((NamedRec*)(void*)g_main_menu.rec)->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&import_pending);
                 }
                 g_main_menu.set_state(0);
             } else {
                 {
                     tstring msg("ui_unable_to_find_character_import_file"); // 0x596c64
                     tstring header("");
-                    g_main_menu.rec->setup(&header, g_strtable.lookup(&msg));
+                    g_main_menu.rec->setup(&header, g_strtable.lookup(msg));
                 }
-                g_main_menu.reset(0);
+                ((WindowMgrW*)(void*)&g_main_menu)->open(0);
             }
         } else {
             {
                 tstring msg("ui_mount_and_blade_is_running_in_trial_mode_please_buy_the_game_for_importing_a_character");
                 tstring header("");
-                g_main_menu.rec->setup(&header, g_strtable.lookup(&msg));
+                g_main_menu.rec->setup(&header, g_strtable.lookup(msg));
             }
-            g_main_menu.reset(0);
+            ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         }
         return;
     }
@@ -381,13 +384,13 @@ void options_panel::import_export(int)
             {
                 tstring msg("ui_export_file_for_character_playername_already_exists_overwrite_it"); // 0x596bc0
                 Troop* t = &g_game->troops[g_game->cur_troop];
-                sprintf(buf_a, g_strtable.lookup(&msg)->c_str(), ((TroopRec*)t)->display_name()->c_str());
+                sprintf(buf_a, g_strtable.lookup(msg)->c_str(), ((TroopRec*)t)->display_name()->c_str());
             }
             {
                 tstring no("ui_no");
                 tstring yes("ui_yes");
                 tstring text(buf_a);
-                g_main_menu.rec->ask_yes_no(&text, g_strtable.lookup(&yes), g_strtable.lookup(&no), &export_pending);
+                ((NamedRec*)(void*)g_main_menu.rec)->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&export_pending);
             }
             g_main_menu.set_state(0);
         } else {

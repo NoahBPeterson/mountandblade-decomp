@@ -10,6 +10,7 @@
 #include "../mission.h"                               // Mission::destroy 0x4d51d0 (the world object 0x5e292c is the mission)
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "quest_page.h"        // QuestPage: Hud is the quest page screen (QuestPage::sel is Hud::f250), fill() 0x4d5ba0
 
 // @ 0x4d4b80
 bool EditMesh::on_selection_changed()
@@ -112,7 +113,7 @@ bool EditMesh::on_selection_changed()
                 ok = add_triangle(tri);
                 if (!ok) {
                     if (nfaces < c.faces.size()) {
-                        remove_face((int)c.faces.size() - 1);
+                        graph(this)->remove_face((int)c.faces.size() - 1);
                         build_adjacency();
                     }
                     return false;
@@ -137,6 +138,14 @@ bool EditMesh::on_selection_changed()
     return true;
 }
 
+
+// The item source as handle_buttons sees it: the callee 0x4d5410 (MissionSource::pick, defined below) without its body, so it is an
+// ordinary external call (cl would otherwise see that &arg does not escape and turn the set_state calls into tail jumps). The
+// linker binds the view's symbol to the definition.
+struct ItemSource {
+    void pick(int* arg);   // 0x4d5410 (MissionSource::pick)
+};
+#pragma comment(linker, "/alternatename:?pick@ItemSource@@QAEXPAH@Z=?pick@MissionSource@@QAEXPAH@Z")
 
 // @ 0x4d5290
 void Hud::handle_buttons(int arg)
@@ -183,13 +192,25 @@ void Hud::handle_buttons(int arg)
 
 // ---- the world object (0x5e292c) -------------------------------------------------------------------------
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
-// all of these are thiscall (ecx = the sub-object), see the lea ecx / call pairs in the original
-struct WorldBase { void dtor(); };                  // 0x479160
-struct Sub6814 { void dtor(); };                    // 0x42bc40 (16-byte string at +0x6814)
-struct Sub6688 { void dtor(); };                    // 0x431a60
-#include "world_subs.h"                            // Sub63d0 / Sub6698 (dtor 0x4be6f0 / 0x4cb780)
-struct Sub0030 { void dtor(); };                    // 0x4c6e30
-struct Sub0004 { void dtor(); };                    // 0x4c6e30 (ICF'd with Sub0030::dtor)
+// clip_table (config/config.h): that header redefines stream_base (dialog_manager.h, included through hud.h, has its own), so the
+// destructor the world teardown calls is repeated under the same class name.
+struct clip_table {
+    ~clip_table();   // 0x4be6f0
+};
+#include "../../rgl/mesh2/graph_obj.h"   // graph_obj (clear_vecs 0x4cb780)
+// MapDialog (rgl/mesh2/gui_edit.h): that header cannot be included here (its mesh2_common.h declares another g_strtable), so the
+// one member the destructor needs is repeated under the same class name.
+// mesh_node (rgl/xmlcfg/game_util.h, whose shape.h clashes with this TU's headers): the animation node's time setter.
+struct mesh_node {
+    void set_time(const float* t);   // 0x433190
+};
+struct MapDialog {
+    void clear_objects();   // 0x4c6e30
+};
+#include "../../rgl/xmlcfg/records.h"    // Item (std::vector<Item>::_Tidy 0x431a60)
+// the vector's out-of-line _Tidy, kept a call as in the original
+namespace std { template<> void vector<Item, allocator<Item> >::_Tidy(); }   // 0x431a60
+struct ItemVec : std::vector<Item> { using std::vector<Item>::_Tidy; };
 
 struct WorldVec {                                       // an STL vector triple
     void* begin; void* end; void* cap;
@@ -200,22 +221,24 @@ struct WorldVec {                                       // an STL vector triple
 void Mission::destroy()
 {
     char* p = (char*)(void*)this;
-    ((WorldBase*)p)->dtor();
-    ((Sub6814*)(p + 0x6814))->dtor();
-    ((Sub6698*)(p + 0x6698))->clear_vecs();
-    ((Sub6688*)(p + 0x6688))->dtor();
+    reset();                                            // 0x479160 (the Mission part of the teardown)
+    ((tstring*)(p + 0x6814))->~tstring();               // 0x42bc40 (16-byte string at +0x6814)
+    ((graph_obj*)(p + 0x6698))->clear_vecs();           // 0x4cb780: Mission::nav is the editor's mesh graph (same tables)
+    ((ItemVec*)(p + 0x6688))->_Tidy();                  // 0x431a60 (Mission::props)
     ((WorldVec*)(p + 0x667c))->release();
-    ((Sub63d0*)(p + 0x63d0))->dtor();
+    ((clip_table*)(p + 0x63d0))->~clip_table();         // 0x4be6f0
     ((WorldVec*)(p + 0x63c4))->release();
     ((WorldVec*)(p + 0x5e00))->release();
-    ((Sub0030*)(p + 0x30))->dtor();
-    ((Sub0004*)(p + 0x4))->dtor();
+    // 0x4c6e30 (MapDialog::clear_objects) is shared by the two vector-bearing sub-objects at +0x30 and +0x4: the code only
+    // empties the vectors at +0x8.. / +0x18.. of whatever object it is handed (identical-code folding)
+    ((MapDialog*)(p + 0x30))->clear_objects();
+    ((MapDialog*)(p + 0x4))->clear_objects();
 }
 
 // @ 0x4d5940
 __declspec(noinline) void ValueSource::on_value_changed(float arg)
 {
-    set_value((step / slot[idx] * arg) * g_char_scale + value());
+    ((UiD*)(void*)this)->set_value((step / slot[idx] * arg) * g_char_scale + ((UiD*)(void*)this)->value());
 }
 
 // @ 0x4d5980
@@ -223,7 +246,7 @@ void Hud::on_mission_start(int arg)
 {
     *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_u32;
     g_u32 = g_u32 + 1;
-    start_setup((void*)(void*)((void*)g_mission));
+    g_mission->start_setup();
     g_screen->v2();
     g_screen->f18 = f18;
     g_menu_w3[1] = 0;
@@ -250,7 +273,7 @@ void Hud::on_update(int arg)
     for (int i = 0; i < f24c; i++) {
         if (wi[i]->changed(0x10000)) {
             f250 = i;
-            page_fill();
+            ((QuestPage*)(void*)this)->fill();
         }
     }
     if (f34->changed(0x10000)) {
@@ -329,7 +352,7 @@ void MissionSource::pick(int* arg)
         MissionItem** p = &begin[i];
         for (int n = 0; n < 5; n++) {
             if ((*p)->nodes[n])
-                set_time((*p)->nodes[n], &t);
+                ((mesh_node*)(*p)->nodes[n])->set_time(&t);
         }
         if ((*p)->changed(0x10000)) {
             g_spawn_lo = i;
@@ -342,7 +365,7 @@ void MissionSource::pick(int* arg)
                 g_spawn_hi = (__int64)it->get_value();
                 play_family_sound(family, 0xc2);
             } else if (k == 6) {
-                string_assign(&g_script.str[0], &it->name);
+                g_script.str[0] = it->name;
                 play_family_sound(family, 0xc2);
             } else if (k != 8 || it->f184 != 1) {
                 play_family_sound(family, 0xc2);

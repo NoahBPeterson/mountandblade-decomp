@@ -1,6 +1,7 @@
 // config_dialog.cpp: the launcher configuration dialog (0x4cf100..0x4d0620): the display-mode list, the tab fill and the
 // dialog procedure (rgl_config.txt). Function names FUN_* are the slices' provisional names.
 // clang-format off
+#include "../config/options_dlg.h"     // OptionsDlg (first: it selects WIN32_LEAN_AND_MEAN and pulls winsock2.h)
 #include <windows.h>
 #include <d3d9.h>
 #include <stdlib.h>
@@ -8,6 +9,10 @@
 #include <vector>
 #include <new>
 #include "../tstring.h"
+#include "./config_dialog.h"                 // Dialog
+#include "../config/config.h"          // Config, Core (the dialog's object is g_app_obj, 0x8ee3c48)
+#include "../../rgl/mesh2/gui_edit.h"  // MapDialog
+#include "../../rgl/text_stream.h"     // mb_open_user_file
 
 // 0x43a1e0: string-table lookup on 0x8ee3c48 (key -> localized text; the empty case falls back to that address).
 const char* strtab_lookup(tstring& key);
@@ -127,9 +132,6 @@ std::vector<tstring> list_modes()
     return result;
 }
 
-void refresh_list(int v);      // 0x4c6f90
-void set_active_tab(int v);      // 0x4b9790
-
 const float g_width_scale = 0.0023752970155328512f;    // 0x59642c
 const float g_height_scale = 0.0020833334419876337f;   // 0x596430
 
@@ -140,23 +142,18 @@ int __stdcall SkinDialog(HWND hwnd, const char* cls);    // SkinMagic ord9, thun
 
 void user_path(char* out);                       // 0x4bab70
 bool mb_file_exists(const char* path);           // 0x415120
-void* mb_open_user_file(const char* name, const char* mode);   // 0x415160
-void load_file(void* file);                       // 0x4bbf70 (thiscall on &g_render_cfg)
-void save(void* file);                       // 0x415fb0 (thiscall on &g_render_cfg)
-void choose_dx_settings(int reset);                        // 0x4b9b90 (thiscall on &g_render_cfg)
-void show_options(int dummy);                       // 0x4bee10 (fastcall on this)
-void read_options();                                // 0x4bf170 (fastcall on this)
+// The dialog procedure runs with this == g_app_obj (0x8ee3c48; Core): 0x4d0240 loads ecx with that address before
+// 0x4b9b90 and passes the same register (edi) to 0x4bee10 / 0x4bf170 / 0x4c6f90 / 0x4b9790. Core, OptionsDlg and
+// MapDialog all keep the dialog window at +0x380 (Core::options_hwnd, OptionsDlg::hwnd, MapDialog::hwnd); the code at
+// 0x4b9790 / 0x4c6f90 serves the dialog through those views, so the calls go through the canonical classes.
+// The launcher's option block is the Config at 0x5aa0a8 (+4 = 0x5aa0ac, the first combo's selection).
+// rgl_config::save (0x415fb0): src/rgl/resource_manager.h declares it, but that header's g_log clashes with config.h's
+// (strat/gui_manager.h), so the one-member class is repeated verbatim.
+struct rgl_config { void save(FILE* f); };
+#define LAUNCHER_CFG ((Config*)0x5aa0a8)
 
 const char k_config[] = "rgl_config.txt";        // 0x54b048
 
-class Dialog {
-public:
-    char pad[0x380];
-    HWND m_hwnd;      // 0x380
-    int m_ctrl;       // 0x384
-    void fill_video_tab();                          // 0x4cf7b0
-    LRESULT proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4d0240
-};
 
 // A table key whose object lives only for the full expression that uses it (the original's
 // `tstring key("..."); strtab_lookup(key)` pairs are an inlined helper of exactly this shape).
@@ -226,7 +223,7 @@ void Dialog::fill_video_tab()
         SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x151, i, 0);
     }
 
-    refresh_list(1);
+    ((MapDialog*)this)->refresh_list(1);
 
     {
         tstring caption(key_text("ui_configure_caption").text);
@@ -259,7 +256,7 @@ void Dialog::fill_video_tab()
     SetDlgItemTextA(m_hwnd, 0x45e, key_text("ui_auto_adjust").text);
 
     m_ctrl = SendMessageA(GetDlgItem(m_hwnd, 0x43e), 0x406, 0, 0x64000a);
-    set_active_tab(m_ctrl);
+    ((OptionsDlg*)this)->set_active_tab(m_ctrl);
 }
 
 // @ 0x4d0240
@@ -273,15 +270,15 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         sprintf(path, "%s", k_config);
         user_path(path);
         if (mb_file_exists(path)) {
-            void* f = mb_open_user_file(k_config, "r");
-            load_file(f);
-            fclose((FILE*)f);
+            FILE* f = mb_open_user_file(k_config, "r");
+            LAUNCHER_CFG->load_file(f);
+            fclose(f);
         } else {
             *(int*)0x5aa0ac = 0x46;
         }
-        choose_dx_settings(0);
+        ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, false);
         fill_video_tab();
-        show_options(0);
+        ((Core*)this)->show_options();
         return 1;
     case 0x114: {
         int v = (int)SendMessageA(GetDlgItem(m_hwnd, 0x43e), 0x400, 0, 0);
@@ -298,14 +295,14 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             __asm add esp, 208h
             __asm ret 10h
         }
-        set_active_tab((int)SendMessageA(GetDlgItem(m_hwnd, 0x43d), 0x130b, 0, 0));
+        ((OptionsDlg*)this)->set_active_tab((int)SendMessageA(GetDlgItem(m_hwnd, 0x43d), 0x130b, 0, 0));
         // falls through to the control dispatch: a tab notification also runs it
         switch (wParam & 0xffff) {
         case 1: {               // ok: write the config back
-            read_options();
-            void* f = mb_open_user_file(k_config, "w");
-            save(f);
-            fclose((FILE*)f);
+            ((Core*)this)->read_options();
+            FILE* f = mb_open_user_file(k_config, "w");
+            ((rgl_config*)LAUNCHER_CFG)->save(f);
+            fclose(f);
             EndDialog(hwnd, 2);
             return 1;
         }
@@ -324,14 +321,14 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             return 1;
         case 0x45e:             // auto adjust: re-detect and re-read the config
-            read_options();
+            ((Core*)this)->read_options();
             *(int*)0x5aa0a8 = 0;
-            choose_dx_settings(1);
-            show_options(0);
+            ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, true);
+            ((Core*)this)->show_options();
             return 1;
         case 0x45f:             // display-mode list changed
             if ((wParam >> 16) == 9) {
-                refresh_list(0);
+                ((MapDialog*)this)->refresh_list(0);
                 return 1;
             }
             break;

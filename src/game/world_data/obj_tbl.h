@@ -5,35 +5,38 @@
 #define GAME_WORLD_DATA_OBJ_TBL_H
 #include <math.h>
 #include "./mesh_hud.h"
+#include "./raw_place.h"
+#include "../../include/mat4.h"   // rgl::mat3
 #include "../game_globals.h"      // canonical g_map_icons
 #include "./tableau.h"
 #include "./widget_mgr_w.h"
 
 // ---- mesh members the shared headers lack (same object as rgl::mesh) ---------------------------------------------------------------------
-struct MeshY : MeshX {
-    void translate(const vector4* d);                           // 0x44f240
-    void set_bone_index(unsigned c);                                 // 0x47b360
-    void add_quad(const vector4* a, const vector4* b, const vec2* uv0, const vec2* uv1, const unsigned* color);   // 0x44e970
-};
+// (translate 0x44f240 and add_quad 0x44e970 are rgl::mesh's own, set_bone_index 0x47b360 is mesh_x's: rgl/mesh.h, rgl/mesh_x.h)
+struct MeshY : MeshX {};
 
 // ---- a 3x3 frame (the rotation rows of a matrix): identity3 writes 0x30 bytes -------------------------------------------------------------
-struct Frame3 {
-    rgl::vector4 s, f, u;
-    void rotate_about_s(const float* angle);                    // 0x40e570
-    void rotate_about_f(const float* angle);                    // 0x40e670
-    void rotate_about_u(const float* angle);                    // 0x40e770
+// (rgl::mat3 of include/mat4.h; identity3 is the global-scope writer 0x40cd60 declared in world_data.h; the axis rotations
+// 0x40e570 / 0x40e670 / 0x40e770 are rgl::matrix's own, applied to the frame as the matrix it starts)
+struct Frame3 : rgl::mat3 {};
+rgl::mat3* __cdecl identity3(rgl::mat3* out);                   // 0x40cd60 (cdecl; returns out)
+// 0x442110 is agent3's Poser::add_extra (the entity takes the extra mesh as an int); 0x428440 is rgl::world::create_entity
+// (Poser::add_extra is declared in mesh_hud.h)
+namespace rgl {
+struct entity;
+struct world {
+    entity* create_entity(int type_id);   // 0x428440
 };
-Frame3* identity3(Frame3* out);                                 // 0x40cd60 (cdecl; returns out)
+}
 
 // ---- the scene a tableau renders into and the entity it creates -----------------------------------------------------------------------------
 struct TableauEntity {
     void* vptr;                                                 // +0x00
     char pad4[0x58 - 4];
     rgl::matrix local;                                          // +0x58 (0x4992b0: the frame copied into the new entity)
-    void add_extra(rgl::mesh* m);                                // 0x442110 (thiscall, ret 4)
 };
 struct TableauWorld {
-    TableauEntity* create_entity(int type_id);                  // 0x428440 (thiscall, ret 4)
+    // create_entity (0x428440) is rgl::world's: callers use ((rgl::world*)w)->create_entity(id)
 };
 
 // ---- the editor's 0x48-byte scene record ----------------------------------------------------------------------------------------------------

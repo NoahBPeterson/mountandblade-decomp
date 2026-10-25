@@ -104,7 +104,7 @@ void OutRecList::write_missions(OutStream* out)
     RecList* l = (RecList*)((char*)this + 0xf8);
     l->flush_ids();
     l->write_table(out);
-    int idx = l->index_of(f78);
+    int idx = ((Map10007*)(void*)l)->lookup(f78);
     Rec5ac8* r = &l->pages[idx >> 4][idx & 0xf];
     int i = 0;
     if (r->f8a8 > 0) {
@@ -246,6 +246,6 @@ void RecList::id_remove(int id)
         set[slot * 2] = -1;
         set[slot * 2 + 1] = -1;
         rec_at(this, idx)->type = 0;
-        ((IntVec*)((char*)this + 0x138bc))->push_back_out(idx);
+        ((std::vector<int>*)((char*)this + 0x138bc))->push_back(idx);   // 0x440b30
     }
 }

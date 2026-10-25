@@ -10,7 +10,7 @@ void facegen_win::init()
     int i;
     for (i = 0; i < 3; i++)
         *(int*)((char*)this + 0x54 + i * 4) = rand() % 0x1b5781;
-    g_terrain_gen.reset();
+    ((Terrain*)(void*)&g_terrain_gen)->reset();   // 0x4647e0
 
     *(float*)((char*)this + 0x3c) = 150.0f;
     *(float*)((char*)this + 0x40) = 150.0f;
@@ -20,15 +20,17 @@ void facegen_win::init()
     *(float*)((char*)this + 0x4c) = 0.8f;
     *(int*)((char*)this + 0x60) = 3;
 
-    reset(g_gui);
+    ((gui_manager*)(void*)g_gui)->reset();   // 0x42d1b0
 
-    UiWindow* w = new UiWindow;
+    UiWindow* w = (UiWindow*)new_container(0x190, vtbl_592848);
+    if (w)
+        w->f188 = 0;
     board = w;
     { tvec2 p = { 0.0f, 0.0f }; w->set_pos((const float*)&p); }
     { tvec2 s = { 1.0f, 0.75f }; w->set_scale((const float*)&s); }
-    gui_push(g_gui, (void**)&board);
+    ((NodeVec*)(void*)g_gui)->push_back((NodeA* const&)board);   // 0x49b120
 
-    UiContainer* c = new UiContainer;
+    UiContainer* c = (UiContainer*)new_container(0x188, 0);
     panel = c;
     { tvec2 p = { 0.5f, 0.0f }; c->set_pos((const float*)&p); }
     { tvec2 s = { 0.5f, 0.75f }; c->set_scale((const float*)&s); }
@@ -46,17 +48,17 @@ void facegen_win::init()
                        &tstring("medium_button_down"), &tstring("medium_button"));
 
     for (i = 0; i < 3; i++) {
-        seeds[i] = make_slider(panel, 0.72f, 0.22f + (float)i * 0.055f);
+        seeds[i] = (UiSlider*)make_slider((MissionUi*)panel, 0.72f, 0.22f + (float)i * 0.055f, 1.0f);
         seeds[i]->set_text(&tstring(""), tstring("randomize"));
     }
 
     for (i = 0; i < 6; i++) {
-        sliders[i] = make_slider(panel, 0.1f, 0.83f - (float)i * 0.088f);
+        sliders[i] = (UiSlider*)make_slider((MissionUi*)panel, 0.1f, 0.83f - (float)i * 0.088f, 1.0f);
         sliders[i]->set_text(&tstring(""), tstring(""));
     }
 
-    region_type = make_dropdown(panel, &tstring("region type"), 0.79f, 0.9f);
-    region_detail = make_dropdown(panel, &tstring("region detail"), 0.79f, 0.9f);
+    region_type = (UiWidget*)make_dropdown((MissionUi*)panel, &tstring("region type"), 0.79f, 0.9f);
+    region_detail = (UiWidget*)make_dropdown((MissionUi*)panel, &tstring("region detail"), 0.79f, 0.9f);
     (void)region_detail;
 
     key = make_short(panel, &tstring("key"), 0.79f, 0.697f, 0.1f, 0.5f, &tstring(""),

@@ -24,6 +24,7 @@ using rgl::vector4;
 
 // ---- tstring / rgl::string (layouts verified in s004d6b80 / s004f25a0) --------------------------------
 #include "../tstring.h"
+#include "./cs_common.h"
 
 extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0x536f7c
 
@@ -54,16 +55,17 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[n] = 2 << n
 #include "../bit_words.h"
-void set_field_a(const float* p);                         // 0x464a60
+// (set_field_a 0x464a60 is Terrain's: cs_common.h)
 
 // ---- the world / scene --------------------------------------------------------------------------------
 // effect object created by 0x478f30 (0x7c bytes; layout from s00494e40)
 #include "../eff_obj.h"                                     // EffObj / EffMgr
 #include "../scene_world.h"                              // World: the page's +0x1ac; scene object 0x421390 resets
-struct terrain_obj {                                        // the object at 0xa76630 (see s00481d10)
-    void generate(World* w, int b, int c);                  // 0x481d10
-    void regenerate_water(int a, int* out);                 // 0x482170
-    void destroy_water();                                   // 0x4814a0
+struct terrain_obj {};                                      // the object at 0xa76630 (see s00481d10): TerrainX
+struct TerrainX {                                           // mesh_terrain
+    void generate(int world, int* b, char c);               // 0x481d10
+    void regenerate_water(void** out, int a);               // 0x482170
+    void destroy_water(int owner);                          // 0x4814a0
 };
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 

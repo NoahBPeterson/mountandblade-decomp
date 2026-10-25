@@ -72,20 +72,13 @@ static float scan_float(const char* name)
 }
 
 struct base_mesh;
-struct resmgr {
-    base_mesh* get_object(const tstring& name);          // 0x419540
-};
-extern resmgr g_alloc;                                   // 0x5d6fa0
-
-extern rgl::matrix identity3();                          // 0x40cd60 (0x40 bytes by value)
-void build_planes(void* cam);                     // 0x41e4f0 (frustum::build_planes)
-// the engine's UI manager singleton (0x5d7080); 0x42d1b0/0x49b120 are its methods.
-struct gui_manager_s {
-    void reset();                                        // 0x42d1b0
-    void add(void* o);                                   // 0x49b120
-};
-extern gui_manager_s* g_gui;                             // 0x5d7080
-void draw(void* box);                         // 0x488d50
+#include "./cs_common.h"                                 // label_refresh, make_*, gui_manager ...
+#include "./cs_mat.h"                                    // identity3 0x40cd60
+#include "./cs_res.h"                                    // resmgr g_alloc (0x419540), mesh_x::clone
+// the engine's UI manager singleton (0x5d7080); 0x42d1b0 (gui_manager::reset) / 0x49b120 (NodeVec::push_back) are its methods.
+struct gui_manager_s;
+extern gui_manager_s* g_gui;
+// (g_gui is at 0x5d7080)
 #include "../str_table.h"
 extern StrTable g_strtable;                              // 0x5e2a18
 
@@ -98,11 +91,9 @@ typedef Overlay Panel;                         // the slice's name for it
 #include "../map_widget.h"                       // MapWidget (the slice's ViewWindow: ctor 0x4ed630, vtable 0x598698, 0x358 bytes)
 typedef MapWidget ViewWindow;
 
-void __cdecl label_refresh(Widget* w, tstring name);       // 0x4e4c70 (cdecl, the name by value; the slice declared it as Widget::configure)
+// (label_refresh 0x4e4c70, make_scrollbar 0x4f6160, make_editor_list 0x4f62f0 are cs_common.h's)
 
 // factory helpers (parent is the last argument)
-Widget* make_scrollbar(Widget* talk, const tstring& name);                         // 0x4f6160
-Widget* make_editor_list(Widget* choice, const tstring& name, Widget* owner);   // 0x4f62f0
 Widget* make_body_button(Widget* parent, const tstring& a, const tstring& b, const tstring& c,
                          float x, float y, float w, float h, float f5, float f6,
                          float f7, float f8);                                // 0x4dcc50
@@ -124,7 +115,6 @@ void refresh(int mode, int* out);                 // 0x4f73c0 (ecx = screen)
 struct ConvCamera {
     char data[0x358];
     void init();                                         // 0x4ed630
-    void label_refresh(const tstring& s);                    // 0x4e4c70
     void set_pos(const float* p);                        // 0x488970 (slot +0x58 of vtable 0x598698)
     void set_size(const float* p);                       // 0x4889b0 (slot +0x64 of vtable 0x598698)
 };

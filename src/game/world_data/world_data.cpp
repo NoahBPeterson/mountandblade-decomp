@@ -43,7 +43,7 @@ void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
     *out = pos;
     char ok = 0;
     int iter = 0;
-    FaceId* f = find_at(&pos.x);
+    FaceId* f = (FaceId*)find_at(&pos.x);
     if (f == 0)
         return;
     int first = f->m4;
@@ -58,10 +58,10 @@ void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
         if (sqrt(dx * dx + dy * dy) <= r) {
             np = Vec2(pos.x + dx, pos.y + dy);
             *out = np;
-            FaceId* g = find_at(&out->x);
+            FaceId* g = (FaceId*)find_at(&out->x);
             if (g != 0) {
                 gi = g->m4;
-                ok = g_level->obj->shares(&first, &gi);
+                ok = ((RiderTable*)g_level->obj)->shares(first, gi) != 0;
             }
         }
     }
@@ -83,7 +83,7 @@ char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
             continue;
         np = Vec2(pos.x + dx, pos.y + dy);
         *out = np;
-        FaceId* f = find_at(&out->x);
+        FaceId* f = (FaceId*)find_at(&out->x);
         if (f == 0)
             continue;
         int kind = *(int*)(g_level->obj->kinds + f->m4 * 0x88 + 0x24);
@@ -105,7 +105,7 @@ int GameW::stack_dna(unsigned id, int group, int f14, int f18)
     int v = -1;
     if ((int)id >= 0) {
         PartyMgrW* m = &pm();
-        int i = m->index_of(id);
+        int i = ((Map10007*)(void*)m)->lookup(id);
         v = m->at(i)->stacks[group].troop;
     }
     return v * 0x1bf + (int)id * 0x7bb7 + f14 + 0x45db + f18;
@@ -153,7 +153,7 @@ void PartyMgrW::clear()
 int PartyMgrW::is_live(unsigned id)
 {
     if (id < limit()) {
-        int i = index_of(id);
+        int i = ((Map10007*)(void*)this)->lookup(id);
         if (i >= 0)
             return atu((unsigned)i)->type == 1;
     }
@@ -192,21 +192,30 @@ int trigger_item_mesh(int c)
     int id = *(int*)((char*)g_mission->agents.pages[idx >> 4] + off * 8 + 0x1d0);
     if (id < 0)
         return -1;
-    return ammo_skill((char*)g_items + id * 0x238);
+    return g_items[id].ammo_skill();
 }
+
+// The container's base destructor (0x487c00) is Buffer's virtual destructor (called here non-virtually), its resource release
+// (0x48ef40) mission_ui2's FrameBox::release, and 0x4175f0 the resource manager's clear_f14 (stdcall; named_object is rgl/resource.h's).
+struct Buffer { virtual ~Buffer(); };
+struct FrameBox {
+    void release();   // 0x48ef40
+};
+struct named_object;
+void __stdcall clear_f14(named_object* o);                      // 0x4175f0
 
 // ==== 0x490520: the container widget (children vector at +0x17c) =================================================
 // @ 0x490520
 void ContainerW::dtor_common()
 {
     *(void**)this = (void*)0x5924a0;
-    release();
+    ((FrameBox*)(void*)this)->release();
     if (ents_first() != 0)
         operator delete(ents_first());
     ents_first() = 0;
     ents_last() = 0;
     ents_end() = 0;
-    dtor_base();
+    ((Buffer*)(void*)this)->Buffer::~Buffer();                  // 0x487c00
 }
 
 // @ 0x490570
@@ -280,7 +289,7 @@ void ContainerW::bounds_of(int* a, float* p3, float* p4, float* p5)
     struct __declspec(align(8)) Locals {
         float z, y0, hy, ly, mx, my;
     } l;
-    render(a, p3, p4, p5);
+    MissionUi::render((rgl::scene*)a, p3, (int)p4, (int)p5);   // 0x488720
     l.mx = p4[0];
     l.y0 = p3[0];
     l.my = p4[1];
@@ -331,13 +340,13 @@ void ContainerW::update_all(int p)
 ContainerW* ContainerW::destroy(unsigned flag)
 {
     *(void**)this = (void*)0x5924a0;
-    release();
+    ((FrameBox*)(void*)this)->release();
     if (ents_first() != 0)
         operator delete(ents_first());
     ents_first() = 0;
     ents_last() = 0;
     ents_end() = 0;
-    dtor_base();
+    ((Buffer*)(void*)this)->Buffer::~Buffer();                  // 0x487c00
     if (flag & 1)
         operator delete(this);
     return this;
@@ -350,9 +359,9 @@ void GameW::mark_kind(int kind)
     PartyMgrW* m = &pm();
     unsigned i = m->first_party_id();
     while (i < parties.n_parties) {
-        if (m->at(m->index_of(i))->kind70() == kind)
-            m->at(m->index_of(i))->flag8b5() = 1;
-        m->next_party_id(&i);
+        if (m->at(((Map10007*)(void*)m)->lookup(i))->kind70() == kind)
+            m->at(((Map10007*)(void*)m)->lookup(i))->flag8b5() = 1;
+        m->next_party_id((int*)&i);
     }
 }
 
@@ -363,21 +372,21 @@ void GameW::detach_party(unsigned id)
     PartyMgrW* m = &pm();
     if (id >= m->limit())
         return;
-    int i = m->index_of(id);
+    int i = ((Map10007*)(void*)m)->lookup(id);
     if (i < 0)
         return;
     if (m->atu((unsigned)i)->type != 1)
         return;
-    if (m->at(m->index_of(id))->leader() < 0)
+    if (m->at(((Map10007*)(void*)m)->lookup(id))->leader() < 0)
         return;
     bool done = false;
-    unsigned* dst = (unsigned*)m->at(m->index_of(m->at(m->index_of(id))->leader()))->fol_first();
+    unsigned* dst = (unsigned*)m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->leader()))->fol_first();
     unsigned* cur = dst + 1;
     do {
-        if ((int*)dst >= m->at(m->index_of(m->at(m->index_of(id))->leader()))->fol_last())
+        if ((int*)dst >= m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->leader()))->fol_last())
             break;
         if (*dst == id) {
-            std::vector<int>& l = m->at(m->index_of(m->at(m->index_of(id))->leader()))->list();
+            std::vector<int>& l = m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->leader()))->list();
             memmove(dst, cur, (int)(l._Mylast - (int*)cur) * 4);
             --l._Mylast;
             done = true;
@@ -385,10 +394,10 @@ void GameW::detach_party(unsigned id)
         dst++;
         cur++;
     } while (!done);
-    m->at(m->index_of(m->at(m->index_of(id))->leader()))->dirty = 1;
-    m->at(m->index_of(id))->f8cc() = 0;
-    m->at(m->index_of(id))->dirty = 1;
-    m->at(m->index_of(id))->leader() = -1;
+    m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->leader()))->dirty = 1;
+    m->at(((Map10007*)(void*)m)->lookup(id))->f8cc() = 0;
+    m->at(((Map10007*)(void*)m)->lookup(id))->dirty = 1;
+    m->at(((Map10007*)(void*)m)->lookup(id))->leader() = -1;
 }
 
 // ==== 0x490ce0: total a party's stacks (and its followers') into counters ========================================
@@ -398,35 +407,35 @@ void GameW::count_units(unsigned id, int* a, int* b, int* c, int* d)
     PartyMgrW* m = &pm();
     if (id >= m->limit())
         return;
-    int i = m->index_of(id);
+    int i = ((Map10007*)(void*)m)->lookup(id);
     if (i < 0)
         return;
     if (m->atu((unsigned)i)->type != 1)
         return;
-    if (m->at(m->index_of(id))->nstacks > 0) {
+    if (m->at(((Map10007*)(void*)m)->lookup(id))->nstacks > 0) {
         int k = 0;
         int n = 0;
         do {
-            if ((*(unsigned char*)((char*)m->at(m->index_of(id)) + 0xb0 + k) & 1) != 0) {
-                *c += *(int*)((char*)m->at(m->index_of(id)) + 0xa8 + k);
+            if ((*(unsigned char*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xb0 + k) & 1) != 0) {
+                *c += *(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xa8 + k);
             } else {
-                *a += *(int*)((char*)m->at(m->index_of(id)) + 0xa8 + k);
-                int troop = *(int*)((char*)m->at(m->index_of(id)) + 0xac + k);
+                *a += *(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xa8 + k);
+                int troop = *(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xac + k);
                 if ((troops[troop].flags30 & 0x10) == 0) {
-                    *b = *b + *(int*)((char*)m->at(m->index_of(id)) + 0xb8 + k);
+                    *b = *b + *(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xb8 + k);
                 } else {
                     *d = *d + 1;
-                    if (agent_low(*(int*)((char*)m->at(m->index_of(id)) + 0xac + k))) {
+                    if (agent_low(*(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xac + k))) {
                         *b = *b + 1;
                     }
                 }
             }
             n++;
             k += 0x20;
-        } while (n < m->at(m->index_of(id))->nstacks);
+        } while (n < m->at(((Map10007*)(void*)m)->lookup(id))->nstacks);
     }
-    for (unsigned j = 0; j < m->at(m->index_of(id))->list().size(); j++)
-        count_units(m->at(m->index_of(id))->list()[j], a, b, c, d);
+    for (unsigned j = 0; j < m->at(((Map10007*)(void*)m)->lookup(id))->list().size(); j++)
+        count_units(m->at(((Map10007*)(void*)m)->lookup(id))->list()[j], a, b, c, d);
 }
 
 // ==== 0x490fa0: a party and, recursively, its followers ===========================================================
@@ -436,7 +445,7 @@ void GameW::list_members(unsigned id, int* out, int* n)
     PartyMgrW* m = &pm();
     if (id >= m->limit())
         return;
-    int i = m->index_of(id);
+    int i = ((Map10007*)(void*)m)->lookup(id);
     if (i < 0)
         return;
     if (m->atu((unsigned)i)->type != 1)
@@ -445,8 +454,8 @@ void GameW::list_members(unsigned id, int* out, int* n)
         return;
     out[*n] = (int)id;
     (*n)++;
-    for (unsigned j = 0; j < m->at(m->index_of(id))->list().size(); j++)
-        list_members(m->at(m->index_of(id))->list()[j], out, n);
+    for (unsigned j = 0; j < m->at(((Map10007*)(void*)m)->lookup(id))->list().size(); j++)
+        list_members(m->at(((Map10007*)(void*)m)->lookup(id))->list()[j], out, n);
 }
 
 // ==== 0x4910a0: casualties of a battle: turn some of a party's troops into prisoners / dead =====================
@@ -456,7 +465,7 @@ void GameW::recruit(int id, int count, PartyW* dest)
     PartyMgrW* m = &pm();
     if ((unsigned)id >= m->limit())
         return;
-    int idx = m->index_of(id);
+    int idx = ((Map10007*)(void*)m)->lookup(id);
     if (idx < 0)
         return;
     if (m->atu(idx)->type != 1)
@@ -471,7 +480,7 @@ void GameW::recruit(int id, int count, PartyW* dest)
         dest->nstacks = 0;
     int total = a - b;
 
-    idx = m->index_of(id);
+    idx = ((Map10007*)(void*)m)->lookup(id);
     PartyW* p = m->at(idx);
     if (p->stacks[0].troop == player && !agent_low(player))
         total--;
@@ -492,7 +501,7 @@ void GameW::recruit(int id, int count, PartyW* dest)
             do {
                 if (j >= n)
                     break;
-                int mi = m->index_of(members[j]);
+                int mi = ((Map10007*)(void*)m)->lookup(members[j]);
                 PartyW* mp = m->at(mi);
                 int sum = mp->sum_stat(0x134);
                 base += sum;
@@ -547,7 +556,7 @@ void GameW::handout(PartyW* p, int id)
     list_members(id, members, &n);
     PartyMgrW* m = &pm();
     for (int i = 0; i < n; i++) {
-        total += m->at(m->index_of(members[i]))->sum_stat(0x100);
+        total += m->at(((Map10007*)(void*)m)->lookup(members[i]))->sum_stat(0x100);
         cum[i] = total;
     }
     if (total == 0)
@@ -564,7 +573,7 @@ void GameW::handout(PartyW* p, int id)
             int k = 0;
             while (k < n && pick >= cum[k])
                 k++;
-            m->at(m->index_of(members[k]))->add_members(p->stacks[i].troop, 1, p->stacks[i].flags, 0, 0);
+            m->at(((Map10007*)(void*)m)->lookup(members[k]))->add_members(p->stacks[i].troop, 1, p->stacks[i].flags, 0, 0);
         }
     }
 }
@@ -576,13 +585,13 @@ void GameW::remove_party(int id)
     if ((unsigned)id >= parties.n_parties)
         return;
     PartyMgrW* m = &pm();
-    int idx = m->index_of(id);
+    int idx = ((Map10007*)(void*)m)->lookup(id);
     if (idx < 0)
         return;
     if (m->atu(idx)->type != 1)
         return;
 
-    idx = m->index_of(id);
+    idx = ((Map10007*)(void*)m)->lookup(id);
     PartyW* p = m->at(idx);
     if (p->leader() >= 0) {
         if (m->is_live(p->leader()))
@@ -593,14 +602,14 @@ void GameW::remove_party(int id)
         for (unsigned k = 0; p->fol_first() != 0 && k < (unsigned)((p->fol_last() - p->fol_first()) >> 2); k++) {
             if ((unsigned)p->fol_first()[k] >= parties.n_parties)
                 continue;
-            int j = m->index_of(p->fol_first()[k]);
+            int j = ((Map10007*)(void*)m)->lookup(p->fol_first()[k]);
             if (j < 0)
                 continue;
             if (m->atu(j)->type != 1)
                 continue;
-            m->at(m->index_of(p->fol_first()[k]))->leader() = -1;
-            m->at(m->index_of(p->fol_first()[k]))->f8cc() = 0;
-            m->at(m->index_of(p->fol_first()[k]))->f8b4() = 1;
+            m->at(((Map10007*)(void*)m)->lookup(p->fol_first()[k]))->leader() = -1;
+            m->at(((Map10007*)(void*)m)->lookup(p->fol_first()[k]))->f8cc() = 0;
+            m->at(((Map10007*)(void*)m)->lookup(p->fol_first()[k]))->f8b4() = 1;
         }
         if (p->fol_first() != 0)
             operator delete(p->fol_first());
@@ -612,14 +621,14 @@ void GameW::remove_party(int id)
         *(int*)(g_party_templates + p->owner * 0xb0 + 0x38) += 1;
     p->clear_map_flag();
 
-    idx = m->index_of(id);
+    idx = ((Map10007*)(void*)m)->lookup(id);
     if (idx >= 0 && idx < parties.count)
         m->at(idx)->type = 2;
 
     unsigned cur = m->first_party_id();
     if (cur < parties.n_parties) {
         do {
-            PartyW* q = m->at(m->index_of(cur));
+            PartyW* q = m->at(((Map10007*)(void*)m)->lookup(cur));
             if (q->f91c() == id) {
                 q->f918() = 0;
                 q->f91c() = -1;
@@ -628,7 +637,7 @@ void GameW::remove_party(int id)
                 q->f8e4() = 0;
                 q->f8e8() = -1;
             }
-            m->next_party_id(&cur);
+            m->next_party_id((int*)&cur);
         } while (cur < parties.n_parties);
     }
 }
@@ -639,13 +648,13 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
 {
     PartyMgrW* mgr = &pm();
     if (id >= parties.n_parties) return false;
-    int idx = mgr->index_of(id);
+    int idx = ((Map10007*)(void*)mgr)->lookup(id);
     if (idx < 0) return false;
     if (mgr->atu((unsigned)idx)->type != 1) return false;
     if (!mgr->is_live(other)) return false;
-    int ia = mgr->index_of(id);
+    int ia = ((Map10007*)(void*)mgr)->lookup(id);
     PartyW* a = mgr->at(ia);
-    int ib = mgr->index_of(other);
+    int ib = ((Map10007*)(void*)mgr)->lookup(other);
     PartyW* b = mgr->at(ib);
     if (b->flags_lo & 0x100000) {
         if (!flag) {
@@ -692,7 +701,7 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     PartyMgrW* mgr = &pm();
     int a = 0, b = 0, c = 0, d = 0;
     if (p2 < parties.n_parties) {
-        int i = mgr->index_of(p2);
+        int i = ((Map10007*)(void*)mgr)->lookup(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             count_units(p2, &a, &b, &c, &d);
         }
@@ -700,9 +709,9 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     float f1 = (float)(a - b);
     float f2 = 0.0f;
     if (p1 < parties.n_parties) {
-        int i = mgr->index_of(p1);
+        int i = ((Map10007*)(void*)mgr)->lookup(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
-            int j = mgr->index_of(p1);
+            int j = ((Map10007*)(void*)mgr)->lookup(p1);
             f2 = (float)mgr->at(j)->sum_stat(0x110);
         }
     }
@@ -725,14 +734,14 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     if (prod - fl > 0.5f) r++;
     if (r < 1) r = 1;
     if (p1 < parties.n_parties) {
-        int i = mgr->index_of(p1);
+        int i = ((Map10007*)(void*)mgr)->lookup(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
-            int j = mgr->index_of(p1);
+            int j = ((Map10007*)(void*)mgr)->lookup(p1);
             r += mgr->atu((unsigned)j)->skill_level(0xf) / 2;
         }
     }
     if (p2 < parties.n_parties) {
-        int i = mgr->index_of(p2);
+        int i = ((Map10007*)(void*)mgr)->lookup(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             r -= mgr->atu((unsigned)i)->skill_level(0xf) / 2;
         }
@@ -748,14 +757,14 @@ void GameW::set_pos(float x, float y, int id, float radius) {
     PartyMgrW* m = &pm();
     random_position_around(Vec2(x, y), radius, (Vec2*)&x);
     if ((unsigned)id >= parties.n_parties) return;
-    int i = m->index_of(id);
+    int i = ((Map10007*)(void*)m)->lookup(id);
     if (i < 0) return;
     if (m->atu((unsigned)i)->type != 1) return;
-    i = m->index_of(id);
+    i = ((Map10007*)(void*)m)->lookup(id);
     PartyW* p = m->at(i);
     p->x30() = x;
     p->y34() = y;
-    i = m->index_of(id);
+    i = ((Map10007*)(void*)m)->lookup(id);
     m->at(i)->place_on_map();
 }
 
@@ -787,7 +796,7 @@ int MissionW::count_agents(int idx)
     int n = teams[idx].relation[rr->team];
     int s = f6520();
     if (n < 0) s = -s;
-    float v = total * (1.0f / speed_factor((float)s));
+    float v = total * (1.0f / ((Mission3*)(void*)this)->speed_factor((float)s));
     double fl = floor(v);
     int res = (int)fl;
     if (v - fl > 0.5) res++;
@@ -859,11 +868,11 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
             if (k < 0 || k >= 8)
                 k = 7;
             if (k == team) {
-                int c = r->agent_class();
+                int c = ((AgentX*)(void*)r)->agent_class();
                 if (*(int*)(self + base + c * 0x6c + 0x52c8) != 0) {
                     int w = r->f56d4();
                     r->f56d4() = 0;
-                    r->set_weapon_mode(w);
+                    ((Agent*)(void*)r)->set_weapon_mode(w);
                 }
             }
         }
@@ -902,11 +911,11 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
             if (k < 0 || k >= 8)
                 k = 7;
             if (k == team) {
-                int c = r->agent_class();
+                int c = ((AgentX*)(void*)r)->agent_class();
                 if (*(int*)(self + base + c * 0x6c + 0x52c8) != 0) {
                     int w = r->f56d4();
                     r->f56d4() = 0;
-                    r->set_weapon_mode(w);
+                    ((Agent*)(void*)r)->set_weapon_mode(w);
                 }
             }
         }
@@ -919,7 +928,7 @@ void BattleW::refresh_rating()
 {
     GameW* g = (GameW*)g_game;
     PartyMgrW* mgr = &g->pm();
-    PartyW* pp = mgr->at(mgr->index_of(ids[sel]));
+    PartyW* pp = mgr->at(((Map10007*)(void*)mgr)->lookup(ids[sel]));
     int t = pp->sum_stat(0x10);
     if (t <= 3)
         tier = 0;
@@ -942,8 +951,8 @@ void BattleW::refresh_rating()
 void GameW::transfer_stack(int a, int b, char flag)
 {
     PartyMgrW* mgr = &pm();
-    PartyW* pa = mgr->at(mgr->index_of(a));
-    PartyW* pb = mgr->at(mgr->index_of(b));
+    PartyW* pa = mgr->at(((Map10007*)(void*)mgr)->lookup(a));
+    PartyW* pb = mgr->at(((Map10007*)(void*)mgr)->lookup(b));
     int* wstacks = &tbl[0][0];
     for (int k = 0; k < pa->nstacks; k++) {
         Stack* s = &pa->stacks[k];
@@ -973,7 +982,7 @@ void GameW::transfer_stack(int a, int b, char flag)
                 } else {
                     v = -1;
                     if (a >= 0) {
-                        PartyW* px = mgr->at(mgr->index_of(a));
+                        PartyW* px = mgr->at(((Map10007*)(void*)mgr)->lookup(a));
                         v = px->stacks[k].troop;
                     }
                     v = v * 0x1bf + 0x45db + a * 0x7bb7 + j;
@@ -1048,14 +1057,13 @@ template void std::vector<__int64>::_Insert_n(std::vector<__int64>::iterator, si
 template void std::deque<int>::_Growmap(size_t);
 
 // ==== 0x492ee0: pop the last pointer of a vector, destroying the object ==========================================
-struct Obj475d50 { void dtor(); };                              // 0x475d50
 // @ 0x492ee0
 void PtrStack14::pop_back_delete()
 {
     unsigned _n = size();
     void* _Ptr = _Myfirst[_n - 1];
     if (_Ptr != 0) {
-        ((Obj475d50*)_Ptr)->dtor();
+        ((CellGrid*)_Ptr)->CellGrid::~CellGrid();                // 0x475d50
         ::operator delete(_Ptr);
     }
     if (_Myfirst != 0 && size() != 0)
@@ -1063,9 +1071,15 @@ void PtrStack14::pop_back_delete()
 }
 
 // ==== 0x492f40: the game object's destructor =======================================================================
-struct CursorObj { void reset(); };                             // 0x492a20 (GameW::free_arrays)
-struct Obj4317b0 { void reset(); };                             // 0x4317b0
-struct Obj4c6e30 { void release(); };                           // 0x4c6e30
+struct CursorObj {
+    void reset();   // 0x492a20 (GameW::free_arrays)
+};
+struct RecGList {
+    void clear();   // 0x4317b0
+};
+struct MapDialog {
+    void clear_objects();   // 0x4c6e30 (rgl/mesh2/gui_edit.h)
+};
 // @ 0x492f40
 void GameW::world_free()
 {
@@ -1110,13 +1124,13 @@ void GameW::world_free()
     *(void**)(self + 0x13a68) = 0;
     *(void**)(self + 0x13a6c) = 0;
 
-    ((Obj4317b0*)(self + 0x139f4))->reset();
+    ((RecGList*)(self + 0x139f4))->clear();                    // 0x4317b0
 
     if (*(void**)(self + 0x139ec) != 0)
         ((RecD*)*(void**)(self + 0x139ec))->scalar_delete(3);
 
     pm().clear();
-    ((Obj4c6e30*)(self + 0xcc))->release();
+    ((MapDialog*)(self + 0xcc))->clear_objects();
     ((tstring*)(self + 0xb8))->~tstring();
 
     if (*(void**)(self + 0x38) != 0)
@@ -1141,7 +1155,7 @@ template void std::deque<int>::push_back(const int&);
 // @ 0x4931a0
 void* ContainerW::construct()
 {
-    ((PanelBase*)this)->init();
+    ((MissionUi*)(void*)this)->MissionUi::MissionUi();                    // 0x48ae20
     *(void**)this = (void*)vtbl_5924a0;
     ents_first() = 0;
     ents_last() = 0;
@@ -1153,7 +1167,7 @@ void* ContainerW::construct()
 DropDownW* DropDownW::construct()
 {
     char* self = (char*)this;
-    ((PanelBase*)this)->init();
+    ((MissionUi*)(void*)this)->MissionUi::MissionUi();                    // 0x48ae20
     *(int*)(self + 0x178) = 0;
     *(char*)(self + 0x121) = 0;
     *(void**)self = (void*)vtbl_592570;
@@ -1192,7 +1206,9 @@ void ListPanelW::set_mode()
         *(char*)(self + 0x11e) = 0;
         *(char*)(self + 0x11d) = 1;
     }
-    render();
+    // the tail jump to MissionUi::render (0x488720, ret 0x10), which finishes with the frame the caller built: the same function
+    // through a member pointer type without parameters, so nothing is pushed here
+    (this->*(void (ListPanelW::*)())&MissionUi::render)();
 }
 
 // @ 0x493300
@@ -1227,7 +1243,7 @@ void ListPanelW::set_index(int _v)
 void ListPanelW::reset_tail()
 {
     char* self = (char*)this;
-    ((TailDtor*)(self + 0x18c))->dtor();
+    ((TailVec*)(self + 0x18c))->_Tidy();                        // 0x42d390
     *(int*)(self + 0x164) = 0;
     *(int*)(self + 0x15c) = 0;
 }
@@ -1236,8 +1252,8 @@ void ListPanelW::reset_tail()
 void* ListPanelW::destroy(unsigned _flags)
 {
     char* self = (char*)this;
-    ((TailDtor*)(self + 0x18c))->dtor();
-    ((ContainerW*)self)->dtor_base();
+    ((TailVec*)(self + 0x18c))->_Tidy();                        // 0x42d390
+    ((Buffer*)(void*)self)->Buffer::~Buffer();                  // 0x487c00
     if (_flags & 1)
         ::operator delete(self);
     return self;
@@ -1300,7 +1316,7 @@ void ListPanelW::append(const tstring* _name)
         _pair[1] = _scale;
         ((PanelVt*)this)->v27(_pair);
     }
-    _v16->push_back(*_name);
+    ((std::vector<tstring>*)(void*)_v16)->push_back(*_name);   // 0x43f2a0
     ++*(int*)(self + 0x164);
     if (_v16->size() == 1)
         ((PanelVt*)this)->v11((void*)0);
@@ -1309,7 +1325,10 @@ void ListPanelW::append(const tstring* _name)
 // ==== 0x4934d0: the party record constructor and its page / hash management ========================================
 void __stdcall vector_constructor_iterator(void* first, unsigned size, unsigned count, void* fn);   // 0x401800
 void elem_ctor_48c210(void* self);                              // 0x48c210
-struct ListNode { void* _Buynode(); };                          // 0x46c0c0 (thiscall)
+#include <list>
+// std::list<int>::_Buynode (0x46c0c0, protected: reached through a derived class)
+namespace std { template<> list<int, allocator<int> >::_Nodeptr list<int, allocator<int> >::_Buynode(); }   // 0x46c0c0
+struct ListInt : std::list<int> { using std::list<int>::_Buynode; };
 
 // @ 0x4936a0
 void PartyW::thunk_4936a0()
@@ -1384,7 +1403,7 @@ template void std::vector<int>::push_back(const int&);
 void RecPool::alloc_record()
 {
     if (free_ids.size() <= 0) {
-        Rec98* blk = new Rec98[16];
+        Rec98* blk = new Event[16];
         pages.push_back(blk);
         for (int i = 0; i < 16; ++i) {
             blk[i].f4 = 0;
@@ -1454,14 +1473,14 @@ SceneBaseCtor* SceneBaseCtor::construct()
     char* self = (char*)this;
 
     {
-        void* _n0 = ((ListNode*)(self + 0x2c))->_Buynode();
+        void* _n0 = ((ListInt*)(self + 0x2c))->_Buynode();
         *(void**)(self + 0x30) = _n0;
         *(int*)(self + 0x34) = 0;
         *(int*)(self + 0x38) = 0x400;
         *(int*)(self + 0x3c) = 0;
     }
     {
-        void* _n1 = ((ListNode*)(self + 0x40))->_Buynode();
+        void* _n1 = ((ListInt*)(self + 0x40))->_Buynode();
         *(void**)(self + 0x44) = _n1;
         *(int*)(self + 0x48) = 0;
         *(int*)(self + 0x4c) = 0x400;
@@ -1487,7 +1506,7 @@ SceneBaseCtor* SceneBaseCtor::construct()
     *(int*)(self + 0xd0) = 0;
     *(int*)(self + 0xd4) = 0;
 
-    ((ViewParamsCtor*)(self + 0xd8))->ctor();
+    ((ViewParams*)(self + 0xd8))->ViewParams::ViewParams();   // 0x46b940
 
     *(int*)(self + 0x330) = 0;
     *(int*)(self + 0x334) = 0;
@@ -1499,7 +1518,7 @@ SceneBaseCtor* SceneBaseCtor::construct()
     {
         float _x[2] = { 1000.0f, 1000.0f };
         float _y[2] = { -1000.0f, -1000.0f };
-        init(_y, _x, 0, 0);
+        ((CellGrid*)(void*)this)->init(_y, _x, 0, 0);
     }
 
     *(float*)(self + 0x30c) = 1.0f;
@@ -1545,7 +1564,7 @@ void I64VecW::reserve(int* _pNewsize)
 
         int _old = (int)size();
         __int64 _z = 0;
-        I64Vec::resize((unsigned)_n, _z);
+        ((std::vector<__int64>*)(void*)this)->resize((unsigned)_n, _z);   // the instance above (0x493090)
         for (int i = _old; i < _n; ++i) {
             E8* _p = &first()[i];
             _p->a = 0;
@@ -1558,14 +1577,14 @@ void I64VecW::reserve(int* _pNewsize)
 void SlotArray::set(const int& slot, const __int64& value)
 {
     int _n = slot + 1;
-    ((I64VecOp*)this)->reserve(&_n);
+    ((I64VecW*)(void*)this)->reserve(&_n);
     (*(std::vector<__int64>*)this)[slot] = value;
 }
 
 // @ 0x493db0
 void SlotHolder40::set40(int _idx, int _val)
 {
-    I64VecOp* _p = (I64VecOp*)((char*)this + 0x40);
+    I64VecW* _p = (I64VecW*)((char*)this + 0x40);
     int _n = _idx + 1;
     _p->reserve(&_n);
     (*(std::vector<__int64>*)_p)[_idx] = _val;
@@ -1584,7 +1603,7 @@ void* E68W::find_or_create(int* _key)
     if (_found != 0)
         return _found;
 
-    ResSlot* _new = (ResSlot*)make(_key);
+    ResSlot* _new = (ResSlot*)((MissionView*)(void*)this)->make(_key);
     slots().push_back(_new);
     return _new;
 }
@@ -1600,7 +1619,7 @@ void E68W::purge()
             if (slots()[_i]->refs <= 0) {
                 slots()[_i]->f5c = -1;
                 slots()[_i]->key = -1;
-                g_resmgr_rel.release(slots()[_i]);
+                ((void (__fastcall*)(void*, StackWord))clear_f14)(&g_resmgr, *(StackWord*)&slots()[_i]);   // 0x4175f0 (the resource manager in ecx)
                 slots()[_i] = slots()[_last];
                 --_last;
             } else
@@ -1654,7 +1673,16 @@ void TableauTbl::add_sun_light(const rgl::matrix* p, const rgl::vector4& c)
 // @ 0x494110
 int WidgetMgrW::create_button_overlay(const tstring* text, unsigned flags)
 {
-    UiAInline* w = new UiAInline;
+    // UiAInline is built by hand: its (inline) constructors would emit a vtable of unresolved MissionUi slots; the real one is 0x591d58
+    UiAInline* w = (UiAInline*)operator new(sizeof(UiAInline));
+    if (w) {
+        new ((void*)w, raw_place()) MissionUi;                  // 0x48ae20
+        *(void**)w = (void*)vtbl_591d58;
+        w->f178 = 0;
+        w->b121 = 0;
+        w->f180 = 0;
+        w->f184 = 0;
+    }
 
     {
         vec2 v;
@@ -1710,7 +1738,7 @@ void SoundW::play_ui(int _a, unsigned _b)
 {
     unsigned _f = _b;
     _f |= 1;
-    play(_a, (int)_f, (const float*)&listener, 1.0f, 0);
+    ((SoundMgr*)(void*)this)->play(_a, (int)_f, (const float*)&listener, 1.0f, 0);
 }
 
 // @ 0x494310
@@ -1728,9 +1756,10 @@ void SoundW::stop_all()
     _pos.x = 0.0f;
     _pos.y = 0.0f;
     _pos.z = 0.0f;
-    RotRows _rot = identity3();
+    rgl::mat3 _t;
+    rgl::mat3 _rot = *identity3(&_t);
     rgl::matrix _m;
-    *(RotRows*)&_m = _rot;
+    *(rgl::mat3*)&_m = _rot;
     _m.o = _pos;
     if (g_cfg.disable_sound == 0) {
         listener_frame() = _m;
@@ -1756,7 +1785,7 @@ void GameW::quest_done(int _idx)
             {
                 tstring _fmt(s_ui_quest_completed_value);
                 char* _f = _val.buf ? _val.buf : (char*)&_val;
-                char* _r = (char*)g_strtable.lookup(&_fmt) + 4;
+                char* _r = (char*)g_strtable.lookup(_fmt) + 4;
                 if (*(char**)_r != 0)
                     _r = *(char**)_r;
                 mb_snprintf(_buf, 0x200, _r, _f);
@@ -1765,7 +1794,7 @@ void GameW::quest_done(int _idx)
                 tstring _txt(_buf);
                 g_msglog.push(_txt, 0xffd0f0c8);
             }
-            g_sound_mgr.play(g_quest_sounds[0], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+            ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[0], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
         }
         if ((*(unsigned*)(_e + 0x50) >> 1 & 1) == 0)
             *(unsigned*)(_e + 0x64) |= 0x200;
@@ -1784,7 +1813,7 @@ void GameW::quest_succeeded(int _idx)
     {
         tstring _fmt(s_ui_quest_succeeded_value);
         char* _f = _val.buf ? _val.buf : (char*)&_val;
-        char* _r = (char*)g_strtable.lookup(&_fmt) + 4;
+        char* _r = (char*)g_strtable.lookup(_fmt) + 4;
         if (*(char**)_r != 0)
             _r = *(char**)_r;
         mb_snprintf(_buf, 0x200, _r, _f);
@@ -1793,7 +1822,7 @@ void GameW::quest_succeeded(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xff90ff28);
     }
-    g_sound_mgr.play(g_quest_sounds[1], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[1], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
 }
 
 // @ 0x494680
@@ -1806,7 +1835,7 @@ void GameW::quest_failed(int _idx)
     {
         tstring _fmt(s_ui_quest_failed_value);
         char* _f = _val.buf ? _val.buf : (char*)&_val;
-        char* _r = (char*)g_strtable.lookup(&_fmt) + 4;
+        char* _r = (char*)g_strtable.lookup(_fmt) + 4;
         if (*(char**)_r != 0)
             _r = *(char**)_r;
         mb_snprintf(_buf, 0x200, _r, _f);
@@ -1815,7 +1844,7 @@ void GameW::quest_failed(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    g_sound_mgr.play(g_quest_sounds[3], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[3], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
 }
 
 // ==== 0x4947a0, 0x4948c0: quest concluded / cancelled ====================================================================
@@ -1840,13 +1869,13 @@ void GameW::set_quest_concluded(int quest, int value)
     {
         tstring id(q->desc);
         tstring key("ui_quest_concluded_value");
-        mb_snprintf(buf, 0x200, g_strtable.lookup(&key)->c_str(), id.c_str());
+        mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), id.c_str());
     }
     {
         tstring msg(buf);
         g_msglog.push(msg, 0xffd02028);
     }
-    g_sound_mgr.play(g_quest_sounds[2], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[2], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
 }
 
 // @ 0x4948c0
@@ -1859,13 +1888,13 @@ void GameW::set_quest_cancelled(int quest)
     {
         tstring id(q->desc);
         tstring key("ui_quest_cancelled_value");
-        mb_snprintf(buf, 0x200, g_strtable.lookup(&key)->c_str(), id.c_str());
+        mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), id.c_str());
     }
     {
         tstring msg(buf);
         g_msglog.push(msg, 0xffd02028);
     }
-    g_sound_mgr.play(g_quest_sounds[4], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[4], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
 }
 
 
@@ -1874,14 +1903,14 @@ void GameW::set_quest_cancelled(int quest)
 void GameW::set_objective(int party, int value)
 {
     PartyMgrW* m = &pm();
-    PartyW* pp = m->at(m->index_of(party));
+    PartyW* pp = m->at(((Map10007*)(void*)m)->lookup(party));
     if (pp->leader() >= 0)
         detach_party(party);
-    PartyW* pp2 = m->at(m->index_of(party));
+    PartyW* pp2 = m->at(((Map10007*)(void*)m)->lookup(party));
     pp2->leader() = value;
-    PartyW* pv = m->at(m->index_of(value));
+    PartyW* pv = m->at(((Map10007*)(void*)m)->lookup(value));
     pv->list().push_back(party);
-    m->at(m->index_of(value))->f8b4() = 1;
+    m->at(((Map10007*)(void*)m)->lookup(value))->f8b4() = 1;
 }
 
 // @ 0x494ad0
@@ -1913,12 +1942,12 @@ void GameW::share_experience(int party, float amount)
     if (party >= parties.n_parties)
         return;
     PartyMgrW* pm_ = &pm();
-    int idx = pm_->index_of(party);
+    int idx = ((Map10007*)(void*)pm_)->lookup(party);
     if (idx < 0)
         return;
     if (pm_->pages[idx >> 4][idx & 15].type != 1)
         return;
-    PartyW* p = pm_->at(pm_->index_of(party));
+    PartyW* p = pm_->at(((Map10007*)(void*)pm_)->lookup(party));
     int total = 0;
     int i = 0;
     for (; i < p->nstacks; i++) {
@@ -1942,7 +1971,7 @@ void GameW::share_experience(int party, float amount)
             int troop = s.troop;
             char hero = (troops[troop].flags32 & 0x10) != 0;
             if (hero)
-                add_experience(troop, (int)(per * (idx2 == 0 ? 10.0f : 3.0f)));
+                GameData::add_experience(troop, (int)(per * (idx2 == 0 ? 10.0f : 3.0f)));
             else
                 p->add_xp_to_stack(idx2, (int)((float)s.count * per));
         }
@@ -1955,7 +1984,7 @@ void GameW::share_experience(int party, float amount)
         char buf[512];
         {
             tstring key("ui_shared_number_experience_within_party");
-            sprintf(buf, g_strtable.lookup(&key)->c_str(), n);
+            sprintf(buf, g_strtable.lookup(key)->c_str(), n);
         }
         {
             tstring msg(buf);
@@ -1965,19 +1994,18 @@ void GameW::share_experience(int party, float amount)
 }
 
 // ==== 0x494e40: award experience to the troop stacks of a party and fold the share-in counters ===========================
-extern int max_stacks();                                   // 0x4b1700 (== 0x20)
 // @ 0x494e40
 void GameW::award_experience(int party, float amount, int mode)
 {
     if ((unsigned)party >= parties.n_parties)
         return;
     PartyMgrW& m2 = pm();
-    int idx = m2.index_of(party);
+    int idx = ((Map10007*)(void*)&m2)->lookup(party);
     if (idx < 0)
         return;
     if (m2.atu((unsigned)idx)->type != 1)
         return;
-    idx = m2.index_of(party);                      // the original looks the party up a second time
+    idx = ((Map10007*)(void*)&m2)->lookup(party);                      // the original looks the party up a second time
     PartyW* p = &((PartyW*)(m2.pages[idx >> 4]))[idx & 15];
     int m = mode != 0 ? mode - 1 : rand() % 2;
 
@@ -2001,9 +2029,9 @@ void GameW::award_experience(int party, float amount, int mode)
             int r = rand() % 15817;
             float v = ((float)r * (1.0f / 31634.0f) + 0.75f) * per;
             if (i == 0)
-                add_experience(s.troop, (int)(v * 10.0f));
+                GameData::add_experience(s.troop, (int)(v * 10.0f));
             else
-                add_experience(s.troop, (int)(v * 3.0f));
+                GameData::add_experience(s.troop, (int)(v * 3.0f));
         } else {
             int r = rand() % 15817;
             float v = (((float)r * (1.0f / 15817.0f)) * 0.5f + 0.75f) * (float)s.count * per;
@@ -2065,7 +2093,7 @@ void GameW::award_experience(int party, float amount, int mode)
                         break;
                     n2++;
                 }
-                if (n2 < max_stacks()) {
+                if (n2 < p->max_stacks()) {
                     int x = (s.f14 - s.count) + s.wounded;
                     if (x < 0)
                         x = 0;
@@ -2087,7 +2115,9 @@ void GameW::award_experience(int party, float amount, int mode)
 int GameW::add_random_experience(int amount)
 {
     int r = rand() % 15817;
-    return add_experience(player, (int)(((float)r * (1.0f / 15817.0f) + 0.5f) * amount));
+    // GameData::add_experience (0x4428c0) is void, the original returns what it left in eax: the same function through an int-returning member type
+    typedef int (GameData::*AddExperienceInt)(int, int);
+    return (((GameData*)this)->*(AddExperienceInt)&GameData::add_experience)(player, (int)(((float)r * (1.0f / 15817.0f) + 0.5f) * amount));
 }
 
 // ==== 0x4952f0: put a light / wind object at the trigger frame ======================================================
@@ -2095,7 +2125,7 @@ int GameW::add_random_experience(int amount)
 void MissionW::add_wind_effect(int a1, int a2)
 {
     GameW* g = (GameW*)g_game;
-    EffObj* o = ((EffMgr*)*(void**)this)->create();
+    EffObj* o = (EffObj*)((CellGrid*)*(void**)this)->spawn_wind();   // 0x478f30
     o->f70 = a1;
     o->f74 = a2;
     o->pos = g->cur_color();
@@ -2128,7 +2158,7 @@ void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ct
         rgl::matrix M;
         int attach;
         int bone;
-        it->get_carry_pos(&M, &attach, &bone);
+        ((ItemKind*)it)->get_carry_pos((pos2*)&M, &attach, &bone);
         if (placed[bone] != 0 || (it->type == 7 && (table[i].m4 & 0xffff) <= 0xa)) {
             if (ctx->c3[i] != 0)
                 ctx->c3[i]->vis = 0;
@@ -2142,16 +2172,16 @@ void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ct
         if (ctx->c1[i] != 0) {
             ctx->c1[i]->vis = 0xffff;
             CarrySkel* sk = holder->skel;
-            sk->remove_shape(ctx->c1[i]);
+            ((Skeleton*)sk)->remove_shape((shape_base*)ctx->c1[i]);
             ctx->c1[i]->frame = M;
-            sk->elems[attach].add_group(ctx->c1[i]);
+            ((FxElem*)&sk->elems[attach])->add_group((int)ctx->c1[i]);
         }
         if (ctx->c2[i] != 0) {
             ctx->c2[i]->vis = 0xffff;
             CarrySkel* sk = holder->skel;
-            sk->remove_shape(ctx->c2[i]);
+            ((Skeleton*)sk)->remove_shape((shape_base*)ctx->c2[i]);
             ctx->c2[i]->frame = M;
-            sk->elems[attach].add_group(ctx->c2[i]);
+            ((FxElem*)&sk->elems[attach])->add_group((int)ctx->c2[i]);
         }
     }
 }
@@ -2211,9 +2241,9 @@ void WindowMgrW::set_state(int idx)
 // @ 0x4957d0
 void GameW::spread_party_experience(int amount)
 {
-    add_experience(player, amount);
+    GameData::add_experience(player, amount);
     PartyMgrW* m = &pm();
-    PartyW* p = m->at(m->index_of(f78));
+    PartyW* p = m->at(((Map10007*)(void*)m)->lookup(f78));
     int live = 0;
     for (int i = 0; i < p->nstacks; i++) {
         if (p->stacks[i].flags & 1)
@@ -2233,6 +2263,6 @@ void GameW::spread_party_experience(int amount)
     for (int i = 1; i < live; i++) {
         int troop = p->stacks[i].troop;
         if (troops[troop].flags32 & 0x10)
-            add_experience(troop, amount / heroes);
+            GameData::add_experience(troop, amount / heroes);
     }
 }

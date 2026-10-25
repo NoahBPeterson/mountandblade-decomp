@@ -7,10 +7,18 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <new>
+#include <vector>
+#include <memory>
+#include <algorithm>
 #include "../tstring.h"
 #include "../party/game.h"
 #include "../../include/rec_dtors.h"
+// application.h's flat view of the framework class is called Application there; its constructor (0x401910) is the real
+// CD3DApplication::CD3DApplication, which GameApp's constructor calls first. Compile the view under that name (this TU includes
+// neither d3dapp.h nor core.h) so the call binds to the definition.
+#define Application CD3DApplication
 #include "../application.h"
+#undef Application
 
 // Tail (0x10 bytes, dtor 0x42d390) is src/include/rec_dtors.h
 
@@ -19,40 +27,60 @@ struct Rec18 {                                      // 0x18-byte record with a t
     ~Rec18();                                       // 0x42bc40
 };
 
-void __fastcall tstring_ctor(tstring* p);           // 0x42bbd0
+// Constructing a tstring in raw storage (0x42bbd0): placement new without the null test std's throw() placement operator adds
+struct raw_place {};
+inline void* operator new(size_t, void* p, raw_place) { return p; }
+inline void operator delete(void*, void*, raw_place) {}
 
 // ---- callees -------------------------------------------------------------------------------------------
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
-void  destroy_arrsets(void* first, void* last, void* self, void* alloc);   // 0x4727a0
-void  destroy_110(void* first, void* last, void* self, void* alloc);   // 0x4ca7e0
-void  hash_alloc(int n, void* sentinel);            // 0x4cd010
+// The vector elements of mesh_2.cpp (E50 0x50, E68 0x68, E176 0xb0) and the std algorithms the original keeps out of line for them;
+// the explicit specialization declarations (no bodies here) keep every one of them a call.
+#include "./elem_calls.h"
+struct scalar4 { int v; };                          // e68.h: the 4-byte element of the hash bucket vector
+namespace std {
+template<> E176* _Copy_opt<E176*, E176*>(E176*, E176*, E176*, _Nonscalar_ptr_iterator_tag);   // 0x4cd620
+template<> void _Destroy_range<E176, allocator<E176> >(E176*, E176*, allocator<E176>&, _Nonscalar_ptr_iterator_tag);   // 0x4ca7e0
+template<> void _Destroy_range<E68, allocator<E68> >(E68*, E68*, allocator<E68>&, _Nonscalar_ptr_iterator_tag);   // 0x4cd570
+template<> void vector<scalar4, allocator<scalar4> >::resize(size_t, scalar4);   // 0x4cd010
+template<> void allocator<E50>::destroy(E50*);   // 0x4cd6a0
+}
+// 0x4727a0 is terrain_b's destroy_arrsets (ArrSet is records.h's 0x38-byte record), defined with two parameters; the original calls
+// it as std::_Destroy_range(first, last, allocator&, tag) and the last two words are never read
+struct ArrSet;
+void destroy_arrsets(ArrSet* first, ArrSet* last);   // 0x4727a0
 void* hash_new_node(void* node, void* hint, void* key);                   // 0x4c4e50
-void  grow(void* self, int one);          // 0x4cb6f0
-void  range4(void* first, void* last, void* self, void* alloc);   // 0x4cd570
-void* copy_4cd620(void* first, void* last, void* self, void* out);        // 0x4cd620
 // 0x4c4e50 is a same-TU static in the original (the caller keeps ebx/ebp across it); declare it as one so our
 // build keeps the same live registers. Its argument order is the original's (node, hint, key) with an unused 4th.
 __declspec(noinline) void* list_int_make_node(void* node, void* hint, void* key, void* pad);   // 0x4c4e50
-void  block_4c2d10(void* p);                        // 0x4c2d10 (0x130-byte block ctor)
-struct Block130 {
-    char pad[0x130];
-    void init();                                    // 0x4c2d10
+// The sub-objects the mission constructor builds in place: rgl/mesh2/rec_tables.h's C4c2d10 (the 0x140-byte block, ctor
+// 0x4c2d10), config/config.h's clip_table (ctor 0x4be6b0) and module_load.h's growable_array (ctor 0x4d1360); those headers do
+// not go with this TU's, so only the constructors are repeated under the class names.
+struct C4c2d10 {
+    char pad[0x140];
+    C4c2d10();   // 0x4c2d10
 };
-void  sub_4be6b0(void* p);                          // 0x4be6b0
-void  sub_4d1360(void* p);                          // 0x4d1360
-#include "world_subs.h"                           // Sub63d0 / Sub6698
-struct TStr {
-    void ctor();                                    // 0x42bbd0
-    ~TStr();                                        // 0x42bc40
+struct clip_table {
+    char pad[0x14c];
+    clip_table();   // 0x4be6b0
 };
-void  open(int flag);                      // 0x494260
+struct growable_array {
+    char pad[0x140];
+    growable_array();   // 0x4d1360
+};
 #include "../str_table.h"                                      // StrTable (0x5e2a18; was StrTab here: lookup 0x43a1e0)
-struct UiObj { void open(int flag); };                         // 0x494260
-
-struct Pair34 {                                     // 0x34-byte element (two tstrings at +0 / +0x10, a heap pointer at +0x30); not the vtable-0x59584c Rec34 of trigger_records.h
-    char pad[0x10];
-    void vecdel(unsigned flags);                    // 0x401870  vector deleting destructor (the symbol file calls it ??_ERec34@@QAEPAXI@Z)
+struct WindowMgrW {
+    void open(int flag);   // 0x494260 (world_data/world_data.h; the main menu object 0xa73980)
 };
+
+// 0x34-byte element (two tstrings at +0 / +0x10, a heap pointer at +0x30); not the vtable-0x59584c Rec34 of trigger_records.h.
+// dxframework/d3dapp.cpp's MBRecord34: the original calls its vector deleting destructor 0x401870 (??_EMBRecord34, which has no
+// source spelling) with flags 3, as a plain call; the linker binds this view's symbol to it.
+struct MBRecord34 {
+    char pad[0x34];
+    void* vecdel(unsigned flags);   // 0x401870
+};
+#pragma comment(linker, "/alternatename:?vecdel@MBRecord34@@QAEPAXI@Z=??_EMBRecord34@@QAEPAXI@Z")
 
 struct OwnedVec {                                      // allocator dword, begin/last/end
     int  alloc;
@@ -61,7 +89,7 @@ struct OwnedVec {                                      // allocator dword, begin
     int* end;
     void clear(void* a) {
         if (first) {
-            destroy_arrsets(first, last, this, a);
+            destroy_arrsets((ArrSet*)first, (ArrSet*)last);
             operator delete(first);
         }
         first = 0; last = 0; end = 0;
@@ -84,7 +112,8 @@ struct RowVec {                                      // 0xb0-byte rows, destroye
     int* end;
     void clear(void* a) {
         if (first) {
-            destroy_110(first, last, this, a);
+            std::_Nonscalar_ptr_iterator_tag tag;
+            std::_Destroy_range((E176*)first, (E176*)last, *(std::allocator<E176>*)(void*)this, tag);
             operator delete(first);
         }
         first = 0; last = 0; end = 0;
@@ -103,7 +132,7 @@ struct Big {
     int  f010; int f014; int f018; int f01c;
     int  f020; int f024; int f028; int f02c;
     int  f030; int f034; int f038; int f03c;
-    Pair34* f040;                                    // +0x40
+    MBRecord34* f040;                                // +0x40
     Rec18* f044;                                    // +0x44
     OwnedVec v48;                                       // +0x48
     OwnedVec v58;                                       // +0x58
@@ -136,11 +165,11 @@ struct Big {
     int  f6330; int f6334;
     char pad6338[0x63c4 - 0x6338];
     int  f63c4; int f63c8; int f63cc;
-    Sub63d0 f63d0;
+    char f63d0[0x667c - 0x63d0];                    // +0x63d0 (a clip_table)
     int  f667c; int f6680; int f6684;
     char pad6688[4];
     int  f668c; int f6690; int f6694;
-    Sub6698 f6698;
+    char f6698[0x67d8 - 0x6698];                    // +0x6698 (a growable_array)
     int  f67d8;
     char pad67dc[4];
     int  f67e0; int f67e4;
@@ -167,7 +196,7 @@ Big* Big::init()
     p->f030 = 0;
     p->v48.end = 0; p->v58.alloc = 0;
     for (int i = 0; i < 0x40; i++)
-        ((Block130*)(p->blocks + i * 0x130))->init();
+        new ((void*)(p->blocks + i * 0x130), raw_place()) C4c2d10;
 
     p->f5de0 = 2;
     p->f5de8 = ((int*)g_ticks)[4];
@@ -190,11 +219,11 @@ Big* Big::init()
     p->f6330 = ((int*)g_ticks)[4];
     p->f6334 = ((int*)g_ticks)[5];
     p->f63c4 = 0; p->f63c8 = 0; p->f63cc = 0;
-    p->f63d0.init();
+    new ((void*)p->f63d0, raw_place()) clip_table;
 
     p->f667c = 0; p->f6680 = 0; p->f6684 = 0;
     p->f668c = 0; p->f6690 = 0; p->f6694 = 0;
-    p->f6698.init();
+    new ((void*)p->f6698, raw_place()) growable_array;
 
     p->f67d8 = 2;
     p->f67e0 = ((int*)g_ticks)[4];
@@ -203,7 +232,7 @@ Big* Big::init()
     p->f6808 = ((int*)g_ticks)[4];
     p->f680c = ((int*)g_ticks)[5];
 
-    ((TStr*)p->f6814)->ctor();
+    new ((void*)p->f6814, raw_place()) tstring;
     p->f000 = 0;
     *(int*)((char*)p + 0x5270) = 0;
     return this;
@@ -226,8 +255,8 @@ void Big::destroy()
     v58.clear(this);
     v48.clear(this);
 
-    ((TStr*)&f028)->~TStr();
-    ((TStr*)this)->~TStr();
+    ((tstring*)&f028)->~tstring();
+    ((tstring*)this)->~tstring();
 }
 
 // @ 0x4d3a50
@@ -265,7 +294,7 @@ void restore_defaults()
             *(int*)(ui + 0x50) = 0;
             *(int*)(ui + 0x4) = 1;
         }
-        ((UiObj*)0xa73980)->open(0);
+        ((WindowMgrW*)0xa73980)->open(0);
         g_game->f1a090 = 0;
     }
 }
@@ -273,22 +302,21 @@ void restore_defaults()
 // ---- hash table ----------------------------------------------------------------------------------------
 // The container helpers below take (first, last, owner, alloc). cl packs the two trailing pointer-sized
 // args: the owner arg rides in ECX (still holding `this` at the call) -- see 0x4d3e50/0x4d3e70.
-void range4(void* a, void* b, void* c, void* d);    // 0x4cd570
 struct HNode {
     HNode* next;                                    // +0
     HNode* prev;                                    // +4
     unsigned key;                                   // +8
 };
 struct HOut { HNode* node; char inserted; };
-struct NodePool {                                   // lives at HashTab+4
+struct list_node {                                  // mesh_2.cpp's list_node (grow 0x4cb6f0); lives at HashTab+4
     char pad0[4];
     HNode* sentinel;                                // +4 (HashTab+8)
     HNode* copy_node(HNode* n, HNode* hint, unsigned* key);   // 0x4c4e50
-    void   grow(int one);                        // 0x4cb6f0
+    void   grow(unsigned one);                   // 0x4cb6f0
 };
 struct HashTab {
     int      f0;
-    NodePool pool;                                  // +4
+    list_node pool;                                  // +4
     int      f0c;                                   // +0xc
     char*    f10;                                   // +0x10
     HNode**  f14;                                   // +0x14
@@ -310,7 +338,7 @@ void HashTab::insert(HOut* out, unsigned* key)
                 f20 = f20 * 2 + 1;
         } else {
             f20 = n * 2 - 3;
-            hash_alloc(n * 2 - 1, pool.sentinel);
+            { scalar4 sen; sen.v = (int)pool.sentinel; ((std::vector<scalar4>*)(void*)((char*)this + 0x10))->resize(n * 2 - 1, sen); }   // 0x4cd010
         }
         unsigned idx = count - (f20 >> 1) - 1;
         HNode* p = f14[idx];
@@ -400,15 +428,15 @@ struct TreeW {
 // @ 0x4d3e50
 void TreeW::erase(void* p1, void* p2)
 {
-    range4(p1, p2, this, p2);
+    std::_Destroy_range((E68*)p1, (E68*)p2, *(std::allocator<E68>*)(void*)this, std::_Nonscalar_ptr_iterator_tag());   // 0x4cd570
 }
 
 // @ 0x4d3e70
 void TreeW::insert(void** out, void* a, void* b)
 {
     if (a != b) {
-        void* p = copy_4cd620(b, f8, a, out);
-        destroy_110(p, f8, this, out);
+        E176* p = std::_Copy_opt((E176*)b, (E176*)f8, (E176*)a, std::_Nonscalar_ptr_iterator_tag());
+        std::_Destroy_range(p, (E176*)f8, *(std::allocator<E176>*)(void*)this, std::_Nonscalar_ptr_iterator_tag());
         f8 = p;
     }
     *out = a;
@@ -418,7 +446,7 @@ void TreeW::insert(void** out, void* a, void* b)
 // ---- callees -------------------------------------------------------------------------------------------
 void* __cdecl operator new(unsigned size);          // 0x53545e
 #include "../../dxframework/d3dfont.h"            // CD3DFont (0x67c bytes; ctor 0x404980)
-void  scan_module_folders(void* array, int* count);          // 0x4bec60
+void  scan_module_folders(tstring* array, int* count);          // 0x4bec60
 void  read_key_string(HKEY* key, const char* name, tstring* out);   // 0x4b9720
 extern "C" {
 void __stdcall FSOUND_SetMaxHardwareChannels(int n);          // 0x534300
@@ -432,7 +460,9 @@ extern int g_use_shaders;                                // 0x5e28fc
 extern int g_5e28c8;                                // 0x5e28c8
 extern int g_counter;                                // 0x5e28cc
 extern char g_saved;                               // 0x5e2a08
-#include "../config/config.h"   // canonical: g_cfg.disable_sound (0x5a9fd8)
+// g_cfg.disable_sound (config/config.h Config +0x40 of g_cfg 0x5a9f98; that header brings d3dapp.h, which would redefine
+// CD3DApplication here)
+#define CFG_DISABLE_SOUND (*(int*)0x5a9fd8)
 #include "../game_globals.h"      // canonical g_key_states (listed directly: the audit reads only the source's own includes)
 #define g_key_states_i (*(int(*)[0x40])g_key_states)     // g_key_states (0x5e27c8, game_globals.h) as 0x40 ints
 
@@ -448,7 +478,7 @@ GameApp::GameApp()
     tstring* p = arrp;
     int n = 0x20;
     do {
-        tstring_ctor(p);
+        new ((void*)p, raw_place()) tstring;
         p++;
     } while (--n);
 
@@ -502,7 +532,7 @@ GameApp::GameApp()
     g_game = 0;
     (*(Big**)&g_mission) = new Big;
 
-    if (g_cfg.disable_sound == 0) {
+    if (CFG_DISABLE_SOUND == 0) {
         FSOUND_SetMaxHardwareChannels(0);
         FSOUND_Init(0xac44, 0x40, 0);
         FSOUND_SetSFXMasterVolume(0xff);
@@ -517,29 +547,30 @@ GameApp::GameApp()
 }
 
 // @ 0x4d4130
-struct AppWnd {
-    int proc(HWND h, UINT msg, WPARAM wp, LPARAM lp);      // 0x4d0240
-};
+#include "./config_dialog.h"                      // Dialog: proc 0x4d0240 (the dialog procedure of the application object)
 int __stdcall wndproc_thunk(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
-    return ((AppWnd*)0x8ee3c48)->proc(h, msg, wp, lp);
+    return (int)((Dialog*)0x8ee3c48)->proc(h, msg, wp, lp);
 }
 
 // ---- callees used by the main window procedure (0x4d4140) ----------------------------------------------
-void __fastcall paint(void* self);                        // 0x4b9af0
-void __fastcall init(void* self);                         // 0x4c7290
-int  __cdecl    get_latest_version();                          // 0x4b9aa0
+// OptionsDlg (config/options_dlg.h, whose winsock2.h cannot follow windows.h) and gui_edit.h's ConfigDialog: the application
+// object (0x8ee3c48) is their `this` (paint 0x4b9af0, init 0x4c7290)
+struct OptionsDlg { void paint(); };
+struct ConfigDialog { void init(); };
+long __cdecl    get_latest_version();                          // 0x4b9aa0
 void __fastcall unescape(tstring* s);                  // 0x4bac70
 void __cdecl    open_keys_key(HKEY* out);                         // 0x4b96d0
-void __cdecl    keys_write_value(HKEY* key, const char* name, tstring* val);   // 0x4beb80
-void __fastcall load(void* self, void* f);             // 0x4bd630
-tstring* __fastcall lookup(void* table, const tstring& key);      // 0x43a1e0
+void __cdecl    keys_write_value(HKEY* key, const char* name, const tstring* val);   // 0x4beb80
+struct ini_file {
+    void load(FILE* f);   // config/config.h: the module.ini reader (0x4bd630)
+};
 void __cdecl    SkinDialog(HWND h, const char* s);       // 0x535446
 
 extern tstring g_module_name;                                      // 0x8ee3c38
 extern tstring g_module_path;                                        // 0x8ee3c28
-#define STRTAB ((void*)0x5e2a18)
-#define UI(s) lookup(STRTAB, tstring(s))
+#define STRTAB ((StrTable*)0x5e2a18)
+#define UI(s) STRTAB->lookup(tstring(s))
 
 // @ 0x4d4140
 int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
@@ -548,7 +579,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
     switch (msg) {
     case 0xf: {                                             // WM_PAINT
-        paint(this);
+        ((OptionsDlg*)(void*)this)->paint();
         if (*(int*)0x5e29c4 == 0 && f350 == 0) {
             f350 = 1;
             *(int*)0x5e29c4 = 1;
@@ -558,7 +589,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     case 0x110: {                                           // WM_INITDIALOG
         hwnd = h;
         SkinDialog(h, "MainFrame");
-        init(this);
+        ((ConfigDialog*)(void*)this)->init();
         if (f38c == 0) {
             ShowWindow(GetDlgItem(hwnd, 0x410), 0);
             ShowWindow(GetDlgItem(hwnd, 0x425), 0);
@@ -624,15 +655,15 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             else if (v == -1) {
                 tstring a("ui_new_version");
                 tstring b("ui_notification_unable_to_retreive_new_version");
-                const char* cap = lookup(STRTAB, a)->c_str();
-                const char* txt = lookup(STRTAB, b)->c_str();
+                const char* cap = STRTAB->lookup(a)->c_str();
+                const char* txt = STRTAB->lookup(b)->c_str();
                 MessageBoxA(hwnd, txt, cap, 0);
             }
             else {
                 tstring a("ui_mount_and_blade_is_up_to_date");
                 tstring b("ui_notification_latest_version");
-                const char* cap = lookup(STRTAB, a)->c_str();
-                const char* txt = lookup(STRTAB, b)->c_str();
+                const char* cap = STRTAB->lookup(a)->c_str();
+                const char* txt = STRTAB->lookup(b)->c_str();
                 MessageBoxA(hwnd, txt, cap, 0);
             }
             break;
@@ -666,7 +697,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
             void* f = fopen(ini.c_str(), "r");
             if (f != 0) {
-                load((void*)0xa18238, f);
+                ((ini_file*)0xa18238)->load((FILE*)f);
                 fclose((FILE*)f);
             }
 
@@ -697,29 +728,34 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
 // ---- std::_Uninit_fill_n helpers (0x4d49c0..0x4d4b80) ----
 struct Elem50 { char pad0[0x50]; };
-struct Elem68 {
-    char pad0[0x68];
-    void destroy();                                   // 0x4c8ba0 (the element's dtor, thiscall)
-};
-struct ElemB0 {
-    char pad0[0xb0];
-    void destroy();                                   // 0x4c8ab0 (the element's dtor, thiscall)
-};
+struct Elem68 { char pad0[0x68]; };
+struct ElemB0 { char pad0[0xb0]; };
 
-// allocator of the 0x50-byte vector: construct = 0x4d1140 (ctor 0x4cd080), destroy = 0x4cd6a0 (a real call)
+// The allocators' members are module_load.cpp's (flora_alloc / ground_alloc / mission_alloc ::construct 0x4d1140 / 0x4d1160 /
+// 0x4d1180: the element copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170 behind a null test) and gui_edit.cpp's element
+// destructors (conv_list_dtor 0x4c8ba0, fastcall; conv_sub_dtor 0x4c8ab0, stdcall: the original's thiscall `destroy` keeps the
+// allocator in ecx, which that callee ignores); std::allocator<E50>::destroy (0x4cd6a0) is a real call.
+struct flora_kind; struct ground_spec; struct mission_type; struct conv_rec;
+struct flora_alloc { void construct(flora_kind* dst, const flora_kind& src); };
+struct ground_alloc { void construct(ground_spec* dst, const ground_spec& src); };
+struct mission_alloc { void construct(mission_type* dst, const mission_type& src); };
+void __fastcall conv_list_dtor(conv_rec* self);     // 0x4c8ba0
+void __stdcall conv_sub_dtor(void** self);          // 0x4c8ab0
+
+// allocator of the 0x50-byte vector
 struct Alloc50 {
-    void construct(Elem50* p, const Elem50& v);       // 0x4d1140
-    void flora_kind_destroy(Elem50* p);                          // 0x4cd6a0
+    __forceinline void construct(Elem50* p, const Elem50& v) { ((flora_alloc*)(void*)this)->construct((flora_kind*)p, *(const flora_kind*)&v); }
+    __forceinline void flora_kind_destroy(Elem50* p) { ((std::allocator<E50>*)(void*)this)->destroy((E50*)p); }
 };
-// 0x68-byte vector: construct = 0x4d1160 (ctor 0x4cd100), destroy inlined to the dtor 0x4c8ba0
+// 0x68-byte vector: destroy inlined to the dtor 0x4c8ba0
 struct Alloc68 {
-    void construct(Elem68* p, const Elem68& v);       // 0x4d1160
-    void destroy(Elem68* p) { p->destroy(); }
+    __forceinline void construct(Elem68* p, const Elem68& v) { ((ground_alloc*)(void*)this)->construct((ground_spec*)p, *(const ground_spec*)&v); }
+    __forceinline void destroy(Elem68* p) { conv_list_dtor((conv_rec*)p); }
 };
-// 0xb0-byte vector: construct = 0x4d1180 (ctor 0x4cd170), destroy inlined to the dtor 0x4c8ab0
+// 0xb0-byte vector: destroy inlined to the dtor 0x4c8ab0
 struct AllocB0 {
-    void construct(ElemB0* p, const ElemB0& v);       // 0x4d1180
-    void destroy(ElemB0* p) { p->destroy(); }
+    __forceinline void construct(ElemB0* p, const ElemB0& v) { ((mission_alloc*)(void*)this)->construct((mission_type*)p, *(const mission_type*)&v); }
+    __forceinline void destroy(ElemB0* p) { conv_sub_dtor((void**)p); }
 };
 
 // @ 0x4d49c0

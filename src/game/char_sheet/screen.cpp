@@ -1,4 +1,5 @@
 #include "./screen.h"
+#include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
@@ -29,7 +30,7 @@ void __cdecl take_screenshot(void)
         FindClose(h);
     }
 
-    if (save_screenshot(name, 0)) {
+    if (save_screenshot(name, D3DXIFF_BMP)) {
         {
             tstring key("ui_screenshot_taken_to_value");
             s = g_strtable.lookup(key);
@@ -42,8 +43,7 @@ void __cdecl take_screenshot(void)
     }
 }
 
-// 0x4d10f0 as the row destructor uses it: (first, model = this+0x10, last, this).
-void __cdecl destroy_row_range(void* first, void* model, void* last, void* self);
+// 0x4d10f0 (item_modifier_array_dtor) as the row destructor uses it: (first, model = this+0x10, last, this).
 
 // The member at +0x10 is the row's model: [0]=first, [4]=buffer (freed), [8]=last.
 // @ 0x4ebdc0
@@ -53,7 +53,7 @@ void __stdcall destroy(UiRow* param)
     int* l = &self->pad10;
     if (l[1]) {
         // arg 4 is a distinct 4-arg instantiation ICF-folded with the 2-arg range destructor.
-        destroy_row_range((void*)l[1], (void*)l[2], l, *(UiRow* const volatile*)&param);
+        ((void (__cdecl*)(void*, void*, void*, void*))item_modifier_array_dtor)((void*)l[1], (void*)l[2], l, *(UiRow* const volatile*)&param);   // 0x4d10f0 (reads two)
         ::operator delete((void*)l[1]);
     }
     l[1] = 0;
@@ -71,10 +71,10 @@ UiRow* __cdecl append_rows(UiRow* first, UiRow* last, UiRow* dest, RowAlloc& al)
     UiRow* next = dest;
     try {
         for (; first != last; ++dest, ++first)
-            al.construct(dest, *first);
+            ((std::allocator<RagModel>*)(void*)&al)->construct((RagModel*)dest, *(const RagModel*)first);   // 0x4e42f0
     } catch (...) {
         for (; next != dest; ++next)
-            al.destroy(next);
+            CALL_STDCALL_ON(destroy, &al, next);   // 0x4ebdc0 (the allocator in ecx)
         throw;
     }
     return dest;
@@ -84,8 +84,8 @@ UiRow* __cdecl append_rows(UiRow* first, UiRow* last, UiRow* dest, RowAlloc& al)
 GuiScreen::GuiScreen()
 {
     for (int i = 0; i < 5; i++)
-        ((Hint*)((char*)this + 0x14))[i].Hint::Hint();
-    ((Hint*)((char*)this + 0x30c))->Hint::Hint();
+        ((Obj720*)((char*)this + 0x14))[i].Obj720::Obj720();
+    ((Obj720*)((char*)this + 0x30c))->Obj720::Obj720();
     *(int*)((char*)this + 0x3a8) = 0;
     *(int*)((char*)this + 0x3ac) = 0;
     *(int*)((char*)this + 0x3b0) = 0;
@@ -218,10 +218,10 @@ void GuiScreen::process(int param)
             switch (type) {
             case 0xc:
                 if ((char)rec[0] < 0) {
-                    this->wheel_step(0x10);
+                    ((gui_view*)(void*)this)->wheel_step(0x10);
                     cr = &this->click3;
-                    if (cr->elapsed() < g_four_tenths) {
-                        this->wheel_step(0x200);
+                    if (((const Timer*)cr)->elapsed() < g_four_tenths) {
+                        ((gui_view*)(void*)this)->wheel_step(0x200);
                     }
                     else {
                         cr->x = g_ticks[cr->idx * 2];
@@ -229,15 +229,15 @@ void GuiScreen::process(int param)
                     }
                 }
                 else {
-                    this->wheel_step(8);
+                    ((gui_view*)(void*)this)->wheel_step(8);
                 }
                 break;
             case 0xd:
                 if ((char)rec[0] < 0) {
-                    this->wheel_step(0x40);
+                    ((gui_view*)(void*)this)->wheel_step(0x40);
                     cr = &this->click2;
-                    if (cr->elapsed() < g_four_tenths) {
-                        this->wheel_step(0x400);
+                    if (((const Timer*)cr)->elapsed() < g_four_tenths) {
+                        ((gui_view*)(void*)this)->wheel_step(0x400);
                     }
                     else {
                         cr->x = g_ticks[cr->idx * 2];
@@ -245,15 +245,15 @@ void GuiScreen::process(int param)
                     }
                 }
                 else {
-                    this->wheel_step(0x20);
+                    ((gui_view*)(void*)this)->wheel_step(0x20);
                 }
                 break;
             case 0xe:
                 if ((char)rec[0] < 0) {
-                    this->wheel_step(0x100);
+                    ((gui_view*)(void*)this)->wheel_step(0x100);
                     cr = &this->click1;
-                    if (cr->elapsed() < g_four_tenths) {
-                        this->wheel_step(0x800);
+                    if (((const Timer*)cr)->elapsed() < g_four_tenths) {
+                        ((gui_view*)(void*)this)->wheel_step(0x800);
                     }
                     else {
                         cr->x = g_ticks[cr->idx * 2];
@@ -261,7 +261,7 @@ void GuiScreen::process(int param)
                     }
                 }
                 else {
-                    this->wheel_step(0x80);
+                    ((gui_view*)(void*)this)->wheel_step(0x80);
                 }
                 break;
             }
@@ -283,9 +283,9 @@ void GuiScreen::process(int param)
     for (i = 0; i < (unsigned)vec_size(this); i++)
         ((ScreenVT*)this->obj_first[i])->update(param);
 
-    this->post(param);
+    ((MsgLog*)(void*)this)->update(*(float*)&param);   // 0x4e6510
     if (this->f1709)
-        this->clear_selection();
+        ((gui_view*)(void*)this)->clear_selection();   // 0x4c5330
 }
 
 // @ 0x4ec460
@@ -296,5 +296,5 @@ void __cdecl frame_hook(void)
     if ((g_a17148 || g_a17348) && g_a1741c && !g_a1781c)
         take_screenshot();
     else if (g_5a9fb0 && (g_a17148 || g_a17348) && (g_a1717c || g_a171ac) && g_a17190 && !g_a17590)
-        leave_module(0);
+        menu_variables_loaded(0);   // 0x4ebb80
 }

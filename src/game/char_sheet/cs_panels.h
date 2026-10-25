@@ -31,7 +31,7 @@ extern "C" double atof(const char* s);              // 0x537352
 
 extern int g_level_table[];                         // 0x5937cc (char_t_next_level_at_ values)
 extern int g_skill_clamp;                           // 0x8ee3ac4 (upper clamp of the skill offset)
-int mb_snprintf(char* buf, int size, const char* fmt, ...);  // 0x415100 (size-limited formatter)
+#include "../../rgl/text_stream.h"           // mb_snprintf 0x415100 (size-limited formatter)
 void mb_vsprintf(char* buf, const char* fmt, ...);          // 0x536f8f (unlimited formatter)
 
 // the inlined "read a configured key as float, 0 when the key is absent" sequence of the original
