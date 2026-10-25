@@ -308,7 +308,7 @@ after_scroll:
                         pf += 0x20;
                     } while (k < n);
                 }
-                if (k == party_index(pid)->ext_4b1700()) {
+                if (k == party_index(pid)->max_stacks()) {
                     limit = sel->f14;
                     if (limit > sel->count)
                         limit = sel->count;
@@ -357,7 +357,7 @@ overflow_path:
             p = party_index(pid);
             int after = p->stacks[slot].f10;
             p = party_index(pid);
-            int ni = p->add_row(base, 1, 0, 0, 1);
+            int ni = p->add_members(base, 1, 0, 0, 1);
             p = party_index(pid);
             if (after < old10)
                 p->stacks[ni].f10++;
@@ -408,7 +408,7 @@ tail:
         g_mission_ctx.build_hero_table(troop, STACK_IDS[1 + b * 0x80],
                     g_game->f78, action);
         g_menu_data[6] = 0xc;
-        g_main_menu.choose(0x10);
+        g_main_menu.set_state(0x10);
         return;
     }
 
@@ -419,7 +419,7 @@ close_menu:
         g_map_flags.commit(commit_out + 3);
         return;
     }
-    g_main_menu.choose(f18);
+    g_main_menu.set_state(f18);
 }
 
 // @ 0x5324d0
@@ -538,7 +538,7 @@ void XferWin::stack_remove(int party_id, int slot, int dst_id, int* was_present,
         party_index(party_id)->remove_row(dummy, slot, table);
     }
 
-    int found = party_index(dst_id)->find_row(local.v[1], local.v[2], 1);
+    int found = party_index(dst_id)->find_or_add(local.v[1], local.v[2], 1);
     if (found == *(int*)((char*)party_index(dst_id) + 0x8a8)) {
         int* row = (int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20);
         row[0] = 0;
@@ -566,7 +566,7 @@ void XferWin::stack_remove(int party_id, int slot, int dst_id, int* was_present,
     }
     party_index(dst_id)->compact();
     if ((local.v[2] & 1) == 0) {
-        party_index(dst_id)->total_value(0x10);
+        party_index(dst_id)->sum_stat(0x10);
     }
 }
 
@@ -588,7 +588,7 @@ void GameDataX::update_party_sprites()
 {
     PartyMgrX* mgr = (PartyMgrX*)&parties;
     PartyX* p = party_index(this, *(int*)((char*)this + 0x7c));
-    if (p->total_value(0x10) != 0) {
+    if (p->sum_stat(0x10) != 0) {
         PartyX* q = party_index(this, *(int*)((char*)this + 0x78));
         int spr = add_sprite(*(int*)((char*)q + 0x30), *(int*)((char*)q + 0x34), 1);
         PartyX* r = party_index(this, spr);
@@ -598,7 +598,7 @@ void GameDataX::update_party_sprites()
             int* row = (int*)((char*)p + 0xb0);
             do {
                 if ((row[0] & 1) == 0)
-                    r->add_row(row[-1], row[-2], row[0], 0, 0);
+                    r->add_members(row[-1], row[-2], row[0], 0, 0);
                 i++;
                 row += 8;
             } while (i < *(int*)((char*)p + 0x8a8));
@@ -621,7 +621,7 @@ void GameDataX::update_party_sprites()
                     s = (tstring*)src;
                 ((tstring*)((char*)d + 0xc))->operator=(*s);
                 *(char*)((char*)d + 0x1c) = 1;
-                d->add_row(row[0], 1, 0, 0, 0);
+                d->add_members(row[0], 1, 0, 0, 0);
             }
             i++;
             row += 8;
@@ -710,35 +710,35 @@ void EventScreen::on_event(int code)
     if (CTRL && g_game_keys.down(0x10)) {
         g_a739a0->f18 = 0x17;
         g_a739a0->f4 = 0;
-        g_main_menu.choose(8);
+        g_main_menu.set_state(8);
     }
     else if (CTRL && g_game_keys.down(0x11)) {
         g_a739b0->f18 = 0x17;
         g_a739b0->f4 = 0;
-        g_main_menu.choose(0xc);
+        g_main_menu.set_state(0xc);
     }
     else if (CTRL && g_game_keys.down(0xf)) {
         g_a739bc->f18 = 0x17;
         g_a739bc->f4 = 0;
         g_a739bc->f14 = g_game->player;
-        g_main_menu.choose(0xf);
+        g_main_menu.set_state(0xf);
     }
     else if (CTRL && g_game_keys.down(0x12)) {
         if (g_show_quest_notes == 0) {
             g_a739b4->f18 = 0x17;
             g_a739b4->f4 = 0;
-            g_main_menu.choose(0xd);
+            g_main_menu.set_state(0xd);
         } else {
             g_a739e8->f18 = 0x17;
             GI(0x13b08) = 4;
             GI(0x13b0c) = 0;
-            g_main_menu.choose(0x1a);
+            g_main_menu.set_state(0x1a);
         }
     }
     else if ((k & 0x200) == 0 && g_game_keys.down(0x13)) {
         g_a739e4->f18 = 0x17;
         g_a739e4->f4 = 0;
-        g_main_menu.choose(0x19);
+        g_main_menu.set_state(0x19);
     }
     else {
         // no hotkey: pick the row's option by key flag 0x10 (the first option) or by the pressed option widget
@@ -771,7 +771,7 @@ emit_option:
     {
         int sel = ((int*)((char*)this + 0xa4))[local];
         GI(0x13af8) = 0;
-        ((DialogBlock*)(*(char**)(rec + 0x58) + sel * 0x68 + 0x4c))->exec(8);
+        ((DialogBlock*)(*(char**)(rec + 0x58) + sel * 0x68 + 0x4c))->play(8);
     }
 
 dispatch:
@@ -792,7 +792,7 @@ dispatch:
                 GI(0xa8) |= 1;
             } else {
                 g_mission_ctx.update_parties();
-                g_main_menu.choose(F(this, 0x18, int));
+                g_main_menu.set_state(F(this, 0x18, int));
                 return;
             }
             g_map_flags.commit(&slot);
@@ -801,7 +801,7 @@ dispatch:
         if (st == 0x11) {
             g_game->fc8 = 0;
             g_mission_ctx.update_parties();
-            g_main_menu.choose(7);
+            g_main_menu.set_state(7);
             return;
         }
         if (st == 0xd) {
@@ -826,7 +826,7 @@ dispatch:
             g_game->fc8 = 0;
             if (F(this, 0x18, int) != 100) {
                 g_a739ec->f18 = 0x17;
-                g_main_menu.choose(0x1b);
+                g_main_menu.set_state(0x1b);
                 return;
             }
             g_a7333c |= 0x1000;
@@ -837,7 +837,7 @@ dispatch:
             g_game->fc8 = 0;
             if (F(this, 0x18, int) != 100) {
                 g_a739e8->f18 = 0x17;
-                g_main_menu.choose(0x1a);
+                g_main_menu.set_state(0x1a);
                 return;
             }
             g_a7333c |= 0x2000;
@@ -848,7 +848,7 @@ dispatch:
             g_game->fc8 = 0;
             GI(0x13af8) = 0;
             if (F(this, 0x18, int) != 100) {
-                g_main_menu.choose(0x17);
+                g_main_menu.set_state(0x17);
                 return;
             }
             g_a7333c |= 0x400;
@@ -859,7 +859,7 @@ dispatch:
             g_a739a0->f18 = 0x17;
             g_a739a0->f14 = GI(0x13af0);
             g_a739a0->f4 = 2;
-            g_main_menu.choose(8);
+            g_main_menu.set_state(8);
             return;
         }
         if (st == 8) {
@@ -883,7 +883,7 @@ dispatch:
             else if (st == 10)
                 v = 3;
             g_a739b0->f4 = v;
-            g_main_menu.choose(0xc);
+            g_main_menu.set_state(0xc);
             g_game->fc8 = 0;
             return;
         }
@@ -912,35 +912,35 @@ void TickScreen::on_tick(int code)
         g_a739e8->f18 = g_a739e4->f18;
         GIF(0x13b08, int) = a;
         GIF(0x13b0c, int) = b;
-        g_main_menu.choose(0x1a);
+        g_main_menu.set_state(0x1a);
         return;
     }
     if (W(this, 0x48)->changed(0x10000)) {
         g_a739e8->f18 = g_a739e4->f18;
         GIF(0x13b08, int) = 1;
         GIF(0x13b0c, int) = 0;
-        g_main_menu.choose(0x1a);
+        g_main_menu.set_state(0x1a);
         return;
     }
     if (W(this, 0x4c)->changed(0x10000)) {
         g_a739e8->f18 = g_a739e4->f18;
         GIF(0x13b08, int) = 3;
         GIF(0x13b0c, int) = 0;
-        g_main_menu.choose(0x1a);
+        g_main_menu.set_state(0x1a);
         return;
     }
     if (W(this, 0x50)->changed(0x10000)) {
         g_a739e8->f18 = g_a739e4->f18;
         GIF(0x13b08, int) = 2;
         GIF(0x13b0c, int) = 0;
-        g_main_menu.choose(0x1a);
+        g_main_menu.set_state(0x1a);
         return;
     }
     if (W(this, 0x54)->changed(0x10000)) {
         g_a739e8->f18 = g_a739e4->f18;
         GIF(0x13b08, int) = 4;
         GIF(0x13b0c, int) = 0;
-        g_main_menu.choose(0x1a);
+        g_main_menu.set_state(0x1a);
         return;
     }
     if (W(this, 0x3c)->changed(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
@@ -949,7 +949,7 @@ void TickScreen::on_tick(int code)
             g_map_flags.commit(&slot);
             return;
         }
-        g_main_menu.choose(F(this, 0x18, int));
+        g_main_menu.set_state(F(this, 0x18, int));
     }
 }
 
@@ -1074,19 +1074,19 @@ void InputScreen::on_input(int code)
     if (W(this, 0x50)->changed(0x10000)) {
         g_a739e4->f18 = g_a739e8->f18;
         g_a739e4->f4 = 1;
-        g_main_menu.choose(0x19);
+        g_main_menu.set_state(0x19);
         return;
     }
     if (W(this, 0x74)->changed(0x10000)) {
         GIF(0x88, char) = 1;
         GIF(0x84, int) = F(this, 0xac, int);
-        g_main_menu.choose(F(this, 0x18, int));
+        g_main_menu.set_state(F(this, 0x18, int));
         return;
     }
     if (W(this, 0x54)->changed(0x10000)) {
         g_a739e4->f18 = g_a739e8->f18;
         g_a739e4->f4 = 0;
-        g_main_menu.choose(0x19);
+        g_main_menu.set_state(0x19);
         return;
     }
     if (W(this, 0x68)->changed(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
@@ -1095,7 +1095,7 @@ void InputScreen::on_input(int code)
             g_map_flags.commit(&slot);
             return;
         }
-        g_main_menu.choose(F(this, 0x18, int));
+        g_main_menu.set_state(F(this, 0x18, int));
     }
 }
 
@@ -1116,12 +1116,12 @@ void SourceScreen::hook_a(int arg)
             g_map_flags.commit(&arg);
             return;
         }
-        g_main_menu.choose(id);
+        g_main_menu.set_state(id);
         return;
     }
     if (GI(0xc8) == 0xf) {
         GI(0xc8) = 0;
-        g_main_menu.choose(0x1b);
+        g_main_menu.set_state(0x1b);
     }
 }
 
@@ -1135,6 +1135,6 @@ void SourceScreen::hook_b(int arg)
             g_map_flags.commit(&arg);
             return;
         }
-        g_main_menu.choose(id);
+        g_main_menu.set_state(id);
     }
 }

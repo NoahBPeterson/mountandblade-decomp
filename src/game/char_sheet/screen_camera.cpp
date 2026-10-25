@@ -110,11 +110,11 @@ void Screen::camera_update(float dt)
     mat4 frame;
     identity(&frame.s);
     float ang = 1.5707964f;
-    frame.rotate_fu(&ang);
+    frame.rotate_about_s(&ang);
     ang = -f2b0;
-    frame.rotate_su(&ang);
+    frame.rotate_about_f(&ang);
     ang = -f2b4;
-    frame.rotate_fu(&ang);
+    frame.rotate_about_s(&ang);
     f29c = 0.0f;
     f290 = frame.f.x * f2b8 + f290;
     f294 = frame.f.y * f2b8 + f294;
@@ -123,7 +123,7 @@ void Screen::camera_update(float dt)
     float hx = f290 - frame.u.x * C_549D70;
     float hy = f294 - frame.u.y * C_549D70;
     float q = 0.0f;
-    ((World*)g_game)->scene_query(g_level, (vector4*)&hx, (vector4*)&q);
+    ((World*)g_game)->ground_height(g_level, (vector4*)&hx, (vector4*)&q);
     q = q + C_549D70;
     if (f298 < q)
         f298 = q;

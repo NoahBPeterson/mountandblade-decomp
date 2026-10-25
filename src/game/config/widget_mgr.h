@@ -64,7 +64,6 @@ struct gui_mesh : rgl::mesh {
     gui_mesh* clone();                          // 0x41c6d0
     void scale(float s);                        // 0x44f0c0
     void set_color(vector4 v);                  // 0x47af30 (v by value; .w is copied uninitialised)
-    void set_scale(vector4 v);                  // 0x47af30 (v by value; .w is copied uninitialised)  // old name of set_color, removed after the names merge
 };
 #define clone_gui(m) (((gui_mesh*)(m))->clone())
 

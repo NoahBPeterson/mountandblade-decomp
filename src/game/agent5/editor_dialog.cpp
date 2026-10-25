@@ -215,7 +215,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (msg != WM_INITDIALOG)
             return 0;
         m_hMapEditorDlg = hDlg;
-        update_mode_checks();
+        update_checks();
         SendMessageA(GetDlgItem(hDlg, 0x46e), LB_RESETCONTENT, 0, 0);
         CheckRadioButton(hDlg, 0x474, 0x476, g_game->axis + 0x474);
         SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETRANGE, TRUE, MAKELONG(0, 100));
@@ -386,7 +386,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->mode = 2;
-        update_mode_checks();
+        update_checks();
         {
             float v1 = g_game->my, v2 = g_game->sy, v3 = g_game->ty;
             char buf[512];
@@ -405,13 +405,13 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->mode = 0;
-        update_mode_checks();
+        update_checks();
         return 1;
     case 0x470:
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->mode = 1;
-        update_mode_checks();
+        update_checks();
         {
             float v1 = g_game->mx, v2 = g_game->sx, v3 = g_game->tx;
             char buf[512];
@@ -430,7 +430,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->mode = 3;
-        update_mode_checks();
+        update_checks();
         {
             float v1 = g_game->mz, v2 = g_game->sz, v3 = g_game->tz;
             char buf[512];
@@ -529,7 +529,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->sub_mode = 0;
-        update_mode_checks();
+        update_checks();
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
@@ -537,7 +537,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x498:
         if (HIWORD(lParam) == 0) {
             g_game->sub_mode = 1;
-            update_mode_checks();
+            update_checks();
             g_game->dirty = 1;
             g_editor->need_redraw[0] = 1;
             g_editor->need_redraw[1] = 1;
@@ -547,7 +547,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x499:
         if (HIWORD(lParam) == 0) {
             g_game->sub_mode = 2;
-            update_mode_checks();
+            update_checks();
             g_editor->need_redraw[0] = 1;
             g_editor->need_redraw[1] = 1;
             g_editor->need_redraw[2] = 1;
@@ -556,7 +556,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x49a:
         if (HIWORD(lParam) == 0) {
             g_game->mode = 4;
-            update_mode_checks();
+            update_checks();
         }
         return 1;
     case 0x49b:
@@ -579,7 +579,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x4a3:
         update_edge_mode();
         g_game->sub_mode = 1;
-        update_mode_checks();
+        update_checks();
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
@@ -588,7 +588,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x4a4:
         update_poly_mode();
         g_game->sub_mode = 2;
-        update_mode_checks();
+        update_checks();
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
@@ -597,7 +597,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x4a5:
         update_vertex_mode();
         g_game->sub_mode = 0;
-        update_mode_checks();
+        update_checks();
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;

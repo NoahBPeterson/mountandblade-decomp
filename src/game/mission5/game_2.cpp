@@ -998,7 +998,7 @@ void Game::load_game_data(int extra_triggers)
 
     // one extra simple trigger per script emitter whose delay is non-negative
     if (g_emitter_count > 0) {
-        Emitter* e = g_emitters;
+        Emitter* e = g_scripts;
         int off = first * 0x30;
         int idx = 0;
         do {

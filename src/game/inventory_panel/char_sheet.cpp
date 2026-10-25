@@ -185,7 +185,7 @@ static int config_index(const tstring& key)
 static float config_float(const tstring& key)
 {
     float v = 0;
-    int i = g_config.find(key);
+    int i = g_game_vars.find(key);
     if (i >= 0) v = (float)atof(config_text(i));
     return v;
 }
@@ -275,9 +275,9 @@ void CharSheet::init()
     float skills_x;
     {
         tstring kn("char_num_skills");
-        if (num_skills <= g_config.get_int(kn)) {
+        if (num_skills <= g_game_vars.get_int(kn)) {
             tstring kx("char_b_skills_x_a");
-            skills_x = g_config.get_float(kx);
+            skills_x = g_game_vars.get_float(kx);
         } else {
             skills_x = 0.0f;
         }
@@ -317,9 +317,9 @@ void CharSheet::init()
             int extra;
             {
                 tstring kn("char_num_skills");
-                if (num_skills < g_config.get_int(kn)) {
+                if (num_skills < g_game_vars.get_int(kn)) {
                     tstring kn2("char_num_skills");
-                    extra = g_config.get_int(kn2) - num_skills;
+                    extra = g_game_vars.get_int(kn2) - num_skills;
                 } else {
                     extra = 0;
                 }

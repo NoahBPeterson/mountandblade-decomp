@@ -228,7 +228,6 @@ struct Party {                              // 0x5ac8 bytes
     int find_or_add(unsigned troop, unsigned flag, char force);   // 0x489620
     int max_members();                      // 0x4b22d0
     int max_prisoners();                    // 0x4b2330
-    int max_4b1700();                       // 0x4b1700  // old name of Party::max_stacks, removed after the names merge
     int max_stacks(); // 0x4b1700
     // ---- src/game/mission_ui2 (0x48c330..0x48d7e0; method declarations only) ----
     void remove_slot(int index);            // 0x48c330 (ret 4: moves a non-prisoner stack up behind the prisoner stacks)
@@ -281,9 +280,8 @@ struct PartyMgr {                           // 0x138e0 bytes, embedded in the ga
         unsigned n_parties;                 // +0x138dc (GameData+0x139d4)   0x4c8ca0
     };
     int index_of(int id);                   // 0x48ad00 (thiscall, ret 4)
-    int find(unsigned id);                  // 0x48ad00  // old name of PartyMgr::index_of, removed after the names merge
     Party* get(int id);                     // 0x51ee50 (thiscall, ret 4)
-    Party* get_party(unsigned id) { int idx = find(id); return (Party*)((char*)pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
+    Party* get_party(unsigned id) { int idx = index_of(id); return (Party*)((char*)pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
     void next_party_id(int* id);            // 0x460ca0
     void next_party_id(unsigned* id);       // 0x460ca0
     int first_party_id();                   // 0x460d20

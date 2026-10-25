@@ -22,11 +22,11 @@ struct World {
         int* first;                                         // +0x04
         int* last;                                          // +0x08
         int* end;                                           // +0x0c
-        void insert_n(int* where, unsigned n, const int& val);   // 0x410610  // old name of IntVec::_Insert_n, removed after the names merge
+        void _Insert_n(int* where, unsigned n, const int& val);   // 0x410610
         void push_back(const int& v)
         {
             if (first == 0 || (unsigned)(last - first) >= (unsigned)(end - first))
-                insert_n(last, 1, v);
+                _Insert_n(last, 1, v);
             else
                 *last++ = v;
         }
@@ -36,14 +36,14 @@ struct World {
     char pad2cc[0x344 - 0x2cc];
     World(const float* lo, const float* hi, const int* a, const int* b, const int* c);   // 0x478ad0  // old name of CellGrid::CellGrid, removed after the names merge
     Entity* create_entity(int type);                        // 0x428440
-    void set_visual(const void* a, const void* b, const void* c);   // 0x488cd0  // old name of world::set_fog, removed after the names merge
+    void set_fog(const void* a, const void* b, const void* c);   // 0x488cd0
     void destroy();                                         // 0x475d50  // old name of CellGrid::~CellGrid, removed after the names merge
     void reset();                                           // 0x421390
     void step(float dt);                                    // 0x427f40
-    void scene_query(void* scene, const rgl::vector4* point, rgl::vector4* out);   // 0x470f40 (ground_height: thiscall, two stack args)  // old name of ground_height, removed after the names merge
+    void ground_height(void* scene, const rgl::vector4* point, rgl::vector4* out);   // 0x470f40 (ground_height: thiscall, two stack args)
     void set_fade(float* fog, void* spec);                  // 0x4624c0 (the fog / fade envelope: members at +0xdc..+0xf4; mesh_slot/mesh_start.cpp)
     void set_params(float a, float b, unsigned* color, float* z);   // 0x462540
     void floor_at(float* pos, float* y, void** face);       // 0x439be0 (the ground face under a position)
-    void f478c50(void* nav);                                // 0x478c50 (hands the nav mesh to the cell grid, terrain_b/cell_grid.h)  // old name of CellGrid::build, removed after the names merge
+    void build(void* nav);                                // 0x478c50 (hands the nav mesh to the cell grid, terrain_b/cell_grid.h)
 };
 #endif // GAME_SCENE_WORLD_H

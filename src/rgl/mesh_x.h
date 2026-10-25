@@ -25,7 +25,6 @@ struct mesh_x : rgl::mesh {
     void set_bone_index(int bone);                                     // 0x47b360
     void multiply_color(const rgl::vector4* tint);                     // 0x47b3b0
     void flip_faces();                                                 // 0x4779b0 (terrain_b/mission.cpp)
-    void finish_load();                                                // 0x419300  // old name of mesh_x::compute_bounds, removed after the names merge
     void append_skinned(rgl::mesh* other, const rgl::matrix* m, int bone, unsigned color, char flip);   // 0x44eb00
     void translate(const rgl::vector4* d);                             // 0x44f240
     void transform(rgl::matrix m);                                     // 0x44f3c0 (matrix by value, ret 0x40)

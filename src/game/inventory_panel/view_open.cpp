@@ -129,7 +129,7 @@ void char_window::open_view()
         face_body* b = new face_body;
         label_refresh((widget*)b, tstring("char_i_character"));
         if (world != 0) {
-            world->destroy();
+            world->~World();
             free_535712(world);
             world = 0;
         }
@@ -152,7 +152,7 @@ void char_window::open_view()
             int   z2 = 0;
             float five = 5.0f;
             int   col = (int)0xff221815;
-            w->set_visual(&z2, &five, &col);
+            w->set_fog(&z2, &five, &col);
         }
         {
             wind* wd = new wind;
@@ -218,7 +218,7 @@ void char_window::open_view()
             int skin = *(int*)(rec + 0x30) & 0xf;
             int flags = 0;
             g_anim.cur = clamp_index(&skin, &flags, &g_skin_count);
-            g_anim.set_anim_a(rec + 0x3c0);
+            g_anim.unpack(rec + 0x3c0);
             void* ra = 0;
             void* rb = 0;
             void* rc = 0;

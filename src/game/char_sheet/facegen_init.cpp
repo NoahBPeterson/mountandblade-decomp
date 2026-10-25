@@ -303,7 +303,7 @@ void FaceGen::init()
         int sk = *(int*)(rec + 0x30) & 0xf;
         int flags = 0;
         g_anim.cur = gen_face_seed(&sk, &flags, &g_char_count);
-        g_anim.set_anim_a(rec + 0x3c0);
+        g_anim.unpack(rec + 0x3c0);
         f354 = *(int*)((char*)&g_anim + 0x04);
         f350 = *(int*)((char*)&g_anim + 0x00);
         f35c = *(int*)((char*)&g_anim + 0x14);

@@ -36,7 +36,7 @@ void Scene::read(stream_base* s, int flag)
     int last;
     s->r_int(&last);
     while (v->count < n) {
-        this->add_page();
+        this->grow();
         if (v->free_ids._Myfirst)
             operator delete(v->free_ids._Myfirst);
         v->free_ids._Myfirst = 0;
@@ -101,7 +101,7 @@ void Scene::clear()
 PartyRecIO* Scene::get(int id)
 {
     SceneView* v = (SceneView*)this;
-    int k = this->lookup(id);
+    int k = this->index_of(id);
     return (PartyRecIO*)((k & 0xf) * 0x5ac8 + (int)v->pages._Myfirst[k >> 4]);
 }
 
@@ -251,12 +251,12 @@ void Game::start_new_game()
         scene.read(&stream, 0);
     }
 
-    int slot = scene.lookup(f78);
+    int slot = scene.index_of(f78);
     char* pr = ((SceneView*)&scene)->pages._Myfirst[slot >> 4] + (slot & 0xf) * 0x5ac8;
     *(int*)(pr + 0x74) = 0x80;
 
-    if (g_n_party_templates > 0) {
-        for (int i = 0; i < g_n_party_templates; i++) {
+    if (g_party_template_count > 0) {
+        for (int i = 0; i < g_party_template_count; i++) {
             PartyTemplate* r = &g_party_templates[i];
             r->f34 = 0;
             r->f38 = 0;
@@ -615,7 +615,7 @@ void TroopRec::raise_stats()
 // @ 0x520520
 void Animator::reset(void* a, void* b)
 {
-    set_anim_a(a);
+    unpack(a);
     int s3 = variant;
     float s128 = scale;
     float s12c = time;
@@ -631,7 +631,7 @@ void Animator::reset(void* a, void* b)
         pf += 9;
     }
 
-    set_anim_a(b);
+    unpack(b);
 
     int r = rand();
     float t = (float)(item - s1) * ((float)(r % 15817) * 6.322311674011871e-05f);

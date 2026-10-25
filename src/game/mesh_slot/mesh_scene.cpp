@@ -90,7 +90,7 @@ void TerrainX::build_entity()
         ((mesh_x*)m)->set_color(center);
         ((mesh_x*)m)->translate(&tv);
         ((TerrainX*)this)->snap(m);
-        ((mesh_x*)m)->finish_load();
+        ((mesh_x*)m)->compute_bounds();
 
         int ix;
         if (m->bounds.center.x < 0.0f)
@@ -730,7 +730,7 @@ void TerrainX::gen_set_init(particle_list* s)
                         id.o = o;
                         ((world_x*)world)->light_mesh(grid[cell][j], &id, 1);
                     }
-                    ((mesh_x*)grid[cell][j])->finish_load();
+                    ((mesh_x*)grid[cell][j])->compute_bounds();
                     TEntity* e = ents[cell];
                     mesh* mm = grid[cell][j];
                     std::vector<mesh*>& em = *(std::vector<mesh*>*)((char*)e + 0x118);

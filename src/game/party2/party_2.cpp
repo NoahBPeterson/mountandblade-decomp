@@ -114,7 +114,7 @@ void scene_step(int material)
         texture* t = g_resmgr_tab.get_texture(w, h, 0x50);
         if (t != 0)
             sc.f15c = (int)t;
-        bool ok = rgl::g_scene_registry.select(&sc);
+        bool ok = rgl::g_scene_registry.render(&sc);
         if (t != 0)
             g_resmgr_tab.release(t);
         if (ok)

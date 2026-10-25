@@ -1309,7 +1309,7 @@ void PhysSet::rebuild_static_body(int idx)
 // @ 0x43a980
 void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base)
 {
-    float cur = body->skel->rec_phase(idx);
+    float cur = body->skel->rec_shaped_phase(idx);
     float scale = cmd->scale;
     float len = 1.5f;
     if (cmd->flags & 0xff)

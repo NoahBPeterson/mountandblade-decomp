@@ -106,7 +106,7 @@ void CamView::update_model(float dt)
         if (row->v44(0x10000)) {
             g_dummy_mat_arr[i] = row->v38();
             SkinSet* set = (SkinSet*)((char*)g_skins_begin + g_cur * 0x1f8);
-            set->regen(i, g_dummy_mat_arr);
+            set->relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
                 rows[j]->v34(g_dummy_mat_arr[j]);
             flag = 1;
@@ -161,7 +161,7 @@ void CamView::update_model(float dt)
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
         SkinSet* set = (SkinSet*)((char*)g_skins_begin + g_cur * 0x1f8);
-        set->regen(-1, g_dummy_mat_arr);
+        set->relax(-1, g_dummy_mat_arr);
         flag = 1;
         for (int i = 0; i < n; i++)
             rows[i]->v34(g_dummy_mat_arr[i]);
@@ -215,6 +215,6 @@ void CamView::update_model(float dt)
         } else {
             ch = choice;
         }
-        g_main_menu.choose(ch);
+        g_main_menu.set_state(ch);
     }
 }

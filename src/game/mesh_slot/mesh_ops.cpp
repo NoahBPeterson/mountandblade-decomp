@@ -97,7 +97,7 @@ void mesh_x::transform(mesh* src, const matrix* m, unsigned color)
 
     slots[0].f28 = 1;
     slots[1].f28 = 1;
-    finish_load();
+    compute_bounds();
 }
 
 // @ 0x47af30 -- multiply the vertex colour terms and the key-frame colours by `color`, renormalise the colour

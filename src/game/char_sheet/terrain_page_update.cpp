@@ -119,7 +119,7 @@ done:
     world->step(dt);
     path(dt);
     if (page_changed(back_btn) || (g_a17110 != 0 && g_a17510 == 0))
-        g_main_menu.choose(option);
+        g_main_menu.set_state(option);
 }
 
 // @ 0x4f34c0

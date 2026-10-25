@@ -39,7 +39,7 @@ void Screen::init_screen()
     g_5d8788 = 1;
     g_gui.add_root(overlay);
     Overlay* self = overlay;
-    self->children.push_back3(*(Widget**)&overlay, 4);
+    self->children.fill_n(*(Widget**)&overlay, 4);
 
     Overlay* buttons = (Overlay*)operator new(0x188);
     if (buttons != 0) {
@@ -70,7 +70,7 @@ void Screen::init_screen()
     f3c = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
     {
         Overlay* self = (Overlay*)buttons;
-        self->children.push_back3(*(Widget**)&buttons, 4);
+        self->children.fill_n(*(Widget**)&buttons, 4);
     }
 
     {

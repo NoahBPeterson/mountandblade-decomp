@@ -115,7 +115,7 @@ static void set_frame_color(mesh* m)
     c.z = 1.0f;
     m->set_color(c);
     m->compute_normals();
-    m->finish_load();
+    m->compute_bounds();
 }
 
 // @ 0x50f930
@@ -145,7 +145,7 @@ void LoadingMeshes::build_frames()
         f1210->set_color(c);
     }
     f1210->compute_normals();
-    f1210->finish_load();
+    f1210->compute_bounds();
 
     {
         tstring n("frame_corner_b");
@@ -157,7 +157,7 @@ void LoadingMeshes::build_frames()
         f1214->set_color(c);
     }
     f1214->compute_normals();
-    f1214->finish_load();
+    f1214->compute_bounds();
 
     {
         tstring n("frame_corner_c");
@@ -169,7 +169,7 @@ void LoadingMeshes::build_frames()
         f1218->set_color(c);
     }
     f1218->compute_normals();
-    f1218->finish_load();
+    f1218->compute_bounds();
 
     {
         tstring n("frame_corner_d");
@@ -181,7 +181,7 @@ void LoadingMeshes::build_frames()
         f121c->set_color(c);
     }
     f121c->compute_normals();
-    f121c->finish_load();
+    f121c->compute_bounds();
 }
 
 // ---------------------------------------------------------------- 0x50fbf0

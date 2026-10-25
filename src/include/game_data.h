@@ -256,7 +256,6 @@ struct GameData {
     int f1a23c;                                 // +0x1a23c   0x4610b0
 
     int skill_level(int troop, int skill);      // 0x437b20 (thiscall, ret 8)  // old name of GameData::skill_level, removed after the names merge
-    int skill(int troop, int id);               // 0x437b20 (thiscall, ret 8) (0x4406a0)  // old name of GameData::skill_level, removed after the names merge
     void step(float dt);                        // 0x427f40 (char_sheet/cs_update.cpp)
     // ---- char_sheet/save_game.cpp, save_state.cpp (the save-game serialiser; the stream is the binary writer OutStream) ----
     void load_header(SaveCtx* h);               // 0x4e8e70 (ret 4)
@@ -269,7 +268,6 @@ struct GameData {
     __declspec(noinline) void write_list300(OutStream* out);             // 0x4e96c0
     __declspec(noinline) void write_records(OutStream* out);             // 0x4e97e0
     __declspec(noinline) void write_items(OutStream* out);               // 0x4e9790
-    void write_other2(OutStream* out);          // 0x4e9b50 (next slice)  // old name of GameData::write_missions, removed after the names merge
     void write_missions(OutStream* out); // 0x4e9b50
     float time_of_day();                        // 0x4356e0 (agent5/agent_hud.cpp: the sun pass reads it through the game object; agent/agent.h time_of_day is the same code)
     char emit_event(int id, int a, int b);      // 0x435790 (ret 0xc)
@@ -294,7 +292,6 @@ struct GameData {
     int remove_troops(int party, int troop, int count, char prisoners, int a5);   // 0x48f9f0 (ret 0x14: count removed)
     float relation(int a, int b);               // 0x48ffa0 (ret 8: party relation, -1..1)
     void list_members(int id, unsigned* out, unsigned* n);   // 0x490fa0 (ret 0xc: the party and its attached parties)
-    void on_member_killed(int id);              // 0x490a30 (ret 4)  // old name of GameData::detach_party, removed after the names merge
     void detach_party(int id); // 0x490a30
     void remove_party(int party);               // 0x4915d0 (ret 4)
     void label_text(rgl::mesh* m, const tstring* text, char flag, int arg, const float* h);   // 0x49baa0 (ret 0x14: lays text out into a label mesh)

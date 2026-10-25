@@ -796,7 +796,7 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
         if ((*(unsigned __int64*)&flags_lo & 0x100000) == 0)
             goto tail_count;
         int ct = count_tail();
-        int mx = max_4b1700();
+        int mx = max_stacks();
         if (ct < mx) {
         tail_count: ;
             int lead = 0;
@@ -813,7 +813,7 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
     if (!(flag & 1)) {
         if (*(unsigned __int64*)&flags_lo & 0x100000) {
             int ff = first_flagged();
-            int mx = max_4b1700();
+            int mx = max_stacks();
             if (!(ff < mx))
                 return found;
         }

@@ -13,9 +13,9 @@ struct Widget;
 struct GuiManager {
     void reset();                               // 0x42d1b0
     void add_root(void* window);                // 0x49b120 (ret 4: the address of a pointer to the window)
-    void frame(float dt);                       // 0x4ebfd0  // old name of GuiScreen::process, removed after the names merge
-    void add_log(tstring s, int type);          // 0x452c00 (tstring by value, then the type)  // old name of MsgLog::add, removed after the names merge
-    void set_active(Widget* w);                 // 0x50d0e0  // old name of sel_list::add, removed after the names merge
+    void process(float dt);                       // 0x4ebfd0
+    void add(tstring s, int type);          // 0x452c00 (tstring by value, then the type)
+    void add(Widget* w);                 // 0x50d0e0
     void build_frames();                        // 0x50f930
     void build_quad();                          // 0x50f8a0
 };

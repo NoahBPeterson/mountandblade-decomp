@@ -12,7 +12,6 @@
 
 // rgl_config.txt (written by 0x415fb0, global at 0x5a9f98)
 struct rgl_config { void save(FILE* f); };     // 0x415fb0
-extern rgl_config g_rgl_config;                // 0x5a9f98  // old name of g_cfg, removed after the names merge
 
 extern IDirect3DDevice9* g_device;             // 0xa17f28  // old name of g_render, removed after the names merge
 extern int g_shadow_quality;                   // 0x5aa000 (shadowmap quality step, counted down on failure)

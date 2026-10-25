@@ -16,22 +16,22 @@ void MapScreen::buttons(int arg)
         if (f74 == 0 || !f74->changed(0x10000)) {
             if (f68->changed(0x10000)) {
                 *(int*)(g_a739c8 + 0x18) = 5;
-                g_main_menu.choose(0x12);
+                g_main_menu.set_state(0x12);
                 return;
             }
             if (f6c != 0 && f6c->changed(0x10000)) {
                 save_game(-1, 0);
                 g_msglog.add(*g_strtable.lookup(&tstring("ui_game_saved")), -1);
-                g_main_menu.choose(menu_sel);
+                g_main_menu.set_state(menu_sel);
                 return;
             }
             if (f70 != 0 && f70->changed(0x10000)) {
                 *(int*)(g_a739d4 + 0x18) = 5;
-                g_main_menu.choose(0x15);
+                g_main_menu.set_state(0x15);
                 return;
             }
             if (f60->changed(0x10000) || g_keyboard.test(1)) {
-                g_main_menu.choose(menu_sel);
+                g_main_menu.set_state(menu_sel);
                 return;
             }
             return;
@@ -48,7 +48,7 @@ void MapScreen::buttons(int arg)
         operator delete(g);
         g_game = 0;
     }
-    g_main_menu.choose(4);
+    g_main_menu.set_state(4);
 }
 
 // ---- the file writer (stream classes of s00417850/mbbin.h: vtable 0x54a740 -> 0x54add8) ----------------

@@ -128,7 +128,7 @@ void TerrainX::create_water(void** out)
     id.o.x = 0.0f; id.o.y = 0.0f; id.o.z = 0.0f; id.o.w = 1.0f;
     m->m1d4 = id;
     ((mesh_w*)m)->compute_tangents();
-    ((mesh_x*)m)->finish_load();
+    ((mesh_x*)m)->compute_bounds();
     ((rgl::entity*)e)->meshes.push_back(m);
     ((rgl::entity*)e)->recalc();
     *out = m;
@@ -375,9 +375,9 @@ EChar* append_mesh(int colour, int kind, void** a, void** b, void** c, char carr
         g_cur = colour;
 
     if (kind == -1)
-        g_anim_view.set_anim_a(a);
+        g_anim_view.unpack(a);
     else
-        g_anim_view.set_anim_b(a, b, kind);
+        g_anim_view.breed(a, b, kind);
     if (carried)
         g_x8ed4f64 = -1;
     g_anim_view.collect((char)g_limit_hair_colors, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
@@ -773,7 +773,7 @@ void TerrainX::emit_particle(int layerno, int blend, int cx, int cy, float z)
             found = k;
     }
     if ((int)found < 0) {
-        ((mesh_x*)m)->finish_load();
+        ((mesh_x*)m)->compute_bounds();
         vpush(em, m);
         e->recalc();
     }

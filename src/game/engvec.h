@@ -11,11 +11,10 @@ struct engvec {
     T* first;                                           // +0x04
     T* last;                                            // +0x08
     T* end;                                             // +0x0c
-    void insert_n(T* where, unsigned n, const T& val);  // 0x40f8a0 (int), 0x410610 (wind pointers)  // old name of fill_n, removed after the names merge
     void __cdecl fill_n(int* dst, unsigned n, const int* val); // 0x40f8a0
     void push_back(const T& v) {
         if (first == 0 || (unsigned)(last - first) >= (unsigned)(end - first))
-            insert_n(last, 1, v);
+            fill_n(last, 1, v);
         else
             *last++ = v;
     }

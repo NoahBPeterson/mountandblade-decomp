@@ -93,7 +93,7 @@ struct EmitTable {
     int idx1, idx2;                                     // +8, +0xc the definition indices of the two scene emitters (mesh_slot/mesh_start.cpp 0x484590)
     void setup(Emit* e, int idx, const rgl::vector4* pos);                  // 0x4424c0
     Emit* spawn(int* idx, const rgl::vector4* pos, const int* owner);       // 0x479d20 (mission.cpp)
-    void read(tstream3* s);                                                 // 0x4c1f70 (inventory_panel/module_files.cpp: the particle-system file loader)  // old name of loaded_psys_table::resize, removed after the names merge
+    void resize(tstream3* s);                                                 // 0x4c1f70 (inventory_panel/module_files.cpp: the particle-system file loader)
 };
 extern EmitTable g_emit_defs;                           // 0x8ed5090
 #endif // GAME_EMIT_H

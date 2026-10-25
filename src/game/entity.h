@@ -97,13 +97,13 @@ struct entity {
     virtual void commit(int unused);                    // 7: 0x41fda0
     virtual void set_f144(const float* p);              // 8: 0x41fdd0
     virtual void render(scene* sc, render_info* out);   // 9: 0x420310
-    virtual void s10();                                 // 10: 0x4280e0  // old name of entity::awake, removed after the names merge
+    virtual void awake();                                 // 10: 0x4280e0
     virtual void s11();                                 // 11: 0x4280e0
     virtual const vector4* local_origin();              // 12: 0x41fde0
     virtual const vector4* get_vac();                   // 13: 0x41fdf0
     virtual const vector4* get_v9c();                   // 14: 0x41fe00
     virtual int is_dirty();                             // 15: 0x41fe10
-    virtual void s16();                                 // 16: 0x4284e0  // old name of entity::load, removed after the names merge
+    virtual void load();                                 // 16: 0x4284e0
     virtual int slot17();                               // 17: 0x408030
     virtual void set_mode(unsigned m);                  // 18: 0x41fe30
     virtual void clear();                               // 19: 0x420960

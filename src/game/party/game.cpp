@@ -60,11 +60,11 @@ void LoadingPanel::update(int arg)
             g_game->f13aec = 0;
             *(int*)(*(char**)((char*)&g_windows + 0x3c) + 0x14) = 0;
             *(int*)(*(char**)((char*)&g_windows + 0x5c) + 0x18) = 0xf;
-            (*(main_menu*)&g_windows).choose(0x17);
+            (*(main_menu*)&g_windows).set_state(0x17);
             return;
         }
         if (m == 1) {
-            (*(main_menu*)&g_windows).choose(7);
+            (*(main_menu*)&g_windows).set_state(7);
             return;
         }
         if (m == 2) {

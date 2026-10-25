@@ -105,7 +105,7 @@ struct mesh : mesh_base {
     mesh();                                         // 0x412a90
     virtual ~mesh();                                // 0x417730 (scalar deleting dtor)
     virtual int slot1() { return 1; }               // 0x48b1f0
-    virtual void slot2();                           // 0x412980  // old name of mesh::compute_sortkey, removed after the names merge
+    virtual void compute_sortkey();                           // 0x412980
 
     // parent-chain accessors: walk up until a mesh that owns its data (recursive; the out-of-line copies at
     // 0x40eba0.. are the tail-call-optimised loops, callers inline one level)
@@ -117,9 +117,9 @@ struct mesh : mesh_base {
     std::vector<elem30>& get60() { return local_a1 ? v60 : parent->get60(); }     // 0x40ec60
     std::vector<elem30>& get60_();                  // 0x40ec60 (out-of-line call)
     std::vector<vertex60>& get50_();                // 0x40ebd0 (out-of-line call)
-    int has_morph();                                // 0x40f7f0  // old name of mesh::should_batch, removed after the names merge
-    void FUN_00412700();                            // 0x412700  // old name of mesh::ensure_skin, removed after the names merge
-    void render_child(scene* sc);                   // 0x414960  // old name of psys::update, removed after the names merge
+    int should_batch();                                // 0x40f7f0
+    void ensure_skin();                            // 0x412700
+    void update(scene* sc);                   // 0x414960
     void ensure_local();                            // 0x412ee0
     int add_point(const vector4* p);                // 0x412f50
     void append(mesh* other, const mat4* m);        // 0x412fe0
@@ -137,7 +137,7 @@ struct mesh : mesh_base {
     mesh* clone();                                  // 0x41c6d0
     void clear_geometry();                          // 0x428e80
     void calc_bounds(vector4* mn, vector4* mx);     // 0x438d80
-    void finish_load();                             // 0x419300  // old name of mesh_x::compute_bounds, removed after the names merge
+    void compute_bounds();                             // 0x419300
     void build_panel(float* base, float* size, float* uv0, float* uv1, int* col);   // 0x4de3e0 (loading_screen.cpp: the frame quads)
     void compute_normals();                         // 0x451c50
     void append_plain(mesh* other, const mat4* m);  // 0x4520b0 (ret 8, tail of append_skinned)
@@ -175,7 +175,7 @@ struct lod_mesh {
     __forceinline bool ready() { return cur < count; }
     char padd0[0x10];                            // size 0xe0
     lod_mesh();                                     // 0x41c2a0
-    void add(int level, mesh* m);                   // 0x441ff0 (ret 8)  // old name of Poser::add_to_list, removed after the names merge
+    void add_to_list(int level, mesh* m);                   // 0x441ff0 (ret 8)
 };
 
 struct mesh_pool {

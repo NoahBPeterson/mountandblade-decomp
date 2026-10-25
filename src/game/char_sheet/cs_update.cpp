@@ -56,7 +56,7 @@ void CharSheet::update(float dt)
                 update_detail();
                 update_skill_rows();
                 refresh_panels();
-                refresh_lists();
+                update_weapons();
             }
         }
         // the seven proficiency rows: train one point on click, paid with proficiency points
@@ -74,7 +74,7 @@ void CharSheet::update(float dt)
                 g_game->chars[f_14].adjust(i, (float)cost);
                 g_game->chars[f_14].prof_points -= cost;
                 f_4d4 = 1;
-                refresh_lists();
+                update_weapons();
                 refresh_panels();
             }
         }
@@ -99,7 +99,7 @@ void CharSheet::update(float dt)
             refresh_panels();
             update_detail();
             update_skill_rows();
-            refresh_lists();
+            update_weapons();
         }
     }
 
@@ -153,7 +153,7 @@ void CharSheet::update(float dt)
             update_detail();
             update_skill_rows();
             refresh_panels();
-            refresh_lists();
+            update_weapons();
             return;
         }
     } else {
@@ -182,7 +182,7 @@ void CharSheet::update(float dt)
             update_detail();
             update_skill_rows();
             refresh_panels();
-            refresh_lists();
+            update_weapons();
             return;
         }
         if (f_42c->changed(0x10000)) {

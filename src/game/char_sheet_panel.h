@@ -95,10 +95,8 @@ struct CharSheet {
     void apply_to_troop();                          // 0x4ef420
     void update_skill_rows();                       // 0x4ef7d0
     void update_detail();                           // 0x4ef9f0
-    void update_texts();                            // 0x4f0820  // old name of CharSheet::refresh_panels, removed after the names merge
     void update_weapons();                          // 0x4f06f0
     void refresh_panels();                          // 0x4f0820 (cs_update's name for update_texts)
-    void refresh_lists();                           // 0x4f06f0 (cs_update's name for update_weapons)  // old name of CharSheet::update_weapons, removed after the names merge
     void init();                                    // 0x507400
 };
 

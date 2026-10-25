@@ -126,7 +126,7 @@ void SavePanel::update(int)
                               *(int*)(g_game + 0x13a00));
         ((tstring*)((char*)g_main_menu_obj + 0x54))->operator=(*(tstring*)slotname);
         g_main_menu.open = 3;
-        g_main_menu.choose(0);
+        g_main_menu.set_state(0);
         return;
         } else {
         char* slot = (char*)this + selected * 0x30;
@@ -142,13 +142,13 @@ void SavePanel::update(int)
             *(int*)(g_save_dialog + 4) = 1;
             ((tstring*)(g_save_dialog + 0x48))->assign(name);
             *(int*)(g_save_dialog + 0x8c) = selected;
-            g_main_menu.choose(3);
+            g_main_menu.set_state(3);
             return;
         }
         }
     }
     if (((Control*)*(void**)((char*)this + 0x20c))->is_key_down(0x10000)) {
-        g_main_menu.choose(*(int*)((char*)this + 0x18));
+        g_main_menu.set_state(*(int*)((char*)this + 0x18));
         return;
     }
     Control* panel = *(Control**)((char*)this + 0x210);
@@ -169,7 +169,7 @@ void SavePanel::update(int)
                 tstring err("ui_error_removing_file");
                 g_msglog.add(*g_strtable.lookup(&err), -1);
             }
-            g_main_menu.choose(0x15);
+            g_main_menu.set_state(0x15);
             return;
         }
         if (*(int*)((char*)this + 0x220) != 0)
@@ -178,7 +178,7 @@ void SavePanel::update(int)
         ((tstring*)(g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
         tstring ok("ui_game_saved");
         g_msglog.add(*g_strtable.lookup(&ok), -1);
-        g_main_menu.choose(*(int*)((char*)this + 0x18));
+        g_main_menu.set_state(*(int*)((char*)this + 0x18));
         return;
     }
 confirm_delete:
@@ -198,7 +198,7 @@ confirm_delete:
     g_main_menu.choice = (int)((char*)this + 0x21c);
     g_main_menu.v50 = 0;
     g_main_menu.open = 1;
-    g_main_menu.choose(0);
+    g_main_menu.set_state(0);
 }
 
 // @ 0x4ea850

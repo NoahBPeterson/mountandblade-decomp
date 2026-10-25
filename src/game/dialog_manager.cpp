@@ -327,7 +327,7 @@ void DialogMgr::select(DlgLine* l)
     cur = l->dialog;
     cur_idx = l->idx;
     g_game->f13a1c = l->idx;
-    recs[l->dialog].conseq.exec(4);
+    recs[l->dialog].conseq.play(4);
     refresh_text();
 }
 
@@ -362,7 +362,7 @@ void DialogMgr::collect(DlgLine* out, int max, int* n, char flag)
             int j = start;
             while (j < reps && *n < max) {
                 g_game->f13a1c = j;
-                if (recs[i].cond.exec(2)) {
+                if (recs[i].cond.play(2)) {
                     out[*n].dialog = i;
                     out[*n].idx = j;
                     DialogRec* r = &recs[i];

@@ -184,7 +184,7 @@ void InventoryPanel::refresh_transaction(int unused)
                     pay.~tstring();
                     think.~tstring();
                     g_main_menu.f4 = 2;
-                    g_main_menu.choose(0);
+                    g_main_menu.set_state(0);
                 }
             } else if (worn > 0) {
                 q_dump = -1;
@@ -208,7 +208,7 @@ void InventoryPanel::refresh_transaction(int unused)
                 yes.~tstring();
                 no.~tstring();
                 g_main_menu.f4 = 2;
-                g_main_menu.choose(0);
+                g_main_menu.set_state(0);
             } else {
                 eaten = 1;
             }
@@ -232,7 +232,7 @@ void InventoryPanel::refresh_transaction(int unused)
                 msg.~tstring();
                 yes.~tstring();
                 no.~tstring();
-                g_main_menu.choose(0);
+                g_main_menu.set_state(0);
                 eaten = 0;
             }
         }
@@ -274,7 +274,7 @@ equip:
     }
 
     if (next_menu != 0x64)
-        g_main_menu.choose(next_menu);
+        g_main_menu.set_state(next_menu);
     else
         g_map_flags.commit(&eaten);
 }
@@ -773,14 +773,14 @@ char GameDataV::emit_event4(int id, int a, int b, int c)
     vals[1] = b;
     vals[2] = c;
     unsigned tag;
-    if (*(int*)((char*)this + 0x1a068) && g_emitters[id].name.equals(*(tstring*)((char*)this + 0x1a06c)))
+    if (*(int*)((char*)this + 0x1a068) && g_scripts[id].name.equals(*(tstring*)((char*)this + 0x1a06c)))
         tag = (id << 16) | *(int*)((char*)this + 0x1a07c);
     else
         tag = (unsigned)-1;
     char r = 0;
     int count = 3;
     if (g_emitter_idx[id] >= 0)
-        r = g_emitters[g_emitter_idx[id]].sub.emit(0x200000, 0, &count, vals, tag);
+        r = g_scripts[g_emitter_idx[id]].sub.emit(0x200000, 0, &count, vals, tag);
     return r;
 }
 

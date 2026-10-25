@@ -206,7 +206,7 @@ void options_panel::on_key_event(int)
         refresh_texts();
     }
     if (menu_keys->is_key_down(0x10000))
-        g_main_menu.choose(menu_choice);
+        g_main_menu.set_state(menu_choice);
 }
 
 // @ 0x4d7de0
@@ -355,7 +355,7 @@ void options_panel::import_export(int)
                     tstring text(buf_a);
                     g_main_menu.rec->ask_yes_no(&text, g_strtable.lookup(&yes), g_strtable.lookup(&no), &import_pending);
                 }
-                g_main_menu.choose(0);
+                g_main_menu.set_state(0);
             } else {
                 {
                     tstring msg("ui_unable_to_find_character_import_file"); // 0x596c64
@@ -389,14 +389,14 @@ void options_panel::import_export(int)
                 tstring text(buf_a);
                 g_main_menu.rec->ask_yes_no(&text, g_strtable.lookup(&yes), g_strtable.lookup(&no), &export_pending);
             }
-            g_main_menu.choose(0);
+            g_main_menu.set_state(0);
         } else {
             export_pending = 0;
         }
         return;
     }
     if (menu_keys->is_key_down(0x10000))
-        g_main_menu.choose(menu_choice);
+        g_main_menu.set_state(menu_choice);
 }
 
 // @ 0x4d86d0

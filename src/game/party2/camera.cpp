@@ -2181,8 +2181,8 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     Group* g = &g_anims[*group];
     if (g->count > 0) {
         int* src = g->src;
-        e->skel->set_group0(0, src[0], src[4], src[5]);
-        e->skel->link_group(0);
+        e->skel->start_anim(0, src[0], src[4], src[5]);
+        e->skel->reset_rec(0);
         *(int*)e->skel->env = 0x3f800000;
         e->skel->update(0.05f, (const rgl::matrix*)e->m);
     }

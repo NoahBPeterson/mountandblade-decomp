@@ -5,7 +5,7 @@
 #define MB_GAME_VIEW_RECT_H
 
 struct ViewRect {
-    void cell_rect(int c0[4], int c1[4]);       // 0x4bd2f0  // old name of camera_ray::screen_to_world, removed after the names merge
+    void screen_to_world(int c0[4], int c1[4]);       // 0x4bd2f0
 };
 
 #endif // MB_GAME_VIEW_RECT_H

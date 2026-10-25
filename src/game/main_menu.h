@@ -50,9 +50,8 @@ struct main_menu {
     }
     void ask_yes_no(const tstring* text, const tstring* yes, const tstring* no, int* result);  // 0x48a3d0 (ret 0x10)  // old name of NamedRec::setup2, removed after the names merge
     void ask(const void* question, const void* yes, const void* no, int* result);   // 0x48a3d0 (ret 0x10)  // old name of NamedRec::setup2, removed after the names merge
-    void set_texts(const void* explanation, const void* name);                       // 0x48a3a0 (ret 8)  // old name of NamedRec::setup, removed after the names merge
     void reset(int n);                                          // 0x494260 (ret 4)  // old name of WindowMgrW::open, removed after the names merge
-    void choose(int option);                                    // 0x495700 (ret 4)  // old name of WindowMgrW::set_state, removed after the names merge
+    void set_state(int option);                                    // 0x495700 (ret 4)
 };
 typedef main_menu MainMenu;
 extern main_menu g_main_menu;                                   // 0xa73980  // old name of g_windows, removed after the names merge

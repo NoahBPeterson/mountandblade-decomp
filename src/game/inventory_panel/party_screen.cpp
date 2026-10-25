@@ -409,11 +409,11 @@ void PartyScreen::refresh_party_members(int type)
 
     if (party_id != -1) {
         // label every row that exists with an empty string
-        for (int i = 0; i < get_party(party_id)->max_4b1700(); i++) {
+        for (int i = 0; i < get_party(party_id)->max_stacks(); i++) {
             push_empty(buttons[type * 2 + 0][i]);
             PSO(buttons[type * 2 + 0][i])->enable();
         }
-        for (int i = 0; i < get_party(party_id)->max_4b1700(); i++) {
+        for (int i = 0; i < get_party(party_id)->max_stacks(); i++) {
             push_empty(buttons[type * 2 + 1][i]);
             PSO(buttons[type * 2 + 1][i])->enable();
         }

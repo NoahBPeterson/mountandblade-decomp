@@ -9,7 +9,7 @@ void FaceGen::update_view(int unused)
     mat4 m;
     identity_pos(&m);
     float angle = 1.5707964f;
-    m.rotate_fu(&angle);
+    m.rotate_about_s(&angle);
     vector4 t;
     t.x = m.u.x * f16c;
     t.y = m.u.y * f16c;
@@ -39,7 +39,7 @@ void Animator::randomise()
     int r = rand() % 0x3dc9;
     time = (float)r * 6.322312e-05f;
     SkinSet* base = (SkinSet*)((char*)skins + cur * 0x1f8);
-    base->regen(-1, weights);
+    base->relax(-1, weights);
 }
 
 // @ 0x4eb3c0
@@ -183,8 +183,8 @@ int SaveLoadUi::run()
 {
     if (g_scene_dirty) {
         g_scene_dirty = 0;
-        g_editor.func_4c1a60();
-        g_editor.func_4c1940();
+        g_editor.InvalidateDeviceObjects();
+        g_editor.RestoreDeviceObjects();
     }
     ++g_5e28c8;
     ++g_a16c58;
@@ -304,7 +304,7 @@ void __cdecl menu_variables_loaded(char flag)
 {
     if (!flag && !g_no_cam)
         return;
-    g_editor.restart();
+    g_editor.load_game_variables();
     if (flag)
         return;
     unsigned u = g_a73a08 + g_a73a04 - 1;
@@ -316,6 +316,6 @@ void __cdecl menu_variables_loaded(char flag)
     if (count <= q)
         q -= count;
     int value = rows[q][r];
-    g_main_menu.choose(value);
+    g_main_menu.set_state(value);
     g_msglog.add("Menu variables are loaded...", 0xffff0000);
 }

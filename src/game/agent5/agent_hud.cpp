@@ -39,8 +39,8 @@ void Mission::init_agent(Agent* a)
         a->cycle_slot(0);
         a->cycle_slot(1);
     }
-    a->set_slot_value(0, 0x14);
-    a->set_slot_value(1, 0x14);
+    a->set_slot(0, 0x14);
+    a->set_slot(1, 0x14);
 }
 
 // @ 0x4f7e00
@@ -55,8 +55,8 @@ void Mission::refresh_agent(Agent* a)
                      (int*)((char*)a + 0x194), (int*)((char*)a + 0x1a4), (int*)((char*)a + 0x1a8), (int*)a->pairs, a->f8);
     build_equipment(a->body, a->f10, a->troop, look, &a->f130, (int*)a->pairs, a->f8);
     a->f24c = a->equipment_value();
-    a->set_slot_value(0, 0x14);
-    a->set_slot_value(1, 0x14);
+    a->set_slot(0, 0x14);
+    a->set_slot(1, 0x14);
 }
 
 static __forceinline rgl::mesh* res_clone(const tstring& n)
@@ -432,10 +432,10 @@ void MissionHud::update_camera(float dt)
         float ang, t, u;
         vector4& gcam = GAME_AT(vector4, 0x1a1a4);
         ang = 1.5707964f;
-        k.rotate_fu(ang);
-        k.rotate_su(&yaw);
-        k.rotate_fu(pitch);
-        k.rotate_su(&f284);
+        k.rotate_about_s(ang);
+        k.rotate_about_f(&yaw);
+        k.rotate_about_s(pitch);
+        k.rotate_about_f(&f284);
         f300 = (1.0f - (dt + dt)) * f300;
         if (f300 < 0.0f)
             f300 = 0.0f;
@@ -541,7 +541,7 @@ void MissionHud::update_camera(float dt)
                     sk->ensure_updated();
                 *(matrix*)&k = body->m.mul(*(matrix*)(sk->recs + 0x1140));
                 ang = 3.1415927f;
-                k.rotate_su(&ang);
+                k.rotate_about_f(&ang);
                 hv_add_to(k.o, hv_mul(k.f, 0.15f));
             } else {
                 float lo = 0.0f, hi = 1.0f, ang, radial;
@@ -556,9 +556,9 @@ void MissionHud::update_camera(float dt)
                 hv_add_to(lag, hv_mulv(c, clamp(&radial, &lo, &hi)));
                 k.o = body->m.transform_point(lag);
                 ang = 1.5707964f;
-                k.rotate_fu(ang);
-                k.rotate_su(&yaw);
-                k.rotate_fu(pitch);
+                k.rotate_about_s(ang);
+                k.rotate_about_f(&yaw);
+                k.rotate_about_s(pitch);
                 hv_add_to(k.o, hv_add(hv_mul(k.f, 0.15f), hv_mul(k.u, 0.11f)));
             }
         } else if (id >= 0) {
@@ -589,10 +589,10 @@ void MissionHud::update_camera(float dt)
             head.x = head.x + ag->v98.x;
             head.y = ag->v98.y + head.y;
             head.z = ag->v98.z + head.z;
-            k.rotate_fu(ang);
-            k.rotate_su(&yaw);
-            k.rotate_fu(pitch);
-            k.rotate_su(&f284);
+            k.rotate_about_s(ang);
+            k.rotate_about_f(&yaw);
+            k.rotate_about_s(pitch);
+            k.rotate_about_f(&f284);
             k.o = head;
             d = (pitch < -3.0f ? -3.0f : (pitch < 3.0f ? pitch : 3.0f)) * 0.0f + f278 + f27c;
             hv_add_to(k.o, hv_mul(k.u, d));
@@ -952,8 +952,8 @@ void MissionHud::update_status()
                     piece->set_offset(*(const vector4*)&v);
                     identity3(&frame);
                     float ang = -1.45f;
-                    ((posm*)&frame)->rotate_sf(&ang);
-                    piece->transform(&frame);
+                    ((posm*)&frame)->rotate_about_u(&ang);
+                    piece->set_part(&frame);
                     rgl::identity_pos(&frame);
                     frame.o.z -= 10.0f;
                     shield_mesh->append_skinned(piece, &frame, -1, -1, 0);
@@ -1081,12 +1081,12 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
     float angle;
     if (type == 0xd) {
         angle = -1.5707964f;
-        ((posm*)&m)->rotate_fu(angle);
+        ((posm*)&m)->rotate_about_s(angle);
         angle = 3.1415927f;
         goto sf;
     } else if (type == 1) {
         angle = -1.5707964f;
-        ((posm*)&m)->rotate_fu(angle);
+        ((posm*)&m)->rotate_about_s(angle);
         angle = 1.5707964f;
         goto sf;
     } else if (type == 2 || type == 3 || type == 4) {
@@ -1094,26 +1094,26 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
         goto sf;
     } else if (type == 0xe) {
         angle = -1.5707964f;
-        ((posm*)&m)->rotate_fu(angle);
+        ((posm*)&m)->rotate_about_s(angle);
         angle = 2.670354f;
-        ((posm*)&m)->rotate_sf(&angle);
+        ((posm*)&m)->rotate_about_u(&angle);
         angle = -0.31415927f;
-        ((posm*)&m)->rotate_fu(angle);
+        ((posm*)&m)->rotate_about_s(angle);
         goto done;
     } else if (type == 7) {
         angle = 1.5707964f;
         goto sf;
     } else if (type == 0xc) {
         angle = -0.47123894f;
-        ((posm*)&m)->rotate_su(&angle);
+        ((posm*)&m)->rotate_about_f(&angle);
         angle = 0.62831855f;
-        ((posm*)&m)->rotate_fu(angle);
+        ((posm*)&m)->rotate_about_s(angle);
         goto done;
     } else if (type == 9) {
         angle = 1.5707964f;
-        ((posm*)&m)->rotate_su(&angle);
+        ((posm*)&m)->rotate_about_f(&angle);
         angle = -2.3561945f;
-        ((posm*)&m)->rotate_fu(angle);
+        ((posm*)&m)->rotate_about_s(angle);
         goto done;
     } else if (type == 0x11) {
         goto done;
@@ -1125,21 +1125,21 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
         goto sf;
     } else if (type == 0xb) {
         angle = -1.2566371f;
-        ((posm*)&m)->rotate_fu(angle);
+        ((posm*)&m)->rotate_about_s(angle);
         angle = 0.7853982f;
         goto sf;
     } else if (type == 0x14) {
         angle = -0.62831855f;
-        ((posm*)&m)->rotate_fu(angle);
+        ((posm*)&m)->rotate_about_s(angle);
         angle = -0.47123894f;
         goto sf;
     } else {
         goto done;
     }
 sf:
-    ((posm*)&m)->rotate_sf(&angle);
+    ((posm*)&m)->rotate_about_u(&angle);
 done:
-    result->transform(&m);
+    result->set_part(&m);
 
     vector4 bmin, bmax;
     result->calc_bounds(&bmin, &bmax);
@@ -1205,7 +1205,7 @@ void GameScreen::build()
     rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
     *(tstring*)((char*)g_game + 0x1a210) = *(tstring*)(rec + 0x28);
     GAME_AT(int, 0x1a220) = -1;
-    ((DialogBlock*)(g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->exec(8);
+    ((DialogBlock*)(g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->play(8);
     if (GAME_AT(int, 0xc8) != 0)
         ok = false;
 
@@ -1894,7 +1894,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         else {
                             GlyphNode* node;
                             int key = ch;
-                            map.lookup(&node, &key);
+                            map.lower_bound(&node, &key);
                             g = node == map.head ? &dflt : &node->val;
                         }
                         pos.x += sc[0] * g->f10;

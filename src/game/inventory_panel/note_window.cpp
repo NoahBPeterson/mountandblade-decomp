@@ -764,7 +764,7 @@ void note_window::build(int page_, int arg_)
     this->data_panel = data;
     label_refresh(data, tstring("note_bo_data"));
 
-    if (((WidgetOps*)this->picture)->visible() == 0) {
+    if (((WidgetOps*)this->picture)->flag1() == 0) {
         float a[2], b[2];
         ((TextLayout*)(*(void**)((char*)this->picture + 0x108)))->calc_bounds(a, b);
         float h = b[1] - a[1];
@@ -808,7 +808,7 @@ void note_window::build(int page_, int arg_)
                                                        : fld(this->keys_scroll, 0xf4);
         v[0] = fld(this->keys_scroll, 0xf0);
         this->keys_scroll->set_scale(v);
-        ((WidgetOps*)this->keys_scroll)->relayout();       // 0x488d50
+        ((WidgetOps*)this->keys_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->keys_scroll);
     }
 
@@ -836,7 +836,7 @@ void note_window::build(int page_, int arg_)
                                                        : fld(this->data_scroll, 0xf4);
         v[0] = fld(this->data_scroll, 0xf0);
         this->data_scroll->set_scale(v);
-        ((WidgetOps*)this->data_scroll)->relayout();       // 0x488d50
+        ((WidgetOps*)this->data_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->data_scroll);
     }
 
@@ -885,7 +885,7 @@ void note_window::build(int page_, int arg_)
         break;
     }
 
-    GUI->set_active(this->panel);
+    GUI->add(this->panel);
 
     if (any && selected >= 0)
         this->build(page_, selected);

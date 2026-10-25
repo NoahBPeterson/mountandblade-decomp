@@ -632,13 +632,13 @@ void Agent::update_anims(int unused)
         if (v == -1 || v == s->cur) {
             if (body->skel->chans[i].busy() && s->cur != -1) {
                 if (anim[i].sub != -1 && v != -1 && ((defs->defs[s->cur].subs[anim[i].sub].flags & 0x10000000) != 0)) {
-                    v = pick_slot_anim(i);
+                    v = pick(i);
                     if (v != anim[i].sub)
                         goto start;
                 }
             }
         } else {
-            v = pick_slot_anim(i);
+            v = pick(i);
         start:
             if (v != -1 && s->next != -1) {
                 unsigned f1 = 0;

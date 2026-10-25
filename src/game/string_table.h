@@ -14,9 +14,9 @@ struct StringTable {
     Str* quick;                         // +4  quick strings
     int count;                          // +8  (check_string_arg 0x49cda0)
     int quick_count;                    // +0xc
-    tstring get(int id, int type);      // 0x48e8f0 (thiscall, ret 0xc: hidden return; type 0 = register, 0x16 = quick)  // old name of NameTable::get_string, removed after the names merge
-    void load(tstream3* s);             // 0x4c46d0  // old name of pair_holder::load1, removed after the names merge
-    void load_quick(tstream3* s);       // 0x4c47d0  // old name of pair_holder::load2, removed after the names merge
+    tstring get_string(int id, int type);      // 0x48e8f0 (thiscall, ret 0xc: hidden return; type 0 = register, 0x16 = quick)
+    void load1(tstream3* s);             // 0x4c46d0
+    void load2(tstream3* s);       // 0x4c47d0
 };
 extern StringTable g_strings;           // 0xa75ea0
 

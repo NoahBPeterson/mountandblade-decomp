@@ -239,7 +239,7 @@ void load_module_files()
     in_particles.r_tstr(&str1);
     in_particles.r_tstr(&str2);
     in_particles.r_int(&version);
-    g_emit_defs.read(&s_particles);
+    g_emit_defs.resize(&s_particles);
     s_particles.failed = 1;
 
     // skins.txt
@@ -325,13 +325,13 @@ void load_module_files()
     in_strings.r_tstr(&str1);
     in_strings.r_tstr(&str2);
     in_strings.r_int(&version);
-    g_strings.load(&s_strings);
+    g_strings.load1(&s_strings);
     s_strings.failed = 1;
 
     // quick_strings.txt
     tstream3 s_quick_strings;
     open_module_file(s_quick_strings, "quick_strings.txt");
-    g_strings.load_quick(&s_quick_strings);
+    g_strings.load2(&s_quick_strings);
     s_quick_strings.failed = 1;
 
     // meshes.txt

@@ -30,7 +30,7 @@ extern "C" void __stdcall SkinMagic_Load(const char*);                        //
 Glyph* GlyphMap::at(const int& key)
 {
     GlyphNode* it;
-    lookup(&it, &key);
+    lower_bound(&it, &key);
     if (it == head) {
         HOut out;
         node_pair v = { key, Glyph() };
@@ -1008,7 +1008,7 @@ void ResultWindow::init()
         }
         {
             rgl::vector4 c(0.5f, 0.5f, 1.0f);
-            ((gui_mesh*)box38->tracks[2])->set_scale(c);
+            ((gui_mesh*)box38->tracks[2])->set_color(c);
         }
         {
             tstring n("party_button_down");
@@ -1016,7 +1016,7 @@ void ResultWindow::init()
         }
         {
             rgl::vector4 c(0.5f, 0.5f, 1.0f);
-            ((gui_mesh*)box38->tracks[1])->set_scale(c);
+            ((gui_mesh*)box38->tracks[1])->set_color(c);
         }
         vt(box38)->d03();
         { struct { int a, b; } ret; vt(box38)->d41(&ret, &s54); }
@@ -1394,7 +1394,7 @@ void BlockOwner::init(ContainerBase* parent, int which)
     index = which;
     int n = g_presentations[which].first;
     if (n > 0)
-        vt(block)->d31(0, g_scene.placed(n));
+        vt(block)->d31(0, g_meshes.placed(n));
     activate();
 }
 
@@ -1592,7 +1592,7 @@ void DebriefMenu::create_report()
     vt(win)->d31(0, make_background(v + 2, -1));
 
     PartyMgr* party = &g_game->parties;
-    int h = party->find(f10);
+    int h = party->index_of(f10);
     Party** page = party->pages._Myfirst;
     char* rec = (char*)((h & 0xf) * 0x5ac8 + (char*)page[h >> 4]);
     const tstring* text;
@@ -1777,8 +1777,8 @@ UiB* make_slider(MissionUi* parent, float x, float y, float k)
     gui_mesh* track = load_mesh("slider_hor");
     gui_mesh* handle = load_mesh("handle_hor");
     if (k != 1.0f) {
-        track->set_scale(rgl::vector4(k, k, k));
-        handle->set_scale(rgl::vector4(k, k, k));
+        track->set_color(rgl::vector4(k, k, k));
+        handle->set_color(rgl::vector4(k, k, k));
     }
     vt(w)->d32(0, track);
     vt(w)->d32(2, handle);
@@ -1799,19 +1799,19 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
         tstring n("button_drop");
         vt(b)->d32(2, res_get(n)->clone());
     }
-    ((gui_mesh*)b->tracks[2])->set_scale(rgl::vector4(1.0f, 0.5f, 1.0f));
+    ((gui_mesh*)b->tracks[2])->set_color(rgl::vector4(1.0f, 0.5f, 1.0f));
 
     {
         tstring n("button_drop_clicked");
         vt(b)->d32(1, res_get(n)->clone());
     }
-    ((gui_mesh*)b->tracks[1])->set_scale(rgl::vector4(1.0f, 0.5f, 1.0f));
+    ((gui_mesh*)b->tracks[1])->set_color(rgl::vector4(1.0f, 0.5f, 1.0f));
 
     {
         tstring n("button_drop_hl");
         vt(b)->d32(3, res_get(n)->clone());
     }
-    ((gui_mesh*)b->tracks[3])->set_scale(rgl::vector4(1.0f, 0.5f, 1.0f));
+    ((gui_mesh*)b->tracks[3])->set_color(rgl::vector4(1.0f, 0.5f, 1.0f));
 
     {
         tstring n("button_drop_child");
@@ -2053,7 +2053,7 @@ static __forceinline void set_mesh_color4(gui_mesh* m, const float* c)          
 {
     rgl::vector4 v;
     v.x = c[0]; v.y = c[1]; v.z = c[2]; v.w = c[3];
-    m->set_scale(v);
+    m->set_color(v);
 }
 MissionUi* new_medium_button(ContainerBase* parent, const tstring* name, float x, float y, float w, float h);   // 0x4dce70
 MissionUi* opt_make_medium_button(ContainerBase* parent, float x, float y, float w, float h, float k,
@@ -2962,7 +2962,7 @@ progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, floa
     v.y = pos[1];
     v.z = sxy[0];
     v.w = sxy[1];
-    c->set_scale(v);
+    c->set_color(v);
     {
         tstring name("progressbar_handle");
         p->handle = res_get(name);

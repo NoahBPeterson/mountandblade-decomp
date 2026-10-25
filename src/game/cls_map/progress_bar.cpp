@@ -68,7 +68,7 @@ void progress_bar::update()
         float* d = &r.x + idx;
         *d = sx * *d;
         tracks[2] = c;
-        c->set_scale(r);
+        c->set_color(r);
         f184 = 0;
     }
 }

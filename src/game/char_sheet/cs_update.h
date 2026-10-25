@@ -97,6 +97,6 @@ extern int g_trial_mode;                            // 0x5e29c4
 }
 
 // 0x495700 "choose menu option" (tail-called through g_main_menu)
-static inline void menu_choose(int option) { g_main_menu.choose(option); }
+static inline void menu_choose(int option) { g_main_menu.set_state(option); }
 
 #endif

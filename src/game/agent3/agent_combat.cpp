@@ -50,7 +50,7 @@ float Font::advance(int ch)
 {
     if (ch >= 0x200) {
         GlyphNode* it;
-        map.lookup(&it, &ch);
+        map.lower_bound(&it, &ch);
         if (it != map.head) {
             Glyph* g = &it->val;
             return g->f18 + g->f10;
@@ -110,7 +110,7 @@ void Skeleton::ensure_updated()
         if (has_poses)
             update_poses();
         else
-            update();
+            update_poses2();
     }
 }
 
@@ -136,7 +136,7 @@ char* Skeleton::rec(int i)
         if (has_poses)
             update_poses();
         else
-            update();
+            update_poses2();
     }
     return recs + i * 0x1dc + 0x84;
 }
@@ -178,7 +178,7 @@ void Agent::aim_point_and_dir(vector4* pos_out, vector4* dir_out)
         if (sk->has_poses)
             sk->update_poses();
         else
-            sk->update();
+            sk->update_poses2();
     }
     AimRec* r = (AimRec*)(sk->recs + 0x1140);
     vector4 t = vadd(vscale(r->offs, 0.2f), r->base);
@@ -205,7 +205,7 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
                 if (sk->has_poses)
                     sk->update_poses();
                 else
-                    sk->update();
+                    sk->update_poses2();
             }
             matrix tm = body->m.mul(*(matrix*)(sk->recs + i * 0x1dc + 0x84));
             c.transform((const ::pos*)&tm);
@@ -277,7 +277,7 @@ int Agent::pick_attack_dir(unsigned tid)
         if (tb == 0)
             return 0;
         posm cam = g_mission->view;
-        cam.rotate_fu(-1.5707964f);
+        cam.rotate_about_s(-1.5707964f);
         vector4 p = t->pos;
         p.z = p.z + 0.7f;
         if (t->f10 == 0)
@@ -369,7 +369,7 @@ void Agent::start_shoot(int slot)
         if (dir == alt)
             alt = 3 - dir;
     }
-    int tgt = find_target();
+    int tgt = pick_front();
     if (id == g_mission->player_id && (g_ctl_mode != 0 || tgt != -1))
         dir = pick_attack_dir(tgt);
     unsigned __int64 kind = flags & itcf_shoot_mask;
@@ -476,13 +476,13 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
         }
     } else {
         mode = 0;
-        int t = find_target();
+        int t = pick_front();
         if (t >= 0) {
             Agent* o = agent_by_id(t);
             AgentBody* tb = o->body;
             if (tb != 0) {
                 posm cam = g_mission->view;
-                cam.rotate_fu(-1.5707964f);
+                cam.rotate_about_s(-1.5707964f);
                 vector4 p = o->pos;
                 p.z = p.z + 0.7f;
                 if (o->f10 == 0)
@@ -539,7 +539,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* t
     Agent* b = agent_by_id(bid);
     bool strike = flag != 0;
     int mode;
-    if (a->charged_0x48())
+    if (a->f100_is_0x48_and_charged())
         mode = 0;
     else if (alt == 0)
         mode = a->mode1;
@@ -577,7 +577,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* t
                     hi = 0.5f;
             }
             if (b->troop >= 0) {
-                int k = g_game->skill(troop, 0x1a);
+                int k = g_game->skill_level(troop, 0x1a);
                 float s = (float)k * 0.02f + 1.0f;
                 float u2 = (float)k * 0.1f;
                 hi = s * hi + u2;
@@ -699,7 +699,7 @@ int Agent::fire_check(unsigned tid, int* out_blocker)
         a.z = tp.z - pos.z;
         float dz = a.z;
         dist = a.normalize();
-        float reach = duration();
+        float reach = attack_speed();
         a.z = (accel_factor(&reach, &dist, &dz) + a.z) * 0.1f;
     }
     a.normalize();

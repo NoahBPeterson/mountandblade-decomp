@@ -10,7 +10,7 @@
 ../src/game/agent/agent.cpp  ?stat_214@ItemRef@@QAEHXZ  00435040  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?stat_204@ItemRef@@QAEHXZ  00435090  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?slot_class_impl@@YAHHH@Z  004350c0  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?has_flag10@Troop@@QAE_NXZ  00435130  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?is_hero@Troop@@QAE_NXZ  00435130  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?stat_int@Troop@@QAEHH@Z  00435150  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?scaled_b0@Troop@@QAEHXZ  00435170  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?nibble@Troop@@QAEHH@Z  004351a0  /O2 /MT /Gy /TP
@@ -20,8 +20,8 @@
 ../src/game/agent/agent.cpp  ?clamped_team@Agent@@QBEHXZ  00435490  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?set_slot@Agent_f8@@QAEXHM@Z  004354b0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?flag_0x400_or_0x114@Agent@@QBE_NXZ  004354d0  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?scale_f4@Agent@@QBEMXZ  004355f0  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?scale_f10@Agent@@QBEMXZ  00435620  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?range_scale@Agent@@QBEMXZ  004355f0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?volume_scale@Agent@@QBEMXZ  00435620  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?set_matrix@Placement@@QAEXPBUmatrix@rgl@@@Z  00435650  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?time_of_day@@YAMXZ  004356e0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?is_daytime@@YA_NXZ  00435700  /O2 /MT /Gy /TP

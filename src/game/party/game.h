@@ -199,9 +199,7 @@ struct Scene {
     Scene();                                // 0x51d250
     // ---- src/game/mission5/troop_rec.cpp (method declarations only: no layout change) ----
     int index_of(int id);                     // 0x48ad00 (ret 4: id -> record index through the hash at +0)
-    int lookup(int id);                     // 0x48ad00 (ret 4: id -> record index through the hash at +0)  // old name of index_of, removed after the names merge
     void grow();                        // 0x493830 (grows the party table by one page of 16 records)
-    void add_page();                        // 0x493830 (grows the party table by one page of 16 records)  // old name of grow, removed after the names merge
     __declspec(noinline) void clear();      // 0x51eda0
     __declspec(noinline) void read(stream_base* s, int flag);   // 0x51eb90 (ret 8)
     __declspec(noinline) struct PartyRecIO* get(int id);        // 0x51ee50 (ret 4)
@@ -418,7 +416,7 @@ struct Game {
 extern Game* g_game;                        // 0x5e2930
 extern I64Vec g_list_a70480;                // 0xa70480 (read first by 0x51dbd0 after the clock)
 extern PartyTemplate* g_party_templates;    // 0x5e29f8 (0xb0-byte records)
-extern int g_n_party_templates;             // 0x5e29fc  // old name of g_party_template_count, removed after the names merge
+extern int g_party_template_count;             // 0x5e29fc
 extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 bytes, up to 0x8ee3c60; the first dword of each is saved)
 
 // ---- layout checks (a wrong pad above is a compile error here) ----

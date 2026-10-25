@@ -60,7 +60,7 @@ struct Screen {
     void camera_update(float dt);               // 0x4ece20 (ret 4)
     void frame_update(float dt);                // 0x514d40 (ret 4)
     void camera_move(float dt);                 // 0x515d80 (ret 4)
-    void f5191e0();                             // 0x5191e0  // old name of MapPanel::update_target, removed after the names merge
+    void update_target();                             // 0x5191e0
 };
 
 #endif // MB_GAME_CAMPAIGN_SCREEN_H

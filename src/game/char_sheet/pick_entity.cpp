@@ -17,7 +17,7 @@ void __fastcall pick_entity(GuiCtx* self)
         return;
     }
     int rect0[4], rect1[4];
-    ((ViewRect*)(self->f60))->cell_rect(rect0, rect1);
+    ((ViewRect*)(self->f60))->screen_to_world(rect0, rect1);
     vector4 lo, hi;
     lo.x = *(float*)&rect0[0];
     lo.y = *(float*)&rect0[1];

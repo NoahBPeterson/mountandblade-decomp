@@ -29,7 +29,7 @@ struct DialogBlock {                                             // 0x1c bytes
     DialogBlock(const DialogBlock& o);                     // 0x4bd7a0 (src/game/config/config.cpp)
     ~DialogBlock() { if (items) delete[] items; }
     void read(stream_base* s);                             // 0x4607e0
-    char exec(int mode);                                   // 0x4875e0 (thiscall, ret 4)  // old name of SlotChan::play, removed after the names merge
+    char play(int mode);                                   // 0x4875e0 (thiscall, ret 4)
     // ---- src/game/party2 (camera.cpp: the script block runner of the mission script interpreter; method declarations only) ----
     char run_line(int locals, int* idx, int script);       // 0x4b0940 (ret 0xc: runs one statement through the interpreter)
     char emit(int script, int depth, int* limit, __int64* vals, unsigned tag);   // 0x4b09e0 (ret 0x14: the block runner)

@@ -18,7 +18,7 @@ struct resmgr {
     rgl::mesh* get_object(tstring* name);                   // 0x419540 (ret 4)
     void* get_material(const tstring& name);                // 0x418a70
     void load_pack(const tstring& name, int user);          // 0x41e150
-    void unload(int id);                                    // 0x418ff0  // old name of resource_manager::resolve_effect_sets, removed after the names merge
+    void resolve_effect_sets(int id);                                    // 0x418ff0
 };
 
 #endif // GAME_RES_MGR_H

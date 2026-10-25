@@ -240,7 +240,7 @@ void PartyWindow::create()
         if (i == 0) {
             label_refresh(nm, tstring("inv_t_name1"));
             Troop* t0 = g_game->troops;
-            tstring* s = g_strtab.find(&t0->key);
+            tstring* s = g_strtable.find(&t0->key);
             if (s == 0)
                 s = &t0->name;
             float out[2];
@@ -249,14 +249,14 @@ void PartyWindow::create()
             label_refresh(nm, tstring("inv_t_name2"));
             if (f4 == 2 || f4 == 4) {
                 Troop* t = &g_game->troops[troop];
-                tstring* s = g_strtab.find(&t->key);
+                tstring* s = g_strtable.find(&t->key);
                 if (s == 0)
                     s = &t->name;
                 float out[2];
                 WOPS(nm)->set_text(out, s);
             } else if (f4 == 0) {
                 float out[2];
-                WOPS(nm)->set_text(out, g_strtab.lookup(&tstring("ui_dump")));
+                WOPS(nm)->set_text(out, g_strtable.lookup(&tstring("ui_dump")));
             }
         }
         WOPS(container)->add_child(nm);
@@ -266,7 +266,7 @@ void PartyWindow::create()
 
     {
         float y = cfg(tstring("inv_b_leave_h"));
-        tstring* label = g_strtab.lookup(&tstring("ui_return"));
+        tstring* label = g_strtable.lookup(&tstring("ui_return"));
         leave = new_sized_button((MissionUi*)container, *label, 0.0f, 0.0f, y, tstring("short_button"), tstring("short_button_down"), 3.0f, 0.072f, 0.085f);
     }
     label_refresh(leave, tstring("inv_b_leave_h"));
@@ -275,7 +275,7 @@ void PartyWindow::create()
         total_cost = tc;
         label_refresh(tc, tstring("inv_t_total_cost"));
         float out[2];
-        WOPS(tc)->set_text(out, g_strtab.lookup(&tstring("ui_no_cost")));
+        WOPS(tc)->set_text(out, g_strtable.lookup(&tstring("ui_no_cost")));
         WOPS(container)->add_child(tc);
     }
 
@@ -310,7 +310,7 @@ void PartyWindow::create()
         int off = 0x20;
         for (;;) {
             int party = g_game->f78;
-            int slot = g_game->scene.lookup(party);
+            int slot = g_game->scene.index_of(party);
             char** pg = *(char***)((char*)&g_game->scene + 0x138d0);
             char* rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             int count = *(int*)(rec + 0x8a8);
@@ -328,7 +328,7 @@ void PartyWindow::create()
             }
             if (n >= c)
                 break;
-            slot = g_game->scene.lookup(party);
+            slot = g_game->scene.index_of(party);
             pg = *(char***)((char*)&g_game->scene + 0x138d0);
             rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             if (troop == *(int*)(rec + 0xac + off))
@@ -348,8 +348,8 @@ void PartyWindow::create()
     if ((g_game->f13ae8 & 1) == 0 && f4 == 2 && g_tutorial_off == 0) {
         tstring t1("ui_tutorial_inventory");
         tstring t2("ui_tutorial");
-        tstring* text = g_strtab.lookup(&t1);
-        tstring* title = g_strtab.lookup(&t2);
+        tstring* text = g_strtable.lookup(&t1);
+        tstring* title = g_strtable.lookup(&t2);
         char* box = (char*)g_windows[0];
         *(tstring*)(box + 0x68) = *title;
         *(tstring*)(box + 0x1c) = *text;
@@ -375,7 +375,7 @@ void PartyWindow::money_label(int which)
         tstring* val = (tstring*)raw;
         tstring key("ui_money_value");
         tstring* id = ((GameStrings*)g_game)->string_value(val, money);
-        sprintf(buf, g_strtab.lookup(&key)->c_str(), id->c_str());
+        sprintf(buf, g_strtable.lookup(&key)->c_str(), id->c_str());
         val->~tstring();
     }
     {

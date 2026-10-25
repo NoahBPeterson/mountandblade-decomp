@@ -24,7 +24,7 @@ int GameData::save_state(OutStream* out)
     out->w_raw(&g_party_template_count);
     for (int i = 0; i < g_party_template_count; i++)
         g_party_templates[i].write(out);
-    write_other2(out);
+    write_missions(out);
     ((Table2*)((char*)this + 0xcc))->write_table(out);
     write_records(out);
     write_items(out);

@@ -34,8 +34,8 @@ struct Animator {
     float time;                  // 0x12c
     void randomise();                            // 0x4eb320
     void collect(char flag, rgl::lod_mesh** a, rgl::lod_mesh** b, rgl::lod_mesh** c);   // 0x47fb10 (ret 0x10)
-    void set_anim_a(void* a);                    // 0x473800  // old name of FaceGenome::unpack, removed after the names merge
-    void set_anim_b(void* a, void* b, int kind); // 0x4746e0  // old name of FaceGenome::breed, removed after the names merge
+    void unpack(void* a);                    // 0x473800
+    void breed(void* a, void* b, int kind); // 0x4746e0
     void pack_state(PackedState* out);           // 0x4eb660 (ret 4; mission5 reset calls it as its closing step)
     void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
 };

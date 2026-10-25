@@ -252,7 +252,7 @@ static __declspec(noinline) int slot_class_impl(int item, int flag)
 int slot_class(int item, int flag) { return slot_class_impl(item, flag); }
 
 // @ 0x435130
-bool Troop::has_flag10()
+bool Troop::is_hero()
 {
     if (flags30 & 0x10) return true;
     return false;
@@ -320,7 +320,7 @@ void PlacedObj::reset()
     m1b4 = 0;
     m1b8 = 0;
     m168 = m14 = -1;
-    md8 = rgl::identity();
+    md8 = rgl::identity_pos();
     f16c = 1.0f;
     v158 = vector4(1.0f, 1.0f, 1.0f);
 }
@@ -394,14 +394,14 @@ void Agent::classify(int key)
     }
 }
 // @ 0x4355f0
-float Agent::scale_f4() const
+float Agent::range_scale() const
 {
     int n = (f4 >> 4) & 0xf;
     if (n == 0) n = 5;
     return n * 0.0625f;
 }
 // @ 0x435620
-float Agent::scale_f10() const
+float Agent::volume_scale() const
 {
     int n = (f10 >> 8) & 0xf;
     if (n == 0) n = 10;
@@ -434,14 +434,14 @@ char SoundCtl::emit_event(int id, int a, int b)
     v[0] = a;
     v[1] = b;
     unsigned tag;
-    if (f1a068 && g_emitters[id].name.equals(name))
+    if (f1a068 && g_scripts[id].name.equals(name))
         tag = (id << 16) | f1a07c;
     else
         tag = (unsigned)-1;
     char r = 0;
     count = 2;
     if (g_emitter_idx[id] >= 0)
-        r = g_emitters[g_emitter_idx[id]].sub.emit(0x200000, 0, &count, v, tag);
+        r = g_scripts[g_emitter_idx[id]].sub.emit(0x200000, 0, &count, v, tag);
     return r;
 }
 // @ 0x435840

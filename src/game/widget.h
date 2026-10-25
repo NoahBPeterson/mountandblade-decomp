@@ -13,13 +13,13 @@ struct widget {
     virtual void s04();                         // +0x04
     virtual void s08();                         // +0x08
     virtual void s0c();                         // +0x0c
-    virtual void s10(float a, int b);           // +0x10 (ui/mission_ui.h MissionUi::set_a 0x488560)  // old name of MissionUi::set_a, removed after the names merge
+    virtual void set_a(float a, int b);           // +0x10 (ui/mission_ui.h MissionUi::set_a 0x488560)
     virtual void s14(float a, int b);           // +0x14
     virtual void s18(float a, int b);           // +0x18
     virtual void s1c(float a, int b);           // +0x1c
     virtual void s20(int a, int b);             // +0x20
     virtual void s24(int a, int b);             // +0x24
-    virtual void s28(int a, void* v, int b, int c);   // +0x28 (0x488720, GuiCtx::follow)  // old name of MissionUi::render, removed after the names merge
+    virtual void render(int a, void* v, int b, int c);   // +0x28 (0x488720, GuiCtx::follow)
     virtual void set_focus(int index);          // +0x2c (strat wheel_focus 0x42cec0)
     virtual void s30();                         // +0x30
     virtual void s34(float v);                  // +0x34 (face-gen window: the slider value)

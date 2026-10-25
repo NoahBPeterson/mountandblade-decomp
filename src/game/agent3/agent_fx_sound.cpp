@@ -96,8 +96,8 @@ void world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<
     int lo[2];
     volatile int hi[2];                     // read from memory at every test (that is what the original compiled to)
     int c[2];
-    locate(bmin, lo);
-    locate(bmax, (int*)hi);
+    to_cell(bmin, lo);
+    to_cell(bmax, (int*)hi);
     for (c[0] = lo[0]; c[0] <= hi[0]; c[0]++) {
         for (c[1] = lo[1]; c[1] <= hi[1]; c[1]++) {
             for (enode* nd = cells[c[0]][c[1]].ents; nd != 0; nd = nd->next) {
@@ -165,7 +165,7 @@ void EmitTable::setup(Emit* e, int idx, const vector4* pos)
     }
     e->f1b0 = d->fb8;
     e->f1b4 = d->fbc;
-    mat4 m = rgl::identity();
+    mat4 m = rgl::identity_pos();
     m.o = *pos;
     e->set_placement(&m, &d->a, &d->b, d->c);
 }
@@ -354,9 +354,9 @@ bool Agent::can_target(unsigned aid, unsigned flags, float maxdist, float* out_d
 {
     Agent* o = &g_mission->agents.pages[aid >> 4][aid & 0xf];
     if (o->f14 == 1
-        && (!(flags & 1) || !rel_a(o))
-        && (!(flags & 2) || !rel_b(o))
-        && (!(flags & 4) || !rel_c(o))
+        && (!(flags & 1) || !is_enemy(o))
+        && (!(flags & 2) || !is_friend(o))
+        && (!(flags & 4) || !is_neutral(o))
         && (!(flags & 0x10) || o->f10 == 1)
         && (!(flags & 0x20) || o->f10 != 1)
         && (!(flags & 0x200) || o->id > id)
@@ -390,7 +390,7 @@ bool Agent::any_hostile_near()
             bool friendly = false;
             if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
                 friendly = m->rel_flat()[team * 0x5b + o->team] == 1;
-            if (!friendly && !rel_c(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
+            if (!friendly && !is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
                 vector4 d;
                 d.x = o->pos.x - pos.x;
                 d.y = o->pos.y - pos.y;
@@ -421,7 +421,7 @@ void Agent::update_alarm()
             break;
         Agent** pg = g_mission->agents.pages._Myfirst;
         Agent* o = pg[i >> 4] + (i & 0xf);
-        if (o->f14 == 1 && !rel_a(o) && !rel_c(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
+        if (o->f14 == 1 && !is_enemy(o) && !is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
             vector4 d = o->pos - pos;
             if (!(10.0f < d.normalize()))
                 hit = (pg[i >> 4][i & 0xf].f2c4 & 1) != 0;

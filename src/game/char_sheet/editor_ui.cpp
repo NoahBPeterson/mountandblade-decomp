@@ -301,6 +301,6 @@ int __cdecl engine_init()
     ((GuiState*)0x5d7080)->init_widgets();
     init_mission_trigger_records();
     g_5e29a4 = g_trial_mode;
-    ((MainMenu*)0xa73980)->choose(2);
+    ((MainMenu*)0xa73980)->set_state(2);
     return 0;
 }

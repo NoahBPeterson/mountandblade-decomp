@@ -146,35 +146,35 @@ void Hud::handle_buttons(int arg)
         g_menu_w1[6] = 4;
         g_menu_w1[1] = 3;
         g_menu_w1[0x8c / 4] = 0;
-        g_main_menu.choose(3);
+        g_main_menu.set_state(3);
         return;
     }
     if (f64->changed(0x10000)) {
         g_menu_w1[1] = 0;
         g_menu_w1[0x8c / 4] = f88;
-        g_main_menu.choose(3);
+        g_main_menu.set_state(3);
         return;
     }
     if (f68->changed(0x10000)) {
         g_menu_w5[6] = 4;
-        g_main_menu.choose(0x15);
+        g_main_menu.set_state(0x15);
         return;
     }
     if (f6c != 0 && f6c->changed(0x10000)) {
         g_menu_w1[6] = 4;
         g_menu_w1[1] = 2;
         g_menu_w1[0x8c / 4] = 0;
-        g_main_menu.choose(3);
+        g_main_menu.set_state(3);
         return;
     }
     if (f70->changed(0x10000)) {
         g_menu_w4[6] = 4;
-        g_main_menu.choose(0x12);
+        g_main_menu.set_state(0x12);
         return;
     }
     if (f74->changed(0x10000)) {
         g_menu_w6[6] = 4;
-        g_main_menu.choose(0x1c);
+        g_main_menu.set_state(0x1c);
         return;
     }
     if (f78->changed(0x10000))
@@ -228,14 +228,14 @@ void Hud::on_mission_start(int arg)
     g_screen->f18 = f18;
     g_menu_w3[1] = 0;
     g_menu_w3[0x18 / 4] = f18;
-    g_main_menu.choose(0xe);
+    g_main_menu.set_state(0xe);
 }
 
 // @ 0x4d59f0
 void Hud::on_leave(int arg)
 {
     if (f34->changed(0x10000))
-        g_main_menu.choose(7);
+        g_main_menu.set_state(7);
 }
 
 // @ 0x4d5a20
@@ -259,16 +259,16 @@ void Hud::on_update(int arg)
             return;
         }
         f04 = 0;
-        g_main_menu.choose(0xd);
+        g_main_menu.set_state(0xd);
     } else if (f38->changed(0x10000)) {
         if (f04 == 1) {
             f38->activate(1);
             return;
         }
         f04 = 1;
-        g_main_menu.choose(0xd);
+        g_main_menu.set_state(0xd);
     } else if (f30->changed(0x10000) || (!g_a170d8 && g_a174d8)) {
-        g_main_menu.choose(f18);
+        g_main_menu.set_state(f18);
     }
 }
 

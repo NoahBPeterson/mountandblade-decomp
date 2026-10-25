@@ -38,10 +38,10 @@ struct Blow;
 // a frame with the operations the agent code calls (rgl::mat4 + the rotation 0x40e570; mul is mat4's operator* 0x40e870)
 struct posm : rgl::mat4 {
     rgl::matrix mul(const rgl::matrix& m) const;       // 0x40e870 (hidden return pointer)
-    void rotate_fu(const float& angle);                // 0x40e570  // old name of matrix::rotate_about_s, removed after the names merge
-    void rotate_su(const float* angle);                // 0x40e670 (0x44fc60)  // old name of matrix::rotate_about_f, removed after the names merge
-    vector4 rot_ext(const vector4& p) const;           // 0x40a9c0 (rotation part only; 0x453710)  // old name of mat4::rot, removed after the names merge
-    void rotate_sf(const float* angle);                // 0x40e770 (0x448eb0)  // old name of matrix::rotate_about_u, removed after the names merge
+    void rotate_about_s(const float& angle);                // 0x40e570
+    void rotate_about_f(const float* angle);                // 0x40e670 (0x44fc60)
+    vector4 rot(const vector4& p) const;           // 0x40a9c0 (rotation part only; 0x453710)
+    void rotate_about_u(const float* angle);                // 0x40e770 (0x448eb0)
     vector4 transform_point(const vector4& p) const;   // 0x408460
 };
 
@@ -431,8 +431,8 @@ struct Agent {                                          // 0x5928 bytes
     int clamped_team() const;                    // 0x435490
     bool flag_0x400_or_0x114() const;            // 0x4354d0
     void classify(int key);                      // 0x435520
-    float scale_f4() const;                      // 0x4355f0  // old name of SoundDef::range_scale, removed after the names merge
-    float scale_f10() const;                     // 0x435620  // old name of SoundGroup::volume_scale, removed after the names merge
+    float range_scale() const;                      // 0x4355f0
+    float volume_scale() const;                     // 0x435620
     void reset_if_enemy_charged();               // 0x435b90
     void camera_params(CamParams* p);     // 0x435c10
     void steer(float dt);                        // 0x435f10
@@ -446,29 +446,23 @@ struct Agent {                                          // 0x5928 bytes
     void build_static_collision();               // 0x4417d0 (phys_set.cpp)
 
     // ---- members of other objects (earlier / shared) ----
-    inline bool charged_0x48() const;            // 0x432470 inlined (defined in agent3/agent_types.h, which has Skeleton and Channel)  // old name of AgentX::f100_is_0x48_and_charged, removed after the names merge
-    bool rel_a(const Agent* o);                  // 0x432350  // old name of Agent::is_enemy, removed after the names merge
-    bool rel_b(const Agent* o);                  // 0x4323a0  // old name of Agent::is_friend, removed after the names merge
-    bool rel_c(const Agent* o);                  // 0x4323f0  // old name of Agent::is_neutral, removed after the names merge
+    inline bool f100_is_0x48_and_charged() const;            // 0x432470 inlined (defined in agent3/agent_types.h, which has Skeleton and Channel)
     bool is_neutral(const Agent* o) const; // 0x4323f0
     bool is_enemy(const Agent* o) const;         // 0x432350 (game_util.cpp AgentX; relation == -1; script)
     bool is_friend(const Agent* o) const;        // 0x4323a0 (relation == 1)
     int id_matches_dir(int id, int dir);         // 0x4326d0 (ret 8; this unused)
-    int pick_slot_anim(int slot);                // 0x433040 (earlier object)  // old name of AgentX::pick, removed after the names merge
+    int pick(int slot);                // 0x433040 (earlier object)
     int agent_class() const;                     // 0x433140 (game_util.cpp hand_kind)
 
     // ---- members: src/game/agent2 (agent_stats.cpp, agent_ai.cpp) ----
     void get_dir(vec2* out);                     // 0x4378f0
     void get_dir(float* out);                    // 0x4378f0 (ret 4; agent3's view of the same function)
     inline void set_order(int slot, int id, unsigned prio, float rate);   // 0x4379c0
-    void set_animation(int channel, int anim, int flags, float speed);   // 0x4379c0 (ret 0x10; the script's name)  // old name of Agent::set_order, removed after the names merge
     bool has_weapon_for(int mode);               // 0x437f00
     float stamina_scale();                       // 0x438180
     void set_default_order();                    // 0x4382e0
     float attack_speed();                        // 0x438360
-    float duration();                            // 0x438360 (agent3's name)  // old name of Agent::attack_speed, removed after the names merge
     void clear_ammo(int unused);                 // 0x438520
-    void refill_ammo(int a1);                    // 0x438520 (ret 4; the script's name)  // old name of Agent::clear_ammo, removed after the names merge
     float damage_factor(int idx);                // 0x4385e0
     void smooth_turn(float dt);                  // 0x438860
     void hand_pos(vector4* out);                 // 0x43a510
@@ -481,7 +475,6 @@ struct Agent {                                          // 0x5928 bytes
     vector4* local_velocity(vector4* out);       // 0x43b7b0
     unsigned find_talk_target();                 // 0x43b8a0
     unsigned pick_front();                       // 0x43b9e0
-    int find_target();                           // 0x43b9e0 (agent3's name)  // old name of Agent::pick_front, removed after the names merge
     unsigned pick_duel();                        // 0x43bb80
     void update_aim_error();                     // 0x43bdb0
     void poll_input(int unused, InputState* out);   // 0x43c9c0 (ret 8)
@@ -522,7 +515,7 @@ struct Agent {                                          // 0x5928 bytes
     float& f2ec_f() { return *(float*)&f2ec; }                  // +0x2ec as a float (0x44df30: interval of the second timer)
     float& f310_f() { return *(float*)&f310; }                  // +0x310 as a float (0x44df30: interval of the third timer)
     float& attack_delay() { return *(float*)&f2c0; }        // +0x2c0 as a float (0x4464d0 start_attack; 0x443140 reads it as an int)
-    void reset_act();                                       // 0x432080 (src/rgl/xmlcfg/records.h calls it reset())  // old name of BigObj::reset, removed after the names merge
+    void reset();                                       // 0x432080 (src/rgl/xmlcfg/records.h calls it reset())
     inline ClassInfo* class_rec();                          // the per-team, per-troop-class record (inlined at the use sites of agent4/agent_think.cpp)
     int* pface() { return &path_face[1]; }                  // +0x324: the face list find_path fills (0x445910; path_face[0] is the slot before it)
     vector4* ppos() { return (vector4*)((char*)this + 0x1324); }   // +0x1324: the portal midpoints (0x445910)
@@ -566,12 +559,8 @@ struct Agent {                                          // 0x5928 bytes
     void update_attack(float dt);                // 0x45c220: the per-tick attack / reload state machine (state in `active`)
     int swing_trace(int hand, Missile* missile, Blow* out, float* scale);   // 0x45a170: the melee swing / missile hit test (returns 0 none, 1 hit, 2 blocked / friendly, 3 hit a prop)
     // ---- members: src/game/script ----
-    void position_changed();                     // 0x4554c0  // old name of Agent::spawn_corpse, removed after the names merge
-    void deliver_blow(const Blow* b);     // 0x457af0 (ret 4)  // old name of Agent::note_blow, removed after the names merge
-    void update_after_blow(int a1);              // 0x457b40 (ret 4)  // old name of Agent::process_blow, removed after the names merge
-    void set_animation_progress(int channel, float progress);   // 0x4354b0 (ret 8)  // old name of Agent_f8::set_slot, removed after the names merge
-    void set_team(const int* team);              // 0x489a90 (ret 4)  // old name of NamedSelRec::set_sel, removed after the names merge
-    int total_ammo();                            // 0x436a70 (the script's name of total_missing_ammo)  // old name of Agent::total_missing_ammo, removed after the names merge
+    void set_slot(int channel, float progress);   // 0x4354b0 (ret 8)
+    void set_sel(const int* team);              // 0x489a90 (ret 4)
 
     // ---- members: src/game/terrain_a/wind.cpp ----
     void init_max_hp();                          // 0x461200
@@ -579,7 +568,7 @@ struct Agent {                                          // 0x5928 bytes
     // ---- members: src/game/agent5 (agent_hud.cpp) ----
     void hide();                                 // 0x4f8bc0 (ret: the held-item meshes get the hidden vis mask)
     void show();                                 // 0x4f8c20
-    void set_slot_value(int idx, int v);         // 0x470d80  // old name of MeterBar::set_slot, removed after the names merge
+    void set_slot(int idx, int v);         // 0x470d80
 };
 
 typedef char Agent_size_check[sizeof(Agent) == 0x5928 ? 1 : -1];

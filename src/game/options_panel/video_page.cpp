@@ -157,7 +157,7 @@ void VideoPage::update(int reason)
         tstring name("DirectX");
         tstring* e = g_strtable.lookup(name);
         MainMenu& m = g_main_menu;
-        m.set_texts(&explanation, e);
+        m.setup(&explanation, e);
         m.f4c = 0;
         m.f50 = 0;
         m.f4 = 0;
@@ -321,7 +321,7 @@ void VideoPage::update(int reason)
             tstring explanation("ui_change_graphics_settings_explanation");
             tstring pos((const char*)0x54a480);
             tstring* e = g_strtable.lookup(pos);
-            g_main_menu.set_texts(&explanation, e);
+            g_main_menu.setup(&explanation, e);
             pos.~tstring();
             explanation.~tstring();
             g_main_menu.reset(0);
@@ -332,6 +332,6 @@ void VideoPage::update(int reason)
         // the last menu entry is checked -> go back to the page that opened the options
         if (*(int*)(*(int*)(0xa739fc + (((0xa73a04 + 0xa73a08 - 1) / 4 - 0xa73a00)) * 4)
                     + ((0xa73a04 + 0xa73a08 - 1) & 3) * 4) != 0)
-            g_main_menu.choose(option);
+            g_main_menu.set_state(option);
     }
 }

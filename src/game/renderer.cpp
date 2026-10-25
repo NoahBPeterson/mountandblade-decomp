@@ -40,8 +40,8 @@ static inline void to_d3d(D3DMATRIX* out, const mat4& m)
 // @ 0x461630
 void renderer::set_view(const mat4* p)
 {
-    to_d3d(&view, rgl::identity());
-    to_d3d((D3DMATRIX*)&cur, rgl::identity());
+    to_d3d(&view, rgl::identity_pos());
+    to_d3d((D3DMATRIX*)&cur, rgl::identity_pos());
     sp = 0;
     rgl::rot3 r;
     r.s.x = 1.0f; r.s.y = 0.0f; r.s.z = 0.0f;
@@ -49,7 +49,7 @@ void renderer::set_view(const mat4* p)
     r.u.x = 0.0f; r.u.y = 0.0f; r.u.z = 1.0f;
     {
         mat4 rel;
-        rel = p->relative(rgl::identity());
+        rel = p->relative(rgl::identity_pos());
         to_d3d(&view, mat4_ro(r, vector4(0.0f, 0.0f, 0.0f)) * rel);
     }
     dev->SetTransform(D3DTS_VIEW, &view);
@@ -324,7 +324,7 @@ D3DXMATRIX rgl::frustum::projection()
 mat4 frustum_view::view_matrix()
 {
     mat4 rel;
-    rel = ((mat4&)m).relative(rgl::identity());
+    rel = ((mat4&)m).relative(rgl::identity_pos());
     rel.s.w = 0.0f; rel.f.w = 0.0f; rel.u.w = 0.0f; rel.o.w = 1.0f;
     return rel;
 }

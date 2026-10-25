@@ -33,8 +33,8 @@ struct mat4 : matrix {                                      // no constructors: 
     mat3 rot3(const matrix& m) const;                       // 0x40a920 (rotation part of this * m; hidden mat3 return)
     mat3* rot_t(mat3* out) const;                           // 0x429670 (transposed rotation of this, returns out)
     mat4 relative(const mat4& base) const;                  // 0x4329d0 (hidden return + base)
-    void rotate_fu(const float* angle);                     // 0x40e570 (thiscall, ret 4: char_sheet/facegen_misc.cpp, cam_view.cpp)  // old name of matrix::rotate_about_s, removed after the names merge
-    void rotate_su(const float* angle);                     // 0x40e670 (thiscall, ret 4: char_sheet/cam_view.cpp)  // old name of matrix::rotate_about_f, removed after the names merge
+    void rotate_about_s(const float* angle);                     // 0x40e570 (thiscall, ret 4: char_sheet/facegen_misc.cpp, cam_view.cpp)
+    void rotate_about_f(const float* angle);                     // 0x40e670 (thiscall, ret 4: char_sheet/cam_view.cpp)
 };
 
 // a frame whose rows can be scaled in place (entity::local)
@@ -42,7 +42,7 @@ struct smat : mat4 {
     void scale_rows(const vector4* k);                      // 0x41fee0
 };
 
-mat4 identity();                                            // 0x40cd00 (cdecl, hidden return pointer, returns it)  // old name of identity_pos, removed after the names merge
+mat4 identity_pos();                                            // 0x40cd00 (cdecl, hidden return pointer, returns it)
 
 } // namespace rgl
 

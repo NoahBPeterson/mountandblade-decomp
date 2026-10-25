@@ -202,30 +202,30 @@ void MapFlags::commit(char* out)
     else if (key == 0x80) {
         g_wA0->f4 = 1;
         g_wA0->f18 = 0x64;
-        return g_main_menu.choose(8);
+        return g_main_menu.set_state(8);
     }
     else if (key == 0x100) {
         g_wB0->f4 = 4;
         g_wB0->f18 = 0x64;
-        return g_main_menu.choose(0xc);
+        return g_main_menu.set_state(0xc);
     }
     else if (key == 4) {
         g_mission_ctx.pick_template();
         g_wA8->f18 = 0x64;
-        return g_main_menu.choose(0xa);
+        return g_main_menu.set_state(0xa);
     }
     else if (key == 0x800) {
         g_mission_ctx.start_battle(GD_I(0x13af0), GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
         g_wC0->f18 = 0x64;
-        return g_main_menu.choose(0x10);
+        return g_main_menu.set_state(0x10);
     }
     else if (key == 0x1000) {
         g_wEC->f18 = 0x64;
-        return g_main_menu.choose(0x1b);
+        return g_main_menu.set_state(0x1b);
     }
     else if (key == 0x2000) {
         g_wE8->f18 = 0x64;
-        return g_main_menu.choose(0x1a);
+        return g_main_menu.set_state(0x1a);
     }
     else if (key == 8) {
         g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
@@ -233,36 +233,36 @@ void MapFlags::commit(char* out)
         SCENE->start_setup();
         g_wB8->v4();
         g_wB8->f18 = 0x64;
-        return g_main_menu.choose(0xe);
+        return g_main_menu.set_state(0xe);
     }
     else if (key == 0x200) {
         g_mission_ctx.update_parties();
         autosave_notice();
-        return g_main_menu.choose(7);
+        return g_main_menu.set_state(7);
     }
     else if (key == 0x400 && f8 <= 0) {
         g_w98->f18 = 0x64;
-        return g_main_menu.choose(6);
+        return g_main_menu.set_state(6);
     }
     else if (g_game->fc8 == 1) {
         g_game->fc8 = 0;
         g_mission_ctx.update_parties();
         autosave_notice();
-        return g_main_menu.choose(7);
+        return g_main_menu.set_state(7);
     }
     else if (f8 <= 0) {
         g_w98->f18 = 0x64;
-        return g_main_menu.choose(6);
+        return g_main_menu.set_state(6);
     }
     else {
         f2 = 1;
         g_wDC->v4();
         g_wDC->f18 = 0x64;
-        return g_main_menu.choose(0x17);
+        return g_main_menu.set_state(0x17);
     }
 
     g_wC0->f18 = 0x64;
-    return g_main_menu.choose(0x10);
+    return g_main_menu.set_state(0x10);
 }
 
 // @ 0x513b10
@@ -756,30 +756,30 @@ void Screen::frame_update(float dt)
     if (cmd == 0x12) {
         GD_I(0xc8) = 0;
         g_wDC->f18 = 7;
-        g_main_menu.choose(0x17);
+        g_main_menu.set_state(0x17);
         return;
     }
     if (cmd == 0xf) {
         GD_I(0xc8) = 0;
         g_wEC->f18 = 7;
-        g_main_menu.choose(0x1b);
+        g_main_menu.set_state(0x1b);
         return;
     }
     if (cmd == 0x10) {
         GD_I(0xc8) = 0;
         g_wE8->f18 = 7;
-        g_main_menu.choose(0x1a);
+        g_main_menu.set_state(0x1a);
         return;
     }
     if (g_a170d8 != 0 && g_a174d8 == 0) {
         g_w94->f18 = 7;
-        g_main_menu.choose(5);
+        g_main_menu.set_state(5);
         return;
     }
     if (f48 != 0 && PSO(f48)->clicked_on(0x10000)) {
         g_wD8->f18 = 7;
         g_wD8->f4 = 0;
-        g_main_menu.choose(0x16);
+        g_main_menu.set_state(0x16);
         return;
     }
     if (flag) {
@@ -788,12 +788,12 @@ void Screen::frame_update(float dt)
                 g_wE8->f18 = 7;
                 GD_I(0x13b08) = 4;
                 GD_I(0x13b0c) = 0;
-                g_main_menu.choose(0x1a);
+                g_main_menu.set_state(0x1a);
                 return;
             }
             g_wB4->f18 = 7;
             g_wB4->f4 = 0;
-            g_main_menu.choose(0xd);
+            g_main_menu.set_state(0xd);
             return;
         }
     }
@@ -814,7 +814,7 @@ void Screen::frame_update(float dt)
         GD_C(0x13a3c) = 0;
         g_mission_ctx.build_hero_table(GD_I(0x13a44), -1, -1, GD_I(0x13a40));
         g_wC0->f18 = 7;
-        g_main_menu.choose(0x10);
+        g_main_menu.set_state(0x10);
         return;
     }
 
@@ -899,26 +899,26 @@ no_party:
         if (PSO(f40)->clicked_on(0x10000) || g_keys.down(0x10)) {
             g_wA0->f18 = 7;
             g_wA0->f4 = 0;
-            g_main_menu.choose(8);
+            g_main_menu.set_state(8);
             return;
         }
         if (PSO(f3c)->clicked_on(0x10000) || g_keys.down(0x11)) {
             g_wB0->f18 = 7;
             g_wB0->f4 = 0;
-            g_main_menu.choose(0xc);
+            g_main_menu.set_state(0xc);
             return;
         }
         if (PSO(f44)->clicked_on(0x10000) || g_keys.down(0xf)) {
             g_wBC->f18 = 7;
             g_wBC->f4 = 0;
             g_wBC->f14 = GD_I(0x8c);
-            g_main_menu.choose(0xf);
+            g_main_menu.set_state(0xf);
             return;
         }
         if (g_keys.down(0x13)) {
             g_wE4->f18 = 7;
             g_wE4->f4 = 0;
-            g_main_menu.choose(0x19);
+            g_main_menu.set_state(0x19);
             return;
         }
         if (f4c != 0 && PSO(f4c)->clicked_on(0x10000)) {
@@ -930,7 +930,7 @@ no_party:
     if (f38 != 0 && PSO(f38)->clicked_on(0x10000)) {
         GD_I(0x13aec) = 4;
         g_wDC->f18 = 7;
-        g_main_menu.choose(0x17);
+        g_main_menu.set_state(0x17);
         return;
     }
     if (GD_F(0x14058) == 0.0f)
@@ -949,7 +949,7 @@ no_party:
         camera_move(dt);
     camera_update(dt);
     if (GD_F(0x13ad0) <= 0.0f) {
-        f5191e0();
+        update_target();
         f2cc += dt;
         f2d0 += dt;
         GD_I(0x13aa4) = 0;

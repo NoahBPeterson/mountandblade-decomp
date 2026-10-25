@@ -19,7 +19,7 @@
         W->set_text_at(t, pos);                         \
     } while (0)
 
-void CharSheet::update_texts()
+void CharSheet::refresh_panels()
 {
     int i;
     Troop* c = (Troop*)((char*)g_game->chars + player * 0x508);

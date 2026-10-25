@@ -349,16 +349,16 @@ void QuestPage::update_settings(int reason)
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)
     if (w40->changed(0x10000)) {
-        g_main_menu.choose(menu_option);
+        g_main_menu.set_state(menu_option);
         return;
     }
     if (w38->changed(0x10000)) {
         g_menu_video_entry[6] = 0x12;
-        g_main_menu.choose(0x14);
+        g_main_menu.set_state(0x14);
         return;
     }
     if (w3c->changed(0x10000)) {
         g_menu_options_entry[6] = 0x12;
-        g_main_menu.choose(0x13);
+        g_main_menu.set_state(0x13);
     }
 }

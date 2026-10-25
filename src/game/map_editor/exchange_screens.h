@@ -46,7 +46,7 @@ inline PartyX* party_at(PartyMgrX* m, int id)
 inline PartyX* party_index(int id)
 {
     PartyMgrX* m = party_mgr();
-    int idx = m->find(id);
+    int idx = m->index_of(id);
     return party_at(m, idx);
 }
 
@@ -54,7 +54,7 @@ inline PartyX* party_index(int id)
 inline PartyX* party_index(GameData* g, int id)
 {
     PartyMgrX* m = (PartyMgrX*)&g->parties;
-    int idx = m->find(id);
+    int idx = m->index_of(id);
     return party_at(m, idx);
 }
 

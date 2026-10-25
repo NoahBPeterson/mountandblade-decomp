@@ -170,8 +170,8 @@ struct FxDef {                                                  // 0x7c bytes
     ~FxDef();                                                   // 0x421680
     void clear_defs();                                          // 0x420ec0
     void set_env_count(int n);                                  // 0x46b9d0 (ret 4; src/game/terrain_a/terrain_a.cpp: allocates the envelope array)
-    void set_group0(int g, int id, int a, int b);               // 0x439fc0 (ret 0x14; party2/camera.cpp)  // old name of Skeleton::start_anim, removed after the names merge
-    void link_group(int g);                                     // 0x4339d0 (ret 4; party2/camera.cpp)  // old name of Curve::reset_rec, removed after the names merge
+    void start_anim(int g, int id, int a, int b);               // 0x439fc0 (ret 0x14; party2/camera.cpp)
+    void reset_rec(int g);                                     // 0x4339d0 (ret 4; party2/camera.cpp)
     void set_color(int c);                                      // 0x4218e0
     void update(float dt, const rgl::matrix* m);                // 0x421df0
     void init(FxRes* r);                                        // 0x4288c0

@@ -122,7 +122,7 @@ void TerrainPage::paste_clipboard()
     if (h) {
         const char* p = (const char*)GlobalLock(h);
         if (p) {
-            g_bits.parse_hex(tstring(p));
+            g_bits.parse(tstring(p));
             { char r[8]; hexbox->set_text(r, tstring(p)); }
             GlobalUnlock(h);
         }
@@ -157,5 +157,5 @@ void TerrainPage::path(float dt)
     *(rgl::matrix*)frame = m;                               // page +0x138
     ((FrustumBlock*)map_block)->build_planes();                    // 0x41e4f0: thiscall on this+0x70
     *(FrustumBlock*)world6c->block = *(FrustumBlock*)map_block;             // 0x120 bytes: page +0x70 -> world +0x1ac
-    g_bits.submit_frame((const float*)&m);                  // 0x4f3e10
+    g_bits.update_particles((const float*)&m);                  // 0x4f3e10
 }

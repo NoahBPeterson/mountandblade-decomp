@@ -925,7 +925,7 @@ void Agent::update_ai()
                 bestid = ta->id;
             } else {
                 if (line_of_sight(ta->id, 0) && fire_check(ta->id, (int*)&t80) == 1 && (!close99 || wsum[0] < 3.0f)) {
-                    reset_act();
+                    reset();
                     goto L_a79;
                 }
                 if (close99) {
@@ -1096,7 +1096,7 @@ void Agent::update_ai()
         set_goal_agent(target);
         if (cr->kind != 3) {
             if ((fac > 2.0f && g_mission->agents.get(target)->f2c == -1 && dist < 11.0f) ||
-                (charged_0x48() && dotv > 0.2f)) {
+                (f100_is_0x48_and_charged() && dotv > 0.2f)) {
                 set_goal_agent(target);
                 f2e4 = 0;
             } else if (f2e4 != 1 || frand() < 0.5f) {
@@ -1222,7 +1222,7 @@ void Agent::update_ai()
             set_goal_near(&v, &r15);
         }
     } else if (mode_ == 3) {
-        reset_act();
+        reset();
         if (fac < 0.5f && f2c != -1)
             g_input_flags |= 0x10000;
     } else if (mode_ == 2) {
@@ -1453,7 +1453,7 @@ void Agent::ai_update_control()
                 if ((char)fl < 0) {
                     float m1 = -1.0f;
                     float k = 0.4f;
-                    if (charged_0x48())
+                    if (f100_is_0x48_and_charged())
                         k = 0.25f;
                     float m = m1;
                     if (anim[1].cur == 0xb9 || anim[1].cur == 0xb8)
@@ -1579,7 +1579,7 @@ process:
                                 posm m = body->m;
                                 int flag = 1;
                                 float ang = 0.01f;
-                                m.rotate_sf(&ang);
+                                m.rotate_about_u(&ang);
                                 AgentBody* ob = o->body;
                                 float lhs = (float)fabs(m.f.y * ob->m.f.y + m.f.z * ob->m.f.z + m.f.x * ob->m.f.x);
                                 if (fabs(rgl::dot(body->m.f, ob->m.f)) > lhs)
@@ -2125,7 +2125,7 @@ melee:
             b59 = false;
             if ((char)wk->type_flags == 4 && facing > 0.4f && anim[1].cur == 0x47 && outlen < 19.0f)
                 b59 = true;
-            if (charged_0x48() && facing > 0.4f)
+            if (f100_is_0x48_and_charged() && facing > 0.4f)
                 b3e = true;
             if (op1.item >= 0 && (g_items[op1.item].type_flags & 0xff) == itp_type_shield)
                 b5b = true;
@@ -2588,7 +2588,7 @@ after:
             if (sh) {
                 sh->scale((const float*)&r->v158);
                 sh->transform((const pos*)&r->m18);
-                scene_world->reg(sh);
+                scene_world->reg_shape(sh);
             }
         } else if (r->kind == 6) {
             unsigned k = g_items[r->id].type_flags & 0xff;
@@ -2803,7 +2803,7 @@ void Agent::choose_action(int unused)
                     }
                 }
             } else {
-                if ((g_modes2[g_mission->mode].flags >> 1) & 1) {
+                if ((g_mission_templates[g_mission->mode].flags >> 1) & 1) {
                     for (int i = 0; i < 8; i++) {
                         if (g_mission->teams[team].relation[i] == -1 &&
                             (g_mission->counts[i][5] > 0 || g_mission->counts[i][4] > 0)) {
@@ -3035,14 +3035,14 @@ void Agent::shoot()
 
     Skeleton* an = body->skel;
     if (!an->done) {
-        if (an->has_poses) an->update_poses(); else an->update();
+        if (an->has_poses) an->update_poses(); else an->update_poses2();
     }
     BoneW* bones = (BoneW*)an->recs;
     const rgl::matrix* W = &bones[9].world;
     vector4 P(W->o.x * 0.65f, W->o.y * 0.65f, W->o.z * 0.65f);
     an = body->skel;
     if (!an->done) {
-        if (an->has_poses) an->update_poses(); else an->update();
+        if (an->has_poses) an->update_poses(); else an->update_poses2();
     }
     const vector4* o19 = &((BoneW*)an->recs)[19].world.o;
     const rgl::matrix* m = &body->m;
@@ -3296,7 +3296,7 @@ static __forceinline const Glyph* font_get(Font* f, int c)
 {
     if (c >= 0x200) {
         GlyphNode* it;
-        f->map.lookup(&it, &c);
+        f->map.lower_bound(&it, &c);
         if (it != f->map.head)
             return &it->val;
         return &f->dflt;
@@ -3332,7 +3332,7 @@ void rgl::mesh::transform(mat4 m)
         v->normal = tb;
     }
     slots[0].f28 = 1;
-    finish_load();
+    compute_bounds();
 }
 // @ 0x44f5d0
 void Font::draw_glyph(int ch, const vector4* pos, const float* scale_, mesh* m, int arg)
@@ -3630,11 +3630,11 @@ void Agent::start_ragdoll()
             }
             T = cur;
             float a0 = rec->rot_x * 0.017453292f;
-            ((posm&)T).rotate_fu(a0);
+            ((posm&)T).rotate_about_s(a0);
             float a1 = rec->rot_y * 0.017453292f;
-            ((posm&)T).rotate_su(&a1);
+            ((posm&)T).rotate_about_f(&a1);
             float a2 = rec->rot_z * 0.017453292f;
-            ((posm&)T).rotate_sf(&a2);
+            ((posm&)T).rotate_about_u(&a2);
             A[i] = ((posm&)A[j]).mul(T);
         }
         if (rec->caps.size() != 0) {
@@ -4106,8 +4106,8 @@ void Agent::refresh_carried(Missile* other)
         LODS(slot) = new rgl::lod_mesh;
         mesh* nm = new rgl::mesh;
         nm->res = m->res;
-        LODS(slot)->add(0, nm);
-        body->skel->attach(0x13, (node_groups*)LODS(slot));
+        LODS(slot)->add_to_list(0, nm);
+        body->skel->attach_group(0x13, (node_groups*)LODS(slot));
         update_equipment_display();
     }
     rgl::lod_mesh* L = LODS(slot);
@@ -4161,7 +4161,7 @@ static __forceinline char* skel_rec_inl(Skeleton* sk, int i)
         if (sk->has_poses)
             sk->update_poses();
         else
-            sk->update();
+            sk->update_poses2();
     }
     return sk->recs + i * 0x1dc + 0x84;
 }
@@ -4282,7 +4282,7 @@ void Skeleton::set_visible(char on)
                 if (has_poses)
                     update_poses();
                 else
-                    update();
+                    update_poses2();
             }
             for (unsigned i = 0; i < psys.size(); i++)
                 ((FxDef*)this)->skin(psys[i], 1);
@@ -4375,7 +4375,7 @@ void Agent::shield_hit(int damage)
                     int mod = it->b.mod;
                     kind = 7;
                     g_mission->add_placed(&kind, &it->item, &mod, (rgl::matrix*)&M, &id);
-                    if (((g_modes2[g_mission->mode].flags >> 1) & 1) && old >= 0 &&
+                    if (((g_mission_templates[g_mission->mode].flags >> 1) & 1) && old >= 0 &&
                         id == g_mission->player_id && old < 10 && B220(old)) {
                         ItemRef* s = &pairs[old];
                         if (s->item >= 0 && (g_items[s->item].type_flags & 0xff) == itp_type_shield) {
@@ -4490,7 +4490,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
         } else {
             vector4 lv;
             lv.x = v->vel_xy.x; lv.y = v->vel_xy.y; lv.z = 0.0f;
-            A = v->body->m.rot_ext(lv);
+            A = v->body->m.rot(lv);
         }
     }
     vector4 B;
@@ -4522,9 +4522,9 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
         *out_dmg = base;
         vector4 d = vsub(A, B);
         float len = d.normalize();
-        if (charged_0x48()) {
+        if (f100_is_0x48_and_charged()) {
             *out_dmg = (*out_dmg + 5.0f) * (float)pow((double)len, (double)1.8f);
-            vector4 q = body->m.rot_ext(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
+            vector4 q = body->m.rot(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
             q.normalize();
             *out_dmg = ((0.2f - (q.x * d.x + q.y * d.y + q.z * d.z)) * *out_dmg) * g_couched_lance_damage_multiplier * 0.2f;
             if (g_ui_enabled) {
@@ -4536,7 +4536,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
         } else {
             if (mode1 == 3)
                 *out_dmg = *out_dmg * 1.05f;
-            vector4 q = body->m.rot_ext(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
+            vector4 q = body->m.rot(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
             q.normalize();
             int m = mode1;
             vector4 up;
@@ -4819,7 +4819,7 @@ void Agent::ragdoll_update()
             bm->s.normalize();
             bm->f = rgl::cross(bm->u, bm->s);
         }
-        ((posm*)bm)->rotate_su(rot);
+        ((posm*)bm)->rotate_about_f(rot);
         bm->o = vector4(v98.x + pos.x, v98.y + pos.y, v98.z + pos.z);
     }
     camera_params(((AgentBodyV*)body)->camp);
@@ -4949,7 +4949,7 @@ void Agent::draw_name()
             col = 0xff4444ff;
     }
     if (f10 == 0 && id != (int)local) {
-        unsigned fl = g_modes2[ms->mode].flags;
+        unsigned fl = g_mission_templates[ms->mode].flags;
         if (((fl >> 1) & 1) && (int)local >= 0 && ms->agents.pages[local >> 4][local & 0xf].is_friend(this)) {
             char buf[512];
             tstring* nm = g_game->chars[troop].display_name();
@@ -5262,7 +5262,7 @@ void Agent::update_controls(float dt)
                         break;
                     default:
                         if (!(f2c4 & 1) && (id != (unsigned)g_mission->player_id ||
-                                (!((g_modes2[g_mission->mode].flags >> 1) & 1) && !(g_mission->terrain.f158 & 1))))
+                                (!((g_mission_templates[g_mission->mode].flags >> 1) & 1) && !(g_mission->terrain.f158 & 1))))
                             anim = stand_animation;
                         else
                             anim = 4;
@@ -5279,7 +5279,7 @@ void Agent::update_controls(float dt)
                 v.y = mv.y;
                 v.z = 0.0f;
                 v.normalize();
-                v = body->m.rot_ext(v);
+                v = body->m.rot(v);
                 v = cross(up, cross(v, up));
                 v.normalize();
                 if (v.z > 0.01f)
@@ -5412,7 +5412,7 @@ void Agent::update_controls(float dt)
                     sgn = 1.0f;
                 }
                 if (rid >= 0) {
-                    if (g_mission->agents.get(rid)->charged_0x48())
+                    if (g_mission->agents.get(rid)->f100_is_0x48_and_charged())
                         sgn = sgn * 0.7f;
                 }
                 float lim = 4.0f;
@@ -5940,7 +5940,7 @@ after_rider:
             body->skel->f68 = 1;
             draw_name();
             m = g_mission;
-            if (f30 == m->player_id && id == m->f60 && (g_modes2[m->mode].flags >> 1 & 1) &&
+            if (f30 == m->player_id && id == m->f60 && (g_mission_templates[m->mode].flags >> 1 & 1) &&
                 f8c.item >= 0 && !(g_items[f8c.item].type_flags >> 12 & 1)) {
                 GameData* g = g_game;
                 ItemRef* horse = &g->chars[g->player].equip[8];
@@ -6156,7 +6156,7 @@ common:
                 goto set_cB;
             if (troop < 0)
                 goto set_cB;
-            if (g_game->chars[troop].has_flag10())
+            if (g_game->chars[troop].is_hero())
                 goto set_cB;
             if (!(frand() > surg))
                 goto set_cB;
@@ -6246,7 +6246,7 @@ common:
             xpf = xpf * 0.1f;
         int xp = (int)xpf;
         if (xp != 0) {
-            if (chars[g_mission->agents.get(atk_rider)->troop].has_flag10()) {
+            if (chars[g_mission->agents.get(atk_rider)->troop].is_hero()) {
                 GameData* g = g_game;
                 if (atk_troop == g->player)
                     g->add_experience(atk_troop, (int)((float)xp * g_player_xp_multiplier));
@@ -6260,7 +6260,7 @@ common:
     if (last_blow().attacker >= 0 && dmg > 0.01f) {
         AgentTable* t = &g_mission->agents;
         if (this->is_enemy(t->get(last_blow().attacker)) && t->get(last_blow().attacker)->troop >= 0 &&
-            g_game->chars[t->get(last_blow().attacker)->troop].has_flag10() && last_blow().item >= 0) {
+            g_game->chars[t->get(last_blow().attacker)->troop].is_hero() && last_blow().item >= 0) {
             ItemRef sp = t->get(last_blow().attacker)->slot_pair(1);
             int cls = slot_class_impl(last_blow().item, sp.item >= 0);
             int old = (int)g_game->chars[atk_troop].f80[cls];
@@ -6517,7 +6517,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
         sweep.p1 = tA;
         sweep.radius = 0.1f;
     } else {
-        missile->make_capsule(&sweep);
+        missile->ray(&sweep);
         steps = 1;
     }
 
@@ -6724,7 +6724,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                     out->dir.normalize();
                                     out->item = s0.item;
                                     out->item_mod = s0.m4;
-                                    if (charged_0x48())
+                                    if (f100_is_0x48_and_charged())
                                         out->flags |= 0x10;
                                 }
                                 o->reduce_blow(out);
@@ -6741,7 +6741,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                 char skip = missile == 0 ? hit_once : missile->spent;
                 if (skip == 0) {
                     int rd = o->f30;
-                    if (rd < 0 || !rel_c(agent_by_id(rd))) {
+                    if (rd < 0 || !is_neutral(agent_by_id(rd))) {
                         if (missile != 0 || (rd >= 0 && is_enemy(agent_by_id(rd)))) {
                             bool h = false;
                             vector4 hp;
@@ -6918,7 +6918,7 @@ void Agent::update_attack(float dt)
         if (sk->has_poses)
             sk->update_poses();
         else
-            sk->update();
+            sk->update_poses2();
     }
 
     fr1 = body->m * *(rgl::mat4*)(sk->recs + 0x23d8);
@@ -7021,8 +7021,8 @@ void Agent::update_attack(float dt)
         }
     melee_tail:
         S = active;
-        if ((S == 2 && ACT == NEXTACT && ACT == snd_b && (mode1 == 0 || PROG > 0.1f)) || charged_0x48()) {
-            if (charged_0x48()) {
+        if ((S == 2 && ACT == NEXTACT && ACT == snd_b && (mode1 == 0 || PROG > 0.1f)) || f100_is_0x48_and_charged()) {
+            if (f100_is_0x48_and_charged()) {
                 mode1 = 0;
                 snd_c = 0x44;
                 if (frand() < 0.05f) {
@@ -7039,12 +7039,12 @@ void Agent::update_attack(float dt)
                 else if (tt == 3) aid = 0x73;
                 set_order(1, aid, 0x0140000c, damage_factor(0));
             }
-            if (!charged_0x48() && (!(PROG < 0.85f) || (mode1 != 0 && !(PROG > 0.2f))))
+            if (!f100_is_0x48_and_charged() && (!(PROG < 0.85f) || (mode1 != 0 && !(PROG > 0.2f))))
                 goto chk99;
-            if (charged_0x48())
+            if (f100_is_0x48_and_charged())
                 f57c0 = 1.0f;
             int r = swing_trace(0, 0, &hit, &f57c0);
-            if (r != 0 && charged_0x48())
+            if (r != 0 && f100_is_0x48_and_charged())
                 order1(this, 0x44, 0x0100007d);
             if (r >= 2) {
                 set_order(1, snd_c, 0x1400023, damage_factor(0));
@@ -7437,7 +7437,7 @@ void Agent::move_step(float dt)
         if (r->flags & 0x4000) {
             PartV* p = &((PartV*)r->subs)[anim[0].sub];
             float inv = 1.0f / p->f0c;
-            gv = mv_vscale(inv, body->m.rot_ext(p->v2c));
+            gv = mv_vscale(inv, body->m.rot(p->v2c));
         }
     }
     vector4 nv(v.x + push.x, v.y + push.y, v.z + push.z);

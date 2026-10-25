@@ -22,7 +22,7 @@ struct GlyphMap {                                    // std::map<int, glyph> (co
     std::vector<int> buckets;                        // +0x10 (0x10 bytes) 9 copies of `head` (0x4d99d0)
     int i20;                                         // +0x20 (1, 0x4d99d0)
     int i24;                                         // +0x24 (1, 0x4d99d0)
-    void lookup(GlyphNode** out, const int* key);    // 0x43b210 (lower_bound/find with an out iterator)  // old name of IntHashBase::lower_bound, removed after the names merge
+    void lower_bound(GlyphNode** out, const int* key);    // 0x43b210 (lower_bound/find with an out iterator)
     void insert(void* out, const int* key);          // 0x4d3c00 (ret 8; returns `out` = {node, inserted})
     Glyph* at(const int& key);                       // 0x4d92c0 (operator[]: the glyph of `key`, inserted zeroed when absent)
 };

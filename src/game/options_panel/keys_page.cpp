@@ -252,7 +252,7 @@ void KeysPage::update(int reason)
         if (p->w30->changed(0x10000)) {
             if (p->modified)
                 g_game_keys.save();
-            g_main_menu.choose(p->option);
+            g_main_menu.set_state(p->option);
         }
     }
 }

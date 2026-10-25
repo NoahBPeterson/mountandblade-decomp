@@ -149,7 +149,7 @@ int GameApp::Update()
     g_5d8798 = m_34c;
     m_34c = -1;
 
-    g_gui.frame(dt);
+    g_gui.process(dt);
     g_keyboard.update(dt);
     g_music_situation.tick();
     _FSOUND_Update();
@@ -159,20 +159,20 @@ int GameApp::Update()
             if (build_shader() < 0) {
                 mb_error("Unable to compile the effect file.");
             } else {
-                g_gui.add_log(tstring("Effect file recompiled."), -1);
+                g_gui.add(tstring("Effect file recompiled."), -1);
             }
-            g_resmgr.unload(g_5e293c);
+            g_resmgr.resolve_effect_sets(g_5e293c);
         }
     }
     if (g_no_cam) {
         if (g_a1719c && !g_a1759c) {
             if ((g_a17348 || g_a17148) && (g_a171ac || g_a1717c)) {
                 load_skyboxes();
-                g_gui.add_log(tstring("Animation data restored."), -1);
+                g_gui.add(tstring("Animation data restored."), -1);
             } else if (g_a17348 || g_a17148) {
                 fn_4d0c20();
                 fn_50d5e0();
-                g_gui.add_log(tstring("Module data restored."), -1);
+                g_gui.add(tstring("Module data restored."), -1);
             }
         }
     }
@@ -298,7 +298,7 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
         case 0x9c5a:
             fn_4d0c20();
             fn_50d5e0();
-            g_gui.add_log(tstring("Module data restored."), -1);
+            g_gui.add(tstring("Module data restored."), -1);
             break;
         case 0x9c56:
             if (!g_game) goto check_focus;
@@ -342,7 +342,7 @@ void LoadingScreen::update(int unused)
     ((ScreenObj*)hint)->set_text(tmp, text);
     ((ScreenObj*)logo)->set_value((float)step * 0.14285715f);
     if (finished) {
-        g_main_menu.choose(4);
+        g_main_menu.set_state(4);
         ((Output*)0x5a9f60)->print("Finished All...\n");
     }
 }

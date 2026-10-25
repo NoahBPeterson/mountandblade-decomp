@@ -635,17 +635,17 @@ void Mission::start_setup()
     Streamer* s444 = (Streamer*)((char*)lrec + 0x444);
     s444->v1();
     NavMesh& nav = at<NavMesh>(0x6698);
-    nav.f4781d0(s444);
-    nav.f470a00();
+    nav.load(s444);
+    nav.build_geometry();
     {
         LevelBits f2 = LV.flags;
         if (f2.b9 && f2.b8 && g_terrain.count_low_quads() > 10) {
-            nav.f4785e0(RAWAT(int, at<World*>(0), 0x64), 1);
-            nav.f470a00();
-            nav.f470750();
+            nav.build(RAWAT(int, at<World*>(0), 0x64), 1);
+            nav.build_geometry();
+            nav.compute_edge_creases();
         }
     }
-    at<World*>(0)->f478c50(&nav);
+    at<World*>(0)->build(&nav);
 
     // ---- light/frame table: 64 slots + 5 extra for a custom camera --------------------------
     SceneSlot* slots = &at<SceneSlot>(0x670);
