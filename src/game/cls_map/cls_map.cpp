@@ -222,7 +222,10 @@ void Font::load(const char* filename)
     height = 0x200;
     padding = 0;
 
-    TiXmlDocument doc(filename);
+    // the argument is the address of the caller's tstring (editor_ui.cpp: `load((const char*)&n)`); the original
+    // reads its buffer, or the characters held in place of the buffer pointer when it is null (add eax, 4)
+    const tstring* name = (const tstring*)filename;
+    TiXmlDocument doc(name->buf ? name->buf : (const char*)&name->buf);
     if (!doc.LoadFile((TiXmlEncoding)0)) {
         mb_error("Unable To Load Font File!");
         return;

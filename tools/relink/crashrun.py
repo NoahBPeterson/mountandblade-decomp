@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """crashrun.py: run the standalone exe under winedbg and report where it crashes, by function name.
 
-usage: crashrun.py [--exe work/relink/standalone/mb_standalone.exe] [--timeout 90] [--hang] [--bottle Steam]
+usage: crashrun.py [--exe work/relink/standalone/mb_standalone.exe] [--timeout 90] [--play] [--hang] [--bottle Steam]
 
 Copies the exe into the game folder (as tools/hybrid/play.sh does: mb_standalone.exe next to the original, which is
 never touched), starts it under CrossOver's winedbg with scripted commands (continue; on an exception: registers,
@@ -23,6 +23,7 @@ def main():
     ap.add_argument("--exe", default=os.path.join(ROOT, "work", "relink", "standalone", "mb_standalone.exe"))
     ap.add_argument("--timeout", type=int, default=90)
     ap.add_argument("--bottle", default=os.environ.get("CX_BOTTLE", "Steam"))
+    ap.add_argument("--play", action="store_true", help="press Return at the launcher (Play)")
     ap.add_argument("--hang", action="store_true", help="when it is still running at the timeout and spinning (CPU "
                     ">= 50%%), break in and report where, then end it")
     a = ap.parse_args()
@@ -37,6 +38,8 @@ def main():
                              env=dict(os.environ, WINEDEBUG="-all"))
         p.stdin.write("cont\n")
         p.stdin.flush()
+        if a.play:
+            press_play(a.timeout)
         t0 = time.time()
         while p.poll() is None and time.time() - t0 < a.timeout:
             time.sleep(1)
@@ -66,6 +69,22 @@ def main():
         except subprocess.TimeoutExpired:
             p.kill()
     return report_text(open(log_path, errors="replace").read())
+
+
+def press_play(limit):
+    """Wait for the launcher window and press Return (its default button is Play): System Events key code 36."""
+    t0 = time.time()
+    while time.time() - t0 < limit:
+        r = subprocess.run(["osascript", "-e", 'tell application "System Events" to get position of window 1 of '
+                            '(first process whose name contains "mb_standalone")'], capture_output=True, text=True)
+        if r.returncode == 0:
+            time.sleep(2)
+            subprocess.run(["osascript", "-e", 'tell application "System Events" to set frontmost of (first process '
+                            'whose name contains "mb_standalone") to true', "-e", "delay 0.5", "-e",
+                            'tell application "System Events" to key code 36'], capture_output=True)
+            return True
+        time.sleep(2)
+    return False
 
 
 def game_procs():

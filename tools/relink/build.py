@@ -14,7 +14,8 @@ Steps (each tool's docstring has the details):
   7. add_rsrc.py      the original's resources (dialogs, icons)
 Writes OUT/mb_standalone.exe, OUT/link.log, OUT/mb_standalone.map and OUT/build.json (what each step did).
 
-Vtable fix-up: a base class of our source often declares placeholder virtuals (MissionUi::d10) that the original's
+Vtable fix-up (and redirect: matched vtables' references in our code are moved to the copy of the original's
+vtable, which has every slot): a base class of our source often declares placeholder virtuals (MissionUi::d10) that the original's
 derived classes override and ours do not, so our compiled vtable of the derived class points at the base's
 placeholder, which the glue can alias to only one function. For each of our vtables that resolve_map matched to an
 original vtable, every slot is rewritten to our definition of the function in the same slot of the original (by
@@ -84,6 +85,7 @@ class Exe:
 def fix_vtables(exe, symmap, rmap, img, lib_names):
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
     report = {"patched_slots": 0, "vtables": 0, "skipped": {}, "missing": []}
+    redirect = {}
     for vt, e in rmap["vtables"].items():
         if len(e["orig"]) != 1 or vt not in symmap:
             report["missing"].append(vt)
@@ -107,6 +109,24 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
             exe.put(ours + 4 * k, want)
         report["patched_slots"] += len(plan)
         report["vtables"] += 1
+        redirect[ours] = ova
+    # Then point the code at the original's vtables: a class our source declares with fewer virtuals than the
+    # original has a short compiled vtable (a call through slot 7 of the 0x4c3290 record read a string literal past
+    # its end). The copy of the original's vtable in the glue's .rdata has every slot, relocated to our functions.
+    from glue import RDATA
+    base = symmap.get("_mb_rdata_base")
+    t0, tn, tp = exe.secs[0]
+    text = bytes(exe.d[tp:tp + tn])
+    moved = 0
+    for ours, ova in redirect.items():
+        new = struct.pack("<I", base + ova - RDATA[1])
+        pat = struct.pack("<I", ours)
+        i = text.find(pat)
+        while i >= 0:
+            exe.d[tp + i:tp + i + 4] = new
+            moved += 1
+            i = text.find(pat, i + 4)
+    report["vptr_stores_redirected"] = moved
     return report
 
 
@@ -247,8 +267,9 @@ def main():
     steps["literals"] = "%d literal image addresses rewritten; %d in dropped functions, %d without a target, %d not " \
                         "where expected" % (lit["patched"], len(lit["missing_function"]), len(lit["no_target"]),
                                             len(lit["changed"]))
-    steps["vtables"] = "%d slots rewritten in %d vtables; %d skipped (match suspect), %d not in the map" % (
-        vt["patched_slots"], vt["vtables"], len(vt["skipped"]), len(vt["missing"]))
+    steps["vtables"] = "%d slots rewritten in %d vtables, %d vtable references moved to the original's; %d skipped " \
+                       "(match suspect), %d not in the map" % (vt["patched_slots"], vt["vtables"],
+                                                             vt["vptr_stores_redirected"], len(vt["skipped"]), len(vt["missing"]))
     steps["rsrc"] = run(["tools/relink/add_rsrc.py", exe_path]).strip()
     json.dump(dict(steps, vtable_report=vt, literal_report=lit), open(os.path.join(out, "build.json"), "w"), indent=1)
     for k, v in steps.items():

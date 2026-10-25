@@ -36,8 +36,12 @@ OWN_IMPORTS = ("newton", "fmod", "skinmagic", "d3dx9_31")
 DLL_FILES = {"newton": "Newton.dll", "fmod": "fmod.dll", "skinmagic": "SkinMagic.dll", "d3dx9_31": "d3dx9_31.dll"}
 
 RDATA = (".rdata$mb", 0x549000, 0x5a7d72)
-DATA = (".data$mb", 0x5a8000, 0x5d7000)
-BSS = (".bss$mb", 0x5d7000, 0x8ee5b94)
+# The original's .data is one section: initialised bytes, then .bss from 0x5d7000. The linker places our copies of
+# the two apart, so the cut between them must not fall inside an object: the resource manager at 0x5d6fa0 is 0xe0
+# bytes and straddles 0x5d7000 (its tail landed on DXUtil_Timer's statics). The copy of the initialised part
+# therefore runs on to 0x5d7080, where the next object (the gui manager, g_gui) starts; those 0x80 bytes are zeros.
+DATA = (".data$mb", 0x5a8000, 0x5d7080)
+BSS = (".bss$mb", 0x5d7080, 0x8ee5b94)
 TEXT_LO, TEXT_HI = 0x401000, 0x548578
 IAT_LO, IAT_HI = 0x549000, 0x5494c8
 
@@ -213,10 +217,11 @@ def make_import_libs(img, out_dir, needed):
                 en = exports.get(k) or ("SkinMagic_ord%d" % k)
                 lines.append("%s @%d NONAME" % (en, k))
                 decorated[dll + "!" + n] = "_" + en
-            elif dll == "d3dx9_31":
+            elif dll == "d3dx9_31":                    # stdcall, exported undecorated: _X@N imports "X"
                 dn = dx_dec.get(n, n)
                 lines.append(dn)
                 decorated[dll + "!" + n] = "_" + dn
+                patch["_" + dn] = 3                    # IMPORT_NAME_UNDECORATE (link /lib kept the @N)
             else:                                       # Newton: cdecl, exported undecorated
                 lines.append(n)
                 decorated[dll + "!" + n] = "_" + n
