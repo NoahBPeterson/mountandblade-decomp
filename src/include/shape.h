@@ -129,6 +129,7 @@ struct composite : shape_base {
     shape_base** bodies;                    // +0x20
     int count;                              // +0x24
     composite() : bodies(0), count(0) {}
+    composite(inline_init t) : shape_base(t), bodies(0), count(0) {}   // the body reader's new (0x41b5a0)
     composite(const composite& o);                          // 0x433470
     virtual ~composite();                                   // 0  0x40d140 (deleting), 0x40d160
     virtual int shape_type();                               // 1  0x48b880 (another object)

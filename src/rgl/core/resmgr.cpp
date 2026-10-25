@@ -463,18 +463,9 @@ skel_anim* make_skel_anim_array(int n) { return new skel_anim[n]; }
 frame_set* make_frame_set_array(int n) { return new frame_set[n]; }
 
 // ---- body parts ----------------------------------------------------------------------------------------------
-// The collision shapes read_body creates. resource.h's shape_base is the base (vtable slot 3 = load); the
-// constructors are expanded inline except capsule (0x408600), face (0x408980) and manifold (0x40c670).
-struct shape_inline : shape_base {
-    shape_inline() : shape_base(inline_init()) {}
-};
-struct composite_obj : shape_inline {                   // vtable 0x54a63c, size 0x28
-    shape_base** bodies; int count;
-    composite_obj() : bodies(0), count(0) {}
-};
-struct sphere_obj : shape_inline {                      // vtable 0x54a4f0, size 0x44
-    vector4 v20, v30; int m40;
-};
+// The collision shapes read_body creates (src/include/shape.h): composite and sphere with the base constructor's
+// stores expanded inline (shape_base(inline_init())), capsule (0x408600), face (0x408980) and
+// manifold (0x40c670) through their out-of-line constructors.
 // @ 0x41b5a0
 stream_base* read_body(stream_base* s, body_part* b)
 {
@@ -482,9 +473,9 @@ stream_base* read_body(stream_base* s, body_part* b)
     s->r_tstr(&b->name);
     s->r_tstr(&kind);
     if (kind == "composite")
-        b->shape = new composite_obj;
+        b->shape = new composite(shape_base::inline_init());
     else if (kind == "sphere")
-        b->shape = new sphere_obj;
+        b->shape = new sphere;
     else if (kind == "capsule")
         b->shape = new capsule;
     else if (kind == "face")

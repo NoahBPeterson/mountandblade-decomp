@@ -26,11 +26,13 @@ def main():
     ap.add_argument("--play", action="store_true", help="press Return at the launcher (Play)")
     ap.add_argument("--hang", action="store_true", help="when it is still running at the timeout and spinning (CPU "
                     ">= 50%%), break in and report where, then end it")
+    ap.add_argument("--cmds", default="", help="extra winedbg commands run at the fault (';'-separated), e.g. "
+                    "'x /4x $ecx' (their output is in dbg.log)")
     a = ap.parse_args()
     game = os.path.join(ROOT, "game")
     shutil.copyfile(a.exe, os.path.join(game, "mb_standalone.exe"))
     log_path = os.path.join(ROOT, "work", "relink", "standalone", "dbg.log")
-    report = "info reg\nbt 40\nx /512x $esp\n"
+    report = "info reg\nbt 40\nx /512x $esp\n" + "".join(c.strip() + "\n" for c in a.cmds.split(";") if c.strip())
     hung = False
     with open(log_path, "w") as log:
         p = subprocess.Popen([CX, "--bottle", a.bottle, "--cx-app", "winedbg", WINPATH], cwd=game,

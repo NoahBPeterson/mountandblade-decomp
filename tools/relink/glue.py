@@ -169,10 +169,17 @@ def unresolved_symbols(log):
 
 
 def string_mask(b):
-    """Byte positions inside a printable run of 4+ characters ended by NUL (C strings)."""
+    """Byte positions inside a printable run of 4+ characters ended by NUL (C strings). A string starts on a 4-byte
+    boundary or right after a NUL: the tail of a float before a vtable (0.01f = 0a d7 23 3c, then 0x417730 =
+    30 77 41 00 reads "#<0wA") is not one."""
     mask = bytearray(len(b))
     for m in re.finditer(rb"[\x20-\x7e\t\r\n]{4,}(?=\0)", b):
-        mask[m.start():m.end()] = b"\1" * (m.end() - m.start())
+        st = m.start()
+        while st % 4 and b[st - 1] != 0:
+            st += 1                                      # skip a non-string prefix up to the next boundary
+        if m.end() - st < 4:
+            continue                                     # (a pointer from a boundary is 3 bytes and its 00)
+        mask[st:m.end()] = b"\1" * (m.end() - st)
     return mask
 
 
