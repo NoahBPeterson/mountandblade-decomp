@@ -34,8 +34,8 @@ struct RecR {                                // 0x5ac8  party / roster record
     RecR();                                  // 0x4934d0
     ~RecR();                                 // 0x431b90
     void   prepare();                        // 0x4b1eb0
-    int    at_target();                      // 0x51be20
-    float  speed();                          // 0x4b20b0
+    int    dist_is_zero();                      // 0x51be20
+    float  speed_factor();                          // 0x4b20b0
     tstring* display_name();                 // 0x48d7b0  (the name used when appending an order)
 
     char     pad00[0x0c];
@@ -80,6 +80,7 @@ struct gui_manager {
 };
 
 #include "../str_table.h"
+#include "../skill_cap.h"
 
 // ---- layout guards (MSVC 13 has no static_assert: a mismatch is a negative array size) -------------
 // Sizes: every record's stride appears in the original as an `imul ..., <stride>` immediate.
@@ -118,9 +119,9 @@ extern gui_manager g_gui;                    // 0x5d7080
 extern StrTable   g_strtable;                // 0x5e2a18
 extern int        g_sel_type;                // 0x5aa3b4  last painted selection
 extern int        g_sel_id;                  // 0x5aa3b0
-extern int        g_use_faction_colors;      // 0xa181b0
-extern char       g_show_keys;               // 0xa181b8
-extern int        g_clamp_max;               // 0x8ee3ac4  tier clamp (same global as s004b2c00's g_clamp_max)
+extern int        g_show_faction_color;      // 0xa181b0
+extern char       g_show_party_ids_instead_of_names;               // 0xa181b8
+
 extern unsigned   g_panel_color;             // 0x5d8760  name colour of the left column
 extern unsigned   g_panel_bg;                // 0x5d8764  background tint for the left column
 
@@ -145,7 +146,7 @@ static Rec98* agent_at(int idx)
 // a record's display string: the key's string-table entry when the key is a token (0x51afb6, 0x51b2cb)
 static tstring* record_name(RecR* r)
 {
-    if (g_show_keys) return &r->key;
+    if (g_show_party_ids_instead_of_names) return &r->key;
     if (r->f1c == 0) {
         tstring* s = g_strtable.find(&r->key);
         if (s) return s;
@@ -229,7 +230,7 @@ void MapPanel::update(int type, int id)
                 rec = party_by_id(agent);
                 float    rel   = g_game->relation(agent, g_game->f78);
                 unsigned color = g_game->color_of(rel, 1);
-                if (g_use_faction_colors)
+                if (g_show_faction_color)
                     color = g_game->factions[party_by_id(agent)->faction].color;
                 if (c == 0) {
                     g_panel_color = color;
@@ -250,7 +251,7 @@ void MapPanel::update(int type, int id)
                         int      m    = members[i];
                         float    mrel = g_game->relation(m, g_game->f78);
                         unsigned mcol = g_game->color_of(mrel, 1);
-                        if (g_use_faction_colors)
+                        if (g_show_faction_color)
                             mcol = g_game->factions[party_by_id(m)->faction].color;
                         if (party_by_id(m)->flags & 0x40000)
                             mcol = mrel < -0.01f ? 0xff22aaffu : 0xffaa22ddu;
@@ -292,7 +293,7 @@ void MapPanel::update(int type, int id)
                         }
                         char buf[0x200];
                         mb_snprintf(buf, 0x200, "(%s)", fn->c_str());        // 0x415100
-                        unsigned fcol = g_use_faction_colors
+                        unsigned fcol = g_show_faction_color
                                       ? f->color
                                       : f->rel[0] < -0.001f ? 0xffff4422u
                                       : f->rel[0] >  0.001f ? 0xff44ff22u : 0xffffffffu;
@@ -333,7 +334,7 @@ void MapPanel::update(int type, int id)
                         label.append(*g_game->parties.get(rec->target)->display_name());
                         break;
                     case 6:
-                        label = *(rec->at_target() ? g_strtable.lookup(tstring("ui_holding"))
+                        label = *(rec->dist_is_zero() ? g_strtable.lookup(tstring("ui_holding"))
                                                    : g_strtable.lookup(tstring("ui_travelling")));
                         break;
                     case 7: {
@@ -358,10 +359,10 @@ void MapPanel::update(int type, int id)
 
                     if (!(rec->flags & 0x400)) {
                         g_gui.draw_string(label, 0.021f, 0xffc0b0a0, 1);
-                        if (!rec->at_target()) {
+                        if (!rec->dist_is_zero()) {
                             char buf[0x200];
                             const char* fmt = g_strtable.lookup(tstring("ui_speed_equals"))->c_str();
-                            sprintf(buf, fmt, (double)rec->speed());
+                            sprintf(buf, fmt, (double)rec->speed_factor());
                             g_gui.draw_string(tstring(buf), 0.021f, 0xffb0a090, 1);
                         }
                     }
@@ -384,7 +385,7 @@ void MapPanel::update(int type, int id)
                         if (t->flags32 & 0x10) {
                             int tier = t->nib_b[0x7a - 0x68] & 0xf;
                             if (tier < 0)                tier = 0;
-                            else if (tier > g_clamp_max) tier = g_clamp_max;
+                            else if (tier > (*(int*)&g_skill_tbl[36].cap)) tier = (*(int*)&g_skill_tbl[36].cap);
                             int pct = (int)(t->hp * 100.0f / (float)(t->f58[0] + tier * 2 + 0x23) + 1e-4f);
                             sprintf(buf, "%s (%d%%)", troop_name_c(t), pct);
                             g_gui.draw_string(tstring(buf), 0.015f, tcol | 0x0f0f0f, 0);
@@ -399,11 +400,11 @@ void MapPanel::update(int type, int id)
                 }
             }                                    // for (c ...)
         } else if (type == 3) {
-            select(id);
+            draw_party_line(id);
         }
 
         // ---- move the panel to the selection's screen position --------------------------------------
-        int* xy = view->to_screen(&rec, pos);                     // 0x51a690
+        int* xy = view->project(&rec, pos);                     // 0x51a690
         int  screen[2] = { xy[0], xy[1] };
         g_gui.set_view((const float*)screen);                     // 0x4c5190
     }

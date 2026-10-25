@@ -57,21 +57,20 @@ extern "C" int sprintf(char* dst, const char* fmt, ...);    // 0x536f8f
 // ---- objects of other translation units ---------------------------------------------------------------------
 struct GuiHost {                                // the gui manager at 0x5d7080
     void reset();                               // 0x42d1b0
-    void add_screen(MissionUi** w);             // 0x49b120
+    void add_root(MissionUi** w);               // 0x49b120
 };
-extern GuiHost g_gui_host;                      // 0x5d7080
+extern GuiHost g_gui;                           // 0x5d7080
 extern char g_gui_dirty;                        // 0x5d8788 (set whenever a window was installed)
 extern int g_tutorial_off;                      // 0x5a9fac (non-zero: tutorials are switched off)
-extern void* g_windows_arr[];                   // 0xa73980 (the window manager: its first screen is the message box)
+extern void* g_windows[];                       // 0xa73980 (the window manager: its first screen is the message box)
 struct WindowOpener { void open(int window); };     // 0x494260 (ret 4)
-extern WindowOpener g_window_opener;            // 0xa73980
 extern float g_row_unit;                        // 0x599ae8 (0.088f: the height of one row of the 3-column item grid)
 struct GameStrings {                            // the game object seen through its text table
-    tstring* string_value_into(tstring* out, int id);     // 0x48e9e0 (ret 8: the hidden result pointer spelled out)
+    tstring* string_value(tstring* out, int id);     // 0x48e9e0 (ret 8: the hidden result pointer spelled out)
 };
 MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
-MissionUi* __cdecl make_scroll_bar(MissionUi* parent, const tstring* name);    // 0x4f6160 (cdecl): the scroll widget of a list
+MissionUi* __cdecl make_scrollbar(MissionUi* parent, const tstring* name);    // 0x4f6160 (cdecl): the scroll widget of a list
 struct ViewOps { void layout(); };              // 0x488d50 (thiscall: lays the list's content out)
 
 // the scrolling item list (constructor 0x49deb0, size 0x4a8): the flags word is MissionUi's; +0x484 the scroll bar, +0x490 the row count
@@ -116,7 +115,7 @@ void PartyWindow::create()
 
     f_a8c = 0;
     f_a98 = 0;
-    g_gui_host.reset();
+    g_gui.reset();
     f_ab0 = -1;
     f_ab4 = -1;
     f_ab8 = -1;
@@ -194,7 +193,7 @@ void PartyWindow::create()
 
         InvList* v;
         if (i == 0) {
-            MissionUi* sc = make_scroll_bar((MissionUi*)container, &tstring("inv_s_inventory1"));
+            MissionUi* sc = make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory1"));
             v = new InvList;
             v->f104 |= 0x20;
             if (sc != 0)
@@ -203,7 +202,7 @@ void PartyWindow::create()
             SET_ROWS(v, nrows);
             label_refresh(v, tstring("inv_sc_inventory1_outer"));
         } else {
-            MissionUi* sc = make_scroll_bar((MissionUi*)container, &tstring("inv_s_inventory2"));
+            MissionUi* sc = make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory2"));
             v = new InvList;
             v->f104 |= 0x20;
             if (sc != 0)
@@ -342,7 +341,7 @@ void PartyWindow::create()
     {
         MissionUi* root = (MissionUi*)container;
         g_gui_dirty = 1;
-        g_gui_host.add_screen(&root);
+        g_gui.add_root(&root);
     }
     init_window();
 
@@ -351,13 +350,13 @@ void PartyWindow::create()
         tstring t2("ui_tutorial");
         tstring* text = g_strtab.lookup(&t1);
         tstring* title = g_strtab.lookup(&t2);
-        char* box = (char*)g_windows_arr[0];
+        char* box = (char*)g_windows[0];
         *(tstring*)(box + 0x68) = *title;
         *(tstring*)(box + 0x1c) = *text;
         *(int*)(box + 0x4c) = 0;
         *(int*)(box + 0x50) = 0;
         *(int*)(box + 4) = 0;
-        g_window_opener.open(0);
+        ((WindowOpener*)g_windows)->open(0);
         g_game->f13ae8 |= 1;
     }
 }
@@ -375,7 +374,7 @@ void PartyWindow::money_label(int which)
         char raw[sizeof(tstring)];                  // the callee constructs the string in place (the original does not run the default constructor)
         tstring* val = (tstring*)raw;
         tstring key("ui_money_value");
-        tstring* id = ((GameStrings*)g_game)->string_value_into(val, money);
+        tstring* id = ((GameStrings*)g_game)->string_value(val, money);
         sprintf(buf, g_strtab.lookup(&key)->c_str(), id->c_str());
         val->~tstring();
     }

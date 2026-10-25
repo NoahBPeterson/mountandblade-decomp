@@ -246,7 +246,7 @@ struct logger {
     virtual logger& operator<<(int v);               // +0x2c
     virtual logger& operator<<(const char* s);       // +0x28
 };
-extern logger g_logger;                              // 0x5a9f60
+extern logger g_log;                              // 0x5a9f60
 
 // the text stream used to read music.txt (vtable 0x54ac88, 0x38 bytes, `failed` at +0x34).
 struct text_stream {
@@ -258,17 +258,17 @@ struct text_stream {
 };
 
 struct Table2;                                       // built by MusicTable::build below (0x50f7e0)
-extern MusicTable g_music_table;                          // 0xa73a10
+extern MusicTable g_music_situation;                          // 0xa73a10
 
 struct ModInfo {
     void load(FILE* f);                              // 0x4bd630
 };
-extern ModInfo g_mod_info;                           // 0xa18238
+extern ModInfo g_module_info;                           // 0xa18238
 
 struct EditorDialog {
-    void restart();                                  // 0x4c0520
+    void load_game_variables();                                  // 0x4c0520
 };
-extern EditorDialog g_editor_dialog;                 // 0x8ee3c48
+extern EditorDialog g_app_obj;                 // 0x8ee3c48
 
 #include "../gui_mgr.h"
 extern GuiManager g_gui;                                 // 0x5d7080
@@ -296,12 +296,12 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         { tstring key("ui_loading_module_info_file"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 1) {
-        g_editor_dialog.restart();
+        g_app_obj.load_game_variables();
         tstring path(g_module_path);
         { tstring ini("module.ini"); path.append(ini); }
         FILE* f = fopen(path.c_str(), "r");
         if (f) {
-            g_mod_info.load(f);
+            g_module_info.load(f);
             f44 = g_xa44238 + 5;
             fclose(f);
         } else {
@@ -317,13 +317,13 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         (*step)++;
     } else if (*step == 3) {
         if (!g_sound_paused && !g_sound_muted) {
-            g_logger << "Loading Music...\n";
+            g_log << "Loading Music...\n";
             text_stream ts;
             {
                 tstring name(g_module_path);
                 { tstring m("music.txt"); name.append(m); }
                 if (ts.open_read_text(name.c_str())) {
-                    g_music_table.build((Src*)&ts);
+                    g_music_situation.build((Src*)&ts);
                     ts.failed = 1;
                 } else {
                     mb_error("Unable to find module music file");
@@ -343,9 +343,9 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         { tstring key("ui_loading_textures"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 7) {
-        g_logger << "Loading Textures...\n";
+        g_log << "Loading Textures...\n";
         g_resmgr2.load_all(g_scan_module_textures, &g_module_path);
-        g_logger << "Finished Loading Textures...\n";
+        g_log << "Finished Loading Textures...\n";
         { tstring key("ui_finished"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else {

@@ -80,7 +80,7 @@ struct vec_model {                                  // vector<model_b>
     model_b* last;                                  // +8
     model_b* end;                                   // +0xc
     unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    void clear();                                   // 0x4eb810
+    void destroy();                                   // 0x4eb810
     void resize(unsigned n, model_b val = model_b());   // 0x50d170
 };
 
@@ -94,16 +94,16 @@ struct vec_widget {                                 // vector<widget*> (allocato
 };
 
 // ------------------------------------------------------------------ callees --------------------------------
-void  destroy_named(named_vec* first, named_vec* last, void* self, void* extra);   // 0x4f6680
+void  destroy_named_t(named_vec* first, named_vec* last, void* self, void* extra);   // 0x4f6680
 void  destroy_named_t(named_vec* first, named_vec* last, void* self, junk_tag tag); // 0x4f6680
 void  insert_models(model_b** out, unsigned n, const model_b* val);      // 0x4fe520
-void  erase_models(model_b* out, model_b* first, model_b* last);         // 0x4eb860
+void  erase(model_b* out, model_b* first, model_b* last);         // 0x4eb860
 void* uninit_copy(void* first, void* last, void* dst, void* self, junk_tag tag);   // 0x4ebe10
 void* uninit_fill(void* dst, unsigned n, const void* val, void* self, const void* val2);  // 0x4f65f0
 void  fill_named(named_vec* first, named_vec* last, const named_vec* val);         // 0x4e5f80
 void  copy_back(void* first, void* last, void* dst, junk_tag tag);        // 0x4e42b0
 void  destroy_items(item50* first, item50* last, void* self, junk_tag tag);         // 0x4d10f0
-void  scene_read(void* self, void* stream);                              // 0x4e7b30
+void  read(void* self, void* stream);                              // 0x4e7b30
 void  tstring_dtor(tstring* s);                                          // 0x42bc40
 
 // ------------------------------------------------------------------ globals --------------------------------
@@ -254,12 +254,12 @@ void __stdcall sort_list(sel_list* l, int mode)
 
 // ------------------------------------------------------------------ the dialog thunk -----------------------
 #include "../editor_panel.h"
-extern EditorPanel g_panel;                         // 0x8ee3c48
+extern EditorPanel g_app_obj;                         // 0x8ee3c48
 
 // @ 0x50d250 dialog_thunk
 LRESULT __stdcall dialog_thunk(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    return g_panel.terrain_dialog(hDlg, msg, wParam, lParam);
+    return g_app_obj.terrain_dialog(hDlg, msg, wParam, lParam);
 }
 
 // ------------------------------------------------------------------ vector<named_vec> members --------------
@@ -275,7 +275,7 @@ named_vec* vec_named::_Ufill(named_vec* ptr, unsigned n, const named_vec& val)
 void vec_named::_Destroy(named_vec* first_, named_vec* last_)
 {
     named_vec* p = last_;
-    destroy_named(first_, last_, this, p);
+    destroy_named_t(first_, last_, this, p);
 }
 
 // @ 0x50d260 vec_named::_Insert_n
@@ -332,7 +332,7 @@ void vec_named::_Insert_n(named_vec* where, unsigned count, const named_vec& val
 
 // ------------------------------------------------------------------ vector<model_b> members ---------------
 void __stdcall insert_models(model_b* where, unsigned n, const model_b& val);      // 0x4fe520
-void __stdcall erase_models(const model_b& out, model_b* first, model_b* last);    // 0x4eb860
+void __stdcall erase(const model_b& out, model_b* first, model_b* last);    // 0x4eb860
 
 // @ 0x50d170 vec_model::resize
 void vec_model::resize(unsigned n, model_b val)
@@ -341,7 +341,7 @@ void vec_model::resize(unsigned n, model_b val)
     if (size() < n)
         insert_models(last, n - size(), val);
     else if (n < size())
-        erase_models(val, f + n, last);
+        erase(val, f + n, last);
 }
 
 // ------------------------------------------------------------------ the scene reader -----------------------
@@ -365,7 +365,7 @@ struct mesh_scene {
 // @ 0x50d520 mesh_scene::read
 void mesh_scene::read(AccessStream* s)
 {
-    models.clear();
+    models.destroy();
     s->read_int(&count);
     unsigned n = count;
     models.resize(n);

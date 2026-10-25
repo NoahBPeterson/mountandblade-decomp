@@ -28,13 +28,14 @@
 __declspec(noinline) void quat_to_matrix(rgl::matrix* m, const quaternion* q);                                  // 0x423080
 __declspec(noinline) void quat_to_axis_angle(rgl::vector4* axis, float* angle, const quaternion* q);            // 0x423160
 
-extern __int64 g_time[];                    // 0x5e2948 clock table, 1e-5 s ticks (scene_objects.cpp uses it too)
+
 extern __int64 g_bit[];                     // 0x5a8e68 g_bit[i] == 1 << i
 extern int g_use_slerp;                     // 0xa171dc
 
 // ---- key tables ------------------------------------------------------------------------------------------------
 // One table: values (vector4 or quaternion records), key array (ints), key count. KeyTable::find 0x423a50.
 #include "../../include/key_table.h"   // KeyTable (one definition for src/game and src/rgl; find 0x423a50 is defined in fx_anim.cpp)
+#include "../../include/fx.h"
 // the table object an AnimRec points to: +0x1c one KeyTable per bone (quaternion keys), +0x28 one table (vector keys)
 struct KeyObj {
     char pad0[0x1c];
@@ -53,7 +54,7 @@ struct AnimRec {
     unsigned __int64 flip_mask;             // +0x10 bit per bone
     float f18;                              // +0x18 shaped phase
     int cur;                                // +0x1c
-    int clock;                              // +0x20 index into g_time
+    int clock;                              // +0x20 index into g_ticks
     char pad24[4];
     __int64 start;                          // +0x28
     char pad30[0x3c - 0x30];

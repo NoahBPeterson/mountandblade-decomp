@@ -34,14 +34,14 @@ struct elem2 : widget {
 extern char g_vt_591ee8[];                                  // 0x591ee8
 
 // load the widget's "<name>_*" parameters from the ini table (0x4e4c70)
-void elem_fill(widget* w, tstring name);                    // 0x4e4c70 (tstring by value)
+void label_refresh(widget* w, tstring name);                    // 0x4e4c70 (tstring by value)
 
 // ---- frustum (0x120 bytes) -------------------------------------------------------------------------------
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
 // ---- frame / matrix --------------------------------------------------------------------------------------
 struct frame : rgl::matrix {
-    void rotate_fu(const float* angle);                     // 0x40e570
-    void rotate_su(const float* angle);                     // 0x40e670
+    void rotate_about_s(const float* angle);                     // 0x40e570
+    void rotate_about_f(const float* angle);                     // 0x40e670
 };
 frame* identity_pos(frame* out);                            // 0x40cd00 (cdecl, returns out)
 
@@ -77,7 +77,7 @@ typedef MapWidget face_body;
 struct obj_tbl {
     mesh* make_mesh_from(const int* def, const int* troop); // 0x4991d0
 };
-extern obj_tbl g_obj;                                       // 0xa75f40
+extern obj_tbl g_tableaus;                                       // 0xa75f40
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                                     // 0x5d6fa0
@@ -85,13 +85,13 @@ extern resmgr g_resmgr;                                     // 0x5d6fa0
 // ---- the global animator ---------------------------------------------------------------------------------
 #include "../animator.h"                                  // Animator, g_anim
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-extern int g_char_count;                                    // 0x8ed4f88
-int gen_face_seed(int* skin, int* flags, int* count);       // 0x432510
+extern int g_skin_count;                                    // 0x8ed4f88
+int clamp_index(int* skin, int* flags, int* count);       // 0x432510
 
 // ---- the game singleton ----------------------------------------------------------------------------------
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 extern float g_fov_k;                                       // 0x5e20a8
-extern int g_a181ac;                                        // 0xa181ac
+extern int g_limit_hair_colors;                                        // 0xa181ac
 extern int g_a75f64;                                        // 0xa75f64
 
 void free_535712(void* p);                                  // 0x535712 (operator delete)
@@ -127,7 +127,7 @@ void char_window::open_view()
     if (g_a75f64 < 0) {
         // ---- 3D portrait: build the body, the world, the wind tracks and the camera ----
         face_body* b = new face_body;
-        elem_fill((widget*)b, tstring("char_i_character"));
+        label_refresh((widget*)b, tstring("char_i_character"));
         if (world != 0) {
             world->destroy();
             free_535712(world);
@@ -207,9 +207,9 @@ void char_window::open_view()
         identity_pos(&m2);
         m2.o.y = -0.12f;
         float ang = -0.2f;
-        m2.rotate_su(&ang);
+        m2.rotate_about_f(&ang);
         ang = 0.1f;
-        m2.rotate_fu(&ang);
+        m2.rotate_about_s(&ang);
         e->set_matrix(&m2);
         ui->add_child((widget*)b);
         if (f2dc == -1) {
@@ -217,12 +217,12 @@ void char_window::open_view()
             char* rec = g_game->chars_c + troop * 0x508;
             int skin = *(int*)(rec + 0x30) & 0xf;
             int flags = 0;
-            g_anim.cur = gen_face_seed(&skin, &flags, &g_char_count);
+            g_anim.cur = clamp_index(&skin, &flags, &g_skin_count);
             g_anim.set_anim_a(rec + 0x3c0);
             void* ra = 0;
             void* rb = 0;
             void* rc = 0;
-            g_anim.collect(g_a181ac != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
+            g_anim.collect(g_limit_hair_colors != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
             e->on_anim_end();
             ResList* rl = (ResList*)((char*)e + 0x108);
             rl->release(&ra);
@@ -236,7 +236,7 @@ void char_window::open_view()
         if (f2dc == -1) {
             widget* a = new widget;
             f4d0 = a;
-            elem_fill(a, tstring("char_i_character_shadow"));
+            label_refresh(a, tstring("char_i_character_shadow"));
             {
                 tstring nm("character_window_shadow");
                 mesh* m = g_resmgr.get_object(nm);
@@ -247,8 +247,8 @@ void char_window::open_view()
             elem2* c = new elem2;
             *(void**)c = (void*)g_vt_591ee8;
             f4cc = c;
-            elem_fill(c, tstring("char_i_character"));
-            mesh* m2 = g_obj.make_mesh_from(&mode, &troop);
+            label_refresh(c, tstring("char_i_character"));
+            mesh* m2 = g_tableaus.make_mesh_from(&mode, &troop);
             c->add_item2(0, m2);
             ui->add_child(c);
         }
@@ -270,7 +270,7 @@ struct view_obj {
     int   fa8;                                              // +0xa8
     int   fac;                                              // +0xac
     float fb0;                                              // +0xb0
-    void  sub_50a1c0(int a, int b);                         // 0x50a1c0
+    void  build(int a, int b);                         // 0x50a1c0
     void  reset();                                          // 0x50a140
 };
 
@@ -291,5 +291,5 @@ void view_obj::reset()
     fb0 = -1.0f;
     clear_buffer(p7c, f80, f84);
     clear_buffer(p8c, f90, f94);
-    sub_50a1c0(g_game->f13b08, g_game->f13b0c);
+    build(g_game->f13b08, g_game->f13b0c);
 }

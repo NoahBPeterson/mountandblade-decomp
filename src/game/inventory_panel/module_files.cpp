@@ -122,7 +122,7 @@ struct MapIcon {
     char pad24[0x18];            // +0x24
     Vec12 v;                     // +0x3c
     MapIcon() {}
-    void read_map_icon(tstream3* s);              // 0x4c20c0
+    void read(tstream3* s);                       // 0x4c20c0
 };
 
 // item_kinds1.txt element (0x238 bytes): ctor 0x4cdf20, dtor 0x4c8a40, read 0x4c8110.
@@ -140,7 +140,7 @@ struct PartyTplRec {
     int fA8;                     // +0xa8
     int fAC;                     // +0xac
     PartyTplRec() : fA4(0), fA8(0), fAC(0) {}
-    void read(tstream3* s);                       // 0x4bdff0
+    void save(tstream3* s);                       // 0x4bdff0
     void destroy_array(int flags);                   // 0x4c8980
 };
 
@@ -154,13 +154,13 @@ struct SoundTable {                                  // 0x5aa128
 };
 #include "../emit.h"
 struct AnimTable {                                   // 0x8ed4f60
-    void load(tstream3* s);                          // 0x50d520
+    void read(tstream3* s);                          // 0x50d520
 };
 struct TableauTable {                                // 0xa75f40
-    void load(tstream3* s);                          // 0x4e7a70
+    void read(tstream3* s);                          // 0x4e7a70
 };
 struct PresentationTable {                           // 0xa75f2c
-    void load(tstream3* s);                          // 0x4c6950
+    void fill_records(tstream3* s);                  // 0x4c6950
 };
 struct ScriptTable {                                 // 0xa75eb0
     void load(tstream3* s);                          // 0x4c48d0
@@ -173,10 +173,10 @@ struct DialogTable {                                 // 0x8ed50c8
     void read(tstream3* s);                          // 0x460ab0
 };
 
-extern SoundTable g_sounds;                          // 0x5aa128
+extern SoundTable g_sound_mgr;                          // 0x5aa128
 extern EmitTable g_emit_defs;                        // 0x8ed5090
-extern AnimTable g_anims;                            // 0x8ed4f60
-extern TableauTable g_tableau;                       // 0xa75f40
+extern AnimTable g_anim_table;                            // 0x8ed4f60
+extern TableauTable g_tableaus;                       // 0xa75f40
 extern PresentationTable g_presentations;            // 0xa75f2c
 extern ScriptTable g_scripts;                        // 0xa75eb0
 extern MeshTable g_meshes;                           // 0x8ed4f58
@@ -192,11 +192,11 @@ extern LogSink g_log;                                // 0x5a9f60
 
 // ---------------------------------------------------------------- module state
 
-extern int g_num_sound_files;                        // 0xa1810c
+extern int g_scan_module_sounds;                        // 0xa1810c
 extern int g_sound_count;                            // 0x5d878c
 
-extern int g_map_point_count;                        // 0x5e29e0
-extern MapPoint* g_map_points;                       // 0x5e29dc
+extern int g_propkind_count;                        // 0x5e29e0
+extern MapPoint* g_propkinds;                       // 0x5e29dc
 
 extern int g_menu_count;                             // 0x5e29b4
 extern MenuRec* g_menus;                             // 0x5e29b0
@@ -204,11 +204,11 @@ extern MenuRec* g_menus;                             // 0x5e29b0
 extern int g_map_icon_count;                         // 0x5e29f4
 extern MapIcon* g_map_icons;                         // 0x5e29f0
 
-extern int g_item_count;                             // 0x5e29d4
+extern int g_item_kind_count;                             // 0x5e29d4
 extern ItemKind* g_items;                            // 0x5e29d0
 
-extern int g_mode_count;                             // 0x5e2a04
-extern ModeRec* g_modes;                             // 0x5e2a00
+extern int g_mission_template_count;                             // 0x5e2a04
+extern ModeRec* g_mission_templates;                             // 0x5e2a00
 
 extern int g_party_template_count;                   // 0x5e29fc
 extern PartyTplRec* g_party_templates;                  // 0x5e29f8
@@ -229,8 +229,8 @@ void load_module_files()
     in_sounds.r_tstr(&str1);
     in_sounds.r_tstr(&str2);
     in_sounds.r_int(&version);
-    g_sounds.load(&s_sounds, g_num_sound_files, &g_module_path);
-    g_sound_count = *g_sounds.p4;
+    g_sound_mgr.load(&s_sounds, g_scan_module_sounds, &g_module_path);
+    g_sound_count = *g_sound_mgr.p4;
     s_sounds.failed = 1;
 
     // particle_systems.txt
@@ -248,7 +248,7 @@ void load_module_files()
     in_skins.r_tstr(&str1);
     in_skins.r_tstr(&str2);
     in_skins.r_int(&version);
-    g_anims.load(&s_skins);
+    g_anim_table.read(&s_skins);
     s_skins.failed = 1;
 
     // scene_props.txt
@@ -257,14 +257,14 @@ void load_module_files()
     in_scene.r_tstr(&str1);
     in_scene.r_tstr(&str2);
     in_scene.r_int(&version);
-    in_scene.r_int(&g_map_point_count);
-    if (g_map_points) {
-        g_map_points->destroy_array(3);
-        g_map_points = 0;
+    in_scene.r_int(&g_propkind_count);
+    if (g_propkinds) {
+        g_propkinds->destroy_array(3);
+        g_propkinds = 0;
     }
-    g_map_points = new MapPoint[g_map_point_count];
-    for (int i = 0; i < g_map_point_count; i++)
-        g_map_points[i].read(&s_scene);
+    g_propkinds = new MapPoint[g_propkind_count];
+    for (int i = 0; i < g_propkind_count; i++)
+        g_propkinds[i].read(&s_scene);
     s_scene.failed = 1;
 
     // menus.txt
@@ -286,13 +286,13 @@ void load_module_files()
     // tableau_materials.txt
     tstream3 s_tableau;
     open_module_file(s_tableau, "tableau_materials.txt");
-    g_tableau.load(&s_tableau);
+    g_tableaus.read(&s_tableau);
     s_tableau.failed = 1;
 
     // presentations.txt
     tstream3 s_presentations;
     open_module_file(s_presentations, "presentations.txt");
-    g_presentations.load(&s_presentations);
+    g_presentations.fill_records(&s_presentations);
     s_presentations.failed = 1;
 
     // scripts.txt
@@ -315,7 +315,7 @@ void load_module_files()
     g_map_icons = 0;
     g_map_icons = new MapIcon[g_map_icon_count];
     for (int i = 0; i < g_map_icon_count; i++)
-        g_map_icons[i].read_map_icon(&s_map_icons);
+        g_map_icons[i].read(&s_map_icons);
     s_map_icons.failed = 1;
     log.w_cstr("Loading Module...\n");
 
@@ -347,11 +347,11 @@ void load_module_files()
     in_items.r_tstr(&str1);
     in_items.r_tstr(&str2);
     in_items.r_int(&version);
-    in_items.r_int(&g_item_count);
+    in_items.r_int(&g_item_kind_count);
     delete[] g_items;
     g_items = 0;
-    g_items = new ItemKind[g_item_count];
-    for (int i = 0; i < g_item_count; i++)
+    g_items = new ItemKind[g_item_kind_count];
+    for (int i = 0; i < g_item_kind_count; i++)
         g_items[i].read(&s_items, version);
     s_items.failed = 1;
     log.w_cstr("Loading dialogs...\n");
@@ -372,14 +372,14 @@ void load_module_files()
     in_mission.r_tstr(&str1);
     in_mission.r_tstr(&str2);
     in_mission.r_int(&version);
-    in_mission.r_int(&g_mode_count);
-    if (g_modes) {
-        g_modes->destroy_array(3);
-        g_modes = 0;
+    in_mission.r_int(&g_mission_template_count);
+    if (g_mission_templates) {
+        g_mission_templates->destroy_array(3);
+        g_mission_templates = 0;
     }
-    g_modes = new ModeRec[g_mode_count];
-    for (int i = 0; i < g_mode_count; i++)
-        g_modes[i].read_trigger_block(&s_mission);
+    g_mission_templates = new ModeRec[g_mission_template_count];
+    for (int i = 0; i < g_mission_template_count; i++)
+        g_mission_templates[i].read_trigger_block(&s_mission);
     s_mission.failed = 1;
     log.w_cstr("Loading party templates...\n");
 
@@ -396,6 +396,6 @@ void load_module_files()
     }
     g_party_templates = new PartyTplRec[g_party_template_count];
     for (int i = 0; i < g_party_template_count; i++)
-        g_party_templates[i].read(&s_party);
+        g_party_templates[i].save(&s_party);
     s_party.failed = 1;
 }

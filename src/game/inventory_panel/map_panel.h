@@ -18,7 +18,7 @@ struct MapView {
     virtual void v80();
     virtual char is_key_down(int key);                              // +0x44
     char  pad04[0x274 - 4];                  // +0x274 = view/projection matrix used by to_screen
-    int*  to_screen(RecR** entity, const Pos4& pos);                // 0x51a690
+    int*  project(RecR** entity, const Pos4& pos);                // 0x51a690
     void screen_to_world(rgl::vector4* near_pt, rgl::vector4* far_pt);   // 0x4bd2f0
 };
 
@@ -34,7 +34,6 @@ struct MapPanel {
     int       f2d8;                          // +0x2d8  currently picked party id
     void set_label(int id);                  // 0x51a420
     void update(int type, int id);           // 0x51abd0
-    void select(int id);                     // 0x51c090
     void draw_party_line(int id); // 0x51c090
     void update_target();                    // 0x5191e0
 };

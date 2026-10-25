@@ -119,16 +119,16 @@ extern SkillRow g_skill_rows[];                     // 0x8ee3110
 // ---- objects and functions of other translation units --------------------------------------------------------------
 extern char g_ui_changed;                           // 0x5d8788 (set to 1 whenever a window was installed)
 extern float g_grow_frac;                           // 0x54a6e4 (0.2f)
-extern float g_skill_points_ok;                     // 0xa18138
-extern float g_skill_points_full;                   // 0xa1813c
-extern char g_use_alt_name;                         // 0xa181b8
+extern float g_hero_wounded_treshold;                     // 0xa18138
+extern float g_player_wounded_treshold;                   // 0xa1813c
+extern char g_show_party_ids_instead_of_names;                         // 0xa181b8
 extern int g_item_sel;                              // 0xa75f6c (the selected item index; negative = nothing selected)
-extern ObjTable g_obj_inv;                          // 0xa75f40
+extern ObjTable g_tableaus;                          // 0xa75f40
 void __fastcall window_ctor(void* p);               // 0x4931a0
 void __fastcall panel_ctor(void* p);                // 0x48ae20
-MissionUi* __cdecl make_button(MissionUi* parent, tstring* text, int a, int b, float h);   // 0x4e5570
-MissionUi* __cdecl make_text(MissionUi* parent, tstring* text, int a, int b, float h);     // 0x4dce70
-MissionUi* __cdecl make_up(MissionUi* parent, tstring* text, int a, int b, float h);       // 0x4dcbd0
+MissionUi* __cdecl make_short_button(MissionUi* parent, tstring* text, int a, int b, float h);   // 0x4e5570
+MissionUi* __cdecl new_medium_button(MissionUi* parent, tstring* text, int a, int b, float h);     // 0x4dce70
+MissionUi* __cdecl new_long_button(MissionUi* parent, tstring* text, int a, int b, float h);       // 0x4dcbd0
 MissionUi* __cdecl make_scrollbar(MissionUi* parent, const tstring* name);                  // 0x4f6160
 MissionUi* __cdecl make_member_list(MissionUi* parent, const tstring* name, MissionUi* sc); // 0x4f62f0
 MissionUi* __cdecl make_editor_list(MissionUi* parent, const tstring* name, MissionUi* sc); // 0x4f62f0
@@ -136,6 +136,6 @@ MissionUi* __cdecl new_member_button(MissionUi* parent, const tstring& name, flo
                                      const tstring& text, const tstring& pressed, float width_ratio,
                                      float height, float ratio);                              // 0x4dcc50
 void __fastcall quarter_update(MissionUi* w);       // 0x488d50
-int member_skill(int member, int skill);            // 0x437b20 (GameData::skill_level, called here with the global as an argument)
+int skill_level(int member, int skill);            // 0x437b20 (GameData::skill_level, called here with the global as an argument)
 
 #endif // GAME_INVENTORY_PANEL_PARTY_SCREEN_H

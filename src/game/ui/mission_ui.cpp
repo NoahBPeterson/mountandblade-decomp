@@ -382,13 +382,13 @@ void MissionUi::put(tstring* out)
 }
 
 // @ 0x488c90
-void MissionUi::flag1_set()
+void MissionUi::hide()
 {
     f104 |= 1;
 }
 
 // @ 0x488ca0
-void MissionUi::flag1_clear()
+void MissionUi::show()
 {
     f104 &= ~1u;
 }
@@ -408,7 +408,7 @@ void MissionUi::flag2_clear()
 // Same fields and shape as renderer.h's envelope::set_fade (0x4624c0) / set_params (0x462540): the object's
 // +0xdc..+0xec block is a fade envelope (target, 1/period, peak, dirty byte, smoothing); see MIGRATION.md.
 // @ 0x488cd0
-void MissionUi::set_speed(const float* ref, const float* lo, const float* hi)
+void MissionUi::set_fog(const float* ref, const float* lo, const float* hi)
 {
     *(char*)&fE8 = 1;
     fDC = *ref;
@@ -576,7 +576,7 @@ void Troop::set_colors(int a, int b)
 }
 
 // @ 0x489340
-void Troop::sub_3b4(int amt)
+void Troop::remove_gold(int amt)
 {
     f3b4 -= amt;
     if (f3b4 < 0)
@@ -592,7 +592,7 @@ void Troop::set_alpha(int a)
 }
 
 // @ 0x489390
-int __cdecl cursor_check(unsigned v)
+int __cdecl terrain_is_road(unsigned v)
 {
     if ((v & 7) != 0 && v != 7)
         return 0;
@@ -600,7 +600,7 @@ int __cdecl cursor_check(unsigned v)
 }
 
 // @ 0x4893b0
-int sub_4893b0(unsigned x)
+int terrain_is_water(unsigned x)
 {
     int m = x & 7;
     if (m < 2 || m >= 7) {
@@ -1198,7 +1198,7 @@ int GameData::sl_pick_chain(int leader, char lancer)
 // @ 0x48a150
 int GameData::template_count(int party, int cell, float)
 {
-    char* base = g_cell_table + party * 0xb0;
+    char* base = g_party_templates + party * 0xb0;
     int roll = rand() % 0x3dc9;
     int lo = range_lo;
     int hi = range_hi;
@@ -1414,7 +1414,7 @@ bool Mission::point_in_rect(const float* p)
 }
 
 // @ 0x48a9e0
-void Mission::slot_finish(int i)
+void Mission::select_team(int i)
 {
     CombatRec* r = ui_rec(this, i);
     r->b[0].m4 = r->b[0].use;
@@ -1423,7 +1423,7 @@ void Mission::slot_finish(int i)
 }
 
 // @ 0x48aa20
-void Mission::slot_restore(int i)
+void Mission::unselect_team(int i)
 {
     CombatRec* r = ui_rec(this, i);
     r->b[0].use = r->b[0].m4;
@@ -1432,7 +1432,7 @@ void Mission::slot_restore(int i)
 }
 
 // @ 0x48aa60
-void Mission::slot_set(int i, int s)
+void Mission::select_class(int i, int s)
 {
     CombatRec* r = ui_rec(this, i);
     if (s >= 0 && s < 3) {
@@ -1448,7 +1448,7 @@ void Mission::slot_set(int i, int s)
 }
 
 // @ 0x48aac0
-int Mission::active_kind(int i)
+int Mission::movement_order(int i)
 {
     CombatRec* r = ui_rec(this, i);
     for (int k = 0; k < 3; k++) {
@@ -1466,7 +1466,7 @@ int Mission::active_kind(int i)
 }
 
 // @ 0x48ab30
-int Mission::slot_mode(int i)
+int Mission::riding_order(int i)
 {
     CombatRec* r = ui_rec(this, i);
     int v = 0;
@@ -1488,7 +1488,7 @@ sw:
 }
 
 // @ 0x48ab90
-int Mission::slot_kind_a(int i)
+int Mission::weapon_usage_order(int i)
 {
     int v = -1;
     for (int k = 0; k < 3; k++) {
@@ -1505,7 +1505,7 @@ int Mission::slot_kind_a(int i)
 }
 
 // @ 0x48abf0
-int Mission::slot_kind_b(int i)
+int Mission::hold_fire_order(int i)
 {
     int v = -1;
     for (int k = 0; k < 3; k++) {
@@ -1522,7 +1522,7 @@ int Mission::slot_kind_b(int i)
 }
 
 // @ 0x48ac50
-bool OriginPairs::has_origin(int i)
+bool OriginPairs::is_down(int i)
 {
     bool r = false;
     int a = slots[i].a;
@@ -1535,7 +1535,7 @@ bool OriginPairs::has_origin(int i)
 }
 
 // @ 0x48ac90
-bool OriginPairs::has_free_origin(int i)
+bool OriginPairs::clicked(int i)
 {
     bool r = false;
     int a = slots[i].a;

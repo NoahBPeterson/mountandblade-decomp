@@ -18,6 +18,7 @@
 #include "../../include/msg_log.h"
 #include "../../rgl/mesh.h"
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../config/config.h"
 
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
 #define FLD(T, off) (*(T*)((char*)this + (off)))
@@ -75,39 +76,39 @@ struct Cfg30 {                                      // the object at game+0x30
 // ---- globals and callees of other translation units ----------------------------------------------------------------
 extern float    g_step;                 // 0x5a9c20  frame step (seconds)
 extern int      g_clock_step;           // 0x5937b4  clock index used by set_clock_step
-extern const float g_speed_scale;       // 0xa18110  map speed scale
+extern const float g_time_multiplier;       // 0xa18110  map speed scale
 extern const float g_speed_eps;         // 0x591390  "the map is moving" threshold
 extern const float g_rate_marker;       // 0x590cd0  marker decay per second
 extern const float g_rate_second;       // 0x596774  ticker 2 rate
 extern const float g_rate_third;        // 0x59b998  ticker 3 rate
 extern const float g_rate_fourth;       // 0x59b994  ticker 4 rate
 extern const float g_rate_fifth;        // 0x59b990  ticker 5 rate
-extern const float g_anim_x;            // 0xa18148  marker drift rate x
-extern const float g_anim_y;            // 0xa1814c  marker drift rate y
-extern const float g_anim_z;            // 0xa18154  marker drift rate x (second set)
-extern const float g_anim_w;            // 0xa18158  marker drift rate y (second set)
-extern int      g_msg_gate;             // 0xa181a8  0: allow the "loading" clock message
-extern int      g_in_gate;              // 0x5a9fbc  input gate
+extern const float g_map_sea_speed_x;            // 0xa18148  marker drift rate x
+extern const float g_map_sea_speed_y;            // 0xa1814c  marker drift rate y
+extern const float g_map_river_speed_x;            // 0xa18154  marker drift rate x (second set)
+extern const float g_map_river_speed_y;            // 0xa18158  marker drift rate y (second set)
+extern int      g_disable_food_slot;             // 0xa181a8  0: allow the "loading" clock message
+
 extern int      g_in_a;                 // 0xa17124  input flags
 extern int      g_in_b;                 // 0xa17524
 extern int      g_in_c;                 // 0xa17148
 extern int      g_in_d;                 // 0xa17348
 extern const char g_resume_text[];      // 0x54a480  resume marker string
 extern const char g_msg_key[];          // 0x59b99c  message log key
-extern int g_env2;                                   // 0x5e28fc  0 = linear colour path
-extern int g_grid_rows;                              // 0xa73298
-extern int g_grid_cols;                              // 0xa73294
-extern char g_grid[];                                // 0xa73094  host grid (array of cell pointers)
-extern float g_track_scale;                             // 0xa18118
-extern float g_train_limit;                     // 0xa18138
-extern float g_train_limit_hero;                // 0xa1813c
+extern int g_use_shaders;                                   // 0x5e28fc  0 = linear colour path
+extern int g_page_rows;                              // 0xa73298
+extern int g_page_cols;                              // 0xa73294
+extern char g_map_pages[];                                // 0xa73094  host grid (array of cell pointers)
+extern float g_track_spotting;                             // 0xa18118
+extern float g_hero_wounded_treshold;                     // 0xa18138
+extern float g_player_wounded_treshold;                // 0xa1813c
 extern MsgLog g_msglog;                                 // 0x5d7080
 extern MarkerList g_list_a;                             // 0xa732c0
 extern MarkerList g_list_b;                             // 0xa732e0
 extern MarkerList g_list_c;                             // 0xa732f0
 extern MarkerList g_list_d;                             // 0xa732d0
 void set_clock_step(int* clock, float step);            // 0x461420
-bool is_day();                                          // 0x435700 (true in the 4..20 h window)
+bool is_daytime();                                          // 0x435700 (true in the 4..20 h window)
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 #define GAMMA (0.45454543828964233f)                    // 0x5a9f1c  1 / 2.2 (the compiler's rounding)
 
@@ -141,14 +142,14 @@ void GameG::tick(float dt)
 
     if (f13aa0 || f13ad0 > 0.0f) {
         int n = f13adc;
-        float v = (n ? (float)n : 10.0f) * g_speed_scale * dt;
+        float v = (n ? (float)n : 10.0f) * g_time_multiplier * dt;
         flags = 0x10001;
         speed = v;
         f13ad0 -= v;
     } else if (f13aa4 == 0) {
         speed = 0.0f;
     } else if (f13aa4 == 2) {
-        float v = g_speed_scale * dt;
+        float v = g_time_multiplier * dt;
         speed = v;
         if (g_in_c || g_in_d)
             speed = v * 10.0f;
@@ -161,7 +162,7 @@ void GameG::tick(float dt)
         if (d == 0.0f)
             speed = 0.0f;
         else
-            speed = g_speed_scale * dt;
+            speed = g_time_multiplier * dt;
     }
 
     set_clock_step(&g_clock_step, speed);
@@ -171,7 +172,7 @@ void GameG::tick(float dt)
 
     int target = -1;
 
-    if (g_msg_gate == 0 &&
+    if (g_disable_food_slot == 0 &&
         ((Troop*)((char*)troops + player * 0x508))->equip[9].item == -1) {
         float d = (g_time[msg_timer.clock] - msg_timer.t) * 1e-5f;
         if (d > 1.0f) {
@@ -228,7 +229,7 @@ void GameG::tick(float dt)
         parties.next_party_id(&id);
     }
     if (target >= 0)
-        dissolve(target);
+        remove_party(target);
 
     {
         GamePool* gp = &pool;
@@ -241,7 +242,7 @@ void GameG::tick(float dt)
 
     g_map_scene->step(g_step);
 
-    if (g_in_gate && g_in_a && !g_in_b && g_in_c)
+    if (g_cfg.cheat_mode && g_in_a && !g_in_b && g_in_c)
         f95 = !f95;
 
     update_colors();
@@ -275,20 +276,20 @@ void GameG::update_markers()
         g_list_a[i]->f208 = g_list_a[i]->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_list_b.count(); i++) {
-        g_list_b[i]->f1f4 += g_step * g_anim_x * 3.0f;
-        g_list_b[i]->f1f8 += g_step * g_anim_y * 3.0f;
+        g_list_b[i]->f1f4 += g_step * g_map_sea_speed_x * 3.0f;
+        g_list_b[i]->f1f8 += g_step * g_map_sea_speed_y * 3.0f;
         g_list_b[i]->f204 = g_list_b[i]->f1f4;
         g_list_b[i]->f208 = g_list_b[i]->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_list_c.count(); i++) {
-        g_list_c[i]->f1f4 -= g_step * g_anim_x * 2.0f;
-        g_list_c[i]->f1f8 -= g_step * g_anim_y * 2.0f;
+        g_list_c[i]->f1f4 -= g_step * g_map_sea_speed_x * 2.0f;
+        g_list_c[i]->f1f8 -= g_step * g_map_sea_speed_y * 2.0f;
         g_list_c[i]->f204 = g_list_c[i]->f1f4;
         g_list_c[i]->f208 = g_list_c[i]->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_list_d.count(); i++) {
-        g_list_d[i]->f1f4 += g_step * g_anim_z;
-        g_list_d[i]->f1f8 += g_step * g_anim_w;
+        g_list_d[i]->f1f4 += g_step * g_map_river_speed_x;
+        g_list_d[i]->f1f8 += g_step * g_map_river_speed_y;
         g_list_d[i]->f204 = g_list_d[i]->f1f4;
         g_list_d[i]->f208 = g_list_d[i]->f1f8;
     }
@@ -316,7 +317,7 @@ void GameG::update_colors()
     sun.z = color_base.z + color_sky.z;
     sun.w = 1.0f;
 
-    if (g_env2 == 0) {
+    if (g_use_shaders == 0) {
         sun.x = (float)pow(sun.x, GAMMA);
         sun.y = (float)pow(sun.y, GAMMA);
         sun.z = (float)pow(sun.z, GAMMA);
@@ -333,7 +334,7 @@ void GameG::update_colors()
         sun_ent->color = col;
     }
 
-    if (g_env2 == 0) {
+    if (g_use_shaders == 0) {
         target_obj->v = rgl::vector4((float)pow(color_base.x, GAMMA),
                             (float)pow(color_base.y, GAMMA),
                             (float)pow(color_base.z, GAMMA));
@@ -352,7 +353,7 @@ void GameG::update_colors()
 rgl::vector4* GameG::sun_color(rgl::vector4* out)
 {
     rgl::vector4 c;
-    if (!is_day()) {
+    if (!is_daytime()) {
         c = rgl::vector4(0.095f, 0.116f, 0.24f);
     } else {
         float d = 3.3f - (f13b3c + f13b3c) - f13b40;
@@ -366,7 +367,7 @@ rgl::vector4* GameG::sun_color(rgl::vector4* out)
 rgl::vector4* GameG::sky_color(rgl::vector4* out)
 {
     rgl::vector4 c;
-    if (!is_day()) {
+    if (!is_daytime()) {
         c = rgl::vector4(0.035f, 0.04f, 0.14f);
     } else {
         float f = f13b40 + f13b3c;
@@ -384,9 +385,9 @@ rgl::vector4* GameG::sky_color(rgl::vector4* out)
 rgl::vector4* GameG::fog_color(rgl::vector4* out)
 {
     rgl::vector4 c(0.65f, 0.68f, 0.71f);
-    if (!is_day())
+    if (!is_daytime())
         c = rgl::vector4(0.11f, 0.18f, 0.25f);
-    if (g_env2 == 0) {
+    if (g_use_shaders == 0) {
         c.x = (float)sqrt(c.x);
         c.y = (float)sqrt(c.y);
         c.z = (float)sqrt(c.z);
@@ -399,21 +400,21 @@ rgl::vector4* GameG::fog_color(rgl::vector4* out)
 void GameG::set_grid_color(unsigned* c)
 {
     int i = 0;
-    if (g_grid_rows > 0) {
-        int* row = (int*)g_grid;
+    if (g_page_rows > 0) {
+        int* row = (int*)g_map_pages;
         do {
             int j = 0;
-            if (g_grid_cols > 0) {
+            if (g_page_cols > 0) {
                 do {
                     GridModel** pp = (GridModel**)(row + j * 8);
                     for (ColorEnt** e = (*pp)->ents; e < (*pp)->ents_end; e++)
                         (*e)->color = *c;
                     j++;
-                } while (j < g_grid_cols);
+                } while (j < g_page_cols);
             }
             i++;
             row = (int*)((char*)row + 4);
-        } while (i < g_grid_rows);
+        } while (i < g_page_rows);
     }
 }
 
@@ -730,7 +731,7 @@ void GameG::track_parties(float dt)
 {
     PartyV4 pos = player_party()->pos;
     int skill = player_party()->skill_level(0x10);
-    float radius = ((float)skill * 0.125f + 1.0f) * g_track_scale;
+    float radius = ((float)skill * 0.125f + 1.0f) * g_track_spotting;
     if (!is_daytime())
         radius *= 0.3f;
     float threshold = radius * radius;
@@ -878,7 +879,7 @@ void GameG::train_troops()
             continue;
         if (!(troops[s.troop].flags32 & 0x10))
             continue;
-        if (troops[s.troop].hp < (s.troop == player ? g_train_limit_hero : g_train_limit))
+        if (troops[s.troop].hp < (s.troop == player ? g_player_wounded_treshold : g_hero_wounded_treshold))
             continue;
         int lvl = skill_level(s.troop, 0x11);
         if (lvl > 10)
@@ -896,7 +897,7 @@ void GameG::train_troops()
             if (troops[q.troop].level >= troops[s.troop].level)
                 continue;
             if (troops[q.troop].flags32 & 0x10) {
-                if (troops[q.troop].hp < (q.troop == player ? g_train_limit_hero : g_train_limit))
+                if (troops[q.troop].hp < (q.troop == player ? g_player_wounded_treshold : g_hero_wounded_treshold))
                     continue;
                 gain[j] += cost;
                 total += cost;

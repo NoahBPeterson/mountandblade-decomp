@@ -8,7 +8,7 @@
 //             "<char_num_skills>" entry (rows vtable 0x591d58: a config-driven label, a level-text
 //             child and a "+" increment label).  The weapon-proficiency column then gets its three
 //             headings, seven rows (hidden for the weapon classes the save says are unavailable,
-//             g_weapon_available @ 0x5e2900), and the attributes column (this+0x4b0) its four rows.
+//             g_display_wp_one_handed @ 0x5e2900), and the attributes column (this+0x4b0) its four rows.
 //             The character-name button (this+0x4c4, vtable 0x592208) shows the record's translated
 //             name, or "enter your name" plus the configured colour when the player has no name yet.
 //             Finally the statistics/next/previous buttons, the skill-description panel, the five
@@ -97,36 +97,37 @@ extern StrTable g_strtable;                     // 0x5e2a18
 
 // settings table at 0xa44240: 0x2c-byte records, key tstring at +0, text pointer at +0x20
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
-extern int g_config_count;                      // 0xa70240
+
 
 extern "C" double atof(const char* s);          // 0x537352
 void* __cdecl operator new(unsigned n);         // 0x53545e
 int sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
 void ctor_window(void* p);                      // 0x4931a0
-void ctor_widget(void* p);                      // 0x48ae20
-void mesh_scale(rgl::mesh* m, float f);              // 0x44f0c0
+void MissionUi(void* p);                      // 0x48ae20
+void scale(rgl::mesh* m, float f);              // 0x44f0c0
 
 // ---- widget factories ----------------------------------------------------------------------------------
-CharSheetWidget* make_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h);        // 0x4dce70
+CharSheetWidget* new_medium_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h);        // 0x4dce70
 CharSheetWidget* make_short_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h);  // 0x4e5570
 CharSheetWidget* make_medium_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h,
                            tstring* up, tstring* down,
                            float a8, float a9, float a10);                           // 0x4dcc50
-CharSheetWidget* make_label(CharSheetWidget* parent, tstring* text, float x, float y, float sx, float sy);  // 0x4dada0
-CharSheetWidget* make_text(CharSheetWidget* parent, tstring* text, float x, float y, int flag, float sy);   // 0x509770
+CharSheetWidget* make_hint(CharSheetWidget* parent, tstring* text, float x, float y, float sx, float sy);  // 0x4dada0
+CharSheetWidget* make_button(CharSheetWidget* parent, tstring* text, float x, float y, int flag, float sy);   // 0x509770
 void label_refresh(CharSheetWidget* w, tstring key);                                          // 0x4e4c70
-CharSheetWidget* make_panel(CharSheetWidget* parent, tstring* key);                                    // 0x4f6160
-CharSheetWidget* make_panel_child(CharSheetWidget* parent, tstring* key, CharSheetWidget* child);               // 0x4f62f0
-void widget_f488d50(CharSheetWidget* w);                                                      // 0x488d50
+CharSheetWidget* make_scrollbar(CharSheetWidget* parent, tstring* key);                                    // 0x4f6160
+CharSheetWidget* make_editor_list(CharSheetWidget* parent, tstring* key, CharSheetWidget* child);               // 0x4f62f0
+void draw(CharSheetWidget* w);                                                      // 0x488d50
 
 // ---- character sheet ------------------------------------------------------------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ini_file.h"
 
 extern int g_game_mode;                         // 0x5a9fb0
-extern int g_weapon_available[7];               // 0x5e2900
-extern char g_skill_table[];                    // 0x8ee3100 (records of 0x44 bytes)
+extern int g_display_wp_one_handed[7];               // 0x5e2900
+extern char g_skill_tbl[];                    // 0x8ee3100 (records of 0x44 bytes)
 
 // the two mode/tutorial objects touched at the end
 struct TutorialMenuRec {                        // the menu record the holder's first dword points to (renamed from MainMenu: 0xa73980 itself is main_menu.h's MainMenu)
@@ -144,7 +145,7 @@ struct TutorialMenuRec {                        // the menu record the holder's 
 // branch fills in (tstrings at +0x1c and +0x68, the three ints at +4/+0x4c/+0x50).
 struct MainMenuHolder {
     TutorialMenuRec* target;                    // +0
-    void set(int v);                            // 0x494260
+    void open(int v);                           // 0x494260
 };
 extern MainMenuHolder g_menu;                   // 0xa73980
 struct PopupDialogMgr {                          // the message-box object behind the pointer at 0xa73984 (renamed from DialogMgr: not the conversation manager 0x8ed50c8 of dialog_manager.h)
@@ -153,13 +154,13 @@ struct PopupDialogMgr {                          // the message-box object behin
 };
 extern PopupDialogMgr* g_dialog;                     // 0xa73984 (pointer variable)
 
-void sheet_509730(CharSheet* s);                // 0x509730
-void sheet_4ef7d0(CharSheet* s);                // 0x4ef7d0
-void sheet_509980(CharSheet* s);                // 0x509980
-void sheet_4ef9f0(CharSheet* s);                // 0x4ef9f0
-void sheet_4f0820(CharSheet* s);                // 0x4f0820
-void sheet_4f06f0(CharSheet* s);                // 0x4f06f0
-void sheet_5094a0(CharSheet* s);                // 0x5094a0
+void fill_skills(CharSheet* s);                // 0x509730
+void update_skill_rows(CharSheet* s);                // 0x4ef7d0
+void open_view(CharSheet* s);                // 0x509980
+void update_detail(CharSheet* s);                // 0x4ef9f0
+void refresh_panels(CharSheet* s);                // 0x4f0820
+void update_weapons(CharSheet* s);                // 0x4f06f0
+void load_troop(CharSheet* s);                // 0x5094a0
 
 // ---- settings access ------------------------------------------------------------------------------------
 static const char* config_text(int i)
@@ -173,7 +174,7 @@ static const char* config_text(int i)
 static int config_index(const tstring& key)
 {
     int found = -1;
-    for (int i = 0; i < g_config_count && found == -1; i++) {
+    for (int i = 0; i < g_game_vars.count && found == -1; i++) {
         if (((tstring*)((char*)0xa44240 + i * 0x2c))->equals(key))
             found = i;
     }
@@ -250,7 +251,7 @@ void CharSheet::init()
         tstring ka("char_b_reset_h");
         tstring kb("ui_reset_changes");
         float h = config_float(ka);
-        reset = make_button(window, g_strtable.lookup(kb), 0, 0, h);
+        reset = new_medium_button(window, g_strtable.lookup(kb), 0, 0, h);
     }
     label_refresh(reset, tstring("char_b_reset"));
 
@@ -262,7 +263,7 @@ void CharSheet::init()
     }
     label_refresh(done, tstring("char_b_done"));
 
-    sheet_509730(this);
+    fill_skills(this);
 
     f4c8 = 1;
     f2d4 = -1;
@@ -301,7 +302,7 @@ void CharSheet::init()
         for (i = 0; i < num_skills; i++) {
             CharSheetWidget* row = (CharSheetWidget*)::operator new(0x188);
             if (row != 0) {
-                ctor_widget(row);
+                MissionUi(row);
                 row->f178 = 0;
                 row->b121 = 0;
                 *(void**)row = (void*)0x591d58;
@@ -335,7 +336,7 @@ void CharSheet::init()
             row->set_scale(&v);
 
             int idx = row->skill_index;
-            char* base = (char*)g_skill_table + idx * 0x44;
+            char* base = (char*)g_skill_tbl + idx * 0x44;
             tstring* nm = g_strtable.find((tstring*)(base + 0x20));
             if (nm == 0)
                 nm = (tstring*)(base + 0x10);
@@ -347,7 +348,7 @@ void CharSheet::init()
             float levels_w = config_float_walk(tstring("char_b_skill_levels_w"));
             float levels_x = config_float_walk(tstring("char_b_skill_levels_x"));
             tstring empty("");
-            row->levels = make_label(sk, &empty, levels_x + skills_x, rowy,
+            row->levels = make_hint(sk, &empty, levels_x + skills_x, rowy,
                                      levels_w, skills_y);
             row->levels->set_color(row->color);   // 0x507b9f pushes the row class's vptr+0x14c (an address, not a colour); row->color is the same byte the original reads
 
@@ -355,7 +356,7 @@ void CharSheet::init()
             float inc_y = config_float_walk(tstring("char_b_skill_increment_y_a"));
             float inc_x = config_float_walk(tstring("char_b_skill_increment_x"));
             tstring plus("+");
-            row->plus150 = make_text(sk, &plus, inc_x + skills_x, inc_y + rowy,
+            row->plus150 = make_button(sk, &plus, inc_x + skills_x, inc_y + rowy,
                                      1, skills_y - inc_h);
 
             float ts_x = config_float_walk(tstring("char_b_skill_increment_t_s"));
@@ -369,24 +370,24 @@ void CharSheet::init()
     }
 
     // the framed "skills" outer panel
-    sheet_4ef7d0(this);
+    ::update_skill_rows(this);
     CharSheetWidget* inner;
     {
         tstring ks("char_s_skills");
-        inner = make_panel(window, &ks);
+        inner = make_scrollbar(window, &ks);
     }
     {
         tstring ko("char_sc_skills_outer");
-        skills_outer = make_panel_child(sk, &ko, inner);
+        skills_outer = make_editor_list(sk, &ko, inner);
     }
-    widget_f488d50(skills_outer);
+    draw(skills_outer);
     window->add_child(skills_outer);
 
     // ---- the three column headings -----------------------------------------------------------------
     {
         CharSheetWidget* t = (CharSheetWidget*)::operator new(0x178);
         if (t != 0) {
-            ctor_widget(t);
+            MissionUi(t);
         } else {
             t = 0;
         }
@@ -402,7 +403,7 @@ void CharSheet::init()
     {
         CharSheetWidget* t = (CharSheetWidget*)::operator new(0x178);
         if (t != 0) {
-            ctor_widget(t);
+            MissionUi(t);
         } else {
             t = 0;
         }
@@ -418,7 +419,7 @@ void CharSheet::init()
     {
         CharSheetWidget* t = (CharSheetWidget*)::operator new(0x178);
         if (t != 0) {
-            ctor_widget(t);
+            MissionUi(t);
         } else {
             t = 0;
         }
@@ -435,7 +436,7 @@ void CharSheet::init()
     for (i = 0; i < 7; i++) {
         CharSheetWidget* row = (CharSheetWidget*)::operator new(0x188);
         if (row != 0) {
-            ctor_widget(row);
+            MissionUi(row);
             row->f178 = 0;
             row->b121 = 0;
             *(void**)row = (void*)0x591d58;
@@ -459,7 +460,7 @@ void CharSheet::init()
         float inc_ya = config_float_walk(tstring("char_b_weapon_proficiency_increment_y_a"));
         float inc_x = config_float_walk(tstring("char_b_weapon_proficiency_increment_x"));
         tstring plus("+");
-        row->plus1c = make_text(window, &plus, inc_y - inc_ya * (float)i, inc_x,
+        row->plus1c = make_button(window, &plus, inc_y - inc_ya * (float)i, inc_x,
                                 1, inc_h);
 
         float ts_x = config_float_walk(tstring("char_b_weapon_proficiency_increment_t_s"));
@@ -473,7 +474,7 @@ void CharSheet::init()
             row->plus1c->set_text(&tx, tstring("+"));
         }
 
-        if (g_weapon_available[i] == 0) {
+        if (g_display_wp_one_handed[i] == 0) {
             row->show();
             row->plus1c->show();
         }
@@ -508,7 +509,7 @@ void CharSheet::init()
     {
         CharSheetWidget* n = (CharSheetWidget*)::operator new(0x188);
         if (n != 0) {
-            ctor_widget(n);
+            MissionUi(n);
             n->f178 = 0;
             n->b121 = 0;
             *(void**)n = (void*)0x592208;
@@ -533,8 +534,8 @@ void CharSheet::init()
             tstring k("party_button_down");
             down = ((rgl::mesh*)g_resmgr.get_object(&k))->clone();
         }
-        mesh_scale(up, 0.6666667f);
-        mesh_scale(down, 0.6666667f);
+        scale(up, 0.6666667f);
+        scale(down, 0.6666667f);
         name->set_mesh(2, up);
         name->set_mesh(1, down);
     }
@@ -569,7 +570,7 @@ void CharSheet::init()
     for (i = 0; i < 4; i++) {
         CharSheetWidget* row = (CharSheetWidget*)::operator new(0x188);
         if (row != 0) {
-            ctor_widget(row);
+            MissionUi(row);
             row->f178 = 0;
             row->b121 = 0;
             *(void**)row = (void*)0x591d58;
@@ -593,7 +594,7 @@ void CharSheet::init()
         float inc_ya = config_float_walk(tstring("char_b_attrib_increment_y_a"));
         float inc_x = config_float_walk(tstring("char_b_attrib_increment_x"));
         tstring plus("+");
-        row->plus10 = make_text(attribs, &plus, rowy - inc_ya, inc_x, 1, inc_h);
+        row->plus10 = make_button(attribs, &plus, rowy - inc_ya, inc_x, 1, inc_h);
 
         float ts_x = config_float_walk(tstring("char_b_attrib_increment_t_s"));
         float ts_y = config_float_walk(tstring("char_b_attrib_increment_t_s"));
@@ -675,7 +676,7 @@ void CharSheet::init()
     {
         CharSheetWidget* e = (CharSheetWidget*)::operator new(0x178);
         if (e != 0) {
-            ctor_widget(e);
+            MissionUi(e);
         } else {
             e = 0;
         }
@@ -686,11 +687,11 @@ void CharSheet::init()
     explanation->show();
 
     // ---- the layout passes -------------------------------------------------------------------------
-    sheet_509980(this);
-    sheet_4ef9f0(this);
-    sheet_4f0820(this);
-    sheet_4f06f0(this);
-    sheet_5094a0(this);
+    open_view(this);
+    ::update_detail(this);
+    ::refresh_panels(this);
+    ::update_weapons(this);
+    load_troop(this);
 
     f4d4 = 0;
 
@@ -701,7 +702,7 @@ void CharSheet::init()
         const char* nonreal = g_strtable.lookup(k1)->c_str();
         const char* real = g_strtable.lookup(k2)->c_str();
         g_dialog->open(g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
-        g_menu.set(1);
+        g_menu.open(1);
         return;
     } else if (mode == 1) {
         tstring k1("ui_tutorial_character_generation");
@@ -714,6 +715,6 @@ void CharSheet::init()
         m->f4c = 0;
         m->f50 = 0;
         m->f4 = 0;
-        g_menu.set(0);
+        g_menu.open(0);
     }
 }

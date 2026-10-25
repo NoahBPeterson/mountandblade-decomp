@@ -34,8 +34,8 @@ struct CombatRec {
 // `this` is an array of {a, b} pairs, not the mission object (whose +0 is the scene pointer).
 struct OriginPairs {
     struct Pair { int a, b; } slots[1];
-    bool has_origin(int i);                 // 0x48ac50
-    bool has_free_origin(int i);            // 0x48ac90
+    bool is_down(int i);                 // 0x48ac50
+    bool clicked(int i);            // 0x48ac90
 };
 extern void* g_origin_table[];              // 0xa170d4 object per origin id
 extern int g_origin_state[];                // 0xa174d4 0 = origin idle / free

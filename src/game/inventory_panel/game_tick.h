@@ -93,7 +93,7 @@ struct GameG : GameDataV {
     void train_troops();                            // 0x518d70
     // helpers of the game object this region calls
     bool is_daytime();                              // 0x435700
-    void dissolve(int id);                          // 0x4915d0 (ret 4: GameData::remove_party)
+    void remove_party(int id);                          // 0x4915d0 (ret 4: GameData::remove_party)
     Party* player_party()
     {
         PartyMgr* mgr = &parties;

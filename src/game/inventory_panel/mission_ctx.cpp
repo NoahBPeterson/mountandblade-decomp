@@ -29,16 +29,16 @@ extern char g_a73320;                                   // 0xa73320
 extern int g_a73438;                                    // 0xa73438 (page index)
 extern int g_a7343c;                                    // 0xa7343c (page 1 party slot)
 extern int g_a73440;                                    // 0xa73440 (page 0 party slot)
-extern int g_max_level;                                 // 0x8ee3ac4
+
 void autosave_notice();                                 // 0x514830
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (cdecl)
 
 struct DetachTarget {                                   // the 0x98-byte object resolved from the handle at ctx+0x08
-    void detach_party();                                // 0x4b6180
+    void detach();                                // 0x4b6180
 };
 #include "../mode_rec.h"                              // MissionTemplate (0x58 bytes, array at 0x5e2a00): the one definition
-extern MissionTemplate* g_templates;                    // 0x5e2a00
-extern int g_template_count;                            // 0x5e2a04
+extern MissionTemplate* g_mission_templates;                    // 0x5e2a00
+extern int g_mission_template_count;                            // 0x5e2a04
 
 using rgl::mat3;
 mat3* identity3(mat3* m);                               // 0x40cd60 (cdecl)
@@ -71,10 +71,11 @@ struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
 struct TextLog { virtual void print(const char* s); };  // +0x28 prints one line (slot index 10 in the original; the declaration order is kept)
 #include "../item_sound.h"                                    // ItemSound: the one definition (play 0x48add0)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../skill_cap.h"
 struct Psys {
     char pad0[0x48];
     int* f48;                                           // +0x48
-    void reset();                                       // 0x47fef0
+    void render();                                       // 0x47fef0
 };
 struct FrameRenderer { virtual void set_frame(const rgl::matrix* m); };   // +0x54 (the slot index is not reproduced: only the call shape matters here)
 struct PosV : rgl::matrix {
@@ -88,14 +89,14 @@ void quick_save_msg();                                  // 0x516a70
 int save_game(int arg, char* name);                     // 0x4e8980
 extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x87 args)
 extern tstring g_scratch;                               // 0xa70464
-extern TextLog g_textlog;                               // 0x5a9f30
+extern TextLog g_debug_log;                               // 0x5a9f30
 extern UiKeyState g_keys;                                 // 0xa73730
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
-extern Psys* g_psys;                                    // 0xa70248
-extern int g_a170c0;            // 0xa170c0
+extern Psys* g_shadow_map;                                    // 0xa70248
+extern int g_psys_scene;            // 0xa170c0
 extern int g_a170d8;            // 0xa170d8
 extern int g_a174d8;            // 0xa174d8
-extern int g_a181b4;            // 0xa181b4
+extern int g_show_quest_notes;            // 0xa181b4
 extern int g_a171b8;            // 0xa171b8
 extern int g_a17454;            // 0xa17454
 extern int g_a17854;            // 0xa17854
@@ -109,7 +110,7 @@ extern int g_trial_mode;        // 0x5e29c4
 extern int g_a735c8;            // 0xa735c8
 extern float g_view_a;          // 0x5d75d8
 extern float g_view_b;          // 0x5d75dc
-extern int g_scene_idx;         // 0xa732b4
+extern int g_level;         // 0xa732b4
 extern const float g_zero;          // 0x549ca8  0.0f
 extern const float g_ten;           // 0x549d74  10.0f
 extern const float g_oneone;        // 0x54b888  1.1f
@@ -308,7 +309,7 @@ void MissionCtx::update_parties()
             unsigned h = f08;
             char* blk = (*(char***)((char*)g_game + 0xe4))[h >> 4];
 
-            ((DetachTarget*)(blk + (h & 0xf) * 0x98))->detach_party();
+            ((DetachTarget*)(blk + (h & 0xf) * 0x98))->detach();
         }
 
         PartyMgr* pm = &g_game->parties;
@@ -458,8 +459,8 @@ void MissionCtx::pick_template()
     f44 = kind;
     int found[32];
     int n = 0;
-    for (int i = 0; i < g_template_count; i++) {
-        if (g_templates[i].type == kind)
+    for (int i = 0; i < g_mission_template_count; i++) {
+        if (g_mission_templates[i].type == kind)
             found[n++] = i;
     }
     int idx;
@@ -505,7 +506,7 @@ void MissionV::init_scene()
     *((char*)this + 0x6339) = 0;
     SceneTmp t;
     ((SceneSub*)((char*)this + 0x6688))->f(0);
-    MI(this, 0x6528) = *(int*)((char*)g_templates + mode * 0x58 + 0x20);
+    MI(this, 0x6528) = *(int*)((char*)g_mission_templates + mode * 0x58 + 0x20);
     *((char*)this + 0x6554) = 0;
     *((char*)this + 0x6555) = 1;
     GD_I(0x13af0) = -1;
@@ -659,9 +660,9 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     MI(g_mission, 0x5270) = f2c0;
     f2c0++;
     SCENE->start_setup();
-    SCENE->fade(0.1f, 1);
-    SCENE->fade(0.1f, 1);
-    SCENE->fade(0.1f, 1);
+    SCENE->frame(0.1f, 1);
+    SCENE->frame(0.1f, 1);
+    SCENE->frame(0.1f, 1);
     ((DialogMgrV*)0x8ed50c8)->start(a1, -1, a3, a4, 1);
 }
 
@@ -676,9 +677,9 @@ void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
     MI(g_mission, 0x5270) = f2c0;
     f2c0++;
     SCENE->start_setup();
-    SCENE->fade(0.1f, 1);
-    SCENE->fade(0.1f, 1);
-    SCENE->fade(0.1f, 1);
+    SCENE->frame(0.1f, 1);
+    SCENE->frame(0.1f, 1);
+    SCENE->frame(0.1f, 1);
     ((DialogMgrV*)0x8ed50c8)->start(a1, -1, party[side], 0, 1);
 }
 
@@ -687,7 +688,7 @@ void MissionCtx::start_mission()
 {
     int id = party[side];
     Party* p = party_at(&g_game->parties, g_game->parties.index_of(id));
-    int v = GV->f491f20(id, 0, 0, 0);
+    int v = GV->token_lookup(id, 0, 0, 0);
     build_hero_table(p->stacks[0].troop, v, id, 1);
 }
 
@@ -698,9 +699,9 @@ void Screen::frame_update(float dt)
     char flag;                                      // 1 while the map is idle
     bool start;
 
-    if (g_psys != 0 && g_psys->f48[0x50 / 4] != g_a170c0
-        && g_a70438 == g_scene_idx && g_use_shaders != 0)
-        g_psys->reset();
+    if (g_shadow_map != 0 && g_shadow_map->f48[0x50 / 4] != g_psys_scene
+        && g_a70438 == g_level && g_use_shaders != 0)
+        g_shadow_map->render();
 
     cam.perspective = 1;
     cam.nearz = 0.2f;
@@ -783,7 +784,7 @@ void Screen::frame_update(float dt)
     }
     if (flag) {
         if (PSO(f50)->clicked_on(0x10000) || g_keys.down(0x12)) {
-            if (g_a181b4 != 0) {
+            if (g_show_quest_notes != 0) {
                 g_wE8->f18 = 7;
                 GD_I(0x13b08) = 4;
                 GD_I(0x13b0c) = 0;
@@ -965,7 +966,7 @@ no_party:
         }
     }
 
-    GV->f516ac0(dt);
+    GV->tick(dt);
     rgl::matrix m;
     rgl::identity_pos(&m);
     {
@@ -985,9 +986,9 @@ no_party:
         int bpid = GD_I(0x78);
         sprintf(buf, "Position: %3.2f, %3.2f ;",
                 (double)PARTIES->get(bpid)->pos.x, (double)PARTIES->get(bpid)->pos.y);
-        g_textlog.print(";-------------------;");
-        g_textlog.print(buf);
-        g_textlog.print(";-------------------;");
+        g_debug_log.print(";-------------------;");
+        g_debug_log.print(buf);
+        g_debug_log.print(";-------------------;");
     }
 }
 
@@ -996,7 +997,7 @@ void Screen::camera_move(float dt)
 {
     float src[2][2] = { { 0.0f, 1.0f }, { 1.0f, 0.0f } };
     mat2 m(&src[0][0], &src[1][0]);
-    m.rotate(-yaw);
+    m.rotate_2x2(-yaw);
 
     bool b = g_key_1740 >= 0 && g_keydown[g_key_1740] != 0;
     if ((g_key_1744 >= 0 && g_keydown[g_key_1744] != 0) || b) {
@@ -1188,8 +1189,8 @@ void MissionCtx::update_anim()
                 int k = ((char*)t)[0x7a] & 0xf;
                 if (k < 0)
                     k = 0;
-                else if (k > g_max_level)
-                    k = g_max_level;
+                else if (k > (*(int*)&g_skill_tbl[36].cap))
+                    k = (*(int*)&g_skill_tbl[36].cap);
                 int n = t->f58[0] + k * 2 + 0x23;
                 float g = (float)(int)((float)n * g_half + g_three);
                 if (!(g <= t->hp))

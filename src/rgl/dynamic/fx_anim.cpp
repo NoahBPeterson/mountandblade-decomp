@@ -15,6 +15,7 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/key_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/fx.h"
 
 using namespace rgl;
 
@@ -363,7 +364,7 @@ void quat_to_axis_angle(vector4* axis, float* angle, const quaternion* q)
 // @ 0x4231f0
 float AnimRec::phase()
 {
-    float t = (float)(g_time[clock] - start) * 1e-5f;
+    float t = (float)(g_ticks[clock] - start) * 1e-5f;
     if (mode == 20)
         return (float)fmod(t, period) / period;
     if (mode == 21) {
