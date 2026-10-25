@@ -90,21 +90,27 @@ def symbol_address(s):
 
 
 def press_play(limit):
-    """Wait for the launcher window and press Return (its default button is Play): System Events key code 36."""
+    """Wait for the launcher window (640 x 480) and press Return (its default button is Play): System Events key
+    code 36, only while the game is frontmost. The launcher ignores a key sent right after it appears, so this
+    presses again every few seconds while the launcher is still up."""
+    proc = '(first process whose name contains "mb_standalone")'
     t0 = time.time()
+    pressed = False
     while time.time() - t0 < limit:
-        r = subprocess.run(["osascript", "-e", 'tell application "System Events" to get position of window 1 of '
-                            '(first process whose name contains "mb_standalone")'], capture_output=True, text=True)
+        r = subprocess.run(["osascript", "-e", 'tell application "System Events" to get size of window 1 of ' + proc],
+                           capture_output=True, text=True)
         if r.returncode == 0:
-            time.sleep(2)
-            subprocess.run(["osascript", "-e", 'tell application "System Events" to set frontmost of (first process '
-                            'whose name contains "mb_standalone") to true', "-e", "delay 0.5", "-e",
+            if r.stdout.strip() != "640, 480":
+                return pressed                           # the launcher is gone: the game is starting
+            time.sleep(3)
+            subprocess.run(["osascript", "-e", 'tell application "System Events" to set frontmost of %s to true' % proc,
+                            "-e", "delay 0.5", "-e",
                             # only into the game: a Return sent while another app kept the focus lands there
                             'tell application "System Events" to if (name of (first process whose frontmost is true)) '
                             'contains "mb_standalone" then key code 36'], capture_output=True)
-            return True
+            pressed = True
         time.sleep(2)
-    return False
+    return pressed
 
 
 def game_procs():

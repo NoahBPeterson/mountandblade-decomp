@@ -104,7 +104,7 @@ void Frame570::build_quad()
 
 // ---------------------------------------------------------------- 0x50f930
 struct LoadingMeshes {
-    char pad0[0xfb0];
+    char pad0[0x1210];
     mesh* f1210;                        // +0x1210
     mesh* f1214;                        // +0x1214
     mesh* f1218;                        // +0x1218

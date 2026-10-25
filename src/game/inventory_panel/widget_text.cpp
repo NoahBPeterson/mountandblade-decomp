@@ -131,7 +131,6 @@ namespace std {   // the library instances of progress_bar.cpp (the folded helpe
 template<> void fill<RagModel*, RagModel>(RagModel*, RagModel*, const RagModel&);                                               // 0x4e5f80
 template<> RagModel* _Copy_backward_opt<RagModel*, RagModel*>(RagModel*, RagModel*, RagModel*, _Nonscalar_ptr_iterator_tag);   // 0x4e42b0
 }
-void  read(void* self, void* stream);                              // 0x4e7b30
 void  tstring_dtor(tstring* s);                                          // 0x42bc40
 
 // ------------------------------------------------------------------ globals --------------------------------
