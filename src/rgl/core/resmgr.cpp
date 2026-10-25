@@ -475,19 +475,6 @@ struct composite_obj : shape_inline {                   // vtable 0x54a63c, size
 struct sphere_obj : shape_inline {                      // vtable 0x54a4f0, size 0x44
     vector4 v20, v30; int m40;
 };
-struct capsule_obj : shape_base {                       // vtable 0x54a540, size 0x64
-    vector4 p0, p1, p2, p3; float radius;
-    capsule_obj();                                      // 0x408600
-};
-struct face_obj : shape_base {                          // vtable 0x54a588, size 0xb4
-    vector4 v20, v30, v40, v50, v[4], normal; int count;
-    face_obj();                                         // 0x408980
-};
-struct manifold_obj : shape_base {                      // vtable 0x54a5f4, size 0x50
-    char pad[0x30];
-    manifold_obj();                                     // 0x40c670
-};
-
 // @ 0x41b5a0
 stream_base* read_body(stream_base* s, body_part* b)
 {
@@ -499,11 +486,11 @@ stream_base* read_body(stream_base* s, body_part* b)
     else if (kind == "sphere")
         b->shape = new sphere_obj;
     else if (kind == "capsule")
-        b->shape = new capsule_obj;
+        b->shape = new capsule;
     else if (kind == "face")
-        b->shape = new face_obj;
+        b->shape = new face;
     else if (kind == "manifold")
-        b->shape = new manifold_obj;
+        b->shape = new manifold;
     else
         mb_error("unrecognized body part %s \n", kind.c_str());
     b->shape->load(s);
@@ -566,7 +553,7 @@ std::vector<mesh*> resmgr::find_meshes(const rgl::string* prefix)
     int from;
     for (std::vector<mesh*>::iterator it = meshes.begin(); it != meshes.end(); ++it) {
         from = 0;
-        if (!((str_x*)&(*it)->name)->range_equals(&from, &to, prefix))
+        if (!((tstring*)&(*it)->name)->range_equals(from, to, *(const tstring*)prefix))
             continue;
         if (to != (*it)->name.len) {
             const char* p = (*it)->name.buf + to;
@@ -826,7 +813,7 @@ lod_group* resmgr::make_lod_mesh(const rgl::string& pat, bool copy)
     for (std::vector<mesh*>::iterator it = meshes.begin(); it != meshes.end(); ++it) {
         int level;
         a = level = 0;
-        if (!((str_x*)&(*it)->name)->range_equals(&a, &pos, &pat))
+        if (!((tstring*)&(*it)->name)->range_equals(a, pos, *(const tstring*)&pat))
             continue;
         if (pos != (*it)->name.len) {
             const char* p = (*it)->name.buf + pos;
@@ -1197,7 +1184,8 @@ stream_base* resmgr::load_stream(stream_base* s)
 
 static __forceinline rgl::string mkpath(const rgl::string& dir, const rgl::string& name, const char* ext)
 {
-    rgl::string e(ext);
+    tstring ext_str(ext);
+    const rgl::string& e = (const rgl::string&)ext_str;
     return dir + name + e;
 }
 
@@ -1207,11 +1195,11 @@ void resmgr::load_pack(const rgl::string& name, int user)
     rgl::string dir;
     if (user) {
         dir = cur;
-        rgl::string r("Resource\\");
-        dir.append(r);
+        tstring r_str("Resource\\");
+        dir.append((const rgl::string&)r_str);
     } else {
-        rgl::string r("CommonRes\\");
-        dir.append(r);
+        tstring r_str("CommonRes\\");
+        dir.append((const rgl::string&)r_str);
     }
     rgl::string trf = mkpath(dir, name, ".trf");
     rgl::string brf = mkpath(dir, name, ".brf");

@@ -10,6 +10,8 @@
 #include <new>
 #include <vector>
 #include "./rgl_string.h"
+#include "../game/tstring.h"      // tstring: the class that defines the rgl::string members called below (same 16-byte object)
+#define TS(s) ((tstring&)(s))
 #include "./rgl_math.h"
 #include "./stream.h"
 #include "./resource.h"
@@ -205,14 +207,14 @@ void key_array::operator=(const key_array& o)
 stream_base& mem_stream::w_stream(stream_base* o)
 {
     int n = o->buf.len - o->buf.pos;
-    buf.write(&n, 4);
+    TS(buf).write(&n, 4);
     if (n > 0) {
         const char* p;
         if (o->buf.buf)
             p = o->buf.pos + o->buf.buf;
         else
             p = (const char*)&o->buf.buf;
-        buf.write(p, n);
+        TS(buf).write(p, n);
     }
     return *this;
 }
@@ -220,24 +222,24 @@ stream_base& mem_stream::w_stream(stream_base* o)
 stream_base& mem_stream::w_cstr(const char* s)
 {
     int n = strlen(s);
-    buf.write(&n, 4);
-    buf.write(s, n);
+    TS(buf).write(&n, 4);
+    TS(buf).write(s, n);
     return *this;
 }
 // @ 0x4179e0
-stream_base& mem_stream::w_int(int* v) { buf.write(v, 4); return *this; }
+stream_base& mem_stream::w_int(int* v) { TS(buf).write(v, 4); return *this; }
 // @ 0x417a00
-stream_base& mem_stream::w_i64(__int64* v) { buf.write(v, 8); return *this; }
+stream_base& mem_stream::w_i64(__int64* v) { TS(buf).write(v, 8); return *this; }
 // @ 0x417a20
 stream_base& mem_stream::w_tstr(const rgl::string* s)
 {
     int n = s->len;
-    buf.write(&n, 4);
-    buf.write(s->c_str(), n);
+    TS(buf).write(&n, 4);
+    TS(buf).write(s->c_str(), n);
     return *this;
 }
 // @ 0x417a70
-stream_base& mem_stream::w_byte(unsigned char* v) { buf.write(v, 1); return *this; }
+stream_base& mem_stream::w_byte(unsigned char* v) { TS(buf).write(v, 1); return *this; }
 // @ 0x417a90
 stream_base& mem_stream::r_tstr(rgl::string* v)
 {
@@ -246,17 +248,17 @@ stream_base& mem_stream::r_tstr(rgl::string* v)
     v->assign("");
     for (int i = 0; i < n; i++) {
         char c;
-        buf.read(&c, 1);
-        v->push_back(c);
+        TS(buf).read(&c, 1);
+        TS(*v).push_back(c);
     }
     return *this;
 }
 // @ 0x417af0
-stream_base& mem_stream::r_byte(char* v) { buf.read(v, 1); return *this; }
+stream_base& mem_stream::r_byte(char* v) { TS(buf).read(v, 1); return *this; }
 // @ 0x417b10
-stream_base& mem_stream::r_int(int* v) { buf.read(v, 4); return *this; }
+stream_base& mem_stream::r_int(int* v) { TS(buf).read(v, 4); return *this; }
 // @ 0x417b30
-stream_base& mem_stream::r_i64(__int64* v) { buf.read(v, 8); return *this; }
+stream_base& mem_stream::r_i64(__int64* v) { TS(buf).read(v, 8); return *this; }
 // @ 0x417b50
 stream_base& mem_stream::r_stream(stream_base* o)
 {
@@ -265,8 +267,8 @@ stream_base& mem_stream::r_stream(stream_base* o)
     o->reset();
     for (int i = 0; i < n; i++) {
         char c;
-        buf.read(&c, 1);
-        o->buf.push_back(c);
+        TS(buf).read(&c, 1);
+        TS(o->buf).push_back(c);
     }
     return *this;
 }

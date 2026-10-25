@@ -15,6 +15,7 @@
 #include <math.h>
 #include <new>
 #include "../rgl_string.h"
+#include "../../game/tstring.h"      // tstring: the class that defines the rgl::string members called below (same 16-byte object)
 #include "../rgl_math.h"
 #include "../stream.h"
 #include "../resource.h"
@@ -32,8 +33,11 @@
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // 0x54a85c "Unexpected End of File while reading file: %s"
+__int64 __cdecl file_length(FILE* f);             // 0x42cbc0 (src/game/strat/gui_manager.cpp; rgl_string.h still has the old name and a long result)
+// the string members below are tstring's (0x42bac0.. src/game/strat/tstring.cpp): the stream buffers are rgl::string objects, the same layout
+#define TS(s) ((tstring&)(s))
 #define EXPECT_TOKEN() \
-    do { if (!buf.has_token()) mb_error("Unexpected End of File while reading file: %s", name.c_str()); } while (0)
+    do { if (!TS(buf).has_token()) mb_error("Unexpected End of File while reading file: %s", name.c_str()); } while (0)
 
 // ---- text stream: read slots -----------------------------------------------------------------------
 // @ 0x415900
@@ -45,7 +49,7 @@ stream_base& text_stream::r_int(int* v)
     char tok[8192];
     int toklen;
     EXPECT_TOKEN();
-    buf.get_token(tok, &toklen);
+    TS(buf).get_token(tok, &toklen);
     *v = mb_parse_int(tok);
     return *this;
 }
@@ -78,7 +82,7 @@ stream_base& text_stream::r_byte(char* v)
     char tok[8192];
     int toklen;
     EXPECT_TOKEN();
-    buf.get_token(tok, &toklen);
+    TS(buf).get_token(tok, &toklen);
     *v = (char)atoi(tok);
     return *this;
 }
@@ -89,7 +93,7 @@ stream_base& text_stream::r_i64(__int64* v)
     char tok[8192];
     int toklen;
     EXPECT_TOKEN();
-    buf.get_token(tok, &toklen);
+    TS(buf).get_token(tok, &toklen);
     bool neg = false;
     int start = 0;
     if (tok[0] == '-') {
@@ -113,7 +117,7 @@ stream_base& text_stream::r_u64(unsigned __int64* v)
     char tok[8192];
     int toklen;
     EXPECT_TOKEN();
-    buf.get_token(tok, &toklen);
+    TS(buf).get_token(tok, &toklen);
     *v = 0;
     __int64 mult = 1;
     for (int i = toklen - 1; i >= 0; i--) {
@@ -129,7 +133,7 @@ stream_base& text_stream::r_bool(char* v)
     char tok[8192];
     int toklen;
     EXPECT_TOKEN();
-    buf.get_token(tok, &toklen);
+    TS(buf).get_token(tok, &toklen);
     *v = atoi(tok) != 0;
     return *this;
 }
@@ -140,7 +144,7 @@ stream_base& text_stream::r_float(float* v)
     char tok[0x2000];
     int len;
     EXPECT_TOKEN();
-    buf.get_token(tok, &len);
+    TS(buf).get_token(tok, &len);
     *v = (float)atof(tok);
     return *this;
 }
@@ -155,8 +159,8 @@ stream_base& text_stream::r_stream(stream_base* o)
     if (n) {
         for (int i = 0; i < n; i++) {
             char c;
-            buf.read(&c, 1);
-            o->buf.push_back(c);
+            TS(buf).read(&c, 1);
+            TS(o->buf).push_back(c);
         }
     }
     return *this;
@@ -183,7 +187,7 @@ bool text_stream::open_read_text(const char* path)
     else
         failed = 1;
     if (!failed) {
-        size_t n = mb_file_size(fp);
+        size_t n = (size_t)file_length(fp);
         read_from_inl(buf, fp, n);
         fclose(fp);
     }
@@ -524,7 +528,7 @@ void skin::save(stream_base* s)
                 int c = r->name.buf[j];
                 if ((char)c == '.')
                     break;
-                t.push_back(c);
+                TS(t).push_back(c);
                 r = tex[i];
             }
             s->w_tstr(&t);

@@ -19,9 +19,12 @@
 #undef push_back       // windows.h's raster-op constant
 
 // ---- element types --------------------------------------------------------------------------------------
-struct CfgRec {                                 // 0x1f8 bytes (s004dbf7e / s004e40f0)
+struct loading_config {                         // src/game/cls_map/cls_map.h: the 0x1f8-byte record, whose copy constructor is the one 0x4dc030 defines
     char pad[0x1f8];
-    CfgRec(const CfgRec& o);            // 0x4dc030
+    loading_config(const loading_config& o);      // 0x4dc030
+};
+struct CfgRec : loading_config {                // 0x1f8 bytes (s004dbf7e / s004e40f0)
+    CfgRec(const CfgRec& o) : loading_config(o) {}   // 0x4dc030 (the inherited copy)
     CfgRec& operator=(const CfgRec& o); // 0x4e4340
     ~CfgRec();                                  // 0x4d3720
 };

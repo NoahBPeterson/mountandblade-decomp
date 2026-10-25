@@ -66,8 +66,27 @@ struct E56 {
 };
 struct alloc_e56 {
     __declspec(noinline) void construct(E56* p, const E56& v);      // 0x442060
-    void destroy(E56* p);                                           // 0x43e150
 };
+// 0x43e150 (src/game/agent2/agent_ai.cpp): destroys the two vectors of an E56 (agent2's VecPair2: vectors at +0x10 and +0x20); the original passes no allocator
+struct VecPair2;
+void __stdcall tidy_vec_pair(VecPair2* p);                          // 0x43e150
+
+// Callees whose definitions are under another class name (identical code folding, or the module that defines them names the
+// class differently); declared with the defining class's name so the call binds its symbol, and the object is cast at the
+// call. Each says why the object is the one the definition works on.
+struct Map10007 { int lookup(unsigned id); };                       // 0x48ad00 (src/game/ui/mission.h): PartyMgr's first 0x138b8 bytes are this 0x2717-entry table
+struct AgentX {                                                     // src/rgl/xmlcfg/game_util.h: the agent record's team relation tests
+    bool is_friend(const Agent* o) const;                           // 0x4323a0
+    int is_neutral(const Agent* o) const;                           // 0x4323f0 (returns int; the callers test only al: (char) at the call)
+};
+struct Obj3 { void set_placement(const matrix* m, const vector4* a, const vector4* b, int c); };   // 0x433770 (game_util.h: scene object with a placement block; Emit's)
+namespace rgl {
+struct entity; struct psys;
+struct world {                                                      // src/rgl/scene (the global `world` of world.h is this class)
+    psys* alloc_emitter();                                          // 0x427ea0
+    void to_cell(const float* p, int* out);                         // 0x41ed00 (frustum_grid.cpp)
+};
+}
 
 // ---- animation slot: 2 x 0x2c bytes at agent+0xd4 (0x4406a0 reads slot[1].cur at +0x100 and .scale at +0x118;
 // 0x444370 sets cur/next/events/rate through the inlined 0x4378a0) ----------------------------------------------

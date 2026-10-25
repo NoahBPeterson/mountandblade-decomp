@@ -7,6 +7,7 @@
 //       NOT visible does cl allocate create_shadow_mesh's locals as the original does (see MIGRATION.md).
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
+#define GM_RGL_NS                 // gui_manager.h: the scene / mesh stand-ins in namespace rgl (the defined symbols)
 #include "./strat_ext.h"       // (listed directly: the resolution audit scans only the source's own includes)
 #include "./strat_entity.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -41,12 +42,12 @@ void StratEnt::shadow_tick()
         if (p288 == 0) return;
         p288->file.assign("shadow_shader");
         skin* sk = p288;
-        sk->f30 = g_resmgr.resolve_shader(&sk->file);
+        sk->f30 = (int)((resource_manager*)&g_resmgr)->resolve_shader(*(const rgl::string*)&sk->file);
         p288->id = 0x108;
         p288->refs[0]->f24 = 0x300000;
     }
     if (sc28c == 0) {
-        sc28c = new scene;
+        sc28c = (scene*)new rgl::scene;                 // the ctor 0x429740 is rgl::scene's
         sc28c->mask = 0x2000;
         sc28c->f0 = 1;
         sc28c->f4 = 1;
@@ -84,7 +85,7 @@ void StratEnt::shadow_tick()
         sc28c->fr = f;
         sc28c->target = p288->refs[0];
         if (fx) fx->draw(sc28c, &pos, &f144);
-        MeshEnt::render(sc28c, &ri);
+        ((rgl::entity*)this)->rgl::entity::render((rgl::scene*)sc28c, &ri);
         if (f298 >= 0) {
             StratEnt* e = ctx->find_entity(f298);
             if (e != 0 && e->type() == 9 && e->fx != 0)

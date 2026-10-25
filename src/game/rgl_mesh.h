@@ -126,6 +126,7 @@ struct mesh : mesh_base {
     void append(mesh* other, const mat4* m);        // 0x412fe0
     void update_morph();                            // 0x413320
     int render(scene* sc, const mat4& frame);       // 0x413750
+    int render(scene* sc, const matrix& frame);     // 0x413750: the spelling of the definition (shapes/mesh_obj.cpp takes the matrix); callers that hold a mat4 cast
     int add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c);   // 0x413c50
     void add_face(int a, int b, int c);             // 0x411920
     std::vector<face20>& get90_();                  // 0x40ec30 (out-of-line call)

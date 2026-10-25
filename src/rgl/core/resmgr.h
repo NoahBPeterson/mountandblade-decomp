@@ -10,7 +10,7 @@
 //
 // Header gaps worked around locally (the shared headers are not ours to edit; see MIGRATION.md):
 //   - rgl::string (../rgl_string.h) has no copy constructor (0x42c110) and no range_equals/match (0x42c160):
-//     `str_x` adds them.
+//     they are tstring's (src/game/tstring.h), which `str_x` derives from.
 //   - rgl::mesh (../particles/mesh_obj.h) has no compute_bounds (0x419300), linearise_vertex_colors (0x419360),
 //     compute_tangents (0x41ce80) or clone (0x41c6d0): `mesh_x` adds them. Its vertex60 names the first
 //     vector `pos` and the one at +0x30 `normal`; the stream carries the normal at +0 (the working normal,
@@ -24,6 +24,9 @@
 #include <vector>
 #include <list>
 #include "../rgl_string.h"
+#define range_equals range_equals_hdr(const int& a, const int& b, const tstring& c) const; char range_equals   // 0x42c160 returns char; tstring.h says bool (as strat/tstring.cpp)
+#include "../../game/tstring.h"   // tstring: the class that defines the string members the resource manager calls (rgl::string is the same 16-byte object)
+#undef range_equals
 #include "../rgl_math.h"
 #include "../stream.h"
 #include "../resource.h"
@@ -31,11 +34,10 @@
 #include "./resource_io.h"            // Bone, skeleton, stage_io, material_io, globals; includes ../particles/mesh_obj.h
 
 // ---- string members the shared header lacks ----------------------------------------------------------------
-struct str_x : rgl::string {
+struct str_x : tstring {                                           // the string passed by value to get_small: tstring's constructors (0x42bbd0, 0x42c110)
     str_x() {}
-    str_x(const rgl::string& o);                                   // 0x42c110 (copy constructor)
-    // this[*from .. min(*to, len)) == o (0x42c160; returns a byte)
-    bool range_equals(int* from, int* to, const rgl::string* o) const;
+    str_x(const rgl::string& o) : tstring((const tstring&)o) {}  // 0x42c110 (copy constructor)
+    operator const rgl::string&() const { return *(const rgl::string*)this; }
 };
 
 // ---- resources ------------------------------------------------------------------------------------------------

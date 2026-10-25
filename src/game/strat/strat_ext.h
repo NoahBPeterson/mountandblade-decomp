@@ -163,11 +163,27 @@ OFFSET_CHECK3(scene, mask, 0x1a8);
 extern __int64 g_ticks[];                                // 0x5e2948 clock table (64-bit ticks, 1e-5 s)
 extern int g_shadows_on;                                // 0x5aa030
 
-struct Psys { void update(scene* sc); };                // 0x414960
+struct Psys { };                                         // (update 0x414960 is rgl::psys::update below)
 struct FxDef { void draw(scene* sc, const matrix* m, const float* p); };   // 0x428ff0 (provisional)
 
 // ---- the collision capsule built on the stack by update_ground_cache (vtable 0x54a540, size 0x64): src/include/shape.h.
 // Its base constructor is the out-of-line 0x407ff0 here (capsule(capsule::outline_init())).
 #include "../../include/shape.h"
+
+// ---- callees declared under the name their definition has -----------------------------------------------------------------
+// The stand-in classes above keep the global names the manifest rows bind (StratEnt::render takes a global scene*); the definitions of
+// the functions they call are in the rgl modules under rgl:: names (or another class of the module), so a call binds its symbol through
+// these declarations and casts the object, which is the one the definition works on (the same object under the stand-in's name).
+namespace rgl {                                                  // (rgl::scene and rgl::mesh are rgl_mesh.h's: constructor 0x429740, add_point 0x412f50, add_vertex 0x413c50, render 0x413750)
+struct psys { void update(scene* sc); };                         // 0x414960 (rgl/psys.cpp)
+struct world { void to_cell(const float* p, int* out); };        // 0x41ed00 (rgl/core/frustum_grid.cpp)
+struct mesh_ext { void clear_geometry(); };                      // 0x428e80 (rgl/scene/fx_support.cpp)
+struct entity { virtual void render(scene* sc, render_info* out); };   // 0x420310 (rgl/scene/entity_render): the base render of MeshEnt
+}
+struct material;
+struct resource_manager {                                        // rgl/resource_manager.cpp: the resource manager at 0x5d6fa0
+    skin* get_material(const rgl::string& name);                 // 0x418a70
+    material* resolve_shader(const rgl::string& name);          // 0x418e90
+};
 
 #endif // STRAT_EXT_H

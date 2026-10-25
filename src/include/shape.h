@@ -154,6 +154,7 @@ struct composite : shape_base {
 #ifndef MB_SHAPE_FULL_MANIFOLD
 struct manifold : shape_base {
     char pad[0x30];
+    manifold();                                             // 0x40c670 (shapes.h defines it inline in the full class; callers of the view call it out of line: rgl/core/resmgr.cpp)
     shape_base* build_composite();                          // 0x40cb60
 };
 #endif

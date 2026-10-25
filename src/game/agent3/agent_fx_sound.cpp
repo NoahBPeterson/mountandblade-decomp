@@ -64,7 +64,7 @@ E56* __cdecl uninit_copy_e56(const E56* first, const E56* last, E56* dest, alloc
             al.construct(dest, *first);
     } catch (...) {
         for (; next != dest; ++next)
-            al.destroy(next);
+            tidy_vec_pair((VecPair2*)next);
         throw;
     }
     return dest;
@@ -96,8 +96,8 @@ void world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<
     int lo[2];
     volatile int hi[2];                     // read from memory at every test (that is what the original compiled to)
     int c[2];
-    to_cell(bmin, lo);
-    to_cell(bmax, (int*)hi);
+    ((rgl::world*)this)->to_cell(&bmin->x, lo);
+    ((rgl::world*)this)->to_cell(&bmax->x, (int*)hi);
     for (c[0] = lo[0]; c[0] <= hi[0]; c[0]++) {
         for (c[1] = lo[1]; c[1] <= hi[1]; c[1]++) {
             for (enode* nd = cells[c[0]][c[1]].ents; nd != 0; nd = nd->next) {
@@ -107,7 +107,8 @@ void world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<
             }
         }
     }
-    sort_range(out->begin(), out->end(), (int)(out->end() - out->begin()));
+    std::vector<rgl::entity*>& ents = *(std::vector<rgl::entity*>*)out;      // the grid collects entity pointers
+    sort_range(ents.begin(), ents.end(), (int)(out->end() - out->begin()));
     std::vector<unsigned>::iterator e = std::unique(out->begin(), out->end());
     out->erase(e, out->end());
 }
@@ -167,7 +168,7 @@ void EmitTable::setup(Emit* e, int idx, const vector4* pos)
     e->f1b4 = d->fbc;
     mat4 m = rgl::identity_pos();
     m.o = *pos;
-    e->set_placement(&m, &d->a, &d->b, d->c);
+    ((Obj3*)e)->set_placement(&m, &d->a, &d->b, d->c);
 }
 
 // ---- the FMOD sound player ---------------------------------------------------------------------------------------------------
@@ -192,7 +193,7 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                 int looping = groups[idx].flags & 2;
                 int hi = 0x100;
                 int vol = 0;
-                int r = round_i(groups[idx].volume_scale() * g_master_volume * 255.0f);
+                int r = round_i(((const Agent*)&groups[idx])->volume_scale() * g_master_volume * 255.0f);
                 vol = clamp_index(&r, &vol, &hi);
                 int prio;
                 if (flags & 1) {
@@ -204,7 +205,7 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                     float f = 3.0f / (dist + 3.0f);
                     int lo = 0;
                     int hi2 = 0x100;
-                    int pr = round_i(defs[dn].range_scale() * f * 254.0f);
+                    int pr = round_i(((const Agent*)&defs[dn])->range_scale() * f * 254.0f);
                     prio = clamp_index(&pr, &lo, &hi2);
                 }
                 FSOUND_SetVolume(ch, vol);
@@ -254,7 +255,7 @@ void GameData::add_experience(int troop, int amount)
     if (troop == player && amount > 0 && f13a34 != 0 && g_show_messages != 0) {
         {
             tstring key("ui_you_got_number_experience");
-            sprintf(buf1, g_strtable.lookup(&key)->c_str(), amount);
+            sprintf(buf1, g_strtable.lookup(key)->c_str(), amount);
         }
         {
             tstring msg(buf1);
@@ -272,7 +273,7 @@ void GameData::add_experience(int troop, int amount)
             g_sound_mgr.play(g_levelup_sound, 1, ((const float*)&g_sound_mgr.listener), 1.0f, 0);
             {
                 tstring key("ui_you_have_advanced_to_level_number");
-                sprintf(buf2, g_strtable.lookup(&key)->c_str(), c->level);
+                sprintf(buf2, g_strtable.lookup(key)->c_str(), c->level);
             }
             {
                 tstring msg(buf2);
@@ -280,18 +281,18 @@ void GameData::add_experience(int troop, int amount)
             }
         } else {
             PartyMgr* pm = &parties;
-            int p = pm->index_of(f78);
+            int p = ((Map10007*)pm)->lookup(f78);
             int i = 0;
             if (pm->pages._Myfirst[p >> 4][p & 0xf].count > 0) {
                 do {
-                    int q = pm->index_of(f78);
+                    int q = ((Map10007*)pm)->lookup(f78);
                     if (pm->pages._Myfirst[q >> 4][q & 0xf].stacks[i].troop == troop) {
                         {
                             tstring key("ui_value_has_advanced_to_level_number");
                             tstring* nm = g_strtable.find(&c->key);
                             if (nm == 0)
                                 nm = (tstring*)c;
-                            sprintf(buf3, g_strtable.lookup(&key)->c_str(), nm->c_str(), c->level);
+                            sprintf(buf3, g_strtable.lookup(key)->c_str(), nm->c_str(), c->level);
                         }
                         {
                             tstring msg(buf3);
@@ -299,7 +300,7 @@ void GameData::add_experience(int troop, int amount)
                         }
                     }
                     i++;
-                    int r = pm->index_of(f78);
+                    int r = ((Map10007*)pm)->lookup(f78);
                     if (!(i < pm->pages._Myfirst[r >> 4][r & 0xf].count))
                         break;
                 } while (1);
@@ -312,7 +313,7 @@ void GameData::add_experience(int troop, int amount)
 // @ 0x442ca0
 Emit* Mission::spawn_effect(int idx, const mat4* m, int duration)
 {
-    Emit* e = scene_world->alloc_emitter();
+    Emit* e = (Emit*)((rgl::world*)scene_world)->alloc_emitter();
     vector4 v(0.0f, 0.0f, 0.0f);
     g_emit_defs.setup(e, idx, &v);
     e->world = *m * e->local;
@@ -355,8 +356,8 @@ bool Agent::can_target(unsigned aid, unsigned flags, float maxdist, float* out_d
     Agent* o = &g_mission->agents.pages[aid >> 4][aid & 0xf];
     if (o->f14 == 1
         && (!(flags & 1) || !is_enemy(o))
-        && (!(flags & 2) || !is_friend(o))
-        && (!(flags & 4) || !is_neutral(o))
+        && (!(flags & 2) || !((const AgentX*)this)->is_friend(o))
+        && (!(flags & 4) || !(char)((const AgentX*)this)->is_neutral(o))
         && (!(flags & 0x10) || o->f10 == 1)
         && (!(flags & 0x20) || o->f10 != 1)
         && (!(flags & 0x200) || o->id > id)
@@ -390,7 +391,7 @@ bool Agent::any_hostile_near()
             bool friendly = false;
             if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
                 friendly = m->rel_flat()[team * 0x5b + o->team] == 1;
-            if (!friendly && !is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
+            if (!friendly && !(char)((const AgentX*)this)->is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
                 vector4 d;
                 d.x = o->pos.x - pos.x;
                 d.y = o->pos.y - pos.y;
@@ -421,7 +422,7 @@ void Agent::update_alarm()
             break;
         Agent** pg = g_mission->agents.pages._Myfirst;
         Agent* o = pg[i >> 4] + (i & 0xf);
-        if (o->f14 == 1 && !is_enemy(o) && !is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
+        if (o->f14 == 1 && !is_enemy(o) && !(char)((const AgentX*)this)->is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
             vector4 d = o->pos - pos;
             if (!(10.0f < d.normalize()))
                 hit = (pg[i >> 4][i & 0xf].f2c4 & 1) != 0;
@@ -949,7 +950,7 @@ void __cdecl uninit_fill_n_e56(E56* first, unsigned n, const E56& val, alloc_e56
             al.construct(first, val);
     } catch (...) {
         for (; next != first; ++next)
-            al.destroy(next);
+            tidy_vec_pair((VecPair2*)next);
         throw;
     }
 }
