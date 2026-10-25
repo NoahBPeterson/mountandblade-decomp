@@ -114,6 +114,3 @@
 004317b0 ?clear_groups@conv_rec@@QAEXXZ  # release of the 16 variation tracks
 004c8330 ?reset_groups@conv_rec@@QAEXXZ  # block material release
 005fe888 ?g_skin_name@@3Utstring@@A  # the skin name tstring (buf at 0x5fe88c)
-
-8ee3100 ?g_skill_tbl@@3PAUSkillRec@@A  # renamed from g_skills (names merge)
-00a73980 ?g_windows@@3Uscreen_cfg@@A  # renamed from g_screen (names merge)

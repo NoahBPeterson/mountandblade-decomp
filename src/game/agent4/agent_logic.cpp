@@ -4802,7 +4802,7 @@ void Agent::ragdoll_update()
         bm->u = vector4(0.0f, 0.0f, 1.0f);
         bm->orthonormalize();
         if (f14 != 1) {
-            f84 = g_blend_rate + f84;
+            f84 = g_step_tbl[2] + f84;
             if (f84 < 0.0f)
                 f84 = 0.0f;
             else if (1.0f < f84)
@@ -8034,7 +8034,7 @@ void Agent::update(float dt)
 void Agent::tick()
 {
     if (body) {
-        update_anims(*(int*)&g_blend_rate);
+        update_anims(*(int*)&g_step_tbl[2]);
         if (f2c >= 0) {
             unsigned id = f2c;
             Agent* o = g_mission->agents.pages[id >> 4] + (id & 0xf);

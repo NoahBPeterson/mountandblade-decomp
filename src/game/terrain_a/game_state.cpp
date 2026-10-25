@@ -276,9 +276,9 @@ void ShadowMap::sync_readback()
         if (g_use_hw_shadow)
             fmt = D3DFMT_R16F;
         IDirect3DTexture9* tex = 0;
-        HRESULT hr = g_device->CreateTexture(w, h, 1, D3DUSAGE_DYNAMIC, fmt, D3DPOOL_SYSTEMMEM, &tex, 0);
+        HRESULT hr = g_render.dev->CreateTexture(w, h, 1, D3DUSAGE_DYNAMIC, fmt, D3DPOOL_SYSTEMMEM, &tex, 0);
         if (hr < 0) {
-            g_mesh_quality = 0;
+            g_options.i7c = 0;
             surf = 0;
         } else {
             tex->GetSurfaceLevel(0, &surf);
@@ -291,7 +291,7 @@ void ShadowMap::sync_readback()
     if (target != 0) {
         IDirect3DSurface9* src;
         (*target->refs[0]->tex)->GetSurfaceLevel(0, &src);
-        g_device->GetRenderTargetData(src, surf);
+        g_render.dev->GetRenderTargetData(src, surf);
         src->Release();
     }
 }

@@ -30,13 +30,13 @@ struct MenuScreen {
 };
 extern MenuScreen* g_screen;                        // 0xa739b8
 
-extern void* g_world;                               // 0x5e292c
+#include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern int   g_u32;                                 // 0xa735c0
 void start_setup(void* m);                  // 0x484590 (this = g_world)
 extern float g_char_scale;                          // 0x590d7c
 
 // the strings the mission items write and the numbers their sounds depend on
-extern tstring g_mission_title;                     // 0xa72890
+#include "../dialog_manager.h"   // canonical: g_script (0xa72890)
 extern __int64 g_spawn_lo;                          // 0xa70448
 extern __int64 g_spawn_hi;                          // 0xa70450
 extern float g_mouse_x;                             // 0x5d7094

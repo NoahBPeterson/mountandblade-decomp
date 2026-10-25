@@ -52,10 +52,10 @@ extern int* g_menu_video_entry;                     // 0xa739d0 (index at +0x18)
 extern int* g_menu_options_entry;                   // 0xa739cc (index at +0x18)
 
 // 0x5e2950 and the per-day factors next to 0x596770.
-extern __int64 g_time64;                            // 0x5e2950 (fild qword)
+#include "../../include/fx.h"   // canonical: g_ticks (0x5e2950)
 extern float  g_tick_per_day;                       // 0x596770
 extern float  g_ticks_per_time;                     // 0x596774
-extern float  g_difficulty_f;                      // 0x5aa07c (the difficulty slider value; the days caption scales it by the constant float at 0x5910fc)
+#include "../../rgl/resource_manager.h"   // canonical: g_options.f74 (0x5aa07c)
 
 // ---- control stub -----------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
@@ -200,7 +200,7 @@ void QuestPage::fill()
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
         int given = (int)(QREC->f11c * g_ticks_per_time);
-        int now = (int)(g_time64 * g_tick_per_day);
+        int now = (int)(g_ticks[1] * g_tick_per_day);
         mb_snprintf(buf, 0x200, fmt, now - given);
     }
     {
@@ -243,7 +243,7 @@ void QuestPage::update_days()
 {
     Pos2 fr;                                 // x = the float spill slot; y is never written (it is passed on to the widget)
     float& v = fr.x;
-    v = g_difficulty_f * *(float*)0x5910fc;
+    v = g_options.f74 * *(float*)0x5910fc;
     float f = (float)floor(v);
     int n = (int)f;
     int r;
@@ -287,7 +287,7 @@ void QuestPage::update_settings(int reason)
     if (w84->changed(0x10000))
         *(float*)0x5aa018 = control_float(w84);
     if (w78->changed(0x10000)) {
-        g_difficulty_f = control_float(w78);
+        g_options.f74 = control_float(w78);
         update_difficulty();
         update_days();
     }

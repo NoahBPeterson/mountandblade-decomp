@@ -221,9 +221,9 @@ __declspec(noinline) void ValueSource::on_value_changed(float arg)
 // @ 0x4d5980
 void Hud::on_mission_start(int arg)
 {
-    *(int*)((char*)(void*)g_world + 0x5270) = g_u32;
+    *(int*)((char*)(void*)(*(void**)&g_mission) + 0x5270) = g_u32;
     g_u32 = g_u32 + 1;
-    start_setup((void*)(void*)g_world);
+    start_setup((void*)(void*)(*(void**)&g_mission));
     g_screen->v2();
     g_screen->f18 = f18;
     g_menu_w3[1] = 0;
@@ -342,7 +342,7 @@ void MissionSource::pick(int* arg)
                 g_spawn_hi = (__int64)it->get_value();
                 play_family_sound(family, 0xc2);
             } else if (k == 6) {
-                string_assign(&g_mission_title, &it->name);
+                string_assign(&g_script.str[0], &it->name);
                 play_family_sound(family, 0xc2);
             } else if (k != 8 || it->f184 != 1) {
                 play_family_sound(family, 0xc2);

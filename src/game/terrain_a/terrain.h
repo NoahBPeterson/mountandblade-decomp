@@ -36,15 +36,11 @@ extern GroundType g_ground_types[11];           // 0x8ed4df8 (beyond the annotat
 // particle / ground-spec type record (table at *0x5e28f8, count 0x5e29e8, 0x20 bytes each) and its 0x48-byte boxes
 #include "../ptype.h"
 
-extern unsigned g_field_mask;                   // 0x5a8ea0 (field values are clamped to g_field_mask - 1)
-extern unsigned g_sel_mask;                     // 0x5a8e78 (0x46a270: second flag field)
-extern int g_type_mask;                         // 0x5a8e88 (terrain type field is 4 bits wide: value & (mask - 1))
+#include "../game_globals.h"   // canonical: g_bit (0x5a8e70)
 extern int g_use_shaders;                       // 0x5e28fc
 extern int g_terrain_gate;                      // 0x5aa03c
 extern unsigned g_river_mask_a;                 // 0x5e2580 (0x46bc70: flag bit of the river path)
 extern unsigned g_river_mask_b;                 // 0x5e2584
-extern int g_pow2_low;                          // 0x5a8e70 (low dword of g_pow2[0] == 2)
-extern unsigned __int64 g_pow2[];               // 0x5a8e70 (g_pow2[n] = 2 << n)
 extern const char* g_name_elevation;            // 0x5a9bf4 "ground_elevation"
 extern const char* g_name_leveling;             // 0x5a9bf8 "ground_leveling"
 

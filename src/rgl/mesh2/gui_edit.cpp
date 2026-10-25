@@ -1226,7 +1226,7 @@ void ConfigDialog::init()
 // @ 0x4c77c0
 void MapEditorDialog::refresh()
 {
-    Frame* g = g_frame;
+    Frame* g = (*(Frame**)&g_game);
     MapRecord* r = 0;
     int var2_no = 0;
     char name[0xc8];
@@ -1237,7 +1237,7 @@ void MapEditorDialog::refresh()
     int mode = 0;
 
     if (g->object_index) {
-        memcpy(matrix, g_edited_object->matrix, 0x28);
+        memcpy(matrix, (*(Pawn**)&g_mission->f65e4)->matrix, 0x28);
         matrix[12] += g->keep;
         mode = g->mode;
         x = g->eye.x;
@@ -1247,7 +1247,7 @@ void MapEditorDialog::refresh()
         strcpy(name, "New Object");
         entry_no = 0;
     } else if (g->record >= 0) {
-        r = g_map->records + g->record;
+        r = (*(Map**)&g_mission)->records + g->record;
         memcpy(matrix, &r->mesh_name, sizeof(matrix));
         entry_no = r->entry_no;
         var_no = r->var_no;
@@ -1337,8 +1337,8 @@ void MapEditorDialog::update_object_type()
         SendMessageA(list, 0x19a, 0, 0);
     }
     SendMessageA(list, 0x186, 0, 0);
-    g_frame->sel = SendMessageA(list, 0x188, 0, 0);
-    g_frame->mode = list_type;
+    (*(Frame**)&g_game)->sel = SendMessageA(list, 0x188, 0, 0);
+    (*(Frame**)&g_game)->mode = list_type;
 }
 
 // @ 0x4c7e20
@@ -1351,10 +1351,10 @@ void MapEditorDialog::update_objects()
     int i = 0;
     int off = 0;
     do {
-        char* base = (char*)g_map->records;
+        char* base = (char*)(*(Map**)&g_mission)->records;
         if (!base)
             break;
-        if ((unsigned)i >= (unsigned)(g_map->records_end - g_map->records))
+        if ((unsigned)i >= (unsigned)((*(Map**)&g_mission)->records_end - (*(Map**)&g_mission)->records))
             break;
         char name[128];
         ((ItemPage*)(base + off))->format(name);
@@ -1362,7 +1362,7 @@ void MapEditorDialog::update_objects()
         SendMessageA(list, 0x19a, item, i);
         i++;
         off += 0x1c8;
-    } while ((char*)g_map->records);
+    } while ((char*)(*(Map**)&g_mission)->records);
 }
 
 // @ 0x4c7ee0

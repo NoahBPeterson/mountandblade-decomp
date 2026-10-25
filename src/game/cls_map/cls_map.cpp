@@ -503,8 +503,7 @@ struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<i
 void save();                                    // 0x4181c0 (this = 0x5aa008)
 void audio_close();                                     // winmm!FSOUND_Close
 void crt_exit();                                        // 0x535458
-extern void* g_game_obj;                                // 0x5e2930
-extern void* g_mission_obj;                             // 0x5e292c
+#include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern char* g_5e29d0;                                  // 0x5e29d0
 extern void* g_menus;                                  // 0x5e29b0
 extern char* g_5e2928;                                  // 0x5e2928
@@ -526,13 +525,13 @@ int shutdown()
     audio_close();
     g_log.w_cstr("Saving options...");
     save();
-    if (g_game_obj) {
-        delete (GameDtor*)g_game_obj;
-        g_game_obj = 0;
+    if ((*(void**)&g_game)) {
+        delete (GameDtor*)(*(void**)&g_game);
+        (*(void**)&g_game) = 0;
     }
-    if (g_mission_obj) {
-        delete (WorldDtor*)g_mission_obj;
-        g_mission_obj = 0;
+    if ((*(void**)&g_mission)) {
+        delete (WorldDtor*)(*(void**)&g_mission);
+        (*(void**)&g_mission) = 0;
     }
     if (g_5e29d0) {
         delete[] (Item238*)g_5e29d0;
@@ -619,7 +618,7 @@ void MissionScreen::fill_single_mission()
         tstring none("");
         vt(overlay)->d41(pos, &none);
     }
-    vt(row[2])->d41(pos, (void*)((const char*)g_mission_templates + *(int*)((char*)g_mission_obj + 0x5df0) * 0x58 + 0x24));
+    vt(row[2])->d41(pos, (void*)((const char*)g_mission_templates + *(int*)((char*)(*(void**)&g_mission) + 0x5df0) * 0x58 + 0x24));
 }
 
 // @ 0x4db090
@@ -786,8 +785,8 @@ void MissionScreen::fill_mission_row(int side)
         char buf[0x20];
         if (u->flags32 & 0x10) {
             int h = ((unsigned char*)u)[0x7a] & 0xf;
-            if (h > g_skill_clamp)
-                h = g_skill_clamp;
+            if (h > g_skill_tbl[36].cap)
+                h = g_skill_tbl[36].cap;
             sprintf(buf, " %d%%",
                     (int)(u->hp * 100.0f / (u->lvl58 + h * 2 + 0x23) + 0.0001f));
         } else {
@@ -1022,7 +1021,7 @@ void ResultWindow::init()
         vt(box38)->d03();
         { struct { int a, b; } ret; vt(box38)->d41(&ret, &s54); }
         box38->f180 = 1;
-        g_ui_active_edit = box38;
+        g_gui.f10 = (int)box38;
         vt(win)->d50(box38);
     } else if (outcome == 2) {
         b3c = new_long_button(win, &s78, 0.03f, 0.085f, 0.045f);
@@ -1038,7 +1037,7 @@ void ResultWindow::init()
         g_ui_changed = 1;
         g_gui.add_root(self);
     }
-    f64 = g_msg_flag;
+    f64 = g_gui.f560;
 }
 
 // @ 0x4dcbd0
@@ -1565,7 +1564,7 @@ void MessageMenu::create_message()
     void* wv = win;
     g_ui_changed = 1;
     g_gui.add_root(wv);
-    f58 = g_msg_flag;
+    f58 = g_gui.f560;
 }
 
 
@@ -2067,7 +2066,7 @@ void OptionsWin::init()
 {
     f_ec = 0;
     f_ed = 0;
-    day_saved = g_day;
+    day_saved = g_cfg.texture_detail;
     {
         g_gui.reset();
         NEW_OVERLAY_WINDOW(w)
@@ -2100,7 +2099,7 @@ void OptionsWin::init()
         ui_width(refresh_rate, n4);
         ui_mesh_color(refresh_rate, 0xffdfcfbf);
         {
-            tstring s(g_dx9 ? "DirectX 9" : "DirectX 7");
+            tstring s(g_cfg.use_vertex_shaders ? "DirectX 9" : "DirectX 7");
             int anchor[3] = { 0, 0, 0 };
             vt(refresh_rate)->d41(anchor, &s);
         }
@@ -2133,7 +2132,7 @@ void OptionsWin::init()
     {   // texture quality (%)
         char buf[0x100];
         const char* fmt = tex("ui_percentage_value").buf;
-        sprintf(buf, fmt, g_day);
+        sprintf(buf, fmt, g_cfg.texture_detail);
         tstring text(buf);
         texture_quality = make_hint(window, text, 0.62f, 0.8f, 0.7f, 0.3f);
         ui_width(texture_quality, n4);
@@ -2298,14 +2297,14 @@ void OptionsWin::init()
             if (ok) {
                 vt(resolution)->d50(&m.name);
                 char buf[0x100];
-                sprintf(buf, "%dx%d", g_res_w, g_res_h);
+                sprintf(buf, "%dx%d", g_cfg.display_width, g_cfg.display_height);
                 ok = m.name.find(tstring(buf), 0) >= 0;
                 if (ok)
                     vt(resolution)->d11(drop_count(resolution) - 1);
             }
         }
         vt(resolution)->d50((void*)&tex("ui_use_desktop_resolution2"));
-        if (g_res_w == 0)
+        if (g_cfg.display_width == 0)
             vt(resolution)->d11(drop_count(resolution) - 1);
     }
 
@@ -2319,13 +2318,13 @@ void OptionsWin::init()
         vt(shadow_quality)->d50((void*)&tex("ui_m_ultra_high2"));
         vt(shadow_quality)->d50((void*)&tex("ui_m_high2"));
         vt(shadow_quality)->d50((void*)&tex("ui_m_low2"));
-        vt(shadow_quality)->d11(2 - g_corpses);
+        vt(shadow_quality)->d11(2 - g_cfg.unk6c);
     }
 
     days = make_slider(window, 0.56f, 0.545f, 1.0f);
     F154(days) = 10.0f;
     F158(days) = 100.0f;
-    vt(days)->d13((float)g_day);
+    vt(days)->d13((float)g_cfg.texture_detail);
 
     ragdoll_limit = make_slider(window, 0.56f, 0.505f, 1.0f);
     F154(ragdoll_limit) = 0.0f;
@@ -2348,7 +2347,7 @@ void OptionsWin::init()
         { tstring t_("3"); vt(corpses)->d50(&t_); }
         { tstring t_("1"); vt(corpses)->d50(&t_); }
         { tstring t_("0"); vt(corpses)->d50(&t_); }
-        vt(corpses)->d11(6 - g_corpses);
+        vt(corpses)->d11(6 - g_cfg.unk6c);
     }
     {   // ragdolls
         ragdolls = make_dropdown(window, &tex("Ragdolls"), 0.52f, 0.345f);
@@ -2409,7 +2408,7 @@ void OptionsWin::init()
 
     { tstring d_("medium_button"); quality[5] = (UiAInline*)opt_make_medium_button(window, 0.56f, 0.13f, 3.7f, 0.01f, 0.005f, &tex("ui_enabled"), &d_); }
     quality[5]->f184 = 1;
-    vt(quality[5])->d11(g_shadow_q);
+    vt(quality[5])->d11(g_cfg.fake_reflections);
     set_enabled_text(quality[5]);
 
     g_ui_changed = 1;

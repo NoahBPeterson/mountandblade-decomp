@@ -1338,7 +1338,7 @@ struct face204 {
 };
 
 // the front table the map slot ids are looked up in (0x5aa130 count, 0x5aa134 entries of 0x98 bytes)
-extern int g_front_count;                       // 0x5aa130
+#include "../../include/sound_mgr.h"   // canonical: g_sound_mgr.ngroups (0x5aa130)
 extern char* g_front;                           // 0x5aa134
 struct front_rec {
     char pad0[0xd0];
@@ -1584,7 +1584,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
             stream_str(s, &nm);
             if (id >= 0 && id < 7) {
                 int found = -1;
-                for (int j = 0; j < g_front_count; j++) {
+                for (int j = 0; j < g_sound_mgr.ngroups; j++) {
                     if (((front_rec*)(g_front + j * 0x98))->name.equals(nm)) {
                         found = j;
                         break;

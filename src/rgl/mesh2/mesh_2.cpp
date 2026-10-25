@@ -23,9 +23,9 @@ void screen_cfg::apply()
     req.pop_back();
     if (!req.empty()) {
         unsigned char v = items[req.back()]->index();
-        if (g_dev_renderer)
-            g_dev_renderer->ShowCursor(v);
-        g_5d75e0 = v;
+        if (g_render.dev)
+            g_render.dev->ShowCursor(v);
+        g_gui.f560 = v;
     }
 }
 

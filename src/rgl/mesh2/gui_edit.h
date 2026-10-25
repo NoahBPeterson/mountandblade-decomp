@@ -505,7 +505,7 @@ struct Pawn {
     char pad[0x58];
     float matrix[0x10];                                 // +0x58
 };
-extern Pawn* g_edited_object;                           // 0x5e292c+0x65e4 (the map's edited object)
+#include "../../game/mission.h"   // canonical: g_mission (0x5e292c)
 
 #include "../../include/vec.h"
 
@@ -547,7 +547,7 @@ struct Frame {
     char pad1a0c0[0x1a1b4 - 0x1a0c0];
     int record;                                         // 0x1a1b4
 };
-extern Frame* g_frame;                                  // 0x5e2930
+#include "../../include/game_data.h"      // GameData (save_language_files 0x4c8ca0), TroopRec, Party, PartyMgr, QuestRec, FactionRec: the shared classes
 
 struct Map {
     char pad[0x65e4];
@@ -556,7 +556,6 @@ struct Map {
     MapRecord* records;                                 // +0x668c
     MapRecord* records_end;                             // +0x6690
 };
-extern Map* g_map;                                      // 0x5e292c
 
 extern tstring g_module_path;                           // 0x8ee3c28 (global file-name prefix)
 extern char g_ui_play[];                                // 0x595e0c
@@ -806,7 +805,6 @@ struct item38_vec {
 // ============================================================================================================
 // 0x4c8ca0: GameData::save_language_files and the records it walks
 // ============================================================================================================
-#include "../../include/game_data.h"      // GameData (save_language_files 0x4c8ca0), TroopRec, Party, PartyMgr, QuestRec, FactionRec: the shared classes
 inline const tstring* QuestRec::text_name() { return suffix_or(key, "_text", desc); }
 
 extern PartyTemplate* g_party_templates;                                // 0x5e29f8

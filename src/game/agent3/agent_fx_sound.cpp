@@ -269,7 +269,7 @@ void GameData::add_experience(int troop, int amount)
         c->fac += 10;
         c->level++;
         if (troop == player) {
-            g_sound_mgr.play(g_levelup_sound, 1, g_levelup_pos, 1.0f, 0);
+            g_sound_mgr.play(g_levelup_sound, 1, ((const float*)&g_sound_mgr.listener), 1.0f, 0);
             {
                 tstring key("ui_you_have_advanced_to_level_number");
                 sprintf(buf2, g_strtable.lookup(&key)->c_str(), c->level);

@@ -92,10 +92,9 @@ struct RowVec {                                      // 0xb0-byte rows, destroye
 };
 
 // ---- globals -------------------------------------------------------------------------------------------
-extern int g_5e2958;                                // 0x5e2958
-extern int g_5e295c;                                // 0x5e295c
+#include "../../include/fx.h"   // canonical: g_ticks (0x5e2958)
 extern int g_pending_action;                                // 0x5a9f18
-extern char* g_world;                               // 0x5e292c
+#include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern char* g_windows;                                  // 0xa73980
 
 // ---- the large record (all members are nominal; accesses are by offset) --------------------------------
@@ -171,25 +170,25 @@ Big* Big::init()
         ((Block130*)(p->blocks + i * 0x130))->init();
 
     p->f5de0 = 2;
-    p->f5de8 = g_5e2958;
-    p->f5dec = g_5e295c;
+    p->f5de8 = ((int*)g_ticks)[4];
+    p->f5dec = ((int*)g_ticks)[5];
     p->f5e00 = 0; p->f5e04 = 0; p->f5e08 = 0;
 
     p->f62e8 = 2;
-    p->f62f0 = g_5e2958;
-    p->f62f4 = g_5e295c;
+    p->f62f0 = ((int*)g_ticks)[4];
+    p->f62f4 = ((int*)g_ticks)[5];
     p->f62f8 = 2;
-    p->f6300 = g_5e2958;
-    p->f6304 = g_5e295c;
+    p->f6300 = ((int*)g_ticks)[4];
+    p->f6304 = ((int*)g_ticks)[5];
     p->f6308 = 2;
-    p->f6310 = g_5e2958;
-    p->f6314 = g_5e295c;
+    p->f6310 = ((int*)g_ticks)[4];
+    p->f6314 = ((int*)g_ticks)[5];
     p->f6318 = 2;
-    p->f6320 = g_5e2958;
-    p->f6324 = g_5e295c;
+    p->f6320 = ((int*)g_ticks)[4];
+    p->f6324 = ((int*)g_ticks)[5];
     p->f6328 = 2;
-    p->f6330 = g_5e2958;
-    p->f6334 = g_5e295c;
+    p->f6330 = ((int*)g_ticks)[4];
+    p->f6334 = ((int*)g_ticks)[5];
     p->f63c4 = 0; p->f63c8 = 0; p->f63cc = 0;
     p->f63d0.init();
 
@@ -198,11 +197,11 @@ Big* Big::init()
     p->f6698.init();
 
     p->f67d8 = 2;
-    p->f67e0 = g_5e2958;
-    p->f67e4 = g_5e295c;
+    p->f67e0 = ((int*)g_ticks)[4];
+    p->f67e4 = ((int*)g_ticks)[5];
     p->f6800 = 2;
-    p->f6808 = g_5e2958;
-    p->f680c = g_5e295c;
+    p->f6808 = ((int*)g_ticks)[4];
+    p->f680c = ((int*)g_ticks)[5];
 
     ((TStr*)p->f6814)->ctor();
     p->f000 = 0;
@@ -241,11 +240,11 @@ void restore_defaults()
     g_game->f1a0c0 = -1;
     g_game->f1a0c4 = -1;
 
-    *(char*)(*(int*)(g_world + 0x65d0) + 0x140) = 0;
-    *(char*)(*(int*)(g_world + 0x65dc) + 0x140) = 0;
-    *(char*)(*(int*)(g_world + 0x65e4) + 0x140) = 0;
-    if (*(int*)(g_world + 0x6738)) *(char*)(*(int*)(g_world + 0x6738) + 0x140) = 0;
-    if (*(int*)(g_world + 0x6740)) *(char*)(*(int*)(g_world + 0x6740) + 0x140) = 0;
+    *(char*)(*(int*)((*(char**)&g_mission) + 0x65d0) + 0x140) = 0;
+    *(char*)(*(int*)((*(char**)&g_mission) + 0x65dc) + 0x140) = 0;
+    *(char*)(*(int*)((*(char**)&g_mission) + 0x65e4) + 0x140) = 0;
+    if (*(int*)((*(char**)&g_mission) + 0x6738)) *(char*)(*(int*)((*(char**)&g_mission) + 0x6738) + 0x140) = 0;
+    if (*(int*)((*(char**)&g_mission) + 0x6740)) *(char*)(*(int*)((*(char**)&g_mission) + 0x6740) + 0x140) = 0;
 
     if (g_game->f1a1cc) {
         g_game->f1a1cc = 0;
@@ -433,8 +432,7 @@ extern int g_use_shaders;                                // 0x5e28fc
 extern int g_5e28c8;                                // 0x5e28c8
 extern int g_counter;                                // 0x5e28cc
 extern char g_saved;                               // 0x5e2a08
-extern Big* g_5e292c;                               // 0x5e292c
-extern int g_5a9fd8;                                // 0x5a9fd8
+#include "../config/config.h"   // canonical: g_cfg.disable_sound (0x5a9fd8)
 extern int g_key_states[0x40];                          // 0x5e27c8
 
 #include "../log_stream.h"                       // LogStream: slot 10 (+0x28) is w_cstr
@@ -501,9 +499,9 @@ GameApp::GameApp()
     g_use_shaders = 0;
     g_saved = 0;
     g_game = 0;
-    g_5e292c = new Big;
+    (*(Big**)&g_mission) = new Big;
 
-    if (g_5a9fd8 == 0) {
+    if (g_cfg.disable_sound == 0) {
         FSOUND_SetMaxHardwareChannels(0);
         FSOUND_Init(0xac44, 0x40, 0);
         FSOUND_SetSFXMasterVolume(0xff);

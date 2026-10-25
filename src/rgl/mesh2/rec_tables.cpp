@@ -45,8 +45,8 @@ C4c2d10::C4c2d10()
 {
     M44 tmp;
     v110 = 2;
-    v118 = g_5e2958;
-    v11c = g_5e295c;
+    v118 = ((int*)g_ticks)[4];
+    v11c = ((int*)g_ticks)[5];
     v120 = 0;
     v128 = 0;
     f124 = 6.0f;
@@ -145,7 +145,7 @@ C4c3050::C4c3050()
 // @ 0x4c30b0
 void set_flag_5d8789()
 {
-    g_5d8789 = 1;
+    g_gui.f1709 = 1;
 }
 
 // @ 0x4c30c0
@@ -337,15 +337,15 @@ void* elem58::vector_deleting_delete(unsigned flags)
 int __fastcall renderer_setup(GameAppView* self)
 {
     self->font->set_device(self->device);
-    g_d3d_device = self->device;
+    g_render.dev = self->device;
     g_renderer_width = self->width;
     if (self->windowed)
         g_renderer_height = self->height;
     else
         g_renderer_height = self->height;
-    g_d3d_device->GetDeviceCaps(&g_caps);
+    g_render.dev->GetDeviceCaps(&g_caps);
     g_renderer_vsync = -1;
-    g_renderer_flag = 0;
+    g_render.pad504 = 0;
     g_use_shaders = 0;
     if (((unsigned*)&g_caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_caps)[0xcc / 4] >= 0xffff0200 &&
         ((unsigned*)&g_caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_caps)[0xd4 / 4] & 1) != 0 && g_shader_support != 0)

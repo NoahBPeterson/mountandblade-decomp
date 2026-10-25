@@ -145,18 +145,15 @@ struct tstr_ll {
     const char* text() const { return s.buf ? s.buf : (const char*)&s.buf; }
 };
 
-extern unsigned char g_5d8789;        // 0x5d8789 (g_ui_dirty)
-extern int    g_5e2958;               // 0x5e2958  clock snapshot source
-extern int    g_5e295c;               // 0x5e295c
+#include "../../include/fx.h"   // canonical: g_ticks (0x5e2958)
 
 
 // ---- options.dat loader (0x4c3a40) and GameApp::InitDeviceObjects (0x4c3510) -----------------------------------
-extern IDirect3DDevice9* g_d3d_device;             // 0xa17f28 ("current device")
+#include "../../include/renderer.h"   // canonical: g_render.pad504 (0xa17e14)
 extern D3DCAPS9 g_caps;                            // 0xa17f2c (GetDeviceCaps fills it here)
 extern int   g_renderer_width;                     // 0xa1805c
 extern int   g_renderer_height;                    // 0xa18060
 extern int   g_renderer_vsync;                     // 0xa180e4
-extern char  g_renderer_flag;                      // 0xa17e14
 extern int   g_use_shaders;                        // 0x5e28fc (also g_dinput_enabled)
 extern int   g_shader_support;                     // 0x5a9fcc "use_vertex_shaders"
 

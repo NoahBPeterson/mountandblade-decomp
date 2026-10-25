@@ -234,7 +234,7 @@ void BitWords::set(const unsigned& lo, const int& hi, const unsigned& v)
 {
     unsigned a = lo;
     int b = hi;
-    unsigned mask = (unsigned)g_pow2[b - a] - 1;
+    unsigned mask = (unsigned)(g_bit + 1)[b - a] - 1;
     unsigned vv = v;
     if (vv > mask)
         vv = mask;
@@ -247,7 +247,7 @@ void BitWords::set(const unsigned& lo, const int& hi, const unsigned& v)
 // @ 0x4649b0
 unsigned BitWords::get(const unsigned& lo, const int& hi)
 {
-    unsigned mask = (unsigned)g_pow2[hi - lo] - 1;
+    unsigned mask = (unsigned)(g_bit + 1)[hi - lo] - 1;
     unsigned sh = lo & 0x1f;
     return ((w[lo >> 5] & (mask << sh)) >> sh) & mask;
 }
@@ -264,7 +264,7 @@ void BitWords::set_pct(const float& f)
         i = 0;
     else if (i >= 100)
         i = 99;
-    unsigned mask = g_field_mask - 1;
+    unsigned mask = ((unsigned*)g_bit)[14] - 1;
     if ((unsigned)i > mask)
         i = mask;
     w[4] = (~mask & w[4]) | i;      // the percentage rides in the low bits of w[4] (+0x10 = Terrain::flags)
@@ -277,7 +277,7 @@ void Terrain::set_field_a(const float* p)
 {
     int i = IFLOOR(*p);
     unsigned v = i < 0 ? 0 : (i >= 128 ? 127 : i);
-    unsigned m = g_field_mask - 1;
+    unsigned m = ((unsigned*)g_bit)[14] - 1;
     if (v > m) v = m;
     flags = (flags & ~(m << 7)) | (v << 7);
 }
@@ -290,7 +290,7 @@ void Terrain::set_field_b(const float* p)
     int i = (int)fl;
     if (!(x - fl <= 0.5f)) i++;
     unsigned v = i < 0 ? 0 : (i >= 100 ? 99 : i);
-    unsigned m = g_field_mask - 1;
+    unsigned m = ((unsigned*)g_bit)[14] - 1;
     if (v > m) v = m;
     flags = (flags & ~(m << 21)) | (v << 21);
 }
@@ -339,7 +339,7 @@ float Terrain::spec_weight(int* spec, int* type, int* mode)
 // @ 0x464d50
 vector4* Terrain::ground_color(vector4* out, const float* pos)
 {
-    unsigned t = flags >> 28 & g_type_mask - 1U;
+    unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
     if (t == 4 || t == 12) {
         out->x = 1.0f; out->y = 1.0f; out->z = 1.0f;
         return out;
@@ -394,7 +394,7 @@ void Terrain::init_layers()
     }
     rand();
     int a = -1, b = 2, c = 5;
-    switch (flags >> 28 & g_type_mask - 1U) {
+    switch (flags >> 28 & ((unsigned*)g_bit)[8] - 1U) {
     case 3:
         a = b = 2;
         break;
@@ -455,7 +455,7 @@ void Terrain::scatter(particle_list* set, int mode, int n)
     set->nsrc = 0;
     int cnt = g_ptype_count;
     ptype* specs = g_ptypes;
-    unsigned t = flags >> 28 & g_type_mask - 1U;
+    unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
     float total = 0.0f;
     int fits = 0;
     int idx = 0;
@@ -563,7 +563,7 @@ void Terrain::scatter_all()
 {
     int a, b, c;
     rand();
-    unsigned t = flags >> 28 & g_type_mask - 1U;
+    unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
     int s2 = 0;
     if (t == 11) {
         b = rand() % 4 + 2;
@@ -1244,7 +1244,7 @@ void Mission3::copy_slot(int i)
 // @ 0x467740
 float Mission3::speed_factor(float x)
 {
-    float base = g_speed_base * 2.5f + 0.833333f;
+    float base = g_options.f74 * 2.5f + 0.833333f;
     float t = (x + 15.0f) * 0.06666667f;
     return base * (t < 0.2f ? 0.2f : (t >= 2.5f ? 2.5f : t));
 }
@@ -1262,7 +1262,7 @@ void Mission3::add_amount(int idx, unsigned flags)
     } else if (rf & 8) {
         amount = 1;
     } else if (rf & 0x10) {
-        amount = g_world3->tbl[0xc5 + f5df4 * 0x125 + idx];
+        amount = (*(World3**)&g_game)->tbl[0xc5 + f5df4 * 0x125 + idx];
     } else {
         int v;
         if ((rf & 1) || ((rf & 0x40) && f6214 == 1) || ((rf & 0x80) && f6214 == 0)
@@ -1292,14 +1292,14 @@ bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, ch
     bool ok = true;
     if (b->f8 & 1) ok = false;
     unsigned fl = a->flags;
-    if ((fl & 0x400) && (g_world3->troops[b->troop].flags30 & 0x10) == 0)
+    if ((fl & 0x400) && ((*(World3**)&g_game)->troops[b->troop].flags30 & 0x10) == 0)
         ok = false;
-    if ((fl & 0x200) && p3 != 0 && (g_world3->troops[b->troop].flags30 & 0x10) != 0)
+    if ((fl & 0x200) && p3 != 0 && ((*(World3**)&g_game)->troops[b->troop].flags30 & 0x10) != 0)
         ok = false;
-    if ((fl & 0x100) && p3 == 0 && (g_world3->troops[b->troop].flags30 & 0x10) != 0)
+    if ((fl & 0x100) && p3 == 0 && ((*(World3**)&g_game)->troops[b->troop].flags30 & 0x10) != 0)
         return false;
     if (ok && (fl & 0x70000)) {
-        Troop* t = &g_world3->troops[b->troop];
+        Troop* t = &(*(World3**)&g_game)->troops[b->troop];
         __int64 tf = t->flags30;
         bool x3 = false, x5 = false, x4 = false;
         if ((tf & 0x1000000) && (a->f8 & 0x100) == 0) {
@@ -1507,7 +1507,7 @@ void texture_x::bind(int stage, float t)
             idx = (int)(owns_texture * t) % owns_texture;
         IDirect3DBaseTexture9* tex = ((IDirect3DBaseTexture9**)d3d_tex)[idx];
         if (g_tex_cache[stage] != tex) {
-            g_device->SetTexture(stage, tex);
+            g_render.dev->SetTexture(stage, tex);
             g_tex_cache[stage] = tex;
         }
         g_render.set_stage_sampler(stage, ((int)flags >> 20) & 3);
@@ -1538,29 +1538,29 @@ void material_x::bind(texture** textures, const float* t)
 void skin_x::apply_state(const float* t)
 {
     unsigned char a = ~(flags >> 4) & 1;
-    if (a != g_rs_zfunc_le) {
-        g_rs_zfunc_le = a;
+    if (a != g_render.b54b) {
+        g_render.b54b = a;
         if (a)
-            g_device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+            g_render.dev->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
         else
-            g_device->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
+            g_render.dev->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
     }
     unsigned char b = (flags >> 3) & 1;
-    if (b != g_rs_zwrite_off) {
+    if (b != g_render.b549) {
         BOOL on = b == 0;
-        g_rs_zwrite_off = b;
-        g_device->SetRenderState(D3DRS_ZWRITEENABLE, on);
+        g_render.b549 = b;
+        g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, on);
     }
     g_render.set_alpha_mode((flags >> 12) & 3);
     unsigned char c = (flags >> 11) & 1;
-    if (c != g_rs_normalize) {
-        g_device->SetRenderState(D3DRS_NORMALIZENORMALS, c);
-        g_rs_normalize = c;
+    if (c != g_render.b548) {
+        g_render.dev->SetRenderState(D3DRS_NORMALIZENORMALS, c);
+        g_render.b548 = c;
     }
     unsigned char d = (shader->flags20 >> 5) & 1;
-    if (d != g_rs_specular) {
-        g_device->SetRenderState(D3DRS_SPECULARENABLE, d);
-        g_rs_specular = d;
+    if (d != g_render.b547) {
+        g_render.dev->SetRenderState(D3DRS_SPECULARENABLE, d);
+        g_render.b547 = d;
     }
     if (shader->flags20 & 0x20) {
         vector4 col;
@@ -1625,8 +1625,8 @@ int Rec468770::max_hit_points()
     int v = b7a & 0xf;
     if (v < 0)
         v = 0;
-    else if (v > g_lod_max)
-        v = g_lod_max;
+    else if (v > g_skill_tbl[36].cap)
+        v = g_skill_tbl[36].cap;
     return base + v * 2 + 0x23;
 }
 
@@ -1762,7 +1762,7 @@ bool ShadowMap::test(unsigned p, float* out)
         scr[1] = (1.0f - pt.y) * (float)h2;
         if (g_use_shaders && surf) {
             // the depth reader overwrites the two argument slots (&out receives the stored depth)
-            read_pixel((int)g_device, (int)scr[0], (int)scr[1], (unsigned*)&out, (unsigned*)&p);
+            read_pixel((int)g_render.dev, (int)scr[0], (int)scr[1], (unsigned*)&out, (unsigned*)&p);
             if ((pt.z - 0.001f) > *(float*)&out)
                 *o = 0.0f;
         } else {
@@ -1779,7 +1779,7 @@ bool ShadowMap::test(unsigned p, float* out)
 // @ 0x468da0
 void Terrain::apply_brush(const float* center, float radius, float strength)
 {
-    float fv = (float)((g_field_mask - 1) & (flags >> 7));
+    float fv = (float)((((unsigned*)g_bit)[14] - 1) & (flags >> 7));
     int lo[2], hi[2];
     const int* lim = &w;
     for (int k = 0; k < 2; ++k) {
@@ -1901,7 +1901,7 @@ void terrain_obj::trace_path(const int* from, const int* to, unsigned char bit, 
                 if ((bitmask & n->flags) == 0) {
                     float dz = ((cur->pz - n->pz) * w2) * 3.0f;
                     if (dz < 0.0f)
-                        dz = (0.25f - (float)((fl >> 7) & (g_field_mask - 1)) * 0.0022f) * dz;
+                        dz = (0.25f - (float)((fl >> 7) & (((unsigned*)g_bit)[14] - 1)) * 0.0022f) * dz;
                     sc[k] = (((((uy * nd[k].y + ux * nd[k].x) + 0.7f) * 0.5f) * 0.65f + dz) +
                              (((g.y * nd[k].y + g.x * nd[k].x) + 0.7f) * 0.5f) * w1) + edge;
                 } else {
@@ -2091,9 +2091,9 @@ static __forceinline void t_normalize(rgl::vector4& v)
 void terrain_obj::spawn_particles(particle_list* list, int unused)
 {
     list->count = 0;
-    unsigned lv = (flags >> 0x15) & (g_field_mask - 1);
+    unsigned lv = (flags >> 0x15) & (((unsigned*)g_bit)[14] - 1);
     float lv_scale = (float)lv * 0.01f;
-    unsigned sel = (flags14 >> 2) & (g_sel_mask - 1);
+    unsigned sel = (flags14 >> 2) & (((unsigned*)g_bit)[4] - 1);
     int maxn = (int)(scale * scale * 0.8f);
     float k1 = (float)pow(scale, 1.7f) * 0.3f;
     float k2 = (float)g_terrain_gate * 0.02f;
@@ -2246,9 +2246,9 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
     *found = 0;
     if (((__int64)mask & g_bit[slot]) == 0 &&
         ((mask & 0x200) == 0 || (g_bit[slot] & 0x10) == 0 ||
-         (int)g_items[g_world3->troops[troop].equip[slot].item].type_flags >= 0)) {
+         (int)g_items[(*(World3**)&g_game)->troops[troop].equip[slot].item].type_flags >= 0)) {
         *found = 1;
-        return *(__int64*)&g_world3->troops[troop].equip[slot];
+        return *(__int64*)&(*(World3**)&g_game)->troops[troop].equip[slot];
     }
     int i = 0;
     ItemRef res;
@@ -2261,7 +2261,7 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
         r.m4 = 0;
         if (v >= 0) {
             r.item = v;
-            if (g_world3->troops[troop].fits_slot(&r, slot)) {
+            if ((*(World3**)&g_game)->troops[troop].fits_slot(&r, slot)) {
                 res.item = v;
                 res.m4 = 0;
                 res.reduce(0);
@@ -2554,7 +2554,7 @@ void terrain_obj::make_river()
     n284 = r % 3;
     if (2.1f < scale && 1 < r % 3) n284 = 1;
     if (3.1f < scale) n284 = 0;
-    if ((unsigned char)(g_pow2_low - 1) & (unsigned char)((unsigned)f4 >> 31)) n284 = 0;
+    if ((unsigned char)(((int*)g_bit)[2] - 1) & (unsigned char)((unsigned)f4 >> 31)) n284 = 0;
     if (ok) {
         unsigned mb = g_river_mask_b;
         unsigned both = g_river_mask_a | mb;
@@ -2565,7 +2565,7 @@ void terrain_obj::make_river()
         spread_flow(mb, 2, ma);
         spread_flow(ma, 2, ma);
         float v = -1.3f;
-        if ((unsigned char)(g_pow2_low - 1) & (unsigned char)((unsigned)f4 >> 31)) v = -2.3f;
+        if ((unsigned char)(((int*)g_bit)[2] - 1) & (unsigned char)((unsigned)f4 >> 31)) v = -2.3f;
         set_cells(2, v);
         smooth_cells(2, 0.5f);
     }
@@ -2727,13 +2727,13 @@ void RenderScene::apply_state()
         vp.MinZ = vp_local.MinZ;
         vp.MaxZ = vp_local.MaxZ;
     }
-    g_device->SetViewport(&vp);
+    g_render.dev->SetViewport(&vp);
     if (flags & 0x100)
         clear = D3DCLEAR_TARGET;
     if (flags & 0x200)
         clear |= D3DCLEAR_ZBUFFER;
     if (clear)
-        g_device->Clear(0, 0, clear, clear_color, 1.0f, 0);
+        g_render.dev->Clear(0, 0, clear, clear_color, 1.0f, 0);
     if (use_alt_vp) {
         vp.X = vp_local.X;
         vp.Y = vp_local.Y;
@@ -2741,57 +2741,57 @@ void RenderScene::apply_state()
         vp.Height = vp_local.Height;
         vp.MinZ = vp_local.MinZ;
         vp.MaxZ = vp_local.MaxZ;
-        g_device->SetViewport(&vp);
+        g_render.dev->SetViewport(&vp);
     }
     if (msaa)
-        g_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, 1);
+        g_render.dev->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, 1);
     else
-        g_device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, 0);
+        g_render.dev->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, 0);
     if (clip_on) {
         if (g_use_shaders == 0) {
-            g_device->SetClipPlane(0, clip_plane);
-            g_device->SetRenderState(D3DRS_CLIPPLANEENABLE, 1);
+            g_render.dev->SetClipPlane(0, clip_plane);
+            g_render.dev->SetRenderState(D3DRS_CLIPPLANEENABLE, 1);
         }
     } else {
-        g_device->SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
+        g_render.dev->SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
     }
     rgl::frustum* c = &cam;
     {
         D3DXMATRIX proj = c->projection();
-        g_device->SetTransform(D3DTS_PROJECTION, &proj);
+        g_render.dev->SetTransform(D3DTS_PROJECTION, &proj);
     }
     g_render.set_view((const rgl::mat4*)&c->m);
     if (cull_flip) {
         if (g_use_hw_shadow)
-            g_cull_mode = 1;
+            g_render.cull_setting = 1;
         else
-            g_cull_mode = cam.left_handed ? 2 : 3;
+            g_render.cull_setting = cam.left_handed ? 2 : 3;
     } else {
-        g_cull_mode = (cam.left_handed != 0) + 2;
+        g_render.cull_setting = (cam.left_handed != 0) + 2;
     }
     unsigned char fog_enable = (fog && fog->enabled) ? 1 : 0;
-    if (g_fog_on != fog_enable) {
-        g_fog_on = fog_enable;
-        g_device->SetRenderState(D3DRS_FOGENABLE, fog_enable);
+    if (g_render.b505 != fog_enable) {
+        g_render.b505 = fog_enable;
+        g_render.dev->SetRenderState(D3DRS_FOGENABLE, fog_enable);
     }
     if (fog && fog->enabled) {
         bool below = cam.m.o.z < fog->level;
         if (fog_invert)
             below = !below;
         if (below) {
-            g_device->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-            g_device->SetRenderState(D3DRS_FOGCOLOR, fog->b_color);
-            g_device->SetRenderState(D3DRS_FOGSTART, fog->b_start);
-            g_device->SetRenderState(D3DRS_FOGEND, fog->b_end);
+            g_render.dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+            g_render.dev->SetRenderState(D3DRS_FOGCOLOR, fog->b_color);
+            g_render.dev->SetRenderState(D3DRS_FOGSTART, fog->b_start);
+            g_render.dev->SetRenderState(D3DRS_FOGEND, fog->b_end);
         } else {
-            g_device->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-            g_device->SetRenderState(D3DRS_FOGCOLOR, fog->a_color);
-            g_device->SetRenderState(D3DRS_FOGSTART, fog->a_start);
-            g_device->SetRenderState(D3DRS_FOGEND, fog->a_end);
+            g_render.dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+            g_render.dev->SetRenderState(D3DRS_FOGCOLOR, fog->a_color);
+            g_render.dev->SetRenderState(D3DRS_FOGSTART, fog->a_start);
+            g_render.dev->SetRenderState(D3DRS_FOGEND, fog->a_end);
         }
     }
     if (g_use_shaders == 0) {
-        if (lights.size() > 0 && lights_active && g_lights_enabled) {
+        if (lights.size() > 0 && lights_active && g_options.i1c) {
             lights_active = 1;
             g_render.set_lighting(true);
             bool found_spot = false;
@@ -2833,7 +2833,7 @@ void RenderScene::apply_state()
                 L.Theta = lights[i]->theta;
                 L.Phi = lights[i]->phi;
                 L.Falloff = 1.0f;
-                g_device->SetLight(i, &L);
+                g_render.dev->SetLight(i, &L);
             }
             if (!found_spot) {
                 memset(&L, 0, sizeof(L));
@@ -2854,13 +2854,13 @@ void RenderScene::apply_state()
                 L.Direction.y = 0;
                 L.Direction.z = 0;
                 L.Range = 1000000.0f;
-                g_device->SetLight(i, &L);
+                g_render.dev->SetLight(i, &L);
             }
         } else {
             lights_active = 0;
-            if (g_lighting_on) {
-                g_lighting_on = 0;
-                g_device->SetRenderState(D3DRS_LIGHTING, 0);
+            if (g_render.b506) {
+                g_render.b506 = 0;
+                g_render.dev->SetRenderState(D3DRS_LIGHTING, 0);
             }
         }
     }
@@ -3085,42 +3085,42 @@ static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 void drawer::draw(view_t* v)
 {
     if (v->b162 || v->f164) {
-        if (g_lighting) {
-            g_lighting = 0;
-            g_device->SetRenderState(D3DRS_LIGHTING, 0);
+        if (g_render.b506) {
+            g_render.b506 = 0;
+            g_render.dev->SetRenderState(D3DRS_LIGHTING, 0);
         }
         if (g_alpha_test)
-            g_device->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
+            g_render.dev->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
         g_alpha_test = 0;
         g_render.set_blend_mode(2);
         if (v->f164) {
-            if (g_zfunc_always) {
-                g_zfunc_always = 0;
-                g_device->SetRenderState(D3DRS_ZFUNC, 8);
+            if (g_render.b54b) {
+                g_render.b54b = 0;
+                g_render.dev->SetRenderState(D3DRS_ZFUNC, 8);
             }
-            if (g_zwrite != 1) {
-                g_zwrite = 1;
-                g_device->SetRenderState(D3DRS_ZWRITEENABLE, 0);
+            if (g_render.b549 != 1) {
+                g_render.b549 = 1;
+                g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, 0);
             }
             g_render.set_stage_alpha(0, 0x4a4);
         } else {
-            if (g_zfunc_always != 1) {
-                g_zfunc_always = 1;
-                g_device->SetRenderState(D3DRS_ZFUNC, 4);
+            if (g_render.b54b != 1) {
+                g_render.b54b = 1;
+                g_render.dev->SetRenderState(D3DRS_ZFUNC, 4);
             }
-            if (g_zwrite) {
-                g_zwrite = 0;
-                g_device->SetRenderState(D3DRS_ZWRITEENABLE, 1);
+            if (g_render.b549) {
+                g_render.b549 = 0;
+                g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, 1);
             }
             g_render.set_stage_alpha(0, 0xa2);
         }
-        if (g_b58) {
-            g_device->SetRenderState(D3DRS_NORMALIZENORMALS, 0);
-            g_b58 = 0;
+        if (g_render.b548) {
+            g_render.dev->SetRenderState(D3DRS_NORMALIZENORMALS, 0);
+            g_render.b548 = 0;
         }
-        if (g_b57) {
-            g_device->SetRenderState(D3DRS_SPECULARENABLE, 0);
-            g_b57 = 0;
+        if (g_render.b547) {
+            g_render.dev->SetRenderState(D3DRS_SPECULARENABLE, 0);
+            g_render.b547 = 0;
         }
         g_render.set_stage_color(0, 0xa2);
         g_render.set_stage_color(1, 2);
@@ -3154,14 +3154,14 @@ void drawer::draw(view_t* v)
         if (cur_a != b || cur_b != a) {
             cur_a = b;
             cur_b = a;
-            g_device->SetVertexDeclaration(vbs[b + a * 2].decl);
-            g_device->SetStreamSource(0, vbs[b + a * 2].vb, 0, vbs[b + a * 2].stride);
+            g_render.dev->SetVertexDeclaration(vbs[b + a * 2].decl);
+            g_render.dev->SetStreamSource(0, vbs[b + a * 2].vb, 0, vbs[b + a * 2].stride);
         }
         rgl::mesh* node = p->m->local_a0 ? p->m : p->m->parent;
         int ibi = node->slots[1].f4;
         if (cur_ib != ibi) {
             cur_ib = ibi;
-            g_device->SetIndices(ib(ibi));
+            g_render.dev->SetIndices(ib(ibi));
         }
         if (!v->b162) {
             if (v->f164) goto L_state;
@@ -3175,21 +3175,21 @@ void drawer::draw(view_t* v)
             }
             if (v->p1b0 && v->p1b0->on) {
                 if (part->flags & 1) {
-                    if (g_b15) {
-                        g_b15 = 0;
-                        g_device->SetRenderState(D3DRS_FOGENABLE, 0);
+                    if (g_render.b505) {
+                        g_render.b505 = 0;
+                        g_render.dev->SetRenderState(D3DRS_FOGENABLE, 0);
                     }
                 } else {
-                    if (g_b15 != 1) {
-                        g_b15 = 1;
-                        g_device->SetRenderState(D3DRS_FOGENABLE, 1);
+                    if (g_render.b505 != 1) {
+                        g_render.b505 = 1;
+                        g_render.dev->SetRenderState(D3DRS_FOGENABLE, 1);
                     }
                 }
             }
             if (v->b160 && !(part->shader->flags20 & 0x80)) {
-                if (g_lighting != 1) {
-                    g_lighting = 1;
-                    g_device->SetRenderState(D3DRS_LIGHTING, 1);
+                if (g_render.b506 != 1) {
+                    g_render.b506 = 1;
+                    g_render.dev->SetRenderState(D3DRS_LIGHTING, 1);
                 }
                 unsigned i = 0;
                 light_t** b;
@@ -3198,7 +3198,7 @@ void drawer::draw(view_t* v)
                     if ((*pl)->type == 2) {
                         if (g_light_on[i] != 1) {
                             g_light_on[i] = 1;
-                            g_device->LightEnable(i, 1);
+                            g_render.dev->LightEnable(i, 1);
                         }
                         i = i + 1;
                     } else {
@@ -3207,78 +3207,78 @@ void drawer::draw(view_t* v)
                         if (d.length() - p->m->f44 < (*pl)->range) {
                             if (g_light_on[i] != 1) {
                                 g_light_on[i] = 1;
-                                g_device->LightEnable(i, 1);
+                                g_render.dev->LightEnable(i, 1);
                             }
                             i = i + 1;
                         } else {
                             if (g_light_on[i]) {
                                 g_light_on[i] = 0;
-                                g_device->LightEnable(i, 0);
+                                g_render.dev->LightEnable(i, 0);
                             }
                             i = i + 1;
                         }
                     }
                 }
             } else {
-                if (g_lighting) {
-                    g_lighting = 0;
-                    g_device->SetRenderState(D3DRS_LIGHTING, 0);
+                if (g_render.b506) {
+                    g_render.b506 = 0;
+                    g_render.dev->SetRenderState(D3DRS_LIGHTING, 0);
                 }
             }
             p->m->setup_material();
             unsigned k = part->shader->stages[0].d & 0xff;
             if (k == 0x30)
-                g_device->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
+                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
             else if (k == 0x20)
-                g_device->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
+                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
         } else {
             if (v->f164) {
 L_state:
                 if (g_tss_c != 0xa2) {
                     g_tss_c = 0xa2;
-                    g_device->SetTextureStageState(0, D3DTSS_ALPHAOP, 2);
-                    g_device->SetTextureStageState(0, D3DTSS_ALPHAARG1, g_stage_arg[5]);
-                    g_device->SetTextureStageState(0, D3DTSS_ALPHAARG2, g_stage_arg[0]);
+                    g_render.dev->SetTextureStageState(0, D3DTSS_ALPHAOP, 2);
+                    g_render.dev->SetTextureStageState(0, D3DTSS_ALPHAARG1, g_stage_arg[5]);
+                    g_render.dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, g_stage_arg[0]);
                 }
                 if (g_tss_d != 1) {
                     g_tss_d = 1;
-                    g_device->SetTextureStageState(1, D3DTSS_ALPHAOP, 1);
-                    g_device->SetTextureStageState(1, D3DTSS_ALPHAARG1, g_stage_arg[0]);
-                    g_device->SetTextureStageState(1, D3DTSS_ALPHAARG2, g_stage_arg[0]);
+                    g_render.dev->SetTextureStageState(1, D3DTSS_ALPHAOP, 1);
+                    g_render.dev->SetTextureStageState(1, D3DTSS_ALPHAARG1, g_stage_arg[0]);
+                    g_render.dev->SetTextureStageState(1, D3DTSS_ALPHAARG2, g_stage_arg[0]);
                 }
                 if (g_tss_a != 0xa2) {
                     g_tss_a = 0xa2;
-                    g_device->SetTextureStageState(0, D3DTSS_COLOROP, 2);
-                    g_device->SetTextureStageState(0, D3DTSS_COLORARG1, g_stage_arg[5]);
-                    g_device->SetTextureStageState(0, D3DTSS_COLORARG2, g_stage_arg[0]);
+                    g_render.dev->SetTextureStageState(0, D3DTSS_COLOROP, 2);
+                    g_render.dev->SetTextureStageState(0, D3DTSS_COLORARG1, g_stage_arg[5]);
+                    g_render.dev->SetTextureStageState(0, D3DTSS_COLORARG2, g_stage_arg[0]);
                 }
                 if (g_tss_b != 1) {
                     g_tss_b = 1;
-                    g_device->SetTextureStageState(1, D3DTSS_COLOROP, 1);
-                    g_device->SetTextureStageState(1, D3DTSS_COLORARG1, g_stage_arg[0]);
-                    g_device->SetTextureStageState(1, D3DTSS_COLORARG2, g_stage_arg[0]);
+                    g_render.dev->SetTextureStageState(1, D3DTSS_COLOROP, 1);
+                    g_render.dev->SetTextureStageState(1, D3DTSS_COLORARG1, g_stage_arg[0]);
+                    g_render.dev->SetTextureStageState(1, D3DTSS_COLORARG2, g_stage_arg[0]);
                 }
             } else {
                 if (!(p->m->mask & 0x8000)) {
-                    if (g_zwrite) {
-                        g_zwrite = 0;
-                        g_device->SetRenderState(D3DRS_ZWRITEENABLE, 1);
+                    if (g_render.b549) {
+                        g_render.b549 = 0;
+                        g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, 1);
                     }
                     ((texture_x*)part->tex[0])->bind(0, 0.0f);
                     g_render.set_stage_alpha(0, 0xa2);
                     g_render.set_stage_alpha(1, 0xaa);
                 } else {
                     if (part->tex[0]) {
-                        if (g_zwrite != 1) {
-                            g_zwrite = 1;
-                            g_device->SetRenderState(D3DRS_ZWRITEENABLE, 0);
+                        if (g_render.b549 != 1) {
+                            g_render.b549 = 1;
+                            g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, 0);
                         }
                         ((texture_x*)part->tex[0])->bind(0, 0.0f);
                         g_render.set_stage_alpha(0, 0x4a4);
                     } else {
-                        if (g_zwrite != 1) {
-                            g_zwrite = 1;
-                            g_device->SetRenderState(D3DRS_ZWRITEENABLE, 0);
+                        if (g_render.b549 != 1) {
+                            g_render.b549 = 1;
+                            g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, 0);
                         }
                         g_render.set_stage_alpha(0, 0xa2);
                     }
@@ -3286,24 +3286,24 @@ L_state:
                 }
             }
             if (g_e68) {
-                g_device->SetPixelShader(0);
+                g_render.dev->SetPixelShader(0);
                 g_e68 = 0;
             }
             int col = p->m->color;
             if (g_texfactor != col) {
                 g_texfactor = col;
-                g_device->SetRenderState(D3DRS_TEXTUREFACTOR, col);
+                g_render.dev->SetRenderState(D3DRS_TEXTUREFACTOR, col);
             }
         }
 
-        int cull = g_cull_base;
+        int cull = g_render.cull_setting;
         if (p->m->f4c) {
             if (cull == 3) cull = 2;
             else if (cull == 2) cull = 3;
         }
         if (cull != g_cull_cur) {
             g_cull_cur = cull;
-            g_device->SetRenderState(D3DRS_CULLMODE, cull);
+            g_render.dev->SetRenderState(D3DRS_CULLMODE, cull);
         }
 
         if (p->m->f34 == 0) {
@@ -3330,13 +3330,13 @@ L_state:
             A = B;
         }
         A.s.w = 0.0f; A.f.w = 0.0f; A.u.w = 0.0f; A.o.w = 1.0f;
-        g_device->SetTransform((D3DTRANSFORMSTATETYPE)0x100, (const D3DMATRIX*)&A);
+        g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x100, (const D3DMATRIX*)&A);
 
         std::vector<rgl::face20>& fv = node->local_a0 ? node->v90 : ((mesh_x*)node->parent)->get90_();
         int nf = fv.size();
         std::vector<rgl::vertex60>& vv = p->m->local_a1 ? p->m->v50 : ((mesh_x*)p->m->parent)->get50_();
         int nv = vv.size();
-        g_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, p->m->slots[0].f8, 0, nv, node->slots[1].f8, (nf * 3) / 3);
+        g_render.dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, p->m->slots[0].f8, 0, nv, node->slots[1].f8, (nf * 3) / 3);
         p++;
     } while (p != v->ents._Mylast);
 }

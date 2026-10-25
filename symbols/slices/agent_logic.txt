@@ -5,5 +5,3 @@
 005e2958 ?g_tick_lo@@3HA  # g_time[2] low dword (iface.h Quad)
 005e295c ?g_tick_hi@@3HA  # g_time[2] high dword
 004378a0 ?set@AnimSlotCall@@QAE_NHI@Z  # AnimSlot::set out of line (agent_stats.cpp), called from move_step
-
-08ed4f60 ?g_anim_table@@3UVoiceTable@@A  # renamed from g_voices (names merge)

@@ -202,7 +202,7 @@ UiAInline* __cdecl new_button(ContainerBase* o, const tstring& text, float px, f
 
 // globals of the campaign diary screens (addresses; names provisional)
 extern GameData* g_game;                        // 0x5e2930
-extern void* g_mission_obj;                     // 0x5e292c (the mission object; +0x5df0 = the selected mission)
+#include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern void* g_mission_templates;                          // 0x5e2a00 (mission table, 0x58-byte records; +0x24 = name)
 extern int g_a73314;                            // 0xa73314 (mission stage)
 extern int g_a73430;                            // 0xa73430 (grid rows)
@@ -213,7 +213,7 @@ extern int g_a73438;                            // 0xa73438 (selected index, -1 
 extern int g_mission_ctx[];                          // 0xa73300 (selection table)
 extern int g_a732fc[];                          // 0xa732fc (per-side fallback ids)
 extern char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
-extern int g_skill_clamp;                       // 0x8ee3ac4
+#include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3ac4)
 extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145}
 void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main mission UI)
 
@@ -221,8 +221,6 @@ void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main miss
 // the option table (0xa44240): ini_file, entries of 0x2c bytes with the value string at +0x1c of each entry (from +0x1c: 0xa4425c)
 extern ini_file g_game_vars;                          // 0xa44240
 extern float g_549cdc, g_590b6c, g_54b3b0, g_549d70, g_549d68;   // button metrics (rdata floats)
-extern MissionUi* g_ui_active_edit;             // 0x5d7090 (the widget that has the keyboard focus)
-extern unsigned char g_msg_flag;                // 0x5d75e0
 struct ResultWindow {
     char pad0[4];
     int outcome;                                // +0x04
@@ -456,13 +454,7 @@ struct OptionsWin {
     char f_ed;                                  // +0xed
     void init();                                // 0x4e05c0
 };
-extern int g_day;                   // 0x5a9f9c
-extern int g_res_w;                 // 0x5a9fe4
-extern int g_res_h;                 // 0x5a9fe8
 extern int g_bpp;                   // 0x5a9fec
-extern int g_shadow_q;              // 0x5a9fc4
-extern int g_dx9;                   // 0x5a9fcc
-extern int g_corpses;               // 0x5aa004
 extern int g_ragdolls;              // 0x5aa008
 extern int g_blood;                 // 0x5aa00c
 extern int g_char_detail;           // 0x5aa024

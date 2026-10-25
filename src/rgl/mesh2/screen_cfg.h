@@ -64,10 +64,9 @@ struct dev_index {
 };
 
 extern gui_manager g_gui;                        // 0x5d7080
-extern IDirect3DDevice9* g_dev_renderer;         // 0xa17f28 (the Direct3D device)
+#include "../../include/renderer.h"   // canonical: g_render.dev (0xa17f28)
 extern int g_windowed_setting;                   // 0xa17144
 extern int g_windowed_other;                     // 0xa17544
-extern unsigned char g_5d75e0;                   // 0x5d75e0
 
 struct screen_cfg {
     __declspec(noinline) void apply();           // 0x4ca600
