@@ -14,6 +14,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/rgl_string.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/mesh_x.h"        // mesh_x: set_bone_index 0x47b360 (the mesh class that defines it)
 #include "../../rgl/core/resmgr.h"
 #include "../tstring.h"
 #include "../item_ref.h"
@@ -30,10 +31,46 @@
 #include "../../include/dialog_rec.h"
 #include "../shadow_map.h"
 #include "../terrain_b/emit.h"
+#define vec cell_grid_vec                 // cell_grid.h's vec (no clear) under another name: the global vec below is the one whose clear() 0x41f4b0 is called
 #include "../terrain_b/cell_grid.h"
+#undef vec
 
 using rgl::vector4;
 using rgl::matrix;
+
+// ---- callees declared under the name of the class or function that defines them -------------------------------------------
+// The linker folds identical bodies and the modules that define them name the class after another of their users; a call binds to the
+// defining declaration's symbol, so these are declared as that definition has them and the object is cast at the call. Each says why.
+struct NodeA;
+struct NodeVec { void push_back(NodeA* const& n); };               // 0x49b120 (widget_node.cpp): g_gui's "make this window the active root"; takes the address of a pointer to the window
+struct ContainerW { void* construct(); };                          // 0x4931a0 (world_data.cpp): the window base constructor body, returns this
+struct BlockOwner { void init(struct ContainerBase* c, int id); }; // 0x4dd920 (cls_map.cpp): MenuLayout::build
+struct SkelBodyV;
+void __cdecl setup_item_meshes(SkelBodyV* b, int kind, int troop, char* look, int f130, ItemRef* items, int id);   // 0x47cfe0 (mesh_scene.cpp)
+// vec<mface>::clear 0x41f4b0 (entity.cpp; vec of rgl/mesh.h: the vector release shared by every record vector) is called out of line, through its member pointer
+template <class T> struct vec { void clear(); };                   // the game's growable array (cell_grid.h, rgl/mesh.h, entity.h define it with their own members): only clear() 0x41f4b0 is called here
+typedef void (vec<mface>::*VecClear)();
+#define VEC_CLEAR(list) do { VecClear vc_ = &vec<mface>::clear; (((vec<mface>*)(list))->*vc_)(); } while (0)
+struct Buffer { virtual ~Buffer(); };                              // 0x487c00 (slot.cpp: the destructor body the widget base uses)
+struct FieldPanel { void update(); };                              // 0x48d470 (mission_ui2/mission_3.cpp): the list widget's layout
+struct HudOuter { void scroll_refresh(vector4* v); };              // 0x498420 (world_data/mesh_hud.cpp)
+struct PartyModel { void set_fade(const float* v); };              // 0x4b1800 (party2/party_2.cpp)
+struct UiD { void set_value(float v); };                           // 0x48baa0 (ui/ui_widgets_c.cpp)
+struct SoundW { void stop_all(); };                                // 0x494310 (world_data.cpp)
+struct level {                                                     // agent2/agent_stats.cpp: the scene's queries
+    bool trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60
+    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870
+};
+float __cdecl time_of_day();                                       // 0x4356e0 (agent.cpp)
+pos* __cdecl identity_pos(pos* out);                               // 0x40cd00 (shapes.cpp; rgl::identity_pos(matrix*) of the scene headers is the same function)
+rgl::mat3* __cdecl identity3(rgl::mat3* out);                      // 0x40cd60 (shapes.cpp)
+namespace rgl { vector4 unpack_color(const unsigned* argb); }      // 0x40e4e0 (shapes.cpp: the vector comes back through the hidden pointer; rgl_math.h declares an out-parameter spelling)
+template <class T> void __cdecl uninit_fill_n(T* first, unsigned n, const T& val, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag);   // 0x40df60 (shapes.cpp)
+// the protected std::vector<T>::_Insert_n of the vectors the widget code fills by hand (VC7.1 layout: allocator word, first, last, end)
+template <class T> struct VecOps : std::vector<T> {
+    void insert_n(iterator where, size_type n, const T& val) { _Insert_n(where, n, val); }
+};
+struct SceneObject;
 
 // ---- the mission object's agent (re)initialisation callees ------------------------------------------------------------
 struct AgentEq;                                                   // terrain_a/misc.h (not included: it pulls the other rgl world)
@@ -41,7 +78,7 @@ void __stdcall AgentEq_pick_slots(AgentEq* a);                    // 0x46b2d0 (r
 // 0x482240 (cdecl, 12 arguments): the agent's appearance lods; 0x47cfe0 (cdecl, 7 arguments): the equipment bodies
 void __cdecl build_appearance(AgentBody* b, int kind, int troop, int f94, ItemRef* f8c, int* look, int* f240, int* f194,
                               int* f1a4, int* f1a8, int* items, int id);       // 0x482240
-void __cdecl build_equipment(AgentBody* b, int kind, int troop, int* look, int* f130, int* items, int id);   // 0x47cfe0
+// 0x47cfe0 is setup_item_meshes (below): the equipment bodies
 
 // ---- globals and engine objects the HUD code uses ---------------------------------------------------------------------
 #include "../gui_mgr.h"                                         // GuiManager: the gui manager at 0x5d7080
@@ -56,7 +93,6 @@ extern __int64 g_ticks[];                                         // 0x5e2948 cl
 struct UiVec {                                                    // a widget list at game +0x1a1b8
     void resize(int a, int b);                                     // 0x43f310 (ret 8)
 };
-void vec_insert_ptr(MissionUi*** where, int count, MissionUi** val);   // 0x4927d0 (the children's _Insert_n: the end iterator, count, the value)
 
 // the game object's fields that only this region reads (g_game is the GameData of game_data.h; the offsets the shared header does not
 // name are reached by offset, each with the function that proves it):
@@ -78,10 +114,10 @@ static __forceinline Agent* agent_by_id(unsigned id)
 }
 
 // ---- camera globals and engine objects the camera tick uses -------------------------------------------------------------
-struct InputKeys {                                                // the key table at 0xa73730
-    char is_down(int key);                                           // 0x48ac50 (ret 4)
+struct OriginPairs {                                              // the key table at 0xa73730 (ui/mission.h)
+    bool is_down(int key);                                           // 0x48ac50 (ret 4)
 };
-extern InputKeys g_game_keys;                                         // 0xa73730
+extern OriginPairs g_game_keys;                                         // 0xa73730
 extern int g_cam_version;                                         // 0xa17118
 extern int g_cam_down;                                            // 0xa17518
 extern int g_cam_left;                                            // 0xa17150
@@ -96,16 +132,13 @@ extern int g_cam_sens;                                            // 0x5a9fdc
 extern float g_screen_a;                                          // 0x5d75dc
 extern float g_screen_b;                                          // 0x5d75d8
 float __cdecl fmax_ref(const float* a, const float* b);           // 0x4324d0 (the larger of the two)
-MissionUi* __cdecl make_scroll_track(MissionUi* parent, float a, float b, float c, float d);   // 0x4ee910 (cdecl)
-MissionUi* __cdecl make_quest_list(MissionUi* content, float* a, float* b, MissionUi* track);   // 0x4eea90 (cdecl)
-MissionUi* __cdecl make_quest_list(MissionUi* content, float* a, float* b, MissionUi* track); // 0x4eea90
+struct widget;                                                    // char_sheet/quest_log.h: the window widget the scroll helpers take and return (a MissionUi)
+widget* __cdecl make_scroll_track(widget* parent, float a, float b, float c, float d);   // 0x4ee910 (cdecl)
+widget* __cdecl make_quest_list(widget* content, const float* a, const float* b, int track);   // 0x4eea90 (cdecl; track is the scroll track widget)
 float __cdecl clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 
-// the scene's segment query and the skeleton's head bone, as the camera tick reaches them
-struct SceneQuery {                                               // Mission::scene (src/game/terrain_b/cell_grid.h: CellGrid; the query is another object's member)
-    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870
-};
-struct SkelView {                                                 // the skeleton at AgentBody+0x304 (skeleton.h's Skeleton: that header cannot be included next to rgl/mesh.h, see MIGRATION.md)
+// the scene's segment query (level, above) and the skeleton's head bone, as the camera tick reaches them
+struct Skeleton {                                                 // the skeleton at AgentBody+0x304: skeleton.h's Skeleton (that header cannot be included next to rgl/mesh.h, see MIGRATION.md), the members this module reads
     int nbones;                                                   // +0
     char* recs;                                                   // +4 (0x1dc-byte records: the matrix at +0x1140 is the head bone, +0x1170 its origin)
     char pad8[0x50 - 8];
@@ -143,10 +176,10 @@ struct SunBody {                                                  // an agent's 
     vector4 origin;                                               // +0x88 (the body frame's origin)
     void set_fade(const float* v);                                // 0x4b1800 (ret 4)
 };
-struct MissionDust {                                              // the mission object's dust-grid pass (src/game/char_sheet/dust.h declares the same function on its own view of the object)
+struct DustTerrain {                                            // the mission object's dust-grid pass (src/game/char_sheet/dust.h declares the same function on its own view of the object)
     void update_particles(const matrix* view);                    // 0x4f3e10 (ret 4)
 };
-extern MissionDust g_terrain;                                 // 0xa76630 (the mission object itself; g_mission points to it)
+extern DustTerrain g_terrain;                                 // 0xa76630 (the mission object itself; g_mission points to it)
 #include "../../include/sound_mgr.h"                             // SoundMgr (play_slot 0x4428a0, stop_all 0x494310)
 #include "../../rgl/resource_manager.h"
 #include "../../include/renderer.h"
@@ -161,21 +194,18 @@ extern int g_flag_a17108, g_flag_a17148, g_flag_a17348;           // 0xa17108, 0
 extern int g_screen_w, g_screen_h;                                // 0x5d75c8, 0x5d75cc
 extern float g_scale_a, g_scale_b;                                // 0x5aa08c, 0x5aa090
 
-int __cdecl clamp_index(int* v, int* lo, int* hi);                  // 0x432510 (max(lo, min(v, hi - 1)))
+int __cdecl clamp_index(const int* v, const int* lo, const int* hi);   // 0x432510 (max(lo, min(v, hi - 1)))
 int __stdcall FSOUND_3D_Listener_SetAttributes(float* pos, float* vel, float fx, float fy, float fz, float ux, float uy, float uz);   // 0x5342dc (_FSOUND_3D_Listener_SetAttributes@32)
 
-void __cdecl identity3(matrix* out);                              // 0x40cd60 (the identity rotation, origin left alone)
 void __cdecl mb_warning(const char* fmt, ...);                    // 0x42cb80 (logs a warning)
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 0x4fba40 (the display mesh of an item, scaled to fit *scale)
 
 extern char* g_menus;                                         // 0x5e29b0 (the game menu records, 0x60 bytes each: +0x20 flags, +0x24 colour, +0x28 background mesh name, +0x38 condition block)
-struct TableauHost {                                              // the object table at 0xa75f40 (world_data/tableau.h: TableauTbl)
+struct TableauTbl {                                            // the object table at 0xa75f40 (world_data/tableau.h: TableauTbl)
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (ret 8)
 };
-extern TableauHost g_tableaus;                                    // 0xa75f40
-struct MenuLayout {                                               // the part of the game screen at +0x30
-    void build(MissionUi* frame, int id);                         // 0x4dd920 (ret 8)
-};
+extern TableauTbl g_tableaus;                                    // 0xa75f40
+struct MenuLayout { char pad[1]; };                               // the part of the game screen at +0x30; its build (0x4dd920, ret 8) is BlockOwner::init above
 
 // ---- the widget slot view -----------------------------------------------------------------------------------------------
 // A pure interface laid over MissionUi's family (vtable 0x591c80 and its derived tables): the slots the HUD builders call, by
@@ -218,29 +248,39 @@ struct ChildVec {                                                 // a widget li
     MissionUi** first;
     MissionUi** last;
     MissionUi** end;
-    void insert_n(MissionUi** where, unsigned count, MissionUi* const& val);   // 0x4927d0 (ret 0xc)
     void push_back(MissionUi* const& v)
     {
         if (first != 0 && (unsigned)(last - first) < (unsigned)(end - first)) {
             *last = v;
             ++last;
         } else
-            insert_n(last, 1, v);
+            ((VecOps<SceneObject*>*)this)->insert_n(std::vector<SceneObject*>::iterator((SceneObject**)last), 1, (SceneObject* const&)v);   // 0x4927d0 (world_data.cpp: std::vector<SceneObject*>::_Insert_n; the children are SceneObject pointers there)
     }
 };
 struct GroupWidget : MissionUi {                                  // vtable 0x5924a0, size 0x188: a container of children (party_window.h's UiFrame)
     ChildVec kids;                                                // +0x178
     GroupWidget() { *(void**)this = (void*)0x5924a0; kids.first = 0; kids.last = 0; kids.end = 0; }
 };
-struct WindowBase : MissionUi {                                   // the 0x188-byte window base (party_window.h's UiWindow; constructor 0x4931a0)
+struct WindowBase : MissionUi {                                   // the 0x188-byte window base (party_window.h's UiWindow); its constructor body 0x4931a0 is ContainerW::construct
     ChildVec kids;                                                // +0x178 (first +0x17c)
-    WindowBase();                                                 // 0x4931a0
+private:
+    WindowBase();                                                 // (never defined: windows are built by new_frame_widget)
 };
 struct FrameWidget : WindowBase {                                 // vtable 0x592848, size 0x190
     char f188;                                                    // +0x188 (cleared by the constructor)
     char pad189[7];
-    FrameWidget() { *(void**)this = (void*)0x592848; f188 = 0; }
 };
+// new FrameWidget: the allocation, then the base constructor body 0x4931a0 (ContainerW::construct, which runs MissionUi's 0x48ae20 itself), the vptr and f188
+inline FrameWidget* new_frame_widget()
+{
+    void* mem = operator new(sizeof(FrameWidget));
+    if (mem == 0)
+        return 0;
+    ((ContainerW*)mem)->construct();
+    *(void**)mem = (void*)0x592848;
+    ((FrameWidget*)mem)->f188 = 0;
+    return (FrameWidget*)mem;
+}
 struct FlagWidget : MissionUi {                                   // vtable 0x592140 (ui_widgets.h's UiD: its constructor 0x48b890 is out of line there, here it is inlined), size 0x188
     int f178;                                                     // +0x178 (0x4fbfa0)
     float f17c;                                                   // +0x17c
@@ -256,16 +296,17 @@ struct ToggleWidget : MissionUi {                                 // vtable 0x59
     int f184;                                                     // +0x184
     ToggleWidget() { f178 = 0; b121 = 0; *(void**)this = (void*)0x591d58; f180 = 0; f184 = 0; }
 };
-struct ListWidget : MissionUi {                                   // the scrolling list (constructor 0x49deb0), size 0x4a8
+namespace c49deb0 {                                               // party2/camera.cpp names the class of the constructor 0x49deb0 Camera in this namespace
+struct Camera : MissionUi {                                       // the scrolling list (constructor 0x49deb0), size 0x4a8; layout 0x48d470 is FieldPanel::update, scroll_refresh 0x498420 (ret 4) is HudOuter's
     char pad178[0x484 - 0x178];
     MissionUi* flag;                                              // +0x484 (0x4fbfa0)
     char pad488[0x490 - 0x488];
     MissionUi* bar;                                               // +0x490
     char pad494[0x4a8 - 0x494];
-    ListWidget();                                                 // 0x49deb0
-    void layout();                                                // 0x48d470
-    void scroll_refresh(float* v);                                    // 0x498420 (ret 4)
+    Camera();                                                     // 0x49deb0
 };
+}
+typedef c49deb0::Camera ListWidget;
 struct NameWidget : MissionUi {                                   // ctor 0x4ed630, vptr 0x598698, size 0x358
     void* mission_scene;                                          // +0x178 (Mission::scene, stored by 0x4f7f00)
     char pad17c[0x1ac - 0x17c];
@@ -273,8 +314,11 @@ struct NameWidget : MissionUi {                                   // ctor 0x4ed6
     char pad2cc[0x354 - 0x2cc];
     char f354;                                                    // +0x354 (set when 0x5aa034 != 0)
     char pad355[3];
-    NameWidget();                                                 // 0x4ed630
+private:
+    NameWidget();                                                 // (never defined: the constructor 0x4ed630 is the fastcall function below)
 };
+struct MapWidget;                                                 // screen_camera.cpp's name for the class of the constructor 0x4ed630
+MapWidget* __fastcall ctor_4ed630(MapWidget* p);                  // 0x4ed630 (ecx = the object; returns it)
 
 
 // ---- the mission HUD screen ---------------------------------------------------------------------------------------------
@@ -377,16 +421,13 @@ struct IntList {                                                  // a VC7.1 vec
     int* first;
     int* last;
     int* end;
-    void push_back(const int& v);                                 // 0x4fe0b0 (ret 4)
-    void int_push_back(const int& v); // 0x4fe0b0
     __declspec(noinline) bool buy(unsigned n);                                         // 0x4fd490 (ret 4: the allocation of the vector<int>'s first block)
-    void xlen();                                                  // 0x43e2a0 (std::vector<int>::_Xlen)
-    void push_back_out(const int& v);                               // 0x440b30 (the identical-code twin of push_back that the linker folded for other callers)
+    void xlen();                                                  // 0x43e2a0 (std::vector<int>::_Xlen: the original loads `this` in ECX; agent3/agent_combat.cpp defines it as the free function vec_xlen, so this row stays unresolved)
     void free_block() { if (first) operator delete(first); first = 0; last = 0; end = 0; }   // the inlined vector release of ~MWidget
-    void clear();                                                 // 0x41f4b0 (frees the block and zeroes the pointers)
-    void insert_n(int* where, unsigned count, const int& val);    // 0x43e7b0 (ret 0xc)
 };
-void __cdecl v4_fill(rgl::vector4* dst, unsigned count, const rgl::vector4& val, void* alloc, const rgl::vector4& tag);   // 0x40df60 (_Uninit_fill_n of vector4)
+// std::vector<int>::push_back called out of line (the original calls the instantiation 0x4fe0b0 where the library would expand it): through its member pointer
+typedef void (std::vector<int>::*VecIntPushBack)(const int&);
+#define VEC_INT_PUSH_BACK(list, val) do { VecIntPushBack pb_ = &std::vector<int>::push_back; (((std::vector<int>*)(list))->*pb_)(val); } while (0)
 struct V4List {                                                   // a VC7.1 vector<vector4>
     int alloc;
     vector4* first;
@@ -395,15 +436,9 @@ struct V4List {                                                   // a VC7.1 vec
     struct iterator { vector4* p; iterator() {} };
     void push_back(const vector4& v);                             // 0x4fdff0 (ret 4)
     __declspec(noinline) iterator insert(iterator where, const vector4& val);          // 0x4fe060 (ret 0xc: the iterator comes back through the hidden pointer)
-    void insert_n(vector4* where, unsigned count, const vector4& val);   // 0x40dc50 (ret 0xc)
     void free_block() { if (first) operator delete(first); first = 0; last = 0; end = 0; }
-    void clear();                                                 // 0x41f4b0
 };
 struct MapText { int a; float w; };                               // the 8-byte layout result (width, height)
-struct MissionUiBody {                                            // the widget base's constructor / destructor body, called out of line by the derived constructors / destructors
-    void init();                                                  // 0x48ae20 (MissionUi::MissionUi, thiscall)
-    void dtor();                                                  // 0x487c00 (thiscall, ret 0)
-};
 // The game-log / map-text list widget: vtable 0x5995c0, size 0x1d0 (the slices called it LogWidget and MWidget). It derives from MissionUi in
 // the original, but its destructor calls the base destructor body out of line (0x487c00) where a derived class of the canonical MissionUi would
 // inline the implicit one (the name string's destructor), so the base part is kept as an opaque block that is constructed by 0x48ae20.
@@ -436,11 +471,10 @@ extern ParamEntry g_game_vars[];                                     // 0xa44240
 extern int g_param_count;                                         // 0xa70240
 extern tstring* g_msg_begin;                                      // 0x5e23c4 (the recent-messages ring: 0x10-byte tstrings)
 extern tstring* g_msg_end;                                        // 0x5e23c8
-struct StrTable2 {                                               // the string / ui lookup table at 0x5e2a18
-    MissionUi* lookup(const tstring& name);                         // 0x43a1e0 (ret 4)
-};
-extern StrTable2 g_strtable;                                      // 0x5e2a18
-MissionUi* __cdecl make_short_button(MissionUi* frame, MissionUi* obj, float x, float y, float h);   // 0x4e5570
+#include "../str_table.h"                                          // StrTable: lookup 0x43a1e0 (ret 4)
+extern StrTable g_strtable;                                       // 0x5e2a18
+struct UiAInline : MissionUi {};                                  // cls_map/progress_bar.cpp's name for the widget make_short_button returns
+UiAInline* __cdecl make_short_button(MissionUi* frame, const tstring* text, float x, float y, float h);   // 0x4e5570
 struct TStringArray {                                             // an array of tstrings allocated with new[] (the count sits in front of the first element)
     void* destroy(unsigned flags);                                // 0x4fd0e0 (this = the first element)
 };

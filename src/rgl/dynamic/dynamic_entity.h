@@ -48,7 +48,6 @@ struct contact_ops : contact_vec {
     void _Insert_n(Contact* _Where, size_type _Count, const Contact& _Val);    // 0x427590
     __declspec(noinline) iterator insert(iterator _Where, const Contact& _Val);    // 0x427540
     void push_back(const Contact& _Val);                            // 0x427450
-    void clear();                                                   // 0x41f4b0 (entity.cpp: frees the block, like vec<T>::clear)
 };
 
 // ---- the shape contact record (shape_contact_count 0x40bfe0 fills it) --------------------------------------------------
@@ -58,7 +57,7 @@ struct contact_rec {                   // 0x24 bytes
     vec4p point;
     float depth;
 };
-int shape_contact_count(coll_shape* a, coll_shape* b, int max, contact_rec* out);       // 0x40bfe0 (shapes.cpp)
+
 
 // ---- the grid cell and the world, seen through the queries ---------------------------------------------------------
 struct cell_q : cell {
@@ -147,4 +146,16 @@ template<> void std::vector<rgl::entity*, std::allocator<rgl::entity*> >::_Tidy(
 
 int box_overlap2(const rgl::vector4* a, const rgl::vector4* b, const rgl::vector4* c, const rgl::vector4* d); // 0x426700
 int box_overlap3(const rgl::vector4* a, const rgl::vector4* b, const rgl::vector4* c, const rgl::vector4* d); // 0x426690
+// 0x40bfe0 (shapes.cpp): the shape pair's contact points; contact_rec is the constructor-free twin of shape.h's contact (0x24 bytes), the
+// shapes are the shape_base objects the coll_shape stand-in views
+struct shape_base;
+struct contact;
+int __cdecl shape_contact_count(shape_base* a, shape_base* b, int max, contact* out);
+// 0x41f4b0 (entity.cpp): vec<mface>::clear, the growable array's release of its block; the contact vector (contact_vec) is released by the same code
+struct mface;
+template <class T> struct vec { void clear(); };    // global ::vec (not rgl::vec of mesh.h: that one mangles into rgl)
+typedef vec<mface> GlobalVecMface;                  // (spelled through a global typedef: inside namespace rgl, `vec` is rgl::vec of mesh.h)
+typedef void (GlobalVecMface::*VecClear)();
+#define VEC_CLEAR(list) do { VecClear vc_ = &GlobalVecMface::clear; (((GlobalVecMface*)(list))->*vc_)(); } while (0)
+
 #endif

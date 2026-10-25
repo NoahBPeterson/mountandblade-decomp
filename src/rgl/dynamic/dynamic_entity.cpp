@@ -267,7 +267,7 @@ void dynamic_entity::resolve()
 void dynamic_entity::integrate(float t)
 {
     resolve();
-    ((contact_ops&)contacts).clear();
+    VEC_CLEAR(&contacts);
     if (vel.length() < 0.2f && angvel.length() < 0.2f && grounded)
         asleep = true;
     matrix m = local;
@@ -539,7 +539,7 @@ bool rigid_base::collide_entity(rigid_base* o)
     if (o->shape == 0)
         return false;
     contact_rec c[4];
-    int n = shape_contact_count(shape, o->shape, 4, c);
+    int n = ::shape_contact_count((shape_base*)shape, (shape_base*)o->shape, 4, (contact*)c);
     if (n == 0)
         return false;
     for (int i = 0; i < n; ++i) {
@@ -737,7 +737,7 @@ bool rigid_base::collide_shape(coll_shape* s)
     if (shape == 0)
         return false;
     contact_rec c[4];
-    int n = shape_contact_count(shape, s, 4, c);
+    int n = ::shape_contact_count((shape_base*)shape, (shape_base*)s, 4, (contact*)c);
     if (n == 0)
         return false;
     for (int i = 0; i < n; ++i) {

@@ -65,8 +65,9 @@ struct EntView {                                            // entity base: virt
     virtual const vector4* get_min();                   // 14 (+0x38)
 };
 #include "../cell.h"                                  // enode, cell (ents +0x30: 0x442180)
-typedef std::vector<unsigned>::iterator UIt;
-void __cdecl sort_range(UIt first, UIt last, int ideal);        // 0x426a30 (std::_Sort)
+namespace rgl { struct entity; }
+typedef std::vector<rgl::entity*>::iterator UIt;
+void __cdecl sort_range(UIt first, UIt last, int ideal);        // 0x426a30 (std::_Sort; the vector of entity pointers the grid collects)
 
 // ---- effect elements / definitions (0x442390..0x4424a0) -----------------------------------------------------------------
 struct Psys {                                           // particle system (provisional): frame at +0xcc
@@ -93,7 +94,7 @@ char __stdcall FSOUND_StopSound(int channel);                                   
 }
 // small helpers seen from here
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);    // 0x432510
-int __cdecl round_float(const float* p);                                // 0x432540
+int __cdecl round_float(float* p);                                      // 0x432540
 int __cdecl rand_below(const int* n);                                   // 0x432580
 
 #include "../../include/sound_mgr.h"             // SoundDef, SoundGroup, SoundMgr (shared with agent5, party2, inventory_panel)

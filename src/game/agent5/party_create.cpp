@@ -55,33 +55,40 @@ static __forceinline float cfg(const tstring& n)
 extern "C" int sprintf(char* dst, const char* fmt, ...);    // 0x536f8f
 
 // ---- objects of other translation units ---------------------------------------------------------------------
-struct GuiHost {                                // the gui manager at 0x5d7080
-    void reset();                               // 0x42d1b0
-    void add_root(MissionUi** w);               // 0x49b120
-};
-extern GuiHost g_gui;                           // 0x5d7080
+// Callees declared under the name of the class or function that defines them (the modules that define them name the class after another of
+// their users, and the linker folds identical bodies); the object is cast at the call, each says why it is the one the definition works on.
+struct gui_manager { void reset(); };           // 0x42d1b0 (strat/gui_manager.cpp): the gui manager at 0x5d7080
+extern gui_manager g_gui;                       // 0x5d7080
+struct NodeA;
+struct NodeVec { void push_back(NodeA* const& n); };   // 0x49b120 (widget_node.cpp): "make this window the active root"; takes the address of a pointer to the window
+struct ContainerW { void* construct(); };       // 0x4931a0 (world_data.cpp): the window base constructor body, returns this
+struct Map10007 { int lookup(unsigned id); };   // 0x48ad00 (ui/mission.h): the party table of the game object (Game::scene) starts with this 0x2717-entry table
+struct FieldPanel { void update(); };           // 0x48d470 (mission_ui2/mission_3.cpp): lays the list out
+struct resmgr { rgl::mesh* get_object(const rgl::string* name); };   // 0x419540 (rgl/core/resmgr.cpp): the resource manager at 0x5d6fa0
+struct WidgetB;
+WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
+void __cdecl label_refresh(MissionUi* w, tstring name);                // 0x4e4c70 (cdecl, the name by value; cls_map/progress_bar.cpp)
+struct GameData { tstring string_value(int index); };                  // 0x48e9e0 (include/game_data.h; ret 8: hidden return)
 extern char g_gui_dirty;                        // 0x5d8788 (set whenever a window was installed)
 extern int g_tutorial_off;                      // 0x5a9fac (non-zero: tutorials are switched off)
 extern void* g_windows[];                       // 0xa73980 (the window manager: its first screen is the message box)
 struct WindowOpener { void open(int window); };     // 0x494260 (ret 4)
 extern float g_row_unit;                        // 0x599ae8 (0.088f: the height of one row of the 3-column item grid)
-struct GameStrings {                            // the game object seen through its text table
-    tstring* string_value(tstring* out, int id);     // 0x48e9e0 (ret 8: the hidden result pointer spelled out)
-};
 MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
-MissionUi* __cdecl make_scrollbar(MissionUi* parent, const tstring* name);    // 0x4f6160 (cdecl): the scroll widget of a list
-struct ViewOps { void layout(); };              // 0x488d50 (thiscall: lays the list's content out)
 
 // the scrolling item list (constructor 0x49deb0, size 0x4a8): the flags word is MissionUi's; +0x484 the scroll bar, +0x490 the row count
-struct InvList : MissionUi {
+namespace c49deb0 {                             // party2/camera.cpp names the class of the constructor 0x49deb0 Camera in this namespace
+struct Camera : MissionUi {
     char pad178[0x484 - 0x178];
     MissionUi* scroll;                          // +0x484
     char pad488[0x490 - 0x488];
     int rows;                                   // +0x490
     char pad494[0x4a8 - 0x494];
-    InvList();                                  // 0x49deb0
+    Camera();                                   // 0x49deb0
 };
+}
+typedef c49deb0::Camera InvList;
 // virtual +0xc8 of the list sets the row count (the widget base's slot at +0xc8 is add_child(child), which takes one stack word as well)
 #define SET_ROWS(w, n) WOPS(w)->add_child((void*)(size_t)(n))
 
@@ -89,8 +96,20 @@ struct InvList : MissionUi {
 struct InvWindow : UiWindow {
     char f188;                                  // +0x188
     char pad189[7];
-    InvWindow() { *(void**)this = (void*)0x592848; f188 = 0; }
+private:
+    InvWindow();                                // (never defined: built by new_inv_window)
 };
+// new InvWindow: the allocation, then the base constructor body 0x4931a0 (ContainerW::construct, which runs MissionUi's 0x48ae20 itself), the vptr and f188
+static __forceinline InvWindow* new_inv_window()
+{
+    void* mem = operator new(sizeof(InvWindow));
+    if (mem == 0)
+        return 0;
+    ((ContainerW*)mem)->construct();
+    *(void**)mem = (void*)0x592848;
+    ((InvWindow*)mem)->f188 = 0;
+    return (InvWindow*)mem;
+}
 
 // @ 0x500ad0
 void PartyWindow::create()
@@ -122,7 +141,7 @@ void PartyWindow::create()
     icon_a84 = 0;
     icon_a88 = 0;
 
-    InvWindow* win = new InvWindow;
+    InvWindow* win = new_inv_window();
     container = win;
     {
         Vec2 p(0.0f, 0.0f);
@@ -134,7 +153,7 @@ void PartyWindow::create()
     }
     {
         tstring n("inventory_window_b");
-        ResMesh* m = g_resmgr_party.get_object(&n)->clone();
+        ResMesh* m = ((ResMesh*)((resmgr*)&g_resmgr_party)->get_object((const rgl::string*)&n))->clone();
         WOPS(win)->add_image(0, m);
     }
 
@@ -144,7 +163,7 @@ void PartyWindow::create()
         label_refresh(bg, tstring("inv_i_equipment_pangel_bg"));
         {
             tstring n("inventory_equipment_panel");
-            WOPS(bg)->add_image_a(0, g_resmgr_party.get_object(&n)->clone());
+            WOPS(bg)->add_image_a(0, ((ResMesh*)((resmgr*)&g_resmgr_party)->get_object((const rgl::string*)&n))->clone());
         }
         WOPS(container)->add_child(bg);
     }
@@ -157,7 +176,7 @@ void PartyWindow::create()
         label_refresh(h, tstring(buf));
         {
             tstring n("inventory_window_hinge");
-            WOPS(h)->add_image_a(0, g_resmgr_party.get_object(&n)->clone());
+            WOPS(h)->add_image_a(0, ((ResMesh*)((resmgr*)&g_resmgr_party)->get_object((const rgl::string*)&n))->clone());
         }
         WOPS(container)->add_child(h);
     }
@@ -193,7 +212,7 @@ void PartyWindow::create()
 
         InvList* v;
         if (i == 0) {
-            MissionUi* sc = make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory1"));
+            MissionUi* sc = (MissionUi*)make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory1"));
             v = new InvList;
             v->f104 |= 0x20;
             if (sc != 0)
@@ -202,7 +221,7 @@ void PartyWindow::create()
             SET_ROWS(v, nrows);
             label_refresh(v, tstring("inv_sc_inventory1_outer"));
         } else {
-            MissionUi* sc = make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory2"));
+            MissionUi* sc = (MissionUi*)make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory2"));
             v = new InvList;
             v->f104 |= 0x20;
             if (sc != 0)
@@ -222,7 +241,7 @@ void PartyWindow::create()
             Vec2 s(v->screen[0], m);
             WOPS(v)->set_scale(&s.x);
         }
-        ((ViewOps*)v)->layout();
+        ((FieldPanel*)v)->update();
         WOPS(container)->add_child(view[i]);
 
         MissionUi* g = new MissionUi;
@@ -269,7 +288,7 @@ void PartyWindow::create()
         tstring* label = g_strtable.lookup(&tstring("ui_return"));
         leave = new_sized_button((MissionUi*)container, *label, 0.0f, 0.0f, y, tstring("short_button"), tstring("short_button_down"), 3.0f, 0.072f, 0.085f);
     }
-    label_refresh(leave, tstring("inv_b_leave_h"));
+    label_refresh((MissionUi*)leave, tstring("inv_b_leave_h"));
     {
         MissionUi* tc = new MissionUi;
         total_cost = tc;
@@ -310,7 +329,7 @@ void PartyWindow::create()
         int off = 0x20;
         for (;;) {
             int party = g_game->f78;
-            int slot = g_game->scene.index_of(party);
+            int slot = ((Map10007*)&g_game->scene)->lookup(party);
             char** pg = *(char***)((char*)&g_game->scene + 0x138d0);
             char* rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             int count = *(int*)(rec + 0x8a8);
@@ -328,7 +347,7 @@ void PartyWindow::create()
             }
             if (n >= c)
                 break;
-            slot = g_game->scene.index_of(party);
+            slot = ((Map10007*)&g_game->scene)->lookup(party);
             pg = *(char***)((char*)&g_game->scene + 0x138d0);
             rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             if (troop == *(int*)(rec + 0xac + off))
@@ -341,7 +360,7 @@ void PartyWindow::create()
     {
         MissionUi* root = (MissionUi*)container;
         g_gui_dirty = 1;
-        g_gui.add_root(&root);
+        ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
     }
     init_window();
 
@@ -371,12 +390,8 @@ void PartyWindow::money_label(int which)
 
     char buf[512];
     {
-        char raw[sizeof(tstring)];                  // the callee constructs the string in place (the original does not run the default constructor)
-        tstring* val = (tstring*)raw;
         tstring key("ui_money_value");
-        tstring* id = ((GameStrings*)g_game)->string_value(val, money);
-        sprintf(buf, g_strtable.lookup(&key)->c_str(), id->c_str());
-        val->~tstring();
+        sprintf(buf, g_strtable.lookup(&key)->c_str(), ((GameData*)g_game)->string_value(money).c_str());   // the callee builds the string in place through the hidden return pointer
     }
     {
         tstring s(buf);

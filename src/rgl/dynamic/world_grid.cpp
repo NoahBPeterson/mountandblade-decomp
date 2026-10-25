@@ -20,6 +20,7 @@
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using rgl::vector4;
+namespace rgl { struct Obj; }        // entity.cpp: the element type of the std::vector<Obj*> instantiation whose resize 0x41fa00 the cell vectors call
 
 // ---- the ext twins -----------------------------------------------------------------------------------------------
 // Callers of these functions saw them as opaque functions (see fx_anim.h): the twin is only declared and bound to the
@@ -161,13 +162,14 @@ void grid_cell::add(grid_shape* x)
     if (pos == (unsigned)-1) {
         push_back(x);
     } else {
-        resize(size() + 1, 0);
+        ((std::vector<rgl::Obj*>*)this)->resize(size() + 1, 0);   // 0x41fa00: the cell's shape vector is the std::vector<Obj*> instantiation of entity.cpp (identical-code folding)
         for (int j = size() - 1; j > (int)pos; j--)
             first[j] = first[j - 1];
         first[pos] = x;
     }
     shape_list* l = &objs;
-    l->_Insert(l->head, x);
+    void (std::list<int>::*ins)(std::list<int>::iterator, const int&) = &std::list<int>::_Insert;   // called out of line, as the original does
+    (((std::list<int>*)l)->*ins)(((std::list<int>*)l)->end(), (const int&)x);   // 0x41f640: entity.cpp's list<int>::_Insert, folded with every list of pointers
 }
 
 // @ 0x423fc0
@@ -201,7 +203,7 @@ void shape_vec::remove(grid_shape* o)
             f[i] = f[i + 1];
             i++;
         }
-        resize(size() - 1, 0);
+        ((std::vector<rgl::Obj*>*)this)->resize(size() - 1, 0);   // 0x41fa00 (see grid_cell::add)
     }
 }
 

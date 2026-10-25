@@ -26,6 +26,10 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
+// signed_angle reads the x and y words of its two arguments (agent2/agent_types.h declares them vec2*); the agent's vel / fx are
+// float records (vector4 or float[]) whose first two words are x and y, so the pointer is the same
+static __forceinline const vec2* xy(const void* v) { return (const vec2*)v; }
+
 // inline helpers: the original compiled them into the callers
 static __forceinline vector4 vmul(const vector4& v, const float& k) { return vector4(v.x * k, v.y * k, v.z * k); }
 static __forceinline vector4 smul(const float& k, const vector4& v) { return vector4(k * v.x, k * v.y, k * v.z); }
@@ -49,10 +53,10 @@ static inline vector4 rot_world(const matrix& m, const vector4& d)
 float Font::advance(int ch)
 {
     if (ch >= 0x200) {
-        GlyphNode* it;
-        map.lower_bound(&it, &ch);
-        if (it != map.head) {
-            Glyph* g = &it->val;
+        IntHashBase::iterator it = ((IntHashBase&)map).lower_bound(ch);
+        GlyphNode* n = (GlyphNode*)it._Mynode();
+        if (n != map.head) {
+            Glyph* g = &n->val;
             return g->f18 + g->f10;
         }
         return dflt.f18 + dflt.f10;
@@ -108,9 +112,9 @@ void Skeleton::ensure_updated()
 {
     if (!done) {
         if (has_poses)
-            update_poses();
+            ((FxAnim*)this)->update_poses();
         else
-            update_poses2();
+            ((FxAnim*)this)->update_poses2();
     }
 }
 
@@ -134,9 +138,9 @@ char* Skeleton::rec(int i)
 {
     if (!done) {
         if (has_poses)
-            update_poses();
+            ((FxAnim*)this)->update_poses();
         else
-            update_poses2();
+            ((FxAnim*)this)->update_poses2();
     }
     return recs + i * 0x1dc + 0x84;
 }
@@ -176,9 +180,9 @@ void Agent::aim_point_and_dir(vector4* pos_out, vector4* dir_out)
     Skeleton* sk = body->skel;
     if (!sk->done) {
         if (sk->has_poses)
-            sk->update_poses();
+            ((FxAnim*)sk)->update_poses();
         else
-            sk->update_poses2();
+            ((FxAnim*)sk)->update_poses2();
     }
     AimRec* r = (AimRec*)(sk->recs + 0x1140);
     vector4 t = vadd(vscale(r->offs, 0.2f), r->base);
@@ -203,9 +207,9 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
             Skeleton* sk = body->skel;
             if (!sk->done) {
                 if (sk->has_poses)
-                    sk->update_poses();
+                    ((FxAnim*)sk)->update_poses();
                 else
-                    sk->update_poses2();
+                    ((FxAnim*)sk)->update_poses2();
             }
             matrix tm = body->m.mul(*(matrix*)(sk->recs + i * 0x1dc + 0x84));
             c.transform((const ::pos*)&tm);
@@ -252,7 +256,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = f2c;
         if (f < 0)
             goto done;
-        float v = signed_angle(&vel, &fx);
+        float v = signed_angle(xy(&vel), xy(&fx));
         if (1.0f < agent_by_id_raw(f)->fac) {
             if (v < -0.2f && dir == 2) {
                 dir = 1;
@@ -277,11 +281,11 @@ int Agent::pick_attack_dir(unsigned tid)
         if (tb == 0)
             return 0;
         posm cam = g_mission->view;
-        cam.rotate_about_s(-1.5707964f);
+        { const float quarter = -1.5707964f; cam.matrix::rotate_about_s(&quarter); }
         vector4 p = t->pos;
         p.z = p.z + 0.7f;
         if (t->f10 == 0)
-            p = t->body->m.transform_point(*(vector4*)(tb->skel->rec(9) + 0x30));
+            p = ((const ::pos&)t->body->m).transform_point(*(vector4*)(tb->skel->rec(9) + 0x30));
         vector4 loc = cam.transform_point_to_local(p);
         float inv = 1.0f / loc.y;
         float x = loc.x * inv;
@@ -305,7 +309,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = f2c;
         if (f < 0)
             goto done;
-        float v = signed_angle(&vel, &fx);
+        float v = signed_angle(xy(&vel), xy(&fx));
         if (1.0f < agent_by_id_raw(f)->fac) {
             alt = 0;
             dir = (v < 0.0f) ? 1 : 2;
@@ -357,7 +361,7 @@ void Agent::start_shoot(int slot)
         flags = g_items[sp.item].flags;
     int dir, alt;
     if (f2c >= 0) {
-        float v = signed_angle(&vel, &fx);
+        float v = signed_angle(xy(&vel), xy(&fx));
         if (v < 0.0f)
             dir = 1;
         else
@@ -482,11 +486,11 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
             AgentBody* tb = o->body;
             if (tb != 0) {
                 posm cam = g_mission->view;
-                cam.rotate_about_s(-1.5707964f);
+                { const float quarter = -1.5707964f; cam.matrix::rotate_about_s(&quarter); }
                 vector4 p = o->pos;
                 p.z = p.z + 0.7f;
                 if (o->f10 == 0)
-                    p = o->body->m.transform_point(*(vector4*)(tb->skel->rec(9) + 0x30));
+                    p = ((const ::pos&)o->body->m).transform_point(*(vector4*)(tb->skel->rec(9) + 0x30));
                 p = cam.transform_point_to_local(p);
                 float inv = 1.0f / p.y;
                 p.x = p.x * inv;
@@ -600,7 +604,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* t
                 if (sp.item < 0)
                     return 1;
             }
-            return id_matches_dir(grp, mode);
+            return ::id_matches_dir(grp, mode);
         }
     }
     return 0;
@@ -623,20 +627,20 @@ template void std::vector<E12>::push_back(const E12&);
 int Pool::alloc()
 {
     if (!(free_ids.size() > 0)) {
-        PoolRec* blk = new PoolRec[16];
+        RecJ* blk = new RecJ[16];
         pages.push_back(blk);
         for (int j = 0; j < 16; j++) {
-            blk[j].used = 0;
-            blk[j].id = next_id + j;
+            blk[j].f4 = 0;
+            blk[j].f8 = next_id + j;
             free_ids.push_back(next_id + j);
         }
         next_id += 16;
     }
     unsigned id = free_ids.back();
     free_ids.pop_back();
-    PoolRec* r = &pages[id >> 4][id & 0xf];
-    r->used = 1;
-    r->serial = serial;
+    RecJ* r = &pages[id >> 4][id & 0xf];
+    r->f4 = 1;
+    r->fc = serial;
     serial++;
     return id;
 }
@@ -657,7 +661,7 @@ bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
     if (d.normalize() <= 300.0f && body != 0 && o->body != 0) {
         vector4 p, dir;
         aim_point_and_dir(&p, &dir);
-        vector4 head = o->body->m.transform_point(*(const vector4*)(o->body->skel->recs + 0x1170));
+        vector4 head = ((const ::pos&)o->body->m).transform_point(*(const vector4*)(o->body->skel->recs + 0x1170));
         head.z += 0.2f;
         vector4 t;
         t.x = head.x - p.x;
@@ -672,7 +676,7 @@ bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
                 return false;
         }
         if (dp > -0.3f || len < 2.0f)
-            r = g_mission->scene_world->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
+            r = ((level*)g_mission->scene_world)->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
     }
     return r;
 }
@@ -683,7 +687,7 @@ int Agent::fire_check(unsigned tid, int* out_blocker)
     g_hit_shape = 0;
     *out_blocker = -1;
     if (f2c != -1) {
-        float v = signed_angle(&vel, blk294);
+        float v = signed_angle(xy(&vel), (const vec2*)blk294);
         if (!(g_range_tbl[variant].lo <= v) || !(v < g_range_tbl[variant].hi))
             return 3;
     }

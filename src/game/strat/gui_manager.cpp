@@ -6,6 +6,7 @@
 //       std::vector<tstring> / <vector4> helpers it instantiates. 0x42d820 starts the TinyXML objects (src/tinyxml).
 //       Functions in ascending address order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#define GM_RGL_NS                 // gui_manager.h: the scene / mesh stand-ins in namespace rgl (the defined symbols)
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>

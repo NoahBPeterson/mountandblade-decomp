@@ -13,6 +13,7 @@
 #include <commctrl.h>
 #include <d3d9.h>
 #include <d3dx9.h>
+#include <vector>
 #include "rgl.h"
 
 // GetDlgItem: User32 exports it as GetDlgItem (IAT 0x54932c); windows.h's A/W-neutral macro maps to it.
@@ -34,32 +35,48 @@ float g_hundred;                                    // 0x54ab28 100.0f
 float g_color_unit;                                 // 0x54a6c4   1/255
 
 
-int  size();                                   // 0x40f010
-void pop_back_if(int i);                               // 0x438bf0
-void resize(int a, int b);                      // 0x43f310
-void push_back_out();                                 // 0x440b30
-void set_delay();                              // 0x42cd20
-void brush_apply_end();                             // 0x41f4b0
-void frame_step();                            // 0x4e8720
 void restore_defaults();                           // 0x4d3a50
-void refresh();                            // 0x4c77c0
-void refresh_dialog();                              // 0x4f6390
-void set_color(float x, float y, float z, float w);     // 0x47af30
-void init();                        // 0x4e85d0
-void conv_build_scene();                        // 0x4c8630
-void set_object_target();                             // 0x4c6dc0
-char split_edge();                            // 0x4cb3a0
-void build_second_pass();                                  // 0x4d1880
-void update_edge_mode();                                  // 0x4c5b60
-void update_poly_mode();                                  // 0x4c5c80
-void update_vertex_mode();                                  // 0x4c5a20
-void refresh_selection();                                  // 0x4c5dc0
-char build_first_pass();                            // 0x4d1410
-void finish();                                  // 0x4d22d0
-char teardown();                            // 0x4d9e80
-char combine();                            // 0x4caa40
-char split_marked_edge();                            // 0x4d27d0
-void add_quad();                                  // 0x4d2df0
+// The callees below take their object in ECX (thiscall). Each is declared as a member of the class that defines it, named as that definition has it
+// (the modules that define them name the classes after another of their users, and the linker folds identical bodies), and called on the object the
+// original passes: the editor scene's edit object at g_editor + 0x6698 (EditMesh and graph_obj are two names for it), the game object's vectors,
+// the dialog panel (this).
+struct EditMesh {                                     // mesh_edit.cpp
+    void add_quad(const rgl::vector4* p);             // 0x4d2df0
+    bool build_first_pass();                          // 0x4d1410
+    void build_second_pass();                         // 0x4d1880
+    void finish();                                    // 0x4d22d0
+    bool split_marked_edge();                         // 0x4d27d0
+};
+struct graph_obj {                                    // mesh_2.cpp / gui_edit.cpp
+    bool combine();                                   // 0x4caa40
+    bool split_edge(int edge);                        // 0x4cb3a0
+    void refresh_selection();                         // 0x4c5dc0
+    void update_edge_mode();                          // 0x4c5b60
+    void update_poly_mode();                          // 0x4c5c80
+    void update_vertex_mode();                        // 0x4c5a20
+};
+struct TearObj { char teardown(); };                  // 0x4d9e80 (cls_map.cpp): the caller tests the success flag in AL, which the definition (declared void, "void hides eax") does not type; the row stays unresolved until cls_map.cpp declares the flag
+struct MapScreen { void frame_step(); void init(void* scene); };      // 0x4e8720 / 0x4e85d0 (progress_bar.cpp)
+struct MapDialog { void set_object_target(int sel); };               // 0x4c6dc0 (gui_edit.cpp)
+struct MapEditorDialog { void refresh(); void update_object_type(); };   // 0x4c77c0 / 0x4c7bf0 (gui_edit.cpp): the dialog procedure's own object
+struct EditorApp { void refresh_dialog(); };                         // 0x4f6390 (editor_ui.cpp)
+struct CreateGameOptionsPage { void update_checks(); };              // 0x4bf640 (trigger_vec.cpp)
+struct gui_timer { void set_delay(float seconds); };                 // 0x42cd20 (gui_manager.cpp)
+struct ptr_vec { void pop_back_if(); };                              // 0x438bf0 (agent_stats.cpp)
+struct conv_rec;
+void __fastcall conv_build_scene(conv_rec* p);                       // 0x4c8630 (gui_edit.cpp; ecx = the object at 0xa76630)
+struct mesh_x { void set_color(rgl::vector4 c); };                    // 0x47af30 (mesh_ops.cpp; the colour by value, ret 0x10)
+// the vector<int> members of the game object / scene (VC7.1 layout: allocator slot, first, last, end); size, push_back and the release are the library's
+// instantiations (mesh_obj.cpp 0x40f010, agent_combat.cpp 0x440b30, entity.cpp 0x41f4b0), called out of line through their member pointers
+typedef std::vector<int> IntVec;
+static __forceinline unsigned vsize(IntVec* v) { unsigned (IntVec::*f)() const = &IntVec::size; return (v->*f)(); }
+static __forceinline void vpush(IntVec* v, const int& x) { void (IntVec::*f)(const int&) = &IntVec::push_back; (v->*f)(x); }
+struct mface;
+template <class T> struct vec { void clear(); };                     // the growable array whose clear() frees the block (rgl/mesh.h, entity.h): only clear() 0x41f4b0 is called
+static __forceinline void vclear(void* v) { void (vec<mface>::*f)() = &vec<mface>::clear; ((vec<mface>*)v->*f)(); }
+struct RawVec { int alloc; int* first; int* last; int* end; };      // a local vector<int>, zeroed
+#define GAME_VEC ((IntVec*)((char*)g_game + 0x1a1b8))              // the selected terrain indices (sel_array is its first at +0x1a1bc)
+#define EDIT_OBJ ((char*)g_editor + 0x6698)
 INT_PTR __stdcall options_dlg_proc(HWND, UINT, WPARAM, LPARAM);  // 0x4bf5f0
 
 struct EditorGameView {
@@ -215,7 +232,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (msg != WM_INITDIALOG)
             return 0;
         m_hMapEditorDlg = hDlg;
-        update_checks();
+        ((CreateGameOptionsPage*)this)->update_checks();
         SendMessageA(GetDlgItem(hDlg, 0x46e), LB_RESETCONTENT, 0, 0);
         CheckRadioButton(hDlg, 0x474, 0x476, g_game->axis + 0x474);
         SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETRANGE, TRUE, MAKELONG(0, 100));
@@ -263,7 +280,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)0x595e6c);
         SendMessageA(combo, CB_SETITEMDATA, idx, 5);
         SendMessageA(combo, CB_SETCURSEL, 0, 0);
-        update_object_type();
+        ((MapEditorDialog*)this)->update_object_type();
         return 1;
     }
     switch (wParam & 0xffff) {
@@ -288,7 +305,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_game->rt_w = 0.0f;
         g_game->rt_extra = 0;
         if (g_game->rt_flag == 0)
-            refresh();
+            ((MapEditorDialog*)this)->refresh();
         return 1;
     }
     case 0x438: {
@@ -299,47 +316,59 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             for (int i = 0; i < (int)cnt; i++)
                 if (g_game->sel_index != (int)SendMessageA(c, LB_GETITEMDATA, i, 0))
                     SendMessageA(c, LB_SETSEL, 0, i);
-            resize(0, 0);
+            GAME_VEC->resize(0, 0);
             if (g_game->sel_index >= 0)
-                push_back_out();
-            refresh_dialog();
+                vpush(GAME_VEC, g_game->sel_index);
+            ((EditorApp*)this)->refresh_dialog();
             if (g_game->sel_index >= 0) {
                 memcpy(g_game->sel_copy, (char*)terrain(g_game->sel_index) + 0x18, 0x40);
-                set_delay();
+                ((gui_timer*)((char*)g_game + 0x1a150))->set_delay(-2.0f);
             }
-            refresh();
+            ((MapEditorDialog*)this)->refresh();
             return 1;
         }
         if (code == 1 || code == 3) {
             HWND c = GetDlgItem(hDlg, 0x438);
             int sel[1024];
             int cnt = (int)SendMessageA(c, LB_GETSELITEMS, 0x400, (LPARAM)sel);
+            RawVec picked = { 0, 0, 0, 0 };                       // the indices the list box reports (a local vector<int>)
             g_game->sel_index = -1;
             for (int i = 0; i < cnt; i++) {
                 int v = (int)SendMessageA(c, LB_GETITEMDATA, sel[i], 0);
                 if (v >= 0) {
-                    push_back_out();
+                    vpush((IntVec*)&picked, v);
                     int found = 0;
-                    for (int k = 0; k < size(); k++) {
+                    for (unsigned k = 0; k < vsize(GAME_VEC); k++) {
                         if (g_game->sel_array[k] == v) {
                             found = 1;
                             break;
                         }
                     }
                     if (!found) {
-                        push_back_out();
+                        vpush(GAME_VEC, v);
                         g_game->sel_index = v;
                     }
                 }
             }
-            for (int k = size(); k > 1; k--) {
-                g_game->sel_array[0] = g_game->sel_array[k - 1];
-                pop_back_if(0);
+            unsigned picked_n = picked.first == 0 ? 0 : (unsigned)(picked.last - picked.first);
+            if (picked_n != vsize(GAME_VEC)) {
+                // drop the selected indices the list box no longer reports (swap with the last, pop)
+                for (unsigned k = 0; k < vsize(GAME_VEC); k++) {
+                    bool kept = false;
+                    for (unsigned j = 0; picked.first != 0 && j < (unsigned)(picked.last - picked.first); j++)
+                        if (g_game->sel_array[k] == picked.first[j])
+                            kept = true;
+                    if (!kept) {
+                        g_game->sel_array[k] = g_game->sel_array[vsize(GAME_VEC) - 1];
+                        ((ptr_vec*)GAME_VEC)->pop_back_if();
+                        k--;
+                    }
+                }
             }
-            if (g_game->sel_index == -1 && size() != 0)
-                g_game->sel_index = g_game->sel_array[size() - 1];
-            refresh_dialog();
-            brush_apply_end();
+            if (g_game->sel_index == -1 && vsize(GAME_VEC) != 0)
+                g_game->sel_index = g_game->sel_array[vsize(GAME_VEC) - 1];
+            ((EditorApp*)this)->refresh_dialog();
+            vclear(&picked);
         }
         return 1;
     }
@@ -380,13 +409,13 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x431:
         if (HIWORD(lParam) != 1)
             return 1;
-        update_object_type();
+        ((MapEditorDialog*)this)->update_object_type();
         return 1;
     case 0x46d:
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->mode = 2;
-        update_checks();
+        ((CreateGameOptionsPage*)this)->update_checks();
         {
             float v1 = g_game->my, v2 = g_game->sy, v3 = g_game->ty;
             char buf[512];
@@ -405,13 +434,13 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->mode = 0;
-        update_checks();
+        ((CreateGameOptionsPage*)this)->update_checks();
         return 1;
     case 0x470:
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->mode = 1;
-        update_checks();
+        ((CreateGameOptionsPage*)this)->update_checks();
         {
             float v1 = g_game->mx, v2 = g_game->sx, v3 = g_game->tx;
             char buf[512];
@@ -430,7 +459,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->mode = 3;
-        update_checks();
+        ((CreateGameOptionsPage*)this)->update_checks();
         {
             float v1 = g_game->mz, v2 = g_game->sz, v3 = g_game->tz;
             char buf[512];
@@ -485,36 +514,42 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                 g_game->rt_x = fx * g_game->rt_x;
                 g_game->rt_y = fy * g_game->rt_y;
                 g_game->rt_z = fz * g_game->rt_z;
-                if (size() == 0)
+                char* so = *(char**)((char*)g_editor + 0x65e4);                   // the edit scene's mesh list: vector at +0x118
+                if (vsize((IntVec*)(so + 0x118)) == 0)
                     return 1;
                 float invx = g_one / ox;
                 float invy = g_one / oy;
                 float invz = g_one / oz;
                 int i = 0;
                 do {
-                    set_color(invx, invy, invz, ow);
-                    set_color(g_game->rt_x, g_game->rt_y, g_game->rt_z, g_game->rt_w);
+                    rgl::vector4 inv;
+                    inv.x = invx;
+                    inv.y = invy;
+                    inv.z = invz;
+                    inv.w = ow;
+                    ((mesh_x**)*(void**)(so + 0x11c))[i]->set_color(inv);
+                    ((mesh_x**)*(void**)(so + 0x11c))[i]->set_color(*(rgl::vector4*)&g_game->rt_x);
                     i++;
-                } while (i < size());
+                } while (i < (int)vsize((IntVec*)(so + 0x118)));
                 return 1;
             }
             EditorTerrainView* t = terrain(g_game->sel_index);
             t->rx = fx * t->rx;
             t->ry = fy * t->ry;
             t->rz = fz * t->rz;
-            for (int i = 0; i < size(); i++) {
+            for (int i = 0; i < (int)vsize((IntVec*)(terrain(g_game->sel_index)->obj + 0x118)); i++) {
                 EditorTerrainView* ti = terrain(g_game->sel_index);
                 *(int*)(*(int*)(*(int*)(ti->obj + 0x11c) + i * 4) + 0x4c) =
                     1 - *(int*)(*(int*)(*(int*)(ti->obj + 0x11c) + i * 4) + 0x4c);
             }
-            set_object_target();
+            ((MapDialog*)g_editor)->set_object_target(g_game->sel_index);
             g_game->dirty = 1;
         }
         return 1;
     case 0x494:
         if (MessageBoxA(m_hMapEditorDlg, "Are you sure?", "Warning", 1) != 1)
             return 1;
-        frame_step();
+        ((MapScreen*)g_editor)->frame_step();
         return 1;
     case 0x46e:
         if (HIWORD(lParam) != 1)
@@ -529,7 +564,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         if (HIWORD(lParam) != 0)
             return 1;
         g_game->sub_mode = 0;
-        update_checks();
+        ((CreateGameOptionsPage*)this)->update_checks();
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
@@ -537,7 +572,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x498:
         if (HIWORD(lParam) == 0) {
             g_game->sub_mode = 1;
-            update_checks();
+            ((CreateGameOptionsPage*)this)->update_checks();
             g_game->dirty = 1;
             g_editor->need_redraw[0] = 1;
             g_editor->need_redraw[1] = 1;
@@ -547,7 +582,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x499:
         if (HIWORD(lParam) == 0) {
             g_game->sub_mode = 2;
-            update_checks();
+            ((CreateGameOptionsPage*)this)->update_checks();
             g_editor->need_redraw[0] = 1;
             g_editor->need_redraw[1] = 1;
             g_editor->need_redraw[2] = 1;
@@ -556,18 +591,18 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     case 0x49a:
         if (HIWORD(lParam) == 0) {
             g_game->mode = 4;
-            update_checks();
+            ((CreateGameOptionsPage*)this)->update_checks();
         }
         return 1;
     case 0x49b:
-        build_second_pass();
+        ((EditMesh*)EDIT_OBJ)->build_second_pass();
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x49d:
-        if (!split_edge()) {
+        if (!((graph_obj*)EDIT_OBJ)->split_edge(-1)) {
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge that has a neighborhood of 2 triangular faces.", "Warning", 0);
             return 1;
         }
@@ -577,37 +612,37 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a3:
-        update_edge_mode();
+        ((graph_obj*)EDIT_OBJ)->update_edge_mode();
         g_game->sub_mode = 1;
-        update_checks();
+        ((CreateGameOptionsPage*)this)->update_checks();
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a4:
-        update_poly_mode();
+        ((graph_obj*)EDIT_OBJ)->update_poly_mode();
         g_game->sub_mode = 2;
-        update_checks();
+        ((CreateGameOptionsPage*)this)->update_checks();
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a5:
-        update_vertex_mode();
+        ((graph_obj*)EDIT_OBJ)->update_vertex_mode();
         g_game->sub_mode = 0;
-        update_checks();
+        ((CreateGameOptionsPage*)this)->update_checks();
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a6:
-        refresh_selection();
+        ((graph_obj*)EDIT_OBJ)->refresh_selection();
         g_editor->need_redraw[g_game->sub_mode] = 1;
         return 1;
     case 0x4a7:
-        if (!build_first_pass()) {
+        if (!((EditMesh*)EDIT_OBJ)->build_first_pass()) {
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of a face and do not have any edge neighborhood.", "Warning", 0);
             return 1;
         }
@@ -617,14 +652,14 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a8:
-        finish();
+        ((EditMesh*)EDIT_OBJ)->finish();
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4aa:
-        if (!teardown()) {
+        if (!((TearObj*)EDIT_OBJ)->teardown()) {
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 3 or 4 vertices (or edges that has 3 or 4 different edges) that are not a member of the same face and that are not members of any edges with 2 faces.", "Warning", 0);
             return 1;
         }
@@ -634,7 +669,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4ac:
-        if (!combine()) {
+        if (!((graph_obj*)EDIT_OBJ)->combine()) {
             if (g_editor->sel_count2 != 0)
                 MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
             else
@@ -647,7 +682,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4ad:
-        if (!split_marked_edge()) {
+        if (!((EditMesh*)EDIT_OBJ)->split_marked_edge()) {
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
             return 1;
         }
@@ -657,7 +692,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4ae:
-        add_quad();
+        ((EditMesh*)EDIT_OBJ)->add_quad((rgl::vector4*)((char*)g_game + 0x1a1a4));
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
@@ -665,9 +700,9 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         return 1;
     case 0x4af:
         if (MessageBoxA(m_hMapEditorDlg, "This action will clear all texture and height data of the terrain that are added manually. Are you sure?", "Warning", 1) == 1) {
-            init();
+            ((MapScreen*)0xa76630)->init((char*)g_editor + 0x63d0);
             g_game->dirty = 1;
-            conv_build_scene();
+            conv_build_scene((conv_rec*)0xa76630);
         }
         return 1;
     case 0x4c8:

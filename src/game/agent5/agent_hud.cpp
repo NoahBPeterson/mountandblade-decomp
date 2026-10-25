@@ -53,7 +53,7 @@ void Mission::refresh_agent(Agent* a)
         look[p] = zero;
     build_appearance(a->body, a->f10, a->troop, *(int*)((char*)a + 0x94), &a->f8c, look, (int*)((char*)a + 0x240),
                      (int*)((char*)a + 0x194), (int*)((char*)a + 0x1a4), (int*)((char*)a + 0x1a8), (int*)a->pairs, a->f8);
-    build_equipment(a->body, a->f10, a->troop, look, &a->f130, (int*)a->pairs, a->f8);
+    setup_item_meshes((SkelBodyV*)a->body, a->f10, a->troop, (char*)look, (int)&a->f130, (ItemRef*)a->pairs, a->f8);
     a->f24c = a->equipment_value();
     a->set_slot(0, 0x14);
     a->set_slot(1, 0x14);
@@ -74,7 +74,7 @@ void MissionHud::refresh()
     g_gui.reset();
     g_hud_flag = 1;
     GAME_AT(int, 0x1a1b4) = -1;
-    ((UiVec*)((char*)g_game + 0x1a1b8))->resize(0, 0);
+    ((std::vector<int>*)((char*)g_game + 0x1a1b8))->resize(0, 0);
 
     if (refresh_slots) {
         int id = g_mission->player_id;
@@ -118,7 +118,7 @@ void MissionHud::refresh()
     ammo_stage = -1;
     GAME_AT(int, 0x1a090) = 0;
 
-    FrameWidget* fw = new FrameWidget;
+    FrameWidget* fw = new_frame_widget();
     frame = fw;
     {
         v[0] = 0.0f;
@@ -131,7 +131,7 @@ void MissionHud::refresh()
     {
         MissionUi* root = frame;
         g_gui_dirty = 1;
-        g_gui.add_root(&root);
+        ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
     }
     for (int i = 0; i < 3; i++) {
         MissionUi* w = new MissionUi;
@@ -291,7 +291,10 @@ void MissionHud::refresh()
     UI(status_group)->add_child(UI(ui_font_bg));
     frame->kids.push_back(status_group);
 
-    name_widget = new NameWidget;
+    {
+        void* mem = operator new(sizeof(NameWidget));
+        name_widget = mem ? (NameWidget*)ctor_4ed630((MapWidget*)mem) : 0;
+    }
     name_widget->mission_scene = g_mission->scene;
     {
         v[0] = 0.0f;
@@ -394,7 +397,7 @@ void MissionHud::update_camera(float dt)
         dt = g_step_tbl[0];
     {
         matrix home;
-        *(matrix*)&k = *rgl::identity_pos(&home);
+        *(matrix*)&k = *(matrix*)identity_pos((pos*)&home);
     }
     radius = 0.03f;
     if (g_cam_sens != 0)
@@ -531,10 +534,10 @@ void MissionHud::update_camera(float dt)
             // spectating: look through the agent this one is bound to
             Agent* ag = AG(g_mission->player_id);
             AgentBody* body = AG(g_mission->player_id)->body;
-            SkelView* sk;
+            Skeleton* sk;
             if (AG(g_mission->player_id)->f2c >= 0)
                 yaw = dt * *(float*)((char*)AG(ag->f2c) + 0x56e8) + yaw;
-            sk = (SkelView*)body->skel;
+            sk = (Skeleton*)body->skel;
             if ((ag->defs->defs[ag->anim[0].cur].flags & 0x100000) != 0) {
                 float ang;
                 if (!sk->ready)
@@ -609,7 +612,7 @@ void MissionHud::update_camera(float dt)
                 c.normalize();
                 vector4 a = hv_sub(p0, hv_mul(c, 0.4f));
                 capsule cap(1e-5f, &q, &a);
-                ((SceneQuery*)g_mission->scene)->query_segment(&p0.x, &q.x, 0x110, list, &count);
+                ((level*)g_mission->scene)->query_segment(&p0.x, &q.x, 0x110, list, &count);
                 t = 1000.0f;
                 for (i = 0; i < count; i++) {
                     if (list[i]->shape_type() == 2 && shape_contact_count(list[i], &cap, 1, &ct) != 0) {
@@ -726,7 +729,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     FrameNode* flare = (FrameNode*)f65c0;
     if (!flare)
         return;
-    float tod = g_game->time_of_day();
+    float tod = time_of_day();
     bool day = tod >= 4.0f && tod < 20.0f;
     int step = (int)((g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f);
     vector4 dir = g_env_rows[cam_row].get_dir(step % 24, day);
@@ -740,7 +743,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         flare_amt = (vis - flare_amt) * g_step_tbl[2] * 10.0f + flare_amt;
     } else {
         vector4 to(eye->o.x - dir.x * 500.0f, eye->o.y - dir.y * 500.0f, eye->o.z - dir.z * 500.0f);
-        if (((CellGrid*)scene)->trace_ray(&eye->o, &to, 1000.0f, 0, 0))
+        if (((level*)scene)->trace_ray(&eye->o.x, &to.x, 1000.0f, 0, 0))
             flare_amt = flare_amt + g_step_tbl[2] * 3.5f;
         else
             flare_amt = flare_amt - g_step_tbl[2] * 3.5f;
@@ -754,7 +757,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     {
         tstring name("sample_flare");
         matrix id;
-        fm->append_skinned(g_resmgr_full.get_object((const rgl::string*)&name), rgl::identity_pos(&id), -1, -1, 0);
+        fm->append_skinned(g_resmgr_full.get_object((const rgl::string*)&name), (const rgl::mat4*)identity_pos((pos*)&id), -1, -1, 0);
     }
     {
         tstring name("flare");
@@ -867,7 +870,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
                     dist = dist * range;
                     v = &dist;
                 }
-                sb->set_fade(v);
+                ((PartyModel*)sb)->set_fade(v);
             }
             int n2 = *(int*)tbl;
             for (i++; (int)i < n2; i++) {
@@ -897,7 +900,7 @@ void MissionHud::update_status()
         health_mesh->clear_geometry();
         {
             tstring name("status_health_bar");
-            matrix* m = rgl::identity_pos(&frame);
+            const rgl::mat4* m = (const rgl::mat4*)identity_pos((pos*)&frame);
             rgl::mesh* obj = g_resmgr_full.get_object((const rgl::string*)&name);
             health_mesh->append_skinned(obj, m, -1, -1, 0);
         }
@@ -950,24 +953,24 @@ void MissionHud::update_status()
                     float v;
                     v = 0.0005f;
                     piece->set_offset(*(const vector4*)&v);
-                    identity3(&frame);
+                    identity3((rgl::mat3*)&frame);
                     float ang = -1.45f;
                     ((posm*)&frame)->rotate_about_u(&ang);
                     piece->set_part(&frame);
-                    rgl::identity_pos(&frame);
+                    identity_pos((pos*)&frame);
                     frame.o.z -= 10.0f;
-                    shield_mesh->append_skinned(piece, &frame, -1, -1, 0);
+                    shield_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
                     shield_mesh->res = piece->res;
                     frame.o.x += 0.0012f;
                     frame.o.y -= 0.001f;
                     frame.o.z -= 10.0f;
                     piece->scale(1.05f);
-                    shadow_mesh->append_skinned(piece, &frame, -1, -1, 0);
+                    shadow_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
                     {
                         tstring shadow("ui_item_shadow");
                         shadow_mesh->res = g_resmgr_full.base().get_material(*(rgl::string*)&shadow);
                     }
-                    shadow_mesh->set_bone_index(-1);
+                    ((mesh_x*)shadow_mesh)->set_bone_index(-1);
                     shadow_mesh->color = 0xff777777;
                     delete piece;
                 }
@@ -1071,13 +1074,13 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
         }
         result = objects[0]->clone();
         for (unsigned i = 1; i < objects.size(); i++) {
-            rgl::identity_pos(&m);
-            result->append_skinned(objects[i], &m, -1, -1, 0);
+            identity_pos((pos*)&m);
+            result->append_skinned(objects[i], (const rgl::mat4*)&m, -1, -1, 0);
         }
     }
 
     unsigned type = g_items[ref->item].type_flags & 0xff;
-    identity3(&m);
+    identity3((rgl::mat3*)&m);
     float angle;
     if (type == 0xd) {
         angle = -1.5707964f;
@@ -1180,8 +1183,7 @@ void rgl::mesh::darken_vertices()
     for (unsigned i = 0; i < v50.size(); i++) {
         rgl::vertex60& v = v50[i];
         float f = (v.normal.z + 0.25f) * 0.8f;
-        vector4 rgb;
-        rgl::unpack_color(&rgb, &v.color);
+        vector4 rgb = rgl::unpack_color(&v.color);
         rgb.x *= f;
         rgb.y *= f;
         rgb.z *= f;
@@ -1195,7 +1197,7 @@ void GameScreen::build()
 {
     float v[2];
     g_gui.reset();
-    g_sound_mgr.stop_all();
+    ((SoundW*)&g_sound_mgr)->stop_all();
 
     char* rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
     bool ok = true;
@@ -1212,7 +1214,7 @@ void GameScreen::build()
     for (int i = 0; i < 16; i++)
         kids[i] = 0;
 
-    frame = new FrameWidget;
+    frame = new_frame_widget();
     v[0] = -0.001f;
     v[1] = -0.001f;
     UI(frame)->set_size(v);
@@ -1314,10 +1316,10 @@ void GameScreen::build()
     v[0] = 0.01f;
     v[1] = 0.38f;
     UI(tree)->set_size(v);
-    tree->layout();
+    ((FieldPanel*)tree)->update();
     v[0] = 0.65f;
     v[1] = 0.31f;
-    tree->scroll_refresh(v);
+    ((HudOuter*)tree)->scroll_refresh((vector4*)v);
     UI(frame)->add_child(UI(tree));
 
     GroupWidget* value = new GroupWidget;
@@ -1327,11 +1329,11 @@ void GameScreen::build()
     v[0] = 0.75f;
     v[1] = 0.36f;
     UI(value)->set_pos(v);
-    MissionUi* made = make_scroll_track(frame, 0.7f, 0.02f, 0.01f, 0.36f);
+    MissionUi* made = (MissionUi*)make_scroll_track((widget*)frame, 0.7f, 0.02f, 0.01f, 0.36f);
     {
         float a[2] = { 0.01f, 0.02f };
         float b[2] = { 0.75f, 0.36f };
-        made = make_quest_list(value, a, b, made);
+        made = (MissionUi*)make_quest_list((widget*)value, a, b, (int)made);
     }
     slider = made;
     UI(frame)->add_child(UI(made));
@@ -1352,14 +1354,14 @@ void GameScreen::build()
 
     if (ok) {
         ((ScreenOps*)this)->begin();
-        ((MenuLayout*)((char*)this + 0x30))->build(frame, GAME_AT(int, 0xac));
+        ((BlockOwner*)((char*)this + 0x30))->init((ContainerBase*)frame, GAME_AT(int, 0xac));
         if (f40 < 0)
             UI(frame)->add_image_a(0, g_resmgr_full.get_object((const rgl::string*)&tstring("meeting_window"))->clone());
     }
     g_gui_dirty = 1;
     {
         MissionUi* root = frame;
-        g_gui.add_root(&root);
+        ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
     }
 }
 
@@ -1391,7 +1393,7 @@ static __forceinline float param_value(const char* key)
 #define MAKE_TAB(name) make_tab(frame, name, x, yy, h)
 static MissionUi* make_tab(FrameWidget* frame, const char* name, float x, float y, float h)
 {
-    return make_short_button(frame, g_strtable.lookup(tstring(name)), x, y, h);
+    return (MissionUi*)make_short_button(frame, g_strtable.lookup(tstring(name)), x, y, h);
 }
 
 // @ 0x4fc820
@@ -1400,7 +1402,7 @@ void LogScreen::build(bool show)
     float v[2];
     g_gui.reset();
 
-    frame = new FrameWidget;
+    frame = new_frame_widget();
     v[0] = 0.0f;
     v[1] = 0.0f;
     UI(frame)->set_size(v);
@@ -1475,7 +1477,7 @@ void LogScreen::build(bool show)
     UI(bar)->set_pos(v);
     UI(bar)->add_child(UI(log));
 
-    MissionUi* track = make_scroll_track(frame, 0.95f, 0.08f, 0.02f, 0.64f);
+    MissionUi* track = (MissionUi*)make_scroll_track((widget*)frame, 0.95f, 0.08f, 0.02f, 0.64f);
     {
         float ymin = y < 0.64f ? y : 0.64f;
         float d = 0.64f - y;
@@ -1483,7 +1485,7 @@ void LogScreen::build(bool show)
             d = 0.0f;
         float a[2] = { 0.03f, d + 0.08f };
         float b[2] = { 0.915f, ymin };
-        slider = make_quest_list(bar, a, b, track);
+        slider = (MissionUi*)make_quest_list((widget*)bar, a, b, (int)track);
     }
     UI(frame)->add_child(UI(slider));
 
@@ -1525,14 +1527,14 @@ void LogScreen::build(bool show)
     g_gui_dirty = 1;
     {
         MissionUi* root = frame;
-        g_gui.add_root(&root);
+        ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
     }
 
     // the slider's value follows the log's scroll state
     FlagWidget* flag = (FlagWidget*)((ListWidget*)slider)->flag;
     float* pf = &flag->screen[flag->f178];
     float value = (*pf - flag->f17c) * ((flag->v168 - flag->f16c) / (flag->f170 - flag->f16c)) - (flag->f17c / *pf) * 5000.0f;
-    flag->set_value(value);
+    ((UiD*)flag)->set_value(value);
     UI(flag)->flag_cmd(0x10000);
 }
 
@@ -1561,7 +1563,7 @@ void* TStringArray::destroy(unsigned flags)
 // @ 0x4fd150
 MWidget::MWidget()
 {
-    ((MissionUiBody*)this)->init();
+    ((MissionUi*)this)->MissionUi::MissionUi();
     *(void**)this = (void*)0x5995c0;
     rects_a.first = 0;
     rects_a.last = 0;
@@ -1638,10 +1640,10 @@ MWidget::~MWidget()
     *(void**)this = (void*)0x5995c0;
     list_e.free_block();
     list_d.free_block();
-    list_c.clear();
+    VEC_CLEAR(&list_c);
     rects_b.free_block();
     rects_a.free_block();
-    ((MissionUiBody*)this)->dtor();
+    ((Buffer*)this)->Buffer::~Buffer();
 }
 
 // @ 0x4fd490
@@ -1736,7 +1738,7 @@ static __forceinline void ints_push(IntList* v, const int& x)
         *v->last = x;
         ++v->last;
     } else
-        v->insert_n(v->last, 1, x);
+        ((VecOps<int>*)v)->insert_n(std::vector<int>::iterator(v->last), 1, x);
 }
 
 // @ 0x4fd700  The map-text row renderer: `this` (the font) in ECX, 17 stack arguments (the first is the caller's 8-byte result block), ret 0x44.
@@ -1750,10 +1752,10 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
     IntList* tags = (IntList*)v1b8;                               // the tag index of every rectangle
     IntList* spare = (IntList*)v198;
     IntList* codes = (IntList*)v1a8;                              // tag kind and value pairs
-    rects_a->clear();
-    rects_b->clear();
+    VEC_CLEAR(rects_a);
+    VEC_CLEAR(rects_b);
     tags->free_block();
-    spare->clear();
+    VEC_CLEAR(spare);
     codes->free_block();
 
     vector4 pos = *p3;
@@ -1843,16 +1845,16 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         int code;
                         if (name.find(tstring("color"), 0) == 0) {
                             code = 1;
-                            codes->int_push_back(code);
+                            VEC_INT_PUSH_BACK(codes, code);
                         } else if (name.find(tstring("size"), 0) == 0) {
                             code = 2;
-                            codes->int_push_back(code);
+                            VEC_INT_PUSH_BACK(codes, code);
                         } else if (name.find(tstring("font"), 0) == 0) {
                             code = 3;
-                            codes->int_push_back(code);
+                            VEC_INT_PUSH_BACK(codes, code);
                         } else if (name.find(tstring("alpha"), 0) == 0) {
                             code = 4;
-                            codes->int_push_back(code);
+                            VEC_INT_PUSH_BACK(codes, code);
                         }
                         char eq = '=';
                         int value = atol(name.substr(name.find(eq, 0) + 1, name.len).c_str());
@@ -1882,10 +1884,10 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                     } else {
                         if (in_tag) {
                             if (i2 == y) {                        // a span continues on a new row
-                                spare->int_push_back(spare->first[(spare->first ? (unsigned)(spare->last - spare->first) : 0) - 1]);
-                                codes->push_back_out(codes->first[(codes->first ? (unsigned)(codes->last - codes->first) : 0) - 1]);
+                                VEC_INT_PUSH_BACK(spare, spare->first[(spare->first ? (unsigned)(spare->last - spare->first) : 0) - 1]);
+                                VEC_INT_PUSH_BACK(codes, codes->first[(codes->first ? (unsigned)(codes->last - codes->first) : 0) - 1]);
                                 rects_b->push_back(pos);
-                                tags->push_back_out(tag_index);
+                                VEC_INT_PUSH_BACK(tags, tag_index);
                             }
                         }
                         const Glyph* g;
@@ -1932,7 +1934,7 @@ void V4List::push_back(const vector4& v)
     unsigned size = first == 0 ? 0 : (unsigned)(last - first);
     if (first != 0 && size < (unsigned)(end - first)) {
         vector4* l = last;
-        v4_fill(l, 1, v, this, v);
+        uninit_fill_n<vector4>(l, 1, v, *(std::allocator<vector4>*)this, std::_Nonscalar_ptr_iterator_tag());
         last = l + 1;
     } else {
         iterator w;
@@ -1949,7 +1951,7 @@ V4List::iterator V4List::insert(iterator where, const vector4& val)
         idx = 0;
     else
         idx = where.p - first;
-    insert_n(where.p, 1, val);
+    ((VecOps<vector4>*)this)->insert_n(std::vector<vector4>::iterator(where.p), 1, val);
     iterator r;
     r.p = first + idx;
     return r;

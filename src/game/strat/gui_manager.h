@@ -18,13 +18,23 @@ using rgl::vector4;
 #include "../../include/fx.h"
 
 // sized stand-ins (see above); ctor/dtor addresses are what the gui_manager ctor/dtor call
+#ifdef GM_RGL_NS                    // the strat modules: the definitions (rgl/scene, rgl/mesh_obj.cpp) are rgl::scene and rgl::mesh; the other
+namespace rgl {                     // includers (config) keep the global stand-ins
+#endif
 struct scene {
     char d[0x1d8];
     scene();                        // 0x429740
     ~scene();                       // 0x41f4e0
 };
+#ifdef GM_RGL_NS
+}
+using rgl::scene;
+#endif
 #include "../../include/frustum.h"
 using rgl::frustum;                 // 0x41ef60 (ctor, no dtor); the sized stand-in became the shared class
+#ifdef GM_RGL_NS
+namespace rgl {
+#endif
 struct mesh {
     char d0[0x10c];
     unsigned mask;                  // +0x10c (reset 0x42d1b0 clears it on two of them)
@@ -32,6 +42,10 @@ struct mesh {
     mesh();                         // 0x412a90
     ~mesh();                        // 0x4127f0
 };
+#ifdef GM_RGL_NS
+}
+using rgl::mesh;
+#endif
 
 extern float g_mouse_x;             // 0x5d7094 (mouse_event 0x42cf50)
 extern float g_mouse_y;             // 0x5d7098

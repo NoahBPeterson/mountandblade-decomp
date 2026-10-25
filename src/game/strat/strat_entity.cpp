@@ -8,6 +8,7 @@
 //       Names provisional.
 //       Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#define GM_RGL_NS                 // gui_manager.h: the scene / mesh stand-ins in namespace rgl (the defined symbols)
 #include <math.h>
 #include <stdlib.h>
 #include "./strat_ext.h"       // (listed directly: the resolution audit scans only the source's own includes)
@@ -29,7 +30,7 @@ void StratEnt::render(scene* sc, render_info* out)
     if (f140) {
         if (fx)
             fx->draw(sc, &pos, &f144);
-        MeshEnt::render(sc, out);
+        ((rgl::entity*)this)->rgl::entity::render((rgl::scene*)sc, out);
         if ((sc->mask & 1) && (mode & 3) && g_shadows_on) {
             Light* l = ctx->first_dir_light();
             if (l && !(l->flags & 2)) {
@@ -40,7 +41,7 @@ void StratEnt::render(scene* sc, render_info* out)
             }
         }
         for (Psys** p = emitters_first; p != emitters_last; ++p)
-            (*p)->update(sc);
+            ((rgl::psys*)*p)->update((rgl::scene*)sc);
         f31c++;
     }
 }
@@ -77,7 +78,7 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
         if (b) {
             create_shadow_mesh(&shadow_b, 0);
             tstring name("shadow_default");
-            shadow_b->res = g_resmgr.lookup(name);
+            shadow_b->res = (res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
         }
     }
     if (a) {
@@ -90,15 +91,15 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
                     shadow_a->res = (res_t*)p288;
                 } else {
                     tstring name("shadow_default");
-                    shadow_a->res = g_resmgr.lookup(name);
+                    shadow_a->res = (res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
                 }
             }
         }
-        shadow_a->render(sc, rgl::identity_pos());
+        ((rgl::mesh*)shadow_a)->render((rgl::scene*)sc, (const rgl::matrix&)rgl::identity_pos());
         f170 = 1;
     }
     if (b) {
-        shadow_b->render(sc, rgl::identity_pos());
+        ((rgl::mesh*)shadow_b)->render((rgl::scene*)sc, (const rgl::matrix&)rgl::identity_pos());
     }
 }
 
@@ -162,8 +163,8 @@ void StratEnt::update_ground_cache()
 void Ctx::query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count)
 {
     int lo[2], hi[2];
-    to_cell(bmin, lo);
-    to_cell(bmax, hi);
+    ((rgl::world*)this)->to_cell(bmin, lo);
+    ((rgl::world*)this)->to_cell(bmax, hi);
     *count = 0;
     for (int i = lo[0]; i <= hi[0]; i++) {
         if (lo[1] <= hi[1]) {
@@ -290,15 +291,15 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
     int al;
     build_shadow_frame(&fr, &amb);
     if (*slot == 0) {
-        *slot = new mesh;
+        *slot = (mesh*)new rgl::mesh;
         {
             tstring name("shadow_default");
-            (*slot)->res = g_resmgr.lookup(name);
+            (*slot)->res = (res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
         }
         (*slot)->slots[1].f4 = 1;
         (*slot)->slots[0].f4 = 1;
     }
-    (*slot)->clear_geometry();
+    ((rgl::mesh_ext*)*slot)->clear_geometry();
     vector4 a2 = ctx->ambient();
     nt = 1;
     s0 = ((a2.z + a2.y) + a2.x) * 0.35f;
@@ -327,7 +328,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             p.x = k * n->x + p.x;
             p.y = p.y + dy;
             p.z = p.z + dz;
-            pi = (*slot)->add_point(&p);
+            pi = ((rgl::mesh*)*slot)->add_point(&p);
             pt[j] = pi;
             ir = 1.0f / radius;
             ik = ir * 0.5f;
@@ -366,13 +367,13 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             for (q = 0; q < nt; q++) {
                 uv = vec2c(u + off[q].x, v + off[q].y);
                 f5c = 0;
-                vtx[q][j] = (*slot)->add_vertex(pi, &uv, &col, n, &f5c);
+                vtx[q][j] = ((rgl::mesh*)*slot)->add_vertex(pi, &uv, &col, n, &f5c);
             }
         }
         for (q = 0; q < nt; q++) {
-            (*slot)->add_face(vtx[q][1], vtx[q][2], vtx[q][0]);
+            ((rgl::mesh*)*slot)->add_face(vtx[q][1], vtx[q][2], vtx[q][0]);
             if (face->n > 3)
-                (*slot)->add_face(vtx[q][0], vtx[q][2], vtx[q][3]);
+                ((rgl::mesh*)*slot)->add_face(vtx[q][0], vtx[q][2], vtx[q][3]);
         }
     }
     (*slot)->slots[0].f28 = 1;
