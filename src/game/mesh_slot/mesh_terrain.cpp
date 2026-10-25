@@ -6,6 +6,7 @@
 #include "../../include/vec.h"
 #include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../game_globals.h"      // canonical g_anim_table (listed directly: the audit reads only the source's own includes)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature

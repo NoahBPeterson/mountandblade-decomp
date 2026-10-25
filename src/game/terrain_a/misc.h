@@ -135,7 +135,7 @@ struct skin_x : skin {
 // (the record is FxDef of include/fx.h: FxDef::set_env_count is defined in terrain_a.cpp)
 
 // ---- level index of a record (0x468770) ----------------------------------------------------------------------------
-#include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3ac4)
+#include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
 struct Rec468770 {
     char pad0[0x58];
     int f58;                                    // +0x58

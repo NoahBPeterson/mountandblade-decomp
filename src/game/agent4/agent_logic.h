@@ -209,7 +209,7 @@ __declspec(dllimport) void __cdecl NewtonBodyGetMatrix(const NewtonBody* b, floa
 __declspec(dllimport) void __cdecl NewtonBodyGetVelocity(const NewtonBody* b, float* v);                         // 0x549210
 __declspec(dllimport) void __cdecl NewtonRagDollBoneGetGlobalMatrix(const NewtonRagDollBone* b, float* m);       // 0x549248
 }
-#include "../../include/fx.h"   // canonical: g_step_tbl (0x5a9c28)
+#include "../../include/fx.h"   // canonical: g_step_tbl (0x5a9c20)
 extern int g_fx_on;                                 // 0x5aa05c
 extern int g_sound_blood;                           // 0x5aa2e4
 extern int g_tick_a;                                // 0x5aa048

@@ -36,7 +36,7 @@ extern GroundType g_ground_types[11];           // 0x8ed4df8 (beyond the annotat
 // particle / ground-spec type record (table at *0x5e28f8, count 0x5e29e8, 0x20 bytes each) and its 0x48-byte boxes
 #include "../ptype.h"
 
-#include "../game_globals.h"   // canonical: g_bit (0x5a8e70)
+#include "../game_globals.h"   // canonical: g_bit (0x5a8e68)
 extern int g_use_shaders;                       // 0x5e28fc
 extern int g_terrain_gate;                      // 0x5aa03c
 extern unsigned g_river_mask_a;                 // 0x5e2580 (0x46bc70: flag bit of the river path)

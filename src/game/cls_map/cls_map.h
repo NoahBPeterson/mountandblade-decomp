@@ -213,7 +213,7 @@ extern int g_a73438;                            // 0xa73438 (selected index, -1 
 extern int g_mission_ctx[];                          // 0xa73300 (selection table)
 extern int g_a732fc[];                          // 0xa732fc (per-side fallback ids)
 extern char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
-#include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3ac4)
+#include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
 extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145}
 void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main mission UI)
 

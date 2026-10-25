@@ -4,6 +4,7 @@
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/mesh2/mesh2_common.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../game_globals.h"      // canonical g_trial_mode (listed directly: the audit reads only the source's own includes)
 
 // @ 0x4f5d20
 WidgetA* __cdecl new_key_label(void* parent, const tstring* name, const tstring* text)

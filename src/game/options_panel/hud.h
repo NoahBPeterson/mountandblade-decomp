@@ -36,7 +36,7 @@ void start_setup(void* m);                  // 0x484590 (this = g_world)
 extern float g_char_scale;                          // 0x590d7c
 
 // the strings the mission items write and the numbers their sounds depend on
-#include "../dialog_manager.h"   // canonical: g_script (0xa72890)
+#include "../dialog_manager.h"   // canonical: g_script (0xa70440)
 extern __int64 g_spawn_lo;                          // 0xa70448
 extern __int64 g_spawn_hi;                          // 0xa70450
 extern float g_mouse_x;                             // 0x5d7094

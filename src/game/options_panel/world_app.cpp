@@ -433,6 +433,7 @@ extern int g_5e28c8;                                // 0x5e28c8
 extern int g_counter;                                // 0x5e28cc
 extern char g_saved;                               // 0x5e2a08
 #include "../config/config.h"   // canonical: g_cfg.disable_sound (0x5a9fd8)
+#include "../game_globals.h"      // canonical g_key_states (listed directly: the audit reads only the source's own includes)
 #define g_key_states_i (*(int(*)[0x40])g_key_states)     // g_key_states (0x5e27c8, game_globals.h) as 0x40 ints
 
 #include "../log_stream.h"                       // LogStream: slot 10 (+0x28) is w_cstr

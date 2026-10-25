@@ -40,6 +40,7 @@
 #include "../../include/timer.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../game_globals.h"      // canonical g_player_wounded_treshold / g_hero_wounded_treshold (listed directly: the audit reads only the source's own includes)
 #include "../../include/phys_set.h"
 #include "../../include/height_field.h"
 #include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)

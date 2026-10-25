@@ -4,6 +4,7 @@
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../list8.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
 
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
 int GameData::save_state(OutStream* out)
