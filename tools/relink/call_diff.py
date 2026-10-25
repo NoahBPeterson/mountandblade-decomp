@@ -78,7 +78,11 @@ def context():
             vas = [name_va[g] for g in group if g in name_va]
             for v in vas:
                 same["f:%08x" % v] = "f:%08x" % vas[0]
-        _ctx.update(img=img, rm=rm, name_va=name_va, md=md, slot_of=slot_of, same=same)
+        # the start of every named global: a data reference compares by the object it falls in (a field of the id
+        # stack at 0xa739fc is the stack at 0xa739f8; a loop that stops at entry 6 of an 11-entry table is not the
+        # table's end, which the next global starts)
+        starts = sorted({int(va, 16) for d in rm["names"].values() for va in d if 0x5a8000 <= int(va, 16) < 0x8ee5b94})
+        _ctx.update(img=img, rm=rm, name_va=name_va, md=md, slot_of=slot_of, same=same, starts=starts)
     return _ctx
 
 
@@ -116,8 +120,9 @@ def orig_calls(va):
             t = (t + 5 + struct.unpack_from("<i", b, 1)[0]) & 0xFFFFFFFF
         return "f:%08x" % t
 
-    out, data = [], []
+    out, data, fields = [], [], set()
     for ins in md.disasm(img.read(lo, hi - lo), lo):
+        fields.update(field_offsets(ins))
         if ins.mnemonic == "call":
             k = call_key(ins, target_of)
             if k:
@@ -126,10 +131,11 @@ def orig_calls(va):
             for v in abs_operands(ins):
                 if DATA_LO <= v < DATA_HI:
                     data.append("d:%08x" % v)
-    return out, data
+    return out, data, fields
 
 
-DATA_LO, DATA_HI = 0x549000, 0x8ee5b94        # the original's .rdata through .bss
+DATA_LO, DATA_HI = 0x5a8000, 0x8ee5b94        # the original's .data and .bss: its writable globals (our side places
+                                               # .rdata constants and strings as its own literals, so they compare as noise)
 
 
 def abs_operands(ins, offsets=False):
@@ -148,6 +154,19 @@ def abs_operands(ins, offsets=False):
     return out if offsets else [v for v, _k in out]
 
 
+def field_offsets(ins):
+    """The displacements of the instruction's memory operands on a base register other than esp / ebp: the struct
+    field offsets the function touches (a frame slot or a global is not one)."""
+    from capstone import x86_const as X
+    out = []
+    for o in ins.operands:
+        if o.type == X.X86_OP_MEM and o.mem.base not in (0, X.X86_REG_ESP, X.X86_REG_EBP) and o.mem.index == 0:
+            d = o.mem.disp
+            if 0 < d < 0x10000:
+                out.append(d)
+    return out
+
+
 def our_calls(coff, sym):
     c = context()
     md, name_va = c["md"], c["name_va"]
@@ -163,10 +182,17 @@ def our_calls(coff, sym):
         if n in c["slot_of"]:
             return c["slot_of"][n]
         va = name_va.get(n)
+        if va:
+            b = c["img"].read(va, 6)
+            if b[:2] == b"\xff\x25":                 # the original's import thunk: the import itself
+                imp = c["img"].imports.get(struct.unpack_from("<I", b, 2)[0])
+                if imp:
+                    return "imp:" + bare(imp)
         return "f:%08x" % va if va else "n:" + n
 
-    out, data = [], []
+    out, data, fields = [], [], set()
     for ins in md.disasm(sec.data[a:b], a):
+        fields.update(field_offsets(ins))
         if ins.mnemonic == "call":
             k = call_key(ins, target_of)
             if k:
@@ -174,12 +200,15 @@ def our_calls(coff, sym):
         elif not ins.mnemonic.startswith("j"):
             for addend, k in abs_operands(ins, offsets=True):
                 n = relocs.get(ins.address + k)
+                if n is None and DATA_LO <= addend < DATA_HI and ins.mnemonic in ("mov", "push", "lea", "cmp"):
+                    data.append("d:%08x" % addend)       # an original address written as a number (literal_addrs.py)
+                    continue
                 if n is None or n.startswith(("__imp_", "??_7", "??_C@", "__real@", "$")) or n in c["slot_of"]:
                     continue                             # (vtables, literals and floats: placed by the link)
                 va = name_va.get(n)
                 if va is not None and DATA_LO <= va + addend < DATA_HI:
                     data.append("d:%08x" % (va + addend))
-    return out, data
+    return out, data, fields
 
 
 def canon(keys):
@@ -243,21 +272,34 @@ def one_module(job):
                 sym = E.best_by_size(coff, sym, hi - lo) if sym else None
             if sym is None:
                 continue
-            (oc, od), (uc, ud) = orig_calls(va), our_calls(coff, sym)
+            (oc, od, of), (uc, ud, uf) = orig_calls(va), our_calls(coff, sym)
         except Exception as e:                           # one bad row must not lose the module
             rows.append({"src": os.path.relpath(src, ROOT), "va": "%08x" % va, "error": str(e)})
             continue
         missing, extra, ratio, score = compare(oc, uc)
         # data: the globals and table bounds both sides address (a loop to &table[6] where the original runs to the
         # end of an 11-entry table). Only addresses our side names are comparable; literals and vtables are skipped.
+        import bisect
+        st = c["starts"]
+        obj = lambda d: "d:%08x" % st[bisect.bisect_right(st, int(d[2:], 16)) - 1] if st and int(d[2:], 16) >= st[0] else d
+        od, ud = [obj(d) for d in od], [obj(d) for d in ud]
         known = set(ud)
         dmiss = sorted(set(od) - known - set(ud)) if ud else []
         dextra = sorted(set(ud) - set(od))
         dmiss = [d for d in dmiss if any(abs(int(d[2:], 16) - int(u[2:], 16)) < 0x1000 for u in ud)]
         score += len(dmiss) + len(dextra)
+        # fields: offsets only one side touches. Register allocation and inlining move some, so this weighs a half
+        # each and is listed only when at least a quarter of the original's offsets are missing (a wrong layout).
+        fmiss, fextra = sorted(of - uf), sorted(uf - of)
+        wrong_layout = of and len(fmiss) * 4 >= len(of) and len(fmiss) >= 2
+        if wrong_layout:
+            score += (len(fmiss) + len(fextra)) // 2
+        else:
+            fmiss, fextra = [], []
         rows.append({"src": os.path.relpath(src, ROOT), "va": "%08x" % va, "sym": sym, "score": score,
                      "order": round(ratio, 2), "missing": dict(missing), "extra": dict(extra),
-                     "data_missing": dmiss, "data_extra": dextra, "orig": oc, "ours": uc})
+                     "data_missing": dmiss, "data_extra": dextra, "fields_missing": ["%#x" % f for f in fmiss],
+                     "fields_extra": ["%#x" % f for f in fextra], "orig": oc, "ours": uc})
     return rows
 
 
@@ -365,6 +407,9 @@ def main():
             print("       - data %s" % name("f:" + d[2:]).replace("?", "", 1))
         for d in r.get("data_extra", []):
             print("       + data %s" % name("f:" + d[2:]).replace("?", "", 1))
+        if r.get("fields_missing"):
+            print("       - fields %s" % " ".join(r["fields_missing"][:16]))
+            print("       + fields %s" % " ".join(r["fields_extra"][:16]))
     print("%d rows compared, %d with differing calls (score >= %d)" % (len(rows), len(flagged), a.min))
     return 0
 

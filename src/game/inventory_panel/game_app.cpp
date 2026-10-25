@@ -32,23 +32,7 @@ struct ScreenObj : Widget {
 void __cdecl frame_hook(void);                               // 0x4ec460 (game/char_sheet/screen.cpp: the end-of-frame callback, a free function)
 extern ScreenObj* g_windows[30];       // 0xa73980 (.. 0xa739f4)
 
-struct IdStack {                    // 0xa739f8
-    int f0;                         // 0xa739f8
-    int** blocks;                   // 0xa739fc
-    unsigned block_count;           // 0xa73a00
-    unsigned a;                     // 0xa73a04
-    unsigned b;                     // 0xa73a08
-};
-extern IdStack g_id_stack;              // 0xa739f8
-
-static __forceinline int current_screen_id()
-{
-    unsigned i = g_id_stack.b + g_id_stack.a - 1;
-    unsigned q = i >> 2;
-    unsigned r = i - q * 4;
-    if (q >= g_id_stack.block_count) q -= g_id_stack.block_count;
-    return g_id_stack.blocks[q][r];
-}
+#include "../id_stack.h"               // IdStack g_id_stack (0xa739f8), current_screen_id
 
 // ---- game (0x5e2930).  Only the members touched here. ------------------------------------------------
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)

@@ -61,6 +61,7 @@ extern ID3DXEffect* g_effect;                                                // 
 extern Game* g_game;                                                        // 0x5e2930
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
+#include "../id_stack.h"                         // the screen id stack (0xa739f8)
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 // 0x415160: open a user file ("rgl_config.txt").
@@ -319,8 +320,7 @@ void VideoPage::update(int reason)
 
     if (apply_requested) {
         // the last menu entry is checked -> go back to the page that opened the options
-        if (*(int*)(*(int*)(0xa739fc + (((0xa73a04 + 0xa73a08 - 1) / 4 - 0xa73a00)) * 4)
-                    + ((0xa73a04 + 0xa73a08 - 1) & 3) * 4) != 0)
+        if (current_screen_id() != 0)
             g_main_menu.set_state(option);
     }
 }
