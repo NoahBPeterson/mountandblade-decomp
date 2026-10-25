@@ -39,8 +39,8 @@ def absolute_operands(ins):
 
 def original_addresses(md):
     """Values that are addresses in the original: function starts, the .rdata/.data addresses its code uses, and
-    the .bss addresses it accesses as memory. A .bss value the original only ever loads as an immediate
-    (100000000 = 0x5f5e100) is an integer, not an address."""
+    the .bss addresses it accesses as memory or that the resolver names as a global. A .bss value the original only
+    ever loads as an immediate and nothing names (100000000 = 0x5f5e100) is an integer, not an address."""
     import resolve as R
     img = R.Image()
     out = set(img.start_set)
@@ -52,6 +52,14 @@ def original_addresses(md):
             for v, kind, _k in absolute_operands(ins):
                 if 0x549000 <= v < 0x5d7000 or (kind == "mem" and 0x5d7000 <= v < HI):
                     out.add(v)
+    # and every address the resolution map names as a global (an object used only as `this`, mov ecx, imm, is never
+    # a memory operand in the original): tools/relink/resolve_map.py's output
+    for mp in (os.path.join(ROOT, "work", "relink", "standalone", "resolve_map.json"),
+               os.path.join(ROOT, "work", "relink", "resolve_map.json")):
+        if os.path.exists(mp):
+            for d in json.load(open(mp))["names"].values():
+                out.update(int(va, 16) for va in d if 0x549000 <= int(va, 16) < HI)
+            break
     return out
 
 
