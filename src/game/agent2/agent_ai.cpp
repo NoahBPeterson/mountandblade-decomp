@@ -425,7 +425,7 @@ void Agent::update_aim_error()
             } else if (t2 != itp_type_crossbow && t2 != itp_type_pistol && t2 != itp_type_musket) {
                 int tr = troop;
                 float sk = (float)g_game->skill_level(tr, skl_power_throw) * 20.0f + (int)g_game->chars[tr].f80[5];
-                float cf = (float)cur.stat_204() * 0.01f;
+                float cf = (float)cur.accuracy() * 0.01f;
                 if (active) {
                     float p21 = (float)cur.stat_21x(1);
                     float fv = (float)cur.stat_1ec() * 5.0f + p21;
@@ -452,7 +452,7 @@ void Agent::update_aim_error()
                     v = 0.0;
                 }
             } else {
-                float cf = (float)cur.stat_204() * 0.01f;
+                float cf = (float)cur.accuracy() * 0.01f;
                 float A, B;
                 if (t2 == itp_type_crossbow) {
                     A = (float)(int)g_game->chars[troop].f80[4];

@@ -275,75 +275,45 @@ ItemD_vt::~ItemD_vt()
 }
 
 // ---- per-frame update of the placed objects (0x4ceb90) --------------------------------------------------
-// The item arrays start at this+0x60; index 0xa0 is the count and the per-slot ids live at +0xa4.
-struct mission_obj_vt {
-    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
-    virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
-    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
-    virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21(); virtual void v22(); virtual void v23(); virtual void v24();
-    virtual void v25(); virtual void v26(); virtual void v27(); virtual void v28(); virtual void v29();
-    virtual void v30(); virtual void v31(); virtual void v32(); virtual void v33(); virtual void v34();
-    virtual void v35(); virtual void v36(); virtual void v37(); virtual void v38(); virtual void v39();
-    virtual void v40(); virtual void v41(); virtual void v42(); virtual void v43(); virtual void v44();
-    virtual void v45(); virtual void v46();
-    void v_add8(int* out);                                      // +0xb0
-    void v_addc();                                              // +0xbc
-    void v_add4();                                              // +0xb4
-    void v_add8b();                                             // +0xb8
-    void v_58(float a, float b);                                // +0x58
-};
-
-struct SceneObj {
-    int pad0[16];
-    int zeros;                                                  // +0x40 = 0
-    int f44;
-    mission_obj_vt* vt;
-    void v_add4();                                              // +0xa4 (thiscall, ret 4)
-};
-
+// The updater's sixteen row widgets (+0x60), the shown count (+0xa0) and the record index per row (+0xa4) fill the menu's
+// list: the widgets are ui_widget.h Widgets (the calls are the original's vtable offsets: hide +0xb0, disable +0xbc,
+// set_text +0xa4, show +0xb4, enable +0xb8, set_pos +0x58, set_scale +0x64).
+#include "../ui_widget.h"                                     // Widget / WidgetObj (the widget interface, ctor 0x48ae20)
 #include "../ui/snd_channel.h"                               // snd_channel: play 0x4875e0 (thiscall, ret 4)
 
-struct placed_rec {
-    char pad0[0x20];
-    int flags;                                                  // +0x20 (bit 4 = skip v_b4)
-    char pad24[0x30 - 0x24];
-    int f30;
-    char pad34[0x34];
+// the 0x60-byte menu record of g_menus (0x5e29b0): title key +0x10, 64-bit flags +0x20, the 0x68-byte entries at +0x54/+0x58
+struct placed_rec {                                             // 0x68 bytes: name +0, translation key +0x20, condition +0x30
+    char pad0[0x30];
+    snd_channel cond;                                           // +0x30 (play 0x4875e0: the entry's condition)
+    char pad4c[0x68 - 0x4c];
 };
-
-struct scene_group {
-    int vt;
-    char pad4[0x1c];
-    int flags;                                                  // +0x20
-    char pad24[0x30];
+struct menu_rec {
+    char pad0[0x20];
+    unsigned __int64 flags;                                     // +0x20 (bit 4: entries start hidden)
+    char pad28[0x54 - 0x28];
     int count;                                                  // +0x54
     placed_rec* recs;                                           // +0x58
-    void v64(float a, float b);                                 // +0x64
 };
 
-// FieldPanel (mission_ui2/field_panel.h, which this TU's headers clash with): the scene widget's relayout 0x48f020 (thiscall, ret 4)
-struct FieldPanel { void relayout(const tstring* text); };
-
-struct scene_handler {
-    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
-    virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
-    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
-    virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21(); virtual void v22(); virtual void v23(); virtual void v24();
-    virtual void v25(); virtual void v26();
-    void v_add8(int* out);                                      // +0xa4 (thiscall, ret 8)
-    virtual void v64(float a, float b);                         // +0x64
+// FieldPanel (mission_ui2/field_panel.h, which this TU's headers clash with): the scene widget's relayout
+struct FieldPanel {
+    void relayout(const tstring* text);                         // 0x48f020 (thiscall, ret 4; mission_ui2/mission_4.cpp)
+};
+// the list panel at +0xec (ui/mission_ui.cpp MissionPanel): its scroll widget at +0x490 and draw
+struct MissionPanel {
+    char pad0[0x490];
+    Widget* scroll;                                             // +0x490
+    void draw();                                                // 0x488d50 (ui/mission_ui.cpp)
 };
 
 struct MissionUpdater {
-    item_base* items[0x10];                                     // +0x00 .. +0x3c (the objects at +0x60)
-    char pad0[0x20];
-    int count;                                                  // +0x40 (at +0xa0)
-    int ids[0x10];                                              // +0x44
+    char pad0[0x60];
+    Widget* items[0x10];                                        // +0x60
+    int count;                                                  // +0xa0
+    int ids[0x10];                                              // +0xa4
     char pade4[0x4];
-    scene_handler* scene;                                       // +0x88 (at +0xe8, 0x4cec0d)
-    scene_group* group;                                         // +0x8c (at +0xec, 0x4cee0c)
+    FieldPanel* scene;                                          // +0xe8 (0x4cec0d)
+    MissionPanel* group;                                        // +0xec (0x4cee0c)
     void update();                                              // 0x4ceb90
 };
 
@@ -351,56 +321,53 @@ struct MissionUpdater {
 void MissionUpdater::update()
 {
     int i = *(int*)(g_game + 0x13aec);
-    scene_group* g = (scene_group*)(i * 0x60 + (int)g_menus);
+    menu_rec* g = (menu_rec*)(i * 0x60 + (int)g_menus);
     tstring* t = g_strtable.find((tstring*)((char*)g + 0x10));
     if (t == 0)
         t = (tstring*)g;
-    tstring tmp = g_script.expand(*t);
-    { tstring stripped = tmp.strip_tags(); ((FieldPanel*)(void*)scene)->relayout(&stripped); }
-    tmp.~tstring();
+    tstring& title = *(tstring*)(g_game + 0xb8);                // the game's current menu title (assign 0x42bc50)
+    title = g_script.expand(*t);
+    { tstring stripped = title.strip_tags(); scene->relayout(&stripped); }
     for (int k = 0; k < 16; k++) {
-        mission_obj_vt* o = (mission_obj_vt*)items[k];
-        o->v_add8(0);
-        o->v_addc();
+        items[k]->hide();
+        items[k]->disable();
     }
-    int n = g->count;
-    int idx = 0;
-    while (idx < n && count < 0x10) {
+    for (int idx = 0; idx < g->count; idx++) {
+        if (count >= 0x10)
+            break;
         *(char*)(g_game + 0x14054) = 0;
-        snd_channel* ch = (snd_channel*)((char*)g->recs + idx * 0x68 + 0x30);
-        if (ch->play(8)) {
-            SceneObj* obj = (SceneObj*)((char*)g->recs + idx * 0x68);
-            tstring* nm = g_strtable.find((tstring*)((char*)obj + 0x20));
+        if (g->recs[idx].cond.play(8)) {
+            placed_rec* r = &g->recs[idx];
+            tstring* nm = g_strtable.find((tstring*)((char*)r + 0x20));
             if (nm == 0)
-                nm = (tstring*)obj;
-            tstring tmp2 = g_script.expand(*nm);
-            tstring tmp3 = tmp2.strip_tags();
-            scene_handler* h = scene;
-            h->v_add8((int*)&obj);
-            tmp3.~tstring();
-            tmp2.~tstring();
-            if (!(g->recs[idx].flags & 0x10))
-                ((mission_obj_vt*)items[count])->v_add4();
+                nm = (tstring*)r;
+            int ret[2];                                         // the 8-byte result slot set_text fills (never read)
+            items[count]->set_text(ret, g_script.expand(*nm).strip_tags());
+            if ((g->flags & 0x10) == 0)
+                items[count]->show();
             if (*(char*)(g_game + 0x14054))
-                ((mission_obj_vt*)items[count])->v_add8b();
+                items[count]->enable();
             ids[count] = idx;
             count++;
         }
-        idx++;
     }
-    float f = (float)count * /*0x54ab1c*/ 0.02f;
-    if (!(f > /*0x5961bc*/ 1000.0f))
+    float f = (float)count * 0.04f;                             // 0x54ab1c
+    if (!(f > 0.24f))                                           // 0x5961bc
         f = 0.24f;
     for (int k = 0; k < count; k++) {
-        mission_obj_vt* o = (mission_obj_vt*)items[k];
-        o->v_58((1.0f - k * 0.5f) /* 0x549d70 */, f);
+        float pos[2];
+        pos[0] = 0.325f - ((WidgetObj*)items[k])->size_x * 0.5f;    // 0x5961b8, 0x549d70
+        pos[1] = f - (float)(k + 1) * 0.04f;
+        items[k]->set_pos(pos);
     }
-    float f2 = (float)count * 0.02f;
-    if (!(f2 > 1000.0f))
-        f2 = 1000.0f;
-    scene_group* gg = group;
-    gg->v64(0.75f /* 0x3f400000 */, f2);
-    ((void (*)(scene_group*))0x488d50)(gg);
+    float h = (float)count * 0.04f;
+    if (!(h > 0.24f))
+        h = 0.24f;
+    float sc[2];
+    sc[0] = 0.75f;
+    sc[1] = h;
+    group->scroll->set_scale(sc);
+    group->draw();
 }
 
 // ---- the array walkers (0x4cf070 / 0x4cf0a0 / 0x4cf0d0) --------------------------------------------------

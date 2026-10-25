@@ -1080,7 +1080,7 @@ private:
 };
 class length_error : public logic_error {
 public:
-    explicit length_error(const std::string& m);
+    explicit length_error(const std::string& m) : logic_error(m) {}   // inline, as <stdexcept>'s: the original has no out-of-line copy (0x43e2a0 builds it in place)
     length_error(const length_error&);
     virtual ~length_error() {}                      // ??_G at 0x40c5c0
 };

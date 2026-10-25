@@ -140,7 +140,9 @@ void destroy_range_mission(mission_type* first, mission_type* last)
 }
 
 // @ 0x4d0c20
-void load_module_files()
+// The engine's Data\*.txt tables (the module's own files are load_module_files 0x50d5e0, inventory_panel/module_files.cpp;
+// the per-frame update 0x50ec40 and the loading screen 0x50f440 call this one first, then that one).
+void load_data_files()
 {
     {
         text_reader_l ts;

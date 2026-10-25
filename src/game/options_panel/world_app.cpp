@@ -50,9 +50,10 @@ template<> void allocator<E50>::destroy(E50*);   // 0x4cd6a0
 struct ArrSet;
 void destroy_arrsets(ArrSet* first, ArrSet* last);   // 0x4727a0
 void* hash_new_node(void* node, void* hint, void* key);                   // 0x4c4e50
-// 0x4c4e50 is a same-TU static in the original (the caller keeps ebx/ebp across it); declare it as one so our
-// build keeps the same live registers. Its argument order is the original's (node, hint, key) with an unused 4th.
-__declspec(noinline) void* list_int_make_node(void* node, void* hint, void* key, void* pad);   // 0x4c4e50
+// 0x4c4e50 is rgl/mesh2/gui_edit.cpp's list_int_make_node: thiscall on the table's node list (ecx = this+4) with the
+// original's (node, hint, key); gui_edit defines it __fastcall with an unused edx word, declared here as it is defined.
+struct list_int;
+void* __fastcall list_int_make_node(list_int* self, void* edx, void* node, void* hint, void* key);   // 0x4c4e50
 // The sub-objects the mission constructor builds in place: rgl/mesh2/rec_tables.h's C4c2d10 (the 0x140-byte block, ctor
 // 0x4c2d10), config/config.h's clip_table (ctor 0x4be6b0) and module_load.h's growable_array (ctor 0x4d1360); those headers do
 // not go with this TU's, so only the constructors are repeated under the class names.
@@ -401,7 +402,7 @@ void HashTab::insert(HOut* out, unsigned* key)
             }
         } while (p != f14[i]);
     }
-    HNode* nn = (HNode*)list_int_make_node(p, p->prev, key, 0);
+    HNode* nn = (HNode*)list_int_make_node((list_int*)&pool, 0, p, p->prev, key);
     pool.grow(1);
     p->prev = nn;
     *(HNode**)nn->prev = nn;

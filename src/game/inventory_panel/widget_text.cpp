@@ -139,7 +139,10 @@ char* g_game;                                       // 0x5e2930
 char  g_flag_a181b8;                                // 0xa181b8
 
 #include "../str_table.h"                                       // StrTable: the translated-string table 0x5e2a18 (find 0x4c6010)
-struct PartyTable { int find(int id); };                        // 0x48ad00
+// 0x48ad00 is Map10007::lookup (ui/mission.h, ui/mission_ui.cpp: the id -> index hash at the start of the party manager)
+struct Map10007 {
+    int lookup(unsigned id);                                    // 0x48ad00 (ret 4)
+};
 struct AccessStream {
     virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
     virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
@@ -158,11 +161,29 @@ unsigned widget::flag1() const
     return flags & 1;
 }
 
-// the text box (vtable 0x597050, size 0x188)
-struct text_box : widget {
+// the text box (vtable 0x597050, size 0x188): the widget base plus the child vector. The base is MissionUi (ui/mission_ui.h,
+// ctor 0x48ae20; that header does not go with this TU's rgl.h), whose slot 0 is the destroying destructor taking the delete
+// flag, not a C++ virtual destructor: deriving from widget.h's view (virtual ~widget) made cl emit ??_Gtext_box calling a
+// ~widget the original does not have. 0x597050 has 51 slots: slot 0 is 0x5021f0 (ui/ui_frame.h UiFrame::destroy, shared
+// through ICF), slots 1..49 the MissionUi ones it overrides or inherits, slot 50 add_child (0x493a30).
+struct text_box_base {
+    virtual void* destroy(unsigned flags);          // +0x00 slot 0 (0x5021f0)
+    virtual void s01(); virtual void s02(); virtual void s03(); virtual void s04(); virtual void s05(); virtual void s06();
+    virtual void s07(); virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11(); virtual void s12();
+    virtual void s13(); virtual void s14(); virtual void s15(); virtual void s16(); virtual void s17(); virtual void s18();
+    virtual void s19(); virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23(); virtual void s24();
+    virtual void s25(); virtual void s26(); virtual void s27(); virtual void s28(); virtual void s29(); virtual void s30();
+    virtual void s31(); virtual void s32(); virtual void s33(); virtual void s34(); virtual void s35(); virtual void s36();
+    virtual void s37(); virtual void s38(); virtual void s39(); virtual void s40(); virtual void s41(); virtual void s42();
+    virtual void s43(); virtual void s44(); virtual void s45(); virtual void s46(); virtual void s47(); virtual void s48();
+    virtual void s49();
+    char pad4[0x178 - 4];
+    text_box_base();                                // 0x48ae20 (MissionUi::MissionUi)
+};
+struct text_box : text_box_base {
     vec_widget kids;                                // +0x178
-    virtual void v1();                              // vtable 0x597050
     text_box();                                     // 0x50d0b0
+    virtual void add_child(text_box_base* c);       // +0xc8 slot 50 (0x493a30)
 };
 
 // @ 0x50d0b0 text_box::text_box
@@ -223,7 +244,7 @@ static inline const char* name_of_2(int id)
 static inline const char* name_of_3(int id)
 {
     char* mgr = g_game + 0xf8;
-    int v = ((PartyTable*)mgr)->find(id);
+    int v = ((Map10007*)mgr)->lookup(id);
     char* rec = *(char**)(mgr + 0x138d0 + (v >> 4) * 4) + (v & 0xf) * 0x5ac8;
     const tstring* t = (const tstring*)(rec + 0xc);
     if (g_flag_a181b8) {

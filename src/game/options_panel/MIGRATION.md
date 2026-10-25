@@ -191,7 +191,7 @@ Removed: `match/include/rgl.h` (every file), the slices' seven `tstring` structs
 `FaceM` / `EdgeM` / `E24` / `E52` / `E100` / `QuadMesh` copies, the slice-local TinyXML header, the local `Game`, `GameL`,
 `QuestRec` stubs.
 
-Open items (not done): the `Core` / `Mission` / `Widget` merges above; 0x4d0c20 `load_module_files` is 262 bytes short without
+Open items (not done): the `Core` / `Mission` / `Widget` merges above; 0x4d0c20 `load_data_files` (was `load_module_files`, the name of 0x50d5e0) is 262 bytes short without
 EH frames and 34 long with `/EHsc` (the original has one frame per stream temporary), not tried further; the uninitialised
 bytes of `Edge` / `Face` temporaries that `add_triangle` etc. copy into the vectors differ from the original's stack
 garbage (harmless; the only observable of the 0x4d1d80 FAIL before the fix).

@@ -236,8 +236,8 @@ extern tstring  g_module_path;                       // 0x8ee3c28 (the module di
 
 void mb_error(const char* fmt, ...);                 // 0x42cc80
 void parse_module_info();                            // 0x4c05b0
-void fn_4d0c20();                                    // 0x4d0c20
-void fn_50d5e0();                                    // 0x50d5e0
+void load_data_files();                                    // 0x4d0c20 (options_panel/module_load.cpp)
+void load_module_files();                                    // 0x50d5e0 (inventory_panel/module_files.cpp)
 
 // message logger (0x5a9f60): the text sink is the virtual `operator<<(const char*)` at +0x28.
 struct logger {
@@ -340,11 +340,11 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
     } else if (*step == 4) {
         *step = 5;
     } else if (*step == 5) {
-        fn_4d0c20();
+        load_data_files();
         { tstring key("ui_loading_setting_data"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 6) {
-        fn_50d5e0();
+        load_module_files();
         { tstring key("ui_loading_textures"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 7) {

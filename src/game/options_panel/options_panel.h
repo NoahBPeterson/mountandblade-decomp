@@ -101,11 +101,12 @@ struct outfile_b : outfile_a {
         }
     }
     ~outfile_b() { shut(); }
-    virtual void b_dummy();
 };
+// 0x595618 (outfile_b) ends at slot 26 (close); 0x595990 (outfile) adds slots 27 and 28 (0x4c4c90, 0x4c6e00)
 struct outfile : outfile_b {
     outfile(const char* p) { path.assign(p); }
-    virtual void c_dummy();
+    virtual void b_dummy();                                         // +0x6c slot 27
+    virtual void c_dummy();                                         // +0x70 slot 28
 };
 
 #define MODE_RA " RA"                                               // 0x595990

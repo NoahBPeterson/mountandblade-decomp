@@ -259,9 +259,8 @@ void GameData::give_item(int troop, int item, int count)
     }
 }
 
-// 0x48ca30 calls the second copy of ItemRef::stat_204 (0x462a10, src/game/ui/item_ref.cpp); both copies define the one symbol
-// ItemRef::stat_204, so the call below is the canonical member. The declaration here only lets the resolution tools (which read
-// the '// 0x' annotations of the sources) see that this slice's callee is the 0x462a10 copy and not the 0x435090 one item_ref.h lists first.
+// 0x48ca30 calls ItemRef::stat_204 (0x462a10, src/game/ui/item_ref.cpp; the raw 0x435090 of agent.cpp is ItemRef::accuracy),
+// the canonical member of item_ref.h. The declaration here repeats its address for the resolution tools.
 namespace icf_twin {
 struct ItemRef {
     int stat_204();   // 0x462a10
