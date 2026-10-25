@@ -1,2 +1,3 @@
 0041f4b0 ?clear@VecView@@QAEXXZ  # std::vector<...>::clear (ICF-folded with every other element type), called from 0x51f40a and 0x51f43a
 00462790 ?randomize@snd_bank@@QAEXXZ  # snd_bank::randomize (src/game/ui/item_ref.h)
+0054ac88 ??_7TextReader@@6B@  # the parties.txt text reader of 0x51f1a0 (vtable 0x54ac88, rgl/stream.h tstream3: final vptr store of the inlined ctor)

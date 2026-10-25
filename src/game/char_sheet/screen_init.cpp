@@ -8,6 +8,21 @@
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
+// std::vector<Widget*>::push_back as the original inlines it (0x4ec824): with room, std::_Uninit_fill_n of the pointer
+// instance (0x40f8a0, ICF-folded: last, 1, &value, allocator; cdecl), else _Insert_n at the end (0x4927d0, thiscall)
+void __cdecl uninit_fill_ptrs(Widget** dst, unsigned n, Widget* const* v, void* al);   // 0x40f8a0
+static inline void push_child(vec<Widget*>& c, Widget* const& v)
+{
+    unsigned n = c.first == 0 ? 0 : (unsigned)(c.last - c.first);
+    if (c.first != 0 && n < (unsigned)(c.end - c.first)) {
+        Widget** p = c.last;
+        uninit_fill_ptrs(p, 1, &v, &c);
+        c.last = p + 1;
+    } else {
+        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c.last), 1, (SceneObject* const&)v);
+    }
+}
+
 // @ 0x4ec4d0
 void Screen::init_screen()
 {
@@ -33,8 +48,6 @@ void Screen::init_screen()
     overlay->set_scale(&s0.x);
     g_5d8788 = 1;
     ((NodeVec*)0x5d7080)->push_back((NodeA* const&)overlay);   // 0x49b120
-    Overlay* self = overlay;
-    self->children.fill_n(*(Widget**)&overlay, 4);
 
     Overlay* buttons = (Overlay*)new_container(0x188, vtbl_597050);   // 0x4931a0, then vptr 0x597050
     f34 = (Widget*)buttons;
@@ -58,10 +71,7 @@ void Screen::init_screen()
     f40 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
     f44 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_character")), 0.5625f, 0.006f, 0.03f);
     f3c = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
-    {
-        Overlay* self = (Overlay*)buttons;
-        self->children.fill_n(*(Widget**)&buttons, 4);
-    }
+    push_child(overlay->children, *(Widget**)&f34);   // 0x4ec824: the map-bar overlay takes the button bar
 
     {
         tstring none("");

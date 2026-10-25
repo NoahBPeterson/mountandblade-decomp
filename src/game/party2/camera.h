@@ -21,9 +21,8 @@ extern int g_cur_param;                             // 0x5e2590
 struct Config;
 extern Config g_cfg;                        // 0x5a9f98 (config.h cannot be included here)
 extern int g_lineno;                                // 0x5e2598  script line number
-// mb_error(const char* msg): the message string reaches it in ecx (__fastcall), so it builds its own
-// tstring and prints; call sites load the address directly into ecx.
-void __fastcall report(const char* msg);            // 0x49cc60
+// report(msg) (0x49cc60): a file-static of the original translation unit (msg in ecx); camera.cpp has a local copy of
+// src/game/script/script_interpreter.cpp's definition, as for check_party (0x49d160).
 int __fastcall size(void* p);             // 0x40f010 (count = (last-first)>>2)
 
 // ---- text log stream (views of the canonical stream_base / text_stream of src/rgl/stream.h, which cannot be included with match/include/rgl.h) ----

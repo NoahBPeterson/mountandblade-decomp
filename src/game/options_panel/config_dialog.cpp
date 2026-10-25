@@ -3,6 +3,7 @@
 // clang-format off
 #include "../config/options_dlg.h"     // OptionsDlg (first: it selects WIN32_LEAN_AND_MEAN and pulls winsock2.h)
 #include <windows.h>
+#include <shlobj.h>                  // SHGetFolderPathA (user_path)
 #include <d3d9.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -140,7 +141,19 @@ int __stdcall SkinDialog(HWND hwnd, const char* cls);    // SkinMagic ord9, thun
 
 #include "../../include/crt.h"   // canonical: sprintf (0x536f8f)
 
-void user_path(char* out);                       // 0x4bab70
+// 0x4bab70 (config/config.cpp, byte-exact): build the user path of a file name in place. A static function in the
+// original, so cl passes `out` in esi (0x4d029b); a local copy with the same body, as in keys_page.cpp.
+static void user_path(char* out)                                            // 0x4bab70
+{
+    char path[0x104];
+    char name[0x104];
+
+    SHGetFolderPathA(0, 0x1a, 0, 0, path);              // CSIDL_APPDATA
+    sprintf(name, "%s\\Mount&Blade", path);
+    CreateDirectoryA(name, 0);
+    sprintf(name, "%s", out);
+    sprintf(out, "%s\\Mount&Blade\\%s", path, name);
+}
 bool mb_file_exists(const char* path);           // 0x415120
 // The dialog procedure runs with this == g_app_obj (0x8ee3c48; Core): 0x4d0240 loads ecx with that address before
 // 0x4b9b90 and passes the same register (edi) to 0x4bee10 / 0x4bf170 / 0x4c6f90 / 0x4b9790. Core, OptionsDlg and

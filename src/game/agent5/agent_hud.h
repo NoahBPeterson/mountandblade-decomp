@@ -188,8 +188,10 @@ extern matrix g_listener;                                         // 0x5aa138 (s
 extern int g_use_shaders;                                      // 0x5e28fc
 extern ShadowMap g_shadow_map;                                        // 0xa70248
 extern int g_flag_a17108, g_flag_a17148, g_flag_a17348;           // 0xa17108, 0xa17148, 0xa17348 (key states that force the sun to full size)
-extern int g_screen_w, g_screen_h;                                // 0x5d75c8, 0x5d75cc
-extern float g_scale_a, g_scale_b;                                // 0x5aa08c, 0x5aa090
+extern int g_screen_w;                                            // 0x5d75c8
+extern int g_screen_h;                                            // 0x5d75cc
+extern float g_scale_a;                                           // 0x5aa08c
+extern float g_scale_b;                                           // 0x5aa090
 
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);   // 0x432510 (max(lo, min(v, hi - 1)))
 int __stdcall FSOUND_3D_Listener_SetAttributes(float* pos, float* vel, float fx, float fy, float fz, float ux, float uy, float uz);   // 0x5342dc (_FSOUND_3D_Listener_SetAttributes@32)

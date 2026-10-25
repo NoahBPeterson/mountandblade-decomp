@@ -1118,8 +1118,9 @@ tstring* StrTable::lookup(const tstring& key)
 }
 
 // stand-in caller for the register convention of ui_weapon_class_name (type in EAX, destination buffer in ESI): the
-// real caller is far away (0x4598d5); this function only makes cl pass the buffer in ESI and is not in the binary
-int ui_other2(char*, int);
+// real caller is far away (0x4598d5); this function only makes cl pass the buffer in ESI and is not in the binary.
+// ui_other2 is part of that scaffolding (keeps the buffer live across the call); defined here so the relink resolves it.
+__declspec(noinline) int ui_other2(char* p, int i) { return p[i]; }
 // @ 0x43a280
 static __declspec(noinline) void ui_weapon_class_name(int type, char* out)
 {

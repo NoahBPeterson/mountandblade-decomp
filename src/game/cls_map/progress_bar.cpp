@@ -76,6 +76,11 @@ void progress_bar::update()
 // ---- 0x4e4060..0x4e4340: the std::vector members the linker placed here ----------------------------------------------------------
 // Whole-class explicit instantiations (as in cls_map.cpp): push_back<E50> 0x4e4060, resize<E68> 0x4e40f0, resize<E176> 0x4e41e0,
 // the RagModel helpers 0x4e42b0 / 0x4e42f0, the loading_config ones 0x4e4320 / 0x4e4340 (+ its unwinder 0x4e43b0, inside the COMDAT).
+// loading_config is the 0x1f8-byte model record of src/game/model_b.h (constructor 0x4d3640, destructor 0x4d3720, read 0x4e7b30):
+// the whole-class instantiation below also emits vector(n) / resize(n), which default-construct one; they reach the record's
+// constructor (0x4d3640, the one definition: options_panel/ragdoll_models.cpp) through this forwarder.
+#include "../model_b.h"
+inline loading_config::loading_config() { new ((void*)this) model_b; }
 template class std::vector<E50>;
 template class std::vector<E68>;
 template class std::vector<E176>;
@@ -1291,13 +1296,14 @@ struct MapResMgr {                              // the resource manager's lod / 
 };
 #define MAP_RESMGR ((MapResMgr*)&g_resmgr)
 
-// the access-code stream as the rest of the program sees it (an abstract reader); while its type is incomplete the reader's calls
-// cannot be devirtualised, so the original reaches its slots through these out-of-line helpers, which take the stream as their second argument
-struct MsStream;
-void stream_f(MsStream* s, float* v);
-void stream_block(MsStream* s, void* v);
-void stream_i(MsStream* s, int* v);
-void stream_str(MsStream* s, tstring* v);
+// the scene stream is the engine's stream_base (src/rgl/stream.h): the original calls its read slots through the vtable
+// (0x4e7b52 r_tstr +0x54, 0x4e7b5e r_uint +0x40 for the 16-dword blocks, r_int +0x4c, r_float +0x38)
+#include "../../rgl/stream.h"
+struct MsStream : stream_base {};
+inline void stream_f(MsStream* s, float* v) { s->r_float(v); }
+inline void stream_block(MsStream* s, void* v) { s->r_uint((unsigned*)v); }
+inline void stream_i(MsStream* s, int* v) { s->r_int(v); }
+inline void stream_str(MsStream* s, tstring* v) { s->r_tstr((rgl::string*)v); }
 
 // a 0x10-byte string record kept in the [0x19c] / [0x1ac] vectors (0x4cbb10 resizes them)
 struct str16 { tstring s; };

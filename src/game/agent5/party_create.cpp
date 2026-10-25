@@ -72,7 +72,9 @@ struct GameData { tstring string_value(int index); };                  // 0x48e9
 extern char g_gui_dirty;                        // 0x5d8788 (set whenever a window was installed)
 extern int g_tutorial_off;                      // 0x5a9fac (non-zero: tutorials are switched off)
 extern void* g_windows[];                       // 0xa73980 (the window manager: its first screen is the message box)
-struct WindowOpener { void open(int window); };     // 0x494260 (ret 4)
+struct WindowOpener {                           // the window manager (world_data.h WindowMgrW)
+    void open(int window);                      // 0x494260 (ret 4)
+};
 extern float g_row_unit;                        // 0x599ae8 (0.088f: the height of one row of the 3-column item grid)
 MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
