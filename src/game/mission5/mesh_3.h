@@ -21,6 +21,78 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/mesh_x.h"
+
+// ---- canonical declarations -----------------------------------------------------------------------------------------------------
+// The slices below each saw the same objects through their own view classes. The members they call that other objects define are
+// declared here under the defining classes (the names the definitions carry) and reached from the views by forwarders at the end of
+// this header (the views are layout-compatible: each cites the offsets it shares).
+struct graph_obj {                                          // the polygon mesh as rgl/mesh2/gui_edit.cpp / mesh_2.cpp define its members
+    void select_mode(int mode, char on);                    // 0x4c53f0
+    void update_terrain(int mode, const float* dir);        // 0x4c7f90
+    void calc_vertex_mode(int mode);                        // 0x4c54f0
+    void remove_node(int index);                            // 0x4c8af0
+    void remove_edge(int index);                            // 0x4ca9b0
+    void remove_face(int index);                            // 0x4cb940
+};
+struct PolyMesh {
+    void build_adjacency();                                 // 0x470920 (terrain_b/terrain_b.cpp)
+};
+struct Shape {                                              // char_sheet/progress_bar.cpp
+    void build_spikes(rgl::mesh* m);                        // 0x4e65e0
+    void build_ribbons(rgl::mesh* m);                       // 0x4e6a70
+    void polygon_to_mesh(rgl::mesh* m);                     // 0x4e75a0
+};
+struct camera_ray {
+    void screen_to_world(rgl::vector4* from, rgl::vector4* to);   // 0x4bd2f0 (config/config.cpp)
+};
+struct CreateGameOptionsPage {
+    void update_checks();                                   // 0x4bf640 (config.h)
+};
+struct MapEditorDialog {                                    // rgl/mesh2/gui_edit.cpp
+    void update_objects();                                  // 0x4c7e20
+    void refresh();                                         // 0x4c77c0
+};
+struct Mission_s2b5c0 {
+    void find_position(char* ok, rgl::vector4* pos);        // 0x52bdb0 (mission_5.cpp)
+};
+struct Mission {
+    int add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn);   // 0x44f870 (agent4/agent_logic.cpp)
+};
+struct PlacedObj {
+    void reset();                                           // 0x4352f0 (agent/agent.cpp)
+};
+struct GuiCtx;
+struct MeshOwner_s2fe40;
+void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out);   // 0x5302f0 (defined in mesh_3.cpp)
+void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (agent/agent.cpp)
+void __fastcall pick_entity(GuiCtx* ctx);                   // 0x4ed8d0 (char_sheet/pick_entity.cpp)
+struct ItemRef {
+    tstring mesh_name();                                    // 0x434b20 (item_ref.h)
+};
+struct res_obj;
+struct ItemKind {                                           // include/item_kind.h
+    tstring mesh_name_for(int bit);                         // 0x433bf0
+    res_obj* mesh_for(unsigned __int64 cls, int bit);       // 0x433cb0 (returns the res_obj that is the mesh)
+};
+struct resmgr {
+    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (rgl/core/resmgr.h)
+};
+struct Vec3; struct pos;
+void vec3_sub(Vec3* out, const Vec3* a, const Vec3* b);     // 0x432830 (cdecl)
+pos* __cdecl identity_pos(pos* out);                        // 0x40cd00
+namespace rgl { struct mat3; }
+rgl::mat3* identity3(rgl::mat3* out);                       // 0x40cd60 (cdecl; returns out)
+struct mface;
+struct MVert { char b[0x18]; };  struct MPoly { char b[0x64]; };  struct MEdge { char b[0x34]; };   // terrain_b/poly_mesh.h
+template<class T> struct vec { void* v0; void* v1; void* v2; void* v3; void clear(); };     // entity.h's vec<T>: vec<mface>::clear is 0x41f4b0, shared by every 4-byte-element vector
+namespace std {
+template<> void vector<MVert, allocator<MVert> >::push_back(const MVert&);              // 0x477c10 (terrain_b)
+template<> void vector<MPoly, allocator<MPoly> >::push_back(const MPoly&);              // 0x477d20
+template<> void vector<MEdge, allocator<MEdge> >::push_back(const MEdge&);              // 0x477e10
+}
+#include "../std_vec_out_of_line.h"
+
 using rgl::vector4;
 using rgl::matrix;
 
@@ -80,20 +152,20 @@ struct gui_manager_s2cf60 {
     char padA0[0xac - 0xa0];
     char need_redraw[3];                            // +0xac..+0xae  one rebuild flag per mode
 
-    unsigned pick_vert(const vector4& p, const vector4& d);     // 0x52da20
-    unsigned pick_edge(const vector4& p, const vector4& d);     // 0x52dc00
-    unsigned pick_poly(const vector4& p, const vector4& d);     // 0x52df40
-    void select_mode(int mode, char on);                        // 0x4c53f0
-    void toggle_flag(int mode, int index);                   // 0x52e510 (provisional)
-    void scale_selected(int mode, const vector4& c);                // 0x52e590 (provisional)
-    void transform_selected(int mode, const float* m);                   // 0x52e6d0 (provisional)
-    void remove_selected();                                         // 0x52e870 (provisional)
-    void make_copy(void* state);                               // 0x52e960 (provisional)
-    void apply_copy(void* state);                                // 0x52edb0 (provisional)
-    void update_terrain(int mode, const vector4& dir);          // 0x4c7f90
-    void build_spikes(rgl::mesh* m);                             // 0x4e65e0
-    void build_ribbons(rgl::mesh* m);                            // 0x4e6a70
-    void polygon_to_mesh(rgl::mesh* m);                               // 0x4e75a0
+__forceinline unsigned pick_vert(const vector4& p, const vector4& d);     // 0x52da20
+__forceinline unsigned pick_edge(const vector4& p, const vector4& d);     // 0x52dc00
+__forceinline unsigned pick_poly(const vector4& p, const vector4& d);     // 0x52df40
+__forceinline void select_mode(int mode, char on);                        // 0x4c53f0
+__forceinline void toggle_flag(int mode, int index);                   // 0x52e510 (provisional)
+__forceinline void scale_selected(int mode, const vector4& c);                // 0x52e590 (provisional)
+__forceinline void transform_selected(int mode, const float* m);                   // 0x52e6d0 (provisional)
+__forceinline void remove_selected();                                         // 0x52e870 (provisional)
+__forceinline void make_copy(void* state);                               // 0x52e960 (provisional)
+__forceinline void apply_copy(void* state);                                // 0x52edb0 (provisional)
+__forceinline void update_terrain(int mode, const vector4& dir);          // 0x4c7f90
+__forceinline void build_spikes(rgl::mesh* m);                             // 0x4e65e0
+__forceinline void build_ribbons(rgl::mesh* m);                            // 0x4e6a70
+__forceinline void polygon_to_mesh(rgl::mesh* m);                               // 0x4e75a0
 };
 
 // ---- engine globals ---------------------------------------------------------------------------
@@ -111,7 +183,7 @@ struct Scene_s2cf60 {
 
 
 struct MapView_s2cf60 {
-    void screen_to_world(vector4& p, vector4& q);         // 0x4bd2f0  picking ray (origin, target)
+__forceinline void screen_to_world(vector4& p, vector4& q);         // 0x4bd2f0  picking ray (origin, target)
 };
 
 struct MapEditor_s2cf60 {
@@ -125,22 +197,22 @@ struct MapEditor_s2cf60 {
 };
 
 struct EditorPanel_s2cf60 {
-    void update_checks();                    // 0x4bf640  (no arguments)
+__forceinline void update_checks();                    // 0x4bf640  (no arguments)
 };
 
 
 // ---- transform helpers ------------------------------------------------------------------------
 struct mat3_s2cf60 {                                       // three basis rows, 0x30 bytes
     float m[12];
-    void rotate_fu(const float& angle);             // 0x40e570  forward/up rows by *angle
-    void rotate_su(const float& angle);             // 0x40e670  side/up rows by *angle
-    void rotate_sf(const float& angle);             // 0x40e770  side/forward rows by *angle
+__forceinline void rotate_fu(const float& angle);             // 0x40e570  forward/up rows by *angle
+__forceinline void rotate_su(const float& angle);             // 0x40e670  side/up rows by *angle
+__forceinline void rotate_sf(const float& angle);             // 0x40e770  side/forward rows by *angle
 };
-void identity3(mat3_s2cf60* m);                            // 0x40cd60 (cdecl)
+__forceinline void identity3(mat3_s2cf60* m) { identity3((rgl::mat3*)m); }      // 0x40cd60 (cdecl)
 
 struct mat2_s2cf60 {                                       // 2x2 rotation matrix, 0x10 bytes
     float m[4];
-    void rotate_2x2(float angle);                       // 0x4f3b40 (thiscall, ret 4)
+void rotate_2x2(float angle);                       // 0x4f3b40 (thiscall, ret 4: the original passes the matrix in ecx; the definition in char_sheet/terrain_page_input.cpp declares it cdecl, so this one stays a view)
 };
 
 // ---- per-key input state ----------------------------------------------------------------------
@@ -241,7 +313,8 @@ struct MeshImpl_s2da20 : MeshData_s2da20 {
 };
 
 namespace rgl {
-void vec3_sub(vector4& out, const vector4& a, const vector4& b);   // 0x432830: out = a - b (xyz)
+__forceinline void vec3_sub(vector4& out, const vector4& a, const vector4& b)   // 0x432830: out = a - b (xyz)
+{ ::vec3_sub((Vec3*)&out, (const Vec3*)&a, (const Vec3*)&b); }
 }
 
 struct Mesh_s2da20 : MeshData_s2da20 {    unsigned pick_vert(const rgl::vector4& p, const rgl::vector4& d);
@@ -297,9 +370,7 @@ struct mpoly_s2dfd0 {                          // 0x64
     char pad61[3];
 };
 
-namespace rgl {
-void vec3_sub(vector4& out, const vector4& a, const vector4& b);   // 0x432830: out = a - b (xyz)
-}
+// (rgl::vec3_sub: defined above)
 
 struct Mesh_s2dfd0 {
     char pad0[0x18];
@@ -319,12 +390,11 @@ struct Mesh_s2dfd0 {
     void transform_selected(int dummy, const float* m);   // 0x52e6d0
     void remove_selected();   // 0x52e870
 
-    void calc_vertex_mode(int mode);    // 0x4c54f0   re-stamps the +0x14 selection field
-    void remove_node(int index);        // 0x4c8af0
-    void remove_edge(int index);        // 0x4ca9b0
-    void remove_face(int index);        // 0x4cb940
-    void build_adjacency();                     // 0x470920
-    void scale_selected(int mode, const vector4& c); // 0x52e590
+    __forceinline void calc_vertex_mode(int mode) { ((graph_obj*)this)->calc_vertex_mode(mode); }    // 0x4c54f0   re-stamps the +0x14 selection field
+    __forceinline void remove_node(int index) { ((graph_obj*)this)->remove_node(index); }        // 0x4c8af0
+    __forceinline void remove_edge(int index) { ((graph_obj*)this)->remove_edge(index); }        // 0x4ca9b0
+    __forceinline void remove_face(int index) { ((graph_obj*)this)->remove_face(index); }        // 0x4cb940
+    __forceinline void build_adjacency() { ((PolyMesh*)this)->build_adjacency(); }     // 0x470920
 };
 
 // Ray / convex-polygon intersection.  The polygon's vertices (at most four) are gathered once,
@@ -343,8 +413,8 @@ template<class T> struct vec_s2e960 {
     T*   last;      // +0x8   (end of used range)
     T*   end;       // +0xc
     int size() const { return first ? (int)(last - first) : 0; }
-    void clear();                       // 0x41f4b0
-    void push_back(const T& v);         // 0x477c10 / 0x477d20 / 0x477e10
+    __forceinline void clear() { ((vec<mface>*)this)->clear(); }                       // 0x41f4b0 (vec<mface>::clear, shared by every 4-byte-element vector)
+    __forceinline void push_back(const T& v);         // 0x477c10 / 0x477d20 / 0x477e10 (std::vector<MVert / MPoly / MEdge>::push_back)
 };
 
 struct mface_s2e960 {                          // 0x18
@@ -417,9 +487,7 @@ struct Mesh_s2e960 {
     int  edge_index(int index, const rgl::matrix& m);
     void apply_copy(const rgl::matrix& m);
 
-    void build_adjacency();                     // 0x470920
-    void apply_copy(void* state); // 0x52edb0
-    void make_copy(void* state); // 0x52e960
+    __forceinline void build_adjacency() { ((PolyMesh*)this)->build_adjacency(); }     // 0x470920
 };
 
 // Duplicate every flagged polygon into polys2, mapping its vertex/edge references through
@@ -473,7 +541,7 @@ struct PlacedObj_s2f250 : IfaceB_s2f250 {
     void* f1b4;                                 // +0x1b4  spawn handle, virtual +0x5c
     int m1b8, m1bc, m1c0, m1c4;                 // +0x1b8
     PlacedObj_s2f250() { reset(); }                    // 0x437830 (inlined here)
-    void reset();                               // 0x4352f0
+    __forceinline void reset() { ((PlacedObj*)this)->reset(); }     // 0x4352f0 (PlacedObj::reset)
 };
 
 // ---- the non-virtual slot at +0x5c of the object behind record->f1b4 ------------------------------
@@ -489,8 +557,8 @@ struct Prop_s2f250 {
 
 // ---- scene mesh_s2f250 + the 16-byte {pad, first, last, end} container ----------------------------------
 struct mesh_s2f250 {
-    mesh_s2f250* clone();                              // 0x41c6d0
-    void set_color(vector4 c);                  // 0x47af30 (16-byte argument passed by value)
+    __forceinline mesh_s2f250* clone();                // 0x41c6d0
+    __forceinline void set_color(vector4 c);           // 0x47af30 (16-byte argument passed by value)
 };
 struct MeshVec_s2f250 {
     int alloc;                                  // +0 (unused by this function)
@@ -499,7 +567,8 @@ struct MeshVec_s2f250 {
     mesh_s2f250** end;                                 // +0xc
     unsigned size() const { return first ? (unsigned)(last - first) : 0u; }
     unsigned capacity() const { return first ? (unsigned)(end - first) : 0u; }
-    void _Insert_n(mesh_s2f250** pos, unsigned n, mesh_s2f250** val);          // 0x410610 (ICF'd vector<int>::_Insert_n)
+    __forceinline void _Insert_n(mesh_s2f250** pos, unsigned n, mesh_s2f250** val)      // 0x410610 (ICF'd vector<int>::_Insert_n)
+    { ((int_stdvec*)this)->insert_n((int*)pos, n, *(int*)val); }
     void push_back(mesh_s2f250* x)
     {
         if (size() < capacity()) {
@@ -514,7 +583,7 @@ struct MeshVec_s2f250 {
 // ---- scene object at g_map_s2f250+0x65e4: 64-byte frame at +0x58, mesh_s2f250 vector at +0x118, shown at +0x140 ---
 struct mat3_s2f250 { vector4 s, f, u; };
 struct smat_s2f250 : matrix {
-    void rotate_sf(const float* angle);         // 0x40e770
+    __forceinline void rotate_sf(const float* angle) { rotate_about_u(angle); }         // 0x40e770 (rgl::matrix::rotate_about_u)
 };
 struct SceneObj_s2f250 {
     virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
@@ -538,16 +607,17 @@ struct Map_s2f250 {
     SceneObj_s2f250* object;                           // +0x65e4  the edited scene object
     char pad65e8[0x668c - 0x65e8];
     PlacedObj_s2f250* records;                         // +0x668c  the 0x1c8 record array
-    void init_placed(PlacedObj_s2f250*, const int* kind, const int* id, const int* value, const matrix*);   // 0x435860
-    void build_mesh_name(PlacedObj_s2f250*, MeshVec_s2f250*);    // 0x5302f0
-    int add_placed(const int* kind, const int* id, const int* value, const matrix*, int* spawn);     // 0x44f870
+    __forceinline void init_placed(PlacedObj_s2f250*, const int* kind, const int* id, const int* value, const matrix*);   // 0x435860
+    __forceinline void build_mesh_name(PlacedObj_s2f250*, MeshVec_s2f250*);    // 0x5302f0
+    __forceinline int add_placed(const int* kind, const int* id, const int* value, const matrix*, int* spawn);     // 0x44f870 (Mission::add_placed)
 };
 struct IntVec_s2f250 {
     int* first;                                 // +0
     int* last;                                  // +4
     int* end;                                   // +8
-    void resize(unsigned n, int v);             // 0x43f310
-    void push_back_out(const int& v);               // 0x440b30
+    // the vector starts 4 bytes before `first` (its allocator word is the field in front: Frame__s2f250::selected)
+    __forceinline void resize(unsigned n, int v) { ((std::vector<int>*)((char*)this - 4))->resize(n, v); }     // 0x43f310
+    __forceinline void push_back_out(const int& v) { ((std::vector<int>*)((char*)this - 4))->push_back(v); }  // 0x440b30
 };
 struct Frame__s2f250 {
     char pad0[0x1a09c];
@@ -580,11 +650,11 @@ struct ObjRec20_s2f250 {                               // 0x20-byte record at 0x
 struct EditorView_s2f250 {
     char pad0[0x2f9];
     char f2f9;                                  // +0x2f9
-    void pick_entity();                         // 0x4ed8d0
+    __forceinline void pick_entity() { ::pick_entity((GuiCtx*)this); }      // 0x4ed8d0
 };
 struct MapEditorDialog_s2f250 {
-    void update_objects();                      // 0x4c7e20
-    void refresh();                             // 0x4c77c0
+    __forceinline void update_objects() { ((MapEditorDialog*)this)->update_objects(); }     // 0x4c7e20
+    __forceinline void refresh() { ((MapEditorDialog*)this)->refresh(); }                  // 0x4c77c0
 };
 
 // ---- globals (all offsets/addresses from the disassembly) ----------------------------------------
@@ -603,8 +673,8 @@ extern HWND g_editor_hwnd;                      // 0x8ee3d30
 
 // ---- callees / helpers not local to this slice ---------------------------------------------------
 void set_list_scroll(int dir);                      // 0x4bb260 (cdecl)
-matrix* identity(matrix* out);                  // 0x40cd00 (cdecl, returns out)
-mat3_s2f250* identity3(mat3_s2f250* out);                     // 0x40cd60 (cdecl, returns out)
+__forceinline matrix* identity(matrix* out) { return (matrix*)identity_pos((pos*)out); }                    // 0x40cd00 (cdecl, returns out)
+__forceinline mat3_s2f250* identity3(mat3_s2f250* out) { return (mat3_s2f250*)identity3((rgl::mat3*)out); }   // 0x40cd60 (cdecl, returns out)
 
 // The original inlines a component-wise cross (0x407dc0's body); keep the same evaluation order.
 static __forceinline vector4 cross_inline_s2f250(const vector4& a, const vector4& b)
@@ -647,8 +717,8 @@ struct MapEditor_s2f250 {
     int f318;                                   // +0x318  up-repeat timer
     int f31c;                                   // +0x31c  selected variant
     int f320;                                   // +0x320  previous variant
-    void find_position(char* ok, vector4* pos); // 0x52bdb0
-    void apply(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out); // 0x52fe40
+    __forceinline void find_position(char* ok, vector4* pos) { ((Mission_s2b5c0*)this)->find_position(ok, pos); } // 0x52bdb0
+    __forceinline void apply(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out); // 0x52fe40 (ViewCtrl_s2fe40::apply)
     void update();                              // 0x52f250
 };
 
@@ -701,7 +771,7 @@ struct Item_s2fe40;
 struct ItemRef_s2fe40 {
     int item;                                           // +0
     unsigned m4;                                        // +4
-    tstring mesh_name();                                // 0x434b20 (returns tstring by value)
+    __forceinline tstring mesh_name() { return ((ItemRef*)this)->mesh_name(); }     // 0x434b20 (returns tstring by value)
 };
 
 struct Item_s2fe40 {
@@ -710,8 +780,8 @@ struct Item_s2fe40 {
     char pad30[0x1c8 - 0x30];
     int type_flags;                                     // +0x1c8 (low byte: item type)
     char pad1cc[0x238 - 0x1cc];
-    tstring mesh_name_for(int bit);                     // 0x433bf0 (returns tstring by value)
-    rgl::mesh* mesh_for(int a, unsigned mask, int b);   // 0x433cb0
+    __forceinline tstring mesh_name_for(int bit) { return ((ItemKind*)this)->mesh_name_for(bit); }   // 0x433bf0 (returns tstring by value)
+    __forceinline rgl::mesh* mesh_for(int lo, unsigned hi, int b) { return (rgl::mesh*)((ItemKind*)this)->mesh_for(((unsigned __int64)hi << 32) | (unsigned)lo, b); }   // 0x433cb0 (the first two words are its 64-bit class mask)
 };
 
 extern int  g_item_kind_count;                               // 0x5e29d4
@@ -741,7 +811,7 @@ extern char g_cfg[]; // 0x5a9f98
 
 // ---- resource manager (0x5d6fa0) -----------------------------------------------------------------------
 struct resmgr_s2fe40 {
-    std::vector<rgl::mesh*> find_meshes(const tstring* name);   // 0x41b960
+    __forceinline std::vector<rgl::mesh*> find_meshes(const tstring* name) { return ((resmgr*)this)->find_meshes((const rgl::string*)name); }   // 0x41b960
 };
 
 
@@ -757,15 +827,15 @@ struct MeshOwner_s2fe40 {
 // ---- matrix / rotation helpers -------------------------------------------------------------------------
 struct Matrix12_s2fe40 {
     float v[12];
-    void rotate_fu(const float* angle);                 // 0x40e570
-    void rotate_su(const float* angle);                 // 0x40e670
-    void rotate_sf(const float* angle);                 // 0x40e770
+    __forceinline void rotate_fu(const float* angle) { ((matrix*)this)->rotate_about_s(angle); }     // 0x40e570
+    __forceinline void rotate_su(const float* angle) { ((matrix*)this)->rotate_about_f(angle); }     // 0x40e670
+    __forceinline void rotate_sf(const float* angle) { ((matrix*)this)->rotate_about_u(angle); }     // 0x40e770
 };
-Matrix12_s2fe40* identity3(Matrix12_s2fe40* out);                     // 0x40cd60
+__forceinline Matrix12_s2fe40* identity3(Matrix12_s2fe40* out) { return (Matrix12_s2fe40*)identity3((rgl::mat3*)out); }     // 0x40cd60
 
 struct Mat2_s2fe40 {
     float m[4];
-    void rotate_2x2(float angle);                           // 0x4f3b40 (thiscall, ret 4)
+    void rotate_2x2(float angle);                           // 0x4f3b40 (thiscall, ret 4; see mat2_s2cf60)
 };
 struct vector2_s2fe40 {
     float x, y;
@@ -779,7 +849,6 @@ struct ViewCtrl_s2fe40 {
     float yaw;                                          // +0x268
 
     void apply(char* f1, float* pos, char* f2, float* out, char* f3, float* vec, char* f4);
-    void apply(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out); // 0x52fe40
 };
 
 // rotate one width-2 row of the view matrix (the original inlines this three times)
@@ -790,5 +859,39 @@ static void rotate_pair_s2fe40(float* p, float c, float s)
     p[1] = c * y + s * x;
 }
 
+
+// ---- forwarders: the views reach the functions other objects define through the classes that define them -------------------------------
+inline void MapEditor_s2f250::apply(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out)
+{ ((ViewCtrl_s2fe40*)this)->apply(a, (float*)off, b, (float*)frame, c, (float*)col, out); }
+__forceinline mesh_s2f250* mesh_s2f250::clone() { return (mesh_s2f250*)((mesh_x*)this)->clone(); }
+__forceinline void mesh_s2f250::set_color(vector4 c) { ((mesh_x*)this)->set_color(c); }
+__forceinline void Map_s2f250::init_placed(PlacedObj_s2f250* o, const int* kind, const int* id, const int* value, const matrix* m)
+{ ::init_placed((PlacedObj*)o, kind, id, value, m); }
+__forceinline void Map_s2f250::build_mesh_name(PlacedObj_s2f250* o, MeshVec_s2f250* v)
+{ ::build_mesh_name((MeshOwner_s2fe40*)o, (std::vector<rgl::mesh*>*)v); }
+__forceinline int Map_s2f250::add_placed(const int* kind, const int* id, const int* value, const matrix* m, int* spawn)
+{ return ((Mission*)this)->add_placed(kind, id, value, m, spawn); }
+__forceinline unsigned gui_manager_s2cf60::pick_vert(const vector4& p, const vector4& d) { return ((Mesh_s2da20*)this)->pick_vert(p, d); }
+__forceinline unsigned gui_manager_s2cf60::pick_edge(const vector4& p, const vector4& d) { return ((Mesh_s2da20*)this)->pick_edge(p, d); }
+__forceinline unsigned gui_manager_s2cf60::pick_poly(const vector4& p, const vector4& d) { return ((Mesh_s2da20*)this)->pick_poly(p, d); }
+__forceinline void gui_manager_s2cf60::select_mode(int mode, char on) { ((graph_obj*)this)->select_mode(mode, on); }
+__forceinline void gui_manager_s2cf60::toggle_flag(int mode, int index) { ((Mesh_s2dfd0*)this)->toggle_flag(mode, index); }
+__forceinline void gui_manager_s2cf60::scale_selected(int mode, const vector4& c) { ((Mesh_s2dfd0*)this)->scale_selected(mode, &c); }
+__forceinline void gui_manager_s2cf60::transform_selected(int mode, const float* m) { ((Mesh_s2dfd0*)this)->transform_selected(mode, m); }
+__forceinline void gui_manager_s2cf60::remove_selected() { ((Mesh_s2dfd0*)this)->remove_selected(); }
+__forceinline void gui_manager_s2cf60::make_copy(void* state) { ((Mesh_s2e960*)this)->make_copy(*(const matrix*)state); }
+__forceinline void gui_manager_s2cf60::apply_copy(void* state) { ((Mesh_s2e960*)this)->apply_copy(*(const matrix*)state); }
+__forceinline void gui_manager_s2cf60::update_terrain(int mode, const vector4& dir) { ((graph_obj*)this)->update_terrain(mode, &dir.x); }
+__forceinline void gui_manager_s2cf60::build_spikes(rgl::mesh* m) { ((Shape*)this)->build_spikes(m); }
+__forceinline void gui_manager_s2cf60::build_ribbons(rgl::mesh* m) { ((Shape*)this)->build_ribbons(m); }
+__forceinline void gui_manager_s2cf60::polygon_to_mesh(rgl::mesh* m) { ((Shape*)this)->polygon_to_mesh(m); }
+__forceinline void MapView_s2cf60::screen_to_world(vector4& p, vector4& q) { ((camera_ray*)this)->screen_to_world(&p, &q); }
+__forceinline void EditorPanel_s2cf60::update_checks() { ((CreateGameOptionsPage*)this)->update_checks(); }
+__forceinline void mat3_s2cf60::rotate_fu(const float& angle) { ((matrix*)this)->rotate_about_s(&angle); }
+__forceinline void mat3_s2cf60::rotate_su(const float& angle) { ((matrix*)this)->rotate_about_f(&angle); }
+__forceinline void mat3_s2cf60::rotate_sf(const float& angle) { ((matrix*)this)->rotate_about_u(&angle); }
+template<> __forceinline void vec_s2e960<mface_s2e960>::push_back(const mface_s2e960& v) { ((std::vector<MVert>*)this)->push_back(*(const MVert*)&v); }
+template<> __forceinline void vec_s2e960<mpoly_s2e960>::push_back(const mpoly_s2e960& v) { ((std::vector<MPoly>*)this)->push_back(*(const MPoly*)&v); }
+template<> __forceinline void vec_s2e960<medge_s2e960>::push_back(const medge_s2e960& v) { ((std::vector<MEdge>*)this)->push_back(*(const MEdge*)&v); }
 
 #endif // MISSION5_MESH_3_H

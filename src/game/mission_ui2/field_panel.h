@@ -6,15 +6,14 @@
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/mesh_x.h"
 #include "../ui/mission_ui.h"
 
 // The panel is a MissionPanel (src/game/ui/mission_ui.h: draw 0x488d50 is its tail call): its five child meshes at +0x108 are
 // the bound shapes, its two draw children at +0x480 are the shape mirror (slot 1 is the mirror panel) and `host` (+0x490) is the
 // scene widget. Only the members of other types are declared here.
 struct FieldV2 { float x, y; FieldV2(float a, float b) { x = a; y = b; } };
-struct FieldShape : rgl::mesh {             // a child mesh as the bounds code sees it: the AABB at +0x22c is x0, y0 / x1, y1
-    void compute_bounds();                  // 0x419300
-};
+typedef mesh_x FieldShape;                  // a child mesh as the bounds code sees it: the AABB at +0x22c is x0, y0 / x1, y1 (compute_bounds 0x419300: mesh_x.h)
 struct FieldVisual {                        // the view object (a camera): colour at +0x14c, floats at +0xf0/+0xf4
     virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
     virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();

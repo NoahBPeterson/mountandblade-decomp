@@ -9,6 +9,7 @@
 //
 // Boundary: class changes only (Game | Scene at 0x51eb90, TroopRec | Game at 0x520b20); no forward call proves either.
 //-----------------------------------------------------------------------------
+#include "../std_vec_out_of_line.h"      // std::vector<int / __int64>::resize: the out-of-line instances of agent_combat.cpp / world_data.cpp
 #include "./troop_rec.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../party/game.h"
@@ -89,7 +90,7 @@ void Scene::clear()
         v->cells[i * 2] = -1;
         v->cells[i * 2 + 1] = -1;
     }
-    v->free_ids.resize(0, 0);
+    ((std::vector<int>*)&v->free_ids)->resize(0, 0);
     for (int i = 0; i < v->count; i++) {
         *(int*)((char*)this->get(i) + 4) = 0;
         v->free_ids.push_back(i);
@@ -156,12 +157,12 @@ void PartyRecIO::read(stream_base* s, int flag)
         s->r_bool(data + 0x8cc);
         int n1;
         s->r_int(&n1);
-        ((IntVec*)(data + 0x8b8))->resize(n1, 0);
+        ((std::vector<int>*)(data + 0x8b8))->resize(n1, 0);
         for (int i = 0; i < n1; i++)
             s->r_int(*(int**)(data + 0x8bc) + i);
         int n2;
         s->r_int(&n2);
-        ((IntVec*)(data + 0x59f4))->resize(n2, 0);
+        ((std::vector<int>*)(data + 0x59f4))->resize(n2, 0);
         for (int i = 0; i < n2; i++)
             s->r_int(*(int**)(data + 0x59f8) + i);
         data[0x5a04] = 1;
@@ -169,7 +170,7 @@ void PartyRecIO::read(stream_base* s, int flag)
         int n3;
         s->r_int(&n3);
         I64Vec* slots = (I64Vec*)(data + 0x59d8);
-        slots->resize(n3, 0);
+        ((std::vector<__int64>*)slots)->resize(n3, 0);
         for (int i = 0; i < n3; i++)
             s->r_i64(slots->_Myfirst + i);
     } else {
@@ -239,7 +240,7 @@ void Game::start_new_game()
 
     TextReader stream;
     {
-        const char* path = module_path("parties.txt");
+        const char* path = ((GameData*)this)->module_path("parties.txt");
         if (!((text_stream*)&stream)->open_read_text(path))
             mb_error("Unable to open %s", path);
         stream_base* sp = &stream;                  // the original calls the slots through the vtable
@@ -320,7 +321,7 @@ void SimpleTag::arm()
 {
     for (int i = 0; i < count; i++) {
         DelayItem* it = &((DelayItem*)array)[i];
-        it->timer.set_delay(frand() * it->delay);
+        ((gui_timer*)&it->timer)->set_delay(frand() * it->delay);
     }
 }
 

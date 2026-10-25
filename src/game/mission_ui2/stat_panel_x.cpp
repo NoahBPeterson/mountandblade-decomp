@@ -27,70 +27,13 @@ static __forceinline int rnd(const float* p)
     return (*p - fl <= 0.5f) ? i : i + 1;
 }
 
-// @ 0x48be00
-void ItemRef::compact(int n)
-{
-    if (n <= 0)
-        n = 0x60;
-    int i = 0;
-    while (i < n) {
-        if (this[i].item == -1)
-            break;
-        i++;
-    }
-    int j = i + 1;
-    if (j < n) {
-        ItemRef* d = &this[i];
-        while (j < n) {
-            if (this[j].item != -1) {
-                if (j >= n)
-                    break;
-                d->item = this[j].item;
-                d->m4 = this[j].m4;
-                i++;
-                this[j].item = -1;
-                d++;
-            }
-            j++;
-        }
-    }
-    sort_sel(i);
-}
-
-// Views of members defined in this file as an object that does not know them (an undefined declaration): the original
-// calls set_attr (from add_attr) and compact (from sort_inv) with `this` kept in a callee-saved register, as for a callee
-// outside the translation unit; a same-file callee lets cl assume its register use and inline part of it.
-#include "../troop_ext.h"      // TroopExt: the one definition (falloff 0x4375b0, set_attr 0x48be70)
-struct ItemRefExt { void compact(int n); };               // 0x48be00
+// ItemRef::compact (0x48be00) and Troop::set_attr (0x48be70) are defined further down, after their callers sort_inv / add_attr:
+// the original calls both with `this` kept in a callee-saved register, as for a callee outside the translation unit, and cl
+// assumes the register use of a callee defined earlier in the file (and inlines part of it). Declared by item_ref.h / troop.h.
 
 // the attribute words (+0x58) and the packed skill words (+0x68) as the setters index them
 #define ATTR(t) ((int*)&(t)->f58[0])
 #define F7A(t) (((unsigned char*)(t))[0x7a])
-
-// @ 0x48be70
-void Troop::set_attr(int idx, int val)
-{
-    if (val < 0)
-        val = 0;
-    else if (val > 100)
-        val = 100;
-    ATTR(this)[idx] = val;
-    int v = F7A(this) & 0xf;
-    int x = v;
-    int base = ATTR(this)[0];
-    int m = g_skill_tbl[36].cap;
-    if (v < 0)
-        x = 0;
-    else if (v > m)
-        x = m;
-    if ((float)(base + 0x23 + x * 2) < hp) {
-        if (v < 0)
-            v = 0;
-        else if (v > m)
-            v = m;
-        hp = (float)(base + 0x23 + v * 2);
-    }
-}
 
 // @ 0x48bef0
 void Troop::add_attr(int idx, int delta)
@@ -115,9 +58,34 @@ void Troop::add_attr(int idx, int delta)
                     hp -= 1.0f;
             }
             int sv = ATTR(this)[idx] + step;
-            ((TroopExt*)this)->set_attr(idx, sv);
+            set_attr(idx, sv);
         }
     } while (--n);
+}
+
+// @ 0x48be70
+void Troop::set_attr(int idx, int val)
+{
+    if (val < 0)
+        val = 0;
+    else if (val > 100)
+        val = 100;
+    ATTR(this)[idx] = val;
+    int v = F7A(this) & 0xf;
+    int x = v;
+    int base = ATTR(this)[0];
+    int m = g_skill_tbl[36].cap;
+    if (v < 0)
+        x = 0;
+    else if (v > m)
+        x = m;
+    if ((float)(base + 0x23 + x * 2) < hp) {
+        if (v < 0)
+            v = 0;
+        else if (v > m)
+            v = m;
+        hp = (float)(base + 0x23 + v * 2);
+    }
 }
 
 // @ 0x48bf90
@@ -167,7 +135,7 @@ void Troop::add_skill(int id, int delta)
 void Troop::sort_inv()
 {
     int count = inv_count();
-    ((ItemRefExt*)&inv[0])->compact(count);
+    inv[0].compact(count);
     if (count > 0) {
         int passes = count;
         int limit = count - 1;
@@ -208,6 +176,36 @@ void Troop::sort_inv()
             passes--;
         } while (passes != 0);
     }
+}
+
+// @ 0x48be00
+void ItemRef::compact(int n)
+{
+    if (n <= 0)
+        n = 0x60;
+    int i = 0;
+    while (i < n) {
+        if (this[i].item == -1)
+            break;
+        i++;
+    }
+    int j = i + 1;
+    if (j < n) {
+        ItemRef* d = &this[i];
+        while (j < n) {
+            if (this[j].item != -1) {
+                if (j >= n)
+                    break;
+                d->item = this[j].item;
+                d->m4 = this[j].m4;
+                i++;
+                this[j].item = -1;
+                d++;
+            }
+            j++;
+        }
+    }
+    sort_sel(i);
 }
 
 // @ 0x48c210

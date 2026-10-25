@@ -56,6 +56,13 @@ extern char g_range_tbl[];             // 0x590aac per-mode {lo, hi} float pairs
 // ---- the level (scene: first field of the mission object) -----------------------------------------------------
 #include "../cell.h"                                  // cell: one grid cell (0x34 bytes; collect_masked 0x4396b0, collect_point 0x439780)
 #include "../light.h"                   // Light (shared with strat / script)
+// The level is the engine's world (src/rgl/scene/world.h; mission.h's scene_world is the same object for agent3). Its walk / to_cell /
+// query_box / remove_entity are the functions of the classes that define them, so they are called through these declarations
+// of just those members (agent/agent.h, strat/strat_entity.h and rgl/scene/world.h cannot be included next to this header's classes).
+namespace rgl { struct world { void to_cell(const float* p, int* out); void remove_entity(int id); }; }   // 0x41ed00, 0x41f0d0
+struct Grid2 { void walk(const float* a, const float* b, int (*cells)[2], int* count); };               // 0x437290 (agent/agent.h)
+struct Ctx { void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count); };   // 0x42aa50 (strat/strat_entity.h)
+struct SoundCtl { char emit_event(int id, int a, int b); };      // 0x435790 (agent/agent.h): GameData seen as the event emitter
 struct level {
     char pad0[8];
     int dim[2];                                         // 0x08 cells per axis
@@ -71,10 +78,6 @@ struct level {
     int lights_alloc;                                   // 0xb8 (std::vector<Light*>: allocator, first, last, end)
     Light** lights_first;                               // 0xbc
     Light** lights_last;                                // 0xc0
-    void walk(const float* a, const float* b, int (*cells)[2], int* count);        // 0x437290 (src/game/agent)
-    void to_cell(const float* p, int* out) const;                                    // 0x41ed00
-    void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50
-    void remove_entity(int id);                                                     // 0x41f0d0
     void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870
     void nav_search(const float* p, const int* face, const int* max_depth, int depth, int* best, float* best_d);   // 0x439900
     int nearest_face(const float* p);                                               // 0x439a50
@@ -87,14 +90,13 @@ struct level {
 };
 
 // ---- animation: the animator at body+0x304 (Skeleton), its channels (Curve in src/game/agent/curve.h) ---------------
-struct Elem12 {                                         // 12-byte element of an animation's track list
-    int a[3];
-    vector4 sample(int idx) const;                       // 0x436ae0
-};
+#include "../../include/key_table.h"                    // KeyTable: the 12-byte track element (vals, keys, count); sample 0x436ae0
+typedef KeyTable Elem12;                                // 12-byte element of an animation's track list
+struct KeyHolder { vector4 sample(int key); };          // 0x436b90 (agent/agent.h): the animation's own key frames at +0x28
 struct Anim {                                           // object with a list of 12-byte tracks at +0x1c (0x439fc0)
     char pad0[0x18];
     std::vector<Elem12> elems;                          // 0x18 (first at 0x1c)
-    vector4 sample(int idx) const;                       // 0x436b90
+    // the key frames of the animation itself are at +0x28 (KeyHolder::kf, 0x436b90)
 };
 // SubAnim, AnimDef, DefList: src/game/agent_obj.h
 #include "../channel.h"             // Channel (shared with agent3)
@@ -107,6 +109,8 @@ struct vec_e32 {
     unsigned size() const { return first == 0 ? 0 : last - first; }
     V32& operator[](unsigned i) { return *(first + i); }
 };
+// rgl::mesh (src/rgl/mesh.h; its header clashes with the game headers here, so only the two chain accessors mnode calls are declared)
+namespace rgl { struct point20; struct keyframes; struct mesh { std::vector<point20>& get70(); keyframes& get_kf(); }; }   // 0x40eba0, 0x40ec00
 struct mnode {
     char pad0[0x18];
     mnode* master;                                      // 0x18
@@ -118,8 +122,6 @@ struct mnode {
     struct { int a0; int* data; int count; } ints;      // 0xa4
     char pad_b0[0xc8 - 0xb0];
     float f_c8;                                         // 0xc8
-    vec_e32* get_verts();                               // 0x40eba0
-    void* get_ints();                                   // 0x40ec00
     void calc_bounds(vector4* mn, vector4* mx);         // 0x438d80
 };
 
@@ -172,7 +174,10 @@ struct vec1c8 {
 #include "../int_vec.h"                                 // IntVec (was vec_int here: fill_ptr 0x438c30)
 // vector<E12>::_Ucopy -> std::_Uninit_copy over the 12-byte records of the next object (0x436d10, src/game/agent)
 E12* __cdecl uninit_copy12(E12* f, E12* l, E12* d, void* al, ptr_tag tag);
-void __cdecl push_heap_node(hnode* first, int hole, int top, hnode val, node_gt pred);   // 0x4b2520
+// 0x4b2520 is defined (party2/party_2.cpp) as push_heap_elem over the 12-byte OpenItem record, which hnode mirrors (face, cost, priority)
+struct OpenItem { int node; float cost; float dist; OpenItem(const OpenItem& o) : node(o.node), cost(o.cost), dist(o.dist) {} };
+struct HeapGt { bool operator()(const OpenItem& a, const OpenItem& b) const { return a.dist > b.dist; } };
+void __cdecl push_heap_elem(OpenItem* first, int hole, int top, OpenItem val, HeapGt pred);   // 0x4b2520
 // the free functions of this object
 void __cdecl uninit_fill_n12(E12* f, unsigned n, const E12& v, allocE12& al, ptr_tag tag);                       // 0x438960
 E1c8* __cdecl copy_backward1c8(E1c8* f, E1c8* l, E1c8* d);                                                       // 0x4389d0

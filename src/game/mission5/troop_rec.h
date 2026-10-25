@@ -18,6 +18,9 @@
 #include "../../include/game_recs.h"
 #include "../mesh_slot/mesh_slot.h"        // Animator (g_anim, 0x8ed4f60)
 
+struct GameData {                                   // include/game_data.h (its g_game clashes with game.h): only the member this file calls
+    const char* module_path(const char* name);      // 0x4639d0 (game.h's Game::module_path is the same function)
+};
 void __cdecl mb_error(const char* fmt, ...);        // 0x42cc80
 float frand();                                      // 0x40e400 (returns st0)
 
@@ -49,7 +52,11 @@ struct PartyRecIO {
 struct DelayItem { float delay; char pad[0x1c]; Timer timer; };       // 0x30 bytes (0x51f7c0)
 
 // ---- the record tables the start-up clears ---------------------------------------------------------------------
-struct VecView { void* v0; void* v1; void* v2; void clear(); };         // std::vector<...>::clear 0x41f4b0 (shared out-of-line instance)
+// 0x41f4b0 is defined (entity.cpp) as vec<mface>::clear and shared by every 4-byte-element vector, so the calls are written against that
+// name: the declaration below is entity.h's vec<T> reduced to the one member this module calls (entity.h itself pulls in rgl.h).
+struct mface;
+template<class T> struct vec { void* v0; void* v1; void* v2; void* v3; void clear(); };
+typedef vec<mface> VecView;                                              // std::vector<...>::clear 0x41f4b0 (shared out-of-line instance)
 
 // ---- the item stack helpers of the troop item passes -----------------------------------------------------------------
 extern float g_inv_gain;                            // 0x590b10 (0.13f)

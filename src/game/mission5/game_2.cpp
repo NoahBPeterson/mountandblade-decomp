@@ -29,38 +29,27 @@
 #include "../../include/iface.h"
 
 // ---- the map object (0xa732b8): vertex and group vectors of the ground geometry ---------------------------------------
-struct MapVert { rgl::vector4 p; rgl::vector4 n; int f20; };    // 0x24 bytes
-struct MapGroup {                                               // 0x88 bytes
-    int n;                                                      // +0
-    int vidx[4];                                                // +4
-    char pad14[0x10];                                           // +0x14
-    int f24;                                                    // +0x24
-    int link[4];                                                // +0x28
-    int f38[4];                                                 // +0x38
-    int f48, f4c, f50;                                          // +0x48
-    char pad54[0x10];                                           // +0x54
-    float f64;                                                  // +0x64
-    int f68, f6c, f70;                                          // +0x68
-    rgl::vector4 c;                                             // +0x74
-    int f84;                                                    // +0x84
-    MapGroup();                                                 // 0x4246f0
-};
-struct MapVerts {                                               // vector<MapVert>, _Myfirst at +4
+// The records and vectors are the ones world_grid.cpp (rgl/dynamic) defines: ground_v36 (0x24 bytes: position, normal, a flag) and ground_g136
+// (0x88 bytes), std::vector<ground_v36> and its group sibling vec136, the group constructor Group (0x4246f0), the container constructor NavCore
+// (0x478150) and PolyGeom::build (mesh_slot/mesh_pass.cpp 0x47ee60). They are declared here in the shape this module needs.
+struct ground_v36  { int v[9]; };                               // 0x24 bytes
+struct ground_g136 { int v[34]; };                              // 0x88 bytes: n +0, vertex ids +4, ...
+struct Group : ground_g136 { Group(); };                        // 0x4246f0
+namespace std {
+template<> void vector<ground_v36, allocator<ground_v36> >::resize(size_t, ground_v36);     // 0x424740
+}
+struct vec136 {                                                 // vector<ground_g136>, _Myfirst at +4
     char pad0[4];
-    MapVert* first; MapVert* last; MapVert* end;
-    void resize(unsigned n, MapVert v);                         // 0x424740
+    ground_g136* first; ground_g136* last; ground_g136* end;
+    void resize(unsigned n, ground_g136 v);                     // 0x424cc0
 };
-struct MapGroups {                                              // vector<MapGroup>, _Myfirst at +4
-    char pad0[4];
-    MapGroup* first; MapGroup* last; MapGroup* end;
-    void resize(unsigned n, MapGroup v);                        // 0x424cc0
-};
+struct PolyGeom { void build(); };                              // 0x47ee60
+typedef char nav_core_size_chk[sizeof(NavCore) == 0x68 ? 1 : -1];     // new NavCore allocates the map store's 0x68 bytes
 struct MapStore {                                               // the global map (0xa732b8), 0x68 bytes
-    MapVerts verts;                                             // +0
-    MapGroups groups;                                           // +0x10
+    char pad0[4];
+    ground_v36* first; ground_v36* last; ground_v36* end;       // +0 vector<ground_v36>
+    vec136 groups;                                              // +0x10
     char pad20[0x68 - 0x20];
-    MapStore();                                                 // 0x478150
-    void build();                                           // 0x47ee60
 };
 extern MapStore* g_nav;                                         // 0xa732b8
 
@@ -70,10 +59,10 @@ stream_base* read_map(stream_base* s, MapStore* map);           // 0x520c00
 void Game::build_map()
 {
     if (!g_new_game_done) {
-        g_nav = new MapStore();
+        g_nav = (MapStore*)new NavCore();
         file_text s;
-        const char* path = module_path("map.txt");
-        if (!s.open_read_text(path))
+        const char* path = MODULE_PATH("map.txt");
+        if (!OPEN_READ_TEXT(s, path))
             mb_error("Unable to open %s", path);
         if (!s.failed) {
             read_map(&s, g_nav);
@@ -87,16 +76,16 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
 {
     int n;
     s->r_int(&n);
-    map->verts.resize(n, MapVert());
+    ((std::vector<ground_v36>*)map)->resize(n, ground_v36());
     int i;
     for (i = 0; i < n; i++) {
-        char* p = (char*)map->verts.first + i * 0x24;
+        char* p = (char*)map->first + i * 0x24;
         s->r_float((float*)p).r_float((float*)p + 1).r_float((float*)p + 2);
-        *(float*)((char*)map->verts.first + i * 0x24 + 0x20) = -1.0f;
+        *(float*)((char*)map->first + i * 0x24 + 0x20) = -1.0f;
     }
     int n2;
     s->r_int(&n2);
-    map->groups.resize(n2, MapGroup());
+    map->groups.resize(n2, Group());
     for (i = 0; i < n2; i++) {
         char* g = (char*)map->groups.first + i * 0x88;
         s->r_int((int*)(g + 0x24));
@@ -106,7 +95,7 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
         for (int j = 0; j < nn; j++)
             s->r_int((int*)(g + 4 + j * 4));
     }
-    map->build();
+    ((PolyGeom*)map)->build();
     return s;
 }
 
@@ -122,7 +111,7 @@ void Game::build_scene()
                 char* cell = row + j * 0x20;
                 void* p = *(void**)cell;
                 if (p) {
-                    ((WorldX*)world)->destroy_obj(p);
+                    ((::world*)world)->erase_entity((rgl::entity*)p);
                     *(void**)(cell + 0x100) = *(void**)cell;
                     *(void**)cell = 0;
                 }
@@ -132,9 +121,9 @@ void Game::build_scene()
     }
     log_stream_ptr()->w_cstr("map mesh built.\n");
     rgl::vector4 tmp;
-    self->fog1 = *self->sun_color(&tmp);
+    self->fog1 = *((GameG*)self)->sun_color(&tmp);
     log_stream_ptr()->w_cstr("get_ideal_sun_color.\n");
-    self->fog2 = *self->fog_color(&tmp);
+    self->fog2 = *((GameG*)self)->fog_color(&tmp);
     log_stream_ptr()->w_cstr("get_ideal_fog_color.\n");
     self->fog1 = rgl::vector4(0.5f, 0.48f, 0.47f);
     self->fog2 = rgl::vector4(0.8f, 0.8f, 0.8f);
@@ -142,7 +131,9 @@ void Game::build_scene()
     world->amb = rgl::vector4(0.35f, 0.37f, 0.4f);
     world->amb.w = 1.0f;
 
-    Wind* w = new Wind();
+    Wind* w = (Wind*)::operator new(sizeof(Wind));                // new Wind: the 0x7c-byte wind object; wind.h's init() is its constructor 0x461480
+    if (w)
+        w = (Wind*)((wind*)w)->init();
     {
         std::vector<Wind*>& wv = world->winds;
         if (wv.size() < wv.capacity()) {
@@ -171,27 +162,28 @@ void Game::build_scene()
         self->wind->f44.z = 0.0f;
     }
 
-    rgl::entity* track = (rgl::entity*)world->create_entity(9);
+    rgl::entity* track = (rgl::entity*)((rgl::world*)world)->create_entity(9);
     self->track_entity = track;
     float d = 1000000.0f;
     track->set_fbc(&d);
     self->map_track = new rgl::mesh();
-    self->map_track->res = g_resmgr.get_material(rgl::string("map_track"));
-    ((EntityX*)self->track_entity)->add_mesh(self->map_track);
+    self->map_track->res = g_resmgr.get_material(RStr("map_track"));
+    ((Poser*)self->track_entity)->add_extra((int)self->map_track);
 
-    rgl::entity* obj = (rgl::entity*)world->create_entity(9);
-    self->map_obj = rgl::resmgr().get_object(g_env_rows)->clone();
+    rgl::entity* obj = (rgl::entity*)((rgl::world*)world)->create_entity(9);
+    self->map_obj = ((mesh_x*)((resmgr*)&g_resmgr)->get_object(g_env_rows))->clone();
     self->map_obj->scale(60.0f);
     self->map_obj->mask = 0xfffeffff;
-    ((EntityX*)obj)->add_mesh(self->map_obj);
+    ((Poser*)obj)->add_extra((int)self->map_obj);
     d = 100000000.0f;
     obj->set_fbc(&d);
     world->f78 = (int)obj;
 
-    self->compass = (rgl::entity*)world->create_entity(9);
-    rgl::mesh* mc = rgl::resmgr().get_object(&rgl::string("compass"))->clone();
+    self->compass = (rgl::entity*)((rgl::world*)world)->create_entity(9);
+    RStr compass_name("compass");
+    rgl::mesh* mc = ((mesh_x*)((resmgr*)&g_resmgr)->get_object((const rgl::string*)&compass_name))->clone();
     mc->scale(0.28f);
-    ((EntityX*)self->compass)->add_mesh(mc);
+    ((Poser*)self->compass)->add_extra((int)mc);
 
     if (!g_new_game_done) {
         build_map_trees();
@@ -209,11 +201,11 @@ void Game::build_scene()
 
     ((rgl::world*)world)->step(0.0f);
 
-    unsigned id = (unsigned)((PartyMgrView*)&scene)->first_party_id();
+    unsigned id = (unsigned)((PartyMgr*)&scene)->first_party_id();
     if (id < (unsigned)scene.f138dc) {
         do {
-            self->add_order_arrow((int)id);
-            ((PartyMgrView*)&scene)->next_party_id((int*)&id);
+            ((c49bea0::MissionAgents*)self)->add_order_arrow((int)id, 0);
+            ((PartyMgr*)&scene)->next_party_id((int*)&id);
         } while (id < (unsigned)scene.f138dc);
     }
     log_stream_ptr()->w_cstr("parties added.\n");
@@ -228,14 +220,14 @@ void Game::build_scene()
     }
     if (idx < sprites.count) {
         do {
-            self->spawn_battle_icon(idx);
-            ((SpriteNext*)&sprites)->next(&idx);
+            ((c49b630::Mission*)self)->spawn_battle_icon((unsigned)idx);
+            ((GamePool*)&sprites)->next(&idx);
         } while (idx < sprites.count);
     }
     release_orders();
     more_start();
     if (f13a34 == 0) {
-        self->emit_event(0, 0, 0);
+        ((SoundCtl*)self)->emit_event(0, 0, 0);
         f13a34 = 1;
     }
 }
@@ -246,7 +238,7 @@ __declspec(noinline) void Game::release_orders()
     TrackRec* p = tracks._Myfirst;
     if (p < tracks._Mylast) {
         do {
-            ((GameMapView*)this)->init_event(p);
+            ((GameData*)this)->init_event((E92*)p);
             p++;
         } while (p < tracks._Mylast);
     }
@@ -274,7 +266,7 @@ void Game::build_map_trees()
     dir.x = -*(float*)((char*)cam + 0x44);
     dir.y = -*(float*)((char*)cam + 0x48);
     dir.z = -*(float*)((char*)cam + 0x4c);
-    normalize(&dir);                                                 // 0x407d60
+    dir.normalize();                                                 // 0x407d60
 
     int npts = (int)(((char*)mgr->pts_end - (char*)mgr->pts) / 0x24);
 
@@ -317,7 +309,7 @@ void Game::build_map_trees()
                  | ((unsigned*)((char*)&g_bit + 0x0))[18] | ((unsigned*)((char*)&g_bit + 0x0))[24] | ((unsigned*)((char*)&g_bit + 0x0))[26] | ((unsigned*)((char*)&g_bit + 0x0))[20] | ((unsigned*)((char*)&g_bit + 0x0))[4];
     unsigned u19 = ((unsigned*)((char*)&g_bit + 0x0))[0];
     unsigned u20 = ((unsigned*)((char*)&g_bit + 0x0))[18];
-    scan_arrays(scratch, (void*)((char*)scratch + 0x40), self);                // 0x523630
+    scan_arrays((void*)((char*)scratch + 0x40), (int)scratch);        // 0x523630 (stdcall: the buffer, then a value it ignores)
 
     for (int i = 0; i < npts; i++) {
         MapNavVert* p = &mgr->pts[i];
@@ -345,8 +337,9 @@ void Game::build_map_trees()
     }
 
     // ---- F: material-name tables ------------------------------------------
-    char tmp[0x40];
-    m5_tstring_ctor0(tmp);                                                      // 0x42bbd0
+    char tmp_buf[0x40];
+    tstring* tmp = (tstring*)tmp_buf;
+    new (tmp) tstring();                                                        // 0x42bbd0
     void* map_arr[0x40];    for (int i = 0; i < 0x40; i++) map_arr[i] = 0;
     void* snow_arr[0x40];   for (int i = 0; i < 0x40; i++) snow_arr[i] = 0;
     void* steppe_arr[0x40]; for (int i = 0; i < 0x40; i++) steppe_arr[i] = 0;
@@ -354,24 +347,24 @@ void Game::build_map_trees()
     for (int i = 0; i < 4; i++) if (g_map_tree_types_a[i] > 0x40) g_map_tree_types_a[i] = 0x40;
 
     for (int i = 0; i < g_map_tree_types_a[0]; i++) {
-        assign(tmp, "map_tree_");                                    // 0x59c0d8
-        push_back(tmp, (char)('a' + i));
-        map_arr[i] = get_object(&g_resmgr, tmp);
+        tmp->assign("map_tree_");                                    // 0x59c0d8
+        tmp->push_back((char)('a' + i));
+        map_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
     for (int i = 0; i < g_map_tree_types_a[1]; i++) {
-        assign(tmp, "snow_tree_");                                   // 0x59c0cc
-        push_back(tmp, (char)('a' + i));
-        snow_arr[i] = get_object(&g_resmgr, tmp);
+        tmp->assign("snow_tree_");                                   // 0x59c0cc
+        tmp->push_back((char)('a' + i));
+        snow_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
     for (int i = 0; i < g_map_tree_types_a[2]; i++) {
-        assign(tmp, "steppe_tree_");                                 // 0x59c0bc
-        push_back(tmp, (char)('a' + i));
-        steppe_arr[i] = get_object(&g_resmgr, tmp);
+        tmp->assign("steppe_tree_");                                 // 0x59c0bc
+        tmp->push_back((char)('a' + i));
+        steppe_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
     for (int i = 0; i < g_map_tree_types_a[3]; i++) {
-        assign(tmp, "desert_tree_");                                 // 0x59c0ac
-        push_back(tmp, (char)('a' + i));
-        desert_arr[i] = get_object(&g_resmgr, tmp);
+        tmp->assign("desert_tree_");                                 // 0x59c0ac
+        tmp->push_back((char)('a' + i));
+        desert_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
 
     // ---- G: grid dimensions and cell entities -----------------------------
@@ -386,7 +379,7 @@ void Game::build_map_trees()
 
     for (int row = 0; row < g_page_rows; row++) {
         for (int col = 0; col < g_page_cols; col++) {
-            void* ent = create_entity(9);                                    // 0x428440
+            void* ent = ((rgl::world*)g_level)->create_entity(9);                // 0x428440
             ((void**)g_map_pages)[col * 8 + row] = ent;
             (*(void(**)(void*, int))((char*)*(void**)ent + 0x18))(ent, 0);   // virtual slot +0x18
         }
@@ -402,8 +395,7 @@ void Game::build_map_trees()
             int ci = col * 8 + row;
             void* cell = ((void**)g_map_pages)[ci];
 
-            void* cellmesh = (void*)::operator new(0x260);
-            cellmesh = cellmesh ? m5_mesh_ctor(cellmesh) : 0;                   // 0x412a90
+            void* cellmesh = new rgl::mesh();                                   // 0x412a90
 
             for (int mi = 0; mi < 0xd; mi++) {
                 int mt;
@@ -413,8 +405,7 @@ void Game::build_map_trees()
                 else               mt = mi;
                 unsigned umask = ((unsigned*)((char*)&g_bit + 0x0))[mi * 2];
 
-                void* m = (void*)::operator new(0x260);
-                m = m ? m5_mesh_ctor(m) : 0;
+                void* m = new rgl::mesh();
 
                 // cell centre (written every material iteration in the original)
                 *(float*)((char*)cell + 0x88) = (x1 + x0) * 0.5f;
@@ -472,7 +463,7 @@ void Game::build_map_trees()
                             if (mt == 0x17 && ((u19 & (unsigned)flags[pi]) == 0
                                             || (u36 & (unsigned)flags[pi]) == 0)) {
                                 int nlist[64]; int ncnt = 0;
-                                build_chain(mgr, pi, nlist, &ncnt);             // 0x5234e0
+                                ((ChainGraph*)mgr)->build_chain(pi, ni, nlist, &ncnt);   // 0x5234e0 (target vertex, start node)
                                 for (int a = 0; a < ncnt; ) {
                                     int p2 = nlist[a];
                                     if ((u19 & (unsigned)flags[p2]) == 0
@@ -508,7 +499,7 @@ void Game::build_map_trees()
                             prec[0] = px; prec[1] = py; prec[2] = pz; prec[3] = 0.0f;
                             prec[4] = mgr->pts[pi].nx; prec[5] = mgr->pts[pi].ny;
                             prec[6] = mgr->pts[pi].nz; prec[7] = 0.0f;
-                            int pidx = add_point(m, prec);                        // 0x412f50
+                            int pidx = ((rgl::mesh*)m)->add_point((const rgl::vector4*)prec);     // 0x412f50
 
                             // ---- per-material orientation + fractal noise ----------
                             // uv seeds: [esp+0x14] = px*0.1, [esp+0x18] = py*0.1
@@ -615,10 +606,10 @@ void Game::build_map_trees()
 
                             float uv[2] = { uu, vv };
                             float col_rec[4] = { cr, cg, cb, ca_ };
-                            unsigned col_ = pack_color(col_rec);             // 0x40e440
-                            vert[pi] = add_vertex(m, pidx, uv, &col_, prec, 0);  // 0x413c50
+                            unsigned col_ = rgl::pack_color((const rgl::vector4*)col_rec);     // 0x40e440
+                            vert[pi] = ((rgl::mesh*)m)->add_vertex(pidx, (const vec2*)uv, &col_, (const rgl::vector4*)prec, 0);  // 0x413c50
                         }
-                        add_face(m, vert[nd->idx[0]], vert[nd->idx[1]], vert[nd->idx[2]]); // 0x411920
+                        ((rgl::mesh*)m)->add_face(vert[nd->idx[0]], vert[nd->idx[1]], vert[nd->idx[2]]); // 0x411920
                     }
 
                     // --- tree-mesh selection, material 0 only (LAB_00522cb4) ---
@@ -649,12 +640,12 @@ void Game::build_map_trees()
                         }
                         if (chosen != 0) {
                             float mat[16];
-                            memcpy(mat, identity3(), 12 * 4);                // 0x40cd60
+                            identity3((rgl::mat3*)mat);                        // 0x40cd60
                             for (int q = 12; q < 16; q++) mat[q] = 0.0f;
                             float ang = (float)rand() * 0.0001f;
-                            rotate_about_u(mat, &ang);                     // 0x40e770
+                            ((rgl::matrix*)mat)->rotate_about_u(&ang);     // 0x40e770
                             for (int q = 0; q < 3; q++) { mat[q * 4 + 3] += (float)rand() * 0.0001f; }
-                            append_skinned(cellmesh, chosen, mat, -1, 0xffffffff, 0); // 0x44eb00
+                            ((rgl::mesh*)cellmesh)->append_skinned((rgl::mesh*)chosen, (const rgl::mat4*)mat, -1, 0xffffffff, 0); // 0x44eb00
                         }
                     lab_fc7: ;
                     }
@@ -668,16 +659,16 @@ void Game::build_map_trees()
                     (*(void(**)(void*))(* (void**)m))(m);                    // virtual dtor
                 } else {
                     *(void**)((char*)m + 0x2c) = terrain_material(mt);     // 0x523390
-                    set_nibble(m, mt);                                     // 0x523360
+                    ((NibbleObj*)m)->set_nibble(mt);                    // 0x523360
                     *(int*)((char*)m + 0x10c) = 0x17fff;
-                    compute_bounds(m);                                     // 0x419300
+                    ((mesh_x*)m)->compute_bounds();                     // 0x419300
 
                     RawVec cv;
                     cv.first = *(void***)((char*)cell + 0x11c);
                     cv.last  = *(void***)((char*)cell + 0x120);
                     cv.end   = *(void***)((char*)cell + 0x124);
                     if (cv.first == 0 || cv.end <= cv.last) {
-                        _Insert_n(&cv, cv.last, 1, &m);                   // 0x410610
+                        ((int_stdvec*)&cv)->insert_n((int*)cv.last, 1, *(int*)&m);      // 0x410610
                         *(void***)((char*)cell + 0x11c) = cv.first;
                         *(void***)((char*)cell + 0x120) = cv.last;
                         *(void***)((char*)cell + 0x124) = cv.end;
@@ -694,7 +685,7 @@ void Game::build_map_trees()
                     else if (mt == 0x17) mv = &g_mat_vec[3];
                     if (mv) {
                         if (mv->first == 0 || mv->end <= mv->last)
-                            _Insert_n(mv, mv->last, 1, &m);
+                            ((int_stdvec*)mv)->insert_n((int*)mv->last, 1, *(int*)&m);
                         else { *mv->last = m; mv->last++; }
                     }
                 }
@@ -707,20 +698,20 @@ void Game::build_map_trees()
                     || (*(void**)((char*)cellmesh + 0x98) == *(void**)((char*)cellmesh + 0x94))) {
                 (*(void(**)(void*))(*(void**)cellmesh))(cellmesh);           // virtual dtor
             } else {
-                char name[0x40];
-                m5_tstring_ctor1(name, "map_trees");                            // 0x42bbe0 / 0x59c070
-                *(void**)((char*)cellmesh + 0x2c) = get_material(&g_resmgr, name); // 0x418a70
-                m5_tstring_dtor(name);                                          // 0x42bc40
-                set_nibble(cellmesh, 2);                                   // 0x523360
+                char name_buf[0x40];
+                tstring* name = new (name_buf) tstring("map_trees");           // 0x42bbe0 / 0x59c070
+                *(void**)((char*)cellmesh + 0x2c) = g_resmgr.get_material(*(const rgl::string*)name); // 0x418a70
+                name->~tstring();                                               // 0x42bc40
+                ((NibbleObj*)cellmesh)->set_nibble(2);                     // 0x523360
                 *(int*)((char*)cellmesh + 0x10c) = 0x1ffff;
-                compute_bounds(cellmesh);                                  // 0x419300
+                ((mesh_x*)cellmesh)->compute_bounds();                  // 0x419300
 
                 RawVec cv;
                 cv.first = *(void***)((char*)cell + 0x11c);
                 cv.last  = *(void***)((char*)cell + 0x120);
                 cv.end   = *(void***)((char*)cell + 0x124);
                 if (cv.first == 0 || cv.end <= cv.last) {
-                    _Insert_n(&cv, cv.last, 1, &cellmesh);
+                    ((int_stdvec*)&cv)->insert_n((int*)cv.last, 1, *(int*)&cellmesh);
                     *(void***)((char*)cell + 0x11c) = cv.first;
                     *(void***)((char*)cell + 0x120) = cv.last;
                     *(void***)((char*)cell + 0x124) = cv.end;
@@ -735,7 +726,7 @@ void Game::build_map_trees()
                 ev.last  = self->ents_last;
                 ev.end   = self->ents_end;
                 if (ev.first == 0 || ev.end <= ev.last) {
-                    _Insert_n(&ev, ev.last, 1, &cellmesh);
+                    ((int_stdvec*)&ev)->insert_n((int*)ev.last, 1, *(int*)&cellmesh);
                     self->ents = ev.first; self->ents_last = ev.last; self->ents_end = ev.end;
                 } else {
                     *ev.last = cellmesh;
@@ -745,7 +736,7 @@ void Game::build_map_trees()
         }
     }
 
-    m5_tstring_dtor(tmp);                                                       // 0x42bc40
+    tmp->~tstring();                                                            // 0x42bc40
 
     delete[] scratch;
     delete[] vert;
@@ -769,30 +760,30 @@ void NibbleObj::set_nibble(int v)
 skin* __stdcall terrain_material(int type)
 {
     if (type == 0)
-        return g_resmgr.get_material(rgl::string("map_ocean"));
+        return g_resmgr.get_material(RStr("map_ocean"));
     if (type == 1)
-        return g_resmgr.get_material(rgl::string("map_mountain"));
+        return g_resmgr.get_material(RStr("map_mountain"));
     if (type == 3)
-        return g_resmgr.get_material(rgl::string("map_plain"));
+        return g_resmgr.get_material(RStr("map_plain"));
     if (type == 2)
-        return g_resmgr.get_material(rgl::string("map_steppe"));
+        return g_resmgr.get_material(RStr("map_steppe"));
     if (type == 4)
-        return g_resmgr.get_material(rgl::string("map_snow"));
+        return g_resmgr.get_material(RStr("map_snow"));
     if (type == 5)
-        return g_resmgr.get_material(rgl::string("map_desert"));
+        return g_resmgr.get_material(RStr("map_desert"));
     if (type == 8)
-        return g_resmgr.get_material(rgl::string("map_river"));
+        return g_resmgr.get_material(RStr("map_river"));
     if (type == 9)
-        return g_resmgr.get_material(rgl::string("map_mountain_forest"));
+        return g_resmgr.get_material(RStr("map_mountain_forest"));
     if (type == 7)
-        return g_resmgr.get_material(rgl::string("map_bridge"));
+        return g_resmgr.get_material(RStr("map_bridge"));
     if (type == 0x15)
-        return g_resmgr.get_material(rgl::string("map_shore"));
+        return g_resmgr.get_material(RStr("map_shore"));
     if (type == 0x16)
-        return g_resmgr.get_material(rgl::string("map_foam"));
+        return g_resmgr.get_material(RStr("map_foam"));
     if (type == 0x17)
-        return g_resmgr.get_material(rgl::string("map_reverse_foam"));
-    return g_resmgr.get_material(rgl::string("default"));
+        return g_resmgr.get_material(RStr("map_reverse_foam"));
+    return g_resmgr.get_material(RStr("default"));
 }
 
 // @ 0x5234e0
@@ -871,8 +862,8 @@ void Game::load_game_data(int extra_triggers)
     // ---- factions.txt -----------------------------------------------------------------------------------
     file_text s_factions;                                // +0x80
     {
-        const char* path = module_path("factions.txt");
-        if (!s_factions.open_read_text(path))
+        const char* path = MODULE_PATH("factions.txt");
+        if (!OPEN_READ_TEXT(s_factions, path))
             mb_error("Unable to open %s", path);
     }
     stream_base& in_factions = s_factions;
@@ -893,8 +884,8 @@ void Game::load_game_data(int extra_triggers)
     // ---- skills.txt -------------------------------------------------------------------------------------
     file_text s_skills;                                  // +0x198
     {
-        const char* path = module_path("skills.txt");
-        if (!s_skills.open_read_text(path))
+        const char* path = MODULE_PATH("skills.txt");
+        if (!OPEN_READ_TEXT(s_skills, path))
             mb_error("Unable to open %s", path);
     }
     int skill_count;
@@ -912,15 +903,15 @@ void Game::load_game_data(int extra_triggers)
     // ---- Data\skeleton_bodies.xml -----------------------------------------------------------------------
     {
         tstring path("Data\\skeleton_bodies.xml");
-        g_skeletons.load(&path);
+        ((SkeletonBody*)g_skeletons)->load(path);
     }
-    g_skeletons.fix_skeletons();
+    fix_skeletons((std::vector<RegSkeleton>*)g_skeletons);
 
     // ---- troops.txt -------------------------------------------------------------------------------------
     file_text s_troops;                                  // +0xb8
     {
-        const char* path = module_path("troops.txt");
-        if (!s_troops.open_read_text(path))
+        const char* path = MODULE_PATH("troops.txt");
+        if (!OPEN_READ_TEXT(s_troops, path))
             mb_error("Unable to open %s", path);
     }
     s_troops.r_tstr(RSTR(&str1));
@@ -937,8 +928,8 @@ void Game::load_game_data(int extra_triggers)
     // ---- scenes.txt -------------------------------------------------------------------------------------
     file_text s_scenes;                                  // +0xf0
     {
-        const char* path = module_path("scenes.txt");
-        if (!s_scenes.open_read_text(path))
+        const char* path = MODULE_PATH("scenes.txt");
+        if (!OPEN_READ_TEXT(s_scenes, path))
             mb_error("Unable to open %s", path);
     }
     s_scenes.r_tstr(RSTR(&str1));
@@ -955,8 +946,8 @@ void Game::load_game_data(int extra_triggers)
     // ---- quests.txt -------------------------------------------------------------------------------------
     file_text s_quests;                                  // +0x48
     {
-        const char* path = module_path("quests.txt");
-        if (!s_quests.open_read_text(path))
+        const char* path = MODULE_PATH("quests.txt");
+        if (!OPEN_READ_TEXT(s_quests, path))
             mb_error("Unable to open %s", path);
     }
     s_quests.r_tstr(RSTR(&str1));
@@ -973,8 +964,8 @@ void Game::load_game_data(int extra_triggers)
     // ---- triggers.txt -----------------------------------------------------------------------------------
     file_text s_triggers;                                // +0x160
     {
-        const char* path = module_path("triggers.txt");
-        if (!s_triggers.open_read_text(path))
+        const char* path = MODULE_PATH("triggers.txt");
+        if (!OPEN_READ_TEXT(s_triggers, path))
             mb_error("Unable to open %s", path);
     }
     s_triggers.r_tstr(RSTR(&str1));
@@ -986,8 +977,8 @@ void Game::load_game_data(int extra_triggers)
     // ---- simple_triggers.txt ----------------------------------------------------------------------------
     file_text s_simple;                                  // +0x128
     {
-        const char* path = module_path("simple_triggers.txt");
-        if (!s_simple.open_read_text(path))
+        const char* path = MODULE_PATH("simple_triggers.txt");
+        if (!OPEN_READ_TEXT(s_simple, path))
             mb_error("Unable to open %s", path);
     }
     s_simple.r_tstr(RSTR(&str1));
@@ -1127,8 +1118,8 @@ void QuestFile::read_file(stream_base& s)
     s.r_tstr(RSTR(&f10));
     f0.underscores_to_spaces();
     f10.underscores_to_spaces();
-    f30 = *raw_title();
-    tstring* p = ((NameMgr*)&g_strtable)->find(&f54);
+    f30 = *((QuestRec*)this)->raw_title();       // QuestRec (include/game_recs.h) is this record: raw_title 0x48d750
+    tstring* p = ((LangTables*)&g_strtable)->find(&f54);
     f40 = p ? *p : f0;
 }
 
@@ -1137,7 +1128,7 @@ TroopFile::TroopFile()
 {
     for (int i = 0; i < 0x60; ++i)
         ((int*)pairs)[i * 2] = -1;
-    vector_constructor_iterator(names_raw, 0x10, 8, (void*)0x42bbd0);
+    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))0x42bbd0);
     f4a0 = -1;
     for (int i = 0; i < 10; ++i) {
         p10[i].item = -1;
@@ -1162,7 +1153,7 @@ TroopFile::TroopFile()
 // @ 0x524860
 QuestFile::QuestFile()
 {
-    vector_constructor_iterator(names_raw, 0x10, 8, (void*)0x42bbd0);
+    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))0x42bbd0);
     f108 = -1;
     f12c = 0;
     f130 = 0;
@@ -1186,7 +1177,7 @@ SceneFile::SceneFile()
 // @ 0x5249f0
 FactionFile::FactionFile()
 {
-    vector_constructor_iterator(names_raw, 0x10, 8, (void*)0x42bbd0);
+    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))0x42bbd0);
     f2fc = -1;
     f230 = 0;
     b10 = 0;
@@ -1227,7 +1218,7 @@ void FactionFile::read_file(stream_base& s, int count)
 void tstring_vec::reserve(unsigned n)
 {
     if (n > 0x0fffffff)
-        _Xlen();
+        vec_xlen();
     if (capacity() >= n)
         return;
     tstring* p = (tstring*)::operator new(n * 0x10);
@@ -1241,7 +1232,7 @@ void tstring_vec::reserve(unsigned n)
     }
     unsigned s = first == 0 ? 0 : (unsigned)(last - first);
     if (first) {
-        destroy(first, last);
+        ((tstring_stdvec*)this)->destroy_range(first, last);
         ::operator delete(first);
     }
     end = p + n;
@@ -1255,7 +1246,7 @@ tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_all
     tstring* s = d;
     try {
         for (; f != l; ++d, ++f)
-            al.construct(d, *f);
+            ((alloc_tstring*)&al)->construct(d, *f);
     }
     catch (...) {
         for (; s != d; ++s)

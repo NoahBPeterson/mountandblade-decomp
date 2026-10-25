@@ -21,6 +21,7 @@
 #include "./agent_stats.h"
 #include "../anim_slot.h"      // (named here too for the resolution audit)
 #include "../channel.h"
+#include "../agent/curve.h"      // Curve: the canonical class of the Skeleton record (Curve::recs +0x40 is Skeleton::chans)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"
@@ -130,7 +131,7 @@ void Agent::set_order(int slot, int id, unsigned prio, float rate)
         if (anim[slot].set(id, prio)) {
             anim[slot].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
             if (prio & 0x4000000)
-                body->skel->set_rec_phase(slot, 0.0f);
+                ((Curve*)body->skel)->set_rec_phase(slot, 0.0f);
             if (slot == 0) {
                 if (id >= 0 && (defs->defs[id].flags & 0x400) && anim[1].cur != -1 &&
                     (prio & 0x1ffff) > (anim[1].events & 0x1ffff))
@@ -156,7 +157,7 @@ int GameData::skill_level(int agent, int skill)
     int lvl = (w >> (skill % 8 * 4)) & 0xf;
     (*(int*)((char*)&g_script + 0x18)) = 0;
     (*(int*)((char*)&g_script + 0x1c)) = 0;
-    emit_event(0x17, agent, skill);
+    ((SoundCtl*)this)->emit_event(0x17, agent, skill);       // GameData is the SoundCtl view of agent/agent.h (the 0x435790 emitter)
     lvl += (*(int*)((char*)&g_script + 0x18));
     if (lvl < 0)
         return 0;
@@ -494,7 +495,7 @@ void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, nod
         first[hole] = first[bottom - 1];
         hole = bottom - 1;
     }
-    push_heap_node(first, hole, top, val, pred);
+    push_heap_elem((OpenItem*)first, hole, top, *(OpenItem*)&val, *(HeapGt*)&pred);     // 0x4b2520: hnode is the OpenItem record (party_2.h)
 }
 
 // ---- small members -----------------------------------------------------------------------------------------------------------
@@ -576,7 +577,7 @@ void mnode::calc_bounds(vector4* mn, vector4* mx)
 {
     *mn = vector4(1e7f, 1e7f, 1e7f);
     *mx = vector4(-1e7f, -1e7f, -1e7f);
-    vec_e32* v = is_owner ? &verts : master->get_verts();
+    vec_e32* v = is_owner ? &verts : (vec_e32*)&((rgl::mesh*)master)->get70();
     for (unsigned i = 0; i < v->size(); ++i) {
         const V32& e = (*v)[i];
         mn->x = minv(mn->x, e.x);
@@ -608,7 +609,7 @@ void node_list::cap_all(const float* limit)
     for (mnode** it = first; it < last; ++it) {
         mnode* n = *it;
         struct L { int a0; int* data; int count; };
-        L* l = n->is_owner ? (L*)&n->ints : (L*)n->master->get_ints();
+        L* l = n->is_owner ? (L*)&n->ints : (L*)&((rgl::mesh*)n->master)->get_kf();
         if (0 < l->count) {
             if (*limit > (float)l->data[l->count - 1])
                 n->f_c8 = (float)l->data[l->count - 1];
@@ -871,7 +872,7 @@ void level::query_segment(const float* a, const float* b, unsigned mask, shape_b
 {
     int pairs[0x2000][2];
     int n;
-    walk(a, b, pairs, &n);
+    ((Grid2*)this)->walk(a, b, pairs, &n);               // the level's cell grid is agent/agent.h's Grid2 (dim +8, mn +0x10, mx +0x18, cell +0x20)
     *count = 0;
     for (int i = 0; i < n; i++)
         cells[pairs[i][0]][pairs[i][1]].collect_masked(mask, out, count);
@@ -957,7 +958,7 @@ void level::floor_at(const float* p, float* out_z, face** out_face)
     {
         int use3d = 0;
         int ci[2];
-        to_cell(p, ci);
+        ((rgl::world*)this)->to_cell(p, ci);
         count = 0;
         cells[ci[0]][ci[1]].collect_point(p, &use3d, 0x304, shapes, &count);
     }
@@ -1069,12 +1070,12 @@ void Skeleton::start_anim(int rec, Anim* poly, int a, int b)
         chans[rec].k48 = 0x33;
         chans[rec].k4c = a;
         chans[rec].k50 = b;
-        chans[rec].va = poly->sample(a);
-        chans[rec].vb = poly->sample(b);
+        chans[rec].va = ((KeyHolder*)poly)->sample(a);          // Anim +0x28 is KeyHolder::kf (agent.h, 0x436b90)
+        chans[rec].vb = ((KeyHolder*)poly)->sample(b);
         chans[rec].anim = poly;
         for (int i = 0; i < nbones; i++) {
-            chans[rec].pa[i] = poly->elems[i].sample(a);
-            chans[rec].pb[i] = poly->elems[i].sample(b);
+            *(quaternion*)&chans[rec].pa[i] = poly->elems[i].sample(a);      // the track tables hold quaternion records (key_table.h)
+            *(quaternion*)&chans[rec].pb[i] = poly->elems[i].sample(b);
         }
     }
 }
@@ -1235,7 +1236,7 @@ void Agent::hand_pos(vector4* out)
 // @ 0x43a6f0
 void Agent::release_body()
 {
-    g_mission->scene_level->remove_entity(body->id);
+    ((rgl::world*)g_mission->scene_level)->remove_entity(body->id);       // the level is the rgl::world (world.h rows +0x28 = level::cells)
     body = 0;
 }
 
@@ -1252,7 +1253,7 @@ int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base*
     unsigned mask = 0x8116;
     if (*flag)
         mask = 0x811e;
-    g_mission->scene_level->query_box(&mn.x, &mx.x, mask, found, &n);
+    ((Ctx*)g_mission->scene_level)->query_box(&mn.x, &mx.x, mask, found, &n);
     int count = n;
     for (int i = 0; i < count; i++) {
         if (shape_contact_count(s, found[i], 1, &c) != 0) {
@@ -1300,7 +1301,7 @@ void PhysSet::rebuild_static_body(int idx)
     recs[idx].body = NewtonCreateBody(recs[idx].world, recs[idx].collision);
     NewtonReleaseCollision(recs[idx].world, recs[idx].collision);
     matrix m;
-    float* mp = (float*)identity_pos(&m);
+    float* mp = (float*)identity_pos((pos*)&m);
     PhysRec& r = recs[idx];
     NewtonBodySetMatrix(r.body, mp);
 }
@@ -1309,7 +1310,7 @@ void PhysSet::rebuild_static_body(int idx)
 // @ 0x43a980
 void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base)
 {
-    float cur = body->skel->rec_shaped_phase(idx);
+    float cur = ((Curve*)body->skel)->rec_shaped_phase(idx);
     float scale = cmd->scale;
     float len = 1.5f;
     if (cmd->flags & 0xff)
@@ -1322,7 +1323,7 @@ void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base
     body->skel->chans[idx].period = scale;
     body->skel->start_anim(idx, (Anim*)cmd->anim, cmd->a, cmd->b);
     body->skel->chans[idx].blend = len + 0.01f;
-    body->skel->reset_rec(idx);
+    ((Curve*)body->skel)->reset_rec(idx);
     if (cmd->flags & 0x10000000)
         body->skel->chans[idx].mode = 0x14;
     else
@@ -1341,9 +1342,9 @@ void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base
             res = v + cmd->offset;
         else
             res = cmd->offset - v;
-        body->skel->set_rec_phase(idx, res);
+        ((Curve*)body->skel)->set_rec_phase(idx, res);
     } else if (cmd->flags & 0x40000000) {
-        body->skel->set_rec_phase(idx, cmd->offset);
+        ((Curve*)body->skel)->set_rec_phase(idx, cmd->offset);
     }
 }
 

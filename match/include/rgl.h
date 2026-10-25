@@ -35,6 +35,9 @@ struct matrix {
     vector4 s, f, u, o;
     void orthonormalize();                                                  // 0x407ef0
     vector4 transform_point_to_local(const vector4& p) const;               // 0x407f70
+    void rotate_about_s(const float* angle);                                // 0x40e570 (rgl/rgl_math.h declares the same members)
+    void rotate_about_f(const float* angle);                                // 0x40e670
+    void rotate_about_u(const float* angle);                                // 0x40e770
 };
 
 // 16 bytes; ctor from a C string at 0x42bbe0 (zeroes all four dwords, then copies). Layout from the
