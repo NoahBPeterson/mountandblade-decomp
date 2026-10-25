@@ -15,7 +15,7 @@
 
 using rgl::vector4;
 
-extern __int64 g_ticks[];            // 0x5e2948 table of 64-bit clocks (1e-5 s units)
+#include "../../include/fx.h"
 
 // sized stand-ins (see above); ctor/dtor addresses are what the gui_manager ctor/dtor call
 struct scene {

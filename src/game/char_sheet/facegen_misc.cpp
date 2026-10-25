@@ -153,7 +153,7 @@ void Forwarder::forward(int a, int b, int c)
 
 // @ 0x4eb8e0 save-load UI entry (whole body reconstructed at 0x4eb8e0; 0x4eb8ed is its interior
 // continuation and is not separately callable)
-extern char g_scene_dirty;                                   // 0x5e2938
+#include "../game_globals.h"
 extern int g_5e28c8;                                    // 0x5e28c8
 extern int g_a16c58;                                    // 0xa16c58
 extern int g_5d75c8;                                    // 0x5d75c8 (view width)

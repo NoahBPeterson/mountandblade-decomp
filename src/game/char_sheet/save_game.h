@@ -64,7 +64,7 @@ extern __int64 g_ticks[2];                              // 0x5e2948
 extern float g_54a6d0;                                  // 0x54a6d0
 extern int   g_59811c;                                  // 0x59811c ("WRDR")
 extern char  g_598120;                                  // 0x598120
-extern int   g_module_version;                                  // 0x5e29c0
+#include "../game_globals.h"
 
 struct SaveCtx {
     tstring title;                                      // +0x0

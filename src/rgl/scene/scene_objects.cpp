@@ -31,7 +31,7 @@
 
 using namespace rgl;
 
-extern __int64 g_ticks[];                                        // 0x5e2948 clock table (64-bit ticks)
+#include "../../include/fx.h"
 
 namespace rgl {
 

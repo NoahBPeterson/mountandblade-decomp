@@ -77,7 +77,7 @@ extern float g_140;                                         // 0x598e6c (140.0f)
 extern float g_0_01;                                        // 0x54ab28 (0.01f)
 extern float g_one;                                         // 0x549d74 (1.0f)
 extern float g_half;                                        // 0x549d70 (0.5f)
-extern int   g_use_shaders;                                        // 0x5e28fc (shaders on)
+#include "../renderer.h"
 extern void* g_a17110;                                      // 0xa17110
 extern void* g_a17510;                                      // 0xa17510
 extern terrain_obj g_terrain_obj;                           // 0xa76630

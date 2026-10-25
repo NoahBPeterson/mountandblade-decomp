@@ -30,8 +30,8 @@ struct EntFlag { char pad0[0x140]; char flag; };         // scene entity: +0x140
 // ---- spawn rules (0x473a60) ---------------------------------------------------------------------------------------
 #include "../mode_rec.h"                      // SpawnRec, ModeRec2, g_modes2 (shared with terrain_a / agent)
 int __cdecl rand_below(const int* n);           // 0x432580 (0 when *n < 2, else rand() % *n)
-extern float g_player_wounded_treshold;                        // 0xa1813c
-extern float g_hero_wounded_treshold;                       // 0xa18138
+
+#include "../game_globals.h"
 
 #include "../../include/timer.h"
 

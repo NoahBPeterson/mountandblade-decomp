@@ -41,7 +41,7 @@ struct ResMgr { void* get_object(const tstring& n); };
 extern char g_5e212c;                           // 0x5e212c
 extern char g_5d8788;                           // 0x5d8788
 extern int g_5a9fb0;                            // 0x5a9fb0 (no terrain camera)
-extern int g_use_shaders;                            // 0x5e28fc
+#include "../renderer.h"
 extern int g_level;                            // 0xa732b4 (current scene)
 extern int g_a70438;                            // 0xa70438 (last-loaded scene)
 extern float g_590bb8;                          // 0x590bb8

@@ -89,10 +89,10 @@ struct Table2 {                                     // the table at Game+0xcc
 
 extern List8 g_list_a70480;                         // 0xa70480
 extern RecB0* g_party_templates;                               // 0x5e29f8 (array of 0xb0-byte records)
-extern int   g_party_template_count;                               // 0x5e29fc
+#include "../game_globals.h"
 #include "../../include/item_kind.h"
 extern ItemKind* g_items;                           // 0x5e29d0 (array of 0x238-byte item kinds)
-extern int   g_item_kind_count;                             // 0x5e29d4
+
 
 // ---- the sub-writers ------------------------------------------------------------------------------------
 OutStream* write_soa(OutStream* out, char* base);   // 0x4e9620 (free, two stack args)

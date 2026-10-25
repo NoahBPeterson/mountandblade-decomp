@@ -68,7 +68,7 @@ static const char* troop_text(int id)
 // ---- dialog manager (layout verified in s0045ff30) --------------------------------------------------
 
 
-extern DialogMgr g_dialogs;                            // 0x8ed50c8 (?g_n_dialogs@@3UDialogMgr@@A)
+#include "../game_globals.h"
 
 // ---- widget slots (see s004dfd50 / s004e05c0) -------------------------------------------------------
 // used slots: 0x58/0x64/0x68/0x6c/0x70 pos & scale, 0x74 flag, 0x80 track, 0xa4 text, 0xb0 advance, 0xb4 clear

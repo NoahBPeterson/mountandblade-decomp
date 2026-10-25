@@ -45,7 +45,7 @@ extern __int64 g_ticks[];                       // 0x5e2948 clock table, 1e-5 s 
 extern int g_use_shaders;                       // 0x5e28fc programmable pipeline in use / detail resources present
 extern int g_mesh_quality;                      // 0x5aa084 (2 = high detail; shader quality)
 extern ptype* g_ptypes;                         // 0x5e28f8 particle / prop type table
-extern ShadowMap g_shadow_map;                          // 0xa70248
+#include "../shadow_map.h"
 extern CellGrid* g_level;                       // 0xa732b4
 extern unsigned g_field_mask;                   // 0x5a8ea0 (field values are clamped to g_field_mask - 1)
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (g_bit[i] == 1 << i)
