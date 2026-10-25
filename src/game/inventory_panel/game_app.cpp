@@ -22,15 +22,15 @@ static __forceinline const char* c_str(const tstring* s)
 // ---- CD3DApplication / GameApp: one definition (../application.h) -----------------------------------
 #include "../application.h"
 
-// ---- screens: g_screens[30] (0xa73980) is the global screen table; the id stack at 0xa739f8 keeps
+// ---- screens: g_windows[30] (0xa73980) is the global screen table; the id stack at 0xa739f8 keeps
 //      the current screen id (a ring of 4-int blocks). ------------------------------------------------
 // ---- the engine widget interface: only the slots this slice dispatches ---------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 struct ScreenObj : Widget {
-    void update_all();                                       // 0x4ec460 (non-virtual)
+    void frame_hook();                                       // 0x4ec460 (non-virtual)
 };
-extern ScreenObj* g_screens[30];       // 0xa73980 (.. 0xa739f4)
+extern ScreenObj* g_windows[30];       // 0xa73980 (.. 0xa739f4)
 
 struct IdStack {                    // 0xa739f8
     int f0;                         // 0xa739f8
@@ -62,12 +62,12 @@ extern float g_5a9c20;                  // 0x5a9c20
 extern int   g_5d8798;                  // 0x5d8798
 extern int   g_5e293c;                  // 0x5e293c
 extern char  g_5d75e0;                  // 0x5d75e0
-extern char  g_5e2a08;                  // 0x5e2a08
+extern char  g_saved;                  // 0x5e2a08
 extern int   g_no_cam;                  // 0x5a9fb0
 extern int   g_a17158, g_a17558, g_a17348, g_a17148;    // 0xa17158 ..
 extern int   g_a1719c, g_a1759c, g_a171ac, g_a1717c;    // 0xa1719c ..
 extern char  g_5e2630;                  // 0x5e2630
-extern char  g_keys[256];               // 0x5e27c8
+extern char  g_key_states[256];               // 0x5e27c8
 // the Direct3D9 device (0xa17f28); __stdcall virtuals -> the COM-style call pattern
 struct IDev9 {
     virtual long __stdcall s0(); virtual long __stdcall s1(); virtual long __stdcall s2();
@@ -77,7 +77,7 @@ struct IDev9 {
     virtual void __stdcall SetCursorPosition(int x, int y, unsigned flags);   // slot 11 (+0x2c)
     virtual int  __stdcall ShowCursor(int show);                              // slot 12 (+0x30)
 };
-extern IDev9* g_a17f28;                 // 0xa17f28 (the Direct3D device)
+
 extern char  g_a739b8[];                // 0xa739b8 (current editor entity)
 // the current editor entity (a pointer at 0xa739b8)
 #include "../editor_entity.h"
@@ -85,20 +85,20 @@ extern EditorEntity* g_entity;          // 0xa739b8
 
 // gui manager object (0x5d7080) and a few of its member functions
 #include "../gui_mgr.h"
-extern GuiManager g_gui_manager;        // 0x5d7080
+extern GuiManager g_gui;        // 0x5d7080
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                 // 0x5d6fa0
 
 struct ButtonTick {
-    void fn(float dt);                  // 0x487930
+    void update(float dt);              // 0x487930
 };
-extern ButtonTick g_a170c8;             // 0xa170c8
+extern ButtonTick g_keyboard;             // 0xa170c8
 
 struct MusicList {
-    void fn();                          // 0x4c4100
+    void tick();                        // 0x4c4100
 };
-extern MusicList g_a73a10;              // 0xa73a10
+extern MusicList g_music_situation;              // 0xa73a10
 
 struct Output {
     virtual void o0(); virtual void o1(); virtual void o2(); virtual void o3();
@@ -106,7 +106,7 @@ struct Output {
     virtual void o8(); virtual void o9();
     virtual void print(const char* s);  // +0x28
 };
-extern Output g_5a9f60;                 // 0x5a9f60
+extern Output g_log;                 // 0x5a9f60
 
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
@@ -117,16 +117,17 @@ extern "C" void __stdcall _FSOUND_Update(void);              // 0x53433c
 void bump_counter(void);                                     // 0x42cb70 (?bump_counter@@YAXXZ)
 int  build_shader(void);                                     // 0x4c17c0
 void mb_error(const char* msg);                              // 0x42cc80
-void fn_4c3350(void);                                        // 0x4c3350
+void load_skyboxes(void);                                        // 0x4c3350
 void fn_4d0c20(void);                                        // 0x4d0c20
 void fn_50d5e0(void);                                        // 0x50d5e0
-void map_dialog_proc();                                      // 0x50d250 (dialog proc, never called here)
+void dialog_thunk();                                      // 0x50d250 (dialog proc, never called here)
 void script_dialog_proc();                                   // 0x4c3340
 void global_4bf870(void*);                                   // 0x4c3330
 void global_4c03b0(void*);                                   // 0x4c3340
 
 // ---- the loading screen (0x50f440 lives in slice s0050f440; see there) ------------------------------
 #include "../loading_screen.h"       // LoadingScreen: update 0x50f390 here, advance 0x50f440 in loading_screen.cpp
+#include "../../include/renderer.h"
 
 // ---- the per-frame update ---------------------------------------------------------------------------
 // @ 0x50ec40
@@ -148,9 +149,9 @@ int GameApp::Update()
     g_5d8798 = m_34c;
     m_34c = -1;
 
-    g_gui_manager.frame(dt);
-    g_a170c8.fn(dt);
-    g_a73a10.fn();
+    g_gui.frame(dt);
+    g_keyboard.update(dt);
+    g_music_situation.tick();
     _FSOUND_Update();
 
     if (g_no_cam) {
@@ -158,7 +159,7 @@ int GameApp::Update()
             if (build_shader() < 0) {
                 mb_error("Unable to compile the effect file.");
             } else {
-                g_gui_manager.add_log(tstring("Effect file recompiled."), -1);
+                g_gui.add_log(tstring("Effect file recompiled."), -1);
             }
             g_resmgr.unload(g_5e293c);
         }
@@ -166,18 +167,18 @@ int GameApp::Update()
     if (g_no_cam) {
         if (g_a1719c && !g_a1759c) {
             if ((g_a17348 || g_a17148) && (g_a171ac || g_a1717c)) {
-                fn_4c3350();
-                g_gui_manager.add_log(tstring("Animation data restored."), -1);
+                load_skyboxes();
+                g_gui.add_log(tstring("Animation data restored."), -1);
             } else if (g_a17348 || g_a17148) {
                 fn_4d0c20();
                 fn_50d5e0();
-                g_gui_manager.add_log(tstring("Module data restored."), -1);
+                g_gui.add_log(tstring("Module data restored."), -1);
             }
         }
     }
 
-    g_screens[current_screen_id()]->update_all();
-    g_screens[current_screen_id()]->update(dt);
+    g_windows[current_screen_id()]->frame_hook();
+    g_windows[current_screen_id()]->update(dt);
 
     if (g_game) {
         if (current_screen_id() == 0xe) {
@@ -185,7 +186,7 @@ int GameApp::Update()
                 if (!g_game->f1a160) {
                     if (!m_hMapEditorDlg) {
                         m_hMapEditorDlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xc0, m_hWnd,
-                                                             (DLGPROC)map_dialog_proc, 0);
+                                                             (DLGPROC)dialog_thunk, 0);
                     } else {
                         ((MapEditor*)this)->update_object_type();
                     }
@@ -246,7 +247,7 @@ int GameApp::Update()
     }
 
     m_bShowCursorWhenFullscreen = g_5d75e0;
-    if (g_5e2a08) ((GameApp*)this)->f4 = true;
+    if (g_saved) ((GameApp*)this)->f4 = true;
     return 0;
 }
 
@@ -265,9 +266,9 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
         *(char*)(0x5e27c8 + wparam) = 1;
         break;
     case 0x20:                                  // WM_SETCURSOR
-        if (g_a17f28 && m_bWindowed) {
+        if ((*(IDev9**)&g_render.dev) && m_bWindowed) {
             SetCursor(0);
-            g_a17f28->ShowCursor(1);
+            (*(IDev9**)&g_render.dev)->ShowCursor(1);
             return 1;
         }
         break;
@@ -297,7 +298,7 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
         case 0x9c5a:
             fn_4d0c20();
             fn_50d5e0();
-            g_gui_manager.add_log(tstring("Module data restored."), -1);
+            g_gui.add_log(tstring("Module data restored."), -1);
             break;
         case 0x9c56:
             if (!g_game) goto check_focus;

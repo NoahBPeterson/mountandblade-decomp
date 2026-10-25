@@ -37,11 +37,11 @@ extern MenuWidget* g_wEC;                               // 0xa739ec
 struct MissionV : Mission {
     void init(int tmpl, int a2, int a3, int a4, struct MissionCtx* ctx, int a6, int a7);   // 0x5143f0 (ret 0x18)
     __declspec(noinline) void init_scene();             // 0x5144d0
-    void fade(float a, int b);                          // 0x483f60 (ret 8)
+    void frame(float a, int b);                          // 0x483f60 (ret 8)
     void start_setup();                                 // 0x484590
 };
 #define MI(m, off) (*(int*)((char*)(m) + (off)))
-extern Mission* g_scene_inv;                            // 0x5e292c (the active mission; g_mission in mission.h)
+
 
 // the 0x6c-byte per-class record of a team (ClassInfo in mission.h: its constructor-style reset is 0x5146f0)
 struct Lane4 {
@@ -135,7 +135,7 @@ extern MissionCtx g_mission_ctx;                        // 0xa73300
 struct mat2 {
     float m[4];
     mat2(const float* a, const float* b);               // 0x516220
-    void rotate(float angle);                           // 0x4f3b40 (thiscall: pointer in ecx, angle on the stack)
+    void rotate_2x2(float angle);                           // 0x4f3b40 (thiscall: pointer in ecx, angle on the stack)
 };
 
 #endif // GAME_INVENTORY_PANEL_MISSION_CTX_H

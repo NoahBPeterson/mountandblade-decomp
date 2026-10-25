@@ -15,6 +15,10 @@
 #include "../../rgl/mesh_x.h"
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/fx.h"
+#include "../../rgl/resource_manager.h"
+#include "../../include/renderer.h"
+#include "../skill_cap.h"
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
 // ---- the mission's agent (re)initialisation ------------------------------------------------------------------
@@ -66,11 +70,11 @@ void MissionHud::refresh()
     float v[2];
     f2fc = 0;
     if ((float)(rand() % 15817) * 6.322312e-05f < 0.05f)
-        g_hud_lucky = 1;
+        g_scene_dirty = 1;
     g_gui.reset();
     g_hud_flag = 1;
     GAME_AT(int, 0x1a1b4) = -1;
-    ((UiVec*)((char*)g_game + 0x1a1b8))->begin(0, 0);
+    ((UiVec*)((char*)g_game + 0x1a1b8))->resize(0, 0);
 
     if (refresh_slots) {
         int id = g_mission->player_id;
@@ -83,8 +87,8 @@ void MissionHud::refresh()
         int n = *(unsigned char*)(troop + 0x7a) & 0xf;
         if (n < 0)
             n = 0;
-        else if (n > g_skin_cap)
-            n = g_skin_cap;
+        else if (n > (*(int*)&g_skill_tbl[36].cap))
+            n = (*(int*)&g_skill_tbl[36].cap);
         int h = lvl + n * 2 + 0x23;
         if (h > status_height) {
             int id = g_mission->player_id;
@@ -105,7 +109,7 @@ void MissionHud::refresh()
     f2f0 = 0;
     f2d8 = -1;
     f2dc = -1;
-    g_hud_last = -1;
+    g_pending_action = -1;
     GAME_AT(int, 0x1a1cc) = 0;
     shown_health = -1;
     shield_max = -2;
@@ -297,7 +301,7 @@ void MissionHud::refresh()
         v[1] = 0.75f;
         UI(name_widget)->set_pos(v);
     }
-    if (g_env_shadows)
+    if (g_options.i2c)
         name_widget->f354 = 1;
     {
         double t = tan(0.8726646304130554);
@@ -387,7 +391,7 @@ void MissionHud::update_camera(float dt)
     float radius, zoomL;
 
     if (GAME_AT(int, 0x1a090) != 0)
-        dt = g_cam_dt;
+        dt = g_step_tbl[0];
     {
         matrix home;
         *(matrix*)&k = *rgl::identity_pos(&home);
@@ -549,7 +553,7 @@ void MissionHud::update_camera(float dt)
                 c.y = n.y - lag.y;
                 c.z = n.z - lag.z;
                 radial = c.out_length() * dt * 200.0f;
-                hv_add_to(lag, hv_mulv(c, clamp_float(&radial, &lo, &hi)));
+                hv_add_to(lag, hv_mulv(c, clamp(&radial, &lo, &hi)));
                 k.o = body->m.transform_point(lag);
                 ang = 1.5707964f;
                 k.rotate_fu(ang);
@@ -561,7 +565,7 @@ void MissionHud::update_camera(float dt)
             // third person: the player's own agent
             Agent* ag = AG(g_mission->player_id);
             float ang, d;
-            if (g_input.down(0xd)) {
+            if (g_game_keys.is_down(0xd)) {
                 float fa = 0.8f, fb = 0.5f;
                 if (AG(g_mission->player_id)->f2c >= 0) {
                     fb = 1.0f;
@@ -717,7 +721,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         sun->pos.s.normalize();
         sun->pos.f = cross(sun->pos.u, sun->pos.s);
         if (f6664 < 0 && fog_dense == 1)
-            f6664 = g_sound.play_slot(8, 3, &g_listener.o.x, 1.0f, 0);
+            f6664 = g_sound_mgr.play_slot(8, 3, &g_listener.o.x, 1.0f, 0);
     }
     FrameNode* flare = (FrameNode*)f65c0;
     if (!flare)
@@ -731,15 +735,15 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     flare->pos.u = vector4(0.0f, 0.0f, 1.0f);
     flare->pos.orthonormalize();
     float vis;
-    if (g_shadow.sample(&eye->o, &vis)) {
+    if (g_shadow_map.sample(&eye->o, &vis)) {
         vis = vis + vis;
-        flare_amt = (vis - flare_amt) * g_amp * 10.0f + flare_amt;
+        flare_amt = (vis - flare_amt) * g_step_tbl[2] * 10.0f + flare_amt;
     } else {
         vector4 to(eye->o.x - dir.x * 500.0f, eye->o.y - dir.y * 500.0f, eye->o.z - dir.z * 500.0f);
         if (((CellGrid*)scene)->trace(&eye->o, &to, 1000.0f, 0, 0))
-            flare_amt = flare_amt + g_amp * 3.5f;
+            flare_amt = flare_amt + g_step_tbl[2] * 3.5f;
         else
-            flare_amt = flare_amt - g_amp * 3.5f;
+            flare_amt = flare_amt - g_step_tbl[2] * 3.5f;
     }
     if (flare_amt < 0.0f)
         flare_amt = 0.0f;
@@ -775,7 +779,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     fm->color |= 0xff000000;
     fm->scale((sc2 * sc2 * 5.0f + 2.0f) * size * 50.0f);
     if (g_game->levels[f5df4].flags & 0x100)
-        g_mission_obj.update_particles(eye);
+        g_terrain.update_particles(eye);
 }
 
 // @ 0x4faee0
@@ -788,7 +792,7 @@ bool ShadowMap::sample(const vector4* p, float* out)
 
     bool ret = true;
     *out = 1.0f;
-    if (!cam || !g_shadow_enabled || !surf) {
+    if (!cam || !g_use_shaders || !surf) {
         ret = false;
         return ret;
     }
@@ -806,9 +810,9 @@ bool ShadowMap::sample(const vector4* p, float* out)
         int xv = tx[i] + px;
         int yv = ty[i] + py;
         float a, b;
-        int cy = clamp_int(&yv, &zero_y, &h2);
-        int cx = clamp_int(&xv, &zero_x, &w2);
-        read_pixel((int)g_device, cx, cy, (unsigned*)&a, (unsigned*)&b);
+        int cy = clamp_index(&yv, &zero_y, &h2);
+        int cx = clamp_index(&xv, &zero_x, &w2);
+        read_pixel((int)g_render.dev, cx, cy, (unsigned*)&a, (unsigned*)&b);
         if (!(a < depth))
             *out += w[i];
     }
@@ -1191,17 +1195,17 @@ void GameScreen::build()
 {
     float v[2];
     g_gui.reset();
-    g_sound.stop_all();
+    g_sound_mgr.stop_all();
 
-    char* rec = g_menu_recs + GAME_AT(int, 0x13aec) * 0x60;
+    char* rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
     bool ok = true;
     int color = (int)(*(__int64*)(rec + 0x20) >> 32) | 0xff000000;
     GAME_AT(int, 0xc8) = 0;
     GAME_AT(int, 0xa8) = 0;
-    rec = g_menu_recs + GAME_AT(int, 0x13aec) * 0x60;
+    rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
     *(tstring*)((char*)g_game + 0x1a210) = *(tstring*)(rec + 0x28);
     GAME_AT(int, 0x1a220) = -1;
-    ((DialogBlock*)(g_menu_recs + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->exec(8);
+    ((DialogBlock*)(g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->exec(8);
     if (GAME_AT(int, 0xc8) != 0)
         ok = false;
 
@@ -1233,7 +1237,7 @@ void GameScreen::build()
             rgl::mesh* src = g_resmgr_full.get_object((const rgl::string*)((char*)g_game + 0x1a210));
             if (src) {
                 rgl::mesh* m = src->clone();
-                rec = g_menu_recs + GAME_AT(int, 0x13aec) * 0x60;
+                rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
                 if ((*(unsigned*)(rec + 0x20) & 0x1000) && 1.35f < g_screen_b / g_screen_a) {
                     float f = 1.33f / (g_screen_b / g_screen_a);
                     vector4 c;
@@ -1313,7 +1317,7 @@ void GameScreen::build()
     tree->layout();
     v[0] = 0.65f;
     v[1] = 0.31f;
-    tree->set_margin(v);
+    tree->scroll_refresh(v);
     UI(frame)->add_child(UI(tree));
 
     GroupWidget* value = new GroupWidget;
@@ -1327,7 +1331,7 @@ void GameScreen::build()
     {
         float a[2] = { 0.01f, 0.02f };
         float b[2] = { 0.75f, 0.36f };
-        made = make_scroll_bar(value, a, b, made);
+        made = make_quest_list(value, a, b, made);
     }
     slider = made;
     UI(frame)->add_child(UI(made));
@@ -1371,23 +1375,23 @@ static __forceinline float param_value(const char* key)
     tstring k(key);
     int found = -1;
     for (int i = 0; i < g_param_count; i++) {
-        if (g_params[i].name.equals(k)) {
+        if (g_game_vars[i].name.equals(k)) {
             found = i;
             break;
         }
     }
     float v = 0.0f;
     if (found >= 0) {
-        char* s = g_params[found].value;
+        char* s = g_game_vars[found].value;
         if (s)
-            v = (float)atof(s ? s : (char*)&g_params[found].value);
+            v = (float)atof(s ? s : (char*)&g_game_vars[found].value);
     }
     return v;
 }
 #define MAKE_TAB(name) make_tab(frame, name, x, yy, h)
 static MissionUi* make_tab(FrameWidget* frame, const char* name, float x, float y, float h)
 {
-    return make_tab_widget(frame, g_ui_names.find(tstring(name)), x, y, h);
+    return make_short_button(frame, g_strtable.lookup(tstring(name)), x, y, h);
 }
 
 // @ 0x4fc820
@@ -1479,7 +1483,7 @@ void LogScreen::build(bool show)
             d = 0.0f;
         float a[2] = { 0.03f, d + 0.08f };
         float b[2] = { 0.915f, ymin };
-        slider = make_scroll_bar(bar, a, b, track);
+        slider = make_quest_list(bar, a, b, track);
     }
     UI(frame)->add_child(UI(slider));
 
@@ -1839,16 +1843,16 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         int code;
                         if (name.find(tstring("color"), 0) == 0) {
                             code = 1;
-                            codes->push_back(code);
+                            codes->int_push_back(code);
                         } else if (name.find(tstring("size"), 0) == 0) {
                             code = 2;
-                            codes->push_back(code);
+                            codes->int_push_back(code);
                         } else if (name.find(tstring("font"), 0) == 0) {
                             code = 3;
-                            codes->push_back(code);
+                            codes->int_push_back(code);
                         } else if (name.find(tstring("alpha"), 0) == 0) {
                             code = 4;
-                            codes->push_back(code);
+                            codes->int_push_back(code);
                         }
                         char eq = '=';
                         int value = atol(name.substr(name.find(eq, 0) + 1, name.len).c_str());
@@ -1878,10 +1882,10 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                     } else {
                         if (in_tag) {
                             if (i2 == y) {                        // a span continues on a new row
-                                spare->push_back(spare->first[(spare->first ? (unsigned)(spare->last - spare->first) : 0) - 1]);
-                                codes->push_back_b(codes->first[(codes->first ? (unsigned)(codes->last - codes->first) : 0) - 1]);
+                                spare->int_push_back(spare->first[(spare->first ? (unsigned)(spare->last - spare->first) : 0) - 1]);
+                                codes->push_back_out(codes->first[(codes->first ? (unsigned)(codes->last - codes->first) : 0) - 1]);
                                 rects_b->push_back(pos);
-                                tags->push_back_b(tag_index);
+                                tags->push_back_out(tag_index);
                             }
                         }
                         const Glyph* g;

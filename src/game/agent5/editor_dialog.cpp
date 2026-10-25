@@ -34,33 +34,33 @@ float g_hundred;                                    // 0x54ab28 100.0f
 float g_color_unit;                                 // 0x54a6c4   1/255
 
 
-int  sel_count();                                   // 0x40f010
-void sel_push(int i);                               // 0x438bf0
-void begin_edit(int a, int b);                      // 0x43f310
-void begin_edit0();                                 // 0x440b30
-void apply_sel_copy();                              // 0x42cd20
+int  size();                                   // 0x40f010
+void pop_back_if(int i);                               // 0x438bf0
+void resize(int a, int b);                      // 0x43f310
+void push_back_out();                                 // 0x440b30
+void set_delay();                              // 0x42cd20
 void brush_apply_end();                             // 0x41f4b0
-void reset_all_action();                            // 0x4e8720
-void reset_view_action();                           // 0x4d3a50
-void scale_all_action();                            // 0x4c77c0
-void dialog_refresh();                              // 0x4f6390
-void scale_terrain(float x, float y, float z, float w);     // 0x47af30
-void clear_manual_terrain();                        // 0x4e85d0
-void refresh_terrain_view();                        // 0x4c8630
-void terrain_rebuild();                             // 0x4c6dc0
-char action_49d_check();                            // 0x4cb3a0
-void action_49b();                                  // 0x4d1880
-void action_4a3();                                  // 0x4c5b60
-void action_4a4();                                  // 0x4c5c80
-void action_4a5();                                  // 0x4c5a20
-void action_4a6();                                  // 0x4c5dc0
-char action_4a7_check();                            // 0x4d1410
-void action_4a8();                                  // 0x4d22d0
-char action_4aa_check();                            // 0x4d9e80
-char action_4ac_check();                            // 0x4caa40
-char action_4ad_check();                            // 0x4d27d0
-void action_4ae();                                  // 0x4d2df0
-INT_PTR __stdcall options_dialog_proc(HWND, UINT, WPARAM, LPARAM);  // 0x4bf5f0
+void frame_step();                            // 0x4e8720
+void restore_defaults();                           // 0x4d3a50
+void refresh();                            // 0x4c77c0
+void refresh_dialog();                              // 0x4f6390
+void set_color(float x, float y, float z, float w);     // 0x47af30
+void init();                        // 0x4e85d0
+void conv_build_scene();                        // 0x4c8630
+void set_object_target();                             // 0x4c6dc0
+char split_edge();                            // 0x4cb3a0
+void build_second_pass();                                  // 0x4d1880
+void update_edge_mode();                                  // 0x4c5b60
+void update_poly_mode();                                  // 0x4c5c80
+void update_vertex_mode();                                  // 0x4c5a20
+void refresh_selection();                                  // 0x4c5dc0
+char build_first_pass();                            // 0x4d1410
+void finish();                                  // 0x4d22d0
+char teardown();                            // 0x4d9e80
+char combine();                            // 0x4caa40
+char split_marked_edge();                            // 0x4d27d0
+void add_quad();                                  // 0x4d2df0
+INT_PTR __stdcall options_dlg_proc(HWND, UINT, WPARAM, LPARAM);  // 0x4bf5f0
 
 struct EditorGameView {
     char pad0[0x1a094];
@@ -268,7 +268,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     }
     switch (wParam & 0xffff) {
     case 2:
-        reset_view_action();
+        restore_defaults();
         ShowWindow(m_hMapEditorDlg, SW_HIDE);
         return 1;
     case 0x433:
@@ -288,7 +288,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_game->rt_w = 0.0f;
         g_game->rt_extra = 0;
         if (g_game->rt_flag == 0)
-            scale_all_action();
+            refresh();
         return 1;
     }
     case 0x438: {
@@ -299,15 +299,15 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             for (int i = 0; i < (int)cnt; i++)
                 if (g_game->sel_index != (int)SendMessageA(c, LB_GETITEMDATA, i, 0))
                     SendMessageA(c, LB_SETSEL, 0, i);
-            begin_edit(0, 0);
+            resize(0, 0);
             if (g_game->sel_index >= 0)
-                begin_edit0();
-            dialog_refresh();
+                push_back_out();
+            refresh_dialog();
             if (g_game->sel_index >= 0) {
                 memcpy(g_game->sel_copy, (char*)terrain(g_game->sel_index) + 0x18, 0x40);
-                apply_sel_copy();
+                set_delay();
             }
-            scale_all_action();
+            refresh();
             return 1;
         }
         if (code == 1 || code == 3) {
@@ -318,27 +318,27 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             for (int i = 0; i < cnt; i++) {
                 int v = (int)SendMessageA(c, LB_GETITEMDATA, sel[i], 0);
                 if (v >= 0) {
-                    begin_edit0();
+                    push_back_out();
                     int found = 0;
-                    for (int k = 0; k < sel_count(); k++) {
+                    for (int k = 0; k < size(); k++) {
                         if (g_game->sel_array[k] == v) {
                             found = 1;
                             break;
                         }
                     }
                     if (!found) {
-                        begin_edit0();
+                        push_back_out();
                         g_game->sel_index = v;
                     }
                 }
             }
-            for (int k = sel_count(); k > 1; k--) {
+            for (int k = size(); k > 1; k--) {
                 g_game->sel_array[0] = g_game->sel_array[k - 1];
-                sel_push(0);
+                pop_back_if(0);
             }
-            if (g_game->sel_index == -1 && sel_count() != 0)
-                g_game->sel_index = g_game->sel_array[sel_count() - 1];
-            dialog_refresh();
+            if (g_game->sel_index == -1 && size() != 0)
+                g_game->sel_index = g_game->sel_array[size() - 1];
+            refresh_dialog();
             brush_apply_end();
         }
         return 1;
@@ -458,7 +458,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game->axis + 0x474);
         return 1;
     case 0x489:
-        DialogBoxParamA(m_hInstance, (LPCSTR)0xde, m_hMapEditorDlg, options_dialog_proc, 0);
+        DialogBoxParamA(m_hInstance, (LPCSTR)0xde, m_hMapEditorDlg, options_dlg_proc, 0);
         return 1;
     case 0x491:
     case 0x492:
@@ -485,36 +485,36 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                 g_game->rt_x = fx * g_game->rt_x;
                 g_game->rt_y = fy * g_game->rt_y;
                 g_game->rt_z = fz * g_game->rt_z;
-                if (sel_count() == 0)
+                if (size() == 0)
                     return 1;
                 float invx = g_one / ox;
                 float invy = g_one / oy;
                 float invz = g_one / oz;
                 int i = 0;
                 do {
-                    scale_terrain(invx, invy, invz, ow);
-                    scale_terrain(g_game->rt_x, g_game->rt_y, g_game->rt_z, g_game->rt_w);
+                    set_color(invx, invy, invz, ow);
+                    set_color(g_game->rt_x, g_game->rt_y, g_game->rt_z, g_game->rt_w);
                     i++;
-                } while (i < sel_count());
+                } while (i < size());
                 return 1;
             }
             EditorTerrainView* t = terrain(g_game->sel_index);
             t->rx = fx * t->rx;
             t->ry = fy * t->ry;
             t->rz = fz * t->rz;
-            for (int i = 0; i < sel_count(); i++) {
+            for (int i = 0; i < size(); i++) {
                 EditorTerrainView* ti = terrain(g_game->sel_index);
                 *(int*)(*(int*)(*(int*)(ti->obj + 0x11c) + i * 4) + 0x4c) =
                     1 - *(int*)(*(int*)(*(int*)(ti->obj + 0x11c) + i * 4) + 0x4c);
             }
-            terrain_rebuild();
+            set_object_target();
             g_game->dirty = 1;
         }
         return 1;
     case 0x494:
         if (MessageBoxA(m_hMapEditorDlg, "Are you sure?", "Warning", 1) != 1)
             return 1;
-        reset_all_action();
+        frame_step();
         return 1;
     case 0x46e:
         if (HIWORD(lParam) != 1)
@@ -560,14 +560,14 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         }
         return 1;
     case 0x49b:
-        action_49b();
+        build_second_pass();
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x49d:
-        if (!action_49d_check()) {
+        if (!split_edge()) {
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge that has a neighborhood of 2 triangular faces.", "Warning", 0);
             return 1;
         }
@@ -577,7 +577,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a3:
-        action_4a3();
+        update_edge_mode();
         g_game->sub_mode = 1;
         update_mode_checks();
         g_game->dirty = 1;
@@ -586,7 +586,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a4:
-        action_4a4();
+        update_poly_mode();
         g_game->sub_mode = 2;
         update_mode_checks();
         g_game->dirty = 1;
@@ -595,7 +595,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a5:
-        action_4a5();
+        update_vertex_mode();
         g_game->sub_mode = 0;
         update_mode_checks();
         g_editor->need_redraw[0] = 1;
@@ -603,11 +603,11 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a6:
-        action_4a6();
+        refresh_selection();
         g_editor->need_redraw[g_game->sub_mode] = 1;
         return 1;
     case 0x4a7:
-        if (!action_4a7_check()) {
+        if (!build_first_pass()) {
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of a face and do not have any edge neighborhood.", "Warning", 0);
             return 1;
         }
@@ -617,14 +617,14 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4a8:
-        action_4a8();
+        finish();
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4aa:
-        if (!action_4aa_check()) {
+        if (!teardown()) {
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 3 or 4 vertices (or edges that has 3 or 4 different edges) that are not a member of the same face and that are not members of any edges with 2 faces.", "Warning", 0);
             return 1;
         }
@@ -634,7 +634,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4ac:
-        if (!action_4ac_check()) {
+        if (!combine()) {
             if (g_editor->sel_count2 != 0)
                 MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
             else
@@ -647,7 +647,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4ad:
-        if (!action_4ad_check()) {
+        if (!split_marked_edge()) {
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
             return 1;
         }
@@ -657,7 +657,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x4ae:
-        action_4ae();
+        add_quad();
         g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
@@ -665,9 +665,9 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         return 1;
     case 0x4af:
         if (MessageBoxA(m_hMapEditorDlg, "This action will clear all texture and height data of the terrain that are added manually. Are you sure?", "Warning", 1) == 1) {
-            clear_manual_terrain();
+            init();
             g_game->dirty = 1;
-            refresh_terrain_view();
+            conv_build_scene();
         }
         return 1;
     case 0x4c8:

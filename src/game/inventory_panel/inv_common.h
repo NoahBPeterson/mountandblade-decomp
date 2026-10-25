@@ -25,22 +25,22 @@
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
 extern StrTable g_strtable;                 // 0x5e2a18
-extern ini_file g_ini;                      // 0xa44240 (the option table: key tstring +0, value tstring +0x1c, count +0x2c000)
+extern ini_file g_game_vars;                      // 0xa44240 (the option table: key tstring +0, value tstring +0x1c, count +0x2c000)
 extern int g_store0;                        // 0xa70458 (first out-slot of GameData::emit_event / sl_query)
 extern int g_store1;                        // 0xa7045c
 
 // ---- the game data (g_game) with the members these modules call ----------------------------------------------------
 struct GameDataV : GameData {
-    tstring* string_value_into(tstring* out, int value);   // 0x48e9e0 (ret 8; GameData::string_value with the hidden result pointer spelled out)
+    tstring* string_value(tstring* out, int value);   // 0x48e9e0 (ret 8; GameData::string_value with the hidden result pointer spelled out)
     char emit_event4(int id, int a, int b, int c);          // 0x512620 (ret 0x10)
     int price(ItemRef* item, int idx, char adjust, char plain, char scaled);   // 0x5129d0 (ret 0x14)
     void clear_hero_ammo(unsigned id);                      // 0x513eb0 (ret 4: zeroes the f10 word of the hero stacks of a party)
     int gate_rating(unsigned p1, unsigned p2, int p3);      // 0x491b20 (ret 0xc)
-    int f491f20(int party, int a, int b, int c);            // 0x491f20 (ret 0x10)
+    int token_lookup(int party, int a, int b, int c);            // 0x491f20 (ret 0x10)
     void fill_ids(int* out, int id);                        // 0x5168e0 (ret 8)
     __declspec(noinline) void reset_trade_ids();            // 0x5168b0
     void attach_party_center(const float* pt, int a, int b);   // 0x49e9c0 (ret 0xc)
-    void f516ac0(float dt);                                 // 0x516ac0 (ret 4)
+    void tick(float dt);                                 // 0x516ac0 (ret 4)
     int weekly_cost();                      // 0x504e20 (thiscall, no args: the weekly wage of the player's party)
     int sl_party_value(int party);          // 0x48a290 (ret 4)
     int sl_party_price(int party);          // 0x48a320 (ret 4)
@@ -58,11 +58,11 @@ struct tstring_buffer {
 // the UI root object (0x5d7080)
 struct GuiRoot {
     void reset();                                   // 0x42d1b0
-    void lock();                                    // 0x48b2d0
-    void unlock(int flag);                          // 0x42cd80 (ret 4)
-    void set_window(MissionUi** w);                 // 0x49b120 (ret 4)
+    void play_sound();                                    // 0x48b2d0
+    void set_o564(int flag);                          // 0x42cd80 (ret 4)
+    void add_root(MissionUi** w);                 // 0x49b120 (ret 4)
     void set_o568(void* o, bool clear_lines);       // 0x42cdb0 (ret 8)
-    void set_pair(float* pt);                       // 0x4c5190 (ret 4)
+    void set_view(float* pt);                       // 0x4c5190 (ret 4)
     void draw_string(const tstring* s, float y, int color, char b);   // 0x4e43e0 (ret 0x10)
 };
 extern GuiRoot g_gui_root;                          // 0x5d7080
@@ -80,9 +80,9 @@ extern GuiRoot g_gui_root;                          // 0x5d7080
 static __forceinline float ini_float(const tstring& key)
 {
     float ret = 0.0f;
-    int idx = g_ini.find(key);
+    int idx = g_game_vars.find(key);
     if (idx >= 0)
-        ret = (float)atof(g_ini.entries[idx].value.c_str());
+        ret = (float)atof(g_game_vars.entries[idx].value.c_str());
     return ret;
 }
 

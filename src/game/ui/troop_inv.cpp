@@ -305,14 +305,14 @@ void Placed::read(stream_base* s, int version)
         if (idx != -1) {
             f18c = idx;
         } else {
-            if (f18c < 0 || f18c >= g_tbl78_count) {
+            if (f18c < 0 || f18c >= g_propkind_count) {
                 f18c = 0;
-                name = g_tbl78[0].name;
+                name = g_propkinds[0].name;
             } else {
-                name = g_tbl78[f18c].name;
+                name = g_propkinds[f18c].name;
             }
         }
-        f1bc = (float)g_tbl78[f18c].f14;
+        f1bc = (float)g_propkinds[f18c].f14;
     }
     s->r_int(&f1a0);
     if (version >= 2) {

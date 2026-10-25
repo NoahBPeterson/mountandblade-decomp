@@ -29,14 +29,14 @@
 extern MsgLog g_msglog;                                 // 0x5d7080
 extern int   g_snd_id_a;                                // 0x5aa350
 extern int   g_snd_id_b;                                // 0x5aa2fc
-extern float g_sound_origin[];                          // 0x5aa168
+
 extern int   g_a17148;                                  // 0xa17148
 extern int   g_a17348;                                  // 0xa17348
 extern int   g_a17188;                                  // 0xa17188
 extern int   g_a17588;                                  // 0xa17588
 extern int   g_a171b4;                                  // 0xa171b4
 extern int   g_a173b4;                                  // 0xa173b4
-extern int   g_a5a9fbc;                                 // 0x5a9fbc
+
 extern int   g_trial_mode;                              // 0x5e29c4
 extern int   g_a170d8;                                  // 0xa170d8
 extern int   g_a174d8;                                  // 0xa174d8
@@ -51,13 +51,13 @@ extern float g_5d8028;                                  // 0x5d8028
 extern int   g_5d8780;                                  // 0x5d8780
 extern void* g_5d75e8;                                  // 0x5d75e8 (== the UI root's object at +0x568)
 extern const char g_empty[];                            // 0x54a480 ("")
-extern int   g_sel_state;                               // 0xa181a8
+extern int   g_disable_food_slot;                               // 0xa181a8
 extern tstring g_num;                                   // 0xa70464
 extern int   g_num_valid;                               // 0xa70470
 extern __int64 g_result64;                              // 0xa70458 (read as one qword by the price rule)
-extern char  g_skill_names[];                           // 0x8ee3100 (skill records of 0x44 bytes)
+extern char  g_skill_tbl[];                           // 0x8ee3100 (skill records of 0x44 bytes)
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
-int round_value(float* v);                              // 0x432540
+int round_float(float* v);                              // 0x432540
 void item_events(int item_no, int* a, int* b, int* c);  // 0x4ef730
 void weapon_class_caption(int cls, char* out);          // 0x4f04f0
 void attribute_name(int type, char* out);               // 0x512840
@@ -79,11 +79,12 @@ struct Modifier {
     float weight;                                       // +0x20
     char pad24[0x4];
 };
-extern Modifier g_modifiers[];                          // 0xa75f70
+extern Modifier g_item_modifiers[];                          // 0xa75f70
 
 // script emitter record (0x34 bytes, array pointer at 0xa75eb0, parallel index array at 0xa75ebc)
 #include "../emitter_rec.h"
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../config/config.h"
 
 // @ 0x50fe20
 void InventoryPanel::refresh_transaction(int unused)
@@ -104,7 +105,7 @@ void InventoryPanel::refresh_transaction(int unused)
     }
 
     if ((g_a17148 != 0 || g_a17348 != 0) && g_a17188 != 0 && g_a17588 == 0 &&
-        g_a5a9fbc != 0 && g_trial_mode != 0) {
+        g_cfg.cheat_mode != 0 && g_trial_mode != 0) {
         g_game->add_gold(1000, g_game->player);
         money_label(0);
     }
@@ -142,7 +143,7 @@ void InventoryPanel::refresh_transaction(int unused)
                 } else {
                     tstring key("ui_you_dont_have_value");
                     tstring_buffer vb;
-                    tstring* val = GV->string_value_into(vb.get(), -pending);
+                    tstring* val = GV->string_value(vb.get(), -pending);
                     tstring* f = g_strtable.lookup(&key);
                     char buf[0x200];
                     sprintf(buf, f->c_str(), val->c_str());
@@ -162,9 +163,9 @@ void InventoryPanel::refresh_transaction(int unused)
                     q_pay = -1;
                     tstring key("ui_merchant_cant_afford_value");
                     tstring_buffer vb1;
-                    tstring* val = GV->string_value_into(vb1.get(), TROOP(this->troop)->f3b4);
+                    tstring* val = GV->string_value(vb1.get(), TROOP(this->troop)->f3b4);
                     tstring_buffer vb2;
-                    tstring* val2 = GV->string_value_into(vb2.get(), pending);
+                    tstring* val2 = GV->string_value(vb2.get(), pending);
                     Troop* rec = TROOP(troop);
                     tstring* nm = g_strtable.find(&rec->key);
                     if (nm == 0)
@@ -244,8 +245,8 @@ void InventoryPanel::refresh_transaction(int unused)
         rec->equip[9].m4 = 0;
         rec->equip[9].reduce(0);
         set_slot_flag(2, 9, 2, 1);
-        SOUNDMGR->play(g_snd_id_a, 1, g_sound_origin, 1.0f, 0);
-        SOUNDMGR->play(g_snd_id_b, 1, g_sound_origin, 1.0f, 0);
+        SOUNDMGR->play(g_snd_id_a, 1, ((float*)&g_sound_mgr.listener), 1.0f, 0);
+        SOUNDMGR->play(g_snd_id_b, 1, ((float*)&g_sound_mgr.listener), 1.0f, 0);
         init_window();
     }
 
@@ -435,7 +436,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
     int zero = 0;
     ItemKind* it = &g_items[slot->item];
     g_gui_root.set_o568(0, 1);
-    g_gui_root.set_pair(pt);
+    g_gui_root.set_view(pt);
 
     char buf[512];
     slot->name(buf);
@@ -648,7 +649,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
-    } else if (kind == 0xb && g_sel_state == 0 && slot->item >= 0 && it->f1fc > 0) {
+    } else if (kind == 0xb && g_disable_food_slot == 0 && slot->item >= 0 && it->f1fc > 0) {
         const tstring* p = g_strtable.lookup(&tstring("ui_value_to_morale"));
         float v = slot->item < 0 ? 0.0f : (float)it->f1fc;
         sprintf(buf, p->c_str(), (double)(v * 0.02f));
@@ -718,7 +719,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
                 if (c >= 0)
                     weapon_class_caption(c, need);
             } else {
-                SkillNames* sk = (SkillNames*)(g_skill_names + b * 0x44);
+                SkillNames* sk = (SkillNames*)(g_skill_tbl + b * 0x44);
                 const tstring* name = g_strtable.find(&sk->f20);
                 if (!name)
                     name = &sk->f10;
@@ -805,7 +806,7 @@ void ItemRef::name(char* out)
     nm.underscores_to_spaces();
     if (mod != 0) {
         const char* s = nm.c_str();
-        Modifier* m = &g_modifiers[mod];
+        Modifier* m = &g_item_modifiers[mod];
         tstring* mk = g_strtable.find(&m->key);
         const char* fmt = (mk ? mk : (tstring*)m)->c_str();
         _snprintf(out, 0x80, fmt, s);
@@ -909,7 +910,7 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
             if (adjust)
                 tf = 1.0f / tf;
             value = tf * value;
-            result = round_value(&value);
+            result = round_float(&value);
         }
     }
     if (result < 1)
@@ -944,7 +945,7 @@ L_cd4:
     if (held.item == item->item && item->item >= 0 && ITYPE(item->item) == 0x12 &&
         (held.m4 & 0xff) != 0 && (item->m4 & 0xff) != 0) {
         // same stackable: pour as much as fits from the hand into the held stack
-        g_gui_root.lock();
+        g_gui_root.play_sound();
         int n = item->m4 & 0xff;
         int have = held.m4 & 0xff;
         int room = held.max_amount() - have;
@@ -955,13 +956,13 @@ L_cd4:
         if (held.max_amount() - (held.m4 & 0xff) > 0)
             return;
         held.item = -1;
-        g_gui_root.unlock(0);
+        g_gui_root.set_o564(0);
         locked = 0;
         return;
     }
 L_de3:
     // pick the slot's contents up into the hand
-    g_gui_root.lock();
+    g_gui_root.play_sound();
     tmp = *item;
     fl = test_slot_flag(page, slot, 1);
     sv = (page < 2) ? (int)values[page][slot] : (int)vstash[page - 2][slot];
@@ -1131,13 +1132,13 @@ void InventoryPanel::add_cost(int delta)
         tstring_buffer sv;
         tstring key("ui_notification_payment_value");
         sprintf(buf, g_strtable.lookup(&key)->c_str(),
-                GV->string_value_into(sv.get(), -pending)->c_str());
+                GV->string_value(sv.get(), -pending)->c_str());
         sv.destroy();
     } else if (pending > 0) {
         tstring_buffer sv;
         tstring key("ui_notification_payment_receive_value");
         sprintf(buf, g_strtable.lookup(&key)->c_str(),
-                GV->string_value_into(sv.get(), pending)->c_str());
+                GV->string_value(sv.get(), pending)->c_str());
         sv.destroy();
     } else {
         tstring key("ui_no_cost");

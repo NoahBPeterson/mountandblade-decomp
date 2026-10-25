@@ -22,12 +22,12 @@ static __forceinline float ini_float_scan(const tstring& key)
 {
     float r = 0.0f;
     int idx = -1;
-    for (int i = 0; i < g_ini.count; i++) {
-        if (g_ini.entries[i].key.equals(key)) { idx = i; break; }
+    for (int i = 0; i < g_game_vars.count; i++) {
+        if (g_game_vars.entries[i].key.equals(key)) { idx = i; break; }
     }
     if (idx >= 0) {
-        char* p = g_ini.entries[idx].value.buf;
-        if (p == 0) p = (char*)&g_ini.entries[idx].value.buf;
+        char* p = g_game_vars.entries[idx].value.buf;
+        if (p == 0) p = (char*)&g_game_vars.entries[idx].value.buf;
         r = (float)atof(p);
     }
     return r;
@@ -43,10 +43,10 @@ static inline int skill_of(const Stack* ms, int skill)
     int v = g_game->skill_level(ms->troop, skill);
     Troop* r = rec_of(ms->troop);
     if (ms->troop == g_game->player) {
-        if (r->hp < g_skill_points_full)
+        if (r->hp < g_player_wounded_treshold)
             v = 0;
     } else {
-        if (r->hp < g_skill_points_ok)
+        if (r->hp < g_hero_wounded_treshold)
             v = 0;
     }
     return v;
@@ -67,7 +67,7 @@ static MissionUi* button(PartyScreen* self, MissionUi* parent, const char* label
     tstring k(label_key);
     tstring h(cfg_key);
     tstring* text = g_strtable.lookup(&k);
-    return make_button(parent, text, 0, 0, ini_float(h));
+    return make_short_button(parent, text, 0, 0, ini_float(h));
 }
 
 // @ 0x502cc0
@@ -107,7 +107,7 @@ void PartyScreen::open_party_window()
         PSO(win)->add_image(0, c);
     }
     g_ui_changed = 1;
-    g_gui_root.set_window((MissionUi**)&window);
+    g_gui_root.add_root((MissionUi**)&window);
 
     // buttons on the window
     done_btn = button(this, win, "ui_done", "party_b_done_h");
@@ -144,7 +144,7 @@ void PartyScreen::open_party_window()
         tstring k("ui_release_one");
         tstring h("party_b_release_h");
         tstring* text = g_strtable.lookup(&k);
-        action_btn = make_text(info, text, 0, 0, ini_float(h));
+        action_btn = new_medium_button(info, text, 0, 0, ini_float(h));
     }
     label_refresh(action_btn, tstring("party_b_release"));
 
@@ -166,7 +166,7 @@ void PartyScreen::open_party_window()
         tstring k("ui_upgrade_one");
         tstring h("party_b_upgrade1_h");
         tstring* text = g_strtable.lookup(&k);
-        upgrade1 = make_up(info, text, 0, 0, ini_float(h));
+        upgrade1 = new_long_button(info, text, 0, 0, ini_float(h));
     }
     label_refresh(upgrade1, tstring("party_b_upgrade1"));
 
@@ -174,7 +174,7 @@ void PartyScreen::open_party_window()
         tstring k("ui_upgrade_one");
         tstring h("party_b_upgrade2_h");
         tstring* text = g_strtable.lookup(&k);
-        upgrade2 = make_up(info, text, 0, 0, ini_float(h));
+        upgrade2 = new_long_button(info, text, 0, 0, ini_float(h));
     }
     label_refresh(upgrade2, tstring("party_b_upgrade2"));
 
@@ -363,12 +363,12 @@ static __forceinline void push_colour(MissionUi* w, const char* key)
     tstring k(key);
     int colour = 0;
     int found = -1;
-    for (int i = 0; found == -1 && i < g_ini.count; i++) {
-        if (g_ini.entries[i].key.equals(k))
+    for (int i = 0; found == -1 && i < g_game_vars.count; i++) {
+        if (g_game_vars.entries[i].key.equals(k))
             found = i;
     }
     if (found >= 0)
-        sscanf(g_ini.entries[found].value.c_str(), "%x", &colour);
+        sscanf(g_game_vars.entries[found].value.c_str(), "%x", &colour);
     PSO(w)->set_colour(&colour);
 }
 
@@ -557,9 +557,9 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     {
         tstring key("party_b_member_h");
         unit = 0.0f;
-        int n = g_ini.find(key);
+        int n = g_game_vars.find(key);
         if (n >= 0)
-            unit = (float)atof(g_ini.entries[n].value.c_str());
+            unit = (float)atof(g_game_vars.entries[n].value.c_str());
     }
     float total = (float)count * unit;
     if (total < bar_amount[type]) {
@@ -766,7 +766,7 @@ void PartyScreen::setup_party(int side)
             Party* rec = (Party*)((char*)g_game->parties.pages._Myfirst[idx >> 4]
                                                 + (idx & 0xf) * 0x5ac8);
             tstring* name;
-            if (g_use_alt_name)              name = &rec->key;
+            if (g_show_party_ids_instead_of_names)              name = &rec->key;
             else if (rec->flag != 0)          name = &rec->key;
             else if (g_strtable.find(&rec->key) != 0) name = &rec->key;
             else                             name = &rec->key;
@@ -1078,8 +1078,8 @@ void PartyScreen::refresh_selection()
             if (diff <= g_game->chars[g_game->player].f3b4) {
                 action = true;
             } else {
-                float y = g_ini.get_float(tstring("party_info_warn_y"));
-                float x = g_ini.get_float(tstring("party_info_warn_x"));
+                float y = g_game_vars.get_float(tstring("party_info_warn_y"));
+                float x = g_game_vars.get_float(tstring("party_info_warn_x"));
                 float pt[2];
                 pt[0] = x;
                 pt[1] = y;
@@ -1116,8 +1116,8 @@ void PartyScreen::refresh_selection()
     if (action) {
         if (PARTIES->get(p1)->find_or_add(stk.troop, stk.flags & 1, 1) == -1) {
             action = false;
-            float y = g_ini.get_float(tstring("party_info_warn_y"));
-            float x = g_ini.get_float(tstring("party_info_warn_x"));
+            float y = g_game_vars.get_float(tstring("party_info_warn_y"));
+            float x = g_game_vars.get_float(tstring("party_info_warn_x"));
             float pt[2];
             pt[0] = x;
             pt[1] = y;
@@ -1283,7 +1283,7 @@ void PartyScreen::show_selected_character(int troop, int slot)
 
     int t = troop;
     troop = slot + troop * 2;
-    PSO(char_quad)->add_image(0, g_obj_inv.make_mesh_from(&item, &troop));
+    PSO(char_quad)->add_image(0, g_tableaus.make_mesh_from(&item, &troop));
 
     TroopRec* rec = (TroopRec*)((char*)g_game->chars + t * 0x508);
     float size[2];

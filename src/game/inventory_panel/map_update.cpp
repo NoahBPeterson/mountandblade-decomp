@@ -28,7 +28,7 @@ extern StrTable g_strtable;                  // 0x5e2a18
 #include "../../include/shape.h"
 #include "../../include/mat4.h"
 
-matrix* identity(matrix* out);                                               // 0x40cd00
+matrix* identity_pos(matrix* out);                                               // 0x40cd00
 
 // --------------------------------------------------------------------------------- map / game records --
 struct shape_base;
@@ -71,7 +71,7 @@ struct LevelNav {                            // a view of NavData (terrain_b/cel
     float    zmin;                           // +0x4c
     char     pad50[0x5c - 0x50];
     float    zmax;                           // +0x5c
-    bool     linked(const int* from, const int* to);   // 0x48efa0
+    bool     shares(const int* from, const int* to);   // 0x48efa0
 };
 
 
@@ -204,7 +204,7 @@ void MapPanel::update_target()
     // ---- 0x51969b: thin capsule around the clipped segment -----------------------------------------
     capsule cap(0.0f, &np, &fp);
     matrix mtx;
-    cap.transform((const pos*)identity(&mtx));
+    cap.transform((const pos*)identity_pos(&mtx));
 
     // The sweep endpoints are built component-wise and only x/y of each are ever written; the third
     // lane is whatever the stack slot already held (reproduced verbatim -- see the notes).
@@ -351,7 +351,7 @@ void MapPanel::update_target()
     } else if (best >= 0) {
         if (g_a17148 && g_5a9fbc) {
             *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
-        } else if (!g_level->wmap->linked(&rec_index,
+        } else if (!g_level->wmap->shares(&rec_index,
                                            (const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
             return;
         }

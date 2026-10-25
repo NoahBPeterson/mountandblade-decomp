@@ -127,11 +127,11 @@ struct MissionUi {
     void set_pos(int p);                                // 0x488b30
     void set_text(float* out, const tstring* s);   // 0x488b50
     void put(tstring* out);                             // 0x488c70
-    void flag1_set();                                   // 0x488c90
-    void flag1_clear();                                 // 0x488ca0
+    void hide();                                   // 0x488c90
+    void show();                                 // 0x488ca0
     void flag2_set();                                   // 0x488cb0
     void flag2_clear();                                 // 0x488cc0
-    void set_speed(const float* ref, const float* lo, const float* hi);   // 0x488cd0
+    void set_fog(const float* ref, const float* lo, const float* hi);   // 0x488cd0
     void set_text_pos(const float* p);                  // 0x48b090
     char always1();                                     // 0x48b170
     void flag2();                                       // 0x48b180

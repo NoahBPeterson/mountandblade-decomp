@@ -38,27 +38,27 @@ struct UiList    : Widget { char pad[0x1d0 - 4]; UiList(); };      // 0x4fd150
 struct UiPanel2  : Widget { char pad[0x188 - 4]; UiPanel2(); };    // 0x50d0b0
 
 // widget helper functions
-extern "C" void  open_menu(Widget* w, tstring name);                       // 0x4e4c70
+extern "C" void  label_refresh(Widget* w, tstring name);                       // 0x4e4c70
 extern "C" Widget* make_short_button(Widget* parent, tstring* text,
                                      float x, float y, float h);            // 0x4e5570
 extern "C" Widget* make_map_button(Widget* parent, tstring* text,
                                    float x, float y, float h);              // 0x4dcbd0
-extern "C" Widget* make_scroll(Widget* parent, const tstring* name);        // 0x4f6160
+extern "C" Widget* make_scrollbar(Widget* parent, const tstring* name);        // 0x4f6160
 extern "C" Widget* make_scroll2(Widget* parent, const tstring* name,
                                 Widget* other);                            // 0x4f62f0
 
 #include "../party/widget_ops.h"            // WidgetOps: the one definition (relayout 0x488d50, visible 0x50cc60)
 struct TextLayout {
-    void measure(float* a, float* b);                // 0x438d80 (this = font object)
+    void calc_bounds(float* a, float* b);                // 0x438d80 (this = font object)
 };
 struct ScrollBar {
-    void scroll_to(float pos);                       // 0x48baa0 (this = scroll bar)
+    void set_value(float pos);                       // 0x48baa0 (this = scroll bar)
 };
 struct ThemeDb {
-    void* lookup(const tstring* key);                // 0x419540
+    void* get_object(const tstring* key);            // 0x419540
 };
 struct ThemeItem {
-    void* image();                                   // 0x41c6d0
+    void* clone();                                   // 0x41c6d0
 };
 #define THEME ((ThemeDb*)0x5d6fa0)
 
@@ -70,8 +70,8 @@ struct ThemeItem {
 #define GUI ((GuiManager*)0x5d7080)
 
 struct UiTextDb {
-    tstring* find(const tstring* key);               // 0x43a1e0
-    tstring* lookup(const tstring* key);             // 0x4c6010
+    tstring* lookup(const tstring* key);             // 0x43a1e0
+    tstring* find(const tstring* key);               // 0x4c6010
 };
 #define UITEXT ((UiTextDb*)0x5e2a18)
 
@@ -79,7 +79,7 @@ struct UiTextDb {
 #define CONFIG ((ini_file*)0xa44240)
 
 struct ImageDb {
-    void* make(void* rec, int* id);                  // 0x4991d0
+    void* make_mesh_from(void* rec, int* id);                  // 0x4991d0
 };
 #define IMAGES ((ImageDb*)0xa75f40)
 
@@ -90,7 +90,7 @@ struct ImageDb {
 #include "../../include/party.h"
 #define WORLDMAP ((PartyMgr*)((char*)WORLD + 0xf8))
 
-extern "C" tstring* quest_text(int quest, int idx);  // 0x42c5d0
+extern "C" tstring* strip_tags(int quest, int idx);  // 0x42c5d0
 
 // ---------------------------------------------------------------------------
 // small helpers
@@ -100,7 +100,7 @@ extern "C" tstring* quest_text(int quest, int idx);  // 0x42c5d0
 static const char* tr(const char* key)
 {
     tstring k(key);
-    tstring* s = UITEXT->find(&k);
+    tstring* s = UITEXT->lookup(&k);
     return s->buf ? s->buf : (char*)&s->buf;
 }
 
@@ -108,7 +108,7 @@ static const char* tr(const char* key)
 static tstring* tr_obj(const char* key)
 {
     tstring k(key);
-    return UITEXT->find(&k);
+    return UITEXT->lookup(&k);
 }
 
 // config entry -> text value
@@ -132,7 +132,7 @@ static float cfg_float(const char* key)
 // name of a game record (troop/party/faction), key stored in a tstring
 static const char* record_name(void* key)
 {
-    tstring* s = UITEXT->lookup((tstring*)key);
+    tstring* s = UITEXT->find((tstring*)key);
     return s->buf ? s->buf : (char*)&s->buf;
 }
 
@@ -147,7 +147,7 @@ static tstring* party_name(char* rec)
     if (*(char*)0xa181b8 != 0)
         return (tstring*)(rec + 0x20);
     if (*(char*)(rec + 0x1c) == 0) {
-        tstring* s = UITEXT->lookup((tstring*)(rec + 0x20));
+        tstring* s = UITEXT->find((tstring*)(rec + 0x20));
         if (s)
             return s;
     }
@@ -223,7 +223,7 @@ struct note_window {
     float  scroll_pos;         // +0xb0
 
     void build(int page, int arg);              // 0x50a1c0
-    void filter_list(int_vector* vec, int kind); // 0x50cc70
+    void sort_list(int_vector* vec, int kind); // 0x50cc70
 };
 
 static float fld(void* p, int off) { return *(float*)((char*)p + off); }
@@ -255,13 +255,13 @@ void note_window::build(int page_, int arg_)
     }
     {
         tstring key("note_window");
-        void* item = THEME->lookup(&key);       // 0x419540
-        panel->set_track(0, ((ThemeItem*)item)->image());   // 0x41c6d0
+        void* item = THEME->get_object(&key);       // 0x419540
+        panel->set_track(0, ((ThemeItem*)item)->clone());   // 0x41c6d0
     }
 
     // ---- title picture ---------------------------------------------------
     this->picture = new UiText2;
-    open_menu(this->picture, tstring("note_i_picture"));
+    label_refresh(this->picture, tstring("note_i_picture"));
     this->picture->hide();
 
     // ---- report text -----------------------------------------------------
@@ -271,11 +271,11 @@ void note_window::build(int page_, int arg_)
         float sz[2];
         this->report->set_text(sz, empty);
     }
-    open_menu(this->report, tstring("note_t_keys"));
+    label_refresh(this->report, tstring("note_t_keys"));
 
     // ---- report title ----------------------------------------------------
     this->title = new UiText2;
-    open_menu(this->title, tstring("note_t_title"));
+    label_refresh(this->title, tstring("note_t_title"));
 
     // ---- links list ------------------------------------------------------
     this->links = new UiList;
@@ -284,18 +284,18 @@ void note_window::build(int page_, int arg_)
         float sz[2];
         this->links->set_text(sz, empty);
     }
-    open_menu(this->links, tstring("note_t_data"));
+    label_refresh(this->links, tstring("note_t_data"));
     panel->add_child(this->links);
 
     // ---- back / forward / map buttons ------------------------------------
     {
         float small_h = 1.0f;
         this->btn_back = make_short_button(panel, tr_obj("ui_back"), 0.0f, 0.0f, small_h);
-        open_menu(this->btn_back, tstring("note_b_back"));
+        label_refresh(this->btn_back, tstring("note_b_back"));
         this->btn_forward = make_short_button(panel, tr_obj("ui_forward"), 0.0f, 0.0f, small_h);
-        open_menu(this->btn_forward, tstring("note_b_forward"));
+        label_refresh(this->btn_forward, tstring("note_b_forward"));
         this->btn_map = make_map_button(panel, tr_obj("ui_display_on_map"), 0.0f, 0.0f, small_h);
-        open_menu(this->btn_map, tstring("note_b_map_follow"));
+        label_refresh(this->btn_map, tstring("note_b_map_follow"));
         this->btn_map->hide();
     }
 
@@ -342,7 +342,7 @@ void note_window::build(int page_, int arg_)
         char* troop = ((char*)WORLD->troops) + ti * 0x508;
         if (*(int*)(troop + 0x4a0) >= 0) {
             int id = ti;
-            this->picture->set_track(0, IMAGES->make(troop + 0x4a0, &id));
+            this->picture->set_track(0, IMAGES->make_mesh_from(troop + 0x4a0, &id));
             this->picture->show();
         }
         sprintf(buf, "<trp=%d>", ti);
@@ -391,7 +391,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        this->filter_list(&vec, 1);
+        this->sort_list(&vec, 1);
 
         for (int i = 0; i < vec.size(); i++) {
             int v = vec[i];
@@ -419,7 +419,7 @@ void note_window::build(int page_, int arg_)
         char* fac = ((char*)WORLD->factions) + fi * 0x300;
         if (*(int*)(fac + 0x2fc) >= 0) {
             int id = fi;
-            this->picture->set_track(0, IMAGES->make(fac + 0x2fc, &id));
+            this->picture->set_track(0, IMAGES->make_mesh_from(fac + 0x2fc, &id));
             this->picture->show();
         }
         sprintf(buf, "<fac=%d>", fi);
@@ -448,7 +448,7 @@ void note_window::build(int page_, int arg_)
             float sz[2];
             tstring* nm = (tstring*)fac;
             if (*(char*)(fac + 0x10) == 0) {
-                tstring* s = UITEXT->lookup((tstring*)(fac + 0x14));
+                tstring* s = UITEXT->find((tstring*)(fac + 0x14));
                 if (s)
                     nm = s;
             }
@@ -472,7 +472,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        this->filter_list(&vec, 2);
+        this->sort_list(&vec, 2);
 
         for (int i = 0; i < vec.size(); i++) {
             int v = vec[i];
@@ -500,7 +500,7 @@ void note_window::build(int page_, int arg_)
         void* party = WORLDMAP->get(pi);
         if (*(int*)((char*)party + 0x5aa8) >= 0) {
             int id = pi;
-            this->picture->set_track(0, IMAGES->make((char*)party + 0x5aa8, &id));
+            this->picture->set_track(0, IMAGES->make_mesh_from((char*)party + 0x5aa8, &id));
             this->picture->show();
         }
         sprintf(buf, "<p=%d>", pi);
@@ -557,7 +557,7 @@ void note_window::build(int page_, int arg_)
                 WORLDMAP->next_party_id(&v);
             }
         }
-        this->filter_list(&vec, 3);
+        this->sort_list(&vec, 3);
 
         for (int i = 0; i < vec.size(); i++) {
             int v = vec[i];
@@ -587,7 +587,7 @@ void note_window::build(int page_, int arg_)
         char* quest = ((char*)WORLD->quests) + qi * 0x138;
         if (*(int*)(quest + 0x108) >= 0) {
             int id = qi;
-            this->picture->set_track(0, IMAGES->make(quest + 0x108, &id));
+            this->picture->set_track(0, IMAGES->make_mesh_from(quest + 0x108, &id));
             this->picture->show();
         }
         sprintf(buf, "<qst=%d>", qi);
@@ -614,7 +614,7 @@ void note_window::build(int page_, int arg_)
 
         if (line.len > 0) {
             float sz[2];
-            tstring* qt = quest_text(qi, 0);
+            tstring* qt = strip_tags(qi, 0);
             this->title->set_text(sz, *qt);
             float* r = (float*)this->links->set_text(sz, line);
             y_cur = r[1];
@@ -630,13 +630,13 @@ void note_window::build(int page_, int arg_)
             if (*(int*)(((char*)WORLD->quests) + i * 0x138 + 0x94) > 0)
                 vec.push_back(i);
         }
-        this->filter_list(&vec, 4);
+        this->sort_list(&vec, 4);
 
         for (int i = 0; i < vec.size(); i++) {
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            sprintf(link_buf, "<qst=%d>%s</>\n", v, quest_text(v, 0)->buf);
+            sprintf(link_buf, "<qst=%d>%s</>\n", v, strip_tags(v, 0)->buf);
             line.append(tstring(link_buf));
         }
         if (line.len > 0)
@@ -683,7 +683,7 @@ void note_window::build(int page_, int arg_)
                     continue;
                 tstring* fnm = (tstring*)rec;
                 if (*(char*)(rec + 0x10) == 0) {
-                    tstring* s = UITEXT->lookup((tstring*)(rec + 0x14));
+                    tstring* s = UITEXT->find((tstring*)(rec + 0x14));
                     if (s)
                         fnm = s;
                 }
@@ -720,7 +720,7 @@ void note_window::build(int page_, int arg_)
             }
         }
         for (int i = 0; i < WORLD->n_quests; i++) {
-            tstring* qt = quest_text(i, 0);
+            tstring* qt = strip_tags(i, 0);
             if (qt->find(acc, 0) < 0)
                 continue;
             sprintf(buf, "<qst=%d>%s</>", i, qt->buf ? qt->buf : (char*)&qt->buf);
@@ -752,7 +752,7 @@ void note_window::build(int page_, int arg_)
     // ---- key / data scrolling panels -------------------------------------
     UiPanel2* keys = new UiPanel2;
     this->keys_panel = keys;
-    open_menu(keys, tstring("note_bo_keys"));
+    label_refresh(keys, tstring("note_bo_keys"));
     {
         float v[2];
         v[0] = fld(keys, 0xf0);
@@ -762,11 +762,11 @@ void note_window::build(int page_, int arg_)
 
     UiPanel2* data = new UiPanel2;
     this->data_panel = data;
-    open_menu(data, tstring("note_bo_data"));
+    label_refresh(data, tstring("note_bo_data"));
 
     if (((WidgetOps*)this->picture)->visible() == 0) {
         float a[2], b[2];
-        ((TextLayout*)(*(void**)((char*)this->picture + 0x108)))->measure(a, b);
+        ((TextLayout*)(*(void**)((char*)this->picture + 0x108)))->calc_bounds(a, b);
         float h = b[1] - a[1];
         float border = cfg_float("note_image_border");
         float right = (border + h) + x_cur;
@@ -791,7 +791,7 @@ void note_window::build(int page_, int arg_)
 
     tstring s_keys("note_s_keys");
     tstring sc_keys("note_sc_keys");
-    Widget* keys_scroll_base = make_scroll(this->panel, &s_keys);      // 0x4f6160
+    Widget* keys_scroll_base = make_scrollbar(this->panel, &s_keys);      // 0x4f6160
     this->keys_scroll = make_scroll2(this->keys_panel, &sc_keys,
                                      keys_scroll_base);                 // 0x4f62f0
 
@@ -813,13 +813,13 @@ void note_window::build(int page_, int arg_)
     }
 
     if (this->scroll_pos >= -0.0001f) {
-        ((ScrollBar*)*(void**)((char*)this->keys_scroll + 0x484))->scroll_to(this->scroll_pos);
+        ((ScrollBar*)*(void**)((char*)this->keys_scroll + 0x484))->set_value(this->scroll_pos);
         this->scroll_pos = -1.0f;
     }
 
     tstring s_data("note_s_data");
     tstring sc_data("note_sc_data");
-    Widget* data_scroll_base = make_scroll(this->panel, &s_data);      // 0x4f6160
+    Widget* data_scroll_base = make_scrollbar(this->panel, &s_data);      // 0x4f6160
     this->data_scroll = make_scroll2(this->data_panel, &sc_data,
                                      data_scroll_base);                 // 0x4f62f0
 

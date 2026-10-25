@@ -48,13 +48,13 @@ void __cdecl build_equipment(AgentBody* b, int kind, int troop, int* look, int* 
 extern GuiManager g_gui;                                              // 0x5d7080
 extern char g_gui_dirty;                                          // 0x5d8788 (set after a screen was built)
 extern char g_hud_flag;                                           // 0x5e212c (set to 1 by 0x4f7f00)
-extern char g_hud_lucky;                                          // 0x5e2938 (set with 5% probability by 0x4f7f00)
-extern int g_hud_last;                                            // 0x5a9f18 (set to -1)
-extern int g_env_shadows;                                         // 0x5aa034 (nonzero: the name overlay starts enabled)
-extern int g_skin_cap;                                            // 0x8ee3ac4 (skin-index clamp on the HUD slot count)
+extern char g_scene_dirty;                                          // 0x5e2938 (set with 5% probability by 0x4f7f00)
+extern int g_pending_action;                                            // 0x5a9f18 (set to -1)
+
+
 extern __int64 g_ticks[];                                         // 0x5e2948 clock table (1e-5 s ticks)
 struct UiVec {                                                    // a widget list at game +0x1a1b8
-    void begin(int a, int b);                                     // 0x43f310 (ret 8)
+    void resize(int a, int b);                                     // 0x43f310 (ret 8)
 };
 void vec_insert_ptr(MissionUi*** where, int count, MissionUi** val);   // 0x4927d0 (the children's _Insert_n: the end iterator, count, the value)
 
@@ -79,9 +79,9 @@ static __forceinline Agent* agent_by_id(unsigned id)
 
 // ---- camera globals and engine objects the camera tick uses -------------------------------------------------------------
 struct InputKeys {                                                // the key table at 0xa73730
-    char down(int key);                                           // 0x48ac50 (ret 4)
+    char is_down(int key);                                           // 0x48ac50 (ret 4)
 };
-extern InputKeys g_input;                                         // 0xa73730
+extern InputKeys g_game_keys;                                         // 0xa73730
 extern int g_cam_version;                                         // 0xa17118
 extern int g_cam_down;                                            // 0xa17518
 extern int g_cam_left;                                            // 0xa17150
@@ -92,14 +92,14 @@ extern int g_cam_roll;                                            // 0xa1718c
 extern int g_cam_lock;                                            // 0xa17148
 extern int g_cam_lock2;                                           // 0xa17348
 extern int g_cam_sens;                                            // 0x5a9fdc
-extern float g_cam_dt;                                            // 0x5a9c20
+
 extern float g_screen_a;                                          // 0x5d75dc
 extern float g_screen_b;                                          // 0x5d75d8
 float __cdecl fmax_ref(const float* a, const float* b);           // 0x4324d0 (the larger of the two)
 MissionUi* __cdecl make_scroll_track(MissionUi* parent, float a, float b, float c, float d);   // 0x4ee910 (cdecl)
-MissionUi* __cdecl make_scroll_bar(MissionUi* content, float* a, float* b, MissionUi* track);   // 0x4eea90 (cdecl)
+MissionUi* __cdecl make_quest_list(MissionUi* content, float* a, float* b, MissionUi* track);   // 0x4eea90 (cdecl)
 MissionUi* __cdecl make_quest_list(MissionUi* content, float* a, float* b, MissionUi* track); // 0x4eea90
-float __cdecl clamp_float(const float* x, const float* lo, const float* hi);   // 0x40e3d0
+float __cdecl clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 
 // the scene's segment query and the skeleton's head bone, as the camera tick reaches them
 struct SceneQuery {                                               // Mission::scene (src/game/terrain_b/cell_grid.h: CellGrid; the query is another object's member)
@@ -146,26 +146,29 @@ struct SunBody {                                                  // an agent's 
 struct MissionDust {                                              // the mission object's dust-grid pass (src/game/char_sheet/dust.h declares the same function on its own view of the object)
     void update_particles(const matrix* view);                    // 0x4f3e10 (ret 4)
 };
-extern MissionDust g_mission_obj;                                 // 0xa76630 (the mission object itself; g_mission points to it)
+extern MissionDust g_terrain;                                 // 0xa76630 (the mission object itself; g_mission points to it)
 #include "../../include/sound_mgr.h"                             // SoundMgr (play_slot 0x4428a0, stop_all 0x494310)
-extern SoundMgr g_sound;                                          // 0x5aa128
+#include "../../rgl/resource_manager.h"
+#include "../../include/renderer.h"
+#include "../skill_cap.h"
+extern SoundMgr g_sound_mgr;                                          // 0x5aa128
 extern int g_listener_off;                                        // 0x5a9fd8 (nonzero: the sound listener does not follow the camera)
 extern matrix g_listener;                                         // 0x5aa138 (s, f, u rows and the position o at 0x5aa168)
-extern float g_amp;                                               // 0x5a9c28 (flare amplitude per second)
-extern int g_shadow_enabled;                                      // 0x5e28fc
-extern ShadowMap g_shadow;                                        // 0xa70248
+
+extern int g_use_shaders;                                      // 0x5e28fc
+extern ShadowMap g_shadow_map;                                        // 0xa70248
 extern int g_flag_a17108, g_flag_a17148, g_flag_a17348;           // 0xa17108, 0xa17148, 0xa17348 (key states that force the sun to full size)
 extern int g_screen_w, g_screen_h;                                // 0x5d75c8, 0x5d75cc
 extern float g_scale_a, g_scale_b;                                // 0x5aa08c, 0x5aa090
-extern IDirect3DDevice9* g_device;                                // 0xa17f28
-int __cdecl clamp_int(int* v, int* lo, int* hi);                  // 0x432510 (max(lo, min(v, hi - 1)))
+
+int __cdecl clamp_index(int* v, int* lo, int* hi);                  // 0x432510 (max(lo, min(v, hi - 1)))
 int __stdcall FSOUND_3D_Listener_SetAttributes(float* pos, float* vel, float fx, float fy, float fz, float ux, float uy, float uz);   // 0x5342dc (_FSOUND_3D_Listener_SetAttributes@32)
 
 void __cdecl identity3(matrix* out);                              // 0x40cd60 (the identity rotation, origin left alone)
 void __cdecl mb_warning(const char* fmt, ...);                    // 0x42cb80 (logs a warning)
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 0x4fba40 (the display mesh of an item, scaled to fit *scale)
 
-extern char* g_menu_recs;                                         // 0x5e29b0 (the game menu records, 0x60 bytes each: +0x20 flags, +0x24 colour, +0x28 background mesh name, +0x38 condition block)
+extern char* g_menus;                                         // 0x5e29b0 (the game menu records, 0x60 bytes each: +0x20 flags, +0x24 colour, +0x28 background mesh name, +0x38 condition block)
 struct TableauHost {                                              // the object table at 0xa75f40 (world_data/tableau.h: TableauTbl)
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (ret 8)
 };
@@ -261,7 +264,7 @@ struct ListWidget : MissionUi {                                   // the scrolli
     char pad494[0x4a8 - 0x494];
     ListWidget();                                                 // 0x49deb0
     void layout();                                                // 0x48d470
-    void set_margin(float* v);                                    // 0x498420 (ret 4)
+    void scroll_refresh(float* v);                                    // 0x498420 (ret 4)
 };
 struct NameWidget : MissionUi {                                   // ctor 0x4ed630, vptr 0x598698, size 0x358
     void* mission_scene;                                          // +0x178 (Mission::scene, stored by 0x4f7f00)
@@ -378,7 +381,7 @@ struct IntList {                                                  // a VC7.1 vec
     void int_push_back(const int& v); // 0x4fe0b0
     __declspec(noinline) bool buy(unsigned n);                                         // 0x4fd490 (ret 4: the allocation of the vector<int>'s first block)
     void xlen();                                                  // 0x43e2a0 (std::vector<int>::_Xlen)
-    void push_back_b(const int& v);                               // 0x440b30 (the identical-code twin of push_back that the linker folded for other callers)
+    void push_back_out(const int& v);                               // 0x440b30 (the identical-code twin of push_back that the linker folded for other callers)
     void free_block() { if (first) operator delete(first); first = 0; last = 0; end = 0; }   // the inlined vector release of ~MWidget
     void clear();                                                 // 0x41f4b0 (frees the block and zeroes the pointers)
     void insert_n(int* where, unsigned count, const int& val);    // 0x43e7b0 (ret 0xc)
@@ -429,15 +432,15 @@ struct ParamEntry {                                               // 0x2c-byte r
     char* value;                                                  // +0x20 (0xa4425c + 4 + index * 0x2c)
     char pad24[0x2c - 0x24];
 };
-extern ParamEntry g_params[];                                     // 0xa44240
+extern ParamEntry g_game_vars[];                                     // 0xa44240
 extern int g_param_count;                                         // 0xa70240
 extern tstring* g_msg_begin;                                      // 0x5e23c4 (the recent-messages ring: 0x10-byte tstrings)
 extern tstring* g_msg_end;                                        // 0x5e23c8
 struct StrTable2 {                                               // the string / ui lookup table at 0x5e2a18
-    MissionUi* find(const tstring& name);                         // 0x43a1e0 (ret 4)
+    MissionUi* lookup(const tstring& name);                         // 0x43a1e0 (ret 4)
 };
-extern StrTable2 g_ui_names;                                      // 0x5e2a18
-MissionUi* __cdecl make_tab_widget(MissionUi* frame, MissionUi* obj, float x, float y, float h);   // 0x4e5570
+extern StrTable2 g_strtable;                                      // 0x5e2a18
+MissionUi* __cdecl make_short_button(MissionUi* frame, MissionUi* obj, float x, float y, float h);   // 0x4e5570
 struct TStringArray {                                             // an array of tstrings allocated with new[] (the count sits in front of the first element)
     void* destroy(unsigned flags);                                // 0x4fd0e0 (this = the first element)
 };

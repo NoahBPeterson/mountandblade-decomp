@@ -42,12 +42,12 @@ struct PartyCellRec {                                        // 0xb0 bytes at 0x
     int f2c;                                            // +0x2c
     char pad30[0xb0 - 0x30];
 };
-extern PartyCellRec* g_slotrecs;                             // 0x5e29f8
-extern int g_flag_a181b0;                               // 0xa181b0
+extern PartyCellRec* g_party_templates;                             // 0x5e29f8
+extern int g_show_faction_color;                               // 0xa181b0
 
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
-unsigned __stdcall tint_color(float t, int flag);       // 0x4b1930
+unsigned __stdcall color_of(float t, int flag);       // 0x4b1930
 
 // ---- the two points the distance test reads -----------------------------------------------------------
 struct DistObj {
@@ -200,12 +200,12 @@ int __stdcall draw_party_line(int index)
                     if (n % 7 > 5)
                         return n / 7;
                 } else if (skill >= 10) {
-                    PartyCellRec* r = &g_slotrecs[n];
+                    PartyCellRec* r = &g_party_templates[n];
                     unsigned color;
-                    if (g_flag_a181b0 != 0)
+                    if (g_show_faction_color != 0)
                         color = *(unsigned*)&g_game->rel[r->f2c * 0xc0 + 0xa];
                     else
-                        color = tint_color(g_game->rel[r->f2c * 0xc0 + 0xb], 1);
+                        color = color_of(g_game->rel[r->f2c * 0xc0 + 0xb], 1);
                     const tstring* name = g_strtable.find((const tstring*)((char*)r + 0x10));
                     if (name == 0)
                         name = (const tstring*)r;
