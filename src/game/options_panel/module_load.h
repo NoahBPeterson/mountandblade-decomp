@@ -42,9 +42,11 @@ struct flora_kind {
     int f1c;            // +0x1c
 };
 
-// ground spec record (0x4c bytes): detail in s004bddf0.
+// ground spec record (0x4c bytes, the table data\skyboxes.txt fills; detail in s004bddf0): a name at +0 that the
+// array new of 0x4d0c20 constructs (with the element count stored before the array)
 struct ground_spec {
-    char pad0[0x4c];
+    tstring name;       // +0
+    char pad10[0x4c - 0x10];
 };
 
 // mission type record (0x20 bytes): detail in 0x4c2dd0.
