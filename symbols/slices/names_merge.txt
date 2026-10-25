@@ -8,3 +8,4 @@
 0051c090 ?draw_party_line@MapPanel@@QAEXH@Z  # canonical name (names merge: map_panel.h is not read as a sibling header)
 0051a690 ?project@MapView@@QAEPAHPAPAURecR@@ABUPos4@@@Z  # canonical name (names merge: map_panel.h is not read as a sibling header)
 0047af30 ?set_color@mesh_x@@QAEXUvector4@rgl@@@Z  # mesh_x::set_color(rgl::vector4), colour by value, ret 0x10 (called from mesh_hud 0x496100.. 0x4985f0); the name is ambiguous by annotation (lod_mesh_x::set_color 0x47b5b0, rgl::mesh::set_color)
+00431e10 ??1SceneFile@@UAE@XZ  # SceneFile (terrain_b/scene_file.h) is xmlcfg's RecY (vtable 0x590904, dtor 0x431e10); referenced only by the compiler's ??_ESceneFile

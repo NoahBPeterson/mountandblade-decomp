@@ -225,7 +225,7 @@ extern LogSink g_log;                                // 0x5a9f60
 // ---------------------------------------------------------------- module state
 
 extern int g_scan_module_sounds;                        // 0xa1810c
-extern int g_sound_count;                            // 0x5d878c
+extern int g_loaded_sound_count;                            // 0x5d878c
 
 extern int g_propkind_count;                        // 0x5e29e0
 extern MissionObj* g_propkinds;                       // 0x5e29dc
@@ -275,7 +275,7 @@ void load_module_files()
     in_sounds.r_tstr(&str2);
     in_sounds.r_int(&version);
     ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_scan_module_sounds, &g_module_path);
-    g_sound_count = *g_sound_mgr.p4;
+    g_loaded_sound_count = *g_sound_mgr.p4;
     s_sounds.failed = 1;
 
     // particle_systems.txt

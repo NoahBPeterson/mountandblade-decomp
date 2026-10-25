@@ -49,7 +49,8 @@ struct MissionUi {
     virtual void get_text_size(tstring* s, float* out);   // +0xa4
     virtual void d42(); virtual void d43(); virtual void d44(); virtual void d45(); virtual void d46();
     virtual void d47(); virtual void d48();
-    virtual void update_children();         // +0xc4 (0x48b7f0; takes no argument here)
+    // 49 slots: the original vtable 0x591c80 ends here. A 50th (+0xc4, `update_children`) exists only in the classes
+    // that add it, each with its own function: UiC 0x497d10, UiD 0x498390, progress_bar 0x4e3fb0, NodeA 0x48ef40.
 
     // six (clock index, start stamp) track pairs; the clock index selects an entry of g_ticks
     int clock0; __int64 t0;                 // +0x08 / +0x10  0x488560, 0x48ae20

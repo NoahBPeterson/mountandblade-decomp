@@ -16,7 +16,8 @@ and writes:
                   Data pointers become section-relative relocations; code pointers point at the function our
                   source defines at that address, the library function at that address (symbols/lib_names.txt),
                   or else a trap (int 3, one per missing address, listed in glue.json).
-  aliases         /alternatename directives (in mb_data.obj's .drectve) for every unresolved symbol whose address
+  aliases         /alternatename directives (link 7.10 ignores one whose left side is a template name, ??$...:
+                  such a call must name the definition in source) (in mb_data.obj's .drectve) for every unresolved symbol whose address
                   is a function our source defines under another name or signature, a CRT function, or an import.
   imports/*.lib   import libraries for the DLLs the game ships without one (Newton, FMOD 3, SkinMagic, d3dx9_31),
                   made with link /lib from the original's import names, decorated as the DLL exports them.
@@ -258,6 +259,7 @@ def main():
     os.chdir(ROOT)
     import resolve as R
     img = R.Image()
+    db = R.SymbolDB(img)
     os.makedirs(a.out, exist_ok=True)
     unres = unresolved_symbols(open(a.log, errors="replace").read())
     rmap = json.load(open(a.map))
@@ -323,6 +325,10 @@ def main():
             slots = {x[0] for x in rmap["vtable_slots"].get(s, [])}
             vas = {v: {} for v in slots}
             how = "vtable slot"
+        if not vas:     # referenced only from code no row covers (a compiler-generated deleting destructor):
+            cands = {v for v in db.mangled.get(s, ())}          # the symbol files' mangled-name mapping
+            vas = {"%08x" % v: {} for v in cands} if len(cands) == 1 else {}
+            how = "symbols"
         if not vas:
             report["unresolved"][s] = "no address (the resolver never saw it)"
             continue

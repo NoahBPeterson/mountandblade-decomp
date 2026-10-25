@@ -19,7 +19,7 @@
 #include "../../include/mat4.h"
 
 // @ 0x42cb70
-void bump_counter() { g_counter++; }
+void bump_counter() { g_gui_counter++; }
 
 // @ 0x42cb80
 void mb_warning(const char* fmt, ...)
@@ -132,7 +132,7 @@ void gui_window::wheel_step()
         else if (w & 2) sel = sel - 1;
         if (sel < sel_lo) sel = sel_lo;
         else if (sel > sel_hi) sel = sel_hi;
-        if (w & 3) g_ui_dirty = 1;
+        if (w & 3) g_gui_dirty = 1;
     }
     pending = 0;
 }
@@ -200,7 +200,7 @@ char gui_window::handle_event(unsigned mask)
 {
     if (mouse_event(mask)) return 1;
     if (wants_redraw && (mask & 0x10)) {
-        g_ui_dirty = 1;
+        g_gui_dirty = 1;
         return 1;
     }
     return 0;

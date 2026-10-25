@@ -49,9 +49,9 @@ using rgl::mesh;
 
 extern float g_mouse_x;             // 0x5d7094 (mouse_event 0x42cf50)
 extern float g_mouse_y;             // 0x5d7098
-extern char  g_ui_dirty;            // 0x5d8789 (wheel_step 0x42ce50, handle_event 0x42d170)
+extern char  g_gui_dirty;            // 0x5d8789 (wheel_step 0x42ce50, handle_event 0x42d170)
 extern char  g_error_flag;          // 0x5d7070 (mb_error 0x42cc80)
-extern int   g_counter;             // 0x5d7074 (bump_counter 0x42cb70)
+extern int   g_gui_counter;         // 0x5d7074 (bump_counter 0x42cb70)
 
 // Text log stream (global at 0x5a9f60): a file writer whose flush (slot 26) is 0x42cc10.
 struct log_stream : file_writer_base {

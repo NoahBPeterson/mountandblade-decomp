@@ -1,4 +1,4 @@
-00418cf0 ?find@StrTable@@QAEPAUtstring@@PBU2@@Z  # StrTable::find: string lookup (null when absent), thiscall ret 4
+004c6010 ?find@StrTable@@QAEPAUtstring@@PBU2@@Z  # StrTable::find (LangTables::find): string lookup, null when absent. Was 0x418cf0 (resource_manager::get_object70), which bound cs_detail/cs_panels' calls to the wrong function
 00438f90 ?cap_all@MeshNodeList@@QAEXPAM@Z  # mesh node list: clamp every node to the given distance (thiscall ret 4)
 08ed4f7c ?g_body_table@@3PAHA  # 0x1f8-byte skin/body records (same table as g_chars/g_skins_begin elsewhere), skeleton pointer at +0x1e8
 08ed4f88 ?g_body_count@@3IA  # number of body records (bounds check at 0x49f526)

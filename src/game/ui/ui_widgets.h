@@ -54,6 +54,7 @@ struct UiC : MissionUi {                    // vtable 0x592078
     float f194;                             // +0x194
     float f198, f19c, f1a0, f1a4;           // +0x198 (1, 1, 1 and an uninitialised stack value: 0x48b760)
     int f1a8;                               // +0x1a8
+    virtual void update_children();         // +0xc4, vtable slot 49 (0x497d10, called by show)
     UiC();                                  // 0x48b760
     void show(void* a, float* b, int c, int d);   // 0x48b7f0
     int type();                             // 0x48b880
@@ -64,6 +65,7 @@ struct UiD : MissionUi {                    // vtable 0x592140
     float f17c;                             // +0x17c tolerance
     int f180;                               // +0x180 dragging
     float f184;                             // +0x184 grab offset
+    virtual void update_children();         // +0xc4, vtable slot 49 (0x498390)
     UiD();                                  // 0x48b890
     void show(void* a, float* b, int c, int d);   // 0x48b8d0
     float value();                          // 0x48b930 (next object)

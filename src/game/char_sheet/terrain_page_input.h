@@ -68,6 +68,6 @@ extern int g_key_17458;                                     // 0xa17458  turn (h
 extern int g_key_17454;                                     // 0xa17454  roll with the vertical axis
 extern float g_axis_y;                                      // 0xa178d8  second input axis
 extern float g_axis_x;                                      // 0xa178d4  first input axis
-extern float g_mouse_y;                                     // 0x5d7094  vertical look axis compared with 0.5
+extern float g_look_y;                                     // 0x5d7094  vertical look axis compared with 0.5
 
 #endif

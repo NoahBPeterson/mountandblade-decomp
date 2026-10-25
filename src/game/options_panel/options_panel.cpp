@@ -18,7 +18,7 @@ struct WindowMgrW { void open(int n); };
 
 // ---- the skill table: 42 records of 0x44 bytes, name (tstring) first (0x8ee3110 .. 0x8ee3c38) ----
 #include "../skill_entry.h"
-extern int g_xp_table[];                                            // 0x5937c8
+extern int g_xp_table_5937c8[];                                            // 0x5937c8
 void mb_snprintf(char* buf, unsigned int n, const char* fmt, ...);  // 0x415100
 // 0x432510: clamp *v into [*lo, *hi) and return it.
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);
@@ -506,11 +506,11 @@ void GameIo::import_apply(ini_file* imp)
             troop->level = 1;
             int j = 1;
             while (j < 0x40) {
-                if (xp <= g_xp_table[j]) break;
+                if (xp <= g_xp_table_5937c8[j]) break;
                 troop->level = j;
-                if (xp <= g_xp_table[j + 1]) break;
+                if (xp <= g_xp_table_5937c8[j + 1]) break;
                 troop->level = j + 1;
-                if (xp <= g_xp_table[j + 2]) break;
+                if (xp <= g_xp_table_5937c8[j + 2]) break;
                 j += 3;
                 troop->level = j - 1;
             }
