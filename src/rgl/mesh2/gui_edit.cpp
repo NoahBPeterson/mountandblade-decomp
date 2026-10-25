@@ -917,8 +917,9 @@ RefRecord* ItemPage::fill_records(RefRecord* rec)
     tstring a, b;
     rec->v54(&a);
     rec->v54(&b);
-    rec->v4c(&field);
-    rec->v4c((void*)((char*)this + 0x1a0));
+    int version;
+    rec->v4c(&version);                                  // the file's version word (unused)
+    rec->v4c((void*)((char*)this + 4));                  // the record count, +4
     ((RefList*)this)->retire();
     RefList* rl = (RefList*)this;
     rl->records = 0;
@@ -939,6 +940,7 @@ RefRecord* ItemPage::fill_records(RefRecord* rec)
     rl->records = p;
     for (int i = 0; i < n; i++)
         ((PresentationRec*)((char*)rl->records + i * 0x24))->read(*(stream_base*)rec);   // 0x4c23f0: a member call on the item, the stream as its argument
+    ((loaded_prsnt_table*)this)->load_used();           // 0x4bdec0: the presentation codes
     return rec;
 }
 
