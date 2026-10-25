@@ -1,0 +1,20 @@
+{
+ "2026-10-25T00:28:04-05:00": {
+  "when": "2026-10-25T00:28:04-05:00",
+  "commit": "d9c09d4",
+  "objects": 170,
+  "compile_failures": 0,
+  "unresolved": 3340,
+  "duplicates": 13,
+  "linked": false,
+  "by_category": {
+   "name mismatch": 1726,
+   "global data": 1232,
+   "no annotation": 206,
+   "missing body": 90,
+   "third-party": 70,
+   "CRT": 16,
+   "other": 0
+  }
+ }
+}
