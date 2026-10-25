@@ -85,8 +85,8 @@ struct AgentS {
     void spawn_corpse();                // 0x4554c0
     void cycle_slot(int i);             // 0x44bc30
     void on_wield_reset();              // 0x445a20
-    bool check_new_enemies(AgentS* a);  // 0x432350 (ecx = commander record)
-    bool check_reinforcements(AgentS* a);   // 0x4323a0 (ecx = commander record)
+    bool is_enemy(AgentS* a);  // 0x432350 (ecx = commander record)
+    bool is_friend(AgentS* a);   // 0x4323a0 (ecx = commander record)
     void update(float dt);              // 0x45f660
     void tick();                        // 0x45ff30
 };
@@ -147,7 +147,7 @@ struct SpawnRecG {                      // a 0x4c-byte wave entry
     int f24;                            // +0x24
     int arr[9];                         // +0x28
 };
-struct SpawnSetG {                      // the 0x58-byte per-set record at g_snd_recs
+struct SpawnSetG {                      // the 0x58-byte per-set record at g_mission_templates
     char pad0[0x34];
     SpawnRecG* recs;                    // +0x34
     int count;                          // +0x38
@@ -155,7 +155,7 @@ struct SpawnSetG {                      // the 0x58-byte per-set record at g_snd
     int num;                            // +0x4c
     SndSlotS* slots;                    // +0x50
 };
-struct ItemKindT {                      // the item-kind table entry the spawner reads (g_item_table at 0x8ed4f7c, 0x1f8 bytes)
+struct ItemKindT {                      // the item-kind table entry the spawner reads (g_skins_begin at 0x8ed4f7c, 0x1f8 bytes)
     char pad0[0x1e8];
     int f1e8;                           // +0x1e8
     float f1ec;                         // +0x1ec
@@ -176,7 +176,7 @@ struct AgentSkel {
     char pad0[0x5c];
     int f5c;                            // +0x5c
     AgentSkel(int n) throw();           // 0x428820 (FxDef::FxDef)
-    void set_object(int obj);           // 0x4288c0
+    void init(int obj);           // 0x4288c0
     void set_env_count(int n);          // 0x46b9d0
 };
 struct EntityG {                        // the 0x30c-byte script entity (rgl::strategic_entity)
@@ -189,19 +189,19 @@ struct EntityG {                        // the 0x30c-byte script entity (rgl::st
     AgentSkel* skel;                    // +0x304
 };
 struct Body {
-    void set_radius(float* r);          // 0x439000
+    void cap_all(float* r);          // 0x439000
 };
 void AgentEq_pick_slots(AgentS* a);      // 0x46b2d0 (__stdcall, ret 4)
 void agent_equip_fill(EntityG* e, int kind, int troop, int f94, void* s0, void* inv, void* f240, void* f194,
                       void* f1a4, void* f1a8, void* slots, int id);   // 0x482240 (__stdcall, ret 0x34)
-void agent_build_body(EntityG* e, int kind, int troop, void* inv, void* f130, void* slots, int id);  // 0x47cfe0
-extern char* g_snd_recs;                // 0x5e2a00 (the mission mode table base)
-extern int g_spawn_lo;                  // 0xa70448
+void build_equipment(EntityG* e, int kind, int troop, void* inv, void* f130, void* slots, int id);  // 0x47cfe0
+extern char* g_mission_templates;                // 0x5e2a00 (the mission mode table base)
+extern char g_script[]; // 0xa70440
 extern int g_spawn_hi;                  // 0xa7044c
-extern int g_item_count;                // g_char_count 0x8ed4f88
-extern ItemKindT* g_item_table;         // 0x8ed4f7c
-extern int g_skin_cap;                  // 0x8ee3ac4
-extern char g_msg_enabled;              // 0x5d8794
+extern int g_skin_count;                // g_char_count 0x8ed4f88
+extern ItemKindT* g_skins_begin;         // 0x8ed4f7c
+#include "../skill_cap.h"
+extern char g_gui[]; // 0x5d7080
 extern int g_msg_count;                 // 0x5e2138
 extern int g_msg_base;                  // 0x5e213c
 extern tstring g_msg_text[32];          // 0x5e2140
@@ -212,7 +212,7 @@ struct StrTableG {
 };
 extern StrTableG g_strtable;            // 0x5e2a18
 long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
-void __stdcall f472160(int v);          // 0x472160
+void __stdcall replace_mark(int v);          // 0x472160
 
 // the mission object as the spawner sees it
 struct MissionG : Mission {
@@ -221,9 +221,9 @@ struct MissionG : Mission {
     NOINL bool spawn_one(int id);                           // 0x483de0
     void run_spawns();                                      // 0x483eb0
     NOINL int spawn_full(const matrix* m, int troop, int a, int b, int c, int d, int e, int f, int cnt, int* arr);  // 0x483870
-    void wave_info(int idx, int* a, int* b, int* c, int* d, int* e, int* f);   // 0x473a60
+    void pick_spawn(int idx, int* a, int* b, int* c, int* d, int* e, int* f);   // 0x473a60
     void frame(float dt, bool spawn);                       // 0x483f60
-    void post_spawn_a(AgentS* a);                           // 0x47a0c0
+    void post_spawn(AgentS* a);                           // 0x47a0c0
 };
 #define POOL (*(PoolS<AgentS>*)&MAT(char, 4))
 
@@ -234,12 +234,12 @@ NOINL void MissionG::spawn(AgentS* a)
     if (a->kind == 0) {
         a->f12c = 0xa76628;
         a->f110 = 7;
-        TroopRecS* t = &(*(TroopRecS**)(g_game_base + 0x13a00))[a->troop];
+        TroopRecS* t = &(*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop];
         if (*(unsigned long long*)&t->skin & 0x10) {
-            PartyMgrS* pm = (PartyMgrS*)(g_game_base + 0xf8);
+            PartyMgrS* pm = (PartyMgrS*)(((char*)g_game) + 0xf8);
             int n = 1;
             do {
-                int idx = pm->index_of(*(int*)(g_game_base + 0x78));
+                int idx = pm->index_of(*(int*)(((char*)g_game) + 0x78));
                 char* page = ((char**)pm->page_table)[idx >> 4];
                 Skeleton96* rec = (Skeleton96*)(page + (idx & 0xf) * 0x5ac8);
                 int cnt = rec->count;
@@ -277,15 +277,15 @@ NOINL void MissionG::spawn(AgentS* a)
     e->skel->f5c = 0;
     shape_base* shp;
     if (a->kind == 0) {
-        unsigned skin_i = (*(TroopRecS**)(g_game_base + 0x13a00))[a->troop].skin & 0xf;
+        unsigned skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         int obj = 0;
-        if (skin_i < (unsigned)g_item_count)
-            obj = g_item_table[skin_i].f1e8;
-        e->skel->set_object(obj);
-        skin_i = (*(TroopRecS**)(g_game_base + 0x13a00))[a->troop].skin & 0xf;
+        if (skin_i < (unsigned)g_skin_count)
+            obj = g_skins_begin[skin_i].f1e8;
+        e->skel->init(obj);
+        skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         float h;
-        if (skin_i < (unsigned)g_item_count)
-            h = g_item_table[skin_i].f1ec;
+        if (skin_i < (unsigned)g_skin_count)
+            h = g_skins_begin[skin_i].f1ec;
         else
             h = 1.0f;
         a->scale = h;
@@ -297,7 +297,7 @@ NOINL void MissionG::spawn(AgentS* a)
             shp = 0;
     } else if (a->kind == 1) {
         tstring name("skel_horse");
-        e->skel->set_object((int)g_resmgr.get_object70(*(rgl::string*)&name));
+        e->skel->init((int)g_resmgr.get_object70(*(rgl::string*)&name));
         name.~tstring();
         if ((mem = operator new(0x64)) != 0) {
             vector4 b(0.0f, 0.8f, 0.8f);
@@ -312,17 +312,17 @@ NOINL void MissionG::spawn(AgentS* a)
     AgentEq_pick_slots(a);
     agent_equip_fill(e, a->kind, a->troop, a->f94, &a->item_a, &a->inv[0], &a->f240, &a->f194, &a->f1a4,
                      &a->f1a8, &a->slots[0], a->id);
-    agent_build_body(e, a->kind, a->troop, &a->inv[0], &a->f130, &a->slots[0], a->id);
+    build_equipment(e, a->kind, a->troop, &a->inv[0], &a->f130, &a->slots[0], a->id);
     a->f24c = a->equipment_value();
-    this->post_spawn_a(a);
+    this->post_spawn(a);
     if (a->kind == 0) {
         if (a->body_a) {
             float r = 20.0f;
-            ((Body*)a->body_a)->set_radius(&r);
+            ((Body*)a->body_a)->cap_all(&r);
         }
         if (a->body_b) {
             float r = 20.0f;
-            ((Body*)a->body_b)->set_radius(&r);
+            ((Body*)a->body_b)->cap_all(&r);
         }
     }
     a->spawn_corpse();
@@ -355,9 +355,9 @@ int MissionG::create(const matrix* m, const ItemStackG* it, int troop)
     a->f240 = ((ItemStack2*)it)->value();
     a->f244 = ((ItemStack2*)it)->value();
     a->f248 = ((ItemStack2*)it)->value();
-    *(long long*)&g_spawn_lo = own;
+    *(long long*)&(*(int*)((char*)&g_script + 0x8)) = own;
     struct SndBody { int num; SndSlotS* slots; };
-    SndBody* p = (SndBody*)(g_snd_recs + this->mode * 0x58 + 0x4c);
+    SndBody* p = (SndBody*)(g_mission_templates + this->mode * 0x58 + 0x4c);
     for (int i = 0; i < p->num; i++)
         p->slots[i].update(-25);
     return own;
@@ -369,7 +369,7 @@ int MissionG::create(const matrix* m, const ItemStackG* it, int troop)
 NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a3, int a4, int a5, int a6, int cnt, int* arr)
 {
     int own = POOL.alloc();
-    if (troop == *(int*)(g_game_base + 0x8c)) {
+    if (troop == *(int*)(((char*)g_game) + 0x8c)) {
         this->f5c = own;
         this->f6598 = m->o;
     }
@@ -390,18 +390,18 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
     a->dir = m->f;
     a->userdata = a->dir;
 
-    TroopRecS* t = &(*(TroopRecS**)(g_game_base + 0x13a00))[troop];
+    TroopRecS* t = &(*(TroopRecS**)(((char*)g_game) + 0x13a00))[troop];
     int v = t->f7a & 0xf;
     if (v < 0) v = 0;
-    if (v > g_skin_cap) v = g_skin_cap;
+    if (v > g_skill_tbl[36].cap) v = g_skill_tbl[36].cap;
     float h = (float)(t->f58 + 0x23 + v * 2);
     a->f5720 = h;
     if (t->skin & 0x10) {
         a->f5724 = t->fa0;
     } else {
         a->f5724 = h;
-        if (a1 == *(int*)(g_game_base + 0x78)) {
-            PartyMgrS* pm = (PartyMgrS*)(g_game_base + 0xf8);
+        if (a1 == *(int*)(((char*)g_game) + 0x78)) {
+            PartyMgrS* pm = (PartyMgrS*)(((char*)g_game) + 0xf8);
             Skeleton96* rec = (Skeleton96*)(pm->page_table[pm->index_of(a1) >> 4]);
             int idx = pm->index_of(a1) & 0xf;
             if (rec[idx].f80 > 0.5f) {
@@ -436,11 +436,11 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
         a->f2c = nid;
         na->f1bc = a1;
         na->f1c0 = a2;
-        if (troop == *(int*)(g_game_base + 0x8c))
+        if (troop == *(int*)(((char*)g_game) + 0x8c))
             this->f60 = nid;
     }
     if (a->id == this->f5c) {
-        if ((MAT(char, 0x6528) & 1) || ((*(unsigned*)(g_snd_recs + this->mode * 0x58 + 0x20) >> 1) & 1) != 0) {
+        if ((MAT(char, 0x6528) & 1) || ((*(unsigned*)(g_mission_templates + this->mode * 0x58 + 0x20) >> 1) & 1) != 0) {
             a->cycle_slot(0);
             a->cycle_slot(1);
         }
@@ -455,14 +455,14 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
         const char* lit = 0;
         if (MAT(char, 0x6669) != 0) {
             AgentS* cmdr = &POOL.pages[(unsigned)this->f5c >> 4][this->f5c & 0xf];
-            if (cmdr->check_new_enemies(a)) {
+            if (cmdr->is_enemy(a)) {
                 MAT(char, 0x6669) = 0;
                 lit = "ui_new_enemies_have_arrived";
             }
         }
         if (lit == 0 && MAT(char, 0x6668) != 0) {
             AgentS* cmdr = &POOL.pages[(unsigned)this->f5c >> 4][this->f5c & 0xf];
-            if (cmdr->check_reinforcements(a)) {
+            if (cmdr->is_friend(a)) {
                 MAT(char, 0x6668) = 0;
                 lit = "ui_reinforcements_have_arrived";
             }
@@ -470,7 +470,7 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
         if (lit != 0) {
             tstring msg(lit);
             t2 = g_strtable.lookup(msg);
-            if (g_msg_enabled && g_msg_count < 0x20) {
+            if ((*(char*)((char*)&g_gui + 0x1714)) && g_msg_count < 0x20) {
                 int k3 = (g_msg_base + g_msg_count) % 0x20;
                 g_msg_text[k3] = *t2;
                 g_msg_id[k3] = -1;
@@ -479,8 +479,8 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
             msg.~tstring();
         }
     }
-    *(long long*)&g_spawn_lo = own;
-    SpawnSetG* p = (SpawnSetG*)(g_snd_recs + this->mode * 0x58);
+    *(long long*)&(*(int*)((char*)&g_script + 0x8)) = own;
+    SpawnSetG* p = (SpawnSetG*)(g_mission_templates + this->mode * 0x58);
     for (int i = 0; i < p->num; i++)
         p->slots[i].update(-25);
     return own;
@@ -491,10 +491,10 @@ NOINL bool MissionG::spawn_one(int id)
 {
     int o7, o5, o3, o2, o6;
     int orig = id;
-    wave_info(id, &o2, &o3, &id, &o5, &o6, &o7);
+    pick_spawn(id, &o2, &o3, &id, &o5, &o6, &o7);
     if (id < 0)
         return false;
-    SpawnRecG* r = (SpawnRecG*)(*(int*)(g_snd_recs + this->mode * 0x58 + 0x34) + orig * 0x4c);
+    SpawnRecG* r = (SpawnRecG*)(*(int*)(g_mission_templates + this->mode * 0x58 + 0x34) + orig * 0x4c);
     int nid = spawn_full((matrix*)((char*)this + r->f0 * 0x130 + 0x6b0), id, o2, o3, o5, o7,
                          r->f8, r->f20, r->f24, r->arr);
     if (nid >= 0)
@@ -505,7 +505,7 @@ NOINL bool MissionG::spawn_one(int id)
 // @ 0x483eb0 -- up to 100 passes over the current wave set, spawning every pending entry whose done flag is clear
 void MissionG::run_spawns()
 {
-    SpawnSetG* p = (SpawnSetG*)(g_snd_recs + this->mode * 0x58);
+    SpawnSetG* p = (SpawnSetG*)(g_mission_templates + this->mode * 0x58);
     char done = 0;
     int iter = 0;
     do {
@@ -517,7 +517,7 @@ void MissionG::run_spawns()
             if (r->cur > 0 && this->done[i] == 0 && this->spawn_one(i)) {
                 r->cur--;
                 r->next++;
-                f472160(r->f0);
+                ::replace_mark(r->f0);
                 done = 0;
             }
         }
@@ -574,28 +574,23 @@ struct SkyF {                           // the sky record at Mission+0x65a8
     char pad1fc[0x208 - 0x1fc];
     float f208;                         // +0x208 (the sky time again)
 };
-struct psys_rec {                       // the shadow object's target skin (ShadowMap::target, g_probe): a texture reference at +0x48
+struct psys_rec {                       // the shadow object's target skin (ShadowMap::target, g_shadow_map): a texture reference at +0x48
     char pad0[0x48];
     char* scene;
 };
 extern long long g_tick_cur;            // 0x5e2980 (the last frame's tick count)
-extern long long g_tick_sum;            // 0x5e2958 (the accumulated tick count)
-extern char g_paused;                   // 0x5e2a09
+extern char g_mt_inited;                   // 0x5e2a09
 extern float g_paused_time;             // 0x5e2a0c
-extern float g_blend_rate;              // 0x5a9c28
+#include "../../include/fx.h"
 extern int g_psys_scene;                // 0xa170c0
-extern char g_water_obj[];              // 0xa76630 (the terrain object 0x4814a0 is called on)
-extern char g_time_scale[];             // 0xa181f8 (the time-scale object 0x472dc0 is called on)
+extern char g_phys[];             // 0xa181f8 (the time-scale object 0x472dc0 is called on)
 struct TimeScale {
-    void apply(float dt);               // 0x472dc0
+    void update(float dt);               // 0x472dc0
 };
-void __fastcall g_f472050(void* g);      // 0x472050 (Mission::update_prop_flags)
-void __fastcall g_f474e60(void* g);      // 0x474e60 (Mission::update_team_stats)
-void __fastcall g_f4759c0(void* g);      // 0x4759c0 (Mission::update_team_counts)
-extern "C" int _rand();                 // 0x536a9f
+extern "C" int rand();                 // 0x536a9f
 struct WorldF {
     void step(float dt);                // 0x427f40
-    void remove(int id);                // 0x41f0d0
+    void remove_entity(int id);                // 0x41f0d0
 };
 struct Terrain_w {
     void destroy_water(int* w);         // 0x4814a0 (TerrainX::destroy_water)
@@ -606,25 +601,25 @@ struct Terrain_w {
 // passes (non-horses, horses, ticks), the mission timers/sky clock and finally world::step + the frame counter
 void MissionG::frame(float dt, bool spawn)
 {
-    psys_rec* ps = (psys_rec*)g_probe.target;
+    psys_rec* ps = (psys_rec*)g_shadow_map.target;
     bool scene_changed = ps != 0 && *(int*)(ps->scene + 0x50) != g_psys_scene;
     if (scene_changed) {
-        unsigned flags = *(unsigned*)(*(char**)(g_game_base + 0x13a50) + f5df4 * 0x494 + 0x30);
+        unsigned flags = *(unsigned*)(*(char**)(((char*)g_game) + 0x13a50) + f5df4 * 0x494 + 0x30);
         int* water = (int*)&MAT(int, 0x63c0);
         if (flags & 0x100) {
-            ((Terrain_w*)g_water_obj)->destroy_water(water);
+            ((Terrain_w*)&g_terrain)->destroy_water(water);
         } else if (!(flags & 1)) {
             ((ShadowMapP*)ps)->render();
         }
     }
 
-    if (!g_paused && dt > 0.0f)
-        ((TimeScale*)g_time_scale)->apply(dt);
+    if (!g_mt_inited && dt > 0.0f)
+        ((TimeScale*)g_phys)->update(dt);
 
     long long t = (long long)(dt * 100000.0f);
     g_tick_cur = t;
-    g_tick_sum += t;
-    g_blend_rate = dt;
+    g_ticks[2] += t;
+    g_step_tbl[2] = dt;
 
     // every sixteenth frame the carried-item records restart from their first matrix
     if ((MAT(unsigned, 0x6550) & 0xf) == 1) {
@@ -644,7 +639,7 @@ void MissionG::frame(float dt, bool spawn)
         run_spawns();
 
     if (MAT(unsigned, 0x6550) != 0) {
-        char* set = g_snd_recs + this->mode * 0x58;
+        char* set = g_mission_templates + this->mode * 0x58;
         int n = *(int*)(set + 0x4c);
         char* slot = *(char**)(set + 0x50);
         for (int i = 0; i < n; i++, slot += 0x78)
@@ -691,9 +686,9 @@ void MissionG::frame(float dt, bool spawn)
     // the retire list overflows: drop a random prop and compact
     if (retire_list.size() > 0x300) {
         unsigned n = (unsigned)retire_list.size();
-        unsigned k = n > 1 ? (unsigned)_rand() % n : 0;
+        unsigned k = n > 1 ? (unsigned)rand() % n : 0;
         int id = *(int*)(retire_list[k] + 8);
-        ((WorldF*)scene_world)->remove(id);
+        ((WorldF*)scene_world)->remove_entity(id);
         unsigned last = (unsigned)retire_list.size();
         retire_list[k] = retire_list[last - 1];
         retire_list.resize(last - 1);
@@ -731,7 +726,7 @@ void MissionG::frame(float dt, bool spawn)
         ((PropRecF*)a)->next_used(&i);
     }
 
-    g_f472050(this);
+    update_prop_flags();
 
     // the sky clock and the mission timers
     SkyF* sky = MAT(SkyF*, 0x65a8);
@@ -742,13 +737,13 @@ void MissionG::frame(float dt, bool spawn)
             sky_time = (float)fmod((double)sky_time, 100.0);
         sky->f1f8 = sky_time;
         sky->f208 = sky_time;
-        sky->f48 = (float)(g_tick_sum % 1000000000) * 7.5e-6f;
+        sky->f48 = (float)(g_ticks[2] % 1000000000) * 7.5e-6f;
     }
 
-    g_f474e60(this);
+    update_team_stats();
     ((WorldF*)scene_world)->step(dt);
-    g_f4759c0(this);
+    update_team_counts();
     MAT(unsigned, 0x6550)++;
-    if (g_paused)
+    if (g_mt_inited)
         g_paused_time += dt;
 }

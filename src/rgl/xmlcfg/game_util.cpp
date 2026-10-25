@@ -284,9 +284,9 @@ void __cdecl apply_force_and_torque(const NewtonBody* body)
 
 // ---- tick timer -------------------------------------------------------------------------------------
 // @ 0x432bf0
-void Timer::restart() { start = g_time[clock]; }
+void Timer::restart() { start = g_ticks[clock]; }
 // @ 0x432c10
-float Timer::elapsed() const { return (float)(g_time[clock] - start) * 1e-5f; }
+float Timer::elapsed() const { return (float)(g_ticks[clock] - start) * 1e-5f; }
 
 // ---- random direction inside a cone around `dir` ------------------------------------------------------
 // @ 0x432c40
@@ -318,7 +318,7 @@ void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread)
 void ActiveTimer::begin(float seconds)
 {
     if (!active) {
-        start = g_time[clock] - (int)(seconds * -100000.0f);
+        start = g_ticks[clock] - (int)(seconds * -100000.0f);
         active = 1;
     }
 }
@@ -326,7 +326,7 @@ void ActiveTimer::begin(float seconds)
 bool ActiveTimer::expired()
 {
     if (active) {
-        float e = (float)(g_time[clock] - start) * 1e-5f;
+        float e = (float)(g_ticks[clock] - start) * 1e-5f;
         if (e >= 0.0f) {
             active = 0;
             return true;
@@ -401,7 +401,7 @@ int AgentX::pick(int idx)
 }
 
 // @ 0x433140
-int AgentX::hand_kind() const
+int AgentX::agent_class() const
 {
     int r = 0;
     int item = *(const int*)((const char*)this + 0x88);       // item index (-1 = none)
@@ -416,7 +416,7 @@ int AgentX::hand_kind() const
 }
 
 // @ 0x433190
-void mesh_node::clamp_c8(const float* t)
+void mesh_node::set_time(const float* t)
 {
     keyframes12& k = local_a1 ? kf : parent->get_kf();
     if (k.count > 0) {
@@ -553,12 +553,12 @@ void Obj3::reset_pending(int v)
 }
 
 // @ 0x433840  (agent/MIGRATION.md calls it Curve::step_reached; Curve and Channel are the same 0xd8-byte record)
-extern __int64 g_time[];        // 0x5e2948 clock table, 1e-5 s ticks
+#include "../../include/fx.h"
 extern float g_step_tbl[];      // 0x5a9c20 per-clock step (seconds)
 bool Channel::busy()
 {
     bool r;
-    float t = (float)(g_time[tm.clock] - tm.start) * 1e-5f;
+    float t = (float)(g_ticks[tm.clock] - tm.start) * 1e-5f;
     if (mode == 20) {
         float inv = 1.0f / period;
         int a = (int)((t - g_step_tbl[tbl_idx]) * inv);

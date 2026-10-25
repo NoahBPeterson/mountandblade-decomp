@@ -134,6 +134,6 @@ struct OvNode {
     FieldShape* s4;                         // +0x118
 };
 
-extern int g_fixed_point_multiplier;       // 0xa70460 the script's fixed-point scale (set_limits divides by it)
+extern char g_script[]; // 0xa70440
 
 #endif // GAME_MISSION_UI2_MISSION_3_H

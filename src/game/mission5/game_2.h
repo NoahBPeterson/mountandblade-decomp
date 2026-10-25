@@ -50,7 +50,7 @@ struct tstring_alloc {
 };
 void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, tstring_alloc& al, ptr_tag tag);   // 0x438f00
 tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_alloc& al, ptr_tag tag);       // 0x524cd0
-void __stdcall vec_ctor_iter(void* dst, unsigned size, unsigned count, void* ctorfn);                       // 0x401800
+void __stdcall vector_constructor_iterator(void* dst, unsigned size, unsigned count, void* ctorfn);                       // 0x401800
 
 struct tstring_vec : tstring_alloc {
     tstring* first;                                 // +4
@@ -61,8 +61,7 @@ struct tstring_vec : tstring_alloc {
     unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
     tstring* last_pos() const { return last; }
     void _Xlen() const;                                         // 0x43e2a0
-    void insert_n(tstring* pos, unsigned n, const tstring& v);  // 0x43e310
-    void _Insert_n(tstring* pos, unsigned n, const tstring& v); // 0x43e310
+    void _Insert_n(tstring* pos, unsigned n, const tstring& v);  // 0x43e310
     void reserve(unsigned n);                                   // 0x524bc0
     void push_back(const tstring& v)
     {
@@ -73,18 +72,16 @@ struct tstring_vec : tstring_alloc {
             last = p + 1;
         } else {
             tstring* pos = last_pos();
-            insert_n(pos, 1, v);
+            _Insert_n(pos, 1, v);
         }
     }
 };
 
 // ---- the data tables and their globals ---------------------------------------------------------------------------
 struct NameMgr { tstring* find(tstring* key); };    // 0x4c6010
-extern NameMgr g_name_mgr;                          // 0x5e2a18
 extern int g_level_lo[];                            // 0x5937c8
 extern int g_level_hi[];                            // 0x5937cc
 extern float g_troop_rand_scale;                    // 0x54a6bc
-extern int g_clamp_max;                             // 0x8ee3ac4
 
 // (item, modifier word) pairs of the statement / troop / scene records are the shared ItemRef (../item_ref.h; item -1 = none)
 
@@ -181,7 +178,7 @@ struct QuestFile {                  // quests.txt record (0x138 bytes); dtor 0x4
     QuestFile();                    // 0x524860
     ~QuestFile();                   // 0x431b10
     void read_file(stream_base& s); // 0x524690
-    tstring* default_name();        // 0x48d750
+    tstring* raw_title();        // 0x48d750
 };
 struct FactionFile {                // factions.txt record (0x300 bytes); dtor 0x432010
     tstring name;                   // 0x000
@@ -239,9 +236,8 @@ struct Local {
 extern int g_emitter_count;                         // 0xa75eb4
 
 struct SkeletonList {                               // skeleton-body table at 0xa180e8
-    void load_bodies(tstring* path);                // 0x50fc60 (ret 4)
-    void load(tstring* path); // 0x50fc60
-    void fix();                                     // 0x4cd850
+    void load(tstring* path);                // 0x50fc60 (ret 4)
+    void fix_skeletons();                                     // 0x4cd850
 };
 extern SkeletonList g_skeletons;                    // 0xa180e8
 
@@ -300,17 +296,16 @@ struct GameMapView {
     Wind*  wind;                     // +0x139dc (the fog / sun object; +0x44 = its direction)
     char   pad139e0[0x1a2a8 - 0x139e0];
     rgl::entity* compass;            // +0x1a2a8
-    rgl::vector4* fog_query_a(rgl::vector4* out);           // 0x5176e0
-    rgl::vector4* fog_query_b(rgl::vector4* out);           // 0x517820
+    rgl::vector4* sun_color(rgl::vector4* out);           // 0x5176e0
+    rgl::vector4* fog_color(rgl::vector4* out);           // 0x517820
     void add_order_arrow(int id);                           // 0x49bea0
-    void del_order(int id);                                 // 0x49bbb0
-    void sl_query(int a, int b, int c);                     // 0x435790
-    void destroy_order(void* p);                            // 0x4b36a0
+    void spawn_battle_icon(int id);                                 // 0x49bbb0
+    void emit_event(int a, int b, int c);                     // 0x435790
+    void init_event(void* p);                            // 0x4b36a0
 };
 extern char g_map_pages[];           // 0xa73094 page grid of the map (cell = 0x20 bytes per column, 4 per row)
 extern int  g_page_cols;             // 0xa73294
 extern int  g_page_rows;             // 0xa73298
-extern void* g_grid[64];             // 0xa73094 cell entities, index col*8+row
 extern float g_minx;                 // 0xa7329c
 extern float g_miny;                 // 0xa732a0
 extern float g_maxx;                 // 0xa732a4
@@ -318,39 +313,37 @@ extern float g_maxy;                 // 0xa732a8
 extern float g_sizex;                // 0xa732ac
 extern float g_sizey;                // 0xa732b0
 extern RawVec g_mat_vec[4];          // 0xa732c0 / 0xa732d0 / 0xa732e0 / 0xa732f0
-extern int    g_mat_count[4];        // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
-extern int    g_ang_a;               // 0xa18144
-extern int    g_ang_b;               // 0xa18150
-extern unsigned g_masks[28];         // 0x5a8e68 .. 0x5a8ed0 (14 pairs, indexed [i*2])
-extern int    g_env2;                // 0x5e28fc
-extern void*  g_resmgr_raw;          // 0x5d6fa0
-float    m5_vector4_normalize(rgl::vector4* self);                                   // 0x407d60
-void     m5_grid_scan(void* a, void* b, void* c);                                    // 0x523630
+extern int    g_map_tree_types[4];        // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
+extern int    g_map_sea_direction;               // 0xa18144
+extern int    g_map_river_direction;               // 0xa18150
+extern char g_bit[]; // 0x5a8e68
+extern int    g_use_shaders;                // 0x5e28fc
+float    normalize(rgl::vector4* self);                                   // 0x407d60
+void     scan_arrays(void* a, void* b, void* c);                                    // 0x523630
 void __stdcall scan_arrays(void* p, int unused); // 0x523630
 void*    m5_tstring_ctor0(void* self);                                               // 0x42bbd0
 void*    m5_tstring_ctor1(void* self, const char* s);                                // 0x42bbe0
-void     m5_tstring_assign(void* self, const char* s);                               // 0x42bcb0
-void     m5_tstring_push_back(void* self, char c);                                   // 0x42be70
+void     assign(void* self, const char* s);                               // 0x42bcb0
+void     push_back(void* self, char c);                                   // 0x42be70
 void     m5_tstring_dtor(void* self);                                                // 0x42bc40
-void*    m5_resmgr_get_object(void* resmgr, void* name);                             // 0x419540
-void*    m5_resmgr_get_material(void* resmgr, void* name);                           // 0x418a70
-void*    m5_create_entity(int type);                                                 // 0x428440
+void*    get_object(void* resmgr, void* name);                             // 0x419540
+void*    get_material(void* resmgr, void* name);                           // 0x418a70
+void*    create_entity(int type);                                                 // 0x428440
 void*    m5_mesh_ctor(void* p);                                                      // 0x412a90
-int      m5_add_point(void* self, void* p);                                          // 0x412f50
-int      m5_add_vertex(void* self, int idx, void* uv, void* color, void* pos, void* f5c); // 0x413c50
-int      m5_add_rec2(void* self, int a, int b, int c);                               // 0x411920
-void     m5_append_skinned(void* self, void* other, const void* m, int bone, unsigned color, char flag); // 0x44eb00
-void     m5_noise_fractal(float a, float b, int c, int d, const float* in, float* out); // 0x414fc0
-unsigned m5_pack_color(const float* rgba);                                           // 0x40e440
-void*    m5_identity3();                                                             // 0x40cd60
-void     m5_matrix_rotate_sf(void* m, float* ang);                                   // 0x40e770
-int      m5_mb_rand();                                                               // 0x536a9f
-void     m5_scene_add_object(void* obj);                                             // 0x419300
-void     m5_mesh_set_mat(void* mesh, int type);                                      // 0x523360
-void*    m5_material_from_name(int type);                                            // 0x523390
+int      add_point(void* self, void* p);                                          // 0x412f50
+int      add_vertex(void* self, int idx, void* uv, void* color, void* pos, void* f5c); // 0x413c50
+int      add_face(void* self, int a, int b, int c);                               // 0x411920
+void     append_skinned(void* self, void* other, const void* m, int bone, unsigned color, char flag); // 0x44eb00
+void     noise_fractal(float a, float b, int c, int d, const float* in, float* out); // 0x414fc0
+unsigned pack_color(const float* rgba);                                           // 0x40e440
+void*    identity3();                                                             // 0x40cd60
+void     rotate_about_u(void* m, float* ang);                                   // 0x40e770
+int      rand();                                                               // 0x536a9f
+void     compute_bounds(void* obj);                                             // 0x419300
+void     set_nibble(void* mesh, int type);                                      // 0x523360
 skin* __stdcall terrain_material(int type); // 0x523390
-void     m5_collect_near(void* mgr, int idx, int* out, int* count);                  // 0x5234e0
-void     m5_vec_insert_n(RawVec* v, void** pos, unsigned n, void** val);             // 0x410610
+void     build_chain(void* mgr, int idx, int* out, int* count);                  // 0x5234e0
+void     _Insert_n(RawVec* v, void** pos, unsigned n, void** val);             // 0x410610
 
 // ---- 0x523360..0x523630: the nibble setter, the terrain material table, the chain builder, the array scan ---------------
 struct FlagNode { char pad[0x1c]; unsigned f1c; };              // +0x1c: bits 24..27 are a 4-bit colour / alpha nibble
@@ -388,6 +381,6 @@ struct PartyMgrView {                                               // Game +0xf
 };
 struct SpriteNext { void next(int* idx); };                         // 0x517960 (ret 4: SpriteTable at Game +0xcc)
 extern CellGrid* g_level;                                           // 0xa732b4 (terrain_b.h declares it too; that header cannot be included next to game.h)
-extern rgl::string* g_compass_name;                                 // 0x5e28f4
+extern rgl::string* g_env_rows;                                 // 0x5e28f4
 
 #endif // MISSION5_GAME_2_H

@@ -22,3 +22,9 @@
 00495700 ?open@Dlg_s25160@@QAEXH@Z  # the main menu: open dialog n (0xa73980 object), ret 4
 08ed50c8 ?g_n_dialogs@@3PADA  # dialogue manager singleton, raw byte-array declaration (speaker 0x460640 / listener 0x460670)
 08ee3c48 ?g_editor@@3PADA  # the map editor object (raw declaration)
+08ee3c48 ?g_app_obj@@3PADA  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+08ed50c8 ?g_dialogs@@3PADA  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+005e29b0 ?g_menus@@3PAUMenuRec@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+005aa008 ?g_options@@3Uoptions@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+005e29dc ?g_propkinds@@3PAUPropKind@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+005a9c20 ?g_step_tbl@@3PAMA  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)

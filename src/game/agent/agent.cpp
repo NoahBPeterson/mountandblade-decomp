@@ -295,7 +295,7 @@ ItemRef Wielder::ranged_ref()
 // @ 0x435260
 int find_in_table20(const tstring* name)
 {
-    for (int i = 0; i < g_tbl20_count; i++)
+    for (int i = 0; i < g_ptype_count; i++)
         if (g_tbl20[i].name.equals(*name)) return i;
     return 0;
 }
@@ -417,7 +417,7 @@ void Placement::set_matrix(const matrix* m)
     m14014 = *m;
 }
 // @ 0x4356e0
-float time_of_day() { return fmod(g_time[1] * 1e-5f, 24.0f); }
+float time_of_day() { return fmod(g_ticks[1] * 1e-5f, 24.0f); }
 // @ 0x435700
 bool is_daytime()
 {
@@ -445,7 +445,7 @@ char SoundCtl::emit_event(int id, int a, int b)
     return r;
 }
 // @ 0x435840
-char Mission::mode_flag1() const { return ((g_modes[mode].flags >> 1) & 1) != 0; }
+char Mission::mode_flag1() const { return ((g_mission_templates[mode].flags >> 1) & 1) != 0; }
 // @ 0x435860
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m)
 {
@@ -510,13 +510,13 @@ float __cdecl accel_factor(const float* a, const float* b, const float* c)
     return r;
 }
 // @ 0x435b60
-int __cdecl team_field5280(const Agent* a)
+int __cdecl team_leader(const Agent* a)
 {
     int t = a->team;
     if (t < 0 || t >= 8) t = 7;
     return g_mission->leader_flat()[t * 0x5b];
 }
-static char mission_mode_flag1() { return ((g_modes[g_mission->mode].flags >> 1) & 1) != 0; }
+static char mission_mode_flag1() { return ((g_mission_templates[g_mission->mode].flags >> 1) & 1) != 0; }
 // @ 0x435b90
 void Agent::reset_if_enemy_charged()
 {

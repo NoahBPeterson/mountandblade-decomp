@@ -20,16 +20,15 @@ struct resmgr_c : resource_manager {
 };
 #define g_rm (*(resmgr_c*)&g_resmgr)
 
-extern int g_x5aa034;                            // 0x5aa034 (shadow quality toggle)
-extern int g_water_mode;                         // 0x5aa084 (g_mesh_quality in src/game/terrain_a)
+extern char g_options[]; // 0x5aa008
 struct MsgLogC : MsgLog {
     void add(tstring text, int color);          // 0x452c00 (ret 0x14)
 };
-extern MsgLogC g_msglog;                         // 0x5d7080
+extern MsgLogC g_gui;                         // 0x5d7080
 struct SceneRegC {
-    void select(scene* sc);                     // 0x47e520 (RenderPass::render)
+    void render(scene* sc);                     // 0x47e520 (RenderPass::render)
 };
-extern SceneRegC g_scene_reg;                    // 0x5fe898
+extern SceneRegC g_batch;                    // 0x5fe898
 
 // EChar::collect lives next to its caller (the original's tail call)
 struct EChar_c : EChar {
@@ -210,8 +209,8 @@ void GameData::load_scene(int idx)
     tstring path = scene_path(idx);
     bin_reader_o s;
     if (!s.open_read(module_path(path.c_str()))) {
-        g_msglog.add("Unable to load scene objects!", 0xffff0000);
-        g_msglog.add(levels[idx].name10, 0xffff0000);
+        g_gui.add("Unable to load scene objects!", 0xffff0000);
+        g_gui.add(levels[idx].name10, 0xffff0000);
     } else {
         ((SceneFile*)&levels[idx])->load((stream_base*)&s, 0);
         s.failed = 1;
@@ -223,7 +222,7 @@ void GameData::load_scene(int idx)
 // object's fields +0x18..+0x1f0 are that scene's; shadow_map.h names the fields of the same bytes its own modules read).
 #define SC (*(scene_ms2*)((char*)this + 0x18))
 struct LightCamP {
-    void attach(scene* view, int rem, int div); // 0x421110
+    void render_part(scene* view, int rem, int div); // 0x421110
     void render_scene(scene* sc, bool reflect); // 0x429890
 };
 extern char g_use_hw_shadow;                     // 0xa17f24
@@ -232,7 +231,7 @@ extern char g_use_hw_shadow;                     // 0xa17f24
 NOINL void ShadowMapP::build_hw()
 {
     SC.reset();
-    if (g_x5aa034 == 0)
+    if ((*(int*)((char*)&g_options + 0x2c)) == 0)
         return;
     if (target2 == 0) {
         if (g_use_hw_shadow) {
@@ -251,8 +250,8 @@ NOINL void ShadowMapP::build_hw()
         SC.active = 0;
         for (int i = 0; i < 4; i++) {
             SC.flags = i ? 1 : 0x301;
-            ((LightCamP*)cam)->attach(&SC, i, 4);
-            g_scene_reg.select(&SC);
+            ((LightCamP*)cam)->render_part(&SC, i, 4);
+            g_batch.render(&SC);
         }
     }
 }
@@ -260,9 +259,9 @@ NOINL void ShadowMapP::build_hw()
 // @ 0x47fdd0
 NOINL void ShadowMapP::build_sw()
 {
-    g_scene_reg.select(0);
+    g_batch.render(0);
     SC.reset();
-    if (g_use_shaders == 0 && g_x5aa034 != 0 && target == 0) {
+    if (g_use_shaders == 0 && (*(int*)((char*)&g_options + 0x2c)) != 0 && target == 0) {
         target = g_rm.get_shadow_skin(w, h, 0x1c, 0);
         if (target != 0) {
             target->file.assign("shadow_shader");
@@ -280,7 +279,7 @@ NOINL void ShadowMapP::build_sw()
         SC.f15c = (int)target2;
         SC.active = 0;
         ((LightCamP*)cam)->render_scene(&SC, 0);
-        g_scene_reg.select(&SC);
+        g_batch.render(&SC);
     }
     if (target2 != 0) {
         g_rm.release(target2);
@@ -299,13 +298,13 @@ NOINL void ShadowMapP::render()
         build_sw();
     bind_target();
     if (g_use_shaders != 0) {
-        if (g_water_mode != 1)
+        if ((*(int*)((char*)&g_options + 0x7c)) != 1)
             return;
         if (!g_use_hw_shadow)
             return sync_readback();
     } else {
-        if (g_water_mode != 1)
+        if ((*(int*)((char*)&g_options + 0x7c)) != 1)
             return;
     }
-    g_water_mode = 0;
+    (*(int*)((char*)&g_options + 0x7c)) = 0;
 }

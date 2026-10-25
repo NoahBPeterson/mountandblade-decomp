@@ -26,20 +26,18 @@ using rgl::matrix;
 
 // ---- the globals the slices saw with their own view types (one raw declaration each)
 extern void* g_game; // 0x5e2930
-extern void* g_scene; // 0x5e292c
-extern char g_editor_dialog[]; // 0x8ee3c48
-extern void* g_map; // 0x5e292c
-extern void* g_objrecs; // 0x5e28f8
-extern void* g_editor_view; // 0xa739b8
+extern char g_app_obj[]; // 0x8ee3c48
+extern char g_mission[]; // 0x5e292c
+#include "../ptype.h"
+extern char g_windows[]; // 0xa73980
 extern void* g_items; // 0x5e29d0
-extern void* g_map_pts; // 0x5e28f8
-extern void* g_map_points; // 0x5e29dc
+#include "../prop_kind.h"
 
 
 // ======================================================= slice s0052cf60: classes, globals, helpers
 #define g_game_s2cf60 (*(Game_s2cf60**)&g_game)
-#define g_scene_s2cf60 (*(Scene_s2cf60**)&g_scene)
-#define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)g_editor_dialog)
+#define g_scene_s2cf60 (*(Scene_s2cf60**)&(*(void**)((char*)&g_mission + 0x0)))
+#define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)g_app_obj)
 // Slice s0052cf60: the world-map mesh_s2cf60 editor's per-frame update (0x52cf60, 2749 bytes).
 //
 // One thiscall member of the map editor.  Each frame it
@@ -86,16 +84,16 @@ struct gui_manager_s2cf60 {
     unsigned pick_edge(const vector4& p, const vector4& d);     // 0x52dc00
     unsigned pick_poly(const vector4& p, const vector4& d);     // 0x52df40
     void select_mode(int mode, char on);                        // 0x4c53f0
-    void select_current(int mode, int index);                   // 0x52e510 (provisional)
-    void set_colour(int mode, const vector4& c);                // 0x52e590 (provisional)
-    void set_basis(int mode, const float* m);                   // 0x52e6d0 (provisional)
-    void rebuild_all();                                         // 0x52e870 (provisional)
-    void drag_start(void* state);                               // 0x52e960 (provisional)
-    void drag_step(void* state);                                // 0x52edb0 (provisional)
+    void toggle_flag(int mode, int index);                   // 0x52e510 (provisional)
+    void scale_selected(int mode, const vector4& c);                // 0x52e590 (provisional)
+    void transform_selected(int mode, const float* m);                   // 0x52e6d0 (provisional)
+    void remove_selected();                                         // 0x52e870 (provisional)
+    void make_copy(void* state);                               // 0x52e960 (provisional)
+    void apply_copy(void* state);                                // 0x52edb0 (provisional)
     void update_terrain(int mode, const vector4& dir);          // 0x4c7f90
-    void build_tetra(rgl::mesh* m);                             // 0x4e65e0
-    void build_ribbon(rgl::mesh* m);                            // 0x4e6a70
-    void build_tri(rgl::mesh* m);                               // 0x4e75a0
+    void build_spikes(rgl::mesh* m);                             // 0x4e65e0
+    void build_ribbons(rgl::mesh* m);                            // 0x4e6a70
+    void polygon_to_mesh(rgl::mesh* m);                               // 0x4e75a0
 };
 
 // ---- engine globals ---------------------------------------------------------------------------
@@ -113,7 +111,7 @@ struct Scene_s2cf60 {
 
 
 struct MapView_s2cf60 {
-    void cell_rect(vector4& p, vector4& q);         // 0x4bd2f0  picking ray (origin, target)
+    void screen_to_world(vector4& p, vector4& q);         // 0x4bd2f0  picking ray (origin, target)
 };
 
 struct MapEditor_s2cf60 {
@@ -127,7 +125,7 @@ struct MapEditor_s2cf60 {
 };
 
 struct EditorPanel_s2cf60 {
-    void update_option_checks();                    // 0x4bf640  (no arguments)
+    void update_checks();                    // 0x4bf640  (no arguments)
 };
 
 
@@ -142,41 +140,34 @@ void identity3(mat3_s2cf60* m);                            // 0x40cd60 (cdecl)
 
 struct mat2_s2cf60 {                                       // 2x2 rotation matrix, 0x10 bytes
     float m[4];
-    void rotate(float angle);                       // 0x4f3b40 (thiscall, ret 4)
+    void rotate_2x2(float angle);                       // 0x4f3b40 (thiscall, ret 4)
 };
 
 // ---- per-key input state ----------------------------------------------------------------------
 // Three 0x400-byte tables of per-scan-code ints at 0xa17000 / 0xa17400 / 0xa17800: held state,
 // this frame's press, and the previous frame's press (s0052f250 names 0xa17458/0xa17858
-// g_key_place/g_key_place_prev).  Only the codes read here are declared.
+// (*(int*)((char*)&g_keyboard + 0x390))/(*(int*)((char*)&g_keyboard + 0x790))).  Only the codes read here are declared.
 extern int g_a170dc;                                // 0xa170dc  held, code 0x37
 extern int g_a170e0;                                // 0xa170e0  held, code 0x38
 extern int g_a170e4;                                // 0xa170e4  held, code 0x39
-extern int g_a17124;                                // 0xa17124  held, code 0x49
+extern char g_keyboard[]; // 0xa170c8
 extern int g_a17128;                                // 0xa17128  held, code 0x4a
-extern int g_a17148;                                // 0xa17148  held, code 0x52
 extern int g_a1715c;                                // 0xa1715c  held, code 0x57
 extern int g_a1717c;                                // 0xa1717c  held, code 0x5f
 extern int g_a17184;                                // 0xa17184  held, code 0x61
 extern int g_a17188;                                // 0xa17188  held, code 0x62
-extern int g_a1718c;                                // 0xa1718c  held, code 0x63
 extern int g_a17190;                                // 0xa17190  held, code 0x64
 extern int g_a17194;                                // 0xa17194  held, code 0x65
 extern int g_a171ac;                                // 0xa171ac  held, code 0x6b
 extern int g_a171b4;                                // 0xa171b4  held, code 0x6d
-extern int g_a17348;                                // 0xa17348  held, code 0xd2
 extern int g_a173b4;                                // 0xa173b4  held, code 0xed
 extern int g_a17420;                                // 0xa17420  press, code 0x08
-extern int g_a17458;                                // 0xa17458  press, code 0x16
 extern int g_a174dc;                                // 0xa174dc  press, code 0x37
 extern int g_a174e0;                                // 0xa174e0  press, code 0x38
 extern int g_a174e4;                                // 0xa174e4  press, code 0x39
 extern int g_a1758c;                                // 0xa1758c  press, code 0x63
 extern int g_a17590;                                // 0xa17590  press, code 0x64
 extern int g_a17820;                                // 0xa17820  previous, code 0x08
-extern int g_a17858;                                // 0xa17858  previous, code 0x16
-extern float g_a178d4;                              // 0xa178d4  camera drag step
-extern float g_a178d8;                              // 0xa178d8  camera drag step
 extern const float g_one;                           // 0x549cdc = 1.0f
 extern const float g_hilite_dim;                    // 0x54b4d0 = 0.05f
 extern const float g_rot_step;                      // 0x590c60 = 0.005f
@@ -250,7 +241,7 @@ struct MeshImpl_s2da20 : MeshData_s2da20 {
 };
 
 namespace rgl {
-void sub(vector4& out, const vector4& a, const vector4& b);   // 0x432830: out = a - b (xyz)
+void vec3_sub(vector4& out, const vector4& a, const vector4& b);   // 0x432830: out = a - b (xyz)
 }
 
 struct Mesh_s2da20 : MeshData_s2da20 {    unsigned pick_vert(const rgl::vector4& p, const rgl::vector4& d);
@@ -307,7 +298,7 @@ struct mpoly_s2dfd0 {                          // 0x64
 };
 
 namespace rgl {
-void sub(vector4& out, const vector4& a, const vector4& b);   // 0x432830: out = a - b (xyz)
+void vec3_sub(vector4& out, const vector4& a, const vector4& b);   // 0x432830: out = a - b (xyz)
 }
 
 struct Mesh_s2dfd0 {
@@ -328,11 +319,11 @@ struct Mesh_s2dfd0 {
     void transform_selected(int dummy, const float* m);   // 0x52e6d0
     void remove_selected();   // 0x52e870
 
-    void gather_selection(int mode);    // 0x4c54f0   re-stamps the +0x14 selection field
-    void delete_vert(int index);        // 0x4c8af0
-    void delete_edge(int index);        // 0x4ca9b0
-    void delete_poly(int index);        // 0x4cb940
-    void rebuild();                     // 0x470920
+    void calc_vertex_mode(int mode);    // 0x4c54f0   re-stamps the +0x14 selection field
+    void remove_node(int index);        // 0x4c8af0
+    void remove_edge(int index);        // 0x4ca9b0
+    void remove_face(int index);        // 0x4cb940
+    void build_adjacency();                     // 0x470920
     void scale_selected(int mode, const vector4& c); // 0x52e590
 };
 
@@ -426,7 +417,7 @@ struct Mesh_s2e960 {
     int  edge_index(int index, const rgl::matrix& m);
     void apply_copy(const rgl::matrix& m);
 
-    void rebuild();                     // 0x470920
+    void build_adjacency();                     // 0x470920
     void apply_copy(void* state); // 0x52edb0
     void make_copy(void* state); // 0x52e960
 };
@@ -435,11 +426,11 @@ struct Mesh_s2e960 {
 // find-or-create helpers so shared vertices stay shared in the copy.  The basis rows are
 // (s, f, up) with up = world Z: s = f x up normalised, f = up x s.
 // ======================================================= slice s0052f250: classes, globals, helpers
-#define g_map_s2f250 (*(Map_s2f250**)&g_map)
+#define g_map_s2f250 (*(Map_s2f250**)&(*(void**)((char*)&g_mission + 0x0)))
 #define g_game_s2f250 (*(Frame__s2f250**)&g_game)
-#define g_objrecs_s2f250 (*(ObjRec20_s2f250**)&g_objrecs)
-#define g_editor_view_s2f250 (*(EditorView_s2f250**)&g_editor_view)
-#define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)g_editor_dialog)
+#define g_objrecs_s2f250 (*(ObjRec20_s2f250**)&g_ptypes)
+#define g_editor_view_s2f250 (*(EditorView_s2f250**)&(*(void**)((char*)&g_windows + 0x38)))
+#define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)g_app_obj)
 // Slice s0052f250: the map editor's per-frame object placement update (0x52f250, 3049 bytes).
 // Each frame it repeats the scroll keys into adjust_mode (0x4bb260), rebuilds the preview entity
 // (clear, a temporary 0x1c8 placed-object record, its meshes cloned into the entity, a camera frame
@@ -456,9 +447,7 @@ using rgl::matrix;
 // ---- engine string (16 bytes) -------------------------------------------------------------------
 
 
-extern int g_tick_lo;                           // 0x5e2958  (g_time[2] low)
-extern int g_tick_hi;                           // 0x5e295c  (g_time[2] high)
-extern __int64 g_time[];                        // 0x5e2948  clock, 1e-5 s ticks (g_time[0] here)
+#include "../../include/fx.h"
 
 // ---- 0x1c8-byte placed-object record (layout from s0044f3c0 / s00435490, vtable 0x590b84) --------
 struct IfaceB_s2f250 {
@@ -469,7 +458,7 @@ struct IfaceB_s2f250 {
 };
 struct Quad_s2f250 {
     int a, b, c, d;
-    Quad_s2f250() : a(2), c(g_tick_lo), d(g_tick_hi) {}
+    Quad_s2f250() : a(2), c(((int*)g_ticks)[4]), d(((int*)g_ticks)[5]) {}
 };
 struct PlacedObj_s2f250 : IfaceB_s2f250 {
     int m10, m14;                               // +0x10
@@ -550,8 +539,7 @@ struct Map_s2f250 {
     char pad65e8[0x668c - 0x65e8];
     PlacedObj_s2f250* records;                         // +0x668c  the 0x1c8 record array
     void init_placed(PlacedObj_s2f250*, const int* kind, const int* id, const int* value, const matrix*);   // 0x435860
-    void build_meshes(PlacedObj_s2f250*, MeshVec_s2f250*);    // 0x5302f0
-    void build_mesh_name(PlacedObj_s2f250*, MeshVec_s2f250*); // 0x5302f0
+    void build_mesh_name(PlacedObj_s2f250*, MeshVec_s2f250*);    // 0x5302f0
     int add_placed(const int* kind, const int* id, const int* value, const matrix*, int* spawn);     // 0x44f870
 };
 struct IntVec_s2f250 {
@@ -559,7 +547,7 @@ struct IntVec_s2f250 {
     int* last;                                  // +4
     int* end;                                   // +8
     void resize(unsigned n, int v);             // 0x43f310
-    void push_back(const int& v);               // 0x440b30
+    void push_back_out(const int& v);               // 0x440b30
 };
 struct Frame__s2f250 {
     char pad0[0x1a09c];
@@ -603,12 +591,8 @@ struct MapEditorDialog_s2f250 {
 
 
 
-extern int g_key_inc;                           // 0xa17414
 extern int g_key_inc_prev;                      // 0xa17814
-extern int g_key_dec;                           // 0xa173f4
 extern int g_key_dec_prev;                      // 0xa177f4
-extern int g_key_place;                         // 0xa17458
-extern int g_key_place_prev;                    // 0xa17858
 extern int g_cursor_x;                          // 0x5d70b4
 extern int g_cursor_y;                          // 0x5d70b8
 extern int g_saved_x;                           // 0x5e2130
@@ -618,7 +602,7 @@ extern HWND g_editor_hwnd;                      // 0x8ee3d30
 
 
 // ---- callees / helpers not local to this slice ---------------------------------------------------
-void adjust_mode(int dir);                      // 0x4bb260 (cdecl)
+void set_list_scroll(int dir);                      // 0x4bb260 (cdecl)
 matrix* identity(matrix* out);                  // 0x40cd00 (cdecl, returns out)
 mat3_s2f250* identity3(mat3_s2f250* out);                     // 0x40cd60 (cdecl, returns out)
 
@@ -664,14 +648,14 @@ struct MapEditor_s2f250 {
     int f31c;                                   // +0x31c  selected variant
     int f320;                                   // +0x320  previous variant
     void find_position(char* ok, vector4* pos); // 0x52bdb0
-    void adjust(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out); // 0x52fe40
+    void apply(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out); // 0x52fe40
     void update();                              // 0x52f250
 };
 
 // ======================================================= slice s0052fe40: classes, globals, helpers
 #define g_items_s2fe40 (*(Item_s2fe40**)&g_items)
-#define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_map_pts)
-#define g_map_points_s2fe40 (*(MapPoint_s2fe40**)&g_map_points)
+#define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_ptypes)
+#define g_map_points_s2fe40 (*(MapPoint_s2fe40**)&g_propkinds)
 #define g_resmgr_s2fe40 (*(resmgr_s2fe40*)&g_resmgr)
 // Slice s0052fe40: the mission view's per-frame camera update and the mesh_s2fe40-name
 // chooser used by the level/object browser.
@@ -691,10 +675,7 @@ struct MapEditor_s2f250 {
 
 
 // ---- global input axes / camera flags (0xa17xxx block; names provisional) -------------------------------
-extern int   g_a17148;                                  // 0xa17148
-extern int   g_a17348;                                  // 0xa17348
 extern int   g_a1715c;                                  // 0xa1715c
-extern int   g_a17124;                                  // 0xa17124
 extern int   g_a171b4;                                  // 0xa171b4
 extern int   g_a173b4;                                  // 0xa173b4
 extern int   g_a17120;                                  // 0xa17120
@@ -705,8 +686,6 @@ extern int   g_a17184;                                  // 0xa17184
 extern int   g_a1712c;                                  // 0xa1712c
 extern int   g_a17194;                                  // 0xa17194
 extern int   g_a17594;                                  // 0xa17594
-extern float g_axis_x;                                  // 0xa178d4
-extern float g_axis_y;                                  // 0xa178d8
 
 extern float  g_k005;                                   // 0x590c60 (0.005f)
 extern double g_d001;                                   // 0x59c480 (0.01)
@@ -732,11 +711,11 @@ struct Item_s2fe40 {
     int type_flags;                                     // +0x1c8 (low byte: item type)
     char pad1cc[0x238 - 0x1cc];
     tstring mesh_name_for(int bit);                     // 0x433bf0 (returns tstring by value)
-    rgl::mesh* get_mesh(int a, unsigned mask, int b);   // 0x433cb0
+    rgl::mesh* mesh_for(int a, unsigned mask, int b);   // 0x433cb0
 };
 
-extern int  g_item_count;                               // 0x5e29d4
-int item_index(const tstring* name);                    // 0x434ad0
+extern int  g_item_kind_count;                               // 0x5e29d4
+int find_item(const tstring* name);                    // 0x434ad0
 
 struct MapName_s2fe40 { char pad[0x48]; };
 struct MapEntry_s2fe40 {
@@ -746,7 +725,7 @@ struct MapEntry_s2fe40 {
     MapName_s2fe40* names;                                     // +0x1c
 };
 
-extern int g_map_count;                                 // 0x5e29e8
+extern int g_ptype_count;                                 // 0x5e29e8
 
 struct MapPoint_s2fe40 {
     char pad0[0x10];
@@ -756,13 +735,13 @@ struct MapPoint_s2fe40 {
     char pad50[0x78 - 0x50];
 };
 
-extern int g_map_points_count;                          // 0x5e29e0
-int map_point_index(const tstring* name);               // 0x4352a0
-extern int g_no_cam;                                    // 0x5a9fb0
+#include "../game_globals.h"
+int find_in_table78(const tstring* name);               // 0x4352a0
+extern char g_cfg[]; // 0x5a9f98
 
 // ---- resource manager (0x5d6fa0) -----------------------------------------------------------------------
 struct resmgr_s2fe40 {
-    std::vector<rgl::mesh*> get(const tstring* name);   // 0x41b960
+    std::vector<rgl::mesh*> find_meshes(const tstring* name);   // 0x41b960
 };
 
 
@@ -786,7 +765,7 @@ Matrix12_s2fe40* identity3(Matrix12_s2fe40* out);                     // 0x40cd6
 
 struct Mat2_s2fe40 {
     float m[4];
-    void rotate(float angle);                           // 0x4f3b40 (thiscall, ret 4)
+    void rotate_2x2(float angle);                           // 0x4f3b40 (thiscall, ret 4)
 };
 struct vector2_s2fe40 {
     float x, y;

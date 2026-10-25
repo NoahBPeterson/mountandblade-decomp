@@ -60,9 +60,9 @@ struct MapStore {                                               // the global ma
     MapGroups groups;                                           // +0x10
     char pad20[0x68 - 0x20];
     MapStore();                                                 // 0x478150
-    void post_load();                                           // 0x47ee60
+    void build();                                           // 0x47ee60
 };
-extern MapStore* g_map;                                         // 0xa732b8
+extern MapStore* g_nav;                                         // 0xa732b8
 
 stream_base* read_map(stream_base* s, MapStore* map);           // 0x520c00
 
@@ -70,13 +70,13 @@ stream_base* read_map(stream_base* s, MapStore* map);           // 0x520c00
 void Game::build_map()
 {
     if (!g_new_game_done) {
-        g_map = new MapStore();
+        g_nav = new MapStore();
         file_text s;
         const char* path = module_path("map.txt");
         if (!s.open_read_text(path))
             mb_error("Unable to open %s", path);
         if (!s.failed) {
-            read_map(&s, g_map);
+            read_map(&s, g_nav);
             s.failed = 1;
         }
     }
@@ -106,7 +106,7 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
         for (int j = 0; j < nn; j++)
             s->r_int((int*)(g + 4 + j * 4));
     }
-    map->post_load();
+    map->build();
     return s;
 }
 
@@ -132,9 +132,9 @@ void Game::build_scene()
     }
     log_stream_ptr()->w_cstr("map mesh built.\n");
     rgl::vector4 tmp;
-    self->fog1 = *self->fog_query_a(&tmp);
+    self->fog1 = *self->sun_color(&tmp);
     log_stream_ptr()->w_cstr("get_ideal_sun_color.\n");
-    self->fog2 = *self->fog_query_b(&tmp);
+    self->fog2 = *self->fog_color(&tmp);
     log_stream_ptr()->w_cstr("get_ideal_fog_color.\n");
     self->fog1 = rgl::vector4(0.5f, 0.48f, 0.47f);
     self->fog2 = rgl::vector4(0.8f, 0.8f, 0.8f);
@@ -180,7 +180,7 @@ void Game::build_scene()
     ((EntityX*)self->track_entity)->add_mesh(self->map_track);
 
     rgl::entity* obj = (rgl::entity*)world->create_entity(9);
-    self->map_obj = rgl::resmgr().get_object(g_compass_name)->clone();
+    self->map_obj = rgl::resmgr().get_object(g_env_rows)->clone();
     self->map_obj->scale(60.0f);
     self->map_obj->mask = 0xfffeffff;
     ((EntityX*)obj)->add_mesh(self->map_obj);
@@ -228,14 +228,14 @@ void Game::build_scene()
     }
     if (idx < sprites.count) {
         do {
-            self->del_order(idx);
+            self->spawn_battle_icon(idx);
             ((SpriteNext*)&sprites)->next(&idx);
         } while (idx < sprites.count);
     }
     release_orders();
     more_start();
     if (f13a34 == 0) {
-        self->sl_query(0, 0, 0);
+        self->emit_event(0, 0, 0);
         f13a34 = 1;
     }
 }
@@ -246,7 +246,7 @@ __declspec(noinline) void Game::release_orders()
     TrackRec* p = tracks._Myfirst;
     if (p < tracks._Mylast) {
         do {
-            ((GameMapView*)this)->destroy_order(p);
+            ((GameMapView*)this)->init_event(p);
             p++;
         } while (p < tracks._Mylast);
     }
@@ -267,14 +267,14 @@ void Game::build_map_trees()
     }
 
     void* cam = self->wind;                                                   // +0x139dc
-    float ang_a = (float)g_ang_a * 3.1415927f * 0.0055555557f;               // deg -> rad
-    float ang_b = (float)g_ang_b * 3.1415927f;
+    float ang_a = (float)g_map_sea_direction * 3.1415927f * 0.0055555557f;               // deg -> rad
+    float ang_b = (float)g_map_river_direction * 3.1415927f;
 
     rgl::vector4 dir;
     dir.x = -*(float*)((char*)cam + 0x44);
     dir.y = -*(float*)((char*)cam + 0x48);
     dir.z = -*(float*)((char*)cam + 0x4c);
-    m5_vector4_normalize(&dir);                                                 // 0x407d60
+    normalize(&dir);                                                 // 0x407d60
 
     int npts = (int)(((char*)mgr->pts_end - (char*)mgr->pts) / 0x24);
 
@@ -283,7 +283,7 @@ void Game::build_map_trees()
         MapNavVert* p = &mgr->pts[i];
         float s = dir.x * p->nx + dir.y * p->ny + dir.z * p->nz;
         p->s = s;
-        if (g_env2 != 0) p->s = s * s;
+        if (g_use_shaders != 0) p->s = s * s;
     }
 
     // ---- C: per-point flags and distance ----------------------------------
@@ -303,7 +303,7 @@ void Game::build_map_trees()
             else if (nd->type == 9)          u = 9;
             else { u = nt & 7; if (nd->type == 0xf) u = 0; }
             if (u == k) {
-                unsigned mask = g_masks[k * 2];
+                unsigned mask = ((unsigned*)((char*)&g_bit + 0x0))[k * 2];
                 for (int j = 0; j < nd->count; j++) flags[nd->idx[j]] |= mask;
             }
         }
@@ -312,12 +312,12 @@ void Game::build_map_trees()
     // ---- D: bbox + aggregate masks ----------------------------------------
     g_maxx = -100000.0f; g_minx = 100000.0f;
     g_miny = 100000.0f;  g_maxy = -100000.0f;
-    unsigned u33 = g_masks[16] | g_masks[14];
-    unsigned u36 = g_masks[6] | g_masks[2] | g_masks[8] | g_masks[10] | g_masks[22]
-                 | g_masks[18] | g_masks[24] | g_masks[26] | g_masks[20] | g_masks[4];
-    unsigned u19 = g_masks[0];
-    unsigned u20 = g_masks[18];
-    m5_grid_scan(scratch, (void*)((char*)scratch + 0x40), self);                // 0x523630
+    unsigned u33 = ((unsigned*)((char*)&g_bit + 0x0))[16] | ((unsigned*)((char*)&g_bit + 0x0))[14];
+    unsigned u36 = ((unsigned*)((char*)&g_bit + 0x0))[6] | ((unsigned*)((char*)&g_bit + 0x0))[2] | ((unsigned*)((char*)&g_bit + 0x0))[8] | ((unsigned*)((char*)&g_bit + 0x0))[10] | ((unsigned*)((char*)&g_bit + 0x0))[22]
+                 | ((unsigned*)((char*)&g_bit + 0x0))[18] | ((unsigned*)((char*)&g_bit + 0x0))[24] | ((unsigned*)((char*)&g_bit + 0x0))[26] | ((unsigned*)((char*)&g_bit + 0x0))[20] | ((unsigned*)((char*)&g_bit + 0x0))[4];
+    unsigned u19 = ((unsigned*)((char*)&g_bit + 0x0))[0];
+    unsigned u20 = ((unsigned*)((char*)&g_bit + 0x0))[18];
+    scan_arrays(scratch, (void*)((char*)scratch + 0x40), self);                // 0x523630
 
     for (int i = 0; i < npts; i++) {
         MapNavVert* p = &mgr->pts[i];
@@ -351,27 +351,27 @@ void Game::build_map_trees()
     void* snow_arr[0x40];   for (int i = 0; i < 0x40; i++) snow_arr[i] = 0;
     void* steppe_arr[0x40]; for (int i = 0; i < 0x40; i++) steppe_arr[i] = 0;
     void* desert_arr[0x40]; for (int i = 0; i < 0x40; i++) desert_arr[i] = 0;
-    for (int i = 0; i < 4; i++) if (g_mat_count[i] > 0x40) g_mat_count[i] = 0x40;
+    for (int i = 0; i < 4; i++) if (g_map_tree_types[i] > 0x40) g_map_tree_types[i] = 0x40;
 
-    for (int i = 0; i < g_mat_count[0]; i++) {
-        m5_tstring_assign(tmp, "map_tree_");                                    // 0x59c0d8
-        m5_tstring_push_back(tmp, (char)('a' + i));
-        map_arr[i] = m5_resmgr_get_object(g_resmgr_raw, tmp);
+    for (int i = 0; i < g_map_tree_types[0]; i++) {
+        assign(tmp, "map_tree_");                                    // 0x59c0d8
+        push_back(tmp, (char)('a' + i));
+        map_arr[i] = get_object(&g_resmgr, tmp);
     }
-    for (int i = 0; i < g_mat_count[1]; i++) {
-        m5_tstring_assign(tmp, "snow_tree_");                                   // 0x59c0cc
-        m5_tstring_push_back(tmp, (char)('a' + i));
-        snow_arr[i] = m5_resmgr_get_object(g_resmgr_raw, tmp);
+    for (int i = 0; i < g_map_tree_types[1]; i++) {
+        assign(tmp, "snow_tree_");                                   // 0x59c0cc
+        push_back(tmp, (char)('a' + i));
+        snow_arr[i] = get_object(&g_resmgr, tmp);
     }
-    for (int i = 0; i < g_mat_count[2]; i++) {
-        m5_tstring_assign(tmp, "steppe_tree_");                                 // 0x59c0bc
-        m5_tstring_push_back(tmp, (char)('a' + i));
-        steppe_arr[i] = m5_resmgr_get_object(g_resmgr_raw, tmp);
+    for (int i = 0; i < g_map_tree_types[2]; i++) {
+        assign(tmp, "steppe_tree_");                                 // 0x59c0bc
+        push_back(tmp, (char)('a' + i));
+        steppe_arr[i] = get_object(&g_resmgr, tmp);
     }
-    for (int i = 0; i < g_mat_count[3]; i++) {
-        m5_tstring_assign(tmp, "desert_tree_");                                 // 0x59c0ac
-        m5_tstring_push_back(tmp, (char)('a' + i));
-        desert_arr[i] = m5_resmgr_get_object(g_resmgr_raw, tmp);
+    for (int i = 0; i < g_map_tree_types[3]; i++) {
+        assign(tmp, "desert_tree_");                                 // 0x59c0ac
+        push_back(tmp, (char)('a' + i));
+        desert_arr[i] = get_object(&g_resmgr, tmp);
     }
 
     // ---- G: grid dimensions and cell entities -----------------------------
@@ -386,8 +386,8 @@ void Game::build_map_trees()
 
     for (int row = 0; row < g_page_rows; row++) {
         for (int col = 0; col < g_page_cols; col++) {
-            void* ent = m5_create_entity(9);                                    // 0x428440
-            g_grid[col * 8 + row] = ent;
+            void* ent = create_entity(9);                                    // 0x428440
+            ((void**)g_map_pages)[col * 8 + row] = ent;
             (*(void(**)(void*, int))((char*)*(void**)ent + 0x18))(ent, 0);   // virtual slot +0x18
         }
     }
@@ -400,7 +400,7 @@ void Game::build_map_trees()
             float y0 = (float)row * stepy + g_miny;
             float y1 = (float)(row + 1) * stepy + g_miny;
             int ci = col * 8 + row;
-            void* cell = g_grid[ci];
+            void* cell = ((void**)g_map_pages)[ci];
 
             void* cellmesh = (void*)::operator new(0x260);
             cellmesh = cellmesh ? m5_mesh_ctor(cellmesh) : 0;                   // 0x412a90
@@ -411,7 +411,7 @@ void Game::build_map_trees()
                 else if (mi == 11) mt = 0x16;
                 else if (mi == 12) mt = 0x17;
                 else               mt = mi;
-                unsigned umask = g_masks[mi * 2];
+                unsigned umask = ((unsigned*)((char*)&g_bit + 0x0))[mi * 2];
 
                 void* m = (void*)::operator new(0x260);
                 m = m ? m5_mesh_ctor(m) : 0;
@@ -472,7 +472,7 @@ void Game::build_map_trees()
                             if (mt == 0x17 && ((u19 & (unsigned)flags[pi]) == 0
                                             || (u36 & (unsigned)flags[pi]) == 0)) {
                                 int nlist[64]; int ncnt = 0;
-                                m5_collect_near(mgr, pi, nlist, &ncnt);             // 0x5234e0
+                                build_chain(mgr, pi, nlist, &ncnt);             // 0x5234e0
                                 for (int a = 0; a < ncnt; ) {
                                     int p2 = nlist[a];
                                     if ((u19 & (unsigned)flags[p2]) == 0
@@ -508,7 +508,7 @@ void Game::build_map_trees()
                             prec[0] = px; prec[1] = py; prec[2] = pz; prec[3] = 0.0f;
                             prec[4] = mgr->pts[pi].nx; prec[5] = mgr->pts[pi].ny;
                             prec[6] = mgr->pts[pi].nz; prec[7] = 0.0f;
-                            int pidx = m5_add_point(m, prec);                        // 0x412f50
+                            int pidx = add_point(m, prec);                        // 0x412f50
 
                             // ---- per-material orientation + fractal noise ----------
                             // uv seeds: [esp+0x14] = px*0.1, [esp+0x18] = py*0.1
@@ -530,7 +530,7 @@ void Game::build_map_trees()
                                 in6[0] = ca * uu - sa * vv;
                                 in6[1] = sa * uu + ca * vv;
                                 in6[2] = 0.0f; in6[3] = 0.0f;
-                                m5_noise_fractal(6.0f, 0.7f, 3, 0, in6, out6);      // 0x414fc0
+                                noise_fractal(6.0f, 0.7f, 3, 0, in6, out6);      // 0x414fc0
                                 if (mt == 8) {
                                     uu = out6[0] * 0.5f + uu;                    // 0x549d70
                                     vv = (out6[1] * 0.5f) + vv;
@@ -560,19 +560,19 @@ void Game::build_map_trees()
                             //         become the tint z / the second uv seed.
                             float na[8], nb[8];
                             na[0] = px;  na[1] = py;  na[2] = 6816.0f; na[3] = 0.0f;  // 0x45d4d000
-                            m5_noise_fractal(9.0f, 0.6f, 4, 0, na, nb);         // 0x40c00000 / 0x3f19999a
+                            noise_fractal(9.0f, 0.6f, 4, 0, na, nb);         // 0x40c00000 / 0x3f19999a
                             float tz = nb[6] * 0.5f;                         // 0x549d70
                             float tseed = nb[7] * 0.5f;
 
                             // pass 2: dither (material, y)
                             float nc[8], nd[8];
                             nc[0] = (float)mt; nc[1] = py; nc[2] = 2917.0f; nc[3] = 0.0f; // 0x45365000
-                            m5_noise_fractal(7.0f, 0.6f, 4, 0, nc, nd);         // 0x40e00000
+                            noise_fractal(7.0f, 0.6f, 4, 0, nc, nd);         // 0x40e00000
 
                             // pass 3: dither the fixed view dir
                             float ne[8], nf_[8];
                             ne[0] = dir.x; ne[1] = dir.y; ne[2] = -3668.0f; ne[3] = 0.0f;  // 0xc4654000
-                            m5_noise_fractal(4.0f, 0.6f, 4, 0, ne, nf_);        // 0x40800000
+                            noise_fractal(4.0f, 0.6f, 4, 0, ne, nf_);        // 0x40800000
 
                             // --- colour: (base + offset) * sc (0x5228a3) -----------
                             float cr = (py + 0.86f) * sc;                    // 0x59944c
@@ -580,7 +580,7 @@ void Game::build_map_trees()
                             float cb = (tz * 0.6f + 0.87f) * sc;             // 0x590d94 / 0x59c080
                             float ca_ = 1.0f;
 
-                            if (g_env2 == 0) {
+                            if (g_use_shaders == 0) {
                                 // modulate the rgb by the point's view dot (0x5228f6)
                                 float k = mgr->pts[pi].s;
                                 cr *= (1.0f + k) * 0.55f;                    // 0x54b888
@@ -611,14 +611,14 @@ void Game::build_map_trees()
                                 }
                             }
 
-                            if (g_env2 == 0) { cr = sqrtf(cr); cg = sqrtf(cg); cb = sqrtf(cb); }
+                            if (g_use_shaders == 0) { cr = sqrtf(cr); cg = sqrtf(cg); cb = sqrtf(cb); }
 
                             float uv[2] = { uu, vv };
                             float col_rec[4] = { cr, cg, cb, ca_ };
-                            unsigned col_ = m5_pack_color(col_rec);             // 0x40e440
-                            vert[pi] = m5_add_vertex(m, pidx, uv, &col_, prec, 0);  // 0x413c50
+                            unsigned col_ = pack_color(col_rec);             // 0x40e440
+                            vert[pi] = add_vertex(m, pidx, uv, &col_, prec, 0);  // 0x413c50
                         }
-                        m5_add_rec2(m, vert[nd->idx[0]], vert[nd->idx[1]], vert[nd->idx[2]]); // 0x411920
+                        add_face(m, vert[nd->idx[0]], vert[nd->idx[1]], vert[nd->idx[2]]); // 0x411920
                     }
 
                     // --- tree-mesh selection, material 0 only (LAB_00522cb4) ---
@@ -630,13 +630,13 @@ void Game::build_map_trees()
                             if (t == 0xc) goto lab_ce0;
                             if (t == 10) {
                                 chosen = steppe_arr[0];
-                                if (g_mat_count[2] > 1) chosen = steppe_arr[m5_mb_rand() % g_mat_count[2]];
+                                if (g_map_tree_types[2] > 1) chosen = steppe_arr[rand() % g_map_tree_types[2]];
                             } else if (t == 0xd) {
                                 chosen = desert_arr[0];
-                                if (g_mat_count[3] > 1) chosen = desert_arr[m5_mb_rand() % g_mat_count[3]];
+                                if (g_map_tree_types[3] > 1) chosen = desert_arr[rand() % g_map_tree_types[3]];
                             } else {
-                                chosen = (g_mat_count[0] < 2) ? 0
-                                       : map_arr[m5_mb_rand() % g_mat_count[0]];
+                                chosen = (g_map_tree_types[0] < 2) ? 0
+                                       : map_arr[rand() % g_map_tree_types[0]];
                             }
                         } else {
                             if (t != 0xc) {
@@ -645,16 +645,16 @@ void Game::build_map_trees()
                             }
                         lab_ce0:
                             chosen = snow_arr[0];
-                            if (g_mat_count[1] > 1) chosen = snow_arr[m5_mb_rand() % g_mat_count[1]];
+                            if (g_map_tree_types[1] > 1) chosen = snow_arr[rand() % g_map_tree_types[1]];
                         }
                         if (chosen != 0) {
                             float mat[16];
-                            memcpy(mat, m5_identity3(), 12 * 4);                // 0x40cd60
+                            memcpy(mat, identity3(), 12 * 4);                // 0x40cd60
                             for (int q = 12; q < 16; q++) mat[q] = 0.0f;
-                            float ang = (float)m5_mb_rand() * 0.0001f;
-                            m5_matrix_rotate_sf(mat, &ang);                     // 0x40e770
-                            for (int q = 0; q < 3; q++) { mat[q * 4 + 3] += (float)m5_mb_rand() * 0.0001f; }
-                            m5_append_skinned(cellmesh, chosen, mat, -1, 0xffffffff, 0); // 0x44eb00
+                            float ang = (float)rand() * 0.0001f;
+                            rotate_about_u(mat, &ang);                     // 0x40e770
+                            for (int q = 0; q < 3; q++) { mat[q * 4 + 3] += (float)rand() * 0.0001f; }
+                            append_skinned(cellmesh, chosen, mat, -1, 0xffffffff, 0); // 0x44eb00
                         }
                     lab_fc7: ;
                     }
@@ -667,17 +667,17 @@ void Game::build_map_trees()
                         || (*(void**)((char*)m + 0x98) == *(void**)((char*)m + 0x94))) {
                     (*(void(**)(void*))(* (void**)m))(m);                    // virtual dtor
                 } else {
-                    *(void**)((char*)m + 0x2c) = m5_material_from_name(mt);     // 0x523390
-                    m5_mesh_set_mat(m, mt);                                     // 0x523360
+                    *(void**)((char*)m + 0x2c) = terrain_material(mt);     // 0x523390
+                    set_nibble(m, mt);                                     // 0x523360
                     *(int*)((char*)m + 0x10c) = 0x17fff;
-                    m5_scene_add_object(m);                                     // 0x419300
+                    compute_bounds(m);                                     // 0x419300
 
                     RawVec cv;
                     cv.first = *(void***)((char*)cell + 0x11c);
                     cv.last  = *(void***)((char*)cell + 0x120);
                     cv.end   = *(void***)((char*)cell + 0x124);
                     if (cv.first == 0 || cv.end <= cv.last) {
-                        m5_vec_insert_n(&cv, cv.last, 1, &m);                   // 0x410610
+                        _Insert_n(&cv, cv.last, 1, &m);                   // 0x410610
                         *(void***)((char*)cell + 0x11c) = cv.first;
                         *(void***)((char*)cell + 0x120) = cv.last;
                         *(void***)((char*)cell + 0x124) = cv.end;
@@ -694,7 +694,7 @@ void Game::build_map_trees()
                     else if (mt == 0x17) mv = &g_mat_vec[3];
                     if (mv) {
                         if (mv->first == 0 || mv->end <= mv->last)
-                            m5_vec_insert_n(mv, mv->last, 1, &m);
+                            _Insert_n(mv, mv->last, 1, &m);
                         else { *mv->last = m; mv->last++; }
                     }
                 }
@@ -709,18 +709,18 @@ void Game::build_map_trees()
             } else {
                 char name[0x40];
                 m5_tstring_ctor1(name, "map_trees");                            // 0x42bbe0 / 0x59c070
-                *(void**)((char*)cellmesh + 0x2c) = m5_resmgr_get_material(g_resmgr_raw, name); // 0x418a70
+                *(void**)((char*)cellmesh + 0x2c) = get_material(&g_resmgr, name); // 0x418a70
                 m5_tstring_dtor(name);                                          // 0x42bc40
-                m5_mesh_set_mat(cellmesh, 2);                                   // 0x523360
+                set_nibble(cellmesh, 2);                                   // 0x523360
                 *(int*)((char*)cellmesh + 0x10c) = 0x1ffff;
-                m5_scene_add_object(cellmesh);                                  // 0x419300
+                compute_bounds(cellmesh);                                  // 0x419300
 
                 RawVec cv;
                 cv.first = *(void***)((char*)cell + 0x11c);
                 cv.last  = *(void***)((char*)cell + 0x120);
                 cv.end   = *(void***)((char*)cell + 0x124);
                 if (cv.first == 0 || cv.end <= cv.last) {
-                    m5_vec_insert_n(&cv, cv.last, 1, &cellmesh);
+                    _Insert_n(&cv, cv.last, 1, &cellmesh);
                     *(void***)((char*)cell + 0x11c) = cv.first;
                     *(void***)((char*)cell + 0x120) = cv.last;
                     *(void***)((char*)cell + 0x124) = cv.end;
@@ -735,7 +735,7 @@ void Game::build_map_trees()
                 ev.last  = self->ents_last;
                 ev.end   = self->ents_end;
                 if (ev.first == 0 || ev.end <= ev.last) {
-                    m5_vec_insert_n(&ev, ev.last, 1, &cellmesh);
+                    _Insert_n(&ev, ev.last, 1, &cellmesh);
                     self->ents = ev.first; self->ents_last = ev.last; self->ents_end = ev.end;
                 } else {
                     *ev.last = cellmesh;
@@ -860,7 +860,7 @@ void __stdcall scan_arrays(void* p, int unused)
 }
 
 // ---- Game::load_game_data and the record helpers that follow it (binary order) -----------------------------------------
-extern SkillFile g_08ee3100[42];                    // 0x8ee3100 (the skill table; kept as a hex name for the equivalence resolver)
+extern SkillFile g_skill_tbl[42];                    // 0x8ee3100 (the skill table; kept as a hex name for the equivalence resolver)
 
 // @ 0x5236f0
 void Game::load_game_data(int extra_triggers)
@@ -901,20 +901,20 @@ void Game::load_game_data(int extra_triggers)
     s_skills.r_int(&skill_count);
     int i;
     for (i = 0; i < skill_count && i < 42; i++)
-        read_skill(s_skills, g_08ee3100[i]);
+        read_skill(s_skills, g_skill_tbl[i]);
     for (; i < 42; i++) {
-        g_08ee3100[i].f34 = 0;
-        g_08ee3100[i].f38 = 0;
-        g_08ee3100[i].f40 = 0x100;
+        g_skill_tbl[i].f34 = 0;
+        g_skill_tbl[i].f38 = 0;
+        g_skill_tbl[i].f40 = 0x100;
     }
     s_skills.failed = 1;
 
     // ---- Data\skeleton_bodies.xml -----------------------------------------------------------------------
     {
         tstring path("Data\\skeleton_bodies.xml");
-        g_skeletons.load_bodies(&path);
+        g_skeletons.load(&path);
     }
-    g_skeletons.fix();
+    g_skeletons.fix_skeletons();
 
     // ---- troops.txt -------------------------------------------------------------------------------------
     file_text s_troops;                                  // +0xb8
@@ -1108,8 +1108,8 @@ void TroopFile::read_file(stream_base& s)
     int b = (f68[4] >> 16) & 0xf;
     if (b < 0)
         b = 0;
-    if (b > g_clamp_max)
-        b = g_clamp_max;
+    if (b > (*(int*)((char*)&g_skill_tbl + 0x9c4)))
+        b = (*(int*)((char*)&g_skill_tbl + 0x9c4));
     fa0 = (float)(f58[0] + 0x23 + b * 2);
 
     for (int i = 0; i < 4; ++i)
@@ -1127,8 +1127,8 @@ void QuestFile::read_file(stream_base& s)
     s.r_tstr(RSTR(&f10));
     f0.underscores_to_spaces();
     f10.underscores_to_spaces();
-    f30 = *default_name();
-    tstring* p = g_name_mgr.find(&f54);
+    f30 = *raw_title();
+    tstring* p = ((NameMgr*)&g_strtable)->find(&f54);
     f40 = p ? *p : f0;
 }
 
@@ -1137,7 +1137,7 @@ TroopFile::TroopFile()
 {
     for (int i = 0; i < 0x60; ++i)
         ((int*)pairs)[i * 2] = -1;
-    vec_ctor_iter(names_raw, 0x10, 8, (void*)0x42bbd0);
+    vector_constructor_iterator(names_raw, 0x10, 8, (void*)0x42bbd0);
     f4a0 = -1;
     for (int i = 0; i < 10; ++i) {
         p10[i].item = -1;
@@ -1162,7 +1162,7 @@ TroopFile::TroopFile()
 // @ 0x524860
 QuestFile::QuestFile()
 {
-    vec_ctor_iter(names_raw, 0x10, 8, (void*)0x42bbd0);
+    vector_constructor_iterator(names_raw, 0x10, 8, (void*)0x42bbd0);
     f108 = -1;
     f12c = 0;
     f130 = 0;
@@ -1186,7 +1186,7 @@ SceneFile::SceneFile()
 // @ 0x5249f0
 FactionFile::FactionFile()
 {
-    vec_ctor_iter(names_raw, 0x10, 8, (void*)0x42bbd0);
+    vector_constructor_iterator(names_raw, 0x10, 8, (void*)0x42bbd0);
     f2fc = -1;
     f230 = 0;
     b10 = 0;

@@ -22,9 +22,9 @@
 #undef g_game_s2cf60
 #define g_game_s2cf60 (*(Game_s2cf60**)&g_game)
 #undef g_scene_s2cf60
-#define g_scene_s2cf60 (*(Scene_s2cf60**)&g_scene)
+#define g_scene_s2cf60 (*(Scene_s2cf60**)&(*(void**)((char*)&g_mission + 0x0)))
 #undef g_editor_dialog_s2cf60
-#define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)g_editor_dialog)
+#define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)g_app_obj)
 // @ 0x52cf60
 void MapEditor_s2cf60::update()
 {
@@ -34,9 +34,9 @@ void MapEditor_s2cf60::update()
     g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
 
     // --- pick the mesh_s2cf60 element under the cursor ------------------------------------------------
-    if (g_a17458 != 0 && g_a17858 == 0) {
+    if ((*(int*)((char*)&g_keyboard + 0x390)) != 0 && (*(int*)((char*)&g_keyboard + 0x790)) == 0) {
         vector4 from, to;
-        this->view->cell_rect(from, to);
+        this->view->screen_to_world(from, to);
         vector4 dir;
         dir.x = to.x - from.x;
         dir.y = to.y - from.y;
@@ -48,25 +48,25 @@ void MapEditor_s2cf60::update()
             picked = (int)g_scene_s2cf60->mesh_s2cf60.pick_edge(from, dir);
         else
             picked = (int)g_scene_s2cf60->mesh_s2cf60.pick_poly(from, dir);
-        if (g_a17148 == 0 && g_a17348 == 0) {
+        if ((*(int*)((char*)&g_keyboard + 0x80)) == 0 && (*(int*)((char*)&g_keyboard + 0x280)) == 0) {
             g_scene_s2cf60->mesh_s2cf60.select_mode(g_scene_s2cf60->mesh_s2cf60.mode, 0);
             g_scene_s2cf60->mesh_s2cf60.need_redraw[g_scene_s2cf60->mesh_s2cf60.mode] = 1;
         }
         if (picked >= 0) {
-            g_scene_s2cf60->mesh_s2cf60.select_current(g_scene_s2cf60->mesh_s2cf60.mode, picked);
+            g_scene_s2cf60->mesh_s2cf60.toggle_flag(g_scene_s2cf60->mesh_s2cf60.mode, picked);
             g_scene_s2cf60->mesh_s2cf60.need_redraw[g_scene_s2cf60->mesh_s2cf60.mode] = 1;
         }
     }
 
     dt = 0.6f;
-    if (g_a17148 != 0 || g_a17348 != 0)
+    if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0)
         dt = 0.06f;
 
     // --- mode switch keys ----------------------------------------------------------------------
     if (g_a170dc != 0 && g_a174dc == 0) {
         g_game_s2cf60->sub_option = 0;
         g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
-        g_editor_dialog_s2cf60.update_option_checks();
+        g_editor_dialog_s2cf60.update_checks();
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -74,7 +74,7 @@ void MapEditor_s2cf60::update()
     if (g_a170e0 != 0 && g_a174e0 == 0) {
         g_game_s2cf60->sub_option = 1;
         g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
-        g_editor_dialog_s2cf60.update_option_checks();
+        g_editor_dialog_s2cf60.update_checks();
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -82,7 +82,7 @@ void MapEditor_s2cf60::update()
     if (g_a170e4 != 0 && g_a174e4 == 0) {
         g_game_s2cf60->sub_option = 2;
         g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
-        g_editor_dialog_s2cf60.update_option_checks();
+        g_editor_dialog_s2cf60.update_checks();
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -93,9 +93,9 @@ void MapEditor_s2cf60::update()
     if (g_a1715c != 0) {
         mat2_s2cf60 keep  = {{1.0f, 0.0f, 0.0f, 1.0f}};   // the original initialises a second identity block
         mat2_s2cf60 basis = {{1.0f, 0.0f, 0.0f, 1.0f}};
-        basis.rotate(this->angle);
-        float a = (g_a178d4 * dt) * g_percent;
-        float b = (g_a178d8 * dt) * g_percent;
+        basis.rotate_2x2(this->angle);
+        float a = ((*(float*)((char*)&g_keyboard + 0x80c)) * dt) * g_percent;
+        float b = ((*(float*)((char*)&g_keyboard + 0x810)) * dt) * g_percent;
         vector4 pos;
         pos.x = basis.m[0] * a - basis.m[2] * b;
         pos.y = basis.m[1] * a - basis.m[3] * b;
@@ -108,12 +108,12 @@ void MapEditor_s2cf60::update()
     }
 
     // --- lift / lower (only while no modifier is held) ------------------------------------------
-    if (g_a17124 != 0) {
+    if ((*(int*)((char*)&g_keyboard + 0x5c)) != 0) {
         vector4 pos;
         pos.x = 0.0f;
         pos.y = 0.0f;
         if (g_a171b4 == 0 && g_a173b4 == 0)
-            pos.z = -((dt * g_percent) * g_a178d8);
+            pos.z = -((dt * g_percent) * (*(float*)((char*)&g_keyboard + 0x810)));
         else
             pos.z = 0.0f;
         g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, pos);
@@ -128,9 +128,9 @@ void MapEditor_s2cf60::update()
         mat3_s2cf60  m;
         float angle;
         identity3(&m);
-        angle = ((g_a178d8 + g_a178d4) * dt) * g_rot_step;
+        angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step;
         m.rotate_fu(angle);
-        g_scene_s2cf60->mesh_s2cf60.set_basis(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
+        g_scene_s2cf60->mesh_s2cf60.transform_selected(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -140,9 +140,9 @@ void MapEditor_s2cf60::update()
         mat3_s2cf60  m;
         float angle;
         identity3(&m);
-        angle = ((g_a178d8 + g_a178d4) * dt) * g_rot_step;
+        angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step;
         m.rotate_su(angle);
-        g_scene_s2cf60->mesh_s2cf60.set_basis(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
+        g_scene_s2cf60->mesh_s2cf60.transform_selected(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -155,9 +155,9 @@ void MapEditor_s2cf60::update()
             mat3_s2cf60  m;
             float angle;
             identity3(&m);
-            angle = ((g_a178d8 + g_a178d4) * dt) * g_rot_step;
+            angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step;
             m.rotate_sf(angle);
-            g_scene_s2cf60->mesh_s2cf60.set_basis(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
+            g_scene_s2cf60->mesh_s2cf60.transform_selected(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
             g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
             g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
             g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -179,12 +179,12 @@ L5c6:
     if (g_a17184 != 0)
         goto L7dd;
     {
-        float dim = g_one - (((g_a178d8 + g_a178d4) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = dim;
         c.y = dim;
         c.z = dim;
-        g_scene_s2cf60->mesh_s2cf60.set_colour(g_scene_s2cf60->mesh_s2cf60.mode, c);
+        g_scene_s2cf60->mesh_s2cf60.scale_selected(g_scene_s2cf60->mesh_s2cf60.mode, c);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -196,12 +196,12 @@ L666:
         goto L71b;
 L673:
     if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
-        float dim = g_one - (((g_a178d8 + g_a178d4) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = dim;
         c.y = 1.0f;
         c.z = 1.0f;
-        g_scene_s2cf60->mesh_s2cf60.set_colour(g_scene_s2cf60->mesh_s2cf60.mode, c);
+        g_scene_s2cf60->mesh_s2cf60.scale_selected(g_scene_s2cf60->mesh_s2cf60.mode, c);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -213,12 +213,12 @@ L71b:
         goto L7d0;
 L728:
     if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
-        float dim = g_one - (((g_a178d8 + g_a178d4) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
         c.y = dim;
         c.z = 1.0f;
-        g_scene_s2cf60->mesh_s2cf60.set_colour(g_scene_s2cf60->mesh_s2cf60.mode, c);
+        g_scene_s2cf60->mesh_s2cf60.scale_selected(g_scene_s2cf60->mesh_s2cf60.mode, c);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -230,12 +230,12 @@ L7d0:
         goto L885;
 L7dd:
     if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
-        float dim = g_one - (((g_a178d8 + g_a178d4) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
         c.y = 1.0f;
         c.z = dim;
-        g_scene_s2cf60->mesh_s2cf60.set_colour(g_scene_s2cf60->mesh_s2cf60.mode, c);
+        g_scene_s2cf60->mesh_s2cf60.scale_selected(g_scene_s2cf60->mesh_s2cf60.mode, c);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -245,7 +245,7 @@ L7dd:
 L885:
     // --- rebuild every per-mode table ----------------------------------------------------------
     if (g_a17420 != 0 && g_a17820 == 0) {
-        g_scene_s2cf60->mesh_s2cf60.rebuild_all();
+        g_scene_s2cf60->mesh_s2cf60.remove_selected();
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -253,12 +253,12 @@ L885:
     }
 
     // --- drag the selection (needs a held code 0x52/0xd2 key) ----------------------------------
-    if (g_a1718c != 0 && g_a1758c == 0 && (g_a17148 != 0 || g_a17348 != 0))
-        g_scene_s2cf60->mesh_s2cf60.drag_start(this->drag_state);
+    if ((*(int*)((char*)&g_keyboard + 0xc4)) != 0 && g_a1758c == 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0))
+        g_scene_s2cf60->mesh_s2cf60.make_copy(this->drag_state);
 
-    if (g_a17190 != 0 && g_a17590 == 0 && (g_a17148 != 0 || g_a17348 != 0) &&
+    if (g_a17190 != 0 && g_a17590 == 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) &&
         g_a1717c == 0 && g_a171ac == 0) {
-        g_scene_s2cf60->mesh_s2cf60.drag_step(this->drag_state);
+        g_scene_s2cf60->mesh_s2cf60.apply_copy(this->drag_state);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -267,11 +267,11 @@ L885:
 
     // --- rebuild the three rgl meshes that were flagged ----------------------------------------
     if (g_scene_s2cf60->mesh_s2cf60.need_redraw[0] != 0)
-        g_scene_s2cf60->mesh_s2cf60.build_tetra(g_scene_s2cf60->mesh_s2cf60.mesh98);
+        g_scene_s2cf60->mesh_s2cf60.build_spikes(g_scene_s2cf60->mesh_s2cf60.mesh98);
     if (g_scene_s2cf60->mesh_s2cf60.need_redraw[1] != 0)
-        g_scene_s2cf60->mesh_s2cf60.build_ribbon(g_scene_s2cf60->mesh_s2cf60.mesh9c);
+        g_scene_s2cf60->mesh_s2cf60.build_ribbons(g_scene_s2cf60->mesh_s2cf60.mesh9c);
     if (g_scene_s2cf60->mesh_s2cf60.need_redraw[2] != 0)
-        g_scene_s2cf60->mesh_s2cf60.build_tri(g_scene_s2cf60->mesh_s2cf60.mesh94);
+        g_scene_s2cf60->mesh_s2cf60.polygon_to_mesh(g_scene_s2cf60->mesh_s2cf60.mesh94);
     g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 0;
     g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 0;
     g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 0;
@@ -428,8 +428,8 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
     mean.z *= inv;
 
     rgl::vector4 e1, e2, normal;
-    rgl::sub(e1, pts[1], pts[0]);
-    rgl::sub(e2, pts[2], pts[0]);
+    rgl::vec3_sub(e1, pts[1], pts[0]);
+    rgl::vec3_sub(e2, pts[2], pts[0]);
     cross(normal, e1, e2);
     normal.normalize();
 
@@ -483,8 +483,8 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
     mean.z *= inv;
 
     rgl::vector4 e1, e2, normal;
-    rgl::sub(e1, pts[1], pts[0]);
-    rgl::sub(e2, pts[2], pts[0]);
+    rgl::vec3_sub(e1, pts[1], pts[0]);
+    rgl::vec3_sub(e2, pts[2], pts[0]);
     cross(normal, e1, e2);
     normal.normalize();
 
@@ -539,7 +539,7 @@ void Mesh_s2dfd0::toggle_flag(int type, int index)
 // @ 0x52e590
 void Mesh_s2dfd0::scale_selected(int dummy, const rgl::vector4* scale)
 {
-    gather_selection(dummy);
+    calc_vertex_mode(dummy);
     float sx = 0.0f, sy = 0.0f, sz = 0.0f;
     int n = 0;
     for (int i = 0; i < verts.size(); i++) {
@@ -569,7 +569,7 @@ void Mesh_s2dfd0::scale_selected(int dummy, const rgl::vector4* scale)
 // @ 0x52e6d0
 void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
 {
-    gather_selection(dummy);
+    calc_vertex_mode(dummy);
     float sx = 0.0f, sy = 0.0f, sz = 0.0f;
     int n = 0;
     for (int i = 0; i < verts.size(); i++) {
@@ -606,7 +606,7 @@ void Mesh_s2dfd0::remove_selected()
     if (mode == 0) {
         for (int i = 0; i < verts.size(); i++) {
             if (verts.first[i].flag) {
-                delete_vert(i);
+                remove_node(i);
                 i--;
             }
         }
@@ -614,19 +614,19 @@ void Mesh_s2dfd0::remove_selected()
     if (mode == 1) {
         for (int i = 0; i < edges.size(); i++) {
             if (edges.first[i].flag) {
-                delete_edge(i);
+                remove_edge(i);
                 i--;
             }
         }
     } else {
         for (int i = 0; i < polys.size(); i++) {
             if (polys.first[i].flag) {
-                delete_poly(i);
+                remove_face(i);
                 i--;
             }
         }
     }
-    rebuild();
+    build_adjacency();
 }
 
 // ======================================================= slice s0052e960: functions
@@ -780,41 +780,41 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
         polys.push_back(t);
     }
 
-    rebuild();
+    build_adjacency();
 }
 
 // ======================================================= slice s0052f250: functions
 #undef g_map_s2f250
-#define g_map_s2f250 (*(Map_s2f250**)&g_map)
+#define g_map_s2f250 (*(Map_s2f250**)&(*(void**)((char*)&g_mission + 0x0)))
 #undef g_game_s2f250
 #define g_game_s2f250 (*(Frame__s2f250**)&g_game)
 #undef g_objrecs_s2f250
-#define g_objrecs_s2f250 (*(ObjRec20_s2f250**)&g_objrecs)
+#define g_objrecs_s2f250 (*(ObjRec20_s2f250**)&g_ptypes)
 #undef g_editor_view_s2f250
-#define g_editor_view_s2f250 (*(EditorView_s2f250**)&g_editor_view)
+#define g_editor_view_s2f250 (*(EditorView_s2f250**)&(*(void**)((char*)&g_windows + 0x38)))
 #undef g_editor_dialog_s2f250
-#define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)g_editor_dialog)
+#define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)g_app_obj)
 // @ 0x52f250
 void MapEditor_s2f250::update()
 {
     g_map_s2f250->object->f140 = 0;
 
     // repeat the two scroll keys every 35000 ticks
-    if (g_key_inc != 0) {
-        if (this->f318 < g_time[0] - 35000)
-            adjust_mode(1);
+    if ((*(int*)((char*)&g_keyboard + 0x34c)) != 0) {
+        if (this->f318 < g_ticks[0] - 35000)
+            set_list_scroll(1);
     }
-    if (g_key_dec != 0) {
-        if (this->f314 < g_time[0] - 35000)
-            adjust_mode(-1);
+    if ((*(int*)((char*)&g_keyboard + 0x32c)) != 0) {
+        if (this->f314 < g_ticks[0] - 35000)
+            set_list_scroll(-1);
     }
-    if (g_key_inc != 0 && g_key_inc_prev == 0)
-        this->f318 = (int)g_time[0];
-    if (g_key_dec != 0 && g_key_dec_prev == 0)
-        this->f314 = (int)g_time[0];
-    if (g_key_inc == 0 && g_key_inc_prev != 0)
+    if ((*(int*)((char*)&g_keyboard + 0x34c)) != 0 && g_key_inc_prev == 0)
+        this->f318 = (int)g_ticks[0];
+    if ((*(int*)((char*)&g_keyboard + 0x32c)) != 0 && g_key_dec_prev == 0)
+        this->f314 = (int)g_ticks[0];
+    if ((*(int*)((char*)&g_keyboard + 0x34c)) == 0 && g_key_inc_prev != 0)
         this->f318 = 0;
-    if (g_key_dec == 0 && g_key_dec_prev != 0)
+    if ((*(int*)((char*)&g_keyboard + 0x32c)) == 0 && g_key_dec_prev != 0)
         this->f314 = 0;
 
     // rebuild the preview when the kind / record / variant changed
@@ -833,7 +833,7 @@ void MapEditor_s2f250::update()
         matrix m;
         identity(&m);
         g_map_s2f250->init_placed(&rec, &g_game_s2f250->mode, &g_game_s2f250->id, &value, &m);
-        g_map_s2f250->build_meshes(&rec, &list);
+        g_map_s2f250->build_mesh_name(&rec, &list);
 
         for (unsigned i = 0; i < list.size(); i++) {
             mesh_s2f250* c = list.first[i]->clone();
@@ -879,7 +879,7 @@ void MapEditor_s2f250::update()
     mat3_s2f250 m3 = *(mat3_s2f250*)&g_map_s2f250->object->frame;
     vector4 col = g_game_s2f250->color;
     char fA, fB, fC;
-    this->adjust(&fA, &off, &fB, &m3, &fC, &col, &this->f2f8);
+    this->apply(&fA, &off, &fB, &m3, &fC, &col, &this->f2f8);
 
     if (fA)
         g_game_s2f250->f1a0ac = off.z;
@@ -906,7 +906,7 @@ void MapEditor_s2f250::update()
             g_map_s2f250->object->frame.o = pos;
             g_map_s2f250->object->frame.o.z += g_game_s2f250->f1a0ac;
             g_map_s2f250->object->f140 = 1;
-            if (g_key_place != 0 && g_key_place_prev == 0)
+            if ((*(int*)((char*)&g_keyboard + 0x390)) != 0 && (*(int*)((char*)&g_keyboard + 0x790)) == 0)
                 goto place;
         }
         if (g_game_s2f250->commit == 0)
@@ -929,7 +929,7 @@ place:
 
                 g_game_s2f250->selected = idx;
                 g_game_s2f250->sel.resize(0, 0);
-                g_game_s2f250->sel.push_back(g_game_s2f250->selected);
+                g_game_s2f250->sel.push_back_out(g_game_s2f250->selected);
 
                 PlacedObj_s2f250* p = &g_map_s2f250->records[g_game_s2f250->selected];
                 p->v158 = g_game_s2f250->color;
@@ -977,19 +977,19 @@ refresh:
 #undef g_items_s2fe40
 #define g_items_s2fe40 (*(Item_s2fe40**)&g_items)
 #undef g_map_pts_s2fe40
-#define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_map_pts)
+#define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_ptypes)
 #undef g_map_points_s2fe40
-#define g_map_points_s2fe40 (*(MapPoint_s2fe40**)&g_map_points)
+#define g_map_points_s2fe40 (*(MapPoint_s2fe40**)&g_propkinds)
 #undef g_resmgr_s2fe40
 #define g_resmgr_s2fe40 (*(resmgr_s2fe40*)&g_resmgr)
 // @ 0x52fe40 ---------------------------------------------------------------------------------------------
 void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3, float* vec, char* f4)
 {
     float k = 0.6f;
-    if (g_a17148 != 0 || g_a17348 != 0)
+    if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0)
         k = 0.6f * 0.1;
     // two statements: the original rounds (y+x)*k to 24 bit before multiplying by 0.005
-    float angle = (g_axis_x + g_axis_y) * k;
+    float angle = ((*(float*)((char*)&g_keyboard + 0x80c)) + (*(float*)((char*)&g_keyboard + 0x810))) * k;
     angle = angle * g_k005;
 
     *f1 = 0;
@@ -1003,23 +1003,23 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         vector2_s2fe40 b = vector2_s2fe40(0.0f, 1.0f);
         m[0] = a;
         m[1] = b;
-        ((Mat2_s2fe40*)&m[0])->rotate(yaw);
+        ((Mat2_s2fe40*)&m[0])->rotate_2x2(yaw);
 
-        float dx = g_axis_x * k * g_d001;
+        float dx = (*(float*)((char*)&g_keyboard + 0x80c)) * k * g_d001;
         pos[0] += m[0].x * dx;
         pos[1] += m[0].y * dx;
-        float dy = g_axis_y * k * g_d001;
+        float dy = (*(float*)((char*)&g_keyboard + 0x810)) * k * g_d001;
         pos[0] -= m[1].x * dy;
         pos[1] -= m[1].y * dy;
         *f1 = 1;
         *f4 = 1;
     }
 
-    if (g_a17124 != 0) {
+    if ((*(int*)((char*)&g_keyboard + 0x5c)) != 0) {
         if (g_a171b4 == 0 && g_a173b4 == 0) {
             // (k*0.01) first, then *axis_y, to match the original's 24-bit rounding order
             double dz = k * g_d001;
-            pos[2] = pos[2] - dz * g_axis_y;
+            pos[2] = pos[2] - dz * (*(float*)((char*)&g_keyboard + 0x810));
         } else
             pos[2] = 0.0f;
         *f1 = 1;
@@ -1107,10 +1107,10 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
     int kind = o->f188;
 
     if (kind == 2) {
-        int idx = item_index(&o->name);
+        int idx = find_item(&o->name);
         name = g_items_s2fe40[idx].mesh_name_for(0);
     } else if (kind == 6) {
-        int idx = item_index(&o->name);
+        int idx = find_item(&o->name);
         int var = o->f1a0;
         Item_s2fe40* it = &g_items_s2fe40[idx];
         int t = it->type_flags & 0xff;
@@ -1119,8 +1119,8 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
         ref.m4 = var;
         rgl::mesh* m;
         if (t == 2 || t == 3 || t == 4 || t == 6 || t == 5 || t == 0x12) {
-            if (idx >= 0 && idx < g_item_count)
-                m = it->get_mesh(0, 0x30000000, var >> 24);
+            if (idx >= 0 && idx < g_item_kind_count)
+                m = it->mesh_for(0, 0x30000000, var >> 24);
             else
                 m = 0;
             if (m != 0) {
@@ -1133,32 +1133,32 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
         }
     } else if (kind == 4) {
         int i;
-        for (i = 0; i < g_map_count; i++) {
+        for (i = 0; i < g_ptype_count; i++) {
             if (g_map_pts_s2fe40[i].name.equals(o->name) != 0)
                 break;
         }
-        if (i == g_map_count)
+        if (i == g_ptype_count)
             i = 0;
         o->f1a0 = o->f1a0 % g_map_pts_s2fe40[i].count;
         name = *(tstring*)((char*)g_map_pts_s2fe40[i].names + o->f1a0 * 0x48);
     } else if (kind == 7) {
         name = g_items_s2fe40[o->f18c].mesh_name_for(o->f1a0);
     } else if (kind == 0) {
-        int pi = map_point_index(&o->name);
+        int pi = find_in_table78(&o->name);
         if (pi < 0)
             pi = o->f18c;
-        if (pi >= 0 && pi < g_map_points_count) {
+        if (pi >= 0 && pi < g_propkind_count) {
             MapPoint_s2fe40* p = &g_map_points_s2fe40[pi];
-            if (g_no_cam != 0 || (p->flags & 0x4000) == 0)
+            if ((*(int*)((char*)&g_cfg + 0x18)) != 0 || (p->flags & 0x4000) == 0)
                 *out = p->meshes;
         }
     } else if (kind == 1) {
-        if (g_no_cam != 0)
+        if ((*(int*)((char*)&g_cfg + 0x18)) != 0)
             name.assign("entry_arrow");
         else
             name.assign("");
     } else if (kind == 5) {
-        if (g_no_cam != 0)
+        if ((*(int*)((char*)&g_cfg + 0x18)) != 0)
             name.assign("_mesh_passage");
         else
             name.assign("");
@@ -1166,7 +1166,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
 
 done:
     if (name.len > 0) {
-        std::vector<rgl::mesh*> tmp = g_resmgr_s2fe40.get(&name);
+        std::vector<rgl::mesh*> tmp = g_resmgr_s2fe40.find_meshes(&name);
         *out = tmp;
     }
 }

@@ -78,7 +78,7 @@ void Troop::set_attr(int idx, int val)
     int v = F7A(this) & 0xf;
     int x = v;
     int base = ATTR(this)[0];
-    int m = g_skin_cap;
+    int m = g_skill_tbl[36].cap;
     if (v < 0)
         x = 0;
     else if (v > m)
@@ -140,7 +140,7 @@ void Troop::set_skill(int idx, int val)
     int v = F7A(this) & 0xf;
     int m;
     int base = ATTR(this)[0];
-    m = g_skin_cap;
+    m = g_skill_tbl[36].cap;
     int x = v;
     if (v < 0)
         x = 0;

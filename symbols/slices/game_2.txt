@@ -18,3 +18,4 @@
 08ee3100 ?g_08ee3100@@3PAUSkillFile@@A  # the skill table (42 entries of 0x44 bytes), named by address for the resolver
 004c6010 ?find@NameMgr@@QAEPAUtstring@@PAU2@@Z  # NameMgr::find (the string table at 0x5e2a18)
 08ee3ac4 ?g_clamp_max@@3HA  # rank / skill clamp (g_skin_cap in the other modules)
+08ee3100 ?g_skill_tbl@@3PAUSkillFile@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)

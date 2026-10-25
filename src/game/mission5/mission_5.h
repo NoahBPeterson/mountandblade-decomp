@@ -34,34 +34,22 @@ struct bin_writer_i : file_writer_base {
 // ---- the globals the slices saw with their own view types (one raw declaration each)
 extern void* g_mission; // 0x5e292c
 extern void* g_game; // 0x5e2930
-extern char g_n_dialogs[]; // 0x8ed50c8
+extern char g_dialogs[]; // 0x8ed50c8
 extern char g_strtable[]; // 0x5e2a18
 extern char g_gui[]; // 0x5d7080
-extern char g_keytable[]; // 0xa73730
-extern char g_keyready[]; // 0xa170c8
-extern char g_main_menu[]; // 0xa73980
-extern void* g_w_a739a0; // 0xa739a0
-extern void* g_w_a739bc; // 0xa739bc
-extern void* g_w_a739b0; // 0xa739b0
-extern void* g_w_a739b4; // 0xa739b4
-extern void* g_w_a739e8; // 0xa739e8
-extern void* g_w_a739e4; // 0xa739e4
-extern void* g_w_a73994; // 0xa73994
-extern void* g_w_a739c8; // 0xa739c8
-extern void* g_w_a739c0; // 0xa739c0
-extern char g_flags[]; // 0x5e291c
-extern char g_a73300[]; // 0xa73300
-extern char g_deque[]; // 0xa739f8
+extern char g_game_keys[]; // 0xa73730
+extern char g_keyboard[]; // 0xa170c8
+extern char g_windows[]; // 0xa73980
+extern char g_map_flags[]; // 0x5e291c
+extern char g_mission_ctx[]; // 0xa73300
 extern void* g_items; // 0x5e29d0
-extern char g_keys[]; // 0xa73730
-extern char g_key_names[]; // 0xa170c8
-extern void* g_scene; // 0x5e292c
-extern void* g_prop_kinds; // 0x5e29dc
-extern void* g_mapobjs; // 0x5e29b0
-extern void* g_areas; // 0x5e2a00
-extern void* g_panel; // 0x5d75e8
+extern char g_game_keys[]; // 0xa73730
+extern char g_keyboard[]; // 0xa170c8
+#include "../prop_kind.h"
+#include "../menu_rec.h"
+extern void* g_mission_templates; // 0x5e2a00
 extern char g_terrain[]; // 0xa76630
-extern char g_editor[]; // 0x8ee3c48
+extern char g_app_obj[]; // 0x8ee3c48
 
 
 // ======================================================= slice s00525160: classes, globals, helpers
@@ -108,7 +96,7 @@ struct Chunk_s25160 { void m_4464d0(int a); void m_4f8bc0(); };
 struct Troop_s25160 { void m_4630d0(int i); };
 struct Big5e292c_s25160 { void m_483f60(int a, int b); };
 
-void __stdcall f_48baa0(float v);                               // 0x48baa0
+void __stdcall set_value(float v);                               // 0x48baa0
 
 #define g_mgr       (*(Mgr_s25160*)0x5d7080)
 #define g_dlg       (*(Dlg_s25160*)0xa73980)
@@ -135,8 +123,8 @@ struct Game_s25160 {
     VObj_s25160* f11ec[5];                                             // +0x11ec
     int f1200;                                                  // +0x1200
     int f1204;                                                  // +0x1204
-    void m_4f73c0(int i, int* out);                             // 0x4f73c0
-    void m_5257f0();                                            // 0x5257f0
+    void refresh(int i, int* out);                             // 0x4f73c0
+    void update();                                            // 0x5257f0
     void handle_event(int code);                                // 0x525160
 };
 
@@ -144,7 +132,7 @@ struct Game_s25160 {
 // ======================================================= slice s005257f0: classes, globals, helpers
 #define g_mission_s257f0 (*(Mission_s257f0**)&g_mission)
 #define g_game_s257f0 (*(Game_s257f0**)&g_game)
-#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)g_n_dialogs)
+#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)g_dialogs)
 // Slice s005257f0: the dialogue "look at" update of the view object (0x5257f0) and its two agent lookups,
 // find_speaker_agent (0x526070) and find_listener_agent (0x526130).  The lookup pair scans the mission's
 // agent table for the agent whose troop id (+0x88) equals the current dialogue speaker / listener.
@@ -208,7 +196,6 @@ struct Game_s257f0 {
     TroopRec_s257f0* chars;                                // +0x13a00
 };
 
-extern int g_player_agent;                          // 0x8ed50dc (-1 when none)
 
 struct DialogMgr_s257f0 {
     char pad0[0x8000];
@@ -218,7 +205,6 @@ struct DialogMgr_s257f0 {
 
 int find_listener_agent();                          // 0x526130 (defined in slice s00526130)
 
-extern float g_dt;                                  // 0x5a9c28 (per-frame delta time)
 extern float g_look_rate;                           // 0x5935c8 (4.0)
 
 // ---- the view object (only the members this function touches) --------------------------------------------
@@ -251,7 +237,7 @@ static __forceinline float clamp01_s257f0(float x)
 // ======================================================= slice s00526130: classes, globals, helpers
 #define g_mission_s26130 (*(Mission_s26130**)&g_mission)
 #define g_game_s26130 (*(Game_s26130**)&g_game)
-#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)g_n_dialogs)
+#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)g_dialogs)
 // Slice s00526130: the dialogue-listener agent lookup (0x526130).  It scans the mission's agent table for
 // the used agent whose troop id (+0x88) equals DialogMgr_s26130::listener and returns the last match, or -1.
 // Names provisional; every callee/global carries its VA.
@@ -292,7 +278,6 @@ struct Game_s26130 {
     TroopRec_s26130* chars;                                // +0x13a00
 };
 
-extern int g_player_agent;                          // 0x8ed50dc (-1 when none)
 
 struct DialogMgr_s26130 {
     char pad0[0x8000];
@@ -303,23 +288,23 @@ struct DialogMgr_s26130 {
 // ======================================================= slice s005261e0: classes, globals, helpers
 #define g_strtable_s261e0 (*(StrTable_s261e0*)g_strtable)
 #define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
-#define g_keytable_s261e0 (*(KeyTable_s261e0*)g_keytable)
-#define g_keyready_s261e0 (*(KeyReady_s261e0*)g_keyready)
+#define g_keytable_s261e0 (*(KeyTable_s261e0*)g_game_keys)
+#define g_keyready_s261e0 (*(KeyReady_s261e0*)g_keyboard)
 #define g_mission_s261e0 (*(Mission_s261e0**)&g_mission)
 #define g_game_s261e0 (*(GameData_s261e0**)&g_game)
-#define g_main_menu_s261e0 (*(MainMenu_s261e0*)g_main_menu)
-#define g_w_a739a0_s261e0 (*(Widget_s261e0**)&g_w_a739a0)
-#define g_w_a739bc_s261e0 (*(Widget_s261e0**)&g_w_a739bc)
-#define g_w_a739b0_s261e0 (*(Widget_s261e0**)&g_w_a739b0)
-#define g_w_a739b4_s261e0 (*(Widget_s261e0**)&g_w_a739b4)
-#define g_w_a739e8_s261e0 (*(Widget_s261e0**)&g_w_a739e8)
-#define g_w_a739e4_s261e0 (*(Widget_s261e0**)&g_w_a739e4)
-#define g_w_a73994_s261e0 (*(Widget_s261e0**)&g_w_a73994)
-#define g_w_a739c8_s261e0 (*(Widget_s261e0**)&g_w_a739c8)
-#define g_w_a739c0_s261e0 (*(Widget_s261e0**)&g_w_a739c0)
-#define g_flags_s261e0 (*(Flags5e291c_s261e0*)g_flags)
-#define g_a73300_s261e0 (*(Obj73300_s261e0*)g_a73300)
-#define g_deque_s261e0 (*(IntDeque_s261e0*)g_deque)
+#define g_main_menu_s261e0 (*(MainMenu_s261e0*)g_windows)
+#define g_w_a739a0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x20)))
+#define g_w_a739bc_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x3c)))
+#define g_w_a739b0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x30)))
+#define g_w_a739b4_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x34)))
+#define g_w_a739e8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x68)))
+#define g_w_a739e4_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x64)))
+#define g_w_a73994_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x14)))
+#define g_w_a739c8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x48)))
+#define g_w_a739c0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x40)))
+#define g_flags_s261e0 (*(Flags5e291c_s261e0*)g_map_flags)
+#define g_a73300_s261e0 (*(Obj73300_s261e0*)g_mission_ctx)
+#define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 // Slice s005261e0: the mission screen / game-loop tick (0x5261e0, 6818 bytes, thiscall, ret 4).
 //
 // The `this` object is the mission HUD/controller: its fields +0x2c8 (mode), +0x2cc (selection),
@@ -359,11 +344,9 @@ struct MsgLog_s261e0 {
 
 // -----------------------------------------------------------------------------------------------------
 // key tables: two 256-entry int arrays at 0xa170d4 (down) and 0xa174d4 (up); 0x480 apart.
-extern int g_key_a[256];                                // 0xa170d4
-extern int g_key_b[256];                                // 0xa174d4
 
 struct KeyTable_s261e0 {
-    char down(int key);                                 // 0x48ac90 (thiscall, ret 4)
+    char clicked(int key);                                 // 0x48ac90 (thiscall, ret 4)
 };
 
 
@@ -454,9 +437,9 @@ struct Mission_s261e0 {
     float f6810;                                        // +0x6810
     void  mode_flag1_stub();
     bool  mode_flag1() const;                           // 0x435840
-    void  f_527f90();                                   // 0x527f90
-    void  f_529d80();                                   // 0x529d80
-    void  f_528410(int arg);                            // 0x528410 (ret 4)
+    void  save_scene_data();                                   // 0x527f90
+    void  fn_529d80();                                   // 0x529d80
+    void  release_item(int arg);                            // 0x528410 (ret 4)
     void  frame(float dt, char spawn);                  // 0x483f60
 };
 
@@ -496,7 +479,7 @@ struct GameData_s261e0 {
     char  pad1a1b8[0x1a208 - 0x1a1b8];                  // +0x1a1b8 vector<int>
     int   f1a208;                                       // +0x1a208
     int   f1a20c;                                       // +0x1a20c
-    void  f_527c90(int arg);                            // 0x527c90 (ret 4)
+    void  save_scene(int arg);                            // 0x527c90 (ret 4)
 };
 
 
@@ -514,8 +497,8 @@ struct Src_s261e0 {
 struct MainMenu_s261e0 {
     char pad0[0x18];
     int  sel;                                           // +0x18
-    void choose(int option);                            // 0x495700 (ret 4)
-    void activate(int idx);                             // 0x494260 (ret 4)
+    void set_state(int option);                            // 0x495700 (ret 4)
+    void open(int idx);                             // 0x494260 (ret 4)
     void setup2(tstring* a, tstring* b, tstring* c, int* v);  // 0x48a3d0 (ret 0x10)
 };
 
@@ -558,35 +541,25 @@ struct SoundBank_s261e0 {
     void update_all(int arg);                           // 0x462760 (ret 4)
 };
 struct EmitSub_s261e0 {
-    char emit_simple(int idx);                          // 0x4875e0 (ret 4)
+    char play(int idx);                          // 0x4875e0 (ret 4)
 };
 
 // ---- plain globals ----------------------------------------------------------------------------------
-extern unsigned char g_lock_enabled;                    // 0x5e2a09
-extern CRITICAL_SECTION g_cs;                           // 0x5e28dc
-extern HANDLE g_event;                                  // 0x5e28d8
-extern int  g_a5a9fbc;                                  // 0x5a9fbc
-extern int  g_a5a9f18;                                  // 0x5a9f18
-extern int  g_a5a9c34;                                  // 0x5a9c34
-extern int  g_no_cam;                                   // 0x5a9fb0
+extern unsigned char g_mt_inited;                    // 0x5e2a09
+extern CRITICAL_SECTION g_mt_cs;                           // 0x5e28dc
+extern HANDLE g_mt_event;                                  // 0x5e28d8
+extern int  g_pending_action;                                  // 0x5a9f18
+extern int  g_vert_budget;                                  // 0x5a9c34
+extern char g_cfg[]; // 0x5a9f98
 extern unsigned char g_a17908;                          // 0xa17908
-extern int  g_a17414;                                   // 0xa17414
-extern int  g_a173f4;                                   // 0xa173f4
-extern __int64 g_ticks[];                               // 0x5e2948
-extern void* g_rec58;                                   // 0x5e2a00 (points at the 0x58-byte record array)
-extern int  g_a735c4;                                   // 0xa735c4
-extern void* g_5e29b0;                                  // 0x5e29b0
-extern int  g_a5e299c;                                  // 0x5e299c
-extern void* g_a17f28;                                  // 0xa17f28
-extern unsigned char g_5d75e0;                          // 0x5d75e0
-extern int  g_result;                                   // 0xa70458 (?g_result@@3HA)
-extern int  g_store1;                                   // 0xa7045c
-extern __int64 g_spawn_lo;                              // 0xa70448 (low dword +0, high dword +4)
+extern int  g_presentation;                                  // 0x5e299c
+#include "../../include/renderer.h"
+extern char g_script[]; // 0xa70440
 #define g_clamp_max (*(int*)0x8ee3ac4)                  // 0x8ee3ac4
 extern int  g_a7333c;                                   // 0xa7333c
 struct Obj73300_s261e0 { void f_5295a0(); };                   // 0x5295a0
 
-extern int  g_a181b4;                                   // 0xa181b4
+extern int  g_show_quest_notes;                                   // 0xa181b4
 extern int  g_a170d8;                                   // 0xa170d8
 extern int  g_a174d8;                                   // 0xa174d8
 
@@ -611,19 +584,19 @@ extern const float g_f549d7c;                           // 0x549d7c = 0.1f
 
 // ---- plain callees ----------------------------------------------------------------------------------
 void __cdecl restore_defaults();                        // 0x4d3a50
-void __cdecl f_516a70();                                // 0x516a70 (quick save)
+void __cdecl quick_save_msg();                                // 0x516a70 (quick save)
 void quick_save_msg(); // 0x516a70
-void __cdecl f_47ce00(void* p, int n);                  // 0x47ce00
-char __cdecl f_52b5c0(int agent, int* pair);            // 0x52b5c0
-void __cdecl op_delete(void* p);                        // 0x535712 (operator delete, ??3@YAXPAX@Z)
-extern "C" int __cdecl _sprintf(char*, const char*, ...);   // 0x536f8f
+void __cdecl light_entities(void* p, int n);                  // 0x47ce00
+char __cdecl order_agent(int agent, int* pair);            // 0x52b5c0
+void __cdecl operator delete(void* p);                        // 0x535712 (operator delete, ??3@YAXPAX@Z)
+extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 
 static __forceinline bool any_pressed_s261e0(const int* keys, int n)
 {
     bool r = false;
     for (int i = 0; i < n; i++) {
         int k = keys[i];
-        if (k >= 0 && g_key_a[k] != 0 && g_key_b[k] == 0)
+        if (k >= 0 && ((int*)((char*)&g_keyboard + 0xc))[k] != 0 && ((int*)((char*)&g_keyboard + 0x40c))[k] == 0)
             r = true;
     }
     return r;
@@ -637,7 +610,7 @@ static __forceinline Agent_s261e0* page_agent_s261e0(int id)
 
 static __forceinline int* rec_base_s261e0(int id)
 {
-    return (int*)((char*)g_rec58 + id * 0x58 + 0x4c);
+    return (int*)((char*)g_mission_templates + id * 0x58 + 0x4c);
 }
 
 // -----------------------------------------------------------------------------------------------------
@@ -688,15 +661,15 @@ struct Screen_s261e0 {
     int   f324;                                         // +0x324
 
     void tick(float dt);                                // 0x5261e0
-    void f_5284a0(float dt);                            // 0x5284a0 (ret 4)
-    void f_529130();                                    // 0x529130
-    void f_52b300();                                    // 0x52b300
+    void update(float dt);                            // 0x5284a0 (ret 4)
+    void update_marks();                                    // 0x529130
+    void order_tick();                                    // 0x52b300
     void f_529ec0();                                    // 0x529ec0
-    void f_52ba10();                                    // 0x52ba10
-    void f_52ae70();                                    // 0x52ae70
-    void refresh();                                     // 0x4f8b40 (ignores this, but takes ecx)
-    void camera_update(float dt);                       // 0x4f8c80 (ret 4)
-    void status_widget_update();                        // 0x4fb350
+    void update_ui();                                    // 0x52ba10
+    void init_order_markers();                                    // 0x52ae70
+    void update_equipment();                                     // 0x4f8b40 (ignores this, but takes ecx)
+    void update_camera(float dt);                       // 0x4f8c80 (ret 4)
+    void update_status();                        // 0x4fb350
 };
 
 // vtable of the object at Screen_s261e0+0x5c: only slot 0xc4 (index 49) is called here.
@@ -826,7 +799,7 @@ struct MissionSub_s27c90 {
     int count;                              // +0x1c
     char* first;                            // +0x20
     char* last;                             // +0x24
-    void save(stream_base* s);              // 0x524f00 (ret 4)
+    void read(stream_base* s);              // 0x524f00 (ret 4)
 };
 
 struct Mission_s27c90 {
@@ -855,8 +828,8 @@ struct MissionHdr_s27c90 {
 #define g_items_s284a0 (*(ItemKind_s284a0**)&g_items)
 #define g_mission_s284a0 (*(Mission_s284a0**)&g_mission)
 #define g_game_s284a0 (*(Game_s284a0**)&g_game)
-#define g_keys_s284a0 (*(KeyTable_s284a0*)g_keys)
-#define g_key_names_s284a0 (*(KeyNames_s284a0*)g_key_names)
+#define g_keys_s284a0 (*(KeyTable_s284a0*)g_game_keys)
+#define g_key_names_s284a0 (*(KeyNames_s284a0*)g_keyboard)
 // Slice s005284a0: the mission player-view / aim controller's per-frame update (0x5284a0, 8192 bytes).
 //
 // It damps the view yaw/pitch (+0x268/+0x26c) from the look input, clamps the pitch, the look speed
@@ -951,8 +924,8 @@ struct Agent_s284a0 {                                          // 0x5928 bytes
     char pad5728[0x5928 - 0x5728];
 
     ItemRef_s284a0 slot_pair(int idx);                         // 0x432790 (ret 8)
-    bool can_attack(Agent_s284a0* o);                          // 0x432350 (ret 4)
-    bool can_attack2(Agent_s284a0* o);                         // 0x4323a0 (ret 4)
+    bool is_enemy(Agent_s284a0* o);                          // 0x432350 (ret 4)
+    bool is_friend(Agent_s284a0* o);                         // 0x4323a0 (ret 4)
     void note_blow(Blow_s284a0* b);                            // 0x457af0 (ret 4)
     void cycle_slot(int slot);                          // 0x44bc30 (ret 4)
     void on_wield_reset();                              // 0x445a20
@@ -995,7 +968,7 @@ struct ViewCtrl_s284a0 {
     int snap;                                           // +0x2fc (frames left to snap the view)
 
     void update(float dt);                              // 0x5284a0
-    void update_weapon_display();                       // 0x4f8b40
+    void update_equipment();                       // 0x4f8b40
 };
 
 // a view of rgl::matrix with the engine's rotation helpers (thiscall, ecx = matrix)
@@ -1007,15 +980,14 @@ void identity3(matrix* m);                              // 0x40cd60
 
 // ---- key tables -------------------------------------------------------------------------------------
 struct KeyTable_s284a0 {                                       // 0xa73730
-    char has_free_origin(int key);                      // 0x48ac90 (ret 4)
-    char has_origin(int key);                           // 0x48ac50 (ret 4)
+    char clicked(int key);                      // 0x48ac90 (ret 4)
+    char is_down(int key);                           // 0x48ac50 (ret 4)
 };
 
 struct KeyNames_s284a0 {                                       // 0xa170c8
-    char bound(int action);                             // 0x487900 (ret 4)
+    char is_ready(int action);                             // 0x487900 (ret 4)
 };
 
-extern int g_key_down[];                                // 0xa170d4 (per-key down state)
 
 // ---- globals ----------------------------------------------------------------------------------------
 extern int g_a17188;                                    // 0xa17188
@@ -1024,12 +996,7 @@ extern int g_a17184;                                    // 0xa17184
 extern int g_a1712c;                                    // 0xa1712c
 extern int g_a17190;                                    // 0xa17190
 extern int g_a1715c;                                    // 0xa1715c
-extern int g_a17124;                                    // 0xa17124
-extern int g_a17454;                                    // 0xa17454
 extern int g_a1717c;                                    // 0xa1717c
-extern int g_5a9fbc;                                    // 0x5a9fbc
-extern int g_a17148;                                    // 0xa17148
-extern int g_a17348;                                    // 0xa17348
 extern int g_a171d0;                                    // 0xa171d0
 extern int g_a175d0;                                    // 0xa175d0
 extern int g_a171d4;                                    // 0xa171d4
@@ -1040,23 +1007,16 @@ extern int g_a17160;                                    // 0xa17160
 extern int g_a17560;                                    // 0xa17560
 extern int g_a73790;                                    // 0xa73790
 extern int g_a73794;                                    // 0xa73794
-extern int g_a73798;                                    // 0xa73798
-extern int g_a7379c;                                    // 0xa7379c
-extern int g_5e299c;                                    // 0x5e299c
+extern int g_presentation;                                    // 0x5e299c
 extern int g_invert;                                    // 0x5aa01c
-extern int g_ctl_mode;                                  // 0x5aa074 (0 = target, 1 = mouse, 2 = mirrored)
 extern int g_stick_mode;                                // 0x5aa078
-extern float g_step;                                    // 0x5a9c20 (per-clock step, seconds)
-extern float g_time_scale;                              // 0x5aa018
-extern float g_axis_x;                                  // 0x5d7094 (gamepad x axis, 0..1)
-extern float g_axis_y;                                  // 0x5d7098
-extern float g_analog_x;                                // 0xa178d4 (mouse dx this frame)
-extern float g_analog_y;                                // 0xa178d8
+#include "../../include/fx.h"
+#include "../../rgl/resource_manager.h"
 
 #define AGENT(id) (g_mission_s284a0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 
 // ======================================================= slice s00529130: classes, globals, helpers
-#define g_scene_s29130 (*(Mission_s29130**)&g_scene)
+#define g_scene_s29130 (*(Mission_s29130**)&(*(void**)((char*)&g_mission + 0x0)))
 #define g_game_s29130 (*(GameData_s29130**)&g_game)
 #define g_items_s29130 (*(ItemKind_s29130**)&g_items)
 // Slice s00529130: the mission HUD's per-frame marker update (0x529130), its per-frame tick
@@ -1133,8 +1093,8 @@ struct Agent_s29130 {
     char pad5734[0x5928 - 0x5734];
 
     ItemRef_s29130 slot_pair(int idx) const;                         // 0x432790 (thiscall, ret 8)
-    bool charged_0x48() const;                                // 0x432470 (thiscall)
-    int find_target();                                        // 0x43b9e0 (fastcall)
+    bool f100_is_0x48_and_charged() const;                                // 0x432470 (thiscall)
+    int pick_front();                                        // 0x43b9e0 (fastcall)
     int pick_attack_dir(unsigned target);                     // 0x43f970 (thiscall, ret 4)
 };
 
@@ -1179,7 +1139,7 @@ struct GameData_s29130 {
     int cur_party;                                            // +0x78
     char pad7c[0x8c - 0x7c];
     int cur_troop;                                            // +0x8c
-    void fn_51f800();                                         // 0x51f800 (thiscall)
+    void more_start();                                         // 0x51f800 (thiscall)
 };
 
 // ---- the HUD object -----------------------------------------------------------------------------------
@@ -1208,13 +1168,8 @@ struct MissionHud_s29130 {
 // ---- externals -----------------------------------------------------------------------------------------
 
 
-extern char* g_party_tbl;                                     // 0x5e2a00 (0x58-byte records)
-extern void* g_objs[];                                        // 0xa170d4
-extern int g_sel0;                                            // 0xa73798
-extern int g_sel1;                                            // 0xa7379c
 extern int g_flag5aa06c;                                      // 0x5aa06c
 extern int g_flag5aa070;                                      // 0x5aa070
-extern int g_flag5aa074;                                      // 0x5aa074
 struct ItemKind_s29130 { char pad[0x1c8]; int type; char pad1cc[0x238 - 0x1cc]; };
 
 extern float g_deg2rad;                                       // 0x590ce4 (0.017453292)
@@ -1222,20 +1177,19 @@ extern float g_half;                                          // 0x549d70 (0.5f)
 extern float g_0375;                                          // 0x59c310 (0.375f)
 extern float g_2p5;                                           // 0x590c4c (2.5f)
 extern float g_1p2;                                           // 0x590b94 (1.2f)
-extern float g_step01;                                        // 0x5a9c20 (0.01f)
 extern float g_255;                                           // 0x590cec (255.0f)
 extern float g_0;                                             // 0x549ca8 (0.0f)
 extern float g_1;                                             // 0x549cdc (1.0f)
 extern float g_range_tbl[];                                   // 0x59390c (lo/hi pairs)
 
-float __cdecl blend_target(void* a, void* b);                 // 0x4381e0
+float __cdecl signed_angle(void* a, void* b);                 // 0x4381e0
 
 inline PartyMgr_s29130* party_mgr_s29130() { return (PartyMgr_s29130*)((char*)g_game_s29130 + 0xf8); }
 inline Troop_s29130* troop_tbl_s29130() { return *(Troop_s29130**)((char*)g_game_s29130 + 0x13a00); }
 inline Agent_s29130* cur_agent_s29130() { return &g_scene_s29130->agents.pages[g_scene_s29130->cur_agent_s29130 >> 4][g_scene_s29130->cur_agent_s29130 & 0xf]; }
 
 // ======================================================= slice s00529840: classes, globals, helpers
-#define g_scene_s29840 (*(Mission_s29840**)&g_scene)
+#define g_scene_s29840 (*(Mission_s29840**)&(*(void**)((char*)&g_mission + 0x0)))
 #define g_game_s29840 (*(GameData_s29840**)&g_game)
 // Slice s00529840: the mission object's per-agent update (0x529840) and the party-stack helpers it
 // dispatches to (0x529b70 / 0x529bc0 / 0x529c30 / 0x529d00), plus the scene/mission record sync (0x529d80).
@@ -1294,8 +1248,8 @@ struct Party_s29840 {
     int nstacks;                                              // +0x8a8
     char pad8ac[0x5ac8 - 0x8ac];
 
-    void clear_exp_share(int slot, int value);                // 0x4b1d80 (thiscall, ret 8)
-    int skill(int n);                                         // 0x4b2370 (thiscall, ret 4)
+    void add_xp_to_stack(int slot, int value);                // 0x4b1d80 (thiscall, ret 8)
+    int skill_level(int n);                                         // 0x4b2370 (thiscall, ret 4)
 };
 struct PartyMgr_s29840 {
     char pad0[0x138d0];
@@ -1388,11 +1342,11 @@ __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add); // 0x52
 #define g_strtable_s29ec0 (*(StrTable_s29ec0*)g_strtable)
 #define g_items_s29ec0 (*(ItemKind_s29ec0**)&g_items)
 #define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
-#define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_prop_kinds)
+#define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_propkinds)
 #define g_mission_s29ec0 (*(Mission_s29ec0**)&g_mission)
-#define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_mapobjs)
-#define g_areas_s29ec0 (*(Area_s29ec0**)&g_areas)
-#define g_panel_s29ec0 (*(hud_panel_s29ec0**)&g_panel)
+#define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
+#define g_areas_s29ec0 (*(Area_s29ec0**)&g_mission_templates)
+#define g_panel_s29ec0 (*(hud_panel_s29ec0**)&(*(void**)((char*)&g_gui + 0x568)))
 // Slice s00529ec0: the mission screen's interaction probe, Screen_s29ec0::f_529ec0 (0x529ec0, 4011 bytes).
 //
 // Every frame the screen asks "what is the local agent looking at?":
@@ -1456,7 +1410,7 @@ struct capsule_s29ec0 : shape_base_s29ec0 {                                   //
     vector4 p0, p1, p2, p3;                                     // 0x20 / 0x30 / 0x40 / 0x50
     float radius;                                               // 0x60
     capsule_s29ec0(float r, const vector4* a, const vector4* b);       // 0x433310 (ret 0xc)
-    void compute_bounds(const matrix* m);                       // 0x408770 (ret 4)
+    void transform(const matrix* m);                       // 0x408770 (ret 4)
 };
 struct contact_s29ec0 {                                                // 0x20 bytes
     vector4 pos;                                                // 0x00
@@ -1481,7 +1435,7 @@ struct Scene_s29ec0 {
     char pad4[0x80 - 0x04];
     SceneEntity_s29ec0** ent_begin;                                    // +0x80
     SceneEntity_s29ec0** ent_end;                                      // +0x84
-    void collect_entities(int type, SceneEntity_s29ec0** out, int* count);   // 0x51a3a0 (ret 0xc)
+    void collect(int type, SceneEntity_s29ec0** out, int* count);   // 0x51a3a0 (ret 0xc)
 };
 
 // ---- items (s00434ad0 / s0043b5d0) -------------------------------------------------------------------
@@ -1523,7 +1477,7 @@ struct Agent_s29ec0 {
     int f5830;                                                  // +0x5830 action state (2 = mounted)
     char pad5834[0x5928 - 0x5834];
 
-    float height();                                             // 0x432450 (thiscall, no arg)
+    float speed_scale();                                             // 0x432450 (thiscall, no arg)
     bool is_enemy(Agent_s29ec0* o);                                    // 0x432350 (ret 4)
     bool is_friend(Agent_s29ec0* o);                                   // 0x4323a0 (ret 4)
 };
@@ -1599,7 +1553,6 @@ struct MapObjList_s29ec0 {                                             // 0x60 b
     MapObject_s29ec0* objs;                                            // +0x58
 };
 
-extern int g_mapobj_idx;                                        // 0xa735c4
 
 // ---- area records (0x5e2a00, 0x58 bytes) --------------------------------------------------------------
 struct Area_s29ec0 {                                                   // 0x58 bytes
@@ -1611,13 +1564,6 @@ struct Area_s29ec0 {                                                   // 0x58 b
 
 // ---- HUD globals -------------------------------------------------------------------------------------
 
-extern int g_hud_line_count;                                    // 0x5d8024
-extern float g_hud_line_dy;                                     // 0x5d8028
-extern int g_hud_line_x;                                        // 0x5d8020
-extern int g_hud_flag;                                          // 0x5d8780
-extern int g_panel_mode;                                        // 0x5d8760
-extern int g_panel_color;                                       // 0x5d8764
-extern tstring g_hud_lines[80];                                 // 0x5d7850 .. 0x5d7d50
 
 // ---- the mission screen ------------------------------------------------------------------------------
 struct Screen_s29ec0 {
@@ -1700,7 +1646,7 @@ struct Entity_s2ae70 {
     virtual void set_scale(const float* s);             // vtable +0x18
     char pad[0x140 - 4];
     unsigned char f140;                                 // +0x140 visible flag
-    void add_mesh(rgl::mesh_s2ae70* m);                        // 0x442110 (thiscall, ret 4)
+    void add_extra(rgl::mesh_s2ae70* m);                        // 0x442110 (thiscall, ret 4)
 };
 
 struct World_s2ae70 {
@@ -1710,9 +1656,9 @@ struct World_s2ae70 {
 // the shape owned by the Screen_s2ae70 at +0x6698 (0x94 bytes; see s004e65e0 / s004e6a70)
 struct Shape_s2ae70 {
     char pad[0x94];
-    void build_tri(rgl::mesh_s2ae70* m);                       // 0x4e75a0 (thiscall, ret 4)
-    void build_ribbon(rgl::mesh_s2ae70* m);                    // 0x4e6a70 (thiscall, ret 4)
-    void build_tetra(rgl::mesh_s2ae70* m);                     // 0x4e65e0 (thiscall, ret 4)
+    void polygon_to_mesh(rgl::mesh_s2ae70* m);                       // 0x4e75a0 (thiscall, ret 4)
+    void build_ribbons(rgl::mesh_s2ae70* m);                    // 0x4e6a70 (thiscall, ret 4)
+    void build_spikes(rgl::mesh_s2ae70* m);                     // 0x4e65e0 (thiscall, ret 4)
 };
 
 // ---- mission (0x5e292c) and the game clock -------------------------------------------------------------
@@ -1729,11 +1675,8 @@ struct Mission_s2ae70 {
     void order(int id, int arg);                        // 0x49c2c0
 };
 
-extern __int64 g_ticks[];                               // 0x5e2948 table of game clocks
 
-extern int g_a5a9fbc;                                   // 0x5a9fbc
 extern int g_a1717c;                                    // 0xa1717c
-extern int g_a17148;                                    // 0xa17148
 
 // ---- the mission screen --------------------------------------------------------------------------------
 struct Screen_s2ae70 {
@@ -1770,7 +1713,7 @@ struct Screen_s2ae70 {
 #define g_terrain_s2b5c0 (*(Terrain_s2b5c0*)g_terrain)
 #define g_game_s2b5c0 (*(CampaignGame_s2b5c0**)&g_game)
 #define g_mission_s2b5c0 (*(Mission_s2b5c0**)&g_mission)
-#define g_editor_s2b5c0 (*(Editor_s2b5c0*)g_editor)
+#define g_editor_s2b5c0 (*(Editor_s2b5c0*)g_app_obj)
 // Slice s0052b5c0: the mission order and cursor/terrain helpers.
 //   0x52b5c0  Mission_s2b5c0::order_agent   -- give an item/order to one of an agent's four order slots
 //   0x52ba10  Mission_s2b5c0::update_ui     -- per-frame UI/cursor state machine
@@ -1835,7 +1778,7 @@ struct Agent_s2b5c0 {
     char pad254[0x5928 - 0x254];
     void on_wield_reset();                              // 0x445a20 (thiscall)
 };
-void __stdcall agent_refresh(Agent_s2b5c0* agent);             // 0x4f7e00
+void __stdcall refresh_agent(Agent_s2b5c0* agent);             // 0x4f7e00
 
 // ---- collision world (mission->f0) --------------------------------------------------------------------
 struct shape_base_s2b5c0 {
@@ -1884,9 +1827,9 @@ struct Terrain_s2b5c0 {
     char f845e094[0x10000];                             // +0x845e094
     void clear();                                       // 0x52c290
     void update(int* objs, vector4* pos, int sel, int mode, int flag);  // 0x52bf40
-    void reset();                                       // 0x4c8630
-    void build_chunk(int layer, int blend, int cx, int cy, float h);     // 0x47ff60
-    void gen_object(int* objs, int index);                              // 0x467250
+    void conv_build_scene();                                       // 0x4c8630
+    void emit_particle(int layer, int blend, int cx, int cy, float h);     // 0x47ff60
+    void load_layer(int* objs, int index);                              // 0x467250
     void brush(int* objs, int* sel, int* col, float* d, int* mode, int* flag, char* place); // 0x52c2b0
 };
 
@@ -1957,24 +1900,19 @@ struct Mission_s2b5c0 {
 
 
 struct Editor_s2b5c0 {
-    void update_option_checks();                        // 0x4bf640
+    void update_checks();                        // 0x4bf640
     void refresh();                                     // 0x4c77c0
 };
 
 
-extern long long g_timestamps[];                        // 0x5e2948
 
 extern int g_a17160;                                    // 0xa17160
 extern int g_a17560;                                    // 0xa17560
 extern int g_a171b8;                                    // 0xa171b8
 extern int g_a175b8;                                    // 0xa175b8
-extern int g_a17458;                                    // 0xa17458
 extern int g_a1745c;                                    // 0xa1745c
-extern int g_a17858;                                    // 0xa17858
 extern int g_a1785c;                                    // 0xa1785c
-extern float g_a178d8;                                  // 0xa178d8
-extern float g_a178d4;                                  // 0xa178d4
-extern int g_5e28fc;                                    // 0x5e28fc
+extern int g_use_shaders;                                    // 0x5e28fc
 
 // =====================================================================================================
 //  Mission_s2b5c0::order_agent
@@ -2003,7 +1941,7 @@ struct CampaignGame_s2bf40 {
     float f1a0dc;                                       // +0x1a0dc
 };
 
-extern int g_5e28fc;                                    // 0x5e28fc
+extern int g_use_shaders;                                    // 0x5e28fc
 
 struct Terrain_s2bf40 {
     char pad0[0x60];
@@ -2024,9 +1962,9 @@ struct Terrain_s2bf40 {
 
     __declspec(noinline) void clear();                  // 0x52c290
     void update(int* objs, vector4* pos, int sel, int mode, int flag);  // 0x52bf40
-    void gen_object(int* objs, int index);                              // 0x467250
+    void load_layer(int* objs, int index);                              // 0x467250
     void brush(int* objs, int* sel, int* col, float* d, int* mode, int* flag, char* place); // 0x52c2b0
-    void build_chunk(int layer, int blend, int cx, int cy, float h);     // 0x47ff60
+    void emit_particle(int layer, int blend, int cx, int cy, float h);     // 0x47ff60
 };
 
 
@@ -2054,7 +1992,7 @@ extern float g_10;                   // 0x549cdc  1.0f
 extern float g_098;                  // 0x5911d8  0.98f (scan threshold)
 extern double g_001;                 // 0x59c480  unused here (other slices)
 
-void* __cdecl mb_new_array(uint size);      // 0x535482  ??_U@YAPAXI@Z operator new[]
+void* __cdecl operator new[](uint size);      // 0x535482  ??_U@YAPAXI@Z operator new[]
 unsigned __cdecl pack_color(const float* c);           // 0x40e440
 float* __cdecl unpack_color(float* out, const unsigned* argb);  // 0x40e4e0
 
@@ -2064,7 +2002,7 @@ float* __cdecl unpack_color(float* out, const unsigned* argb);  // 0x40e4e0
 struct BrushElem_s2c2b0 {
     int    f0, f1, f2, f3, f4;
     float* v;                        // +0x14  0xac440-byte value block (0x1a4*0x2a1 dwords), or 0
-    void zero();                     // 0x52ce00  clear the whole block
+    void clear();                     // 0x52ce00  clear the whole block
     void put(int* a, int* b, int* value);   // 0x52ce70  lazy-alloc + store one cell
 };
 
@@ -2089,7 +2027,7 @@ struct SceneBrush_s2c2b0 {
 // cells by the brush (0x52c2b0) and written as int -1 when it is first allocated. Layout and offsets
 // are read off this slice's disassembly.
 
-void* __cdecl alloc_arr_535482(unsigned _Size);          // 0x535482  operator new[] (??_U@YAPAXI@Z)
+void* __cdecl operator new[](unsigned _Size);          // 0x535482  operator new[] (??_U@YAPAXI@Z)
 
 struct Elem_s2ce00 {
     int f0;

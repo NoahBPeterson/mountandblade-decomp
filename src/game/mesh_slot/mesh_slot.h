@@ -35,7 +35,6 @@ extern float g_ramp_gamma;                      // 0x5a9bfc gamma exponent of th
 // rgl::unpack_color returns nothing in rgl_math.h; the callers below use its result pointer (eax = out)
 typedef vector4* (__cdecl *unpack_color_fn)(vector4* out, const unsigned* argb);
 #define UNPACK_COLOR ((unpack_color_fn)&rgl::unpack_color)
-extern char* g_game_base;                       // 0x5e2930 g_game as a byte pointer (Game, src/game/party/game.h, and the GameData views)
 unsigned pack_signed_color(const float* c);     // 0x461370 (cdecl)
 
 // ---- members of rgl::mesh defined in this TU (0x47aa40..0x47b3b0) ------------------------------------------------
@@ -64,10 +63,10 @@ struct resmgr_ms : resource_manager {
 // ---- the scene container's lighting pass --------------------------------------------------------------------------
 struct Geom_t;
 struct world_x : rgl::world {
-    rgl::entity* create_entity_x(int id);                                                                    // 0x428440
-    void set_geom(void* g);                                                                                  // 0x479980
-    void relight(int use_shaders);                                                                           // 0x472ed0
-    void main_camera(float* v, const float* sun_dir, const float* centre);                                   // 0x42ad60
+    rgl::entity* create_entity(int id);                                                                    // 0x428440
+    void build_faces(void* g);                                                                                  // 0x479980
+    void update_probes(int use_shaders);                                                                           // 0x472ed0
+    void sample_lights(float* v, const float* sun_dir, const float* centre);                                   // 0x42ad60
     void light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale);   // 0x43ac40
     void light_mesh(rgl::mesh* m, const matrix* frame, unsigned flags);                                    // 0x47b7b0
 };
@@ -126,8 +125,7 @@ struct EChar : TroopMgr {
 // The object is the Terrain of terrain_a/terrain.h when the world map is up and the Mission (game/mission.h) in a battle: the
 // same ~138 MB global (props at +0x6688 is Mission::props, wx/wy at +0x270 Terrain::wx). TerrainX adds the members past
 // the end of Terrain (arr3 ends at 0x845e030) that the scene-entity builder uses.
-extern ShadowMap g_probe;                       // 0xa70248 the light-camera / shadow object ("g_psys" in the slices)
-extern int g_mesh_quality;                      // 0x5aa084 (2: high detail; shader quality)
+extern char g_options[]; // 0x5aa008
 struct ShadowMapP : ShadowMap {
     rgl::scene& sc() { return *(rgl::scene*)((char*)this + 0x18); }
     NOINL void build_hw();   // 0x47fce0
@@ -145,7 +143,7 @@ struct TerrainX : terrain_obj {
     void light_entities(rgl::mesh** list, int count);   // 0x47ce00
     void light_props();                              // 0x47ced0
     void gen_set_init(particle_list* s);             // 0x47df80
-    void light_particles(particle_list* l, int mode);   // 0x472020 (Terrain::light_all with the flag as an int)
+    void light_all(particle_list* l, int mode);   // 0x472020 (Terrain::light_all with the flag as an int)
     void create_water(void** out);                   // 0x480db0
     void destroy_water(int a);                       // 0x4814a0
     void emit_particle(int type, int v, int x, int y, float z);   // 0x47ff60

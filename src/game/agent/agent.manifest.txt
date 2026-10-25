@@ -37,7 +37,7 @@
 ../src/game/agent/agent.cpp  ?fill_tstrings@@YAXPAUtstring@@0PBU1@@Z  00435a70  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?fill_triples@@YAXPAUTriple@@0PBU1@@Z  00435aa0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?accel_factor@@YAMPBM00@Z  00435ae0  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?team_field5280@@YAHPBUAgent@@@Z  00435b60  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?team_leader@@YAHPBUAgent@@@Z  00435b60  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?reset_if_enemy_charged@Agent@@QAEXXZ  00435b90  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?steer@Agent@@QAEXM@Z  00435f10  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?best_weapon_slot@Agent@@QBE?AUItemRef@@XZ  00435fc0  /O2 /MT /Gy /TP

@@ -21,6 +21,6 @@ struct render_cache {
     void set_blend_mode(int mode);                  // 0x40e940
     void set_texcoord_gen(int stage, int mode);     // 0x40ea00
 };
-extern render_cache g_render_cache;                 // 0xa17910
+extern render_cache g_render;                 // 0xa17910
 
 #endif

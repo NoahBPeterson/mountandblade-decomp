@@ -1,0 +1,3 @@
+00a70248 ?g_shadow_map@@3UShadowMap@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+00a76630 ?g_terrain@@3Uterrain_obj@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+00472050 ?update_prop_flags@Mission@@QAEXXZ  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)

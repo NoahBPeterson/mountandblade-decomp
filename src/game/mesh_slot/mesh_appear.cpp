@@ -3,6 +3,7 @@
 #include "../../include/fx.h"
 #include "../../include/troop.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
@@ -11,35 +12,34 @@ using namespace rgl;
 // ---- views of shared classes (members defined elsewhere in the image) --------------------------------------------------
 struct lod2_a : lod_mesh2 {                      // the 0xe0-byte lod record
     lod2_a();                                    // 0x41c2a0
-    void add(int level, mesh* m);                // 0x441ff0 (thiscall, ret 8)
+    void add_to_list(int level, mesh* m);                // 0x441ff0 (thiscall, ret 8)
     lod_mesh2* clone();                          // 0x47a370
     void set_color(unsigned color);              // 0x47b5b0 (ret 4)
     void transform(const matrix* m);             // 0x47b610 (ret 4)
     void append(lod_mesh2* src, int bone, const matrix* m, const unsigned* color);   // 0x47b690 (ret 16)
     void apply(const matrix* m);                 // 0x46c9f0 (ret 4)
-    void set_mesh_color(const void* color);      // 0x47dd90 (ret 4)
+    void apply_anim_all(const void* color);      // 0x47dd90 (ret 4)
 };
 struct ItemKindA : ItemKind {
-    void get_carry_pos_n(tstring* out, int modifier);    // 0x433bf0 (thiscall, ret 8; the hidden-return mesh_name_for)
+    void mesh_name_for(tstring* out, int modifier);    // 0x433bf0 (thiscall, ret 8; the hidden-return mesh_name_for)
 };
 struct ItemSndA {
     void play(int id);                           // 0x48add0 (this = &ItemKind + 0x228)
 };
 struct FxDefA : FxDef {
-    void attach(lod_mesh2* l);                   // 0x478fb0 (thiscall, ret 4: pushes onto the int list at +0x30)
+    void add(lod_mesh2* l);                   // 0x478fb0 (thiscall, ret 4: pushes onto the int list at +0x30)
 };
 struct EChar_a : EChar {
-    void use_carry_a(lod_mesh2* l, const float* m);   // 0x47de60 (ret 8)
+    void use_carry(lod_mesh2* l, const float* m);   // 0x47de60 (ret 8)
 };
 void append_mesh(int colour, int kind, lod_mesh2** ap, ItemRef* a, ItemRef* b, int carried, int* out);   // 0x481c40
-extern int g_item_count;                         // g_item_kind_count 0x5e29d4
+extern int g_item_kind_count;                         // g_item_kind_count 0x5e29d4
 extern int g_cur;                                // 0x8ed4f68
-extern EChar* g_chars;                           // 0x8ed4f7c
-extern int g_char_count;                         // 0x8ed4f88
+extern EChar* g_skins_begin;                           // 0x8ed4f7c
+extern int g_skin_count;                         // 0x8ed4f88
 extern float g_dummy_mat;                        // 0x8ed4f8c
 extern float g_lod_scale;                        // 0x54b890 (0.95)
-extern __int64 g_hit_a;                          // 0xa70448
-extern __int64 g_hit_b;                          // 0xa70450
+extern char g_script[]; // 0xa70440
 
 // the player-visible fields of the agent body: a strategic entity (vtable 0x54b5d0) whose effect definition (+0x304) holds
 // the skeleton elements; slot 6 of its vtable is set_fbc (the "anim" argument of the slice)
@@ -67,8 +67,8 @@ template<class T> __forceinline void vpush_i(std::vector<T>& v, const T& x)
 // the name an item contributes (its carry position), or the error string when the item is invalid
 static __forceinline void item_name(tstring* out, ItemRef* r, int modifier)
 {
-    if (r->item >= 0 && r->item < g_item_count)
-        ((ItemKindA*)&g_items[r->item])->get_carry_pos_n(out, modifier);
+    if (r->item >= 0 && r->item < g_item_kind_count)
+        ((ItemKindA*)&g_items[r->item])->mesh_name_for(out, modifier);
     else
         *out = tstring("Error: Invalid item");
 }
@@ -99,8 +99,8 @@ static __forceinline void lod_release(lod_mesh2* l)
 static __forceinline lod_mesh2* clone_char_mesh(int colour, int off)
 {
     lod2_a* src;
-    if (colour < g_char_count)
-        src = *(lod2_a**)((char*)g_chars + colour * 0x1f8 + off);
+    if (colour < g_skin_count)
+        src = *(lod2_a**)((char*)g_skins_begin + colour * 0x1f8 + off);
     else
         src = 0;
     return src->clone();
@@ -129,7 +129,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     body->mask = 1;
 
     lod2_a* rec = new lod2_a;
-    rec->add(0, body);
+    rec->add_to_list(0, body);
     vpush_i(a->lods, (lod_mesh2*)rec);
     ap[21] = rec;
 
@@ -138,8 +138,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     if (hand != 0) {
         // ---- only the hand-held weapon ------------------------------------------------------------
         tstring nm;
-        if (hweapon->item >= 0 && hweapon->item < g_item_count)
-            ((ItemKindA*)&g_items[hweapon->item])->get_carry_pos_n(&nm, ((signed char*)hweapon)[7]);
+        if (hweapon->item >= 0 && hweapon->item < g_item_kind_count)
+            ((ItemKindA*)&g_items[hweapon->item])->mesh_name_for(&nm, ((signed char*)hweapon)[7]);
         else
             nm = tstring("Error: Invalid item");
         lod_mesh2* l = g_rms.make_lod_mesh(nm, false);
@@ -168,7 +168,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         if (w->item >= 0 && (g_items[w->item].type_flags & 0x1000000) == 0)
             carried = 1;
 
-        char* tr = *(char**)(g_game_base + 0x13a00) + troop * 0x508;
+        char* tr = *(char**)(((char*)g_game) + 0x13a00) + troop * 0x508;
         int colour = *(unsigned*)(tr + 0x30) & 0xf;
         append_mesh(colour, kind, ap, (ItemRef*)(tr + 0x3c0), (ItemRef*)(tr + 0x3c0 + 4 * 8), carried, &mesh_color);
 
@@ -196,10 +196,10 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             lod_mesh2* wl = make_item_lod(w, w->m4 >> 24);
             unsigned wflags = g_items[w->item].type_flags;
             if ((wflags & 0x80000000) == 0)
-                ((EChar_a*)&g_chars[g_cur])->use_carry_a(wl, &g_dummy_mat);
+                ((EChar_a*)&g_skins_begin[g_cur])->use_carry(wl, &g_dummy_mat);
             ((lod2_a*)wl)->apply((matrix*)mtx);
             if ((wflags & 0xf00) == 0xf00)
-                ((FxDefA*)a->fx)->attach(wl);
+                ((FxDefA*)a->fx)->add(wl);
             else
                 ELEM(9)->add_group((int)wl);
             int c3 = (wflags & 0x80000000) ? 1 : legs_covered;
@@ -243,21 +243,21 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 if (g_items[h->item].type_flags & 0x1000000)
                     legs_covered = 1;
                 lod_mesh2* hl = make_item_lod(h, h->m4 >> 24);
-                if (colour < g_char_count) {
-                    int cv = (int)((*(unsigned*)((char*)&g_chars[colour] + 0x10) & 7) * 10);
+                if (colour < g_skin_count) {
+                    int cv = (int)((*(unsigned*)((char*)&g_skins_begin[colour] + 0x10) & 7) * 10);
                     if (cv != 0) {
                         float cf = (float)cv;
-                        ((lod2_a*)hl)->set_mesh_color(&cf);
+                        ((lod2_a*)hl)->apply_anim_all(&cf);
                     }
                 }
                 if (*(int*)((char*)&g_items[h->item] + 0x228) > 0) {
-                    *(int*)(g_game_base + 0x1a1f4) = hit_troop;
-                    *(int*)(g_game_base + 0x1a1f8) = troop;
-                    *(int*)(g_game_base + 0x1a204) = 5;
-                    *(int*)(g_game_base + 0x1a1fc) = (int)hl;
-                    *(int*)(g_game_base + 0x1a200) = 0;
-                    g_hit_a = hit_troop;
-                    g_hit_b = troop;
+                    *(int*)(((char*)g_game) + 0x1a1f4) = hit_troop;
+                    *(int*)(((char*)g_game) + 0x1a1f8) = troop;
+                    *(int*)(((char*)g_game) + 0x1a204) = 5;
+                    *(int*)(((char*)g_game) + 0x1a1fc) = (int)hl;
+                    *(int*)(((char*)g_game) + 0x1a200) = 0;
+                    (*(__int64*)((char*)&g_script + 0x8)) = hit_troop;
+                    (*(__int64*)((char*)&g_script + 0x10)) = troop;
                     ((ItemSndA*)((char*)&g_items[h->item] + 0x228))->play(-50);
                 }
                 vpush_i(a->fx->groups, hl);
@@ -355,7 +355,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     ((lod2_a*)*out_body)->append(R, b2, (matrix*)((char*)a->fx->elems + 4 + b2 * 0x1dc), &col);
                 } else {
                     lod_mesh2* c = ((lod2_a*)g_rms.get_lod_mesh(nm))->clone();
-                    ((FxDefA*)a->fx)->attach(c);
+                    ((FxDefA*)a->fx)->add(c);
                 }
             }
         }

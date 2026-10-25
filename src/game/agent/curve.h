@@ -13,7 +13,7 @@ using rgl::vector4;
 #include "../../include/quaternion.h"
 #include "../../include/timer.h"
 
-extern __int64 g_time[];        // 0x5e2948 clock table, 1e-5 s ticks (0x4339d0 reads g_time[tm.clock])
+#include "../../include/fx.h"
 extern float g_step_tbl[];      // 0x5a9c20 (step_reached)
 
 struct Curve {
@@ -51,7 +51,7 @@ struct Curve {
         if (shape_mode == 4) return x * x;
         return 0.0f;
     }
-    bool step_reached();                                    // 0x433840 (previous object)
+    bool busy();                                    // 0x433840 (previous object)
     float unshape(float y);                                 // 0x4338e0
     void set_phase(float period);                           // 0x433930
     void reset_rec(int i);                                  // 0x4339d0

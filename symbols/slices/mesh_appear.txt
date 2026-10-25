@@ -1,0 +1,1 @@
+08ed4f7c ?g_skins_begin@@3PAUEChar@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)

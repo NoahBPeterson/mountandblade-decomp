@@ -1,0 +1,3 @@
+08ed4f60 ?g_anim_table@@3UAnimator@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+00a70248 ?g_shadow_map@@3UShadowMap@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+08ed4f7c ?g_skins_begin@@3PAUEChar@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
