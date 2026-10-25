@@ -90,18 +90,23 @@ def symbol_address(s):
 
 
 def press_play(limit):
-    """Wait for the launcher window (640 x 480) and press Return (its default button is Play): System Events key
-    code 36, only while the game is frontmost. The launcher ignores a key sent right after it appears, so this
-    presses again every few seconds while the launcher is still up."""
+    """Wait for the launcher and press Return (its default button is Play): System Events key code 36, only while
+    the game is frontmost. The launcher ignores a key sent right after it appears, so this presses again every few
+    seconds until the game's log (rgl_log.txt) shows loading past the launcher's two lines."""
     proc = '(first process whose name contains "mb_standalone")'
+    log = os.path.join(ROOT, "game", "rgl_log.txt")
     t0 = time.time()
     pressed = False
     while time.time() - t0 < limit:
-        r = subprocess.run(["osascript", "-e", 'tell application "System Events" to get size of window 1 of ' + proc],
+        try:
+            started = os.path.getmtime(log) >= t0 - 1 and os.path.getsize(log) > 200
+        except OSError:
+            started = False
+        if started:
+            return pressed
+        r = subprocess.run(["osascript", "-e", 'tell application "System Events" to get name of window 1 of ' + proc],
                            capture_output=True, text=True)
         if r.returncode == 0:
-            if r.stdout.strip() != "640, 480":
-                return pressed                           # the launcher is gone: the game is starting
             time.sleep(3)
             subprocess.run(["osascript", "-e", 'tell application "System Events" to set frontmost of %s to true' % proc,
                             "-e", "delay 0.5", "-e",
@@ -109,7 +114,7 @@ def press_play(limit):
                             'tell application "System Events" to if (name of (first process whose frontmost is true)) '
                             'contains "mb_standalone" then key code 36'], capture_output=True)
             pressed = True
-        time.sleep(2)
+        time.sleep(3)
     return pressed
 
 

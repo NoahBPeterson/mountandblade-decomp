@@ -1480,16 +1480,16 @@ void Block::clear()
 }
 
 // @ 0x4c8110
-void Block::read(stream_base* stream)
+void Block::read(stream_base* stream, int version)
 {
     if (*(char**)((char*)this + 0x34))
         operator delete(*(char**)((char*)this + 0x34));
     *(int*)((char*)this + 0x34) = 0;
     *(int*)((char*)this + 0x38) = 0;
     *(int*)((char*)this + 0x3c) = 0;
+    stream->r_tstr((rgl::string*)((char*)this + 0x20));         // the original reads +0x20 first, then +0, +0x10
     stream->r_tstr((rgl::string*)((char*)this + 0x00));
     stream->r_tstr((rgl::string*)((char*)this + 0x10));
-    stream->r_tstr((rgl::string*)((char*)this + 0x20));
     ((tstring*)((char*)this + 0x00))->underscores_to_spaces();
     ((tstring*)((char*)this + 0x10))->underscores_to_spaces();
     stream->r_int((int*)((char*)this + 0x44));
@@ -1499,12 +1499,12 @@ void Block::read(stream_base* stream)
     for (int i = 0; i < n; i++) {
         char* v = (char*)this + 0x58 + i * 0x18;
         stream->r_tstr((rgl::string*)(v - 0x10));
-        stream->r_float((float*)v);
+        stream->r_i64((__int64*)v);                                 // slot +0x48
     }
-    stream->r_float((float*)((char*)this + 0x1c8));
-    stream->r_float((float*)((char*)this + 0x1d0));
+    stream->r_uint((unsigned*)((char*)this + 0x1c8));              // +0x40: the item flags
+    stream->r_u64((unsigned __int64*)((char*)this + 0x1d0));       // +0x44: the capabilities
     stream->r_int((int*)((char*)this + 0x1d8));
-    stream->r_float((float*)((char*)this + 0x1e0));
+    stream->r_u64((unsigned __int64*)((char*)this + 0x1e0));       // +0x44
     stream->r_float((float*)((char*)this + 0x208));
     stream->r_int((int*)((char*)this + 0x220));
     stream->r_int((int*)((char*)this + 0x1fc));
@@ -1518,7 +1518,7 @@ void Block::read(stream_base* stream)
     stream->r_int((int*)((char*)this + 0x210));
     stream->r_int((int*)((char*)this + 0x214));
     stream->r_int((int*)((char*)this + 0x218));
-    if (*(int*)((char*)this + 0x20) > 1) {
+    if (version > 1) {                                              // itemsfile version 2: each item has triggers
         char buf[0x200];
         _snprintf(buf, 0x200, "Item %s", ((tstring*)((char*)this + 0x20))->c_str());
         ((GameVec*)((char*)this + 0x228))->resize(*stream, buf, 0);   // 0x4c1e10: a member call on the sub-object at +0x228

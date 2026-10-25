@@ -198,7 +198,7 @@ struct pair_holder {
     void load2(stream_base* s);   // 0x4c47d0
 };
 struct Block {
-    void read(stream_base* s);   // 0x4c8110 (ItemKind::read: rgl/mesh2/gui_edit.h; the loader's version word is not a parameter of the definition)
+    void read(stream_base* s, int version);   // 0x4c8110 (ItemKind::read: rgl/mesh2/gui_edit.h; ret 8, the file version is the second argument)
 };
 struct csv_row {
     char data[0x238];
@@ -397,7 +397,7 @@ void load_module_files()
     g_items = 0;
     g_items = new_item_array(g_item_kind_count);
     for (int i = 0; i < g_item_kind_count; i++)
-        ((Block*)&g_items[i])->read((stream_base*)&s_items);
+        ((Block*)&g_items[i])->read((stream_base*)&s_items, version);
     s_items.failed = 1;
     log.w_cstr("Loading dialogs...\n");
 

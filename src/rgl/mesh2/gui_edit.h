@@ -622,7 +622,7 @@ inline Rec78Tail& rec78_tail(Rec78* r) { return *(Rec78Tail*)r->tail; }
 struct BlockMat { char pad0[0x64]; void* owned; };      // a material entry; +0x64 the owning block (cleared on release)
 struct Block {
     int first;                                          // +0x00
-    char pad0[0x1c];
+    char pad0[0x18];
     float* verts;                                       // +0x1c (0x18-byte vertices)
     char* verts_end;                                    // +0x20
     char* verts_cap;                                    // +0x24
@@ -633,6 +633,7 @@ struct Block {
     int variation_count;                                // +0x44 (an int, read from the stream)
     char* pad48;                                        // +0x48
     char* pad4c;                                        // +0x4c
+    char pad50[8];                                      // +0x50 (+0x54: the material vector, mats())
     char* variations;                                   // +0x58 (array of pointers)
     char* variations_end;                               // +0x5c
     char* variations_cap;                               // +0x60
@@ -640,7 +641,7 @@ struct Block {
 
     std::vector<BlockMat*>& mats() { return *(std::vector<BlockMat*>*)((char*)this + 0x54); }   // allocator lane +0x54
     void clear();                                       // 0x4c80c0
-    void read(stream_base* stream);                     // 0x4c8110
+    void read(stream_base* stream, int version);        // 0x4c8110 (ret 8: the file version gates the triggers)
     void free_materials();                              // 0x4c8330
     void read_terrain(stream_base* stream);             // 0x4c83a0
 };

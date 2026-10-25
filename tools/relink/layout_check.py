@@ -88,21 +88,22 @@ def check_one(job):
         bad -= unknown
         if not bad:
             return [(e, None, "unchecked" if k in unknown else "ok") for k, e in enumerate(entries)]
-        # the compiler's offsets of the disagreeing members: a template instantiated with the value names it
-        probes = ["template<int N> struct lc_off_;"]
+        # the compiler's offsets of the disagreeing members: initializing a pointer to an array of offset + 1 chars
+        # from an int fails with an error that spells the array type ("cannot convert from 'int' to 'char (*)[17]'")
+        probes = ["/* probes */"]
         order = sorted(bad)
         for j, k in enumerate(order):
             name, member = entries[k][0], entries[k][1]
-            probes.append("lc_off_<(int)(size_t)&reinterpret_cast<const volatile char&>(((%s*)0)->%s)> lc_p_%d_;"
-                          % (name, member, j))
+            probes.append("char (*lc_p_%d_)[(size_t)&reinterpret_cast<const volatile char&>(((%s*)0)->%s) + 1] = 1;"
+                          % (j, name, member))
         open(tmp, "w").write(base + "\n#include <stddef.h>\n" + "\n".join(probes) + "\n")
         r = subprocess.run([S.CL, "/nologo", "/c", "/Zs", *flags, S.INCLUDE, S.winpath(tmp)], capture_output=True,
                            text=True)
         actual = {}
-        for m in re.finditer(r"_layoutchk_[^(]*\((\d+)\)\s*:\s*error C\d+:.*lc_off_<(-?\d+)>", r.stdout + r.stderr):
+        for m in re.finditer(r"_layoutchk_[^(]*\((\d+)\)\s*:\s*error C\d+:.*\(\*\)\[(\d+)\]", r.stdout + r.stderr):
             j = int(m[1]) - nbase - 3
             if 0 <= j < len(order):
-                actual[order[j]] = int(m[2])
+                actual[order[j]] = int(m[2]) - 1
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
