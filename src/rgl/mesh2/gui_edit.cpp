@@ -19,6 +19,30 @@
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skill_rec.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
+rgl::mat3* __cdecl identity3(rgl::mat3* out);                 // 0x40cd60 (rgl/shapes/shapes.h; matrix3 of gui_edit.h is a view of it)
+// canonical declarations of the callees this module reaches through its layout views (definitions in other modules)
+#include "../../game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
+#include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10)
+#include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
+struct OptionsDlg {
+    void choose_dx_settings(struct Config* cfg, bool overwrite);   // 0x4b9b90 (game/config/options_dlg.h, which cannot be mixed with windows.h here)
+};
+struct rgl_config {
+    void save(FILE* f);   // 0x415fb0 (rgl/resource_manager.h clashes on g_log)
+};
+struct mnode {
+    void calc_bounds(rgl::vector4* lo, rgl::vector4* hi);   // 0x438d80 (game/agent2/agent_types.h)
+};
+struct PresentationRec {
+    void read(stream_base& s);   // 0x4c23f0 (game/triggers/trigger_vec.h)
+};
+namespace rgl { struct keyframes { void find(int* lo, int* hi, float* frac, const float* t); }; }   // 0x40f0d0 (include/keyframes.h, which needs rgl::frame_t first)
+struct StrTable {
+    tstring* lookup(const tstring& key);   // 0x43a1e0 (game/agent2/agent_stats.h): the UI string table
+};
+struct clip_pair {
+    clip_pair(void* a_, void* b_, const int* src);   // 0x4be9c0 (game/triggers/trigger_vec.h)
+};
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 #pragma warning(disable:4700)     // 0x4c77c0: the matrix is left unread when no record is selected
@@ -36,7 +60,7 @@ void __fastcall rec34_list::load(stream_base& s)
     s.r_int(&dummy);
     s.r_int(&count);
     if (v != 0) {
-        free_vec_4318c0(v, 3);
+        delete[] (RecK*)v;                                      // 0x4318c0 is the vector deleting destructor of RecK (rec34 has the same 0x34-byte layout)
         v = 0;
     }
     nok = 0;
@@ -52,10 +76,10 @@ void __fastcall rec34_list::load(stream_base& s)
         r = 0;
     v = r;
     for (int i = 0; i < count; i++) {
-        if (read(&r[i], &s))
+        if (r[i].read(&s))
             nok++;
     }
-    load_used(this);
+    ((rec34_table*)this)->load_used();   // 0x4be560: rec34_list has rec34_table's records / count / success head
     b.~tstring();
     a.~tstring();
 }
@@ -187,7 +211,7 @@ void* __fastcall list_int_make_node(list_int* self, void*, void* a, void* b, voi
 {
     void* node = operator new(0x28);
     if (node != 0)
-        list_node_init_4be9c0(node, 0, a, b, c);
+        new (node) clip_pair(a, b, (const int*)c);
     return node;
 }
 
@@ -255,7 +279,7 @@ void __cdecl uninit_fill_n(void* first, size_t n, const void* src, block_copier*
 {
     try {
         while (n > 0) {
-            cop->construct(first, src);
+            ((Alloc2c*)cop)->construct(first, src);   // block_copier is the empty Alloc2c tag (0x4c1b20)
             --n;
             first = (char*)first + 0x2c;
         }
@@ -277,7 +301,7 @@ void fill_records_funclet()
 item38* copy_range38(item38* dst, const item38* first, const item38* last, editor* self)
 {
     for (; first != last; first++) {
-        copy_item38(dst, first);
+        construct_arrset((ArrSet*)dst, *(const ArrSet*)first);   // item38 is the 0x38-byte ArrSet (terrain_a.cpp 0x46b6c0)
         dst++;
     }
     return dst;
@@ -343,7 +367,7 @@ void gui_view::set_view(const float* v)
         fx = 0.05f;
     if (!o568)
         return;
-    o568->bounds(&lo, &hi);
+    ((mnode*)o568)->calc_bounds(&lo, &hi);   // o568 is a scene node: mesh_bnd is a view of it, the callee 0x438d80 is mnode::calc_bounds
     if (lo.x + fx < g_f011) {
         fx = g_f011 - lo.x;
     } else if (hi.x + fx > g_f989) {
@@ -819,7 +843,7 @@ void ItemPage::reset()
 {
     if (*(void**)((char*)this + 0x54))
         (*(RefRecord**)((char*)this + 0x54))->deleting_dtor(1);
-    kf_arr_dtor((char*)this + 0x6c);
+    ((RecGList*)((char*)this + 0x6c))->clear();   // 0x4317b0: frees the keyframe track array and clears the pointer
     if (*(void**)((char*)this + 0x44))
         operator delete(*(void**)((char*)this + 0x44));
     *(int*)((char*)this + 0x44) = 0;
@@ -835,30 +859,30 @@ void ItemPage::format(char* out)
 {
     if (kind == 1) {
         tstring key(s_entry_point);
-        _snprintf(out, 0x80, g_strtable.lookup(key)->c_str(), text_ptr);
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), text_ptr);
     } else if (kind == 5) {
         tstring key(s_passage);
-        _snprintf(out, 0x80, g_strtable.lookup(key)->c_str(), text_ptr2);
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), text_ptr2);
     } else if (kind == 4) {
         if (index < 0 || index >= g_ptype_count) {
             _snprintf(out, 0x80, s_invalid_plant);
             return;
         }
         tstring key(s_plant);
-        _snprintf(out, 0x80, g_strtable.lookup(key)->c_str(), cs(&g_ptypes[index].name));
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&g_ptypes[index].name));
     } else if (kind == 2 || kind == 6) {
         if (index < 0 || index >= g_item_kind_count) {
             _snprintf(out, 0x80, s_invalid_item);
             return;
         }
         tstring key(s_item_name);
-        _snprintf(out, 0x80, g_strtable.lookup(key)->c_str(), g_items[index].display_name()->c_str());
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), g_items[index].display_name()->c_str());
     } else if (kind == 0) {
         tstring key(s_prop);
-        _snprintf(out, 0x80, g_strtable.lookup(key)->c_str(), cs(&field.buf));
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&field.buf));
     } else {
         tstring key(s_unknown);
-        _snprintf(out, 0x80, g_strtable.lookup(key)->c_str(), field.c_str());
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), field.c_str());
     }
 }
 
@@ -914,7 +938,7 @@ RefRecord* ItemPage::fill_records(RefRecord* rec)
     }
     rl->records = p;
     for (int i = 0; i < n; i++)
-        read((char*)rl->records + i * 0x24, i, rec, i);
+        ((PresentationRec*)((char*)rl->records + i * 0x24))->read(*(stream_base*)rec);   // 0x4c23f0: a member call on the item, the stream as its argument
     return rec;
 }
 
@@ -950,7 +974,7 @@ void ItemPage::place(int e)
     float t = (float)poses[e].key;
     int lo, hi;
     float frac;
-    m->kf.find(&lo, &hi, &frac, &t);
+    ((rgl::keyframes*)&m->kf)->find(&lo, &hi, &frac, &t);
     if (!(frac < 0.5f))
         lo = hi;
     if (lo >= 0 && lo < m->kf.count) {
@@ -1028,42 +1052,49 @@ void MapDialog::clear_objects()
     tidy3(&raw);
 }
 
+// The helpers below are cdecl and the definitions have no tag parameter; the original pushes its slot (here the fifth argument
+// repeats z), so each call goes to the definition's own declaration through the five-parameter type of the original's call.
+void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al);                  // 0x4c3d90 (rec_tables.cpp)
+struct blk204;
+char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* al);                 // 0x4c1b60 (game/triggers/trigger_vec.cpp)
+
 // @ 0x4c6eb0
 MapRecord* MapDialog::insert_a(MapRecord* arr, int index, int z)
 {
-    ctor_4c3d90(arr, index, z, this, z);
+    ((void (__cdecl*)(char*, unsigned, const void*, Alloc204&, int))copy_uninit_204)((char*)arr, (unsigned)index, (const void*)z, *(Alloc204*)this, z);
     return (MapRecord*)((char*)arr + index * 0x204);
 }
 
 // @ 0x4c6ee0
 int* MapDialog::insert_b(int* arr, int index, int z)
 {
-    copy_uninit_4((MapRecord*)arr, index, z, this, z);
+    ((void (__cdecl*)(char*, unsigned, const void*, Alloc4&, int))copy_uninit_4)((char*)arr, (unsigned)index, (const void*)z, *(Alloc4*)this, z);
     return &arr[index];
 }
 
 // @ 0x4c6f10
 void MapDialog::place_a(MapRecord* arr, int index, int z)
 {
-    copy_uninit_2c(arr, index, z, this, z);
+    ((void* (__cdecl*)(char*, char*, char*, Alloc2c&, int))copy_uninit_2c)((char*)arr, (char*)index, (char*)z, *(Alloc2c*)this, z);
 }
 
 // @ 0x4c6f30
 void MapDialog::place_b(MapRecord* arr, int index, int z)
 {
-    copy_uninit_4_range(arr, index, z, this, z);
+    ((void* (__cdecl*)(char*, char*, char*, Alloc4&, int))copy_uninit_4_range)((char*)arr, (char*)index, (char*)z, *(Alloc4*)this, z);
 }
 
 // @ 0x4c6f50
 void MapDialog::place_c(MapRecord* arr, int index, int z)
 {
-    uninit_copy_str(arr, index, z, this, z);
+    ptr_tag tag;
+    uninit_copy_str((tstring*)arr, (tstring*)index, (tstring*)z, *(tstring_alloc*)this, tag);   // MapDialog is the vector (and its allocator) of tstrings here
 }
 
 // @ 0x4c6f70
 void MapDialog::place_d(MapRecord* arr, int index, int z)
 {
-    uninit_copy_204(arr, index, z, this, z);
+    ((char* (__cdecl*)(blk204*, blk204*, char*, Alloc204*, int))uninit_copy_204)((blk204*)arr, (blk204*)index, (char*)z, (Alloc204*)this, z);
 }
 
 // @ 0x4c6f90
@@ -1106,10 +1137,10 @@ void MapDialog::refresh_list(char use_sel)
         int data = 0x16 + (kind == 0x10);
         {
             tstring off("ui_off");
-            tstring* r = g_strtable.lookup(off);
+            tstring* r = ((StrTable&)g_strtable).lookup(off);
             if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)(r->buf ? r->buf : (char*)&r->buf)) < 0) {   // LB_GETTEXT
                 tstring off2("ui_off");
-                tstring* r2 = g_strtable.lookup(off2);
+                tstring* r2 = ((StrTable&)g_strtable).lookup(off2);
                 int idx = SendMessageA(hWnd, 0x14a, 0, (LPARAM)(r2->buf ? r2->buf : (char*)&r2->buf));  // 0x180
                 SendMessageA(hWnd, 0x151, idx, 1);                                          // 0x19a
             }
@@ -1147,16 +1178,17 @@ void MapDialog::refresh_list(char use_sel)
 void ConfigDialog::init()
 {
     RenderConfig cfg;
+    ((Config*)&cfg)->init_defaults();            // RenderConfig is Config's 0x70-byte layout (first_time at +0)
     FILE* f = mb_open_user_file(g_rgl_name, g_mode_rb);
     if (f) {
-        cfg.load_file(f);
+        ((Config*)&cfg)->load_file(f);
         fclose(f);
     }
     if (cfg.first_time) {
         cfg.first_time = 0;
-        choose_dx_settings(&cfg, true);
+        ((OptionsDlg*)this)->choose_dx_settings((Config*)&cfg, true);   // ConfigDialog::init runs on the OptionsDlg object
         f = mb_open_user_file(g_rgl_name, g_mode_wb);
-        cfg.save(f);
+        ((rgl_config*)&cfg)->save(f);
         fclose(f);
     }
     SetWindowPos(hwnd, 0, 0, 0, 0x280, 0x1e0, 0x16);
@@ -1185,31 +1217,31 @@ void ConfigDialog::init()
     } else {
         {
             tstring key(g_ui_play);
-            SetDlgItemTextA(hwnd, 0x410, g_strtable.lookup(key)->c_str());
+            SetDlgItemTextA(hwnd, 0x410, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
             tstring key(g_ui_configure);
-            SetDlgItemTextA(hwnd, 0x405, g_strtable.lookup(key)->c_str());
+            SetDlgItemTextA(hwnd, 0x405, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
             tstring key(g_ui_check_for_new_version);
-            SetDlgItemTextA(hwnd, 0x41f, g_strtable.lookup(key)->c_str());
+            SetDlgItemTextA(hwnd, 0x41f, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
             tstring key(g_ui_download_new_settings);
-            SetDlgItemTextA(hwnd, 0x46b, g_strtable.lookup(key)->c_str());
+            SetDlgItemTextA(hwnd, 0x46b, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
             tstring key(g_ui_website);
-            SetDlgItemTextA(hwnd, 0x406, g_strtable.lookup(key)->c_str());
+            SetDlgItemTextA(hwnd, 0x406, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
             tstring key(g_ui_cancel2);
-            SetDlgItemTextA(hwnd, 0x469, g_strtable.lookup(key)->c_str());
+            SetDlgItemTextA(hwnd, 0x469, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
             tstring key(g_ui_current_setting);
-            SetDlgItemTextA(hwnd, 0x425, g_strtable.lookup(key)->c_str());
+            SetDlgItemTextA(hwnd, 0x425, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
     }
 
@@ -1380,7 +1412,7 @@ void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
             operator delete[]((char*)p - 4);
         return (char*)p - 4;
     }
-    reset(p);
+    ((ItemPage*)p)->reset();   // 0x4c65d0
     if (flags & 1)
         operator delete(p);
     return p;
@@ -1489,7 +1521,7 @@ void Block::read(stream_base* stream)
     if (*(int*)((char*)this + 0x20) > 1) {
         char buf[0x200];
         _snprintf(buf, 0x200, "Item %s", ((tstring*)((char*)this + 0x20))->c_str());
-        resize(stream, buf, 0);
+        ((GameVec*)((char*)this + 0x228))->resize(*stream, buf, 0);   // 0x4c1e10: a member call on the sub-object at +0x228
     }
     *(int*)((char*)this + 0x40) = 0x3f800000;
     *(int*)((char*)this + 0x21c) = 0x3f800000;
@@ -1502,7 +1534,9 @@ void Block::free_materials()
 {
     for (unsigned i = 0; i < mats().size(); i++) {
         mats()[i]->owned = 0;                           // the block no longer owns the material
-        g_res_manager.release(mats()[i]);
+        ReleaseFn rel;
+        rel.clear_f14 = clear_f14;
+        (g_res_manager.*rel.as_member)(mats()[i]);
     }
     tidy3((char*)this + 0x58);
     *(int*)((char*)this + 0x64) = 0;
@@ -1527,7 +1561,7 @@ void Block::read_terrain(stream_base* stream)
     *f2 *= 0.001;
     *(float*)((char*)this + 0x30) *= 0.001;
     *(float*)((char*)this + 0x34) *= 0.001;
-    ((BlockBase*)((char*)this + 0x38))->read(stream);
+    ((DialogBlock*)((char*)this + 0x38))->read(stream);   // 0x4607e0
     char buf[0x200];
     _snprintf(buf, 0x200, "Tableau material %s", ((tstring*)this)->c_str());
     {
@@ -1536,7 +1570,7 @@ void Block::read_terrain(stream_base* stream)
     }
     if (name.len > 1) {
         if (name.differs("none"))
-            *(void**)((char*)this + 0x64) = g_res_manager.get_material(name);
+            *(void**)((char*)this + 0x64) = ((resource_manager*)&g_res_manager)->get_material(*(const rgl::string*)&name);
     }
 }
 
@@ -1615,7 +1649,7 @@ void __fastcall conv_build_scene(conv_rec* self)
                 r->pts[j] = sub->verts[sub->items[k].idx[j]].pos;
             vector4 z0(0.0f, 0.0f, 0.0f);
             matrix3 t;
-            matrix3* ip = identity3(&t);
+            matrix3* ip = (matrix3*)identity3((rgl::mat3*)&t);
             rgl::matrix m;
             *(matrix3*)&m = *ip;
             m.o = z0;
@@ -1627,7 +1661,7 @@ void __fastcall conv_build_scene(conv_rec* self)
 // @ 0x4c8810
 edit_vert* edit_vec::ufill(edit_vert* dst, int n, const edit_vert* src)
 {
-    uninit_fill_n(dst, (unsigned)n, src, this, src);
+    ((void (__cdecl*)(void*, size_t, const void*, block_copier*, const void*))uninit_fill_n)(dst, (unsigned)n, src, (block_copier*)this, src);
     return dst + n;
 }
 
@@ -1635,7 +1669,7 @@ edit_vert* edit_vec::ufill(edit_vert* dst, int n, const edit_vert* src)
 tstr_iter tstr_vec::erase_range(tstring* first, tstring* lastp)
 {
     if (first != lastp) {
-        tstring* end = assign_range(lastp, last, first, first);
+        tstring* end = std::_Copy_opt<tstring*, tstring*>(lastp, last, first, std::_Nonscalar_ptr_iterator_tag());
         for (tstring* it = end; it != last; it++)
             it->~tstring();
         last = end;
@@ -1666,7 +1700,7 @@ ptr_iter ptr_vec::erase_range(int* first, int* last)
 // @ 0x4c88e0
 void item38_vec::copy_range(item38* dst, const item38* first, const item38* last)
 {
-    copy_range38(dst, first, last, (conv_rec*)this, last);
+    ((item38* (__cdecl*)(item38*, const item38*, const item38*, editor*, const item38*))copy_range38)(dst, first, last, (editor*)this, last);
 }
 
 // @ 0x4c8900
@@ -1708,7 +1742,7 @@ void* __fastcall conv_item_array_dtor(conv_rec* self, int, unsigned char flags)
 void __fastcall conv_group_dtor(conv_rec* self)
 {
     char* p = (char*)self;
-    record_array_clear(p + 0x228);
+    ((RecGList*)(p + 0x228))->clear();   // 0x4317b0
     int i = 16;
     char* q = p + 0x1c8;
     do {
@@ -1757,7 +1791,7 @@ void graph_obj::remove_node(int idx)
 void __fastcall conv_list_dtor(conv_rec* self)
 {
     char* p = (char*)self;
-    self->free_materials();
+    ((Block*)self)->free_materials();   // conv_rec is the mesh block (Block) here; 0x4c8330
     void** v = (void**)(p + 0x58);
     if (v[0] != 0)
         operator delete(v[0]);
@@ -1796,6 +1830,10 @@ void* __fastcall conv_zero_node(void* self)
 }
 
 
+// The accessors below are shared by classes with the same field layout (identical code folded by the linker): 0x4c6080 is
+// PartyTemplate's for DialogRec / GameString / ModRec / QuickString / SkinElem (name +0, key +0x10), 0x4c62b0 MenuDoor's
+// for TroopRec / ItemKind, 0x4c6530 RecB's for Party, 0x4c6860 RecC's for FactionRec, 0x4c63f0 / 0x4c6330 / 0x4c6470 RecA's
+// for QuestRec (and translated_plural of TroopRec / ItemKind). The calls go to the class that defines the function.
 // @ 0x4c8ca0
 void GameData::save_language_files(bool translated)
 {
@@ -1807,12 +1845,12 @@ void GameData::save_language_files(bool translated)
             if (i == player_troop)
                 continue;
             if (translated) {
-                g_strtable.write(f, chars[i].key, chars[i].translated());
+                ((ini_file&)g_strtable).write(f, chars[i].key, ((MenuDoor*)&chars[i])->translated());
                 tstring suffix("_pl");                                  // 0x5923b0
-                g_strtable.write(f, chars[i].key + suffix, chars[i].translated_plural());
+                ((ini_file&)g_strtable).write(f, chars[i].key + suffix, ((RecA*)&chars[i])->translated_plural());
             } else {
-                g_strtable.write(f, chars[i].key, *find_or(chars[i].key, chars[i].name));
-                g_strtable.write(f, chars[i].key + tstring("_pl"),
+                ((ini_file&)g_strtable).write(f, chars[i].key, *find_or(chars[i].key, chars[i].name));
+                ((ini_file&)g_strtable).write(f, chars[i].key + tstring("_pl"),
                              *chars[i].plural_name());
             }
         }
@@ -1825,7 +1863,7 @@ void GameData::save_language_files(bool translated)
         while (i < parties.n_parties) {
             if (parties.get_party(i)->owner <= 0 && i != (unsigned)party_id_78) {
                 if (translated) {
-                    write_row(f, parties.get_party(i)->key, parties.get_party(i)->translated());
+                    write_row(f, parties.get_party(i)->key, ((RecB*)parties.get_party(i))->translated());
                 } else {
                     Party* p = parties.get_party(i);
                     const tstring* v;
@@ -1847,7 +1885,7 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\factions.csv", "wt+");           // 0x596018
         for (int i = 0; i < n_factions; i++) {
             if (translated) {
-                tstring v = factions[i].translated();
+                tstring v = ((RecC*)&factions[i])->translated();
                 write_row(f, factions[i].key, v);
             } else {
                 const tstring* v = &factions[i].name;
@@ -1863,10 +1901,10 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\item_kinds.csv", "wt+");         // 0x595ffc
         for (int i = 0; i < g_item_kind_count; i++) {
             if (translated) {
-                tstring v = g_items[i].translated();
+                tstring v = ((MenuDoor*)&g_items[i])->translated();
                 write_row(f, g_items[i].key, v);
                 tstring suffix("_pl");
-                write_row(f, g_items[i].key + suffix, g_items[i].translated_plural());
+                write_row(f, g_items[i].key + suffix, ((RecA*)&g_items[i])->translated_plural());
             } else {
                 const tstring* v = find_or(g_items[i].key, g_items[i].name);
                 write_row(f, g_items[i].key, *v);
@@ -1881,7 +1919,7 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\item_modifiers.csv", "wt+");     // 0x595fdc
         for (ModRec* r = g_item_modifiers; r < g_item_modifiers + 43; r++) {
             if (translated) {
-                tstring v = r->translated();
+                tstring v = ((PartyTemplate*)r)->translated();
                 write_row(f, r->key, v);
             } else {
                 write_row(f, r->key, *find_or(r->key, r->name));
@@ -1908,7 +1946,7 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\game_strings.csv", "wt+");       // 0x595f98
         for (int i = 0; i < g_n_game_strings; i++) {
             if (translated) {
-                tstring v = g_strings[i].translated();
+                tstring v = ((PartyTemplate*)&g_strings[i])->translated();
                 write_row(f, g_strings[i].key, v);
             } else {
                 write_row(f, g_strings[i].key,
@@ -1922,7 +1960,7 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\quick_strings.csv", "wt+");      // 0x595f78
         for (int i = 0; i < g_n_quick_strings; i++) {
             if (translated) {
-                tstring v = g_quick_strings[i].translated();
+                tstring v = ((PartyTemplate*)&g_quick_strings[i])->translated();
                 write_row(f, g_quick_strings[i].key, v);
             } else {
                 write_row(f, g_quick_strings[i].key,
@@ -1936,10 +1974,10 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\quests.csv", "wt+");             // 0x595f60
         for (int i = 0; i < n_quests; i++) {
             if (translated) {
-                tstring v = quests[i].translated();
+                tstring v = ((RecA*)&quests[i])->translated();
                 write_row(f, quests[i].key, v);
                 tstring suffix("_text");                                // 0x5923b4
-                write_row(f, quests[i].key + suffix, quests[i].translated_text());
+                write_row(f, quests[i].key + suffix, ((RecA*)&quests[i])->translated_text());
             } else {
                 write_row(f, quests[i].key, *find_or(quests[i].key, quests[i].name));
                 write_row(f, quests[i].key + tstring("_text"),
@@ -1957,7 +1995,7 @@ void GameData::save_language_files(bool translated)
                     goto next_dialog;
             }
             if (translated) {
-                tstring v = g_dialogs[i].translated();
+                tstring v = ((PartyTemplate*)&g_dialogs[i])->translated();
                 write_row(f, g_dialogs[i].id, v);
             } else {
                 write_row(f, g_dialogs[i].id,
@@ -1974,7 +2012,7 @@ void GameData::save_language_files(bool translated)
         for (unsigned i = 0; g_skins_begin && i < (unsigned)(g_skins_end - g_skins_begin); i++) {
             for (int j = 0; j < g_skins_begin[i].n_elems; j++) {
                 if (translated) {
-                    tstring v = g_skins_begin[i].elems[j].translated();
+                    tstring v = ((PartyTemplate*)&g_skins_begin[i].elems[j])->translated();
                     write_row(f, g_skins_begin[i].elems[j].key, v);
                 } else {
                     write_row(f, g_skins_begin[i].elems[j].key,

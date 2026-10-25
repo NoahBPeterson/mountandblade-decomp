@@ -15,6 +15,22 @@
 
 struct face;
 struct Entity;
+// Classes of other modules that own methods this grid's callers reach (the definitions carry these names; the views below
+// forward to them, so the call sites keep their spelling): the grid cell (game/cell.h), the scene as agent2 sees it
+// (agent2/agent_types.h), rgl::world (rgl/scene/world.h) and rgl::world_grid (rgl/dynamic/world_grid.h).
+struct shape_base; struct grid_shape;
+struct cell {
+    void collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count);   // 0x439780
+};
+struct level {
+    void floor_at(const float* p, float* out_z, face** out_face);           // 0x439be0 (ret 0xc)
+    void light_at(rgl::vector4 p, rgl::vector4 n, rgl::vector4* out_dir, rgl::vector4* out_col, unsigned flags, float scale);   // 0x43ac40 (ret 0x30)
+    bool trace_ray(const float* from, const float* to, float maxlen, shape_base** hit, int a);   // 0x439d60 (ret 0x14)
+};
+struct world_grid {
+    void reg_shape(grid_shape* o);                                          // 0x424170
+    void add_tree(grid_shape* s);                                           // 0x425240
+};
 
 // ---- height field (CellGrid::hf, +0x64): 16-byte cells in columns -------------------------------------------------
 #include "../../include/height_field.h"      // HCell, HeightField (cols 0x471b30, 0x4785e0; line_clear 0x436da0; sample 0x433510)
@@ -69,7 +85,8 @@ struct Cell {
     std::vector<int> b;                         // +0x20
     int tail;                                   // +0x30
     ~Cell();                                    // 0x431ab0 (the slices' RecP: array delete in ~CellGridBase)
-    void collect_point(const float* p, int* use3d, unsigned mask, face** out, int* count);   // 0x439780
+    __forceinline void collect_point(const float* p, int* use3d, unsigned mask, face** out, int* count)   // 0x439780
+    { ((cell*)this)->collect_point(p, use3d, mask, (shape_base**)out, count); }
 };
 // A list of owned int arrays (pages of ids) with a capacity and a count (0x14 bytes): the grid's two free lists. The
 // destructor of the grid frees the arrays first (free_values 0x472460), then the usual node sweep.
@@ -82,7 +99,7 @@ struct PList : std::list<int*> {
 };
 // The object list: a std::vector<void*> whose growth path (_Insert_n of the pointer vectors) is the shared instance 0x41f720.
 struct ObjVec : std::vector<void*> {
-    void insert_n(iterator where, size_t count, void* const& val);   // 0x41f720
+    void insert_n(iterator where, size_t count, void* const& val);   // 0x41f720 (mission.cpp forwards it to vector<rgl::Obj*>::_Insert_n)
 };
 struct Wind {                   // 0x7c-byte effect / wind object (0x478f30, 0x4792d0)
     int f0;                     // +0x00
@@ -136,7 +153,7 @@ struct CellGrid : CellGridBase {
     int f340;                                   // +0x340
 
     void init(const float* lo_, const float* hi_, int dimx, int dimy);      // 0x478830
-    void to_cell(const float* p, int* out) const;                            // 0x41ed00
+    void to_cell(const float* p, int* out) const;                            // 0x41ed00 (forwards to rgl::world::to_cell: cell_world.h)
     void insert(int id, const float* lo_, const float* hi_);                // 0x478a10
     CellGrid(const float* lo_, const float* hi_, const int* dimx, const int* dimy, const int* v);  // 0x478ad0
     ~CellGrid();                                                            // 0x475d50
@@ -145,15 +162,21 @@ struct CellGrid : CellGridBase {
     Wind* spawn_wind();                                                     // 0x478f30
     void sample_lights(const rgl::vector4* p, rgl::vector4* dir, rgl::vector4* amb);   // 0x42ad60
     void build_light_frame(rgl::matrix* m, rgl::vector4* amb);              // 0x470c00
-    int trace_ray(const rgl::vector4* from, const rgl::vector4* to, float maxlen, int a, void** hit);   // 0x439d60 (ret 0x14)
-    void floor_at(const float* p, float* out_z, face** out_face);           // 0x439be0 (ret 0xc)
-    void light_at(rgl::vector4 p, rgl::vector4 n, rgl::vector4* out_dir, rgl::vector4* out_col, unsigned flags, float scale);   // 0x43ac40 (ret 0x30)
+    int trace_ray(const rgl::vector4* from, const rgl::vector4* to, float maxlen, int a, void** hit);   // 0x439d60 (ret 0x14; the callers use TRACE_RAY at the end of this header)
+    __forceinline void floor_at(const float* p, float* out_z, face** out_face) { ((level*)this)->floor_at(p, out_z, out_face); }   // 0x439be0 (ret 0xc)
+    __forceinline void light_at(rgl::vector4 p, rgl::vector4 n, rgl::vector4* out_dir, rgl::vector4* out_col, unsigned flags, float scale)   // 0x43ac40 (ret 0x30)
+    { ((level*)this)->light_at(p, n, out_dir, out_col, flags, scale); }
     void update_probes(unsigned flags);                                     // 0x472ed0
-    void reg_shape(void* o);                                                      // 0x424170
-    void post(void* o);                                                     // 0x425240
+    __forceinline void reg_shape(void* o) { ((world_grid*)this)->reg_shape((grid_shape*)o); }                      // 0x424170
+    __forceinline void post(void* o) { ((world_grid*)this)->add_tree((grid_shape*)o); }                           // 0x425240
     Entity* create_entity(int type_id);                                     // 0x428440
     void build_faces(NavData* map);                                         // 0x479980
     void remove_entity(int id);                                             // 0x41f0d0 (ret 4; src/game/party2 clear_map_flag)
 };
+
+
+// level::trace_ray returns bool; the callers test the whole of eax, so the call is made through the int-returning member type
+#define TRACE_RAY(grid, from, to, maxlen, a, hit) \
+    (((level*)(grid))->*(int (level::*)(const float*, const float*, float, shape_base**, int))&level::trace_ray)((const float*)(from), (const float*)(to), (maxlen), (shape_base**)(hit), (a))
 
 #endif // TERRAIN_B_CELL_GRID_H

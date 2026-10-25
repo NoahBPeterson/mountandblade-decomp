@@ -25,6 +25,7 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../scene/emitter.h"      // psys (update 0x414960)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using namespace rgl;
@@ -121,7 +122,7 @@ void emitter::spawn(emitter_particle* out)
         local.y = r.y * box[1];
         local.z = r.z * box[2];
         *(rot3*)out = *(const rot3*)&world;
-        out->pos = static_cast<const frame_ops&>(world).transform_point(local);
+        out->pos = static_cast<const pos&>(world).transform_point(local);
     }
     if (flags & psf_emit_at_water_level)
         out->pos.z = water_z;
@@ -129,7 +130,7 @@ void emitter::spawn(emitter_particle* out)
     vector4* vel = &out->vel;
     *vel = r;
     if (!(flags & psf_global_emit_dir))
-        *vel = static_cast<const frame_ops&>(world).rot(*vel);
+        *vel = static_cast<const pos&>(world).rot(*vel);
     float m = RND(1.0f) + RND(1.0f);
     vel->x = m * vel->x;
     vel->y = m * vel->y;
@@ -455,7 +456,7 @@ void mesh::compute_sortkey()
 // @ 0x412a90
 mesh::mesh()
 {
-    matrix tmp;
+    pos tmp;
     c4 = -1.0f;
     c8 = -1.0f;
     parent = 0;
@@ -469,10 +470,10 @@ mesh::mesh()
     color = (unsigned)-1;
     f40 = -1;
     f44 = 0;
-    m_cc = *identity(&tmp);
-    m1d4 = *identity(&tmp);
+    m_cc = *identity_pos(&tmp);
+    m1d4 = *identity_pos(&tmp);
     mask = 0xffff;
-    m194 = *identity(&tmp);
+    m194 = *identity_pos(&tmp);
     f48 = 0;
     p220 = 0; f224 = 0; f228 = 0;
     p_c0 = 0;
@@ -736,7 +737,7 @@ int mesh::render(scene* sc, const matrix& frame)
     }
 done:
     for (std::vector<psys*>::iterator it = kids.begin(); it != kids.end(); ++it)
-        ((emitter*)*it)->update(sc);
+        (*it)->update(sc);   // psys::update 0x414960 (scene/emitter.h)
     if (p_c0) {
         vector4 t;
         t.x = m_cc.u.x * p_c0->in.z + m_cc.f.x * p_c0->in.y + p_c0->in.x * m_cc.s.x + m_cc.o.x;

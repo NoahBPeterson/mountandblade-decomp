@@ -68,4 +68,11 @@ MISSION_OFFSET_CHECK(blend2_time, 0x6810);
 MISSION_OFFSET_CHECK(str, 0x6814);
 MISSION_OFFSET_CHECK(done, 0x6824);
 
+// The agent record's two methods that live in other modules (the record is the same object as their `this`)
+struct AgentX {
+    int agent_class() const;   // 0x433140 (rgl/xmlcfg/game_util.h: AgentX::agent_class)
+};
+__forceinline int MAgent::agent_class() { return ((const AgentX*)this)->agent_class(); }
+__forceinline int MAgent::update_nav_face() { return ((Agent*)this)->update_nav_face(); }   // Agent::update_nav_face 0x43cb30 (agent_obj.h)
+
 #endif // TERRAIN_B_MISSION_H

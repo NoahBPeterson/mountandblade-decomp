@@ -28,8 +28,8 @@ static __forceinline const char* c_str(const tstring* s)
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 struct ScreenObj : Widget {
-    void frame_hook();                                       // 0x4ec460 (non-virtual)
 };
+void __cdecl frame_hook(void);                               // 0x4ec460 (game/char_sheet/screen.cpp: the end-of-frame callback, a free function)
 extern ScreenObj* g_windows[30];       // 0xa73980 (.. 0xa739f4)
 
 struct IdStack {                    // 0xa739f8
@@ -90,15 +90,32 @@ extern GuiManager g_gui;        // 0x5d7080
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                 // 0x5d6fa0
 
-struct ButtonTick {
+struct Slot {                           // game/ui (slot.cpp): the input device at 0xa170c8
     void update(float dt);              // 0x487930
 };
-extern ButtonTick g_keyboard;             // 0xa170c8
+extern Slot g_keyboard;                   // 0xa170c8
 
-struct MusicList {
-    void tick();                        // 0x4c4100
+struct sound_engine {                   // rgl/mesh2/rec_tables.h: the music player at 0xa73a10
+    void __fastcall tick();             // 0x4c4100
 };
-extern MusicList g_music_situation;              // 0xa73a10
+extern sound_engine g_music_situation;           // 0xa73a10
+
+struct GuiScreen {
+    void process(int param);   // 0x4ebfd0 (game/char_sheet/screen.h): the gui object at 0x5d7080 (the dt rides in as its bits)
+};
+struct GuiCtx;
+void __fastcall pick_entity(GuiCtx* e);                // 0x4ed8d0 (game/char_sheet/pick_entity.cpp): EditorEntity::pick_entity
+struct ID3DXEffect;
+struct resource_manager {
+    void resolve_effect_sets(ID3DXEffect* fx);   // 0x418ff0 (rgl/resource.h)
+};
+struct MapEditorDialog {
+    void update_object_type();   // 0x4c7bf0 / 0x4c7e20 (rgl/mesh2/gui_edit.h): the dialog of the application object
+    void update_objects();   // 0x4c7e20
+};
+struct CD3DApplication {
+    virtual long MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x403120 (dxframework/d3dapp.h)
+};
 
 struct Output {
     virtual void o0(); virtual void o1(); virtual void o2(); virtual void o3();
@@ -115,15 +132,14 @@ extern Output g_log;                 // 0x5a9f60
 // ---- free functions --------------------------------------------------------------------------------
 extern "C" void __stdcall _FSOUND_Update(void);              // 0x53433c
 void bump_counter(void);                                     // 0x42cb70 (?bump_counter@@YAXXZ)
-int  build_shader(void);                                     // 0x4c17c0
-void mb_error(const char* msg);                              // 0x42cc80
+long build_shader(void);                                    // 0x4c17c0 (game/triggers/trigger_vec.cpp, returns an HRESULT)
+void mb_error(const char* fmt, ...);                          // 0x42cc80
 void load_skyboxes(void);                                        // 0x4c3350
 void fn_4d0c20(void);                                        // 0x4d0c20
 void fn_50d5e0(void);                                        // 0x50d5e0
-void dialog_thunk();                                      // 0x50d250 (dialog proc, never called here)
+LRESULT __stdcall dialog_thunk(HWND, UINT, WPARAM, LPARAM);   // 0x50d250 (the dialog proc: inventory_panel/widget_text.cpp)
 void script_dialog_proc();                                   // 0x4c3340
-void global_4bf870(void*);                                   // 0x4c3330
-void global_4c03b0(void*);                                   // 0x4c3340
+void global_4bf870(void);                                    // 0x4c3330 (rgl/mesh2/rec_tables.cpp: the thunk to the script debugger proc)
 
 // ---- the loading screen (0x50f440 lives in slice s0050f440; see there) ------------------------------
 #include "../loading_screen.h"       // LoadingScreen: update 0x50f390 here, advance 0x50f440 in loading_screen.cpp
@@ -149,7 +165,7 @@ int GameApp::Update()
     g_5d8798 = m_34c;
     m_34c = -1;
 
-    g_gui.process(dt);
+    ((GuiScreen*)&g_gui)->process(*(int*)&dt);
     g_keyboard.update(dt);
     g_music_situation.tick();
     _FSOUND_Update();
@@ -161,7 +177,7 @@ int GameApp::Update()
             } else {
                 g_gui.add(tstring("Effect file recompiled."), -1);
             }
-            g_resmgr.resolve_effect_sets(g_5e293c);
+            ((resource_manager*)&g_resmgr)->resolve_effect_sets((ID3DXEffect*)g_5e293c);
         }
     }
     if (g_no_cam) {
@@ -177,7 +193,7 @@ int GameApp::Update()
         }
     }
 
-    g_windows[current_screen_id()]->frame_hook();
+    frame_hook();
     g_windows[current_screen_id()]->update(dt);
 
     if (g_game) {
@@ -188,9 +204,9 @@ int GameApp::Update()
                         m_hMapEditorDlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xc0, m_hWnd,
                                                              (DLGPROC)dialog_thunk, 0);
                     } else {
-                        ((MapEditor*)this)->update_object_type();
+                        ((MapEditorDialog*)this)->update_object_type();
                     }
-                    ((MapEditor*)this)->update_objects();
+                    ((MapEditorDialog*)this)->update_objects();
                     ShowWindow(m_hMapEditorDlg, 5);
                     g_game->f1a160 = 1;
                 }
@@ -214,7 +230,7 @@ int GameApp::Update()
                             }
                         }
                     }
-                    g_entity->pick_entity();
+                    pick_entity((GuiCtx*)g_entity);
                     g_entity->f2f9 = 1;
                     SetFocus(m_hWnd);
                     g_game->f1a1c8 = 0;
@@ -307,7 +323,7 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
             ((tstring*)((char*)g_game + 0x1a06c))->clear();
             break;
         case 0x9c58:
-            DialogBoxParamA(m_hInstance, (LPCSTR)0xe0, m_hWnd, (DLGPROC)global_4c03b0, 0);
+            DialogBoxParamA(m_hInstance, (LPCSTR)0xe0, m_hWnd, (DLGPROC)script_dialog_proc, 0);
             // falls through
         }
         // falls through
@@ -326,7 +342,7 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
         m_34c = wparam;
         break;
     }
-    return Application::MsgProc(hWnd, msg, wparam, lparam);
+    return ((CD3DApplication*)this)->CD3DApplication::MsgProc(hWnd, msg, wparam, lparam);
 }
 
 // ---- the loading screen's step ----------------------------------------------------------------------

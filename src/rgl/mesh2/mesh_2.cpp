@@ -8,9 +8,22 @@
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"
+#include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10, stamp 0x4c1ee0)
 #include "../../game/terrain_a/terrain.h"      // Terrain (the 0x845e7c8-byte world-map terrain object): its constructor 0x4ce720 ends this object
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
+
+// canonical declarations of callees defined in other modules, reached through this module's layout views
+struct PolyMesh {
+    void build_adjacency();   // 0x470920 (game/terrain_b/poly_mesh.h): graph_obj is the same object
+};
+struct editor {
+    void free_items();   // 0x4c5150 / 0x4c5110 (rgl/mesh2/gui_edit.h)
+    void clear_vec38();   // 0x4c5110
+};
+struct CellGrid {
+    ~CellGrid();   // 0x475d50 (game/terrain_b): the grid's destructor body, called without the delete
+};
 
 const char g_none[] = "none";                                   // 0x54ac00
 static const float HALF = 0.5f;                                 // 0x549d70
@@ -93,9 +106,13 @@ void big_holder::release()
     v3a8 = 0;
     v3ac = 0;
     v3b0 = 0;
-    tail.free_items();
+    ((editor*)&tail)->free_items();   // rec is the editor's item pair (0x4c5150)
+    // the callback is editor::clear_vec38 (thiscall = fastcall for one argument): a single-inheritance pointer to member is
+    // its address (cl 13.10 has no other way to name a member's address as a plain function pointer)
+    union { void (editor::*m)(); void (__fastcall* f)(void*); } cb;
+    cb.m = &editor::clear_vec38;
     for (int i = 4; i >= 0; i--)
-        vector_destructor_iterator(&rows[i], 0x4c, 2, &clear_vec38);
+        vector_destructor_iterator(&rows[i], 0x4c, 2, cb.f);
 }
 
 // @ 0x4ca8c0
@@ -298,7 +315,7 @@ again:
             }
         }
     }
-    build_adjacency();
+    ((PolyMesh*)this)->build_adjacency();   // 0x470920
     return true;
 }
 
@@ -362,7 +379,7 @@ bool graph_obj::split_edge(int e)
     f0->ends[3] = ys[3];
     f0->count = 4;
     remove_edge(e);
-    build_adjacency();
+    ((PolyMesh*)this)->build_adjacency();   // 0x470920
     return true;
 }
 
@@ -373,7 +390,7 @@ void rec_2e4::release()
     g_gui.reset();
     res_rec* r = p;
     if (r) {
-        r->remove();
+        ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);
         p = 0;
     }
@@ -386,7 +403,7 @@ void rec_1ac::release()
     g_gui.reset();
     res_rec* r = p;
     if (r) {
-        r->remove();
+        ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);
     }
 }
@@ -399,7 +416,7 @@ void rec_178::release()
     g_gui.reset();
     res_rec* r = ((rec_178*)self)->p;
     if (r) {
-        r->remove();
+        ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);
     }
 }
@@ -410,7 +427,7 @@ void vec3_holder::clear()
 {
     ptr_tag tag;
     if (begin) {
-        obj_free(begin, end, (void*)pad0, tag);
+        ((obj_free_t)destroy_arrsets)((ArrSet*)begin, (ArrSet*)end, (void*)pad0, tag);
         operator delete(begin);
     }
     begin = 0;
@@ -472,7 +489,7 @@ void big_obj::release()
 {
     res_rec* r = p2e74;
     if (r) {
-        r->remove();
+        ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);
     }
     for (int i = 0; i < 8; i++) {
@@ -578,8 +595,8 @@ template class std::vector<E176>;
 // @ 0x4cc260
 void __fastcall erase_110(void* self, int, void* first, void* last)
 {
-    nonscalar_tag tag;
-    destroy_110(first, last, self, tag);
+    std::_Nonscalar_ptr_iterator_tag tag;
+    std::_Destroy_range((E176*)first, (E176*)last, *(std::allocator<E176>*)self, tag);   // 0x4ca7e0
 }
 
 // @ 0x4cd720
@@ -604,7 +621,7 @@ void __fastcall fix_skeletons(std::vector<RegSkeleton>* list)
 {
     for (unsigned i = 0; i < list->size(); i++) {
         RegSkeleton* sk = &(*list)[i];
-        SkelRes* res = g_resmgr.get_object70(sk->model);
+        SkelRes* res = (SkelRes*)((resource_manager*)&g_resmgr)->get_object70(*(const rgl::string*)&sk->model);
         if (res != 0) {
 #define DST(j) ((SkelBone*)(res->bones + (j) * 0xdc))
             for (unsigned j = 0; j < sk->bones.size() && (int)j < res->count; j++) {
@@ -636,6 +653,7 @@ void LangTables::load(const char* root)
     FILE* f = fopen("language.txt", "r");
     tstring line;
     char buf[5000];
+    ptr_tag tag;
     if (fgets(buf, 5000, f)) {
         line.assign(buf);
         if (line.buf[line.len - 1] == '\n')
@@ -694,15 +712,15 @@ void LangTables::load(const char* root)
                     } else {
                         lang_bucket* kb = &keys[hash];
                         if (kb->size() < (unsigned)(kb->myend - kb->myfirst))
-                            uninit_fill_n_str(kb, kb->mylast, 1, key);
+                            uninit_fill_n_str(kb->mylast, 1, key, *(allocstr*)kb, tag);
                         else
-                            _Insert_n(kb, kb->mylast, 1, key);
+                            ((tstring_vec_pub*)((char*)kb + 4))->_Insert_n(std::vector<tstring>::iterator(kb->mylast), 1, key);   // the vector sits at +4 of the bucket
                         kb->mylast++;
                         lang_bucket* vb = &vals[hash];
                         if (vb->size() < (unsigned)(vb->myend - vb->myfirst))
-                            uninit_fill_n_str(vb, vb->mylast, 1, value);
+                            uninit_fill_n_str(vb->mylast, 1, value, *(allocstr*)vb, tag);
                         else
-                            _Insert_n(vb, vb->mylast, 1, value);
+                            ((tstring_vec_pub*)((char*)vb + 4))->_Insert_n(std::vector<tstring>::iterator(vb->mylast), 1, value);
                         vb->mylast++;
                     }
                     len = text.len;
@@ -751,7 +769,7 @@ void ObjectList::read(stream_base* s)
         vector4 big(10000000.0f, 10000000.0f, 10000000.0f);
         vector4 neg(-10000000.0f, -10000000.0f, -10000000.0f);
         s->r_tstr((rgl::string*)&entries[i].name);
-        entries[i].nodes.assign(g_resmgr.find_meshes(&entries[i].name));
+        entries[i].nodes.assign(as_mesh_vector(g_resmgr.find_meshes((const rgl::string*)&entries[i].name)));
         entries[i].mn = big;
         entries[i].mx = neg;
         for (unsigned j = 0; j < entries[i].nodev().size(); j++) {
@@ -764,7 +782,7 @@ void ObjectList::read(stream_base* s)
         if (buf.equals("0")) {
             entries[i].shape = 0;
         } else {
-            entries[i].shape = g_resmgr.get_object60(&buf);
+            entries[i].shape = (mesh*)((resource_manager*)&g_resmgr)->get_object60(*(const rgl::string*)&buf);
             entries[i].body = body_copy_shape(entries[i].shape);
         }
     }
@@ -794,11 +812,8 @@ void MissionObj::read(stream_base* s)
     tstring t1;
     s->r_tstr((rgl::string*)&t0);
     if (t0.len > 1 && t0.differs(g_none)) {
-        mesh_vector nodes;
-        g_resmgr.find_meshes(&nodes, &t0);
-        vec_assign_43f0a0(&nodes_, &nodes);
-        if (nodes.begin)
-            operator delete(nodes.begin);
+        std::vector<rgl::mesh*> nodes = g_resmgr.find_meshes((const rgl::string*)&t0);
+        vec_assign_43f0a0(&nodes_, &as_mesh_vector(nodes));
         unsigned j = 0;
         while (1) {
             if (nodes_.begin == 0 || (nodes_.end - nodes_.begin) <= (int)j)
@@ -817,7 +832,7 @@ void MissionObj::read(stream_base* s)
     }
     s->r_tstr((rgl::string*)&t1);
     if (t1.len > 1) {
-        shape = g_resmgr.get_object60(&t1);
+        shape = (mesh*)((resource_manager*)&g_resmgr)->get_object60(*(const rgl::string*)&t1);
         body = body_copy_shape(shape);
         vector4 b;
         vmax(&mx, &mx, body->get_bounds_max(&b));
@@ -829,8 +844,8 @@ void MissionObj::read(stream_base* s)
         radius = rgl::length(mx - v58);
     }
     _snprintf(buf, 0x200, "Mission object %s", name.c_str());
-    v70.resize(s, buf, 0);
-    v70.stamp(2);
+    ((GameVec*)&v70)->resize(*s, buf, 0);   // game_vec is the 12-byte GameVec head (0x4c1e10 / 0x4c1ee0)
+    ((GameVec*)&v70)->stamp(2);
 }
 
 // @ 0x4ce680

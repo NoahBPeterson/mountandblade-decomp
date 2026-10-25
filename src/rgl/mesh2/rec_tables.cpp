@@ -5,10 +5,23 @@
 // 0x4c3050..0x4c48d0 is the "T regime" region (docs/tu_map.md): helpers sit right after their caller, so
 // the functions stay in binary order and the helpers defined after a caller are kept out of line.
 #include "./rec_tables.h"
+#include "../../game/ini_file.h"      // g_game_vars (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
+#include "../../game/config/config.h"        // canonical: clip_slot (Entry18), music_player, InputSet, Config, loaded_snd_table, prsnt_record, sound_record
+#include "../../game/render_batch.h"          // render_batch (g_batch 0x5fe898)
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+
+// agent.h's allocator tag of the one-int record (0x436d80); declared here to avoid that header
+struct int1 { int a; };
+struct alloc_int1 {
+    void construct(int1* p, const int1& v);   // 0x436d80
+};
+// rgl/core/resmgr.h's resmgr (the object at 0x5d6fa0), declared here: that header's g_log clashes with gui_manager.h's
+struct resmgr {
+    int load_all(int check_exists, rgl::string* root);   // 0x41c540
+};
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 
@@ -43,20 +56,25 @@ void C4c2c50::dtor()
 // @ 0x4c2d10
 C4c2d10::C4c2d10()
 {
-    M44 tmp;
+    pos tmp;
     v110 = 2;
     v118 = ((int*)g_ticks)[4];
     v11c = ((int*)g_ticks)[5];
     v120 = 0;
     v128 = 0;
     f124 = 6.0f;
-    blk0 = *identity_pos(&tmp);
-    blk1 = *identity_pos(&tmp);
-    blk3 = *identity_pos(&tmp);
-    blk2 = *identity_pos(&tmp);
+    blk0 = *(M44*)identity_pos(&tmp);
+    blk1 = *(M44*)identity_pos(&tmp);
+    blk3 = *(M44*)identity_pos(&tmp);
+    blk2 = *(M44*)identity_pos(&tmp);
     v100 = 0;
     v104 = 0;
 }
+
+// The class whose constructor the linker folded into clip_slot's (0x4be720): its own constructor forwards to it.
+struct Entry18 : clip_slot {
+    ~Entry18() { ((tstring*)&name)->~tstring(); }
+};
 
 // @ 0x4c2dd0
 void Blk2dd0::read(stream_base* s)
@@ -68,9 +86,9 @@ void Blk2dd0::read(stream_base* s)
         entries = new Entry18[count];
     for (int i = 0; i < count; i++) {
         s->r_int(&entries[i].v10);
-        s->r_tstr((rgl::string*)&entries[i].s0);
-        s->r_int(&entries[i].v14);
-        entries[i].s0.underscores_to_spaces();
+        s->r_tstr((rgl::string*)&entries[i].name);
+        s->r_int((int*)&entries[i].v14);
+        ((tstring*)&entries[i].name)->underscores_to_spaces();   // raw_tstring is tstring's layout without the constructor (config.h)
     }
     s->r_int(&v10);
     s->r_int(&v14);
@@ -264,21 +282,33 @@ void C4c3290::dtor()
 
 // Tail-call thunks: `mov ecx, 0x8ee3c48; jmp 0x4bf870` -> a thiscall member call on the editor singleton
 // (the MapEditorDialog instance, ?g_editor_dialog@@3UMapEditorDialog@@A).
+// The targets are dialog procedures: 0x4bf870 is Core::script_debugger_proc (a thiscall member taking the four window-procedure
+// arguments, which the thunk leaves on the stack) and 0x4c03b0 is the stdcall folder_dlg_proc (it ignores ecx). The thunk calls each
+// definition's own symbol through the argument-less thiscall member type the original's `mov ecx; jmp` stands for.
+INT_PTR CALLBACK folder_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4c03b0 (game/triggers/trigger_vec.h)
 struct EditorObj {
-    void script_debugger_proc();                          // 0x4bf870
-    void folder_dlg_proc();                          // 0x4c03b0
+    void thunk();
+};
+union DlgThunk {
+    void (EditorObj::*thunk)();
+    INT_PTR (Core::*script_debugger_proc)(HWND, UINT, WPARAM, LPARAM);
+    INT_PTR (CALLBACK *folder_dlg_proc)(HWND, UINT, WPARAM, LPARAM);
 };
 
 // @ 0x4c3330
 void global_4bf870()
 {
-    ((EditorObj*)0x8ee3c48)->script_debugger_proc();
+    DlgThunk f;
+    f.script_debugger_proc = &Core::script_debugger_proc;
+    (((EditorObj*)0x8ee3c48)->*f.thunk)();
 }
 
 // @ 0x4c3340
 void script_dialog_proc()
 {
-    ((EditorObj*)0x8ee3c48)->folder_dlg_proc();
+    DlgThunk f;
+    f.folder_dlg_proc = ::folder_dlg_proc;
+    (((EditorObj*)0x8ee3c48)->*f.thunk)();
 }
 
 // @ 0x4c3350
@@ -350,32 +380,33 @@ int __fastcall renderer_setup(GameAppView* self)
     if (((unsigned*)&g_caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_caps)[0xcc / 4] >= 0xffff0200 &&
         ((unsigned*)&g_caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_caps)[0xd4 / 4] & 1) != 0 && g_shader_support != 0)
         g_use_shaders = 1;
-    apply_input_settings((InputGlobal*)0xa17910);
-    load_game_variables(self);
+    apply_input_settings((InputSet*)0xa17910);
+    ((void (__fastcall*)(void*))load_game_variables)(self);
     {
         tstring k1("buffer_size_dx7_regular_ffp_dynamic");
-        int v1 = (int)g_game_vars.get_float(k1);
+        int v1 = (int)((ini_file_x&)g_game_vars).get_float(k1);
         tstring k2("buffer_size_dx7_regular_ffp_static");
-        int v2 = (int)g_game_vars.get_float(k2);
+        int v2 = (int)((ini_file_x&)g_game_vars).get_float(k2);
         tstring k3("buffer_size_normal_map_dynamic");
-        int v3 = (int)g_game_vars.get_float(k3);
+        int v3 = (int)((ini_file_x&)g_game_vars).get_float(k3);
         tstring k4("buffer_size_normal_map_static");
-        int v4 = (int)g_game_vars.get_float(k4);
+        int v4 = (int)((ini_file_x&)g_game_vars).get_float(k4);
         tstring k5("buffer_size_skinning_dynamic");
-        int v5 = (int)g_game_vars.get_float(k5);
+        int v5 = (int)((ini_file_x&)g_game_vars).get_float(k5);
         tstring k6("buffer_size_skinning_static");
-        int v6 = (int)g_game_vars.get_float(k6);
+        int v6 = (int)((ini_file_x&)g_game_vars).get_float(k6);
         tstring k7("buffer_size_regular_dynamic");
-        int v7 = (int)g_game_vars.get_float(k7);
+        int v7 = (int)((ini_file_x&)g_game_vars).get_float(k7);
         tstring k8("buffer_size_regular_static");
-        int v8 = (int)g_game_vars.get_float(k8);
+        int v8 = (int)((ini_file_x&)g_game_vars).get_float(k8);
         tstring k9("buffer_size_regular_ffp_dynamic");
-        int v9 = (int)g_game_vars.get_float(k9);
+        int v9 = (int)((ini_file_x&)g_game_vars).get_float(k9);
         tstring k10("buffer_size_regular_ffp_static");
-        ((RenderSetup*)0x5fe898)->init_decls((int)g_game_vars.get_float(k10), v9, v8, v7, v6, v5, v4, v3, v2, v1);
+        int v10 = (int)((ini_file_x&)g_game_vars).get_float(k10);
+        g_batch.init_decls(&v10, &v9, &v8, &v7, &v6, &v5, &v4, &v3, &v2, &v1);
     }
-    ((ResMgrX*)0x5d6fa0)->load_all(1, &g_module_path);
-    ((InputDevices*)0xa170c8)->init_devices(self->hwnd);
+    ((resmgr*)0x5d6fa0)->load_all(1, (rgl::string*)&g_module_path);
+    ((InputSet*)0xa170c8)->init_devices(self->hwnd);
     return 0;
 }
 
@@ -415,7 +446,7 @@ void options_record::load()
         st.r_int(&w28);
         st.r_int(&w30);
         st.r_int(&mode);
-        set_triple_buffering(mode);
+        ((Config*)this)->set_triple_buffering(mode);
         st.r_int(&w34);
         st.r_int(&w48);
         if (w48 < 0 || w48 >= 3)
@@ -438,7 +469,7 @@ void options_record::load()
         st.r_int(&w78);
         st.r_int(&w7c);
         st.r_int(&w04);
-        set_texture_quality(w04);
+        ((Config*)this)->set_texture_quality(w04);
         st.r_float(&f80);
         if (!(1.4f <= f80) || !(f80 < 2.6f))
             f80 = 2.2f;
@@ -476,7 +507,7 @@ void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al)
     char* first = dst;
     try {
         for (; 0 < n; --n, dst += 4)
-            al.construct(dst, arg);
+            ((alloc_int1&)al).construct((int1*)dst, *(const int1*)arg);   // Alloc4 is the empty allocator tag; 0x436d80 is alloc_int1::construct (agent.h)
     } catch (...) {
         throw;
     }
@@ -503,7 +534,7 @@ void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al)
     char* dest0 = dst;
     try {
         for (; first != last; dst += 4, first += 4)
-            al.construct(dst, first);
+            ((alloc_int1&)al).construct((int1*)dst, *(const int1*)first);   // 0x436d80, as above
     } catch (...) {
         throw;
     }
@@ -537,7 +568,7 @@ void __fastcall load_elem48_array(elem48_holder* self, int, stream_base* s)
     }
     self->arr = new elem48[self->count];
     for (int i = 0; i < self->count; i++)
-        self->arr[i].save(s);
+        ((prsnt_record*)&self->arr[i])->save(*s);   // prsnt_record is the 0x48-byte record (tstring +0, tstring +0x14); 0x4bdf60
 }
 
 // ---- the 0x1c034-byte scene file object (last member ends at +0x1c034) -----------------------------
@@ -559,15 +590,15 @@ void __fastcall sound_engine::tick()
 {
     if (g_sound_paused != 0 || g_sound_muted != 0)
         return;
-    if ((float)(g_ticks[t2418.slot] - t2418.start) * 1e-5f > 0.5f) {
-        advance_piece();
-        t2418.start = g_ticks[t2418.slot];
+    if ((float)(g_ticks[t2418.clock] - t2418.start) * 1e-5f > 0.5f) {
+        ((music_player*)this)->advance_piece();   // the music player object; 0x4c25e0
+        t2418.start = g_ticks[t2418.clock];
     }
     float vol = g_music_volume;
     if (fading != 0) {
-        if ((float)(g_ticks[t2450.slot] - t2450.start) * 1e-5f > 5.0f) {
+        if ((float)(g_ticks[t2450.clock] - t2450.start) * 1e-5f > 5.0f) {
             vol = 0.0f;
-            stop(0);
+            ((music_player*)this)->stop(0);   // 0x4be0a0
             fading = 0;
         } else {
             vol = (1.0f - clamp(t2450.elapsed() * 0.2f, 0.0f, 1.0f)) * vol;
@@ -647,8 +678,8 @@ void music_set::load(stream_base* s, int load_samples, const tstring* dir)
     s->r_int(&count2);
     names = new music_name[count2];
     for (int j = 0; j < count2; j++)
-        names[j].load(*s);
-    load_used(this);
+        ((sound_record*)&names[j])->load(*s);   // music_name is the 0x98-byte sound_record (0x4be200)
+    ((loaded_snd_table*)this)->load_used();   // 0x4be270 reads count at +8 and records at +0xc: music_set's count2 / names
 }
 
 // ---- the two 0x20-byte tstring arrays destroyed by 0x4c4640 ----------------------------------------

@@ -15,6 +15,10 @@
 #include "./poly_mesh.h"
 #include "../../include/rec1c8.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "./cell_grid.h"
+#include "./cell_world.h"
+struct render_cache {
+    void set_blend_mode(int mode);   // 0x40e940 (rgl/particles/render_cache.h; that header's g_render clashes with renderer.h's): the renderer object's blend-state cache
+};
 #include "./terrain.h"
 #include "./records.h"
 #include "./game_data.h"
@@ -171,7 +175,7 @@ void render_batch::render_scene(scene* sc)
                 IDirect3DBaseTexture9* t = tex_current(st, 0.0f);
                 g_effect->SetTexture("shadowmap_texture", t);
                 D3DXMATRIX proj = scene_sky(sc)->shadow_cam.projection();
-                D3DXMATRIX view = scene_sky(sc)->shadow_cam.view_matrix();
+                D3DXMATRIX view = frustum_view_matrix(&scene_sky(sc)->shadow_cam);
                 D3DXMATRIX svp = view * proj * D3DXMATRIX(0.5f, 0.0f, 0.0f, 0.0f,
                                                          0.0f, -0.5f, 0.0f, 0.0f,
                                                          0.0f, 0.0f, 1.0f, 0.0f,
@@ -207,7 +211,7 @@ void render_batch::render_scene(scene* sc)
                 g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, 1);
             }
         }
-        g_render.set_blend_mode(1);
+        ((render_cache*)&g_render)->set_blend_mode(1);   // 0x40e940
         if (g_render.alpha_mode)
             g_render.dev->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
         g_render.alpha_mode = 0;
@@ -235,7 +239,7 @@ void render_batch::render_scene(scene* sc)
     {
         frame4 b;
         rot3 idt;
-        b.rot = *identity3(&idt);
+        b.rot = *(rot3*)identity3((mat3*)&idt);
         b.o = vector4(0.0f, 0.0f, 0.0f);
         float ang = 1.5707964f;
         ((m4*)&b)->rotate_about_s(&ang);
@@ -251,7 +255,7 @@ void render_batch::render_scene(scene* sc)
     g_effect->SetVector("vCameraPos", (D3DXVECTOR4*)&camp);
 
     D3DXMATRIX proj = sc->fr.projection();
-    D3DXMATRIX view = sc->fr.view_matrix();
+    D3DXMATRIX view = frustum_view_matrix(&sc->fr);
     g_effect->SetMatrixTranspose("matView", &view);
     D3DXMATRIX viewproj = view * proj;
     g_effect->SetMatrixTranspose("matViewProj", &viewproj);
@@ -550,7 +554,7 @@ void render_batch::render_scene(scene* sc)
                 D3DXMATRIX world2 = world;
                 if ((it->m->res->shader->flags20 & 0x100) && sc->refl) {
                     D3DXMATRIX wproj = sc->refl->fr.projection();
-                    D3DXMATRIX wview = sc->refl->fr.view_matrix();
+                    D3DXMATRIX wview = frustum_view_matrix(&sc->refl->fr);
                     wproj = world2 * wview * wproj;
                     g_effect->SetMatrixTranspose("matWaterWorldViewProj", &wproj);
                 }
@@ -1018,7 +1022,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                         near_.x = pos.x - d.x; near_.y = pos.y - d.y; near_.z = pos.z - d.z;
                         bool visible;
                         if (trace)
-                            visible = grid->trace_ray(&near_, &far_, 50.0f, 0, 0) != 0;
+                            visible = TRACE_RAY(grid, &near_, &far_, 50.0f, 0, 0) != 0;
                         else
                             visible = grid->hf->line_clear(&near_, &far_) != 0;
                         if (!visible)
@@ -1122,7 +1126,7 @@ void Mission::replace_mark(int idx)
                 from.z = from.z + 0.7f;
                 vector4 to = b;
                 to.z = to.z + 0.7f;
-                if (scene->trace_ray(&from, &to, 15.0f, 0, 0)) {
+                if (TRACE_RAY(scene, &from, &to, 15.0f, 0, 0)) {
                     *ov = b;
                     goto done;
                 }
@@ -1147,11 +1151,16 @@ void PList::free_values()
     n = 0;
 }
 
+// 0x467940 is a stdcall function that ignores `this` (src/game/terrain_a/misc.h): the member spelling of game/mission.h would name
+// a symbol nothing defines, so the call goes to the definition's own declaration
+struct RuleRec; struct CandRec;
+bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, char p6);    // 0x467940
+
 // @ 0x4724c0
 MRow36* vecMRow36::ufill(MRow36* f, unsigned n, const MRow36& v)
 {
     ptr_tag t;
-    uninit_fill_n36(f, n, v, *this, t);
+    ((fill36_t)uninit_fill_n36)((rec36*)f, n, (const rec36&)v, (alloc36&)*this, t);
     return f + n;
 }
 
@@ -1159,7 +1168,7 @@ MRow36* vecMRow36::ufill(MRow36* f, unsigned n, const MRow36& v)
 MVert* vec18::ufill(MVert* f, unsigned n, const MVert& v)
 {
     ptr_tag t;
-    uninit_fill_n24(f, n, v, *this, t);
+    ((fill24_t)uninit_fill_n24)((elem24*)f, n, (const elem24&)v, (alloc24&)*this, t);
     return f + n;
 }
 
@@ -1167,7 +1176,7 @@ MVert* vec18::ufill(MVert* f, unsigned n, const MVert& v)
 MPoly* vec64::ufill(MPoly* f, unsigned n, const MPoly& v)
 {
     ptr_tag t;
-    uninit_fill_n100(f, n, v, *this, t);
+    ((fill100_t)uninit_fill_n100)((particle100*)f, n, (const particle100&)v, (alloc100&)*this, t);
     return f + n;
 }
 
@@ -1175,7 +1184,7 @@ MPoly* vec64::ufill(MPoly* f, unsigned n, const MPoly& v)
 MEdge* vec34::ufill(MEdge* f, unsigned n, const MEdge& v)
 {
     ptr_tag t;
-    uninit_fill_n52(f, n, v, *this, t);
+    ((fill52_t)uninit_fill_n52)((elem52*)f, n, (const elem52&)v, (alloc52&)*this, t);
     return f + n;
 }
 
@@ -1188,8 +1197,8 @@ template std::vector<Rec1c8>::iterator std::vector<Rec1c8>::erase(std::vector<Re
 // @ 0x472630
 ArrSet* vecArr::ucopy(ArrSet* f, ArrSet* l, ArrSet* d)
 {
-    ptr_tag t;
-    return uninit_copy_arrset(f, l, d, *this, t);
+    std::_Nonscalar_ptr_iterator_tag t;
+    return (ArrSet*)uninit_copy_arrset((rec136*)f, (rec136*)l, (rec136*)d, (alloc136&)*this, t);
 }
 
 // (0x467f80: a copy of the other object's function, kept in this object so cl knows its register use)
@@ -1715,7 +1724,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
                 __int64 hero = t->flags30s & 0x10;
                 if ((hero != 0 && s->spawned == 0 && t->used == 0 && (s->troop == g_game->player || !g_game->agent_low(s->troop)))
                     || (hero == 0 && s->count > s->wounded + s->spawned)) {
-                    if (rule_accepts(r, s, k, x3, x4, x5)) {
+                    if (::rule_accepts((RuleRec*)r, (CandRec*)s, k, x3, x4, x5)) {
                         if (hero == 0) {
                             float chance = (float)(s->count - s->wounded) / (float)total + 0.25f;
                             float rnd = (float)(rand() % 15817) * (1.0f / 15817.0f);
@@ -1763,7 +1772,7 @@ template<> void Pool<RecJ>::next_used(unsigned* i)
 ArrSet* vecArr2::ucopy(ArrSet* f, ArrSet* l, ArrSet* d)
 {
     ptr_tag t;
-    return uninit_copy_arrset2(f, l, d, *this, t);
+    return ((copy2_t)uninit_copy_arrset2)(f, l, d, *this, t);
 }
 
 // @ 0x474370 (_Insertion_sort)
@@ -2054,13 +2063,13 @@ void Mission::update_team_counts()
 void vecArrS::destroy(ArrSet* f, ArrSet* l)
 {
     ptr_tag t;
-    destroy_range_arrset_x(f, l, *this, t);
+    ((destroy_arrsets_t)destroy_arrsets)(f, l, *this, t);
 }
 // @ 0x475b80
 ArrSet* vecArrS::ufill(ArrSet* f, unsigned n, const ArrSet& v)
 {
     ptr_tag t;
-    uninit_fill_n_arrset_x(f, n, v, *this, t);
+    uninit_fill_n_arrset(f, n, v, *this, t);
     return f + n;
 }
 
@@ -2178,7 +2187,7 @@ MAgent::MAgent()
 {
     f20 = 0; f24 = 0; f28 = 0;
     t40.state = 2; t40.t = tk(2);
-    view.init_timers();
+    new (&view) ViewState;   // 0x475e50
     subB.init();
     t57c8.state = 2; t57c8.t = tk(2); f57d8 = 0;
     t57e0.state = 2; t57e0.t = tk(2);

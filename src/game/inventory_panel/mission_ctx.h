@@ -34,11 +34,13 @@ extern MenuWidget* g_wE8;                               // 0xa739e8
 extern MenuWidget* g_wEC;                               // 0xa739ec
 
 // the Mission object with the members of 0x5143f0 / 0x5144d0 (src/game/mission.h lacks them) and the offsets the start-up reads
+struct MissionG {
+    void frame(float dt, bool spawn);   // 0x483f60 (ret 8; game/mesh_slot mesh_game.cpp: Mission::frame's definition)
+};
 struct MissionV : Mission {
     void init(int tmpl, int a2, int a3, int a4, struct MissionCtx* ctx, int a6, int a7);   // 0x5143f0 (ret 0x18)
     __declspec(noinline) void init_scene();             // 0x5144d0
-    void frame(float a, int b);                          // 0x483f60 (ret 8)
-    void start_setup();                                 // 0x484590
+    __forceinline void frame(float a, int b) { ((MissionG*)this)->frame(a, b != 0); }   // 0x483f60 (ret 8)
 };
 #define MI(m, off) (*(int*)((char*)(m) + (off)))
 
@@ -126,16 +128,17 @@ struct MissionCtx {
     void frame(int tick);                               // 0x516370 (ret 4)
     void update_anim();                                 // 0x516700
     void reset_ids(int id);                             // 0x5169e0 (ret 4)
-    void select_side(int side);                         // 0x492750 (ret 4)
+    __forceinline void select_side(int side) { ((BattleW*)this)->select_side(side); }   // 0x492750 (ret 4)
     void base_init();                                   // 0x4be730
 };
 extern MissionCtx g_mission_ctx;                        // 0xa73300
 
+void rotate_2x2(float* m, float angle);                     // 0x4f3b40 (game/char_sheet/terrain_page_input)
 // a 2x2 matrix (0x516220)
 struct mat2 {
     float m[4];
     mat2(const float* a, const float* b);               // 0x516220
-    void rotate_2x2(float angle);                           // 0x4f3b40 (thiscall: pointer in ecx, angle on the stack)
+    __forceinline void rotate_2x2(float angle) { ::rotate_2x2(m, angle); }   // 0x4f3b40
 };
 
 #endif // GAME_INVENTORY_PANEL_MISSION_CTX_H

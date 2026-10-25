@@ -9,6 +9,7 @@
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./mission_ctx.h"
+#include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
 #include "../mission.h"
@@ -33,7 +34,7 @@ extern int g_a73440;                                    // 0xa73440 (page 0 part
 void autosave_notice();                                 // 0x514830
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (cdecl)
 
-struct DetachTarget {                                   // the 0x98-byte object resolved from the handle at ctx+0x08
+struct BattleRec {                                      // the 0x98-byte object resolved from the handle at ctx+0x08 (game/party2)
     void detach();                                // 0x4b6180
 };
 #include "../mode_rec.h"                              // MissionTemplate (0x58 bytes, array at 0x5e2a00): the one definition
@@ -43,56 +44,62 @@ extern int g_mission_template_count;                            // 0x5e2a04
 using rgl::mat3;
 mat3* identity3(mat3* m);                               // 0x40cd60 (cdecl)
 struct FramePlacement { mat3 m; int a, b, c, d; };      // 0x40 bytes (rotation + position; was Placement: agent/agent.h's Placement is the game-data view of 0x435650)
-struct SceneTmp {                                       // 0x1c8 bytes, ctor 0x437830
+struct PlacedObj {                                       // 0x1c8 bytes, ctor 0x437830
     char pad0[0x10];
     int f10, f14, f18, f1c;                             // +0x10
     mat3 rot;                                           // +0x20
     FramePlacement out;                                    // +0x50
     char pad90[0x1c8 - 0x90];
-    SceneTmp();                                         // 0x437830
+    PlacedObj();                                         // 0x437830
 };
 struct IVector { void resize(unsigned n, int v); };     // 0x43f310 (ret 8)
 struct SceneSub { int dummy; void f(int v); };          // 0x4777c0 (ret 4)
-struct GenA { void reset(); };                          // 0x4647e0 (this = 0xa76630)
+struct Terrain {
+    void reset();   // 0x4647e0 (this = 0xa76630; game/terrain_a/terrain.h)
+};
 struct GenB { void f(); };                              // 0x494310 (this = 0x5aa128)
-void save_game(int id, int mode);                       // 0x4e8980
-struct DialogMgrV {                                     // the dialog manager at 0x8ed50c8
-    void start(int a, int b, int c, int d, int e);      // 0x4610b0 (ret 0x14)
+int save_game(int id, tstring* name);                  // 0x4e8980
+struct DialogMgr {                                      // the dialog manager at 0x8ed50c8
+    void start(int a, int b, int c, int d, char e);     // 0x4610b0 (ret 0x14)
 };
 
 
 int count_hero_items();                                 // 0x513e10
-static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(&k); }
+static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k); }
 #include "../rec98.h"                                  // Rec98: the 0x98-byte scene node record (pages at game+0xe4)
 // ---- objects and constants of other translation units ----------------------------------------------------------------
 #include "../ui/named_rec.h"                            // NamedRec: setup 0x48a3a0 (ret 8)
+struct Slot {
+    int is_ready(int index);   // 0x487900 (ret 4; game/mesh_slot: Slot::is_ready, the keyboard slot table)
+};
 struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
 #include "../key_names.h"
 struct TextLog { virtual void print(const char* s); };  // +0x28 prints one line (slot index 10 in the original; the declaration order is kept)
 #include "../item_sound.h"                                    // ItemSound: the one definition (play 0x48add0)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
-struct Psys {
+struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
-    void render();                                       // 0x47fef0
+    void render();                                       // 0x47fef0 (game/mesh_slot)
 };
 struct FrameRenderer { virtual void set_frame(const rgl::matrix* m); };   // +0x54 (the slot index is not reproduced: only the call shape matters here)
-struct PosV : rgl::matrix {
-    rgl::vector4 transform_point(const rgl::vector4& p) const;   // 0x408460
+struct MapPanel {
+    void update_target();   // 0x5191e0 (inventory_panel/map_panel.h)
+};
+struct GameG {
+    void tick(float dt);   // 0x516ac0 (ret 4; inventory_panel/game_tick.h)
 };
 struct PartyV : Party {
     int data_ready();                                   // 0x5166a0
 };
-void refresh_rating();                                  // 0x492470
 void quick_save_msg();                                  // 0x516a70
-int save_game(int arg, char* name);                     // 0x4e8980
 extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x87 args)
 extern tstring g_scratch;                               // 0xa70464
 extern TextLog g_debug_log;                               // 0x5a9f30
 extern UiKeyState g_keys;                                 // 0xa73730
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
-extern Psys* g_shadow_map;                                    // 0xa70248
+extern ShadowMapP* g_shadow_map;                                    // 0xa70248
 extern int g_psys_scene;            // 0xa170c0
 extern int g_a170d8;            // 0xa170d8
 extern int g_a174d8;            // 0xa174d8
@@ -145,7 +152,7 @@ extern const float g_half;          // 0x549d70  0.5f
 static Party* party_by_id(int id)
 {
     PartyMgr* mgr = &g_game->parties;
-    int idx = mgr->index_of(id);
+    int idx = ((Map10007*)mgr)->lookup(id);
     return (Party*)((char*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8);
 }
 
@@ -288,20 +295,20 @@ void MissionCtx::update_parties()
         f40 = 0;
         GV->clear_hero_ammo(g_game->f78);
 
-        if (party[side] >= 0 && g_game->parties.is_live(party[side])) {
+        if (party[side] >= 0 && ((PartyMgrW*)&g_game->parties)->is_live(party[side])) {
             int a = 0, b = 0, c = 0, d = 0;
 
             GV->clear_hero_ammo(party[side]);
             g_game->parties.get(party[side])->dirty = 1;
-            g_game->count_units(party[side], &a, &b, &c, &d);
+            ((GameW*)g_game)->count_units(party[side], &a, &b, &c, &d);
         }
         if (f2c8 != 0) {
-            if (party[1 - side] >= 0 && g_game->parties.is_live(party[1 - side])) {
+            if (party[1 - side] >= 0 && ((PartyMgrW*)&g_game->parties)->is_live(party[1 - side])) {
                 int a = 0, b = 0, c = 0, d = 0;
 
                 GV->clear_hero_ammo(party[1 - side]);
                 g_game->parties.get(party[1 - side])->dirty = 1;
-                g_game->count_units(party[1 - side], &a, &b, &c, &d);
+                ((GameW*)g_game)->count_units(party[1 - side], &a, &b, &c, &d);
             }
         }
 
@@ -309,21 +316,21 @@ void MissionCtx::update_parties()
             unsigned h = f08;
             char* blk = (*(char***)((char*)g_game + 0xe4))[h >> 4];
 
-            ((DetachTarget*)(blk + (h & 0xf) * 0x98))->detach();
+            ((BattleRec*)(blk + (h & 0xf) * 0x98))->detach();
         }
 
         PartyMgr* pm = &g_game->parties;
 
-        party_at(pm, pm->index_of(g_game->f78))->f88 = -1;
-        party_at(pm, pm->index_of(g_game->f78))->action = 0;
+        party_at(pm, ((Map10007*)pm)->lookup(g_game->f78))->f88 = -1;
+        party_at(pm, ((Map10007*)pm)->lookup(g_game->f78))->action = 0;
 
         if (count_hero_items() > f168) {
             tstring msg("ui_some_soldiers_are_ready_to_upgrade");
 
-            g_msglog.add(*g_strtable.lookup(&msg), 0xffbbffbb);
+            g_msglog.add(*g_strtable.lookup(msg), 0xffbbffbb);
         }
 
-        party_at(pm, pm->index_of(g_game->f78))->dirty = 1;
+        party_at(pm, ((Map10007*)pm)->lookup(g_game->f78))->dirty = 1;
     }
 }
 
@@ -332,7 +339,7 @@ int count_hero_items()
 {
     GameData* g = g_game;
     PartyMgr* m = &g->parties;
-    Party* p = party_at(m, m->index_of(g->f78));
+    Party* p = party_at(m, ((Map10007*)m)->lookup(g->f78));
     int n = 0;
     int i = 0;
     Stack* s = p->stacks;
@@ -359,9 +366,9 @@ void GameDataV::clear_hero_ammo(unsigned id)
     GameDataV* g = this;
     PartyMgr* m = &g->parties;
     if (id < m->n_parties) {
-        int idx = m->index_of(id);
+        int idx = ((Map10007*)m)->lookup(id);
         if (idx >= 0 && party_at(m, idx)->type == 1) {
-            Party* p = party_at(m, m->index_of(id));
+            Party* p = party_at(m, ((Map10007*)m)->lookup(id));
             for (int i = 0; i < p->nstacks; i++) {
                 if ((g->troops[p->stacks[i].troop].flags32 & 0x10) != 0 && p->stacks[i].f10 != 0)
                     p->stacks[i].f10 = 0;
@@ -407,30 +414,30 @@ void MissionCtx::setup(unsigned flags, int delta)
             n = 8 - n;
         f1c = GV->gate_rating(g_game->f78, party[side], party[1 - side]) + n;
         PartyMgr* m = &g_game->parties;
-        party_at(m, m->index_of(g_game->f78))->sum_stat(0x110);
-        if (g_game->parties.is_live(party[side]))
-            party_at(&g_game->parties, g_game->parties.index_of(party[side]))->sum_stat(0x110);
-        if (mode == 4 && g_game->parties.is_live(party[1 - side]))
+        party_at(m, ((Map10007*)m)->lookup(g_game->f78))->sum_stat(0x110);
+        if (((PartyMgrW*)&g_game->parties)->is_live(party[side]))
+            party_at(&g_game->parties, ((Map10007*)&g_game->parties)->lookup(party[side]))->sum_stat(0x110);
+        if (mode == 4 && ((PartyMgrW*)&g_game->parties)->is_live(party[1 - side]))
             g_game->parties.get(party[1 - side])->sum_stat(0x110);
         if (f1c > 6)
             f1c = 6;
         f27c = f1c - old;
         int i = 0;
-        while (i < party_at(&g_game->parties, g_game->parties.index_of(g_game->f78))->nstacks)
+        while (i < party_at(&g_game->parties, ((Map10007*)&g_game->parties)->lookup(g_game->f78))->nstacks)
             i++;
         int l[8];
         l[0] = 0;
         l[2] = 0;
         l[4] = 0;
         l[6] = 0;
-        g_game->count_units(party[side], &l[6], &l[4], &l[2], &l[0]);
+        ((GameW*)g_game)->count_units(party[side], &l[6], &l[4], &l[2], &l[0]);
         int d = -l[0];
         if (mode == 4) {
             l[1] = 0;
             l[3] = 0;
             l[5] = 0;
             l[7] = 0;
-            g_game->count_units(party[1 - side], &l[7], &l[5], &l[3], &l[1]);
+            ((GameW*)g_game)->count_units(party[1 - side], &l[7], &l[5], &l[3], &l[1]);
         }
         if (((signed char)f10 < 0 || f2c8 != 0) &&
             ((flags & 0x2000000) || (d <= 0 && f2c4 <= 0))) {
@@ -488,15 +495,15 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
     int p0 = ctx->party[0];
     if (p0 >= 0) {
         cnt[0] = 0;
-        g_game->list_members(p0, (unsigned*)list[0], (unsigned*)&cnt[0]);
+        ((GameW*)g_game)->list_members(p0, (int*)list[0], (int*)&cnt[0]);
     }
     int p1 = ctx->party[1];
     if (p1 >= 0) {
         cnt[1] = 0;
-        g_game->list_members(p1, (unsigned*)list[1], (unsigned*)&cnt[1]);
+        ((GameW*)g_game)->list_members(p1, (int*)list[1], (int*)&cnt[1]);
     }
     f6218 = a7;
-    g_game->list_members(g_game->f78, (unsigned*)(list[1] - a7 * 0x80), (unsigned*)((char*)this + (0x1884 - a7) * 4));
+    ((GameW*)g_game)->list_members(g_game->f78, (int*)(list[1] - a7 * 0x80), (int*)((char*)this + (0x1884 - a7) * 4));
     init_scene();
 }
 
@@ -504,7 +511,7 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
 void MissionV::init_scene()
 {
     *((char*)this + 0x6339) = 0;
-    SceneTmp t;
+    PlacedObj t;
     ((SceneSub*)((char*)this + 0x6688))->f(0);
     MI(this, 0x6528) = *(int*)((char*)g_mission_templates + mode * 0x58 + 0x20);
     *((char*)this + 0x6554) = 0;
@@ -531,7 +538,7 @@ void MissionV::init_scene()
     t.out.c = t.f18;
     t.out.d = t.f1c;
     *(FramePlacement*)((char*)this + 0x6624) = t.out;
-    ((GenA*)0xa76630)->reset();
+    ((Terrain*)0xa76630)->reset();
     ((GenB*)0x5aa128)->f();
     ((IVector*)((char*)this + 0x63c0))->resize(0, 0);
     *((char*)this + 0x6668) = 0;
@@ -597,7 +604,7 @@ void autosave_notice()
         return;
     {
         tstring s("ui_autosaving");
-        g_msglog.add(*g_strtable.lookup(&s), -1);
+        g_msglog.add(*g_strtable.lookup(s), -1);
     }
     save_game(-1, 0);
 }
@@ -619,7 +626,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     *(int*)(t + 0x7ac) = 1;
 
     PartyMgr* m = &g_game->parties;
-    Party* p = party_at(m, m->index_of(g_game->f78));
+    Party* p = party_at(m, ((Map10007*)m)->lookup(g_game->f78));
     if (1 < p->nstacks) {
         int n = 1;
         int oi = 0x5b8;
@@ -639,12 +646,12 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     }
 
     if (a3 > 0 && a3 != g_game->f78) {
-        if (1 < party_at(m, m->index_of(a3))->nstacks) {
+        if (1 < party_at(m, ((Map10007*)m)->lookup(a3))->nstacks) {
             int oi = 0x630;
             int of = 0x7ec;
             int n = 1;
-            for (; n < party_at(m, m->index_of(a3))->nstacks; n++) {
-                int item = party_at(m, m->index_of(a3))->stacks[n].troop;
+            for (; n < party_at(m, ((Map10007*)m)->lookup(a3))->nstacks; n++) {
+                int item = party_at(m, ((Map10007*)m)->lookup(a3))->stacks[n].troop;
                 if ((g_game->troops[item].flags32 & 0x10) != 0) {
                     *(int*)(t + oi) = item;
                     *(int*)(t + of) = 1;
@@ -663,7 +670,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
-    ((DialogMgrV*)0x8ed50c8)->start(a1, -1, a3, a4, 1);
+    ((DialogMgr*)0x8ed50c8)->start(a1, -1, a3, a4, 1);
 }
 
 // @ 0x514c00
@@ -680,14 +687,14 @@ void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
-    ((DialogMgrV*)0x8ed50c8)->start(a1, -1, party[side], 0, 1);
+    ((DialogMgr*)0x8ed50c8)->start(a1, -1, party[side], 0, 1);
 }
 
 // @ 0x514cd0
 void MissionCtx::start_mission()
 {
     int id = party[side];
-    Party* p = party_at(&g_game->parties, g_game->parties.index_of(id));
+    Party* p = party_at(&g_game->parties, ((Map10007*)&g_game->parties)->lookup(id));
     int v = GV->token_lookup(id, 0, 0, 0);
     build_hero_table(p->stacks[0].troop, v, id, 1);
 }
@@ -735,7 +742,7 @@ void Screen::frame_update(float dt)
 
     int hi = (int)t;
     g_scratch.assign("");
-    g_game->emit_event(0xf, hi / 24, hi);
+    ((SoundCtl*)g_game)->emit_event(0xf, hi / 24, hi);
     {
         tstring tmp(g_scratch);
         PSO(f60)->set_text(sz, &tmp);
@@ -852,7 +859,7 @@ void Screen::frame_update(float dt)
             if (g_trial_mode == 0) {
                 tstring a("ui_explanation_time_limit");
                 tstring b("ui_time_limit_reached");
-                ((NamedRec*)g_main_menu.f0)->setup(g_strtable.lookup(&b), g_strtable.lookup(&a));
+                ((NamedRec*)g_main_menu.f0)->setup(g_strtable.lookup(b), g_strtable.lookup(a));
                 g_main_menu.reset(g_trial_mode);
                 f64 = 1;
                 start = false;
@@ -861,7 +868,7 @@ void Screen::frame_update(float dt)
     } else {
         tstring a("ui_explanation_level_limit");
         tstring b("ui_level_limit_reached");
-        ((NamedRec*)g_main_menu.f0)->setup(g_strtable.lookup(&b), g_strtable.lookup(&a));
+        ((NamedRec*)g_main_menu.f0)->setup(g_strtable.lookup(b), g_strtable.lookup(a));
         g_main_menu.reset(g_trial_mode);
         f64 = 1;
         start = false;
@@ -875,7 +882,7 @@ void Screen::frame_update(float dt)
     GD_I(0x13aec) = 0;
     GD_I(0x13af8) = 0;
     ((ItemSound*)((char*)g_game + 0x139f4))->play(-6);
-    g_game->emit_event(1, GD_I(0x13a0c), GD_I(0x13a10));
+    ((SoundCtl*)g_game)->emit_event(1, GD_I(0x13a0c), GD_I(0x13a10));
     if (GD_I(0x13aec) > 0) {
         g_mission_ctx.frame(GD_I(0x13aec));
         party = PARTIES->get(GD_I(0x78));
@@ -949,7 +956,7 @@ no_party:
         camera_move(dt);
     camera_update(dt);
     if (GD_F(0x13ad0) <= 0.0f) {
-        update_target();
+        ((MapPanel*)this)->update_target();
         f2cc += dt;
         f2d0 += dt;
         GD_I(0x13aa4) = 0;
@@ -966,19 +973,19 @@ no_party:
         }
     }
 
-    GV->tick(dt);
+    ((GameG*)GV)->tick(dt);
     rgl::matrix m;
     rgl::identity_pos(&m);
     {
         float vx = 0.0175f - g_view_a * 0.1975f;
         float vy = 0.015f - g_view_b * 0.18f;
         rgl::vector4 v(vx, vy, -0.4f);
-        rgl::vector4 p = ((PosV*)&cam.m)->transform_point(v);
+        rgl::vector4 p = ((pos*)&cam.m)->transform_point(v);
         m.o = p;
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_no_cam != 0 && (g_a17148 != 0 || g_a17348 != 0) && g_key_names.is_bound(0x12))
+    if (g_no_cam != 0 && (g_a17148 != 0 || g_a17348 != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {
@@ -1134,7 +1141,7 @@ void MissionCtx::frame(int tick)
         }
     }
     if (f144 != 0) {
-        refresh_rating();
+        ((BattleW*)this)->refresh_rating();
         if (f2c4 < 1)
             f3c |= 1;
     }
@@ -1181,7 +1188,7 @@ void MissionCtx::update_anim()
     if (party[0] >= 0) {
         GameData* g = g_game;
         PartyMgr* m = &g->parties;
-        Party* p = party_at(m, m->index_of(party[0]));
+        Party* p = party_at(m, ((Map10007*)m)->lookup(party[0]));
         int slot = p->stacks[0].troop;
         if (slot >= 0) {
             Troop* t = &g->troops[slot];
@@ -1228,7 +1235,7 @@ void GameDataV::reset_trade_ids()
 void GameDataV::fill_ids(int* out, int id)
 {
     PartyMgr* m = &parties;
-    Party* rec = party_at(m, m->index_of(id));
+    Party* rec = party_at(m, ((Map10007*)m)->lookup(id));
     if (rec->nstacks <= 0)
         return;
     int* base = out;
@@ -1251,7 +1258,7 @@ void MissionCtx::reset_ids(int id)
     if (id == -1)
         return;
     PartyMgr* m = &g_game->parties;
-    Party* rec = party_at(m, m->index_of(id));
+    Party* rec = party_at(m, ((Map10007*)m)->lookup(id));
     for (int i = 0; i < rec->nstacks; i++) {
         int slot = *(int*)((char*)rec + 0xac + i * 0x20);
         Troop* t = (Troop*)((char*)g_game->troops + slot * 0x508);
@@ -1265,6 +1272,6 @@ void MissionCtx::reset_ids(int id)
 // @ 0x516a70
 void quick_save_msg()
 {
-    g_msglog.add(*g_strtable.lookup(&tstring("ui_quick_saving")), -1);
+    g_msglog.add(*g_strtable.lookup(tstring("ui_quick_saving")), -1);
     save_game(-1, 0);
 }

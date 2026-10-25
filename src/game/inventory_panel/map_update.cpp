@@ -71,7 +71,7 @@ struct LevelNav {                            // a view of NavData (terrain_b/cel
     float    zmin;                           // +0x4c
     char     pad50[0x5c - 0x50];
     float    zmax;                           // +0x5c
-    bool     shares(const int* from, const int* to);   // 0x48efa0
+    // shares (0x48efa0) is RiderTable::shares (game/mission4): called through a cast below
 };
 
 
@@ -83,9 +83,29 @@ struct GroundItem {                          // 0x5c  fleet entry
 };
 
 
+// the party-id hash table at the head of PartyMgr (game/ui/mission.h's Map10007; PartyMgr::index_of is the same function, 0x48ad00)
+struct Map10007 {
+    int lookup(unsigned id);   // 0x48ad00
+};
+struct PlaneTrace {
+    void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0 (inventory_panel/map_picker.cpp)
+};
+struct level {
+    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* n);   // 0x439870 (game/agent2/agent_stats.h)
+};
+struct camera_ray {
+    void screen_to_world(vector4* near_pt, vector4* far_pt);   // 0x4bd2f0 (game/config/config.h)
+};
+struct MapPickScreen {
+    void set_label(int id);   // 0x51a420 (inventory_panel/map_picker.cpp): the map panel's label owner
+};
+struct RiderTable {
+    int shares(const int& from, const int& to) const;   // 0x48efa0 (game/mission4)
+};
+
 static inline Party* party_at(GameData* g, int id)
 {
-    int i = g->parties.index_of(id);
+    int i = ((Map10007*)&g->parties)->lookup(id);
     return g->parties.pages[i >> 4] + (i & 0xf);
 }
 
@@ -140,7 +160,7 @@ void MapPanel::update_target()
                 if (i < n) {
                     g_game->cur_label = n - i - 1;
                     if (view->is_key_down(8)) {
-                        set_label(-1);
+                        ((MapPickScreen*)this)->set_label(-1);
                         f2d5 = 0;
                         int sel = g_game->label_target[g_game->cur_label];
                         if (sel == -7) {
@@ -160,15 +180,15 @@ void MapPanel::update_target()
             }
         } else if (dx < -0.2f || dx > w + 0.2f ||
                    dy < -0.2f || dy > h + 0.2f || view->is_key_down(8)) {
-            set_label(-1);
+            ((MapPickScreen*)this)->set_label(-1);
             f2d5 = 0;
         }
-        if (f2d5) set_label(f2d8);
+        if (f2d5) ((MapPickScreen*)this)->set_label(f2d8);
     }
 
     // ---- 0x519496: screen ray ----------------------------------------------------------------------
     vector4 nearp, farp;                                  // nearp -> S+0x40, farp -> S+0x1c
-    view->screen_to_world(&nearp, &farp);
+    ((camera_ray*)view)->screen_to_world(&nearp, &farp);   // 0x4bd2f0
 
     vector4 dir;
     dir.x = farp.x - nearp.x;
@@ -220,7 +240,7 @@ void MapPanel::update_target()
     int       best  = -1;
     shape_base* hits[0x2000];                  // the sweep is told 0x110, but the slot is 0x2000 wide
     int       count;
-    g_level->query_segment(seg_a, seg_b, 0x110, hits, &count);
+    ((level*)g_level)->query_segment(seg_a, seg_b, 0x110, hits, &count);   // 0x439870
 
     vector4 bestpt;
     for (int i = 0; i < count; i++) {
@@ -228,7 +248,7 @@ void MapPanel::update_target()
         if (o->shape_type() != 2) continue;
         if (!shape_contact_count(o, &cap, 0, 0)) continue;
         vector4 hp;
-        ((face*)o)->intersect(&hp, &np, &fp);
+        ((PlaneTrace*)o)->intersect(&hp, &np, &fp);   // 0x51a2d0 (the face's intersect is the same code)
         float ddx = hp.x - nearp.x;
         float ddy = hp.y - nearp.y;
         float ddz = hp.z - nearp.z;
@@ -281,7 +301,7 @@ void MapPanel::update_target()
             g_game->emit_event(0x15, f2d8, 0);
             if (g_game->n_labels > 0) {
                 f2d5 = 1;
-                set_label(f2d8);
+                ((MapPickScreen*)this)->set_label(f2d8);
             }
         }
         int kind = ((MapSceneObj*)bestobj)->kind;
@@ -351,8 +371,8 @@ void MapPanel::update_target()
     } else if (best >= 0) {
         if (g_a17148 && g_5a9fbc) {
             *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
-        } else if (!g_level->wmap->shares(&rec_index,
-                                           (const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
+        } else if (!((RiderTable*)g_level->wmap)->shares(rec_index,
+                                           *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
             return;
         }
         party_at(g_game, g_game->f78)->action = 6;

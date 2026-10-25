@@ -15,6 +15,7 @@
 #include "../rgl_math.h"
 #include "../stream.h"
 #include "../../game/strat/gui_manager.h"     // g_log (log_stream)
+#include "../../game/ini_file.h"               // ini_file (canonical owner of find 0x4bd5a0; ini_file_x below is a view of g_game_vars)
 #include "./mesh2_common.h"
 #include "./head_rec.h"
 
@@ -40,7 +41,8 @@ struct C4c2c50 : head_rec {
 };
 
 struct M44 { float f[16]; };
-M44* identity_pos(M44* out);                         // 0x40cd00 (fills `out`, returns it)
+struct pos;                                          // include/mat4.h: the 0x40-byte frame, layout of M44
+pos* __cdecl identity_pos(pos* out);                 // 0x40cd00 (fills `out`, returns it; shapes.h)
 
 // 0x140-byte record: four 0x40-byte matrices filled from 0x40cd00, counters at +0x100/+0x104,
 // a mode int at +0x110 and a clock snapshot / rate at +0x118..+0x128 (ctor 0x4c2d10).
@@ -110,13 +112,10 @@ struct C4c3290 : head_rec {  // vtable 0x595a20
     __declspec(noinline) void dtor();   // 0x4c3300 (called, not inlined, by the deleting dtor 0x4c32e0)
 };
 
-// 0x18-byte entry of the block read by 0x4c2dd0 (tstring, two ints).
-struct Entry18 {
-    tstring s0;              // +0
-    int  v10;                // +0x10
-    int  v14;                // +0x14
-    Entry18();               // 0x4be720 (out of line: array new goes through the vector constructor iterator)
-};
+// 0x18-byte entry of the block read by 0x4c2dd0 (tstring, two ints): config.h's clip_slot (same layout; its constructor
+// 0x4be720 is out of line, the array new goes through the vector constructor iterator). rec_tables.cpp includes config.h.
+struct clip_slot;
+struct Entry18;
 // Block with a tstring at +0, two ints and an entry array at +0x18 (0x4c2dd0).
 struct Blk2dd0 {
     tstring  s0;             // +0
@@ -174,17 +173,9 @@ struct GameAppView {
     font_ref* font;                 // +0x348
 };
 
-struct InputGlobal;                                // the object at 0xa17910 (apply_input_settings' argument)
-void __fastcall apply_input_settings(InputGlobal* self);   // 0x4bc350
-struct InputDevices {                                      // the object at 0xa170c8
-    int init_devices(HWND h);                              // 0x4bc430 (thiscall, ret 4)
-};
-struct RenderSetup {                                       // the object at 0x5fe898
-    int init_decls(const int& a0, const int& a1, const int& a2, const int& a3, const int& a4, const int& a5, const int& a6, const int& a7, const int& a8, const int& a9);   // 0x4bc830 (thiscall, ret 0x28)
-};
-struct ResMgrX {                                           // the object at 0x5d6fa0
-    void load_all(int flag, tstring* prefix);       // 0x41c540 (thiscall, ret 8)
-};
+// the input object at 0xa17910 (apply_input_settings' argument), the device set at 0xa170c8 (init_devices), the render
+// batch at 0x5fe898 (init_decls) and the resource manager at 0x5d6fa0 (load_all) are config.h's InputSet,
+// render_batch.h's render_batch and rgl/core/resmgr.h's resmgr (included by rec_tables.cpp).
 extern tstring g_module_path;                              // 0x8ee3c28
 
 // the ini table at 0xa44240 (0x2c-byte entries: key tstring +0, value tstring +0x1c); get_float is inline (header)
@@ -192,21 +183,21 @@ struct ini_entry_x { tstring key; char pad10[0xc]; tstring value; };
 struct ini_file_x {
     ini_entry_x entries[0x1000];                           // +0
     int count;                                             // +0x2c000
-    int find(const tstring& key);                          // 0x4bd5a0 (thiscall, ret 4)
+    // find is ini_file::find (0x4bd5a0, thiscall, ret 4): this is the same 0x2c004-byte table (ini_file.h), g_game_vars
     float get_float(const tstring& key)
     {
         float ret = 0.0f;
-        int idx = find(key);
+        int idx = ((ini_file*)this)->find(key);
         if (idx >= 0)
             ret = (float)atof(entries[idx].value.c_str());
         return ret;
     }
 };
-#ifndef REC_TABLES_NO_GAME_VARS   // a TU that declares g_game_vars with its own ini_file view defines this before including
-extern ini_file_x g_game_vars;                                   // 0xa44240
-#endif
+// g_game_vars (0xa44240) is declared by ini_file.h as an ini_file; rec_tables.cpp views it as ini_file_x for the inline get_float
 
-void __fastcall load_game_variables(void* self);    // 0x4c0520 (resets one buffer-size group)
+// 0x4c0520 is a cdecl function without parameters (game/triggers/trigger_vec.cpp); the original calls it with ecx = the renderer object, which
+// it ignores: rec_tables.cpp calls it through the fastcall type of that call
+void load_game_variables();                         // 0x4c0520 (resets one buffer-size group)
 // 0x4bab70 user_path (argument in ESI, a static helper of another TU) has a local copy in rec_tables.cpp.
 
 // The binary file reader the options loader builds on its stack (vtable 0x54ae48 = bin_reader): the same inline chain
@@ -269,14 +260,17 @@ struct options_record {
     int   w94;           // +0x94
     int   w98;           // +0x98
     void load();                               // 0x4c3a40
-    void set_triple_buffering(int mode);                   // 0x4bc090 (thiscall, ret 4)
-    void set_texture_quality(int v);                   // 0x4bc100 (thiscall, ret 4)
+    // set_triple_buffering (0x4bc090) and set_texture_quality (0x4bc100) are Config's (config.h): this record is the
+    // option block g_cfg 0x5a9f98 (mode == Config::first_time +0, w04 == Config::texture_detail +4)
 };
 
 // ---- element type of the 0x58-byte arrays (0x4c3430) ------------------------------------------------------------
 #include "../../include/rec_dtors.h"                  // RecD (scalar_delete 0x431480 = ??_ERecD, ret 4), shared with rgl/xmlcfg/records.h
-void __stdcall vector_destructor_iterator(void* p, unsigned size, int n, void (__stdcall* d)(void* const*));  // 0x401830
-void __stdcall RecD_dtor(void* const* p);             // 0x431440 (the pointer is in ecx: (void*, unused) call)
+void __stdcall vector_destructor_iterator(void* p, unsigned size, int n, void (__fastcall* d)(void*));  // 0x401830 (d3dapp.h)
+// 0x431440 is ~RecD (thiscall, the record in ecx). C++ cannot take a destructor's address, so the callback of the inlined
+// vector delete (elem58::vector_deleting_delete) is declared as the equivalent fastcall function; its symbol is not
+// ??1RecD (see docs of the relink report: delete[] would call ??_ERecD instead of expanding the loop).
+void __fastcall RecD_dtor(void* p);                   // 0x431440
 
 // 0x58-byte element: { tstring s0, tstring s10, tstring s24, void* p34, .., RecD* p50 }.
 struct elem58 {
@@ -313,12 +307,9 @@ extern int    g_sound_muted;    // 0x5a9fd8
 extern float  g_music_volume;   // 0x5aa010
 
 // a clock reading: slot into g_time[] and the start tick; elapsed() = (g_time[slot] - start) * 1e-5f
-struct SndTimer {
-    int     slot;       // +0
-    int     pad4;
-    __int64 start;      // +8
-    float elapsed();    // 0x432c10 (thiscall)
-};
+// (include/timer.h's Timer: {clock index, pad, start}; elapsed() is 0x432c10)
+#include "../../include/timer.h"
+typedef Timer SndTimer;
 
 // the "sound manager" tail (0x2474-byte object, layout-only view)
 struct sound_engine {
@@ -335,8 +326,7 @@ struct sound_engine {
     SndTimer t2450;                 // +0x2450  start of the new piece
     SndTimer t2460;                 // +0x2460  fade end
     int   fading;                   // +0x2470
-    void __fastcall advance_piece();               // 0x4c25e0
-    void stop(int idx);                      // 0x4be0a0 (thiscall, ret 4)
+    // advance_piece (0x4c25e0) and stop (0x4be0a0) are music_player's (config.h): this is the same object, the music player
     void __fastcall tick();                        // 0x4c4100
 };
 
@@ -350,7 +340,7 @@ struct elem48 {
     int w10;             // +0x10
     tstring s14;         // +0x14
     char pad24[0x24];
-    void save(stream_base* s);   // 0x4bdf60 (thiscall, ret 4)
+    // initialised from the stream by prsnt_record::save (0x4bdf60, config.h): the same 0x48-byte record (two tstrings at +0 / +0x14)
 };
 struct elem48_holder {
     elem48* arr;     // +0 (array new, count in front)
@@ -381,12 +371,12 @@ struct music_rec {
     music_rec() : sample(0), level(0), ratio(0.0f), length(0) {}    // +0xc is left alone
 };
 
-void __fastcall load_used(struct music_set* m);                     // 0x4be270
+// load_used (0x4be270) is loaded_snd_table::load_used (config.h): music_set is the same table (count2 +8, names +0xc)
 
 struct music_name {         // 0x98 bytes, only the leading tstring is constructed
     tstring s;
     char pad[0x98 - sizeof(tstring)];
-    void load(stream_base& s);   // 0x4be200 (thiscall, ret 4)
+    // loaded by sound_record::load (0x4be200, config.h): the same 0x98-byte record
 };
 
 struct music_set {

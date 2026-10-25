@@ -24,7 +24,7 @@ struct TroopMgr {
 // copy_troop calls apply_group through the same address from outside its own definition: cl must not assume its
 // register use (the slice compiled them apart).
 struct TroopMgrExt {
-    void apply_group(ArrSet* dst, int idx, rgl::mesh* obj);     // 0x470db0
+    __forceinline void apply_group(ArrSet* dst, int idx, rgl::mesh* obj) { ((TroopMgr*)this)->apply_group(dst, idx, obj); }   // 0x470db0
 };
 
 #endif // TERRAIN_B_TROOP_MGR_H

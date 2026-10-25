@@ -7,6 +7,7 @@
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./inventory_panel.h"
+#include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
 #include "../item_ref.h"
@@ -83,7 +84,8 @@ extern Modifier g_item_modifiers[];                          // 0xa75f70
 
 // script emitter record (0x34 bytes, array pointer at 0xa75eb0, parallel index array at 0xa75ebc)
 #include "../emitter_rec.h"
-#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../main_menu.h"
+#include "../ui/named_rec.h"      // NamedRec::setup2 0x48a3d0 (main_menu::ask is the same function)      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config/config.h"
 
 // @ 0x50fe20
@@ -144,7 +146,7 @@ void InventoryPanel::refresh_transaction(int unused)
                     tstring key("ui_you_dont_have_value");
                     tstring_buffer vb;
                     tstring* val = GV->string_value(vb.get(), -pending);
-                    tstring* f = g_strtable.lookup(&key);
+                    tstring* f = g_strtable.lookup(key);
                     char buf[0x200];
                     sprintf(buf, f->c_str(), val->c_str());
                     vb.destroy();
@@ -170,7 +172,7 @@ void InventoryPanel::refresh_transaction(int unused)
                     tstring* nm = g_strtable.find(&rec->key);
                     if (nm == 0)
                         nm = &rec->key;
-                    tstring* f = g_strtable.lookup(&key);
+                    tstring* f = g_strtable.lookup(key);
                     char buf[0x200];
                     mb_snprintf(buf, 0x200, f->c_str(), nm->c_str(), val2->c_str(), val->c_str());
                     vb2.destroy();
@@ -179,7 +181,7 @@ void InventoryPanel::refresh_transaction(int unused)
                     tstring think("ui_merchant_think_of_something_else");
                     tstring pay("ui_merchant_pay_whatever");
                     tstring msg(buf);
-                    g_main_menu.ask(&msg, g_strtable.lookup(&pay), g_strtable.lookup(&think), &q_pay);
+                    ((NamedRec*)&g_main_menu)->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), (int)&q_pay);
                     msg.~tstring();
                     pay.~tstring();
                     think.~tstring();
@@ -191,19 +193,19 @@ void InventoryPanel::refresh_transaction(int unused)
                 char buf[0x200];
                 if (worn == 1) {
                     tstring key("ui_dumping_value_item");
-                    tstring* f = g_strtable.lookup(&key);
+                    tstring* f = g_strtable.lookup(key);
                     mb_snprintf(buf, 0x200, f->c_str(), 1);
                     key.~tstring();
                 } else {
                     tstring key("ui_dumping_value_items");
-                    tstring* f = g_strtable.lookup(&key);
+                    tstring* f = g_strtable.lookup(key);
                     mb_snprintf(buf, 0x200, f->c_str(), worn);
                     key.~tstring();
                 }
                 tstring no("ui_no");
                 tstring yes("ui_yes");
                 tstring msg(buf);
-                g_main_menu.ask(&msg, g_strtable.lookup(&yes), g_strtable.lookup(&no), &q_dump);
+                ((NamedRec*)&g_main_menu)->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_dump);
                 msg.~tstring();
                 yes.~tstring();
                 no.~tstring();
@@ -221,14 +223,14 @@ void InventoryPanel::refresh_transaction(int unused)
                 tstring* nm = g_strtable.find(&rec->key);
                 if (nm == 0)
                     nm = &rec->key;
-                tstring* f = g_strtable.lookup(&q);
+                tstring* f = g_strtable.lookup(q);
                 char buf[0x200];
                 mb_snprintf(buf, 0x200, f->c_str(), nm->c_str());
                 q.~tstring();
                 tstring no("ui_no");
                 tstring yes("ui_yes");
                 tstring msg(buf);
-                g_main_menu.ask(&msg, g_strtable.lookup(&yes), g_strtable.lookup(&no), &q_food);
+                ((NamedRec*)&g_main_menu)->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_food);
                 msg.~tstring();
                 yes.~tstring();
                 no.~tstring();
@@ -456,7 +458,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
         else
             key = "ui_one_handed";
         tstring k(key);
-        sprintf(buf, "%s", g_strtable.lookup(&k)->c_str());
+        sprintf(buf, "%s", g_strtable.lookup(k)->c_str());
         k.~tstring();
         {
             tstring s(buf);
@@ -486,10 +488,10 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
 
     if (page == 1) {
         if (buyable) {
-            sprintf(buf, "%s", g_strtable.lookup(&tstring("ui_reclaim_price"))->c_str(),
+            sprintf(buf, "%s", g_strtable.lookup(tstring("ui_reclaim_price"))->c_str(),
                      values[1][index]);
         } else {
-            const tstring* v = g_strtable.lookup(&tstring("ui_buying_price"));
+            const tstring* v = g_strtable.lookup(tstring("ui_buying_price"));
             int p = compute_price((int*)slot, 1);
             sprintf(buf, v->c_str(), p);
         }
@@ -500,11 +502,11 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
                 p = values[page][index];
             else
                 p = vstash[page - 2][index];
-            const tstring* v = g_strtable.lookup(&tstring("ui_return_price"));
+            const tstring* v = g_strtable.lookup(tstring("ui_return_price"));
             sprintf(buf, v->c_str(), p);
         } else {
             int p = compute_price((int*)slot, 0);
-            const tstring* v = g_strtable.lookup(&tstring("ui_sell_price"));
+            const tstring* v = g_strtable.lookup(tstring("ui_sell_price"));
             sprintf(buf, v->c_str(), p);
         }
     }
@@ -515,7 +517,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
 
     if (slot->item >= 0 && it->f208 > 1e-5f) {
         float w = slot->item < 0 ? 0.0f : it->f208;
-        const tstring* v = g_strtable.lookup(&tstring("ui_weight"));
+        const tstring* v = g_strtable.lookup(tstring("ui_weight"));
         sprintf(buf, v->c_str(), (double)w);
         tstring s(buf);
         g_gui_root.draw_string(&s, 0.011f, 0xffffffff, 1);
@@ -524,19 +526,19 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
     kind = it->type_flags & 0xff;
     if (kind == 12 || kind == 13 || kind == 14 || kind == 15) {
         if (slot->stat_1fc()) {
-            const tstring* v = g_strtable.lookup(&tstring("ui_plus_value_to_head_armor"));
+            const tstring* v = g_strtable.lookup(tstring("ui_plus_value_to_head_armor"));
             sprintf(buf, v->c_str(), slot->stat_1fc());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         if (slot->stat_200()) {
-            const tstring* v = g_strtable.lookup(&tstring("ui_plus_value_to_body_armor"));
+            const tstring* v = g_strtable.lookup(tstring("ui_plus_value_to_body_armor"));
             sprintf(buf, v->c_str(), slot->stat_200());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         if (slot->stat_204()) {
-            const tstring* v = g_strtable.lookup(&tstring("ui_plus_value_to_leg_armor"));
+            const tstring* v = g_strtable.lookup(tstring("ui_plus_value_to_leg_armor"));
             sprintf(buf, v->c_str(), slot->stat_204());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
@@ -557,9 +559,9 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
             const tstring* v;
             {
                 tstring k(key);
-                v = g_strtable.lookup(&k);
+                v = g_strtable.lookup(k);
             }
-            const tstring* dmg = g_strtable.lookup(&tstring("ui_swing"));
+            const tstring* dmg = g_strtable.lookup(tstring("ui_swing"));
             sprintf(buf, dmg->c_str(), slot->stat_21x(0), v->c_str());
             if (mask & 4) mask &= ~4;
             if (mask & 2) mask &= ~2;
@@ -588,9 +590,9 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
             const tstring* v;
             {
                 tstring k(key);
-                v = g_strtable.lookup(&k);
+                v = g_strtable.lookup(k);
             }
-            const tstring* dmg = g_strtable.lookup(&tstring(fmtkey));
+            const tstring* dmg = g_strtable.lookup(tstring(fmtkey));
             sprintf(buf, dmg->c_str(), slot->stat_21x(1), v->c_str());
             if (mask & 0x100) mask &= ~0x100;
             if (mask & 0x80)  mask &= ~0x80;
@@ -608,20 +610,20 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
                     v = 99;
             }
             if (v > 100) v = 100;
-            const tstring* p = g_strtable.lookup(&tstring("ui_accuracy"));
+            const tstring* p = g_strtable.lookup(tstring("ui_accuracy"));
             sprintf(buf, p->c_str(), v);
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffeebbfe, 1);
         }
         if (slot->stat_1f0a()) {
-            const tstring* p = g_strtable.lookup(&tstring("ui_speed_rating"));
+            const tstring* p = g_strtable.lookup(tstring("ui_speed_rating"));
             sprintf(buf, p->c_str(), slot->stat_1f0a());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
     } else if (kind == 5 || kind == 6 || kind == 0x12) {
         if (slot->stat_21x(1)) {
-            const tstring* p = g_strtable.lookup(&tstring("ui_value_to_damage"));
+            const tstring* p = g_strtable.lookup(tstring("ui_value_to_damage"));
             int v = slot->stat_21x(1);
             sprintf(buf, p->c_str(), slot->stat_21x(1), v <= 0 ? '+' : ' ');
             tstring s(buf);
@@ -629,13 +631,13 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
         }
     } else if (kind == 7) {
         if (slot->stat_200()) {
-            const tstring* p = g_strtable.lookup(&tstring("ui_resistance"));
+            const tstring* p = g_strtable.lookup(tstring("ui_resistance"));
             sprintf(buf, p->c_str(), slot->stat_200());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         {
-            const tstring* p = g_strtable.lookup(&tstring("ui_size"));
+            const tstring* p = g_strtable.lookup(tstring("ui_size"));
             int v = (int)((float)it->weight * 1.0f);
             sprintf(buf, p->c_str(), v);
         }
@@ -644,13 +646,13 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         if (slot->stat_1f0a()) {
-            const tstring* p = g_strtable.lookup(&tstring("ui_speed_rating"));
+            const tstring* p = g_strtable.lookup(tstring("ui_speed_rating"));
             sprintf(buf, p->c_str(), slot->stat_1f0a());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
     } else if (kind == 0xb && g_disable_food_slot == 0 && slot->item >= 0 && it->f1fc > 0) {
-        const tstring* p = g_strtable.lookup(&tstring("ui_value_to_morale"));
+        const tstring* p = g_strtable.lookup(tstring("ui_value_to_morale"));
         float v = slot->item < 0 ? 0.0f : (float)it->f1fc;
         sprintf(buf, p->c_str(), (double)(v * 0.02f));
         tstring s(buf);
@@ -663,7 +665,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
         int n = (int)floor(reach);
         if (reach - (float)n > 0.5f)
             n++;
-        const tstring* p = g_strtable.lookup(&tstring("ui_weapon_reach"));
+        const tstring* p = g_strtable.lookup(tstring("ui_weapon_reach"));
         sprintf(buf, p->c_str(), n);
         tstring s(buf);
         g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
@@ -672,31 +674,31 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
     if (*(char*)&it->type_flags == 1) {
         g_game->skill_level(g_game->player, 0x18);
         {
-            const tstring* p = g_strtable.lookup(&tstring("ui_armor"));
+            const tstring* p = g_strtable.lookup(tstring("ui_armor"));
             sprintf(buf, p->c_str(), slot->stat_200());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffddddff, 1);
         }
         {
-            const tstring* p = g_strtable.lookup(&tstring("ui_speed"));
+            const tstring* p = g_strtable.lookup(tstring("ui_speed"));
             sprintf(buf, p->c_str(), slot->stat_1f4());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         {
-            const tstring* p = g_strtable.lookup(&tstring("ui_maneuver"));
+            const tstring* p = g_strtable.lookup(tstring("ui_maneuver"));
             sprintf(buf, p->c_str(), slot->stat_1f0b());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         {
-            const tstring* p = g_strtable.lookup(&tstring("ui_charge"));
+            const tstring* p = g_strtable.lookup(tstring("ui_charge"));
             sprintf(buf, p->c_str(), slot->stat_214());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         {
-            const tstring* p = g_strtable.lookup(&tstring("ui_hit_points"));
+            const tstring* p = g_strtable.lookup(tstring("ui_hit_points"));
             sprintf(buf, p->c_str(), slot->stat_1e8(), slot->stat_1e8());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
@@ -727,7 +729,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
             }
         }
         {
-            const tstring* p = g_strtable.lookup(&tstring("ui_requires_value_difficulty"));
+            const tstring* p = g_strtable.lookup(tstring("ui_requires_value_difficulty"));
             sprintf(buf, p->c_str(), need, slot->stat_1ec());
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, color, 1);
@@ -735,18 +737,18 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
     }
 
     if (it->type_flags & 0x4000000) {
-        const tstring* p = g_strtable.lookup(&tstring("ui_bonus_against_shields"));
+        const tstring* p = g_strtable.lookup(tstring("ui_bonus_against_shields"));
         sprintf(buf, p->c_str());
         tstring s(buf);
         g_gui_root.draw_string(&s, 0.024f, 0xffbbff22, 1);
     }
     if (it->type_flags & 0x4000) {
         tstring k("ui_cant_be_used_to_block");
-        g_gui_root.draw_string(g_strtable.lookup(&k), 0.024f, 0xffccbb33, 1);
+        g_gui_root.draw_string(g_strtable.lookup(k), 0.024f, 0xffccbb33, 1);
     }
     if (it->type_flags & 0x10100000) {
         tstring k("ui_cannot_be_used_on_horseback");
-        g_gui_root.draw_string(g_strtable.lookup(&k), 0.024f, 0xffccbb33, 1);
+        g_gui_root.draw_string(g_strtable.lookup(k), 0.024f, 0xffccbb33, 1);
     }
 
     for (int i = 0; i < 8; i++) {
@@ -820,19 +822,19 @@ void attribute_name(int type, char* out)
 {
     if (type == 0) {
         tstring k("ui_strength");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     } else if (type == 1) {
         tstring k("ui_agility");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     } else if (type == 2) {
         tstring k("ui_intelligence");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     } else {
         tstring k("ui_charisma");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     }
 }
@@ -863,7 +865,7 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
         return 0;
 
     PartyMgr* pool = &parties;
-    int pi = pool->index_of(f78);
+    int pi = ((Map10007*)pool)->lookup(f78);
     Party* p = party_at(pool, pi);
     int skill = p->skill_level(0);
     float f = (1.0f - (float)skill * 0.06f) * 1.25f;
@@ -1042,7 +1044,7 @@ L_304c:
     if (slot == 8 && ITYPE(held.item) == 1) {
         if (page == 2) {
             tstring key("ui_notification_riding_skill_not_enough");
-            g_msglog.add(*g_strtable.lookup(&key), 0xffffddbb);
+            g_msglog.add(*g_strtable.lookup(key), 0xffffddbb);
             return;
         }
     } else if (slot >= 0 && slot < 4 &&
@@ -1052,7 +1054,7 @@ L_304c:
                 (g_items[held.item].type_flags & 0xff) == 16 || (g_items[held.item].type_flags & 0xff) == 17)) {
         if (page == 2) {
             tstring key("ui_notification_requirements_not_met");
-            g_msglog.add(*g_strtable.lookup(&key), 0xffffddbb);
+            g_msglog.add(*g_strtable.lookup(key), 0xffffddbb);
             return;
         }
     } else if (((g_items[held.item].type_flags & 0xff) == 12 && slot == 4) ||
@@ -1061,7 +1063,7 @@ L_304c:
                ((g_items[held.item].type_flags & 0xff) == 14 && slot == 6)) {
         if (page == 2) {
             tstring key("ui_notification_requirements_not_met");
-            g_msglog.add(*g_strtable.lookup(&key), 0xffffddbb);
+            g_msglog.add(*g_strtable.lookup(key), 0xffffddbb);
             return;
         }
     } else {
@@ -1069,7 +1071,7 @@ L_304c:
     }
     {
         tstring key("ui_troop_cant_use_item");
-        sprintf(buf, g_strtable.lookup(&key)->c_str(),
+        sprintf(buf, g_strtable.lookup(key)->c_str(),
                 ((TroopRec*)((char*)g_game->chars + troop * 0x508))->display_name()->c_str());
     }
     g_msglog.add(tstring(buf), 0xffff7700);
@@ -1131,18 +1133,18 @@ void InventoryPanel::add_cost(int delta)
     if (pending < 0) {
         tstring_buffer sv;
         tstring key("ui_notification_payment_value");
-        sprintf(buf, g_strtable.lookup(&key)->c_str(),
+        sprintf(buf, g_strtable.lookup(key)->c_str(),
                 GV->string_value(sv.get(), -pending)->c_str());
         sv.destroy();
     } else if (pending > 0) {
         tstring_buffer sv;
         tstring key("ui_notification_payment_receive_value");
-        sprintf(buf, g_strtable.lookup(&key)->c_str(),
+        sprintf(buf, g_strtable.lookup(key)->c_str(),
                 GV->string_value(sv.get(), pending)->c_str());
         sv.destroy();
     } else {
         tstring key("ui_no_cost");
-        sprintf(buf, g_strtable.lookup(&key)->c_str());
+        sprintf(buf, g_strtable.lookup(key)->c_str());
     }
     {
         tstring_buffer out;
@@ -1203,10 +1205,10 @@ bool InventoryPanel::try_place(ItemRef* item, int page, int slot)
     if (found) {
         if (page == 1) {
             tstring msg("ui_reclaim_your_sold_goods");
-            g_msglog.add(*g_strtable.lookup(&msg), -1);
+            g_msglog.add(*g_strtable.lookup(msg), -1);
         } else {
             tstring msg("ui_return_your_bought_goods");
-            g_msglog.add(*g_strtable.lookup(&msg), -1);
+            g_msglog.add(*g_strtable.lookup(msg), -1);
         }
     }
     return found;

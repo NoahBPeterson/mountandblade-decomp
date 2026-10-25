@@ -10,6 +10,7 @@
 //       member names). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./game_tick.h"
+#include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
 #include "../../include/game_data.h"
@@ -19,6 +20,7 @@
 #include "../../rgl/mesh.h"
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/config.h"
+#include "../battle_rec.h"      // BattleRec (update_nav_anim 0x4b71e0)
 
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
 #define FLD(T, off) (*(T*)((char*)this + (off)))
@@ -108,7 +110,12 @@ extern MarkerList g_list_b;                             // 0xa732e0
 extern MarkerList g_list_c;                             // 0xa732f0
 extern MarkerList g_list_d;                             // 0xa732d0
 void set_clock_step(int* clock, float step);            // 0x461420
-bool is_daytime();                                          // 0x435700 (true in the 4..20 h window)
+bool is_daytime();                                          // 0x435700 (true in the 4..20 h window; game/agent/agent.cpp)
+// GameW (inv_common.h): remove_party 0x4915d0 (game/world_data, GameData::remove_party)
+struct PageTable98 {
+    void* slot(unsigned idx);   // 0x48ef20 (game/slot_api)
+};
+// resmgr (inv_common.h): get_object 0x419540 (rgl/core/resmgr.h)
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 #define GAMMA (0.45454543828964233f)                    // 0x5a9f1c  1 / 2.2 (the compiler's rounding)
 
@@ -125,10 +132,10 @@ static void blend_color(rgl::vector4& dst, const rgl::vector4& src, float t, flo
 // the iterator helper on a bare base pointer
 static Rec5c* rec_at(Rec5c* base, int idx)
 {
-    RecArray a;
+    ItemArray a;
     a.base = base;
-    Rec5c* r;
-    return *a.at(&r, idx);
+    ItemIter r = a.at(idx);
+    return r.p;
 }
 
 // @ 0x516ac0
@@ -167,8 +174,8 @@ void GameG::tick(float dt)
 
     set_clock_step(&g_clock_step, speed);
     f13af8 = 0;
-    ((SoundObj*)((char*)this + 0x139f4))->update(flags);
-    ((UpdateObj*)((char*)this + 0x139e8))->update(flags);
+    ((TimerList*)((char*)this + 0x139f4))->update(flags);   // 0x48add0
+    ((snd_bank*)((char*)this + 0x139e8))->update_all(flags);   // 0x462760
 
     int target = -1;
 
@@ -178,11 +185,11 @@ void GameG::tick(float dt)
         if (d > 1.0f) {
             msg_timer.set_delay(-2.0f);
             tstring msg(g_msg_key);
-            g_msglog.add(*g_strtable.lookup(&msg), 0xffdd4444);
+            g_msglog.add(*g_strtable.lookup(msg), 0xffdd4444);
         }
     }
 
-    party_at(&parties, parties.index_of(cur_agent))->dirty = 1;
+    party_at(&parties, ((Map10007*)&parties)->lookup(cur_agent))->dirty = 1;
 
     {
         int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f);
@@ -222,20 +229,20 @@ void GameG::tick(float dt)
 
     int id = parties.first_party_id();
     while ((unsigned)id < parties.n_parties) {
-        Party* p = party_at(&parties, parties.index_of(id));
+        Party* p = party_at(&parties, ((Map10007*)&parties)->lookup(id));
         p->tick(speed);
         if (p->action == 8 && (*(__int64*)&p->flags_lo & 0x20000))
             target = id;
         parties.next_party_id(&id);
     }
     if (target >= 0)
-        remove_party(target);
+        ((GameW*)this)->remove_party(target);   // 0x4915d0 (game/world_data)
 
     {
         GamePool* gp = &pool;
         int idx = gp->first();
         while (idx < gp->count) {
-            gp->slot(idx)->update_nav_anim(speed);
+            ((BattleRec*)((PageTable98*)gp)->slot(idx))->update_nav_anim(*(int*)&speed);   // 0x4b71e0 (battle_rec.h; the argument is unused by the callee)
             gp->next(&idx);
         }
     }
@@ -252,7 +259,7 @@ void GameG::tick(float dt)
         float d = (g_ticks[resume_timer.clock] - resume_timer.t) * 1e-5f;
         if (d >= 0.0f) {
             f13aa0 = 0;
-            Party* p = party_at(&parties, parties.index_of(cur_agent));
+            Party* p = party_at(&parties, ((Map10007*)&parties)->lookup(cur_agent));
             *(__int64*)&p->flags_lo &= ~(__int64)0x100;
             tstring s(g_resume_text);
             resume_strings(&s, &resume_old);
@@ -451,17 +458,17 @@ void GameG::update_cursor(float dt)
 {
     PartyMgr* mgr = &parties;
 
-    party_at(mgr, mgr->index_of(main_party))->f6c = 1;
-    float radius = party_at(mgr, mgr->index_of(main_party))->map_speed();
+    party_at(mgr, ((Map10007*)mgr)->lookup(main_party))->f6c = 1;
+    float radius = party_at(mgr, ((Map10007*)mgr)->lookup(main_party))->map_speed();
 
     unsigned id = (unsigned)mgr->first_party_id();
     while (id < mgr->n_parties) {
         unsigned cur = id;
-        Party* p = party_at(mgr, mgr->index_of((int)id));
+        Party* p = party_at(mgr, ((Map10007*)mgr)->lookup((int)id));
         if (cur != (unsigned)main_party && p->f8c8 < 0) {
             unsigned __int64 flags = *(unsigned __int64*)&p->flags_lo;
             if ((flags & 0x1000100) == 0 && p->model != 0) {
-                Party* mp = party_at(mgr, mgr->index_of(main_party));
+                Party* mp = party_at(mgr, ((Map10007*)mgr)->lookup(main_party));
                 float dx = p->pos.x - mp->pos.x;
                 float dy = p->pos.y - mp->pos.y;
                 float dist = (float)sqrt(dx * dx + dy * dy);
@@ -529,7 +536,7 @@ void GameG::update_cursor(float dt)
         if (f95 != 0) {
             r->opacity = 1.0f;
         } else {
-            Party* mp = party_at(mgr, mgr->index_of(main_party));
+            Party* mp = party_at(mgr, ((Map10007*)mgr)->lookup(main_party));
             float dx = r->x - mp->pos.x;
             float dy = r->y - mp->pos.y;
             float dist = (float)sqrt(dx * dx + dy * dy);
@@ -559,8 +566,8 @@ void GameG::update_weather()
     unsigned id = (unsigned)mgr->first_party_id();
     while (id < mgr->n_parties) {
         if (id == (unsigned)main_party
-            || (*(unsigned __int64*)&party_at(mgr, mgr->index_of((int)id))->flags_lo & 0x80100) == 0)
-            party_at(mgr, mgr->index_of((int)id))->tick_stats();
+            || (*(unsigned __int64*)&party_at(mgr, ((Map10007*)mgr)->lookup((int)id))->flags_lo & 0x80100) == 0)
+            party_at(mgr, ((Map10007*)mgr)->lookup((int)id))->tick_stats();
         mgr->next_party_id((unsigned*)&id);
     }
 
@@ -631,7 +638,7 @@ void GameG::weekly_report(bool)
         if (f > -0.01f)
             factor1 = f;
         tstring key("ui_number_of_companions_exceeds_leadership_limit");
-        body.append(*g_strtable.lookup(&key));
+        body.append(*g_strtable.lookup(key));
     }
 
     total = 0;
@@ -643,12 +650,12 @@ void GameG::weekly_report(bool)
     if (total > limit) {
         factor2 = (1.0f - (float)limit / (float)total) * 0.5f;
         tstring key("ui_number_of_prisoners_exceeds_prisoner_management_limit");
-        body.append(*g_strtable.lookup(&key));
+        body.append(*g_strtable.lookup(key));
     }
 
     if (p->f7c < 0.2f) {
         tstring key("ui_party_morale_is_low");
-        body.append(*g_strtable.lookup(&key));
+        body.append(*g_strtable.lookup(key));
         float f = 0.3f - p->f7c;
         if (f < factor1)
             f = factor1;
@@ -708,17 +715,17 @@ void GameG::weekly_report(bool)
                 body.push_back(',');
             else if (j == before_last) {
                 tstring key("ui_and_one_space");
-                body.append(*g_strtable.lookup(&key));
+                body.append(*g_strtable.lookup(key));
             }
         }
         {
             tstring key(nsel == 1 && counts[0] == 1 ? "ui_has_deserted_the_party"
                                                     : "ui_have_deserted_the_party");
-            body.append(*g_strtable.lookup(&key));
+            body.append(*g_strtable.lookup(key));
         }
         {
             tstring key("ui_weekly_report");
-            report_title = *g_strtable.lookup(&key);
+            report_title = *g_strtable.lookup(key);
             report_text = body;
             report_pending = 1;
         }
@@ -805,15 +812,15 @@ void GameG::update_tracks()
     rgl::mesh* track;
     {
         tstring n("track");
-        track = (rgl::mesh*)g_resmgr_inv.get_object(n);
+        track = ((resmgr*)&g_resmgr_inv)->get_object((const rgl::string*)&n);
     }
     rgl::mesh* battle;
     {
         tstring n("battle_track");
-        battle = (rgl::mesh*)g_resmgr_inv.get_object(n);
+        battle = ((resmgr*)&g_resmgr_inv)->get_object((const rgl::string*)&n);
     }
 
-    float denom = (float)party_at(&parties, parties.index_of(f78))->skill_level(0x10) + 8.0f;
+    float denom = (float)party_at(&parties, ((Map10007*)&parties)->lookup(f78))->skill_level(0x10) + 8.0f;
 
     for (Rec5c* p = events._Myfirst; p < events._Mylast; ++p) {
         if (!f95 && !(p->flags & 0x20000000))
@@ -846,7 +853,7 @@ void GameG::update_tracks()
         }
 
         unsigned col = rgl::pack_color(&c);
-        if (party_at(&parties, parties.index_of(f78))->skill_level(0x10) < 2)
+        if (party_at(&parties, ((Map10007*)&parties)->lookup(f78))->skill_level(0x10) < 2)
             col = 0xffa8a8a8;
         col |= 0xff000000;
 
@@ -862,9 +869,9 @@ void GameG::update_tracks()
 void GameG::train_troops()
 {
     for (unsigned id = parties.first_party_id(); id < parties.n_parties; parties.next_party_id(&id))
-        party_at(&parties, parties.index_of(id))->dirty = 1;
+        party_at(&parties, ((Map10007*)&parties)->lookup(id))->dirty = 1;
 
-    Party* p = party_at(&parties, parties.index_of(f78));
+    Party* p = party_at(&parties, ((Map10007*)&parties)->lookup(f78));
 
     int gain[64];
     for (int i = 0; i < p->nstacks; i++)
@@ -912,9 +919,9 @@ void GameG::train_troops()
     }
 
     if (total != 0) {
-        g_msglog.add(*g_strtable.lookup(&tstring("ui_days_training_is_complete")), -1);
+        g_msglog.add(*g_strtable.lookup(tstring("ui_days_training_is_complete")), -1);
         char buf[512];
-        sprintf(buf, g_strtable.lookup(&tstring("ui_total_experience_gained_through_training_number"))->c_str(), total);
+        sprintf(buf, g_strtable.lookup(tstring("ui_total_experience_gained_through_training_number"))->c_str(), total);
         g_msglog.add(tstring(buf), -1);
     }
 
@@ -931,5 +938,5 @@ void GameG::train_troops()
         }
     }
     if (changed)
-        g_msglog.add(*g_strtable.lookup(&tstring("ui_some_soldiers_are_ready_to_upgrade")), -1);
+        g_msglog.add(*g_strtable.lookup(tstring("ui_some_soldiers_are_ready_to_upgrade")), -1);
 }

@@ -16,6 +16,12 @@
 // ------------------------------------------------------------------ engine string (0x10 bytes) -----------
 #include "../tstring.h"
 
+namespace c49aca0 {                                                     // game/party2/camera.cpp
+struct NodeA;
+struct PVec {
+    void _Insert_n(NodeA** where, unsigned n, NodeA* const& x);   // 0x49b1c0
+};
+}
 // ------------------------------------------------------------------ records --------------------------------
 // 0x50-byte item stored inside `named_vec::items` (name + tail pointer, see 0x4d10f0).
 struct item50 {
@@ -27,7 +33,20 @@ struct item50 {
 // Scratch argument the folded STL helpers take by value (the original's slots at -0x2c/-0x30/-0x34/-0x38/-0x3c are read-only).
 #include "../junk_tag.h"
 
-void destroy_items(item50* first, item50* last, void* self, junk_tag tag);   // 0x4d10f0
+// The folded STL helpers are cdecl functions of other modules whose definitions omit the trailing scratch arguments (item_modifier_array_dtor,
+// destroy_range, append_rows, uninit_fill take 2 / 2 / 4 / 4 parameters); the original pushes them anyway (the caller pops), so every
+// call goes to the definition's own declaration through the original's argument list.
+struct item_modifier; struct NameVecRec; struct UiRow; struct RowAlloc; struct RecAlloc;
+void __cdecl item_modifier_array_dtor(item_modifier* first, item_modifier* last);         // 0x4d10f0 (game/module_load.cpp)
+void __cdecl destroy_range(NameVecRec* first, NameVecRec* last);                          // 0x4f6680 (game/editor_ui.cpp)
+UiRow* __cdecl append_rows(UiRow* first, UiRow* last, UiRow* dst, RowAlloc& al);           // 0x4ebe10 (game/screen.cpp)
+void __cdecl uninit_fill(NameVecRec* dst, unsigned n, const NameVecRec& val, RecAlloc* al); // 0x4f65f0 (game/editor_ui.cpp)
+struct item50;
+struct named_vec;
+struct E50;                                           // the 0x50-byte record of cls_map's vector instance (the same as item50)
+template<> std::vector<E50>::vector(const std::vector<E50>&);   // 0x4da1f0
+static __forceinline void destroy_items(item50* first, item50* last, void* self, junk_tag tag)
+{ ((void (__cdecl*)(item50*, item50*, void*, junk_tag))item_modifier_array_dtor)(first, last, self, tag); }   // 0x4d10f0
 
 struct sub_vec {                                    // vector<item50>
     void* alloc;                                    // +0
@@ -35,7 +54,7 @@ struct sub_vec {                                    // vector<item50>
     item50* last;                                   // +8
     item50* end;                                    // +0xc
     sub_vec();                                      // implicit
-    sub_vec(const sub_vec& o);                      // 0x4da1f0
+    __forceinline sub_vec(const sub_vec& o) { new ((void*)this) std::vector<E50>(*(const std::vector<E50>*)&o); }   // 0x4da1f0 (std::vector<E50>'s copy constructor, cls_map)
     ~sub_vec() { destroy(); }
     void destroy()
     {
@@ -64,12 +83,18 @@ struct vec_named {                                  // vector<named_vec>
     unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
     unsigned max_size() const { return 0x7ffffff; }
     named_vec* _Ufill(named_vec* ptr, unsigned n, const named_vec& val);   // 0x50d140
-    named_vec* _Ucopy(named_vec* first_, named_vec* last_, named_vec* dst); // 0x4fe840
     void _Destroy(named_vec* first_, named_vec* last_);                    // 0x50d230
     void _Insert_n(named_vec* where, unsigned n, const named_vec& val);    // 0x50d260
     void _Xlen() const;                                                    // 0x43e2a0
 };
+// 0x4fe840 is std::vector<RowRec>::_Ucopy<RowRec*>, a protected member template of the library's vector of these records (RowRec is the
+// named_vec record under its library name); cl 13.10 crashes on its explicit specialization declaration, so the member is instantiated
+// here (a COMDAT: the linker folds it with agent_vec.cpp's instance) through a class that makes it public
+struct RowRec : named_vec {};
+struct vec_rowrec_pub : std::vector<RowRec> { using std::vector<RowRec>::_Ucopy; };
+#define UCOPY(self, f, l, d) ((named_vec*)((vec_rowrec_pub*)(self))->_Ucopy((RowRec*)(f), (RowRec*)(l), (RowRec*)(d)))   // 0x4fe840
 void vec_named::_Xlen() const { throw std::length_error("vector<T> too long"); }
+
 
 // ------------------------------------------------------------------ the 0x1f8 model record ---------------
 #include "../model_b.h"
@@ -80,7 +105,6 @@ struct vec_model {                                  // vector<model_b>
     model_b* last;                                  // +8
     model_b* end;                                   // +0xc
     unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    void destroy();                                   // 0x4eb810
     void resize(unsigned n, model_b val = model_b());   // 0x50d170
 };
 
@@ -94,15 +118,19 @@ struct vec_widget {                                 // vector<widget*> (allocato
 };
 
 // ------------------------------------------------------------------ callees --------------------------------
-void  destroy_named_t(named_vec* first, named_vec* last, void* self, void* extra);   // 0x4f6680
-void  destroy_named_t(named_vec* first, named_vec* last, void* self, junk_tag tag); // 0x4f6680
-void  insert_models(model_b** out, unsigned n, const model_b* val);      // 0x4fe520
-void  erase(model_b* out, model_b* first, model_b* last);         // 0x4eb860
-void* uninit_copy(void* first, void* last, void* dst, void* self, junk_tag tag);   // 0x4ebe10
-void* uninit_fill(void* dst, unsigned n, const void* val, void* self, const void* val2);  // 0x4f65f0
-void  fill_named(named_vec* first, named_vec* last, const named_vec* val);         // 0x4e5f80
-void  copy_back(void* first, void* last, void* dst, junk_tag tag);        // 0x4e42b0
-void  destroy_items(item50* first, item50* last, void* self, junk_tag tag);         // 0x4d10f0
+static __forceinline void destroy_named_t(named_vec* first, named_vec* last, void* self, void* extra)   // 0x4f6680
+{ ((void (__cdecl*)(named_vec*, named_vec*, void*, void*))destroy_range)(first, last, self, extra); }
+static __forceinline void destroy_named_t(named_vec* first, named_vec* last, void* self, junk_tag tag)  // 0x4f6680
+{ ((void (__cdecl*)(named_vec*, named_vec*, void*, junk_tag))destroy_range)(first, last, self, tag); }
+static __forceinline void* uninit_copy(void* first, void* last, void* dst, void* self, junk_tag tag)   // 0x4ebe10
+{ return ((void* (__cdecl*)(void*, void*, void*, void*, junk_tag))append_rows)(first, last, dst, self, tag); }
+static __forceinline void uninit_fill5(void* dst, unsigned n, const void* val, void* self, const void* val2)   // 0x4f65f0
+{ ((void (__cdecl*)(void*, unsigned, const void*, void*, const void*))uninit_fill)(dst, n, val, self, val2); }
+struct RagModel;                                                  // cls_map/progress_bar.cpp: the 0x20-byte record the instances below were made for
+namespace std {   // the library instances of progress_bar.cpp (the folded helpers of 0x50d260)
+template<> void fill<RagModel*, RagModel>(RagModel*, RagModel*, const RagModel&);                                               // 0x4e5f80
+template<> RagModel* _Copy_backward_opt<RagModel*, RagModel*>(RagModel*, RagModel*, RagModel*, _Nonscalar_ptr_iterator_tag);   // 0x4e42b0
+}
 void  read(void* self, void* stream);                              // 0x4e7b30
 void  tstring_dtor(tstring* s);                                          // 0x42bc40
 
@@ -162,7 +190,7 @@ void sel_list::add(int val)
         *p = val;
         v._Mylast = p + 1;
     } else {
-        v.insert_n_49b1c0(v._Mylast, 1, &val);
+        ((c49aca0::PVec*)&v)->_Insert_n((c49aca0::NodeA**)v._Mylast, 1, *(c49aca0::NodeA* const*)&val);   // 0x49b1c0
     }
 }
 
@@ -267,7 +295,7 @@ LRESULT __stdcall dialog_thunk(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam
 named_vec* vec_named::_Ufill(named_vec* ptr, unsigned n, const named_vec& val)
 {
     const named_vec* q = &val;
-    uninit_fill(ptr, n, q, this, &val);
+    uninit_fill5(ptr, n, q, this, &val);
     return ptr + n;
 }
 
@@ -295,9 +323,9 @@ void vec_named::_Insert_n(named_vec* where, unsigned count, const named_vec& val
         named_vec* newvec = (named_vec*)::operator new(cap * sizeof(named_vec));
         named_vec* ptr = newvec;
         try {
-            ptr = _Ucopy(first, where, newvec);
+            ptr = UCOPY(this, first, where, newvec);
             ptr = _Ufill(ptr, count, tmp);
-            _Ucopy(where, last, ptr);
+            UCOPY(this, where, last, ptr);
         } catch (...) {
             _Destroy(newvec, ptr);
             ::operator delete(newvec);
@@ -321,27 +349,40 @@ void vec_named::_Insert_n(named_vec* where, unsigned count, const named_vec& val
             throw;
         }
         last += count;
-        fill_named(where, last - count, &tmp);
+        std::fill<RagModel*, RagModel>((RagModel*)where, (RagModel*)(last - count), (const RagModel&)tmp);
     } else {
         named_vec* oldend = last;
         last = (named_vec*)uninit_copy(oldend - count, oldend, oldend, this, junk_tag());
-        copy_back(where, oldend - count, oldend, junk_tag());
-        fill_named(where, where + count, &tmp);
+        std::_Nonscalar_ptr_iterator_tag cb_tag;
+        std::_Copy_backward_opt<RagModel*, RagModel*>((RagModel*)where, (RagModel*)(oldend - count), (RagModel*)oldend, cb_tag);
+        std::fill<RagModel*, RagModel>((RagModel*)where, (RagModel*)(where + count), (const RagModel&)tmp);
     }
 }
 
 // ------------------------------------------------------------------ vector<model_b> members ---------------
-void __stdcall insert_models(model_b* where, unsigned n, const model_b& val);      // 0x4fe520
-void __stdcall erase(const model_b& out, model_b* first, model_b* last);    // 0x4eb860
+// vec_model is the library's vector of 0x1f8-byte records: its growth path is std::vector<CfgRec>::_Insert_n (0x4fe520,
+// agent_vec.cpp's instance, protected: reached through a class that makes it public) and its shrink path is BigArray::erase
+// (0x4eb860, game/char_sheet/facegen_misc.cpp: erase(hidden result, first, last), thiscall)
+struct CfgRec { char b[0x1f8]; };
+template<> void std::vector<CfgRec>::_Insert_n(std::vector<CfgRec>::iterator, size_t, const CfgRec&);   // 0x4fe520
+struct vec_cfg_pub : std::vector<CfgRec> { using std::vector<CfgRec>::_Insert_n; };
+struct SkinSet;
+struct BigArray {
+    void destroy();                                                     // 0x4eb810
+    void erase(SkinSet** out, SkinSet* first, SkinSet* last);           // 0x4eb860
+};
+struct FaceRace {
+    void relax(int mode, float* w);   // 0x4735e0 (game/terrain_b)
+};
 
 // @ 0x50d170 vec_model::resize
 void vec_model::resize(unsigned n, model_b val)
 {
     model_b* f = first;
     if (size() < n)
-        insert_models(last, n - size(), val);
+        ((vec_cfg_pub*)this)->_Insert_n(std::vector<CfgRec>::iterator((CfgRec*)last), n - size(), *(const CfgRec*)&val);
     else if (n < size())
-        erase(val, f + n, last);
+        ((BigArray*)this)->erase((SkinSet**)&val, (SkinSet*)(f + n), (SkinSet*)last);
 }
 
 // ------------------------------------------------------------------ the scene reader -----------------------
@@ -365,7 +406,7 @@ struct mesh_scene {
 // @ 0x50d520 mesh_scene::read
 void mesh_scene::read(AccessStream* s)
 {
-    models.destroy();
+    ((BigArray*)&models)->destroy();   // 0x4eb810
     s->read_int(&count);
     unsigned n = count;
     models.resize(n);
@@ -385,5 +426,5 @@ void mesh_scene::read(AccessStream* s)
     for (int i = 0; i < 0x3f; i++)
         w[i] = 0.5f;
     model_b* m = &models.first[f8];
-    m->relax(-1, w);
+    ((FaceRace*)m)->relax(-1, w);   // 0x4735e0
 }

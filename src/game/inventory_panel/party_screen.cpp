@@ -7,6 +7,7 @@
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./party_screen.h"
+#include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
 #include "../../include/game_data.h"
@@ -66,7 +67,7 @@ static MissionUi* button(PartyScreen* self, MissionUi* parent, const char* label
 {
     tstring k(label_key);
     tstring h(cfg_key);
-    tstring* text = g_strtable.lookup(&k);
+    tstring* text = g_strtable.lookup(k);
     return make_short_button(parent, text, 0, 0, ini_float(h));
 }
 
@@ -102,7 +103,7 @@ void PartyScreen::open_party_window()
 
     {
         tstring key("party_window_b");
-        ResMesh* m = g_resmgr_inv.get_object(key);
+        ResMesh* m = (ResMesh*)((resmgr*)&g_resmgr_inv)->get_object((const rgl::string*)&key);
         ResMesh* c = m->clone();
         PSO(win)->add_image(0, c);
     }
@@ -143,7 +144,7 @@ void PartyScreen::open_party_window()
     {
         tstring k("ui_release_one");
         tstring h("party_b_release_h");
-        tstring* text = g_strtable.lookup(&k);
+        tstring* text = g_strtable.lookup(k);
         action_btn = new_medium_button(info, text, 0, 0, ini_float(h));
     }
     label_refresh(action_btn, tstring("party_b_release"));
@@ -165,7 +166,7 @@ void PartyScreen::open_party_window()
     {
         tstring k("ui_upgrade_one");
         tstring h("party_b_upgrade1_h");
-        tstring* text = g_strtable.lookup(&k);
+        tstring* text = g_strtable.lookup(k);
         upgrade1 = new_long_button(info, text, 0, 0, ini_float(h));
     }
     label_refresh(upgrade1, tstring("party_b_upgrade1"));
@@ -173,7 +174,7 @@ void PartyScreen::open_party_window()
     {
         tstring k("ui_upgrade_one");
         tstring h("party_b_upgrade2_h");
-        tstring* text = g_strtable.lookup(&k);
+        tstring* text = g_strtable.lookup(k);
         upgrade2 = new_long_button(info, text, 0, 0, ini_float(h));
     }
     label_refresh(upgrade2, tstring("party_b_upgrade2"));
@@ -276,16 +277,16 @@ void PartyScreen::refresh_morale()
     char text[0x1f0];
 
     sprintf(text,
-            g_strtable.lookup(&tstring("ui_morale"))->c_str(),
-            morale < 0.1f ? g_strtable.lookup(&tstring("ui_terrible"))->c_str()
-          : morale < 0.2f ? g_strtable.lookup(&tstring("ui_very_low"))->c_str()
-          : morale < 0.3f ? g_strtable.lookup(&tstring("ui_low"))->c_str()
-          : morale < 0.4f ? g_strtable.lookup(&tstring("ui_below_average"))->c_str()
-          : morale < 0.6f ? g_strtable.lookup(&tstring("ui_average"))->c_str()
-          : morale < 0.7f ? g_strtable.lookup(&tstring("ui_above_average"))->c_str()
-          : morale < 0.8f ? g_strtable.lookup(&tstring("ui_high"))->c_str()
-          : morale < 0.9f ? g_strtable.lookup(&tstring("ui_very_high"))->c_str()
-          : g_strtable.lookup(&tstring("ui_excellent"))->c_str());
+            g_strtable.lookup(tstring("ui_morale"))->c_str(),
+            morale < 0.1f ? g_strtable.lookup(tstring("ui_terrible"))->c_str()
+          : morale < 0.2f ? g_strtable.lookup(tstring("ui_very_low"))->c_str()
+          : morale < 0.3f ? g_strtable.lookup(tstring("ui_low"))->c_str()
+          : morale < 0.4f ? g_strtable.lookup(tstring("ui_below_average"))->c_str()
+          : morale < 0.6f ? g_strtable.lookup(tstring("ui_average"))->c_str()
+          : morale < 0.7f ? g_strtable.lookup(tstring("ui_above_average"))->c_str()
+          : morale < 0.8f ? g_strtable.lookup(tstring("ui_high"))->c_str()
+          : morale < 0.9f ? g_strtable.lookup(tstring("ui_very_high"))->c_str()
+          : g_strtable.lookup(tstring("ui_excellent"))->c_str());
 
     {
         tstring line(text);
@@ -304,7 +305,7 @@ void PartyScreen::refresh_morale()
         int n = (int)whole;
         if (!(value - whole <= 0.5f))
             n++;
-        sprintf(text, g_strtable.lookup(&fmt)->c_str(), n);
+        sprintf(text, g_strtable.lookup(fmt)->c_str(), n);
     }
 
     {
@@ -325,7 +326,7 @@ void PartyScreen::refresh_morale()
 static Party* get_party(int id)
 {
     PartyMgr* m = &g_game->parties;
-    int i = m->index_of(id);
+    int i = ((Map10007*)m)->lookup(id);
     return &m->pages._Myfirst[i >> 4][i & 0xf];
 }
 
@@ -447,7 +448,7 @@ void PartyScreen::refresh_party_members(int type)
                         else if (v > g_clamp_max)
                             v = g_clamp_max;
                         int pct = (int)(rec->hp * 100.0f / (float)(rec->f58[0] + v * 2 + 0x23) + 0.0001f);
-                        sprintf(buf, g_strtable.lookup(&key)->c_str(), display_name(rec), pct);
+                        sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec), pct);
                     }
                     label.assign(buf);
                     if (rec->fa8 != 0)
@@ -461,7 +462,7 @@ void PartyScreen::refresh_party_members(int type)
                         else if (v > g_clamp_max)
                             v = g_clamp_max;
                         int pct = (int)(rec->hp * 100.0f / (float)(rec->f58[0] + v * 2 + 0x23) + 0.0001f);
-                        sprintf(buf, g_strtable.lookup(&key)->c_str(), display_name(rec), pct);
+                        sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec), pct);
                     }
                     label.assign(buf);
                     if (rec->fa8 != 0)
@@ -471,7 +472,7 @@ void PartyScreen::refresh_party_members(int type)
                 if (st->count > 0 && !is_wounded) {
                     {
                         tstring key("ui_button_party_member_healthy_total");
-                        sprintf(buf, g_strtable.lookup(&key)->c_str(), display_name(rec),
+                        sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec),
                                 st->count - st->wounded, st->count);
                     }
                     label.assign(buf);
@@ -480,7 +481,7 @@ void PartyScreen::refresh_party_members(int type)
                 } else {
                     {
                         tstring key("ui_button_party_member_total");
-                        sprintf(buf, g_strtable.lookup(&key)->c_str(), display_name(rec),
+                        sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec),
                                 st->count);
                     }
                     label.assign(buf);
@@ -515,7 +516,7 @@ void PartyScreen::refresh_party_members(int type)
             {
                 tstring key("ui_weekly_cost_value");
                 tstring val = g_game->string_value(cost);
-                sprintf(buf, g_strtable.lookup(&key)->c_str(), val.c_str());
+                sprintf(buf, g_strtable.lookup(key)->c_str(), val.c_str());
             }
             tstring text(buf);
             push_text(weekly_cost_lbl, &text);
@@ -526,7 +527,7 @@ void PartyScreen::refresh_party_members(int type)
 
         {
             tstring key("ui_company");
-            tstring* fmt = g_strtable.lookup(&key);
+            tstring* fmt = g_strtable.lookup(key);
             sprintf(buf, fmt->c_str(), get_party(g_game->f78)->sum_head(),
                     get_party(g_game->f78)->max_members());
         }
@@ -537,7 +538,7 @@ void PartyScreen::refresh_party_members(int type)
 
         {
             tstring key("ui_prisoners_equal_value");
-            tstring* fmt = g_strtable.lookup(&key);
+            tstring* fmt = g_strtable.lookup(key);
             sprintf(buf, fmt->c_str(), get_party(g_game->f78)->sum_flagged(),
                     get_party(g_game->f78)->max_prisoners());
         }
@@ -604,7 +605,7 @@ void PartyScreen::money_label(int type, int troop)
     char buf[512];
     {
         tstring key("ui_money_value");
-        sprintf(buf, g_strtable.lookup(&key)->c_str(), g_game->string_value(troop).c_str());
+        sprintf(buf, g_strtable.lookup(key)->c_str(), g_game->string_value(troop).c_str());
     }
     {
         tstring text(buf);
@@ -631,7 +632,7 @@ int GameDataV::weekly_cost()
     if (sl_query(8, 0, 0))
         return g_store0;
 
-    int id = parties.index_of(f78);
+    int id = ((Map10007*)&parties)->lookup(f78);
     int* blk = (int*)parties.pages._Myfirst[id >> 4];
     char* rec = (char*)blk + (id & 0xf) * 0x5ac8;
     int cnt = *(int*)(rec + 0x8a8);
@@ -656,14 +657,14 @@ void PartyScreen::setup_party(int side)
 {
     float caption_pos[2];           // passed uninitialized by the original (a game bug)
 
-    members_base[side] = new PsBar;
+    members_base[side] = new_ps_bar();
     if (side == 0) {
         label_refresh(members_base[0], tstring("party_bo_party1"));
         if (g_game->skill_level(g_game->player, 2) == 0) {
             prisoner_mgmt = new MissionUi;
             label_refresh(prisoner_mgmt, tstring("party_t_prisoner_mgmt"));
             PSO(prisoner_mgmt)->set_text(
-                caption_pos, g_strtable.lookup(&tstring("ui_need_to_learn_prisoner_mgmt")));
+                caption_pos, g_strtable.lookup(tstring("ui_need_to_learn_prisoner_mgmt")));
             PSO(members_base[0])->add_child(prisoner_mgmt);
         }
     } else {
@@ -671,7 +672,7 @@ void PartyScreen::setup_party(int side)
     }
 
     for (int page = 0; page < 2; page++) {
-        members_page[side][page] = new PsListWidget;
+        members_page[side][page] = new_ps_list();
         label_refresh(members_page[side][page], tstring("party_bo_members_base"));
         if (page == 0) {
             tstring s1("party_s_members1");
@@ -762,7 +763,7 @@ void PartyScreen::setup_party(int side)
 
         // the two captions depend on what kind of party is shown
         if (mode == 1 || mode == 6 || mode == 7) {
-            int           idx = g_game->parties.index_of(other_party);
+            int           idx = ((Map10007*)&g_game->parties)->lookup(other_party);
             Party* rec = (Party*)((char*)g_game->parties.pages._Myfirst[idx >> 4]
                                                 + (idx & 0xf) * 0x5ac8);
             tstring* name;
@@ -780,9 +781,9 @@ void PartyScreen::setup_party(int side)
             PSO(choose_prisoners)->set_text(caption_pos, &empty2);
         } else {
             tstring s1("ui_rescued_prisoners");
-            PSO(choose_companions)->set_text(caption_pos, g_strtable.lookup(&s1));
+            PSO(choose_companions)->set_text(caption_pos, g_strtable.lookup(s1));
             tstring s2("ui_captured_enemies");
-            PSO(choose_prisoners)->set_text(caption_pos, g_strtable.lookup(&s2));
+            PSO(choose_prisoners)->set_text(caption_pos, g_strtable.lookup(s2));
         }
     }
 }
@@ -792,7 +793,7 @@ void PartyScreen::setup_party(int side)
 void PartyScreen::setup_skills()
 {
     // ---- the skills panel ----
-    MissionUi* w = new PsBar;                   // 0x188, ctor 0x4931a0, vptr 0x597050
+    MissionUi* w = new_ps_bar();                   // 0x188, ctor 0x4931a0, vptr 0x597050
     skills_base = w;
     label_refresh(skills_base, tstring("party_bo_skills"));
     {
@@ -808,13 +809,13 @@ void PartyScreen::setup_skills()
     {
         tstring key("ui_party_skills");
         float pos[2];
-        PSO(bar)->set_text(pos, g_strtable.lookup(&key));
+        PSO(bar)->set_text(pos, g_strtable.lookup(key));
     }
     PSO(skills_base)->add_child(bar);
 
     // ---- the party this page shows and its members ----
     GameData* g = g_game;
-    int idx = g->parties.index_of(g->f78);
+    int idx = ((Map10007*)&g->parties)->lookup(g->f78);
     Party* members = (Party*)((char*)g->parties.pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8);
     int count = members->nstacks;
 
@@ -938,7 +939,7 @@ void PartyScreen::setup_skills()
     }
     {
         tstring name("party_sc_skills");
-        PsScrollList* list = new PsScrollList;            // 0x4a8, ctor 0x49deb0
+        PsScrollList* list = new_scroll_list();            // 0x4a8, ctor 0x49deb0
         list->f104 |= 0x20;
         if (sb != 0)
             list->scrollbar = sb;
@@ -973,7 +974,7 @@ void PartyScreen::setup_skills()
     {
         tstring key("ui_party_skills");
         float pos[2];
-        PSO(party_skills_bar)->set_text(pos, g_strtable.lookup(&key));
+        PSO(party_skills_bar)->set_text(pos, g_strtable.lookup(key));
     }
     PSO(window)->add_child(party_skills_bar);
 }
@@ -1039,7 +1040,7 @@ void PartyScreen::refresh_selection()
             tstring s("ui_take_prisoner");
             k = s;
         }
-        zero = *g_strtable.lookup(&k);
+        zero = *g_strtable.lookup(k);
         if (sel_row != -1) {
             if (!(sel_type == 0 && sel_row == 0 && sel_slot == 0)) {
                 action = true;
@@ -1054,7 +1055,7 @@ void PartyScreen::refresh_selection()
             tstring s("ui_take");
             k = s;
         }
-        zero = *g_strtable.lookup(&k);
+        zero = *g_strtable.lookup(k);
         if (sel_row != 0 || sel_slot != 0 || mode == 6) {
             if (!(sel_type == 0 && sel_slot == 0 && mode == 7)) {
                 action = true;
@@ -1062,7 +1063,7 @@ void PartyScreen::refresh_selection()
         }
     } else if (cmd == 2) {
         tstring k("ui_sell");
-        zero = *g_strtable.lookup(&k);
+        zero = *g_strtable.lookup(k);
         if (sel_type == 0 && (stk.flags & 1) != 0) {
             g_store0 = 1;
             g_store1 = 0;
@@ -1072,7 +1073,7 @@ void PartyScreen::refresh_selection()
         }
     } else if (cmd == 3) {
         tstring k("ui_hire");
-        zero = *g_strtable.lookup(&k);
+        zero = *g_strtable.lookup(k);
         if (sel_type != 0) {
             int diff = GV->sl_party_price(stk.troop) - f8cc;
             if (diff <= g_game->chars[g_game->player].f3b4) {
@@ -1084,7 +1085,7 @@ void PartyScreen::refresh_selection()
                 pt[0] = x;
                 pt[1] = y;
                 tstring msg("ui_notification_cant_hire");
-                PSO(info)->set_label(g_strtable.lookup(&msg), pt);
+                PSO(info)->set_label(g_strtable.lookup(msg), pt);
             }
         }
     } else if (cmd == 4) {
@@ -1100,7 +1101,7 @@ void PartyScreen::refresh_selection()
             tstring s("ui_capture");
             k = s;
         }
-        zero = *g_strtable.lookup(&k);
+        zero = *g_strtable.lookup(k);
     }
 
     if (p2 == g_game->f78) {
@@ -1122,7 +1123,7 @@ void PartyScreen::refresh_selection()
             pt[0] = x;
             pt[1] = y;
             tstring msg("ui_party_capcity_reached");
-            PSO(info)->set_label(g_strtable.lookup(&msg), pt);
+            PSO(info)->set_label(g_strtable.lookup(msg), pt);
         }
     }
 
@@ -1148,7 +1149,7 @@ void PartyScreen::refresh_selection()
                 v = g_store0;
             else
                 v = GD_I(0x13a20);
-            sprintf(price_buf, g_strtable.lookup(&k)->c_str(), v);
+            sprintf(price_buf, g_strtable.lookup(k)->c_str(), v);
             PSO(cost_panel)->set_text((float*)&tmp, &k);
             put_text(cost_panel, price_buf);
         }
@@ -1159,11 +1160,11 @@ void PartyScreen::refresh_selection()
             k = tstring("ui_joining_cost_weekly_wage");
             int v2 = GV->sl_party_price(slot_idx);
             int v1 = GV->sl_party_value(slot_idx);
-            sprintf(wage_buf, g_strtable.lookup(&k)->c_str(), v1, v2);
+            sprintf(wage_buf, g_strtable.lookup(k)->c_str(), v1, v2);
         } else {
             k = tstring("ui_weekly_wage");
             int v1 = GV->sl_party_value(slot_idx);
-            sprintf(wage_buf, g_strtable.lookup(&k)->c_str(), v1);
+            sprintf(wage_buf, g_strtable.lookup(k)->c_str(), v1);
         }
         PSO(cost_panel)->set_text((float*)&tmp, &k);
         put_text(cost_panel, wage_buf);
@@ -1178,24 +1179,24 @@ void PartyScreen::refresh_selection()
     if (sel_type == 0 && (rec->flags32 & 0x10) == 0) {
         nb = stk.flags & 1;
         if (nb == 0) {
-            sprintf(upgrade_buf, g_strtable.lookup(&tstring("ui_number_ready_to_upgrade"))->c_str(), sel_slot);
+            sprintf(upgrade_buf, g_strtable.lookup(tstring("ui_number_ready_to_upgrade"))->c_str(), sel_slot);
             if (rec->f50 != 0) {
                 up1 = true;
                 {
                     tstring k("ui_upgrade_to_value");
-                    sprintf(price_buf, g_strtable.lookup(&k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
+                    sprintf(price_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
                     PSO(upgrade1)->set_text((float*)&tmp, &k);
                 }
-                PSO(upgrade1)->set_colour(&g_strtable.lookup(&tstring("party_b_member_t_c"))->len);
+                PSO(upgrade1)->set_colour(&g_strtable.lookup(tstring("party_b_member_t_c"))->len);
             }
             if (*(unsigned*)((char*)rec + 0x54) != 0) {
                 up2 = true;
                 {
                     tstring k("ui_upgrade_to_value");
-                    sprintf(price_buf, g_strtable.lookup(&k)->c_str(), g_game->chars[*(unsigned*)((char*)rec + 0x54)].display_name()->c_str());
+                    sprintf(price_buf, g_strtable.lookup(k)->c_str(), g_game->chars[*(unsigned*)((char*)rec + 0x54)].display_name()->c_str());
                     PSO(upgrade2)->set_text((float*)&tmp, &k);
                 }
-                PSO(upgrade2)->set_colour(&g_strtable.lookup(&tstring("party_b_member_t_c"))->len);
+                PSO(upgrade2)->set_colour(&g_strtable.lookup(tstring("party_b_member_t_c"))->len);
             }
             if (up1) {
                 put_text(upgrade1, upgrade_buf);
@@ -1230,17 +1231,17 @@ void PartyScreen::refresh_selection()
     if (sel_slot != 0) {
         if (!up2) {
             tstring k("ui_notification_no_slot_for_upgrade");
-            sprintf(price_buf, g_strtable.lookup(&k)->c_str(), g_game->chars[*(unsigned*)((char*)rec + 0x54)].display_name()->c_str());
+            sprintf(price_buf, g_strtable.lookup(k)->c_str(), g_game->chars[*(unsigned*)((char*)rec + 0x54)].display_name()->c_str());
             PSO(upgrade2)->set_text((float*)&tmp, &k);
-            PSO(upgrade2)->set_colour(&g_strtable.lookup(&tstring("party_b_upgrade_t_c_passive"))->len);
+            PSO(upgrade2)->set_colour(&g_strtable.lookup(tstring("party_b_upgrade_t_c_passive"))->len);
         }
         if (nb == 0) {
             {
                 tstring k("ui_notification_no_slot_for_upgrade");
-                sprintf(price_buf, g_strtable.lookup(&k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
+                sprintf(price_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
                 PSO(upgrade1)->set_text((float*)&tmp, &k);
             }
-            PSO(upgrade1)->set_colour(&g_strtable.lookup(&tstring("party_b_upgrade_t_c_passive"))->len);
+            PSO(upgrade1)->set_colour(&g_strtable.lookup(tstring("party_b_upgrade_t_c_passive"))->len);
         }
         put_text(upgrade_panel, upgrade_buf);
     }
@@ -1283,7 +1284,7 @@ void PartyScreen::show_selected_character(int troop, int slot)
 
     int t = troop;
     troop = slot + troop * 2;
-    PSO(char_quad)->add_image(0, g_tableaus.make_mesh_from(&item, &troop));
+    PSO(char_quad)->add_image(0, ((TableauTbl*)&g_tableaus)->make_mesh_from(&item, &troop));
 
     TroopRec* rec = (TroopRec*)((char*)g_game->chars + t * 0x508);
     float size[2];

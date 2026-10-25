@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
+enum TiXmlEncoding { TIXML_ENCODING_UNKNOWN, TIXML_ENCODING_UTF8, TIXML_ENCODING_LEGACY };   // tinyxml/tinyxml.h
 void tinystr_free(void* p);                                 // 0x53570d (operator delete[])
 
 class TiXmlString {
@@ -97,7 +98,7 @@ public:
     TiXmlNode* FirstChild() const { return firstChild; }
     TiXmlNode* FirstChild(const char* value) const;         // 0x42dc10
     TiXmlNode* NextSibling() const { return next; }
-    TiXmlElement* NextSiblingElement() const;               // 0x42dc80
+    TiXmlElement* NextSiblingElement();                     // 0x42dc80 (tinyxml/tinyxml.h: non-const)
     TiXmlElement* FirstChildElement() const
     {
         const TiXmlNode* node;
@@ -232,7 +233,7 @@ public:
     virtual TiXmlNode* Clone() const;
     void CopyTo(TiXmlDocument* target) const;               // 0x42dd30
     void ClearError() { error = false; errorId = 0; errorDesc = ""; errorLocation.row = errorLocation.col = 0; }
-    bool LoadFile(int ignore = 0);                          // 0x42f6c0
+    bool LoadFile(TiXmlEncoding encoding = TIXML_ENCODING_UNKNOWN);   // 0x42f6c0
     bool error;                     // +0x2c
     int errorId;                    // +0x30
     TiXmlString errorDesc;          // +0x34

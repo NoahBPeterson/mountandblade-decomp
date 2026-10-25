@@ -21,6 +21,7 @@
 #include "./ui_widgets.h"
 #include "./world.h"
 #include "./mission.h"
+#include "../../include/dialog_rec.h"      // DialogBlock::emit 0x4b09e0 (the block runner a TimerChild's sound channel stands for)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/keyframes.h"
 #include "../../include/mat4.h"
@@ -479,7 +480,7 @@ void TimerChild::tick(int idx)
         if (idx == rnd(&period)) {
             __int64 buf[16];
             int zero = 0;
-            ch.emit(idx, 0, &zero, buf, -1);
+            ((DialogBlock*)&ch)->emit(idx, 0, &zero, buf, (unsigned)-1);   // 0x4b09e0
         }
     } else {
         long long d = g_ticks[clock] - last;
@@ -977,7 +978,7 @@ void MissionView::quarter()
 void* MissionView::make(int* p)
 {
     quarter();
-    char* o = g_alloc.make(v18[2], v18[3], 0x15, 1);
+    char* o = (char*)g_alloc.get_shadow_skin(v18[2], v18[3], 0x15, 1);
     *(int*)(o + 0x64) = 0;
     *(int*)(o + 0x60) = *p;
     *(int*)(*(int*)(o + 0x48) + 0x4c) = 0;

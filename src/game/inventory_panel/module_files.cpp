@@ -60,16 +60,17 @@ struct stream_root {
 // The 0x54a890 stream class: its destructor (0x417310) stores that vtable and owns nothing else, so
 // the base's members are destroyed after it, `buf` before `name` -- exactly the order the original
 // inlines at the end of the loader.
-struct tstream2 : stream_root {
+struct stream_base;                                  // the shared stream class (rgl): the definitions of the table loaders take it
+struct text_stream : stream_root {
     FILE* fp;                    // +0x30
     char failed;                 // +0x34
-    ~tstream2() {}                                   // 0x417310 (inlined: vtable 0x54a890)
+    ~text_stream() {}                                   // 0x417310 (inlined: vtable 0x54a890)
     bool open_read_text(const char* path);           // 0x415d60
 };
 
 // The concrete text stream (vtable 0x54ac88); its constructor at 0x4172d0 stores that vtable last.
-// It declares no destructor, so the implicit one just runs ~tstream2.
-struct tstream3 : tstream2 {
+// It declares no destructor, so the implicit one just runs ~text_stream.
+struct tstream3 : text_stream {
     tstream3() { autoflush = 0; f1c = 0; fp = 0; state = 0; failed = 1; }
 };
 
@@ -104,12 +105,21 @@ struct Vec12 {
 
 // scene_props.txt element (0x78 bytes): ctor 0x4ce2a0, read 0x4ce360, array-deleting
 // destructor 0x4c7ee0 (flag 3 = destroy the elements and free the cookie-prefixed block).
-struct MapPoint {
+struct MissionObj {
     char data[0x78];
-    MapPoint();                                      // 0x4ce2a0
-    void read(tstream3* s);                       // 0x4ce360
-    void destroy_array(int flags);                   // 0x4c7ee0
+    MissionObj();                                      // 0x4ce2a0
+    void read(stream_base* s);                       // 0x4ce360
 };
+// the array-deleting destructors of the four record arrays, as the definitions declare them (the loader calls them with the
+// array pointer in ecx and the flags on the stack; the second slot is the definitions' unused edx parameter)
+void* __fastcall destroy_record_array(void* p, int, unsigned char flags);             // 0x4c7ee0 (the 0x78-byte records)
+struct elem60;
+void* __fastcall elem60_vector_delete(elem60* p, void*, unsigned flags);               // 0x4c4f40 (the 0x60-byte menu records)
+struct elem58 {
+    void* vector_deleting_delete(unsigned flags);   // 0x4c3430 (the 0x58-byte mission templates)
+};
+struct conv_rec;
+void* __fastcall conv_item_array_dtor(conv_rec* p, int, unsigned char flags);          // 0x4c8980 (the 0xb0-byte party templates)
 
 // menus.txt element (0x60 bytes): ctor is inlined, load 0x4c2b20, array reject 0x4c4f40.
 #include "../menu_rec.h"           // MenuRec (menus.txt element, 0x60 bytes)
@@ -122,7 +132,7 @@ struct MapIcon {
     char pad24[0x18];            // +0x24
     Vec12 v;                     // +0x3c
     MapIcon() {}
-    void read(tstream3* s);                       // 0x4c20c0
+    void read(stream_base& s);                    // 0x4c20c0
 };
 
 // item_kinds1.txt element (0x238 bytes): ctor 0x4cdf20, dtor 0x4c8a40, read 0x4c8110.
@@ -140,8 +150,9 @@ struct PartyTplRec {
     int fA8;                     // +0xa8
     int fAC;                     // +0xac
     PartyTplRec() : fA4(0), fA8(0), fAC(0) {}
-    void save(tstream3* s);                       // 0x4bdff0
-    void destroy_array(int flags);                   // 0x4c8980
+};
+struct sound_def {
+    void save(stream_base& s);   // 0x4bdff0 (game/config: the party template's record writer)
 };
 
 // ---------------------------------------------------------------- table objects
@@ -150,27 +161,48 @@ struct PartyTplRec {
 struct SoundTable {                                  // 0x5aa128
     int pad0;                                        // +0x00
     int* p4;                                         // +0x04  -> sound count
-    void load(tstream3* s, int count, tstring* path);  // 0x4c4340
+};
+struct music_set {
+    void load(stream_base* s, int count, const tstring* path);   // 0x4c4340 (rgl/mesh2/rec_tables.h: SoundTable::load)
 };
 #include "../emit.h"
-struct AnimTable {                                   // 0x8ed4f60
-    void read(tstream3* s);                          // 0x50d520
+struct AnimTable { char pad; };                      // 0x8ed4f60
+struct AccessStream;
+struct mesh_scene {
+    void read(AccessStream* s);   // 0x50d520 (AnimTable::read: game/mesh_slot)
 };
-struct TableauTable {                                // 0xa75f40
-    void read(tstream3* s);                          // 0x4e7a70
+struct TableauTable { char pad; };                   // 0xa75f40
+struct SlotReader;
+struct MapLoader {
+    void read(SlotReader* s);   // 0x4e7a70 (TableauTable::read)
 };
-struct PresentationTable {                           // 0xa75f2c
-    void fill_records(tstream3* s);                  // 0x4c6950
+struct PresentationTable { char pad; };              // 0xa75f2c
+struct RefRecord;
+struct ItemPage {
+    RefRecord* fill_records(RefRecord* s);   // 0x4c6950 (PresentationTable::fill_records: rgl/mesh2/gui_edit.h)
 };
-struct ScriptTable {                                 // 0xa75eb0
-    void load(tstream3* s);                          // 0x4c48d0
+struct ScriptTable { char pad; };                    // 0xa75eb0
+struct rec34_list {
+    void __fastcall load(stream_base& s);   // 0x4c48d0 (ScriptTable::load, ret 4: rgl/mesh2/gui_edit.h)
 };
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
-struct MeshTable {                                   // 0x8ed4f58
-    void load(tstream3* s);                          // 0x4c3fb0
+struct MeshTable { char pad; };                      // 0x8ed4f58
+struct elem48_holder;
+void __fastcall load_elem48_array(elem48_holder* self, int, stream_base* s);   // 0x4c3fb0 (MeshTable::load: rgl/mesh2/rec_tables.cpp)
+struct DialogTable { char pad; };                    // 0x8ed50c8
+struct DialogMgr {
+    void read(stream_base* s);   // 0x460ab0 (DialogTable::read)
 };
-struct DialogTable {                                 // 0x8ed50c8
-    void read(tstream3* s);                          // 0x460ab0
+struct pair_holder {
+    void load1(stream_base* s);   // 0x4c46d0 / 0x4c47d0 (StringTable::load1 / load2: rgl/mesh2/rec_tables.h)
+    void load2(stream_base* s);   // 0x4c47d0
+};
+struct Block {
+    void read(stream_base* s);   // 0x4c8110 (ItemKind::read: rgl/mesh2/gui_edit.h; the loader's version word is not a parameter of the definition)
+};
+struct csv_row {
+    char data[0x238];
+    csv_row();   // 0x4cdf20 (ItemKind::ItemKind: rgl/mesh2)
 };
 
 extern SoundTable g_sound_mgr;                          // 0x5aa128
@@ -196,7 +228,7 @@ extern int g_scan_module_sounds;                        // 0xa1810c
 extern int g_sound_count;                            // 0x5d878c
 
 extern int g_propkind_count;                        // 0x5e29e0
-extern MapPoint* g_propkinds;                       // 0x5e29dc
+extern MissionObj* g_propkinds;                       // 0x5e29dc
 
 extern int g_menu_count;                             // 0x5e29b4
 extern MenuRec* g_menus;                             // 0x5e29b0
@@ -215,6 +247,19 @@ extern PartyTplRec* g_party_templates;                  // 0x5e29f8
 
 // ---------------------------------------------------------------- loader
 
+// `new ItemKind[n]` as the original runs it: the element count in front of the elements, each element built by 0x4cdf20
+static ItemKind* new_item_array(int n)
+{
+    int* raw = (int*)::operator new(n * 0x238 + 4);
+    if (raw == 0)
+        return 0;
+    raw[0] = n;
+    csv_row* e = (csv_row*)(raw + 1);
+    for (int i = 0; i < n; i++)
+        new (&e[i]) csv_row;
+    return (ItemKind*)e;
+}
+
 // @ 0x50d5e0
 void load_module_files()
 {
@@ -229,7 +274,7 @@ void load_module_files()
     in_sounds.r_tstr(&str1);
     in_sounds.r_tstr(&str2);
     in_sounds.r_int(&version);
-    g_sound_mgr.load(&s_sounds, g_scan_module_sounds, &g_module_path);
+    ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_scan_module_sounds, &g_module_path);
     g_sound_count = *g_sound_mgr.p4;
     s_sounds.failed = 1;
 
@@ -248,7 +293,7 @@ void load_module_files()
     in_skins.r_tstr(&str1);
     in_skins.r_tstr(&str2);
     in_skins.r_int(&version);
-    g_anim_table.read(&s_skins);
+    ((mesh_scene*)&g_anim_table)->read((AccessStream*)&s_skins);
     s_skins.failed = 1;
 
     // scene_props.txt
@@ -259,12 +304,12 @@ void load_module_files()
     in_scene.r_int(&version);
     in_scene.r_int(&g_propkind_count);
     if (g_propkinds) {
-        g_propkinds->destroy_array(3);
+        destroy_record_array(g_propkinds, 0, 3);
         g_propkinds = 0;
     }
-    g_propkinds = new MapPoint[g_propkind_count];
+    g_propkinds = new MissionObj[g_propkind_count];
     for (int i = 0; i < g_propkind_count; i++)
-        g_propkinds[i].read(&s_scene);
+        g_propkinds[i].read((stream_base*)&s_scene);
     s_scene.failed = 1;
 
     // menus.txt
@@ -275,7 +320,7 @@ void load_module_files()
     in_menus.r_int(&version);
     in_menus.r_int(&g_menu_count);
     if (g_menus) {
-        g_menus->destroy_array(3);
+        elem60_vector_delete((elem60*)g_menus, 0, 3);
         g_menus = 0;
     }
     g_menus = new MenuRec[g_menu_count];
@@ -286,19 +331,19 @@ void load_module_files()
     // tableau_materials.txt
     tstream3 s_tableau;
     open_module_file(s_tableau, "tableau_materials.txt");
-    g_tableaus.read(&s_tableau);
+    ((MapLoader*)&g_tableaus)->read((SlotReader*)&s_tableau);
     s_tableau.failed = 1;
 
     // presentations.txt
     tstream3 s_presentations;
     open_module_file(s_presentations, "presentations.txt");
-    g_presentations.fill_records(&s_presentations);
+    ((ItemPage*)&g_presentations)->fill_records((RefRecord*)&s_presentations);
     s_presentations.failed = 1;
 
     // scripts.txt
     tstream3 s_scripts;
     open_module_file(s_scripts, "scripts.txt");
-    g_scripts.load(&s_scripts);
+    ((rec34_list*)&g_scripts)->load(*(stream_base*)&s_scripts);
     s_scripts.failed = 1;
 
     // map_icons.txt
@@ -315,7 +360,7 @@ void load_module_files()
     g_map_icons = 0;
     g_map_icons = new MapIcon[g_map_icon_count];
     for (int i = 0; i < g_map_icon_count; i++)
-        g_map_icons[i].read(&s_map_icons);
+        g_map_icons[i].read(*(stream_base*)&s_map_icons);
     s_map_icons.failed = 1;
     log.w_cstr("Loading Module...\n");
 
@@ -325,19 +370,19 @@ void load_module_files()
     in_strings.r_tstr(&str1);
     in_strings.r_tstr(&str2);
     in_strings.r_int(&version);
-    g_strings.load1(&s_strings);
+    ((pair_holder*)&g_strings)->load1((stream_base*)&s_strings);
     s_strings.failed = 1;
 
     // quick_strings.txt
     tstream3 s_quick_strings;
     open_module_file(s_quick_strings, "quick_strings.txt");
-    g_strings.load2(&s_quick_strings);
+    ((pair_holder*)&g_strings)->load2((stream_base*)&s_quick_strings);
     s_quick_strings.failed = 1;
 
     // meshes.txt
     tstream3 s_meshes;
     open_module_file(s_meshes, "meshes.txt");
-    g_meshes.load(&s_meshes);
+    load_elem48_array((elem48_holder*)&g_meshes, 0, (stream_base*)&s_meshes);
     s_meshes.failed = 1;
     log.w_cstr("Loading item kinds...\n");
 
@@ -350,9 +395,9 @@ void load_module_files()
     in_items.r_int(&g_item_kind_count);
     delete[] g_items;
     g_items = 0;
-    g_items = new ItemKind[g_item_kind_count];
+    g_items = new_item_array(g_item_kind_count);
     for (int i = 0; i < g_item_kind_count; i++)
-        g_items[i].read(&s_items, version);
+        ((Block*)&g_items[i])->read((stream_base*)&s_items);
     s_items.failed = 1;
     log.w_cstr("Loading dialogs...\n");
 
@@ -362,7 +407,7 @@ void load_module_files()
     in_conversation.r_tstr(&str1);
     in_conversation.r_tstr(&str2);
     in_conversation.r_int(&version);
-    g_dialogs.read(&s_conversation);
+    ((DialogMgr*)&g_dialogs)->read((stream_base*)&s_conversation);
     s_conversation.failed = 1;
     log.w_cstr("Loading mission templates...\n");
 
@@ -374,12 +419,12 @@ void load_module_files()
     in_mission.r_int(&version);
     in_mission.r_int(&g_mission_template_count);
     if (g_mission_templates) {
-        g_mission_templates->destroy_array(3);
+        ((elem58*)g_mission_templates)->vector_deleting_delete(3);
         g_mission_templates = 0;
     }
     g_mission_templates = new ModeRec[g_mission_template_count];
     for (int i = 0; i < g_mission_template_count; i++)
-        g_mission_templates[i].read_trigger_block(&s_mission);
+        g_mission_templates[i].read(*(stream_base*)&s_mission);
     s_mission.failed = 1;
     log.w_cstr("Loading party templates...\n");
 
@@ -391,11 +436,11 @@ void load_module_files()
     in_party.r_int(&version);
     in_party.r_int(&g_party_template_count);
     if (g_party_templates) {
-        g_party_templates->destroy_array(3);
+        conv_item_array_dtor((conv_rec*)g_party_templates, 0, 3);
         g_party_templates = 0;
     }
     g_party_templates = new PartyTplRec[g_party_template_count];
     for (int i = 0; i < g_party_template_count; i++)
-        g_party_templates[i].save(&s_party);
+        ((sound_def*)&g_party_templates[i])->save(*(stream_base*)&s_party);
     s_party.failed = 1;
 }

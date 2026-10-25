@@ -91,13 +91,11 @@ struct PsFrame : MissionUi {                        // 0x188 bytes, ctor 0x4931a
     int f17c;                                       // +0x17c
     int f180;                                       // +0x180
     unsigned f184;                                  // +0x184
-    PsFrame();                                      // 0x4931a0
 };
 struct PsBar : PsFrame {};                          // vptr 0x597050 (implicit ctor: base call then the vptr store)
 struct PsListWidget : MissionUi {                   // 0x188 bytes, vptr 0x5924a0, the ctor is inlined at the `new`
     int f178, f17c, f180;
     unsigned f184;
-    PsListWidget() { f17c = 0; f180 = 0; f184 = 0; }
 };
 struct PsScrollList : MissionUi {                   // 0x4a8 bytes (ctor 0x49deb0): f104 flags (MissionUi), scrollbar +0x484, list +0x490
     char pad178[0x484 - 0x178];
@@ -105,7 +103,6 @@ struct PsScrollList : MissionUi {                   // 0x4a8 bytes (ctor 0x49deb
     char pad488[0x490 - 0x488];
     MissionUi* list;                                // +0x490
     char pad494[0x4a8 - 0x494];
-    PsScrollList();                                 // 0x49deb0
 };
 struct SkillRow {                                   // the 42 x 0x44-byte skill table seen from its name field (0x8ee3110 .. 0x8ee3c38)
     tstring name;                                   // +0x00 (the skill's display name)
@@ -124,18 +121,69 @@ extern float g_player_wounded_treshold;                   // 0xa1813c
 extern char g_show_party_ids_instead_of_names;                         // 0xa181b8
 extern int g_item_sel;                              // 0xa75f6c (the selected item index; negative = nothing selected)
 extern ObjTable g_tableaus;                          // 0xa75f40
-void __fastcall window_ctor(void* p);               // 0x4931a0
-void __fastcall panel_ctor(void* p);                // 0x48ae20
-MissionUi* __cdecl make_short_button(MissionUi* parent, tstring* text, int a, int b, float h);   // 0x4e5570
-MissionUi* __cdecl new_medium_button(MissionUi* parent, tstring* text, int a, int b, float h);     // 0x4dce70
-MissionUi* __cdecl new_long_button(MissionUi* parent, tstring* text, int a, int b, float h);       // 0x4dcbd0
-MissionUi* __cdecl make_scrollbar(MissionUi* parent, const tstring* name);                  // 0x4f6160
-MissionUi* __cdecl make_member_list(MissionUi* parent, const tstring* name, MissionUi* sc); // 0x4f62f0
-MissionUi* __cdecl make_editor_list(MissionUi* parent, const tstring* name, MissionUi* sc); // 0x4f62f0
+struct TableauTbl {
+    rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (game/world_data/tableau.h; ObjTable is the same table)
+};
+// Definitions elsewhere under their own declarations: the class stubs carry only the member called here, the forwarders keep
+// the spelling of the call sites (the widget views are MissionUi pointers).
+struct ContainerW {
+    void* construct();   // 0x4931a0 (world_data: the list container's constructor body, returns this)
+};
+struct UiAInline; struct WidgetB; struct WidgetC; struct NodeA;
+static __forceinline void __fastcall window_ctor(void* p) { ((ContainerW*)p)->construct(); }   // 0x4931a0
+static __forceinline void __fastcall panel_ctor(void* p) { new (p) MissionUi; }                   // 0x48ae20 (MissionUi::MissionUi)
+UiAInline* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float h);   // 0x4e5570
+UiAInline* __cdecl new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float h);   // 0x4dce70
+UiAInline* __cdecl new_long_button(MissionUi* parent, const tstring* text, float a, float b, float h);     // 0x4dcbd0
+// the `new` expressions of the widget classes: allocate, run the constructor 0x4931a0 / 0x49deb0 of the definitions, and store the
+// class's vtable pointer by its address (0x597050), as the original does after the call
+namespace c49deb0 { struct Camera { Camera(); }; }   // 0x49deb0 (game/camera: ??0Camera@c49deb0@@QAE@XZ, the scroll list's constructor)
+static __forceinline PsBar* new_ps_bar()
+{
+    PsBar* b = (PsBar*)::operator new(0x188);
+    if (b != 0) {
+        ((ContainerW*)b)->construct();
+        *(void**)b = (void*)0x597050;
+    }
+    return b;
+}
+static __forceinline PsListWidget* new_ps_list()      // 0x188 bytes, the constructor inlined: base 0x48ae20, three zeroed words, vptr 0x5924a0
+{
+    PsListWidget* w = (PsListWidget*)::operator new(0x188);
+    if (w != 0) {
+        new (w) MissionUi;
+        w->f17c = 0;
+        w->f180 = 0;
+        w->f184 = 0;
+        *(void**)w = (void*)0x5924a0;
+    }
+    return w;
+}
+static __forceinline PsScrollList* new_scroll_list()
+{
+    void* m = ::operator new(0x4a8);
+    if (m != 0)
+        new (m) c49deb0::Camera;
+    return (PsScrollList*)m;
+}
+WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name);                        // 0x4f6160
+WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int sc);              // 0x4f62f0
+static __forceinline MissionUi* make_short_button(MissionUi* p, tstring* t, int a, int b, float h)
+{ return (MissionUi*)make_short_button(p, (const tstring*)t, (float)a, (float)b, h); }
+static __forceinline MissionUi* new_medium_button(MissionUi* p, tstring* t, int a, int b, float h)
+{ return (MissionUi*)new_medium_button(p, (const tstring*)t, (float)a, (float)b, h); }
+static __forceinline MissionUi* new_long_button(MissionUi* p, tstring* t, int a, int b, float h)
+{ return (MissionUi*)new_long_button(p, (const tstring*)t, (float)a, (float)b, h); }
+static __forceinline MissionUi* make_member_list(MissionUi* p, const tstring* n, MissionUi* sc)
+{ return (MissionUi*)make_editor_list((void*)p, n, (int)sc); }
+static __forceinline MissionUi* make_editor_list(MissionUi* p, const tstring* n, MissionUi* sc)
+{ return (MissionUi*)make_editor_list((void*)p, n, (int)sc); }
+static __forceinline MissionUi* make_scrollbar(MissionUi* p, const tstring* n)
+{ return (MissionUi*)make_scrollbar((void*)p, n); }
 MissionUi* __cdecl new_member_button(MissionUi* parent, const tstring& name, float x, int zero, float h,
                                      const tstring& text, const tstring& pressed, float width_ratio,
                                      float height, float ratio);                              // 0x4dcc50
-void __fastcall quarter_update(MissionUi* w);       // 0x488d50
+static __forceinline void __fastcall quarter_update(MissionUi* w) { ((MissionPanel*)w)->draw(); }   // 0x488d50
 int skill_level(int member, int skill);            // 0x437b20 (GameData::skill_level, called here with the global as an argument)
 
 #endif // GAME_INVENTORY_PANEL_PARTY_SCREEN_H
