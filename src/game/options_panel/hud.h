@@ -17,7 +17,7 @@ extern int* g_menu_w3;                              // 0xa739ac
 extern int* g_menu_w4;                              // 0xa739c8
 extern int* g_menu_w5;                              // 0xa739d4
 extern int* g_menu_w6;                              // 0xa739f0
-extern char g_5e2a08;                               // 0x5e2a08
+extern char g_saved;                               // 0x5e2a08
 
 struct MenuScreen {
     virtual void v0();
@@ -30,13 +30,13 @@ struct MenuScreen {
 };
 extern MenuScreen* g_screen;                        // 0xa739b8
 
-extern void* g_world;                               // 0x5e292c
+#include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern int   g_u32;                                 // 0xa735c0
-void mission_start_setup(void* m);                  // 0x484590 (this = g_world)
+void start_setup(void* m);                  // 0x484590 (this = g_world)
 extern float g_char_scale;                          // 0x590d7c
 
 // the strings the mission items write and the numbers their sounds depend on
-extern tstring g_mission_title;                     // 0xa72890
+#include "../dialog_manager.h"   // canonical: g_script (0xa72890)
 extern __int64 g_spawn_lo;                          // 0xa70448
 extern __int64 g_spawn_hi;                          // 0xa70450
 extern float g_mouse_x;                             // 0x5d7094
@@ -52,8 +52,8 @@ extern int g_a170d8;                                // 0xa170d8
 extern int g_a174d8;                                // 0xa174d8
 
 extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
-extern "C" int   __cdecl round_top(float v);        // 0x535a64 (the x87 int conversion used here)
-void timer_set(void* node, const float* t);         // 0x433190 (mesh_node::clamp_c8)
+#include "../../include/crt.h"   // canonical: ftol2 (0x535a64)
+void set_time(void* node, const float* t);         // 0x433190 (mesh_node::clamp_c8)
 void string_assign(tstring* thisp, const tstring* src); // 0x42bc50
 
 #define ABS(x) ((float)fabs(x))
@@ -65,10 +65,10 @@ struct MenuKind {                                   // 0x1c bytes (table at 0xa7
     char      pad0[0x14];
     TimerList sound;                                // +0x14
 };
-extern MenuKind* g_menu_kinds;                      // 0xa75f2c (menu-kind table, element stride 0x1c)
+extern MenuKind* g_presentations;                      // 0xa75f2c (menu-kind table, element stride 0x1c)
 inline void play_family_sound(int family, int id)
 {
-    g_menu_kinds[family].sound.update(id);
+    g_presentations[family].sound.update(id);
 }
 
 // ---- widgets -------------------------------------------------------------------------------------------

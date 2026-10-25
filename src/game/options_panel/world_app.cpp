@@ -433,7 +433,7 @@ extern int g_5e28c8;                                // 0x5e28c8
 extern int g_counter;                                // 0x5e28cc
 extern char g_saved;                               // 0x5e2a08
 #include "../config/config.h"   // canonical: g_cfg.disable_sound (0x5a9fd8)
-extern int g_key_states[0x40];                          // 0x5e27c8
+#define g_key_states_i (*(int(*)[0x40])g_key_states)     // g_key_states (0x5e27c8, game_globals.h) as 0x40 ints
 
 #include "../log_stream.h"                       // LogStream: slot 10 (+0x28) is w_cstr
 
@@ -465,7 +465,7 @@ GameApp::GameApp()
     *(int*)((char*)this + 0x34c) = -1;
 
     for (int i = 0; i < 0x40; i++)
-        g_key_states[i] = 0;
+        g_key_states_i[i] = 0;
 
     g_counter = 0;
     g_5e28c8 = 0;

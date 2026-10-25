@@ -21,6 +21,7 @@
 #include "../config/config.h"
 #include "../party/game.h"
 #include "../../rgl/xmlcfg/records.h"
+#define REC_TABLES_NO_GAME_VARS   // g_game_vars is declared below with the ini_file view
 #include "../../rgl/mesh2/rec_tables.h"       // Alloc2c / Alloc204 (0x4c1b20 / 0x4c1b40), sound_engine
 #include "../../rgl/resource.h"             // texture
 #include "../shadow_map.h"

@@ -187,8 +187,8 @@ void RagModel::load(TiXmlElement* e)
 }
 
 // ---- 0x4e4790: the save / load screen ----------------------------------------------------------------------------------------------
-extern tstring g_save_prefix_str;               // 0x8ee3c38 (the save-directory prefix string)
-extern int g_save_day;                          // 0x5e29b8
+extern tstring g_module_name;               // 0x8ee3c38 (the save-directory prefix string)
+extern int g_compatible_module_version;                          // 0x5e29b8
 extern float g_time_scale;                      // 0x590e28
 extern const float g_minus_one;                 // 0x549ca8 (-1.0f)
 extern "C" int __cdecl sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
@@ -199,8 +199,8 @@ static __forceinline int config_index(const tstring& key)
 {
     int found = -1;
     int i = 0;
-    while (i < g_ini.count) {
-        if (g_ini.entries[i].key.equals(key))
+    while (i < g_game_vars.count) {
+        if (g_game_vars.entries[i].key.equals(key))
             found = i;
         ++i;
         if (found != -1)
@@ -214,7 +214,7 @@ static __forceinline float config_value(int i)
 {
     float r = 0.0f;
     if (i >= 0) {
-        char* e = (char*)&g_ini + 0x1c + 0x2c * i;
+        char* e = (char*)&g_game_vars + 0x1c + 0x2c * i;
         char* v = *(char**)(e + 4);
         r = (float)atof(v ? v : e + 4);
     }
@@ -304,15 +304,15 @@ void SaveWindow::init()
 void label_refresh(MissionUi* self, tstring key)
 {
     tstring name = key + tstring("_text_color");
-    int idx = g_ini.find(name);
+    int idx = g_game_vars.find(name);
     if (idx >= 0) {
-        int c = g_ini.get_hex(&idx);
+        int c = g_game_vars.get_hex(&idx);
         vt(self)->d38(&c);
     }
     name = key + tstring("_highlight_text_color");
-    idx = g_ini.find(name);
+    idx = g_game_vars.find(name);
     if (idx >= 0) {
-        int c = g_ini.get_hex(&idx);
+        int c = g_game_vars.get_hex(&idx);
         vt(self)->d39(&c);
     }
     {
@@ -322,15 +322,15 @@ void label_refresh(MissionUi* self, tstring key)
         v[0] = 0.0f;
         v[1] = 0.0f;
         name = key + tstring("_position_x");
-        idx_x = g_ini.find(name);
+        idx_x = g_game_vars.find(name);
         if (idx_x >= 0) {
-            v[0] = g_ini.get_float(&idx_x);
+            v[0] = g_game_vars.get_float(&idx_x);
             any = true;
         }
         name = key + tstring("_position_y");
-        idx_y = g_ini.find(name);
+        idx_y = g_game_vars.find(name);
         if (idx_y >= 0) {
-            v[1] = g_ini.get_float(&idx_y);
+            v[1] = g_game_vars.get_float(&idx_y);
         }
         if (any)
             vt(self)->d22(v);
@@ -342,15 +342,15 @@ void label_refresh(MissionUi* self, tstring key)
         v[0] = 0.0f;
         v[1] = 0.0f;
         name = key + tstring("_size_x");
-        idx_x = g_ini.find(name);
+        idx_x = g_game_vars.find(name);
         if (idx_x >= 0) {
-            v[0] = g_ini.get_float(&idx_x);
+            v[0] = g_game_vars.get_float(&idx_x);
             any = true;
         }
         name = key + tstring("_size_y");
-        idx_y = g_ini.find(name);
+        idx_y = g_game_vars.find(name);
         if (idx_y >= 0) {
-            v[1] = g_ini.get_float(&idx_y);
+            v[1] = g_game_vars.get_float(&idx_y);
         }
         if (any)
             vt(self)->d25(v);
@@ -362,15 +362,15 @@ void label_refresh(MissionUi* self, tstring key)
         v[0] = 0.0f;
         v[1] = 0.0f;
         name = key + tstring("_text_size_x");
-        idx_x = g_ini.find(name);
+        idx_x = g_game_vars.find(name);
         if (idx_x >= 0) {
-            v[0] = g_ini.get_float(&idx_x);
+            v[0] = g_game_vars.get_float(&idx_x);
             any = true;
         }
         name = key + tstring("_text_size_y");
-        idx_y = g_ini.find(name);
+        idx_y = g_game_vars.find(name);
         if (idx_y >= 0) {
-            v[1] = g_ini.get_float(&idx_y);
+            v[1] = g_game_vars.get_float(&idx_y);
         }
         if (any)
             vt(self)->d27(v);
@@ -382,23 +382,23 @@ void label_refresh(MissionUi* self, tstring key)
         v[0] = 0.0f;
         v[1] = 0.0f;
         name = key + tstring("_text_position_x");
-        idx_x = g_ini.find(name);
+        idx_x = g_game_vars.find(name);
         if (idx_x >= 0) {
-            v[0] = g_ini.get_float(&idx_x);
+            v[0] = g_game_vars.get_float(&idx_x);
             any = true;
         }
         name = key + tstring("_text_position_y");
-        idx_y = g_ini.find(name);
+        idx_y = g_game_vars.find(name);
         if (idx_y >= 0) {
-            v[1] = g_ini.get_float(&idx_y);
+            v[1] = g_game_vars.get_float(&idx_y);
         }
         if (any)
             vt(self)->d28(v);
     }
     name = key + tstring("_text_flags");
-    idx = g_ini.find(name);
+    idx = g_game_vars.find(name);
     if (idx >= 0) {
-        int f = g_ini.get_hex(&idx);
+        int f = g_game_vars.get_hex(&idx);
         vt(self)->d29(&f);
     }
 }
@@ -489,7 +489,7 @@ void SaveWindow::list_saves()
     char text[0x200];
     for (int i = 0; i < 9; ++i) {
         SlotRec* slot = &slots[i];
-        char* p = g_save_prefix_str.buf ? g_save_prefix_str.buf : (char*)&g_save_prefix_str.buf;
+        char* p = g_module_name.buf ? g_module_name.buf : (char*)&g_module_name.buf;
         sprintf(dir, "");
         save_path(dir);
         mb_snprintf(full, 0x200, "%s%s\\sg%d%d.sav", dir, p, i / 10, i % 10);
@@ -525,7 +525,7 @@ void SaveWindow::list_saves()
                     slot->bad_type = 1;
                 if (year < 1000 || year > 0x3f3)
                     slot->bad_version = 1;
-                if (day < g_save_day)
+                if (day < g_compatible_module_version)
                     slot->bad_module = 1;
             }
             s.failed = 1;
@@ -570,12 +570,12 @@ struct PairF {
 static __forceinline float config_float(const char* name)
 {
     tstring n(name);
-    int i = g_ini.find(n);
+    int i = g_game_vars.find(n);
     float r = 0.0f;
     if (i >= 0) {
-        char* v = g_ini.entries[i].value.buf;
+        char* v = g_game_vars.entries[i].value.buf;
         if (!v)
-            v = (char*)&g_ini.entries[i].value.buf;
+            v = (char*)&g_game_vars.entries[i].value.buf;
         r = (float)atof(v);
     }
     return r;
@@ -613,12 +613,12 @@ void SaveWindow::slot_button(ContainerBase* parent, int slot, UiAInline** out)
     }
     {
         tstring k("save_b_save_t_c");
-        int v = g_ini.hex_field(k);
+        int v = g_game_vars.hex_field(k);
         vt(*out)->d38(&v);
     }
     {
         tstring k("save_b_save_t_h_c");
-        int v = g_ini.hex_field(k);
+        int v = g_game_vars.hex_field(k);
         vt(*out)->d39(&v);
     }
 
@@ -710,7 +710,7 @@ void SaveWinCtl::create()
 // @ 0x4e5e50
 void SaveWinCtl::create_flagged()
 {
-    g_window_flags = 0x400000;
+    g_music_situation = 0x400000;
     create2();
 }
 
@@ -1163,7 +1163,7 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
     }
     *((char*)out + 0x164) = 1;
     *((char*)out + 0x138) = 1;
-    finish();
+    compute_face_normals();
 }
 
 // ---- 0x4e7a70: the map loader's block-list reader ---------------------------------------------------------------------------------------------
@@ -1185,7 +1185,7 @@ void MapLoader::read(SlotReader* stream)
         b->read_terrain(stream);                // 0x4c83a0
         ((MapBlock*)&blocks[0] + i)->b0 = i;
     }
-    map_layouts();                              // 0x4c84f0
+    conv_map_codes();                              // 0x4c84f0
 }
 
 // ---- 0x4e85d0 / 0x4e8720: MapScreen::init and MapScreen::frame_step ------------------------------------------------------------------------
@@ -1228,11 +1228,11 @@ void MapScreen::init(void* desc)
                     else if (slot == 2)
                         continue;
                 }
-                build_chunk(slot, type, row, col, f);
+                emit_particle(slot, type, row, col, f);
             }
         }
     }
-    gen_objects_aligned(desc);
+    fill_desc_named(desc);
 }
 
 // @ 0x4e8720   MapScreen::frame_step()
@@ -1259,7 +1259,7 @@ void MapScreen::frame_step()
 // 0x204-byte block-face records. A semantic model: the layouts below are read off the disassembly of the reader only; the count-prefixed
 // allocations (scenery list, materials, cell grid) are walked through the pointers the offsets show. Names provisional.
 void mb_error(const char* fmt, ...);            // 0x42cc80
-void* alloc_obj(unsigned n);                    // 0x535482 (block allocator)
+#include "../../include/crt.h"   // canonical: operator new[] (0x535482)
 void unpack_color_swap(rgl::vector4* out, const unsigned* argb);   // 0x40e4e0 (cdecl)
 
 // a lod-mesh resource: +0x38 -> the lod object; its first mesh list hangs off +0x38 and +0x84 is 0 when the mesh is missing
@@ -1275,7 +1275,7 @@ struct MsLodRes {
 };
 struct MapResMgr {                              // the resource manager's lod / object getters (the object is g_resmgr)
     MsLodRes* get_lod_mesh(tstring* name);      // 0x41cdc0
-    MsLodRes* lookup(tstring* name);            // 0x418a70
+    MsLodRes* get_material(tstring* name);            // 0x418a70
     void* get_object70(tstring* name);          // 0x418cf0
 };
 #define MAP_RESMGR ((MapResMgr*)&g_resmgr)
@@ -1302,7 +1302,7 @@ struct entry18 {
 struct rec38 {
     char pad0[0x38];
     void init(void* src);                       // 0x477880 (self, argument)
-    void link(rgl::mesh* m, int count);         // 0x473570
+    void copy_troop(rgl::mesh* m, int count);         // 0x473570
 };
 void resize_rec38(int* dst, int n);             // 0x4ccf60 (element size 0x38, behind a count word)
 
@@ -1338,7 +1338,7 @@ struct face204 {
 };
 
 // the front table the map slot ids are looked up in (0x5aa130 count, 0x5aa134 entries of 0x98 bytes)
-extern int g_front_count;                       // 0x5aa130
+#include "../../include/sound_mgr.h"   // canonical: g_sound_mgr.ngroups (0x5aa130)
 extern char* g_front;                           // 0x5aa134
 struct front_rec {
     char pad0[0xd0];
@@ -1404,7 +1404,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
     int n = 0;
     stream_i(s, &n);
     n18c = n;
-    lod_entry* e = (lod_entry*)alloc_obj(n * 0x34 + 4);
+    lod_entry* e = (lod_entry*)operator new[](n * 0x34 + 4);
     if (e != 0) {
         ((int*)e)[0] = n;
         e = (lod_entry*)((char*)e + 4);
@@ -1428,9 +1428,9 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
         MsLodRes* lr = (MsLodRes*)owner;
         rgl::mesh* m = lr->f38->meshes[0];
         std::vector<rgl::point20>& pts = m->get70();
-        e[i].mesh30 = alloc_obj((unsigned)(pts.size() << 4));
+        e[i].mesh30 = operator new[]((unsigned)(pts.size() << 4));
         rec38* r = (rec38*)((char*)e + i * 0x34 + 0x4);
-        r->link((rgl::mesh*)e[i].mesh30, (int)pts.size());
+        r->copy_troop((rgl::mesh*)e[i].mesh30, (int)pts.size());
     }
     rec38* colrec = (rec38*)((char*)e + 0x4);                       // the columns' template records
     {
@@ -1459,7 +1459,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
         stream_i(s, &nmat);
         entry18* mats = 0;
         if (nmat != 0) {
-            entry18* raw = (entry18*)alloc_obj(nmat * 0x18 + 4);
+            entry18* raw = (entry18*)operator new[](nmat * 0x18 + 4);
             if (raw != 0) {
                 ((int*)raw)[0] = nmat;
                 mats = (entry18*)((char*)raw + 4);
@@ -1473,7 +1473,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
         }
         int* matrecs = 0;
         if (mats != 0) {
-            char* mr = (char*)alloc_obj(nmat * 0x38 + 4);
+            char* mr = (char*)operator new[](nmat * 0x38 + 4);
             if (mr != 0) {
                 *(int*)mr = nmat;
                 matrecs = (int*)(mr + 4);
@@ -1491,7 +1491,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
                 mb_error((const char*)0x598308, mats[i].name.buf);
             }
             rec38* r = (rec38*)((char*)matrecs + i * 0x38);
-            r->link((rgl::mesh*)mats[i].res14, 0x38);
+            r->copy_troop((rgl::mesh*)mats[i].res14, 0x38);
         }
     }
     int n1 = 0;
@@ -1512,7 +1512,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
         int ncell = 0;
         stream_i(s, &ncell);
         n190 = ncell;
-        cell_b0* c = (cell_b0*)alloc_obj(ncell * 0xb0 + 4);
+        cell_b0* c = (cell_b0*)operator new[](ncell * 0xb0 + 4);
         if (c != 0) {
             ((int*)c)[0] = ncell;
             c = (cell_b0*)((char*)c + 4);
@@ -1525,7 +1525,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
             cell_b0* cl = &cells[i];
             tstring nil;
             stream_str(s, &nil);                                     // the cell's name
-            MAP_RESMGR->lookup(&nil);                                // the material resource at +0x10
+            MAP_RESMGR->get_material(&nil);                                // the material resource at +0x10
             stream_block(s, &cl->f04);
             if (g_use_shaders) {
                 rgl::vector4 col;
@@ -1584,7 +1584,7 @@ void MapSceneRec::read(rgl::mesh* owner, MsStream* s)
             stream_str(s, &nm);
             if (id >= 0 && id < 7) {
                 int found = -1;
-                for (int j = 0; j < g_front_count; j++) {
+                for (int j = 0; j < g_sound_mgr.ngroups; j++) {
                     if (((front_rec*)(g_front + j * 0x98))->name.equals(nm)) {
                         found = j;
                         break;

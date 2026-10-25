@@ -579,7 +579,7 @@ struct psys_rec {                       // the shadow object's target skin (Shad
     char* scene;
 };
 extern long long g_tick_cur;            // 0x5e2980 (the last frame's tick count)
-extern char g_mt_inited;                   // 0x5e2a09
+extern unsigned char g_mt_inited;                   // 0x5e2a09
 extern float g_paused_time;             // 0x5e2a0c
 #include "../../include/fx.h"
 extern int g_psys_scene;                // 0xa170c0

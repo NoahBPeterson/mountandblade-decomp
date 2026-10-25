@@ -10,6 +10,6 @@ struct StrTableRgl {
     tstring* lookup(tstring* key);                          // 0x43a1e0
     tstring* lookup(tstring& key);                          // 0x43a1e0
 };
-extern StrTableRgl g_string_table;                          // 0x5e2a18
+extern StrTableRgl g_strtable;                          // 0x5e2a18
 
 #endif // OPTIONS_PANEL_STR_TABLE_RGL_H

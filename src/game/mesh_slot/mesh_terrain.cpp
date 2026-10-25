@@ -13,9 +13,8 @@ using namespace rgl;
 
 int rand();                            // 0x536a9f rand()
 void seed_rng(unsigned s);              // 0x536a92 srand
-extern char g_bit[]; // 0x5a8e68
+extern unsigned __int64 g_bit[]; // 0x5a8e68
 extern char g_cfg[]; // 0x5a9f98
-extern char g_options[]; // 0x5aa008
 
 // Naming note: the slices called the +0x278 extent `h` and the +0x27c extent `w`; terrain_a/terrain.h has them the other
 // way round (w = last cell index in x, h = last in y). The terrain cell of terrain_a/terrain.h is the record these
@@ -355,7 +354,7 @@ void TerrainX::tessellate()
 
 // ---- 0x481c40 ----------------------------------------------------------------------------------------------------------
 
-extern Animator g_anim_table;                 // 0x8ed4f60
+#define g_anim_view (*(Animator*)&g_anim_table)          // g_anim_table (0x8ed4f60, game_globals.h) seen as the Animator
 extern int g_cur;                       // 0x8ed4f68
 extern int g_x8ed4f64;                  // 0x8ed4f64
 extern int g_x8ed4f74;                  // 0x8ed4f74
@@ -375,12 +374,12 @@ EChar* append_mesh(int colour, int kind, void** a, void** b, void** c, char carr
         g_cur = colour;
 
     if (kind == -1)
-        g_anim_table.set_anim_a(a);
+        g_anim_view.set_anim_a(a);
     else
-        g_anim_table.set_anim_b(a, b, kind);
+        g_anim_view.set_anim_b(a, b, kind);
     if (carried)
         g_x8ed4f64 = -1;
-    g_anim_table.collect((char)g_limit_hair_colors, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
+    g_anim_view.collect((char)g_limit_hair_colors, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
 
     EChar* ec = &g_skins_begin[g_cur];
     int* rec = (int*)((char*)ec->mats + g_x8ed4f74 * 0xb0 + 0x18);

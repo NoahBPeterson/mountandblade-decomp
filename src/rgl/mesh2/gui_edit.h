@@ -35,8 +35,8 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 // ============================================================================================================
 #include "../../include/rec34.h"      // rec34 (shared with game/config/config.h; the loader 0x4be470 is rec34::read)
 void __fastcall free_vec_4318c0(rec34* p, unsigned flags);   // 0x4318c0 (ret 4)
-char __stdcall rec34_load(rec34* r, stream_base* s);         // 0x4be470 (ret 4, this in ecx): 1 on success
-void __fastcall rec34_list_finish(void* self);               // 0x4be560
+char __stdcall read(rec34* r, stream_base* s);         // 0x4be470 (ret 4, this in ecx): 1 on success
+void __fastcall load_used(void* self);               // 0x4be560
 
 struct rec34_list {
     rec34* v;        // +0
@@ -98,14 +98,14 @@ struct elem60 {
 };
 
 struct block_copier {
-    void copy(void* dst, const void* src);   // 0x4c1b20 (this in ecx): 0x2c-byte record copy
+    void construct(void* dst, const void* src);   // 0x4c1b20 (this in ecx): 0x2c-byte record copy
 };
 
 
 // ============================================================================================================
 // 0x4c5080..0x4c5150: the editor's item records
 // ============================================================================================================
-void free_mem(void* p);                        // 0x535712 operator delete (??3@YAXPAX@Z)
+#include "../../include/crt.h"   // canonical: operator delete (0x535712)
 struct item38 { char d[0x38]; };               // 0x38-byte record (tstring at +0x24)
 void copy_item38(item38* dst, const item38* src);  // 0x46b6c0 (plain args: [esp+4] dst, [esp+8] src)
 
@@ -190,10 +190,9 @@ extern const char s_plant[];                    // 0x595d0c "ui_plant_plantname"
 extern const char s_passage[];                  // 0x595d20 "ui_passage_menu_item_passagename"
 extern const char s_entry_point[];              // 0x595d44 "ui_entry_point_entrypointname"
 
-int sprintf_c(char* out, int size, const char* fmt, ...);        // 0x535717 (_snprintf)
 void __fastcall kf_arr_dtor(void* k);                                       // 0x4317b0 (an array of keyframe tracks)
-void ref_item_ctor(void* item, int i, void* rec, int k);         // 0x4c23f0
-void* find_frame(void* kf, const float* t, int* lo, int* hi, float* frac);   // 0x40f0d0
+void read(void* item, int i, void* rec, int k);         // 0x4c23f0
+void* find(void* kf, const float* t, int* lo, int* hi, float* frac);   // 0x40f0d0
 struct RefRecord;                                                // below
 
 // ---- the record classes of the language export (save_language_files 0x4c8ca0) -----------------------------
@@ -204,12 +203,12 @@ struct GroundSpec {             // 0x20-byte record (array pointer at 0x5e28f8, 
     char* name;                 // +0x4
     char pad8[0x20 - 0x8];
 };
-extern GroundSpec* g_ground_specs;              // 0x5e28f8
-extern int g_ground_spec_count;                 // 0x5e29e8
+extern GroundSpec* g_ptypes;              // 0x5e28f8
+extern int g_ptype_count;                 // 0x5e29e8
 
 #include "../../include/item_kind.h"       // ItemKind (name / plural / key at +0 / +0x10 / +0x20), g_items 0x5e29d0
 inline const tstring* ItemKind::plural_name() { return suffix_or(key, "_pl", plural); }
-extern int g_n_items;                           // 0x5e29d4
+extern int g_item_kind_count;                           // 0x5e29d4
 
 // a mesh's keyframe track (a 0x24-byte record's +0x14 points at an array of these)
 struct kf_track {               // (not the 12-byte rgl::keyframes of src/include/keyframes.h: times at +8, count at +0xc)
@@ -258,9 +257,9 @@ struct RecA {
     char pad30[0x54 - 0x30];
     tstring key;                // +0x54
 
-    tstring text_by_kind();                     // 0x4c6330
-    tstring src_text();                         // 0x4c63f0
-    tstring src_id_name();                      // 0x4c6470
+    tstring translated_plural();                     // 0x4c6330
+    tstring translated();                         // 0x4c63f0
+    tstring translated_text();                      // 0x4c6470
 };
 
 // Class C: a one-byte flag and the string share the +0x10 word (the faction records, array at +0x13a48)
@@ -269,7 +268,7 @@ struct RecC {
     char flag;                  // +0x10
     tstring field;              // +0x14
 
-    tstring field_name();                       // 0x4c6860
+    tstring translated();                       // 0x4c6860
 };
 
 // Class B: the grid the caller walks (a string at +0xc, a one-byte flag at +0x1c and a second string at +0x20)
@@ -279,7 +278,7 @@ struct RecB {
     char flag;                  // +0x1c
     tstring name;               // +0x20
 
-    tstring name_by_state();                    // 0x4c6530
+    tstring translated();                    // 0x4c6530
 };
 
 // ---- the morph-target layout used by ItemPage::place (0x4c6b30); these mirror rgl::mesh / rgl::keyframes of
@@ -426,11 +425,11 @@ struct ListObj {
 
 struct MapDialog;
 void ctor_4c3d90(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3d90
-void ctor_4c3e10(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3e10
-void ctor_4c3e80(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3e80
-void ctor_4c3ef0(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3ef0
-void ctor_524cd0(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x524cd0
-void ctor_4c1b60(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c1b60
+void copy_uninit_4(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3e10
+void copy_uninit_2c(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3e80
+void copy_uninit_4_range(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c3ef0
+void uninit_copy_str(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x524cd0
+void uninit_copy_204(MapRecord* base, int index, int z, MapDialog* self, int h);  // 0x4c1b60
 
 struct MapDialog {
     char pad0[0x8];
@@ -464,8 +463,8 @@ struct MapDialog {
     void refresh_list(char use_sel);                             // 0x4c6f90
 };
 
-extern int g_dlg_sel;                                   // 0x5aa0fc (selection of the map dialog)
-extern int g_map_state;                                 // 0x5aa100
+extern int g_dlg_display_bits;                                   // 0x5aa0fc (selection of the map dialog)
+extern int g_dlg_multisample;                                 // 0x5aa100
 
 // ============================================================================================================
 // 0x4c7290..0x4c7f90: the configuration dialog and the map editor's object dialog
@@ -475,12 +474,12 @@ struct RenderConfig {                                   // game/config/config.h 
     int first_time;                                     // +0 (set when the file was missing or fresh)
     char data[0x70 - 4];
     RenderConfig();                                     // 0x4bc020 (Config::init_defaults)
-    void read(FILE* f);                                 // 0x4bbf70 (Config::load_file)
-    void write(FILE* f);                                // 0x415fb0 (rgl_config::save)
+    void load_file(FILE* f);                                 // 0x4bbf70 (Config::load_file)
+    void save(FILE* f);                                // 0x415fb0 (rgl_config::save)
 };
 
 extern tstring g_skin_name;                             // 0x5fe888 (the skin name; buf at 0x5fe88c)
-extern int g_show_download;                             // 0x5e29c4 (show the download button)
+extern int g_trial_mode;                             // 0x5e29c4 (show the download button)
 extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb_skin_%s.smf")
 extern char g_rgl_name[];                               // 0x54b048 ("rgl_config.txt")
 extern const char g_mode_rb[];                          // 0x54a8fc ("rb")
@@ -506,7 +505,7 @@ struct Pawn {
     char pad[0x58];
     float matrix[0x10];                                 // +0x58
 };
-extern Pawn* g_edited_object;                           // 0x5e292c+0x65e4 (the map's edited object)
+#include "../../game/mission.h"   // canonical: g_mission (0x5e292c)
 
 #include "../../include/vec.h"
 
@@ -531,7 +530,7 @@ struct MapEditorDialog {
     void update();                                      // 0x5305b0
     void add_selected(rgl::mesh* m, const rgl::matrix* frame, void* rec, unsigned color);   // 0x5314e0 (ret 0x10)
     void select_entity(rgl::mesh* m, void* rec, unsigned color);    // 0x4ea0c0 (ret 0xc)
-    void handle_input(bool& moved, rgl::vector4& pos, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag);   // 0x52fe40 (ret 0x1c)
+    void apply(bool& moved, rgl::vector4& pos, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag);   // 0x52fe40 (ret 0x1c)
 };
 
 // a game frame's camera: +0x1a098 the edited map-object index, +0x1a09c the eye position, +0x1a0ac the
@@ -548,7 +547,7 @@ struct Frame {
     char pad1a0c0[0x1a1b4 - 0x1a0c0];
     int record;                                         // 0x1a1b4
 };
-extern Frame* g_frame;                                  // 0x5e2930
+#include "../../include/game_data.h"      // GameData (save_language_files 0x4c8ca0), TroopRec, Party, PartyMgr, QuestRec, FactionRec: the shared classes
 
 struct Map {
     char pad[0x65e4];
@@ -557,9 +556,8 @@ struct Map {
     MapRecord* records;                                 // +0x668c
     MapRecord* records_end;                             // +0x6690
 };
-extern Map* g_map;                                      // 0x5e292c
 
-extern tstring g_path_prefix;                           // 0x8ee3c28 (global file-name prefix)
+extern tstring g_module_path;                           // 0x8ee3c28 (global file-name prefix)
 extern char g_ui_play[];                                // 0x595e0c
 extern char g_ui_configure[];                           // 0x595dfc
 extern char g_ui_check_for_new_version[];               // 0x595de0
@@ -599,7 +597,7 @@ struct RecordArrayHead {
     int count;                                          // -4
 };
 void __fastcall record_array_clear(void* r);            // 0x4317b0 (thiscall)
-void __fastcall record_free(void* r);                   // 0x4c65d0 (thiscall: = ItemPage::reset)
+void __fastcall reset(void* r);                   // 0x4c65d0 (thiscall: = ItemPage::reset)
 struct Rec78Buf {                                       // three owned pointers (begin, end, cap)
     char* p;
     char* e;
@@ -653,7 +651,7 @@ struct Block {
     void read_terrain(stream_base* stream);             // 0x4c83a0
 };
 struct BlockBase { void read(stream_base* s); };        // 0x4607e0 (thiscall on block+0x38)
-void add_frame(stream_base* s, const char* name, int flags);   // 0x4c1e10
+void resize(stream_base* s, const char* name, int flags);   // 0x4c1e10
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/strat/gui_manager.h)
 
 
@@ -704,7 +702,7 @@ struct conv_rec {
     edit_vert* begin;                                        // +0x1c  (vector<edit_vert>-style triple)
     edit_vert* end;                                          // +0x20
     char pad24[0xc3b0dc - 0x24];
-    void reset_groups();                                     // 0x4c8330 (the block's material release)
+    void free_materials();                                     // 0x4c8330 (the block's material release)
     void clear_groups();                                     // 0x4317b0 (release of the 16 variation tracks)
 };
 
@@ -759,10 +757,10 @@ struct world_root {
 #include "../../include/phys_set.h"                      // PhysSet (update 0x472dc0), g_phys 0xa181f8
 
 extern char g_loading;                                       // 0x5a9c38 (loader thread runs while set)
-extern HANDLE g_load_event;                                  // 0x5e28d8
-extern CRITICAL_SECTION g_load_cs;                           // 0x5e28dc
-extern float g_load_dt;                                      // 0x5e2a0c (pending physics step)
-extern void* g_conv_scratch;                                 // 0x5e299c
+extern HANDLE g_mt_event;                                  // 0x5e28d8
+extern CRITICAL_SECTION g_mt_cs;                           // 0x5e28dc
+extern float g_paused_time;                                      // 0x5e2a0c (pending physics step)
+extern void* g_presentation;                                 // 0x5e299c
 
 // the +0x2c-byte record of the +0x1c vector
 struct edit_vert {
@@ -807,23 +805,22 @@ struct item38_vec {
 // ============================================================================================================
 // 0x4c8ca0: GameData::save_language_files and the records it walks
 // ============================================================================================================
-#include "../../include/game_data.h"      // GameData (save_language_files 0x4c8ca0), TroopRec, Party, PartyMgr, QuestRec, FactionRec: the shared classes
 inline const tstring* QuestRec::text_name() { return suffix_or(key, "_text", desc); }
 
 extern PartyTemplate* g_party_templates;                                // 0x5e29f8
-extern int g_n_party_templates;                                         // 0x5e29fc
-extern GameString* g_game_strings;                                      // 0xa75ea0
+extern int g_party_template_count;                                         // 0x5e29fc
+extern GameString* g_strings;                                      // 0xa75ea0
 extern int g_n_game_strings;                                            // 0xa75ea8
 extern QuickString* g_quick_strings;                                    // 0xa75ea4
 extern int g_n_quick_strings;                                           // 0xa75eac
 extern DialogRec* g_dialogs;                                            // 0x8ed50cc
 extern int g_n_dialogs;                                                 // 0x8ed50c8
-extern ModRec g_item_mods[];                                            // 0xa75f70 (43 x 0x28)
+extern ModRec g_item_modifiers[];                                            // 0xa75f70 (43 x 0x28)
 extern ModRec g_item_modifiers[]; // 0xa75f70 (43 x 0x28)
-extern SkillRec g_skills[];                                             // 0x8ee3100 (42 x 0x44)
+extern SkillRec g_skill_tbl[];                                             // 0x8ee3100 (42 x 0x44)
 extern GameMenu* g_menus;                                               // 0x5e29b0
-extern int g_n_menus;                                                   // 0x5e29b4
-extern char g_lang_on;                                                  // 0xa181b8
+extern int g_menu_count;                                                   // 0x5e29b4
+extern char g_show_party_ids_instead_of_names;                                                  // 0xa181b8
 
 
 // the text log is written through its virtual w_cstr slot (+0x28), as the call sites do

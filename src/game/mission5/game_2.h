@@ -313,10 +313,12 @@ extern float g_maxy;                 // 0xa732a8
 extern float g_sizex;                // 0xa732ac
 extern float g_sizey;                // 0xa732b0
 extern RawVec g_mat_vec[4];          // 0xa732c0 / 0xa732d0 / 0xa732e0 / 0xa732f0
-extern int    g_map_tree_types[4];        // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
-extern int    g_map_sea_direction;               // 0xa18144
-extern int    g_map_river_direction;               // 0xa18150
-extern char g_bit[]; // 0x5a8e68
+#include "../game_globals.h"   // canonical g_map_tree_types (0xa1815c), g_map_sea_direction (0xa18144), g_map_river_direction (0xa18150)
+// the slices read these as ints (g_map_sea_direction/river_direction are floats in game_globals.h, same words)
+#define g_map_tree_types_a ((int*)&g_map_tree_types)                  // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
+#define g_map_sea_direction_i (*(int*)&g_map_sea_direction)
+#define g_map_river_direction_i (*(int*)&g_map_river_direction)
+extern unsigned __int64 g_bit[]; // 0x5a8e68
 extern int    g_use_shaders;                // 0x5e28fc
 float    normalize(rgl::vector4* self);                                   // 0x407d60
 void     scan_arrays(void* a, void* b, void* c);                                    // 0x523630

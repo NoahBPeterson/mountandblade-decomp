@@ -329,8 +329,8 @@ void EditMesh::finish()
     n.y = n.y * inv;
     n.z = n.z * inv;
     n.normalize_inl();
-    ((MeshCalls*)this)->set_slot(2, &n);
-    ((MeshCalls*)this)->rebuild();
+    ((MeshCalls*)this)->update_terrain(2, &n);
+    ((MeshCalls*)this)->clean();
 }
 
 // @ 0x4d27d0

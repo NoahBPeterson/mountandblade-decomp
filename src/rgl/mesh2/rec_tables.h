@@ -21,7 +21,7 @@
 using rgl::vector4;
 
 // ---- engine entry points (mesh2_common.h: engine_alloc/new/free/delete, sub_536f8f) --------------------------
-void __cdecl alloc_ctor(void* dst, int size, int n, void* ctor);     // 0x401800
+void __cdecl vector_constructor_iterator(void* dst, int size, int n, void* ctor);     // 0x401800
 
 // ---- the C4c* record classes (vtable 0x5947d8 base, own vtable stored after the base ctor) ---------------
 // 0x4c2c50 (vtable 0x595740): tstrings +0x54/+0x68/+0x78/+0x88
@@ -145,18 +145,15 @@ struct tstr_ll {
     const char* text() const { return s.buf ? s.buf : (const char*)&s.buf; }
 };
 
-extern unsigned char g_5d8789;        // 0x5d8789 (g_ui_dirty)
-extern int    g_5e2958;               // 0x5e2958  clock snapshot source
-extern int    g_5e295c;               // 0x5e295c
+#include "../../include/fx.h"   // canonical: g_ticks (0x5e2958)
 
 
 // ---- options.dat loader (0x4c3a40) and GameApp::InitDeviceObjects (0x4c3510) -----------------------------------
-extern IDirect3DDevice9* g_d3d_device;             // 0xa17f28 ("current device")
+#include "../../include/renderer.h"   // canonical: g_render.pad504 (0xa17e14)
 extern D3DCAPS9 g_caps;                            // 0xa17f2c (GetDeviceCaps fills it here)
 extern int   g_renderer_width;                     // 0xa1805c
 extern int   g_renderer_height;                    // 0xa18060
 extern int   g_renderer_vsync;                     // 0xa180e4
-extern char  g_renderer_flag;                      // 0xa17e14
 extern int   g_use_shaders;                        // 0x5e28fc (also g_dinput_enabled)
 extern int   g_shader_support;                     // 0x5a9fcc "use_vertex_shaders"
 
@@ -186,9 +183,9 @@ struct RenderSetup {                                       // the object at 0x5f
     int init_decls(const int& a0, const int& a1, const int& a2, const int& a3, const int& a4, const int& a5, const int& a6, const int& a7, const int& a8, const int& a9);   // 0x4bc830 (thiscall, ret 0x28)
 };
 struct ResMgrX {                                           // the object at 0x5d6fa0
-    void set_path_prefix(int flag, tstring* prefix);       // 0x41c540 (thiscall, ret 8)
+    void load_all(int flag, tstring* prefix);       // 0x41c540 (thiscall, ret 8)
 };
-extern tstring g_path_prefix;                              // 0x8ee3c28
+extern tstring g_module_path;                              // 0x8ee3c28
 
 // the ini table at 0xa44240 (0x2c-byte entries: key tstring +0, value tstring +0x1c); get_float is inline (header)
 struct ini_entry_x { tstring key; char pad10[0xc]; tstring value; };
@@ -205,9 +202,11 @@ struct ini_file_x {
         return ret;
     }
 };
-extern ini_file_x g_ini;                                   // 0xa44240
+#ifndef REC_TABLES_NO_GAME_VARS   // a TU that declares g_game_vars with its own ini_file view defines this before including
+extern ini_file_x g_game_vars;                                   // 0xa44240
+#endif
 
-void __fastcall reset_buffer_group(void* self);    // 0x4c0520 (resets one buffer-size group)
+void __fastcall load_game_variables(void* self);    // 0x4c0520 (resets one buffer-size group)
 // 0x4bab70 user_path (argument in ESI, a static helper of another TU) has a local copy in rec_tables.cpp.
 
 // The binary file reader the options loader builds on its stack (vtable 0x54ae48 = bin_reader): the same inline chain
@@ -270,13 +269,13 @@ struct options_record {
     int   w94;           // +0x94
     int   w98;           // +0x98
     void load();                               // 0x4c3a40
-    void set_mode(int mode);                   // 0x4bc090 (thiscall, ret 4)
-    void set_spacing(int v);                   // 0x4bc100 (thiscall, ret 4)
+    void set_triple_buffering(int mode);                   // 0x4bc090 (thiscall, ret 4)
+    void set_texture_quality(int v);                   // 0x4bc100 (thiscall, ret 4)
 };
 
 // ---- element type of the 0x58-byte arrays (0x4c3430) ------------------------------------------------------------
 #include "../../include/rec_dtors.h"                  // RecD (scalar_delete 0x431480 = ??_ERecD, ret 4), shared with rgl/xmlcfg/records.h
-void __stdcall RecD_free_array(void* p, unsigned size, int n, void (__stdcall* d)(void* const*));  // 0x401830
+void __stdcall vector_destructor_iterator(void* p, unsigned size, int n, void (__stdcall* d)(void* const*));  // 0x401830
 void __stdcall RecD_dtor(void* const* p);             // 0x431440 (the pointer is in ecx: (void*, unused) call)
 
 // 0x58-byte element: { tstring s0, tstring s10, tstring s24, void* p34, .., RecD* p50 }.
@@ -295,13 +294,13 @@ struct elem58 {
 
 // ---- music / sound objects (0x4c3d90..0x4c4640; s004c3d90) -------------------------------------------------------
 int   __stdcall ftol2(double d);                   // 0x535a64
-int   __cdecl round_f(const float* f);             // 0x432540: round to nearest
-float __cdecl clamp_float3(const float& v, const float& lo, const float& hi);  // 0x40e3d0
+int   __cdecl round_float(const float* f);             // 0x432540: round to nearest
+float __cdecl clamp(const float& v, const float& lo, const float& hi);  // 0x40e3d0
 
 // FMOD 3 entry points used by the sound loader.
 struct FSOUND_SAMPLE;
 FSOUND_SAMPLE* __stdcall FSOUND_Sample_Load(int index, const char* name, unsigned flags, int offset, int length); // 0x534330 (ret 20)
-void  __stdcall _FSOUND_SetVolume(int channel, int volume);                                                       // 0x5342ca (ret 8)
+void  __stdcall FSOUND_SetVolume(int channel, int volume);                                                       // 0x5342ca (ret 8)
 int   __stdcall FSOUND_Sample_SetDefaults(FSOUND_SAMPLE* s, int freq, int vol, int pan, int pri);                 // 0x53432a (ret 20)
 int   __stdcall FSOUND_Sample_GetLength(FSOUND_SAMPLE* s);                                                         // 0x534324 (ret 4)
 int   __stdcall FSOUND_Sample_GetDefaults(FSOUND_SAMPLE* s, int* freq, int* vol, int* pan, int* pri);              // 0x53431e (ret 20)
@@ -337,7 +336,7 @@ struct sound_engine {
     SndTimer t2460;                 // +0x2460  fade end
     int   fading;                   // +0x2470
     void __fastcall advance_piece();               // 0x4c25e0
-    void stop_piece(int idx);                      // 0x4be0a0 (thiscall, ret 4)
+    void stop(int idx);                      // 0x4be0a0 (thiscall, ret 4)
     void __fastcall tick();                        // 0x4c4100
 };
 
@@ -351,7 +350,7 @@ struct elem48 {
     int w10;             // +0x10
     tstring s14;         // +0x14
     char pad24[0x24];
-    void init(stream_base* s);   // 0x4bdf60 (thiscall, ret 4)
+    void save(stream_base* s);   // 0x4bdf60 (thiscall, ret 4)
 };
 struct elem48_holder {
     elem48* arr;     // +0 (array new, count in front)
@@ -382,12 +381,12 @@ struct music_rec {
     music_rec() : sample(0), level(0), ratio(0.0f), length(0) {}    // +0xc is left alone
 };
 
-void __fastcall music_set_finish(struct music_set* m);                     // 0x4be270
+void __fastcall load_used(struct music_set* m);                     // 0x4be270
 
 struct music_name {         // 0x98 bytes, only the leading tstring is constructed
     tstring s;
     char pad[0x98 - sizeof(tstring)];
-    void read(stream_base& s);   // 0x4be200 (thiscall, ret 4)
+    void load(stream_base& s);   // 0x4be200 (thiscall, ret 4)
 };
 
 struct music_set {

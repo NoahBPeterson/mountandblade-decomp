@@ -25,14 +25,14 @@ struct VoiceTable {
         return -1;
     }
 };
-extern VoiceTable g_voices;                             // 0x8ed4f60
+extern VoiceTable g_anim_table;                             // 0x8ed4f60
 
 // ---- free functions of earlier objects the module calls -------------------------------------------------------------
 float frand();                                                          // 0x40e400 (rand() % 15817) / 15817
 float __cdecl accel_factor(const float* a, const float* b, const float* c);   // 0x435ae0
 float __cdecl fmin_ref(const float* a, const float* b);                 // 0x4324b0
 float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0
-float __cdecl clamp_float(const float* x, const float* lo, const float* hi);  // 0x40e3d0
+float __cdecl clamp(const float* x, const float* lo, const float* hi);  // 0x40e3d0
 int __stdcall in_id_set(int id);                                        // 0x432640
 extern int g_difficulty;                                                // 0x5aa04c
 extern unsigned g_input_mask;                                           // 0x5e2474
@@ -81,7 +81,7 @@ struct SceneEnt {
     rgl::vector4 v1ac;                                  // +0x1ac
     char pad1bc[0x1d4 - 0x1bc];
     char f1d4;                                          // +0x1d4 (0x44c210)
-    void add_mesh(res_obj* m);                          // 0x442110
+    void add_extra(res_obj* m);                          // 0x442110
 };
 struct EntVec {                                         // std::vector<SceneEnt*> layout (VC7.1), freed by hand (0x448eb0); Mission +0x63c0 (0x44c210)
     int alloc_pad;
@@ -90,14 +90,14 @@ struct EntVec {                                         // std::vector<SceneEnt*
     SceneEnt** end;
     unsigned size() const { return first == 0 ? 0 : last - first; }
     unsigned capacity() const { return first == 0 ? 0 : end - first; }
-    void _Insert_n(SceneEnt** where, unsigned n, SceneEnt* const& v);       // 0x43e7b0 (ICF-folded with vector<int>::_Insert_n)
+    void insert_n(SceneEnt** where, unsigned n, SceneEnt* const& v);       // 0x43e7b0 (ICF-folded with vector<int>::_Insert_n)
     void push_back(SceneEnt* const& x)                  // VC7.1: inline fast path, out-of-line _Insert_n
     {
         if (size() < capacity()) {
             *last = x;
             ++last;
         } else {
-            _Insert_n(last, 1, x);
+            insert_n(last, 1, x);
         }
     }
 };
@@ -165,9 +165,9 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                                   
 struct V4 { float x, y, z, w; };               // constructor-free storage for the local arrays of start_ragdoll
 struct M4 { V4 s, f, u, o; };
 
-extern float g_pow_a;                   // 0xa18194
-extern float g_pow_b;                   // 0xa18198
-extern float g_lance_scale;             // 0xa181a0
+extern float g_missile_damage_speed_power;                   // 0xa18194
+extern float g_melee_damage_speed_power;                   // 0xa18198
+extern float g_couched_lance_damage_multiplier;             // 0xa181a0
 extern int g_ui_enabled;                // 0x5aa060
 
 // ---- the blow record (0x58 bytes; agent/agent.h calls it RecZSubB with the fields m0..m54 and the initialiser 0x4353a0, which the
@@ -209,14 +209,14 @@ __declspec(dllimport) void __cdecl NewtonBodyGetMatrix(const NewtonBody* b, floa
 __declspec(dllimport) void __cdecl NewtonBodyGetVelocity(const NewtonBody* b, float* v);                         // 0x549210
 __declspec(dllimport) void __cdecl NewtonRagDollBoneGetGlobalMatrix(const NewtonRagDollBone* b, float* m);       // 0x549248
 }
-extern float g_blend_rate;                          // 0x5a9c28
+#include "../../include/fx.h"   // canonical: g_step_tbl (0x5a9c28)
 extern int g_fx_on;                                 // 0x5aa05c
 extern int g_sound_blood;                           // 0x5aa2e4
 extern int g_tick_a;                                // 0x5aa048
 extern int g_tick_b;                                // 0xa18234
 float __cdecl capsule_sphere_gap(capsule* c, sphere* s);   // 0x409d20
-extern float g_armor_a[3];                          // 0xa1817c
-extern float g_armor_b[3];                          // 0xa18188
+extern float g_armor_soak_factor_against_cut[3];                          // 0xa1817c
+extern float g_armor_reduction_factor_against_cut[3];                          // 0xa18188
 
 
 #endif // AGENT4_LOGIC_H

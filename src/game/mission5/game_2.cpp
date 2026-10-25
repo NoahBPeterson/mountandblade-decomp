@@ -267,8 +267,8 @@ void Game::build_map_trees()
     }
 
     void* cam = self->wind;                                                   // +0x139dc
-    float ang_a = (float)g_map_sea_direction * 3.1415927f * 0.0055555557f;               // deg -> rad
-    float ang_b = (float)g_map_river_direction * 3.1415927f;
+    float ang_a = (float)g_map_sea_direction_i * 3.1415927f * 0.0055555557f;               // deg -> rad
+    float ang_b = (float)g_map_river_direction_i * 3.1415927f;
 
     rgl::vector4 dir;
     dir.x = -*(float*)((char*)cam + 0x44);
@@ -351,24 +351,24 @@ void Game::build_map_trees()
     void* snow_arr[0x40];   for (int i = 0; i < 0x40; i++) snow_arr[i] = 0;
     void* steppe_arr[0x40]; for (int i = 0; i < 0x40; i++) steppe_arr[i] = 0;
     void* desert_arr[0x40]; for (int i = 0; i < 0x40; i++) desert_arr[i] = 0;
-    for (int i = 0; i < 4; i++) if (g_map_tree_types[i] > 0x40) g_map_tree_types[i] = 0x40;
+    for (int i = 0; i < 4; i++) if (g_map_tree_types_a[i] > 0x40) g_map_tree_types_a[i] = 0x40;
 
-    for (int i = 0; i < g_map_tree_types[0]; i++) {
+    for (int i = 0; i < g_map_tree_types_a[0]; i++) {
         assign(tmp, "map_tree_");                                    // 0x59c0d8
         push_back(tmp, (char)('a' + i));
         map_arr[i] = get_object(&g_resmgr, tmp);
     }
-    for (int i = 0; i < g_map_tree_types[1]; i++) {
+    for (int i = 0; i < g_map_tree_types_a[1]; i++) {
         assign(tmp, "snow_tree_");                                   // 0x59c0cc
         push_back(tmp, (char)('a' + i));
         snow_arr[i] = get_object(&g_resmgr, tmp);
     }
-    for (int i = 0; i < g_map_tree_types[2]; i++) {
+    for (int i = 0; i < g_map_tree_types_a[2]; i++) {
         assign(tmp, "steppe_tree_");                                 // 0x59c0bc
         push_back(tmp, (char)('a' + i));
         steppe_arr[i] = get_object(&g_resmgr, tmp);
     }
-    for (int i = 0; i < g_map_tree_types[3]; i++) {
+    for (int i = 0; i < g_map_tree_types_a[3]; i++) {
         assign(tmp, "desert_tree_");                                 // 0x59c0ac
         push_back(tmp, (char)('a' + i));
         desert_arr[i] = get_object(&g_resmgr, tmp);
@@ -630,13 +630,13 @@ void Game::build_map_trees()
                             if (t == 0xc) goto lab_ce0;
                             if (t == 10) {
                                 chosen = steppe_arr[0];
-                                if (g_map_tree_types[2] > 1) chosen = steppe_arr[rand() % g_map_tree_types[2]];
+                                if (g_map_tree_types_a[2] > 1) chosen = steppe_arr[rand() % g_map_tree_types_a[2]];
                             } else if (t == 0xd) {
                                 chosen = desert_arr[0];
-                                if (g_map_tree_types[3] > 1) chosen = desert_arr[rand() % g_map_tree_types[3]];
+                                if (g_map_tree_types_a[3] > 1) chosen = desert_arr[rand() % g_map_tree_types_a[3]];
                             } else {
-                                chosen = (g_map_tree_types[0] < 2) ? 0
-                                       : map_arr[rand() % g_map_tree_types[0]];
+                                chosen = (g_map_tree_types_a[0] < 2) ? 0
+                                       : map_arr[rand() % g_map_tree_types_a[0]];
                             }
                         } else {
                             if (t != 0xc) {
@@ -645,7 +645,7 @@ void Game::build_map_trees()
                             }
                         lab_ce0:
                             chosen = snow_arr[0];
-                            if (g_map_tree_types[1] > 1) chosen = snow_arr[rand() % g_map_tree_types[1]];
+                            if (g_map_tree_types_a[1] > 1) chosen = snow_arr[rand() % g_map_tree_types_a[1]];
                         }
                         if (chosen != 0) {
                             float mat[16];

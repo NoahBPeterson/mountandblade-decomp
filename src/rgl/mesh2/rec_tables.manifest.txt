@@ -18,7 +18,7 @@
 ../src/rgl/mesh2/rec_tables.cpp  ?destroy_C4c3290@@YIPAXPAUC4c3290@@HH@Z  004c32e0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?dtor@C4c3290@@QAEXXZ  004c3300  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?global_4bf870@@YAXXZ  004c3330  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?global_4c03b0@@YAXXZ  004c3340  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?script_dialog_proc@@YAXXZ  004c3340  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?vector_deleting_delete@elem58@@QAEPAXI@Z  004c3430  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?load@options_record@@QAEXXZ  004c3a40  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_204@@YAXPADIPBXAAUAlloc204@@@Z  004c3d90  /O2 /MT /Gy /TP

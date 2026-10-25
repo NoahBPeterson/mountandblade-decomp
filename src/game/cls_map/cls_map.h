@@ -43,7 +43,7 @@ extern int       g_init_flag;                    // 0x8ee3f9c (g_app_obj + 0x354
 extern HWND      g_editor_hwnd;                  // 0x8ee3d30 (m_hWnd)
 extern unsigned char g_fullscreen_flag;          // 0x8ee3f8e (m_bStartFullscreen)
 extern float     g_res_scale;                    // 0x8ee3c50 (m_fMinFrameTime)
-extern tstring   g_skin;                         // 0x5fe888 the language of the skin file name
+extern tstring   g_skin_name;                         // 0x5fe888 the language of the skin file name
 extern unsigned char g_mt_inited;                // 0x5e2a09
 extern void*     g_mt_event;                     // 0x5e28d8
 extern CRITICAL_SECTION g_mt_cs;                 // 0x5e28dc
@@ -53,10 +53,10 @@ struct OptionsDlgView {
     void choose_dx_settings(Config* cfg, bool overwrite);   // 0x4b9b90
 };
 FILE* __cdecl mb_open_user_file(const char* name, const char* mode);   // 0x415160
-void __fastcall init_options_obj(void* self);    // 0x4c3a40 (ecx = the object at 0x5aa008)
-void __cdecl worker_thread(void* arg);           // 0x4c8900
+void __fastcall load(void* self);    // 0x4c3a40 (ecx = the object at 0x5aa008)
+void __cdecl loader_thread_body(void* arg);           // 0x4c8900
 void __cdecl loader_thread_body(void* arg); // 0x4c8900
-float __cdecl timer_op(int op);                  // 0x407660
+float __cdecl DXUtil_Timer(int op);                  // 0x407660
 
 // std::list<int>::_Buynode of the glyph table's list (0x4c4dc0; ecx = the list at Font + 0x48)
 void* __fastcall list_int_buynode(void* self);   // 0x4c4dc0
@@ -65,8 +65,8 @@ void* __fastcall list_int_buynode(void* self);   // 0x4c4dc0
 struct TearObj {
     char pad0[0x78];
     void* f78;                                  // +0x78
-    void m4c54f0(void*);                        // 0x4c54f0
-    void m4d4b80();                             // 0x4d4b80
+    void calc_vertex_mode(void*);                        // 0x4c54f0
+    void on_selection_changed();                             // 0x4d4b80
     void teardown();                            // 0x4d9e80
 };
 
@@ -156,7 +156,7 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 // ---- 0x4daa10: the loading-screen object (a screen like the menus below: the overlay window at +0x2c, three child widgets) ----
 // (0x4da900 is gui_manager::rebuild, ../strat/gui_manager.h; this object only shares the offsets +0x568.. with it by accident of the slice)
 #include "../loading_screen.h"        // LoadingScreen: one definition (update 0x50f390, advance 0x50f440 are in inventory_panel)
-extern int g_hint_count;                        // 0xa18140 (number of "hint_N" strings; 0 = none)
+extern int g_num_hints;                        // 0xa18140 (number of "hint_N" strings; 0 = none)
 
 // ---- widgets: this module's call sites go through vt() (../config/widget_mgr.h): slot n of the widget vtable is dNN at +4n ----
 // The slots and the call sites that name them (offset: role: callers in this module):
@@ -194,7 +194,7 @@ struct MissionScreen {
     void init_meeting_window();                 // 0x4db1f0
     void fill_mission_row(int side);            // 0x4db440
     void init_done_window();                    // 0x4db660
-    void dynamic_pass();                        // 0x4d7e50
+    void draw_faction_report();                        // 0x4d7e50
 };
 // the hint bar / label maker (0x4dada0) and the 0x4db810 button maker
 MissionUi* __cdecl make_hint(ContainerBase* o, const tstring& text, float x, float y, float w, float h);   // 0x4dada0
@@ -202,27 +202,25 @@ UiAInline* __cdecl new_button(ContainerBase* o, const tstring& text, float px, f
 
 // globals of the campaign diary screens (addresses; names provisional)
 extern GameData* g_game;                        // 0x5e2930
-extern void* g_mission_obj;                     // 0x5e292c (the mission object; +0x5df0 = the selected mission)
-extern void* g_5e2a00;                          // 0x5e2a00 (mission table, 0x58-byte records; +0x24 = name)
+#include "../mission.h"   // canonical: g_mission (0x5e292c)
+extern void* g_mission_templates;                          // 0x5e2a00 (mission table, 0x58-byte records; +0x24 = name)
 extern int g_a73314;                            // 0xa73314 (mission stage)
 extern int g_a73430;                            // 0xa73430 (grid rows)
 extern int g_a73428;                            // 0xa73428 (grid columns)
 extern int g_a7342c;                            // 0xa7342c (grid depth)
 extern int g_a73348[];                          // 0xa73348 (grid of unit indices)
 extern int g_a73438;                            // 0xa73438 (selected index, -1 = none)
-extern int g_a73300[];                          // 0xa73300 (selection table)
+extern int g_mission_ctx[];                          // 0xa73300 (selection table)
 extern int g_a732fc[];                          // 0xa732fc (per-side fallback ids)
-extern char g_a181b8;                           // 0xa181b8 (hide-names flag)
-extern int g_skill_clamp;                       // 0x8ee3ac4
+extern char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
+#include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3ac4)
 extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145}
-void __fastcall stop_sounds_494310(void* p);    // 0x494310 (ecx = 0x5aa128: the main mission UI)
+void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main mission UI)
 
 // ---- 0x4dc630..0x4dce70: the message (result) window and its button makers ----------------------------------------------
 // the option table (0xa44240): ini_file, entries of 0x2c bytes with the value string at +0x1c of each entry (from +0x1c: 0xa4425c)
-extern ini_file g_ini;                          // 0xa44240
+extern ini_file g_game_vars;                          // 0xa44240
 extern float g_549cdc, g_590b6c, g_54b3b0, g_549d70, g_549d68;   // button metrics (rdata floats)
-extern MissionUi* g_ui_active_edit;             // 0x5d7090 (the widget that has the keyboard focus)
-extern unsigned char g_msg_flag;                // 0x5d75e0
 struct ResultWindow {
     char pad0[4];
     int outcome;                                // +0x04
@@ -256,7 +254,7 @@ struct MenuKindRec {
     char pad18[0x20 - 0x18];
     int first;                                  // +0x20 background image id (0 = none)
 };
-extern MenuKindRec* g_menu_kinds;               // 0xa75f2c
+extern MenuKindRec* g_presentations;               // 0xa75f2c
 extern int g_menu_kind_count;                   // 0xa75f38
 // the menu block: a widget (vtable 0x5924a0, 0x188 bytes) that owns a vector (alloc +0x178, first +0x17c, last, end). The UiFrame of
 // ../party/party_window.h (destroying destructor 0x5021f0); that header conflicts with game_data.h on g_game, so this is its view here.
@@ -342,14 +340,14 @@ struct DebriefMenu {
 };
 
 // globals of the menus
-extern int g_window_flags;                      // 0xa73a10 (set to 0x400000)
-extern int g_tutorial_enabled;                  // 0xa181a4
-extern int g_menu_font_red;                     // 0xa181bc
-extern int g_menu_font_green;                   // 0xa181c0
-extern int g_menu_font_blue;                    // 0xa181c4
+extern int g_music_situation;                      // 0xa73a10 (set to 0x400000)
+extern int g_enable_quick_battles;                  // 0xa181a4
+extern int g_main_menu_font_color_red;                     // 0xa181bc
+extern int g_main_menu_font_color_green;                   // 0xa181c0
+extern int g_main_menu_font_color_blue;                    // 0xa181c4
 extern int g_main_menu_kind;                    // 0xa75f34
 extern char* g_save_prefix;                     // 0x8ee3c3c (the c_str idiom falls back to its own address)
-extern BlockOwner* g_active_menu;               // 0x5e299c
+extern BlockOwner* g_presentation;               // 0x5e299c
 extern float g_rand_range;                      // 0x54a6bc
 extern float g_pic_split1;                      // 0x54b868
 extern float g_pic_split2;                      // 0x549d70
@@ -399,7 +397,6 @@ struct OptionsScreen {
     MissionUi* d78;                             // +0x78 framerate slider
     MissionUi* s7c, *s80, *s84, *t88;           // +0x7c..+0x88
     MissionUi* s8c, *s90, *s94, *s98, *s9c, *sa0, *sa4, *sa8, *sac, *sb0, *sb4, *sb8, *sbc, *sc0, *sc4, *sc8, *scc, *sd0, *sd4;   // +0x8c..+0xd4
-    void create();                              // 0x4d6300
     void update_difficulty(); // 0x4d6300
     void open();                                // 0x4de6f0
 };
@@ -457,13 +454,7 @@ struct OptionsWin {
     char f_ed;                                  // +0xed
     void init();                                // 0x4e05c0
 };
-extern int g_day;                   // 0x5a9f9c
-extern int g_res_w;                 // 0x5a9fe4
-extern int g_res_h;                 // 0x5a9fe8
 extern int g_bpp;                   // 0x5a9fec
-extern int g_shadow_q;              // 0x5a9fc4
-extern int g_dx9;                   // 0x5a9fcc
-extern int g_corpses;               // 0x5aa004
 extern int g_ragdolls;              // 0x5aa008
 extern int g_blood;                 // 0x5aa00c
 extern int g_char_detail;           // 0x5aa024
@@ -475,7 +466,7 @@ extern int g_particle;              // 0x5aa040
 extern float g_scale_x;             // 0x5aa088
 extern float g_scale_y;             // 0x5aa08c
 extern float g_scale_z;             // 0x5aa090
-extern int g_dinput_enabled;        // 0x5e28fc
+extern int g_use_shaders;        // 0x5e28fc
 extern const float g_row_step;      // 0x597944 = 0.00528f
 
 // ---- 0x4e25a0..0x4e3780: the key-binding page of the options menu (global at 0xa73730; the key table and the page share it) -----------
@@ -501,11 +492,11 @@ struct OptionsMenu {
     int f1b8;                                   // +0x1b8 the row being assigned, -1 for none
     void init();                                // 0x4e25a0
     void copy_slots();                          // 0x4e2cb0
-    void read_keys();                           // 0x4d7120 (thiscall)
-    void read_key_name(int i, tstring* out);    // 0x4d7370 (thiscall, ret 8)
+    void refresh();                           // 0x4d7120 (thiscall)
+    void key_name(int i, tstring* out);    // 0x4d7370 (thiscall, ret 8)
     tstring* key_text(tstring* out, int i);     // 0x4e2ce0 (ret 8)
     tstring* slot_text(tstring* out, int i);    // 0x4e2ea0 (ret 8)
 };
-extern OptionsMenu g_menu;                      // 0xa73730
+extern OptionsMenu g_game_keys;                      // 0xa73730
 
 #endif // GAME_CLS_MAP_CLS_MAP_H

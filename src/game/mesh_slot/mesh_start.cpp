@@ -137,6 +137,7 @@ struct SndBank {                                             // at mode record +
 struct SndRec : Raw {                                        // 0x4c bytes, array g_env_rows
     char b[0x4c];
 };
+#include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../prop_kind.h"                                    // PropKind (g_propkinds records, 0x78 bytes; shared with terrain_b)
 
 #include "../../include/party.h"
@@ -189,13 +190,13 @@ extern SndRec*    g_env_rows;          // 0x5e28f4  sound slot records (0x4c byt
 extern int        g_snd_count;    // 0x5e29ec
 extern tstring*   g_ptypes;          // 0x5e28f8  ground-spec names
 extern int        g_ptype_count;    // 0x5e29e8
+#include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../prop_kind.h"
 extern int        g_use_shaders;   // 0x5e28fc
 extern char g_script[]; // 0xa70440
 extern Scene*     g_level;        // 0xa732b4
-extern char g_options[]; // 0x5aa008
 extern char g_cfg[]; // 0x5a9f98
-extern char g_bit[]; // 0x5a8e68
+extern unsigned __int64 g_bit[]; // 0x5a8e68
 extern unsigned   g_rand_seed;    // 0x5d7078
 
 #include "../mission.h"

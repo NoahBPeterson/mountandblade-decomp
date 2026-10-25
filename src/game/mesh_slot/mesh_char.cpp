@@ -20,7 +20,6 @@ struct resmgr_c : resource_manager {
 };
 #define g_rm (*(resmgr_c*)&g_resmgr)
 
-extern char g_options[]; // 0x5aa008
 struct MsgLogC : MsgLog {
     void add(tstring text, int color);          // 0x452c00 (ret 0x14)
 };

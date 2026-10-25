@@ -740,7 +740,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         flare_amt = (vis - flare_amt) * g_step_tbl[2] * 10.0f + flare_amt;
     } else {
         vector4 to(eye->o.x - dir.x * 500.0f, eye->o.y - dir.y * 500.0f, eye->o.z - dir.z * 500.0f);
-        if (((CellGrid*)scene)->trace(&eye->o, &to, 1000.0f, 0, 0))
+        if (((CellGrid*)scene)->trace_ray(&eye->o, &to, 1000.0f, 0, 0))
             flare_amt = flare_amt + g_step_tbl[2] * 3.5f;
         else
             flare_amt = flare_amt - g_step_tbl[2] * 3.5f;

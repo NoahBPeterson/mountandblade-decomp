@@ -29,7 +29,7 @@ mission_type g_mission_types[(0xa73730 - 0xa735d0) / 0x20];   // 0xa735d0
 ttype g_ttypes[(0x8ed4f58 - 0x8ed4df8) / 0x20];  // 0x8ed4df8
 
 void load_skyboxes(stream_base* s);              // 0x4c3350
-text_reader_l* read_flora_kind(text_reader_l* s, flora_kind* f);    // 0x4cdfd0
+text_reader_l* read(text_reader_l* s, flora_kind* f);    // 0x4cdfd0
 
 // @ 0x4d10f0
 void item_modifier_array_dtor(item_modifier* first, item_modifier* last)
@@ -161,17 +161,17 @@ void load_module_files()
         ts.r_int(&g_num_flora_kinds);
         g_flora_kinds = new flora_kind[g_num_flora_kinds];
         for (int i = 0; i < g_num_flora_kinds; i++)
-            read_flora_kind(&ts, &g_flora_kinds[i]);
+            read(&ts, &g_flora_kinds[i]);
     }
     {
         text_reader_l ts;
         if (!((text_stream*)&ts)->open_read_text("data\\ground_specs.txt"))
             mb_error("Unable to open %s", "data\\ground_specs.txt");
         for (ttype* t = g_ttypes; t < &g_ttypes[6]; t++)
-            t->read_ground_spec(&ts);           // 0x4be600
+            t->read(&ts);           // 0x4be600
         g_ground_specs = new ground_spec[g_num_ground_specs];
         for (int i = 0; i < g_num_ground_specs; i++)
-            g_ground_specs[i].read(&ts);        // 0x4bddf0
+            g_ground_specs[i].load_extras(&ts);        // 0x4bddf0
     }
     {
         text_reader_l ts;

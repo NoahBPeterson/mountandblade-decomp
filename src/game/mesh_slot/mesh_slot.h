@@ -125,7 +125,7 @@ struct EChar : TroopMgr {
 // The object is the Terrain of terrain_a/terrain.h when the world map is up and the Mission (game/mission.h) in a battle: the
 // same ~138 MB global (props at +0x6688 is Mission::props, wx/wy at +0x270 Terrain::wx). TerrainX adds the members past
 // the end of Terrain (arr3 ends at 0x845e030) that the scene-entity builder uses.
-extern char g_options[]; // 0x5aa008
+#include "../../rgl/options.h"   // g_options 0x5aa008
 struct ShadowMapP : ShadowMap {
     rgl::scene& sc() { return *(rgl::scene*)((char*)this + 0x18); }
     NOINL void build_hw();   // 0x47fce0

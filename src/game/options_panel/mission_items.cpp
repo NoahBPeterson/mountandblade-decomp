@@ -30,8 +30,8 @@ struct expander {
 };
 extern expander g_5a70440;
 
-void* game_malloc(void* p);                                     // 0x535712: free wrapper
-void release_block(void* p);                                    // 0x4c8bf0 (releases an owned block)
+#include "../../include/crt.h"   // canonical: operator delete (0x535712)
+void conv_clear(void* p);                                    // 0x4c8bf0 (releases an owned block)
 
 // opaque record types used by the loops at the end of the slice
 struct rec50 { int pad[0x50 / 4]; void read(void* p); };       // reader 0x4cd270, stride 0x50
@@ -262,10 +262,10 @@ ItemD_vt::~ItemD_vt()
 {
     ItemD* self = (ItemD*)this;
     if (self->f_8c)
-        game_malloc((void*)self->f_8c);
+        operator delete((void*)self->f_8c);
     self->f_8c = 0; self->f_90 = 0; self->f_94 = 0;
     if (self->f_7c)
-        game_malloc((void*)self->f_7c);
+        operator delete((void*)self->f_7c);
     self->f_7c = 0; self->f_80 = 0; self->f_84 = 0;
 }
 
@@ -324,7 +324,7 @@ struct scene_handler {
     virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
     virtual void v20(); virtual void v21(); virtual void v22(); virtual void v23(); virtual void v24();
     virtual void v25(); virtual void v26();
-    void set_string(const tstring& s);                          // 0x48f020 (thiscall, ret 4)
+    void relayout(const tstring& s);                          // 0x48f020 (thiscall, ret 4)
     void v_add8(int* out);                                      // +0xa4 (thiscall, ret 8)
     virtual void v64(float a, float b);                         // +0x64
 };
@@ -349,7 +349,7 @@ void MissionUpdater::update()
     if (t == 0)
         t = (tstring*)g;
     tstring tmp = g_5a70440.expand(*t);
-    scene->set_string(tmp.strip_tags());
+    scene->relayout(tmp.strip_tags());
     tmp.~tstring();
     for (int k = 0; k < 16; k++) {
         mission_obj_vt* o = (mission_obj_vt*)items[k];
@@ -430,14 +430,14 @@ struct vec44 {
     void grow(char** out, char* at, char* v);                   // 0x4ccef0 (thiscall)
 };
 
-extern char* fill_2c(char* dst, int n, char* src, vec44* self, char* src2);   // 0x4c5010
+extern char* uninit_fill_n(char* dst, int n, char* src, vec44* self, char* src2);   // 0x4c5010
 
 // @ 0x4cefe0
 void vec44::push_back(char* v)
 {
     int n = size();
     if (begin && (unsigned)n < capacity()) {
-        fill_2c(end, 1, v, this, v);
+        uninit_fill_n(end, 1, v, this, v);
         end += 0x2c;
         return;
     }

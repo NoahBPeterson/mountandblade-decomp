@@ -65,7 +65,7 @@ void scene_step(int material)
     o->fr.mat4[3] = 1.0f;
     o->f344 = 0;
     o->f348 = 0;
-    o->cleanup();
+    o->reset();
 
     o->fr.perspective = 0;
     o->fr.nplanes = 0;
@@ -1114,7 +1114,7 @@ static __forceinline vector4 crossv(const vector4& a, const vector4& b)
 // (0.01 <= t <= 0.99, 0 <= s <= 1), honouring the order-target mask and the per-edge keep distance.
 bool NavData::can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max)
 {
-    if (!linked(&from, &to))
+    if (!shares(&from, &to))
         return false;
     int cur = -1;
     if (from < 0 || to < 0)
@@ -1360,7 +1360,7 @@ void Party::plan_order()
             }
             if (a) {
                 NavData* w = g_level->core;
-                if (w->linked(&a->m4, &mesh->m4)) {
+                if (w->shares(&a->m4, &mesh->m4)) {
                     unsigned k2 = nav_recs()[a->m4].mask();
                     if (flags_lo & 0x200) {
                         if (terrain_is_road(k2)) {
@@ -1461,7 +1461,7 @@ chase:
         }
         if (a) {
             NavData* w = g_level->core;
-            if (w->linked(&a->m4, &mesh->m4)) {
+            if (w->shares(&a->m4, &mesh->m4)) {
                 unsigned k2 = nav_recs()[a->m4].mask();
                 if (flags_lo & 0x200) {
                     if (k2 == 7 || (k2 & 7) == 0) {
@@ -3002,7 +3002,7 @@ void Party::tick(float dt)
     face* node = g_game->find_at(&px);
     if (node != 0) {
         unsigned animfield = nav_recs()[node->m4].mask();
-        bool adjacent = g_level->core->linked(&node->m4, &mesh->m4) != 0;
+        bool adjacent = g_level->core->shares(&node->m4, &mesh->m4) != 0;
         bool commit = false;
         if (flags_lo & 0x200) {
             if (terrain_is_road(animfield)) {

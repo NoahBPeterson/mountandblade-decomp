@@ -713,7 +713,7 @@ void Screen::frame_update(float dt)
     cam.build_planes();
     f30->view = cam;
 
-    __int64 cur = g_time[GD_I(0x13b18)];
+    __int64 cur = g_ticks[GD_I(0x13b18)];
     __int64 ref = *(__int64*)((char*)g_game + 0x13b20);
     t = (float)(cur - ref) * 1e-5f;
 
@@ -1157,7 +1157,7 @@ int PartyV::data_ready()
     int clk = *(int*)((char*)this + 0x59b0);
     __int64 start = *(__int64*)((char*)this + 0x59b8);
     if ((*(__int64*)&flags_lo & 0x1000000) == 0) {
-        __int64 d = g_time[clk] - start;
+        __int64 d = g_ticks[clk] - start;
         if (!((float)d * g_tick_scale < g_quarter))
             return 0;
     }

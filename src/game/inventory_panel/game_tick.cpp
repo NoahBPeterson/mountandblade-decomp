@@ -174,7 +174,7 @@ void GameG::tick(float dt)
 
     if (g_disable_food_slot == 0 &&
         ((Troop*)((char*)troops + player * 0x508))->equip[9].item == -1) {
-        float d = (g_time[msg_timer.clock] - msg_timer.t) * 1e-5f;
+        float d = (g_ticks[msg_timer.clock] - msg_timer.t) * 1e-5f;
         if (d > 1.0f) {
             msg_timer.set_delay(-2.0f);
             tstring msg(g_msg_key);
@@ -185,31 +185,31 @@ void GameG::tick(float dt)
     party_at(&parties, parties.index_of(cur_agent))->dirty = 1;
 
     {
-        int v = (int)((g_time[f13b18v] - f13b20v) * 1e-5f);
+        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f);
         if (v > f13b28) {
             update_weather();
             f13b28 = v;
         }
     }
     {
-        int v = (int)((g_time[f13b18v] - f13b20v) * 1e-5f * g_rate_second);
+        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * g_rate_second);
         if (v > f13b2c) {
             train_troops();
             f13b2c = v;
         }
     }
     {
-        int v = (int)((g_time[f13b18v] - f13b20v) * 1e-5f * g_rate_third);
+        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * g_rate_third);
         if (v > f13b30)
             f13b30 = v;
     }
     {
-        int v = (int)((g_time[f13b18v] - f13b20v) * 1e-5f * g_rate_fourth);
+        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * g_rate_fourth);
         if (v > f13b34)
             f13b34 = v;
     }
     {
-        int v = (int)((g_time[f13b18v] - f13b20v) * 1e-5f * g_rate_fifth);
+        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * g_rate_fifth);
         if (v > f13b38)
             f13b38 = v;
     }
@@ -249,7 +249,7 @@ void GameG::tick(float dt)
     update_markers();
 
     if (f13aa0) {
-        float d = (g_time[resume_timer.clock] - resume_timer.t) * 1e-5f;
+        float d = (g_ticks[resume_timer.clock] - resume_timer.t) * 1e-5f;
         if (d >= 0.0f) {
             f13aa0 = 0;
             Party* p = party_at(&parties, parties.index_of(cur_agent));
@@ -564,7 +564,7 @@ void GameG::update_weather()
         mgr->next_party_id((unsigned*)&id);
     }
 
-    __int64 cur = g_time[f13b18];
+    __int64 cur = g_ticks[f13b18];
     __int64 ref;
     ((int*)&ref)[0] = f13b20;
     ((int*)&ref)[1] = f13b24;

@@ -843,14 +843,14 @@ void parse_module_info()
             float x = (float)atof(val.c_str());
             float lo = 2.0f;
             float hi = 1.0f;
-            g_missile_damage_speed_power = clamp_float3(x, hi, lo);
+            g_missile_damage_speed_power = clamp(x, hi, lo);
             ((stream_base&)g_log).w_cstr("Setting missile_damage_speed_power = ").w_float(&g_missile_damage_speed_power).w_cstr("\n");
         }
         else if (msg.equals("melee_damage_speed_power")) {
             float x = (float)atof(val.c_str());
             float lo = 2.0f;
             float hi = 1.0f;
-            g_melee_damage_speed_power = clamp_float3(x, hi, lo);
+            g_melee_damage_speed_power = clamp(x, hi, lo);
             ((stream_base&)g_log).w_cstr("Setting melee_damage_speed_power = ").w_float(&g_melee_damage_speed_power).w_cstr("\n");
         }
         else if (msg.equals("damage_interrupt_attack_treshold") || msg.equals("damage_interrupt_attack_threshold")) {
@@ -893,7 +893,7 @@ void parse_module_info()
             float x = (float)atof(val.c_str());
             float lo = 10.0f;
             float hi = 1.0f;
-            g_player_xp_multiplier = clamp_float3(x, hi, lo);
+            g_player_xp_multiplier = clamp(x, hi, lo);
             ((stream_base&)g_log).w_cstr("Setting player_xp_multiplier = ").w_float(&g_player_xp_multiplier).w_cstr("\n");
         }
         else if (msg.equals("hero_xp_multiplier")) {
