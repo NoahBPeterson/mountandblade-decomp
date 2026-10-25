@@ -29,7 +29,8 @@ struct ItemRef {
     int stat_1f4();                     // 0x434f60
     int stat_1f0b();                    // 0x434fd0
     int stat_214();                     // 0x435040
-    int stat_204();                     // 0x435090 (agent.cpp), 0x462a10 (ui/item_ref.cpp)
+    int stat_204();                     // 0x462a10 (ui/item_ref.cpp: the modifier-adjusted +0x204 value, leg armour)
+    int accuracy();                     // 0x435090 (agent.cpp: the raw +0x204 word, a ranged weapon's accuracy: 100 for no item, 0 read as 99)
     int stat_1fc();                     // 0x462960 (ui/item_ref.cpp)
     void reduce(int n);                 // 0x437510 (0x438520 inlines its body with n == 0)
     void set_modifier(int k);           // 0x438bc0 (stores the modifier in the top byte, then reduce(0))

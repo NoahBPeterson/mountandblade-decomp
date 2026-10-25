@@ -32,10 +32,23 @@ extern "C" double atof(const char* s);                       // 0x537352
 
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
-struct NotePanel : Widget { char pad[0x190 - 4]; NotePanel(); };   // 0x4931a0
-struct UiText2   : Widget { char pad[0x178 - 4]; UiText2(); };     // 0x48ae20
-struct UiList    : Widget { char pad[0x1d0 - 4]; UiList(); };      // 0x4fd150
-struct UiPanel2  : Widget { char pad[0x188 - 4]; UiPanel2(); };    // 0x50d0b0
+// (each constructor on its own line inside its class: the resolution tools read a '// 0x' annotation in the class's scope)
+struct NotePanel : Widget {
+    char pad[0x190 - 4];
+    NotePanel();                        // 0x4931a0
+};
+struct UiText2 : Widget {
+    char pad[0x178 - 4];
+    UiText2();                          // 0x48ae20
+};
+struct UiList : Widget {
+    char pad[0x1d0 - 4];
+    UiList();                           // 0x4fd150 (MWidget::MWidget, src/game/agent5/agent_hud.cpp)
+};
+struct UiPanel2 : Widget {
+    char pad[0x188 - 4];
+    UiPanel2();                         // 0x50d0b0
+};
 
 // widget helper functions
 extern "C" void  label_refresh(Widget* w, tstring name);                       // 0x4e4c70

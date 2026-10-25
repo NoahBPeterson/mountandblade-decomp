@@ -8,7 +8,7 @@
 ../src/game/agent/agent.cpp  ?stat_1f4@ItemRef@@QAEHXZ  00434f60  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?stat_1f0b@ItemRef@@QAEHXZ  00434fd0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?stat_214@ItemRef@@QAEHXZ  00435040  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?stat_204@ItemRef@@QAEHXZ  00435090  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?accuracy@ItemRef@@QAEHXZ  00435090  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?slot_class_impl@@YAHHH@Z  004350c0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?is_hero@Troop@@QAE_NXZ  00435130  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?stat_int@Troop@@QAEHH@Z  00435150  /O2 /MT /Gy /TP

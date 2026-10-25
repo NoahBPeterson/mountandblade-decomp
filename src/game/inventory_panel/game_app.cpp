@@ -135,8 +135,8 @@ void bump_counter(void);                                     // 0x42cb70 (?bump_
 long build_shader(void);                                    // 0x4c17c0 (game/triggers/trigger_vec.cpp, returns an HRESULT)
 void mb_error(const char* fmt, ...);                          // 0x42cc80
 void load_skyboxes(void);                                        // 0x4c3350
-void fn_4d0c20(void);                                        // 0x4d0c20
-void fn_50d5e0(void);                                        // 0x50d5e0
+void load_data_files(void);                                        // 0x4d0c20 (options_panel/module_load.cpp)
+void load_module_files(void);                                        // 0x50d5e0 (inventory_panel/module_files.cpp)
 LRESULT __stdcall dialog_thunk(HWND, UINT, WPARAM, LPARAM);   // 0x50d250 (the dialog proc: inventory_panel/widget_text.cpp)
 void script_dialog_proc();                                   // 0x4c3340
 void global_4bf870(void);                                    // 0x4c3330 (rgl/mesh2/rec_tables.cpp: the thunk to the script debugger proc)
@@ -186,8 +186,8 @@ int GameApp::Update()
                 load_skyboxes();
                 g_gui.add(tstring("Animation data restored."), -1);
             } else if (g_a17348 || g_a17148) {
-                fn_4d0c20();
-                fn_50d5e0();
+                load_data_files();
+                load_module_files();
                 g_gui.add(tstring("Module data restored."), -1);
             }
         }
@@ -312,8 +312,8 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
             }
             break;
         case 0x9c5a:
-            fn_4d0c20();
-            fn_50d5e0();
+            load_data_files();
+            load_module_files();
             g_gui.add(tstring("Module data restored."), -1);
             break;
         case 0x9c56:

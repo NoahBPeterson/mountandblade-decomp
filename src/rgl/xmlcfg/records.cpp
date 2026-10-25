@@ -12,7 +12,11 @@
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/rec_dtors.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
-template class std::vector<Item>;       // 0x431a30 _Destroy, 0x431a60 _Tidy
+// Only the two members the original has here: instantiating the whole class also emitted Item's copy constructor, vtable,
+// scalar deleting destructor and with it a call to ~Item, which the original does not have out of line (Item is the
+// 0x1c8-byte placed object of game/placed_obj.h: its destructor is implicit, the deleting one is 0x437870).
+template void std::vector<Item>::_Destroy(Item*, Item*);       // 0x431a30
+template void std::vector<Item>::_Tidy();                       // 0x431a60
 
 // @ 0x431400
 IfaceA::IfaceA() {}

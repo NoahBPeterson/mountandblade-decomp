@@ -52,12 +52,16 @@ struct PlacedObj {                                       // 0x1c8 bytes, ctor 0x
     char pad90[0x1c8 - 0x90];
     PlacedObj();                                         // 0x437830
 };
-struct IVector { void resize(unsigned n, int v); };     // 0x43f310 (ret 8)
+struct IVector {
+    void resize(unsigned n, int v);                     // 0x43f310 (ret 8; std::vector<int>::resize of agent3/agent_combat.cpp)
+};
 struct SceneSub { int dummy; void f(int v); };          // 0x4777c0 (ret 4)
 struct Terrain {
     void reset();   // 0x4647e0 (this = 0xa76630; game/terrain_a/terrain.h)
 };
-struct GenB { void f(); };                              // 0x494310 (this = 0x5aa128)
+struct GenB {
+    void f();                                           // 0x494310 (this = 0x5aa128; SoundW::stop_all of world_data/world_data.cpp)
+};
 int save_game(int id, tstring* name);                  // 0x4e8980
 struct DialogMgr {                                      // the dialog manager at 0x8ed50c8
     void start(int a, int b, int c, int d, char e);     // 0x4610b0 (ret 0x14)
@@ -74,7 +78,15 @@ struct Slot {
 };
 struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
 #include "../key_names.h"
-struct TextLog { virtual void print(const char* s); };  // +0x28 prints one line (slot index 10 in the original; the declaration order is kept)
+#include "../../include/logger.h"                     // Logger g_debug_log (0x5a9f30): slot 10 (+0x28) prints one line
+// 0x516250 calls MetaMission::init (../meta_mission.h, included by mission_ctx.h: 0x4be742 of triggers/trigger_vec.cpp) through
+// its WinLicense entry marker 0x4be730 (jmp over the marker data to 0x4be742). The declaration below only gives the resolution
+// tools the original's call operand; the call is the canonical member.
+namespace marker_entry {
+struct MetaMission {
+    void init();                                        // 0x4be730
+};
+}
 #include "../item_sound.h"                                    // ItemSound: the one definition (play 0x48add0)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
@@ -96,7 +108,6 @@ struct PartyV : Party {
 void quick_save_msg();                                  // 0x516a70
 extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x87 args)
 extern tstring g_scratch;                               // 0xa70464
-extern TextLog g_debug_log;                               // 0x5a9f30
 extern UiKeyState g_keys;                                 // 0xa73730
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
 extern ShadowMapP* g_shadow_map;                                    // 0xa70248
@@ -993,9 +1004,10 @@ no_party:
         int bpid = GD_I(0x78);
         sprintf(buf, "Position: %3.2f, %3.2f ;",
                 (double)PARTIES->get(bpid)->pos.x, (double)PARTIES->get(bpid)->pos.y);
-        g_debug_log.print(";-------------------;");
-        g_debug_log.print(buf);
-        g_debug_log.print(";-------------------;");
+        Logger& log = g_debug_log;          // reached through a reference: the calls stay virtual (+0x28), as in the original
+        log.get(";-------------------;");
+        log.get(buf);
+        log.get(";-------------------;");
     }
 }
 
@@ -1084,7 +1096,7 @@ mat2::mat2(const float* a, const float* b)
 // @ 0x516250
 void MissionCtx::init_battle(int id_)
 {
-    base_init();
+    ((MetaMission*)this)->init();           // 0x4be742 (called through its WinLicense entry 0x4be730)
     f08 = id_;
     unsigned urow = (id_ & 0xf) * 0x98;
     f40 = 1;

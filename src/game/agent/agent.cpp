@@ -234,7 +234,7 @@ int ItemRef::stat_214()
     return v;
 }
 // @ 0x435090
-int ItemRef::stat_204()
+int ItemRef::accuracy()
 {
     if (item < 0) return 100;
     int v = g_items[item].f204;

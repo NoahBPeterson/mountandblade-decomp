@@ -10,9 +10,10 @@
 // +0x94 set_default, +0xa4 set_text(text[, position]), +0x298 get the value's text (slider labels).
 //
 // Text helpers: 0x42bbe0/0x42c110 tstring ctors, 0x42bc40 dtor, 0x42bc50 assign, 0x42bd10 equals,
-// 0x42c080 find, 0x42c4a0 substr, 0x42c900 insert. The render-config object at 0x5e293c has a
-// set(name, vector4) virtual at +0x88.
+// 0x42c080 find, 0x42c4a0 substr, 0x42c900 insert. 0x5e293c holds the game's ID3DXEffect*: the gamma values go to
+// its SetVector (COM, +0x88).
 #include <windows.h>
+#include <d3dx9.h>
 #include <stdio.h>
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"
@@ -56,20 +57,7 @@ extern rgl_config g_cfg;                                        // 0x5a9f98
 // block at 0x5aa008 (ecx = 0x5aa008 at 0x4d6610 / 0x4d6642).
 struct Config { void set_triple_buffering(int t); void set_texture_quality(int q); };
 
-// 0x5e293c: the renderer; set(name, value) at +0x88.
-struct RenderParams {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
-    virtual void v0c(); virtual void v0d(); virtual void v0e(); virtual void v0f();
-    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13();
-    virtual void v14(); virtual void v15(); virtual void v16(); virtual void v17();
-    virtual void v18(); virtual void v19(); virtual void v1a(); virtual void v1b();
-    virtual void v1c(); virtual void v1d(); virtual void v1e(); virtual void v1f();
-    virtual void v20();
-    virtual void set(const char* name, const vector4& v);   // +0x88  0x?
-};
-extern RenderParams g_effect;                                                 // 0x5e293c
+extern ID3DXEffect* g_effect;                                                // 0x5e293c (renderer.h)
 extern Game* g_game;                                                        // 0x5e2930
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
@@ -226,8 +214,8 @@ void VideoPage::update(int reason)
         vector4 v, vi;
         v.x = v.y = v.z = v.w = gamma;
         vi.x = vi.y = vi.z = vi.w = inv;
-        g_effect.set("output_gamma", v);
-        g_effect.set("output_gamma_inv", vi);
+        g_effect->SetVector("output_gamma", (const D3DXVECTOR4*)&v);
+        g_effect->SetVector("output_gamma_inv", (const D3DXVECTOR4*)&vi);
         char buf[0x40];
         _itoa((int)(gamma * *(float*)0x54ab28), buf, 10);
         tstring text(buf);
