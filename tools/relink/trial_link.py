@@ -106,9 +106,11 @@ def main():
     ap.add_argument("--record", action="store_true")
     ap.add_argument("--list", metavar="CATEGORY")
     ap.add_argument("--json")
+    ap.add_argument("--dir", help="output directory for trial.exe and link.log (default work/relink); worktrees share "
+                                  "work/, so parallel runs need their own")
     a = ap.parse_args()
     os.chdir(ROOT)
-    out_dir = os.path.join(ROOT, "work", "relink")
+    out_dir = os.path.abspath(a.dir) if a.dir else os.path.join(ROOT, "work", "relink")
     os.makedirs(out_dir, exist_ok=True)
     objs, fails = objects()
     log = link(objs, out_dir)
