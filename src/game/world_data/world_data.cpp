@@ -743,7 +743,8 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     if (p2 < parties.n_parties) {
         int i = ((Map10007*)(void*)mgr)->lookup(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
-            r -= mgr->atu((unsigned)i)->skill_level(0xf) / 2;
+            int j = ((Map10007*)(void*)mgr)->lookup(p2);  // the original looks the party up again here (2nd call 0x48ad00)
+            r -= mgr->atu((unsigned)j)->skill_level(0xf) / 2;
         }
     }
     if (r < -0x14) return -0x14;
