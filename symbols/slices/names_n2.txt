@@ -1,0 +1,6 @@
+004b1800 ?set_fade@MapModel@@QAEXPBM@Z  # names n2: renamed external, resolved before the rename
+0051a690 ?project@MapView@@QAEPAHPAPAURecR@@ABUPos4@@@Z  # names n2: renamed external, resolved before the rename
+0051c090 ?draw_party_line@MapPanel@@QAEXH@Z  # names n2: renamed external, resolved before the rename
+08ed4f60 ?g_anim_table@@3UAnimTable@@A  # names n2: renamed external, resolved before the rename
+08ee3c48 ?g_app_obj@@3UEditorPanel@@A  # names n2: renamed external, resolved before the rename
+08ee3c48 ?g_app_obj@@3UEditorDialog@@A  # names n2: renamed external, resolved before the rename
