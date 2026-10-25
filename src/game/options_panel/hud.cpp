@@ -112,7 +112,7 @@ bool EditMesh::on_selection_changed()
                 ok = add_triangle(tri);
                 if (!ok) {
                     if (nfaces < c.faces.size()) {
-                        delete_face((int)c.faces.size() - 1);
+                        remove_face((int)c.faces.size() - 1);
                         build_adjacency();
                     }
                     return false;
@@ -178,11 +178,11 @@ void Hud::handle_buttons(int arg)
         return;
     }
     if (f78->changed(0x10000))
-        g_5e2a08 = 1;
+        g_saved = 1;
 }
 
 // ---- the world object (0x5e292c) -------------------------------------------------------------------------
-extern "C" void __cdecl free_ptr(void* p);          // 0x535712 (operator delete / free)
+#include "../../include/crt.h"   // canonical: operator delete (0x535712)
 // all of these are thiscall (ecx = the sub-object), see the lea ecx / call pairs in the original
 struct WorldBase { void dtor(); };                  // 0x479160
 struct Sub6814 { void dtor(); };                    // 0x42bc40 (16-byte string at +0x6814)
@@ -193,7 +193,7 @@ struct Sub0004 { void dtor(); };                    // 0x4c6e30 (ICF'd with Sub0
 
 struct WorldVec {                                       // an STL vector triple
     void* begin; void* end; void* cap;
-    void release() { if (begin) free_ptr(begin); begin = 0; end = 0; cap = 0; }
+    void release() { if (begin) operator delete(begin); begin = 0; end = 0; cap = 0; }
 };
 
 // @ 0x4d51d0
@@ -202,7 +202,7 @@ void Mission::destroy()
     char* p = (char*)(void*)this;
     ((WorldBase*)p)->dtor();
     ((Sub6814*)(p + 0x6814))->dtor();
-    ((Sub6698*)(p + 0x6698))->dtor();
+    ((Sub6698*)(p + 0x6698))->clear_vecs();
     ((Sub6688*)(p + 0x6688))->dtor();
     ((WorldVec*)(p + 0x667c))->release();
     ((Sub63d0*)(p + 0x63d0))->dtor();
@@ -221,9 +221,9 @@ __declspec(noinline) void ValueSource::on_value_changed(float arg)
 // @ 0x4d5980
 void Hud::on_mission_start(int arg)
 {
-    *(int*)((char*)(void*)g_world + 0x5270) = g_u32;
+    *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_u32;
     g_u32 = g_u32 + 1;
-    mission_start_setup((void*)(void*)g_world);
+    start_setup((void*)(void*)((void*)g_mission));
     g_screen->v2();
     g_screen->f18 = f18;
     g_menu_w3[1] = 0;
@@ -329,7 +329,7 @@ void MissionSource::pick(int* arg)
         MissionItem** p = &begin[i];
         for (int n = 0; n < 5; n++) {
             if ((*p)->nodes[n])
-                timer_set((*p)->nodes[n], &t);
+                set_time((*p)->nodes[n], &t);
         }
         if ((*p)->changed(0x10000)) {
             g_spawn_lo = i;
@@ -342,7 +342,7 @@ void MissionSource::pick(int* arg)
                 g_spawn_hi = (__int64)it->get_value();
                 play_family_sound(family, 0xc2);
             } else if (k == 6) {
-                string_assign(&g_mission_title, &it->name);
+                string_assign(&g_script.str[0], &it->name);
                 play_family_sound(family, 0xc2);
             } else if (k != 8 || it->f184 != 1) {
                 play_family_sound(family, 0xc2);

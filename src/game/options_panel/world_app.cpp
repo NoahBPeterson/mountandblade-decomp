@@ -22,13 +22,13 @@ struct Rec18 {                                      // 0x18-byte record with a t
 void __fastcall tstring_ctor(tstring* p);           // 0x42bbd0
 
 // ---- callees -------------------------------------------------------------------------------------------
-void  op_delete(void* p);                           // 0x535712  ??3@YAXPAX@Z
-void  destroy_4727a0(void* first, void* last, void* self, void* alloc);   // 0x4727a0
-void  destroy_4ca7e0(void* first, void* last, void* self, void* alloc);   // 0x4ca7e0
+#include "../../include/crt.h"   // canonical: operator delete (0x535712)
+void  destroy_arrsets(void* first, void* last, void* self, void* alloc);   // 0x4727a0
+void  destroy_110(void* first, void* last, void* self, void* alloc);   // 0x4ca7e0
 void  hash_alloc(int n, void* sentinel);            // 0x4cd010
 void* hash_new_node(void* node, void* hint, void* key);                   // 0x4c4e50
-void  node_free_hint(void* self, int one);          // 0x4cb6f0
-void  destroy_4cd570(void* first, void* last, void* self, void* alloc);   // 0x4cd570
+void  grow(void* self, int one);          // 0x4cb6f0
+void  range4(void* first, void* last, void* self, void* alloc);   // 0x4cd570
 void* copy_4cd620(void* first, void* last, void* self, void* out);        // 0x4cd620
 // 0x4c4e50 is a same-TU static in the original (the caller keeps ebx/ebp across it); declare it as one so our
 // build keeps the same live registers. Its argument order is the original's (node, hint, key) with an unused 4th.
@@ -45,7 +45,7 @@ struct TStr {
     void ctor();                                    // 0x42bbd0
     ~TStr();                                        // 0x42bc40
 };
-void  ui_open_close(int flag);                      // 0x494260
+void  open(int flag);                      // 0x494260
 #include "../str_table.h"                                      // StrTable (0x5e2a18; was StrTab here: lookup 0x43a1e0)
 struct UiObj { void open(int flag); };                         // 0x494260
 
@@ -61,8 +61,8 @@ struct OwnedVec {                                      // allocator dword, begin
     int* end;
     void clear(void* a) {
         if (first) {
-            destroy_4727a0(first, last, this, a);
-            op_delete(first);
+            destroy_arrsets(first, last, this, a);
+            operator delete(first);
         }
         first = 0; last = 0; end = 0;
     }
@@ -73,7 +73,7 @@ struct PlainVec {                                      // trivial elements: only
     void* last;
     void* end;
     void clear(void* a) {
-        if (first) op_delete(first);
+        if (first) operator delete(first);
         first = 0; last = 0; end = 0;
     }
 };
@@ -84,19 +84,18 @@ struct RowVec {                                      // 0xb0-byte rows, destroye
     int* end;
     void clear(void* a) {
         if (first) {
-            destroy_4ca7e0(first, last, this, a);
-            op_delete(first);
+            destroy_110(first, last, this, a);
+            operator delete(first);
         }
         first = 0; last = 0; end = 0;
     }
 };
 
 // ---- globals -------------------------------------------------------------------------------------------
-extern int g_5e2958;                                // 0x5e2958
-extern int g_5e295c;                                // 0x5e295c
-extern int g_5a9f18;                                // 0x5a9f18
-extern char* g_world;                               // 0x5e292c
-extern char* g_ui;                                  // 0xa73980
+#include "../../include/fx.h"   // canonical: g_ticks (0x5e2958)
+extern int g_pending_action;                                // 0x5a9f18
+#include "../mission.h"   // canonical: g_mission (0x5e292c)
+extern char* g_windows;                                  // 0xa73980
 
 // ---- the large record (all members are nominal; accesses are by offset) --------------------------------
 struct Big {
@@ -171,25 +170,25 @@ Big* Big::init()
         ((Block130*)(p->blocks + i * 0x130))->init();
 
     p->f5de0 = 2;
-    p->f5de8 = g_5e2958;
-    p->f5dec = g_5e295c;
+    p->f5de8 = ((int*)g_ticks)[4];
+    p->f5dec = ((int*)g_ticks)[5];
     p->f5e00 = 0; p->f5e04 = 0; p->f5e08 = 0;
 
     p->f62e8 = 2;
-    p->f62f0 = g_5e2958;
-    p->f62f4 = g_5e295c;
+    p->f62f0 = ((int*)g_ticks)[4];
+    p->f62f4 = ((int*)g_ticks)[5];
     p->f62f8 = 2;
-    p->f6300 = g_5e2958;
-    p->f6304 = g_5e295c;
+    p->f6300 = ((int*)g_ticks)[4];
+    p->f6304 = ((int*)g_ticks)[5];
     p->f6308 = 2;
-    p->f6310 = g_5e2958;
-    p->f6314 = g_5e295c;
+    p->f6310 = ((int*)g_ticks)[4];
+    p->f6314 = ((int*)g_ticks)[5];
     p->f6318 = 2;
-    p->f6320 = g_5e2958;
-    p->f6324 = g_5e295c;
+    p->f6320 = ((int*)g_ticks)[4];
+    p->f6324 = ((int*)g_ticks)[5];
     p->f6328 = 2;
-    p->f6330 = g_5e2958;
-    p->f6334 = g_5e295c;
+    p->f6330 = ((int*)g_ticks)[4];
+    p->f6334 = ((int*)g_ticks)[5];
     p->f63c4 = 0; p->f63c8 = 0; p->f63cc = 0;
     p->f63d0.init();
 
@@ -198,11 +197,11 @@ Big* Big::init()
     p->f6698.init();
 
     p->f67d8 = 2;
-    p->f67e0 = g_5e2958;
-    p->f67e4 = g_5e295c;
+    p->f67e0 = ((int*)g_ticks)[4];
+    p->f67e4 = ((int*)g_ticks)[5];
     p->f6800 = 2;
-    p->f6808 = g_5e2958;
-    p->f680c = g_5e295c;
+    p->f6808 = ((int*)g_ticks)[4];
+    p->f680c = ((int*)g_ticks)[5];
 
     ((TStr*)p->f6814)->ctor();
     p->f000 = 0;
@@ -241,15 +240,15 @@ void restore_defaults()
     g_game->f1a0c0 = -1;
     g_game->f1a0c4 = -1;
 
-    *(char*)(*(int*)(g_world + 0x65d0) + 0x140) = 0;
-    *(char*)(*(int*)(g_world + 0x65dc) + 0x140) = 0;
-    *(char*)(*(int*)(g_world + 0x65e4) + 0x140) = 0;
-    if (*(int*)(g_world + 0x6738)) *(char*)(*(int*)(g_world + 0x6738) + 0x140) = 0;
-    if (*(int*)(g_world + 0x6740)) *(char*)(*(int*)(g_world + 0x6740) + 0x140) = 0;
+    *(char*)(*(int*)(((char*)g_mission) + 0x65d0) + 0x140) = 0;
+    *(char*)(*(int*)(((char*)g_mission) + 0x65dc) + 0x140) = 0;
+    *(char*)(*(int*)(((char*)g_mission) + 0x65e4) + 0x140) = 0;
+    if (*(int*)(((char*)g_mission) + 0x6738)) *(char*)(*(int*)(((char*)g_mission) + 0x6738) + 0x140) = 0;
+    if (*(int*)(((char*)g_mission) + 0x6740)) *(char*)(*(int*)(((char*)g_mission) + 0x6740) + 0x140) = 0;
 
     if (g_game->f1a1cc) {
         g_game->f1a1cc = 0;
-        g_5a9f18 = -1;
+        g_pending_action = -1;
         {
             tstring s1("ui_no_discard_changes");
             tstring s2("ui_yes_save");
@@ -257,12 +256,12 @@ void restore_defaults()
             const tstring* r1 = ((StrTable*)0x5e2a18)->lookup(s1);
             const tstring* r2 = ((StrTable*)0x5e2a18)->lookup(s2);
             const tstring* r3 = ((StrTable*)0x5e2a18)->lookup(s3);
-            char* ui = g_ui;
+            char* ui = g_windows;
             ((tstring*)(ui + 0x68))->clear();
             *(tstring*)(ui + 0x1c) = *r3;
             *(tstring*)(ui + 0x78) = *r2;
             *(tstring*)(ui + 0x88) = *r1;
-            *(int*)(ui + 0x4c) = (int)&g_5a9f18;
+            *(int*)(ui + 0x4c) = (int)&g_pending_action;
             *(int*)(ui + 0x50) = 0;
             *(int*)(ui + 0x4) = 1;
         }
@@ -285,7 +284,7 @@ struct NodePool {                                   // lives at HashTab+4
     char pad0[4];
     HNode* sentinel;                                // +4 (HashTab+8)
     HNode* copy_node(HNode* n, HNode* hint, unsigned* key);   // 0x4c4e50
-    void   reserve(int one);                        // 0x4cb6f0
+    void   grow(int one);                        // 0x4cb6f0
 };
 struct HashTab {
     int      f0;
@@ -375,7 +374,7 @@ void HashTab::insert(HOut* out, unsigned* key)
         } while (p != f14[i]);
     }
     HNode* nn = (HNode*)list_int_make_node(p, p->prev, key, 0);
-    pool.reserve(1);
+    pool.grow(1);
     p->prev = nn;
     *(HNode**)nn->prev = nn;
     HNode* q = (HNode*)p->prev;
@@ -409,7 +408,7 @@ void TreeW::insert(void** out, void* a, void* b)
 {
     if (a != b) {
         void* p = copy_4cd620(b, f8, a, out);
-        destroy_4ca7e0(p, f8, this, out);
+        destroy_110(p, f8, this, out);
         f8 = p;
     }
     *out = a;
@@ -419,8 +418,8 @@ void TreeW::insert(void** out, void* a, void* b)
 // ---- callees -------------------------------------------------------------------------------------------
 void* __cdecl operator new(unsigned size);          // 0x53545e
 #include "../../dxframework/d3dfont.h"            // CD3DFont (0x67c bytes; ctor 0x404980)
-void  sub_4bec60(void* array, int* count);          // 0x4bec60
-void  keys_read(HKEY* key, const char* name, tstring* out);   // 0x4b9720
+void  scan_module_folders(void* array, int* count);          // 0x4bec60
+void  read_key_string(HKEY* key, const char* name, tstring* out);   // 0x4b9720
 extern "C" {
 void __stdcall FSOUND_SetMaxHardwareChannels(int n);          // 0x534300
 int  __stdcall FSOUND_Init(int mixrate, int maxsoftwarechannels, int flags);  // 0x5342fa
@@ -429,13 +428,12 @@ void __stdcall FSOUND_3D_SetRolloffFactor(float factor);      // 0x5342ee
 }
 
 // ---- globals -------------------------------------------------------------------------------------------
-extern int g_5e28fc;                                // 0x5e28fc
+extern int g_use_shaders;                                // 0x5e28fc
 extern int g_5e28c8;                                // 0x5e28c8
-extern int g_5e28cc;                                // 0x5e28cc
-extern char g_5e2a08;                               // 0x5e2a08
-extern Big* g_5e292c;                               // 0x5e292c
-extern int g_5a9fd8;                                // 0x5a9fd8
-extern int g_5e27c8[0x40];                          // 0x5e27c8
+extern int g_counter;                                // 0x5e28cc
+extern char g_saved;                               // 0x5e2a08
+#include "../config/config.h"   // canonical: g_cfg.disable_sound (0x5a9fd8)
+extern int g_key_states[0x40];                          // 0x5e27c8
 
 #include "../log_stream.h"                       // LogStream: slot 10 (+0x28) is w_cstr
 
@@ -467,11 +465,11 @@ GameApp::GameApp()
     *(int*)((char*)this + 0x34c) = -1;
 
     for (int i = 0; i < 0x40; i++)
-        g_5e27c8[i] = 0;
+        g_key_states[i] = 0;
 
-    g_5e28cc = 0;
+    g_counter = 0;
     g_5e28c8 = 0;
-    sub_4bec60(arrp, &f38c);
+    scan_module_folders(arrp, &f38c);
     if (f38c > 0) {
         *(tstring*)0x8ee3c38 = *arrp;
 
@@ -483,7 +481,7 @@ GameApp::GameApp()
             ((LogStream*)0x5a9f60)->w_cstr("Creating new Registry Key");
         if (key != 0) {
             tstring modname;
-            keys_read(&key, "last_module", &modname);
+            read_key_string(&key, "last_module", &modname);
             if (key != 0)
                 RegCloseKey(key);
             if (modname.len > 0)
@@ -498,12 +496,12 @@ GameApp::GameApp()
         ((tstring*)0x8ee3c28)->append(tmp);
     }
 
-    g_5e28fc = 0;
-    g_5e2a08 = 0;
+    g_use_shaders = 0;
+    g_saved = 0;
     g_game = 0;
-    g_5e292c = new Big;
+    (*(Big**)&g_mission) = new Big;
 
-    if (g_5a9fd8 == 0) {
+    if (g_cfg.disable_sound == 0) {
         FSOUND_SetMaxHardwareChannels(0);
         FSOUND_Init(0xac44, 0x40, 0);
         FSOUND_SetSFXMasterVolume(0xff);
@@ -519,31 +517,28 @@ GameApp::GameApp()
 
 // @ 0x4d4130
 struct AppWnd {
-    int WndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp);      // 0x4d0240
+    int proc(HWND h, UINT msg, WPARAM wp, LPARAM lp);      // 0x4d0240
 };
 int __stdcall wndproc_thunk(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
-    return ((AppWnd*)0x8ee3c48)->WndProc(h, msg, wp, lp);
+    return ((AppWnd*)0x8ee3c48)->proc(h, msg, wp, lp);
 }
 
 // ---- callees used by the main window procedure (0x4d4140) ----------------------------------------------
-void __fastcall app_frame(void* self);                        // 0x4b9af0
-void __fastcall app_init(void* self);                         // 0x4c7290
-int  __cdecl    app_check_version();                          // 0x4b9aa0
-void __fastcall unescape_string(tstring* s);                  // 0x4bac70
-void __cdecl    keys_open(HKEY* out);                         // 0x4b96d0
-void __cdecl    keys_write(HKEY* key, const char* name, tstring* val);   // 0x4beb80
-void* __cdecl   crt_fopen(const char* name, const char* mode);           // 0x536f7c
-int  __cdecl    crt_fclose(void* f);                          // 0x537168
-int  __cdecl    crt_sprintf(char* buf, const char* fmt, ...); // 0x536f8f
-void __fastcall module_info(void* self, void* f);             // 0x4bd630
-tstring* __fastcall strtab_lookup(void* table, const tstring& key);      // 0x43a1e0
-void __cdecl    set_window_name(HWND h, const char* s);       // 0x535446
+void __fastcall paint(void* self);                        // 0x4b9af0
+void __fastcall init(void* self);                         // 0x4c7290
+int  __cdecl    get_latest_version();                          // 0x4b9aa0
+void __fastcall unescape(tstring* s);                  // 0x4bac70
+void __cdecl    open_keys_key(HKEY* out);                         // 0x4b96d0
+void __cdecl    keys_write_value(HKEY* key, const char* name, tstring* val);   // 0x4beb80
+void __fastcall load(void* self, void* f);             // 0x4bd630
+tstring* __fastcall lookup(void* table, const tstring& key);      // 0x43a1e0
+void __cdecl    SkinDialog(HWND h, const char* s);       // 0x535446
 
-extern tstring g_module;                                      // 0x8ee3c38
-extern tstring g_path;                                        // 0x8ee3c28
+extern tstring g_module_name;                                      // 0x8ee3c38
+extern tstring g_module_path;                                        // 0x8ee3c28
 #define STRTAB ((void*)0x5e2a18)
-#define UI(s) strtab_lookup(STRTAB, tstring(s))
+#define UI(s) lookup(STRTAB, tstring(s))
 
 // @ 0x4d4140
 int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
@@ -552,7 +547,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
     switch (msg) {
     case 0xf: {                                             // WM_PAINT
-        app_frame(this);
+        paint(this);
         if (*(int*)0x5e29c4 == 0 && f350 == 0) {
             f350 = 1;
             *(int*)0x5e29c4 = 1;
@@ -561,8 +556,8 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     }
     case 0x110: {                                           // WM_INITDIALOG
         hwnd = h;
-        set_window_name(h, "MainFrame");
-        app_init(this);
+        SkinDialog(h, "MainFrame");
+        init(this);
         if (f38c == 0) {
             ShowWindow(GetDlgItem(hwnd, 0x410), 0);
             ShowWindow(GetDlgItem(hwnd, 0x425), 0);
@@ -577,7 +572,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             int r = SendMessageA(list, 0x14a, 0, (LPARAM)mod(i)->c_str());
             SendMessageA(list, 0x151, r, i);
         }
-        int r = SendMessageA(list, 0x158, (WPARAM)-1, (LPARAM)g_module.c_str());
+        int r = SendMessageA(list, 0x158, (WPARAM)-1, (LPARAM)g_module_name.c_str());
         SendMessageA(list, 0x14e, r, 0);
         PostMessageA(hwnd, 0x111, 0x10000, (LPARAM)list);
         ShowWindow(GetDlgItem(hwnd, 0x420), 5);
@@ -603,40 +598,40 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
                 int idx = SendMessageA(c, 0x147, 0, 0);
                 sel = SendMessageA(c, 0x150, idx, 0);
             }
-            g_module = *mod(sel);
-            g_path.assign("Modules\\");
-            g_path.append(g_module);
-            g_path.append(tstring("\\"));
+            g_module_name = *mod(sel);
+            g_module_path.assign("Modules\\");
+            g_module_path.append(g_module_name);
+            g_module_path.append(tstring("\\"));
             HKEY key;
-            keys_open(&key);
-            keys_write(&key, "last_module", &g_module);
+            open_keys_key(&key);
+            keys_write_value(&key, "last_module", &g_module_name);
             if (key != 0)
                 RegCloseKey(key);
             EndDialog(h, 0x410);
             break;
         }
         case 0x41f: {                                       // check for a newer version
-            int v = app_check_version();
+            int v = get_latest_version();
             if (v > 0x3f3) {
                 tstring text(*UI("ui_notification_new_version"));
-                unescape_string(&text);
+                unescape(&text);
                 char buf[0x100];
-                crt_sprintf(buf, text.c_str(), 1, 0, 1, 1,
+                sprintf(buf, text.c_str(), 1, 0, 1, 1,
                             v / 1000, (v / 100) % 10, (v / 10) % 10, v % 10);
                 MessageBoxA(hwnd, buf, UI("ui_new_version_found")->c_str(), 0);
             }
             else if (v == -1) {
                 tstring a("ui_new_version");
                 tstring b("ui_notification_unable_to_retreive_new_version");
-                const char* cap = strtab_lookup(STRTAB, a)->c_str();
-                const char* txt = strtab_lookup(STRTAB, b)->c_str();
+                const char* cap = lookup(STRTAB, a)->c_str();
+                const char* txt = lookup(STRTAB, b)->c_str();
                 MessageBoxA(hwnd, txt, cap, 0);
             }
             else {
                 tstring a("ui_mount_and_blade_is_up_to_date");
                 tstring b("ui_notification_latest_version");
-                const char* cap = strtab_lookup(STRTAB, a)->c_str();
-                const char* txt = strtab_lookup(STRTAB, b)->c_str();
+                const char* cap = lookup(STRTAB, a)->c_str();
+                const char* txt = lookup(STRTAB, b)->c_str();
                 MessageBoxA(hwnd, txt, cap, 0);
             }
             break;
@@ -655,23 +650,23 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             int sel = SendMessageA(c, 0x150, idx, 0);
             if (f38c <= sel)
                 sel = f38c - 1;
-            g_module = *mod(sel);
+            g_module_name = *mod(sel);
 
             path.assign("Modules\\");
-            path.append(g_module);
+            path.append(g_module_name);
             path.append(tstring("\\main.bmp"));
 
             DeleteObject(hbmp);
             hbmp = (HBITMAP)LoadImageA(0, path.c_str(), 0, 0, 0, 0x10);
 
             tstring ini("Modules\\");
-            ini.append(g_module);
+            ini.append(g_module_name);
             ini.append(tstring("\\module.ini"));
 
-            void* f = crt_fopen(ini.c_str(), "r");
+            void* f = fopen(ini.c_str(), "r");
             if (f != 0) {
-                module_info((void*)0xa18238, f);
-                crt_fclose(f);
+                load((void*)0xa18238, f);
+                fclose((FILE*)f);
             }
 
             tstring v1;
@@ -713,7 +708,7 @@ struct ElemB0 {
 // allocator of the 0x50-byte vector: construct = 0x4d1140 (ctor 0x4cd080), destroy = 0x4cd6a0 (a real call)
 struct Alloc50 {
     void construct(Elem50* p, const Elem50& v);       // 0x4d1140
-    void destroy(Elem50* p);                          // 0x4cd6a0
+    void flora_kind_destroy(Elem50* p);                          // 0x4cd6a0
 };
 // 0x68-byte vector: construct = 0x4d1160 (ctor 0x4cd100), destroy inlined to the dtor 0x4c8ba0
 struct Alloc68 {
@@ -735,7 +730,7 @@ void uninit_fill_n_50(Elem50* f, unsigned n, const Elem50& x, Alloc50& al)
             al.construct(f, x);
     } catch (...) {
         for (; next != f; ++next)
-            al.destroy(next);
+            al.flora_kind_destroy(next);
         throw;
     }
 }

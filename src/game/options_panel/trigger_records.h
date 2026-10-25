@@ -103,34 +103,12 @@ struct Rec428 : head_rec {   // vtable 0x595c68
 };
 
 extern RecCam* g_rec_9c;   // 0xa7399c
-extern RecMenu* g_main_menu;   // 0xa73980
-extern RecProfile* g_profile;   // 0xa73984
+#include "../world_data/world_data.h"   // canonical: g_windows (0xa73980)
 extern RecItem90* g_rec_90;   // 0xa73990
 extern Rec98b* g_rec_88;   // 0xa73988
-extern Rec90b* g_rec_8c;   // 0xa7398c
-extern Rec80* g_rec_94;   // 0xa73994
-extern Rec118* g_rec_98;   // 0xa73998
-extern Recacc* g_rec_a0;   // 0xa739a0
 extern Rec38* g_rec_a4;   // 0xa739a4
-extern Rec44* g_rec_a8;   // 0xa739a8
-extern Rec34* g_rec_ac;   // 0xa739ac
-extern Rec3910* g_rec_b0;   // 0xa739b0
-extern Rec454* g_rec_b4;   // 0xa739b4
-extern RecBlocker* g_rec_b8;   // 0xa739b8
-extern RecObj2* g_rec_bc;   // 0xa739bc
-extern Rec1208* g_rec_c0;   // 0xa739c0
 extern Rec3c* g_rec_c4;   // 0xa739c4
-extern Recd8* g_rec_c8;   // 0xa739c8
-extern Recf0* g_rec_cc;   // 0xa739cc
-extern Rec1bc* g_rec_d0;   // 0xa739d0
-extern Rec238* g_rec_d4;   // 0xa739d4
-extern Rec23c* g_rec_d8;   // 0xa739d8
-extern RecItemA* g_rec_dc;   // 0xa739dc
 extern Rec48* g_army_state;   // 0xa739e0
-extern Rec58* g_rec_e4;   // 0xa739e4
-extern RecItemD* g_rec_e8;   // 0xa739e8
-extern RecItemB* g_rec_ec;   // 0xa739ec
-extern RecItemC* g_rec_f0;   // 0xa739f0
 extern Rec428* g_menu_state;   // 0xa739f4
 extern int g_trial_mode;   // 0x5e29c4
 extern int g_5e29ac;   // 0x5e29ac
