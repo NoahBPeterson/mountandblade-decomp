@@ -41,8 +41,8 @@ struct ResMgr { void* get_object(const tstring& n); };
 extern char g_5e212c;                           // 0x5e212c
 extern char g_5d8788;                           // 0x5d8788
 extern int g_5a9fb0;                            // 0x5a9fb0 (no terrain camera)
-extern int g_5e28fc;                            // 0x5e28fc
-extern int g_a732b4;                            // 0xa732b4 (current scene)
+extern int g_use_shaders;                            // 0x5e28fc
+extern int g_level;                            // 0xa732b4 (current scene)
 extern int g_a70438;                            // 0xa70438 (last-loaded scene)
 extern float g_590bb8;                          // 0x590bb8
 extern float g_549cdc;                          // 0x549cdc (1.0f)
@@ -50,9 +50,9 @@ extern float g_54b3b4;                          // 0x54b3b4
 
 // ---- callees -------------------------------------------------------------------------------------------
 void ctor_4931a0(void* p);                      // 0x4931a0 (ecx = object)
-void __fastcall ctor_494310(void* p);           // 0x494310 (ecx = 0x5aa128: the campaign UI root)
-void* clone_41c6d0(void* m);                    // 0x41c6d0
-void* __fastcall ui_terrain_quad(Overlay* o, void* name);   // 0x4e5570
+void __fastcall stop_all(void* p);           // 0x494310 (ecx = 0x5aa128: the campaign UI root)
+void* clone(void* m);                    // 0x41c6d0
+void* __fastcall make_short_button(Overlay* o, void* name);   // 0x4e5570
 Widget* new_medium_button(Overlay* o, void* text, float x, float y, float z);   // 0x4dce70
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 WidgetObj* make_hint(const tstring& text, int a, Overlay* o, vector2 p, vector2 s);   // 0x4dada0
@@ -63,10 +63,10 @@ void __fastcall ctor_4ed630(MapWidget* w);       // 0x4ed630
 
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
 struct GameScene {                              // g_psys (0xa70248)
-    void finish(int scene);                     // 0x4711e0
-    void add_scene_obj(void* p);                // 0x468c20
-    void flush();                               // 0x463cc0
-    void reset();                               // 0x47fef0
+    void attach_camera(int scene);                     // 0x4711e0
+    void extend(void* p);                // 0x468c20
+    void fit_bounds();                               // 0x463cc0
+    void render();                               // 0x47fef0
 };
 #define g_psys (*(GameScene*)0xa70248)
 

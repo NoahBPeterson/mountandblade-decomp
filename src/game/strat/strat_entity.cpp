@@ -71,7 +71,7 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
         update_ground_cache();
         last_pos = pos.o;
     }
-    if ((float)(g_time[f2a0] - t2a8) * 1e-05f >= -0.0001f) {
+    if ((float)(g_ticks[f2a0] - t2a8) * 1e-05f >= -0.0001f) {
         if (a)
             create_shadow_mesh(&shadow_a, 1);
         if (b) {
@@ -82,9 +82,9 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
     }
     if (a) {
         if (mode & 2) {
-            if ((float)(g_time[f2b0] - t2b8) * 1e-05f >= -0.0001f) {
+            if ((float)(g_ticks[f2b0] - t2b8) * 1e-05f >= -0.0001f) {
                 float k = -1.0f / (f15c * 25.0f);
-                t2b8 = g_time[f2b0] - (int)((k - (float)(rand() % 0x3dc9) * 6.3223115e-07f) * 100000.0f);
+                t2b8 = g_ticks[f2b0] - (int)((k - (float)(rand() % 0x3dc9) * 6.3223115e-07f) * 100000.0f);
                 shadow_tick();
                 if (p288 != 0) {
                     shadow_a->res = (res_t*)p288;
@@ -162,8 +162,8 @@ void StratEnt::update_ground_cache()
 void Ctx::query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count)
 {
     int lo[2], hi[2];
-    locate(bmin, lo);
-    locate(bmax, hi);
+    to_cell(bmin, lo);
+    to_cell(bmax, hi);
     *count = 0;
     for (int i = lo[0]; i <= hi[0]; i++) {
         if (lo[1] <= hi[1]) {
@@ -298,7 +298,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         (*slot)->slots[1].f4 = 1;
         (*slot)->slots[0].f4 = 1;
     }
-    (*slot)->clear_all();
+    (*slot)->clear_geometry();
     vector4 a2 = ctx->ambient();
     nt = 1;
     s0 = ((a2.z + a2.y) + a2.x) * 0.35f;

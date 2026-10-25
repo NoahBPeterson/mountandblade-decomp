@@ -153,7 +153,7 @@ void Forwarder::forward(int a, int b, int c)
 
 // @ 0x4eb8e0 save-load UI entry (whole body reconstructed at 0x4eb8e0; 0x4eb8ed is its interior
 // continuation and is not separately callable)
-extern char g_5e2938;                                   // 0x5e2938
+extern char g_scene_dirty;                                   // 0x5e2938
 extern int g_5e28c8;                                    // 0x5e28c8
 extern int g_a16c58;                                    // 0xa16c58
 extern int g_5d75c8;                                    // 0x5d75c8 (view width)
@@ -176,19 +176,19 @@ typedef void (__stdcall* PanelCall1)(void*);
 
 struct SaveLoadUi {
     int run();                                          // 0x4eb8e0
-    void start();                                       // 0x4bace0
+    void update_view_rect();                                       // 0x4bace0
 };
 
 int SaveLoadUi::run()
 {
-    if (g_5e2938) {
-        g_5e2938 = 0;
+    if (g_scene_dirty) {
+        g_scene_dirty = 0;
         g_editor.func_4c1a60();
         g_editor.func_4c1940();
     }
     ++g_5e28c8;
     ++g_a16c58;
-    start();
+    update_view_rect();
 
     Viewport vp;
     vp.x = 0; vp.y = 0;

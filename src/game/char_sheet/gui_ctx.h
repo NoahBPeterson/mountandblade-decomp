@@ -44,8 +44,8 @@ struct GuiCtx {
     void render_shape_frame(int a, rgl::vector4* v, int b, int c);   // 0x4ed6f0
     void __fastcall draw_string(tstring* s, float a, int color, char b);    // 0x4e43e0
     void __fastcall select_entity(scene_row* row, int ent, int flags);      // 0x4ea0c0
-    void __fastcall reset_all(char reinit);                                 // 0x42cdb0
-    void __fastcall set_pair(const vector2* p);                             // 0x4c5190
+    void __fastcall set_o568(char reinit);                                 // 0x42cdb0
+    void __fastcall set_view(const vector2* p);                             // 0x4c5190
 };
 
 #endif // CHAR_SHEET_GUI_CTX_H

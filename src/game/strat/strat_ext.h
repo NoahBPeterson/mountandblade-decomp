@@ -104,9 +104,9 @@ struct mesh : mesh_base {
     std::vector<elem30>& get60() { return local_a1 ? v60 : parent->get60(); }     // 0x40ec60
     std::vector<elem30>& get60_();                  // 0x40ec60 (out-of-line call)
     std::vector<vertex60>& get50_();                // 0x40ebd0 (out-of-line call)
-    int has_morph();                                // 0x40f7f0
-    void FUN_00412700();                            // 0x412700
-    void render_child(scene* sc);                   // 0x414960
+    int should_batch();                                // 0x40f7f0
+    void ensure_skin();                            // 0x412700
+    void update(scene* sc);                   // 0x414960
     void ensure_local();                            // 0x412ee0
     int add_point(const vector4* p);                // 0x412f50
     void append(mesh* other, const mat4* m);        // 0x412fe0
@@ -114,7 +114,7 @@ struct mesh : mesh_base {
     int render(scene* sc, const mat4& frame);       // 0x413750
     int add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c);   // 0x413c50
     void add_face(int a, int b, int c);             // 0x411920
-    void clear_all();                               // 0x428e80 (resizes every vector to 0)
+    void clear_geometry();                               // 0x428e80 (resizes every vector to 0)
 };
 
 
@@ -131,7 +131,7 @@ struct skin {
 struct resmgr {
     res_t* lookup(const tstring& name);                      // 0x418a70
     skin* get_shadow_skin(int w, int h, int fmt, int f34);   // 0x41c420
-    int lookup_file(tstring* name);                          // 0x418e90
+    int resolve_shader(tstring* name);                          // 0x418e90
 };
 extern resmgr g_resmgr;                                      // 0x5d6fa0
 
@@ -160,7 +160,7 @@ OFFSET_CHECK3(scene, f164, 0x164);
 OFFSET_CHECK3(scene, f1a5, 0x1a5);
 OFFSET_CHECK3(scene, mask, 0x1a8);
 
-extern __int64 g_time[];                                // 0x5e2948 clock table (64-bit ticks, 1e-5 s)
+extern __int64 g_ticks[];                                // 0x5e2948 clock table (64-bit ticks, 1e-5 s)
 extern int g_shadows_on;                                // 0x5aa030
 
 struct Psys { void update(scene* sc); };                // 0x414960

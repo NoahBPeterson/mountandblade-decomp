@@ -17,7 +17,7 @@ void GuiCtx::render_shape_frame(int a, vector4* v, int b, int c)
     f190 = 1.0f;
     f2dc = 1;
     f310.assign(&f178->fb8);
-    f178->render(&cell_x0, 1);
+    f178->render_scene(&cell_x0, 1);
     v->x += 1.0f;
     follow(a, v, b, c);
 }

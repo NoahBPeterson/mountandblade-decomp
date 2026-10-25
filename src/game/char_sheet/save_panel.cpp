@@ -2,7 +2,7 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ea0c0
-void __stdcall render_skin(mesh* m, skin_owner* o, unsigned color)
+void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
 {
     m->clear_geometry();
     if (!o->skins)

@@ -30,7 +30,7 @@ void MapScreen::buttons(int arg)
                 g_main_menu.choose(0x15);
                 return;
             }
-            if (f60->changed(0x10000) || g_a170c8.test(1)) {
+            if (f60->changed(0x10000) || g_keyboard.test(1)) {
                 g_main_menu.choose(menu_sel);
                 return;
             }
@@ -113,11 +113,11 @@ int save_game(int version, tstring* name)
     const char* ps = g->module.c_str();
     int ver = g->version;
     sprintf(dirA, "");
-    save_dir(dirA);
+    save_path(dirA);
     mb_snprintf(pathB, 0x200, "%s%s\\sg%d%d.sav", dirA, ps, ver / 10, ver % 10);
     file_writer w;
     sprintf(dirC, "");
-    save_dir(dirC);
+    save_path(dirC);
     g = g_game;
     ps = g->module.c_str();
     mb_snprintf(pathD, 0x200, "%s%s\\new_game.sav", dirC, ps);
@@ -150,7 +150,7 @@ int save_game(int version, tstring* name)
                     WL_MARK(0x0c)
                     LOG("Backing up old file name...");
                     sprintf(dirA, "");
-                    save_dir(dirA);
+                    save_path(dirA);
                     g = g_game;
                     ps = g->module.c_str();
                     mb_snprintf(pathE, 0x200, "%s%s\\last_savegame_backup.sav", dirA, ps);
@@ -183,7 +183,7 @@ int SaveCtx::write(OutStream* out)
     out->w_raw(&hdr);
     int version = 0x3f3;
     out->w_raw(&version);
-    out->w_raw(&g_5e29c0);
+    out->w_raw(&g_module_version);
     out->w_struct(this);
     out->w_struct(&slot).w_raw(&flag);
     out->w_int((int*)&stamp);
@@ -196,7 +196,7 @@ void log_save_path()
     char dir[260];
     char path[512];
     crt_sprintf(dir, "");
-    save_dir(dir);
+    save_path(dir);
     CreateDirectoryA(dir, NULL);
     mb_snprintf(path, 0x200, "%s%s", dir, g_game->module.c_str());
     CreateDirectoryA(path, NULL);

@@ -58,7 +58,7 @@ static __declspec(noinline) void report(const char* msg)
     char buf[1024];
     sprintf(buf, "%s; LINE NO: %d:", msg, g_lineno);
     g_msglog.add(tstring(buf), 0xffff5555);
-    stream_base& lg = *(stream_base*)g_log_obj;
+    stream_base& lg = *(stream_base*)g_log;
     lg.w_cstr(buf);
     g_script_error = 1;
 }
@@ -502,7 +502,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::key_clicked:
         if (IN_RANGE(params[0], 0, 0x100))
-            result = g_keyboard.clicked((int)params[0]);
+            result = g_keyboard.is_ready((int)params[0]);
         break;
     case op::game_key_is_down:
         if (IN_RANGE(params[0], 0, 0x25))
@@ -565,13 +565,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::party_can_join:
-        if (g_encountered_party < 0 || !game()->party_can_join_party(g_encountered_party, game()->main_party, 0))
+        if (g_encountered_party < 0 || !game()->can_transfer(g_encountered_party, game()->main_party, 0))
             result = 0;
         else
             result = 1;
         break;
     case op::party_can_join_as_prisoner:
-        if (g_encountered_party < 0 || !game()->party_can_join_party(g_encountered_party, game()->main_party, 1))
+        if (g_encountered_party < 0 || !game()->can_transfer(g_encountered_party, game()->main_party, 1))
             result = 0;
         else
             result = 1;
@@ -599,7 +599,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_can_join_party:
         result = 0;
         if (check_party((int)params[0]) && check_party((int)params[1]))
-            result = game()->party_can_join_party((int)params[0], (int)params[1], params[2] != 0);
+            result = game()->can_transfer((int)params[0], (int)params[1], params[2] != 0);
         break;
     case op::main_party_has_troop: {
         int main = game()->main_party;
@@ -634,7 +634,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::player_has_item: {
         TroopX* t = troop(game()->player_troop);
         result = 0;
-        for (int k = 0; k < t->num_inventory_slots(); k++)
+        for (int k = 0; k < t->inv_count(); k++)
             if ((__int64)t->items[k].item == params[0])
                 result = 1;
         break;
@@ -920,7 +920,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::position_transform_position_to_local:
         if (check_register((int)params[0]) && check_register((int)params[1]) && check_register((int)params[2]))
-            script_pos((int)params[0]) = script_pos((int)params[1]).to_local(script_pos((int)params[2]));
+            script_pos((int)params[0]) = script_pos((int)params[1]).relative(script_pos((int)params[2]));
         break;
     case op::position_copy_rotation:
         if (check_register((int)params[0]) && check_register((int)params[1]))
@@ -961,13 +961,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::position_rotate_x:
         if (check_register((int)params[0])) {
             float a = (float)params[1] * 0.017453292f;
-            script_pos((int)params[0]).rotate_x(&a);
+            script_pos((int)params[0]).rotate_about_s(&a);
         }
         break;
     case op::position_rotate_y:
         if (check_register((int)params[0])) {
             float a = (float)params[1] * 0.017453292f;
-            script_pos((int)params[0]).rotate_y(&a);
+            script_pos((int)params[0]).rotate_about_f(&a);
         }
         break;
     case op::position_rotate_z:
@@ -976,11 +976,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
             float a = (float)params[1] * 0.017453292f;
             if (params[2]) {
                 Pos& p = script_pos((int)params[0]);
-                p.s.rotate_z(a);
-                p.f.rotate_z(a);
-                p.u.rotate_z(a);
+                p.s.rotate_b(a);
+                p.f.rotate_b(a);
+                p.u.rotate_b(a);
             } else
-                script_pos((int)params[0]).rotate_z(&a);
+                script_pos((int)params[0]).rotate_about_u(&a);
         }
         break;
     case op::position_get_x:
@@ -1136,7 +1136,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::overlay_set_boundaries:
         if (g_presentation)
-            g_presentation->set_boundaries((int)params[0], (int)params[1], (int)params[2]);
+            g_presentation->set_limits((int)params[0], (int)params[1], (int)params[2]);
         break;
     case op::overlay_set_area_size:
         // the position register is not validated here
@@ -1145,7 +1145,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::overlay_set_mesh_rotation:
         if (g_presentation)
-            g_presentation->set_mesh_rotation((int)params[0], &script_pos((int)params[1]));
+            g_presentation->set_mesh_matrix((int)params[0], &script_pos((int)params[1]));
         break;
     case op::overlay_add_item:
         if (g_presentation && check_string_arg(types[1], (int)params[1]))
@@ -1201,24 +1201,24 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::get_average_game_difficulty:
-        game()->update_average_difficulty();
+        game()->sl_update_avg();
         SET_LV((__int64)(int)game()->average_difficulty);
         break;
 
     // ---- missions, map, resting, experience ------------------------------------------------------------------------
     case op::all_enemies_defeated:
-        result = mission()->all_enemies_defeated((int)params[0]);
+        result = mission()->all_defeated((int)params[0]);
         break;
     case op::race_completed_by_player:
         break;
     case op::num_active_teams_le:
-        if ((__int64)mission()->num_active_teams() > params[0])
+        if ((__int64)mission()->team_count() > params[0])
             result = 0;
         else
             result = 1;
         break;
     case op::main_hero_fallen:
-        result = mission()->main_hero_fallen();
+        result = mission()->hero_down();
         break;
     case op::set_party_battle_mode:
         g_party_battle_mode = 1;
@@ -1266,13 +1266,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::add_xp_to_troop:
         // (add_xp_to_troop, <value>, [troop_id])
         if (check_troop((int)params[1]))
-            game()->add_xp_to_troop((int)params[1], (int)params[0]);
+            game()->add_experience((int)params[1], (int)params[0]);
         break;
     case op::add_gold_as_xp:
-        game()->add_gold_as_xp((int)params[0]);
+        game()->add_random_experience((int)params[0]);
         break;
     case op::add_xp_as_reward:
-        game()->add_xp_as_reward((int)params[0]);
+        game()->spread_party_experience((int)params[0]);
         break;
     case op::add_gold_to_party:
         // (add_gold_to_party, <value>, <party_id>): 1.011 only clears the party's carried-gold byte
@@ -1318,14 +1318,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameX* g = game();
             if (g->message_log.len > 2)
                 g->message_log.push_back('|');
-            game()->message_log.append(g->format_time((int)game()->clock.elapsed()));
+            game()->message_log.append(g->event_string((int)game()->clock.elapsed()));
             game()->message_log.push_back('|');
             game()->message_log.append(tstring(num));
             game()->message_log.push_back('|');
             game()->message_log.append(text);
             if (g_text_log_enabled) {
                 text.push_back('\n');
-                ((stream_base*)g_log_obj)->w_tstr(&text);
+                ((stream_base*)g_log)->w_tstr(&text);
             }
         }
         break;
@@ -1338,7 +1338,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_msglog.add(text, color);
             if (g_text_log_enabled) {
                 text.push_back('\n');
-                ((stream_base*)g_log_obj)->w_tstr(&text);
+                ((stream_base*)g_log)->w_tstr(&text);
             }
         }
         break;
@@ -1368,7 +1368,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
             quest((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
             quest((int)params[0])->notes[(int)params[1]].append(tstring(": "));
-            quest((int)params[0])->notes[(int)params[1]].append(g_dialogs.current_text());
+            quest((int)params[0])->notes[(int)params[1]].append(g_dialogs.get_name());
             quest((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
         }
         break;
@@ -1383,7 +1383,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
             troop((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
             troop((int)params[0])->notes[(int)params[1]].append(tstring(": "));
-            troop((int)params[0])->notes[(int)params[1]].append(g_dialogs.current_text());
+            troop((int)params[0])->notes[(int)params[1]].append(g_dialogs.get_name());
             troop((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
         }
         break;
@@ -1391,7 +1391,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_faction((int)params[0]) && params[1] < 8) {
             faction((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
             faction((int)params[0])->notes[(int)params[1]].append(tstring(": "));
-            faction((int)params[0])->notes[(int)params[1]].append(g_dialogs.current_text());
+            faction((int)params[0])->notes[(int)params[1]].append(g_dialogs.get_name());
             faction((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
         }
         break;
@@ -1399,7 +1399,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_party((int)params[0]) && params[1] < 8) {
             party((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
             party((int)params[0])->notes[(int)params[1]].append(tstring(": "));
-            party((int)params[0])->notes[(int)params[1]].append(g_dialogs.current_text());
+            party((int)params[0])->notes[(int)params[1]].append(g_dialogs.get_name());
             party((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
         }
         break;
@@ -1446,7 +1446,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 no = (int)params[2];
                 no_type = types[2];
             }
-            g_windows.dialog_box->ask(g_script.expand(g_strings.get((int)params[0], types[0])),
+            g_windows.dialog_box->setup2(g_script.expand(g_strings.get((int)params[0], types[0])),
                                       g_script.expand(g_strings.get(yes, yes_type)),
                                       g_script.expand(g_strings.get(no, no_type)), &game()->question_answer);
             g_windows.open(0);
@@ -1458,14 +1458,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int color = -1;
             if (params[1])
                 color = (int)params[1];
-            g_msglog.tutorial_message(g_script.expand(g_strings.get((int)params[0], types[0])), color);
+            g_msglog.set_font_mesh(g_script.expand(g_strings.get((int)params[0], types[0])), color);
         } else
-            g_msglog.tutorial_message(tstring(""), (int)params[1]);
+            g_msglog.set_font_mesh(tstring(""), (int)params[1]);
         break;
 
     // ---- prices, joining and leaving -----------------------------------------------------------------------------
     case op::reset_price_rates:
-        game()->reset_price_rates();
+        game()->sl_item_flag_all();
         break;
     case op::set_price_rate_for_item:
         if (check_item_kind((int)params[0]))
@@ -1479,12 +1479,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_join:
         sprintf(buf, UI("ui_value_joined_your_party"), CS(party(g_encountered_party)->display_name()));
         g_msglog.push(tstring(buf), -1);
-        game()->transfer_stacks(g_encountered_party, game()->main_party, 0);
+        game()->transfer_stack(g_encountered_party, game()->main_party, 0);
         break;
     case op::party_join_as_prisoner:
         sprintf(buf, UI("ui_value_joined_party_as_prisoner"), CS(party(g_encountered_party)->display_name()));
         g_msglog.push(tstring(buf), -1);
-        game()->transfer_stacks(g_encountered_party, game()->main_party, 1);
+        game()->transfer_stack(g_encountered_party, game()->main_party, 1);
         break;
     case op::troop_join:
         if (check_troop((int)params[0])) {
@@ -1599,7 +1599,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::add_troop_to_site:
         // (add_troop_to_site, <troop_id>, <scene_id>, <entry_no>)
         if (check_troop((int)params[0]))
-            troop((int)params[0])->set_site((int)params[1], (int)params[2]);
+            troop((int)params[0])->set_colors((int)params[1], (int)params[2]);
         break;
     case op::remove_troop_from_site:
         if (check_troop((int)params[0]))
@@ -1629,7 +1629,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[2])
                 scene(g_visitor_scene)->visitors[(int)params[0]].dna = (int)params[2];
             if (g_mission)
-                mission()->visitors_changed();
+                mission()->clear_done();
         }
         break;
     case op::set_visitors:
@@ -1639,7 +1639,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             scene(g_visitor_scene)->visitors[(int)params[0]].dna = 0xffff2f33;
             scene(g_visitor_scene)->visitor_counts[(int)params[0]] = (int)params[2];
             if (g_mission)
-                mission()->visitors_changed();
+                mission()->clear_done();
         }
         break;
     case op::add_visitors_to_current_scene:
@@ -1648,8 +1648,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             scene(g_visitor_scene)->visitors[(int)params[0]].troop = (int)params[1];
             scene(g_visitor_scene)->visitors[(int)params[0]].dna = 0xffff2f33;
             scene(g_visitor_scene)->visitor_counts[(int)params[0]] = (int)params[2];
-            mission()->visitors_changed();
-            mission()->add_visitors((int)params[0], (int)params[2]);
+            mission()->clear_done();
+            mission()->add_amount((int)params[0], (int)params[2]);
         }
         break;
 
@@ -1661,7 +1661,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             float v = (float)params[2] * 0.01f;
             int old_rel = round_float(faction((int)params[0])->relations[(int)params[1]] * 100.0f);
             float lo = -1.0f, hi = 1.0f;
-            float c = clamp_float(&v, &lo, &hi);
+            float c = clamp(&v, &lo, &hi);
             faction((int)params[0])->relations[(int)params[1]] = c;
             faction((int)params[1])->relations[(int)params[0]] = c;
             int new_rel = round_float(faction((int)params[0])->relations[(int)params[1]] * 100.0f);
@@ -1677,9 +1677,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     g_msglog.push(tstring(buf), 0xffff7028);
                 }
                 if (params[0] == 0)
-                    game()->update_faction_parties((int)params[1]);
+                    game()->mark_kind((int)params[1]);
                 else if (params[1] == 0)
-                    game()->update_faction_parties((int)params[0]);
+                    game()->mark_kind((int)params[0]);
             }
         }
         break;
@@ -1707,19 +1707,19 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::complete_quest:
         if (check_quest((int)params[0]))
-            game()->complete_quest((int)params[0]);
+            game()->quest_done((int)params[0]);
         break;
     case op::succeed_quest:
         if (check_quest((int)params[0]))
-            game()->succeed_quest((int)params[0]);
+            game()->quest_succeeded((int)params[0]);
         break;
     case op::fail_quest:
         if (check_quest((int)params[0]))
-            game()->fail_quest((int)params[0]);
+            game()->quest_failed((int)params[0]);
         break;
     case op::cancel_quest:
         if (check_quest((int)params[0]))
-            game()->cancel_quest((int)params[0]);
+            game()->set_quest_cancelled((int)params[0]);
         break;
     case op::set_quest_progression:
         if (check_quest((int)params[0]))
@@ -1727,7 +1727,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::conclude_quest:
         if (check_quest((int)params[0]))
-            game()->conclude_quest((int)params[0]);
+            game()->set_quest_concluded((int)params[0]);
         break;
     case op::setup_quest_text:
         if (check_quest((int)params[0])) {
@@ -1744,7 +1744,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // ---- encounters and merchandise ------------------------------------------------------------------------------
     case op::start_encounter:
         if (check_party((int)params[0]))
-            game()->start_encounter(game()->main_party, (int)params[0]);
+            game()->deploy_party(game()->main_party, (int)params[0]);
         break;
     case op::leave_encounter:
         game()->encounter_flags |= 1;
@@ -1754,7 +1754,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::select_enemy:
         if (params[0] == 0 || params[0] == 1)
-            g_mission_ui.select_enemy(1 - (int)params[0]);
+            g_mission_ctx.select_side(1 - (int)params[0]);
         break;
     case op::set_passage_menu:
         if (check_menu((int)params[0]))
@@ -1770,7 +1770,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::set_merchandise_modifier_quality: {
         // percentage, clamped to 0..1000 (as a factor 0..10)
         float v = (float)params[0] * 0.01f, lo = 0, hi = 1000.0f;
-        game()->merchandise_modifier_quality = clamp_float(&v, &lo, &hi);
+        game()->merchandise_modifier_quality = clamp(&v, &lo, &hi);
         break;
     }
     case op::reset_item_probabilities: {
@@ -1778,7 +1778,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         int v = (int)params[0];
         if (!v)
             v = 100;
-        game()->set_item_probabilities((float)v * 0.01f);
+        game()->sl_item_set_all((float)v * 0.01f);
         break;
     }
     case op::set_item_probability_in_merchandise:
@@ -1789,7 +1789,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // ---- troops ------------------------------------------------------------------------------------------------
     case op::troop_set_type:
         if (check_troop((int)params[0])) {
-            troop((int)params[0])->set_type(clamp_index((int)params[1], 0, g_skin_count));
+            troop((int)params[0])->set_flags_low(clamp_index((int)params[1], 0, g_skin_count));
         }
         break;
     case op::troop_get_type:
@@ -1802,7 +1802,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troop_is_wounded:
         if (check_troop((int)params[0]))
-            result = game()->troop_is_wounded((int)params[0]);
+            result = game()->agent_low((int)params[0]);
         break;
     case op::troop_set_auto_equip:
         // value 0 disables auto-equipping (tf_is_merchant)
@@ -1815,16 +1815,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troop_ensure_inventory_space:
         if (check_troop((int)params[0]))
-            game()->ensure_inventory_space((int)params[0], (int)params[1]);
+            game()->init_slots((int)params[0], (int)params[1]);
         break;
     case op::troop_sort_inventory:
         if (check_troop((int)params[0]))
-            troop((int)params[0])->sort_inventory();
+            troop((int)params[0])->sort_inv();
         break;
     case op::troop_add_merchandise:
         // (troop_add_merchandise, <troop_id>, <item_type_id>, <value>)
         if (check_troop((int)params[0]))
-            game()->add_merchandise((int)params[1], (int)params[2], (int)params[0]);
+            game()->spawn_items((int)params[1], (int)params[2], (int)params[0]);
         break;
     case op::troop_get_xp:
         if (check_troop((int)params[1]))
@@ -1832,19 +1832,19 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troop_raise_attribute:
         if (check_troop((int)params[0]) && params[2] && IN_RANGE(params[1], 0, 4))
-            troop((int)params[0])->raise_attribute((int)params[1], (int)params[2]);
+            troop((int)params[0])->add_attr((int)params[1], (int)params[2]);
         break;
     case op::troop_raise_skill:
         if (check_troop((int)params[0]) && params[2] && IN_RANGE(params[1], 0, 0x2a))
-            troop((int)params[0])->raise_skill((int)params[1], (int)params[2]);
+            troop((int)params[0])->add_skill((int)params[1], (int)params[2]);
         break;
     case op::troop_raise_proficiency:
         if (check_troop((int)params[0]) && params[2] > 0 && IN_RANGE(params[1], 0, 7))
-            troop((int)params[0])->raise_proficiency((int)params[1], (float)params[2]);
+            troop((int)params[0])->adjust((int)params[1], (float)params[2]);
         break;
     case op::troop_raise_proficiency_linear:
         if (check_troop((int)params[0]) && params[2] && IN_RANGE(params[1], 0, 7))
-            troop((int)params[0])->raise_proficiency_linear((int)params[1], (int)params[2]);
+            troop((int)params[0])->add_stat((int)params[1], (int)params[2]);
         break;
     case op::troop_add_proficiency_points:
         // at most 99 points at a time
@@ -1860,7 +1860,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troop_remove_gold:
         if (params[1] > 0) {
             if (params[0] == 0)
-                game()->remove_player_gold((int)params[1], 0);
+                game()->remove_gold((int)params[1], 0);
             else if (check_troop((int)params[0]))
                 troop((int)params[0])->remove_gold((int)params[1]);
         }
@@ -1869,18 +1869,18 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (troop_add_item, <troop_id>, <item_id>, [modifier])
         if (check_troop((int)params[0]) && IN_RANGE(params[1], 0, g_item_kind_count)) {
             if (params[0] == (__int64)game()->player_troop)
-                game()->player_add_item((int)params[1], (int)params[2]);
+                game()->add_inventory((int)params[1], (int)params[2]);
             else {
                 TroopX* t = troop((int)params[0]);
-                int k = t->first_free_inventory_slot();
+                int k = t->find_free();
                 if (k >= 0)
-                    t->set_item((int)params[1], k, (int)params[2]);
+                    t->set_slot((int)params[1], k, (int)params[2]);
             }
         }
         break;
     case op::troop_remove_item:
         if (check_troop((int)params[0])) {
-            int n = game()->remove_items((int)params[0], (int)params[1], 1, 1);
+            int n = game()->sl_take((int)params[0], (int)params[1], 1, 1);
             if (params[0] == 0 && n > 0) {
                 sprintf(buf, UI("ui_lost_item_value"), CS(item_kind((int)params[1])->display_name()));
                 g_msglog.push(tstring(buf), -1);
@@ -1889,7 +1889,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troop_clear_inventory:
         if (check_troop((int)params[0]))
-            clear_inventory_items(troop((int)params[0])->items);
+            clear_slots(troop((int)params[0])->items);
         break;
     case op::troop_equip_items:
         if (check_troop((int)params[0]))
@@ -1899,7 +1899,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (troop_inventory_slot_set_item_amount, <troop_id>, <inventory_slot_no>, <value>); 0 empties the slot.
         // The low byte of the packed word holds the missing amount (max - value).
         if (check_troop((int)params[0]) && params[1] >= 0 &&
-            params[1] < (__int64)(troop((int)params[0])->num_inventory_slots() + 10)) {
+            params[1] < (__int64)(troop((int)params[0])->inv_count() + 10)) {
             if (params[1] < 10) {
                 if (params[2] > 0) {
                     int mx = troop((int)params[0])->equipment[(int)params[1]].max_amount();
@@ -1922,7 +1922,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troop_add_items:
         // (troop_add_items, <troop_id>, <item_id>, <number>)
         if (check_troop((int)params[0]) && check_item_kind((int)params[1])) {
-            game()->add_items((int)params[0], (int)params[1], (int)params[2]);
+            game()->give_item((int)params[0], (int)params[1], (int)params[2]);
             if (params[0] == 0) {
                 sprintf(buf, UI("ui_got_number_value"), (int)params[2], CS(item_kind((int)params[1])->display_name()));
                 g_msglog.push(tstring(buf), -1);
@@ -1932,7 +1932,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troop_remove_items:
         // puts the value of the removed items into reg0
         if (check_troop((int)params[0]) && check_item_kind((int)params[1])) {
-            g_script.reg[0] = game()->remove_items((int)params[0], (int)params[1], (int)params[2], 1);
+            g_script.reg[0] = game()->sl_take((int)params[0], (int)params[1], (int)params[2], 1);
             if (params[0] == 0) {
                 sprintf(buf, UI("ui_lost_number_value"), (int)params[2], CS(item_kind((int)params[1])->display_name()));
                 g_msglog.push(tstring(buf), -1);
@@ -1942,7 +1942,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troop_inventory_slot_get_item_amount:
         // (troop_inventory_slot_get_item_amount, <destination>, <troop_id>, <inventory_slot_no>)
         if (check_troop((int)params[1]) && params[2] >= 0 &&
-            params[2] < (__int64)(troop((int)params[1])->num_inventory_slots() + 10)) {
+            params[2] < (__int64)(troop((int)params[1])->inv_count() + 10)) {
             if (params[2] < 10)
                 SET_LV((__int64)troop((int)params[1])->equipment[(int)params[2]].room_left());
             else
@@ -1951,7 +1951,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troop_inventory_slot_get_item_max_amount:
         if (check_troop((int)params[1]) && params[2] >= 0 &&
-            params[2] < (__int64)(troop((int)params[1])->num_inventory_slots() + 10)) {
+            params[2] < (__int64)(troop((int)params[1])->inv_count() + 10)) {
             if (params[2] < 10)
                 SET_LV((__int64)troop((int)params[1])->equipment[(int)params[2]].max_amount());
             else
@@ -1963,12 +1963,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (troop_loot_troop, <target_troop>, <source_troop_id>, <probability>): every itp_always_loot item, then ten
         // random draws weighted by the source's level against the item value
         if (params[2] > 0 && check_troop((int)params[0]) && check_troop((int)params[1])) {
-            i = troop((int)params[1])->num_inventory_slots();
+            i = troop((int)params[1])->inv_count();
             TroopX* t = troop((int)params[0]);
-            int dst = ((ItemList*)t->items)->first_free(t->num_inventory_slots());
+            int dst = ((ItemList*)t->items)->check_slots(t->inv_count());
             for (int k = 0; k < i; k++) {
                 TroopX* troops = game()->troops;
-                if (dst < troops[(int)params[0]].num_inventory_slots()) {
+                if (dst < troops[(int)params[0]].inv_count()) {
                     ItemRef* src = &troops[(int)params[1]].items[k];
                     if (src->item >= 0 && (item_kind(src->item)->type_flags & itp_always_loot)) {
                         troops[(int)params[0]].items[dst] = *src;
@@ -1979,7 +1979,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             for (int n = 10; n; n--) {
                 int k = rand_below(&i);
                 TroopX* troops = game()->troops;
-                if (dst < troops[(int)params[0]].num_inventory_slots() && troops[(int)params[1]].items[k].item >= 0) {
+                if (dst < troops[(int)params[0]].inv_count() && troops[(int)params[1]].items[k].item >= 0) {
                     float one = 1.0f;
                     float x = ((float)troops[(int)params[1]].level + 10.0f) * 10.0f /
                               item_kind(troops[(int)params[1]].items[k].item)->value;
@@ -1998,14 +1998,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troop_get_inventory_capacity:
         if (check_troop((int)params[1]))
-            SET_LV((__int64)(troop((int)params[1])->num_inventory_slots() + 10));
+            SET_LV((__int64)(troop((int)params[1])->inv_count() + 10));
         else
             SET_LV(0);
         break;
     case op::troop_get_inventory_slot:
         // (troop_get_inventory_slot, <destination>, <troop_id>, <inventory_slot_no>); -1 when invalid
         if (check_troop((int)params[1]) && params[2] >= 0 &&
-            params[2] < (__int64)(troop((int)params[1])->num_inventory_slots() + 10)) {
+            params[2] < (__int64)(troop((int)params[1])->inv_count() + 10)) {
             if (params[2] < 10)
                 SET_LV((__int64)troop((int)params[1])->equipment[(int)params[2]].item);
             else
@@ -2015,7 +2015,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troop_get_inventory_slot_modifier:
         if (check_troop((int)params[1]) && params[2] >= 0 &&
-            params[2] < (__int64)(troop((int)params[1])->num_inventory_slots() + 10)) {
+            params[2] < (__int64)(troop((int)params[1])->inv_count() + 10)) {
             if (params[2] < 10)
                 SET_LV((__int64)troop((int)params[1])->equipment[(int)params[2]].b.mod);
             else
@@ -2025,7 +2025,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troop_set_inventory_slot:
         if (check_troop((int)params[0]) && params[1] >= 0 &&
-            params[1] < (__int64)(troop((int)params[0])->num_inventory_slots() + 10)) {
+            params[1] < (__int64)(troop((int)params[0])->inv_count() + 10)) {
             if (params[1] < 10)
                 IR(troop((int)params[0])->equipment[(int)params[1]]).set_item((int)params[2]);
             else
@@ -2034,7 +2034,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troop_set_inventory_slot_modifier:
         if (check_troop((int)params[0]) && params[1] >= 0 &&
-            params[1] < (__int64)(troop((int)params[0])->num_inventory_slots() + 10)) {
+            params[1] < (__int64)(troop((int)params[0])->inv_count() + 10)) {
             if (params[1] < 10)
                 IR(troop((int)params[0])->equipment[(int)params[1]]).set_modifier((int)params[2]);
             else
@@ -2190,12 +2190,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0]) && check_party((int)params[1])) {
             GameX* g = game();
             PartyX* target = party((int)params[1]);
-            g->relocate_near(target->pos.x, target->pos.y, (int)params[0], (float)params[2]);
+            g->set_pos(target->pos.x, target->pos.y, (int)params[0], (float)params[2]);
         }
         break;
     case op::party_get_position:
         if (check_register((int)params[0]) && check_party((int)params[1])) {
-            *(Rot*)&script_pos((int)params[0]) = identity_rot();
+            *(Rot*)&script_pos((int)params[0]) = identity3();
             script_pos((int)params[0]).o = party_pos(party((int)params[1]));
         }
         break;
@@ -2367,7 +2367,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
 
     case op::party_attach_to_party:
         if (check_party((int)params[0]) && check_party((int)params[1])) {
-            game()->attach_party((int)params[0], (int)params[1]);
+            game()->set_objective((int)params[0], (int)params[1]);
             party((int)params[0])->f8cc = 0;
         }
         break;
@@ -2384,7 +2384,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_quick_attach_to_current_battle:
         // (party_quick_attach_to_current_battle, <party_id>, <side (0:players side, 1:enemy side)>)
         if (check_party((int)params[0]))
-            game()->quick_attach_to_battle((int)params[0], (int)params[1]);
+            game()->switch_objective((int)params[0], (int)params[1]);
         break;
     case op::party_get_cur_town:
         // the town the party is in (ai_bhvr_in_town), else -1
@@ -2438,11 +2438,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_upgrade_with_xp:
         // (party_upgrade_with_xp, <party_id>, <xp_amount>, <upgrade_path>), upgrade_path 0 random, 1 first, 2 second
         if (check_party((int)params[0]) && params[1] > 0 && IN_RANGE(params[2], 0, 3))
-            game()->upgrade_with_xp((int)params[0], (float)params[1], (int)params[2]);
+            game()->award_experience((int)params[0], (float)params[1], (int)params[2]);
         break;
     case op::party_add_xp:
         if (check_party((int)params[0]) && params[1] > 0)
-            game()->party_add_xp((int)params[0], (float)params[1]);
+            game()->share_experience((int)params[0], (float)params[1]);
         break;
     case op::party_add_template:
         // (party_add_template, <party_id>, <party_template_id>, [reverse_prisoner_status])
@@ -2539,15 +2539,15 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0])) {
             if (params[2] != (__int64)game()->main_party && check_party((int)params[2])) {
                 GameX* g = game();
-                g->inflict_casualties((int)params[0], (int)params[1], (PartyX*)g->parties.get((int)params[2]));
+                g->recruit((int)params[0], (int)params[1], (PartyX*)g->parties.get((int)params[2]));
             } else
-                game()->inflict_casualties((int)params[0], (int)params[1], 0);
+                game()->recruit((int)params[0], (int)params[1], 0);
         }
         break;
     case op::distribute_party_among_party_group:
         if (check_party((int)params[0]) && check_party((int)params[1])) {
             GameX* g = game();
-            g->distribute_party((PartyX*)g->parties.get((int)params[0]), (int)params[1]);
+            g->handout((PartyX*)g->parties.get((int)params[0]), (int)params[1]);
         }
         break;
 
@@ -2608,7 +2608,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::agent_get_look_position:
         if (check_register((int)params[0]) && warn_agent((int)params[1])) {
-            *(Rot*)&script_pos((int)params[0]) = identity_rot();
+            *(Rot*)&script_pos((int)params[0]) = identity3();
             Pos* dst = &script_pos((int)params[0]);
             AgentTable* t = &mission()->agents;
             int a = (int)params[1];
@@ -2626,7 +2626,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (t->get(a)->body)
                 script_pos((int)params[0]) = (Pos&)t->get(a)->body->m;      // the body frame (+0x58)
             else {
-                *(Rot*)&script_pos((int)params[0]) = identity_rot();
+                *(Rot*)&script_pos((int)params[0]) = identity3();
                 script_pos((int)params[0]).o = t->get(a)->pos;
             }
         }
@@ -2901,7 +2901,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             mission()->select_team((int)params[0]);
             if (params[1] >= 0)
                 mission()->select_class((int)params[0], (int)params[1]);
-            mission()->give_order((int)params[0], (int)params[2]);
+            mission()->order((int)params[0], (int)params[2]);
             mission()->unselect_team((int)params[0]);
         }
         break;
@@ -2967,7 +2967,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             mission()->fog_distance = (float)params[0];
             if (mission()->scene) {
                 MissionX* m = mission();
-                unsigned color = g_env_rows_x[m->env_row].fog_color;
+                unsigned color = g_env_rows[m->env_row].fog_color;
                 if (params[1])
                     color = (unsigned)params[1];
                 float d = (float)params[0];
@@ -2989,12 +2989,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::scene_prop_get_num_instances:
         if (warn_scene_prop((int)params[1]))
-            SET_LV((__int64)mission()->num_prop_instances((int)params[1]));
+            SET_LV((__int64)mission()->count_props((int)params[1]));
         break;
     case op::scene_prop_get_instance:
         // fails when there is no such instance
         if (warn_scene_prop((int)params[1])) {
-            int n = mission()->prop_instance((int)params[1], (int)params[2]);
+            int n = mission()->find_prop((int)params[1], (int)params[2]);
             if (n < 0)
                 result = 0;
             else
@@ -3036,7 +3036,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::replace_scene_props:
         // only in the scene-load trigger (context -19)
         if (warn_scene_prop((int)params[0]) && warn_scene_prop((int)params[1]) && *context == -19)
-            mission()->replace_props((int)params[0], (int)params[1]);
+            mission()->retag_props((int)params[0], (int)params[1]);
         break;
 
 
@@ -3045,7 +3045,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         mission()->result = (int)params[0];
         break;
     case op::finish_mission:
-        mission()->finish((int)params[0]);
+        mission()->start_clock((int)params[0]);
         break;
     case op::jump_to_scene:
         // (jump_to_scene, <scene_id>, <entry_no>): the entry is set with set_jump_entry
@@ -3062,11 +3062,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::start_mission_conversation:
         {
             MissionX* m = mission();
-            m->conversation = m->start_conversation((int)params[0]);
+            m->conversation = m->find_agent_by_troop((int)params[0]);
         }
         break;
     case op::add_reinforcements_to_entry:
-        mission()->add_reinforcements((int)params[0], (int)params[1]);
+        mission()->check_slot((int)params[0], (int)params[1]);
         break;
     case op::mission_enable_talk:
         game()->talk_enabled = 1;
@@ -3138,10 +3138,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     l->base_color = l->color;
                     l->update();
                     if (mesh >= 0 && ent->meshes)
-                        ent->meshes->attach_light(mesh, l);
+                        ent->meshes->call1(mesh, l);
                 }
             } else
-                mission()->add_point_light((float)params[0] * 0.01f, (float)params[1] * 0.01f);
+                mission()->add_wind_effect((float)params[0] * 0.01f, (float)params[1] * 0.01f);
         }
         break;
     case op::particle_system_add_new:
@@ -3153,11 +3153,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 int mesh = trigger_item_mesh(ctx);
                 int zero = 0;
                 int psys = (int)params[0];
-                void* ps = g_particle_mgr.create(&psys, &game()->position_delta, &zero);
+                void* ps = g_emit_defs.spawn(&psys, &game()->position_delta, &zero);
                 if (ps) {
                     if (mesh >= 0) {
                         if (ent->meshes)
-                            ent->meshes->attach_particle_system(mesh, ps);
+                            ent->meshes->call0(mesh, ps);
                     } else
                         ent->add_particle_system(ps);
                 }
@@ -3183,7 +3183,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     ps = ent->particle_systems[k];
                 }
                 if (ps)
-                    ps->emit((int)params[1]);
+                    ps->reset_pending((int)params[1]);
             }
         }
         break;
@@ -3193,7 +3193,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int strength = 100;
             if (params[2])
                 strength = (int)params[2];
-            mission()->burst((int)params[0], &script_pos((int)params[1]), strength);
+            mission()->spawn_effect((int)params[0], &script_pos((int)params[1]), strength);
         }
         break;
     case op::set_spawn_position:
@@ -3207,19 +3207,19 @@ char Operation::execute(__int64* locals, int* context, int* error)
             r.item = (int)params[0];
             r.set_modifier((int)params[1]);
             r.reduce(0);
-            g_script.reg[0] = mission()->spawn_item(&r);
+            g_script.reg[0] = mission()->place(&r);
         }
         break;
     case op::spawn_agent:
         // (spawn_agent, <troop_id>), (stores agent_id in reg0)
         g_script.reg[0] = -1;
         if (check_troop((int)params[0]))
-            g_script.reg[0] = mission()->spawn_agent((int)params[0]);
+            g_script.reg[0] = mission()->exec_trigger((int)params[0]);
         break;
     case op::spawn_horse:
         g_script.reg[0] = -1;
         if (check_item_kind((int)params[0]))
-            g_script.reg[0] = mission()->spawn_horse((int)params[0], (int)params[1]);
+            g_script.reg[0] = mission()->enter_trigger((int)params[0], (int)params[1]);
         break;
     case op::spawn_scene_prop:
         // opcode 1974 (spawn_scene_prop in later versions): only validates the prop id in 1.011
@@ -3243,7 +3243,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 c = b.set(z, y, x) * s;
                 scale = &c;
             }
-            g_tableaus.add_tableau_mesh((int)params[0], (int)params[1], &script_pos((int)params[2]), *scale);
+            g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), *scale);
         }
         break;
     case op::cur_item_set_tableau_material:
@@ -3252,12 +3252,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
             TriggerItem* it = trigger_item(-50);
             if (it) {
                 int code = (int)params[1], tab = (int)params[0];
-                it->set_tableau_material(g_tableaus.material(&tab, &code));
+                it->set_owner(g_tableaus.add_spawned(&tab, &code));
             } else {
                 TriggerMeshObj* o = trigger_mesh_obj(-50);
                 if (o) {
                     int code = (int)params[1], tab = (int)params[0];
-                    o->set_tableau_material(g_tableaus.material(&tab, &code));
+                    o->set_part(g_tableaus.add_spawned(&tab, &code));
                 }
             }
         }
@@ -3268,7 +3268,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             TriggerMeshObj* o = trigger_mesh_obj(-40);
             if (o) {
                 int code = (int)params[1], tab = (int)params[0];
-                o->set_tableau_material(g_tableaus.material(&tab, &code));
+                o->set_part(g_tableaus.add_spawned(&tab, &code));
             }
         }
         break;
@@ -3278,7 +3278,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             TriggerMeshObj* o = trigger_mesh_obj(-70);
             if (o) {
                 int code = (int)params[1], tab = (int)params[0];
-                o->set_tableau_material(g_tableaus.material(&tab, &code));
+                o->set_part(g_tableaus.add_spawned(&tab, &code));
             }
         }
         break;
@@ -3360,7 +3360,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 c = b.set(z, y, x) * s;
                 scale = &c;
             }
-            g_tableaus.add_mesh((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
+            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
         }
         break;
     case op::cur_tableau_add_mesh_with_vertex_color:
@@ -3384,7 +3384,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 c = b.set(z, y, x) * s;
                 scale = &c;
             }
-            g_tableaus.add_mesh((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
+            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
         }
         break;
     case op::cur_tableau_add_map_icon:
@@ -3395,7 +3395,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 scale = 1.0f;
             else
                 scale = (float)params[2] / g_fixed_point_multiplier;
-            g_tableaus.add_map_icon((int)params[0], &script_pos((int)params[1]), &scale);
+            g_tableaus.spawn_scaled2((int)params[0], &script_pos((int)params[1]), &scale);
         }
         break;
     case op::cur_tableau_add_troop:
@@ -3448,7 +3448,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             else
                 alpha = (float)params[3] / g_fixed_point_multiplier;
             float s = 1.0f / g_fixed_point_multiplier;
-            g_tableaus.add_mesh((int)params[0], &script_pos((int)params[1]),
+            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]),
                                 V(script_pos((int)params[2]).o) * s, &alpha, &color);
         }
         break;
@@ -3462,8 +3462,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             MissionX* m = mission();
             m->cam_mode = clamp_index((int)params[0], 0, 2);
             if (mission()->cam_mode == 0 && params[1] > 0) {
-                mission()->cam_target_frame = mission()->cam_current_frame();
-                mission()->cam_target_aperture = mission()->cam_current_aperture();
+                mission()->cam_target_frame = mission()->get_frame();
+                mission()->cam_target_aperture = mission()->blend_param();
                 mission()->cam_anim_time = (float)params[1] * 0.001f;
                 mission()->cam_timer.restart();
                 mission()->cam_easing = 0;
@@ -3475,7 +3475,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::mission_get_time_speed:
         if (g_mission)
-            SET_LV((__int64)(mission()->current_time_speed() * g_fixed_point_multiplier));
+            SET_LV((__int64)(mission()->blend2_param() * g_fixed_point_multiplier));
         break;
     case op::mission_set_time_speed:
         // (mission_set_time_speed, <value_fixed_point>) #this works only when cheat mode is enabled
@@ -3488,7 +3488,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (mission_speed_move_to_value, <value_fixed_point>, <duration-in-1/1000-seconds>)
         if (g_mission && params[0] > 0 && params[1] > 0) {
             MissionX* m = mission();
-            m->time_speed = m->current_time_speed();
+            m->time_speed = m->blend2_param();
             mission()->target_time_speed = (float)params[0] / g_fixed_point_multiplier;
             mission()->time_speed_anim_time = (float)params[1] * 0.001f;
             mission()->time_speed_timer.restart();
@@ -3496,7 +3496,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::mission_cam_get_position:
         if (g_mission && check_register((int)params[0]))
-            script_pos((int)params[0]) = mission()->cam_current_frame();
+            script_pos((int)params[0]) = mission()->get_frame();
         break;
     case op::mission_cam_set_position:
         if (g_mission && check_register((int)params[0])) {
@@ -3507,10 +3507,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_animate_to_position:
         // (.., <position_register_no>, <duration-in-1/1000-seconds>, <value>) # value 0: linear velocity
         if (g_mission && check_register((int)params[0]) && params[1] > 0) {
-            mission()->cam_frame = mission()->cam_current_frame();
+            mission()->cam_frame = mission()->get_frame();
             mission()->cam_target_frame = script_pos((int)params[0]);
             MissionX* m = mission();
-            m->cam_target_aperture = m->cam_current_aperture();
+            m->cam_target_aperture = m->blend_param();
             mission()->cam_anim_time = (float)params[1] * 0.001f;
             mission()->cam_timer.restart();
             mission()->cam_easing = 0;
@@ -3520,7 +3520,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::mission_cam_get_aparture:
         if (g_mission)
-            SET_LV((__int64)mission()->cam_current_aperture());
+            SET_LV((__int64)mission()->blend_param());
         break;
     case op::mission_cam_set_aparture:
         // clamped to 37..149
@@ -3533,10 +3533,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_animate_to_aparture:
         // (mission_cam_animate_to_aparture, <value>, <duration-in-1/1000-seconds>, <value>)
         if (g_mission && params[1] > 0) {
-            mission()->cam_frame = mission()->cam_current_frame();
+            mission()->cam_frame = mission()->get_frame();
             mission()->cam_target_frame = mission()->cam_frame;
             MissionX* m = mission();
-            m->cam_aperture = m->cam_current_aperture();
+            m->cam_aperture = m->blend_param();
             mission()->cam_target_aperture = (float)clamp_index((int)params[0], 0x25, 0x96);
             mission()->cam_anim_time = (float)params[1] * 0.001f;
             mission()->cam_timer.restart();
@@ -3546,10 +3546,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_animate_to_position_and_aparture:
         // (.., <position_register_no>, <value>, <duration-in-1/1000-seconds>, <value>)
         if (g_mission && check_register((int)params[0]) && params[2] > 0) {
-            mission()->cam_frame = mission()->cam_current_frame();
+            mission()->cam_frame = mission()->get_frame();
             mission()->cam_target_frame = script_pos((int)params[0]);
             MissionX* m = mission();
-            m->cam_aperture = m->cam_current_aperture();
+            m->cam_aperture = m->blend_param();
             mission()->cam_target_aperture = (float)clamp_index((int)params[1], 0x25, 0x96);
             mission()->cam_anim_time = (float)params[2] * 0.001f;
             mission()->cam_timer.restart();
@@ -3581,7 +3581,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::talk_info_set_line:
         // (talk_info_set_line, <line_no>, <string_no>)
         if (IN_RANGE(params[0], 0, 5) && check_string_arg(types[1], (int)params[1])) {
-            game()->set_talk_line((int)params[0], g_script.expand(g_strings.get((int)params[1], types[1])));
+            game()->set_names((int)params[0], g_script.expand(g_strings.get((int)params[1], types[1])));
             game()->talk_line_set[(int)params[0]] = 1;
         }
         break;
@@ -3682,7 +3682,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::change_screen_quit:
         // destroys the game object
-        g_windows.close_all();
+        g_windows.clear_all();
         if (g_game) {
             delete game();
             g_game = 0;
@@ -3929,15 +3929,15 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::store_item_kind_count:
         // (store_item_kind_count, <destination>, <item_id>, [troop_id])
-        SET_LV((__int64)game()->item_count((int)params[1], (int)params[2], 1));
+        SET_LV((__int64)game()->count_in((int)params[1], (int)params[2], 1));
         break;
     case op::store_free_inventory_capacity:
-        SET_LV((__int64)game()->item_count(-1, (int)params[1], 0));
+        SET_LV((__int64)game()->count_in(-1, (int)params[1], 0));
         break;
     case op::store_skill_level:
         // (store_skill_level, <destination>, <skill_id>, [troop_id])
         if (check_troop((int)params[2]))
-            SET_LV((__int64)game()->troop_skill_level((int)params[2], (int)params[1]));
+            SET_LV((__int64)game()->skill_level((int)params[2], (int)params[1]));
         break;
     case op::store_character_level:
         if (check_troop((int)params[1]))
@@ -3949,7 +3949,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::store_proficiency_level:
         if (check_troop((int)params[1]) && IN_RANGE(params[2], 0, 7))
-            SET_LV((__int64)troop((int)params[1])->proficiency((int)params[2]));
+            SET_LV((__int64)troop((int)params[1])->stat_int((int)params[2]));
         break;
     case op::store_troop_faction:
         if (check_troop((int)params[1]))
@@ -4043,7 +4043,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::store_troop_value:
         if (check_troop((int)params[1]))
-            SET_LV((__int64)game()->troop_value((int)params[1]));
+            SET_LV((__int64)game()->sl_party_price((int)params[1]));
         break;
     case op::store_partner_quest:
         // the last active quest given by the conversation troop, -1 if none
@@ -4059,26 +4059,26 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::store_random_quest_in_range:
-        SET_LV((__int64)game()->random_quest((int)params[1], (int)params[2]));
+        SET_LV((__int64)game()->sl_roll_party((int)params[1], (int)params[2]));
         break;
     case op::store_random_troop_to_raise:
-        SET_LV((__int64)game()->random_troop((int)params[1], 0));
+        SET_LV((__int64)game()->sl_pick_chain((int)params[1], 0));
         break;
     case op::store_random_troop_to_capture:
-        SET_LV((__int64)game()->random_troop((int)params[1], 1));
+        SET_LV((__int64)game()->sl_pick_chain((int)params[1], 1));
         break;
     case op::store_random_party_in_range:
-        SET_LV((__int64)game()->random_party((int)params[1], (int)params[2]));
+        SET_LV((__int64)game()->sl_roll_other((int)params[1], (int)params[2]));
         break;
     case op::store01_random_parties_in_range:
         // two different random parties to reg0 and reg1 (at most 100000 tries for the second)
         {
-            int a = game()->random_party((int)params[0], (int)params[1]);
+            int a = game()->sl_roll_other((int)params[0], (int)params[1]);
             int b = a;
             int n = 0;
             while (n < 100000) {
                 ++n;
-                b = game()->random_party((int)params[0], (int)params[1]);
+                b = game()->sl_roll_other((int)params[0], (int)params[1]);
                 if (b != a)
                     break;
             }
@@ -4087,13 +4087,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::store_random_horse:
-        SET_LV((__int64)game()->random_item(1, -1, -1, -1));
+        SET_LV((__int64)game()->pick_random_item(1, -1, -1, -1));
         break;
     case op::store_random_equipment:
-        SET_LV((__int64)game()->random_item(2, 3, 4, -1));
+        SET_LV((__int64)game()->pick_random_item(2, 3, 4, -1));
         break;
     case op::store_random_armor:
-        SET_LV((__int64)game()->random_item(0xc, 0xd, 0xe, -1));
+        SET_LV((__int64)game()->pick_random_item(0xc, 0xd, 0xe, -1));
         break;
     case op::store_quest_number:
         // no quest id check
@@ -4301,7 +4301,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::str_store_date:
         // (str_store_date, <string_register>, <number_of_days_to_add_to_the_current_date>)
         if (check_register((int)params[0]) && params[1] >= 0)
-            g_script.str[(int)params[0]] = game()->format_time((int)params[1]);
+            g_script.str[(int)params[0]] = game()->event_string((int)params[1]);
         break;
     case op::str_store_troop_name_link:
         if (check_register((int)params[0]) && check_troop((int)params[1])) {

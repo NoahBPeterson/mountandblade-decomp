@@ -82,17 +82,17 @@ struct Rec30Tag {                                   // count +0x0, array +0x4, s
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 #pragma pack(push, 4)
 struct Table2 {                                     // the table at Game+0xcc
-    void write(OutStream* out);                     // 0x4e99d0 (next slice)
+    void write_table(OutStream* out);                     // 0x4e99d0 (next slice)
 };
 #pragma pack(pop)
 
 
 extern List8 g_list_a70480;                         // 0xa70480
-extern RecB0* g_29f8;                               // 0x5e29f8 (array of 0xb0-byte records)
-extern int   g_n29fc;                               // 0x5e29fc
+extern RecB0* g_party_templates;                               // 0x5e29f8 (array of 0xb0-byte records)
+extern int   g_party_template_count;                               // 0x5e29fc
 #include "../../include/item_kind.h"
 extern ItemKind* g_items;                           // 0x5e29d0 (array of 0x238-byte item kinds)
-extern int   g_n_items;                             // 0x5e29d4
+extern int   g_item_kind_count;                             // 0x5e29d4
 
 // ---- the sub-writers ------------------------------------------------------------------------------------
 OutStream* write_soa(OutStream* out, char* base);   // 0x4e9620 (free, two stack args)

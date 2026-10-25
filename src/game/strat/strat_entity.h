@@ -45,7 +45,7 @@ struct Ctx {
     std::vector<mesh*> meshes;  // 0xc8 (first at 0xcc)   (render_scene)
     char env[0x32c - 0xd8];     // 0xd8
     std::vector<Psys*> psyss;   // 0x32c (first at 0x330) (render_scene)
-    void locate(const float* p, int* out) const;    // 0x41ed00
+    void to_cell(const float* p, int* out) const;    // 0x41ed00
     Light* first_dir_light();                       // 0x42a1a0
     void sample_lights(const vector4* p, vector4* dir, vector4* amb);   // 0x42ad60
     vector4 ambient();                              // 0x42b6d0 (by-value return)

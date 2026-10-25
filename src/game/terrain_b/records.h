@@ -34,13 +34,13 @@ typedef std::vector<P8>::iterator It8;
 // The wrappers stand for the _Ufill members of vector<MRow36>, vector<MVert>, vector<MPoly> and vector<MEdge> that
 // _Insert_n (0x476370, 0x476620, 0x4768f0, 0x476bb0) calls; the fill itself is an instance in an earlier object.
 struct alloc18 {}; struct alloc24 {}; struct alloc34 {}; struct alloc64 {};
-MVert* __cdecl uninit_fill_n_18(MVert* f, unsigned n, const MVert& v, alloc18& al, ptr_tag tag);   // 0x46b570
+MVert* __cdecl uninit_fill_n24(MVert* f, unsigned n, const MVert& v, alloc18& al, ptr_tag tag);   // 0x46b570
 MVert* __cdecl uninit_fill_n24(MVert* f, unsigned n, const MVert& v, alloc18& al, ptr_tag tag); // 0x46b570
-MRow36* __cdecl uninit_fill_n_24(MRow36* f, unsigned n, const MRow36& v, alloc24& al, ptr_tag tag);         // 0x46b500
+MRow36* __cdecl uninit_fill_n36(MRow36* f, unsigned n, const MRow36& v, alloc24& al, ptr_tag tag);         // 0x46b500
 MRow36* __cdecl uninit_fill_n36(MRow36* f, unsigned n, const MRow36& v, alloc24& al, ptr_tag tag); // 0x46b500
-MEdge* __cdecl uninit_fill_n_34(MEdge* f, unsigned n, const MEdge& v, alloc34& al, ptr_tag tag);   // 0x46b650
+MEdge* __cdecl uninit_fill_n52(MEdge* f, unsigned n, const MEdge& v, alloc34& al, ptr_tag tag);   // 0x46b650
 MEdge* __cdecl uninit_fill_n52(MEdge* f, unsigned n, const MEdge& v, alloc34& al, ptr_tag tag); // 0x46b650
-MPoly* __cdecl uninit_fill_n_64(MPoly* f, unsigned n, const MPoly& v, alloc64& al, ptr_tag tag);   // 0x46b5e0
+MPoly* __cdecl uninit_fill_n100(MPoly* f, unsigned n, const MPoly& v, alloc64& al, ptr_tag tag);   // 0x46b5e0
 MPoly* __cdecl uninit_fill_n100(MPoly* f, unsigned n, const MPoly& v, alloc64& al, ptr_tag tag); // 0x46b5e0
 struct vecMRow36 : alloc24 { MRow36* first; MRow36* last; MRow36* end; MRow36* ufill(MRow36* f, unsigned n, const MRow36& v); };            // 0x4724c0
 struct vec18 : alloc18 { MVert* first; MVert* last; MVert* end; MVert* ufill(MVert* f, unsigned n, const MVert& v); };   // 0x4724f0

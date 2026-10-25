@@ -41,8 +41,8 @@ typedef Widget UiWidget;                // the slice's name for it
 
 // skill table at 0x8ee3100, stride 0x44
 #include "../../include/skill_rec.h"            // SkillRec (shared with src/rgl/mesh2/gui_edit.h)
-extern SkillRec g_skills[];                         // 0x8ee3100
-#define SKILL_ATTR(id) (g_skills[id].attr & 0xf)
+extern SkillRec g_skill_tbl[];                         // 0x8ee3100
+#define SKILL_ATTR(id) (g_skill_tbl[id].attr & 0xf)
 
 // the ini table at 0xa44240 (0x2c-byte entries, see s004bd170)
 #include "../ini_file.h"
@@ -50,14 +50,14 @@ extern ini_file g_config;                           // 0xa44240
 
 // the character texture's text anchors for the level values; the original loads the pointer stored
 // in each global and prints it as a "%s" argument
-extern const char* g_char_t_level_x;                // 0xa18120
-extern const char* g_char_t_level_y;                // 0xa18124
+extern const char* g_skill_leadership_bonus;                // 0xa18120
+extern const char* g_skill_prisoner_management_bonus;                // 0xa18124
 
 // the character sheet panel (full layout in s004eeb10)
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
 
 // 0x4f04f0: the proficiency group name of proficiency idx into buf (another slice)
-void prof_group_name(int idx, char* buf);           // 0x4f04f0
+void weapon_class_caption(int idx, char* buf);           // 0x4f04f0
 void weapon_class_caption(int cls, char* out); // 0x4f04f0
 
 // translated text of a key (lookup, falling back to the key's own storage when the buffer is null)

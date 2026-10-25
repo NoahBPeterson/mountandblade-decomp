@@ -28,7 +28,7 @@ extern resmgr g_alloc;                                      // 0x5d6fa0
 
 // world / terrain object at 0xa76630 (the terrain generator)
 struct TerrainGen {
-    void gen_reset();                                       // 0x4647e0
+    void reset();                                       // 0x4647e0
 };
 extern TerrainGen g_terrain_gen;                            // 0xa76630
 
@@ -38,7 +38,7 @@ struct frustum_t {
     float f108, f10c, f110, f114, f118, f11c;               // +0x108
     char pad120[0x344 - 0x120];
     frustum_t(float fov, float aspect, float zmin, float zmax);     // 0x478ad0
-    void set_fov(float h, float v, float a, float b, float c);      // 0x488cd0
+    void set_fog(float h, float v, float a, float b, float c);      // 0x488cd0
 };
 
 // ---- the widget interface (slot offsets in comments) -----------------------------------------------
@@ -107,7 +107,7 @@ struct FaceBoard : UiWidget {                               // ctor 0x4931a0 (+ 
 
 // ---- helpers / globals ------------------------------------------------------------------------------
 extern char g_gui[];                                        // 0x5d7080 (the GUI root object)
-void gui_reset(char* g);                                    // 0x42d1b0
+void reset(char* g);                                    // 0x42d1b0
 void gui_push(char* g, void** w);                           // 0x49b120 (appends to the root widget list)
 extern unsigned char g_gui_dirty;                           // 0x5d8788
 extern int g_region_names[];                                // 0x59394c, 8 entries ending at 0x59396c
@@ -116,7 +116,7 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);    // 0x536f8f
 extern "C" int __cdecl rand(void);                          // 0x536a9f
 
 UiSlider* make_slider(void* parent, float x, float y);                                  // 0x4dfd50
-UiWidget* make_option(void* parent, const tstring* name, float x, float y);             // 0x4dfec0
+UiWidget* make_dropdown(void* parent, const tstring* name, float x, float y);             // 0x4dfec0
 UiWidget* make_medium(void* parent, tstring* a, float x, float y, float w, float h,
                       tstring* b, tstring* c);                                          // 0x4dcc50
 UiWidget* make_short(void* parent, tstring* a, float x, float y, float w, float h,

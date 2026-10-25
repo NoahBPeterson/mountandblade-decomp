@@ -219,7 +219,7 @@ struct MAgent {
     Timed t5918;   // +0x5918 (0x477a30)
     MAgent();                    // 0x477a30
     void reset();               // 0x472f90
-    int troop_class();          // 0x433140 (0 infantry, 1 archer, 2 cavalry)
+    int agent_class();          // 0x433140 (0 infantry, 1 archer, 2 cavalry)
     int update_nav_face();      // 0x43cb30
 };
 

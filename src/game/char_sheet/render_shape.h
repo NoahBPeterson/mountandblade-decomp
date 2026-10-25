@@ -37,7 +37,7 @@ extern float g_div;                     // 0x5d7594  1/radius
 struct RenderScene {                    // the scene object at GuiCtx+0x178 (renamed from Scene: party/game.h Scene is the party manager at game+0xf8)
     char pad000[0xb8];
     Vec1c fb8;                          // +0xb8 (copied into GuiCtx+0x310)
-    void render(int* cells, char a);              // 0x429890 renders the +0x17c extent
+    void render_scene(int* cells, char a);              // 0x429890 renders the +0x17c extent
 };
 
 

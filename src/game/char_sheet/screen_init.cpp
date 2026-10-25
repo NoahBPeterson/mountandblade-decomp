@@ -14,7 +14,7 @@ void Screen::init_screen()
     g_gui.reset();
     g_game->f1a090 = 0;
     g_5e212c = 1;
-    ctor_494310((void*)0x5aa128);
+    stop_all((void*)0x5aa128);
     g_game->f88 = 1;
     f2d4 = 0;
     f2d5 = 0;
@@ -56,11 +56,11 @@ void Screen::init_screen()
     s0.y = 0.05f;
     buttons->set_scale(&s0.x);
     {
-        buttons->set_mesh(0, clone_41c6d0(g_resmgr.get_object(tstring("map_bar"))));
+        buttons->set_mesh(0, clone(g_resmgr.get_object(tstring("map_bar"))));
     }
     f48 = 0;
     if (g_5a9fb0) {
-        f48 = (int)ui_terrain_quad(buttons, (void*)g_strtab.lookup(tstring("ui_terrain")));
+        f48 = (int)make_short_button(buttons, (void*)g_strtab.lookup(tstring("ui_terrain")));
     }
     f4c = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
     f38 = new_medium_button(buttons, (void*)g_strtab.lookup(tstring("ui_reports")), 0.18f, 0.006f, 0.03f);
@@ -94,7 +94,7 @@ void Screen::init_screen()
     else
         map = 0;
     f30 = map;
-    map->world = (void*)g_a732b4;
+    map->world = (void*)g_level;
     memcpy(&map->view, &cam, 0x120);
     vector2 mp;
     mp.x = 0.0f;
@@ -179,16 +179,16 @@ void Screen::init_screen()
     }
     camera_mark_entities();
 
-    if (g_a732b4 != g_a70438 && g_5e28fc) {
-        g_psys.finish(g_a732b4);
-        void* scene_objs = *(void**)((char*)g_a732b4 + 0xb0);
+    if (g_level != g_a70438 && g_use_shaders) {
+        g_psys.attach_camera(g_level);
+        void* scene_objs = *(void**)((char*)g_level + 0xb0);
         int count = (*(int*)((char*)scene_objs + 8) - *(int*)((char*)scene_objs + 4)) / 0x24;
         char* p = *(char**)((char*)scene_objs + 4);
         for (int i = 0; i < count; i++, p += 0x24) {
-            g_psys.add_scene_obj(p);
+            g_psys.extend(p);
         }
-        g_psys.flush();
-        g_psys.reset();
+        g_psys.fit_bounds();
+        g_psys.render();
     }
 }
 

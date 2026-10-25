@@ -42,10 +42,10 @@ check_follow:
     mat4 m;
     identity_pos(&m);
     float angle = 1.5707964f;
-    ((mat4_self*)&m)->rotate_fu(&angle);
-    ((mat4_self*)&m)->rotate_su(&yaw);
+    ((mat4_self*)&m)->rotate_about_s(&angle);
+    ((mat4_self*)&m)->rotate_about_f(&yaw);
     angle = -pitch;
-    ((mat4_self*)&m)->rotate_fu(&angle);
+    ((mat4_self*)&m)->rotate_about_s(&angle);
     m.o.z = -0.1f;
     *(mat4*)((char*)ent + 0x58) = m;
 }

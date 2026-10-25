@@ -10,9 +10,9 @@ void __fastcall pick_entity(GuiCtx* self)
     Mission* sc = (Mission*)g_tasks;
     *(char*)(sc->f65dc + 0x140) = 0;
     if (g_menu_mode) {
-        self->reset_all(1);
+        self->set_o568(1);
         vector2 pp(0.5f, 0.23f);
-        self->set_pair(&pp);
+        self->set_view(&pp);
         set_junk = 0;
         return;
     }
@@ -59,8 +59,8 @@ void __fastcall pick_entity(GuiCtx* self)
             centre.x = 0.0f; centre.y = 0.0f; centre.z = 1.0f; centre.w = o.w;
             rad = row->mat[3].length();
             int map = row->ref;
-            if (map >= 0 && map < g_map_count) {
-                int* maprow = (int*)((char*)g_map_rows + map * 0x20);
+            if (map >= 0 && map < g_ptype_count) {
+                int* maprow = (int*)((char*)g_ptypes + map * 0x20);
                 if (row->point < 0 || maprow[6] <= row->point)
                     row->point = row->point % maprow[6];
                 char* pr = (char*)maprow[7] + row->point * 0x48;
@@ -74,7 +74,7 @@ void __fastcall pick_entity(GuiCtx* self)
         } else if (row->kind == 5) {
             rad = (row->mat[1].x + row->mat[0].x) * 0.5f;
         } else if (row->kind == 0) {
-            char* pr = (char*)g_point_rows + row->ref * 0x78;
+            char* pr = (char*)g_propkinds + row->ref * 0x78;
             centre = *(vector4*)(pr + 0x58);
             rad = row->mat[3].length() * *(float*)(pr + 0x68);
             hit = *(shape_base**)(pr + 0x54);
@@ -113,7 +113,7 @@ void __fastcall pick_entity(GuiCtx* self)
     g_list1 = 0;
     g_sel_ent = 0;
     vector2 pair(0.1f, 0.13f);
-    self->set_pair(&pair);
+    self->set_view(&pair);
     if (self->f2cc == -1) {
         self->f2c8 = -1;
         return;

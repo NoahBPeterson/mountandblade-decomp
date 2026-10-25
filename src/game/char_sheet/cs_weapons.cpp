@@ -60,7 +60,7 @@ void CharSheet::update_weapons()
         }
         if (c->prof_points > 0
             && (float)g_weapon_xp[g_game->skill_level(player, 0x1b)] >= c->f80[i]
-            && g_weapon_xp_cats[i] != 0
+            && g_display_wp_one_handed[i] != 0
             && c->steps_to_point(i) <= c->prof_points)
             rows[i]->show();   // slot +0xb4 (the slice called it show_selected)
         else

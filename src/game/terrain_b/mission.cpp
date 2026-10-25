@@ -118,8 +118,8 @@ void CellGrid::init(const float* lo_, const float* hi_, int dimx, int dimy)
 void CellGrid::insert(int id, const float* lo_, const float* hi_)
 {
     int a[2], b[2];
-    locate(lo_, a);
-    locate(hi_, b);
+    to_cell(lo_, a);
+    to_cell(hi_, b);
     for (int x = a[0]; x <= b[0]; x++)
         for (int y = a[1]; y <= b[1]; y++)
             cells[x][y].b.push_back(id);
@@ -478,7 +478,7 @@ void Terrain::spawn_bodies(SpawnSet* r)
             shape_calls* o = (shape_calls*)rs->clone_shape();
             o->transform(&e->m);
             o->or_m8(0x200);
-            grid->reg(o);
+            grid->reg_shape(o);
         }
     }
 }
@@ -534,7 +534,7 @@ void Mission::rebuild_nav(int which, int)
         matrix m;
         identity_pos(&m);
         o->transform(&m);
-        s->reg(o);
+        s->reg_shape(o);
     }
 }
 

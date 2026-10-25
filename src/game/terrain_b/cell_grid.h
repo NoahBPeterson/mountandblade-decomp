@@ -53,7 +53,7 @@ struct NavData {                // 0x68 bytes
     NavData();                  // 0x478150 (same constructor as NavCore's, ICF-folded)
     ~NavData();                 // 0x41f5d0 (four_vecs::~four_vecs)
     // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----
-    bool linked(const int* a, const int* b);    // 0x48efa0 (other object)
+    bool shares(const int* a, const int* b);    // 0x48efa0 (other object)
     bool can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max);   // 0x4b3420 (ret 0x1c)
     void reset();                               // 0x4b33c0 (new search generation: m64)
     bool find_path(int from, int to, int* path, float* detail, int* count, int* visited, int* guard,
@@ -136,20 +136,20 @@ struct CellGrid : CellGridBase {
     int f340;                                   // +0x340
 
     void init(const float* lo_, const float* hi_, int dimx, int dimy);      // 0x478830
-    void locate(const float* p, int* out) const;                            // 0x41ed00
+    void to_cell(const float* p, int* out) const;                            // 0x41ed00
     void insert(int id, const float* lo_, const float* hi_);                // 0x478a10
     CellGrid(const float* lo_, const float* hi_, const int* dimx, const int* dimy, const int* v);  // 0x478ad0
     ~CellGrid();                                                            // 0x475d50
-    void cleanup();                                                         // 0x421390 (rgl::world::reset)
+    void reset();                                                         // 0x421390 (rgl::world::reset)
     void build(PolyMesh* m);                                                    // 0x478c50
     Wind* spawn_wind();                                                     // 0x478f30
     void sample_lights(const rgl::vector4* p, rgl::vector4* dir, rgl::vector4* amb);   // 0x42ad60
     void build_light_frame(rgl::matrix* m, rgl::vector4* amb);              // 0x470c00
-    int trace(const rgl::vector4* from, const rgl::vector4* to, float maxlen, int a, void** hit);   // 0x439d60 (ret 0x14)
+    int trace_ray(const rgl::vector4* from, const rgl::vector4* to, float maxlen, int a, void** hit);   // 0x439d60 (ret 0x14)
     void floor_at(const float* p, float* out_z, face** out_face);           // 0x439be0 (ret 0xc)
     void light_at(rgl::vector4 p, rgl::vector4 n, rgl::vector4* out_dir, rgl::vector4* out_col, unsigned flags, float scale);   // 0x43ac40 (ret 0x30)
     void update_probes(unsigned flags);                                     // 0x472ed0
-    void reg(void* o);                                                      // 0x424170
+    void reg_shape(void* o);                                                      // 0x424170
     void post(void* o);                                                     // 0x425240
     Entity* create_entity(int type_id);                                     // 0x428440
     void build_faces(NavData* map);                                         // 0x479980

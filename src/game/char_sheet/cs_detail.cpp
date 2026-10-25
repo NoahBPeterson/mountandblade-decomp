@@ -22,7 +22,7 @@ void CharSheet::update_detail()
     if (f_2d8 == 1) {
         // skills page: one skill row
         int id = f_228[row];
-        SkillRec* sk = &g_skills[id];
+        SkillRec* sk = &g_skill_tbl[id];
         tstring sep(": ");
         tstring* name = g_strtable.find(&sk->key);
         if (!name)
@@ -30,9 +30,9 @@ void CharSheet::update_detail()
         tstring s = (*name + sep) + *sk->desc_name();
         const char* anchor = 0;
         if (id == 2)
-            anchor = g_char_t_level_y;
+            anchor = g_skill_prisoner_management_bonus;
         else if (id == 1)
-            anchor = g_char_t_level_x;
+            anchor = g_skill_leadership_bonus;
         mb_snprintf(title, 0x400, s.c_str(), anchor);
         {
             tstring tt(title);
@@ -66,7 +66,7 @@ void CharSheet::update_detail()
             f_434->hide();
             return;
         }
-        int maxlvl = g_skills[id].cap;
+        int maxlvl = g_skill_tbl[id].cap;
         TroopRec* t = &g->chars[f_14];
         if (t->nibble(id) < maxlvl && t->skill_points >= 1 &&
             (g_game->chars[f_14].nibble(id) + 1) * 3 <= g->chars[f_14].attrs[SKILL_ATTR(id)]) {
@@ -96,7 +96,7 @@ void CharSheet::update_detail()
         return;
     }
     if (f_2d8 == 2) {                                       // proficiencies page
-        prof_group_name(row, body);
+        weapon_class_caption(row, body);
         row = f_2d4;
         if (row == 0)
             strcpy(attr, tr(tstring("ui_explanation_one_handed_weapon")));

@@ -81,7 +81,7 @@ void mb_error(const char* fmt, ...)
 // @ 0x42cd20
 void gui_timer::set_delay(float seconds)
 {
-    t = g_time[clock] - (int)(seconds * 100000.0f);
+    t = g_ticks[clock] - (int)(seconds * 100000.0f);
 }
 
 // @ 0x42cd60
