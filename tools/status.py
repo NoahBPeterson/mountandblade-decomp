@@ -3,8 +3,9 @@
 
 Denominator: Ghidra functions in .text below the import thunks (0x5342a6), minus the CRT/C++ library
 functions identified byte-exact in symbols/lib_names.txt (linked from the real libcmt/libcpmt, not
-decompiled). The EH-handler and atexit stubs after the CRT are compiler-generated with their parent
-functions and are not counted separately.
+decompiled). Plus the game's dynamic initializers and the atexit destructors they register (0x5479a0..0x54856e,
+after the CRT: the constructors of the game's file-scope globals; src/game/static_init/). The EH handlers
+and unwind funclets are compiler-generated with their parent functions and are not counted separately.
 
 Tiers (from match/manifest.txt, match/slices/*/{manifest,nonmatching,partial}.txt and the migrated modules'
 src/**/<module>.{manifest,nonmatching,partial}.txt):
@@ -20,6 +21,7 @@ import csv, glob, os, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 W = lambda *p: os.path.join(ROOT, *p)
 GAME_END = 0x5342A6
+INIT_LO, INIT_HI = 0x5479A0, 0x54856E    # the game's dynamic initializers and their atexit destructors
 
 not_func = set()
 for line in open(W("symbols/not_functions.txt")):
@@ -37,7 +39,7 @@ for line in open(W("symbols/lib_names.txt")):
             lib.add(int(p[0], 16))
         except ValueError:
             pass
-game = {a for a in starts if a < GAME_END and a not in lib}
+game = {a for a in starts if (a < GAME_END or INIT_LO <= a < INIT_HI) and a not in lib}
 
 
 def rows(pattern, col):

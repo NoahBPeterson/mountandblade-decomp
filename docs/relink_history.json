@@ -34,5 +34,23 @@
    "CRT": 16,
    "other": 0
   }
+ },
+ "2026-10-25T10:03:37-05:00": {
+  "when": "2026-10-25T10:03:37-05:00",
+  "commit": "549be53",
+  "objects": 171,
+  "compile_failures": 0,
+  "unresolved": 2336,
+  "duplicates": 13,
+  "linked": false,
+  "by_category": {
+   "name mismatch": 642,
+   "global data": 1290,
+   "no annotation": 307,
+   "missing body": 11,
+   "third-party": 70,
+   "CRT": 16,
+   "other": 0
+  }
  }
 }

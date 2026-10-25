@@ -70,6 +70,29 @@ if rl:
     if not rl["linked"]:
         print(table(["Unresolved, by cause", "Symbols"], [[k, v] for k, v in rl["by_category"].items() if v]))
 
+# Static data: what our source defines of the original's .rdata/.data/.bss (tools/relink/data_coverage.py --record)
+try:
+    dc = sorted(json.load(open(W("docs", "data_history.json"))).values(), key=lambda p: p["when"])[-1]
+except (OSError, ValueError, IndexError):
+    dc = None
+if dc:
+    it, sb = dc["items"], dc["section_bytes"]
+    gcls = [c for c in it if c != "library data"]
+    gitems = sum(it[c] for c in gcls)
+    init = lambda c: sb[".rdata"][c] + sb[".data"][c]
+    ginit = sum(init(c) for c in gcls)
+    gbss = sum(sb[".bss"][c] for c in gcls)
+    src = it["defined in source"] + it["generated from source"]
+    print()
+    print("Static data (items recovered from their uses, %s, commit %s): %d of %d game data items come from our source "
+          "(%s); the rest the standalone link takes from the original image.\nNamed globals: %d defined in source, %d "
+          "borrowed (string literals, constants and vtables are the compiler's)" % (
+              dc["when"][:16].replace("T", " "), dc["commit"], src, gitems, pc(src, gitems),
+              it["defined in source"], it["borrowed from image"]))
+    print(table(["Class", "Items", "Share", ".rdata+.data", "Share (bytes)", ".bss"],
+                [[c, it[c], pc(it[c], gitems) if c in gcls else "-", "%.1f KB" % (init(c) / 1024),
+                  pc(init(c), ginit) if c in gcls else "-", "%.1f MB" % (sb[".bss"][c] / 1e6)] for c in it]))
+
 rows = []
 for bf in sorted(glob.glob(W("work", "batches", "*.json")), key=os.path.getmtime):
     sl = json.load(open(bf))

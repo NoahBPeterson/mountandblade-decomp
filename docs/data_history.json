@@ -1,0 +1,45 @@
+{
+ "2026-10-25T10:03:14-05:00": {
+  "when": "2026-10-25T10:03:14-05:00",
+  "commit": "549be53",
+  "items": {
+   "defined in source": 44,
+   "generated from source": 2002,
+   "borrowed from image": 789,
+   "reached through tables": 790,
+   "library data": 538
+  },
+  "bytes": {
+   "defined in source": 6806,
+   "generated from source": 315476,
+   "borrowed from image": 126905814,
+   "reached through tables": 17009720,
+   "library data": 57058
+  },
+  "section_bytes": {
+   ".rdata": {
+    "defined in source": 2136,
+    "generated from source": 315476,
+    "borrowed from image": 5612,
+    "reached through tables": 18264,
+    "library data": 45746
+   },
+   ".data": {
+    "defined in source": 2940,
+    "generated from source": 0,
+    "borrowed from image": 6040,
+    "reached through tables": 178496,
+    "library data": 5036
+   },
+   ".bss": {
+    "defined in source": 1730,
+    "generated from source": 0,
+    "borrowed from image": 126894162,
+    "reached through tables": 16812960,
+    "library data": 6276
+   }
+  },
+  "unreferenced_bytes": 100,
+  "total_bytes": 144294974
+ }
+}
