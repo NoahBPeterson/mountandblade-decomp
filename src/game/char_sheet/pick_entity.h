@@ -17,10 +17,11 @@ using rgl::vector4;
 // ---- constants / callees ------------------------------------------------------------------------------------
 extern const float g_549cdc;            // 1.0f
 extern const float g_549d70;            // 0.5f
-extern const float g_3f000000;          // 0.5f   (contact radius)
-extern const float g_3f8ccccd;          // 1.1f   (pick tolerance)
-extern const float g_4e6e6b28;          // 1e9f   (far reach)
-extern const float g_3ac49ba6;          // 1.5e-3f (capsule radius)
+// compile-time constants: the original stores / pushes them as immediates (0x4ed921, 0x4ed99d, 0x4ed9a9), no image address
+const float g_3f000000 = 0.5f;          // 0x3f000000 (contact radius)
+const float g_3f8ccccd = 1.1f;          // 0x3f8ccccd (pick tolerance)
+const float g_4e6e6b28 = 1e9f;          // 0x4e6e6b28 (far reach)
+const float g_3ac49ba6 = 1.5e-3f;       // 0x3ac49ba6 (capsule radius)
 
 // ---- globals ------------------------------------------------------------------------------------------------
 extern int g_menu_mode;                 // 0x5e2930+0x1a20c

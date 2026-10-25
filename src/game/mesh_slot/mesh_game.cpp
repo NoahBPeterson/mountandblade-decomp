@@ -102,7 +102,7 @@ template<class T> struct PoolS {
     std::vector<int> free_ids;          // +4
     std::vector<T*> pages;              // +0x14
     int serial;                         // +0x24
-    int alloc();                        // 0x478020 (thiscall, 16-record pages)
+    int alloc() { return ((Pool<MAgent>*)this)->alloc(); }   // 0x478020 (thiscall, 16-record pages: terrain_b.cpp's Pool<MAgent>::alloc)
 };
 
 // ---- the objects behind the game pointer ---------------------------------------------------------------------------

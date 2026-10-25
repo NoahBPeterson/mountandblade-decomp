@@ -6,6 +6,45 @@
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
+#include "../game_globals.h"      // g_dialogs 0x8ed50c8 (listed directly: the resolution audit reads only the source's own includes)
+
+// UTF-8 -> int code points (0x487b00; a static of another object with cl's register convention: text in edi, count out
+// in edx, buf and &capacity on the stack, as 0x4f7926 calls it). Local copy (as in cls_map.cpp, ui_widgets_a.cpp).
+static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int* buf, const int* maxn)   // 0x487b00
+{
+    *out_len = 0;
+    int n = s->len;
+    int i = 0;
+    if (n > 0) {
+        do {
+            if (*out_len >= *maxn)
+                break;
+            unsigned char c = s->buf[i];
+            int ch;
+            if (c >= 0xf0 && c < 0xf5) {
+                const unsigned char* q = (const unsigned char*)s->buf + i;
+                ch = (((((q[0] & 7) << 6) | (q[1] & 0x3f)) << 6 | (q[2] & 0x3f)) << 6) | (q[3] & 0x3f);
+                i += 4;
+            } else if (c >= 0xe0 && c < 0xf0) {
+                const unsigned char* q = (const unsigned char*)s->buf + i;
+                ch = ((((q[0] & 0xf) << 6) | (q[1] & 0x3f)) << 6) | (q[2] & 0x3f);
+                i += 3;
+            } else if (c >= 0xc2 && c < 0xe0) {
+                const unsigned char* q = (const unsigned char*)s->buf + i;
+                ch = (((q[0] & 0x1f) << 6) | (q[1] & 0x3f));
+                i += 2;
+            } else {
+                i++;
+                if (c >= 0x80)
+                    continue;
+                ch = (signed char)c;
+            }
+            buf[*out_len] = ch;
+            (*out_len)++;
+        } while (i < n);
+    }
+}
+
 // @ 0x4f73c0
 void ConvScreen::refresh(int sel, int* out)
 {
@@ -57,8 +96,11 @@ tail:
                 (void)setting_float("conv_sentence_button_height");
                 float size_y = setting_float("conv_sentence_size_y");
                 float h = size_y * 0.65f;
-                int count = 0;
-                text_px = decode_utf8(&text, &count, 0) * ratio * 0.39f;
+                int count;
+                int maxn = 0x800;                        // [esp+0x6c] (0x4f7608)
+                int codes[0x800];                        // the 0x2000-byte code-point buffer of the 0x222c frame
+                decode_utf8(&text, &count, codes, &maxn);
+                text_px = (float)count * ratio * 0.39f;  // the width estimate is the code-point count (fild at 0x4f792b)
                 if (size_y * 23.5f - 0.02f < text_px && (flags & 0x80000)) {
                     flags = 0x100;
                     buttons[i]->set_flag((const int*)&flags);

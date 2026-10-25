@@ -2425,6 +2425,18 @@ void GameData::label_text(rgl::mesh* m, const tstring* text, char flag, int arg,
 // all of them are DialogBlock / Elem members (items, count, done = the linked flag, text = the script id at +0xc).
 // ======================================================================================
 
+// 0x49cc60 is a file-static function in the original translation unit (the message in ECX): a local copy of
+// script_interpreter.cpp's byte-exact definition. "%s; LINE NO: %d:" to the message log and the text log, error flag up.
+static __declspec(noinline) void report(const char* msg)
+{
+    char buf[1024];
+    sprintf(buf, "%s; LINE NO: %d:", msg, g_lineno);
+    g_gui.add(tstring(buf), 0xffff5555);
+    LogStreamBase& lg = g_log;
+    lg.w_cstr(buf);
+    g_script_error = 1;
+}
+
 // 0x49d160 is a file-static function in the original translation unit, so its pointer argument arrives in
 // EAX.  A local static re-implementation reproduces that convention exactly (and hence the original
 // behaviour); the party-table probe mirrors 0x49d160: max-id guard, index_of, page/base lookup, live flag.

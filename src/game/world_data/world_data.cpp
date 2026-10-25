@@ -1404,7 +1404,7 @@ template void std::vector<int>::push_back(const int&);
 void RecPool::alloc_record()
 {
     if (free_ids.size() <= 0) {
-        Rec98* blk = new Event[16];
+        Rec98* blk = (Rec98*)new Event[16];
         pages.push_back(blk);
         for (int i = 0; i < 16; ++i) {
             blk[i].f4 = 0;

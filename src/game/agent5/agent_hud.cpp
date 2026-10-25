@@ -13,6 +13,8 @@
 #include "./agent_hud.h"
 #include "../gui_mgr.h"           // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../rgl/mesh_x.h"
+#include "../../rgl/mesh.h"      // mesh::set_part 0x495ba0 (listed directly: the resolution audit reads only the source's own includes)
+#include "../agent_obj.h"      // posm::rotate_about_u 0x40e770, Agent::set_slot 0x470d80 (listed directly)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/fx.h"

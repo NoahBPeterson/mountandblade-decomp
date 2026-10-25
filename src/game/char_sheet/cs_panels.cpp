@@ -4,7 +4,6 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-// @ 0x4f0820
 // Each looked-up string / posted line is a named tstring local (the original takes their address with lea).
 #define POS(W, LINE, KEY_Y, KEY_X)                       \
     do {                                                 \
@@ -19,6 +18,7 @@
         W->set_text_at(t, pos);                         \
     } while (0)
 
+// @ 0x4f0820
 void CharSheet::refresh_panels()
 {
     int i;

@@ -113,8 +113,8 @@ struct loading_config {
     std::vector<E176> r1bc;         // +0x1bc (copy ctor 0x4da300, operator= 0x4d9840)
     struct Ints7 { int v1cc, v1d0, v1d4, v1d8, v1dc, v1e0, v1e4; } t1cc;    // +0x1cc (the copy constructor copies these seven as one block: rep movsd)
     int v1e8, v1ec, v1f0, v1f4;
-    loading_config();                                           // (other object)
-    ~loading_config();                                          // (other object)
+    loading_config();                                           // model_b::model_b (src/game/model_b.h: the same 0x1f8-byte record; progress_bar.cpp forwards to it)
+    ~loading_config();                                          // 0x4d3720 (model_b::~model_b)
     loading_config& operator=(const loading_config& src);     // 0x4da410
 };
 loading_config* copy_loading_config(loading_config* self, const loading_config* o);   // forces the implicit copy constructor 0x4dc030

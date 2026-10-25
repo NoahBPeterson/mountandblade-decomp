@@ -33,10 +33,6 @@ extern WindowMgrW g_windows;                                // 0xa73980 (screen 
 extern int g_save_kind;                                     // 0x5e29bc
 extern int g_a75eb8;                                        // 0xa75eb8
 
-struct GameStep2 { void call(int v); };                     // 0x5236f0 (this = g_game)
-struct GameStep4 { void call(); };                          // 0x51f1a0
-struct GameStep4b { void call(); };                         // 0x520b20
-struct GameStep6 { void call(); };                          // 0x520d60
 #include "../meta_mission.h"                                 // MetaMission (0xa73300): the one definition (init 0x4be742, entered through 0x4be730)
 
 template<> void std::vector<int>::resize(size_t, int);       // 0x43f310 (agent3/agent_combat.cpp: the out-of-line instance, only declared)
@@ -118,7 +114,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         return false;
     }
     if (step == 2) {
-        ((GameStep2*)g_game)->call(g_a75eb8);
+        g_game->load_game_data(g_a75eb8);   // 0x5236f0
         if (mode == 1) {
             Game* g = g_game;
             {
@@ -150,7 +146,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
     if (step == 4) {
         int m = mode;
         if (m == 0 || m == 2 || m == 3) {
-            ((GameStep4*)g_game)->call();
+            g_game->start_new_game();          // 0x51f1a0
             if (m == 2 || m == 3) {
                 Game* g = g_game;
                 tstring key("ui_player");
@@ -159,7 +155,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
             }
         }
         if (mode != 2 && mode != 3)
-            ((GameStep4b*)g_game)->call();
+            g_game->build_map();               // 0x520b20
         log_stream_ptr()->w_cstr("load_map_data complete.\n");
         *counter = *counter + 1;
         tstring k("ui_initializing_map");
@@ -179,7 +175,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         ((MetaMission*)0xa73300)->init();
         log_stream_ptr()->w_cstr("init_meta_mission complete.\n");
         if (mode != 2 && mode != 3) {
-            ((GameStep6*)g_game)->call();
+            g_game->build_scene();             // 0x520d60
             g_new_game_done = 1;
         }
         log_stream_ptr()->w_cstr("launch complete.\n");

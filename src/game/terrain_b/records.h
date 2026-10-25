@@ -56,10 +56,22 @@ struct vec34 : alloc34 { MEdge* first; MEdge* last; MEdge* end; MEdge* ufill(MEd
 // ---- ArrSet: name + five (count, int array) pairs (0x38 bytes) -----------------------------------------------------
 #include "../arr_set.h"
 
-// The range algorithms of vector<ArrSet> are the object's own out-of-line instances (erase / resize call them):
+// The range algorithms of vector<ArrSet> are the object's own out-of-line instances (erase / resize call them): terrain_b.cpp's
+// destroy_arrsets (0x4727a0) and terrain_a.cpp's copy_arrset (0x468050, declared for its elem56 view of the same record). The
+// specialisations forward to them by name through the four-parameter type (the caller still pushes the tag slot), so the
+// relink binds them directly (the linker cannot alias a `??$` template name).
+struct elem56;
+elem56* __cdecl copy_arrset(elem56* f, elem56* l, elem56* d);                                     // 0x468050
+void __cdecl destroy_arrsets(ArrSet* first, ArrSet* last);                                       // 0x4727a0
 namespace std {
-template<> void _Destroy_range<ArrSet, allocator<ArrSet> >(ArrSet*, ArrSet*, allocator<ArrSet>&, _Nonscalar_ptr_iterator_tag);   // 0x4727a0
-template<> ArrSet* _Copy_opt<ArrSet*, ArrSet*>(ArrSet*, ArrSet*, ArrSet*, _Nonscalar_ptr_iterator_tag);                         // 0x468050
+template<> inline void _Destroy_range<ArrSet, allocator<ArrSet> >(ArrSet* f, ArrSet* l, allocator<ArrSet>& al, _Nonscalar_ptr_iterator_tag t)   // 0x4727a0
+{
+    ((void (__cdecl*)(ArrSet*, ArrSet*, allocator<ArrSet>&, _Nonscalar_ptr_iterator_tag))destroy_arrsets)(f, l, al, t);
+}
+template<> inline ArrSet* _Copy_opt<ArrSet*, ArrSet*>(ArrSet* f, ArrSet* l, ArrSet* d, _Nonscalar_ptr_iterator_tag t)   // 0x468050
+{
+    return ((ArrSet* (__cdecl*)(ArrSet*, ArrSet*, ArrSet*, _Nonscalar_ptr_iterator_tag))copy_arrset)(f, l, d, t);
+}
 }
 
 // ---- std::vector<ArrSet> helpers: the allocator-carrying wrappers around the earlier objects' algorithms ----------------

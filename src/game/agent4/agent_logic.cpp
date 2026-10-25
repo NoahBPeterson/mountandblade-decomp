@@ -89,10 +89,21 @@ static inline vector4 a_vsub(const vector4& a, const vector4& b) { return vector
 
 #define itp_two_handed 0x200000
 
+// The std::vector<E56> range helpers at 0x442080 / 0x444bc0 are agent3/agent_fx_sound.cpp's definitions (uninit_copy_e56,
+// uninit_fill_n_e56). The specialisations below forward to them by name, called through the five-parameter type so the
+// caller still pushes the tag slot as the original does (the linker cannot alias a `??$` template name to them).
+E56* __cdecl uninit_copy_e56(const E56* first, const E56* last, E56* dest, alloc_e56& al);          // 0x442080
+void __cdecl uninit_fill_n_e56(E56* first, unsigned n, const E56& val, alloc_e56& al, int tag);     // 0x444bc0
 namespace std {
 // out-of-object helpers of the std::vector<E56> instantiations
-template<> E56* _Uninit_copy<E56*, E56*, allocator<E56> >(E56*, E56*, E56*, allocator<E56>&, _Nonscalar_ptr_iterator_tag);        // 0x442080
-template<> void _Uninit_fill_n<E56*, unsigned int, E56, allocator<E56> >(E56*, unsigned int, const E56&, allocator<E56>&, _Nonscalar_ptr_iterator_tag);   // 0x444bc0
+template<> inline E56* _Uninit_copy<E56*, E56*, allocator<E56> >(E56* f, E56* l, E56* d, allocator<E56>& al, _Nonscalar_ptr_iterator_tag t)   // 0x442080
+{
+    return ((E56* (__cdecl*)(E56*, E56*, E56*, allocator<E56>&, _Nonscalar_ptr_iterator_tag))uninit_copy_e56)(f, l, d, al, t);
+}
+template<> inline void _Uninit_fill_n<E56*, unsigned int, E56, allocator<E56> >(E56* f, unsigned int n, const E56& v, allocator<E56>& al, _Nonscalar_ptr_iterator_tag t)   // 0x444bc0
+{
+    ((void (__cdecl*)(E56*, unsigned int, const E56&, allocator<E56>&, _Nonscalar_ptr_iterator_tag))uninit_fill_n_e56)(f, n, v, al, t);
+}
 template<> void _Destroy_range<E56, allocator<E56> >(E56*, E56*, allocator<E56>&, _Nonscalar_ptr_iterator_tag);                   // 0x43e6e0
 template<> void fill<E56*, E56>(E56*, E56*, const E56&);                                                                               // 0x440dc0
 template<> E56* _Copy_backward_opt<E56*, E56*>(E56*, E56*, E56*, _Nonscalar_ptr_iterator_tag);                                       // 0x440a30

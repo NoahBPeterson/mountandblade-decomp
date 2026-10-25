@@ -1,3 +1,4 @@
 0x5d7080 ?g_ui_sound@@3UUiSoundHost@@A  # the click-sound player (src/game/ui/ui_widgets.h), UiE::key 0x48bb50, DropDown::on_event 0x49aca0, DropDown::create 0x49ad20
 0x5d7090 ?g_ui_active@@3PAXA  # widget being edited / dragged
 0x488720 ?render@MissionUi@@QAEXPAUscene@rgl@@PAMHH@Z  # MissionUi::render (ret 0x10), UiE::update 0x48bda0
+0x592848 ??_7NodeA@@6B@  # the drop-down list container DropDown::create (0x49ad20) stores (the Overlay / container vtable 0x592848)
