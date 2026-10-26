@@ -231,3 +231,33 @@ Format (one entry per problem):
   `0x596190`, which is **not** a vtable (its slots point into the middle of unrelated functions and slots 10/11 are the
   floats 0.325f / 0.24f), so the fix-up wrote the garbage dword into our slot. Next: find the real `ItemA` vtable (all
   slots function starts) or make `fix_vtables` reject a candidate whose slots are not `img.start_set` functions.
+
+- 0x513710 (fixed) 2026-10-26: virtual calls that land in *float constants* (0x3ea66666 = 0.325f from
+  `call [[0xa9795c]+0x10]`; 0x3cb923a2 = 0.009f later, inside `GameScreen::build` -> `text_box::add_child` ->
+  `ContainerW::track_bounds`) are **short vtables**: our source declares fewer virtuals than the original class, so
+  the compiled table ends early and a call through a later slot reads whatever .rdata follows (a string, a float).
+  `??_7ItemA@@6B@` had 1 slot against the original's 10 (`ItemA::ItemA` 0x4ceb30 stores 0x596190); `fix_vtables`
+  reported "0 of 1 slots agree" and never redirected it. Fix (tools/relink/build.py): for every vtable whose
+  original table starts with more function-start dwords than ours has slots and whose address is inside the copied
+  .rdata, redirect our vptr stores to the glue's copy of the original table, whose slots are all relocated to our
+  functions: 51 classes, 461 stores (`vtable_report.redirected_short`). Verified: no float-jump in the menu, in-game
+  init (`launch complete.`) and the HUD build path for four runs. Lesson: a vtable that is too short is worse than a
+  wrong one - the failure surfaces as an "impossible" EIP.
+
+- 0x4ee910 (fixed) 2026-10-26: the RGL ERROR dialog "get_object failed for: ui_scrollbar" (the user's screenshot):
+  `make_scroll_track` asked for `ui_scrollbar` / `ui_scrollbar_handle`, but the original pushes 0x592748 = "scrollbar"
+  and 0x592734 = "scrollbar_handle" (0x4ee9a3 / 0x4eea05), and `CommonRes/core_ui_meshes.brf` holds those names with
+  no `ui_` prefix. Audit of all 71 `get_object*` call sites with a literal: only this one named a string absent from
+  the original exe.
+
+- 0x488ad0 (fixed) 2026-10-26: `make_scroll_track` called vtable slot +0x80 (`MissionUi::set_track(int i, mesh* p)`,
+  `ret 8`) with **one** argument through the cdecl `VCALL1` macro, so the object landed in `i` and the callee faulted
+  at `[esi + edi*4 + 0x108]`. The original passes both (`0x4eea5e`: push edi / push 0; `0x4eea6b`: push ebx / push 2).
+  Fix: typed `set_track(0, m1)` / `set_track(2, m2)` (the declaration was added to cs_common.h's MissionUi view).
+  The `VCALL0/1/P/2` macros still cast to cdecl: MSVC 7.1 rejects `__thiscall` in a pointer cast (C4234), so a
+  thiscall slot cannot be spelled there - call the class's method instead when it is known.
+
+- 0x43ac03 (naming) 2026-10-26: `*(tstring*)((char*)g_game + 0x1a210) = *(tstring*)(rec + 0x28)` is
+  `g_game->mesh1a210 = MenuRec::mesh`: `rec` is a 0x60-byte menus.txt record (`g_menus + idx*0x60`, `+0x28` is its
+  `mesh` tstring), and `Game+0x1a210` is a tstring that `Block::read` (0x51d100) constructs and 0x492f6f resets - it
+  is part of the serialised game block. Named `Game::mesh1a210` and `MenuRec::mesh` at the call site.

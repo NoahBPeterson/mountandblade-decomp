@@ -252,7 +252,10 @@ struct GameData {
     int f1a204;                    // +0x1a204 0x44c210
     char pad1a208[0x1a20c - 0x1a208];
     int f1a20c;                                 // +0x1a20c
-    char pad1a210[0x1a23c - 0x1a210];
+    tstring mesh1a210;                          // +0x1a210 the game menu's mesh override (MenuRec::mesh, menus.txt
+                                                //         +0x28, copied here by GameScreen::build; constructed by the save
+                                                //         block reader Block::read 0x51d100, reset at 0x492f6f)
+    char pad1a220[0x1a23c - 0x1a220];
     int f1a23c;                                 // +0x1a23c   0x4610b0
 
     int skill_level(int troop, int skill);      // 0x437b20 (thiscall, ret 8)  // old name of GameData::skill_level, removed after the names merge

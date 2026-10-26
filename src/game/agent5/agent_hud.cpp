@@ -1207,7 +1207,8 @@ void GameScreen::build()
     GAME_AT(int, 0xc8) = 0;
     GAME_AT(int, 0xa8) = 0;
     rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
-    *(tstring*)((char*)g_game + 0x1a210) = *(tstring*)(rec + 0x28);
+    struct MenuMesh { char pad0[0x28]; tstring mesh; };   // menu_rec.h's MenuRec, of which this path uses +0x28 only
+    g_game->mesh1a210 = ((MenuMesh*)rec)->mesh;      // the game menu's mesh override (+0x1a210)
     GAME_AT(int, 0x1a220) = -1;
     ((DialogBlock*)(g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->play(8);
     if (GAME_AT(int, 0xc8) != 0)

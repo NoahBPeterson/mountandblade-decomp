@@ -51,6 +51,10 @@ extern const float g_592754;            // 0x592754  0.155f
 #include "../widget.h"                        // widget (the 0x178-byte UI element; shared with facegen_init.h, view_open.cpp, widget_text.cpp, strat/gui_manager.h)
 
 // slots addressed by byte offset: ((void**)self[0])[off / 4]
+// The engine's widget slots are __thiscall (ecx = the object, args on the stack), like every other method. MSVC 7.1
+// cannot spell __thiscall in a function-pointer cast (C4234), so call a slot through the real class when it is
+// known, and treat these cdecl helpers as suspect: they push the object as the first *argument* and leave ecx
+// undefined (see the set_track call in quest_log.cpp).
 #define VCALL0(self, off)               ((void (*)(void*))((void**)*(void***)(self))[(off) / 4])(self)
 #define VCALL1(self, off, a)            ((void (*)(void*, int))((void**)*(void***)(self))[(off) / 4])(self, (a))
 #define VCALLP(self, off, a)            ((void (*)(void*, const void*))((void**)*(void***)(self))[(off) / 4])(self, (a))

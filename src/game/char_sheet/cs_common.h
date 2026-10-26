@@ -69,9 +69,11 @@ struct Terrain {
 // (Overlay 0x592848, TextBox 0x597050).
 #include <new>
 #include "../world_data/raw_place.h"
+namespace rgl { struct mesh; }                                     // (the set_track pointer argument; ui/mission_ui.h has the full class)
 struct MissionUi {                                                  // ui/mission_ui.h
     MissionUi();                                                    // 0x48ae20
     void render(rgl::scene* s, float* v, int a, int b);             // 0x488720
+    void set_track(int i, rgl::mesh* p);                            // 0x488ad0 (vtable slot +0x80)
 };
 struct ContainerW {                                                 // world_data/world_data.h
     void* construct();                                              // 0x4931a0

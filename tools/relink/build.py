@@ -86,11 +86,20 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
     report = {"patched_slots": 0, "vtables": 0, "skipped": {}, "missing": []}
     redirect = {}
+    from glue import RDATA
     for vt, e in rmap["vtables"].items():
         if len(e["orig"]) != 1 or vt not in symmap:
             report["missing"].append(vt)
             continue
         ova, ours = int(e["orig"][0], 16), symmap[vt]
+        # How many slots the original's table really has: the leading run of function starts. Our own compiled
+        # vtable can be shorter than that (a record class whose base's virtuals our source never declared), and a
+        # call through a slot past its end then reads whatever .rdata follows (crash 0x3ea66666 = the float 0.325f).
+        n_orig = 0
+        while n_orig < 512 and ova + 4 * n_orig < (1 << 32):
+            if img.u32(ova + 4 * n_orig) not in img.start_set:
+                break
+            n_orig += 1
         plan, agree, comparable = [], 0, 0
         for k in range(e["slots"]):
             t = img.u32(ova + 4 * k)
@@ -107,16 +116,27 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
                 plan.append((k, want))
         if comparable and agree * 2 < comparable:
             report["skipped"][vt] = "%d of %d slots agree" % (agree, comparable)
+            # The match is suspect, so do not rewrite slots - but if our vtable is shorter than the original's
+            # and the original's table is a real one, still point our vptr stores at the copy of it in the glue,
+            # so every slot our code calls exists (relocated to our functions) instead of reading past the end.
+            if n_orig >= 2 and e["slots"] < n_orig and RDATA[1] <= ova < RDATA[2]:
+                redirect[ours] = ova
+                report.setdefault("redirected_short", {})[vt] = "our %d slots, original %d" % (e["slots"], n_orig)
             continue
         for k, want in plan:
             exe.put(ours + 4 * k, want)
         report["patched_slots"] += len(plan)
         report["vtables"] += 1
         redirect[ours] = ova
+        # Our source may declare fewer virtuals than the class really has, so our compiled table is short and a
+        # call through a later slot reads the .rdata that follows (a string, or a float: 0x3ea66666 = 0.325f,
+        # 0x3cb923a2 = 0.009f). Point the vptr stores at the glue's copy of the original table, which has every
+        # slot relocated to our functions.
+        if n_orig > e["slots"] and n_orig >= 2 and RDATA[1] <= ova < RDATA[2]:
+            report.setdefault("redirected_short", {})[vt] = "our %d slots, original %d" % (e["slots"], n_orig)
     # Then point the code at the original's vtables: a class our source declares with fewer virtuals than the
     # original has a short compiled vtable (a call through slot 7 of the 0x4c3290 record read a string literal past
     # its end). The copy of the original's vtable in the glue's .rdata has every slot, relocated to our functions.
-    from glue import RDATA
     base = symmap.get("_mb_rdata_base")
     t0, tn, tp = exe.secs[0]
     text = bytes(exe.d[tp:tp + tn])
