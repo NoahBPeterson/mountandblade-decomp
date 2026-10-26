@@ -261,3 +261,17 @@ Format (one entry per problem):
   `g_game->mesh1a210 = MenuRec::mesh`: `rec` is a 0x60-byte menus.txt record (`g_menus + idx*0x60`, `+0x28` is its
   `mesh` tstring), and `Game+0x1a210` is a tstring that `Block::read` (0x51d100) constructs and 0x492f6f resets - it
   is part of the serialised game block. Named `Game::mesh1a210` and `MenuRec::mesh` at the call site.
+
+- 0x43ac03 (open, cleanup) 2026-10-26: **idiomaticize the offset views.** The reconstructions read objects through
+  raw offsets and casts (`*(tstring*)((char*)g_game + 0x1a210)`, `GAME_AT(int, 0x13aec)`, `rec + 0x28`,
+  `*(int*)((char*)self + 0x178)`, `VCALL1(self, 0x80, 0)`), which is what let the same offset mean two different
+  objects in different files (the `g_main_menu`/deque collision, the `MenuRec::mesh` line above). Work to do, in
+  order of payoff:
+    1. one header per object with the *complete* field list (Game/GameData still has 20+ `padXXXX` runs and unnamed
+       `fXXXX` fields between named ones; MenuRec is done),
+    2. take the field's own type (tstring, vector, deque) from the original's constructor/reader, never from a
+       `char*` cast,
+    3. replace the `VCALLn` macros (cdecl casts, wrong for thiscall slots) with the class's method when the class is
+       known, and a *typed* slot view (`struct Slot80 { virtual void set_track(int, rgl::mesh*); }`) when it is not,
+    4. name the remaining `f1a2xx`-style fields from their users (`Block::read`/`Block::write` order is a good
+       oracle: every serialised field appears there).
