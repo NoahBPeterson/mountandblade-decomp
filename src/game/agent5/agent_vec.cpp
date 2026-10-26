@@ -29,8 +29,15 @@ struct CfgRec : loading_config {                // 0x1f8 bytes (s004dbf7e / s004
     ~CfgRec();                                  // 0x4d3720
 };
 
-struct RowRec {                                          // 0x1c8 bytes (s004ebc10)
-    char pad[0x1c8];
+// 0x20 bytes, NOT 0x1c8: the UI row record is the engine string plus a 4-dword vector (s004ebc10;
+// copy ctor 0x4e42f0 copies the tstring and the vector). The size here decides the stride of every
+// vector<RowRec> instantiation this file emits, and the linker folds those COMDATs with
+// inventory_panel/widget_text.cpp's RowRec (= named_vec, 0x20). With a wrong 0x1c8 here, the folded
+// _Uninit_copy walked 0x1c8 bytes per element inside the 0x20-byte row vector and the skeleton loader
+// crashed reading text out of the heap (game/agent5 -> SkeletonBody::load -> Entries::add).
+struct RowRec {
+    int str[4];                                           // tstring name: pos, buf, cap, len
+    void* vec[4];                                         // vector<E50>: alloc, first, last, end
     RowRec(const RowRec& o);                              // 0x4e42f0
 };
 

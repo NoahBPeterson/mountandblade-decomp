@@ -124,3 +124,15 @@ Format (one entry per problem):
   snapshot because of it. Fix idea: `--base EXE` that reads the restore bytes from the base image, or read them
   from the file being patched. Probe side: `work/probe/cap_hybrid.py` + `work/probe/patch_cap_orig.py`
   — minutes lost: 90
+
+- 0x4f65f0 2026-10-25: two `struct RowRec` definitions with *different* sizes (0x20 as `: named_vec` in
+  `inventory_panel/widget_text.cpp`, and a modelled `char pad[0x1c8]` in `agent5/agent_vec.cpp`) share every
+  mangled name, so the linker folds `std::vector<RowRec>::_Uninit_copy` onto one body. The 0x1c8 body then ran
+  inside the 0x20-byte row vector: `Entries::add` grew the skeleton list, `_Uninit_copy` stepped 0x1c8 bytes
+  per element, read past the single-element buffer into reused heap holding text, and the record copy ctor
+  faulted on `tstring{buf=0x20353066, len=" 2 1"}`. Fix: model the size correctly (`tstring` + 4-dword vector);
+  the folded stride is visible as `add edi/esi, 0x20` in our `_Uninit_copy` against the original's `0x4ebe10`.
+  Lesson: a "size only" modelling struct is only safe if *every* TU that names it agrees on the size — otherwise
+  any `std::vector<T>`/`_Uninit_copy<T>`/`_Ufill<T>` COMDAT folds across them. Cross-check the stride in the
+  emitted code, not just the row's byte match (`_Insert_n` was byte-exact the whole time; its *callee* was not).
+  — minutes lost: 150
