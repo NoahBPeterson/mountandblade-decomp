@@ -89,6 +89,10 @@ extern char g_main_menu_obj[];                                  // 0xa73980
 // main menu layout (see s004d7d10)
 #include "../main_menu.h"
 #define g_main_menu (*(main_menu*)g_main_menu_obj)
+// The menu record's tstrings/fields live on the object g_main_menu.rec points at, NOT on the screen manager itself:
+// the manager (0xa73980) is 30 screen pointers plus the open-screen deque at +0x78, so writing the record's
+// +0x78/+0x88 answers (or constructing them) lands on the deque and destroys it (crash in current_screen_id).
+#define g_menu_rec (g_main_menu.rec)
 
 static const char* text_of(const tstring* s)
 {
@@ -107,11 +111,11 @@ void SavePanel::update(int)
         static bool menu_strings_done = false;
         if (!menu_strings_done) {
             menu_strings_done = true;
-            new (&g_main_menu.title) tstring();
-            new (&*(tstring*)((char*)g_main_menu_obj + 0x54)) tstring();
-            new (&g_main_menu.header) tstring();
-            new (&g_main_menu.answer_yes) tstring();
-            new (&g_main_menu.answer_no) tstring();
+            new (&g_menu_rec->title) tstring();
+            new (&*(tstring*)((char*)g_menu_rec + 0x54)) tstring();
+            new (&g_menu_rec->header) tstring();
+            new (&g_menu_rec->answer_yes) tstring();
+            new (&g_menu_rec->answer_no) tstring();
         }
     }
     char pathbuf[16];
@@ -132,20 +136,20 @@ void SavePanel::update(int)
         tstring title2(name);
         const tstring* rc = g_strtable.lookup(cancel);
         const tstring* ro = g_strtable.lookup(ok);
-        g_main_menu.header.clear();
-        g_main_menu.title = *rc;
-        g_main_menu.answer_yes = *ro;
-        g_main_menu.answer_no = title2;
-        g_main_menu.choice = (int)((char*)this + 0x220);
-        g_main_menu.v50 = (int)((char*)this + 0x224);
+        g_menu_rec->header.clear();
+        g_menu_rec->title = *rc;
+        g_menu_rec->answer_yes = *ro;
+        g_menu_rec->answer_no = title2;
+        g_menu_rec->choice = (int)((char*)this + 0x220);
+        g_menu_rec->v50 = (int)((char*)this + 0x224);
         int* slotname;
         if (*(int*)((char*)this + selected * 0x30 + 0x4c) != 0)
             slotname = (int*)((char*)this + selected * 0x30 + 0x2c);
         else
             slotname = (int*)(*(int*)(g_game + 0x8c) * 0x508 +
                               *(int*)(g_game + 0x13a00));
-        ((tstring*)((char*)g_main_menu_obj + 0x54))->operator=(*(tstring*)slotname);
-        g_main_menu.open = 3;
+        ((tstring*)((char*)g_menu_rec + 0x54))->operator=(*(tstring*)slotname);
+        g_menu_rec->open = 3;
         g_main_menu.set_state(0);
         return;
         } else {
@@ -211,13 +215,13 @@ confirm_delete:
     tstring title2(name);
     const tstring* rn = g_strtable.lookup(no);
     const tstring* ry = g_strtable.lookup(yes);
-    g_main_menu.header.clear();
-    g_main_menu.title = *rn;
-    g_main_menu.answer_yes = *ry;
-    g_main_menu.answer_no = title2;
-    g_main_menu.choice = (int)((char*)this + 0x21c);
-    g_main_menu.v50 = 0;
-    g_main_menu.open = 1;
+    g_menu_rec->header.clear();
+    g_menu_rec->title = *rn;
+    g_menu_rec->answer_yes = *ry;
+    g_menu_rec->answer_no = title2;
+    g_menu_rec->choice = (int)((char*)this + 0x21c);
+    g_menu_rec->v50 = 0;
+    g_menu_rec->open = 1;
     g_main_menu.set_state(0);
 }
 

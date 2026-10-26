@@ -184,11 +184,13 @@ void CamView::update_model(float dt)
         tstring t2("ui_tutorial");
         const tstring* r1 = g_strtable.lookup(t1);
         const tstring* r2 = g_strtable.lookup(t2);
-        g_main_menu.header = *r2;
-        g_main_menu.title = *r1;
-        g_main_menu.choice = 0;
-        g_main_menu.v50 = 0;
-        g_main_menu.open = 0;
+        // the dialog record's fields (0xa73980+0 is the record pointer: the manager's +0x78 is the screen deque,
+        // so writing these through the manager destroys the deque)
+        g_main_menu.rec->header = *r2;
+        g_main_menu.rec->title = *r1;
+        g_main_menu.rec->choice = 0;
+        g_main_menu.rec->v50 = 0;
+        g_main_menu.rec->open = 0;
         ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         return;
     }

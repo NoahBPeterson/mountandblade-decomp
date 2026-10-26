@@ -311,7 +311,7 @@ void VideoPage::update(int reason)
             tstring explanation("ui_change_graphics_settings_explanation");
             tstring pos((const char*)0x54a480);
             tstring* e = g_strtable.lookup(pos);
-            g_main_menu.setup(&explanation, e);
+            g_main_menu.rec->setup(&explanation, e);
             pos.~tstring();
             explanation.~tstring();
             ((WindowMgrW*)(void*)&g_main_menu)->open(0);

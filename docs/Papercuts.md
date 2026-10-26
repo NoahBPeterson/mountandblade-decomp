@@ -167,3 +167,67 @@ Format (one entry per problem):
   31 307-point map), so the store landed past the block: page fault at 0x49c86d on Start-New-Game. Fix: `new char[0xc3600]`.
   Lesson: when a callee indexes by a fixed offset rather than by `i`, size the caller's buffer from that offset.
   — minutes lost: 25
+
+- 0x5213d0 (open) 2026-10-26: after the map-group `nb[]` initialisation (see the 0x520c00 entry) Start-New-Game reaches
+  "map mesh built." and then faults in the edge-relaxation loops of `Game::build_map_trees` (our `+0x3c5` / `+0x467`,
+  `fld [pts + 9*a*4]`) on an edge whose `a` is **-1** (fault address = `pts - 36`). Probe of the edge vector:
+  `npts=31307 nedges=93744 edges=27810020`, first five entries valid (`a/b` = 0/1, 1/173, 173/0, 1/172, 172/173) and
+  every sampled record has `+0x20 = -1`, so some slots in `edges[]` were never written by `PolyGeom::build` (0x47ee60)
+  while the walk trusts `(edges_end - edges)/0x24`. Next: count `bad_a/bad_b` over the whole vector (probe ready,
+  `edge_probe.txt`) and find which append path leaves `f0c = -1`.
+  Blocker for measurement: the click-through is flaky (fraction-based clicks land on "Restore a Saved Game" and die in
+  `SavePanel::update` 0x44cc0c); the deterministic button position in windowed 1280x720 is `(876, 631)` and the log
+  must be checked for `map mesh built.` to confirm the right item was hit.
+  — minutes lost: 60 (ongoing)
+
+- 0x4ea290 (open) 2026-10-26: an intermittent, *input-free* crash a few seconds after the main menu appears:
+  `tstring::operator=`+0x24 (`0x44f9a4`, `rep movsl (%esi),%es:(%edi)` with EDI=0) writing 0x2a dwords into a destination
+  whose `buf` is null but whose `len` is 42. Backtrace (stack walk): `SavePanel::update`+0x53c (0x44cc0c) <-
+  `GuiScreen::process`+0x449 (0x44e519) <- `Slot::read_keys`+0x37 (0x49b4f7) <- `GameApp::Update`. So `update()` is called
+  on the menu's save panel every frame and takes a branch that assigns from a computed pointer
+  (`*(int*)(g_game+0x8c)*0x508 + *(int*)(g_game+0x13a00)`); the panel's `deleting` at +0x234 (or that pointer) is junk.
+  Earlier the *same* instruction was reached by clicking "Restore a Saved Game", which is why it was mistaken for a
+  misclick. Next: diff our `SavePanel::update` against the original 0x4ea290 (field offsets + branch order) and check
+  whether the panel passed by `GuiScreen::process` is the same object our model assumes.
+  — minutes lost: 35 (ongoing)
+
+  Follow-up on the same crash: the faulting assignment is `g_main_menu.answer_no = title2` (compiled as
+  `ecx = 0xa97988` + `call tstring::operator=` 0x44f980, the caller's return address 0x44cc0c). Our `operator=` is
+  byte-identical to the original (0x42bc50) and calls `reserve(len)`; the destination `answer_no` has `buf == 0` with
+  `cap` already >= len+1, so `reserve` (0x44f880, `cmp [edi+8], n+1; jae done`) returns without allocating and the
+  `rep movsl` writes to null. So the global's tstring is inconsistent *before* the assignment: its `cap` is junk while
+  `buf` is null, i.e. `g_main_menu` (ours at 0xa97900, the original's 0xa73980 via the glue) was written by something
+  that sets `+8` without `+4`, or its static construction never ran. Next: check the resolve_map/glue entry for
+  `?g_main_menu@@3Umain_menu@@A` and whether our static-init list constructs its tstrings.
+
+- 0xa739f8 (open) 2026-10-26: the input-free menu crash *after* the tstring one (fixed in save_panel.cpp) is the screen
+  deque: `GameApp::Update+0x1ed` (0x46f6ed) reads `edx=[0xa9797c]` (blocks), `eax=[edx+eax*4]` (a block pointer, 0) then
+  `[eax+ecx*4]` -> read of 0x0000000c. The object at 0xa739f8 is the `std::deque<int>` seen as `g_screen_stack`
+  (script_interpreter.h), `g_menu_vars` (facegen_misc.cpp: {pad, rows +4, count +8}) and `g_id_stack` (id_stack.h:
+  {f0, blocks +4, block_count +8, a +0xc, b +0x10}); its blocks array exists but the current block is null, i.e. the
+  deque was never constructed - the same missing-static-constructor pattern as g_main_menu. Next: construct it in place
+  once (first frame of GameApp::Update) with our std::deque<int> and check the engine's layout (0x28?) matches, or call
+  the original's deque ctor at its address if one exists.
+
+  RESOLVED 2026-10-26 (the entry above guessed "never constructed"; it was constructed and then destroyed):
+  the deque (`0xa739f8` = `g_windows + 0x78`) is healthy at every `WindowMgrW::open`/`set_state` call — probe
+  `open(2/4/21) after: map=0beefef8 ms=8 off=0 size=1` — and all-zero in the `winedbg` dump at the fault (`x /6x
+  0xa98978` = zeros, while `0xa98900` still held the 30 screen pointers). The writer came from probing
+  `GuiScreen::process` entry/exit: healthy at one frame's exit, zero at the next entry, i.e. zeroed between the input
+  pass and the following frame. Disassembling every reference to `0xa98978` in the built image gave the culprit:
+  `SavePanel::update` runs `tstring_ctor` on `0xa98954/0xa98968/0xa98978/0xa98988` — the menu record's
+  `title`/`+0x54`/`header`/`answer_yes`/`answer_no` — and a `tstring` ctor zeroes four dwords, exactly the damage.
+  Those offsets belong to the dialog *record* (`g_main_menu.rec`; the original's `ask_yes_no` 0x48a3d0 clears `this+0x68`
+  and assigns `this+0x1c/0x78/0x88`), **not** to the screen manager, whose `+0x78` is the deque (the original's
+  `open` 0x494260: `lea esi,[edi+0x78]` then the deque's push_back/back). Our `main_menu` model inlined the record's
+  fields into the manager, so constructing or assigning them landed on the deque. Fix: all record-field uses go through
+  `g_main_menu.rec` (save_panel.cpp, cam_view.cpp, video_page.cpp). Verified: four runs, deque never zeroed, no fault
+  (`menu after 28-30 s, fault: none, alive: 3`). Lesson: one global modelled as several types needs every field offset
+  kept on its own object; a stray `tstring` write looks exactly like a `std::deque` reset.
+
+- 0x513710 (open) 2026-10-26: the next crash, once a game is actually reached (`launch complete.`): `Mgr513710_s25160::m`
+  (`0x513710`) does `call dword ptr [[0xa9795c] + 0x10]` and jumps to `0x3ea66666` (the float 0.325f). The object's vptr
+  is our `??_7ItemA@@6B@` (built at `0x55585c`) and slot 4 holds `0x3ea66666`; `resolve_map` matched that class to
+  `0x596190`, which is **not** a vtable (its slots point into the middle of unrelated functions and slots 10/11 are the
+  floats 0.325f / 0.24f), so the fix-up wrote the garbage dword into our slot. Next: find the real `ItemA` vtable (all
+  slots function starts) or make `fix_vtables` reject a candidate whose slots are not `img.start_set` functions.

@@ -18,6 +18,18 @@ CX = os.path.expanduser("~/Applications/CrossOver.app/Contents/SharedSupport/Cro
 WINPATH = r"C:\Program Files (x86)\Steam\steamapps\common\Mount and Blade\mb_standalone.exe"
 
 
+def kill_stale():
+    """End any game process a previous run left behind, so a new run never fights an old window/log.
+
+    The harnesses leave the game running by design when it survives the timeout (the report says so), and a killed
+    debugger can also leave the debuggee: both then hold the window and write rgl_log.txt, which makes the next run's
+    "menu is up" test fire on the old game's log. Called before every launch.
+    """
+    for pattern in ("mb_standalone", "mb_check", "mb_hybrid", "Mount & Blade", "mount&blade", "winedbg"):
+        subprocess.run(["pkill", "-f", pattern], capture_output=True)
+    time.sleep(1.0)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--exe", default=os.path.join(ROOT, "work", "relink", "standalone", "mb_standalone.exe"))
@@ -30,8 +42,11 @@ def main():
                     "'x /4x $ecx' (their output is in dbg.log)")
     ap.add_argument("--break", dest="brk", action="append", default=[], help="stop at this address (hex or a map "
                     "symbol, e.g. __purecall) and report as for a fault")
+    ap.add_argument("--pre", default="", help="extra winedbg commands run before 'cont' (';'-separated), e.g. "
+                    "'watch *0xa9897c' (a data watchpoint)")
     a = ap.parse_args()
     game = os.path.join(ROOT, "game")
+    kill_stale()
     shutil.copyfile(a.exe, os.path.join(game, "mb_standalone.exe"))
     log_path = os.path.join(ROOT, "work", "relink", "standalone", "dbg.log")
     report = "info reg\nbt 40\nx /3072x $esp\n" + "".join(c.strip() + "\n" for c in a.cmds.split(";") if c.strip())
@@ -42,6 +57,9 @@ def main():
                              env=dict(os.environ, WINEDEBUG="-all"))
         for b in a.brk:
             p.stdin.write("break *0x%x\n" % symbol_address(b))
+        for c in a.pre.split(";"):
+            if c.strip():
+                p.stdin.write(c.strip() + "\n")
         p.stdin.write("cont\n")
         p.stdin.flush()
         if a.play:
@@ -78,7 +96,8 @@ def main():
 
 
 def stopped(text):
-    return "Unhandled exception" in text or "Stopped on breakpoint" in text
+    return ("Unhandled exception" in text or "Stopped on breakpoint" in text
+            or "watchpoint" in text.lower() or "Hardware watchpoint" in text)
 
 
 def symbol_address(s):
