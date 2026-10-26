@@ -60,6 +60,8 @@ struct cap_cfg {
     DWORD max_hits;
     DWORD skip_lo, skip_hi; /* never dumped: the exe's code (made writable for the int3s) */
     char dir[128];          /* where the snapshots go (with a trailing backslash), "" = cwd */
+    DWORD arm;              /* 0, or: only this address gets an int3 at start; its first hit plants the targets */
+    DWORD arm_orig;         /* the byte the arm int3 replaces */
 };
 struct cap_cfg cap_cfg = { 0x4643424d };
 
@@ -184,8 +186,12 @@ static void snapshot(DWORD va, BYTE* ctx)
                 g.page_hash[p >> 12] = h;
                 rec = p | (zero ? 1 : 0);
                 put(&rec, 4);
-                if (!zero)
-                    put((const void*)p, 0x1000);
+                if (!zero) {                        /* the page itself straight from memory (no copy) */
+                    DWORD w;
+                    flush();
+                    g.wf(g.file, (const void*)p, 0x1000, &w, 0);
+                    g.bytes += 0x1000;
+                }
             }
         }
         a = end;
@@ -209,14 +215,32 @@ static int find(DWORD addr)
     return -1;
 }
 
+static void plant_all(void)
+{
+    DWORD i;
+    for (i = 0; i < cap_cfg.n; i++)
+        *(BYTE*)((DWORD*)cap_cfg.bps)[i] = 0xcc;
+    g.flush(g.curproc(), 0, 0);
+}
+
 static long __stdcall handler(EXPTRS* ep)
 {
     DWORD code = ep->ExceptionRecord->ExceptionCode;
     BYTE* ctx = ep->ContextRecord;
     if (code == 0x80000003) {                       /* EXCEPTION_BREAKPOINT */
         DWORD addr = (DWORD)ep->ExceptionRecord->ExceptionAddress;
-        int i = find(addr);
+        int i;
         BYTE* hits = (BYTE*)cap_cfg.hits;
+        if (cap_cfg.arm && addr == cap_cfg.arm) {   /* the trigger: from now on every target snapshots */
+            *(BYTE*)addr = (BYTE)cap_cfg.arm_orig;
+            cap_cfg.arm = 0;
+            *(DWORD*)(ctx + CTX_EIP) = addr;
+            plant_all();
+            if (find(addr) < 0)
+                return -1;
+            *(BYTE*)addr = 0xcc;                    /* the trigger is a target too: take it now */
+        }
+        i = find(addr);
         if (i < 0)
             return 0;                               /* EXCEPTION_CONTINUE_SEARCH */
         g.enter(g.cs);
@@ -270,9 +294,13 @@ void __cdecl cap_init(void)
     /* 4 GB / 4 KB pages x 4 bytes: reserved and committed lazily by the system's zero pages */
     g.page_hash = (DWORD*)g.va(0, 0x400000, 0x3000 /* MEM_COMMIT | MEM_RESERVE */, 0x04);
     addveh(1, handler);
-    for (i = 0; i < cap_cfg.n; i++)
-        *(BYTE*)((DWORD*)cap_cfg.bps)[i] = 0xcc;
-    g.flush(g.curproc(), 0, 0);
+    if (cap_cfg.arm) {
+        *(BYTE*)cap_cfg.arm = 0xcc;
+        g.flush(g.curproc(), 0, 0);
+    } else {
+        plant_all();
+    }
+    (void)i;
 }
 
 __declspec(naked) void cap_entry(void)

@@ -78,7 +78,7 @@ def link(coff, base_va):
     return blob, syms
 
 
-def build(targets, max_hits, out, dirpath):
+def build(targets, max_hits, out, dirpath, arm=0):
     import pefile
     import resolve as R
     import slice as S
@@ -118,6 +118,7 @@ def build(targets, max_hits, out, dirpath):
                      len(targets), base_va + off_bps, base_va + off_orig, base_va + off_hits, max_hits,
                      t0, t0 + tn)
     blob[cfg + 44:cfg + 44 + 128] = d.ljust(128, b"\0")[:128]
+    struct.pack_into("<2I", blob, cfg + 44 + 128, arm, img.read(arm, 1)[0] if arm else 0)
     B.add_section(pe, ".capt", rva, bytes(blob), 0xE0000020)      # code | execute | read | write
     for s in pe.sections:
         if s.Name.rstrip(b"\0") == b".text":
@@ -190,6 +191,8 @@ def main():
     ap.add_argument("--dir", default="")
     ap.add_argument("--run", type=int, metavar="SECS")
     ap.add_argument("--play", action="store_true")
+    ap.add_argument("--arm", help="VA: plant the targets only when this function is first called (e.g. 4dcef0, "
+                                  "MainMenuScreen::create: skip the loading screens)")
     a = ap.parse_args()
     if a.targets == "nonmatching":
         targets = nonmatching_vas()
@@ -197,7 +200,7 @@ def main():
         targets = {int(l.split()[0], 16) for l in open(a.targets) if l.strip() and not l.startswith("#")}
     else:
         targets = {int(v, 16) for v in a.targets.split(",")}
-    build(targets, a.max_hits, a.out, a.dir)
+    build(targets, a.max_hits, a.out, a.dir, int(a.arm, 16) if a.arm else 0)
     if a.run:
         run(a.out, a.run, a.play)
     return 0

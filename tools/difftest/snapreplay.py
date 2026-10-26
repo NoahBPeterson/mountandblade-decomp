@@ -78,8 +78,15 @@ class Replayer:
 
     def runner(self, va):
         import equiv as E
+        import machine as M
         if va in self.runners:
             return self.runners[va]
+        # every Runner loads its object at the same address of the one shared machine and adds code hooks there:
+        # a cached runner for another function would run whatever was loaded last, so each function gets a fresh
+        # machine and only the current runner is kept
+        self.runners.clear()
+        ctx = E.context()
+        ctx["m"] = E.machine_hooks(M.Machine(ctx["img"]))
         sid, src = module_of(va)
         r = None
         why = None
@@ -111,20 +118,39 @@ class Replayer:
                    (M.DYN_BASE, M.DYN_BASE + M.DYN_SIZE), (M.TRAP_BASE, 0x100000000)]
         mapped = []
         restore = {}
-        for p, data in self.mem.items():
+        fresh = []
+        for p in sorted(self.mem):
             if any(lo <= p < hi for lo, hi in harness):
                 continue                                 # collides with the harness's own map: left out
             if img_lo <= p < img_hi:
                 if not m.in_image_writable(p):
                     continue
                 restore[p] = bytes(uc.mem_read(p, 0x1000))
+                data = self.mem[p]
+                uc.mem_write(p, data if data is not None else b"\0" * 0x1000)
             else:
-                try:
-                    uc.mem_map(p, 0x1000, UC_PROT_READ | UC_PROT_WRITE)
-                    mapped.append(p)
-                except Exception:
-                    continue
-            uc.mem_write(p, data if data is not None else b"\0" * 0x1000)
+                fresh.append(p)
+        # contiguous pages in one mem_map each: unicorn's per-region cost makes 100k single-page maps quadratic
+        i = 0
+        while i < len(fresh):
+            j = i + 1
+            while j < len(fresh) and fresh[j] == fresh[j - 1] + 0x1000:
+                j += 1
+            lo, n = fresh[i], j - i
+            try:
+                uc.mem_map(lo, n * 0x1000, UC_PROT_READ | UC_PROT_WRITE)
+                mapped.append((lo, n * 0x1000))
+                uc.mem_write(lo, b"".join(self.mem[q] if self.mem[q] is not None else b"\0" * 0x1000
+                                          for q in fresh[i:j]))
+            except Exception:
+                for q in fresh[i:j]:                     # overlaps an existing map: page by page
+                    try:
+                        uc.mem_map(q, 0x1000, UC_PROT_READ | UC_PROT_WRITE)
+                        mapped.append((q, 0x1000))
+                        uc.mem_write(q, self.mem[q] if self.mem[q] is not None else b"\0" * 0x1000)
+                    except Exception:
+                        pass
+            i = j
         regs = {k: struct.unpack_from("<I", ctx, o)[0] for k, o in CTX.items()}
         m.take_dirty()
         m.dyn_next = M.DYN_BASE                         # the harness heap restarts per run: equal allocation
@@ -164,7 +190,7 @@ class Replayer:
             for pg in {address & ~0xfff, (address + size - 1) & ~0xfff}:
                 try:
                     uc_.mem_map(pg, 0x1000, UC_PROT_READ | UC_PROT_WRITE)
-                    mapped.append(pg)
+                    mapped.append((pg, 0x1000))
                 except Exception:
                     pass
             return True
@@ -209,8 +235,8 @@ class Replayer:
         m.take_dirty()
         m.take_image_dirty()
         uc.mem_write(esp0, struct.pack("<I", ret_addr))
-        for p in mapped:
-            uc.mem_unmap(p, 0x1000)
+        for p, n in mapped:
+            uc.mem_unmap(p, n)
         for p, data in restore.items():
             uc.mem_write(p, data)
         return out

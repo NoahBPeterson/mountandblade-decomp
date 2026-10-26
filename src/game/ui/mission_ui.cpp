@@ -120,11 +120,11 @@ void MissionUi::set_f(float a, float* p)
 
 // @ 0x488720
 // Per-frame track driver (ret 0x10: this + three stack words). `a` is forwarded to mesh::render, `t` is the
-// caller's time accumulator, bumped by 1.0 for every child that advances. 0x40cd00 fills a 0x40-byte frame; the
-// original keeps a snapshot of (fE0, fE4, fE8) and the advanced time in the words around it.
+// caller's time accumulator, bumped by 1.0 for every child that advances. 0x40cd00 fills the 0x40-byte matrix; the
+// position row (+0x30) gets (fE0, fE4, *t), and its z is the advanced time for each child.
 void MissionUi::render(rgl::scene* a, float* t, int, int)
 {
-    float xf[19];
+    float xf[16];
     if (f104 & 1)
         return;
     if (tracks[4])
@@ -135,11 +135,14 @@ void MissionUi::render(rgl::scene* a, float* t, int, int)
             tracks[4]->color = (b121 && d01()) ? color150 : color14c;
     }
     rgl::identity_pos((rgl::matrix*)xf);
-    xf[0] = fE0;
-    xf[1] = fE4;
-    xf[16] = fE0;
-    xf[17] = fE4;
-    xf[18] = fE8;
+    float pos[4];                   // (fE0, fE4, *t) and an unset 4th word, copied whole into the position row
+    pos[0] = fE0;
+    pos[1] = fE4;
+    pos[2] = *t;
+    xf[12] = pos[0];
+    xf[13] = pos[1];
+    xf[14] = pos[2];
+    xf[15] = pos[3];
     for (int i = 0; i < 5; i++)
     {
         if (!tracks[i])
@@ -150,8 +153,8 @@ void MissionUi::render(rgl::scene* a, float* t, int, int)
                 ;
             else
             {
-                xf[17] = *t + 1.0f;
-                *t = xf[17];
+                xf[14] = *t + 1.0f;
+                *t = xf[14];
                 tracks[3]->render(a, *(rgl::matrix*)xf);
                 continue;
             }
@@ -163,8 +166,8 @@ void MissionUi::render(rgl::scene* a, float* t, int, int)
         }
         if (!b11c[i])
             continue;
-        xf[17] = *t + 1.0f;
-        *t = xf[17];
+        xf[14] = *t + 1.0f;
+        *t = xf[14];
         tracks[i]->render(a, *(rgl::matrix*)xf);
     }
 }
