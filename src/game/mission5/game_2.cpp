@@ -85,7 +85,17 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
     }
     int n2;
     s->r_int(&n2);
-    map->groups.resize(n2, Group());
+    // The record's neighbour list (+0x28) and weights (+0x38) are NOT in map.txt: read_map writes count (+0), the
+    // group's vertex ids (+4), mask (+0x24) and +0x68, and Group::Group 0x4246f0 leaves +0x28/+0x38 untouched. The
+    // original therefore stamps whatever its stack template held; ours held heap bytes, and score_triggers 0x51dac0
+    // treats any nb[k] != -1 as a node index and walked off the graph (the Start-New-Game fault). Initialise them
+    // explicitly so the template is deterministic: nb = -1 (no neighbour), weights = 0.
+    Group tmpl;                                        // Group::Group 0x4246f0 (mask/+0x48..+0x70 +0x84, as the original)
+    for (int k = 0; k < 4; k++) {
+        ((int*)((char*)&tmpl + 0x28))[k] = -1;         // nb[k]: this list is filled by the graph builder, not by map.txt
+        ((float*)((char*)&tmpl + 0x38))[k] = 0.0f;     // weight[k]
+    }
+    map->groups.resize(n2, *(ground_g136*)&tmpl);
     for (i = 0; i < n2; i++) {
         char* g = (char*)map->groups.first + i * 0x88;
         s->r_int((int*)(g + 0x24));

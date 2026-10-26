@@ -148,3 +148,15 @@ Format (one entry per problem):
   +0x44. Lesson: an opaque callee's model must match the *caller's* element type, and "the name says modifier" is not
   evidence — read the stride (`add esi,0x50`) and the offsets it frees (`[+0x44]`) off the original every time.
   — minutes lost: 70
+
+- 0x520c00 2026-10-26: `map.txt` carries no neighbour list for a map group. `read_map` (0x520c00) fills `count` (+0),
+  the group's vertex ids (+4), `mask` (+0x24) and +0x68; `Group::Group` (0x4246f0) initialises +0x24, +0x48/+0x4c/+0x50,
+  +0x64, +0x68/+0x6c/+0x70 and +0x84 — but **not** +0x28 (`nb[4]`) or +0x38 (`weights[4]`). Those reach the 62 408
+  elements only through `vec136::resize(n2, Group())`, i.e. as whatever bytes the temporary's stack slot held. In our
+  build that slot held heap pointers, so `score_triggers` (0x51dac0, gate `nb[k] != -1`) treated a heap address as a
+  node id and `trigger_score` (0x51db70) indexed `nodes + nb*0x88` — page fault at 0x4be8a7 on Start-New-Game.
+  Fix: build the resize template explicitly with `nb = -1`, `weights = 0` (game_2.cpp `read_map`). Probes showed the
+  parse itself is correct: 31 307 vertices / 62 408 groups, first six groups all `count=3 mask=2` (true in the file),
+  ids at +4 varying (0,1 / 173,1 / 172,1 …). Lesson: a vector filled by `resize(n, template)` inherits *every*
+  uninitialised byte of the template; if the original only survives because its stack junk is benign, initialise.
+  — minutes lost: 95
