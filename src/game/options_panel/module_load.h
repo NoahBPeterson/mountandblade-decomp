@@ -21,16 +21,15 @@ struct item_mod {
 };
 extern item_mod g_item_mods[43];     // 0xa75f70
 
-// the record type of item_modifier_array_dtor (0x4d10f0, shared by identical-code folding): a name, a string, a
-// flag and an id / value array pair. Not the item modifier table above.
+// the record type of item_modifier_array_dtor (0x4d10f0, shared by identical-code folding): the 0x50-byte bone
+// record (E50) whose only owned members are the string at +0 and the block at +0x44. Not the item modifier table
+// above; the destructor itself (0x4d10f0) steps 0x50 and frees +0x44, so the stride has to be this record's size.
 struct item_modifier {
-    tstring name;       // +0
-    tstring value;      // +0x10
-    char hidden;        // +0x20
-    char pad21[3];
-    int count;          // +0x24
-    int* ids;           // +0x28
-    int* values;        // +0x2c
+    tstring name;       // +0x00
+    char pad10[0x34];   // +0x10 (floats / sockets / vectors: not owned by this destructor)
+    void* block;        // +0x44 the array it frees (E50's vector<R44> data; Obj7a0's p44)
+    void* last;         // +0x48 zeroed with it
+    void* end;          // +0x4c zeroed with it
 };
 
 // flora kind record (0x20 bytes): name, two ints.

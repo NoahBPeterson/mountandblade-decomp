@@ -136,3 +136,15 @@ Format (one entry per problem):
   any `std::vector<T>`/`_Uninit_copy<T>`/`_Ufill<T>` COMDAT folds across them. Cross-check the stride in the
   emitted code, not just the row's byte match (`_Insert_n` was byte-exact the whole time; its *callee* was not).
   — minutes lost: 150
+
+- 0x4d10f0 2026-10-26: `item_modifier_array_dtor` was modelled on `module_load.h`'s 0x30-byte `item_modifier`
+  (`tstring name; tstring value; char hidden; int count; int* ids; int* values`), freeing `ids` at +0x28. The real
+  function (0x4d10f0) steps **0x50** and frees the block at +0x44 (the bone record's `vector<R44>` data), then
+  destroys the string at +0. It is the array destructor of the **bone lists** (`widget_text`/`skeleton_load`
+  `destroy_items` -> `Entries`, 32 x 0x50 records in the dump), not of the item-modifier table (`item_mod`, 43 x 0x28).
+  At 0x30 stride the loop walked into the middle of each record, read `socket_dir`/`rotate_*` floats as a `tstring`
+  and freed `0x3f800000` (`1.0f`) — the second "Start New Game" crash, in `tstring::~tstring <- item_modifier_array_dtor
+  <- destroy_range <- _Insert_n <- Entries::add`. Fix: model the record as `tstring` + 0x34 pad + three dwords at
+  +0x44. Lesson: an opaque callee's model must match the *caller's* element type, and "the name says modifier" is not
+  evidence — read the stride (`add esi,0x50`) and the offsets it frees (`[+0x44]`) off the original every time.
+  — minutes lost: 70

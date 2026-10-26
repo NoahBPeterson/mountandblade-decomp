@@ -32,11 +32,11 @@ void item_modifier_array_dtor(item_modifier* first, item_modifier* last)
 {
     if (first != last) {
         do {
-            if (first->ids) {
-                operator delete(first->ids);   // 0x535712
-                first->ids = 0;
-                first->values = 0;
-                first->count = 0;
+            if (first->block) {
+                operator delete(first->block);   // 0x535712
+                first->block = 0;
+                first->last = 0;
+                first->end = 0;
             }
             first->name.~tstring();
             first++;
