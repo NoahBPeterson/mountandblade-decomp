@@ -139,6 +139,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     si.cb = sizeof(si);
     memset(&pi, 0, sizeof(pi));
 
+#if 0   // TEMPORARY (local, do not commit): the binkplay intro videos cost 30 s per test run under Wine.
     float t0 = DXUtil_Timer(TIMER_GETAPPTIME);
 
     hfind = FindFirstFileA("paradox.bik", &fd);
@@ -174,6 +175,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
         }
     }
+#endif  // TEMPORARY: videos disabled
 
     r = g_app_obj.Create(hInstance);
     if (r < 0)
@@ -525,7 +527,9 @@ struct elem58 {
 void* __fastcall destroy_record_array(void* p, int unused, unsigned char flags);               // 0x4c7ee0
 void* __fastcall conv_item_array_dtor(conv_rec* self, int unused, unsigned char flags);        // 0x4c8980
 struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<int>::clear)
+#include "../main_menu.h"                                    // g_main_menu (the record at 0xa73980)
 #include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
+
 void __stdcall FSOUND_Close();                          // 0x534336 (the import thunk of fmod!FSOUND_Close)
 void crt_exit();                                        // 0x535458
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
