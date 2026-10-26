@@ -292,7 +292,10 @@ void Game::build_map_trees()
     int*   flags = new int[npts];
     float* dist  = new float[npts];
     int*   vert  = new int[npts];
-    int*   scratch = new int[npts];                                          // [esp+0xc3e00]
+    // scan_arrays (0x523630) does NOT index this buffer by element: it writes one dword at buffer+0xc3500 (a fixed
+    // offset, 0xcb189680), so the original's buffer is the ~0xc3540-byte block at [esp+0xc3e00], not npts ints. Sizing
+    // it by npts wrote past the end of a 125 KB allocation on a 31 307-point map (page fault at 0x49c86d).
+    char*  scratch = new char[0xc3600];                                      // [esp+0xc3e00]
     for (int i = 0; i < npts; i++) { flags[i] = 0; dist[i] = 1000.0f; }
 
     int nnodes = (int)(((char*)mgr->nodes_end - (char*)mgr->nodes) / 0x88);

@@ -160,3 +160,10 @@ Format (one entry per problem):
   ids at +4 varying (0,1 / 173,1 / 172,1 …). Lesson: a vector filled by `resize(n, template)` inherits *every*
   uninitialised byte of the template; if the original only survives because its stack junk is benign, initialise.
   — minutes lost: 95
+
+- 0x5213d0 2026-10-26: `build_map_trees`'s scratch buffer is sized by the *fixed offset* `scan_arrays` writes, not by the
+  point count. `scan_arrays` (0x523630) writes one dword at `buffer + 0xc3500` (constant `0xcb189680`, not per element),
+  and the original's buffer is the ~0xc3540-byte block at `[esp+0xc3e00]`. We allocated `new int[npts]` (125 KB on a
+  31 307-point map), so the store landed past the block: page fault at 0x49c86d on Start-New-Game. Fix: `new char[0xc3600]`.
+  Lesson: when a callee indexes by a fixed offset rather than by `i`, size the caller's buffer from that offset.
+  — minutes lost: 25
