@@ -99,6 +99,21 @@ static const char* text_of(const tstring* s)
 // @ 0x4ea290
 void SavePanel::update(int)
 {
+    // 0xa73980's tstrings are built by the original's static initialiser, which our build does not have: the glue copies
+    // the object's image bytes (cap = a pointer, buf = 0), so the first assignment goes through tstring::reserve's
+    // "enough capacity" path and writes to null. A file-scope initialiser did not survive (the fields were re-established
+    // before use), so construct them here, once, on the frame path that first touches the record.
+    {
+        static bool menu_strings_done = false;
+        if (!menu_strings_done) {
+            menu_strings_done = true;
+            new (&g_main_menu.title) tstring();
+            new (&*(tstring*)((char*)g_main_menu_obj + 0x54)) tstring();
+            new (&g_main_menu.header) tstring();
+            new (&g_main_menu.answer_yes) tstring();
+            new (&g_main_menu.answer_no) tstring();
+        }
+    }
     char pathbuf[16];
     char name[0x200];
     for (int i = 0; i < 9; i++) {
