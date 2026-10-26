@@ -237,6 +237,7 @@ void Font::load(const char* filename)
     TiXmlElement* root = docHandle.FirstChildElement().Element();
     if (!root)
         return;
+    TiXmlHandle rootHandle(root);                    // the FontDetails chain hangs off the root element, not the document
 
     root->QueryIntAttribute("padding", &padding);
     root->QueryIntAttribute("width", &width);
@@ -250,10 +251,9 @@ void Font::load(const char* filename)
     x_ratio = (float)font_size / (float)width;
     y_ratio = (float)font_size / (float)height;
 
-    Glyph fd;
-    (void)fd;
+    font_details fd;                                // staged glyph record: its ctor zeroes it once, before the loop
 
-    TiXmlElement* details = docHandle.FirstChild("FontDetails").FirstChild().Element();
+    TiXmlElement* details = rootHandle.FirstChild("FontDetails").FirstChild().Element();
     if (!details)
         return;
 
@@ -262,32 +262,31 @@ void Font::load(const char* filename)
         if (e->QueryIntAttribute("code", &code) != 0)
             continue;
 
-        Glyph g;
         int u, v, w, h, preshift, yadjust, postshift;
 
-        g.f0 = g.f4 = g.f8 = g.fc = g.f10 = g.f14 = g.f18 = 0.0f;
+        fd.a = fd.b = fd.c = fd.d = fd.e = fd.f = fd.g = 0.0f;
 
         if (e->QueryIntAttribute("u", &u) == 0)
-            g.f0 = (float)(u - 4) / (float)width;
+            fd.a = (float)(u - 4) / (float)width;
         if (e->QueryIntAttribute("v", &v) == 0)
-            g.fc = (float)((height - v) + 4) / (float)height;
+            fd.d = (float)((height - v) + 4) / (float)height;
         if (e->QueryIntAttribute("w", &w) == 0)
-            g.f8 = (float)((w - padding) + 6) / (float)width;
+            fd.c = (float)((w - padding) + 6) / (float)width;
         if (e->QueryIntAttribute("h", &h) == 0)
-            g.f4 = (float)((height - h) - 6 + padding) / (float)height;
+            fd.b = (float)((height - h) - 6 + padding) / (float)height;
         if (e->QueryIntAttribute("preshift", &preshift) == 0)
-            g.f10 = (float)(preshift - 4) / (float)width;
+            fd.e = (float)(preshift - 4) / (float)width;
         if (e->QueryIntAttribute("yadjust", &yadjust) == 0)
-            g.f14 = (float)(yadjust + 4) / (float)height;
+            fd.f = (float)(yadjust + 4) / (float)height;
         if (e->QueryIntAttribute("postshift", &postshift) == 0)
-            g.f18 = (float)(postshift + 4) / (float)width;
+            fd.g = (float)(postshift + 4) / (float)width;
 
-        Glyph* dst;
+        font_details* dst;
         if (code < 0x200)
-            dst = &ascii[code];
+            dst = (font_details*)&ascii[code];
         else
-            dst = map.at(code);
-        *dst = g;
+            dst = (font_details*)map.at(code);
+        *dst = fd;
     }
 }
 

@@ -166,9 +166,9 @@ struct resource_manager_x {                         // the resource manager (0x5
 #include "../../rgl/resource.h"          // resource_manager g_resmgr 0x5d6fa0 (the one declaration)
 #define g_resmgr_x (*(resource_manager_x*)&g_resmgr)   // the 0x5d6fa0 object seen through the shader / texture view above
 #include "../render_batch.h"                   // render_batch (shared with terrain_b)
-struct font_details {                               // seven zeroed dwords
-    int a, b, c, d, e, f, g;
-    font_details();                                 // 0x4bd120
+struct font_details {                               // 0x1c: the staged glyph record Font::load 0x4d9aa0 copies into the
+    float a, b, c, d, e, f, g;                      // table (a = u/f0, b = h/f4, c = w/f8, d = v/fc, e..g = shifts)
+    font_details();                                 // 0x4bd120 (zeroes all seven)
 };
 
 // ---- ambient particle ring and screen ray (0x4bd170, 0x4bd2f0) ---------------------------------------------------

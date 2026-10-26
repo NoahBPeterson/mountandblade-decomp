@@ -30,9 +30,13 @@ EditorSceneView* g_editor;                              // 0x5e292c
 EditorGameView*   g_game;                                // 0x5e2930
 char** g_object_names;                              // 0x8ed4df8: 0x20-byte records, name pointer at +4
 
-float g_one;                                        // 0x549cdc   1.0f
-float g_hundred;                                    // 0x54ab28 100.0f
-float g_color_unit;                                 // 0x54a6c4   1/255
+// These live in the original's shared float-constant pool (.rdata). Defined without an initialiser they are
+// zero in our build, which silently broke every use: g_one = 0 made GuiScreen::process's cursor y negative
+// ((-y/h)*f514) so no widget ever hit-tested (menus unclickable), and g_hundred / g_color_unit are the
+// 0..100 slider range and the byte->float colour unit.
+float g_one = 1.0f;                                 // 0x549cdc   1.0f
+float g_hundred = 100.0f;                           // 0x54ab28 100.0f
+float g_color_unit = 1.0f / 255.0f;                 // 0x54a6c4   1/255
 
 
 void restore_defaults();                           // 0x4d3a50

@@ -115,3 +115,12 @@ Format (one entry per problem):
 - chk.py takes a slice id or VA list only; module stems such as `config` are rejected.
 - The marker parser takes the first identifier before `(`, so `static __declspec(noinline) void f(` is read as `__declspec`; forward-declare with the attribute and put the marker on a plain `static void f(` definition line.
 - equiv.py resolves a same-TU custom-ABI static to its own copy ("local copies: 1") and reports FAIL even though the bytes are exact (0x48d940 calling 0x48d830).
+
+- 0x4d9aa0 2026-10-25: `tools/hybrid/capture.py` on a *hooked hybrid* silently destroys the hooked function:
+  `build()` fills the runtime's restore-byte table from `R.Image()` (the untouched analysis image), so when a
+  target's int3 fires it rewrites the first byte with the **original** opcode (`81` = `sub esp,`) over the
+  hook's `e9` jump, leaving bytes 1-4 of the jmp in place — the function is garbage from the second call on and
+  the game dies (log stops after "Starting new log file."). Three capture runs produced only the loader-entry
+  snapshot because of it. Fix idea: `--base EXE` that reads the restore bytes from the base image, or read them
+  from the file being patched. Probe side: `work/probe/cap_hybrid.py` + `work/probe/patch_cap_orig.py`
+  — minutes lost: 90
