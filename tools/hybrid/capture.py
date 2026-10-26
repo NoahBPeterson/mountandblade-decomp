@@ -161,9 +161,9 @@ def run(out, secs, play):
     print("%d snapshots, %.1f MB -> work/capture/" % (n, size / 1e6))
 
 
-def press(limit):
+def press(limit, name="mb_capture"):
     """Press Return at the launcher until the game's log shows loading (crashrun.press_play, by process name)."""
-    proc = '(first process whose name contains "mb_capture")'
+    proc = "(first process whose name contains \"%s\")" % name
     log = os.path.join(ROOT, "game", "rgl_log.txt")
     t0 = time.time()
     while time.time() - t0 < limit:
@@ -179,7 +179,7 @@ def press(limit):
             subprocess.run(["osascript", "-e", 'tell application "System Events" to set frontmost of %s to true' % proc,
                             "-e", "delay 0.5", "-e",
                             'tell application "System Events" to if (name of (first process whose frontmost is true)) '
-                            'contains "mb_capture" then key code 36'], capture_output=True)
+                            "contains \"%s\" then key code 36" % name], capture_output=True)
         time.sleep(3)
 
 
