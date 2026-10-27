@@ -54,11 +54,15 @@ def pyint(ref):
 def find_window(owner_sub):
     arr = cg.CGWindowListCopyWindowInfo(0, 0)   # kCGWindowListOptionAll
     k_owner, k_num, k_on, k_bounds = cfstr("kCGWindowOwnerName"), cfstr("kCGWindowNumber"), cfstr("kCGWindowIsOnscreen"), cfstr("kCGWindowBounds")
+    k_title = cfstr("kCGWindowName")
     best = None
     for i in range(cf.CFArrayGetCount(arr)):
         d = cf.CFArrayGetValueAtIndex(arr, i)
         owner = pystr(cf.CFDictionaryGetValue(d, k_owner))
-        if owner_sub.lower() not in owner.lower():
+        title = pystr(cf.CFDictionaryGetValue(d, k_title)) or ""
+        # windowed runs report the *process* as the owner ("mb_standalone.exe") but Wine sometimes reports the
+        # window's own name; matching either keeps the harness working in both fullscreen and windowed modes.
+        if owner_sub.lower() not in owner.lower() and owner_sub.lower() not in title.lower():
             continue
         if not pyint(cf.CFDictionaryGetValue(d, k_on)):
             continue   # Wine's hidden helper windows; the game window is on screen (any layer)
@@ -68,6 +72,32 @@ def find_window(owner_sub):
         wid = pyint(cf.CFDictionaryGetValue(d, k_num))
         if wid and w * h > (best[1] * best[2] if best else 0):
             best = (wid, w, h)
+    return best
+
+
+def find_window_bounds(owner_sub):
+    """(window id, x, y, w, h) of the largest on-screen window whose owner or title contains owner_sub."""
+    import ctypes
+    arr = cg.CGWindowListCopyWindowInfo(0, 0)
+    k_owner, k_num, k_on, k_bounds = cfstr("kCGWindowOwnerName"), cfstr("kCGWindowNumber"), cfstr("kCGWindowIsOnscreen"), cfstr("kCGWindowBounds")
+    k_title = cfstr("kCGWindowName")
+    best = None
+    for i in range(cf.CFArrayGetCount(arr)):
+        d = cf.CFArrayGetValueAtIndex(arr, i)
+        owner = pystr(cf.CFDictionaryGetValue(d, k_owner))
+        title = pystr(cf.CFDictionaryGetValue(d, k_title)) or ""
+        if owner_sub.lower() not in owner.lower() and owner_sub.lower() not in title.lower():
+            continue
+        if not pyint(cf.CFDictionaryGetValue(d, k_on)):
+            continue
+        b = cf.CFDictionaryGetValue(d, k_bounds)
+        x = pyint(cf.CFDictionaryGetValue(b, cfstr("X"))) or 0
+        y = pyint(cf.CFDictionaryGetValue(b, cfstr("Y"))) or 0
+        w = pyint(cf.CFDictionaryGetValue(b, cfstr("Width"))) or 0
+        h = pyint(cf.CFDictionaryGetValue(b, cfstr("Height"))) or 0
+        wid = pyint(cf.CFDictionaryGetValue(d, k_num))
+        if wid and w * h > (best[3] * best[4] if best else 0):
+            best = (wid, x, y, w, h)
     return best
 
 
@@ -96,6 +126,10 @@ def main():
         i = args.index("--scene-min")
         scene_min = float(args[i + 1])
         del args[i:i + 2]
+    if args and args[0] == "--bounds":
+        win = find_window_bounds(args[1] if len(args) > 1 else "Mount")
+        print("%d %d %d %d %d" % win if win else "no window")
+        return 0 if win else 1
     if args and args[0] == "--measure":
         dark, mean, scene = measure(args[1])
         print("dark=%.3f mean=%.1f scene=%.1f" % (dark, mean, scene))

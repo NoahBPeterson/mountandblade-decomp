@@ -118,7 +118,10 @@ void SavePanel::update(int)
             new (&g_menu_rec->answer_no) tstring();
         }
     }
-    char pathbuf[16];
+    // save_path reads this as a C string, then WRITES the whole "%s\Mount&Blade Savegames\%s" path back into
+    // it (its own local buffer is 0x104), so this is a char buffer of that size - the 16 bytes it used to have
+    // were overrun, corrupting the neighbouring `name` buffer (crash 0x73726573 = the tail of "...\users").
+    char pathbuf[0x200];
     char name[0x200];
     for (int i = 0; i < 9; i++) {
         Control* button = buttons[i];
@@ -137,9 +140,11 @@ void SavePanel::update(int)
         const tstring* rc = g_strtable.lookup(cancel);
         const tstring* ro = g_strtable.lookup(ok);
         g_menu_rec->header.clear();
-        g_menu_rec->title = *rc;
+        // The original (0x4ea40c..0x4ea42d) stores the prompt into +0x1c and the two answers into +0x78/+0x88:
+        // +0x1c = the question, +0x78 = ui_ok, +0x88 = ui_cancel. Ours had +0x1c and +0x88 swapped.
+        g_menu_rec->title = title2;
         g_menu_rec->answer_yes = *ro;
-        g_menu_rec->answer_no = title2;
+        g_menu_rec->answer_no = *rc;
         g_menu_rec->choice = (int)((char*)this + 0x220);
         g_menu_rec->v50 = (int)((char*)this + 0x224);
         int* slotname;
@@ -157,7 +162,7 @@ void SavePanel::update(int)
         if (slot[0x58] == 0 && slot[0x59] == 0 && slot[0x5a] == 0) {
             crt_sprintf(pathbuf, "");
             save_path(pathbuf);
-            const char* path = *(char**)(pathbuf + 4);
+            const char* path = pathbuf;
             const char* pf = g_save_prefix;
             if (!pf)
                 pf = (char*)&g_save_prefix;
@@ -176,14 +181,21 @@ void SavePanel::update(int)
         return;
     }
     Control* panel = *(Control**)((char*)this + 0x210);
-    if (panel->is_key_down(0x10000))
+    // The original (verified by the byte-level reconstruction in match/slices/save_panel) reaches the delete
+    // confirmation on the delete widget OR (a17420 set, a17820 clear, AND the panel's +0x104 bit 1 clear); the
+    // remaining case is the save/remove path. Ours had that second test as an OR of the positive bit, which sent
+    // the ordinary save/load click into the confirmation (equiv.py reported FAIL until this was ANDed).
+    if (panel->is_key_down(0x10000) ||
+        (g_a17420 != 0 && g_a17820 == 0 && ((*(unsigned char*)((char*)panel + 0x104) & 2) == 0)))
         goto confirm_delete;
-    if ((g_a17420 != 0 && g_a17820 == 0) ||
-        ((*(unsigned char*)((char*)panel + 0x104) & 2) != 0)) {
-        if (*(int*)((char*)this + 0x21c) == 0) {
+    {
+        // +0x21c is the dialog's answer slot (the confirm sets it to -1 before opening the box). Require an explicit
+        // "yes" (1) here: while the polarity of the original's 0/1 encoding is unconfirmed, a mis-click must not
+        // reach crt_remove (it would delete the save the player just clicked on).
+        if (*(int*)((char*)this + 0x21c) == 1) {
             crt_sprintf(pathbuf, "");
             save_path(pathbuf);
-            const char* path = *(char**)(pathbuf + 4);
+            const char* path = pathbuf;
             const char* pf = g_save_prefix;
             if (!pf)
                 pf = (char*)&g_save_prefix;
@@ -216,9 +228,10 @@ confirm_delete:
     const tstring* rn = g_strtable.lookup(no);
     const tstring* ry = g_strtable.lookup(yes);
     g_menu_rec->header.clear();
-    g_menu_rec->title = *rn;
+    // Same shape as the save-name box (0x4ea7e4..0x4ea801): +0x1c = the question, +0x78 = ui_yes, +0x88 = ui_no.
+    g_menu_rec->title = title2;
     g_menu_rec->answer_yes = *ry;
-    g_menu_rec->answer_no = title2;
+    g_menu_rec->answer_no = *rn;
     g_menu_rec->choice = (int)((char*)this + 0x21c);
     g_menu_rec->v50 = 0;
     g_menu_rec->open = 1;

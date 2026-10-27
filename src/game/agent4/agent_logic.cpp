@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <stdio.h>
 #include <vector>
 #include <memory>
 #include <new>

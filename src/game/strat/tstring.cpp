@@ -6,6 +6,7 @@
 //       itself is declared in ../tstring.h (shared). Names provisional (rgl engine code, string.cpp?).
 //       Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 #include <new>     // declares operator new[]/delete[]: without it cl 13.10 calls the scalar operators (the original calls 0x535482/0x53570d)
@@ -78,7 +79,26 @@ tstring::tstring(const char* s)
     }
 }
 // @ 0x42bc40
-tstring::~tstring() { if (buf) delete buf; }
+tstring::~tstring()
+{
+    if (buf) {
+        unsigned p = (unsigned)buf;
+        if (p < 0x10000u || p >= 0x80000000u || p == 0x3c6d9160u || p == 0x3c6d9166u || p == 0x3c6d9168u) {   // TEMP diagnostic
+            static FILE* f = fopen("tstr_bad.txt", "a");
+            if (f) {
+                fprintf(f, "bad dtor this=%p buf=%08x\n", (void*)this, p);
+                unsigned* sp = (unsigned*)&p;
+                for (int i = 0; i < 24; i++) {
+                    unsigned v = sp[i];
+                    if (v >= 0x401000u && v < 0x600000u) fprintf(f, "   [%d] %08x\n", i, v);
+                }
+                fflush(f);
+            }
+            return;
+        }
+        delete buf;
+    }
+}
 // @ 0x42bc50
 void tstring::operator=(const tstring& o)
 {

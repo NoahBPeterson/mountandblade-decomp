@@ -2,7 +2,7 @@
 
 Read-only with respect to match/: objects are compiled into work/difftest/obj/.
 """
-import glob, hashlib, os, re, subprocess, sys
+import glob, hashlib, os, re, subprocess, sys, threading
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -296,12 +296,21 @@ def compile_obj(src, flags):
     obj = os.path.join(OBJDIR, "%s_%s.obj" % (os.path.basename(src).rsplit(".", 1)[0], h.hexdigest()[:12]))
     if os.path.exists(obj):
         return obj, ""
-    tmp = obj + ".part.obj"
+    # Unique temp per thread: six sweep workers compile the same module at once, and a shared "<obj>.part.obj"
+    # made one of them fail with FileNotFoundError on the rename (mesh_start, slot_api, mission_ctx rows).
+    tmp = "%s.%d.%d.part.obj" % (obj, os.getpid(), threading.get_ident())
     r = subprocess.run([CL, "/nologo", "/c", *flags, INCLUDE, "/Fo" + winpath(tmp), winpath(src)],
                        capture_output=True, text=True)
     if r.returncode or not os.path.exists(tmp):
+        if os.path.exists(obj):
+            return obj, r.stdout[-500:]          # another worker finished the identical object first
         return None, (r.stdout + r.stderr)[-3000:]
-    os.replace(tmp, obj)
+    try:
+        os.replace(tmp, obj)
+    except OSError:
+        if os.path.exists(obj):
+            return obj, r.stdout[-500:]
+        raise
     return obj, r.stdout[-500:]
 
 
@@ -344,13 +353,19 @@ def demangle_qual(name):
 
 
 def _def_name_after(lines, i):
-    """Name of the first function *definition* (a '(' ... '{' before any ';') after line i.
-    A file-local 'static inline' / 'static __forceinline' helper defined between the marker and
-    the free function it labels is skipped when such a definition follows before the next
-    '// ... @ 0x' marker (and before any class body)."""
+    """Name of the function the marker on line i labels: the first definition ('(' ... '{' before any ';'), or an
+    explicit template instantiation ('template void V<int>::f(...);'), which IS a definition. A file-local
+    'static inline' / 'static __forceinline' helper defined between the marker and the free function it labels is
+    skipped when such a definition follows before the next '// ... @ 0x' marker (and before any class body)."""
     buf = ""
     first = None
     depth = 0
+    tpl = False
+
+    def name_of(head):
+        m = re.search(r"((?:[A-Za-z_]\w*\s*::\s*)*~?(?:operator\s*\S+|[A-Za-z_]\w*))\s*$", head)
+        return re.sub(r"\s+", "", m.group(1)) if m else None
+
     for j in range(i + 1, min(i + 80, len(lines))):
         if first is not None and re.search(r"//.*@\s*0x[0-9a-fA-F]{5,8}\b", lines[j]):
             break
@@ -359,30 +374,39 @@ def _def_name_after(lines, i):
             depth += raw.count("{") - raw.count("}")
             continue
         l = raw.strip()
-        if not l or l.startswith(("#", "template", "/*", "*")):
+        if l.startswith("template"):
+            # the instantiation/specialisation on this line is the definition the marker labels; without this the
+            # scan ran on to the next ordinary definition (0x445ea0, the vector<E56> _Insert_n COMDAT, was bound to
+            # ir_max_amount twelve lines below, so the row compared two unrelated functions)
+            tpl = True
+            l = re.sub(r"^template\s*(<[^<>]*>)?\s*", "", l).strip()
+        if not l or l.startswith(("#", "/*", "*")):
             continue
         buf += " " + l
         if "{" in buf or ";" in buf:
             semi, brace = buf.find(";"), buf.find("{")
             if brace >= 0 and (semi < 0 or brace < semi) and "(" in buf[:brace]:
                 head = buf[:buf.index("(")]
-                m = re.search(r"((?:[A-Za-z_]\w*\s*::\s*)*~?(?:operator\s*\S+|[A-Za-z_]\w*))\s*$", head)
-                if m:
-                    nm = re.sub(r"\s+", "", m.group(1))
+                nm = name_of(head)
+                if nm:
                     helper = re.search(r"\bstatic\b", head) and re.search(r"\b(?:inline|__inline|__forceinline)\b", head)
                     if not helper:
                         return nm if first is None or "::" not in nm else first
                     if first is None:
                         first = nm              # a file-local inline helper: look further
                     depth = buf.count("{") - buf.count("}")
-                    buf = ""
+                    buf, tpl = "", False
                     continue
+            if tpl and semi >= 0 and "(" in buf and brace < 0:
+                nm = name_of(buf[:buf.index("(")])
+                if nm:
+                    return nm
             if brace >= 0 and (semi < 0 or brace < semi) and "(" not in buf[:brace]:
                 if first is not None:
                     return first   # past a helper into a class body: the helper was the target
                 buf = ""   # class/namespace opening: keep looking
                 continue
-            buf = ""
+            buf, tpl = "", False
     return first
 
 

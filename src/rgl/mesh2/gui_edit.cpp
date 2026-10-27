@@ -50,7 +50,7 @@ struct clip_pair {
 // @ 0x4c48d0
 // Loader (ret 4): reads two tstrings and an int into locals, then the count at +4, rebuilds the 0x34-byte
 // records and counts the ones whose 0x4be470 load succeeded; finishes the list.
-void __fastcall rec34_list::load(stream_base& s)
+void rec34_list::load(stream_base& s)
 {
     tstring a;
     tstring b;
@@ -64,25 +64,13 @@ void __fastcall rec34_list::load(stream_base& s)
         v = 0;
     }
     nok = 0;
-    int n = count;
-    rec34* r = (rec34*)operator new[](n * 0x34 + 4);
-    if (r != 0) {
-        *(int*)((char*)r - 4) = n;
-        for (int i = 0; i < n; i++) {
-            new (&r[i].name) tstring();
-            new (&r[i].body) DialogBlock();
-        }
-    } else
-        r = 0;
-    v = r;
+    v = new rec34[count];           // the compiler's vector-ctor-iterator expansion: cookie, then name/body per record
     for (int i = 0; i < count; i++) {
-        if (r[i].read(&s))
+        if ((char)v[i].read(&s))        // rec34::read returns a char (config.cpp declares int for the same code)
             nok++;
     }
     ((rec34_table*)this)->load_used();   // 0x4be560: rec34_list has rec34_table's records / count / success head
-    b.~tstring();
-    a.~tstring();
-}
+}                                       // a and b are destroyed by the epilogue, b first
 
 // @ 0x4c49f0
 head_cam::head_cam()
@@ -912,7 +900,7 @@ void RefList::retire()
 }
 
 // @ 0x4c6950
-RefRecord* ItemPage::fill_records(RefRecord* rec)
+void ItemPage::fill_records(RefRecord* rec)
 {
     tstring a, b;
     rec->v54(&a);
@@ -920,28 +908,18 @@ RefRecord* ItemPage::fill_records(RefRecord* rec)
     int version;
     rec->v4c(&version);                                  // the file's version word (unused)
     rec->v4c((void*)((char*)this + 4));                  // the record count, +4
-    ((RefList*)this)->retire();
     RefList* rl = (RefList*)this;
-    rl->records = 0;
-    int n = *(int*)((char*)this + 4);
-    RefItem* p = (RefItem*)operator new[](n * 0x24 + 4);
-    if (p) {
-        p = (RefItem*)((char*)p + 4);
-        ((int*)p)[-1] = n;
-        RefItem* it = p;
-        for (int i = 0; i < n; i++, it = (RefItem*)((char*)it + 0x24)) {
-            tstring t;
-            it->name = t;
-            it->refs = 0;
-            it->kf = 0;
-            it->f18 = 0;
-        }
+    if (rl->records) {                                  // retire(), open-coded as in the original 0x4c69a5..0x4c69e2
+        delete[] rl->records;
+        rl->records = 0;
     }
-    rl->records = p;
+    rl->records = new RefItem[*(int*)((char*)this + 4)];  // 0x4c69e9: the array-new expansion builds each entry
+    int n = *(int*)((char*)this + 4);
     for (int i = 0; i < n; i++)
         ((PresentationRec*)((char*)rl->records + i * 0x24))->read(*(stream_base*)rec);   // 0x4c23f0: a member call on the item, the stream as its argument
     ((loaded_prsnt_table*)this)->load_used();           // 0x4bdec0: the presentation codes
-    return rec;
+    // void: the original sets no eax, so its "return value" is whatever the last local destructor (tstring
+    // 0x42bc40) leaves in eax, and no caller reads it (inventory_panel/module_files.cpp discards it).
 }
 
 // @ 0x4c6aa0
@@ -2089,16 +2067,16 @@ void screen_text::refresh(int handle)
             return;
     }
 on:
-    if (g->flag)
-        *g->flag = 1;
-    if (text && g->text)
-        g->text->assign("");
+    if (flag)
+        *flag = 1;
+    if (text && win)
+        text->assign("");
     g_windows.apply();
     return;
 off:
-    if (g->flag)
-        *g->flag = 0;
-    if (text && g->text)
+    if (flag)
+        *flag = 0;
+    if (text && win)
         *text = *(tstring*)((char*)win + 0x128);
     g_windows.apply();
 }

@@ -549,9 +549,10 @@ struct HudRoot {
 // @ 0x49b630
 void HudRoot::set_font_mesh(const tstring* text, int arg)
 {
-    tstring name("ui_font");
-    font.res = (skin*)g_resmgr.get_material(name);
-    name.~tstring();
+    {
+        tstring name("ui_font");
+        font.res = (skin*)g_resmgr.get_material(name);
+    }
     font.clear_geometry();
     if (text->len <= 0) {
         font.mask = 0;
@@ -702,7 +703,10 @@ struct OrderObj {
 
 struct OrderEntry {                                 // 0x5ac8-byte order/agent record
     char pad0[0xc];
-    char* name;                                     // +0xc
+    char name[0x10];                                // +0xc..0x1c an *inline* name buffer: the original passes
+                                                    // `lea esi,[ebx+0xc]` as the string (0x49c04a), not a pointer.
+                                                    // Declaring it `char*` (plus a pad) also put flag1c at +0x10,
+                                                    // so every later field was 0xc low (obj at 0x59b4, not 0x59c0)
     char flag1c;                                    // +0x1c
     char pad1d[3];
     tstring text;                                   // +0x20
@@ -710,11 +714,15 @@ struct OrderEntry {                                 // 0x5ac8-byte order/agent r
     unsigned flags;                                 // +0xa0 (0x400 normal, 0x80000 hidden, 0x3000 style)
     int f_a4;                                       // +0xa4 (vertical offset)
     char pada8[0x59c0 - 0xa8];
-    OrderObj* obj;                                  // +0x59c0
+    OrderObj* obj;                                  // +0x59c0 (== Party::model)
     char pad59c4[0x59e8 - 0x59c4];
     Sprite* label;                                  // +0x59e8 (text mesh)
     void place_on_map() { ((::Party*)this)->place_on_map(); }                                // 0x4b2880
+    void update_flags() { ((::Party*)this)->update_flags(); }                                // 0x4b7840 (the record is a Party)
 };
+typedef char chk_ordentry_flags[offsetof(OrderEntry, flags) == 0xa0 ? 1 : -1];
+typedef char chk_ordentry_obj[offsetof(OrderEntry, obj) == 0x59c0 ? 1 : -1];
+typedef char chk_ordentry_label[offsetof(OrderEntry, label) == 0x59e8 ? 1 : -1];
 
 struct Reinf {                                      // 0x4c-byte reinforcement record
     int idx;                                        // +0 (unit index)
@@ -771,22 +779,29 @@ struct Mission {
     Unit units[1];                                  // +0x666c (0x130 each)
 
     void add_amount(int a, int b) { ((Mission3*)this)->add_amount(a, (unsigned)b); }                 // 0x4677a0 (ret 8)
-    int label_text(Sprite* label, const char* name, int a, int b, const float* h)   // 0x49baa0 (ret 0x14)
+    int label_text(Sprite* label, const tstring* name, int a, int b, const float* h)   // 0x49baa0 (ret 0x14)
     {
-        ((::GameData*)this)->label_text((rgl::mesh*)label, (const tstring*)name, (char)a, b, h);
+        ((::GameData*)this)->label_text((rgl::mesh*)label, name, (char)a, b, h);
         return 0;
     }
     Sprite* build_legend_mesh(OrderObj* o) { return (Sprite*)::build_legend_mesh((ColourOwner*)o); }                // 0x495b20 (ret 4)
     void check_slot(int id, unsigned bits);         // 0x49c170 (ret 8)
 };
 extern char g_show_party_ids_instead_of_names;                              // 0xa181b8
-struct ResMgr { Sprite* material(const char* name) { return (Sprite*)((::resource_manager*)this)->get_material(*(const rgl::string*)name); } };  // 0x418a70
+struct ResMgr {   // 0x418a70: the original builds a tstring from the literal first (0x42bbe0), passes it, frees it
+    Sprite* material(const char* name) {
+        tstring tmp(name);
+        Sprite* r = (Sprite*)((::resource_manager*)this)->get_material(*(const rgl::string*)&tmp);
+        return r;
+    }
+};
 extern ResMgr g_resmgr;                             // 0x5d6fa0
 
-// 0xa732b4 holds a pointer; its object creates the scene object for orders.
+// 0xa732b4 is g_level; the original calls the *direct* create_entity (0x49bea0: mov ecx,[0xa732b4]; push 9;
+// call 0x428440), not a virtual slot - the object at g_level is not polymorphic (its first dword is data).
 static OrderObj* order_create_entity(int type)
 {
-    return ((OrderObjHost*)*(void**)0xa732b4)->create_entity(type);
+    return (OrderObj*)((rgl::world*)g_level)->create_entity(type);
 }
 
 // @ 0x49bea0
@@ -805,41 +820,54 @@ void MissionAgents::add_order_arrow(int id)
     o->shape = shape;
     e->obj = o;
     o->frame = *identity_pos(&o->frame);
-    e->obj->update_flags();
+    e->update_flags();                                // 0x49bf6d: the original calls it on the record (ecx = ebx), not e->obj
     e->label = ((Mission*)g_game)->build_legend_mesh(e->obj);
     h = (float)e->f_a4;
-    if (e->flags & 0x80000) {
-        name = "";
-        ((Mission*)g_game)->label_text(e->label, name, 0, 1, &h);
-    } else if (e->flags & 0x400) {
-        if ((e->flags & 0x3000) == 0)
-            h = 0.5f;
-        else if ((e->flags & 0x3000) == 0x1000)
-            h = 0.75f;
-        else
-            h = 1.0f;
-        if (g_show_party_ids_instead_of_names)
-            name = (const char*)&e->text;
-        else if (e->flag1c == 0 && (name = g_strtable.find(&e->text)) != 0)
-            ;
-        else
-            name = e->name;
-        ((Mission*)g_game)->label_text(e->label, name, 1, (int)h, &h);
-        ((RefSlot*)e->label)->sprite = g_resmgr.material("map_legend_outline");
-    } else {
-        if ((e->flags & 0x3000) == 0)
-            h = 0.5f;
-        else if ((e->flags & 0x3000) == 0x1000)
-            h = 0.75f;
-        else
-            h = 1.0f;
-        if (g_show_party_ids_instead_of_names)
-            name = (const char*)&e->text;
-        else if (e->flag1c == 0 && (name = g_strtable.find(&e->text)) != 0)
-            ;
-        else
-            name = e->name;
-        ((Mission*)g_game)->label_text(e->label, name, 0, (int)h, &h);
+    // label_text takes a *tstring* (0x49baa0 reads s->buf/len): the char* cases build one on the stack, as the
+    // original does (0x49bfd9 / 0x49c076 destroy/construct a tstring right around the call).
+    {
+        tstring local_name;
+        const tstring* nm;
+        if (e->flags & 0x80000) {
+            local_name.assign("");
+            nm = &local_name;
+            ((Mission*)g_game)->label_text(e->label, nm, 0, 1, &h);
+        } else if (e->flags & 0x400) {
+            if ((e->flags & 0x3000) == 0)
+                h = 0.5f;
+            else if ((e->flags & 0x3000) == 0x1000)
+                h = 0.75f;
+            else
+                h = 1.0f;
+            if (g_show_party_ids_instead_of_names) {
+                nm = &e->text;
+            } else if (e->flag1c == 0 && g_strtable.find(&e->text) != 0) {
+                local_name.assign(g_strtable.find(&e->text));
+                nm = &local_name;
+            } else {
+                local_name.assign(e->name);
+                nm = &local_name;
+            }
+            ((Mission*)g_game)->label_text(e->label, nm, 1, (int)h, &h);
+            ((RefSlot*)e->label)->sprite = g_resmgr.material("map_legend_outline");
+        } else {
+            if ((e->flags & 0x3000) == 0)
+                h = 0.5f;
+            else if ((e->flags & 0x3000) == 0x1000)
+                h = 0.75f;
+            else
+                h = 1.0f;
+            if (g_show_party_ids_instead_of_names) {
+                nm = &e->text;
+            } else if (e->flag1c == 0 && g_strtable.find(&e->text) != 0) {
+                local_name.assign(g_strtable.find(&e->text));
+                nm = &local_name;
+            } else {
+                local_name.assign(e->name);
+                nm = &local_name;
+            }
+            ((Mission*)g_game)->label_text(e->label, nm, 0, (int)h, &h);
+        }
     }
     o->mode = id;                                   // (+0xc takes the argument again: [esp+0x70] is [esp+0x60] after the pushes)
     o->fade = 1;
@@ -1632,7 +1660,7 @@ struct scene_obj {
     virtual void s30(); virtual void s31(); virtual void s32(); virtual void s33();
     virtual void s34(); virtual void s35(); virtual void s36(); virtual void s37();
     virtual void s38(); virtual void s39(); virtual void s40();
-    virtual void attach(void* v, int n);                 // +0xa4
+    virtual void attach(void* v, void* n);               // +0xa4
     virtual void s42(); virtual void s43(); virtual void s44(); virtual void s45();
     virtual void s46(); virtual void s47(); virtual void s48(); virtual void s49();
     virtual void add_child(void* v);                     // +0xc8
@@ -1790,7 +1818,7 @@ int View::create_text_overlay(int arg, int flags)
     r.x = 0.9f;
     r.y = 0.75f;
     o->set_rot(&r);                                      // +0x64
-    o->attach((void*)arg, *(int*)&r.y);                  // +0xa4 (operand pair of the original)
+    o->attach((void*)&r, (void*)arg);                    // +0xa4 (the original passes &r first, then arg)
     if (flags & 0x2000) {
         scene_obj* ps = (scene_obj*)operator new(0x188);
         if (ps)
@@ -1846,7 +1874,7 @@ int View::create_text_overlay(int arg, int flags)
     }
     if (this->begin == 0)
         return -1;
-    return ((this->end - this->begin) >> 2) - 1;
+    return (this->end - this->begin) - 1;
 }
 
 // ---- @ 0x49e9c0 -----------------------------------------------------------------------------------
@@ -2467,7 +2495,7 @@ void Elem::set_lvalue(__int64* locals, const __int64& value)
     const int* v = (const int*)&value;
     int k = ((int*)vals)[1];
     int idx = ((int*)vals)[0];
-    if (k < 0 || (k == 0 && (unsigned)idx >= 0x80000000u)) {
+    if (k < 0 || (k == 0 && (unsigned)idx < 0x80000000u)) {
         sprintf(buf, "Illegal lvalue in statement; Opcode = %d", g_cur_opcode, g_cur_param);
         report(buf);
         return;

@@ -18,6 +18,6 @@ struct ConfigTable {
     int get_int(const tstring& key);        // 0x5093d0 (ret 4)
 };
 extern ConfigTable g_config;                // 0xa44240  // old name of g_game_vars, removed after the names merge
-#define CONFIG_ENTRIES ((ConfigEntry*)0xa4425c)
+#define CONFIG_ENTRIES ((ConfigEntry*)((char*)&g_config + 0x1c))   // the table is the symbol, not 0xa4425c
 
 #endif // GAME_CONFIG_TABLE_H

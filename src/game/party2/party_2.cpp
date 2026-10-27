@@ -1278,12 +1278,10 @@ void Party::collect_targets(int* out, int* max, int* count)
 void Party::reissue_order()
 {
     if (action == 9) {
-        set_order_face((int*)&battles()->pages[target >> 4][target & 0xf].x2,
-                       battles()->pages[target >> 4][target & 0xf].face2);
-        order_state = 0;
+        set_order_face((int*)&battles()->pages[(unsigned)target >> 4][target & 0xf].x2,
+                       battles()->pages[(unsigned)target >> 4][target & 0xf].face2);
     } else if (action == 6) {
         set_order_pos((int*)&order_pos);
-        order_state = 0;
     } else if (action == 4 || action == 1) {
         if (target >= 0 && parties()->is_live(target)) {
             if (parties()->get(target)->flags_lo & 0x400)
@@ -1292,8 +1290,8 @@ void Party::reissue_order()
             else
                 set_order_party(&target);
         }
-        order_state = 0;
     }
+    order_state = 0;
 }
 
 

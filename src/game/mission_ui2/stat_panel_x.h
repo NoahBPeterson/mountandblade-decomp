@@ -38,6 +38,7 @@ struct Event {
     int f8c;                                // +0x8c g_ticks[0] high word
     int f90;                                // +0x90
     Event();                                // 0x48c210
+    virtual void s_last() {}                 // placeholder: original table 0x5922cc has 3 slots, ours 2
 };
 
 #endif // GAME_MISSION_UI2_STAT_PANEL_X_H

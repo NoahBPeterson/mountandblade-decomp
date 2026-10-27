@@ -80,5 +80,5 @@ Once most TUs exist: a link-order list of all modules + the CRT, globals defined
 (`.data`/`.bss` ownership from the initializer table), and a first trial relink with link 7.10.
 
 ## Tracking
-`tools/progress.py --plot` (green "migrated" line) and `docs/STATUS.md` "Source tree" table after each
-commit.
+`tools/progress.py --plot` (treemap: game / engine / 3rd party -> file -> function, area = instructions,
+colour = verdict) and `docs/STATUS.md` "Source tree" table after each commit.

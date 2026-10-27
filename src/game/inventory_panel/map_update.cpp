@@ -150,9 +150,11 @@ void MapPanel::update_target()
         float dy = (float)g_mouse_y - y0;
         g_game->cur_label = -1;
 
-        if (!(dx < -0.01f) && !(dx > w + 0.01f) &&
-            !(dy < -0.01f) && !(dy > h + 0.01f)) {
-            if (!(dy < 0.0f)) {
+        // The original tests the band with `test ah,1; jne` (C0 = less-than *or* unordered), so a NaN
+        // coordinate counts as OUT of the band and the label is dropped; `!(x < lo)` keeps a NaN in.
+        if (dx >= -0.01f && w + 0.01f >= dx &&
+            dy >= -0.01f && h + 0.01f >= dy) {
+            if (dy >= 0.0f) {
                 int n = g_game->n_labels;
                 int i;
                 for (i = 0; i < n; i++)

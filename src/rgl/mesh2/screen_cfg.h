@@ -92,8 +92,8 @@ struct screen_text {
     dev_rec* dev1;                               // +0x3c
     dev_rec* dev2;                               // +0x40
     char pad44[0x8];
-    screen_gadget* g;                            // +0x4c
-    tstring* text;                               // +0x50
+    int* flag;                                   // +0x4c (the original dereferences this directly: `mov eax,[esi+0x4c];
+    tstring* text;                               // +0x50  test eax,eax; je ...; mov [eax],1` at 0x4ca594)
 };
 
 // a list of device records: +0x38 .. +0x50 (the last slot holds the selected index)

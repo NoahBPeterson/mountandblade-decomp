@@ -103,7 +103,7 @@ struct UiTextDb {                                            // the UI string ta
 #define UITEXT ((UiTextDb*)0x5e2a18)
 
 #include "../ini_file.h"
-#define CONFIG ((ini_file*)0xa44240)
+#define CONFIG (&g_game_vars)
 
 struct TableauTbl {                                          // world_data/obj_tbl.h: the image table at 0xa75f40
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0
@@ -144,7 +144,7 @@ static tstring* tr_obj(const char* key)
 // config entry -> text value
 static char* cfg_text(int idx)
 {
-    char* e = (char*)0xa4425c + idx * 0x2c;
+    char* e = (char*)&g_game_vars + 0x1c + idx * 0x2c;
     char* s = *(char**)(e + 4);
     return s ? s : (e + 4);
 }

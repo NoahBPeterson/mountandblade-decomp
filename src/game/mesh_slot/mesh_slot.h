@@ -137,11 +137,13 @@ struct ShadowMapP : ShadowMap {
     NOINL void render();     // 0x47fef0
 };
 struct TerrainX : terrain_obj {
+    // The object ends with Terrain's own members: the scene name is Terrain::tail (+0x845e784) and the mesh list is
+    // Terrain::v845e7b8.  TerrainX only adds the 9 entity slots, which sit in Terrain's +0x845e794 hole and so are
+    // reachable by address only (a derived class cannot place members inside its base).
     // (TerrainLayer::f14 as the float scale of a layer's texture coordinates: layer[l].f14f())
-    char pad_845e030[0x845e784 - 0x845e030];
-    tstring name;                                    // +0x845e784 scene name (0x47cae0: shorter than 4 = none)
-    rgl::entity* sent[9];                            // +0x845e794 3x3 entities by the sign of the mesh centre (0x47cae0)
-    std::vector<rgl::mesh*> smeshes;                 // +0x845e7b8 the meshes find_meshes returned (allocator at +0x845e7b8)
+    tstring& name() { return tail; }                          // +0x845e784 scene name (0x47cae0: shorter than 4 = none)
+    rgl::entity** sent() { return (rgl::entity**)((char*)this + 0x845e794); }   // 3x3 entities by the sign of the mesh centre
+    std::vector<rgl::mesh*>& smeshes() { return *(std::vector<rgl::mesh*>*)&v845e7b8; }   // the meshes find_meshes returned
     void snap(rgl::mesh* m);                         // 0x47c9b0
     void build_entity();                             // 0x47cae0
     void light_entities(rgl::mesh** list, int count);   // 0x47ce00

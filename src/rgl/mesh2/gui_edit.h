@@ -40,7 +40,7 @@ struct rec34_list {
     rec34* v;        // +0
     int   count;     // +4
     int   nok;       // +8
-    void __fastcall load(stream_base& s);   // 0x4c48d0 (ret 4)
+    void load(stream_base& s);              // 0x4c48d0 (ret 4: thiscall, the stream on the stack)
 };
 
 // ============================================================================================================
@@ -218,9 +218,10 @@ struct kf_node98 {              // 0x98-byte record with a keyframe track at +0x
 
 struct RefItem {                // 0x24-byte entry of the record array
     tstring name;               // +0
-    void* refs;                 // +0x10
+    void* refs;                 // +0x10 (left uninitialised by the array constructor)
     void* kf;                   // +0x14 (an array of keyframes, freed with the item)
-    int f18, f1c, f20;
+    int f18, f1c, f20;          // +0x18, +0x1c, +0x20 (f20 left uninitialised)
+    RefItem() { kf = 0; f18 = 0; f1c = 0; }   // the array-new expansion 0x4c6a20: tstring ctor, then these three
     ~RefItem() { ((RecGList*)&kf)->clear(); }   // 0x4317b0: the keyframe track array is a RecGList-style owner
 };
 struct RefList {                // the object whose record array sits at +0 (fill_records 0x4c6950 / retire 0x4c6900)
@@ -332,7 +333,7 @@ struct ItemPage {
 
     void reset();                               // 0x4c65d0
     void format(char* out);                     // 0x4c6620
-    RefRecord* fill_records(RefRecord* rec);    // 0x4c6950
+    void fill_records(RefRecord* rec);          // 0x4c6950 (declared void: the original sets no eax)
     void clear();                               // 0x4c6aa0
     void place(int e);                          // 0x4c6b30
 };

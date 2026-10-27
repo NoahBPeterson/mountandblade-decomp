@@ -88,7 +88,7 @@ extern const char g_fmt_d[];                                // 0x54a0f4 "%d"
 // the page: src/game/terrain_page.h (Paged, TerrainPage)
 #include "../terrain_page.h"
 
-static inline bool page_changed(Widget* w) { return w->changed(0x10000) != 0; }
+static __forceinline bool page_changed(Widget* w) { return w->changed(0x10000) != 0; }
 
 // the caption / visibility updates that follow a checkbox change (slice s004f25a0)
 void set_enabled_text(Widget* w);                           // 0x4f28a0

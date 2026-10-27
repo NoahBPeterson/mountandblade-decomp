@@ -215,7 +215,7 @@ void MapPanel::update(int type, int id)
     }
 
     // ---- the same selection is still on screen and the cooldown has not elapsed -------------------
-    if (type == g_sel_type && id == g_sel_id && !(timer < 1.0f)) return;
+    if (type == g_sel_type && id == g_sel_id && timer < 1.0f) return;
 
     g_gui.set_o568(0, true);
     timer = 0.0f;

@@ -44,18 +44,21 @@ extern int g_mission_template_count;                            // 0x5e2a04
 using rgl::mat3;
 mat3* identity3(mat3* m);                               // 0x40cd60 (cdecl)
 struct FramePlacement { mat3 m; int a, b, c, d; };      // 0x40 bytes (rotation + position; was Placement: agent/agent.h's Placement is the game-data view of 0x435650)
-struct PlacedObj {                                       // 0x1c8 bytes, ctor 0x437830
+struct PlacedObj {                                       // 0x1c8 bytes, ctor 0x437830 (passed BY VALUE to SceneSub::f)
+    char pad0[0x1c8];
+    PlacedObj();                                         // 0x437830
+};
+struct FrameTemp {                                      // init_scene's 0x1c8-byte frame scratch (never constructed)
     char pad0[0x10];
     int f10, f14, f18, f1c;                             // +0x10
     mat3 rot;                                           // +0x20
     FramePlacement out;                                    // +0x50
     char pad90[0x1c8 - 0x90];
-    PlacedObj();                                         // 0x437830
 };
 struct IVector {
     void resize(unsigned n, int v);                     // 0x43f310 (ret 8; std::vector<int>::resize of agent3/agent_combat.cpp)
 };
-struct SceneSub { int dummy; void f(int v); };          // 0x4777c0 (ret 4)
+struct SceneSub { int dummy; void f(int v, PlacedObj o); };   // 0x4777c0 (ret 0x1cc: the 0x1c8 object by value, then the int)
 struct Terrain {
     void reset();   // 0x4647e0 (this = 0xa76630; game/terrain_a/terrain.h)
 };
@@ -345,7 +348,7 @@ void MissionCtx::update_parties()
         if (count_hero_items() > f168) {
             tstring msg("ui_some_soldiers_are_ready_to_upgrade");
 
-            g_msglog.add(*g_strtable.lookup(msg), 0xffbbffbb);
+            g_msglog.push(*g_strtable.lookup(msg), 0xffbbffbb);
         }
 
         party_at(pm, ((Map10007*)pm)->lookup(g_game->f78))->dirty = 1;
@@ -529,8 +532,7 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
 void MissionV::init_scene()
 {
     *((char*)this + 0x6339) = 0;
-    PlacedObj t;
-    ((SceneSub*)((char*)this + 0x6688))->f(0);
+    ((SceneSub*)((char*)this + 0x6688))->f(0, PlacedObj());
     MI(this, 0x6528) = *(int*)((char*)g_mission_templates + mode * 0x58 + 0x20);
     *((char*)this + 0x6554) = 0;
     *((char*)this + 0x6555) = 1;
@@ -547,6 +549,7 @@ void MissionV::init_scene()
     Team* tm = (Team*)((char*)this + 0x527c);
     for (int i = 0; i < 8; i++, tm++)
         tm->init(i);
+    FrameTemp t;
     t.f10 = 0;
     t.f14 = 0;
     t.f18 = 0;

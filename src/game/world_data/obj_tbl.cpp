@@ -186,7 +186,7 @@ int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
     ((MeshWidgetVt*)w)->w29(&v);
     if (a >= 0) {
         MeshY* m = (MeshY*)g_meshes.placed(a);
-        skin* nr = TAB_ADD_SPAWNED(&g_tableaus, &a, &b);   // 0x4b14b0
+        skin* nr = TAB_ADD_SPAWNED(&g_tableaus, &b, (const int*)&c);   // 0x4b14b0
         if (m->res)
             --*(int*)((char*)m->res + 0x64);
         m->res = nr;
@@ -194,7 +194,7 @@ int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
             ++*(int*)((char*)nr + 0x64);
         ((MeshWidgetVt*)w)->w32(0, m);
     } else {
-        ((MeshWidgetVt*)w)->w32(0, g_tableaus.make_mesh_from(&a, &b));
+        ((MeshWidgetVt*)w)->w32(0, g_tableaus.make_mesh_from(&b, &c));
     }
     ((MeshWidgetVt*)w)->w3();
     scene->d50(w);

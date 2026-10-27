@@ -214,7 +214,7 @@ void Game::build_scene()
     unsigned id = (unsigned)((PartyMgr*)&scene)->first_party_id();
     if (id < (unsigned)scene.f138dc) {
         do {
-            ((c49bea0::MissionAgents*)self)->add_order_arrow((int)id, 0);
+            ((c49bea0::MissionAgents*)self)->add_order_arrow((int)id);
             ((PartyMgr*)&scene)->next_party_id((int*)&id);
         } while (id < (unsigned)scene.f138dc);
     }
@@ -254,9 +254,22 @@ __declspec(noinline) void Game::release_orders()
     }
 }
 
+// The rgl object prefix build_map_trees drives: every slot is a *thiscall* (the original does `mov ecx, obj;
+// push arg; call [vt+N]`). Calling these through a cdecl function-pointer cast (what this file used to do) leaves
+// `this` = the vtable pointer, so the callee writes into .rdata: 0x521c90 / 0x52308a / 0x5231d7.
+struct MapObjView {
+    virtual void del(unsigned flags);              // +0x00 scalar deleting destructor, ret 4 (the original pushes 1)
+    virtual void v04(); virtual void v08(); virtual void v0c();
+    virtual void finalize();                       // +0x10 the cell's finalize after a mesh was appended
+    virtual void v14();
+    virtual void set_flag18(const int* flag);      // +0x18 the entity: the original passes &zero, not 0
+};
+
 // @ 0x5213d0
+#define BMT_MARK(n) do { FILE* pf_ = fopen("bmt_probe.txt", "at"); if (pf_) { fprintf(pf_, "  %s\n", n); fclose(pf_); } } while (0)
 void Game::build_map_trees()
 {
+    BMT_MARK("A enter");
     GameMapView* self = (GameMapView*)this;
     MapNav* mgr = (MapNav*)g_level->core;
 
@@ -280,6 +293,7 @@ void Game::build_map_trees()
 
     int npts = (int)(((char*)mgr->pts_end - (char*)mgr->pts) / 0x24);
 
+    BMT_MARK("A done, B start");
     // ---- B: per-point view dot --------------------------------------------
     for (int i = 0; i < npts; i++) {
         MapNavVert* p = &mgr->pts[i];
@@ -288,6 +302,7 @@ void Game::build_map_trees()
         if (g_use_shaders != 0) p->s = s * s;
     }
 
+    BMT_MARK("B done, C start");
     // ---- C: per-point flags and distance ----------------------------------
     int*   flags = new int[npts];
     float* dist  = new float[npts];
@@ -314,6 +329,7 @@ void Game::build_map_trees()
         }
     }
 
+    BMT_MARK("C done, D start");
     // ---- D: bbox + aggregate masks ----------------------------------------
     g_maxx = -100000.0f; g_minx = 100000.0f;
     g_miny = 100000.0f;  g_maxy = -100000.0f;
@@ -334,6 +350,7 @@ void Game::build_map_trees()
             dist[i] = 0.0f;
     }
 
+    BMT_MARK("D done, E start");
     // ---- E: ten relaxation passes over the edges --------------------------
     int nedges = (int)(((char*)mgr->edges_end - (char*)mgr->edges) / 0x24);
     for (int pass = 10; pass != 0; pass--) {
@@ -349,6 +366,7 @@ void Game::build_map_trees()
         }
     }
 
+    BMT_MARK("E done, F start");
     // ---- F: material-name tables ------------------------------------------
     char tmp_buf[0x40];
     tstring* tmp = (tstring*)tmp_buf;
@@ -380,6 +398,7 @@ void Game::build_map_trees()
         desert_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
 
+    BMT_MARK("F done, G start");
     // ---- G: grid dimensions and cell entities -----------------------------
     g_sizex = g_maxx - g_minx;
     g_sizey = g_maxy - g_miny;
@@ -394,10 +413,12 @@ void Game::build_map_trees()
         for (int col = 0; col < g_page_cols; col++) {
             void* ent = ((rgl::world*)g_level)->create_entity(9);                // 0x428440
             ((void**)g_map_pages)[col * 8 + row] = ent;
-            (*(void(**)(void*, int))((char*)*(void**)ent + 0x18))(ent, 0);   // virtual slot +0x18
+            int zero = 0;                                                    // 0x521c83: the original passes &0
+            ((MapObjView*)ent)->set_flag18(&zero);                           // slot +0x18
         }
     }
 
+    BMT_MARK("G done, H start");
     // ---- H: per-cell geometry ---------------------------------------------
     for (int col = 0; col < g_page_cols; col++) {
         float x0 = (float)col * stepx + g_minx;
@@ -620,7 +641,8 @@ void Game::build_map_trees()
                             float uv[2] = { uu, vv };
                             float col_rec[4] = { cr, cg, cb, ca_ };
                             unsigned col_ = rgl::pack_color((const rgl::vector4*)col_rec);     // 0x40e440
-                            vert[pi] = ((rgl::mesh*)m)->add_vertex(pidx, (const vec2*)uv, &col_, (const rgl::vector4*)prec, 0);  // 0x413c50
+                            int f5c_ = 0;                                                  // add_vertex dereferences this
+                            vert[pi] = ((rgl::mesh*)m)->add_vertex(pidx, (const vec2*)uv, &col_, (const rgl::vector4*)prec, &f5c_);  // 0x413c50
                         }
                         ((rgl::mesh*)m)->add_face(vert[nd->idx[0]], vert[nd->idx[1]], vert[nd->idx[2]]); // 0x411920
                     }
@@ -669,7 +691,7 @@ void Game::build_map_trees()
                     // nothing
                 } else if (*(void**)((char*)m + 0x94) == 0
                         || (*(void**)((char*)m + 0x98) == *(void**)((char*)m + 0x94))) {
-                    (*(void(**)(void*))(* (void**)m))(m);                    // virtual dtor
+                    ((MapObjView*)m)->del(1);                                // 0x5231d7: push 1, call [vt]
                 } else {
                     *(void**)((char*)m + 0x2c) = terrain_material(mt);     // 0x523390
                     ((NibbleObj*)m)->set_nibble(mt);                    // 0x523360
@@ -689,7 +711,7 @@ void Game::build_map_trees()
                         *cv.last = m;
                         *(void***)((char*)cell + 0x120) = cv.last + 1;
                     }
-                    (*(void(**)(void*))((char*)*(void**)cell + 0x10))(cell); // virtual slot +0x10
+                    ((MapObjView*)cell)->finalize();                         // 0x52308a: call [vt+0x10]
 
                     RawVec* mv = 0;
                     if (mt == 0)       mv = &g_mat_vec[0];
@@ -709,7 +731,7 @@ void Game::build_map_trees()
                 // nothing
             } else if (*(void**)((char*)cellmesh + 0x94) == 0
                     || (*(void**)((char*)cellmesh + 0x98) == *(void**)((char*)cellmesh + 0x94))) {
-                (*(void(**)(void*))(*(void**)cellmesh))(cellmesh);           // virtual dtor
+                ((MapObjView*)cellmesh)->del(1);                              // scalar deleting destructor
             } else {
                 char name_buf[0x40];
                 tstring* name = new (name_buf) tstring("map_trees");           // 0x42bbe0 / 0x59c070
@@ -732,7 +754,7 @@ void Game::build_map_trees()
                     *cv.last = cellmesh;
                     *(void***)((char*)cell + 0x120) = cv.last + 1;
                 }
-                (*(void(**)(void*))((char*)*(void**)cell + 0x10))(cell);
+                ((MapObjView*)cell)->finalize();
 
                 RawVec ev;
                 ev.first = self->ents;
@@ -809,6 +831,8 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
     int next;
     *count = 0;
     do {
+        if (cur < 0)                    // the neighbour lists can carry -1; rec at f14 - 0x88 faults (0x49d47a)
+            return;
         Rec88* rec = (Rec88*)((char*)this->f14 + cur * 0x88);
         int n = rec->count;
         int found = -1;
@@ -817,6 +841,10 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
         int* nb = (int*)((char*)rec + 0x14);
         do {
             int v = *nb;
+            if (v < 0) {                // same for a neighbour id: node at f24 - 0x24 faulted with v = -1
+                nb++;
+                continue;
+            }
             Node24* node = (Node24*)((char*)this->f24 + v * 0x24);
             if (node->f00 > 1 && node->f04 != prev && node->f08 != prev
                 && (node->f0c == target || node->f10 == target))
@@ -827,6 +855,8 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
             return;
         Node24* node = (Node24*)((char*)this->f24 + found * 0x24);
         next = (node->f04 == cur) ? node->f08 : node->f04;
+        if (next < 0)
+            return;
         int c = *count;
         bool dup = false;
         if (node->f0c == target) {

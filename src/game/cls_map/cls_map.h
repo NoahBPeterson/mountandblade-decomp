@@ -534,8 +534,8 @@ struct OptionsMenu {
     void copy_slots();                          // 0x4e2cb0
     void refresh() { ((KeysPage*)this)->refresh(); }                           // 0x4d7120 (thiscall; options_panel/keys_page.cpp)
     void key_name(int i, tstring* out) { ((options_panel*)this)->key_name(i, out); }    // 0x4d7370 (thiscall, ret 8; options_panel/options_panel.cpp)
-    tstring* key_text(tstring* out, int i);     // 0x4e2ce0 (ret 8)
-    tstring* slot_text(tstring* out, int i);    // 0x4e2ea0 (ret 8)
+    tstring key_text(int i);                    // 0x4e2ce0 (returns a tstring: hidden out pointer, ret 8)
+    tstring slot_text(int i);                   // 0x4e2ea0 (same convention)
 };
 extern OptionsMenu g_game_keys;                      // 0xa73730
 

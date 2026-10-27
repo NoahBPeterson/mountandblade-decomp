@@ -6,15 +6,21 @@ usage: verdicts.py --from DIR [DIR ...]      # write docs/equiv_verdicts.json + 
        verdicts.py                           # print the current breakdown
 
 A sweep directory holds equiv.py --json results named <id>_<va>.json (tools/difftest/sweep_nonmatching.py --out DIR).
-With --from, every current src module nonmatching row takes its result from the LAST directory
-that has one; rows without a result count as "not run". Categories (each row exactly one):
+With --from, every current src module nonmatching row takes the newest result measured for that row's own module
+(the module whose compiled object defines the VA; sweep_nonmatching.rows keeps one row per VA, from its defining
+module); rows without a result count as "not run". Categories (each row exactly one):
   pass        PASS / PASS-FP: outputs matched on every valid input and every control-flow edge (each branch's taken
               and fall-through side, each jump-table target) of both sides was exercised
   weak        WEAK / WEAK-FP: outputs matched, but some edges never ran (instruction coverage can still be 100%)
   fail        FAIL: a mismatch on some input (the row's note says whether it is a harness artifact)
   inputs      UNSUPPORTED because random inputs were mostly invalid (virtual calls on soup objects, faults, ...)
   harness     UNSUPPORTED for a harness reason (resolution audit, own copies of constants, unresolved symbols, ...)
-  funclet     no callable symbol: catch funclets and cold tails, covered by their parent's test
+  comdat      no callable symbol, but the enclosing COMDAT is byte-identical (tools/difftest/comdat_check.py:
+              cmpobj over the parent's COMDAT range, so the fragment's bytes are covered) - verified statically,
+              never executed
+  comdatdiff  no callable symbol and the enclosing COMDAT differs: the fragment sits inside a parent that does NOT
+              match, so its bytes are not verified either
+  funclet     no callable symbol and no COMDAT verdict yet (not yet run through comdat_check.py)
   not_run     no result (timeout, crash, or never swept)
 """
 import argparse, datetime, glob, json, os, sys
@@ -24,7 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 CUR = os.path.join(ROOT, "docs", "equiv_verdicts.json")
 HIST = os.path.join(ROOT, "docs", "equiv_history.json")
-CATS = ("pass", "weak", "fail", "inputs", "harness", "funclet", "not_run")
+CATS = ("pass", "weak", "fail", "inputs", "harness", "comdat", "comdatdiff", "funclet", "not_run")
 
 
 def load(path):
@@ -38,6 +44,10 @@ def load(path):
 
 def category(d):
     v = (d or {}).get("verdict")
+    if isinstance(v, str) and v.startswith("BYTE-EXACT-COMDAT"):
+        return "comdat"
+    if isinstance(v, str) and v.startswith("COMDAT-DIFFERS"):
+        return "comdatdiff"
     if v in ("PASS", "PASS-FP"):
         return "pass"
     if v in ("WEAK", "WEAK-FP"):
@@ -125,9 +135,15 @@ def main():
             if not r["src"]:
                 continue        # match/slices rows: every function lives in a src module since migration wave M4
             name = "%s_%s.json" % (r["id"], r["va"])
-            d = None
-            for sd in src_dirs:
-                d = load(os.path.join(sd, name)) or d
+            # r["id"] is the module whose compiled object defines the VA (sweep_nonmatching.rows keeps one
+            # row per VA, from its defining module), so only that module's results count: another module's
+            # result for the same VA is a measurement of a different object and must not be reported here.
+            # The row's own module file, and the NEWEST measurement across the source directories wins: the dirs hold a
+            # mix of sweep generations (after2 is newer than parts of sweep), so neither the argument order nor a
+            # single "current" dir is reliable.
+            cands = [os.path.join(sd, name) for sd in src_dirs]
+            cands = [c for c in cands if os.path.exists(c)]
+            d = load(max(cands, key=os.path.getmtime)) if cands else None
             res[r["va"]] = {"module": r["id"], "file": r["file"], "verdict": (d or {}).get("verdict"),
                             "category": category(d), "size": size_of(d, r["va"])}
         when = max(newest(d) for d in src_dirs)

@@ -1861,14 +1861,13 @@ static __forceinline void log_add(const tstring& s)
 }
 
 // @ 0x4947a0
-void GameW::set_quest_concluded(int quest, int value)
+void GameW::set_quest_concluded(int quest)
 {
-    if (quest < 0 || value < 0) return;
     char buf[512];
     QuestRec* q = &quests[quest];
     q->flags |= 0x1000;
+    tstring id(q->text);                    // lives to the end of the function (the last dtor in the original)
     {
-        tstring id(q->desc);
         tstring key("ui_quest_concluded_value");
         mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), id.c_str());
     }
@@ -1882,12 +1881,11 @@ void GameW::set_quest_concluded(int quest, int value)
 // @ 0x4948c0
 void GameW::set_quest_cancelled(int quest)
 {
-    if (quest < 0) return;
     char buf[512];
     QuestRec* q = &quests[quest];
     q->flags = 0;
+    tstring id(q->text);                    // lives to the end of the function (the last dtor in the original)
     {
-        tstring id(q->desc);
         tstring key("ui_quest_cancelled_value");
         mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), id.c_str());
     }

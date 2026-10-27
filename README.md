@@ -10,6 +10,34 @@ and are produced locally from your own copy of the game.
 Sister project: spore-decomp (Spore), whose tools this project's are ported from. **To contribute, start with
 [`CONTRIBUTING.md`](CONTRIBUTING.md)**; `docs/codegen.md` is the cl 13.10 code-generation reference.
 
+## Status: **unfinished** (2026-10-27)
+
+This is a work in progress, not a working replacement for `mount&blade.exe`. **There is no runnable binary yet**: the
+last trial link of our objects still had ~2,300 unresolved symbols. Do not expect `git clone && make` to produce a game.
+
+| Tier | Functions | Share | How it is verified |
+|---|---:|---:|---|
+| Byte-exact | 2,254 | 67.2% | compiled object vs the original, byte for byte, relocations masked (`tools/matching/run_all.py`) |
+| Equivalent only | 242 | 7.2% | both versions executed on 219-589 inputs, all reachable branch edges covered on **both** builds, exit state + call traces + written memory identical (`tools/difftest/equiv.py`) |
+| Not equivalent yet | 856 | 25.5% | 425 weak (some edge never taken), 82 failing (a real mismatch), 210 untestable with random inputs, plus 149 symbol-less compiler fragments |
+
+Denominator: 3,352 game functions, 1.26 MB of code (the static CRT/STL is linked from the real VC7.1 libraries and
+excluded). "Equivalent" is **empirical evidence, not proof**: it says the two implementations were indistinguishable on the inputs tried, with every branch
+edge of both versions exercised.
+
+Current numbers, from the sources of truth (`docs/STATUS.md`, `docs/equiv_verdicts.json`):
+
+```sh
+.venv/bin/python tools/progress.py                  # tables: byte-exact / equivalent / evidence breakdown
+.venv/bin/python tools/progress.py --plot            # treemap -> work/progress.png
+```
+
+The treemap is one box per module (area = instructions, colour = verdict) inside three groups: game, engine (`rgl`),
+3rd-party. Orange is "weak", vermillion is "failing", purple is "every random input was rejected", grey/black are
+symbol-less compiler fragments (byte-checked inside their COMDAT / not matching).
+
+See [`docs/PLAN.md`](docs/PLAN.md) for the plan and [`docs/matching.md`](docs/matching.md) for the workflow.
+
 ## Setup
 ```sh
 uv sync   # .venv from pyproject.toml + uv.lock (pinned: unicorn/capstone versions affect equiv results)

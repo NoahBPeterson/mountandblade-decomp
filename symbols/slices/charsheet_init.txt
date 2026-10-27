@@ -1,0 +1,5 @@
+00507400 ?init@CharSheet@@QAEXXZ  # the character-sheet window builder (8 KB); CharSheet gained the fields this function writes
+00592848 ??_7CharSheetWindow@@6B@  # vtable stored into the 0x190-byte "character_window" panel (ctor 0x4931a0)
+00597050 ??_7CharSheetColumn@@6B@  # vtable of the 0x188-byte column widgets (skills, attribs, general, skill_desc)
+00591d58 ??_7CharSheetRow@@6B@     # vtable of the 0x188-byte row widgets (skill/weapon/attrib rows)
+00592208 ??_7CharSheetName@@6B@    # vtable of the 0x188-byte character-name button

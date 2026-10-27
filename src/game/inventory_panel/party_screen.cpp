@@ -664,7 +664,7 @@ void PartyScreen::setup_party(int side)
             prisoner_mgmt = new MissionUi;
             label_refresh(prisoner_mgmt, tstring("party_t_prisoner_mgmt"));
             PSO(prisoner_mgmt)->set_text(
-                caption_pos, g_strtable.lookup(tstring("ui_need_to_learn_prisoner_mgmt")));
+                caption_pos, g_strtable.lookup(tstring("ui_need_to_learn_prisoner_management")));
             PSO(members_base[0])->add_child(prisoner_mgmt);
         }
     } else {

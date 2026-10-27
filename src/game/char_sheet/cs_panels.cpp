@@ -62,7 +62,7 @@ void CharSheet::refresh_panels()
     POS(xp_bar, line, "char_t_next_level_y", "char_t_next_level_x");
 
     if ((c->flags32 & 0x10) != 0) {
-        tstring k("ui_health_pyer");
+        tstring k("ui_health_player");
         i = c->nib[3] & 0xf;
         if (i < 0) i = 0;
         else if (i > g_skill_clamp) i = g_skill_clamp;
@@ -83,7 +83,7 @@ void CharSheet::refresh_panels()
     POS(level_at, line, "char_t_attribut_points_y", "char_t_attribut_points_x");
 
     {
-        tstring k("ui_skillts");
+        tstring k("ui_skill_points");
         mb_snprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->skill_points);
     }
     POS(level_at, line, "char_t_skillts_y", "char_t_skillts_x");

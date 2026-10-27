@@ -283,8 +283,9 @@ struct MapEdge {                     // 0x24 bytes
     char  pad0c[0xc];
     int   a;                         // +0x0c
     int   b;                         // +0x10
-    char  pad18[0x24 - 0x18];
-};
+    char  pad14[0x24 - 0x14];        // the tail after b is 0x10 bytes: `0x24 - 0x18` made the record 0x20,
+};                                   // so the 0x24-stride edge loops drifted 4 bytes per record and read an `a` of -1
+typedef char chk_map_edge_size[sizeof(MapEdge) == 0x24 ? 1 : -1];
 struct MapNav {                      // NavData
     int      pad0;
     MapNavVert* pts;                   // +0x04
@@ -316,7 +317,7 @@ struct GameMapView {
     rgl::entity* compass;            // +0x1a2a8
 };
 struct GameG { rgl::vector4* sun_color(rgl::vector4* out); rgl::vector4* fog_color(rgl::vector4* out); };   // 0x5176e0, 0x517820 (inventory_panel/game_tick.h: the game object)
-namespace c49bea0 { struct MissionAgents { void add_order_arrow(int id, int mode); }; }     // 0x49bea0 (party2/camera.cpp; the original passes only the id)
+namespace c49bea0 { struct MissionAgents { void add_order_arrow(int id); }; }     // 0x49bea0 (ret 4: one int arg; party2/camera.cpp)
 namespace c49b630 { struct Mission { void spawn_battle_icon(unsigned id); }; }              // 0x49bbb0 (party2/camera.cpp)
 struct SoundCtl { char emit_event(int id, int a, int b); };                               // 0x435790 (agent/agent.h)
 struct E92;

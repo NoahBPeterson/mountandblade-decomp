@@ -241,7 +241,7 @@ void options_panel::draw_faction_report()
         texts->set_text(empty);
     }
     {
-        tstring title("ui_factions_report");                        // 0x596bac
+        tstring title("ui_factions");                        // 0x596bac
         float pos[2];
         pos[0] = 0.1f;
         pos[1] = 0.65f;

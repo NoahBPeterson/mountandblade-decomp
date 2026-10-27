@@ -37,6 +37,7 @@ using rgl::vector4;
 #include "../bit_words.h"
 extern unsigned g_type_mask;                                // 0x5a8e88 (= 4: the terrain type is 4 bits wide)
 extern unsigned g_size_mask;                                // 0x5a8e78 (= 4: the terrain size is 2 bits wide)
+extern int g_use_shaders;                                   // 0x5e28fc (shaders on: the water checkbox stores the inverse)
 
 // ---- the world / scene --------------------------------------------------------------------------------
 struct FrustumBlock { int d[0x48]; };                        // the 0x120-byte frustum (copied page +0x70 -> world +0x1ac)
@@ -52,7 +53,7 @@ struct mat_self : rgl::matrix {};                            // (rotate_about_s 
 // 0x4f3b40 is thiscall on the four floats of a 2x2 matrix (ret 4: the angle); mesh_3.h's two matrix views and
 // mission_ctx.h's mat2 call the same function
 struct rot2 { float m[4]; void rotate_2x2(float angle); };  // 0x4f3b40
-void identity_2x2(float* m);                                // 0x4f3be0
+__declspec(noinline) void identity_2x2(float* m);          // 0x4f3be0 (the original calls it: simulate 0x4f37f0)
 
 // ---- the page: src/game/terrain_page.h ------------------------------------------------------------------
 #include "../terrain_page.h"

@@ -239,7 +239,9 @@ void __cdecl destroy_range(NameVecRec* first, NameVecRec* last)
 // @ 0x4f6390
 void EditorApp::refresh_dialog()
 {
-    ((FaceGen*)g_editor_game)->refresh();   // 0x4eb3c0 (the editor game is the FaceGen)
+    extern bool g_facegen_ready;
+    if (g_facegen_ready)                     // the sliders only exist after FaceGen::init (0x4f49d0) ran
+        ((FaceGen*)g_editor_game)->refresh();   // 0x4eb3c0 (the editor game is the FaceGen)
     g_editor_game->f2f9 = 1;
     SetFocus(hwnd);
 }

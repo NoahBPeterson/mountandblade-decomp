@@ -51,8 +51,9 @@ struct Widget {
     virtual void  set_text_at(const tstring& text, const float* pos); // +0xac 
     virtual void  hide();                                          // +0xb0 sets bit 0 of the flag word at +0x104 (0x488c90; MissionUi flag1_set). The slices called this slot show / hide by guess; call offsets, not names, are preserved
     virtual void  show();                                          // +0xb4 clears bit 0 (0x488ca0; the slices: show_selected / hide)
-    virtual void  enable();                                        // +0xb8 
-    virtual void  disable();                                       // +0xbc 
+    virtual void  disable();                                       // +0xb8 0x488cb0 sets bit 1 of +0x104 (the disabled flag)
+    virtual void  enable();                                        // +0xbc 0x488cc0 clears bit 1 (these two were declared the
+                                                                   //      other way round, so every enable() disabled the widget)
     virtual int   kind();                                          // +0xc0 widget kind (hud.h MissionItem)
     virtual void  update_children();                               // +0xc4 
     virtual void  add_child(void* child);                          // +0xc8 

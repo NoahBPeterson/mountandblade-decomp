@@ -35,27 +35,26 @@ void TerrainPage::update(float dt)
     }
 
     // the two "Enable terrain" checkboxes also recaption themselves, so they form a chain of their own
-    if (page_changed(terrain_box) || page_changed(terraingen_box)) {
-        Widget* w;
-        if (page_changed(terrain_box)) {
-            terrain_on = terrain_box->get_value();
-            w = terrain_box;
-        } else {
-            terraingen_on = terraingen_box->get_value();
-            w = terraingen_box;
-        }
-        set_enabled_text(w);
+    if (page_changed(terrain_box)) {
+        terrain_on = terrain_box->get_value();
+        set_enabled_text(terrain_box);
+        refresh_hex();
+        goto done;
+    }
+    if (page_changed(terraingen_box)) {
+        terraingen_on = terraingen_box->get_value();
+        set_enabled_text(terraingen_box);
         refresh_hex();
         goto done;
     }
 
-    if (page_changed(water_box) || page_changed(river_box)) {
-        Widget* w = page_changed(water_box) ? water_box : river_box;
-        if (w == water_box)
-            water_on = water_box->get_value();
-        else
-            river_on = river_box->get_value();
-        set_enabled_text(w);
+    if (page_changed(water_box)) {
+        water_on = water_box->get_value();
+        set_enabled_text(water_box);
+        refresh_hex();
+    } else if (page_changed(river_box)) {
+        river_on = river_box->get_value();
+        set_enabled_text(river_box);
         refresh_hex();
     } else if (page_changed(x_slider)) {
         float v = x_slider->get_float() * g_500 + g_140;
@@ -91,7 +90,7 @@ void TerrainPage::update(float dt)
 done:
     if (page_changed(regen_btn)) {
         // "regenerate": reset the scene, arm the flash effect, rebuild the terrain and put the camera on it
-        ((Terrain*)(void*)world)->reset();   // 0x4647e0
+        world->reset();                      // 0x421390 (rgl::world::reset)
         vector4 clear_colour(0.4f, 0.4f, 0.6f);
         world->color = clear_colour;
         world->color.w = 1.0f;

@@ -551,7 +551,6 @@ void FieldPanel::update()
     m[0] = screen[0] + e[0] + 0.01f;
     m[1] = e[1];
     mirror()->d22(m);
-
     draw();
 }
 
@@ -572,6 +571,10 @@ int ArrHolder::lookup(int index, int arg)
 }
 
 // @ 0x48d650
+// Not reproducible byte-exactly with cl 13.10 /O2 (see the note in mission_3.nonmatching.txt): the body is
+// identical except that the compiler puts `_Mylast - _Myfirst` in ecx (dead `this`) where the original uses
+// eax. Every source form of the same conditions (/O2) picks ecx; /O1 and /O2 /Os pick eax but emit the
+// size-optimised shared epilogue (a `jmp` past the failure block) instead of the original's duplicated tails.
 __int64 SlotArray::get(const int& slot)
 {
     I64Vec* v = (I64Vec*)this;

@@ -46,9 +46,7 @@ void progress_bar::set_ratio(float r)
         v168 = g_min_ratio;
         return;
     }
-    if (r > g_max_ratio)
-        r = g_max_ratio;
-    v168 = r;
+    v168 = (r > g_max_ratio) ? g_max_ratio : r;
     f184 = 1;
 }
 

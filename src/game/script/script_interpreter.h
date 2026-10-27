@@ -49,7 +49,7 @@ struct GameW {                                                               // 
     void set_objective(int party, int value);                               // 0x4949d0
     void set_pos(float x, float y, int id, float radius);                   // 0x491e50
     void set_quest_cancelled(int quest);                                    // 0x4948c0
-    void set_quest_concluded(int quest, int value);                         // 0x4947a0
+    void set_quest_concluded(int quest);                                    // 0x4947a0
     void share_experience(int party, float amount);                         // 0x494b60
     void spread_party_experience(int amount);                               // 0x4957d0
     void switch_objective(int party, int mode);                             // 0x494ad0
@@ -621,7 +621,7 @@ struct GameX {
     __forceinline void quest_succeeded(int quest) { ((GameW*)this)->quest_succeeded(quest); }                                          // 0x494560
     __forceinline void quest_failed(int quest) { ((GameW*)this)->quest_failed(quest); }                                                // 0x494680
     __forceinline void set_quest_cancelled(int quest) { ((GameW*)this)->set_quest_cancelled(quest); }                                  // 0x4948c0
-    __forceinline void set_quest_concluded(int quest) { ((GameW*)this)->set_quest_concluded(quest, 0); }                              // 0x4947a0 (the definition takes a second word the interpreter does not push: the stack word is whatever is there)
+    __forceinline void set_quest_concluded(int quest) { ((GameW*)this)->set_quest_concluded(quest); }                                  // 0x4947a0 (the original pushes one word at the call site and the callee pops 4)
     __forceinline void deploy_party(int party, int other) { ((c49f060::GameData*)this)->deploy_party(party, other); }                  // 0x49f060 (ret 8)
     __forceinline void sl_item_set_all(float rate) { ::sl_item_set_all(rate); }                                                        // 0x48a250 (ret 4)
     __forceinline char agent_low(int troop) { return ((GameData*)this)->agent_low(troop); }                                            // 0x4638f0 (ret 4)

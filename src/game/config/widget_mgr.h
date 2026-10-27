@@ -131,6 +131,7 @@ struct ContainerBase : MissionUi {
 struct NodeA : ContainerBase {
     virtual bool d01();
     virtual void update_children();             // +0xc4, vtable slot 49 (0x48ef40)
+    virtual void s4c() {}                       // placeholder: the original table has one more slot after +0xc4
     NodeA() { f188 = 1; }
     void* destroy(unsigned flags);              // 0x49b0f0 (scalar deleting destructor)
 };

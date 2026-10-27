@@ -275,3 +275,140 @@ Format (one entry per problem):
        known, and a *typed* slot view (`struct Slot80 { virtual void set_track(int, rgl::mesh*); }`) when it is not,
     4. name the remaining `f1a2xx`-style fields from their users (`Block::read`/`Block::write` order is a good
        oracle: every serialised field appears there).
+
+- 0x48f020 (fixed) 2026-10-26: `FieldPanel::relayout` crashed with EIP = a *float* (0x3cb923a2 = 0.00905f) right
+  after `relayout` returned. The original reserves `sub esp,0x10` and the trailing `get_state(&v[2])` writes **two**
+  floats at `v+8`, filling all 16 bytes; our `float v[3]` (12 bytes) let the second one land on the saved frame, so
+  the return address became that float's bit pattern. Fix: `float v[4]` with the frame size in the comment. Lesson:
+  match the original's *local buffer* size, not just its call count - a callee that writes a 2-float state can be one
+  float wider than the source's array.
+
+- NavData MapEdge (fixed) 2026-10-26: `build_map_trees` crashed in the relaxation passes (`fld [pts+idx*4]`, idx -1).
+  `struct MapEdge` padded `0x24-0x18` after `b`, which is 0x0c bytes - the record is 0x24, so the tail must be
+  `0x24-0x14`. `sizeof` was 0x20 while `nedges` divides by 0x24, so the loop advanced 4 bytes per edge, drifted off
+  the array and read a record whose `a` was -1. Fix: `pad14[0x24-0x14]` plus `chk_map_edge_size`. Lesson: a `padX`
+  whose length is written as `TOTAL - wrong_offset` silently changes `sizeof`; assert every documented size.
+
+- Widget slots +0xb8/+0xbc (fixed) 2026-10-26: `ui_widget.h` had `enable()` at +0xb8 and `disable()` at +0xbc, but
+  0x488cb0 (+0xb8) *sets* bit 1 of the flag word at +0x104 and 0x488cc0 (+0xbc) *clears* it. So every `->enable()`
+  disabled its widget and every `->disable()` enabled it, which is why no menu item responded to a click.
+  `MissionUpdater::update` happened to be self-consistent (it wants "clear disabled" then "disable the flagged
+  rows"), so flip both the header and its two call sites.
+
+- build_map_trees cdecl casts (fixed) 2026-10-26: five virtual calls were spelled
+  `(*(void(**)(...))((char*)*(void**)obj + N))(...)`, i.e. *cdecl* function-pointer casts of `__thiscall` slots. The
+  callee gets `ecx` = the vtable pointer, so `entity::set_fbc` wrote to 0x5635e8 (inside .rdata) and the game died on
+  the first map-tree cell. The original always does `mov ecx, obj; push arg; call [vt+N]`
+  (0x521c90 slot +0x18 with `&zero`, 0x52308a slot +0x10, 0x5231d7 the scalar deleting destructor with `push 1`).
+  Fix: `MapObjView` (a typed thiscall view) instead of the casts. Same class as the 0x488ad0 `set_track` bug.
+
+- 0x413c50 add_vertex (fixed) 2026-10-26: `build_map_trees` called
+  `add_vertex(idx, uv, &col, prec, 0)` - the last parameter is a `const int*` that the callee dereferences, so the
+  literal 0 crashed at `mov ecx,[ecx]` (EIP 0x5295d7). Every other call site passes `&zero`. Lesson: a `0` in a
+  pointer parameter is not "unused" - check the callee before passing it.
+
+- 0x49bea0 add_order_arrow (fixed) 2026-10-26: `game_2.h` declared `add_order_arrow(int, int)` and callers passed
+  `(id, 0)`, but the original is `ret 4` (one int). The 2-arg spelling resolved to a *different* mangled symbol, so no
+  warning fired; the callee also dispatched `create_entity` through a virtual slot where the original calls 0x428440
+  directly (`mov ecx,[0xa732b4]; push 9; call 0x428440`), and the object at g_level is not polymorphic. Fix: one
+  argument and the direct call. Lesson: argument count must be checked against the callee's `ret N`, not the header.
+
+- config table (fixed) 2026-10-26: **every UI offset was 0** because the settings table was read through the
+  *original's address* instead of the symbol. `config_table.h`'s `CONFIG_ENTRIES`, `char_sheet.cpp`'s
+  `config_text`/`config_index`, `cs_panels.h`'s `config_float` and `note_window.cpp`'s `CONFIG` all spelled
+  `0xa44240` / `0xa4425c`, but the relink places `g_game_vars` at **0xa691c0** (`mb_standalone.map`), so the
+  lookups hit a dead copy of the table: `find()` still returned the key's index (831 entries load fine) while
+  `atof(value)` saw an empty buffer. Symptom: the whole character sheet stacked at y=0 and every menu row, slider
+  and hint collapsed to the origin. Fix: view the *symbol* (`&g_game_vars`, `&g_config + 0x1c`). Verified by probe:
+  `char_b_skills_y_a` went from `v=0` to `v=0.0175` and the sheet's rows, attributes, skill names and points all
+  render at their configured positions. Lesson: a hard-coded original address in a *macro* escapes
+  literal_addrs.py's fix-up; grep for `0xa4xxxx` literals when a table looks empty.
+
+- string keys (fixed) 2026-10-26: 13 of the 541 `"ui_*"` keys our source passes to `g_strtable.lookup` do not
+  exist in the game's language files (`languages/*/ui.csv` + `Data/*.csv`). The visible one was
+  `ui_skillts` -> the sheet printed the raw key in the corner; the real key is `ui_skill_points`. Also fixed
+  `ui_health_pyer` -> `ui_health_player`, `ui_order_dismount` -> `ui_order_dismount_toggle`,
+  `ui_order_hold_position` -> `ui_order_hold`, `ui_order_mount` -> `ui_mount`,
+  `ui_need_to_learn_prisoner_mgmt` -> `ui_need_to_learn_prisoner_management`, `ui_factions_report` -> `ui_factions`.
+  Remaining suspects (`ui_font`, `ui_item_shadow`, `ui_font_background`, `ui_create_brf`, `ui_audio_options`) are
+  resource names, not strings. Repeatable check: the one-liner in tools/matching/README (collect keys from
+  `game/languages/*/*.csv` + `Data/*.csv`, compare with the `"ui_..."` literals in `src/`).
+
+- signature drift vs the original (tool) 2026-10-26: `tools/matching/slot_sig_audit.py` (textual slot scan) is too
+  noisy to act on (1693 drift rows, all alias spellings). `tools/matching/sig_vs_original.py` is the usable
+  version: it pairs our mangled name with the original's at the same VA via `resolve_map.json`, and MSVC expands
+  typedefs in mangling, so `mat3*` vs `rgl::mat3*` cannot produce a row. Output is bucketed VIRTUAL / CONVENTION /
+  ARITY / RETURN / OTHER: currently **20 rows**, of which 2 were real: `~mesh` was compiled non-virtual
+  (`??1mesh@rgl@@QAE@XZ`) while the original's is `??1mesh@rgl@@UAE@XZ` - `strat/gui_manager.h`'s view declared it
+  without `virtual`; fixed by making that view polymorphic while folding the vptr into `d0` so every offset stays
+  put (`char d0[0x10c - 4]`), and the row disappeared on the next run. `~RecR` (same class of issue in
+  `inventory_panel/map_info.cpp`) is still flagged and left documented.
+
+- vtable slot loss (tool + fixed for Rec428/FaceGen) 2026-10-26: a class whose source declares fewer virtuals than
+  the original compiles a *short* vtable, and every slot past its end is unreachable - the relink can only patch
+  slots that exist, so the functions those slots point at never run. The visible case: the table at 0x595c68 (our
+  `Rec428`, the face-generator / character-creation record) has nine entries, and slot +0x08 is `FaceGen::init`
+  (0x4f49d0), slot +0x0c `CamView::update_model` (0x4ea8e0). Our source declared one virtual, so `init` never ran,
+  ~40 widget fields stayed zero and the first slider read crashed (`0x44a09d`, reading `0x3f800000` = 1.0f) the
+  moment the character sheet opened; `sl_hair_color`/`sl_age` are not null, they are the *screen's* fields at those
+  offsets, so null guards do not help. Fix: declare all nine slots on `Rec428` (placeholders; the relink writes the
+  original's own functions into them) and give it the constructor the original has (`new Rec428` left the body as raw
+  heap, so slot +0x04 `release` freed garbage at +0x178 and `~tstring` crashed on 0x3c6d9166). Check:
+  `tools/relink/reach_audit.py` - it reads each original table (bounded by the next known table) and lists the slots
+  our build is missing, with `--strict` for a build gate. Before the fix: 38 tables / 289 slots. After: 38 / 281.
+  Declaring the nine slots on the shared base (`head_rec.h`, 0x5947d8) instead fixes ~20 tables at once but pushed
+  startup into a *new* crash (`options_panel::export_path` called with a null `this`), so that is left for later and
+  the wide short-table family (`item_head`/`item_base`/`ItemRec`/`MissionBlocker`/`Buffer`/`UiC`) is still open.
+
+- vtable slot declaration (2026-10-27): every vtable the original has is now declared at its full length; the
+  patch on `??_7C4c3290@@6B@` fixed the last 23 record tables (the `head_rec` family: `head_cam`, `head_obj2`, 15
+  `Rec*`, 6 `C4c*`), each 7 -> 9 slots. `tools/relink/reach_audit.py` reports **0 tables / 0 slots unreachable** and the
+  game reaches `Finished All...`. What was fixed and verified (game runs): `??_7Buffer@@6B@` (widget base) 29->49,
+  `NodeA` 50->51, `Event` 2->3, `PlacedObj_s2f250` 2->3, `strategic_entity` 28->29, `ItemA` 9->10,
+  `item_head`/`item_base`/`ItemD_vt` 1->9.
+  The base record table `0x5947d8` is **seven** slots, not nine: entry 7 is the next table's first dword (a CRT
+  function, not a slot) and declaring eight makes the engine call it and die inside `TiXmlBase::StringEqual`; seven
+  runs. `reach_audit.py` carries that as `VERIFIED_SLOTS = {0x5947d8: 7}`. Each *derived* table does have nine entries
+  (dtor, release, init, update_model, ..., always1 twice).
+  The reason the 46 extra declarations used to crash, found by bisection to `C4c3290` alone: a record table's match is
+  *suspect* under build.py's agreement test (our declared virtuals sit in a different slot order), so its slots are
+  never rewritten; the fallback that then points the vptr stores at the glue copy of the original table only fired when
+  our table was **shorter** than the original's (`e["slots"] < n_orig`). With the full length declared, our unpatched
+  table was used instead: its slot 7/8 returned nothing where the original's `always1` returns 1, the menu state machine
+  took the wrong branch and nothing ever pushed a root widget, so `GuiScreen::process` ran on an empty vector
+  (`vec_back` reads +4/+8 = end/cap) and faulted. Fix: in the suspect branch, redirect to the copy whenever the
+  original's table is real, regardless of our table's length.
+
+- vtable "match suspect" (2026-10-27): `build.py`'s agreement test compares, slot by slot, the address in our compiled
+  table with the address of the function we define under the *original slot's* name. Every record/vtable family whose
+  slots hold per-class functions (the 23 record tables, `Buffer`, `Item*`, `Iface*`: 49 tables) therefore reads "1 of 9"
+  and is classed suspect - the slot *positions* are right (vfunc + d01..d06, derived d07/d08), but the placeholder bodies
+  cannot be address-identical to `reset_gui`, `init2@MeetingWindow`, `always1`, ... since one base declaration cannot
+  carry 23 different per-class names. So this is a naming artifact, not a reordering, and reordering cannot fix it: the
+  slots a class overrides would have to be *our reconstructions of that class's* functions under the original names.
+  Correctness is unaffected because such tables are pointed at the glue copy of the original table with every slot
+  relocated to our definition (the redirect now applies whether or not our table is short).
+
+- New Game crash in a tstring destructor (2026-10-27): `Start a New Game` died in `tstring::~tstring` -> `free(0x3c6d9166)`
+  (an uninitialised pointer, the same value the menu-state FaceGen::init case produced). The bt names `rec_178::release`,
+  but that function is a `return;` stub, so the frame is a stale stack value. `~tstring` now checks that `buf` looks like a
+  heap address, logs `tstr_bad.txt` and skips the free: with it, New Game runs through character creation to the world map
+  (reached gender -> background -> ...). This is a diagnostic, not the fix: the real cause is a tstring member that is
+  destroyed without its constructor having run, still to be pinned down by the `this` in `tstr_bad.txt`.
+
+- byte-exact wall: WinLicense tags (2026-10-27): `CharSheet::update` (0x4eeb10) cannot be byte-exact: the original
+  brackets its two game-key blocks with four 18-byte WinLicense records (`EB 10 "WL  "`, ids 0x0c/0x0d) at 0x4ef333,
+  0x4ef36d, 0x4ef3a9, 0x4ef3eb. cl 13.10 emits those bytes only through `_emit`, which asm_audit forbids (four slices
+  already record the same blocker). With the tags hand-emitted in scratch the remainder is the original's *shared zero
+  register* (`xor ebp,ebp` at entry, reused by four comparisons and a `push`), which cl 13.10 only materialises for the
+  attribute loop - the same wall as s00462e20 / s004529e0. Measured: 678/686 instructions identical, 6 changed,
+  3 orig-only, 2 ours-only; equiv WEAK (403 inputs, no mismatch).
+- equiv.py seeding: the input generator is seeded with the slice-id *string*, so the same source+VA can flip between
+  "UNSUPPORTED 0/363 valid" and "WEAK 403 valid". Running the old batch id with `--src match/slices/<id>/<id>.cpp`
+  restores usable inputs.
+
+- integration builds during a slice wave (2026-10-27): `build.py` links every compiled object, `match/slices/*/<id>.cpp`
+  included, and resolves duplicate definitions "from its row's module". While slices are being written, a slice that is
+  only half verified can therefore replace the src version of a function in the game exe (10 such duplicates in one
+  wave build); the run then hangs at the character sheet with 0% CPU. Playthrough verification must be done either
+  before a wave starts or after it lands, or with the slice objects removed from `work/difftest/obj/`.

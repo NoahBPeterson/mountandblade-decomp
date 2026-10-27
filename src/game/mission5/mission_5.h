@@ -1516,7 +1516,7 @@ struct Mission_s29ec0 {
 };
 
 
-inline Agent_s29ec0* agent_at_s29ec0(int id)
+inline Agent_s29ec0* agent_at_s29ec0(unsigned id)
 {
     return (Agent_s29ec0*)((char*)g_mission_s29ec0->pages[id >> 4] + (id & 0x0f) * 0x5928);
 }

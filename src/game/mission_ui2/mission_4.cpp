@@ -70,7 +70,10 @@ int RiderTable::shares(const int& a, const int& b) const
 // @ 0x48f020
 void FieldPanel::relayout(const tstring* text)
 {
-    float v[3];
+    // sub esp,0x10 in the original: 16 bytes, not 12. text_size writes three floats, and the trailing
+    // get_state(&v[2]) writes *two* more (a 2D state) over v[2] and v[3] - the original's last dword. A float v[3]
+    // here makes that second dword overwrite the saved frame (return address -> the state's float bit pattern).
+    float v[4];
     scene()->view[0]->text_size(v, text);
     if (sqrt(f4a0 * f4a0 + f49c * f49c) > 0.0f) {
         scene()->view[0]->set_xy(&f49c);

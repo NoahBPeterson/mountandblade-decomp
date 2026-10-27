@@ -103,6 +103,27 @@ struct Buffer {                                             // vtable 0x591c80
     virtual void s26() {}
     virtual void s27() {}
     virtual void s28() {}
+    // 0x591c80 (the widget base MissionUi also declares) has 49 slots; this view stopped at 29.
+    virtual void s29() {}
+    virtual void s30() {}
+    virtual void s31() {}
+    virtual void s32() {}
+    virtual void s33() {}
+    virtual void s34() {}
+    virtual void s35() {}
+    virtual void s36() {}
+    virtual void s37() {}
+    virtual void s38() {}
+    virtual void s39() {}
+    virtual void s40() {}
+    virtual void s41() {}
+    virtual void s42() {}
+    virtual void s43() {}
+    virtual void s44() {}
+    virtual void s45() {}
+    virtual void s46() {}
+    virtual void s47() {}
+    virtual void s48() {}
     char body[0x108 - 4];
     BufferSub* subs[5];                                     // +0x108
     int pad11c[3];

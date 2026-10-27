@@ -147,11 +147,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
     if (hand != 0) {
         // ---- only the hand-held weapon ------------------------------------------------------------
-        tstring nm;
-        if (hweapon->item >= 0 && hweapon->item < g_item_kind_count)
-            nm = g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7]);         // 0x433bf0
-        else
-            nm = tstring("Error: Invalid item");
+        tstring nm = hweapon->item >= 0 && hweapon->item < g_item_kind_count
+                   ? g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7])    // 0x433bf0
+                   : tstring("Error: Invalid item");
         lod_mesh2* l = g_rms.make_lod_mesh(nm, false);
         vpush_i(a->fx->groups, l);
         float* e = (float*)a->fx->elems;

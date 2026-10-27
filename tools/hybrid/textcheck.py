@@ -41,6 +41,7 @@ def run(exe, secs, shot):
     import capture as K
     game = os.path.join(ROOT, "game")
     log = os.path.join(game, "rgl_log.txt")
+    C.kill_stale()
     shutil.copyfile(exe, os.path.join(game, COPY))
     t0 = time.time()
     p = subprocess.Popen([C.CX, "--bottle", "Steam", "--cx-app", GAME_WIN + COPY], cwd=game,

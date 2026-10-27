@@ -41,17 +41,34 @@ void conv_clear(void* p);                                    // 0x4c8bf0 (releas
 struct rec50 { int pad[0x50 / 4]; };       // E50 (stride 0x50)
 struct rec68 { int pad[0x68 / 4]; };       // E68 (stride 0x68)
 struct recb0 { int pad[0xb0 / 4]; };       // E176 (stride 0xb0)
-#include "./elem_calls.h"                                       // E50 / E68 / E176: the out-of-line copy assignments
+#include "./elem_calls.h"
+
+// A compiler fence (no code): pins the store order the original has (base id/vptr stores before the zero and
+// load/store runs) where cl 13.10 otherwise sinks them (docs/codegen.md 10.9).
+extern "C" void _ReadWriteBarrier(void);
+
+// The frustum sub-object at +0xf8 is built in the ctor body, not by a member ctor (the original calls 0x41ef60
+// after the first group of stores). Called through this declaration: same thiscall, no arguments.
+struct frustum_ctor { void ctor(); };   // 0x41ef60
+#define CONSTRUCT_FRUSTUM(p) (((frustum_ctor*)(p))->ctor())                                       // E50 / E68 / E176: the out-of-line copy assignments
 
 // ---- 0x60-byte item base (vtbl 0x5947d8, id 99, tstring at +0x1c) ----------------------------------------
 // A polymorphic base so MSVC emits the base-vtable store; the ctor puts id 99 in place after the name ctor.
 struct item_base {
     virtual ~item_base() { }
+    virtual void s1() {}
+    virtual void s2() {}
+    virtual void s3() {}
+    virtual void s4() {}
+    virtual void s5() {}
+    virtual void s6() {}
+    virtual void s7() {}
+    virtual void s8() {}
     int f4;                                                     // +0x04 = 0
     int f8;                                                     // +0x08 = 99
     char padc[0x10];
     tstring name;                                               // +0x1c
-    item_base() : name(), f8(99) { }
+    item_base() : name() { f8 = 99; }
 };
 
 struct MissionBlocker : item_base {                             // 0x2c8 bytes, vtable 0x59616c
@@ -65,8 +82,9 @@ struct MissionBlocker : item_base {                             // 0x2c8 bytes, 
     int f_d4;                                                   // +0xd4 = 0
     int f_d8;                                                   // +0xd8 = 0
     char pad_dc[0xf8 - 0xdc];
-    rgl::frustum fst;                                                // +0xf8 (0x41ef60)
-    char pad1cc[0x2a8 - 0x1cc];
+    char fst[0x120];                                            // +0xf8 frustum, constructed in the body by the
+                                                                // original's own order (0x41ef60 at 0x4ce9b8)
+    char pad1cc[0x2a8 - 0x218];
     int f_2a8;                                                  // +0x2a8 = 0
     char pad2ac[0x4];
     int f_2b0;                                                  // +0x2b0 = g_ticks[0]
@@ -81,6 +99,7 @@ struct MissionBlocker : item_base {                             // 0x2c8 bytes, 
 // @ 0x4ce960
 MissionBlocker::MissionBlocker()
 {
+    _ReadWriteBarrier();
     f4 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
     clock = g_ticks[0];
@@ -88,12 +107,14 @@ MissionBlocker::MissionBlocker()
     f58 = 1.0f;
     f40 = -1;
     f5c = 0;
+    CONSTRUCT_FRUSTUM(fst);
     f_2a8 = 0;
     f_2b0 = g_ticks[0];
     f_2b4 = g_ticks[1];
     f_2b8 = 0;
     f_2c0 = g_ticks[0];
     f_2c4 = g_ticks[1];
+    _ReadWriteBarrier();
     f_d4 = 0;
     f_d8 = 0;
 }
@@ -173,6 +194,7 @@ void MissionParams::init()
 
 // ---- the remaining item constructors (0x4ceb30 / 0x4cef20 / 0x4cef80) --------------------------------------
 struct ItemA : item_base {                                      // vtable 0x596190
+    virtual void s_last() {}                    // placeholder: original table 0x596190 has 10 slots, ours 9
     char pad2c[0x8];
     int f34, f38, f3c, f40, f44, f48, f4c;
     int clock, clock_hi; float f58; int f5c;
@@ -194,10 +216,12 @@ struct ItemC : item_base {                                      // vtable 0x5962
 // @ 0x4ceb30
 ItemA::ItemA()
 {
+    _ReadWriteBarrier();
     f4 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
     clock = g_ticks[0];
     clock_hi = g_ticks[1];
+    _ReadWriteBarrier();
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -206,10 +230,12 @@ ItemA::ItemA()
 // @ 0x4cef20
 ItemB::ItemB()
 {
+    _ReadWriteBarrier();
     f4 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
     clock = g_ticks[0];
     clock_hi = g_ticks[1];
+    _ReadWriteBarrier();
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -218,10 +244,12 @@ ItemB::ItemB()
 // @ 0x4cef80
 ItemC::ItemC()
 {
+    _ReadWriteBarrier();
     f4 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
     clock = g_ticks[0];
     clock_hi = g_ticks[1];
+    _ReadWriteBarrier();
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -230,49 +258,37 @@ ItemC::ItemC()
 // ---- 0x9c-byte item with four empty vector-ish pairs (0x4cee50) -------------------------------------------
 // 0x4ceea0 / 0x4ceec0 are the deleting dtor / releasing dtor of a class whose vtable takes precedence, so this
 // variant carries a virtual dtor of its own (the shared base vtable 0x5947d8 + id 99, then its own vtable).
-struct ItemD_vt {                                               // virtual-dtor base of 0x4cee50's record
-    virtual ~ItemD_vt();                                        // 0x4ceec0 (releasing dtor)
-    int f4;                                                     // +0x04 = 0
-    int f8;                                                     // +0x08 = 99
-    char padc[0x10];
-    tstring name;                                               // +0x1c
-    ItemD_vt() : name() { f4 = 0; f8 = 99; }
+// The item records' virtual destructor, laid over item_base: the body releases the two blocks and the inlined
+// item_base dtor then restores the base vtable 0x5947d8 and destroys the name (the original order).
+// novtable: the original dtor has no store of its own vtable at the top (only cl's ctor/dtor scaffolding emits one).
+// A three-pointer owned block that releases and clears itself (the item record holds two of these). The record's
+// destructor is the compiler's: it runs the two members in reverse declaration order (the +0x8c block first, as the
+// original 0x4ceec0 does) with no vptr scaffolding of its own.
+struct owned_triple {
+    void* p0;                                                   // +0x00 = 0
+    void* p1;                                                   // +0x04
+    void* p2;                                                   // +0x08
+    owned_triple() { p0 = 0; p1 = 0; p2 = 0; }
+    ~owned_triple() { if (p0) operator delete(p0); p0 = 0; p1 = 0; p2 = 0; }
+};
+struct ItemD_vt : item_base {
+    char pad2c[0x7c - 0x2c];
+    owned_triple blk0;                                          // +0x7c = 0 (vector begin/end/cap)
+    int f_88;                                                   // +0x88
+    owned_triple blk1;                                          // +0x8c = 0 (vector begin/end/cap)
+    char pad98[0x4];                                            // +0x98
+    ItemD_vt() { f4 = 0; f8 = 99; }
 };
 struct ItemD : ItemD_vt {                                       // vtable 0x5961c0
-    char pad2c[0x7c - 0x2c];
-    int f_7c;                                                   // +0x7c = 0 (vector begin)
-    int f_80;                                                   // +0x80 = 0 (vector end)
-    int f_84;                                                   // +0x84 = 0 (vector cap)
-    int f_88;
-    int f_8c;                                                   // +0x8c = 0 (vector begin)
-    int f_90;                                                   // +0x90 = 0 (vector end)
-    int f_94;                                                   // +0x94 = 0 (vector cap)
-    char pad98[0x4];
     ItemD();                                                    // 0x4cee50
 };
 
-// @ 0x4cee50
+// @ 0x4cee50 (the two owned triples are built by their member constructors, as in 0x4ceec0)
 ItemD::ItemD()
 {
-    f_7c = 0;
-    f_80 = 0;
-    f_84 = 0;
-    f_8c = 0;
-    f_90 = 0;
-    f_94 = 0;
+    _ReadWriteBarrier();
 }
 
-// @ 0x4ceec0
-ItemD_vt::~ItemD_vt()
-{
-    ItemD* self = (ItemD*)this;
-    if (self->f_8c)
-        operator delete((void*)self->f_8c);
-    self->f_8c = 0; self->f_90 = 0; self->f_94 = 0;
-    if (self->f_7c)
-        operator delete((void*)self->f_7c);
-    self->f_7c = 0; self->f_80 = 0; self->f_84 = 0;
-}
 
 // ---- per-frame update of the placed objects (0x4ceb90) --------------------------------------------------
 // The updater's sixteen row widgets (+0x60), the shown count (+0xa0) and the record index per row (+0xa4) fill the menu's
@@ -330,7 +346,7 @@ void MissionUpdater::update()
     { tstring stripped = title.strip_tags(); scene->relayout(&stripped); }
     for (int k = 0; k < 16; k++) {
         items[k]->hide();
-        items[k]->disable();
+        items[k]->enable();
     }
     for (int idx = 0; idx < g->count; idx++) {
         if (count >= 0x10)
@@ -345,8 +361,8 @@ void MissionUpdater::update()
             items[count]->set_text(ret, g_script.expand(*nm).strip_tags());
             if ((g->flags & 0x10) == 0)
                 items[count]->show();
-            if (*(char*)(g_game + 0x14054))
-                items[count]->enable();
+            if (*(char*)(g_game + 0x14054))                 // menu_option_disabled (script_interpreter.h +0x14054)
+                items[count]->disable();
             ids[count] = idx;
             count++;
         }

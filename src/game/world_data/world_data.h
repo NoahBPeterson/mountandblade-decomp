@@ -193,7 +193,7 @@ struct GameW : GameData {
     void quest_done(int quest);                                 // 0x494410 (ret 4)
     void quest_succeeded(int quest);                            // 0x494560 (ret 4)
     void quest_failed(int quest);                               // 0x494680 (ret 4)
-    void set_quest_concluded(int quest, int value);             // 0x4947a0 (ret 8)
+    void set_quest_concluded(int quest);                        // 0x4947a0 (ret 4: the original takes one stack word, one push at each of its two call sites)
     void set_quest_cancelled(int quest);                        // 0x4948c0 (ret 4)
     void set_objective(int party, int value);                   // 0x4949d0 (ret 8)
     void switch_objective(int party, int mode);                 // 0x494ad0 (ret 8)

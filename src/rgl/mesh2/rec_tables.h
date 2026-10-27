@@ -37,6 +37,8 @@ struct C4c2c50 : head_rec {
     tstring t88;             // +0x88
     C4c2c50();               // 0x4c2c50
     virtual void vfunc();
+    virtual void d07() {}
+    virtual void d08() {}
     __declspec(noinline) void dtor();   // 0x4c2cd0 (called, not inlined, by the deleting dtor 0x4c2cb0)
 };
 
@@ -70,6 +72,8 @@ struct C4c2fb0 : head_rec {  // vtable 0x595798
     char    t58[0x20];       // +0x58, +0x68: two tstrings (built/destroyed through one pointer)
     C4c2fb0();               // 0x4c2fb0
     virtual void vfunc();
+    virtual void d07() {}
+    virtual void d08() {}
     __declspec(noinline) void dtor();   // 0x4c3020 (called, not inlined, by the deleting dtor 0x4c3000)
 };
 
@@ -82,6 +86,8 @@ struct C4c3050 : head_rec {  // vtable 0x5957bc
     char    t6c[0x60];       // +0x6c (6 tstrings, 0x10 apart; built/destroyed by hand in the ctor/dtor)
     C4c3050();               // 0x4c3050
     virtual void vfunc();
+    virtual void d07() {}
+    virtual void d08() {}
     void dtor();             // 0x4c30e0
 };
 
@@ -93,6 +99,8 @@ struct C4c3160 : head_rec {  // vtable 0x595870
     Slot20 slots[0x80];      // +0x8e8
     C4c3160();               // 0x4c3160
     virtual void vfunc();
+    virtual void d07() {}
+    virtual void d08() {}
 };
 
 struct C4c31c0 : head_rec {  // vtable 0x595924
@@ -100,6 +108,8 @@ struct C4c31c0 : head_rec {  // vtable 0x595924
     char    t224[0x10];      // +0x224 tstring
     C4c31c0();               // 0x4c31c0
     virtual void vfunc();
+    virtual void d07() {}
+    virtual void d08() {}
     void dtor();             // 0x4c3240
 };
 
@@ -109,6 +119,8 @@ struct C4c3290 : head_rec {  // vtable 0x595a20
     char    t60[0x20];       // +0x60, +0x70: two tstrings (built/destroyed through one pointer)
     C4c3290();               // 0x4c3290
     virtual void vfunc();
+    virtual void d07() {}
+    virtual void d08() {}
     __declspec(noinline) void dtor();   // 0x4c3300 (called, not inlined, by the deleting dtor 0x4c32e0)
 };
 

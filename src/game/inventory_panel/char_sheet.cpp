@@ -1,3 +1,4 @@
+#include <stddef.h>
 // Slice s00507400: the character sheet's window builder (0x507400).
 //
 //   0x507400  CharSheet::init: if the caller did not hand over a character record, take the player's;
@@ -35,22 +36,34 @@ extern "C" int _fltused = 0;
 // +0xa4 set_text(vector2* out, const tstring& text) (0x488b50, ret 8), +0xb0 show(),
 // +0xc8 add_child(CharSheetWidget*).  Field offsets are the ones this function reads and writes.
 struct CharSheetWidget {
-    char pad00[0x10];
+    char pad00[0x0c];   // 4 lower than the +0x10 these comments name: the vptr occupies the first 4 bytes
     CharSheetWidget* plus10;                             // +0x10 (attribute row '+' label)
-    CharSheetWidget* plus1c;                             // +0x1c (weapon row '+' label)
+    char pad14[0x1c - 0x14];                             // +0x14..0x1c (without it plus1c landed at +0x14 and
+    CharSheetWidget* plus1c;                             // +0x1c  every later field was 8 bytes low)
     char pad20[0xa8 - 0x20];
     CharSheetWidget* levels;                             // +0xa8 (skill row level text)
+    // The offset vector is +0xe0/+0xe4 and the size +0xe8/+0xec (ui_widget.h WidgetObj: rect_x, rect_y, rect_w,
+    // rect_h). This view had px/py at +0xe8/+0xec - the *size* fields - so every row was placed at the width and
+    // height that label_refresh had just set instead of at its configured position. The class is polymorphic, so cl
+    // puts the vptr in the first 4 bytes and every member compiles 4 bytes after its declaration (verified with
+    // cl 13.10: a stub with px declared at 0xe0 reports offsetof 0xe4). The pads below are therefore 4 smaller than
+    // the real offsets, and the pad after the rect gives the 4 bytes back so the members after it keep their offsets.
+    // The original's row code reads px/py from +0xe8/+0xec (0x507922 `mov edx,[ecx+0xe8]`, 0x5078ed `fadd
+    // [edx+0xec]`, 0x5077cd `mov edx,[ecx+0xf0]`) and the weapon/attribute rows likewise; +0xe0/+0xe4 is the second
+    // copy set_pos writes for the child chain. Declared 4 lower, because the vptr shifts every member by +4.
     char pad_ac[0xe8 - 0xac];
     float px;                                   // +0xe8
     float py;                                   // +0xec
     float pw;                                   // +0xf0
-    char pad_f4[0x121 - 0xf4];
+    float ph;                                   // +0xf4
+    char pad_f0[0x121 - 0xf8];
     char b121;                                  // +0x121
     char pad122[0x14c - 0x122];
     int color;                                  // +0x14c
     CharSheetWidget* plus150;                            // +0x150 (skill row '+' label)
     char pad154[0x178 - 0x154];
     int f178;                                   // +0x178
+    char pad17c[4];                             // the 4 bytes the original leaves between f178 and b180
     char b180;                                  // +0x180
     char b181;                                  // +0x181
     char pad182[0x184 - 0x182];
@@ -72,7 +85,8 @@ struct CharSheetWidget {
     virtual void v28(); virtual void v29(); virtual void v30(); virtual void v31();
     virtual void set_mesh(int slot, void* mesh);                    // +0x80  (slot 32)
     virtual void v33(); virtual void v34(); virtual void v35(); virtual void v36(); virtual void v37();
-    virtual void set_color(int color);                              // +0x98  (slot 38)
+    virtual void set_color(const unsigned* color);                   // +0x98  (slot 38; by address, like
+                                                                     // field_panel.h/mission_3.h's same slot)
     virtual void v39(); virtual void v40();
     virtual void set_text(vector2* out, const tstring& text);       // +0xa4  (slot 41)
     virtual void v42(); virtual void v43();
@@ -80,6 +94,12 @@ struct CharSheetWidget {
     virtual void v45(); virtual void v46(); virtual void v47(); virtual void v48(); virtual void v49();
     virtual void add_child(CharSheetWidget* child);                          // +0xc8  (slot 50)
 };
+typedef char chk_csw_skill[offsetof(CharSheetWidget, skill_index) == 0x1f8 ? 1 : -1];
+typedef char chk_csw_px[offsetof(CharSheetWidget, px) == 0xe8 ? 1 : -1];
+typedef char chk_csw_py[offsetof(CharSheetWidget, py) == 0xec ? 1 : -1];
+typedef char chk_csw_pw[offsetof(CharSheetWidget, pw) == 0xf0 ? 1 : -1];
+typedef char chk_csw_color[offsetof(CharSheetWidget, color) == 0x14c ? 1 : -1];
+typedef char chk_csw_b180[offsetof(CharSheetWidget, b180) == 0x180 ? 1 : -1];
 
 // ---- engine globals -----------------------------------------------------------------------------------
 #include "../../include/game_data.h"
@@ -186,7 +206,7 @@ extern char_window* g_dialog;                     // 0xa73984 (pointer variable)
 // ---- settings access ------------------------------------------------------------------------------------
 static const char* config_text(int i)
 {
-    char* e = (char*)0xa4425c + i * 0x2c;       // entry base; the text pointer is at +4
+    char* e = (char*)&g_game_vars + 0x1c + i * 0x2c;   // entry base; the text pointer is at +4
     const char* v = *(const char**)(e + 4);
     return v ? v : e + 4;
 }
@@ -196,7 +216,7 @@ static int config_index(const tstring& key)
 {
     int found = -1;
     for (int i = 0; i < g_game_vars.count && found == -1; i++) {
-        if (((tstring*)((char*)0xa44240 + i * 0x2c))->equals(key))
+        if (((tstring*)((char*)&g_game_vars + i * 0x2c))->equals(key))
             found = i;
     }
     return found;
@@ -208,6 +228,8 @@ static float config_float(const tstring& key)
     float v = 0;
     int i = g_game_vars.find(key);
     if (i >= 0) v = (float)atof(config_text(i));
+    { FILE* pf_ = fopen("cf_probe.txt", "at");
+      if (pf_) { fprintf(pf_, "key=%-28s idx=%4d v=%g\n", key.c_str() ? key.c_str() : "?", i, v); fclose(pf_); } }
     return v;
 }
 
@@ -333,6 +355,7 @@ void CharSheet::init()
                 row = 0;
             }
             skill_row[i] = row;
+            row->skill_index = (int)i;              // rows are created in skill order; nothing else ever wrote it
             label_refresh(row, tstring("char_b_skills_base"));
 
             int extra;
@@ -347,6 +370,14 @@ void CharSheet::init()
             }
 
             float rowy = (float)(extra + i) * skills_y + row->py;
+            { FILE* pf_ = fopen("cs_rows.txt", "at");
+              if (pf_) { unsigned* w = (unsigned*)row;
+                         fprintf(pf_, "skill %d px=%g py=%g pw=%g rowy=%g | e0=%g e4=%g e8=%g ec=%g off_px=%d off_skill=%d\n",
+                                 i, row->px, row->py, row->pw, rowy,
+                                 *(float*)((char*)w + 0xe0), *(float*)((char*)w + 0xe4),
+                                 *(float*)((char*)w + 0xe8), *(float*)((char*)w + 0xec),
+                                 (int)offsetof(CharSheetWidget, px), (int)offsetof(CharSheetWidget, skill_index));
+                         fclose(pf_); } }
             v.x = row->px;
             v.y = rowy;
             row->set_rect(&v);
@@ -371,7 +402,9 @@ void CharSheet::init()
             tstring empty("");
             row->levels = make_hint(sk, &empty, levels_x + skills_x, rowy,
                                      levels_w, skills_y);
-            row->levels->set_color(row->color);   // 0x507b9f pushes the row class's vptr+0x14c (an address, not a colour); row->color is the same byte the original reads
+            row->levels->set_color((const unsigned*)&row->color);
+            label[i] = (Widget*)row->levels;                     // +0xd8: the per-row rank text update_skill_rows recolours
+   // 0x507b9f pushes the row class's vptr+0x14c (an address, not a colour); row->color is the same byte the original reads
 
             float inc_h = config_float_walk(tstring("char_b_skill_increment_h_a"));
             float inc_y = config_float_walk(tstring("char_b_skill_increment_y_a"));
@@ -387,6 +420,8 @@ void CharSheet::init()
             ts.y = ts_x;
             row->plus150->set_text_size(&ts);
             row->plus150->set_text(&tx, tstring("+"));
+            btn[i] = (Widget*)row->plus150;                      // +0x180: the per-row upgrade button it shows/hides
+
         }
     }
 
@@ -495,6 +530,7 @@ void CharSheet::init()
             row->plus1c->set_text(&tx, tstring("+"));
         }
 
+        rows[i] = (Widget*)row->plus1c;              // +0x494: update_weapons shows/hides this '+' per weapon class
         if (g_display_wp_one_handed[i] == 0) {
             row->show();
             row->plus1c->show();
@@ -576,7 +612,7 @@ void CharSheet::init()
         int idx = config_index(tstring("char_tb_character_name_t_c"));
         if (idx >= 0)
             sscanf(config_text(idx), "%x", &col);
-        name->set_color(col);
+        name->set_color((const unsigned*)&col);
         vector2 tx;
         name->set_text(&tx, *g_strtable.lookup(tstring("ui_enter_name_here")));
     } else {
@@ -601,6 +637,7 @@ void CharSheet::init()
             row = 0;
         }
         attrib_row[i] = row;
+        skill_pos[i] = (Widget*)row;                 // +0x45c-8: refresh_panels sets each attribute row's text
         label_refresh(row, tstring("char_b_attribs_base"));
 
         float spacing = config_float_walk(tstring("char_b_attribs_y_a"));
@@ -616,6 +653,7 @@ void CharSheet::init()
         float inc_x = config_float_walk(tstring("char_b_attrib_increment_x"));
         tstring plus("+");
         row->plus10 = make_button(attribs, &plus, rowy - inc_ya, inc_x, 1, inc_h);
+        skill_val[i] = (Widget*)row->plus10;         // +0x45c: refresh_panels shows/hides the '+' per attribute
 
         float ts_x = config_float_walk(tstring("char_b_attrib_increment_t_s"));
         float ts_y = config_float_walk(tstring("char_b_attrib_increment_t_s"));

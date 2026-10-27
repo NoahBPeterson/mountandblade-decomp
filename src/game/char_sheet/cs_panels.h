@@ -39,7 +39,10 @@ static __forceinline float config_float(const tstring& key)
 {
     float v = 0;
     int i = g_config.find(key);
-    if (i >= 0) v = (float)atof(((ConfigEntry*)0xa4425c)[i].value);
+    if (i >= 0) {                                        // a missing key has no text pointer: read the inline bytes
+        ConfigEntry* e = &CONFIG_ENTRIES[i];   // (same fallback as conv_open.h / char_sheet.cpp config_text)
+        v = (float)atof(e->value ? e->value : (char*)&e->value);
+    }
     return v;
 }
 

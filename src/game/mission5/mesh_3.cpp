@@ -522,15 +522,18 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
 void Mesh_s2dfd0::toggle_flag(int type, int index)
 {
     if (type == 0) {
-        verts.first[index].flag = !verts.first[index].flag;
+        bool flag = verts.first[index].flag;
+        verts.first[index].flag = !flag;
         if (verts.first[index].flag)
             selected = index;
         else
             selected = -1;
     } else if (type == 1) {
-        edges.first[index].flag = !edges.first[index].flag;
+        bool flag = edges.first[index].flag;
+        edges.first[index].flag = !flag;
     } else {
-        polys.first[index].flag = !polys.first[index].flag;
+        bool flag = polys.first[index].flag;
+        polys.first[index].flag = !flag;
     }
 }
 

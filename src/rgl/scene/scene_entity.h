@@ -193,6 +193,7 @@ struct strategic_entity : entity {
     virtual void add_emitter(psys* e);                          // 25: 0x421aa0
     virtual void clear_emitters();                              // 26: 0x421b00
     virtual int find_emitter(int tag);                          // 27: 0x421a50
+    virtual void s_last() {}                    // placeholder: original table 0x54b5d0 has 29 slots, ours 28
 };
 
 // the rigid body entity (vtable 0x54b668, 0x1d8 bytes) is defined in ../dynamic/dynamic_entity.h (collision_entity's

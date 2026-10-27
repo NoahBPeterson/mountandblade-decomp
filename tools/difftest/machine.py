@@ -35,6 +35,9 @@ SLOT = 0x10000
 # slots are mapped whole rather than per 4 KB page, and runaway loops on random inputs stop here.
 MAX_POOL_SLOTS = 64
 DYN_BASE, DYN_SIZE = 0x50000000, 0x04000000
+MODEL_BASE, MODEL_SIZE = 0x60000000, 0x00400000   # zeroed blocks for symbols only a model can bind
+MODEL_SLOT = 0x1000                               # one modelled object per page
+MODEL_STUB_SLOTS = 128                            # spare import-thunk slots Machine.model_stub hands out
 STACK_TOP, STACK_SIZE = 0x7E000000, 0x00200000
 SENTINEL = 0x7EFFF000
 STUB_BASE = 0x7F000000
@@ -109,6 +112,9 @@ class Machine:
         uc.mem_map(STACK_TOP - STACK_SIZE, STACK_SIZE + 0x1000, UC_PROT_READ | UC_PROT_WRITE)
         uc.mem_map(SENTINEL, 0x1000, UC_PROT_READ | UC_PROT_EXEC)
         uc.mem_map(MISC_BASE, MISC_SIZE, UC_PROT_ALL)
+        # Modelled data symbols (Machine.model_data): its own region, so no hook and no diffed section
+        # ever sees it -- the same exclusion imports and pool objects get.
+        uc.mem_map(MODEL_BASE, MODEL_SIZE, UC_PROT_READ | UC_PROT_WRITE)
         self._setup_cpu()
         uc.mem_protect(STUB_BASE, _page(self.stub_end - STUB_BASE), UC_PROT_READ | UC_PROT_EXEC)
         uc.mem_protect(GDT_BASE, 0x1000, UC_PROT_READ)
@@ -151,6 +157,8 @@ class Machine:
         self.pool_pages = {}        # page -> initial bytes of every page mapped during this run
         self.pool_slots = []        # slots mapped during this run
         self.pool_entry = set()     # page of the first access to each slot (for mutation)
+        self.model_next = MODEL_BASE    # bump allocator for Machine.model_data
+        self.model_blocks = {}      # symbol name -> (address, size) of its zeroed block
         uc.hook_add(UC_HOOK_MEM_UNMAPPED | UC_HOOK_MEM_PROT, self._on_bad_mem)
 
     def _on_tracked_write(self, uc, access, address, size, value, _):
@@ -320,12 +328,16 @@ class Machine:
     def _install_stubs(self):
         uc = self.uc
         install_crt(self)
+        install_import_models(self)
         # mount&blade.exe links the CRT statically (/MT): malloc, operator new, memcpy, ... are image code
         # that ends in kernel32!HeapAlloc. Route each byte-exact-identified CRT function that has a handler
         # to the same stub an import would get (entry overwritten with `jmp stub` in emulator memory only).
         crt = static_crt_functions(self.handlers)
         n = len(self.img.imports) + len(crt)
-        uc.mem_map(STUB_BASE, _page(n * STUB_SLOT), UC_PROT_READ | UC_PROT_EXEC | UC_PROT_WRITE)
+        # The tail of the stub table is never used by an import: Machine.model_stub hands those slots out
+        # to symbols no source maps, through this same table and Python handler dispatch.
+        slots = n + MODEL_STUB_SLOTS
+        uc.mem_map(STUB_BASE, _page(slots * STUB_SLOT), UC_PROT_READ | UC_PROT_EXEC | UC_PROT_WRITE)
         for i, (iat, full) in enumerate(sorted(self.img.imports.items())):
             name = full.split("!", 1)[1]
             stub = STUB_BASE + STUB_SLOT * i
@@ -341,7 +353,9 @@ class Machine:
             uc.mem_write(stub, self.handlers[name]["code"].ljust(STUB_SLOT, b"\xcc"))
             uc.mem_write(va, b"\xe9" + struct.pack("<i", stub - (va + 5)))
             self.stub_names[stub] = name
-        self.stub_end = STUB_BASE + STUB_SLOT * n
+        self.stub_end = STUB_BASE + STUB_SLOT * slots
+        self.model_stub_next, self.model_stub_limit = n, slots
+        self.model_stubs = {}       # symbol name -> stub address
         uc.hook_add(UC_HOOK_CODE, self._on_stub, begin=STUB_BASE, end=self.stub_end - 1)
 
     def handle(self, name, fn=None, nargs=0, pops=0, code=None, fresult=False):
@@ -441,6 +455,56 @@ class Machine:
         self.dyn_sizes[a] = n
         return a
 
+    # ------------------------------------------------------------------ models
+    # A symbol our object references but no name source identifies has no original address to bind to.
+    # Narrowing the row to "unresolved reference" makes it unmeasurable, so the resolver (resolve.py) may
+    # bind it to one of these two models instead. A model is evidence of testability, never of equivalence:
+    # resolve.py records it in r.models and equiv.py caps such a run at WEAK and says how many there were.
+    # Neither model can hide a difference the harness compares: model stubs live in the read-only stub
+    # table and model data in its own untracked region, so neither shows up as written memory.
+    def model_stub(self, name):
+        """Address of an executable stub for an unmapped function symbol: a `call` returns 0 (xor eax,eax;
+        ret) and touches nothing but the return address. Routed through the import stub table and the same
+        Python handler dispatch (_on_stub), so it costs one traced import entry and nothing else.
+        Idempotent per name."""
+        a = self.model_stubs.get(name)
+        if a is not None:
+            return a
+        slot = self.model_stub_next
+        if slot >= self.model_stub_limit:
+            raise Stop("model stub slots exhausted (%s)" % name)
+        stub = STUB_BASE + STUB_SLOT * slot
+        key = "model:" + name        # never collides with an import handler of the same name
+        code = b"\x31\xc0\xc3"       # xor eax,eax; ret
+        self.handlers[key] = {"fn": lambda m, args, esp: 0, "nargs": 0, "pops": 0, "code": code,
+                              "fresult": False}
+        page = stub & ~0xFFF
+        self.uc.mem_protect(page, 0x1000, UC_PROT_READ | UC_PROT_WRITE | UC_PROT_EXEC)
+        self.uc.mem_write(stub, code.ljust(STUB_SLOT, b"\xcc"))
+        self.uc.mem_protect(page, 0x1000, UC_PROT_READ | UC_PROT_EXEC)
+        self.stub_names[stub] = key
+        self.model_stub_next = slot + 1
+        self.model_stubs[name] = stub
+        return stub
+
+    def model_data(self, name, size):
+        """Address of a zeroed, readable+writable block of at least `size` bytes for a data symbol no source
+        maps. Idempotent per name for the same or a smaller size; a later, larger request gets a fresh block
+        (the first address may already be reachable from the code being tested). Both sides start every run
+        from zeros (see run()), and the block lies in MODEL_BASE, which no write hook or diffed region
+        covers -- the exclusion imports and pool objects get."""
+        n = max(int(size), 1)
+        blk = self.model_blocks.get(name)
+        if blk is not None and blk[1] >= n:
+            return blk[0]
+        span = (n + MODEL_SLOT - 1) // MODEL_SLOT * MODEL_SLOT
+        a = self.model_next
+        if a + span > MODEL_BASE + MODEL_SIZE:
+            raise Stop("model data exhausted (%d bytes for %s)" % (span, name))
+        self.model_next = a + span
+        self.model_blocks[name] = (a, n)
+        return a
+
     # ------------------------------------------------------------------ our object
     def load_object(self, coff, res, func_sym):
         """Map the sections of `coff` listed in res.local_sections at OBJ_BASE, relocated.
@@ -524,6 +588,8 @@ class Machine:
         generated function pointer): it may emulate a do-nothing method and the run resumes."""
         import time as _time
         uc = self.uc
+        for a, n in self.model_blocks.values():     # both sides start from the same model memory
+            uc.mem_write(a, b"\0" * n)
         self.stop_reason = None
         self.fake_calls = 0
         self.tsc = 0x1000000
@@ -556,6 +622,10 @@ class Machine:
                     return r
             return ("fault", "%s at eip=%08x" % (err, eip))
         if eip != SENTINEL:
+            if t_end is not None and _time.time() >= t_end:
+                # the WALL clock stopped it, not the instruction budget: this outcome depends on machine load, so
+                # the caller must not turn it into a verdict (equiv invalidates the row instead)
+                return ("wall", "%ss wall-clock cap exhausted at eip=%08x" % (seconds, eip))
             return ("budget", "instruction budget %d or %ss exhausted at eip=%08x" % (budget, seconds, eip))
         return ("ok", None)
 
@@ -863,3 +933,158 @@ def install_crt(m):
     }
     for name, code in native.items():
         m.handle(name, None, code=code)
+
+
+# ---------------------------------------------------------------------- import models
+
+def install_import_models(m):
+    """Models for imports that stop the run where they are called: an unmodelled thunk ends the input, so
+    a function that reaches one is never measurable (rows "only 0/N inputs valid (discards:
+    import:CreateDirectoryA=400)"). Each model is what the API documents for the state the original can
+    reach with a generated input -- a handle, S_OK, a zeroed allocation, the documented D3DX matrix -- and
+    never a pointer the real call could not have produced. Like install_crt's handlers these change the
+    emulator identically on both sides, so a row they keep alive is still re-run and compared in full;
+    unlike a symbol model they are not part of equiv.py's "N modelled symbol(s)" count."""
+    def fl(x):
+        """A FLOAT argument: the dword on the stack reinterpreted, as the callee's own code would read it."""
+        return struct.unpack("<f", struct.pack("<I", x & 0xFFFFFFFF))[0]
+
+    def raise_exception(m_, a, esp):
+        # The harness has no SEH unwinder, so a raise that reached the CRT's C++ throw (0xE06D7363) can only
+        # either stop the input -- indistinguishable from the unmodelled thunk it replaces, which is what
+        # left these rows untestable -- or be modelled as ignored, the documented behaviour when no handler
+        # takes the exception. Ignored, execution resumes after the raise; a dead frame that faults does so
+        # at the barrier (address 0 / 0xCCCCCCCC) and is discarded as a fault, never counted as valid.
+        return 0
+
+    def heap_alloc(m_, a, esp):
+        # A block from the emulated heap, as kernel32!HeapAlloc hands one out. DYN memory is zero on a fresh
+        # run and restored to zero between runs, so an overflowing size stops the run like malloc does.
+        return m_.dyn_alloc(max(a[2], 1))
+
+    def create_directory(m_, a, esp):
+        # BOOL: nonzero when the directory now exists. A generated path is not a real path, so "created" is
+        # the answer that lets the caller's success branch run.
+        return 1
+
+    def create_compatible_dc(m_, a, esp):
+        return 0x00010001           # HDC: a handle, not an address the caller dereferences
+
+    def create_dib_section(m_, a, esp):
+        # HBITMAP, and the BITS pointer the API writes through ppvBits: a zeroed block to draw into.
+        m_.write(a[3], struct.pack("<I", m_.model_data("CreateDIBSection.bits", 0x1000)))
+        return 0x00020001
+
+    def d3dx_create_texture(m_, a, esp):
+        # S_OK plus a non-null texture at ppTexture: the caller checks the HRESULT and then uses *ppTexture,
+        # so returning 0 alone would hand it a NULL engine object.
+        m_.write(a[7], struct.pack("<I", m_.model_data("D3DXCreateTexture.texture", 0x100)))
+        return 0
+
+    def fsound_listener(m_, a, esp):
+        # FSOUND_BOOL: the attributes were accepted. The call only hands the listener position/velocity
+        # vectors to the sound driver, which nothing the harness compares reads back.
+        return 1
+
+    def message_box(m_, a, esp):
+        # int: a modal dialog. A generated caption/text is not a real prompt, so the answer is the one
+        # the original's continuation expects: the user pressed OK (IDOK). The API writes nothing.
+        return 1
+
+    def open_clipboard(m_, a, esp):
+        # BOOL: the clipboard is now owned by the caller (the function it is called from only reads or
+        # writes through the other clipboard APIs, which this harness never reaches).
+        return 1
+
+    def get_module_file_name(m_, a, esp):
+        # DWORD: the module's path written to lpFilename. A generated buffer is not the process's real
+        # one, so the documented "path truncated to nSize-1, NUL terminated" answer is written instead
+        # of faulting; a buffer the emulator cannot write (generated garbage pointer) keeps the count.
+        path = b"C:\\Program Files\\Mount&Blade\\mount&blade.exe"
+        n = a[2] & 0xFFFFFFFF
+        if not n:
+            return 0
+        copy = path[:max(n - 1, 0)]
+        try:
+            m_.write(a[1], copy + b"\0")
+        except UcError:
+            pass
+        return n if len(copy) < len(path) else len(path)
+
+    def matrix(m_, a, rows):
+        m_.write(a[0], struct.pack("<16f", *rows))      # D3DXMATRIX: row-major, translation in row 4
+        return a[0]                                     # pOut, as the API returns it
+
+    def matrix_read(m_, addr):
+        return struct.unpack("<16f", m_.read(addr, 64))
+
+    def matrix_multiply(m_, a, esp):
+        p, q = matrix_read(m_, a[1]), matrix_read(m_, a[2])
+        return matrix(m_, a, tuple(_f32(_f32(p[i * 4] * q[j]) + _f32(p[i * 4 + 1] * q[4 + j])
+                                        + _f32(p[i * 4 + 2] * q[8 + j]) + _f32(p[i * 4 + 3] * q[12 + j]))
+                                 for i in range(4) for j in range(4)))
+
+    def matrix_transpose(m_, a, esp):
+        p = matrix_read(m_, a[1])
+        return matrix(m_, a, tuple(p[j * 4 + i] for i in range(4) for j in range(4)))
+
+    def ortho_off_center(rh):
+        def f(m_, a, esp):
+            l, r, b, t, zn, zf = (fl(x) for x in a[1:7])
+            z = _fdiv(1.0, zn - zf) if rh else _fdiv(1.0, zf - zn)
+            return matrix(m_, a, (_fdiv(2.0, r - l), 0.0, 0.0, 0.0,
+                                  0.0, _fdiv(2.0, t - b), 0.0, 0.0,
+                                  0.0, 0.0, z, 0.0,
+                                  _fdiv(l + r, l - r), _fdiv(t + b, b - t), _fdiv(zn, zn - zf), 1.0))
+        return f
+
+    def persp_off_center(rh):
+        def f(m_, a, esp):
+            l, r, b, t, zn, zf = (fl(x) for x in a[1:7])
+            two_zn = _f32(2.0 * zn)
+            far = _fdiv(zf, zn - zf) if rh else _fdiv(zf, zf - zn)
+            w = _fdiv(zn * zf, zn - zf) if rh else _fdiv(-zn * zf, zf - zn)
+            return matrix(m_, a, (_fdiv(two_zn, r - l), 0.0, 0.0, 0.0,
+                                  0.0, _fdiv(two_zn, t - b), 0.0, 0.0,
+                                  _fdiv(l + r, l - r), _fdiv(t + b, b - t), far, -1.0 if rh else 1.0,
+                                  0.0, 0.0, w, 0.0))
+        return f
+
+    stdcall = {
+        "RaiseException": (raise_exception, 4),
+        "HeapAlloc": (heap_alloc, 3),
+        "CreateDirectoryA": (create_directory, 2),
+        "CreateCompatibleDC": (create_compatible_dc, 1),
+        "CreateDIBSection": (create_dib_section, 6),
+        "D3DXCreateTexture": (d3dx_create_texture, 8),
+        "D3DXMatrixMultiply": (matrix_multiply, 3),
+        "D3DXMatrixTranspose": (matrix_transpose, 2),
+        "D3DXMatrixOrthoOffCenterRH": (ortho_off_center(True), 7),
+        "D3DXMatrixOrthoOffCenterLH": (ortho_off_center(False), 7),
+        "D3DXMatrixPerspectiveOffCenterRH": (persp_off_center(True), 7),
+        "D3DXMatrixPerspectiveOffCenterLH": (persp_off_center(False), 7),
+        "_FSOUND_3D_Listener_SetAttributes@32": (fsound_listener, 8),
+        "MessageBoxA": (message_box, 4),
+        "OpenClipboard": (open_clipboard, 1),
+        "GetModuleFileNameA": (get_module_file_name, 3),
+    }
+    for name, (fn, n) in stdcall.items():
+        m.handle(name, fn, nargs=n, pops=n)
+
+
+def _f32(x):
+    """x rounded to single precision, the width the original's D3DX call computes in."""
+    try:
+        return struct.unpack("<f", struct.pack("<f", x))[0]
+    except OverflowError:
+        return math.copysign(math.inf, x)
+
+
+def _fdiv(a, b):
+    """IEEE division: a degenerate projection (l == r, zn == zf) yields inf/NaN like the real call, where
+    Python would raise ZeroDivisionError."""
+    if b:
+        return _f32(a / b)
+    if a == 0.0 or a != a:
+        return float("nan")
+    return math.copysign(float("inf"), a) * math.copysign(1.0, b)

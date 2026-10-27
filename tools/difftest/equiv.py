@@ -3,7 +3,8 @@
 
 usage: equiv.py <slice-id> [<va> ...] [--flags "..."] [--inputs N] [--seed S] [--json out.json]
                 [--min-valid K] [--gate edges|insns] [--no-steer] [--ulp U] [--strict-calls]
-                [--budget N] [--time-limit S] [--fp-tol] [--fp-realistic] [-v]
+                [--budget N] [--time-limit S] [--fp-tol] [--fp-realistic]
+                [--call-regs [--call-regs-strict]] [-v]
 
 Default VAs: the slice's nonmatching.txt. Our function is compiled (into work/difftest/obj/, never
 match/), its relocations are resolved to the ORIGINAL's addresses (tools/difftest/resolve.py), and
@@ -25,7 +26,10 @@ branches are replayed with the compare instrumented and the compared input locat
 register, pool field, .data global, malloc result) is set to the other operand (input-to-state);
 mutation prefers inputs that reach uncovered branches; covered compares get boundary probes; fault
 repair redirects bad pointers, small-ifies garbage indices and, as a last resort, maps input memory
-at the faulting address.
+at the faulting address. A run that stops in `_purecall` is resampled the same way instead of being
+discarded: the dword that carried the vtable pointer (an argument, a pool object's vtable field or an
+image .data global) and, when that is not the input's, the vtable slot itself get input soup, and the
+first resample that gets past the pure call is kept.
 
 Verdicts:
   PASS        no mismatch, >= K valid inputs (--min-valid, default 200) and every edge of BOTH builds
@@ -34,9 +38,19 @@ Verdicts:
               how many edges each misses;
   PASS-FP / WEAK-FP  (--fp-tol only) PASS / WEAK where every mismatching input differed only by float rounding
               (judged against the original at 64-bit precision) or was out of float range; stats in the reason;
-  FAIL        a mismatch (the first one is printed, its input saved for --replay);
+  FAIL        a mismatch (the first one is printed, its input saved for --replay). A pointer to our own
+              copy of a constant/vtable/code label where the original stores the image's address is
+              tolerated (with a note) only when the bytes at both are identical; otherwise it is a FAIL
+              whose detail names the differing dwords;
   UNSUPPORTED unresolved reference, symbol not found, compile error, or almost every input discarded.
 --gate insns restores the legacy gate (original's instruction coverage >= --min-cov, default 60%).
+--call-regs is a diagnostic for a FAIL: it captures the whole live register file (eax ebx ecx edx esi edi ebp
+esp, xmm0-3) at every recorded call site (depth-1 calls, imports, fake calls) and reports the first difference
+that no tolerance explains (an address inside the function's own stack frame, the same pooled constant, our own
+copy of a block with identical bytes, --ulp), with the call index, its callee and both values, in the result's
+"call_regs" and the printed reason. It never changes a verdict; --call-regs-strict makes such a difference a
+mismatch (only for an input whose every other observable agrees, and only at a call pair whose callee and
+arguments agree).
 """
 import argparse, collections, glob, json, math, os, random, struct, sys, time, zlib
 
@@ -49,7 +63,7 @@ except OSError:
     pass
 import numpy as np                                 # noqa: E402
 from capstone import x86_const as CX               # noqa: E402
-from unicorn import UC_HOOK_CODE, UC_HOOK_BLOCK, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_PROT_READ, UC_PROT_WRITE    # noqa: E402
+from unicorn import UcError, UC_HOOK_CODE, UC_HOOK_BLOCK, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_PROT_READ, UC_PROT_WRITE    # noqa: E402
 from unicorn.x86_const import *                    # noqa: E402,F401,F403
 
 import slice as S                                  # noqa: E402
@@ -123,6 +137,38 @@ def unsupported(t, reason, **kw):
     for k, v in kw.items():
         setattr(t, k, v)
     return t
+
+
+def modelled_symbols(t):
+    """r.models of the resolver (agent B's model bindings; absent before that landed). Each entry is
+    {"symbol", "kind", "addr", "size"}; kind "model-data"/"model-stub" is a harness model, "orig-code" is
+    the original's own code at that address and is evidence, not a model."""
+    ms = getattr(t, "models", None)
+    if ms is None:
+        ms = getattr(getattr(t, "res", None), "models", None)
+    out = []
+    for m in ms or ():
+        sym, kind = (m.get("symbol"), m.get("kind")) if isinstance(m, dict) else \
+            (getattr(m, "symbol", None), getattr(m, "kind", None))
+        out.append({"symbol": sym, "kind": kind})
+    return out
+
+
+def model_note(ms):
+    """'; N modelled symbol(s)' for the reason (only model-* kinds are models), or ''."""
+    n = sum(1 for m in ms if str(m.get("kind") or "").startswith("model"))
+    return "; %d modelled symbol(s)" % n if n else ""
+
+
+def model_capped(v, ms):
+    """A verdict that rests on a harness model can be no better than WEAK: a model proves the row runnable,
+    never that our code is equivalent. A FAIL is already stronger evidence and is left alone."""
+    if any(str(m.get("kind") or "").startswith("model") for m in ms):
+        if v == "PASS":
+            return "WEAK"
+        if v == "PASS-FP":
+            return "WEAK-FP"
+    return v
 
 
 def prepare(sid, va, flags_override=None, log=print, src=None):
@@ -290,6 +336,12 @@ def entry_reads(insns, entry):
             r = []          # 'or eax,-1' / 'and eax,0': constant result
         if ins.id == CX.X86_INS_PUSH:
             r = []          # 'push ecx' is MSVC's 4-byte stack allocation / a save, not a use
+        if len(ops) == 2 and ops[0].type == CX.X86_OP_REG and (
+                (ins.id == CX.X86_INS_LEA and ops[1].type == CX.X86_OP_MEM and not ops[1].mem.disp
+                 and not ops[1].mem.index and ops[1].mem.base == ops[0].reg) or
+                (ins.id == CX.X86_INS_MOV and ops[1].type == CX.X86_OP_REG and ops[1].reg == ops[0].reg)):
+            r = []          # 'lea ecx,[ecx]' / 'mov ecx,ecx': MSVC's alignment nop, not a use
+                            # (static_init 0x548360 read ecx as an argument only through this nop)
         for x in r:
             n = names.get(x)
             if n and n not in written:
@@ -302,6 +354,71 @@ def entry_reads(insns, entry):
             break
         a += ins.size
     return read
+
+
+GPR32 = {CX.X86_REG_EAX: "eax", CX.X86_REG_EBX: "ebx", CX.X86_REG_ECX: "ecx", CX.X86_REG_EDX: "edx",
+         CX.X86_REG_ESI: "esi", CX.X86_REG_EDI: "edi", CX.X86_REG_EBP: "ebp", CX.X86_REG_ESP: "esp"}
+
+
+def reg_arg_use(insns, entry, reg, limit=40):
+    """How the original uses the argument our declaration does not pass: (kind, address, instruction).
+    'pointer' = the original addresses memory through it, 'int' = it is compared/masked/scaled, 'unknown' =
+    copied around only. Follows fall-through (a conditional branch still runs one way) and `mov r32, reg`
+    copies, so a this pointer parked in esi still counts; stops at jmp/ret."""
+    aliases, int_ev, a = {reg}, None, entry
+    for _ in range(limit):
+        ins = insns.get(a)
+        if ins is None:
+            break
+        ops, text = ins.operands, "%s %s" % (ins.mnemonic, ins.op_str)
+        for op in ops:                      # memory addressed through the register: a pointer
+            if op.type == CX.X86_OP_MEM:
+                for rr in (op.mem.base, op.mem.index):
+                    if GPR32.get(rr) in aliases:
+                        return "pointer", a, text
+        try:
+            rd, wr = ins.regs_access()
+        except capstone.CsError:
+            break
+        reads = {GPR32.get(x) for x in rd} & aliases
+        writes = {GPR32.get(x) for x in wr} & aliases
+        zeroed = ins.id in (CX.X86_INS_XOR, CX.X86_INS_SUB, CX.X86_INS_SBB) and len(ops) == 2 and \
+            ops[0].type == CX.X86_OP_REG and ops[1].type == CX.X86_OP_REG and ops[0].reg == ops[1].reg
+        if zeroed:
+            reads = set()                   # 'xor eax,eax': the entry value is dead, not an integer argument
+        if reads and int_ev is None and ins.id in (
+                CX.X86_INS_CMP, CX.X86_INS_TEST, CX.X86_INS_AND, CX.X86_INS_OR, CX.X86_INS_IMUL,
+                CX.X86_INS_SHL, CX.X86_INS_SHR, CX.X86_INS_SAR, CX.X86_INS_MOVZX, CX.X86_INS_MOVSX):
+            int_ev = (a, text)              # compare/mask/scale of the value: an integer argument
+                                            # (bare add/sub is left ambiguous: it is also pointer arithmetic)
+        if writes and not reads:
+            aliases -= writes               # overwritten: the entry value cannot be used after this
+            if not aliases:
+                break
+        elif ins.id == CX.X86_INS_MOV and len(ops) == 2 and ops[0].type == CX.X86_OP_REG \
+                and ops[1].type == CX.X86_OP_REG and GPR32.get(ops[1].reg) in aliases:
+            aliases.add(GPR32[ops[0].reg])  # a copy keeps the value live in the destination
+        if ins.group(capstone.CS_GRP_CALL):
+            aliases -= {"eax", "ecx", "edx"}    # caller-saved: the callee clobbers them
+            if not aliases:
+                break
+        if ins.group(capstone.CS_GRP_RET) or ins.id in (CX.X86_INS_JMP, CX.X86_INS_RET):
+            break
+        a += ins.size
+    if int_ev:
+        return "int", int_ev[0], int_ev[1]
+    return "unknown", entry, "copied only"
+
+
+def abi_fix(reg, kind, addr, text):
+    """The concrete declaration change for a register argument: which register and which type."""
+    what = {"pointer": "a pointer (the original addresses memory through it at %08x: %s)" % (addr, text),
+            "int": "an integer (the original does arithmetic/compare on it at %08x: %s)" % (addr, text),
+            "unknown": "a value (the original copies it at %08x: %s)" % (addr, text)}[kind]
+    how = {"ecx": "make it a thiscall member (this arrives in ecx) or __fastcall with that first parameter",
+           "edx": "declare it __fastcall with that pointer as the second parameter (the first would be in ecx)",
+           "eax": "no MSVC declaration passes an argument in eax (an LTCG-only register argument; run with --ignore-abi)"}[reg]
+    return "%s in %s: %s" % (what, reg, how)
 
 
 def build_layout(t):
@@ -360,8 +477,9 @@ def build_layout(t):
             regk[r] = "soup"
             notes.append("original reads %s at entry (register argument?)" % r)
             if sg is not None and sg.params is not None:
+                kind, at, text = reg_arg_use(t.orig_insns, t.va, r)
                 t.abi_mismatch = "original reads %s at entry but our declaration passes nothing there " \
-                                 "(custom/LTCG register ABI?)" % r
+                                 "(custom/LTCG register ABI?); fix: pass %s" % (r, abi_fix(r, kind, at, text))
     t.void_hides_eax = False
     if t.ret_kind == "void" and getattr(t, "orig_returns_eax", False):
         # Seven hybrid defects (2026-10-12) were `void` declarations of functions whose original
@@ -700,6 +818,41 @@ CALLEE_SENTINEL = {UC_X86_REG_EBX: 0x0BB0BB00, UC_X86_REG_ESI: 0x05150515, UC_X8
 STACK_FILL = b"\xcc"
 STACK_END = M.STACK_TOP + 0x1000           # end of the stack mapping (one guard-free page above the top)
 
+# --call-regs: the whole live register file at a call site (the GPRs the trace already compares, plus the
+# first four xmm registers). NEVER compared by default: a call is compared through its callee, this/edx and
+# stack arguments, so intermediate register state that reaches no call, store or return is invisible.
+# Values that are not data: MSVC's uninitialised-stack fills and the sentinels a build leaves in a register that
+# never carried an input. A register difference against one of these is a dead value, not a divergence.
+FILL_PATTERNS = frozenset((0xCCCCCCCC, 0xCDCDCDCD, 0xDDDDDDDD, 0xFDFDFDFD, 0x0BB0BB00, 0x0D1D0D1D,
+                           0xBAADF00D, 0xFEEEFEEE, 0xABABABAB, 0xDEADBEEF))
+
+CALL_REGS = ("eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp")
+CALL_XMM = ("xmm0", "xmm1", "xmm2", "xmm3")
+CALL_REG_IDS = {"eax": UC_X86_REG_EAX, "ebx": UC_X86_REG_EBX, "ecx": UC_X86_REG_ECX, "edx": UC_X86_REG_EDX,
+                "esi": UC_X86_REG_ESI, "edi": UC_X86_REG_EDI, "ebp": UC_X86_REG_EBP, "esp": UC_X86_REG_ESP}
+CALL_XMM_IDS = {"xmm%d" % k: UC_X86_REG_XMM0 + k for k in range(len(CALL_XMM))}
+
+
+def call_reg_snapshot(uc):
+    """The register file at a call site (--call-regs): {name: int}, xmm as the full 128-bit value."""
+    snap = {r: uc.reg_read(i) for r, i in CALL_REG_IDS.items()}
+    snap.update({r: uc.reg_read(i) for r, i in CALL_XMM_IDS.items()})
+    return snap
+
+
+class ImportTrace(list):
+    """machine.py records one import call as (name, args) and appends it here. With --call-regs the register
+    file at that call is captured in the same order: the append happens inside machine's import hook, so the
+    values are the ones at the stub entry."""
+
+    def __init__(self, uc, regs):
+        super().__init__()
+        self.uc, self.regs = uc, regs
+
+    def append(self, ent):
+        list.append(self, ent)
+        self.regs.append(call_reg_snapshot(self.uc))
+
 
 class Side:
     """One installed function (original or ours): entry, ranges, call-site hooks."""
@@ -744,6 +897,7 @@ class Runner:
                 self.decl_arity.setdefault(va_, n_)
         self.our_insns = {}
         self.code_cache = {}      # image function start -> (sorted addrs, insns) for fake-call arity
+        self.targets_cache = {}   # id(insns) -> addresses a branch/call in that code lands on (block starts)
         self.fakes = []
         self.orig = Side("orig", t.va, [(t.orig_lo, t.orig_hi)], self._sites_orig(), t.orig_cfg, (t.orig_lo, t.orig_hi))
         self.ours = Side("ours", obj["entry"], obj["code"], self._sites_ours(), self._cfg_ours(), obj["func_range"])
@@ -972,6 +1126,8 @@ class Runner:
             words = (0,) * 8
         self.calls.append((tgt, uc.reg_read(UC_X86_REG_ECX), uc.reg_read(UC_X86_REG_EDX), words,
                            info["add_esp"], info["is_jmp"]))
+        if self.opts.call_regs:
+            self.call_regs.append(call_reg_snapshot(uc))
 
     def _thunk(self, va):
         r = self.thunk_targets.get(va)
@@ -1076,9 +1232,26 @@ class Runner:
             return self.code_cache[f]
         return None
 
+    def block_starts(self, addrs, insns):
+        """Addresses a branch or call in this code can land on: the start of a basic block. `addrs[0]`
+        (the function's entry in the image) is a block start too. Attributed here once per code blob."""
+        key = id(insns)
+        t = self.targets_cache.get(key)
+        if t is None:
+            t = {addrs[0]} if addrs else set()
+            for ins in insns.values():
+                if ins.id == CX.X86_INS_CALL or ins.group(capstone.CS_GRP_JUMP):
+                    if ins.operands and ins.operands[0].type == CX.X86_OP_IMM:
+                        t.add(ins.operands[0].imm & 0xFFFFFFFF)
+            self.targets_cache[key] = t
+        return t
+
     def site_arity(self, ret):
         """Stack dwords a call ending at `ret` passes: pushes (and 'sub esp,N' slots) walking back
-        from the call to the previous call/branch/stack adjustment. None if not determinable."""
+        from the call to the previous call/branch/stack adjustment. None if not determinable.
+        The walk stays inside the call's own basic block: the pushes of a loop's prologue (or of the
+        funclet/parent function the site was inlined into) belong to a different path, and counting
+        them fabricated 6 arguments for a 1-argument vtable call in a loop (write_soa 0x4e9640)."""
         got = self._insns_around(ret - 1)
         if not got:
             return None
@@ -1090,34 +1263,38 @@ class Runner:
         call = insns[addrs[i]]
         if call.id != CX.X86_INS_CALL or call.address + call.size != ret:
             return None
+        starts = self.block_starts(addrs, insns)
         n = 0
         j = i - 1
-        while j >= 0 and i - j < 40:
-            ins = insns[addrs[j]]
-            if ins.address + ins.size != addrs[j + 1]:
-                break                       # gap: not a straight-line predecessor
-            if ins.id == CX.X86_INS_PUSH:
-                n += 1
-            elif ins.id == CX.X86_INS_SUB and ins.operands[0].type == CX.X86_OP_REG and \
-                    ins.operands[0].reg == CX.X86_REG_ESP and ins.operands[1].type == CX.X86_OP_IMM:
-                if ins.operands[1].imm > 0x40:
+        if addrs[i] not in starts:
+            while j >= 0 and i - j < 40:
+                ins = insns[addrs[j]]
+                if ins.address + ins.size != addrs[j + 1]:
+                    break                       # gap: not a straight-line predecessor
+                if ins.id == CX.X86_INS_PUSH:
+                    n += 1
+                elif ins.id == CX.X86_INS_SUB and ins.operands[0].type == CX.X86_OP_REG and \
+                        ins.operands[0].reg == CX.X86_REG_ESP and ins.operands[1].type == CX.X86_OP_IMM:
+                    if ins.operands[1].imm > 0x40:
+                        break
+                    n += ins.operands[1].imm // 4
+                elif ins.id in (CX.X86_INS_CALL, CX.X86_INS_RET, CX.X86_INS_POP, CX.X86_INS_ADD) or \
+                        ins.group(capstone.CS_GRP_JUMP):
+                    if ins.id == CX.X86_INS_ADD and not (ins.operands[0].type == CX.X86_OP_REG and
+                                                         ins.operands[0].reg == CX.X86_REG_ESP):
+                        j -= 1
+                        continue
                     break
-                n += ins.operands[1].imm // 4
-            elif ins.id in (CX.X86_INS_CALL, CX.X86_INS_RET, CX.X86_INS_POP, CX.X86_INS_ADD) or \
-                    ins.group(capstone.CS_GRP_JUMP):
-                if ins.id == CX.X86_INS_ADD and not (ins.operands[0].type == CX.X86_OP_REG and
-                                                     ins.operands[0].reg == CX.X86_REG_ESP):
-                    j -= 1
-                    continue
-                break
-            else:
-                try:
-                    _r, w = ins.regs_access()
-                except capstone.CsError:
-                    w = []
-                if CX.X86_REG_ESP in w and ins.id not in (CX.X86_INS_MOV,):
-                    break
-            j -= 1
+                else:
+                    try:
+                        _r, w = ins.regs_access()
+                    except capstone.CsError:
+                        w = []
+                    if CX.X86_REG_ESP in w and ins.id not in (CX.X86_INS_MOV,):
+                        break
+                if addrs[j] in starts:
+                    break                   # this instruction starts the block: earlier ones are another path
+                j -= 1
         nxt = self.m.read(ret, 3)
         callee_pops = not (nxt[:2] == b"\x83\xc4" or nxt[:2] == b"\x81\xc4")
         return n, callee_pops
@@ -1142,7 +1319,15 @@ class Runner:
         h = zlib.crc32(repr((target, ecx, args)).encode())
         k = h % 4
         eax = (0, 1, h % 9, M.POOL_BASE + M.SLOT * (HOT_SLOTS + (h >> 8) % (NSLOTS - HOT_SLOTS)))[k]
+        if self._bool_result(ret):
+            # the caller tests the return value as a flag (`test al,al`): a do-nothing method reports
+            # "the check failed" (0), the answer that lets the caller's error path run instead of
+            # sending it into work the method was supposed to do (cam_view 0x4eaa05: the model-record
+            # check gates the clipboard copy, whose GlobalAlloc is not modelled)
+            eax = 0
         self.fakes.append((target, n, ecx, tuple(args)))
+        if self.opts.call_regs:
+            self.fake_regs.append(call_reg_snapshot(uc))
         uc.reg_write(UC_X86_REG_EAX, eax)
         uc.reg_write(UC_X86_REG_EDX, 0)
         new_esp = esp + 4 + (4 * n if pops else 0)
@@ -1156,6 +1341,18 @@ class Runner:
         uc.reg_write(UC_X86_REG_ESP, new_esp)
         uc.reg_write(UC_X86_REG_EIP, ret)
         return True
+
+    def _bool_result(self, ret):
+        """True if the first instruction after the call tests the return value against itself
+        (`test al,al` / `test eax,eax`): a method used as a boolean predicate."""
+        try:
+            ins = next(_md.disasm(self.m.read(ret, 16), ret, 1))
+        except Exception:
+            return False
+        if ins.id != CX.X86_INS_TEST or len(ins.operands) != 2:
+            return False
+        return all(op.type == CX.X86_OP_REG for op in ins.operands) and \
+            ins.operands[0].reg == ins.operands[1].reg
 
     def _returns_x87(self, ret):
         """True if the code after the call reads an x87 register it did not push itself, i.e. it
@@ -1200,6 +1397,105 @@ class Runner:
             except Exception:
                 pass
 
+    def _traced_reads(self, inp):
+        """[(address, dword)] of every 4-byte read the original makes from an input buffer, the
+        argument area or image .data, in order (the last matching one is the most recent)."""
+        m = self.m
+        self.reads = []
+        ranges = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE), (self.esp_entry, self.args_hi)]
+        ranges += [(lo, hi) for _nm, lo, hi in m.writable]
+        hs = [m.uc.hook_add(UC_HOOK_MEM_READ, self._on_read, begin=lo, end=hi - 1) for lo, hi in ranges]
+        try:
+            self.run_side(self.orig, inp)
+        finally:
+            for h in hs:
+                m.uc.hook_del(h)
+        reads, self.reads = self.reads, None
+        return reads
+
+    def _put_dword(self, out, addr, val):
+        """Store val into the input location at addr: a pool object field, an incoming argument slot,
+        or an image .data dword (an override both sides start from). None for an address the input
+        does not own (read-only constants/tables are not writable)."""
+        if M.POOL_BASE <= addr < M.POOL_BASE + M.POOL_SIZE:
+            if addr & 3:
+                return None
+            out.pool_over[addr] = val
+        elif self.esp_entry + 4 <= addr < self.args_hi:
+            k = (addr - self.esp_entry - 4) // 4
+            if addr & 3:
+                return None
+            if k < len(out.args):
+                out.args[k] = val
+            else:
+                out.pad[k - len(out.args)] = val
+        elif self.m.in_image_writable(addr):
+            out.overrides[addr] = val
+        else:
+            return None
+        return out
+
+    def _redirect(self, reads, out, val, newp, depth=0):
+        """Store newp into the input dword that carried `val`. When that dword is not writable as one
+        (a pool address that is not 4-aligned, a read-only table), follow the chain one level: the
+        pointer that led to it is an input dword (cam_view 0x4eaa05: [this+0x188] -> unaligned soup
+        address -> 0xd -> call [0xd+0x44])."""
+        for addr, v in reversed(reads):
+            if v != val:
+                continue
+            if val == 0 and self.m.in_image_writable(addr):
+                continue            # a zero global is an empty container/NULL constant, not the input's
+            r = self._put_dword(out, addr, newp)
+            if r is not None:
+                return r
+            if depth < 2 and addr != val:
+                r = self._redirect(reads, out, addr, newp, depth + 1)
+                if r is not None:
+                    return r
+        return None
+
+    def _reg_def(self, eip, reg, window=12):
+        """The last instruction before eip (same straight-line block) that writes `reg`: the instruction
+        that built the faulting address."""
+        got = self._insns_around(eip - 1)
+        if not got:
+            return None
+        addrs, insns = got
+        import bisect
+        i = bisect.bisect_left(addrs, eip) - 1
+        j = i
+        while j >= 0 and i - j < window:
+            ins = insns[addrs[j]]
+            if j + 1 >= len(addrs) or ins.address + ins.size != addrs[j + 1]:
+                break
+            try:
+                _r, w = ins.regs_access()
+            except capstone.CsError:
+                w = []
+            if reg in w:
+                return ins
+            if ins.group(capstone.CS_GRP_JUMP) or ins.group(capstone.CS_GRP_CALL) or ins.id == CX.X86_INS_RET:
+                break
+            j -= 1
+        return None
+
+    def scaled_factor(self, eip, reg):
+        """The factor N>1 by which `imul reg, reg, N` / `shl reg, N` scaled reg just before eip, or
+        None: an array index that the faulting access multiplied by its element size (cam_view
+        0x4ea8fd: `imul eax,eax,0x1f8` then `mov ebp,[eax+ecx+0x3c]`)."""
+        ins = self._reg_def(eip, reg)
+        if ins is None:
+            return None
+        ops = ins.operands
+        if ins.id == CX.X86_INS_IMUL and len(ops) == 3 and ops[0].type == CX.X86_OP_REG and \
+                ops[0].reg == reg and ops[1].type == CX.X86_OP_REG and ops[1].reg == reg and \
+                ops[2].type == CX.X86_OP_IMM and ops[2].imm > 1:
+            return ops[2].imm & 0xFFFFFFFF
+        if ins.id == CX.X86_INS_SHL and len(ops) == 2 and ops[0].type == CX.X86_OP_REG and \
+                ops[0].reg == reg and ops[1].type == CX.X86_OP_IMM and 0 < ops[1].imm < 32:
+            return 1 << ops[1].imm
+        return None
+
     def repair(self, inp, fault, rng, attempt=0):
         """The original faulted at an unmapped address A. Find the dword the bad pointer V came from
         (the last 4-byte read from the input buffers, image .data or the argument area with
@@ -1211,20 +1507,12 @@ class Runner:
         m = self.m
         fault_eip = m.uc.reg_read(UC_X86_REG_EIP)
         fault_regs = {cs: m.uc.reg_read(u) for cs, u in CS2UC.items()}
-        self.reads = []
-        ranges = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE), (self.esp_entry, self.args_hi)]
-        ranges += [(lo, hi) for _nm, lo, hi in m.writable]
-        hs = [m.uc.hook_add(UC_HOOK_MEM_READ, self._on_read, begin=lo, end=hi - 1) for lo, hi in ranges]
-        try:
-            self.run_side(self.orig, inp)
-        finally:
-            for h in hs:
-                m.uc.hook_del(h)
-        reads, self.reads = self.reads, None
+        reads = self._traced_reads(inp)
 
         # The faulting instruction's base register is the bad pointer V (exactly, if it was
         # loaded unchanged); otherwise fall back to "some value up to 64K below A".
         base_v = idx_v = None
+        base_reg = None
         try:
             eip = fault_eip
             ins = next(_md.disasm(m.read(eip, 16), eip, 1))
@@ -1232,30 +1520,17 @@ class Runner:
                 if op.type == CX.X86_OP_MEM:
                     if op.mem.base and op.mem.base in CS2UC:
                         base_v = fault_regs.get(op.mem.base)
+                        base_reg = op.mem.base
                     if op.mem.index and op.mem.index in CS2UC:
                         idx_v = fault_regs.get(op.mem.index)
                     break
         except Exception:
-            base_v = idx_v = None
+            base_v = idx_v = base_reg = None
         newp = M.POOL_BASE + M.SLOT * (HOT_SLOTS + rng.randrange(NSLOTS - HOT_SLOTS))
         out = inp.copy()
 
         def put(addr, val):
-            if M.POOL_BASE <= addr < M.POOL_BASE + M.POOL_SIZE:
-                if addr & 3:
-                    return None
-                out.pool_over[addr] = val
-            elif self.esp_entry + 4 <= addr < self.args_hi:
-                k = (addr - self.esp_entry - 4) // 4
-                if addr & 3:
-                    return None
-                if k < len(out.args):
-                    out.args[k] = val
-                else:
-                    out.pad[k - len(out.args)] = val
-            else:
-                out.overrides[addr] = val
-            return out
+            return self._put_dword(out, addr, val)
 
         def mapped(v):
             return v is not None and (M.POOL_BASE <= v < M.POOL_BASE + M.POOL_SIZE or self.img.in_image(v) or
@@ -1269,9 +1544,9 @@ class Runner:
             return out
         # 1. the bad base pointer, loaded unchanged
         if base_v is not None and not mapped(base_v):
-            for addr, v in reversed(reads):
-                if v == base_v:
-                    return put(addr, newp)
+            r = self._redirect(reads, out, base_v, newp)
+            if r is not None:
+                return r
             for k, v in enumerate(out.args):
                 if v == base_v:
                     out.args[k] = newp
@@ -1280,6 +1555,30 @@ class Runner:
                 if v == base_v:
                     out.regs[r] = newp
                     return out
+        # 1c. the base register is an index the code scaled by the element size (`imul eax,eax,0x1f8`
+        # before `mov [eax+ecx+0x3c]`): the dword it came from is a garbage array index, so resample it
+        # small instead of writing a pointer into it and faulting the same way 24 times
+        if base_v is not None and not mapped(base_v) and base_reg is not None and A >= 0x10000:
+            mul = self.scaled_factor(fault_eip, base_reg)
+            if mul:
+                for addr, v in reversed(reads):
+                    if (v * mul) & 0xFFFFFFFF == base_v:
+                        if v == 0 and self.m.in_image_writable(addr):
+                            continue    # an index of 0 is indistinguishable from a NULL global pointer
+                        r = self._put_dword(out, addr, rng.randrange(4))
+                        if r is not None:
+                            return r
+                for k, v in enumerate(out.args):
+                    if (v * mul) & 0xFFFFFFFF == base_v:
+                        out.args[k] = rng.randrange(4)
+                        return out
+        # 1b. a NULL that no input dword carried (an empty global container, a call that returned 0):
+        # rewriting some zero .data dword would corrupt the program's own state (mesh_appear 0x4822ac:
+        # the resmgr's empty registry vector), so map the null page and let the input soup decide
+        if A < 0x10000 and 0 not in out.extra and \
+                self._mappable(0, M.SLOT) and not getattr(self.opts, "no_extra_map", False):
+            out.extra[0] = M.SLOT
+            return out
         # 2. a good base with a garbage index: make the index small
         if idx_v is not None and (base_v is None or mapped(base_v)) and idx_v > 0x100:
             for addr, v in reversed(reads):
@@ -1309,6 +1608,74 @@ class Runner:
                     out.extra[base] = size
                     return out
         return None
+
+    def _call_before(self, ret):
+        """The `call` instruction whose return address is ret, or None."""
+        got = self._insns_around(ret - 1)
+        if not got:
+            return None
+        addrs, insns = got
+        import bisect
+        i = bisect.bisect_left(addrs, ret) - 1
+        if i < 0:
+            return None
+        ins = insns[addrs[i]]
+        if ins.id != CX.X86_INS_CALL or ins.address + ins.size != ret:
+            return None
+        return ins
+
+    def pure_call_site(self):
+        """(vtable pointer, slot address, return address) of the indirect call the run stopped in
+        _purecall from, or None. The pure-call stub is reached by one `call [reg(+disp)]` whose
+        slot holds the stub: `reg` is the object's vtable pointer (or the object itself, for a
+        function-pointer member), and the slot is the abstract method that was called."""
+        m = self.m
+        try:
+            ret = m.u32(m.uc.reg_read(UC_X86_REG_ESP))
+        except Exception:
+            return None
+        ins = self._call_before(ret)
+        if ins is None or not ins.operands:
+            return None
+        op = ins.operands[0]
+        if op.type != CX.X86_OP_MEM:
+            return None
+        regs = {cs: m.uc.reg_read(u) for cs, u in CS2UC.items()}
+        base = regs.get(op.mem.base, 0) if op.mem.base else 0
+        idx = regs.get(op.mem.index, 0) if op.mem.index else 0
+        slot = (base + idx * op.mem.scale + op.mem.disp) & 0xFFFFFFFF
+        return base, slot, ret
+
+    def repair_pure(self, inp, rng):
+        """The original stopped in _purecall: an indirect call read a vtable slot that is still the
+        pure-call stub (an interface object the game would have initialised, or a slot the input
+        never set). Resample, from the same input soup the rest of the arguments come from, the dword
+        that carried the vtable pointer -- an argument slot, a pool object's vtable field or an image
+        .data global -- and, when that dword is not the input's, the slot itself. Returns the
+        resampled input or None; the caller keeps the first attempt that gets past the pure call."""
+        site = self.pure_call_site()
+        if site is None:
+            return None
+        vptr, slot, _ret = site
+        reads = self._traced_reads(inp)
+        out = inp.copy()
+        newp = M.POOL_BASE + M.SLOT * (HOT_SLOTS + rng.randrange(NSLOTS - HOT_SLOTS))
+        for addr, v in reversed(reads):         # the dword the vtable pointer was loaded from
+            if v == vptr:
+                r = self._put_dword(out, addr, newp)
+                if r is not None:
+                    return r
+        for k, v in enumerate(out.args):        # ... or an argument/register that carried it
+            if v == vptr:
+                out.args[k] = newp
+                return out
+        for r, v in out.regs.items():
+            if v == vptr:
+                out.regs[r] = newp
+                return out
+        # the vtable pointer is a constant table (no input source): resample the slot that is still
+        # the stub, when the input owns it (a pool object's vtable field, or an image .data table)
+        return self._put_dword(out, slot, newp)
 
     def _mappable(self, base, size):
         """True if [base, base+size) is free address space outside the harness's own regions."""
@@ -1388,10 +1755,10 @@ class Runner:
         entry = {r: uc.reg_read(REGS[r]) for r in RF.GPR_SCRATCH}
         for k in range(8):
             entry["xmm%d" % k] = uc.reg_read(UC_X86_REG_XMM0 + k)
-        m.trace_imports = []
+        self.fakes, self.calls = [], []
+        self.call_regs, self.fake_regs, self.import_regs = [], [], []
+        m.trace_imports = ImportTrace(uc, self.import_regs) if self.opts.call_regs else []
         m.fake_handler = (getattr(self, "fake_override", None) or self.fake_call) if self.opts.fake_calls else None
-        self.fakes = []
-        self.calls = []
         self.tr_stack, self.tr_block = [], None
         self.cur = side
         self.cov_on = True
@@ -1470,6 +1837,11 @@ class Runner:
         o["imports"] = list(m.trace_imports)
         o["fakes"] = list(self.fakes)
         o["calls"] = list(self.calls)
+        if self.opts.call_regs:
+            # index-aligned with the three traces above: the register file at each recorded call (copied: a
+            # later ref run reuses the lists)
+            o["call_regs"] = {"call": list(self.call_regs), "import": list(self.import_regs),
+                              "fake": list(self.fake_regs)}
         return o
 
 
@@ -1503,7 +1875,7 @@ def ulp_close(a, b, ulp, bits=32):
 class Comparer:
     def __init__(self, runner, opts):
         self.r, self.opts = runner, opts
-        self.tolerated = {"stack-pointer": 0, "inline-calls": 0, "ulp": 0, "const-pointer": 0}
+        self.tolerated = {"stack-pointer": 0, "inline-calls": 0, "ulp": 0, "const-pointer": 0, "local-copy": 0}
         self.ro = runner.ro
         self.last_kind = None
 
@@ -1528,6 +1900,93 @@ class Comparer:
                 return True
         return False
 
+    def our_section_end(self, y):
+        """End of the section of OUR mapped object that contains y, else None."""
+        obj, coff = self.r.obj, self.r.t.coff
+        for i, a in obj["sec_addr"].items():
+            n = len(coff.sections[i].data)
+            if a <= y < a + n:
+                return a + n
+        return None
+
+    def same_call_site(self, x, y):
+        """x and y are the addresses stored right after a `call` in the original's and in our code: the
+        same call site when both preceding calls target the same address and the instruction at the
+        stored address is identical (the two builds may have drifted a few bytes apart)."""
+        img, m = context()["img"], self.r.m
+        try:
+            ca, cb = img.read(x - 5, 5), m.read(y - 5, 5)
+            if ca[0] != 0xE8 or cb[0] != 0xE8:
+                return False
+            ta = (x + struct.unpack_from("<i", ca, 1)[0]) & 0xFFFFFFFF
+            tb = (y + struct.unpack_from("<i", cb, 1)[0]) & 0xFFFFFFFF
+            return ta == tb and img.read(x, 8) == m.read(y, 8)
+        except Exception:
+            return False
+
+    def same_local_copy(self, x, y):
+        """x is the address the ORIGINAL stores, y the one our code stores: an address in our own mapped
+        object, where the linker kept its own copy of something the original keeps in the image
+        (a literal/constant pool entry, a vtable, a code label our code stores - a return address left in
+        an output buffer) or a copy our code built in the pool/heap. Not such an address -> None.
+        Otherwise (equal, note): equal only when the bytes at both are identical - for an address inside
+        the function under test, the same offset in our copy, or the return address of the same call.
+        A differing block is reported with its first differing dwords: a real difference, never a pass."""
+        obj = self.r.obj
+        img = context()["img"]
+        if obj is None or not isinstance(y, int) or not isinstance(x, int) or not img.in_image(x):
+            return None
+        if not (obj["map_lo"] <= y < obj["map_hi"] or M.POOL_BASE <= y < M.POOL_BASE + M.POOL_SIZE or
+                M.DYN_BASE <= y < M.DYN_BASE + M.DYN_SIZE):
+            return None
+        m = self.r.m
+        lo, hi = obj["func_range"]
+        flo, fhi = self.r.t.orig_lo, self.r.t.orig_hi
+        if lo <= y < hi and flo <= x < fhi:
+            try:
+                if y - obj["entry"] == x - flo:
+                    # the same position in our copy of the function (a label, or a return address an
+                    # image callee copied out of the caller's frame): the address differs by the base only
+                    return True, "our copy of the function, +%#x from its entry" % (y - obj["entry"])
+                if self.same_call_site(x, y):
+                    return True, "the return address of the same call (image +%#x, ours +%#x)" % (
+                        x - flo, y - obj["entry"])
+                return False, "code at the image's +%#x / our +%#x differs: %s/%s" % (
+                    x - flo, y - obj["entry"], img.read(x, 8).hex(), m.read(y, 8).hex())
+            except Exception:
+                return None
+        end = self.our_section_end(y)
+        if end is not None:
+            n = min(256, end - y)       # our copy's own extent in the object image
+        elif M.POOL_BASE <= y < M.POOL_BASE + M.POOL_SIZE or M.DYN_BASE <= y < M.DYN_BASE + M.DYN_SIZE:
+            n = 16                      # a copy our code built in the pool/heap: a fixed window, so no
+        else:                           # difference inside the compared block can be skipped
+            return None
+        try:
+            bx, by = img.read(x, n), m.read(y, n)
+        except Exception:
+            return None
+        n = min(n, len(bx), len(by))        # a read can come back short (unmapped tail): never unpack past it
+        if bx == by:
+            return True, "%d byte(s) identical at the image's %08x" % (n, x)
+        diffs = []
+        for q in range(0, n - 3, 4):
+            if bx[q:q + 4] != by[q:q + 4]:
+                diffs.append("+%#x: %08x/%08x" % (q, struct.unpack_from("<I", bx, q)[0],
+                                                   struct.unpack_from("<I", by, q)[0]))
+                if len(diffs) >= 4:
+                    break
+        return False, "our copy at %08x vs the image's %08x differs (%s)" % (
+            y, x, ", ".join(diffs) if diffs else "%d/%d bytes" % (len(bx), len(by)))
+
+    def local_copy_equal(self, x, y):
+        """same_local_copy, counting a tolerated difference (see the reason note)."""
+        lc = self.same_local_copy(x, y)
+        if lc and lc[0]:
+            self.tolerated["local-copy"] += 1
+            return True
+        return False
+
     def compare(self, a, b, t):
         """-> None if equivalent, else (observable, orig, ours, detail). self.last_kind: triage hint."""
         self.last_kind = None
@@ -1538,7 +1997,7 @@ class Comparer:
                 mask = 0xFFFF
             ea, eb = a["eax"] & mask, b["eax"] & mask
             if ea != eb and not (in_stack_frame(ea, self.r.stk_hi) and in_stack_frame(eb, self.r.stk_hi)) \
-                    and not (mask == 0xFFFFFFFF and self.same_constant(ea, eb)):
+                    and not (mask == 0xFFFFFFFF and (self.same_constant(ea, eb) or self.local_copy_equal(ea, eb))):
                 return ("eax" if mask == 0xFFFFFFFF else "eax&%#x" % mask, "%08x" % ea, "%08x" % eb, "return value")
             if rk == "i64" and a["edx"] != b["edx"]:
                 return ("edx", "%08x" % a["edx"], "%08x" % b["edx"], "64-bit return high half")
@@ -1590,7 +2049,18 @@ class Comparer:
         d = self.compare_calls(a["calls"], b["calls"])
         if d:
             return d
-        return self.compare_fakes(a["fakes"], b["fakes"])
+        d = self.compare_fakes(a["fakes"], b["fakes"])
+        if d:
+            return d
+        if getattr(self.opts, "call_regs_strict", False):
+            # --call-regs-strict: a live-register difference is a mismatch, not just a diagnostic. Only an input
+            # that matched every other observable reaches here, so nothing that already passed can be weakened.
+            rd = self.call_reg_diff(a, b)
+            if rd and rd.get("reg") and rd.get("before_args"):
+                # only at a pair whose callee and normalised arguments still agree: a difference at or past
+                # the point where the trace itself diverges is explained by that divergence (an inlined call)
+                return (rd["observable"], rd["orig"], rd["ours"], rd["detail"])
+        return None
 
     def compare_fakes(self, fa, fb):
         """Calls through generated pointers (fake methods): same `this` and the same stack
@@ -1608,6 +2078,179 @@ class Comparer:
                     return ("fake call #%d arg %d" % (k, i), fmt_val(aa[i]), fmt_val(ab[i]),
                             "stack argument of a call through a generated pointer (normalised)")
         return None
+
+    # --- --call-regs: the live register file at every call site
+
+    def reg_value_equal(self, x, y):
+        """One register dword explained: the same value, two addresses inside the function's own stack frame,
+        the same pooled read-only constant, our own copy of a block whose bytes are identical, or --ulp apart.
+        Uses the NON-counting forms of same_constant/local_copy_equal: a diagnostic must not move the tolerated
+        tallies or the note a verdict prints."""
+        if x == y:
+            return True
+        if in_stack_frame(x, self.r.stk_hi) and in_stack_frame(y, self.r.stk_hi):
+            return True
+        if self.same_constant(x, y):
+            return True
+        lc = self.same_local_copy(x, y)
+        if lc is not None and lc[0]:
+            return True
+        return bool(self.opts.ulp) and ulp_close(x, y, self.opts.ulp)
+
+    def reg_equal(self, name, x, y):
+        """A whole register; an xmm register dword by dword (an address can sit in one lane)."""
+        if name not in CALL_XMM:
+            return self.reg_value_equal(x, y)
+        return all(self.reg_value_equal((x >> (32 * i)) & 0xFFFFFFFF, (y >> (32 * i)) & 0xFFFFFFFF)
+                   for i in range(4))
+
+    def reg_pair_class(self, name, x, y, callee, reads=()):
+        """Why two live-register values differ, for the --call-regs diagnostic:
+        'frame-size'  the callee is __chkstk and its argument IS the caller's frame size - our frame legitimately
+                      differs (the esp-at-return comparison already covers what matters);
+        'fill'        a build left an uninitialised-stack pattern / sentinel there: a dead value, no information;
+        'address'     a stack, heap or pool address against something else: a pointer that never reaches the
+                      compared observable state (only registers and declared arguments are compared here);
+        'pool'        two different pool/heap addresses: allocation order differs;
+        'value'       anything else - the two implementations computed different things. The interesting case."""
+        if name == "eax" and callee and "chkstk" in callee.lower():
+            return "frame-size"
+        if name in (reads or ()):
+            return "input"           # the callee reads this register at entry: an argument we do not declare
+        lo, hi = M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE
+        is_pool = lambda v: lo <= v < hi or M.DYN_BASE <= v < M.DYN_BASE + M.DYN_SIZE or 0x50000000 <= v < 0x50080000
+        is_stack = lambda v: in_stack_frame(v, self.r.stk_hi) or 0x7D000000 <= v < 0x7E000000
+        if x in FILL_PATTERNS or y in FILL_PATTERNS:
+            return "dead-fill"
+        if is_stack(x) or is_stack(y):
+            return "dead-address"
+        if is_pool(x) or is_pool(y):
+            return "dead-address"
+        return "dead"                # internal state the callee never sees: the final-state comparison covers it
+
+    def peq(self, x, y):
+        """veq without the tallies (same_constant/local_copy_equal report), for the same reason."""
+        if x == y:
+            return True
+        if not (isinstance(x, int) and isinstance(y, int)):
+            return False
+        lc = self.same_local_copy(x, y)
+        return self.same_constant(x, y) or (lc is not None and lc[0])
+
+    def trace_diff_index(self, kind, a, b):
+        """Index of the first pair of `kind` ('call', 'import', 'fake') whose CALLEE, this/edx or normalised
+        stack arguments differ, or None: the point where the compared part of the trace already diverges, so a
+        register difference at or after it explains nothing. Non-counting (peq)."""
+        if kind == "call":
+            A, B = self.norm_calls(a["calls"]), self.norm_calls(b["calls"])
+            for k in range(min(len(A), len(B))):
+                (ta, ea, da), aa = A[k]
+                (tb, eb, db), ab = B[k]
+                if ta != tb or not self.peq(ea, eb) or not self.peq(da, db) or \
+                        not all(self.peq(x, y) for x, y in zip(aa, ab[:len(aa)])):
+                    return k
+            return min(len(A), len(B)) if len(A) != len(B) else None
+        if kind == "import":
+            esp = self.r.stk_hi
+            ia, ib = a["imports"], b["imports"]
+            for k in range(min(len(ia), len(ib))):
+                na, va = ia[k][0], tuple(norm_val(v, esp) for v in ia[k][1])
+                nb, vb = ib[k][0], tuple(norm_val(v, esp) for v in ib[k][1])
+                if na != nb or len(va) != len(vb) or not all(self.peq(x, y) for x, y in zip(va, vb)):
+                    return k
+            return min(len(ia), len(ib)) if len(ia) != len(ib) else None
+        fa, fb = a["fakes"], b["fakes"]
+        for k in range(min(len(fa), len(fb))):
+            ta, na, ea, aa = fa[k]
+            tb, nb, eb, ab = fb[k]
+            if ta != tb or not self.peq(ea, eb) or not all(self.peq(x, y) for x, y in zip(aa[:na], ab[:nb])):
+                return k
+        return min(len(fa), len(fb)) if len(fa) != len(fb) else None
+
+    def trace_callee(self, kind, a, b, k):
+        """'<address> <symbol>' of the callee of pair k (both sides when they disagree)."""
+        try:
+            if kind == "import":
+                na, nb = str(a["imports"][k][0]), str(b["imports"][k][0])
+                return na if na == nb else "%s vs %s" % (na, nb)
+            ta = a["calls"][k][0] if kind == "call" else a["fakes"][k][0]
+            tb = b["calls"][k][0] if kind == "call" else b["fakes"][k][0]
+        except (IndexError, KeyError):
+            return "?"
+        img = context()["img"]
+        def lab(t):
+            nm = img.names.get(t, "")
+            return "%08x%s" % (t, " " + nm if nm else "")
+        return lab(ta) if ta == tb else "%s vs %s" % (lab(ta), lab(tb))
+
+    def call_reg_diff(self, a, b):
+        """--call-regs: the first live-register difference at a call site that no tolerance explains, with the
+        call it belongs to. Pairs are aligned by index inside each trace (depth-1 calls, then imports, then fake
+        calls - the order the trace comparisons use) and within a trace in call order. None when the flag is off
+        or every captured register agrees."""
+        if not getattr(self.opts, "call_regs", False):
+            return None
+        ra, rb = a.get("call_regs") or {}, b.get("call_regs") or {}
+        counted, compared = [], 0
+        for kind in ("call", "import", "fake"):
+            n = min(len(ra.get(kind) or ()), len(rb.get(kind) or ()))
+            compared += n
+            if n:
+                counted.append("%d %s%s" % (n, kind, "" if n == 1 else "s"))
+        benign = None
+        for kind in ("call", "import", "fake"):
+            sa, sb = ra.get(kind) or (), rb.get(kind) or ()
+            for k in range(min(len(sa), len(sb))):
+                if not sa[k] or not sb[k]:
+                    continue
+                callee = self.trace_callee(kind, a, b, k)
+                try:                    # registers the callee itself reads at entry (entry_reads, first 400 bytes)
+                    reads = set() if kind == "import" else self.r.callee_regs(
+                        a["calls"][k][0] if kind == "call" else a["fakes"][k][0])
+                except (IndexError, KeyError, TypeError):
+                    reads = set()
+                for nm in CALL_REGS + CALL_XMM:
+                    x, y = sa[k].get(nm), sb[k].get(nm)
+                    if x is None or y is None or self.reg_equal(nm, x, y):
+                        continue
+                    lo_x, lo_y = (x & 0xFFFFFFFF, y & 0xFFFFFFFF) if nm in CALL_XMM else (x, y)
+                    cls = self.reg_pair_class(nm, lo_x, lo_y, callee, reads)
+                    j = self.trace_diff_index(kind, a, b)
+                    where = "depth-1" if kind == "call" else kind
+                    rec = {"kind": kind, "index": k, "reg": nm, "orig": fmt_reg(nm, x), "ours": fmt_reg(nm, y),
+                           "callee": callee, "compared": compared, "traces": ", ".join(counted) or "none",
+                           "first_arg_diff": j, "before_args": j is None or k < j, "class": cls,
+                           "semantic": cls == "input", "observable": "call #%d reg %s" % (k, nm)}
+                    if cls == "input":
+                        rec["detail"] = (("live register at a %s call whose callee and normalised this/edx/stack "
+                                          "arguments agree: the two implementations computed different values "
+                                          "before this call" % where) if (j is None or k < j) else
+                                         ("live register at a %s call; the compared callee/arguments already differ "
+                                          "at #%d" % (where, j)))
+                        return rec
+                    if benign is None:      # keep the first explicable difference, in case nothing better shows up
+                        benign = rec
+        if benign is not None:
+            why = {"frame-size": "the argument IS the caller's frame size (our frame legitimately differs)",
+                   "dead-fill": "an uninitialised-stack fill / sentinel in a register the callee never reads",
+                   "dead-address": "a stack/heap/pool address in a register the callee never reads",
+                   "dead": "a register the callee never reads (internal state; the final-state comparison covers it)"}[benign["class"]]
+            benign["detail"] = "no semantic divergence at any call; first explicable difference: %s" % why
+            return benign
+        return {"kind": None, "reg": None, "compared": compared, "traces": ", ".join(counted) or "none",
+                "semantic": False}
+
+    def call_reg_note(self, d):
+        """The one-line --call-regs diagnostic for the printed reason."""
+        if not d:
+            return ""
+        if not d.get("reg"):
+            return "call-regs: no unexplained register difference (%d call site(s) compared: %s)" % (
+                d.get("compared", 0), d.get("traces", "none"))
+        kind = {"call": "depth-1 call", "import": "import call", "fake": "fake call"}.get(d["kind"], d["kind"])
+        return "call-regs: call #%d reg %s: orig %s ours %s (%s to %s, %d call site(s) compared: %s%s)" % (
+            d["index"], d["reg"], d["orig"], d["ours"], kind, d["callee"], d["compared"], d["traces"],
+            "" if d["before_args"] else "; the compared callee/arguments already differ at #%s" % d["first_arg_diff"])
 
     def compare_mem(self, a, b):
         ma, mb = a["mem"], b["mem"]
@@ -1691,6 +2334,9 @@ class Comparer:
                 self.tolerated["const-pointer"] += 1
                 i = k + 4
                 continue
+            if va is not None and self.local_copy_equal(va, vb):
+                i = k + 4
+                continue
             if va is not None and self.opts.ulp and ulp_close(va, vb, self.opts.ulp):
                 self.tolerated["ulp"] += 1
                 i = k + 4
@@ -1705,10 +2351,14 @@ class Comparer:
                     if len(pairs) >= 64:
                         break
             self.last_kind = classify_pairs(pairs)
-            ol, oh = self.r.obj["map_lo"], self.r.obj["map_hi"]
-            if pairs and (ol <= pairs[0][1] < oh) and not (ol <= pairs[0][0] < oh) and \
-                    context()["img"].in_image(pairs[0][0]):
+            block = ""
+            # ours holds an address of its own copy where the original holds the image's (a constant, a
+            # vtable, a code label, a copy our code built): same_local_copy already accepted every copy
+            # whose bytes are identical, so say how the block differs - the FAIL then names bytes
+            lc = self.same_local_copy(pairs[0][0], pairs[0][1]) if pairs else None
+            if lc is not None and not lc[0]:
                 self.last_kind = "local-address"
+                block = "; " + lc[1]
             ulps = ""
             if va is not None and vb is not None:
                 fa = struct.unpack("<f", struct.pack("<I", va))[0]
@@ -1722,7 +2372,7 @@ class Comparer:
             return ("memory %s @%08x" % (region, base_addr + k),
                     "%08x" % va if va is not None else xa[k:k + 4].hex(),
                     "%08x" % vb if vb is not None else xb[k:k + 4].hex(),
-                    "differing dwords (addr: orig/ours): " + ", ".join(more) + ulps)
+                    "differing dwords (addr: orig/ours): " + ", ".join(more) + block + ulps)
         if len(xa) != len(xb):
             return ("memory %s" % region, "len %d" % len(xa), "len %d" % len(xb), "")
         return None
@@ -1731,9 +2381,12 @@ class Comparer:
         """Normalised values equal, or two pointers to the same read-only constant."""
         if x == y:
             return True
-        if isinstance(x, int) and isinstance(y, int) and self.same_constant(x, y):
-            self.tolerated["const-pointer"] += 1
-            return True
+        if isinstance(x, int) and isinstance(y, int):
+            if self.same_constant(x, y):
+                self.tolerated["const-pointer"] += 1
+                return True
+            if self.local_copy_equal(x, y):
+                return True
         return False
 
     def seq_eq(self, xs, ys):
@@ -2019,12 +2672,18 @@ class FpTol:
             else:
                 edits.setdefault(edit[:2], []).append(edit[2:])
         for (region, pg), lst in edits.items():
+            if region not in sane["mem"]:
+                # the baseline never snapshotted this region (e.g. our object's .data when the original's run wrote
+                # nothing there), so compare() does not look at it: nothing to hide (KeyError: '.data', hud 0x4d5410)
+                continue
             if pg is None:
                 buf = bytearray(sane["mem"][region])
             else:
                 buf = bytearray(self.page(b, (a,), region, pg, "pool_init" if region == "pool" else "extra_init" if region == "extra" else None))
             for k, va in lst:
-                struct.pack_into("<I", buf, 4 * k, va)
+                if 4 * k + 4 <= len(buf):    # the page compare() will look at can be shorter than the one the
+                    struct.pack_into("<I", buf, 4 * k, va)   # dword index was computed from: skip the edit, never crash
+                # (an unapplied edit only means compare() still sees a float difference: the safe direction)
             if pg is None:
                 sane["mem"][region] = bytes(buf)
             else:
@@ -2079,6 +2738,11 @@ def fmt_val(v):
     if isinstance(v, tuple) and v and v[0] == "RO":
         return "RO:" + repr(v[1][:24])
     return str(v)
+
+
+def fmt_reg(name, v):
+    """A captured register value: 8 hex digits for a GPR, 32 for an xmm register."""
+    return "%032x" % v if name in CALL_XMM else "%08x" % v
 
 
 def fmt_call(x):
@@ -2199,14 +2863,16 @@ def _ledger(r):
 def _test_function(sid, va, opts, log=print):
     t0 = time.time()
     t = prepare(sid, va, opts.flags, log, getattr(opts, "src", None))
+    models = modelled_symbols(t)
     out = {"slice": sid, "va": "%08x" % va, "flags": " ".join(t.flags), "flags_from": t.flags_how,
            "symbol": getattr(t, "sym", None), "symbol_from": getattr(t, "sym_how", None),
            "unresolved": t.unresolved, "eh_unresolved": t.eh_unresolved,
+           "modelled": models,
            "resolution_conflicts": [{"symbol": c[0], "resolved": "%08x" % c[1], "method": c[2], "aligned": "%08x" % c[3]}
                                     for c in t.conflicts],
            "resolution_methods": t.methods}
     if t.verdict == "UNSUPPORTED":
-        out.update(verdict="UNSUPPORTED", reason=t.reason, seconds=round(time.time() - t0, 1))
+        out.update(verdict="UNSUPPORTED", reason=t.reason + model_note(models), seconds=round(time.time() - t0, 1))
         return out
     # Resolution audit (resaudit.py): every mapped reference vs the original's operand at the paired instruction.
     # A disagreement means our build would call/read something other than what the original does there, so any
@@ -2215,9 +2881,17 @@ def _test_function(sid, va, opts, log=print):
     out["resolution_audit"] = {"disagree": aud["disagree"], "unverified": aud["unverified"],
                                "local_copy": aud["local_copy"], "same_code": aud["same_code"],
                                "agree": len(aud["agree"]), "paired_insns": aud["pairs"], "insns": aud["insns"]}
+    audit_warning = None
     if aud["disagree"]:
-        out.update(verdict="UNSUPPORTED", reason=RA.summary(aud), seconds=round(time.time() - t0, 1))
-        return out
+        # The audit pairs operands positionally, so a shifted-but-equivalent instruction stream "disagrees" without
+        # saying anything about behaviour. Keep it as evidence and let the emulator decide; --strict-audit restores
+        # the veto for a caller that wants the static gate.
+        audit_warning = RA.summary(aud)
+        out["audit_warning"] = audit_warning
+        out["audit_disagree"] = aud["disagree"]
+        if getattr(opts, "strict_audit", False):
+            out.update(verdict="UNSUPPORTED", reason=audit_warning, seconds=round(time.time() - t0, 1))
+            return out
     out.update(signature=str(t.sig) if t.sig else "unparsed (%s)" % getattr(t, "sig_error", "?"),
                stack_args=len(t.stack_kinds), reg_args=t.reg_kinds, callee_pop=t.callee_pop,
                ret_kind=t.ret_kind, layout_notes=t.layout_notes, orig_size=t.orig_hi - t.orig_lo,
@@ -2275,35 +2949,56 @@ def _test_function(sid, va, opts, log=print):
                     inp = gen.mutate(parent, rng, corpus)
                 else:
                     inp = gen.fresh(rng)
-            a = runner.run_side(runner.orig, inp)
-            fixes = 0
-            while (a["status"][0] == "fault" and a["fault"] and a["fault"][0] != "pool-limit"
-                   and fixes < opts.repairs and time.time() < deadline):
-                rep = runner.repair(inp, a["fault"], rng, fixes)
-                if rep is None:
-                    break
-                inp = rep
-                fixes += 1
+            try:
                 a = runner.run_side(runner.orig, inp)
-            if a["status"][0] == "budget" and runner.budget < opts.budget and probes < BUDGET_PROBES:
-                # Runaway input, or a function whose real runs are long? Retry with the full cap.
-                probes += 1
-                low, runner.budget = runner.budget, opts.budget
-                a2 = runner.run_side(runner.orig, inp)
-                if a2["status"][0] == "budget":
-                    runner.budget = low
-                else:
-                    a = a2
-                    out["budget_raised"] = "input %d needed more than %d instructions" % (i, low)
-            st = a["status"][0]
-            if st == "import" and ours_probe < OURS_IMPORT_PROBES:
-                # our side's call sites that stop at the same import (for its 'blocked' edges): run it, never compare
-                ours_probe += 1
-                runner.run_side(runner.ours, inp)
+                fixes = pure_fixes = 0
+                while time.time() < deadline:
+                    st_ = a["status"]
+                    if st_[0] == "fault" and a["fault"] and a["fault"][0] != "pool-limit" and fixes < opts.repairs:
+                        fixes += 1
+                        rep = runner.repair(inp, a["fault"], rng, fixes - 1)
+                    elif st_[0] == "import" and str(st_[1]).split(":")[0] == "_purecall" and \
+                            pure_fixes < opts.repairs:
+                        # a random input drove a vtable call through a slot that is still the pure-call
+                        # stub: resample the class pointer/vtable the input carried and keep the first
+                        # attempt that gets past it instead of burning the input
+                        pure_fixes += 1
+                        rep = runner.repair_pure(inp, rng)
+                    else:
+                        break
+                    if rep is None:
+                        break
+                    inp = rep
+                    a = runner.run_side(runner.orig, inp)
+                if a["status"][0] == "budget" and runner.budget < opts.budget and probes < BUDGET_PROBES:
+                    # Runaway input, or a function whose real runs are long? Retry with the full cap.
+                    probes += 1
+                    low, runner.budget = runner.budget, opts.budget
+                    a2 = runner.run_side(runner.orig, inp)
+                    if a2["status"][0] == "budget":
+                        runner.budget = low
+                    else:
+                        a = a2
+                        out["budget_raised"] = "input %d needed more than %d instructions" % (i, low)
+                st = a["status"][0]
+                if st == "import" and ours_probe < OURS_IMPORT_PROBES:
+                    # our side's call sites that stop at the same import (for its 'blocked' edges): run it, never compare
+                    ours_probe += 1
+                    runner.run_side(runner.ours, inp)
+            except UcError as e:
+                # one input whose run trips the emulator (a hook reading unmapped memory: fake_call's argument
+                # peek, save_state 0x4e9620) must not kill the row - discard it and carry on. Setup and compile
+                # errors stay fatal above.
+                discarded["fault(unmapped)"] = discarded.get("fault(unmapped)", 0) + 1
+                if opts.verbose:
+                    log("  discard input %d: UcError: %s" % (i, str(e)[:120]))
+                continue
             if st != "ok":
-                key = st if st != "import" else "import:%s" % str(a["status"][1]).split(":")[0]
+                key = "wall-timeout" if st == "wall" else (st if st != "import" else "import:%s" % str(a["status"][1]).split(":")[0])
                 if st == "fault" and a["fault"]:
                     key = "fault(%s)" % a["fault"][0]
+                if key in ("timeout", "wall", "wall-timeout"):
+                    out["wall_timeout"] = out.get("wall_timeout", 0) + 1
                 discarded[key] = discarded.get(key, 0) + 1
                 continue
             if not runner.abi_ok(a):
@@ -2313,10 +3008,16 @@ def _test_function(sid, va, opts, log=print):
                 key = "orig-abi-broken(fake)" if a["fakes"] else "orig-abi-broken"
                 discarded[key] = discarded.get(key, 0) + 1
                 continue
-            if fixes:
+            if fixes or pure_fixes:
                 repaired += 1
             run_blocks = runner.run_blocks
-            b = runner.run_side(runner.ours, inp)
+            try:
+                b = runner.run_side(runner.ours, inp)
+            except UcError as e:
+                discarded["fault(unmapped)"] = discarded.get("fault(unmapped)", 0) + 1
+                if opts.verbose:
+                    log("  discard input %d (ours): UcError: %s" % (i, str(e)[:120]))
+                continue
             sb = b["status"]
             if sb[0] == "trap":
                 traps[sb[1]] = traps.get(sb[1], 0) + 1
@@ -2354,10 +3055,19 @@ def _test_function(sid, va, opts, log=print):
                 d = cmp_.compare(a, b, t)
                 if d and fpt is not None:
                     kind_, d_ = fpt.judge(a, b, inp, t)
-                    d = d_ if kind_ == "real" else None
+                    if kind_ == "real":
+                        d = d_
+                        if d_[0].endswith("(fp-tol)") or d_[0] in ("fp-tol", "control flow"):
+                            cmp_.last_kind = None   # an fp judgement replaced the compared observable
+                    else:
+                        d = None
             if d:
                 mism += 1
                 sigs[mismatch_sig(d)] += 1
+                if first is None and opts.call_regs:
+                    # --call-regs: where the live register file at a call site first differs (independent of
+                    # which observable the mismatch names, so a register difference can be the explanation)
+                    out["call_regs"] = cmp_.call_reg_diff(a, b)
                 if first is None:
                     first = {"input": i, "profile": inp.profile, "origin": inp.origin, "observable": d[0],
                              "kind": cmp_.last_kind or ("float-rounding" if d[0] == "st0" else "value"),
@@ -2394,7 +3104,9 @@ def _test_function(sid, va, opts, log=print):
     total = len(t.orig_insns)
     cov = 100.0 * len(covered) / total if total else 0.0
     out["mismatch_sigs"] = dict(sigs.most_common(40))
-    out.update(inputs=ran, valid=valid, discarded=discarded, mismatches=mism, first_mismatch=first,
+    out.update(seed=opts.seed, inputs_planned=opts.inputs, extra_inputs=opts.extra_inputs if getattr(opts, "steer", True) else 0,
+               gate=opts.gate, require_all=bool(getattr(opts, "require_all", False)),
+               inputs=ran, valid=valid, discarded=discarded, mismatches=mism, first_mismatch=first,
                coverage={"covered_insns": len(covered), "total_insns": total, "pct": round(cov, 1),
                          "all": len(covered) >= total,
                          "missed": ["%08x" % a for a in sorted(set(t.orig_insns) - covered)][:64]},
@@ -2404,9 +3116,22 @@ def _test_function(sid, va, opts, log=print):
         out["ulp"] = opts.ulp
     if fpt is not None:
         out["fp_tol"] = fpt.stats(valid, mism)
-    if mism and first.get("kind") == "local-address":
-        v, why = "UNSUPPORTED", ("our code stores the address of its own copy of an object/vtable/constant "
-                                 "where the original stores the image's (%s); map that symbol" % first["observable"])
+    if out.get("stopped_early"):
+        # The input stream is deterministic (--inputs + --seed); the wall clock is not. A row cut short by the
+        # row-level deadline must not report a verdict at all: on a loaded machine that turned FAILs into WEAKs
+        # (16 of 82 rows in one sweep). Raise --time-limit or run fewer workers.
+        v, why = "UNSUPPORTED", ("not a verdict: %s; the run was cut short by the wall-clock limit, everything "
+                                 "measured so far is in this JSON" % out["stopped_early"])
+    elif out.get("wall_timeout"):
+        v, why = "UNSUPPORTED", ("not a verdict: %d input run(s) were cut by the per-run wall-clock cap (--run-seconds); "
+                                 "raise it so the verdict depends only on --inputs and --seed" % out["wall_timeout"])
+    elif mism and first.get("kind") == "local-address":
+        # our code stores the address of its own copy of an object/vtable/constant where the original
+        # stores the image's: same_local_copy already accepted every copy whose bytes are identical, so
+        # what is left is a real difference - the detail names the differing dwords of the block.
+        v, why = "FAIL", ("%d/%d valid inputs mismatched; first: %s (our code stores the address of its own "
+                          "copy where the original stores the image's; %s)" % (
+                              mism, valid, first["observable"], first.get("detail") or "the copies differ"))
     elif mism:
         v, why = "FAIL", "%d/%d valid inputs mismatched; first: %s" % (mism, valid, first["observable"])
     elif traps:
@@ -2438,6 +3163,13 @@ def _test_function(sid, va, opts, log=print):
             if not all_insns:
                 need.append("--require-all: %d original insns never ran" % (total - len(covered)))
             v, why = "WEAK", "%s; edges %s; %.1f%% insns" % (", ".join(need), edges_txt, cov)
+    if cmp_.tolerated.get("local-copy") and v in ("PASS", "WEAK"):
+        # our code stored the address of its own copy where the original stores the image's, and the
+        # bytes at both were identical: an address difference only (the linker kept two copies)
+        why += ("; note: %d address(es) of our own copy of the image's block differed in address only "
+                "(the bytes matched)" % cmp_.tolerated["local-copy"])
+    if audit_warning and v in ("PASS", "WEAK"):
+        why += "; audit advisory (positional pairing): " + audit_warning
     if fpt is not None and v in ("PASS", "WEAK") and fpt.n_fp + fpt.n_oor:
         fs = out["fp_tol"]
         v += "-FP"
@@ -2448,6 +3180,10 @@ def _test_function(sid, va, opts, log=print):
     if v == "FAIL" and aud["local_copy"]:
         # our own copy of a callee ran where the original calls a real function: a call-trace FAIL may be that
         why += "; NOTE " + RA.summary(aud)
+    if opts.call_regs and out.get("call_regs"):
+        why += "; " + cmp_.call_reg_note(out["call_regs"])
+    why += model_note(models)               # a run kept alive by a harness model: say so in the reason ...
+    v = model_capped(v, models)             # ... and never report PASS on modelled symbols
     out.update(verdict=v, reason=why, seconds=round(time.time() - t0, 1))
     return out
 
@@ -2524,6 +3260,10 @@ def replay(sid, va, path, opts):
         for ent in o["imports"][:40]:
             print("    import", fmt_call((ent[0], tuple(norm_val(v, runner.stk_hi) for v in ent[1]))))
     print("first difference:", cmp_.compare(a, b, t) if a["status"][0] == b["status"][0] == "ok" else "status differs")
+    if opts.call_regs and a["status"][0] == b["status"][0] == "ok":
+        crd = cmp_.call_reg_diff(a, b)
+        if crd:
+            print("  " + cmp_.call_reg_note(crd))
     runner.close()
     return 0
 
@@ -2546,11 +3286,27 @@ def parse_args(argv=None):
                          "insns: the legacy gate (original's instruction coverage >= --min-cov)")
     ap.add_argument("--ulp", type=int, default=0)
     ap.add_argument("--strict-calls", action="store_true")
+    ap.add_argument("--call-regs", action="store_true",
+                    help="capture the full register file (eax ebx ecx edx esi edi ebp esp, xmm0-3) at every "
+                         "recorded call site (depth-1 calls, imports, fake calls) and report the first difference "
+                         "no tolerance explains: index, callee and values, in the result's 'call_regs' and the "
+                         "reason. A diagnostic only - the verdict is unchanged")
+    ap.add_argument("--call-regs-strict", action="store_true",
+                    help="--call-regs, and a register difference is a mismatch instead of a diagnostic: an input "
+                         "that matches every other observable but differs in a live register at a call pair whose "
+                         "callee and arguments still agree FAILs")
+    ap.add_argument("--strict-audit", action="store_true",
+                    help="keep the old behaviour: a resolution-audit disagreement aborts with UNSUPPORTED. By default "
+                         "the audit is advisory - the emulator runs anyway and the disagreement is recorded in the "
+                         "result (66 rows were blocked by positional operand pairing alone)")
     ap.add_argument("--budget", type=int, default=DEFAULT_BUDGET, help="max instructions per original run (ours: 4x)")
     ap.add_argument("--start-budget", type=int, default=START_BUDGET,
                     help="initial cap; raised to --budget if one of the first %d capped inputs finishes under it" % BUDGET_PROBES)
     ap.add_argument("--time-limit", type=int, default=180, help="seconds per function")
-    ap.add_argument("--run-seconds", type=float, default=10, help="wall-clock cap per original run (ours: 4x)")
+    ap.add_argument("--run-seconds", type=float, default=0,
+                    help="wall-clock cap per original run (ours: 4x). Default 0 = off: a wall-clock stop depends on "
+                         "machine load, so with it on, any row that hits it reports no verdict (only --inputs and "
+                         "--seed decide); the instruction budget (--budget) bounds every run deterministically")
     ap.add_argument("--max-mismatch", type=int, default=5)
     ap.add_argument("--no-fake-calls", dest="fake_calls", action="store_false",
                     help="discard inputs that call through a generated function pointer instead of emulating a do-nothing method")
@@ -2580,7 +3336,10 @@ def parse_args(argv=None):
                     help="fault repair never maps input memory at an untraceable faulting address")
     ap.add_argument("-v", "--verbose", action="store_true")
     ap.add_argument("--replay", help="re-run one saved failing input (first_mismatch.input_file) and print details")
-    return ap.parse_args(argv)
+    o = ap.parse_args(argv)
+    if o.call_regs_strict:
+        o.call_regs = True          # strict compares the same capture; capture is what costs the run
+    return o
 
 
 def main(argv=None):

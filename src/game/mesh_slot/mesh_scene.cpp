@@ -62,9 +62,9 @@ extern float g_f54b8b0;        // 0x54b8b0 (1.5f)
 // @ 0x47cae0 -- build the 3x3 scene entities of the world object from the meshes named like the scene and light them
 void TerrainX::build_entity()
 {
-    if (name.len < 4)
+    if (name().len < 4)
         return;
-    smeshes = g_resmgr_c->find_meshes((const rgl::string*)&name);
+    smeshes() = g_resmgr_c->find_meshes((const rgl::string*)&name());
 
     vector4 center;
     center.x = wx - 10.0f;
@@ -72,7 +72,7 @@ void TerrainX::build_entity()
     center.z = (wx + wy) * 0.5f;
     vector4 tv(10.0f, 10.0f, 0.0f);
 
-    entity** e = sent;
+    entity** e = sent();
     int i = 3;
     do {
         int j = 3;
@@ -83,8 +83,8 @@ void TerrainX::build_entity()
         } while (--j);
     } while (--i);
 
-    for (unsigned n = 0; n < smeshes.size(); n++) {
-        mesh* m = ((mesh_x*)smeshes[n])->clone();
+    for (unsigned n = 0; n < smeshes().size(); n++) {
+        mesh* m = ((mesh_x*)smeshes()[n])->clone();
         ((mesh_x*)m)->set_color(center);
         ((mesh*)m)->translate(&tv);
         ((TerrainX*)this)->snap(m);
@@ -104,7 +104,7 @@ void TerrainX::build_entity()
             iy = 2;
         else
             iy = 1;
-        entity** ep = &sent[ix * 3 + iy];
+        entity** ep = &sent()[ix * 3 + iy];
 
         m->f214 = 10;
         entity* e0 = *ep;
@@ -120,7 +120,7 @@ void TerrainX::build_entity()
         (*ep)->box.extend(&m->bounds.max);
     }
 
-    entity** q = sent;
+    entity** q = sent();
     int k = 3;
     do {
         int j = 3;

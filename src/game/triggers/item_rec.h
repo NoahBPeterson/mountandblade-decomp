@@ -22,11 +22,21 @@ struct owned_block {
 // exact bytes of these three functions need this variant. Same layout as head_rec.
 struct item_head {
     virtual ~item_head() {}                     // 0x4c4c90 (symbols/slices/triggers.txt maps ??_7item_head to 0x5947d8)
+    // 0x5947d8 has seven slots (entry 7 is the next table's first dword: declaring it made the engine call a CRT
+    // compare). Same table as head_rec.
+    virtual void s1() {}
+    virtual void s2() {}
+    virtual void s3() {}
+    virtual void s4() {}
+    virtual void s5() {}
+    virtual void s6() {}
+    virtual void s7() {}
+    virtual void s8() {}
     int w04;                                    // +4
     int w08;                                    // +8 0x63
     char pad0c[0x10];
     tstring name;                               // +0x1c
-    item_head() : name(), w08(0x63) {}
+    item_head() : name() { w08 = 0x63; }
 };
 
 struct ItemRec : item_head {                     // vtable 0x596124

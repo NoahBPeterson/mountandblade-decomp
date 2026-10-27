@@ -1,0 +1,4 @@
+# unwritten_member_audit.py allowlist: one `Struct::field` per line (a whole struct: `Struct::*`).
+# Use it for rows the audit cannot decide: members the engine/glue initialises, members written through a
+# view the audit does not model, or layout aliases of a member that is written under another name.
+# `#` starts a comment; blank lines are ignored. A missing file is an empty allowlist.

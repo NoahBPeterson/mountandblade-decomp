@@ -1,0 +1,3 @@
+# slice save_panel (batch: ad-hoc ticket) -- VAs: 004ea290 004e4c70
+# No byte-exact rows: both functions are complete reconstructions whose byte diff is stack-slot /
+# block-layout only (see nonmatching.txt for the measured diff and the reasons).

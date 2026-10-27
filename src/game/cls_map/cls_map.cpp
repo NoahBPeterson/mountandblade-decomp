@@ -1321,7 +1321,20 @@ void save_path(char* out)
 {
     char dir[0x104];
     char base[0x104];
+    // A NULL/garbage `out` used to fault in the first sprintf (source pointer 0x73726573 = the tail of
+    // "...\\users"); log the offender instead of dying, and never leave `dir` uninitialised if the shell call fails.
+    {
+        unsigned p = (unsigned)out;
+        if (p < 0x10000u || p >= 0x80000000u) {
+            FILE* f = fopen("save_path_probe.txt", "a");
+            if (f) { fprintf(f, "bad out=%08x\n", p); fclose(f); }
+            return;
+        }
+    }
+    dir[0] = 0;
     SHGetFolderPathA(0, 5, 0, 0, dir);
+    if (!dir[0])
+        strcpy(dir, ".");
     sprintf(base, "%s\\Mount&Blade Savegames", dir);
     CreateDirectoryA(base, 0);
     sprintf(base, "%s", out);
@@ -1953,7 +1966,10 @@ void OptionsScreen::open()
         vt(header)->d25(s);
     }
     {
-        tstring k("main_options");
+        // 0x4de6f0 pushes "options_window" first and "warrider_logo" second (push 005976c8 / 00597020); there is no
+        // "main_options" resource anywhere in the game data - this name was invented by the slice's guessed skeleton and
+        // produced "RGL ERROR: get_object failed for: main_options" when the options screen opened.
+        tstring k("warrider_logo");
         gui_mesh* m = res_get(k)->clone();
         vt(header)->d31(0, m);
     }
@@ -2518,9 +2534,7 @@ void OptionsMenu::init()
         float c = 0.677f - (float)(i % 0x13) * 0.037f;
         if (i >= 0x13)
             x = 0.35f;
-        tstring s;
-        slot_text(&s, i);
-        MissionUi* tb = make_hint(quad, s, x, c, 0.185f, 0.03f);
+        MissionUi* tb = make_hint(quad, slot_text(i), x, c, 0.185f, 0.03f);
         slots[i] = tb;
         iv = 8;
         vt(tb)->d29(&iv);
@@ -2535,9 +2549,7 @@ void OptionsMenu::init()
     }
     for (int i = 0; i < 7; i++) {
         float c = 0.677f - (float)i * 0.037f;
-        tstring s;
-        key_text(&s, i);
-        MissionUi* tb = make_hint(quad, s, 0.72f, c, 0.13f, 0.03f);
+        MissionUi* tb = make_hint(quad, key_text(i), 0.72f, c, 0.13f, 0.03f);
         captions[i] = tb;
         iv = 8;
         vt(tb)->d29(&iv);
@@ -2589,8 +2601,9 @@ void OptionsMenu::copy_slots()
     } while (--n != 0);
 }
 
-// @ 0x4e2ce0  tstring* key_text(tstring* out, int i)  (ret 8)
-tstring* OptionsMenu::key_text(tstring* out, int i)
+// @ 0x4e2ce0  tstring key_text(int i)  (a tstring returned by value: the hidden out pointer is the first stack
+// argument and the epilogue copy-constructs r into it, 0x4e2e55)
+tstring OptionsMenu::key_text(int i)
 {
     tstring r("unknown");
     switch (i) {
@@ -2630,12 +2643,11 @@ tstring* OptionsMenu::key_text(tstring* out, int i)
         break;
     }
     }
-    *out = r;
-    return out;
+    return r;
 }
 
-// @ 0x4e2ea0    tstring* slot_text(tstring* out, int i)  (ret 8)
-tstring* OptionsMenu::slot_text(tstring* out, int i)
+// @ 0x4e2ea0    tstring slot_text(int i)  (same return-by-value convention as key_text)
+tstring OptionsMenu::slot_text(int i)
 {
     tstring r("unknown");
     switch (i) {
@@ -2695,47 +2707,47 @@ tstring* OptionsMenu::slot_text(tstring* out, int i)
         break;
     }
     case 11: {
-        tstring k("ui_character_window");
-        r = *g_strtable_c.lookup(k);
-        break;
-    }
-    case 12: {
-        tstring k("ui_inventory_window");
-        r = *g_strtable_c.lookup(k);
-        break;
-    }
-    case 13: {
-        tstring k("ui_party_window");
-        r = *g_strtable_c.lookup(k);
-        break;
-    }
-    case 14: {
-        tstring k("ui_quests_window");
-        r = *g_strtable_c.lookup(k);
-        break;
-    }
-    case 15: {
-        tstring k("ui_game_log_window");
-        r = *g_strtable_c.lookup(k);
-        break;
-    }
-    case 16: {
         tstring k("ui_leave_location_retreat");
         r = *g_strtable_c.lookup(k);
         break;
     }
-    case 17: {
+    case 12: {
         tstring k("ui_zoom");
         r = *g_strtable_c.lookup(k);
         break;
     }
-    case 18: {
+    case 13: {
         tstring k("ui_view_outfit");
         r = *g_strtable_c.lookup(k);
         break;
     }
-    case 19: {
+    case 14: {
         tstring k("ui_toggle_first_person_view");
+        r = *g_strtable_c.lookup(k);
+        break;
+    }
+    case 15: {
+        tstring k("ui_character_window");
+        r = *g_strtable_c.lookup(k);
+        break;
+    }
+    case 16: {
+        tstring k("ui_inventory_window");
+        r = *g_strtable_c.lookup(k);
+        break;
+    }
+    case 17: {
+        tstring k("ui_party_window");
+        r = *g_strtable_c.lookup(k);
+        break;
+    }
+    case 18: {
+        tstring k("ui_quests_window");
+        r = *g_strtable_c.lookup(k);
+        break;
+    }
+    case 19: {
+        tstring k("ui_game_log_window");
         r = *g_strtable_c.lookup(k);
         break;
     }
@@ -2765,32 +2777,32 @@ tstring* OptionsMenu::slot_text(tstring* out, int i)
         break;
     }
     case 25: {
-        tstring k("ui_order_advance");
+        tstring k("ui_order_hold_fire_toggle");
         r = *g_strtable_c.lookup(k);
         break;
     }
     case 26: {
-        tstring k("ui_order_fall_back");
+        tstring k("ui_order_advance");
         r = *g_strtable_c.lookup(k);
         break;
     }
     case 27: {
-        tstring k("ui_order_stand_closer");
+        tstring k("ui_order_fall_back");
         r = *g_strtable_c.lookup(k);
         break;
     }
     case 28: {
-        tstring k("ui_order_spread_out");
+        tstring k("ui_order_stand_closer");
         r = *g_strtable_c.lookup(k);
         break;
     }
     case 29: {
-        tstring k("ui_order_blunt_weapons_toggle");
+        tstring k("ui_order_spread_out");
         r = *g_strtable_c.lookup(k);
         break;
     }
     case 30: {
-        tstring k("ui_order_hold_fire_toggle");
+        tstring k("ui_order_blunt_weapons_toggle");
         r = *g_strtable_c.lookup(k);
         break;
     }
@@ -2800,12 +2812,12 @@ tstring* OptionsMenu::slot_text(tstring* out, int i)
         break;
     }
     case 32: {
-        tstring k("ui_archers_control");
+        tstring k("ui_infantry_control");
         r = *g_strtable_c.lookup(k);
         break;
     }
     case 33: {
-        tstring k("ui_infantry_control");
+        tstring k("ui_archers_control");
         r = *g_strtable_c.lookup(k);
         break;
     }
@@ -2825,8 +2837,7 @@ tstring* OptionsMenu::slot_text(tstring* out, int i)
         break;
     }
     }
-    *out = r;
-    return out;
+    return r;
 }
 
 // ---- 0x4e3780: the meeting window (character sheet) ----------------------------------------------------------------------------------

@@ -12,7 +12,7 @@
 0048d3c0	9	ecx/edx register swap; equiv UNSUPPORTED (fake-arity)
 0048d470	328	semantically equivalent body; cl register choice / instruction order differs from the original
 0048d5f0	90	semantically equivalent body; cl register choice / instruction order differs from the original
-0048d650	4	temp register eax vs ecx; sweep mismatch signature is only "ecx (untouched by the original)": we clobber ecx, the 10 callers never read it (benign, as documented in the slice); results equal
+0048d650	4	temp register eax vs ecx, allocator-only: the only differing bytes are 0048d662/665/667/66a (mov/sub/sar/cmp). The original computes _Mylast-_Myfirst in eax with a dead ecx; cl 13.10 /O2 always recycles ecx (this) there, for every source form of the same three tests (30+ variants: locals, reference, inline helper, pointer compare, reordered tests, int/unsigned, member size()). /O1 and /O2 /Os do pick eax (byte-identical prefix) but emit the size-optimised shared epilogue (jmp past the failure block) instead of the original's duplicated tails. Forcing a 64-bit index removes the ecx clobber but adds a two-word compare whose high-word branch is unreachable (cfg edge can never be covered), so no equiv PASS either. Equivalence fails only on "ecx (untouched by the original)"; return value, edx/eax, esp and memory all agree.
 0048d690	10	one extra dead stack store in the original; otherwise identical
 0048d6d0	45	semantically equivalent body; cl register choice / instruction order differs from the original
 0048d750	45	semantically equivalent body; cl register choice / instruction order differs from the original

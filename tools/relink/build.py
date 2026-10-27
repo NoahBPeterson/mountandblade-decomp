@@ -22,7 +22,7 @@ original vtable, every slot is rewritten to our definition of the function in th
 address); slots whose original function we do not define keep what the compiler put there. A vtable where fewer
 than half of the comparable slots already agree is left alone and reported: its match is suspect.
 """
-import argparse, json, os, re, struct, subprocess, sys
+import argparse, bisect, json, os, re, struct, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -86,6 +86,7 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
     report = {"patched_slots": 0, "vtables": 0, "skipped": {}, "missing": []}
     redirect = {}
+    _sym_addrs = sorted({v for v in symmap.values() if isinstance(v, int)})
     from glue import RDATA
     for vt, e in rmap["vtables"].items():
         if len(e["orig"]) != 1 or vt not in symmap:
@@ -100,11 +101,20 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
             if img.u32(ova + 4 * n_orig) not in img.start_set:
                 break
             n_orig += 1
+        # Our compiled table's length: the distance to the next symbol in the map (MSVC emits vtables side by side),
+        # so a source that now declares every virtual of the original gets those slots patched too, and a slot we
+        # never wrote is never written past our table's end.
+        _sa = _sym_addrs
+        _i = bisect.bisect_right(_sa, ours)
+        n_ours = (_sa[_i] - ours) // 4 if _i < len(_sa) else 0
+        limit = min(max(e["slots"], n_orig), n_ours) if n_ours > 0 else e["slots"]
         plan, agree, comparable = [], 0, 0
-        for k in range(e["slots"]):
+        for k in range(limit):
             t = img.u32(ova + 4 * k)
+            if t not in img.start_set:
+                continue
             name = defined_at.get(t) or lib_names.get(t)
-            if t not in img.start_set or name is None or name not in symmap:
+            if name is None or name not in symmap:
                 continue
             want, have = symmap[name], exe.u32(ours + 4 * k)
             if have == symmap.get("__purecall") and want != have:
@@ -116,10 +126,11 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
                 plan.append((k, want))
         if comparable and agree * 2 < comparable:
             report["skipped"][vt] = "%d of %d slots agree" % (agree, comparable)
-            # The match is suspect, so do not rewrite slots - but if our vtable is shorter than the original's
-            # and the original's table is a real one, still point our vptr stores at the copy of it in the glue,
-            # so every slot our code calls exists (relocated to our functions) instead of reading past the end.
-            if n_orig >= 2 and e["slots"] < n_orig and RDATA[1] <= ova < RDATA[2]:
+            # The match is suspect, so do not rewrite slots - but the original's table is a real one: point our vptr
+            # stores at the copy of it in the glue, so every slot our code (or the original's) calls runs the
+            # original's function relocated to our definition. Without this a source that declares the table's
+            # whole length would run it unpatched (the record tables' slot 7/8 read as a no-op instead of always1).
+            if n_orig >= 2 and RDATA[1] <= ova < RDATA[2]:
                 redirect[ours] = ova
                 report.setdefault("redirected_short", {})[vt] = "our %d slots, original %d" % (e["slots"], n_orig)
             continue

@@ -36,11 +36,11 @@ using rgl::frustum;                 // 0x41ef60 (ctor, no dtor); the sized stand
 namespace rgl {
 #endif
 struct mesh {
-    char d0[0x10c];
-    unsigned mask;                  // +0x10c (reset 0x42d1b0 clears it on two of them)
-    char d1[0x260 - 0x110];
+    virtual ~mesh();                // 0x4127f0 is *virtual* in the original (??1mesh@rgl@@UAE@XZ); declaring it
+    char d0[0x10c - 4];             // non-virtual here emitted a second, non-virtual body (??1mesh@rgl@@QAE@XZ),
+    unsigned mask;                  // +0x10c (reset 0x42d1b0 clears it on two of them)   and the vptr at +0 keeps
+    char d1[0x260 - 0x110];         // every offset: d0 covers +4..0x10c, mask is still +0x10c
     mesh();                         // 0x412a90
-    ~mesh();                        // 0x4127f0
 };
 #ifdef GM_RGL_NS
 }

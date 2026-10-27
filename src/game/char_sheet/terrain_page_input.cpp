@@ -6,8 +6,8 @@
 // @ 0x4f3570
 void TerrainPage::read_fields()
 {
-    water_on = (g_bits.get(0xa2, 0xa3) != 0) ? 0 : 1;       // the "Enable water" checkbox holds the INVERSE
-    river_on = (int)water_on;                               // (one flag per box; same word here)
+    water_on = (g_use_shaders == 0) ? 1 : 0;                // "Enable water" holds the inverse of the shader flag
+    river_on = g_bits.get(0xa2, 0xa3);                      // the raw two bits of the "Enable river" checkbox
     terrain_on = g_bits.get(0x7f, 0x7f);
     terraingen_on = g_bits.get(0x3f, 0x3f);
     camera_x = (float)g_bits.get(0x60, 0x69);
@@ -85,26 +85,32 @@ void TerrainPage::simulate(float dt)
 }
 
 // @ 0x4f3b40
+// Rotate the 2x2 matrix m by `angle`: first row -> c*row0 + s*row1, second row -> c*row1 - s*row0.
+// The original keeps sin/cos in x87 registers, spills one float copy of the sine and the m[1]/m[3]
+// products to the stack: m[0]/m[2] therefore round their products once, m[1]/m[3] twice, and only
+// the m[2] sine product uses the unrounded register value.  The volatile temps reproduce exactly
+// that (the values are bit-identical to the original), and the stores go through unsigned copies in
+// the original's order (the last one leaves the new m[2] in eax, which a caller may read).
 void rot2::rotate_2x2(float angle)
 {
-    float s = 0, c = 0;                                     // x87 inline sin/cos (the original has no CRT call)
-    __asm {
-        fld [angle]
-        fsin
-        fstp [s]
-        fld [angle]
-        fcos
-        fstp [c]
-    }
-    float x = m[0], y = m[1];
-    m[2] = c * m[2] - s * x;
-    m[3] = c * m[3] - s * y;
-    m[0] = c * x + s * m[2];
-    m[1] = c * y + s * m[3];
+    float s = sinf(angle), c = cosf(angle);
+    volatile float sr = s;                                  // the float32 copy the original spills
+    float x = m[0], y = m[1], z = m[2], w = m[3];
+    volatile float a = c * y, b = sr * w;                   // m[1] products (spilled -> rounded)
+    volatile float d = c * w, e = sr * y;                   // m[3] products (spilled -> rounded)
+    float r0 = c * x + sr * z;
+    float r1 = a + b;
+    float r2 = c * z - s * x;                               // the unrounded sine, as in the original
+    float r3 = d - e;
+    unsigned* mi = (unsigned*)m;
+    mi[0] = *(unsigned*)&r0;
+    mi[1] = *(unsigned*)&r1;
+    mi[3] = *(unsigned*)&r3;
+    mi[2] = *(unsigned*)&r2;
 }
 
 // @ 0x4f3be0
-void identity_2x2(float* m)
+__declspec(noinline) void identity_2x2(float* m)
 {
     float a = 1.0f, b = 0.0f, c = 0.0f, d = 1.0f;           // the original fills four stack temps, then the array
     m[0] = a;

@@ -47,6 +47,9 @@ struct head_cam : head_rec {
     float   f2b8;              // +0x2b8
     head_cam();                // 0x4c49f0
     virtual void vfunc();
+    virtual void d07() {}
+    virtual void d08() {}
+    // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
     void write_stream(w_stream* w);     // 0x4c4b70
     void read_stream(w_stream* r);      // 0x4c4c00
 };
@@ -61,6 +64,9 @@ struct head_obj2 : head_rec {
     rgl::frustum fr;           // +0x2ec
     head_obj2();               // 0x4c4cc0
     virtual void vfunc();
+    virtual void d07() {}
+    virtual void d08() {}
+    // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 
 #endif

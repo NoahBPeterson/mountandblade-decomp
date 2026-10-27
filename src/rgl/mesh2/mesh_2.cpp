@@ -412,6 +412,9 @@ void rec_1ac::release()
 
 void rec_178::release()
 {
+    // TEMP (profiling run): the widget dispatch that lands here during FaceGen::init passes a 0x178-byte widget,
+    // so the destructor below frees the neighbouring heap block. Skipped so the run can reach the loading screen.
+    return;
     void* self = this;
     g_gui.reset();
     res_rec* r = ((rec_178*)self)->p;

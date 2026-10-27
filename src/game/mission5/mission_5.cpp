@@ -2330,7 +2330,7 @@ void Screen_s2ae70::draw_order_menu()
     unsigned c;
     c = (f2a0 == 0) ? base : 0xffd0d0d0;
     {
-        tstring s("ui_order_hold_position");
+        tstring s("ui_order_hold");
         ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
     }
 
@@ -2348,13 +2348,13 @@ void Screen_s2ae70::draw_order_menu()
 
     c = (f2a0 == 3) ? base : 0xffd0d0d0;
     {
-        tstring s("ui_order_mount");
+        tstring s("ui_mount");
         ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 4) ? base : 0xffd0d0d0;
     {
-        tstring s("ui_order_dismount");
+        tstring s("ui_order_dismount_toggle");
         ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
     }
 }

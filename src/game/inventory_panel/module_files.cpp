@@ -192,11 +192,11 @@ struct MapLoader {
 struct PresentationTable { char pad; };              // 0xa75f2c
 struct RefRecord;
 struct ItemPage {
-    RefRecord* fill_records(RefRecord* s);   // 0x4c6950 (PresentationTable::fill_records: rgl/mesh2/gui_edit.h)
+    void fill_records(RefRecord* s);         // 0x4c6950 (PresentationTable::fill_records: rgl/mesh2/gui_edit.h)
 };
 struct ScriptTable { char pad; };                    // 0xa75eb0
 struct rec34_list {
-    void __fastcall load(stream_base& s);   // 0x4c48d0 (ScriptTable::load, ret 4: rgl/mesh2/gui_edit.h)
+    void load(stream_base& s);              // 0x4c48d0 (ScriptTable::load, ret 4: rgl/mesh2/gui_edit.h)
 };
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
 struct MeshTable { char pad; };                      // 0x8ed4f58

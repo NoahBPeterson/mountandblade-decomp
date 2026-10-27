@@ -7,6 +7,19 @@
 
 struct head_rec {
     virtual void vfunc();      // slot 0 (only the vptr store matters)
+    // The original table at 0x5947d8 (and every record table derived from it) has NINE slots; the relink patches only
+    // the slots our compiled table has, so a one-slot declaration left slots 1..8 out of reach (slot 1 is `release`,
+    // 0x4cb680, the rest are the record's other virtuals). The names are placeholders: the relink writes the original's
+    // own functions into the slots, and slots whose original target has no symbol stay as these no-ops.
+    virtual void d01() {}
+    virtual void d02() {}
+    virtual void d03() {}
+    virtual void d04() {}
+    virtual void d05() {}
+    virtual void d06() {}
+    // the relink can only patch slots that exist in our compiled table, so a one-slot declaration left slots 1..8
+    // unreachable (several 0x4xxxxx functions were never installed or called). Declare the remaining eight; the names are
+    // placeholders, the relink writes the original's own functions into the slots.
     int     w04;               // +4     0x4c2c50
     int     w08;               // +8     0x63
     char    pad0c[0x10];       // +0xc

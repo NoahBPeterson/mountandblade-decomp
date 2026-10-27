@@ -1,0 +1,9 @@
+00410610 ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z  # std::vector<int>::_Insert_n (World::tracks +0xb8 slow path; our TU emits its own COMDAT copy)
+004927d0 ?_Insert_n@?$vector@PAUMissionUi@@V?$allocator@PAUMissionUi@@@std@@@std@@IAEXViterator@12@IABQAUMissionUi@@@Z  # std::vector<MissionUi*>::_Insert_n (container children +0x178)
+0040f8a0 ?_Uninitialized_fill_n@std@@YAPAHPAHIABHPAH@Z  # _Uninitialized_fill_n(int*, n, val, alloc); ICF-folded with the pointer fill
+004931a0 ?ctor_4931a0@@YIPAXPAX@Z  # base ctor of the 0x188/0x190 window (vptr stored by the caller)
+0048ae20 ?ctor_48ae20@@YIPAXPAX@Z  # base ctor of the 0x178 widget (returns this in eax)
+004ed630 ?ctor_4ed630@@YIPAXPAX@Z  # MapWidget (0x358 camera body) ctor
+00461480 ?ctor_461480@@YIPAXPAX@Z  # wind track (0x7c) ctor
+00419540 ?get_object@resmgr@@QAEPAXABUtstring@@@Z  # resmgr::get_object (0x5d6fa0)
+0041c6d0 ?mesh_clone@@YIPAXPAX@Z  # mesh::clone

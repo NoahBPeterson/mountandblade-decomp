@@ -4,9 +4,10 @@ src/**/*.nonmatching.txt) and tally every mismatch, not just the first (equiv's 
 
 usage: sweep_nonmatching.py [--out DIR=work/sweep] [--workers N=6] [--filter substr] [--tally] [--extra "..."]
 Each row runs `equiv.py <id> <va> [--src <module.cpp>] --fp-tol --max-mismatch 200 --json <out>/<id>_<va>.json`;
-rows whose JSON exists are skipped (restartable). A VA listed both in a src module and in its old slice runs
-once, from the module. --tally prints verdict counts and writes <out>/tally.json: every row with its recorded
-reason, the new verdict and the mismatch signatures."""
+rows whose JSON exists are skipped (restartable). One row per VA: a VA listed both in a src module and in its
+old slice runs from the module (and a VA two slices both claim runs from the one whose source/symbol table
+records it); every dropped claim is named once on stderr. --tally prints verdict counts and writes
+<out>/tally.json: every row with its recorded reason, the new verdict and the mismatch signatures."""
 import argparse, collections, glob, json, os, re, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 
@@ -14,26 +15,96 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 PY = os.path.join(ROOT, ".venv", "bin", "python")
 EQ = os.path.join(ROOT, "tools", "difftest", "equiv.py")
 ROW = re.compile(r"^([0-9a-fA-F]{8})\s+\S+\s+(.*)$")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import slice as SL                                # noqa: E402  (VA->symbol tables, manifests, source markers)
+
+_VA_COMMENT = re.compile(r"//.*@\s*0x0*([0-9a-fA-F]{3,8})\b")
+_TABLES, _MANIFESTS, _COMMENTS = {}, {}, {}
 
 
-def rows():
-    out = {}
+def _table_vas(sid):
+    """VAs `symbols/slices/<sid>.txt` names a mangled symbol for (written from the compiled TU)."""
+    if sid not in _TABLES:
+        out, p = set(), os.path.join(ROOT, "symbols", "slices", sid + ".txt")
+        try:
+            for line in open(p, encoding="utf-8", errors="replace"):
+                q = line.split("#", 1)[0].split(None, 1)
+                try:
+                    out.add(int(q[0], 16))
+                except (IndexError, ValueError):
+                    pass
+        except OSError:
+            pass
+        _TABLES[sid] = out
+    return _TABLES[sid]
+
+
+def _manifest_vas(sid):
+    """VAs the slice/module manifest binds to a symbol."""
+    if sid not in _MANIFESTS:
+        _MANIFESTS[sid] = {r[2] for r in SL.manifest_rows(sid)}
+    return _MANIFESTS[sid]
+
+
+def _comment_vas(src):
+    """VAs src marks with a '// ... @ 0x<va>' comment: find_symbol's marker binding."""
+    if src not in _COMMENTS:
+        out = set()
+        try:
+            out = {int(m[1], 16) for m in _VA_COMMENT.finditer(open(src, encoding="utf-8", errors="replace").read())}
+        except OSError:
+            pass
+        _COMMENTS[src] = out
+    return _COMMENTS[src]
+
+
+def _defines(c, va):
+    """2 if the module's own symbol table/manifest binds va, 1 if its source carries the VA marker, else 0."""
+    v = int(va, 16)
+    if v in _table_vas(c["id"]) or v in _manifest_vas(c["id"]):
+        return 2
+    src = os.path.join(ROOT, c["src"]) if c["src"] else SL.source_path(c["id"])
+    return 1 if v in _comment_vas(src) else 0
+
+
+def _claims():
+    out = []
     for p in sorted(glob.glob(os.path.join(ROOT, "match", "slices", "*", "nonmatching.txt"))):
         sid = os.path.basename(os.path.dirname(p))
         for line in open(p, encoding="utf-8", errors="replace"):
             m = ROW.match(line.strip())
             if m:
-                out[m[1].lower()] = {"id": sid, "va": m[1].lower(), "src": None, "reason": m[2][:2000],
-                                     "file": os.path.relpath(p, ROOT)}
+                out.append({"id": sid, "va": m[1].lower(), "src": None, "reason": m[2][:2000],
+                            "file": os.path.relpath(p, ROOT)})
     for p in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True)):
         mod = os.path.basename(p)[:-len(".nonmatching.txt")]
         src = p[:-len(".nonmatching.txt")] + ".cpp"
         for line in open(p, encoding="utf-8", errors="replace"):
             m = ROW.match(line.strip())
             if m:
-                out[m[1].lower()] = {"id": mod, "va": m[1].lower(), "src": os.path.relpath(src, ROOT),
-                                     "reason": m[2][:2000], "file": os.path.relpath(p, ROOT)}
-    return sorted(out.values(), key=lambda r: r["va"])
+                out.append({"id": mod, "va": m[1].lower(), "src": os.path.relpath(src, ROOT),
+                            "reason": m[2][:2000], "file": os.path.relpath(p, ROOT)})
+    return out
+
+
+def rows():
+    """One row per VA, from the module whose compiled object defines it: a src module beats its old slice,
+    and within a kind the module whose manifest/symbol table/VA marker binds the VA wins; remaining ties go
+    to the lowest module name. Dropped duplicate claims are named on stderr."""
+    by_va = collections.defaultdict(list)
+    for c in _claims():
+        by_va[c["va"]].append(c)
+    out, dropped = [], []
+    for va, cs in by_va.items():
+        # (module before slice, strongest definition evidence, lowest name) -- total and deterministic
+        ranked = sorted(cs, key=lambda c: (0 if c["src"] else 1, -_defines(c, va), c["id"], c["file"]))
+        out.append(ranked[0])
+        dropped += ["%s:%s" % (va, c["id"]) for c in ranked[1:]]
+    if dropped:
+        dropped.sort()
+        print("sweep: kept one row per VA (%d rows); dropped %d duplicate claim(s): %s"
+              % (len(out), len(dropped), ", ".join(dropped)), file=sys.stderr)
+    return sorted(out, key=lambda r: r["va"])
 
 
 def run(r, out, extra):
