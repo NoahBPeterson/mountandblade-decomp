@@ -128,6 +128,10 @@ struct mesh : mesh_base {
     int render(scene* sc, const mat4& frame);       // 0x413750
     int render(scene* sc, const matrix& frame);     // 0x413750: the spelling of the definition (shapes/mesh_obj.cpp takes the matrix); callers that hold a mat4 cast
     int add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c);   // 0x413c50
+    // @ 0x413c50 form create_shadow_mesh 0x42b080 reaches: v50 grows by exactly ONE element per ground vertex and
+    // the nt 0x18-byte uv/colour records are joined into it one after another (0x42b590 _Insert_n, 0x4106f0 _Ufill,
+    // 0x40ff60 the vertex60 shift). add_vertex's resize-then-fill compiles to a call per record instead.
+    int add_vertex_rec(int index, const vertex60& v);
     void add_face(int a, int b, int c);             // 0x411920
     std::vector<face20>& get90_();                  // 0x40ec30 (out-of-line call)
     void build_skin();                              // 0x411d20

@@ -70,7 +70,7 @@ void TerrainX::build_entity()
     center.x = wx - 10.0f;
     center.y = wy - 10.0f;
     center.z = (wx + wy) * 0.5f;
-    vector4 tv(10.0f, 10.0f, 0.0f);
+    vector4 tv(5.0f, 5.0f, 0.0f);
 
     entity** e = sent();
     int i = 3;

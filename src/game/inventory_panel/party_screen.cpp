@@ -983,10 +983,17 @@ void PartyScreen::setup_skills()
 // @ 0x5063e0
 void PartyScreen::refresh_selection()
 {
-    tstring zero("");
-    tstring tmp;
+    // the original's first temporary is the info label's text, built in place and destroyed before the
+    // enable block; [zero] is the label text the rest of the body reuses ([tmp] is declared at its first
+    // use so the two live slots below it keep the original's frame order). cl hoists the dtor of a
+    // scoped temporary only when the scope is entered unconditionally, so the block is entered first
+    // (the original's own `test char_quad` guard then sits inside it).
+    bool sel_invalid = false;
+    {
+        tstring empty("");
+        PSO(info)->set_text((float*)&empty, &empty);
 
-    PSO(info)->set_text((float*)&zero, &zero);
+        tstring zero;
 
     PSO(talk_btn)->enable();
     locked = 1;
@@ -1001,14 +1008,14 @@ void PartyScreen::refresh_selection()
     PSO(cost_panel)->clear();
     PSO(upgrade_panel)->clear();
     if (char_quad) {
-        tmp = tstring("");
-        PSO(name_lbl)->set_text((float*)&tmp, &tmp);
+        tstring name("");
+        PSO(name_lbl)->set_text((float*)&name, &name);
         PSO(char_quad)->add_image(0, 0);
     }
 
     bool action = false;
     if (sel_row == -1 || sel_type == -1 || sel_slot == -1) {
-        return;
+        sel_invalid = true;
     }
     int troop_type = sel_type;
     int p1 = troop_type != 0 ? g_game->f78 : other_party;
@@ -1016,7 +1023,7 @@ void PartyScreen::refresh_selection()
     int p2 = troop_type != 0 ? other_party : g_game->f78;
     Stack stk = PARTIES->get(p2)->stacks[slot_idx];
     if (stk.troop < 0) {
-        return;
+        sel_invalid = true;
     }
     TroopRec* rec = g_game->chars + stk.troop;
     show_selected_character(stk.troop, slot_idx);
@@ -1132,6 +1139,7 @@ void PartyScreen::refresh_selection()
         locked = 0;
     }
 
+    tstring tmp;
     tstring price;
     {
         tstring src = zero;
@@ -1258,6 +1266,8 @@ void PartyScreen::refresh_selection()
         }
     } else {
         PSO(action_btn)->act_b4();                  // +0xb4 (0x5072d0)
+    }
+
     }
 }
 

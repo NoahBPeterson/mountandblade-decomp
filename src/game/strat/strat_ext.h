@@ -113,6 +113,10 @@ struct mesh : mesh_base {
     void update_morph();                            // 0x413320
     int render(scene* sc, const mat4& frame);       // 0x413750
     int add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c);   // 0x413c50
+    // @ 0x413c50 form create_shadow_mesh 0x42b080 calls: v50 grows by exactly ONE element and the nt uv/colour
+    // records of a ground vertex are joined into it one after another (0x42b590 _Insert_n, 0x4106f0 _Ufill,
+    // 0x40ff60 the vertex60 shift). add_vertex's resize-then-fill compiles to a call per record instead.
+    int add_vertex_rec(int index, const vertex60& v);
     void add_face(int a, int b, int c);             // 0x411920
     void clear_geometry();                               // 0x428e80 (resizes every vector to 0)
 };
