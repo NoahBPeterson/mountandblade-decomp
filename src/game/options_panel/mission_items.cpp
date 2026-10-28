@@ -86,6 +86,15 @@ struct MissionBlocker : item_base {
     char pad2bc[0x4];
     int f_2c0;                                                  // +0x2c0 = g_ticks[0]
     int f_2c4;                                                  // +0x2c4 = g_ticks[1]
+    // The image's table (0x59616c) overrides five of the base's slots: declaring them here under the base's slot
+    // names, each with the image's own target in the comment (the item_rec.h annotation shape), binds the table's
+    // slots to the image's functions. Nothing in this TU calls them, so they stay declared, not defined.
+    virtual void slot_empty_1();                                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
+    virtual void slot_empty_2();                                // slot 2  0x4f7f00 MissionHud::refresh (agent_hud.cpp)
+    virtual void scale_3(const float*);                         // slot 3  0x5261e0 Screen_s261e0::tick(float) (mission_5.cpp)
+    virtual void slot_empty_4();                                // slot 4  0x4cea10 MissionParams::init (this file)
+    virtual char pure_7() { return 1; }                         // slot 7  0x48b170 (overrides the base's pure slot)
+    virtual char always_true();                                 // slot 8  0x4280e0 rgl::static_entity::awake (entity_types.cpp)
     MissionBlocker();                                           // 0x4ce960
 };
 
@@ -188,7 +197,11 @@ void MissionParams::init()
 // ---- the remaining item constructors (0x4ceb30 / 0x4cef20 / 0x4cef80) --------------------------------------
 struct ItemA : item_base {
                                       // vtable 0x596190
-    virtual void s_last() {}                    // placeholder: original table 0x596190 has 10 slots, ours 9
+    virtual void slot_empty_1();                // slot 1  0x4c6e10 MapDialog::reset_state (gui_edit.cpp)
+    virtual void slot_empty_2();                // slot 2  0x4fbfa0 GameScreen::build (agent_hud.cpp)
+    virtual void scale_3(const float*);         // slot 3  0x533070 EventScreen::on_event(int) (exchange_screens.cpp)
+    virtual char pure_7() { return 1; }         // slot 7  0x48b170 (overrides the base's pure slot)
+    virtual void s_last();                      // slot 9  0x4ceb90 MissionUpdater::update (this file)
     char pad2c[0x8];
     int f34, f38, f3c, f40, f44, f48, f4c;
     int clock, clock_hi; float f58; int f5c;
@@ -196,6 +209,10 @@ struct ItemA : item_base {
 };
 struct ItemB : item_base {
                                       // vtable 0x5961e4
+    virtual void slot_empty_1();                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
+    virtual void slot_empty_2();                // slot 2  0x4e5d80 SaveWinCtl::create_stub (progress_bar.cpp)
+    virtual void scale_3(const float*);         // slot 3  0x534180 SourceScreen::hook_a(int) (exchange_screens.cpp)
+    virtual char pure_7() { return 1; }         // slot 7  0x48b170 (overrides the base's pure slot)
     char pad2c[0x8];
     int f34, f38, f3c, f40, f44, f48, f4c;
     int clock, clock_hi; float f58; int f5c;
@@ -203,6 +220,10 @@ struct ItemB : item_base {
 };
 struct ItemC : item_base {
                                       // vtable 0x596208
+    virtual void slot_empty_1();                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
+    virtual void slot_empty_2();                // slot 2  0x4e5e50 SaveWinCtl::create_flagged (progress_bar.cpp)
+    virtual void scale_3(const float*);         // slot 3  0x534230 SourceScreen::hook_b(int) (exchange_screens.cpp)
+    virtual char pure_7() { return 1; }         // slot 7  0x48b170 (overrides the base's pure slot)
     char pad2c[0x8];
     int f34, f38, f3c, f40, f44, f48, f4c;
     int clock, clock_hi; float f58; int f5c;
@@ -277,6 +298,11 @@ struct ItemD_vt : item_base {
     ItemD_vt() { w04 = 0; w08 = 99; }
 };
 struct ItemD : ItemD_vt {                                       // vtable 0x5961c0
+    // overrides go on ItemD only: ItemD_vt's own table (the base vptr store in 0x4ceec0) must keep the head_rec slots
+    virtual void slot_empty_1();                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
+    virtual void slot_empty_2();                // slot 2  0x50a140 view_obj::reset (view_open.cpp)
+    virtual void scale_3(const float*);         // slot 3  0x533aa0 InputScreen::on_input(int) (exchange_screens.cpp)
+    virtual char pure_7() { return 1; }         // slot 7  0x48b170 (overrides the base's pure slot)
     ItemD();                                                    // 0x4cee50
 };
 

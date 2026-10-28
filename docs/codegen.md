@@ -336,6 +336,53 @@ compiler cannot fold: a constructor-expression temporary, or a union overlay.
   the default access of members and bases, so write the old default out
   (`struct X : B {` becomes `class X : public B { public:`).
 
+### 5.7 Overriding a record's vtable slots (the head_rec family)
+
+The head_rec family's records (`head_rec.h`, `item_rec.h`'s ItemRec/ItemRec2,
+`mission_items.cpp`'s MissionBlocker/ItemA/ItemB/ItemC/ItemD) are never
+constructed by the binary - each table is referenced only by its own
+constructor's vptr store - so a row's evidence is the table's slot targets, not
+executed behaviour (docs/Papercuts.md). When the image's derived table
+overrides base slots that our source leaves empty, the constructor keeps the
+local table's address (`own-copy vtable 30001004 vs image 00596190`) and the
+row fails on the vtable bytes. The fix pattern (mission_items 0x4ce960
+0x4ceb30 0x4cee50 0x4cef20 0x4cef80):
+
+- Declare the overridden slots **in the derived class, under the base's slot
+  names** (head_rec.h's `slot_empty_1/2/4`, `scale_3/5/6`, `pure_7`,
+  `always_true`), one `// slot N  0x<va> <Target>::<method> (owner TU)` comment
+  per declaration - the item_rec.h shape. Never append new virtual names (each
+  compiles to its own extra slot and the table grows past the image's), and
+  never put two declarations on one annotated line.
+- Declarations, not definitions: nothing in a row TU calls the overrides, so a
+  bare declaration plus annotation is enough - the vtable's slot dword binds
+  straight to the image's address (`by_annotation` matches the annotation's
+  identifier and last scope) and the slot then agrees by name. The base's own
+  annotations (scope `head_rec`) do not leak into a derived row; a per-class
+  comment disambiguates shared slot names.
+- Override `pure_7` inline in every derived class (`{ return 1; }` + `// slot 7
+  0x48b170`): the base's table holds `__purecall` (0x5363c8) there but every
+  derived table in the image holds always1.
+- Slot 0 is the deleting dtor `??_E<cls>@@UAEPAXI@Z` and stays an **external**
+  in the row object (cl emits no deleting dtor when nothing constructs the
+  class); special members cannot be annotated, so the slot stays unverifiable
+  and is skipped. `vtable_by_content` therefore never fully binds one of these
+  tables - rows pass through per-slot agreement. Do not define a dtor to "fix"
+  this: the generated body would not match the family's shared dtor and hands
+  the relink a body to place.
+- One class per vptr store: put the overrides on the class whose constructor
+  stores the table (ItemD, not its base ItemD_vt) when a sibling row (the
+  dtor 0x4ceec0) must keep the base's table.
+- A row pass is row-level proof only: a relink rerun validates declare-only
+  overrides end to end. If the relink reports unresolved externals for the slot
+  symbols, fall back to one-line forwarding thunks defined in the target's
+  owning TU (`void ItemRec::screen_build() { ((MainMenuScreen*)this)->create(); }`,
+  cls_map.cpp:3023; also hud.cpp:390, save_game.cpp:225). Targets owned by
+  rgl-layer TUs (`reset_gui`, `MapDialog::reset_state` in gui_edit.cpp,
+  `static_entity::awake` in entity_types.cpp) cannot include a game header, so
+  their thunks stay with the record (`void ItemRec::slot_empty_1() {
+  reset_gui(); }`, item_rec.cpp:55).
+
 ---
 
 ## 6. Register allocation and compiler internals
