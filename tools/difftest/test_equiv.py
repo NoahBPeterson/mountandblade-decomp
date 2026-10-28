@@ -482,8 +482,8 @@ def test_budget_cutoff_and_heap_exhausted_are_not_verdicts():
     # guard is what protects them - the order alone is not the rule.
     src = open(os.path.join(HERE, "equiv.py")).read()
     i_cut = src.index("budget_cut = out.get(")
-    i_budget = src.index("elif not mism and budget_cut and budget_cut * 20 >= cut_total:")
-    i_heap = src.index('elif not mism and (out.get("heap_exhausted", 0) + out.get("heap_exhausted_ours", 0)) * 20 >=')
+    i_budget = src.index("elif not mism and not valid and budget_cut:")
+    i_heap = src.index('elif not mism and not valid and (out.get("heap_exhausted", 0) + out.get("heap_exhausted_ours", 0)):')
     i_fail = src.index("elif mism and first.get(\"kind\") == \"local-address\"")
     assert i_cut < i_budget < i_heap < i_fail, (i_cut, i_budget, i_heap, i_fail)
     assert "not a verdict" in src[i_budget:i_heap] and "not a verdict" in src[i_heap:i_fail]

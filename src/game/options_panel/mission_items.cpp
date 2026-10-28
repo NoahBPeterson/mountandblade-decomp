@@ -53,25 +53,18 @@ struct frustum_ctor { void ctor(); };   // 0x41ef60
 #define CONSTRUCT_FRUSTUM(p) (((frustum_ctor*)(p))->ctor())                                       // E50 / E68 / E176: the out-of-line copy assignments
 
 // ---- 0x60-byte item base (vtbl 0x5947d8, id 99, tstring at +0x1c) ----------------------------------------
-// A polymorphic base so MSVC emits the base-vtable store; the ctor puts id 99 in place after the name ctor.
-struct item_base {
-    virtual ~item_base() { }
-    virtual void s1() {}
-    virtual void s2() {}
-    virtual void s3() {}
-    virtual void s4() {}
-    virtual void s5() {}
-    virtual void s6() {}
-    virtual void s7() {}
-    virtual void s8() {}
-    int f4;                                                     // +0x04 = 0
-    int f8;                                                     // +0x08 = 99
-    char padc[0x10];
-    tstring name;                                               // +0x1c
-    item_base() : name() { f8 = 99; }
+// The family base is src/game/head_rec.h - the nine real slots of the image's table (see the table there), not
+// placeholders. This TU used to declare its own `item_base` with eight empty virtuals, which put stubs in the
+// vtable where the original has functions; deriving from head_rec keeps the layout (id at +8, name at +0x1c) and
+// the slots real. `item_base` stays as the name this file uses.
+#include "../head_rec.h"
+struct item_base : head_rec {
+    // head_rec's ctor sets +8 to 0x63; these records store 99 instead, so the ctor here finishes the job.
+    item_base() { w08 = 99; }
 };
 
-struct MissionBlocker : item_base {                             // 0x2c8 bytes, vtable 0x59616c
+struct MissionBlocker : item_base {
+                             // 0x2c8 bytes, vtable 0x59616c
     char pad2c[0x8];
     int f34, f38, f3c, f40, f44, f48, f4c;
     int clock;                                                  // +0x50 = g_ticks[0]
@@ -100,7 +93,7 @@ struct MissionBlocker : item_base {                             // 0x2c8 bytes, 
 MissionBlocker::MissionBlocker()
 {
     _ReadWriteBarrier();
-    f4 = 0;
+    w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
     clock = g_ticks[0];
     clock_hi = g_ticks[1];
@@ -193,20 +186,23 @@ void MissionParams::init()
 }
 
 // ---- the remaining item constructors (0x4ceb30 / 0x4cef20 / 0x4cef80) --------------------------------------
-struct ItemA : item_base {                                      // vtable 0x596190
+struct ItemA : item_base {
+                                      // vtable 0x596190
     virtual void s_last() {}                    // placeholder: original table 0x596190 has 10 slots, ours 9
     char pad2c[0x8];
     int f34, f38, f3c, f40, f44, f48, f4c;
     int clock, clock_hi; float f58; int f5c;
     ItemA();                                                    // 0x4ceb30
 };
-struct ItemB : item_base {                                      // vtable 0x5961e4
+struct ItemB : item_base {
+                                      // vtable 0x5961e4
     char pad2c[0x8];
     int f34, f38, f3c, f40, f44, f48, f4c;
     int clock, clock_hi; float f58; int f5c;
     ItemB();                                                    // 0x4cef20
 };
-struct ItemC : item_base {                                      // vtable 0x596208
+struct ItemC : item_base {
+                                      // vtable 0x596208
     char pad2c[0x8];
     int f34, f38, f3c, f40, f44, f48, f4c;
     int clock, clock_hi; float f58; int f5c;
@@ -217,7 +213,7 @@ struct ItemC : item_base {                                      // vtable 0x5962
 ItemA::ItemA()
 {
     _ReadWriteBarrier();
-    f4 = 0;
+    w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
     clock = g_ticks[0];
     clock_hi = g_ticks[1];
@@ -231,7 +227,7 @@ ItemA::ItemA()
 ItemB::ItemB()
 {
     _ReadWriteBarrier();
-    f4 = 0;
+    w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
     clock = g_ticks[0];
     clock_hi = g_ticks[1];
@@ -245,7 +241,7 @@ ItemB::ItemB()
 ItemC::ItemC()
 {
     _ReadWriteBarrier();
-    f4 = 0;
+    w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
     clock = g_ticks[0];
     clock_hi = g_ticks[1];
@@ -272,12 +268,13 @@ struct owned_triple {
     ~owned_triple() { if (p0) operator delete(p0); p0 = 0; p1 = 0; p2 = 0; }
 };
 struct ItemD_vt : item_base {
+
     char pad2c[0x7c - 0x2c];
     owned_triple blk0;                                          // +0x7c = 0 (vector begin/end/cap)
     int f_88;                                                   // +0x88
     owned_triple blk1;                                          // +0x8c = 0 (vector begin/end/cap)
     char pad98[0x4];                                            // +0x98
-    ItemD_vt() { f4 = 0; f8 = 99; }
+    ItemD_vt() { w04 = 0; w08 = 99; }
 };
 struct ItemD : ItemD_vt {                                       // vtable 0x5961c0
     ItemD();                                                    // 0x4cee50

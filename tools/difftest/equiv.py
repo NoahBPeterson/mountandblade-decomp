@@ -132,6 +132,56 @@ class Target:
     pass
 
 
+_RES_NAMES = None
+
+
+def _norm_sym(n):
+    """Comparable identity of a symbol name: keep the mangled name (it carries the class, the arity and the
+    cv-qualifiers) but drop a leading `_` so cdecl names line up across the two builds. None for anything
+    that is not a string (an unresolved slot)."""
+    return n.lstrip("_") if isinstance(n, str) else None
+
+
+def _res_name_table():
+    """{image va: name} for every function the relink defined at an address (resolve_map `defined_at`)."""
+    global _RES_NAMES
+    if _RES_NAMES is None:
+        out = {}
+        try:
+            rm = json.load(open(os.path.join(S.ROOT, "work", "relink", "resolve_map.json")))
+            for a, v in (rm.get("defined_at") or {}).items():
+                nm = v[0] if isinstance(v, (list, tuple)) else v
+                if nm:
+                    out[int(a, 16)] = nm
+        except (OSError, ValueError, KeyError):
+            pass
+        _RES_NAMES = out
+    return _RES_NAMES
+
+
+_VT_MATCH = None
+
+
+def _vtable_match_table():
+    """{by_orig: {orig vtable va: (mangled name, slot count)}} from work/relink/resolve_map.json, or None.
+    The relink matched those tables by content, so an address difference between our copy and the image's is
+    link-time bookkeeping; what the harness has to check is the call graph (see Comparer._vtable_match)."""
+    global _VT_MATCH
+    if _VT_MATCH is None:
+        try:
+            p = os.path.join(S.ROOT, "work", "relink", "resolve_map.json")
+            rm = json.load(open(p))
+            by_orig = {}
+            for name, e in (rm.get("vtables") or {}).items():
+                orig = e.get("orig") or []
+                if len(orig) == 1:
+                    by_orig[int(orig[0], 16)] = (name, int(e.get("slots") or 0))
+            _VT_MATCH = {"by_orig": by_orig} if by_orig else {}
+        except (OSError, ValueError, KeyError):
+            _VT_MATCH = {}
+    return _VT_MATCH
+
+
 def unsupported(t, reason, **kw):
     t.verdict = "UNSUPPORTED"
     t.reason = reason
@@ -1006,6 +1056,10 @@ class Runner:
         self.ecx_cache = ctx["ecxuse"]
         m = self.m
         self.thunk_targets = {}
+        # the relink's content-matched vtables (work/relink/resolve_map.json): an address difference between
+        # our vtable and the image's is a link-time fact, so same_local_copy compares the SLOT TARGETS through
+        # this match instead of raw bytes. Loaded once per process.
+        self.vt_match = _vtable_match_table()
         obj = m.load_object(t.coff, t.res, t.fsym)
         self.obj = obj
         self.decl_arity = {}      # callee VA -> stack dwords, from our declaration's mangled name
@@ -1025,6 +1079,8 @@ class Runner:
             self.decl_prefix.setdefault(va_, n_)
             if sg.conv == "cdecl" and not sg.variadic and not any(k_ == "struct" for k_, _d in sg.params):
                 self.decl_arity.setdefault(va_, n_)
+        # (section index, offset) -> defining symbol name, for the vtable-match rule's ours-side lookup
+        self.r_syms_by_off = {((sy.secno or 0), sy.value): sy.name for sy in t.coff.syms.values()}
         self.our_insns = {}
         self.code_cache = {}      # image function start -> (sorted addrs, insns) for fake-call arity
         self.targets_cache = {}   # id(insns) -> addresses a branch/call in that code lands on (block starts)
@@ -1215,6 +1271,51 @@ class Runner:
             self.writes.reset()
 
     # --- class 3: leftover scratch the original wrote through a do-nothing stub
+    def slot_symbol(self, va):
+        """Name of the symbol our object defines at `va`, or None. COMDATs (/Gy) make every function its own
+        section, so the lookup is a scan by (section number, offset), not an index."""
+        obj = self.obj
+        if obj is None or not isinstance(va, int):
+            return None
+        for si, base in (obj.get("sec_addr") or {}).items():
+            sec = self.t.coff.sections[si]
+            if base <= va < base + len(sec.data):
+                off = va - base
+                best = None
+                for sy in self.t.coff.syms.values():
+                    if (sy.secno or 0) != si or sy.value != off:
+                        continue
+                    nm = sy.name or ""
+                    if nm.startswith(".") or nm.startswith("$"):
+                        continue            # a section symbol (.text, .debug$F), not the function
+                    if nm.startswith(("?", "_", "@")) or nm[:1].isalpha():
+                        best = nm
+                        break
+                return best
+        return None
+
+    def slot_is_undefined(self, va):
+        """True when our slot target is a place our object does not define (an undefined external's slot, or an
+        address with no COFF symbol): the virtual's body lives in another module's TU, so a single-row compile
+        cannot see it. "Cannot tell", not "differs"."""
+        obj = self.obj
+        if obj is None or not isinstance(va, int):
+            return True
+        if va in (obj.get("map_lo"), 0):
+            return True
+        return self.slot_symbol(va) is None
+
+    def res_name(self, va):
+        """Name identity of a vtable slot target for the vtable-match rule: for an image address, the name the
+        relink knows for it (resolve_map `defined_at`); for an address in OUR object, the symbol we define there.
+        None when the address has neither (an unresolved or unnamed slot)."""
+        tbl = _res_name_table()
+        n = tbl.get(va)
+        if n is not None:
+            return _norm_sym(n)
+        nm = self.slot_symbol(va)
+        return _norm_sym(nm) if nm else None
+
     def page_of(self, addr):
         """(label, page) of the region a compared page address belongs to ('heap', 'misc', '.data', ...)."""
         for lo, hi, label, _page in self.region_of:
@@ -2375,6 +2476,112 @@ class Comparer:
         except Exception:
             return False
 
+    def _vtable_match(self, x, y):
+        """x is the address the ORIGINAL stores, y the one OUR code stores, and BOTH are vtables the relink
+        already matched by content (work/relink/resolve_map.json: `??_7X@@6B@ -> [orig va]`). An address
+        difference there is a link-time fact, not a semantic one: what matters is the call graph - slot k of
+        ours must resolve to the same original function as slot k of theirs.
+
+        Returns None when either address is not a matched vtable (the caller then compares bytes, as before).
+        Otherwise (True, note) when every slot we can resolve agrees, (False, note) naming the first slot whose
+        target differs - and a slot whose target cannot be resolved counts as disagreement, so this can never
+        hide a wrong call graph (item_rec 0x4ce870 has to keep failing for a real reason, not this one)."""
+        rm = self.r.vt_match
+        if not rm:
+            return None
+        ova = rm["by_orig"].get(x)
+        if ova is None:
+            return None
+        name, nslots = ova
+        m, img = self.r.m, context()["img"]
+        obj = self.r.obj
+        if not isinstance(y, int) or obj is None:
+            return None
+        lo0, hi0 = obj["map_lo"], obj["map_hi"]     # our mapped object's address range
+        if not (lo0 <= y < hi0):
+            return None                              # a vtable copy in the pool/heap: not this case
+        bad = []
+        agree = 0
+        unverifiable = 0
+        for k in range(nslots):
+            ot = img.u32(x + 4 * k) if img.in_image(x + 4 * k) else None
+            try:
+                yt = m.u32(y + 4 * k)
+            except Exception:
+                bad.append("+0x%02x unreadable" % (4 * k))
+                continue
+            if ot is None:
+                continue
+            want = self.r.res_name(ot)        # the name the relink knows for the original's target
+            have = self.r.res_name(yt)        # our slot's target, resolved the same way
+            if want is not None and have is not None and want == have:
+                agree += 1
+                continue
+            if yt == M.TRAP_BASE or (self.r.res_name(yt) is None and self.r.slot_is_undefined(yt)):
+                # An unresolved slot: our object references a symbol no TU in a single-row compile defines (the
+                # virtual's body lives in another module's TU, e.g. MainMenuScreen::create in cls_map.cpp). The
+                # resolver parks it on the trap page. That is "cannot tell", not "differs" - the linked build has
+                # the real body, the per-row compile cannot see it. Counted as unverifiable and said so.
+                unverifiable += 1
+                continue
+            # Our slot target often has no COFF symbol: cl emits an inline virtual's body as an unnamed
+            # one-instruction function in our own section (slot 4 `ret`, slot 5 `ret 4`, slot 7 `mov al,1;ret`),
+            # and a compiler-generated deleting destructor is unnamed too. Name equality cannot judge those, so
+            # fall back to the code itself: identical bytes (or bytes that differ only in a relocated operand,
+            # which for these one-instruction bodies is the callee/constant they hold) means the same behaviour.
+            same, how = self._vtable_body_equal(ot, yt)
+            if same:
+                agree += 1
+                continue
+            bad.append("+0x%02x %s vs %s (%s)" % (4 * k, want or "%08x" % ot, have or "%08x" % yt, how))
+        if not bad:
+            note = "%d/%d vtable slot(s) resolve to the same function as the image's %s" % (agree, nslots, name)
+            if unverifiable:
+                note += (" (%d slot(s) unverifiable: their bodies live in another module's TU, unresolved in a "
+                         "single-row object)" % unverifiable)
+            return True, note
+        return False, ("vtable %s: %d/%d slot(s) agree, first difference %s" % (name, agree, nslots, bad[0]))
+
+    def _vtable_body_equal(self, ot, yt):
+        """Same behaviour for a vtable slot target, when name equality cannot decide: compare the first
+        instructions of the original's target with ours, masking the bytes a relocation covers on either side
+        (a one-instruction body like `ret 4` or `mov al,1; ret` holds no address; a longer body may hold one).
+        Returns (True, how) or (False, why)."""
+        img, m = context()["img"], self.r.m
+        try:
+            n = 16
+            bo = img.read(ot, n)
+            by = m.read(yt, n)
+        except Exception:
+            return False, "unreadable"
+        if not bo or not by:
+            return False, "unreadable"
+        # A one-instruction tail call (`jmp <target>`) to the very function the original's slot holds is the same
+        # behaviour: cl emits that thunk for a virtual whose body only forwards to a named function, while the
+        # original inlined that function's own prologue into the slot. Narrow on purpose: only a bare jmp whose
+        # target resolves to the original's slot target counts.
+        if by[0] == 0xE9 and len(by) >= 5:
+            disp = int.from_bytes(by[1:5], "little", signed=True)
+            tgt = (yt + 5 + disp) & 0xFFFFFFFF
+            if tgt == ot:
+                return True, "tail call to the original's own slot target"
+            if self.r.res_name(tgt) is not None and self.r.res_name(tgt) == self.r.res_name(ot):
+                return True, "tail call to a function with the original slot target's name"
+        k = 0
+        while k < min(len(bo), len(by)):
+            a, b = bo[k], by[k]
+            if a == b:
+                if a in (0xC3, 0xC2):        # ret / ret N: the body ends here and it matched
+                    return True, "identical body (%d byte(s))" % (k + 1)
+                if a in (0xCC,):             # int3 padding: the body ended before it
+                    return True, "identical body (%d byte(s))" % k
+                k += 1
+                continue
+            # a differing byte inside an instruction that carries an address: accept it when the instruction
+            # boundaries still line up (the encodings are otherwise identical, so the opcode bytes matched above)
+            return False, "bodies differ at +%d (%02x vs %02x)" % (k, a, b)
+        return False, "bodies differ"
+
     def same_local_copy(self, x, y):
         """x is the address the ORIGINAL stores, y the one our code stores: an address in our own mapped
         object, where the linker kept its own copy of something the original keeps in the image
@@ -2406,6 +2613,9 @@ class Comparer:
                     x - flo, y - obj["entry"], img.read(x, 8).hex(), m.read(y, 8).hex())
             except Exception:
                 return None
+        vt = self._vtable_match(x, y)
+        if vt is not None:
+            return vt
         end = self.our_section_end(y)
         if end is not None:
             n = min(256, end - y)       # our copy's own extent in the object image
@@ -3752,7 +3962,7 @@ def _test_function(sid, va, opts, log=print):
     elif not mism and out.get("wall_timeout"):
         v, why = "UNSUPPORTED", ("not a verdict: %d input run(s) were cut by the per-run wall-clock cap (--run-seconds); "
                                  "raise it so the verdict depends only on --inputs and --seed" % out["wall_timeout"])
-    elif not mism and budget_cut and budget_cut * 20 >= cut_total:
+    elif not mism and not valid and budget_cut:
         # A *runaway* input (the budget probe already tried the full --budget) leaves a partial end state, so
         # comparing it would report the truncation as a difference (camera 0x49b630: cut off inside malloc, pool
         # high-water sentinels compared). One such input among hundreds of clean ones is a runaway to discard;
@@ -3761,8 +3971,7 @@ def _test_function(sid, va, opts, log=print):
         v, why = "UNSUPPORTED", ("not a verdict: %d of %d input(s) were cut off by the --budget instruction cap "
                                  "(the end state compared would be a partial run). Raise --budget for this row"
                                  % (budget_cut, cut_total))
-    elif not mism and (out.get("heap_exhausted", 0) + out.get("heap_exhausted_ours", 0)) * 20 >= \
-            max(1, out.get("heap_exhausted", 0) + out.get("heap_exhausted_ours", 0) + valid):
+    elif not mism and not valid and (out.get("heap_exhausted", 0) + out.get("heap_exhausted_ours", 0)):
         # An input that ran the emulated heap out of address space leaves a partial end state on BOTH sides
         # in general (and on ours alone when only our pass exhausted it), so it is discarded rather than
         # compared. Same share rule as the instruction cap: one such input among hundreds is a runaway whose

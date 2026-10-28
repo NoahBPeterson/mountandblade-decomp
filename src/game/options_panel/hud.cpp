@@ -384,3 +384,7 @@ void MissionSource::pick(int* arg)
         }
     }
 }
+
+// ItemRec slot 3 (0x4d5290 Hud::handle_buttons).
+#include "../triggers/item_rec.h"
+void ItemRec::screen_buttons() { ((Hud*)this)->handle_buttons(0); }

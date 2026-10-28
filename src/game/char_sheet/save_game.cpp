@@ -219,3 +219,7 @@ void GameData::load_header(SaveCtx* h)
     h->flag = rec->fb0;
     h->stamp = (float)(g_ticks[f13b18] - clock) * g_54a6d0;
 }
+
+// ItemRec2 slot 3 (0x4e87d0 MapScreen::buttons).
+#include "../triggers/item_rec.h"
+void ItemRec2::screen_buttons() { ((MapScreen*)this)->buttons(0); }
