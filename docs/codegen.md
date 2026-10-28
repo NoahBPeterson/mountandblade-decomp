@@ -459,17 +459,35 @@ callee preserves it. To reproduce it:
   garbage at absolute offsets, so reproduce the frame with a POD `struct Frame`
   holding the locals at the original's offsets. Objects whose lifetimes the
   compiler would overlay into one slot go into one local struct. (M&B.)
-- **Very large functions stop sharing slots.** M&B: cl 13.10 stops packing
-  block-scope locals and temporaries into shared frame slots once a function has
-  a few hundred candidates. A synthetic switch with about 600 cases and three
-  address-taken locals packed into 4 slots; at about 700 cases it packed into
-  none. The 70 KB script interpreter (`0x49fa10`, 591 real cases) packs any 300
-  of its cases but not all of them: frame `0x2630` against the original's
-  `0x1ec0`, and every stack offset differs. Each by-value temporary or named local
-  passed by address then costs a slot. The lever is a shared function-scope
-  scratch variable: routing about 220 `set_lvalue(locals, <temporary>)` sites
-  through one function-scope `__int64` cut the frame from `0x2d18` to `0x2630`
-  and removed 6 KB of code. The remaining frame difference is a wall (section 15).
+- **Very large functions stop sharing slots — but the trigger is *which* locals,
+  not how many.** M&B: the 70 KB script interpreter (`0x49fa10`, 591 real cases)
+  packs any 300 of its cases but not all of them: frame `0x2630` against the
+  original's `0x1ec0`, and every stack offset differs. Synthetic one-knob probes
+  (600-case switches, `work/match/scratch_si_gen4.py`/`gen5.py`/`gen6.py`,
+  results in `scratch_si_pack*.asm`) disproved the earlier "case-count cutoff"
+  guess and pinned the real predicate:
+  - **Packs fine even at 600 cases:** block locals that are only read (ints,
+    floats, doubles, `__int64` — any type, 1 or 3 per case, shared or unique
+    names), and block locals that are address-taken but never read after the
+    address-escaping call (`clamp(&v, &lo, &hi)` with no later use of `v`).
+  - **Never packs — one private slot per scope instance:** a block local that is
+    address-taken *and read after the escape* (one per case collapsed a 600-case
+    switch from 48 B to `0x12e8`; three collapsed it to `0x1c48`), or co-live
+    with other such locals of mixed type. Arithmetic on the collapsed frames
+    matches exactly: `0x1c48 = 40 + 600*12` (3 private dwords per case).
+  - Case count, address-taking per se, and name uniqueness are all innocent.
+  - **The lever — hoist to function-scope shared scratch.** Exactly one case body
+    runs per call, so every block local across all cases can legally share slots.
+    Rewriting block-local value scalars to function-scope scratches (the
+    `lv_` trick: `int si_0, si_1, ...; float sf_0, ...;`) collapsed every probe
+    back to 40–56 B (`scratch_si_pack6_h*`), and mirrors the original's slot map,
+    where `0x10/0x18/0x20/0x24/0x28` are shared validator-arg/clamp-arg/vector4-arg
+    slots reused by all cases. Routing about 220 `set_lvalue(locals, <temporary>)`
+    sites through one function-scope `__int64` had already cut the frame from
+    `0x2d18` to `0x2630` and removed 6 KB of code — same mechanism.
+  - Measure with `work/match/scratch_si_bisect.py <a> <b>` (per-case-range
+    compile; reads frame from the `sub esp`/`mov eax, N; call __chkstk` prologue
+    and counts named/temporary slot symbols in the `/FAs` listing).
 
 ---
 
@@ -961,8 +979,10 @@ Record the function as complete and move on after two rounds without a diff drop
   `ox` in memory). Twelve source shapes and four `volatile`/pointer variants moved
   the first statements into line but not this. Accept it as `PASS-FP` when the
   tolerance mode agrees.
-- Slot sharing in very large functions (section 7): frame `0x2630` against
-  `0x1ec0` in the script interpreter.
+- ~~Slot sharing in very large functions (section 7)~~ **solved**: the predicate
+  is address-taken-and-read-after-escape block locals, and the fix is the
+  function-scope scratch hoist (section 7). Application to the script interpreter
+  (`0x2630` → `0x1ec0` target) was in progress when this was written.
 - The frame sharing around pushed `double` varargs.
 - Six `push`es against `sub esp,0x18` plus six stores for a by-value 6-int block.
 - Extended-precision x87 ordering that differs by one ULP.
