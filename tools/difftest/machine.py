@@ -71,6 +71,16 @@ class Stop(Exception):
     pass
 
 
+# An import handler that runs the emulated heap out of address space (malloc/new). equiv.py needs to tell this
+# apart from an input-dependent handler stop that *is* measured (a huge memcpy/memset): the run no longer has a
+# comparable end state, so the input is discarded instead of compared.
+HEAP_EXHAUSTED = "emulated heap exhausted"
+
+
+def is_heap_exhausted(why):
+    return HEAP_EXHAUSTED in str(why)
+
+
 def _page(n):
     return (n + 0xFFF) & ~0xFFF
 
@@ -199,9 +209,11 @@ class Machine:
     def tracked(a):
         return DYN_BASE <= a < DYN_BASE + DYN_SIZE or MISC_BASE <= a < MISC_BASE + MISC_SIZE
 
-    def take_dirty(self):
+    def take_dirty(self, written=None):
         """-> ({DYN page: bytes}, {MISC page: bytes}) for pages written since the last call that
-        differ from the baseline; restores every dirty page."""
+        differ from the baseline; restores every dirty page. `written`, when given, collects the address
+        of every written dword (the caller's per-run write set: the comparison needs to know which dwords
+        of a dirty page a build actually wrote, and only an emulated store reaches this hook)."""
         dyn, misc = {}, {}
         zero = b"\0" * 0x1000
         for p in sorted(self.dirty):
@@ -212,6 +224,10 @@ class Machine:
                 base, out = self.misc_base_page(p), misc
             if cur != base:
                 out[p] = cur
+                if written is not None:
+                    for k in range(0, 0x1000, 4):
+                        if cur[k:k + 4] != base[k:k + 4]:
+                            written.add(p + k)
                 self.uc.mem_write(p, base)
         self.dirty = set()
         return dyn, misc
@@ -358,15 +374,18 @@ class Machine:
         self.model_stubs = {}       # symbol name -> stub address
         uc.hook_add(UC_HOOK_CODE, self._on_stub, begin=STUB_BASE, end=self.stub_end - 1)
 
-    def handle(self, name, fn=None, nargs=0, pops=0, code=None, fresult=False):
-        """fn(machine, args) -> eax (or float when fresult; then the stub does fld [SCRATCH])."""
+    def handle(self, name, fn=None, nargs=0, pops=0, code=None, fresult=False, span=None):
+        """fn(machine, args) -> eax (or float when fresult; then the stub does fld [SCRATCH]).
+        `span`, when given, is the byte length of the handler's buffer argument(s): equiv.py's
+        stub-scratch rule uses it to scope which addresses a do-nothing stub (fn None) can excuse."""
         if code is None:
             if fresult:
                 code = b"\xdd\x05" + struct.pack("<I", SCRATCH)
             else:
                 code = b""
             code += (b"\xc2" + struct.pack("<H", pops * 4)) if pops else b"\xc3"
-        self.handlers[name] = {"fn": fn, "nargs": nargs, "pops": pops, "code": code, "fresult": fresult}
+        self.handlers[name] = {"fn": fn, "nargs": nargs, "pops": pops, "code": code, "fresult": fresult,
+                               "span": span}
 
     def _on_stub(self, uc, address, size, _):
         if (address - STUB_BASE) % STUB_SLOT:
@@ -411,6 +430,12 @@ class Machine:
         """Write on behalf of the emulated program (import handlers, input setup): refuses read-only
         memory (a write-protection fault, as the CPU would raise) and records dirty pages."""
         n = len(data)
+        cb = getattr(self, "mark_written", None)
+        if cb is not None and n:            # --uninit-mem: a handler/setup write is a write by this run
+            try:
+                cb(a, n, True)              # via_import: not a store the code made (see MemWrites.mark)
+            except Exception:               # noqa: BLE001  bookkeeping must never break a run
+                pass
         if n:
             e = a + n
             for lo, hi in self.readonly:
@@ -450,7 +475,7 @@ class Machine:
     def dyn_alloc(self, n, align=16):
         a = (self.dyn_next + align - 1) & ~(align - 1)
         if a + n > DYN_BASE + DYN_SIZE or n > DYN_SIZE:
-            raise Stop("emulated heap exhausted (%d bytes)" % n)
+            raise Stop("%s (%d bytes)" % (HEAP_EXHAUSTED, n))
         self.dyn_next = a + n
         self.dyn_sizes[a] = n
         return a

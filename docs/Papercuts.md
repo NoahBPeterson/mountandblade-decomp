@@ -412,3 +412,33 @@ Format (one entry per problem):
   only half verified can therefore replace the src version of a function in the game exe (10 such duplicates in one
   wave build); the run then hangs at the character sheet with 0% CPU. Playthrough verification must be done either
   before a wave starts or after it lands, or with the slice objects removed from `work/difftest/obj/`.
+
+- `--uninit-mem` (default ON) excused a _missing zeroing store_ (2026-10-27). `FILL_BYTES` was derived mechanically as
+  `p & 0xFF for p in FILL_PATTERNS`, so the sentinel `0x0BB0BB00` contributed `0x00`, and the partial-copy branch of
+  `unobserved_fill` then excused any dword whose differing bytes all happened to be fill bytes. Measured:
+  `unobserved_fill(v=0x00000000, base=0xDEADBEEF) == True` — i.e. "the original zeroes this and our build never stores
+  it", one of the commonest real divergences, was dropped from the comparison. This shipped default-ON, so it could
+  turn a real FAIL into WEAK (not into PASS: the dword still has to differ and our side still has to hold the input).
+  Fixed by narrowing the predicate rather than the bookkeeping — see the two positions below.
+
+  **Position A (narrow the predicate; keep one merged flag set).** The defect is what counts as evidence: `0x00` is not
+  evidence of non-initialisation, it is the most common intended value in the binary; nor are `0x0D`/`0x1D` from
+  `BAADF00D`/`0x0D1D0D1D`. The only measured case that needs the partial-copy branch is `movb 0xf(%esp),%cl;
+  movb %cl,0x44(%esi)` — an uninitialised `0xCC` stack byte copied over one byte of a field (`cls_map 0x4d99d0`,
+  `config 0x4bd4d0`). So: treat a dword as a leftover only when it is one of `FILL_PATTERNS`, or when exactly ONE byte
+  changed and that byte is an MSVC stack-fill byte (`0xCC/0xCD/0xDD/0xFD`). Nothing else. On the flags: the refusal
+  test already requires our side to hold the baseline (`y == t0`), so the hole was in the fill predicate, not in the
+  merge — two bitmaps would add state and a class of "which side's flags are live at the moment of the comparison"
+  bugs for no measurable gain. Landed: `FILL_BYTES = {0xCC,0xCD,0xDD,0xFD}` plus a single-differing-byte rule
+  (`len(diff) == 1`).
+
+  **Position B (the reviewer's: drop the bad bytes _and_ split the flags per side).** Agree on the byte set (and go
+  further: drop `0x00`, and arguably `0x0D`/`0x1D`), but also replace the single merged `write_flags` bitmap with two
+  (orig-wrote / ours-wrote), so an original-side write whose value merely looks fill-like can never be excused.
+  Not required for soundness under position A, and deferred: if we later want it, its value is in the *reason string*
+  ("ours wrote it, the original did not") — a diagnostic — rather than in the verdict rule.
+
+  Evidence for both: `python -c "import sys; sys.path.insert(0,'tools/difftest'); import equiv as E;
+  print(E.unobserved_fill(0, 0xDEADBEEF), E.unobserved_fill(0xBF5B80CC, 0xBF5B8056))"` → `False True` after the fix
+  (`True True` before). Guard test: a mutant of `Font::Font` that *writes* `0xCCCCCCCC` into the very dword the rule
+  exists to excuse still FAILs.

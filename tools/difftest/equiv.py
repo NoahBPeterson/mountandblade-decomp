@@ -72,6 +72,7 @@ import resaudit as RA                              # noqa: E402
 import regfacts as RF                                # noqa: E402
 import cfgcov as CF                                # noqa: E402
 import steer as ST                                 # noqa: E402
+import invariants as INV                           # noqa: E402
 import sig as SIG                                  # noqa: E402
 import machine as M                                # noqa: E402
 from coff import Coff                              # noqa: E402
@@ -152,6 +153,12 @@ def modelled_symbols(t):
             (getattr(m, "symbol", None), getattr(m, "kind", None))
         out.append({"symbol": sym, "kind": kind})
     return out
+
+
+def describe_invariants(invs):
+    """Human form of a row's input-object invariants for the JSON ('face::count in [1..4]'), or None."""
+    txt = INV.describe(invs)
+    return txt or None
 
 
 def model_note(ms):
@@ -549,6 +556,7 @@ class InputGen:
         self.code = list(code)
         self.dic = [self.fin(v) for v in (t.dict or [0])]
         self.specials = SPECIAL_F if nan else SPECIAL_F[:8]
+        self.invs = []                              # input-object invariants (invariants.py), set by Runner
         self.slot_cache = {}
 
     def fin(self, v):
@@ -762,6 +770,8 @@ class InputGen:
         inp.overrides = {}
         inp.alloc_fail = ()
         inp.extra = {}
+        if self.invs:
+            INV.enforce(self.invs, self, inp, rng)      # keep the object's length field within its array
         return inp
 
     def mutate(self, parent, rng, corpus):
@@ -804,6 +814,10 @@ class InputGen:
                 k = self.t.reg_kinds.get(r)
                 if k:
                     inp.regs[r] = self.scalar(k, rng, inp.profile, {"ecx": 1, "edx": 7, "eax": 6}[r])
+        if self.invs:
+            # a mutation can drop the length field back out of range (or swap the object pointer): put the
+            # governed fields back in range so the mutant stays a usable input rather than being discarded.
+            INV.enforce(self.invs, self, inp, rng)
         return inp
 
 
@@ -826,7 +840,123 @@ STACK_END = M.STACK_TOP + 0x1000           # end of the stack mapping (one guard
 FILL_PATTERNS = frozenset((0xCCCCCCCC, 0xCDCDCDCD, 0xDDDDDDDD, 0xFDFDFDFD, 0x0BB0BB00, 0x0D1D0D1D,
                            0xBAADF00D, 0xFEEEFEEE, 0xABABABAB, 0xDEADBEEF))
 
-CALL_REGS = ("eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp")
+# ---------------------------------------------------------------------- unobserved memory
+# A dword that NEITHER build wrote during the run says nothing about equivalence: its two values are
+# whatever the machine happened to hold (MSVC's uninitialised-stack fill, a frame slot the two compilers
+# place differently, a pool page one side materialised and the other never touched). `--uninit-mem`
+# (default ON) drops those dwords from the memory comparison, but only when the ORIGINAL's value is
+# recognisably such a leftover - one of FILL_PATTERNS, a byte/word broadcast of one, or a fill pattern
+# with only its low 16 bits perturbed (the `cls_map` 0x4d99d0 / `config` 0x4bd4d0 evidence: an
+# uninitialised stack byte copied into an object field). Anything else stays a real mismatch, and a
+# dword OUR side wrote is never excused, so a genuine difference cannot hide behind this.
+# The bytes that are evidence of an MSVC *stack fill* specifically: 0xCC is what cl stamps over the
+# uninitialised frame, and these are the four bytes the fill-pattern dwords are made of. A byte that
+# merely happens to be the low byte of a sentinel dword (0x00 from 0x0BB0BB00, 0x0D from 0xBAADF00D) is
+# NOT evidence of anything: treating 0x00 that way excused "the original zeroes a dword our build never
+# stores", which is one of the commonest real divergences (see the ticket in docs/Papercuts.md).
+FILL_BYTES = frozenset((0xCC, 0xCD, 0xDD, 0xFD))
+
+
+def unobserved_fill(v, base):
+    """v (the original's value) is a fill/sentinel leftover: v itself is one of FILL_PATTERNS (a dword a
+    build stamped), or `v` differs from the bytes it had when the run started (`base`, the input the run
+    was handed) in exactly ONE byte, and that byte is an MSVC stack-fill byte (0xCC/0xCD/0xDD/0xFD). That second case is the `cls_map`/`config`
+    evidence: `movb 0xf(%esp),%cl; movb %cl,0x44(%esi)` copies ONE uninitialised stack byte (0xCC) over
+    the low byte of a float the input/argument already carried, so the dword shares its other bytes with
+    `base` and only the 0xCC bytes are new. A dword OUR build wrote is refused by the caller before this
+    is consulted, so a real difference cannot pass through here."""
+    if v in FILL_PATTERNS:
+        return True
+    try:
+        b = struct.pack("<I", base & 0xFFFFFFFF)
+    except (struct.error, TypeError):
+        return False
+    n = struct.pack("<I", v & 0xFFFFFFFF)
+    if n == b:
+        return False                    # unchanged: no fill byte was introduced
+    diff = [(x, y) for x, y in zip(n, b) if x != y]
+    if len(diff) != 1:
+        return False                    # a partial copy moves ONE byte (0xCC over a frame byte)
+    return diff[0][0] in FILL_BYTES
+
+
+class MemWrites:
+    """Per-run record of every dword at least one build wrote (see the unobserved-memory rule above).
+
+    One bytearray of flags per region page, kept on the Runner (`write_flags_reg`), 0 = the run never
+    wrote that dword, 1 = it did. Required for the pool (which the machine maps lazily and never diffs)
+    and harmless everywhere else, so a write the hook misses only makes the harness compare MORE dwords -
+    it can never hide a difference.
+    """
+
+    def __init__(self, r):
+        self.r = r
+        self.on = bool(getattr(r.opts, "uninit_mem", True))
+        self.h = None
+
+    def start(self):
+        if not self.on or self.h is not None:
+            return
+        uc = self.r.m.uc
+        self.h = [uc.hook_add(UC_HOOK_MEM_WRITE, self._on_write, begin=lo, end=hi - 1)
+                  for lo, hi in self._spans()]
+
+    def close(self):
+        for h in self.h or ():
+            self.r.m.uc.hook_del(h)
+        self.h = None
+
+    def _spans(self):
+        out = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE)]
+        for _nm, lo, hi in self.r.m.writable:
+            out.append((lo, hi))
+        for base, size in getattr(self.r, "mapped_extra", ()) or ():
+            out.append((base, base + size))
+        return out
+
+    def _on_write(self, uc, access, address, size, value, _):
+        self.mark(address, max(int(size), 1))
+
+    @property
+    def own_dwords(self):
+        """Dwords the code itself stored (emulated stores), excluding harness-side handler writes."""
+        s = getattr(self, "_own", None)
+        if s is None:
+            s = self._own = set()
+        return s
+
+    @property
+    def dwords(self):
+        """The set of dword addresses THIS run wrote so far (per-run: cleared by reset()). Filled by the
+        emulated-store hook and by `mark` (Machine.write: an import handler's or the input setup's write).
+        The class-3 rule subtracts these from what the ORIG pass wrote before it excuses a dword as stub
+        scaffold, so a dword our own pass writes is never excused."""
+        s = getattr(self, "_dwords", None)
+        if s is None:
+            s = self._dwords = set()
+        return s
+
+    def mark(self, addr, nbytes, via_import=False):
+        """Flag the dwords [addr, addr+nbytes) as written by this run. `via_import` marks a write the
+        harness performed on the program's behalf (an import handler's buffer fill, the input setup):
+        it still counts as "this run wrote it" for the unobserved-memory rule (a dword a handler wrote is
+        not a leftover), but NOT as a store the code itself made, which is the set the stub-scratch trim
+        subtracts (a stub's own buffer must remain excusable)."""
+        if self.on:
+            self.r.mark_written(addr, nbytes)
+            d = self.dwords.update(range(addr & ~3, (addr + max(int(nbytes), 1) + 3) & ~3, 4))
+            if not via_import:
+                self.own_dwords.update(range(addr & ~3, (addr + max(int(nbytes), 1) + 3) & ~3, 4))
+            return d
+        return None
+
+    def reset(self):
+        """Forget this run's per-dword write set. The region flag tables are Runner.reset_writes' job, and
+        that method calls this one, so this must not call back into it."""
+        self._dwords = set()
+        self._own = set()
+
+
 CALL_XMM = ("xmm0", "xmm1", "xmm2", "xmm3")
 CALL_REG_IDS = {"eax": UC_X86_REG_EAX, "ebx": UC_X86_REG_EBX, "ecx": UC_X86_REG_ECX, "edx": UC_X86_REG_EDX,
                 "esi": UC_X86_REG_ESI, "edi": UC_X86_REG_EDI, "ebp": UC_X86_REG_EBP, "esp": UC_X86_REG_ESP}
@@ -930,6 +1060,10 @@ class Runner:
         self.page_cache = {}
         code = [(a, a + n) for nm, a, n, ch in self.img.sections if ch & 0x20000000]
         self.gen = InputGen(t, opts.alias, opts.nan, code + list(obj["code"]), getattr(opts, "fp_realistic", False))
+        # Input-object invariants (class-2 harness artefacts): the length fields of the objects this row
+        # walks, with the declared capacity of the array they index. Attached once per row; `--no-invariants`
+        # leaves the list empty and the generator/comparison behave exactly as before.
+        self.gen.invs = INV.specs_for(t.sid, t.va, not getattr(opts, "no_invariants", False))
         self.cov_on = False
         self.cov_side = None
         self.prev_end = None
@@ -954,11 +1088,257 @@ class Runner:
         # contents compare equal (the same literal pooled at two addresses)
         self.ro = [(a, a + n) for nm, a, n, ch in self.img.sections if nm == ".rdata"]
         self.ro += [(lo, hi) for lo, hi in m.readonly if obj["map_lo"] <= lo < obj["map_hi"]]
+        # --uninit-mem: which dwords each run wrote (see MemWrites). Keyed by page, entry: bytearray of
+        # one flag per dword; a stack region is a single long buffer, a pool page only exists once mapped.
+        self.writes = MemWrites(self)
+        self.write_flags_reg = {}       # (label, base) -> (baseline, flags)
+        self.region_of = self._region_map()
+        self.writes.start()             # --uninit-mem: per-dword write flags for pool/.data/extras
+        if self.writes.on:
+            m.mark_written = self.mark_written     # machine.write() reports handler/input-setup writes here
+        # --- class 3 (symmetric baseline): the pass that follows must start from the heap/misc/stub state
+        # the first pass started from. `self.baseline` is that state, captured at the end of the ORIG pass
+        # (its leftover heap, the image pages it wrote, and the stub scratch); `self.mapped_extra` lists the
+        # extra regions currently mapped, so the pool/extra page input of a later run is restored exactly.
+        self.baseline = None                    # {"heap": {page: bytes}, "img": {section: {page: bytes}},
+                                                #  "extra": [[base, size]], "inp_extra": {base: size}}
+        self.mapped_extra = []                  # [[base, size]] of the fault-repair regions now mapped
+        self.trimmed = {}                       # (label, page) -> {dword addr: 0} dropped as stub scratch
+        self.uncompared = {}                    # (label, page, dword addr) -> stub name: never compared
+        self.runs = 0                           # passes run for the row (diagnostics)
+
+    def _region_map(self):
+        """[(lo, hi, label, is_page)] for every range the run can write and the comparison looks at.
+        `is_page`: the range is addressed in 4 KB pages (pool / heap / misc / extra); otherwise the
+        region is one buffer starting at `lo` (the stack, an image section, our object's data)."""
+        t, m, obj = self.t, self.m, self.obj
+        out = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE, "pool", True),
+               (M.DYN_BASE, M.DYN_BASE + M.DYN_SIZE, "heap", True),
+               (M.MISC_BASE, M.MISC_BASE + M.MISC_SIZE, "misc", True)]
+        for nm, lo, hi in m.writable:
+            out.append((lo, hi, ".data" if nm == ".data" else nm, False))
+        for base, size in sorted(getattr(self, "mapped_extra", ()) or ()):
+            out.append((base, base + size, "extra", True))
+        out.append((M.STACK_TOP - M.STACK_SIZE - 0x1000, M.STACK_TOP + 0x1000, "stack", False))
+        return out
+
+    def _addr_region(self, addr):
+        """(label, base, is_page) of the writable region `addr` falls in, or (None, None, False)."""
+        for lo, hi, label, is_page in self.region_of:
+            if lo <= addr < hi:
+                return label, (addr & ~0xFFF if is_page else lo), is_page
+        return None, None, False
+
+    def write_flags(self, addr):
+        """The write flags of the region page holding `addr`: a bytearray with one flag per dword, or
+        None when the run is not allowed to say anything about that address."""
+        if not self.writes.on:
+            return None
+        label, base, _is_page = self._addr_region(addr)
+        if label is None:
+            return None
+        ent = self.write_flags_reg.get((label, base))
+        if ent is None:
+            n = (min(self._region_hi(label, base), base + 0x1000) - base) // 4
+            ent = self.write_flags_reg[(label, base)] = (self._region_baseline(label, base), bytearray(n))
+        return ent[1]
+
+    def _region_hi(self, label, base):
+        for lo, hi, lbl, is_page in self.region_of:
+            if lbl == label and (lo == base or (is_page and base <= lo < base + 0x1000)):
+                return hi
+        return base + 0x1000
+
+    def _region_baseline(self, label, base):
+        """The bytes the run started from for one region page (used only to recognise a dword a run wrote
+        before the flags existed - i.e. the input the pool hands the program). None when unknowable."""
+        m = self.m
+        if label == "pool":
+            return m.pool_pages.get(base)
+        if label in ("heap", "misc") or label == "extra":
+            return None                     # DYN/misc are zeroed / restored between runs; extra is per run
+        if label == "stack":
+            return None
+        try:
+            return m.image_base_page(label, base)
+        except (StopIteration, KeyError):
+            return None
+
+    def mark_written(self, addr, nbytes):
+        """Flag the dwords [addr, addr+nbytes) as written by the current run (machine.write, the input
+        setup, and the pool page loader all funnel here)."""
+        w = self.writes
+        if not w.on:
+            return
+        for page in range(addr & ~0xFFF, addr + max(int(nbytes), 1), 0x1000):
+            f = self.write_flags(page)
+            if f is None:
+                continue
+            k0, k1 = page + 0, page + 0x1000
+            k0, k1 = max(addr, k0), min(addr + max(int(nbytes), 1), k1)
+            for k in range((k0 - page) & ~3, k1 - page, 4):
+                if (k >> 2) * 4 == k:
+                    f[k >> 2] = 1
+
+    def note_pool_page(self, page, data):
+        """The lazy loader is about to hand the program `data` as pool page `page`: record it as that
+        page's baseline, so a dword neither build wrote is recognisable as untouched."""
+        if not self.writes.on:
+            return
+        base = page & ~0xFFF
+        self.put_flags("pool", base, bytes(data), bytearray(len(data) // 4))
+
+    def put_flags(self, label, base, baseline, flags, is_page=True):
+        """Register the write flags of one region page/buffer and make its range addressable (pool and
+        fault-repair `extra` pages only exist once the run has materialised them). A page the other side
+        already wrote keeps its flags: the rule is "at least one side wrote it", so a later registration
+        must not clear them."""
+        old = self.write_flags_reg.get((label, base))
+        if old is not None and len(old[1]) == len(flags):
+            flags = bytearray(max(a, b) for a, b in zip(old[1], flags))
+            baseline = baseline if baseline is not None else old[0]
+        self.write_flags_reg[(label, base)] = (baseline, flags)
+        if is_page:
+            self.region_of = [(lo, hi, lbl, ip) for lo, hi, lbl, ip in self.region_of
+                              if not (lbl == label and base <= lo < base + 0x1000)]
+            self.region_of.append((base, base + 4 * len(flags), label, True))
+
+    def reset_writes(self):
+        """Start a fresh input: forget every write the previous input's two passes made. Called from
+        run_side for the ORIGINAL pass only, so the rule sees writes from both sides of one input."""
+        self.write_flags_reg = {}
+        self.region_of = self._region_map()
+        # The per-dword set is the OTHER half of the same rule (`MemWrites.dwords`, used by the stub-scratch
+        # trim): it must cover the orig and ours passes of ONE input, not the whole row, or the trim would
+        # subtract dwords written by some earlier input's ours pass (and it grew unboundedly).
+        if getattr(self, "writes", None) is not None:
+            self.writes.reset()
+
+    # --- class 3: leftover scratch the original wrote through a do-nothing stub
+    def page_of(self, addr):
+        """(label, page) of the region a compared page address belongs to ('heap', 'misc', '.data', ...)."""
+        for lo, hi, label, _page in self.region_of:
+            if lo <= addr < hi:
+                return label
+        return None
+
+    def _stub_spans(self, page):
+        """[(lo, hi)] of the buffers the do-nothing stubs of this run were handed, clipped to `page`:
+        the handler's declared span when it has one, else the whole page of the buffer argument (the
+        same fallback _stub_only uses to attribute an address)."""
+        out = []
+        for name, args in list(getattr(self.m, "trace_imports", ()) or ()):
+            h = self.m.handlers.get(name)
+            if h is None or h.get("fn") is not None:
+                continue                    # a real handler's writes are evidence, not scaffold
+            span = h.get("span")
+            for a in args:
+                if not isinstance(a, int):
+                    continue
+                lo, hi = (a, a + span) if span else (a & ~0xFFF, (a & ~0xFFF) + 0x1000)
+                lo, hi = max(lo, page), min(hi, page + 0x1000)
+                if lo < hi:
+                    out.append((lo, hi))
+        return out
+
+    def _trim_stub_scratch(self, side, pages, page, written, other=None, label="heap"):
+        """Mark the dwords of one dirty page that ONE run wrote through a do-nothing stub and the other
+        left alone.
+
+        `written` is the dword set the excusal is attributed to (on OURS' pages the inherited ORIGINAL
+        writes, on the ORIGINAL's pages its own pass's writes), `other` the set of the opposite pass
+        (None on the orig pass, which runs first and cannot know ours' writes yet - safe, because any
+        later ours-side write into the region still shows as a difference on ours' page). A differing
+        dword is scaffold only when ALL of these hold; when in doubt the difference is kept:
+        - `written` contains it (a dword this pass's attribution never wrote stays compared);
+        - `other` does not (both passes wrote it: a joint product, never scaffold);
+        - no buffer a do-nothing stub of this run was handed INTERSECTS `other` at the span containing
+          the address (the other build stores into a stub buffer: the buffer is a joint product and
+          every dword of it stays compared - the guard test test_equiv.py
+          ::test_stub_scratch_never_excuses_a_dword_our_build_wrote is exactly this case);
+        - `_stub_only` attributes the address to exactly one do-nothing stub.
+        The value is replaced by the page baseline so the comparison sees nothing there; the count is
+        reported in the verdict reason and every excused dword is named in `uncompared`."""
+        if page not in pages:
+            return
+        if written is None:
+            return
+        spans = self._stub_spans(page)
+        buf = bytearray(pages[page])
+        base = self._region_baseline(label, page) or b"\0" * 0x1000
+        n = 0
+        for i in range(0, len(buf) - 3, 4):
+            if buf[i:i + 4] == base[i:i + 4]:
+                continue
+            addr = page + i
+            if addr not in written:
+                continue        # a dword this pass's attribution did not write: the other pass's
+                                # business, or a real difference - never scaffold
+            if other is not None and addr in other:
+                continue        # both passes wrote the address: a joint product
+            if other is not None and any(not other.isdisjoint(range(lo, hi, 4))
+                                         for lo, hi in spans if lo <= addr < hi):
+                continue        # the other pass wrote inside this buffer: the whole buffer stays compared
+            who = self._stub_only(addr)
+            if not who:
+                continue
+            buf[i:i + 4] = base[i:i + 4]
+            n += 1
+            self.uncompared[(label, page, addr)] = who
+        if n:
+            pages[page] = bytes(buf)
+            key = (label, page)
+            self.trimmed[key] = n
+            self.tolerated["stub-scratch"] = self.tolerated.get("stub-scratch", 0) + n
+
+    def _stub_only(self, addr):
+        """Name of the do-nothing import handler when EVERY import call this run recorded that reaches
+        `addr` as a buffer argument is a stub (fn is None: sprintf, strcpy, ...), else None.
+
+        `addr` must actually be inside a buffer the stub was handed (the previous form ignored it and
+        excused any address in the run as soon as one stub with one int argument existed)."""
+        m = self.m
+        names = set()
+        for name, args in list(getattr(m, "trace_imports", ()) or ()):
+            h = m.handlers.get(name)
+            if h is None or h.get("fn") is not None:
+                continue                    # a real handler (memcpy, malloc, a modelled function): not a stub
+            span = h.get("span")            # handlers are dicts: getattr(h, "span") was always None
+            if span and any(isinstance(a, int) and a <= addr < a + span for a in args):
+                names.add(name)
+                break
+            if span is None and any(isinstance(a, int) and (a & ~0xFFF) == (addr & ~0xFFF) for a in args):
+                names.add(name)             # no declared buffer length: fall back to the same page
+                break
+        if len(names) != 1:
+            return None
+        return names.pop()
+
+    def _stub_fence(self, addr):
+        """Name of the do-nothing stub that "owns" a page no compared run wrote, else None. Only DYN and
+        MISC pages, where a stub's only footprint is where its buffer happened to be; a pool/extra page
+        that only our run touched is real evidence and stays compared."""
+        r = getattr(self, "_lastref", None)
+        if not r:
+            return None
+        region = self.page_of(addr)
+        if region not in ("heap", "misc"):
+            return None
+        names = set()
+        for name, args in list(getattr(self.m, "trace_imports", ()) or ()):
+            h = self.m.handlers.get(name)
+            if h is None or h.get("fn") is not None:
+                continue
+            for a in args:
+                if isinstance(a, int) and ((a & ~0xFFF) == (addr & ~0xFFF)):
+                    names.add(name)
+        return names.pop() if len(names) == 1 else None
 
     def close(self):
         for h in self.hooks:
             self.m.uc.hook_del(h)
         self.hooks = []
+        self.writes.close()
 
     # --- static site discovery
     def _site_info(self, ins, read_next):
@@ -1723,10 +2103,31 @@ class Runner:
             if d is None:
                 cache.update(self.gen.slot_pages(inp, page & ~(M.SLOT - 1)))
                 d = cache[page]
+            self.note_pool_page(page, d)        # --uninit-mem: this page's baseline for the write flags
             return d
         m.take_dirty()              # DYN/MISC back to baseline (normally already clean)
         m.lazy = lazy
-        m.pool_pages = {}
+        if side is self.orig:
+            self.reset_writes()     # a new input: the rule needs writes from BOTH passes, so only here
+        if self.baseline is not None:
+            # class 3: the second pass must start from the state the first pass started from. The heap
+            # state that pass *left* is restored before the input is laid out, so a page the original's
+            # run dirtied through a do-nothing stub holds the same bytes when our pass writes it (or, for
+            # a page our pass never writes, the same leftover) -- and a page our pass never dirties is not
+            # compared at all. The pool (lazy input) and the fault-repair regions are restored to the bytes
+            # they started with, undoing exactly the pages the previous pass materialised.
+            for p, data in self.baseline.get("heap", {}).items():
+                m.uc.mem_write(p, data)
+            pages = self.baseline.get("extra")
+            if pages is not None and getattr(inp, "extra", None) == self.baseline.get("inp_extra", {}):
+                for base, data in pages.items():
+                    try:
+                        m.uc.mem_write(base, data)
+                    except Exception:       # noqa: BLE001  the region is re-mapped just below in any case
+                        pass
+            for pg in getattr(self, "pool_pages", ()) or ():
+                self.page_cache.pop(pg, None)
+        m.pool_pages = dict(getattr(self, "pool_pages", ()) or {})
         m.pool_slots = []
         m.pool_entry = set()
         for a_, v_ in inp.overrides.items():
@@ -1736,13 +2137,16 @@ class Runner:
         m.rand_state = 1
         m.alloc_fail, m.alloc_count = tuple(getattr(inp, "alloc_fail", ())), 0
         extra_init = {}
+        self.mapped_extra = []
         for base, size in sorted(getattr(inp, "extra", {}).items()):
             # memory mapped at a faulting address by fault repair: input soup, compared like pool pages
             m.uc.mem_map(base, size, UC_PROT_READ | UC_PROT_WRITE)
             data = self.gen._slot_soup(inp, base)[:size]
             m.uc.mem_write(base, data)
+            self.mapped_extra.append([base, size])
             for k in range(0, size, 0x1000):
                 extra_init[base + k] = data[k:k + 0x1000]
+                self.put_flags("extra", base + k, data[k:k + 0x1000], bytearray(len(data[k:k + 0x1000]) // 4))
         stk_lo = M.STACK_TOP - M.STACK_SIZE
         m.write(stk_lo, STACK_FILL * (STACK_END - stk_lo))
         frame = struct.pack("<I", M.SENTINEL) + struct.pack("<%dI" % (len(inp.args) + 4), *(inp.args + inp.pad))
@@ -1820,13 +2224,58 @@ class Runner:
         o["dyn_hi"] = m.dyn_next
         # every dirty DYN page (also beyond dyn_next, reached through garbage indices) and every
         # dirty MISC page (TEB, TLS, scratch), restored to the baseline for the next run
-        mem["heap"], misc = m.take_dirty()
+        mem["heap"], misc = m.take_dirty(
+            self.writes.dwords if getattr(self.writes, "on", False) else None)
+        if getattr(self.writes, "on", False):
+            # snapshot the pass's write set: the other pass subtracts it to find dwords only ONE run wrote
+            # through a do-nothing stub (Runner._trim_stub_scratch, Comparer.diff_bytes' stub fence)
+            if side is self.orig:
+                self.orig_wrote = set(self.writes.dwords)      # any write, incl. handler buffers
+                self.orig_stores = set(self.writes.own_dwords)
+            else:
+                self.ours_wrote = set(self.writes.dwords)
+                self.ours_stores = set(self.writes.own_dwords)
+        # --uninit-mem: the original allocated through an import whose handler is a do-nothing stub and the
+        # pages it wrote are scaffold for the *input's* benefit (a formatted text buffer, a container a
+        # blocked walk fills). Our builds of that call are the same kind of stub, so a dword only the
+        # original wrote is not evidence about our code; it is excused by name (`stub-scratch: N dword(s)
+        # via sprintf`) and never silently dropped. A dword OUR pass wrote is still compared.
+        if getattr(self.opts, "uninit_mem", True):
+            # dwords each pass wrote, from the MemWrites registry (the emulated-store hook + Machine.write).
+            # On the ORIG pass (which runs first) `ours_w` below is this pass's OWN stores -- writes were
+            # reset at pass start -- and `other` is None: ours' writes are unknowable yet, and any later
+            # ours-side write into an excused region still shows as a difference on ours' page. On the
+            # OURS pass the pages carry the ORIGINAL's inherited leftovers, so the excusal is attributed
+            # to orig's snapshot and contested against ours' own stores. (Machine has no written_dwords
+            # method, so this used to be a `None` fallback and the trim never ran.)
+            ours_w = set(self.writes.own_dwords) if getattr(self.writes, "on", False) else None
+            orig_w = getattr(self, "orig_wrote", None)
+            for page in sorted(mem["heap"]):
+                self._trim_stub_scratch(side, mem["heap"], page,
+                                        orig_w if side is self.ours else ours_w,
+                                        other=ours_w if side is self.ours else None)
+            for page in sorted(misc):
+                self._trim_stub_scratch(side, misc, page,
+                                        orig_w if side is self.ours else ours_w,
+                                        other=ours_w if side is self.ours else None, label="misc")
         sp = M.SCRATCH & ~0xFFF
         if sp in misc:                                  # harness scratch (float results) is not compared
             pg = bytearray(misc[sp])
             pg[M.SCRATCH - sp:M.SCRATCH - sp + 16] = m.misc_base_page(sp)[M.SCRATCH - sp:M.SCRATCH - sp + 16]
             misc[sp] = bytes(pg)
         mem["misc"] = misc
+        if side is self.orig:
+            # class 3: capture what the ORIG pass left behind, so the OURS pass starts from it (heap pages
+            # only, because only DYN is shared with the stub scratch the original writes through a do-nothing
+            # import). `baseline` holds the bytes the second pass is injected with; `mem["heap"]` (above) is
+            # what the comparison sees, and it is restored from the same bytes when the pass ends.
+            self.baseline = {
+                "heap": dict(mem["heap"]),
+                "extra": {k: v for k, v in mem.get("extra", {}).items()} if extra_init else None,
+                "inp_extra": dict(getattr(inp, "extra", {})),
+            }
+        elif self.baseline is not None:
+            self.runs += 1
         mem["stack"] = m.read(self.args_hi, STACK_END - self.args_hi)
         for (lo, hi), base in zip(self.obj["data_rw"], self.obj["rw_baseline"]):
             cur = m.read(lo, hi - lo)
@@ -1875,9 +2324,11 @@ def ulp_close(a, b, ulp, bits=32):
 class Comparer:
     def __init__(self, runner, opts):
         self.r, self.opts = runner, opts
-        self.tolerated = {"stack-pointer": 0, "inline-calls": 0, "ulp": 0, "const-pointer": 0, "local-copy": 0}
+        self.tolerated = {"stack-pointer": 0, "inline-calls": 0, "ulp": 0, "const-pointer": 0, "local-copy": 0,
+                          "uninit-dword": 0, "stub-scratch": 0}
         self.ro = runner.ro
         self.last_kind = None
+        self._thr, self._thr_key = None, None      # --uninit-mem: the pool/extra baseline of the page in hand
 
     def same_constant(self, x, y):
         """Two different pointers into read-only data whose 64 bytes (or C strings) are identical:
@@ -2258,6 +2709,7 @@ class Comparer:
         for region in sorted(set(ma) | set(mb)):
             if region == "ours_data":
                 continue
+            self._lastref = b                       # the run whose values the page holds (see _stub_fence)
             xa, xb = ma.get(region), mb.get(region)
             if region in ("pool", "extra"):
                 ik = "pool_init" if region == "pool" else "extra_init"
@@ -2265,6 +2717,8 @@ class Comparer:
                 for page in sorted(set(xa) | set(xb)):
                     pa = xa.get(page) or a.get(ik, {}).get(page) or b.get(ik, {}).get(page)
                     pb = xb.get(page) or b.get(ik, {}).get(page) or a.get(ik, {}).get(page)
+                    self._thr = a.get(ik, {}).get(page) or b.get(ik, {}).get(page) or pa
+                    self._thr_key = (region, page, id(pa))
                     d = self.diff_bytes(pa, pb, page, region, esp)
                     if d:
                         return d
@@ -2305,10 +2759,84 @@ class Comparer:
                             "OUR code wrote its own static data (a global the original keeps elsewhere)")
         return None
 
+    def unobserved(self, region, base_addr, xa, xb, thr):
+        """--uninit-mem: the dwords of one compared block that NEITHER build wrote and whose original-side
+        value is a fill/sentinel leftover. Returns (n_dropped, set of dropped dword offsets).
+
+        Only the `pool`, `extra` (fault-repair mapped input), `heap` and `misc` regions are eligible: for
+        the image's .data and our object's copies a difference can always be a global the function was
+        supposed to write, and a baseline of zeros there would excuse a real missing store. In the eligible
+        regions the dword must still be byte-identical to the bytes the run started from (`thr`), so a dword
+        a build produced is never reached; and a dword OUR build wrote is refused outright (its flag is set)
+        regardless of what it holds. Anything dropped is counted and named in `excused` so the reason can
+        report it and nothing becomes invisible."""
+        if not getattr(self.opts, "uninit_mem", True) or region not in ("pool", "extra", "heap", "misc"):
+            return 0, frozenset()
+        r = self.r
+        if getattr(r, "write_flags_reg", None) is None:
+            return 0, frozenset()
+        drop = set()
+        n = min(len(xa), len(xb)) // 4
+        for k in range(n):
+            q = 4 * k
+            if q + 4 > len(thr):
+                continue                    # no baseline of the page in hand: nothing to compare against
+            t0 = struct.unpack_from("<I", thr, q)[0]
+            x, y = struct.unpack_from("<I", xa, q)[0], struct.unpack_from("<I", xb, q)[0]
+            if x == y:
+                continue                    # not a difference in the first place
+            addr = base_addr + q
+            # The original's value must be a fill/sentinel leftover: either it is one of FILL_PATTERNS, or
+            # it is the baseline with a fill byte copied over it (the `cls_map` case: the original copies an
+            # uninitialised 0xCC stack byte into a float field the input already carried).
+            if not unobserved_fill(x, t0):
+                continue
+            f = r.write_flags(addr)
+            if f is None:
+                continue
+            if f[k] and y != t0:
+                # OUR build wrote this dword and what it wrote is not the value the run started with: a
+                # real difference, never a leftover. (A write that restored the baseline is a no-op, and a
+                # dword our build never wrote cannot hold a value it produced.)
+                continue
+            if y != t0:
+                # no flag (a region the hook does not cover) but our side still changed it: refuse too
+                continue
+            drop.add(q)
+            r.uncompared[(region, addr)] = "fill 0x%08x" % x
+        return len(drop), drop
+
     def diff_bytes(self, xa, xb, base_addr, region, esp):
         if xa == xb:
             return None
         n = min(len(xa), len(xb))
+        thr = getattr(self, "_thr", None) if self._thr_key == (region, base_addr, id(xa)) else None
+        stubs = getattr(self.r, "uncompared", None)
+        # a page only the run whose values these bytes are wrote, and it wrote them through a do-nothing
+        # import stub: that is where the stub's buffer happened to land, and the run that did not write it
+        # reports the page as untouched (its baseline). The page says nothing about the code (see
+        # Runner._stub_fence); the count is reported and each excused page is listed by name in the reason.
+        if stubs is not None and not xa.startswith(b"\0" * 4096):
+            who = self.r._stub_fence(base_addr)
+            if who:
+                # Excuse only the dwords the fence really covers: the page difference is dropped, but any
+                # dword OUR code wrote is put back (it was a real store, not the stub's buffer), so the
+                # whole-page excuse can no longer hide a value our build produced.
+                buf = None
+                ours = set(getattr(self.r, "ours_stores", ()) or ())
+                for q in range(0, n - 3, 4):
+                    if ours and (base_addr + q) in ours and xa[q:q + 4] != xb[q:q + 4]:
+                        if buf is None:
+                            buf = bytearray(xb)
+                        continue
+                    stubs[(region, base_addr, base_addr + q)] = who
+                if buf is None:
+                    self.tolerated["stub-scratch"] = self.tolerated.get("stub-scratch", 0) + n // 4
+                    return None
+                # fall through with the restored dwords compared below
+                self.tolerated["stub-scratch"] = self.tolerated.get("stub-scratch", 0) + n // 4 - sum(
+                    1 for q in range(0, n - 3, 4) if ours and (base_addr + q) in ours)
+        dropped, drop = self.unobserved(region, base_addr, xa, xb, thr or b"")
         i = 0
         while i < n:
             # skip identical 256-byte chunks quickly
@@ -2324,6 +2852,21 @@ class Comparer:
                 i += 256
                 continue
             k = j & ~3
+            if stubs is not None and (region, base_addr, base_addr + k) in stubs:
+                # class 3: neither pass but the original's do-nothing stub wrote this dword, and our pass
+                # wrote neither it nor the page: leftover scaffold for the input (a formatted buffer), not
+                # information about the code. Counted under the stub's name in the reason, never silently
+                # dropped, and a dword our own pass wrote is never in this set.
+                self.tolerated["stub-scratch"] = self.tolerated.get("stub-scratch", 0) + 1
+                i = k + 4
+                continue
+            if k in drop:
+                # --uninit-mem: a fill/sentinel leftover neither build wrote: not information about the
+                # code, so it is neither compared nor counted as search progress (its bytes are re-tested
+                # on every 4-byte step, so a page of them cannot loop forever).
+                self.tolerated["uninit-dword"] += 1
+                i = k + 4
+                continue
             va = struct.unpack_from("<I", xa, k)[0] if k + 4 <= n else None
             vb = struct.unpack_from("<I", xb, k)[0] if k + 4 <= n else None
             if va is not None and in_stack_frame(va, esp) and in_stack_frame(vb, esp):
@@ -2342,7 +2885,11 @@ class Comparer:
                 i = k + 4
                 continue
             more, pairs = [], []
+            ndrop = 0
             for q in range(k, n - 3, 4):
+                if q in drop:
+                    ndrop += 1
+                    continue
                 x, y = struct.unpack_from("<I", xa, q)[0], struct.unpack_from("<I", xb, q)[0]
                 if x != y and not (in_stack_frame(x, esp) and in_stack_frame(y, esp)):
                     pairs.append((x, y))
@@ -2350,6 +2897,12 @@ class Comparer:
                         more.append("%08x: %08x/%08x" % (base_addr + q, x, y))
                     if len(pairs) >= 64:
                         break
+            if not pairs and not ndrop:
+                break                           # nothing left in this block: not a difference either way
+            if not pairs:
+                self.tolerated["uninit-dword"] += ndrop
+                i = k + 4
+                continue
             self.last_kind = classify_pairs(pairs)
             block = ""
             # ours holds an address of its own copy where the original holds the image's (a constant, a
@@ -2521,13 +3074,14 @@ class FpTol:
         self.r, self.c, self.opts = runner, cmp_, opts
         self.cw = int(opts.fpcw, 16)
         self.n_fp = self.n_oor = self.n_floats = 0
+        self.n_uninit = 0           # --uninit-mem: fill/sentinel dwords neither build wrote, not judged
         self.max_ulp = 0.0
         self.max_ratio = 0.0
 
     def stats(self, valid, mism):
         return {"compared": valid, "bit_identical": valid - self.n_fp - self.n_oor - mism, "fp_tolerable": self.n_fp,
                 "fp_floats": self.n_floats, "max_ulp": round(self.max_ulp, 2), "max_err_ratio": round(self.max_ratio, 2),
-                "out_of_range": self.n_oor, "real_mismatches": mism}
+                "out_of_range": self.n_oor, "real_mismatches": mism, "uninit_dwords": self.n_uninit}
 
     def ref_run(self, inp):
         m = self.r.m
@@ -2620,12 +3174,29 @@ class FpTol:
                 wa = np.frombuffer(pa[:4 * n], "<u4")
                 wb = np.frombuffer(pb[:4 * n], "<u4")
                 wr = np.frombuffer(pr[:4 * n], "<u4") if pr is not None and len(pr) >= 4 * n else None
+                thr = None
+                if ik:                      # --uninit-mem: the bytes this page started the input with
+                    thr = (a.get(ik, {}).get(pg) or b.get(ik, {}).get(pg) or pa) if ik in ("pool_init", "extra_init") else None
                 for k in np.nonzero(wa != wb)[0]:
                     va, vb = int(wa[k]), int(wb[k])
                     if in_stack_frame(va, esp) and in_stack_frame(vb, esp):
                         continue
                     if self.c.same_constant(va, vb):
                         continue
+                    if thr is not None and k * 4 + 4 <= len(thr) and \
+                            getattr(self.opts, "uninit_mem", True):
+                        # --uninit-mem: a dword the original left as a fill/sentinel leftover (one of
+                        # FILL_PATTERNS, or the input value with a fill byte copied over it) that ours
+                        # holds at its baseline value is unobserved - not a float difference to judge.
+                        # Ours holding a value of its own, or ours having changed the input value when the
+                        # original only stored it back, stays a real mismatch.
+                        t0 = int(np.frombuffer(thr[k * 4:k * 4 + 4], "<u4")[0])
+                        if vb == t0 and unobserved_fill(va, t0):
+                            f = self.r.write_flags(base + 4 * int(k))
+                            if not (f is not None and f[k] and va == t0):
+                                self.n_uninit += 1
+                                self.r.uncompared[(region, base + 4 * int(k))] = "fill 0x%08x" % va
+                                continue
                     out.append((region, pg, base, int(k), va, vb, int(wr[k]) if wr is not None else va))
         return out
 
@@ -2981,8 +3552,12 @@ def _test_function(sid, va, opts, log=print):
                         a = a2
                         out["budget_raised"] = "input %d needed more than %d instructions" % (i, low)
                 st = a["status"][0]
-                if st == "import" and ours_probe < OURS_IMPORT_PROBES:
-                    # our side's call sites that stop at the same import (for its 'blocked' edges): run it, never compare
+                if st == "import" and ours_probe < OURS_IMPORT_PROBES and \
+                        not M.is_heap_exhausted(a["status"][1]):
+                    # our side's call sites that stop at the same import (for its 'blocked' edges): run it,
+                    # never compare. A heap-exhausted original is discarded by the caller, so probing our
+                    # side along that path would only build a second partial run (and the probe is a copy
+                    # of the discarded run's state, not of an accepted one).
                     ours_probe += 1
                     runner.run_side(runner.ours, inp)
             except UcError as e:
@@ -2999,6 +3574,20 @@ def _test_function(sid, va, opts, log=print):
                     key = "fault(%s)" % a["fault"][0]
                 if key in ("timeout", "wall", "wall-timeout"):
                     out["wall_timeout"] = out.get("wall_timeout", 0) + 1
+                if st == "import" and M.is_heap_exhausted(a["status"][1]):
+                    # the original ran the emulated heap out of address space: the end state is not
+                    # comparable (the run did not finish), and the discarded input is not a difference.
+                    key = "heap-exhausted"
+                    out["heap_exhausted"] = out.get("heap_exhausted", 0) + 1
+                if st == "budget" and runner.budget >= opts.budget:
+                    # --budget is the row's instruction cap and the budget probe above could not get past it:
+                    # the original was cut off mid-run, so its end state (heap, registers, memory) is a
+                    # partial one and comparing it would report the truncation as a difference. The rows this
+                    # matters for are the ones whose ORIGINAL stalls on a do-nothing import long enough to burn
+                    # the whole cap (camera 0x49b630: cut off mid-malloc), so the count is reported and the row
+                    # is not given a verdict at all - it must be re-run with a larger --budget instead.
+                    key = "budget(cut-off)"
+                    out["budget_cutoff"] = out.get("budget_cutoff", 0) + 1
                 discarded[key] = discarded.get(key, 0) + 1
                 continue
             if not runner.abi_ok(a):
@@ -3010,6 +3599,24 @@ def _test_function(sid, va, opts, log=print):
                 continue
             if fixes or pure_fixes:
                 repaired += 1
+            # Input-object invariants, on the FINAL input (generation edits, steering and every fault repair
+            # applied): an object whose length field is outside the declared capacity of the array the
+            # function indexes cannot exist, so the two builds would be compared on out-of-array frame or
+            # pool bytes - a property of their layouts, not of the code. Discard before comparing, and say
+            # which field and how many inputs (never silent: the key, the count and the bound are reported).
+            if gen.invs:
+                bad = INV.check(gen.invs, gen, inp)
+                if bad:
+                    label, value, lo, hi, inv = bad
+                    discarded["invalid-object"] = discarded.get("invalid-object", 0) + 1
+                    out.setdefault("invalid_objects", {})
+                    out["invalid_objects"][label] = out["invalid_objects"].get(label, 0) + 1
+                    if "invalid_object_example" not in out:
+                        out["invalid_object_example"] = "%s=%d outside [%d..%d]; %s" % (
+                            label, value - (1 << 32) if value >= (1 << 31) else value, lo, hi, inv.why)
+                    if opts.verbose:
+                        log("  discard input %d: invalid object: %s=%#x outside [%d..%d]" % (i, label, value, lo, hi))
+                    continue
             run_blocks = runner.run_blocks
             try:
                 b = runner.run_side(runner.ours, inp)
@@ -3022,6 +3629,19 @@ def _test_function(sid, va, opts, log=print):
             if sb[0] == "trap":
                 traps[sb[1]] = traps.get(sb[1], 0) + 1
                 discarded["ours-trap"] = discarded.get("ours-trap", 0) + 1
+                continue
+            if sb[0] == "budget" or (sb[0] == "import" and M.is_heap_exhausted(sb[1])):
+                # our pass was cut off by the same cap (or ran the heap out of address space) while the
+                # original returned normally: 'ours failed where the original succeeded' would read as a
+                # real difference, but neither is: the pass did not finish. Both counters are reported and
+                # the row gets no verdict (see the budget-cutoff/heap-exhausted chain below).
+                if sb[0] == "budget":
+                    key = "budget(cut-off-ours)"
+                    out["cutoff_ours"] = out.get("cutoff_ours", 0) + 1
+                else:
+                    key = "heap-exhausted(ours)"
+                    out["heap_exhausted_ours"] = out.get("heap_exhausted_ours", 0) + 1
+                discarded[key] = discarded.get(key, 0) + 1
                 continue
             if b["fakes"] and sb[0] == "ok" and not runner.abi_ok(b):
                 discarded["ours-abi-broken(fake)"] = discarded.get("ours-abi-broken(fake)", 0) + 1
@@ -3104,6 +3724,8 @@ def _test_function(sid, va, opts, log=print):
     total = len(t.orig_insns)
     cov = 100.0 * len(covered) / total if total else 0.0
     out["mismatch_sigs"] = dict(sigs.most_common(40))
+    if gen.invs:
+        out["input_invariants"] = describe_invariants(gen.invs)
     out.update(seed=opts.seed, inputs_planned=opts.inputs, extra_inputs=opts.extra_inputs if getattr(opts, "steer", True) else 0,
                gate=opts.gate, require_all=bool(getattr(opts, "require_all", False)),
                inputs=ran, valid=valid, discarded=discarded, mismatches=mism, first_mismatch=first,
@@ -3116,15 +3738,39 @@ def _test_function(sid, va, opts, log=print):
         out["ulp"] = opts.ulp
     if fpt is not None:
         out["fp_tol"] = fpt.stats(valid, mism)
-    if out.get("stopped_early"):
+    budget_cut = out.get("budget_cutoff", 0) + out.get("cutoff_ours", 0)
+    cut_total = max(1, budget_cut + valid)
+    # Every "the run was cut short" excuse is subordinate to a real difference: if the two builds already
+    # disagreed on a comparable input, the row is a FAIL whatever else happened. (Before this, 16
+    # heap-exhausted inputs turned agent_hud 0x4fba40's 200 real mismatches into "no verdict".)
+    if out.get("stopped_early") and (not mism or not valid):
         # The input stream is deterministic (--inputs + --seed); the wall clock is not. A row cut short by the
         # row-level deadline must not report a verdict at all: on a loaded machine that turned FAILs into WEAKs
         # (16 of 82 rows in one sweep). Raise --time-limit or run fewer workers.
         v, why = "UNSUPPORTED", ("not a verdict: %s; the run was cut short by the wall-clock limit, everything "
                                  "measured so far is in this JSON" % out["stopped_early"])
-    elif out.get("wall_timeout"):
+    elif not mism and out.get("wall_timeout"):
         v, why = "UNSUPPORTED", ("not a verdict: %d input run(s) were cut by the per-run wall-clock cap (--run-seconds); "
                                  "raise it so the verdict depends only on --inputs and --seed" % out["wall_timeout"])
+    elif not mism and budget_cut and budget_cut * 20 >= cut_total:
+        # A *runaway* input (the budget probe already tried the full --budget) leaves a partial end state, so
+        # comparing it would report the truncation as a difference (camera 0x49b630: cut off inside malloc, pool
+        # high-water sentinels compared). One such input among hundreds of clean ones is a runaway to discard;
+        # a row where they are >=5% of the runs has no comparable state at all and gets no verdict - re-run it
+        # with a larger --budget. (resmgr 0x41aee0: 1 of 260, so it keeps its verdict.)
+        v, why = "UNSUPPORTED", ("not a verdict: %d of %d input(s) were cut off by the --budget instruction cap "
+                                 "(the end state compared would be a partial run). Raise --budget for this row"
+                                 % (budget_cut, cut_total))
+    elif not mism and (out.get("heap_exhausted", 0) + out.get("heap_exhausted_ours", 0)) * 20 >= \
+            max(1, out.get("heap_exhausted", 0) + out.get("heap_exhausted_ours", 0) + valid):
+        # An input that ran the emulated heap out of address space leaves a partial end state on BOTH sides
+        # in general (and on ours alone when only our pass exhausted it), so it is discarded rather than
+        # compared. Same share rule as the instruction cap: one such input among hundreds is a runaway whose
+        # end state is discarded; a row where they are >=5% of the runs has no comparable state at all.
+        v, why = "UNSUPPORTED", ("not a verdict: %d input(s) ran the emulated heap out of address space "
+                                 "(%d in the original's pass, %d in ours); neither run has a comparable end state"
+                                 % (out.get("heap_exhausted", 0) + out.get("heap_exhausted_ours", 0),
+                                    out.get("heap_exhausted", 0), out.get("heap_exhausted_ours", 0)))
     elif mism and first.get("kind") == "local-address":
         # our code stores the address of its own copy of an object/vtable/constant where the original
         # stores the image's: same_local_copy already accepted every copy whose bytes are identical, so
@@ -3168,6 +3814,21 @@ def _test_function(sid, va, opts, log=print):
         # bytes at both were identical: an address difference only (the linker kept two copies)
         why += ("; note: %d address(es) of our own copy of the image's block differed in address only "
                 "(the bytes matched)" % cmp_.tolerated["local-copy"])
+    if (cmp_.tolerated.get("stub-scratch") or getattr(runner, "trimmed", None)) and \
+            v in ("PASS", "WEAK", "FAIL", "PASS-FP", "WEAK-FP"):
+        # class 3: dwords/pages that ONLY the original's run wrote, through an import whose handler is a
+        # do-nothing stub (sprintf, strcpy, ...). Leftover scaffold for the input, not information about the
+        # code; excused by name so nothing becomes invisible. Our pass wrote none of them. The dict is shared
+        # with the class-1 (fill-leftover) rule, so only the stub names are counted here: an entry whose value
+        # starts with "fill" belongs to that rule and is reported by it.
+        byn = collections.Counter(nm for nm in (runner.uncompared or {}).values()
+                                  if not str(nm).startswith("fill"))
+        if cmp_.tolerated.get("stub-scratch"):
+            why += "; note: %d dword(s) written only by the original's do-nothing stub(s) were not compared (%s)" % (
+                cmp_.tolerated["stub-scratch"],
+                ", ".join("%s: %d" % (k, n) for k, n in byn.most_common(3)) or "unnamed stub")
+        if getattr(runner, "trimmed", None):
+            why += "; %d page(s) trimmed" % len(runner.trimmed)
     if audit_warning and v in ("PASS", "WEAK"):
         why += "; audit advisory (positional pairing): " + audit_warning
     if fpt is not None and v in ("PASS", "WEAK") and fpt.n_fp + fpt.n_oor:
@@ -3183,6 +3844,13 @@ def _test_function(sid, va, opts, log=print):
     if opts.call_regs and out.get("call_regs"):
         why += "; " + cmp_.call_reg_note(out["call_regs"])
     why += model_note(models)               # a run kept alive by a harness model: say so in the reason ...
+    n_inv = discarded.get("invalid-object")
+    if n_inv:
+        # Never silent: a row that discarded inputs says how many, which field, and the bound it broke, so
+        # a reader can tell that the verdict rests on fewer inputs and check the bound themselves.
+        why += "; invalid-object: %d input(s) discarded (declared %s)%s" % (
+            n_inv, describe_invariants(gen.invs), "; e.g. " + out["invalid_object_example"]
+            if out.get("invalid_object_example") else "")
     v = model_capped(v, models)             # ... and never report PASS on modelled symbols
     out.update(verdict=v, reason=why, seconds=round(time.time() - t0, 1))
     return out
@@ -3320,11 +3988,25 @@ def parse_args(argv=None):
     ap.add_argument("--fpcw", default="%04X" % M.FPCW,
                     help="x87 control word both sides run under (hex; default %04X = 24-bit D3D device-thread state, "
                          "027F = CRT 53-bit state of worker threads)" % M.FPCW)
+    ap.add_argument("--uninit-mem", dest="uninit_mem", action="store_true", default=True,
+                    help="(default ON) drop from the memory comparison a dword that NEITHER build wrote "
+                         "during the run when the original's value is one of MSVC's fill/sentinel leftovers "
+                         "(0xCCCCCCCC, 0xCDCDCDCD, ... and their partial-copy variants) - an uninitialised "
+                         "frame slot or a pool page one side materialised and the other never touched. A dword "
+                         "our build wrote is never excused, and the count is reported ('uninit: N dword(s)')")
+    ap.add_argument("--no-uninit-mem", dest="uninit_mem", action="store_false",
+                    help="compare every dword, including fill/sentinel leftovers neither build wrote (the "
+                         "pre-2026-10-27 behaviour: 6 rows of unrelated FAILs)")
     ap.add_argument("--fp-tol", action="store_true",
                     help="judge float-only mismatches against the original re-run at 64-bit precision (0x037F): "
                          "rounding-only differences give PASS-FP / WEAK-FP, Inf/NaN/>1e30 cases are counted as out-of-range")
     ap.add_argument("--fp-realistic", action="store_true",
                     help="generate float fields as finite magnitudes in [1e-3, 1e5] (both signs, plus 0/+-1) instead of random bit patterns")
+    ap.add_argument("--no-invariants", action="store_true",
+                    help="disable the input-object invariants (invariants.py): feed the raw pointer soup to every row, "
+                         "including the rows that read a length field out of it and index an array whose capacity the "
+                         "type declares (face::count over v[4], GFace::n over idx[4], Terrain::w/h over cell[251][251]). "
+                         "With the invariants on those inputs are moved into range or discarded as 'invalid-object'")
     ap.add_argument("--alias", type=float, default=0.0, help="probability that a generated pointer aliases an argument object")
     ap.add_argument("--mutate", type=float, default=0.6, help="share of inputs mutated from the coverage corpus")
     ap.add_argument("--no-steer", dest="steer", action="store_false",

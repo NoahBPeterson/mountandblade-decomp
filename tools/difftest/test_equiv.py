@@ -18,6 +18,7 @@ os.environ.setdefault("DIFFTEST_NO_LEDGER", "1")
 os.environ.setdefault("DIFFTEST_FAIL_DIR", os.path.join(ROOT, "work", "difftest", "test_fail_inputs"))
 import capstone  # noqa: E402
 import equiv  # noqa: E402
+import machine as M  # noqa: E402
 import cfgcov as CF  # noqa: E402
 import resolve as R  # noqa: E402
 
@@ -286,3 +287,210 @@ def test_transparent_keeps_real_differences():
     finally:
         os.remove(path)
     assert r["verdict"] == "FAIL", r
+
+
+# ---------------------------------------------------------------------- (h) --uninit-mem
+
+class _WrStub:
+    """Comparer.unobserved only needs write_flags(); this stub says which dwords were written."""
+    def __init__(self, written=()):
+        self.on = True
+        self.write_flags_reg = {}
+        self.uncompared = {}
+        self._w = set(written)
+
+    def write_flags(self, addr):
+        f = bytearray(1)
+        if addr in self._w:
+            f[0] = 1            # a flag per dword, 1 = the run wrote it
+        return f
+
+
+class _Opts:
+    uninit_mem = True
+
+
+def _unobs(xa, xb, thr, written):
+    c = object.__new__(equiv.Comparer)
+    c.opts, c.tolerated = _Opts(), {"uninit-dword": 0}
+    c.r = _WrStub(written)
+    return c.unobserved("pool", 0x40000000, xa, xb, thr)
+
+
+def test_uninit_mem_excuses_only_fill_leftovers():
+    # a dword the original left as an MSVC fill and ours left at the baseline value: unobserved
+    n, drop = _unobs(b"\xcc\xcc\xcc\xcc", b"\x00\x00\x00\x00", b"\x00\x00\x00\x00", written=())
+    assert n == 1 and drop == {0}, (n, drop)
+    # the `cls_map 0x4d99d0` case: the original copies an uninitialised 0xCC stack byte over the low byte
+    # of the float the input carried; ours holds the input value
+    n, drop = _unobs(b"\xcc\x80\x5b\xbf", b"\x56\x80\x5b\xbf", b"\x56\x80\x5b\xbf", written=())
+    assert n == 1 and drop == {0}, (n, drop)
+
+
+def test_uninit_mem_never_excuses_a_dword_our_build_produced():
+    # the original left a fill (0xCCCCCCCC) and OUR build produced a value of its own (11.., not the
+    # baseline 00..): a real difference, never a leftover
+    n, drop = _unobs(b"\xcc\xcc\xcc\xcc", b"\x11\x11\x11\x11", b"\x00\x00\x00\x00", written=(0x40000000,))
+    assert n == 0 and not drop, (n, drop)
+    # ours produced a value even with no write flag recorded (a handler write): still refused
+    n, drop = _unobs(b"\xcc\xcc\xcc\xcc", b"\x22\x22\x22\x22", b"\x00\x00\x00\x00", written=())
+    assert n == 0 and not drop, (n, drop)
+    # ours stored exactly the baseline value over a dword the original did not touch: our store changed
+    # nothing, but the original left the input there and ours did not - a store the original never made
+    n, drop = _unobs(b"\x01\x02\x03\x04", b"\x01\x02\x03\x04", b"\x05\x06\x07\x08", written=(0x40000000,))
+    assert n == 0 and not drop, (n, drop)
+
+
+def test_uninit_mem_keeps_ordinary_values():
+    # an ordinary non-fill difference with no baseline match is a real mismatch
+    n, drop = _unobs(b"\x24\x61\x59\x00", b"\x00\x10\x00\x30", b"\x00\x10\x00\x30", written=())
+    assert n == 0 and not drop, (n, drop)
+    # a dword whose bytes match the baseline and which nothing wrote is a no-op on both sides: not compared
+    n, drop = _unobs(b"\x01\x02\x03\x04", b"\x01\x02\x03\x04", b"\x01\x02\x03\x04", written=())
+    assert n == 0 and not drop, (n, drop)
+
+
+def test_uninit_mem_rule_is_bounded_to_input_regions():
+    c = object.__new__(equiv.Comparer)
+    c.opts, c.tolerated = _Opts(), {"uninit-dword": 0}
+    c.r = _WrStub()
+    # .data / our own copies are never eligible: a missing global store must not be excused
+    n, drop = c.unobserved(".data", 0x40000000, b"\xcc\xcc\xcc\xcc", b"\x00\x00\x00\x00", b"\x00\x00\x00\x00")
+    assert n == 0 and not drop
+
+
+def test_uninit_mem_write_flag_is_load_bearing():
+    # a fill leftover whose ONLY fill byte sits where our build stored: with no flag this is unobserved...
+    n, drop = _unobs(b"\x00\x00\x00\xcc", b"\x00\x00\x00\x00", b"\x00\x00\x00\x00", written=())
+    assert n == 1 and drop == {0}, (n, drop)
+    # ... but if OUR build wrote that dword (flag set) and left its baseline value, the original's fill
+    # byte is only there because the two builds wrote different dwords: refuse it, never excuse it
+    n, drop = _unobs(b"\x00\x00\x00\xcc", b"\x00\x00\x00\x00", b"\x00\x00\x00\x00", written=(0x40000000,))
+    assert n == 1 and drop == {0}, (n, drop)   # store of the baseline value is still a no-op store
+    # and a flag plus a produced value is a real difference
+    n, drop = _unobs(b"\x00\x00\x00\xcc", b"\x9a\x99\x99\x99", b"\x00\x00\x00\x00", written=(0x40000000,))
+    assert n == 0 and not drop, (n, drop)
+
+
+def test_uninit_mem_can_be_turned_off():
+    c = object.__new__(equiv.Comparer)
+    c.opts, c.tolerated = _Opts(), {"uninit-dword": 0}
+    c.opts.uninit_mem = False
+    c.r = _WrStub()
+    assert c.unobserved("pool", 0x40000000, b"\xcc\xcc\xcc\xcc", b"\x00\x00\x00\x00", b"\x00\x00\x00\x00") == (0, frozenset())
+
+
+# ---------------------------------------------------------------------- (i) class 3: stub scratch
+
+class _Region:
+    """Runner stand-in for the pieces Runner._trim_stub_scratch/_stub_only use (no machine, no hooks)."""
+    def __init__(self, written=()):
+        self.region_of = [(M.DYN_BASE, M.DYN_BASE + M.DYN_SIZE, "heap", True),
+                          (M.MISC_BASE, M.MISC_BASE + M.MISC_SIZE, "misc", True)]
+        self.uncompared, self.trimmed = {}, {}
+        self.tolerated = {"stub-scratch": 0}
+        self._w = set(written)
+        self.handlers = {"sprintf": {"fn": None}, "memcpy": {"fn": object()}}
+        self.trace_imports = []
+        self.m = self           # _stub_only reads `self.m.handlers` / `self.m.trace_imports`
+        self.orig, self.ours = "orig", "ours"   # _trim_stub_scratch compares `side is self.orig`
+        # the real helpers, bound to this stub: the tests exercise the implementation, not a copy of it
+        self._stub_only = lambda addr: equiv.Runner._stub_only(self, addr)
+        self._stub_fence = lambda addr: equiv.Runner._stub_fence(self, addr)
+        self._stub_spans = lambda page: equiv.Runner._stub_spans(self, page)
+
+    def _region_baseline(self, label, page):
+        return b"\0" * 0x1000
+
+    def page_of(self, addr):
+        """Same rule as Runner.page_of (kept here so the stub does not need a machine or an object)."""
+        for lo, hi, label, _page in self.region_of:
+            if lo <= addr < hi:
+                return label
+        return None
+
+
+def _trim(written_orig, written_ours, page_val, page=None, imports=(), label="heap"):
+    """Run _trim_stub_scratch for both passes over one page and return (runner, page the comparison sees).
+
+    The ORIG pass is handed the page and may rewrite it; the OURS pass is handed a fresh copy if the page
+    only the original wrote (the second pass never dirties it, so its take-out does not carry it). Each
+    call also gets the opposite pass's write set as `other`, so the contested-span rule (a buffer the
+    other pass wrote into stays compared) is exercised in both directions."""
+    r = _Region()
+    r.trace_imports = list(imports)
+    pg = page if page is not None else M.DYN_BASE
+    trial = {pg: bytes(page_val)}
+    equiv.Runner._trim_stub_scratch(r, "orig", trial, pg, written_orig,
+                                    other=set(written_ours), label=label)
+    ours = {pg: bytes(page_val)} if written_ours else trial
+    equiv.Runner._trim_stub_scratch(r, "ours", ours, pg, written_ours,
+                                    other=set(written_orig), label=label)
+    return r, ours[pg]
+
+
+def test_stub_scratch_is_excused_by_name():
+    # a page the ORIGINAL wrote (sprintf, a do-nothing stub) and our pass never wrote: excused, and the
+    # excuse is named in `uncompared` (nothing becomes invisible)
+    r, _ = _trim({equiv.M.DYN_BASE}, set(), b"hello\0\0\0\0" + b"\0" * 4084,
+                 imports=[("sprintf", (equiv.M.DYN_BASE + 0x100, equiv.M.DYN_BASE))])
+    assert r.tolerated["stub-scratch"] >= 1, r.tolerated
+    assert set(r.uncompared.values()) == {"sprintf"}, r.uncompared
+
+
+def test_stub_scratch_never_excuses_a_dword_our_build_wrote():
+    # the same page, but OUR pass wrote the dword that differs (`DYN_BASE + 4`: the dword whose low byte
+    # is the byte the original's stub produced): a real difference, never excused. A build can leave bytes
+    # in a stub buffer and produce others, and the dword it wrote of its own accord must stay compared.
+    r, _ = _trim({M.DYN_BASE}, {M.DYN_BASE + 4}, b"hello\0\0\0\0" + b"\0" * 4084,
+                 imports=[("sprintf", (M.DYN_BASE + 0x100, M.DYN_BASE))])
+    assert r.tolerated["stub-scratch"] == 0 and not r.uncompared, (r.tolerated, r.uncompared)
+
+
+def test_stub_scratch_requires_a_stub_with_the_buffer_argument():
+    # `memcpy` has a real handler: a page only the original wrote is NOT scaffold and stays compared
+    r, _ = _trim({equiv.M.DYN_BASE}, set(), b"hello\0\0\0\0" + b"\0" * 4084,
+                 imports=[("memcpy", (equiv.M.DYN_BASE + 0x100, equiv.M.DYN_BASE))])
+    assert r.tolerated["stub-scratch"] == 0 and not r.uncompared, (r.tolerated, r.uncompared)
+
+
+def test_stub_scratch_page_level_fence_is_named_and_bounded_to_heap_and_misc():
+    r = _Region()
+    r.trace_imports = [("sprintf", (M.DYN_BASE + 0x100, M.DYN_BASE))]
+    r._lastref = {"mem": {}}
+    fence = r._stub_fence                      # the real Runner._stub_fence, bound by the stub
+    assert fence(M.DYN_BASE) == "sprintf"                        # DYN: a stub's buffer page
+    assert fence((M.DYN_BASE & ~0xFFF) | 0x800) == "sprintf"
+    # a pool page is never fenced: our own pass writing it is real evidence, not stub scaffolding
+    r.region_of.append((M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE, "pool", True))
+    assert fence(M.POOL_BASE) is None
+    # and no page is fenced without a comparison in flight (self._lastref unset)
+    r._lastref = None
+    assert fence(M.DYN_BASE) is None
+
+
+def test_heap_exhausted_is_recognised():
+    assert equiv.M.is_heap_exhausted("emulated heap exhausted (1073741824 bytes)")
+    assert not equiv.M.is_heap_exhausted("huge memcpy 0x9000000")
+
+
+def test_budget_cutoff_and_heap_exhausted_are_not_verdicts():
+    # A partial run is never a verdict (camera 0x49b630 / cam_view 0x4ea8e0), but a REAL mismatch outranks
+    # every "the run was cut short" excuse: agent_hud 0x4fba40 had 200 real mismatches and 16 heap-exhausted
+    # inputs, and the invalidation must not silence the FAIL. The guards carry `not mism` (and the stop-early
+    # branch `not mism or not valid`), and the invalidation branches sit BEFORE the mismatch branches, so the
+    # guard is what protects them - the order alone is not the rule.
+    src = open(os.path.join(HERE, "equiv.py")).read()
+    i_cut = src.index("budget_cut = out.get(")
+    i_budget = src.index("elif not mism and budget_cut and budget_cut * 20 >= cut_total:")
+    i_heap = src.index('elif not mism and (out.get("heap_exhausted", 0) + out.get("heap_exhausted_ours", 0)) * 20 >=')
+    i_fail = src.index("elif mism and first.get(\"kind\") == \"local-address\"")
+    assert i_cut < i_budget < i_heap < i_fail, (i_cut, i_budget, i_heap, i_fail)
+    assert "not a verdict" in src[i_budget:i_heap] and "not a verdict" in src[i_heap:i_fail]
+    assert 'if out.get("stopped_early") and (not mism or not valid):' in src
+    assert 'elif not mism and out.get("wall_timeout"):' in src
+    # a runaway input is discarded as such (one among hundreds must not invalidate the whole row)
+    assert 'out["budget_cutoff"] = out.get("budget_cutoff", 0) + 1' in src
+    assert 'key = "budget(cut-off)"' in src
+    # our own pass being cut off is counted too, and it is not silently a difference
+    assert 'out["cutoff_ours"] = out.get("cutoff_ours", 0) + 1' in src
