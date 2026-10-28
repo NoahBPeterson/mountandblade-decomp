@@ -475,10 +475,11 @@ __declspec(noinline) char __fastcall check_animation(const int& value)
 // esp+0x18: a by-value temporary per call site would get a frame slot of its own)
 #define SET_LV(e) do { lv_ = (e); set_lvalue(locals, lv_); } while (0)
 
+// buf: 0x920..0xb20 in the original frame (single-use temporaries fill the rest up to the link buffers at 0xd20)
 // @ 0x49fa10
 char Operation::execute(__int64* locals, int* context, int* error)
 {
-    char buf[0x400];
+    char buf[0x200];
     __int64 lv_;
     g_cur_opcode = id;
     unsigned op_word = id;
@@ -1014,11 +1015,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::position_move_z:
         if (check_register((int)params[0])) {
-            sf_0 = (float)params[1] * 0.01f;
+            float d = (float)params[1] * 0.01f;
             if (params[2])
-                script_pos((int)params[0]).o.z += sf_0;
+                script_pos((int)params[0]).o.z += d;
             else
-                script_pos((int)params[0]).o += sf_0 * script_pos((int)params[0]).u;
+                script_pos((int)params[0]).o += d * script_pos((int)params[0]).u;
         }
         break;
     case op::position_rotate_x:
@@ -1376,7 +1377,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 color = (int)params[1];
             tstring text = g_script.expand(g_strings.get_string((int)params[0], types[0]));
             g_msglog.add(text, color);
-            char num[0x200];
+            char num[32];      // 0x890..0x8b0 in the original frame
             _itoa(color, num, 10);
             GameX* g = game();
             if (g->message_log.len > 2)
@@ -2046,10 +2047,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 int k = rand_below(&i);
                 TroopX* troops = game()->troops;
                 if (dst < troops[(int)params[0]].inv_count() && troops[(int)params[1]].items[k].item >= 0) {
-                    sf_0 = 1.0f;
-                    sf_1 = ((float)troops[(int)params[1]].level + 10.0f) * 10.0f /
+                    float one = 1.0f;
+                    sf_0 = ((float)troops[(int)params[1]].level + 10.0f) * 10.0f /
                               item_kind(troops[(int)params[1]].items[k].item)->value;
-                    float chance = fmin_ref(&sf_0, &sf_1) * ((float)params[2] * 0.01f);
+                    float chance = fmin_ref(&one, &sf_0) * ((float)params[2] * 0.01f);
                     if (frand() < chance) {
                         ItemRef* src = &troop((int)params[1])->items[k];
                         if (!(item_kind(src->item)->type_flags & (itp_unique | itp_always_loot))) {
@@ -2981,8 +2982,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             rgl::vector4* p = &script_pos((int)params[2]).o;
             sf_0 = 0, sf_1 = 0, sf_2 = 0;
             si_0 = ((level*)m->scene)->nearest_face((const float*)p);
-            sv_0;
-            ((Sel*)&m->teams[(int)params[0]])->set_vec((const int*)p, &si_0, (const int*)&sv_0.set(sf_2, sf_1, sf_0));
+            vec4 off;
+            ((Sel*)&m->teams[(int)params[0]])->set_vec((const int*)p, &si_0, (const int*)&off.set(sf_2, sf_1, sf_0));
             mission()->unselect_team((int)params[0]);
         }
         break;
@@ -3301,10 +3302,15 @@ char Operation::execute(__int64* locals, int* context, int* error)
             // temporary itself (C4238), as the original: no copy into a third vector
             rgl::vector4 a, b;
             const rgl::vector4* scale;
-            if (params[3] == 0)
-                scale = &a.set(1.0f, 1.0f, 1.0f);
-            else
-                scale = &(b.set((float)params[3], (float)params[3], (float)params[3]) * (1.0f / g_fixed_point_multiplier));
+            if (params[3] == 0) {
+                float z = 1.0f, y = 1.0f, x = 1.0f;
+                scale = &a.set(x, y, z);
+            } else {
+                float s = 1.0f / g_fixed_point_multiplier;
+                float x, y, z;
+                x = y = z = (float)params[3];
+                scale = &(b.set(z, y, x) * s);
+            }
             g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), *scale);
         }
         break;
@@ -3387,8 +3393,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_0 = (float)params[3] / m;
             sf_1 = (float)params[2] / m;
             sf_2 = (float)params[1] / m;
-            sv_0;
-            g_tableaus.add_point_light(&script_pos((int)params[0]), sv_0.set(sf_2, sf_1, sf_0));
+            vec4 c;
+            g_tableaus.add_point_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
         break;
     case op::cur_tableau_add_sun_light:
@@ -3397,8 +3403,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_0 = (float)params[3] / m;
             sf_1 = (float)params[2] / m;
             sf_2 = (float)params[1] / m;
-            sv_0;
-            g_tableaus.add_sun_light(&script_pos((int)params[0]), sv_0.set(sf_2, sf_1, sf_0));
+            vec4 c;
+            g_tableaus.add_sun_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
         break;
     case op::cur_tableau_add_mesh:
@@ -3414,10 +3420,15 @@ char Operation::execute(__int64* locals, int* context, int* error)
             // temporary itself (C4238), as the original: no copy into a third vector
             rgl::vector4 a, b;
             const rgl::vector4* scale;
-            if (params[2] == 0)
-                scale = &a.set(1.0f, 1.0f, 1.0f);
-            else
-                scale = &(b.set((float)params[2], (float)params[2], (float)params[2]) * (1.0f / g_fixed_point_multiplier));
+            if (params[2] == 0) {
+                float z = 1.0f, y = 1.0f, x = 1.0f;
+                scale = &a.set(x, y, z);
+            } else {
+                float s = 1.0f / g_fixed_point_multiplier;
+                float x, y, z;
+                x = y = z = (float)params[2];
+                scale = &(b.set(z, y, x) * s);
+            }
             g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
         }
         break;
@@ -3434,10 +3445,15 @@ char Operation::execute(__int64* locals, int* context, int* error)
             // temporary itself (C4238), as the original: no copy into a third vector
             rgl::vector4 a, b;
             const rgl::vector4* scale;
-            if (params[2] == 0)
-                scale = &a.set(1.0f, 1.0f, 1.0f);
-            else
-                scale = &(b.set((float)params[2], (float)params[2], (float)params[2]) * (1.0f / g_fixed_point_multiplier));
+            if (params[2] == 0) {
+                float z = 1.0f, y = 1.0f, x = 1.0f;
+                scale = &a.set(x, y, z);
+            } else {
+                float s = 1.0f / g_fixed_point_multiplier;
+                float x, y, z;
+                x = y = z = (float)params[2];
+                scale = &(b.set(z, y, x) * s);
+            }
             g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
         }
         break;

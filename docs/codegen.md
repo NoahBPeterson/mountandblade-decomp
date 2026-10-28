@@ -491,6 +491,26 @@ callee preserves it. To reproduce it:
     Hoisting only the 150 locals the pre-hoist listing shows under `lea`
     restored the original's low map: shared slot 0x10, `result` 0x17, `lv_`
     0x18, params 0x28 (original 0x2c).
+  - **The real packing predicate: escape to an opaque callee.** An object
+    (named local *or* `$T` temporary) whose address goes to a callee whose
+    body cl cannot see is assumed to escape and keeps a private slot for the
+    whole function; passed to a callee defined in the same object, it packs.
+    Probe (`work/match/probe/gen_esc5.py`): 60 cases of
+    `use(g((int)params[k]))` give 60 temp slots with `g` external, 2 with `g`
+    defined (`__declspec(noinline)`) in the TU. In execute(), every shared
+    `$T` fed a same-TU validator; every private one an external helper.
+    Giving `clamp_index`, `vector4::set`, `SlotArray::get/set`, ... visible
+    bodies moved the frame `0x24cc -> 0x22d0` and params to the original's 0x2c.
+    The original's helpers were header inlines left out of line.
+    Not every callee was visible, though: moving `Elem::set_lvalue`/`get_operand`
+    (0x49d500/0x49d650) into the interpreter's object packs the lvalue
+    temporaries, but cl then drops `locals` from `ebp` (the original pushes `ebp`
+    at every site) and cross-jumps the SET_LV tails into 12 hubs / 39 calls (the
+    original: one 57-jump hub, 147 calls; opaque callee: 134). So execute() did
+    not see those two bodies; check `ebp` and the hub count before adding one.
+    In a function this size a named block local escaping to an opaque callee
+    stays private too (`do { __int64 lv = (e); set_lvalue(locals, lv); }`:
+    326 named locals in 290 slots).
   - **The inliner has a per-function budget too.** In the whole interpreter cl
     stopped inlining the `inline` accessors (`party`, `troop`, `agent`, ...:
     147/97/45 out-of-line calls); the original inlines them all (its callee
