@@ -678,6 +678,45 @@ inline `fsqrt` is a difference this guide has no confirmed source lever for.
   returns the old length). An x87 return must be declared `double` to come back
   in `st0`.
 
+### 9.4a Operation order cl rewrites (and how to find it)
+
+cl 13.10 at `/O2` changes floating-point arithmetic in ways that change results.
+In a big function, register allocation hides these among a lot of noise. So compare
+only the x87 arithmetic.
+
+- **Method.** For each unit (a function, or each case of a switch), take the
+  sequence of x87 arithmetic instructions: `fadd/fsub(r)/fmul/fdiv(r)`, `fsin`,
+  `fcos`, `fptan`, `fpatan`, `fsqrt`, `fchs`, `fabs`, `fscale`, `frndint`,
+  `fyl2x`. Leave out loads, stores, `fxch` and register numbers. Give every
+  memory operand that is a constant its value: the `__real@<hex>` name on our
+  side, the bytes at the address in the image on the original's side. Then
+  compare the two sequences. Any difference changes what is computed.
+  `work/match/scratch_fpscan.py` (a scratch script, gitignored) does this for `Operation::execute`'s cases:
+  before the fixes below, 5–9 of its 66 cases with x87 arithmetic differed;
+  after them, 0. Register allocation can't move this metric, so it isn't
+  goodharted by allocator noise.
+- **Reassociation: `x * k / m` becomes `x / m * k`.** With a constant `k`, cl
+  divides first. The original's `fmul [k]` before `fdiv st(1)` needs explicit
+  parentheses: `((float)p * 0.017453292f) / m`. cl keeps the parenthesised order.
+  (M&B `store_sin`/`store_cos`/`store_tan`.)
+- **Reciprocal: several divides by one float become one `1/m` and multiplies.**
+  Any `float m = …` local that divides two or more values is turned into
+  `fld 1.0; fdivr` / `fdiv [m]` followed by `fmul`s, which rounds differently. It
+  happens to separate statements, comma initialisers and arguments alike (probed
+  5 spellings). The original's three `fdiv st(1)` come from dividing by the
+  **integer global** at each use, `(float)p / g_fixed_point_multiplier`: cl
+  converts it once (`fild`) and divides by it. To keep a float divisor in memory
+  (original: `fild [g]; fstp [t]; fdiv [t]; fdiv [t]; fmul [t]`), write the
+  conversion at every use, `(float)p / (float)g_fixed_point_multiplier`: cl
+  merges the conversions into one stored temporary after the reciprocal pass
+  runs. (M&B tableau light/camera cases, `store_pow`.)
+- **`pow`/`atan2` with float arguments pick the float overload.** In C++, VC7.1's
+  `<math.h>` has `float pow(float, float)`. Our `pow((float)a / m, …)` called it
+  (`?pow@@YAMMM@Z`), while the original calls the CRT intrinsic `_CIpow`, which
+  takes its arguments on the x87 stack in double precision. Cast the arguments
+  to `double`. A `call` with no pushed arguments, right after two values are
+  left on the x87 stack, is the sign of an intrinsic (`_CIpow`, `_CIatan2`, …).
+
 ### 9.5 Reading float mismatches
 
 Compare **aligned instructions**, not differing-byte counts (section 16), and

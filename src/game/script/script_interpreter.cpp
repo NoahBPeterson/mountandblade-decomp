@@ -3359,12 +3359,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_tableaus.set_background_color((int)params[0]);
         break;
     case op::cur_tableau_set_ambient_light:
+        // the original divides each component by the int multiplier: a float local divisor gets rewritten as one
+        // reciprocal and three multiplies (different rounding). Same in camera_parameters / point_light / sun_light
         // (cur_tableau_set_ambient_light, <red_fixed_point>, <green_fixed_point>, <blue_fixed_point>)
         if (g_tableaus.stack.size()) {
-            float m = (float)g_fixed_point_multiplier;
-            sf_0 = (float)params[2] / m;
-            sf_1 = (float)params[1] / m;
-            sf_2 = (float)params[0] / m;
+            sf_0 = (float)params[2] / g_fixed_point_multiplier;
+            sf_1 = (float)params[1] / g_fixed_point_multiplier;
+            sf_2 = (float)params[0] / g_fixed_point_multiplier;
             sv_0;
             g_tableaus.set_ambient_light(sv_0.set(sf_2, sf_1, sf_0));
         }
@@ -3377,11 +3378,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (.., <is_perspective>, <camera_width_times_1000>, <camera_height_times_1000>, <camera_near_times_1000>,
         // <camera_far_times_1000>): fixed point in fact
         if (g_tableaus.stack.size()) {
-            float m = (float)g_fixed_point_multiplier;
-            sf_0 = (float)params[4] / m;
-            sf_1 = (float)params[3] / m;
-            sf_2 = (float)params[2] / m;
-            sf_3 = (float)params[1] / m;
+            sf_0 = (float)params[4] / g_fixed_point_multiplier;
+            sf_1 = (float)params[3] / g_fixed_point_multiplier;
+            sf_2 = (float)params[2] / g_fixed_point_multiplier;
+            sf_3 = (float)params[1] / g_fixed_point_multiplier;
             bool perspective = params[0] != 0;
             g_tableaus.set_camera_parameters(&perspective, &sf_3, &sf_2, &sf_1, &sf_0);
         }
@@ -3389,20 +3389,18 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::cur_tableau_add_point_light:
         // the position is operand 0 and the colour operands 1..3 (the header's <map_icon_id> is not read)
         if (check_register((int)params[0]) && g_tableaus.stack.size()) {
-            float m = (float)g_fixed_point_multiplier;
-            sf_0 = (float)params[3] / m;
-            sf_1 = (float)params[2] / m;
-            sf_2 = (float)params[1] / m;
+            sf_0 = (float)params[3] / g_fixed_point_multiplier;
+            sf_1 = (float)params[2] / g_fixed_point_multiplier;
+            sf_2 = (float)params[1] / g_fixed_point_multiplier;
             vec4 c;
             g_tableaus.add_point_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
         break;
     case op::cur_tableau_add_sun_light:
         if (check_register((int)params[0]) && g_tableaus.stack.size()) {
-            float m = (float)g_fixed_point_multiplier;
-            sf_0 = (float)params[3] / m;
-            sf_1 = (float)params[2] / m;
-            sf_2 = (float)params[1] / m;
+            sf_0 = (float)params[3] / g_fixed_point_multiplier;
+            sf_1 = (float)params[2] / g_fixed_point_multiplier;
+            sf_2 = (float)params[1] / g_fixed_point_multiplier;
             vec4 c;
             g_tableaus.add_sun_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
@@ -3869,28 +3867,31 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::store_pow:
-        {
-            float m = (float)g_fixed_point_multiplier;
-            SET_LV(round_i64((float)(pow((float)params[1] / m, (float)params[2] / m) * m)));
-        }
+        // pow(double, double): the original calls the CRT's _CIpow on the x87 stack (the float overload would call a
+        // float pow). The multiplier is converted at each use: cl stores it once and divides by it, where a float
+        // local divisor is rewritten as one reciprocal and multiplies (different rounding)
+        SET_LV(round_i64((float)(pow((double)((float)params[1] / (float)g_fixed_point_multiplier),
+                                     (double)((float)params[2] / (float)g_fixed_point_multiplier)) *
+                                 (float)g_fixed_point_multiplier)));
         break;
     case op::store_sin:
-        // degrees in fixed point
+        // degrees in fixed point. The parentheses are the original's operation order (x * k, then / m): without
+        // them cl 13.10 reassociates `x * k / m` into `x / m * k`, which can round differently (also cos/tan below)
         {
             float m = (float)g_fixed_point_multiplier;
-            SET_LV(round_i64((float)(sin((float)params[1] * 0.017453292f / m) * m)));
+            SET_LV(round_i64((float)(sin(((float)params[1] * 0.017453292f) / m) * m)));
         }
         break;
     case op::store_cos:
         {
             float m = (float)g_fixed_point_multiplier;
-            SET_LV(round_i64((float)(cos((float)params[1] * 0.017453292f / m) * m)));
+            SET_LV(round_i64((float)(cos(((float)params[1] * 0.017453292f) / m) * m)));
         }
         break;
     case op::store_tan:
         {
             float m = (float)g_fixed_point_multiplier;
-            SET_LV(round_i64((float)(tan((float)params[1] * 0.017453292f / m) * m)));
+            SET_LV(round_i64((float)(tan(((float)params[1] * 0.017453292f) / m) * m)));
         }
         break;
     case op::convert_to_fixed_point:
