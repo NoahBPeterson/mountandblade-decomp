@@ -49,6 +49,63 @@
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../world.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
+// ==== by-reference helpers with their bodies in this object ================================================
+// The original's interpreter sees these bodies (header inlines its inliner left out of line in the 70 KB execute()):
+// a temporary or local whose address is passed to a callee cl can see is known not to escape, so it shares the
+// low frame slots (0x10/0x20/0x24...) with the validator arguments. Passed to an opaque callee, every such object
+// keeps a private slot for the whole function (frame 0x24cc -> 0x22d0, params back at 0x2c). The canonical
+// definitions (and their manifest rows) stay in their own modules; tools/relink/build.py takes each duplicate
+// from its row's module.
+__declspec(noinline) int __cdecl clamp_index(const int* v, const int* lo, const int* hi)
+{
+    if (*v < *lo) return *lo;
+    if (*v >= *hi) return *hi - 1;
+    return *v;
+}
+__declspec(noinline) int __cdecl round_float(float* p)
+{
+    float fl = (float)floor((double)*p);
+    int i = (int)fl;
+    return (*p - fl <= 0.5f) ? i : i + 1;
+}
+__declspec(noinline) int __cdecl rand_below(const int* n)
+{
+    if (*n <= 1) return 0;
+    return rand() % *n;
+}
+__declspec(noinline) __int64 __cdecl round_i64(const float* p)
+{
+    float fl = (float)floor((double)*p);
+    long long i = (long long)fl;
+    if (!(*p - fl <= 0.5f))
+        i += 1;
+    return i;
+}
+__declspec(noinline) rgl::vector4& rgl::vector4::set(const float& x_, const float& y_, const float& z_) { x = x_; y = y_; z = z_; return *this; }
+__declspec(noinline) rgl::vector4 rgl::vector4::operator*(const float& s) const { return rgl::vector4(x * s, y * s, z * s); }
+
+__declspec(noinline) int __cdecl imax_ref(const int* a, const int* b) { return *a > *b ? *a : *b; }
+__declspec(noinline) float __cdecl fmin_ref(const float* a, const float* b) { return *a < *b ? *a : *b; }
+__declspec(noinline) float __cdecl clamp(const float* x, const float* lo, const float* hi)
+{
+    return *x < *lo ? *lo : (*x >= *hi ? *hi : *x);
+}
+struct I64VecW : I64Vec { void reserve(int* _pNewsize); };   // world_data.h has the full class; same layout, no inline bodies (no COMDAT folding risk)
+__declspec(noinline) __int64 SlotArray::get(const int& slot)
+{
+    I64Vec* v = (I64Vec*)this;
+    unsigned i = slot;
+    if ((int)i < 0 || !v->_Myfirst || i >= (unsigned)(v->_Mylast - v->_Myfirst))
+        return 0;
+    return v->_Myfirst[i];
+}
+__declspec(noinline) void SlotArray::set(const int& slot, const __int64& value)
+{
+    int _n = slot + 1;
+    ((I64VecW*)(void*)this)->reserve(&_n);
+    ((I64Vec*)this)->_Myfirst[slot] = value;
+}
+
 // ==== error reporting and argument validators (static, same object) =========================================
 
 // @ 0x49cc60
@@ -3240,18 +3297,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::cur_tableau_add_tableau_mesh:
         // (cur_tableau_add_tableau_mesh, <tableau_material_id>, <value>, <position_register_no>, [scale_fixed_point])
         if (warn_tableau((int)params[0]) && check_register((int)params[2]) && g_tableaus.stack.size()) {
-            vec4 a, b, c;
+            // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
+            // temporary itself (C4238), as the original: no copy into a third vector
+            rgl::vector4 a, b;
             const rgl::vector4* scale;
-            if (params[3] == 0) {
-                float z = 1.0f, y = 1.0f, x = 1.0f;
-                scale = &a.set(x, y, z);
-            } else {
-                float s = 1.0f / g_fixed_point_multiplier;
-                float x, y, z;
-                x = y = z = (float)params[3];
-                c = b.set(z, y, x) * s;
-                scale = &c;
-            }
+            if (params[3] == 0)
+                scale = &a.set(1.0f, 1.0f, 1.0f);
+            else
+                scale = &(b.set((float)params[3], (float)params[3], (float)params[3]) * (1.0f / g_fixed_point_multiplier));
             g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), *scale);
         }
         break;
@@ -3357,18 +3410,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 alpha = 1.0f;
             else
                 alpha = (float)params[3] / g_fixed_point_multiplier;
-            vec4 a, b, c;
+            // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
+            // temporary itself (C4238), as the original: no copy into a third vector
+            rgl::vector4 a, b;
             const rgl::vector4* scale;
-            if (params[2] == 0) {
-                float z = 1.0f, y = 1.0f, x = 1.0f;
-                scale = &a.set(x, y, z);
-            } else {
-                float s = 1.0f / g_fixed_point_multiplier;
-                float x, y, z;
-                x = y = z = (float)params[2];
-                c = b.set(z, y, x) * s;
-                scale = &c;
-            }
+            if (params[2] == 0)
+                scale = &a.set(1.0f, 1.0f, 1.0f);
+            else
+                scale = &(b.set((float)params[2], (float)params[2], (float)params[2]) * (1.0f / g_fixed_point_multiplier));
             g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
         }
         break;
@@ -3381,18 +3430,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 alpha = 1.0f;
             else
                 alpha = (float)params[3] / g_fixed_point_multiplier;
-            vec4 a, b, c;
+            // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
+            // temporary itself (C4238), as the original: no copy into a third vector
+            rgl::vector4 a, b;
             const rgl::vector4* scale;
-            if (params[2] == 0) {
-                float z = 1.0f, y = 1.0f, x = 1.0f;
-                scale = &a.set(x, y, z);
-            } else {
-                float s = 1.0f / g_fixed_point_multiplier;
-                float x, y, z;
-                x = y = z = (float)params[2];
-                c = b.set(z, y, x) * s;
-                scale = &c;
-            }
+            if (params[2] == 0)
+                scale = &a.set(1.0f, 1.0f, 1.0f);
+            else
+                scale = &(b.set((float)params[2], (float)params[2], (float)params[2]) * (1.0f / g_fixed_point_multiplier));
             g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
         }
         break;
