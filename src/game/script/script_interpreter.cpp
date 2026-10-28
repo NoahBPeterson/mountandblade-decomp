@@ -3752,7 +3752,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // destroys the game object
         g_windows.clear_all();
         if (g_game) {
-            delete game();
+            // `delete game()` spelled out: the original calls ~GameX (0x492f40) and operator delete in place, where cl
+            // (inline budget spent) would call the scalar deleting destructor out of line
+            GameX* g = game();
+            g->dtor();
+            operator delete(g);
             g_game = 0;
         }
         g_windows.set_state(4);

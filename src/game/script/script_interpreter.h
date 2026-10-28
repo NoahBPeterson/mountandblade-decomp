@@ -247,7 +247,7 @@ extern ScreenStack g_screen_stack;      // 0xa739f8
 // ---- vectors and frames ----------------------------------------------------------------------------------------------
 // vec4: the vector4 members rgl.h does not declare
 struct vec4 : rgl::vector4 {
-    vec4& operator=(const rgl::vector4& v) { *(rgl::vector4*)this = v; return *this; }
+    __forceinline vec4& operator=(const rgl::vector4& v) { *(rgl::vector4*)this = v; return *this; }   // inlined in execute(): the original copies the four floats in place
     __forceinline vec4& set(const float& x_, const float& y_, const float& z_) { rgl::vector4::set(x_, y_, z_); return *this; }   // 0x407c30 (rgl::vector4::set)
     vec4 operator*(const float& s) const;                       // 0x407cd0 (hidden return)
     void operator+=(const rgl::vector4& o);                     // 0x40e420 (thiscall, ret 4)
@@ -602,6 +602,7 @@ struct GameX {
     // thiscall on the game object: the interpreter's names for the functions of GameData (include/game_data.h), GameW (world_data.cpp) and
     // the other classes that define these addresses; each forwards (inline) to the definition's class
     ~GameX();                                                               // 0x492f40
+    void dtor();                                                            // 0x492f40 (~GameX called directly: an explicit g->~GameX() goes through the scalar deleting destructor)
     __forceinline void set_names(int line, const tstring& text) { ((GameData*)this)->set_names(line, &text); }                         // 0x48a380 (ret 8)
     __forceinline char can_transfer(int joiner, int host, char flip_prisoners) { return ((GameW*)this)->can_transfer(joiner, host, flip_prisoners); }   // 0x4918d0 (ret 0xc)
     __forceinline void sl_update_avg() { ((GameData*)this)->sl_update_avg(); }                                                         // 0x48a000
