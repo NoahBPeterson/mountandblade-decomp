@@ -287,7 +287,7 @@ __forceinline float fmin_ref(const float& a, const float& b) { return fmin_ref(&
 double __cdecl ceil_float_comdat(float x);                     // 0x404590 (src/dxframework/d3dfont.cpp)
 
 // ---- position registers: g_script + 0x450, 128 frames of 0x40 bytes ----------------------------------------------
-inline Pos& script_pos(int i) { return ((Pos*)((char*)&g_script + 0x450))[i]; }
+__forceinline Pos& script_pos(int i) { return ((Pos*)((char*)&g_script + 0x450))[i]; }
 extern int g_fixed_point_multiplier;    // 0xa70460 (g_script + 0x20; position_get_x 0x4a1d65)
 
 // std::vector<int> (VC7.1: allocator word, then first / last / end)
@@ -493,7 +493,7 @@ struct ItemKindX {
     __forceinline tstring* plural_name() { return ((TroopRec*)this)->plural_name(); }    // 0x48d6d0 (folded with TroopRec::plural_name)
 };
 SI_ASSERT(itemkind_size, sizeof(ItemKindX) == 0x238);
-inline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; }
+__forceinline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; }
 
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
@@ -663,13 +663,13 @@ SI_ASSERT(game_cloud, offsetof(GameX, cloud_amount) == 0x13b3c);
 SI_ASSERT(game_log, offsetof(GameX, message_log) == 0x13b50);
 SI_ASSERT(game_menu, offsetof(GameX, context_menu_values) == 0x13eec);
 SI_ASSERT(game_tpos, offsetof(GameX, trigger_object_pos) == 0x14014);
-inline GameX* game() { return (GameX*)g_game; }
-inline PartyV* party(int id) { return (PartyV*)g_game->parties.get(id); }
+__forceinline GameX* game() { return (GameX*)g_game; }
+__forceinline PartyV* party(int id) { return (PartyV*)g_game->parties.get(id); }
 inline rgl::vector4& party_pos(PartyV* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
-inline TroopX* troop(int id) { return &game()->troops[id]; }
-inline QuestRec* quest(int id) { return &game()->quests[id]; }
-inline FactionRec* faction(int id) { return &game()->factions[id]; }
-inline SceneRec* scene(int id) { return &game()->scenes[id]; }
+__forceinline TroopX* troop(int id) { return &game()->troops[id]; }
+__forceinline QuestRec* quest(int id) { return &game()->quests[id]; }
+__forceinline FactionRec* faction(int id) { return &game()->factions[id]; }
+__forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }
 
 extern int g_conversation_troop;        // 0x8ed50d4 (g_dialogs +0xc; start_quest)
 extern int g_encountered_party;         // 0x8ed50d8 (g_dialogs +0x10; party_can_join)
@@ -843,8 +843,8 @@ SI_ASSERT(prop_scale, offsetof(PropInst, scale_x) == 0x158);
 // the 0x4c-byte environment rows (EnvRow in src/game/terrain_b/emit.h)
 struct EnvRowX { char pad0[0x44]; unsigned fog_color; char pad48[0x4c - 0x48]; };
 extern EnvRowX* g_env_rows;           // 0x5e28f4 (set_fog_distance 0x4aa230)
-inline MissionX* mission() { return (MissionX*)g_mission; }
-inline Agent* agent(int id) { return mission()->agents.get(id); }
+__forceinline MissionX* mission() { return (MissionX*)g_mission; }
+__forceinline Agent* agent(int id) { return mission()->agents.get(id); }
 
 // ---- the operation record ---------------------------------------------------------------------------------------
 // Elem (dialog_manager.h): +0 opcode word (flags neg / this_or_next in the top bits), +8 operand count, +0x10 the

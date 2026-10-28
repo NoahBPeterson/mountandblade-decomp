@@ -485,6 +485,19 @@ callee preserves it. To reproduce it:
     slots reused by all cases. Routing about 220 `set_lvalue(locals, <temporary>)`
     sites through one function-scope `__int64` had already cut the frame from
     `0x2d18` to `0x2630` and removed 6 KB of code — same mechanism.
+  - **Hoist only the address-taken locals.** Hoisting every block-local scalar
+    (161 decls) also turned register/spill values such as `party(p)` ids into
+    function-scope homes with private slots (`si_0`: 177 uses below params).
+    Hoisting only the 150 locals the pre-hoist listing shows under `lea`
+    restored the original's low map: shared slot 0x10, `result` 0x17, `lv_`
+    0x18, params 0x28 (original 0x2c).
+  - **The inliner has a per-function budget too.** In the whole interpreter cl
+    stopped inlining the `inline` accessors (`party`, `troop`, `agent`, ...:
+    147/97/45 out-of-line calls); the original inlines them all (its callee
+    counts: `PartyMgr::get` 193, `AgentTable::get` 73). `__forceinline` restores
+    the counts. Compare callee histograms of both sides before reading layout.
+  - Listing offsets: `fb = frame + 16 - N` for `_x$ = -N` (fb = esp after the
+    four callee-saved pushes), the same base as capstone displacements.
   - Measure with `work/match/scratch_si_bisect.py <a> <b>` (per-case-range
     compile; reads frame from the `sub esp`/`mov eax, N; call __chkstk` prologue
     and counts named/temporary slot symbols in the `/FAs` listing).
