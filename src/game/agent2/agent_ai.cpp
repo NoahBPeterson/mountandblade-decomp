@@ -803,7 +803,7 @@ void Agent::update_anims(int unused)
         unsigned ev = s->events;
         if ((ev & 0x3000000) == 0 || (body->skel->chans[i].busy() && (ev & 0x2000000) == 0))
             s->events = 0;
-        if (!(s->phase < 0.0f)) {
+        if (s->phase >= 0.0f) {                     // false for a NaN phase too (0x43da1f: test ah,1 = C0, set when unordered)
             ((Curve*)body->skel)->set_rec_phase(i, s->phase);
             s->phase = -1.0f;
         }
