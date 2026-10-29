@@ -16,6 +16,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 os.environ.setdefault("DIFFTEST_NO_LEDGER", "1")
 os.environ.setdefault("DIFFTEST_FAIL_DIR", os.path.join(ROOT, "work", "difftest", "test_fail_inputs"))
+os.environ.setdefault("DIFFTEST_REGRESS_DIR", os.path.join(ROOT, "work", "difftest", "test_regress"))
 import capstone  # noqa: E402
 import equiv  # noqa: E402
 import machine as M  # noqa: E402
@@ -270,10 +271,115 @@ def resmgr_run(extra, src=RESMGR_SRC):
 
 
 def test_transparent_hides_only_the_call_boundary():
-    base = resmgr_run([])
+    base = resmgr_run(["--no-auto-transparent"])
     assert base["verdict"] == "FAIL" and "call #" in base["first_mismatch"]["observable"], base
     r = resmgr_run(FS_TRANSPARENT)
     assert r["verdict"] in ("PASS", "WEAK"), r
+
+
+def test_marker_names_skip_declspec():
+    """`__declspec(noinline) char __fastcall check_register(...)` under a marker is check_register, not __declspec."""
+    import slice as S
+    src = os.path.join(ROOT, "src", "game", "script", "script_interpreter.cpp")
+    assert S.marker_names(src, 0x49cd00) == ["check_register"]
+
+
+def test_crt_startup_state():
+    """_mtinit/_mtinitlocks state: the preallocated CRT locks have critical sections and _getptd finds the main
+    thread's _tiddata through the TLS fallback (without it, quest_log 0x4ee910 overflowed the stack in _lock)."""
+    import struct
+    m = M.Machine(R.Image())
+    u = lambda a: struct.unpack("<I", bytes(m.uc.mem_read(a, 4)))[0]
+    table = m.crt_locktable if hasattr(m, "crt_locktable") else 0x5d61b0
+    assert u(table + 8 * 0xA) != 0                       # _LOCKTAB_LOCK
+    idx = u(0x5d6150)                                    # __tlsindex
+    assert idx != 0xFFFFFFFF
+    assert u(M.TLS_BLOCKS + 0x1000 * idx + 0x54) == 0x5d67d0   # ptmbcinfo = &__initialmbcinfo
+    assert all(m.image_base_page(".data", p) == bytes(m.uc.mem_read(p, 0x1000)) for p in m.image_extra_base)
+
+
+def test_lookup_stub_makes_row_testable():
+    """make_scroll_track calls resmgr::get_object, which exit()s on a name an empty test resource manager lacks:
+    stubbed (the default) the row is measured; unstubbed every input ends at the exit."""
+    src = os.path.join(ROOT, "src", "game", "char_sheet", "quest_log.cpp")
+    run = lambda *x: equiv.test_function("quest_log", 0x4ee910, equiv.parse_args(
+        ["quest_log", "4ee910", "--src", src, "--inputs", "150", "--no-regress", *x]))
+    r = run()
+    assert r["verdict"] in ("PASS", "WEAK") and r["valid"] > 0, r
+    r = run("--stub", "")
+    assert r["verdict"] == "UNSUPPORTED" and r["valid"] == 0, r
+
+
+def test_caller_dead_register_is_tolerated():
+    """SlotArray::get 0x48d650: ours leaves a dead value in ecx, which the original never writes; none of the 10
+    call sites reads ecx before overwriting it (callerdeps SAFE), so the difference is tolerated, not a FAIL."""
+    src = os.path.join(ROOT, "src", "game", "mission_ui2", "mission_3.cpp")
+    r = equiv.test_function("mission_3", 0x48d650, equiv.parse_args(
+        ["mission_3", "48d650", "--src", src, "--inputs", "100", "--no-regress"]))
+    assert r["verdict"] in ("PASS", "WEAK") and r["tolerated"].get("caller-dead-ecx"), r
+
+
+def test_callee_narrow_args():
+    """tstring::push_back(char) 0x42be70 reads its argument as a byte (`mov al, [esp+8]` after `push esi`): only that
+    byte of the caller's pushed dword is compared. A dword-reading callee keeps the full width."""
+    r = equiv.Runner.__new__(equiv.Runner)
+    r.img, r.arity_cache = R.Image(), {}
+    assert r.callee_arg_widths(0x42be70) == {0: 1}
+    assert r.callee_arg_widths(0x42bcb0) == {}          # tstring::assign(const char*): a pointer
+
+
+def test_tail_call_pops_count():
+    """0x48bda0 has no ret of its own: it ends in `jmp 0x488720`, whose `ret 0x10` pops its four arguments. Read as
+    0, every input was discarded as orig-abi-broken; with the tail target's pops the row is measured."""
+    src = os.path.join(ROOT, "src", "game", "config", "ui_widgets_c.cpp")
+    r = equiv.test_function("ui_widgets_c", 0x48bda0, equiv.parse_args(
+        ["ui_widgets_c", "48bda0", "--src", src, "--inputs", "100", "--no-regress"]))
+    assert r["callee_pop"] == 0x10 and r["valid"] > 0, r
+
+
+def test_uninit_copy_is_excused():
+    """scene_tbl::placed 0x499050: Frame3's rows leave w unset and set_part copies them into the mesh, so both builds
+    store an uninitialised stack slot there (different leftovers). The original's value is a plain copy of a slot
+    its run never wrote, so it is excused; with --no-uninit-copy the row FAILs on it."""
+    src = os.path.join(ROOT, "src", "game", "world_data", "obj_tbl.cpp")
+    run = lambda *x: equiv.test_function("obj_tbl", 0x499050, equiv.parse_args(
+        ["obj_tbl", "499050", "--src", src, "--inputs", "120", "--no-regress", "--fp-tol", *x]))
+    r = run()
+    assert r["verdict"] in ("PASS", "PASS-FP", "WEAK", "WEAK-FP") and r["tolerated"].get("uninit-copy"), r
+    assert run("--no-uninit-copy")["verdict"] == "FAIL"
+
+
+def _row(sid, va, src, *x):
+    return equiv.test_function(sid, va, equiv.parse_args(
+        [sid, "%x" % va, "--src", os.path.join(ROOT, src), "--no-regress", *x]))
+
+
+def test_forced_callee_result_covers_branch():
+    """0x4b25c0 branches on `call 0x435740; test al, al`: the predicate reads game state soup never satisfies, so
+    one edge stayed missed; forcing the callee's result (both builds call it) covers it, and the switch removes it."""
+    assert _row("party_2", 0x4b25c0, "src/game/party2/party_2.cpp")["verdict"] == "PASS"
+    assert _row("party_2", 0x4b25c0, "src/game/party2/party_2.cpp", "--no-force-results")["verdict"] == "WEAK"
+
+
+def test_fault_only_edge_is_unreachable():
+    """0x48f480: the NULL-vector arm of the size idiom reads first[-1]: every input taking it faults in both builds,
+    so the edge is reported unreachable with that reason, not missed."""
+    r = _row("mission_4", 0x48f480, "src/game/mission_ui2/mission_4.cpp")
+    assert r["verdict"] == "PASS" and any("fault" in u["reason"] for u in r["edges"]["orig"]["unreachable"]), r
+
+
+def test_import_float_args_are_fp_judged():
+    """0x4f8c80 passes the listener frame to FSOUND_3D_Listener_SetAttributes by value; on some inputs the two builds'
+    floats are 1 ulp apart (x87 rounding). --fp-tol judges import arguments against the reference run like memory, so
+    the row is not a FAIL; the arguments are still compared exactly without --fp-tol."""
+    r = _row("agent_hud", 0x4f8c80, "src/game/agent5/agent_hud.cpp", "--fp-tol")
+    assert r["verdict"] != "FAIL" and not r["fp_tol"]["real_mismatches"], r
+
+
+def test_tail_call_through_pointer_is_a_fake_method():
+    """0x48d7e0 ends in `jmp [eax+0x68]`: the generated target takes the function's own arguments (no call site)."""
+    r = _row("mission_3", 0x48d7e0, "src/game/mission_ui2/mission_3.cpp")
+    assert r["verdict"] == "PASS" and not r["discarded"].get("fake-arity"), r
 
 
 def test_transparent_keeps_real_differences():
@@ -494,3 +600,53 @@ def test_budget_cutoff_and_heap_exhausted_are_not_verdicts():
     assert 'key = "budget(cut-off)"' in src
     # our own pass being cut off is counted too, and it is not silently a difference
     assert 'out["cutoff_ours"] = out.get("cutoff_ours", 0) + 1' in src
+
+
+# ---------------------------------------------------------------- switch functions case by case (case_sweep.py)
+
+def test_pin_spec():
+    """--pin parses offset, mask and values; a value outside the set is a violation the fix puts back."""
+    import invariants as INV
+    inv = INV.pin_invariant("this+0&0fffffff=848,3b")
+    assert inv.bounds == [(0x3b, 0x848)]
+    import pytest
+    with pytest.raises(ValueError):
+        INV.pin_invariant("ecx=1")
+
+
+def test_char_return_compares_al_only():
+    """A char return (mangled D/C/E) is compared on al; a short (F/G) on ax."""
+    import sig
+    assert sig.parse("?execute@Operation@@QAEDPA_JPAH1@Z").ret_width == 1
+    assert sig.parse("?f@@YAFH@Z").ret_width == 2
+
+
+def test_jump_table_beyond_2048_entries():
+    """The interpreter's 2356-entry table: every target is in the static edge model (the old 2048 cut 115 cases)."""
+    assert CF.MAX_TABLE >= 2356
+    insns = {}
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    md.detail = True
+    code = bytes.fromhex("ff2485") + (0x1000).to_bytes(4, "little")        # jmp [eax*4 + 0x1000]
+    for i in md.disasm(code, 0x100):
+        insns[i.address] = i
+    targets = {0x1000 + 4 * k: 0x200 + k for k in range(2356)}
+    cfg = CF.Cfg(insns, 0x100, 0x100, 0x4000, lambda a: targets.get(a))
+    assert sum(1 for e in cfg.edges if e[0] == 0x100) == 2356
+
+
+def test_regression_inputs_rerun():
+    """A mismatching input is kept and run first next time: the second run fails on it at input 0, even with
+    another seed, and without it (--no-regress) the cache key differs."""
+    import shutil
+    shutil.rmtree(os.environ["DIFFTEST_REGRESS_DIR"], ignore_errors=True)
+    os.environ["DIFFTEST_NO_CACHE"] = "1"
+    try:
+        path = mutant(RECT_SID, "p[0] >= lo[0]", "p[0] > lo[0]", "op")
+        r1 = equiv.test_function(RECT_SID, RECT_VA, opts("--src", path))
+        assert r1["verdict"] == "FAIL" and r1["regress_inputs"] == 0, r1
+        r2 = equiv.test_function(RECT_SID, RECT_VA, opts("--src", path, "--seed", "7"))
+        assert r2["verdict"] == "FAIL" and r2["regress_inputs"] >= 1 and r2.get("regress_failed", 0) >= 1, r2
+        assert r2["first_mismatch"]["input"] == 0 and r2["first_mismatch"]["origin"] == "regress", r2
+    finally:
+        os.environ.pop("DIFFTEST_NO_CACHE", None)

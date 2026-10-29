@@ -2,9 +2,9 @@
 """Print Mount & Blade decompilation progress as terminal tables. Standalone: run from any shell.
 
   .venv/bin/python tools/progress.py                 # coverage + per-batch tables
-  .venv/bin/python tools/progress.py --plot [out.png]  # treemap of every function (default work/progress.png;
-                                                       # group -> file -> function, area = instructions, colour =
-                                                       # verdict; needs matplotlib)
+  .venv/bin/python tools/progress.py --plot [out.png]     # progress over time (default work/progress.png)
+  .venv/bin/python tools/progress.py --treemap [out.png]  # one box per module -> function, area = instructions,
+                                                          # colour = verdict (default work/treemap.png)
 
 Coverage is computed by tools/status.py itself (run via runpy), so the numbers match docs/STATUS.md.
 """
@@ -31,6 +31,15 @@ _equiv_all = equiv
 equiv = {a for a in _equiv_all if _verd.get("%08x" % a) in ("PASS", "PASS-FP")}   # PASS-FP = PASS within fp tolerance
 equiv_fail = _equiv_all - equiv
 done = exact | equiv
+# "Instruction-exact": the original's instructions in the original's order, up to a consistent renaming of registers
+# and stack slots, with every call/global/literal operand resolved to the same original address
+# (tools/matching/insn_exact.py; tools/matching/insn_exact_sweep.py writes docs/insn_exact.json). Its own tier: not
+# counted in `done`, and these rows also appear under their equivalence verdict below.
+try:
+    _ie = json.load(open(W("docs", "insn_exact.json")))
+except (OSError, ValueError):
+    _ie = {}
+insn_exact = {int(a, 16) for a, r in _ie.get("rows", {}).items() if r.get("verdict") == "INSN-EXACT"} & game - exact
 migrated = S["migrated"] & done
 
 
@@ -58,6 +67,21 @@ print(table(["Tier", "Functions", "Share", "Insns", "Share (insns)", "Code size"
              row("Not equivalent: weak / untestable / FAIL", equiv_fail),
              row("Total counted as done", done),
              row("Partial (not counted)", partial), row("No source yet", game - done - partial - equiv_fail)]))
+print()
+print(table(["Instruction-exact (not counted above)", "Functions", "Share", "Insns", "Share (insns)", "Code size",
+             "Share (size)"],
+            [row("Same instructions, renamed registers/slots", insn_exact),
+             row("  of which: equivalent (STRONG pass)", insn_exact & equiv),
+             row("  of which: weak / untestable / FAIL", insn_exact & equiv_fail)]))
+_sw = [(int(a, 16), r) for a, r in _ie.get("rows", {}).items() if r.get("cases")]
+if _sw:
+    print()
+    print("Switch functions compared case by case (instruction-exact cases; sweep of %s):"
+          % _ie.get("when", "?")[:16].replace("T", " "))
+    print(table(["Function", "Cases", "Insn-exact", "Share (insns)", "Prologue"],
+                [["%08x %s" % (a, (r.get("symbol") or "")[:40]), r["cases"]["total"], r["cases"]["insn_exact"],
+                  "%.1f%%" % (100.0 * r["cases"]["insn_share"]), r["cases"].get("prologue") or "-"]
+                 for a, r in sorted(_sw)]))
 print()
 print(table(["Source tree", "Functions", "Share", "Insns", "Share (insns)", "Code size", "Share (size)"],
             [row("Migrated into src/", migrated), row("Compilable, still only in match/slices", done - migrated)]))
@@ -161,7 +185,152 @@ def record_verdicts():
     print("verdicts: recorded the sweep at %s (%d PASS, %d WEAK, %d FAIL)" % (when, summ.get("pass", 0), summ.get("weak", 0), summ.get("fail", 0)))
 
 
+def parse_status_md(md):
+    """Shares from one committed docs/STATUS.md (tools/status.py format) -> dict or None."""
+    out = {}
+    for line in md.splitlines():
+        cells = [c.strip().strip("*").strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 5 or not cells[2].endswith("%"):
+            continue
+        key = {"byte-exact": "exact", "total with compilable source": "comp", "migrated into src/": "mig"}.get(cells[0].lower())
+        if key:
+            out[key] = float(cells[2].rstrip("%"))
+            out[key + "_sz"] = float(cells[4].rstrip("%"))
+    return out if "exact" in out and "comp" in out else None
+
+
+def plot_history(path):
+    """Progress over time: one point per committed docs/STATUS.md and one per --plot run (kept in
+    docs/progress_history.json), plus the equivalence-evidence stacked bands per recorded sweep.
+    The per-module picture is --treemap."""
+    import datetime
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.dates as mdates          # noqa: F401  (kept: mdates is used by older saved points)
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import PercentFormatter
+    pts = []
+    log = subprocess.run(["git", "-C", ROOT, "log", "--format=%H %cI", "--", "docs/STATUS.md"],
+                         capture_output=True, text=True).stdout.split("\n")
+    for line in filter(str.strip, log):
+        sha, when = line.split()
+        p = parse_status_md(subprocess.run(["git", "-C", ROOT, "show", sha + ":docs/STATUS.md"],
+                                           capture_output=True, text=True).stdout)
+        if p:
+            pts.append((datetime.datetime.fromisoformat(when), p))
+    now = datetime.datetime.now().astimezone()
+    live = {"exact": 100.0 * len(exact) / G, "comp": 100.0 * len(done) / G, "mig": 100.0 * len(migrated) / G,
+            "exact_sz": 100.0 * nbytes(exact) / B, "comp_sz": 100.0 * nbytes(done) / B,
+            "mig_sz": 100.0 * nbytes(migrated) / B}
+    # One saved point per --plot run, keyed by its timestamp (older files were keyed by date, one entry per day;
+    # re-keying them by their 'when' keeps those points).
+    hist_path = W("docs", "progress_history.json")
+    try:
+        hist = {p["when"]: p for p in json.load(open(hist_path)).values()}
+    except (OSError, ValueError, KeyError, TypeError):
+        hist = {}
+    stamp = now.isoformat(timespec="seconds")
+    hist[stamp] = dict(live, when=stamp)
+    with open(hist_path, "w") as f:
+        json.dump(dict(sorted(hist.items())), f, indent=1)
+        f.write("\n")
+    # The saved runs are measured live; a committed STATUS.md can be stale (3e37956 carried a snapshot from hours
+    # earlier and drew a dip to 32% migrated). Keep commit points only from before the first saved run.
+    first = min(datetime.datetime.fromisoformat(p["when"]) for p in hist.values())
+    pts = [t for t in pts if t[0] < first]
+    pts += [(datetime.datetime.fromisoformat(p["when"]), p) for p in hist.values()]   # includes this run
+    pts.sort(key=lambda t: t[0])
+
+    BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
+    SURFACE, INK, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e6e5e0"
+    top = max([p[k] for _, p in pts for k in ("comp", "comp_sz") if p.get(k) is not None] + [0])
+    ymax = 100 if top > 40 else max(5, round(top * 1.4 + 0.5))
+    evh = record_verdicts()
+
+    def style(ax, title, times):
+        ax.set_facecolor(SURFACE)
+        ax.set_title(title, loc="left", fontsize=11, color=INK)
+        ax.yaxis.set_major_formatter(PercentFormatter(decimals=0))
+        ax.grid(axis="y", color=GRID, lw=1)
+        ax.set_axisbelow(True)
+        for sp in ("top", "right", "left"):
+            ax.spines[sp].set_visible(False)
+        ax.spines["bottom"].set_color(GRID)
+        ax.tick_params(colors=MUTED, labelsize=9, length=0)
+        byday = {}
+        for t in times:
+            byday.setdefault(t.astimezone(now.tzinfo).date(), []).append(t)
+        days = sorted(byday)[::max(1, -(-len(byday) // 8))]
+        ax.set_xticks([min(byday[d]) + (max(byday[d]) - min(byday[d])) / 2 for d in days])
+        ax.set_xticklabels([d.strftime("%b %-d") for d in days])
+        ax.margins(x=0.08)
+
+    nrows = 1 + bool(evh)
+    fig, grid = plt.subplots(nrows, 2, figsize=(12, 4.4 * nrows + 1.6), dpi=150, squeeze=False)
+    axes = grid[0]
+    fig.patch.set_facecolor(SURFACE)
+    for ax, (title, ke, kc, km) in zip(axes, (("Share of functions", "exact", "comp", "mig"),
+                                              ("Share of code size", "exact_sz", "comp_sz", "mig_sz"))):
+        ax.set_facecolor(SURFACE)
+        for key, color, label in ((kc, ORANGE, "Compilable (byte-exact + equivalent)"), (ke, BLUE, "Byte-exact"),
+                                  (km, AQUA, "Migrated into src/ modules")):
+            val = (lambda p, key=key: p.get(key, 0.0)) if key == km else (lambda p, key=key: p.get(key))
+            xs = [t for t, p in pts if val(p) is not None]
+            ys = [val(p) for t, p in pts if val(p) is not None]
+            if not xs:
+                continue
+            ax.plot(xs, ys, color=color, lw=2, marker="o", ms=4, label=label, solid_capstyle="round")
+            ax.annotate("%.1f%%" % ys[-1], (xs[-1], ys[-1]), xytext=(6, 0), textcoords="offset points",
+                        va="center", fontsize=9, color=INK)
+        ax.set_ylim(0, ymax)
+        style(ax, title, [t for t, _ in pts])
+    axes[1].tick_params(labelleft=False)
+    axes[0].legend(loc="upper left", frameon=False, fontsize=9, labelcolor=INK)
+    if evh:
+        # Equivalence evidence of the equivalent-only rows, stacked bottom-up from strongest to none. These are the
+        # same categories as --treemap and the terminal table, so the three views agree.
+        EVC = dict((k, c) for k, _l, c in TREE_CATS)
+        EVC["excluded"] = EVC["nosource"] = None
+        xs = [datetime.datetime.fromisoformat(p["when"]) for p in evh]
+        for ax, suffix, title in ((grid[1][0], "", "Non-byte-exact rows by test verdict (PASS = the only equivalent)"),
+                                  (grid[1][1], "_sz", "... by code size")):
+            keys = [c for c, _l in EV_CATS if any(p.get(c + suffix) for p in evh)]
+            tot = [sum(p.get(c + suffix, 0) for c, _l in EV_CATS) or 1 for p in evh]
+            ys = [[100.0 * p.get(c + suffix, 0) / t for p, t in zip(evh, tot)] for c in keys]
+            ax.stackplot(xs, ys, colors=[EVC[c] for c in keys], edgecolor=SURFACE, linewidth=1.5,
+                         labels=[dict(EV_CATS)[c] for c in keys])
+            base = 0.0
+            for c, y in zip(keys, ys):
+                if y[-1] >= 4:
+                    ax.annotate("%.0f%%" % y[-1], (xs[-1], base + y[-1] / 2), xytext=(6, 0),
+                                textcoords="offset points", va="center", fontsize=9, color=INK)
+                base += y[-1]
+            ax.set_ylim(0, 100)
+            style(ax, title, xs)
+        grid[1][1].tick_params(labelleft=False)
+        h, l = grid[1][0].get_legend_handles_labels()
+        grid[1][0].legend(h, l, loc="upper center", ncol=3, frameon=False, fontsize=8.5, labelcolor=INK,
+                          bbox_to_anchor=(1.07, -0.09))
+    fig.suptitle("Mount & Blade 1.011 decompilation progress (%d game functions, %.2f MB; static CRT excluded)" % (G, B / 1e6),
+                 x=0.01, ha="left", fontsize=12, color=INK)
+    fig.text(0.01, 0.01, "One point per committed docs/STATUS.md and one per --plot run. "
+             "Equivalent = complete compilable source whose equivalence sweep PASSed (no mismatch on the same random\n"
+             "inputs); weak / untestable / FAIL rows are failures here. Migrated = moved from match/slices "
+             "into one .cpp per original translation unit (0%% before the first migration).%s" %
+             ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax) +
+             ("\nVerdicts: one point per full equivalence sweep (tools/difftest/verdicts.py); a sweep tests the original and "
+              "our function\non the same random inputs under emulation. The first point also counted pre-migration slice rows."
+              if evh else "") + "\nPer-module detail (area = instructions, colour = verdict): tools/progress.py --treemap",
+             fontsize=8, color=MUTED)
+    h_in = fig.get_figheight()
+    fig.subplots_adjust(left=0.06, right=0.93, top=1 - 0.75 / h_in, bottom=(1.15 + 0.35 * nrows) / h_in,
+                        wspace=0.14, hspace=0.42)
+    fig.savefig(path, facecolor=SURFACE)
+    print("\nwrote %s (%d snapshots)" % (os.path.relpath(path, ROOT), len(pts)))
+
+
 # ---------------------------------------------------------------- treemap
+
 # Cell colours are the verdicts themselves: exact / equivalent / weak / FAIL plus the two "no evidence" kinds.
 # Okabe-Ito (colour-blind safe): one hue per verdict, exactly one grey (comdat) and white (no source). The four
 # "untested/unknown" kinds used to be four shades of grey, which is what made the treemap unreadable.
@@ -320,7 +489,7 @@ def _tree_cells(rows, names):
     return out
 
 
-def plot_history(path):
+def treemap(path):
     """Treemap of every census function: group -> source file (module) -> function, area = instructions,
     colour = verdict. Every file box is drawn; its label is measured and only kept where it fits (horizontal first,
     then rotated), so nothing overlaps and nothing is clipped."""
@@ -480,8 +649,13 @@ def plot_history(path):
           ", ".join("%s %d" % (k, v) for k, v in counts.items() if v)))
 
 
-# Last on purpose: the plot path is the final line of output.
+# Last on purpose: the chart paths are the final lines of output.
+def _out(name, default):
+    i = sys.argv.index(name)
+    return sys.argv[i + 1] if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("--") else W("work", default)
+
+
+if "--treemap" in sys.argv:
+    treemap(_out("--treemap", "treemap.png"))
 if "--plot" in sys.argv:
-    i = sys.argv.index("--plot")
-    plot_history(sys.argv[i + 1] if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("--")
-                 else W("work", "progress.png"))
+    plot_history(_out("--plot", "progress.png"))

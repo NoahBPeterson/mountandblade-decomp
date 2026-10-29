@@ -10,7 +10,7 @@
 - Coverage-guided parent choice: mutation prefers corpus inputs that reach branches with an uncovered edge.
 Every candidate is an ordinary Input: both builds run it, and it is compared like any other.
 """
-import collections, math, struct
+import collections, math, os, struct
 
 import capstone
 from capstone import x86_const as X
@@ -145,6 +145,15 @@ class Steer:
         extra = [gen.fin(c) for c in sorted(consts) if c not in set(gen.dic)]
         gen.dic.extend(extra[:4096])
         self.n_consts = len(consts)
+        self.concolic = None
+        self.cc_time = 0.0                          # seconds spent tracing/solving (capped at 40% of --time-limit)
+        if os.environ.get("DIFFTEST_CONCOLIC"):        # opt-in while it is evaluated
+            try:
+                import concolic
+                if concolic.z3 is not None:
+                    self.concolic = concolic.Concolic(runner, self)
+            except Exception:           # noqa: BLE001 - z3 missing: input-to-state only, as before
+                self.concolic = None
 
     # ------------------------------------------------------------------ bookkeeping
     def note_valid(self, inp, edges_by_side):
@@ -160,10 +169,11 @@ class Steer:
         """{(side name, branch src)} for branches that ran in a valid input but miss an edge."""
         if self.frontier_cache is None:
             fr = set()
-            for side in (self.r.orig, self.r.ours):
+            scope = getattr(self.r, "edge_scope", None)     # --edge-scope: the original's edges that matter
+            for side in ((self.r.orig,) if scope is not None else (self.r.orig, self.r.ours)):
                 cov = side.edges
                 skip = side.cfg_static_unreachable
-                for e in side.cfg.edges:
+                for e in (scope if scope is not None else side.cfg.edges):
                     if e not in cov and e not in skip and e[0] in self.reach[side.name]:
                         fr.add((side.name, e[0]))
             self.frontier_cache = fr
@@ -204,6 +214,7 @@ class Steer:
         sname, src = key
         side = self.r.orig if sname == "orig" else self.r.ours
         inp0 = self.reach[sname][src]
+        self._boundary = boundary
         cands = self.redqueen(side, src, inp0, rng)
         self.stats["replays"] += 1
         if cands:
@@ -237,44 +248,187 @@ class Steer:
             return []
         r, m = self.r, self.r.m
         uc = m.uc
-        recent = collections.deque(maxlen=RECENT)
-        occ = []
-        allocs = []
+        # a branch on a callee's result (`call f; test al, al; je`): the compare that decides it is inside f, so
+        # every cmp/test of f is instrumented too and each one it executed becomes an input-to-state target
+        self._last_ranges = []
+        inner = self._callee_compares(cfg, cins) if kind == "int" else []
+        windows = list(self._last_ranges)
+        def replay(inp):
+            """Run inp with the compare (and the callee's compares) instrumented -> (occ, iocc, allocs)."""
+            recent = collections.deque(maxlen=RECENT)
+            occ, iocc, allocs = [], [], []
 
-        def on_read(uc_, access, address, size, value, _):
-            try:
-                v = int.from_bytes(m.read(address, size), "little") if size in (1, 2, 4, 8) else None
-            except Exception:
-                return
-            if v is not None:
-                recent.append((address, size, v, uc_.reg_read(U.UC_X86_REG_EIP)))
+            def on_read(uc_, access, address, size, value, _):
+                try:
+                    v = int.from_bytes(m.read(address, size), "little") if size in (1, 2, 4, 8) else None
+                except Exception:
+                    return
+                if v is not None:
+                    recent.append((address, size, v, uc_.reg_read(U.UC_X86_REG_EIP)))
 
-        def on_cmp(uc_, address, size, _):
-            if r.cur is not side or len(occ) >= MAX_OCC:
-                return
+            def on_cmp(uc_, address, size, _):
+                if r.cur is not side or len(occ) >= MAX_OCC:
+                    return
+                try:
+                    occ.append((self._operands(cins, kind), list(recent)))
+                except Exception:
+                    pass
+
+            def on_icmp(uc_, address, size, ins):
+                if r.cur is not side or len(iocc) >= 4 * MAX_OCC:
+                    return
+                try:
+                    iocc.append((ins, self._operands(ins, "int"), list(recent)))
+                except Exception as e:
+                    if os.environ.get("DIFFTEST_STEER_DEBUG"):
+                        print("  callee cmp %08x: operands failed: %r" % (ins.address, e), flush=True)
+            ranges = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE), (r.esp_entry, r.args_hi)]
+            ranges += [(lo, hi) for _nm, lo, hi in m.writable]
+            hooks = [uc.hook_add(UC_HOOK_MEM_READ, on_read, begin=lo, end=hi - 1) for lo, hi in ranges]
+            hooks.append(uc.hook_add(UC_HOOK_CODE, on_cmp, begin=cins.address, end=cins.address))
+            for ins in inner:
+                hooks.append(uc.hook_add(UC_HOOK_CODE, on_icmp, user_data=ins, begin=ins.address, end=ins.address))
+            m.alloc_log = allocs
             try:
-                occ.append((self._operands(cins, kind), list(recent)))
+                r.run_side(side, inp)
             except Exception:
                 pass
-        ranges = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE), (r.esp_entry, r.args_hi)]
-        ranges += [(lo, hi) for _nm, lo, hi in m.writable]
-        hooks = [uc.hook_add(UC_HOOK_MEM_READ, on_read, begin=lo, end=hi - 1) for lo, hi in ranges]
-        hooks.append(uc.hook_add(UC_HOOK_CODE, on_cmp, begin=cins.address, end=cins.address))
-        m.alloc_log = allocs
-        try:
-            r.run_side(side, inp0)
-        finally:
-            for h in hooks:
-                uc.hook_del(h)
-            m.alloc_log = None
+            finally:
+                for h in hooks:
+                    uc.hook_del(h)
+                m.alloc_log = None
+            return occ, iocc, allocs
+
+        occ, iocc, allocs = replay(inp0)
+        if inner and iocc and os.environ.get("DIFFTEST_STEER_CHAIN"):
+            # (opt-in: on the interpreter's sample it cost more time than it found, see docs/matching.md)
+            # Chained conditions (check_party: the id below the table count, PartyMgr::index_of finds it, the
+            # record it finds has type 1): a candidate that reaches a compare its parent never reached is
+            # replayed at once and steered from, up to 3 levels, instead of waiting for a later round to pick
+            # it as a parent. A candidate whose result test flips (`test al, al` sees nonzero) is returned first.
+            reached = {i.address for i, _o, _r in iocc}
+            level, deeper, winners = [(inp0, iocc, allocs)], [], []
+            for _depth in range(3):
+                nxt = []
+                for base, bio, bal in level:
+                    tried = 0
+                    for ins, ops, rec in reversed(bio):
+                        for c in self._candidates(ins, "int", ops, rec, base, bal, jins, rng)[:4]:
+                            if tried >= 12:
+                                break
+                            tried += 1
+                            o2, io2, al2 = replay(c)
+                            self.stats["chain-replay"] += 1
+                            if any(op[0][0] for op, _rc in o2 if op and op[0][0] is not None):
+                                winners.append(c)
+                            new = {i.address for i, _o, _r in io2} - reached
+                            if new:
+                                reached |= new
+                                nxt.append((c, io2, al2))
+                                deeper.append(c)
+                if winners or not nxt:
+                    break
+                level = nxt[:3]
+            if winners or deeper:
+                self.stats["chain-win" if winners else "chain-deeper"] += 1
+                for c in (winners + deeper)[:24]:
+                    c.origin = "steer"
+                return (winners + deeper)[:24]
         out = []
+        budget = 0.4 * getattr(self.opts, "time_limit", 180)
+        if self.concolic is not None and not getattr(self, "_boundary", False) and kind == "int" \
+                and self.cc_time < budget:
+            # z3 over the traced path, for every uncovered branch while its share of the run's time lasts: the
+            # callee's chained decisions (windows) when the branch tests a callee's result, else its own
+            import time as _t
+            t0 = _t.time()
+            try:
+                cc = self.concolic.steer(side, inp0, src, window=windows or None)
+                if cc and os.environ.get("DIFFTEST_STEER_DEBUG"):
+                    print("  concolic %08x: %d candidate(s)" % (src, len(cc)), flush=True)
+            except Exception as e:      # noqa: BLE001 - steering must never stop a run
+                cc = []
+                if os.environ.get("DIFFTEST_STEER_DEBUG"):
+                    print("  concolic failed: %r" % e, flush=True)
+            self.cc_time += _t.time() - t0
+            self.stats["concolic"] += len(cc)
+            out.extend(cc)
+        if os.environ.get("DIFFTEST_STEER_DEBUG"):
+            print("  replay %s %08x: %d callee compares hooked (%s), fired: %s" % (side.name, src, len(inner),
+                  " ".join("%x" % i.address for i in inner[:12]), sorted({"%x" % i.address for i, _o, _r in iocc})),
+                  flush=True)
+        # the callee's compares first (each deciding compare, latest occurrence), then the tested function's own
+        # compare: for `call f; test al, al` the latter only says "al was 0", which no input location holds
+        seen = set()
+        for ins, ops, rec in reversed(iocc):
+            if ins.address in seen:
+                continue
+            seen.add(ins.address)
+            self.stats["callee-cmp"] += 1
+            if os.environ.get("DIFFTEST_STEER_DEBUG"):
+                locs = [self._locations(o[0], o[1], o[2], rec, inp0, "int") if o[0] is not None and not o[3] else None
+                        for o in ops]
+                print("  callee cmp %08x %s %s | ops %s | locs %s" % (ins.address, ins.mnemonic, ins.op_str,
+                      [(("%x" % o[0]) if o[0] is not None else None, o[3]) for o in ops], locs), flush=True)
+            for c in self._candidates(ins, "int", ops, rec, inp0, allocs, jins, rng)[:8]:
+                out.append(c)
         for ops, rec in occ:
             self.fpcs = {a for a, i in cfg.insns.items() if i.mnemonic.startswith("f")}
             for c in self._candidates(cins, kind, ops, rec, inp0, allocs, jins, rng):
                 out.append(c)
-                if len(out) >= 24:
+                if len(out) >= 24 + 8 * len(seen):
                     return out
         return out
+
+    def _callee_compares(self, cfg, cins):
+        """The cmp/test instructions of the function whose result `cins` tests (`call f` within the three
+        instructions before `test al, al` / `test eax, eax`), or []. Image functions only, cached."""
+        if cins.mnemonic != "test" or len(cins.operands) != 2 or cins.operands[0].type != X.X86_OP_REG or \
+                cins.operands[0].reg != cins.operands[1].reg or _md_reg_name(cins.operands[0].reg) not in ("al", "eax"):
+            return []
+        a, tgt = cins.address, None
+        for _ in range(3):
+            a = cfg.prev.get(a)
+            ins = cfg.insns.get(a) if a is not None else None
+            if ins is None:
+                break
+            if ins.id == X.X86_INS_CALL:
+                if ins.operands[0].type == X.X86_OP_IMM:
+                    tgt = ins.operands[0].imm & 0xFFFFFFFF
+                break
+        if tgt is None:
+            return []
+        cache = self.__dict__.setdefault("_ccache", {})
+        if tgt not in cache:
+            # the callee and the image functions it calls directly (check_party 0x49d160 decides through
+            # PartyMgr::index_of 0x48ad00's compares too)
+            out, todo, done, ranges = [], [(tgt, 0)], set(), []
+            while todo and len(out) < 128:
+                f, depth = todo.pop(0)
+                if f in done:
+                    continue
+                done.add(f)
+                try:
+                    img = self.r.img
+                    lo, hi = img.func_extent(f)
+                    code = img.read(lo, hi - lo)
+                    import resolve as R
+                    insns, _ = R.recursive_descent(lambda x, k, lo=lo, code=code: code[x - lo:x - lo + k], lo, hi, f,
+                                                   lambda x: None)
+                except Exception:
+                    continue
+                ranges.append((lo, hi))
+                for _a, i in sorted(insns.items()):
+                    if i.mnemonic in ("cmp", "test"):
+                        out.append(i)
+                    elif i.id == X.X86_INS_CALL and depth < 1 and i.operands[0].type == X.X86_OP_IMM:
+                        todo.append((i.operands[0].imm & 0xFFFFFFFF, depth + 1))
+            cache[tgt] = out[:128]
+            self.__dict__.setdefault("_cranges", {})[tgt] = ranges
+            self._last_ranges = ranges
+        else:
+            self._last_ranges = self.__dict__.get("_cranges", {}).get(tgt, [])
+        return cache[tgt]
 
     def _operands(self, ins, kind):
         """[(value, size, mem address or None, is_imm)] of the compare's operands (x87: floats)."""
@@ -322,10 +476,25 @@ class Steer:
                 res.append((uc.reg_read(ur) & _MASK.get(o.size, 0xFFFFFFFF), o.size, None, False))
             elif o.type == X.X86_OP_MEM:
                 a = self._ea(o)
-                res.append((int.from_bytes(self.r.m.read(a, o.size), "little"), o.size, a, False))
+                res.append((int.from_bytes(self._peek(a, o.size), "little"), o.size, a, False))
             elif o.type == X.X86_OP_IMM:
                 res.append((o.imm & _MASK.get(o.size, 0xFFFFFFFF), o.size, None, True))
         return res
+
+    def _peek(self, a, n):
+        """Read n bytes at a; a pool page the run has not touched yet (a compare hook fires before the access
+        that would map it) is read from the pool generator, without mapping it."""
+        m = self.r.m
+        try:
+            return m.read(a, n)
+        except Exception:
+            if not (M.POOL_BASE <= a and a + n <= M.POOL_BASE + M.POOL_SIZE) or getattr(m, "lazy", None) is None:
+                raise
+            out = bytearray()
+            for k in range(n):
+                p = (a + k) & ~0xFFF
+                out.append(m.lazy(p)[(a + k) & 0xFFF])
+            return bytes(out)
 
     def _ea(self, o):
         uc = self.r.m.uc

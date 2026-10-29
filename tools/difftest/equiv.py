@@ -52,7 +52,7 @@ copy of a block with identical bytes, --ulp), with the call index, its callee an
 mismatch (only for an input whose every other observable agrees, and only at a call pair whose callee and
 arguments agree).
 """
-import argparse, collections, glob, json, math, os, random, struct, sys, time, zlib
+import argparse, collections, glob, json, math, os, random, re, struct, sys, time, zlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -84,6 +84,62 @@ DEFAULT_BUDGET = 10_000_000
 START_BUDGET = 100_000
 BUDGET_PROBES = 3
 FAIL_DIR = os.environ.get("DIFFTEST_FAIL_DIR") or os.path.join(S.ROOT, "work", "difftest", "fail_inputs")
+# Regression inputs: every input that ever made a row mismatch is kept (one file per distinct input) and run first
+# by every later run of that row, so a FAIL once found is re-checked forever, whatever the seed or the steering
+# does. Per row and per --pin set (a pinned case's inputs carry its selector). --no-regress / DIFFTEST_NO_REGRESS=1
+# turns it off; the file names enter the result cache key, so a new regression input invalidates cached verdicts.
+REGRESS_DIR = os.environ.get("DIFFTEST_REGRESS_DIR") or os.path.join(S.ROOT, "work", "difftest", "regress")
+
+
+def regress_dir(sid, va, opts):
+    import hashlib
+    pins = sorted(getattr(opts, "pin", None) or [])
+    sub = hashlib.sha1(json.dumps(pins).encode()).hexdigest()[:12] if pins else "nopin"
+    return os.path.join(REGRESS_DIR, "%s_%08x" % (sid, va), sub)
+
+
+def regress_inputs(sid, va, opts):
+    """[(file name, Input)] of the row's regression inputs, oldest first."""
+    if getattr(opts, "no_regress", False) or os.environ.get("DIFFTEST_NO_REGRESS"):
+        return []
+    import pickle
+    d = regress_dir(sid, va, opts)
+    out = []
+    try:
+        names = sorted(os.listdir(d), key=lambda f: os.path.getmtime(os.path.join(d, f)))
+    except OSError:
+        return []
+    for f in names:
+        if not f.endswith(".pkl"):
+            continue
+        try:
+            inp = Input()
+            inp.__dict__.update(pickle.load(open(os.path.join(d, f), "rb")))
+            inp.__dict__.setdefault("pagegen", 1)
+            inp.origin = "regress"
+            out.append((f, inp))
+        except Exception:       # noqa: BLE001 - an unreadable file (older harness) is skipped, never fatal
+            continue
+    return out
+
+
+def save_regress(sid, va, opts, inp):
+    """Keep a mismatching input (content-addressed: the same input is stored once). -> path or None."""
+    if getattr(opts, "no_regress", False) or os.environ.get("DIFFTEST_NO_REGRESS"):
+        return None
+    import hashlib, pickle
+    blob = pickle.dumps(dict(inp.__dict__, pagegen=inp.pagegen, origin="regress"))
+    d = regress_dir(sid, va, opts)
+    pth = os.path.join(d, hashlib.sha1(blob).hexdigest()[:16] + ".pkl")
+    try:
+        os.makedirs(d, exist_ok=True)
+        if not os.path.exists(pth):
+            tmp = pth + ".%d.part" % os.getpid()
+            open(tmp, "wb").write(blob)
+            os.replace(tmp, pth)
+        return pth
+    except OSError:
+        return None
 
 _md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
 _md.detail = True
@@ -326,6 +382,24 @@ def best_by_size(coff, names, n0):
     return best[1]
 
 
+def _audit_copy(t, name, ova):
+    """The local copies our symbol `name` (a local copy of the original's ova) itself calls, paired by the resolution
+    audit against the original function at ova: [] when either side is unavailable."""
+    img = context()["img"]
+    table = t.coff.syms.values() if isinstance(t.coff.syms, dict) else t.coff.syms
+    syms = [s for s in table if getattr(s, "name", None) == name and getattr(s, "defined", False)]
+    if not syms:
+        return []
+    try:
+        lo, hi = img.func_extent(ova)
+        code = img.read(lo, hi - lo)
+        insns, _tables = R.recursive_descent(lambda a, n: code[a - lo:a - lo + n], lo, hi, ova,
+                                             lambda a: struct.unpack_from("<I", code, a - lo)[0] if lo <= a <= hi - 4 else None)
+        return RA.audit(t.coff, syms[0], t.res, insns, img).get("local_copy", [])
+    except Exception:
+        return []
+
+
 def analyse_original(t):
     """Recursive-descent disassembly of the original: instruction set (coverage denominator),
     callee-pop size, ECX/EDX use at entry, immediate dictionary for input generation."""
@@ -358,6 +432,24 @@ def analyse_original(t):
                 v = op.imm & 0xFFFFFFFF
                 if not any(a <= p < a + ins.size for p in relset):
                     consts.add(v)
+    # A tail call (`jmp` to another function, the stack balanced back to the entry state) returns through the
+    # target's `ret N`: those arguments are popped by it (ui_widgets_c 0x48bda0 has no ret of its own and ends in
+    # `jmp 0x488720`, whose `ret 0x10` pops the four arguments it was handed; read as 0, every run was
+    # "orig-abi-broken").
+    for a, ins in insns.items():
+        if ins.id == CX.X86_INS_JMP and ins.operands and ins.operands[0].type == CX.X86_OP_IMM:
+            tgt = ins.operands[0].imm & 0xFFFFFFFF
+            if lo <= tgt < hi or not img.in_text(tgt):
+                continue
+            try:
+                tlo, thi = img.func_extent(tgt)
+                if tlo != tgt:
+                    continue
+                tcode = img.read(tlo, thi - tlo)
+                tins, _ = R.recursive_descent(lambda x, k: tcode[x - tlo:x - tlo + k], tlo, thi, tgt, lambda x: None)
+            except Exception:
+                continue
+            pops |= {i.operands[0].imm if i.operands else 0 for i in tins.values() if i.id == CX.X86_INS_RET}
     t.callee_pop = max(pops) if pops else 0
     t.pop_variants = sorted(pops)
     ordered = [insns[a] for a in sorted(insns)]
@@ -368,13 +460,21 @@ def analyse_original(t):
     t.entry_reads = entry_reads(insns, t.va)
 
 
-def entry_reads(insns, entry):
-    """Registers among ecx/edx/eax read before written along the entry path (first 40 insns)."""
+ALL_FAM = {CX.X86_REG_ECX: "ecx", CX.X86_REG_CX: "ecx", CX.X86_REG_CL: "ecx", CX.X86_REG_CH: "ecx",
+           CX.X86_REG_EDX: "edx", CX.X86_REG_DX: "edx", CX.X86_REG_DL: "edx", CX.X86_REG_DH: "edx",
+           CX.X86_REG_EAX: "eax", CX.X86_REG_AX: "eax", CX.X86_REG_AL: "eax", CX.X86_REG_AH: "eax",
+           CX.X86_REG_EBX: "ebx", CX.X86_REG_BX: "ebx", CX.X86_REG_BL: "ebx", CX.X86_REG_BH: "ebx",
+           CX.X86_REG_ESI: "esi", CX.X86_REG_SI: "esi", CX.X86_REG_EDI: "edi", CX.X86_REG_DI: "edi",
+           CX.X86_REG_EBP: "ebp", CX.X86_REG_BP: "ebp"}
+
+
+def entry_reads(insns, entry, regs=("ecx", "edx", "eax"), follow_jcc=False):
+    """Registers among `regs` read before written along the entry path (first 40 insns). follow_jcc: continue
+    along the fall-through of a conditional jump (a read behind an early `je` still reads the argument)."""
     read, written = set(), set()
+    order = []
     a = entry
-    names = {CX.X86_REG_ECX: "ecx", CX.X86_REG_CX: "ecx", CX.X86_REG_CL: "ecx", CX.X86_REG_CH: "ecx",
-             CX.X86_REG_EDX: "edx", CX.X86_REG_DX: "edx", CX.X86_REG_DL: "edx", CX.X86_REG_DH: "edx",
-             CX.X86_REG_EAX: "eax", CX.X86_REG_AX: "eax", CX.X86_REG_AL: "eax", CX.X86_REG_AH: "eax"}
+    names = {k: v for k, v in ALL_FAM.items() if v in regs}
     for _ in range(40):
         ins = insns.get(a)
         if ins is None:
@@ -402,14 +502,18 @@ def entry_reads(insns, entry):
         for x in r:
             n = names.get(x)
             if n and n not in written:
+                if n not in read:
+                    order.append(n)
                 read.add(n)
         for x in w:
             n = names.get(x)
             if n:
                 written.add(n)
         if ins.group(capstone.CS_GRP_JUMP) or ins.group(capstone.CS_GRP_CALL) or ins.group(capstone.CS_GRP_RET):
-            break
+            if not (follow_jcc and ins.group(capstone.CS_GRP_JUMP) and ins.id != CX.X86_INS_JMP):
+                break
         a += ins.size
+    entry_reads.order = order           # first-read order of the last call (reg_map pairs arguments by it)
     return read
 
 
@@ -521,6 +625,7 @@ def build_layout(t):
             notes.append("signature gives %d stack dwords, original pops %d" % (len(kinds), pop_dw))
             kinds = (kinds + ["soup"] * pop_dw)[:pop_dw]
         t.ret_kind = sg.ret
+        t.ret_width = getattr(sg, "ret_width", None)
         t.conv = conv
     else:
         n = t.callee_pop // 4 if t.callee_pop else 6
@@ -529,6 +634,7 @@ def build_layout(t):
         t.conv = "stdcall?" if t.callee_pop else "cdecl?"
         notes.append("no parsed signature: %d soup stack dwords" % n)
     t.abi_mismatch = None
+    declared = set(regk)
     for r in ("ecx", "edx", "eax"):
         if r in t.entry_reads and r not in regk:
             regk[r] = "soup"
@@ -537,6 +643,35 @@ def build_layout(t):
                 kind, at, text = reg_arg_use(t.orig_insns, t.va, r)
                 t.abi_mismatch = "original reads %s at entry but our declaration passes nothing there " \
                                  "(custom/LTCG register ABI?); fix: pass %s" % (r, abi_fix(r, kind, at, text))
+    # A file-static helper on both sides with cl-chosen register conventions (the interpreter's validators: the
+    # original takes the value pointer in eax / ecx / edi, our copy in another register): when each side reads
+    # exactly one undeclared register at entry, the input's value goes into both (reg_map), so the two builds
+    # receive the same argument the way each of them expects it.
+    t.reg_map = None
+    try:
+        allr = ("eax", "ecx", "edx", "ebx", "esi", "edi", "ebp")
+        entry_reads(t.orig_insns, t.va, allr, follow_jcc=True)
+        o_x = [r for r in entry_reads.order if r not in declared]
+        u_ins = RA.our_insns(t.coff, t.fsym)[0]
+        u_x = []
+        if u_ins:
+            entry_reads(u_ins, t.fsym.value, allr, follow_jcc=True)
+            u_x = [r for r in entry_reads.order if r not in declared]
+    except Exception:           # noqa: BLE001 - the analysis is an aid: without it the row is judged as before
+        o_x = u_x = []
+    if o_x and len(o_x) == len(u_x) and len(o_x) <= 3:
+        # paired in first-read order (check_string_arg 0x49cda0: the original reads the type in ecx then the
+        # value in esi, ours eax then edx)
+        pairs = []
+        for ro, ru in zip(o_x, u_x):
+            kind, _at, _text = reg_arg_use(t.orig_insns, t.va, ro)
+            regk[ro] = "ptr" if kind == "pointer" else "soup"
+            if ro != ru:
+                pairs.append((ro, ru))
+        t.reg_map = pairs or None
+        t.abi_mismatch = None
+        notes.append("register arguments: the original reads %s at entry, ours %s; each value goes into both"
+                     % ("/".join(o_x), "/".join(u_x)))
     t.void_hides_eax = False
     if t.ret_kind == "void" and getattr(t, "orig_returns_eax", False):
         # Seven hybrid defects (2026-10-12) were `void` declarations of functions whose original
@@ -584,10 +719,20 @@ class Input:
         n.pagegen = self.pagegen
         n.alloc_fail = tuple(getattr(self, "alloc_fail", ()))
         n.extra = dict(getattr(self, "extra", {}))
+        n.forced = dict(getattr(self, "forced", {}))
         return n
 
 
 NSLOTS = M.POOL_SIZE // M.SLOT
+FORCE_SHARE = 0.25     # share of fresh inputs that force one branch-feeding callee's result (Runner._on_forced)
+FAULT_EDGE_RUNS = 50   # faulting inputs per row whose edges are recorded (each also runs our build once)
+# Resource lookups that call mb_error (0x42cc80: message box, exit(-1)) when the name is not registered. A test
+# starts with an empty resource manager, so their callers are stubbed by default (Runner._on_stubbed).
+STUB_LOOKUPS = [0x418b30,       # resource_manager::get_shader
+                0x418c10,       # resource_manager::get_object60
+                0x418c80,       # resource_manager::get_skeleton_anim
+                0x418cf0,       # resource_manager::get_object70
+                0x419540]       # resmgr::get_object
 HOT_SLOTS = 8          # slots 0..7 hold the argument / `this` objects
 
 
@@ -811,6 +956,10 @@ class InputGen:
             k = self.t.reg_kinds.get(r)
             hot = {"ecx": 1, "edx": 7, "eax": 6}[r]
             inp.regs[r] = self.scalar(k, rng, inp.profile, hot) if k else self.soup(rng, inp.profile)
+        for r in ("ebx", "esi", "edi", "ebp"):          # a register argument outside eax/ecx/edx (reg_map)
+            k = self.t.reg_kinds.get(r)
+            if k:
+                inp.regs[r] = self.scalar(k, rng, inp.profile, 1)
         inp.xmm = []
         for _ in range(8):
             v = 0
@@ -820,6 +969,12 @@ class InputGen:
         inp.overrides = {}
         inp.alloc_fail = ()
         inp.extra = {}
+        inp.forced = {}
+        cands = getattr(self, "force_cands", ())
+        if cands and rng.random() < FORCE_SHARE:
+            inp.forced[rng.choice(cands)] = rng.choice((0, 1))
+        for h in getattr(self, "hints", ()):            # --hint: soft pins, fresh inputs only
+            h(self, inp, rng)
         if self.invs:
             INV.enforce(self.invs, self, inp, rng)      # keep the object's length field within its array
         return inp
@@ -860,10 +1015,11 @@ class InputGen:
                 other = rng.choice(corpus)
                 inp.pool_over.update(other.pool_over)
             else:
-                r = rng.choice(["eax", "ecx", "edx"])
+                r = rng.choice(["eax", "ecx", "edx"] + [x for x in ("ebx", "esi", "edi", "ebp")
+                                                         if self.t.reg_kinds.get(x)])
                 k = self.t.reg_kinds.get(r)
                 if k:
-                    inp.regs[r] = self.scalar(k, rng, inp.profile, {"ecx": 1, "edx": 7, "eax": 6}[r])
+                    inp.regs[r] = self.scalar(k, rng, inp.profile, {"ecx": 1, "edx": 7, "eax": 6}.get(r, 1))
         if self.invs:
             # a mutation can drop the length field back out of range (or swap the object pointer): put the
             # governed fields back in range so the mutant stays a usable input rather than being discarded.
@@ -876,7 +1032,8 @@ PROFILE_KW = {k: tuple(zip(*v)) for k, v in PROFILES.items()}
 
 # ====================================================================== running
 
-REGS = {"eax": UC_X86_REG_EAX, "ecx": UC_X86_REG_ECX, "edx": UC_X86_REG_EDX}
+REGS = {"eax": UC_X86_REG_EAX, "ecx": UC_X86_REG_ECX, "edx": UC_X86_REG_EDX, "ebx": UC_X86_REG_EBX,
+        "esi": UC_X86_REG_ESI, "edi": UC_X86_REG_EDI, "ebp": UC_X86_REG_EBP}
 CALLEE_SENTINEL = {UC_X86_REG_EBX: 0x0BB0BB00, UC_X86_REG_ESI: 0x05150515, UC_X86_REG_EDI: 0x0D1D0D1D,
                    UC_X86_REG_EBP: 0x0E0B0E0B}
 STACK_FILL = b"\xcc"
@@ -1099,7 +1256,7 @@ class Runner:
             for a, info in side.sites.items():
                 self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_site, user_data=(side, info), begin=a, end=a))
         # --transparent: image functions whose call is replaced in the depth-1 trace by the calls they make
-        self.transparent = set(getattr(opts, "transparent", None) or ())
+        self.transparent = set(getattr(opts, "transparent", None) or ()) | set(getattr(opts, "transparent_auto", None) or ())
         self.tr_stack, self.tr_block = [], None
         for tva in sorted(self.transparent):
             lo, hi = self.img.func_extent(tva)
@@ -1111,8 +1268,45 @@ class Runner:
                                                     begin=a, end=a))
                     r = a + ins.size
                     self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_tret, begin=r, end=r))
+        # --stub (default STUB_LOOKUPS): image functions both builds call that return an input object instead of
+        # running; see _on_stubbed
+        self.stubbed = {}
+        for sva in sorted(set(getattr(opts, "stub", None) or ()) - {t.va}):
+            try:
+                lo, hi = self.img.func_extent(sva)
+                code = self.img.read(lo, hi - lo)
+                insns, _ = R.recursive_descent(lambda a, k, lo=lo, code=code: code[a - lo:a - lo + k], lo, hi, sva,
+                                               lambda a: None)
+            except Exception:
+                continue
+            pops = {ins.operands[0].imm if ins.operands else 0 for ins in insns.values() if ins.id == CX.X86_INS_RET}
+            if len(pops) != 1:
+                continue                                # no single return convention: leave it running
+            self.stubbed[sva] = pops.pop()
+            self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_stubbed, user_data=self.stubbed[sva],
+                                            begin=sva, end=sva))
+        # branch-feeding callees whose result an input may force (see _on_forced)
+        self.cur_forced = {}
+        self.forced_cands = []
+        if getattr(opts, "force_results", True):
+            order = sorted(t.orig_insns)
+            for k_, a_ in enumerate(order[:-2]):
+                ins = t.orig_insns[a_]
+                if ins.id != CX.X86_INS_CALL or ins.operands[0].type != CX.X86_OP_IMM:
+                    continue
+                tgt = ins.operands[0].imm & 0xFFFFFFFF
+                nxt = t.orig_insns.get(a_ + ins.size)
+                if nxt is None or not self.img.in_text(tgt) or tgt in self.transparent or tgt in self.stubbed:
+                    continue
+                tests_result = nxt.id == CX.X86_INS_TEST and nxt.op_str in ("al, al", "eax, eax") or \
+                    nxt.id == CX.X86_INS_CMP and nxt.op_str.startswith(("eax, ", "al, "))
+                if tests_result and tgt not in self.forced_cands:
+                    self.forced_cands.append(tgt)
+            for tgt in self.forced_cands:
+                self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_forced, begin=tgt, end=tgt))
         self.blocks = set()
         self.run_blocks = set()
+        self.fault_edges, self.fault_runs = {"orig": set(), "ours": set()}, []
         self.page_cache = {}
         code = [(a, a + n) for nm, a, n, ch in self.img.sections if ch & 0x20000000]
         self.gen = InputGen(t, opts.alias, opts.nan, code + list(obj["code"]), getattr(opts, "fp_realistic", False))
@@ -1120,6 +1314,15 @@ class Runner:
         # walks, with the declared capacity of the array they index. Attached once per row; `--no-invariants`
         # leaves the list empty and the generator/comparison behave exactly as before.
         self.gen.invs = INV.specs_for(t.sid, t.va, not getattr(opts, "no_invariants", False))
+        self.gen.force_cands = list(self.forced_cands)
+        # --edge-scope: the original's edges this run is about (one case of a switch): the run continues past
+        # --inputs and steers only for these; coverage is still reported for the whole function
+        self.edge_scope = None
+        if getattr(opts, "edge_scope", None):
+            self.edge_scope = {tuple(int(x, 16) for x in e.split("->")) for e in json.load(open(opts.edge_scope))}
+        self.gen.hints = [INV.hint(h) for h in (getattr(opts, "hint", None) or [])]
+        if getattr(opts, "pin", None):                  # --pin: not an invariant of the type, never disabled
+            self.gen.invs = self.gen.invs + [INV.pin_invariant(p) for p in opts.pin]
         self.cov_on = False
         self.cov_side = None
         self.prev_end = None
@@ -1150,6 +1353,11 @@ class Runner:
         self.write_flags_reg = {}       # (label, base) -> (baseline, flags)
         self.region_of = self._region_map()
         self.writes.start()             # --uninit-mem: per-dword write flags for pool/.data/extras
+        # the DYN dwords the ORIGINAL's code itself stored this pass (emulated stores; import handlers write
+        # through Machine.write, which no hook sees): the class-3 baseline injects everything else
+        self.heap_stores = set()
+        self.hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, self._on_heap_store,
+                                        begin=M.DYN_BASE, end=M.DYN_BASE + M.DYN_SIZE - 1))
         if self.writes.on:
             m.mark_written = self.mark_written     # machine.write() reports handler/input-setup writes here
         # --- class 3 (symmetric baseline): the pass that follows must start from the heap/misc/stub state
@@ -1159,6 +1367,7 @@ class Runner:
         self.baseline = None                    # {"heap": {page: bytes}, "img": {section: {page: bytes}},
                                                 #  "extra": [[base, size]], "inp_extra": {base: size}}
         self.mapped_extra = []                  # [[base, size]] of the fault-repair regions now mapped
+        self.injected = set()                   # class-3 heap pages written into the current pass
         self.trimmed = {}                       # (label, page) -> {dword addr: 0} dropped as stub scratch
         self.uncompared = {}                    # (label, page, dword addr) -> stub name: never compared
         self.runs = 0                           # passes run for the row (diagnostics)
@@ -1553,6 +1762,36 @@ class Runner:
                 return None
         return None
 
+    def wild_eip(self, why):
+        """The fault text names an eip inside an image function that is not one of its instructions (cached
+        recursive descent per function), i.e. the run was executing garbage reached through a soup pointer."""
+        import re
+        m_ = re.search(r"eip=([0-9a-fA-F]{8})", str(why))
+        if not m_:
+            return False
+        eip = int(m_.group(1), 16)
+        if not self.img.in_text(eip):
+            return False
+        import bisect
+        starts = getattr(self.img, "starts", None)
+        if not starts:
+            return False
+        f = starts[max(0, bisect.bisect_right(starts, eip) - 1)]
+        cache = self.__dict__.setdefault("_decoded", {})
+        if f not in cache:
+            try:
+                lo, hi = self.img.func_extent(f)
+                code = self.img.read(lo, hi - lo)
+                insns, _ = R.recursive_descent(lambda x, k: code[x - lo:x - lo + k], lo, hi, f, lambda x: None)
+                cache[f] = set(insns) if lo <= eip < hi else None
+            except Exception:
+                cache[f] = None
+        return cache[f] is not None and eip not in cache[f]
+
+    def _on_heap_store(self, uc, access, address, size, value, _):
+        if self.cur is self.orig:
+            self.heap_stores.update(range(address & ~3, (address + max(int(size), 1) + 3) & ~3, 4))
+
     def _on_site(self, uc, address, size, data):
         side, info = data
         if side is not self.cur:
@@ -1560,6 +1799,11 @@ class Runner:
         if side.span[0] <= address < side.span[1]:
             self.last_site = address
             self.run_sites[address] = self.run_sites.get(address, 0) + 1
+            # executing the tested function itself: every transparent call has returned. The esp test below
+            # cannot see that when this call pushes arguments the transparent one did not (the original's
+            # register-argument check_party 0x49d160, then set_lvalue's two pushes): the stale frame made
+            # set_lvalue's inner report() calls depth 1 on the original's side only
+            self.tr_stack.clear()
         tgt = self._eval_target(info["ins"])
         if tgt is None:
             return
@@ -1640,6 +1884,93 @@ class Runner:
         self.arity_cache[va] = n
         return n
 
+    def callee_arg_widths(self, va):
+        """{stack argument index: bytes the callee reads of it} for arguments it only ever reads narrower than a
+        dword (a char/short/bool parameter: tstring::push_back 0x42be70 reads `mov al, [esp+8]`). The caller's
+        other bytes of that slot are whatever the register or stack slot held (ini_file::parse_line 0x4bd4d0
+        stores the char into the low byte of its own `line` argument slot and pushes the whole dword), so they
+        are not compared. Static and conservative: every path of the callee is walked with esp tracked through
+        push/pop/sub/add and direct calls (their ret N), or every [ebp+8+4k] access of a `push ebp; mov ebp, esp`
+        frame; an argument read as a dword or address-taken (lea) anywhere is full width, and anything the walk
+        cannot follow (an indirect call/jmp, another esp write, paths joining at different esp) gives {}."""
+        cache = self.__dict__.setdefault("_argw_cache", {})
+        if va in cache:
+            return cache[va]
+        cache[va] = {}
+        if not self.img.in_text(va):
+            return {}
+        try:
+            lo, hi = self.img.func_extent(va)
+            if lo != va:
+                return {}
+            code = self.img.read(lo, hi - lo)
+            insns, _ = R.recursive_descent(lambda a, k: code[a - lo:a - lo + k], lo, hi, va, lambda a: None)
+        except Exception:
+            return {}
+        seen = {}
+
+        def note(off, size, full):
+            if off >= 0:
+                k = off // 4
+                seen[k] = max(seen.get(k, 0), 4 if full or off % 4 else size)
+        first = [insns[a] for a in sorted(insns)[:2]] if len(insns) >= 2 else []
+        ebp_frame = len(first) == 2 and first[0].mnemonic == "push" and first[0].op_str == "ebp" and \
+            first[1].mnemonic == "mov" and first[1].op_str == "ebp, esp"
+        if ebp_frame:
+            for i in insns.values():
+                for o in i.operands:
+                    if o.type == CX.X86_OP_MEM and o.mem.base == CX.X86_REG_EBP and not o.mem.index and o.mem.disp >= 8:
+                        note(o.mem.disp - 8, o.size, i.id == CX.X86_INS_LEA)
+        else:
+            at, work = {}, [(va, 0)]                    # address -> esp delta when reached (esp - entry esp)
+            while work:
+                a, d = work.pop()
+                while True:
+                    if a in at:
+                        if at[a] != d:
+                            return {}
+                        break
+                    i = insns.get(a)
+                    if i is None:
+                        return {}
+                    at[a] = d
+                    for o in i.operands:
+                        if o.type == CX.X86_OP_MEM and o.mem.base == CX.X86_REG_ESP and not o.mem.index:
+                            note(o.mem.disp + d - 4, o.size, i.id == CX.X86_INS_LEA)
+                    m_, nxt = i.mnemonic, a + i.size
+                    if m_ == "ret":
+                        break
+                    if m_ == "push":
+                        d -= 4
+                    elif m_ == "pop":
+                        if i.operands[0].type == CX.X86_OP_REG and i.operands[0].reg == CX.X86_REG_ESP:
+                            return {}
+                        d += 4
+                    elif m_ in ("sub", "add") and i.operands[0].type == CX.X86_OP_REG and \
+                            i.operands[0].reg == CX.X86_REG_ESP:
+                        if i.operands[1].type != CX.X86_OP_IMM:
+                            return {}
+                        d += -i.operands[1].imm if m_ == "sub" else i.operands[1].imm
+                    elif m_ == "call":
+                        if i.operands[0].type != CX.X86_OP_IMM:
+                            return {}
+                        d += 4 * (self.callee_arity(i.operands[0].imm) or 0)
+                    elif m_ == "jmp":
+                        if i.operands[0].type != CX.X86_OP_IMM:
+                            return {}
+                        nxt = i.operands[0].imm
+                        if not (lo <= nxt < hi):
+                            break                       # tail call: the arguments go on to its callee
+                    elif m_.startswith("j") or m_.startswith("loop"):
+                        if i.operands[0].type == CX.X86_OP_IMM:
+                            work.append((i.operands[0].imm, d))
+                    elif i.operands and i.operands[0].type == CX.X86_OP_REG and \
+                            i.operands[0].reg == CX.X86_REG_ESP and i.operands[0].access & capstone.CS_AC_WRITE:
+                        return {}                       # mov/lea/and esp, ...: not tracked
+                    a = nxt
+        cache[va] = {k: w for k, w in seen.items() if w < 4}
+        return cache[va]
+
     def callee_regs(self, va):
         if va in self.ecx_cache:
             return self.ecx_cache[va]
@@ -1657,7 +1988,7 @@ class Runner:
 
     def abi_ok(self, o):
         """Callee-saved registers back at their sentinels and esp popped exactly the declared args."""
-        if any(o[nm] != CALLEE_SENTINEL[r] for nm, r in M.CALLEE_SAVED):
+        if any(o[nm] != o.get("entry_cs", {}).get(nm, CALLEE_SENTINEL[r]) for nm, r in M.CALLEE_SAVED):
             return False
         return o["esp"] == 4 + self.t.callee_pop
 
@@ -1790,6 +2121,10 @@ class Runner:
         if self.img.in_text(target) or M.STUB_BASE <= target < m.stub_end:
             return None
         ar = self.site_arity(ret)
+        if ar is None and ret == M.SENTINEL and esp == self.esp_entry:
+            # a tail call through a pointer (`jmp [eax+0x68]` with the tested function's frame gone): the target
+            # takes over the tested function's own arguments and returns to its caller (mission_3 0x48d7e0)
+            ar = (len(self.t.stack_kinds), bool(self.t.callee_pop))
         if ar is None:
             return ("fake-arity", "no call site before %08x" % ret)
         n, pops = ar
@@ -1822,6 +2157,54 @@ class Runner:
         uc.reg_write(UC_X86_REG_ESP, new_esp)
         uc.reg_write(UC_X86_REG_EIP, ret)
         return True
+
+    def _on_forced(self, uc, address, size, _):
+        """Entry of a callee whose result this input forces (Input.forced {va: value}): return it without running
+        the callee. The candidates are the image functions the original calls directly and whose result its next
+        instruction tests (`call f; test al, al; jcc`): a branch on a predicate of game state the input cannot
+        easily build (party_2 0x4b25c0 on 0x435740). Both builds call the same image function, and the depth-1
+        trace still compares the call and its arguments, so the forced value is one more environment both are
+        measured in: the callee treated as an uninterpreted function."""
+        if self.cur is None or address not in self.cur_forced:
+            return
+        m = self.m
+        esp = uc.reg_read(UC_X86_REG_ESP)
+        try:
+            ret = m.u32(esp)
+        except Exception:
+            return
+        n = self.callee_arity(address) or 0
+        uc.reg_write(UC_X86_REG_EAX, self.cur_forced[address] & 0xFFFFFFFF)
+        uc.reg_write(UC_X86_REG_EDX, 0)
+        uc.reg_write(UC_X86_REG_ESP, esp + 4 + 4 * n)
+        uc.reg_write(UC_X86_REG_EIP, ret)
+
+    def _on_stubbed(self, uc, address, size, pops):
+        """Entry of a --stub function: return an input object without running it. These are the resource lookups
+        that end the game when a name is missing (resmgr::get_object 0x419540 -> mb_error -> exit): a test's
+        resource manager is empty, so every input that reached one ended at exit() (quest_log 0x4ee910: 30/30).
+        Both builds call the same image function, so the depth-1 trace still compares the call and its
+        arguments; the object returned is a pool slot chosen by (callee, this, arguments) like a fake call's,
+        the same object on both sides."""
+        if self.cur is None:
+            return
+        m = self.m
+        esp = uc.reg_read(UC_X86_REG_ESP)
+        try:
+            ret = m.u32(esp)
+        except Exception:
+            return
+        n = pops // 4 if pops else ((self.site_arity(ret) or (0, False))[0])
+        try:
+            args = [self.norm_key(m.u32(esp + 4 + 4 * k)) for k in range(n)]
+        except Exception:
+            return
+        ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX))
+        h = zlib.crc32(repr(("stub", address, ecx, args)).encode())
+        self.fakes.append((address, n, ecx, tuple(args)))
+        uc.reg_write(UC_X86_REG_EAX, M.POOL_BASE + M.SLOT * (HOT_SLOTS + (h >> 8) % (NSLOTS - HOT_SLOTS)))
+        uc.reg_write(UC_X86_REG_ESP, esp + 4 + pops)
+        uc.reg_write(UC_X86_REG_EIP, ret)
 
     def _bool_result(self, ret):
         """True if the first instruction after the call tests the return value against itself
@@ -1877,6 +2260,130 @@ class Runner:
                 self.reads.append((address, self.m.u32(address)))
             except Exception:
                 pass
+
+    def uninit_copies(self, inp, max_steps=3_000_000):
+        """Dword addresses whose content, at the end of the ORIGINAL's run of inp, is a plain copy of a stack slot
+        below the entry esp that this run has not written since the slot last became live (an uninitialised local,
+        whatever a returned callee's frame left there): the original's value there is
+        indeterminate, so a different value in ours is not a difference. The class: a vector4 built by the
+        3-argument constructor (w never set) and passed or stored by value (editor_ui 0x4f5fb0 copies its colour's
+        w into the mesh; obj_tbl 0x499050 copies Frame3 rows' w). Copy-only taint: a value is tainted when
+        loaded from such a slot (or from tainted memory) and moved unchanged by mov / push / pop / fld / fst(p);
+        any other instruction makes what it writes untainted, so arithmetic on a leftover is never excused."""
+        m, uc = self.m, self.m.uc
+        lo_s, entry = M.STACK_TOP - M.STACK_SIZE, self.esp_entry
+        written, tainted = set(), set()
+        regt, fpu, pend, steps = {}, [], [False], [0]
+        movs = [None]       # esi - edi of the string copy in progress: its writes take their source bytes' taint
+        last_esp = [entry]
+        cache = {}
+
+        def src_taint(a, n):
+            return all((b in tainted) or (lo_s <= b < entry and b not in written) for b in range(a, a + n))
+
+        def ea(o):
+            mm = o.mem
+            a = mm.disp
+            if mm.base:
+                a += uc.reg_read(CS2UC[mm.base]) if mm.base in CS2UC else 0
+            if mm.index:
+                a += (uc.reg_read(CS2UC[mm.index]) if mm.index in CS2UC else 0) * mm.scale
+            return a & 0xFFFFFFFF
+
+        def full(r):
+            return CX.X86_REG_EAX if r in (CX.X86_REG_AX, CX.X86_REG_AL) else r
+
+        def on_code(uc_, address, size, _):
+            steps[0] += 1
+            if self.cur is not self.orig or steps[0] > max_steps:
+                return
+            ins = cache.get(address)
+            if ins is None:
+                try:
+                    ins = cache[address] = next(_md.disasm(bytes(uc_.mem_read(address, size)), address))
+                except Exception:
+                    return
+            ops, mn = ins.operands, ins.mnemonic
+            if mn.startswith("rep "):
+                mn = mn[4:]                 # capstone spells the prefix into the mnemonic ("rep movsd")
+            pend[0] = False
+            movs[0] = None
+            esp_now = uc_.reg_read(UC_X86_REG_ESP)
+            if esp_now > last_esp[0]:
+                # the bytes esp just rose past belong to a frame that has returned: dead again, so a later read
+                # of one (before this function writes it) is an uninitialised read
+                for b in range(last_esp[0], min(esp_now, last_esp[0] + 0x10000)):
+                    written.discard(b)
+            last_esp[0] = esp_now
+            try:
+                if mn == "mov" and len(ops) == 2 and ops[0].size == 4:
+                    d, sop = ops
+                    if sop.type == CX.X86_OP_MEM:
+                        t = src_taint(ea(sop), 4)
+                    elif sop.type == CX.X86_OP_REG:
+                        t = regt.get(sop.reg, False)
+                    else:
+                        t = False
+                    if d.type == CX.X86_OP_REG:
+                        regt[d.reg] = t
+                    else:
+                        pend[0] = t
+                    return
+                if mn.startswith("movs") and mn in ("movsd", "movsb", "movsw") and not ops or \
+                        (mn in ("movsd", "movsb", "movsw") and all(o.type == CX.X86_OP_MEM for o in ops)):
+                    # string copy: every written byte takes its own source byte's taint (the code hook can run
+                    # once for a whole rep movs, so the taint is resolved per write from the esi - edi delta)
+                    movs[0] = (uc_.reg_read(UC_X86_REG_ESI) - uc_.reg_read(UC_X86_REG_EDI)) & 0xFFFFFFFF
+                    return
+                if mn == "push" and ops:
+                    o = ops[0]
+                    pend[0] = (regt.get(o.reg, False) if o.type == CX.X86_OP_REG else
+                               src_taint(ea(o), 4) if o.type == CX.X86_OP_MEM else False)
+                    return
+                if mn == "pop" and ops and ops[0].type == CX.X86_OP_REG:
+                    regt[ops[0].reg] = src_taint(uc_.reg_read(UC_X86_REG_ESP), 4) and \
+                        uc_.reg_read(UC_X86_REG_ESP) in tainted
+                    return
+                if mn == "fld" and ops and ops[0].type == CX.X86_OP_MEM and ops[0].size == 4:
+                    fpu.append(src_taint(ea(ops[0]), 4))
+                    return
+                if mn in ("fst", "fstp") and ops and ops[0].type == CX.X86_OP_MEM and ops[0].size == 4:
+                    pend[0] = fpu[-1] if fpu else False
+                    if mn == "fstp" and fpu:
+                        fpu.pop()
+                    return
+                # anything else: what it writes is untainted (registers here, memory through on_write)
+                for r_ in ins.regs_access()[1]:
+                    regt.pop(r_, None)
+                    regt.pop(full(r_), None)
+                if mn.startswith("f"):
+                    fpu[:] = []                  # x87 stack effects not modelled: forget (untainted)
+            except Exception:
+                pend[0] = False
+
+        def on_write(uc_, access, address, size, value, _):
+            if self.cur is not self.orig:
+                return
+            for b in range(address, address + size):
+                t_ = src_taint((b + movs[0]) & 0xFFFFFFFF, 1) if movs[0] is not None else pend[0]
+                if lo_s <= b < entry + 0x1000:
+                    written.add(b)
+                if t_:
+                    tainted.add(b)
+                else:
+                    tainted.discard(b)
+
+        hs = [uc.hook_add(UC_HOOK_CODE, on_code), uc.hook_add(UC_HOOK_MEM_WRITE, on_write)]
+        try:
+            self.run_side(self.orig, inp)
+        finally:
+            for h in hs:
+                uc.hook_del(h)
+        if steps[0] > max_steps:
+            return frozenset()
+        # bytes, not dwords: a copy to an unaligned destination (cam widget + 0x1ac from a soup pointer) straddles
+        # dwords, so the comparison excuses a dword whose differing bytes are all tainted (Comparer.uninit_excused)
+        return frozenset(a for a in tainted if not (lo_s <= a < entry))
 
     def _traced_reads(self, inp):
         """[(address, dword)] of every 4-byte read the original makes from an input buffer, the
@@ -2127,6 +2634,36 @@ class Runner:
         slot = (base + idx * op.mem.scale + op.mem.disp) & 0xFFFFFFFF
         return base, slot, ret
 
+    def repair_heap(self, inp, why, rng):
+        """The original ran the emulated heap out (64 MB): a size or element count it read from the input is a
+        soup value no game state holds (mesh_hud 0x498420: 321 of 400 inputs; quest_log 0x4ee910: 37 of 100).
+        Shrink the input dword that carried it: the most recent one the failed size is a small multiple of
+        (an element count times its stride, or the byte size itself) or a few bytes more than (quest_log:
+        a string length + 1), else the most recent large non-pointer
+        value (a loop count over small allocations). Returns the repaired input or None."""
+        mm = re.search(r"\((\d+) bytes\)", str(why))
+        size = int(mm.group(1)) if mm else 0
+        reads = self._traced_reads(inp)
+
+        def pointer(v):
+            return (M.POOL_BASE <= v < M.POOL_BASE + M.POOL_SIZE or self.img.in_image(v) or
+                    M.DYN_BASE <= v < M.DYN_BASE + M.DYN_SIZE or M.STACK_TOP - M.STACK_SIZE <= v < STACK_END)
+        pick = None
+        for addr, v in reversed(reads):
+            # the size is the value times a stride, or the value plus a small header/terminator (a string length
+            # + 1); a soup value used as a length is often a pool address, so pointers are not excluded here
+            if v >= 0x1000 and size and (size % v == 0 and size // v <= 0x1000 or 0 <= size - v <= 0x40):
+                pick = addr
+                break
+        if pick is None:
+            for addr, v in reversed(reads):
+                if 0x10000 <= v and not pointer(v):
+                    pick = addr
+                    break
+        if pick is None:
+            return None
+        return self._put_dword(inp.copy(), pick, rng.choice((0, 1, 2, 3, 4, 8, 16, rng.randrange(64))))
+
     def repair_pure(self, inp, rng):
         """The original stopped in _purecall: an indirect call read a vtable slot that is still the
         pure-call stub (an interface object the game would have initialised, or a slot the input
@@ -2193,6 +2730,7 @@ class Runner:
     # --- one run
     def run_side(self, side, inp):
         m, uc, t = self.m, self.m.uc, self.t
+        self.cur_forced = getattr(inp, "forced", None) or {}
         # memory: pool, dyn heap, stack, misc
         cache = self.page_cache
         if cache.get("inp") is not inp:
@@ -2210,7 +2748,11 @@ class Runner:
         m.lazy = lazy
         if side is self.orig:
             self.reset_writes()     # a new input: the rule needs writes from BOTH passes, so only here
-        if self.baseline is not None:
+            self.heap_stores = set()
+        if self.baseline is not None and side is self.ours:
+            # (our pass only: the original's pass of the NEXT input used to be injected with this input's
+            # leftover heap, so input N's original run started from input N-1's; a fresh replay of the same
+            # input then agreed - add_point_light in the interpreter's case sweep, heap @50004bc0)
             # class 3: the second pass must start from the state the first pass started from. The heap
             # state that pass *left* is restored before the input is laid out, so a page the original's
             # run dirtied through a do-nothing stub holds the same bytes when our pass writes it (or, for
@@ -2219,6 +2761,7 @@ class Runner:
             # they started with, undoing exactly the pages the previous pass materialised.
             for p, data in self.baseline.get("heap", {}).items():
                 m.uc.mem_write(p, data)
+                self.injected.add(p)        # raw writes are not dirty-tracked: zeroed after this pass
             pages = self.baseline.get("extra")
             if pages is not None and getattr(inp, "extra", None) == self.baseline.get("inp_extra", {}):
                 for base, data in pages.items():
@@ -2255,9 +2798,17 @@ class Runner:
         regs = dict(CALLEE_SENTINEL)
         for r, v in inp.regs.items():
             regs[REGS[r]] = v
+        for ro, ru in getattr(t, "reg_map", None) or ():
+            # the same argument in both builds' registers (an input saved before the mapping carries only ours)
+            v = inp.regs.get(ro, inp.regs.get(ru))
+            if v is not None:
+                regs[REGS[ro]] = regs[REGS[ru]] = v
         m.reset_cpu(regs, inp.xmm)
         uc.reg_write(UC_X86_REG_ESP, self.esp_entry)
         entry = {r: uc.reg_read(REGS[r]) for r in RF.GPR_SCRATCH}
+        # callee-saved registers as this run starts: their sentinels, unless the input passes an argument in one
+        # (reg_map: the original reads edi); the ABI check expects them back at these values
+        self.entry_cs = {nm: uc.reg_read(r_) for nm, r_ in M.CALLEE_SAVED}
         for k in range(8):
             entry["xmm%d" % k] = uc.reg_read(UC_X86_REG_XMM0 + k)
         self.fakes, self.calls = [], []
@@ -2291,6 +2842,7 @@ class Runner:
         o["edx"] = uc.reg_read(UC_X86_REG_EDX)
         o["ecx"] = uc.reg_read(UC_X86_REG_ECX)
         o["entry"] = entry
+        o["entry_cs"] = dict(self.entry_cs)
         for k in range(1, 8):
             o["xmm%d" % k] = uc.reg_read(UC_X86_REG_XMM0 + k)
         for nm, r in M.CALLEE_SAVED:
@@ -2327,6 +2879,11 @@ class Runner:
         # dirty MISC page (TEB, TLS, scratch), restored to the baseline for the next run
         mem["heap"], misc = m.take_dirty(
             self.writes.dwords if getattr(self.writes, "on", False) else None)
+        for p in sorted(self.injected):
+            # the class-3 pages injected into this pass (run_side) go back to zeros, as take_dirty left every
+            # page this pass wrote, so the next input's original run starts from a clean heap
+            m.uc.mem_write(p, b"\0" * 0x1000)
+        self.injected = set()
         if getattr(self.writes, "on", False):
             # snapshot the pass's write set: the other pass subtracts it to find dwords only ONE run wrote
             # through a do-nothing stub (Runner._trim_stub_scratch, Comparer.diff_bytes' stub fence)
@@ -2370,8 +2927,29 @@ class Runner:
             # only, because only DYN is shared with the stub scratch the original writes through a do-nothing
             # import). `baseline` holds the bytes the second pass is injected with; `mem["heap"]` (above) is
             # what the comparison sees, and it is restored from the same bytes when the pass ends.
+            # Only the pages of the original's allocations: a DYN page past its high-water mark (dyn_next)
+            # is no heap block but memory a soup pointer reached (a GameData* of 0x53db0000 in the
+            # interpreter's context_menu_add_item: the original's tstring::operator= wrote its buffer
+            # into that "object", and injecting it made our pass's operator= see a string that already
+            # had one). Those pages started as zeros for the original, so they start as zeros for ours.
+            # And only what import handlers wrote there (the do-nothing stubs' scaffold this rule is for):
+            # a dword the original's code itself stored starts as zeros for our pass, as it did for the
+            # original's (change_screen_quit: our malloc got the original's deque map back, its block
+            # slot already set, so our deque::push_back skipped the malloc the original made).
+            hw = (o["dyn_hi"] + 0xFFF) & ~0xFFF
+            stores = self.heap_stores
+            heap = {}
+            for pg, d in mem["heap"].items():
+                if pg >= hw:
+                    continue
+                keep = bytearray(0x1000)
+                for k in range(0, 0x1000, 4):
+                    if pg + k not in stores:
+                        keep[k:k + 4] = d[k:k + 4]
+                if any(keep):
+                    heap[pg] = bytes(keep)
             self.baseline = {
-                "heap": dict(mem["heap"]),
+                "heap": heap,
                 "extra": {k: v for k, v in mem.get("extra", {}).items()} if extra_init else None,
                 "inp_extra": dict(getattr(inp, "extra", {})),
             }
@@ -2426,10 +3004,36 @@ class Comparer:
     def __init__(self, runner, opts):
         self.r, self.opts = runner, opts
         self.tolerated = {"stack-pointer": 0, "inline-calls": 0, "ulp": 0, "const-pointer": 0, "local-copy": 0,
-                          "uninit-dword": 0, "stub-scratch": 0}
+                          "uninit-dword": 0, "stub-scratch": 0, "stale-return-address": 0}
         self.ro = runner.ro
+        self.uninit_copy = frozenset()      # bytes excused for the input in hand (set by test_function)
         self.last_kind = None
         self._thr, self._thr_key = None, None      # --uninit-mem: the pool/extra baseline of the page in hand
+
+    def stale_return_address(self, x, y):
+        """Both values are return addresses of call sites inside the tested function (the original's in
+        the image, ours in our copy). Code never stores one as data, so such a dword is a stale stack
+        slot an uninitialised read copied out (the original Light::init 0x461480 copies an unset
+        vector4 w into four fields; the stack below esp holds the return addresses of earlier calls,
+        and those differ between the builds because the call sites do). Both sides must be one."""
+        if x == y:
+            return False
+        sites = getattr(self, "_ret_sites", None)
+        if sites is None:
+            CALL = CX.X86_INS_CALL
+
+            def rets(insns):
+                return {a + ins.size for a, ins in (insns or {}).items() if ins.id == CALL}
+            sites = self._ret_sites = (rets(self.r.t.orig_insns), rets(getattr(self.r, "ours_func_insns", None)))
+        return x in sites[0] and y in sites[1]
+
+    def uninit_excused(self, addr, ba, bb):
+        """True when the dword at addr differs only in bytes the original copied from an uninitialised stack slot
+        (Runner.uninit_copies): every differing byte is tainted."""
+        if not self.uninit_copy:
+            return False
+        diff = [j for j in range(min(len(ba), len(bb))) if ba[j] != bb[j]]
+        return bool(diff) and all((addr + j) in self.uninit_copy for j in diff)
 
     def same_constant(self, x, y):
         """Two different pointers into read-only data whose 64 bytes (or C strings) are identical:
@@ -2648,6 +3252,27 @@ class Comparer:
             return True
         return False
 
+    def caller_safe(self, t, reg, result):
+        """True when no caller of the original can observe reg after the call (callerdeps.py, SAFE): every direct
+        call site's paths overwrite it before reading it, up to two caller levels. Preserve mode: ours writes a
+        scratch register the original leaves untouched (mission_3 0x48d650: cl keeps a dead `this`-derived value in
+        ecx); result mode (result=True): the original's eax differs and no caller reads it. DEPENDS and UNKNOWN
+        (pointer callers, indirect jmps) stay mismatches. Counted as tolerated 'caller-dead-<reg>'."""
+        cache = self.__dict__.setdefault("_caller_safe", {})
+        k = (t.va, reg, result)
+        if k not in cache:
+            try:
+                import callerdeps as CD
+                d = getattr(Comparer, "_deps", None) or CD.Deps(self.r.img)
+                Comparer._deps = d
+                cache[k] = d.check(t.va, {reg}, 2, result=result)["verdict"] == "SAFE"
+            except Exception:
+                cache[k] = False
+        if cache[k]:
+            nm = "caller-dead-" + reg
+            self.tolerated[nm] = self.tolerated.get(nm, 0) + 1
+        return cache[k]
+
     def compare(self, a, b, t):
         """-> None if equivalent, else (observable, orig, ours, detail). self.last_kind: triage hint."""
         self.last_kind = None
@@ -2655,10 +3280,12 @@ class Comparer:
         if rk in ("int", "ptr", "hidden", "unknown", "small", "bool", "i64"):
             mask = {"bool": 0xFF, "small": 0xFFFF}.get(rk, 0xFFFFFFFF)
             if rk == "small":
-                mask = 0xFFFF
+                # a char return is al (the caller reads nothing else; ah is whatever the last write left)
+                mask = 0xFF if getattr(t, "ret_width", None) == 1 else 0xFFFF
             ea, eb = a["eax"] & mask, b["eax"] & mask
             if ea != eb and not (in_stack_frame(ea, self.r.stk_hi) and in_stack_frame(eb, self.r.stk_hi)) \
-                    and not (mask == 0xFFFFFFFF and (self.same_constant(ea, eb) or self.local_copy_equal(ea, eb))):
+                    and not (mask == 0xFFFFFFFF and (self.same_constant(ea, eb) or self.local_copy_equal(ea, eb))) \
+                    and not self.caller_safe(t, "eax", True):
                 return ("eax" if mask == 0xFFFFFFFF else "eax&%#x" % mask, "%08x" % ea, "%08x" % eb, "return value")
             if rk == "i64" and a["edx"] != b["edx"]:
                 return ("edx", "%08x" % a["edx"], "%08x" % b["edx"], "64-bit return high half")
@@ -2676,7 +3303,7 @@ class Comparer:
             if rk == "m128":
                 cand = [r for r in cand if r != "xmm0"]
             for r in cand:
-                if a[r] == a["entry"][r] and b[r] != b["entry"][r]:
+                if a[r] == a["entry"][r] and b[r] != b["entry"][r] and not self.caller_safe(t, r, False):
                     self.last_kind = "clobber"
                     return (r + " (untouched by the original)", "%x" % a["entry"][r], "%x" % b[r],
                             "ours writes a register the original never writes; an LTCG caller may keep a live value there")
@@ -3070,6 +3697,12 @@ class Comparer:
                 self.tolerated["stub-scratch"] = self.tolerated.get("stub-scratch", 0) + 1
                 i = k + 4
                 continue
+            if self.uninit_excused(base_addr + k, xa[k:k + 4], xb[k:k + 4]):
+                # the original's dword is a plain copy of a stack slot its run never wrote (Runner.uninit_copies):
+                # its value is indeterminate, so ours may hold anything there
+                self.tolerated["uninit-copy"] = self.tolerated.get("uninit-copy", 0) + 1
+                i = k + 4
+                continue
             if k in drop:
                 # --uninit-mem: a fill/sentinel leftover neither build wrote: not information about the
                 # code, so it is neither compared nor counted as search progress (its bytes are re-tested
@@ -3088,6 +3721,10 @@ class Comparer:
                 i = k + 4
                 continue
             if va is not None and self.local_copy_equal(va, vb):
+                i = k + 4
+                continue
+            if va is not None and self.stale_return_address(va, vb):
+                self.tolerated["stale-return-address"] += 1
                 i = k + 4
                 continue
             if va is not None and self.opts.ulp and ulp_close(va, vb, self.opts.ulp):
@@ -3181,7 +3818,9 @@ class Comparer:
                 n = min(n, self.r.decl_prefix[tgt])
             regs = self.r.callee_regs(tgt)
             ent = [tgt, norm_val(ecx, esp) if "ecx" in regs else "-", norm_val(edx, esp) if "edx" in regs else "-"]
-            out.append((ent, [norm_val(w, esp) for w in words[:n]] if n else []))
+            widths = self.r.callee_arg_widths(tgt) if n else {}
+            out.append((ent, [norm_val(w & ((1 << 8 * widths[k]) - 1) if k in widths else w, esp)
+                              for k, w in enumerate(words[:n])] if n else []))
         return out
 
     def compare_calls(self, ca, cb):
@@ -3393,6 +4032,8 @@ class FpTol:
                         continue
                     if self.c.same_constant(va, vb):
                         continue
+                    if self.c.uninit_excused(base + 4 * int(k), struct.pack("<I", va), struct.pack("<I", vb)):
+                        continue            # excused by compare() too (Runner.uninit_copies): not a float to judge
                     if thr is not None and k * 4 + 4 <= len(thr) and \
                             getattr(self.opts, "uninit_mem", True):
                         # --uninit-mem: a dword the original left as a fill/sentinel leftover (one of
@@ -3431,6 +4072,20 @@ class FpTol:
                 floats.append((lbl, float("inf"), 0.0, 0.0, 24, (region, pg, k, va)))     # denormal result: range case
                 continue
             floats.append((lbl, _f32(va), _f32(vb), _f32(vr), 24, (region, pg, k, va)))
+        # float arguments of import calls (FSOUND_3D_Listener_SetAttributes takes the listener frame by value: 0x4f8c80
+        # passes values 1 ulp apart): judged like memory, against the reference run's same call
+        ia, ib, ir = a.get("imports") or [], b.get("imports") or [], ref.get("imports") or []
+        if len(ia) == len(ib) == len(ir):
+            for k, (x, y, z) in enumerate(zip(ia, ib, ir)):
+                if x[0] != y[0] or x[0] != z[0] or len(x[1]) != len(y[1]) or len(x[1]) != len(z[1]):
+                    continue
+                for j, (va, vb, vr) in enumerate(zip(x[1], y[1], z[1])):
+                    if va == vb or not all(isinstance(v, int) for v in (va, vb, vr)):
+                        continue
+                    if _tiny(va) or _tiny(vb) or _tiny(vr):
+                        continue        # a small integer / pointer-ish value: left to compare()
+                    floats.append(("import call #%d %s arg %d" % (k, x[0], j), _f32(va), _f32(vb), _f32(vr), 24,
+                                   ("import", k, j, va)))
         results = []
         for lbl, fa, fb, fr, bits, edit in floats:
             v, ulps, ratio, detail = fp_judge_value(fa, fb, fr, bits)
@@ -3450,6 +4105,13 @@ class FpTol:
                 continue
             if edit == "st0":
                 sane["st0"] = a["st0"]
+            elif edit[0] == "import":
+                _k, k_, j_, va_ = edit
+                imps = [list(c) for c in (sane.get("imports") or [])]
+                args_ = list(imps[k_][1])
+                args_[j_] = va_
+                imps[k_][1] = tuple(args_) if isinstance(sane["imports"][k_][1], tuple) else args_
+                sane["imports"] = [tuple(c) if isinstance(sane["imports"][i_], tuple) else c for i_, c in enumerate(imps)]
             else:
                 edits.setdefault(edit[:2], []).append(edit[2:])
         for (region, pg), lst in edits.items():
@@ -3681,6 +4343,38 @@ def _test_function(sid, va, opts, log=print):
     if t.abi_mismatch and not opts.ignore_abi:
         out.update(verdict="UNSUPPORTED", reason=t.abi_mismatch, seconds=round(time.time() - t0, 1))
         return out
+    # Automatic --transparent: an original function our object runs its OWN copy of (the audit pairs a local copy
+    # with it at the call sites). The original's call to it is replaced in the call trace by the calls it makes,
+    # as ours already is: without this, every row whose TU defines its callees (the interpreter 0x49fa10 with
+    # report and its 18 validators) FAILed on the call boundary alone. Until 2026-10-29 only copies the source
+    # also marks `// @ 0x<va>` qualified, which left camera.cpp's static copy of report (0x49cc60, commented but
+    # unmarked) a call-boundary FAIL of set_lvalue 0x49d500. Transparency never hides a difference (the inner
+    # calls, memory and registers are still compared), so the audit's pairing is enough.
+    opts.transparent_auto = []
+    if not getattr(opts, "no_auto_transparent", False) and aud.get("local_copy"):
+        paired = {int(o, 16) for lc in aud["local_copy"] for o in lc.get("original", [])}
+        # Nested copies: a copy's own callees can be copies too (camera.cpp's check_party copy of 0x49d160 calls its
+        # report copy of 0x49cc60). Ours expands both, so the original must expand both: audit each paired copy
+        # against its original and take the copies it pairs, a few levels deep.
+        frontier = [(lc["symbol"], int(o, 16)) for lc in aud["local_copy"] for o in lc.get("original", [])]
+        done = set()
+        for _depth in range(3):
+            nxt = []
+            for nm, ova in frontier:
+                if (nm, ova) in done or ova == va:
+                    continue
+                done.add((nm, ova))
+                for lc2 in _audit_copy(t, nm, ova):
+                    for o in lc2.get("original", []):
+                        if int(o, 16) not in paired:
+                            paired.add(int(o, 16))
+                        nxt.append((lc2["symbol"], int(o, 16)))
+            frontier = nxt
+        opts.transparent_auto = sorted(paired - {va})
+        if opts.transparent_auto:
+            out["transparent_auto"] = ["%08x" % v for v in opts.transparent_auto]
+    regress = regress_inputs(sid, va, opts)
+    opts.regress_set = [f for f, _i in regress]      # keyed: a new regression input re-runs the row
     key = _cache_key(t, out, opts)
     if key:
         try:
@@ -3721,8 +4415,11 @@ def _test_function(sid, va, opts, log=print):
             ran += 1
             rng = random.Random(rng_master.getrandbits(64))
             inp = None
-            if steer and corpus and (i >= opts.inputs or rng.random() < opts.steer_share):
+            if steer and corpus and i >= len(regress) and (i >= opts.inputs or rng.random() < opts.steer_share):
                 inp = steer.next(rng, corpus)
+            if inp is None and i < len(regress):
+                inp = regress[i][1]
+                inp.origin = "regress"
             if inp is None:
                 if corpus and rng.random() < opts.mutate:
                     parent = steer.pick_parent(corpus, rng) if steer else \
@@ -3732,12 +4429,15 @@ def _test_function(sid, va, opts, log=print):
                     inp = gen.fresh(rng)
             try:
                 a = runner.run_side(runner.orig, inp)
-                fixes = pure_fixes = 0
+                fixes = pure_fixes = heap_fixes = 0
                 while time.time() < deadline:
                     st_ = a["status"]
                     if st_[0] == "fault" and a["fault"] and a["fault"][0] != "pool-limit" and fixes < opts.repairs:
                         fixes += 1
                         rep = runner.repair(inp, a["fault"], rng, fixes - 1)
+                    elif st_[0] == "import" and M.is_heap_exhausted(st_[1]) and heap_fixes < 4 and opts.repairs:
+                        heap_fixes += 1
+                        rep = runner.repair_heap(inp, st_[1], rng)
                     elif st_[0] == "import" and str(st_[1]).split(":")[0] == "_purecall" and \
                             pure_fixes < opts.repairs:
                         # a random input drove a vtable call through a slot that is still the pure-call
@@ -3782,6 +4482,14 @@ def _test_function(sid, va, opts, log=print):
                 key = "wall-timeout" if st == "wall" else (st if st != "import" else "import:%s" % str(a["status"][1]).split(":")[0])
                 if st == "fault" and a["fault"]:
                     key = "fault(%s)" % a["fault"][0]
+                if st == "fault" and len(runner.fault_runs) < FAULT_EDGE_RUNS:
+                    # the original faulted on this input even after the repairs: if ours faults too, the edges each
+                    # took are evidence about paths no valid input can take (edge_report: "fault-only")
+                    b_ = runner.run_side(runner.ours, inp)
+                    runner.fault_runs.append(1)
+                    if b_["status"][0] == "fault":
+                        for nm_, side_, o_ in (("orig", runner.orig, a), ("ours", runner.ours, b_)):
+                            runner.fault_edges[nm_] |= faulting_edges(side_, o_)
                 if key in ("timeout", "wall", "wall-timeout"):
                     out["wall_timeout"] = out.get("wall_timeout", 0) + 1
                 if st == "import" and M.is_heap_exhausted(a["status"][1]):
@@ -3799,6 +4507,9 @@ def _test_function(sid, va, opts, log=print):
                     key = "budget(cut-off)"
                     out["budget_cutoff"] = out.get("budget_cutoff", 0) + 1
                 discarded[key] = discarded.get(key, 0) + 1
+                if opts.verbose and st == "fault" and a["fault"]:
+                    log("  discard input %d: fault %s" % (i, " ".join(
+                        "%#x" % x if isinstance(x, int) else str(x) for x in a["fault"])))
                 continue
             if not runner.abi_ok(a):
                 # the original itself returned with clobbered callee-saved registers or a wrong esp:
@@ -3853,6 +4564,13 @@ def _test_function(sid, va, opts, log=print):
                     out["heap_exhausted_ours"] = out.get("heap_exhausted_ours", 0) + 1
                 discarded[key] = discarded.get(key, 0) + 1
                 continue
+            if sb[0] == "fault" and runner.wild_eip(sb[1]):
+                # our pass faulted executing *between* the instructions of an image function: it got there
+                # through a soup code pointer (a misaligned soup vtable's slot, report 0x49cc60's call [edx+0x28]
+                # into 0x435100), and whether such bytes fault depends on incidental register values, so the
+                # original's run of the same garbage proves nothing either. Not information about the code.
+                discarded["wild-code"] = discarded.get("wild-code", 0) + 1
+                continue
             if b["fakes"] and sb[0] == "ok" and not runner.abi_ok(b):
                 discarded["ours-abi-broken(fake)"] = discarded.get("ours-abi-broken(fake)", 0) + 1
                 continue
@@ -3891,9 +4609,27 @@ def _test_function(sid, va, opts, log=print):
                             cmp_.last_kind = None   # an fp judgement replaced the compared observable
                     else:
                         d = None
+                if d and d[0].startswith("memory") and getattr(opts, "uninit_copy", True):
+                    # the original may have copied an uninitialised local there: re-compare without those dwords
+                    # (the original's run of this input is re-done once with copy taint; see uninit_copies)
+                    u = runner.uninit_copies(inp)
+                    if u:
+                        cmp_.uninit_copy = u
+                        try:
+                            d2 = cmp_.compare(a, b, t)
+                            if d2 and fpt is not None:
+                                kind_, d2_ = fpt.judge(a, b, inp, t)
+                                d2 = d2_ if kind_ == "real" else None
+                        finally:
+                            cmp_.uninit_copy = frozenset()
+                        d = d2
             if d:
                 mism += 1
                 sigs[mismatch_sig(d)] += 1
+                if getattr(inp, "origin", None) == "regress":
+                    out["regress_failed"] = out.get("regress_failed", 0) + 1
+                else:
+                    save_regress(sid, va, opts, inp)
                 if first is None and opts.call_regs:
                     # --call-regs: where the live register file at a call site first differs (independent of
                     # which observable the mismatch names, so a register difference can be the explanation)
@@ -3936,6 +4672,7 @@ def _test_function(sid, va, opts, log=print):
     out["mismatch_sigs"] = dict(sigs.most_common(40))
     if gen.invs:
         out["input_invariants"] = describe_invariants(gen.invs)
+    out["regress_inputs"] = len(regress)
     out.update(seed=opts.seed, inputs_planned=opts.inputs, extra_inputs=opts.extra_inputs if getattr(opts, "steer", True) else 0,
                gate=opts.gate, require_all=bool(getattr(opts, "require_all", False)),
                inputs=ran, valid=valid, discarded=discarded, mismatches=mism, first_mismatch=first,
@@ -4023,6 +4760,9 @@ def _test_function(sid, va, opts, log=print):
         # bytes at both were identical: an address difference only (the linker kept two copies)
         why += ("; note: %d address(es) of our own copy of the image's block differed in address only "
                 "(the bytes matched)" % cmp_.tolerated["local-copy"])
+    if cmp_.tolerated.get("stale-return-address") and v in ("PASS", "WEAK"):
+        why += ("; note: %d dword(s) held a return address of the tested function on both sides (a stale stack "
+                "slot copied out by an uninitialised read), not compared" % cmp_.tolerated["stale-return-address"])
     if (cmp_.tolerated.get("stub-scratch") or getattr(runner, "trimmed", None)) and \
             v in ("PASS", "WEAK", "FAIL", "PASS-FP", "WEAK-FP"):
         # class 3: dwords/pages that ONLY the original's run wrote, through an import whose handler is a
@@ -4088,7 +4828,29 @@ def noreturn_stop(why):
 
 
 def edges_missing(runner):
+    scope = getattr(runner, "edge_scope", None)
+    if scope is not None:           # --edge-scope: only the original's edges the run is about
+        return bool(scope - runner.orig.edges - runner.orig.cfg_static_unreachable)
     return any(set(side.cfg.edges) - side.edges - side.cfg_static_unreachable for side in (runner.orig, runner.ours))
+
+
+def faulting_edges(side, o):
+    """The edges of run o (which faulted) into the block the fault happened in: the taken edge (src, dst) with
+    dst <= fault eip and no branch of the function's CFG between dst and the fault. Only these say the path
+    cannot complete; an edge taken earlier in a run that faulted later says nothing about itself."""
+    mm = re.search(r"eip=([0-9a-f]{8})", str(o["status"][1]))
+    if not mm:
+        return set()
+    eip = int(mm.group(1), 16)
+    srcs = sorted({e[0] for e in side.cfg.edges})
+    import bisect
+    out = set()
+    for e in o.get("edges", ()):
+        if e[1] <= eip:
+            k = bisect.bisect_left(srcs, e[1])
+            if k == len(srcs) or srcs[k] >= eip:
+                out.add(e)
+    return out
 
 
 def edge_report(runner, side, opts):
@@ -4098,12 +4860,20 @@ def edge_report(runner, side, opts):
     allx = set(cfg.edges)
     cov = side.edges & allx
     unr = cfg.unreachable(cov, runner.blocked_calls(side), nan=opts.nan)
+    # an edge into the faulting block of inputs on which BOTH builds fault, that no valid run took: the path
+    # cannot complete -- the NULL-vector arm of `n = first ? (last - first) >> 2 : 0` that then reads
+    # first[n - 1] (mission_4 0x48f480) -- so it is not coverage a valid input could add
+    fo = getattr(runner, "fault_edges", {}).get("orig" if side is runner.orig else "ours", set())
+    for e in allx - cov - set(unr):
+        if e in fo:
+            unr[e] = "leads straight to a fault in both builds (every input that took it)"
     missed = sorted(allx - cov - set(unr))
     req = len(allx) - len(unr)
     return {"total": len(allx), "covered": len(cov), "required": req,
             "pct": round(100.0 * len(cov) / req, 1) if req else 100.0,
             "unreachable": [{"edge": CF.fmt_edge(e), "reason": unr[e]} for e in sorted(unr)],
-            "missed_n": len(missed), "missed": [CF.fmt_edge(e) for e in missed[:64]]}
+            "missed_n": len(missed), "missed": [CF.fmt_edge(e) for e in missed[:None if getattr(opts, "full_edges", False) else 64]],
+            **({"covered_edges": [CF.fmt_edge(e) for e in sorted(cov)]} if getattr(opts, "full_edges", False) else {})}
 
 
 def edge_summary(nm, r):
@@ -4191,6 +4961,16 @@ def parse_args(argv=None):
                     help="comma-separated image function VAs (hex) whose calls the depth-1 call trace replaces by the "
                          "calls they make themselves (e.g. a vector deleting destructor one build inlined and the "
                          "other calls); arguments, memory, registers and imports are still compared")
+    ap.add_argument("--stub", type=lambda v: [int(x, 16) for x in v.split(",") if x], default=STUB_LOOKUPS,
+                    help="comma-separated image function VAs (hex) that return an input object instead of running "
+                         "(default: the resource lookups that exit() on a missing name; '' for none)")
+    ap.add_argument("--no-force-results", dest="force_results", action="store_false",
+                    help="never force the result of a branch-feeding callee (Runner._on_forced)")
+    ap.add_argument("--no-uninit-copy", dest="uninit_copy", action="store_false",
+                    help="compare every dword, including those the original only copied from an uninitialised stack "
+                         "slot (Runner.uninit_copies: a vector4's unset w passed by value)")
+    ap.add_argument("--no-auto-transparent", action="store_true",
+                    help="do not make the source's own marked functions transparent automatically (see transparent_auto)")
     ap.add_argument("--ignore-abi", action="store_true", help="run even if the original reads an undeclared register argument")
     ap.add_argument("--repairs", type=int, default=24, help="fault repairs per input (0 = off)")
     ap.add_argument("--nan", action="store_true", help="also generate NaN/Inf float bit patterns")
@@ -4216,6 +4996,21 @@ def parse_args(argv=None):
                          "including the rows that read a length field out of it and index an array whose capacity the "
                          "type declares (face::count over v[4], GFace::n over idx[4], Terrain::w/h over cell[251][251]). "
                          "With the invariants on those inputs are moved into range or discarded as 'invalid-object'")
+    ap.add_argument("--pin", action="append", metavar="this+OFF[&MASK]=V1,V2,...",
+                    help="hold an input field to a set of values (hex), e.g. a switch selector so one case of a dispatch "
+                         "runs per invocation: this+0&0fffffff=3b. Inputs that cannot carry it are discarded as "
+                         "invalid-object. Repeatable")
+    ap.add_argument("--hint", action="append", metavar="this+OFF[&MASK]=V1,V2,...@P",
+                    help="soft pin: in a share P (default 0.5) of fresh inputs set the field to one of the values "
+                         "(hex); nothing is discarded. Repeatable")
+    ap.add_argument("--edge-scope", metavar="FILE",
+                    help="JSON list of the original's edges ('0049fafc->004ac670') the run is about: it continues past "
+                         "--inputs and steers only while one of them is uncovered (a pinned switch case)")
+    ap.add_argument("--no-regress", action="store_true",
+                    help="do not run (or record) the row's regression inputs (work/difftest/regress: every input "
+                         "that ever made the row mismatch, run first)")
+    ap.add_argument("--full-edges", action="store_true",
+                    help="JSON: every missed edge (not the first 64) and the covered edges of each side")
     ap.add_argument("--alias", type=float, default=0.0, help="probability that a generated pointer aliases an argument object")
     ap.add_argument("--mutate", type=float, default=0.6, help="share of inputs mutated from the coverage corpus")
     ap.add_argument("--no-steer", dest="steer", action="store_false",

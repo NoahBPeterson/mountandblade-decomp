@@ -1,0 +1,6 @@
+{
+  "resmgr 0041aee0": {
+    "args": ["--transparent", "401830,41a510,41a550"],
+    "why": "??_Eframe_set: the original inlines ??_EBone (0x41a550) on its array path as ??_I (0x401830, calling ~Bone 0x41a510) + operator delete[]; ours calls ??_EBone on both paths (tools/difftest/test_equiv.py FS_TRANSPARENT)"
+  }
+}

@@ -53,7 +53,8 @@ NSLOTS = POOL_SIZE // SLOT
 # header so that a reviewer can check it against the source. A missing/changed declaration falls back to the
 # explicit constant and, failing that, disables that invariant (a wrong bound must never excuse a mismatch).
 
-_HEADERS = ("src/include/shape.h", "src/game/strat/strat_entity.h", "src/game/terrain_a/terrain.h")
+_HEADERS = ("src/include/shape.h", "src/game/strat/strat_entity.h", "src/game/terrain_a/terrain.h",
+            "src/include/dialog_rec.h")
 _decl_cache = {}
 
 
@@ -263,6 +264,25 @@ TERRAIN_INV = Invariant("Terrain::w/h",
                         _terrain_dims, [(0, CELL_DIM - 1)])
 
 
+# -- Elem::n: the Module System interpreter Operation::execute 0x49fa10 reads `n` (+8) operands of the
+#    declared `__int64 vals[16]` (+0x10) into its local params[16] / types[16]. n > 16 writes past both
+#    arrays into whatever frame slots follow them, which the two builds lay out differently (the original's
+#    types[19] is its saved `neg` flag), so the result is a property of the frame, not of the code.
+
+ELEM_CAP = declared_array_len("Elem", "vals", default=16)
+
+
+def _elem_n(gen, inp):
+    th = inp.regs.get("ecx", 0)
+    if not (POOL_BASE <= th < POOL_BASE + NSLOTS * SLOT):
+        return
+    yield "Elem::n", _signed(_dword(gen, inp, th + 0x08)), 0, ELEM_CAP
+
+
+ELEM_N_INV = Invariant("Elem::n", "the operand count of an operation (dialog_rec.h: int n +8, __int64 vals[%d] +0x10)"
+                       % ELEM_CAP, _elem_n, [(0, ELEM_CAP)]) if ELEM_CAP else None
+
+
 # ====================================================================== registry
 
 # (module, va) -> the invariants its inputs must satisfy. Keyed by the row's own module+VA, not by symbol:
@@ -272,7 +292,61 @@ SPECS = {
     ("shapes", 0x40B0F0): [FACE_INV],
     ("strat_entity", 0x42B080): [NIDS_INV, GFACE_INV],
     ("terrain_a", 0x465AF0): [TERRAIN_INV],
+    ("script_interpreter", 0x49FA10): [ELEM_N_INV],
 }
+
+
+# -- --pin: a field the run is held to (a switch's selector, so each case of a dispatch can be driven on its own).
+#    Not a capacity: the row's code accepts any value there, the pin only says which part of the function this
+#    run is about. Spec "this+OFF&MASK=V1,V2,..." (hex): the bits MASK of the dword at this+OFF are one of V1..
+#    (the bits outside MASK stay soup). An input whose `this` is not a pool object cannot carry the pin and is
+#    discarded under the same invalid-object key, so no unpinned input is ever compared under a pinned row.
+
+def pin_invariant(spec):
+    m = re.fullmatch(r"this\+(?:0x)?([0-9a-fA-F]+)(?:&(?:0x)?([0-9a-fA-F]+))?=([0-9a-fA-Fx,]+)", spec.strip())
+    if not m:
+        raise ValueError("--pin: expected this+OFF[&MASK]=V1,V2,... (hex), got %r" % spec)
+    off, mask = int(m.group(1), 16), int(m.group(2) or "ffffffff", 16)
+    vals = sorted({int(v, 16) & mask for v in m.group(3).split(",") if v})
+    lo, hi = vals[0], vals[-1]
+
+    def fields(gen, inp):
+        th = inp.regs.get("ecx", 0)
+        if not (POOL_BASE <= th < POOL_BASE + NSLOTS * SLOT):
+            yield "pin(this not a pool object)", -1, lo, hi
+            return
+        v = _dword(gen, inp, th + off)
+        # out-of-set values report as just outside [lo..hi] so violations() flags them
+        yield "pin(this+%#x)" % off, (v & mask if v is not None and v & mask in vals else
+                                      (hi + 1 if v is not None else -1)), lo, hi
+
+    def fix(bad, gen, inp, rng):
+        th = inp.regs.get("ecx", 0)
+        if not (POOL_BASE <= th < POOL_BASE + NSLOTS * SLOT):
+            return []
+        v = _dword(gen, inp, th + off) or 0
+        return [(th + off, (v & ~mask) | rng.choice(vals))]
+
+    return Invariant("pin(this+%#x&%#x)" % (off, mask), "the field --pin holds to %s" % ",".join("%#x" % v for v in vals),
+                     fields, [(lo, hi)], fix)
+
+
+def hint(spec):
+    """--hint "this+OFF[&MASK]=V1,V2,...@P": a soft pin. In a share P of freshly generated inputs the masked dword at
+    this+OFF is set to one of the values; nothing is ever discarded and mutation/steering may move it again. For a
+    field whose realistic values soup rarely produces (a Module System operand's tag dword: 0 / -1 = a constant)."""
+    body, _, prob = spec.partition("@")
+    inv = pin_invariant(body)
+    p = float(prob) if prob else 0.5
+    off = int(re.match(r"this\+(?:0x)?([0-9a-fA-F]+)", body).group(1), 16)
+
+    def apply(gen, inp, rng):
+        if rng.random() >= p:
+            return
+        for addr, val in inv.fix([], gen, inp, rng):
+            inp.pool_over[addr] = val & 0xFFFFFFFF
+    apply.spec, apply.off = spec, off
+    return apply
 
 
 def specs_for(sid, va, enabled=True):
@@ -328,6 +402,8 @@ def enforce(invs, gen, inp, rng):
 def _repairs(inv, bad, gen, inp, rng):
     """[(pool address, new dword)] that brings the violated fields of one invariant back in range."""
     out = []
+    if inv.fix is not None:
+        return inv.fix(bad, gen, inp, rng)
     if inv is FACE_INV:
         a = inp.args[0] if inp.args else 0
         if POOL_BASE <= a < POOL_BASE + NSLOTS * SLOT:
@@ -352,6 +428,10 @@ def _repairs(inv, bad, gen, inp, rng):
             fid = _signed(_dword(gen, inp, th + 0x174 + 4 * k))
             if fid is not None and fid >= 0:
                 out.append((faces + 0x88 * fid, rng.randint(3, GFACE_CAP)))
+    elif inv is ELEM_N_INV:
+        th = inp.regs.get("ecx", 0)
+        if POOL_BASE <= th < POOL_BASE + NSLOTS * SLOT:
+            out.append((th + 0x08, rng.randint(0, ELEM_CAP)))
     elif inv is TERRAIN_INV:
         th = inp.regs.get("ecx", 0)
         if not (POOL_BASE <= th < POOL_BASE + NSLOTS * SLOT):

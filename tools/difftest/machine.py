@@ -63,6 +63,7 @@ TLS_ARRAY = MISC_BASE + 0x1000
 TLS_BLOCKS = MISC_BASE + 0x2000          # 64 x 0x1000 (TlsGetValue slots + static TLS)
 ERRNO_CELL = MISC_BASE + 0x80000
 SCRATCH = MISC_BASE + 0x80100            # double result of python float handlers
+CRT_LOCKS = MISC_BASE + 0x90000          # the CRITICAL_SECTIONs _mtinitlocks hands the preallocated CRT locks
 
 CALLEE_SAVED = (("ebx", UC_X86_REG_EBX), ("esi", UC_X86_REG_ESI), ("edi", UC_X86_REG_EDI), ("ebp", UC_X86_REG_EBP))
 
@@ -137,6 +138,8 @@ class Machine:
         self._rdtsc_cb = uccallback(uc, intel.HOOK_INSN_CPUID_CFUNC)(self._on_rdtsc)
         # The Python binding only maps in/out/syscall/cpuid; rdtsc hooks share cpuid's C signature.
         uc._Uc__do_hook_add(UC_HOOK_INSN, self._rdtsc_cb, 1, 0, ctypes.c_int(UC_X86_INS_RDTSC))
+        self.image_extra_base = {}
+        self._init_crt_state()
         # Baseline of each writable section up to its last nonzero page; pages beyond are zero
         # (mount&blade.exe: 188 KB initialized of a 144 MB .data). Read through image_base_page().
         self.image_baseline = {}
@@ -183,6 +186,8 @@ class Machine:
 
     def image_base_page(self, nm, p):
         lo = next(l for n, l, _h in self.writable if n == nm)
+        if p in self.image_extra_base:
+            return self.image_extra_base[p]
         b = self.image_baseline[nm][p - lo:p - lo + 0x1000]
         return b + b"\0" * (0x1000 - len(b))
 
@@ -339,6 +344,58 @@ class Machine:
         """Change the control word the init stub loads before every run (equiv.py --fpcw)."""
         self.fpcw = fpcw & 0xFFFF
         self.uc.mem_write(self.cw_addr, struct.pack("<H", self.fpcw))
+
+    def _init_crt_state(self):
+        """The static CRT's per-process state as the game's startup (_mtinit, before main) leaves it, which
+        no test runs: left as the image has it, the first CRT function that takes a lock or reads per-thread
+        data (errno, locale, mbcinfo) recursed or ended the input (quest_log 0x4ee910: _lock -> _mtinitlocknum
+        -> _lock(_LOCKTAB_LOCK) until the stack ran out; then _getptd -> _amsg_exit -> MessageBoxA).
+        - _mtinitlocks: each preallocated lock of _locktable ({CRITICAL_SECTION*, kind} x 36, mlock.c) gets a
+          critical section; the table is found through _lock's `lea esi,[eax*8+table]; cmp dword [esi],0`.
+        - _mtinit's no-FLS path (kernel32 without FlsAlloc): the four gpFls* pointers are the Tls* imports,
+          __tlsindex a TLS slot, and that slot's block the main thread's _tiddata (tid, _thandle -1,
+          _ownlocale 1, ptmbcinfo = &__initialmbcinfo). Addresses are read from _mtinit's own stores.
+        Pages of .bss this writes are kept as baseline (image_extra_base), so every run starts from them."""
+        uc = self.uc
+        rd = lambda a, n: bytes(uc.mem_read(a, n))
+        text = next((s for s in self.img.sections if s[0] == ".text"), None)
+        if text is None:
+            return
+        code = rd(text[1], text[2])
+        touched = set()
+
+        def put(a, v):
+            uc.mem_write(a, struct.pack("<I", v & 0xFFFFFFFF))
+            touched.add(a & ~0xFFF)
+
+        k = code.find(b"\x55\x8b\xec\x8b\x45\x08\x56\x8d\x34\xc5")
+        if k >= 0 and code[k + 14:k + 17] == b"\x83\x3e\x00":
+            table = struct.unpack_from("<I", code, k + 10)[0]
+            ents = struct.unpack("<72I", rd(table, 72 * 4))
+            for i in range(36):
+                if ents[2 * i] == 0 and ents[2 * i + 1] == 1:
+                    put(table + 8 * i, CRT_LOCKS + 0x18 * i)
+        mt = next((va for va, nm in static_crt_functions({"_mtinit": {"fn": True}})), None)
+        b = rd(mt, 0xF0) if mt else b""
+        want = ((0x38, b"\xa3"), (0x45, b"\xa3"), (0x52, b"\xa3"), (0x60, b"\xa3"), (0x67, b"\xa1"),
+                (0x71, b"\xa1"), (0x7B, b"\xa1"), (0x80, b"\xc7\x05"), (0x9D, b"\xa3"), (0xCB, b"\xc7\x46\x54"))
+        if b and all(b[o:o + len(op)] == op for o, op in want):
+            u = lambda o: struct.unpack_from("<I", b, o)[0]
+            fls_alloc, fls_get, fls_set, fls_free = u(0x39), u(0x46), u(0x53), u(0x61)
+            put(fls_get, struct.unpack("<I", rd(u(0x68), 4))[0])      # = TlsGetValue's IAT entry
+            put(fls_set, struct.unpack("<I", rd(u(0x72), 4))[0])      # TlsSetValue
+            put(fls_free, struct.unpack("<I", rd(u(0x7C), 4))[0])     # TlsFree
+            put(fls_alloc, u(0x86))                                    # _mtinit's TlsAlloc wrapper
+            slot = 63
+            put(u(0x9E), slot)                                         # __tlsindex
+            ptd = TLS_BLOCKS + 0x1000 * slot
+            uc.mem_write(ptd, b"\0" * 0x8C)
+            uc.mem_write(ptd, struct.pack("<Ii", 0x1234, -1))         # _tid (GetCurrentThreadId), _thandle
+            uc.mem_write(ptd + 0x14, struct.pack("<I", 1))            # _ownlocale
+            uc.mem_write(ptd + 0x54, struct.pack("<I", u(0xCE)))      # ptmbcinfo = &__initialmbcinfo
+            uc.mem_write(TLS_ARRAY + 4 * slot, struct.pack("<I", ptd))
+        for p in touched:
+            self.image_extra_base[p] = rd(p, 0x1000)
 
     # ------------------------------------------------------------------ imports
     def _install_stubs(self):
@@ -922,6 +979,9 @@ def install_crt(m):
         "rand": (rand, 0), "srand": (srand, 1), "_errno": (errno, 0), "atoi": (atoi, 1), "atol": (atoi, 1),
         "_isnan": (isnan, 2), "_finite": (finite, 2), "_purecall": (purecall, 0),
         "_CxxThrowException": (throw, 2),
+        # _mtinitlocknum's critical section for a lock first taken at run time: initialized (TRUE), without
+        # the LoadLibraryA("kernel32")/GetProcAddress lookup that otherwise ends the input at an import
+        "__crtInitCritSecAndSpinCount": (lambda m, a, e: 1, 2),
     }
     for name, (fn, n) in cdecl.items():
         m.handle(name, fn, nargs=n)

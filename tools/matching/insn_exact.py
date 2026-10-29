@@ -842,7 +842,8 @@ def main():
             return (res.addr[si] + stored) & 0xFFFFFFFF
 
         oi = disasm(img.read(lo, hi - lo), lo)
-        oi = [i for i in oi if i.address < code_end(oi, lo, hi)]
+        end = code_end(oi, lo, hi)
+        oi = [i for i in oi if i.address < end]
         ui = disasm(bytes(sec.data[ulo:uhi]), ulo)
         # (our jump tables are separate COMDAT sections: nothing to cut off on our side)
         if a.cases:

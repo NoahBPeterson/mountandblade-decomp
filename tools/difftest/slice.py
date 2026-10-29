@@ -382,6 +382,9 @@ def _def_name_after(lines, i):
             l = re.sub(r"^template\s*(<[^<>]*>)?\s*", "", l).strip()
         if not l or l.startswith(("#", "/*", "*")):
             continue
+        # `__declspec(noinline) char __fastcall check_register(...)`: the attribute's parenthesis is not the
+        # parameter list (every validator of the interpreter was "our symbol not found: __declspec")
+        l = re.sub(r"__declspec\s*\([^)]*\)", " ", l)
         buf += " " + l
         if "{" in buf or ";" in buf:
             semi, brace = buf.find(";"), buf.find("{")

@@ -30,6 +30,11 @@ def fmt_edge(e):
     return "%08x->%08x" % e
 
 
+# jump-table entries read per dispatch (the walk stops at the first entry outside the function); the
+# Module System interpreter 0x49fa10 has 2356, so the old 2048 cut its last 115 cases from the CFG
+MAX_TABLE = 8192
+
+
 class Cfg:
     """Static edges of one function. insns: {addr: capstone insn} (recursive descent from entry);
     table_target(a) -> branch target stored in the dword at a (a relocated table entry) or None."""
@@ -56,7 +61,7 @@ class Cfg:
                 elif op.type == X.X86_OP_MEM and op.mem.index != 0 and op.mem.scale == 4:
                     tbl = op.mem.disp & 0xFFFFFFFF
                     tg = []
-                    for k in range(2048):
+                    for k in range(MAX_TABLE):
                         t = table_target(tbl + 4 * k)
                         if t is None or not lo <= t < hi:
                             break

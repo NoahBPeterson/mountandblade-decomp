@@ -156,6 +156,24 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
     recorded call, memory, registers and imports are still compared; a real difference inside still FAILs
     (`test_transparent_keeps_real_differences`). Name the option and the addresses in the reason column,
     and say what the default mode gives.
+  - **`--pin 'this+OFF[&MASK]=V1,V2,...'`** (hex) holds the masked dword at `this+OFF` to one of the values,
+    so every input enters the same part of the function. It exists for switch functions: random inputs
+    never get past a jump-table dispatch (the selector is soup, and a table entry is not a comparison
+    steering can solve). Inputs whose `this` is not a pool object are discarded as `invalid-object`.
+    `--full-edges` puts every missed edge and each side's covered edges in the JSON.
+  - **Switch functions case by case: `tools/difftest/case_sweep.py <src> <va> --selector 'this+OFF&MASK'`**
+    runs equiv.py once per jump-table case, pinning the selector to that case's values (table indices plus
+    the dispatch bias). It passes the source's other `// @ 0x` functions as `--transparent`, since our object
+    runs its own copies of them. Each case records equiv's mismatches and valid inputs, plus coverage of the
+    case's own edges in the original: everything reachable from its table target, minus the shared exit,
+    whose coverage is reported across the whole sweep. Verdicts are PASS / WEAK / FAIL / UNREACHED / ERROR.
+    The sweep is resumable. Results are rewritten atomically after every case (default
+    `work/difftest/cases/<module>_<va>.json`). A case is skipped when its key is unchanged: the harness
+    sources, the options, our prologue, and our case code normalised for position plus the local functions
+    it calls. Killing the sweep loses only the cases in flight, and a source edit re-runs only the cases
+    whose code changed. Runs are niced (`--nice 10`), `--status` prints the summary, `--only` and `--redo`
+    select cases. The Module System interpreter: `case_sweep.py src/game/script/script_interpreter.cpp
+    49fa10 --selector 'this+0&0fffffff'`.
   - Limit is 180 s per function by default. Run it with `run_in_background` and keep working, never with a
     shell `&`.
 

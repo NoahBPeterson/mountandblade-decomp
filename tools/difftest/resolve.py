@@ -48,6 +48,7 @@ from slice import base_ident, demangle_qual  # noqa: E402
 from slice import _clean_name, _name_matches  # noqa: E402
 from machine import BUILTIN_ADDR  # noqa: E402
 
+from cfgcov import MAX_TABLE  # noqa: E402  jump-table entries per dispatch (see there)
 EH_PREFIXES = ("??_R", "__ehhandler$", "__unwindfunclet$", "__ehfuncinfo$", "__unwindtable$", "__catchsym$",
                "__tryblocktable$", "__catch$", "__tryend$", "__catchblock", "$unwind", "__ehvec", "__TI", "__CT", "__CTA")
 # a function-local static ('?sMax@?1??Update@C@@QAEXXZ@4MA') or its guard ('?$S1@?1??Update@...')
@@ -521,7 +522,7 @@ def recursive_descent(read, lo, hi, entry, table_target):
                 if op.type == X.X86_OP_MEM and op.mem.index != 0 and op.mem.scale == 4:
                     t = op.mem.disp & 0xFFFFFFFF
                     k = 0
-                    while k < 2048:
+                    while k < MAX_TABLE:
                         tgt = table_target(t + 4 * k)
                         if tgt is None or not lo <= tgt < hi:
                             break

@@ -6,7 +6,8 @@ usage: sweep_nonmatching.py [--out DIR=work/sweep] [--workers N=6] [--filter sub
 Each row runs `equiv.py <id> <va> [--src <module.cpp>] --fp-tol --max-mismatch 200 --json <out>/<id>_<va>.json`;
 rows whose JSON exists are skipped (restartable). One row per VA: a VA listed both in a src module and in its
 old slice runs from the module (and a VA two slices both claim runs from the one whose source/symbol table
-records it); every dropped claim is named once on stderr. --tally prints verdict counts and writes
+records it); every dropped claim is named once on stderr. A slice claim for a VA a src module's manifest binds (the
+slice was migrated into the module and left in place) is no row: the slice's source is no longer built. --tally prints verdict counts and writes
 <out>/tally.json: every row with its recorded reason, the new verdict and the mismatch signatures."""
 import argparse, collections, glob, json, os, re, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
@@ -87,12 +88,34 @@ def _claims():
     return out
 
 
+def _module_manifest_vas():
+    """VA -> (module, module source) for every function a src module's manifest binds (its compiled object)."""
+    out = {}
+    for p in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True)):
+        mod = os.path.basename(p)[:-len(".manifest.txt")]
+        src = os.path.relpath(p[:-len(".manifest.txt")] + ".cpp", ROOT)
+        for line in open(p, encoding="utf-8", errors="replace"):
+            q = line.split("#", 1)[0].split()
+            if len(q) > 2:
+                try:
+                    out.setdefault(int(q[2], 16), (mod, src))
+                except ValueError:
+                    pass
+    return out
+
+
 def rows():
     """One row per VA, from the module whose compiled object defines it: a src module beats its old slice,
     and within a kind the module whose manifest/symbol table/VA marker binds the VA wins; remaining ties go
     to the lowest module name. Dropped duplicate claims are named on stderr."""
     by_va = collections.defaultdict(list)
+    live = _module_manifest_vas()
     for c in _claims():
+        if not c["src"] and int(c["va"], 16) in live:
+            # a slice claim for a function a module now compiles (the slices stay in place after a migration,
+            # src/rgl/mesh2/MIGRATION.md) and does not list as nonmatching: the slice's source is dead code and
+            # the module's function is exact, so there is no row (verdicts.py counts module rows only)
+            continue
         by_va[c["va"]].append(c)
     out, dropped = [], []
     for va, cs in by_va.items():
@@ -107,11 +130,27 @@ def rows():
     return sorted(out, key=lambda r: r["va"])
 
 
+_ROW_OPTS = None
+
+
+def row_opts(r):
+    """Extra equiv.py arguments for one row from tools/difftest/row_opts.json ("<id> <va>": {"args": [...], "why":
+    "..."}): facts about a row the harness cannot infer, such as image functions one build inlines and the other
+    calls (--transparent), each with its reason."""
+    global _ROW_OPTS
+    if _ROW_OPTS is None:
+        try:
+            _ROW_OPTS = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "row_opts.json")))
+        except (OSError, ValueError):
+            _ROW_OPTS = {}
+    return list((_ROW_OPTS.get("%s %s" % (r["id"], r["va"])) or {}).get("args", []))
+
+
 def run(r, out, extra):
     js = os.path.join(out, "%s_%s.json" % (r["id"], r["va"]))
     if os.path.exists(js):
         return
-    cmd = [PY, EQ, r["id"], r["va"], "--fp-tol", "--max-mismatch", "200", "--json", js + ".part"] + extra
+    cmd = [PY, EQ, r["id"], r["va"], "--fp-tol", "--max-mismatch", "200", "--json", js + ".part"] + extra + row_opts(r)
     if r["src"]:
         cmd += ["--src", os.path.join(ROOT, r["src"])]
     try:

@@ -8,7 +8,9 @@ usage: verdicts.py --from DIR [DIR ...]      # write docs/equiv_verdicts.json + 
 A sweep directory holds equiv.py --json results named <id>_<va>.json (tools/difftest/sweep_nonmatching.py --out DIR).
 With --from, every current src module nonmatching row takes the newest result measured for that row's own module
 (the module whose compiled object defines the VA; sweep_nonmatching.rows keeps one row per VA, from its defining
-module); rows without a result count as "not run". Categories (each row exactly one):
+module); rows without a result count as "not run". A switch function with a complete case sweep
+(work/difftest/cases/<module>_<va>.json, tools/difftest/case_sweep.py) takes its verdict from that instead: FAIL
+when a case FAILs, PASS when every case PASSes, WEAK otherwise. Categories (each row exactly one):
   pass        PASS / PASS-FP: outputs matched on every valid input and every control-flow edge (each branch's taken
               and fall-through side, each jump-table target) of both sides was exercised
   weak        WEAK / WEAK-FP: outputs matched, but some edges never ran (instruction coverage can still be 100%)
@@ -62,6 +64,50 @@ def category(d):
             return "inputs"
         return "harness"
     return "not_run"
+
+
+CASES_DIR = os.path.join(ROOT, "work", "difftest", "cases")
+
+
+def case_sweep(module, va):
+    """A switch function's case-by-case verdict (tools/difftest/case_sweep.py), or None: FAIL when a case FAILs,
+    PASS when every case PASSes, WEAK otherwise (UNREACHED/ERROR cases count as not covered). Results marked
+    stale (measured on other code) are left out; a sweep that has not recorded every case is not used."""
+    path = os.path.join(CASES_DIR, "%s_%s.json" % (module, va))
+    try:
+        doc = json.load(open(path))
+    except (OSError, ValueError):
+        return None
+    cases = {k: c for k, c in doc.get("cases", {}).items() if not c.get("stale")}
+    total = doc.get("total") or len(cases)
+    if not cases or len(cases) < total:
+        return None
+    # Alternate runs of some cases under other input options (<module>_<va>.<tag>.json, e.g. operand hints): each
+    # is a complete comparison of the same code, so a case takes the strongest evidence across files -- a FAIL in
+    # any file is a FAIL, else a PASS in any file is a PASS
+    alts = 0
+    for alt in sorted(glob.glob(os.path.join(CASES_DIR, "%s_%s.*.json" % (module, va)))):
+        try:
+            ad = json.load(open(alt))
+        except (OSError, ValueError):
+            continue
+        for k, c in ad.get("cases", {}).items():
+            if c.get("stale") or k not in cases:
+                continue
+            rank = {"FAIL": 2, "PASS": 1}
+            if rank.get(c.get("verdict"), 0) > rank.get(cases[k].get("verdict"), 0):
+                cases[k] = c
+                alts += 1
+    n = {}
+    for c in cases.values():
+        n[c.get("verdict")] = n.get(c.get("verdict"), 0) + 1
+    v = "FAIL" if n.get("FAIL") else "PASS" if n.get("PASS") == total else "WEAK"
+    older = sum(1 for c in cases.values() if c.get("older_harness"))
+    reason = "case sweep (%s): %s of %d cases%s%s" % (
+        os.path.relpath(path, ROOT), ", ".join("%s %d" % kv for kv in sorted(n.items())), total,
+        "; %d measured by an older harness on the same code" % older if older else "",
+        "; %d taken from alternate runs" % alts if alts else "")
+    return {"verdict": v, "reason": reason, "cases": n, "when": doc.get("when")}
 
 
 _SIZES = None
@@ -144,6 +190,15 @@ def main():
             cands = [os.path.join(sd, name) for sd in src_dirs]
             cands = [c for c in cands if os.path.exists(c)]
             d = load(max(cands, key=os.path.getmtime)) if cands else None
+            cs = case_sweep(r["id"], r["va"])
+            if cs is not None:
+                # a switch function swept case by case: one whole-function run never gets past its dispatch
+                # (random selectors), so the case sweep is the evidence; the whole-function result keeps its size
+                sz = size_of(d, r["va"])
+                d = dict(d or {}, verdict=cs["verdict"], reason=cs["reason"])
+                res[r["va"]] = {"module": r["id"], "file": r["file"], "verdict": cs["verdict"],
+                                "category": category(d), "size": sz, "cases": cs["cases"], "source": "case-sweep"}
+                continue
             res[r["va"]] = {"module": r["id"], "file": r["file"], "verdict": (d or {}).get("verdict"),
                             "category": category(d), "size": size_of(d, r["va"])}
         when = max(newest(d) for d in src_dirs)
