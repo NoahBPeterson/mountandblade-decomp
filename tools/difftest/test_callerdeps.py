@@ -34,3 +34,8 @@ def test_caller_overwrites_ecx_first(d):   # 0x9d39c1 mov ecx, [esp+0xc] right a
 
 def test_untracked_register_is_never_safe(d):   # build.py reports x87 stack use as 'st'
     assert d.check(0x9d3840, {"st"})["verdict"] == "UNKNOWN"
+
+
+def test_partial_write_then_low_read_is_safe(d):
+    # 0x52df40 calls 0x52dfd0 (void) then `fnstsw ax; test ah, 5`: ah is the status word, not the callee's eax
+    assert d.check(0x52dfd0, {"eax"}, result=True)["verdict"] == "SAFE"
