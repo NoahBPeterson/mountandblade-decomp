@@ -1229,11 +1229,11 @@ void PartyScreen::refresh_selection()
             }
         }
     }
-    if (!up1) {
-        if (nb == 0 && sel_slot <= p1) {
-            PSO(upgrade1)->act_bc();
-            up1 = true;
-        }
+    if (up1) {                                      // both buttons alike (0x507031..0x507064)
+        PSO(upgrade1)->act_bc();
+    } else if (nb == 0 && sel_slot <= p1) {
+        PSO(upgrade1)->act_bc();
+        up1 = true;
     }
     if (up2) {
         PSO(upgrade2)->act_bc();

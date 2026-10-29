@@ -337,19 +337,21 @@ void note_window::build(int page_, int arg_)
         this->btn_map->hide();
     }
 
+    // a button is enabled only when its history has an entry to go to (0x50a5db: slot 0xbc enable, 0x50a5e8: 0xb8
+    // disable; these calls predate the ui_widget.h enable/disable slot fix and were left inverted)
     if (this->back_end == 0) {
-        this->btn_back->enable();
+        this->btn_back->disable();
     } else {
         this->back_sel_a = this->back_end[-2];
         this->back_sel_b = this->back_end[-1];
-        this->btn_back->disable();
+        this->btn_back->enable();
     }
     if (this->fwd_end == 0) {
-        this->btn_forward->enable();
+        this->btn_forward->disable();
     } else {
         this->fwd_sel_a = this->fwd_end[-2];
         this->fwd_sel_b = this->fwd_end[-1];
-        this->btn_forward->disable();
+        this->btn_forward->enable();
     }
 
     // ---- page link key + candidate list ----------------------------------
@@ -901,23 +903,23 @@ void note_window::build(int page_, int arg_)
         *(int*)((char*)this->btn_return + 0x184) = 1;
     }
 
-    // ---- highlight the active page button --------------------------------
+    // ---- highlight the active page button and disable it (0x50cbb8: slot 0xb8) ----
     switch (page_) {
     case 1:
         this->btn_troops->activate(1);
-        this->btn_troops->enable();
+        this->btn_troops->disable();
         break;
     case 2:
         this->btn_factions->activate(1);
-        this->btn_factions->enable();
+        this->btn_factions->disable();
         break;
     case 3:
         this->btn_locations->activate(1);
-        this->btn_locations->enable();
+        this->btn_locations->disable();
         break;
     case 4:
         this->btn_quests->activate(1);
-        this->btn_quests->enable();
+        this->btn_quests->disable();
         break;
     default:
         break;
