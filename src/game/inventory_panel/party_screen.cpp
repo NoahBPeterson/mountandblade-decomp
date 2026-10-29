@@ -674,16 +674,23 @@ void PartyScreen::setup_party(int side)
     for (int page = 0; page < 2; page++) {
         members_page[side][page] = new_ps_list();
         label_refresh(members_page[side][page], tstring("party_bo_members_base"));
+        // the scrollbar goes on the base, the list on this page (0x5050cc / 0x505131); each name dies after its call
         if (page == 0) {
-            tstring s1("party_s_members1");
-            MissionUi* sc = make_scrollbar(members_base[side], &s1);
+            MissionUi* sc;
+            {
+                tstring s1("party_s_members1");
+                sc = make_scrollbar(members_base[side], &s1);
+            }
             tstring s2("party_sc_members1");
-            member_list[side][page] = make_member_list(members_base[side], &s2, sc);
+            member_list[side][page] = make_member_list(members_page[side][page], &s2, sc);
         } else {
-            tstring s1("party_s_members2");
-            MissionUi* sc = make_scrollbar(members_base[side], &s1);
+            MissionUi* sc;
+            {
+                tstring s1("party_s_members2");
+                sc = make_scrollbar(members_base[side], &s1);
+            }
             tstring s2("party_sc_members2");
-            member_list[side][page] = make_member_list(members_base[side], &s2, sc);
+            member_list[side][page] = make_member_list(members_page[side][page], &s2, sc);
         }
         PSO(members_base[side])->add_child(member_list[side][page]);
 
