@@ -132,7 +132,7 @@ void char_window::open_view()
         face_body* b = new face_body;
         label_refresh((widget*)b, tstring("char_i_character"));
         if (world != 0) {
-            world->~World();
+            world->destroy();                   // 0x475d50 (the CellGrid destructor body), then the free
             free_535712(world);
             world = 0;
         }
