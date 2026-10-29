@@ -1289,6 +1289,18 @@ class Runner:
         self.cur_forced = {}
         self.forced_cands = []
         if getattr(opts, "force_results", True):
+            # only callees our object calls too, at the same image address: a forced result the other build cannot
+            # see (ours inlined the callee, or runs its own copy of it) is a difference the harness made
+            # (inventory_panel 0x5134c0 inlines test_slot_flag 0x5126e0)
+            ours_calls = None
+            try:
+                _ou, _rel, _data = RA.our_insns(t.coff, t.fsym)
+                ours_calls = set()
+                for _off, (_si, _typ) in _rel.items():
+                    if _typ == RA.REL_REL32 and _si in t.res.addr:
+                        ours_calls.add(t.res.addr[_si] & 0xFFFFFFFF)
+            except Exception:
+                ours_calls = None
             order = sorted(t.orig_insns)
             for k_, a_ in enumerate(order[:-2]):
                 ins = t.orig_insns[a_]
@@ -1300,7 +1312,7 @@ class Runner:
                     continue
                 tests_result = nxt.id == CX.X86_INS_TEST and nxt.op_str in ("al, al", "eax, eax") or \
                     nxt.id == CX.X86_INS_CMP and nxt.op_str.startswith(("eax, ", "al, "))
-                if tests_result and tgt not in self.forced_cands:
+                if tests_result and tgt not in self.forced_cands and (ours_calls is None or tgt in ours_calls):
                     self.forced_cands.append(tgt)
             for tgt in self.forced_cands:
                 self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_forced, begin=tgt, end=tgt))
