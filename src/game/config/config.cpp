@@ -488,19 +488,19 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
 
     if (!detailed) {
         first = page->find(tstring(g_eq_sep), 0);
-        key_end = page->find(tstring(g_eq_sep), 0) + 3;
+        key_end = sel_text.find(tstring(g_eq_sep), 0) + 3;   // the previous text's values (0x4bb6a1: find on sel_text)
         while ((first = first + 3, first > 2)) {
             int k = page->find((const char)',', first);
             if (k < 0) {
                 k = page->len;
             }
             if (key_end > 2) {
-                int e = page->find((const char)',', key_end);
+                int e = sel_text.find((const char)',', key_end);
                 if (e < 0) {
-                    e = page->len;
+                    e = sel_text.len;
                 }
                 long l = atoi(page->substr(first, k).c_str());
-                long r = atoi(page->substr(key_end, e).c_str());
+                long r = atoi(sel_text.substr(key_end, e).c_str());
                 if (l != r) {
                     goto mark;
                 }
@@ -513,7 +513,7 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
                 SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)item_rgb);
             }
             first = page->find(tstring(g_eq_sep), first) + 3;
-            key_end = page->find(tstring(g_eq_sep), key_end) + 3;
+            key_end = sel_text.find(tstring(g_eq_sep), key_end) + 3;
         }
     }
 
