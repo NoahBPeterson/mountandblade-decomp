@@ -64,7 +64,7 @@ extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[
 struct terrain_obj {};                                      // the object at 0xa76630 (see s00481d10): TerrainX
 struct TerrainX {                                           // mesh_terrain
     void generate(int world, int* b, char c);               // 0x481d10
-    void regenerate_water(void** out, int a);               // 0x482170
+    void regenerate_water(void** out, bool a);              // 0x482170
     void destroy_water(int owner);                          // 0x4814a0
 };
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition

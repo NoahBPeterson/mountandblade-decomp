@@ -501,7 +501,7 @@ void TerrainX::generate(int seed, int* objs, char flag)
 
 // @ 0x482170 -- regenerate the water of a finished map: drop both scatter sets, rebuild the water mesh, relight both particle
 // lists when the high-quality water path is off, and store fresh values into the two height fields of the seed word
-void TerrainX::regenerate_water(void** out, int mode)
+void TerrainX::regenerate_water(void** out, bool mode)
 {
     spawn_bodies((SpawnSet*)&list_b);
     spawn_bodies((SpawnSet*)&list_a);
@@ -511,8 +511,8 @@ void TerrainX::regenerate_water(void** out, int mode)
     gen_set_init(&list_b);
     make_grid();
     if (g_use_shaders == 0 || (*(int*)((char*)&g_options + 0x7c)) == 0) {
-        light_all(&list_a, mode != 0);
-        light_all(&list_b, mode != 0);
+        light_all(&list_a, mode);                  // 0x4821cb: the argument dword pushed as it came in
+        light_all(&list_b, mode);
     }
 
 #define hword (*(int*)((char*)this + 0xc))

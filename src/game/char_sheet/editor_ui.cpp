@@ -144,14 +144,14 @@ WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name)
     {
         tstring n("scrollbar");
         m1 = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&n))->clone();
-        m1->set_color(col);
-    }
+    }                                           // the name dies before the colour is set (0x4f6160: ~tstring, then set_color)
+    m1->set_color(col);
     mesh* m2;
     {
         tstring n("scrollbar_handle");
         m2 = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&n))->clone();
-        m2->set_color(col);
-    }
+    }                                           // the name dies before the colour is set (0x4f6160: ~tstring, then set_color)
+    m2->set_color(col);
     w->set_track(0, m1);
     w->set_track(2, m2);
     ((Widget*)parent)->add_child(w);

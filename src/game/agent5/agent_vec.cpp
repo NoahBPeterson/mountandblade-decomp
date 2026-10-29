@@ -2,7 +2,7 @@
 // File: agent_vec.cpp  (0x4fe0b0..0x4fe860)
 //
 // Desc: the VC7.1 <vector> instantiations that sit between the map-text renderer and the editor dialog:
-//       vector<int>::push_back / insert / _Insert_n, the 4-byte-element _Uninit_fill_n / _Uninit_copy,
+//       vector<ui_cell>::push_back / insert / _Insert_n, the 4-byte-element _Uninit_fill_n / _Uninit_copy,
 //       vector<loading-screen config record>::_Insert_n and the row list's _Ucopy tail.
 //       Compiled with the real library headers (/EHsc, /Gz for the __thiscall members, see matching.md).
 //       CfgRec / RowRec stand for the loading_config (src/game/cls_map/cls_map.h) and UiRow
@@ -41,14 +41,20 @@ struct RowRec {
     RowRec(const RowRec& o);                              // 0x4e42f0
 };
 
-typedef std::vector<int> int_vec;
+// the 4-byte element of the 0x4fe0b0 vector: a class (so _Ptr_cat is non-scalar and the fills go through
+// _Uninit_fill_n 0x4fe120 / _Uninit_copy 0x4fe4b0, which push_back and _Insert_n call), trivially copyable
+struct ui_cell {
+    int v;
+};
+typedef std::vector<ui_cell> int_vec;           // 0x4fe0b0/0x4fe190/0x4fe1e0 are vector<ui_cell> (not vector<int>:
+                                                // the int instance fills inline and calls neither helper)
 typedef std::vector<CfgRec> cfg_vec;
 typedef std::vector<RowRec> row_vec;
 
 // ---- the vectors the engine works on (globals here keep the instantiations reachable) -------------------
 static int_vec int_v;
-const int* int_x;
-int* int_where;
+const ui_cell* int_x;
+ui_cell* int_where;
 unsigned int_n;
 
 static cfg_vec cfg_v;
@@ -88,9 +94,7 @@ void* __cdecl int_insert_n() throw()
 // (a throwing region with no call -- 0x4fe120, 0x4fe4b0). cl 13.10 does not inline the header's
 // allocator::construct/_Uninit_fill_n at this instantiation depth, so the template body is written
 // out here; it is byte-identical to the library instantiation.
-struct ui_cell {                                        // 4-byte provisional element
-    int v;
-};
+// ui_cell (defined above with the element types) is that element
 
 // @ 0x4fe120  _Uninit_fill_n for the 4-byte non-scalar element
 void __cdecl cell_fill(ui_cell* _First, unsigned _Count, const ui_cell& _Val,

@@ -91,7 +91,7 @@ struct Curve {
     void reset_rec(int i);   // 0x4339d0 agent/curve.cpp (FxDef::reset_rec in include/fx.h)
 };
 struct ColourOwner;
-rgl::mesh* build_legend_mesh(ColourOwner* parent);                                  // 0x495b20 world_data/mesh_hud.cpp
+rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 struct pos;
 pos* __cdecl identity_pos(pos* out);                                                // 0x40cd00 rgl/shapes/shapes.cpp
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
@@ -609,7 +609,7 @@ void Mission::spawn_battle_icon(unsigned id)
             e->add_extra(g_resmgr.get_object(&nm)->clone());
         }
         {
-            float angle = 1.5707963f;
+            float angle = 1.5707964f;                       // 0x3fc90fdb (1.5707963f rounds to 0x3fc90fda)
             ((RotFrame*)((char*)e->f11c[0] + 0xcc))->rotate_about_u(&angle);
         }
 
@@ -2435,7 +2435,7 @@ void GameData::label_text(rgl::mesh* m, const tstring* text, char flag, int arg,
         xmin = -xmax;
         scale[0] = xmax * 0.6f;
         scale[1] = xmax * 0.6f;
-        pos = rgl::vector4(0.0f, 0.1f, 0.2f);
+        pos = rgl::vector4(0.0f, 0.1f, 0.4f);              // 0x49bb06: 0x3ecccccd
         flags = 0x10;
     }
     float   out[2];
@@ -2495,7 +2495,7 @@ void Elem::set_lvalue(__int64* locals, const __int64& value)
     const int* v = (const int*)&value;
     int k = ((int*)vals)[1];
     int idx = ((int*)vals)[0];
-    if (k < 0 || (k == 0 && (unsigned)idx < 0x80000000u)) {
+    if (((const __int64*)vals)[0] < 0) {        // 0x49d50c: test hi; jl; jg; test lo; jb (never) -- a signed 64-bit < 0
         sprintf(buf, "Illegal lvalue in statement; Opcode = %d", g_cur_opcode, g_cur_param);
         report(buf);
         return;

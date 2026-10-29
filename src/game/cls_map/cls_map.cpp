@@ -768,7 +768,7 @@ void MissionScreen::init_meeting_window()
         ContainerBase* c = (ContainerBase*)operator new(0x188);
         col[j - 1] = c != 0 ? (((ContainerW*)c)->construct(), *(void**)c = (void*)0x597050, c) : 0;
         {
-            float v[2] = { 0.6f, 0.65f - j * 0.2145f };
+            float v[2] = { 0.6f, g_5a9f24 - j * g_5a9f28[1] };     // globals in the original (0x4db3bf / 0x4db3c6)
             vt(c)->d22(v);
         }
         vt(c)->d25(g_5a9f28);
@@ -857,7 +857,7 @@ void MissionScreen::init_done_window()
     }
     {
         tstring n("ui_done");
-        const tstring& t = *g_strtable.find(&n);
+        const tstring& t = *g_strtable_c.lookup(n);     // 0x4db6f0: lookup (a fallback string when absent), not find
         row[0] = new_button(overlay, t, 0.65f, 0.03f, 0.15f, 0.05f);
     }
     {
@@ -868,7 +868,7 @@ void MissionScreen::init_done_window()
     {
         tstring n("ui_factions");
         struct { int a, b; } ret;
-        vt(row[2])->d41(&ret, (void*)g_strtable.find(&n));
+        vt(row[2])->d41(&ret, (void*)g_strtable_c.lookup(n));
     }
     {
         void* self = overlay;
@@ -1455,8 +1455,8 @@ void EscapeMenu::create()
     v[1] = -0.001f;
     vt(win)->d22(v);
 
-    v[0] = 1.01f;
-    v[1] = 0.75f;
+    v[0] = 1.002f;                              // 0x4ddaa4: 0x3f804189
+    v[1] = 0.752f;                              // 0x3f408312
     vt(win)->d25(v);
 
     int no = -1;
@@ -1816,7 +1816,7 @@ UiB* make_slider(MissionUi* parent, float x, float y, float k)
         vt(w)->d22(&pos);
     }
     {
-        V2 size(y * 0.25f, k * 0.03f);
+        V2 size(k * 0.25f, k * 0.03f);              // 0x4dfd90: both from k ([esp+0x4c] / [esp+0x50] after the push)
         vt(w)->d25(&size);
     }
     gui_mesh* track = load_mesh("slider_hor");
@@ -2985,33 +2985,28 @@ progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, floa
     pos[0] = x;
     pos[1] = y;
     vt(p)->d22(pos);
+    // the size is the unscaled (a, b); the scaled pair (and 1.0) is the bar's colour and rect, whose w is never set
+    // (0x4e3d9b..0x4e3dd8: [esp+0x10] = a, [esp+0x14] = b; a * 1.5576323, b * 50, 1.0 into the vector at [esp+0x20])
     float size[2];
-    size[0] = a * 1.5576323f;
-    size[1] = b * 50.0f;
+    size[0] = a;
+    size[1] = b;
+    rgl::vector4 v;
+    v.x = a * 1.5576323f;
+    v.y = b * 50.0f;
+    v.z = 1.0f;
     vt(p)->d25(size);
-    p->ratio = a * 0.31f;
-    float sxy[2];
-    sxy[0] = 1.0f;
-    sxy[1] = b * 50.0f;
+    p->ratio = v.y * 0.31f;
     gui_mesh* c;
     {
         tstring name("progressbar");
         c = res_get(name)->clone();
     }
-    rgl::vector4 v;
-    v.x = pos[0];
-    v.y = pos[1];
-    v.z = sxy[0];
-    v.w = sxy[1];
     c->set_color(v);
     {
         tstring name("progressbar_handle");
         p->handle = res_get(name);
     }
-    p->rect.x = pos[0];
-    p->rect.y = pos[1];
-    p->rect.z = sxy[0];
-    p->rect.w = sxy[1];
+    p->rect = v;
     vt(p)->d32(0, c);
     vt(o)->d50(p);
     return p;

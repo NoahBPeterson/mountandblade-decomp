@@ -254,7 +254,8 @@ extern int g_mission_ctx[];                          // 0xa73300 (selection tabl
 extern int g_a732fc[];                          // 0xa732fc (per-side fallback ids)
 extern char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
 #include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
-extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145}
+extern float g_5a9f24;                          // 0x5a9f24 0.65 (the meeting window columns' top)
+extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145} ([1] is 0.21450001, not the literal 0.2145f)
 void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main mission UI)
 
 // ---- 0x4dc630..0x4dce70: the message (result) window and its button makers ----------------------------------------------

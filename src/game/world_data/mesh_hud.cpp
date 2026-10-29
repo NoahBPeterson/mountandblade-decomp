@@ -44,7 +44,7 @@ struct SliderVt {
     virtual void s03();                                         // +0x0c
     virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07(); virtual void s08();
     virtual void s09(); virtual void s10(); virtual void s11(); virtual void s12();
-    virtual void s13(int v);                                    // +0x34 set the value
+    virtual void s13(float v);                                  // +0x34 set the value
     virtual void s14(); virtual void s15(); virtual void s16(); virtual void s17(); virtual void s18();
     virtual void s19(); virtual void s20(); virtual void s21();
     virtual void s22(void* range);                              // +0x58
@@ -65,17 +65,18 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
     // built by hand: SliderW's constructor would emit a vtable of unresolved MissionUi slots (the real one is 0x591fb0, UiB's)
     SliderW* w = (SliderW*)operator new(sizeof(SliderW));
     if (w) {
+        // the slider's own fields belong to its construction (0x495991..0x4959bf, inside the null check)
         new ((void*)w, raw_place()) MissionUi;                  // 0x48ae20
         *(void**)w = (void*)vtbl_591fb0;
+        w->f178 = 0;
+        w->f17c = 0.008f;                                       // 0x3c03126f
+        w->v168 = 1.0f;
+        w->f180 = 0;
+        w->f184 = 0;
     }
-    w->f178 = 0;
-    w->f17c = 0.3f;
-    w->v168 = 1.0f;
-    w->f180 = 0;
-    w->f184 = 0;
     {
-        vector4 range[2];
-        ((SliderVt*)w)->s22(&range[0]);
+        float pos[2] = { 0.0f, 0.0f };                          // 0x4959d7: both halves stored before the call
+        ((SliderVt*)w)->s22(pos);
     }
     {
         tstring n("slider_hor");
@@ -91,17 +92,15 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
     }
     ((SliderVt*)w)->s03();
     {
-        vector4 v;
-        v.x = 0.25f;
-        v.y = (float)w->screen[1];
-        v.z = 0.0f;
-        v.w = 0.0f;
-        ((SliderVt*)w)->s25(&v);
+        float size[2];
+        size[0] = 0.25f;
+        size[1] = w->screen[1];                                 // 0x495a65 (+0xf4)
+        ((SliderVt*)w)->s25(size);
     }
     float fmin = (float)vmin;
     w->f16c = fmin;
     w->f170 = (float)vmax;
-    ((SliderVt*)w)->s13(vmin);
+    ((SliderVt*)w)->s13(fmin);                                  // 0x495a99: the float's bits are pushed
     scene->d50(w);
     widgets.push_back(w);
     return (int)(widgets.size() - 1);
@@ -109,7 +108,7 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
 
 // ==== 0x495b20: build the map-legend mesh ==========================================================================
 // @ 0x495b20
-rgl::mesh* build_legend_mesh(ColourOwner* parent)
+rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent)
 {
     rgl::mesh* m = new rgl::mesh;
     m->f34 = 2;

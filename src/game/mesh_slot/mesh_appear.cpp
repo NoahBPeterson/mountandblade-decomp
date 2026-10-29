@@ -147,11 +147,12 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
     if (hand != 0) {
         // ---- only the hand-held weapon ------------------------------------------------------------
-        tstring nm = hweapon->item >= 0 && hweapon->item < g_item_kind_count
+        // one full-expression: the name is a temporary built straight into make_lod_mesh's argument (0x48254d:
+        // tstring(const char*) on [esp+0x38], no copy) and destroyed after the push (0x48256e); a named `nm`
+        // initialised from the conditional was a copy of a temporary (an extra 0x80-byte buffer and destructor)
+        vpush_i(a->fx->groups, g_rms.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
                    ? g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7])    // 0x433bf0
-                   : tstring("Error: Invalid item");
-        lod_mesh2* l = g_rms.make_lod_mesh(nm, false);
-        vpush_i(a->fx->groups, l);
+                   : tstring("Error: Invalid item"), false));
         float* e = (float*)a->fx->elems;
         *(float*)((char*)e + 0x944) = 0.2f;
         *(float*)((char*)e + 0xb20) = 0.25f;

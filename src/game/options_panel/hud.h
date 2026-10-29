@@ -40,8 +40,8 @@ extern __int64 g_spawn_lo;                          // 0xa70448
 extern __int64 g_spawn_hi;                          // 0xa70450
 extern float g_mouse_x;                             // 0x5d7094
 extern float g_mouse_y;                             // 0x5d7098
-extern double g_tick_scale;                         // 0x54a6d0
-extern double g_day_scale;                          // 0x591834
+extern float g_tick_scale;                          // 0x54a6d0 (1e-5f: fmul dword)
+extern float g_day_scale;                           // 0x591834 (fmul dword)
 extern double g_day_period;                         // 0x54a5d8
 extern float g_hour_scale;                          // 0x590c90
 extern float g_hour_base;                           // 0x54ab28
@@ -58,11 +58,12 @@ extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 // sound holder inside a MenuKind (s0048add0): count of 0x30-byte children at +0, the child array at +4.
 // update(0xc3 / 0xc2 / 0xc1) advances the children with that flag.
 #include "../ui/timer_list.h"                    // TimerList: count +0, items +4 (the ui module declares the children)
-struct MenuKind {                                   // 0x1c bytes (table at 0xa75f2c)
+struct MenuKind {                                   // 0x24 bytes (table at 0xa75f2c; cls_map.h MenuKindRec)
     char      pad0[0x14];
     TimerList sound;                                // +0x14
+    char      pad1c[0x24 - 0x1c];
 };
-extern MenuKind* g_presentations;                      // 0xa75f2c (menu-kind table, element stride 0x1c)
+extern MenuKind* g_presentations;                      // 0xa75f2c (menu-kind table, element stride 0x24: 0x4d546c lea eax,[eax+eax*8] / [ecx+eax*4+0x14])
 inline void play_family_sound(int family, int id)
 {
     g_presentations[family].sound.update(id);
@@ -108,8 +109,11 @@ typedef ValueSource ValueWidget;
 // +0x108, a name at +0x128 (string) and two item flags at +0x180/+0x184.
 struct MissionItem : Widget {
     char         pade0[0xe0 - sizeof(Widget)];
-    float        rect[4];                           // +0xe0 x0, +0xe4 y0, +0xf0 w, +0xf4 h
-    char         padf8[0x108 - 0xf8];
+    float        org[2];                            // +0xe0 x, +0xe4 y
+    char         pade8[0xf0 - 0xe8];
+    float        ext[4];                            // +0xf0 x far, +0xf4 y far, +0xf8 x near, +0xfc y near (offsets
+                                                    // from org; 0x4d54f5..0x4d55d3 test org+near <= mouse < org+far)
+    char         pad100[0x108 - 0x100];
     void*        nodes[5];                          // +0x108 .. +0x118
     char         pad11c[0x128 - 0x11c];
     tstring      name;                              // +0x128

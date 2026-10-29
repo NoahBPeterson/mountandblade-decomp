@@ -299,13 +299,15 @@ void Hud::on_update(int arg)
 void MissionSource::pick(int* arg)
 {
     float t;
-    if (family >= 0) {
+    if (family < 0)                     // 0x4d541b: jl to the epilogue -- nothing else runs without a family
+        return;
+    {
         __int64 now = *(__int64*)(g_ticks_ + slot * 2);
-        __int64 d = now - ((__int64)tick_hi << 32) - (unsigned)tick_lo;
-        g_spawn_lo = (__int64)(int)((double)d * g_tick_scale * g_day_scale);
-        play_family_sound(family, 0xc3);
-        t = (float)(int)(fmod((double)*(__int64*)g_ticks_ * g_tick_scale, g_day_period) * g_hour_scale
-                         + g_hour_base);
+        __int64 d = now - *(__int64*)&tick_lo;      // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
+        g_spawn_lo = (__int64)(int)((double)d * g_day_scale * g_tick_scale);
+        play_family_sound(family, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended
+        t = (float)(fmod((double)*(__int64*)g_ticks_ * g_tick_scale, g_day_period) * g_hour_scale
+                    + g_hour_base);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
     }
     if (g_mission_clock) {
         float best_d = 1.0e5f;
@@ -314,21 +316,22 @@ void MissionSource::pick(int* arg)
             MissionItem* it = begin[i];
             if (it->kind() != 7)
                 continue;
+            // inside [org + near, org + far) on an axis: 0, else the distance to the nearer edge (0x4d54f5..0x4d55f0)
             float dx;
-            if (it->rect[0] + it->rect[2] <= g_mouse_x && g_mouse_x < it->rect[0] + it->rect[2]) {
+            if (it->ext[2] + it->org[0] <= g_mouse_x && g_mouse_x < it->ext[0] + it->org[0]) {
                 dx = 0.0f;
             } else {
-                dx = ABS(g_mouse_x - (it->rect[0] + it->rect[2]));
-                float alt = ABS(g_mouse_x - (it->rect[0] + it->rect[2]));
+                dx = ABS(g_mouse_x - (it->ext[0] + it->org[0]));
+                float alt = ABS(g_mouse_x - (it->ext[2] + it->org[0]));
                 if (alt < dx)
                     dx = alt;
             }
             float dy;
-            if (it->rect[1] + it->rect[3] <= g_mouse_y && g_mouse_y < it->rect[1] + it->rect[3]) {
+            if (it->ext[3] + it->org[1] <= g_mouse_y && g_mouse_y < it->ext[1] + it->org[1]) {
                 dy = 0.0f;
             } else {
-                dy = ABS(g_mouse_y - (it->rect[1] + it->rect[3]));
-                float alt = ABS(g_mouse_y - (it->rect[1] + it->rect[3]));
+                dy = ABS(g_mouse_y - (it->ext[1] + it->org[1]));
+                float alt = ABS(g_mouse_y - (it->org[1] + it->ext[3]));
                 if (alt < dy)
                     dy = alt;
             }
@@ -348,39 +351,39 @@ void MissionSource::pick(int* arg)
     }
 
     for (unsigned i = 0; i < (unsigned)size(); i++) {
-        MissionItem* it = begin[i];
-        MissionItem** p = &begin[i];
+        // every use re-reads the item from the vector (the original goes through its iterator, 0x534160, each
+        // time): a callee may move the storage, so a pointer to begin[i] taken once can go stale
         for (int n = 0; n < 5; n++) {
-            if ((*p)->nodes[n])
-                ((mesh_node*)(*p)->nodes[n])->set_time(&t);
+            if (begin[i]->nodes[n])
+                ((mesh_node*)begin[i]->nodes[n])->set_time(&t);
         }
-        if ((*p)->changed(0x10000)) {
+        if (begin[i]->changed(0x10000)) {
             g_spawn_lo = i;
             g_spawn_hi = 0;
-            int k = it->kind();
+            int k = begin[i]->kind();
             if (k == 2 || k == 3) {
-                g_spawn_hi = (__int64)(int)it->get_float();
-                play_family_sound(family, 0xc2);
+                g_spawn_hi = (__int64)(int)begin[i]->get_float();
+                play_family_sound(family, -0x3e);
             } else if (k == 5) {
-                g_spawn_hi = (__int64)it->get_value();
-                play_family_sound(family, 0xc2);
+                g_spawn_hi = (__int64)begin[i]->get_value();
+                play_family_sound(family, -0x3e);
             } else if (k == 6) {
-                g_script.str[0] = it->name;
-                play_family_sound(family, 0xc2);
-            } else if (k != 8 || it->f184 != 1) {
-                play_family_sound(family, 0xc2);
+                g_script.str[0] = begin[i]->name;
+                play_family_sound(family, -0x3e);
+            } else if (k != 8 || begin[i]->f184 != 1) {
+                play_family_sound(family, -0x3e);
             } else {
-                g_spawn_hi = it->f180 != 0;
-                play_family_sound(family, 0xc2);
+                g_spawn_hi = begin[i]->f180 != 0;
+                play_family_sound(family, -0x3e);
             }
-        } else if (it->changed(2)) {
+        } else if (begin[i]->changed(2)) {
             g_spawn_hi = 0;
             g_spawn_lo = i;
-            play_family_sound(family, 0xc1);
-        } else if (it->changed(4)) {
+            play_family_sound(family, -0x3f);
+        } else if (begin[i]->changed(4)) {
             g_spawn_hi = 1;
             g_spawn_lo = i;
-            play_family_sound(family, 0xc1);
+            play_family_sound(family, -0x3f);
         }
     }
 }

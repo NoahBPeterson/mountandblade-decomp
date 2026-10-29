@@ -579,6 +579,23 @@ struct PairF {
     __forceinline PairF(float a, float b) { x = a; y = b; }
 };
 
+// a temporary's address for a by-pointer widget call (the temporary lives to the end of the caller's full expression)
+static __forceinline PairF* pair_ref(const PairF& p) { return (PairF*)&p; }
+
+// one float setting by an existing key string (the caller's temporary)
+static __forceinline float config_float_key(const tstring& n)
+{
+    int i = g_game_vars.find(n);
+    float r = 0.0f;
+    if (i >= 0) {
+        char* v = g_game_vars.entries[i].value.buf;
+        if (!v)
+            v = (char*)&g_game_vars.entries[i].value.buf;
+        r = (float)atof(v);
+    }
+    return r;
+}
+
 // one float setting (this body is inlined 18 times in 0x4e55f0)
 static __forceinline float config_float(const char* name)
 {
@@ -620,10 +637,8 @@ void SaveWindow::slot_button(ContainerBase* parent, int slot, UiAInline** out)
     }
     (*out)->f184 = 1;
 
-    {
-        PairF sc(config_float("save_b_save_t_s"), config_float("save_b_save_t_s"));
-        vt(*out)->d27(&sc);
-    }
+    // one full expression: both lookups' key strings live until d27 returns (0x4e5734..0x4e5767 destroy them after it)
+    vt(*out)->d27(pair_ref(PairF(config_float_key(tstring("save_b_save_t_s")), config_float_key(tstring("save_b_save_t_s")))));
     {
         tstring k("save_b_save_t_c");
         int v = g_game_vars.hex_field(k);
@@ -680,7 +695,8 @@ void SaveWindow::slot_button(ContainerBase* parent, int slot, UiAInline** out)
 
 // ---- 0x4e5d30: one "%x" setting ---------------------------------------------------------------------------------------------------------------------
 // @ 0x4e5d30
-int ini_file::hex_field(const tstring& key)
+// out of line, as the original keeps it (0x4e55f0 calls it; inlined, its find call replaced the hex_field call)
+__declspec(noinline) int ini_file::hex_field(const tstring& key)
 {
     unsigned v = 0;
     int i = find(key);

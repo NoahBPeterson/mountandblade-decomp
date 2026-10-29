@@ -10,9 +10,13 @@
 void Screen::camera_update(float dt)
 {
     // --- pan: the stick and yaw rates are integrated at 10x ---------------------------------------
-    f290 = dt * C_549D74 * f2bc + f290;
-    f294 = dt * C_549D74 * f2c0 + f294;
-    f2b0 = dt * f2c4 * C_549D74 + f2b0;
+    // the original shares dt*10 and spills the y increment as a float before adding it (x87 register pressure);
+    // the volatile temporary keeps that rounding, which an in-register sum does not
+    float r = dt * C_549D74;
+    volatile float ry = r * f2c0;
+    f290 = r * f2bc + f290;
+    f294 = ry + f294;
+    f2b0 = dt * f2c4 * 10.0f + f2b0;        // a literal: with the 0x549d74 global cl evaluates (10 * f2c4) * dt
 
     float max_zoom = C_598690;                  // 105
     if (g_a17148 != 0 && g_a1717c != 0 && g_5a9fbc != 0) {
@@ -79,7 +83,8 @@ void Screen::camera_update(float dt)
             float dx = rect.x - f290;
             float dy = rect.y - f294;
             float dz = rect.z - f298;
-            if (f2b8 * 0.05f >= sqrtf(dz * dz + dy * dy + dx * dx)) {
+            // pan toward the party only while it is farther than 5% of the zoom (0x4ed165: fcompp; test ah, 5; jp skip)
+            if (f2b8 * 0.05f < sqrtf(dz * dz + dy * dy + dx * dx)) {
                 if (dx < C_5915A0)
                     dx = -10.0f;
                 else if (dx > C_549D74)
@@ -111,24 +116,26 @@ void Screen::camera_update(float dt)
     // --- the frame: identity, +90deg, -yaw, then -pitch; the eye becomes frame.o --------------------
     mat4 frame;
     identity_pos((pos*)&frame.s);
+    frame.o.x = f290;
+    frame.o.y = f294;
+    frame.o.z = f298;
+    frame.o.w = f29c;
     float ang = 1.5707964f;
     ((rgl::matrix*)&frame)->rotate_about_s(&ang);
     ang = -f2b0;
     ((rgl::matrix*)&frame)->rotate_about_f(&ang);
     ang = -f2b4;
     ((rgl::matrix*)&frame)->rotate_about_s(&ang);
-    f29c = 0.0f;
-    f290 = frame.f.x * f2b8 + f290;
-    f294 = frame.f.y * f2b8 + f294;
-    f298 = frame.f.z * f2b8 + f298;
-    float hz = frame.u.z * C_549D70;
-    float hx = f290 - frame.u.x * C_549D70;
-    float hy = f294 - frame.u.y * C_549D70;
     float q = 0.0f;
-    ((World*)g_game)->ground_height(g_level, (vector4*)&hx, (vector4*)&q);
+    frame.o.x = frame.u.x * f2b8 + frame.o.x;
+    frame.o.y = frame.u.y * f2b8 + frame.o.y;
+    frame.o.z = frame.u.z * f2b8 + frame.o.z;
+    // the ground probe point under the eye (3-component constructor: w is never written)
+    vector4 h(frame.o.x - frame.u.x * C_549D70, frame.o.y - frame.u.y * C_549D70, frame.o.z - frame.u.z * C_549D70);
+    ((World*)g_game)->ground_height(g_level, &h, (vector4*)&q);
     q = q + C_549D70;
-    if (f298 < q)
-        f298 = q;
+    if (frame.o.z < q)
+        frame.o.z = q;
 
     // the fog distance parameter (the 0.9 / 0.94 / 0.98 range steps shift it progressively)
     float g1 = g_game->f13b40 + 0.4f;
@@ -148,19 +155,10 @@ void Screen::camera_update(float dt)
     memcpy((char*)this + 0x238, &frame, 0x40);
     ((frustum*)((char*)this + 0x170))->build_planes();
     MapWidget* w = f30;
-    float nx = -frame.f.x;
     memcpy((char*)w + 0x1ac, (char*)this + 0x170, 0x120);
-    float ny = -frame.f.y;
-    float nz = -frame.f.z;
     WorldCam* sc = g_level;
-    sc->f30c.x = nx;
-    sc->f30c.y = ny;
-    sc->f30c.z = nz;
-    sc->f30c.w = frame.s.w;
-    sc->f31c.x = f290;
-    sc->f31c.y = f294;
-    sc->f31c.z = f298;
-    sc->f31c.w = f29c;
+    sc->f30c = vector4(-frame.u.x, -frame.u.y, -frame.u.z);   // w never written (3-component constructor)
+    sc->f31c = frame.o;
     if (!g_5a9fd8) {
         *(mat4*)&g_listener.pos = frame;
         // FMOD wants y/z swapped (the engine is z-up)

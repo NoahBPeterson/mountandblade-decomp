@@ -65,10 +65,10 @@ extern const float g_592754;            // 0x592754  0.155f
 mesh* make_background(float* col, int rgb);              // 0x4de320
 
 // ---- the quest database (g_game = 0x5e2930) ----------------------------------------------------------------
-extern int g_game[];                                    // 0x5e2930
+extern char* g_game;                                    // 0x5e2930: a pointer to the game (0x4ee840: mov eax, [0x5e2930])
 extern char g_frame_flag;                               // 0x5d8788
-#define QUEST_COUNT (*(int*)((char*)g_game + 0x13a5c))
-#define QUESTS      ((char*)(*(int*)((char*)g_game + 0x13a58)))
+#define QUEST_COUNT (*(int*)(g_game + 0x13a5c))
+#define QUESTS      ((char*)(*(int*)(g_game + 0x13a58)))
 #define QUEST(i)    (QUESTS + (i) * 0x138)
 
 // ---- the quest log window ----------------------------------------------------------------------------------

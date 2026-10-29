@@ -154,7 +154,7 @@ struct TerrainX : terrain_obj {
     void emit_particle(int type, int v, int x, int y, float z);   // 0x47ff60
     void tessellate();                               // 0x481570
     void generate(int seed, int* objs, char flag);   // 0x481d10
-    void regenerate_water(void** out, int mode);     // 0x482170
+    void regenerate_water(void** out, bool mode);    // 0x482170 (mode is forwarded to light_all unchanged)
 };
 
 #endif // MESH_SLOT_H

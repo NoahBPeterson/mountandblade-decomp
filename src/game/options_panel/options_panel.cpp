@@ -485,10 +485,14 @@ void GameIo::import_apply(ini_file* imp)
 {
     Troop* troop = &troops[cur_troop];
 
+    // one key/value pair for the whole loop, assigned per entry (0x4d8c65: two default constructors before it,
+    // operator= inside), not a copy constructed and destroyed per entry
+    tstring key;
+    tstring value;
     for (int i = 0; i < imp->count; i++) {
         ini_entry* e = &imp->entries[i];
-        tstring key = e->key;
-        tstring value = e->value;
+        key = e->key;
+        value = e->value;
 
         if (key.equals("name")) {
             value.underscores_to_spaces();
@@ -573,18 +577,29 @@ void GameIo::import_apply(ini_file* imp)
                 found = true;
             }
         }
-        if (!found) {
-            tstring wname;
-            for (int j = 0; j < 7 && !found; j++) {
-                wname.assign(weapon_names[j]);
-                wname.spaces_to_underscores();
-                if (wname.equals(key)) {
-                    int v = atoi(value.c_str());
-                    int lo = 0, hi = 0x2bc;
-                    int r = clamp_index(&v, &lo, &hi);
-                    troop->f80[j] = (float)r;
-                    found = true;
-                }
+        // wname exists whether or not a skill matched (0x4d9032: constructed after the skill loop, the weapon loop
+        // then runs only while nothing matched); the name is copied into a local buffer first, as in export
+        // (0x4d9142..0x4d9185: the short strcpy inlined as dword moves, then assign from the buffer)
+        char weapon_text[0x100];
+        tstring wname;
+        for (int j = 0; j < 7 && !found; j++) {
+            switch (j) {
+            case 0: strcpy(weapon_text, "one_handed_weapons"); break;
+            case 1: strcpy(weapon_text, "two_handed_weapons"); break;
+            case 2: strcpy(weapon_text, "polearms"); break;
+            case 3: strcpy(weapon_text, "archery"); break;
+            case 4: strcpy(weapon_text, "crossbows"); break;
+            case 5: strcpy(weapon_text, "throwing"); break;
+            case 6: strcpy(weapon_text, "firearms"); break;
+            }
+            wname.assign(weapon_text);
+            wname.spaces_to_underscores();
+            if (wname.equals(key)) {
+                int v = atoi(value.c_str());
+                int lo = 0, hi = 0x2bc;
+                int r = clamp_index(&v, &lo, &hi);
+                troop->f80[j] = (float)r;
+                found = true;
             }
         }
     }

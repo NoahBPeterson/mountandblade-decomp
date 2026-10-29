@@ -53,7 +53,7 @@ struct ColourOwner {};
 struct Poser {
     void add_extra(int m);   // 0x442110 (thiscall, ret 4)
 };
-rgl::mesh* build_legend_mesh(ColourOwner* parent);              // 0x495b20
+rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);    // 0x495b20 (ret 4)
 
 // ---- the HUD bar widget (MissionUi-derived; the fields past +0x178 are the slider-like frame state) ---------------------------------
 struct HudBar : MissionUi {

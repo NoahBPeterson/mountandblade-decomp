@@ -379,7 +379,7 @@ static __declspec(noinline) char warn_scene_prop_instance(const int& value)
     char buf[512];
     int id = value;
     if (g_mission && id >= 0) {
-        if (mission()->props._Myfirst && id < mission()->props.count())
+        if (mission()->props._Myfirst && (unsigned)id < (unsigned)mission()->props.count())   // jb: unsigned
             return 1;
     }
     sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Scene_prop Instance ID: %d", g_cur_opcode, id);
@@ -410,7 +410,7 @@ static __declspec(noinline) char warn_tableau(const int& value)
     char buf[512];
     int id = value;
     if (id >= 0 && g_tableaus.first != 0) {
-        if (id < g_tableaus.size())
+        if ((unsigned)id < (unsigned)g_tableaus.size())    // jb: unsigned, as the original
             return 1;
     }
     sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Tableau ID: %d", g_cur_opcode, id);
@@ -470,10 +470,20 @@ __declspec(noinline) char __fastcall check_animation(const int& value)
 
 // 64-bit operand range test as the original spells it: lo <= v < hi on the full 64-bit value
 #define IN_RANGE(v, lo, hi) ((v) >= (lo) && (v) < (hi))
+// team t's class selector (Sel 0x489890 / 0x4898e0): the original addresses it at the team record - 4
+// (mission +0x527c + t*0x16c), so that its rec[k] fields land on cls[k] (present +0x4c = cls.use, the vector +0x18 = cls.pos)
+#define TEAM_SEL(m, t) ((Sel*)((char*)&(m)->teams[t] - 4))
 #define SLOT_OK(v) IN_RANGE(v, 0, 0x100000)
 // store a value into the lvalue operand through one named temporary (the original's single 64-bit slot at
 // esp+0x18: a by-value temporary per call site would get a frame slot of its own)
 #define SET_LV(e) do { lv_ = (e); set_lvalue(locals, lv_); } while (0)
+// one full-expression: the temporaries of e (an expanded string) die after the store, as in the original
+#define SET_LV_FULL(e) set_lvalue(locals, (lv_ = (e), lv_))
+// d = s with s evaluated first: the string (get_string + expand) is built before the party record d is located
+// (PartyMgr::get), and both temporaries die after the assignment, as in the original (add_party_note_from_sreg:
+// get_string, expand, PartyMgr::get, operator=, ~, ~). One full-expression, sequenced by the comma operator.
+static __forceinline const tstring& str_ref(const tstring& s) { return s; }
+#define ASSIGN_STR(d, s) do { const tstring* s_; (s_ = &str_ref(s), (d) = *s_); } while (0)
 
 // buf: 0x920..0xb20 in the original frame (single-use temporaries fill the rest up to the link buffers at 0xd20)
 // @ 0x49fa10
@@ -603,13 +613,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0])) {
             if (params[0] == 0) {
                 int main = game()->main_party;
-                if (party(main)->max_stacks() - party(main)->first_flagged() < 1 ||
-                    party(game()->main_party)->sum_head() >= party(main)->max_members())
+                // named in the original's call order (cl evaluates the right operand first)
+                int stacks = party(main)->max_stacks(), members;
+                if (stacks - party(main)->first_flagged() < 1 ||
+                    ((members = party(game()->main_party)->sum_head()), members >= party(main)->max_members()))
                     result = 0;
                 else
                     result = 1;
             } else {
-                result = party((int)params[0])->max_stacks() > party((int)params[0])->first_flagged();
+                int stacks = party((int)params[0])->max_stacks();
+                result = stacks > party((int)params[0])->first_flagged();
             }
         }
         break;
@@ -617,13 +630,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0])) {
             if (params[0] == 0) {
                 int main = game()->main_party;
-                if (party(main)->max_stacks() - party(main)->count_tail() < 1 ||
-                    party(game()->main_party)->sum_flagged() >= party(main)->max_prisoners())
+                // named in the original's call order (cl evaluates the right operand first)
+                int stacks = party(main)->max_stacks(), prisoners;
+                if (stacks - party(main)->count_tail() < 1 ||
+                    ((prisoners = party(game()->main_party)->sum_flagged()), prisoners >= party(main)->max_prisoners()))
                     result = 0;
                 else
                     result = 1;
             } else {
-                result = party((int)params[0])->max_stacks() > party((int)params[0])->count_tail();
+                int stacks = party((int)params[0])->max_stacks();
+                result = stacks > party((int)params[0])->count_tail();
             }
         }
         break;
@@ -642,8 +658,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troops_can_join:
         if (params[0] > 0) {
             int main = game()->main_party;
-            if (party(main)->max_stacks() - party(main)->first_flagged() < 1 ||
-                (__int64)party(main)->sum_head() + params[0] > (__int64)party(main)->max_members())
+            // named in the original's call order (cl evaluates the right operand first)
+            int stacks = party(main)->max_stacks();
+            int members;
+            if (stacks - party(main)->first_flagged() < 1 ||
+                ((members = party(main)->sum_head()), (__int64)members + params[0] > (__int64)party(main)->max_members()))
                 result = 0;
             else
                 result = 1;
@@ -652,8 +671,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troops_can_join_as_prisoner:
         if (params[0] > 0) {
             int main = game()->main_party;
-            if (party(main)->max_stacks() - party(main)->count_tail() < 1 ||
-                (__int64)party(main)->sum_flagged() + params[0] > (__int64)party(main)->max_prisoners())
+            // named in the original's call order (cl evaluates the right operand first)
+            int stacks = party(main)->max_stacks();
+            int prisoners;
+            if (stacks - party(main)->count_tail() < 1 ||
+                ((prisoners = party(main)->sum_flagged()), (__int64)prisoners + params[0] > (__int64)party(main)->max_prisoners()))
                 result = 0;
             else
                 result = 1;
@@ -1130,7 +1152,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::create_text_overlay:
         if (g_presentation && check_string_arg(types[1], (int)params[1]))
-            SET_LV((__int64)g_presentation->create_text_overlay(
+            SET_LV_FULL((__int64)g_presentation->create_text_overlay(
                 g_script.expand(g_strings.get_string((int)params[1], types[1])), (int)params[2]));
         break;
     case op::create_mesh_overlay:
@@ -1139,7 +1161,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::create_button_overlay:
         if (g_presentation && check_string_arg(types[1], (int)params[1]))
-            SET_LV((__int64)g_presentation->create_button_overlay(
+            SET_LV_FULL((__int64)g_presentation->create_button_overlay(
                 g_script.expand(g_strings.get_string((int)params[1], types[1])), (int)params[2]));
         break;
     case op::create_image_button_overlay:
@@ -1253,7 +1275,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::create_game_button_overlay:
         if (g_presentation && check_string_arg(types[1], (int)params[1]))
-            SET_LV((__int64)g_presentation->create_game_button_overlay(
+            SET_LV_FULL((__int64)g_presentation->create_game_button_overlay(
                 g_script.expand(g_strings.get_string((int)params[1], types[1]))));
         break;
     case op::context_menu_add_item:
@@ -1481,7 +1503,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::add_party_note_from_sreg:
         if (check_string_arg(types[2], (int)params[2]) && check_party((int)params[0]) && params[1] < 8) {
-            party((int)params[0])->notes[(int)params[1]] = g_script.expand(g_strings.get_string((int)params[2], types[2]));
+            ASSIGN_STR(party((int)params[0])->notes[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
             party((int)params[0])->note_times[(int)params[1]] = params[3] ? game()->note_time : -1;
         }
         break;
@@ -1522,7 +1544,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int color = -1;
             if (params[1])
                 color = (int)params[1];
-            tstring msg = g_script.expand(g_strings.get_string((int)params[0], types[0]));
+            tstring text = g_strings.get_string((int)params[0], types[0]);   // a local: lives past set_font_mesh
+            tstring msg = g_script.expand(text);
             ((c49b630::HudRoot*)&g_msglog)->set_font_mesh(&msg, color);
         } else {
             tstring empty("");
@@ -1544,25 +1567,41 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 item_kind(k)->price_rate = (float)params[1] * 0.01f;
         break;
     case op::party_join:
-        sprintf(buf, UI("ui_value_joined_your_party"), CS(party(g_encountered_party)->display_name()));
+        {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+            tstring key("ui_value_joined_your_party");
+            const char* arg0 = CS(party(g_encountered_party)->display_name());
+            sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
+        }
         g_msglog.push(tstring(buf), -1);
         game()->transfer_stack(g_encountered_party, game()->main_party, 0);
         break;
     case op::party_join_as_prisoner:
-        sprintf(buf, UI("ui_value_joined_party_as_prisoner"), CS(party(g_encountered_party)->display_name()));
+        {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+            tstring key("ui_value_joined_party_as_prisoner");
+            const char* arg0 = CS(party(g_encountered_party)->display_name());
+            sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
+        }
         g_msglog.push(tstring(buf), -1);
         game()->transfer_stack(g_encountered_party, game()->main_party, 1);
         break;
     case op::troop_join:
         if (check_troop((int)params[0])) {
-            sprintf(buf, UI("ui_value_has_joined_party"), CS(troop((int)params[0])->display_name()));
+            {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                tstring key("ui_value_has_joined_party");
+                const char* arg0 = CS(troop((int)params[0])->display_name());
+                sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
+            }
             g_msglog.push(tstring(buf), -1);
             party(game()->main_party)->add_members((int)params[0], 1, 0, 0, 0);
         }
         break;
     case op::troop_join_as_prisoner:
         if (check_troop((int)params[0])) {
-            sprintf(buf, UI("ui_value_has_been_taken_prisoner"), CS(troop((int)params[0])->display_name()));
+            {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                tstring key("ui_value_has_been_taken_prisoner");
+                const char* arg0 = CS(troop((int)params[0])->display_name());
+                sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
+            }
             g_msglog.push(tstring(buf), -1);
             party(game()->main_party)->add_members((int)params[0], 1, 1, 0, 0);
         }
@@ -1576,7 +1615,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (!game()->remove_troops(p, (int)params[0], 1, 1, 0))
                 game()->remove_troops(p, (int)params[0], 1, 0, 0);
             if (!params[1]) {
-                sprintf(buf, UI("ui_value_left_the_party"), CS(troop((int)params[0])->display_name()));
+                {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                    tstring key("ui_value_left_the_party");
+                    const char* arg0 = CS(troop((int)params[0])->display_name());
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
+                }
                 g_msglog.push(tstring(buf), -1);
             }
         }
@@ -1586,8 +1629,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         for (int k = party(game()->main_party)->num_stacks - 1; k >= 0; k--) {
             int main = game()->main_party;
             if ((party(main)->stacks[k].flags & 1) && !troop(party(main)->stacks[k].troop)->is_hero()) {
-                sprintf(buf, UI("ui_number_values_left_the_party"), party(game()->main_party)->stacks[k].count,
-                        CS(troop(party(game()->main_party)->stacks[k].troop)->display_name()));
+                {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                    tstring key("ui_number_values_left_the_party");
+                    const char* arg1 = CS(troop(party(game()->main_party)->stacks[k].troop)->display_name());
+                    int arg0 = party(game()->main_party)->stacks[k].count;
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), arg0, arg1);
+                }
                 g_msglog.push(tstring(buf), -1);
                 party(game()->main_party)->remove_stack(k, game()->stack_rows);
             }
@@ -1597,9 +1644,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_troop((int)params[0]) && params[1] > 0) {
             game()->remove_troops(game()->main_party, (int)params[0], (int)params[1], 0, 0);
             if (troop((int)params[0])->is_hero())
-                sprintf(buf, UI("ui_value_left_the_party"), CS(troop((int)params[0])->display_name()));
+                {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                    tstring key("ui_value_left_the_party");
+                    const char* arg0 = CS(troop((int)params[0])->display_name());
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
+                }
             else
-                sprintf(buf, UI("ui_number_value_left_the_party"), params[1], CS(troop((int)params[0])->display_name()));
+                {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                    tstring key("ui_number_value_left_the_party");
+                    const char* arg1 = CS(troop((int)params[0])->display_name());
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), params[1], arg1);
+                }
             g_msglog.push(tstring(buf), -1);
         }
         break;
@@ -1608,9 +1663,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_troop((int)params[0]) && params[1] > 0) {
             game()->remove_troops(game()->main_party, (int)params[0], (int)params[1], 1, 0);
             if (troop((int)params[0])->is_hero())
-                sprintf(buf, UI("ui_value_left_the_party"), CS(troop((int)params[0])->display_name()));
+                {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                    tstring key("ui_value_left_the_party");
+                    const char* arg0 = CS(troop((int)params[0])->display_name());
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
+                }
             else
-                sprintf(buf, UI("ui_number_value_left_the_party"), params[1], CS(troop((int)params[0])->display_name()));
+                {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                    tstring key("ui_number_value_left_the_party");
+                    const char* arg1 = CS(troop((int)params[0])->display_name());
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), params[1], arg1);
+                }
         }
         break;
 
@@ -1735,12 +1798,18 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[0] == 0 || params[1] == 0) {
                 si_0 = (int)params[1], si_1 = (int)params[0];
                 if (old_rel < new_rel) {
-                    sprintf(buf, UI("ui_your_relations_with_value_has_improved_from_number_to_number"),
-                            CS(faction(imax_ref(&si_1, &si_0))->display_name()), old_rel, new_rel);
+                    {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                        tstring key("ui_your_relations_with_value_has_improved_from_number_to_number");
+                        const char* arg1 = CS(faction(imax_ref(&si_1, &si_0))->display_name());
+                        sprintf(buf, CS(g_ui_strings.lookup(key)), arg1, old_rel, new_rel);
+                    }
                     g_msglog.push(tstring(buf), 0xff6fff28);
                 } else if (old_rel > new_rel) {
-                    sprintf(buf, UI("ui_your_relations_with_value_has_deteriorated_from_number_to_number"),
-                            CS(faction(imax_ref(&si_1, &si_0))->display_name()), old_rel, new_rel);
+                    {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                        tstring key("ui_your_relations_with_value_has_deteriorated_from_number_to_number");
+                        const char* arg1 = CS(faction(imax_ref(&si_1, &si_0))->display_name());
+                        sprintf(buf, CS(g_ui_strings.lookup(key)), arg1, old_rel, new_rel);
+                    }
                     g_msglog.push(tstring(buf), 0xffff7028);
                 }
                 if (params[0] == 0)
@@ -1752,7 +1821,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::faction_set_name:
         if (check_faction((int)params[0]) && check_string_arg(types[1], (int)params[1]))
-            { tstring nm = g_script.expand(g_strings.get_string((int)params[1], types[1])); ((Named16*)faction((int)params[0]))->set(&nm); }
+            { tstring text = g_strings.get_string((int)params[1], types[1]); tstring nm = g_script.expand(text);
+              ((Named16*)faction((int)params[0]))->set(&nm); }
         break;
     case op::faction_set_color:
         if (check_faction((int)params[0])) {
@@ -1949,7 +2019,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_troop((int)params[0])) {
             int n = game()->sl_take((int)params[0], (int)params[1], 1, 1);
             if (params[0] == 0 && n > 0) {
-                sprintf(buf, UI("ui_lost_item_value"), CS(item_kind((int)params[1])->display_name()));
+                {   // the original's order: the key, the item name, then the lookup (the key dies after sprintf)
+                    tstring key("ui_lost_item_value");
+                    const char* name = CS(item_kind((int)params[1])->display_name());
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), name);
+                }
                 g_msglog.push(tstring(buf), -1);
             }
         }
@@ -1987,21 +2061,29 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::troop_add_items:
-        // (troop_add_items, <troop_id>, <item_id>, <number>)
-        if (check_troop((int)params[0]) && check_item_kind((int)params[1])) {
+        // (troop_add_items, <troop_id>, <item_id>, <number>): a count <= 0 is ignored before the id checks
+        if (params[2] > 0 && check_troop((int)params[0]) && check_item_kind((int)params[1])) {
             game()->give_item((int)params[0], (int)params[1], (int)params[2]);
             if (params[0] == 0) {
-                sprintf(buf, UI("ui_got_number_value"), (int)params[2], CS(item_kind((int)params[1])->display_name()));
+                {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                    tstring key("ui_got_number_value");
+                    const char* arg1 = CS(item_kind((int)params[1])->display_name());
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), (int)params[2], arg1);
+                }
                 g_msglog.push(tstring(buf), -1);
             }
         }
         break;
     case op::troop_remove_items:
-        // puts the value of the removed items into reg0
-        if (check_troop((int)params[0]) && check_item_kind((int)params[1])) {
+        // puts the value of the removed items into reg0; a count <= 0 is ignored before the id checks
+        if (params[2] > 0 && check_troop((int)params[0]) && check_item_kind((int)params[1])) {
             g_script.reg[0] = game()->sl_take((int)params[0], (int)params[1], (int)params[2], 1);
             if (params[0] == 0) {
-                sprintf(buf, UI("ui_lost_number_value"), (int)params[2], CS(item_kind((int)params[1])->display_name()));
+                {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
+                    tstring key("ui_lost_number_value");
+                    const char* arg1 = CS(item_kind((int)params[1])->display_name());
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), (int)params[2], arg1);
+                }
                 g_msglog.push(tstring(buf), -1);
             }
         }
@@ -2160,7 +2242,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_set_extra_text:
         if (check_party((int)params[0]) && check_string_arg(types[1], (int)params[1]))
-            party((int)params[0])->extra_text = g_script.expand(g_strings.get_string((int)params[1], types[1]));
+            ASSIGN_STR(party((int)params[0])->extra_text, g_script.expand(g_strings.get_string((int)params[1], types[1])));
         break;
     case op::party_get_current_terrain:
         if (check_party((int)params[1]))
@@ -2306,7 +2388,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_free_companions_capacity:
         if (check_party((int)params[1])) {
-            if (party((int)params[1])->max_stacks() - party((int)params[1])->first_flagged() < 1)
+            int stacks = party((int)params[1])->max_stacks();       // the original's call order
+            if (stacks - party((int)params[1])->first_flagged() < 1)
                 SET_LV(0);
             else {
                 int members = party((int)params[1])->sum_head();
@@ -2316,7 +2399,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_free_prisoners_capacity:
         if (check_party((int)params[1])) {
-            if (party((int)params[1])->max_stacks() - party((int)params[1])->count_tail() < 1)
+            int stacks = party((int)params[1])->max_stacks();       // the original's call order
+            if (stacks - party((int)params[1])->count_tail() < 1)
                 SET_LV(0);
             else {
                 int members = party((int)params[1])->sum_flagged();
@@ -2480,7 +2564,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_set_name:
         if (check_party((int)params[0]) && check_string_arg(types[1], (int)params[1]))
-            party((int)params[0])->set_name(g_script.expand(g_strings.get_string((int)params[1], types[1])));
+            // the string first (get_string, expand), then the party record (PartyMgr::get), as the original
+            { const tstring* s_; (s_ = &str_ref(g_script.expand(g_strings.get_string((int)params[1], types[1]))),
+                                  party((int)params[0])->set_name(*s_)); }
         break;
     case op::party_add_xp_to_stack:
         if (check_party((int)params[0]) && params[1] >= 0) {
@@ -2983,7 +3069,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_0 = 0, sf_1 = 0, sf_2 = 0;
             si_0 = ((level*)m->scene)->nearest_face((const float*)p);
             vec4 off;
-            ((Sel*)&m->teams[(int)params[0]])->set_vec((const int*)p, &si_0, (const int*)&off.set(sf_2, sf_1, sf_0));
+            TEAM_SEL(m, (int)params[0])->set_vec((const int*)p, &si_0, (const int*)&off.set(sf_2, sf_1, sf_0));
             mission()->unselect_team((int)params[0]);
         }
         break;
@@ -3002,7 +3088,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             mission()->select_class((int)params[1], (int)params[2]);
             MissionX* m = mission();
             int t = (int)params[1];
-            script_pos((int)params[0]).o = m->teams[t].first();
+            script_pos((int)params[0]).o = ((TeamRec*)TEAM_SEL(m, t))->first();
             m->unselect_team(t);
         }
         break;

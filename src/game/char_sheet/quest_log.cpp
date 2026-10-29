@@ -45,29 +45,29 @@ widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
     pos[1] = y;
     self->set_pos(pos);
     *(int*)((char*)self + 0x178) = 1;
+    // the size is the unscaled (h, w); the scaled pair is the meshes' colour (0x4ee965..0x4ee998: [esp+0x10] = h,
+    // [esp+0x14] = w; h * g_590b70, w * g_592758 and 1.0 into the vector at [esp+0x20], whose w is never set)
     float size[2];
-    size[0] = w * g_590b70;
-    size[1] = h * g_592758;
-    self->set_size(size);
-    *(float*)((char*)self + 0x17c) = w * g_592754;
-    tstring s1;
-    s1.assign("scrollbar");       // the original pushes 0x592748 = "scrollbar" (core_ui_meshes.brf has no "ui_" prefix)
-    mesh* m1 = g_resmgr.get_object((const rgl::string*)&s1)->clone();
+    size[0] = h;
+    size[1] = w;
     vector4 col;
-    col.x = x;
-    col.y = y;
-    col.z = h;
-    col.w = w;
+    col.x = h * g_590b70;
+    col.y = w * g_592758;
+    col.z = 1.0f;
+    self->set_size(size);
+    *(float*)((char*)self + 0x17c) = col.y * g_592754;
+    // the original pushes 0x592748 = "scrollbar" (core_ui_meshes.brf has no "ui_" prefix) into a temporary
+    // tstring(const char*) (0x42bbe0), destroyed right after the clone
+    mesh* m1 = g_resmgr.get_object((const rgl::string*)&tstring("scrollbar"))->clone();
     m1->set_color(col);
-    tstring s2;
-    s2.assign("scrollbar_handle"); // the original pushes 0x592734 = "scrollbar_handle"
-    mesh* m2 = g_resmgr.get_object((const rgl::string*)&s2)->clone();
+    // 0x592734 = "scrollbar_handle", a temporary the same way
+    mesh* m2 = g_resmgr.get_object((const rgl::string*)&tstring("scrollbar_handle"))->clone();
     m2->set_color(col);
     // the original calls vtable slot 0x80 = MissionUi::set_track(int i, mesh* p) with *both* arguments
     // (0x4eea5e: push edi/push 0/ecx=esi; 0x4eea6b: push ebx/push 2), which is why a one-argument call through a
     // cdecl cast handed the object over as the index (fault at [esi + edi*4 + 0x108]).
-    ((MissionUi*)self)->set_track(0, m1);
-    ((MissionUi*)self)->set_track(2, m2);
+    self->add_item2(0, m1);         // vtable +0x80 (set_track), called through the vtable as the original does
+    self->add_item2(2, m2);
     parent->add_child(self);
     return self;
 }

@@ -333,7 +333,7 @@ void HashTab::insert(HOut* out, unsigned* key)
 {
     unsigned count = f24;
     unsigned n = f14 ? (unsigned)(((char*)f18 - (char*)f14) >> 2) : 0u;
-    if (f24 <= (unsigned)(f0c >> 2)) {
+    if (f24 <= (unsigned)f0c >> 2) {               // 0x4d3c0d: shr (unsigned)
         if (count < n - 1) {
             if (f20 < count)
                 f20 = f20 * 2 + 1;
@@ -413,7 +413,7 @@ void HashTab::insert(HOut* out, unsigned* key)
             if (i == 0)
                 break;
             i = i - 1;
-        } while (p != f14[i]);
+        } while (p == f14[i]);                      // 0x4d3e13: cmp edi, [f14+i*4]; je back
     }
     out->node = q;
     out->inserted = 1;

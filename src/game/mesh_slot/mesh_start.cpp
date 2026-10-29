@@ -64,7 +64,7 @@ struct ShadowMapP {
 };
 struct TerrainX {                                            // mesh_slot/mesh_slot.h (mesh_terrain.cpp, mesh_scene.cpp)
     void generate(int seed, int* objs, char flag);           // 0x481d10
-    void regenerate_water(void** out, int mode);             // 0x482170
+    void regenerate_water(void** out, bool mode);            // 0x482170
     void destroy_water(int a);                               // 0x4814a0
     void light_entities(rgl::mesh** list, int count);        // 0x47ce00
     void light_props();                                      // 0x47ced0
