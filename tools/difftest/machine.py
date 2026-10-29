@@ -1146,11 +1146,24 @@ def install_import_models(m):
 
     UI_QUERIES = {0x146, 0x147, 0x150, 0x188, 0x18b, 0x199}   # CB_GETCOUNT/GETCURSEL/GETITEMDATA, LB_GETCURSEL/GETCOUNT/GETITEMDATA
 
+    # messages that write into lParam: the text getters (WM_GETTEXT, CB_GETLBTEXT, LB_GETTEXT, the rich edit's
+    # EM_GETSELTEXT / EM_GETTEXTRANGE) return an empty string; EM_EXGETSEL fills a CHARRANGE with an empty selection
+    UI_TEXT_OUT = {0x0d, 0x148, 0x189, 0x43e, 0x44b}
+    EM_EXGETSEL = 0x434
+
     def send_message(m_, a, esp):
         # LRESULT. Queries (the selection, a count, an item's data) and the application's own messages (>= WM_USER,
         # the editor's 0x40x list-type queries) answer -1 ("none", CB_ERR / LB_ERR) or a small number; every other
         # message (adding strings, setting the selection, WM_SETTEXT, ...) answers 0
         msg = a[1] & 0xFFFF
+        if msg in UI_TEXT_OUT:
+            if a[3] & 0xFFFFFFFF:
+                put(m_, a[3], b"\0")
+            return 0
+        if msg == EM_EXGETSEL:
+            if a[3] & 0xFFFFFFFF:
+                put(m_, a[3], struct.pack("<2i", 0, 0))
+            return 0
         if msg in UI_QUERIES or msg >= 0x400:
             return ui_answer(m_, (0xFFFFFFFF, 0, 1, 2, 3, 4, 5, 7))
         return 0
