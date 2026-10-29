@@ -343,10 +343,12 @@ TREE_CATS = (("byte-exact", "Byte-exact", "#0072B2"),                    # blue
              ("comdat", "Byte-exact via COMDAT (no callable symbol)", "#999999"),  # the only grey
              ("comdatdiff", "COMDAT differs (symbol-less fragment)", "#000000"),   # black
              ("funclet", "Symbol-less, not COMDAT-checked", "#999999"),
+             ("not_run", "Not run: hit the time limit", "#F0E442"),       # yellow
              ("excluded", "Byte-exact library code: the real VC7.1 CRT/STL (excluded from the totals)", "#8FB1C8"),
              ("nosource", "No source yet", "#FFFFFF"))
+# a TIMEOUT row (verdicts.py category not_run) has source: it was "No source yet" here until 2026-10-29
 _VCAT = {"inputs": "inputs", "harness": "harness", "funclet": "funclet", "comdat": "comdat",
-         "comdatdiff": "comdatdiff"}
+         "comdatdiff": "comdatdiff", "not_run": "not_run"}
 
 
 def _verdict_data():
