@@ -937,10 +937,11 @@ struct SubOrder {
     vector4 extra;          // +0x20  (zeroed, w = order group)
     int     face;           // +0x30  nearest face
     float   ox, oy, oz;     // +0x34  per-slot offset
+    char    pad40[4];
     int     mode;           // +0x44  sub-order mode (0 = unused)
-    char    pad48[0x18];
-    int     field5c;        // +0x5c
-};
+    char    pad48[0x14];
+    vector4 home;           // +0x5c  the slot's resting target (fall back restores it when the slot is unarmed)
+};                          // 0x6c bytes (the Leader stride below)
 
 struct Leader {             // this + 0x527c + index*0x16c
     int      pad0;
@@ -948,6 +949,7 @@ struct Leader {             // this + 0x527c + index*0x16c
     SubOrder sub[3];        // +8, stride 0x6c
     char     pad14c[0x20];
 };
+typedef char SubOrder_size_check[sizeof(SubOrder) == 0x6c && sizeof(Leader) == 0x16c ? 1 : -1];
 
 struct AgentTable {         // mission + 4
     unsigned count;                         // +0
@@ -962,6 +964,7 @@ struct Agent {
     int     slot_no;        // +0x1c4  order group (clamped to 7)
     char    pad1c8[0x2b0 - 0x1c8];
     int     unit;           // +0x2b0  unit/order-table index
+    char    pad2b4[4];
     int     form_a;         // +0x2b8
     int     form_b;         // +0x2bc
     float   form_delay;     // +0x2c0
@@ -970,6 +973,7 @@ struct Agent {
     char    pad56c4[0x5928 - 0x56c4];
     int     update_nav_face() { return ((::Agent*)this)->update_nav_face(); }     // 0x43cb30 (thiscall) -> eax
 };
+typedef char Agent_offset_check[offsetof(Agent, form_a) == 0x2b8 && offsetof(Agent, alt) == 0x56b4 ? 1 : -1];
 
 struct Level { int nearest_face(vector4* p) { return ((::level*)this)->nearest_face((const float*)p); } };     // 0x439a50 (thiscall) -> face index
 
@@ -992,7 +996,8 @@ struct Mission {
 extern Mission* g_mission;                  // 0x5e292c
 
 // order-leader helpers (all thiscall on the Leader record)
-inline void set_vec(Leader* L, vector4* pos, vector4* a, vector4* b) { ((Sel*)L)->set_vec((const int*)pos, (const int*)a, (const int*)b); }   // 0x4898e0
+// 0x4898e0: every armed slot gets target = *pos, face = *face, extra = *dir
+inline void set_vec(Leader* L, vector4* pos, int* face, vector4* dir) { ((Sel*)L)->set_vec((const int*)pos, face, (const int*)dir); }
 inline void set_v(Leader* L, int v) { ((Sel*)L)->set_v(v); }                                     // 0x489860
 inline void bump(Leader* L, int v) { ((Sel*)L)->bump(v); }                                    // 0x4899e0
 inline void make_label(Leader* L, char* buf) { ((ForceLabel*)L)->make_label(buf); }                                      // 0x48d940
@@ -1025,12 +1030,11 @@ void Mission::order(int index, int order) {
     switch (order) {
     case 0: {                                   // hold this position
         if (L->agent_id == -1)
-            return;
+            break;                              // still informs and re-seeds the group (0x49c2fe -> 0x49cafa)
         Agent* a = agent_by_id(this, L->agent_id);
         vector4 zero = { 0, 0, 0, 0 };
         int f = a->update_nav_face();
-        (void)f;
-        set_vec(L, &a->pos, &zero, &zero);
+        set_vec(L, &a->pos, &f, &zero);
         if (L->sub[0].mode) L->sub[0].state = 1;
         if (L->sub[1].mode) L->sub[1].state = 1;
         if (L->sub[2].mode) L->sub[2].state = 1;
@@ -1039,15 +1043,13 @@ void Mission::order(int index, int order) {
     }
     case 1: {                                   // follow me
         if (L->agent_id == -1)
-            return;
+            break;                              // still informs and re-seeds the group (0x49c3e5 -> 0x49cafa)
         if (L->sub[0].mode) L->sub[0].state = 2;
         if (L->sub[1].mode) L->sub[1].state = 2;
         if (L->sub[2].mode) L->sub[2].state = 2;
         Agent* a = agent_by_id(this, L->agent_id);
-        vector4 zero = { 0, 0, 0, 0 };
         int f = a->update_nav_face();
-        (void)f;
-        set_vec(L, &a->pos, &a->alt, &zero);
+        set_vec(L, &a->pos, &f, &a->alt);
         strcpy(ordstr, order_string("ui_follow_me_e_"));
         break;
     }
@@ -1116,12 +1118,8 @@ void Mission::order(int index, int order) {
             SubOrder* s = &L->sub[k];
             if (s->mode == 0)
                 continue;
-            if (s->state == 0) {
-                s->target.x = s->extra.x;
-                s->target.y = s->extra.y;
-                s->target.z = s->extra.z;
-                s->target.w = s->extra.w;
-            }
+            if (s->state == 0)
+                s->target = s->home;
             vector4 p;
             p.x = s->target.x - s->ox * 7.0f;
             p.y = s->target.y - s->oy * 7.0f;
@@ -1161,8 +1159,8 @@ void Mission::order(int index, int order) {
         strcpy(ordstr, order_string("ui_fire_at_will_e_"));
         break;
     }
-    default:
-        return;
+    default:                                    // an unknown order still informs (empty caption) and re-seeds
+        break;
     }
 
     // inform the local agent, but only about its own order group
@@ -1174,7 +1172,8 @@ void Mission::order(int index, int order) {
         if (g == index) {
             make_label(L, ordtxt);
             sprintf(msg, ordstr, ordtxt);
-            g_gui.add(tstring(msg), 0xfffffefb);
+            tstring line(msg);                  // copied into the by-value argument (0x42c110), destroyed after the call
+            g_gui.add(line, 0xfffffefb);
         }
     }
 
