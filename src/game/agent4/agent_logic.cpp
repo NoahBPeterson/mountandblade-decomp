@@ -2420,8 +2420,10 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     pos2 ident;
     identity_pos((::pos*)&ident);
     res_obj* m;
-    if ((g_items[ammo->item].type_flags & 0xff) == 10) {
-        tstring tn = ammo->mesh_name();
+    // a launcher of type 10 names the flying mesh itself (0x44bed6..0x44befd read the third argument); otherwise
+    // the ammo item's own mesh (0x44bf04.. read the fourth)
+    if ((g_items[launcher->item].type_flags & 0xff) == 10) {
+        tstring tn = launcher->mesh_name();
         m = (res_obj*)RESMGR->get_object((const rgl::string*)&tn);
     } else {
         m = 0;
