@@ -1472,7 +1472,8 @@ class Runner:
         must not clear them."""
         old = self.write_flags_reg.get((label, base))
         if old is not None and len(old[1]) == len(flags):
-            flags = bytearray(max(a, b) for a, b in zip(old[1], flags))
+            flags = bytearray(np.maximum(np.frombuffer(bytes(old[1]), np.uint8),
+                                         np.frombuffer(bytes(flags), np.uint8)).tobytes())
             baseline = baseline if baseline is not None else old[0]
         self.write_flags_reg[(label, base)] = (baseline, flags)
         if is_page:
@@ -2291,7 +2292,8 @@ class Runner:
         regt, fpu, pend, steps = {}, [], [False], [0]
         movs = [None]       # esi - edi of the string copy in progress: its writes take their source bytes' taint
         last_esp = [entry]
-        cache = {}
+        # decoded instructions, kept across inputs (keyed by address AND bytes, so changed code is re-decoded)
+        cache = self.__dict__.setdefault("_taint_insns", {})
 
         def src_taint(a, n):
             return all((b in tainted) or (lo_s <= b < entry and b not in written) for b in range(a, a + n))
@@ -2312,10 +2314,14 @@ class Runner:
             steps[0] += 1
             if self.cur is not self.orig or steps[0] > max_steps:
                 return
-            ins = cache.get(address)
+            try:
+                raw = bytes(uc_.mem_read(address, size))
+            except Exception:
+                return
+            ins = cache.get((address, raw))
             if ins is None:
                 try:
-                    ins = cache[address] = next(_md.disasm(bytes(uc_.mem_read(address, size)), address))
+                    ins = cache[(address, raw)] = next(_md.disasm(raw, address))
                 except Exception:
                     return
             ops, mn = ins.operands, ins.mnemonic
@@ -3973,18 +3979,23 @@ class FpTol:
         touched = list(inp.touched)
         m.set_fpcw(FPCW_REF)
         self.fstore = {}        # dword address -> the last write to it was an x87/SSE float store
-        code, fvals = {}, set()
+        # pc -> "is a float store", kept across inputs (keyed by address AND bytes, so changed code is re-decoded)
+        code, fvals = self.__dict__.setdefault("_fst_code", {}), set()
 
         def on_write(uc, access, address, size, value, _):
             pc = uc.reg_read(UC_X86_REG_EIP)
-            f = code.get(pc)
+            try:
+                raw = bytes(uc.mem_read(pc, 15))
+            except Exception:                           # noqa: BLE001
+                raw = b""
+            f = code.get((pc, raw))
             if f is None:
                 try:
-                    ins = next(_md.disasm(bytes(uc.mem_read(pc, 15)), pc))
+                    ins = next(_md.disasm(raw, pc))
                     f = ins.mnemonic.startswith("fst") or ins.mnemonic in FP_STORES
                 except (StopIteration, Exception):      # noqa: BLE001
                     f = False
-                code[pc] = f
+                code[(pc, raw)] = f
             if size >= 4:
                 # an integer store of a value an x87/SSE store wrote earlier is a copied float (spill, then mov to the result)
                 v = value & 0xFFFFFFFF
