@@ -6056,7 +6056,7 @@ after_rider:
         if (last_blow().kind != 1) return;
         if (!(last_blow().dmg_out > 8.0f)) return;
         if (!(vel_xy.y > 0.1f)) return;
-        if (last_blow().attacker < 0) return;
+        if ((int)last_blow().attacker < 0) return;
         if (!(rgl::dot(pos - m->agents.get(last_blow().attacker)->pos, body->m.f) < -0.5f)) return;
         if ((int)(anim[0].events & 0x1ffff) >= 0x4a) return;
         float a = 5.0f;
@@ -6083,7 +6083,7 @@ after_rider:
         apos.x = 0.0f;
         apos.y = 0.0f;
         apos.z = 0.0f;
-        if (last_blow().attacker >= 0)
+        if ((int)last_blow().attacker >= 0)
             apos = g_mission->agents.get(last_blow().attacker)->pos;
         if (f2c != -1) {
             anim_a = 0x120;
@@ -6117,7 +6117,7 @@ after_rider:
         bee:
             if (!(dmg < g_damage_interrupt_attack_treshold)) goto c25;
         }
-        if (last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 0)
+        if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 0)
             stunned = true;
     }
 c25:
@@ -6175,7 +6175,7 @@ impulse:
         impulse.x = imp.x + impulse.x;
         impulse.y = imp.y + impulse.y;
         impulse.z = imp.z + impulse.z;
-        if (last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 1) {
+        if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 1) {
             impulse.x = impulse.x;
             impulse.y = impulse.y;
             impulse.z = impulse.z + 1.0f;
@@ -6303,7 +6303,7 @@ common:
             }
         }
     }
-    if (last_blow().attacker >= 0 && dmg > 0.01f) {
+    if ((int)last_blow().attacker >= 0 && dmg > 0.01f) {
         AgentTable* t = &g_mission->agents;
         if (this->is_enemy(t->get(last_blow().attacker)) && t->get(last_blow().attacker)->troop >= 0 &&
             g_game->chars[t->get(last_blow().attacker)->troop].is_hero() && last_blow().item >= 0) {
@@ -6418,7 +6418,7 @@ common:
                 g_game->cnt_killed_friend++;
             m = g_mission;
         }
-        if (last_blow().attacker >= 0)
+        if ((int)last_blow().attacker >= 0)
             m->agents.get(last_blow().attacker)->kill_count++;
         if (g_opt_kill_msgs != 0) {
             char msgbuf[512];
@@ -6461,7 +6461,7 @@ common:
                 g_game->cnt_ko_friend++;
             m = g_mission;
         }
-        if (last_blow().attacker >= 0)
+        if ((int)last_blow().attacker >= 0)
             m->agents.get(last_blow().attacker)->wounded_count++;
         if (g_opt_kill_msgs != 0) {
             char namebuf[256];
