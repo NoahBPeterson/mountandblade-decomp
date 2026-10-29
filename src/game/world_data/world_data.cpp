@@ -1975,7 +1975,7 @@ void GameW::share_experience(int party, float amount)
                 p->add_xp_to_stack(idx2, (int)((float)s.count * per));
         }
     }
-    float fl = floorf(amount);
+    double fl = floor(amount);                  // the CRT floor 0x536b10; the result stays a double (0x494d39..0x494d4a)
     int n = (int)fl;
     if (!(amount - fl <= 0.5f))
         n = (int)fl + 1;
