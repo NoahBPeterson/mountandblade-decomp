@@ -2283,8 +2283,8 @@ class Runner:
         loaded from such a slot (or from tainted memory) and moved unchanged by mov / push / pop / fld / fst(p), or
         shifted by a constant (inc / dec, add / sub of an immediate, lea reg, [reg + disp]: a leftover plus a constant
         is still indeterminate -- trigger_vec 0x4bf170 stores a D3D out-parameter the generated callee never wrote,
-        minus 1); any other instruction makes what it writes untainted, so arithmetic that mixes a leftover with
-        real data is never excused."""
+        minus 1), or, on the x87 stack, shifted by a memory operand (fadd / fsub / fsubr m32/m64); any other
+        instruction (multiplies, compares, register-register x87 ops) makes what it writes untainted."""
         m, uc = self.m, self.m.uc
         lo_s, entry = M.STACK_TOP - M.STACK_SIZE, self.esp_entry
         written, tainted = set(), set()
@@ -2374,6 +2374,13 @@ class Runner:
                     return
                 if mn == "fld" and ops and ops[0].type == CX.X86_OP_MEM and ops[0].size == 4:
                     fpu.append(src_taint(ea(ops[0]), 4))
+                    return
+                if mn in ("fadd", "fsub", "fsubr") and len(ops) == 1 and ops[0].type == CX.X86_OP_MEM \
+                        and ops[0].size in (4, 8):
+                    # st0 +- a memory operand: a leftover shifted by any amount is still indeterminate
+                    # (note_window 0x50a1c0 adds 0.001 and a panel size to a local the original never sets)
+                    if fpu:
+                        fpu[-1] = fpu[-1] or src_taint(ea(ops[0]), ops[0].size)
                     return
                 if mn in ("fst", "fstp") and ops and ops[0].type == CX.X86_OP_MEM and ops[0].size == 4:
                     pend[0] = fpu[-1] if fpu else False
