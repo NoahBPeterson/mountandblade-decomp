@@ -1796,6 +1796,17 @@ static __forceinline gui_mesh* load_mesh(const char* name)
     return res_get(n)->clone();
 }
 
+// one float setting by a key string the caller owns (a temporary that lives to the end of the caller's full expression)
+static __forceinline float config_float_key(const tstring& n)
+{
+    int i = g_game_vars.find(n);
+    float r = 0.0f;
+    if (i >= 0)
+        r = (float)atof(g_game_vars.entries[i].value.c_str());
+    return r;
+}
+static __forceinline V2* v2_ref(const V2& v) { return (V2*)&v; }
+
 // read one float setting of the option table, `def` when the key is missing (the original always passes 0.0f)
 static __forceinline float config_float(const char* name, float def)
 {
@@ -1875,26 +1886,24 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
         b->m1a8 = res_get(n);
     }
 
-    {
-        V2 size(config_float("combobox_button_size_x", 0.0f),
-                config_float("combobox_button_size_y", 0.0f));
-        vt(b)->d25(&size);
-    }
+    // one full expression: both key strings live until d25 returns (the original destroys them after the call)
+    vt(b)->d25(v2_ref(V2(config_float_key(tstring("combobox_button_size_x")),
+                         config_float_key(tstring("combobox_button_size_y")))));
 
     b->f1b0 = config_float("combobox_child_button_size_x", 0.0f);
     b->f1b4 = config_float("combobox_child_button_size_y", 0.0f);
     b->f1b8 = config_float("combobox_child_button_position_x", 0.0f);
 
     {
-        V2 ts(config_float("combobox_child_button_text_size_x", 0.0f),
-              config_float("combobox_child_button_text_size_y", 0.0f));
+        V2 ts(config_float_key(tstring("combobox_child_button_text_size_x")),     // both keys live to the end of the declaration
+              config_float_key(tstring("combobox_child_button_text_size_y")));
         b->f1bc = ts.x;
         b->f1c0 = ts.y;
     }
 
     {
-        V2 tp(config_float("combobox_child_button_text_position_x", 0.0f),
-              config_float("combobox_child_button_text_position_y", 0.0f));
+        V2 tp(config_float_key(tstring("combobox_child_button_text_position_x")),     // both keys live to the end of the declaration
+              config_float_key(tstring("combobox_child_button_text_position_y")));
         b->f1c4 = tp.x;
         b->f1c8 = tp.y;
     }
@@ -1905,11 +1914,8 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
         vt(b)->d27(&tsize);
     }
 
-    {
-        V2 tpos(config_float("combobox_text_position_x", 0.0f),
-                config_float("combobox_text_position_y", 0.0f));
-        vt(b)->d28(&tpos);
-    }
+    vt(b)->d28(v2_ref(V2(config_float_key(tstring("combobox_text_position_x")),
+                         config_float_key(tstring("combobox_text_position_y")))));
 
     {
         rgl::vector4 out;
