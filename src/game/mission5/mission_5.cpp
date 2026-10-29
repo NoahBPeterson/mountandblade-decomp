@@ -298,6 +298,7 @@ void ViewObj_s257f0::update()
         dir.y = sel->pos.y - a->pos.y;
         dir.z = sel->pos.z - a->pos.z;
         float len = dir.normalize();
+        F = dir;                                // the look direction (0x5258e1..0x5258fa copy all four dwords)
         if (len > 1.0f)
             len = 1.0f;
         G.x = dir.x * len + G.x;
