@@ -88,8 +88,8 @@ inline const tstring* find_or(const tstring& key, const tstring& fallback)
 // "key" + suffix lookup with fallback (the plural / text / desc variants)
 inline const tstring* suffix_or(const tstring& key, const char* suffix, const tstring& fallback)
 {
-    tstring lookup = key + tstring(suffix);
-    const tstring* p = g_strtable.find(&lookup);
+    // one full expression: the lookup runs while the suffix and the sum are both alive, and they die after it
+    const tstring* p = g_strtable.find(&(key + tstring(suffix)));
     return p ? p : &fallback;
 }
 

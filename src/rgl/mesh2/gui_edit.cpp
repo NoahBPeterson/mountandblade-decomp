@@ -1830,8 +1830,8 @@ void GameData::save_language_files(bool translated)
                 ((ini_file&)g_strtable).write(f, chars[i].key + suffix, ((RecA*)&chars[i])->translated_plural());
             } else {
                 ((ini_file&)g_strtable).write(f, chars[i].key, *find_or(chars[i].key, chars[i].name));
-                ((ini_file&)g_strtable).write(f, chars[i].key + tstring("_pl"),
-                             *chars[i].plural_name());
+                tstring suffix("_pl");                                  // built before plural_name() runs, as in the original
+                ((ini_file&)g_strtable).write(f, chars[i].key + suffix, *chars[i].plural_name());
             }
         }
         fclose(f);
@@ -1881,15 +1881,17 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\item_kinds.csv", "wt+");         // 0x595ffc
         for (int i = 0; i < g_item_kind_count; i++) {
             if (translated) {
-                tstring v = ((MenuDoor*)&g_items[i])->translated();
-                write_row(f, g_items[i].key, v);
+                {
+                    tstring v = ((MenuDoor*)&g_items[i])->translated(); // dies before the suffix is built
+                    write_row(f, g_items[i].key, v);
+                }
                 tstring suffix("_pl");
                 write_row(f, g_items[i].key + suffix, ((RecA*)&g_items[i])->translated_plural());
             } else {
                 const tstring* v = find_or(g_items[i].key, g_items[i].name);
                 write_row(f, g_items[i].key, *v);
-                write_row(f, g_items[i].key + tstring("_pl"),
-                          *g_items[i].plural_name());
+                tstring suffix("_pl");                                  // built before plural_name() runs, as in the original
+                write_row(f, g_items[i].key + suffix, *g_items[i].plural_name());
             }
         }
         fclose(f);
@@ -1954,14 +1956,16 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\quests.csv", "wt+");             // 0x595f60
         for (int i = 0; i < n_quests; i++) {
             if (translated) {
-                tstring v = ((RecA*)&quests[i])->translated();
-                write_row(f, quests[i].key, v);
+                {
+                    tstring v = ((RecA*)&quests[i])->translated();      // dies before the suffix is built
+                    write_row(f, quests[i].key, v);
+                }
                 tstring suffix("_text");                                // 0x5923b4
                 write_row(f, quests[i].key + suffix, ((RecA*)&quests[i])->translated_text());
             } else {
                 write_row(f, quests[i].key, *find_or(quests[i].key, quests[i].name));
-                write_row(f, quests[i].key + tstring("_text"),
-                          *quests[i].text_name());
+                tstring suffix("_text");                                // built before text_name() runs, as in the original
+                write_row(f, quests[i].key + suffix, *quests[i].text_name());
             }
         }
         fclose(f);
@@ -2007,14 +2011,16 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\skills.csv", "wt+");             // 0x595f14
         for (SkillRec* r = g_skill_tbl; r < g_skill_tbl + 42; r++) {
             if (translated) {
-                tstring v = r->translated();
-                write_row(f, r->key, v);
+                {
+                    tstring v = r->translated();                        // dies before the suffix is built
+                    write_row(f, r->key, v);
+                }
                 tstring suffix("_desc");                                // 0x595ca4
                 write_row(f, r->key + suffix, r->translated_desc());
             } else {
                 write_row(f, r->key, *find_or(r->key, r->name));
-                write_row(f, r->key + tstring("_desc"),
-                          *r->desc_name());
+                tstring suffix("_desc");                                // built before desc_name() runs, as in the original
+                write_row(f, r->key + suffix, *r->desc_name());
             }
         }
         fclose(f);
