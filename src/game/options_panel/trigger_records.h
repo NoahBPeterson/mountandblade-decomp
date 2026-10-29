@@ -16,10 +16,13 @@ void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 #include <string.h>
 #include "../head_rec.h"
 
-// A record's slot 1 is `release` (0x4cb680), which frees the pointer at +0x178. The original's constructors leave the
-// rest of the record zeroed; ours are declared with a body only, so `new` left it as raw heap and release freed
-// garbage. Zero everything above the base's head (vptr, w04, w08, name) in the record's own constructor.
-#define MB_ZERO_TAIL(T) T() { if (sizeof(T) > 0x2c) memset((char*)this + 0x2c, 0, sizeof(T) - 0x2c); }
+// A record's slot 1 is `release` (0x4cb680), which frees the pointer at +0x178. The original allocates these records
+// with the plain operator new 0x53545e and its constructors write only the head and the member objects; ours left the
+// rest as raw heap and release freed garbage (runtime workaround, not in the original). Zero everything above the
+// base's head (vptr, w04, w08, name) when the record is allocated, before any constructor runs: zeroing it in the
+// constructor body wiped the members it had just built (Rec23c's frustum at +0x70, Rec118's tstring at +0x84).
+#define MB_ZERO_TAIL(T) static void* operator new(size_t n) \
+    { char* p = (char*)::operator new(n); if (p && n > 0x2c) memset(p + 0x2c, 0, n - 0x2c); return p; }
 
 struct RecCam { char body[0x2dc]; RecCam(); };   // ctor 0x4c49f0
 struct RecMenu { char body[0x98]; RecMenu(); };   // ctor 0x4c2c50
@@ -144,11 +147,10 @@ struct Rec58 : head_rec { MB_ZERO_TAIL(Rec58)   // vtable 0x5959fc
     virtual void d08() {}
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
-struct Rec428 : head_rec {   // vtable 0x595c68
-    // The original's constructor clears the record; ours declared none, so `new Rec428` left the body as raw
-    // heap. Slot +0x04 (`release`, 0x4cb680) then freed whatever sat at +0x178 as a CellGrid and its tstring
-    // destructor freed garbage (crash 0x3c6d9166).
-    Rec428() { for (int i = 4; i < 0x428; i++) ((char*)this)[i] = 0; }
+struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
+    // Without the zeroed tail, slot +0x04 (`release`, 0x4cb680) freed whatever sat at +0x178 as a CellGrid and its
+    // tstring destructor freed garbage (crash 0x3c6d9166). The original's constructor (inline at 0x4d0bc1) writes only
+    // the head and the frustum.
     char pad2c[0x8];
     rgl::frustum fr;    // +0x34
     char tail[0x428 - 0x154];
