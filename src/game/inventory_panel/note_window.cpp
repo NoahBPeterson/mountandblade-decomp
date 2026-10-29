@@ -134,12 +134,13 @@ static const char* tr(const char* key)
     return s->buf ? s->buf : (char*)&s->buf;
 }
 
-// translated string object (kept as a pointer: the database owns the object)
-static tstring* tr_obj(const char* key)
+// translated string object (kept as a pointer: the database owns the object). The key is a temporary of the full
+// expression that uses the result: it is destroyed after the call the translation is passed to (0x50a476..0x50a4ae)
+static __forceinline tstring* tr_key(const tstring& k)
 {
-    tstring k(key);
-    return UITEXT->lookup(&k);
+    return UITEXT->lookup(const_cast<tstring*>(&k));
 }
+#define tr_obj(key) tr_key(tstring(key))
 
 // config entry -> text value
 static char* cfg_text(int idx)
@@ -279,7 +280,8 @@ void note_window::build(int page_, int arg_)
     GUI->reset();
 
     // ---- main panel ------------------------------------------------------
-    NotePanel* panel = new NotePanel;
+    NotePanel* panel = new NotePanel;                // base constructor 0x4931a0, then the container's vtable and f188
+    *(void**)panel = (void*)0x592848;                  // (0x50a20e; the same window class as agent_hud.h's FrameWidget)
     *(char*)((char*)panel + 0x188) = 0;
     this->panel = panel;
     {
@@ -311,23 +313,28 @@ void note_window::build(int page_, int arg_)
     }
     label_refresh(this->report, tstring("note_t_keys"));
 
-    // ---- report title ----------------------------------------------------
-    this->title = new UiText2;
-    label_refresh(this->title, tstring("note_t_title"));
-
-    // ---- links list ------------------------------------------------------
+    // ---- links list (made before the title: 0x50a34b / 0x50a3b3) ------------------------------------------------
     this->links = new UiList;
     {
         tstring empty("");
         float sz[2];
         this->links->set_text(sz, empty);
     }
-    label_refresh(this->links, tstring("note_t_data"));
-    panel->add_child(this->links);
+    label_refresh(this->links, tstring("note_t_data"));          // (it joins the data panel later, 0x50c5eb)
+
+    // ---- report title: the one widget the main panel holds directly (0x50a3e8..0x50a41d) ----
+    this->title = new UiText2;
+    label_refresh(this->title, tstring("note_t_title"));
+    {
+        tstring empty("");
+        float sz[2];
+        this->title->set_text(sz, empty);
+    }
+    panel->add_child(this->title);
 
     // ---- back / forward / map buttons ------------------------------------
     {
-        float small_h = 1.0f;
+        float small_h = cfg_float("note_button_sm_h");      // the config's small-button height (0x50a423..0x50a466)
         this->btn_back = make_short_button(panel, tr_obj("ui_back"), 0.0f, 0.0f, small_h);
         label_refresh(this->btn_back, tstring("note_b_back"));
         this->btn_forward = make_short_button(panel, tr_obj("ui_forward"), 0.0f, 0.0f, small_h);
