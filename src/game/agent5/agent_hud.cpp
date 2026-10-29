@@ -714,8 +714,9 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     lis.o.z = lis.o.z - back.z;
     if (g_listener_off == 0) {
         g_listener = lis;
-        FSOUND_3D_Listener_SetAttributes(&g_listener.o.x, 0, g_listener.f.x, g_listener.f.y, g_listener.f.z, g_listener.u.x,
-                                         g_listener.u.y, g_listener.u.z);
+        // FMOD is y-up: y and z swap (0x4fa887..0x4fa8ae push f.x, f.z, f.y, u.x, u.z, u.y)
+        FSOUND_3D_Listener_SetAttributes(&g_listener.o.x, 0, g_listener.f.x, g_listener.f.z, g_listener.f.y, g_listener.u.x,
+                                         g_listener.u.z, g_listener.u.y);
     }
     FrameNode* sun = (FrameNode*)f65b8;
     if (sun) {
