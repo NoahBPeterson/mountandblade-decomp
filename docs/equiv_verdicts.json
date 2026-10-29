@@ -1,28 +1,28 @@
 {
-"when": "2026-10-29T12:54:59-05:00",
-"commit": "00b37c5",
+"when": "2026-10-29T13:50:04-05:00",
+"commit": "6e9ab06",
 "sources": [
 "work/sweep_view"
 ],
 "summary": {
 "pass": 329,
-"weak": 416,
+"weak": 430,
 "fail": 27,
 "inputs": 88,
-"harness": 98,
+"harness": 81,
 "comdat": 104,
 "comdatdiff": 10,
 "funclet": 17,
-"not_run": 22,
+"not_run": 25,
 "pass_sz": 90201,
-"weak_sz": 500014,
+"weak_sz": 512215,
 "fail_sz": 56507,
 "inputs_sz": 87127,
-"harness_sz": 122494,
+"harness_sz": 98779,
 "comdat_sz": 2383,
 "comdatdiff_sz": 689,
 "funclet_sz": 1042,
-"not_run_sz": 38636
+"not_run_sz": 50150
 },
 "rows": {
 "00408a50": {
@@ -5598,8 +5598,8 @@
 "004db660": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 418
 },
 "004dbb83": {
@@ -5654,8 +5654,8 @@
 "004dcef0": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 2026
 },
 "004dd830": {
@@ -5675,8 +5675,8 @@
 "004dda40": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 1336
 },
 "004ddf80": {
@@ -5731,8 +5731,8 @@
 "004e05c0": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 8152
 },
 "004e25a0": {
@@ -5857,15 +5857,15 @@
 "004e6050": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1117
 },
 "004e65e0": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK-FP",
+"category": "weak",
 "size": 1162
 },
 "004e6a70": {
@@ -5878,8 +5878,8 @@
 "004e75a0": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1217
 },
 "004e7a70": {
@@ -5899,8 +5899,8 @@
 "004e85d0": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 330
 },
 "004e8720": {
@@ -5962,8 +5962,8 @@
 "004ea0c0": {
 "module": "save_panel",
 "file": "src/game/char_sheet/save_panel.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 458
 },
 "004ea290": {
@@ -6347,8 +6347,8 @@
 "004fb350": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1413
 },
 "004fb8e0": {
@@ -6403,15 +6403,15 @@
 "004fd4f0": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 519
 },
 "004fd700": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2277
 },
 "004fdff0": {
@@ -6424,8 +6424,8 @@
 "004fe060": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 72
 },
 "004fe0b0": {
@@ -6445,8 +6445,8 @@
 "004fe1e0": {
 "module": "agent_vec",
 "file": "src/game/agent5/agent_vec.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 435
 },
 "004fe393": {
@@ -6571,8 +6571,8 @@
 "005059c0": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2578
 },
 "005063e0": {
@@ -6641,8 +6641,8 @@
 "0050d230": {
 "module": "widget_text",
 "file": "src/game/inventory_panel/widget_text.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 27
 },
 "0050d3d9": {
@@ -6662,8 +6662,8 @@
 "0050d520": {
 "module": "widget_text",
 "file": "src/game/inventory_panel/widget_text.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 178
 },
 "0050d5e0": {
