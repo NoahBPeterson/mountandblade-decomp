@@ -1102,9 +1102,11 @@ void NavData::reset()
 
 // ---- the world-map walk test and the event record frame -------------------------------------------------------------------
 
-static __forceinline vector4 crossv(const vector4& a, const vector4& b)
+static __forceinline void cross_into(vector4& d, const vector4& a, const vector4& b)
 {
-    return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+    d.x = a.y * b.z - a.z * b.y;
+    d.y = a.z * b.x - a.x * b.z;
+    d.z = a.x * b.y - a.y * b.x;
 }
 
 #define RECS ((NavRec*)cells.first)
@@ -1192,9 +1194,13 @@ void GameData::init_event(E92* rec)
         float fx = r->pos.f.x, fy = r->pos.f.y;
         r->pos.f.x = c * fx - s * fy;
         r->pos.f.y = s * fx + c * fy;
-        r->pos.s = crossv(r->pos.f, r->pos.u);
+        // both cross products are built in t's slot (dead after find_at) and copied out whole, so the frame's s.w and
+        // f.w are the target's w (0x4b37f0, 0x4b3846 read it back from t)
+        cross_into(t, r->pos.f, r->pos.u);
+        r->pos.s = t;
         r->pos.s.normalize();
-        r->pos.f = crossv(r->pos.u, r->pos.s);
+        cross_into(t, r->pos.u, r->pos.s);
+        r->pos.f = t;
         r->pos.f.normalize();
     }
     float k = (float)(r->scale & 0xff) * 0.01f + 0.5f;
