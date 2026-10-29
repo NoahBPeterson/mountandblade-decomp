@@ -983,17 +983,14 @@ void PartyScreen::setup_skills()
 // @ 0x5063e0
 void PartyScreen::refresh_selection()
 {
-    // the original's first temporary is the info label's text, built in place and destroyed before the
-    // enable block; [zero] is the label text the rest of the body reuses ([tmp] is declared at its first
-    // use so the two live slots below it keep the original's frame order). cl hoists the dtor of a
-    // scoped temporary only when the scope is entered unconditionally, so the block is entered first
-    // (the original's own `test char_quad` guard then sits inside it).
-    bool sel_invalid = false;
+    // the info label's text is built and destroyed before the enable block; [zero] (the label text the rest of
+    // the body reuses) is constructed after the char_quad block, and a missing selection or an empty stack slot
+    // returns at once, as in the original.
     {
-        tstring empty("");
-        PSO(info)->set_text((float*)&empty, &empty);
-
-        tstring zero;
+        {
+            tstring empty("");
+            PSO(info)->set_text((float*)&empty, &empty);
+        }                                           // destroyed at once (0x506414)
 
     PSO(talk_btn)->enable();
     locked = 1;
@@ -1008,23 +1005,24 @@ void PartyScreen::refresh_selection()
     PSO(cost_panel)->clear();
     PSO(upgrade_panel)->clear();
     if (char_quad) {
-        tstring name("");
-        PSO(name_lbl)->set_text((float*)&name, &name);
+        {
+            tstring name("");
+            PSO(name_lbl)->set_text((float*)&name, &name);
+        }                                           // destroyed before add_image (0x5064ca)
         PSO(char_quad)->add_image(0, 0);
     }
+    tstring zero;                                   // the label text the rest reuses (constructed at 0x5064e5)
 
     bool action = false;
-    if (sel_row == -1 || sel_type == -1 || sel_slot == -1) {
-        sel_invalid = true;
-    }
+    if (sel_row == -1 || sel_type == -1 || sel_slot == -1)
+        return;                                     // nothing selected (0x5064f3..0x506515 -> 0x5072f6)
     int troop_type = sel_type;
     int p1 = troop_type != 0 ? g_game->f78 : other_party;
     int slot_idx = slots[sel_type][sel_slot][sel_row];   // (sel_slot*2 + sel_type) << 6
     int p2 = troop_type != 0 ? other_party : g_game->f78;
     Stack stk = PARTIES->get(p2)->stacks[slot_idx];
-    if (stk.troop < 0) {
-        sel_invalid = true;
-    }
+    if (stk.troop < 0)
+        return;                                     // an empty stack slot (0x506586 -> 0x5072e2)
     TroopRec* rec = g_game->chars + stk.troop;
     show_selected_character(stk.troop, slot_idx);
     if (mode == 0) {
