@@ -167,6 +167,7 @@ class Machine:
         self.dyn_next = DYN_BASE
         self.dyn_sizes = {}
         self.rand_state = 1
+        self.ui_seed, self.ui_calls = 0, 0
         self.trace_imports = []
         self.stop_reason = None
         self.hooks = []
@@ -1119,6 +1120,65 @@ def install_import_models(m):
         p = matrix_read(m_, a[1])
         return matrix(m_, a, tuple(p[j * 4 + i] for i in range(4) for j in range(4)))
 
+    # ---- user32 dialog / window calls (the map editor's and the options' dialogs). No window exists in the
+    # emulator, so each call gets a fixed, documented answer: a control handle is a token the game only passes back
+    # to user32 (never dereferenced), queries answer "nothing selected / empty / unchecked", and the out-buffers are
+    # written as the API would. Writes through a generated pointer the emulator cannot write are skipped.
+    def put(m_, addr, data):
+        try:
+            m_.write(addr, data)
+        except UcError:
+            pass
+
+    def get_dlg_item(m_, a, esp):
+        # HWND of control a[1] in dialog a[0]: NULL for a NULL dialog (the API fails), else a stable token
+        return 0 if not a[0] & 0xFFFFFFFF else 0x00030000 | (a[1] & 0xFFFF)
+
+    def ui_answer(m_, choices):
+        # One of `choices` for the n-th user32 query of this run, a pure function of (input seed, n): both builds
+        # get the same answers as long as they ask the same questions in the same order (a reordered call is a
+        # mismatch of the import trace anyway), and different inputs see different selections / checks / item
+        # data, so the dialog code's branches on them are reachable.
+        m_.ui_calls += 1
+        h = (m_.ui_seed * 0x9E3779B1 + m_.ui_calls * 0x85EBCA77) & 0xFFFFFFFF
+        h ^= h >> 15
+        return choices[h % len(choices)]
+
+    UI_QUERIES = {0x146, 0x147, 0x150, 0x188, 0x18b, 0x199}   # CB_GETCOUNT/GETCURSEL/GETITEMDATA, LB_GETCURSEL/GETCOUNT/GETITEMDATA
+
+    def send_message(m_, a, esp):
+        # LRESULT. Queries (the selection, a count, an item's data) and the application's own messages (>= WM_USER,
+        # the editor's 0x40x list-type queries) answer -1 ("none", CB_ERR / LB_ERR) or a small number; every other
+        # message (adding strings, setting the selection, WM_SETTEXT, ...) answers 0
+        msg = a[1] & 0xFFFF
+        if msg in UI_QUERIES or msg >= 0x400:
+            return ui_answer(m_, (0xFFFFFFFF, 0, 1, 2, 3, 4, 5, 7))
+        return 0
+
+    def get_text(buf_arg):
+        def f(m_, a, esp):
+            # int: the control's text: empty, NUL-terminated when the buffer has room
+            if a[buf_arg + 1] & 0xFFFFFFFF:
+                put(m_, a[buf_arg], b"\0")
+            return 0
+        return f
+
+    def get_dlg_item_int(m_, a, esp):
+        # UINT: no number in an empty control: 0, *lpTranslated = FALSE
+        if a[2] & 0xFFFFFFFF:
+            put(m_, a[2], struct.pack("<I", 0))
+        return 0
+
+    def get_rect(m_, a, esp):
+        # BOOL: an 800 x 600 window at the origin (the game's default resolution)
+        put(m_, a[1], struct.pack("<4i", 0, 0, 800, 600))
+        return 1
+
+    def get_cursor_pos(m_, a, esp):
+        # BOOL: the cursor at the centre of that window
+        put(m_, a[0], struct.pack("<2i", 400, 300))
+        return 1
+
     def ortho_off_center(rh):
         def f(m_, a, esp):
             l, r, b, t, zn, zf = (fl(x) for x in a[1:7])
@@ -1158,6 +1218,28 @@ def install_import_models(m):
         "MessageBoxA": (message_box, 4),
         "OpenClipboard": (open_clipboard, 1),
         "GetModuleFileNameA": (get_module_file_name, 3),
+        "GetDlgItem": (get_dlg_item, 2),
+        "SendMessageA": (send_message, 4),
+        "GetDlgItemTextA": (get_text(2), 4),
+        "GetWindowTextA": (get_text(1), 3),
+        "GetDlgItemInt": (get_dlg_item_int, 4),
+        "IsDlgButtonChecked": (lambda m_, a, esp: ui_answer(m_, (0, 1)), 2),   # BST_UNCHECKED / BST_CHECKED
+        "SetDlgItemTextA": (lambda m_, a, esp: 1, 3),             # BOOL: done
+        "SetDlgItemInt": (lambda m_, a, esp: 1, 4),
+        "SetWindowTextA": (lambda m_, a, esp: 1, 2),
+        "CheckRadioButton": (lambda m_, a, esp: 1, 4),
+        "EnableWindow": (lambda m_, a, esp: 0, 2),                # BOOL: the window was not disabled before
+        "ShowWindow": (lambda m_, a, esp: 0, 2),                  # BOOL: it was hidden before
+        "UpdateWindow": (lambda m_, a, esp: 1, 1),
+        "RedrawWindow": (lambda m_, a, esp: 1, 4),
+        "SetWindowPos": (lambda m_, a, esp: 1, 7),
+        "SetFocus": (lambda m_, a, esp: 0, 1),                    # HWND: no window had the focus
+        "PostMessageA": (lambda m_, a, esp: 1, 4),
+        "EndDialog": (lambda m_, a, esp: 1, 2),
+        "DefWindowProcA": (lambda m_, a, esp: 0, 4),
+        "GetWindowRect": (get_rect, 2),
+        "GetClientRect": (get_rect, 2),
+        "GetCursorPos": (get_cursor_pos, 1),
     }
     for name, (fn, n) in stdcall.items():
         m.handle(name, fn, nargs=n, pops=n)

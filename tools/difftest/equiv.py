@@ -2791,6 +2791,7 @@ class Runner:
         m.dyn_next = M.DYN_BASE
         m.dyn_sizes = {}
         m.rand_state = 1
+        m.ui_seed, m.ui_calls = getattr(inp, "seed", 0) & 0xFFFFFFFF, 0     # user32 query answers (machine.ui_answer)
         m.alloc_fail, m.alloc_count = tuple(getattr(inp, "alloc_fail", ())), 0
         extra_init = {}
         self.mapped_extra = []
