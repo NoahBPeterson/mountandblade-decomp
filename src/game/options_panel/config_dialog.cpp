@@ -17,7 +17,8 @@
 
 // 0x43a1e0: the string table's lookup (thiscall on g_strtable 0x5e2a18, key -> localized text)
 // (g_strtable is mesh2_common.h's LangTables, through gui_edit.h)
-static __forceinline const char* strtab_lookup(tstring& key) { return g_strtable.lookup(key)->c_str(); }
+static __forceinline tstring* strtab_entry(const tstring& key) { return g_strtable.lookup(const_cast<tstring&>(key)); }
+static __forceinline const char* strtab_lookup(const tstring& key) { return strtab_entry(key)->c_str(); }
 
 // 0x08ee3d3c: renderer display-mode enumerator. Verified call offsets: +0x10 adapter count,
 // +0x14 adapter display mode, +0x18 mode count, +0x1c enumerate mode.
@@ -169,12 +170,9 @@ struct rgl_config { void save(FILE* f); };
 const char k_config[] = "rgl_config.txt";        // 0x54b048
 
 
-// A table key whose object lives only for the full expression that uses it (the original's
-// `tstring key("..."); strtab_lookup(key)` pairs are an inlined helper of exactly this shape).
-struct key_text {
-    char* text;
-    key_text(const char* s) { tstring k(s); text = (char*)strtab_lookup(k); }
-};
+// A table key whose object lives for the full expression that uses it: the key is freed after the call the text is
+// passed to (0x4cfa4f.. CB_ADDSTRING / SetDlgItemTextA, then ~tstring), and before the next statement.
+#define KEY_TEXT(s) ((char*)strtab_lookup(tstring(s)))
 
 // @ 0x4cf7b0
 void Dialog::fill_video_tab()
@@ -185,13 +183,13 @@ void Dialog::fill_video_tab()
     m_ctrl = 0;
 
     HWND tabs = GetDlgItem(m_hwnd, 0x43d);
-    item[1] = (int)key_text("ui_video").text;
+    item[1] = (int)KEY_TEXT("ui_video");
     SendMessageA(tabs, 0x1307, 0, (LPARAM)item);
-    item[1] = (int)key_text("ui_audio").text;
+    item[1] = (int)KEY_TEXT("ui_audio");
     SendMessageA(tabs, 0x1307, 1, (LPARAM)item);
-    item[1] = (int)key_text("ui_game").text;
+    item[1] = (int)KEY_TEXT("ui_game");
     SendMessageA(tabs, 0x1307, 2, (LPARAM)item);
-    item[1] = (int)key_text("ui_advanced").text;
+    item[1] = (int)KEY_TEXT("ui_advanced");
     SendMessageA(tabs, 0x1307, 3, (LPARAM)item);
 
     RECT dlg;
@@ -202,8 +200,11 @@ void Dialog::fill_video_tab()
     rc.left -= 10;
     int top = rc.top;
     int left = rc.left;
-    int h = (int)((float)(rc.bottom - 0x3c) * g_height_scale) - top;
-    int w = (int)((float)(rc.right - 0x3c) * g_width_scale) - rc.left;
+    // the tab's design-unit edge scaled to the dialog's size (480 x 421 units, 0x4cf921..0x4cf995), less the corner
+    int dh = dlg.bottom - dlg.top;
+    int dw = dlg.right - dlg.left;
+    int h = (int)((float)dh * (float)(rc.bottom - 0x3c) * g_height_scale - (float)top);
+    int w = (int)((float)dw * (float)(rc.right - 10) * g_width_scale - (float)left);
     SetWindowPos(tabs, NULL, left - dlg.left, top - dlg.top, w, h, 0x14);
 
     HWND modes = GetDlgItem(m_hwnd, 0x45f);
@@ -213,64 +214,65 @@ void Dialog::fill_video_tab()
         for (unsigned i = 0; i < list.size(); i++)
             SendMessageA(modes, 0x14a, i, (LPARAM)list[i].buf);
     }
-    SendMessageA(modes, 0x14a, 0, (LPARAM)key_text("ui_use_desktop_resolution").text);
+    SendMessageA(modes, 0x14a, 0, (LPARAM)KEY_TEXT("ui_use_desktop_resolution"));
 
     HWND quality = GetDlgItem(m_hwnd, 0x467);
     {
-        int i = SendMessageA(quality, 0x14a, 0, (LPARAM)key_text("ui_m_ultra_high").text);
+        int i = SendMessageA(quality, 0x14a, 0, (LPARAM)KEY_TEXT("ui_m_ultra_high"));
         SendMessageA(quality, 0x151, i, 2);
     }
     {
-        int i = SendMessageA(quality, 0x14a, 0, (LPARAM)key_text("ui_m_high").text);
+        int i = SendMessageA(quality, 0x14a, 0, (LPARAM)KEY_TEXT("ui_m_high"));
         SendMessageA(quality, 0x151, i, 1);
     }
     {
-        int i = SendMessageA(quality, 0x14a, 0, (LPARAM)key_text("ui_m_low").text);
+        int i = SendMessageA(quality, 0x14a, 0, (LPARAM)KEY_TEXT("ui_m_low"));
         SendMessageA(quality, 0x151, i, 0);
     }
     {
-        int i = SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x14a, 0, (LPARAM)key_text("ui_directx_9").text);
+        int i = SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x14a, 0, (LPARAM)KEY_TEXT("ui_directx_9"));
         SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x151, i, 1);
     }
     {
-        int i = SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x14a, 0, (LPARAM)key_text("ui_directx_7").text);
+        int i = SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x14a, 0, (LPARAM)KEY_TEXT("ui_directx_7"));
         SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x151, i, 0);
     }
 
     ((MapDialog*)this)->refresh_list(1);
 
+    // a copy of the table's string that lives to the end of the function; the key dies with its statement
+    tstring caption(*strtab_entry(tstring("ui_configure_caption")));
     {
-        tstring caption(key_text("ui_configure_caption").text);
         char* p = caption.buf;
         if (!p)
             p = (char*)&caption;
         SendMessageA(m_hwnd, 0xc, 0, (LPARAM)p);
     }
 
-    SetDlgItemTextA(m_hwnd, 0x43f, key_text("ui_texture_detail").text);
-    SetDlgItemTextA(m_hwnd, 0x449, key_text("ui_max_frame_rate").text);
-    SetDlgItemTextA(m_hwnd, 0x460, key_text("ui_screen_size").text);
-    SetDlgItemTextA(m_hwnd, 0x462, key_text("ui_antialiasing").text);
-    SetDlgItemTextA(m_hwnd, 0x492, key_text("ui_shadow_quality").text);
-    SetDlgItemTextA(m_hwnd, 0x493, key_text("ui_enable_vertex_shaders").text);
-    SetDlgItemTextA(m_hwnd, 0x44b, key_text("ui_create_brf").text);
-    SetDlgItemTextA(m_hwnd, 0x443, key_text("ui_disable_blood").text);
-    SetDlgItemTextA(m_hwnd, 0x446, key_text("ui_disable_music").text);
-    SetDlgItemTextA(m_hwnd, 0x452, key_text("ui_disable_sound").text);
-    SetDlgItemTextA(m_hwnd, 0x442, key_text("ui_enable_cheats").text);
-    SetDlgItemTextA(m_hwnd, 0x44c, key_text("ui_enable_edit_mode").text);
-    SetDlgItemTextA(m_hwnd, 0x44a, key_text("ui_force_single_threading").text);
-    SetDlgItemTextA(m_hwnd, 0x441, key_text("ui_enable_pixel_shaders").text);
-    SetDlgItemTextA(m_hwnd, 0x44d, key_text("ui_enable_sound_variation").text);
-    SetDlgItemTextA(m_hwnd, 0x445, key_text("ui_show_framerate").text);
-    SetDlgItemTextA(m_hwnd, 0x487, key_text("ui_force_vsync").text);
-    SetDlgItemTextA(m_hwnd, 0x444, key_text("ui_start_windowed").text);
-    SetDlgItemTextA(m_hwnd, 2, key_text("ui_cancel2").text);
-    SetDlgItemTextA(m_hwnd, 1, key_text("ui_ok2").text);
-    SetDlgItemTextA(m_hwnd, 0x45e, key_text("ui_auto_adjust").text);
+    SetDlgItemTextA(m_hwnd, 0x43f, KEY_TEXT("ui_texture_detail"));
+    SetDlgItemTextA(m_hwnd, 0x449, KEY_TEXT("ui_max_frame_rate"));
+    SetDlgItemTextA(m_hwnd, 0x460, KEY_TEXT("ui_screen_size"));
+    SetDlgItemTextA(m_hwnd, 0x462, KEY_TEXT("ui_antialiasing"));
+    SetDlgItemTextA(m_hwnd, 0x492, KEY_TEXT("ui_shadow_quality"));
+    SetDlgItemTextA(m_hwnd, 0x493, KEY_TEXT("ui_enable_vertex_shaders"));
+    SetDlgItemTextA(m_hwnd, 0x44b, KEY_TEXT("ui_create_brf"));
+    SetDlgItemTextA(m_hwnd, 0x443, KEY_TEXT("ui_disable_blood"));
+    SetDlgItemTextA(m_hwnd, 0x446, KEY_TEXT("ui_disable_music"));
+    SetDlgItemTextA(m_hwnd, 0x452, KEY_TEXT("ui_disable_sound"));
+    SetDlgItemTextA(m_hwnd, 0x442, KEY_TEXT("ui_enable_cheats"));
+    SetDlgItemTextA(m_hwnd, 0x44c, KEY_TEXT("ui_enable_edit_mode"));
+    SetDlgItemTextA(m_hwnd, 0x44a, KEY_TEXT("ui_force_single_threading"));
+    SetDlgItemTextA(m_hwnd, 0x441, KEY_TEXT("ui_enable_pixel_shaders"));
+    SetDlgItemTextA(m_hwnd, 0x44d, KEY_TEXT("ui_enable_sound_variation"));
+    SetDlgItemTextA(m_hwnd, 0x445, KEY_TEXT("ui_show_framerate"));
+    SetDlgItemTextA(m_hwnd, 0x487, KEY_TEXT("ui_force_vsync"));
+    SetDlgItemTextA(m_hwnd, 0x444, KEY_TEXT("ui_start_windowed"));
+    SetDlgItemTextA(m_hwnd, 2, KEY_TEXT("ui_cancel2"));
+    SetDlgItemTextA(m_hwnd, 1, KEY_TEXT("ui_ok2"));
+    SetDlgItemTextA(m_hwnd, 0x45e, KEY_TEXT("ui_auto_adjust"));
 
-    m_ctrl = SendMessageA(GetDlgItem(m_hwnd, 0x43e), 0x406, 0, 0x64000a);
-    ((OptionsDlg*)this)->set_active_tab(m_ctrl);
+    SendMessageA(GetDlgItem(m_hwnd, 0x43e), 0x406, 0, 0x64000a);   // TBM_SETRANGE: the result is dropped (0x4d0216)
+    ((OptionsDlg*)this)->set_active_tab(m_ctrl);                    // m_ctrl is still the 0 set above
 }
 
 // @ 0x4d0240
