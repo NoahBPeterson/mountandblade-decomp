@@ -90,7 +90,7 @@ template class std::vector<loading_config>;
 struct mnode {
     void calc_bounds(rgl::vector4* mn, rgl::vector4* mx);   // 0x438d80 (thiscall, ret 8: the mesh's min / max corners; agent2/agent_stats.cpp)
 };
-struct PanelView { void set_view(const int* v); };                                // 0x4c5190 (thiscall, ret 4: the view state pair)
+struct gui_view { void set_view(const float* v); };                               // 0x4c5190 (thiscall, ret 4: the view state pair; rgl/mesh2/gui_edit.h)
 extern const float g_half_ratio;                // 0x549d78
 extern const float g_ratio_a;                   // 0x597fec
 extern const float g_ratio_b;                   // 0x597fe8
@@ -150,26 +150,28 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     at[1] = pos.y - g_pad_in;
     ((FrameGui*)self)->set_rect(at, sz);
     int v[2];
-    v[0] = self->f16e0;
-    v[1] = self->f16e4;
-    ((PanelView*)self)->set_view(v);
+    v[0] = *(int*)((char*)self + 0x16e8);          // the view pair at +0x16e8 (0x4e45c0), not +0x16e0
+    v[1] = *(int*)((char*)self + 0x16ec);
+    ((gui_view*)self)->set_view((const float*)v);
     float& widest = (float&)self->fa4;
     float& run = (float&)self->fa8;
-    if (!(widest >= w)) {
-        if (wrap) {
-            widest = w;
-        } else {
-            float d = widest - w;
-            float n = run + d;
-            run = n;
-            if (!(n >= widest * g_half_ratio)) {
-                n = n - d * g_ratio_a;
-                run = n;
-                widest = n * g_ratio_b;
-            } else {
-                widest = w;
-            }
-        }
+    // a line no wider than the widest so far (or NaN) changes nothing; a wrapped one only widens; the layout is
+    // rebuilt only when the running width moves (0x4e45e0..0x4e4680)
+    if (!(w > widest))
+        return;
+    if (wrap) {
+        widest = w;
+        return;
+    }
+    float d = widest - w;
+    float n = run + d;
+    run = n;
+    if (!(n >= widest * g_half_ratio)) {
+        n = n - d * g_ratio_a;
+        run = n;
+        widest = n * g_ratio_b;
+    } else {
+        widest = w;
     }
     rebuild();
 }
