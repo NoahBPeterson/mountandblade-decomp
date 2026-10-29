@@ -398,7 +398,7 @@ tail:
             return;
         }
         if (!w44->changed(0x10000))
-            goto close_menu;
+            return;                             // nothing pressed: stay on the screen (0x532384 -> the epilogue)
         if (f8e4 < 0)
             return;
         get_cell(f8dc, f8e0, f8e4, &a, &b);
