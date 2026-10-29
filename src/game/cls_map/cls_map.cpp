@@ -2942,18 +2942,17 @@ void MeetingWindow::init2()
     }
     int iv = 0xff442323;
     vt(bg)->d38(&iv);
-    {
-        int t = rand() % 0x3dc9;
-        float f = (float)t * 6.3223117e-005f;
-        tstring name("ini_pic_mb_warrior_1");
-        if (f < 0.25f)
-            name.assign("ini_pic_mb_warrior_2");
-        else if (f < 0.5f)
-            name.assign("ini_pic_mb_warrior_3");
-        else if (f < 0.75f)
-            name.assign("ini_pic_mb_warrior_4");
-        vt(bg)->d32(2, res_get(name)->clone());
-    }
+    // the picture's name outlives the logo and the hint blocks (the original destroys it only after them)
+    int t = rand() % 0x3dc9;
+    float f = (float)t * 6.3223117e-005f;
+    tstring pic("ini_pic_mb_warrior_1");
+    if (f < 0.25f)
+        pic.assign("ini_pic_mb_warrior_2");
+    else if (f < 0.5f)
+        pic.assign("ini_pic_mb_warrior_3");
+    else if (f < 0.75f)
+        pic.assign("ini_pic_mb_warrior_4");
+    vt(bg)->d32(2, res_get(pic)->clone());
     {
         MissionUi* logo_ = new MissionUi;
         import_btn = logo_;
