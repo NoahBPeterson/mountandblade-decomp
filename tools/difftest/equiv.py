@@ -2280,8 +2280,11 @@ class Runner:
         indeterminate, so a different value in ours is not a difference. The class: a vector4 built by the
         3-argument constructor (w never set) and passed or stored by value (editor_ui 0x4f5fb0 copies its colour's
         w into the mesh; obj_tbl 0x499050 copies Frame3 rows' w). Copy-only taint: a value is tainted when
-        loaded from such a slot (or from tainted memory) and moved unchanged by mov / push / pop / fld / fst(p);
-        any other instruction makes what it writes untainted, so arithmetic on a leftover is never excused."""
+        loaded from such a slot (or from tainted memory) and moved unchanged by mov / push / pop / fld / fst(p), or
+        shifted by a constant (inc / dec, add / sub of an immediate, lea reg, [reg + disp]: a leftover plus a constant
+        is still indeterminate -- trigger_vec 0x4bf170 stores a D3D out-parameter the generated callee never wrote,
+        minus 1); any other instruction makes what it writes untainted, so arithmetic that mixes a leftover with
+        real data is never excused."""
         m, uc = self.m, self.m.uc
         lo_s, entry = M.STACK_TOP - M.STACK_SIZE, self.esp_entry
         written, tainted = set(), set()
@@ -2355,6 +2358,19 @@ class Runner:
                 if mn == "pop" and ops and ops[0].type == CX.X86_OP_REG:
                     regt[ops[0].reg] = src_taint(uc_.reg_read(UC_X86_REG_ESP), 4) and \
                         uc_.reg_read(UC_X86_REG_ESP) in tainted
+                    return
+                if mn in ("inc", "dec") and ops and ops[0].size == 4:
+                    if ops[0].type == CX.X86_OP_REG:
+                        return                                  # the register keeps its taint
+                    if ops[0].type == CX.X86_OP_MEM:
+                        pend[0] = src_taint(ea(ops[0]), 4)
+                        return
+                if mn in ("add", "sub") and len(ops) == 2 and ops[0].type == CX.X86_OP_REG and ops[0].size == 4 \
+                        and ops[1].type == CX.X86_OP_IMM:
+                    return                                      # reg +- constant keeps its taint
+                if mn == "lea" and len(ops) == 2 and ops[0].type == CX.X86_OP_REG and ops[1].mem.base \
+                        and not ops[1].mem.index:
+                    regt[ops[0].reg] = regt.get(ops[1].mem.base, False)
                     return
                 if mn == "fld" and ops and ops[0].type == CX.X86_OP_MEM and ops[0].size == 4:
                     fpu.append(src_taint(ea(ops[0]), 4))
