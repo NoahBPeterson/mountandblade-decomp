@@ -2318,15 +2318,22 @@ class Runner:
                 raw = bytes(uc_.mem_read(address, size))
             except Exception:
                 return
-            ins = cache.get((address, raw))
-            if ins is None:
+            dec = cache.get((address, raw))
+            if dec is None:
                 try:
-                    ins = cache[(address, raw)] = next(_md.disasm(raw, address))
+                    ins = next(_md.disasm(raw, address))
                 except Exception:
                     return
-            ops, mn = ins.operands, ins.mnemonic
-            if mn.startswith("rep "):
-                mn = mn[4:]                 # capstone spells the prefix into the mnemonic ("rep movsd")
+                mn = ins.mnemonic
+                if mn.startswith("rep "):
+                    mn = mn[4:]             # capstone spells the prefix into the mnemonic ("rep movsd")
+                try:
+                    wr = tuple(ins.regs_access()[1])
+                except Exception:
+                    wr = None               # re-raised below, where the instruction needs it
+                # capstone rebuilds .operands on every access: decode once, with the registers it writes
+                dec = cache[(address, raw)] = (mn, ins.operands, wr)
+            mn, ops, wr = dec
             pend[0] = False
             movs[0] = None
             esp_now = uc_.reg_read(UC_X86_REG_ESP)
@@ -2394,7 +2401,9 @@ class Runner:
                         fpu.pop()
                     return
                 # anything else: what it writes is untainted (registers here, memory through on_write)
-                for r_ in ins.regs_access()[1]:
+                if wr is None:
+                    raise ValueError("regs_access failed")
+                for r_ in wr:
                     regt.pop(r_, None)
                     regt.pop(full(r_), None)
                 if mn.startswith("f"):
