@@ -212,7 +212,6 @@ struct world_t {                        // the scene object at terrain_obj+0xc3b
     void build_faces(Geom_t* g) { ((CellGrid*)this)->build_faces((NavData*)g); }       // 0x479980 (CellGrid::build_faces, terrain_b/cell_grid.h)
     void update_probes(int use_shaders) { ((CellGrid*)this)->update_probes(use_shaders); }      // 0x472ed0
 };
-Geom_t* g_geom;                         // the mesh being rebuilt (ours: the original keeps it in a local of tessellate, so no address)
 
 // 0x4612d0 (cdecl): normal of the triangle spanned by the three 16-byte records at *tri (terrain_a/wind.h; hidden return pointer)
 rgl::vector4 tri_normal(const rgl::vector4* tri);
@@ -224,8 +223,7 @@ extern unsigned char g_x8ed4e14[];              // 0x8ed4e14, 0x20-byte records,
 // rebuild the world mesh, install a fresh cell_rows table and relight the scene
 void TerrainX::tessellate()
 {
-    Geom_t* g = new Geom_t;
-    g_geom = g;
+    Geom_t* g = new Geom_t;                 // the mesh being rebuilt: a local, as in the original ([esp+0x28])
 
     cell_rows_t* rows = new cell_rows_t;
     cell_rows_t* cr = rows;
@@ -240,13 +238,13 @@ void TerrainX::tessellate()
         for (int x = 0; x <= w; x++) {
             terrain_cell* c = &at(x, y);
             c->f14 = -1;
-            int id = *(int*)c;
-            rows->rows[x][y] = id;
+            int id = *(int*)&c->pz;                 // the height's bits (0x481630 reads cell+8)
+            rows->rows[x][y * 4] = id;              // the 16-byte row entries' first dword (0x48163e: [row + y*16])
         }
     }
 
-    g_geom->elems().reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
-    g_geom->pts().reserve((w + 2) * (h + 2));
+    g->elems().reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
+    g->pts().reserve((w + 2) * (h + 2));
 
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
@@ -297,21 +295,21 @@ void TerrainX::tessellate()
                 rec.f6c = 0;
                 rec.f70 = 0;
                 rec.f84 = 0;
-                int vbase = g_geom->elems().size();
+                int vbase = g->elems().size();
                 float acc = 0.0f;
 
                 int* cid = tri + qn * 8;
                 for (int k = 0; k < ncorner; k++) {
                     terrain_cell* c = &at(cid[0], cid[1]);
                     if (c->f14 == -1) {
-                        c->f14 = g_geom->pts().size();
+                        c->f14 = g->pts().size();
                         geom_pt pt;
                         *(int*)&pt.px = *(int*)&c->px;
                         *(int*)&pt.py = *(int*)&c->py;
                         *(int*)&pt.wet = *(int*)&c->pz;
                         pt.f0c = c->ntype;
                         pt.f20 = 1.0f;
-                        g_geom->pts().push_back(pt);
+                        g->pts().push_back(pt);
                     }
 
                     int* slot = (int*)((char*)this + 0x258);
@@ -331,7 +329,7 @@ void TerrainX::tessellate()
                 rec.flags |= 0x10;
                 if (acc > 1.5f)
                     rec.flags |= 0x4000;
-                g_geom->elems().push_back(rec);
+                g->elems().push_back(rec);
 
                 int* row = rows->rows[x];
                 *(int*)((char*)row + y * 16 + 8 + qn * 4) = vbase;
@@ -341,9 +339,9 @@ void TerrainX::tessellate()
         }
     }
 
-    g_geom->build();
-    g_geom->compute_bounds();
-    ((world_t*)world)->build_faces(g_geom);
+    g->build();
+    g->compute_bounds();
+    ((world_t*)world)->build_faces(g);
 
     cell_rows_t* old = ((world_t*)world)->cells;
     if (old) {
