@@ -1084,7 +1084,7 @@ void MapDialog::refresh_list(char use_sel)
     if (!hWnd)
         return;
     SendMessageA(hWnd, 0x14b, 0, 0);                    // 0x184
-    int count = list->get_count(list);
+    int count = list->get_count();
     for (int i = 0; i < count; ++i) {
         int kind;
         if (use_sel) {
@@ -1126,7 +1126,7 @@ void MapDialog::refresh_list(char use_sel)
             }
         }
         int flag;
-        if (list->get_sel(list, i, 1, data, 0, 2, &flag) >= 0) {
+        if (list->get_sel(i, 1, data, 0, 2, &flag) >= 0) {
             if (flag > 0) {
                 if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)"2x") < 0) {
                     int idx = SendMessageA(hWnd, 0x14a, 1, (LPARAM)"2x");
@@ -1134,7 +1134,7 @@ void MapDialog::refresh_list(char use_sel)
                 }
             }
         }
-        if (list->get_sel(list, i, 1, data, 0, 4, &flag) >= 0) {
+        if (list->get_sel(i, 1, data, 0, 4, &flag) >= 0) {
             if (flag > 0) {
                 if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)"4x") < 0) {
                     int idx = SendMessageA(hWnd, 0x14a, 2, (LPARAM)"4x");

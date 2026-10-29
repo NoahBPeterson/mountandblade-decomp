@@ -405,12 +405,14 @@ struct MapRecord {
     char pad1b8[0x1c8 - 0x1b8];
 };
 
-struct SelList {                                        // selection list (vtable slot [0x10] = get_count)
+// selection list: a COM-style interface, its methods __stdcall with `this` pushed on the stack (0x4c6fd8: push the
+// object, call [vtbl+0x10], no ecx argument, callee pops)
+struct SelList {
     virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual int get_count(void* owner);                 // [0x10]
+    virtual int __stdcall get_count();                  // [0x10]
     virtual void v14(); virtual void v18(); virtual void v1c(); virtual void v20();
     virtual void v24(); virtual void v28();
-    virtual int get_sel(void* owner, int a, int value, int b, int c, int d, int* flag);  // [0x2c]
+    virtual int __stdcall get_sel(int a, int value, int b, int c, int d, int* flag);    // [0x2c]
 };
 
 // objects inserted into the map: vtable + payload
