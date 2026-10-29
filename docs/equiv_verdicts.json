@@ -1,24 +1,24 @@
 {
-"when": "2026-10-29T08:16:14-05:00",
-"commit": "8c14e77",
+"when": "2026-10-29T08:46:49-05:00",
+"commit": "4d726f1",
 "sources": [
 "work/sweep_view"
 ],
 "summary": {
 "pass": 329,
-"weak": 370,
-"fail": 48,
+"weak": 392,
+"fail": 40,
 "inputs": 88,
-"harness": 135,
+"harness": 121,
 "comdat": 104,
 "comdatdiff": 10,
 "funclet": 17,
 "not_run": 10,
 "pass_sz": 90201,
-"weak_sz": 420292,
-"fail_sz": 125857,
+"weak_sz": 474840,
+"fail_sz": 84417,
 "inputs_sz": 87127,
-"harness_sz": 150832,
+"harness_sz": 137724,
 "comdat_sz": 2383,
 "comdatdiff_sz": 689,
 "funclet_sz": 1042,
@@ -147,8 +147,8 @@
 "0040dc50": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 421
 },
 "0040ddf5": {
@@ -315,8 +315,8 @@
 "00412150": {
 "module": "mesh_obj",
 "file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1159
 },
 "00412c30": {
@@ -329,8 +329,8 @@
 "00412fe0": {
 "module": "mesh_obj",
 "file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 827
 },
 "00413750": {
@@ -350,15 +350,15 @@
 "00413e50": {
 "module": "psys",
 "file": "src/rgl/psys.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2823
 },
 "00414960": {
 "module": "psys",
 "file": "src/rgl/psys.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 372
 },
 "00414ae0": {
@@ -434,8 +434,8 @@
 "004195e0": {
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 93
 },
 "0041973a": {
@@ -644,8 +644,8 @@
 "00421df0": {
 "module": "fx_anim",
 "file": "src/rgl/dynamic/fx_anim.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 245
 },
 "00422130": {
@@ -896,8 +896,8 @@
 "00429890": {
 "module": "render_scene",
 "file": "src/rgl/scene/render_scene.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2036
 },
 "0042a1f0": {
@@ -1540,8 +1540,8 @@
 "004428c0": {
 "module": "agent_fx_sound",
 "file": "src/game/agent3/agent_fx_sound.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 988
 },
 "00442ca0": {
@@ -1687,8 +1687,8 @@
 "0044be50": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 949
 },
 "0044c210": {
@@ -1729,8 +1729,8 @@
 "0044eb00": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1467
 },
 "0044f240": {
@@ -1743,8 +1743,8 @@
 "0044f3c0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 524
 },
 "0044f5d0": {
@@ -1862,8 +1862,8 @@
 "004556d0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 8252
 },
 "00457710": {
@@ -1876,8 +1876,8 @@
 "00457b40": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 9773
 },
 "0045a170": {
@@ -1890,8 +1890,8 @@
 "0045c220": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 5630
 },
 "0045d820": {
@@ -2044,8 +2044,8 @@
 "004650f0": {
 "module": "terrain_a",
 "file": "src/game/terrain_a/terrain_a.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1095
 },
 "00465540": {
@@ -2373,8 +2373,8 @@
 "00470db0": {
 "module": "terrain_b",
 "file": "src/game/terrain_b/terrain_b.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 394
 },
 "00470f40": {
@@ -2583,8 +2583,8 @@
 "00479e20": {
 "module": "mission",
 "file": "src/game/terrain_b/mission.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 664
 },
 "0047a0c0": {
@@ -6480,8 +6480,8 @@
 "004fe860": {
 "module": "editor_dialog",
 "file": "src/game/agent5/editor_dialog.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 8812
 },
 "00500ad0": {
@@ -6578,8 +6578,8 @@
 "005063e0": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 3880
 },
 "00507400": {
@@ -6599,8 +6599,8 @@
 "00509980": {
 "module": "view_open",
 "file": "src/game/inventory_panel/view_open.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1981
 },
 "0050a1c0": {
@@ -7355,8 +7355,8 @@
 "005257f0": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK-FP",
+"category": "weak",
 "size": 2163
 },
 "00526070": {
