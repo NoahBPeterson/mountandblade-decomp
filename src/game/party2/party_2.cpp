@@ -2377,8 +2377,10 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
     int so = from * 0x88;
 
     float last_dist = 0.0f;                          // the loop tests the dist of the element popped by the previous round (0 at the start)
-    if (RECS[to].gen() <= m64) {
-        for (;;) {
+    // the search ends once the target is reached: the original re-tests its stamp after every expanded node
+    // (0x4b6fd6), not just once before the loop
+    while (RECS[to].gen() <= m64) {
+        {
             if (OPEN_BEGIN == 0)
                 break;
             if ((int)(OPEN_END - OPEN_BEGIN) == 0)
