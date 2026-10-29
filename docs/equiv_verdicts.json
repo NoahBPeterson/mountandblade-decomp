@@ -1,28 +1,28 @@
 {
-"when": "2026-10-29T09:01:05-05:00",
-"commit": "3a29f12",
+"when": "2026-10-29T10:22:34-05:00",
+"commit": "082e857",
 "sources": [
 "work/sweep_view"
 ],
 "summary": {
 "pass": 329,
-"weak": 402,
-"fail": 35,
+"weak": 412,
+"fail": 29,
 "inputs": 88,
-"harness": 116,
+"harness": 104,
 "comdat": 104,
 "comdatdiff": 10,
 "funclet": 17,
-"not_run": 10,
+"not_run": 18,
 "pass_sz": 90201,
-"weak_sz": 489402,
-"fail_sz": 76553,
+"weak_sz": 499387,
+"fail_sz": 67816,
 "inputs_sz": 87127,
-"harness_sz": 131026,
+"harness_sz": 123989,
 "comdat_sz": 2383,
 "comdatdiff_sz": 689,
 "funclet_sz": 1042,
-"not_run_sz": 20780
+"not_run_sz": 26566
 },
 "rows": {
 "00408a50": {
@@ -420,8 +420,8 @@
 "00418e90": {
 "module": "resource_manager",
 "file": "src/rgl/resource_manager.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 281
 },
 "00419360": {
@@ -3353,8 +3353,8 @@
 "00490160": {
 "module": "world_data",
 "file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 309
 },
 "004904a0": {
@@ -4086,8 +4086,8 @@
 "004b09e0": {
 "module": "camera",
 "file": "src/game/party2/camera.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1910
 },
 "004b1160": {
@@ -4191,8 +4191,8 @@
 "004b2c00": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1762
 },
 "004b33c0": {
@@ -4219,8 +4219,8 @@
 "004b38f0": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 32
 },
 "004b3910": {
@@ -4331,8 +4331,8 @@
 "004b6b40": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "FAIL",
+"category": "fail",
 "size": 1690
 },
 "004b71e0": {
@@ -4534,8 +4534,8 @@
 "004c1b60": {
 "module": "trigger_vec",
 "file": "src/game/triggers/trigger_vec.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 108
 },
 "004c1bcc": {
@@ -4583,8 +4583,8 @@
 "004c2250": {
 "module": "trigger_vec",
 "file": "src/game/triggers/trigger_vec.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 168
 },
 "004c24c0": {
@@ -4772,8 +4772,8 @@
 "004c5a20": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 311
 },
 "004c5b60": {
@@ -4814,16 +4814,16 @@
 "004c6950": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 321
 },
 "004c6b30": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
-"size": 362
+"verdict": "TIMEOUT",
+"category": "not_run",
+"size": 359
 },
 "004c6dc0": {
 "module": "gui_edit",
@@ -4856,8 +4856,8 @@
 "004c6f30": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 32
 },
 "004c6f50": {
@@ -4870,8 +4870,8 @@
 "004c6f70": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 32
 },
 "004c6f90": {
@@ -5591,8 +5591,8 @@
 "004db440": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 543
 },
 "004db660": {
@@ -5871,8 +5871,8 @@
 "004e6a70": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 2851
 },
 "004e75a0": {
@@ -6095,8 +6095,8 @@
 "004ee230": {
 "module": "quest_log",
 "file": "src/game/char_sheet/quest_log.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 1552
 },
 "004ee840": {
@@ -6753,8 +6753,8 @@
 "005134c0": {
 "module": "inventory_panel",
 "file": "src/game/inventory_panel/inventory_panel.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 580
 },
 "00513710": {
@@ -7558,8 +7558,8 @@
 "0052dfd0": {
 "module": "mesh_3",
 "file": "src/game/mission5/mesh_3.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK-FP",
+"category": "weak",
 "size": 1343
 },
 "0052e510": {
@@ -7670,8 +7670,8 @@
 "00531800": {
 "module": "exchange_screens",
 "file": "src/game/map_editor/exchange_screens.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 3277
 },
 "005325b0": {
