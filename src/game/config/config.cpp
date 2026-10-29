@@ -441,8 +441,10 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
     char quote;
 
     SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x434, 0, (LPARAM)&item);
-    ((GameConfig*)g_game)->settings_text.erase_range(item.left, item.right);
+    // EM_EXGETSEL fills a CHARRANGE (cpMin, cpMax): the first two LONGs of `item`, left and top
+    ((GameConfig*)g_game)->settings_text.erase_range(item.left, item.top);
     ((GameConfig*)g_game)->settings_text.insert(item.left, *page);
+    RECT sel = item;                                // the selection (CHARRANGE in left/top), restored at the end ([esp+0x14])
 
     tstring sel_text;
     SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x43e, 0, (LPARAM)text);
@@ -515,7 +517,7 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
         }
     }
 
-    WPARAM top = SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x436, 0, (LPARAM)item.left);
+    WPARAM top = SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x436, 0, (LPARAM)sel.left);    // EM_EXLINEFROMCHAR
     GetWindowRect(GetDlgItem(g_hwnd_dlg, 0x4b0), &window);
     int count = window.bottom - window.top;
     lineheight = (top - 5) * 0x11;
@@ -526,16 +528,14 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
         g_edit_value = lineheight;
     }
 
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&item);
+    // back to the caller's selection, reset its format, then collapse it to its start (0x4bb924..0x4bb9a0)
+    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&sel);
     item_rgb[2] = detailed != 0;
     item_rgb[0] = 0x3c;
     item_rgb[1] = 1;
     SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)item_rgb);
-
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&item);
-    item.right = item.left;
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&item);
-    sel_text.~tstring();
+    sel.top = sel.left;                             // cpMax = cpMin (0x4bb99c)
+    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&sel);
 }
 
 // @ 0x4bb9c0
