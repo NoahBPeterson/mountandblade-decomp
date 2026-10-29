@@ -1,28 +1,28 @@
 {
-"when": "2026-10-29T14:49:50-05:00",
-"commit": "f5b7412",
+"when": "2026-10-29T16:21:45-05:00",
+"commit": "beaedd6",
 "sources": [
 "work/sweep_view"
 ],
 "summary": {
 "pass": 331,
-"weak": 444,
-"fail": 24,
+"weak": 450,
+"fail": 19,
 "inputs": 83,
 "harness": 73,
 "comdat": 104,
 "comdatdiff": 10,
 "funclet": 17,
-"not_run": 25,
+"not_run": 24,
 "pass_sz": 92121,
-"weak_sz": 524682,
-"fail_sz": 58027,
+"weak_sz": 541900,
+"fail_sz": 51713,
 "inputs_sz": 79969,
 "harness_sz": 90030,
 "comdat_sz": 2383,
 "comdatdiff_sz": 689,
 "funclet_sz": 1042,
-"not_run_sz": 50150
+"not_run_sz": 39347
 },
 "rows": {
 "00408a50": {
@@ -4394,8 +4394,8 @@
 "004bb3f0": {
 "module": "config",
 "file": "src/game/config/config.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1481
 },
 "004bba90": {
@@ -4506,8 +4506,8 @@
 "004bf170": {
 "module": "trigger_vec",
 "file": "src/game/triggers/trigger_vec.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1149
 },
 "004bf870": {
@@ -4877,8 +4877,8 @@
 "004c6f90": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 761
 },
 "004c7290": {
@@ -5206,8 +5206,8 @@
 "004cf7b0": {
 "module": "config_dialog",
 "file": "src/game/options_panel/config_dialog.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2698
 },
 "004d0240": {
@@ -6116,8 +6116,8 @@
 "004eeb10": {
 "module": "cs_update",
 "file": "src/game/char_sheet/cs_update.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2317
 },
 "004ef730": {
@@ -6480,8 +6480,8 @@
 "004fe860": {
 "module": "editor_dialog",
 "file": "src/game/agent5/editor_dialog.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 8812
 },
 "00500ad0": {
@@ -6606,9 +6606,9 @@
 "0050a1c0": {
 "module": "note_window",
 "file": "src/game/inventory_panel/note_window.nonmatching.txt",
-"verdict": "TIMEOUT",
-"category": "not_run",
-"size": 10803
+"verdict": "FAIL",
+"category": "fail",
+"size": 10904
 },
 "0050cc70": {
 "module": "widget_text",
