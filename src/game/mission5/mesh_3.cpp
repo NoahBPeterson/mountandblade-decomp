@@ -433,33 +433,43 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
     cross(normal, e1, e2);
     normal.normalize();
 
-    if (dot(mean - p, d) < 0.0f) {          // face points away from the ray
+    // from here on the original calls nothing: the differences, dot and cross products are inline
+    float mx = mean.x - p.x, my = mean.y - p.y, mz = mean.z - p.z;
+    if (mx * d.x + my * d.y + mz * d.z < 0.0f) {   // face points away from the ray
         *dist = 1e6f;
         return;
     }
-    float t = dot(normal, mean - p) / dot(normal, d);
+    float t = (normal.x * mx + normal.y * my + normal.z * mz) / (normal.x * d.x + normal.y * d.y + normal.z * d.z);
     rgl::vector4 hit(p.x + d.x * t, p.y + d.y * t, p.z + d.z * t);
 
     bool outside = false;
     for (int i = 0; i < n && !outside; i++) {
         const rgl::vector4& a = pts[i];
         const rgl::vector4& b = pts[(i + 1) % n];
-        rgl::vector4 edge = b - a;
-        float len = edge.length();
-        if (len > 1e-6f)
-            edge = edge * (1.0f / len);
-        else
-            edge = rgl::vector4(0.0f, 1.0f, 0.0f);
-        rgl::vector4 c;
-        cross(c, edge, normal);
-        if (dot(hit - a, c) > 0.0f)
+        float ex = b.x - a.x, ey = b.y - a.y, ez = b.z - a.z;
+        float len = (float)sqrt(ex * ex + ey * ey + ez * ez);
+        if (len > 1e-6f) {
+            float k = 1.0f / len;
+            ex = ex * k;
+            ey = ey * k;
+            ez = ez * k;
+        } else {
+            ex = 0.0f;
+            ey = 1.0f;
+            ez = 0.0f;
+        }
+        float cx = ey * normal.z - ez * normal.y;
+        float cy = ez * normal.x - ex * normal.z;
+        float cz = ex * normal.y - ey * normal.x;
+        if ((hit.x - a.x) * cx + (hit.y - a.y) * cy + (hit.z - a.z) * cz > 0.0f)
             outside = true;
     }
     if (outside) {
         *dist = 1e6f;
         return;
     }
-    *dist = (pts[0] - p).length();
+    float qx = pts[0].x - p.x, qy = pts[0].y - p.y, qz = pts[0].z - p.z;
+    *dist = (float)sqrt(qx * qx + qy * qy + qz * qz);
 }
 
 // ======================================================= slice s0052dfd0: functions
@@ -488,33 +498,43 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
     cross(normal, e1, e2);
     normal.normalize();
 
-    if (dot(mean - p, d) < 0.0f) {          // face points away from the ray
+    // from here on the original calls nothing: the differences, dot and cross products are inline
+    float mx = mean.x - p.x, my = mean.y - p.y, mz = mean.z - p.z;
+    if (mx * d.x + my * d.y + mz * d.z < 0.0f) {   // face points away from the ray
         *dist = 1e6f;
         return;
     }
-    float t = dot(normal, mean - p) / dot(normal, d);
+    float t = (normal.x * mx + normal.y * my + normal.z * mz) / (normal.x * d.x + normal.y * d.y + normal.z * d.z);
     rgl::vector4 hit(p.x + d.x * t, p.y + d.y * t, p.z + d.z * t);
 
     bool outside = false;
     for (int i = 0; i < n && !outside; i++) {
         const rgl::vector4& a = pts[i];
         const rgl::vector4& b = pts[(i + 1) % n];
-        rgl::vector4 edge = b - a;
-        float len = edge.length();
-        if (len > 1e-6f)
-            edge = edge * (1.0f / len);
-        else
-            edge = rgl::vector4(0.0f, 1.0f, 0.0f);
-        rgl::vector4 c;
-        cross(c, edge, normal);
-        if (dot(hit - a, c) > 0.0f)
+        float ex = b.x - a.x, ey = b.y - a.y, ez = b.z - a.z;
+        float len = (float)sqrt(ex * ex + ey * ey + ez * ez);
+        if (len > 1e-6f) {
+            float k = 1.0f / len;
+            ex = ex * k;
+            ey = ey * k;
+            ez = ez * k;
+        } else {
+            ex = 0.0f;
+            ey = 1.0f;
+            ez = 0.0f;
+        }
+        float cx = ey * normal.z - ez * normal.y;
+        float cy = ez * normal.x - ex * normal.z;
+        float cz = ex * normal.y - ey * normal.x;
+        if ((hit.x - a.x) * cx + (hit.y - a.y) * cy + (hit.z - a.z) * cz > 0.0f)
             outside = true;
     }
     if (outside) {
         *dist = 1e6f;
         return;
     }
-    *dist = (pts[0] - p).length();
+    float qx = pts[0].x - p.x, qy = pts[0].y - p.y, qz = pts[0].z - p.z;
+    *dist = (float)sqrt(qx * qx + qy * qy + qz * qz);
 }
 
 // Select/deselect one vertex, edge or polygon.  Only the vertex case updates `selected`.
