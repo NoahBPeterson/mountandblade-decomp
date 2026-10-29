@@ -28,7 +28,9 @@ struct EditorGameView;                                   // the game object (0x5
 
 EditorSceneView* g_editor;                              // 0x5e292c
 EditorGameView*   g_game;                                // 0x5e2930
-char** g_object_names;                              // 0x8ed4df8: 0x20-byte records, name pointer at +4
+// the table itself lives at 0x8ed4df8 (0x20-byte records; a record's name tstring has its buf at +4): the original
+// indexes it in place (0x4feaff: j * 0x20 + 0x8ed4df8). Ours declared a pointer to it and read garbage through 0x8ed4df8.
+char* g_object_names[1];                            // 0x8ed4df8
 
 // These live in the original's shared float-constant pool (.rdata). Defined without an initialiser they are
 // zero in our build, which silently broke every use: g_one = 0 made GuiScreen::process's cursor y negative
@@ -92,7 +94,9 @@ struct EditorGameView {
     float rt_z;             // +0x1a0a4
     float rt_w;             // +0x1a0a8
     int   rt_extra;         // +0x1a0ac
+    char  pad1a0b0[0x1a0bc - 0x1a0b0];
     int   combo_sel;        // +0x1a0bc
+    char  pad1a0c0[0x1a0c8 - 0x1a0c0];
     char  flag_c8;          // +0x1a0c8
     int   opt_cc;           // +0x1a0cc
     int   opt_d0;           // +0x1a0d0
@@ -101,13 +105,20 @@ struct EditorGameView {
     float tx, ty, tz;       // +0x1a0ec  slider 3
     float col_r, col_g, col_b, col_a;   // +0x1a0f8
     int   axis;             // +0x1a108  0/1/2 (radio buttons 0x474..0x476)
-    char  pad10c[0x1a1b4 - 0x1a10c];
     int   sel_copy[16];     // +0x1a10c  copy of a terrain's +0x18..+0x58
+    char  pad1a14c[0x1a1b4 - 0x1a14c];
     int   sel_index;        // +0x1a1b4  selected terrain (-1 = none)
+    int   sel_alloc;        // +0x1a1b8  (GAME_VEC: the vector<int> of the selected terrains starts here)
     int*  sel_array;        // +0x1a1bc  selected terrain indices, sel_count() long
+    char  pad1a1c0[0x1a1cc - 0x1a1c0];
     int   dirty;            // +0x1a1cc
     unsigned sub_mode;      // +0x1a1d0
 };
+// the layout the original addresses (ours had lost three gaps: combo_sel, flag_c8.. and sel_index.. were 12, 20 and 0x48 bytes early)
+typedef char EditorGameView_check[offsetof(EditorGameView, combo_sel) == 0x1a0bc && offsetof(EditorGameView, flag_c8) == 0x1a0c8
+    && offsetof(EditorGameView, mx) == 0x1a0d4 && offsetof(EditorGameView, axis) == 0x1a108 && offsetof(EditorGameView, sel_copy) == 0x1a10c
+    && offsetof(EditorGameView, sel_index) == 0x1a1b4 && offsetof(EditorGameView, sel_array) == 0x1a1bc
+    && offsetof(EditorGameView, dirty) == 0x1a1cc && offsetof(EditorGameView, sub_mode) == 0x1a1d0 ? 1 : -1];
 
 struct EditorTerrainView {            // 0x1c8 bytes
     char  pad0[0x158];
@@ -235,17 +246,19 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             return 0;
         m_hMapEditorDlg = hDlg;
         ((CreateGameOptionsPage*)this)->update_checks();
-        SendMessageA(GetDlgItem(hDlg, 0x46e), LB_RESETCONTENT, 0, 0);
+        HWND objs = GetDlgItem(hDlg, 0x46e);                          // looked up once (0x4fe8ba, kept in ebx)
+        SendMessageA(objs, CB_RESETCONTENT, 0, 0);                    // 0x46e is a combo box (0x4fe8c8)
         CheckRadioButton(hDlg, 0x474, 0x476, g_game->axis + 0x474);
-        SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETRANGE, TRUE, MAKELONG(0, 100));
-        SendMessageA(GetDlgItem(hDlg, 0x477), TBM_SETRANGE, TRUE, MAKELONG(0, 100));
-        SendMessageA(GetDlgItem(hDlg, 0x472), TBM_SETRANGE, TRUE, MAKELONG(0, 100));
-        SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(g_one));
-        SendMessageA(GetDlgItem(hDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(g_one));
-        SendMessageA(GetDlgItem(hDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(g_one));
-        SendMessageA(GetDlgItem(hDlg, 0x4c8), TBM_SETRANGE, TRUE, MAKELONG(0, 255));
-        SendMessageA(GetDlgItem(hDlg, 0x4c9), TBM_SETRANGE, TRUE, MAKELONG(0, 255));
-        SendMessageA(GetDlgItem(hDlg, 0x4ca), TBM_SETRANGE, TRUE, MAKELONG(0, 255));
+        // the three sliders' ranges (no redraw) and positions from the current values (0x4fe8ff..0x4fe9d7)
+        SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETRANGE, FALSE, MAKELONG(1, 100));
+        SendMessageA(GetDlgItem(hDlg, 0x477), TBM_SETRANGE, FALSE, MAKELONG(0, 100));
+        SendMessageA(GetDlgItem(hDlg, 0x472), TBM_SETRANGE, FALSE, MAKELONG(1, 100));
+        SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game->sx * g_hundred));
+        SendMessageA(GetDlgItem(hDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game->tx * g_hundred));
+        SendMessageA(GetDlgItem(hDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)g_game->mx);
+        SendMessageA(GetDlgItem(hDlg, 0x4c8), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
+        SendMessageA(GetDlgItem(hDlg, 0x4c9), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
+        SendMessageA(GetDlgItem(hDlg, 0x4ca), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
         g_game->col_r = g_one;
         g_game->col_g = g_one;
         g_game->col_b = g_one;
@@ -257,16 +270,17 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         for (int i = 0; i < g_editor->brush_count - 2; i++) {
             int j = *(int*)((char*)g_editor + i * 0x18 + 0x63ec);
             if (j >= 0) {
-                // name table: 0x20-byte records at 0x8ed4df8, the name pointer at +4 (NULL -> the record itself)
+                // name table: 0x20-byte records at 0x8ed4df8 starting with a tstring: its c_str() (buf at +4, NULL ->
+                // the address of that buf field, 0x4feb0a)
                 const char* name = g_object_names[j * 8 + 1];
                 if (name == 0)
-                    name = (const char*)&g_object_names[j * 8];
-                WPARAM idx = SendMessageA(GetDlgItem(hDlg, 0x46e), LB_ADDSTRING, 0, (LPARAM)name);
-                SendMessageA(GetDlgItem(hDlg, 0x46e), LB_SETITEMDATA, idx, n);
+                    name = (const char*)&g_object_names[j * 8 + 1];
+                WPARAM idx = SendMessageA(objs, CB_ADDSTRING, 0, (LPARAM)name);
+                SendMessageA(objs, CB_SETITEMDATA, idx, n);
             }
             n++;
         }
-        SendMessageA(GetDlgItem(hDlg, 0x46e), LB_SETCURSEL, 0, 0);
+        SendMessageA(objs, CB_SETCURSEL, 0, 0);
         HWND combo = GetDlgItem(hDlg, 0x431);
         SendMessageA(combo, CB_RESETCONTENT, 0, 0);
         if (combo == 0)
@@ -281,6 +295,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         SendMessageA(combo, CB_SETITEMDATA, idx, 4);
         idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)0x595e6c);
         SendMessageA(combo, CB_SETITEMDATA, idx, 5);
+        *(int*)((char*)g_editor + 0x651c) = 0;                        // the object kind resets to the first entry (0x4fec16)
         SendMessageA(combo, CB_SETCURSEL, 0, 0);
         ((MapEditorDialog*)this)->update_object_type();
         return 1;
@@ -288,15 +303,18 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
     // above WM_COMMAND only WM_MOUSEMOVE is handled (0x500920: 1 for it, 0 for anything else)
     return msg == WM_MOUSEMOVE;
 command:
+    // WM_COMMAND: LOWORD(wParam) is the control, HIWORD(wParam) the notification code (0x4ff24c reads both from
+    // wParam; every case below tested HIWORD(lParam), the control's window handle)
     switch (wParam & 0xffff) {
     case 2:
         restore_defaults();
         ShowWindow(m_hMapEditorDlg, SW_HIDE);
         return 1;
     case 0x433:
-        if (HIWORD(lParam) != 2) {
-            HWND c = GetDlgItem(m_hMapEditorDlg, 0x433);
-            g_game->combo_sel = (int)SendMessageA(c, CB_GETITEMDATA, SendMessageA(c, CB_GETCURSEL, 0, 0), 0);
+        if (HIWORD(wParam) != 2) {
+            GetDlgItem(m_hMapEditorDlg, 0x431);                 // looked up and not used (0x4ff323)
+            HWND c = GetDlgItem(m_hMapEditorDlg, 0x433);        // the object list is a list box: LB_ messages (0x4ff347)
+            g_game->combo_sel = (int)SendMessageA(c, LB_GETITEMDATA, SendMessageA(c, LB_GETCURSEL, 0, 0), 0);
             return 1;
         }
         g_game->flag_c8 = 1;
@@ -314,7 +332,7 @@ command:
         return 1;
     }
     case 0x438: {
-        int code = (short)HIWORD(lParam);
+        int code = (short)HIWORD(wParam);
         if (code == 2) {
             HWND c = GetDlgItem(hDlg, 0x438);
             LRESULT cnt = SendMessageA(c, LB_GETCOUNT, 0, 0);
@@ -378,7 +396,7 @@ command:
         return 1;
     }
     case 0x43a:
-        if (HIWORD(lParam) != 0x200)
+        if (HIWORD(wParam) != 0x200)
             return 1;
         {
             BOOL ok;
@@ -392,7 +410,7 @@ command:
         }
         return 1;
     case 0x43b:
-        if (HIWORD(lParam) != 0x200)
+        if (HIWORD(wParam) != 0x200)
             return 1;
         {
             BOOL ok;
@@ -412,12 +430,12 @@ command:
         g_game->opt_d0 = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x454), BM_GETCHECK, 0, 0) == 1;
         return 1;
     case 0x431:
-        if (HIWORD(lParam) != 1)
+        if (HIWORD(wParam) != 1)
             return 1;
         ((MapEditorDialog*)this)->update_object_type();
         return 1;
     case 0x46d:
-        if (HIWORD(lParam) != 0)
+        if (HIWORD(wParam) != 0)
             return 1;
         g_game->mode = 2;
         ((CreateGameOptionsPage*)this)->update_checks();
@@ -436,13 +454,13 @@ command:
         }
         return 1;
     case 0x46f:
-        if (HIWORD(lParam) != 0)
+        if (HIWORD(wParam) != 0)
             return 1;
         g_game->mode = 0;
         ((CreateGameOptionsPage*)this)->update_checks();
         return 1;
     case 0x470:
-        if (HIWORD(lParam) != 0)
+        if (HIWORD(wParam) != 0)
             return 1;
         g_game->mode = 1;
         ((CreateGameOptionsPage*)this)->update_checks();
@@ -461,7 +479,7 @@ command:
         }
         return 1;
     case 0x471:
-        if (HIWORD(lParam) != 0)
+        if (HIWORD(wParam) != 0)
             return 1;
         g_game->mode = 3;
         ((CreateGameOptionsPage*)this)->update_checks();
@@ -497,7 +515,7 @@ command:
     case 0x491:
     case 0x492:
     case 0x493:
-        if (HIWORD(lParam) != 0)
+        if (HIWORD(wParam) != 0)
             return 1;
         if (g_game->sel_index < 1 && g_game->rt_flag == 0)
             return 1;
@@ -557,16 +575,16 @@ command:
         ((MapScreen*)g_editor)->frame_step();
         return 1;
     case 0x46e:
-        if (HIWORD(lParam) != 1)
+        if (HIWORD(wParam) != 1)
             return 1;
         {
             HWND lst = GetDlgItem(m_hMapEditorDlg, 0x46e);
-            *(int*)((char*)g_editor + 0x651c) = (int)SendMessageA(lst, LB_GETITEMDATA,
-                                                  SendMessageA(lst, LB_GETCURSEL, 0, 0), 0);
+            *(int*)((char*)g_editor + 0x651c) = (int)SendMessageA(lst, CB_GETITEMDATA,
+                                                  SendMessageA(lst, CB_GETCURSEL, 0, 0), 0);
         }
         return 1;
     case 0x497:
-        if (HIWORD(lParam) != 0)
+        if (HIWORD(wParam) != 0)
             return 1;
         g_game->sub_mode = 0;
         ((CreateGameOptionsPage*)this)->update_checks();
@@ -575,17 +593,16 @@ command:
         g_editor->need_redraw[2] = 1;
         return 1;
     case 0x498:
-        if (HIWORD(lParam) == 0) {
+        if (HIWORD(wParam) == 0) {
             g_game->sub_mode = 1;
             ((CreateGameOptionsPage*)this)->update_checks();
-            g_game->dirty = 1;
-            g_editor->need_redraw[0] = 1;
+            g_editor->need_redraw[0] = 1;                   // joins the redraw tail after the dirty store (0x5005f0)
             g_editor->need_redraw[1] = 1;
             g_editor->need_redraw[2] = 1;
         }
         return 1;
     case 0x499:
-        if (HIWORD(lParam) == 0) {
+        if (HIWORD(wParam) == 0) {
             g_game->sub_mode = 2;
             ((CreateGameOptionsPage*)this)->update_checks();
             g_editor->need_redraw[0] = 1;
@@ -594,7 +611,7 @@ command:
         }
         return 1;
     case 0x49a:
-        if (HIWORD(lParam) == 0) {
+        if (HIWORD(wParam) == 0) {
             g_game->mode = 4;
             ((CreateGameOptionsPage*)this)->update_checks();
         }
@@ -739,7 +756,7 @@ command:
         return 1;
     }
     case 0x4cd: {
-        if (HIWORD(lParam) != 0x400)
+        if (HIWORD(wParam) != 0x400)
             return 1;
         char text[0x40];
         long v;
@@ -759,7 +776,7 @@ command:
         return 1;
     }
     case 0x4cf: {
-        if (HIWORD(lParam) != 0x400)
+        if (HIWORD(wParam) != 0x400)
             return 1;
         char text[0x40];
         long v;
@@ -779,7 +796,7 @@ command:
         return 1;
     }
     case 0x4ce: {
-        if (HIWORD(lParam) != 0x400)
+        if (HIWORD(wParam) != 0x400)
             return 1;
         char text[0x40];
         long v;
