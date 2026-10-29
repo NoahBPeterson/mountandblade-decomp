@@ -7045,7 +7045,7 @@ void Agent::update_attack(float dt)
                                 play_class_sound(&kind);
                             }
                         }
-                        fr1.o.x = fr2.o.x = -10000000.0f;
+                        fr1.o.x = fr2.o.x = -20000000.0f;      // 0xcb989680 (0x45d14d)
                         hit_once = 0;
                         prop_done = 0;
                         classify(0);
