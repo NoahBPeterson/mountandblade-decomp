@@ -159,9 +159,10 @@ refresh_list:
         if (f2f9) {
             f2f9 = 0;
             ::select_entity(g_map_mission()->mesh_a(), (skin_owner*)rec_at(ed_selected(g_game)), 0xa0dd7711);   // 0x4ea0c0 (a free stdcall function, save_panel.cpp)
-            for (unsigned i = 0; i < ed_sel_list(g_game).size() - 1; i++)
-                add_selected(g_map_mission()->mesh_a(), &frame_of(g_map_mission()->cursor()),
-                             rec_at(ed_sel_list(g_game)[i]), 0x70886611);
+            if (ed_sel_list(g_game).size() > 0)   // 0x530d43..0x530d5e: an empty list skips the loop (size()-1 would wrap)
+                for (unsigned i = 0; i < ed_sel_list(g_game).size() - 1; i++)
+                    add_selected(g_map_mission()->mesh_a(), &frame_of(g_map_mission()->cursor()),
+                                 rec_at(ed_sel_list(g_game)[i]), 0x70886611);
             vector4 off;
             off.x = 0.01f;
             g_map_mission()->mesh_a()->set_offset(off);
@@ -237,8 +238,8 @@ refresh_list:
         }
 
         if (drag) {
-            PlacedObj* p = rec_at(ed_selected(g_game));
-            p->v158 = dir;
+            rec_at(ed_selected(g_game))->v158 = dir;
+            PlacedObj* p = rec_at(ed_selected(g_game));   // 0x5311e2: re-read after the store
             if (ent_of(p))
                 ent_of(p)->set_local_scaled_dirty(&p->m18, &p->v158);
         }
