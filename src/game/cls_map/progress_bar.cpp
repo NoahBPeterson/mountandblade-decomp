@@ -128,26 +128,28 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     }
     rgl::vector4 lo, hi;
     float out[2];
-    float xmin = x + 1.0f;
-    float xmax = x - 1.0f;
-    int zero = 0;
-    rgl::vector4 pos(x, height, height);
+    float xmin = x - 1.0f;
+    float xmax = x + 1.0f;
     float scale[2];
     float& pen = (float&)self->f1700;
-    pos.w = pen;
+    rgl::vector4 pos(x, pen, 0.0f);                 // the pen position (x, pen, 0) (0x4e4503..0x4e4537)
+    // pos never sets w: the original builds pos in the dead "ui_font" tstring's slot, so the glyph vertices get that
+    // tstring's len (+0xc, which ~tstring leaves alone) = 7
+    *(int*)&pos.w = 7;
     scale[0] = height;
     scale[1] = height;
-    g_font->layout_text(out, s, &pos, scale, self->o568, zero, &xmin, &xmax, flags);
-    pen = pen - out[1];
+    // the colour word is the caller's own `arg` slot (0x4e451b pushes its address)
+    g_font->layout_text(out, s, &pos, scale, self->o568, (int)&arg, &xmin, &xmax, flags);
+    pen = pen - height;                             // one line down (0x4e454a subtracts the height argument)
     ((mnode*)self->o568)->calc_bounds(&lo, &hi);
-    float w = hi.x - pos.x;
-    float h = hi.y - pos.y;
+    float w = hi.x - lo.x;                          // the laid-out text's bounds (0x4e4569: [esp+0x30] - [esp+0x20])
+    float h = hi.y - lo.y;
     float sz[2];
     float at[2];
     sz[0] = w + g_pad_out;
     sz[1] = h + g_pad_out;
-    at[0] = pos.x - g_pad_in;
-    at[1] = pos.y - g_pad_in;
+    at[0] = lo.x - g_pad_in;
+    at[1] = lo.y - g_pad_in;
     ((FrameGui*)self)->set_rect(at, sz);
     int v[2];
     v[0] = *(int*)((char*)self + 0x16e8);          // the view pair at +0x16e8 (0x4e45c0), not +0x16e0
