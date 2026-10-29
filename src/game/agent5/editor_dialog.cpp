@@ -231,8 +231,6 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
             }
             }
         }
-        if (msg == WM_MOUSEMOVE)
-            return 1;
         if (msg != WM_INITDIALOG)
             return 0;
         m_hMapEditorDlg = hDlg;
@@ -287,6 +285,9 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         ((MapEditorDialog*)this)->update_object_type();
         return 1;
     }
+    // above WM_COMMAND only WM_MOUSEMOVE is handled (0x500920: 1 for it, 0 for anything else)
+    return msg == WM_MOUSEMOVE;
+command:
     switch (wParam & 0xffff) {
     case 2:
         restore_defaults();
@@ -791,6 +792,5 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         return 1;
     }
     }
-command:
-    return 1;
+    return 1;                                   // an unhandled command id (0x4ffb92)
 }
