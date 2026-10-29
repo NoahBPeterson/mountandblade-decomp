@@ -5679,7 +5679,7 @@ void Agent::update_controls(float dt)
         f5610 = 0;
         agent_by_id(f2c)->f30 = -1;
         agent_by_id(f2c)->f2c8 = 0;
-        agent_by_id(f2c)->f2c0 = 10.0f;
+        agent_by_id(f2c)->attack_delay() = 10.0f;     // +0x2c0 as a float (0x457367: 0x41200000)
         restart_inl(agent_by_id(f2c)->ai_ta());
         f2c = -1;
         draw_name();
