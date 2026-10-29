@@ -367,8 +367,8 @@ void note_window::build(int page_, int arg_)
     tstring other("");          // +0x70   "other pages that link here"
     tstring link_text("");      // +0xb0   scratch for the links widget
 
-    float x_cur = 0.0f;         // [esp+0x14]
-    float y_cur = 0.0f;         // [esp+0x24]
+    float x_cur;                // [esp+0x14]  never initialized: the original leaves both unset (0x50a66d)
+    float y_cur;                // [esp+0x24]  (case 0 and an empty troop page reach the panels with garbage)
     bool  any = true;           // [esp+0x1b]
     int   selected = -1;        // [esp+0x58]
     this->picture->hide();
@@ -378,8 +378,7 @@ void note_window::build(int page_, int arg_)
         tstring line("");
         float sz[2];
         tstring* t = tr_obj("ui_click_button_to_view_note");
-        this->links->set_text(sz, *t);
-        y_cur = sz[1];
+        x_cur = ((float*)this->links->set_text(sz, *t))[1];    // the returned size (0x50a6d8), not sz
         break;
     }
 
@@ -419,13 +418,13 @@ void note_window::build(int page_, int arg_)
             float sz[2];
             this->title->set_text(sz, tstring(record_name(troop + 0x20)));
             float* r = (float*)this->links->set_text(sz, line);
-            y_cur = r[1];
+            x_cur = r[1];
             line.clear();
             any = false;
         } else {
             float sz[2];
             float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
-            y_cur = r[1];
+            x_cur = r[1];
         }
 
         // all troops that carry at least one report item
@@ -501,13 +500,13 @@ void note_window::build(int page_, int arg_)
             }
             this->title->set_text(sz, *nm);
             float* r = (float*)this->links->set_text(sz, line);
-            y_cur = r[1];
+            x_cur = r[1];
             line.clear();
             any = false;
         } else {
             float sz[2];
             float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
-            y_cur = r[1];
+            x_cur = r[1];
         }
 
         for (int i = 0; i < WORLD->n_factions; i++) {
@@ -580,13 +579,13 @@ void note_window::build(int page_, int arg_)
                 this->btn_map->show();
             this->title->set_text(sz, *party_name(base));
             float* r = (float*)this->links->set_text(sz, line);
-            y_cur = r[1];
+            x_cur = r[1];
             line.clear();
             any = false;
         } else {
             float sz[2];
             float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
-            y_cur = r[1];
+            x_cur = r[1];
         }
 
         // live map parties
@@ -623,7 +622,7 @@ void note_window::build(int page_, int arg_)
             line.erase(line.len - 1, 1);
         {
             float sz[2];
-            this->report->set_text(sz, line);
+            y_cur = ((float*)this->report->set_text(sz, line))[1];
         }
         break;
     }
@@ -664,13 +663,13 @@ void note_window::build(int page_, int arg_)
             tstring qt = quest_title(qi);
             this->title->set_text(sz, qt);
             float* r = (float*)this->links->set_text(sz, line);
-            y_cur = r[1];
+            x_cur = r[1];
             line.clear();
             any = false;
         } else {
             float sz[2];
             float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
-            y_cur = r[1];
+            x_cur = r[1];
         }
 
         for (int i = 0; i < WORLD->n_quests; i++) {
@@ -690,7 +689,7 @@ void note_window::build(int page_, int arg_)
             line.erase(line.len - 1, 1);
         {
             float sz[2];
-            this->report->set_text(sz, line);
+            y_cur = ((float*)this->report->set_text(sz, line))[1];
         }
         break;
     }
@@ -793,17 +792,20 @@ void note_window::build(int page_, int arg_)
         t.append(other);
         float sz[2];
         float* r = (float*)this->links->set_text(sz, t);
-        y_cur = r[1];
+        x_cur = r[1];
     }
 
     // ---- key / data scrolling panels -------------------------------------
+    // x_cur holds the links text height, y_cur the report's (0x50c405)
+    x_cur += 0.001f;
+    y_cur += 0.001f;
     UiPanel2* keys = new UiPanel2;
     this->keys_panel = keys;
     label_refresh(keys, tstring("note_bo_keys"));
     {
         float v[2];
         v[0] = fld(keys, 0xf0);
-        v[1] = fld(keys, 0xf4);
+        v[1] = y_cur + fld(keys, 0xf4);
         keys->set_scale(v);
     }
 
@@ -815,20 +817,19 @@ void note_window::build(int page_, int arg_)
         float a[2], b[2];
         ((mnode*)(*(void**)((char*)this->picture + 0x108)))->calc_bounds(a, b);
         float h = b[1] - a[1];
+        float w = b[0] - a[0];
         float border = cfg_float("note_image_border");
-        float right = (border + h) + x_cur;
-        x_cur = right;
-        y_cur = (fld(data, 0xf0) - border) * 0.5f - 0.1f;
+        x_cur = (h + border) + x_cur;                     // the picture sits above the links (0x50c54f)
         float v[2];
-        v[0] = right;
-        v[1] = a[0] - b[0];
+        v[0] = (fld(data, 0xf0) - w) * 0.5f - a[0];       // centred across the panel (0x50c568)
+        v[1] = x_cur - b[1];
         this->picture->set_pos(v);
     }
 
     {
         float v[2];
         v[0] = fld(data, 0xf0);
-        v[1] = fld(data, 0xf4);
+        v[1] = x_cur + fld(data, 0xf4);
         data->set_scale(v);
     }
 
