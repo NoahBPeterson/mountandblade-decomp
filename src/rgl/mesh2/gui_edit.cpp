@@ -1319,25 +1319,24 @@ void MapEditorDialog::update_object_type()
         int count = *(int*)0x5e29e0;
         for (int i = 0, off = 0; i < count; i++, off += 0x78) {
             char* e = (char*)(*(int*)0x5e29dc + off);
-            tstring sub = ((tstring*)e)->substr(4, *(int*)(e + 0xc));
-            int item = SendMessageA(list, 0x180, 0, (LPARAM)sub.c_str());
-            sub.~tstring();
+            // the substring is a temporary of the add-string call (destroyed once, right after it: 0x4c7caa)
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)((tstring*)e)->substr(4, *(int*)(e + 0xc)).c_str());
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 2) {
         int count = *(int*)0x5e29d4;
         for (int i = 0, off = 0; i < count; i++, off += 0x238) {
-            tstring* key = (tstring*)(*(int*)0x5e29d0 + off + 0x20);
-            tstring* text = g_strtable.find(key);
-            if (text)
-                key = text;
-            int item = SendMessageA(list, 0x180, 0, (LPARAM)key->c_str());
+            char* rec = (char*)(*(int*)0x5e29d0 + off);
+            tstring* text = g_strtable.find((tstring*)(rec + 0x20));     // the translation of the key at +0x20,
+            if (!text)
+                text = (tstring*)rec;                                   // else the record's name at +0 (0x4c7cfa)
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)text->c_str());
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 4) {
         int count = *(int*)0x5e29e8;
         for (int i = 0, off = 0; i < count; i++, off += 0x20) {
-            tstring* s = (tstring*)(*(int*)0x5e28f8 + off + 4);
+            tstring* s = (tstring*)(*(int*)0x5e28f8 + off);          // the 0x20-byte record starts with its name (0x4c7d76 reads its buf at +4)
             int item = SendMessageA(list, 0x180, 0, (LPARAM)s->c_str());
             SendMessageA(list, 0x19a, item, i);
         }
@@ -1349,7 +1348,8 @@ void MapEditorDialog::update_object_type()
         SendMessageA(list, 0x19a, 0, 0);
     }
     SendMessageA(list, 0x186, 0, 0);
-    ((Frame*)g_game)->sel = SendMessageA(list, 0x188, 0, 0);
+    // the selection's item data (LB_GETITEMDATA of LB_GETCURSEL, 0x4c7de2..0x4c7df7): the object index stored by 0x19a
+    ((Frame*)g_game)->sel = SendMessageA(list, 0x199, SendMessageA(list, 0x188, 0, 0), 0);
     ((Frame*)g_game)->mode = list_type;
 }
 
