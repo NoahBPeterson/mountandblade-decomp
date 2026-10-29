@@ -1,3 +1,4 @@
 0054aeb4 ??_7frame_set@@6B@  # skeleton model vtable (type() 7), stored by the dtor at 0x41aee0 / ctor 0x417e10
 0041aee0 ??_Eframe_set@@UAEPAXI@Z  # vtable 0x54aeb4 slot 0 (vector deleting dtor)
 0041a550 ??_EBone@@QAEPAXI@Z  # Bone vector deleting dtor (flags 3 = delete[]), called by ??_Eframe_set's scalar path
+0041a6b0 ?_Insert_n@?$vector@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@IAEXViterator@12@IABUvec_array@@@Z  # std::vector<vec_array>::_Insert_n (the object instantiates 17 same-named _Insert_n; size alone picked vertex60)

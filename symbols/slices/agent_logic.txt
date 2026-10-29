@@ -5,3 +5,4 @@
 005e2958 ?g_tick_lo@@3HA  # g_time[2] low dword (iface.h Quad)
 005e295c ?g_tick_hi@@3HA  # g_time[2] high dword
 004378a0 ?set@AnimSlotCall@@QAE_NHI@Z  # AnimSlot::set out of line (agent_stats.cpp), called from move_step
+00445ea0 ?_Insert_n@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEXViterator@12@IABUE56@@@Z  # std::vector<E56>::_Insert_n (8 same-named _Insert_n in the object; size alone picked Rec1c8)
