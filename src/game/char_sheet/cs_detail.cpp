@@ -5,6 +5,17 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
+// a skill's "name: description" title; the separator and the partial sum die before the caller goes on, as in the
+// original (both destroyed straight after the second operator+)
+static __forceinline tstring skill_row_title(SkillRec* sk)
+{
+    tstring sep(": ");
+    tstring* name = g_strtable.find(&sk->key);
+    if (!name)
+        name = &sk->name;
+    return (*name + sep) + *sk->desc_name();
+}
+
 // @ 0x4ef9f0 -------------------------------------------------------------------------------
 void CharSheet::update_detail()
 {
@@ -23,11 +34,7 @@ void CharSheet::update_detail()
         // skills page: one skill row
         int id = f_228[row];
         SkillRec* sk = &g_skill_tbl[id];
-        tstring sep(": ");
-        tstring* name = g_strtable.find(&sk->key);
-        if (!name)
-            name = &sk->name;
-        tstring s = (*name + sep) + *sk->desc_name();
+        tstring s = skill_row_title(sk);
         const char* anchor = 0;
         if (id == 2)
             anchor = g_skill_prisoner_management_bonus;
