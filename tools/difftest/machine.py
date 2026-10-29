@@ -68,6 +68,11 @@ CRT_LOCKS = MISC_BASE + 0x90000          # the CRITICAL_SECTIONs _mtinitlocks ha
 CALLEE_SAVED = (("ebx", UC_X86_REG_EBX), ("esi", UC_X86_REG_ESI), ("edi", UC_X86_REG_EDI), ("ebp", UC_X86_REG_EBP))
 
 
+# Pure CRT math our object calls by name (a modelled stub) where the original runs its statically linked copy in
+# the image (floor 0x536b10): the original's call is never an import, so recording ours as one made every such row
+# an "import call" FAIL (world_data 0x494b60). The result is still compared through registers and memory.
+UNTRACED_PURE = frozenset(("floor", "ceil", "ldexp"))
+
 class Stop(Exception):
     pass
 
@@ -455,7 +460,8 @@ class Machine:
             uc.emu_stop()
             return
         args = [self.u32(esp + 4 + 4 * k) for k in range(h["nargs"])]
-        self.trace_imports.append((name, tuple(args)))
+        if name not in UNTRACED_PURE:
+            self.trace_imports.append((name, tuple(args)))
         if h["fn"] is None:
             return
         try:
