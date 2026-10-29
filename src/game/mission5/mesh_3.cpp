@@ -871,7 +871,7 @@ void MapEditor_s2f250::update()
         // preview colour / scale
         float v = 1.0f;
         if (g_game_s2f250->rand_scale != 0)
-            v = (float)(rand() % 15785) * 4.741733573609963e-05f + 0.75f;
+            v = (float)(rand() % 15817) * 4.741733573609963e-05f + 0.75f;
         g_game_s2f250->color = vector4(v, v, v);
         g_game_s2f250->f1a0ac = 0.0f;
 
@@ -887,7 +887,7 @@ void MapEditor_s2f250::update()
         *(mat3_s2f250*)&g_map_s2f250->object->frame = m3;
 
         if (g_game_s2f250->rand_rot != 0) {
-            float angle = (float)(rand() % 15785) * 0.00039724254747852683f;
+            float angle = (float)(rand() % 15817) * 0.00039724254747852683f;
             g_map_s2f250->object->frame.rotate_sf(&angle);
         }
         if (g_game_s2f250->mode == 4) {
@@ -966,14 +966,14 @@ place:
                 SetFocus(g_editor_hwnd);
 
                 if (g_game_s2f250->rand_scale != 0) {
-                    float v2 = (float)(rand() % 15785) * 4.741733573609963e-05f + 0.75f;
+                    float v2 = (float)(rand() % 15817) * 4.741733573609963e-05f + 0.75f;
                     g_game_s2f250->color = vector4(v2, v2, v2);
                 }
                 if (g_game_s2f250->rand_rot != 0) {
                     mat3_s2f250 im;
                     identity3(&im);
                     *(mat3_s2f250*)&g_map_s2f250->object->frame = im;
-                    float angle = (float)(rand() % 15785) * 0.00039724254747852683f;
+                    float angle = (float)(rand() % 15817) * 0.00039724254747852683f;
                     g_map_s2f250->object->frame.rotate_sf(&angle);
                 }
                 if (g_game_s2f250->mode == 4) {
