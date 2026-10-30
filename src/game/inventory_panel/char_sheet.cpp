@@ -69,8 +69,7 @@ struct CharSheetWidget {
     char pad182[0x184 - 0x182];
     int f184;                                   // +0x184
     char b188;                                  // +0x188
-    char pad189[0x1f8 - 0x189];
-    int skill_index;                            // +0x1f8
+    char pad189[3];                             // (0x190-byte panels; skill rows are 0x188 bytes)
 
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();
     virtual void v05(); virtual void v06(); virtual void v07(); virtual void v08(); virtual void v09();
@@ -94,7 +93,6 @@ struct CharSheetWidget {
     virtual void v45(); virtual void v46(); virtual void v47(); virtual void v48(); virtual void v49();
     virtual void add_child(CharSheetWidget* child);                          // +0xc8  (slot 50)
 };
-typedef char chk_csw_skill[offsetof(CharSheetWidget, skill_index) == 0x1f8 ? 1 : -1];
 typedef char chk_csw_px[offsetof(CharSheetWidget, px) == 0xe8 ? 1 : -1];
 typedef char chk_csw_py[offsetof(CharSheetWidget, py) == 0xec ? 1 : -1];
 typedef char chk_csw_pw[offsetof(CharSheetWidget, pw) == 0xf0 ? 1 : -1];
@@ -355,7 +353,6 @@ void CharSheet::init()
                 row = 0;
             }
             skill_row[i] = row;
-            row->skill_index = (int)i;              // rows are created in skill order; nothing else ever wrote it
             label_refresh(row, tstring("char_b_skills_base"));
 
             int extra;
@@ -370,14 +367,6 @@ void CharSheet::init()
             }
 
             float rowy = (float)(extra + i) * skills_y + row->py;
-            { FILE* pf_ = fopen("cs_rows.txt", "at");
-              if (pf_) { unsigned* w = (unsigned*)row;
-                         fprintf(pf_, "skill %d px=%g py=%g pw=%g rowy=%g | e0=%g e4=%g e8=%g ec=%g off_px=%d off_skill=%d\n",
-                                 i, row->px, row->py, row->pw, rowy,
-                                 *(float*)((char*)w + 0xe0), *(float*)((char*)w + 0xe4),
-                                 *(float*)((char*)w + 0xe8), *(float*)((char*)w + 0xec),
-                                 (int)offsetof(CharSheetWidget, px), (int)offsetof(CharSheetWidget, skill_index));
-                         fclose(pf_); } }
             v.x = row->px;
             v.y = rowy;
             row->set_rect(&v);
@@ -387,7 +376,7 @@ void CharSheet::init()
             v.y = skills_y;
             row->set_scale(&v);
 
-            int idx = row->skill_index;
+            int idx = skill_id[i];                   // fill_skills' list of active skills (0x5079f8: [&skill_row[i] + 0x1f8])
             char* base = (char*)g_skill_tbl + idx * 0x44;
             tstring* nm = g_strtable.find((tstring*)(base + 0x20));
             if (nm == 0)
@@ -652,7 +641,7 @@ void CharSheet::init()
         float inc_ya = config_float_walk(tstring("char_b_attrib_increment_y_a"));
         float inc_x = config_float_walk(tstring("char_b_attrib_increment_x"));
         tstring plus("+");
-        row->plus10 = make_button(attribs, &plus, rowy - inc_ya, inc_x, 1, inc_h);
+        row->plus10 = make_button(attribs, &plus, inc_x, rowy - inc_ya, 1, inc_h);
         skill_val[i] = (Widget*)row->plus10;         // +0x45c: refresh_panels shows/hides the '+' per attribute
 
         float ts_x = config_float_walk(tstring("char_b_attrib_increment_t_s"));
