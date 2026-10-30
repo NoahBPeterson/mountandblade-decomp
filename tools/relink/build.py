@@ -186,6 +186,7 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
                 if tgt is not None and (tgt == want or slot_equivalent(icf_map, name, by_addr.get(tgt) or [])):
                     report.setdefault("thunk_slots", []).append([vt, k, name])
                     comparable += 1
+                    agree += 1
                     continue
             if want != have and k == 0 and is_deleting_dtor(name) and any(is_deleting_dtor(n) for n in by_addr.get(have) or []):
                 # slot 0 on both sides is a deleting destructor: ours the compiler's, the original's a function the
