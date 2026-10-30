@@ -1050,10 +1050,10 @@ void rgl::mesh::set_offset(const vector4& pos)
         p->b.z += dz;
         for (int j = 0; j < kf.count; j++) {
             rgl::frame_t& f = kf.frames[j];
-            float fx = f.norms[i].x * pos.x, fy = f.norms[i].y * pos.x, fz = f.norms[i].z * pos.x;
-            f.verts[idx].x += fx;
-            f.verts[idx].y += fy;
-            f.verts[idx].z += fz;
+            vector4 fo = hv_mulv(f.norms[i], pos.x);
+            f.verts[idx].x += fo.x;
+            f.verts[idx].y += fo.y;
+            f.verts[idx].z += fo.z;
         }
     }
     slots[0].f28 = 1;                       // +0x138 (dirty flag)
