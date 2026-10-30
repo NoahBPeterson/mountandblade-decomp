@@ -103,9 +103,14 @@ def main():
     return report_text(open(log_path, errors="replace").read())
 
 
+# an int3 in the game's own code (a diagnostic __debugbreak) stops winedbg with only the next instruction printed after
+# the prompt, no "Unhandled exception" line: e.g. "Wine-dbg>0x00000000499beb mb_standalone+0x99beb: movl (%esi), %edx"
+DEBUGBREAK = re.compile(r"Wine-dbg>(0x[0-9a-f]+ " + re.escape(NAME) + r"\+0x[0-9a-f]+:.*)")
+
+
 def stopped(text):
     return ("Unhandled exception" in text or "Stopped on breakpoint" in text
-            or "watchpoint" in text.lower() or "Hardware watchpoint" in text)
+            or "watchpoint" in text.lower() or "Hardware watchpoint" in text or DEBUGBREAK.search(text) is not None)
 
 
 def symbol_address(s):
@@ -191,8 +196,9 @@ def hang_dump(a, game, log_path):
 def report_text(text, hung=False):
     """Name the fault (or, for a hang, each thread's position) and the code addresses on each stack."""
     m = re.search(r"Unhandled exception: (.*)|(Stopped on breakpoint.*)", text)
+    d = DEBUGBREAK.search(text)
     if not hung:
-        print((m[1] or m[2]) if m else "exited without an exception")
+        print((m[1] or m[2]) if m else ("stopped at a __debugbreak, next instruction " + d[1]) if d else "exited without an exception")
     tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "addr2sym.py")
     blocks = [b for b in re.split(r"(?=EIP:[0-9a-f]{8})", text) if b.startswith("EIP:")]
     for blk in blocks:
