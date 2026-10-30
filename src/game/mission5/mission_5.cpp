@@ -29,6 +29,8 @@
 #define g_513710    (*(Mgr513710_s25160*)0x5e291c)
 #undef g_big
 #define g_big       (*(Big5e292c_s25160**)0x5e292c)
+// agent record i of the mission (pages of 16, 0x5928 bytes each)
+#define REC_S25160(i) ((*(char***)((char*)g_big + 0x1c))[(i) >> 4] + ((i) & 0xf) * 0x5928)
 // @ 0x525160
 void Game_s25160::handle_event(int code)
 {
@@ -73,34 +75,34 @@ void Game_s25160::handle_event(int code)
             f11e4->v45();
         }
     }
-    goto shown;
+    {
+        for (int i = 0; i < 5; ++i)
+        {
+            b = *(char**)0x5e2930;
+            if (*(char*)(b + 0x1a290 + i) == 0)
+                continue;
+            int l1;
+            int l2;
+            f11ec[i]->v41(&l1, (void*)(b + 0x1a240 + i * 0x10));   // out value first, the record second (0x525301)
+            f11ec[i]->v37(&l2);
+            *(char*)(*(char**)0x5e2930 + 0x1a290 + i) = 0;   // the calls above may have swapped the global: 0x525322 re-reads it
+        }
+    }
+    goto done;
 hide:
     f11e0->v44();
-shown:
-
-    for (int i = 0; i < 5; ++i)
-    {
-        b = *(char**)0x5e2930;
-        if (*(char*)(b + 0x1a290 + i) == 0)
-            continue;
-        int l1;
-        int l2;
-        f11ec[i]->v41((void*)(b + 0x1a240 + i * 0x10), &l1);
-        f11ec[i]->v37(&l2);
-        *(char*)(b + 0x1a290 + i) = 0;
-    }
+done:
 
     *(char*)(g_big + 0x6554) = 1;
 
     int res = -1;
     if (*(int*)0x8ed50dc >= 0)
     {
-        *(int*)(*(char**)((void**)*(void***)((char*)g_big + 0x1c))[*(int*)0x8ed50dc >> 4] + 0x31c)
-            = *(int*)((char*)g_big + 0x5c);
-        *(int*)(*(char**)((void**)*(void***)((char*)g_big + 0x1c))[*(int*)0x8ed50dc >> 4] + 0x533c) = 2;
-        *(int*)(*(char**)((void**)*(void***)((char*)g_big + 0x1c))[*(int*)0x8ed50dc >> 4] + 0x5338) = 0;
-        ((Chunk_s25160*)*(char**)((void**)*(void***)((char*)g_big + 0x1c))[*(int*)0x8ed50dc >> 4])
-            ->m_4464d0(0);
+        char* rec = REC_S25160(*(int*)0x8ed50dc);
+        *(int*)(rec + 0x31c) = *(int*)((char*)g_big + 0x5c);
+        *(int*)(rec + 0x533c) = 2;
+        *(int*)(rec + 0x5338) = 0;
+        ((Chunk_s25160*)rec)->m_4464d0(0);
     }
 
     g_big->m_483f60(code, 0);
@@ -108,9 +110,9 @@ shown:
     {
         if (*(int*)((char*)g_big + 0x5c) >= 0)
         {
-            ((Chunk_s25160*)*(char**)((void**)*(void***)((char*)g_big + 0x1c))[*(int*)((char*)g_big + 0x5c) >> 4])
-                ->m_4f8bc0();
-            *(int*)(*(char**)((void**)*(void***)((char*)g_big + 0x1c))[*(int*)((char*)g_big + 0x5c) >> 4] + 0x55d0) = 0;
+            char* rec = REC_S25160(*(int*)((char*)g_big + 0x5c));
+            ((Chunk_s25160*)rec)->m_4f8bc0();
+            *(int*)(rec + 0x55d0) = 0;
         }
     }
 
@@ -2427,8 +2429,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
     }
 
     if (chosen < 0) {
-        tstring key("ui_unable_to_take");
-        g_gui_s2b5c0.add(*g_strtable_s2b5c0.lookup(key), -1);
+        ((MsgLog*)&g_gui_s2b5c0)->add(*g_strtable_s2b5c0.lookup(tstring("ui_unable_to_take")), -1);   // one copy of the table string (0x52b9dc); the Gui_ wrapper would add a second
         return false;
     }
 
@@ -2443,7 +2444,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
             tstring key("ui_picking_up");
             sprintf(buf, g_strtable_s2b5c0.lookup(key)->c_str(), newname);
         }
-        g_gui_s2b5c0.add(tstring(buf), -1);
+        ((MsgLog*)&g_gui_s2b5c0)->add(tstring(buf), -1);
     } else {
         slot->name(oldname);
         order->name(newname);
@@ -2451,7 +2452,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
             tstring key("ui_dropping_picking_up");
             sprintf(buf, g_strtable_s2b5c0.lookup(key)->c_str(), oldname, newname);
         }
-        g_gui_s2b5c0.add(tstring(buf), -1);
+        ((MsgLog*)&g_gui_s2b5c0)->add(tstring(buf), -1);
 
         unsigned k = g_items_s2b5c0[slot->id].kind & 0xff;
         bool place = false;
@@ -2769,10 +2770,13 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
     float r2 = this->f_c3b0e0 * 10.0f + speed;
     r2 = r2 * r2;
 
-    int row = 0;
+    int cell[2];   // brush() reads {col, row} through one pointer (0x52c0a1: [esp+0x1c], [esp+0x20])
+    int& row = cell[1];
+    int& col = cell[0];
+    row = 0;
     if (this->f27c >= 0) {
         do {
-            int col = 0;
+            col = 0;
             if (this->f278 >= 0) {
                 do {
                     int off = (col * 0xfb + row) * 0x94;
@@ -2789,7 +2793,7 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
                             return;
                         if (sel >= objs[0])
                             return;
-                        brush(objs, &sel, &col, &d, &m, &flag, &place);
+                        brush(objs, &sel, cell, &d, &m, &flag, &place);
                     }
                     col++;
                 } while (col <= this->f278);
