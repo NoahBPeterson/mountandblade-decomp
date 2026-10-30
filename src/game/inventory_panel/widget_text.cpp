@@ -244,7 +244,7 @@ static inline const char* name_of_3(int id)
 {
     char* mgr = g_game + 0xf8;
     int v = ((Map10007*)mgr)->lookup(id);
-    char* rec = *(char**)(mgr + 0x138d0 + (v >> 4) * 4) + (v & 0xf) * 0x5ac8;
+    char* rec = (*(char***)(mgr + 0x138d0))[v >> 4] + (v & 0xf) * 0x5ac8;      // the page table is a pointer (0x50ce86)
     const tstring* t = (const tstring*)(rec + 0xc);
     if (g_flag_a181b8) {
         t = (const tstring*)(rec + 0x20);
