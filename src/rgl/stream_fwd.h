@@ -4,16 +4,8 @@
 // of an owner's slot compiles to a bare `jmp` to the real function. Include this INSTEAD of stream.h, never with it.
 #ifndef RGL_STREAM_FWD_H
 #define RGL_STREAM_FWD_H
-#ifndef RGL_STREAM_H
 namespace rgl { struct string; }
-struct stream_base {                            // the base slots every concrete stream shares (rgl/stream.h)
-    virtual void reset();                       // 0x415220
-    virtual void rewind();                      // 0x415240
-    virtual bool at_end();                      // 0x415250
-    virtual void set_autoflush(char f);         // 0x415270
-    virtual char get_autoflush();               // 0x415280
-    virtual int flush();                        // 0x408020
-};
+struct stream_base;
 // A source's own stream root class declares the 21 typed slots through this (RT: its return type, STR: its string type;
 // P: "= 0" for the abstract root, empty for a concrete class).
 #define STREAM_SLOTS_OF(RT, STR, P) \
@@ -28,6 +20,16 @@ struct stream_base {                            // the base slots every concrete
     virtual RT& r_i64(__int64* v) P; virtual RT& r_int(int* v) P; \
     virtual RT& r_byte(char* v) P; virtual RT& r_tstr(STR* v) P; \
     virtual RT& slot22(void* v) P;
+#ifndef RGL_STREAM_H
+namespace rgl { struct string; }
+struct stream_base {                            // the base slots every concrete stream shares (rgl/stream.h)
+    virtual void reset();                       // 0x415220
+    virtual void rewind();                      // 0x415240
+    virtual bool at_end();                      // 0x415250
+    virtual void set_autoflush(char f);         // 0x415270
+    virtual char get_autoflush();               // 0x415280
+    virtual int flush();                        // 0x408020
+};
 #define STREAM_FWD_SLOT_DECLS \
     virtual stream_base& w_stream(stream_base* o); \
     virtual stream_base& w_float(float* v); \
@@ -102,6 +104,19 @@ struct bin_writer { virtual int flush(); };    // 0x417bb0
     SF_T(C, r_u64, unsigned __int64*, r_u64, unsigned __int64*) SF_T(C, r_i64, __int64*, r_i64, __int64*) \
     SF_T(C, r_int, int*, r_int, int*) SF_T(C, r_byte, char*, r_byte, char*) \
     SF_T(C, r_tstr, SF_STR*, r_tstr, rgl::string*)
+// the log file stream (log_stream, 0x595990): text_stream's write slots, r_stream and r_byte; the other read slots return *this
+#define STREAM_FWD_LOG_OUT(C) \
+    SF_T(C, w_stream, stream_base*, w_stream, stream_base*) \
+    SF_T(C, w_float, float*, w_float, float*) SF_T(C, w_bool, char*, w_bool, char*) \
+    SF_T(C, w_u64, unsigned __int64*, w_u64, unsigned __int64*) SF_T(C, w_i64, __int64*, w_i64, __int64*) \
+    SF_T(C, w_uint, unsigned*, w_int, int*) SF_T(C, w_int, int*, w_int, int*) \
+    SF_T(C, w_byte, unsigned char*, w_byte, unsigned char*) SF_T(C, w_cstr, const char*, w_cstr, const char*) \
+    SF_T(C, w_tstr, const SF_STR*, w_tstr, const rgl::string*) SF_COMMON_RET_THIS(C) \
+    SF_T(C, r_stream, stream_base*, r_stream, stream_base*) SF_T(C, r_byte, char*, r_byte, char*) \
+    SF_T(C, r_float, float*, slot12, void*) SF_T(C, r_bool, char*, slot12, void*) \
+    SF_T(C, r_uint, unsigned*, slot12, void*) SF_T(C, r_u64, unsigned __int64*, slot12, void*) \
+    SF_T(C, r_i64, __int64*, slot12, void*) SF_T(C, r_int, int*, slot12, void*) \
+    SF_T(C, r_tstr, SF_STR*, slot12, void*)
 // write halves of the in-memory binary table (mem_stream's)
 #define STREAM_FWD_MEM_WRITE(C) \
     SF_M(C, w_stream, stream_base*, w_stream, stream_base*) \
