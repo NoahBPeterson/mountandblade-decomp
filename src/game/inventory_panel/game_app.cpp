@@ -260,10 +260,10 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
     // the case bodies are laid out by the compiler in this order (see the disassembly at 0x50f163..)
     switch (msg) {
     case 0x101:                                 // WM_KEYUP
-        *(char*)(0x5e27c8 + wparam) = 0;
+        g_key_states[wparam] = 0;
         break;
     case 0x100:                                 // WM_KEYDOWN
-        *(char*)(0x5e27c8 + wparam) = 1;
+        g_key_states[wparam] = 1;
         break;
     case 0x20:                                  // WM_SETCURSOR
         if ((*(IDev9**)&g_render.dev) && m_bWindowed) {
