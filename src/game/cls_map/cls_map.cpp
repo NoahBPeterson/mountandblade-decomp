@@ -2147,36 +2147,32 @@ void OptionsScreen::open()
 }
 
 
-// ---- 0x4e05c0: the options screen ----------------------------------------------------------------------------------------------
-// helpers of the slice's reconstruction (a skeleton: the constants of the widget calls were not all recovered; the callee
-// prototypes opt_* are the slice's guesses of 0x4dce70 / 0x4dcc50)
-static const tstring& tex(const char* key)
-{
-    tstring k(key);
-    return *g_strtable_c.lookup(k);
-}
-// pair of floats handed to a widget slot (the original copies the constants onto the stack)
-static float* xy(float a, float b)
-{
-    static float v[2];
-    v[0] = a;
-    v[1] = b;
-    return v;
-}
-static __forceinline void ui_color(MissionUi* w, unsigned c) { vt(w)->d38(&c); }          // +0x98
-static __forceinline void ui_mesh_color(MissionUi* w, unsigned c) { vt(w)->d37(&c); }     // +0x94
-static __forceinline void ui_width(MissionUi* w, int n) { vt(w)->d29(&n); }               // +0x74
-#define F154(w) (*(float*)((char*)(w) + 0x154))                                           // slider range minimum (0x4e05c0)
-#define F158(w) (*(float*)((char*)(w) + 0x158))                                           // slider range maximum
+// ---- 0x4e05c0: OptionsWin::init (the video-options page) -----------------------------------------------------------------------
+// Every widget of the original in order, with its callee prototypes (make_hint 0x4dada0, new_medium_button 0x4dce70, new_sized_button
+// 0x4dcc50, make_slider 0x4dfd50, make_dropdown 0x4dfec0): the overlay window, the done button, the gamma string (g_scale_x*100 shown
+// as "2.20", or "ui_default" for the default) used for two labels, 25 text labels in two columns, update_perf, the change button, the
+// resolution drop-down (filled from list_modes), the gamma / texture-detail / ragdoll-limit / y / z sliders, the shadow, corpse, ragdoll,
+// blood and plant-shadow drop-downs, six toggle buttons (quality) and the shader-less tail that hides the gamma widgets.
+#define SL_MIN(w) (*(float*)((char*)(w) + 0x16c))   // slider range minimum (MissionUi +0x16c)
+#define SL_MAX(w) (*(float*)((char*)(w) + 0x170))   // slider range maximum
 static __forceinline int drop_count(DropDown* d) { return d->rows_first ? (int)(d->rows_last - d->rows_first) : 0; }
-static __forceinline void set_mesh_color4(gui_mesh* m, const float* c)                    // 0x47af30: the colour by value
-{
-    rgl::vector4 v;
-    v.x = c[0]; v.y = c[1]; v.z = c[2]; v.w = c[3];
-    m->set_color(v);
-}
-MissionUi* opt_make_medium_button(ContainerBase* parent, float x, float y, float w, float h, float k,
-                                  const tstring* a, const tstring* b);   // 0x4dcc50
+// the three calls every label gets: width (+0x74), colour (+0x98), mesh colour (+0x94), all with COLOR_ENABLED
+#define LABEL_STYLE(m, wd) \
+    { int v_ = (wd); vt(m)->d29(&v_); } \
+    { unsigned c_ = COLOR_ENABLED; vt(m)->d38(&c_); } \
+    { unsigned c_ = COLOR_ENABLED; vt(m)->d37(&c_); }
+#define LABEL(m, key, x, y, w, h) \
+    { tstring k_(key); m = make_hint(window, *g_strtable_c.lookup(k_), x, y, w, h); } \
+    LABEL_STYLE(m, 4)
+// a toggle button: "ui_enabled" text, the two button textures, flag 1, the current value of an option, then the "enabled"/"disabled" caption
+#define QBTN(m, y, getval) \
+    { tstring k_("ui_enabled"); tstring* t_ = g_strtable_c.lookup(k_); tstring d_("medium_button_down"); tstring u_("medium_button"); \
+      m = new_sized_button((MissionUi*)window, *t_, 0.52f, y, 0.035f, u_, d_, 3.7f, 0.072f, 0.085f); } \
+    ((UiAInline*)m)->f184 = 1; \
+    vt(m)->d11(getval); \
+    set_enabled_text(m);
+#define DD_ITEM(dd, key) { tstring k_(key); vt(dd)->d50(g_strtable_c.lookup(k_)); }
+#define DD_TEXT(dd, text) { tstring t_(text); vt(dd)->d50(&t_); }
 
 // @ 0x4e05c0
 void OptionsWin::init()
@@ -2184,217 +2180,129 @@ void OptionsWin::init()
     f_ec = 0;
     f_ed = 0;
     day_saved = g_cfg.texture_detail;
+    g_gui.reset();
+    { NEW_OVERLAY_WINDOW(p_) window = p_; }
     {
-        g_gui.reset();
-        NEW_OVERLAY_WINDOW(w)
-        vt(w)->d22(xy(-0.001f, -0.001f)); // @@inner@@
-        vt(w)->d25(xy(1.0101f, 0.7505f));
-        {
-            tstring empty("");
-            tstring title("");
-            vt(w)->d41(&title, &empty);
-        }
-        ui_color(w, 0xffdfcfbf);
-        { tstring n_("options_window"); vt(w)->d31(0, res_get(n_)->clone()); }
-        window = w;
+        float p[2];
+        p[0] = -0.001f; p[1] = -0.001f;
+        vt(window)->d22(p);
     }
-    done = new_medium_button((MissionUi*)window, &tex("ui_done"), 0.24f, 0.7f, 0.76f);
-    {   // version number, shown in place of the refresh rate
-        char buf[0x100];
-        _itoa((int)(g_scale_x * 100.0f), buf, 10);   // cl: fld; call __ftol2 (0x535a64)
-        tstring version(buf);
-        tstring dot(".");
-        version.insert(1, dot);
-        if (version.equals("2.20"))
-            version = tex("ui_default");
-        refresh_rate = make_hint(window, version, 0.52f, 0.8f, 0.7f, 0.3f);
+    {
+        float s[2];
+        s[0] = 1.002f; s[1] = 0.752f;
+        vt(window)->d25(s);
+    }
+    {
+        tstring k("");
+        float o_[2];
+        vt(window)->d41(o_, &k);
+    }
+    {
+        unsigned c = COLOR_ENABLED;
+        vt(window)->d38(&c);
+    }
+    {
+        gui_mesh* m;
+        {
+            tstring k("options_window");
+            m = res_get(k)->clone();
+        }
+        vt(window)->d31(0, m);
+    }
+    { tstring k("ui_done"); done = new_medium_button((MissionUi*)window, g_strtable_c.lookup(k), 0.75f, 0.02f, 0.05f); }
+
+    // the gamma as text: g_scale_x * 100 with a point after the first digit; the default 2.20 is shown as "ui_default"
+    char buf[0x80];
+    _itoa((int)(g_scale_x * 100.0f), buf, 10);
+    tstring gamma_text(buf);
+    { tstring dot("."); gamma_text.insert(1, dot); }
+    if (gamma_text.equals("2.20")) {
+        tstring k("ui_default");
+        gamma_text = *g_strtable_c.lookup(k);
     }
 
-    int n4 = 4;
-    {   // DirectX version
-        refresh_rate = make_hint(window, tex("ui_enable_vertex_shaders2"), 0.2f, 0.8f, 0.7f, 0.3f);
-        ui_width(refresh_rate, n4);
-        ui_mesh_color(refresh_rate, 0xffdfcfbf);
+    // the first label starts as the gamma text, then d41 replaces it with the DirectX version
+    val_vertex_shaders = make_hint(window, gamma_text, 0.52f, 0.7f, 0.3f, 0.035f);
+    {
+        int v = 4;
+        vt(val_vertex_shaders)->d29(&v);
+        unsigned c[2];
+        c[0] = COLOR_ENABLED;
+        vt(val_vertex_shaders)->d38(c);
         {
             tstring s(g_cfg.use_vertex_shaders ? "DirectX 9" : "DirectX 7");
-            int anchor[3] = { 0, 0, 0 };
-            vt(refresh_rate)->d41(anchor, &s);
+            vt(val_vertex_shaders)->d41(c, &s);   // c doubles as the out buffer
         }
-        ui_color(refresh_rate, 0xffdfcfbf);
+        vt(val_vertex_shaders)->d37(c);           // ... and is what d37 receives next (the original reuses the slot)
     }
-    {   // vertex shaders
-        vertex_shaders = make_hint(window, tex("ui_enable_vertex_shaders2"), 0.2f, 0.8f, 0.7f, 0.3f);
-        ui_width(vertex_shaders, n4);
-        ui_mesh_color(vertex_shaders, 0xffdfcfbf);
-        ui_color(vertex_shaders, 0xffdfcfbf);
+    LABEL(lbl_vertex_shaders, "ui_enable_vertex_shaders2", 0.2f, 0.7f, 0.3f, 0.035f)
+    LABEL(lbl_screen_size, "ui_screen_size2", 0.2f, 0.66f, 0.3f, 0.035f)
+    LABEL(lbl_gamma, "ui_gamma", 0.2f, 0.62f, 0.3f, 0.035f)
+    val_gamma = make_hint(window, gamma_text, 0.823f, 0.615f, 0.3f, 0.035f);
+    LABEL_STYLE(val_gamma, 4)
+    LABEL(lbl_shadow_quality, "ui_shadow_quality2", 0.2f, 0.58f, 0.3f, 0.035f)
+    LABEL(lbl_texture_detail, "ui_texture_detail", 0.2f, 0.54f, 0.3f, 0.035f)
+    {
+        {
+            tstring k("ui_percentage_value");
+            sprintf(buf, g_strtable_c.lookup(k)->c_str(), g_cfg.texture_detail);
+        }
+        tstring t(buf);
+        val_texture_detail = make_hint(window, t, 0.823f, 0.535f, 0.3f, 0.035f);
     }
-    {   // screen size
-        screen_size = make_hint(window, tex("ui_screen_size2"), 0.2f, 0.76f, 0.7f, 0.3f);
-        ui_width(screen_size, n4);
-        ui_mesh_color(screen_size, 0xffdfcfbf);
-        ui_color(screen_size, 0xffdfcfbf);
+    LABEL_STYLE(val_texture_detail, 4)
+    LABEL(lbl_grass_density, "ui_grass_density", 0.2f, 0.5f, 0.3f, 0.035f)
+    {
+        {
+            tstring k("ui_percentage_value");
+            sprintf(buf, g_strtable_c.lookup(k)->c_str(), g_ragdoll_lim);
+        }
+        tstring t(buf);
+        val_grass_density = make_hint(window, t, 0.823f, 0.495f, 0.3f, 0.035f);
     }
-    {   // gamma
-        gamma = make_hint(window, tex("ui_gamma"), 0.2f, 0.74f, 0.7f, 0.3f);
-        ui_width(gamma, n4);
-        ui_mesh_color(gamma, 0xffdfcfbf);
-        ui_color(gamma, 0xffdfcfbf);
-    }
-    {   // texture detail
-        texture_detail = make_hint(window, tex("ui_texture_detail"), 0.2f, 0.7f, 0.62f, 0.3f);
-        ui_width(texture_detail, n4);
-        ui_mesh_color(texture_detail, 0xffdfcfbf);
-        ui_color(texture_detail, 0xffdfcfbf);
-    }
-    {   // texture quality (%)
-        char buf[0x100];
-        const char* fmt = tex("ui_percentage_value").buf;
-        sprintf(buf, fmt, g_cfg.texture_detail);
-        tstring text(buf);
-        texture_quality = make_hint(window, text, 0.62f, 0.8f, 0.7f, 0.3f);
-        ui_width(texture_quality, n4);
-        ui_mesh_color(texture_quality, 0xffdfcfbf);
-        ui_color(texture_quality, 0xffdfcfbf);
-    }
-    {   // shadow quality label
-        char buf[0x100];
-        const char* fmt = tex("ui_percentage_value").buf;
-        sprintf(buf, fmt, g_ragdoll_lim);
-        tstring text(buf);
-        shadow_quality_label = make_hint(window, text, 0.62f, 0.8f, 0.7f, 0.3f);
-        ui_width(shadow_quality_label, n4);
-        ui_mesh_color(shadow_quality_label, 0xffdfcfbf);
-        ui_color(shadow_quality_label, 0xffdfcfbf);
-    }
-    {   // grass density
-        grass_density = make_hint(window, tex("ui_grass_density"), 0.54f, 0.8f, 0.7f, 0.3f);
-        ui_width(grass_density, n4);
-        ui_mesh_color(grass_density, 0xffdfcfbf);
-        ui_color(grass_density, 0xffdfcfbf);
-    }
-    {   // ragdoll quality
-        ragdoll_quality = make_hint(window, tex("ui_character_detail"), 0.2f, 0.72f, 0.7f, 0.3f);
-        ui_width(ragdoll_quality, n4);
-        ui_mesh_color(ragdoll_quality, 0xffdfcfbf);
-        ui_color(ragdoll_quality, 0xffdfcfbf);
-    }
-    {   // character detail: low
-        char_detail_low = make_hint(window, tex("ui_low"), 0.33f, 0.12f, 0.3f, 0.3f);
-        ui_width(char_detail_low, n4);
-        ui_mesh_color(char_detail_low, 0xffdfcfbf);
-        ui_color(char_detail_low, 0xffdfcfbf);
-    }
-    {   // character detail: high
-        char_detail_high = make_hint(window, tex("ui_high"), 0.33f, 0.12f, 0.8f, 0.3f);
-        ui_width(char_detail_high, n4);
-        ui_mesh_color(char_detail_high, 0xffdfcfbf);
-        ui_color(char_detail_high, 0xffdfcfbf);
-    }
-    {   // character shadow detail
-        char_shadow_detail = make_hint(window, tex("ui_character_shadow_detail"), 0.2f, 0.68f, 0.7f, 0.3f);
-        ui_width(char_shadow_detail, n4);
-        ui_mesh_color(char_shadow_detail, 0xffdfcfbf);
-        ui_color(char_shadow_detail, 0xffdfcfbf);
-    }
-    {   // character shadow detail: low
-        char_shadow_low = make_hint(window, tex("ui_low"), 0.33f, 0.12f, 0.6f, 0.3f);
-        ui_width(char_shadow_low, n4);
-        ui_mesh_color(char_shadow_low, 0xffdfcfbf);
-        ui_color(char_shadow_low, 0xffdfcfbf);
-    }
-    {   // character shadow detail: high
-        char_shadow_high = make_hint(window, tex("ui_high"), 0.33f, 0.12f, 0.8f, 0.3f);
-        ui_width(char_shadow_high, n4);
-        ui_mesh_color(char_shadow_high, 0xffdfcfbf);
-        ui_color(char_shadow_high, 0xffdfcfbf);
-    }
-    {   // number of corpses
-        corpses_list = make_hint(window, tex("ui_number_of_corpses"), 0.2f, 0.6f, 0.7f, 0.3f);
-        ui_width(corpses_list, n4);
-        ui_mesh_color(corpses_list, 0xffdfcfbf);
-        ui_color(corpses_list, 0xffdfcfbf);
-    }
-    {   // number of ragdolls
-        ragdolls_list = make_hint(window, tex("ui_number_of_ragdolls"), 0.2f, 0.54f, 0.7f, 0.3f);
-        ui_width(ragdolls_list, n4);
-        ui_mesh_color(ragdolls_list, 0xffdfcfbf);
-        ui_color(ragdolls_list, 0xffdfcfbf);
-    }
-    {   // blood stains
-        blood_list = make_hint(window, tex("ui_blood_stains"), 0.2f, 0.48f, 0.7f, 0.3f);
-        ui_width(blood_list, n4);
-        ui_mesh_color(blood_list, 0xffdfcfbf);
-        ui_color(blood_list, 0xffdfcfbf);
-    }
-    {   // dynamic lighting
-        dynamic_lighting = make_hint(window, tex("ui_dynamic_lighting"), 0.2f, 0.42f, 0.7f, 0.3f);
-        ui_width(dynamic_lighting, n4);
-        ui_mesh_color(dynamic_lighting, 0xffdfcfbf);
-        ui_color(dynamic_lighting, 0xffdfcfbf);
-    }
-    {   // character shadows
-        character_shadows = make_hint(window, tex("ui_character_shadows"), 0.2f, 0.36f, 0.7f, 0.3f);
-        ui_width(character_shadows, n4);
-        ui_mesh_color(character_shadows, 0xffdfcfbf);
-        ui_color(character_shadows, 0xffdfcfbf);
-    }
-    {   // environment shadows
-        environment_shadows = make_hint(window, tex("ui_environment_shadows"), 0.2f, 0.3f, 0.7f, 0.3f);
-        ui_width(environment_shadows, n4);
-        ui_mesh_color(environment_shadows, 0xffdfcfbf);
-        ui_color(environment_shadows, 0xffdfcfbf);
-    }
-    {   // realistic shadows on plants
-        realistic_shadows = make_hint(window, tex("ui_realistic_shadows_on_plants"), 0.2f, 0.24f, 0.7f, 0.3f);
-        ui_width(realistic_shadows, n4);
-        ui_mesh_color(realistic_shadows, 0xffdfcfbf);
-        ui_color(realistic_shadows, 0xffdfcfbf);
-    }
-    {   // particle systems
-        particle_systems = make_hint(window, tex("ui_particle_systems"), 0.2f, 0.18f, 0.7f, 0.3f);
-        ui_width(particle_systems, n4);
-        ui_mesh_color(particle_systems, 0xffdfcfbf);
-        ui_color(particle_systems, 0xffdfcfbf);
-    }
-    {   // anisotropic filtering
-        anisotropic_filtering = make_hint(window, tex("ui_anisotropic_filtering"), 0.2f, 0.12f, 0.7f, 0.3f);
-        ui_width(anisotropic_filtering, n4);
-        ui_mesh_color(anisotropic_filtering, 0xffdfcfbf);
-        ui_color(anisotropic_filtering, 0xffdfcfbf);
-    }
-    {   // fast water reflection
-        fast_water = make_hint(window, tex("ui_fast_water_reflection"), 0.2f, 0.06f, 0.7f, 0.3f);
-        ui_width(fast_water, n4);
-        ui_mesh_color(fast_water, 0xffdfcfbf);
-        ui_color(fast_water, 0xffdfcfbf);
-    }
-    {   // quality estimate
-        int n16 = 16;
-        quality_label = make_hint(window, tex(""), 0.68f, 0.08f, 0.7f, 0.3f);
-        ui_width(quality_label, n16);
-        ui_mesh_color(quality_label, 0xffdfcfbf);
-        ui_color(quality_label, 0xffdfcfbf);
-    }
+    LABEL_STYLE(val_grass_density, 4)
+    LABEL(lbl_char_detail, "ui_character_detail", 0.2f, 0.46f, 0.3f, 0.035f)
+    LABEL(lbl_char_low, "ui_low", 0.52f, 0.45f, 0.03f, 0.05f)
+    LABEL(lbl_char_high, "ui_high", 0.823f, 0.45f, 0.03f, 0.05f)
+    LABEL(lbl_char_shadow_detail, "ui_character_shadow_detail", 0.2f, 0.42f, 0.3f, 0.035f)
+    LABEL(lbl_shadow_low, "ui_low", 0.52f, 0.41f, 0.03f, 0.05f)
+    LABEL(lbl_shadow_high, "ui_high", 0.823f, 0.41f, 0.03f, 0.05f)
+    LABEL(lbl_corpses, "ui_number_of_corpses", 0.2f, 0.38f, 0.3f, 0.035f)
+    LABEL(lbl_ragdolls, "ui_number_of_ragdolls", 0.2f, 0.34f, 0.3f, 0.035f)
+    LABEL(lbl_blood_stains, "ui_blood_stains", 0.2f, 0.3f, 0.3f, 0.035f)
+    LABEL(lbl_dynamic_lighting, "ui_dynamic_lighting", 0.2f, 0.26f, 0.3f, 0.035f)
+    LABEL(lbl_character_shadows, "ui_character_shadows", 0.2f, 0.22f, 0.3f, 0.035f)
+    LABEL(lbl_environment_shadows, "ui_environment_shadows", 0.2f, 0.18f, 0.3f, 0.035f)
+    LABEL(lbl_realistic_shadows, "ui_realistic_shadows_on_plants", 0.2f, 0.14f, 0.3f, 0.035f)
+    LABEL(lbl_particle_systems, "ui_particle_systems", 0.2f, 0.1f, 0.3f, 0.035f)
+    LABEL(lbl_anisotropic, "ui_anisotropic_filtering", 0.2f, 0.06f, 0.3f, 0.035f)
+    LABEL(lbl_fast_water, "ui_fast_water_reflection", 0.2f, 0.02f, 0.3f, 0.035f)
+    { tstring k(""); quality_label = make_hint(window, k, 0.68f, 0.08f, 0.3f, 0.035f); }
+    LABEL_STYLE(quality_label, 16)
 
     update_perf(this);
 
-    change = new_medium_button((MissionUi*)window, &tex("ui_change"), 0.68f, 0.65f, 0.705f);
+    { tstring k("ui_change"); change = new_medium_button((MissionUi*)window, g_strtable_c.lookup(k), 0.65f, 0.705f, 0.035f); }
 
     {   // resolution
-        resolution = make_dropdown(window, &tex("Resolution"), 0.52f, 0.66f);
-        float c[4];
-        c[0] = 0.7f;
-        c[1] = 0.7f;
-        c[2] = 1.0f;
-        c[3] = 0.7f;
-        set_mesh_color4((gui_mesh*)resolution->tracks[2], c);
-        set_mesh_color4((gui_mesh*)resolution->tracks[1], c);
-        set_mesh_color4((gui_mesh*)resolution->tracks[3], c);
+        { tstring k("Resolution"); resolution = make_dropdown((MissionUi*)window, &k, 0.52f, 0.665f); }
+        // The original builds this vector4 with the 3-argument constructor and never sets w, so it passes a stale stack word
+        // (the first call at 0x4e1792 reads [esp+0x2c]); the value is whatever the frame held and cannot be reproduced, so w is
+        // given 1.0 here instead of a compile-dependent leftover.
+        rgl::vector4 v;
+        v.w = 1.0f;
+        v.x = 0.7f; v.y = 0.7f; v.z = 1.0f;
+        ((gui_mesh*)resolution->tracks[2])->set_color(v);
+        v.x = 0.7f; v.y = 0.7f; v.z = 1.0f;
+        ((gui_mesh*)resolution->tracks[1])->set_color(v);
+        v.x = 0.7f; v.y = 0.7f; v.z = 1.0f;
+        ((gui_mesh*)resolution->tracks[3])->set_color(v);
         float sc[2];
-        sc[0] = 0.014f;
-        sc[1] = 0.014f;
+        sc[0] = 0.0139999995f;   // 0x3c656041 (0.014f would be 0x3c656042)
+        sc[1] = 0.0139999995f;
         vt(resolution)->d27(sc);
-        sc[1] = 0.008f;
+        sc[0] = 0.0139999995f;
+        sc[1] = 0.00805f;
         vt(resolution)->d28(sc);
         vt(resolution)->d03();
         resolution->fD8 = 0.7f;
@@ -2412,127 +2320,98 @@ void OptionsWin::init()
                 ok = m.name.find(tstring("32 bits"), 0) >= 0;
             if (ok) {
                 vt(resolution)->d50(&m.name);
-                char buf[0x100];
-                sprintf(buf, "%dx%d", g_cfg.display_width, g_cfg.display_height);
-                ok = m.name.find(tstring(buf), 0) >= 0;
+                char mb[0x80];
+                sprintf(mb, "%dx%d", g_cfg.display_width, g_cfg.display_height);
+                ok = m.name.find(tstring(mb), 0) >= 0;
                 if (ok)
                     vt(resolution)->d11(drop_count(resolution) - 1);
             }
         }
-        vt(resolution)->d50((void*)&tex("ui_use_desktop_resolution2"));
+        DD_ITEM(resolution, "ui_use_desktop_resolution2")
         if (g_cfg.display_width == 0)
             vt(resolution)->d11(drop_count(resolution) - 1);
     }
 
-    ui_scale = make_slider(window, 0.56f, 0.625f, 1.0f);
-    F154(ui_scale) = 1.5f;
-    F158(ui_scale) = 2.5f;
+    ui_scale = make_slider((MissionUi*)window, 0.56f, 0.625f, 1.0f);
+    SL_MIN(ui_scale) = 1.5f;
+    SL_MAX(ui_scale) = 2.5f;
     vt(ui_scale)->d13(g_scale_x);
 
     {   // shadow quality
-        shadow_quality = make_dropdown(window, &tex("ShadowQ"), 0.52f, 0.585f);
-        vt(shadow_quality)->d50((void*)&tex("ui_m_ultra_high2"));
-        vt(shadow_quality)->d50((void*)&tex("ui_m_high2"));
-        vt(shadow_quality)->d50((void*)&tex("ui_m_low2"));
-        vt(shadow_quality)->d11(2 - g_cfg.unk6c);
+        { tstring k("ShadowQ"); shadow_quality = make_dropdown((MissionUi*)window, &k, 0.52f, 0.585f); }
+        DD_ITEM(shadow_quality, "ui_m_ultra_high2")
+        DD_ITEM(shadow_quality, "ui_m_high2")
+        DD_ITEM(shadow_quality, "ui_m_low2")
+        vt(shadow_quality)->d11(2 - g_cfg.unk6c);   // 0x5aa004
     }
 
-    days = make_slider(window, 0.56f, 0.545f, 1.0f);
-    F154(days) = 10.0f;
-    F158(days) = 100.0f;
+    days = make_slider((MissionUi*)window, 0.56f, 0.545f, 1.0f);
+    SL_MIN(days) = 10.0f;
+    SL_MAX(days) = 100.0f;
     vt(days)->d13((float)g_cfg.texture_detail);
 
-    ragdoll_limit = make_slider(window, 0.56f, 0.505f, 1.0f);
-    F154(ragdoll_limit) = 0.0f;
-    F158(ragdoll_limit) = 100.0f;
+    ragdoll_limit = make_slider((MissionUi*)window, 0.56f, 0.505f, 1.0f);
+    SL_MIN(ragdoll_limit) = 0.0f;
+    SL_MAX(ragdoll_limit) = 100.0f;
     vt(ragdoll_limit)->d13((float)g_ragdoll_lim);
 
-    y_scale = make_slider(window, 0.56f, 0.465f, 1.0f);
+    y_scale = make_slider((MissionUi*)window, 0.56f, 0.465f, 1.0f);
     vt(y_scale)->d13(g_scale_y);
 
-    z_scale = make_slider(window, 0.56f, 0.425f, 1.0f);
+    z_scale = make_slider((MissionUi*)window, 0.56f, 0.425f, 1.0f);
     vt(z_scale)->d13(g_scale_z);
 
-    {   // corpses
-        corpses = make_dropdown(window, &tex("Corpses"), 0.52f, 0.385f);
-        vt(corpses)->d50((void*)&tex("ui_unlimited"));
-        { tstring t_("40"); vt(corpses)->d50(&t_); }
-        { tstring t_("20"); vt(corpses)->d50(&t_); }
-        { tstring t_("10"); vt(corpses)->d50(&t_); }
-        { tstring t_("5"); vt(corpses)->d50(&t_); }
-        { tstring t_("3"); vt(corpses)->d50(&t_); }
-        { tstring t_("1"); vt(corpses)->d50(&t_); }
-        { tstring t_("0"); vt(corpses)->d50(&t_); }
-        vt(corpses)->d11(6 - g_cfg.unk6c);
+    {   // corpses (0x5aa008)
+        { tstring k("Corpses"); corpses = make_dropdown((MissionUi*)window, &k, 0.52f, 0.385f); }
+        DD_ITEM(corpses, "ui_unlimited")
+        DD_TEXT(corpses, "40")
+        DD_TEXT(corpses, "20")
+        DD_TEXT(corpses, "10")
+        DD_TEXT(corpses, "5")
+        DD_TEXT(corpses, "0")
+        vt(corpses)->d11(5 - g_ragdolls);
     }
-    {   // ragdolls
-        ragdolls = make_dropdown(window, &tex("Ragdolls"), 0.52f, 0.345f);
-        vt(ragdolls)->d50((void*)&tex("ui_unlimited"));
-        { tstring t_("10"); vt(ragdolls)->d50(&t_); }
-        { tstring t_("5"); vt(ragdolls)->d50(&t_); }
-        { tstring t_("3"); vt(ragdolls)->d50(&t_); }
-        { tstring t_("1"); vt(ragdolls)->d50(&t_); }
-        { tstring t_("0"); vt(ragdolls)->d50(&t_); }
-        vt(ragdolls)->d11(5 - g_ragdolls);
+    {   // ragdolls (0x5aa00c)
+        { tstring k("Ragdolls"); ragdolls = make_dropdown((MissionUi*)window, &k, 0.52f, 0.345f); }
+        DD_ITEM(ragdolls, "ui_unlimited")
+        DD_TEXT(ragdolls, "10")
+        DD_TEXT(ragdolls, "5")
+        DD_TEXT(ragdolls, "3")
+        DD_TEXT(ragdolls, "1")
+        DD_TEXT(ragdolls, "0")
+        vt(ragdolls)->d11(5 - g_blood);
     }
-    {   // blood
-        blood = make_dropdown(window, &tex("Blood"), 0.52f, 0.305f);
-        vt(blood)->d50((void*)&tex("ui_off2"));
-        vt(blood)->d50((void*)&tex("ui_near_player_only"));
-        vt(blood)->d50((void*)&tex("ui_on"));
-        vt(blood)->d11(g_blood);
-    }
-    {   // plant shadows, upper row
-        plant_shadows = make_dropdown(window, &tex("PlantShadows"), 0.52f, 0.265f);
-        vt(plant_shadows)->d50((void*)&tex("ui_none"));
-        vt(plant_shadows)->d50((void*)&tex("ui_quick"));
-        vt(plant_shadows)->d50((void*)&tex("ui_full"));
-        vt(plant_shadows)->d11(g_plant_shadow);
+    {   // blood (0x5aa020)
+        { tstring k("Blood"); blood = make_dropdown((MissionUi*)window, &k, 0.52f, 0.305f); }
+        DD_ITEM(blood, "ui_off2")
+        DD_ITEM(blood, "ui_near_player_only")
+        DD_ITEM(blood, "ui_on")
+        vt(blood)->d11(*(int*)0x5aa020);
     }
 
-    { tstring d_("medium_button_down"); quality[0] = (UiAInline*)opt_make_medium_button(window, 0.56f, 0.53f, 3.7f, 0.265f, 0.115f, &tex("ui_enabled"), &d_); }
-    quality[0]->f184 = 1;
-    vt(quality[0])->d11(g_char_detail);
-    set_enabled_text(quality[0]);
-    {   // plant shadows, lower row
-        plant_shadows = make_dropdown(window, &tex("PlantShadows"), 0.52f, 0.145f);
-        vt(plant_shadows)->d50((void*)&tex("ui_none"));
-        vt(plant_shadows)->d50((void*)&tex("ui_quick"));
-        vt(plant_shadows)->d50((void*)&tex("ui_full"));
-        vt(plant_shadows)->d11(g_plant_shadow);
+    QBTN(quality[0], 0.265f, g_char_detail)
+    QBTN(quality[1], 0.225f, g_ragdoll_q)
+    QBTN(quality[2], 0.185f, g_plant_shadow)
+    {   // plant shadows (0x5aa084)
+        { tstring k("PlantShadows"); plant_shadows = make_dropdown((MissionUi*)window, &k, 0.52f, 0.145f); }
+        DD_ITEM(plant_shadows, "ui_none")
+        DD_ITEM(plant_shadows, "ui_quick")
+        DD_ITEM(plant_shadows, "ui_full")
+        vt(plant_shadows)->d11(*(int*)0x5aa084);
     }
+    QBTN(quality[3], 0.105f, g_char_shadow)
+    QBTN(quality[4], 0.065f, g_particle)
+    QBTN(quality[5], 0.025f, g_cfg.fake_reflections)
 
-    { tstring d_("medium_button"); quality[1] = (UiAInline*)opt_make_medium_button(window, 0.56f, 0.45f, 3.7f, 0.225f, 0.075f, &tex("ui_enabled"), &d_); }
-    quality[1]->f184 = 1;
-    vt(quality[1])->d11(g_ragdoll_q);
-    set_enabled_text(quality[1]);
-
-    { tstring d_("medium_button"); quality[2] = (UiAInline*)opt_make_medium_button(window, 0.56f, 0.37f, 3.7f, 0.185f, 0.045f, &tex("ui_enabled"), &d_); }
-    quality[2]->f184 = 1;
-    vt(quality[2])->d11(g_plant_shadow);
-    set_enabled_text(quality[2]);
-
-    { tstring d_("medium_button"); quality[3] = (UiAInline*)opt_make_medium_button(window, 0.56f, 0.29f, 3.7f, 0.145f, 0.053f, &tex("ui_enabled"), &d_); }
-    quality[3]->f184 = 1;
-    vt(quality[3])->d11(g_char_shadow);
-    set_enabled_text(quality[3]);
-
-    { tstring d_("medium_button"); quality[4] = (UiAInline*)opt_make_medium_button(window, 0.56f, 0.21f, 3.7f, 0.065f, 0.01f, &tex("ui_enabled"), &d_); }
-    quality[4]->f184 = 1;
-    vt(quality[4])->d11(g_particle);
-    set_enabled_text(quality[4]);
-
-    { tstring d_("medium_button"); quality[5] = (UiAInline*)opt_make_medium_button(window, 0.56f, 0.13f, 3.7f, 0.01f, 0.005f, &tex("ui_enabled"), &d_); }
-    quality[5]->f184 = 1;
-    vt(quality[5])->d11(g_cfg.fake_reflections);
-    set_enabled_text(quality[5]);
-
-    g_ui_changed = 1;
-    { void* w_ = window; ADD_ROOT_REF(w_); }
+    {
+        void* w = window;
+        g_ui_changed = 1;
+        ADD_ROOT_REF(w);
+    }
     if (!g_use_shaders) {
         vt(ui_scale)->d44();
-        vt(gamma)->d44();
-        vt(anisotropic_filtering)->d44();
+        vt(lbl_gamma)->d44();
+        vt(val_gamma)->d44();
     }
 }
 

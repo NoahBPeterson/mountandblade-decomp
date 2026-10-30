@@ -458,33 +458,33 @@ struct OptionsWin {
     DropDown* shadow_quality;                   // +0x5c
     MissionUi* change;                          // +0x60
     UiAInline* quality[6];                      // +0x64..0x78
-    MissionUi* texture_quality;                 // +0x7c
-    MissionUi* shadow_quality_label;            // +0x80
-    MissionUi* texture_detail;                  // +0x84
-    MissionUi* vertex_shaders;                  // +0x88
-    MissionUi* refresh_rate;                    // +0x8c
-    MissionUi* screen_size;                     // +0x90
-    MissionUi* gamma;                           // +0x94
-    MissionUi* anisotropic_filtering;           // +0x98
-    MissionUi* grass_density;                   // +0x9c
-    MissionUi* ragdoll_quality;                 // +0xa0
-    MissionUi* character_detail;                // +0xa4
-    MissionUi* char_detail_low;                 // +0xa8
-    MissionUi* char_detail_high;                // +0xac
-    MissionUi* char_shadow_detail;              // +0xb0
-    MissionUi* char_shadow_low;                 // +0xb4
-    MissionUi* char_shadow_high;                // +0xb8
-    MissionUi* dynamic_lighting;                // +0xbc
-    MissionUi* character_shadows;               // +0xc0
-    MissionUi* environment_shadows;             // +0xc4
-    MissionUi* realistic_shadows;               // +0xc8
-    MissionUi* particle_systems;                // +0xcc
-    MissionUi* antialiasing;                    // +0xd0
-    MissionUi* fast_water;                      // +0xd4
-    MissionUi* corpses_list;                    // +0xd8
-    MissionUi* ragdolls_list;                   // +0xdc
-    MissionUi* blood_list;                      // +0xe0
-    MissionUi* quality_label;                   // +0xe4
+    MissionUi* lbl_texture_detail;              // +0x7c "ui_texture_detail"
+    MissionUi* val_texture_detail;              // +0x80 texture detail percentage text
+    MissionUi* lbl_shadow_quality;              // +0x84 "ui_shadow_quality2"
+    MissionUi* lbl_vertex_shaders;              // +0x88 "ui_enable_vertex_shaders2"
+    MissionUi* val_vertex_shaders;              // +0x8c gamma text, replaced by "DirectX 9/7"
+    MissionUi* lbl_screen_size;                 // +0x90 "ui_screen_size2"
+    MissionUi* lbl_gamma;                       // +0x94 "ui_gamma" (hidden without shaders)
+    MissionUi* val_gamma;                       // +0x98 the gamma text, e.g. 2.20 (hidden without shaders)
+    MissionUi* lbl_grass_density;               // +0x9c "ui_grass_density"
+    MissionUi* val_grass_density;               // +0xa0 ragdoll-limit percentage text
+    MissionUi* lbl_char_detail;                 // +0xa4 "ui_character_detail"
+    MissionUi* lbl_char_low;                    // +0xa8 "ui_low"
+    MissionUi* lbl_char_high;                   // +0xac "ui_high"
+    MissionUi* lbl_char_shadow_detail;          // +0xb0 "ui_character_shadow_detail"
+    MissionUi* lbl_shadow_low;                  // +0xb4 "ui_low"
+    MissionUi* lbl_shadow_high;                 // +0xb8 "ui_high"
+    MissionUi* lbl_blood_stains;                // +0xbc "ui_blood_stains"
+    MissionUi* lbl_dynamic_lighting;            // +0xc0 "ui_dynamic_lighting"
+    MissionUi* lbl_character_shadows;           // +0xc4 "ui_character_shadows"
+    MissionUi* lbl_environment_shadows;         // +0xc8 "ui_environment_shadows"
+    MissionUi* lbl_realistic_shadows;           // +0xcc "ui_realistic_shadows_on_plants"
+    MissionUi* lbl_particle_systems;            // +0xd0 "ui_particle_systems"
+    MissionUi* lbl_anisotropic;                 // +0xd4 "ui_anisotropic_filtering"
+    MissionUi* lbl_fast_water;                  // +0xd8 "ui_fast_water_reflection"
+    MissionUi* lbl_corpses;                     // +0xdc "ui_number_of_corpses"
+    MissionUi* lbl_ragdolls;                    // +0xe0 "ui_number_of_ragdolls"
+    MissionUi* quality_label;                   // +0xe4 empty text (set by update_perf)
     int day_saved;                              // +0xe8
     char f_ec;                                  // +0xec
     char f_ed;                                  // +0xed

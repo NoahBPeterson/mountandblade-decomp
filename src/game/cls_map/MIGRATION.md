@@ -77,9 +77,12 @@ constants. 0x4e4790 / 0x4e55f0: `SaveWindow::slot_button(parent, slot, out)` (th
 its prefix by value. 0x4e43e0 is `gui_manager::draw_string(tstring*, float, int, char)` (argument order was wrong).
 0x4db440: `" (%d/%d)"` takes (count - wounded, count) (the slice had them swapped).
 
-**Caveats kept honest:** 0x4e05c0 (`OptionsWin::init`) is a skeleton whose constants do not match the disassembly (first
-make_hint pushes 0.52, 0.7, 0.3, 0.035) and which calls placeholder helpers; it stays nonmatching with no equivalence claim.
-0x4de6f0 (`OptionsScreen::open`) was a skeleton too (1949 of 5721 bytes); it was rebuilt from the disassembly on 2026-10-30.
+**Caveats kept honest:** 0x4e05c0 (`OptionsWin::init`) was a skeleton (wrong constants, offsets and placeholder helpers); it was rebuilt from the
+disassembly on 2026-10-30 (all 423 calls, constants and string keys in original order, real callee prototypes, 8155 vs 8152 bytes) and stays nonmatching.
+Equivalence: with seed 2 and `--budget 3000000` 6 inputs are valid (94.9% of insns, ~4.5 min each) and the only differences are stale stack words
+(an unset vector4 w and return addresses left in widget memory); the default seed yields no valid input (the stubbed resource object makes the
+original exhaust the emulated heap in `mesh::clone`). 0x4de6f0 (`OptionsScreen::open`) was a skeleton too (1949 of 5721 bytes); it was rebuilt from
+the disassembly on 2026-10-30.
 
 ## Verification
 
