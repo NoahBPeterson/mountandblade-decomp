@@ -1,6 +1,6 @@
 #include "../../include/image_addrs.h"
 #include "./save_game.h"
-#include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../tstring.h"
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -53,15 +53,12 @@ void MapScreen::buttons(int arg)
 }
 
 // ---- the file writer (stream classes of s00417850/mbbin.h: vtable 0x54a740 -> 0x54add8) ----------------
+// This file's own tstring-based copy of the stream root (rgl/stream.h cannot be included here: see stream_fwd.h).
+#include "../../rgl/stream_fwd.h"
 struct stream_root {
     virtual void reset();                               // slot 0
     virtual void rewind();                              // slot 1
-    virtual void w_stream(void* o) = 0;                 // 2 .. 22 (declared as one block here)
-    virtual void s3() = 0; virtual void s4() = 0; virtual void s5() = 0; virtual void s6() = 0;
-    virtual void s7() = 0; virtual void s8() = 0; virtual void s9() = 0; virtual void s10() = 0;
-    virtual void s11() = 0; virtual void s12() = 0; virtual void s13() = 0; virtual void s14() = 0;
-    virtual void s15() = 0; virtual void s16() = 0; virtual void s17() = 0; virtual void s18() = 0;
-    virtual void s19() = 0; virtual void s20() = 0; virtual void s21() = 0; virtual void s22() = 0;
+    STREAM_SLOTS_OF(stream_root, rgl::string, = 0)
     virtual bool at_end();                              // 23
     virtual void set_autoflush(char f);                 // 24
     virtual char get_autoflush();                       // 25
@@ -79,18 +76,14 @@ struct file_writer_base : stream_root {
     char is_open;                                       // +0x35
     file_writer_base() { failed = 1; is_open = 0; state = 0; }
 };
+#undef SF_RT
+#define SF_RT stream_root
 struct file_writer : file_writer_base {
-    virtual void w_stream(void* o);
-    virtual void s3(); virtual void s4(); virtual void s5(); virtual void s6();
-    virtual void s7(); virtual void s8(); virtual void s9(); virtual void s10();
-    virtual void s11(); virtual void s12(); virtual void s13(); virtual void s14();
-    virtual void s15(); virtual void s16(); virtual void s17(); virtual void s18();
-    virtual void s19(); virtual void s20(); virtual void s21(); virtual void s22();
+    STREAM_SLOTS_OF(stream_root, rgl::string, )
     virtual int flush();
 };
-struct text_stream {
-    int open_write(const char* path);   // 0x415320 (ret 4; rgl/text_stream.h)
-};
+STREAM_FWD_BIN_WRITER(file_writer)
+int file_writer::flush() { return ((bin_writer*)this)->bin_writer::flush(); }
 
 #define WL_MARK(id) \
     __asm _emit 0xEB __asm _emit 0x10 __asm _emit 0x57 __asm _emit 0x4C __asm _emit 0x20 __asm _emit 0x20 \

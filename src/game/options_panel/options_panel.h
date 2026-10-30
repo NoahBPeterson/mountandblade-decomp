@@ -69,17 +69,17 @@ extern int g_trial_mode;                                            // 0x5e29c4
 // the export file object: three classes in a chain (vtables 0x54a740 / 0x595618 / 0x595990); the middle one's
 // destructor closes the file (virtual close at slot 26 = +0x68, called through the class's own vtable). Slot 10
 // (+0x28) writes a text line (0x4d86d0).
-struct outfile_a {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09();
-    virtual void write(const char* text);                           // +0x28
-    virtual void v11();
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21(); virtual void v22(); virtual void v23();
-    virtual void v24(); virtual void v25();
-    virtual int close();                                            // +0x68
+#include "../../rgl/stream_fwd.h"
+// (rgl/stream.h's stream_base with the file fields; this header keeps its own tstring-based copy, see stream_fwd.h)
+struct outfile_a {                                                  // vtable 0x54a740: every typed slot abstract
+    virtual void reset();                                           // 0
+    virtual void rewind();                                          // 1
+    STREAM_SLOTS_OF(outfile_a, tstring, = 0)                        // 2 .. 22; slot 10 (+0x28) writes a text line
+    virtual bool at_end();                                          // 23
+    virtual void set_autoflush(char f);                             // 24
+    virtual char get_autoflush();                                   // 25
+    virtual int flush();                                            // 26 (+0x68)
+    outfile_a& write(const char* text) { return w_cstr(text); }     // slot 10
     tstring path;                                                   // +0x04
     int f14;                                                        // +0x14
     char f18;                                                       // +0x18
@@ -89,12 +89,15 @@ struct outfile_a {
     char failed;                                                    // +0x34
     char open;                                                      // +0x35
 };
+// 0x595618: text_stream's slots, flush (slot 26) is the log file's (0x42cc10)
 struct outfile_b : outfile_a {
     outfile_b() { f18 = 0; f1c = 0; failed = 1; open = 0; f14 = 0; }
+    STREAM_SLOTS_OF(outfile_a, tstring, )
+    virtual int flush();                                            // 0x42cc10
     void shut()
     {
         if (open) {
-            if (close() == 0)
+            if (flush() == 0)
                 fclose(fp);
             failed = 1;
             open = 0;
@@ -102,11 +105,11 @@ struct outfile_b : outfile_a {
     }
     ~outfile_b() { shut(); }
 };
-// 0x595618 (outfile_b) ends at slot 26 (close); 0x595990 (outfile) adds slots 27 and 28 (0x4c4c90, 0x4c6e00)
+// 0x595990 (outfile): the log stream's table, 27 slots like the others
 struct outfile : outfile_b {
     outfile(const char* p) { path.assign(p); }
-    virtual void b_dummy();                                         // +0x6c slot 27
-    virtual void c_dummy();                                         // +0x70 slot 28
+    STREAM_SLOTS_OF(outfile_a, tstring, )
+    virtual int flush();                                            // 0x42cc10
 };
 
 #define MODE_RA " RA"                                               // 0x595990

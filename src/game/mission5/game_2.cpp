@@ -1366,3 +1366,7 @@ void Local::read(stream_base& s)
         s.w_int(&e.c);
     }
 }
+
+// ---- the text reader classes' slots (folded into text_stream's by the original's linker) ----
+STREAM_FWD_TEXT_BOTH(file_text_b)
+STREAM_FWD_TEXT_READER(file_text)

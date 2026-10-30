@@ -616,3 +616,52 @@ void options_panel::export_path(char* out)
     if (*(char**)name != 0) name = *(char**)name;
     sprintf(out, "CharExport\\%s.txt", name);
 }
+
+// ---- the export file object's slots (the original's linker folded them into text_stream's / stream_base's) ----
+#undef SF_RT
+#define SF_RT outfile_a
+#undef SF_STR
+#define SF_STR tstring
+void outfile_a::reset() { ((stream_base*)this)->stream_base::reset(); }
+void outfile_a::rewind() { ((stream_base*)this)->stream_base::rewind(); }
+bool outfile_a::at_end() { return ((stream_base*)this)->stream_base::at_end(); }
+void outfile_a::set_autoflush(char f) { ((stream_base*)this)->stream_base::set_autoflush(f); }
+char outfile_a::get_autoflush() { return ((stream_base*)this)->stream_base::get_autoflush(); }
+int outfile_a::flush() { return ((stream_base*)this)->stream_base::flush(); }
+STREAM_FWD_TEXT_BOTH(outfile_b)
+STREAM_FWD_LOG_OUT(outfile)
+// 0x42cc10: writes the unwritten part of the buffer and flushes (the log file's flush, shared by 0x595618 and 0x595990)
+int outfile_b::flush()
+{
+    int r = 0;
+    if (open) {
+        int len = t20.len;
+        if (f1c < len) {
+            int bad = 0;
+            size_t n = fwrite(f1c + t20.c_str(), 1, len - f1c, fp);
+            if (n != (size_t)(len - f1c))
+                bad = 1;
+            fflush(fp);
+            f1c = len;
+            r = bad;
+        }
+    }
+    return r;
+}
+int outfile::flush()
+{
+    int r = 0;
+    if (open) {
+        int len = t20.len;
+        if (f1c < len) {
+            int bad = 0;
+            size_t n = fwrite(f1c + t20.c_str(), 1, len - f1c, fp);
+            if (n != (size_t)(len - f1c))
+                bad = 1;
+            fflush(fp);
+            f1c = len;
+            r = bad;
+        }
+    }
+    return r;
+}

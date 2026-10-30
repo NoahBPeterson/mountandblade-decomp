@@ -734,3 +734,6 @@ void Mission::build_interior(int which, rgl::mesh** out, int* n)
 
 // @ 0x47a980
 template void std::vector<MRow56>::resize(size_t, MRow56);
+
+// ---- file_stream_s's slots (the in-memory binary table, folded into mem_stream's by the original's linker) ----
+STREAM_FWD_MEM(file_stream_s)
