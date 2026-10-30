@@ -180,9 +180,13 @@ struct Big {
     int  f6808; int f680c;
     char pad6810[4];
     char f6814[0x10];                               // +0x6814 (a tstring)
+    char done[0x40];                                // +0x6824 spawn-done flags (Mission::done, ../mission.h)
+    char pad6864[4];                                // Mission's __int64 members round its size up to 8: new 0x6868 (0x4d4083)
     Big* init();                                    // 0x4d3880
     void destroy();                                 // 0x4d3720
 };
+
+typedef char big_size_check[sizeof(Big) == 0x6868 ? 1 : -1];   // operator new(0x6868) at 0x4d4083
 
 // @ 0x4d3880
 Big* Big::init()
@@ -531,7 +535,11 @@ GameApp::GameApp()
     g_use_shaders = 0;
     g_saved = 0;
     g_game = 0;
-    (*(Big**)&g_mission) = new Big;
+    {
+        // 0x4d4083..0x4d40b4: operator new(0x6868), then the constructor 0x4d3880 on a non-null block
+        Big* b = (Big*)operator new(sizeof(Big));
+        (*(Big**)&g_mission) = b ? b->init() : 0;
+    }
 
     if (CFG_DISABLE_SOUND == 0) {
         FSOUND_SetMaxHardwareChannels(0);
