@@ -236,12 +236,13 @@ void __cdecl destroy_range(NameVecRec* first, NameVecRec* last)
     }
 }
 
+struct GuiCtx;
+void __fastcall pick_entity(GuiCtx* self);   // 0x4ed8d0 (char_sheet/pick_entity.cpp)
+
 // @ 0x4f6390
 void EditorApp::refresh_dialog()
 {
-    extern bool g_facegen_ready;
-    if (g_facegen_ready)                     // the sliders only exist after FaceGen::init (0x4f49d0) ran
-        ((FaceGen*)g_editor_game)->refresh();   // 0x4eb3c0 (the editor game is the FaceGen)
+    pick_entity((GuiCtx*)g_editor_game);     // 0x4ed8d0 (char_sheet/pick_entity.cpp), not FaceGen::refresh
     g_editor_game->f2f9 = 1;
     SetFocus(hwnd);
 }
