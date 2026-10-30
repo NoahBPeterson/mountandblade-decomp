@@ -177,6 +177,14 @@ def main():
     if a.src:
         from sweep_nonmatching import rows
         res, src_dirs = {}, [os.path.abspath(d) for d in a.src]
+        # A re-run (rerun_rows.py) keeps the rows' previous results in work/sweep_stale/<stamp>; with work/sweep alone,
+        # every row still queued read as "not run" (spikes of 117-633 in the history). Search those too: the newest
+        # result per row still wins, so a finished re-run's result always replaces the stale one.
+        for sd in list(src_dirs):
+            stale = os.path.join(os.path.dirname(sd), "sweep_stale")
+            if os.path.basename(sd) == "sweep" and os.path.isdir(stale):
+                src_dirs += sorted(os.path.join(stale, d) for d in os.listdir(stale)
+                                   if os.path.isdir(os.path.join(stale, d)) and os.path.join(stale, d) not in src_dirs)
         for r in rows():
             if not r["src"]:
                 continue        # match/slices rows: every function lives in a src module since migration wave M4
@@ -201,7 +209,7 @@ def main():
                 continue
             res[r["va"]] = {"module": r["id"], "file": r["file"], "verdict": (d or {}).get("verdict"),
                             "category": category(d), "size": size_of(d, r["va"])}
-        when = max(newest(d) for d in src_dirs)
+        when = max(newest(d) for d in src_dirs if glob.glob(os.path.join(d, "*.json")))
         head = os.popen("git -C '%s' rev-parse --short HEAD" % ROOT).read().strip()
         summ = summarize((v["category"], v["size"]) for v in res.values())
         doc = {"when": when, "commit": head, "sources": [os.path.relpath(d, ROOT) for d in src_dirs],

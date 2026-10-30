@@ -1,28 +1,32 @@
 {
-"when": "2026-10-29T22:07:10-05:00",
-"commit": "3c121af",
+"when": "2026-10-29T22:27:22-05:00",
+"commit": "99d2c41",
 "sources": [
-"work/sweep_view"
+"work/sweep",
+"work/sweep_stale/20261028_2353",
+"work/sweep_stale/fixed",
+"work/sweep_stale/limits",
+"work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 394,
-"weak": 431,
-"fail": 46,
-"inputs": 38,
-"harness": 56,
+"pass": 380,
+"weak": 424,
+"fail": 53,
+"inputs": 37,
+"harness": 52,
 "comdat": 116,
 "comdatdiff": 13,
 "funclet": 0,
-"not_run": 8,
-"pass_sz": 118570,
-"weak_sz": 548158,
-"fail_sz": 81527,
-"inputs_sz": 32464,
-"harness_sz": 93864,
+"not_run": 6,
+"pass_sz": 117777,
+"weak_sz": 541124,
+"fail_sz": 97274,
+"inputs_sz": 32432,
+"harness_sz": 90995,
 "comdat_sz": 2719,
 "comdatdiff_sz": 1373,
 "funclet_sz": 0,
-"not_run_sz": 15070
+"not_run_sz": 8460
 },
 "rows": {
 "00408a50": {
@@ -2797,13 +2801,6 @@
 "category": "harness",
 "size": 1378
 },
-"00483eb0": {
-"module": "mesh_game",
-"file": "src/game/mesh_slot/mesh_game.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 170
-},
 "00483f60": {
 "module": "mesh_game",
 "file": "src/game/mesh_slot/mesh_game.nonmatching.txt",
@@ -3272,13 +3269,6 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 706
-},
-"0048f480": {
-"module": "mission_4",
-"file": "src/game/mission_ui2/mission_4.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 64
 },
 "0048f4c0": {
 "module": "mission_4",
@@ -3805,13 +3795,6 @@
 "category": "weak",
 "size": 2458
 },
-"0049cc60": {
-"module": "script_interpreter",
-"file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 96
-},
 "0049cd00": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
@@ -4104,13 +4087,6 @@
 "category": "pass",
 "size": 265
 },
-"004b20b0": {
-"module": "party_2",
-"file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 110
-},
 "004b2370": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
@@ -4124,13 +4100,6 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 121
-},
-"004b25c0": {
-"module": "party_2",
-"file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 66
 },
 "004b2770": {
 "module": "party_2",
@@ -4187,13 +4156,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 577
-},
-"004b38f0": {
-"module": "party_2",
-"file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
-"size": 32
 },
 "004b3910": {
 "module": "party_2",
@@ -4797,48 +4759,6 @@
 "category": "pass",
 "size": 49
 },
-"004c6eb0": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 46
-},
-"004c6ee0": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 39
-},
-"004c6f10": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "inputs",
-"size": 32
-},
-"004c6f30": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
-"size": 32
-},
-"004c6f50": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 32
-},
-"004c6f70": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 32
-},
 "004c6f90": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
@@ -4916,26 +4836,12 @@
 "category": "pass",
 "size": 465
 },
-"004c8810": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 43
-},
 "004c8840": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 82
-},
-"004c88e0": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 32
 },
 "004c8af0": {
 "module": "gui_edit",
@@ -5112,40 +5018,12 @@
 "category": "pass",
 "size": 275
 },
-"004ceb30": {
-"module": "mission_items",
-"file": "src/game/options_panel/mission_items.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 86
-},
 "004ceb90": {
 "module": "mission_items",
 "file": "src/game/options_panel/mission_items.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 689
-},
-"004cee50": {
-"module": "mission_items",
-"file": "src/game/options_panel/mission_items.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 72
-},
-"004cef20": {
-"module": "mission_items",
-"file": "src/game/options_panel/mission_items.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 86
-},
-"004cef80": {
-"module": "mission_items",
-"file": "src/game/options_panel/mission_items.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 86
 },
 "004cefe0": {
 "module": "mission_items",
@@ -6095,9 +5973,9 @@
 "004f1460": {
 "module": "facegen_win",
 "file": "src/game/char_sheet/facegen_win.nonmatching.txt",
-"verdict": "TIMEOUT",
-"category": "not_run",
-"size": 4371
+"verdict": "FAIL",
+"category": "fail",
+"size": 4404
 },
 "004f25a0": {
 "module": "facegen_win",
@@ -6249,8 +6127,8 @@
 "004f73c0": {
 "module": "conv_refresh",
 "file": "src/game/char_sheet/conv_refresh.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2480
 },
 "004f7f00": {
@@ -6298,8 +6176,8 @@
 "004fb8e0": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 343
 },
 "004fba40": {
@@ -6326,8 +6204,8 @@
 "004fc820": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "TIMEOUT",
-"category": "not_run",
+"verdict": "FAIL",
+"category": "fail",
 "size": 2239
 },
 "004fd150": {
@@ -6347,14 +6225,14 @@
 "004fd4f0": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 519
 },
 "004fd700": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 2277
 },
@@ -6487,8 +6365,8 @@
 "00503ed0": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 3274
 },
 "00504ba0": {
@@ -6501,8 +6379,8 @@
 "00504e20": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 208
 },
 "00504ef0": {
@@ -6522,8 +6400,8 @@
 "005063e0": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 3880
 },
 "00507400": {
@@ -6557,8 +6435,8 @@
 "0050cc70": {
 "module": "widget_text",
 "file": "src/game/inventory_panel/widget_text.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 1088
 },
 "0050d0e0": {
@@ -7240,13 +7118,6 @@
 "category": "pass",
 "size": 120
 },
-"00524a70": {
-"module": "game_2",
-"file": "src/game/mission5/game_2.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
-"size": 325
-},
 "00524bc0": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
@@ -7653,13 +7524,6 @@
 "category": "harness",
 "size": 692
 },
-"00533a60": {
-"module": "exchange_screens",
-"file": "src/game/map_editor/exchange_screens.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 61
-},
 "00533aa0": {
 "module": "exchange_screens",
 "file": "src/game/map_editor/exchange_screens.nonmatching.txt",
@@ -7715,13 +7579,6 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 48
-},
-"005482b0": {
-"module": "static_init",
-"file": "src/game/static_init/static_init.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 82
 },
 "00548360": {
 "module": "static_init",
