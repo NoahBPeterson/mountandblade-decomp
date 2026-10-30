@@ -496,7 +496,7 @@ void GameIo::import_apply(ini_file* imp)
 
         if (key.equals("name")) {
             value.underscores_to_spaces();
-            troop->name = value;
+            troop->name = tstring(value);       // 0x4d8cc7: a copy of value (0x42c110) is built, assigned, destroyed
             continue;
         }
         if (key.equals("xp")) {

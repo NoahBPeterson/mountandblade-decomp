@@ -288,12 +288,13 @@ void EditMesh::finish()
                 int k = nv;
                 while (k < (int)c.verts.size() && vat(c.verts, k).pad14 != (&e.v0)[j])
                     k++;
-                if (k == (int)c.verts.size()) {         // no copy yet: append one
-                    MVert v = vat(c.verts, (&e.v0)[j]);
+                if (k >= (int)c.verts.size()) {         // no copy yet: append one (the scan ran out: 0x4d24a3 jae)
+                    MVert v;                            // the pad after flag is left as the stack had it
+                    v.pos = vat(c.verts, (&e.v0)[j]).pos;
                     v.flag = 0;
                     v.pad14 = (&e.v0)[j];
+                    (&e.v0)[j] = (int)c.verts.size();     // the index the copy gets (read before the push)
                     c.verts.push_back(v);
-                    (&e.v0)[j] = (int)c.verts.size();
                 } else {
                     (&e.v0)[j] = k;
                 }
@@ -390,7 +391,7 @@ bool EditMesh::split_marked_edge()
             c.edges.push_back(e2);
             c.faces.push_back(nf);
         }
-        int cn = corners[nc - 1];
+        int cn = nc ? corners[nc - 1] : n;   // nc == 0 (no real face): the original reads corners[-1], the slot holding n (0x4d2c10)
         int v0 = vat(c.faces, fi).vid[cn];
         int v1 = vat(c.faces, fi).vid[(cn + 1) % n];
         int v2 = (int)c.verts.size();
