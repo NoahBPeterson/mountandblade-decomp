@@ -87,6 +87,13 @@ DEFAULT_C = 60.0                  # legacy --gate insns only
 DEFAULT_BUDGET = 10_000_000
 START_BUDGET = 100_000
 BUDGET_PROBES = 3
+LOOP_PROFILE_CAP = 300_000     # repair_loop: instructions profiled/sampled to find a runaway loop and its compare
+_PAIR_K = np.arange(1, 0x401, dtype=np.uint64)   # repair_relations: element strides of a begin/end pair
+LOOP_REPAIRS_PER_ROW = 40      # repair_loop calls per row, all inputs together
+LOOP_REPAIRS = 4               # repair_loop calls per input (each up to 16 capped shrink rounds; a fault repair
+#                                between two calls can expose the next soup loop)
+HEAP_REPAIRS = 12              # repair_heap rounds per input (an array of soup records, one string length each:
+#                                MapDialog::place_c 0x4c6f50 allocates [rec+0xc]+1 bytes per record)
 FAIL_DIR = os.environ.get("DIFFTEST_FAIL_DIR") or os.path.join(S.ROOT, "work", "difftest", "fail_inputs")
 # Regression inputs: every input that ever made a row mismatch is kept (one file per distinct input) and run first
 # by every later run of that row, so a FAIL once found is re-checked forever, whatever the seed or the steering
@@ -1671,6 +1678,7 @@ class Side:
 class Runner:
     def __init__(self, t, opts, log=print):
         self.t, self.opts, self.log = t, opts, log
+        self.shrink_stats = collections.Counter()      # repair_heap / repair_loop: shrinks by kind and relation
         ctx = context()
         self.img, self.m = ctx["img"], ctx["m"]
         self.arity_cache = ctx["arity"]
@@ -3378,35 +3386,454 @@ class Runner:
         slot = (base + idx * op.mem.scale + op.mem.disp) & 0xFFFFFFFF
         return base, slot, ret
 
-    def repair_heap(self, inp, why, rng):
+    def repair_heap(self, inp, why, rng, round_=0):
         """The original ran the emulated heap out (64 MB): a size or element count it read from the input is a
         soup value no game state holds (mesh_hud 0x498420: 321 of 400 inputs; quest_log 0x4ee910: 37 of 100).
-        Shrink the input dword that carried it: the most recent one the failed size is a small multiple of
-        (an element count times its stride, or the byte size itself) or a few bytes more than (quest_log:
-        a string length + 1), else the most recent large non-pointer
-        value (a loop count over small allocations). Returns the repaired input or None."""
+        Shrink the input dword that carried it. A large failed size is matched against the input reads made before
+        the allocation (repair_relations: the size is a count times a stride plus a small header, as new[] of
+        trigger_vec 0x4c1c90 allocates count * 0x78 + 4; a byte length; or the distance between a vector's begin and
+        end); a small one is the n-th allocation of a loop whose trip count the input set, which repair_loop shrinks.
+        From the third round of one input on, the loop comes first: a runaway loop over soup records allocates each
+        record's soup-sized string in turn (uninitialized_copy 0x524cd0 under MapDialog::place_c 0x4c6f50), and
+        shrinking one size per round never ends it. Last resort: the most recent large non-pointer value. Returns the
+        repaired input or None."""
         mm = re.search(r"\((\d+) bytes\)", str(why))
         size = int(mm.group(1)) if mm else 0
+        if round_ >= 2:
+            out = self.repair_loop(inp, rng, why="heap")
+            if out is not None:
+                return out
+        if size >= 0x10000:
+            reads = self._traced_reads(inp)
+            n = rng.choice((1, 2, 3, 4, 8, 16, rng.randrange(33)))
+            for addr, val, rel in self.repair_relations(reads, size):
+                # a count scaled to the size gets n elements; a size/length/distance gets a small byte size
+                new = self._invert(rel, val, n * rel[1] + rel[2] if rel[0] == "scaled" else 16 * n)
+                out = self._put_any(inp.copy(), addr, new)
+                if out is not None:
+                    self.note_repair("heap", rel, addr, val, new)
+                    return out
+        out = self.repair_loop(inp, rng, why="heap")
+        if out is not None:
+            return out
         reads = self._traced_reads(inp)
-
-        def pointer(v):
-            return (M.POOL_BASE <= v < M.POOL_BASE + M.POOL_SIZE or self.img.in_image(v) or
-                    M.DYN_BASE <= v < M.DYN_BASE + M.DYN_SIZE or M.STACK_TOP - M.STACK_SIZE <= v < STACK_END)
-        pick = None
         for addr, v in reversed(reads):
-            # the size is the value times a stride, or the value plus a small header/terminator (a string length
-            # + 1); a soup value used as a length is often a pool address, so pointers are not excluded here
-            if v >= 0x1000 and size and (size % v == 0 and size // v <= 0x1000 or 0 <= size - v <= 0x40):
-                pick = addr
-                break
-        if pick is None:
-            for addr, v in reversed(reads):
-                if 0x10000 <= v and not pointer(v):
-                    pick = addr
+            if 0x10000 <= v and not self._pointer(v):
+                new = rng.choice((0, 1, 2, 3, 4, 8, 16, rng.randrange(64)))
+                out = self._put_any(inp.copy(), addr, new)
+                if out is not None:
+                    self.note_repair("heap", ("large", 1, 0), addr, v, new)
+                    return out
+        return None
+
+    def _put_any(self, out, addr, val):
+        """_put_dword, plus an unaligned pool dword (a count stored at an odd offset of a soup record, rec_tables
+        0x4c47d0's callee bound at [..+0x...9]): its bytes are spliced into the two aligned pool dwords around it, as
+        the input generates them (Generator.slot_pages applies pool_over)."""
+        r = self._put_dword(out, addr, val)
+        if r is not None or not (M.POOL_BASE <= addr and addr + 4 <= M.POOL_BASE + M.POOL_SIZE) or not addr & 3:
+            return r
+        lo = addr & ~3
+        cur = bytearray()
+        for a in (lo, lo + 4):
+            slot = a & ~(M.SLOT - 1)
+            pg = self.gen.slot_pages(out, slot)[a & ~0xFFF]
+            cur += pg[a & 0xFFF:(a & 0xFFF) + 4]
+        sh = addr - lo
+        cur[sh:sh + 4] = struct.pack("<I", val & 0xFFFFFFFF)
+        out.pool_over[lo], out.pool_over[lo + 4] = struct.unpack("<II", bytes(cur))
+        return out
+
+    def _pointer(self, v):
+        return (M.POOL_BASE <= v < M.POOL_BASE + M.POOL_SIZE or self.img.in_image(v) or
+                M.DYN_BASE <= v < M.DYN_BASE + M.DYN_SIZE or M.STACK_TOP - M.STACK_SIZE <= v < STACK_END)
+
+    def note_repair(self, kind, rel, addr, old, new):
+        """Diagnostics of the shrink repairs (the result's `shrink_repairs`): how many of each kind and relation."""
+        self.shrink_stats["%s:%s" % (kind, rel[0])] += 1
+        if self.opts.verbose:
+            self.log("  %s repair: [%08x] %#x -> %s (%s)" % (kind, addr, old, "%#x" % new if isinstance(new, int)
+                                                          else "small", " ".join(str(x) for x in rel)))
+
+    @staticmethod
+    def _relate(t, v):
+        """How the value t (a trip count, a loop bound, an allocation size) follows from the input dword v:
+        ("eq", 1, 0) t == v; ("scaled", k, c) t == v*k + c, also modulo 2**32 (a count times a stride plus a header;
+        v >= 0x40, so a small soup value is not a count by accident); ("divided", k, c) v == t*k + c (a byte size the
+        loop walks in strides); None. 1 <= k <= 0x1000, |c| <= 0x40."""
+        if v == t:
+            return ("eq", 1, 0)
+        if v >= 0x40 and t > v:
+            k = (t + v // 2) // v
+            if 1 <= k <= 0x1000 and abs(t - v * k) <= 0x40:
+                return ("scaled", k, t - v * k)
+        if v >= 0x40:
+            # the same modulo 2**32: a soup count times the stride wraps (new[] of 0xff7fffff elements of 0x78)
+            tz = (v & -v).bit_length() - 1
+            inv = pow(v >> tz, -1, 1 << (32 - tz))
+            for c in range(-0x40, 0x41):
+                r = (t - c) & 0xFFFFFFFF
+                if r & ((1 << tz) - 1):
+                    continue
+                k = ((r >> tz) * inv) & ((1 << (32 - tz)) - 1)
+                if 2 <= k <= 0x1000:
+                    return ("scaled", k, c)
+        if t >= 2 and v > t:
+            k = (v + t // 2) // t
+            if 1 <= k <= 0x1000 and abs(v - t * k) <= 0x40:
+                return ("divided", k, v - t * k)
+        return None
+
+    @staticmethod
+    def _invert(rel, val, want):
+        """The new value of input dword `val` (related to the target by rel) that makes the target `want`.
+        A ("pair", k, c, begin) relation is the end dword of a begin/end pair: begin + the new distance."""
+        kind, k, c = rel[0], rel[1], rel[2]
+        if kind == "eq":
+            return want & 0xFFFFFFFF
+        if kind == "scaled":
+            return max(0, want - c) // k
+        if kind == "divided":
+            return (want * k + c) & 0xFFFFFFFF
+        if kind == "pair":
+            return (rel[3] + want) & 0xFFFFFFFF
+        return None
+
+    def repair_relations(self, reads, t, limit=None, near=None):
+        """[(addr, value, relation)] of the input dwords (most recent read first) the value t follows from: one dword
+        (_relate), or the distance between the two dwords of an adjacent begin/end pair (a vector's first/last:
+        ("pair", k, c, begin) with distance == t*k + c, the end dword being the one rewritten); eq first. A pair needs
+        one pointer among the two, except for the reads from index `near` on (the loop's own first iteration, which
+        reads the vector it walks: Hud 0x420860 compares against ([ebx+8] - [ebx+4]) >> 2 of soup 0x5000000)."""
+        if t < 2:
+            return []
+        reads = reads[:limit] if limit is not None else reads
+        last, seen = {}, set()
+        for a, v in reads:
+            last[a] = v
+        out = []
+        for idx in range(len(reads) - 1, -1, -1):
+            a, v = reads[idx]
+            if (a, v) in seen:
+                continue
+            seen.add((a, v))
+            rel = self._relate(t, v)
+            if rel is not None:
+                out.append((a, v, rel))
+            b = last.get(a - 4)
+            if b is not None and last.get(a) == v and (self._pointer(v) or self._pointer(b) or
+                                                        near is not None and idx >= near):
+                # a vector [begin, end) of t elements of k bytes: end - begin == t*k + c modulo 2**32, c the remainder
+                # a size computation drops ((end - begin) >> 2 of soup begin 0x44221431: Hud's vectors at 0x420860)
+                d = (v - b) & 0xFFFFFFFF
+                r = (d - t * _PAIR_K) & 0xFFFFFFFF
+                hit = np.nonzero((r < _PAIR_K) | (r <= 0x40))[0]
+                if len(hit):
+                    k = int(_PAIR_K[hit[0]])
+                    out.append((a, v, ("pair", k, int(r[hit[0]]), b)))
+        rank = {"eq": 0, "pair": 1, "scaled": 2, "divided": 3}
+        out.sort(key=lambda x: rank.get(x[2][0], 9))       # stable: most recent first within a kind
+        return out
+
+    def _profile_loops(self, inp, cap):
+        """Run the original on inp for at most `cap` instructions with every block transition counted: [(count, src
+        block start, src block end, loop head)] of the backward jumps (a jcc/jmp/loop to an address at or below the
+        jumping block, or a rep string instruction repeating itself), hottest first; and the run's status."""
+        m, uc = self.m, self.m.uc
+        cnt = collections.Counter()
+        st = ("budget", None)
+        prev = [None, 0]
+
+        def on_blk(uc_, addr, size, _):
+            p = prev[0]
+            if p is not None and addr <= p:
+                cnt[(p, prev[1], addr)] += 1
+            prev[0], prev[1] = addr, size
+        h = uc.hook_add(UC_HOOK_BLOCK, on_blk, begin=1, end=0)
+        saved = self.budget
+        self.budget = cap
+        try:
+            st = self.run_side(self.orig, inp)["status"]
+        except UcError:
+            pass
+        finally:
+            self.budget = saved
+            uc.hook_del(h)
+        stop = uc.reg_read(UC_X86_REG_EIP)
+        loops = []
+        for (src, size, dst), n in cnt.most_common(32):
+            try:
+                last = list(_md.disasm(m.read(src, size), src))[-1]
+            except Exception:
+                continue
+            if last.address + last.size != src + size:
+                continue
+            ok = last.prefix[0] in (0xF2, 0xF3) and dst == src
+            if last.group(CX.X86_GRP_JUMP) and last.operands and last.operands[0].type == CX.X86_OP_IMM:
+                ok = ok or (last.operands[0].imm & 0xFFFFFFFF) == dst
+            if ok:
+                loops.append((n, src, src + size, dst))
+        try:
+            # a rep string instruction burning the cap is one instruction (the block hook may see it once)
+            ins = next(_md.disasm(m.read(stop, 16), stop, 1))
+            if ins.prefix[0] in (0xF2, 0xF3) and all(lp[3] != stop for lp in loops):
+                loops.insert(0, (cap, stop, stop + ins.size, stop))
+        except Exception:
+            pass
+        return loops, st
+
+    _FLAG_SETTERS = {"cmp", "test", "dec", "inc", "sub", "add", "and", "or", "xor", "neg", "sar", "shr", "shl"}
+    _STRING_OPS = ("movs", "stos", "scas", "cmps", "lods")
+
+    def _loop_compares(self, head, end):
+        """[instruction] that set the flags of the loop's exit branches: every jcc/loop in [head, end) with a side
+        outside the range, and the flag-setting instruction just before it (a rep string instruction: itself)."""
+        if not 0 < end - head <= 0x4000:
+            return []
+        try:
+            insns = list(_md.disasm(self.m.read(head, end - head), head))
+        except Exception:
+            return []
+        out = []
+        for k, ins in enumerate(insns):
+            if ins.prefix[0] in (0xF2, 0xF3) and ins.mnemonic.split()[-1][:4] in self._STRING_OPS:
+                out.append(ins)
+                continue
+            if not (ins.group(CX.X86_GRP_JUMP) and ins.mnemonic != "jmp" and ins.operands and
+                    ins.operands[0].type == CX.X86_OP_IMM):
+                continue
+            tgt, fall = ins.operands[0].imm & 0xFFFFFFFF, ins.address + ins.size
+            if head <= tgt < end and head <= fall < end:
+                continue
+            if ins.mnemonic in ("loop", "loope", "loopne", "jecxz"):
+                out.append(ins)
+                continue
+            for j in range(k - 1, max(-1, k - 8), -1):
+                p = insns[j]
+                if p.mnemonic in ("call", "ret") or p.group(CX.X86_GRP_JUMP):
                     break
-        if pick is None:
+                if p.mnemonic in self._FLAG_SETTERS:
+                    if all(q.address != p.address for q in out):
+                        out.append(p)
+                    break
+        return out
+
+    def _cmp_operands(self, ins):
+        """The values the flag setter ins compares, as [(value, is_imm, address of a dword memory operand or None)]
+        of two: cmp/test both operands (test r, r: r against 0); an arithmetic setter its destination against 0;
+        loop/jecxz/rep ecx against 0."""
+        uc = self.m.uc
+        mn = ins.mnemonic
+        if mn in ("loop", "loope", "loopne", "jecxz") or ins.prefix[0] in (0xF2, 0xF3):
+            return [(uc.reg_read(UC_X86_REG_ECX), False, None), (0, True, None)]
+        ops = list(ins.operands)
+        if mn not in ("cmp", "test"):
+            ops = ops[:1]
+        res = []
+        for o in ops:
+            msk = ST._MASK.get(o.size, 0xFFFFFFFF)
+            if o.type == CX.X86_OP_REG:
+                res.append((uc.reg_read(ST._ucreg(o.reg)) & msk, False, None))
+            elif o.type == CX.X86_OP_MEM:
+                a = o.mem.disp
+                if o.mem.base:
+                    a += uc.reg_read(ST._ucreg(o.mem.base))
+                if o.mem.index:
+                    a += uc.reg_read(ST._ucreg(o.mem.index)) * o.mem.scale
+                a &= 0xFFFFFFFF
+                try:
+                    raw = self.m.read(a, o.size)
+                except Exception:
+                    # a pool page the run has not touched yet (the hook runs before the access maps it)
+                    if not M.POOL_BASE <= a < M.POOL_BASE + M.POOL_SIZE - 8 or self.m.lazy is None:
+                        raise
+                    raw = bytes(self.m.lazy((a + k) & ~0xFFF)[(a + k) & 0xFFF] for k in range(o.size))
+                res.append((int.from_bytes(raw, "little"), False, a if o.size == 4 else None))
+            elif o.type == CX.X86_OP_IMM:
+                res.append((o.imm & msk, True, None))
+        if mn == "test" and len(res) == 2 and ins.operands[0].type == ins.operands[1].type == CX.X86_OP_REG and \
+                ins.operands[0].reg == ins.operands[1].reg:
+            res[1] = (0, True, None)
+        if len(res) == 1:
+            res.append((0, True, None))
+        return res
+
+    def repair_loop(self, inp, rng, why="budget", cap=LOOP_PROFILE_CAP, samples=12, rounds=16):
+        """A loop of the original ran on and on (the --budget instruction cap cut the run off, or its allocations
+        ran the heap out): its trip count came from a soup value no game state holds (rec_tables 0x4c47d0 deletes
+        [[this+4]-4] elements of an array). These are O(n) loops, so a small n tests the same code: the input
+        dword that set the trip count is shrunk, and the input is then replayed identically on both sides (only
+        the input changes, never the comparison).
+        1. profile `cap` instructions: the hottest backward jumps are the loops (_profile_loops);
+        2. the exit compares of the hottest few (_loop_compares) are sampled for `samples` iterations: the operand
+           that steps by a constant d is the induction variable (first value x0), a constant one is the bound B (0
+           for a dec/sub/loop/rep counter), and N = (B - x0) / d is the trip count;
+        3. the input dword that N, B or x0 follows from (in that order; the compare's own memory operand when the
+           input owns it, else one read before the loop or in its first iteration, by repair_relations: equal, a
+           scaled count, a byte size, a begin/end pair) is rewritten so the loop runs n times: n for a count,
+           x0 + n*d for an end pointer, B - n*d for a count-down start;
+        a loop over a chain of pointers compared against a constant (a list walked to NULL) is cut instead: the
+        input dword the k-th pointer was loaded from is set to the compared constant.
+        Up to `rounds` shrinks are made per call, each checked by a run capped at `cap` (one soup count per element
+        of an array: rec_tables 0x4c47d0's strings); the caller replays the result at the full cap. Returns the
+        repaired input or None."""
+        cur = None
+        self.loop_fit = False
+        for _round in range(rounds):
+            loops, st = self._profile_loops(cur or inp, cap)
+            if os.environ.get("DIFFTEST_LOOP_DEBUG"):
+                self.log("  loop repair round %d: profile %s" % (_round, st))
+            if cur is not None and st[0] != "budget":
+                self.loop_fit = True            # the shrunk input finishes (or stops for another reason) in the cap
+                break
+            nxt = self._shrink_loop(cur or inp, loops, rng, why, cap, samples)
+            if nxt is None:
+                break
+            cur = nxt
+        return cur
+
+    def _shrink_loop(self, inp, loops, rng, why, cap, samples):
+        """One repair_loop round: sample the exit compares of the profiled loops and shrink one input dword."""
+        hooked = []
+        for _n, _src, end, head in loops[:4]:
+            for ins in self._loop_compares(head, end):
+                if all(h.address != ins.address for h in hooked):
+                    hooked.append(ins)
+        if not hooked:
             return None
-        return self._put_dword(inp.copy(), pick, rng.choice((0, 1, 2, 3, 4, 8, 16, rng.randrange(64))))
+        m, uc = self.m, self.m.uc
+        # per compare: runs of consecutive executions whose operands each step by a constant (one invocation of the
+        # loop: a callee's loop runs once per call, each call from its own start and bound). The LONGEST run is the
+        # runaway one (rec_tables 0x4c47d0: a 0x21-character string's loop runs before the soup-length one); its
+        # first `samples` executions are kept. first: the first `samples` executions whatever they hold (a pointer
+        # chain does not step). Sampling stops once every compare has a run of `long_run`.
+        long_run = 4 * samples + 16
+        state = {ins.address: {"seg": [], "n": 0, "last": [], "best": (0, [])} for ins in hooked}
+        first = {ins.address: [] for ins in hooked}
+        full = [0]
+
+        def steps(a_, b_, c_):
+            return all(((z[0] - y[0]) - (y[0] - x[0])) & 0xFFFFFFFF == 0 for x, y, z in zip(a_[0], b_[0], c_[0]))
+
+        def on_cmp(uc_, address, size, ins):
+            if self.cur is not self.orig:
+                return
+            st_ = state[ins.address]
+            if st_["n"] >= long_run:
+                return
+            try:
+                hit = (self._cmp_operands(ins), len(self.reads))
+            except Exception:
+                return
+            f = first[ins.address]
+            if len(f) < samples:
+                f.append(hit)
+            last = st_["last"]
+            if len(last) == 2 and not steps(last[0], last[1], hit):
+                if st_["n"] > st_["best"][0]:
+                    st_["best"] = (st_["n"], st_["seg"])
+                st_["seg"], st_["n"] = [last[1]], 1      # a new invocation (or no progression) starts here
+            st_["n"] += 1
+            if len(st_["seg"]) < samples:
+                st_["seg"].append(hit)
+            st_["last"] = (last + [hit])[-2:]
+            if st_["n"] == long_run:
+                full[0] += 1
+                if full[0] >= len(state):
+                    uc_.emu_stop()
+        self.reads = []
+        ranges = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE), (self.esp_entry, self.args_hi)]
+        ranges += [(lo, hi) for _nm, lo, hi in m.writable]
+        hs = [uc.hook_add(UC_HOOK_MEM_READ, self._on_read, begin=lo, end=hi - 1) for lo, hi in ranges]
+        hs += [uc.hook_add(UC_HOOK_CODE, on_cmp, user_data=ins, begin=ins.address, end=ins.address) for ins in hooked]
+        saved = self.budget
+        self.budget = cap
+        try:
+            self.run_side(self.orig, inp)
+        except UcError:
+            pass
+        finally:
+            self.budget = saved
+            for h in hs:
+                uc.hook_del(h)
+        reads, self.reads = self.reads, None
+        n = rng.choice((1, 2, 3, 4, 5, 8, rng.randrange(17)))
+
+        def s32(x):
+            x &= 0xFFFFFFFF
+            return x - (1 << 32) if x >> 31 else x
+        got = {a_: (st_["seg"] if st_["n"] >= st_["best"][0] else st_["best"][1]) for a_, st_ in state.items()}
+        cands = []          # (rank, addr, old, new, rel, what)
+        for ins in hooked:
+            s = got[ins.address]
+            if len(s) < 4:
+                continue
+            for j in (0, 1):
+                xs = [smp[0][j][0] for smp in s]
+                bs = [smp[0][1 - j][0] for smp in s]
+                if len(set(bs)) != 1:
+                    continue                        # the other operand moves too: not a bound
+                b = bs[0]
+                d = s32(xs[1] - xs[0])
+                lim = s[0][1]                       # the reads made before the loop's first compare
+                lim2 = s[1][1]                      # ... and in its first iteration (the bound re-read each time)
+                if d and all(s32(xs[i + 1] - xs[i]) == d for i in range(len(xs) - 1)):
+                    x0 = xs[0]
+                    dist = s32(b - x0)
+                    if dist and (dist > 0) == (d > 0) and dist % d == 0:
+                        trip = dist // d
+                    else:
+                        # moving away from the bound, or stepping over it (an equality exit never taken: soup
+                        # uninitialized_copy 0x4c1b60 walks [first, last) in 0x204 strides): it wraps first
+                        trip = 1 << 32
+                    if trip <= 4 * samples:
+                        continue                    # a short loop: not the one burning the budget
+                    targets = [("x0", x0, (b - n * d) & 0xFFFFFFFF)]
+                    if trip < 1 << 32:
+                        targets.insert(0, ("N", trip, n))
+                    if not s[0][0][1 - j][1] and b:
+                        targets.append(("B", b, (x0 + n * d) & 0xFFFFFFFF))
+                    for what, t, want in targets:
+                        rels = self.repair_relations(reads, t, lim2, near=lim)[:4]
+                        ma = s[0][0][1 - j][2] if what == "B" else s[0][0][j][2] if what == "x0" else None
+                        if ma is not None:
+                            rels.insert(0, (ma, t, ("eq", 1, 0)))   # the compare reads it from the input itself
+                        for addr, val, rel in rels:
+                            # N as a begin/end pair: the end is begin + n elements of the pair's stride
+                            new = self._invert(rel, val, n * rel[1] if what == "N" and rel[0] == "pair" else want)
+                            if new is None or new == val:
+                                continue
+                            rank = -1 if addr == ma else \
+                                {"eq": 0, "pair": 1}.get(rel[0], 2) * 3 + ("N", "B", "x0").index(what)
+                            cands.append((rank, addr, val, new, rel, what))
+        for ins in hooked:
+            s = first[ins.address]
+            if len(s) < 4:
+                continue
+            xs = [smp[0][0][0] for smp in s]
+            bs = [smp[0][1][0] for smp in s]
+            if len(set(bs)) == 1 and len(set(xs)) == len(xs) and all(self._pointer(x) for x in xs):
+                # a pointer chain compared against a constant (a list walked to NULL): end it at element k
+                k = rng.randrange(1, min(4, len(xs)))
+                for addr, val in reversed(reads[s[k - 1][1]:s[k][1]]):
+                    if val == xs[k]:
+                        cands.append((9, addr, val, bs[0], ("chain", 1, 0), "chain"))
+                        break
+        cands.sort(key=lambda c: c[0])
+        if os.environ.get("DIFFTEST_LOOP_DEBUG"):
+            self.log("  loop repair (%s): loops %s" % (why, " ".join("%08x->%08x x%d" % (lp[1], lp[3], lp[0])
+                                                                 for lp in loops[:4])))
+            for ins in hooked:
+                self.log("    %08x %s %s: %s" % (ins.address, ins.mnemonic, ins.op_str, " ".join(
+                    "/".join("%x" % v for v, *_x in smp[0]) for smp in got[ins.address][:6])))
+            self.log("    %d candidate(s): %s" % (len(cands), " ".join(
+                "[%08x]%x->%x:%s:%s" % (c[1], c[2], c[3], c[4][0], c[5]) for c in cands[:6])))
+        for _r, addr, val, new, rel, what in cands:
+            out = self._put_any(inp.copy(), addr, new)
+            if out is not None:
+                self.note_repair("%s-loop:%s" % (why, what), rel, addr, val, new)
+                return out
+        return None
 
     def repair_pure(self, inp, rng):
         """The original stopped in _purecall: an indirect call read a vtable slot that is still the
@@ -5162,6 +5589,7 @@ def _test_function(sid, va, opts, log=print):
     sigs = collections.Counter()
     traps = {}
     repaired = 0
+    loop_tries = loop_ok = loop_calls = 0
     faked = 0
     ran = 0
     ours_probe = 0
@@ -5205,15 +5633,34 @@ def _test_function(sid, va, opts, log=print):
                 typed_n += 1
             try:
                 a = runner.run_side(runner.orig, inp)
-                fixes = pure_fixes = heap_fixes = 0
+                fixes = pure_fixes = heap_fixes = loop_fixes = shrunk = 0
                 while time.time() < deadline:
                     st_ = a["status"]
                     if st_[0] == "fault" and a["fault"] and a["fault"][0] != "pool-limit" and fixes < opts.repairs:
                         fixes += 1
                         rep = runner.repair(inp, a["fault"], rng, fixes - 1)
-                    elif st_[0] == "import" and M.is_heap_exhausted(st_[1]) and heap_fixes < 4 and opts.repairs:
+                    elif st_[0] == "import" and M.is_heap_exhausted(st_[1]) and heap_fixes < HEAP_REPAIRS and \
+                            opts.repairs:
                         heap_fixes += 1
-                        rep = runner.repair_heap(inp, st_[1], rng)
+                        rep = runner.repair_heap(inp, st_[1], rng, heap_fixes - 1)
+                        shrunk += rep is not None
+                    elif st_[0] == "budget" and loop_fixes < LOOP_REPAIRS and opts.repairs and \
+                            getattr(opts, "loop_repair", True) and loop_calls < LOOP_REPAIRS_PER_ROW and \
+                            not (loop_tries >= 6 and loop_ok * 4 < loop_tries):
+                        # (a row stops shrinking once it has spent LOOP_REPAIRS_PER_ROW calls, or once fewer than a
+                        # quarter of the shrunk inputs finished: mesh_terrain 0x481d10 spent its time limit on 160)
+                        # a loop whose trip count is a soup value burned the instruction cap: shrink the input
+                        # dword that set it (never the cap: the loops are O(n), a small n tests the same code)
+                        loop_fixes += 1
+                        loop_calls += 1
+                        rep = runner.repair_loop(inp, rng)
+                        shrunk += rep is not None
+                        if rep is not None and runner.loop_fit and runner.budget < min(LOOP_PROFILE_CAP, opts.budget):
+                            # the shrunk input ends inside the profiling cap but not inside the start cap: the row's
+                            # real runs are longer than the start cap (the start-budget probe's job, done here with
+                            # the cap the repair already ran it under; never above --budget)
+                            out["budget_raised"] = "input %d needed more than %d instructions" % (i, runner.budget)
+                            runner.budget = min(LOOP_PROFILE_CAP, opts.budget)
                     elif st_[0] == "import" and str(st_[1]).split(":")[0] == "_purecall" and \
                             pure_fixes < opts.repairs:
                         # a random input drove a vtable call through a slot that is still the pure-call
@@ -5227,6 +5674,11 @@ def _test_function(sid, va, opts, log=print):
                         break
                     inp = rep
                     a = runner.run_side(runner.orig, inp)
+                if loop_fixes:
+                    # each round re-runs the input at the full cap: a row whose runaway loops the repair cannot
+                    # shrink (the trip count is not an input dword) stops trying after 6 such inputs
+                    loop_tries += 1
+                    loop_ok += a["status"][0] != "budget"
                 if a["status"][0] == "budget" and runner.budget < opts.budget and probes < BUDGET_PROBES:
                     # Runaway input, or a function whose real runs are long? Retry with the full cap.
                     probes += 1
@@ -5286,6 +5738,8 @@ def _test_function(sid, va, opts, log=print):
                 if opts.verbose and st == "fault" and a["fault"]:
                     log("  discard input %d: fault %s" % (i, " ".join(
                         "%#x" % x if isinstance(x, int) else str(x) for x in a["fault"])))
+                elif opts.verbose and st == "budget":
+                    log("  discard input %d: %s (%d loop repair call(s))" % (i, a["status"][1], loop_fixes))
                 continue
             if st == "ok" and not runner.abi_ok(a):     # (an exit's frames never return: no ABI to check)
                 # the original itself returned with clobbered callee-saved registers or a wrong esp:
@@ -5294,7 +5748,7 @@ def _test_function(sid, va, opts, log=print):
                 key = "orig-abi-broken(fake)" if a["fakes"] else "orig-abi-broken"
                 discarded[key] = discarded.get(key, 0) + 1
                 continue
-            if fixes or pure_fixes:
+            if fixes or pure_fixes or shrunk:
                 repaired += 1
             # Input-object invariants, on the FINAL input (generation edits, steering and every fault repair
             # applied): an object whose length field is outside the declared capacity of the array the
@@ -5450,6 +5904,10 @@ def _test_function(sid, va, opts, log=print):
     finally:
         runner.close()
     out["repaired_inputs"] = repaired
+    if runner.shrink_stats:
+        out["shrink_repairs"] = dict(runner.shrink_stats.most_common())
+    if loop_tries:
+        out["loop_repair"] = {"inputs": loop_tries, "finished": loop_ok, "calls": loop_calls}
     if steer:
         out["steering"] = dict(steer.stats, constants=steer.n_consts, queued=steer.made)
     covered = set()
@@ -5765,6 +6223,12 @@ def parse_args(argv=None):
     ap.add_argument("--stub", type=lambda v: [int(x, 16) for x in v.split(",") if x], default=STUB_LOOKUPS,
                     help="comma-separated image function VAs (hex) that return an input object instead of running "
                          "(default: the resource lookups that exit() on a missing name; '' for none)")
+    ap.add_argument("--loop-repair", dest="loop_repair", action="store_true",
+                    default=os.environ.get("DIFFTEST_LOOP_REPAIR") == "1",
+                    help="shrink the input dword that set a runaway loop's trip count when the original is cut off by "
+                         "the instruction cap (Runner.repair_loop). Opt-in for now: on obj_tbl 0x499050 it halved the "
+                         "row's edge coverage (10/10 -> 5/10), cause not yet found")
+    ap.add_argument("--no-loop-repair", dest="loop_repair", action="store_false")
     ap.add_argument("--no-force-results", dest="force_results", action="store_false",
                     help="never force the result of a branch-feeding callee (Runner._on_forced)")
     ap.add_argument("--no-uninit-copy", dest="uninit_copy", action="store_false",

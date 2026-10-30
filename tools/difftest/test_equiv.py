@@ -676,6 +676,41 @@ def test_heap_exhausted_is_recognised():
     assert not equiv.M.is_heap_exhausted("huge memcpy 0x9000000")
 
 
+def test_shrink_relations():
+    """repair_heap / repair_loop find the input dword a trip count or allocation size follows from: equal, a count
+    times a stride plus a header (also modulo 2**32: new[] of 0xff7fffff elements of 0x78 + 4 wraps), a byte size
+    walked in strides, or the distance of an adjacent begin/end pointer pair; _invert gives the dword's small value."""
+    R_ = equiv.Runner
+    assert R_._relate(0x1234, 0x1234) == ("eq", 1, 0)
+    assert R_._relate(1000 * 0x78 + 4, 1000) == ("scaled", 0x78, 4)
+    assert R_._relate((0xff7fffff * 0x78 + 4) & 0xFFFFFFFF, 0xff7fffff) == ("scaled", 0x78, 4)
+    assert R_._relate(1000, 1000 * 0x20) == ("divided", 0x20, 0)
+    assert R_._relate(0x10000, 0x12345678) is None
+    assert R_._invert(("scaled", 0x78, 4), 0xff7fffff, 3 * 0x78 + 4) == 3
+    assert R_._invert(("divided", 0x20, 0), 32000, 2) == 0x40
+    r = R_.__new__(R_)
+    r.img = R.Image()
+    b, e = equiv.M.POOL_BASE + 0x100, equiv.M.POOL_BASE + 0x100 + 5000 * 0x204
+    reads = [(0x40010000, 7), (0x40020004, b), (0x40020008, e)]
+    rels = r.repair_relations(reads, 5000)
+    assert (0x40020008, e, ("pair", 0x204, 0, b)) in rels, rels
+    assert R_._invert(("pair", 0x204, 0, b), e, 2 * 0x204) == b + 0x408
+
+
+def test_loop_repair_shrinks_runaway_trip_count():
+    """uninitialized_copy 0x4c1b60 walks [first, last) in 0x204-byte strides until `cmp esi, [ebp+0xc]` is equal: soup
+    pointers never meet, so every original run burned the instruction cap (the row TIMEd OUT in the sweep). repair_loop
+    finds the hot loop, samples its exit compare (esi steps by 0x204, the bound is the argument slot) and rewrites
+    `last` to first + n*0x204; the input, replayed identically on both sides, then finishes. Without it every input
+    is cut off. (A small --budget keeps the unrepaired run fast; the repair itself never changes the cap.)"""
+    src = "src/game/triggers/trigger_vec.cpp"
+    r = _row("trigger_vec", 0x4c1b60, src, "--inputs", "30", "--budget", "200000", "--loop-repair")
+    assert r["valid"] > 0 and not r.get("budget_cutoff"), r
+    assert any(k.startswith("budget-loop:") for k in r.get("shrink_repairs", {})), r
+    r = _row("trigger_vec", 0x4c1b60, src, "--inputs", "30", "--budget", "200000", "--no-loop-repair")
+    assert r["valid"] == 0 and r["verdict"] == "UNSUPPORTED", r
+
+
 def test_budget_cutoff_and_heap_exhausted_are_not_verdicts():
     # A partial run is never a verdict (camera 0x49b630 / cam_view 0x4ea8e0), but a REAL mismatch outranks
     # every "the run was cut short" excuse: agent_hud 0x4fba40 had 200 real mismatches and 16 heap-exhausted
