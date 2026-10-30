@@ -262,7 +262,7 @@ int __cdecl engine_init()
         g_log_flag94 = ok;
     }
     g_log_flag78 = ok;
-    ((text_stream*)(void*)&g_log)->text_stream::w_cstr("Starting new log file.\n");   // 0x4153a0 (g_log is a text_stream)
+    ((stream_base*)(void*)&g_log)->w_cstr("Starting new log file.\n");   // virtual slot +0x28 (0x4f6441 call [eax+0x28]); text_stream::w_cstr 0x4153a0 at run time
     g_5d705c = g_path_prefix;
     bool b = g_no_cam != 0;
     g_5d706c = b;

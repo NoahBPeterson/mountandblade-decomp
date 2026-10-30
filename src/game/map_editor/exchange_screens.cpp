@@ -650,10 +650,10 @@ void XferWin::set_selection(int a, int b, int c)
 static __forceinline float anim_value(ValueSource* vs)
 {
     float* base = (float*)((char*)vs + 0xf0 + F(vs, 0x178, int) * 4);
-    return ((float)g_mission_clock / base[0]) * F(vs, 0x17c, float) * g_char_scale
-         + (base[0] - F(vs, 0x17c, float))
-         * ((F(vs, 0x168, float) - F(vs, 0x16c, float))
-          / (F(vs, 0x170, float) - F(vs, 0x16c, float)));
+    float a = F(vs, 0x168, float) - F(vs, 0x16c, float);
+    float b = F(vs, 0x170, float) - F(vs, 0x16c, float);
+    return (a / b) * (base[0] - F(vs, 0x17c, float))
+         + ((float)g_mission_clock / base[0]) * F(vs, 0x17c, float) * g_char_scale;
 }
 
 static __forceinline void set_anim(TickScreen* s, int push_off, int resize_off)
