@@ -18,6 +18,7 @@
 #include "../mission.h"
 #include "../placed_obj.h"
 #include "../int_vec.h"
+extern MapEditorDialog g_editor_dialog;          // 0x8ee3c48 (the application object seen as the map editor dialog)
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 struct skin_owner;
@@ -119,7 +120,7 @@ add_current:
 
 refresh_list:
         ed_dirty_1c8(g_game) = 1;
-        ((MapEditorDialog*)0x8ee3c48)->refresh();
+        g_editor_dialog.refresh();
     }
 
     // 2. select-all modifier: select every record
@@ -132,7 +133,7 @@ refresh_list:
             ed_selected(g_game) = ed_sel_list(g_game)[0];
         f2f9 = 1;
         ed_dirty_1c8(g_game) = 1;
-        ((MapEditorDialog*)0x8ee3c48)->refresh();
+        g_editor_dialog.refresh();
     }
 
     // 3. the editor camera frame
@@ -183,7 +184,7 @@ refresh_list:
         ed_dirty_1cc(g_game) = 1;
         ed_selected(g_game) = -1;
         ed_sel_list(g_game).resize(0, 0);
-        ((MapEditorDialog*)0x8ee3c48)->update_objects();
+        g_editor_dialog.update_objects();
         pick_entity((GuiCtx*)(void*)g_editor);   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
         g_editor->f2f9 = 1;
         SetFocus(g_editor_hwnd);
@@ -253,7 +254,7 @@ refresh_list:
 
         if (drag || rotated || moved) {
             ed_dirty_1cc(g_game) = 1;
-            ((MapEditorDialog*)0x8ee3c48)->refresh();
+            g_editor_dialog.refresh();
         }
 
         rec_at(ed_selected(g_game))->m98 = rec_at(ed_selected(g_game))->m18;

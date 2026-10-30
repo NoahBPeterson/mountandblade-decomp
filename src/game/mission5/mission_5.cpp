@@ -96,9 +96,9 @@ done:
     *(char*)(g_big + 0x6554) = 1;
 
     int res = -1;
-    if (*(int*)0x8ed50dc >= 0)
+    if (g_conversation_agent >= 0)
     {
-        char* rec = REC_S25160(*(int*)0x8ed50dc);
+        char* rec = REC_S25160(g_conversation_agent);
         *(int*)(rec + 0x31c) = *(int*)((char*)g_big + 0x5c);
         *(int*)(rec + 0x533c) = 2;
         *(int*)(rec + 0x5338) = 0;
@@ -153,7 +153,7 @@ done:
     if (v == 4)
     {
         char* b2 = *(char**)0x5e2930;
-        char* rec = *(char**)(b2 + 0x13a00) + *(int*)0x8ed50d4 * 0x508;
+        char* rec = *(char**)(b2 + 0x13a00) + g_conversation_troop * 0x508;
         int save = *(int*)(rec + 0x34);
         int flags = *(int*)(rec + 0x30);
         (void)save;
@@ -164,21 +164,21 @@ done:
         }
         char* t = *(char**)0xa739a0;
         *(int*)(t + 0x18) = 0x10;
-        *(int*)(t + 0x14) = *(int*)0x8ed50d4;
+        *(int*)(t + 0x14) = g_conversation_troop;
         *(int*)(t + 4) = 2;
         g_dlg.open(8);
         return;
     }
 
     if (v == 3)
-        f1200 = *(int*)0x8ed50d4;
+        f1200 = g_conversation_troop;
     if (v == 2 || v == 3)
     {
         char* t = *(char**)0xa739a0;
         *(int*)(t + 0x18) = 0x10;
         int a = *(int*)(*(char**)0x5e2930 + 0x13af0);
         if (a == 0)
-            a = *(int*)0x8ed50d4;
+            a = g_conversation_troop;
         *(int*)(t + 0x14) = a;
         *(int*)(t + 4) = ((v != 3) ? 0 : 3) + 1;
         g_dlg.open(8);
@@ -191,12 +191,12 @@ done:
         *(int*)(t + 0x18) = 0x10;
         if (v == 5 || v == 6 || v == 7)
         {
-            *(int*)(t + 0x10) = *(int*)0x8ed50d8;
+            *(int*)(t + 0x10) = g_encountered_party;
         }
         else
         {
             *(int*)(t + 0x10) = -1;
-            *(int*)(t + 0x14) = *(int*)0x8ed50d4;
+            *(int*)(t + 0x14) = g_conversation_troop;
         }
         if (v == 5)
         {
@@ -231,7 +231,7 @@ done:
     {
         char* t = *(char**)0xa739bc;
         *(int*)(t + 0x18) = 0x10;
-        *(int*)(t + 0x14) = *(int*)0x8ed50d4;
+        *(int*)(t + 0x14) = g_conversation_troop;
         *(int*)(t + 4) = (v != 0xb) + 1;
         ((VObj_s25160*)t)->v4();
         g_dlg.open(0xf);
@@ -465,10 +465,9 @@ int find_listener_agent()
 #define g_a73300_s261e0 (*(Obj73300_s261e0*)g_mission_ctx)
 #undef g_deque_s261e0
 #define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
-#undef g_dialogmgr
-#define g_dialogmgr (*(DialogMgr_s261e0*)0x8ed50c8)
 #undef g_clamp_max
-#define g_clamp_max (*(int*)0x8ee3ac4)                  // 0x8ee3ac4
+extern int g_skill_clamp;                       // 0x8ee3ac4
+#define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
 // @ 0x5261e0
 void Screen_s261e0::tick(float dt)
 {

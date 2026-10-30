@@ -141,7 +141,7 @@ int GameApp::Update()
 
     dt = m_fElapsedTime;
     if (dt > 0.1f) dt = 0.1f;
-    *(float*)0x8ee42f0 = dt;
+    g_8ee42f0 = dt;
     t = (__int64)(dt * *(float*)0x54b86c);
     g_5e2970 = t;
     g_ticks += t;

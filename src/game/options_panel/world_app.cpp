@@ -33,6 +33,9 @@ inline void* operator new(size_t, void* p, raw_place) { return p; }
 inline void operator delete(void*, void*, raw_place) {}
 
 // ---- callees -------------------------------------------------------------------------------------------
+extern tstring g_module_name;                                      // 0x8ee3c38
+extern tstring g_module_path;                                        // 0x8ee3c28
+extern tstring g_module_path_copy;                                   // 0xa75e8c
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 // The vector elements of mesh_2.cpp (E50 0x50, E68 0x68, E176 0xb0) and the std algorithms the original keeps out of line for them;
 // the explicit specialization declarations (no bodies here) keep every one of them a call.
@@ -507,7 +510,7 @@ GameApp::GameApp()
     g_5e28c8 = 0;
     scan_module_folders(arrp, &f38c);
     if (f38c > 0) {
-        *(tstring*)0x8ee3c38 = *arrp;
+        g_module_name = *arrp;
 
         HKEY  key;
         DWORD disp;
@@ -521,15 +524,15 @@ GameApp::GameApp()
             if (key != 0)
                 RegCloseKey(key);
             if (modname.len > 0)
-                *(tstring*)0x8ee3c38 = modname;
+                g_module_name = modname;
         }
     }
 
-    ((tstring*)0x8ee3c28)->assign("Modules\\");
-    ((tstring*)0x8ee3c28)->append(*(tstring*)0x8ee3c38);
+    g_module_path.assign("Modules\\");
+    g_module_path.append(g_module_name);
     {
         tstring tmp("\\");
-        ((tstring*)0x8ee3c28)->append(tmp);
+        g_module_path.append(tmp);
     }
 
     g_use_shaders = 0;
@@ -548,7 +551,7 @@ GameApp::GameApp()
         FSOUND_3D_SetRolloffFactor(0.5f);
     }
 
-    *(tstring*)0xa75e8c = *(tstring*)0x8ee3c28;
+    g_module_path_copy = g_module_path;
     *(int*)((char*)this + 0x364) = 0;
     m_hMapEditorDlg = 0;
     m_hScriptDlg = 0;
@@ -557,9 +560,10 @@ GameApp::GameApp()
 
 // @ 0x4d4130
 #include "./config_dialog.h"                      // Dialog: proc 0x4d0240 (the dialog procedure of the application object)
+extern Dialog g_app_dialog;                                        // 0x8ee3c48 (the application object)
 int __stdcall wndproc_thunk(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
-    return (int)((Dialog*)0x8ee3c48)->proc(h, msg, wp, lp);
+    return (int)g_app_dialog.proc(h, msg, wp, lp);
 }
 
 // ---- callees used by the main window procedure (0x4d4140) ----------------------------------------------
@@ -576,8 +580,6 @@ struct ini_file {
 };
 int __stdcall   SkinDialog(HWND h, const char* s);       // 0x535446 (SkinMagic SetSingleDialogSkin: stdcall, the callers do not pop)
 
-extern tstring g_module_name;                                      // 0x8ee3c38
-extern tstring g_module_path;                                        // 0x8ee3c28
 #define STRTAB ((StrTable*)0x5e2a18)
 #define UI(s) STRTAB->lookup(tstring(s))
 

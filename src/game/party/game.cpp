@@ -880,7 +880,7 @@ void Game::load_troops(stream_base* s)
     do {
         s->r_int((int*)p);
         p += 0x44;
-    } while ((int)p < (int)0x8ee3c60);
+    } while ((int)p < (int)(g_troop_extra + 42 * 0x44));         // 0x8ee3c60
 }
 
 // @ 0x51e540

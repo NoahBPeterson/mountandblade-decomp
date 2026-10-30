@@ -36,7 +36,8 @@ struct RenderPass {
 };
 extern SceneRegistry g_renderer;                             // 0x5fe898
 #include "../map_editor_obj.h"                      // MapEditor, instance at 0x8ee3c48
-#define g_editor (*(MapEditor*)0x8ee3c48)
+extern MapEditor g_editor_obj;                      // 0x8ee3c48
+#define g_editor g_editor_obj
 extern MsgLog g_msglog;                                 // 0x5d7080
 
 // ---- UI widget (vtable family 0x597050; s004f49d0 / s004dada0) ------------------------------------------

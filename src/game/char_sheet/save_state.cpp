@@ -4,6 +4,7 @@
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../list8.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
+extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 bytes)
 #include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
 
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
@@ -235,8 +236,8 @@ void GameData::write_records(OutStream* out)
     out->w_raw(&nrecords);
     for (int i = 0; i < nrecords; i++)
         records[i].write_save(out);
-    char* q = (char*)0x8ee3138;
-    int   qend = 0x8ee3c60;
+    char* q = g_troop_extra;                       // 0x8ee3138
+    int   qend = (int)(g_troop_extra + 42 * 0x44);  // 0x8ee3c60
     while ((int)q < qend) {
         out->w_raw(q);
         q += 0x44;

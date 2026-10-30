@@ -35,6 +35,9 @@ struct bin_writer_i : file_writer_base {
 extern void* g_mission; // 0x5e292c
 extern void* g_game; // 0x5e2930
 extern char g_dialogs[]; // 0x8ed50c8
+extern int g_conversation_troop;   // 0x8ed50d4
+extern int g_encountered_party;    // 0x8ed50d8
+extern int g_conversation_agent;   // 0x8ed50dc
 extern char g_strtable[]; // 0x5e2a18
 extern char g_gui[]; // 0x5d7080
 extern char g_game_keys[]; // 0xa73730
@@ -527,7 +530,7 @@ struct DialogMgr_s261e0 {
 };
 // The dialog manager is a fixed object at 0x8ed50c8 (outside the tool's annotation range, so it is
 // named through a literal cast here).
-#define g_dialogmgr (*(DialogMgr_s261e0*)0x8ed50c8)
+extern DialogMgr_s261e0 g_dialogmgr;          // 0x8ed50c8
 
 struct Flags5e291c_s261e0 {
     char b0, b1, b2, pad3;
@@ -557,7 +560,8 @@ extern unsigned char g_a17908;                          // 0xa17908
 extern int  g_presentation;                                  // 0x5e299c
 #include "../../include/renderer.h"
 extern char g_script[]; // 0xa70440
-#define g_clamp_max (*(int*)0x8ee3ac4)                  // 0x8ee3ac4
+extern int g_skill_clamp;                       // 0x8ee3ac4
+#define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
 extern int  g_a7333c;                                   // 0xa7333c
 struct Obj73300_s261e0 { void f_5295a0(); };                   // 0x5295a0
 

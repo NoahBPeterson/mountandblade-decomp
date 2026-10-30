@@ -69,6 +69,7 @@ int save_game(int id, tstring* name);                  // 0x4e8980
 struct DialogMgr {                                      // the dialog manager at 0x8ed50c8
     void start(int a, int b, int c, int d, char e);     // 0x4610b0 (ret 0x14)
 };
+extern DialogMgr g_dialogs;                             // 0x8ed50c8
 
 
 int count_hero_items();                                 // 0x513e10
@@ -693,7 +694,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
-    ((DialogMgr*)0x8ed50c8)->start(a1, -1, a3, a4, 1);
+    g_dialogs.start(a1, -1, a3, a4, 1);
 }
 
 // @ 0x514c00
@@ -710,7 +711,7 @@ void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
-    ((DialogMgr*)0x8ed50c8)->start(a1, -1, party[side], 0, 1);
+    g_dialogs.start(a1, -1, party[side], 0, 1);
 }
 
 // @ 0x514cd0

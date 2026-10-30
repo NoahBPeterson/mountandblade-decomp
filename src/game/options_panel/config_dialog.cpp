@@ -36,7 +36,8 @@ struct IModeEnum {
 };
 
 // 0x08ee3d3c: renderer singleton pointer.
-#define g_renderer (*(IModeEnum**)0x8ee3d3c)
+extern IModeEnum* g_mode_enum;               // 0x8ee3d3c
+#define g_renderer g_mode_enum
 
 // Temporary sorted result, copied into the return value at the end (as the original does).
 struct ModeList {

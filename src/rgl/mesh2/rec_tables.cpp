@@ -295,6 +295,7 @@ INT_PTR CALLBACK folder_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lPara
 struct EditorObj {
     void thunk();
 };
+extern EditorObj g_app_obj_thunk;                       // 0x8ee3c48 (the application object, g_app_obj)
 union DlgThunk {
     void (EditorObj::*thunk)();
     INT_PTR (Core::*script_debugger_proc)(HWND, UINT, WPARAM, LPARAM);
@@ -306,7 +307,7 @@ void global_4bf870()
 {
     DlgThunk f;
     f.script_debugger_proc = &Core::script_debugger_proc;
-    (((EditorObj*)0x8ee3c48)->*f.thunk)();
+    ((g_app_obj_thunk).*f.thunk)();
 }
 
 // @ 0x4c3340
@@ -314,7 +315,7 @@ void script_dialog_proc()
 {
     DlgThunk f;
     f.folder_dlg_proc = ::folder_dlg_proc;
-    (((EditorObj*)0x8ee3c48)->*f.thunk)();
+    ((g_app_obj_thunk).*f.thunk)();
 }
 
 // skyboxes.txt of the module: a tstream3 text reader (vtable 0x54ac88; constructor 0x4172d0 inlined in the

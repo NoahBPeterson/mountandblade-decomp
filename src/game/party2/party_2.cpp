@@ -879,7 +879,8 @@ extern float g_rand_k;                               // 0x54a6bc  1/15817
 extern float g_k_item_weight;                        // 0x593640  per-item weight of the equipped grid item
 struct options;
 extern options g_options;                   // 0x5aa008
-#define g_clamp_max (*(int*)0x8ee3ac4)               // outside the annotation range, so a literal cast
+extern int g_skill_clamp;                       // 0x8ee3ac4
+#define g_clamp_max g_skill_clamp               // outside the annotation range, so a literal cast
 
 // @ 0x4b2c00
 void Party::tick_stats()
