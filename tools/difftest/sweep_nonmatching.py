@@ -155,8 +155,10 @@ def run(r, out, extra, force=False):
     cmd = [PY, EQ, r["id"], r["va"], "--fp-tol", "--max-mismatch", "200", "--json", js + ".part"] + extra + row_opts(r)
     if r["src"]:
         cmd += ["--src", os.path.join(ROOT, r["src"])]
+    # the hard cap follows a --time-limit given to equiv (the last one wins, as in argparse), with room to write the JSON
+    tl = [cmd[i + 1] for i, a in enumerate(cmd[:-1]) if a == "--time-limit"]
     try:
-        subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=900)
+        subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=max(900, float(tl[-1]) + 180 if tl else 0))
     except subprocess.TimeoutExpired:
         json.dump([{"verdict": "TIMEOUT"}], open(js + ".part", "w"))
     if os.path.exists(js + ".part"):
