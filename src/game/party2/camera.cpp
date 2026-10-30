@@ -1485,7 +1485,11 @@ void Camera::update(int)
         float inv = 1.0f / lim[4];
         float rest = lim[4] - d4;
         float xn = d4 * w20 + rest * w22;
-        float yn = rest * w23 + d4 * w21;
+        // the original spills both y terms and their sum to float slots before scaling (volatile
+        // forces the same float rounding; it matters for denormal results)
+        volatile float yb = d4 * w21;
+        volatile float yr = rest * w23;
+        volatile float yn = yr + yb;
         float x = xn * inv;
         float y = yn * inv;
         v.x = x * 0.02f;
