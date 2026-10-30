@@ -1355,10 +1355,12 @@ struct lod_entry {
 };
 
 // a 0x18-byte material entry of the [0x44] array
-struct entry18 {
+struct entry18 {                                // 0x18 bytes (0x4e7b30: mov [edi+0x14], 0 / add edi, 0x18; 0x47f650 reads +0x14)
     tstring name;                               // +0x00
+    char pad10[4];                              // +0x10
     MsLod* res14;                               // +0x14
 };
+typedef char entry18_size_check[sizeof(entry18) == 0x18 ? 1 : -1];
 
 // a 0xb0-byte cell of the [0x1bc] vector<E176>; MissionRec2 (0x4ce680) is its constructor
 struct MissionRec2 {
