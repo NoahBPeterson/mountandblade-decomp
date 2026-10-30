@@ -80,7 +80,7 @@ void SkeletonBody::load(const tstring& filename)
 {
     TiXmlDocument doc(filename.c_str());
     if (!doc.LoadFile()) {
-        mb_error("Unable To Load Skeleton Body File");
+        mb_error("Unable To Load Skeleton Body File!");
         return;
     }
 
