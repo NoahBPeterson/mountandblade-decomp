@@ -77,9 +77,9 @@ constants. 0x4e4790 / 0x4e55f0: `SaveWindow::slot_button(parent, slot, out)` (th
 its prefix by value. 0x4e43e0 is `gui_manager::draw_string(tstring*, float, int, char)` (argument order was wrong).
 0x4db440: `" (%d/%d)"` takes (count - wounded, count) (the slice had them swapped).
 
-**Caveats kept honest:** 0x4de6f0 (`OptionsScreen::open`) is a skeleton covering 1949 of 5721 bytes with placeholder `opt_*`
-callees; 0x4e05c0 (`OptionsWin::init`) is a skeleton whose constants do not match the disassembly (first make_hint pushes
-0.52, 0.7, 0.3, 0.035) and which calls placeholder helpers. Both stay nonmatching with no equivalence claim.
+**Caveats kept honest:** 0x4e05c0 (`OptionsWin::init`) is a skeleton whose constants do not match the disassembly (first
+make_hint pushes 0.52, 0.7, 0.3, 0.035) and which calls placeholder helpers; it stays nonmatching with no equivalence claim.
+0x4de6f0 (`OptionsScreen::open`) was a skeleton too (1949 of 5721 bytes); it was rebuilt from the disassembly on 2026-10-30.
 
 ## Verification
 

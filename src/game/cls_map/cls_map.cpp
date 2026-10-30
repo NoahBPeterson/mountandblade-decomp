@@ -1927,14 +1927,14 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
 }
 
 // ---- 0x4de6f0: OptionsScreen::open ----------------------------------------------------------------------------------------
-// The slice's reconstruction (a third of the original's size: the sliders / labels between the six difficulty boxes and the
-// framerate sliders were rebuilt from the repeated code shape, the callee prototypes below are the slice's guesses; the true
-// makers are make_hint 0x4dada0, new_medium_button 0x4dce70, make_slider 0x4dfd50 above, called with their true prototypes; the surplus
-// guessed arguments are dropped).
+// Every widget of the original in order: the overlay window, its header logo, the three buttons (ui_controls / ui_video_options /
+// ui_done), the difficulty sliders and drop-downs, the 19 hint labels and the "ui_enabled" toggles, with the original callee
+// prototypes (make_hint 0x4dada0, new_medium_button 0x4dce70, make_slider 0x4dfd50, make_dropdown 0x4dfec0).
 #define set_enabled_text(o) ((KeysPage*)this)->set_enabled_text((Widget*)(o))   // 0x4d6dd0
 #define update_perf(w) ((KeysPage*)(w))->update_perf()                          // 0x4d6b80
 #define OPT_F(o) (*(float*)(0x5aa010 + (o)))   // the option block's float settings (0x5aa010..)
 #define OPT_C(o) (*(int*)(0x5aa01c + (o)))   // the option block's integer settings fed to select() (0x5aa01c..)
+#define COLOR_ENABLED 0xffdfcfbfu   // the ui colour word every label of the screen is tinted with (edi in the original)
 
 // @ 0x4de6f0
 void OptionsScreen::open()
@@ -1942,13 +1942,13 @@ void OptionsScreen::open()
     g_gui.reset();
     { NEW_OVERLAY_WINDOW(p_) root = p_; }
     {
-        float p[4];
+        float p[2];
         p[0] = -0.001f; p[1] = -0.001f;
         vt(root)->d22(p);
     }
     {
-        float s[4];
-        s[0] = 1.001f; s[1] = 0.001f;
+        float s[2];
+        s[0] = 1.002f; s[1] = 0.752f;
         vt(root)->d25(s);
     }
     {
@@ -1957,123 +1957,186 @@ void OptionsScreen::open()
         vt(root)->d41(o_, &k);
     }
     {
-        tstring k("options_window");
-        gui_mesh* m = res_get(k)->clone();
+        unsigned c = COLOR_ENABLED;
+        vt(root)->d38(&c);
+    }
+    {
+        gui_mesh* m;
+        {
+            tstring k("options_window");
+            m = res_get(k)->clone();
+        }
         vt(root)->d31(0, m);
     }
     header = new MissionUi;
     {
-        float p[4];
+        float p[2];
         p[0] = 0.4f; p[1] = 0.67f;
         vt(header)->d22(p);
     }
     {
-        float s[4];
+        float s[2];
         s[0] = 0.2f; s[1] = 0.05f;
         vt(header)->d25(s);
     }
     {
-        // 0x4de6f0 pushes "options_window" first and "warrider_logo" second (push 005976c8 / 00597020); there is no
-        // "main_options" resource anywhere in the game data - this name was invented by the slice's guessed skeleton and
-        // produced "RGL ERROR: get_object failed for: main_options" when the options screen opened.
         tstring k("warrider_logo");
         gui_mesh* m = res_get(k)->clone();
         vt(header)->d31(0, m);
     }
     vt(root)->d50(header);
-    {
-        tstring k("ui_controls");
-        vt(root)->d50(make_hint((ContainerBase*)this, *g_strtable_c.lookup(k), 0.1f, 0.05f, 0.8f, 0.01f));
-    }
-    {
-        tstring k("ui_video_options");
-        vt(root)->d50(make_hint((ContainerBase*)this, *g_strtable_c.lookup(k), 0.1f, 0.05f, 0.8f, 0.035f));
-    }
-    {
-        tstring k("ui_done");
-        vt(root)->d50(make_hint((ContainerBase*)this, *g_strtable_c.lookup(k), 0.65f, 0.1f, 0.8f, 0.01f));
-    }
-    {
-        tstring k("ui_audio_options");
-        vt(root)->d50(make_hint((ContainerBase*)this, *g_strtable_c.lookup(k), 0.1f, 0.67f, 0.8f, 0.035f));
-    }
-    {
-        tstring k("");
-        s7c = make_slider((MissionUi*)root, 0.23f, 0.604f, 1.0f);
-        vt(s7c)->d13(OPT_F(0x6c));
-    }
-    {
-        tstring k("");
-        s80 = make_slider((MissionUi*)root, 0.23f, 0.557f, 1.0f);
-        vt(s80)->d13(OPT_F(0x70));
-    }
-    {
-        tstring k("");
-        s84 = make_slider((MissionUi*)root, 0.23f, 0.456f, 1.0f);
-        vt(s84)->d13(OPT_F(0x74));
-    }
-    {
-        tstring k("ui_enabled");
-        t88 = new_medium_button((MissionUi*)this, g_strtable_c.lookup(k), 0.4f, 0.15f, 0.7f);
-        ((UiAInline*)t88)->f184 = 1;
-        vt(t88)->d11(OPT_C(0x1c));
-        set_enabled_text(t88);
-    }
-    {
-        tstring k("");
-        d78 = make_slider((MissionUi*)root, 0.14f, 0.42f, 1.0f);
-        vt(d78)->d13(OPT_F(0x3c));
-    }
-    {
-        tstring k("ui_enabled");
-        l74 = new_medium_button((MissionUi*)this, g_strtable_c.lookup(k), 0.4f, 0.27f, 0.7f);
-        ((UiAInline*)l74)->f184 = 1;
-        vt(l74)->d11(OPT_C(0x38));
-        set_enabled_text(l74);
-    }
-    {
-        tstring k("ui_enabled");
-        l70 = new_medium_button((MissionUi*)this, g_strtable_c.lookup(k), 0.4f, 0.315f, 0.7f);
-        ((UiAInline*)l70)->f184 = 1;
-        vt(l70)->d11(OPT_C(0x34));
-        set_enabled_text(l70);
-    }
-    {
-        tstring k("ui_controls");
-        l6c = new_medium_button((MissionUi*)this, g_strtable_c.lookup(k), 0.4f, 0.62f, 0.7f);
-        ((UiAInline*)l6c)->f184 = 1;
-        vt(l6c)->d11(OPT_C(0x30));
-        set_enabled_text(l6c);
-    }
-    {
-        tstring k("ui_video_options");
-        l68 = new_medium_button((MissionUi*)this, g_strtable_c.lookup(k), 0.4f, 0.57f, 0.7f);
-        ((UiAInline*)l68)->f184 = 1;
-        vt(l68)->d11(OPT_C(0x2c));
-        set_enabled_text(l68);
-    }
-    {
-        tstring k("ui_audio_options");
-        l64 = new_medium_button((MissionUi*)this, g_strtable_c.lookup(k), 0.4f, 0.53f, 0.7f);
-        ((UiAInline*)l64)->f184 = 1;
-        vt(l64)->d11(OPT_C(0x28));
-        set_enabled_text(l64);
-    }
-    {
-        tstring k("ui_enabled");
-        l60 = new_medium_button((MissionUi*)this, g_strtable_c.lookup(k), 0.4f, 0.48f, 0.7f);
-        ((UiAInline*)l60)->f184 = 1;
-        vt(l60)->d11(OPT_C(0x24));
-        set_enabled_text(l60);
-    }
-    {
-        tstring k("ui_enabled");
-        l5c = new_medium_button((MissionUi*)this, g_strtable_c.lookup(k), 0.4f, 0.35f, 0.7f);
-        ((UiAInline*)l5c)->f184 = 1;
-        vt(l5c)->d11(OPT_C(0x20));
-        set_enabled_text(l5c);
-    }
+    { tstring k("ui_controls"); b38 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.1f, 0.07f, 0.05f); }
+    { tstring k("ui_video_options"); b3c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.1f, 0.14f, 0.05f); }
+    { tstring k("ui_done"); b40 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.65f, 0.03f, 0.05f); }
+    s7c = make_slider((MissionUi*)root, 0.23f, 0.605f, 1.0f);
+    vt(s7c)->d13(*(float*)0x5aa010);
+    s80 = make_slider((MissionUi*)root, 0.23f, 0.555f, 1.0f);
+    vt(s80)->d13(*(float*)0x5aa014);
+    s84 = make_slider((MissionUi*)root, 0.23f, 0.455f, 1.0f);
+    vt(s84)->d13(*(float*)0x5aa018);
+    { tstring k("ui_enabled"); b88 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.23f, 0.405f, 0.03f); }
+    ((UiAInline*)b88)->f184 = 1;
+    vt(b88)->d11(*(int*)0x5aa01c);
+    set_enabled_text(b88);
+    { tstring k("Combat dif"); dd44 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.605f); }
+    { tstring k("ui_reduced_to_1_over_4_easiest"); vt(dd44)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_reduced_to_1_over_2_easy"); vt(dd44)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_normal"); vt(dd44)->d50(g_strtable_c.lookup(k)); }
+    vt(dd44)->d11(*(int*)0x5aa054);
+    { tstring k("Friend combat dif"); dd48 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.555f); }
+    { tstring k("ui_reduced_to_1_over_2_easiest"); vt(dd48)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_reduced_to_3_over_4_easy"); vt(dd48)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_normal"); vt(dd48)->d50(g_strtable_c.lookup(k)); }
+    vt(dd48)->d11(*(int*)0x5aa058);
+    { tstring k("Combat ai"); dd4c = make_dropdown((MissionUi*)root, &k, 0.7f, 0.505f); }
+    { tstring k("ui_good"); vt(dd4c)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_average_caps"); vt(dd4c)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_poor"); vt(dd4c)->d50(g_strtable_c.lookup(k)); }
+    vt(dd4c)->d11(*(int*)0x5aa04c);
+    { tstring k("Combat speed"); dd50 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.455f); }
+    { tstring k("ui_slower"); vt(dd50)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_normal"); vt(dd50)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_faster"); vt(dd50)->d50(g_strtable_c.lookup(k)); }
+    vt(dd50)->d11(*(int*)0x5aa050);
+    { tstring k(""); dd54 = make_dropdown((MissionUi*)root, &k, 0.23f, 0.305f); }
+    { tstring k("ui_automatic_recommended"); vt(dd54)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_by_mouse_movement"); vt(dd54)->d50(g_strtable_c.lookup(k)); }
+    vt(dd54)->d11(*(int*)0x5aa078);
+    { tstring k(""); dd58 = make_dropdown((MissionUi*)root, &k, 0.23f, 0.255f); }
+    { tstring k("ui_by_relative_enemy_position"); vt(dd58)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_by_mouse_movement"); vt(dd58)->d50(g_strtable_c.lookup(k)); }
+    { tstring k("ui_by_inverse_mouse_movement"); vt(dd58)->d50(g_strtable_c.lookup(k)); }
+    vt(dd58)->d11(*(int*)0x5aa074);
+    sl78 = make_slider((MissionUi*)root, 0.67f, 0.405f, 1.0f);
+    vt(sl78)->d13(*(float*)0x5aa07c);
+    { tstring k(""); h34 = make_hint((ContainerBase*)root, k, 0.93f, 0.4f, 0.05f, 0.035f); }
+    { unsigned c = 0xffffffff; vt(h34)->d38(&c); }
+    ((QuestPage*)this)->update_days();
+    { tstring k("ui_music_volume"); h8c = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.6f, 0.16f, 0.035f); }
+    { int v = 4; vt(h8c)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(h8c)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(h8c)->d37(&c); }
+    { tstring k("ui_sound_volume"); h90 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.55f, 0.16f, 0.035f); }
+    { int v = 4; vt(h90)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(h90)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(h90)->d37(&c); }
+    { tstring k("ui_mouse_sensitivity"); h94 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.45f, 0.16f, 0.035f); }
+    { int v = 4; vt(h94)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(h94)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(h94)->d37(&c); }
+    { tstring k("ui_invert_mouse_y_axis"); h98 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.4f, 0.16f, 0.035f); }
+    { int v = 4; vt(h98)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(h98)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(h98)->d37(&c); }
+    { tstring k("ui_control_block_direction"); h9c = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.3f, 0.16f, 0.035f); }
+    { int v = 4; vt(h9c)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(h9c)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(h9c)->d37(&c); }
+    { tstring k("ui_control_attack_direction"); ha0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.25f, 0.16f, 0.035f); }
+    { int v = 4; vt(ha0)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(ha0)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(ha0)->d37(&c); }
+    { tstring k("ui_damage_to_player"); ha4 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.6f, 0.16f, 0.035f); }
+    { int v = 4; vt(ha4)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(ha4)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(ha4)->d37(&c); }
+    { tstring k("ui_damage_to_friends"); ha8 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.55f, 0.16f, 0.035f); }
+    { int v = 4; vt(ha8)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(ha8)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(ha8)->d37(&c); }
+    { tstring k("ui_combat_ai"); hac = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.5f, 0.16f, 0.035f); }
+    { int v = 4; vt(hac)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hac)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hac)->d37(&c); }
+    { tstring k("ui_combat_speed"); hb0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.45f, 0.16f, 0.035f); }
+    { int v = 4; vt(hb0)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hb0)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hb0)->d37(&c); }
+    { tstring k("ui_battle_size"); hb4 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.4f, 0.12f, 0.035f); }
+    { int v = 4; vt(hb4)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hb4)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hb4)->d37(&c); }
+    { tstring k("ui_show_attack_direction"); hb8 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.34f, 0.3f, 0.035f); }
+    { int v = 4; vt(hb8)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hb8)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hb8)->d37(&c); }
+    { tstring k("ui_show_targeting_reticule"); hbc = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.3f, 0.3f, 0.035f); }
+    { int v = 4; vt(hbc)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hbc)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hbc)->d37(&c); }
+    { tstring k("ui_show_names_of_friendly_troops"); hc0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.26f, 0.3f, 0.035f); }
+    { int v = 4; vt(hc0)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hc0)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hc0)->d37(&c); }
+    { tstring k("ui_report_damage"); hc4 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.22f, 0.3f, 0.035f); }
+    { int v = 4; vt(hc4)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hc4)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hc4)->d37(&c); }
+    { tstring k("ui_report_shot_difficulty"); hc8 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.18f, 0.3f, 0.035f); }
+    { int v = 4; vt(hc8)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hc8)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hc8)->d37(&c); }
+    { tstring k("ui_report_casualties"); hcc = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.14f, 0.3f, 0.035f); }
+    { int v = 4; vt(hcc)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hcc)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hcc)->d37(&c); }
+    { tstring k("ui_report_experience"); hd0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.1f, 0.3f, 0.035f); }
+    { int v = 4; vt(hd0)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hd0)->d38(&c); }
+    { unsigned c = COLOR_ENABLED; vt(hd0)->d37(&c); }
+    { tstring k("ui_enabled"); b60 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.345f, 0.035f); }
+    ((UiAInline*)b60)->f184 = 1;
+    vt(b60)->d11(*(int*)0x5aa070);
+    set_enabled_text(b60);
+    { tstring k("ui_enabled"); b5c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.305f, 0.035f); }
+    ((UiAInline*)b5c)->f184 = 1;
+    vt(b5c)->d11(*(int*)0x5aa06c);
+    set_enabled_text(b5c);
+    { tstring k("ui_enabled"); b64 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.265f, 0.035f); }
+    ((UiAInline*)b64)->f184 = 1;
+    vt(b64)->d11(*(int*)0x5aa05c);
+    set_enabled_text(b64);
+    { tstring k("ui_enabled"); b68 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.225f, 0.035f); }
+    ((UiAInline*)b68)->f184 = 1;
+    vt(b68)->d11(*(int*)0x5aa060);
+    set_enabled_text(b68);
+    { tstring k("ui_enabled"); b6c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.185f, 0.035f); }
+    ((UiAInline*)b6c)->f184 = 1;
+    vt(b6c)->d11(*(int*)0x5aa064);
+    set_enabled_text(b6c);
+    { tstring k("ui_enabled"); b70 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.145f, 0.035f); }
+    ((UiAInline*)b70)->f184 = 1;
+    vt(b70)->d11(*(int*)0x5aa068);
+    set_enabled_text(b70);
+    { tstring k("ui_enabled"); b74 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.105f, 0.035f); }
+    ((UiAInline*)b74)->f184 = 1;
+    vt(b74)->d11(*(int*)0x5aa080);
+    set_enabled_text(b74);
+    { tstring k(""); hd4 = make_hint((ContainerBase*)root, k, 0.34f, 0.03f, 0.3f, 0.04f); }
+    { int v = 4; vt(hd4)->d29(&v); }
+    { unsigned c = COLOR_ENABLED; vt(hd4)->d38(&c); }
     update_difficulty();
+
     {
         void* w = root;
         g_ui_changed = 1;

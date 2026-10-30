@@ -84,6 +84,7 @@ struct options_panel { void key_name(int which, tstring* out); void draw_faction
 struct KeysPage { void refresh(); void update_perf(); void set_enabled_text(Widget* w); };        // 0x4d7120 / 0x4d6b80 / 0x4d6dd0
 struct QuestPage {
     void update_difficulty();   // 0x4d6300
+    void update_days();         // 0x4d6270
 };
 struct TearObj {
     char pad0[0x78];
@@ -423,21 +424,15 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
 struct OptionsScreen {
     char pad0[0x2c];
     ContainerBase* root;                        // +0x2c options_window container
-    MissionUi* header;                          // +0x30 main_options container
-    MissionUi* s34;                             // +0x34
-    MissionUi* b38;                             // +0x38 ui_controls
-    MissionUi* b3c;                             // +0x3c ui_video_options
-    MissionUi* b40;                             // +0x40 ui_done
-    MissionUi* box44;                           // +0x44
-    MissionUi* box48;                           // +0x48
-    MissionUi* box4c;                           // +0x4c
-    MissionUi* box50;                           // +0x50
-    MissionUi* box54;                           // +0x54
-    MissionUi* box58;                           // +0x58
-    MissionUi* l5c, *l60, *l64, *l68, *l6c, *l70, *l74;   // +0x5c..+0x74
-    MissionUi* d78;                             // +0x78 framerate slider
-    MissionUi* s7c, *s80, *s84, *t88;           // +0x7c..+0x88
-    MissionUi* s8c, *s90, *s94, *s98, *s9c, *sa0, *sa4, *sa8, *sac, *sb0, *sb4, *sb8, *sbc, *sc0, *sc4, *sc8, *scc, *sd0, *sd4;   // +0x8c..+0xd4
+    MissionUi* header;                          // +0x30 warrider_logo container
+    MissionUi* h34;                             // +0x34 the "days" caption (update_days 0x4d6270 rewrites it)
+    UiAInline* b38, *b3c, *b40;                 // +0x38 ui_controls, +0x3c ui_video_options, +0x40 ui_done
+    DropDown* dd44, *dd48, *dd4c, *dd50, *dd54, *dd58;   // +0x44..0x58 the drop-downs
+    UiAInline* b5c, *b60, *b64, *b68, *b6c, *b70, *b74;  // +0x5c..0x74 the ui_enabled toggles
+    UiB* sl78;                                  // +0x78
+    UiB* s7c, *s80, *s84;                       // +0x7c..0x84 the sliders
+    UiAInline* b88;                             // +0x88
+    MissionUi* h8c, *h90, *h94, *h98, *h9c, *ha0, *ha4, *ha8, *hac, *hb0, *hb4, *hb8, *hbc, *hc0, *hc4, *hc8, *hcc, *hd0, *hd4;   // +0x8c..0xd4 the hint labels
     void update_difficulty() { ((QuestPage*)this)->update_difficulty(); } // 0x4d6300 (options_panel/quest_page.cpp)
     void open();                                // 0x4de6f0
 };
