@@ -753,7 +753,8 @@ guess, because two FAILs on 2026-10-29 were exactly this:
 | `test ah,0x41; je L` | st0 <= op, or NaN | `if (!(a > b)) { fall-through }` |
 | `test ah,5; jp L` | st0 < op (ordered) | `if (a < b) { fall-through }`; `>=` and NaN go to `L` |
 | `test ah,0x44; jp L` | st0 == op | `if (a == b) { fall-through }`; not-equal and NaN go to `L` |
-| `test ah,1; jne L` | st0 >= op, or NaN | `if (!(a < b)) { fall-through }` |
+| `test ah,1; jne L` | st0 >= op (ordered) | `if (a >= b) { fall-through }`; `<` and NaN go to `L` |
+| `test ah,1; je L` | st0 < op, or NaN | `if (!(a >= b)) { fall-through }` (dynamic_entity 0x42727e) |
 
 - M&B `FieldPanel::update` 0x48d528 (`fld scene.h; fcomp this.h; test ah,5; jp`):
   ours wrote `==`, while the original's branch is `scene.h < this.h`.
