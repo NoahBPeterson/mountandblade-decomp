@@ -40,7 +40,7 @@ void ConvScreen::open(int dialog, int* out)
         tstring name("conv_bo_board");
         label_refresh((MissionUi*)bar, name);
     }
-    talk->children.push_back(bar);
+    push_back_inline(talk->children, bar);
 
     Widget* line = (WidgetObj*)new_widget_base(0x178);
     label_text = line;
@@ -216,7 +216,7 @@ void ConvScreen::open(int dialog, int* out)
     }
 
     // the talk panel's child vector gets the view window at +0x30 pushed directly (again via _Insert_n)
-    talk->children.push_back((Widget*)vw);
+    push_back_inline(talk->children, (Widget*)vw);
     started = 1;
 
     n_lines = 0;

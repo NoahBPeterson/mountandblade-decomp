@@ -152,6 +152,14 @@ void __cdecl item_modifier_array_dtor(item_modifier* first, item_modifier* last)
 // out-of-line _Insert_n instance is 0x4927d0 (world_data); _Insert_n is a protected member, reached through a derived class
 struct SceneObjVec : std::vector<SceneObject*> { using std::vector<SceneObject*>::_Insert_n; };
 namespace std { template<> void vector<SceneObject*, allocator<SceneObject*> >::_Insert_n(iterator where, size_type n, const value_type& v); }   // 0x4927d0 (world_data)
+// a children vector's push_back as the original inlines it: with room, store at last; else _Insert_n(last, 1, &v) (0x4927d0)
+template<class V, class T> __forceinline void push_back_inline(V& c, T* const& v)
+{
+    if (c.first != 0 && (unsigned)(c.last - c.first) < (unsigned)(c.end - c.first))
+        *c.last++ = v;
+    else
+        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c.last), 1, (SceneObject* const&)v);
+}
 
 namespace c49deb0 {
 struct Camera {                                                     // the editor / quest list widget

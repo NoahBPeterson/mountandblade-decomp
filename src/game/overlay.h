@@ -14,7 +14,8 @@ template <class T> struct vec {
     T* first;
     T* last;
     T* end;
-    void push_back(const T& v);                 // 0x4927d0
+    // (no out-of-line push_back: 0x4927d0 is _Insert_n(where, n, &v); the callers inline push_back, see cs_common.h's
+    // push_back_inline. A one-argument declaration here linked to an unrelated vec<Widget*>::push_back COMDAT.)
     void push_back2(const T& v);                // 0x4936b0 (std::vector<T>::push_back)
     void fill_n(const T& v, int size);      // 0x40f8a0 (incremental copy_push_back)
 };

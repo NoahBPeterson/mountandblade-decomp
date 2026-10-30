@@ -105,7 +105,7 @@ void Screen::init_screen()
     ms.x = 1.0f;
     ms.y = 0.71f;
     map->set_scale(&ms.x);
-    overlay->children.push_back(*(Widget**)&map);
+    push_back_inline(overlay->children, *(Widget**)&map);   // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
     f54 = new_widget(0x178);
     {
         vector2 pp;
