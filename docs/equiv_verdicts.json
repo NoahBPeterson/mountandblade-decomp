@@ -1,6 +1,6 @@
 {
-"when": "2026-10-30T08:19:50-05:00",
-"commit": "5864f7d",
+"when": "2026-10-30T08:38:31-05:00",
+"commit": "6e886ee",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -10,19 +10,19 @@
 ],
 "summary": {
 "pass": 415,
-"weak": 440,
-"fail": 26,
+"weak": 443,
+"fail": 25,
 "inputs": 28,
-"harness": 38,
+"harness": 36,
 "comdat": 118,
 "comdatdiff": 11,
 "funclet": 0,
 "not_run": 5,
 "pass_sz": 136686,
-"weak_sz": 588998,
-"fail_sz": 70170,
+"weak_sz": 592632,
+"fail_sz": 69237,
 "inputs_sz": 23807,
-"harness_sz": 64228,
+"harness_sz": 61527,
 "comdat_sz": 2793,
 "comdatdiff_sz": 1299,
 "funclet_sz": 0,
@@ -1712,8 +1712,8 @@
 "0044eb00": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1467
 },
 "0044f240": {
@@ -2629,8 +2629,8 @@
 "0047c1d0": {
 "module": "mesh_ops",
 "file": "src/game/mesh_slot/mesh_ops.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1234
 },
 "0047c6b0": {
@@ -7198,8 +7198,8 @@
 "00528060": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 933
 },
 "00528410": {
