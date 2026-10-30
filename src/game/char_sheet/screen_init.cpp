@@ -24,6 +24,12 @@ static inline void push_child(vec<Widget*>& c, Widget* const& v)
     }
 }
 
+// the 0x5ac8-byte record of dense index idx (page table at PartyMgr +0x138d0), as the original indexes it
+static char* party_bytes(PartyMgr* mgr, int idx)
+{
+    return (char*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8;
+}
+
 // @ 0x4ec4d0
 void Screen::init_screen()
 {
@@ -169,7 +175,7 @@ void Screen::init_screen()
     {
         PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
         int rec = ((Map10007*)(void*)mgr)->lookup(g_game->side_party);   // 0x48ad00
-        Rect* r = (Rect*)((char*)mgr + (rec >> 4) * 4 + *(int*)((char*)mgr + 0x138d0) + (rec & 0xf) * 0x5ac8 + 0x30);
+        Rect* r = (Rect*)(party_bytes(mgr, rec) + 0x30);   // pages[rec >> 4] + (rec & 0xf) * 0x5ac8 (0x4ecbc8), not mgr + the table address
         *(Rect*)((char*)this + 0x290) = *r;
     }
     {
@@ -193,12 +199,6 @@ void Screen::init_screen()
         ((ShadowMap*)g_psys)->fit_bounds();   // 0x463cc0
         ((ShadowMapP*)g_psys)->render();   // 0x47fef0
     }
-}
-
-// the 0x5ac8-byte record of dense index idx (page table at PartyMgr +0x138d0), as the original indexes it
-static char* party_bytes(PartyMgr* mgr, int idx)
-{
-    return (char*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8;
 }
 
 // @ 0x4ecce0
