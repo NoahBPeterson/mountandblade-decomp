@@ -359,7 +359,10 @@ def main():
         return None, None
 
     for s in sorted(unres):
-        vas = rmap["names"].get(s)
+        # a harness model (resolve.py's model-stub / model-data: an address in the emulator's stub region, 0x7f00xxxx)
+        # is not an original address; a name only the models resolved falls through to its vtable slot or the symbols
+        vas = {v: e for v, e in (rmap["names"].get(s) or {}).items()
+               if not set(e.get("methods", ())) <= {"model-stub", "model-data"}}
         how = "map"
         if not vas:
             slots = {x[0] for x in rmap["vtable_slots"].get(s, [])}
@@ -397,6 +400,13 @@ def main():
                 aliases[s] = t
             else:
                 report["unresolved"][s] = "code at %08x with no definition (%s)" % (va, how)
+            continue
+        if how == "vtable slot":
+            # our vtable is longer than the original's (Rec428 0x595c68 has 9 slots, ours declares a 10th `vfunc`):
+            # the dword past the original table is data, and the original never calls that slot. Anything that does
+            # stops in the CRT's pure-call handler instead of jumping into data.
+            aliases[s] = "__purecall"
+            report["traps"][s] = "vtable slot past the original table (%08x is not code): __purecall" % va
             continue
         report["unresolved"][s] = "address %08x outside the image sections" % va
 
