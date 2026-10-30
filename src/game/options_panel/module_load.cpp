@@ -32,12 +32,11 @@ void item_modifier_array_dtor(item_modifier* first, item_modifier* last)
 {
     if (first != last) {
         do {
-            if (first->block) {
+            if (first->block)
                 operator delete(first->block);   // 0x535712
-                first->block = 0;
-                first->last = 0;
-                first->end = 0;
-            }
+            first->block = 0;                    // zeroed whether or not there was a block (0x4d1116..0x4d111b)
+            first->last = 0;
+            first->end = 0;
             first->name.~tstring();
             first++;
         } while (first != last);
@@ -89,16 +88,18 @@ growable_array::growable_array()
 // @ 0x4d11a0 (returns the advanced destination, as std::_Uninit_copy does)
 flora_kind* uninitialized_copy_flora(flora_kind* first, flora_kind* last, flora_kind* dst, flora_alloc& al)
 {
-    for (; first != last; first++, dst++)
-        al.construct(dst, *first);
+    // the vector's element is E50 (stride 0x50), not the 0x20-byte table record
+    for (E50* f = (E50*)first, *l = (E50*)last, *d = (E50*)dst; f != l; f++, d++, dst = (flora_kind*)d)
+        al.construct((flora_kind*)d, *(const flora_kind*)f);
     return dst;
 }
 
 // @ 0x4d1230 (returns the advanced destination, as std::_Uninit_copy does)
 ground_spec* uninitialized_copy_ground(ground_spec* first, ground_spec* last, ground_spec* dst, ground_alloc& al)
 {
-    for (; first != last; first++, dst++)
-        al.construct(dst, *first);
+    // the vector's element is E68 (stride 0x68), not the 0x4c-byte table record
+    for (E68* f = (E68*)first, *l = (E68*)last, *d = (E68*)dst; f != l; f++, d++, dst = (ground_spec*)d)
+        al.construct((ground_spec*)d, *(const ground_spec*)f);
     return dst;
 }
 
@@ -115,23 +116,24 @@ void destroy_range_and_rethrow(ground_spec* first, ground_spec* last)
 // @ 0x4d129a
 void destroy_range_ground(ground_spec* first, ground_spec* last)
 {
-    for (; first != last; first++)
-        conv_list_dtor((conv_rec*)first);       // 0x4c8ba0 takes the element as its only argument
+    for (E68* f = (E68*)first, *l = (E68*)last; f != l; f++)   // stride 0x68
+        conv_list_dtor((conv_rec*)f);       // 0x4c8ba0 takes the element as its only argument
 }
 
 // @ 0x4d12c0 (returns the advanced destination, as std::_Uninit_copy does)
 mission_type* uninitialized_copy_mission(mission_type* first, mission_type* last, mission_type* dst, mission_alloc& al)
 {
-    for (; first != last; first++, dst++)
-        al.construct(dst, *first);
+    // the vector's element is E176 (stride 0xb0), not the 0x20-byte table record
+    for (E176* f = (E176*)first, *l = (E176*)last, *d = (E176*)dst; f != l; f++, d++, dst = (mission_type*)d)
+        al.construct((mission_type*)d, *(const mission_type*)f);
     return dst;
 }
 
 // @ 0x4d1330
 void destroy_range_mission(mission_type* first, mission_type* last)
 {
-    for (; first != last; first++)
-        conv_sub_dtor((void**)first);           // 0x4c8ab0 takes the element as its only argument
+    for (E176* f = (E176*)first, *l = (E176*)last; f != l; f++)   // stride 0xb0
+        conv_sub_dtor((void**)f);           // 0x4c8ab0 takes the element as its only argument
 }
 
 // @ 0x4d0c20
