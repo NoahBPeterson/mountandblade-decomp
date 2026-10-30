@@ -24,12 +24,11 @@ const float g_4e6e6b28 = 1e9f;          // 0x4e6e6b28 (far reach)
 const float g_3ac49ba6 = 1.5e-3f;       // 0x3ac49ba6 (capsule radius)
 
 // ---- globals ------------------------------------------------------------------------------------------------
-extern int g_menu_mode;                 // 0x5e2930+0x1a20c
-extern int g_sel_entity;                // 0x5e2930+0x1a1b4
-extern int g_tasks[];                   // 0x5e292c scene (0x65dc)
-extern int g_ptypes[];                // 0x5e28f8 map rows (0x20 bytes)
+// (the menu-mode flag is g_game->f1a20c, the selected entity g_game->f1a1b4, the scene is *g_mission: all fields of the pointed-to
+//  objects, not globals of their own)
+extern int* g_ptypes;                 // 0x5e28f8 pointer to the map rows (0x20 bytes)
 extern int g_ptype_count;                 // 0x5e29e8
-extern int g_propkinds[];              // 0x5e29dc point rows (0x78 bytes)
+extern int* g_propkinds;              // 0x5e29dc pointer to the point rows (0x78 bytes)
 extern void* g_overlay;                 // 0x5d75e8
 extern int g_cursor_id;                 // 0x5d8760
 extern int g_cursor_color;              // 0x5d8764
@@ -54,12 +53,15 @@ struct camera_ray {
 };
 
 #include "../mission.h"
+#include "../../include/game_data.h"   // g_game
 struct scene_row {                      // 0x1c8 bytes
     char pad000[0x18];
     vector4 mat[4];                     // +0x18 transform
     vector4 origin;                     // +0x58
     float radius;                       // +0x68
-    char pad06c[0x188 - 0x6c];
+    char pad06c[0x158 - 0x6c];
+    vector4 scale;                      // +0x158 (xyz: the object's scale; scale_rows 0x41fee0 takes it)
+    char pad168[0x188 - 0x168];
     int kind;                           // +0x188
     int ref;                            // +0x18c
     int caption[4];                     // +0x190 tstring
