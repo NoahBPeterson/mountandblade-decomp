@@ -2787,7 +2787,7 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
                     if ((m == 0 && d2 <= r2) || d2 <= r1) {
                         char place = 1;
                         float d = (float)sqrt(d2);
-                        if (!(d <= r1))
+                        if (!(d2 <= r1))   // 0x52c065: fcomp vs the squared distance (the fld st(0) copy), not d
                             place = 0;
                         if (sel < 0)
                             return;

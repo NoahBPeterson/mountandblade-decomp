@@ -360,6 +360,7 @@ bool EditMesh::split_marked_edge()
     for (int slot = 0; slot < vat(c.edges, mark).nfaces; slot++) {
         int fi = vat(c.edges, mark).face[slot];
         int n = vat(c.faces, fi).n;
+        int last = split;                       // 0x4d2987: reset to the split edge for every slot, then follows each new edge
         int corners[4];
         int nc = 0;
         for (int j = 0; j < n; j++) {
@@ -380,13 +381,13 @@ bool EditMesh::split_marked_edge()
             nf.vid[1] = vat(c.faces, fi).vid[cn];
             nf.vid[2] = (int)c.verts.size();
             nf.eid[0] = vat(c.faces, fi).eid[(cn + n - 1) % n];
-            int last = (int)c.edges.size() - 1;         // the split edge, or the previous corner's edge
             if ((nf.vid[2] == vat(c.edges, last).v0 && nf.vid[0] == vat(c.edges, last).v1) ||
                 (nf.vid[2] == vat(c.edges, last).v1 && nf.vid[0] == vat(c.edges, last).v0))
                 nf.eid[2] = last;
             else
                 nf.eid[2] = mark;
             nf.eid[1] = (int)c.edges.size();
+            last = nf.eid[1];                           // 0x4d2b72: the size read before the push
             NewEdge e2(nf.vid[1], nf.vid[2]);
             c.edges.push_back(e2);
             c.faces.push_back(nf);
@@ -408,7 +409,7 @@ bool EditMesh::split_marked_edge()
         vat(c.faces, fi).vid[2] = v2;
         vat(c.faces, fi).eid[0] = e0;
         vat(c.faces, fi).eid[1] = e1;
-        vat(c.faces, fi).eid[2] = (int)c.edges.size() - 1;
+        vat(c.faces, fi).eid[2] = last;             // 0x4d2d73
     }
     vat(c.edges, mark).v0 = (int)c.verts.size();
     c.verts.push_back(v);
