@@ -1,6 +1,6 @@
 {
-"when": "2026-10-30T05:37:50-05:00",
-"commit": "ce327d4",
+"when": "2026-10-30T06:02:20-05:00",
+"commit": "f3000d3",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -10,8 +10,8 @@
 ],
 "summary": {
 "pass": 404,
-"weak": 452,
-"fail": 24,
+"weak": 454,
+"fail": 22,
 "inputs": 22,
 "harness": 45,
 "comdat": 116,
@@ -19,10 +19,10 @@
 "funclet": 0,
 "not_run": 5,
 "pass_sz": 129498,
-"weak_sz": 595830,
-"fail_sz": 61474,
+"weak_sz": 599549,
+"fail_sz": 58934,
 "inputs_sz": 22138,
-"harness_sz": 74949,
+"harness_sz": 73770,
 "comdat_sz": 2719,
 "comdatdiff_sz": 1373,
 "funclet_sz": 0,
@@ -865,7 +865,7 @@
 "004291c0": {
 "module": "fxdef_skin",
 "file": "src/rgl/scene/fxdef_skin.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 1200
 },
@@ -4762,8 +4762,8 @@
 "004c6f90": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 761
 },
 "004c7290": {
@@ -5035,8 +5035,8 @@
 "004cf100": {
 "module": "config_dialog",
 "file": "src/game/options_panel/config_dialog.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "FAIL",
+"category": "fail",
 "size": 1700
 },
 "004cf7b0": {
@@ -5987,8 +5987,8 @@
 "004f2d70": {
 "module": "terrain_page_update",
 "file": "src/game/char_sheet/terrain_page_update.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1868
 },
 "004f34c0": {
@@ -6715,8 +6715,8 @@
 "00516ac0": {
 "module": "game_tick",
 "file": "src/game/inventory_panel/game_tick.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1611
 },
 "00517140": {
@@ -6981,8 +6981,8 @@
 "0051eb90": {
 "module": "troop_rec",
 "file": "src/game/mission5/troop_rec.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "UNSUPPORTED",
+"category": "harness",
 "size": 521
 },
 "0051eda0": {
