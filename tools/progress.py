@@ -245,7 +245,12 @@ def plot_history(path):
     SURFACE, INK, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e6e5e0"
     top = max([p[k] for _, p in pts for k in ("comp", "comp_sz") if p.get(k) is not None] + [0])
     ymax = 100 if top > 40 else max(5, round(top * 1.4 + 0.5))
-    evh = record_verdicts()
+    record_verdicts()
+    # one point per recorded sweep (record_verdicts returns nothing: evh was always None, so the bands never drew)
+    try:
+        evh = sorted(json.load(open(W("docs", "equiv_history.json"))).values(), key=lambda p: p["when"])
+    except (OSError, ValueError, KeyError):
+        evh = []
 
     def style(ax, title, times):
         ax.set_facecolor(SURFACE)
@@ -287,29 +292,54 @@ def plot_history(path):
     axes[1].tick_params(labelleft=False)
     axes[0].legend(loc="upper left", frameon=False, fontsize=9, labelcolor=INK)
     if evh:
-        # Equivalence evidence of the equivalent-only rows, stacked bottom-up from strongest to none. These are the
-        # same categories as --treemap and the terminal table, so the three views agree.
-        EVC = dict((k, c) for k, _l, c in TREE_CATS)
-        EVC["excluded"] = EVC["nosource"] = None
+        # Every game function, 100%: byte-exact at the bottom, then equivalent (PASS), then the remaining verdicts of
+        # the non-byte-exact rows, then code with no source yet. The byte-exact share at each sweep is the --plot
+        # point at or before it; the verdict counts are that sweep's (same categories and colours as --treemap).
+        TC = dict((k, c) for k, _l, c in TREE_CATS)
+        LAYERS = (("exact", "Byte-exact", TC["byte-exact"]),
+                  ("pass", "Equivalent: PASS (matched, every branch taken)", TC["equivalent"]),
+                  ("comdat", "Byte-exact via COMDAT (symbol-less fragment)", "#7FB8DA"),
+                  ("weak", "WEAK: matched, some branch never taken", TC["weak"]),
+                  ("fail", "FAIL: a mismatch", TC["fail"]),
+                  ("inputs", "Untestable: inputs invalid", TC["inputs"]),
+                  ("harness", "Untestable: harness limitation", TC["harness"]),
+                  ("comdatdiff", "COMDAT differs", TC["comdatdiff"]),
+                  ("funclet", "Fragment not yet COMDAT-checked", TC["funclet"]),
+                  ("not_run", "Not run (time limit)", TC["not_run"]),
+                  ("nosource", "No source yet", "#E4E2DA"))
         xs = [datetime.datetime.fromisoformat(p["when"]) for p in evh]
-        for ax, suffix, title in ((grid[1][0], "", "Non-byte-exact rows by test verdict (PASS = the only equivalent)"),
-                                  (grid[1][1], "_sz", "... by code size")):
-            keys = [c for c, _l in EV_CATS if any(p.get(c + suffix) for p in evh)]
-            tot = [sum(p.get(c + suffix, 0) for c, _l in EV_CATS) or 1 for p in evh]
-            ys = [[100.0 * p.get(c + suffix, 0) / t for p, t in zip(evh, tot)] for c in keys]
-            ax.stackplot(xs, ys, colors=[EVC[c] for c in keys], edgecolor=SURFACE, linewidth=1.5,
-                         labels=[dict(EV_CATS)[c] for c in keys])
+        saved = sorted((datetime.datetime.fromisoformat(p["when"]), p) for p in hist.values())
+
+        def exact_at(t, key):
+            prior = [p for w, p in saved if w <= t and p.get(key) is not None]
+            return prior[-1][key] if prior else (saved[0][1].get(key, 0.0) if saved else 0.0)
+        for ax, suffix, total, title in ((grid[1][0], "", G, "All game functions, by evidence"),
+                                         (grid[1][1], "_sz", B, "... by code size")):
+            ys = {k: [] for k, _l, _c in LAYERS}
+            for p, t in zip(evh, xs):
+                e = exact_at(t, "exact" + suffix)
+                ys["exact"].append(e)
+                used = e
+                for k, _l, _c in LAYERS[1:-1]:
+                    v = 100.0 * p.get(k + suffix, 0) / total
+                    ys[k].append(v)
+                    used += v
+                ys["nosource"].append(max(0.0, 100.0 - used))
+            keys = [k for k, _l, _c in LAYERS if any(v > 0 for v in ys[k])]
+            ax.stackplot(xs, [ys[k] for k in keys], colors=[c for k, _l, c in LAYERS if k in keys],
+                         edgecolor=SURFACE, linewidth=1.0, labels=[l for k, l, _c in LAYERS if k in keys])
             base = 0.0
-            for c, y in zip(keys, ys):
-                if y[-1] >= 4:
-                    ax.annotate("%.0f%%" % y[-1], (xs[-1], base + y[-1] / 2), xytext=(6, 0),
+            for k in keys:
+                y = ys[k][-1]
+                if y >= 3:
+                    ax.annotate("%.1f%%" % y, (xs[-1], base + y / 2), xytext=(6, 0),
                                 textcoords="offset points", va="center", fontsize=9, color=INK)
-                base += y[-1]
+                base += y
             ax.set_ylim(0, 100)
             style(ax, title, xs)
         grid[1][1].tick_params(labelleft=False)
         h, l = grid[1][0].get_legend_handles_labels()
-        grid[1][0].legend(h, l, loc="upper center", ncol=3, frameon=False, fontsize=8.5, labelcolor=INK,
+        grid[1][0].legend(h, l, loc="upper center", ncol=4, frameon=False, fontsize=8, labelcolor=INK,
                           bbox_to_anchor=(1.07, -0.09))
     fig.suptitle("Mount & Blade 1.011 decompilation progress (%d game functions, %.2f MB; static CRT excluded)" % (G, B / 1e6),
                  x=0.01, ha="left", fontsize=12, color=INK)
