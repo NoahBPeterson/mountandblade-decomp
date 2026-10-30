@@ -10,6 +10,7 @@
 //
 // __thiscall, cleans two stack arguments (ret 8).
 
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
@@ -81,14 +82,14 @@ struct ThemeDb {
 struct mesh_x {
     mesh_x* clone();   // 0x41c6d0 (rgl/mesh_x.h)
 };
-#define THEME ((ThemeDb*)0x5d6fa0)
+#define THEME ((ThemeDb*)at_5d6fa0)
 
 // ---------------------------------------------------------------------------
 // globals
 // ---------------------------------------------------------------------------
 
 #include "../gui_mgr.h"
-#define GUI ((GuiManager*)0x5d7080)
+#define GUI ((GuiManager*)at_5d7080)
 
 struct StrTable {
     tstring* lookup(const tstring& key);   // 0x43a1e0 (game/str_table.h)
@@ -100,7 +101,7 @@ struct UiTextDb {                                            // the UI string ta
     __forceinline tstring* lookup(const tstring* key) { return ((StrTable*)this)->lookup(*key); }
     __forceinline tstring* find(const tstring* key) { return ((LangTables*)this)->find(key); }
 };
-#define UITEXT ((UiTextDb*)0x5e2a18)
+#define UITEXT ((UiTextDb*)at_5e2a18)
 
 #include "../ini_file.h"
 #define CONFIG (&g_game_vars)
@@ -109,7 +110,7 @@ struct TableauTbl {                                          // world_data/obj_t
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0
     __forceinline void* make_mesh_from(void* rec, int* id) { return make_mesh_from((const int*)rec, (const void*)id); }
 };
-#define IMAGES ((TableauTbl*)0xa75f40)
+#define IMAGES ((TableauTbl*)at_a75f40)
 
 #include "../../include/game_data.h"             // GameData: the game object at 0x5e2930 (troops +0x13a00, factions +0x13a48, quests +0x13a58, parties +0xf8)
 #define WORLD g_game
@@ -182,7 +183,7 @@ static const char* ts_chars(const tstring* s)
 // name tstring of a map-party record (record base from the party table)
 static tstring* party_name(char* rec)
 {
-    if (*(char*)0xa181b8 != 0)
+    if (*(char*)at_a181b8 != 0)
         return (tstring*)(rec + 0x20);
     if (*(char*)(rec + 0x1c) == 0) {
         tstring* s = UITEXT->find((tstring*)(rec + 0x20));
@@ -281,7 +282,7 @@ void note_window::build(int page_, int arg_)
 
     // ---- main panel ------------------------------------------------------
     NotePanel* panel = new NotePanel;                // base constructor 0x4931a0, then the container's vtable and f188
-    *(void**)panel = (void*)0x592848;                  // (0x50a20e; the same window class as agent_hud.h's FrameWidget)
+    *(void**)panel = (void*)vtbl_592848;                  // (0x50a20e; the same window class as agent_hud.h's FrameWidget)
     *(char*)((char*)panel + 0x188) = 0;
     this->panel = panel;
     {
@@ -367,8 +368,11 @@ void note_window::build(int page_, int arg_)
     tstring other("");          // +0x70   "other pages that link here"
     tstring link_text("");      // +0xb0   scratch for the links widget
 
-    float x_cur;                // [esp+0x14]  never initialized: the original leaves both unset (0x50a66d)
-    float y_cur;                // [esp+0x24]  (case 0 and an empty troop page reach the panels with garbage)
+    // [esp+0x14] / [esp+0x24]: the original never initialises these two (case 0 and an empty troop page reach the panels
+    // without a text height), but their frame slots still hold the 0.1f / 0.1f the preceding call (0x50a2dd, the by-value
+    // 0.1,0.1 pairs pushed around the 0x1d0 allocation) stored there, so on those paths the panels get 0.1 (+0.001), not garbage.
+    float x_cur = 0.1f;
+    float y_cur = 0.1f;
     bool  any = true;           // [esp+0x1b]
     int   selected = -1;        // [esp+0x58]
     this->picture->hide();

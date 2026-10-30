@@ -1,3 +1,4 @@
+#include "../../include/image_addrs.h"
 #include "./facegen_win.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/frustum.h"
@@ -214,6 +215,7 @@ void facegen_win::init()
         o.x = 0.0f;
         o.y = 0.0f;
         o.z = 10.0f;
+        *(int*)&o.w = 13;                           // the original copies the unset w from a stale frame slot (0x4f24f6): the length of the 13-character "facegen_board" tstring temporary
         *(v4raw*)((char*)this + 0x168) = o;         // the camera frame's origin row (cam +0xf8)
     }
     {
@@ -221,6 +223,7 @@ void facegen_win::init()
         o.x = 0.0f;
         o.y = 0.0f;
         o.z = 0.0f;
+        *(int*)&o.w = 13;                           // (same stale slot, 0x4f24f6 / 0x4f2531)
         view_pos = o;
     }
     yaw = 0.0f;

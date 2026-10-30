@@ -1,6 +1,7 @@
 // config_dialog.cpp: the launcher configuration dialog (0x4cf100..0x4d0620): the display-mode list, the tab fill and the
 // dialog procedure (rgl_config.txt). Function names FUN_* are the slices' provisional names.
 // clang-format off
+#include "../../include/image_addrs.h"
 #include "../config/options_dlg.h"     // OptionsDlg (first: it selects WIN32_LEAN_AND_MEAN and pulls winsock2.h)
 #include <windows.h>
 #include <shlobj.h>                  // SHGetFolderPathA (user_path)
@@ -134,8 +135,7 @@ std::vector<tstring> list_modes()
         cur_bpp = best_bpp;
     }
 
-    std::vector<tstring> result(sorted.names);
-    return result;
+    return std::vector<tstring>(sorted.names);
 }
 
 const float g_width_scale = 0.0023752970155328512f;    // 0x59642c
@@ -168,7 +168,7 @@ bool mb_file_exists(const char* path);           // 0x415120
 // rgl_config::save (0x415fb0): src/rgl/resource_manager.h declares it, but that header's g_log clashes with config.h's
 // (strat/gui_manager.h), so the one-member class is repeated verbatim.
 struct rgl_config { void save(FILE* f); };
-#define LAUNCHER_CFG ((Config*)0x5aa0a8)
+#define LAUNCHER_CFG ((Config*)at_5aa0a8)
 
 const char k_config[] = "rgl_config.txt";        // 0x54b048
 
@@ -293,7 +293,7 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             LAUNCHER_CFG->load_file(f);
             fclose(f);
         } else {
-            *(int*)0x5aa0ac = 0x46;
+            *(int*)at_5aa0ac = 0x46;
         }
         ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, false);
         fill_video_tab();
@@ -333,15 +333,15 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 BOOL ok;
                 UINT v = GetDlgItemInt(m_hwnd, 0x448, &ok, 0);
                 if (ok && v >= 10 && v < 1000) {
-                    *(int*)0x5aa0b4 = v;
+                    *(int*)at_5aa0b4 = v;
                 } else {
-                    SetDlgItemInt(m_hwnd, 0x448, *(int*)0x5aa0b4, 0);
+                    SetDlgItemInt(m_hwnd, 0x448, *(int*)at_5aa0b4, 0);
                 }
             }
             return 1;
         case 0x45e:             // auto adjust: re-detect and re-read the config
             ((Core*)this)->read_options();
-            *(int*)0x5aa0a8 = 0;
+            *(int*)at_5aa0a8 = 0;
             ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, true);
             ((Core*)this)->show_options();
             return 1;
