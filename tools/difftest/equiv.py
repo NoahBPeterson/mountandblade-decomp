@@ -950,8 +950,8 @@ class InputGen:
                 words[(a - page) // 4] = v
         return struct.pack("<1024I", *words)
 
-    def ptr(self, rng, hot):
-        if rng.random() < 0.04:
+    def ptr(self, rng, hot, k=None):
+        if k != "this" and rng.random() < 0.04:
             return 0
         return M.POOL_BASE + M.SLOT * hot
 
@@ -960,7 +960,7 @@ class InputGen:
 
     def _scalar(self, k, rng, profile, hot=1):
         if k in ("this", "ptr", "retptr"):
-            return self.ptr(rng, hot)
+            return self.ptr(rng, hot, k)
         if k == "int":
             r = rng.random()
             if r < 0.4:
@@ -5746,6 +5746,10 @@ def _test_function(sid, va, opts, log=print):
                     inp = gen.mutate(parent, rng, corpus)
                 else:
                     inp = gen.fresh(rng)
+            if t.reg_kinds.get("ecx") == "this" and not inp.regs.get("ecx"):
+                # no caller passes a NULL this: point it at the hot slot rather than run and discard the input
+                # (progress_bar 0x4e7a70: mutants and steered inputs of a NULL-this parent were 174/400 discards)
+                inp.regs["ecx"] = M.POOL_BASE + M.SLOT
             if getattr(inp, "typed", 0):
                 typed_n += 1
             try:
