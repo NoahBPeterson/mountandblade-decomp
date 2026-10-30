@@ -46,3 +46,4 @@
 ../src/game/config/config.cpp  ??0clip_table@@QAE@XZ  004be6b0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??1clip_table@@QAE@XZ  004be6f0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0clip_slot@@QAE@XZ  004be720  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?init_decls@render_batch@@QAEHPAH000000000@Z  004bc830  /O2 /MT /Gy /TP

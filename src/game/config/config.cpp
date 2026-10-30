@@ -1047,9 +1047,9 @@ int render_batch::init_decls(int* a0, int* a1, int* a2, int* a3, int* a4,
     skinning[2].Method = 0; skinning[2].Usage = D3DDECLUSAGE_COLOR; skinning[2].UsageIndex = 0;
     skinning[3].Stream = 0; skinning[3].Offset = 0x1c; skinning[3].Type = D3DDECLTYPE_FLOAT2;
     skinning[3].Method = 0; skinning[3].Usage = D3DDECLUSAGE_TEXCOORD; skinning[3].UsageIndex = 0;
-    skinning[4].Stream = 0; skinning[4].Offset = 0x24; skinning[4].Type = D3DDECLTYPE_UBYTE4;
+    skinning[4].Stream = 0; skinning[4].Offset = 0x24; skinning[4].Type = D3DDECLTYPE_FLOAT4;
     skinning[4].Method = 0; skinning[4].Usage = D3DDECLUSAGE_BLENDWEIGHT; skinning[4].UsageIndex = 0;
-    skinning[5].Stream = 0; skinning[5].Offset = 0x34; skinning[5].Type = D3DDECLTYPE_UBYTE4;
+    skinning[5].Stream = 0; skinning[5].Offset = 0x34; skinning[5].Type = D3DDECLTYPE_FLOAT4;
     skinning[5].Method = 0; skinning[5].Usage = D3DDECLUSAGE_BLENDINDICES; skinning[5].UsageIndex = 0;
     skinning[6].Stream = 0xff; skinning[6].Offset = 0; skinning[6].Type = D3DDECLTYPE_UNUSED;
     skinning[6].Method = 0; skinning[6].Usage = 0; skinning[6].UsageIndex = 0;
@@ -1066,9 +1066,9 @@ int render_batch::init_decls(int* a0, int* a1, int* a2, int* a3, int* a4,
     normalmap_skin[4].Method = 0; normalmap_skin[4].Usage = D3DDECLUSAGE_TANGENT; normalmap_skin[4].UsageIndex = 0;
     normalmap_skin[5].Stream = 0; normalmap_skin[5].Offset = 0x30; normalmap_skin[5].Type = D3DDECLTYPE_FLOAT3;
     normalmap_skin[5].Method = 0; normalmap_skin[5].Usage = D3DDECLUSAGE_BINORMAL; normalmap_skin[5].UsageIndex = 0;
-    normalmap_skin[6].Stream = 0; normalmap_skin[6].Offset = 0x3c; normalmap_skin[6].Type = D3DDECLTYPE_UBYTE4;
+    normalmap_skin[6].Stream = 0; normalmap_skin[6].Offset = 0x3c; normalmap_skin[6].Type = D3DDECLTYPE_FLOAT4;
     normalmap_skin[6].Method = 0; normalmap_skin[6].Usage = D3DDECLUSAGE_BLENDWEIGHT; normalmap_skin[6].UsageIndex = 0;
-    normalmap_skin[7].Stream = 0; normalmap_skin[7].Offset = 0x4c; normalmap_skin[7].Type = D3DDECLTYPE_UBYTE4;
+    normalmap_skin[7].Stream = 0; normalmap_skin[7].Offset = 0x4c; normalmap_skin[7].Type = D3DDECLTYPE_FLOAT4;
     normalmap_skin[7].Method = 0; normalmap_skin[7].Usage = D3DDECLUSAGE_BLENDINDICES; normalmap_skin[7].UsageIndex = 0;
     normalmap_skin[8].Stream = 0xff; normalmap_skin[8].Offset = 0; normalmap_skin[8].Type = D3DDECLTYPE_UNUSED;
     normalmap_skin[8].Method = 0; normalmap_skin[8].Usage = 0; normalmap_skin[8].UsageIndex = 0;
