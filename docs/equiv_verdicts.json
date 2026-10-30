@@ -1,6 +1,6 @@
 {
-"when": "2026-10-30T09:45:59-05:00",
-"commit": "fd5b8f4",
+"when": "2026-10-30T10:23:04-05:00",
+"commit": "5241ea5",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -10,23 +10,23 @@
 ],
 "summary": {
 "pass": 415,
-"weak": 452,
-"fail": 15,
+"weak": 455,
+"fail": 12,
 "inputs": 28,
-"harness": 36,
+"harness": 37,
 "comdat": 118,
 "comdatdiff": 11,
 "funclet": 0,
-"not_run": 6,
+"not_run": 5,
 "pass_sz": 136686,
-"weak_sz": 609528,
-"fail_sz": 46620,
+"weak_sz": 613923,
+"fail_sz": 42225,
 "inputs_sz": 23807,
-"harness_sz": 61527,
+"harness_sz": 67248,
 "comdat_sz": 2793,
 "comdatdiff_sz": 1299,
 "funclet_sz": 0,
-"not_run_sz": 9894
+"not_run_sz": 4173
 },
 "rows": {
 "00408a50": {
@@ -5420,8 +5420,8 @@
 "004db440": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 543
 },
 "004db660": {
@@ -5539,8 +5539,8 @@
 "004de6f0": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "TIMEOUT",
-"category": "not_run",
+"verdict": "UNSUPPORTED",
+"category": "harness",
 "size": 5721
 },
 "004dfd50": {
@@ -5791,8 +5791,8 @@
 "004ea290": {
 "module": "save_panel",
 "file": "src/game/char_sheet/save_panel.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1467
 },
 "004ea8e0": {
@@ -5910,8 +5910,8 @@
 "004ed8d0": {
 "module": "pick_entity",
 "file": "src/game/char_sheet/pick_entity.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2385
 },
 "004ee230": {
