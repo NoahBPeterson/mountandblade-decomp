@@ -166,8 +166,10 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         if (mode != 2 && mode != 3)
             g_game->init_map();
         *counter = *counter + 1;
-        tstring k("ui_launching_game");
-        out->assign(g_strtable.lookup(&k)->c_str());
+        {
+            tstring k("ui_launching_game");
+            out->assign(g_strtable.lookup(&k)->c_str());
+        }   // the key dies before the log line (0x51cb4a, then the call at 0x51cb5e)
         log_stream_ptr()->w_cstr("Init_map complete.\n");
         return false;
     }
