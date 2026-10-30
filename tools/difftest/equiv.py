@@ -5823,6 +5823,13 @@ def _test_function(sid, va, opts, log=print):
                 if opts.verbose:
                     log("  discard input %d: UcError: %s" % (i, str(e)[:120]))
                 continue
+            if any(M.STACK_TOP - M.STACK_SIZE <= w < runner.esp_entry for w in list(inp.args) +
+                   [v for k, v in inp.regs.items() if k != "esp"]):
+                # an argument or entry register pointing below esp at entry, inside the callee's own frame: no
+                # caller can pass that (mesh_3 0x5302f0: `out` at entry esp - 0x10 is where the original keeps
+                # find_meshes' result temporary, ours an uninitialised slot -> free(0xcccccccc))
+                discarded["arg-in-callee-frame"] = discarded.get("arg-in-callee-frame", 0) + 1
+                continue
             if st not in FINISHED:
                 key = "wall-timeout" if st == "wall" else (st if st != "import" else "import:%s" % str(a["status"][1]).split(":")[0])
                 if st == "fault" and a["fault"]:
