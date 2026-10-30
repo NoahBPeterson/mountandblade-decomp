@@ -670,7 +670,7 @@ struct Shape {
     matrix m20;                                     // +0x20
     int m40;                                        // +0x40 (the float* arg, copied)
 };
-inline Shape* sphere_shape(Shape* mem, vector4 pos, const float* radius)   // 0x4332a0 (ret 0x14, ECX=mem): the constructor of ::sphere on the raw memory
+__forceinline Shape* sphere_shape(Shape* mem, vector4 pos, const float* radius)   // 0x4332a0 (ret 0x14, ECX=mem): the constructor of ::sphere on the raw memory
 {
     rgl::vector4 c;
     c.x = pos.x; c.y = pos.y; c.z = pos.z; c.w = pos.w;
@@ -703,7 +703,7 @@ struct OrderObj {
 
 struct OrderEntry {                                 // 0x5ac8-byte order/agent record
     char pad0[0xc];
-    char name[0x10];                                // +0xc..0x1c an *inline* name buffer: the original passes
+    tstring name;                                   // +0xc..0x1c an *inline* name tstring: the original passes
                                                     // `lea esi,[ebx+0xc]` as the string (0x49c04a), not a pointer.
                                                     // Declaring it `char*` (plus a pad) also put flag1c at +0x10,
                                                     // so every later field was 0xc low (obj at 0x59b4, not 0x59c0)
@@ -810,7 +810,6 @@ void MissionAgents::add_order_arrow(int id)
     vector4 zero = { 0, 0, 0, 0 };
     float radius = 0.3f;
     float h;
-    const char* name;
     int idx = table.index_of(id);
     OrderEntry* e = (OrderEntry*)(table.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
     OrderObj* o = order_create_entity(9);
@@ -819,38 +818,20 @@ void MissionAgents::add_order_arrow(int id)
         shape = sphere_shape(shape, zero, &radius);
     o->shape = shape;
     e->obj = o;
-    o->frame = *identity_pos(&o->frame);
+    {
+        matrix tmp;
+        o->frame = *identity_pos(&tmp);
+    }
     e->update_flags();                                // 0x49bf6d: the original calls it on the record (ecx = ebx), not e->obj
     e->label = ((Mission*)g_game)->build_legend_mesh(e->obj);
-    h = (float)e->f_a4;
-    // label_text takes a *tstring* (0x49baa0 reads s->buf/len): the char* cases build one on the stack, as the
-    // original does (0x49bfd9 / 0x49c076 destroy/construct a tstring right around the call).
+    // the original keeps h (+0x10, reused from the radius), scale (+0x14 = 1.0, passed by pointer) and a dead copy of f_a4
+    float scale = 1.0f;
     {
-        tstring local_name;
-        const tstring* nm;
         if (e->flags & 0x80000) {
-            local_name.assign("");
-            nm = &local_name;
-            ((Mission*)g_game)->label_text(e->label, nm, 0, 1, &h);
-        } else if (e->flags & 0x400) {
-            if ((e->flags & 0x3000) == 0)
-                h = 0.5f;
-            else if ((e->flags & 0x3000) == 0x1000)
-                h = 0.75f;
-            else
-                h = 1.0f;
-            if (g_show_party_ids_instead_of_names) {
-                nm = &e->text;
-            } else if (e->flag1c == 0 && g_strtable.find(&e->text) != 0) {
-                local_name.assign(g_strtable.find(&e->text));
-                nm = &local_name;
-            } else {
-                local_name.assign(e->name);
-                nm = &local_name;
-            }
-            ((Mission*)g_game)->label_text(e->label, nm, 1, (int)h, &h);
-            ((RefSlot*)e->label)->sprite = g_resmgr.material("map_legend_outline");
+            tstring s("");
+            ((Mission*)g_game)->label_text(e->label, &s, 0, 1, &scale);
         } else {
+            const tstring* nm;
             if ((e->flags & 0x3000) == 0)
                 h = 0.5f;
             else if ((e->flags & 0x3000) == 0x1000)
@@ -859,20 +840,31 @@ void MissionAgents::add_order_arrow(int id)
                 h = 1.0f;
             if (g_show_party_ids_instead_of_names) {
                 nm = &e->text;
-            } else if (e->flag1c == 0 && g_strtable.find(&e->text) != 0) {
-                local_name.assign(g_strtable.find(&e->text));
-                nm = &local_name;
             } else {
-                local_name.assign(e->name);
-                nm = &local_name;
+                // the found tstring* (or the record's own name tstring at +0xc) goes straight to label_text
+                const tstring* f = 0;
+                if (e->flag1c == 0)
+                    f = (const tstring*)g_strtable.find(&e->text);
+                nm = f ? f : &e->name;
             }
-            ((Mission*)g_game)->label_text(e->label, nm, 0, (int)h, &h);
+            if (e->flags & 0x400) {
+                ((Mission*)g_game)->label_text(e->label, nm, 1, (int)h, &scale);
+                Sprite* mat = g_resmgr.material("map_legend_outline");
+                Sprite* old = ((RefSlot*)e->label)->sprite;
+                if (old) old->refs--;
+                ((RefSlot*)e->label)->sprite = mat;
+                if (mat) mat->refs++;
+            } else {
+                ((Mission*)g_game)->label_text(e->label, nm, 0, (int)h, &scale);
+            }
         }
     }
-    o->mode = id;                                   // (+0xc takes the argument again: [esp+0x70] is [esp+0x60] after the pushes)
+    o->mode = id;
     o->fade = 1;
-    if (!(o->param() > 0.0f))
-        o->set_param(&h);
+    if (!(o->param() > 0.0f)) {
+        id = 0x3f666666;                            // the original reuses the argument slot for the 0.9f
+        o->set_param((const float*)&id);
+    }
     e->place_on_map();
 }
 
