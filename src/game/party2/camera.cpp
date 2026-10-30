@@ -512,25 +512,8 @@ struct Mission {
     std::vector<char*> f0e0;                        // +0xe0  page table of Rec98 records
     char        pad0f0[0xf8 - 0xf0];
     AgentTable  agents;                             // +0xf8 (0x138d4; pages at +0x139c8)
-    char        pad1[0x10000 - 0x6a0];
-    int         f132c;                              // +0x132c (font mesh active)
-    char        pad1b[0x13a00 - 0x132c - 4];
-    char*       f13a00;                             // +0x13a00  array of 0x508 records
-    char        pad2[0x13a34 - 0x13a04];
-    int         f13a34;                             // +0x13a34
-    char        pad3[0x13a58 - 0x13a38];
-    char*       f13a58;                             // +0x13a58  array of Rec138 records
-    char        pad4[0x13acc - 0x13a5c];
-    float       f13acc;                             // +0x13acc
-    char        pad5[0x13b18 - 0x13ad0];
-    int         f13b18;                             // +0x13b18
-    char        pad6[0x13b20 - 0x13b1c];
-    int         f13b20;                             // +0x13b20 (clock low)
-    int         f13b24;                             // +0x13b24 (clock high)
-    char        pad7[0xc58];
-    mesh        f1480;                              // +0x1480 (0x260)
-    char        pad8[0x158c - 0x16e0 + 0x10000];
-    int         f158c;                              // +0x158c (font mesh visible)
+    // (the HudRoot fields at +0x132c/+0x1480/+0x158c and the +0x13a00.. records belong to other objects and were never
+    //  accessed through this struct; they were mis-placed here and removed so the layout stays truthful)
 
     tstring string_value(int index);                // 0x48e9e0 (ret 4)
     mesh* build_legend_mesh(EntityFull* e) { return ::build_legend_mesh((ColourOwner*)e); }                // 0x495b20 (ret 4)
@@ -668,9 +651,11 @@ struct Shape {
     virtual void set_radius(const float* r);        // 6 (+0x18)
     char pad4[0x18];
     Sprite* own;                                    // +0x1c
-    matrix m20;                                     // +0x20
+    vector4 m20;                                    // +0x20 (two vector4s: the centre at +0x20 and a copy at +0x30, 0x4332a0)
+    vector4 m30;                                    // +0x30
     int m40;                                        // +0x40 (the float* arg, copied)
 };
+typedef char Shape_size_check[sizeof(Shape) == 0x44 ? 1 : -1];
 __forceinline Shape* sphere_shape(Shape* mem, vector4 pos, const float* radius)   // 0x4332a0 (ret 0x14, ECX=mem): the constructor of ::sphere on the raw memory
 {
     rgl::vector4 c;
@@ -718,12 +703,14 @@ struct OrderEntry {                                 // 0x5ac8-byte order/agent r
     OrderObj* obj;                                  // +0x59c0 (== Party::model)
     char pad59c4[0x59e8 - 0x59c4];
     Sprite* label;                                  // +0x59e8 (text mesh)
+    char pad59ec[0x5ac8 - 0x59ec];
     void place_on_map() { ((::Party*)this)->place_on_map(); }                                // 0x4b2880
     void update_flags() { ((::Party*)this)->update_flags(); }                                // 0x4b7840 (the record is a Party)
 };
 typedef char chk_ordentry_flags[offsetof(OrderEntry, flags) == 0xa0 ? 1 : -1];
 typedef char chk_ordentry_obj[offsetof(OrderEntry, obj) == 0x59c0 ? 1 : -1];
 typedef char chk_ordentry_label[offsetof(OrderEntry, label) == 0x59e8 ? 1 : -1];
+typedef char OrderEntry_size_check[sizeof(OrderEntry) == 0x5ac8 ? 1 : -1];
 
 struct Reinf {                                      // 0x4c-byte reinforcement record
     int idx;                                        // +0 (unit index)
@@ -731,7 +718,8 @@ struct Reinf {                                      // 0x4c-byte reinforcement r
     char pad8[0x4c - 8];
 };
 struct ReinfSet {                                   // 0x58-byte reinforcement packet
-    char pad0[0x34]; Reinf* recs;                   // +0x34
+    char pad0[0x34];
+    Reinf* recs;                                    // +0x34
     int count;                                      // +0x38
     char pad3c[0x58 - 0x3c];
 };
@@ -741,10 +729,11 @@ struct Unit {                                       // 0x130-byte leader/unit re
     char pad0[0x6b0];
     char m6b0[0x40];                                // +0x6b0 (frame copy of +0x6f0)
     char m6f0[0x40];                                // +0x6f0
+    char pad730[0x770 - 0x730];
     int f770;                                       // +0x770
     int f774;                                       // +0x774
     int pad778;
-};
+};   // (offsets are relative to the Mission; the code addresses them as this + idx*0x130 + off)
 
 // the mission's agent table (member of the object 0x49bea0 is called on)
 struct AgentTable {
@@ -1693,9 +1682,10 @@ struct ObjRec {
     int fa4;                                             // +0xa4
     char pad_a8[0x8e4 - 0xa8];
     int f8e4;                                            // +0x8e4
+    int pad8e8;                                          // +0x8e8
     int f8ec;                                            // +0x8ec
     int f8f0;                                            // +0x8f0
-    char pad8f0[0x918 - 0x8f0];
+    char pad8f4[0x918 - 0x8f4];
     int f918;                                            // +0x918
     char pad91c[0x5ac8 - 0x91c];
 

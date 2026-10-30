@@ -36,9 +36,9 @@ extern int g_key_b[256];                        // 0xa17400
 
 // the game data's "current emitter audio" state at +0x1a068..+0x1a07c (see s00435490.h SoundCtl)
 struct EmitAudio {
-    int id;                                     // +0x1a068  current emitter id (0 = none)
-    tstring name;                               // +0x1a06c  current emitter name
-    int tag;                                    // +0x1a07c  current emitter tag
+    int id;                                     // +0 (game+0x1a068)  current emitter id (0 = none)
+    tstring name;                               // +4 (game+0x1a06c)  current emitter name
+    int tag;                                    // +0x14 (game+0x1a07c)  current emitter tag
 };
 #define EMIT_AUDIO (*(EmitAudio*)((char*)g_game + 0x1a068))
 
