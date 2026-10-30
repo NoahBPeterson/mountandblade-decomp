@@ -129,6 +129,10 @@ struct Mesh : Raw {                                          // rgl::mesh, 0x260
 
 
 struct Entity : Raw {                                        // scene entity (vtable object)
+    // Raw::at measures from the Raw base, which MSVC places after the vptr (+4) in a polymorphic class: every entity
+    // field access through it landed 4 bytes high (the +0x118 mesh list was written at +0x11c.., leaving first = 0 and
+    // last set, so the next push copied from address 0). Entity offsets are from the object start.
+    template<class T> T& at(int o) { return *(T*)((char*)this + o); }
     virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
     virtual void v4();
     virtual void v5();
