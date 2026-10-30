@@ -382,6 +382,45 @@ def test_tail_call_through_pointer_is_a_fake_method():
     assert r["verdict"] == "PASS" and not r["discarded"].get("fake-arity"), r
 
 
+def _static_arity(call_va):
+    """Argument dwords Runner's call-site inference gives the image call at call_va (no run needed)."""
+    class _T:
+        va = orig_lo = orig_hi = 0
+
+    class _S:
+        entry = 0
+    r = equiv.Runner.__new__(equiv.Runner)
+    r.t, r.ours, r.obj = _T(), _S(), {"code": []}
+    r.img = equiv.context()["img"]
+    r.code_cache, r.targets_cache = {}, {}
+    addrs, insns = r._insns_around(call_va)
+    return r._call_pushes(addrs, insns, addrs.index(call_va))
+
+
+def test_fake_call_arity_inference():
+    """Call-site arity for calls through soup pointers, against the image's own code:
+    - 0x4260ab: `push ebx/ebp/esi` + `push edi` of the prologue are register saves -> 0;
+    - 0x4617fc: `push ebp; push edi` save registers the function first touches here (late /O2 saves) -> 3;
+    - 0x46197e: the 4th argument is pushed in both arms before the merged call (`push 3; jmp` / `push 2`) -> 4;
+    - 0x4bce92: two of the three COM arguments are pushed 30-60 instructions earlier -> 3;
+    - 0x4eb981: 0x4eb8ed is a split continuation (reads the ebx it inherits), so its `push ebx`s are
+      arguments, not saves -> 7 (IDirect3DDevice9::Clear)."""
+    assert _static_arity(0x4260ab) == 0
+    assert _static_arity(0x4617fc) == 3
+    assert _static_arity(0x46197e) == 4
+    assert _static_arity(0x4bce92) == 3
+    assert _static_arity(0x4eb981) == 7
+
+
+def test_prologue_pushes_are_not_fake_call_args():
+    """dynamic_entity::integrate 0x4260a0 opens `sub esp,70h; push ebx; push ebp; push esi; mov ebx,ecx;
+    mov eax,[ebx]; push edi; call [eax+7Ch]`: the four pushes save callee-saved registers, so the soup method
+    takes no arguments. Counting them made the fake pop 16 bytes and every input returned through a float
+    (fake-arity "no call site before cccccccc", 0/400 valid)."""
+    r = _row("dynamic_entity", 0x4260a0, "src/rgl/dynamic/dynamic_entity.cpp", "--fp-tol")
+    assert r["verdict"] in ("PASS", "PASS-FP") and not r["discarded"].get("fake-arity"), r
+
+
 def test_transparent_keeps_real_differences():
     text = open(RESMGR_SRC).read()
     old = "if (f18 != 0 && f1c != 0) delete[] (Bone*)f1c; delete[] table.data; }"

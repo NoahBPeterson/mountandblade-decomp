@@ -78,6 +78,7 @@ import machine as M                                # noqa: E402
 from coff import Coff                              # noqa: E402
 
 DEFAULT_INPUTS = 400
+DEFAULT_PLATEAU = 150      # --plateau: inputs in a row without new coverage before a row stops early
 DEFAULT_K = 200
 DEFAULT_C = 60.0                  # legacy --gate insns only
 DEFAULT_BUDGET = 10_000_000
@@ -1191,6 +1192,12 @@ class ImportTrace(list):
         self.regs.append(call_reg_snapshot(self.uc))
 
 
+_CALLEE_SAVED_REGS = (CX.X86_REG_EBX, CX.X86_REG_EBP, CX.X86_REG_ESI, CX.X86_REG_EDI)
+# sub-registers -> the callee-saved register they write
+_FULL_REG = {CX.X86_REG_BX: CX.X86_REG_EBX, CX.X86_REG_BL: CX.X86_REG_EBX, CX.X86_REG_BH: CX.X86_REG_EBX,
+             CX.X86_REG_BP: CX.X86_REG_EBP, CX.X86_REG_SI: CX.X86_REG_ESI, CX.X86_REG_DI: CX.X86_REG_EDI}
+
+
 class Side:
     """One installed function (original or ours): entry, ranges, call-site hooks."""
 
@@ -2059,11 +2066,15 @@ class Runner:
 
     def block_starts(self, addrs, insns):
         """Addresses a branch or call in this code can land on: the start of a basic block. `addrs[0]`
-        (the function's entry in the image) is a block start too. Attributed here once per code blob."""
+        (the function's entry in the image) is a block start too, and so is the tested function's entry on either
+        side: our object can place another function before it (mission_5 0x529130's inlined accessor ends at
+        0x3000001d), and walking from a call back over `sub esp,34h` counted the frame as 13 arguments.
+        Attributed here once per code blob."""
         key = id(insns)
         t = self.targets_cache.get(key)
         if t is None:
             t = {addrs[0]} if addrs else set()
+            t |= {a for a in (self.t.va, self.ours.entry) if a in insns}
             for ins in insns.values():
                 if ins.id == CX.X86_INS_CALL or ins.group(capstone.CS_GRP_JUMP):
                     if ins.operands and ins.operands[0].type == CX.X86_OP_IMM:
@@ -2071,12 +2082,245 @@ class Runner:
             self.targets_cache[key] = t
         return t
 
+    def fn_entries(self, addrs, insns):
+        """Addresses in this code that are a function's entry: the tested function on either side, the
+        code blob's first address, and every direct call target (attributed once per code blob)."""
+        key = ("fn", id(insns))
+        t = self.targets_cache.get(key)
+        if t is None:
+            t = {self.t.va, self.t.orig_lo, self.ours.entry}
+            if addrs:
+                t.add(addrs[0])
+            for ins in insns.values():
+                if ins.id == CX.X86_INS_CALL and ins.operands and ins.operands[0].type == CX.X86_OP_IMM:
+                    t.add(ins.operands[0].imm & 0xFFFFFFFF)
+            self.targets_cache[key] = t
+        return t
+
+    def block_preds(self, addrs, insns):
+        """Block start -> indexes of the instructions ending its predecessors: the fall-through instruction and
+        every direct jump/jcc to it (attributed once per code blob)."""
+        key = ("pred", id(insns))
+        t = self.targets_cache.get(key)
+        if t is None:
+            t = {}
+            idx = {a: k for k, a in enumerate(addrs)}
+            starts = self.block_starts(addrs, insns)
+            for k, a in enumerate(addrs):
+                ins = insns[a]
+                if ins.group(capstone.CS_GRP_JUMP) and ins.operands and ins.operands[0].type == CX.X86_OP_IMM:
+                    tg = ins.operands[0].imm & 0xFFFFFFFF
+                    if tg in idx:
+                        t.setdefault(tg, []).append(k)
+                nx = a + ins.size
+                if nx in starts and nx in idx and ins.id not in (CX.X86_INS_JMP, CX.X86_INS_RET, CX.X86_INS_INT3):
+                    t.setdefault(nx, []).append(k)
+            self.targets_cache[key] = t
+        return t
+
+    @staticmethod
+    def _is_frame_sub(ins):
+        return ins.id == CX.X86_INS_SUB and ins.operands[0].type == CX.X86_OP_REG and \
+            ins.operands[0].reg == CX.X86_REG_ESP and \
+            (ins.operands[1].type != CX.X86_OP_IMM or ins.operands[1].imm > 0x40)
+
+    def _walk_back(self, addrs, insns, k, starts):
+        """The straight-line instructions ending with index k, back to the previous stack-balance point (call,
+        pop, `add esp`, branch, ret, other esp write) or the start of k's basic block, in program order; and
+        whether the walk ended at a block start (then the first instruction returned is that start)."""
+        seq = []
+        hit_start = False
+        j = k
+        # no instruction cap short of the block: /O2 schedules argument pushes far ahead of the call; config
+        # 0x4bc830 pushes 2 of its 3 COM-call arguments 60 and 30 instructions before `call [edx+158h]`, between
+        # byte stores into the vertex-declaration table, and a 40-instruction cap found only the last
+        while j >= 0 and k - j < 2000:
+            ins = insns[addrs[j]]
+            if j < k and ins.address + ins.size != addrs[j + 1]:
+                break                           # gap: not a straight-line predecessor
+            if ins.id in (CX.X86_INS_PUSH, CX.X86_INS_SUB):
+                pass                            # counted, or judged a frame allocation, by _count_pushes
+            elif ins.id in (CX.X86_INS_CALL, CX.X86_INS_RET, CX.X86_INS_POP, CX.X86_INS_ADD) or \
+                    ins.group(capstone.CS_GRP_JUMP):
+                if not (ins.id == CX.X86_INS_ADD and not (ins.operands[0].type == CX.X86_OP_REG and
+                                                          ins.operands[0].reg == CX.X86_REG_ESP)):
+                    break
+            else:
+                try:
+                    _r, w = ins.regs_access()
+                except capstone.CsError:
+                    w = []
+                if CX.X86_REG_ESP in w and ins.id not in (CX.X86_INS_MOV,):
+                    break
+            seq.append(ins)
+            if addrs[j] in starts:
+                hit_start = True
+                break                           # this instruction starts the block: earlier ones are another path
+            j -= 1
+        seq.reverse()
+        return seq, hit_start
+
+    def entry_saved(self, addrs, insns):
+        """address -> bitmask of the callee-saved registers (_CALLEE_SAVED_REGS order) some path from a function
+        entry in this code may have written before that instruction runs. A register outside the mask still holds
+        the caller's value there, so pushing it saves it: it is never an argument. /O2 schedules those saves
+        late: mesh_pass's render-state setter 0x4617b0 saves ebp and edi only in its third block, as
+        `push ebp; push edi; push ebx; push 0Fh; push eax; call [ecx+0E4h]`, a 3-argument call."""
+        key = ("saved", id(insns))
+        t = self.targets_cache.get(key)
+        if t is not None:
+            return t
+        bit = {r: 1 << k for k, r in enumerate(_CALLEE_SAVED_REGS)}
+        t = {}
+        for e in sorted(self.fn_entries(addrs, insns)):
+            if e not in insns:
+                continue
+            te = self._entry_saved_from(insns, e, bit)
+            if te is None:
+                continue                        # not a real entry: it reads a caller register it never saved
+            for a, m in te.items():
+                t[a] = t.get(a, 0) | m
+        self.targets_cache[key] = t
+        return t
+
+    @staticmethod
+    def _entry_saved_from(insns, e, bit):
+        """entry_saved's dataflow from one entry, or None when some path from it reads a callee-saved register
+        it has not written (other than to push it): the code there is the interior continuation of another
+        function, whose registers already hold values (facegen_misc 0x4eb8ed, a split of 0x4eb8e0, passes the
+        ebx it inherits as `push ebx` arguments of IDirect3DDevice9::Clear)."""
+        t = {}
+        work = [(e, 0)]
+        while work:
+            a, m = work.pop()
+            while a in insns:
+                old = t.get(a)
+                if old is not None and (old | m) == old:
+                    break
+                m = m | (old or 0)
+                t[a] = m
+                ins = insns[a]
+                try:
+                    rd, w = ins.regs_access()
+                except capstone.CsError:
+                    rd, w = list(_CALLEE_SAVED_REGS), list(_CALLEE_SAVED_REGS)
+                ops = ins.operands
+                zeroing = ins.id in (CX.X86_INS_XOR, CX.X86_INS_SUB) and len(ops) == 2 and \
+                    ops[0].type == ops[1].type == CX.X86_OP_REG and ops[0].reg == ops[1].reg
+                if ins.id != CX.X86_INS_PUSH and not zeroing:
+                    for r in rd:
+                        b = bit.get(_FULL_REG.get(r, r), 0)
+                        if b and not m & b:
+                            return None
+                if ins.id == CX.X86_INS_POP:
+                    w = [ops[0].reg] if ops[0].type == CX.X86_OP_REG else []
+                elif ins.id in (CX.X86_INS_PUSH, CX.X86_INS_CALL):
+                    w = []                      # a callee restores what it saves
+                for r in w:
+                    m |= bit.get(_FULL_REG.get(r, r), 0)
+                if ins.id in (CX.X86_INS_RET, CX.X86_INS_INT3):
+                    break
+                if ins.group(capstone.CS_GRP_JUMP):
+                    tg = ops[0].imm & 0xFFFFFFFF if ops and ops[0].type == CX.X86_OP_IMM else None
+                    if tg is not None:
+                        work.append((tg, m))
+                    if ins.id == CX.X86_INS_JMP:
+                        break
+                a = a + ins.size
+        return t
+
+    def _count_pushes(self, seq, prologue, saved=None):
+        """Argument dwords `seq` pushes. A push of a callee-saved register still holding the caller's value
+        (`saved`, from entry_saved) saves it. With `prologue` (seq starts at a function's entry) a `sub esp,N` /
+        `push ecx` that only prologue instructions precede allocates the frame. A large `sub esp,N` anywhere
+        allocates a frame: the pushes before it are not the call's."""
+        n = 0
+        in_prologue = prologue
+        bit = {r: 1 << k for k, r in enumerate(_CALLEE_SAVED_REGS)}
+        for ins in seq:
+            push_reg = ins.operands[0].reg if ins.id == CX.X86_INS_PUSH and \
+                ins.operands[0].type == CX.X86_OP_REG else None
+            if push_reg in bit and saved is not None and ins.address in saved and \
+                    not saved[ins.address] & bit[push_reg]:
+                continue                        # saves the caller's register
+            if ins.id == CX.X86_INS_PUSH:
+                if in_prologue and push_reg == CX.X86_REG_ECX:
+                    continue                    # `push ecx` reserving a local slot
+                n += 1
+                in_prologue = False
+                continue
+            if ins.id == CX.X86_INS_SUB and ins.operands[0].type == CX.X86_OP_REG and \
+                    ins.operands[0].reg == CX.X86_REG_ESP:
+                if self._is_frame_sub(ins):
+                    n = 0
+                    in_prologue = False
+                elif not in_prologue:
+                    n += ins.operands[1].imm // 4
+                continue
+            if prologue and ins.id == CX.X86_INS_MOV and ins.operands[0].type == CX.X86_OP_REG and \
+                    ins.operands[0].reg == CX.X86_REG_EBP and ins.operands[1].type == CX.X86_OP_REG and \
+                    ins.operands[1].reg == CX.X86_REG_ESP:
+                continue                        # frame pointer setup
+            in_prologue = False
+        return n
+
+    def _pushes_ending(self, addrs, insns, k, depth):
+        """Argument dwords on the stack, since the last balance point, after the instruction at index k runs
+        (k ends a predecessor block when it is a jump)."""
+        starts = self.block_starts(addrs, insns)
+        ins = insns[addrs[k]]
+        if ins.group(capstone.CS_GRP_JUMP):
+            if addrs[k] in starts:
+                return self._pushes_from_preds(addrs, insns, addrs[k], depth)
+            k -= 1
+            if insns[addrs[k]].address + insns[addrs[k]].size != addrs[k + 1]:
+                return None
+        seq, hit_start = self._walk_back(addrs, insns, k, starts)
+        saved = self.entry_saved(addrs, insns)
+        if not seq or not hit_start:
+            return self._count_pushes(seq, False, saved)
+        if seq[0].address in self.fn_entries(addrs, insns):
+            return self._count_pushes(seq, True, saved)
+        n = self._count_pushes(seq, False, saved)
+        if any(self._is_frame_sub(x) for x in seq):
+            return n
+        return n + self._pushes_from_preds(addrs, insns, seq[0].address, depth)
+
+    def _pushes_from_preds(self, addrs, insns, start, depth):
+        """Pushes the predecessors of the block at `start` leave for it, when they all agree; else 0 (a loop header
+        entered from its preheader and its back edge: the pushes belong to one path only)."""
+        if depth >= 4 or start in self.fn_entries(addrs, insns):
+            return 0
+        preds = self.block_preds(addrs, insns).get(start, [])
+        got = {self._pushes_ending(addrs, insns, k, depth + 1) for k in preds}
+        return got.pop() if len(got) == 1 and None not in got else 0
+
+    def _call_pushes(self, addrs, insns, i):
+        """Argument dwords the call at index i passes. Its own block's pushes, plus those every predecessor
+        leaves when they agree: /O2 merges the call after an if/else whose arms each push its argument
+        (`push eax; jmp L` / `push ecx; L: mov edx,[esi]; mov ecx,esi; call [edx+64h]`, ours of mission_3
+        0x48d470); counting the call's block alone faked a 0-argument method, the dword stayed on the stack and
+        the epilogue popped it into esi (ours-abi-broken)."""
+        if addrs[i] in self.block_starts(addrs, insns):
+            return self._pushes_from_preds(addrs, insns, addrs[i], 0)
+        prev = insns[addrs[i - 1]]
+        if prev.address + prev.size != addrs[i]:
+            return 0
+        return self._pushes_ending(addrs, insns, i - 1, 0) or 0
+
     def site_arity(self, ret):
         """Stack dwords a call ending at `ret` passes: pushes (and 'sub esp,N' slots) walking back
         from the call to the previous call/branch/stack adjustment. None if not determinable.
-        The walk stays inside the call's own basic block: the pushes of a loop's prologue (or of the
-        funclet/parent function the site was inlined into) belong to a different path, and counting
-        them fabricated 6 arguments for a 1-argument vtable call in a loop (write_soa 0x4e9640)."""
+        The walk counts the call's own basic block, and continues into its predecessors only when they all
+        push the same (_call_pushes): the pushes of a loop's prologue (or of the funclet/parent function the
+        site was inlined into) belong to a different path, and counting them fabricated 6 arguments for a
+        1-argument vtable call in a loop (write_soa 0x4e9640).
+        When the walk reaches a function's entry block is the function's entry block, its prologue is not argument traffic: a push of a
+        callee-saved register still holding its entry value saves it, and a `sub esp,N` / `push ecx` that
+        only prologue instructions precede allocates the frame. Counting /O2's interleaved prologue
+        (`sub esp,70h; push ebx; push ebp; push esi; mov ebx,ecx; mov eax,[ebx]; push edi; call [eax+7Ch]`,
+        dynamic_entity::integrate 0x4260a0) as 4 arguments popped 16 bytes the callee never owned, and the
+        run then returned through a float (logged as "no call site before cccccccc")."""
         got = self._insns_around(ret - 1)
         if not got:
             return None
@@ -2088,38 +2332,11 @@ class Runner:
         call = insns[addrs[i]]
         if call.id != CX.X86_INS_CALL or call.address + call.size != ret:
             return None
-        starts = self.block_starts(addrs, insns)
-        n = 0
-        j = i - 1
-        if addrs[i] not in starts:
-            while j >= 0 and i - j < 40:
-                ins = insns[addrs[j]]
-                if ins.address + ins.size != addrs[j + 1]:
-                    break                       # gap: not a straight-line predecessor
-                if ins.id == CX.X86_INS_PUSH:
-                    n += 1
-                elif ins.id == CX.X86_INS_SUB and ins.operands[0].type == CX.X86_OP_REG and \
-                        ins.operands[0].reg == CX.X86_REG_ESP and ins.operands[1].type == CX.X86_OP_IMM:
-                    if ins.operands[1].imm > 0x40:
-                        break
-                    n += ins.operands[1].imm // 4
-                elif ins.id in (CX.X86_INS_CALL, CX.X86_INS_RET, CX.X86_INS_POP, CX.X86_INS_ADD) or \
-                        ins.group(capstone.CS_GRP_JUMP):
-                    if ins.id == CX.X86_INS_ADD and not (ins.operands[0].type == CX.X86_OP_REG and
-                                                         ins.operands[0].reg == CX.X86_REG_ESP):
-                        j -= 1
-                        continue
-                    break
-                else:
-                    try:
-                        _r, w = ins.regs_access()
-                    except capstone.CsError:
-                        w = []
-                    if CX.X86_REG_ESP in w and ins.id not in (CX.X86_INS_MOV,):
-                        break
-                if addrs[j] in starts:
-                    break                   # this instruction starts the block: earlier ones are another path
-                j -= 1
+        key = ("arity", id(insns), i)
+        n = self.targets_cache.get(key)
+        if n is None:
+            n = self._call_pushes(addrs, insns, i)
+            self.targets_cache[key] = n
         nxt = self.m.read(ret, 3)
         callee_pops = not (nxt[:2] == b"\x83\xc4" or nxt[:2] == b"\x81\xc4")
         return n, callee_pops
@@ -2138,6 +2355,11 @@ class Runner:
             # a tail call through a pointer (`jmp [eax+0x68]` with the tested function's frame gone): the target
             # takes over the tested function's own arguments and returns to its caller (mission_3 0x48d7e0)
             ar = (len(self.t.stack_kinds), bool(self.t.callee_pop))
+        if ar is None and esp > self.esp_entry:
+            # esp is above the tested function's return-address slot: it already returned, to `target`. That is a stack
+            # imbalance (a misjudged fake call earlier, or a fragment returning through its parent's epilogue, mission_5
+            # 0x52ba1d), not a call site arity could be read from
+            return ("ret-misaligned", "returned to %08x with esp %+d past its entry" % (target, esp - self.esp_entry))
         if ar is None:
             return ("fake-arity", "no call site before %08x" % ret)
         n, pops = ar
@@ -4457,11 +4679,17 @@ def _test_function(sid, va, opts, log=print):
     deadline = time.time() + opts.time_limit
     steer = ST.Steer(runner, gen, opts) if getattr(opts, "steer", True) else None
     hard = opts.inputs + (opts.extra_inputs if steer else 0)
+    plateau = getattr(opts, "plateau", 0)
+    last_new = 0            # input index of the last one that reached a new block or edge
     i = -1
     try:
         while True:
             i += 1
             if i >= hard:
+                break
+            if plateau and i >= plateau and i - last_new >= plateau and valid >= opts.min_valid:
+                # coverage has stopped growing: more inputs would re-run the same paths (--plateau 0 runs them all)
+                out["plateau"] = "no new coverage in the %d inputs after input %d" % (i - last_new, last_new)
                 break
             if i >= opts.inputs and not (steer and corpus and edges_missing(runner) and steer.has_work()):
                 break               # past --inputs only while steering still has uncovered branches to try
@@ -4636,8 +4864,13 @@ def _test_function(sid, va, opts, log=print):
                     fa.setdefault(tg, set()).add(n)
                 for tg, n, _e, _a in b["fakes"]:
                     fb.setdefault(tg, set()).add(n)
-                if any(len(v) > 1 for v in list(fa.values()) + list(fb.values())) or \
-                        any(fa[k] != fb[k] for k in set(fa) & set(fb)):
+                # one generated value fills several soup slots (0, small integers, a float's bits), so the same
+                # target can stand for methods of different arities (mission_4 0x48f120: target 0 called with 1
+                # and with 0 arguments). Calls both builds made in the same order with the same arities were each
+                # judged alike; only otherwise must a target keep one arity on both sides.
+                same_seq = [(tg, n) for tg, n, _e, _a in a["fakes"]] == [(tg, n) for tg, n, _e, _a in b["fakes"]]
+                if not same_seq and (any(len(v) > 1 for v in list(fa.values()) + list(fb.values())) or
+                                     any(fa[k] != fb[k] for k in set(fa) & set(fb))):
                     discarded["fake-arity"] = discarded.get("fake-arity", 0) + 1
                     continue
                 faked += 1
@@ -4650,6 +4883,7 @@ def _test_function(sid, va, opts, log=print):
                 runner.ours.edges |= b["edges"]
             if new:
                 corpus.append(inp)
+                last_new = i
             if steer:
                 steer.note_valid(inp, {"orig": a["edges"], "ours": b["edges"] if sb[0] == "ok" else set()})
             cmp_.last_kind = None
@@ -4978,6 +5212,9 @@ def parse_args(argv=None):
     ap.add_argument("--flags")
     ap.add_argument("--src", help="test this source file instead of match/slices/<id>/<id>.cpp")
     ap.add_argument("--inputs", type=int, default=DEFAULT_INPUTS)
+    ap.add_argument("--plateau", type=int, default=int(os.environ.get("DIFFTEST_PLATEAU", DEFAULT_PLATEAU)),
+                    help="stop once this many inputs in a row reach no new block or edge (and --min-valid inputs "
+                         "are valid); 0 runs every input, for a fix's confirmation run")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--json")
     ap.add_argument("--min-valid", type=int, default=DEFAULT_K)
@@ -5151,5 +5388,15 @@ def print_result(r):
         print("    resolution conflicts: %s" % r["resolution_conflicts"][:3])
 
 
+def pin_hash_seed():
+    """Re-exec once with PYTHONHASHSEED=0. Some passes iterate sets of strings, whose order follows the per-process
+    hash seed, so the same --seed gave different runs (obj_tbl 0x499050: the uninit-copy excuse came and went).
+    A fixed seed makes every run reproducible."""
+    if os.environ.get("PYTHONHASHSEED") != "0":
+        os.environ["PYTHONHASHSEED"] = "0"
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+
+
 if __name__ == "__main__":
+    pin_hash_seed()
     sys.exit(main())
