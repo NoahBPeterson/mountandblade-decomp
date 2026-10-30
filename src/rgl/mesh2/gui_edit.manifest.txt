@@ -48,3 +48,8 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_list_dtor@@YIXPAUconv_rec@@@Z  004c8ba0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_clear@@YIXPAPAX@Z  004c8bf0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_zero_node@@YIPAXPAX@Z  004c8c20  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?place_c@MapDialog@@QAEXPAUMapRecord@@HH@Z  004c6f10  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?place_c@MapDialog@@QAEXPAUMapRecord@@HH@Z  004c6f30  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?place_c@MapDialog@@QAEXPAUMapRecord@@HH@Z  004c6f50  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?place_c@MapDialog@@QAEXPAUMapRecord@@HH@Z  004c6f70  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?place_c@MapDialog@@QAEXPAUMapRecord@@HH@Z  004c88e0  /O2 /MT /Gy /TP
