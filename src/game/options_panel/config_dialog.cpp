@@ -20,17 +20,19 @@
 static __forceinline tstring* strtab_entry(const tstring& key) { return g_strtable.lookup(const_cast<tstring&>(key)); }
 static __forceinline const char* strtab_lookup(const tstring& key) { return strtab_entry(key)->c_str(); }
 
-// 0x08ee3d3c: renderer display-mode enumerator. Verified call offsets: +0x10 adapter count,
-// +0x14 adapter display mode, +0x18 mode count, +0x1c enumerate mode.
+// 0x08ee3d3c: g_app_obj's m_pD3D (CD3DApplication +0xf4), the IDirect3D9: +0x10 GetAdapterCount, +0x14
+// GetAdapterIdentifier, +0x18 GetAdapterModeCount, +0x1c EnumAdapterModes. COM methods are __stdcall with this pushed
+// (0x4cf115 push eax / call [ecx+0x10]); declared as plain virtuals they were thiscall, and d3d9 read its this from a
+// stale stack slot (the in-game Video Options crash, a fault on 0x3f800010).
 struct IModeEnum {
-    virtual void v0();
-    virtual int v1();
-    virtual int v2();
-    virtual int v3();
-    virtual int count();                                  // +0x10
-    virtual void display_mode(int adapter, int fmt, D3DDISPLAYMODE* mode);   // +0x14
-    virtual int mode_count(int adapter, int fmt);                            // +0x18
-    virtual void enum_mode(int adapter, int fmt, int index, D3DDISPLAYMODE* m); // +0x1c
+    virtual void __stdcall v0();
+    virtual int __stdcall v1();
+    virtual int __stdcall v2();
+    virtual int __stdcall v3();
+    virtual int __stdcall count();                                                         // +0x10
+    virtual void __stdcall adapter_identifier(int adapter, int flags, D3DADAPTER_IDENTIFIER9* id); // +0x14
+    virtual int __stdcall mode_count(int adapter, int fmt);                                // +0x18
+    virtual void __stdcall enum_mode(int adapter, int fmt, int index, D3DDISPLAYMODE* m);  // +0x1c
 };
 
 // 0x08ee3d3c: renderer singleton pointer.
@@ -52,11 +54,11 @@ std::vector<tstring> list_modes()
     std::vector<int> bpps;
 
     unsigned adapters = g_renderer->count();
-    int adapter_geometry[32];
     for (unsigned a = 0; a < adapters; a++) {
-        D3DDISPLAYMODE adapter_mode;
-        g_renderer->display_mode(a, 0, &adapter_mode);
-        adapter_geometry[a] = adapter_mode.Height;
+        // 0x4cf194: GetAdapterIdentifier into a 0x448-byte frame buffer ([esp+0x14c]) that is never read again (a
+        // D3DDISPLAYMODE here let d3d9 write 1.1 KB over the frame: the in-game Video Options crash)
+        D3DADAPTER_IDENTIFIER9 id;
+        g_renderer->adapter_identifier(a, 0, &id);
         D3DFORMAT formats[2];
         formats[0] = D3DFMT_R5G6B5;      // 16-bit
         formats[1] = D3DFMT_X8R8G8B8;    // 32-bit
