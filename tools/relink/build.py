@@ -67,6 +67,26 @@ class Exe:
             vsize, va, rsize, rptr = struct.unpack_from("<IIII", self.d, o + 8)
             self.secs.append((self.base + va, min(vsize, rsize), rptr))
 
+    def reloc_sites(self):
+        """{target value: [VAs of the IMAGE_REL_BASED_HIGHLOW fixups that hold it]} from the base relocation table."""
+        pe = struct.unpack_from("<I", self.d, 0x3C)[0]
+        rva, size = struct.unpack_from("<II", self.d, pe + 24 + 96 + 8 * 5)
+        if not size:
+            sys.exit("no base relocation table: link with /FIXED:NO so the vptr redirect can find the real references")
+        o, end, sites = self.off(self.base + rva), None, {}
+        end = o + size
+        while o < end:
+            page, blk = struct.unpack_from("<II", self.d, o)
+            if blk < 8:
+                break
+            for k in range(8, blk, 2):
+                e, = struct.unpack_from("<H", self.d, o + k)
+                if e >> 12 == 3:
+                    va = self.base + page + (e & 0xfff)
+                    sites.setdefault(self.u32(va), []).append(va)
+            o += blk
+        return sites
+
     def off(self, va):
         for a, n, p in self.secs:
             if a <= va < a + n:
@@ -150,18 +170,20 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
     # Then point the code at the original's vtables: a class our source declares with fewer virtuals than the
     # original has a short compiled vtable (a call through slot 7 of the 0x4c3290 record read a string literal past
     # its end). The copy of the original's vtable in the glue's .rdata has every slot, relocated to our functions.
+    # Only the absolute-address fixups the linker recorded (/FIXED:NO keeps the .reloc table) are references to a
+    # vtable. A byte search for the address also matched displacement/immediate bytes that merely look like it: in one
+    # build Agent::update's `lea eax, [eax+ecx+0x55d0]` (08 d0 55 00) was rewritten because UiC's vtable sat at 0x55d008.
     base = symmap.get("_mb_rdata_base")
     t0, tn, tp = exe.secs[0]
-    text = bytes(exe.d[tp:tp + tn])
+    fixups = exe.reloc_sites()
     moved = 0
     for ours, ova in redirect.items():
         new = struct.pack("<I", base + ova - RDATA[1])
-        pat = struct.pack("<I", ours)
-        i = text.find(pat)
-        while i >= 0:
-            exe.d[tp + i:tp + i + 4] = new
-            moved += 1
-            i = text.find(pat, i + 4)
+        for va in fixups.get(ours, ()):
+            if t0 <= va < t0 + tn:
+                o = tp + va - t0
+                exe.d[o:o + 4] = new
+                moved += 1
     report["vptr_stores_redirected"] = moved
     return report
 
@@ -262,7 +284,7 @@ def main():
                      ", ".join(sorted({s["src"] for s in lits} | {p for p, _i, _v in text_lits} | set(L.FAILED))[:12])))
     keep = sorted({defined_at[int(st["value"], 16)] for st in lits if int(st["value"], 16) in defined_at})
     # the original's stack (reserve = commit = 0x3e8480): mesh::build_skin alone has a 1 MB frame
-    link_extra = ["/MAP:" + T.winpath(map_path), "/STACK:0x3e8480,0x3e8480"] + ["/INCLUDE:" + k for k in keep]
+    link_extra = ["/MAP:" + T.winpath(map_path), "/STACK:0x3e8480,0x3e8480", "/FIXED:NO"] + ["/INCLUDE:" + k for k in keep]
     steps["keep"] = "%d functions reached only through literal addresses kept (/INCLUDE)" % len(keep)
     log = T.link(objs, out, os.path.join(out, "glue"), extra=link_extra, name="mb_standalone.exe", icf=False)
     # A symbol two objects define (a view header's inline copy, or an out-of-line forwarder, next to the row's own
