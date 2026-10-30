@@ -1026,7 +1026,7 @@ no_party:
 // @ 0x515d80
 void Screen::camera_move(float dt)
 {
-    float src[2][2] = { { 0.0f, 1.0f }, { 1.0f, 0.0f } };
+    float src[2][2] = { { 1.0f, 0.0f }, { 0.0f, 1.0f } };   // the identity: a = {1,0} at [esp+0xc], b = {0,1} at [esp+4] (0x515d94)
     mat2 m(&src[0][0], &src[1][0]);
     m.rotate_2x2(-yaw);
 
@@ -1146,14 +1146,19 @@ void MissionCtx::frame(int tick)
 {
     f2c4 = tick;
     if (f24 == 2 && tick <= 0) {
-        int aid = (int)f08;
+        unsigned aid = (unsigned)f08;                  // the page index is unsigned (shr edi,4 at 0x5163b9)
         char* rec = (char*)((char*)(*(char***)((char*)g_game + 0xe4))[aid >> 4] + (aid & 0xf) * 0x98);
         party[0] = *(int*)((char*)rec + 0x58);
         rec = (char*)((char*)(*(char***)((char*)g_game + 0xe4))[aid >> 4] + (aid & 0xf) * 0x98);
         party[1] = *(int*)((char*)rec + 0x54);
 
-        bool a = !(*(float*)((char*)GD_I(0x13a48) + party_by_id(party[0])->f70 * 0x300 + 0x2c) > 0.0f);
-        bool b = *(float*)((char*)GD_I(0x13a48) + party_by_id(party[1])->f70 * 0x300 + 0x2c) < 0.0f;
+        // the record is looked up again for each test (0x516447, 0x5164cf), not read from party[]
+        aid = (unsigned)f08;
+        rec = (char*)((char*)(*(char***)((char*)g_game + 0xe4))[aid >> 4] + (aid & 0xf) * 0x98);
+        bool a = *(float*)((char*)GD_I(0x13a48) + party_by_id(*(int*)((char*)rec + 0x58))->f70 * 0x300 + 0x2c) < 0.0f;   // fcomp; test ah,5; jp (0x5164a6)
+        aid = (unsigned)f08;
+        rec = (char*)((char*)(*(char***)((char*)g_game + 0xe4))[aid >> 4] + (aid & 0xf) * 0x98);
+        bool b = *(float*)((char*)GD_I(0x13a48) + party_by_id(*(int*)((char*)rec + 0x54))->f70 * 0x300 + 0x2c) < 0.0f;
         if (a != b) {
             side = b ? 1 : 0;
             f10 &= ~0x10;
@@ -1173,7 +1178,7 @@ void MissionCtx::frame(int tick)
     if (((PartyV*)p)->data_ready())
         f10 |= 2;
 
-    char* self = (char*)((char*)(*(char***)((char*)g_game + 0xe4))[(int)f08 >> 4] + ((int)f08 & 0xf) * 0x98);
+    char* self = (char*)((char*)(*(char***)((char*)g_game + 0xe4))[(unsigned)f08 >> 4] + ((unsigned)f08 & 0xf) * 0x98);   // shr (0x5165f8)
     if (g_game->f78 == *(int*)((char*)self + 0x58))
         f10 |= 4;
     else if (g_game->f78 == *(int*)((char*)self + 0x54))

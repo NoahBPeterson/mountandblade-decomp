@@ -3054,10 +3054,9 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
         if (*op == 0) {
             for (int i = 0; i < *elems - 2; i++) {
                 float v = 0.0f;
-                if (e[i].v) {
-                    v = e[i].v[ci] - amount;
-                    if (v < 0.0f) v = 0.0f;
-                }
+                if (e[i].v) v = e[i].v[ci];
+                v = v - amount;                     // also for an absent layer (0x52c3e1: the fsub follows the join)
+                if (v < 0.0f) v = 0.0f;
                 if (e[i].v == 0) {
                     if (!(v > 0.0f)) continue;
                     e[i].v = (float*)operator new[](0xac440);
