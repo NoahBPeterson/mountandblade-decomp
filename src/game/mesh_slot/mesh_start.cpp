@@ -250,7 +250,7 @@ extern ModeRec*   g_mission_templates;        // 0x5e2a00  mode table (0x58-byte
 static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)((char*)m + 0x4c); }   // the sound bank at mode record +0x4c
 extern SndRec*    g_env_rows;          // 0x5e28f4  sound slot records (0x4c bytes)
 extern int        g_snd_count;    // 0x5e29ec
-extern tstring*   g_ptypes;          // 0x5e28f8  ground-spec names
+extern char*      g_ptypes;          // 0x5e28f8  ground-spec records, 0x20 bytes each, name tstring at +0 (ptype.h)
 extern int        g_ptype_count;    // 0x5e29e8
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../prop_kind.h"
@@ -793,7 +793,7 @@ void Mission::start_setup()
         if ((*(int*)((char*)&g_cfg + 0x18)) == 0 && RAWAT(int, p, 0x188) == 4 && LV.flags.b8) {
             int j;
             for (j = 0; j < g_ptype_count; j++)
-                if (g_ptypes[j].equals(RAWAT(tstring, p, 0x190)))
+                if (((tstring*)(g_ptypes + j * 0x20))->equals(RAWAT(tstring, p, 0x190)))   // 0x4866c0: add esi, 0x20
                     goto found;
             j = 0;
         found:
