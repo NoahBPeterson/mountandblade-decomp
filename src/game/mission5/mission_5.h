@@ -1418,7 +1418,7 @@ struct SceneEntity_s29ec0 {
 struct Scene_s29ec0 {
     __forceinline void query_segment(const float* a, const float* b, unsigned mask,
                        shape_base_s29ec0** out, int* count);           // 0x439870 (ret 0x14)
-    char pad4[0x80 - 0x04];
+    char pad0[0x80];
     SceneEntity_s29ec0** ent_begin;                                    // +0x80
     SceneEntity_s29ec0** ent_end;                                      // +0x84
     __forceinline void collect(int type, SceneEntity_s29ec0** out, int* count);   // 0x51a3a0 (ret 0xc)
@@ -1474,6 +1474,7 @@ struct GameData_s29ec0 {
     int f8c;                                                    // +0x8c (troop record used for skills)
     char pad90[0x13a00 - 0x90];
     char* chars;                                                // +0x13a00 troop records (0x508 bytes)
+    char pad13a04[0x13a50 - 0x13a04];
     char* map_records;                                          // +0x13a50 area records (0x494 bytes)
     int f13a54;                                                 // +0x13a54 number of areas
     char pad13a58[0x13b10 - 0x13a58];
@@ -1531,13 +1532,17 @@ struct MapObject_s29ec0 {                                              // 0x68 b
     char pad0[0x10];
     tstring name;                                               // +0x10
     tstring mesh;                                               // +0x20
+    char pad30[0x68 - 0x30];
     __forceinline tstring* mesh_ptr();                                        // 0x4c6ca0 (thiscall)
 };
+typedef char MapObject_s29ec0_size_check[sizeof(MapObject_s29ec0) == 0x68 ? 1 : -1];
 struct MapObjList_s29ec0 {                                             // 0x60 bytes
     char pad0[0x54];
     int count;                                                  // +0x54
     MapObject_s29ec0* objs;                                            // +0x58
+    char pad5c[4];
 };
+typedef char MapObjList_s29ec0_size_check[sizeof(MapObjList_s29ec0) == 0x60 ? 1 : -1];   // indexed by g_mapobjs[i]: 0x60 stride (0x52a4ec: lea ecx,[ecx+ecx*2]; shl ecx,5)
 
 
 // ---- area records (0x5e2a00, 0x58 bytes) --------------------------------------------------------------

@@ -119,12 +119,15 @@ struct TriggerStmt {                // the 0x2c-byte statement of a simple trigg
     StmtRec* p;                     // +0
     int n;                          // +4
     char flag;                      // +8
+    char pad9[0x2c - 9];
     void init(int op, int idx);     // 0x524360 (ret 8)
 };
+typedef char TriggerStmt_size_check[sizeof(TriggerStmt) == 0x2c ? 1 : -1];
 struct SimpleTrigger {              // 0x30 bytes: SimpleRec of game.h
     int f0;                         // +0 (the emitter delay, bit-copied)
     TriggerStmt stmt;               // +4
 };
+typedef char SimpleTrigger_size_check[sizeof(SimpleTrigger) == 0x30 ? 1 : -1];
 
 // skills.txt record (0x44 bytes, table g_skill_tbl 0x8ee3100)
 struct SkillFile {
@@ -350,7 +353,8 @@ struct NibbleObj {
     FlagNode* f2c;                                              // +0x2c
     void set_nibble(int v);                                     // 0x523360 (thiscall, ret 4)
 };
-struct Rec88 { int count; char pad4[0x14 - 4]; int nb[1]; };    // the 0x88-byte graph node (NavCell): neighbour ids at +0x14
+struct Rec88 { int count; char pad4[0x14 - 4]; int nb[1]; char pad18[0x88 - 0x18]; };
+typedef char Rec88_size_check[sizeof(Rec88) == 0x88 ? 1 : -1];    // the 0x88-byte graph node (NavCell): neighbour ids at +0x14
 struct Node24 { int f00, f04, f08, f0c, f10; char pad14[0x24 - 0x14]; };   // the 0x24-byte edge record
 struct ChainGraph {
     char pad0[0x14];

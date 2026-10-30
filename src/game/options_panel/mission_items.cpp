@@ -130,29 +130,37 @@ struct MissionParams {
     char pad0[0xd4];
     int f_d4;                                                   // +0xd4 = 0
     int f_d8;                                                   // +0xd8 = 0
-    char pade0[0x110];
+    char pade0[0x114];
     vector4 v_1f0;                                              // +0x1f0 (0, 0, 10, w)
+    char pad200[0x18];
     vector4 v_218;                                              // +0x218 (0, 0, 10, w)
+    char pad228[0x40];
     int f_268;                                                  // +0x268 = 0
     float f_26c;                                                // +0x26c = -0.1f
     int f_270;                                                  // +0x270 = 0
     int f_274;                                                  // +0x274 = 0
     float f_278;                                                // +0x278 = 1.1f
+    char pad27c[0x8];
     int f_284;                                                  // +0x284 = 0
     float f_288;                                                // +0x288 = 97.0f
     float f_28c;                                                // +0x28c = -1e6f
+    char pad290[0xc];
     int f_29c;                                                  // +0x29c = 0
     int f_2a0;                                                  // +0x2a0 = -1
-    char pad2a4[0x28];
+    char pad2a4[0x3c];
     char b_2e0;                                                 // +0x2e0 = 0
     char b_2e1;                                                 // +0x2e1 = 0
+    char pad2e2[0xa];
     float f_2ec;                                                // +0x2ec = 1.1f
     char b_2f0;                                                 // +0x2f0 = 0
     char b_2f1;                                                 // +0x2f1 = 0
     char b_2f2;                                                 // +0x2f2 = 0
+    char pad2f3[0x5];
     char b_2f8;                                                 // +0x2f8 = 0
     char b_2f9;                                                 // +0x2f9 = 0
+    char pad2fa[0x6];
     int f_300;                                                  // +0x300 = 0
+    char pad304[0x10];
     int f_314;                                                  // +0x314 = 0
     int f_318;                                                  // +0x318 = 0
     int f_31c;                                                  // +0x31c = 0
@@ -160,6 +168,7 @@ struct MissionParams {
     int f_324;                                                  // +0x324 = -1
     void init();                                                // 0x4cea10
 };
+typedef char MissionParams_size_check[sizeof(MissionParams) == 0x328 ? 1 : -1];
 
 char* g_mission_params;                                         // unknown owner; init called from here
 
