@@ -73,57 +73,11 @@ struct Slot {
     int is_ready(int i);                                    // 0x487900
 };
 
-struct Buffer {                                             // vtable 0x591c80
+struct Buffer {                                             // the widget base (vtable 0x591c80), as far as its destructor goes
+    // Only the destructor is declared: slot 0 of MissionUi's 49-slot table (ui/mission_ui.h; the other slots are defined in
+    // ui/widget_slots.cpp, so no invented virtuals here). 0x487c00 stores the vptr, deletes the five child meshes, then runs
+    // ~tstring on the name.
     virtual ~Buffer();                                      // 0x487c00
-    virtual void s1() {}
-    virtual void s2() {}
-    virtual void s3() {}
-    virtual void s4() {}
-    virtual void s5() {}
-    virtual void s6() {}
-    virtual void s7() {}
-    virtual void s8() {}
-    virtual void s9() {}
-    virtual void s10() {}
-    virtual void s11() {}
-    virtual void s12() {}
-    virtual void s13() {}
-    virtual void s14() {}
-    virtual void s15() {}
-    virtual void s16() {}
-    virtual void s17() {}
-    virtual void s18() {}
-    virtual void s19() {}
-    virtual void s20() {}
-    virtual void s21() {}
-    virtual void s22() {}
-    virtual void s23() {}
-    virtual void s24() {}
-    virtual void s25() {}
-    virtual void s26() {}
-    virtual void s27() {}
-    virtual void s28() {}
-    // 0x591c80 (the widget base MissionUi also declares) has 49 slots; this view stopped at 29.
-    virtual void s29() {}
-    virtual void s30() {}
-    virtual void s31() {}
-    virtual void s32() {}
-    virtual void s33() {}
-    virtual void s34() {}
-    virtual void s35() {}
-    virtual void s36() {}
-    virtual void s37() {}
-    virtual void s38() {}
-    virtual void s39() {}
-    virtual void s40() {}
-    virtual void s41() {}
-    virtual void s42() {}
-    virtual void s43() {}
-    virtual void s44() {}
-    virtual void s45() {}
-    virtual void s46() {}
-    virtual void s47() {}
-    virtual void s48() {}
     char body[0x108 - 4];
     BufferSub* subs[5];                                     // +0x108
     int pad11c[3];

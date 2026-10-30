@@ -27,6 +27,14 @@ struct UiE : UiEBase {                      // vtable 0x592208
     UiE(int) : UiEBase(0) { f180 = 0; f181 = 0; f184 = 0x1c; }   // inlined by 0x49a0b0
     char key(unsigned p);                   // 0x48bb50
     void update(void* a, float* b, int c, int d);   // 0x48bda0 (ret 0x10)
+    // slots of vtable 0x592208 that differ from the base's (config/widget_slots.cpp)
+    bool d01();                             // +0x04 returns 1 (0x48b170)
+    void d02(int a);                        // +0x08 -> HudBar::update_full 0x4985f0
+    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> update
+    char d35(unsigned mask);                // +0x8c -> key
+    void d44();                             // +0xb0 -> MissionUi::flag1 0x48b1a0
+    void d46();                             // +0xb8 -> MissionUi::flag2 0x48b180
+    int d48();                              // +0xc0 widget type code 6 (0x4171f0)
 };
 
 #endif

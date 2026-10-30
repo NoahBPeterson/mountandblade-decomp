@@ -3180,3 +3180,7 @@ int* Scene_s2ce00::clamp(int* out, int* in)
     out[1] = iy;
     return out;
 }
+
+// ---- bin_writer_i's slots (the original's linker folded them into mem_stream's / text_stream's) ----
+STREAM_FWD_BIN_WRITER(bin_writer_i)
+int bin_writer_i::flush() { return ((bin_writer*)this)->bin_writer::flush(); }

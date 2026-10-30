@@ -521,6 +521,7 @@ using rgl::matrix;
 struct IfaceB_s2f250 {
     int f4, f8, fc;
     IfaceB_s2f250() {}
+    virtual ~IfaceB_s2f250() {}                 // slot 0: 0x437870 is PlacedObj's deleting destructor
     virtual void slot1() {}
     virtual void slot2() {}
 };
@@ -542,7 +543,6 @@ struct PlacedObj_s2f250 : IfaceB_s2f250 {
     int m1b8, m1bc, m1c0, m1c4;                 // +0x1b8
     PlacedObj_s2f250() { reset(); }                    // 0x437830 (inlined here)
     __forceinline void reset() { ((PlacedObj*)this)->reset(); }     // 0x4352f0 (PlacedObj::reset)
-    virtual void s_last() {}                    // placeholder: original table 0x590b84 has 3 slots, ours 2
 };
 
 // ---- the non-virtual slot at +0x5c of the object behind record->f1b4 ------------------------------

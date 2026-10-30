@@ -100,6 +100,19 @@ stream_base& w_body_part(stream_base& s, body_part* b)
 
 // @ 0x4172d0
 tstream3::tstream3() {}
+STREAM_FWD_TEXT_READER(tstream3)   // slots folded with text_stream's
+
+// mem_stream's slots the original's linker folded into other slot functions (identical code)
+SF_M(mem_stream, w_float, float*, w_int, int*)
+SF_M(mem_stream, w_bool, char*, w_byte, unsigned char*)
+SF_M(mem_stream, w_u64, unsigned __int64*, w_i64, __int64*)
+SF_M(mem_stream, w_uint, unsigned*, w_int, int*)
+SF_M(mem_stream, r_float, float*, r_int, int*)
+SF_M(mem_stream, r_bool, char*, r_byte, char*)
+SF_M(mem_stream, r_u64, unsigned __int64*, r_i64, __int64*)
+SF_M(mem_stream, r_uint, unsigned*, r_int, int*)
+SF_T(mem_stream, slot12, void*, slot12, void*)
+SF_T(mem_stream, slot22, void*, slot12, void*)
 
 // @ 0x417310
 text_stream2::~text_stream2() {}

@@ -37,9 +37,10 @@ struct C4c2c50 : head_rec {
     tstring t78;             // +0x78
     tstring t88;             // +0x88
     C4c2c50();               // 0x4c2c50
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
     __declspec(noinline) void dtor();   // 0x4c2cd0 (called, not inlined, by the deleting dtor 0x4c2cb0)
 };
 
@@ -72,9 +73,10 @@ struct C4c2fb0 : head_rec {  // vtable 0x595798
     tstring t48;             // +0x48
     char    t58[0x20];       // +0x58, +0x68: two tstrings (built/destroyed through one pointer)
     C4c2fb0();               // 0x4c2fb0
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     __declspec(noinline) void dtor();   // 0x4c3020 (called, not inlined, by the deleting dtor 0x4c3000)
 };
 
@@ -86,9 +88,10 @@ struct C4c3050 : head_rec {  // vtable 0x5957bc
     tstring t5c;             // +0x5c
     char    t6c[0x60];       // +0x6c (6 tstrings, 0x10 apart; built/destroyed by hand in the ctor/dtor)
     C4c3050();               // 0x4c3050
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
     void dtor();             // 0x4c30e0
 };
 
@@ -99,18 +102,20 @@ struct C4c3160 : head_rec {  // vtable 0x595870
     char   body[0x8e8 - 0x2c];
     Slot20 slots[0x80];      // +0x8e8
     C4c3160();               // 0x4c3160
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
 };
 
 struct C4c31c0 : head_rec {  // vtable 0x595924
     char    body[0x224 - 0x2c];  // +0x2c: 9 pairs of tstrings, 0x30 apart (built/destroyed by hand)
     char    t224[0x10];      // +0x224 tstring
     C4c31c0();               // 0x4c31c0
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     void dtor();             // 0x4c3240
 };
 
@@ -119,9 +124,10 @@ struct C4c3290 : head_rec {  // vtable 0x595a20
     tstring t50;             // +0x50
     char    t60[0x20];       // +0x60, +0x70: two tstrings (built/destroyed through one pointer)
     C4c3290();               // 0x4c3290
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     __declspec(noinline) void dtor();   // 0x4c3300 (called, not inlined, by the deleting dtor 0x4c32e0)
 };
 

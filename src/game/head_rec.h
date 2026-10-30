@@ -19,7 +19,7 @@
 //   slot 5  0x408030  scale_5(const float*)  `ret 4` (the same function as slot 3)
 //   slot 6  0x408030  scale_6(const float*)  `ret 4` (the same function as slot 3)
 //   slot 7  0x5363c8  pure_7() = 0          __purecall: the base declares this one pure and EVERY derived class
-//                                          overrides it (all seven tables hold 0x48b170 there)
+//                                          overrides it (0x48b170, or 0x4280e0 `return 0` in four of the record classes)
 //   slot 8  0x48b170  always_true()        `mov al,1; ret` (MissionUi::always1; MissionBlocker overrides it with
 //                                          static_entity::awake, 0x4280e0)
 //
@@ -45,11 +45,9 @@ struct head_rec {
     virtual void slot_empty_4() {}                                  // slot 4  0x477b70 (the same function)
     virtual void scale_5(const float*) {}                           // slot 5  0x408030 (the same function)
     virtual void scale_6(const float*) {}                           // slot 6  0x408030 (the same function)
-    // slot 7: the BASE table (0x5947d8) holds 0x5363c8 (__purecall) there, while EVERY derived table in the family
-    // holds 0x48b170 (always1). Declaring it pure would make ~30 derived classes abstract for no gain, so it is
-    // modelled concretely with always1's body: every derived table then matches, and only the base's own table
-    // (which nothing instantiates) would differ in that slot.
-    virtual char pure_7() { return 1; }
+    // slot 7: pure here (the base table 0x5947d8 holds __purecall there); EVERY derived class overrides it - 0x48b170
+    // (`return 1`) in most, 0x4280e0 (`return 0`) in C4c2c50, C4c3050, Rec34 and Rec38.
+    virtual char pure_7() = 0;                                      // slot 7: __purecall; every derived class overrides it
     virtual char always_true() { return 1; }                        // slot 8  0x48b170
     int     w04;               // +4     0x4c2c50
     int     w08;               // +8     0x63

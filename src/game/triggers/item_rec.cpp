@@ -45,7 +45,7 @@ ItemRec2::ItemRec2()
 // 0x4ce930 is the compiler-generated deleting destructor of ItemRec (ICF also serves ItemRec2): head_rec's virtual
 // destructor, the owned block's destructor 0x4c8bf0 and operator delete.
 //
-// Slots 2 and 3 (screen_build / screen_buttons) are declared in item_rec.h; their bodies live with the functions the
+// Slots 2 and 3 (slot_empty_2 / scale_3) are declared in item_rec.h; their bodies live with the functions the
 // image's tables name (MainMenuScreen::create in cls_map.cpp, Hud::handle_buttons in hud.cpp, ...). Nothing in the
 // binary constructs these records, so no caller reaches those slots (docs/Papercuts.md).
 

@@ -21,31 +21,13 @@
 
 void mb_error(const char* fmt, ...);                 // 0x42cc80
 
-// Root of the reader-stream hierarchy (vtable 0x54a740): vptr, name at +4.
+// Root of the reader-stream hierarchy (vtable 0x54a740): vptr, name at +4. This file's own tstring-based copy of rgl/stream.h's
+// stream_base (stream.h cannot be included here: see stream_fwd.h); every typed slot is abstract, as in the original.
+#include "../../rgl/stream_fwd.h"
 struct stream_root {
     virtual void reset();                            // slot 0
     virtual void rewind();                           // 1
-    virtual stream_root& s2(stream_root* o);
-    virtual stream_root& s3(float* v);
-    virtual stream_root& s4(char* v);
-    virtual stream_root& s5(unsigned __int64* v);
-    virtual stream_root& s6(__int64* v);
-    virtual stream_root& s7(unsigned* v);
-    virtual stream_root& s8(int* v);
-    virtual stream_root& s9(unsigned char* v);
-    virtual stream_root& s10(const char* s);
-    virtual stream_root& s11(const tstring* s);
-    virtual stream_root& s12(void* v);
-    virtual stream_root& s13(stream_root* o);
-    virtual stream_root& r_float(float* v);          // 14
-    virtual stream_root& r_bool(char* v);            // 15
-    virtual stream_root& r_uint(unsigned* v);        // 16
-    virtual stream_root& r_u64(unsigned __int64* v); // 17
-    virtual stream_root& r_i64(__int64* v);          // 18
-    virtual stream_root& r_int(int* v);              // 19 -> vtable +0x4c
-    virtual stream_root& r_byte(char* v);            // 20
-    virtual stream_root& r_tstr(tstring* v);         // 21 -> vtable +0x54
-    virtual stream_root& s22(void* v);
+    STREAM_SLOTS_OF(stream_root, tstring, = 0)       // 2 .. 22
     virtual bool at_end();
     virtual void set_autoflush(char f);
     virtual char get_autoflush();
@@ -57,23 +39,38 @@ struct stream_root {
     tstring buf;                                     // +0x20
     stream_root() {}
 };
+#undef SF_RT
+#define SF_RT stream_root
+#undef SF_STR
+#define SF_STR tstring
+// the base slots (0x415220..0x415280, 0x408020): stream_base's functions
+void stream_root::reset() { ((stream_base*)this)->stream_base::reset(); }
+void stream_root::rewind() { ((stream_base*)this)->stream_base::rewind(); }
+bool stream_root::at_end() { return ((stream_base*)this)->stream_base::at_end(); }
+void stream_root::set_autoflush(char f) { ((stream_base*)this)->stream_base::set_autoflush(f); }
+char stream_root::get_autoflush() { return ((stream_base*)this)->stream_base::get_autoflush(); }
+int stream_root::flush() { return ((stream_base*)this)->stream_base::flush(); }
 
-// The 0x54a890 stream class: its destructor (0x417310) stores that vtable and owns nothing else, so
-// the base's members are destroyed after it, `buf` before `name` -- exactly the order the original
-// inlines at the end of the loader.
-struct stream_base;                                  // the shared stream class (rgl): the definitions of the table loaders take it
-struct text_stream : stream_root {
+// The 0x54a890 stream class (rgl/core/resmgr.h's text_reader_b): its destructor (0x417310) stores that vtable and owns nothing
+// else, so the base's members are destroyed after it, `buf` before `name` -- exactly the order the original inlines at the end of
+// the loader. Its typed slots are text_stream's.
+struct text_reader_b : stream_root {
     FILE* fp;                    // +0x30
     char failed;                 // +0x34
-    ~text_stream() {}                                   // 0x417310 (inlined: vtable 0x54a890)
-    bool open_read_text(const char* path);           // 0x415d60
+    STREAM_SLOTS_OF(stream_root, tstring, )
+    ~text_reader_b() {}                                 // 0x417310 (inlined: vtable 0x54a890)
 };
+STREAM_FWD_TEXT_BOTH(text_reader_b)
+// the text stream's file opener (0x415d60; stream_fwd.h's text_stream)
+inline bool open_read_text(void* s, const char* path) { return ((text_stream*)s)->open_read_text(path); }
 
 // The concrete text stream (vtable 0x54ac88); its constructor at 0x4172d0 stores that vtable last.
-// It declares no destructor, so the implicit one just runs ~text_stream.
-struct tstream3 : text_stream {
+// It declares no destructor, so the implicit one just runs ~text_reader_b.
+struct tstream3 : text_reader_b {
+    STREAM_SLOTS_OF(stream_root, tstring, )
     tstream3() { autoflush = 0; f1c = 0; fp = 0; state = 0; failed = 1; }
 };
+STREAM_FWD_TEXT_READER(tstream3)
 
 // ---------------------------------------------------------------- module path helper
 
@@ -100,7 +97,7 @@ __forceinline stream_root& open_module_file(tstream3& s, const char* name)
     g_path[0] = 0;
     strncpy(g_path, g_module_path.c_str(), 0xff);
     strncat(g_path, name, 0xff);
-    if (!s.open_read_text(g_path))
+    if (!open_read_text(&s, g_path))
         mb_error("Unable to open %s", g_path);
     return s;
 }

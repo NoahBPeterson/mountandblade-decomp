@@ -274,6 +274,9 @@ stream_base& text_stream::w_stream(stream_base* o)
 // @ 0x415870
 // (also slot 22, and every "return *this" slot of the other stream classes: ICF)
 stream_base& text_stream::slot12(void* v) { return *this; }
+stream_base& text_stream::slot22(void* v) { return *this; }   // folded with slot12
+stream_base& text_stream::w_uint(unsigned* v) { return text_stream::w_int((int*)v); }   // folded with w_int
+stream_base& text_stream::r_uint(unsigned* v) { return text_stream::r_int((int*)v); }   // folded with r_int
 
 // @ 0x415880
 stream_base& text_stream::r_tstr(rgl::string* v)

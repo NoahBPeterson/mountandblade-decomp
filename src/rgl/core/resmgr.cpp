@@ -1222,3 +1222,9 @@ void resmgr::load_pack(const rgl::string& name, int user)
         br.failed = 1;
     }
 }
+
+// ---- the reader classes' slots (the original's linker folded them into text_stream's / mem_stream's) ----
+STREAM_FWD_TEXT_BOTH(text_reader_b)
+STREAM_FWD_TEXT_READER(text_reader)
+STREAM_FWD_MEM(mem_stream_inl)
+STREAM_FWD_BIN_READER(file_reader)

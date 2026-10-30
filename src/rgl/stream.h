@@ -152,4 +152,6 @@ struct bin_reader : file_reader_base {
     STREAM_SLOTS
 };
 
+#include "./stream_fwd.h"   // the forwarding slot-body macros (STREAM_FWD_*)
+
 #endif
