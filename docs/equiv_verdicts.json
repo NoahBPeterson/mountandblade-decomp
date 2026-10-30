@@ -1,6 +1,6 @@
 {
-"when": "2026-10-30T00:03:24-05:00",
-"commit": "dfec3b7",
+"when": "2026-10-30T00:54:48-05:00",
+"commit": "b3ee19a",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,20 +9,20 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 396,
-"weak": 437,
-"fail": 49,
-"inputs": 22,
-"harness": 45,
+"pass": 401,
+"weak": 448,
+"fail": 29,
+"inputs": 23,
+"harness": 48,
 "comdat": 116,
 "comdatdiff": 13,
 "funclet": 0,
 "not_run": 3,
-"pass_sz": 125881,
-"weak_sz": 564180,
-"fail_sz": 95808,
-"inputs_sz": 23751,
-"harness_sz": 76417,
+"pass_sz": 127233,
+"weak_sz": 582837,
+"fail_sz": 68302,
+"inputs_sz": 23943,
+"harness_sz": 83722,
 "comdat_sz": 2719,
 "comdatdiff_sz": 1373,
 "funclet_sz": 0,
@@ -4048,8 +4048,8 @@
 "004b1160": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 848
 },
 "004b1930": {
@@ -4657,8 +4657,8 @@
 "004c5080": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "PASS",
+"category": "pass",
 "size": 106
 },
 "004c50ea": {
@@ -5070,15 +5070,15 @@
 "004d10f0": {
 "module": "module_load",
 "file": "src/game/options_panel/module_load.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "PASS",
+"category": "pass",
 "size": 66
 },
 "004d11a0": {
 "module": "module_load",
 "file": "src/game/options_panel/module_load.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "PASS",
+"category": "pass",
 "size": 106
 },
 "004d120a": {
@@ -5091,8 +5091,8 @@
 "004d1230": {
 "module": "module_load",
 "file": "src/game/options_panel/module_load.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 106
 },
 "004d129a": {
@@ -5105,8 +5105,8 @@
 "004d12c0": {
 "module": "module_load",
 "file": "src/game/options_panel/module_load.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 112
 },
 "004d1330": {
@@ -5707,8 +5707,8 @@
 "004e7a70": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "UNSUPPORTED",
+"category": "inputs",
 "size": 192
 },
 "004e7b30": {
@@ -5917,8 +5917,8 @@
 "004ee230": {
 "module": "quest_log",
 "file": "src/game/char_sheet/quest_log.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1552
 },
 "004ee840": {
@@ -5966,8 +5966,8 @@
 "004f0820": {
 "module": "cs_panels",
 "file": "src/game/char_sheet/cs_panels.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2916
 },
 "004f1460": {
@@ -6099,8 +6099,8 @@
 "004f63c0": {
 "module": "editor_ui",
 "file": "src/game/char_sheet/editor_ui.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "PASS",
+"category": "pass",
 "size": 555
 },
 "004f6658": {
@@ -6134,8 +6134,8 @@
 "004f7f00": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "UNSUPPORTED",
+"category": "harness",
 "size": 3134
 },
 "004f8c80": {
@@ -6204,8 +6204,8 @@
 "004fc820": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "UNSUPPORTED",
+"category": "harness",
 "size": 2239
 },
 "004fd150": {
@@ -6225,8 +6225,8 @@
 "004fd4f0": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "PASS",
+"category": "pass",
 "size": 519
 },
 "004fd700": {
@@ -6316,8 +6316,8 @@
 "00501a20": {
 "module": "party_window",
 "file": "src/game/party/party_window.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "UNSUPPORTED",
+"category": "harness",
 "size": 1932
 },
 "00502320": {
@@ -6365,8 +6365,8 @@
 "00503ed0": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 3274
 },
 "00504ba0": {
@@ -6400,8 +6400,8 @@
 "005063e0": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 3880
 },
 "00507400": {
@@ -6435,8 +6435,8 @@
 "0050cc70": {
 "module": "widget_text",
 "file": "src/game/inventory_panel/widget_text.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1088
 },
 "0050d0e0": {
@@ -6519,15 +6519,15 @@
 "0050fc60": {
 "module": "skeleton_load",
 "file": "src/game/inventory_panel/skeleton_load.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 448
 },
 "0050fe20": {
 "module": "inventory_panel",
 "file": "src/game/inventory_panel/inventory_panel.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2606
 },
 "005108d0": {
@@ -7513,8 +7513,8 @@
 "00533070": {
 "module": "exchange_screens",
 "file": "src/game/map_editor/exchange_screens.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1827
 },
 "005337a0": {
