@@ -103,21 +103,6 @@ static const char* text_of(const tstring* s)
 // @ 0x4ea290
 void SavePanel::update(int)
 {
-    // 0xa73980's tstrings are built by the original's static initialiser, which our build does not have: the glue copies
-    // the object's image bytes (cap = a pointer, buf = 0), so the first assignment goes through tstring::reserve's
-    // "enough capacity" path and writes to null. A file-scope initialiser did not survive (the fields were re-established
-    // before use), so construct them here, once, on the frame path that first touches the record.
-    {
-        static bool menu_strings_done = false;
-        if (!menu_strings_done && g_menu_rec) {
-            menu_strings_done = true;
-            new (&g_menu_rec->title) tstring();
-            new (&*(tstring*)((char*)g_menu_rec + 0x54)) tstring();
-            new (&g_menu_rec->header) tstring();
-            new (&g_menu_rec->answer_yes) tstring();
-            new (&g_menu_rec->answer_no) tstring();
-        }
-    }
     // save_path reads this as a C string, then WRITES the whole "%s\Mount&Blade Savegames\%s" path back into
     // it (its own local buffer is 0x104), so this is a char buffer of that size - the 16 bytes it used to have
     // were overrun, corrupting the neighbouring `name` buffer (crash 0x73726573 = the tail of "...\users").
