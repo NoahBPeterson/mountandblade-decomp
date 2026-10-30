@@ -488,7 +488,8 @@ void MissionHud::update_camera(float dt)
     } else if (CAMSLOT.rec != 0) {
         // the scripted camera slot: cur -> sway over value seconds
         if (CAMSLOT.value > 0.0f) {
-            float t = (float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f / CAMSLOT.value;
+            float el = (float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f;
+            float t = el / CAMSLOT.value;
             if (CAMSLOT.num > 0) {
                 float nn = (float)CAMSLOT.num;
                 t = atan((t - 0.5f) * nn * 3.1415927f) / (atan(nn * 1.5707964f) * 2.0f) + 0.5f;
@@ -640,7 +641,8 @@ void MissionHud::update_camera(float dt)
 pass2:
     if (CAMSLOT.rec == 0) {
         if (CAMSLOT.value > 0.0f) {
-            float t = (float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f / CAMSLOT.value;
+            float el = (float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f;
+            float t = el / CAMSLOT.value;
             if (CAMSLOT.num > 0) {
                 float nn = (float)CAMSLOT.num;
                 t = atan((t - 0.5f) * nn * 3.1415927f) / (atan(nn * 1.5707964f) * 2.0f) + 0.5f;
