@@ -62,7 +62,7 @@ void FaceGen::init()
         label_refresh((MissionUi*)b, tstring("face_bo_button"));
         push_item(ui, (widget*)b);
     }
-    tstring btn_text;
+    struct { int a, b; } btn_text;                 // set_text's 8-byte result (the original's [esp+0x30] slot: never constructed or destroyed)
     {
         tstring empty("");
         buttons->set_text(&btn_text, &empty);

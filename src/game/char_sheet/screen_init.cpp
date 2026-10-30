@@ -131,7 +131,8 @@ void Screen::init_screen()
     }
     {
         tstring name("ui_paused");
-        f54->set_text(&name, *(const tstring*)g_strtab.lookup(name));
+        struct { int a, b; } ret;                    // set_text's 8-byte result: its own slot, not the key string
+        f54->set_text(&ret, *(const tstring*)g_strtab.lookup(name));
     }
     overlay->children.push_back2(*(Widget**)&f54);
 
@@ -160,7 +161,8 @@ void Screen::init_screen()
     }
     {
         tstring name("ui_click_left_button_to_cancel_wait");
-        f58->set_text(&name, *(const tstring*)g_strtab.lookup(name));
+        struct { int a, b; } ret;                    // set_text's 8-byte result: its own slot, not the key string
+        f58->set_text(&ret, *(const tstring*)g_strtab.lookup(name));
     }
     overlay->children.push_back2(*(Widget**)&f58);
 

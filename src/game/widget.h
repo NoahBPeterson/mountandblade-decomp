@@ -50,7 +50,7 @@ struct widget {
     virtual void set_value_a(int* v);           // +0x98
     virtual void set_value_b(int* v);           // +0x9c
     virtual void sa0(int a);                    // +0xa0
-    virtual void set_text(tstring* s, const void* p);   // +0xa4 (ret 8)
+    virtual void set_text(void* out, const void* text); // +0xa4 (ret 8): `out` is the 8-byte result slot (WRet, wret.h), NOT a string; `text` is the tstring*
     virtual void sa8(int a);                    // +0xa8
     virtual void sac(int a, int b);             // +0xac (ret 8)
     virtual void sb0();                         // +0xb0

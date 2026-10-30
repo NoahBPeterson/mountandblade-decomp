@@ -90,8 +90,8 @@ void ConvScreen::open(int dialog, int* out)
     }
     {
         tstring key("ui_press_left_mouse_button_to_continue");
-        tstring out2;
-        input->set_text(g_strtable.lookup(key), out2);
+        struct { int a, b; } ret;                        // set_text's 8-byte result (original [esp+0x10]); the looked-up string is the text
+        input->set_text(&ret, *g_strtable.lookup(key));
     }
     talk->add_child(input);
 

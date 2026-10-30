@@ -73,8 +73,8 @@ tail:
         speaker_id = g_dialogs.speaker();
         {
             tstring name(troop_text(speaker_id));        // original: snprintf("%s:") into [esp+0x140]
-            tstring tmp;
-            label_speaker->set_text(&name, tmp);
+            struct { int a, b; } ret;                    // set_text's 8-byte result slot (original [esp+0x30]); the name is the text
+            label_speaker->set_text(&ret, name);
         }
         {
             tstring text = g_empty_string;               // original: copy ctor from 0x8ee30f0
