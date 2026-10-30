@@ -84,10 +84,8 @@ struct FaceGen {
     UiVt* deform;                                       // +0x180
     UiVt* buttons;                                      // +0x184
     UiVt* cam_btn;                                      // +0x188
-    UiVt* deform_rows[0x1c];                            // +0x18c (one row per deform key)
-    char pad1fc[0x24c - 0x1fc];
-    UiVt* key_labels[0x1c];                             // +0x24c
-    char pad2bc[0x30c - 0x2bc];
+    UiVt* deform_rows[0x30];                            // +0x18c (one row per deform key; 0x30 slots up to key_labels)
+    UiVt* key_labels[0x30];                             // +0x24c (up to b_next_beard)
     UiVt* b_next_beard;                                 // +0x30c
     UiVt* b_next_hair;                                  // +0x310
     UiVt* b_next_face;                                  // +0x314

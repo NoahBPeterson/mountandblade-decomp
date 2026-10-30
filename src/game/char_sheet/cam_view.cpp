@@ -76,7 +76,7 @@ void CamView::update_model(float dt)
         sl->v48(0x10000);
     }
 
-    if (cam_btn->v44(0x10000)) {
+    if (cam_btn && cam_btn->v44(0x10000)) {
         if (OpenClipboard(0)) {
             char text[0x200];
             mb_snprintf(text, 0x200, "0x%s%s%s%s", buf388, buf3b0, buf3d8, buf400);
@@ -113,7 +113,7 @@ void CamView::update_model(float dt)
         }
     }
 
-    if (b_next_beard->v44(0x10000)) {
+    if (b_next_beard && b_next_beard->v44(0x10000)) {
         f350 = f350 + 1;
         flag = 1;
     }
@@ -125,7 +125,7 @@ void CamView::update_model(float dt)
         f35c = f35c + 1;
         flag = 1;
     }
-    if (b_prev_beard->v44(0x10000)) {
+    if (b_prev_beard && b_prev_beard->v44(0x10000)) {
         int m = SKIN_INT(0x88);
         f350 = (f350 + m) % (m + 1);
         flag = 1;
@@ -180,17 +180,19 @@ void CamView::update_model(float dt)
 
     if (state == 0) {
         state = 1;
-        tstring t1("ui_tutorial_face_generator");
-        tstring t2("ui_tutorial");
-        const tstring* r1 = g_strtable.lookup(t1);
-        const tstring* r2 = g_strtable.lookup(t2);
-        // the dialog record's fields (0xa73980+0 is the record pointer: the manager's +0x78 is the screen deque,
-        // so writing these through the manager destroys the deque)
-        g_main_menu.rec->header = *r2;
-        g_main_menu.rec->title = *r1;
-        g_main_menu.rec->choice = 0;
-        g_main_menu.rec->v50 = 0;
-        g_main_menu.rec->open = 0;
+        {
+            tstring t1("ui_tutorial_face_generator");
+            tstring t2("ui_tutorial");
+            const tstring* r1 = g_strtable.lookup(t1);
+            const tstring* r2 = g_strtable.lookup(t2);
+            // the dialog record's fields (0xa73980+0 is the record pointer: the manager's +0x78 is the screen deque,
+            // so writing these through the manager destroys the deque)
+            g_main_menu.rec->header = *r2;
+            g_main_menu.rec->title = *r1;
+            g_main_menu.rec->choice = 0;
+            g_main_menu.rec->v50 = 0;
+            g_main_menu.rec->open = 0;
+        }
         ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         return;
     }
@@ -212,7 +214,7 @@ void CamView::update_model(float dt)
         if (state == 1) {
             state = -1;
             *(int*)(g_game + 0x13aec) = 1;
-            *(int*)(0xa739dc + 0x18) = 7;
+            *(int*)(*(char**)0xa739dc + 0x18) = 7;
             ch = 0x17;
         } else {
             ch = choice;
