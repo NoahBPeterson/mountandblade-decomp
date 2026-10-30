@@ -530,6 +530,8 @@ template void std::_Rotate<It, int, u32>(It, It, It, int*, u32*);
 static __forceinline vector4 vmulf(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline float vdot(const vector4& a, const vector4& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+// collide_entity's dots sum z first: (a.z*b.z + a.y*b.y) + a.x*b.x (0x4271ee, 0x427287, 0x42735d)
+static __forceinline float vdot_zyx(const vector4& a, const vector4& b) { return a.z * b.z + a.y * b.y + a.x * b.x; }
 
 // @ 0x427000
 bool rigid_base::collide_entity(rigid_base* o)
@@ -558,12 +560,12 @@ bool rigid_base::collide_entity(rigid_base* o)
         rec2.p = pt;
         rec2.n = neg;
         ((contact_ops&)o->contacts).push_back(rec2);
-        float vn = vdot(nrm, rel);
+        float vn = vdot_zyx(nrm, rel);
         vector4 t = vsub(rel, vmulf(nrm, vn));
         vector4 td;
         normalize(td, t);
-        if (vn < 0.0f) {
-            double j = -(vdot(nrm, rel) * ((o->restitution + restitution) * 0.5f + 1.0));
+        if (!(vn >= 0.0f)) {                    // true for a NaN vn too (0x42727e: test ah,1 = C0, set when unordered)
+            double j = -(vdot_zyx(nrm, rel) * ((o->restitution + restitution) * 0.5f + 1.0));
             float rb = o->impulse_response(&pt, &nrm);
             double mag = j / (impulse_response(&pt, &nrm) + rb);
             vector4 imp(nrm.x * mag, nrm.y * mag, nrm.z * mag);
@@ -571,7 +573,7 @@ bool rigid_base::collide_entity(rigid_base* o)
             vector4 imp2(-imp.x, -imp.y, -imp.z);
             o->apply_impulse(&pt, &imp2);
         }
-        double j = vdot(td, rel) * -0.5;
+        double j = vdot_zyx(td, rel) * -0.5;
         float rb = o->impulse_response(&pt, &td);
         double mag = j / (impulse_response(&pt, &td) + rb);
         vector4 imp(td.x * mag, td.y * mag, td.z * mag);
