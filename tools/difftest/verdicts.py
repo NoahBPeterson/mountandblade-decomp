@@ -197,10 +197,15 @@ def main():
             # single "current" dir is reliable.
             cands = [os.path.join(sd, name) for sd in src_dirs]
             cands = [c for c in cands if os.path.exists(c)]
-            # A run that hit the sweep's time limit (TIMEOUT) or died (CRASH) measured nothing: the newest result that
-            # did finish wins, and a timeout counts only when the row has nothing else.
+            # A run that hit the sweep's time limit (TIMEOUT), died (CRASH) or was cut short by equiv's own wall-clock
+            # limit (UNSUPPORTED "not a verdict: time limit ...", a loaded machine) measured nothing: the newest result
+            # that did finish wins, and a cut-short one counts only when the row has nothing else.
             got = [(os.path.getmtime(c), load(c)) for c in cands]
-            done = [g for g in got if (g[1] or {}).get("verdict") not in (None, "TIMEOUT", "CRASH")]
+            def finished(d):
+                d = d or {}
+                return d.get("verdict") not in (None, "TIMEOUT", "CRASH") and not (
+                    d.get("verdict") == "UNSUPPORTED" and d.get("stopped_early"))
+            done = [g for g in got if finished(g[1])]
             d = max(done or got, key=lambda g: g[0])[1] if got else None
             cs = case_sweep(r["id"], r["va"])
             if cs is not None:
