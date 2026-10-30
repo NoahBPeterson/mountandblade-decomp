@@ -31,11 +31,11 @@ EditorSceneView* g_editor;                              // 0x5e292c
 EditorGameView*   g_game;                                // 0x5e2930
 // the table itself lives at 0x8ed4df8 (0x20-byte records; a record's name tstring has its buf at +4): the original
 // indexes it in place (0x4feaff: j * 0x20 + 0x8ed4df8). Ours declared a pointer to it and read garbage through 0x8ed4df8.
-// The one definition of the table's storage (terrain.h's GroundType g_ground_types[11] binds to the same address): it
-// must be the whole 11 x 0x20 bytes. Declared [1] (4 bytes) it overlapped the globals linked after it, so the ground-spec
-// loader overwrote them and TerrainDescEntry::read (0x464200) compared garbage names (crash entering a scene).
-char* g_object_names[11 * 8];                       // 0x8ed4df8 (0x160 bytes)
-typedef char g_object_names_size_check[sizeof(g_object_names) == 11 * 0x20 ? 1 : -1];
+// The table's one definition is module_load.cpp's g_ttypes (0x8ed4df8, 11 x 0x20 bytes), which the ground-spec loader
+// (0x4d0e5b) fills. A second definition here gave the editor, terrain.h's g_ground_types and static_init's g_8ed4df8 a
+// separate, never-filled copy (null layer materials: crash in world_x::light_mesh when a scene starts); before that it
+// was 4 bytes and overlapped the globals after it. Declared only: the glue binds this name to the definition.
+extern char* g_object_names[];                      // 0x8ed4df8
 
 // These live in the original's shared float-constant pool (.rdata). Defined without an initialiser they are
 // zero in our build, which silently broke every use: g_one = 0 made GuiScreen::process's cursor y negative
