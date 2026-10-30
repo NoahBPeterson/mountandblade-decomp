@@ -70,7 +70,7 @@ void scene_step(int material)
     o->fr.perspective = 0;
     o->fr.nplanes = 0;
     o->fr.nearz = 0.0f;
-    o->fr.farz = 400.0f;
+    o->fr.farz = 501.0f;   // 0x43fa8000 at 4b12af..4b12b9
     o->fr.left = -0.5f;
     o->fr.right = 0.5f;
     o->fr.bottom = -0.375f;

@@ -14,7 +14,7 @@
 004c4f40 ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z
 004c5010 ?uninit_fill_n@@YAXPAXIPBXPAUblock_copier@@@Z
 004c5074 ?fill_records_funclet@@YAXXZ
-004c5080 ?copy_range38@@YAPAUitem38@@PAU1@PBU1@1PAUeditor@@@Z
+004c5080 ?copy_range38@@YAPAUitem38@@PBU1@0PAU1@PAUeditor@@@Z
 004c50ea ?copy_range38_catch@@YAXXZ
 004c5110 ?clear_vec38@editor@@QAEXXZ
 004c5150 ?free_items@editor@@QAEXXZ

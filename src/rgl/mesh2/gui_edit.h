@@ -793,7 +793,7 @@ struct tstr_vec {
 // the 0x38-byte record vector the copy helper belongs to
 struct item38_vec {
     char pad0[8];
-    void copy_range(item38* dst, const item38* first, const item38* last);   // 0x4c88e0
+    void copy_range(const item38* first, const item38* last, item38* dst);   // 0x4c88e0
 };
 
 

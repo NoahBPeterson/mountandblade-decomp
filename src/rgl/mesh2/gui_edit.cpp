@@ -284,9 +284,9 @@ void fill_records_funclet()
 }
 
 // @ 0x4c5080
-// copy-assign a range of 0x38-byte records (the original's auto-object range ctor; its EH pad is the
-// next function). Arguments: dst, first, last; the 4th is the record ctor's context.
-item38* copy_range38(item38* dst, const item38* first, const item38* last, editor* self)
+// copy-construct a range of 0x38-byte records (the original's auto-object range ctor; its EH pad is the
+// next function). Arguments: first, last, dst (esi = [ebp+8], [ebp+0xc] end, edi = [ebp+0x10]); the 4th is the record ctor's context.
+item38* copy_range38(const item38* first, const item38* last, item38* dst, editor* self)
 {
     for (; first != last; first++) {
         construct_arrset((ArrSet*)dst, *(const ArrSet*)first);   // item38 is the 0x38-byte ArrSet (terrain_a.cpp 0x46b6c0)
@@ -1680,9 +1680,9 @@ ptr_iter ptr_vec::erase_range(int* first, int* last)
 }
 
 // @ 0x4c88e0
-void item38_vec::copy_range(item38* dst, const item38* first, const item38* last)
+void item38_vec::copy_range(const item38* first, const item38* last, item38* dst)
 {
-    ((item38* (__cdecl*)(item38*, const item38*, const item38*, editor*, const item38*))copy_range38)(dst, first, last, (editor*)this, last);
+    ((item38* (__cdecl*)(const item38*, const item38*, item38*, editor*, item38*))copy_range38)(first, last, dst, (editor*)this, dst);
 }
 
 // @ 0x4c8900
