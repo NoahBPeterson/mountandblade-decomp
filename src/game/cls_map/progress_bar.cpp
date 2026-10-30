@@ -260,8 +260,13 @@ void SaveWindow::init()
         vt(window)->d25(v);
     }
     {
-        tstring mesh_name("load_window");
-        vt(window)->d31(0, res_get(mesh_name)->clone());
+        // 0x4e4844..0x4e485e: the name dies (0x42bc40) before the clone is handed to the window
+        rgl::mesh* m;
+        {
+            tstring mesh_name("load_window");
+            m = (rgl::mesh*)res_get(mesh_name)->clone();
+        }
+        vt(window)->d31(0, m);
     }
 
     list_saves();
