@@ -60,3 +60,5 @@
 ../src/rgl/core/resmgr.cpp  ?resize@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@QAEXIUbone_influence@rgl@@@Z  0041cd10  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?get_lod_mesh@resmgr@@QAEPAUlod_group@@ABUstring@rgl@@@Z  0041cdc0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?load_pack@resmgr@@QAEXABUstring@rgl@@H@Z  0041e150  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  ?load_stream@resmgr@@QAEPAUstream_base@@PAU2@@Z  0041db20  /O2 /MT /Gy /TP
+../src/rgl/core/resmgr.cpp  ?get_render_target@resmgr@@QAEPAUtexture@@HHHHH@Z  0041b7d0  /O2 /MT /Gy /TP

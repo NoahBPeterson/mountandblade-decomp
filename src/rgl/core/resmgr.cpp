@@ -493,10 +493,10 @@ stream_base* read_body(stream_base* s, body_part* b)
 // load_stream and in get_render_target).
 inline texture::texture()
 {
-    height = 0x80;
-    width = 0x80;
     loaded = 0;
     f1c = -1;
+    width = 0x80;
+    height = 0x80;
     kind = 0;
     d3d_tex = 0;
     surface = 0;
