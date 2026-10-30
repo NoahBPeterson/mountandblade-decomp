@@ -706,6 +706,17 @@ def test_stdcall_through_vtable_ecx_is_not_compared():
     assert r["verdict"] in ("PASS", "WEAK", "PASS-FP", "WEAK-FP") and r["valid"] > 0, r
 
 
+def test_com_and_cdecl_calls_through_pointers_ignore_ecx():
+    """GeomBuffer::upload 0x46d060 locks its vertex buffer with `mov edx,[eax]; push ...; push eax; call [edx+2Ch]`: edx is
+    the vtable of the first stack argument, so the callee is a COM __stdcall method and ecx (a leftover) is dead there.
+    mesh::render 0x413750 calls a function pointer member with `push eax; call [eax+68h]; add esp,4`: caller-cleaned, so
+    __cdecl, and ecx again carries nothing. Comparing ecx made 194/480 and 107/514 inputs FAIL."""
+    r = _row("terrain_a", 0x46d060, "src/game/terrain_a/terrain_a.cpp", "--inputs", "60")
+    assert r["verdict"] in ("PASS", "WEAK", "PASS-FP", "WEAK-FP") and r["valid"] > 0, r
+    r = _row("mesh_obj", 0x413750, "src/rgl/particles/mesh_obj.cpp", "--inputs", "60")
+    assert r["verdict"] in ("PASS", "WEAK", "PASS-FP", "WEAK-FP") and r["valid"] > 0, r
+
+
 def test_loop_repair_shrinks_runaway_trip_count():
     """uninitialized_copy 0x4c1b60 walks [first, last) in 0x204-byte strides until `cmp esi, [ebp+0xc]` is equal: soup
     pointers never meet, so every original run burned the instruction cap (the row TIMEd OUT in the sweep). repair_loop

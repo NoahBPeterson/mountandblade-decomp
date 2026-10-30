@@ -2789,23 +2789,57 @@ class Runner:
             return 0
         return self._pushes_ending(addrs, insns, i - 1, 0) or 0
 
-    def _call_via_ecx(self, ret):
-        """The call ending at `ret` is `call [ecx+disp]` (ecx the vtable base, so not a thiscall `this`)."""
-        key = ("via-ecx", ret)
-        v = self.targets_cache.get(key)
-        if v is None:
-            v = False
+    def _call_vtable_base(self, ret):
+        """The base register of a `call [reg+disp]` ending at `ret` (capstone reg id), or None."""
+        key = ("via-base", ret)
+        v = self.targets_cache.get(key, 0)
+        if v == 0:
+            v = None
             try:
-                for n in (3, 6, 2):         # ff 51 xx / ff 91 xx xx xx xx / ff 11
+                for n in (3, 6, 2):         # ff 5x xx / ff 9x xx xx xx xx / ff 1x
                     ins = next(_md.disasm(self.m.read(ret - n, n), ret - n, 1), None)
                     if ins is not None and ins.id == CX.X86_INS_CALL and ins.address + ins.size == ret:
                         o = ins.operands[0]
-                        v = o.type == CX.X86_OP_MEM and o.mem.base == CX.X86_REG_ECX and not o.mem.index
+                        if o.type == CX.X86_OP_MEM and o.mem.base and not o.mem.index and o.mem.base != CX.X86_REG_ESP:
+                            v = o.mem.base
                         break
             except Exception:           # noqa: BLE001 - undecodable: treat ecx as an argument, as before
-                v = False
+                v = None
             self.targets_cache[key] = v
         return v
+
+    def _call_via_ecx(self, ret):
+        """The call ending at `ret` is `call [ecx+disp]` (ecx the vtable base, so not a thiscall `this`)."""
+        return self._call_vtable_base(ret) == CX.X86_REG_ECX
+
+    _CS_TO_UC = {CX.X86_REG_EAX: UC_X86_REG_EAX, CX.X86_REG_EBX: UC_X86_REG_EBX, CX.X86_REG_ECX: UC_X86_REG_ECX,
+                 CX.X86_REG_EDX: UC_X86_REG_EDX, CX.X86_REG_ESI: UC_X86_REG_ESI, CX.X86_REG_EDI: UC_X86_REG_EDI,
+                 CX.X86_REG_EBP: UC_X86_REG_EBP}
+
+    def _com_call(self, ret, esp, n):
+        """The call ending at `ret` is `call [R+disp]` where R holds the vtable of its first stack argument
+        (`mov edx,[eax]; push eax; call [edx+2Ch]`): a COM-style __stdcall method whose object is on the stack,
+        so ecx is not an argument there (IDirect3DVertexBuffer9::Lock in GeomBuffer::upload 0x46d060)."""
+        if n < 1:
+            return False
+        base = self._call_vtable_base(ret)
+        if base is None:
+            return False
+        try:
+            vt = self.m.uc.reg_read(self._CS_TO_UC[base])
+            obj = self.m.u32(esp + 4)
+            if self.m.u32(obj) != vt:
+                return False
+        except Exception:               # noqa: BLE001 - unreadable object: treat ecx as an argument
+            return False
+        try:
+            # ...unless ecx is another object with that vtable: `a->compare(b)` on two objects of one class is a
+            # thiscall whose this (ecx) and first argument share the vtable (typed inputs give both the real one).
+            # ecx left holding the argument object itself (an earlier call on it) is the COM leftover: still dead.
+            ecx = self.m.uc.reg_read(UC_X86_REG_ECX)
+            return ecx == obj or self.m.u32(ecx) != vt
+        except Exception:               # noqa: BLE001 - ecx is no readable pointer: not an object, so not this
+            return True
 
     def site_arity(self, ret):
         """Stack dwords a call ending at `ret` passes: pushes (and 'sub esp,N' slots) walking back
@@ -2868,7 +2902,12 @@ class Runner:
         # a call through [ecx+disp] has the vtable in ecx, so ecx is not its `this`: the callee is __stdcall
         # (a COM-style method, the object is a stack argument) and ecx is dead there (screen 0x4ebfd0's
         # GetDeviceData through vtable +0x28: the original leaves the vtable in ecx, ours a stack address)
-        ecx = DEAD_ECX if self._call_via_ecx(ret) else self.norm_key(uc.reg_read(UC_X86_REG_ECX))
+        # likewise `call [R+disp]` where R is the vtable of the first stack argument (a COM method through
+        # another register: the original's ecx is then whatever it last held, GeomBuffer::upload 0x46d060)
+        # and a caller-cleaned call with stack arguments (`push eax; call [eax+68h]; add esp,4`) is __cdecl: MSVC's
+        # thiscall callee pops its own arguments, so ecx carries nothing there (mesh::render 0x413750's on_render)
+        dead = self._call_via_ecx(ret) or self._com_call(ret, esp, n) or (n > 0 and not pops)
+        ecx = DEAD_ECX if dead else self.norm_key(uc.reg_read(UC_X86_REG_ECX))
         h = zlib.crc32(repr((target, ecx, args)).encode())
         k = h % 4
         eax = (0, 1, h % 9, M.POOL_BASE + M.SLOT * (HOT_SLOTS + (h >> 8) % (NSLOTS - HOT_SLOTS)))[k]
