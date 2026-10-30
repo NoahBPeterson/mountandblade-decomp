@@ -1155,16 +1155,16 @@ UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, flo
     decode_utf8(&text, &len, buf, &maxn);
     float t = (float)len * v * g_54b3b0;
     float e = tmp - r * (c * k3);
-    if (t > e) {
+    if (t > e)
         v = v * (e / t);
-        s = v;
-    }
     {
         float sv[2] = { v, v };
         vt(p)->d27(sv);
     }
     {
-        float pv[2] = { 0.0f, c * g_549d70 - s * g_549d68 };
+        // the text's y offset uses the text size (0x4dcda2 stores v over the mesh scale's slot [esp+0xc], read at
+        // 0x4dce1f whether or not the text was shrunk), not the mesh scale s
+        float pv[2] = { 0.0f, c * g_549d70 - v * g_549d68 };
         vt(p)->d28(pv);
     }
     { struct { int a, b; } ret; vt(p)->d41(&ret, (void*)&text); }
