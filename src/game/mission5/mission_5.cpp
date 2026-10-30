@@ -1183,7 +1183,7 @@ void Grid_s27c90::save(stream_base* s, int* dims)
                             float y = data[c * 0x1a4 + r] * 255.0f;
                             double f = floor((double)y);
                             int ci = (int)f;
-                            if (y - f > 0.5f)
+                            if (!(y - f <= 0.5f))
                                 ci++;
                             unsigned char b;
                             if (ci < 0)
@@ -1233,7 +1233,7 @@ void Grid_s27c90::save(stream_base* s, int* dims)
                 float y = data[c * 0x1a4 + r] * 255.0f;
                 double f = floor((double)y);
                 int ci = (int)f;
-                if (y - f > 0.5f)
+                if (!(y - f <= 0.5f))
                     ci++;
                 unsigned char b;
                 if (ci < 0)
