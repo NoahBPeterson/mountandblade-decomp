@@ -627,9 +627,9 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             *(char*)0x5e2630 = 0;
             int sel = 0;
             if (f38c > 1) {
-                HWND c = GetDlgItem(h, 0x420);
-                int idx = SendMessageA(c, 0x147, 0, 0);
-                sel = SendMessageA(c, 0x150, idx, 0);
+                // the control is looked up again for each message (0x4d4140 calls GetDlgItem twice)
+                int idx = SendMessageA(GetDlgItem(h, 0x420), 0x147, 0, 0);
+                sel = SendMessageA(GetDlgItem(h, 0x420), 0x150, idx, 0);
             }
             g_module_name = *mod(sel);
             g_module_path.assign("Modules\\");
@@ -678,9 +678,8 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         case 0x420: {                                       // module selection changed
             if (HIWORD(wp) != 9)
                 break;
-            HWND c = GetDlgItem(h, 0x420);
-            int idx = SendMessageA(c, 0x147, 0, 0);
-            int sel = SendMessageA(c, 0x150, idx, 0);
+            int idx = SendMessageA(GetDlgItem(h, 0x420), 0x147, 0, 0);    // GetDlgItem per message, as above
+            int sel = SendMessageA(GetDlgItem(h, 0x420), 0x150, idx, 0);
             if (f38c <= sel)
                 sel = f38c - 1;
             g_module_name = *mod(sel);

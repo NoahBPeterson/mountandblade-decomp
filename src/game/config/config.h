@@ -290,12 +290,12 @@ struct loaded_snd_table {
 };
 
 struct music_res {                                  // 0x20-byte music record, in the player's head (0x4be0e0)
-    unsigned flags;                                 // +0x08? (read at +0 of the record here)
+    int v00, v04;
+    unsigned flags;                                 // +0x08 (0x4be10d, 0x4be175)
     int v0c;
     int v10, v14;
-    float v18, v1c;
-    int prim;
-    const char* name;
+    int v18;
+    const char* name;                               // +0x1c tstring buffer pointer; NULL means the text is inline at +0x1c
 };
 struct music_player {
     char pad0[0x2008];

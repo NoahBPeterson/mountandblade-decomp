@@ -122,20 +122,23 @@ __declspec(noinline) void identity_2x2(float* m)
 // @ 0x4f3c30
 void TerrainPage::paste_clipboard()
 {
-    // Write the hex words and the hex field from whatever text the clipboard holds. The original opens and closes
-    // the clipboard itself, and always re-reads the fields and refreshes the page (even when the clipboard is
-    // empty: falling off the inner path jumps to the CloseClipboard block).
-    HANDLE h = OpenClipboard(0) ? GetClipboardData(CF_TEXT) : 0;
-    if (h) {
-        const char* p = (const char*)GlobalLock(h);
-        if (p) {
-            ((HexWords*)(void*)&g_bits)->parse(tstring(p));   // 0x4658c0
-            { char r[8]; hexbox->set_text(r, tstring(p)); }
-            GlobalUnlock(h);
+    // Write the hex words and the hex field from the clipboard's text. Only a successful read re-reads the fields and
+    // refreshes the page (0x4f3cc7); a closed clipboard returns without CloseClipboard (0x4f3c40).
+    if (!OpenClipboard(0))
+        return;
+    if (IsClipboardFormatAvailable(CF_TEXT)) {                  // 0x4f3c48
+        HANDLE h = GetClipboardData(CF_TEXT);
+        if (h) {
+            const char* p = (const char*)GlobalLock(h);
+            if (p) {
+                ((HexWords*)(void*)&g_bits)->parse(tstring(p));   // 0x4658c0
+                { char r[8]; hexbox->set_text(r, tstring(p)); }
+                GlobalUnlock(h);
+                read_fields();
+                update();
+            }
         }
     }
-    read_fields();
-    update();
     CloseClipboard();
 }
 

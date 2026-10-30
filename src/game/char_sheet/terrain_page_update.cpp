@@ -128,8 +128,8 @@ void TerrainPage::copy_clipboard()
     tstring s;
     hexbox->get_text(&s);
     if (OpenClipboard(0)) {
-        // GMEM_MOVEABLE | GMEM_ZEROINIT; a failure just leaves the clipboard closed again
-        HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, s.len + 1);
+        // GMEM_MOVEABLE | GMEM_DDESHARE (0x2002); a failure just leaves the clipboard closed again
+        HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, s.len + 1);
         if (h) {
             EmptyClipboard();
             char* p = (char*)GlobalLock(h);
