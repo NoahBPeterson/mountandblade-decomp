@@ -52,9 +52,11 @@ int bin_writer::flush()
 
 // @ 0x417c10
 bin_writer::bin_writer() {}
+STREAM_FWD_BIN_WRITER(bin_writer)
 
 // @ 0x417c50
 bin_reader::bin_reader() {}
+STREAM_FWD_BIN_READER(bin_reader)
 
 // @ 0x417c90
 mem_stream::~mem_stream() {}

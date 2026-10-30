@@ -152,4 +152,74 @@ struct bin_reader : file_reader_base {
     STREAM_SLOTS
 };
 
+// ---- forwarding slot bodies -------------------------------------------------------------------------------------
+// The original's linker folded identical slot functions across the concrete stream classes (OPT:ICF), so most slots of
+// a class's table are the text_stream / mem_stream function. A class that declares STREAM_SLOTS defines each slot it does
+// not implement itself as a forwarding stub: a qualified (non-virtual) call of the owner's slot, which /O2 compiles to a
+// bare `jmp` (or the same code, which folds).
+#define SF_T(C, n, A, ofn, cast) stream_base& C::n(A a) { return ((text_stream*)this)->text_stream::ofn((cast)a); }
+#define SF_M(C, n, A, ofn, cast) stream_base& C::n(A a) { return ((mem_stream*)this)->mem_stream::ofn((cast)a); }
+// the slots every in-memory / binary-writer style table shares: slot12 / slot22 are text_stream::slot12 (return *this)
+#define SF_COMMON_RET_THIS(C) SF_T(C, slot12, void*, slot12, void*) SF_T(C, slot22, void*, slot12, void*)
+// text readers (tstream3, TextReader, file_text, text_reader): text_stream's read slots, write slots 3-8 and 11 return *this
+#define STREAM_FWD_TEXT_READER(C) \
+    SF_T(C, w_stream, stream_base*, w_stream, stream_base*) \
+    SF_T(C, w_float, float*, slot12, void*) SF_T(C, w_bool, char*, slot12, void*) \
+    SF_T(C, w_u64, unsigned __int64*, slot12, void*) SF_T(C, w_i64, __int64*, slot12, void*) \
+    SF_T(C, w_uint, unsigned*, slot12, void*) SF_T(C, w_int, int*, slot12, void*) \
+    SF_T(C, w_byte, unsigned char*, w_byte, unsigned char*) SF_T(C, w_cstr, const char*, w_cstr, const char*) \
+    SF_T(C, w_tstr, const rgl::string*, slot12, void*) SF_COMMON_RET_THIS(C) \
+    SF_T(C, r_stream, stream_base*, r_stream, stream_base*) SF_T(C, r_float, float*, r_float, float*) \
+    SF_T(C, r_bool, char*, r_bool, char*) SF_T(C, r_uint, unsigned*, r_int, int*) \
+    SF_T(C, r_u64, unsigned __int64*, r_u64, unsigned __int64*) SF_T(C, r_i64, __int64*, r_i64, __int64*) \
+    SF_T(C, r_int, int*, r_int, int*) SF_T(C, r_byte, char*, r_byte, char*) \
+    SF_T(C, r_tstr, rgl::string*, r_tstr, rgl::string*)
+// text streams with both directions real (the 0x54a890 level: file_text_b, text_reader_b)
+#define STREAM_FWD_TEXT_BOTH(C) \
+    SF_T(C, w_stream, stream_base*, w_stream, stream_base*) \
+    SF_T(C, w_float, float*, w_float, float*) SF_T(C, w_bool, char*, w_bool, char*) \
+    SF_T(C, w_u64, unsigned __int64*, w_u64, unsigned __int64*) SF_T(C, w_i64, __int64*, w_i64, __int64*) \
+    SF_T(C, w_uint, unsigned*, w_int, int*) SF_T(C, w_int, int*, w_int, int*) \
+    SF_T(C, w_byte, unsigned char*, w_byte, unsigned char*) SF_T(C, w_cstr, const char*, w_cstr, const char*) \
+    SF_T(C, w_tstr, const rgl::string*, w_tstr, const rgl::string*) SF_COMMON_RET_THIS(C) \
+    SF_T(C, r_stream, stream_base*, r_stream, stream_base*) SF_T(C, r_float, float*, r_float, float*) \
+    SF_T(C, r_bool, char*, r_bool, char*) SF_T(C, r_uint, unsigned*, r_int, int*) \
+    SF_T(C, r_u64, unsigned __int64*, r_u64, unsigned __int64*) SF_T(C, r_i64, __int64*, r_i64, __int64*) \
+    SF_T(C, r_int, int*, r_int, int*) SF_T(C, r_byte, char*, r_byte, char*) \
+    SF_T(C, r_tstr, rgl::string*, r_tstr, rgl::string*)
+// write halves of the in-memory binary table (mem_stream's)
+#define STREAM_FWD_MEM_WRITE(C) \
+    SF_M(C, w_stream, stream_base*, w_stream, stream_base*) \
+    SF_M(C, w_float, float*, w_int, int*) SF_M(C, w_bool, char*, w_byte, unsigned char*) \
+    SF_M(C, w_u64, unsigned __int64*, w_i64, __int64*) SF_M(C, w_i64, __int64*, w_i64, __int64*) \
+    SF_M(C, w_uint, unsigned*, w_int, int*) SF_M(C, w_int, int*, w_int, int*) \
+    SF_M(C, w_byte, unsigned char*, w_byte, unsigned char*) SF_M(C, w_cstr, const char*, w_cstr, const char*) \
+    SF_M(C, w_tstr, const rgl::string*, w_tstr, const rgl::string*)
+#define STREAM_FWD_MEM_READ(C) \
+    SF_M(C, r_stream, stream_base*, r_stream, stream_base*) SF_M(C, r_float, float*, r_int, int*) \
+    SF_M(C, r_bool, char*, r_byte, char*) SF_M(C, r_uint, unsigned*, r_int, int*) \
+    SF_M(C, r_u64, unsigned __int64*, r_i64, __int64*) SF_M(C, r_i64, __int64*, r_i64, __int64*) \
+    SF_M(C, r_int, int*, r_int, int*) SF_M(C, r_byte, char*, r_byte, char*) \
+    SF_M(C, r_tstr, rgl::string*, r_tstr, rgl::string*)
+// the whole in-memory binary table (mem_stream_inl, opt_mem_stream, file_stream_s)
+#define STREAM_FWD_MEM(C) STREAM_FWD_MEM_WRITE(C) STREAM_FWD_MEM_READ(C) SF_COMMON_RET_THIS(C)
+// binary file readers (bin_reader, file_reader, opt_reader): mem_stream's read slots; the write slots are mem_stream's
+// for stream/byte/cstr and return *this for the rest
+#define STREAM_FWD_BIN_READER(C) \
+    STREAM_FWD_MEM_READ(C) SF_COMMON_RET_THIS(C) \
+    SF_M(C, w_stream, stream_base*, w_stream, stream_base*) \
+    SF_T(C, w_float, float*, slot12, void*) SF_T(C, w_bool, char*, slot12, void*) \
+    SF_T(C, w_u64, unsigned __int64*, slot12, void*) SF_T(C, w_i64, __int64*, slot12, void*) \
+    SF_T(C, w_uint, unsigned*, slot12, void*) SF_T(C, w_int, int*, slot12, void*) \
+    SF_M(C, w_byte, unsigned char*, w_byte, unsigned char*) SF_M(C, w_cstr, const char*, w_cstr, const char*) \
+    SF_T(C, w_tstr, const rgl::string*, slot12, void*)
+// binary file writers (bin_writer, bin_writer_i): mem_stream's write slots; read slots return *this except stream/byte
+#define STREAM_FWD_BIN_WRITER(C) \
+    STREAM_FWD_MEM_WRITE(C) SF_COMMON_RET_THIS(C) \
+    SF_M(C, r_stream, stream_base*, r_stream, stream_base*) SF_M(C, r_byte, char*, r_byte, char*) \
+    SF_T(C, r_float, float*, slot12, void*) SF_T(C, r_bool, char*, slot12, void*) \
+    SF_T(C, r_uint, unsigned*, slot12, void*) SF_T(C, r_u64, unsigned __int64*, slot12, void*) \
+    SF_T(C, r_i64, __int64*, slot12, void*) SF_T(C, r_int, int*, slot12, void*) \
+    SF_T(C, r_tstr, rgl::string*, slot12, void*)
+
 #endif

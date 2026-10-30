@@ -678,3 +678,6 @@ void Animator::reset(void* a, void* b)
 
     pack_state((PackedState*)a);
 }
+
+// ---- TextReader's slots (folded into text_stream's by the original's linker) ----
+STREAM_FWD_TEXT_READER(TextReader)
