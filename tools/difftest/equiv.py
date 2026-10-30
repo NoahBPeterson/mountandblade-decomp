@@ -3527,7 +3527,12 @@ class Runner:
         if size >= 0x10000:
             reads = self._traced_reads(inp)
             n = rng.choice((1, 2, 3, 4, 8, 16, rng.randrange(33)))
-            for addr, val, rel in self.repair_relations(reads, size):
+            rels = self.repair_relations(reads, size)
+            if not rels:
+                # a soup vector header (begin/last/end of float or int garbage, none a pointer): the size is still
+                # a stride times end - begin, an exact match no unrelated pair of dwords produces by chance
+                rels = [r for r in self.repair_relations(reads, size, near=0) if r[2][0] == "pair"]
+            for addr, val, rel in rels:
                 # a count scaled to the size gets n elements; a size/length/distance gets a small byte size
                 new = self._invert(rel, val, n * rel[1] + rel[2] if rel[0] == "scaled" else 16 * n)
                 out = self._put_any(inp.copy(), addr, new)
@@ -3538,6 +3543,28 @@ class Runner:
         if out is not None:
             return out
         reads = self._traced_reads(inp)
+        if size >= 0x10000:
+            # a vector header (three adjacent dwords read as begin/last/end, each a pointer or a small int, not a
+            # consistent first <= last <= end triple): soup or small typed ints where a pointer triple belongs. Its grow path sizes the
+            # allocation from end - begin modulo 2**32 (camera 0x49ebd0: PartyMgrW::grow's pages.push_back asked for
+            # 0xfffffffc bytes), which no single dword relates to. Make the most recent such header empty (all equal).
+            seen = {a: v for a, v in reads}
+            tri = []
+            for a, v in reversed(reads):
+                if a not in [x[0] for x in tri] and a + 4 in seen and a + 8 in seen and \
+                        not seen[a] == seen[a + 4] == seen[a + 8] and \
+                        all(seen[a + k] < 0x1000 or self._pointer(seen[a + k]) for k in (0, 4, 8)) and \
+                        not all(self._pointer(seen[a + k]) and not seen[a + k] & 3 and
+                                seen[a] <= seen[a + 4] <= seen[a + 8] for k in (0, 4, 8)):
+                    tri.append((a, v))
+            for a, v in tri[:4][rng.randrange(min(4, len(tri))):] if tri else ():
+                out = inp.copy()
+                keep = v if self._pointer(v) else 0
+                for k in range(3):
+                    out = self._put_any(out, a + 4 * k, keep) if out is not None else None
+                if out is not None:
+                    self.note_repair("heap", ("vecheader", 1, 0), a, v, keep)
+                    return out
         for addr, v in reversed(reads):
             if 0x10000 <= v and not self._pointer(v):
                 new = rng.choice((0, 1, 2, 3, 4, 8, 16, rng.randrange(64)))
@@ -3648,7 +3675,7 @@ class Runner:
                 # a size computation drops ((end - begin) >> 2 of soup begin 0x44221431: Hud's vectors at 0x420860)
                 d = (v - b) & 0xFFFFFFFF
                 r = (d - t * _PAIR_K) & 0xFFFFFFFF
-                hit = np.nonzero((r < _PAIR_K) | (r <= 0x40))[0]
+                hit = np.nonzero((r < _PAIR_K) | (r <= 0x40) | (r >= 0xFFFFFFC0))[0]     # (a size one or a few bytes past the stride multiple: new[] of the bytes + 1)
                 if len(hit):
                     k = int(_PAIR_K[hit[0]])
                     out.append((a, v, ("pair", k, int(r[hit[0]]), b)))

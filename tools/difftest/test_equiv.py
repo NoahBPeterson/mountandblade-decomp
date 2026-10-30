@@ -695,6 +695,12 @@ def test_shrink_relations():
     rels = r.repair_relations(reads, 5000)
     assert (0x40020008, e, ("pair", 0x204, 0, b)) in rels, rels
     assert R_._invert(("pair", 0x204, 0, b), e, 2 * 0x204) == b + 0x408
+    # a soup header (no pointer among the dwords; mesh_game 0x4832b0 spawn: begin 0xff7fffff, last 0xc31d9dde, a
+    # reserve of end - begin + 1 bytes) is related only with near=0, and a size one byte past the multiple counts
+    b2, e2 = 0xff7fffff, 0xc31d9dde
+    reads = [(0x40d60090, b2), (0x40d60094, e2)]
+    assert not r.repair_relations(reads, (e2 - b2 + 1) & 0xFFFFFFFF)
+    assert any(x[2][0] == "pair" for x in r.repair_relations(reads, (e2 - b2 + 1) & 0xFFFFFFFF, near=0))
 
 
 def test_stdcall_through_vtable_ecx_is_not_compared():
