@@ -59,7 +59,7 @@ static float scan_float(const char* name)
     do {
         if (i >= g_n_strings)
             break;
-        if (key.equals(((tstring*)((char*)&g_strings + 0x1c))[i]))
+        if (((tstring*)((char*)&g_strings + i * 0x2c))->equals(key))   // entry i's key (+0, 0x2c-byte stride) as this
             idx = i;
         i++;
     } while (idx == -1);
