@@ -326,6 +326,19 @@ compiler cannot fold: a constructor-expression temporary, or a union overlay.
   bytes), even when the new member was a plain `char[16]`. A header-only layout
   merge is not always code-neutral; member numbering feeds the id-keyed
   allocator (section 6.2).
+- **`operator new`'s size is a free size check.** `push N; call operator new`
+  in the original gives `sizeof` exactly. Assert it at compile time
+  (`typedef char chk[sizeof(T) == N ? 1 : -1];`). M&B `GameApp::GameApp` 0x4d3ec0:
+  `Big` was 0x44 bytes short of `new(0x6868)` (a missing `char done[0x40]`, plus the
+  tail padding that `__int64` members round up to 8). That moved every later heap
+  block, and the FAIL showed up as an unrelated pointer in `.data`. In the same
+  function `new Big` never ran `Big::init` 0x4d3880, because a plain member
+  function is not a constructor. The original calls it on the non-null block
+  (0x4d409a..0x4d40b4).
+- **Check every field the function reads, not only the name.** M&B
+  `music_player::play` 0x4be0e0 read the record's flags at +8 (0x4be10d), while
+  `music_res` declared them at +0. The name at +0x1c was right, so the function
+  looked plausible and only failed once an import model let inputs reach it.
 - **Struct pack** around SDK structures must match the SDK's own packing, or every
   frame displacement shifts.
 - **Class-key.** `class` versus `struct` changes no code, only mangled names
@@ -727,6 +740,29 @@ reading the mismatches turned out to be real bugs under that mode (a code
 address written where the original writes a float, a skipped `normalize` call,
 seven values left on the x87 stack at return).
 
+### 9.6 Reading `fcomp; fnstsw ax; test ah,M; jcc`
+
+`fcom` sets C0 (`0x01`) when st0 < operand, C3 (`0x40`) when they are equal, and
+C0, C2 (`0x04`) and C3 together when either is NaN. The mask and the jump say
+which C condition the **fall-through** path has. Read it from the table; don't
+guess, because two FAILs on 2026-10-29 were exactly this:
+
+| Sequence | Falls through when | Source |
+|---|---|---|
+| `test ah,0x41; jne L` | st0 > op (ordered) | `if (a > b) { fall-through } else { L }`; a NaN goes to `L` |
+| `test ah,0x41; je L` | st0 <= op, or NaN | `if (!(a > b)) { fall-through }` |
+| `test ah,5; jp L` | st0 < op (ordered) | `if (a < b) { fall-through }`; `>=` and NaN go to `L` |
+| `test ah,0x44; jp L` | st0 == op | `if (a == b) { fall-through }`; not-equal and NaN go to `L` |
+| `test ah,1; jne L` | st0 >= op, or NaN | `if (!(a < b)) { fall-through }` |
+
+- M&B `FieldPanel::update` 0x48d528 (`fld scene.h; fcomp this.h; test ah,5; jp`):
+  ours wrote `==`, while the original's branch is `scene.h < this.h`.
+- M&B `music_player::advance_piece` 0x4c2884 (`test ah,0x41; jne`): the original
+  draws `rand()` only for an ordered sum > 0. Ours had `if (sum <= 0) best; else
+  draw`, which sends a NaN sum to `rand()`. The fix is `if (sum > 0) draw; else
+  best`. The two spellings are equal for ordinary numbers and differ only on NaN,
+  which typed and soup inputs do reach.
+
 ---
 
 ## 10. Instruction selection and intrinsics
@@ -915,6 +951,13 @@ merged by discovery; split the extent instead of treating it as one ABI.
 - `__declspec(noinline)` is accepted by cl 13.10 and keeps a call the compiler
   would inline. A same-TU function called before its definition is still inlined
   by `/O2`; mark the definition `noinline` when the original calls it out of line.
+  M&B `InventoryPanel::transfer_slot` 0x512c80: the original calls
+  `test_slot_flag` 0x5126e0 and `or_slot_flag` 0x513320 as real calls (0x512e07,
+  0x512e42), but our cl inlined both at the first site. The source logic was right,
+  yet the equivalence call trace went out of step (FAIL) until the declarations in
+  the header got `__declspec(noinline)`. When a FAIL's first difference is "call #N:
+  orig f, ours g" and `g` is the *next* call the original makes, look for an
+  inlined callee before looking for a logic bug.
 - `__forceinline` on a value-type copy constructor keeps it from being emitted
   out of line as `push; call ctor`.
 - A call to an **empty function in the same file is dropped** even when it is
@@ -991,6 +1034,16 @@ merged by discovery; split the extent instead of treating it as one ABI.
 
 ### 13.3 Lifetime
 
+- **A temporary lives to the end of its full expression.** When the original
+  destroys a temporary *before* a later call in the same statement, split the
+  statement and end the temporary's scope first. M&B `SaveWindow::init`
+  0x4e4790: the original destroys the `"load_window"` tstring (0x42bc40 at
+  0x4e484f) before `window->d31(0, clone)` at 0x4e485e. Ours wrote
+  `d31(0, res_get(tstring("load_window"))->clone())`, so the destructor ran after
+  the call. The fix is `{ tstring n("load_window"); m = res_get(n)->clone(); }
+  d31(0, m);`. In the equivalence harness these show up as malloc/free or
+  ctor/dtor order differences in the call trace; `gui_edit` 0x4c8ca0 had eight such
+  sites.
 - For a "dead" vptr store the original keeps, make just that store volatile:
   `*(void* volatile*)&mpVtbl = ...`.
 - An EASTL-style bool tag passed by value is a `struct { bool b; }` local set to
@@ -1087,6 +1140,58 @@ Record the function as complete and move on after two rounds without a diff drop
   coordinated changes that were each neutral or negative alone. A negative sweep
   holds only for its baseline; replay rejected spellings after an ownership or
   lifetime change.
+
+### 16.1 Behaviour bugs only the equivalence harness found (2026-10-29)
+
+Every one of these compiled cleanly, and most had a plausible byte diff. They
+surfaced once harness work let inputs reach the code: import models, typed
+inputs, fake-call arity. Check for them when writing a function.
+
+- **Constants inside expressions.** `rand() % 15785` where the original divides by
+  `0x3dc9` (15817), at four sites in `mesh_3` 0x52f250. The float scale factors
+  were already right (0.75/15817), which was the clue.
+- **Pointer difference divided twice.** `(e->b - e->a) >> 2 == 0` with `int*`
+  members: the subtraction is already a count, so lists of 1 to 3 entries looked
+  empty (`ArrHolder::lookup` 0x48d5f0). The original's `sub; sar 2` is the byte
+  difference.
+- **A missing dereference.** `*(int*)(v + 0xb4 + i*4)` where the original loads
+  the array pointer first: `[[v+0xb4] + i*4]` (0x48d636).
+- **Swapped if/else arms** (`FieldPanel::update` 0x48d4d2). The `> 0` arm copies
+  the stored size into a local; the other arm uses the scene's values.
+- **A missing empty-container guard.** A `size()-1` loop bound wrapped on an empty
+  list (`map_editor` 0x530d43).
+- **A handle cached where the original re-queries.** The original calls
+  `GetDlgItem(h, 0x420)` before each of its two `SendMessageA` calls
+  (`GameApp::msg_proc` 0x4d4140). Reusing one HWND changes the call trace.
+- **Win32 flag constants.** `GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE)` is
+  `0x2002`, not `GMEM_ZEROINIT` (`0x42`) (`copy_clipboard` 0x4f34c0). Decode every
+  immediate pushed to an import against the SDK header.
+- **A missing API check.** `paste_clipboard` 0x4f3c30 calls
+  `IsClipboardFormatAvailable(CF_TEXT)` first, and refreshes only after a
+  successful read.
+- **Results stored in the wrong local.** `note_window` 0x50a1c0 put the links
+  text height (`[esp+0x14]`) and the report height (`[esp+0x24]`) into the same
+  variable. Map every `mov [esp+N], eax` after a call to a named local before
+  writing the code.
+- **Uninitialised locals stay uninitialised.** If the original never writes a
+  local before reading it (`note_window`'s two heights, 0x50a66d), declare it
+  without an initialiser. Zero-initialising it is a behaviour change. The
+  remaining equivalence difference is then a documented artifact, a different
+  stack leftover in each build, not a bug.
+
+Harness behaviour worth knowing when reading a verdict:
+
+- A row stops after 150 inputs in a row with no new coverage, once 200 inputs are
+  valid. Run `--plateau 0` to confirm a fix with every input.
+- `--typed-share 0` turns off the type-aware inputs. Use it to tell whether only
+  CodeView-typed objects trigger a mismatch.
+- ecx is not compared at a call through a generated pointer when the original's
+  call cannot be `__thiscall`:
+  - `call [ecx+disp]`, where ecx holds the vtable;
+  - `call [R+disp]`, where R is the vtable of the first stack argument (COM
+    `__stdcall`), unless ecx is itself an object with that vtable;
+  - a call whose caller pops the arguments (`__cdecl`).
+  Everything else at such a call is still compared.
 
 ---
 
