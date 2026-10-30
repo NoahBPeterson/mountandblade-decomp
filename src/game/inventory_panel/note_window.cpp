@@ -127,14 +127,6 @@ struct Map10007 {
 // small helpers
 // ---------------------------------------------------------------------------
 
-// localised string for a key
-static const char* tr(const char* key)
-{
-    tstring k(key);
-    tstring* s = UITEXT->lookup(&k);
-    return s->buf ? s->buf : (char*)&s->buf;
-}
-
 // translated string object (kept as a pointer: the database owns the object). The key is a temporary of the full
 // expression that uses the result: it is destroyed after the call the translation is passed to (0x50a476..0x50a4ae)
 static __forceinline tstring* tr_key(const tstring& k)
@@ -142,6 +134,13 @@ static __forceinline tstring* tr_key(const tstring& k)
     return UITEXT->lookup(const_cast<tstring*>(&k));
 }
 #define tr_obj(key) tr_key(tstring(key))
+// localised string for a key (a macro: the temporary key lives to the end of the caller's full expression, the way the
+// original's inlined lookup keeps it, 0x50a84f..0x50a8b8)
+static __forceinline const char* tstr_chars(tstring* s)
+{
+    return s->buf ? s->buf : (char*)&s->buf;
+}
+#define tr(key) tstr_chars(tr_obj(key))
 
 // config entry -> text value
 static char* cfg_text(int idx)
@@ -151,7 +150,7 @@ static char* cfg_text(int idx)
     return s ? s : (e + 4);
 }
 
-static float cfg_float(const char* key)
+static __forceinline float cfg_float(const char* key)
 {
     tstring k(key);
     int i = CONFIG->find(k);
@@ -198,7 +197,7 @@ struct int_vector {
     int* last;
     int* cap;
     int_vector() { first = 0; last = 0; cap = 0; }
-    ~int_vector() { delete[] first; }
+    ~int_vector() { if (first) delete[] first; }   // std::vector<int>: the original guards it (0x50cc00)
     int size() const { return (int)(last - first); }
     int operator[](int i) const { return first[i]; }
     void push_back(int v)
@@ -272,9 +271,24 @@ static void  fst(void* p, int off, float v) { *(float*)((char*)p + off) = v; }
 // @ 0x50a1c0
 void note_window::build(int page_, int arg_)
 {
-    char buf[0x400];
-    char buf2[0x400];
-    char link_buf[0x400];
+    char buf[0x100];
+    float sz1[2];
+    float sz2[2];
+    float sz3[2];
+    float sz4[2];
+    float sz5[2];
+    float sz6[2];
+    float sz7[2];
+    float sz8[2];
+    float sz9[2];
+    float sz10[2];
+    float sz11[2];
+    float sz12[2];
+    float sz13[2];
+    float sz14[2];
+    float sz15[2];
+    float sz16[2];
+    char buf2[0x100];
 
     this->page = page_;
     this->arg = arg_;
@@ -303,7 +317,6 @@ void note_window::build(int page_, int arg_)
     // ---- title picture ---------------------------------------------------
     this->picture = new UiText2;
     label_refresh(this->picture, tstring("note_i_picture"));
-    this->picture->hide();
 
     // ---- report text -----------------------------------------------------
     this->report = new UiList;
@@ -363,10 +376,8 @@ void note_window::build(int page_, int arg_)
     }
 
     // ---- page link key + candidate list ----------------------------------
-    tstring acc("");            // +0xa0   "<trp=%d>" for the current page
+    tstring acc;            // +0xa0   "<trp=%d>" for the current page
     int_vector vec;             // +0x60
-    tstring other("");          // +0x70   "other pages that link here"
-    tstring link_text("");      // +0xb0   scratch for the links widget
 
     // [esp+0x14] / [esp+0x24]: the original never initialises these two (case 0 and an empty troop page reach the panels
     // without a text height), but their frame slots still hold the 0.1f / 0.1f the preceding call (0x50a2dd, the by-value
@@ -379,10 +390,9 @@ void note_window::build(int page_, int arg_)
 
     switch (page_) {
     case 0: {
-        tstring line("");
-        float sz[2];
+        tstring line;
         tstring* t = tr_obj("ui_click_button_to_view_note");
-        x_cur = ((float*)this->links->set_text(sz, *t))[1];    // the returned size (0x50a6d8), not sz
+        x_cur = ((float*)this->links->set_text(sz1, *t))[1];    // the returned size (0x50a6d8), not sz1
         break;
     }
 
@@ -398,7 +408,7 @@ void note_window::build(int page_, int arg_)
         sprintf(buf, "<trp=%d>", ti);
         acc.assign(buf);
 
-        tstring line("");
+        tstring line;
         for (int k = 0; k < 8; k++) {
             char* slot = troop + k * 0x10;
             if (*(int*)(slot + 0x42c) <= 0)
@@ -419,15 +429,13 @@ void note_window::build(int page_, int arg_)
         }
 
         if (line.len > 0) {
-            float sz[2];
-            this->title->set_text(sz, tstring(record_name(troop + 0x20)));
-            float* r = (float*)this->links->set_text(sz, line);
+            this->title->set_text(sz2, tstring(record_name(troop + 0x20)));
+            float* r = (float*)this->links->set_text(sz3, line);
             x_cur = r[1];
             line.clear();
             any = false;
         } else {
-            float sz[2];
-            float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
+                    float* r = (float*)this->links->set_text(sz4, *tr_obj("ui_click_button_to_view_note"));
             x_cur = r[1];
         }
 
@@ -449,16 +457,15 @@ void note_window::build(int page_, int arg_)
                 selected = v;
             const char* nm = record_name(((char*)WORLD->troops) + v * 0x508 + 0x20);
             if (v == page_)
-                sprintf(link_buf, "%s\n", nm);
+                sprintf(buf2, "%s\n", nm);
             else
-                sprintf(link_buf, "<trp=%d>%s</>\n", v, nm);
-            line.append(tstring(link_buf));
+                sprintf(buf2, "<trp=%d>%s</>\n", v, nm);
+            line.append(tstring(buf2));
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
         {
-            float sz[2];
-            this->report->set_text(sz, line);
+            this->report->set_text(sz5, line);
         }
         break;
     }
@@ -475,7 +482,7 @@ void note_window::build(int page_, int arg_)
         sprintf(buf, "<fac=%d>", fi);
         acc.assign(buf);
 
-        tstring line("");
+        tstring line;
         for (int k = 0; k < 8; k++) {
             char* slot = fac + k * 0x10;
             if (*(int*)(slot + 0x288) <= 0)
@@ -495,21 +502,19 @@ void note_window::build(int page_, int arg_)
         }
 
         if (line.len > 0) {
-            float sz[2];
             tstring* nm = (tstring*)fac;
             if (*(char*)(fac + 0x10) == 0) {
                 tstring* s = UITEXT->find((tstring*)(fac + 0x14));
                 if (s)
                     nm = s;
             }
-            this->title->set_text(sz, *nm);
-            float* r = (float*)this->links->set_text(sz, line);
+            this->title->set_text(sz6, *nm);
+            float* r = (float*)this->links->set_text(sz7, line);
             x_cur = r[1];
             line.clear();
             any = false;
         } else {
-            float sz[2];
-            float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
+                    float* r = (float*)this->links->set_text(sz8, *tr_obj("ui_click_button_to_view_note"));
             x_cur = r[1];
         }
 
@@ -530,16 +535,15 @@ void note_window::build(int page_, int arg_)
                 selected = v;
             const char* nm = record_name(((char*)WORLD->factions) + v * 0x300 + 0x14);
             if (v == page_)
-                sprintf(link_buf, "%s\n", nm);
+                sprintf(buf2, "%s\n", nm);
             else
-                sprintf(link_buf, "<fac=%d>%s</>\n", v, nm);
-            line.append(tstring(link_buf));
+                sprintf(buf2, "<fac=%d>%s</>\n", v, nm);
+            line.append(tstring(buf2));
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
         {
-            float sz[2];
-            this->report->set_text(sz, line);
+            this->report->set_text(sz9, line);
         }
         break;
     }
@@ -556,7 +560,7 @@ void note_window::build(int page_, int arg_)
         sprintf(buf, "<p=%d>", pi);
         acc.assign(buf);
 
-        tstring line("");
+        tstring line;
         int idx = ((Map10007*)WORLDMAP)->lookup(pi);
         char* base = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x5ac8;
         char* ids  = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x16b2 * 4;
@@ -578,17 +582,15 @@ void note_window::build(int page_, int arg_)
         }
 
         if (line.len > 0) {
-            float sz[2];
             if (this->menu_id == 7)
                 this->btn_map->show();
-            this->title->set_text(sz, *party_name(base));
-            float* r = (float*)this->links->set_text(sz, line);
+            this->title->set_text(sz10, *party_name(base));
+            float* r = (float*)this->links->set_text(sz11, line);
             x_cur = r[1];
             line.clear();
             any = false;
         } else {
-            float sz[2];
-            float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
+                    float* r = (float*)this->links->set_text(sz12, *tr_obj("ui_click_button_to_view_note"));
             x_cur = r[1];
         }
 
@@ -617,16 +619,15 @@ void note_window::build(int page_, int arg_)
             char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
             const char* nm = ts_chars(party_name(rec));
             if (v == page_)
-                sprintf(link_buf, "%s\n", nm);
+                sprintf(buf2, "%s\n", nm);
             else
-                sprintf(link_buf, "<p=%d>%s</>\n", v, nm);
-            line.append(tstring(link_buf));
+                sprintf(buf2, "<p=%d>%s</>\n", v, nm);
+            line.append(tstring(buf2));
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
         {
-            float sz[2];
-            y_cur = ((float*)this->report->set_text(sz, line))[1];
+            y_cur = ((float*)this->report->set_text(sz13, line))[1];
         }
         break;
     }
@@ -643,7 +644,7 @@ void note_window::build(int page_, int arg_)
         sprintf(buf, "<qst=%d>", qi);
         acc.assign(buf);
 
-        tstring line("");
+        tstring line;
         for (int k = 0; k < 8; k++) {
             char* slot = quest + k * 0x10;
             if (*(int*)(slot + 0x94) <= 0)
@@ -663,16 +664,14 @@ void note_window::build(int page_, int arg_)
         }
 
         if (line.len > 0) {
-            float sz[2];
             tstring qt = quest_title(qi);
-            this->title->set_text(sz, qt);
-            float* r = (float*)this->links->set_text(sz, line);
+            this->title->set_text(sz14, qt);
+            float* r = (float*)this->links->set_text(sz15, line);
             x_cur = r[1];
             line.clear();
             any = false;
         } else {
-            float sz[2];
-            float* r = (float*)this->links->set_text(sz, *tr_obj("ui_click_button_to_view_note"));
+                    float* r = (float*)this->links->set_text(sz16, *tr_obj("ui_click_button_to_view_note"));
             x_cur = r[1];
         }
 
@@ -686,14 +685,14 @@ void note_window::build(int page_, int arg_)
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            sprintf(link_buf, "<qst=%d>%s</>\n", v, quest_title(v).c_str());
-            line.append(tstring(link_buf));
+            sprintf(buf2, "<qst=%d>%s</>\n", v, quest_title(v).c_str());
+            line.append(tstring(buf2));
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
         {
-            float sz[2];
-            y_cur = ((float*)this->report->set_text(sz, line))[1];
+            float sz17[2];
+            y_cur = ((float*)this->report->set_text(sz17, line))[1];
         }
         break;
     }
@@ -703,6 +702,8 @@ void note_window::build(int page_, int arg_)
     }
 
     // ---- collect the back references -------------------------------------
+    tstring other;              // +0x70   "other pages that link here"  (default-constructed after the switch, 0x50bc44)
+    tstring link_text;          // +0xb0   scratch for the links widget  (0x50bc50)
     this->links->get_text(&link_text);
     if (acc.len > 0) {
         for (int i = 0; i < WORLD->ntroops; i++) {
@@ -784,18 +785,17 @@ void note_window::build(int page_, int arg_)
     }
 
     if (other.len > 0) {
-        tstring t("");
+        tstring t;
+        float szT[2];
         this->links->get_text(&t);
         if (t.equals(*tr_obj("ui_click_button_to_view_note"))) {
-            float sz[2];
-            this->links->set_text(sz, *tr_obj("ui_this_page_contains_no_information"));
+            this->links->set_text(szT, *tr_obj("ui_this_page_contains_no_information"));
             this->links->get_text(&t);
         }
         t.append(tstring("\n\n"));
         t.append(*tr_obj("ui_other_pages_that_link_here"));
         t.append(other);
-        float sz[2];
-        float* r = (float*)this->links->set_text(sz, t);
+        float* r = (float*)this->links->set_text(szT, t);
         x_cur = r[1];
     }
 
@@ -841,11 +841,17 @@ void note_window::build(int page_, int arg_)
     this->data_panel->add_child(this->picture);
     this->data_panel->add_child(this->links);
 
-    tstring s_keys("note_s_keys");
-    tstring sc_keys("note_sc_keys");
-    Widget* keys_scroll_base = make_scrollbar(this->panel, &s_keys);      // 0x4f6160
-    this->keys_scroll = make_scroll2(this->keys_panel, &sc_keys,
-                                     keys_scroll_base);                 // 0x4f62f0
+    // each key string is a temporary that dies right after its call (0x50c5f1..0x50c642)
+    Widget* keys_scroll_base;
+    {
+        tstring s_keys("note_s_keys");
+        keys_scroll_base = make_scrollbar(this->panel, &s_keys);      // 0x4f6160
+    }
+    {
+        tstring sc_keys("note_sc_keys");
+        this->keys_scroll = make_scroll2(this->keys_panel, &sc_keys,
+                                         keys_scroll_base);                 // 0x4f62f0
+    }
 
     {
         float v[2];
@@ -869,11 +875,17 @@ void note_window::build(int page_, int arg_)
         this->scroll_pos = -1.0f;
     }
 
-    tstring s_data("note_s_data");
-    tstring sc_data("note_sc_data");
-    Widget* data_scroll_base = make_scrollbar(this->panel, &s_data);      // 0x4f6160
-    this->data_scroll = make_scroll2(this->data_panel, &sc_data,
-                                     data_scroll_base);                 // 0x4f62f0
+    // each key string is a temporary that dies right after its call (0x50c5f1..0x50c642)
+    Widget* data_scroll_base;
+    {
+        tstring s_data("note_s_data");
+        data_scroll_base = make_scrollbar(this->panel, &s_data);      // 0x4f6160
+    }
+    {
+        tstring sc_data("note_sc_data");
+        this->data_scroll = make_scroll2(this->data_panel, &sc_data,
+                                         data_scroll_base);                 // 0x4f62f0
+    }
 
     {
         float v[2];
@@ -900,19 +912,24 @@ void note_window::build(int page_, int arg_)
         float ba = cfg_float("note_button_x_a");
 
         this->btn_game_log = make_short_button(this->panel, tr_obj("ui_game_log"), bx, by, bh);
+        *(int*)((char*)this->btn_game_log + 0x184) = 1;
         x_cur = bx + ba;
         this->btn_recent = make_short_button(this->panel, tr_obj("ui_recent_messages"), x_cur, by, bh);
+        *(int*)((char*)this->btn_recent + 0x184) = 1;
         x_cur = x_cur + ba;
         this->btn_quests = make_short_button(this->panel, tr_obj("ui_quests"), x_cur, by, bh);
+        *(int*)((char*)this->btn_quests + 0x184) = 1;
         x_cur = x_cur + ba;
         this->btn_troops = make_short_button(this->panel, tr_obj("ui_troops2"), x_cur, by, bh);
+        *(int*)((char*)this->btn_troops + 0x184) = 1;
         x_cur = x_cur + ba;
         this->btn_locations = make_short_button(this->panel, tr_obj("ui_locations"), x_cur, by, bh);
+        *(int*)((char*)this->btn_locations + 0x184) = 1;
         x_cur = x_cur + ba;
         this->btn_factions = make_short_button(this->panel, tr_obj("ui_factions"), x_cur, by, bh);
+        *(int*)((char*)this->btn_factions + 0x184) = 1;
         x_cur = x_cur + ba;
-        this->btn_return = make_short_button(this->panel, tr_obj("ui_return"), x_cur, by, bh);
-        *(int*)((char*)this->btn_return + 0x184) = 1;
+        this->btn_return = make_short_button(this->panel, tr_obj("ui_return"), x_cur, by, bh);   // (the only one of the seven the original leaves without f184 = 1, 0x50c99b..0x50cb62)
     }
 
     // ---- highlight the active page button and disable it (0x50cbb8: slot 0xb8) ----
