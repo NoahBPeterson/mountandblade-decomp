@@ -1,7 +1,6 @@
 00490030  14  Game::pick_near: complete; only stack slot assignment of the float locals differs. 5% insns, 11 symmetric missed edges: harness cannot reach the face-found paths, no [14 bytes differ; equiv WEAK: orig misses 11 edge(s), ours misses 11 edge(s); edges orig 1/12; ours 1/12; 27.5% insns]
 00490160  242  Game::pick_near_type: complete; 298 vs 309 bytes, frame and register allocation [242 bytes differ size 298 vs 309; equiv WEAK: 20 valid inputs (need 200), orig misses 13 edge(s), ours misses 13 edge(s); edges orig 5/1]
 004904a0  53  agent_of:. EAX register convention (caller passes the argument in eax, not expressible as a normal declaration) [53 bytes differ (size 122 vs 118)]
-00490570  2  place: complete and behaviourally equivalent ( vtable reload register eax vs [2 bytes differ; equiv PASS: 381 valid inputs, all edges covered (orig 2/2; ours 2/2), 100.0% insns]
 004905c0  8  track_bounds: complete; delayed store vs load scheduling in the position [8 bytes differ; equiv UNSUPPORTED: only 0/400 inputs valid (discards: fake-arity=398, fault(write)=1, import:_purecall=1)]
 00490710  14  bounds_of: complete; initial local register allocation [14 bytes differ; equiv WEAK: orig misses 13 edge(s), ours misses 13 edge(s); edges orig 11/24; ours 11/24; 61.9% insns]
 00490990  118  mark_kind: complete; this kept in edi vs ebx and page lookup [118 bytes differ; equiv WEAK: orig misses 2 edge(s), ours misses 2 edge(s); edges orig 4/6; ours 4/6; 78.0% insns]

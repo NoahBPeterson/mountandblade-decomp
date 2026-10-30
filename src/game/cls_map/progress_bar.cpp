@@ -732,17 +732,17 @@ void SaveWinCtl::create()
     g_gui.reset();
     NEW_OVERLAY_WINDOW(w)
     win = w;
-    float v[2];
-    v[0] = -0.001f;
-    v[1] = -0.001f;
-    vt(win)->d22(v);
-    v[0] = 1.002f;
-    v[1] = 0.752f;
-    vt(win)->d25(v);
+    union { float v[2]; void* root; } u;   // the root ref shares the position pair's slot (frame 8, not 0xc)
+    u.v[0] = -0.001f;
+    u.v[1] = -0.001f;
+    vt(win)->d22(u.v);
+    u.v[0] = 1.002f;
+    u.v[1] = 0.752f;
+    vt(win)->d25(u.v);
     block.init(win, *(int*)((char*)g_game + 0x13b04));
-    void* root = win;
+    u.root = win;
     g_ui_changed = 1;
-    ADD_ROOT_REF(root);
+    ADD_ROOT_REF(u.root);
 }
 
 // @ 0x4e5e50

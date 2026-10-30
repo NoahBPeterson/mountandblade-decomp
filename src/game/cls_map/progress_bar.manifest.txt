@@ -20,3 +20,4 @@
 ../src/game/cls_map/progress_bar.cpp  ??$_Uninit_fill_n@PAUloading_config@@IU1@V?$allocator@Uloading_config@@@std@@@std@@YAXPAUloading_config@@IABU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004e5fc0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?reset_geometry@MsgLog@@QAEXXZ  004e64b0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?update@MsgLog@@QAEXM@Z  004e6510  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?create@SaveWinCtl@@QAEXXZ  004e5d90  /O2 /MT /Gy /TP

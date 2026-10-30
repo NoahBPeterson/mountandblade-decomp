@@ -32,3 +32,4 @@
 ../src/game/cls_map/cls_map.cpp  ?init@BlockOwner@@QAEXPAUContainerBase@@H@Z  004dd920  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?create_debrief@DebriefMenu@@QAEXXZ  004de5b0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?copy_slots@OptionsMenu@@QAEXXZ  004e2cb0  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?msg_proc_thunk@@YGHPAUHWND__@@IIJ@Z  004d9440  /O2 /MT /Gy /TP

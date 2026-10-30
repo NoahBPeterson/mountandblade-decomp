@@ -44,3 +44,4 @@
 ../src/game/world_data/world_data.cpp  ?add@EmitterCtl@@QAEXH@Z  004955e0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?push@SceneList@@QAEPAUSceneObject@@XZ  00495650  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_state@WindowMgrW@@QAEXH@Z  00495700  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?place@ContainerW@@QAEXPAH@Z  00490570  /O2 /MT /Gy /TP

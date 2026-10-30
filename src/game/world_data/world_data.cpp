@@ -225,12 +225,11 @@ void ContainerW::place(int* a)
     WD_FLD(int, 0xec) = a[1];
     if (p154 != 0) {
         ((EntVt*)p154)->v23(this);
-        ((EntVt*)this)->v24();
-        return;
+    } else {
+        WD_FLD(int, 0xe0) = a[0];
+        WD_FLD(int, 0xe4) = a[1];
     }
-    WD_FLD(int, 0xe0) = a[0];
-    WD_FLD(int, 0xe4) = a[1];
-    ((EntVt*)this)->v24();
+    ((EntVt*)this)->v24();    // one shared tail call: an early return in the first arm moved the register allocation
 }
 
 // @ 0x4905c0
