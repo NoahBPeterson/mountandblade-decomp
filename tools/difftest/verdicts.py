@@ -197,7 +197,11 @@ def main():
             # single "current" dir is reliable.
             cands = [os.path.join(sd, name) for sd in src_dirs]
             cands = [c for c in cands if os.path.exists(c)]
-            d = load(max(cands, key=os.path.getmtime)) if cands else None
+            # A run that hit the sweep's time limit (TIMEOUT) or died (CRASH) measured nothing: the newest result that
+            # did finish wins, and a timeout counts only when the row has nothing else.
+            got = [(os.path.getmtime(c), load(c)) for c in cands]
+            done = [g for g in got if (g[1] or {}).get("verdict") not in (None, "TIMEOUT", "CRASH")]
+            d = max(done or got, key=lambda g: g[0])[1] if got else None
             cs = case_sweep(r["id"], r["va"])
             if cs is not None:
                 # a switch function swept case by case: one whole-function run never gets past its dispatch

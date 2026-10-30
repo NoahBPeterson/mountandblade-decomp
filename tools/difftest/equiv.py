@@ -134,6 +134,57 @@ def regress_inputs(sid, va, opts):
     return out
 
 
+def cover_dir(sid, va, opts):
+    """Coverage inputs: valid inputs that reached a control-flow edge no earlier input of the row had reached (kept
+    by every run, replayed first by every later run, like the regression inputs). A slow, thorough run (z3 steering:
+    DIFFTEST_CONCOLIC=1, more inputs) finds them once; every ordinary run then starts from its coverage."""
+    return os.path.join(regress_dir(sid, va, opts), "cover")
+
+
+def cover_inputs(sid, va, opts):
+    """[(file name, Input)] of the row's coverage inputs, oldest first."""
+    if getattr(opts, "no_regress", False) or os.environ.get("DIFFTEST_NO_REGRESS"):
+        return []
+    import pickle
+    d = cover_dir(sid, va, opts)
+    out = []
+    try:
+        names = sorted(os.listdir(d), key=lambda f: os.path.getmtime(os.path.join(d, f)))
+    except OSError:
+        return []
+    for f in names:
+        if not f.endswith(".pkl"):
+            continue
+        try:
+            inp = Input()
+            inp.__dict__.update(pickle.load(open(os.path.join(d, f), "rb")))
+            inp.__dict__.setdefault("pagegen", 1)
+            inp.origin = "cover"
+            out.append(("cover/" + f, inp))
+        except Exception:       # noqa: BLE001 - an unreadable file (older harness) is skipped, never fatal
+            continue
+    return out
+
+
+def save_cover(sid, va, opts, inp):
+    """Keep a valid input that reached a new edge (content-addressed). -> path or None."""
+    if getattr(opts, "no_regress", False) or os.environ.get("DIFFTEST_NO_REGRESS"):
+        return None
+    import hashlib, pickle
+    blob = pickle.dumps(dict(inp.__dict__, pagegen=inp.pagegen, origin="cover"))
+    d = cover_dir(sid, va, opts)
+    pth = os.path.join(d, hashlib.sha1(blob).hexdigest()[:16] + ".pkl")
+    try:
+        os.makedirs(d, exist_ok=True)
+        if not os.path.exists(pth):
+            tmp = pth + ".%d.part" % os.getpid()
+            open(tmp, "wb").write(blob)
+            os.replace(tmp, pth)
+        return pth
+    except OSError:
+        return None
+
+
 def save_regress(sid, va, opts, inp):
     """Keep a mismatching input (content-addressed: the same input is stored once). -> path or None."""
     if getattr(opts, "no_regress", False) or os.environ.get("DIFFTEST_NO_REGRESS"):
@@ -5631,6 +5682,8 @@ def _test_function(sid, va, opts, log=print):
         if opts.transparent_auto:
             out["transparent_auto"] = ["%08x" % v for v in opts.transparent_auto]
     regress = regress_inputs(sid, va, opts)
+    n_regress = len(regress)
+    regress += cover_inputs(sid, va, opts)          # then the saved coverage inputs (see cover_dir)
     opts.regress_set = [f for f, _i in regress]      # keyed: a new regression input re-runs the row
     key = _cache_key(t, out, opts)
     if key:
@@ -5654,6 +5707,7 @@ def _test_function(sid, va, opts, log=print):
     repaired = 0
     loop_tries = loop_ok = loop_calls = 0
     faked = 0
+    saved_cover = 0
     ran = 0
     ours_probe = 0
     probes = 0
@@ -5684,7 +5738,7 @@ def _test_function(sid, va, opts, log=print):
                 inp = steer.next(rng, corpus)
             if inp is None and i < len(regress):
                 inp = regress[i][1]
-                inp.origin = "regress"
+                inp.origin = "regress" if i < n_regress else "cover"
             if inp is None:
                 if corpus and rng.random() < opts.mutate:
                     parent = steer.pick_parent(corpus, rng) if steer else \
@@ -5888,7 +5942,8 @@ def _test_function(sid, va, opts, log=print):
                 out["exited"] = out.get("exited", 0) + 1      # valid runs that ended in a program exit
             if getattr(inp, "typed", 0):
                 typed_valid += 1
-            new = bool(run_blocks - runner.blocks) or bool(a["edges"] - runner.orig.edges) or \
+            new_edge = bool(a["edges"] - runner.orig.edges)
+            new = bool(run_blocks - runner.blocks) or new_edge or \
                 bool(sb[0] in FINISHED and b["edges"] - runner.ours.edges)
             runner.blocks |= run_blocks
             runner.orig.edges |= a["edges"]
@@ -5897,6 +5952,8 @@ def _test_function(sid, va, opts, log=print):
             if new:
                 corpus.append(inp)
                 last_new = i
+                if i >= len(regress) and new_edge:
+                    saved_cover += save_cover(sid, va, opts, inp) is not None
             if steer:
                 steer.note_valid(inp, {"orig": a["edges"], "ours": b["edges"] if sb[0] in FINISHED else set()})
             cmp_.last_kind = None
@@ -5983,7 +6040,8 @@ def _test_function(sid, va, opts, log=print):
     out["mismatch_sigs"] = dict(sigs.most_common(40))
     if gen.invs:
         out["input_invariants"] = describe_invariants(gen.invs)
-    out["regress_inputs"] = len(regress)
+    out["regress_inputs"] = n_regress
+    out["cover_inputs"] = {"replayed": len(regress) - n_regress, "saved": saved_cover}
     # inputs that carry typed objects (fresh ones and the mutants/steered inputs made from them)
     out["typed_inputs"] = {"inputs": typed_n, "valid": typed_valid, "types": runner.typed_info}
     out.update(seed=opts.seed, inputs_planned=opts.inputs, extra_inputs=opts.extra_inputs if getattr(opts, "steer", True) else 0,
