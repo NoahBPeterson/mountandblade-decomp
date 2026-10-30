@@ -116,7 +116,7 @@ extern gui_mgr g_gui;                                   // 0x5d7080
 extern StrTable g_strtable;                             // 0x5e2a18
 #include "../ini_file.h"
 extern ini_file g_config;                               // 0xa44240
-#define CONFIG_VALUES ((char**)0xa4425c)
+#define CONFIG_VALUES ((char**)((char*)&g_config + 0x1c))   // 0xa4425c: g_config (0xa44240) + 0x1c, the value of each 0x2c-byte entry
 extern "C" double atof(const char* s);                  // 0x537352
 
 #include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
