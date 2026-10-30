@@ -44,6 +44,8 @@ def main():
                     ">= 50%%), break in and report where, then end it")
     ap.add_argument("--cmds", default="", help="extra winedbg commands run at the fault (';'-separated), e.g. "
                     "'x /4x $ecx' (their output is in dbg.log)")
+    ap.add_argument("--winedebug", default="-all", help="WINEDEBUG channels for the run (default -all), e.g. '+seh' to log "
+                    "every exception Wine dispatches, including one that kills the process before winedbg hears of it")
     ap.add_argument("--break", dest="brk", action="append", default=[], help="stop at this address (hex or a map "
                     "symbol, e.g. __purecall) and report as for a fault")
     ap.add_argument("--pre", default="", help="extra winedbg commands run before 'cont' (';'-separated), e.g. "
@@ -62,7 +64,7 @@ def main():
     with open(log_path, "w") as log:
         p = subprocess.Popen([CX, "--bottle", a.bottle, "--cx-app", "winedbg", WINPATH], cwd=game,
                              stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT, text=True,
-                             env=dict(os.environ, WINEDEBUG="-all"))
+                             env=dict(os.environ, WINEDEBUG=a.winedebug))
         for b in a.brk:
             p.stdin.write("break *0x%x\n" % symbol_address(b))
         for c in a.pre.split(";"):
