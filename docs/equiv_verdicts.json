@@ -1,6 +1,6 @@
 {
-"when": "2026-10-30T09:28:40-05:00",
-"commit": "e7b2a5c",
+"when": "2026-10-30T09:45:59-05:00",
+"commit": "fd5b8f4",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -10,8 +10,8 @@
 ],
 "summary": {
 "pass": 415,
-"weak": 448,
-"fail": 19,
+"weak": 452,
+"fail": 15,
 "inputs": 28,
 "harness": 36,
 "comdat": 118,
@@ -19,8 +19,8 @@
 "funclet": 0,
 "not_run": 6,
 "pass_sz": 136686,
-"weak_sz": 598219,
-"fail_sz": 57929,
+"weak_sz": 609528,
+"fail_sz": 46620,
 "inputs_sz": 23807,
 "harness_sz": 61527,
 "comdat_sz": 2793,
@@ -2671,8 +2671,8 @@
 "0047d3e0": {
 "module": "mesh_scene",
 "file": "src/game/mesh_slot/mesh_scene.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK-FP",
+"category": "weak",
 "size": 2159
 },
 "0047dcd0": {
@@ -5798,8 +5798,8 @@
 "004ea8e0": {
 "module": "cam_view",
 "file": "src/game/char_sheet/cam_view.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1889
 },
 "004eb270": {
@@ -6141,8 +6141,8 @@
 "004f8c80": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 6918
 },
 "004fa790": {
@@ -6176,8 +6176,8 @@
 "004fb8e0": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK-FP",
+"category": "weak",
 "size": 343
 },
 "004fba40": {
