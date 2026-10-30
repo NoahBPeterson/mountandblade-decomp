@@ -27,6 +27,13 @@ struct UiA : MissionUi {                    // vtable 0x591d58
     void update(void* a, float* b, int c, int d);   // 0x48b320
     int type9();                            // 0x48b390
     int type8();                            // 0x48b4a0
+    // the slots of vtable 0x591d58 that differ from the base's (widget_slots.cpp: each a jmp to the function named)
+    bool d01();                             // +0x04 returns 1 (0x48b170)
+    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> update
+    char d35(unsigned mask);                // +0x8c -> key
+    void d44();                             // +0xb0 -> MissionUi::flag1 0x48b1a0
+    void d46();                             // +0xb8 -> MissionUi::flag2 0x48b180
+    int d48();                              // +0xc0 -> type
 };
 
 struct UiB : MissionUi {                    // vtable 0x591fb0
@@ -40,6 +47,11 @@ struct UiB : MissionUi {                    // vtable 0x591fb0
     int type2();                            // 0x48b590
     char key(unsigned p);                   // 0x48b5a0
     void set_value(float v);                // 0x48b6e0
+    // slots of vtable 0x591fb0 that differ from the base's (widget_slots.cpp)
+    void d02(int a);                        // +0x08 -> HudBar::update_4 0x497880
+    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> show
+    char d35(unsigned mask);                // +0x8c -> key
+    int d48();                              // +0xc0 -> type2
 };
 
 struct UiC : MissionUi {                    // vtable 0x592078
@@ -54,10 +66,15 @@ struct UiC : MissionUi {                    // vtable 0x592078
     float f194;                             // +0x194
     float f198, f19c, f1a0, f1a4;           // +0x198 (1, 1, 1 and an uninitialised stack value: 0x48b760)
     int f1a8;                               // +0x1a8
-    virtual void update_children();         // +0xc4, vtable slot 49 (0x497d10, called by show)
+    virtual void update_children();         // +0xc4, vtable slot 49 (0x497d10, called by show: widget_slots.cpp jmps to HudBar::rebuild_frame)
     UiC();                                  // 0x48b760
     void show(void* a, float* b, int c, int d);   // 0x48b7f0
     int type();                             // 0x48b880
+    // slots of vtable 0x592078 that differ from the base's (widget_slots.cpp)
+    void d02(int a);                        // +0x08 -> HudBar::update_5 0x497e30
+    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> show
+    char d35(unsigned mask);                // +0x8c -> UiB::key 0x48b5a0 (the same slider handler)
+    int d48();                              // +0xc0 -> type
 };
 
 struct UiD : MissionUi {                    // vtable 0x592140
@@ -65,12 +82,15 @@ struct UiD : MissionUi {                    // vtable 0x592140
     float f17c;                             // +0x17c tolerance
     int f180;                               // +0x180 dragging
     float f184;                             // +0x184 grab offset
-    virtual void update_children();         // +0xc4, vtable slot 49 (0x498390)
+    virtual void update_children(float a);  // +0xc4, vtable slot 49 (0x498390: widget_slots.cpp jmps to HudBar::scale_lane)
     UiD();                                  // 0x48b890
     void show(void* a, float* b, int c, int d);   // 0x48b8d0
     float value();                          // 0x48b930 (next object)
     char key(unsigned p);                   // 0x48b960 (next object)
     void set_value(float x);                // 0x48baa0 (next object)
+    // slots of vtable 0x592140 that differ from the base's (widget_slots.cpp)
+    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> show
+    char d35(unsigned mask);                // +0x8c -> key
 };
 
 #endif // GAME_UI_WIDGETS_H

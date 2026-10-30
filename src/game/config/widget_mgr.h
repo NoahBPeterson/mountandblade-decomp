@@ -97,11 +97,24 @@ struct ButtonBase : MissionUi {
     ButtonBase() { f178 = 0; b121 = 0; b180 = 0; f184 = 0; }
     void set_flag() { f184 = 1; }               // 0x499b50
 };
+// The slots these widgets override (config/widget_slots.cpp: each a leaf or a jmp to the function the original's table names)
 struct MediumButton : ButtonBase {              // vtable 0x591e20, size 0x188
-    virtual bool d01();
+    bool d01();                                 // +0x04 returns 1 (0x48b170)
+    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> UiA::update 0x48b320
+    char d35(unsigned mask);                    // +0x8c -> UiA::key 0x48b200
+    void d41(float* out, const tstring* s);     // +0xa4 -> MissionUi::make_text 0x48b3a0
+    void d44();                                 // +0xb0 -> MissionUi::flag1 0x48b1a0
+    void d46();                                 // +0xb8 -> MissionUi::flag2 0x48b180
+    int d48();                                  // +0xc0 -> UiA::type9 0x48b390
 };
 struct XyzButton : ButtonBase {                 // vtable 0x591ee8, size 0x188
-    virtual bool d01();
+    bool d01();                                 // +0x04 returns 1 (0x48b170)
+    void d02(int a);                            // +0x08 -> HudBar::update_2 0x4966b0
+    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> UiA::update 0x48b320
+    char d35(unsigned mask);                    // +0x8c -> UiA::key 0x48b200
+    void d44();                                 // +0xb0 -> MissionUi::flag1 0x48b1a0
+    void d46();                                 // +0xb8 -> MissionUi::flag2 0x48b180
+    int d48();                                  // +0xc0 -> UiA::type8 0x48b4a0
 };
 
 // UiA (../ui/ui_widgets.h, vtable 0x591d58) as DropDown::create builds it: the constructor 0x48b1c0 is inlined there
@@ -114,8 +127,13 @@ struct UiABase : MissionUi {
     int f184;                                   // +0x184
     UiABase() { f178 = 0; b121 = 0; }
 };
-struct UiAInline : UiABase {                    // vtable 0x591d58 (= UiA's)
-    virtual bool d01();
+struct UiAInline : UiABase {                    // vtable 0x591d58 (= UiA's; the same overrides, config/widget_slots.cpp)
+    bool d01();                                 // +0x04 returns 1 (0x48b170)
+    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> UiA::update 0x48b320
+    char d35(unsigned mask);                    // +0x8c -> UiA::key 0x48b200
+    void d44();                                 // +0xb0 -> MissionUi::flag1 0x48b1a0
+    void d46();                                 // +0xb8 -> MissionUi::flag2 0x48b180
+    int d48();                                  // +0xc0 -> UiA::type 0x48b1f0
     UiAInline() { f180 = 0; f184 = 0; }
 };
 
@@ -129,9 +147,18 @@ struct ContainerBase : MissionUi {
     char pad189[0x190 - 0x189];
 };
 struct NodeA : ContainerBase {
-    virtual bool d01();
-    virtual void update_children();             // +0xc4, vtable slot 49 (0x48ef40)
-    virtual void s4c() {}                       // placeholder: the original table has one more slot after +0xc4
+    // the slots vtable 0x592848 holds that the base's does not (config/widget_slots.cpp: jmps to ContainerW's members)
+    void d00(int release);                      // +0x00 -> destroy 0x49b0f0
+    void d02(int a);                            // +0x08 -> ContainerW::update_all 0x4908c0
+    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> ContainerW::bounds_of 0x490710
+    void d16();                                 // +0x40 -> ContainerW::reset_all 0x4906e0
+    void d22(void* p);                          // +0x58 -> ContainerW::place 0x490570
+    void d23(MissionUi* child);                 // +0x5c -> ContainerW::track_bounds 0x4905c0
+    void d24();                                 // +0x60 -> ContainerW::activate_all 0x4906b0
+    char d35(unsigned mask);                    // +0x8c -> gui_window::handle_event 0x42d170
+    void refresh();                             // +0x90 -> gui_window::wheel_focus 0x42cec0
+    virtual void update_children();             // +0xc4, vtable slot 49 (0x48ef40, FrameBox::release)
+    virtual void d50(MissionUi* child);         // +0xc8, vtable slot 50 -> ContainerW::add_child 0x493a30
     NodeA() { f188 = 1; }
     void* destroy(unsigned flags);              // 0x49b0f0 (scalar deleting destructor)
 };

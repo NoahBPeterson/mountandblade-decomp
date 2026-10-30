@@ -20,35 +20,59 @@
 extern float g_tick_scale;                  // 0x54a6d0 1e-5f (the tick table's scale; loaded with fmul from the image)
 
 struct MissionUi {
-    // vtable 0x591c80, 50 slots. Names where a caller shows the signature; the rest are placeholders.
-    virtual void d00(int release);          // +0x00 deleting destructor (called with push 1 by 0x488ad0)
-    virtual bool d01();                     // +0x04 "is active" (tested by 0x488720)
-    virtual void d02(); virtual void d03(); virtual void d04(); virtual void d05(); virtual void d06();
-    virtual void d07(); virtual void d08(); virtual void d09(); virtual void d10(); virtual void d11();
-    virtual void d12(); virtual void d13(); virtual void d14(); virtual void d15(); virtual void d16();
-    virtual void d17();
-    virtual void set_key_flags(int f);      // +0x48 (0x48b200, 0x48b5a0)
-    virtual void d19(); virtual void d20(); virtual void d21();
-    virtual void d22(void* p);              // +0x58 position/offset pair (0x487c40)
-    virtual void d23(MissionUi* src);       // +0x5c "child moved" notification, passed this (0x488970)
-    virtual void d24();
-    virtual void set_xy(float* v);          // +0x64 (0x488b50, 0x48b090)
-    virtual void d26();
-    virtual void set_size(float* v);        // +0x6c (0x48b3a0)
-    virtual void set_offset(float* v);      // +0x70 (0x48b3a0)
-    virtual void d29(); virtual void d30(); virtual void d31();
-    virtual void d32(int a, int b);         // +0x80 (0x488aa0)
-    virtual void d33(int a);                // +0x84 (0x488aa0)
-    virtual void d34(void* a);              // +0x88 (0x488ad0)
-    virtual void d35();
-    virtual void refresh();                 // +0x90 (0x48b200)
-    virtual void get_xy(float* v);          // +0x94 (0x488b30, 0x488a40)
-    virtual void set_color(unsigned* c);    // +0x98 (0x487c40)
-    virtual void d39(void* p);              // +0x9c (0x487c40)
-    virtual void d40();
-    virtual void get_text_size(tstring* s, float* out);   // +0xa4
-    virtual void d42(); virtual void d43(); virtual void d44(); virtual void d45(); virtual void d46();
-    virtual void d47(); virtual void d48();
+    // vtable 0x591c80, 49 slots. Names where a caller shows the signature; the rest are placeholders. Every slot is
+    // defined in widget_slots.cpp: a leaf the original's slot also holds (`return 0`, `ret`), or a bare `jmp` to the
+    // function the original's slot names (the comment on each: slot, its address and owner). A derived widget class
+    // overrides a slot with the same name and its own jmp.
+    virtual void d00(int release);          // +0x00 deleting destructor (called with push 1 by 0x488ad0)  -> WidgetDtor::destroy 0x502300
+    virtual bool d01();                     // +0x04 "is active" (tested by 0x488720): returns 0 (0x4280e0; UiA & co. return 1: 0x48b170)
+    virtual void d02(int a);                // +0x08 -> Effect::animate 0x487c40 (the widgets' per-frame update; the argument is not used)
+    virtual void d03();                     // +0x0c -> FieldPanel::update_bounds 0x48d020
+    virtual void d04(float a, int b);       // +0x10 -> set_a 0x488560
+    virtual void d05(float a, int b);       // +0x14 -> set_b 0x4885a0
+    virtual void d06(float a, int b);       // +0x18 -> set_c 0x4885e0
+    virtual void d07(float a, int b);       // +0x1c -> set_d 0x488620
+    virtual void d08(float a, float* p);    // +0x20 -> set_e 0x488660
+    virtual void d09(float a, float* p);    // +0x24 -> set_f 0x4886c0
+    virtual void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> render 0x488720 (the derived widgets' update / show)
+    virtual void d11(int v);                // +0x2c -> set15c 0x488890
+    virtual int d12();                      // +0x30 -> get15c 0x4888a0
+    virtual void d13(int v);                // +0x34 -> set168 0x4888b0
+    virtual float d14();                    // +0x38 -> get168 0x4888c0
+    virtual bool d15(int m);                // +0x3c -> test_c8 0x4888d0
+    virtual void d16();                     // +0x40 -> clear_c8 0x4888e0
+    virtual bool d17(int m);                // +0x44 -> clear_mask 0x4888f0
+    virtual void set_key_flags(int f);      // +0x48 -> or_flags 0x488910 (0x48b200, 0x48b5a0)
+    virtual void d19(int v);                // +0x4c -> set_d0 0x488930
+    virtual void d20(int v);                // +0x50 -> set_d4 0x488940
+    virtual void d21(int m);                // +0x54 -> or_d4 0x488950
+    virtual void d22(void* p);              // +0x58 -> move_a 0x488970: position/offset pair (0x487c40)
+    virtual void d23(MissionUi* src);       // +0x5c "child moved" notification, passed this (0x488970): `ret 4` (0x408030)
+    virtual void d24();                     // +0x60 `ret` (0x477b70)
+    virtual void set_xy(float* v);          // +0x64 -> move_f0 0x4889b0 (0x488b50, 0x48b090)
+    virtual void d26(float* v);             // +0x68 -> move_f8 0x4889e0
+    virtual void set_size(float* v);        // +0x6c -> set_text_pos 0x48b090 (0x48b3a0)
+    virtual void set_offset(float* v);      // +0x70 -> set138 0x488a10 (0x48b3a0)
+    virtual void d29(float* v);             // +0x74 -> set148 0x488a40
+    virtual void d30(float* v);             // +0x78 -> or148 0x488a70
+    virtual void d31(int a, int b);         // +0x7c -> run 0x488aa0
+    virtual void d32(int a, int b);         // +0x80 -> set_track 0x488ad0 (0x488aa0)
+    virtual void d33(int a);                // +0x84 -> normalize_uv 0x495fa0 (0x488aa0)
+    virtual void d34(void* a);              // +0x88 `ret 4` (0x408030) (0x488ad0)
+    virtual char d35(unsigned mask);        // +0x8c -> gui_window::refresh_all 0x42cd60 (the derived widgets' key handler)
+    virtual void refresh();                 // +0x90 -> gui_window::wheel_step 0x42ce50 (0x48b200)
+    virtual void get_xy(float* v);          // +0x94 -> PObj::text_rect 0x49b4f0, hidden result pointer (0x488b30, 0x488a40)
+    virtual void set_color(unsigned* c);    // +0x98 -> set14c 0x488b10 (0x487c40)
+    virtual void d39(void* p);              // +0x9c -> set_target 0x488b20 (0x487c40)
+    virtual void d40(int p);                // +0xa0 -> set_pos 0x488b30
+    virtual void d41(float* out, const tstring* s);   // +0xa4 -> set_text 0x488b50
+    virtual void d42(tstring* out);         // +0xa8 -> put 0x488c70
+    virtual void d43(const tstring* s, const float* p);   // +0xac -> MissionUiText::layout_text_to 0x49abc0
+    virtual void d44();                     // +0xb0 -> hide 0x488c90
+    virtual void d45();                     // +0xb4 -> show 0x488ca0
+    virtual void d46();                     // +0xb8 -> flag2_set 0x488cb0
+    virtual void d47();                     // +0xbc -> flag2_clear 0x488cc0
+    virtual int d48();                      // +0xc0 widget type code: returns 0 (0x408020; the derived widgets return their kind)
     // 49 slots: the original vtable 0x591c80 ends here. A 50th (+0xc4, `update_children`) exists only in the classes
     // that add it, each with its own function: UiC 0x497d10, UiD 0x498390, progress_bar 0x4e3fb0, NodeA 0x48ef40.
 
