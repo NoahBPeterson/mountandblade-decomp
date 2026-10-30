@@ -368,7 +368,10 @@ extern int g_limit_hair_colors;                   // 0xa181ac
 
 // @ 0x481c40 -- append a character mesh to the world: select the character, set up the animator, collect the lod meshes
 // and return &g_skins_begin[g_cur] with the mesh count written to *out
-EChar* append_mesh(int colour, int kind, void** a, void** b, void** c, char carried, int* out)
+// the third argument receives the three lod meshes and the fourth / fifth are the face codes (0x481c75: unpack [esp+0x10],
+// 0x481cad: collect into [esp+0xc] +0/+4/+8); the old a/b/c order decoded the caller's output array and collected the
+// meshes over the troop's face code, leaving the head mesh null (crash in build_appearance when agents spawn)
+EChar* append_mesh(int colour, int kind, void** c, void** a, void** b, char carried, int* out)
 {
     if (colour < 0)
         g_cur = 0;
