@@ -109,7 +109,7 @@ void SavePanel::update(int)
     // before use), so construct them here, once, on the frame path that first touches the record.
     {
         static bool menu_strings_done = false;
-        if (!menu_strings_done) {
+        if (!menu_strings_done && g_menu_rec) {
             menu_strings_done = true;
             new (&g_menu_rec->title) tstring();
             new (&*(tstring*)((char*)g_menu_rec + 0x54)) tstring();
@@ -189,10 +189,9 @@ void SavePanel::update(int)
         (g_a17420 != 0 && g_a17820 == 0 && ((*(unsigned char*)((char*)panel + 0x104) & 2) == 0)))
         goto confirm_delete;
     {
-        // +0x21c is the dialog's answer slot (the confirm sets it to -1 before opening the box). Require an explicit
-        // "yes" (1) here: while the polarity of the original's 0/1 encoding is unconfirmed, a mis-click must not
-        // reach crt_remove (it would delete the save the player just clicked on).
-        if (*(int*)((char*)this + 0x21c) == 1) {
+        // +0x21c is the dialog's answer slot (the confirm sets it to -1 before opening the box). The original
+        // (0x4ea5f5: cmp [esi+0x21c], 0 / jne 0x4ea6bc) removes the file when the answer is 0 (ui_yes).
+        if (*(int*)((char*)this + 0x21c) == 0) {
             crt_sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
@@ -203,7 +202,7 @@ void SavePanel::update(int)
                         selected / 10, selected % 10);
             if (crt_remove(name) != 0) {
                 tstring err("ui_error_removing_file");
-                g_msglog.add(*g_strtable.lookup(err), -1);
+                g_msglog.add(*g_strtable.lookup(err), 0xffff0000);
             }
             g_main_menu.set_state(0x15);
             return;

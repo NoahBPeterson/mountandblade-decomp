@@ -90,10 +90,9 @@ int GameData::write_clock(OutStream* out)
     out->w_raw(p + 0x13ae0);
     out->w_raw(p + 0x13ae4);
     tstring tmp = f13b50;
-    tmp.clear();
+    tmp.spaces_to_underscores();
     if (!tmp.len) {
-        static const char kEmpty[] = "";
-        out->w_cstr(kEmpty);
+        out->w_cstr("-1");
     } else {
         out->w_struct(&tmp);
     }
