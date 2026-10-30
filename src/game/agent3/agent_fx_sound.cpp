@@ -64,7 +64,7 @@ E56* __cdecl uninit_copy_e56(const E56* first, const E56* last, E56* dest, alloc
             al.construct(dest, *first);
     } catch (...) {
         for (; next != dest; ++next)
-            tidy_vec_pair((VecPair2*)next);
+            al.destroy((VecPair2*)next);
         throw;
     }
     return dest;
@@ -950,7 +950,7 @@ void __cdecl uninit_fill_n_e56(E56* first, unsigned n, const E56& val, alloc_e56
             al.construct(first, val);
     } catch (...) {
         for (; next != first; ++next)
-            tidy_vec_pair((VecPair2*)next);
+            al.destroy((VecPair2*)next);
         throw;
     }
 }

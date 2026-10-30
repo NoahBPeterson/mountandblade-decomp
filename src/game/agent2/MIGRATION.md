@@ -1,7 +1,7 @@
 # src/game/agent2 migration: agent_stats, agent_ai
 
 Region 0x437830..0x43e190 of the TU map (`agent_2` = TU 44 from 0x437830 and `agent_3` = TU 45 up to 0x43e190; the task
-range ended at 0x43e150, but the function at 0x43e150 (`tidy_vec_pair`, 0x40 bytes) and `deque_xlen` 0x43e0e0 are the
+range ended at 0x43e150, but the function at 0x43e150 (`alloc_e56::destroy`, 0x40 bytes) and `deque_xlen` 0x43e0e0 are the
 last two functions before `Font::advance` 0x43e190, which src/game/agent3 starts with, so they are defined here).
 Merged from twelve slices of `match/slices/` (`s004375b0` (from 0x437830), `s00437f00`, `s00438860` (+ `_b`), `s00439100`,
 `s00439a50`, `s0043a280`, `s0043ac40`, `s0043b5d0`, `s0043bdb0`, `s0043c9c0`, `s0043d040`, `s0043db60` (up to 0x43e150))
@@ -169,7 +169,7 @@ All of these define smaller or different views of the same objects under the sam
   `rec_phase` 0x433ac0 / `reset_rec` 0x4339d0 / `set_rec_phase` 0x433b20 are members of the controller, not of the channel).
 - `src/game/agent3/agent_types.h`: `Agent` (0x5928 bytes, view without +4/+0x30/+0x8c/+0xa8/+0xc4/+0x25c../+0x5340/+0x53a4/+0x5624/+0x587c),
   `Mission`, `AgentBody`, `Skeleton` (+0x30 shapes vector, +0x40 chans here), `AnimSlot`, `DefList`, `Threat`, `ItemRef`, `GameData`, `TroopRec`,
-  `world` (= `level` here), `E56`/`alloc_e56` (the destroyer 0x43e150 is `tidy_vec_pair` here). Its `Agent::duration()` is `attack_speed()`
+  `world` (= `level` here), `E56`/`alloc_e56` (the destroyer 0x43e150 is `alloc_e56::destroy` here). Its `Agent::duration()` is `attack_speed()`
   0x438360, `find_target()` is `pick_front` 0x43b9e0, its `slot_pair_inl` / `charged_0x48` are the same inline bodies.
 - `src/game/ui/*.h` (`Agent`, `Mission`, `ItemRef`, `ItemKind`, `Troop`) as in the notes of src/game/agent and src/game/agent3.
 - `src/rgl/shapes/shapes.h` defines the real shape classes; `agent_stats.h` has minimal views.

@@ -39,6 +39,8 @@ struct VecPair2 {                                        // two vectors at +0x10
 
 
 void deque_xlen();                                                                                               // 0x43e0e0
-void __stdcall tidy_vec_pair(VecPair2* p);                                                                       // 0x43e150
+struct alloc_e56 {                                       // std::allocator<E56>: the E56 record (agent3/agent_types.h) as a VecPair2 here
+    void destroy(VecPair2* p);                           // 0x43e150 (thiscall; the allocator itself is unused)
+};
 
 #endif // AGENT2_AGENT_AI_H

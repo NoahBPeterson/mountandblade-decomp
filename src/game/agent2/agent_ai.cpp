@@ -962,7 +962,7 @@ void deque_xlen() { throw std::length_error("deque<T> too long"); }
 
 // destroys the two int vectors of an E56 record (std::allocator<E56>::destroy)
 // @ 0x43e150
-void __stdcall tidy_vec_pair(VecPair2* p)
+void alloc_e56::destroy(VecPair2* p)
 {
     p->b.tidy();
     p->a.tidy();

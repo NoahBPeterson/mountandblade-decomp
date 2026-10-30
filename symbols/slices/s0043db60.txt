@@ -5,7 +5,7 @@
 0043dd70 Agent::set_goal_near  # random jitter within radius (rand()%0x3dc9), 32 tries, inside the play area
 0043df60 Agent::advance_path  # advances path_cur when the next waypoint is reached (NavMesh::trace)
 0043e0e0 deque_xlen  # throws std::length_error("deque<T> too long")
-0043e150 tidy_vec_pair  # frees and clears two (first,last,end) pointer vectors at +0x10 and +0x20
+0043e150 alloc_e56::destroy  # frees and clears two (first,last,end) pointer vectors at +0x10 and +0x20
 0043e190 Font::advance  # glyph advance for a character code
 0043e200 Font::measure  # text width, skipping <...> tags, tab stops at 0.25
 0043e2a0 vec_xlen  # throws std::length_error("vector<T> too long")

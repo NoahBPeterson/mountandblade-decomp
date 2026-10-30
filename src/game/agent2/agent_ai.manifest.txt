@@ -9,4 +9,4 @@
 ../src/game/agent2/agent_ai.cpp  ?collect_enemies@Agent@@QAEXH@Z  0043b300  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_ai.cpp  ?ufill@vecE1c8@@QAEPAUPlacedObj@@PAU2@IABU2@@Z  0043db60  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_ai.cpp  ?deque_xlen@@YAXXZ  0043e0e0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_ai.cpp  ?tidy_vec_pair@@YGXPAUVecPair2@@@Z  0043e150  /O2 /MT /Gy /TP
+../src/game/agent2/agent_ai.cpp  ?destroy@alloc_e56@@QAEXPAUVecPair2@@@Z  0043e150  /O2 /MT /Gy /TP

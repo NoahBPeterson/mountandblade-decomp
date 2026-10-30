@@ -64,12 +64,11 @@ struct E56 {
     int d, e, f;
     E56(const E56& o);         // 0x43f510
 };
+struct VecPair2;
 struct alloc_e56 {
     __declspec(noinline) void construct(E56* p, const E56& v);      // 0x442060
+    void destroy(VecPair2* p);     // 0x43e150 (src/game/agent2/agent_ai.cpp): frees the two vectors (agent2's VecPair2: +0x10, +0x20)
 };
-// 0x43e150 (src/game/agent2/agent_ai.cpp): destroys the two vectors of an E56 (agent2's VecPair2: vectors at +0x10 and +0x20); the original passes no allocator
-struct VecPair2;
-void __stdcall tidy_vec_pair(VecPair2* p);                          // 0x43e150
 
 // Callees whose definitions are under another class name (identical code folding, or the module that defines them names the
 // class differently); declared with the defining class's name so the call binds its symbol, and the object is cast at the
