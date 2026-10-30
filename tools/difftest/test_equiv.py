@@ -298,16 +298,72 @@ def test_crt_startup_state():
     assert all(m.image_base_page(".data", p) == bytes(m.uc.mem_read(p, 0x1000)) for p in m.image_extra_base)
 
 
+def test_system_import_models_are_input_driven():
+    """FindFirstFileA / SHGetFolderPathA / FSOUND_PlaySoundEx / NewtonBodyGetMatrix answer by (seed, call ordinal):
+    the same seed replays the same answers and out-parameters (orig and ours see one environment), and across
+    seeds both sides of the caller's branch occur. Out-parameters are written as the API documents."""
+    import struct
+    m = M.Machine(R.Image())
+    buf = m.model_data("test_sys_models", 0x1000)
+    m.write(buf + 0x800, b"C:\\mods\\*.sco\0")
+    call = lambda name, *a: m.handlers[name]["fn"](m, list(a), 0)
+
+    def run(seed):
+        m.ui_seed, m.ui_calls = seed, 0
+        m.find_patterns, m.find_counts = {}, {}
+        m.write(buf, b"\0" * 0x800)
+        out = [call("FindFirstFileA", buf + 0x800, buf), m.read(buf, 320),
+               call("SHGetFolderPathA", 0, 0x1A, 0, 0, buf + 0x400), m.cstr(buf + 0x400),
+               call("_FSOUND_PlaySoundEx@16", 0xFFFFFFFF, 0, 0, 1)]
+        call("NewtonBodyGetMatrix", 0, buf + 0x600)
+        return out + [m.read(buf + 0x600, 64)]
+
+    runs = [run(s) for s in range(0x1000, 0x1040)]
+    assert runs == [run(s) for s in range(0x1000, 0x1040)]                 # deterministic per seed
+    assert {r[0] for r in runs} == {M.INVALID_HANDLE, M.H_FIND}             # found / not found
+    found = next(r for r in runs if r[0] == M.H_FIND)
+    assert found[1][44:50] == b"a.sco\0" and struct.unpack_from("<I", found[1])[0] == 0x20
+    assert {r[2] for r in runs} == {0, 0x80004005}
+    assert next(r for r in runs if r[2] == 0)[3] == M.FOLDER_PATHS[0x1A]
+    assert next(r for r in runs if r[2])[3] == b""                         # a failed lookup leaves ""
+    assert {r[4] for r in runs} == {0xFFFFFFFF, 0, 3, 7}                    # no channel / a channel
+    assert len({r[5][48:60] for r in runs}) > 4                            # body translations vary
+    assert all(struct.unpack("<16f", r[5])[:12] == (1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0) for r in runs)
+    assert m.handlers["NewtonBodyGetMatrix"]["pops"] == 0                  # newton.dll is __cdecl
+    assert m.handlers["_FSOUND_PlaySoundEx@16"]["pops"] == 4
+
+
+def test_program_exit_is_a_compared_run():
+    """resmgr::load_stream 0x41db20 reports an unknown token through mb_error -> exit(-1): the CRT exit ends the run
+    with status "exit" on both sides and the run is compared (memory + traces), not discarded; it was UNSUPPORTED
+    (every input stopped at the exit path's SetUnhandledExceptionFilter)."""
+    m = M.Machine(R.Image())
+    try:
+        m.handlers["exit"]["fn"](m, [0xFFFFFFFF], 0)
+        assert False, "exit returned"
+    except M.Exit as e:
+        assert str(e) == "code -1"
+    assert equiv.noreturn_stop("exit: code -1")
+    src = os.path.join(ROOT, "src", "rgl", "core", "resmgr.cpp")
+    r = equiv.test_function("resmgr", 0x41db20, equiv.parse_args(
+        ["resmgr", "41db20", "--src", src, "--inputs", "100", "--time-limit", "90", "--no-regress"]))
+    assert r["verdict"] in ("PASS", "WEAK") and r["valid"] > 50, r
+    assert not any(k.startswith("import:SetUnhandledExceptionFilter") for k in r["discarded"]), r["discarded"]
+
+
 def test_lookup_stub_makes_row_testable():
     """make_scroll_track calls resmgr::get_object, which exit()s on a name an empty test resource manager lacks:
-    stubbed (the default) the row is measured; unstubbed every input ends at the exit."""
+    stubbed (the default) the row is measured past the lookup; unstubbed every input ends at the exit (a compared
+    run since program exits are modelled, but one that never reaches the code after the lookup)."""
     src = os.path.join(ROOT, "src", "game", "char_sheet", "quest_log.cpp")
     run = lambda *x: equiv.test_function("quest_log", 0x4ee910, equiv.parse_args(
         ["quest_log", "4ee910", "--src", src, "--inputs", "150", "--no-regress", *x]))
     r = run()
-    assert r["verdict"] in ("PASS", "WEAK") and r["valid"] > 0, r
+    assert r["verdict"] in ("PASS", "WEAK") and r["valid"] > 0 and r.get("exited", 0) < r["valid"], r
+    stubbed_cov = r["coverage"]["covered_insns"]
     r = run("--stub", "")
-    assert r["verdict"] == "UNSUPPORTED" and r["valid"] == 0, r
+    assert r["valid"] > 0 and r.get("exited", 0) == r["valid"], r
+    assert r["coverage"]["covered_insns"] < stubbed_cov, r["coverage"]
 
 
 def test_caller_dead_register_is_tolerated():

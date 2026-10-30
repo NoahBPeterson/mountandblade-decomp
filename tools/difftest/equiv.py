@@ -2983,7 +2983,7 @@ class Runner:
             stopped = status[0] != "ok" and a == last
             side.site_hits[a] = side.site_hits.get(a, 0) + n
             side.site_returned[a] = side.site_returned.get(a, 0) + n - (1 if stopped else 0)
-        if status[0] == "import" and last is not None and noreturn_stop(status[1]):
+        if status[0] in ("import", "exit") and last is not None and noreturn_stop(status[1]):
             nm = str(status[1]).split(":")[0]
             side.site_stops.setdefault(last, {})
             side.site_stops[last][nm] = side.site_stops[last].get(nm, 0) + 1
@@ -3052,6 +3052,7 @@ class Runner:
         m.dyn_sizes = {}
         m.rand_state = 1
         m.ui_seed, m.ui_calls = getattr(inp, "seed", 0) & 0xFFFFFFFF, 0     # user32 query answers (machine.ui_answer)
+        m.find_patterns, m.find_counts = {}, {}                                 # FindFirstFileA search state
         m.alloc_fail, m.alloc_count = tuple(getattr(inp, "alloc_fail", ())), 0
         extra_init = {}
         self.mapped_extra = []
@@ -3549,6 +3550,11 @@ class Comparer:
     def compare(self, a, b, t):
         """-> None if equivalent, else (observable, orig, ours, detail). self.last_kind: triage hint."""
         self.last_kind = None
+        if a["status"][0] == "exit":
+            # both builds terminated the program (run() checked that they did so the same way): no frame returned,
+            # so registers, esp and the x87 stack are mid-call state nothing observes. Everything the process
+            # leaves behind -- memory, the calls and imports made on the way -- is compared below as for a return.
+            return self.compare_state(a, b, t)
         rk = t.ret_kind
         if rk in ("int", "ptr", "hidden", "unknown", "small", "bool", "i64"):
             mask = {"bool": 0xFF, "small": 0xFFFF}.get(rk, 0xFFFFFFFF)
@@ -3601,6 +3607,16 @@ class Comparer:
             return ("mxcsr", "%08x" % a["mxcsr"], "%08x" % b["mxcsr"], "SSE control")
         if rk == "m128" and a["xmm0"] != b["xmm0"]:
             return ("xmm0", "%032x" % a["xmm0"], "%032x" % b["xmm0"], "SSE return")
+        return self.compare_state(a, b, t)
+
+    def compare_state(self, a, b, t):
+        """The observables a run leaves besides its registers: the control words, memory, and the import, call
+        and fake-call traces (compare's tail; on its own for a run that ended in a program exit)."""
+        if a["status"][0] == "exit":
+            if a["fpcw"] != b["fpcw"]:
+                return ("fpcw", "%04x" % a["fpcw"], "%04x" % b["fpcw"], "x87 control word")
+            if a["mxcsr"] != b["mxcsr"]:
+                return ("mxcsr", "%08x" % a["mxcsr"], "%08x" % b["mxcsr"], "SSE control")
         d = self.compare_mem(a, b)
         if d:
             return d
@@ -4332,10 +4348,11 @@ class FpTol:
     def judge(self, a, b, inp, t):
         """-> ('fp' | 'oor', None) when only float rounding differs, else ('real', mismatch tuple)."""
         ref = self.ref_run(inp)
-        if ref["status"][0] != "ok":
+        if ref["status"][0] != a["status"][0]:
             return "real", ("fp-tol", "-", "-", "reference run (original at 64-bit precision) did not complete: %s" % (ref["status"],))
         floats = []          # (label, fa, fb, fr, bits, edit): edit = (region, page, dword index, orig dword) | "st0" | None
-        for_st0 = a["fpu_depth"] and a["fpu_depth"] == b["fpu_depth"] and a["st0"] != b["st0"]
+        for_st0 = a["status"][0] == "ok" and a["fpu_depth"] and a["fpu_depth"] == b["fpu_depth"] and \
+            a["st0"] != b["st0"]                    # (an exit leaves no result on the x87 stack)
         if for_st0:
             fa, fb = x87_to_float(a["st0"]), x87_to_float(b["st0"])
             fr = x87_to_float(ref["st0"]) if ref["fpu_depth"] == a["fpu_depth"] and ref["st0"] is not None else fa
@@ -4762,7 +4779,7 @@ def _test_function(sid, va, opts, log=print):
                 if opts.verbose:
                     log("  discard input %d: UcError: %s" % (i, str(e)[:120]))
                 continue
-            if st != "ok":
+            if st not in FINISHED:
                 key = "wall-timeout" if st == "wall" else (st if st != "import" else "import:%s" % str(a["status"][1]).split(":")[0])
                 if st == "fault" and a["fault"]:
                     key = "fault(%s)" % a["fault"][0]
@@ -4795,7 +4812,7 @@ def _test_function(sid, va, opts, log=print):
                     log("  discard input %d: fault %s" % (i, " ".join(
                         "%#x" % x if isinstance(x, int) else str(x) for x in a["fault"])))
                 continue
-            if not runner.abi_ok(a):
+            if st == "ok" and not runner.abi_ok(a):     # (an exit's frames never return: no ABI to check)
                 # the original itself returned with clobbered callee-saved registers or a wrong esp:
                 # a fake method popped the wrong number of bytes, or the input sent it through
                 # non-code (e.g. a vtable pointer into .text). Says nothing about equivalence.
@@ -4875,20 +4892,26 @@ def _test_function(sid, va, opts, log=print):
                     continue
                 faked += 1
             valid += 1
+            if st == "exit":
+                out["exited"] = out.get("exited", 0) + 1      # valid runs that ended in a program exit
             new = bool(run_blocks - runner.blocks) or bool(a["edges"] - runner.orig.edges) or \
-                bool(sb[0] == "ok" and b["edges"] - runner.ours.edges)
+                bool(sb[0] in FINISHED and b["edges"] - runner.ours.edges)
             runner.blocks |= run_blocks
             runner.orig.edges |= a["edges"]
-            if sb[0] == "ok":
+            if sb[0] in FINISHED:
                 runner.ours.edges |= b["edges"]
             if new:
                 corpus.append(inp)
                 last_new = i
             if steer:
-                steer.note_valid(inp, {"orig": a["edges"], "ours": b["edges"] if sb[0] == "ok" else set()})
+                steer.note_valid(inp, {"orig": a["edges"], "ours": b["edges"] if sb[0] in FINISHED else set()})
             cmp_.last_kind = None
-            if sb[0] != "ok":
-                d = ("execution", "returned normally", "%s: %s" % sb, "ours failed where the original succeeded")
+            if sb[0] != st:
+                d = ("execution", "returned normally" if st == "ok" else "%s: %s" % a["status"], "%s: %s" % sb,
+                     "ours failed where the original succeeded" if sb[0] not in FINISHED else
+                     "one build exited where the other returned")
+            elif st == "exit" and sb[1] != a["status"][1]:
+                d = ("exit", a["status"][1], sb[1], "how / with which code the program exited")
             else:
                 d = cmp_.compare(a, b, t)
                 if d and fpt is not None:
@@ -5107,7 +5130,12 @@ def mismatch_sig(d):
     return obs + ((" [" + ",".join(offs[:8]) + "]") if offs else "")
 
 
-NORETURN_WHY = {"_purecall": "pure virtual call", "_CxxThrowException": "C++ throw", "RaiseException": "C++ throw"}
+NORETURN_WHY = {"_purecall": "pure virtual call", "_CxxThrowException": "C++ throw", "RaiseException": "C++ throw",
+                "exit": "process exit", "_exit": "process exit", "abort": "process exit",
+                "SetUnhandledExceptionFilter": "process exit"}
+# Run statuses that are a completed run: "exit" is the program terminating (machine.Exit) -- compared on memory and
+# the call traces at that point, never discarded
+FINISHED = ("ok", "exit")
 
 
 def noreturn_stop(why):
@@ -5196,7 +5224,8 @@ def replay(sid, va, path, opts):
             print("    call", fmt_tcall(ent))
         for ent in o["imports"][:40]:
             print("    import", fmt_call((ent[0], tuple(norm_val(v, runner.stk_hi) for v in ent[1]))))
-    print("first difference:", cmp_.compare(a, b, t) if a["status"][0] == b["status"][0] == "ok" else "status differs")
+    print("first difference:", cmp_.compare(a, b, t) if a["status"][0] == b["status"][0] in FINISHED
+          else "status differs")
     if opts.call_regs and a["status"][0] == b["status"][0] == "ok":
         crd = cmp_.call_reg_diff(a, b)
         if crd:
