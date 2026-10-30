@@ -194,8 +194,8 @@ void MissionHud::refresh()
     // the status background group, its health bar and bar, the two text widgets and the shield icon
     status_group = new GroupWidget;
     {
-        v[0] = 0.87625f;
-        v[1] = 0.024375f;
+        v[0] = 0.876249969f;
+        v[1] = 0.0243749972f;
         UI(status_group)->set_size(v);
         v[0] = 0.17f;
         v[1] = 0.1175f;
@@ -210,8 +210,8 @@ void MissionHud::refresh()
         v[0] = 0.0f;
         v[1] = 0.0f;
         UI(health_bar)->set_size(v);
-        v[0] = 0.1065f;
-        v[1] = 0.005f;
+        v[0] = 0.106500007f;
+        v[1] = 0.00500000035f;
         UI(health_bar)->set_pos(v);
     }
     {
@@ -220,10 +220,10 @@ void MissionHud::refresh()
     }
     status_bar = new MissionUi;
     {
-        v[0] = 0.0725f;
+        v[0] = 0.0725000203f;
         v[1] = 0.05075f;
         UI(status_bar)->set_size(v);
-        v[0] = 0.04f;
+        v[0] = 0.0400000028f;
         v[1] = 0.05f;
         UI(status_bar)->set_pos(v);
     }
@@ -233,19 +233,19 @@ void MissionHud::refresh()
     UI(status_bar)->add_image(2, shield_mesh);
     shield_icon = new MissionUi;
     {
-        v[0] = 0.025f;
-        v[1] = 0.05f;
+        v[0] = 0.0249999985f;
+        v[1] = 0.0500000082f;
         UI(shield_icon)->set_size(v);
         v[0] = 0.05f;
-        v[1] = 0.06f;
+        v[1] = 0.0600000024f;
         UI(shield_icon)->set_pos(v);
     }
     ui_font = new MissionUi;
     {
-        v[0] = 0.071875f;
+        v[0] = 0.0718750283f;
         v[1] = 0.045f;
         UI(ui_font)->set_size(v);
-        v[0] = 0.12f;
+        v[0] = 0.120000005f;
         v[1] = 0.024f;
         UI(ui_font)->set_pos(v);
         int two = 2;
@@ -265,10 +265,10 @@ void MissionHud::refresh()
     }
     ui_font_bg = new MissionUi;
     {
-        v[0] = 0.071875f;
+        v[0] = 0.0718750283f;
         v[1] = 0.045f;
         UI(ui_font_bg)->set_size(v);
-        v[0] = 0.12f;
+        v[0] = 0.120000005f;
         v[1] = 0.024f;
         UI(ui_font_bg)->set_pos(v);
         int two = 2;
