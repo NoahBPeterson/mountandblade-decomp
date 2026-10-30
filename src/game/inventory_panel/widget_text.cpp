@@ -166,25 +166,15 @@ unsigned widget::flag1() const
 // flag, not a C++ virtual destructor: deriving from widget.h's view (virtual ~widget) made cl emit ??_Gtext_box calling a
 // ~widget the original does not have. 0x597050 has 51 slots: slot 0 is 0x5021f0 (ui/ui_frame.h UiFrame::destroy, shared
 // through ICF), slots 1..49 the MissionUi ones it overrides or inherits, slot 50 add_child (0x493a30).
-struct text_box_base {
-    virtual void* destroy(unsigned flags);          // +0x00 slot 0 (0x5021f0)
-    virtual void s01(); virtual void s02(); virtual void s03(); virtual void s04(); virtual void s05(); virtual void s06();
-    virtual void s07(); virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11(); virtual void s12();
-    virtual void s13(); virtual void s14(); virtual void s15(); virtual void s16(); virtual void s17(); virtual void s18();
-    virtual void s19(); virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23(); virtual void s24();
-    virtual void s25(); virtual void s26(); virtual void s27(); virtual void s28(); virtual void s29(); virtual void s30();
-    virtual void s31(); virtual void s32(); virtual void s33(); virtual void s34(); virtual void s35(); virtual void s36();
-    virtual void s37(); virtual void s38(); virtual void s39(); virtual void s40(); virtual void s41(); virtual void s42();
-    virtual void s43(); virtual void s44(); virtual void s45(); virtual void s46(); virtual void s47(); virtual void s48();
-    virtual void s49();
-    char pad4[0x178 - 4];
-    text_box_base();                                // 0x48ae20 (MissionUi::MissionUi)
-};
+#include "./text_box_base.h"                    // text_box_base (the 50 virtuals of vtable 0x597050; slots in text_box_slots.cpp)
 struct text_box : text_box_base {
     vec_widget kids;                                // +0x178
     text_box();                                     // 0x50d0b0
     virtual void add_child(text_box_base* c);       // +0xc8 slot 50 (0x493a30)
 };
+struct MissionUi;
+struct ContainerW { void add_child(MissionUi* child); };        // 0x493a30 (world_data/world_data.cpp)
+void text_box::add_child(text_box_base* c) { ((ContainerW*)this)->add_child((MissionUi*)c); }
 
 // @ 0x50d0b0 text_box::text_box
 text_box::text_box()
