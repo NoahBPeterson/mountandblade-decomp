@@ -11,6 +11,9 @@
 #include "../include/rgl_base.h"
 
 struct Entity;
+struct CellGrid;
+bool __stdcall ground_height(CellGrid* lv, const float* p, float* out);   // 0x470f40 (terrain_b.cpp: a free stdcall, ret 0xc, returns bool; callers load no ecx)
+
 struct World {
     char pad0[0x28];
     char pad28[0x68 - 0x28];                                // +0x28 cell table (rows)
@@ -40,7 +43,6 @@ struct World {
     void destroy();                                         // 0x475d50  // old name of CellGrid::~CellGrid, removed after the names merge
     void reset();                                           // 0x421390
     void step(float dt);                                    // 0x427f40
-    void ground_height(void* scene, const rgl::vector4* point, rgl::vector4* out);   // 0x470f40 (ground_height: thiscall, two stack args)
     void set_fade(float* fog, void* spec);                  // 0x4624c0 (the fog / fade envelope: members at +0xdc..+0xf4; mesh_slot/mesh_start.cpp)
     void set_params(float a, float b, unsigned* color, float* z);   // 0x462540
     void floor_at(float* pos, float* y, void** face);       // 0x439be0 (the ground face under a position)

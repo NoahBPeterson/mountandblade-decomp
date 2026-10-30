@@ -12,7 +12,6 @@
 ../src/game/party2/party_2.cpp  ?slot_value@Party@@QBEHHI@Z  004b1be0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?sum_stat@Party@@QAEHH@Z  004b1cf0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?set_speed_from_stat@Party@@QAEXXZ  004b2120  /O2 /MT /Gy /TP
-../src/game/party2/party_2.cpp  ?copy_item@@YGXPAX0@Z  004b2160  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ??$_Uninit_copy@PAUE12@@PAU1@V?$allocator@UE12@@@std@@@std@@YAPAUE12@@PAU1@00AAV?$allocator@UE12@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004b2180  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?food_factor@Troop@@QAEMXZ  004b21f0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?at@ItemArray@@QAE?AUItemIter@@H@Z  004b22b0  /O2 /MT /Gy /TP

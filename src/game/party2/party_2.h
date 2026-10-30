@@ -122,7 +122,7 @@ struct E92 { int v[23]; ~E92() {} };                    // 0x5c: event record (e
 struct OpenItem { int node; float cost; float dist; };  // 0x4b24b0.., 0x4b6b40
 
 struct ElemCopier {                                     // the allocator-like context of the copy helpers (thiscall copy / fill)
-    void copy_event(void* dst, void* src);              // 0x4b2160 (ret 8, ignores this: called as the member the original source had; the definition is the TU's stdcall copy_item, whose
+    void copy_event(void* dst, void* src);              // 0x4b2160 (ret 8, ignores this: a thiscall member, defined in party_2_copy.cpp (its own TU: it was once a stdcall copy_item, whose
                                                         // direct call is not spellable: cl would give the caller the TU-local callee's register knowledge)
     void copy(OpenItem* dst, OpenItem* src) { ((alloc_int3*)this)->construct((int3*)dst, *(const int3*)src); }   // 0x436cf0 (agent/agent.cpp, ret 8)
     OpenItem* fill_elems(OpenItem* first, OpenItem* last, OpenItem* dst);          // 0x4b25a0 (_Uninit_copy)

@@ -61,7 +61,7 @@
 ../src/game/terrain_a/terrain_a.cpp  ?uninit_fill_n24@@YAXPAUelem24@@IABU1@AAUalloc24@@@Z  0046b570  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?uninit_fill_n100@@YAXPAUparticle100@@IABU1@AAUalloc100@@@Z  0046b5e0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?uninit_fill_n52@@YAXPAUelem52@@IABU1@AAUalloc52@@@Z  0046b650  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?construct_arrset@@YGXPAUArrSet@@ABU1@@Z  0046b6c0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?construct@allocArr@@QAEXPAUArrSet@@ABU2@@Z  0046b6c0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?uninit_copy36@@YAPAUrec36@@PAU1@00AAUalloc36@@U_Nonscalar_ptr_iterator_tag@std@@@Z  0046b6e0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?uninit_copy_arrset@@YAPAUrec136@@PAU1@00AAUalloc136@@U_Nonscalar_ptr_iterator_tag@std@@@Z  0046b750  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ??$_Copy_opt@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@V?$_Temp_iterator@UE8@@@3@@std@@YA?AV?$_Temp_iterator@UE8@@@0@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@0@0V10@U_Nonscalar_ptr_iterator_tag@0@@Z  0046b7d0  /O2 /MT /Gy /TP

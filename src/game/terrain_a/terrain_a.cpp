@@ -2365,7 +2365,7 @@ void __cdecl uninit_fill_n52(elem52* first, unsigned count, const elem52& val, a
 // ---- construct a 0x38-byte ArrSet (name + five count/array pairs) from another -----------------------------------------------------
 
 // @ 0x46b6c0
-void __stdcall construct_arrset(ArrSet* p, const ArrSet& v) { if (p) new (p) ArrSet(v); }
+void allocArr::construct(ArrSet* p, const ArrSet& v) { if (p) new (p) ArrSet(v); }   // thiscall ret 8 (ecx, the allocator, unused)
 
 // ---- _Uninit_copy with an opaque allocator::construct ---------------------------------------------------------------------------------
 

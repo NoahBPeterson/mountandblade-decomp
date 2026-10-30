@@ -1,0 +1,1 @@
+../src/game/party2/party_2_copy.cpp  ?copy_event@ElemCopier@@QAEXPAX0@Z  004b2160  /O2 /MT /Gy /TP

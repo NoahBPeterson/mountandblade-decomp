@@ -132,7 +132,7 @@ void Screen::camera_update(float dt)
     frame.o.z = frame.u.z * f2b8 + frame.o.z;
     // the ground probe point under the eye (3-component constructor: w is never written)
     vector4 h(frame.o.x - frame.u.x * C_549D70, frame.o.y - frame.u.y * C_549D70, frame.o.z - frame.u.z * C_549D70);
-    ((World*)g_game)->ground_height(g_level, &h, (vector4*)&q);
+    ground_height((CellGrid*)g_level, (const float*)&h, &q);
     q = q + C_549D70;
     if (frame.o.z < q)
         frame.o.z = q;

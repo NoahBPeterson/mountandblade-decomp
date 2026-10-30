@@ -471,15 +471,6 @@ void Party::set_speed_from_stat()
     f8b0 = (float)(*(__int64*)((char*)&g_script + 0x18)) * g_k0_01;
 }
 
-// @ 0x4b2160
-void __stdcall copy_item(void* dst, void* src)
-{
-    if (dst) {
-        E92 tmp = *(E92*)src;
-        *(E92*)dst = tmp;
-    }
-}
-
 // @ 0x4b2180
 MB_NOINLINE OpenItem* construct_items(OpenItem* first, OpenItem* last, OpenItem* dst, ElemCopier* ctx, ptr_tag tag)
 {
@@ -3202,3 +3193,4 @@ void Party::tick(float dt)
 }
 
 // ==== END ====
+

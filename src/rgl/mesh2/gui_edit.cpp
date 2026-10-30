@@ -289,7 +289,7 @@ void fill_records_funclet()
 item38* copy_range38(const item38* first, const item38* last, item38* dst, editor* self)
 {
     for (; first != last; first++) {
-        construct_arrset((ArrSet*)dst, *(const ArrSet*)first);   // item38 is the 0x38-byte ArrSet (terrain_a.cpp 0x46b6c0)
+        ((allocArr*)self)->construct((ArrSet*)dst, *(const ArrSet*)first);   // item38 is the 0x38-byte ArrSet (terrain_a.cpp 0x46b6c0)
         dst++;
     }
     return dst;
