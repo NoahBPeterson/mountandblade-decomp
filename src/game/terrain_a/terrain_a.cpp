@@ -845,7 +845,6 @@ void Terrain::smooth_cells(int bit, float k)
 
 static inline vector4 t_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static inline void t_cross3(vector4& r, const vector4& a, const vector4& b) { r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x; }
-static inline float t_dot(const vector4& a, const vector4& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 
 // @ 0x4661e0
 void terrain_obj::smooth_heights()
@@ -943,7 +942,7 @@ void terrain_obj::pick_diagonals()
                     rgl::vector4 e3 = t_sub(this->at(x, y + 1).P(), this->at(x, y).P());
                     rgl::vector4 cr;
                     t_cross3(cr, e2, e3);
-                    if (t_dot(e1, cr) > 0.0f) q.diag = 0; else q.diag = 1;
+                    if (e1.y * cr.y + e1.z * cr.z + e1.x * cr.x > 0.0f) q.diag = 0; else q.diag = 1;   // x is added last (0x46689a: the spilled cr component goes in after the other two)
                     break; }
                 case 0:
                 case 2:

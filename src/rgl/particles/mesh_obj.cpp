@@ -328,7 +328,7 @@ void emitter::update(const float* pdt, const matrix& frame)
         pv[0] = gd.z + pv[0];
         if (noise_amount > 0.01f) {
             vector4 in = *(vector4*)&pv[-6];
-            float w = (float)pow((double)((float)g_ticks[noise_index] * 1e-5f), 4000.0);
+            float w = (float)fmod((double)((float)g_ticks[noise_index] * 1e-5f), 4000.0);   // 0x412240: _CIfmod 0x536a6a
             in.z = w * noise_scale * 0.2f + in.z;
             vector4 out;
             noise_gradient(noise_scale, &in.x, &out.x);

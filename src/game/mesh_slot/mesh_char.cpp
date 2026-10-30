@@ -55,7 +55,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
     if (variant_count == 0)
         variant = -1;
 
-    *out_a = ((lod_mesh_ms*)ref->base)->clone();
+    *out_a = ((lod_mesh_ms*)ref)->clone();      // the lod mesh is the +0x38 pointer itself (0x47f701: mov ecx,[edi+38h]), not its +0x38
 
     if (set < 0 || set >= set_count) {
         set = -1;
