@@ -249,7 +249,8 @@ def main():
     # a function our code reaches only through a literal address has no reference /OPT:REF can see: keep it
     import literal_addrs as L
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
-    keep = sorted({defined_at[int(st["value"], 16)] for st in L.scan() if int(st["value"], 16) in defined_at})
+    lits = L.scan()
+    keep = sorted({defined_at[int(st["value"], 16)] for st in lits if int(st["value"], 16) in defined_at})
     # the original's stack (reserve = commit = 0x3e8480): mesh::build_skin alone has a 1 MB frame
     link_extra = ["/MAP:" + T.winpath(map_path), "/STACK:0x3e8480,0x3e8480"] + ["/INCLUDE:" + k for k in keep]
     steps["keep"] = "%d functions reached only through literal addresses kept (/INCLUDE)" % len(keep)
@@ -287,6 +288,15 @@ def main():
     if unres or not os.path.exists(exe_path):
         sys.exit("link failed: %d unresolved (see %s)" % (len(unres), rel(os.path.join(out, "link.log"))))
     steps["link"] = "linked %d objects; %d duplicate definitions, each taken from its row's module" % (len(objs), len(dups))
+
+    # trap gate: glue.py points the original's data at int3 traps for code we do not define. That is only acceptable
+    # where nothing we link can reach the slot (tools/relink/trap_report.py has the proof; docs/standalone_traps.md)
+    import trap_report as TR
+    ntraps, reach = TR.gate(os.path.join(out, "glue", "glue.json"), rmap, map_path, lits)
+    if reach:
+        sys.exit("trap gate: %d of %d trapped code addresses are reachable from our code (%s); define them (see "
+                 "docs/standalone_traps.md, trap_report.py)" % (len(reach), ntraps, ", ".join(e["va"] for e in reach[:12])))
+    steps["traps"] = "%d trapped code addresses, all proven unreachable (no data label, literal or vtable reaches them)" % ntraps
 
     import resolve as R
     img = R.Image()
