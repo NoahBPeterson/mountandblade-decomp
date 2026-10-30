@@ -70,7 +70,7 @@ struct SettingsControl {
     virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
     virtual int  value();                   // +0x30
     virtual void v0d();                     // +0x34 (Widget::set_value)
-    virtual int  float_value();             // +0x38
+    virtual float float_value();            // +0x38 (returned in st0: 0x4d5f20 stores it with fstp)
 };
 
 // The integer a polled control returns (an int slot of the settings view).
@@ -80,11 +80,10 @@ static inline int control_value(Widget* w)
     return (int)(long)(void*)v;
 }
 
-// The float behind get_float (the original returns it as an integer the caller stores as a float).
+// The float behind get_float (an x87 return: the caller stores st0, fstp dword [0x5aa010]).
 static inline float control_float(Widget* w)
 {
-    int v = ((SettingsControl*)w)->float_value();
-    return *(float*)&v;
+    return ((SettingsControl*)w)->float_value();
 }
 
 
