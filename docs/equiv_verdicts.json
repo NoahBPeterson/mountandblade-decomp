@@ -1,13 +1,13 @@
 {
-"when": "2026-10-29T16:21:45-05:00",
-"commit": "beaedd6",
+"when": "2026-10-29T18:09:46-05:00",
+"commit": "5746760",
 "sources": [
 "work/sweep_view"
 ],
 "summary": {
 "pass": 331,
-"weak": 450,
-"fail": 19,
+"weak": 452,
+"fail": 17,
 "inputs": 83,
 "harness": 73,
 "comdat": 104,
@@ -15,8 +15,8 @@
 "funclet": 17,
 "not_run": 24,
 "pass_sz": 92121,
-"weak_sz": 541900,
-"fail_sz": 51713,
+"weak_sz": 548478,
+"fail_sz": 45135,
 "inputs_sz": 79969,
 "harness_sz": 90030,
 "comdat_sz": 2383,
@@ -7621,8 +7621,8 @@
 "0052f250": {
 "module": "mesh_3",
 "file": "src/game/mission5/mesh_3.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 3049
 },
 "0052fe40": {
@@ -7642,8 +7642,8 @@
 "005305b0": {
 "module": "map_editor",
 "file": "src/game/map_editor/map_editor.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 3529
 },
 "00531380": {
