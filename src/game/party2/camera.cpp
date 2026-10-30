@@ -1196,7 +1196,7 @@ using rgl::vector4;
 inline void identity_pos(float* m) { ::identity_pos((::pos*)m); }                   // 0x40cd00  out-only 4x4 identity (cdecl)
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
-float g_tick_scale = 1e-5f;                    // 0x54a6d0  1e-05f  (tick -> seconds)
+extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> seconds); defined once, in mesh_slot/slot.cpp
 extern const float g_549cdc;                    // 0x549cdc  1.0f
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
 extern const float g_549d70;                    // 0x549d70  0.5f

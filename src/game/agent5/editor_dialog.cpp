@@ -28,7 +28,7 @@ struct EditorSceneView;                                 // the editor's scene/do
 struct EditorGameView;                                   // the game object (0x5e2930)
 
 EditorSceneView* g_editor;                              // 0x5e292c
-EditorGameView*   g_game;                                // 0x5e2930
+extern EditorGameView* g_game;                          // 0x5e2930 (defined once, in inventory_panel/widget_text.cpp as char*; this is the editor's view of it)
 // the table itself lives at 0x8ed4df8 (0x20-byte records; a record's name tstring has its buf at +4): the original
 // indexes it in place (0x4feaff: j * 0x20 + 0x8ed4df8). Ours declared a pointer to it and read garbage through 0x8ed4df8.
 // The table's one definition is module_load.cpp's g_ttypes (0x8ed4df8, 11 x 0x20 bytes), which the ground-spec loader
