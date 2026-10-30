@@ -17,7 +17,7 @@ struct MapView {
     virtual void v60(); virtual void v68(); virtual void v70(); virtual void v78();
     virtual void v80();
     virtual char is_key_down(int key);                              // +0x44
-    char  pad04[0x274 - 4];                  // +0x274 = view/projection matrix used by to_screen
+    char  pad04[0x274 - 4];                  // (the next member, the view/projection matrix used by to_screen, is at 0x274)
 };
 
 struct MapPanel {

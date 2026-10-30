@@ -6,6 +6,7 @@
 // The includer must have rgl::vector4 declared (rgl.h).
 #ifndef CHAR_SHEET_GUI_CTX_H
 #define CHAR_SHEET_GUI_CTX_H
+#include "../../include/rgl_base.h"   // rgl::vector4 (whichever declaration the includer uses)
 
 struct tstring;
 struct scene_row;

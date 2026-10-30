@@ -4,6 +4,8 @@
 // (rgl::vector4 of rgl_math.h or of match/include/rgl.h) and <vector>.
 #ifndef MB_SOUND_MGR_H
 #define MB_SOUND_MGR_H
+#include <vector>
+#include "./rgl_base.h"   // rgl::vector4 (whichever declaration the includer uses)
 
 struct SoundDef {                                       // 0x14 bytes
     void* sample;                                       // +0

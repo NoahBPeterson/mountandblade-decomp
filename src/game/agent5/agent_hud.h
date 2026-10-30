@@ -146,18 +146,18 @@ struct Skeleton {                                                 // the skeleto
 
 // the mission's scripted camera slot (Mission +0x6748 .. +0x67f4; mission.h names the same words f6748 / frame_a / frame_b / blend_*)
 struct CamSlot {
-    void* rec;                                                    // +0x6748 (non-null = scripted camera)
-    matrix cur;                                                   // +0x674c rows as stored: f = -forward
-    matrix sway;                                                  // +0x678c blend target
-    float zoom_cur;                                               // +0x67cc
-    float zoom_to;                                                // +0x67d0
-    float value;                                                  // +0x67d4 blend duration (seconds), 0 = none
-    int clock;                                                    // +0x67d8 tick clock index
+    void* rec;                                                    // Mission+0x6748 (non-null = scripted camera)
+    matrix cur;                                                   // Mission+0x674c rows as stored: f = -forward
+    matrix sway;                                                  // Mission+0x678c blend target
+    float zoom_cur;                                               // Mission+0x67cc
+    float zoom_to;                                                // Mission+0x67d0
+    float value;                                                  // Mission+0x67d4 blend duration (seconds), 0 = none
+    int clock;                                                    // Mission+0x67d8 tick clock index
     int pad67dc;
-    __int64 start;                                                // +0x67e0 blend start tick
-    int agent;                                                    // +0x67e8 attached agent id, -1 = none
-    int attached;                                                 // +0x67ec 1 = frame is relative to the agent's body
-    int num;                                                      // +0x67f0 smoothing strength
+    __int64 start;                                                // Mission+0x67e0 blend start tick
+    int agent;                                                    // Mission+0x67e8 attached agent id, -1 = none
+    int attached;                                                 // Mission+0x67ec 1 = frame is relative to the agent's body
+    int num;                                                      // Mission+0x67f0 smoothing strength
 };
 #define CAMSLOT (*(CamSlot*)((char*)g_mission + 0x6748))
 

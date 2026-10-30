@@ -77,10 +77,10 @@ struct RowAlloc {
 // the row's 0x10-byte model record (reached as this+0x10) and its deallocator 0x4d10f0: `zero` is the
 // first pointer of a std::vector-like member, `count` a tstring-like pointer freed with free().
 struct RowModel {
-    int zero;                           // +0x10 (nulled by ~UiRow)
-    int pad14;                          // +0x14 (nulled by ~UiRow)
-    int count;                          // +0x18
-    int pad1c;                          // +0x1c (nulled by ~UiRow)
+    int zero;                           // row+0x10 (nulled by ~UiRow)
+    int pad14;                          // row+0x14 (nulled by ~UiRow)
+    int count;                          // row+0x18
+    int pad1c;                          // row+0x1c (nulled by ~UiRow)
     void __fastcall erase_all(int unused);
 };
 

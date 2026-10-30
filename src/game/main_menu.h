@@ -12,7 +12,7 @@
 // inventory_panel/char_sheet.cpp (+0x1c / +0x68 texts) is TutorialMenuRec.
 #ifndef MB_GAME_MAIN_MENU_H
 #define MB_GAME_MAIN_MENU_H
-// Needs `tstring` complete (src/game/tstring.h, or the options_panel TUs' typedef of rgl::string: same 16-byte layout) before the include.
+#include "./tstring.h"   // tstring complete (the options_panel TUs' former typedef of rgl::string had the same 16-byte layout)
 
 struct main_menu {
     union {

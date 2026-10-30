@@ -4,6 +4,7 @@
 // declared (rgl.h or rgl_math.h) and ItemRef (item_ref.h) available.
 #ifndef GAME_MISSILE_H
 #define GAME_MISSILE_H
+#include "../include/rgl_base.h"   // rgl::vector4 (whichever declaration the includer uses)
 #include "./item_ref.h"
 
 struct SceneEnt;

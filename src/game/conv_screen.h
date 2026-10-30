@@ -17,6 +17,7 @@ struct base_mesh {
 };
 
 struct Choices : WidgetObj {                             // vtable 0x5924a0, ctor 0x48ae20, 0x188 bytes
+    int f178;                                            // +0x178 (the allocator slot of the vec that the shared constructor 0x4931a0 leaves in front of the three zeroed words)
     int f17c, f180, f184;                                // +0x17c/+0x180/+0x184
 };
 

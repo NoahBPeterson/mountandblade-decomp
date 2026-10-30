@@ -25,8 +25,8 @@ struct MenuScreen {
     virtual void v2();
     virtual void v3();
     virtual void v4();
-    char pad14[0x18 - 0x14];
-    int  f18;                                       // +0x18
+    char pad04[0x18 - 4];                           // (the vptr is at +0; the screen base fills up to +0x18; 0x4d59b9 writes +0x18)
+    int  f18;                                      // +0x18
 };
 extern MenuScreen* g_screen;                        // 0xa739b8
 

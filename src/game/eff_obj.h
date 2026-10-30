@@ -4,6 +4,7 @@
 // Needs rgl::vector4 (16 bytes) declared by the includer's engine header.
 #ifndef MB_GAME_EFF_OBJ_H
 #define MB_GAME_EFF_OBJ_H
+#include "../include/rgl_base.h"   // rgl::vector4 (whichever declaration the includer uses)
 
 struct EffObj {
     int f0;                                                     // +0x00

@@ -8,8 +8,10 @@
 #ifndef GAME_SKELETON_H
 #define GAME_SKELETON_H
 #include <vector>
+#include "rgl.h"   // first: see agent4/agent_logic.h
 #include "../include/rgl_base.h"
 #include "./agent/item_kind.h"        // pos2
+#include "./mat4.h"                   // rgl::mat4
 
 struct shape_base;
 struct node_groups;

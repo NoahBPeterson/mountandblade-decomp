@@ -8,6 +8,7 @@
 #include <vector>
 #include "../tstring.h"
 #include "../item_ref.h"
+#include "rgl.h"   // first: rgl_base.h would otherwise pull rgl_math.h in before agent/item_kind.h includes rgl.h
 #include "../../include/rgl_base.h"
 
 // ---- canonical declarations -----------------------------------------------------------------------------------------------

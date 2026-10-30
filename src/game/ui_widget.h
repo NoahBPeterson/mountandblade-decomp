@@ -10,7 +10,7 @@
 // name are placed in reverse order, so every slot here has its own name.
 #ifndef MB_GAME_UI_WIDGET_H
 #define MB_GAME_UI_WIDGET_H
-// Needs `tstring` declared by the includer (game/tstring.h, or the options_panel TUs' typedef of rgl::string).
+struct tstring;   // by reference only: the includer's own tstring (game/tstring.h, or char_sheet/terrain_page.h's derived view) stays the complete type
 
 struct Widget {
     Widget* base_ctor();                                           // 0x48ae20 called as an ordinary member (returns this in eax; the slices' editor_ui)  // old name of MissionUi::MissionUi, removed after the names merge

@@ -24,6 +24,7 @@ struct Overlay : WidgetObj {                    // ctor 0x4931a0, vtable 0x59284
     vec<Widget*> children;                      // +0x178
     unsigned char f188;                         // +0x188
     char pad189[3];
+    int pad18c;                                 // (the allocation is 0x190 bytes; nothing reads +0x18c)
     Overlay();                                  // 0x4931a0
 };
 

@@ -4,6 +4,7 @@
 // No includes: the includer must have rgl::vector4 declared (rgl_math.h or rgl.h).
 #ifndef GAME_WIND_H
 #define GAME_WIND_H
+#include "../include/rgl_base.h"   // rgl::vector4 (whichever declaration the includer uses)
 
 // Direction vector at +4 scaled by a fractal-noise factor driven by clock 2 (wrapped at 1e9 ticks) and a random per-instance
 // phase (0x461480 init, 0x461570 sample). The portrait worlds store their light colours in v04 / v14 / v24 / v44 and 20.0 in

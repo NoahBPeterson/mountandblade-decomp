@@ -674,9 +674,9 @@ struct BufTriple {
     void release() { if (p) operator delete(p); p = 0; e = 0; c = 0; }
 };
 struct Rec0xb0Tail {                                     // the sub-object at +0x10 of the element (inline destructor)
-    tstring key;                                         // +0x10
+    tstring key;                                         // element+0x10
     char pad20[0x84];
-    BufTriple buf;                                       // +0xa4 owned buffer (operator delete), end, cap
+    BufTriple buf;                                       // element+0xa4 owned buffer (operator delete), end, cap
     ~Rec0xb0Tail() { buf.release(); }
 };
 struct Rec0xb0 {                                         // element of the array destroyed by 0x4c8980 (destructor = 0x4c85e0)

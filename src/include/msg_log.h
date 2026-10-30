@@ -21,10 +21,10 @@ struct MsgLog {
     int color[32];                                      // +0xb02c
     char padb0ac[0xb0b8 - 0xb0ac];
     struct Ring {
-        int count;                                      // +0xb0b8
-        int head;                                       // +0xb0bc
-        tstring names[32];                              // +0xb0c0
-        int vals[32];                                   // +0xb2c0
+        int count;                                      // MsgLog+0xb0b8
+        int head;                                       // MsgLog+0xb0bc
+        tstring names[32];                              // MsgLog+0xb0c0
+        int vals[32];                                   // MsgLog+0xb2c0
         void pop(tstring& out, int& index);             // 0x4f13f0 (src/game/char_sheet/msg_log_ui.cpp): oldest entry, or "No messages" and -1
     } ring;
     std::vector<tstring> lines;                         // +0xb340 (first at +0xb344) the line history (0x452c00)
