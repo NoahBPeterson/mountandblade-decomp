@@ -146,9 +146,11 @@ def row_opts(r):
     return list((_ROW_OPTS.get("%s %s" % (r["id"], r["va"])) or {}).get("args", []))
 
 
-def run(r, out, extra):
+def run(r, out, extra, force=False):
+    """Run one row into out/<id>_<va>.json. An existing result is skipped (restartable) unless force: then it stays in
+    place until the new result replaces it, so a re-run in progress never leaves the row without a result."""
     js = os.path.join(out, "%s_%s.json" % (r["id"], r["va"]))
-    if os.path.exists(js):
+    if os.path.exists(js) and not force:
         return
     cmd = [PY, EQ, r["id"], r["va"], "--fp-tol", "--max-mismatch", "200", "--json", js + ".part"] + extra + row_opts(r)
     if r["src"]:
