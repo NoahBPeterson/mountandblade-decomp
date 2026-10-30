@@ -1,6 +1,6 @@
 {
-"when": "2026-10-30T08:53:55-05:00",
-"commit": "aaf052f",
+"when": "2026-10-30T09:28:40-05:00",
+"commit": "e7b2a5c",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -10,23 +10,23 @@
 ],
 "summary": {
 "pass": 415,
-"weak": 444,
-"fail": 24,
+"weak": 448,
+"fail": 19,
 "inputs": 28,
 "harness": 36,
 "comdat": 118,
 "comdatdiff": 11,
 "funclet": 0,
-"not_run": 5,
+"not_run": 6,
 "pass_sz": 136686,
-"weak_sz": 593351,
-"fail_sz": 68518,
+"weak_sz": 598219,
+"fail_sz": 57929,
 "inputs_sz": 23807,
 "harness_sz": 61527,
 "comdat_sz": 2793,
 "comdatdiff_sz": 1299,
 "funclet_sz": 0,
-"not_run_sz": 4173
+"not_run_sz": 9894
 },
 "rows": {
 "00408a50": {
@@ -3966,8 +3966,8 @@
 "0049dfe0": {
 "module": "camera",
 "file": "src/game/party2/camera.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1432
 },
 "0049e780": {
@@ -5539,8 +5539,8 @@
 "004de6f0": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "TIMEOUT",
+"category": "not_run",
 "size": 5721
 },
 "004dfd50": {
@@ -7093,8 +7093,8 @@
 "00524420": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 614
 },
 "00524710": {
@@ -7156,8 +7156,8 @@
 "00525160": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1666
 },
 "005257f0": {
@@ -7268,8 +7268,8 @@
 "0052ae70": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1156
 },
 "0052b5c0": {
