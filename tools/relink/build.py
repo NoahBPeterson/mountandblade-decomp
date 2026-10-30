@@ -75,6 +75,10 @@ class Exe:
         o = self.off(va)
         return None if o is None else struct.unpack_from("<I", self.d, o)[0]
 
+    def read(self, va, n):
+        o = self.off(va)
+        return b"" if o is None else bytes(self.d[o:o + n])
+
     def put(self, va, v):
         struct.pack_into("<I", self.d, self.off(va), v)
 
@@ -82,10 +86,47 @@ class Exe:
         open(self.path, "wb").write(self.d)
 
 
-def fix_vtables(exe, symmap, rmap, img, lib_names):
+def slot_equivalent(icf_map, want_name, have_names):
+    """A slot whose function is not the one the original's table names, but is the same code: the linker with
+    /OPT:ICF (as the original was linked) folds the two to one address. `icf_map` is the map of that trial link."""
+    w = icf_map.get(want_name)
+    return w is not None and any(icf_map.get(n) == w for n in have_names)
+
+
+def is_deleting_dtor(name):
+    return name.startswith(("??_G", "??_E")) or "head_rec_delete" in name or "destroy_" in name or name.startswith("?destroy@")
+
+
+def vtable_starts(img):
+    """Sorted addresses in .rdata that some dword in the image names (code immediates at any alignment, data
+    pointers) and whose first dword is a function start: the original's vtables. Tables sit back to back, so a table
+    ends at the next start. (The image carries no base relocations, so the pointers are found by value.)"""
+    import numpy as np
+    from glue import RDATA, TEXT_LO, TEXT_HI, DATA
+    out = set()
+    for lo, hi in ((TEXT_LO, TEXT_HI), (RDATA[1], RDATA[2]), (DATA[1], DATA[2])):
+        b = np.frombuffer(img.read(lo, hi - lo), dtype=np.uint8)
+        if len(b) < 8:
+            continue
+        w = (b[:-3].astype(np.uint32) | (b[1:-2].astype(np.uint32) << 8) | (b[2:-1].astype(np.uint32) << 16)
+             | (b[3:].astype(np.uint32) << 24))
+        w = w[(w >= RDATA[1]) & (w < RDATA[2]) & (w % 4 == 0)]
+        for v in np.unique(w):
+            v = int(v)
+            if img.u32(v) in img.start_set:
+                out.add(v)
+    return sorted(out)
+
+
+def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
-    report = {"patched_slots": 0, "vtables": 0, "skipped": {}, "missing": []}
+    report = {"patched_slots": 0, "vtables": 0, "skipped": {}, "missing": [], "detail": {}}
+    by_addr = {}
+    for n_, a_ in symmap.items():
+        if isinstance(a_, int):
+            by_addr.setdefault(a_, []).append(n_)
     redirect = {}
+    vt_starts = vtable_starts(img)
     _sym_addrs = sorted({v for v in symmap.values() if isinstance(v, int)})
     from glue import RDATA
     for vt, e in rmap["vtables"].items():
@@ -101,6 +142,10 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
             if img.u32(ova + 4 * n_orig) not in img.start_set:
                 break
             n_orig += 1
+        # (tables sit back to back, so that run can swallow the next table: n_true stops at the next pointed-to start;
+        # a table something points into the middle of is cut short there, hence the rewrite below keeps n_orig)
+        _j = bisect.bisect_right(vt_starts, ova)
+        n_true = min(n_orig, (vt_starts[_j] - ova) // 4) if _j < len(vt_starts) else n_orig
         # Our compiled table's length: the distance to the next symbol in the map (MSVC emits vtables side by side),
         # so a source that now declares every virtual of the original gets those slots patched too, and a slot we
         # never wrote is never written past our table's end.
@@ -109,6 +154,8 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
         n_ours = (_sa[_i] - ours) // 4 if _i < len(_sa) else 0
         limit = min(max(e["slots"], n_orig), n_ours) if n_ours > 0 else e["slots"]
         plan, agree, comparable = [], 0, 0
+        if e["slots"] != n_true:
+            report.setdefault("shape", {})[vt] = "ours %d slots, original %d" % (e["slots"], n_true)
         for k in range(limit):
             t = img.u32(ova + 4 * k)
             if t not in img.start_set:
@@ -117,6 +164,16 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
             if name is None or name not in symmap:
                 continue
             want, have = symmap[name], exe.u32(ours + 4 * k)
+            if want != have and slot_equivalent(icf_map, name, by_addr.get(have) or []):
+                comparable += 1          # (not `agree`: the match-suspect test below counts exact slots only)
+                continue
+            if want != have and k == 0 and is_deleting_dtor(name) and any(is_deleting_dtor(n) for n in by_addr.get(have) or []):
+                # slot 0 on both sides is a deleting destructor: ours the compiler's, the original's a function the
+                # row owner wrote by hand or a different class's folded copy. Not rewritten (the class's own is right
+                # for it); listed so the class gets its real destructor chain.
+                report.setdefault("dtor_slots", []).append(vt)
+                comparable += 1
+                continue
             if have == symmap.get("__purecall") and want != have:
                 plan.append((k, want))       # a class one source declares abstract: no evidence against the match
                 continue
@@ -124,6 +181,9 @@ def fix_vtables(exe, symmap, rmap, img, lib_names):
             agree += want == have
             if want != have:
                 plan.append((k, want))
+                if k < n_true:
+                    report["detail"].setdefault(vt, []).append(
+                        [k, "%08x" % t, name, "%08x" % have, (by_addr.get(have) or ["?"])[:3]])
         if comparable and agree * 2 < comparable:
             report["skipped"][vt] = "%d of %d slots agree" % (agree, comparable)
             # The match is suspect, so do not rewrite slots - but the original's table is a real one: point our vptr
@@ -223,6 +283,10 @@ def fix_literals(exe, symmap, rmap, img, lib_names, by_obj={}):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "relink", "standalone"))
+    ap.add_argument("--strict-vtables", action="store_true", help="fail when a vtable slot differs from the original's "
+                    "(would be rewritten), a vptr store is moved to the original's table, a vtbl_* extern is still "
+                    "referenced, or a placeholder virtual is bound by the glue instead of defined in source")
+    ap.add_argument("--icf", action="store_true", help="link with /OPT:ICF like the original (identical functions fold)")
     a = ap.parse_args()
     out = os.path.abspath(a.out)
     os.makedirs(out, exist_ok=True)
@@ -262,7 +326,7 @@ def main():
     # the original's stack (reserve = commit = 0x3e8480): mesh::build_skin alone has a 1 MB frame
     link_extra = ["/MAP:" + T.winpath(map_path), "/STACK:0x3e8480,0x3e8480"] + ["/INCLUDE:" + k for k in keep]
     steps["keep"] = "%d functions reached only through literal addresses kept (/INCLUDE)" % len(keep)
-    log = T.link(objs, out, os.path.join(out, "glue"), extra=link_extra, name="mb_standalone.exe", icf=False)
+    log = T.link(objs, out, os.path.join(out, "glue"), extra=link_extra, name="mb_standalone.exe", icf=a.icf)
     # A symbol two objects define (a view header's inline copy, or an out-of-line forwarder, next to the row's own
     # definition): /FORCE:MULTIPLE keeps the first in link order, and a forwarder whose callee aliases back to the
     # same address recurses forever. Link the row owners first, then check that every duplicate came from its owner.
@@ -288,7 +352,7 @@ def main():
             if oi > ti:
                 objs.insert(ti, objs.pop(oi))
                 stems.insert(ti, stems.pop(oi))
-        log = T.link(objs, out, os.path.join(out, "glue"), extra=link_extra, name="mb_standalone.exe", icf=False)
+        log = T.link(objs, out, os.path.join(out, "glue"), extra=link_extra, name="mb_standalone.exe", icf=a.icf)
     else:
         sys.exit("duplicate definitions not taken from the row's module: %s" % wrong)
     open(os.path.join(out, "link.log"), "w").write(log)
@@ -314,7 +378,13 @@ def main():
         if p and len(p[0]) == 8 and p[1].startswith("lib_crt::"):
             lib_names.setdefault(int(p[0], 16), p[1][9:])
     exe = Exe(exe_path)
-    vt = fix_vtables(exe, read_map(map_path), rmap, img, lib_names)
+    # the oracle for "same code": the same objects linked with /OPT:ICF (not shipped: only its map is read)
+    icf_dir = os.path.join(out, "icf")
+    os.makedirs(icf_dir, exist_ok=True)
+    icf_map_path = os.path.join(icf_dir, "icf.map")
+    T.link(objs, icf_dir, os.path.join(out, "glue"), extra=["/MAP:" + T.winpath(icf_map_path), "/STACK:0x3e8480,0x3e8480"]
+           + ["/INCLUDE:" + k for k in keep], name="icf.exe", icf=True)
+    vt = fix_vtables(exe, read_map(map_path), rmap, img, lib_names, read_map(icf_map_path))
     lit = fix_literals(exe, read_map(map_path), rmap, img, lib_names, read_map_by_object(map_path))
     exe.save()
     steps["literals"] = "%d literal image addresses rewritten; %d in dropped functions, %d without a target, %d not " \
@@ -323,10 +393,23 @@ def main():
     steps["vtables"] = "%d slots rewritten in %d vtables, %d vtable references moved to the original's; %d skipped " \
                        "(match suspect), %d not in the map" % (vt["patched_slots"], vt["vtables"],
                                                              vt["vptr_stores_redirected"], len(vt["skipped"]), len(vt["missing"]))
+    vt["vtbl_externs"] = sorted(n for n in rmap["names"] if n.startswith("?vtbl_"))
+    gj = json.load(open(os.path.join(out, "glue", "glue.json")))
+    vt["glue_bound_slots"] = sorted(n for n in gj["aliases"] if n in rmap["vtable_slots"])
+    vt["slots_differing"] = max(vt["patched_slots"], sum(len(v) for v in vt["detail"].values()))
+    steps["vtable_gate"] = ("%d slots differ from the original's table (same code per ICF counts as equal), %d vtables " \
+                            "skipped as suspect, %d vptr stores moved to the original's table, %d vtbl_* externs " \
+                            "referenced, %d placeholder virtuals bound by the glue" % (
+                                vt["slots_differing"], len(vt["skipped"]), vt["vptr_stores_redirected"],
+                                len(vt["vtbl_externs"]), len(vt["glue_bound_slots"]))) + \
+                            "; %d deleting-destructor slots not the original's function" % len(vt.get("dtor_slots", []))
     steps["rsrc"] = run(["tools/relink/add_rsrc.py", exe_path]).strip()
     json.dump(dict(steps, vtable_report=vt, literal_report=lit), open(os.path.join(out, "build.json"), "w"), indent=1)
     for k, v in steps.items():
         print("%-12s %s" % (k, v.splitlines()[-1] if v else ""))
+    if a.strict_vtables and (vt["slots_differing"] or vt["skipped"] or vt["vptr_stores_redirected"]
+                             or vt["vtbl_externs"] or vt["glue_bound_slots"]):
+        sys.exit("vtable gate: " + steps["vtable_gate"])
     print("-> %s" % rel(exe_path))
     return 0
 
