@@ -129,7 +129,7 @@ void char_window::fill_skills()
 {
     int n = 0;
     int i = 0;
-    unsigned* se = &((skill_entry*)0x8ee3110)->flags;           // 0x8ee3140: the flags word of record 0
+    unsigned* se = &g_skills[0].flags;           // 0x8ee3140: the flags word of record 0
     int* out = skill_ids;
     do {
         unsigned char c = (unsigned char)(*se >> 8);
@@ -141,7 +141,7 @@ void char_window::fill_skills()
         }
         se = (unsigned*)((char*)se + sizeof(skill_entry));
         i++;
-    } while ((int)se < 0x8ee3c68);
+    } while ((int)se < (int)&g_skills[42].flags);
     skill_count = n;
 }
 

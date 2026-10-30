@@ -505,8 +505,8 @@ void CharSheet::init()
         float inc_ya = config_float_walk(tstring("char_b_weapon_proficiency_increment_y_a"));
         float inc_x = config_float_walk(tstring("char_b_weapon_proficiency_increment_x"));
         tstring plus("+");
-        row->plus1c = make_button(window, &plus, inc_y - inc_ya * (float)i, inc_x,
-                                1, inc_h);
+        row->plus1c = make_button(window, &plus, inc_x, inc_y - inc_ya * (float)i,
+                                1, inc_h);      // 0x50844e: x = increment_x, y = increment_y - increment_y_a * i
 
         float ts_x = config_float_walk(tstring("char_b_weapon_proficiency_increment_t_s"));
         float ts_y = config_float_walk(tstring("char_b_weapon_proficiency_increment_t_s"));

@@ -29,8 +29,9 @@ typedef Widget UiVt;                    // the slice's name for it
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // skill table at 0x8ee3100, stride 0x44: max rank / attribute index at +0x34 / +0x3c / +0x40
-#define SKILL_MAX(id)  (*(int*)(0x8ee3134 + (id) * 0x44))
-#define SKILL_ATTR(id) (*(int*)(0x8ee3140 + (id) * 0x44))
+extern char g_skill_tbl[];                      // 0x8ee3100 (a literal address would miss the relinked copy: the data moved)
+#define SKILL_MAX(id)  (*(int*)(g_skill_tbl + 0x34 + (id) * 0x44))
+#define SKILL_ATTR(id) (*(int*)(g_skill_tbl + 0x40 + (id) * 0x44))
 
 // ---- panel -------------------------------------------------------------------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
