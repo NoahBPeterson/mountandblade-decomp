@@ -98,7 +98,7 @@ struct MissionBlocker : item_base {
     virtual void scale_3(const float*);                         // slot 3  0x5261e0 Screen_s261e0::tick(float) (mission_5.cpp)
     virtual void slot_empty_4();                                // slot 4  0x4cea10 MissionParams::init (this file)
     virtual char pure_7() { return 1; }                         // slot 7  0x48b170 (overrides the base's pure slot)
-    virtual char always_true();                                 // slot 8  0x4280e0 rgl::static_entity::awake (entity_types.cpp)
+    virtual char always_true() { return 0; }                    // slot 8  0x4280e0 rgl::static_entity::awake (xor al,al; ret: ICF folds it)
     MissionBlocker();                                           // 0x4ce960
 };
 
@@ -162,6 +162,17 @@ struct MissionParams {
 };
 
 char* g_mission_params;                                         // unknown owner; init called from here
+
+// MissionBlocker's slot overrides: forwarding stubs (a bare `jmp`) to the functions the image's table 0x59616c names. The
+// record is not those classes' view (MissionHud / Screen_s261e0 are other screens), so the stubs stay stubs. They sit
+// before MissionParams::init's definition so cl does not inline it into slot 4.
+struct MissionHud { void refresh(); };                          // 0x4f7f00
+struct Screen_s261e0 { void tick(float); };                     // 0x5261e0
+void reset_gui();                                               // 0x4c6e00
+void MissionBlocker::slot_empty_1() { reset_gui(); }
+void MissionBlocker::slot_empty_2() { ((MissionHud*)this)->refresh(); }
+void MissionBlocker::scale_3(const float* a) { ((Screen_s261e0*)this)->tick(*(float*)&a); }
+void MissionBlocker::slot_empty_4() { ((MissionParams*)this)->init(); }
 
 // @ 0x4cea10
 void MissionParams::init()
@@ -319,6 +330,27 @@ ItemD::ItemD()
 }
 
 
+// The item records' slot overrides (tables 0x596190 / 0x5961e4 / 0x596208 / 0x5961c0): forwarding stubs to the image's functions.
+struct MapDialog { void reset_state(); };                       // 0x4c6e10
+struct GameScreen { void build(); };                            // 0x4fbfa0
+struct EventScreen { void on_event(int); };                     // 0x533070
+struct SaveWinCtl { void create(); void create_flagged(); };   // 0x4e5d90 / 0x4e5e50 (0x4e5d80 create_stub is `jmp create`)
+struct SourceScreen { void hook_a(int); void hook_b(int); };    // 0x534180 / 0x534230
+struct view_obj { void reset(); };                              // 0x50a140
+struct InputScreen { void on_input(int); };                     // 0x533aa0
+void ItemA::slot_empty_1() { ((MapDialog*)this)->reset_state(); }
+void ItemA::slot_empty_2() { ((GameScreen*)this)->build(); }
+void ItemA::scale_3(const float* a) { ((EventScreen*)this)->on_event((int)a); }
+void ItemB::slot_empty_1() { reset_gui(); }
+void ItemB::slot_empty_2() { ((SaveWinCtl*)this)->create(); }     // the same `jmp create` as 0x4e5d80: the linker's ICF folds them
+void ItemB::scale_3(const float* a) { ((SourceScreen*)this)->hook_a((int)a); }
+void ItemC::slot_empty_1() { reset_gui(); }
+void ItemC::slot_empty_2() { ((SaveWinCtl*)this)->create_flagged(); }
+void ItemC::scale_3(const float* a) { ((SourceScreen*)this)->hook_b((int)a); }
+void ItemD::slot_empty_1() { reset_gui(); }
+void ItemD::slot_empty_2() { ((view_obj*)this)->reset(); }
+void ItemD::scale_3(const float* a) { ((InputScreen*)this)->on_input((int)a); }
+
 // ---- per-frame update of the placed objects (0x4ceb90) --------------------------------------------------
 // The updater's sixteen row widgets (+0x60), the shown count (+0xa0) and the record index per row (+0xa4) fill the menu's
 // list: the widgets are ui_widget.h Widgets (the calls are the original's vtable offsets: hide +0xb0, disable +0xbc,
@@ -361,6 +393,9 @@ struct MissionUpdater {
     MissionPanel* group;                                        // +0xec (0x4cee0c)
     void update();                                              // 0x4ceb90
 };
+
+// ItemA slot 9: the record IS the updater's `this` (0x4ceb90); declared before the definition so it stays a `jmp`.
+void ItemA::s_last() { ((MissionUpdater*)this)->update(); }
 
 // @ 0x4ceb90
 void MissionUpdater::update()

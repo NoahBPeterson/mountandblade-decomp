@@ -2964,5 +2964,5 @@ progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, floa
 // ItemRec / ItemRec2 slot 2 (0x4dcef0 MainMenuScreen::create, 0x4dda40 EscapeMenu::create): the record IS the screen
 // object those take in ecx, so the body forwards `this` unchanged and cl tail-calls the member.
 #include "../triggers/item_rec.h"
-void ItemRec::screen_build()  { ((MainMenuScreen*)this)->create(); }
-void ItemRec2::screen_build() { ((EscapeMenu*)this)->create(); }
+void ItemRec::slot_empty_2()  { ((MainMenuScreen*)this)->create(); }
+void ItemRec2::slot_empty_2() { ((EscapeMenu*)this)->create(); }

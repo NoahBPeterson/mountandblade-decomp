@@ -1,0 +1,1 @@
+# rec_slots_tr: forwarding stubs only, no byte-exact function. Flags /O2 /MT /Gy /TP.

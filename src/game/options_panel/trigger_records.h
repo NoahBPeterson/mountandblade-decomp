@@ -43,45 +43,51 @@ struct Rec118 : head_rec { MB_ZERO_TAIL(Rec118)   // vtable 0x595804
     char pad2c[0x58];
     tstring second;     // +0x84
     char tail[0x118 - 0x94];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Recacc : head_rec {   // vtable 0x595764
     char body[0xaa0];
     Recacc() { w04 = 0; }
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec38 : head_rec { MB_ZERO_TAIL(Rec38)   // vtable 0x595828
     char body[0xc];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec44 : head_rec { MB_ZERO_TAIL(Rec44)   // vtable 0x5957e0
     char body[0x18];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec34 : head_rec { MB_ZERO_TAIL(Rec34)   // vtable 0x59584c
     char body[0x8];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec454 : head_rec { MB_ZERO_TAIL(Rec454)   // vtable 0x595894
     char body[0x428];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec1208 : head_rec {   // vtable 0x595bfc
@@ -91,60 +97,68 @@ struct Rec1208 : head_rec {   // vtable 0x595bfc
     int f1200;
     char tail[0x1208 - 0x1204];
     Rec1208() { f1200 = -1; }
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec3c : head_rec { MB_ZERO_TAIL(Rec3c)   // vtable 0x595948
     char body[0x10];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Recd8 : head_rec { MB_ZERO_TAIL(Recd8)   // vtable 0x5958b8
     char body[0xac];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Recf0 : head_rec { MB_ZERO_TAIL(Recf0)   // vtable 0x5958dc
     char body[0xc4];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec1bc : head_rec { MB_ZERO_TAIL(Rec1bc)   // vtable 0x595900
     char body[0x190];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec23c : head_rec { MB_ZERO_TAIL(Rec23c)   // vtable 0x595c44
     char pad2c[0x44];
     rgl::frustum fr;    // +0x70
     char tail[0x23c - 0x190];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec48 : head_rec { MB_ZERO_TAIL(Rec48)   // vtable 0x59596c
     char body[0x1c];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec58 : head_rec { MB_ZERO_TAIL(Rec58)   // vtable 0x5959fc
     char body[0x2c];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
@@ -154,9 +168,10 @@ struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
     char pad2c[0x8];
     rgl::frustum fr;    // +0x34
     char tail[0x428 - 0x154];
-    virtual void vfunc();
-    virtual void d07() {}
-    virtual void d08() {}
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(const float*);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
     // head_rec now declares the nine slots the original's table at 0x595c68 has (slot +0x08 is FaceGen::init, +0x0c
     // CamView::update_model), so this record only overrides slot 0 with its own vfunc.
