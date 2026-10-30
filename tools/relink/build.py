@@ -93,6 +93,18 @@ def slot_equivalent(icf_map, want_name, have_names):
     return w is not None and any(icf_map.get(n) == w for n in have_names)
 
 
+def jmp_target(exe, va, hops=2):
+    """Where `jmp rel32` stubs at va lead (None if va is not a stub)."""
+    t = None
+    for _ in range(hops):
+        b = exe.read(va, 5)
+        if len(b) < 5 or b[0] != 0xE9:
+            break
+        va = (va + 5 + struct.unpack_from("<i", b, 1)[0]) & 0xFFFFFFFF
+        t = va
+    return t
+
+
 def is_deleting_dtor(name):
     return name.startswith(("??_G", "??_E")) or "head_rec_delete" in name or "destroy_" in name or name.startswith("?destroy@")
 
@@ -167,6 +179,14 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
             if want != have and slot_equivalent(icf_map, name, by_addr.get(have) or []):
                 comparable += 1          # (not `agree`: the match-suspect test below counts exact slots only)
                 continue
+            if want != have:
+                # a slot bound in source by a forwarding stub (`void C::s() { ((Owner*)this)->f(); }` compiles to
+                # `jmp f`): the compiler's vtable points at the stub, the stub at the function the original's slot names
+                tgt = jmp_target(exe, have)
+                if tgt is not None and (tgt == want or slot_equivalent(icf_map, name, by_addr.get(tgt) or [])):
+                    report.setdefault("thunk_slots", []).append([vt, k, name])
+                    comparable += 1
+                    continue
             if want != have and k == 0 and is_deleting_dtor(name) and any(is_deleting_dtor(n) for n in by_addr.get(have) or []):
                 # slot 0 on both sides is a deleting destructor: ours the compiler's, the original's a function the
                 # row owner wrote by hand or a different class's folded copy. Not rewritten (the class's own is right
@@ -402,13 +422,14 @@ def main():
                             "referenced, %d placeholder virtuals bound by the glue" % (
                                 vt["slots_differing"], len(vt["skipped"]), vt["vptr_stores_redirected"],
                                 len(vt["vtbl_externs"]), len(vt["glue_bound_slots"]))) + \
-                            "; %d deleting-destructor slots not the original's function" % len(vt.get("dtor_slots", []))
+                            "; %d deleting-destructor slots not the original's function; %d slots bound by forwarding stubs in source" % (
+                                len(vt.get("dtor_slots", [])), len(vt.get("thunk_slots", [])))
     steps["rsrc"] = run(["tools/relink/add_rsrc.py", exe_path]).strip()
     json.dump(dict(steps, vtable_report=vt, literal_report=lit), open(os.path.join(out, "build.json"), "w"), indent=1)
     for k, v in steps.items():
         print("%-12s %s" % (k, v.splitlines()[-1] if v else ""))
     if a.strict_vtables and (vt["slots_differing"] or vt["skipped"] or vt["vptr_stores_redirected"]
-                             or vt["vtbl_externs"] or vt["glue_bound_slots"]):
+                             or vt["vtbl_externs"] or vt["glue_bound_slots"] or vt.get("dtor_slots")):
         sys.exit("vtable gate: " + steps["vtable_gate"])
     print("-> %s" % rel(exe_path))
     return 0
