@@ -1396,7 +1396,7 @@ void psys_record::load(stream_base& a)
     RF(RF(a, p), p + 1); p += 2;
     RF(RF(a, p), p + 1); p += 2;
     RF(RF(a, p), p + 1); p += 2;
-    RF(RF(RF(a, p), p + 1), p + 2); p += 3;
+    RF(RF(RF(a, p), p + 1), p + 2); p += 4;     // two x,y,z triples 0x10 apart (+0x94, +0xa4: 0x4bdb01), w unread
     RF(RF(RF(a, p), p + 1), p + 2);
     RF(a, o + 0xb4);
     RF(a, o + 0xb8);

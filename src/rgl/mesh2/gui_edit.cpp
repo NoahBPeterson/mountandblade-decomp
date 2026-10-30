@@ -1500,7 +1500,9 @@ void Block::read(stream_base* stream, int version)
     stream->r_int((int*)((char*)this + 0x218));
     if (version > 1) {                                              // itemsfile version 2: each item has triggers
         char buf[0x200];
-        _snprintf(buf, 0x200, "Item %s", ((tstring*)((char*)this + 0x20))->c_str());
+        // the original passes the tstring itself through the varargs (a 16-byte bitwise copy at 0x4c82c4), so %s
+        // reads its first dword (the read cursor), not the text: reproduced as is
+        _snprintf(buf, 0x200, "Item %s", *(tstring*)((char*)this + 0x20));
         ((GameVec*)((char*)this + 0x228))->resize(*stream, buf, 0);   // 0x4c1e10: a member call on the sub-object at +0x228
     }
     *(int*)((char*)this + 0x40) = 0x3f800000;

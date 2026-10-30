@@ -432,13 +432,12 @@ int __fastcall renderer_setup(GameAppView* self)
 static __declspec(noinline) void user_path(char* name)
 {
     char folder[260];
-    char dir[260];
-    char tmp[260];
+    char buf[260];                                  // one scratch buffer for the directory and the name copy (0x4bab70: 0x208-byte frame)
     SHGetFolderPathA(0, CSIDL_APPDATA, 0, 0, folder);
-    sprintf(dir, "%s\\Mount&Blade", folder);
-    CreateDirectoryA(dir, 0);
-    sprintf(tmp, "%s", name);
-    sprintf(name, "%s\\Mount&Blade\\%s", folder, tmp);
+    sprintf(buf, "%s\\Mount&Blade", folder);
+    CreateDirectoryA(buf, 0);
+    sprintf(buf, "%s", name);
+    sprintf(name, "%s\\Mount&Blade\\%s", folder, buf);
 }
 
 // @ 0x4c3a40

@@ -559,13 +559,15 @@ struct PropRecF {
     long long start;                    // +0x78
     char pad80[0xb0 - 0x80];
     void update(float dt) { ((MissileU*)this)->update(dt); }        // 0x47d3e0 (thiscall, ret 4)
-    void next_used(unsigned* i) { ((Pool<RecJ>*)this)->next_used(i); }       // 0x474300 (thiscall; Pool<RecJ> serves the agent pool too: the folded instance)
 };
 struct PtrTableF {                      // the paged pointer table (count; the page vector's first member sits at +0x18)
     int count;                          // +0
     char pad4[0x14];
     char** pages;                       // +0x18
     char pad1c[4];
+    // the iterators are the pool's own members (ecx = the table, not the record)
+    void next_prop(unsigned* i) { ((Pool<RecJ>*)this)->next_used(i); }      // 0x474300 (thiscall, ret 4)
+    void next_agent(unsigned* i) { ((Pool<MAgent>*)this)->next_used(i); }   // 0x43b160 (thiscall, ret 4)
 };
 typedef char assert_ptrtable[(sizeof(PtrTableF) == 0x20) ? 1 : -1];
 struct PropAnim {                       // the 0x1c8-byte prop tween record (Rec1c8)
@@ -632,11 +634,11 @@ void MissionG::frame(float dt, bool spawn)
         CarryRec* c = (CarryRec*)((char*)this + 0x6b0);
         int n = 0x40;
         do {
-            normalize(c->m0.s, c->m1.s);
+            c->m0 = c->m1;                  // plain matrix copies (rep movsd x16 at 0x484060 / 0x484086), not normalize
             c->f_c4 = 0;
             c->f_c0 = 0;
             c->f_e8 = 0;
-            normalize(c->m2.s, c->m1.s);
+            c->m2 = c->m1;
             c++;
         } while (--n);
     }
@@ -656,7 +658,7 @@ void MissionG::frame(float dt, bool spawn)
     PtrTableF& props = MAT(PtrTableF, 0x30);
     PtrTableF& agents = MAT(PtrTableF, 4);
     std::vector<char*>& retire_list = *(std::vector<char*>*)&MAT(char, 0x5dfc);
-    std::vector<int>& cull_list = *(std::vector<int>*)&MAT(char, 0x5e0c);
+    std::vector<int>& cull_list = *(std::vector<int>*)&MAT(char, 0x34);     // the prop pool's free-id list (Pool<RecJ>::free_ids, ecx = this+0x34 at 0x484209)
     unsigned i;
     for (i = 0; i < (unsigned)props.count; i++)
         if (((PropRecF*)props.pages[i >> 4])[i & 0xf].used != 0)
@@ -686,13 +688,13 @@ void MissionG::frame(float dt, bool spawn)
                 cull_list.insert(cull_list.end(), idx);
             }
         }
-        p->next_used(&i);
+        props.next_prop(&i);
     }
 
     // the retire list overflows: drop a random prop and compact
     if (retire_list.size() > 0x300) {
-        unsigned n = (unsigned)retire_list.size();
-        unsigned k = n > 1 ? (unsigned)rand() % n : 0;
+        int n = (int)retire_list.size();                    // signed: cmp edi,1; jg / cdq; idiv (0x4842a5)
+        int k = n > 1 ? rand() % n : 0;
         int id = *(int*)(retire_list[k] + 8);
         ((rgl::world*)scene_world)->remove_entity(id);       // 0x41f0d0
         unsigned last = (unsigned)retire_list.size();
@@ -712,7 +714,7 @@ void MissionG::frame(float dt, bool spawn)
         AgentS* a = (AgentS*)agents.pages[i >> 4] + (i & 0xf);
         if (a->kind != 1)
             a->update(dt);
-        ((PropRecF*)a)->next_used(&i);
+        agents.next_agent(&i);
     }
     for (i = 0; i < (unsigned)agents.count; i++)
         if (((AgentS*)agents.pages[i >> 4])[i & 0xf].used != 0)
@@ -721,7 +723,7 @@ void MissionG::frame(float dt, bool spawn)
         AgentS* a = (AgentS*)agents.pages[i >> 4] + (i & 0xf);
         if (a->kind == 1)
             a->update(dt);
-        ((PropRecF*)a)->next_used(&i);
+        agents.next_agent(&i);
     }
     for (i = 0; i < (unsigned)agents.count; i++)
         if (((AgentS*)agents.pages[i >> 4])[i & 0xf].used != 0)
@@ -729,7 +731,7 @@ void MissionG::frame(float dt, bool spawn)
     while (i < (unsigned)agents.count) {
         AgentS* a = (AgentS*)agents.pages[i >> 4] + (i & 0xf);
         a->tick();
-        ((PropRecF*)a)->next_used(&i);
+        agents.next_agent(&i);
     }
 
     update_prop_flags();
