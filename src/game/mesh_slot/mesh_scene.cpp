@@ -337,12 +337,17 @@ void MissileU::update(float dt)
     if (state != 0)
         return;
 
-    v.x = dt * 0.0f + speed * vel.x;
-    v.y = dt * 0.0f + vel.y * speed;
-    v.z = dt * g_f54b708 + vel.z * speed;
-    pos.x = v.x * dt + pos.x;
-    pos.y = v.y * dt + pos.y;
-    pos.z = v.z * dt + pos.z;
+    // the velocity is a sum of two vector temporaries (vel * speed, and the gravity step); like the original, only some of
+    // the components are spilled to float locals
+    vector4 sv = vmul(vel, speed);
+    vector4 gv(dt * 0.0f, dt * 0.0f, dt * g_f54b708);
+    v.x = gv.x + sv.x;
+    v.y = gv.y + sv.y;
+    v.z = gv.z + sv.z;
+    vector4 dp = vmul(v, dt);
+    pos.x = dp.x + pos.x;
+    pos.y = dp.y + pos.y;
+    pos.z = dp.z + pos.z;
 
     if (ent->f140 == 0) {
         float dx = pos.x - prev.x;
