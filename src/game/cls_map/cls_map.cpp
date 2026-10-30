@@ -813,7 +813,7 @@ void MissionScreen::fill_mission_row(int side)
     for (int i = 0; i < party->first_flagged(); i++) {
         Stack* rec = (Stack*)((char*)party + 0xa8) + i;
         Troop* u = &g_game->troops[rec->troop];
-        char buf[0x20];
+        char buf[0x14];   // 0x14 like the original: its sprintf of a long count pair overflows into the line buffer that follows
         if (u->flags32 & 0x10) {
             int h = ((unsigned char*)u)[0x7a] & 0xf;
             if (h > g_skill_tbl[36].cap)
