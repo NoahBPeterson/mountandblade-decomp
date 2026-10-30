@@ -447,8 +447,11 @@ void PartyScreen::refresh_party_members(int type)
                             v = 0;
                         else if (v > g_clamp_max)
                             v = g_clamp_max;
+                        // the name, then the format, then the percentage (0x50441d..0x504494)
+                        const char* nm = display_name(rec);
+                        const char* fmt = g_strtable.lookup(key)->c_str();
                         int pct = (int)(rec->hp * 100.0f / (float)(rec->f58[0] + v * 2 + 0x23) + 0.0001f);
-                        sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec), pct);
+                        sprintf(buf, fmt, nm, pct);
                     }
                     label.assign(buf);
                     if (rec->fa8 != 0)
@@ -461,15 +464,18 @@ void PartyScreen::refresh_party_members(int type)
                             v = 0;
                         else if (v > g_clamp_max)
                             v = g_clamp_max;
+                        // the name, then the format, then the percentage (0x50441d..0x504494)
+                        const char* nm = display_name(rec);
+                        const char* fmt = g_strtable.lookup(key)->c_str();
                         int pct = (int)(rec->hp * 100.0f / (float)(rec->f58[0] + v * 2 + 0x23) + 0.0001f);
-                        sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec), pct);
+                        sprintf(buf, fmt, nm, pct);
                     }
                     label.assign(buf);
                     if (rec->fa8 != 0)
                         append_plus(label);
                 }
             } else {
-                if (st->count > 0 && !is_wounded) {
+                if (st->wounded > 0 && !is_wounded) {        // a stack with wounded troops shows healthy / total (0x504254)
                     {
                         tstring key("ui_button_party_member_healthy_total");
                         sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec),
@@ -1005,14 +1011,11 @@ void PartyScreen::setup_skills()
 // @ 0x5063e0
 void PartyScreen::refresh_selection()
 {
-    // the info label's text is built and destroyed before the enable block; [zero] (the label text the rest of
-    // the body reuses) is constructed after the char_quad block, and a missing selection or an empty stack slot
-    // returns at once, as in the original.
+    float size[2];                                  // the text size every +0xa4 call writes (esp+0x28)
     {
-        {
-            tstring empty("");
-            PSO(info)->set_text((float*)&empty, &empty);
-        }                                           // destroyed at once (0x506414)
+        tstring empty("");
+        PSO(info)->set_text(size, &empty);
+    }                                               // destroyed at once (0x506414)
 
     PSO(talk_btn)->enable();
     locked = 1;
@@ -1029,127 +1032,100 @@ void PartyScreen::refresh_selection()
     if (char_quad) {
         {
             tstring name("");
-            PSO(name_lbl)->set_text((float*)&name, &name);
+            PSO(name_lbl)->set_text(size, &name);
         }                                           // destroyed before add_image (0x5064ca)
         PSO(char_quad)->add_image(0, 0);
     }
-    tstring zero;                                   // the label text the rest reuses (constructed at 0x5064e5)
+    tstring label;                                  // the action button's caption (constructed at 0x5064e5)
 
-    bool action = false;
     if (sel_row == -1 || sel_type == -1 || sel_slot == -1)
         return;                                     // nothing selected (0x5064f3..0x506515 -> 0x5072f6)
-    int troop_type = sel_type;
-    int p1 = troop_type != 0 ? g_game->f78 : other_party;
-    int slot_idx = slots[sel_type][sel_slot][sel_row];   // (sel_slot*2 + sel_type) << 6
-    int p2 = troop_type != 0 ? other_party : g_game->f78;
+    int p1 = sel_type != 0 ? g_game->f78 : other_party;     // the party a moved stack goes to
+    int slot_idx = slots[sel_type][sel_slot][sel_row];      // (sel_slot*2 + sel_type) << 6
+    int p2 = sel_type != 0 ? other_party : g_game->f78;     // the party the selected stack is in
     Stack stk = PARTIES->get(p2)->stacks[slot_idx];
     if (stk.troop < 0)
         return;                                     // an empty stack slot (0x506586 -> 0x5072e2)
     TroopRec* rec = g_game->chars + stk.troop;
-    show_selected_character(stk.troop, slot_idx);
+    show_selected_character(stk.troop, sel_slot);   // (0x5065a0 pushes sel_slot)
+    bool action = false;
     if (mode == 0) {
-        bool captured = sel_row != -1 && !(sel_row == 0 && sel_slot == 0);
-        if (captured) {
+        if (sel_row != -1 && !(sel_row == 0 && sel_slot == 0))
             PSO(talk_btn)->act_bc();
-        }
     }
 
     int cmd = mode;
     if (cmd == 0 || cmd == 5) {
-        tstring k;
-        if (sel_type == 0) {
-            tstring s("ui_disband");
-            k = s;
-        } else if ((stk.flags & 1) == 0) {
-            tstring s("ui_take_back");
-            k = s;
-        } else {
-            tstring s("ui_take_prisoner");
-            k = s;
-        }
-        zero = *g_strtable.lookup(k);
-        if (sel_row != -1) {
-            if (!(sel_type == 0 && sel_row == 0 && sel_slot == 0)) {
-                action = true;
-            }
-        }
+        tstring k(sel_type == 0 ? "ui_disband" : (stk.flags & 1) != 0 ? "ui_take_prisoner" : "ui_take_back");
+        label = *g_strtable.lookup(k);
+        if (sel_row != -1 && !(sel_type == 0 && sel_row == 0 && sel_slot == 0))
+            action = true;
     } else if (cmd == 1 || cmd == 6 || cmd == 7) {
-        tstring k;
-        if (sel_type == 0) {
-            tstring s("ui_give");
-            k = s;
-        } else {
-            tstring s("ui_take");
-            k = s;
-        }
-        zero = *g_strtable.lookup(k);
+        tstring k(sel_type == 0 ? "ui_give" : "ui_take");
+        label = *g_strtable.lookup(k);
         if (sel_row != 0 || sel_slot != 0 || mode == 6) {
-            if (!(sel_type == 0 && sel_slot == 0 && mode == 7)) {
+            if ((sel_type == 0 && sel_slot == 0) || mode != 7)      // 0x5068b8..0x5068d4
                 action = true;
-            }
         }
     } else if (cmd == 2) {
-        tstring k("ui_sell");
-        zero = *g_strtable.lookup(k);
+        {
+            tstring k("ui_sell");
+            label = *g_strtable.lookup(k);
+        }
         if (sel_type == 0 && (stk.flags & 1) != 0) {
             g_store0 = 1;
             g_store1 = 0;
-            if (g_game->emit_event(0xb, stk.troop, 0) != 0 && g_store0 == 0 && g_store1 == 0) {
+            // a script that answers and leaves both out-slots clear refuses the sale (0x506684..0x50669e)
+            if (!(g_game->emit_event(0xb, stk.troop, 0) != 0 && g_store0 == 0 && g_store1 == 0))
                 action = true;
-            }
         }
     } else if (cmd == 3) {
-        tstring k("ui_hire");
-        zero = *g_strtable.lookup(k);
+        {
+            tstring k("ui_hire");
+            label = *g_strtable.lookup(k);
+        }
         if (sel_type != 0) {
             int diff = GV->sl_party_price(stk.troop) - f8cc;
-            if (diff <= g_game->chars[g_game->player].f3b4) {
+            if (g_game->chars[g_game->player].f3b4 >= diff) {
                 action = true;
             } else {
-                float y = g_game_vars.get_float(tstring("party_info_warn_y"));
-                float x = g_game_vars.get_float(tstring("party_info_warn_x"));
+                tstring ky("party_info_warn_y");
+                float y = g_game_vars.get_float(ky);
+                tstring kx("party_info_warn_x");
+                float x = g_game_vars.get_float(kx);
+                tstring msg("ui_notification_cant_hire");
                 float pt[2];
                 pt[0] = x;
                 pt[1] = y;
-                tstring msg("ui_notification_cant_hire");
                 PSO(info)->set_label(g_strtable.lookup(msg), pt);
-            }
+            }                                       // msg, kx, ky destroyed here (0x5067b6..0x5067cb)
         }
     } else if (cmd == 4) {
         action = true;
-        tstring k;
-        if (sel_type == 0) {
-            tstring s("ui_uncapture");
-            k = s;
-        } else if ((stk.flags & 1) == 0) {
-            tstring s("ui_hire");
-            k = s;
-        } else {
-            tstring s("ui_capture");
-            k = s;
-        }
-        zero = *g_strtable.lookup(k);
+        tstring k(sel_type == 0 ? "ui_uncapture" : (stk.flags & 1) != 0 ? "ui_capture" : "ui_hire");
+        label = *g_strtable.lookup(k);
     }
 
     if (p2 == g_game->f78) {
         int n = PARTIES->get(g_game->f78)->first_flagged();
-        if (slot_idx > 1 && slot_idx < n) {
+        if (slot_idx > 1 && slot_idx < n)
             PSO(move_up)->act_bc();
-        }
-        if (slot_idx > 0 && slot_idx < n - 1) {
+        if (slot_idx > 0 && slot_idx < n - 1)
             PSO(move_down)->act_bc();
-        }
     }
 
     if (action) {
-        if (PARTIES->get(p1)->find_or_add(stk.troop, stk.flags & 1, 1) == -1) {
+        // (the stack's whole flags dword is passed: 0x5069ca)
+        if (PARTIES->get(p1)->find_or_add(stk.troop, stk.flags, 1) == -1) {
             action = false;
-            float y = g_game_vars.get_float(tstring("party_info_warn_y"));
-            float x = g_game_vars.get_float(tstring("party_info_warn_x"));
+            tstring ky("party_info_warn_y");
+            float y = g_game_vars.get_float(ky);
+            tstring kx("party_info_warn_x");
+            float x = g_game_vars.get_float(kx);
+            tstring msg("ui_party_capcity_reached");
             float pt[2];
             pt[0] = x;
             pt[1] = y;
-            tstring msg("ui_party_capcity_reached");
             PSO(info)->set_label(g_strtable.lookup(msg), pt);
         }
     }
@@ -1159,123 +1135,146 @@ void PartyScreen::refresh_selection()
         locked = 0;
     }
 
-    tstring tmp;
-    tstring price;
-    {
-        tstring src = zero;
-        PSO(action_btn)->set_text((float*)&src, &price);
-    }
-    char price_buf[512];
-    sprintf(price_buf, "");
+    tstring caption(label);                         // a copy (0x506b08), alive to the end
+    PSO(action_btn)->set_text(size, &caption);
+
+    char cost_buf[512];                             // esp+0x2b0
+    sprintf(cost_buf, "");
     if (stk.troop == g_game->player || (stk.flags & 1) != 0) {
         if (mode == 2 && action) {
             int v;
-            tstring k("ui_price");
-            g_store0 = 0;
-            g_store1 = 0;
-            if (g_game->emit_event(10, slot_idx, g_game->f78) != 0)
-                v = g_store0;
-            else
-                v = GD_I(0x13a20);
-            sprintf(price_buf, g_strtable.lookup(k)->c_str(), v);
-            PSO(cost_panel)->set_text((float*)&tmp, &k);
-            put_text(cost_panel, price_buf);
+            {
+                tstring k("ui_price");
+                g_store0 = 0;
+                g_store1 = 0;
+                if (g_game->emit_event(10, stk.troop, g_game->f78) != 0)
+                    v = g_store0;
+                else
+                    v = GD_I(0x13a20);
+                sprintf(cost_buf, g_strtable.lookup(k)->c_str(), v);
+            }
+            put_text(cost_panel, cost_buf);
         }
     } else {
-        char wage_buf[512];
-        tstring k;
         if (sel_type == 1 && mode == 3) {
-            k = tstring("ui_joining_cost_weekly_wage");
-            int v2 = GV->sl_party_price(slot_idx);
-            int v1 = GV->sl_party_value(slot_idx);
-            sprintf(wage_buf, g_strtable.lookup(k)->c_str(), v1, v2);
+            tstring k("ui_joining_cost_weekly_wage");
+            const char* fmt = g_strtable.lookup(k)->c_str();
+            sprintf(cost_buf, fmt, GV->sl_party_price(stk.troop), GV->sl_party_value(stk.troop));
         } else {
-            k = tstring("ui_weekly_wage");
-            int v1 = GV->sl_party_value(slot_idx);
-            sprintf(wage_buf, g_strtable.lookup(k)->c_str(), v1);
+            tstring k("ui_weekly_wage");
+            const char* fmt = g_strtable.lookup(k)->c_str();
+            sprintf(cost_buf, fmt, GV->sl_party_value(stk.troop));
         }
-        PSO(cost_panel)->set_text((float*)&tmp, &k);
-        put_text(cost_panel, wage_buf);
+        put_text(cost_panel, cost_buf);
     }
 
-    bool up1 = false;
-    bool up2 = false;
-    unsigned char nb = 0;
-    char upgrade_buf[512];
+    // the two upgrade buttons: shown (a) when the troop has that upgrade, available (c) when the party has room
+    bool shown1 = false, shown2 = false, room1 = false, room2 = false;
+    char upgrade_buf[512];                          // esp+0x4b0
+    char name_buf[512];                             // esp+0xb0
     sprintf(upgrade_buf, "");
-    int sel = stk.troop;
-    if (sel_type == 0 && (rec->flags32 & 0x10) == 0) {
-        nb = stk.flags & 1;
-        if (nb == 0) {
-            sprintf(upgrade_buf, g_strtable.lookup(tstring("ui_number_ready_to_upgrade"))->c_str(), sel_slot);
-            if (rec->f50 != 0) {
-                up1 = true;
-                {
-                    tstring k("ui_upgrade_to_value");
-                    sprintf(price_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
-                    PSO(upgrade1)->set_text((float*)&tmp, &k);
-                }
-                PSO(upgrade1)->set_colour(&g_strtable.lookup(tstring("party_b_member_t_c"))->len);
+    int ready = stk.f14;                            // the stack's troops ready to upgrade
+    if (sel_type == 0 && (rec->flags32 & 0x10) == 0 && (stk.flags & 1) == 0) {
+        {
+            tstring k("ui_number_ready_to_upgrade");
+            sprintf(upgrade_buf, g_strtable.lookup(k)->c_str(), ready);
+        }
+        if (rec->f50 != 0) {
+            shown1 = true;
+            {
+                tstring k("ui_upgrade_to_value");
+                sprintf(name_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
             }
-            if (*(unsigned*)((char*)rec + 0x54) != 0) {
-                up2 = true;
-                {
-                    tstring k("ui_upgrade_to_value");
-                    sprintf(price_buf, g_strtable.lookup(k)->c_str(), g_game->chars[*(unsigned*)((char*)rec + 0x54)].display_name()->c_str());
-                    PSO(upgrade2)->set_text((float*)&tmp, &k);
-                }
-                PSO(upgrade2)->set_colour(&g_strtable.lookup(tstring("party_b_member_t_c"))->len);
+            {
+                tstring t(name_buf);
+                PSO(upgrade1)->set_text(size, &t);
             }
-            if (up1) {
-                put_text(upgrade1, upgrade_buf);
-                PSO(upgrade1)->enable();
-                if (sel_slot != 0) {
-                    if (PARTIES->get(sel)->find_or_add(rec->f50, 0, 0) != -1)
-                        up1 = true;
-                }
-            }
-            if (up2) {
-                put_text(upgrade2, upgrade_buf);
-                PSO(upgrade2)->enable();
-                if (sel_slot != 0) {
-                    if (PARTIES->get(sel)->find_or_add(*(unsigned*)((char*)rec + 0x54), 0, 0) != -1)
-                        up2 = true;
-                }
+            {
+                tstring k("party_b_member_t_c");
+                int colour = g_game_vars.hex_field(k);
+                PSO(upgrade1)->set_colour(&colour);
             }
         }
-    }
-    if (up1) {                                      // both buttons alike (0x507031..0x507064)
-        PSO(upgrade1)->act_bc();
-    } else if (nb == 0 && sel_slot <= p1) {
-        PSO(upgrade1)->act_bc();
-        up1 = true;
-    }
-    if (up2) {
-        PSO(upgrade2)->act_bc();
-    } else if (nb == 0 && sel_slot <= p1) {
-        PSO(upgrade2)->act_bc();
-        up2 = true;
-    }
-    if (sel_slot != 0) {
-        if (!up2) {
-            tstring k("ui_notification_no_slot_for_upgrade");
-            sprintf(price_buf, g_strtable.lookup(k)->c_str(), g_game->chars[*(unsigned*)((char*)rec + 0x54)].display_name()->c_str());
-            PSO(upgrade2)->set_text((float*)&tmp, &k);
-            PSO(upgrade2)->set_colour(&g_strtable.lookup(tstring("party_b_upgrade_t_c_passive"))->len);
+        unsigned up2 = *(unsigned*)((char*)rec + 0x54);
+        if (up2 != 0) {
+            shown2 = true;
+            {
+                tstring k("ui_upgrade_to_value");
+                sprintf(name_buf, g_strtable.lookup(k)->c_str(), g_game->chars[up2].display_name()->c_str());
+            }
+            {
+                tstring t(name_buf);
+                PSO(upgrade2)->set_text(size, &t);
+            }
+            {
+                tstring k("party_b_member_t_c");
+                int colour = g_game_vars.hex_field(k);
+                PSO(upgrade2)->set_colour(&colour);
+            }
         }
-        if (nb == 0) {
+        if (shown1) {
+            PSO(upgrade1)->act_b4();
+            PSO(upgrade1)->enable();
+            if (ready != 0 && PARTIES->get(p2)->find_or_add(rec->f50, 0, 0) != -1)
+                room1 = true;
+        }
+        if (shown2) {
+            PSO(upgrade2)->act_b4();
+            PSO(upgrade2)->enable();
+            if (ready != 0 && PARTIES->get(p2)->find_or_add(*(unsigned*)((char*)rec + 0x54), 0, 0) != -1)
+                room2 = true;
+        }
+    }
+    bool nb = (stk.flags & 1) != 0;
+    if (room1) {                                    // 0x507031..0x507064
+        PSO(upgrade1)->act_bc();
+    } else if (!nb && ready >= stk.count) {
+        PSO(upgrade1)->act_bc();
+        room1 = true;
+    }
+    if (room2) {
+        PSO(upgrade2)->act_bc();
+    } else if (!nb && ready >= stk.count) {
+        PSO(upgrade2)->act_bc();
+        room2 = true;
+    }
+    if (ready != 0) {
+        if (!room2) {
             {
                 tstring k("ui_notification_no_slot_for_upgrade");
-                sprintf(price_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
-                PSO(upgrade1)->set_text((float*)&tmp, &k);
+                sprintf(name_buf, g_strtable.lookup(k)->c_str(),
+                        g_game->chars[*(unsigned*)((char*)rec + 0x54)].display_name()->c_str());
             }
-            PSO(upgrade1)->set_colour(&g_strtable.lookup(tstring("party_b_upgrade_t_c_passive"))->len);
+            {
+                tstring t(name_buf);
+                PSO(upgrade2)->set_text(size, &t);
+            }
+            {
+                tstring k("party_b_upgrade_t_c_passive");
+                int colour = g_game_vars.hex_field(k);
+                PSO(upgrade2)->set_colour(&colour);
+            }
         }
-        put_text(upgrade_panel, upgrade_buf);
+        if (!room1) {
+            {
+                tstring k("ui_notification_no_slot_for_upgrade");
+                sprintf(name_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
+            }
+            {
+                tstring t(name_buf);
+                PSO(upgrade1)->set_text(size, &t);
+            }
+            {
+                tstring k("party_b_upgrade_t_c_passive");
+                int colour = g_game_vars.hex_field(k);
+                PSO(upgrade1)->set_colour(&colour);
+            }
+        }
+        PSO(upgrade_panel)->act_b4();
     }
     {
         tstring u(upgrade_buf);
-        PSO(upgrade_panel)->set_text((float*)&tmp, &u);
+        PSO(upgrade_panel)->set_text(size, &u);
     }
     if (mode == 3) {
         if (sel_type == 0) {
@@ -1286,8 +1285,6 @@ void PartyScreen::refresh_selection()
         }
     } else {
         PSO(action_btn)->act_b4();                  // +0xb4 (0x5072d0)
-    }
-
     }
 }
 

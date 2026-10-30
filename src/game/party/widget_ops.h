@@ -17,7 +17,7 @@ struct WidgetOps {
     virtual void v5c(); virtual void v60();
     virtual void set_scale(float* xy);                  // +0x64 (0x502230, 0x502320)
     virtual void v68(); virtual void v6c(); virtual void v70();
-    virtual void set_xyz(float* xy);                    // +0x74 (0x501a20: called with (16.0, 0.0) after set_scale)
+    virtual void set_flags(unsigned* f);                // +0x74 (0x488a40 stores *f at +0x148; 0x501a20 passes 0x10)
     virtual void v78();
     virtual void add_image_a(int layer, void* mesh);    // +0x7c (0x502230: slot icon from the cloned "inv_slot" mesh)
     virtual void add_image(int layer, void* mesh);      // +0x80 (0x5029f0: item mesh on layer 2; 0x5024e0: strip icon on layer 0)

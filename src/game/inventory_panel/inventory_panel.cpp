@@ -125,6 +125,8 @@ void InventoryPanel::refresh_transaction(int unused)
     if (mode == 4)
         refresh_lists(1);
 
+    // the question boxes live on the dialog record g_main_menu.rec points at (0x51036e: ecx = [0xa73980]); the screen
+    // state is then left through g_main_menu itself (0x510395: ecx = 0xa73980)
     char eaten = 0;
     if (PSO(leave)->clicked_on(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0 && pending == 0)) {
         if (locked == 0) {
@@ -143,18 +145,18 @@ void InventoryPanel::refresh_transaction(int unused)
                     TROOP(troop)->f3b4 -= pending;
                     eaten = 1;
                 } else {
-                    tstring key("ui_you_dont_have_value");
-                    tstring_buffer vb;
-                    tstring* val = GV->string_value(vb.get(), -pending);
-                    tstring* f = g_strtable.lookup(key);
                     char buf[0x200];
-                    sprintf(buf, f->c_str(), val->c_str());
-                    vb.destroy();
-                    key.~tstring();
+                    {
+                        tstring key("ui_you_dont_have_value");
+                        tstring_buffer vb;
+                        tstring* val = GV->string_value(vb.get(), -pending);
+                        const char* v = val->c_str();
+                        sprintf(buf, g_strtable.lookup(key)->c_str(), v);
+                        vb.destroy();
+                    }                                   // the value, then the key (0x5101a4, 0x5101ad)
                     tstring msg(buf);
-                    char out[0x10];
-                    PSO(total_cost)->set_text((float*)out, &msg);
-                    msg.~tstring();
+                    float out[2];
+                    PSO(total_cost)->set_text(out, &msg);
                 }
             } else if (pending > 0) {
                 if (pending <= TROOP(troop)->f3b4) {
@@ -163,53 +165,44 @@ void InventoryPanel::refresh_transaction(int unused)
                     eaten = 1;
                 } else {
                     q_pay = -1;
-                    tstring key("ui_merchant_cant_afford_value");
-                    tstring_buffer vb1;
-                    tstring* val = GV->string_value(vb1.get(), TROOP(this->troop)->f3b4);
-                    tstring_buffer vb2;
-                    tstring* val2 = GV->string_value(vb2.get(), pending);
-                    Troop* rec = TROOP(troop);
-                    tstring* nm = g_strtable.find(&rec->key);
-                    if (nm == 0)
-                        nm = &rec->key;
-                    tstring* f = g_strtable.lookup(key);
                     char buf[0x200];
-                    mb_snprintf(buf, 0x200, f->c_str(), nm->c_str(), val2->c_str(), val->c_str());
-                    vb2.destroy();
-                    vb1.destroy();
-                    key.~tstring();
-                    tstring think("ui_merchant_think_of_something_else");
-                    tstring pay("ui_merchant_pay_whatever");
-                    tstring msg(buf);
-                    ((NamedRec*)&g_main_menu)->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), (int)&q_pay);
-                    msg.~tstring();
-                    pay.~tstring();
-                    think.~tstring();
-                    g_main_menu.f4 = 2;
+                    {
+                        tstring key("ui_merchant_cant_afford_value");
+                        tstring_buffer vb1;
+                        const char* gold = GV->string_value(vb1.get(), TROOP(troop)->f3b4)->c_str();
+                        tstring_buffer vb2;
+                        const char* price = GV->string_value(vb2.get(), pending)->c_str();
+                        Troop* rec = TROOP(troop);
+                        tstring* nm = g_strtable.find(&rec->key);
+                        if (nm == 0)
+                            nm = &rec->key;
+                        mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), nm->c_str(), price, gold);
+                        vb2.destroy();
+                        vb1.destroy();
+                    }
+                    {
+                        tstring think("ui_merchant_think_of_something_else");
+                        tstring pay("ui_merchant_pay_whatever");
+                        tstring msg(buf);
+                        ((NamedRec*)g_main_menu.rec)->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), (int)&q_pay);
+                    }                                   // msg, pay, think destroyed here (0x5106bd..0x5106cf)
+                    g_main_menu.rec->f4 = 2;
                     g_main_menu.set_state(0);
                 }
             } else if (worn > 0) {
                 q_dump = -1;
                 char buf[0x200];
-                if (worn == 1) {
-                    tstring key("ui_dumping_value_item");
-                    tstring* f = g_strtable.lookup(key);
-                    mb_snprintf(buf, 0x200, f->c_str(), 1);
-                    key.~tstring();
-                } else {
-                    tstring key("ui_dumping_value_items");
-                    tstring* f = g_strtable.lookup(key);
-                    mb_snprintf(buf, 0x200, f->c_str(), worn);
-                    key.~tstring();
+                {
+                    tstring key(worn == 1 ? "ui_dumping_value_item" : "ui_dumping_value_items");
+                    mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), worn);
                 }
-                tstring no("ui_no");
-                tstring yes("ui_yes");
-                tstring msg(buf);
-                ((NamedRec*)&g_main_menu)->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_dump);
-                msg.~tstring();
-                yes.~tstring();
-                no.~tstring();
-                g_main_menu.f4 = 2;
+                {
+                    tstring no("ui_no");
+                    tstring yes("ui_yes");
+                    tstring msg(buf);
+                    ((NamedRec*)g_main_menu.rec)->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_dump);
+                }
+                g_main_menu.rec->f4 = 2;
                 g_main_menu.set_state(0);
             } else {
                 eaten = 1;
@@ -218,22 +211,22 @@ void InventoryPanel::refresh_transaction(int unused)
             int food = g_game->troops->equip[9].item;
             if (food >= 0 && ITYPE(food) == 1) {
                 q_food = -1;
-                tstring q("ui_question_slaughter_food_and_eat");
-                ItemKind* rec = &g_items[food];
-                tstring* nm = g_strtable.find(&rec->key);
-                if (nm == 0)
-                    nm = &rec->key;
-                tstring* f = g_strtable.lookup(q);
                 char buf[0x200];
-                mb_snprintf(buf, 0x200, f->c_str(), nm->c_str());
-                q.~tstring();
-                tstring no("ui_no");
-                tstring yes("ui_yes");
-                tstring msg(buf);
-                ((NamedRec*)&g_main_menu)->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_food);
-                msg.~tstring();
-                yes.~tstring();
-                no.~tstring();
+                {
+                    tstring q("ui_question_slaughter_food_and_eat");
+                    ItemKind* rec = &g_items[food];
+                    tstring* nm = g_strtable.find(&rec->key);
+                    if (nm == 0)
+                        nm = &rec->key;
+                    const char* n = nm->c_str();
+                    mb_snprintf(buf, 0x200, g_strtable.lookup(q)->c_str(), n);
+                }
+                {
+                    tstring no("ui_no");
+                    tstring yes("ui_yes");
+                    tstring msg(buf);
+                    ((NamedRec*)g_main_menu.rec)->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_food);
+                }
                 g_main_menu.set_state(0);
                 eaten = 0;
             }
@@ -252,23 +245,18 @@ void InventoryPanel::refresh_transaction(int unused)
         init_window();
     }
 
-    if (!eaten) {
-        if (q_pay != 0) {
-            if (q_dump != 0)
-                return;
-        }
-    } else if (q_pay != 0) {
-        goto equip;
+    // an unanswered question keeps the screen open (0x510479..0x51048f); the merchant's gold goes to the player
+    // only when there is no pay question (0x510495)
+    if (!eaten && q_pay != 0 && q_dump != 0)
+        return;
+    if (q_pay == 0) {
+        g_game->add_gold(TROOP(troop)->f3b4, g_game->player);
+        TROOP(troop)->f3b4 = 0;
     }
-    g_game->add_gold(TROOP(troop)->f3b4, g_game->player);
-    TROOP(troop)->f3b4 = 0;
 
-equip:
     if (troop >= 3) {
         Troop* rec = TROOP(troop);
         unsigned f = rec->flags32;
-        int spare = *(int*)((char*)rec + 0x34);
-        spare = spare;
         if ((f & 0x10) == 0 || (f & 0x1000) == 0) {
             if (mode == 4)
                 ((TroopRec*)rec)->auto_equip(-1, 0x100e, 0, 0);

@@ -67,7 +67,9 @@ void* PartyWindow::make_inventory_menu(int idx)
     float f_ax = cfg(tstring("inv_armor_x"));
     float f_hy = cfg(tstring("inv_horse_y"));
 
-    Vec2 pos[11];
+    // one position per equipment slot (0x501be7..0x501d34 fill esp+0x50..0x9c): four arms, three armour, then the
+    // three around the horse slot
+    Vec2 pos[10];
     pos[0] = Vec2(f_x, f_y);
     pos[1] = Vec2(f_x, f_y - 0.088f);
     pos[2] = Vec2(f_x, f_y - 0.176f);
@@ -75,9 +77,9 @@ void* PartyWindow::make_inventory_menu(int idx)
     pos[4] = Vec2(f_ax, f_y);
     pos[5] = Vec2(f_ax, f_y - 0.088f);
     pos[6] = Vec2(f_ax, f_y - 0.176f);
-    pos[8] = Vec2(f_ax - 0.088f, f_y - 0.088f);
-    pos[9] = Vec2(f_ax - 0.088f, f_hy);
-    pos[10] = Vec2(f_y, f_hy - 0.088f);
+    pos[7] = Vec2(f_ax - 0.088f, f_y - 0.088f);
+    pos[8] = Vec2(f_ax - 0.088f, f_hy);
+    pos[9] = Vec2(f_ax, f_hy - 0.088f);
 
     PartyPanel* panel = new PartyPanel;
     panels[idx] = panel;
@@ -103,8 +105,8 @@ void* PartyWindow::make_inventory_menu(int idx)
             WOPS(w)->set_scale(&v.x);
         }
         {
-            Vec2 v(16.0f, 0.0f);
-            WOPS(w)->set_xyz(&v.x);
+            unsigned f = 0x10;          // the option flags (+0x148), an integer
+            WOPS(w)->set_flags(&f);
         }
         {
             float out[2];
@@ -123,8 +125,8 @@ void* PartyWindow::make_inventory_menu(int idx)
             WOPS(w)->set_scale(&v.x);
         }
         {
-            Vec2 v(16.0f, 0.0f);
-            WOPS(w)->set_xyz(&v.x);
+            unsigned f = 0x10;          // the option flags (+0x148), an integer
+            WOPS(w)->set_flags(&f);
         }
         {
             float out[2];
@@ -143,8 +145,8 @@ void* PartyWindow::make_inventory_menu(int idx)
             WOPS(w)->set_scale(&v.x);
         }
         {
-            Vec2 v(16.0f, 0.0f);
-            WOPS(w)->set_xyz(&v.x);
+            unsigned f = 0x10;          // the option flags (+0x148), an integer
+            WOPS(w)->set_flags(&f);
         }
         {
             float out[2];
@@ -163,8 +165,8 @@ void* PartyWindow::make_inventory_menu(int idx)
             WOPS(w)->set_scale(&v.x);
         }
         {
-            Vec2 v(16.0f, 0.0f);
-            WOPS(w)->set_xyz(&v.x);
+            unsigned f = 0x10;          // the option flags (+0x148), an integer
+            WOPS(w)->set_flags(&f);
         }
         {
             float out[2];
