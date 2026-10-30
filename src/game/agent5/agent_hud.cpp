@@ -1035,18 +1035,23 @@ void rgl::mesh::set_offset(const vector4& pos)
     ensure_local();
     for (unsigned i = 0; v50.begin() != NULL && i < v50.size(); i++) {
         int idx = v50[i].index;
-        rgl::point20& p = v70[idx];
-        p.a.x += v50[i].normal.x * pos.x;
-        p.a.y += v50[i].normal.y * pos.x;
-        p.a.z += v50[i].normal.z * pos.x;
-        p.b.x += v50[i].normal.x * pos.x;
-        p.b.y += v50[i].normal.y * pos.x;
-        p.b.z += v50[i].normal.z * pos.x;
+        // each offset is a vector temporary (normal * pos.x): the original forms all three products before it adds any of them
+        float dx = v50[i].normal.x * pos.x, dy = v50[i].normal.y * pos.x, dz = v50[i].normal.z * pos.x;
+        rgl::point20* p = &v70[idx];
+        p->a.x += dx;
+        p->a.y += dy;
+        p->a.z += dz;
+        dx = v50[i].normal.x * pos.x, dy = v50[i].normal.y * pos.x, dz = v50[i].normal.z * pos.x;
+        p = &v70[idx];
+        p->b.x += dx;
+        p->b.y += dy;
+        p->b.z += dz;
         for (int j = 0; j < kf.count; j++) {
             rgl::frame_t& f = kf.frames[j];
-            f.verts[idx].x += f.norms[i].x * pos.x;
-            f.verts[idx].y += f.norms[i].y * pos.x;
-            f.verts[idx].z += f.norms[i].z * pos.x;
+            float fx = f.norms[i].x * pos.x, fy = f.norms[i].y * pos.x, fz = f.norms[i].z * pos.x;
+            f.verts[idx].x += fx;
+            f.verts[idx].y += fy;
+            f.verts[idx].z += fz;
         }
     }
     slots[0].f28 = 1;                       // +0x138 (dirty flag)
@@ -1457,7 +1462,7 @@ void LogScreen::build(bool show)
     } else {
         int n = 0;
         if (g_msg_begin)
-            n = ((int)(g_msg_end - g_msg_begin) / 0x10) * 3;
+            n = (int)(g_msg_end - g_msg_begin) * 3;     // (the byte span >> 4: g_msg_* are tstring pointers already)
         for (int i = 0; i < n; i += 3) {
             text->append(g_msg_begin[i / 3]);
             text->push_back('\n');
@@ -1472,7 +1477,7 @@ void LogScreen::build(bool show)
 
     float y = log->U()->screen[1] + 0.001f;
 
-    bar = new GroupWidget;
+    bar = new TextGroupWidget;              // vptr 0x597050 (0x4fcb33)
     v[0] = 0.0f;
     v[1] = 0.0f;
     UI(bar)->set_size(v);
@@ -1675,8 +1680,10 @@ MapText MWidget::text_rect()
     MissionUi* u = U();
     if (u->tracks[4] == 0) {
         rgl::mesh* m = new rgl::mesh;
-        tstring n("ui_font");
-        m->res = g_resmgr_full.base().get_material(*(rgl::string*)&n);
+        {
+            tstring n("ui_font");           // destroyed before add_image_a (0x4fd544)
+            m->res = g_resmgr_full.base().get_material(*(rgl::string*)&n);
+        }
         UI(this)->add_image_a(4, m);
     }
     u->tracks[4]->clear_geometry();

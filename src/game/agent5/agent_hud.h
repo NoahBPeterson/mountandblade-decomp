@@ -260,6 +260,9 @@ struct GroupWidget : MissionUi {                                  // vtable 0x59
     ChildVec kids;                                                // +0x178
     GroupWidget() { *(void**)this = (void*)0x5924a0; kids.first = 0; kids.last = 0; kids.end = 0; }
 };
+struct TextGroupWidget : GroupWidget {                            // the same 0x188-byte container with vtable 0x597050 (overlay.h's TextBox)
+    TextGroupWidget() { *(void**)this = (void*)0x597050; }
+};
 struct WindowBase : MissionUi {                                   // the 0x188-byte window base (party_window.h's UiWindow); its constructor body 0x4931a0 is ContainerW::construct
     ChildVec kids;                                                // +0x178 (first +0x17c)
 private:
@@ -475,7 +478,7 @@ extern StrTable g_strtable;                                       // 0x5e2a18
 struct UiAInline : MissionUi {};                                  // cls_map/progress_bar.cpp's name for the widget make_short_button returns
 UiAInline* __cdecl make_short_button(MissionUi* frame, const tstring* text, float x, float y, float h);   // 0x4e5570
 struct TStringArray {                                             // an array of tstrings allocated with new[] (the count sits in front of the first element)
-    void* destroy(unsigned flags);                                // 0x4fd0e0 (this = the first element)
+    __declspec(noinline) void* destroy(unsigned flags);           // 0x4fd0e0 (this = the first element; called, not inlined, by 0x4fc820)
 };
 struct LogScreen {                                                // the game-log window (built by 0x4fc820)
     char pad0[4];

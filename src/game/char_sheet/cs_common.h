@@ -74,6 +74,7 @@ struct MissionUi {                                                  // ui/missio
     MissionUi();                                                    // 0x48ae20
     void render(rgl::scene* s, float* v, int a, int b);             // 0x488720
     void set_track(int i, rgl::mesh* p);                            // 0x488ad0 (vtable slot +0x80)
+    void set_fog(const float* ref, const float* lo, const float* hi);   // 0x488cd0 (facegen_win 0x4f1460 calls it on the 0x344-byte preview scene)
 };
 struct ContainerW {                                                 // world_data/world_data.h
     void* construct();                                              // 0x4931a0
