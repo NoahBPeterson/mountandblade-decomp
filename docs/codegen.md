@@ -188,6 +188,22 @@ compiler computes a trip count and uses `mul`.
 
 ## 4. Statement order, ownership and spelling
 
+- **An inline constructor's stores follow source order.** M&B `resmgr::load_stream`
+  0x41db20 and `get_render_target` 0x41b7d0 both expand `texture::texture()`. The
+  original's `or ecx,-1` comes before the two `0x80` stores only when the source
+  writes `loaded = 0; f1c = -1;` before `width = height = 0x80`. Reordering the
+  ctor body matched both functions at once.
+- **Count immediates before blaming the allocator.** When "cl hoists different
+  constants into registers" seems to explain a diff, count how many times each
+  immediate is stored in both listings. A count that differs is a wrong *value*
+  in the source, not allocation. M&B `render_batch::init_decls` 0x4bc830: the
+  note said "identical values", but the skinning vertex declarations used
+  `D3DDECLTYPE_UBYTE4` (5) where the original has `FLOAT4` (3). That was a real
+  behaviour bug.
+- **A `mov ecx,...` right before a call to a function that ignores `this` means
+  the source called the member.** Calling the `::` free function drops the ecx
+  load (M&B `Agent::can_hit` 0x4406a0 → `id_matches_dir` 0x4326d0).
+
 - **Repeat a pure expression instead of naming it.** CSE picks the owner
   register; a named local imposes a lifetime that can hoist, spill, or rotate
   registers. M&B: writing `Agent* a = (Agent*)(g_game->chars + idx * 0x508);` once
@@ -761,6 +777,13 @@ address written where the original writes a float, a skipped `normalize` call,
 seven values left on the x87 stack at return).
 
 ### 9.6 Reading `fcomp; fnstsw ax; test ah,M; jcc`
+
+Byte-matching note (M&B `rigid_base::collide_shape` 0x427900): write `if (!(vn >=
+0.0f))` and *repeat the expression* inside the branch instead of reusing `vn`.
+cl then merges the two into the original's `fld st(0)` + `fcomp [0]` + `test
+ah,1`; reusing the named float gives a plain `fcom` with no copy. Write the dot
+product's last term commuted (`... + v.z*nrm.z`) to get `fld nrm.z; fmul v.z`
+first.
 
 `fcom` sets C0 (`0x01`) when st0 < operand, C3 (`0x40`) when they are equal, and
 C0, C2 (`0x04`) and C3 together when either is NaN. The mask and the jump say
