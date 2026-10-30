@@ -79,7 +79,7 @@ void FieldPanel::relayout(const tstring* text)
         scene()->view[0]->set_xy(&f49c);
         scene()->view[0]->get_state(v);
         scene()->view[0]->set_xy(v);
-        scene()->view[0]->f13c = v[1] - screen[3] * 0.63f - 0.001f;
+        scene()->view[0]->f13c = v[1] - f144 * 0.63f - 0.001f;   // the text-metric f144 (0x48f0c0), not screen[3]
         scene()->view[0]->get_state(&v[2]);
     }
     update();

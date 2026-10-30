@@ -126,6 +126,8 @@ rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent)
 // ==== 0x495ba0: transform the position list, the vertex list and every key frame ==================================
 // Takes a 3x4 transform (the s / f / u rows) by reference; the w lane of every rebuilt vector is whatever the
 // uninitialised local carries (the original never writes it; see the sibling rgl::mesh transform at 0x44f3c0).
+// Every sum is written in the original's evaluation order, which differs per row (0x495bdd..0x495e92: the position
+// pair's x rows add f,s then u; the other rows s,u then f, or u,f then s); cl keeps the written order here.
 // @ 0x495ba0
 void MeshX::set_part(const rgl::matrix& mtx)
 {
@@ -134,14 +136,14 @@ void MeshX::set_part(const rgl::matrix& mtx)
         std::vector<rgl::point20>& pos = v70;
         for (unsigned i = 0; i < pos.size(); i++) {
             vector4 a;
-            a.x = mtx.u.x * pos[i].a.z + mtx.f.x * pos[i].a.y + mtx.s.x * pos[i].a.x;
-            a.y = mtx.u.y * pos[i].a.z + mtx.f.y * pos[i].a.y + mtx.s.y * pos[i].a.x;
-            a.z = mtx.u.z * pos[i].a.z + mtx.f.z * pos[i].a.y + mtx.s.z * pos[i].a.x;
+            a.x = (mtx.f.x * pos[i].a.y + mtx.s.x * pos[i].a.x) + mtx.u.x * pos[i].a.z;
+            a.y = (mtx.s.y * pos[i].a.x + mtx.u.y * pos[i].a.z) + mtx.f.y * pos[i].a.y;
+            a.z = (mtx.s.z * pos[i].a.x + mtx.u.z * pos[i].a.z) + mtx.f.z * pos[i].a.y;
             pos[i].a = a;
             vector4 b;
-            b.x = mtx.u.x * pos[i].b.z + mtx.f.x * pos[i].b.y + mtx.s.x * pos[i].b.x;
-            b.y = mtx.u.y * pos[i].b.z + mtx.f.y * pos[i].b.y + mtx.s.y * pos[i].b.x;
-            b.z = mtx.u.z * pos[i].b.z + mtx.f.z * pos[i].b.y + mtx.s.z * pos[i].b.x;
+            b.x = (mtx.f.x * pos[i].b.y + mtx.s.x * pos[i].b.x) + mtx.u.x * pos[i].b.z;
+            b.y = (mtx.u.y * pos[i].b.z + mtx.f.y * pos[i].b.y) + mtx.s.y * pos[i].b.x;
+            b.z = (mtx.s.z * pos[i].b.x + mtx.u.z * pos[i].b.z) + mtx.f.z * pos[i].b.y;
             pos[i].b = b;
         }
     }
@@ -150,9 +152,9 @@ void MeshX::set_part(const rgl::matrix& mtx)
         for (unsigned i = 0; i < verts.size(); i++) {
             vector4* p = &verts[i].normal;
             vector4 a;
-            a.x = mtx.u.x * p->z + mtx.f.x * p->y + mtx.s.x * p->x;
-            a.y = mtx.u.y * p->z + mtx.f.y * p->y + mtx.s.y * p->x;
-            a.z = mtx.u.z * p->z + mtx.f.z * p->y + mtx.s.z * p->x;
+            a.x = (mtx.u.x * p->z + mtx.f.x * p->y) + mtx.s.x * p->x;
+            a.y = (mtx.s.y * p->x + mtx.u.y * p->z) + mtx.f.y * p->y;
+            a.z = (mtx.s.z * p->x + mtx.u.z * p->z) + mtx.f.z * p->y;
             *p = a;
         }
     }
@@ -162,9 +164,9 @@ void MeshX::set_part(const rgl::matrix& mtx)
             std::vector<rgl::vector4>& vl = l->verts;
             for (unsigned j = 0; j < vl.size(); j++) {
                 vector4 a;
-                a.x = mtx.u.x * vl[j].z + mtx.f.x * vl[j].y + mtx.s.x * vl[j].x;
-                a.y = mtx.u.y * vl[j].z + mtx.f.y * vl[j].y + mtx.s.y * vl[j].x;
-                a.z = mtx.u.z * vl[j].z + mtx.f.z * vl[j].y + mtx.s.z * vl[j].x;
+                a.x = (mtx.u.x * vl[j].z + mtx.f.x * vl[j].y) + mtx.s.x * vl[j].x;
+                a.y = (mtx.s.y * vl[j].x + mtx.u.y * vl[j].z) + mtx.f.y * vl[j].y;
+                a.z = (mtx.s.z * vl[j].x + mtx.u.z * vl[j].z) + mtx.f.z * vl[j].y;
                 vl[j] = a;
             }
         }
@@ -172,9 +174,9 @@ void MeshX::set_part(const rgl::matrix& mtx)
             std::vector<rgl::vector4>& vl = l->norms;
             for (unsigned j = 0; j < vl.size(); j++) {
                 vector4 a;
-                a.x = mtx.u.x * vl[j].z + mtx.f.x * vl[j].y + mtx.s.x * vl[j].x;
-                a.y = mtx.u.y * vl[j].z + mtx.f.y * vl[j].y + mtx.s.y * vl[j].x;
-                a.z = mtx.u.z * vl[j].z + mtx.f.z * vl[j].y + mtx.s.z * vl[j].x;
+                a.x = (mtx.u.x * vl[j].z + mtx.f.x * vl[j].y) + mtx.s.x * vl[j].x;
+                a.y = (mtx.s.y * vl[j].x + mtx.u.y * vl[j].z) + mtx.f.y * vl[j].y;
+                a.z = (mtx.s.z * vl[j].x + mtx.u.z * vl[j].z) + mtx.f.z * vl[j].y;
                 vl[j] = a;
             }
         }
@@ -829,7 +831,7 @@ void HudOuter::scroll_refresh(vector4* arg)
     v1.x = 0.01f;
     v1.y = arg->y;
     bar->s25(&v1);
-    bar->f17c = arg->y * 1.5576323f * 0.31f;
+    bar->f17c = (float)(arg->y * 1.5576323f) * 0.31f;    // two fmuls (0x4984ac, 0x4984ba): the cast stops cl folding the constants
 
     delete bar->tracks[0];
     bar->tracks[0] = 0;
@@ -837,11 +839,10 @@ void HudOuter::scroll_refresh(vector4* arg)
     bar->tracks[2] = 0;
 
     vector4 scale(0.5f, arg->y * 1.5576323f, 1.0f);
-    tstring a_name("scrollbar");
-    gui_mesh* a = ((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&a_name))->clone();
+    // the names are temporaries: each dies right after its clone (0x498534, 0x49858a)
+    gui_mesh* a = ((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&tstring("scrollbar")))->clone();
     a->set_color(scale);
-    tstring b_name("scrollbar_handle");
-    gui_mesh* b = ((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&b_name))->clone();
+    gui_mesh* b = ((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&tstring("scrollbar_handle")))->clone();
     b->set_color(scale);
     bar->s32(0, a);
     bar->s32(2, b);

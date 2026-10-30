@@ -538,12 +538,12 @@ void FieldPanel::update()
         float z[2];
         z[0] = 0.0f;
         z[1] = 0.0f;
-        v->set_pos(z);
+        scene()->view[0]->set_pos(z);           // view[0] re-read after the set_xy calls (0x48d587)
     } else {
         float z[2];
         z[0] = 0.0f;
         z[1] = screen[1] - scene()->screen[1];
-        v->set_pos(z);
+        scene()->view[0]->set_pos(z);           // re-read (0x48d543)
         float w[2];
         w[0] = scene()->screen[0];
         w[1] = screen[1];

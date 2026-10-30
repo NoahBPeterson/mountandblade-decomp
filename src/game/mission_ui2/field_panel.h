@@ -3,6 +3,7 @@
 // function that reads it.
 #ifndef GAME_MISSION_UI2_FIELD_PANEL_H
 #define GAME_MISSION_UI2_FIELD_PANEL_H
+#include <stddef.h>
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
@@ -45,8 +46,8 @@ struct FieldHost : MissionUi {              // the scene widget (MissionPanel::h
     int f178;                               // +0x178
     FieldVisual** view;                     // +0x17c
 };
-struct FieldPanel : MissionPanel {
-    char pad494[0x49c - 0x494];
+struct FieldPanel : MissionPanel {      // MissionPanel is 0x498 bytes: its __int64 clocks align it to 8 (host +0x490, then 4 bytes of tail padding)
+    char pad498[0x49c - 0x498];
     float f49c;                             // +0x49c
     float f4a0;                             // +0x4a0
     FieldHost* scene() const { return (FieldHost*)host; }
@@ -59,5 +60,6 @@ struct FieldPanel : MissionPanel {
     void update();                          // 0x48d470
     void relayout(const tstring* text);     // 0x48f020 (ret 4: re-places the scene's view after a text change)
 };
+typedef char assert_field_panel_f49c[(offsetof(FieldPanel, f49c) == 0x49c) ? 1 : -1];
 
 #endif // GAME_MISSION_UI2_FIELD_PANEL_H
