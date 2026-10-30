@@ -736,6 +736,7 @@ class Input:
 
 
 NSLOTS = M.POOL_SIZE // M.SLOT
+DEAD_ECX = "dead-ecx"  # Input fake-call record: ecx was the call's vtable base, not an argument (Runner._call_via_ecx)
 FORCE_SHARE = 0.25     # share of fresh inputs that force one branch-feeding callee's result (Runner._on_forced)
 FAULT_EDGE_RUNS = 50   # faulting inputs per row whose edges are recorded (each also runs our build once)
 # Resource lookups that call mb_error (0x42cc80: message box, exit(-1)) when the name is not registered. A test
@@ -2788,6 +2789,24 @@ class Runner:
             return 0
         return self._pushes_ending(addrs, insns, i - 1, 0) or 0
 
+    def _call_via_ecx(self, ret):
+        """The call ending at `ret` is `call [ecx+disp]` (ecx the vtable base, so not a thiscall `this`)."""
+        key = ("via-ecx", ret)
+        v = self.targets_cache.get(key)
+        if v is None:
+            v = False
+            try:
+                for n in (3, 6, 2):         # ff 51 xx / ff 91 xx xx xx xx / ff 11
+                    ins = next(_md.disasm(self.m.read(ret - n, n), ret - n, 1), None)
+                    if ins is not None and ins.id == CX.X86_INS_CALL and ins.address + ins.size == ret:
+                        o = ins.operands[0]
+                        v = o.type == CX.X86_OP_MEM and o.mem.base == CX.X86_REG_ECX and not o.mem.index
+                        break
+            except Exception:           # noqa: BLE001 - undecodable: treat ecx as an argument, as before
+                v = False
+            self.targets_cache[key] = v
+        return v
+
     def site_arity(self, ret):
         """Stack dwords a call ending at `ret` passes: pushes (and 'sub esp,N' slots) walking back
         from the call to the previous call/branch/stack adjustment. None if not determinable.
@@ -2846,7 +2865,10 @@ class Runner:
         args = []
         for k in range(n):
             args.append(self.norm_key(m.u32(esp + 4 + 4 * k)))
-        ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX))
+        # a call through [ecx+disp] has the vtable in ecx, so ecx is not its `this`: the callee is __stdcall
+        # (a COM-style method, the object is a stack argument) and ecx is dead there (screen 0x4ebfd0's
+        # GetDeviceData through vtable +0x28: the original leaves the vtable in ecx, ours a stack address)
+        ecx = DEAD_ECX if self._call_via_ecx(ret) else self.norm_key(uc.reg_read(UC_X86_REG_ECX))
         h = zlib.crc32(repr((target, ecx, args)).encode())
         k = h % 4
         eax = (0, 1, h % 9, M.POOL_BASE + M.SLOT * (HOT_SLOTS + (h >> 8) % (NSLOTS - HOT_SLOTS)))[k]
@@ -4547,7 +4569,9 @@ class Comparer:
             tb, nb, eb, ab = fb[k]
             if ta != tb:
                 return ("fake call #%d" % k, "%08x" % ta, "%08x" % tb, "different generated callee")
-            if not self.veq(ea, eb):
+            if ea != DEAD_ECX and not self.veq(ea, eb):
+                # (the original's ecx was the vtable base: not an argument, so not compared; ours being dead
+                # where the original passes a real `this` is still a mismatch)
                 return ("fake call #%d this" % k, fmt_val(ea), fmt_val(eb), "ecx at a call through a generated pointer")
             for i in range(min(na, nb)):
                 if not self.veq(aa[i], ab[i]):

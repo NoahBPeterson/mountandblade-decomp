@@ -697,6 +697,15 @@ def test_shrink_relations():
     assert R_._invert(("pair", 0x204, 0, b), e, 2 * 0x204) == b + 0x408
 
 
+def test_stdcall_through_vtable_ecx_is_not_compared():
+    """GuiScreen::process 0x4ebfd0 calls DirectInput's GetDeviceData through `mov ecx,[eax]; ... call [ecx+0x28]`: ecx is
+    the vtable, the device is a stack argument (__stdcall), so ecx is dead at the call. The original leaves the vtable
+    there, ours a stack address; comparing it made 200/201 inputs FAIL. Every stack argument is still compared."""
+    src = "src/game/char_sheet/screen.cpp"
+    r = _row("screen", 0x4ebfd0, src, "--inputs", "60")
+    assert r["verdict"] in ("PASS", "WEAK", "PASS-FP", "WEAK-FP") and r["valid"] > 0, r
+
+
 def test_loop_repair_shrinks_runaway_trip_count():
     """uninitialized_copy 0x4c1b60 walks [first, last) in 0x204-byte strides until `cmp esi, [ebp+0xc]` is equal: soup
     pointers never meet, so every original run burned the instruction cap (the row TIMEd OUT in the sweep). repair_loop
