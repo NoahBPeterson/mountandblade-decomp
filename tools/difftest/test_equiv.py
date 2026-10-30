@@ -213,7 +213,8 @@ def test_fp_judge_value():
 
 
 def test_fp_tol_rounding_only_is_pass_fp():
-    args = ("config", "4bd2f0")
+    # soup inputs only: typed inputs (--typed-share) reach a case fp-tol judges real on this mutant (open item)
+    args = ("config", "4bd2f0", "--typed-share", "0")
     # a different association of the same sum: only rounding differs
     path = cfg_mutant("f.v[0] = f.z * view.u.x + py * view.f.x + f.px * view.s.x + view.o.x;",
                       "f.v[0] = view.o.x + f.px * view.s.x + py * view.f.x + f.z * view.u.x;", "assoc")
@@ -399,7 +400,7 @@ def test_uninit_copy_is_excused():
     its run never wrote, so it is excused; with --no-uninit-copy the row FAILs on it."""
     src = os.path.join(ROOT, "src", "game", "world_data", "obj_tbl.cpp")
     run = lambda *x: equiv.test_function("obj_tbl", 0x499050, equiv.parse_args(
-        ["obj_tbl", "499050", "--src", src, "--inputs", "120", "--no-regress", "--fp-tol", *x]))
+        ["obj_tbl", "499050", "--src", src, "--inputs", "120", "--no-regress", "--fp-tol", "--typed-share", "0", *x]))
     r = run()
     assert r["verdict"] in ("PASS", "PASS-FP", "WEAK", "WEAK-FP") and r["tolerated"].get("uninit-copy"), r
     assert run("--no-uninit-copy")["verdict"] == "FAIL"

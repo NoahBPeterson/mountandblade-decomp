@@ -24,7 +24,9 @@ Inputs are random "pointer soup" plus steering (tools/difftest/steer.py; --no-st
 the constants compared before branches (both builds, +-1 / +-1 ulp) join the dictionary; uncovered
 branches are replayed with the compare instrumented and the compared input location (argument, entry
 register, pool field, .data global, malloc result) is set to the other operand (input-to-state);
-mutation prefers inputs that reach uncovered branches; covered compares get boundary probes; fault
+mutation prefers inputs that reach uncovered branches; a share of fresh inputs (--typed-share) builds `this`
+and the pointer-to-class arguments as objects of their declared class (TypedInputs: CodeView types of a
+/Z7 compile; vtable pointers are the original's vtables, nested objects and vectors are consistent); covered compares get boundary probes; fault
 repair redirects bad pointers, small-ifies garbage indices and, as a last resort, maps input memory
 at the faulting address. A run that stops in `_purecall` is resampled the same way instead of being
 discarded: the dword that carried the vtable pointer (an argument, a pool object's vtable field or an
@@ -73,6 +75,7 @@ import regfacts as RF                                # noqa: E402
 import cfgcov as CF                                # noqa: E402
 import steer as ST                                 # noqa: E402
 import invariants as INV                           # noqa: E402
+import cvtypes as CV                               # noqa: E402
 import sig as SIG                                  # noqa: E402
 import machine as M                                # noqa: E402
 from coff import Coff                              # noqa: E402
@@ -721,6 +724,7 @@ class Input:
         n.alloc_fail = tuple(getattr(self, "alloc_fail", ()))
         n.extra = dict(getattr(self, "extra", {}))
         n.forced = dict(getattr(self, "forced", {}))
+        n.typed = getattr(self, "typed", 0)
         return n
 
 
@@ -754,6 +758,8 @@ class InputGen:
         self.specials = SPECIAL_F if nan else SPECIAL_F[:8]
         self.invs = []                              # input-object invariants (invariants.py), set by Runner
         self.slot_cache = {}
+        self.typed = None                           # TypedInputs (set by Runner), or None: soup only
+        self.typed_share = 0.0
 
     def fin(self, v):
         """Unless --nan: never produce a dword whose float32 reading is NaN/Inf (clears the top
@@ -971,6 +977,9 @@ class InputGen:
         inp.alloc_fail = ()
         inp.extra = {}
         inp.forced = {}
+        inp.typed = 0
+        if self.typed is not None and rng.random() < self.typed_share:
+            inp.typed = self.typed.build(self, inp, rng)    # typed `this` / argument objects into pool_over
         cands = getattr(self, "force_cands", ())
         if cands and rng.random() < FORCE_SHARE:
             inp.forced[rng.choice(cands)] = rng.choice((0, 1))
@@ -1026,6 +1035,454 @@ class InputGen:
             # governed fields back in range so the mutant stays a usable input rather than being discarded.
             INV.enforce(self.invs, self, inp, rng)
         return inp
+
+
+TYPED_SHARE = 0.5      # share of fresh inputs whose `this` / pointer-to-class arguments are typed objects
+TYPED_DEPTH = 3        # nested object pointers followed (deeper ones stay soup)
+TYPED_OBJECTS = 48     # typed objects (incl. vector elements) per input
+_VT_NAMES = None
+
+
+def _vtable_names():
+    """{mangled vtable name: original VA} from work/relink/resolve_map.json (the relink's content-matched
+    `vtables`, then single-address `names` entries)."""
+    global _VT_NAMES
+    if _VT_NAMES is None:
+        out = {}
+        try:
+            rm = json.load(open(os.path.join(S.ROOT, "work", "relink", "resolve_map.json")))
+            for name, e in (rm.get("names") or {}).items():
+                if name.startswith("??_7") and isinstance(e, dict) and len(e) == 1:
+                    out[name] = int(next(iter(e)), 16)
+            for name, e in (rm.get("vtables") or {}).items():
+                orig = e.get("orig") or []
+                if len(orig) == 1:
+                    out[name] = int(orig[0], 16)
+        except (OSError, ValueError, KeyError, AttributeError):
+            pass
+        _VT_NAMES = out
+    return _VT_NAMES
+
+
+class TypedInputs:
+    """Typed `this` / pointer-argument objects for a share of fresh inputs (InputGen.fresh).
+
+    The row's source is compiled once more with /Z7 (cached like the tested object, never the object under
+    test) and cvtypes.py flattens the declared class of `this` and of each pointer/reference-to-class argument.
+    An object is written into Input.pool_over at its hot slot. Image .data globals the function references
+    whose image value is zero (run-time state: g_game, a CRT-constructed static object) and whose decorated
+    name gives a class (pointer) type are typed too, through Input.overrides (10% keep the zero).
+    Per field:
+      vfptr      the ORIGINAL's vtable for that (sub)object's class (the tested object's own relocation, the
+                 relink's resolve_map, symbols/); unknown -> soup. Both builds run the same input and our
+                 relocations resolve to the original's addresses, so the original's vtable is right for both.
+      ptr_class  10% NULL, else a fresh object (bump-allocated in cold slots), typed recursively to depth 3
+      ptr_char   a short NUL-terminated ASCII string
+      int/bool/enum  mostly 0..8 (sometimes < 300; an enum takes one of its enumerators)
+      float/double   the soup's float distributions
+      vector     first <= last <= end with 0..4 typed elements (empty: all NULL or all equal)
+      rglstring / stdstring  consistent buffer, length and capacity
+    Padding, unions, bitfields and unknown pointers stay soup; a dword only partly covered by typed fields
+    has its other bytes zeroed. Mutations, fault repair and invariants act on top of the result."""
+
+    def __init__(self, tt, this_cls, arg_cls, vt_lookup, globs=(), image=None):
+        self.tt = tt
+        self.this_cls = this_cls        # class type index of `this` (thiscall, ecx) or None
+        self.arg_cls = arg_cls          # [(stack dword index, class type index)]
+        self.vt_lookup = vt_lookup      # mangled vtable name -> original VA or None
+        self.globs = list(globs)        # [(original VA, "ptr"|"obj", class type index, name)]: zero globals
+        self.image = image              # va, n -> the image's bytes (an "obj" global's untyped bytes)
+        self.vt_cache = {}
+        self.slots_of = None            # vtable VA -> slot targets (set by setup)
+        self.purecall = None
+        self.known_vts = ()             # every vtable VA the repository names
+        self.concrete_cache = {}
+
+    @classmethod
+    def setup(cls, t, ctx):
+        """(TypedInputs for the row, None) or (None, why not)."""
+        if not getattr(t, "src", None) or not getattr(t, "sym", None):
+            return None, "no source/symbol"
+        obj, _clog = S.compile_obj(t.src, list(t.flags) + ["/Z7"])
+        if obj is None:
+            return None, "the /Z7 compile failed"
+        try:
+            tt, procs = CV.load(Coff(obj))
+        except (ValueError, KeyError, struct.error, IndexError) as e:
+            return None, "CodeView parse: %s" % e
+        fty = procs.get(t.sym)
+        f = tt.func(fty) if fty is not None else None
+        if f is None:
+            return None, "no S_GPROC32 for %s" % t.sym
+        this_cls = None
+        if t.reg_kinds.get("ecx") == "this" and f["this"]:
+            p = tt.pointee(f["this"])
+            if p is not None and tt.is_class(p) and tt.sizeof(p):
+                this_cls = tt.strip(p)
+        arg_cls = []
+        kinds = t.stack_kinds
+        if getattr(t, "conv", None) != "fastcall":
+            pos = 1 if kinds and kinds[0] == "retptr" else 0
+            for a in f["args"]:
+                if a == 0:                                  # varargs terminator
+                    break
+                s = tt.scalar(a)
+                if s and s[0] == "ptr_class" and pos < len(kinds) and kinds[pos] in ("ptr", "unknown", "soup"):
+                    arg_cls.append((pos, s[2]))
+                pos += max(1, (tt.sizeof(a) + 3) // 4)
+            if pos != len(kinds):
+                arg_cls = []                                # the CV argument list does not match the stack layout
+        res, coff = t.res, t.coff
+        db, img, m = ctx["db"], ctx["img"], ctx["m"]
+        # globals the function reads whose image value is zero (set at run time in the game: g_game, g_items,
+        # a static object constructed by the CRT's initialisers): a pointer to a class gets a typed object,
+        # an object of a class is typed in place (image .data overrides)
+        globs = []
+        try:
+            our, our_rel, our_data = RA.our_insns(coff, t.fsym)
+        except Exception:           # noqa: BLE001
+            our, our_rel, our_data = {}, {}, b""
+
+        def loads_only(si):
+            # `extern T g[]` decorates like `T* g` (3PAU...): a pointer is only ever loaded whole (mov r32,
+            # [g]); an array is indexed or its address taken, and must not get a pointer stored over it
+            uses = 0
+            for a_, ins in our.items():
+                for o_ in range(a_, a_ + ins.size):
+                    if our_rel.get(o_, (None,))[0] != si:
+                        continue
+                    uses += 1
+                    mem = [op for op in ins.operands if op.type == CX.X86_OP_MEM]
+                    if ins.id == CX.X86_INS_LEA or not mem or mem[0].mem.base or mem[0].mem.index or \
+                            mem[0].size != 4 or struct.unpack_from("<I", our_data, o_)[0]:
+                        return False
+            return uses > 0
+
+        for si, va_ in sorted(res.addr.items()):
+            sy = coff.syms.get(si)
+            dt = CV.data_type(sy.name) if sy is not None and not sy.defined else None
+            if dt is None or not m.in_image_writable(va_) or (dt[0] == "ptr" and not loads_only(si)):
+                continue
+            cti = tt.defined.get(dt[1])
+            if cti is None or not tt.is_class(cti) or not tt.sizeof(cti):
+                continue
+            n_ = 4 if dt[0] == "ptr" else tt.sizeof(cti)
+            if n_ > M.SLOT or not m.in_image_writable(va_ + n_ - 1):
+                continue
+            try:
+                if any(img.read(va_, n_)):
+                    continue
+            except Exception:       # noqa: BLE001 - .bss past the raw data reads as zero or not at all
+                pass
+            globs.append((va_, dt[0], tt.strip(cti), sy.name))
+        if this_cls is None and not arg_cls and not globs:
+            return None, "no class-typed this/pointer argument or global"
+        names = _vtable_names()
+
+        def vt_lookup(name):
+            s_ = coff.by_name.get(name)
+            if s_ is not None and s_.index in res.addr:
+                return res.addr[s_.index] & 0xFFFFFFFF
+            if name in names:
+                return names[name]
+            vas = [v for v in db.mangled.get(name, ()) if img.in_data(v)]
+            return vas[0] if len(vas) == 1 else None
+
+        def image(va_, n_):
+            try:
+                return bytes(img.read(va_, n_)).ljust(n_, b"\0")
+            except Exception:       # noqa: BLE001
+                return b"\0" * n_
+
+        ti_ = cls(tt, this_cls, arg_cls, vt_lookup, globs, image)
+        ti_.purecall = db.lib.get("purecall")
+        known = set(names.values())
+        for nm_, vas in db.mangled.items():
+            if nm_.startswith("??_7") and len(vas) == 1 and img.in_data(next(iter(vas))):
+                known.add(next(iter(vas)))
+        ti_.known_vts = sorted(known)
+
+        def slots_of(va_):
+            out_ = []
+            for k_ in range(256):
+                try:
+                    x_ = img.u32(va_ + 4 * k_)
+                except Exception:   # noqa: BLE001
+                    break
+                if not img.in_text(x_):
+                    break
+                out_.append(x_)
+            return out_
+
+        ti_.slots_of = slots_of
+        return ti_, None
+
+    def describe(self):
+        tt = self.tt
+        return {"this": tt.name(self.this_cls) if self.this_cls else None,
+                "args": {str(p): tt.name(c) for p, c in self.arg_cls},
+                "globals": {"%08x" % va: "%s %s" % (k, tt.name(c)) for va, k, c, _n in self.globs}}
+
+    def vtable(self, cands):
+        """The original VA of the first known candidate vtable. An abstract class's vtable (a `_purecall` slot:
+        stream_base, whose readers are all pure) is replaced by a random concrete one that agrees with it in
+        every implemented slot and has at least as many slots (mem_stream, file_reader, ...): the object is
+        then one of the classes the game actually passes there."""
+        for nm in cands or ():
+            if nm not in self.vt_cache:
+                self.vt_cache[nm] = self.vt_lookup(nm)
+            va = self.vt_cache[nm]
+            if va is not None:
+                conc = self.concrete(va)
+                return self.rng.choice(conc) if conc else va
+        return None
+
+    def concrete(self, va):
+        """[concrete vtable VA] standing in for the abstract vtable at va; [] when va is not abstract."""
+        if va in self.concrete_cache:
+            return self.concrete_cache[va]
+        out = []
+        if self.slots_of is not None and self.purecall is not None:
+            a = self.slots_of(va)
+            if self.purecall in a:
+                for v in self.known_vts:
+                    sl = self.slots_of(v)
+                    if len(sl) >= len(a) and self.purecall not in sl and \
+                            all(x == self.purecall or x == y for x, y in zip(a, sl)) and sl[:len(a)] not in \
+                            [self.slots_of(o)[:len(a)] for o in out]:
+                        out.append(v)
+        self.concrete_cache[va] = out
+        return out
+
+    # ---- one input
+    def build(self, gen, inp, rng):
+        """Write the typed objects of one fresh input into inp.pool_over. -> number of root objects typed."""
+        self.gen, self.inp, self.rng = gen, inp, rng
+        self.bytes = {}
+        self.nobj = 0
+        self.queue = []                 # objects allocated, fields not written yet (breadth first)
+        self.heap = None                # [next free address, end] of the current cold allocation slot
+        self.used = set(range(HOT_SLOTS))
+        roots = 0
+        done = set()
+        if self.this_cls is not None and inp.regs.get("ecx") == M.POOL_BASE + M.SLOT * 1:
+            self.obj(M.POOL_BASE + M.SLOT * 1, self.this_cls, 0)
+            done.add(1)
+            roots += 1
+        for pos, c in self.arg_cls:
+            v = inp.args[pos] if pos < len(inp.args) else 0
+            slot = (v - M.POOL_BASE) // M.SLOT
+            if v and (v - M.POOL_BASE) % M.SLOT == 0 and 0 < slot < HOT_SLOTS and slot not in done:
+                done.add(slot)
+                self.obj(v, c, 0)
+                roots += 1
+        for va, kind, c, _n in self.globs:
+            if rng.random() < 0.1:
+                continue                                # the global as the image has it (zero)
+            if kind == "ptr":
+                p = self.alloc(self.tt.sizeof(c), 8)
+                if p:
+                    self.obj(p, c, 1)
+                    self.gput(va, p, 4)
+            else:
+                self.obj(va, c, 1)
+            roots += 1
+        # breadth first: every root's direct members are typed before the budget goes to deep nesting (a
+        # vector of objects early in `this` must not use up the objects its later `env` pointer needs)
+        k = 0
+        while k < len(self.queue):
+            self.fill(*self.queue[k])
+            k += 1
+        for a in sorted({a & ~3 for a in self.bytes}):
+            pool = M.POOL_BASE <= a < M.POOL_BASE + M.POOL_SIZE
+            old = b"\0" * 4 if pool else self.image(a, 4)
+            w = 0
+            for k in range(4):
+                w |= self.bytes.get(a + k, old[k]) << (8 * k)
+            if pool:
+                inp.pool_over[a] = w
+            else:
+                inp.overrides[a] = w
+        self.bytes = self.gen = self.inp = self.rng = None
+        return roots
+
+    def alloc(self, size, align=8):
+        """Address of `size` fresh bytes in a cold slot (bump allocation: few slots get mapped), or 0."""
+        size = max(4, size)
+        if self.heap is None or ((self.heap[0] + align - 1) & ~(align - 1)) + size > self.heap[1]:
+            if size > M.SLOT or len(self.used) >= NSLOTS:
+                return 0
+            while True:
+                slot = HOT_SLOTS + self.rng.randrange(NSLOTS - HOT_SLOTS)
+                if slot not in self.used:
+                    break
+            self.used.add(slot)
+            base = M.POOL_BASE + M.SLOT * slot
+            self.heap = [base, base + M.SLOT]
+        a = (self.heap[0] + align - 1) & ~(align - 1)
+        self.heap[0] = a + size
+        return a
+
+    def put(self, addr, value, size):
+        if M.POOL_BASE <= addr < M.POOL_BASE + M.POOL_SIZE or self.in_glob(addr):
+            for k in range(size):
+                self.bytes[addr + k] = (value >> (8 * k)) & 0xFF
+
+    def gput(self, addr, value, size):
+        for k in range(size):
+            self.bytes[addr + k] = (value >> (8 * k)) & 0xFF
+
+    def in_glob(self, addr):
+        """addr lies in one of the typed in-place ("obj") globals."""
+        return any(kind == "obj" and va <= addr < va + self.tt.sizeof(c) for va, kind, c, _n in self.globs)
+
+    def small(self):
+        r = self.rng.random()
+        if r < 0.75:
+            return self.rng.randrange(9)
+        if r < 0.93:
+            return self.rng.randrange(300)
+        return self.rng.choice(self.gen.dic)
+
+    def text(self, n):
+        return bytes(self.rng.choice(b"abcdefghijklmnopqrstuvwxyz_0123456789") for _ in range(n))
+
+    def string_at(self, n):
+        a = self.alloc(n + 1, 4)
+        if a:
+            for k, ch in enumerate(self.text(n) + b"\0"):
+                self.bytes[a + k] = ch
+        return a
+
+    def room(self):
+        return self.nobj < TYPED_OBJECTS
+
+    def obj(self, addr, cls, depth):
+        """Queue a typed object of class `cls` at addr (build() writes the queue in order)."""
+        self.nobj += 1
+        self.queue.append((addr, cls, depth))
+
+    def fill(self, addr, cls, depth):
+        """Write the fields of a typed object (fields past the end of its 64 KB slot are left)."""
+        lim = (addr & ~(M.SLOT - 1)) + M.SLOT if M.POOL_BASE <= addr < M.POOL_BASE + M.POOL_SIZE \
+            else addr + self.tt.sizeof(cls)
+        for f in self.tt.layout(cls):
+            if addr + f.off + f.size > lim:
+                break
+            self.field(addr + f.off, f, depth)
+
+    def value(self, addr, kind, size, target, depth):
+        """Write one non-aggregate value (a cvtypes Field kind) at addr."""
+        rng, gen = self.rng, self.gen
+        if kind == "vfptr":
+            v = self.vtable(target)
+            if v is not None:
+                self.put(addr, v, 4)
+        elif kind == "ptr_class":
+            if rng.random() < 0.1:
+                self.put(addr, 0, 4)
+            elif depth < TYPED_DEPTH and self.room():
+                p = self.alloc(self.tt.sizeof(target), 8)
+                if p:
+                    self.obj(p, target, depth + 1)
+                self.put(addr, p, 4)
+        elif kind == "ptr_char":
+            self.put(addr, 0 if rng.random() < 0.05 else self.string_at(rng.randrange(1, 12)), 4)
+        elif kind == "int":
+            v = self.small()
+            if target and rng.random() < 0.03:
+                v = -1
+            self.put(addr, v & ((1 << (8 * size)) - 1), size)
+        elif kind == "bool":
+            self.put(addr, rng.randrange(2), size)
+        elif kind == "enum":
+            v = rng.choice(target) if target and rng.random() < 0.9 else rng.randrange(9)
+            self.put(addr, v & ((1 << (8 * size)) - 1), size)
+        elif kind == "float":
+            self.put(addr, gen.fin(gen._scalar("float", rng, self.inp.profile)), 4)
+        elif kind == "double":
+            x = rng.uniform(-10, 10) if rng.random() < 0.7 else rng.choice(gen.specials)
+            self.put(addr, struct.unpack("<Q", struct.pack("<d", x))[0], 8)
+
+    def field(self, addr, f, depth):
+        rng = self.rng
+        if f.kind == "chars":
+            n = rng.randrange(min(f.size, 12))
+            for k, ch in enumerate(self.text(n) + b"\0"):
+                self.bytes[addr + k] = ch
+        elif f.kind == "vector":
+            self.vector(addr, f.target, depth)
+        elif f.kind == "rglstring":                     # {pos, buf, cap, len}; c_str() is buf ? buf : &buf
+            n = rng.randrange(12)
+            if n == 0 and rng.random() < 0.5:
+                for k in range(4):
+                    self.put(addr + 4 * k, 0, 4)
+                return
+            if rng.random() < 0.4:
+                # a binary buffer of small dwords: rgl::string is also mem_stream's backing store (+0x20), whose
+                # r_int/r_float read counts and records out of it (a counted loop then runs 0..4 times)
+                k = rng.randrange(4, 17)
+                n = 4 * k
+                p = self.alloc(n + 4, 4)
+                for j in range(k):
+                    self.put(p + 4 * j, rng.randrange(5) if rng.random() < 0.8 else self.small(), 4)
+                self.put(p + n, 0, 4)
+                self.put(addr, 0, 4)
+                self.put(addr + 4, p, 4)
+                self.put(addr + 8, n + 4, 4)
+                self.put(addr + 12, n, 4)
+                return
+            self.put(addr, 0 if rng.random() < 0.8 else rng.randrange(n + 1), 4)
+            self.put(addr + 4, self.string_at(n), 4)
+            self.put(addr + 8, n + 1 + rng.randrange(8), 4)
+            self.put(addr + 12, n, 4)
+        elif f.kind == "stdstring":                     # VC7.1 basic_string<char>: _Bx[16], _Mysize, _Myres
+            n = rng.randrange(14)
+            if rng.random() < 0.8:
+                for k, ch in enumerate(self.text(n) + b"\0"):
+                    self.bytes[addr + k] = ch
+                self.put(addr + 20, 15, 4)
+            else:
+                n += 16
+                self.put(addr, self.string_at(n), 4)
+                self.put(addr + 20, n + rng.randrange(8), 4)
+            self.put(addr + 16, n, 4)
+        else:
+            self.value(addr, f.kind, f.size, f.target, depth)
+
+    def vector(self, addr, elem, depth):
+        """first <= last <= end, 0..4 typed elements."""
+        rng, tt = self.rng, self.tt
+        esz = tt.sizeof(elem)
+        # mostly non-empty: game state vectors rarely are, and code that reads back() / [n-1] of an empty one
+        # (a NULL _Mylast - 4: fault at 0xfffffffc) makes a whole input useless
+        n = 0 if rng.random() < 0.1 else rng.randrange(1, 5)
+        if n == 0 or depth >= TYPED_DEPTH or not self.room():
+            p = 0 if rng.random() < 0.5 else self.alloc(4, 4)
+            for k in range(3):
+                self.put(addr + 4 * k, p, 4)
+            return
+        cap = n + rng.randrange(3)
+        if esz * cap > M.SLOT // 2:
+            cap = n = max(1, (M.SLOT // 2) // esz)
+        p = self.alloc(esz * cap, 8)
+        if not p:
+            for k in range(3):
+                self.put(addr + 4 * k, 0, 4)
+            return
+        self.put(addr, p, 4)
+        self.put(addr + 4, p + esz * n, 4)
+        self.put(addr + 8, p + esz * cap, 4)
+        if tt.is_class(elem):
+            for i in range(n):
+                if not self.room():
+                    break
+                self.obj(p + i * esz, elem, depth + 1)
+            return
+        s = tt.scalar(elem)
+        if s:
+            for i in range(n):
+                self.value(p + i * esz, s[0], s[1], s[2], depth + 1)
 
 
 PROFILE_KW = {k: tuple(zip(*v)) for k, v in PROFILES.items()}
@@ -1334,6 +1791,21 @@ class Runner:
         # leaves the list empty and the generator/comparison behave exactly as before.
         self.gen.invs = INV.specs_for(t.sid, t.va, not getattr(opts, "no_invariants", False))
         self.gen.force_cands = list(self.forced_cands)
+        # typed `this` / pointer-to-class argument objects (TypedInputs) for a share of the fresh inputs
+        self.typed_info = None
+        share = getattr(opts, "typed_share", TYPED_SHARE)
+        if share > 0:
+            try:
+                ti_, why = TypedInputs.setup(t, ctx)
+            except Exception as e:      # noqa: BLE001 - an aid: without type info the row runs on soup as before
+                ti_, why = None, "%s: %s" % (type(e).__name__, e)
+            if ti_ is not None:
+                self.gen.typed, self.gen.typed_share = ti_, share
+                self.typed_info = ti_.describe()
+            else:
+                self.typed_info = {"none": why}
+            if getattr(opts, "verbose", False):
+                log("  typed inputs: %s" % self.typed_info)
         # --edge-scope: the original's edges this run is about (one case of a switch): the run continues past
         # --inputs and steers only for these; coverage is still reported for the whole function
         self.edge_scope = None
@@ -4686,6 +5158,7 @@ def _test_function(sid, va, opts, log=print):
     gen = runner.gen
     corpus = []
     valid, discarded, mism, first = 0, {}, 0, None
+    typed_n = typed_valid = 0
     sigs = collections.Counter()
     traps = {}
     repaired = 0
@@ -4728,6 +5201,8 @@ def _test_function(sid, va, opts, log=print):
                     inp = gen.mutate(parent, rng, corpus)
                 else:
                     inp = gen.fresh(rng)
+            if getattr(inp, "typed", 0):
+                typed_n += 1
             try:
                 a = runner.run_side(runner.orig, inp)
                 fixes = pure_fixes = heap_fixes = 0
@@ -4894,6 +5369,8 @@ def _test_function(sid, va, opts, log=print):
             valid += 1
             if st == "exit":
                 out["exited"] = out.get("exited", 0) + 1      # valid runs that ended in a program exit
+            if getattr(inp, "typed", 0):
+                typed_valid += 1
             new = bool(run_blocks - runner.blocks) or bool(a["edges"] - runner.orig.edges) or \
                 bool(sb[0] in FINISHED and b["edges"] - runner.ours.edges)
             runner.blocks |= run_blocks
@@ -4986,6 +5463,8 @@ def _test_function(sid, va, opts, log=print):
     if gen.invs:
         out["input_invariants"] = describe_invariants(gen.invs)
     out["regress_inputs"] = len(regress)
+    # inputs that carry typed objects (fresh ones and the mutants/steered inputs made from them)
+    out["typed_inputs"] = {"inputs": typed_n, "valid": typed_valid, "types": runner.typed_info}
     out.update(seed=opts.seed, inputs_planned=opts.inputs, extra_inputs=opts.extra_inputs if getattr(opts, "steer", True) else 0,
                gate=opts.gate, require_all=bool(getattr(opts, "require_all", False)),
                inputs=ran, valid=valid, discarded=discarded, mismatches=mism, first_mismatch=first,
@@ -5335,6 +5814,10 @@ def parse_args(argv=None):
                     help="JSON: every missed edge (not the first 64) and the covered edges of each side")
     ap.add_argument("--alias", type=float, default=0.0, help="probability that a generated pointer aliases an argument object")
     ap.add_argument("--mutate", type=float, default=0.6, help="share of inputs mutated from the coverage corpus")
+    ap.add_argument("--typed-share", type=float, default=TYPED_SHARE,
+                    help="share of fresh inputs whose `this` and pointer-to-class arguments are objects of their "
+                         "declared class (CodeView types of a /Z7 compile: the original's vtable pointers, nested "
+                         "objects, consistent vectors and strings, small counts); 0 = pointer soup only")
     ap.add_argument("--no-steer", dest="steer", action="store_false",
                     help="no input steering (comparison constants, input-to-state replays, frontier-weighted parents)")
     ap.add_argument("--steer-share", type=float, default=0.35, help="share of inputs taken from the steering queue")
