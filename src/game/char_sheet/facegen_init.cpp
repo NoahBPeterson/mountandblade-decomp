@@ -8,12 +8,6 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-// TEMP trace: the menu-state init dies in a tstring destructor; these markers say which block it reaches.
-struct trace_log_v { virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4();
-                     virtual void s5(); virtual void s6(); virtual void s7(); virtual void s8(); virtual void s9();
-                     virtual void w_cstr(const char* s); };
-static void trace(const char* m) { ((trace_log_v*)0x5a9f60)->w_cstr(m); }
-
 // @ 0x4f49d0
 void FaceGen::init()
 {
@@ -26,23 +20,12 @@ void FaceGen::init()
     skin = 0;
     if (troop >= 0)
         skin = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
-    // This init also runs for the menu-state record (main_menu::reset calls it through vtable slot 2), where no
-    // troop has been chosen: troop is -1, skin came out of whatever precedes chars_c and `keys` was a wild count,
-    // so the deform_rows[0x1c] loop below wrote past the array and the next tstring destructor freed the wreckage
-    // (crash 0x3c6d9160). Clamp both to what the arrays can hold.
     int keys = g_skins_begin[skin].n_elems - 1;
-    if (skin < 0 || skin > 0xf)        // the troop record masks the skin with 0xf; troop < 0 has no record at all
-        skin = 0;
-    if (keys < 0)
-        keys = 0;
-    if (keys > 0x1c)
-        keys = 0x1c;
     ((gui_manager*)(void*)&g_msglog)->reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
     overlay* o = (overlay*)new_container(0x190, vtbl_592848);
     if (o != 0)
         o->f188 = 0;
-    trace("FG 1 after container");
     ui = o;
     float f2[2];
     f2[0] = 0.0f;
@@ -102,7 +85,6 @@ void FaceGen::init()
         lab->set_text(&btn_text, &kt);
         deform->add_child(lab);
     }
-    trace("FG 2 after deform rows");
     {
         tstring t("face_s_deform");
         elem* sc = (elem*)make_scrollbar(ui, &t);
@@ -112,7 +94,6 @@ void FaceGen::init()
         ((MissionPanel*)sl)->draw();   // 0x488d50
         push_item(ui, sl);
     }
-    trace("FG 3 after slider");
     cam_btn = 0;
     if (g_no_cam) {
         tstring t("key");
@@ -135,7 +116,6 @@ void FaceGen::init()
     label_refresh((MissionUi*)b_prev_beard, tstring("face_b_prev_beard"));
     b_prev_hair = (widget*)make_left_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
     label_refresh((MissionUi*)b_prev_hair, tstring("face_b_prev_hair"));
-    trace("FG 4 after arrows");
     {
         tstring t("face_t_change_beard");
         tstring v("ui_change_beard");
@@ -279,7 +259,6 @@ void FaceGen::init()
         wd->v44.z = -1.0f;
         wd->v44.w = 0.0f;
     }
-    trace("FG 5 after buttons");
     ent = (Entity*)((rgl::world*)w)->create_entity(9);   // 0x428440
     b->world = w;
 
@@ -322,7 +301,6 @@ void FaceGen::init()
     f170 = 0;
     b->view = fr;
 
-    trace("FG 6 before anim");
     // ---- hook the face up to the troop's anim table ------------------------------------------------
     if (troop >= 0) {
         char* rec = g_game->chars_c + troop * 0x508;
@@ -343,9 +321,6 @@ void FaceGen::init()
         sl_age->s34(g_dummy0);
         sl_hair_color->s34(g_dummy1);
     }
-    trace("FG 7 before refresh");
     refresh();
-    trace("FG 8 done");
 
-    { extern bool g_facegen_ready; extern void* g_facegen_this; g_facegen_ready = true; g_facegen_this = this; }
 }

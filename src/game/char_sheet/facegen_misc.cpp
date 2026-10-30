@@ -46,15 +46,6 @@ void Animator::randomise()
 // @ 0x4eb3c0
 void FaceGen::refresh()
 {
-    // The face-generator widgets are built by FaceGen::init (0x4f49d0), which the *character-creation* screen
-    // runs; the in-game character sheet shares this update loop but has no face sliders, so its object carries
-    // screen fields where sl_age/sl_hair_color sit (sl_age read back as 1.0f -> `mov eax,[ecx]` at 0x44a09d).
-    // Only valid after FaceGen::init (0x4f49d0) built the sliders. That init is reached through a virtual slot
-    // the character-creation screen calls and nothing runs yet, while the in-game character sheet shares this
-    // update path and its object holds screen fields where sl_age sits (read back as 1.0f -> crash at 0x44a09d).
-    extern bool g_facegen_ready;
-    if (!g_facegen_ready)
-        return;
     int n = g_skins_begin[skin].n_elems - 1;
     for (int i = 0; i < n; i++)
         (&g_dummy_mat)[i] = deform_rows[i]->get_float();

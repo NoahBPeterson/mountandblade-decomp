@@ -82,20 +82,6 @@ tstring::tstring(const char* s)
 tstring::~tstring()
 {
     if (buf) {
-        unsigned p = (unsigned)buf;
-        if (p < 0x10000u || p >= 0x80000000u || p == 0x3c6d9160u || p == 0x3c6d9166u || p == 0x3c6d9168u) {   // TEMP diagnostic
-            static FILE* f = fopen("tstr_bad.txt", "a");
-            if (f) {
-                fprintf(f, "bad dtor this=%p buf=%08x\n", (void*)this, p);
-                unsigned* sp = (unsigned*)&p;
-                for (int i = 0; i < 24; i++) {
-                    unsigned v = sp[i];
-                    if (v >= 0x401000u && v < 0x600000u) fprintf(f, "   [%d] %08x\n", i, v);
-                }
-                fflush(f);
-            }
-            return;
-        }
         delete buf;
     }
 }

@@ -50,44 +50,23 @@ check_follow:
     *(mat4*)((char*)ent + 0x58) = m;
 }
 
-// The face-generator widgets update_model reads (sl_age, sl_hair_color, cam_btn, rows) only exist once
-// FaceGen::init (0x4f49d0) has run. The creation screen and the in-game character sheet share this update slot
-// (+0xbc) and only the FaceGen object has creation-screen widgets at +0x30c..; the sheet holds screen fields
-// there, so gate on the object FaceGen::init ran on (crash at 0x443740: b_next_hair read the float 0x3dc30c32).
-bool g_facegen_ready = false;
-void* g_facegen_this = 0;
-
-// A UI object is only usable if its pointer is in the image and its vptr lands in the vtable area. The creation
-// screen and the character sheet reuse one update slot, and the sheet's screen fields look like widget pointers
-// (0x3dc30c32 = the float 0.0951 was read as b_next_hair). Only objects that pass this test are dereferenced.
-static bool is_ui_obj(const void* p)
-{
-    unsigned a = (unsigned)p;
-    if (a < 0x10000u || a >= 0x80000000u)
-        return false;
-    unsigned vt = *(const unsigned*)p;
-    return vt >= 0x54e000u && vt < 0x600000u;
-}
-
 // @ 0x4ea8e0
 void CamView::update_model(float dt)
 {
-    if (!g_facegen_ready || (void*)this != g_facegen_this)
-        return;
     int n = *(int*)((char*)g_skins_begin + skin * 0x1f8 + 0x3c) - 1;
 
     if (g_no_cam && (g_a17148 || g_a17348) && *(int*)0xa1711c && !*(int*)0xa1751c) {
         if (*(int*)(g_game + 0x1a090) == 0) {
             *(int*)(g_game + 0x1a090) = 1;
-            if (is_ui_obj(cam_btn)) cam_btn->vb4();
+            cam_btn->vb4();
         } else {
             *(int*)(g_game + 0x1a090) = 0;
-            if (is_ui_obj(cam_btn)) cam_btn->vb0();
+            cam_btn->vb0();
         }
     }
 
     Ctrl* sl = *(Ctrl**)(*(char**)((char*)this + 0x17c) + 0x484);
-    if (g_world_time != 0 && is_ui_obj(sl)) {
+    if (g_world_time != 0) {
         float a = *(float*)((char*)sl + 0x168) - *(float*)((char*)sl + 0x16c);
         float b = *(float*)((char*)sl + 0x170) - *(float*)((char*)sl + 0x16c);
         float* arr = (float*)((char*)sl + *(int*)((char*)sl + 0x178) * 4 + 0xf0);
@@ -97,7 +76,7 @@ void CamView::update_model(float dt)
         sl->v48(0x10000);
     }
 
-    if (is_ui_obj(cam_btn) && cam_btn->v44(0x10000)) {
+    if (cam_btn->v44(0x10000)) {
         if (OpenClipboard(0)) {
             char text[0x200];
             mb_snprintf(text, 0x200, "0x%s%s%s%s", buf388, buf3b0, buf3d8, buf400);
@@ -124,60 +103,60 @@ void CamView::update_model(float dt)
     char flag = 0;
     for (int i = 0; i < n; i++) {
         Ctrl* row = rows[i];
-        if (is_ui_obj(row) && row->v44(0x10000)) {
+        if (row->v44(0x10000)) {
             g_dummy_mat_arr[i] = row->v38();
             SkinSet* set = (SkinSet*)((char*)g_skins_begin + g_cur * 0x1f8);
             ((FaceRace*)set)->relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
-                if (is_ui_obj(rows[j])) rows[j]->v34(g_dummy_mat_arr[j]);
+                rows[j]->v34(g_dummy_mat_arr[j]);
             flag = 1;
         }
     }
 
-    if (is_ui_obj(b_next_beard) && b_next_beard->v44(0x10000)) {
+    if (b_next_beard->v44(0x10000)) {
         f350 = f350 + 1;
         flag = 1;
     }
-    if (is_ui_obj(b_next_hair) && b_next_hair->v44(0x10000)) {
+    if (b_next_hair->v44(0x10000)) {
         f354 = f354 + 1;
         flag = 1;
     }
-    if (is_ui_obj(b_next_face) && b_next_face->v44(0x10000)) {
+    if (b_next_face->v44(0x10000)) {
         f35c = f35c + 1;
         flag = 1;
     }
-    if (is_ui_obj(b_prev_beard) && b_prev_beard->v44(0x10000)) {
+    if (b_prev_beard->v44(0x10000)) {
         int m = SKIN_INT(0x88);
         f350 = (f350 + m) % (m + 1);
         flag = 1;
     }
-    if (is_ui_obj(b_prev_hair) && b_prev_hair->v44(0x10000)) {
+    if (b_prev_hair->v44(0x10000)) {
         int m = SKIN_INT(0x18c);
         f354 = (f354 + m) % (m + 1);
         flag = 1;
     }
-    if (is_ui_obj(b_prev_face) && b_prev_face->v44(0x10000)) {
+    if (b_prev_face->v44(0x10000)) {
         int m = SKIN_INT(0x190);
         f35c = (m - 1 + f35c) % m;
         flag = 1;
     }
-    if (is_ui_obj(sl_age) && sl_age->v44(0x10000))
+    if (sl_age->v44(0x10000))
         flag = 1;
-    if (is_ui_obj(sl_hair_color) && sl_hair_color->v44(0x10000))
+    if (sl_hair_color->v44(0x10000))
         flag = 1;
-    if (is_ui_obj(b_randomize) && b_randomize->v44(0x10000)) {
+    if (b_randomize->v44(0x10000)) {
         g_anim.randomise();
         for (int i = 0; i < n; i++)
-            if (is_ui_obj(rows[i])) rows[i]->v34(g_dummy_mat_arr[i]);
+            rows[i]->v34(g_dummy_mat_arr[i]);
         int m = SKIN_INT(0x18c);
         f354 = (m < 2 ? 0 : rand() % m) + 1;
         f350 = rand();
         f35c = rand();
         f358 = rand();
-        if (is_ui_obj(sl_hair_color)) sl_hair_color->v34(g_dummy1);
+        sl_hair_color->v34(g_dummy1);
         flag = 1;
     }
-    if (is_ui_obj(b_reset) && b_reset->v44(0x10000)) {
+    if (b_reset->v44(0x10000)) {
         float* p = g_dummy_mat_arr;
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
@@ -185,7 +164,7 @@ void CamView::update_model(float dt)
         ((FaceRace*)set)->relax(-1, g_dummy_mat_arr);
         flag = 1;
         for (int i = 0; i < n; i++)
-            if (is_ui_obj(rows[i])) rows[i]->v34(g_dummy_mat_arr[i]);
+            rows[i]->v34(g_dummy_mat_arr[i]);
     }
 
     f350 = f350 % (SKIN_INT(0x88) + 1);
