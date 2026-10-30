@@ -91,7 +91,7 @@ struct InventoryPanel {
     void refresh_lists(int unused);                                 // 0x5108d0 (ret 4)
     __declspec(noinline) void place_slot(MissionUi* w, ItemRef* slot, int page, int index);   // 0x510f50 (ret 0x10)
     void place_slot_mesh(ItemRef* slot, float* pt, int page, int index);   // 0x510fa0 (ret 0x10)
-    char test_slot_flag(int page, int slot, unsigned mask);         // 0x5126e0 (ret 0xc)
+    __declspec(noinline) char test_slot_flag(int page, int slot, unsigned mask);         // 0x5126e0 (ret 0xc)
     void compute(int* item, int mode);                              // 0x512960 (ret 8; the price stays in eax)
     __forceinline int compute_price(int* item, int mode)   // 0x512960 (the same function; the price stays in eax: compute is called through its address read as an int-returning member)
     {
@@ -102,7 +102,7 @@ struct InventoryPanel {
     void transfer_slot(ItemRef* item, int page, int slot);          // 0x512c80 (ret 0xc)
     char can_transfer(ItemRef* item, int mode, int flag);           // 0x513230 (ret 0xc)
     void set_slot_value(int page, int slot, int value);             // 0x5132e0 (ret 0xc)
-    void or_slot_flag(int page, int slot);                          // 0x513320 (ret 8)
+    __declspec(noinline) void or_slot_flag(int page, int slot);                          // 0x513320 (ret 8)
     void add_cost(int delta);                                       // 0x513360 (ret 4)
     bool try_place(ItemRef* item, int page, int slot);              // 0x5134c0 (ret 0xc)
     __forceinline DragMesh* make_mesh(ItemRef* item, int* out, int troop)   // 0x502b80 (ret 0xc)

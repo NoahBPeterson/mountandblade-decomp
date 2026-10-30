@@ -1554,9 +1554,8 @@ void music_player::advance_piece()
                     sum += 500.0f;
                 }
             }
-            if (sum <= 0.0f) {
-                sel = best;
-            } else {
+            // 0x4c2888 fcomp 0; test ah,0x41; jne: only an ordered sum > 0 draws (a NaN sum keeps `best`)
+            if (sum > 0.0f) {
                 int pick = (int)((float)(rand() % 0x3dc9) * sum * 6.3223117e-05f);
                 for (int i = 0; i < count; i++) {
                     if (i != best && (TRACK(i, 8) & mode) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0)) {
@@ -1567,6 +1566,8 @@ void music_player::advance_piece()
                         }
                     }
                 }
+            } else {
+                sel = best;
             }
         }
         if (sel >= 0) {
