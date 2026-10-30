@@ -67,7 +67,9 @@ struct scene_row {                      // 0x1c8 bytes
     int caption[4];                     // +0x190 tstring
     int point;                          // +0x1a0
     int f1a4;                           // +0x1a4
+    char pad1a8[0x1c8 - 0x1a8];
 };
+typedef char scene_row_size_check[sizeof(scene_row) == 0x1c8 ? 1 : -1];
 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 

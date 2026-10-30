@@ -516,7 +516,7 @@ struct GameDtor  { ~GameDtor(); };                      // 0x492f40 (the game ob
 struct WorldDtor { ~WorldDtor(); };                     // 0x4d51d0 (the mission object)
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
 struct E4C   { tstring s; char pad[0x3c]; };            // 0x4c bytes
-struct S3c   { char pad[0xb]; ~S3c(); };                // 0xc bytes at +0x3c (dtor 0x4317b0)
+struct S3c   { char pad[0xc]; ~S3c(); };                // 0xc bytes at +0x3c (dtor 0x4317b0)
 struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; S3c m3c; };   // 0x48 bytes
 struct Item238 { char pad[0x238]; ~Item238(); };        // dtor 0x4c8a40
 // the vector deleting destructors of the global record tables (rgl/mesh2/gui_edit.cpp, rec_tables.cpp): 0x4c4f40 elem60_vector_delete and

@@ -8,7 +8,7 @@
 #include "./records.h"
 
 struct MeshRef { char pad[0x38]; rgl::mesh** base; };       // base: pointer to the base mesh pointer at +0x38 (0x470db0)
-struct MeshGroupRec {                                       // reduced: the record copy_troop reads (NOT the 0x508-byte troop record, Troop in src/include/troop.h: +0x34.. holds five vectors where Troop has f50 / f58 / nib)
+struct MeshGroupRec {                                       // reduced: the record copy_troop reads (NOT the full troop record of 1288 bytes, Troop in src/include/troop.h: +0x34.. holds five vectors where Troop has f50 / f58 / nib)
     char pad0[0x34];
     std::vector<int> groups[5];                             // +0x34 (first at +0x38): mesh handles per group (0x473570)
     int ngroups;                                            // +0x84

@@ -11,7 +11,7 @@
 struct elem24 { int a[6]; };               // 0x18: copy 0x461230, copy_backward 0x461280, fill 0x467ba0, uninit_copy 0x4681b0
 #include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 struct elem52 { int a[13]; };              // 0x34: fill 0x467bf0, copy_backward 0x467c20, uninit_copy 0x468290
-struct particle100 { int a[25]; };         // 0x64: uninit_copy 0x468220 (not the 0xa0-byte terrain particle)
+struct particle100 { int a[25]; };         // 0x64: uninit_copy 0x468220 (not the 160-byte terrain particle)
 struct s516 { int a[129]; };               // 0x204: vec516::size 0x467b20
 typedef bool (*Pr8)(const E8&, const E8&);
 

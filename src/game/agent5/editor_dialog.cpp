@@ -129,6 +129,7 @@ struct EditorTerrainView {            // 0x1c8 bytes
     unsigned field_1a4;     // +0x1a4
     char  pad1a8[0x1b4 - 0x1a8];
     int   obj;              // +0x1b4
+    char  pad1b8[0x1c8 - 0x1b8];
 };
 
 struct EditorSceneView {

@@ -123,8 +123,9 @@ struct Skeleton96 {                     // the 0x5ac8-byte character record of t
     int count;                          // +0x8a8
     char pad8ac[4];
     int* items() { return (int*)((char*)this + 0xb0); }   // stride 0x20, low bit of the first dword
-    char padb4[0x5ac8 - 0x8b4];
+    char pad8b0[0x5ac8 - 0x8b0];
 };
+typedef char Skeleton96_size_check[sizeof(Skeleton96) == 0x5ac8 ? 1 : -1];
 struct TroopRecS {                      // the 0x508-byte troop record (g_game+0x13a00)
     char pad0[0x30];
     unsigned skin;                      // +0x30 (low nibble = skin, bit 4, bit 12)
@@ -167,7 +168,9 @@ struct SpawnSetG {                      // the 0x58-byte per-set record at g_mis
     char pad3c[0x4c - 0x3c];
     int num;                            // +0x4c
     SndSlotS* slots;                    // +0x50
+    char pad54[4];
 };
+typedef char SpawnSetG_size_check[sizeof(SpawnSetG) == 0x58 ? 1 : -1];
 struct ItemKindT {                      // the item-kind table entry the spawner reads (g_skins_begin at 0x8ed4f7c, 0x1f8 bytes)
     char pad0[0x1e8];
     int f1e8;                           // +0x1e8
@@ -198,7 +201,9 @@ struct EntityG {                        // the 0x30c-byte script entity (rgl::st
     void* shape;                        // +0x98
     char pad9c[0x304 - 0x9c];
     FxDef* skel;                        // +0x304
+    char pad308[4];
 };
+typedef char EntityG_size_check[sizeof(EntityG) == 0x30c ? 1 : -1];
 // 0x439000 is node_groups::cap_all (agent2/agent_types.h: the display mesh's node lists of a body)
 struct node_groups {
     void cap_all(const float* limit);   // 0x439000
@@ -585,7 +590,7 @@ struct CarryRec {                       // the carried-item records copied by th
     int f_e8;                           // +0xe8 (zeroed)
     char padec[0x130 - 0xec];
 };
-struct SndSetF { char pad0[0x4c]; int count; SndSlotS* slots; };   // the 0x58-byte mode record (+0x4c count, +0x50 slots)
+struct SndSetF { char pad0[0x4c]; int count; SndSlotS* slots; char pad54[4]; };   // the 0x58-byte mode record (+0x4c count, +0x50 slots)
 struct SkyF {                           // the sky record at Mission+0x65a8
     char pad0[0x48];
     float f48;                          // +0x48 (the mission clock in seconds)

@@ -244,6 +244,7 @@ struct RenderScene {                            // the render scene (rgl::scene,
     char use_alt_vp;                            // 0x1a5
     char pad1a6[0x1b0 - 0x1a6];
     fog_rec* fog;                               // 0x1b0
+    char pad1b4[0x1d8 - 0x1b4];
     void apply_state();                         // 0x46ca50
 };
 

@@ -388,7 +388,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             // records into the last 0x60-byte slot, 0x40ff60 splices vertex60 records down from the end).
             // One add_vertex per sample calls _Insert_n once per sample, so ours reallocates on the first
             // and fills the rest in place where the original brings every element forward.
-            struct vert_rec { float u, v; unsigned color; int f5c; };   // the 0x18-byte chunk the original merges
+            struct vert_rec { float u, v; unsigned color; int f5c; int pad[2]; };   // the 0x18-byte chunk the original merges
             vert_rec recs[3];
             vertex60 vv;
             vv.index = pi;

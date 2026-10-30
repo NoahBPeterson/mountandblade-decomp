@@ -28,6 +28,7 @@ struct TplSlot {
 struct PartyTemplateSlots {                     // the slot block of a PartyTemplate (game_recs.h, 0xb0 bytes); not the 0x20-byte mission template TplRec of map_editor/exchange_screens.h
     char pad0[0x40];
     TplSlot slots[6];                           // +0x40 (0x48fbd0)
+    char pad_a0[0xb0 - 0xa0];
 };
 
 // the party record of an id: the page pointer is added to the scaled slot as an offset (not PartyMgr::get_party's shape)
