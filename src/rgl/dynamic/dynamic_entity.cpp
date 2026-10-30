@@ -751,10 +751,10 @@ bool rigid_base::collide_shape(coll_shape* s)
         rec.p = pt;
         rec.n = nrm;
         ((contact_inl&)contacts).push_back(rec);
-        float vn = nrm.x * v.x + nrm.y * v.y + nrm.z * v.z;
+        float vn = nrm.x * v.x + nrm.y * v.y + v.z * nrm.z;
         vector4 t = vsub(v, vmulf(nrm, vn));
-        if (0.0f > vn) {
-            double j = -((restitution + 1.0) * vn);
+        if (!(vn >= 0.0f)) {
+            double j = -((restitution + 1.0) * (nrm.x * v.x + nrm.y * v.y + v.z * nrm.z));
             double mag = j / impulse_response(&pt, &nrm);
             vector4 imp(nrm.x * mag, nrm.y * mag, nrm.z * mag);
             apply_impulse(&pt, &imp);

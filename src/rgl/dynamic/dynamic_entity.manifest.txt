@@ -29,3 +29,4 @@
 ../src/rgl/dynamic/dynamic_entity.cpp  ??$_Uninitialized_fill_n@PAUContact@rgl@@IU12@V?$allocator@UContact@rgl@@@std@@@std@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@0@@Z  00427ca0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ??1coll_base@rgl@@UAE@XZ  00427cd0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ??_Gcoll_base@rgl@@UAEPAXI@Z  00427d20  /O2 /MT /Gy /TP
+../src/rgl/dynamic/dynamic_entity.cpp  ?collide_shape@rigid_base@rgl@@QAE_NPAUcoll_shape@2@@Z  00427900  /O2 /MT /Gy /TP
