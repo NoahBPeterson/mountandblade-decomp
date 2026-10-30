@@ -699,13 +699,13 @@ void PartyScreen::setup_party(int side)
             tstring k_width_ratio("party_b_members_width_ratio");
             tstring k_h("party_b_members_h");
             tstring k_x("party_b_members_x");
-            tstring k_empty("");                    // built and destroyed, never read (original)
+            tstring k_empty("");                    // the button's name (arg 1 at 0x5053ac is this "", not k_x)
             float ev    = ini_float_scan(k_button_h);
             float ratio = ini_float_scan(k_width_ratio);
             float h     = ini_float_scan(k_h);
             float x     = ini_float_scan(k_x);
             buttons[side * 2 + page][i] =
-                new_member_button(members_page[side][page], k_x, x, 0, h,
+                new_member_button(members_page[side][page], k_empty, x, 0, h,
                                   tstring("party_member_button"),
                                   tstring("party_member_button_pressed"),
                                   ratio, ev, 0.085f);
@@ -773,24 +773,39 @@ void PartyScreen::setup_party(int side)
             int           idx = ((Map10007*)&g_game->parties)->lookup(other_party);
             Party* rec = (Party*)((char*)g_game->parties.pages._Myfirst[idx >> 4]
                                                 + (idx & 0xf) * 0x5ac8);
+            // Party::display_name inlined (0x505949): the ids, else the string-table entry, else the name (+0xc)
             tstring* name;
-            if (g_show_party_ids_instead_of_names)              name = &rec->key;
-            else if (rec->flag != 0)          name = &rec->key;
-            else if (g_strtable.find(&rec->key) != 0) name = &rec->key;
-            else                             name = &rec->key;
+            if (g_show_party_ids_instead_of_names)
+                name = &rec->key;
+            else {
+                name = 0;
+                if (rec->flag == 0)
+                    name = g_strtable.find(&rec->key);
+                if (name == 0)
+                    name = &rec->name;
+            }
             PSO(choose_companions)->set_text(caption_pos, name);
             tstring empty("");
             PSO(choose_prisoners)->set_text(caption_pos, &empty);
         } else if (mode == 2 || mode == 3) {
-            tstring empty("");
-            PSO(choose_companions)->set_text(caption_pos, &empty);
-            tstring empty2("");
-            PSO(choose_prisoners)->set_text(caption_pos, &empty2);
+            // each caption string dies before the next is built (0x505886)
+            {
+                tstring empty("");
+                PSO(choose_companions)->set_text(caption_pos, &empty);
+            }
+            {
+                tstring empty2("");
+                PSO(choose_prisoners)->set_text(caption_pos, &empty2);
+            }
         } else {
-            tstring s1("ui_rescued_prisoners");
-            PSO(choose_companions)->set_text(caption_pos, g_strtable.lookup(s1));
-            tstring s2("ui_captured_enemies");
-            PSO(choose_prisoners)->set_text(caption_pos, g_strtable.lookup(s2));
+            {
+                tstring s1("ui_rescued_prisoners");
+                PSO(choose_companions)->set_text(caption_pos, g_strtable.lookup(s1));
+            }
+            {
+                tstring s2("ui_captured_enemies");
+                PSO(choose_prisoners)->set_text(caption_pos, g_strtable.lookup(s2));
+            }
         }
     }
 }
