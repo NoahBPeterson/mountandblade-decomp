@@ -1161,5 +1161,28 @@
   "when": "2026-10-29T23:12:24-05:00",
   "source": "work/sweep+work/sweep_stale/20261028_2353+work/sweep_stale/fixed+work/sweep_stale/limits+work/sweep_stale/rerun",
   "rows": 1081
+ },
+ "2026-10-30T00:03:24-05:00": {
+  "pass": 396,
+  "weak": 437,
+  "fail": 49,
+  "inputs": 22,
+  "harness": 45,
+  "comdat": 116,
+  "comdatdiff": 13,
+  "funclet": 0,
+  "not_run": 3,
+  "pass_sz": 125881,
+  "weak_sz": 564180,
+  "fail_sz": 95808,
+  "inputs_sz": 23751,
+  "harness_sz": 76417,
+  "comdat_sz": 2719,
+  "comdatdiff_sz": 1373,
+  "funclet_sz": 0,
+  "not_run_sz": 2033,
+  "when": "2026-10-30T00:03:24-05:00",
+  "source": "work/sweep+work/sweep_stale/20261028_2353+work/sweep_stale/fixed+work/sweep_stale/limits+work/sweep_stale/rerun",
+  "rows": 1081
  }
 }

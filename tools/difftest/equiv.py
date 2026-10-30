@@ -5830,6 +5830,18 @@ def _test_function(sid, va, opts, log=print):
                 # find_meshes' result temporary, ours an uninitialised slot -> free(0xcccccccc))
                 discarded["arg-in-callee-frame"] = discarded.get("arg-in-callee-frame", 0) + 1
                 continue
+            if any(M.DYN_BASE <= w < M.DYN_BASE + M.DYN_SIZE for w in list(inp.args) +
+                   [v for k, v in inp.regs.items() if k != "esp"]):
+                # the heap is empty at entry (dyn_next = DYN_BASE), so such an argument points at a block the function
+                # itself is about to be handed: steering copies malloc results it saw into the input (agent_hud
+                # 0x4f7f00: this = 0x50000001 aliases the frame engine_new returns, this->fr overlaps frame->kids)
+                discarded["arg-in-unallocated-heap"] = discarded.get("arg-in-unallocated-heap", 0) + 1
+                continue
+            if t.reg_kinds.get("ecx") == "this" and not inp.regs.get("ecx"):
+                # a member function called on NULL: no caller does that (agent_hud 0x4f7f00: this = 0 put frame->kids at
+                # 0x178, overlapping this->fr)
+                discarded["null-this"] = discarded.get("null-this", 0) + 1
+                continue
             if st not in FINISHED:
                 key = "wall-timeout" if st == "wall" else (st if st != "import" else "import:%s" % str(a["status"][1]).split(":")[0])
                 if st == "fault" and a["fault"]:

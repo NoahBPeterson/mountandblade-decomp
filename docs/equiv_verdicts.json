@@ -1,6 +1,6 @@
 {
-"when": "2026-10-29T23:12:24-05:00",
-"commit": "500377c",
+"when": "2026-10-30T00:03:24-05:00",
+"commit": "dfec3b7",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -10,19 +10,19 @@
 ],
 "summary": {
 "pass": 396,
-"weak": 435,
-"fail": 52,
+"weak": 437,
+"fail": 49,
 "inputs": 22,
-"harness": 44,
+"harness": 45,
 "comdat": 116,
 "comdatdiff": 13,
 "funclet": 0,
 "not_run": 3,
 "pass_sz": 125881,
-"weak_sz": 560592,
-"fail_sz": 102161,
+"weak_sz": 564180,
+"fail_sz": 95808,
 "inputs_sz": 23751,
-"harness_sz": 73652,
+"harness_sz": 76417,
 "comdat_sz": 2719,
 "comdatdiff_sz": 1373,
 "funclet_sz": 0,
@@ -6386,8 +6386,8 @@
 "00504ef0": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "UNSUPPORTED",
+"category": "harness",
 "size": 2765
 },
 "005059c0": {
@@ -7310,8 +7310,8 @@
 "0052c2b0": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2887
 },
 "0052cef0": {
@@ -7443,8 +7443,8 @@
 "005302f0": {
 "module": "mesh_3",
 "file": "src/game/mission5/mesh_3.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 701
 },
 "005305b0": {
