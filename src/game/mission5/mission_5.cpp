@@ -44,7 +44,7 @@ void Game_s25160::handle_event(int code)
         float v = (*(float*)(o + 0x168) - *(float*)(o + 0x16c))
                 / (*(float*)(o + 0x170) - *(float*)(o + 0x16c))
                 * (*pa - *(float*)(o + 0x17c))
-                + (float)*(int*)0x5d8790 / *pa * *(float*)(o + 0x17c)
+                + ((float)*(int*)0x5d8790 / *pa * *(float*)(o + 0x17c))
                   * *(float*)0x590d7c;
         ((UiD*)o)->set_value(v);   // 0x48baa0: UiD::set_value, this = the object o (ecx is still o at the call)
         ((VObj_s25160*)o)->v18(0x10000);
