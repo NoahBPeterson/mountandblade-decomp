@@ -2263,17 +2263,25 @@ void Screen_s2ae70::init_order_markers()
         int p3 = f673c->add_point(&p);
 
         int v0, v1, v2, v3;
-        rgl::vec2_s2ae70 uv;
-        unsigned color;
-        int zero;
-        uv.x = 0.0f; uv.y = 0.0f; color = 0x663333ff; p.x = 0.0f; p.y = 0.0f; p.z = 1.0f; zero = 0;
-        v0 = f673c->add_vertex(p0, &uv, &color, &p, &zero);
-        uv.x = 0.0f; uv.y = 0.0f; color = 0x663333ff; p.x = 0.0f; p.y = 0.0f; p.z = 1.0f; zero = 0;
-        v1 = f673c->add_vertex(p1, &uv, &color, &p, &zero);
-        uv.x = 0.0f; uv.y = 0.0f; color = 0x663333ff; p.x = 0.0f; p.y = 0.0f; p.z = 1.0f; zero = 0;
-        v2 = f673c->add_vertex(p2, &uv, &color, &p, &zero);
-        uv.x = 0.0f; uv.y = 0.0f; color = 0x663333ff; p.x = 0.0f; p.y = 0.0f; p.z = 1.0f; zero = 0;
-        v3 = f673c->add_vertex(p3, &uv, &color, &p, &zero);
+        {
+            rgl::vec2_s2ae70 uv;
+            unsigned color;
+            int zero;
+            uv.x = 0.0f; uv.y = 0.0f; color = 0x663333ff; p.x = 0.0f; p.y = 0.0f; p.z = 1.0f; zero = 0;
+            v0 = f673c->add_vertex(p0, &uv, &color, &p, &zero);
+            uv.x = 0.0f; uv.y = 0.0f; color = 0x663333ff; p.x = 0.0f; p.y = 0.0f; p.z = 1.0f; zero = 0;
+            v1 = f673c->add_vertex(p1, &uv, &color, &p, &zero);
+        }
+        {
+            rgl::vec2_s2ae70 uv;
+            unsigned color;
+            int zero;
+            rgl::vector4 n;
+            uv.x = 0.0f; uv.y = 0.0f; color = 0x663333ff; n.x = 0.0f; n.y = 0.0f; n.z = 1.0f; zero = 0;
+            v2 = f673c->add_vertex(p2, &uv, &color, &n, &zero);
+            uv.x = 0.0f; uv.y = 0.0f; color = 0x663333ff; n.x = 0.0f; n.y = 0.0f; n.z = 1.0f; zero = 0;
+            v3 = f673c->add_vertex(p3, &uv, &color, &n, &zero);
+        }
 
         f673c->add_face(v0, v1, v2);
         f673c->add_face(v0, v2, v3);
