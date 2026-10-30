@@ -782,6 +782,7 @@ class Input:
         n.alloc_fail = tuple(getattr(self, "alloc_fail", ()))
         n.extra = dict(getattr(self, "extra", {}))
         n.forced = dict(getattr(self, "forced", {}))
+        n.fake_ret = dict(getattr(self, "fake_ret", {}))
         n.typed = getattr(self, "typed", 0)
         return n
 
@@ -1036,6 +1037,7 @@ class InputGen:
         inp.alloc_fail = ()
         inp.extra = {}
         inp.forced = {}
+        inp.fake_ret = {}
         inp.typed = 0
         if self.typed is not None and rng.random() < self.typed_share:
             inp.typed = self.typed.build(self, inp, rng)    # typed `this` / argument objects into pool_over
@@ -1811,6 +1813,8 @@ class Runner:
                                             begin=sva, end=sva))
         # branch-feeding callees whose result an input may force (see _on_forced)
         self.cur_forced = {}
+        self.cur_fake_ret = {}      # Input.fake_ret {target: eax}: the result a fake call to target returns
+        self.fake_seq, self.last_fake = 0, None
         self.forced_cands = []
         if getattr(opts, "force_results", True):
             # only callees our object calls too, at the same image address: a forced result the other build cannot
@@ -2968,6 +2972,11 @@ class Runner:
             # sending it into work the method was supposed to do (cam_view 0x4eaa05: the model-record
             # check gates the clipboard copy, whose GlobalAlloc is not modelled)
             eax = 0
+        ov = self.cur_fake_ret.get(target)
+        if ov is not None:          # the input chooses this callee's result (concolic steering, concolic.py)
+            eax = ov & 0xFFFFFFFF
+        self.fake_seq += 1
+        self.last_fake = target
         self.fakes.append((target, n, ecx, tuple(args)))
         if self.opts.call_regs:
             self.fake_regs.append(call_reg_snapshot(uc))
@@ -4014,6 +4023,7 @@ class Runner:
     def run_side(self, side, inp):
         m, uc, t = self.m, self.m.uc, self.t
         self.cur_forced = getattr(inp, "forced", None) or {}
+        self.cur_fake_ret = getattr(inp, "fake_ret", None) or {}
         # memory: pool, dyn heap, stack, misc
         cache = self.page_cache
         if cache.get("inp") is not inp:
