@@ -523,15 +523,18 @@ void FieldPanel::update()
     scene()->set_xy(p);
 
     if (sqrt(f49c * f49c + f4a0 * f4a0) > 0.0f) {
-        float q[2];
+        float q[2];                     // a copy of the stored size (0x48d4d4)
+        q[0] = f49c;
+        q[1] = f4a0;
+        set_xy(q);
+    } else {
+        float q[2];                     // none stored: the scene's width, our height (0x48d4f6)
         q[0] = scene()->screen[0];
         q[1] = screen[1];
         set_xy(q);
-    } else {
-        set_xy(&f49c);
     }
 
-    if (scene()->screen[1] == screen[1]) {
+    if (!(scene()->screen[1] < screen[1])) {        // fcomp; test ah,5; jp (0x48d528): not shorter than us
         float z[2];
         z[0] = 0.0f;
         z[1] = 0.0f;
@@ -557,17 +560,17 @@ void FieldPanel::update()
 // @ 0x48d5f0
 int ArrHolder::lookup(int index, int arg)
 {
-    ArrElem* e = (ArrElem*)((char*)base + index * 0x1dc);
-    int i = e->v08(arg);
+    int i = ((ArrElem*)((char*)base + index * 0x1dc))->v08(arg);
     if (i < 0)
         return 0;
+    ArrElem* e = (ArrElem*)((char*)base + index * 0x1dc);     // base re-read after the call (0x48d613)
     int* a = e->a;
     if (!a)
         return 0;
-    if ((e->b - a) >> 2 == 0)
+    if (e->b - a == 0)          // an empty list (pointer difference is already a count: no >> 2)
         return 0;
     int* v = (int*)a[0];
-    return *(int*)((char*)v + 0xb4 + i * 4);
+    return (*(int**)((char*)v + 0xb4))[i];     // +0xb4 holds a pointer to the int array (0x48d636)
 }
 
 // @ 0x48d650
