@@ -53,3 +53,6 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?place_c@MapDialog@@QAEXPAUMapRecord@@HH@Z  004c6f50  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?place_c@MapDialog@@QAEXPAUMapRecord@@HH@Z  004c6f70  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?place_c@MapDialog@@QAEXPAUMapRecord@@HH@Z  004c88e0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?insert_a@MapDialog@@QAEPAUMapRecord@@PAU2@HH@Z  004c6eb0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?insert_b@MapDialog@@QAEPAHPAHHH@Z  004c6ee0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?ufill@edit_vec@@QAEPAUedit_vert@@PAU2@HPBU2@@Z  004c8810  /O2 /MT /Gy /TP

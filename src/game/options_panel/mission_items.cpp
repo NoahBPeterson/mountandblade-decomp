@@ -63,6 +63,10 @@ struct item_base : head_rec {
     item_base() { w08 = 99; }
 };
 
+struct item_base_nz : head_rec {
+    item_base_nz() : head_rec(no_w04()) { w08 = 99; }
+};
+
 struct MissionBlocker : item_base {
                              // 0x2c8 bytes, vtable 0x59616c
     char pad2c[0x8];
@@ -195,7 +199,7 @@ void MissionParams::init()
 }
 
 // ---- the remaining item constructors (0x4ceb30 / 0x4cef20 / 0x4cef80) --------------------------------------
-struct ItemA : item_base {
+struct ItemA : item_base_nz {
                                       // vtable 0x596190
     virtual void slot_empty_1();                // slot 1  0x4c6e10 MapDialog::reset_state (gui_edit.cpp)
     virtual void slot_empty_2();                // slot 2  0x4fbfa0 GameScreen::build (agent_hud.cpp)
@@ -207,7 +211,7 @@ struct ItemA : item_base {
     int clock, clock_hi; float f58; int f5c;
     ItemA();                                                    // 0x4ceb30
 };
-struct ItemB : item_base {
+struct ItemB : item_base_nz {
                                       // vtable 0x5961e4
     virtual void slot_empty_1();                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
     virtual void slot_empty_2();                // slot 2  0x4e5d80 SaveWinCtl::create_stub (progress_bar.cpp)
@@ -218,7 +222,7 @@ struct ItemB : item_base {
     int clock, clock_hi; float f58; int f5c;
     ItemB();                                                    // 0x4cef20
 };
-struct ItemC : item_base {
+struct ItemC : item_base_nz {
                                       // vtable 0x596208
     virtual void slot_empty_1();                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
     virtual void slot_empty_2();                // slot 2  0x4e5e50 SaveWinCtl::create_flagged (progress_bar.cpp)
@@ -285,7 +289,7 @@ struct owned_triple {
     void* p0;                                                   // +0x00 = 0
     void* p1;                                                   // +0x04
     void* p2;                                                   // +0x08
-    owned_triple() { p0 = 0; p1 = 0; p2 = 0; }
+    owned_triple() {}
     ~owned_triple() { if (p0) operator delete(p0); p0 = 0; p1 = 0; p2 = 0; }
 };
 struct ItemD_vt : item_base {
@@ -310,6 +314,8 @@ struct ItemD : ItemD_vt {                                       // vtable 0x5961
 ItemD::ItemD()
 {
     _ReadWriteBarrier();
+    blk0.p0 = 0; blk0.p1 = 0; blk0.p2 = 0;
+    blk1.p0 = 0; blk1.p1 = 0; blk1.p2 = 0;
 }
 
 

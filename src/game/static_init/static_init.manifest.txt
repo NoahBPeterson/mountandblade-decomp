@@ -69,3 +69,4 @@
 ../src/game/static_init/static_init.cpp  ?static_init_5480d0@@YAXXZ  005480d0  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_init_5480f0@@YAXXZ  005480f0  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_init_548110@@YAXXZ  00548110  /O2 /MT /Gy /TP
+../src/game/static_init/static_init.cpp  ?static_dtor_5482b0@@YAXXZ  005482b0  /O2 /MT /Gy /TP

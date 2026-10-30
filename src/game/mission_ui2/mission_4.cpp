@@ -193,9 +193,9 @@ TabCurrent* TableauStack::current()
 // @ 0x48f480
 void TableauStack::set_camera_position(const rgl::matrix* m)
 {
-    TabCurrent* c = stack[stack.size() - 1];
-    c->fr.m = *m;
-    c->fr.build_planes();
+    rgl::frustum* f = &stack[stack.size() - 1]->fr;
+    f->m = *m;
+    f->build_planes();
 }
 
 // @ 0x48f4c0

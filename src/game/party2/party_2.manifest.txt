@@ -41,3 +41,5 @@
 ../src/game/party2/party_2.cpp  ?throw_stub_26d6@@YAXXZ  004b26d6  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?throw_stub_33b4@@YAXXZ  004b33b4  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?fill_elems@ElemCopier@@QAEPAUOpenItem@@PAU2@00@Z  004b38f0  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?map_speed@Party@@QAEMXZ  004b25c0  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?speed_factor@Party@@QAEMXZ  004b20b0  /O2 /MT /Gy /TP

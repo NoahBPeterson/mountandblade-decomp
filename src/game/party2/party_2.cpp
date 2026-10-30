@@ -455,10 +455,10 @@ float Party::speed_factor()
     float v = f8b0 * f8ac;
     int type = map_mask;
     if (type == 0xb || type == 0xc || type == 0xa || type == 0xd) {
-        v = g_k0_7 * v;
+        v = v * 0.7f;
     }
     if (g_game->is_night()) {
-        return g_k0_6 * v;
+        return v * 0.6f;
     }
     return v;
 }
@@ -717,7 +717,7 @@ float Party::map_speed()
 {
     float v = (skill_level(0xd) * g_gk0_05b + 1.0f) * g_seeing_range;
     if (g_game->is_night()) {
-        return g_gk0_03 * v;
+        return v * 0.5f;
     }
     return v;
 }

@@ -1041,14 +1041,14 @@ char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* al);    
 // @ 0x4c6eb0
 MapRecord* MapDialog::insert_a(MapRecord* arr, int index, int z)
 {
-    ((void (__cdecl*)(char*, unsigned, const void*, Alloc204&, int))copy_uninit_204)((char*)arr, (unsigned)index, (const void*)z, *(Alloc204*)this, z);
+    ((void (__cdecl*)(char*, unsigned, const void*, Alloc204&, int))copy_uninit_204)((char*)arr, (unsigned)index, *(const void* volatile*)&z, *(Alloc204*)this, z);
     return (MapRecord*)((char*)arr + index * 0x204);
 }
 
 // @ 0x4c6ee0
 int* MapDialog::insert_b(int* arr, int index, int z)
 {
-    ((void (__cdecl*)(char*, unsigned, const void*, Alloc4&, int))copy_uninit_4)((char*)arr, (unsigned)index, (const void*)z, *(Alloc4*)this, z);
+    ((void (__cdecl*)(char*, unsigned, const void*, Alloc4&, int))copy_uninit_4)((char*)arr, (unsigned)index, *(const void* volatile*)&z, *(Alloc4*)this, z);
     return &arr[index];
 }
 
@@ -1643,7 +1643,7 @@ void __fastcall conv_build_scene(conv_rec* self)
 // @ 0x4c8810
 edit_vert* edit_vec::ufill(edit_vert* dst, int n, const edit_vert* src)
 {
-    ((void (__cdecl*)(void*, size_t, const void*, block_copier*, const void*))uninit_fill_n)(dst, (unsigned)n, src, (block_copier*)this, src);
+    ((void (__cdecl*)(void*, size_t, const void*, block_copier*, const void*))uninit_fill_n)(dst, (unsigned)n, *(const void* volatile*)&src, (block_copier*)this, src);
     return dst + n;
 }
 

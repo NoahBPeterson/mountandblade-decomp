@@ -958,12 +958,10 @@ void TickScreen::on_tick(int code)
 // @ 0x533a60
 void ChoiceList::get3(int* a, int* b, int* c)
 {
-    int* p = F(this, 0x19c, int*);
-    p += F(this, 0x1cc, int);
-    *a = *p;
-    p = F(this, 0x1ac, int*);
-    p += F(this, 0x1cc, int);
-    *b = *p;
+    int* pa = (int*)((char*)F(this, 0x19c, int*) + F(this, 0x1cc, int) * 4);
+    *a = *(volatile int*)pa;
+    int* pb = (int*)((char*)F(this, 0x1ac, int*) + F(this, 0x1cc, int) * 4);
+    *b = *(volatile int*)pb;
     *c = F(this, 0x1cc, int);
 }
 

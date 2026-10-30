@@ -207,8 +207,8 @@ void __cdecl static_dtor_5482b0()
 {
     AT(void*, g_5a9f60, 0) = g_vt_595618;
     if (g_5a9f60[0x35]) {
-        typedef int (__fastcall* close_fn)(void* self, int unused);   // a thiscall slot with no arguments
-        if (((close_fn)g_vt_595618[0x1a])(g_5a9f60, 0) == 0)
+        typedef int (__fastcall* close_fn)(void* self);   // a thiscall slot with no arguments
+        if (((close_fn)g_vt_595618[0x1a])(g_5a9f60) == 0)
             fclose(g_5a9f90);
         g_5a9f60[0x34] = 1;
         g_5a9f60[0x35] = 0;

@@ -5,7 +5,6 @@
 00547fe0  25  11 tstring constructors (0x8ed4df8, stride 0x20): complete; as 0x547e60 | equiv: UNSUPPORTED (fixed-address writes fault)
 00548070  65  0x2a records of three tstrings (0x8ee3120-0x20, stride 0x44): complete; as 0x547e60 (size 76 vs 61) | equiv: UNSUPPORTED (fixed-address writes fault)
 00548270  18  destructor of the 0x2a three-string records: complete; loop shape | equiv: PASS, 400 valid
-005482b0  28  the log stream's destructor (outfile -> outfile_b, close, strings): complete; the original calls the close slot as `call [vtable+0x68]` of outfile_b's vtable, ours loads the slot then calls (size 84 vs 82) | equiv: PASS, 396 valid
 00548360  38  the 11 key records' destructor (delete[] of a NameHolder array, then a tstring): complete; register choice | equiv: UNSUPPORTED (the original's `lea ecx,[ecx]` alignment padding reads ecx, which the harness takes for an argument)
 005484b0  33  std::vector<E56>::~vector of the physics set: complete; the original pushes a dummy tag from [esp] and the allocator, ours passes 0 (size 75 vs 78) | equiv: WEAK (1/2 edges each)
 00548520  40  std::vector<NameVecRec>::~vector of the skeleton names: complete; ours calls destroy_range with its two declared arguments, the original pushes four (cdecl: the callee reads two) (size 68 vs 78) | equiv: WEAK (1/2 edges each)

@@ -56,6 +56,8 @@ struct head_rec {
     char    pad0c[0x10];       // +0xc
     tstring name;              // +0x1c
     head_rec() : name() { w04 = 0; w08 = 0x63; }
+    struct no_w04 {};
+    head_rec(no_w04) : name() { w08 = 0x63; }               // for derived ctors that store w04 themselves, later
 };
 
 #endif // MB_GAME_HEAD_REC_H

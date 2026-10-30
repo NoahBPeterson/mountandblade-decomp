@@ -9,3 +9,4 @@
 ../src/game/map_editor/exchange_screens.cpp  ?advance@VecIter@@QAEPAPAHPAPAHH@Z  00534160  /O2 /MT /Gy /TP
 ../src/game/map_editor/exchange_screens.cpp  ?hook_a@SourceScreen@@QAEXH@Z  00534180  /O2 /MT /Gy /TP
 ../src/game/map_editor/exchange_screens.cpp  ?hook_b@SourceScreen@@QAEXH@Z  00534230  /O2 /MT /Gy /TP
+../src/game/map_editor/exchange_screens.cpp  ?get3@ChoiceList@@QAEXPAH00@Z  00533a60  /O2 /MT /Gy /TP

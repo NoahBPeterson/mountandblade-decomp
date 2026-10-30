@@ -3,3 +3,7 @@
 ../src/game/options_panel/mission_items.cpp  ?walk68@@YAXPAUrec68@@0PAX@Z  004cf0a0  /O2 /MT /Gy /TP
 ../src/game/options_panel/mission_items.cpp  ?walkb0@@YAXPAUrecb0@@0PAX@Z  004cf0d0  /O2 /MT /Gy /TP
 ../src/game/options_panel/mission_items.cpp  ??1ItemD_vt@@UAE@XZ  004ceec0  /O2 /MT /Gy /TP
+../src/game/options_panel/mission_items.cpp  ??0ItemA@@QAE@XZ  004ceb30  /O2 /MT /Gy /TP
+../src/game/options_panel/mission_items.cpp  ??0ItemB@@QAE@XZ  004cef20  /O2 /MT /Gy /TP
+../src/game/options_panel/mission_items.cpp  ??0ItemC@@QAE@XZ  004cef80  /O2 /MT /Gy /TP
+../src/game/options_panel/mission_items.cpp  ??0ItemD@@QAE@XZ  004cee50  /O2 /MT /Gy /TP
