@@ -82,9 +82,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     g_init_flag = 0;
     g_skin_name.assign("en");
 
-    tstring empty("");
-    g_strtable.load((const char*)&empty);
-    empty.~tstring();
+    {
+        tstring empty("");
+        g_strtable.load((const char*)&empty);
+    }   // destroyed here, once (0x4d94dd); an explicit ~tstring() plus the scope exit freed the buffer twice
 
     LoadLibraryA("riched20.dll");
     SkinMagic_Init(hInstance, "SCRIBBLE", 0, 0);
