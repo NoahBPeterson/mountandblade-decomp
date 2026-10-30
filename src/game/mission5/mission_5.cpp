@@ -50,7 +50,7 @@ void Game_s25160::handle_event(int code)
         ((VObj_s25160*)o)->v18(0x10000);
     }
 
-    char* b = *(char**)0x5e2930;
+    char* b = *(char**)&g_game;
     if (f1204 == *(int*)(b + 0x8c) || *(int*)(b + 0x1a23c) == 0)
         goto hide;
     if (*(float*)0x5d7094 >= *(float*)(f30 + 0xf0))
@@ -78,14 +78,14 @@ void Game_s25160::handle_event(int code)
     {
         for (int i = 0; i < 5; ++i)
         {
-            b = *(char**)0x5e2930;
+            b = *(char**)&g_game;
             if (*(char*)(b + 0x1a290 + i) == 0)
                 continue;
             int l1;
             int l2;
             f11ec[i]->v41(&l1, (void*)(b + 0x1a240 + i * 0x10));   // out value first, the record second (0x525301)
             f11ec[i]->v37(&l2);
-            *(char*)(*(char**)0x5e2930 + 0x1a290 + i) = 0;   // the calls above may have swapped the global: 0x525322 re-reads it
+            *(char*)(*(char**)&g_game + 0x1a290 + i) = 0;   // the calls above may have swapped the global: 0x525322 re-reads it
         }
     }
     goto done;
@@ -152,7 +152,7 @@ done:
 
     if (v == 4)
     {
-        char* b2 = *(char**)0x5e2930;
+        char* b2 = *(char**)&g_game;
         char* rec = *(char**)(b2 + 0x13a00) + g_conversation_troop * 0x508;
         int save = *(int*)(rec + 0x34);
         int flags = *(int*)(rec + 0x30);
@@ -162,7 +162,7 @@ done:
             for (int i = 0; i < 0xa; ++i)
                 ((Troop_s25160*)rec)->m_4630d0(i);
         }
-        char* t = *(char**)0xa739a0;
+        char* t = *(char**)(g_windows + 0x20);
         *(int*)(t + 0x18) = 0x10;
         *(int*)(t + 0x14) = g_conversation_troop;
         *(int*)(t + 4) = 2;
@@ -174,9 +174,9 @@ done:
         f1200 = g_conversation_troop;
     if (v == 2 || v == 3)
     {
-        char* t = *(char**)0xa739a0;
+        char* t = *(char**)(g_windows + 0x20);
         *(int*)(t + 0x18) = 0x10;
-        int a = *(int*)(*(char**)0x5e2930 + 0x13af0);
+        int a = *(int*)(*(char**)&g_game + 0x13af0);
         if (a == 0)
             a = g_conversation_troop;
         *(int*)(t + 0x14) = a;
