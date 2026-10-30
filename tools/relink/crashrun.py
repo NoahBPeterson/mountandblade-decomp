@@ -15,7 +15,11 @@ import argparse, os, re, shutil, subprocess, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 CX = os.path.expanduser("~/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine")
-WINPATH = r"C:\Program Files (x86)\Steam\steamapps\common\Mount and Blade\mb_standalone.exe"
+# The copy's name in the game folder: our build runs as mb_standalone.exe; any other --exe (the original image,
+# work/hybrid/mb.base.exe) runs as mb_original.exe, so the original never sits under our build's name.
+NAME = "mb_standalone"
+GAMEDIR = r"C:\Program Files (x86)\Steam\steamapps\common\Mount and Blade" + "\\"
+WINPATH = GAMEDIR + NAME + ".exe"
 
 
 def kill_stale():
@@ -25,7 +29,7 @@ def kill_stale():
     debugger can also leave the debuggee: both then hold the window and write rgl_log.txt, which makes the next run's
     "menu is up" test fire on the old game's log. Called before every launch.
     """
-    for pattern in ("mb_standalone", "mb_check", "mb_hybrid", "Mount & Blade", "mount&blade", "winedbg"):
+    for pattern in ("mb_standalone", "mb_original", "mb_check", "mb_hybrid", "Mount & Blade", "mount&blade", "winedbg"):
         subprocess.run(["pkill", "-f", pattern], capture_output=True)
     time.sleep(1.0)
 
@@ -45,9 +49,13 @@ def main():
     ap.add_argument("--pre", default="", help="extra winedbg commands run before 'cont' (';'-separated), e.g. "
                     "'watch *0xa9897c' (a data watchpoint)")
     a = ap.parse_args()
+    global NAME, WINPATH
+    if os.path.basename(a.exe) != "mb_standalone.exe":
+        NAME = "mb_original"
+        WINPATH = GAMEDIR + NAME + ".exe"
     game = os.path.join(ROOT, "game")
     kill_stale()
-    shutil.copyfile(a.exe, os.path.join(game, "mb_standalone.exe"))
+    shutil.copyfile(a.exe, os.path.join(game, NAME + ".exe"))
     log_path = os.path.join(ROOT, "work", "relink", "standalone", "dbg.log")
     report = "info reg\nbt 40\nx /3072x $esp\n" + "".join(c.strip() + "\n" for c in a.cmds.split(";") if c.strip())
     hung = False
@@ -112,7 +120,7 @@ def press_play(limit):
     """Wait for the launcher and press Return (its default button is Play): System Events key code 36, only while
     the game is frontmost. The launcher ignores a key sent right after it appears, so this presses again every few
     seconds until the game's log (rgl_log.txt) shows loading past the launcher's two lines."""
-    proc = '(first process whose name contains "mb_standalone")'
+    proc = '(first process whose name contains "%s")' % NAME
     log = os.path.join(ROOT, "game", "rgl_log.txt")
     t0 = time.time()
     pressed = False
@@ -131,7 +139,7 @@ def press_play(limit):
                             "-e", "delay 0.5", "-e",
                             # only into the game: a Return sent while another app kept the focus lands there
                             'tell application "System Events" to if (name of (first process whose frontmost is true)) '
-                            'contains "mb_standalone" then key code 36'], capture_output=True)
+                            'contains "%s" then key code 36' % NAME], capture_output=True)
             pressed = True
         time.sleep(3)
     return pressed
@@ -142,7 +150,7 @@ def game_procs():
     out = []
     for line in subprocess.run(["ps", "-axo", "pid=,pcpu=,command="], capture_output=True, text=True).stdout.splitlines():
         pid, cpu, cmd = line.strip().split(None, 2)
-        if cmd.startswith(WINPATH) or ("winedbg" in cmd and "mb_standalone" in cmd):
+        if cmd.startswith(WINPATH) or ("winedbg" in cmd and NAME in cmd):
             out.append((int(pid), float(cpu), cmd))
     return out
 
@@ -165,7 +173,7 @@ def hang_dump(a, game, log_path):
     while time.time() - t0 < a.timeout + 60 and not any(c > 50 for _p, c, cmd in game_procs() if cmd.startswith(WINPATH)):
         time.sleep(2)
     procs = dbg(a, "info process\nquit\n")
-    m = re.search(r"([0-9a-f]{8}) +\d+ +\\_ 'mb_standalone.exe'", procs)
+    m = re.search(r"([0-9a-f]{8}) +\d+ +\\_ '" + NAME + r".exe'", procs)
     if not m:
         return "no game process to attach to\n" + procs
     wpid = m[1]
@@ -189,7 +197,7 @@ def report_text(text, hung=False):
     blocks = [b for b in re.split(r"(?=EIP:[0-9a-f]{8})", text) if b.startswith("EIP:")]
     for blk in blocks:
         eip = blk[4:12]
-        if not 0x401000 <= int(eip, 16) < 0x560000 and hung and "mb_standalone" not in blk:
+        if not 0x401000 <= int(eip, 16) < 0x560000 and hung and NAME not in blk:
             continue                                     # a thread waiting in the system with nothing of ours
         walk = []
         for line in blk.splitlines():
@@ -199,7 +207,7 @@ def report_text(text, hung=False):
                     v = int(w, 16)
                     if 0x401000 <= v < 0x560000:
                         walk.append((int(mm[1], 16) + 4 * i, v))
-        bt = re.findall(r"^\s*=?>?\s*\d+ 0x0*([0-9a-f]+) in mb_standalone", blk, re.M)
+        bt = re.findall(r"^\s*=?>?\s*\d+ 0x0*([0-9a-f]+) in " + NAME, blk, re.M)
         names = subprocess.run([sys.executable, tool, eip] + bt + ["%x" % v for _a, v in walk[:60]],
                                capture_output=True, text=True).stdout.splitlines()
         regs = re.search(r"EAX:.*\n.*ESI:.*", blk)
