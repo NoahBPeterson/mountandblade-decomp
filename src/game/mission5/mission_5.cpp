@@ -13,6 +13,7 @@
 // Boundary: starts at 0x525160 (Game::handle_event, a class change after the record readers of game_2.cpp); ends where the
 //       map editor starts (0x52cf60, class Mesh | Elem). The map's boundary 0x5249f0 is not kept (see game_2.cpp).
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include "./mission_5.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../tstring.h"
@@ -22,13 +23,13 @@
 
 // ======================================================= slice s00525160: functions
 #undef g_mgr
-#define g_mgr       (*(Mgr_s25160*)0x5d7080)
+#define g_mgr       (*(Mgr_s25160*)&orig::g_gui_mgr)
 #undef g_dlg
-#define g_dlg       (*(Dlg_s25160*)0xa73980)
+#define g_dlg       (*(Dlg_s25160*)&orig::g_main_menu_obj)
 #undef g_513710
-#define g_513710    (*(Mgr513710_s25160*)0x5e291c)
+#define g_513710    (*(Mgr513710_s25160*)&orig::g_map_flags)
 #undef g_big
-#define g_big       (*(Big5e292c_s25160**)0x5e292c)
+#define g_big       (*(Big5e292c_s25160**)&orig::g_mission)
 // agent record i of the mission (pages of 16, 0x5928 bytes each)
 #define REC_S25160(i) ((*(char***)((char*)g_big + 0x1c))[(i) >> 4] + ((i) & 0xf) * 0x5928)
 // @ 0x525160
@@ -36,7 +37,7 @@ void Game_s25160::handle_event(int code)
 {
     g_mgr.update();
 
-    if (*(int*)0x5d8790 != 0)
+    if (orig::g_mission_clock != 0)
     {
         // camera/sky interpolation over the current site's passage table
         char* o = *(char**)(f188 + 0x484);
@@ -44,8 +45,8 @@ void Game_s25160::handle_event(int code)
         float v = (*(float*)(o + 0x168) - *(float*)(o + 0x16c))
                 / (*(float*)(o + 0x170) - *(float*)(o + 0x16c))
                 * (*pa - *(float*)(o + 0x17c))
-                + ((float)*(int*)0x5d8790 / *pa * *(float*)(o + 0x17c))
-                  * *(float*)0x590d7c;
+                + ((float)orig::g_mission_clock / *pa * *(float*)(o + 0x17c))
+                  * orig::k_0_0005f;
         ((UiD*)o)->set_value(v);   // 0x48baa0: UiD::set_value, this = the object o (ecx is still o at the call)
         ((VObj_s25160*)o)->v18(0x10000);
     }
@@ -53,9 +54,9 @@ void Game_s25160::handle_event(int code)
     char* b = *(char**)&g_game;
     if (f1204 == *(int*)(b + 0x8c) || *(int*)(b + 0x1a23c) == 0)
         goto hide;
-    if (*(float*)0x5d7094 >= *(float*)(f30 + 0xf0))
+    if (orig::g_mouse_x >= *(float*)(f30 + 0xf0))
         goto hide;
-    if (*(float*)(f30 + 0xe4) + *(float*)0x549d7c >= *(float*)0x5d7098)
+    if (*(float*)(f30 + 0xe4) + orig::k_0_1f >= orig::g_mouse_y)
         goto hide;
     {
         f11e0->v45();
@@ -68,7 +69,7 @@ void Game_s25160::handle_event(int code)
         else
         {
             float pair[2];
-            pair[0] = (float)(s + 0x64) * *(float*)0x59c268 + *(float*)0x590cd0;
+            pair[0] = (float)(s + 0x64) * orig::k_0_00105f + orig::k_0_02f;
             pair[1] = 0.02f;
             f11e4->v22(pair);
             f11e8->v45();
@@ -128,7 +129,7 @@ done:
             refresh(i, &res);
         }
     }
-    else if (*(int*)0xa17454 == 0 && *(int*)0xa17854 != 0)
+    else if (orig::g_a17454 == 0 && orig::g_a17854 != 0)
     {
         refresh(-2, &res);
     }
@@ -139,12 +140,12 @@ done:
 
     if (v == 1)
         goto case1;
-    if (*(int*)0x5a9fb0 != 0 && *(int*)0xa17110 != 0 && *(int*)0xa17510 == 0)
+    if (orig::g_no_cam != 0 && *(int*)&orig::g_a17110 != 0 && *(int*)&orig::g_a17510 == 0)
         goto case1;
 
     if (v == 0x10)
     {
-        char* t = *(char**)0xa739e8;
+        char* t = *(char**)&orig::g_wE8;
         *(int*)(t + 0x18) = 0x10;
         g_dlg.open(0x1a);
         return;
@@ -187,7 +188,7 @@ done:
 
     if (v == 5 || v == 7 || v == 6 || v == 9 || v == 0xa)
     {
-        char* t = *(char**)0xa739b0;
+        char* t = *(char**)&orig::g_wB0;
         *(int*)(t + 0x18) = 0x10;
         if (v == 5 || v == 6 || v == 7)
         {
@@ -229,7 +230,7 @@ done:
 
     if (v == 0xb || v == 0xc)
     {
-        char* t = *(char**)0xa739bc;
+        char* t = *(char**)&orig::g_wBC;
         *(int*)(t + 0x18) = 0x10;
         *(int*)(t + 0x14) = g_conversation_troop;
         *(int*)(t + 4) = (v != 0xb) + 1;

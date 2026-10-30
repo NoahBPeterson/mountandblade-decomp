@@ -5,6 +5,7 @@
 //       scene table, the tableau table's mesh/entity spawners, and the two mesh-widget factories. Translation unit 87
 //       (obj_tbl) of the TU map. Names provisional. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include "./obj_tbl.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/widget_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)

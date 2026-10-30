@@ -6,6 +6,7 @@
 //       refresh and the character quad. "T regime" region (docs/tu_map.md): the file keeps the binary order.
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include "./party_screen.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -90,7 +91,7 @@ void PartyScreen::open_party_window()
     PsWindow* win = (PsWindow*)::operator new(0x190);
     if (win) {
         window_ctor(win);
-        *(void**)win = (void*)0x592848;
+        *(void**)win = (void*)vtbl_592848;
         win->f188 = 0;
     }
     window = win;
@@ -122,7 +123,7 @@ void PartyScreen::open_party_window()
     MissionUi* panel = (MissionUi*)::operator new(0x188);
     if (panel) {
         window_ctor(panel);
-        *(void**)panel = (void*)0x597050;
+        *(void**)panel = (void*)vtbl_597050;
     }
     info = panel;
     label_refresh(info, tstring("party_bo_info"));

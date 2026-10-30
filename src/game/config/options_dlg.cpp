@@ -11,6 +11,7 @@
 // function at 0x4b9b90 is itself an OptionsDlg method (choose_dx_settings), so the object runs on to 0x4b9e70
 // (CreateGameOptionsPage::refresh, the first function of the next class); see MIGRATION.md.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -221,7 +222,7 @@ void __cdecl open_keys_key(PHKEY out)
     if (disp != 1) {
         return;
     }
-    ((log_stream*)0x5a9f60)->w_cstr("Creating new Registry Key");
+    ((log_stream*)&orig::g_log)->w_cstr("Creating new Registry Key");
 }
 
 // @ 0x4b9720

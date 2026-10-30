@@ -1,3 +1,4 @@
+#include "../../include/image_addrs.h"
 #include "./editor_ui.h"
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -89,7 +90,7 @@ WidgetB* __cdecl make_slider(void* parent, const tstring* name)
     WidgetB* w = (WidgetB*)::operator new(0x188);
     if (w != 0) {
         new (w, raw_place()) MissionUi;   // 0x48ae20
-        *(void**)w = (void*)0x591fb0;
+        *(void**)w = (void*)vtbl_591fb0;
         w->f178 = 0;
         w->f17c = 0.008f;
         w->f168 = 1.0f;
@@ -125,7 +126,7 @@ WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name)
     WidgetB* w = (WidgetB*)::operator new(0x188);
     if (w != 0) {
         new (w, raw_place()) MissionUi;   // 0x48ae20
-        *(void**)w = (void*)0x592140;
+        *(void**)w = (void*)vtbl_UiD;
         w->f178 = 0;
         w->f17c = 0.1f;
         w->f168 = 1.0f;
@@ -251,7 +252,7 @@ void EditorApp::refresh_dialog()
 int __cdecl engine_init()
 {
     srand(timeGetTime());
-    ((render_batch*)0x5fe898)->init_formats();   // 0x4bc5b0
+    ((render_batch*)&orig::g_batch)->init_formats();   // 0x4bc5b0
     g_log_path.assign("rgl_log.txt");
     FILE* f = fopen("rgl_log.txt", "w");
     g_log_file = f;
@@ -299,9 +300,9 @@ int __cdecl engine_init()
         tstring n("Data\\font_data.xml");
         ((Font*)g_font)->load((const char*)&n);   // 0x4d9aa0
     }
-    ((GuiState*)0x5d7080)->init_widgets();
+    ((GuiState*)&orig::g_gui_mgr)->init_widgets();
     init_mission_trigger_records();
     g_5e29a4 = g_trial_mode;
-    ((MainMenu*)0xa73980)->set_state(2);
+    ((MainMenu*)&orig::g_main_menu_obj)->set_state(2);
     return 0;
 }

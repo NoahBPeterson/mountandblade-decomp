@@ -15,6 +15,7 @@
 // unverified match/include/rgl.h string layout (buffer at +0, really +4), explicit destructor calls on top of
 // the implicit ones, swapped forget() arguments, a restore() two dwords off, a performance formula missing
 // four factors, a save() that never wrote the table, and no body for 0x4d7270.
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <shlobj.h>
 #include <stdio.h>
@@ -157,57 +158,57 @@ static inline KeysPageView* head(KeysPage* p) { return (KeysPageView*)p; }
 // @ 0x4d6b80
 void KeysPage::update_perf()
 {
-    float perf = *(float*)0x54ab28;
-    if (*(int*)0x5aa030)
-        perf = *(float*)0x5aa090 * *(float*)0x59393c + *(float*)0x54ab28;
-    perf += *(int*)0x5aa020 * 5;
-    perf += *(int*)0x5aa028 * 6;
-    int limit = *(int*)0x5aa044;
+    float perf = orig::k_100f;
+    if (orig::g_shadows_on)
+        perf = orig::g_scale_z * orig::k_5f + orig::k_100f;
+    perf += orig::g_opt_blood * 5;
+    perf += orig::g_char_shadow * 6;
+    int limit = *(int*)&orig::g_max_dead;
     if (limit >= 100) limit = 100;
-    perf += limit * *(float*)0x54a6e4;
-    limit = *(int*)0x5aa048;
+    perf += limit * orig::k_0_2f;
+    limit = orig::g_tick_a;
     if (limit >= 5) limit = 5;
     perf += limit;
-    int d3d = *(int*)0x5aa034;
-    char high = *(char*)0xa17f24;
-    perf += *(int*)0x5aa03c * *(float*)0x549d7c;
-    int shadows = *(int*)0x5e28fc;
-    perf += *(float*)0x5aa08c * *(float*)0x549d74;
+    int d3d = orig::g_plant_shadow;
+    char high = orig::g_use_hw_shadow;
+    perf += orig::g_ragdoll_lim * orig::k_0_1f;
+    int shadows = orig::g_use_shaders;
+    perf += orig::g_scale_y * orig::g_ten;
 
     if (d3d) {
-        if (*(int*)0x5aa004 >= 2)
-            perf += *(float*)0x54a710;
+        if (orig::g_shadow_quality_req >= 2)
+            perf += orig::g_three;
         if (shadows) {
-            if (high) perf *= *(float*)0x54b888;
-            else                  perf *= *(float*)0x590c80;
+            if (high) perf *= orig::k_1_1f;
+            else                  perf *= orig::k_1_25f;
         } else {
-            perf += *(float*)0x5935c8;
+            perf += orig::g_four;
         }
     }
-    if (*(int*)0x5aa084 == 2) {
+    if (orig::g_mesh_quality == 2) {
         if (shadows) {
-            if (high) perf *= *(float*)0x54b888;
-            else                  perf *= *(float*)0x590b94;
+            if (high) perf *= orig::k_1_1f;
+            else                  perf *= orig::k_1_2f;
         }
     }
     if (shadows)
-        perf *= (1 - *(int*)0x5a9fc4) * *(float*)0x590b6c + *(float*)0x549cdc;
-    perf *= *(int*)0x5aa040 * *(float*)0x54b8b4 + *(double*)0x54a5d8;
-    perf *= *(int*)0x5a9f9c + *(float*)0x590b58;
-    perf *= *(float*)0x590c78;
-    int w = *(int*)0x5a9fe4;
-    int h = *(int*)0x5a9fe8;
+        perf *= (1 - orig::g_simple_reflect) * orig::k_0_65f + orig::g_one;
+    perf *= orig::g_particle * orig::k_0_03f + orig::g_day_period;
+    perf *= orig::g_texture_detail + orig::k_400f;
+    perf *= orig::k_0_002f;
+    int w = orig::g_iWindowWidth;
+    int h = orig::g_iWindowHeight;
     if (w <= 0) { w = 0x500; h = 0x400; }
-    perf *= w + *(float*)0x590b20;
-    perf *= *(float*)0x59685c;
-    perf *= h + *(float*)0x590b60;
-    perf *= *(float*)0x596858;
+    perf *= w + orig::k_300f;
+    perf *= orig::k_0_000909091f;
+    perf *= h + orig::k_250f;
+    perf *= orig::k_0_00117647f;
 
     char buf[0x104];
     {
         tstring key("ui_estimated_performance");
         tstring* e = g_strtable.lookup(key);
-        sprintf(buf, e->c_str(), (int)(*(float*)0x596854 / perf));
+        sprintf(buf, e->c_str(), (int)(orig::k_30000f / perf));
     }
     {
         tstring text(buf);
@@ -363,12 +364,12 @@ void KeysPage::refresh()
 // @ 0x4d7270
 void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, float bw)
 {
-    float s = bx * *(float*)0x590b6c;
+    float s = bx * orig::k_0_65f;
     int maxn = 0x800;
     int len;
     int buf[0x800];
     decode_utf8(text, &len, buf, &maxn);
-    float tw = len * s * *(float*)0x54b3b0;
+    float tw = len * s * orig::k_0_39f;
     float room = bx * by - bx / bz * bw;
     if (tw > room)
         s *= room / tw;
@@ -378,7 +379,7 @@ void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, 
     row->set_size((const float*)&scale);
     vector2 pos;
     pos.x = 0;
-    pos.y = bx * *(float*)0x549d70 - s * *(float*)0x549d68;
+    pos.y = bx * orig::g_half - s * orig::k_0_3f;
     row->set_offset((const float*)&pos);
     { char r[8]; row->set_text(r, *text); }
 }

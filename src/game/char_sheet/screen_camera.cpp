@@ -1,3 +1,4 @@
+#include "../../include/image_addrs.h"
 #include "./screen_camera.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -173,7 +174,7 @@ MapWidget* __fastcall ctor_4ed630(MapWidget* w);   // 0x4ed630 (ecx = object)
 MapWidget* __fastcall ctor_4ed630(MapWidget* w)
 {
     ((MissionUi*)w)->MissionUi::MissionUi();   // 0x48ae20
-    *(void**)w = (void*)0x598698;
+    *(void**)w = (void*)vtbl_598698;
     ((scene*)w->scene_bytes())->scene::scene();   // 0x429740
     *(char*)((char*)w + 0x2e6) = 1;
     *(vector2*)((char*)w + 0xe0) = vector2(0.0f, 0.0f);
@@ -184,7 +185,7 @@ MapWidget* __fastcall ctor_4ed630(MapWidget* w)
 // @ 0x4ed6b0
 void* __fastcall dtor_4ed6b0(MapWidget* w, int, unsigned flags)
 {
-    *(void**)w = (void*)0x598698;
+    *(void**)w = (void*)vtbl_598698;
     ((scene*)w->scene_bytes())->scene::~scene();   // 0x41f4e0
     ((Buffer*)w)->Buffer::~Buffer();   // 0x487c00
     if (flags & 1)

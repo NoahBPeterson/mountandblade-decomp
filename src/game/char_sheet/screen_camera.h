@@ -30,6 +30,7 @@
 //  0x4ed6b0  MapWidget dtor  vptr 0x598698, scene dtor 0x41f4e0 at +0x17c, widget dtor 0x487c00, then
 //                            operator delete when the deleting flag's low bit is set.
 // flags /O2 /MT /Gy /TP
+#include "../../include/image_addrs.h"
 #include <new>
 #include <string.h>
 #include <math.h>
@@ -90,31 +91,31 @@ extern int g_map_max_y;                            // 0x5aa11c  map max y ( 50)
 extern char g_world0[0x28];                     // the strategy world whose +0x28 cell table 0x470f40 reads
 
 // the by-name float constants (the originals live in the read-only pools noted here)
-#define C_549D74 (*(float*)0x549d74)             // 10.0
-#define C_549D70 (*(float*)0x549d70)             // 0.5
-#define C_549CDC (*(float*)0x549cdc)             // 1.0
-#define C_549CA8 (*(float*)0x549ca8)             // 0.0
-#define C_549D7C (*(float*)0x549d7c)             // 0.1
-#define C_54A534 (*(float*)0x54a534)             // 1.5707964
-#define C_54A6D0 (*(float*)0x54a6d0)             // 1e-05
-#define C_598690 (*(float*)0x598690)             // 105.0
-#define C_59868C (*(float*)0x59868c)             // 235.0
-#define C_598688 (*(float*)0x598688)             // -1e-05
-#define C_590D8C (*(float*)0x590d8c)             // 3.5
-#define C_590AF0 (*(float*)0x590af0)             // 9.8
-#define C_590F7C (*(float*)0x590f7c)             // 0.014
-#define C_590E68 (*(float*)0x590e68)             // 0.23
-#define C_54B4D0 (*(float*)0x54b4d0)             // 0.05
-#define C_5915A0 (*(float*)0x5915a0)             // -10.0
-#define C_5935C8 (*(float*)0x5935c8)             // 4.0
-#define C_54B3B8 (*(float*)0x54b3b8)             // 0.4
-#define C_590C74 (*(float*)0x590c74)             // 0.08
-#define C_590FA4 (*(float*)0x590fa4)             // 1.7
-#define C_591AF4 (*(float*)0x591af4)             // 0.94
-#define C_590C48 (*(float*)0x590c48)             // 1.6
-#define C_5911D8 (*(float*)0x5911d8)             // 0.98
-#define C_54B8B0 (*(float*)0x54b8b0)             // 1.5
-#define C_549D6C (*(float*)0x549d6c)             // 0.9
+#define C_549D74 (orig::g_ten)             // 10.0
+#define C_549D70 (orig::g_half)             // 0.5
+#define C_549CDC (orig::g_one)             // 1.0
+#define C_549CA8 (orig::g_zero)             // 0.0
+#define C_549D7C (orig::k_0_1f)             // 0.1
+#define C_54A534 (orig::k_1_5708f)             // 1.5707964
+#define C_54A6D0 (orig::k_1em05f)             // 1e-05
+#define C_598690 (orig::k_105f)             // 105.0
+#define C_59868C (orig::k_235f)             // 235.0
+#define C_598688 (orig::k_m1em05f)             // -1e-05
+#define C_590D8C (orig::k_3_5f)             // 3.5
+#define C_590AF0 (orig::k_9_8f)             // 9.8
+#define C_590F7C (orig::k_0_014f)             // 0.014
+#define C_590E68 (orig::k_0_23f)             // 0.23
+#define C_54B4D0 (orig::k_0_05f)             // 0.05
+#define C_5915A0 (orig::k_m10f)             // -10.0
+#define C_5935C8 (orig::g_four)             // 4.0
+#define C_54B3B8 (orig::k_0_4f)             // 0.4
+#define C_590C74 (orig::k_0_08f)             // 0.08
+#define C_590FA4 (orig::k_1_7f)             // 1.7
+#define C_591AF4 (orig::k_0_94f)             // 0.94
+#define C_590C48 (orig::k_1_6f)             // 1.6
+#define C_5911D8 (orig::k_0_98f)             // 0.98
+#define C_54B8B0 (orig::k_1_5f)             // 1.5
+#define C_549D6C (orig::k_0_9f)             // 0.9
 
 // the listener block (written by 0x5342dc, from the map frame)
 struct Listener3D {

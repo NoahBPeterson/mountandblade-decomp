@@ -2,6 +2,7 @@
 // s004da410, s004dada0, s004db660, s004dbf7e, s004dc630, s004dcef0, s004dd830, s004de1b0, s004de6f0, s004dfd50,
 // s004e05c0, s004e25a0, s004e2ea0 and s004e3780. T-regime region: helpers sit right after their first caller;
 // the ones the original does not inline are kept out of line (noinline) in binary order.
+#include "../../include/image_addrs.h"
 #include "./cls_map.h"
 #include "./progress_bar.h"
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
@@ -118,7 +119,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         g_cfg.load_file(f);
         fclose(f);
     }
-    ((options_record*)0x5aa008)->load();
+    ((options_record*)&orig::g_options)->load();
     ((OptionsDlg*)&g_app_obj)->choose_dx_settings(&g_cfg, false);
 
     DWORD_PTR proc_mask = 0, sys_mask = 0;
@@ -686,7 +687,7 @@ void MissionScreen::fill_mission_grid()
 // the base construction shared by 0x4dae40 and 0x4db1f0 (both build the same sequence with a different overlay mesh name)
 #define NEW_OVERLAY_BASE(name_string)                                                   \
     g_gui.reset();                                                                      \
-    stop_all((void*)0x5aa128);                                                \
+    stop_all((void*)&orig::g_sound_mgr);                                                \
     { NEW_OVERLAY_WINDOW(p_) overlay = p_; }                                            \
     {                                                                                   \
         float v[2] = { 0.0f, 0.0f };                                                    \
@@ -767,7 +768,7 @@ void MissionScreen::init_meeting_window()
     do {
         j++;
         ContainerBase* c = (ContainerBase*)operator new(0x188);
-        col[j - 1] = c != 0 ? (((ContainerW*)c)->construct(), *(void**)c = (void*)0x597050, c) : 0;
+        col[j - 1] = c != 0 ? (((ContainerW*)c)->construct(), *(void**)c = (void*)vtbl_597050, c) : 0;
         {
             float v[2] = { 0.6f, g_5a9f24 - j * g_5a9f28[1] };     // globals in the original (0x4db3bf / 0x4db3c6)
             vt(c)->d22(v);
@@ -793,7 +794,7 @@ void MissionScreen::fill_mission_row(int side)
     else if (side == 1)
         id = g_mission_ctx[g_a73438];
     else
-        id = *(int*)(0xa73304 - g_a73438 * 4);
+        id = *(int*)(((char*)orig::g_a73304) - g_a73438 * 4);
     if (id == -1)
         return;
     int pidx = ((Map10007*)&g_game->parties)->lookup(id);
@@ -1424,7 +1425,7 @@ void BlockOwner::init(ContainerBase* parent, int which)
         UiFrame* w = (UiFrame*)::operator new(0x188);
         if (w != 0) {
             ((MissionUiCtor*)w)->ctor();
-            *(void**)w = (void*)0x5924a0;
+            *(void**)w = (void*)vtbl_5924a0;
             w->f17c = 0;
             w->f180 = 0;
             w->f184 = 0;
@@ -1754,7 +1755,7 @@ void PanelMesh::build_panel(const float* base, const float* size, const float* u
 // @ 0x4de5b0
 void DebriefMenu::create_debrief()
 {
-    stop_all((void*)0x5aa128);
+    stop_all((void*)&orig::g_sound_mgr);
 
     ContainerBase* w;
     {
@@ -1932,8 +1933,8 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
 // prototypes (make_hint 0x4dada0, new_medium_button 0x4dce70, make_slider 0x4dfd50, make_dropdown 0x4dfec0).
 #define set_enabled_text(o) ((KeysPage*)this)->set_enabled_text((Widget*)(o))   // 0x4d6dd0
 #define update_perf(w) ((KeysPage*)(w))->update_perf()                          // 0x4d6b80
-#define OPT_F(o) (*(float*)(0x5aa010 + (o)))   // the option block's float settings (0x5aa010..)
-#define OPT_C(o) (*(int*)(0x5aa01c + (o)))   // the option block's integer settings fed to select() (0x5aa01c..)
+#define OPT_F(o) (*(float*)(((char*)&orig::g_music_volume) + (o)))   // the option block's float settings (0x5aa010..)
+#define OPT_C(o) (*(int*)(((char*)&orig::g_invert) + (o)))   // the option block's integer settings fed to select() (0x5aa01c..)
 #define COLOR_ENABLED 0xffdfcfbfu   // the ui colour word every label of the screen is tinted with (edi in the original)
 
 // @ 0x4de6f0
@@ -1989,46 +1990,46 @@ void OptionsScreen::open()
     { tstring k("ui_video_options"); b3c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.1f, 0.14f, 0.05f); }
     { tstring k("ui_done"); b40 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.65f, 0.03f, 0.05f); }
     s7c = make_slider((MissionUi*)root, 0.23f, 0.605f, 1.0f);
-    vt(s7c)->d13(*(float*)0x5aa010);
+    vt(s7c)->d13(orig::g_music_volume);
     s80 = make_slider((MissionUi*)root, 0.23f, 0.555f, 1.0f);
-    vt(s80)->d13(*(float*)0x5aa014);
+    vt(s80)->d13(orig::g_master_volume);
     s84 = make_slider((MissionUi*)root, 0.23f, 0.455f, 1.0f);
-    vt(s84)->d13(*(float*)0x5aa018);
+    vt(s84)->d13(orig::g_exp_arg);
     { tstring k("ui_enabled"); b88 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.23f, 0.405f, 0.03f); }
     ((UiAInline*)b88)->f184 = 1;
-    vt(b88)->d11(*(int*)0x5aa01c);
+    vt(b88)->d11(orig::g_invert);
     set_enabled_text(b88);
     { tstring k("Combat dif"); dd44 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.605f); }
     { tstring k("ui_reduced_to_1_over_4_easiest"); vt(dd44)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_reduced_to_1_over_2_easy"); vt(dd44)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_normal"); vt(dd44)->d50(g_strtable_c.lookup(k)); }
-    vt(dd44)->d11(*(int*)0x5aa054);
+    vt(dd44)->d11(orig::g_opt_dmg_to_player);
     { tstring k("Friend combat dif"); dd48 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.555f); }
     { tstring k("ui_reduced_to_1_over_2_easiest"); vt(dd48)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_reduced_to_3_over_4_easy"); vt(dd48)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_normal"); vt(dd48)->d50(g_strtable_c.lookup(k)); }
-    vt(dd48)->d11(*(int*)0x5aa058);
+    vt(dd48)->d11(orig::g_opt_dmg_to_friends);
     { tstring k("Combat ai"); dd4c = make_dropdown((MissionUi*)root, &k, 0.7f, 0.505f); }
     { tstring k("ui_good"); vt(dd4c)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_average_caps"); vt(dd4c)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_poor"); vt(dd4c)->d50(g_strtable_c.lookup(k)); }
-    vt(dd4c)->d11(*(int*)0x5aa04c);
+    vt(dd4c)->d11(orig::g_difficulty);
     { tstring k("Combat speed"); dd50 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.455f); }
     { tstring k("ui_slower"); vt(dd50)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_normal"); vt(dd50)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_faster"); vt(dd50)->d50(g_strtable_c.lookup(k)); }
-    vt(dd50)->d11(*(int*)0x5aa050);
+    vt(dd50)->d11(orig::g_agent_count);
     { tstring k(""); dd54 = make_dropdown((MissionUi*)root, &k, 0.23f, 0.305f); }
     { tstring k("ui_automatic_recommended"); vt(dd54)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_by_mouse_movement"); vt(dd54)->d50(g_strtable_c.lookup(k)); }
-    vt(dd54)->d11(*(int*)0x5aa078);
+    vt(dd54)->d11(orig::g_stick_mode);
     { tstring k(""); dd58 = make_dropdown((MissionUi*)root, &k, 0.23f, 0.255f); }
     { tstring k("ui_by_relative_enemy_position"); vt(dd58)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_by_mouse_movement"); vt(dd58)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_by_inverse_mouse_movement"); vt(dd58)->d50(g_strtable_c.lookup(k)); }
-    vt(dd58)->d11(*(int*)0x5aa074);
+    vt(dd58)->d11(orig::g_ctl_mode);
     sl78 = make_slider((MissionUi*)root, 0.67f, 0.405f, 1.0f);
-    vt(sl78)->d13(*(float*)0x5aa07c);
+    vt(sl78)->d13(orig::g_speed_base);
     { tstring k(""); h34 = make_hint((ContainerBase*)root, k, 0.93f, 0.4f, 0.05f, 0.035f); }
     { unsigned c = 0xffffffff; vt(h34)->d38(&c); }
     ((QuestPage*)this)->update_days();
@@ -2106,31 +2107,31 @@ void OptionsScreen::open()
     { unsigned c = COLOR_ENABLED; vt(hd0)->d37(&c); }
     { tstring k("ui_enabled"); b60 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.345f, 0.035f); }
     ((UiAInline*)b60)->f184 = 1;
-    vt(b60)->d11(*(int*)0x5aa070);
+    vt(b60)->d11(orig::g_flag5aa070);
     set_enabled_text(b60);
     { tstring k("ui_enabled"); b5c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.305f, 0.035f); }
     ((UiAInline*)b5c)->f184 = 1;
-    vt(b5c)->d11(*(int*)0x5aa06c);
+    vt(b5c)->d11(orig::g_flag5aa06c);
     set_enabled_text(b5c);
     { tstring k("ui_enabled"); b64 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.265f, 0.035f); }
     ((UiAInline*)b64)->f184 = 1;
-    vt(b64)->d11(*(int*)0x5aa05c);
+    vt(b64)->d11(orig::g_fx_on);
     set_enabled_text(b64);
     { tstring k("ui_enabled"); b68 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.225f, 0.035f); }
     ((UiAInline*)b68)->f184 = 1;
-    vt(b68)->d11(*(int*)0x5aa060);
+    vt(b68)->d11(orig::g_opt_damage_msgs);
     set_enabled_text(b68);
     { tstring k("ui_enabled"); b6c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.185f, 0.035f); }
     ((UiAInline*)b6c)->f184 = 1;
-    vt(b6c)->d11(*(int*)0x5aa064);
+    vt(b6c)->d11(orig::g_opt_shot_difficulty);
     set_enabled_text(b6c);
     { tstring k("ui_enabled"); b70 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.145f, 0.035f); }
     ((UiAInline*)b70)->f184 = 1;
-    vt(b70)->d11(*(int*)0x5aa068);
+    vt(b70)->d11(orig::g_opt_kill_msgs);
     set_enabled_text(b70);
     { tstring k("ui_enabled"); b74 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.105f, 0.035f); }
     ((UiAInline*)b74)->f184 = 1;
-    vt(b74)->d11(*(int*)0x5aa080);
+    vt(b74)->d11(orig::g_show_messages);
     set_enabled_text(b74);
     { tstring k(""); hd4 = make_hint((ContainerBase*)root, k, 0.34f, 0.03f, 0.3f, 0.04f); }
     { int v = 4; vt(hd4)->d29(&v); }
@@ -2386,7 +2387,7 @@ void OptionsWin::init()
         DD_ITEM(blood, "ui_off2")
         DD_ITEM(blood, "ui_near_player_only")
         DD_ITEM(blood, "ui_on")
-        vt(blood)->d11(*(int*)0x5aa020);
+        vt(blood)->d11(orig::g_opt_blood);
     }
 
     QBTN(quality[0], 0.265f, g_char_detail)
@@ -2397,7 +2398,7 @@ void OptionsWin::init()
         DD_ITEM(plant_shadows, "ui_none")
         DD_ITEM(plant_shadows, "ui_quick")
         DD_ITEM(plant_shadows, "ui_full")
-        vt(plant_shadows)->d11(*(int*)0x5aa084);
+        vt(plant_shadows)->d11(orig::g_mesh_quality);
     }
     QBTN(quality[3], 0.105f, g_char_shadow)
     QBTN(quality[4], 0.065f, g_particle)
@@ -2836,7 +2837,7 @@ void MeetingWindow::init()
     }
     {
         ContainerBase* c = (ContainerBase*)operator new(0x188);
-        panel = c != 0 ? (((ContainerW*)c)->construct(), *(void**)c = (void*)0x597050, c) : 0;
+        panel = c != 0 ? (((ContainerW*)c)->construct(), *(void**)c = (void*)vtbl_597050, c) : 0;
     }
     f2[0] = 0.05f;
     f2[1] = 0.0f;

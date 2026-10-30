@@ -12,6 +12,7 @@
 // (../config/widget_mgr.h: WVt, ButtonBase, UiAInline, ContainerBase, DropDown, gui_mesh).
 #ifndef GAME_CLS_MAP_CLS_MAP_H
 #define GAME_CLS_MAP_CLS_MAP_H
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <new>
 #include <vector>
@@ -199,7 +200,7 @@ struct ContainerW {
 #define NEW_OVERLAY_WINDOW(var) \
     ContainerBase* var; \
     { ContainerBase* np_ = (ContainerBase*)operator new(0x190); \
-      var = np_ != 0 ? (((ContainerW*)np_)->construct(), *(void**)np_ = (void*)0x592848, np_->f188 = 0, np_) : 0; }
+      var = np_ != 0 ? (((ContainerW*)np_)->construct(), *(void**)np_ = (void*)vtbl_592848, np_->f188 = 0, np_) : 0; }
 // the resource manager's get_object (0x419540) for tstring keys, and the UI globals
 // 0x419540 is resmgr::get_object (rgl/core/resmgr.h), which cannot be included next to resource.h: only the member is declared
 // 0x49b120 is NodeVec::push_back (config/widget_node.cpp: the UI root vector at the start of g_gui / g_ui_sound), not gui_manager::add_root:

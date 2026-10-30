@@ -6,6 +6,7 @@
 // page of terrain_page.h (TerrainPage: the same offsets; its update 0x4f2730 / refresh_hex 0x4f2960 run at the end of
 // init). Widget slots, the tstring helpers and the resource manager follow the verified neighbours (s0048add0,
 // s004dfd50, s004e05c0, s004dd830).
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <stdlib.h>
 #include <string.h>

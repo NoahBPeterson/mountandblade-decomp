@@ -8,6 +8,7 @@
 //       this object in source order, so the file keeps the binary order and the helpers that follow their
 //       caller are __declspec(noinline). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "./agent_hud.h"
@@ -1575,7 +1576,7 @@ void* TStringArray::destroy(unsigned flags)
 MWidget::MWidget()
 {
     ((MissionUi*)this)->MissionUi::MissionUi();
-    *(void**)this = (void*)0x5995c0;
+    *(void**)this = (void*)vtbl_5995c0;
     rects_a.first = 0;
     rects_a.last = 0;
     rects_a.end = 0;
@@ -1648,7 +1649,7 @@ void* MWidget::destroy(unsigned flags)
 // @ 0x4fd3d0
 MWidget::~MWidget()
 {
-    *(void**)this = (void*)0x5995c0;
+    *(void**)this = (void*)vtbl_5995c0;
     list_e.free_block();
     list_d.free_block();
     VEC_CLEAR(&list_c);

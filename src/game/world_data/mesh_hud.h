@@ -7,6 +7,7 @@
 // color14c / color150. The classes below add only members beyond MissionUi (HudBar, +0x178..) or are views.
 #ifndef GAME_WORLD_DATA_MESH_HUD_H
 #define GAME_WORLD_DATA_MESH_HUD_H
+#include "../../include/image_addrs.h"
 #include <math.h>
 #include <stddef.h>
 #include "./widget_mgr_w.h"

@@ -10,7 +10,7 @@ Steps (each tool's docstring has the details):
   4. link             our objects + glue -> mb_standalone.exe, with a /MAP and /OPT:NOICF (every function keeps
                       its own address, so the fix-ups below find the one they look for)
   5. vtable fix-up    see below
-  6. literal fix-up   original addresses our source writes as numbers (literal_addrs.py), moved to their new place
+  6. literal gate     the build fails when our source writes an original address as a number (literal_addrs.py)
   7. add_rsrc.py      the original's resources (dialogs, icons)
 Writes OUT/mb_standalone.exe, OUT/link.log, OUT/mb_standalone.map and OUT/build.json (what each step did).
 
@@ -250,6 +250,14 @@ def main():
     import literal_addrs as L
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
     lits = L.scan()
+    # literal gate: our source must name every original address it uses (an extern with its `// 0x...` annotation, a
+    # function it declares); a number written as an address points into our own image, and no post-link rewrite fixes it
+    text_lits = L.text_literals()
+    if lits or text_lits or L.FAILED:
+        sys.exit("literal gate: %d literal image addresses in the compiled objects, %d numeric address casts in the "
+                 "source, %d sources that did not compile (tools/relink/literal_addrs.py lists them): %s" % (
+                     len(lits), len(text_lits), len(L.FAILED),
+                     ", ".join(sorted({s["src"] for s in lits} | {p for p, _i, _v in text_lits} | set(L.FAILED))[:12])))
     keep = sorted({defined_at[int(st["value"], 16)] for st in lits if int(st["value"], 16) in defined_at})
     # the original's stack (reserve = commit = 0x3e8480): mesh::build_skin alone has a 1 MB frame
     link_extra = ["/MAP:" + T.winpath(map_path), "/STACK:0x3e8480,0x3e8480"] + ["/INCLUDE:" + k for k in keep]

@@ -17,6 +17,7 @@
 #include "../party/game.h"
 #include "../party/externs.h"
 #include "../tstring.h"
+void __fastcall tstring_ctor(tstring* p);                      // 0x42bbd0 (tstring::tstring as the vector-constructor callback)
 #include "../../rgl/rgl_string.h"
 #include "../../rgl/scene/scene.h"
 #include "../../rgl/stream.h"
@@ -1170,7 +1171,7 @@ TroopFile::TroopFile()
 {
     for (int i = 0; i < 0x60; ++i)
         ((int*)pairs)[i * 2] = -1;
-    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))0x42bbd0);
+    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))tstring_ctor);
     f4a0 = -1;
     for (int i = 0; i < 10; ++i) {
         p10[i].item = -1;
@@ -1195,7 +1196,7 @@ TroopFile::TroopFile()
 // @ 0x524860
 QuestFile::QuestFile()
 {
-    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))0x42bbd0);
+    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))tstring_ctor);
     f108 = -1;
     f12c = 0;
     f130 = 0;
@@ -1219,7 +1220,7 @@ SceneFile::SceneFile()
 // @ 0x5249f0
 FactionFile::FactionFile()
 {
-    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))0x42bbd0);
+    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))tstring_ctor);
     f2fc = -1;
     f230 = 0;
     b10 = 0;

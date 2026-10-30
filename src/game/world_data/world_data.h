@@ -10,6 +10,7 @@
 // Pure additions to canonical headers: none.
 #ifndef GAME_WORLD_DATA_H
 #define GAME_WORLD_DATA_H
+#include "../../include/image_addrs.h"
 #include <new>
 #include <vector>
 #include <deque>

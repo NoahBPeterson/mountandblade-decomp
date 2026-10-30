@@ -3,6 +3,7 @@
 // step function (0x50f390).  Class layouts follow the verified wave-1 slices of the DirectX framework
 // (s00401010: CD3DApplication = `Application`) and the engine's tstring (s0042a1f0) / widget vtables.
 // Names are provisional.
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <d3d9.h>
 #include <stdio.h>
@@ -142,7 +143,7 @@ int GameApp::Update()
     dt = m_fElapsedTime;
     if (dt > 0.1f) dt = 0.1f;
     g_8ee42f0 = dt;
-    t = (__int64)(dt * *(float*)0x54b86c);
+    t = (__int64)(dt * orig::k_100000f);
     g_5e2970 = t;
     g_ticks += t;
     g_5a9c20 = dt;
@@ -354,6 +355,6 @@ void LoadingScreen::update(int unused)
     }
     if (finished) {
         g_main_menu.set_state(4);
-        ((Output*)0x5a9f60)->print("Finished All...\n");
+        ((Output*)&orig::g_log)->print("Finished All...\n");
     }
 }

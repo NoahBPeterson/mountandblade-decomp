@@ -6,6 +6,7 @@
 //       the grid refresh, the item tooltip, the item and attribute names, the price rules, and the slot-transfer engine.
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include "./inventory_panel.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -24,7 +25,7 @@
 #define ITYPE(i) (*(unsigned char*)&g_items[i].type_flags)
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
-#define SOUNDMGR ((SoundMgr*)0x5aa128)                  // 0x5aa128
+#define SOUNDMGR ((SoundMgr*)&orig::g_sound_mgr)                  // 0x5aa128
 
 // ---- globals and callees of other translation units -----------------------------------------------------------------
 extern MsgLog g_msglog;                                 // 0x5d7080

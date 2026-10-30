@@ -1,3 +1,4 @@
+#include "../../include/image_addrs.h"
 #include "./facegen_init.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)

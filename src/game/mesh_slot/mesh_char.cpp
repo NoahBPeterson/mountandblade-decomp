@@ -1,5 +1,6 @@
 // mesh_char.cpp: TU 63 "mesh", part 4 (0x47f650..0x47ff60): the character mesh collector and its animation-state wrapper,
 // the scene-object loader and the shadow-map passes. See MIGRATION.md.
+#include "../../include/image_addrs.h"
 #include "./mesh_slot.h"
 #include "../terrain_a/game_state.h"
 #include "../terrain_b/scene_file.h"
@@ -178,7 +179,7 @@ struct bin_reader_o {
     char failed;                 // 0x34
     bin_reader_o()
     {
-        vt = (void*)0x54a740;
+        vt = (void*)vtbl_54a740;
         name.ctor();
         buf.ctor();
         autoflush = 0;
@@ -186,11 +187,11 @@ struct bin_reader_o {
         failed = 1;
         fp = 0;
         state = 0;
-        vt = (void*)0x54ae48;
+        vt = (void*)vtbl_54ae48;
     }
     ~bin_reader_o()
     {
-        vt = (void*)0x54ad68;
+        vt = (void*)vtbl_54ad68;
         buf.dtor();
         name.dtor();
     }

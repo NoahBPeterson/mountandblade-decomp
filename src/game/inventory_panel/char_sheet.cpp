@@ -1,3 +1,4 @@
+#include "../../include/image_addrs.h"
 #include <stddef.h>
 // Slice s00507400: the character sheet's window builder (0x507400).
 //
@@ -259,7 +260,7 @@ void CharSheet::init()
     CharSheetWidget* w = (CharSheetWidget*)::operator new(0x190);
     if (w != 0) {
         ctor_window(w);
-        *(void**)w = (void*)0x592848;
+        *(void**)w = (void*)vtbl_592848;
         w->b188 = 0;
     } else {
         w = 0;
@@ -328,7 +329,7 @@ void CharSheet::init()
     CharSheetWidget* sk = (CharSheetWidget*)::operator new(0x188);
     if (sk != 0) {
         ctor_window(sk);
-        *(void**)sk = (void*)0x597050;
+        *(void**)sk = (void*)vtbl_597050;
     } else {
         sk = 0;
     }
@@ -346,7 +347,7 @@ void CharSheet::init()
                 init_mission_ui(row);
                 row->f178 = 0;
                 row->b121 = 0;
-                *(void**)row = (void*)0x591d58;
+                *(void**)row = (void*)vtbl_591d58;
                 row->b180 = 0;
                 row->f184 = 0;
             } else {
@@ -484,7 +485,7 @@ void CharSheet::init()
             init_mission_ui(row);
             row->f178 = 0;
             row->b121 = 0;
-            *(void**)row = (void*)0x591d58;
+            *(void**)row = (void*)vtbl_591d58;
             row->b180 = 0;
             row->f184 = 0;
         } else {
@@ -531,7 +532,7 @@ void CharSheet::init()
         CharSheetWidget* a = (CharSheetWidget*)::operator new(0x188);
         if (a != 0) {
             ctor_window(a);
-            *(void**)a = (void*)0x597050;
+            *(void**)a = (void*)vtbl_597050;
         } else {
             a = 0;
         }
@@ -543,7 +544,7 @@ void CharSheet::init()
         CharSheetWidget* g = (CharSheetWidget*)::operator new(0x188);
         if (g != 0) {
             ctor_window(g);
-            *(void**)g = (void*)0x597050;
+            *(void**)g = (void*)vtbl_597050;
         } else {
             g = 0;
         }
@@ -558,7 +559,7 @@ void CharSheet::init()
             init_mission_ui(n);
             n->f178 = 0;
             n->b121 = 0;
-            *(void**)n = (void*)0x592208;
+            *(void**)n = (void*)vtbl_592208;
             n->b180 = 0;
             n->b181 = 0;
             n->f184 = 0x1c;
@@ -619,7 +620,7 @@ void CharSheet::init()
             init_mission_ui(row);
             row->f178 = 0;
             row->b121 = 0;
-            *(void**)row = (void*)0x591d58;
+            *(void**)row = (void*)vtbl_591d58;
             row->b180 = 0;
             row->f184 = 0;
         } else {
@@ -712,7 +713,7 @@ void CharSheet::init()
         CharSheetWidget* d = (CharSheetWidget*)::operator new(0x188);
         if (d != 0) {
             ctor_window(d);
-            *(void**)d = (void*)0x597050;
+            *(void**)d = (void*)vtbl_597050;
         } else {
             d = 0;
         }

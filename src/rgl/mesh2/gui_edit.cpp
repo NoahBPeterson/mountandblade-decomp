@@ -4,6 +4,7 @@
 // the mesh block reader, the layout/tableau group and the language-file exporter.
 // Migrated from slices s004c46d0, s004c5080, s004c5a20, s004c6330, s004c6ca0, s004c7290, s004c7bf0, s004c84f0,
 // s004c8ca0 and s004ca550 (0x4ca550).
+#include "../../include/image_addrs.h"
 #include "./gui_edit.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
@@ -123,7 +124,7 @@ void head_cam::read_stream(w_stream* w)
 // Deleting destructor (ret 4): the head vtable, the string at +0x1c, then the object itself for bit 0.
 void* __fastcall head_rec_delete(head_rec* self, void*, unsigned flags)
 {
-    *(void**)self = (void*)0x5947d8;
+    *(void**)self = (void*)vtbl_5947d8;
     self->name.~tstring();
     if (flags & 1)
         operator delete(self);
@@ -1316,17 +1317,17 @@ void MapEditorDialog::update_object_type()
     int list_type = SendMessageA(type, WM_USER_LIST, type_sel, 0);
     SendMessageA(list, 0x184, 0, 0);
     if (!list_type) {
-        int count = *(int*)0x5e29e0;
+        int count = orig::g_propkind_count;
         for (int i = 0, off = 0; i < count; i++, off += 0x78) {
-            char* e = (char*)(*(int*)0x5e29dc + off);
+            char* e = (char*)(*(int*)&orig::g_propkinds + off);
             // the substring is a temporary of the add-string call (destroyed once, right after it: 0x4c7caa)
             int item = SendMessageA(list, 0x180, 0, (LPARAM)((tstring*)e)->substr(4, *(int*)(e + 0xc)).c_str());
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 2) {
-        int count = *(int*)0x5e29d4;
+        int count = orig::g_item_kind_count;
         for (int i = 0, off = 0; i < count; i++, off += 0x238) {
-            char* rec = (char*)(*(int*)0x5e29d0 + off);
+            char* rec = (char*)(*(int*)&orig::g_items + off);
             tstring* text = g_strtable.find((tstring*)(rec + 0x20));     // the translation of the key at +0x20,
             if (!text)
                 text = (tstring*)rec;                                   // else the record's name at +0 (0x4c7cfa)
@@ -1334,9 +1335,9 @@ void MapEditorDialog::update_object_type()
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 4) {
-        int count = *(int*)0x5e29e8;
+        int count = orig::g_ptype_count;
         for (int i = 0, off = 0; i < count; i++, off += 0x20) {
-            tstring* s = (tstring*)(*(int*)0x5e28f8 + off);          // the 0x20-byte record starts with its name (0x4c7d76 reads its buf at +4)
+            tstring* s = (tstring*)(*(int*)&orig::g_ptypes + off);          // the 0x20-byte record starts with its name (0x4c7d76 reads its buf at +4)
             int item = SendMessageA(list, 0x180, 0, (LPARAM)s->c_str());
             SendMessageA(list, 0x19a, item, i);
         }

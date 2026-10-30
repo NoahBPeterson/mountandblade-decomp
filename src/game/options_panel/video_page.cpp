@@ -12,6 +12,7 @@
 // Text helpers: 0x42bbe0/0x42c110 tstring ctors, 0x42bc40 dtor, 0x42bc50 assign, 0x42bd10 equals,
 // 0x42c080 find, 0x42c4a0 substr, 0x42c900 insert. 0x5e293c holds the game's ID3DXEffect*: the gamma values go to
 // its SetVector (COM, +0x88).
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <d3dx9.h>
 #include <stdio.h>
@@ -137,7 +138,7 @@ struct VideoPage {
 void VideoPage::update(int reason)
 {
     if (w50->changed(0x10000)) {
-        *(int*)0x5aa020 = settings_value(w50);
+        orig::g_opt_blood = settings_value(w50);
         update_performance_caption(this);
     }
 
@@ -158,44 +159,44 @@ void VideoPage::update(int reason)
     }
 
     if (w64->changed(0x10000)) {
-        *(int*)0x5aa024 = settings_value(w64);
+        orig::g_char_detail = settings_value(w64);
         set_enabled_text_local(w64, this);
         update_performance_caption(this);
     }
     if (w68->changed(0x10000)) {
-        *(int*)0x5aa030 = settings_value(w68);
+        orig::g_shadows_on = settings_value(w68);
         set_enabled_text_local(w68, this);
         update_performance_caption(this);
     }
     if (w6c->changed(0x10000)) {
-        *(int*)0x5aa034 = settings_value(w6c);
+        orig::g_plant_shadow = settings_value(w6c);
         set_enabled_text_local(w6c, this);
         changed_config = 1;
         update_performance_caption(this);
     }
     if (w54->changed(0x10000)) {
-        *(int*)0x5aa084 = settings_value(w54);
+        orig::g_mesh_quality = settings_value(w54);
         changed_config = 1;
         update_performance_caption(this);
     }
     if (w70->changed(0x10000)) {
-        *(int*)0x5aa028 = settings_value(w70);
+        orig::g_char_shadow = settings_value(w70);
         set_enabled_text_local(w70, this);
         update_performance_caption(this);
     }
     if (w74->changed(0x10000)) {
-        *(int*)0x5aa040 = settings_value(w74);
+        orig::g_particle = settings_value(w74);
         set_enabled_text_local(w74, this);
         update_performance_caption(this);
     }
     if (w78->changed(0x10000)) {
-        *(int*)0x5a9fc4 = settings_value(w78);
+        orig::g_simple_reflect = settings_value(w78);
         set_enabled_text_local(w78, this);
         changed_config = 1;
         update_performance_caption(this);
     }
     if (w5c->changed(0x10000)) {
-        *(int*)0x5aa004 = 2 - settings_value(w5c);
+        orig::g_shadow_quality_req = 2 - settings_value(w5c);
         changed_config = 1;
         update_performance_caption(this);
     }
@@ -211,15 +212,15 @@ void VideoPage::update(int reason)
     if (w34->changed(0x10000)) {
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
         float gamma = w34->get_float();
-        *(float*)0x5aa088 = gamma;
-        float inv = *(float*)0x549cdc / gamma;
+        orig::g_scale_x = gamma;
+        float inv = orig::g_one / gamma;
         vector4 v, vi;
         v.x = v.y = v.z = v.w = gamma;
         vi.x = vi.y = vi.z = vi.w = inv;
         g_effect->SetVector("output_gamma", (const D3DXVECTOR4*)&v);
         g_effect->SetVector("output_gamma_inv", (const D3DXVECTOR4*)&vi);
         char buf[0x40];
-        _itoa((int)(gamma * *(float*)0x54ab28), buf, 10);
+        _itoa((int)(gamma * orig::k_100f), buf, 10);
         tstring text(buf);
         tstring state("");
         {
@@ -236,7 +237,7 @@ void VideoPage::update(int reason)
 
     if (w44->changed(0x10000)) {
         int pct = (int)w44->get_float();
-        *(int*)0x5aa03c = pct;
+        orig::g_ragdoll_lim = pct;
         char buf[0x40];
         {
             tstring key("ui_percentage_value");
@@ -253,16 +254,16 @@ void VideoPage::update(int reason)
     }
 
     if (w38->changed(0x10000)) {
-        *(float*)0x5aa08c = w38->get_float();
+        orig::g_scale_y = w38->get_float();
         update_performance_caption(this);
     }
     if (w3c->changed(0x10000)) {
-        *(float*)0x5aa090 = w3c->get_float();
+        orig::g_scale_z = w3c->get_float();
         update_performance_caption(this);
     }
     if (w40->changed(0x10000)) {
         int pct = (int)w40->get_float();
-        *(int*)0x5a9f9c = pct;
+        orig::g_texture_detail = pct;
         char buf[0x40];
         {
             tstring key("ui_percentage_value");
@@ -285,11 +286,11 @@ void VideoPage::update(int reason)
         int b = label.find(' ', 0);
         {
         tstring left = label.substr(0, a);
-        *(int*)0x5a9fe4 = atoi(left.c_str());
+        orig::g_iWindowWidth = atoi(left.c_str());
         }
         {
         tstring right = label.substr(a + 1, b);
-        *(int*)0x5a9fe8 = atoi(right.c_str());
+        orig::g_iWindowHeight = atoi(right.c_str());
         }
         run_settings_probe();
         update_performance_caption(this);
@@ -297,17 +298,17 @@ void VideoPage::update(int reason)
 
     if (w30->changed(0x10000)) {
         apply_requested = 1;
-        if (applied_value != *(int*)0x5a9f9c) {
+        if (applied_value != orig::g_texture_detail) {
             g_resmgr.unload_textures();
             g_resmgr.load_textures();
         }
-        void* f = mb_open_user_file("rgl_config.txt", (const char*)0x54b048);
+        void* f = mb_open_user_file("rgl_config.txt", (const char*)orig::g_rgl_name);
         g_cfg.save((FILE*)f);
         fclose((FILE*)f);
         if (changed_config) {
             {
                 tstring explanation("ui_change_graphics_settings_explanation");
-                tstring pos((const char*)0x54a480);
+                tstring pos((const char*)orig::g_empty_text);
                 tstring* e = g_strtable.lookup(pos);
                 g_main_menu.rec->setup(&explanation, e);
             }

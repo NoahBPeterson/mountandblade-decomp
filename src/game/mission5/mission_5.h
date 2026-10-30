@@ -8,6 +8,7 @@
 // src/rgl/rgl_math.h); offsets in the views cite the function that proves them, in each view's comments.
 #ifndef MISSION5_MISSION_5_H
 #define MISSION5_MISSION_5_H
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
@@ -103,10 +104,10 @@ struct Troop_s25160 { void m_4630d0(int i); };
 struct Big5e292c_s25160 { void m_483f60(int a, int b); };
 
 
-#define g_mgr       (*(Mgr_s25160*)0x5d7080)
-#define g_dlg       (*(Dlg_s25160*)0xa73980)
-#define g_513710    (*(Mgr513710_s25160*)0x5e291c)
-#define g_big       (*(Big5e292c_s25160**)0x5e292c)
+#define g_mgr       (*(Mgr_s25160*)&orig::g_gui_mgr)
+#define g_dlg       (*(Dlg_s25160*)&orig::g_main_menu_obj)
+#define g_513710    (*(Mgr513710_s25160*)&orig::g_map_flags)
+#define g_big       (*(Big5e292c_s25160**)&orig::g_mission)
 
 // ---------------------------------------------------------------------------
 // the game object (only the members this handler touches)

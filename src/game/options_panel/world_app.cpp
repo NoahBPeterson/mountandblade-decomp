@@ -4,6 +4,7 @@
 // `Big` is the mission object g_mission (0x5e292c; Mission, ../mission.h) and `GameApp` is the application object
 // (Core, ../config/core.h): their constructors / destructors are the only functions here, written against partial
 // views because mission.h / core.h declare neither (see MIGRATION.md).
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <shellapi.h>
 #include <new>
@@ -290,9 +291,9 @@ void restore_defaults()
             tstring s1("ui_no_discard_changes");
             tstring s2("ui_yes_save");
             tstring s3("ui_question_save_changes");
-            const tstring* r1 = ((StrTable*)0x5e2a18)->lookup(s1);
-            const tstring* r2 = ((StrTable*)0x5e2a18)->lookup(s2);
-            const tstring* r3 = ((StrTable*)0x5e2a18)->lookup(s3);
+            const tstring* r1 = ((StrTable*)&orig::g_strtable)->lookup(s1);
+            const tstring* r2 = ((StrTable*)&orig::g_strtable)->lookup(s2);
+            const tstring* r3 = ((StrTable*)&orig::g_strtable)->lookup(s3);
             char* ui = g_windows;
             ((tstring*)(ui + 0x68))->clear();
             *(tstring*)(ui + 0x1c) = *r3;
@@ -302,7 +303,7 @@ void restore_defaults()
             *(int*)(ui + 0x50) = 0;
             *(int*)(ui + 0x4) = 1;
         }
-        ((WindowMgrW*)0xa73980)->open(0);
+        ((WindowMgrW*)&orig::g_main_menu_obj)->open(0);
         g_game->f1a090 = 0;
     }
 }
@@ -470,7 +471,7 @@ extern int g_counter;                                // 0x5e28cc
 extern char g_saved;                               // 0x5e2a08
 // g_cfg.disable_sound (config/config.h Config +0x40 of g_cfg 0x5a9f98; that header brings d3dapp.h, which would redefine
 // CD3DApplication here)
-#define CFG_DISABLE_SOUND (*(int*)0x5a9fd8)
+#define CFG_DISABLE_SOUND (orig::g_sound_muted)
 #include "../game_globals.h"      // canonical g_key_states (listed directly: the audit reads only the source's own includes)
 #define g_key_states_i (*(int(*)[0x40])g_key_states)     // g_key_states (0x5e27c8, game_globals.h) as 0x40 ints
 
@@ -481,7 +482,7 @@ extern char g_saved;                               // 0x5e2a08
 GameApp::GameApp()
 {
     tstring* arrp = (tstring*)arr;
-    *(void**)this = (void*)0x5948e0;
+    *(void**)this = (void*)vtbl_5948e0;
 
     tstring* p = arrp;
     int n = 0x20;
@@ -492,8 +493,8 @@ GameApp::GameApp()
 
     f350 = 0;
 
-    *(int*)((char*)this + 0x334) = 0x5a9c3c;
-    *(int*)((char*)this + 0x338) = 0x5a9c54;
+    *(int*)((char*)this + 0x334) = (int)orig::str_m;
+    *(int*)((char*)this + 0x338) = (int)orig::str_mount_and_blade;
     *(char*)((char*)this + 0x30) = 1;
     *(int*)((char*)this + 0x33c) = 0x190;
     *(int*)((char*)this + 0x340) = 0x12c;
@@ -517,7 +518,7 @@ GameApp::GameApp()
         RegCreateKeyExA((HKEY)0x80000001, "Software\\MountAndBladeKeys", 0, 0, 0, 0x20007, 0,
                         &key, &disp);
         if (disp == 1)
-            ((LogStream*)0x5a9f60)->w_cstr("Creating new Registry Key");
+            ((LogStream*)&orig::g_log)->w_cstr("Creating new Registry Key");
         if (key != 0) {
             tstring modname;
             read_key_string(&key, "last_module", &modname);
@@ -580,7 +581,7 @@ struct ini_file {
 };
 int __stdcall   SkinDialog(HWND h, const char* s);       // 0x535446 (SkinMagic SetSingleDialogSkin: stdcall, the callers do not pop)
 
-#define STRTAB ((StrTable*)0x5e2a18)
+#define STRTAB ((StrTable*)&orig::g_strtable)
 #define UI(s) STRTAB->lookup(tstring(s))
 
 // @ 0x4d4140
@@ -591,9 +592,9 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     switch (msg) {
     case 0xf: {                                             // WM_PAINT
         ((OptionsDlg*)(void*)this)->paint();
-        if (*(int*)0x5e29c4 == 0 && f350 == 0) {
+        if (orig::g_trial_mode == 0 && f350 == 0) {
             f350 = 1;
-            *(int*)0x5e29c4 = 1;
+            orig::g_trial_mode = 1;
         }
         return 1;
     }
@@ -628,13 +629,13 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             EndDialog(h, 2);
             break;
         case 0x405:
-            DialogBoxParamA(0, (LPCSTR)0xc1, hwnd, (DLGPROC)0x4d4130, 0);
+            DialogBoxParamA(0, (LPCSTR)0xc1, hwnd, (DLGPROC)wndproc_thunk, 0);
             break;
         case 0x406:
             ShellExecuteA(0, "open", "http://www.gamersgate.com", 0, 0, 5);
             break;
         case 0x410: {
-            *(char*)0x5e2630 = 0;
+            orig::g_5e2630 = 0;
             int sel = 0;
             if (f38c > 1) {
                 // the control is looked up again for each message (0x4d4140 calls GetDlgItem twice)
@@ -707,16 +708,16 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
             void* f = fopen(ini.c_str(), "r");
             if (f != 0) {
-                ((ini_file*)0xa18238)->load((FILE*)f);
+                ((ini_file*)&orig::g_module_info)->load((FILE*)f);
                 fclose((FILE*)f);
             }
 
             tstring v1;
             tstring v2;
-            if (*(int*)0xa181c8 > 0x3f3) {
+            if (orig::g_works_with_version_min > 0x3f3) {
                 MessageBoxA(hwnd, UI("ui_module_newer_than_application")->c_str(), 0, 0x30);
             }
-            else if (*(int*)0xa181cc < 0x3f3) {
+            else if (orig::g_works_with_version_max < 0x3f3) {
                 MessageBoxA(hwnd, UI("ui_module_older_than_application")->c_str(), 0, 0x40);
             }
 

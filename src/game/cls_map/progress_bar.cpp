@@ -1,6 +1,7 @@
 // progress_bar.cpp: 0x4e3eb0..0x4e87d0 (TU map 108 "progress_bar"), merged from the slices s004e3780 (tail), s004e40f0, s004e4790,
 // s004e4c70, s004e55f0, s004e5f80, s004e65e0, s004e6a70, s004e75a0, s004e7b30 and s004e85d0 (head). T-regime region: helpers sit
 // right after their first caller; the ones the original does not inline are kept out of line (noinline) in binary order.
+#include "../../include/image_addrs.h"
 #include "./cls_map.h"
 #include "./progress_bar.h"
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
@@ -241,7 +242,7 @@ static __forceinline float config_value(int i)
 // @ 0x4e4790
 void SaveWindow::init()
 {
-    is_load = (*(int*)(*(char**)0xa739d4 + 0x18) == 5);
+    is_load = (*(int*)(*(char**)&orig::g_a739d4 + 0x18) == 5);
     g_gui.reset();
 
     NEW_OVERLAY_WINDOW(w)
@@ -467,7 +468,7 @@ struct SlotHeader {
 // the stream object 0x4e5270 builds (0x54ae48 reader -> 0x54ad68 mem_stream) and 0x4e54e0 reads
 struct SlotStreamBase {
     void* vptr;                                 // +0x00
-    SlotStreamBase() { vptr = (void*)0x54a740; }
+    SlotStreamBase() { vptr = (void*)vtbl_54a740; }
 };
 struct SlotStream : SlotStreamBase {
     tstring name;                               // +0x04
@@ -484,9 +485,9 @@ struct SlotStream : SlotStreamBase {
         failed = 1;
         file = 0;
         f14 = 0;
-        vptr = (void*)0x54ae48;
+        vptr = (void*)vtbl_54ae48;
     }
-    ~SlotStream() { vptr = (void*)0x54ad68; }
+    ~SlotStream() { vptr = (void*)vtbl_54ad68; }
     char open_read(const char* path) { return ((text_stream*)this)->open_read(path); }     // 0x415290 (ret 4; the folded text_stream::open_read)
 };
 struct SlotReader {                             // the 0x54ae48 reader's virtuals
@@ -1446,7 +1447,7 @@ void MapSceneRec::read(MsStream* s)
     stream_str(s, &name28);
     lod38 = MAP_RESMGR->get_lod_mesh(&name28);
     if (lod38->has == 0)
-        mb_error((const char*)0x598328, name28.c_str());
+        mb_error((const char*)orig::str_no_face_mesh, name28.c_str());
 
     // the poses
     stream_i(s, &npose);
@@ -1516,7 +1517,7 @@ void MapSceneRec::read(MsStream* s)
         stream_str(s, &mats[i].name);
         mats[i].res14 = MAP_RESMGR->get_lod_mesh(&mats[i].name);
         if (lod38->has == 0)                                        // the original tests [+0x38], not the material
-            mb_error((const char*)0x598308, mats[i].name.c_str());
+            mb_error((const char*)orig::str_no_beard_mesh, mats[i].name.c_str());
         ((TroopMgr*)this)->copy_troop(&matrecs[i], (const MeshGroupRec*)mats[i].res14);   // 0x473570
     }
 

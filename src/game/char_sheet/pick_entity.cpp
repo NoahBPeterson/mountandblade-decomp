@@ -1,3 +1,4 @@
+#include "../../include/image_addrs.h"
 #include "./pick_entity.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -10,9 +11,9 @@ void __fastcall pick_entity(GuiCtx* self)
     Mission* sc = g_mission;
     *(char*)(sc->f65dc + 0x140) = 0;
     if (g_game->f1a20c) {
-        ((gui_manager*)0x5d7080)->set_o568(0, true);   // 0x42cdb0
+        ((gui_manager*)&orig::g_gui_mgr)->set_o568(0, true);   // 0x42cdb0
         vector2 pp(0.5f, 0.23f);
-        ((gui_view*)0x5d7080)->set_view((const float*)&pp);   // 0x4c5190
+        ((gui_view*)&orig::g_gui_mgr)->set_view((const float*)&pp);   // 0x4c5190
         set_junk = 0;
         return;
     }
@@ -118,7 +119,7 @@ void __fastcall pick_entity(GuiCtx* self)
     g_list1 = 0;
     g_sel_ent = 0;
     vector2 pair(0.1f, 0.13f);
-    ((gui_view*)0x5d7080)->set_view((const float*)&pair);   // 0x4c5190
+    ((gui_view*)&orig::g_gui_mgr)->set_view((const float*)&pair);   // 0x4c5190
     if (self->f2cc == -1) {
         self->f2c8 = -1;
         return;
@@ -171,9 +172,9 @@ void __fastcall pick_entity(GuiCtx* self)
         s_kind.assign("SHIELD");
         break;
     }
-    if (s_kind.len) ((gui_manager*)0x5d7080)->draw_string(&s_kind, 0.03f, color_a, 1);
-    if (s_info.len) ((gui_manager*)0x5d7080)->draw_string(&s_info, 0.027f, color_b, 1);
-    if (s_info2.len) ((gui_manager*)0x5d7080)->draw_string(&s_info2, 0.027f, color_b, 1);
+    if (s_kind.len) ((gui_manager*)&orig::g_gui_mgr)->draw_string(&s_kind, 0.03f, color_a, 1);
+    if (s_info.len) ((gui_manager*)&orig::g_gui_mgr)->draw_string(&s_info, 0.027f, color_b, 1);
+    if (s_info2.len) ((gui_manager*)&orig::g_gui_mgr)->draw_string(&s_info2, 0.027f, color_b, 1);
     memcpy((void*)(sc->f65dc + 0x58), &sel->mat[0], 64);
     select_entity((rgl::mesh*)sc->f65e0, (skin_owner*)sel, 0x80229933);   // 0x4ea0c0
     if (!self->f2f8 && !g_game->f1a20c)

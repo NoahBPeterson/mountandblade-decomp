@@ -11,6 +11,7 @@
 // create -> push_back -> insert -> _Insert_n are further forward calls, but all four are the vector members
 // std::vector<NodeA*> (template COMDATs land after their first caller), not separate objects; see MIGRATION.md.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include "./widget_mgr.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../font.h"
@@ -119,7 +120,7 @@ NodeA* DropDown::create()
 // @ 0x49b0f0
 void* NodeA::destroy(unsigned flags)
 {
-    *(void**)this = (void*)0x592848;
+    *(void**)this = (void*)vtbl_592848;
     ContainerBase::~ContainerBase();
     if (flags & 1)
         ::operator delete(this);

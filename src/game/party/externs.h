@@ -4,6 +4,7 @@
 // (the headers differ in argument types), see MIGRATION.md.
 #ifndef GAME_PARTY_EXTERNS_H
 #define GAME_PARTY_EXTERNS_H
+#include "../../include/image_addrs.h"
 #include "../tstring.h"
 #include "../../rgl/stream.h"
 
@@ -11,6 +12,6 @@
 extern StrTable g_strtab;                   // 0x5e2a18  // old name of g_strtable, removed after the names merge
 
 // the engine log (global 0x5a9f60): stream slot 10 (+0x28) writes a C string
-inline stream_base* log_stream_ptr() { return (stream_base*)0x5a9f60; }
+inline stream_base* log_stream_ptr() { return (stream_base*)&orig::g_log; }
 
 #endif // GAME_PARTY_EXTERNS_H

@@ -7,6 +7,7 @@
 //
 // Boundary: UiD::key (0x48b960, previous object) calls set_value (0x48baa0) forward, so 0x48baa0 starts an object.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include "../tstring.h"
 #include "./ui_widgets_c.h"
 struct gui_manager;
@@ -90,7 +91,7 @@ UiE::UiE()
     b121 = 0;
     f180 = 0;
     f181 = 0;
-    *(int*)this = 0x592208;
+    *(int*)this = (int)vtbl_592208;
     f184 = 0x1c;
 }
 

@@ -67,6 +67,7 @@ struct Terrain {
 // (0x48ae20) and ContainerW::construct (0x4931a0, which stores the container vptr 0x5924a0, clears +0x17c..+0x184 and returns this). An
 // object is built as the original does: operator new, that constructor in place, then the final vptr when the kind has its own
 // (Overlay 0x592848, TextBox 0x597050).
+#include "../../include/image_addrs.h"
 #include <new>
 #include "../world_data/raw_place.h"
 namespace rgl { struct mesh; }                                     // (the set_track pointer argument; ui/mission_ui.h has the full class)

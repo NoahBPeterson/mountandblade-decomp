@@ -20,6 +20,7 @@
 // State of the row: every path and call of `fill` is reconstructed, but its frame (0x220 + ebx/esi/edi with
 // the prologue emitted right after the game test and no epilogue on the early-out) could not be reproduced
 // from any source shape tried here, so it is recorded in nonmatching.txt rather than manifest.txt.
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"
@@ -203,7 +204,7 @@ void QuestPage::update_days()
 {
     Pos2 fr;                                 // x = the float spill slot; y is never written (it is passed on to the widget)
     float& v = fr.x;
-    v = g_options.f74 * *(float*)0x5910fc;
+    v = g_options.f74 * orig::k_75f;
     float f = (float)floor(v);
     int n = (int)f;
     int r;
@@ -225,7 +226,7 @@ void QuestPage::update_difficulty()
     char buf[0x80];
     {
         // the localized caption is the format; the rating is the argument
-        tstring key((const char*)0x5967a0);
+        tstring key((const char*)orig::str_ui_difficulty_rating_percentage);
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
         sprintf(buf, fmt, ((GameData*)g_game)->sl_value_factor());
@@ -241,70 +242,70 @@ void QuestPage::update_difficulty()
 void QuestPage::update_settings(int reason)
 {
     if (w7c->changed(0x10000))
-        *(float*)0x5aa010 = control_float(w7c);
+        orig::g_music_volume = control_float(w7c);
     if (w80->changed(0x10000))
-        *(float*)0x5aa014 = control_float(w80);
+        orig::g_master_volume = control_float(w80);
     if (w84->changed(0x10000))
-        *(float*)0x5aa018 = control_float(w84);
+        orig::g_exp_arg = control_float(w84);
     if (w78->changed(0x10000)) {
         g_options.f74 = control_float(w78);
         update_difficulty();
         update_days();
     }
     if (w44->changed(0x10000)) {
-        *(int*)0x5aa054 = control_value(w44);
+        orig::g_opt_dmg_to_player = control_value(w44);
         update_difficulty();
     }
     if (w48->changed(0x10000)) {
-        *(int*)0x5aa058 = control_value(w48);
+        orig::g_opt_dmg_to_friends = control_value(w48);
         update_difficulty();
     }
     if (w4c->changed(0x10000)) {
-        *(int*)0x5aa04c = control_value(w4c);
+        orig::g_difficulty = control_value(w4c);
         update_difficulty();
     }
     if (w50->changed(0x10000)) {
-        *(int*)0x5aa050 = control_value(w50);
+        orig::g_agent_count = control_value(w50);
         update_difficulty();
     }
     if (w54->changed(0x10000)) {
-        *(int*)0x5aa078 = control_value(w54);
+        orig::g_stick_mode = control_value(w54);
         update_difficulty();
     }
     if (w58->changed(0x10000)) {
-        *(int*)0x5aa074 = control_value(w58);
+        orig::g_ctl_mode = control_value(w58);
         update_difficulty();
     }
     if (w5c->changed(0x10000)) {
-        *(int*)0x5aa06c = control_value(w5c);
+        orig::g_flag5aa06c = control_value(w5c);
         ((KeysPage*)(void*)this)->set_enabled_text(w5c);
     }
     if (w60->changed(0x10000)) {
-        *(int*)0x5aa070 = control_value(w60);
+        orig::g_flag5aa070 = control_value(w60);
         ((KeysPage*)(void*)this)->set_enabled_text(w60);
     }
     if (w64->changed(0x10000)) {
-        *(int*)0x5aa05c = control_value(w64);
+        orig::g_fx_on = control_value(w64);
         ((KeysPage*)(void*)this)->set_enabled_text(w64);
     }
     if (w68->changed(0x10000)) {
-        *(int*)0x5aa060 = control_value(w68);
+        orig::g_opt_damage_msgs = control_value(w68);
         ((KeysPage*)(void*)this)->set_enabled_text(w68);
     }
     if (w6c->changed(0x10000)) {
-        *(int*)0x5aa064 = control_value(w6c);
+        orig::g_opt_shot_difficulty = control_value(w6c);
         ((KeysPage*)(void*)this)->set_enabled_text(w6c);
     }
     if (w70->changed(0x10000)) {
-        *(int*)0x5aa068 = control_value(w70);
+        orig::g_opt_kill_msgs = control_value(w70);
         ((KeysPage*)(void*)this)->set_enabled_text(w70);
     }
     if (w74->changed(0x10000)) {
-        *(int*)0x5aa080 = control_value(w74);
+        orig::g_show_messages = control_value(w74);
         ((KeysPage*)(void*)this)->set_enabled_text(w74);
     }
     if (w88->changed(0x10000)) {
-        *(int*)0x5aa01c = control_value(w88);
+        orig::g_invert = control_value(w88);
         ((KeysPage*)(void*)this)->set_enabled_text(w88);
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)

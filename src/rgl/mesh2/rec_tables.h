@@ -4,6 +4,7 @@
 // maps them (C4c*, in symbols/slices/rec_tables.txt). Offsets cite the function that proves them.
 #ifndef MESH2_REC_TABLES_H
 #define MESH2_REC_TABLES_H
+#include "../../include/image_addrs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -149,10 +150,10 @@ inline void st_int(void* s, int* dst) { ((vt_rec*)(*(char**)s))[0x4c / 4](s, dst
 struct tstr_ll {
     void*      typ;     // +0
     tstring    s;       // +4
-    tstr_ll() : typ((void*)0x54a740) { }
-    tstr_ll(const char* c) : typ((void*)0x54a740), s(c) { }                // 0x42bbe0
-    tstr_ll(const tstring& o) : typ((void*)0x54a740), s(o) { }             // 0x42c110
-    ~tstr_ll() { typ = (void*)0x54ad68; }
+    tstr_ll() : typ((void*)vtbl_54a740) { }
+    tstr_ll(const char* c) : typ((void*)vtbl_54a740), s(c) { }                // 0x42bbe0
+    tstr_ll(const tstring& o) : typ((void*)vtbl_54a740), s(o) { }             // 0x42c110
+    ~tstr_ll() { typ = (void*)vtbl_54ad68; }
     const char* text() const { return s.buf ? s.buf : (const char*)&s.buf; }
 };
 

@@ -19,6 +19,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 LO, HI = 0x401000, 0x8ee5b94          # the original's .text through .bss
+FAILED = []                           # sources scan() could not compile
+# a numeric address cast in the text: `(T*)0x5a9f60`, `*(float*)0x5aa010`, `(void*)0x592848` (the object scan above
+# sees only operands with no base register, so an indexed or base-relative use of such a literal escapes it)
+TEXT_CAST = re.compile(r"\)\s*0x([5-9a][0-9a-fA-F]{5}|8e[0-9a-fA-F]{5})\b")
 
 
 def absolute_operands(ins):
@@ -74,12 +78,35 @@ def main():
     for f, n in by.most_common():
         print("%4d  %s" % (n, f))
     print("%d literal image addresses in %d sources" % (len(sites), len(by)))
+    text = text_literals()
+    for p, i, v in text:
+        print("text: %s:%d  %s" % (p, i, v))
+    print("%d numeric address casts in the source text" % len(text))
+    if FAILED:
+        print("%d sources did not compile: %s" % (len(FAILED), ", ".join(FAILED)))
     if a.v:
         for s in sites:
             print("%s  %s  %s  %s" % (s["src"], s["value"], s["func"][:50], s["insn"]))
     if a.json:
         json.dump(sites, open(a.json, "w"), indent=1)
-    return 1 if sites else 0
+    return 1 if sites or text or FAILED else 0
+
+
+def text_literals():
+    """[(path, line, value)] of every cast of a number in the original's .rdata/.data/.bss to a pointer or
+    integer type in our source (comments excluded)."""
+    out = []
+    for dp, _dn, fn in os.walk(os.path.join(ROOT, "src")):
+        for f in fn:
+            if not f.endswith((".cpp", ".h", ".hpp", ".inc")):
+                continue
+            p = os.path.join(dp, f)
+            for i, line in enumerate(open(p, errors="replace"), 1):
+                for m in TEXT_CAST.finditer(line.split("//")[0]):
+                    v = int(m.group(1), 16)
+                    if 0x549000 <= v <= HI:
+                        out.append((os.path.relpath(p, ROOT), i, "%08x" % v))
+    return out
 
 
 def scan(filt=None):
@@ -98,6 +125,7 @@ def scan(filt=None):
             continue
         o, _ = S.compile_obj(src, flags)
         if not o:
+            FAILED.append(os.path.relpath(src, ROOT))      # an uncompiled source cannot be checked: that is a failure
             continue
         coff = Coff(o)
         funcs = {}
@@ -112,6 +140,8 @@ def scan(filt=None):
                 for v, _kind, k in absolute_operands(ins):
                     if ins.address + k in relocs:
                         continue
+                    if v >> 24 and all(((v >> s) & 0xff) < 0x20 for s in (0, 8, 16, 24)):
+                        continue            # a switch's byte-index table after the function's ret, disassembled as code
                     if v in known:
                         sites.append({"src": os.path.relpath(src, ROOT), "func": funcs.get(i + 1, "?"),
                                       "value": "%08x" % v, "insn": "%s %s" % (ins.mnemonic, ins.op_str),

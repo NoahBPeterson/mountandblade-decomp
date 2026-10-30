@@ -9,6 +9,7 @@
 //                                setting +0x8b5 = 1 on every party whose scene object (+0x59c0) exists and
 //                                whose flags (+0xa0) have 0x400 but not 0x80000.
 // flags /O2 /MT /Gy /TP
+#include "../../include/image_addrs.h"
 #include <new>
 #include <string.h>
 #include "rgl.h"
@@ -35,8 +36,8 @@ struct Rect {                                   // the 0x10-byte region copied i
 #include "../gui_mgr.h"
 #include "../str_table.h"                      // StrTable (0x5e2a18; was StrTab here: find(name) was lookup 0x43a1e0)
 
-#define g_gui     (*(GuiManager*)0x5d7080)
-#define g_strtab  (*(StrTable*)0x5e2a18)
+#define g_gui     (*(GuiManager*)&orig::g_gui_mgr)
+#define g_strtab  (orig::g_strtable)
 
 extern char g_5e212c;                           // 0x5e212c
 extern char g_5d8788;                           // 0x5d8788
@@ -56,7 +57,7 @@ extern float g_54b3b4;                          // 0x54b3b4
 #include "../../include/party.h"
 
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
-#define g_psys 0xa70248                         // the shadow / particle system (ShadowMap, ShadowMapP: cs_common.h)
+#define g_psys ((char*)&orig::g_shadow_map)                         // the shadow / particle system (ShadowMap, ShadowMapP: cs_common.h)
 
 static Widget* new_widget(int size)
 {

@@ -3,6 +3,7 @@
 // Slice s004ea8e0: the character-sheet camera/rotation widget. 0x4ea8e0 updates the model preview
 // (zoom slider, clipboard pose dump, reset keys); 0x4eb050 is the per-frame orbit/zoom step.
 // Names provisional; all offsets come from the disassembly of this range.
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <math.h>
 #include "rgl.h"
@@ -49,7 +50,7 @@ extern int g_cur;                                       // 0x8ed4f68
 #include "../str_table.h"      // 0x43a1e0
 extern StrTable g_strtable;                             // 0x5e2a18
 #include "../main_menu.h"
-#define g_main_menu (*(main_menu*)0xa73980)
+#define g_main_menu (orig::g_main_menu_obj)
 
 #include "../../rgl/text_stream.h"                    // mb_snprintf (0x415100)
 #include "../animator.h"                              // Animator, g_anim

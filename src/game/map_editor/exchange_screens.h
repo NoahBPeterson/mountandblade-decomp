@@ -11,6 +11,7 @@
 // The classes below that are views of those (PartyX, PartyMgrX, GameDataX) only add member declarations of this region.
 #ifndef GAME_MAP_EDITOR_PARTY_SCREEN_H
 #define GAME_MAP_EDITOR_PARTY_SCREEN_H
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <stdlib.h>
 #include <vector>
@@ -296,6 +297,6 @@ struct OriginPairs {
     bool clicked(int key);   // 0x48ac90 (ret 4)
 };
 extern KeyDown g_game_keys;                    // 0xa73730
-#define STR_TABLE ((StrTable*)0x5e2a18)     // the localized string table (str_table.h)
+#define STR_TABLE ((StrTable*)&orig::g_strtable)     // the localized string table (str_table.h)
 
 #endif // GAME_MAP_EDITOR_PARTY_SCREEN_H

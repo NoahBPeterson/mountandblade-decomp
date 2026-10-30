@@ -2,6 +2,7 @@
 #define SAVE_GAME_H
 // Slice s004e85d0 (batch ds1): world-map screen init/frame/buttons and the save-file helpers it calls.
 // Layouts follow the verified neighbouring slices (s004d5410, s004e2ea0, s00477ea0).
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <math.h>
 #include <stdio.h>
@@ -23,7 +24,7 @@ struct log_stream {
     virtual void s8(); virtual void s9();
     virtual void w_cstr(const char* s);                 // +0x28
 };
-#define LOG(s) ((log_stream*)0x5a9f60)->w_cstr(s)          // 0x5a9f60 (virtual call through the object's vptr)
+#define LOG(s) ((log_stream*)&orig::g_log)->w_cstr(s)          // 0x5a9f60 (virtual call through the object's vptr)
 
 bool print_and_remove(const char* path);                // 0x539023
 int  rename_file(char* from, const char* to);           // 0x538ff5

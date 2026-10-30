@@ -8,6 +8,7 @@
 //       order and the helpers that follow their caller are __declspec(noinline) where the original calls them.
 //       Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include <stdio.h>
 #include "./game.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
@@ -174,7 +175,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         return false;
     }
     if (step == 6) {
-        ((MetaMission*)0xa73300)->init();
+        ((MetaMission*)&orig::g_mission_ctx)->init();
         log_stream_ptr()->w_cstr("init_meta_mission complete.\n");
         if (mode != 2 && mode != 3) {
             g_game->build_scene();             // 0x520d60

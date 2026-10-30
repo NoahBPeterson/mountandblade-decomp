@@ -10,6 +10,7 @@
 //   - the script block runner (DialogBlock / Elem, include/dialog_rec.h, camera.h): set_lvalue, get_operand, step_less,
 //     renumber, link, pop_try, run_line, emit. The slices viewed these as `Interp`, `Mission` and `ScriptHolder`.
 #define MB_CAMERA_TU
+#include "../../include/image_addrs.h"
 #include <new>
 #include <string.h>
 #include "../../rgl/rgl_math.h"
@@ -369,7 +370,7 @@ R8 PObj::text_rect()
         mesh* m = new mesh;
         {
             tstring s("ui_font");
-            *(void**)((char*)m + 0x2c) = ((resmgr*)0x5d6fa0)->lookup(s);
+            *(void**)((char*)m + 0x2c) = ((resmgr*)&orig::g_resmgr_obj)->lookup(s);
         }
         v31(4, m);
     }
@@ -1419,7 +1420,7 @@ Camera::Camera()
     sub0 = 0;
     sub1 = 0;
     sub2 = 0;
-    vptr = (void*)0x5931a8;                     // the view's own class descriptor
+    vptr = (void*)vtbl_5931a8;                     // the view's own class descriptor
     scene.ctor();
     fr.ctor();
     shake_x = 0;
@@ -1836,7 +1837,7 @@ int View::create_text_overlay(int arg, int flags)
         scene_obj* grp = (scene_obj*)operator new(0x188);
         if (grp) {
             grp = base_ctor(grp);                        // 0x48ae20
-            *(void**)grp = (void*)0x5924a0;
+            *(void**)grp = (void*)vtbl_5924a0;
             *(int*)((char*)grp + 0x17c) = 0;
             *(int*)((char*)grp + 0x180) = 0;
             *(int*)((char*)grp + 0x184) = 0;
@@ -1924,7 +1925,7 @@ int Party::add_sprite(int x, int y, int troop)
     float ox = ro->rot.x;
     ro->rot.y = c * oy + s * ox;
     ro->rot.x = c * ox - s * oy;
-    tstring* n = ((Golist*)0x5e2a18)->find(&tr->name);    // 0x4c6010
+    tstring* n = ((Golist*)&orig::g_strtable)->find(&tr->name);    // 0x4c6010
     if (n == 0)
         n = (tstring*)tr;
     scene.obj(id)->name = *n;
@@ -1950,7 +1951,7 @@ int Party::add_sprite(int x, int y, int troop)
 int Party::create_companion_party(int slot, int x, int y, int a)
 {
     int id = add_sprite(x, y, 3);                        // 0x49ebd0
-    tstring* n = ((Golist*)0x5e2a18)->find(&chars()[slot].name); // 0x4c6010
+    tstring* n = ((Golist*)&orig::g_strtable)->find(&chars()[slot].name); // 0x4c6010
     if (n == 0)
         n = &chars()[slot].name;
     scene.obj(id)->name = *n;

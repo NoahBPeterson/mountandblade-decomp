@@ -1,3 +1,4 @@
+#include "../../include/image_addrs.h"
 #include "./screen_init.h"
 #include "../gui_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -29,7 +30,7 @@ void Screen::init_screen()
     g_gui.reset();
     g_game->f1a090 = 0;
     g_5e212c = 1;
-    ((SoundW*)0x5aa128)->stop_all();   // 0x494310
+    ((SoundW*)&orig::g_sound_mgr)->stop_all();   // 0x494310
     g_game->f88 = 1;
     f2d4 = 0;
     f2d5 = 0;
@@ -47,7 +48,7 @@ void Screen::init_screen()
     s0.y = 0.75f;
     overlay->set_scale(&s0.x);
     g_5d8788 = 1;
-    ((NodeVec*)0x5d7080)->push_back((NodeA* const&)overlay);   // 0x49b120
+    ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)overlay);   // 0x49b120
 
     Overlay* buttons = (Overlay*)new_container(0x188, vtbl_597050);   // 0x4931a0, then vptr 0x597050
     f34 = (Widget*)buttons;

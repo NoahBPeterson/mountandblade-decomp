@@ -4,6 +4,7 @@
 // Migrated from slices s004c2b20 (0x4c2c50..0x4c3350), s004c3430, s004c3d90 and s004c46d0 (0x4c46d0, 0x4c47d0).
 // 0x4c3050..0x4c48d0 is the "T regime" region (docs/tu_map.md): helpers sit right after their caller, so
 // the functions stay in binary order and the helpers defined after a caller are kept out of line.
+#include "../../include/image_addrs.h"
 #include "./rec_tables.h"
 #include "../../game/ini_file.h"      // g_game_vars (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -44,12 +45,12 @@ void* __fastcall destroy_C4c2c50(C4c2c50* self, int, int flags)
 // @ 0x4c2cd0
 void C4c2c50::dtor()
 {
-    *(void**)this = (void*)0x595740;
+    *(void**)this = (void*)vtbl_C4c2c50;
     t88.~tstring();
     t78.~tstring();
     t68.~tstring();
     t54.~tstring();
-    *(void**)this = (void*)0x5947d8;
+    *(void**)this = (void*)vtbl_5947d8;
     name.~tstring();
 }
 
@@ -150,7 +151,7 @@ void C4c2fb0::dtor()
     (p + 1)->~tstring();
     p->~tstring();
     t48.~tstring();
-    *(void**)this = (void*)0x5947d8;
+    *(void**)this = (void*)vtbl_5947d8;
     name.~tstring();
 }
 
@@ -184,14 +185,14 @@ void* __fastcall destroy_C4c3050(C4c3050* self, int, int flags)
 // @ 0x4c30e0
 void C4c3050::dtor()
 {
-    *(void**)this = (void*)0x5957bc;
+    *(void**)this = (void*)vtbl_C4c3050;
     char* p = (char*)this + 0xcc;
     for (int i = 6; i > 0; i--) {
         p -= 0x10;
         ((tstring*)p)->~tstring();
     }
     t5c.~tstring();
-    *(void**)this = (void*)0x5947d8;
+    *(void**)this = (void*)vtbl_5947d8;
     name.~tstring();
 }
 
@@ -202,7 +203,7 @@ void C4c3050::dtor()
 void* __fastcall destroy_C4c3120(void* self, int, int flags)
 {
     ((tstring*)((char*)self + 0x84))->~tstring();
-    *((void**)self) = (void*)0x5947d8;
+    *((void**)self) = (void*)vtbl_5947d8;
     ((tstring*)((char*)self + 0x1c))->~tstring();
     if (flags & 1)
         operator delete(self);
@@ -254,7 +255,7 @@ void C4c31c0::dtor()
         ((tstring*)(p + 0x10))->~tstring();
         ((tstring*)p)->~tstring();
     }
-    *(void**)this = (void*)0x5947d8;
+    *(void**)this = (void*)vtbl_5947d8;
     name.~tstring();
 }
 
@@ -282,7 +283,7 @@ void C4c3290::dtor()
     (p + 1)->~tstring();
     p->~tstring();
     t50.~tstring();
-    *(void**)this = (void*)0x5947d8;
+    *(void**)this = (void*)vtbl_5947d8;
     name.~tstring();
 }
 
@@ -397,7 +398,7 @@ int __fastcall renderer_setup(GameAppView* self)
     if (((unsigned*)&g_caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_caps)[0xcc / 4] >= 0xffff0200 &&
         ((unsigned*)&g_caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_caps)[0xd4 / 4] & 1) != 0 && g_shader_support != 0)
         g_use_shaders = 1;
-    apply_input_settings((InputSet*)0xa17910);
+    apply_input_settings((InputSet*)&orig::g_render);
     ((void (__fastcall*)(void*))load_game_variables)(self);
     {
         tstring k1("buffer_size_dx7_regular_ffp_dynamic");
@@ -422,8 +423,8 @@ int __fastcall renderer_setup(GameAppView* self)
         int v10 = (int)((ini_file_x&)g_game_vars).get_float(k10);
         g_batch.init_decls(&v10, &v9, &v8, &v7, &v6, &v5, &v4, &v3, &v2, &v1);
     }
-    ((resmgr*)0x5d6fa0)->load_all(1, (rgl::string*)&g_module_path);
-    ((InputSet*)0xa170c8)->init_devices(self->hwnd);
+    ((resmgr*)&orig::g_resmgr_obj)->load_all(1, (rgl::string*)&g_module_path);
+    ((InputSet*)&orig::g_input_a)->init_devices(self->hwnd);
     return 0;
 }
 

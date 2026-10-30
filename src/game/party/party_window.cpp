@@ -7,6 +7,7 @@
 //       order and the helpers that follow their caller (refresh_page -> place_slot -> make_mesh) are
 //       __declspec(noinline), as the original calls them. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <new>
@@ -215,7 +216,7 @@ char PartyWindow::mouse_event(unsigned mask)
 // @ 0x5021f0
 void* UiFrame::destroy(unsigned flags)
 {
-    *(void**)this = (void*)0x5924a0;
+    *(void**)this = (void*)vtbl_5924a0;
     release();
     ((vec<mface>*)&f178)->clear();               // 0x41f4b0
     ((WidgetDtor*)this)->base_dtor();

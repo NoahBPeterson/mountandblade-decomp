@@ -14,6 +14,7 @@
 //   +0xa84 / +0xa88 strip icons, +0xac0 / +0xac4 their specs         0x5029f0
 #ifndef GAME_PARTY_PARTY_WINDOW_H
 #define GAME_PARTY_PARTY_WINDOW_H
+#include "../../include/image_addrs.h"
 #include "../tstring.h"
 #include "../game_globals.h"      // canonical g_disable_food_slot
 #include "../../rgl/rgl_math.h"
@@ -53,13 +54,13 @@ struct UiWindow : MissionUi {               // 0x188 bytes, constructor 0x4931a0
     UiWindow();                             // 0x4931a0
 };
 struct PartyPanel : UiWindow {              // vtable 0x599bf8 (the equipment menu / inventory page block)
-    PartyPanel() { *(void**)this = (void*)0x599bf8; }
+    PartyPanel() { *(void**)this = (void*)vtbl_599bf8; }
 };
 struct PartySlot : MissionUi {              // vtable 0x599d28, size 0x178 (the item slot)
-    PartySlot() { *(void**)this = (void*)0x599d28; }
+    PartySlot() { *(void**)this = (void*)vtbl_599d28; }
 };
 struct StripIcon : UiA {                    // vtable 0x591ee8, size 0x188 (constructor 0x48b1c0 of UiA)
-    StripIcon() { *(void**)this = (void*)0x591ee8; }
+    StripIcon() { *(void**)this = (void*)vtbl_XyzButton; }
 };
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
 // the widget base's destructor body (0x487c00) and the scalar deleting destructor built on it (0x502300, the shared

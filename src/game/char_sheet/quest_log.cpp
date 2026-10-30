@@ -1,3 +1,4 @@
+#include "../../include/image_addrs.h"
 #include "./quest_log.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -91,12 +92,12 @@ widget* make_quest_list(widget* parent, const float* pos, const float* size, int
 // @ 0x4ee230
 void __fastcall quest_window::build()
 {
-    ((gui_manager*)0x5d7080)->reset();   // 0x42d1b0
+    ((gui_manager*)&orig::g_gui_mgr)->reset();   // 0x42d1b0
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared
     widget* win = (widget*)operator new(0x190);
     if (win) {
         ((ContainerW*)win)->construct();     // 0x4931a0
-        *(void**)win = (void*)0x592848;      // 0x4ee268
+        *(void**)win = (void*)vtbl_592848;      // 0x4ee268
         *((char*)win + 0x188) = 0;           // 0x4ee26e
     }
     window = win;
@@ -115,7 +116,7 @@ void __fastcall quest_window::build()
     }
     win->add_item(0, bgm);
     g_frame_flag = 1;
-    ((NodeVec*)0x5d7080)->push_back((NodeA* const&)win);   // 0x49b120
+    ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)win);   // 0x49b120
 
     // the two panels behind the tabs
     widget* p1 = (widget*)operator new(0x178);
@@ -172,7 +173,7 @@ void __fastcall quest_window::build()
     widget* fr = (widget*)operator new(0x188);
     if (fr) {
         fr = (widget*)new (fr, raw_place()) MissionUi;
-        *(void**)fr = (void*)0x5924a0;
+        *(void**)fr = (void*)vtbl_5924a0;
         *(int*)((char*)fr + 0x17c) = 0;
         *(int*)((char*)fr + 0x180) = 0;
         *(int*)((char*)fr + 0x184) = 0;
@@ -203,7 +204,7 @@ void __fastcall quest_window::build()
             row = (widget*)new (row, raw_place()) MissionUi;
             *(int*)((char*)row + 0x178) = 0;
             *((char*)row + 0x121) = 0;
-            *(void**)row = (void*)0x591d58;
+            *(void**)row = (void*)vtbl_591d58;
             *((char*)row + 0x180) = 0;
             *(int*)((char*)row + 0x184) = 0;
         }

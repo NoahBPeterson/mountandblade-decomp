@@ -4,6 +4,7 @@
 // One layout for all functions; every offset cites the function that proves it. Names provisional.
 #ifndef GAME_INVENTORY_PANEL_PARTY_SCREEN_H
 #define GAME_INVENTORY_PANEL_PARTY_SCREEN_H
+#include "../../include/image_addrs.h"
 #include "./inv_common.h"
 
 // a 0x20-byte stack row copied by 0x503810 (the same record as Stack, src/include/party.h)
@@ -143,7 +144,7 @@ static __forceinline PsBar* new_ps_bar()
     PsBar* b = (PsBar*)::operator new(0x188);
     if (b != 0) {
         ((ContainerW*)b)->construct();
-        *(void**)b = (void*)0x597050;
+        *(void**)b = (void*)vtbl_597050;
     }
     return b;
 }
@@ -155,7 +156,7 @@ static __forceinline PsListWidget* new_ps_list()      // 0x188 bytes, the constr
         w->f17c = 0;
         w->f180 = 0;
         w->f184 = 0;
-        *(void**)w = (void*)0x5924a0;
+        *(void**)w = (void*)vtbl_5924a0;
     }
     return w;
 }

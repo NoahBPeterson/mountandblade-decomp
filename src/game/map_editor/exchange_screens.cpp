@@ -9,6 +9,7 @@
 //       order and every member that another function of the file calls is __declspec(noinline) in exchange_screens.h.
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include <stdlib.h>
 #include <math.h>
 #include "./exchange_screens.h"

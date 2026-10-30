@@ -8,6 +8,7 @@
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order; helpers that follow their caller are
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include "./mission_ctx.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -216,7 +217,7 @@ void MapFlags::commit(char* out)
             g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 2);
         }
         else if (key == 0x40) {
-            int p = *(int*)(0xa73304 - g_a73438 * 4);
+            int p = *(int*)(((char*)orig::g_a73304) - g_a73438 * 4);
             g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 4);
         }
     }
@@ -297,7 +298,7 @@ void MapFlags::commit(char* out)
 // @ 0x513b10
 unsigned MissionCtx::pop_key()
 {
-    unsigned* p = (unsigned*)0x5a8e68;
+    unsigned* p = (unsigned*)orig::g_bit;
 
     do {
         unsigned k = *p;
@@ -306,7 +307,7 @@ unsigned MissionCtx::pop_key()
             return k;
         }
         p += 2;
-    } while ((int)p < 0x5a8f68);
+    } while ((int)p < (int)(orig::g_bit + 32));
     return 0;
 }
 
@@ -562,8 +563,8 @@ void MissionV::init_scene()
     t.out.c = t.f18;
     t.out.d = t.f1c;
     *(FramePlacement*)((char*)this + 0x6624) = t.out;
-    ((Terrain*)0xa76630)->reset();
-    ((GenB*)0x5aa128)->f();
+    ((Terrain*)&orig::g_terrain)->reset();
+    ((GenB*)&orig::g_sound_mgr)->f();
     ((IVector*)((char*)this + 0x63c0))->resize(0, 0);
     *((char*)this + 0x6668) = 0;
     *((char*)this + 0x6669) = 0;

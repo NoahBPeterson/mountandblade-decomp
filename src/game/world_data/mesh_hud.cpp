@@ -6,6 +6,7 @@
 //       (rgl_mesh) and 86 (hud2) of the TU map. Names provisional. Functions in ascending address order.
 //       Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include "./mesh_hud.h"
 #include "../config/widget_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../ui/mission_ui.h"

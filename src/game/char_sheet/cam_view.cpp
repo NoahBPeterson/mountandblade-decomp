@@ -1,3 +1,4 @@
+#include "../../include/image_addrs.h"
 #include "./cam_view.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -55,7 +56,7 @@ void CamView::update_model(float dt)
 {
     int n = *(int*)((char*)g_skins_begin + skin * 0x1f8 + 0x3c) - 1;
 
-    if (g_no_cam && (g_a17148 || g_a17348) && *(int*)0xa1711c && !*(int*)0xa1751c) {
+    if (g_no_cam && (g_a17148 || g_a17348) && orig::g_a1711c && !orig::g_a1751c) {
         if (*(int*)(g_game + 0x1a090) == 0) {
             *(int*)(g_game + 0x1a090) = 1;
             cam_btn->vb4();
@@ -71,7 +72,7 @@ void CamView::update_model(float dt)
         float b = *(float*)((char*)sl + 0x170) - *(float*)((char*)sl + 0x16c);
         float* arr = (float*)((char*)sl + *(int*)((char*)sl + 0x178) * 4 + 0xf0);
         float v = (a / b) * (arr[0] - *(float*)((char*)sl + 0x17c))
-                + ((float)g_world_time / arr[0]) * *(float*)((char*)sl + 0x17c) * *(float*)0x590d7c;
+                + ((float)g_world_time / arr[0]) * *(float*)((char*)sl + 0x17c) * orig::k_0_0005f;
         ((UiD*)(void*)sl)->set_value(v);
         sl->v48(0x10000);
     }
@@ -214,7 +215,7 @@ void CamView::update_model(float dt)
         if (state == 1) {
             state = -1;
             *(int*)(g_game + 0x13aec) = 1;
-            *(int*)(*(char**)0xa739dc + 0x18) = 7;
+            *(int*)(*(char**)&orig::g_wDC + 0x18) = 7;
             ch = 0x17;
         } else {
             ch = choice;

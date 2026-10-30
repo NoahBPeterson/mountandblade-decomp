@@ -5,6 +5,7 @@
 //       message-log quest lines and the neighbouring small objects of translation units 83 (world_2) and 84
 //       (game_data_2) of the TU map. Names provisional. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include "./world_data.h"
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
@@ -208,7 +209,7 @@ void __stdcall clear_f14(named_object* o);                      // 0x4175f0
 // @ 0x490520
 void ContainerW::dtor_common()
 {
-    *(void**)this = (void*)0x5924a0;
+    *(void**)this = (void*)vtbl_5924a0;
     ((FrameBox*)(void*)this)->release();
     if (ents_first() != 0)
         operator delete(ents_first());
@@ -338,7 +339,7 @@ void ContainerW::update_all(int p)
 // @ 0x490930
 ContainerW* ContainerW::destroy(unsigned flag)
 {
-    *(void**)this = (void*)0x5924a0;
+    *(void**)this = (void*)vtbl_5924a0;
     ((FrameBox*)(void*)this)->release();
     if (ents_first() != 0)
         operator delete(ents_first());

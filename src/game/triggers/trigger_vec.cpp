@@ -11,6 +11,7 @@
 // call, 0x4be730 -> 0x4be742, is the jump over a WinLicense marker), so the four map TUs (trigger_vec, game_vec,
 // trigger_entry_vec, big_obj) are one module.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -250,7 +251,7 @@ void scan_module_folders(tstring* out, int* count)
 void __fastcall core_dtor(Core* self)
 {
     CD3DFont* font = self->font;
-    *(void**)self = (void*)0x5948e0;
+    *(void**)self = (void*)vtbl_5948e0;
     if (font != 0) {
         font->~CD3DFont();
         operator delete(font);
@@ -264,7 +265,7 @@ void __fastcall core_dtor(Core* self)
             p->~tstring();
         } while (--n);
     }
-    *(void**)self = (void*)0x549c60;
+    *(void**)self = (void*)vtbl_CD3DApplication;
     ((CD3DEnumeration*)((char*)self + 0xc))->~CD3DEnumeration();
 }
 

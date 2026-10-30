@@ -82,14 +82,14 @@ struct ThemeDb {
 struct mesh_x {
     mesh_x* clone();   // 0x41c6d0 (rgl/mesh_x.h)
 };
-#define THEME ((ThemeDb*)at_5d6fa0)
+#define THEME ((ThemeDb*)&orig::g_resmgr_obj)
 
 // ---------------------------------------------------------------------------
 // globals
 // ---------------------------------------------------------------------------
 
 #include "../gui_mgr.h"
-#define GUI ((GuiManager*)at_5d7080)
+#define GUI ((GuiManager*)&orig::g_gui_mgr)
 
 struct StrTable {
     tstring* lookup(const tstring& key);   // 0x43a1e0 (game/str_table.h)
@@ -101,7 +101,7 @@ struct UiTextDb {                                            // the UI string ta
     __forceinline tstring* lookup(const tstring* key) { return ((StrTable*)this)->lookup(*key); }
     __forceinline tstring* find(const tstring* key) { return ((LangTables*)this)->find(key); }
 };
-#define UITEXT ((UiTextDb*)at_5e2a18)
+#define UITEXT ((UiTextDb*)&orig::g_strtable)
 
 #include "../ini_file.h"
 #define CONFIG (&g_game_vars)
@@ -110,7 +110,7 @@ struct TableauTbl {                                          // world_data/obj_t
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0
     __forceinline void* make_mesh_from(void* rec, int* id) { return make_mesh_from((const int*)rec, (const void*)id); }
 };
-#define IMAGES ((TableauTbl*)at_a75f40)
+#define IMAGES ((TableauTbl*)&orig::g_tableaus)
 
 #include "../../include/game_data.h"             // GameData: the game object at 0x5e2930 (troops +0x13a00, factions +0x13a48, quests +0x13a58, parties +0xf8)
 #define WORLD g_game
@@ -183,7 +183,7 @@ static const char* ts_chars(const tstring* s)
 // name tstring of a map-party record (record base from the party table)
 static tstring* party_name(char* rec)
 {
-    if (*(char*)at_a181b8 != 0)
+    if (*(char*)&orig::g_show_party_ids_instead_of_names != 0)
         return (tstring*)(rec + 0x20);
     if (*(char*)(rec + 0x1c) == 0) {
         tstring* s = UITEXT->find((tstring*)(rec + 0x20));

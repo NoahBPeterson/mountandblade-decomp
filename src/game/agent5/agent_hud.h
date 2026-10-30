@@ -7,6 +7,7 @@
 // function that proves it. Names provisional.
 #ifndef AGENT5_HUD_H
 #define AGENT5_HUD_H
+#include "../../include/image_addrs.h"
 #include <stddef.h>
 #include <math.h>
 #include <new>
@@ -258,10 +259,10 @@ struct ChildVec {                                                 // a widget li
 };
 struct GroupWidget : MissionUi {                                  // vtable 0x5924a0, size 0x188: a container of children (party_window.h's UiFrame)
     ChildVec kids;                                                // +0x178
-    GroupWidget() { *(void**)this = (void*)0x5924a0; kids.first = 0; kids.last = 0; kids.end = 0; }
+    GroupWidget() { *(void**)this = (void*)vtbl_5924a0; kids.first = 0; kids.last = 0; kids.end = 0; }
 };
 struct TextGroupWidget : GroupWidget {                            // the same 0x188-byte container with vtable 0x597050 (overlay.h's TextBox)
-    TextGroupWidget() { *(void**)this = (void*)0x597050; }
+    TextGroupWidget() { *(void**)this = (void*)vtbl_597050; }
 };
 struct WindowBase : MissionUi {                                   // the 0x188-byte window base (party_window.h's UiWindow); its constructor body 0x4931a0 is ContainerW::construct
     ChildVec kids;                                                // +0x178 (first +0x17c)
@@ -279,7 +280,7 @@ inline FrameWidget* new_frame_widget()
     if (mem == 0)
         return 0;
     ((ContainerW*)mem)->construct();
-    *(void**)mem = (void*)0x592848;
+    *(void**)mem = (void*)vtbl_592848;
     ((FrameWidget*)mem)->f188 = 0;
     return (FrameWidget*)mem;
 }
@@ -287,7 +288,7 @@ struct FlagWidget : MissionUi {                                   // vtable 0x59
     int f178;                                                     // +0x178 (0x4fbfa0)
     float f17c;                                                   // +0x17c
     int f180, f184;                                               // +0x180
-    FlagWidget() { *(void**)this = (void*)0x592140; f178 = 0; f17c = 0.1f; v168 = 1.0f; f180 = 0; f184 = 0; }
+    FlagWidget() { *(void**)this = (void*)vtbl_UiD; f178 = 0; f17c = 0.1f; v168 = 1.0f; f180 = 0; f184 = 0; }
     void set_value(float x);                                      // 0x48baa0
 };
 struct ToggleWidget : MissionUi {                                 // vtable 0x591d58 (ui_widgets.h's UiA, constructor inlined), size 0x188
@@ -296,7 +297,7 @@ struct ToggleWidget : MissionUi {                                 // vtable 0x59
     char f180;                                                    // +0x180
     char pad181[3];
     int f184;                                                     // +0x184
-    ToggleWidget() { f178 = 0; b121 = 0; *(void**)this = (void*)0x591d58; f180 = 0; f184 = 0; }
+    ToggleWidget() { f178 = 0; b121 = 0; *(void**)this = (void*)vtbl_591d58; f180 = 0; f184 = 0; }
 };
 namespace c49deb0 {                                               // party2/camera.cpp names the class of the constructor 0x49deb0 Camera in this namespace
 struct Camera : MissionUi {                                       // the scrolling list (constructor 0x49deb0), size 0x4a8; layout 0x48d470 is FieldPanel::update, scroll_refresh 0x498420 (ret 4) is HudOuter's

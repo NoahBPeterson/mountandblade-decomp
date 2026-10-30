@@ -9,6 +9,7 @@
 //       the same objects and are not compatible with the rgl.h world this function needs.
 //       Names provisional.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include <windows.h>
 #include <commctrl.h>
 #include <d3d9.h>
@@ -285,15 +286,15 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         SendMessageA(combo, CB_RESETCONTENT, 0, 0);
         if (combo == 0)
             return 1;
-        WPARAM idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)0x5999c0);
+        WPARAM idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_scene_props);
         SendMessageA(combo, CB_SETITEMDATA, idx, 0);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)0x595e74);
+        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_entry_point);
         SendMessageA(combo, CB_SETITEMDATA, idx, 1);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)0x5999b4);
+        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_item_kinds);
         SendMessageA(combo, CB_SETITEMDATA, idx, 2);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)0x5999ac);
+        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_plants);
         SendMessageA(combo, CB_SETITEMDATA, idx, 4);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)0x595e6c);
+        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_passage);
         SendMessageA(combo, CB_SETITEMDATA, idx, 5);
         *(int*)((char*)g_editor + 0x651c) = 0;                        // the object kind resets to the first entry (0x4fec16)
         SendMessageA(combo, CB_SETCURSEL, 0, 0);
@@ -722,9 +723,9 @@ command:
         return 1;
     case 0x4af:
         if (MessageBoxA(m_hMapEditorDlg, "This action will clear all texture and height data of the terrain that are added manually. Are you sure?", "Warning", 1) == 1) {
-            ((MapScreen*)0xa76630)->init((char*)g_editor + 0x63d0);
+            ((MapScreen*)&orig::g_terrain)->init((char*)g_editor + 0x63d0);
             g_game->dirty = 1;
-            conv_build_scene((conv_rec*)0xa76630);
+            conv_build_scene((conv_rec*)&orig::g_terrain);
         }
         return 1;
     case 0x4c8:

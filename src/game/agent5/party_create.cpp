@@ -11,6 +11,7 @@
 //       `EB 10 57 4C ..` sequence at 0x500b10 and 0x500bbf) that no C++ source can emit, so it can never be byte-exact.
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/image_addrs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <new>
@@ -108,7 +109,7 @@ static __forceinline InvWindow* new_inv_window()
     if (mem == 0)
         return 0;
     ((ContainerW*)mem)->construct();
-    *(void**)mem = (void*)0x592848;
+    *(void**)mem = (void*)vtbl_592848;
     ((InvWindow*)mem)->f188 = 0;
     return (InvWindow*)mem;
 }

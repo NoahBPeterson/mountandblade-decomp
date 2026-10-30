@@ -1,5 +1,6 @@
 // mesh_game.cpp: TU 63 "mesh", part 7 (0x4832b0..0x484590): the mission's agent spawner (spawn, create, spawn_full,
 // spawn_one, run_spawns) and the per-frame mission tick. The object is the Mission of src/game/mission.h. See MIGRATION.md.
+#include "../../include/image_addrs.h"
 #include "./mesh_slot.h"
 #include "../terrain_b/mission.h"
 #include "../terrain_b/pool.h"          // Pool<RecJ>::next_used 0x474300
@@ -242,7 +243,7 @@ struct MissionG : Mission {
 NOINL void MissionG::spawn(AgentS* a)
 {
     if (a->kind == 0) {
-        a->f12c = 0xa76628;
+        a->f12c = (int)&orig::g_anim_set;
         a->f110 = 7;
         TroopRecS* t = &(*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop];
         if (*(unsigned long long*)&t->skin & 0x10) {
@@ -275,7 +276,7 @@ NOINL void MissionG::spawn(AgentS* a)
                 ((Inv*)t)->auto_equip(a->f94, 0x100e, (a->f56f0 >> 28) & 0xffffff01, (a->f56f0 >> 9) & 0xffffff01);
         }
     } else if (a->kind == 1) {
-        a->f12c = 0xa76628;
+        a->f12c = (int)&orig::g_anim_set;
     }
     EntityG* e = (EntityG*)((world_x*)scene_world)->create_entity(9);
     e->id = a->id;
