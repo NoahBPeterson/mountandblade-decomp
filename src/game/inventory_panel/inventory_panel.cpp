@@ -445,9 +445,10 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
             key = (flags & 0x200000) ? "ui_two_handed" : "ui_two_handed_one_handed";
         else
             key = "ui_one_handed";
-        tstring k(key);
-        sprintf(buf, "%s", g_strtable.lookup(k)->c_str());
-        k.~tstring();
+        {
+            tstring k(key);
+            sprintf(buf, "%s", g_strtable.lookup(k)->c_str());
+        }   // one destroy (an explicit ~tstring() plus the scope exit freed it twice)
         {
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.021f, 0xffc0b0e0, 1);

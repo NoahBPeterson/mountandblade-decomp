@@ -169,7 +169,6 @@ again:
             if (((mesh*)Q(*s)[k].a)->res == 0) {
                 tstring ts("default");
                 ((mesh*)Q(*s)[k].a)->res = g_resmgr.get_material(*(rgl::string*)&ts);
-                ts.~tstring();
             }
             ((mesh*)Q(*s)[k].a)->compute_sortkey();                // 0x412980 (slot 2 of the vtable)
         }

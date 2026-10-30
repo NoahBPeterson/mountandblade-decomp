@@ -306,9 +306,10 @@ NOINL void MissionG::spawn(AgentS* a)
         } else
             shp = 0;
     } else if (a->kind == 1) {
-        tstring name("skel_horse");
-        e->skel->init((FxRes*)g_resmgr.get_object70(*(rgl::string*)&name));
-        name.~tstring();
+        {
+            tstring name("skel_horse");
+            e->skel->init((FxRes*)g_resmgr.get_object70(*(rgl::string*)&name));
+        }
         if ((mem = operator new(0x64)) != 0) {
             vector4 b(0.0f, 0.8f, 0.8f);
             vector4 c(0.0f, -0.3f, 0.7f);
@@ -486,7 +487,6 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
                 g_msg_id[k3] = -1;
                 g_msg_count++;
             }
-            msg.~tstring();
         }
     }
     *(long long*)&(*(int*)((char*)&g_script + 0x8)) = own;

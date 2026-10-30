@@ -143,16 +143,17 @@ void VideoPage::update(int reason)
 
     if (w60->changed(0x10000)) {
         // switching the renderer: replace the two menu captions and always return to the main menu
-        tstring explanation("ui_change_directx_explanation");
-        tstring name("DirectX");
-        tstring* e = g_strtable.lookup(name);
+        {
+            tstring explanation("ui_change_directx_explanation");
+            tstring name("DirectX");
+            tstring* e = g_strtable.lookup(name);
+            MainMenu& m = g_main_menu;
+            m.setup(&explanation, e);
+            m.f4c = 0;
+            m.f50 = 0;
+            m.f4 = 0;
+        }
         MainMenu& m = g_main_menu;
-        m.setup(&explanation, e);
-        m.f4c = 0;
-        m.f50 = 0;
-        m.f4 = 0;
-        name.~tstring();
-        explanation.~tstring();
         ((WindowMgrW*)(void*)&m)->open(0);
     }
 
@@ -220,18 +221,17 @@ void VideoPage::update(int reason)
         char buf[0x40];
         _itoa((int)(gamma * *(float*)0x54ab28), buf, 10);
         tstring text(buf);
-        tstring key_state("ui_gamma");
         tstring state("");
-        state.insert(1, key_state);   // the state suffix is appended after the first character
-        key_state.~tstring();
+        {
+            tstring key_state("ui_gamma");
+            state.insert(1, key_state);   // the state suffix is appended after the first character
+        }
         if (text.equals("ui_default")) {
             tstring k("ui_default");
             state = *g_strtable.lookup(k);
-            k.~tstring();
         }
         { char r[8]; w98->set_text(r, state); }
         { char r[8]; w98->get_xy(r); }
-        text.~tstring();
     }
 
     if (w44->changed(0x10000)) {
@@ -242,13 +242,11 @@ void VideoPage::update(int reason)
             tstring key("ui_percentage_value");
             tstring* e = g_strtable.lookup(key);
             sprintf(buf, e->c_str(), pct);
-            key.~tstring();
         }
-        tstring text(buf);
-        tstring key2("ui_percentage_value");
-        { char r[8]; wa0->set_text(r, text); }
-        key2.~tstring();
-        text.~tstring();
+        {
+            tstring text(buf);
+            { char r[8]; wa0->set_text(r, text); }
+        }
         { char r[8]; wa0->get_xy(r); }
         changed_config = 1;
         update_performance_caption(this);
@@ -270,13 +268,11 @@ void VideoPage::update(int reason)
             tstring key("ui_percentage_value");
             tstring* e = g_strtable.lookup(key);
             sprintf(buf, e->c_str(), pct);
-            key.~tstring();
         }
-        tstring text(buf);
-        tstring key2("ui_percentage_value");
-        { char r[8]; w80->set_text(r, text); }
-        key2.~tstring();
-        text.~tstring();
+        {
+            tstring text(buf);
+            { char r[8]; w80->set_text(r, text); }
+        }
         { char r[8]; w80->get_xy(r); }
         update_performance_caption(this);
     }
@@ -287,15 +283,16 @@ void VideoPage::update(int reason)
         tstring label(*value_label(w58, idx));
         int a = label.find('x', 0);
         int b = label.find(' ', 0);
+        {
         tstring left = label.substr(0, a);
         *(int*)0x5a9fe4 = atoi(left.c_str());
-        left.~tstring();
+        }
+        {
         tstring right = label.substr(a + 1, b);
         *(int*)0x5a9fe8 = atoi(right.c_str());
-        right.~tstring();
+        }
         run_settings_probe();
         update_performance_caption(this);
-        label.~tstring();
     }
 
     if (w30->changed(0x10000)) {
@@ -308,12 +305,12 @@ void VideoPage::update(int reason)
         g_cfg.save((FILE*)f);
         fclose((FILE*)f);
         if (changed_config) {
-            tstring explanation("ui_change_graphics_settings_explanation");
-            tstring pos((const char*)0x54a480);
-            tstring* e = g_strtable.lookup(pos);
-            g_main_menu.rec->setup(&explanation, e);
-            pos.~tstring();
-            explanation.~tstring();
+            {
+                tstring explanation("ui_change_graphics_settings_explanation");
+                tstring pos((const char*)0x54a480);
+                tstring* e = g_strtable.lookup(pos);
+                g_main_menu.rec->setup(&explanation, e);
+            }
             ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         }
     }
