@@ -1127,7 +1127,7 @@ void MapDialog::refresh_list(char use_sel)
         }
         int flag;
         if (list->get_sel(i, 1, data, 0, 2, &flag) >= 0) {
-            if (flag > 0) {
+            if ((unsigned)flag > 0) {
                 if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)"2x") < 0) {
                     int idx = SendMessageA(hWnd, 0x14a, 1, (LPARAM)"2x");
                     SendMessageA(hWnd, 0x151, idx, 2);
@@ -1135,7 +1135,7 @@ void MapDialog::refresh_list(char use_sel)
             }
         }
         if (list->get_sel(i, 1, data, 0, 4, &flag) >= 0) {
-            if (flag > 0) {
+            if ((unsigned)flag > 0) {
                 if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)"4x") < 0) {
                     int idx = SendMessageA(hWnd, 0x14a, 2, (LPARAM)"4x");
                     SendMessageA(hWnd, 0x151, idx, 4);

@@ -241,7 +241,7 @@ void GameG::tick(float dt)
     {
         GamePool* gp = &pool;
         int idx = gp->first();
-        while (idx < gp->count) {
+        while ((unsigned)idx < (unsigned)gp->count) {
             ((BattleRec*)((PageTable98*)gp)->slot(idx))->update_nav_anim(*(int*)&speed);   // 0x4b71e0 (battle_rec.h; the argument is unused by the callee)
             gp->next(&idx);
         }

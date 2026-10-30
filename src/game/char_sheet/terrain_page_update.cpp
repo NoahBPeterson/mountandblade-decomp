@@ -5,6 +5,13 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
+// the original inlines set_enabled_text (0x4f28a0) and refresh_hex (0x4f2960) into the two "Enable terrain" branches
+// (they stay calls in the other branches); same behaviour, spelled out so the call sequence matches
+#define inline_enabled_text(w) do { if ((w)->get_value()) { char r[8]; (w)->set_text(r, tstring("Enabled")); } \
+    else { char r[8]; (w)->set_text(r, tstring("Disabled")); } } while (0)
+#define inline_refresh_hex() do { sync_bits(); tstring t_; g_bits.build_hex_text(t_); \
+    { char r_[8]; hexbox->set_text(r_, t_); } } while (0)
+
 // @ 0x4f2d70
 void TerrainPage::update(float dt)
 {
@@ -37,14 +44,14 @@ void TerrainPage::update(float dt)
     // the two "Enable terrain" checkboxes also recaption themselves, so they form a chain of their own
     if (page_changed(terrain_box)) {
         terrain_on = terrain_box->get_value();
-        set_enabled_text(terrain_box);
-        refresh_hex();
+        inline_enabled_text(terrain_box);
+        inline_refresh_hex();
         goto done;
     }
     if (page_changed(terraingen_box)) {
         terraingen_on = terraingen_box->get_value();
-        set_enabled_text(terraingen_box);
-        refresh_hex();
+        inline_enabled_text(terraingen_box);
+        inline_refresh_hex();
         goto done;
     }
 
@@ -57,12 +64,14 @@ void TerrainPage::update(float dt)
         set_enabled_text(river_box);
         refresh_hex();
     } else if (page_changed(x_slider)) {
+        float zero = 0.0f;
         float v = x_slider->get_float() * g_500 + g_140;
-        camera_x = clamp(&v, &g_clamp_lo, &g_140);
+        camera_x = clamp(&v, &zero, &g_clamp_lo);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(y_slider)) {
+        float zero = 0.0f;
         float v = y_slider->get_float() * g_500 + g_140;
-        camera_y = clamp(&v, &g_clamp_lo, &g_140);
+        camera_y = clamp(&v, &zero, &g_clamp_lo);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(z_slider)) {
         camera_z = z_slider->get_float() * g_0_01 + g_one;
