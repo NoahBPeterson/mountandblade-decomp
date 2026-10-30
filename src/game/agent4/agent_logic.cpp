@@ -1725,10 +1725,11 @@ weave_up:
         op.z = op.z - (float)(f55c4 & 2) * 0.8f;
 lead:
         if ((fl2 & 0x20) != 0 && att > 0.1f) {
-            float dx = op.x - eye.x;
-            float dy = op.y - eye.y;
-            float dz = op.z - eye.z;
-            float dist = (float)sqrt(dx * dx + dz * dz + dy * dy);
+            float dx = op.x - P->x;          // from the agent's position, not the eye (0x449c44: fsub [edi], edi = &pos)
+            float dy = op.y - P->y;
+            float dz = op.z - P->z;
+            float dxz = dx * dx + dz * dz;   // dy^2 is added last (0x449c69..0x449c7f); in one expression cl summed dz, dy, dx
+            float dist = (float)sqrt(dxz + dy * dy);
             float s = 40.0f - (float)g_game->troops[troop].fb0;
             if (0.0f > s)
                 s = 0.0f;

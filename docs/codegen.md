@@ -729,6 +729,26 @@ only the x87 arithmetic.
   takes its arguments on the x87 stack in double precision. Cast the arguments
   to `double`. A `call` with no pushed arguments, right after two values are
   left on the x87 stack, is the sign of an intrinsic (`_CIpow`, `_CIatan2`, …).
+  **Check which intrinsic it is:** M&B `emitter::update` 0x412150 called
+  `pow(t, 4000.0)` where the original calls `_CIfmod` 0x536a6a (0x41223a). The
+  relocation is masked in a byte diff, so only the equivalence harness saw it.
+- **cl evaluates a written three-term sum in reverse.** VC7.1 emits the source
+  text `n[2] + n[1] + n[0]` as `n[0] + n[1] + n[2]`. To get the original's
+  descending order (0x47156f), write it ascending (`terrain_b`
+  `generate_heights` 0x4713d0: a cell weight was off by 1 ulp). Read the order
+  from the disassembly and check the compiled order; don't trust the source text.
+  Dot products are the common case: `collide_entity` 0x427000 and
+  `pick_diagonals` 0x4666b0 add the x term last (`a.y*b.y + a.z*b.z + a.x*b.x`, or
+  the `z, y, x` order). A wrong order turned an exact 0 into a value > 0 and
+  flipped a branch.
+- **An argument slot of a "dead" neighbour gets reused.** When the original
+  passes `&x` and the callee also reads the `y` stored beside it (`p[0]`, `p[1]`),
+  cl may consider `y` dead after its last named use and reuse its home for
+  another value. That happened even with `volatile y`, with a `float* volatile`
+  pointer to y, and with a two-float temporary. The callee then reads garbage
+  (`terrain_b` `blend` 0x471040, ground_height 0x470f40). Pass a real pair,
+  `float p[2] = { x, y }; f(p);`. That costs two stores, but the callee gets the
+  same values.
 
 ### 9.5 Reading float mismatches
 

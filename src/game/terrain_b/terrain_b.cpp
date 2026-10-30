@@ -847,8 +847,13 @@ void GameData::blend(float* out, float x, float y)
     float r3 = wn.w + t * s3;
     if (g_level == 0)
         t = 1.0f;
-    else
-        ground_height(g_level, &x, &t);
+    else {
+        // ground_height reads p[0] and p[1]: the original passes &x (0x471163) and the callee reads the y beside it.
+        // cl treats y as dead after the loop and reused its home (for t, a spill, even a pointer to y), so p[1]
+        // read garbage and ours faulted where the original returned. A real pair gives the callee the same x, y.
+        float p[2] = { x, y };
+        ground_height(g_level, p, &t);
+    }
     out[0] = r0 - t * 10.0f;
     out[1] = r1;
     out[2] = r2 * t + r2;
@@ -895,7 +900,7 @@ void Terrain::generate_heights()
             p[1] = off[1] + cell[x][y].py;
             p[2] = off[2] + cell[x][y].pz;
             noise_fractal(noise_seed, 0.6f, 1, 0, p, n);
-            float v = (n[2] + n[1] + n[0]) * fl * 9.0f;
+            float v = (n[0] + n[1] + n[2]) * fl * 9.0f;   // cl emits this as n[2] + n[1] + n[0] (0x47156f), as the original
             if (v < 0.0f) v = 0.0f;
             else if (v >= 1.0f) v = 1.0f;
             cell[x][y].weight = ((float)cos(v * 3.1415927f) + 1.0f) * 0.45f + 0.1f;
