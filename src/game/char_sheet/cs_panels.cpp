@@ -38,7 +38,7 @@ void CharSheet::refresh_panels()
 
     if (((SheetWidget*)f_4c4)->has_label == 0) {
         tstring* n = g_strtable.find(&c->key);
-        if (n == 0) n = &c->key;
+        if (n == 0) n = (tstring*)c;     // 0x4f08d6: mov eax, esi (the Troop itself, not its key at +0x20)
         tstring t(n->c_str());
         f_4c4->set_text(&out, t);
     }
@@ -59,7 +59,7 @@ void CharSheet::refresh_panels()
         tstring k("ui_next_level_at");
         mb_vsprintf(line, g_strtable.lookup(k)->c_str(), g_level_table[c->level]);
     }
-    POS(xp_bar, line, "char_t_next_level_y", "char_t_next_level_x");
+    POS(xp_bar, line, "char_t_next_level_at_y", "char_t_next_level_at_x");
 
     if ((c->flags32 & 0x10) != 0) {
         tstring k("ui_health_player");
@@ -80,13 +80,13 @@ void CharSheet::refresh_panels()
         tstring k("ui_attribute_points");
         mb_snprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->attr_points);
     }
-    POS(level_at, line, "char_t_attribut_points_y", "char_t_attribut_points_x");
+    POS(level_at, line, "char_t_attrib_points_y", "char_t_attrib_points_x");
 
     {
         tstring k("ui_skill_points");
         mb_snprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->skill_points);
     }
-    POS(level_at, line, "char_t_skillts_y", "char_t_skillts_x");
+    POS(level_at, line, "char_t_skill_points_y", "char_t_skill_points_x");
 
     {
         tstring k("ui_weapon_points");
@@ -95,7 +95,7 @@ void CharSheet::refresh_panels()
     POS(level_at, line, "char_t_weapon_points_y", "char_t_weapon_points_x");
 
     for (i = 0; i < 4; i++) {
-        mb_snprintf(line, 0x200, "%s:  %d",
+        mb_snprintf(line, 0x200, "%s: %d",
                    g_strtable.lookup(i == 0 ? tstring("ui_str") : i == 1 ? tstring("ui_agi")
                                      : i == 2 ? tstring("ui_int") : tstring("ui_cha"))->c_str(),
                    stats[i]);

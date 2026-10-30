@@ -94,7 +94,11 @@ void __fastcall quest_window::build()
     ((gui_manager*)0x5d7080)->reset();   // 0x42d1b0
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared
     widget* win = (widget*)operator new(0x190);
-    win = win ? (widget*)((ContainerW*)win)->construct() : 0;
+    if (win) {
+        ((ContainerW*)win)->construct();     // 0x4931a0
+        *(void**)win = (void*)0x592848;      // 0x4ee268
+        *((char*)win + 0x188) = 0;           // 0x4ee26e
+    }
     window = win;
     float pos[2];
     pos[0] = 0.0f;
@@ -104,8 +108,12 @@ void __fastcall quest_window::build()
     size[0] = 1.0f;
     size[1] = 0.75f;
     win->set_size(size);
-    tstring bg("ui_quests_window");
-    win->add_item(0, g_resmgr.get_object((const rgl::string*)&bg)->clone());
+    mesh* bgm;
+    {
+        tstring bg("quests_window");   // 0x598810 (no "ui_" prefix); destroyed right after the clone
+        bgm = g_resmgr.get_object((const rgl::string*)&bg)->clone();
+    }
+    win->add_item(0, bgm);
     g_frame_flag = 1;
     ((NodeVec*)0x5d7080)->push_back((NodeA* const&)win);   // 0x49b120
 
@@ -151,15 +159,15 @@ void __fastcall quest_window::build()
     *(int*)((char*)active_tab + 0x184) = 1;
     *(int*)((char*)finished_tab + 0x184) = 1;
     if (mode == 0)
-        VCALL0(active_tab, 0x2c);
+        active_tab->set_focus(1);     // 0x4ee532: push 1; call [vtbl+0x2c]
     else
-        VCALL0(finished_tab, 0x2c);
+        finished_tab->set_focus(1);
     f250 = -1;
     refresh();
 
     // the quest list frame: 0x188 bytes, vtable 0x5924a0
     float h = (float)count * g_54ab1c + g_591d54;
-    if (h > g_5987e4)
+    if (h < g_5987e4)     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
         h = 0.56f;
     widget* fr = (widget*)operator new(0x188);
     if (fr) {
@@ -180,17 +188,15 @@ void __fastcall quest_window::build()
     frame->add_item(0, make_background((float*)((char*)frame + 0xf0), (int)0xff000000));
 
     // one row per listed quest
+    h -= g_54b4d0;     // 0x4ee623: fsub [0x54b4d0] (0.05) before the loop
     for (int i = 0; i < count; i++) {
         char* q = QUEST(indices[i]);
         tstring text(*(tstring*)(q + 0x40));
+        char buf[512];
         if (q[0x50] & 1) {
-            char buf[512];
-            mb_snprintf(buf, 0x200, "(%d)", *(int*)(q + 0x64) & 0xff);
-            text.assign(buf);
+            mb_snprintf(buf, 0x200, "%s (%d%%)", text.buf ? text.buf : (char*)&text, *(int*)(q + 0x64) & 0xff);
         } else {
-            char buf2[512];
-            mb_snprintf(buf2, 0x200, "%s", text.buf ? text.buf : (char*)&text);
-            text.assign(buf2);
+            mb_snprintf(buf, 0x200, "%s", text.buf ? text.buf : (char*)&text);
         }
         widget* row = (widget*)operator new(0x188);
         if (row) {
@@ -210,24 +216,27 @@ void __fastcall quest_window::build()
         rs[0] = 0.3f;
         rs[1] = 0.04f;
         row->set_size(rs);
-        float tp[2];
-        tp[0] = 1.0f;
-        tp[1] = 0.0f;
-        VCALL2(row, 0xa4, &text, tp);
+        {
+            // set_text(out, text): `out` is the hidden pointer of the 8-byte result (never initialised, 0x4ee750),
+            // text is a temporary tstring built from the formatted buffer and destroyed right after the call
+            char ret[8];
+            tstring shown(buf);
+            row->set_text((tstring*)ret, &shown);
+        }
         int a = -1;
-        VCALL1(row, 0x98, (int)&a);
-        int b = -1000;
-        VCALL1(row, 0x9c, (int)&b);
+        row->set_value_a(&a);
+        int b = -3941;     // 0xfffff09b
+        row->set_value_b(&b);
         frame->add_child(row);
     }
-    make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f);
+    widget* track = make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f);
     float lpos[2];
-    lpos[0] = -0.02f;
-    lpos[1] = 0.58f;
+    lpos[0] = 0.1f;     // 0x4ee7ea..: pos = [esp+0x4c] (0.1, 0.11), size = [esp+0x44] (0.32, 0.58)
+    lpos[1] = 0.11f;
     float lsize[2];
-    lsize[0] = 0.1f;
-    lsize[1] = 0.11f;
-    list = make_quest_list(frame, lpos, lsize, 0x3f800000);
+    lsize[0] = 0.32f;
+    lsize[1] = 0.58f;
+    list = make_quest_list(frame, lpos, lsize, (int)track);
     window->add_child(list);
 }
 
