@@ -45,5 +45,18 @@
       "this+c=4,6,8,10@0.9"
     ],
     "why": "strip_tags scans for '<' ... '>' pairs; the typed strings' alphabet (a-z0-9_) never contains them and the length field (+0xc) is independent of the buffer, so the loop body was never entered (14/40 edges). --text-chars adds markup characters to the generated strings, the hint keeps len within the buffer. Nothing is discarded."
+  },
+  "agent_ai 0043b4d0": {
+    "args": [
+      "--hint",
+      "this+50=0,3e800000@0.9",
+      "--hint",
+      "this+54=0,3e800000@0.9",
+      "--hint",
+      "this+58=0,3e800000@0.9",
+      "--typed-share",
+      "0.8"
+    ],
+    "why": "Agent::pick_target clamps 3.0/dist to 4.0 only when the target is within 0.75 of this->pos; random floats are never that close. Soft hints bias this+0x50..0x58 (pos) to 0 / 0.25 (nothing discarded); with them all 10/10 edges are covered."
   }
 }
