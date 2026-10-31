@@ -44,7 +44,7 @@ def main():
                     ">= 50%%), break in and report where, then end it")
     ap.add_argument("--cmds", default="", help="extra winedbg commands run at the fault (';'-separated), e.g. "
                     "'x /4x $ecx' (their output is in dbg.log)")
-    ap.add_argument("--winedebug", default="-all", help="WINEDEBUG channels for the run (default -all), e.g. '+seh' to log "
+    ap.add_argument("--winedebug", default="err+all,fixme-all", help="WINEDEBUG channels for the run (default -all), e.g. '+seh' to log "
                     "every exception Wine dispatches, including one that kills the process before winedbg hears of it")
     ap.add_argument("--break", dest="brk", action="append", default=[], help="stop at this address (hex or a map "
                     "symbol, e.g. __purecall) and report as for a fault")
@@ -62,7 +62,11 @@ def main():
     report = "info reg\nbt 40\nx /3072x $esp\n" + "".join(c.strip() + "\n" for c in a.cmds.split(";") if c.strip())
     hung = False
     with open(log_path, "w") as log:
-        p = subprocess.Popen([CX, "--bottle", a.bottle, "--cx-app", "winedbg", WINPATH], cwd=game,
+        # CrossOver drops Wine's own messages (err:, an assertion in wined3d, +seh traces) unless they go to a log
+        # file: keep them next to dbg.log, so a process that dies without winedbg seeing a fault still says why
+        wine_log = os.path.join(ROOT, "work", "relink", "standalone", "wine.log")
+        p = subprocess.Popen([CX, "--bottle", a.bottle, "--cx-log", wine_log, "--debugmsg", a.winedebug,
+                              "--cx-app", "winedbg", WINPATH], cwd=game,
                              stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT, text=True,
                              env=dict(os.environ, WINEDEBUG=a.winedebug))
         for b in a.brk:
