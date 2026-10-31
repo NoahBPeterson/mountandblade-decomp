@@ -27,7 +27,7 @@
 ../src/game/triggers/trigger_vec.cpp  ?DeleteDeviceObjects@Core@@UAEJXZ  004c1ad0  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?gfx_restore@@YAJXZ  004c1b00  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?construct@Alloc2c@@QAEXPAXPBX@Z  004c1b20  /O2 /MT /Gy /TP
-../src/game/triggers/trigger_vec.cpp  ?construct@Alloc204@@QAEXPAXPBX@Z  004c1b40  /O2 /MT /Gy /TP
+../src/game/triggers/alloc204.cpp  ?construct@Alloc204@@QAEXPAXPBX@Z  004c1b40  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ??0ini_file@@QAE@XZ  004c1be0  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?stamp@TriggerVec@@QAEXH@Z  004c1d70  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ??0trigger_entry@@QAE@XZ  004c1de0  /O2 /MT /Gy /TP

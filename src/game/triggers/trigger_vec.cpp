@@ -1160,13 +1160,6 @@ void Alloc2c::construct(void* dst, const void* src)
         *(blk2c*)dst = *(const blk2c*)src;
 }
 
-// @ 0x4c1b40
-void Alloc204::construct(void* dst, const void* src)
-{
-    if (dst)
-        *(blk204*)dst = *(const blk204*)src;
-}
-
 // @ 0x4c1b60
 // (std::uninitialized_copy with the empty iterator-tag class passed as a 5th argument, which is what keeps first/dst in esi/edi; the catch(...) funclet at 0x4c1bcc is the rethrow `push 0; push 0; call _CxxThrowException`)
 char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a, ptr_tag tag)
@@ -1180,6 +1173,9 @@ char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a, ptr_t
     }
     return dst;
 }
+
+// (Alloc204::construct 0x4c1b40 is in alloc204.cpp: the original compiled it outside this object, so uninit_copy_204 and
+// copy_uninit_204 call it without seeing its body)
 
 // ---- the ini table's constructor (two 0x1000-entry tables: 0xa18238 module_info, 0xa44240 game variables) ---------------------
 // @ 0x4c1be0
