@@ -248,8 +248,8 @@ void world::render_part(scene* view, int rem, int div)
         if (e->id % div == rem) {
             vector4 c;
             c.x = e->local.f.x * e->vc4.y + e->local.u.x * e->vc4.z + e->local.s.x * e->vc4.x + e->local.o.x;
-            c.y = e->local.s.y * e->vc4.x + e->local.f.y * e->vc4.y + e->local.u.y * e->vc4.z + e->local.o.y;
-            c.z = e->local.s.z * e->vc4.x + e->local.f.z * e->vc4.y + e->local.u.z * e->vc4.z + e->local.o.z;
+            c.y = e->local.s.y * e->vc4.x + (e->local.f.y * e->vc4.y + e->local.u.y * e->vc4.z) + e->local.o.y;
+            c.z = e->local.s.z * e->vc4.x + (e->local.f.z * e->vc4.y + e->local.u.z * e->vc4.z) + e->local.o.z;
             float r = e->get_radius();
             int n = view->fr.nplanes;
             int ok = 1;
