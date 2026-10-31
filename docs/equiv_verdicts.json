@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T12:01:51-05:00",
-"commit": "47f605f",
+"when": "2026-10-31T13:25:42-05:00",
+"commit": "44c36cf",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -10,8 +10,8 @@
 ],
 "summary": {
 "pass": 440,
-"weak": 439,
-"fail": 9,
+"weak": 437,
+"fail": 11,
 "inputs": 27,
 "harness": 33,
 "comdat": 118,
@@ -19,8 +19,8 @@
 "funclet": 0,
 "not_run": 4,
 "pass_sz": 154391,
-"weak_sz": 600574,
-"fail_sz": 30607,
+"weak_sz": 587387,
+"fail_sz": 43794,
 "inputs_sz": 25127,
 "harness_sz": 75211,
 "comdat_sz": 2793,
@@ -1656,8 +1656,8 @@
 "00448eb0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 11644
 },
 "0044bc30": {
@@ -4286,8 +4286,8 @@
 "004b7840": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 1543
 },
 "004b7e50": {
