@@ -1231,7 +1231,7 @@ void MissionCtx::update_anim()
                     k = (*(int*)&g_skill_tbl[36].cap);
                 int n = t->f58[0] + k * 2 + 0x23;
                 float g = (float)(int)((float)n * g_half + g_three);
-                if (!(g <= t->hp))
+                if (g > t->hp)          // fcom; test ah,0x41; jne skip (0x516834): a NaN hp skips
                     t->hp = g;
             }
         }

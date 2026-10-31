@@ -34,5 +34,16 @@
       "--rand-seeded"
     ],
     "why": "the harness rand() always starts from state 1, so the first draw is always 41 and ItemRef::randomize_modifier's `rand()%15817*k < 0.1` early return (and the draw-dependent loops of spawn_items) never varied; --rand-seeded seeds the sequence per input (both sides identical)"
+  },
+  "tstring 0042c5d0": {
+    "args": [
+      "--typed-share",
+      "1.0",
+      "--text-chars",
+      "<><><><>",
+      "--hint",
+      "this+c=4,6,8,10@0.9"
+    ],
+    "why": "strip_tags scans for '<' ... '>' pairs; the typed strings' alphabet (a-z0-9_) never contains them and the length field (+0xc) is independent of the buffer, so the loop body was never entered (14/40 edges). --text-chars adds markup characters to the generated strings, the hint keeps len within the buffer. Nothing is discarded."
   }
 }
