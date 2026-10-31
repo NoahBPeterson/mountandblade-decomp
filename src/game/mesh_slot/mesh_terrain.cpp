@@ -386,7 +386,7 @@ EChar* append_mesh(int colour, int kind, void** c, void** a, void** b, char carr
         ((FaceGenome*)&g_anim_view)->breed((const unsigned __int64*)a, (const unsigned __int64*)b, kind);     // 0x4746e0
     if (carried)
         g_x8ed4f64 = -1;
-    g_anim_view.collect((char)g_limit_hair_colors, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
+    g_anim_view.collect(g_limit_hair_colors != 0, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
 
     EChar* ec = &g_skins_begin[g_cur];
     int* rec = (int*)((char*)ec->mats + g_x8ed4f74 * 0xb0 + 0x18);

@@ -124,8 +124,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     DWORD_PTR proc_mask = 0, sys_mask = 0;
     GetProcessAffinityMask(GetCurrentProcess(), &proc_mask, &sys_mask);
-    (void)proc_mask;
-    if (g_cfg.force_single_threading == 0 && sys_mask > 1) {
+    (void)sys_mask;     // 0x4d9613 tests [esp+0x1c], the PROCESS mask (2nd out-parameter), not the system mask
+    if (g_cfg.force_single_threading == 0 && proc_mask > 1) {
         g_mt_inited = 1;
         InitializeCriticalSection(&g_mt_cs);
         g_mt_event = CreateEventA(NULL, FALSE, FALSE, NULL);
@@ -1153,7 +1153,7 @@ UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, flo
     int maxn = 0x800;
     decode_utf8(&text, &len, buf, &maxn);
     float t = (float)len * v * g_54b3b0;
-    float e = tmp - r * (c * k3);
+    float e = tmp - (r * c) * k3;               // 0x4dcdc7: r, * c, * k3 in that order
     if (t > e)
         v = v * (e / t);
     {
