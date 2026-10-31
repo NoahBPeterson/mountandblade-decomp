@@ -906,7 +906,7 @@ void PartyScreen::setup_skills()
             {
                 tstring* nm = g_strtable.find(&r->key);
                 if (nm == 0)
-                    nm = &r->key;
+                    nm = &r->name;                  // 0x505f14: the record itself (esi), not its key
                 tstring cap(*nm);
                 cap.capitalize();
                 sprintf(buf, "%s:", cap.c_str());
@@ -943,7 +943,7 @@ void PartyScreen::setup_skills()
                     {
                         tstring* nm = g_strtable.find(&se->key);
                         if (nm == 0)
-                            nm = &se->key;
+                            nm = &se->name;         // 0x5060d1: the row itself (edi), not its key
                         if (pq == best)
                             sprintf(buf, "%s (%d)", nm->c_str(), best);
                         else
@@ -990,7 +990,7 @@ void PartyScreen::setup_skills()
     d[1] = d[1] + list->fE4;
     PSO(list)->set_pos(d);
     {
-        MissionUi* lower = skills_base->screen[1] > list->screen[1] ? skills_base : list;
+        MissionUi* lower = skills_base->screen[1] > list->screen[1] ? list : skills_base;     // 0x50630c: the lower of the two
         float pos[2];
         pos[0] = list->screen[0];
         pos[1] = lower->screen[1];
@@ -1136,6 +1136,8 @@ void PartyScreen::refresh_selection()
     if (((rec->flags32 & 0x10) == 0 || sel_type != 0 || mode == 6) && (rec->flags32 & 0x10000000) == 0 && action) {
         PSO(action_btn)->act_bc();
         locked = 0;
+    } else {
+        action = false;                             // 0x506adb: the later `mode == 2 && action` reads the cleared flag
     }
 
     tstring caption(label);                         // a copy (0x506b08), alive to the end
