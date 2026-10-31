@@ -105,5 +105,58 @@
       "500"
     ],
     "why": "the bone-0 add_pos accumulation needs typed objects and more inputs (PASS with DIFFTEST_CONCOLIC=1; 61/68 edges without)"
+  },
+  "render_shape 004ed6f0": {
+    "args": [
+      "--inputs",
+      "1000",
+      "--extra-inputs",
+      "500",
+      "--hint",
+      "this+e0=3f333333,3e99999a,3f400000@0.7",
+      "--hint",
+      "this+f0=3f333333,3e99999a,3f400000@0.7",
+      "--hint",
+      "this+e4=3f333333,3e99999a@0.7",
+      "--hint",
+      "this+f4=3f333333,3e99999a,3f000000@0.7"
+    ],
+    "why": "render_shape_frame rounds four view-extent products (floor + 'fraction above 0.5' bump); random floats almost never land the fraction above 0.5 for every product, so two of the +1 edges were missed. Soft hints on the four view-rect floats (this+0xe0/e4/f0/f4) only, nothing discarded (10/10 edges with them)."
+  },
+  "editor_ui 004f6360": {
+    "args": [
+      "--inputs",
+      "1000",
+      "--extra-inputs",
+      "500"
+    ],
+    "why": "_Uninit_fill_n wrapper: 46 bytes, but most random inputs fault on the 0x1f8-byte TextRow copies; the default 400 inputs gave 168 valid (< 200). More inputs only."
+  },
+  "module_load 004d1230": {
+    "args": [
+      "--inputs",
+      "1500",
+      "--extra-inputs",
+      "800"
+    ],
+    "why": "std::_Uninit_copy over 0x68-byte elements: most random pointer ranges fault, the default budget gave 186 valid (< 200). More inputs only."
+  },
+  "module_load 004d12c0": {
+    "args": [
+      "--inputs",
+      "1500",
+      "--extra-inputs",
+      "800"
+    ],
+    "why": "std::_Uninit_copy over 0xb0-byte elements: most random pointer ranges fault, the default budget gave 199 valid (< 200). More inputs only."
+  },
+  "loading_screen 0050f930": {
+    "args": [
+      "--inputs",
+      "1500",
+      "--extra-inputs",
+      "800"
+    ],
+    "why": "straight-line build_frames: the default budget gave 119 valid (< 200) because the mesh/resmgr calls fault on many random `this`. More inputs only."
   }
 }
