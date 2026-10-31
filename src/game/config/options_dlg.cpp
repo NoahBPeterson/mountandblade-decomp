@@ -391,8 +391,9 @@ void OptionsDlg::choose_dx_settings(Config* cfg, bool overwrite)
     WCHAR name[0x100];
     char mem_text[0x100];
 
-    CoInitialize(0);
     do {
+        if (CoInitialize(0) < 0)                // a failed CoInitialize skips straight to the releases
+            break;
         if (CoCreateInstance(CLSID_DxDiagProvider, 0, 1, IID_IDxDiagProvider, (void**)&provider) < 0)
             break;
         if (!provider)
