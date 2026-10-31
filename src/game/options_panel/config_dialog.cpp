@@ -180,19 +180,21 @@ const char k_config[] = "rgl_config.txt";        // 0x54b048
 // @ 0x4cf7b0
 void Dialog::fill_video_tab()
 {
-    int item[3];
+    // TCM_INSERTITEM's TCITEM (0x4cf7c5 / 0x4cf7cd): mask TCIF_TEXT at +0, pszText at +0xc, iImage -1 at +0x14; the
+    // other fields stay as the stack left them
+    int item[6];
     item[0] = 1;
-    item[2] = -1;
+    item[5] = -1;
     m_ctrl = 0;
 
     HWND tabs = GetDlgItem(m_hwnd, 0x43d);
-    item[1] = (int)KEY_TEXT("ui_video");
+    item[3] = (int)KEY_TEXT("ui_video");
     SendMessageA(tabs, 0x1307, 0, (LPARAM)item);
-    item[1] = (int)KEY_TEXT("ui_audio");
+    item[3] = (int)KEY_TEXT("ui_audio");
     SendMessageA(tabs, 0x1307, 1, (LPARAM)item);
-    item[1] = (int)KEY_TEXT("ui_game");
+    item[3] = (int)KEY_TEXT("ui_game");
     SendMessageA(tabs, 0x1307, 2, (LPARAM)item);
-    item[1] = (int)KEY_TEXT("ui_advanced");
+    item[3] = (int)KEY_TEXT("ui_advanced");
     SendMessageA(tabs, 0x1307, 3, (LPARAM)item);
 
     RECT dlg;
@@ -215,7 +217,7 @@ void Dialog::fill_video_tab()
         SendMessageA(modes, 0x14b, 0, 0);
         std::vector<tstring> list = list_modes();
         for (unsigned i = 0; i < list.size(); i++)
-            SendMessageA(modes, 0x14a, i, (LPARAM)list[i].buf);
+            SendMessageA(modes, 0x14a, i, (LPARAM)list[i].c_str());   // the empty string passes &buf (0x4cfa14)
     }
     SendMessageA(modes, 0x14a, 0, (LPARAM)KEY_TEXT("ui_use_desktop_resolution"));
 
@@ -246,9 +248,7 @@ void Dialog::fill_video_tab()
     // a copy of the table's string that lives to the end of the function; the key dies with its statement
     tstring caption(*strtab_entry(tstring("ui_configure_caption")));
     {
-        char* p = caption.buf;
-        if (!p)
-            p = (char*)&caption;
+        char* p = (char*)caption.c_str();      // an empty string passes &buf (0x4cfc97)
         SendMessageA(m_hwnd, 0xc, 0, (LPARAM)p);
     }
 
@@ -286,7 +286,7 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         m_hwnd = hwnd;
         SkinDialog(hwnd, "Dialog");
         char path[256];
-        sprintf(path, "%s", k_config);
+        sprintf(path, k_config);          // the file name is the format string itself (0x4d0295)
         user_path(path);
         if (mb_file_exists(path)) {
             FILE* f = mb_open_user_file(k_config, "r");
@@ -306,16 +306,12 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         SetWindowTextA(GetDlgItem(m_hwnd, 0x450), text);
         return 1;
     }
-    case WM_COMMAND:
-        if (wParam != 0x43d) {
-            DefWindowProcA(hwnd, msg, wParam, lParam);
-            __asm pop edi
-            __asm pop esi
-            __asm add esp, 208h
-            __asm ret 10h
-        }
+    case WM_NOTIFY:             // 0x4e: only the tab control (0x43d, compared as a 16-bit word) is handled
+        if ((short)wParam != 0x43d)
+            return DefWindowProcA(hwnd, msg, wParam, lParam);
         ((OptionsDlg*)this)->set_active_tab((int)SendMessageA(GetDlgItem(m_hwnd, 0x43d), 0x130b, 0, 0));
         // falls through to the control dispatch: a tab notification also runs it
+    case WM_COMMAND:            // 0x111 enters the dispatch directly (4d03d1)
         switch (wParam & 0xffff) {
         case 1: {               // ok: write the config back
             ((Core*)this)->read_options();
@@ -331,7 +327,7 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case 0x448:             // refresh-rate edit: keep 10..999, else restore
             if ((wParam >> 16) == 0x200) {
                 BOOL ok;
-                UINT v = GetDlgItemInt(m_hwnd, 0x448, &ok, 0);
+                int v = (int)GetDlgItemInt(m_hwnd, 0x448, &ok, 0);   // signed compares (jl / jge)
                 if (ok && v >= 10 && v < 1000) {
                     orig::g_opt_5aa0b4 = v;
                 } else {
