@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T06:39:39-05:00",
-"commit": "5270b59",
+"when": "2026-10-31T12:01:51-05:00",
+"commit": "47f605f",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,18 +9,18 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 442,
-"weak": 438,
-"fail": 8,
+"pass": 440,
+"weak": 439,
+"fail": 9,
 "inputs": 27,
 "harness": 33,
 "comdat": 118,
 "comdatdiff": 11,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 154593,
-"weak_sz": 600713,
-"fail_sz": 30266,
+"pass_sz": 154391,
+"weak_sz": 600574,
+"fail_sz": 30607,
 "inputs_sz": 25127,
 "harness_sz": 75211,
 "comdat_sz": 2793,
@@ -1719,8 +1719,8 @@
 "0044f240": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 377
 },
 "0044f3c0": {
@@ -1733,8 +1733,8 @@
 "0044f5d0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 199
 },
 "0044f6a0": {
@@ -5273,8 +5273,8 @@
 "004d6b80": {
 "module": "keys_page",
 "file": "src/game/options_panel/keys_page.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 582
 },
 "004d6f90": {
@@ -6379,8 +6379,8 @@
 "00504e20": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 208
 },
 "00504ef0": {
@@ -7051,8 +7051,8 @@
 "00520c00": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 341
 },
 "00520d60": {

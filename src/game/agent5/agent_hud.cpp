@@ -1598,7 +1598,8 @@ char MWidget::on_event(unsigned ev)
 {
     char r = 0;
     if ((ev & 7) != 0) {
-        int id = cur;
+        int id[2];                          // +0x94 writes its 8-byte result here (0x4fd2ba reuses the slot)
+        id[0] = cur;
         cur = -1;
         int* ids = list_e.first;
         unsigned i = 0, off = 0;
@@ -1613,8 +1614,8 @@ char MWidget::on_event(unsigned ev)
                             break;
                         }
         }
-        if (cur != id)
-            U()->get_xy((float*)&id);
+        if (cur != id[0])
+            U()->get_xy((float*)id);
     } else if ((ev & 8) != 0) {
         int* ids = list_e.first;
         r = 1;
