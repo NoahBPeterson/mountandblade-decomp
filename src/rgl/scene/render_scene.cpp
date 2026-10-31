@@ -123,12 +123,62 @@ static __forceinline int in_frustum_n(scene* sc, const vector4* p, float r)
     return inside;
 }
 
-// world position of an entity's bounding-sphere centre
+// world position of an entity's bounding-sphere centre. The original inlines this three times and the sums are
+// grouped differently per copy and per component (float addition is not associative, so each copy is spelled out):
+// the ents loop (0x4298f2: x = f,u,s; y and z = f,s,u), the ents2 loop (0x429a35: f,u,s) and the reflection loop
+// (0x429f80: x = u,f,s; y and z = u,s,f).
 static __forceinline void centre(vector4& c, entity* e)
 {
-    c.x = e->local.s.x * e->vc4.x + (e->local.f.x * e->vc4.y + e->local.u.x * e->vc4.z) + e->local.o.x;
-    c.y = e->local.s.y * e->vc4.x + (e->local.f.y * e->vc4.y + e->local.u.y * e->vc4.z) + e->local.o.y;
-    c.z = e->local.s.z * e->vc4.x + (e->local.f.z * e->vc4.y + e->local.u.z * e->vc4.z) + e->local.o.z;
+    const mat4& l = e->local;
+    const vector4& v = e->vc4;
+    float x = l.f.x * v.y;
+    x = x + l.u.x * v.z;
+    x = x + l.s.x * v.x;
+    c.x = x + l.o.x;
+    float y = l.f.y * v.y;
+    y = y + l.s.y * v.x;
+    y = y + l.u.y * v.z;
+    c.y = y + l.o.y;
+    float z = l.f.z * v.y;
+    z = z + l.s.z * v.x;
+    z = z + l.u.z * v.z;
+    c.z = z + l.o.z;
+}
+
+static __forceinline void centre2(vector4& c, entity* e)
+{
+    const mat4& l = e->local;
+    const vector4& v = e->vc4;
+    float x = l.f.x * v.y;
+    x = x + l.u.x * v.z;
+    x = x + l.s.x * v.x;
+    c.x = x + l.o.x;
+    float y = l.f.y * v.y;
+    y = y + l.u.y * v.z;
+    y = y + l.s.y * v.x;
+    c.y = y + l.o.y;
+    float z = l.f.z * v.y;
+    z = z + l.u.z * v.z;
+    z = z + l.s.z * v.x;
+    c.z = z + l.o.z;
+}
+
+static __forceinline void centre3(vector4& c, entity* e)
+{
+    const mat4& l = e->local;
+    const vector4& v = e->vc4;
+    float x = l.u.x * v.z;
+    x = x + l.f.x * v.y;
+    x = x + l.s.x * v.x;
+    c.x = x + l.o.x;
+    float y = l.u.y * v.z;
+    y = y + l.s.y * v.x;
+    y = y + l.f.y * v.y;
+    c.y = y + l.o.y;
+    float z = l.u.z * v.z;
+    z = z + l.s.z * v.x;
+    z = z + l.f.z * v.y;
+    c.z = z + l.o.z;
 }
 
 // @ 0x429890
@@ -153,7 +203,7 @@ void world::render_scene(scene* sc, bool reflect)
     for (entity** it = ents2._Myfirst; it < ents2._Mylast; ++it) {
         float r;
         vector4 c;
-        centre(c, *it);
+        centre2(c, *it);
         r = (*it)->get_radius();
         if (in_frustum(sc, &c, r))
             (*it)->render(sc, &info);
@@ -231,7 +281,7 @@ void world::render_scene(scene* sc, bool reflect)
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
         float r;
         vector4 c;
-        centre(c, *it);
+        centre3(c, *it);
         r = (*it)->get_radius();
         if (in_frustum_n(sc->refl, &c, r))
             (*it)->render(sc->refl, &rinfo);
