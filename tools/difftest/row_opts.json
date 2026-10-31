@@ -58,5 +58,12 @@
       "0.8"
     ],
     "why": "Agent::pick_target clamps 3.0/dist to 4.0 only when the target is within 0.75 of this->pos; random floats are never that close. Soft hints bias this+0x50..0x58 (pos) to 0 / 0.25 (nothing discarded); with them all 10/10 edges are covered."
+  },
+  "mesh_pass 0047e520": {
+    "args": [
+      "--transparent",
+      "4119d0"
+    ],
+    "why": "RenderPass::render copies the pass into a local vector<int> with the out-of-line std::vector<int>::push_back (0x4119d0) that ours inlines; 0x410610/0x410b60 are already auto-transparent, so the allocation (engine_new) inside the hidden call made the depth-1 trace of ours differ from the original in every input that also reached a later transparent allocation (call #6 mismatch, not a behavioural difference)"
   }
 }
