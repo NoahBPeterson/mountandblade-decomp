@@ -84,10 +84,10 @@ extern int g_a17148;                            // 0xa17148
 extern int g_a1717c;                            // 0xa1717c
 extern int g_5a9fbc;                            // 0x5a9fbc
 extern int g_5a9fd8;                            // 0x5a9fd8  listener already set
-extern int g_map_min_x;                            // 0x5aa120  map min x (-50)
-extern int g_map_max_x;                            // 0x5aa118  map max x ( 50)
-extern int g_map_min_y;                            // 0x5aa124  map min y (-50)
-extern int g_map_max_y;                            // 0x5aa11c  map max y ( 50)
+extern float g_map_min_x;                            // 0x5aa120  map min x (-50)
+extern float g_map_max_x;                            // 0x5aa118  map max x ( 50)
+extern float g_map_min_y;                            // 0x5aa124  map min y (-50)
+extern float g_map_max_y;                            // 0x5aa11c  map max y ( 50)
 extern char g_world0[0x28];                     // the strategy world whose +0x28 cell table 0x470f40 reads
 
 // the by-name float constants (the originals live in the read-only pools noted here)
