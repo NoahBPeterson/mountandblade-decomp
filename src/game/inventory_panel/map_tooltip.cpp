@@ -145,7 +145,7 @@ int __stdcall draw_party_line(int index)
         }
         {
             tstring s(buf);
-            g_gui.draw_string(&s, 0.0249f, 0xfff0f0f0, 1);
+            g_gui.draw_string(&s, 0.025f, 0xfff0f0f0, 1);
         }
 
         int size = info->flags & 0xff;
@@ -172,7 +172,7 @@ int __stdcall draw_party_line(int index)
         }
         {
             tstring s(buf);
-            g_gui.draw_string(&s, 0.0249f, 0xfff0f0f0, 1);
+            g_gui.draw_string(&s, 0.025f, 0xfff0f0f0, 1);
         }
     }
 
@@ -181,25 +181,28 @@ int __stdcall draw_party_line(int index)
         if (!(f & 0x10000000)) {
             int n = (f >> 8) & 0xff;
             if (n != 0xff && n > 0) {
+                // skills 4..9 draw the template name only while n % 7 < skill - 3 (0x51c441 .. 0x51c4eb jl 0x51c506);
+                // otherwise the function returns with eax = n / 7 (the idiv quotient); skill >= 10 always draws
                 if (skill == 4) {
-                    if (n % 7 != 0)
+                    if (n % 7 >= 1)
                         return n / 7;
                 } else if (skill == 5) {
-                    if (n % 7 > 1)
+                    if (n % 7 >= 2)
                         return n / 7;
                 } else if (skill == 6) {
-                    if (n % 7 > 2)
+                    if (n % 7 >= 3)
                         return n / 7;
                 } else if (skill == 7) {
-                    if (n % 7 > 3)
+                    if (n % 7 >= 4)
                         return n / 7;
                 } else if (skill == 8) {
-                    if (n % 7 > 4)
+                    if (n % 7 >= 5)
                         return n / 7;
                 } else if (skill == 9) {
-                    if (n % 7 > 5)
+                    if (n % 7 >= 6)
                         return n / 7;
-                } else if (skill >= 10) {
+                }
+                {
                     PartyCellRec* r = &g_party_templates[n];
                     unsigned color;
                     if (g_show_faction_color != 0)
