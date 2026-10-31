@@ -85,7 +85,8 @@ struct mesh : mesh_base {
     unsigned color;              // 0x3c: packed ARGB multiplier
     int f40;
     float f44;
-    int f48, f4c;
+    float f48;                   // 0x48: texture animation phase (render_scene 0x46e590 multiplies the frame count by it)
+    int f4c;
     std::vector<vertex60> v50;
     std::vector<elem30> v60;
     std::vector<point20> v70;

@@ -643,7 +643,6 @@ command:
         ((graph_obj*)EDIT_OBJ)->update_edge_mode();
         g_game->sub_mode = 1;
         ((CreateGameOptionsPage*)this)->update_checks();
-        g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
@@ -652,7 +651,6 @@ command:
         ((graph_obj*)EDIT_OBJ)->update_poly_mode();
         g_game->sub_mode = 2;
         ((CreateGameOptionsPage*)this)->update_checks();
-        g_game->dirty = 1;
         g_editor->need_redraw[0] = 1;
         g_editor->need_redraw[1] = 1;
         g_editor->need_redraw[2] = 1;
@@ -733,51 +731,30 @@ command:
             conv_build_scene((conv_rec*)&orig::g_terrain);
         }
         return 1;
-    case 0x4c8:
-    case 0x4c9:
-    case 0x4ca: {
-        int r = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_GETPOS, 0, 0);
-        int g = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_GETPOS, 0, 0);
-        int b = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_GETPOS, 0, 0);
-        char num[64];
-        char text[64];
-        _itoa(r, num, 10);
-        GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
-        if (_stricmp(num, text) != 0)
-            SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, num);
-        _itoa(g, num, 10);
-        GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
-        if (_stricmp(num, text) != 0)
-            SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, num);
-        _itoa(b, num, 10);
-        GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
-        if (_stricmp(num, text) != 0)
-            SetDlgItemTextA(m_hMapEditorDlg, 0x4ce, num);
-        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4cb), 0x443,
-                     (WPARAM)(((b & 0xff) << 16) | (r & 0xff) | ((g & 0xff) << 8)), 0);
-        g_game->col_r = (float)r * g_color_unit;
-        g_game->col_g = (float)g * g_color_unit;
-        g_game->col_b = (float)b * g_color_unit;
-        g_game->col_a = 0.0f;
-        return 1;
-    }
     case 0x4cd: {
         if (HIWORD(wParam) != 0x400)
             return 1;
         char text[0x40];
         long v;
         GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
+        // the edit text is rewritten only when the value had to be corrected (empty, negative or above 255: 0x50078c);
+        // an in-range value goes straight to the trackbar (0x5007b3)
+        bool fix = true;
         if (text[0] == 0)
             v = 0;
         else {
             v = _atol(text);
-            if (v < 0)
-                v = 0;
-            else if (v > 0xff)
+            if (v > 0xff)
                 v = 0xff;
+            else if (v < 0)
+                v = 0;
+            else
+                fix = false;
         }
-        _itoa(v, text, 10);
-        SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text);
+        if (fix) {
+            _itoa(v, text, 10);
+            SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text);
+        }
         SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_SETPOS, TRUE, (LPARAM)v);
         return 1;
     }
@@ -787,17 +764,24 @@ command:
         char text[0x40];
         long v;
         GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
+        // the edit text is rewritten only when the value had to be corrected (empty, negative or above 255: 0x50078c);
+        // an in-range value goes straight to the trackbar (0x5007b3)
+        bool fix = true;
         if (text[0] == 0)
             v = 0;
         else {
             v = _atol(text);
-            if (v < 0)
-                v = 0;
-            else if (v > 0xff)
+            if (v > 0xff)
                 v = 0xff;
+            else if (v < 0)
+                v = 0;
+            else
+                fix = false;
         }
-        _itoa(v, text, 10);
-        SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text);
+        if (fix) {
+            _itoa(v, text, 10);
+            SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text);
+        }
         SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_SETPOS, TRUE, (LPARAM)v);
         return 1;
     }
