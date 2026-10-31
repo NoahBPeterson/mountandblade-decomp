@@ -264,10 +264,10 @@ def _quoted_includes(src):
     return sorted(seen)
 
 
-def compile_obj(src, flags):
-    """Compile src with flags into work/difftest/obj (cached by source+headers+flags). -> (obj, log)."""
-    flags = resolve_include_flags(flags)
-    os.makedirs(OBJDIR, exist_ok=True)
+def compile_key(src, flags):
+    """The cache key of compiling src with flags (flags already through resolve_include_flags): source, every header
+    it can reach, the flags. compile_obj names its objects by it; other per-source compiler probes
+    (relink/data_size_audit.py) cache their results under it, so they invalidate exactly when the object would."""
     h = hashlib.md5()
     # paths enter the key relative to the repo, so git worktrees of the repo share compiled objects. No source
     # uses __FILE__, but cl mangles anonymous-namespace names with a hash of the source path (?A0x101b409b), so a
@@ -293,7 +293,14 @@ def compile_obj(src, flags):
             for f in sorted(files):
                 if f.endswith((".h", ".hpp", ".inl")):
                     h.update(open(os.path.join(d, f), "rb").read())
-    obj = os.path.join(OBJDIR, "%s_%s.obj" % (os.path.basename(src).rsplit(".", 1)[0], h.hexdigest()[:12]))
+    return h.hexdigest()
+
+
+def compile_obj(src, flags):
+    """Compile src with flags into work/difftest/obj (cached by source+headers+flags). -> (obj, log)."""
+    flags = resolve_include_flags(flags)
+    os.makedirs(OBJDIR, exist_ok=True)
+    obj = os.path.join(OBJDIR, "%s_%s.obj" % (os.path.basename(src).rsplit(".", 1)[0], compile_key(src, flags)[:12]))
     if os.path.exists(obj):
         return obj, ""
     # Unique temp per thread: six sweep workers compile the same module at once, and a shared "<obj>.part.obj"

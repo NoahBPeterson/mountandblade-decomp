@@ -110,6 +110,16 @@ def probe_one(job):
     if not entries:
         return []
     flags = S.resolve_include_flags(flags)
+    # the probe's result depends only on what the compile of src sees plus the probed names: cache it under the same
+    # key compile_obj names objects by (an unchanged source costs no compiler run on the next build)
+    import hashlib
+    key = hashlib.md5((S.compile_key(src, flags) + repr(entries)).encode()).hexdigest()
+    cache = os.path.join(ROOT, "work", "relink", "dataaudit_cache", key + ".json")
+    if os.path.exists(cache):
+        try:
+            return [tuple(e) for e in json.load(open(cache))]
+        except (OSError, ValueError):
+            pass
     tmp = os.path.join(os.path.dirname(src), "_dataaudit_%s" % os.path.basename(src))
     base = open(src, errors="replace").read()
     if not base.endswith("\n"):
@@ -128,6 +138,11 @@ def probe_one(job):
         if 0 <= k < len(entries):
             name, addr, f, line = entries[k]
             out.append((name, addr, f, line, int(m[2]) - 1))
+    if out:     # an empty answer to a non-empty probe list means the compile itself failed: measure again next time
+        os.makedirs(os.path.dirname(cache), exist_ok=True)
+        part = "%s.%d.part" % (cache, os.getpid())
+        json.dump(out, open(part, "w"))
+        os.replace(part, cache)
     return out
 
 
