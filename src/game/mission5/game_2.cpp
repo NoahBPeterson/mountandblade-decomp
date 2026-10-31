@@ -847,8 +847,7 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
             return;
         Node24* node = (Node24*)((char*)this->f24 + found * 0x24);
         next = (node->f04 == cur) ? node->f08 : node->f04;
-        if (next < 0)
-            return;
+        // (no early-out on next < 0: the original appends first; the loop-top cur < 0 guard stops the walk)
         int c = *count;
         bool dup = false;
         if (node->f0c == target) {

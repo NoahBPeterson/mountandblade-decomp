@@ -336,10 +336,10 @@ void widget_mgr::set_size(int idx, const float* pos)
         return;
     }
     if (vt(ITEM)->kind() == 3) {
-        *(vector4*)&((UiC*)ITEM)->f198 = vector4(pos[0] * 0.38940808f, pos[1], 1.0f);
-        *(int*)&((UiC*)ITEM)->f194 = (int)0xcb3c57cb;
         SCALE_BY_OLD(0);
         SCALE_BY_OLD(2);
+        *(vector4*)&((UiC*)ITEM)->f198 = vector4(pos[0] * 0.38940808f, pos[1], 1.0f);   // 0x49a786: stored after the two scalings
+        *(int*)&((UiC*)ITEM)->f194 = (int)0xcb3c57cb;
         vt(ITEM)->d03();
         vt(ITEM)->d25(&vector4(pos[0] * 0.25f, ITEM->screen[1], 1.0f));
         STORE_SIZE();
@@ -350,7 +350,7 @@ void widget_mgr::set_size(int idx, const float* pos)
         SCALE_BY_OLD(1);
         SCALE_BY_OLD(3);
         vt(ITEM)->d27(&vector4(pos[0] * 0.02f, pos[1] * 0.02f, 1.0f));
-        vt(ITEM)->d28(&vector4(0.0f, pos[1] * 0.013f, 1.0f));
+        vt(ITEM)->d28(&vector4(pos[0] * 0.02f, pos[1] * 0.013f, 1.0f));   // 0x49a956: x is pos[0] * 0.02 (kind 6 passes 0)
         vt(ITEM)->d03();
         STORE_SIZE();
         vt(ITEM)->d41(sz, &ITEM->name);
