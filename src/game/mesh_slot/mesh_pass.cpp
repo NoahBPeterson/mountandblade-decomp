@@ -185,6 +185,7 @@ again:
     f3b8 = -1;
 
     texture* last_tex = 0;
+    int ds_changed = 0;                     // the last pass's depth target (0x47ecad: ebp = o->f15c): only a flag
     for (std::vector<int>::iterator d = tmp.begin(); d != tmp.end(); ++d) {
         scene_ms* o = SC(*d);
         if (o->target != (texture*)&g_render || o->f15c != 0) {
@@ -220,7 +221,7 @@ again:
                 bias = 2.0f;
                 g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xaf, *(unsigned*)&bias);
             }
-            ds = (IDirect3DSurface9*)o->f15c;
+            ds_changed = o->f15c;
         }
         o->apply_state();
         if (g_use_shaders)
@@ -233,7 +234,9 @@ again:
         g_render.dev->SetRenderTarget(0, rt);
     rt->Release();
 
-    if (ds)
+    // restore the saved depth-stencil surface when a pass replaced it; ds stays the surface GetDepthStencilSurface
+    // returned (ours overwrote it with the pass's texture record, which Wine's d3d9 asserts on: surface.c:454)
+    if (ds_changed)
         g_render.dev->SetDepthStencilSurface(ds);
     ds->Release();
 
