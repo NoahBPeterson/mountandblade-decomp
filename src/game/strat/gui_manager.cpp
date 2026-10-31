@@ -132,7 +132,7 @@ void gui_window::wheel_step()
         else if (w & 2) sel = sel - 1;
         if (sel < sel_lo) sel = sel_lo;
         else if (sel > sel_hi) sel = sel_hi;
-        if (w & 3) g_gui_dirty = 1;
+        if (w & 3) g_gui.f1709 = 1;   // 0x42cead: mov byte [0x5d8789], 1 (g_gui+0x1709: close the top window)
     }
     pending = 0;
 }
@@ -200,7 +200,7 @@ char gui_window::handle_event(unsigned mask)
 {
     if (mouse_event(mask)) return 1;
     if (wants_redraw && (mask & 0x10)) {
-        g_gui_dirty = 1;
+        g_gui.f1709 = 1;              // 0x42d19c: g_gui+0x1709, not g_gui_dirty (+0x1708)
         return 1;
     }
     return 0;

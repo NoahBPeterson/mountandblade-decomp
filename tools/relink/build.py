@@ -11,8 +11,9 @@ Steps (each tool's docstring has the details):
                       its own address, so the fix-ups below find the one they look for)
   5. vtable fix-up    see below
   6. literal gate     the build fails when our source writes an original address as a number (literal_addrs.py)
-  7. data gate        the build fails on a data definition smaller than a declaration of its address, or on two storage
-                      locations for one original address (data_size_audit.py)
+  7. data gate        the build fails on a data definition smaller than a declaration of its address, on two storage
+                      locations for one original address (data_size_audit.py), or on one data name annotated with
+                      two original addresses
   8. add_rsrc.py      the original's resources (dialogs, icons)
 Writes OUT/mb_standalone.exe, OUT/link.log, OUT/mb_standalone.map and OUT/build.json (what each step did).
 
@@ -460,7 +461,21 @@ def main():
                  "see tools/relink/data_size_audit.py" % (
                      len(under), ", ".join("%08x %s %d<%d" % (e["va"], e["name"], e["size"], e["claimed"]) for e in under[:8]),
                      len(dup_addrs), ", ".join("%08x" % v for v, _a in dup_addrs[:8])))
-    steps["data"] = "%d data definitions at original addresses: none smaller than a declaration of its address, one storage each" % ndefs
+    # one data name, several original addresses: the glue gives the name one of them, so the sources annotated with the
+    # other read or write the wrong bytes (g_gui_dirty: 0x5d8788 in agent_hud, 0x5d8789 in gui_manager -- the dropdown
+    # list's close flag landed on the neighbouring byte and the list never closed). Harness model addresses don't count.
+    multi = {}
+    for n, d in rmap["names"].items():
+        if "@@3" not in n:                      # data symbols only (?name@@3TYPE)
+            continue
+        real = [va for va, e in d.items() if not any(m.startswith("model") for m in e["methods"])]
+        if len(real) > 1:
+            multi[n] = real
+    if multi:
+        sys.exit("data gate: %d data names annotated with more than one original address (%s): pick the right address "
+                 "for each source (resolve_map.json 'names' lists the rows behind each)" % (
+                     len(multi), "; ".join("%s %s" % (n, "/".join(v)) for n, v in sorted(multi.items())[:8])))
+    steps["data"] = "%d data definitions at original addresses: none smaller than a declaration of its address, one storage each, one address per name" % ndefs
 
     import resolve as R
     img = R.Image()

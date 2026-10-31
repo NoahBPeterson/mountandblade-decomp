@@ -61,12 +61,20 @@ def main():
                     "Wine's own messages still go to wine.log; returns when the game exits or at --timeout")
     ap.add_argument("--pre", default="", help="extra winedbg commands run before 'cont' (';'-separated), e.g. "
                     "'watch *0xa9897c' (a data watchpoint)")
+    ap.add_argument("--attach", action="store_true", help="launch nothing: attach to the game already running (without "
+                    "a debugger, e.g. started with --nodebug), report every thread's position, and leave it running")
     a = ap.parse_args()
     global NAME, WINPATH
     if os.path.basename(a.exe) != "mb_standalone.exe":
         NAME = "mb_original"
         WINPATH = GAMEDIR + NAME + ".exe"
     game = os.path.join(ROOT, "game")
+    log_path = os.path.join(ROOT, "work", "relink", "standalone", "dbg.log")
+    if a.attach:
+        text = dump_threads(a, end="detach")
+        open(log_path, "w").write(text)
+        print(report_text(text, hung=True))
+        return 0
     kill_stale()
     shutil.copyfile(a.exe, os.path.join(game, NAME + ".exe"))
     log_path = os.path.join(ROOT, "work", "relink", "standalone", "dbg.log")
@@ -197,6 +205,20 @@ def dbg(a, cmds):
                           env=dict(os.environ, WINEDEBUG="-all"), timeout=120).stdout
 
 
+def dump_threads(a, end="kill"):
+    """Attach a debugger to the running game (one not already under winedbg), dump every thread's registers,
+    backtrace and stack, then `end` it: "kill" ends the game, "detach" leaves it running."""
+    procs = dbg(a, "info process\nquit\n")
+    m = re.search(r"([0-9a-f]{8}) +\d+ +\\_ '" + NAME + r".exe'", procs)
+    if not m:
+        return "no game process to attach to\n" + procs
+    wpid = m[1]
+    # one session: Wine refuses a second attach after a detach (error 5), and the failed attempt can end the game
+    cmds = "attach 0x%s\ninfo thread\nbt all\n" % wpid + end + "\nquit\n"
+    text = dbg(a, cmds)
+    return text
+
+
 def hang_dump(a, game, log_path):
     """The game spins under the debugger, which cannot be interrupted from outside: end that run (its own two
     processes, by pid), start the game again without a debugger, wait until it spins, then attach a debugger and
@@ -209,17 +231,7 @@ def hang_dump(a, game, log_path):
     t0 = time.time()
     while time.time() - t0 < a.timeout + 60 and not any(c > 50 for _p, c, cmd in game_procs() if cmd.startswith(WINPATH)):
         time.sleep(2)
-    procs = dbg(a, "info process\nquit\n")
-    m = re.search(r"([0-9a-f]{8}) +\d+ +\\_ '" + NAME + r".exe'", procs)
-    if not m:
-        return "no game process to attach to\n" + procs
-    wpid = m[1]
-    threads = dbg(a, "attach 0x%s\ninfo thread\ndetach\nquit\n" % wpid)
-    block = threads[threads.find(wpid + " (D)"):] if wpid + " (D)" in threads else threads
-    tids = re.findall(r"^\t([0-9a-f]{8})\s+-?\d+", block.split("\n0000")[0], re.M)
-    cmds = "attach 0x%s\n" % wpid + "".join("thread 0x%s\ninfo reg\nbt 20\nx /256x $esp\n" % t for t in tids) + \
-           "kill\nquit\n"
-    text = dbg(a, cmds)
+    text = dump_threads(a)
     open(log_path, "w").write(text)
     q.wait(30)
     return text

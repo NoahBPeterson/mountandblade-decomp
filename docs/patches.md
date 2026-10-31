@@ -40,3 +40,5 @@ pipeline, the progress counts or the gates' view of our source.
   launches fail, as with binkplay.exe missing) and `no_sound_samples.cpp` (every FSOUND_Sample_Load returns 0: no
   sound effects, ~55 s less start-up under Wine). Both swap one of our own import slots from a static constructor
   (`iat_hook.h`), so no function of the reconstruction is replaced.
+- `diag`: runtime diagnostics. `rootwatch.cpp` logs the GUI root-widget stack (g_gui's vector) to rootwatch.txt
+  whenever it changes (found the dropdown list that never closed).
