@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T13:25:42-05:00",
-"commit": "44c36cf",
+"when": "2026-10-31T16:28:55-05:00",
+"commit": "f8ecb45",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -914,7 +914,7 @@
 "0042b080": {
 "module": "strat_entity",
 "file": "src/game/strat/strat_entity.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 1601
 },
@@ -1887,7 +1887,7 @@
 "0045f660": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 2247
 },
@@ -6050,7 +6050,7 @@
 "004f4060": {
 "module": "dust",
 "file": "src/game/char_sheet/dust.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 1640
 },
