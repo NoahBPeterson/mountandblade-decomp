@@ -38,12 +38,12 @@ extern resmgr g_resmgr;
 
 // ---- constants ----------------------------------------------------------------------------------------------
 extern const float g_54ab1c;            // 0x54ab1c  0.04f
-extern const float g_54b4d0;            // 0x54b4d0  0.56f
-extern const float g_591d54;            // 0x591d54  0.45f
-extern const float g_5987e4;            // 0x5987e4  1.0f
-extern const float g_590b70;            // 0x590b70  1.26f
-extern const float g_592758;            // 0x592758  0.48f
-extern const float g_592754;            // 0x592754  0.155f
+extern const float g_54b4d0;            // 0x54b4d0  0.05f
+extern const float g_591d54;            // 0x591d54  0.09f
+extern const float g_5987e4;            // 0x5987e4  0.56f
+extern const float g_590b70;            // 0x590b70  50.0f
+extern const float g_592758;            // 0x592758  1.5576f
+extern const float g_592754;            // 0x592754  0.31f
 
 // ---- the gui widget ------------------------------------------------------------------------------------------
 // The base supplies slots up to set_pos (+0x58) / set_size (+0x64); the concrete window classes insert their own

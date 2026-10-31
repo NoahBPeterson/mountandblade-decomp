@@ -8,8 +8,7 @@
 void __fastcall quest_window::refresh()
 {
     if (QUEST_COUNT > 0x80) {
-        tstring s;
-        s.assign("ui_too_many_quests");
+        tstring s("ui_too_many_quests");     // 0x4ee861: tstring(const char*) 0x42bbe0
         tstring* msg = g_strtable.lookup(s);
         mb_error(msg->buf ? msg->buf : (char*)&msg->buf);
     }
