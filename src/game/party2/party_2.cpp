@@ -1259,7 +1259,7 @@ void Party::collect_targets(int* out, int* max, int* count)
             float len = d.out_length();
             if (!(len < radius))
                 goto next;
-            if (!(len < strength() * radius))
+            if (!(len < p->strength() * radius))
                 goto next;
         }
         (*(int*)((char*)&g_script + 0x18)) = 1;
@@ -3182,7 +3182,7 @@ void Party::tick(float dt)
     float sx = *(float*)((char*)g_level + 0x31c) - pos.x;
     float sy = *(float*)((char*)g_level + 0x320) - pos.y;
     float sz = *(float*)((char*)g_level + 0x324) - pos.z;
-    float dd = sx * sx + sy * sy + sz * sz;
+    float dd = sz * sz + sy * sy + sx * sx;      // 0x4b8ea4: z squared first, then y, then x (float sums are order-sensitive)
     if (!(dd < 2000.0f))
         return;
     float ph2 = (float)fmod((double)id * 0.05f + (double)g_ticks[0] * 1e-05f, 1.0) * 40.0f + 100.0f;
