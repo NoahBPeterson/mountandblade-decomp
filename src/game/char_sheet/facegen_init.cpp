@@ -65,7 +65,7 @@ void FaceGen::init()
     struct { int a, b; } btn_text;                 // set_text's 8-byte result (the original's [esp+0x30] slot: never constructed or destroyed)
     {
         tstring empty("");
-        buttons->set_text(&btn_text, &empty);
+        deform->set_text(&btn_text, &empty);   // 0x4f4cab: [ebp+0x180] (the deform panel), not the buttons panel
     }
     for (int i = 0; i < keys; i++) {
         tstring row_name("face_sl_deform_key_base");
@@ -264,11 +264,11 @@ void FaceGen::init()
     b->world = w;
 
     float p2[2];
-    p2[0] = 0.0513f;
-    p2[1] = 0.2669f;
+    p2[0] = 0.05125f;                                  // 0x3d51eb85
+    p2[1] = 0.266875f;                                 // 0x3e88a3d7
     b->set_pos(p2);
     float s2[2];
-    s2[0] = 0.4585f;
+    s2[0] = 0.45875f;                                  // 0x3eeae148
     s2[1] = 0.44f;
     b->set_scale(s2);
     b->flags |= 0x300;

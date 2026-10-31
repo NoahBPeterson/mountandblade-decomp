@@ -11,6 +11,8 @@
 // Boundary: class change only at 0x520b20 (TroopRec | Game); the map's next boundary (0x5249f0, QuestRec | Faction) is NOT
 //       kept: 0x5236f0 calls 0x524360..0x524d60 in turn and they are its record helpers (see MIGRATION.md).
 //-----------------------------------------------------------------------------
+#include <math.h>
+#include <string.h>
 #include "./game_2.h"
 #include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -283,8 +285,9 @@ void Game::build_map_trees()
     }
 
     void* cam = self->wind;                                                   // +0x139dc
-    float ang_a = (float)g_map_sea_direction_i * 3.1415927f * 0.0055555557f;               // deg -> rad
-    float ang_b = (float)g_map_river_direction_i * 3.1415927f;
+    // 0x521473..0x5214ba: the two map directions are floats (fld, not fild); ang_a [esp+0xe8], ang_b [esp+0x11c]
+    float ang_a = g_map_sea_direction * 3.1415927f * 0.0055555557f;                         // deg -> rad
+    float ang_b = g_map_river_direction * 3.1415927f * 0.0055555557f;
 
     rgl::vector4 dir;
     dir.x = -*(float*)((char*)cam + 0x44);
@@ -292,20 +295,28 @@ void Game::build_map_trees()
     dir.z = -*(float*)((char*)cam + 0x4c);
     dir.normalize();                                                 // 0x407d60
 
+    // [esp+0x150] / [esp+0x120]: the lighting vectors the fixed-function vertex colour uses (0x5214f1..0x521546)
+    float lightL[4], lightM[4];
+    memcpy(lightL, (char*)g_level + 0x68, 16);
+    memcpy(lightM, (char*)(*(void**)(*(char**)((char*)g_level + 0xbc))) + 4, 16);
+
     int npts = (int)(((char*)mgr->pts_end - (char*)mgr->pts) / 0x24);
 
     // ---- B: per-point view dot --------------------------------------------
     for (int i = 0; i < npts; i++) {
         MapNavVert* p = &mgr->pts[i];
-        float s = dir.x * p->nx + dir.y * p->ny + dir.z * p->nz;
+        float s = dir.y * p->ny + dir.z * p->nz;                      // 0x521581: (y + z) + x, the x87 order
+        s = s + dir.x * p->nx;
         p->s = s;
         if (g_use_shaders != 0) p->s = s * s;
     }
 
     // ---- C: per-point flags and distance ----------------------------------
-    int*   flags = new int[npts];
-    float* dist  = new float[npts];
-    int*   vert  = new int[npts];
+    // The original keeps these three on its stack, 100000 entries each (dist [esp+0x900], vert [esp+0x62380], flags
+    // [esp+0x187300]); the exe reserves 4 MB of stack (/STACK:0x3e8480), the same as the relink.
+    int   flags[100000];
+    float dist[100000];
+    int   vert[100000];
     // scan_arrays (0x523630) does NOT index this buffer by element: it writes one dword at buffer+0xc3500 (a fixed
     // offset, 0xcb189680), so the original's buffer is the ~0xc3540-byte block at [esp+0xc3e00], not npts ints. Sizing
     // it by npts wrote past the end of a 125 KB allocation on a 31 307-point map (page fault at 0x49c86d).
@@ -354,9 +365,12 @@ void Game::build_map_trees()
         for (int e = 0; e < nedges; e++) {
             MapEdge* ed = &mgr->edges[e];
             int a = ed->a, b = ed->b;
-            float dx = mgr->pts[a].x - mgr->pts[b].x;
-            float dy = mgr->pts[a].y - mgr->pts[b].y;
-            float dz = mgr->pts[a].z - mgr->pts[b].z;
+            // 0x5218d7: the edge endpoints are read from g_nav's vertex vector (map.txt's store, +4), not mgr->pts
+            const float* pa = (const float*)((char*)g_nav->first + a * 0x24);
+            const float* pb = (const float*)((char*)g_nav->first + b * 0x24);
+            float dx = pa[0] - pb[0];
+            float dy = pa[1] - pb[1];
+            float dz = pa[2] - pb[2];
             float len = sqrtf(dy * dy + (dz * dz + dx * dx));
             if (len + dist[b] < dist[a])      dist[a] = len + dist[b];
             else if (len + dist[a] < dist[b]) dist[b] = len + dist[a];
@@ -424,6 +438,8 @@ void Game::build_map_trees()
             void* cell = ((void**)g_map_pages)[ci];
 
             void* cellmesh = new rgl::mesh();                                   // 0x412a90
+            float ccx = (x1 + x0) * 0.5f;                                       // [esp+0x100]/[0x104]: the cell centre
+            float ccy = (y1 + y0) * 0.5f;
 
             for (int mi = 0; mi < 0xd; mi++) {
                 int mt;
@@ -436,9 +452,9 @@ void Game::build_map_trees()
                 void* m = new rgl::mesh();
 
                 // cell centre (written every material iteration in the original)
-                *(float*)((char*)cell + 0x88) = (x1 + x0) * 0.5f;
-                *(float*)((char*)cell + 0x8c) = (y1 + y0) * 0.5f;
-                *(int*)((char*)cell + 0x90) = 0;
+                *(float*)((char*)cell + 0x88) = ccx;
+                *(float*)((char*)cell + 0x8c) = ccy;
+                *(int*)((char*)cell + 0x90) = row;                              // 0x521d08: the row index, as an int
                 *(int*)((char*)cell + 0x94) = 0;
 
                 for (int i = 0; i < npts; i++) vert[i] = -1;
@@ -473,8 +489,10 @@ void Game::build_map_trees()
                     } else if (mt != 7 && mt != 0xf) {
                         unsigned u18;
                         int t = nd->type;
-                        if (mt == 9) { u18 = u20; if (t == 8) emit = true; else if (t == 0) emit = true; }
-                        else         { u18 = umask; if (t == 8 || t == 7) emit = true; }
+                        // 0x522099: types 8 and 0 (and 7 unless mt == 9) are skipped outright; every other type is
+                        // emitted only when the material's mask hits one of the first three vertices' flags
+                        if (mt == 9) { u18 = u20;   emit = (t != 8 && t != 0); }
+                        else         { u18 = umask; emit = (t != 8 && t != 7 && t != 0); }
                         if (emit && (u18 & nf[0]) == 0 && (u18 & nf[1]) == 0 && (u18 & nf[2]) == 0)
                             emit = false;
                     }
@@ -488,83 +506,84 @@ void Game::build_map_trees()
                             float py = mgr->pts[pi].y;
                             float pz = mgr->pts[pi].z;
 
-                            if (mt == 0x17 && ((u19 & (unsigned)flags[pi]) == 0
-                                            || (u36 & (unsigned)flags[pi]) == 0)) {
-                                int nlist[64]; int ncnt = 0;
-                                ((ChainGraph*)mgr)->build_chain(pi, ni, nlist, &ncnt);   // 0x5234e0 (target vertex, start node)
-                                for (int a = 0; a < ncnt; ) {
-                                    int p2 = nlist[a];
-                                    if ((u19 & (unsigned)flags[p2]) == 0
-                                     || (u36 & (unsigned)flags[p2]) == 0)
-                                        nlist[a] = nlist[--ncnt];
-                                    else a++;
-                                }
-                                if (ncnt > 0) {
-                                    float sx = 0.0f, sy = 0.0f;
-                                    for (int a = 0; a < ncnt; a++) {
+                            float pw = *(float*)((char*)&mgr->pts[pi] + 0xc);          // [esp+0x60]: the 4th float of the vertex
+
+                            if (mt == 0x17) {
+                                if ((u19 & (unsigned)flags[pi]) != 0 && (u36 & (unsigned)flags[pi]) != 0) {
+                                    pz += 0.01f;                                       // 0x52246b (0x54a6f0)
+                                } else {
+                                    int nlist[64]; int ncnt = 0;
+                                    ((ChainGraph*)mgr)->build_chain(pi, ni, nlist, &ncnt);   // 0x5234e0 (target vertex, start node)
+                                    for (int a = 0; a < ncnt; ) {
                                         int p2 = nlist[a];
-                                        float dx = px - mgr->pts[p2].x;
-                                        float dy = py - mgr->pts[p2].y;
-                                        float dz = pz - mgr->pts[p2].z;
-                                        float d = sqrtf(dy * dy + (dz * dz + dx * dx));
-                                        float nx_, ny_;
-                                        if (d > 1e-10f) { nx_ = dx * (1.0f / d); ny_ = dy * (1.0f / d); }
-                                        else            { nx_ = 0.0f; ny_ = 1.0f; }
-                                        float qx = px, qy = py;
-                                        if (d > 0.25f) {
-                                            qx = mgr->pts[p2].x + nx_ * 0.25f;
-                                            qy = mgr->pts[p2].y + ny_ * 0.25f;
-                                        }
-                                        sx += qx; sy += qy;
+                                        if ((u19 & (unsigned)flags[p2]) == 0
+                                         || (u36 & (unsigned)flags[p2]) == 0)
+                                            nlist[a] = nlist[--ncnt];
+                                        else a++;
                                     }
-                                    px = sx * (1.0f / (float)ncnt);
-                                    py = sy * (1.0f / (float)ncnt);
+                                    if (ncnt > 0) {
+                                        float sx = 0.0f, sy = 0.0f, sz = 0.0f;
+                                        for (int a = 0; a < ncnt; a++) {
+                                            int p2 = nlist[a];
+                                            float dx = px - mgr->pts[p2].x;
+                                            float dy = py - mgr->pts[p2].y;
+                                            float dz = pz - mgr->pts[p2].z;
+                                            float d = sqrtf(dy * dy + (dz * dz + dx * dx));
+                                            float nx_, ny_, nz_;
+                                            if (d > 1e-10f) { float inv = 1.0f / d; nx_ = dx * inv; ny_ = inv * dy; nz_ = inv * dz; }
+                                            else            { nx_ = 0.0f; ny_ = 1.0f; nz_ = 0.0f; }
+                                            float qx = px, qy = py, qz = pz;
+                                            if (d > 0.25f) {
+                                                qx = nx_ * 0.25f + mgr->pts[p2].x;
+                                                qy = ny_ * 0.25f + mgr->pts[p2].y;
+                                                qz = nz_ * 0.25f + mgr->pts[p2].z;
+                                            }
+                                            sx += qx; sy += qy; sz += qz;
+                                        }
+                                        float inv = 1.0f / (float)ncnt;
+                                        px = sx * inv;
+                                        py = inv * sy;
+                                        pz = sz * inv;
+                                    }
+                                    pz += 0.03f;                                       // 0x52245f (0x54b8b4)
                                 }
                             }
 
-                            // m5_add_point takes a 0x20-byte record
-                            float prec[8];
-                            prec[0] = px; prec[1] = py; prec[2] = pz; prec[3] = 0.0f;
-                            prec[4] = mgr->pts[pi].nx; prec[5] = mgr->pts[pi].ny;
-                            prec[6] = mgr->pts[pi].nz; prec[7] = 0.0f;
+                            // add_point takes (px - cell centre x, py - cell centre y, pz, w)       0x522481..0x5224b4
+                            float prec[4];
+                            prec[0] = px - ccx; prec[1] = py - ccy; prec[2] = pz; prec[3] = 0.0f;
                             int pidx = ((rgl::mesh*)m)->add_point((const rgl::vector4*)prec);     // 0x412f50
 
                             // ---- per-material orientation + fractal noise ----------
-                            // uv seeds: [esp+0x14] = px*0.1, [esp+0x18] = py*0.1
                             float uu = px * 0.1f;                                 // 0x549d7c
                             float vv = py * 0.1f;
 
-                            float in6[4], out6[4];
+                            float npt[4] = { px, py, pz, pw };                    // the noise input is the point itself (0x5225..)
+                            float out6[8];
                             if (mt == 0) {
-                                // atan2 of the scaled point; result * 10 stored as uu
                                 float l = sqrtf(px * px + py * py);
-                                float ca, sa;
-                                if (l > 0.0f) { float inv = 1.0f / l; ca = px * inv; sa = py * inv; }
-                                else          { ca = 0.0f; sa = 1.0f; }
-                                uu = 10.0f * atan2f(ca, -sa);                 // 0x549d74, fpatan
+                                float nx_, ny_;
+                                if (l > 0.0f) { float inv = 1.0f / l; nx_ = px * inv; ny_ = inv * py; }
+                                else          { nx_ = 0.0f; ny_ = 1.0f; }
+                                vv = l * 0.1f;                                    // 0x522552: fxch st2 / fmul 0.1 / fstp [0x18]
+                                uu = (float)(atan2((double)-nx_, (double)ny_) * 10.0);   // fchs; fpatan; fmul 10.0 (0x549d74)
                             } else if (mt == 8 || mt == 0x16 || mt == 0x17) {
-                                // rotate the uv seed pair by the fixed map angle ang_b, then noise
-                                float A = ang_b * 3.1415927f * 0.0055555557f; // [esp+0x11c]
-                                float sa = sinf(A), ca = cosf(A);
-                                in6[0] = ca * uu - sa * vv;
-                                in6[1] = sa * uu + ca * vv;
-                                in6[2] = 0.0f; in6[3] = 0.0f;
-                                noise_fractal(6.0f, 0.7f, 3, 0, in6, out6);      // 0x414fc0
+                                // rotate the uv seed pair by the map angle (mt 8: river [esp+0x11c]; foam: sea [esp+0xe8]), then
+                                // add the noise sampled at the point
+                                float ang = (mt == 8) ? ang_b : ang_a;
+                                double sa = sin((double)ang), ca = cos((double)ang);
+                                float Au = (float)(ca * uu - sa * vv);
+                                float Av = (float)(sa * uu + ca * vv);
+                                noise_fractal(6.0f, 0.7f, 3, 0, npt, out6);         // 0x414fc0
                                 if (mt == 8) {
-                                    uu = out6[0] * 0.5f + uu;                    // 0x549d70
-                                    vv = (out6[1] * 0.5f) + vv;
-                                    uu *= 0.45f;                                 // 0x54b3b8
-                                    vv *= 0.45f;
+                                    uu = (Au + out6[0] * 0.5f) * 0.4f;               // 0x549d70 / 0x54b3b8
+                                    vv = (out6[1] * 0.5f + Av) * 0.4f;
                                 } else if (mt == 0x16) {
-                                    uu = out6[0] * 0.7f + uu;                    // 0x54b3c8
-                                    vv = (out6[1] * 0.7f) + vv;
-                                    uu *= 2.3f;                                  // 0x591a0c
-                                    vv *= 2.3f;
+                                    uu = (Au + out6[0] * 0.7f) * 2.3f;               // 0x54b3c8 / 0x591a0c
+                                    vv = (out6[1] * 0.7f + Av) * 2.3f;
                                 } else {
-                                    uu = out6[0] * 0.3f + uu;                    // 0x549d68
-                                    vv = (out6[1] * 0.3f) + vv;
-                                    uu *= 5.3f;                                  // 0x59c088
-                                    vv *= 5.3f;
+                                    uu = (Au + out6[0] * 0.3f) * 5.3f;               // 0x549d68 / 0x59c088
+                                    vv = (out6[1] * 0.3f + Av) * 5.3f;
                                 }
                             } else if (mt == 2) {
                                 uu *= 0.6f; vv *= 0.6f;                       // 0x590d94
@@ -574,69 +593,69 @@ void Game::build_map_trees()
                             float sc = mgr->pts[pi].s * 1.3f + 0.1f;          // 0x590d90, 0x549d7c
                             if (sc > 1.0f) sc = 1.0f;                         // 0x549cdc
 
-                            // --- three fractal passes (0x5227ac..0x5228a2) ---------
-                            // pass 1: dither the vertex's own (px,py); its out[6]/out[7]
-                            //         become the tint z / the second uv seed.
-                            float na[8], nb[8];
-                            na[0] = px;  na[1] = py;  na[2] = 6816.0f; na[3] = 0.0f;  // 0x45d4d000
-                            noise_fractal(9.0f, 0.6f, 4, 0, na, nb);         // 0x40c00000 / 0x3f19999a
-                            float tz = nb[6] * 0.5f;                         // 0x549d70
-                            float tseed = nb[7] * 0.5f;
+                            // --- three fractal passes at the point (0x5227ac..0x5228a2); only out[0] of each is used ---
+                            float na[4], nb[8], nc[4], nd2[8], ne[4], nf_[8];
+                            na[0] = px; na[1] = py; na[2] = 6810.0f; na[3] = 0.0f;   // 0x45d4d000
+                            noise_fractal(9.0f, 0.6f, 4, 0, na, nb);          // 0x41100000 / 0x3f19999a
+                            float g0 = nb[0] * 0.5f;                          // 0x549d70
+                            nc[0] = px; nc[1] = py; nc[2] = 2917.0f; nc[3] = 0.0f;   // 0x45365000
+                            noise_fractal(7.0f, 0.6f, 4, 0, nc, nd2);         // 0x40e00000
+                            float h0 = nd2[0] * 2.1f;                         // 0x590d74
+                            ne[0] = px; ne[1] = py; ne[2] = -917.0f; ne[3] = 0.0f;   // 0xc4654000
+                            noise_fractal(4.0f, 0.6f, 4, 0, ne, nf_);         // 0x40800000
 
-                            // pass 2: dither (material, y)
-                            float nc[8], nd[8];
-                            nc[0] = (float)mt; nc[1] = py; nc[2] = 2917.0f; nc[3] = 0.0f; // 0x45365000
-                            noise_fractal(7.0f, 0.6f, 4, 0, nc, nd);         // 0x40e00000
-
-                            // pass 3: dither the fixed view dir
-                            float ne[8], nf_[8];
-                            ne[0] = dir.x; ne[1] = dir.y; ne[2] = -3668.0f; ne[3] = 0.0f;  // 0xc4654000
-                            noise_fractal(4.0f, 0.6f, 4, 0, ne, nf_);        // 0x40800000
-
-                            // --- colour: (base + offset) * sc (0x5228a3) -----------
-                            float cr = (py + 0.86f) * sc;                    // 0x59944c
-                            float cg = (tseed + 0.89f) * sc;                 // 0x59c084
-                            float cb = (tz * 0.6f + 0.87f) * sc;             // 0x590d94 / 0x59c080
+                            // --- colour (0x5228a3) ----------------------------------
+                            float cr = (g0 + 0.86f) * sc;                    // 0x59944c
+                            float cg = (h0 + 0.89f) * sc;                    // 0x59c084
+                            float cb = (nf_[0] * 0.6f + 0.87f) * sc;         // 0x590d94 / 0x59c080
                             float ca_ = 1.0f;
 
                             if (g_use_shaders == 0) {
-                                // modulate the rgb by the point's view dot (0x5228f6)
+                                // the fixed-function lighting factor per channel (0x5228f6)
                                 float k = mgr->pts[pi].s;
-                                cr *= (1.0f + k) * 0.55f;                    // 0x54b888
-                                cg *= (1.0f + k) * 0.55f;
-                                cb *= (1.0f + k) * 0.55f;
+                                float la = lightM[0] * k * 1.1f + lightL[0];     // 0x54b888
+                                float lb = lightM[1] * k * 1.1f + lightL[1];
+                                float lc = lightM[2] * k * 1.1f + lightL[2];
+                                cr *= la; cg *= lb; cb *= lc;
                             }
 
-                            // --- material-conditional tint / alpha (0x5229af) ------
-                            if (mt != 0) {
-                                if (mt == 8) {
-                                    if ((umask & (unsigned)flags[pi]) == 0) ca_ = 0.0f;
-                                    cr *= 0.7f; cg *= 0.7f; cb *= 0.7f;      // 0x54b3c8
-                                } else if (mt == 0x15) {
-                                    float dd = dist[pi];
-                                    if (!(dd > 0.01f)) { cr *= 0.42f; cg *= 0.42f; cb *= 0.42f; } // 0x590c5c
-                                    ca_ = 1.0f - dd * 0.66f;                 // 0x590aec
-                                    if (ca_ < 0.0f) ca_ = 0.0f;
-                                    if (dist[pi] > 0.01f) ca_ = 0.0f;
-                                } else if (mt == 0x16 || mt == 0x17) {
-                                    ca_ = (dist[pi] > 0.01f) ? 0.0f
-                                        : ((umask & (unsigned)flags[pi]) ? 0.0f : 1.0f);
-                                } else {
-                                    if ((umask & (unsigned)flags[pi]) == 0) ca_ = 0.0f;
-                                    if (mt == 4) { cr = cg = cb = 0.9f; }    // 0x3f666666
-                                    else if ((umask & (unsigned)flags[pi])) {
-                                        cr *= 0.65f; cg *= 0.85f; cb *= 0.7f; // 0x590b6c / 0x590c5c / 0x54b3c8
-                                    }
+                            bool force_sqrt = false;
+                            float dpi = dist[pi];
+                            if (mt == 0) {                                    // 0x5229c3
+                                float sd = sqrtf(dpi);
+                                if (!(sd < 5.0f)) sd = 5.0f;                 // 0x59393c
+                                float f = (g_use_shaders == 0) ? (8.0f - sd) * 0.125f      // 0x590b38 / 0x54b8a0
+                                                               : (6.0f - sd) * 0.16666667f; // 0x590b34 / 0x59c07c
+                                cr *= f; cg *= f; cb *= f;
+                                force_sqrt = (g_use_shaders == 0);
+                            } else if (mt == 8) {                             // 0x522a5d
+                                if ((u33 & (unsigned)flags[pi]) == 0) ca_ = 0.0f;
+                                cr *= 0.7f; cg *= 0.7f; cb *= 0.7f;          // 0x54b3c8
+                            } else if (mt == 0x15) {                          // 0x522a98
+                                if (dpi > 0.01f) { cr *= 0.85f; cg *= 0.85f; cb *= 0.85f; }   // 0x54a6f0 / 0x590c5c
+                                float a = 1.0f - dpi * 0.6666667f;           // 0x590aec
+                                ca_ = (a > 0.0f) ? a : 0.0f;
+                                if (nd->type == 0 && dpi > 0.01f) ca_ = 0.0f;
+                            } else if (mt == 0x16 || mt == 0x17) {            // 0x522b48
+                                if (dpi > 0.01f)                              ca_ = 0.0f;
+                                else if ((u33 & (unsigned)flags[pi]) == 0)   ca_ = 1.0f;
+                                else                                          ca_ = 0.0f;
+                            } else {                                          // 0x522b92
+                                if ((umask & (unsigned)flags[pi]) == 0) ca_ = 0.0f;
+                                if (mt == 4) { cr = cg = cb = 0.9f; }        // 0x3f666666
+                                else if ((u33 & (unsigned)flags[pi]) != 0) {
+                                    cr *= 0.65f; cg *= 0.85f; cb *= 0.7f;    // 0x590b6c / 0x590c5c / 0x54b3c8
                                 }
                             }
 
-                            if (g_use_shaders == 0) { cr = sqrtf(cr); cg = sqrtf(cg); cb = sqrtf(cb); }
+                            if (g_use_shaders == 0 || force_sqrt) { cr = sqrtf(cr); cg = sqrtf(cg); cb = sqrtf(cb); }
 
                             float uv[2] = { uu, vv };
                             float col_rec[4] = { cr, cg, cb, ca_ };
                             unsigned col_ = rgl::pack_color((const rgl::vector4*)col_rec);     // 0x40e440
                             int f5c_ = 0;                                                  // add_vertex dereferences this
-                            vert[pi] = ((rgl::mesh*)m)->add_vertex(pidx, (const vec2*)uv, &col_, (const rgl::vector4*)prec, &f5c_);  // 0x413c50
+                            // the position argument is the vertex's normal (pts[pi] + 0x10), not the point
+                            vert[pi] = ((rgl::mesh*)m)->add_vertex(pidx, (const vec2*)uv, &col_, (const rgl::vector4*)&mgr->pts[pi].nx, &f5c_);  // 0x413c50
                         }
                         ((rgl::mesh*)m)->add_face(vert[nd->idx[0]], vert[nd->idx[1]], vert[nd->idx[2]]); // 0x411920
                     }
@@ -655,7 +674,7 @@ void Game::build_map_trees()
                                 chosen = desert_arr[0];
                                 if (g_map_tree_types_a[3] > 1) chosen = desert_arr[rand() % g_map_tree_types_a[3]];
                             } else {
-                                chosen = (g_map_tree_types_a[0] < 2) ? 0
+                                chosen = (g_map_tree_types_a[0] < 2) ? map_arr[0]
                                        : map_arr[rand() % g_map_tree_types_a[0]];
                             }
                         } else {
@@ -671,9 +690,23 @@ void Game::build_map_trees()
                             float mat[16];
                             identity3((rgl::mat3*)mat);                        // 0x40cd60
                             for (int q = 12; q < 16; q++) mat[q] = 0.0f;
-                            float ang = (float)rand() * 0.0001f;
+                            float ang = (float)(rand() % 0x3dc9) * 0.00039724255f;          // 0x522e1e (0x54a6e0)
                             ((rgl::matrix*)mat)->rotate_about_u(&ang);     // 0x40e770
-                            for (int q = 0; q < 3; q++) { mat[q * 4 + 3] += (float)rand() * 0.0001f; }
+                            // a random point of the node's first three vertices (0x522e80): weights t = r * 6.3223e-5 + 0.2
+                            float tsx = 0.0f, tsy = 0.0f, tsz = 0.0f, tw = 0.0f;
+                            for (int q = 0; q < 3; q++) {
+                                float t = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 0.2f;   // 0x54a6bc / 0x54a6e4
+                                const MapNavVert* tp = &mgr->pts[nd->idx[q]];
+                                tsx = t * tp->x + tsx;
+                                tsy = t * tp->y + tsy;
+                                tsz = t * tp->z + tsz;
+                                tw = t + tw;
+                            }
+                            float tinv = 1.0f / tw;
+                            tsx *= tinv; tsy *= tinv; tsz = tsz * tinv;
+                            mat[12] = tsx - ccx;                              // 0x522f50..0x522fb2: translation (m[12..14])
+                            mat[13] = tsy - ccy;
+                            mat[14] = tsz;
                             ((rgl::mesh*)cellmesh)->append_skinned((rgl::mesh*)chosen, (const rgl::mat4*)mat, -1, 0xffffffff, 0); // 0x44eb00
                         }
                     lab_fc7: ;
@@ -688,7 +721,7 @@ void Game::build_map_trees()
                     ((MapObjView*)m)->del(1);                                // 0x5231d7: push 1, call [vt]
                 } else {
                     *(void**)((char*)m + 0x2c) = terrain_material(mt);     // 0x523390
-                    ((NibbleObj*)m)->set_nibble(mt);                    // 0x523360
+                    ((NibbleObj*)m)->set_nibble(mi - 6);                // 0x523360 (add eax,-6 on the loop index)
                     *(int*)((char*)m + 0x10c) = 0x17fff;
                     ((mesh_x*)m)->compute_bounds();                     // 0x419300
 
@@ -768,9 +801,6 @@ void Game::build_map_trees()
     tmp->~tstring();                                                            // 0x42bc40
 
     delete[] scratch;
-    delete[] vert;
-    delete[] dist;
-    delete[] flags;
 }
 
 
