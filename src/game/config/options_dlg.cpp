@@ -81,7 +81,7 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
     if (*p == '/' && p[1] == '/')
         p += 2;
     char* start = p;
-    while (_isalpha((unsigned char)*p) || _isdigit((unsigned char)*p) || *p == '-' || *p == '.' ||
+    while (_isalpha(*p) || _isdigit(*p) || *p == '-' || *p == '.' ||
            *p == ':')
         p++;
     *p = '\0';
@@ -96,7 +96,7 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
 }
 
 // @ 0x4b9110
-int __cdecl http_fetch(const char* url, const char* post, int post_len, int reserved, int out_)
+int __cdecl http_fetch(const char* url, const char* extra, const char* post, int post_len, int out_)
 {
     http_result* out = (http_result*)out_;
     char scheme[20];
@@ -118,12 +118,11 @@ int __cdecl http_fetch(const char* url, const char* post, int post_len, int rese
     addr.sin_family = 2;
     addr.sin_port = htons((u_short)port);
     hostent* he = gethostbyname(host);
+    addr.sin_addr.s_addr = 0;
     if (he)
         addr.sin_addr.s_addr = *(unsigned long*)he->h_addr_list[0];
-    if (connect(sock, (sockaddr*)&addr, 16) != 0) {
-        closesocket(sock);
-        return 1;
-    }
+    if (connect(sock, (sockaddr*)&addr, 16) != 0)
+        return 1;                           // (the original leaks the socket here: no closesocket)
     if (path[0] == '\0')
         lstrcpynA(path, "/", 1024);
     if (post == 0) {
@@ -157,9 +156,9 @@ int __cdecl http_fetch(const char* url, const char* post, int post_len, int rese
     strcat(req, host);
     sock_send_str(sock, "\r\n");
     strcat(req, "\r\n");
-    if (post != 0 && post[0] != '\0') {
-        sock_send_str(sock, post);
-        strcat(req, post);
+    if (extra != 0 && extra[0] != '\0') {
+        sock_send_str(sock, extra);
+        strcat(req, extra);
     }
     sock_send_str(sock, "\r\n");
     strcat(req, "\r\n");
@@ -168,7 +167,7 @@ int __cdecl http_fetch(const char* url, const char* post, int post_len, int rese
         ((char*)post)[post_len] = '\0';
         strcat(req, post);
     }
-    char* urlcopy = (char*)malloc(strlen(req + 1) * 4);
+    char* urlcopy = (char*)malloc(strlen(req) * 4);
     out->url = urlcopy;
     strcpy(urlcopy, req);
     // header lines, one recv'd byte at a time
@@ -189,7 +188,15 @@ int __cdecl http_fetch(const char* url, const char* post, int post_len, int rese
         } else if (buf[0] != '\r') {
             blank++;
         }
-        bytes_append(&hdr, buf, 1);
+        // (inline in the original: grow once, by doubling, when the buffer is full)
+        char c = buf[0];
+        unsigned used = (unsigned)(hdr.pos - hdr.data);
+        if (used >= (unsigned)hdr.cap) {
+            hdr.cap *= 2;
+            hdr.data = (char*)realloc(hdr.data, hdr.cap);
+            hdr.pos = hdr.data + used;
+        }
+        *hdr.pos++ = c;
     } while (!flag);
     *hdr.pos = '\0';
     out->headers = hdr.data;

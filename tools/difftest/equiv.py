@@ -5924,6 +5924,8 @@ def _test_function(sid, va, opts, log=print):
                 if opts.verbose and st == "fault" and a["fault"]:
                     log("  discard input %d: fault %s" % (i, " ".join(
                         "%#x" % x if isinstance(x, int) else str(x) for x in a["fault"])))
+                elif opts.verbose and st == "fault":
+                    log("  discard input %d: fault status %r" % (i, a["status"]))
                 elif opts.verbose and st == "budget":
                     log("  discard input %d: %s (%d loop repair call(s))" % (i, a["status"][1], loop_fixes))
                 continue

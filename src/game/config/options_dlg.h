@@ -30,7 +30,7 @@ void __cdecl bytes_append(byte_buf* v, const char* src, unsigned n);    // 0x4b8
 void __cdecl sock_send_str(int sock, const char* s);                    // 0x4b8fc0
 void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, int host_n,
                        LPSTR path, int path_n, long* port);             // 0x4b8ff0
-int __cdecl http_fetch(const char* url, const char* post, int post_len, int reserved, int out);  // 0x4b9110 (4th: never read; `out` is an http_result*, passed as an int)
+int __cdecl http_fetch(const char* url, const char* extra, const char* post, int post_len, int out);  // 0x4b9110 (extra: header text sent after Host; post/post_len: body, POST when post != 0; `out` is an http_result*, passed as an int)
 void __cdecl open_keys_key(PHKEY out);                                  // 0x4b96d0 HKCU\Software\MountAndBladeKeys
 void __cdecl read_key_string(HKEY* key, LPCSTR name, tstring* out);     // 0x4b9720
 long __cdecl get_latest_version();                                      // 0x4b9aa0 (the slice's __stdcall-less long)

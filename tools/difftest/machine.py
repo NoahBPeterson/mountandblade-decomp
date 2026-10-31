@@ -536,7 +536,13 @@ class Machine:
         out = bytearray()
         step = 2 if wide else 1
         while len(out) < limit:
-            ch = self.read(a + len(out), step)
+            try:
+                ch = self.read(a + len(out), step)
+            except UcError:
+                # an API-level read has no fault hook: record the address so equiv's fault repair can map or
+                # redirect it, exactly as for a read fault inside emulated code
+                self.last_fault = ("read", (a + len(out)) & 0xFFFFFFFF, step)
+                raise
             if ch == b"\0" * step:
                 break
             out += ch
@@ -870,7 +876,8 @@ def install_crt(m):
         return a[0]
 
     def ctype(pred):
-        return lambda m, a, esp: 1 if (a[0] & 0xFFFFFFFF) < 256 and pred(chr(a[0])) else 0
+        # "C" locale (the game never calls setlocale): bytes >= 0x80 are in no class
+        return lambda m, a, esp: 1 if (a[0] & 0xFFFFFFFF) < 128 and pred(chr(a[0])) else 0
 
     def malloc(m, a, esp):
         return m.dyn_alloc(max(a[0], 1))
@@ -881,6 +888,18 @@ def install_crt(m):
 
     def free(m, a, esp):
         return 0
+
+    def strdup(m, a, esp):
+        s = m.cstr(a[0])
+        p = m.dyn_alloc(len(s) + 1)
+        m.write(p, s + b"\0")
+        return p
+
+    def strupr(m, a, esp):
+        # "C" locale: ASCII only (the game never calls setlocale)
+        s = m.cstr(a[0])
+        m.write(a[0], bytes(c - 32 if 97 <= c <= 122 else c for c in s))
+        return a[0]
 
     def realloc(m, a, esp, align=16):
         p, n = a[0], a[1]
@@ -1007,6 +1026,7 @@ def install_crt(m):
         "isalnum": (ctype(str.isalnum), 1), "isupper": (ctype(str.isupper), 1),
         "isxdigit": (ctype(lambda c: c in "0123456789abcdefABCDEF"), 1), "isprint": (ctype(str.isprintable), 1),
         "malloc": (malloc, 1), "free": (free, 1), "realloc": (realloc, 2),
+        "_strdup": (strdup, 1), "_strupr": (strupr, 1),
         "_aligned_malloc": (aligned_malloc, 2), "_aligned_free": (free, 1), "_aligned_realloc": (aligned_realloc, 3),
         "rand": (rand, 0), "srand": (srand, 1), "_errno": (errno, 0), "atoi": (atoi, 1), "atol": (atoi, 1),
         "_isnan": (isnan, 2), "_finite": (finite, 2), "_purecall": (purecall, 0),
