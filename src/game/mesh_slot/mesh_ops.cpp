@@ -396,7 +396,7 @@ void EChar::build_mirror(mesh* m, int* remap, int* count, char flip)
 
     int n = (int)m->v70.size();
     *count = n;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < *count; i++) {        // 0x47c2d6: the bound is the stored *count, not the growing n
         point20* p = &vat(m->v70, i);
         if (p->a.x > 0.001f) {
             vector4 q;
@@ -452,7 +452,7 @@ void EChar::build_mirror(mesh* m, int* remap, int* count, char flip)
         } else {
             vertex60 t = *v;
             t.pos.x = -t.pos.x;
-            t.normal = v->pos;
+            t.normal = t.pos;                  // 0x47c395..0x47c3aa: the normal copies the NEGATED position
             t.f5c = 0;
             if (flip) {
                 t.uv.x = 1.0f - t.uv.x;
