@@ -1,6 +1,6 @@
 {
-"when": "2026-10-30T12:17:21-05:00",
-"commit": "4b05880",
+"when": "2026-10-30T23:51:50-05:00",
+"commit": "1d5e6bb",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,18 +9,18 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 415,
-"weak": 455,
-"fail": 10,
+"pass": 419,
+"weak": 453,
+"fail": 8,
 "inputs": 29,
 "harness": 38,
 "comdat": 118,
 "comdatdiff": 11,
 "funclet": 0,
 "not_run": 5,
-"pass_sz": 136686,
-"weak_sz": 613923,
-"fail_sz": 29621,
+"pass_sz": 138053,
+"weak_sz": 615457,
+"fail_sz": 26720,
 "inputs_sz": 25507,
 "harness_sz": 78152,
 "comdat_sz": 2793,
@@ -1516,8 +1516,8 @@
 "00442650": {
 "module": "agent_fx_sound",
 "file": "src/game/agent3/agent_fx_sound.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 591
 },
 "004428c0": {
@@ -1656,7 +1656,7 @@
 "00448eb0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK-FP",
+"verdict": "WEAK",
 "category": "weak",
 "size": 11644
 },
@@ -1698,8 +1698,8 @@
 "0044e2b0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1726
 },
 "0044e970": {
@@ -5840,8 +5840,8 @@
 "004eb8c0": {
 "module": "facegen_misc",
 "file": "src/game/char_sheet/facegen_misc.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 32
 },
 "004eb8e0": {
@@ -6561,8 +6561,8 @@
 "00513230": {
 "module": "inventory_panel",
 "file": "src/game/inventory_panel/inventory_panel.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 164
 },
 "00513360": {
@@ -6575,8 +6575,8 @@
 "005134c0": {
 "module": "inventory_panel",
 "file": "src/game/inventory_panel/inventory_panel.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 580
 },
 "00513710": {
@@ -7366,7 +7366,7 @@
 "0052dfd0": {
 "module": "mesh_3",
 "file": "src/game/mission5/mesh_3.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 1343
 },
@@ -7422,8 +7422,8 @@
 "0052edb0": {
 "module": "mesh_3",
 "file": "src/game/mission5/mesh_3.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1175
 },
 "0052f250": {
