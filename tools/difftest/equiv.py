@@ -5202,6 +5202,22 @@ class Comparer:
                 return ("import call #%d" % k, fmt_call(x), fmt_call(y), "imports called (any depth), args normalised")
         return None
 
+    def call_nargs(self, tgt, add_esp):
+        """Stack dwords a depth-1 call passes: the callee's own `ret N`, else our declaration's arity, else the
+        caller's `add esp, N`. The words recorded past them are the caller's frame, not arguments."""
+        n = self.r.callee_arity(tgt)
+        if n is None:
+            n = self.r.decl_arity.get(tgt)
+        if n is None:
+            n = add_esp
+        if tgt in self.r.decl_prefix and not (tgt in self.r.decl_struct and self.r.callee_arity(tgt)):
+            # a by-value struct's size is not in the mangled name, so without the callee's own `ret N` the
+            # dwords from the struct on stay uncompared. With it (callee_arity), the whole popped argument
+            # area is the callee's arity and the struct bytes are compared like any other stack argument
+            # (set_color 0x47af30 takes an rgl::vector4 by value: a wrong colour constant was invisible)
+            n = min(n, self.r.decl_prefix[tgt])
+        return n
+
     def norm_calls(self, calls, uninit=None):
         """uninit: the original's per-call masks (Runner.uninit_copies); a masked dword becomes UNINIT_ARG."""
         out = []
@@ -5209,17 +5225,7 @@ class Comparer:
             uninit = None
         esp = self.r.stk_hi
         for ci, (tgt, ecx, edx, words, add_esp, is_jmp) in enumerate(calls):
-            n = self.r.callee_arity(tgt)
-            if n is None:
-                n = self.r.decl_arity.get(tgt)
-            if n is None:
-                n = add_esp
-            if tgt in self.r.decl_prefix and not (tgt in self.r.decl_struct and self.r.callee_arity(tgt)):
-                # a by-value struct's size is not in the mangled name, so without the callee's own `ret N` the
-                # dwords from the struct on stay uncompared. With it (callee_arity), the whole popped argument
-                # area is the callee's arity and the struct bytes are compared like any other stack argument
-                # (set_color 0x47af30 takes an rgl::vector4 by value: a wrong colour constant was invisible)
-                n = min(n, self.r.decl_prefix[tgt])
+            n = self.call_nargs(tgt, add_esp)
             regs = self.r.callee_regs(tgt)
             ent = [tgt, norm_val(ecx, esp) if "ecx" in regs else "-", norm_val(edx, esp) if "edx" in regs else "-"]
             widths = self.r.callee_arg_widths(tgt) if n else {}
@@ -5509,7 +5515,10 @@ class FpTol:
             for k, (x, y, z) in enumerate(zip(ca_, cb_, cr_)):
                 if x[0] != y[0] or x[0] != z[0] or len(x[3]) != len(y[3]) or len(x[3]) != len(z[3]):
                     continue
+                nargs = self.c.call_nargs(z[0], z[4])   # only the callee's arguments, as compare_calls does
                 for j, (va, vb, vr) in enumerate(zip(x[3], y[3], z[3])):
+                    if j >= nargs:
+                        break
                     if va == vb or (ua_ is not None and j in ua_[k]) or \
                             not all(isinstance(v, int) for v in (va, vb, vr)):
                         continue
