@@ -176,7 +176,7 @@ void InventoryPanel::refresh_transaction(int unused)
                         Troop* rec = TROOP(troop);
                         tstring* nm = g_strtable.find(&rec->key);
                         if (nm == 0)
-                            nm = &rec->key;
+                            nm = &rec->name;            // 0x510604: the record itself, not its key
                         mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), nm->c_str(), price, gold);
                         vb2.destroy();
                         vb1.destroy();
@@ -218,7 +218,7 @@ void InventoryPanel::refresh_transaction(int unused)
                     ItemKind* rec = &g_items[food];
                     tstring* nm = g_strtable.find(&rec->key);
                     if (nm == 0)
-                        nm = &rec->key;
+                        nm = &rec->name;                // 0x5102d2: the record itself, not its key
                     const char* n = nm->c_str();
                     mb_snprintf(buf, 0x200, g_strtable.lookup(q)->c_str(), n);
                 }
@@ -1165,9 +1165,7 @@ bool InventoryPanel::try_place(ItemRef* item, int page, int slot)
             n = 9;
         else
             n = g_game->troops[idx].inv_count();
-        if (n <= 0)
-            return found;
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {                       // (n <= 0: nothing found, the original returns at once: 0x513554)
             if (g_game->troops[idx].inv[i].item == id && (flags[1][i] & 1))
                 found = true;
         }
@@ -1180,11 +1178,9 @@ bool InventoryPanel::try_place(ItemRef* item, int page, int slot)
             n = 9;
         else
             n = g_game->troops[idx].inv_count();
-        if (n > 0) {
-            for (int i = 0; i < n; i++) {
-                if (g_game->troops[idx].inv[i].item == id && (flags[0][i] & 1))
-                    found = true;
-            }
+        for (int i = 0; i < n; i++) {                       // (the loop's own entry test is the original's `jle 0x51360b`)
+            if (g_game->troops[idx].inv[i].item == id && (flags[0][i] & 1))
+                found = true;
         }
         for (int i = 0; i < 10; i++) {
             if (g_game->troops[idx].equip[i].item == id && (fstash[0][i] & 1))

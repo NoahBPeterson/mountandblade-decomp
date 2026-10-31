@@ -2,5 +2,9 @@
   "resmgr 0041aee0": {
     "args": ["--transparent", "401830,41a510,41a550"],
     "why": "??_Eframe_set: the original inlines ??_EBone (0x41a550) on its array path as ??_I (0x401830, calling ~Bone 0x41a510) + operator delete[]; ours calls ??_EBone on both paths (tools/difftest/test_equiv.py FS_TRANSPARENT)"
+  },
+  "inventory_panel 005108d0": {
+    "args": ["--hint", "this+964=1,2@0.9", "--hint", "this+968=1,2@0.9", "--hint", "this+a98=0,1@0.5", "--hint", "this+4=0,2,4@0.7", "--hint", "this+14=0,1,2,3,4@0.8", "--typed-share", "0.8"],
+    "why": "InventoryPanel::refresh_lists loops over view_count / view_count2 (+0x964 / +0x968); a random int is almost never 1 or 2, so the widget loops were not entered (10/136 edges). Soft hints only, nothing is discarded (66/140 with them)."
   }
 }
