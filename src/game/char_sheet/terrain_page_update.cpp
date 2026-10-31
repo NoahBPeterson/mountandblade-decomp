@@ -37,7 +37,7 @@ void TerrainPage::update(float dt)
             else             { lo = 0x40; hi = 0x5e; }
             g_bits.set(lo, hi, v);
             read_fields();
-            this->update(dt);       // refresh every widget from the page fields
+            this->update();         // 0x4f2730: refresh every widget from the page fields
         }
     }
 
@@ -111,18 +111,20 @@ done:
         flash->f54 = 20.0f;
         vector4 dir(1.0f, 1.0f, -1.0f);
         flash->f44 = dir;
+        flash->f44.normalize();                     // inlined in the original (0x407d60 body: (0,1,0) when the length is <= 1e-10)
         sync_bits();
         ((TerrainX*)(void*)&g_terrain_obj)->generate((int)world, (int*)0, 0);   // 0x481d10
-        vector4 owner;                              // 16 zeroed bytes; lane 1 is what 0x4814a0 hands back
-        owner.x = 0.0f; owner.y = 0.0f; owner.z = 0.0f; owner.w = 0.0f;
-        ((TerrainX*)(void*)&g_terrain_obj)->regenerate_water((void**)&owner.y, 0);   // 0x482170
-        ((TerrainX*)(void*)&g_terrain_obj)->destroy_water((int)&owner);   // 0x4814a0
+        void* water_out;                            // 0x482170 stores the new water mesh here; the original never reads it back
+        ((TerrainX*)(void*)&g_terrain_obj)->regenerate_water(&water_out, 0);   // 0x482170
+        int owner[4];                               // lanes 1..3 are zeroed just before 0x4814a0 (which ignores its argument); lane 0 is never set
+        owner[0] = 0; owner[1] = 0; owner[2] = 0; owner[3] = 0;
+        ((TerrainX*)(void*)&g_terrain_obj)->destroy_water((int)owner);   // 0x4814a0
         float x = camera_x * g_half;
         view_x = x;
         float y = camera_y * g_half;
         view_y = y;
-        if (owner.y != 0.0f)
-            free_ptr((void*)(int)owner.y);
+        if (owner[1] != 0)
+            free_ptr((void*)owner[1]);
     }
     simulate(dt);
     world->step(dt);

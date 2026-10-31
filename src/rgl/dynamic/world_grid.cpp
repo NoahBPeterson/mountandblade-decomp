@@ -186,7 +186,7 @@ void shape_vec::push_back(grid_shape* const& v)
 // @ 0x4240d0
 int shape_vec_f::find(grid_shape* o) const
 {
-    for (unsigned i = 0; first != 0 && i < size(); i++)
+    for (unsigned i = 0; first != 0 && i < (unsigned)(last - first); i++)
         if (first[i] == o)
             return i;
     return -1;
