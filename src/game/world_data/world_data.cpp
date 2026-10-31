@@ -599,7 +599,7 @@ void GameW::remove_party(int id)
         p->leader() = -1;
     }
     if (p->fol_first() != 0 && p->fol_last() - p->fol_first() != 0) {
-        for (unsigned k = 0; p->fol_first() != 0 && k < (unsigned)((p->fol_last() - p->fol_first()) >> 2); k++) {
+        for (unsigned k = 0; p->fol_first() != 0 && k < (unsigned)(p->fol_last() - p->fol_first()); k++) {
             if ((unsigned)p->fol_first()[k] >= parties.n_parties)
                 continue;
             int j = ((Map10007*)(void*)m)->lookup(p->fol_first()[k]);
@@ -2027,15 +2027,14 @@ void GameW::award_experience(int party, float amount, int mode)
             break;
         if (troops[s.troop].flags30 & 0x10) {
             int r = rand() % 15817;
-            float v = ((float)r * (1.0f / 31634.0f) + 0.75f) * per;
+            // no float temporary: the original keeps the product on the x87 stack (0x494fd1 .. 0x494fdb) and truncates it from there
             if (i == 0)
-                GameData::add_experience(s.troop, (int)(v * 10.0f));
+                GameData::add_experience(s.troop, (int)((((float)r * (1.0f / 31634.0f) + 0.75f) * per) * 10.0f));
             else
-                GameData::add_experience(s.troop, (int)(v * 3.0f));
+                GameData::add_experience(s.troop, (int)((((float)r * (1.0f / 31634.0f) + 0.75f) * per) * 3.0f));
         } else {
             int r = rand() % 15817;
-            float v = (((float)r * (1.0f / 15817.0f)) * 0.5f + 0.75f) * (float)s.count * per;
-            p->add_xp_to_stack(i, (int)v);
+            p->add_xp_to_stack(i, (int)((((float)r * (1.0f / 15817.0f)) * 0.5f + 0.75f) * (float)s.count * per));
         }
     }
 
