@@ -358,8 +358,7 @@ void MissionSource::pick(int* arg)
                 ((mesh_node*)begin[i]->nodes[n])->set_time(&t);
         }
         if (begin[i]->changed(0x10000)) {
-            g_spawn_lo = i;
-            g_spawn_hi = 0;
+            g_spawn_lo = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it
             int k = begin[i]->kind();
             if (k == 2 || k == 3) {
                 g_spawn_hi = (__int64)(int)begin[i]->get_float();
