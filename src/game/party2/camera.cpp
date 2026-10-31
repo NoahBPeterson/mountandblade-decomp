@@ -2309,7 +2309,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         ((Skeleton*)e->skel)->start_anim(0, (Anim*)src[0], src[4], src[5]);
         ((Curve*)e->skel)->reset_rec(0);
         *(int*)e->skel->env = 0x3f800000;
-        e->skel->update(0.05f, (const rgl::matrix*)e->m);
+        e->skel->update(0.1f, (const rgl::matrix*)e->m);     // 0x3dcccccd (was 0.05f)
     }
     *(V4c*)&e->f_c4 = V4c(0.0f, 0.0f, 1.1f);
     dist = 100000.0f;
@@ -2569,6 +2569,8 @@ __int64 Elem::get_operand(__int64* locals, int* i, int* type)
 }
 
 // @ 0x49d7f0
+// The original reuses its two incoming argument slots as the callee's out-variables: `stack` (as the int 1/2 operand
+// selector) and `locals` (as the type out and then the loaded value).  Same here, so the frame depth matches.
 bool DialogBlock::step_less(int locals, int* stack)
 {
     int n = stack[0x100];
@@ -2584,32 +2586,33 @@ bool DialogBlock::step_less(int locals, int* stack)
     }
     int op = items[idx].id;
     Elem* ins = items + idx;
-    int kind;
+    int* sel = (int*)&stack;
+    int v;
     if (op == 6) {
-        int two = 2;
-        int v = (int)ins->get_operand((__int64*)locals, &two, &kind);
+        *sel = 2;
+        v = (int)ins->get_operand((__int64*)locals, sel, &locals);
         return left < v;
     }
     if (op == 7) {
-        int one = 1;
-        int v = (int)ins->get_operand((__int64*)locals, &one, &kind);
+        *sel = 1;
+        v = (int)ins->get_operand((__int64*)locals, sel, &locals);
         return left >= v;
     }
     if (op == 0xc)
         return left < g_mission->agents.count;
     if (op == 0xb)
         return left < (int)g_game->parties.n_parties;
+    *sel = 1;
     if (op == 0xf) {
-        int one = 1;
-        int v = (int)ins->get_operand((__int64*)locals, &one, &kind);
-        if (check_party(&v)) {
+        v = (int)ins->get_operand((__int64*)locals, sel, &locals);
+        locals = v;
+        if (check_party(&locals)) {
             Party* party = g_game->parties.get(v);
             return left < (int)((std::vector<int>*)&party->attached)->size();
         }
         return left < -1;
     }
-    int one = 1;
-    int v = (int)ins->get_operand((__int64*)locals, &one, &kind);
+    v = (int)ins->get_operand((__int64*)locals, sel, &locals);
     return left < v;
 }
 
@@ -3021,8 +3024,11 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 in_key = 0;
                 done = 0;
             }
-            tstring s2 = renumber((int)buf, saved, 1, &which, &saved);
-            tstring s1 = renumber((int)buf, saved, ok, &range_lo, &range_hi);
+            // the original reads `saved` into a register before the first call (which stores the block end back into the
+            // slot through its last argument); both calls take the statement index, not the clobbered slot
+            int at = saved;
+            tstring s2 = renumber((int)buf, at, 1, &which, &saved);
+            tstring s1 = renumber((int)buf, at, ok, &range_lo, &range_hi);
             set_progress_range(range_lo, range_hi);
             refresh_settings_list(&s1, 0);
         }
