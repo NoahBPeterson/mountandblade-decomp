@@ -394,5 +394,16 @@
       "800"
     ],
     "why": "MapFlags::commit dispatches on MissionCtx::pop_key(), which returns the lowest set g_bit bit of g_mission_ctx.f3c (0xa7333c, zero in the harness), so only the key == 0 tail ran; the g:ADDR soft hint puts a key bit there, and 0xa73320 (byte) gates the key 0x10 branch"
+  },
+  "mission_5 00525160": {
+    "args": [
+      "--hint",
+      "g:5d7094=c0000000@0.8",
+      "--hint",
+      "g:5d7098=41200000@0.8",
+      "--typed-share",
+      "0.8"
+    ],
+    "why": "Game::handle_event: the HUD block needs g_mouse_x < panel.x1 and g_mouse_y > panel.y0+0.1; random floats rarely satisfy both, so the flag loop and slider branch were never entered. Soft hints only, nothing discarded."
   }
 }

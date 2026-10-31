@@ -54,9 +54,9 @@ void Game_s25160::handle_event(int code)
     char* b = *(char**)&g_game;
     if (f1204 == *(int*)(b + 0x8c) || *(int*)(b + 0x1a23c) == 0)
         goto hide;
-    if (orig::g_mouse_x >= *(float*)(f30 + 0xf0))
+    if (!(orig::g_mouse_x < *(float*)(f30 + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
         goto hide;
-    if (*(float*)(f30 + 0xe4) + orig::k_0_1f >= orig::g_mouse_y)
+    if (!(*(float*)(f30 + 0xe4) + orig::k_0_1f < orig::g_mouse_y))
         goto hide;
     {
         f11e0->v45();
@@ -158,7 +158,7 @@ done:
         int save = *(int*)(rec + 0x34);
         int flags = *(int*)(rec + 0x30);
         (void)save;
-        if (!(flags & 0x10) || (flags & 0x1000))
+        if (!(flags & 0x10) || !(flags & 0x1000))   // 0x525568..0x525574: both bits set skips the loop
         {
             for (int i = 0; i < 0xa; ++i)
                 ((Troop_s25160*)rec)->m_4630d0(i);
@@ -1866,6 +1866,11 @@ void Mission_s29840::fn_529d80()
 #define g_areas_s29ec0 (*(Area_s29ec0**)&g_mission_templates)
 #undef g_panel_s29ec0
 #define g_panel_s29ec0 (*(hud_panel_s29ec0**)&(*(void**)((char*)&g_gui + 0x568)))
+// the length the original inlines in this function: x*x + z*z + y*y (0x52a2af, 0x52a337, 0x52a786)
+static inline float len_xzy_s29ec0(const vector4& v)
+{
+    return (float)sqrt(v.x * v.x + v.z * v.z + v.y * v.y);
+}
 // @ 0x529ec0
 void Screen_s29ec0::f_529ec0()
 {
@@ -1916,11 +1921,24 @@ void Screen_s29ec0::f_529ec0()
     }
 
     // ---- phase B: the same probe as a 0.1 m capsule_s29ec0, 0.1 m further out, against the entities ---------
-    vector4 axis = cap.p1 - cap.p0;
-    axis.normalize();
-    cap.p0.x += axis.x * 0.1f;
-    cap.p0.y += axis.y * 0.1f;
-    cap.p0.z += axis.z * 0.1f;
+    // 0x52a124..0x52a1fa: Vector::normalize inlined, the squares summed x, z, y (not the outlined 0x407d60's x, y, z)
+    float ax = cap.p1.x - cap.p0.x;
+    float ay = cap.p1.y - cap.p0.y;
+    float az = cap.p1.z - cap.p0.z;
+    float al = (float)sqrt(ax * ax + az * az + ay * ay);
+    if (al > 1e-10f) {
+        float inv = 1.0f / al;
+        ax = ax * inv;
+        ay = ay * inv;
+        az = az * inv;
+    } else {
+        ax = 0.0f;
+        ay = 1.0f;
+        az = 0.0f;
+    }
+    cap.p0.x += ax * 0.1f;
+    cap.p0.y += ay * 0.1f;
+    cap.p0.z += az * 0.1f;
     cap.radius = 0.1f;
     best += 1.0f;
 
@@ -1934,8 +1952,8 @@ void Screen_s29ec0::f_529ec0()
             continue;
 
         vector4 d = c.point - back;
-        float len = d.length();
-        if (len > best)
+        float len = len_xzy_s29ec0(d);
+        if (!(len <= best))        // 0x52a2d1: test ah,0x41 / jp -- skips on len > best and on NaN
             continue;
 
         bool keep = false;
@@ -1951,7 +1969,7 @@ void Screen_s29ec0::f_529ec0()
                 target = e->id;
                 best = len;
                 vector4 r = e->pos - back;
-                second = r.length();
+                second = len_xzy_s29ec0(r);
             } else if (a->f10 == 1) {
                 // a ridden mount
                 if (g_items_s29ec0[a->item.item].type_flags != 1)
@@ -1962,7 +1980,7 @@ void Screen_s29ec0::f_529ec0()
                 target = e->id;
                 best = d.out_length();
                 vector4 r = e->pos - back;
-                second = r.length();
+                second = r.out_length();   // 0x52a420: call 0x407c50 on the second vector as well
             }
         } else if (e->type == 0x0c) {
             SceneProp_s29ec0* p = &m->props[e->id];
@@ -2058,7 +2076,7 @@ void Screen_s29ec0::f_529ec0()
             if (stat > g_game_s29ec0->skill_level(g_game_s29ec0->f8c, 0x18))
                 goto no_selection;
             vector4 r = a->pos - me->pos;
-            if (r.length() < 1.3f)
+            if (len_xzy_s29ec0(r) < 1.3f)
                 ok = 1;
         }
     } else if (mode == 4) {
