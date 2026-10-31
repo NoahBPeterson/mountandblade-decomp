@@ -138,14 +138,16 @@ tail:
                 {
                     tstring name("dlg_button");
                     base_mesh* bm = (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone();
-                    float col[4] = { one, text_px, 0.0f, one };   // original: four 1.0f at +0x8c..+0xa4
+                    rgl::vector4 col;                         // original: four 1.0f at +0x8c..+0xa4, passed by value
+                    col.x = one; col.y = text_px; col.z = 0.0f; col.w = one;
                     bm->set_color(col);
                     buttons[i]->set_track(2, bm);
                 }
                 {
                     tstring name("dlg_button_down");
                     base_mesh* bm = (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone();
-                    float col[4] = { one, text_px, 0.0f, one };
+                    rgl::vector4 col;
+                    col.x = one; col.y = text_px; col.z = 0.0f; col.w = one;
                     bm->set_color(col);
                     buttons[i]->set_track(1, bm);
                 }

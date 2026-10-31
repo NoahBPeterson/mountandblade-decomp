@@ -13,7 +13,7 @@
 
 struct base_mesh {
     base_mesh* clone();                                  // 0x41c6d0
-    void set_color(const float* c);                      // 0x47af30 (four floats)
+    void set_color(rgl::vector4 c);                      // 0x47af30 (four floats BY VALUE, ret 0x10: a pointer here left the caller's stack 12 bytes off)
 };
 
 struct Choices : WidgetObj {                             // vtable 0x5924a0, ctor 0x48ae20, 0x188 bytes
