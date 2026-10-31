@@ -65,5 +65,18 @@
       "4119d0"
     ],
     "why": "RenderPass::render copies the pass into a local vector<int> with the out-of-line std::vector<int>::push_back (0x4119d0) that ours inlines; 0x410610/0x410b60 are already auto-transparent, so the allocation (engine_new) inside the hidden call made the depth-1 trace of ours differ from the original in every input that also reached a later transparent allocation (call #6 mismatch, not a behavioural difference)"
+  },
+  "config_dialog 004d0240": {
+    "args": [
+      "--hint",
+      "arg1=4e,110,111,114@0.9",
+      "--hint",
+      "arg2&ffff=1,2,43d,448,45e,45f@0.9",
+      "--hint",
+      "arg2&ffff0000=0,2000000,90000@0.8",
+      "--typed-share",
+      "0.8"
+    ],
+    "why": "Dialog::proc dispatches on the message id (arg 1) through a jump table and then on the command id in wParam's low word; a random 32-bit msg is almost never 0x4e/0x110/0x111/0x114 (3/33 edges, 7.4% of insns). Soft arg hints only (--hint argN[&MASK]=V1,..@P, new in invariants.py), nothing is discarded."
   }
 }
