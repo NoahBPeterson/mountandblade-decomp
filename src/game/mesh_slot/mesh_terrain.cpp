@@ -44,9 +44,9 @@ struct Ctx {
 void TerrainX::create_water(void** out)
 {
     Entity* e = (Entity*)((rgl::world*)grid)->create_entity(9);       // CellGrid is the rgl::world of src/rgl/scene/world.h (its reset 0x421390 is rgl::world::reset)
-    float cmap = (*(float*)((char*)this + 0x843bd1c) + *(float*)((char*)this + 0x843bd20) + *(float*)((char*)this + 0x843bd24)) * 0.33f;
+    float cmap = (*(float*)((char*)this + 0x843bd24) + *(float*)((char*)this + 0x843bd20) + *(float*)((char*)this + 0x843bd1c)) * 0.33f;   // summed z, y, x as at 0x480dce
     rgl::world* wo = (rgl::world*)world;
-    float cz = (wo->ambient.x + wo->ambient.y + wo->ambient.z) * 0.3f;
+    float cz = (wo->ambient.z + wo->ambient.y + wo->ambient.x) * 0.3f;   // summed z, y, x as at 0x480e0e
 
     for (int y = 0; y <= h; y++) {
         for (int x = 0; x <= w; x++) {
@@ -248,7 +248,7 @@ void TerrainX::tessellate()
 
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
-            terrain_quad* qp = &quads[y * 250 + x];
+            terrain_quad* qp = &quads[x * 250 + y];     // 0x4816d6: row stride 0x38, column stride 0x36b0 (index x * 250 + y)
             int tri[16];
             vector4 nrm[2];
 
@@ -267,7 +267,7 @@ void TerrainX::tessellate()
 
             int ncorner = 4;
             int nquad = 1;
-            if (nrm[1].x * nrm[0].x + nrm[1].y * nrm[0].y + nrm[1].z * nrm[0].z > 0.999f) {
+            if (nrm[1].y * nrm[0].y + nrm[1].z * nrm[0].z + nrm[1].x * nrm[0].x > 0.999f) {      // summed y, z, x as at 0x4817f9
                 tri[0] = x;     tri[1] = y;
                 tri[2] = x + 1; tri[3] = y;
                 tri[4] = x + 1; tri[5] = y + 1;
@@ -319,8 +319,8 @@ void TerrainX::tessellate()
                         if (*slot >= 0 && (g_x8ed4e14[*slot * 0x20] & 2))
                             acc += mult * *l;
                         slot -= 10;
+                        mult *= 1.0f - *l;          // 0x481aa1: fsub [ecx + 4] after the pointer step, i.e. the entry just used
                         l -= 1;
-                        mult *= 1.0f - *l;
                     }
                     rec.ids[k] = c->f14;
                     cid += 2;
