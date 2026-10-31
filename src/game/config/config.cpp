@@ -21,6 +21,7 @@
 #include <math.h>
 #include <new>
 #include "./config.h"
+#include <richedit.h>
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // g_game 0x5e2930 (g_config is a view of it)
 #include "../../tinyxml/tinyxml.h"   // TiXmlElement::QueryDoubleAttribute 0x42f190 (RagBody::load)
@@ -432,19 +433,18 @@ void set_progress_range(int low, int high)
 void __cdecl refresh_settings_list(const tstring* page, char detailed)
 {
     char text[0x1000];
-    RECT item;
-    int color;
-    int key_end;
-    int lineheight;
-    int item_rgb[3];
+    CHARRANGE sel;                                  // [esp+0x14]: the selection, then (L, L + page length) after the insert
+    CHARRANGE range;                                // [esp+0x24]: the span being coloured
+    struct { int flags, codepage; } stx;            // [esp+0x58] SETTEXTEX (the code page is never written)
+    CHARFORMAT cf;                                  // [esp+0x60]: cbSize 0x3c, mask, effects; crTextColor at +0x14
+    POINT scroll;                                   // [esp+0x40]
     RECT window;
     char quote;
 
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x434, 0, (LPARAM)&item);
-    // EM_EXGETSEL fills a CHARRANGE (cpMin, cpMax): the first two LONGs of `item`, left and top
-    ((GameConfig*)g_game)->settings_text.erase_range(item.left, item.top);
-    ((GameConfig*)g_game)->settings_text.insert(item.left, *page);
-    RECT sel = item;                                // the selection (CHARRANGE in left/top), restored at the end ([esp+0x14])
+    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x434, 0, (LPARAM)&sel);
+    // EM_EXGETSEL fills a CHARRANGE (cpMin, cpMax)
+    ((GameConfig*)g_game)->settings_text.erase_range(sel.cpMin, sel.cpMax);
+    ((GameConfig*)g_game)->settings_text.insert(sel.cpMin, *page);
 
     tstring sel_text;
     SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x43e, 0, (LPARAM)text);
@@ -453,23 +453,25 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
         sel_text.append(line);
     }
 
-    item_rgb[0] = 2;
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x461, (WPARAM)item_rgb, (LPARAM)page->c_str());
+    stx.flags = 2;
+    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x461, (WPARAM)&stx, (LPARAM)page->c_str());
 
-    item.right = item.left + page->len;
+    const int L = sel.cpMin;                        // the base every coloured span is measured from (never modified)
+    sel.cpMax = page->len + L;                      // 0x4bb4f2: [esp+0x18]
     quote = '"';
     int first = page->find(quote, 0);
     int separated = 0;
-    item_rgb[1] = 0x3c;
-    item_rgb[2] = 0x40000000;
-    color = detailed ? 0x00c80000 : 0;
+    cf.cbSize = 0x3c;
+    cf.dwMask = 0x40000000;
+    cf.dwEffects = 0;
+    int color = detailed ? 0x00c80000 : 0;
 
     for (;;) {
-        item.left = separated + item.right;
-        item.top = first < 0 ? item.right : first + item.right;
-        SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&item);
-        item_rgb[0] = color;
-        SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)item_rgb);
+        range.cpMin = separated + L;
+        range.cpMax = first < 0 ? sel.cpMax : first + L;
+        SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
+        cf.crTextColor = color;
+        SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
         if (first < 0) {
             break;
         }
@@ -477,64 +479,67 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
         if (separated < 1) {
             first = -1;
         } else {
-            item.left = item.right + first;
-            item.top = item.right + separated;
-            SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&item);
-            item_rgb[0] = (detailed ? 0x00c80000 : 0) + 0xc800;
-            SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)item_rgb);
+            range.cpMin = first + L;
+            range.cpMax = L + separated;
+            SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
+            cf.crTextColor = (detailed ? 0x00c80000 : 0) + 0xc800;
+            SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
             first = page->find(quote, separated);
         }
     }
 
     if (!detailed) {
-        first = page->find(tstring(g_eq_sep), 0);
-        key_end = sel_text.find(tstring(g_eq_sep), 0) + 3;   // the previous text's values (0x4bb6a1: find on sel_text)
-        while ((first = first + 3, first > 2)) {
-            int k = page->find((const char)',', first);
+        // 0x4bb65d: both finds happen first, then the loop runs while the page still has a " = " from `first`
+        first = page->find(tstring(g_eq_sep), 0) + 3;
+        int key_end = sel_text.find(tstring(g_eq_sep), 0) + 3;   // the previous text's values (0x4bb6a1: find on sel_text)
+        while (first >= 3) {
+            quote = ',';
+            int k = page->find(quote, first);
             if (k < 0) {
                 k = page->len;
             }
-            if (key_end > 2) {
-                int e = sel_text.find((const char)',', key_end);
+            bool mark = true;
+            if (key_end >= 3) {
+                int e = sel_text.find(quote, key_end);
                 if (e < 0) {
                     e = sel_text.len;
                 }
                 long l = atoi(page->substr(first, k).c_str());
                 long r = atoi(sel_text.substr(key_end, e).c_str());
-                if (l != r) {
-                    goto mark;
-                }
-            } else {
-            mark:
-                item.left = item.right + first;
-                item.top = item.right + k;
-                SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&item);
-                item_rgb[0] = 0xff;
-                SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)item_rgb);
+                mark = (l != r);
+            }
+            if (mark) {
+                range.cpMin = L + first;
+                range.cpMax = L + k;
+                SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
+                cf.crTextColor = 0xff;
+                SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
             }
             first = page->find(tstring(g_eq_sep), first) + 3;
             key_end = sel_text.find(tstring(g_eq_sep), key_end) + 3;
         }
     }
 
-    WPARAM top = SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x436, 0, (LPARAM)sel.left);    // EM_EXLINEFROMCHAR
+    int top = (int)SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x436, 0, L);    // EM_EXLINEFROMCHAR
     GetWindowRect(GetDlgItem(g_hwnd_dlg, 0x4b0), &window);
+    int prev = g_edit_value;
+    int lineheight = (top - 5) * 0x11;
+    scroll.x = 0;
+    scroll.y = lineheight;
     int count = window.bottom - window.top;
-    lineheight = (top - 5) * 0x11;
-    item_rgb[0] = 0;
-    if ((float)count * g_line_pitch_ratio < (float)abs(lineheight - g_edit_value)) {
-        SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x4de, 0, (LPARAM)item_rgb);
-        g_edit_key = item_rgb[0];
-        g_edit_value = lineheight;
+    if ((float)abs(lineheight - prev) > (float)count * g_line_pitch_ratio) {
+        SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x4de, 0, (LPARAM)&scroll);
+        g_edit_key = scroll.x;
+        g_edit_value = scroll.y;
     }
 
-    // back to the caller's selection, reset its format, then collapse it to its start (0x4bb924..0x4bb9a0)
+    // back to the caller's selection (L, L + length), embolden it per `detailed`, then collapse it to its start (0x4bb924..0x4bb9a0)
     SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&sel);
-    item_rgb[2] = detailed != 0;
-    item_rgb[0] = 0x3c;
-    item_rgb[1] = 1;
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)item_rgb);
-    sel.top = sel.left;                             // cpMax = cpMin (0x4bb99c)
+    cf.cbSize = 0x3c;
+    cf.dwMask = 1;
+    cf.dwEffects = detailed != 0;
+    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
+    sel.cpMax = sel.cpMin;                          // cpMax = cpMin (0x4bb99c)
     SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&sel);
 }
 
@@ -1441,10 +1446,17 @@ void* psys_record::read(stream_base& a, char* o)
     int* q = (int*)(o + 0x2c);
     RF(RF(RF(s, q), q + 1), q + 2);
     RF(s, o + 0x3c);
-    *(float*)(o + 0x1c) = (*(unsigned*)(o + 0x18) & 0xff) ? (float)(*(unsigned*)(o + 0x18) & 0xff) * 0.003921568859f : -1.0f;
-    *(float*)(o + 0x20) = *(unsigned char*)(o + 0x19) ? (float)*(unsigned char*)(o + 0x19) * 0.003921568859f : -1.0f;
-    *(float*)(o + 0x24) = *(unsigned char*)(o + 0x1a) ? (float)*(unsigned char*)(o + 0x1a) * 0.003921568859f : -1.0f;
-    *(float*)(o + 0x28) = *(unsigned char*)(o + 0x1b) ? (float)*(unsigned char*)(o + 0x1b) * 0.003921568859f : -1.0f;
+    {
+        // (an if/else per channel as the original branches: 0x4bdc9f..0x4bdd3d; a zero byte gives -1.0)
+        unsigned b0 = *(unsigned*)(o + 0x18) & 0xff;
+        if (b0) *(float*)(o + 0x1c) = (float)(int)b0 * 0.003921568859f; else *(float*)(o + 0x1c) = -1.0f;
+        unsigned b1 = *(unsigned char*)(o + 0x19);
+        if (b1) *(float*)(o + 0x20) = (float)(int)b1 * 0.003921568859f; else *(float*)(o + 0x20) = -1.0f;
+        unsigned b2 = *(unsigned char*)(o + 0x1a);
+        if (b2) *(float*)(o + 0x24) = (float)(int)b2 * 0.003921568859f; else *(float*)(o + 0x24) = -1.0f;
+        unsigned b3 = *(unsigned char*)(o + 0x1b);
+        if (b3) *(float*)(o + 0x28) = (float)(int)b3 * 0.003921568859f; else *(float*)(o + 0x28) = -1.0f;
+    }
     return &a;
 }
 
