@@ -839,17 +839,19 @@ void GameG::update_tracks()
         rgl::vector4 c;
         if (t < 1.0f) {
             float u = 1.0f - t;
-            c = rgl::vector4(0.8f * t + 1.2f * u,
-                             0.6f * t + 0.9f * u,
-                             0.9f * t + 0.9f * u);
+            // 0x518b53: (0.9t + 1.2u, 0.8t + 0u, 0t + 0u)
+            c = rgl::vector4(0.9f * t + 1.2f * u,
+                             0.8f * t + 0.0f * u,
+                             0.0f * t + 0.0f * u);
         } else {
             float u = t - 1.0f;
             if (u > 1.0f)
                 u = 1.0f;
             float v = 1.0f - u;
-            c = rgl::vector4(0.9f * u + 0.8f * v,
-                             0.6f * u + 0.6f * v,
-                             0.6f * u + 0.9f * v);
+            // 0x518bee: (0u + 0.9v, 0.6u + 0.8v, 0.8u + 0v)
+            c = rgl::vector4(0.0f * u + 0.9f * v,
+                             0.6f * u + 0.8f * v,
+                             0.8f * u + 0.0f * v);
         }
 
         unsigned col = rgl::pack_color(&c);
