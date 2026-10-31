@@ -40,6 +40,8 @@ pipeline, the progress counts or the gates' view of our source.
   launches fail, as with binkplay.exe missing) and `no_sound_samples.cpp` (every FSOUND_Sample_Load returns 0: no
   sound effects, ~55 s less start-up under Wine). Both swap one of our own import slots from a static constructor
   (`iat_hook.h`), so no function of the reconstruction is replaced.
+- `fps`: `fps_title.cpp` puts the frame rate in the window title ("... - 59.9 fps (16.7 ms)"), read every 500 ms from
+  the m_fFPS the faithful CD3DApplication::UpdateStats (0x402580) already measures once a second. Title text only.
 - `diag`: runtime diagnostics. `rootwatch.cpp` logs the GUI root-widget stack (g_gui's vector) to rootwatch.txt
   whenever it changes (found the dropdown list that never closed).
 
