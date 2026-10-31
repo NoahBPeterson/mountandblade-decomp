@@ -247,8 +247,15 @@ void char_window::open_view()
                 a->add_item(0, m);
             }
             ui->add_child(a);
-            elem2* c = new elem2;
-            *(void**)c = (void*)g_vt_591ee8;
+            // 0x509a4a: the original keeps the allocation in esi and discards the constructor's result (0x48b1c0), then
+            // installs the vtable inside the non-null arm
+            void* raw = operator new(sizeof(elem2));
+            elem2* c = 0;
+            if (raw) {
+                new (raw) elem2;
+                c = (elem2*)raw;
+                *(void**)c = (void*)g_vt_591ee8;
+            }
             f4cc = c;
             label_refresh(c, tstring("char_i_character"));
             mesh* m2 = g_tableaus.make_mesh_from(&mode, &troop);
