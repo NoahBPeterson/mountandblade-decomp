@@ -2806,7 +2806,11 @@ void Party::update_flags()
     model->color.x = 0.0f;
     model->color.y = 0.0f;
     model->color.z = 0.5f;
-    model->color.w = a;
+    // The original builds (0, 0, 0.5) and copies the never-written w of that stack temp (0x4b7e11 [esp+0x2c] ->
+    // 0x4b7e24); nothing in update_flags writes the slot. In all four update_flags snapshots of a real session
+    // (work/capture, 2026-10-31) it held 0, so the colour the game shows is (0, 0, 0.5, 0). The scale `a` is never
+    // stored here.
+    model->color.w = 0.0f;
     float shade = 0.95f;
     model->set_color(&shade);
 }
