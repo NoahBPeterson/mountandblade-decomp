@@ -24,7 +24,11 @@ void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
         if ((unsigned)i >= (unsigned)(o->skins->end - o->skins->begin))
             break;
         mat3 tmp;
-        mat3 id = *identity3(&tmp);
+        // the original (0x4ea147..0x4ea241) multiplies a full mat4 (rows from identity3, origin zeroed): 0x40e870 reads the
+        // left operand's origin (+0x30..+0x38), so it must be zero, not the stack bytes after a bare mat3
+        mat4 id;
+        *(mat3*)&id = *identity3(&tmp);
+        id.o.x = 0.0f; id.o.y = 0.0f; id.o.z = 0.0f;
         id.s.x *= o->f158; id.s.y *= o->f158; id.s.z *= o->f158;
         id.f.x *= o->f15c; id.f.y *= o->f15c; id.f.z *= o->f15c;
         id.u.x *= o->f160; id.u.y *= o->f160; id.u.z *= o->f160;
