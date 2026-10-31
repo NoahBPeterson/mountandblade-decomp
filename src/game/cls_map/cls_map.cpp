@@ -266,7 +266,7 @@ void Font::load(const char* filename)
 
         int u, v, w, h, preshift, yadjust, postshift;
 
-        fd.a = fd.b = fd.c = fd.d = fd.e = fd.f = fd.g = 0.0f;
+        fd.b = fd.c = fd.d = fd.e = fd.f = fd.g = 0.0f;       // (0x4d9c89..0x4d9ccc: the first float, a, is not cleared per glyph: it keeps the previous glyph's value)
 
         if (e->QueryIntAttribute("u", &u) == 0)
             fd.a = (float)(u - 4) / (float)width;
@@ -2272,17 +2272,25 @@ void OptionsWin::init()
 
     {   // resolution
         { tstring k("Resolution"); resolution = make_dropdown((MissionUi*)window, &k, 0.52f, 0.665f); }
-        // The original builds this vector4 with the 3-argument constructor and never sets w, so it passes a stale stack word
-        // (the first call at 0x4e1792 reads [esp+0x2c]); the value is whatever the frame held and cannot be reproduced, so w is
-        // given 1.0 here instead of a compile-dependent leftover.
-        rgl::vector4 v;
-        v.w = 1.0f;
-        v.x = 0.7f; v.y = 0.7f; v.z = 1.0f;
-        ((gui_mesh*)resolution->tracks[2])->set_color(v);
-        v.x = 0.7f; v.y = 0.7f; v.z = 1.0f;
-        ((gui_mesh*)resolution->tracks[1])->set_color(v);
-        v.x = 0.7f; v.y = 0.7f; v.z = 1.0f;
-        ((gui_mesh*)resolution->tracks[3])->set_color(v);
+        // The original builds each of these vector4 with the 3-argument constructor and never sets w, so each call passes a stale
+        // stack word (0x4e1751 / 0x4e1797 / 0x4e17dd read [esp+0x2c]: a frame slot nothing in this function writes, which holds 0
+        // or a small integer on every harness input). Leaving w uninitialised would hand the mesh a leftover stack address in ours
+        // (whatever our frame held), so w is 0.0f here: the value the original's slot holds in practice, and compile-independent.
+        {
+            rgl::vector4 v(0.7f, 0.7f, 1.0f);
+            v.w = 0.0f;
+            ((gui_mesh*)resolution->tracks[2])->set_color(v);
+        }
+        {
+            rgl::vector4 v(0.7f, 0.7f, 1.0f);
+            v.w = 0.0f;
+            ((gui_mesh*)resolution->tracks[1])->set_color(v);
+        }
+        {
+            rgl::vector4 v(0.7f, 0.7f, 1.0f);
+            v.w = 0.0f;
+            ((gui_mesh*)resolution->tracks[3])->set_color(v);
+        }
         float sc[2];
         sc[0] = 0.0139999995f;   // 0x3c656041 (0.014f would be 0x3c656042)
         sc[1] = 0.0139999995f;
