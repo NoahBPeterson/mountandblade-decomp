@@ -1061,6 +1061,8 @@ void rgl::mesh::set_offset(const vector4& pos)
     ((mesh_x*)this)->compute_bounds();
 }
 
+static __forceinline const rgl::string* as_rgl_string(const tstring& t) { return (const rgl::string*)&t; }
+
 // @ 0x4fba40 -------------------------------------------------------------------------------
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
 {
@@ -1070,11 +1072,10 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
         (result = (rgl::mesh*)g_items[ref->item].mesh_for(0x1000000000000000ULL, (int)*(signed char*)((const char*)ref + 7))) != 0) {
         result = result->clone();
     } else {
-        std::vector<rgl::mesh*> objects;
-        {
-            tstring name = ((ItemRef*)ref)->mesh_name();
-            objects = g_resmgr_full.find_meshes((const rgl::string*)&name);
-        }
+        // built in place into the local (0x4fbaa7 passes the local as the hidden return pointer); assigning a
+        // temporary would copy it into a second buffer, one extra 4-byte allocation the original never makes. The
+        // name temporary dies at the end of the statement (0x4fbab0).
+        std::vector<rgl::mesh*> objects = g_resmgr_full.find_meshes(as_rgl_string(((ItemRef*)ref)->mesh_name()));
         if (objects.empty()) {
             {
                 tstring name = ((ItemRef*)ref)->mesh_name();
