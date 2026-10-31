@@ -137,7 +137,7 @@ struct TroopRecS {                      // the 0x508-byte troop record (g_game+0
     char pad5c[0x7a - 0x5c];
     unsigned char f7a;                  // +0x7a
     char pad7b[0xa0 - 0x7b];
-    int fa0;                            // +0xa0
+    float fa0;                          // +0xa0 a hero's stored health (troop.h: float hp); the original copies the dword raw (0x483a1a)
     char pad_a4[0x508 - 0xa4];
     void auto_equip_dummy();
 };
