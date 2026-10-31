@@ -148,7 +148,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         int m = mode;
         if (m == 0 || m == 2 || m == 3) {
             g_game->start_new_game();          // 0x51f1a0
-            if (m == 2 || m == 3) {
+            if (mode == 2 || mode == 3) {      // re-read after the call (0x51ca17)
                 Game* g = g_game;
                 tstring key("ui_player");
                 tstring name(*g_strtable.lookup(&key));
