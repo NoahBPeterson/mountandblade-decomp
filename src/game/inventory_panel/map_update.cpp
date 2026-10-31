@@ -120,8 +120,8 @@ extern world*    g_level;                    // 0xa732b4
 extern rgl::mesh* g_label_obj;                // 0x5d75ec
 extern float     g_box_x;                    // 0x5d8778
 extern float     g_box_y;                    // 0x5d877c
-extern int       g_mouse_x;                  // 0x5d7094
-extern int       g_mouse_y;                  // 0x5d7098
+extern float     g_mouse_x;                  // 0x5d7094 (float: ?g_mouse_x@@3MA)
+extern float     g_mouse_y;                  // 0x5d7098
 extern int       g_a17458;                   // 0xa17458
 extern int       g_a17858;                   // 0xa17858
 extern int       g_a17148;                   // 0xa17148
@@ -146,8 +146,8 @@ void MapPanel::update_target()
         float h  = (g_box_y + mx.y) - (g_box_y + mn.y);
         float x0 = g_box_x + mn.x;
         float y0 = g_box_y + mn.y;
-        float dx = (float)g_mouse_x - x0;
-        float dy = (float)g_mouse_y - y0;
+        float dx = g_mouse_x - x0;
+        float dy = g_mouse_y - y0;
         g_game->cur_label = -1;
 
         // The original tests the band with `test ah,1; jne` (C0 = less-than *or* unordered), so a NaN
@@ -336,54 +336,57 @@ void MapPanel::update_target()
         else                update(0, rec_mask);
     }
 
-    // ---- 0x519c01: post-selection -----------------------------------------------------------------
+    // ---- 0x519c01: post-selection (0x519c0d / 0x519c21: a pending label (f2d5) or no key goes straight to 0x519fe8) -----
     if (!f2d5 && view->is_key_down(8)) {
         g_game->map_live = 1;
         g_game->sel_party = g_game->f78;
-    }
 
-    if (bestobj) {
-        int kind = ((MapSceneObj*)bestobj)->kind;
-        if (kind == 1) {
-            if (((MapSceneObj*)bestobj)->party != g_game->f78) {
-                // 0x519c9e..0x519cd5: both arms are the same store (the `0x400` flags test survives
-                // only as a dead select); reproduced verbatim.
-                if (party_at(g_game, ((MapSceneObj*)bestobj)->party)->flags_lo & 0x400)
-                    party_at(g_game, g_game->f78)->action = 4;
-                else
-                    party_at(g_game, g_game->f78)->action = 4;
-                party_at(g_game, g_game->f78)->target = ((MapSceneObj*)bestobj)->party;
+        if (bestobj) {
+            int kind = ((MapSceneObj*)bestobj)->kind;
+            if (kind == 1) {
+                if (((MapSceneObj*)bestobj)->party != g_game->f78) {
+                    // 0x519c9e..0x519cd5: both arms are the same store (the `0x400` flags test survives
+                    // only as a dead select); reproduced verbatim.
+                    if (party_at(g_game, ((MapSceneObj*)bestobj)->party)->flags_lo & 0x400)
+                        party_at(g_game, g_game->f78)->action = 4;
+                    else
+                        party_at(g_game, g_game->f78)->action = 4;
+                    party_at(g_game, g_game->f78)->target = ((MapSceneObj*)bestobj)->party;
+                    party_at(g_game, g_game->f78)->reissue_order();
+                }
+            } else if (kind == 3) {
+                int id = ((MapSceneObj*)bestobj)->party;
+                AgentRec* rec = ((AgentRec**)g_game->agent_pages)[id >> 4] + (id & 0xf);
+                if (rec->kind == 1) {
+                    Party* pl = party_at(g_game, g_game->f78);
+                    pl->action = 4;
+                    pl->target = rec->party;
+                    pl->reissue_order();
+                } else if (rec->kind == 2) {
+                    Party* pl = party_at(g_game, g_game->f78);
+                    pl->action = 9;
+                    pl->target = id;
+                    pl->reissue_order();
+                }
+            }
+        } else if (best >= 0) {
+            bool go = true;
+            if (g_a17148 && g_5a9fbc) {
+                *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
+            } else if (!((RiderTable*)g_level->wmap)->shares(rec_index,
+                                               *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
+                go = false;        // 0x519f15: jumps to 0x519fe2 (the target-lost check below), not out of the function
+            }
+            if (go) {
+                party_at(g_game, g_game->f78)->action = 6;
+                {
+                    Party* pl = party_at(g_game, g_game->f78);
+                    pl->order_pos.x = bestpt.x;
+                    pl->order_pos.y = bestpt.y;
+                }
                 party_at(g_game, g_game->f78)->reissue_order();
             }
-        } else if (kind == 3) {
-            int id = ((MapSceneObj*)bestobj)->party;
-            AgentRec* rec = ((AgentRec**)g_game->agent_pages)[id >> 4] + (id & 0xf);
-            if (rec->kind == 1) {
-                Party* pl = party_at(g_game, g_game->f78);
-                pl->state  = 4;
-                pl->target = rec->party;
-                pl->reissue_order();
-            } else if (rec->kind == 2) {
-                Party* pl = party_at(g_game, g_game->f78);
-                pl->state  = 9;
-                pl->target = id;
-                pl->reissue_order();
-            }
         }
-    } else if (best >= 0) {
-        if (g_a17148 && g_5a9fbc) {
-            *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
-        } else if (!((RiderTable*)g_level->wmap)->shares(rec_index,
-                                           *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
-            return;
-        }
-        party_at(g_game, g_game->f78)->action = 6;
-        {
-            Party* pl = party_at(g_game, g_game->f78);
-            pl->order_pos.x = bestpt.x;
-            pl->order_pos.y = bestpt.y;
-        }
-        party_at(g_game, g_game->f78)->reissue_order();
     }
 
     // ---- 0x519fe8: drop the order if the target vanished -------------------------------------------
@@ -401,7 +404,7 @@ void MapPanel::update_target()
                (tgt->flags_lo & 0x1080100) != 0;
         if (lost) {
             Party* pl = party_at(g_game, g_game->f78);
-            pl->state       = 6;
+            pl->action      = 6;
             pl->order_pos.x = tgt->pos.x;
             pl->order_pos.y = tgt->pos.y;
             pl->reissue_order();

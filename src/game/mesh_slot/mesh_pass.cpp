@@ -184,17 +184,19 @@ again:
     f3b4 = -1;
     f3b8 = -1;
 
-    texture* last_tex = 0;
+    // ebx / ebp of the original: the previous pass's colour target (starts at &g_render) and depth target (starts at 0);
+    // a scene only re-begins the scene when either differs from the previous one's (0x47eb32 / 0x47eb3a)
+    texture* last_tex = (texture*)&g_render;
     int ds_changed = 0;                     // the last pass's depth target (0x47ecad: ebp = o->f15c): only a flag
     for (std::vector<int>::iterator d = tmp.begin(); d != tmp.end(); ++d) {
         scene_ms* o = SC(*d);
-        if (o->target != (texture*)&g_render || o->f15c != 0) {
+        if (o->target != last_tex || o->f15c != ds_changed) {
             if (g_render.pad504)
                 g_render.dev->EndScene();
             g_render.dev->BeginScene();
             g_render.pad504 = 1;
         }
-        if (o->target != (texture*)&g_render) {
+        if (o->target != last_tex) {
             if (o->target != 0) {
                 texture* t = o->target;
                 IDirect3DSurface9* surf = t->kind == 1 ? t->level0 : t->surface;
@@ -401,14 +403,14 @@ void PolyGeom::build()
         }
     }
 
-    // edge id -> the face on the other side of it
+    // edge id -> the face on the other side of it, stored per corner in adj[] (0x47f186..0x47f1af read +0x14+4k, write +0x28+4k)
     for (unsigned fi = 0; fi < elems.size(); fi++) {
         for (int k = 0; k < elems[fi].n; k++) {
             int f4 = edges[elems[fi].e[k]].f4;
             if (f4 == fi)
-                elems[fi].e[k] = edges[elems[fi].e[k]].f8;
+                elems[fi].adj[k] = edges[elems[fi].e[k]].f8;
             else
-                elems[fi].e[k] = f4;
+                elems[fi].adj[k] = f4;
         }
     }
 
