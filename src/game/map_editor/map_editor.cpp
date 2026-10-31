@@ -40,6 +40,20 @@ inline PlacedObj* rec_at(int i)
 
 inline matrix& frame_of(rgl::entity* e) { return e->local; }
 
+// std::vector<int>::push_back(const int&) inlined by 0x5305b0 at 0x53086e: the slow path hands _Insert_n the address of the
+// REFERENCED int (the game's selected-record dword), not of a by-value copy (IntVec::push_back(int) copies to the stack)
+static __forceinline void push_back_ref(IntVec& v, const int& x)
+{
+    unsigned size = v._Myfirst == 0 ? 0 : (unsigned)(v._Mylast - v._Myfirst);
+    if (v._Myfirst && size < (unsigned)(v._Myend - v._Myfirst)) {
+        int* last = v._Mylast;
+        *last = x;
+        v._Mylast = last + 1;
+    } else {
+        v.insert_n(v._Mylast, 1, &x);
+    }
+}
+
 // the original cross / normalize are inlined into update()
 static __forceinline void cross3(vector4& r, const vector4& a, const vector4& b)
 {
@@ -114,7 +128,7 @@ add_current:
                     ed_sel_list(g_game)[i] = ed_sel_list(g_game).back();
                     ed_sel_list(g_game).pop_back();
                 }
-            ((IntVec&)ed_sel_list(g_game)).push_back(ed_selected(g_game));
+            push_back_ref((IntVec&)ed_sel_list(g_game), ed_selected(g_game));
             f2f9 = 1;
         }
 
