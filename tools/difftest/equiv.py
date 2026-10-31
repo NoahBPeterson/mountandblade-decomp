@@ -45,6 +45,11 @@ Verdicts:
               tolerated (with a note) only when the bytes at both are identical; otherwise it is a FAIL
               whose detail names the differing dwords;
   UNSUPPORTED unresolved reference, symbol not found, compile error, or almost every input discarded.
+--hint g:ADDR[&MASK]=V1,V2@P (opt-in, soft, nothing discarded): in a share P of fresh inputs the original-image global at ADDR
+(.data/.bss, hex) is set to one of the values, for a row whose branches hang on a count or flag the image leaves at zero. The
+value is an Input.overrides dword written into the image before BOTH passes (our relocations are resolved to the original's
+addresses, so both builds read the same dword); it is saved with the input, so --replay reproduces it. Hints act on fresh
+inputs only: a row whose valid inputs are rare needs a high P and more --inputs/--plateau for the hint to reach its corpus.
 --gate insns restores the legacy gate (original's instruction coverage >= --min-cov, default 60%).
 --call-regs is a diagnostic for a FAIL: it captures the whole live register file (eax ebx ecx edx esi edi ebp
 esp, xmm0-3) at every recorded call site (depth-1 calls, imports, fake calls) and reports the first difference
@@ -1895,6 +1900,12 @@ class Runner:
         if getattr(opts, "edge_scope", None):
             self.edge_scope = {tuple(int(x, 16) for x in e.split("->")) for e in json.load(open(opts.edge_scope))}
         self.gen.hints = [INV.hint(h) for h in (getattr(opts, "hint", None) or [])]
+        self.gen.img_read = lambda va_, n_: bytes(self.img.read(va_, n_)).ljust(n_, b"\0")
+        for h_ in self.gen.hints:       # --hint g:ADDR: the address must be image data both builds share (resolved to it)
+            ga_ = getattr(h_, "gaddr", None)
+            if ga_ is not None and not self.m.in_image_writable(ga_):
+                raise SystemExit("--hint %s: %#x is not in the original image's writable data (.data/.bss); "
+                                 "cannot place a value there" % (h_.spec, ga_))
         if getattr(opts, "pin", None):                  # --pin: not an invariant of the type, never disabled
             self.gen.invs = self.gen.invs + [INV.pin_invariant(p) for p in opts.pin]
         self.cov_on = False
@@ -6475,9 +6486,11 @@ def parse_args(argv=None):
                     help="hold an input field to a set of values (hex), e.g. a switch selector so one case of a dispatch "
                          "runs per invocation: this+0&0fffffff=3b. Inputs that cannot carry it are discarded as "
                          "invalid-object. Repeatable")
-    ap.add_argument("--hint", action="append", metavar="this+OFF[&MASK]=V1,V2,...@P",
+    ap.add_argument("--hint", action="append", metavar="this+OFF[&MASK]=V1,V2,...@P | argN[&MASK]=... | g:ADDR[&MASK]=...",
                     help="soft pin: in a share P (default 0.5) of fresh inputs set the field to one of the values "
-                         "(hex); nothing is discarded. Repeatable")
+                         "(hex); nothing is discarded. g:ADDR is a global of the ORIGINAL image (hex address in "
+                         ".data/.bss; our build's reference to it is resolved to the same address, so both runs see "
+                         "the value; stored in Input.overrides, so --replay reproduces it). Repeatable")
     ap.add_argument("--edge-scope", metavar="FILE",
                     help="JSON list of the original's edges ('0049fafc->004ac670') the run is about: it continues past "
                          "--inputs and steers only while one of them is uncovered (a pinned switch case)")

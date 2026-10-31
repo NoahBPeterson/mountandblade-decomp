@@ -348,6 +348,34 @@ def hint(spec):
             inp.args[n] = (inp.args[n] & ~amask & 0xFFFFFFFF) | (rng.choice(avals) & amask)
         apply_arg.spec, apply_arg.off = spec, -1
         return apply_arg
+    mg = re.fullmatch(r"g:(?:0x)?([0-9a-fA-F]+)(?:&(?:0x)?([0-9a-fA-F]+))?=([0-9a-fA-Fx,]+)", body.strip())
+    if mg:      # "g:ADDR[&MASK]=V1,V2,...@P": the same soft pin on a global of the ORIGINAL image (.data/.bss at ADDR)
+        # The value goes into Input.overrides (image dwords set for this input), which run_side writes into the
+        # image before BOTH passes; our build's relocations are resolved to the original's addresses, so both
+        # runs see the identical dword. ADDR may be unaligned (value/mask are shifted into the dword and must not
+        # cross it); give &MASK for a byte/word global to keep its neighbours (the neighbours then keep the image value).
+        gaddr = int(mg.group(1), 16)
+        gsh = (gaddr & 3) * 8
+        gmask = (int(mg.group(2), 16) if mg.group(2) else 0xFFFFFFFF) << gsh
+        gvals = [(int(v, 16) << gsh) for v in mg.group(3).split(",") if v]
+        if gmask > 0xFFFFFFFF or any(v > 0xFFFFFFFF for v in gvals):
+            raise ValueError("--hint %s: value/mask crosses the dword at %#x" % (spec, gaddr & ~3))
+        gp = float(prob) if prob else 0.5
+        gbase = gaddr & ~3
+
+        def apply_glob(gen, inp, rng):
+            if rng.random() >= gp:
+                return
+            v = rng.choice(gvals)
+            if gmask == 0xFFFFFFFF:
+                old = 0
+            elif gbase in inp.overrides:
+                old = inp.overrides[gbase]
+            else:
+                old = struct.unpack("<I", gen.img_read(gbase, 4))[0]
+            inp.overrides[gbase] = (old & ~gmask & 0xFFFFFFFF) | (v & gmask)
+        apply_glob.spec, apply_glob.off, apply_glob.gaddr = spec, -1, gaddr
+        return apply_glob
     inv = pin_invariant(body)
     p = float(prob) if prob else 0.5
     off = int(re.match(r"this\+(?:0x)?([0-9a-fA-F]+)", body).group(1), 16)
