@@ -3545,7 +3545,7 @@ unsigned PhysSet::create_world()
 // inlined helpers (see s004417d0)
 static __forceinline float vnorm(vector4& v)
 {
-    float len = (float)sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    float len = (float)sqrt(v.x * v.x + v.z * v.z + v.y * v.y);        // 0x450667: (x^2 + z^2) + y^2
     if (len > 1e-10f) {
         float inv = 1.0f / len;
         v.x *= inv; v.y *= inv; v.z *= inv;
@@ -3565,7 +3565,7 @@ static __forceinline void make_frame(matrix& R, const vector4& dir)
 {
     R.s = dir;
     vector4 c1 = cross3(R.s, R.f);
-    if (c1.length() < 0.001f) {
+    if ((float)sqrt(c1.x * c1.x + c1.z * c1.z + c1.y * c1.y) < 0.001f) {      // 0x450778: (x^2 + z^2) + y^2
         R.f = cross3(R.u, R.s);
         vnorm(R.f);
         R.u = cross3(R.s, R.f);
@@ -3591,6 +3591,28 @@ static __forceinline void rot3v(vector4& r, const matrix& m, float x, float y, f
     r.x = m.s.x * x + m.u.x * z + m.f.x * y;
     r.y = m.s.y * x + m.u.y * z + m.f.y * y;
     r.z = m.s.z * x + m.u.z * z + m.f.z * y;
+}
+// the same product in the three summation orders the original uses (float sums are not associative)
+// 0x450e65 (skeleton velocity) and 0x450f40 (the bone's own angular velocity): x is (u*z + f*y) + s*x
+static __forceinline void rot3v_x(vector4& r, const matrix& m, float x, float y, float z)
+{
+    r.x = m.u.x * z + m.f.x * y + m.s.x * x;
+    r.y = m.s.y * x + m.u.y * z + m.f.y * y;
+    r.z = m.s.z * x + m.u.z * z + m.f.z * y;
+}
+// 0x450bf1 (the cone limit axis): x is (u*z + s*x) + f*y, y and z are (f*y + s*x) + u*z
+static __forceinline void rot3v_cone(vector4& r, const matrix& m, float x, float y, float z)
+{
+    r.x = m.u.x * z + m.s.x * x + m.f.x * y;
+    r.y = m.f.y * y + m.s.y * x + m.u.y * z;
+    r.z = m.f.z * y + m.s.z * x + m.u.z * z;
+}
+// 0x450fbb (the angular velocity into the world): every component is (z*u + y*f) + x*s
+static __forceinline void rot3v_w(vector4& r, const matrix& m, float x, float y, float z)
+{
+    r.x = z * m.u.x + y * m.f.x + x * m.s.x;
+    r.y = z * m.u.y + y * m.f.y + x * m.s.y;
+    r.z = z * m.u.z + y * m.f.z + x * m.s.z;
 }
 
 // @ 0x44fc60
@@ -3635,9 +3657,9 @@ void Agent::start_ragdoll()
                 float ry = py - (b->m.f.y * o.y + b->m.s.y * o.x + b->m.u.y * o.z + b->m.o.y);
                 float rz = pz - qz;
                 Region* e = &b->skel->regs[j];
-                float lx = e->m84.s.x * e->wx + e->m84.f.x * e->wy + e->m84.u.x * e->wz;
-                float ly = e->m84.s.y * e->wx + e->m84.f.y * e->wy + e->m84.u.y * e->wz;
-                float lz = e->m84.s.z * e->wx + e->m84.f.z * e->wy + e->m84.u.z * e->wz;
+                float lx = e->m84.f.x * e->wy + e->m84.u.x * e->wz + e->m84.s.x * e->wx;     // 0x4500ac: (f*wy + u*wz) + s*wx
+                float ly = e->m84.f.y * e->wy + e->m84.u.y * e->wz + e->m84.s.y * e->wx;
+                float lz = e->m84.f.z * e->wy + e->m84.u.z * e->wz + e->m84.s.z * e->wx;
                 float vx = ly * b->m.f.x + (lz * b->m.u.x + lx * b->m.s.x);
                 float vy = ly * b->m.f.y + (lz * b->m.u.y + lx * b->m.s.y);
                 float vz = ly * b->m.f.z + (lz * b->m.u.z + lx * b->m.s.z);
@@ -3715,7 +3737,7 @@ void Agent::start_ragdoll()
                 pbone = b->skel->regs[q].bone;
             }
             vector4 cone;
-            rot3v(cone, A[i], rec->cone.x, rec->cone.y, rec->cone.z);
+            rot3v_cone(cone, A[i], rec->cone.x, rec->cone.y, rec->cone.z);
             b->skel->regs[i].bone = g_phys.add_bone(phys_idx, pbone, &rec->mass, T, &radius, &height, R, &cone.x,
                                                      &rec->lim_min, &rec->lim_max, &rec->lim_twist);
             v = v56a4;
@@ -3726,7 +3748,7 @@ void Agent::start_ragdoll()
                 v = vector4(0.0f, 0.0f, 0.0f);
             }
             vector4 rv;
-            rot3v(rv, b->m, b->skel->rvx, b->skel->rvy, b->skel->rvz);
+            rot3v_x(rv, b->m, b->skel->rvx, b->skel->rvy, b->skel->rvz);
             v.x = rv.x + v.x;
             v.y = rv.y + v.y;
             v.z = v.z + rv.z;
@@ -3736,8 +3758,8 @@ void Agent::start_ragdoll()
             NewtonBody* nb = NewtonRagDollBoneGetBody(b->skel->regs[i].bone);
             Region* e = &b->skel->regs[i];
             vector4 wl;
-            rot3v(wl, e->m84, e->wx, e->wy, e->wz);
-            rot3v(w, b->m, wl.x, wl.y, wl.z);
+            rot3v_x(wl, e->m84, e->wx, e->wy, e->wz);
+            rot3v_w(w, b->m, wl.x, wl.y, wl.z);
             w.x = w.x + wacc[i].x;
             w.y = w.y + wacc[i].y;
             w.z = w.z + wacc[i].z;
@@ -3764,9 +3786,8 @@ void Agent::start_ragdoll()
         rgl::mat3* ip = identity3(&t);
         *(rgl::mat3*)&R = *ip;
         float radius = 0.2114f * h->scale;
-        vector4 dir(0.0f, 1.2886f, 0.0f);
-        float len = vnorm(dir);
-        float height = len * h->scale;
+        vector4 dir(0.0f, 1.0f, 0.0f);                       // 0x45117c: the original folds the unit axis and the 1.2886 length
+        float height = 1.2886f * h->scale;
         make_frame(R, dir);
         R.o = vector4(0.0f * h->scale, 0.5443f * h->scale, -0.0629f * h->scale);
         matrix m0 = h->body->m.mul(h->body->skel->regs->m84);
@@ -4555,7 +4576,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             float z = missile->p40.z * missile->f5c;
             float x = A.x - missile->f5c * missile->p40.x;
             float y = A.y - missile->p40.y * missile->f5c;
-            spd = (float)sqrt(x * x + y * y + (A.z - z) * (A.z - z));
+            spd = (float)sqrt((A.z - z) * (A.z - z) + y * y + x * x);        // 0x4539d7: (dz^2 + y^2) + x^2
         }
         *out_dmg = (float)pow((double)(spd / missile->f60), (double)g_missile_damage_speed_power) * missile->f64 * *scale;
     } else {
@@ -4574,7 +4595,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             *out_dmg = (*out_dmg + 5.0f) * (float)pow((double)len, (double)1.8f);
             vector4 q = ((const ::pos&)body->m).rot(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
             q.normalize();
-            *out_dmg = ((0.2f - (q.x * d.x + q.y * d.y + q.z * d.z)) * *out_dmg) * g_couched_lance_damage_multiplier * 0.2f;
+            *out_dmg = ((0.2f - (q.z * d.z + q.y * d.y + q.x * d.x)) * *out_dmg) * g_couched_lance_damage_multiplier * 0.2f;
             if (g_ui_enabled) {
                 if (id == g_mission->player_id)
                     g_gui.add(*lk(tstring("ui_delivered_couched_lance_damage")), 0xffd03030);
@@ -4636,7 +4657,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                     t = 0.1f;
                 else if (t >= 1.2f)
                     t = 1.2f;
-                t = (t * w - (A.x * d.x + A.y * d.y + A.z * d.z) * len) / w;
+                t = (t * w - (A.z * d.z + A.y * d.y + A.x * d.x) * len) / w;
                 if (t < 0.3f)
                     t = 0.3f;
                 else if (t > 3.0f)

@@ -405,5 +405,20 @@
       "0.8"
     ],
     "why": "Game::handle_event: the HUD block needs g_mouse_x < panel.x1 and g_mouse_y > panel.y0+0.1; random floats rarely satisfy both, so the flag loop and slider branch were never entered. Soft hints only, nothing discarded."
+  },
+  "agent_logic 00453710": {
+    "args": [
+      "--typed-share",
+      "0.9",
+      "--inputs",
+      "2000",
+      "--extra-inputs",
+      "1000",
+      "--plateau",
+      "1500",
+      "--hint",
+      "arg0=0,1@0.5"
+    ],
+    "why": "Agent::hit_damage: the missile / melee / bow / couched-lance branches were behind inputs the default budget plateaued on (28.7% insns, 14/118 edges); more typed inputs, a longer plateau and a bias of the hand argument to 0/1 give 87.1% insns, 87/118 edges with no mismatch. Soft hints only."
   }
 }
