@@ -336,6 +336,18 @@ def hint(spec):
     this+OFF is set to one of the values; nothing is ever discarded and mutation/steering may move it again. For a
     field whose realistic values soup rarely produces (a Module System operand's tag dword: 0 / -1 = a constant)."""
     body, _, prob = spec.partition("@")
+    ma = re.fullmatch(r"arg(\d+)(?:&(?:0x)?([0-9a-fA-F]+))?=([0-9a-fA-Fx,]+)", body.strip())
+    if ma:      # "argN[&MASK]=V1,V2,...@P": the same soft pin on stack argument N (a message id, a command word)
+        n, amask = int(ma.group(1)), int(ma.group(2) or "ffffffff", 16)
+        avals = [int(v, 16) & 0xFFFFFFFF for v in ma.group(3).split(",") if v]
+        ap = float(prob) if prob else 0.5
+
+        def apply_arg(gen, inp, rng):
+            if rng.random() >= ap or n >= len(inp.args):
+                return
+            inp.args[n] = (inp.args[n] & ~amask & 0xFFFFFFFF) | (rng.choice(avals) & amask)
+        apply_arg.spec, apply_arg.off = spec, -1
+        return apply_arg
     inv = pin_invariant(body)
     p = float(prob) if prob else 0.5
     off = int(re.match(r"this\+(?:0x)?([0-9a-fA-F]+)", body).group(1), 16)

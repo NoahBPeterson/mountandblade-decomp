@@ -147,12 +147,12 @@ void VideoPage::update(int reason)
         {
             tstring explanation("ui_change_directx_explanation");
             tstring name("DirectX");
-            tstring* e = g_strtable.lookup(name);
-            MainMenu& m = g_main_menu;
-            m.setup(&explanation, e);
-            m.f4c = 0;
-            m.f50 = 0;
-            m.f4 = 0;
+            tstring* e = g_strtable.lookup(explanation);   // 0x4d6418: the explanation is the key; "DirectX" is the header
+            MainMenu* r = g_main_menu.rec;                  // 0x4d641d: edi = the dialog box record, loaded from [0xa73980]
+            r->setup(&name, e);                             // header (+0x68) = "DirectX", title (+0x1c) = the looked-up text
+            r->f4c = 0;
+            r->f50 = 0;
+            r->f4 = 0;
         }
         MainMenu& m = g_main_menu;
         ((WindowMgrW*)(void*)&m)->open(0);
@@ -222,16 +222,15 @@ void VideoPage::update(int reason)
         char buf[0x40];
         _itoa((int)(gamma * orig::k_100f), buf, 10);
         tstring text(buf);
-        tstring state("");
         {
-            tstring key_state("ui_gamma");
-            state.insert(1, key_state);   // the state suffix is appended after the first character
+            tstring dot(".");
+            text.insert(1, dot);          // 0x4d6726: "220" -> "2.20" (the point goes after the first digit)
         }
-        if (text.equals("ui_default")) {
+        if (text.equals("2.20")) {        // 0x4d6734: the default gamma (the literal at 0x596820) shows as ui_default
             tstring k("ui_default");
-            state = *g_strtable.lookup(k);
+            text = *g_strtable.lookup(k);
         }
-        { char r[8]; w98->set_text(r, state); }
+        { char r[8]; w98->set_text(r, text); }
         { char r[8]; w98->get_xy(r); }
     }
 
@@ -286,11 +285,11 @@ void VideoPage::update(int reason)
         int b = label.find(' ', 0);
         {
         tstring left = label.substr(0, a);
-        orig::g_iWindowWidth = atoi(left.c_str());
+        orig::g_iWindowWidth = atol(left.c_str());     // 0x4d6900: _atol, not _atoi
         }
         {
         tstring right = label.substr(a + 1, b);
-        orig::g_iWindowHeight = atoi(right.c_str());
+        orig::g_iWindowHeight = atol(right.c_str());
         }
         run_settings_probe();
         update_performance_caption(this);
