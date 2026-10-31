@@ -731,8 +731,7 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     float prod = mag * ratio;
     float fl = floor(prod);
     int r = (int)fl;
-    if (prod - fl > 0.5f) r++;
-    if (r < 1) r = 1;
+    if (!(prod - fl <= 0.5f)) r++;
     if (p1 < parties.n_parties) {
         int i = ((Map10007*)(void*)mgr)->lookup(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
@@ -1855,7 +1854,7 @@ static __forceinline void log_add(const tstring& s)
     if (g_msglog.enabled && g_msglog.ring.count < 32) {
         int idx = (g_msglog.ring.head + g_msglog.ring.count) % 32;
         g_msglog.ring.names[idx] = s;
-        g_msglog.ring.vals[idx] = 0xfff000;
+        g_msglog.ring.vals[idx] = 0xffffffff;       // 0x494e0b stores -1
         g_msglog.ring.count++;
     }
 }
@@ -1960,7 +1959,9 @@ void GameW::share_experience(int party, float amount)
         else
             total += s.count;
     }
-    if (total > 0) {
+    if (total <= 0)
+        return;                                 // 0x494c69: the whole function ends here, no message either
+    {
         float per = amount / (float)total;
         for (int j = 0; j < p->nstacks; j++) {
             int idx2 = j;
