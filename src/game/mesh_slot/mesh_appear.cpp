@@ -72,21 +72,28 @@ template<class T> __forceinline void vpush_i(std::vector<T>& v, const T& x)
     }
 }
 
-// the name an item contributes (its carry position), or the error string when the item is invalid
-static __forceinline void item_name(tstring* out, ItemRef* r, int modifier)
-{
-    if (r->item >= 0 && r->item < g_item_kind_count)
-        *out = g_items[r->item].mesh_name_for(modifier);                   // 0x433bf0 (hidden return pointer)
-    else
-        *out = tstring("Error: Invalid item");
-}
+// the name an item contributes (its carry position), or the error string when the item is invalid. The original builds the
+// name straight into one 16-byte slot from either branch (0x433bf0's hidden return pointer, or 0x42bbe0 on the literal) and
+// destroys it at scope end: no default construction, no assignment, no copy. A holder with placement construction gives the
+// same (a conditional expression, or `*out = ...`, copies a temporary: an extra 0x80-byte buffer).
+struct ItemName {
+    char raw[sizeof(tstring)];
+    ItemName(ItemRef* r, int modifier)
+    {
+        if (r->item >= 0 && r->item < g_item_kind_count)
+            new (raw) tstring(g_items[r->item].mesh_name_for(modifier));       // 0x433bf0
+        else
+            new (raw) tstring("Error: Invalid item");                          // 0x42bbe0
+    }
+    ~ItemName() { get().~tstring(); }
+    tstring& get() { return *(tstring*)raw; }
+};
 
 // the lod record that a single equipped item contributes (named, made into a lod mesh)
 static __forceinline lod_mesh2* make_item_lod(ItemRef* r, int modifier)
 {
-    tstring name;
-    item_name(&name, r, modifier);
-    return g_rms.make_lod_mesh(name, false);
+    ItemName name(r, modifier);
+    return g_rms.make_lod_mesh(name.get(), false);
 }
 
 // tear down one owned lod record: the name, the five lists (which delete the meshes they own) and the block itself.
@@ -283,8 +290,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 stats[1] += b->stat_200();
                 stats[2] += b->stat_204();
 
-                tstring nm;
-                item_name(&nm, b, b->m4 >> 24);
+                ItemName nmh(b, b->m4 >> 24);
+                tstring& nm = nmh.get();
                 nm.buf[nm.len - 1] = 'L';
                 ap[17] = g_rms.make_lod_mesh(nm, false);
 
@@ -349,8 +356,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 stats[1] += bd->stat_200();
                 stats[2] += bd->stat_204();
 
-                tstring nm;
-                item_name(&nm, bd, bd->m4 >> 24);
+                ItemName nmh(bd, bd->m4 >> 24);
+                tstring& nm = nmh.get();
                 if (nm.buf[nm.len - 1] == 'L') {
                     lod_mesh2* L = g_rms.get_lod_mesh(nm);
                     nm.buf[nm.len - 1] = 'R';
