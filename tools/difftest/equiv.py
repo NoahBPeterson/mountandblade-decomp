@@ -1792,6 +1792,7 @@ class Runner:
         self.hooks = []
         self.cur = None
         self.calls = []
+        self.call_esps = []                 # esp at each recorded call (the stack-argument address, for --fp-tol)
         self.call_taint_fn, self.call_taint, self.last_call_uninit = None, [], None
         # Original's instruction cap: starts low (random inputs often send a loop into the
         # billions) and rises to --budget if a probe shows a real input needs more; see run_function.
@@ -2438,6 +2439,7 @@ class Runner:
             words = (0,) * 8
         self.calls.append((tgt, uc.reg_read(UC_X86_REG_ECX), uc.reg_read(UC_X86_REG_EDX), words,
                            info["add_esp"], info["is_jmp"]))
+        self.call_esps.append(esp)
         if self.call_taint_fn is not None:
             self.call_taint.append(self.call_taint_fn(esp))     # uninit_copies: which argument dwords are leftovers
         if self.opts.call_regs:
@@ -4177,6 +4179,7 @@ class Runner:
         for k in range(8):
             entry["xmm%d" % k] = uc.reg_read(UC_X86_REG_XMM0 + k)
         self.fakes, self.calls = [], []
+        self.call_esps = []
         self.call_taint = []
         self.call_regs, self.fake_regs, self.import_regs = [], [], []
         m.trace_imports = ImportTrace(uc, self.import_regs) if self.opts.call_regs else []
@@ -4331,6 +4334,7 @@ class Runner:
         o["imports"] = list(m.trace_imports)
         o["fakes"] = list(self.fakes)
         o["calls"] = list(self.calls)
+        o["call_esps"] = list(self.call_esps)
         if self.opts.call_regs:
             # index-aligned with the three traces above: the register file at each recorded call (copied: a
             # later ref run reuses the lists)
@@ -5487,6 +5491,31 @@ class FpTol:
                         continue        # a small integer / pointer-ish value: left to compare()
                     floats.append(("import call #%d %s arg %d" % (k, x[0], j), _f32(va), _f32(vb), _f32(vr), 24,
                                    ("import", k, j, va)))
+        # float stack arguments of depth-1 calls (a by-value struct, e.g. a vec/matrix, is passed as its dwords: mesh_ops
+        # 0x47b7b0 passes lanes 1 ulp apart): judged like memory and the import arguments, against the reference run's
+        # same call. Lanes the original passes from never-written stack (uninit_args) are not compared at all.
+        ca_, cb_, cr_ = a.get("calls") or [], b.get("calls") or [], ref.get("calls") or []
+        ua_ = self.c.uninit_args if self.c.uninit_args is not None and len(self.c.uninit_args) == len(ca_) else None
+        if len(ca_) == len(cb_) == len(cr_) and len(cr_) == len(ref.get("call_esps") or ()):
+            for k, (x, y, z) in enumerate(zip(ca_, cb_, cr_)):
+                if x[0] != y[0] or x[0] != z[0] or len(x[3]) != len(y[3]) or len(x[3]) != len(z[3]):
+                    continue
+                for j, (va, vb, vr) in enumerate(zip(x[3], y[3], z[3])):
+                    if va == vb or (ua_ is not None and j in ua_[k]) or \
+                            not all(isinstance(v, int) for v in (va, vb, vr)):
+                        continue
+                    if _tiny(va) or _tiny(vr):
+                        # as for memory: a small value is a float only if an x87/SSE store wrote that stack slot
+                        # in the reference run (then a denormal result: a range case)
+                        if not self.fstore.get((ref["call_esps"][k] + 4 * j) & ~3):
+                            continue
+                        floats.append(("call #%d %08x stack arg %d" % (k, x[0], j), float("inf"), 0.0, 0.0, 24,
+                                       ("call", k, j, va)))
+                        continue
+                    if _tiny(vb):
+                        continue
+                    floats.append(("call #%d %08x stack arg %d" % (k, x[0], j), _f32(va), _f32(vb), _f32(vr), 24,
+                                   ("call", k, j, va)))
         results = []
         for lbl, fa, fb, fr, bits, edit in floats:
             v, ulps, ratio, detail = fp_judge_value(fa, fb, fr, bits)
@@ -5506,6 +5535,15 @@ class FpTol:
                 continue
             if edit == "st0":
                 sane["st0"] = a["st0"]
+            elif edit[0] == "call":
+                _k, k_, j_, va_ = edit
+                cs_ = list(sane["calls"])
+                c_ = list(cs_[k_])
+                w_ = list(c_[3])
+                w_[j_] = va_
+                c_[3] = tuple(w_) if isinstance(cs_[k_][3], tuple) else w_
+                cs_[k_] = tuple(c_) if isinstance(sane["calls"][k_], tuple) else c_
+                sane["calls"] = cs_
             elif edit[0] == "import":
                 _k, k_, j_, va_ = edit
                 imps = [list(c) for c in (sane.get("imports") or [])]
