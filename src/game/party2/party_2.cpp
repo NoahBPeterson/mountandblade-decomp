@@ -1259,7 +1259,7 @@ void Party::collect_targets(int* out, int* max, int* count)
             float len = d.out_length();
             if (!(len < radius))
                 goto next;
-            if (len >= strength() * radius)
+            if (!(len < strength() * radius))
                 goto next;
         }
         (*(int*)((char*)&g_script + 0x18)) = 1;
@@ -1359,7 +1359,7 @@ void Party::plan_order()
                 if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                     unsigned k2 = nav_recs()[a->m4].mask();
                     if (flags_lo & 0x200) {
-                        if ((char)terrain_is_road(k2)) {
+                        if (k2 == 7 || (k2 & 7) == 0) {
                             set_order_face((int*)&p, a);
                             return;
                         }
@@ -1460,7 +1460,7 @@ chase:
             if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                 unsigned k2 = nav_recs()[a->m4].mask();
                 if (flags_lo & 0x200) {
-                    if (k2 == 7 || (k2 & 7) == 0) {
+                    if ((char)terrain_is_road(k2)) {
                         set_order_face((int*)&p, a);
                         return;
                     }
@@ -1728,8 +1728,6 @@ void Party::think()
         for (int i = 0; i < n; i++) {
             int tid = ids[i];
             int pi = ((Map10007*)&g_game->parties)->lookup(tid);
-            if (pi < 0)
-                continue;
             Party* p = (Party*)((char*)g_game->parties.pages[pi >> 4]
                                 + (pi & 0xf) * sizeof(Party));
             float rel = g_game->relation(id, tid);
@@ -1780,8 +1778,6 @@ void Party::think()
         for (int i = 0; i < n; i++) {
             int tid = ids[i];
             int pi = ((Map10007*)&g_game->parties)->lookup(tid);
-            if (pi < 0)
-                continue;
             Party* p = (Party*)((char*)g_game->parties.pages[pi >> 4]
                                 + (pi & 0xf) * sizeof(Party));
             float adj = near_v[i] - accum[i] * 0.9f;
@@ -2095,7 +2091,7 @@ extern PartyTemplate* g_party_templates;             // 0x5e29f8 (0xb0-byte rows
 void BattleRec::detach()
 {
     unsigned list1[128], list2[128];
-    int n1, n2;
+    int n1 = 0, n2 = 0;                       // zeroed before the list_members calls (0x4b6180: local counts cleared first)
     int total = 0;
 
     if (type != 1)
@@ -2995,9 +2991,10 @@ void Party::tick(float dt)
     }
 
     // ---- nav-mesh probe at the candidate position ---------------------------------------------------------
-    float px = step * dirx + pos.x;
-    float py = step * diry + pos.y;
-    face* node = g_game->find_at(&px);
+    vec2r pq;                                   // find_at reads two consecutive floats
+    pq.x = step * dirx + pos.x;
+    pq.y = step * diry + pos.y;
+    face* node = g_game->find_at(&pq.x);
     if (node != 0) {
         unsigned animfield = nav_recs()[node->m4].mask();
         bool adjacent = ((RiderTable*)g_level->core)->shares(node->m4, mesh->m4) != 0;
@@ -3006,8 +3003,8 @@ void Party::tick(float dt)
             if ((char)terrain_is_road(animfield)) {
                 commit = true;
             } else if (animfield != 0xf && id == g_game->f78 && 0.05f < GDP(Timer, 0x13a90).elapsed()) {
-                g_emit_pos.x = px;
-                g_emit_pos.y = py;
+                g_emit_pos.x = pq.x;
+                g_emit_pos.y = pq.y;
                 g_emit_pos.z = 0.0f;
                 g_game->emit_event(0x14, 0, 0);
                 GDP(Timer, 0x13a90).start = g_ticks[GDP(Timer, 0x13a90).clock];
@@ -3026,8 +3023,8 @@ void Party::tick(float dt)
             }
         }
         if (commit) {
-            pos.x = px;
-            pos.y = py;
+            pos.x = pq.x;
+            pos.y = pq.y;
             mesh = node;
             map_mask = animfield;
             pos.z = node->plane_z(&pos.x);
