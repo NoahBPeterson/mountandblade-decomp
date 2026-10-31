@@ -807,6 +807,16 @@ MissionObj::MissionObj()
     radius = 0.1f;
 }
 
+// 0x4ce360 inlines the length of (mx - v58) as x*x + (y*y + z*z) (the z lane is squared first, then y, then x); 0x407d30
+// (rgl::length) adds them as (x*x + y*y) + z*z, which rounds differently
+static __forceinline float center_dist(const vector4& a, const vector4& c)
+{
+    float dx = a.x - c.x;
+    float dy = a.y - c.y;
+    float dz = a.z - c.z;
+    return (float)sqrt(dx * dx + (dy * dy + dz * dz));
+}
+
 // @ 0x4ce360
 void MissionObj::read(stream_base* s)
 {
@@ -836,7 +846,7 @@ void MissionObj::read(stream_base* s)
         v58.y = (mn.y + mx.y) * HALF;
         v58.z = (mn.z + mx.z) * HALF;
         v58.w = 0;
-        radius = rgl::length(mx - v58);
+        radius = center_dist(mx, v58);
     }
     s->r_tstr((rgl::string*)&t1);
     if (t1.len > 1) {
@@ -849,7 +859,7 @@ void MissionObj::read(stream_base* s)
         v58.y = (mn.y + mx.y) * HALF;
         v58.z = (mn.z + mx.z) * HALF;
         v58.w = 0;
-        radius = rgl::length(mx - v58);
+        radius = center_dist(mx, v58);
     }
     _snprintf(buf, 0x200, "Mission object %s", name.c_str());
     ((GameVec*)&v70)->resize(*s, buf, 0);   // game_vec is the 12-byte GameVec head (0x4c1e10 / 0x4c1ee0)
