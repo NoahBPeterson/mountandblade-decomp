@@ -355,10 +355,12 @@ void KeysPage::refresh()
     bool unassigned = false;
     for (int i = 0; i < 0x25; i++)
         if (g_game_keys.entry[i][0] == -1) unassigned = true;
-    if (unassigned) p->w30->enable();
-    else            p->w30->disable();
-    if (p->modified) p->w34->disable();
-    else             p->w34->enable();
+    // 0x4d71e0: Done is greyed while any key is unbound (+0xb8), Undo only while nothing changed. Written when ui_widget.h
+    // had the two slots swapped and not flipped with it, so Done was greyed with every key bound.
+    if (unassigned) p->w30->disable();
+    else            p->w30->enable();
+    if (p->modified) p->w34->enable();
+    else             p->w34->disable();
 }
 
 // @ 0x4d7270
