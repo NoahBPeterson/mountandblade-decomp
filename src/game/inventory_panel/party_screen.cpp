@@ -415,11 +415,11 @@ void PartyScreen::refresh_party_members(int type)
         // label every row that exists with an empty string
         for (int i = 0; i < get_party(party_id)->max_stacks(); i++) {
             push_empty(buttons[type * 2 + 0][i]);
-            PSO(buttons[type * 2 + 0][i])->enable();
+            PSO(buttons[type * 2 + 0][i])->disable();
         }
         for (int i = 0; i < get_party(party_id)->max_stacks(); i++) {
             push_empty(buttons[type * 2 + 1][i]);
-            PSO(buttons[type * 2 + 1][i])->enable();
+            PSO(buttons[type * 2 + 1][i])->disable();
         }
 
         int negfirst = -first_wounded;
@@ -508,7 +508,7 @@ void PartyScreen::refresh_party_members(int type)
             else
                 push_colour(buttons[type * 2 + row][col], "party_b_member_t_c");
             PSO(buttons[type * 2 + row][col])->act_b4();
-            PSO(buttons[type * 2 + row][col])->act_bc();
+            PSO(buttons[type * 2 + row][col])->enable();
             slots[type][row][col] = i;
         }
 
@@ -1020,16 +1020,16 @@ void PartyScreen::refresh_selection()
         PSO(info)->set_text(size, &empty);
     }                                               // destroyed at once (0x506414)
 
-    PSO(talk_btn)->enable();
+    PSO(talk_btn)->disable();
     locked = 1;
-    PSO(action_btn)->enable();
+    PSO(action_btn)->disable();
     PSO(action_btn)->clear();
-    PSO(upgrade1)->enable();
-    PSO(upgrade2)->enable();
+    PSO(upgrade1)->disable();
+    PSO(upgrade2)->disable();
     PSO(upgrade1)->clear();
     PSO(upgrade2)->clear();
-    PSO(move_up)->enable();
-    PSO(move_down)->enable();
+    PSO(move_up)->disable();
+    PSO(move_down)->disable();
     PSO(cost_panel)->clear();
     PSO(upgrade_panel)->clear();
     if (char_quad) {
@@ -1054,7 +1054,7 @@ void PartyScreen::refresh_selection()
     bool action = false;
     if (mode == 0) {
         if (sel_row != -1 && !(sel_row == 0 && sel_slot == 0))
-            PSO(talk_btn)->act_bc();
+            PSO(talk_btn)->enable();
     }
 
     int cmd = mode;
@@ -1112,9 +1112,9 @@ void PartyScreen::refresh_selection()
     if (p2 == g_game->f78) {
         int n = PARTIES->get(g_game->f78)->first_flagged();
         if (slot_idx > 1 && slot_idx < n)
-            PSO(move_up)->act_bc();
+            PSO(move_up)->enable();
         if (slot_idx > 0 && slot_idx < n - 1)
-            PSO(move_down)->act_bc();
+            PSO(move_down)->enable();
     }
 
     if (action) {
@@ -1134,7 +1134,7 @@ void PartyScreen::refresh_selection()
     }
 
     if (((rec->flags32 & 0x10) == 0 || sel_type != 0 || mode == 6) && (rec->flags32 & 0x10000000) == 0 && action) {
-        PSO(action_btn)->act_bc();
+        PSO(action_btn)->enable();
         locked = 0;
     } else {
         action = false;                             // 0x506adb: the later `mode == 2 && action` reads the cleared flag
@@ -1219,28 +1219,28 @@ void PartyScreen::refresh_selection()
         }
         if (shown1) {
             PSO(upgrade1)->act_b4();
-            PSO(upgrade1)->enable();
+            PSO(upgrade1)->disable();
             if (ready != 0 && PARTIES->get(p2)->find_or_add(rec->f50, 0, 0) != -1)
                 room1 = true;
         }
         if (shown2) {
             PSO(upgrade2)->act_b4();
-            PSO(upgrade2)->enable();
+            PSO(upgrade2)->disable();
             if (ready != 0 && PARTIES->get(p2)->find_or_add(*(unsigned*)((char*)rec + 0x54), 0, 0) != -1)
                 room2 = true;
         }
     }
     bool nb = (stk.flags & 1) != 0;
     if (room1) {                                    // 0x507031..0x507064
-        PSO(upgrade1)->act_bc();
+        PSO(upgrade1)->enable();
     } else if (!nb && ready >= stk.count) {
-        PSO(upgrade1)->act_bc();
+        PSO(upgrade1)->enable();
         room1 = true;
     }
     if (room2) {
-        PSO(upgrade2)->act_bc();
+        PSO(upgrade2)->enable();
     } else if (!nb && ready >= stk.count) {
-        PSO(upgrade2)->act_bc();
+        PSO(upgrade2)->enable();
         room2 = true;
     }
     if (ready != 0) {
@@ -1283,7 +1283,7 @@ void PartyScreen::refresh_selection()
     }
     if (mode == 3) {
         if (sel_type == 0) {
-            PSO(action_btn)->enable();
+            PSO(action_btn)->disable();
             locked = 1;
         } else {
             PSO(action_btn)->act_b4();              // +0xb4 (0x5072c6)

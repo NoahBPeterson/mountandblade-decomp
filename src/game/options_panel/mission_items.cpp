@@ -362,8 +362,8 @@ void ItemD::scale_3(const float* a) { ((InputScreen*)this)->on_input((int)a); }
 
 // ---- per-frame update of the placed objects (0x4ceb90) --------------------------------------------------
 // The updater's sixteen row widgets (+0x60), the shown count (+0xa0) and the record index per row (+0xa4) fill the menu's
-// list: the widgets are ui_widget.h Widgets (the calls are the original's vtable offsets: hide +0xb0, disable +0xbc,
-// set_text +0xa4, show +0xb4, enable +0xb8, set_pos +0x58, set_scale +0x64).
+// list: the widgets are ui_widget.h Widgets (the calls are the original's vtable offsets: hide +0xb0, enable +0xbc,
+// set_text +0xa4, show +0xb4, disable +0xb8, set_pos +0x58, set_scale +0x64).
 #include "../ui_widget.h"                                     // Widget / WidgetObj (the widget interface, ctor 0x48ae20)
 #include "../ui/snd_channel.h"                               // snd_channel: play 0x4875e0 (thiscall, ret 4)
 

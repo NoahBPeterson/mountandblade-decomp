@@ -154,8 +154,8 @@ struct PsOps : PsFill {
     virtual void set_label(const tstring* text, const float* pos);   // +0xac (0x5059c0, 0x5063e0)
     virtual void clear();                           // +0xb0 (0x503ed0)
     virtual void act_b4();                          // +0xb4
-    virtual void enable();                          // +0xb8
-    virtual void act_bc();                          // +0xbc
+    virtual void disable();                         // +0xb8 (0x488cb0: sets bit 1 of +0x104, greys the widget out)
+    virtual void enable();                          // +0xbc (0x488cc0: clears bit 1)
     virtual void fc0(); virtual void fc4();
     virtual void add_child(void* child);            // +0xc8
 };
