@@ -78,5 +78,12 @@
       "0.8"
     ],
     "why": "Dialog::proc dispatches on the message id (arg 1) through a jump table and then on the command id in wParam's low word; a random 32-bit msg is almost never 0x4e/0x110/0x111/0x114 (3/33 edges, 7.4% of insns). Soft arg hints only (--hint argN[&MASK]=V1,..@P, new in invariants.py), nothing is discarded."
+  },
+  "view_open 00509980": {
+    "args": [
+      "--hint",
+      "this+2dc=ffffffff@0.8"
+    ],
+    "why": "char_window::open_view's flat-fallback branch (the elem2 path) needs +0x2dc == -1; random ints never hit it (68.5% -> 84.4% insns with the soft hint, nothing discarded)"
   }
 }
