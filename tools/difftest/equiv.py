@@ -4100,6 +4100,10 @@ class Runner:
         m.dyn_next = M.DYN_BASE
         m.dyn_sizes = {}
         m.rand_state = 1
+        if getattr(self.opts, "rand_seeded", False):
+            # opt-in (--rand-seeded): the CRT rand() sequence starts from the input's seed, so a row gated on a rand() draw
+            # sees different draws per input (both sides of one input still get the identical sequence)
+            m.rand_state = (1 + (getattr(inp, "seed", 0) & 0xFFFFFFFF) * 2654435761) & 0xFFFFFFFF
         m.ui_seed, m.ui_calls = getattr(inp, "seed", 0) & 0xFFFFFFFF, 0     # user32 query answers (machine.ui_answer)
         m.find_patterns, m.find_counts = {}, {}                                 # FindFirstFileA search state
         m.alloc_fail, m.alloc_count = tuple(getattr(inp, "alloc_fail", ())), 0
@@ -6464,6 +6468,9 @@ def parse_args(argv=None):
                     help="share of fresh inputs whose `this` and pointer-to-class arguments are objects of their "
                          "declared class (CodeView types of a /Z7 compile: the original's vtable pointers, nested "
                          "objects, consistent vectors and strings, small counts); 0 = pointer soup only")
+    ap.add_argument("--rand-seeded", action="store_true",
+                    help="start the modelled rand() sequence from each input's seed instead of always from state 1 "
+                         "(rows whose first rand() draw gates the whole body never leave the gate otherwise)")
     ap.add_argument("--no-steer", dest="steer", action="store_false",
                     help="no input steering (comparison constants, input-to-state replays, frontier-weighted parents)")
     ap.add_argument("--steer-share", type=float, default=0.35, help="share of inputs taken from the steering queue")
