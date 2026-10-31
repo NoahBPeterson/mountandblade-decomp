@@ -2074,6 +2074,7 @@ void screen_text::refresh(int handle)
     } else {
         if (!g_windowed_setting || g_windowed_other)
             return;
+        goto off;   // 0x4ca573/0x4ca57d: windowed setting on and other off -> the 'off' tail at 0x4ca5c7
     }
 on:
     if (flag)
