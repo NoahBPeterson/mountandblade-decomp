@@ -615,7 +615,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
         if (slot->stat_21x(1)) {
             const tstring* p = g_strtable.lookup(tstring("ui_value_to_damage"));
             int v = slot->stat_21x(1);
-            sprintf(buf, p->c_str(), slot->stat_21x(1), v <= 0 ? '+' : ' ');
+            sprintf(buf, p->c_str(), slot->stat_21x(1), v <= 0 ? ' ' : '+');
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffb0a0, 1);
         }
