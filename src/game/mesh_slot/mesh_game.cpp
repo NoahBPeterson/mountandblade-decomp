@@ -292,6 +292,7 @@ NOINL void MissionG::spawn(AgentS* a)
     e->skel->set_env_count(2);
     e->skel->f5c = 0;
     shape_base* shp;
+    // any other kind skips the shape (0x4835fc, the jne at 0x483566) and falls through to the common tail
     if (a->kind == 0) {
         unsigned skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         int obj = 0;
@@ -311,6 +312,7 @@ NOINL void MissionG::spawn(AgentS* a)
             shp = new (mem) capsule(a->scale * 0.3f, &c, &b);
         } else
             shp = 0;
+        e->shape = shp;
     } else if (a->kind == 1) {
         {
             tstring name("skel_horse");
@@ -322,10 +324,8 @@ NOINL void MissionG::spawn(AgentS* a)
             shp = new (mem) capsule(0.4f, &c, &b);
         } else
             shp = 0;
-    } else {
-        return;
+        e->shape = shp;
     }
-    e->shape = shp;
     AgentEq_pick_slots((AgentEq*)a);
     agent_equip_fill(e, a->kind, a->troop, a->f94, &a->item_a, &a->inv[0], &a->f240, &a->f194, &a->f1a4,
                      &a->f1a8, &a->slots[0], a->id);

@@ -675,15 +675,18 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
             int oi = 0x630;
             int of = 0x7ec;
             int n = 1;
-            for (; n < party_at(m, ((Map10007*)m)->lookup(a3))->nstacks; n++) {
+            // do-while (0x514b4b jl 0x514a68): the party is looked up again for the flag test, for the stored troop and
+            // for the loop condition, but not before the first iteration
+            do {
                 int item = party_at(m, ((Map10007*)m)->lookup(a3))->stacks[n].troop;
                 if ((g_game->troops[item].flags32 & 0x10) != 0) {
-                    *(int*)(t + oi) = item;
+                    *(int*)(t + oi) = party_at(m, ((Map10007*)m)->lookup(a3))->stacks[n].troop;
                     *(int*)(t + of) = 1;
                     oi += 8;
                     of += 4;
                 }
-            }
+                n++;
+            } while (n < party_at(m, ((Map10007*)m)->lookup(a3))->nstacks);
         }
     }
 
