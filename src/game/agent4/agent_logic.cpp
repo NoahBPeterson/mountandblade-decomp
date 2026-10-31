@@ -3144,6 +3144,7 @@ void Agent::shoot()
     int missing, total, slot_out;
     ItemRef ammo = best_ammo(-1, &missing, &total, &slot_out);
     vector4 shot;
+    shot.w = d0.w;       // rand_cone_dir writes only x/y/z; the original builds `shot` in the stack slot of d0's 16-byte temporary, so its w lane is d0.w (0x44e82f..0x44e84b)
     rand_cone_dir(&shot, d0, spr);
     ItemRef launcher = cur_pair_fi();
     unsigned mid = g_mission->spawn_missile(&P, &shot, &launcher, &ammo, id);
