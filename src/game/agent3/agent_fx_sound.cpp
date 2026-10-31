@@ -498,7 +498,7 @@ unsigned Agent::pick_threat()
                     float dz = op.z - pos.z;
                     float v = 3.0f / (float)sqrt(dy * dy + (dx * dx + dz * dz));
                     if (!(v < 4.0f)) v = 4.0f;
-                    score = v / ((float)g_mission->agents.pages[r->id >> 4][r->id & 0xf].f55e8 + 7.0f);
+                    score = v / ((float)g_mission->agents.pages[(unsigned)r->id >> 4][r->id & 0xf].f55e8 + 7.0f);
                     float s = ((float)(rand() % 0x3dc9) * 1.2644623e-05f + 1.0f) * score;
                     if (s > bestv) { bestv = s; best = r->id; }
                 }
