@@ -43,10 +43,11 @@ def winpath(p):
 def objects():
     import compile_all as C
     objs, fails = [], []
+    extra = os.environ.get("MB_EXTRA_CFLAGS", "").split()      # build.py --cflags: a variant build (never the faithful one)
     for src, flags in C.sources():
         if os.sep + "src" + os.sep not in src:
             continue
-        o, _log = S.compile_obj(src, flags)
+        o, _log = S.compile_obj(src, list(flags) + extra)
         (objs if o else fails).append(o or os.path.relpath(src, ROOT))
     return objs, fails
 

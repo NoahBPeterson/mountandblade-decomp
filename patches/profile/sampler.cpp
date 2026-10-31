@@ -7,10 +7,14 @@
 //     header: u32 'MBPS', u32 tick0, u32 filetime0 lo, u32 filetime0 hi  (the tick and the wall clock taken together)
 //     then per sample: u32 tick (GetTickCount), u32 eip, u32 n, u32 addr[n]   -- addr: stack dwords inside our .text
 //
+// Every 2 s (and at start) it also rewrites profile_modules.txt with the loaded modules ("base size path" per line),
+// so samples outside our image can be charged to a DLL (fmod.dll, dsound, wined3d, ...).
+//
 // Nothing that can take a lock runs while the main thread is suspended (only GetThreadContext and memcpy of committed
 // stack memory); the file is written with WriteFile, never the C runtime. tools/relink/profile_report.py symbolises it
 // and splits it into the load phases logged in rgl_log.txt (tools/relink/logwatch.py stamps those lines).
 #include <windows.h>
+#include <stdio.h>
 #include <string.h>
 
 namespace {
@@ -31,8 +35,33 @@ void text_range()
     g_text_hi = g_text_lo + sec[0].Misc.VirtualSize;
 }
 
+void write_modules()
+{
+    // every image mapping's allocation base is a module handle: walk the address space (no psapi in this toolchain)
+    FILE* f = fopen("profile_modules.txt", "w");
+    if (!f)
+        return;
+    char* p = 0;
+    MEMORY_BASIC_INFORMATION mbi;
+    void* last = 0;
+    while ((unsigned)p < 0x7fff0000u && VirtualQuery(p, &mbi, sizeof mbi)) {
+        if (mbi.Type == MEM_IMAGE && mbi.AllocationBase != last) {
+            last = mbi.AllocationBase;
+            char path[MAX_PATH];
+            char* b = (char*)mbi.AllocationBase;
+            if (GetModuleFileNameA((HMODULE)b, path, sizeof path) && ((IMAGE_DOS_HEADER*)b)->e_magic == IMAGE_DOS_SIGNATURE) {
+                IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)(b + ((IMAGE_DOS_HEADER*)b)->e_lfanew);
+                fprintf(f, "%08x %08x %s\n", (unsigned)b, (unsigned)nt->OptionalHeader.SizeOfImage, path);
+            }
+        }
+        p = (char*)mbi.BaseAddress + mbi.RegionSize;
+    }
+    fclose(f);
+}
+
 DWORD WINAPI sampler(void*)
 {
+    DWORD last_mods = 0;
     static unsigned stack[STACK_DWORDS];
     static unsigned rec[3 + MAX_ADDRS];
     static char buf[1 << 16];
@@ -40,6 +69,10 @@ DWORD WINAPI sampler(void*)
     timeBeginPeriod(1);
     for (;;) {
         Sleep(1);
+        if (GetTickCount() - last_mods > 2000) {     // on the sampler thread, with the main thread running
+            write_modules();
+            last_mods = GetTickCount();
+        }
         CONTEXT ctx;
         ctx.ContextFlags = CONTEXT_CONTROL;
         if (SuspendThread(g_main) == (DWORD)-1)

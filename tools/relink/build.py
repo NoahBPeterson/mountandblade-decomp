@@ -359,9 +359,15 @@ def main():
     ap.add_argument("--patches", action="append", default=[], metavar="SET",
                     help="also link patches/SET/*.cpp (repeatable): opt-in replacements and additions that never enter "
                          "src/ or the equivalence work (docs/patches.md); the output goes to work/relink/patched-SET")
+    ap.add_argument("--cflags", default="", help="extra compiler flags for every src/ object, e.g. '/arch:SSE2' "
+                    "(a variant build: under Rosetta the original's x87 float code runs ~1.8x slower than SSE2). "
+                    "Changes codegen, so never for the faithful build; the output goes to work/relink/variant-...")
     a = ap.parse_args()
-    if a.patches and a.out == ap.get_default("out"):
-        a.out = os.path.join(ROOT, "work", "relink", "patched-" + "+".join(a.patches))
+    if a.cflags:
+        os.environ["MB_EXTRA_CFLAGS"] = a.cflags                # trial_link.objects() and the pre-link subprocess read it
+    if (a.patches or a.cflags) and a.out == ap.get_default("out"):
+        tag = "+".join(a.patches + [re.sub(r"[^A-Za-z0-9]+", "", f) for f in a.cflags.split()])
+        a.out = os.path.join(ROOT, "work", "relink", ("patched-" if a.patches else "variant-") + tag)
     out = os.path.abspath(a.out)
     os.makedirs(out, exist_ok=True)
     rel = lambda p: os.path.relpath(p, ROOT)

@@ -42,3 +42,11 @@ pipeline, the progress counts or the gates' view of our source.
   (`iat_hook.h`), so no function of the reconstruction is replaced.
 - `diag`: runtime diagnostics. `rootwatch.cpp` logs the GUI root-widget stack (g_gui's vector) to rootwatch.txt
   whenever it changes (found the dropdown list that never closed).
+
+## Variant builds
+
+`build.py --cflags "/arch:SSE2"` compiles every src/ object with extra flags (output: work/relink/variant-archSSE2, or
+patched-SET+archSSE2 with --patches). Under Rosetta 2 (Apple Silicon CrossOver) x87 float code runs ~1.8x slower than
+SSE2 scalar code (microbenchmark in the game's bottle: 18.4 s vs 10.4 s); VC7.1 emits movss/mulss/addss for float math
+with /arch:SSE2. Float results differ in the low bits (x87 keeps 80-bit intermediates), so a variant is for play, never
+for the equivalence or byte-exact checks.
