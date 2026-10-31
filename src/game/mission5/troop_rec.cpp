@@ -248,8 +248,8 @@ void Game::start_new_game()
         sp->r_tstr(rs(&b));
         int version;
         sp->r_int(&version);
-        stream.failed = 1;
         scene.read(&stream, 0);
+        stream.failed = 1;                          // set after the scene is read (0x51f3ba), not before
     }
 
     int slot = scene.index_of(f78);
