@@ -107,7 +107,7 @@ static __forceinline void lod_release(lod_mesh2* l)
 static __forceinline lod_mesh2* clone_char_mesh(int colour, int off)
 {
     lod2_a* src;
-    if (colour < g_skin_count)
+    if ((unsigned)colour < (unsigned)g_skin_count)          // 0x482852/0x48297f: cmp + jae (unsigned)
         src = *(lod2_a**)((char*)g_skins_begin + colour * 0x1f8 + off);
     else
         src = 0;
@@ -254,7 +254,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 if (g_items[h->item].type_flags & 0x1000000)
                     legs_covered = 1;
                 lod_mesh2* hl = make_item_lod(h, h->m4 >> 24);
-                if (colour < g_skin_count) {
+                if ((unsigned)colour < (unsigned)g_skin_count) {
                     int cv = (int)((*(unsigned*)((char*)&g_skins_begin[colour] + 0x10) & 7) * 10);
                     if (cv != 0) {
                         float cf = (float)cv;
