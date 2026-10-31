@@ -34,25 +34,10 @@ void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
     }
 }
 
-// ---- widget virtual slots (indices from the verified UI slices) -----------------------------------------
-struct Control {
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
-    virtual void v20(); virtual void v24(); virtual void v28();
-    virtual void set_cursor(int on);                    // +0x2c
-    virtual void v30(); virtual void v34(); virtual void v38(); virtual void v3c();
-    virtual void v40();
-    virtual char is_key_down(int key);                  // +0x44
-    virtual void v48(); virtual void v4c(); virtual void v50(); virtual void v54();
-    virtual void v58(); virtual void v5c(); virtual void v60(); virtual void v64();
-    virtual void v68(); virtual void v6c(); virtual void v70(); virtual void v74();
-    virtual void v78(); virtual void v7c(); virtual void v80(); virtual void v84();
-    virtual void v88(); virtual void v8c(); virtual void v90(); virtual void v94();
-    virtual void v98(); virtual void v9c(); virtual void va0(); virtual void va4();
-    virtual void va8(); virtual void vac(); virtual void vb0(); virtual void vb4();
-    virtual void hide();                                // +0xb8
-    virtual void show();                                // +0xbc
-};
+// ---- widget virtual slots: the canonical Widget view (src/game/ui_widget.h): +0x2c activate (the cursor on/off),
+// +0x44 changed (input test), +0xb8 disable, +0xbc enable (the harness types the widget pointers through its vtable)
+#include "../ui_widget.h"
+typedef Widget Control;
 
 // the save/load panel: nine slot buttons at +0x1e4, the two sub-panels at +0x208/+0x210, the
 // selected slot at +0x218 and the slot records at +0 (stride 0x30, selected flag at +0x4c).
@@ -110,15 +95,15 @@ void SavePanel::update(int)
     char name[0x200];
     for (int i = 0; i < 9; i++) {
         Control* button = buttons[i];
-        if (button && button->is_key_down(0x10000))
+        if (button && button->changed(0x10000))
             select(i);
     }
-    if (list_panel->is_key_down(0x10000)) {
+    if (list_panel->changed(0x10000)) {
         if (deleting) {
         *(int*)((char*)this + 0x220) = -1;
         tstring title("ui_set_save_file_name");
         const tstring* r = g_strtable.lookup(title);
-        mb_snprintf(name, 0x200, "%s", text_of(r));
+        mb_snprintf(name, 0x200, text_of(r));   // original passes the text itself as the format (0x4ea368, 0x4ea776)
         tstring cancel("ui_cancel");
         tstring ok("ui_ok");
         tstring title2(name);
@@ -161,7 +146,7 @@ void SavePanel::update(int)
         }
         }
     }
-    if (((Control*)*(void**)((char*)this + 0x20c))->is_key_down(0x10000)) {
+    if (((Control*)*(void**)((char*)this + 0x20c))->changed(0x10000)) {
         g_main_menu.set_state(*(int*)((char*)this + 0x18));
         return;
     }
@@ -170,7 +155,7 @@ void SavePanel::update(int)
     // confirmation on the delete widget OR (a17420 set, a17820 clear, AND the panel's +0x104 bit 1 clear); the
     // remaining case is the save/remove path. Ours had that second test as an OR of the positive bit, which sent
     // the ordinary save/load click into the confirmation (equiv.py reported FAIL until this was ANDed).
-    if (panel->is_key_down(0x10000) ||
+    if (panel->changed(0x10000) ||
         (g_a17420 != 0 && g_a17820 == 0 && ((*(unsigned char*)((char*)panel + 0x104) & 2) == 0)))
         goto confirm_delete;
     {
@@ -205,7 +190,7 @@ confirm_delete:
     *(int*)((char*)this + 0x21c) = -1;
     tstring title("ui_confirm_delete_game");
     const tstring* r = g_strtable.lookup(title);
-    mb_snprintf(name, 0x200, "%s", text_of(r));
+    mb_snprintf(name, 0x200, text_of(r));   // original passes the text itself as the format (0x4ea368, 0x4ea776)
     tstring no("ui_no");
     tstring yes("ui_yes");
     tstring title2(name);
@@ -226,17 +211,17 @@ confirm_delete:
 void SavePanel::select(int idx)
 {
     if (selected != -1)
-        buttons[selected]->set_cursor(0);
+        buttons[selected]->activate(0);
     selected = idx;
     if (selected != -1) {
-        buttons[selected]->set_cursor(1);
-        list_panel->show();
+        buttons[selected]->activate(1);
+        list_panel->enable();
         if (*(int*)((char*)this + selected * 0x30 + 0x4c))
-            info_panel->show();
+            info_panel->enable();
         else
-            info_panel->hide();
+            info_panel->disable();
     } else {
-        list_panel->hide();
-        info_panel->hide();
+        list_panel->disable();
+        info_panel->disable();
     }
 }
