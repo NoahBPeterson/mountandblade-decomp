@@ -130,11 +130,12 @@ face* GameData::find_at(const float* p)
     int idx[2];
     shape_base* cand[0x2000];
     int count;
-    float q[2];
+    float q[3];
     int flag;
 
     q[0] = p[0];
     q[1] = p[1];
+    q[2] = 0;                                      // 0x48ea80 builds a 3-float point with z = 0
     ((rgl::world*)g_level)->to_cell(q, idx);       // g_level (0xa732b4) is the rgl::world: world.h rows +0x28 = LevelGrid::cells
     flag = 0;
     cell* c = &g_level->cells[idx[0]][idx[1]];

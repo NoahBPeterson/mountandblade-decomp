@@ -82,7 +82,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
     m->compute_normals();
     build_mirror(m, remap, &color2, 1);
 
-    unsigned alpha = ((unsigned)(scale * scale * 255.0f)) << 24;
+    unsigned alpha = ((unsigned)(int)(scale * scale * 255.0f)) << 24;   // 0x47f7f9: __ftol2 (signed), not the unsigned conversion
 
     for (unsigned i = 0; i < m->v50.size(); i++) {
         m->v50[i].color &= 0xffffff;

@@ -578,7 +578,7 @@ struct PtrTableF {                      // the paged pointer table (count; the p
 typedef char assert_ptrtable[(sizeof(PtrTableF) == 0x20) ? 1 : -1];
 struct PropAnim {                       // the 0x1c8-byte prop tween record (Rec1c8)
     char pad0[0x1c8];
-    void update(float dt) { ((Prop*)this)->update((int)dt); }       // 0x467c50 (thiscall, ret 4)
+    void update(float dt) { union { float f; int i; } u; u.f = dt; ((Prop*)this)->update(u.i); }       // 0x467c50 (thiscall, ret 4): the original pushes dt's bits unconverted
 };
 struct CarryRec {                       // the carried-item records copied by the frame&0xf sweep (0x130 bytes, 0x40 of them at +0x6b0)
     matrix m0;                          // +0x00
@@ -748,7 +748,7 @@ void MissionG::frame(float dt, bool spawn)
     if (sky != 0) {
         sky_time = sky_time + dt * 0.04f;
         if (sky_time > 100.0f)
-            sky_time = (float)fmod((double)sky_time, 100.0);
+            sky_time = (float)fmod((double)sky_time, 1.0);     // 0x4844df: the divisor is the double at 0x54a5d8 (1.0), the 100.0 is only the wrap test (0x54ab28)
         sky->f1f8 = sky_time;
         sky->f208 = sky_time;
         sky->f48 = (float)(g_ticks[2] % 1000000000) * 7.5e-6f;
