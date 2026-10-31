@@ -1751,6 +1751,7 @@ class Runner:
         self.obj = obj
         self.decl_arity = {}      # callee VA -> stack dwords, from our declaration's mangled name
         self.decl_prefix = {}     # callee VA -> comparable leading stack dwords (before a by-value struct)
+        self.decl_struct = set()  # callee VAs declared with a by-value struct parameter
         for si, va_ in t.res.addr.items():
             try:
                 sg = SIG.parse(t.coff.syms[si].name)
@@ -1764,6 +1765,8 @@ class Runner:
                     break
                 n_ += d_
             self.decl_prefix.setdefault(va_, n_)
+            if any(k_ == "struct" for k_, _d in sg.params):
+                self.decl_struct.add(va_)
             if sg.conv == "cdecl" and not sg.variadic and not any(k_ == "struct" for k_, _d in sg.params):
                 self.decl_arity.setdefault(va_, n_)
         # (section index, offset) -> defining symbol name, for the vtable-match rule's ours-side lookup
@@ -5162,7 +5165,11 @@ class Comparer:
                 n = self.r.decl_arity.get(tgt)
             if n is None:
                 n = add_esp
-            if tgt in self.r.decl_prefix:
+            if tgt in self.r.decl_prefix and not (tgt in self.r.decl_struct and self.r.callee_arity(tgt)):
+                # a by-value struct's size is not in the mangled name, so without the callee's own `ret N` the
+                # dwords from the struct on stay uncompared. With it (callee_arity), the whole popped argument
+                # area is the callee's arity and the struct bytes are compared like any other stack argument
+                # (set_color 0x47af30 takes an rgl::vector4 by value: a wrong colour constant was invisible)
                 n = min(n, self.r.decl_prefix[tgt])
             regs = self.r.callee_regs(tgt)
             ent = [tgt, norm_val(ecx, esp) if "ecx" in regs else "-", norm_val(edx, esp) if "edx" in regs else "-"]
