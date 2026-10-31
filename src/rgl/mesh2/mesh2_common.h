@@ -64,7 +64,7 @@ struct LangTables : LangTablesBase {
     tstring* find(const tstring* key) throw();                  // 0x4c6010 (null when absent)
     tstring* lookup(const tstring& key) throw();                // 0x43a1e0 (never null: a shared "ui_unknown..." entry on a miss)
     void write(FILE* f, const tstring& key, const tstring& value);   // 0x4bd740 ("key|value\n" row of a language file)
-    void load(const char* root);                                // 0x4cda90
+    void load(const tstring* root);                             // 0x4cda90 (the path prefix is a tstring: buf, else its inline bytes at +4)
     void release_strings();                                     // 0x4ca720
 };
 extern LangTables g_strtable;                         // 0x5e2a18

@@ -276,7 +276,7 @@ struct GameData {
     char emit_event(int id, int a, int b);      // 0x435790 (ret 0xc)
     void set_matrix(const rgl::matrix* m);      // 0x435650 (agent4: sound-event context frame)
     void add_experience(int troop, int amount); // 0x4428c0 (ret 8) (agent_fx_sound.cpp)
-    void party_counts(unsigned id, int* extra, int* wounded, int* size);   // 0x51be60 (inventory_panel/map_tooltip.cpp, called by map_info.cpp 0x51abd0: counts a party's heroes and wounded)
+    void party_counts(unsigned id, int* num, int* num2, int* prisoners);   // 0x51be60 (inventory_panel/map_tooltip.cpp, called by map_info.cpp 0x51abd0 as (id, &size, &wounded, &prisoners))
     bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4: the hit points of troop idx are below the agent-low threshold)
     tstring scene_path(int idx);                // 0x463950 (ret 8: hidden return)
     const char* module_path(const char* sub);   // 0x4639d0

@@ -245,11 +245,12 @@ void MapPanel::update(int type, int id)
 
                 rec = party_by_id(agent);
                 float    rel   = g_game->relation(agent, g_game->f78);
-                unsigned color = g_game->color_of(rel, 1);
+                unsigned rel_color = g_game->color_of(rel, 1);
+                unsigned color = rel_color;
                 if (g_show_faction_color)
                     color = g_game->factions[party_by_id(agent)->faction].color;
                 if (c == 0) {
-                    g_panel_color = color;
+                    g_panel_color = rel_color;          // 0x51af67: the relation colour (edi), not the faction override (esi)
                     g_panel_bg    = rel < -0.001f ? 0xff200000u
                                   : rel >  0.001f ? 0xff002000u : 0xff101010u;
                 }
@@ -273,7 +274,7 @@ void MapPanel::update(int type, int id)
                             mcol = mrel < -0.01f ? 0xff22aaffu : 0xffaa22ddu;
 
                         int extra = 0, wounded = 0, size = 0;
-                        g_game->party_counts(m, &extra, &wounded, &size);    // 0x51be60
+                        g_game->party_counts(m, &size, &wounded, &extra);    // 0x51be60: arg2 = troops, arg3 = wounded, arg4 = prisoners (the "+ N")
 
                         char buf[0x100];
                         RecR* mr = party_by_id(m);
@@ -313,7 +314,7 @@ void MapPanel::update(int type, int id)
                                       ? f->color
                                       : f->rel[0] < -0.001f ? 0xffff4422u
                                       : f->rel[0] >  0.001f ? 0xff44ff22u : 0xffffffffu;
-                        g_gui.draw_string(tstring(buf), 0.011f, fcol, 1);
+                        g_gui.draw_string(tstring(buf), 0.022f, fcol, 1);     // 0x3cb43958
                     }
                 }
                 if (rec->text.len > 2)
