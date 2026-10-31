@@ -133,7 +133,7 @@ void StratEnt::update_ground_cache()
         GFace* face = &ctx->ground->faces[id];
         vector4 nu(-m.u.x, -m.u.y, -m.u.z);
         const float* nn = face->normal;
-        if (!(nu.x * nn[0] + nu.y * nn[1] + nu.z * nn[2] < 0.0f))
+        if (!(nu.x * nn[0] + (nu.y * nn[1] + nu.z * nn[2]) < 0.0f))   // 0x42a720: the z and y terms are summed first
             continue;
         if (shape_contact_count(&cap, found[i], 0, 0) == 0)
             continue;
