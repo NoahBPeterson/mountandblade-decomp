@@ -1568,6 +1568,143 @@ class TypedInputs:
                 self.value(p + i * esz, s[0], s[1], s[2], depth + 1)
 
 
+# ---- --party-table: a consistent party id -> index -> page -> Party chain (opt-in environment model) ------------------
+G_GAME_VA = 0x5e2930            # GameData* g_game (include/game_data.h)
+PT_GAME_CLASSES = ("GameData", "GameW", "GameX", "GameDataX", "GameDataV")      # `this` is the game object: PartyMgr at +0xf8
+PT_MGR_CLASSES = ("PartyMgr", "PartyMgrW", "PartyMgrX", "Map10007")             # `this` is the party manager itself
+PT_MGR_OFF = 0xf8               # PartyMgr inside GameData
+PT_PARTY_SZ = 0x5ac8            # sizeof(Party); pages of 16 records (PartyMgr::pages)
+PT_TAB_N = 0x2717               # Map10007::tab entries (8 bytes: key, value); id < 0x2717 reads tab[id].value (0x48ad00)
+
+
+class PartyTable:
+    """--party-table[=P]: in a share P of fresh inputs write a small consistent party table into BOTH builds' memory.
+
+    What the original reads (index_of 0x48ad00 and its callers 0x4b4800 / 0x490ce0 / 0x4915d0 / 0x4b6870 ...), relative to
+    the PartyMgr base B (the game object + 0xf8; g_game 0x5e2930):
+      B + 8*id + 4    the index of party `id` for id < 0x2717 (tab[id].value; -1 = none; ids >= 0x2717 hash on tab[].key)
+      B + 0x138b8     party count
+      B + 0x138d0     pages._Myfirst (last +0x138d4, end +0x138d8): Party*[], page = index >> 4, record = index & 15
+      B + 0x138dc     n_parties (the id bound every caller checks first: `id >= n_parties` returns)
+      record + 4      type (the callers continue only when it is 1); +8 id; +0xa8 stacks[64] of 0x20 bytes (count, troop,
+                      flags bit 0 = prisoner/hero, spawned, wounded); +0x8a8 stack count; +0x8b8 follower id vector
+                      (first +0x8bc, last +0x8c0, end +0x8c4); +0x8c8 leader id (-1 = none)
+    The model maps ids 0..NP-1 (NP 3..7) to indices in pages of two records (0,1 / 16,17 / 32,33; a record is 23 KB and a pool slot
+    64 KB), gives them type 1 (about 70%) or another type (0, 2, 3), 0..4 plausible stacks, and an occasional follower list / leader
+    among the table's own ids; the ids in [NP, n_parties) map to -1. Everything else stays input soup. Nothing is read from the
+    original image: the bytes go to Input.pool_over (pool) / Input.overrides (g_game), identically for both builds, and are saved
+    with the input, so --replay reproduces them. `this` a game object or a manager: the table is put at its PartyMgr and g_game
+    is made to point at the same object; otherwise g_game gets two fresh contiguous cold slots of its own."""
+
+    def __init__(self, sym, share):
+        self.share = share
+        m = re.match(r"\?[^@]+@([^@]+)@@", sym or "")
+        self.cls = m.group(1) if m else ""
+
+    def _free_run(self, inp, rng, n, typed):
+        used = set(range(HOT_SLOTS)) | set(getattr(typed, "used", ()) or ())
+        for a in list(inp.pool_over):
+            if M.POOL_BASE <= a < M.POOL_BASE + M.POOL_SIZE:
+                used.add((a - M.POOL_BASE) // M.SLOT)
+        for _ in range(200):
+            s = HOT_SLOTS + rng.randrange(NSLOTS - HOT_SLOTS - n)
+            if not any((s + k) in used for k in range(n)):
+                for k in range(n):
+                    used.add(s + k)
+                if typed is not None and hasattr(typed, "used"):
+                    typed.used.update(range(s, s + n))
+                return M.POOL_BASE + M.SLOT * s
+        return None
+
+    def __call__(self, gen, inp, rng):
+        if rng.random() >= self.share:
+            return
+        typed = getattr(gen, "typed", None)
+        ecx = inp.regs.get("ecx", 0)
+        this_in_pool = M.POOL_BASE <= ecx < M.POOL_BASE + M.POOL_SIZE and (ecx & 3) == 0
+        if self.cls in PT_GAME_CLASSES and this_in_pool:
+            game, mgr = ecx, ecx + PT_MGR_OFF
+        elif self.cls in PT_MGR_CLASSES and this_in_pool:
+            game, mgr = None, ecx
+        else:
+            game = self._free_run(inp, rng, 2, typed)          # the game object spans two slots (mgr .. +0x139d8)
+            if game is None:
+                return
+            mgr = game + PT_MGR_OFF
+        if game is not None:
+            inp.overrides[G_GAME_VA] = game                    # g_game: the same object for both builds
+        w = {}                                                 # address -> dword
+
+        def put(a, v):
+            w[a] = v & 0xFFFFFFFF
+
+        np_ = rng.randint(3, 7)
+        pages = (np_ + 1) // 2                                 # two records per page
+        pbase = []
+        for _ in range(pages):
+            a = self._free_run(inp, rng, 1, typed)
+            if a is None:
+                return
+            pbase.append(a)
+        parr = self._free_run(inp, rng, 1, typed)              # the Party*[] array
+        if parr is None:
+            return
+        # id -> index: ids 0..np_-1 in a shuffled order over the available (page, slot) records
+        recs = [pg * 16 + k for pg in range(pages) for k in range(2)]
+        rng.shuffle(recs)
+        recs = recs[:np_]
+        nids = len(recs)
+        nparties = nids + rng.choice((0, 0, 1, 2, 5))          # ids in [nids, nparties) are in range but unmapped
+        for i in range(max(nids, nparties)):
+            idx = recs[i] if i < nids else -1
+            put(mgr + 8 * i, i)
+            put(mgr + 8 * i + 4, idx)
+        put(mgr + 0x138b8, nids)
+        put(mgr + 0x138d0, parr)
+        put(mgr + 0x138d4, parr + 4 * pages)
+        put(mgr + 0x138d8, parr + 4 * pages)
+        put(mgr + 0x138dc, nparties)
+        for pg in range(pages):
+            put(parr + 4 * pg, pbase[pg])
+        for i, idx in enumerate(recs):
+            rec = pbase[idx >> 4] + (idx & 15) * PT_PARTY_SZ
+            r = rng.random()
+            put(rec + 0, i)
+            put(rec + 4, 1 if r < 0.7 else rng.choice((0, 2, 3)))
+            put(rec + 8, i)
+            ns = rng.choice((0, 1, 2, 3, 4))
+            put(rec + 0x8a8, ns)
+            for s in range(ns):
+                st = rec + 0xa8 + 0x20 * s
+                cnt = rng.choice((1, 2, 5, 10, 30, 60))
+                put(st + 0, cnt)
+                put(st + 4, rng.randrange(0, 6))
+                put(st + 8, rng.choice((0, 0, 0, 1)))
+                put(st + 0xc, rng.randrange(0, cnt + 1) if rng.random() < 0.3 else 0)
+                put(st + 0x10, rng.randrange(0, cnt + 1) if rng.random() < 0.3 else 0)
+                for o in (0x14, 0x18, 0x1c):
+                    put(st + o, 0)
+            put(rec + 0x8b4, 0)                                # dirty byte and its neighbours
+            nf = rng.choice((0, 0, 1, 2)) if i + 1 < nids else 0
+            put(rec + 0x8bc, 0)
+            put(rec + 0x8c0, 0)
+            put(rec + 0x8c4, 0)
+            if nf:
+                fa = self._free_run(inp, rng, 1, typed)
+                if fa is not None:
+                    put(rec + 0x8bc, fa)
+                    put(rec + 0x8c0, fa + 4 * nf)
+                    put(rec + 0x8c4, fa + 4 * nf)
+                    for k in range(nf):
+                        put(fa + 4 * k, rng.randrange(i + 1, nids))     # followers have higher ids: no attach cycle (party_value recurses)
+            put(rec + 0x8c8, rng.randrange(nids) if rng.random() < 0.3 else 0xFFFFFFFF)
+        for a, v in w.items():
+            if M.POOL_BASE <= a < M.POOL_BASE + M.POOL_SIZE:
+                inp.pool_over[a] = v
+            else:
+                inp.overrides[a] = v
+
+
 PROFILE_KW = {k: tuple(zip(*v)) for k, v in PROFILES.items()}
 
 
@@ -1911,6 +2048,8 @@ class Runner:
         if getattr(opts, "edge_scope", None):
             self.edge_scope = {tuple(int(x, 16) for x in e.split("->")) for e in json.load(open(opts.edge_scope))}
         self.gen.hints = [INV.hint(h) for h in (getattr(opts, "hint", None) or [])]
+        if getattr(opts, "party_table", None):         # --party-table: a consistent party id -> index -> page -> Party chain
+            self.gen.hints.append(PartyTable(t.sym, opts.party_table))
         self.gen.img_read = lambda va_, n_: bytes(self.img.read(va_, n_)).ljust(n_, b"\0")
         for h_ in self.gen.hints:       # --hint g:ADDR: the address must be image data both builds share (resolved to it)
             ga_ = getattr(h_, "gaddr", None)
@@ -6572,6 +6711,10 @@ def parse_args(argv=None):
                          "(hex); nothing is discarded. g:ADDR is a global of the ORIGINAL image (hex address in "
                          ".data/.bss; our build's reference to it is resolved to the same address, so both runs see "
                          "the value; stored in Input.overrides, so --replay reproduces it). Repeatable")
+    ap.add_argument("--party-table", nargs="?", type=float, const=0.5, default=None, metavar="P",
+                    help="opt-in environment (off by default): in a share P (default 0.5) of fresh inputs write a small consistent "
+                         "party table (id -> index map, page table, Party records of type 1 and others with stacks) at the "
+                         "PartyMgr of `this` / g_game for BOTH builds; saved with the input. See PartyTable")
     ap.add_argument("--edge-scope", metavar="FILE",
                     help="JSON list of the original's edges ('0049fafc->004ac670') the run is about: it continues past "
                          "--inputs and steers only while one of them is uncovered (a pinned switch case)")
