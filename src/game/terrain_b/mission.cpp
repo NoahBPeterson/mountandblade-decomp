@@ -446,14 +446,18 @@ void CellGrid::build_faces(NavData* map)
     for (unsigned i = 0; i < map->verts.size(); i++)
         map->verts[i].n = vector4(0.0f, 0.0f, 0.0f);
 
+    // the three products are read before any store and the cell is re-fetched each step: a vertex may overlap a
+    // cell record, so the order of these loads is behaviour
     for (unsigned i = 0; i < map->cells.size(); i++) {
-        NavCell* c = &map->cells[i];
-        for (int j = 0; j < c->npts; j++) {
+        for (int j = 0; j < map->cells[i].npts; j++) {
+            NavCell* c = &map->cells[i];
+            float x = c->trans.x * c->scale;
+            float y = c->trans.y * c->scale;
+            float z = c->trans.z * c->scale;
             NavVert* v = &map->verts[c->ids[j]];
-            float s = c->scale;
-            v->n.x += c->trans.x * s;
-            v->n.y += c->trans.y * s;
-            v->n.z += c->trans.z * s;
+            v->n.x = x + v->n.x;
+            v->n.y = y + v->n.y;
+            v->n.z = z + v->n.z;
         }
     }
 
