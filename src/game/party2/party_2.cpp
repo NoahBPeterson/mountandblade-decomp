@@ -2659,11 +2659,14 @@ void Party::update_nav()
         } else {
             f598c = 0;
             f5984 = tf->m4;
-            int max = 10;
-            if (id == g_game->f78)
+            int lim = 10;                                    // 0x4b7758: the step budget ...
+            int max = 10;                                    // ... and the last can_move argument are separate locals
+            if (id == g_game->f78) {
+                lim = 0x64;
                 max = 0x96;
+            }
             int progress = 0;
-            while (progress < max) {
+            while (progress < lim) {
                 int from = mesh->m4;
                 if (from < 0)
                     break;
@@ -2671,8 +2674,8 @@ void Party::update_nav()
                 if (cursor + 1 >= npath)
                     break;
                 float p4[4];
-                p4[0] = detail[cur * 4 + 1];
-                p4[1] = detail[cur * 4 + 2];
+                p4[0] = detail[cur * 4 + 4];                 // 0x4b77ac: +0x197c + cur * 16
+                p4[1] = detail[cur * 4 + 5];                 // 0x4b77b3: +0x1980 + cur * 16
                 if (!g_level->core->can_move(from, pos.x, pos.y, path[cur + 1], p4, 0, max))
                     break;
                 cursor = cur + 1;
@@ -2750,7 +2753,7 @@ void Party::update_flags()
         GDP(rgl::mesh*, 0x1a200) = m2;
         GDP(int, 0x1a1fc) = 0;
         (*(__int64*)((char*)&g_script + 8)) = id;
-        d->frames.update(-0x46);
+        r->frames.update(-0x46);
     }
     if (e59ec == 0) {
         model->add_extra(m);

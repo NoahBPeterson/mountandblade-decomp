@@ -437,5 +437,21 @@
       "arg2&ffff0000=0,10000,20000,30000,2000000,4000000@0.7"
     ],
     "why": "EditorPanel::terrain_dialog is a window proc: a random msg is almost never WM_INITDIALOG/WM_NOTIFY/WM_COMMAND and a random wParam never a control id, so 0.8% of the insns were reached. Soft hints on msg (arg1) and the control id / notification code in wParam (arg2) reach 52%+ with nothing discarded. With --inputs 4000 --plateau 3000 --typed-share 0.8 and DIFFTEST_CONCOLIC=1: 69.7% insns, 178/286 edges, 4027 valid inputs, 0 mismatches (the remaining misses are the equal-string and listbox-selection paths that need matching GetDlgItemTextA/LB_ results)."
+  },
+  "party_2 004b7460": {
+    "args": [
+      "--rand-seeded",
+      "--hint",
+      "this+5998=1,2,3@0.9",
+      "--hint",
+      "this+5980=0@0.7",
+      "--hint",
+      "this+5988=1@0.8",
+      "--hint",
+      "this+a8=1@0.5",
+      "--typed-share",
+      "0.8"
+    ],
+    "why": "Party::update_nav switches on the order kind (+0x5998: 1, 2, 3), the moving flag (+0x5980) and the re-path flag (+0x5988); random ints are almost never 1/2/3, so the kind-2/3 branches, start_path success and the can_move advance loop were never entered (37/58 edges). Soft hints only, nothing is discarded: 52/57 edges, 80.6% insns, 476 valid inputs, 0 mismatches."
   }
 }
