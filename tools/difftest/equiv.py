@@ -222,6 +222,11 @@ def context():
     return _ctx
 
 
+def RS_db_lib_full():
+    """lib_crt C symbol name -> va (symbols/lib_names.txt)."""
+    return context()["db"].lib_full
+
+
 def machine_hooks(m):
     """Input-controlled allocation failure: the k-th malloc/operator new of a run returns NULL when k is
     in the input's alloc_fail (the null-check branches after `new` are edges like any other)."""
@@ -1836,6 +1841,11 @@ class Runner:
                         ours_calls.add(t.res.addr[_si] & 0xFFFFFFFF)
             except Exception:
                 ours_calls = None
+            # compiler helpers that take their operand on the x87 stack (__ftol2, __CI*): _on_forced returns
+            # without running them, which leaves that operand pushed, so a forced result is not a state the
+            # helper can produce (game_util 0x433510: `call __ftol2; test eax,eax` left 2 stale x87 values and
+            # the two builds' residues differed). Their result is already a function of the operand.
+            x87_abi = {v for k, v in RS_db_lib_full().items() if k.lstrip("_").startswith(("ftol", "CI"))}
             order = sorted(t.orig_insns)
             for k_, a_ in enumerate(order[:-2]):
                 ins = t.orig_insns[a_]
@@ -1843,7 +1853,8 @@ class Runner:
                     continue
                 tgt = ins.operands[0].imm & 0xFFFFFFFF
                 nxt = t.orig_insns.get(a_ + ins.size)
-                if nxt is None or not self.img.in_text(tgt) or tgt in self.transparent or tgt in self.stubbed:
+                if nxt is None or not self.img.in_text(tgt) or tgt in self.transparent or tgt in self.stubbed \
+                        or tgt in x87_abi:
                     continue
                 tests_result = nxt.id == CX.X86_INS_TEST and nxt.op_str in ("al, al", "eax, eax") or \
                     nxt.id == CX.X86_INS_CMP and nxt.op_str.startswith(("eax, ", "al, "))
