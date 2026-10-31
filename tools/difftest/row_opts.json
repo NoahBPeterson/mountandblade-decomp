@@ -85,5 +85,25 @@
       "this+2dc=ffffffff@0.8"
     ],
     "why": "char_window::open_view's flat-fallback branch (the elem2 path) needs +0x2dc == -1; random ints never hit it (68.5% -> 84.4% insns with the soft hint, nothing discarded)"
+  },
+  "fx_anim 00423b60": {
+    "args": [
+      "--inputs",
+      "1000",
+      "--extra-inputs",
+      "500"
+    ],
+    "why": "only 171 of the default inputs are valid (200 needed); more inputs reach 200 valid, 2/2 edges"
+  },
+  "fx_anim 00422130": {
+    "args": [
+      "--typed-share",
+      "0.8",
+      "--inputs",
+      "1000",
+      "--extra-inputs",
+      "500"
+    ],
+    "why": "the bone-0 add_pos accumulation needs typed objects and more inputs (PASS with DIFFTEST_CONCOLIC=1; 61/68 edges without)"
   }
 }
