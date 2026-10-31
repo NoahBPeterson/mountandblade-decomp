@@ -733,8 +733,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
             f6664 = g_sound_mgr.play_slot(8, 3, &g_listener.o.x, 1.0f, 0);
     }
     FrameNode* flare = (FrameNode*)f65c0;
-    if (!flare)
-        return;
+    if (flare) {          // (no flare: the original jumps to the particle update at 0x4faea5, it does not return)
     float tod = time_of_day();
     bool day = tod >= 4.0f && tod < 20.0f;
     int step = (int)((g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f);
@@ -787,6 +786,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     fm->color = rgl::pack_color(&col);
     fm->color |= 0xff000000;
     fm->scale((sc2 * sc2 * 5.0f + 2.0f) * size * 50.0f);
+    }
     if (g_game->levels[f5df4].flags & 0x100)
         g_terrain.update_particles(eye);
 }
@@ -1180,7 +1180,6 @@ done:
     tr.x = -cx;
     tr.y = -cy;
     tr.z = -(sumz * 0.5f);
-    tr.w = 0.0f;
     result->translate(&tr);
     result->scale(((*scale / extent) * size) * 0.95f);
     result->darken_vertices();
@@ -1871,7 +1870,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                             VEC_INT_PUSH_BACK(codes, code);
                         }
                         char eq = '=';
-                        int value = atol(name.substr(name.find(eq, 0) + 1, name.len).c_str());
+                        int value = atoi(name.substr(name.find(eq, 0) + 1, name.len).c_str());
                         ints_push(codes, value);
                         rects_a->push_back(pos);
                         ints_push(tags, tag_index);
