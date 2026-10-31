@@ -291,45 +291,17 @@ extern char* g_xa44238;                              // 0xa44238
 #include "../loading_screen.h"       // LoadingScreen: advance 0x50f440 here
 
 // @ 0x50f440
-extern "C" __declspec(dllimport) unsigned long __stdcall GetTickCount();   // TEMPORARY PROFILE
-
-// TEMP: one line per state-machine case, so a run shows exactly which case ran and what it printed.
-static void step_log(const char* what, int from)
-{
-    FILE* pf_ = fopen("ls_steps.txt", "at");
-    if (pf_) { fprintf(pf_, "case %d: %s\n", from, what); fclose(pf_); }
-}
-
 bool LoadingScreen::advance(int* step, int* total, tstring* text)
 {
-    // TEMPORARY PROFILE (do not commit): per-step wall time, to see where the loading screen spends its time.
-    unsigned long t_prof = GetTickCount();
-    const int step_in = *step;
     bool finished = false;
 
     text->assign("");
     if (*step == 0) {
-        step_log("module info file (f48=0)", *step);
         f48 = 0;
         { tstring key("ui_loading_module_info_file"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 1) {
-        step_log("load_game_variables + module.ini", *step);
         ((void (__fastcall*)(void*))load_game_variables)(&g_app_obj);
-        {   // DEBUG PROBE
-            FILE* pf_ = fopen("gv_probe.txt", "at");
-            if (pf_) {
-                tstring k("char_b_skills_y_a");
-                int idx = g_game_vars.find(k);
-                fprintf(pf_, "after load_game_variables: count=%d idx=%d", g_game_vars.count, idx);
-                if (idx >= 0) {
-                    char* v = *(char**)((char*)&g_game_vars + idx * 0x2c + 0x20);
-                    fprintf(pf_, " value_ptr=%08x value='%s'", (unsigned)(size_t)v, v ? v : "(null)");
-                }
-                fprintf(pf_, "\n");
-                fclose(pf_);
-            }
-        }
         tstring path(g_module_path);
         { tstring ini("module.ini"); path.append(ini); }
         FILE* f = fopen(path.c_str(), "r");
@@ -343,21 +315,12 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         { tstring key("ui_processing_ini_file"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 2) {
-        step_log("parse_module_info + frames/quads", *step);
-        unsigned long t0_ = GetTickCount();
         parse_module_info();
-        unsigned long t1_ = GetTickCount();
         ((LoadingMeshes*)&g_gui)->build_frames();   // 0x50f930: the gui object at 0x5d7080 holds the loading meshes
-        unsigned long t2_ = GetTickCount();
         ((Frame570*)&g_gui)->build_quad();          // 0x50f8a0
-        unsigned long t3_ = GetTickCount();
-        { FILE* pf_ = fopen("ls_steps.txt", "at");
-          if (pf_) { fprintf(pf_, "  case 2 parts: parse_module_info %lu ms, build_frames %lu ms, build_quad %lu ms\n",
-                             t1_ - t0_, t2_ - t1_, t3_ - t2_); fclose(pf_); } }
         { tstring key("ui_loading_music"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 3) {
-        step_log("music table", *step);
         if (!g_sound_paused && !g_sound_muted) {
             g_log << "Loading Music...\n";
             text_stream ts;
@@ -375,51 +338,23 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         { tstring key("ui_loading_data"); text->assign(g_strtable.lookup(key)->c_str()); }
         *step += 2;
     } else if (*step == 4) {
-        step_log("step 4: skip to 5", *step);
         *step = 5;
     } else if (*step == 5) {
-        step_log("load_data_files", *step);
         load_data_files();
         { tstring key("ui_loading_setting_data"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 6) {
-        step_log("load_module_files", *step);
         load_module_files();
         { tstring key("ui_loading_textures"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 7) {
-        step_log("load_all textures", *step);
         g_log << "Loading Textures...\n";
         g_res.load_all(g_scan_module_textures, (rgl::string*)&g_module_path);
         g_log << "Finished Loading Textures...\n";
         { tstring key("ui_finished"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else {
-        step_log("finished (state machine done)", *step);
         finished = true;
-    }
-    {   // The bar sits at +0x38 of this object (MeetingWindow::export_btn, created by init2) and its slot 13 is
-        // set_ratio. The only other caller is update (0x50f390), which the driver never enters, so the bar stayed at
-        // its initial ratio: drive it here, exactly as update would (step * 1/7).
-        struct BarVt {                       // the widget's slot 13 (+0x34) is set_value / progress_bar::set_ratio
-            virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4();
-            virtual void s5(); virtual void s6(); virtual void s7(); virtual void s8(); virtual void s9();
-            virtual void s10(); virtual void s11(); virtual void s12();
-            virtual void set_value(float v);
-        };
-        BarVt* bar_ = *(BarVt**)((char*)this + 0x38);
-        { FILE* pf_ = fopen("ls_bar.txt", "at");
-          if (pf_) { fprintf(pf_, "advance this=%p bar(+0x38)=%p step=%d\n", (void*)this, (void*)bar_, *step); fclose(pf_); } }
-        if (bar_)
-            bar_->set_value((float)*step * 0.14285715f);
-    }
-    {
-        FILE* pf = fopen("load_timing.txt", "at");
-        if (pf) {
-            fprintf(pf, "step %d -> %d: %lu ms   [%s]\n", step_in, *step, (unsigned long)(GetTickCount() - t_prof),
-                    text->c_str() ? text->c_str() : "");
-            fclose(pf);
-        }
     }
     return finished;
 }

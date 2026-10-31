@@ -42,6 +42,8 @@ def main():
                 partial = lines.pop()
                 for line in lines:
                     out.write("%d\t%s\n" % (now, line.rstrip("\r")))
+                if partial.strip():             # the game writes some lines without a newline ("begin_setup end_setup")
+                    out.write("%d\t[partial] %s\n" % (now, partial.rstrip("\r")))
                 out.flush()
             time.sleep(a.poll)
 

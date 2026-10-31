@@ -653,8 +653,6 @@ void __fastcall sound_engine::tick()
 // Loader (ret 0xc) of a music set: frees the old records and names, reads the sample records (name string and
 // flag bits), loads every sample through FMOD ("<dir>Sounds\<name>" first, then "sounds\<name>") unless muted,
 // derives priority, ratio and length from the sample defaults, then reads the name records and finishes.
-int mb_fast_load(void);   // inventory_panel/module_files.cpp
-
 void music_set::load(stream_base* s, int load_samples, const tstring* dir)
 {
     char buf[0x200];
@@ -677,7 +675,7 @@ void music_set::load(stream_base* s, int load_samples, const tstring* dir)
             sprintf(buf, "%sSounds\\%s", dir->c_str(), name.c_str());
             recs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
         }
-        if (recs[i].sample == 0 && g_sound_muted == 0 && !mb_fast_load()) {
+        if (recs[i].sample == 0 && g_sound_muted == 0) {
             sprintf(buf, "sounds\\%s", name.c_str());
             recs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
         }

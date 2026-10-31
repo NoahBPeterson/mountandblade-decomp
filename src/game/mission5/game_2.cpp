@@ -267,10 +267,8 @@ struct MapObjView {
 };
 
 // @ 0x5213d0
-#define BMT_MARK(n) do { FILE* pf_ = fopen("bmt_probe.txt", "at"); if (pf_) { fprintf(pf_, "  %s\n", n); fclose(pf_); } } while (0)
 void Game::build_map_trees()
 {
-    BMT_MARK("A enter");
     GameMapView* self = (GameMapView*)this;
     MapNav* mgr = (MapNav*)g_level->core;
 
@@ -294,7 +292,6 @@ void Game::build_map_trees()
 
     int npts = (int)(((char*)mgr->pts_end - (char*)mgr->pts) / 0x24);
 
-    BMT_MARK("A done, B start");
     // ---- B: per-point view dot --------------------------------------------
     for (int i = 0; i < npts; i++) {
         MapNavVert* p = &mgr->pts[i];
@@ -303,7 +300,6 @@ void Game::build_map_trees()
         if (g_use_shaders != 0) p->s = s * s;
     }
 
-    BMT_MARK("B done, C start");
     // ---- C: per-point flags and distance ----------------------------------
     int*   flags = new int[npts];
     float* dist  = new float[npts];
@@ -330,7 +326,6 @@ void Game::build_map_trees()
         }
     }
 
-    BMT_MARK("C done, D start");
     // ---- D: bbox + aggregate masks ----------------------------------------
     g_maxx = -100000.0f; g_minx = 100000.0f;
     g_miny = 100000.0f;  g_maxy = -100000.0f;
@@ -351,7 +346,6 @@ void Game::build_map_trees()
             dist[i] = 0.0f;
     }
 
-    BMT_MARK("D done, E start");
     // ---- E: ten relaxation passes over the edges --------------------------
     int nedges = (int)(((char*)mgr->edges_end - (char*)mgr->edges) / 0x24);
     for (int pass = 10; pass != 0; pass--) {
@@ -367,7 +361,6 @@ void Game::build_map_trees()
         }
     }
 
-    BMT_MARK("E done, F start");
     // ---- F: material-name tables ------------------------------------------
     char tmp_buf[0x40];
     tstring* tmp = (tstring*)tmp_buf;
@@ -399,7 +392,6 @@ void Game::build_map_trees()
         desert_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
 
-    BMT_MARK("F done, G start");
     // ---- G: grid dimensions and cell entities -----------------------------
     g_sizex = g_maxx - g_minx;
     g_sizey = g_maxy - g_miny;
@@ -419,7 +411,6 @@ void Game::build_map_trees()
         }
     }
 
-    BMT_MARK("G done, H start");
     // ---- H: per-cell geometry ---------------------------------------------
     for (int col = 0; col < g_page_cols; col++) {
         float x0 = (float)col * stepx + g_minx;

@@ -48,6 +48,9 @@ def main():
                     "every exception Wine dispatches, including one that kills the process before winedbg hears of it")
     ap.add_argument("--break", dest="brk", action="append", default=[], help="stop at this address (hex or a map "
                     "symbol, e.g. __purecall) and report as for a fault")
+    ap.add_argument("--nodebug", action="store_true", help="run the game directly under Wine, without winedbg "
+                    "(for timing: under the debugger every first-chance exception stops the process); no fault report, "
+                    "Wine's own messages still go to wine.log; returns when the game exits or at --timeout")
     ap.add_argument("--pre", default="", help="extra winedbg commands run before 'cont' (';'-separated), e.g. "
                     "'watch *0xa9897c' (a data watchpoint)")
     a = ap.parse_args()
@@ -59,6 +62,21 @@ def main():
     kill_stale()
     shutil.copyfile(a.exe, os.path.join(game, NAME + ".exe"))
     log_path = os.path.join(ROOT, "work", "relink", "standalone", "dbg.log")
+    if a.nodebug:
+        wine_log = os.path.join(ROOT, "work", "relink", "standalone", "wine.log")
+        p = subprocess.Popen([CX, "--bottle", a.bottle, "--cx-log", wine_log, "--debugmsg", a.winedebug, WINPATH],
+                             cwd=game, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if a.play:
+            press_play(a.timeout)
+        t0 = time.time()
+        while time.time() - t0 < a.timeout:
+            time.sleep(2)
+            if not any(WINPATH in l for l in subprocess.run(["ps", "-axo", "command="], capture_output=True,
+                                                            text=True).stdout.splitlines()):
+                print("exited (no debugger attached: no fault report; see wine.log)")
+                return 0
+        print("still running after %d s (left running)" % a.timeout)
+        return 0
     report = "info reg\nbt 40\nx /3072x $esp\n" + "".join(c.strip() + "\n" for c in a.cmds.split(";") if c.strip())
     hung = False
     with open(log_path, "w") as log:

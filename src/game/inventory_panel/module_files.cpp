@@ -80,18 +80,6 @@ extern char g_path[0x100];                           // 0x8ee41f0
 // g_path = <module path><file name>; abort the load if the file cannot be opened.  Inlined at
 // all sixteen call sites in the original.  The stream is returned as a base reference, which is
 // how the callers reach the reader methods (so their virtual dispatch stays indirect).
-// MB_FAST_LOAD=1 skips the per-sound sample decode at startup (the game's own load_samples == 0 path):
-// FMOD needs ~58 s for the 359 entries under Wine, which makes every test run pay for it.
-int mb_fast_load(void)
-{
-    static int cached = -1;
-    if (cached < 0) {
-        FILE* f = fopen("mb_fast_load.on", "rb");   // a marker file in the working directory
-        if (f) { fclose(f); cached = 1; } else cached = 0;
-    }
-    return cached;
-}
-
 __forceinline stream_root& open_module_file(tstream3& s, const char* name)
 {
     g_path[0] = 0;
@@ -284,7 +272,7 @@ void load_module_files()
     in_sounds.r_tstr(&str1);
     in_sounds.r_tstr(&str2);
     in_sounds.r_int(&version);
-    ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, mb_fast_load() ? 0 : g_scan_module_sounds, &g_module_path);
+    ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_scan_module_sounds, &g_module_path);
     g_loaded_sound_count = *g_sound_mgr.p4;
     s_sounds.failed = 1;
 

@@ -141,7 +141,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     si.cb = sizeof(si);
     memset(&pi, 0, sizeof(pi));
 
-#if 0   // TEMPORARY (local, do not commit): the binkplay intro videos cost 30 s per test run under Wine.
     float t0 = DXUtil_Timer(TIMER_GETAPPTIME);
 
     hfind = FindFirstFileA("paradox.bik", &fd);
@@ -177,7 +176,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
         }
     }
-#endif  // TEMPORARY: videos disabled
 
     r = g_app_obj.Create(hInstance);
     if (r < 0)
@@ -1323,20 +1321,7 @@ void save_path(char* out)
 {
     char dir[0x104];
     char base[0x104];
-    // A NULL/garbage `out` used to fault in the first sprintf (source pointer 0x73726573 = the tail of
-    // "...\\users"); log the offender instead of dying, and never leave `dir` uninitialised if the shell call fails.
-    {
-        unsigned p = (unsigned)out;
-        if (p < 0x10000u || p >= 0x80000000u) {
-            FILE* f = fopen("save_path_probe.txt", "a");
-            if (f) { fprintf(f, "bad out=%08x\n", p); fclose(f); }
-            return;
-        }
-    }
-    dir[0] = 0;
     SHGetFolderPathA(0, 5, 0, 0, dir);
-    if (!dir[0])
-        strcpy(dir, ".");
     sprintf(base, "%s\\Mount&Blade Savegames", dir);
     CreateDirectoryA(base, 0);
     sprintf(base, "%s", out);

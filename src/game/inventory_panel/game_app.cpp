@@ -342,17 +342,6 @@ void LoadingScreen::update(int unused)
     _snprintf(buf, 0x100, fmt, step);
     ((ScreenObj*)hint)->set_text(tmp, text);
     ((ScreenObj*)logo)->set_value((float)step * 0.14285715f);
-    {   // TEMP probe: which class is the +0x38 widget, and what does its slot 13 (the one 0x50f390 calls) point at?
-        static int once_ = 0;
-        FILE* pf_ = once_++ ? 0 : fopen("ls_probe.txt", "at");
-        if (pf_) {
-            void** vp = *(void***)(void*)logo;
-            void* s13 = vp ? vp[13] : 0;
-            fprintf(pf_, "ls +0x38 vptr=%p slot13=%p  (MissionUi vt=0x591c80, progress_bar vt=0x597f20, set_ratio=0x4e3f60) step=%d ratio=%g\n",
-                    (void*)vp, s13, step, (float)step * 0.14285715f);
-            fclose(pf_);
-        }
-    }
     if (finished) {
         g_main_menu.set_state(4);
         ((Output*)&orig::g_log)->print("Finished All...\n");

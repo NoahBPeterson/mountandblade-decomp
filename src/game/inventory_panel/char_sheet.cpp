@@ -227,8 +227,6 @@ static float config_float(const tstring& key)
     float v = 0;
     int i = g_game_vars.find(key);
     if (i >= 0) v = (float)atof(config_text(i));
-    { FILE* pf_ = fopen("cf_probe.txt", "at");
-      if (pf_) { fprintf(pf_, "key=%-28s idx=%4d v=%g\n", key.c_str() ? key.c_str() : "?", i, v); fclose(pf_); } }
     return v;
 }
 
