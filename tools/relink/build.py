@@ -24,7 +24,7 @@ original vtable, every slot is rewritten to our definition of the function in th
 address); slots whose original function we do not define keep what the compiler put there. A vtable where fewer
 than half of the comparable slots already agree is left alone and reported: its match is suspect.
 """
-import argparse, bisect, json, os, re, struct, subprocess, sys
+import argparse, bisect, glob, json, os, re, struct, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -325,6 +325,29 @@ def fix_literals(exe, symmap, rmap, img, lib_names, by_obj={}):
     return rep
 
 
+def patch_objects(sets, rmap):
+    """Compile patches/<set>/*.cpp for each set. A patch names the original functions it replaces with
+    `// @ replaces 0xADDR` lines; returns (object paths, {replaced symbol: patch object stem})."""
+    import compile_all as C
+    import slice as S
+    objs, replaced = [], {}
+    for name in sets:
+        srcs = sorted(glob.glob(os.path.join(ROOT, "patches", name, "*.cpp")))
+        if not srcs:
+            sys.exit("patch set %r: no patches/%s/*.cpp" % (name, name))
+        for src in srcs:
+            o, log = S.compile_obj(src, C.manifest_flags(src[:-4] + ".manifest.txt") or C.DEFAULT)
+            if not o:
+                sys.exit("patch %s does not compile:\n%s" % (os.path.relpath(src, ROOT), log))
+            objs.append(o)
+            for va in re.findall(r"^// @ replaces 0x([0-9a-fA-F]+)", open(src).read(), re.M):
+                row = rmap["defined_at"].get("%08x" % int(va, 16)) or rmap["defined_at"].get(va.lower())
+                if not row:
+                    sys.exit("patch %s replaces 0x%s, which no row of ours defines" % (os.path.relpath(src, ROOT), va))
+                replaced[row[0]] = os.path.basename(o).rsplit("_", 1)[0]
+    return objs, replaced
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "relink", "standalone"))
@@ -332,7 +355,12 @@ def main():
                     "(would be rewritten), a vptr store is moved to the original's table, a vtbl_* extern is still "
                     "referenced, or a placeholder virtual is bound by the glue instead of defined in source")
     ap.add_argument("--icf", action="store_true", help="link with /OPT:ICF like the original (identical functions fold)")
+    ap.add_argument("--patches", action="append", default=[], metavar="SET",
+                    help="also link patches/SET/*.cpp (repeatable): opt-in replacements and additions that never enter "
+                         "src/ or the equivalence work (docs/patches.md); the output goes to work/relink/patched-SET")
     a = ap.parse_args()
+    if a.patches and a.out == ap.get_default("out"):
+        a.out = os.path.join(ROOT, "work", "relink", "patched-" + "+".join(a.patches))
     out = os.path.abspath(a.out)
     os.makedirs(out, exist_ok=True)
     rel = lambda p: os.path.relpath(p, ROOT)
@@ -355,6 +383,13 @@ def main():
     rmap = json.load(open(rmap_path))
     owner = {sym: stem for sym, stem in rmap["defined_at"].values()}
     stem_of = lambda o: os.path.basename(o).rsplit("_", 1)[0]
+    if a.patches:
+        pobjs, replaced = patch_objects(a.patches, rmap)
+        for sym, stem in replaced.items():          # the patch owns the symbol: the link-order logic below keeps its copy
+            owner[sym] = stem
+        objs = pobjs + objs
+        steps["patches"] = "%s: %d objects, %d functions replaced (%s)" % (
+            "+".join(a.patches), len(pobjs), len(replaced), ", ".join(sorted(replaced)[:6]) + (" ..." if len(replaced) > 6 else ""))
     # a function our code reaches only through a literal address has no reference /OPT:REF can see: keep it
     import literal_addrs as L
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
