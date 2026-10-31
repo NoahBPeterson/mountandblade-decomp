@@ -4316,8 +4316,8 @@ void MsgLog::add(tstring msg, int color)
             int minus1;
             vector4 p;
             vector4 ext;
-            scale.x = 0.0197f;
-            scale.y = 0.0197f;
+            scale.x = 0.021f;                                  // 0x3cac0831 (0x452d72)
+            scale.y = 0.021f;                                  // 0x3cac0831 (0x452d7a)
             f08 = 0.8f;
             cur = (cur + 31) % 32;
             ((rgl::mesh_ext*)&TXT(cur))->clear_geometry();
