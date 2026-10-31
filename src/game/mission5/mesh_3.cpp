@@ -448,7 +448,7 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
         const rgl::vector4& b = pts[(i + 1) % n];
         float ex = b.x - a.x, ey = b.y - a.y, ez = b.z - a.z;
         float len = (float)sqrt(ex * ex + ey * ey + ez * ez);
-        if (len > 1e-6f) {
+        if (len > 1e-10f) {
             float k = 1.0f / len;
             ex = ex * k;
             ey = ey * k;
@@ -513,7 +513,7 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
         const rgl::vector4& b = pts[(i + 1) % n];
         float ex = b.x - a.x, ey = b.y - a.y, ez = b.z - a.z;
         float len = (float)sqrt(ex * ex + ey * ey + ez * ez);
-        if (len > 1e-6f) {
+        if (len > 1e-10f) {
             float k = 1.0f / len;
             ex = ex * k;
             ey = ey * k;
@@ -739,7 +739,12 @@ int Mesh_s2e960::edge_index(int index, const rgl::matrix& m)
 // @ 0x52edb0
 void Mesh_s2e960::apply_copy(const rgl::matrix& m)
 {
-    rgl::matrix basis = m;
+    // The original keeps the basis matrix, the edge temporary and the polygon temporary in one
+    // stack area (their lifetimes are disjoint), so the unwritten tail of each pushed element
+    // holds leftover basis words; one shared buffer keeps that.
+    char scratch[sizeof(mpoly_s2e960)];
+    rgl::matrix& basis = *(rgl::matrix*)scratch;
+    basis = m;
     basis.u = rgl::vector4(0.0f, 0.0f, 1.0f);
     basis.s = rgl::vcross_s2e960(basis.f, basis.u);
     basis.s.normalize();
@@ -769,7 +774,7 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
     }
 
     for (unsigned i = 0; i < (unsigned)edges2.size(); i++) {
-        medge_s2e960 e;
+        medge_s2e960& e = *(medge_s2e960*)scratch;
         e.v0 = edges2.first[i].v0 + voff;
         e.v1 = edges2.first[i].v1 + voff;
         e.unk08 = -10000;
@@ -783,7 +788,7 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
 
     for (unsigned i = 0; i < (unsigned)polys2.size(); i++) {
         mpoly_s2e960& p = polys2.first[i];
-        mpoly_s2e960 t;
+        mpoly_s2e960& t = *(mpoly_s2e960*)scratch;
         t.idx[0] = -100000;
         t.idx[1] = -100000;
         t.idx[2] = -100000;

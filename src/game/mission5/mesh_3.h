@@ -568,6 +568,9 @@ struct MeshVec_s2f250 {
     mesh_s2f250** end;                                 // +0xc
     unsigned size() const { return first ? (unsigned)(last - first) : 0u; }
     unsigned capacity() const { return first ? (unsigned)(end - first) : 0u; }
+    MeshVec_s2f250() : first(0), last(0), end(0) {}
+    // the std::vector destructor the original runs when the local goes out of scope (0x52f7e0: operator delete 0x535712 on first, zero the pointers)
+    ~MeshVec_s2f250() { if (first) ::operator delete(first); first = 0; last = 0; end = 0; }
     __forceinline void _Insert_n(mesh_s2f250** pos, unsigned n, mesh_s2f250** val)      // 0x410610 (ICF'd vector<int>::_Insert_n)
     { ((int_stdvec*)this)->insert_n((int*)pos, n, *(int*)val); }
     void push_back(mesh_s2f250* x)
@@ -613,12 +616,13 @@ struct Map_s2f250 {
     __forceinline int add_placed(const int* kind, const int* id, const int* value, const matrix*, int* spawn);     // 0x44f870 (Mission::add_placed)
 };
 struct IntVec_s2f250 {
-    int* first;                                 // +0
-    int* last;                                  // +4
-    int* end;                                   // +8
-    // the vector starts 4 bytes before `first` (its allocator word is the field in front: Frame__s2f250::selected)
-    __forceinline void resize(unsigned n, int v) { ((std::vector<int>*)((char*)this - 4))->resize(n, v); }     // 0x43f310
-    __forceinline void push_back_out(const int& v) { ((std::vector<int>*)((char*)this - 4))->push_back(v); }  // 0x440b30
+    int alloc;                                  // +0  (std::vector allocator word)
+    int* first;                                 // +4
+    int* last;                                  // +8
+    int* end;                                   // +0xc
+    // 0x43f310 / 0x440b30 take the vector's own address (ecx = frame + 0x1a1b8)
+    __forceinline void resize(unsigned n, int v) { ((std::vector<int>*)this)->resize(n, v); }     // 0x43f310
+    __forceinline void push_back_out(const int& v) { ((std::vector<int>*)this)->push_back(v); }  // 0x440b30
 };
 struct Frame__s2f250 {
     char pad0[0x1a09c];
@@ -638,7 +642,7 @@ struct Frame__s2f250 {
     char pad1a1a4[0x1a1b4 - 0x1a1a4];
     int selected;                               // +0x1a1b4
     IntVec_s2f250 sel;                                 // +0x1a1b8
-    char pad1a1c4[0x1a1cc - 0x1a1c4];
+    char pad1a1c8[0x1a1cc - 0x1a1c8];
     int dirty;                                  // +0x1a1cc
 };
 struct ObjRec20_s2f250 {                               // 0x20-byte record at 0x5e28f8
