@@ -143,7 +143,13 @@ def run(out, secs, play):
     if play:
         C.WINPATH = GAME_WIN + COPY
         press(secs)
-    time.sleep(secs)
+    # wait for the player to quit, at most secs (then end it)
+    t0 = time.time()
+    while time.time() - t0 < secs:
+        time.sleep(5)
+        ps = subprocess.run(["ps", "-axo", "command="], capture_output=True, text=True).stdout
+        if not any(l.startswith(GAME_WIN + COPY) for l in ps.splitlines()) and time.time() - t0 > 60:
+            break
     for line in subprocess.run(["ps", "-axo", "pid=,command="], capture_output=True, text=True).stdout.splitlines():
         pid, cmd = line.strip().split(None, 1)
         if cmd.startswith(GAME_WIN + COPY):
