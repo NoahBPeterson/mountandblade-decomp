@@ -71,7 +71,8 @@ struct WidgetObj : Widget {
     unsigned flags;                                                // +0x104 flag word (bit 0 hidden, bit 1 tint)
     char pad108[0x121 - 0x108];
     char b121;                                                     // +0x121
-    char pad122[0x14c - 0x122];
+    char b122;                                                     // +0x122
+    char pad123[0x14c - 0x123];
     unsigned color14c;                                             // +0x14c
     unsigned color150;                                             // +0x150
     char pad154[0x178 - 0x154];

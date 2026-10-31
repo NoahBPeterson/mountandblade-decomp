@@ -65,34 +65,42 @@ void Screen::init_screen()
     s0.y = 0.05f;
     buttons->set_scale(&s0.x);
     {
-        tstring map_bar("map_bar");
-        buttons->set_mesh(0, (void*)((mesh_x*)g_alloc.get_object((const rgl::string*)&map_bar))->clone());
+        void* bar_mesh;
+        {
+            tstring map_bar("map_bar");
+            bar_mesh = (void*)((mesh_x*)g_alloc.get_object((const rgl::string*)&map_bar))->clone();
+        }                                           // the key string dies before set_mesh (0x4ec681 dtor, then 0x4ec6.. call 0x488aa0)
+        buttons->set_mesh(0, bar_mesh);
     }
     f48 = 0;
     if (g_5a9fb0) {
         f48 = (int)make_short_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_terrain")), 0.002f, 0.006f, 0.03f);
     }
     f4c = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
-    f38 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_reports")), 0.18f, 0.006f, 0.03f);
-    f50 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_quests")), 0.33f, 0.006f, 0.03f);
+    f38 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_reports")), 0.216f, 0.006f, 0.03f);
+    f50 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_quests")), 0.332f, 0.006f, 0.03f);
     f40 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
-    f44 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_character")), 0.5625f, 0.006f, 0.03f);
+    f44 = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_character")), 0.564f, 0.006f, 0.03f);
     f3c = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
     push_child(overlay->children, *(Widget**)&f34);   // 0x4ec824: the map-bar overlay takes the button bar
 
     {
-        tstring none("");
-        f5c = (WidgetObj*)make_hint((ContainerBase*)buttons, none, 0.8f, -0.006f, 0.2f, 0.027f);
+        {
+            tstring none("");
+            f5c = (WidgetObj*)make_hint((ContainerBase*)buttons, none, 0.8f, -0.006f, 0.2f, 0.027f);
+        }                                           // the empty key string dies before set_flag (0x4ec8bf dtor, then vt+0x74)
         int flag = 0x11;
         f5c->set_flag(&flag);
-        f5c->b121 = 1;
+        f5c->b122 = 1;                               // 0x4ec8dd: +0x122
     }
     {
-        tstring none("");
-        f60 = (WidgetObj*)make_hint((ContainerBase*)buttons, none, 0.8f, 0.015f, 0.2f, 0.027f);
+        {
+            tstring none("");
+            f60 = (WidgetObj*)make_hint((ContainerBase*)buttons, none, 0.8f, 0.015f, 0.2f, 0.027f);
+        }                                           // the empty key string dies before set_flag (0x4ec8bf dtor, then vt+0x74)
         int flag = 0x11;
         f60->set_flag(&flag);
-        f60->b121 = 1;
+        f60->b122 = 1;                               // 0x4ec93c: +0x122
     }
 
     MapWidget* map = (MapWidget*)operator new(0x358);
@@ -115,14 +123,14 @@ void Screen::init_screen()
     f54 = new_widget(0x178);
     {
         vector2 pp;
-        pp.x = 0.182f;
-        pp.y = 0.045f;
+        pp.x = 0.445f;                               // 0x4eca31
+        pp.y = 0.06f;
         f54->set_pos(&pp.x);
     }
     {
         vector2 ps;
-        ps.x = 0.27f;
-        ps.y = 0.03f;
+        ps.x = 0.09f;                                // 0x4eca4f
+        ps.y = 0.04f;
         f54->set_scale(&ps.x);
     }
     {
@@ -180,13 +188,14 @@ void Screen::init_screen()
     }
     {
         float zero = 0.0f;
-        f2b8 = f2b8 + 1.0f;
+        f298 = f298 + 1.0f;                           // +0x298 (camera target z; 0x4ecc09), not the zoom at +0x2b8
         *(float*)((char*)this + 0x2bc) = zero;
         *(float*)((char*)this + 0x2c0) = zero;
         *(float*)((char*)this + 0x2c4) = zero;
         *(float*)((char*)this + 0x2c8) = zero;
     }
     camera_mark_entities();
+    camera_update(0.0f);                                   // 0x4ece20 (push ebx = 0)
 
     if (g_level != g_a70438 && g_use_shaders) {
         ((ShadowMap*)g_psys)->attach_camera((CellGrid*)g_level);   // 0x4711e0
