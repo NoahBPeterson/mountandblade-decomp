@@ -1683,6 +1683,7 @@ class MemWrites:
         self._own = set()
 
 
+CALL_REGS = ("eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp")
 CALL_XMM = ("xmm0", "xmm1", "xmm2", "xmm3")
 CALL_REG_IDS = {"eax": UC_X86_REG_EAX, "ebx": UC_X86_REG_EBX, "ecx": UC_X86_REG_ECX, "edx": UC_X86_REG_EDX,
                 "esi": UC_X86_REG_ESI, "edi": UC_X86_REG_EDI, "ebp": UC_X86_REG_EBP, "esp": UC_X86_REG_ESP}
