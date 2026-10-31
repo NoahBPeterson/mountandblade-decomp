@@ -1305,6 +1305,9 @@ def install_import_models(m):
         "SetFocus": (lambda m_, a, esp: 0, 1),                    # HWND: no window had the focus
         "PostMessageA": (lambda m_, a, esp: 1, 4),
         "EndDialog": (lambda m_, a, esp: 1, 2),
+        "WSAStartup": (lambda m_, a, esp: 10091, 2),               # WSASYSNOTREADY: no network (get_latest_version 0x4b9aa0 gives up; 0x4d4140 WM_COMMAND 0x41f)
+        "DialogBoxParamA": (lambda m_, a, esp: 0, 5),             # INT_PTR: the modal dialog ended with 0 (Application's about/key dialog 0x4d4140)
+        "ord9": (lambda m_, a, esp: 1, 2),                        # SkinMagic SetSingleDialogSkin(hwnd, name), stdcall: skin applied (0x4d4140)
         "DefWindowProcA": (lambda m_, a, esp: 0, 4),
         "GetWindowRect": (get_rect, 2),
         "GetClientRect": (get_rect, 2),
@@ -1407,6 +1410,24 @@ def install_system_models(m, ui_answer, put):
         if a[3] & 0xFFFFFFFF:
             put(m_, a[3], struct.pack("<I", 0))
         return 1
+
+    def wide_to_multi(m_, a, esp):
+        # int; code page ignored (ASCII range: the low byte, anything else '?'). cchWideChar -1 = NUL-terminated (the NUL is
+        # converted too); cbMultiByte 0 = only report the size
+        n = a[3] - (1 << 32) if a[3] & 0x80000000 else a[3]
+        chars = []
+        while (n < 0 and len(chars) < 0x1000) or (n >= 0 and len(chars) < n):
+            c = struct.unpack("<H", m_.read(a[2] + 2 * len(chars), 2))[0]
+            chars.append(c)
+            if n < 0 and c == 0:
+                break
+        data = bytes(c if c < 0x80 else 0x3F for c in chars)
+        if a[5] == 0:
+            return len(data)
+        if a[5] < len(data):
+            return 0
+        put(m_, a[4], data)
+        return len(data)
 
     def file_time_to_local(m_, a, esp):
         # BOOL; the machine's time zone is UTC, so the local time is the same FILETIME
@@ -1577,6 +1598,8 @@ def install_system_models(m, ui_answer, put):
         "GetFileType": (lambda m_, a, esp: 1, 1),                 # FILE_TYPE_DISK
         "SetEndOfFile": (lambda m_, a, esp: 1, 1),
         "FileTimeToLocalFileTime": (file_time_to_local, 2),
+        "WideCharToMultiByte": (wide_to_multi, 8),                # CRT time-zone names (_tzset) on the module-folder scan path of GameApp::GameApp
+        "GetTimeZoneInformation": (lambda m_, a, esp: (put(m_, a[0], bytes(172)), 0)[1], 1),   # UTC, no DST: Bias 0, empty names, TIME_ZONE_ID_UNKNOWN (module-folder scan 0x4bec60 via GameApp::GameApp)
         "FileTimeToSystemTime": (file_time_to_system, 2),
         "LoadImageA": (lambda m_, a, esp: ui_answer(m_, (0, H_GDI + 0x200)), 6),   # HANDLE, NULL = not found
         "FlushFileBuffers": (lambda m_, a, esp: 1, 1),
