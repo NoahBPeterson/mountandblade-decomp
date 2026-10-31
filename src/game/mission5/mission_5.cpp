@@ -499,7 +499,8 @@ void Screen_s261e0::tick(float dt)
         Mission_s261e0* m = g_mission_s261e0;
         if (m->f6810 > 0.0f) {
             __int64 d = g_ticks[m->f6800] - *(__int64*)((char*)m + 0x6808);
-            float r = (float)d * g_f54a6d0 / m->f6810;
+            float r = (float)d * g_f54a6d0;
+            r = r / m->f6810;      // 0x52630b..0x526311: fmul then fdiv (the fused expression compiles to fdiv then fmul)
             if (r >= 1.0f) {
                 *(int*)&m->f67f4 = *(int*)&m->f67f8;
                 sdt = sdt * m->f67f4;
@@ -562,7 +563,7 @@ void Screen_s261e0::tick(float dt)
         g_game_s261e0->f1a1b4 = -1;
         ((std::vector<int>*)((char*)g_game_s261e0 + 0x1a1b8))->resize(0, 0);
         *(int*)((char*)g_game_s261e0 + 0x1a1cc) = 0;
-        init_order_markers();
+        ((Screen_s2ae70*)g_mission_s261e0)->init_order_markers();   // 0x52653e: ecx = g_mission (0x5e292c), not the screen
     }
     if (g_game_s261e0->f1a090 != 0) {
         update_ui();
@@ -846,7 +847,8 @@ void Screen_s261e0::tick(float dt)
             if (g_keytable_s261e0.clicked(4) && f2c8 == 8) {
                 if (best > 8.0f) {
                     f2dc = -1;
-                    g_main_menu_s261e0.setup2(
+                    // 0x527591: ecx = [0xa73980] (the dialog box the menu points to), unlike set_state/open (ecx = 0xa73980)
+                    (*(MainMenu_s261e0**)g_windows)->setup2(
                         g_strtable_s261e0.lookup(&tstring("ui_question_leave_area")),
                         g_strtable_s261e0.lookup(&tstring("ui_yes")),
                         g_strtable_s261e0.lookup(&tstring("ui_no")),
@@ -1998,7 +2000,7 @@ void Screen_s29ec0::f_529ec0()
                 keep = true;
             }
         } else {
-            keep = true;
+            continue;   // 0x52a42e..0x52a431: any other entity type goes straight to 0x52a547, no best/second update
         }
 
         if (keep && mode >= 0) {
@@ -2464,8 +2466,10 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
 
         unsigned k = g_items_s2b5c0[slot->id].kind & 0xff;
         bool place = false;
-        if (k == 7)
-            place = ((slot->count & 0xffff) > 1);
+        // 0x52b808..0x52b814: kind 7 with count <= 1 does not stop here, it falls into the generic
+        // max_amount test below (0x52b816..0x52b84d)
+        if (k == 7 && (slot->count & 0xffff) > 1)
+            place = true;
         else if (k == 2 || k == 3 || k == 4 || k == 8 || k == 9 ||
                  k == 0x10 || k == 0x11)
             place = true;
@@ -2474,7 +2478,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
 
         if (place) {
             matrix m = agent->frame->m;
-            m.o.y += 0.1f;
+            m.o.z += 0.1f;   // 0x52b86f..0x52b875: [esp+0x64] is matrix +0x38 (o.z), not o.y
             int mode = 6;
             add_placed(&mode, &slot->id, &slot->count, &m,
                        (int*)((char*)agent + 8));

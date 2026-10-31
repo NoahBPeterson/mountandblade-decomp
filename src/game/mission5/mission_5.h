@@ -1322,7 +1322,7 @@ struct Mission_s29840 {
 // ---- externals -----------------------------------------------------------------------------------------
 
 
-extern float g_exp_rate;                                      // 0x590c54 (1.0f)
+extern float g_exp_rate;                                      // 0x590c54 (7.0f)
 
 inline PartyMgr_s29840* party_mgr_s29840() { return (PartyMgr_s29840*)((char*)g_game_s29840 + 0xf8); }
 inline Troop_s29840* troop_tbl_s29840() { return *(Troop_s29840**)((char*)g_game_s29840 + 0x13a00); }
