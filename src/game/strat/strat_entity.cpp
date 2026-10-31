@@ -261,7 +261,8 @@ void Ctx::sample_lights(const vector4* p, vector4* dir, vector4* amb)
     if (amb->z > 0.95f) amb->z = 0.95f;
 }
 
-// @ 0x413c50 (the form create_shadow_mesh reaches: one v50 growth, then the nt 0x18-byte uv/colour records of a
+// NOTE: create_shadow_mesh no longer calls this; the original calls the 5-argument mesh::add_vertex (rgl/psys.cpp) once per sample.
+// @ 0x413c50 (the form create_shadow_mesh reached: one v50 growth, then the nt 0x18-byte uv/colour records of a
 // ground vertex are joined one after another; the vertex60 record itself is shared, only the merged chunk varies)
 int rgl::mesh::add_vertex_rec(int index, const vertex60& v)
 {
@@ -350,8 +351,15 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             pt[j] = pi;
             ir = 1.0f / radius;
             ik = ir * 0.5f;
-            u = (fr.s.x * (p.x - fr.o.x) + (fr.s.y * (p.y - fr.o.y) + fr.s.z * (p.z - fr.o.z))) * ik;
-            v = (fr.f.y * (p.y - fr.o.y) + (fr.f.x * (p.x - fr.o.x) + fr.f.z * (p.z - fr.o.z))) * ik;
+            // 0x42b363: the offsets from the frame origin stay unrounded in x87 registers; each dot product is stored
+            // as a float (0x68 / 0x6c) before it is scaled by ik
+            double rx = p.x - fr.o.x;
+            double ry = p.y - fr.o.y;
+            double rz = p.z - fr.o.z;
+            volatile float ur = (float)(fr.s.x * rx + (fr.s.y * ry + fr.s.z * rz));
+            volatile float vr = (float)(fr.f.y * ry + (fr.f.x * rx + fr.f.z * rz));
+            u = ur * ik;
+            v = vr * ik;
             if (!flag) {
                 u = u * 1.5f;
                 v = v * 1.5f;
@@ -367,10 +375,11 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             } else if (nt == 3) {
                 c = (3.0f - (float)sqrt(9.0f - (c - 0.01f) * 12.0f)) * 0.125f;
             }
-            dx2 = p.x - pos.o.x;
-            dy2 = p.y - pos.o.y;
-            dz2 = p.z - pos.o.z;
-            a = (float)sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2) * ir * 1.3333334f - 3.8f;
+            // 0x42b4bd: the original adds the squares as (z + x) + y (x87 stack order), not (z + y) + x
+            float ex = p.x - pos.o.x;
+            float ey = p.y - pos.o.y;
+            float ez = p.z - pos.o.z;
+            a = (float)sqrt((ex * ex + ez * ez) + ey * ey) * ir * 1.3333334f - 3.8f;
             if (a < 0.2f) a = 0.2f;
             else if (a >= 1.0f) a = 1.0f;
             t = c * (1.0f - a) * f294;
@@ -382,31 +391,12 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             if (al < 0) al = 0;
             else if (al >= 0x100) al = 0xff;
             col = (al << 24) | 0xffffff;
-            // The original grows v50 once per ground vertex, not once per sample: it merges the nt uv+colour
-            // records, then joins each with the same transformed vertex through the single call at
-            // 0x42b5eb (0x42b590 grows v50 by 1, 0x4106f0 copies the nt 0x18-byte (uv, colour, f5c)
-            // records into the last 0x60-byte slot, 0x40ff60 splices vertex60 records down from the end).
-            // One add_vertex per sample calls _Insert_n once per sample, so ours reallocates on the first
-            // and fills the rest in place where the original brings every element forward.
-            struct vert_rec { float u, v; unsigned color; int f5c; int pad[2]; };   // the 0x18-byte chunk the original merges
-            vert_rec recs[3];
-            vertex60 vv;
-            vv.index = pi;
-            vv.normal = *n;
+            // 0x42b5a0: one mesh::add_vertex (0x413c50) per sample, each with its own uv (u + off[q].x, v + off[q].y),
+            // the shared colour, the vertex normal as position and f5c = 0
             for (q = 0; q < nt; q++) {
-                recs[q].u = u + off[q].x;
-                recs[q].v = v + off[q].y;
-                recs[q].color = col;
-                recs[q].f5c = 0;
-            }
-            for (q = 0; q < nt; q++) {
-                uv = vec2c(recs[q].u, recs[q].v);
-                f5c = recs[q].f5c;
-                vv.uv = uv;
-                vv.color = recs[q].color;
-                vv.f5c = f5c;
-                vv.pos = *n;
-                vtx[q][j] = ((rgl::mesh*)*slot)->add_vertex_rec(pi, vv);
+                uv = vec2c(u + off[q].x, v + off[q].y);
+                f5c = 0;
+                vtx[q][j] = ((rgl::mesh*)*slot)->add_vertex(pi, &uv, &col, n, &f5c);
             }
         }
         for (q = 0; q < nt; q++) {
