@@ -168,10 +168,27 @@ static __forceinline tstring quest_title(int q)
     return ((const tstring*)(((char*)WORLD->quests) + q * 0x138 + 0x40))->strip_tags();
 }
 
-static const char* record_name(void* key)
+static const char* ts_chars(const tstring* s);
+
+// a troop record's display name: the UITEXT entry for its key at +0x20, else the record's own tstring at +0
+// (0x4c6010 find, falling back to the record itself: 0x50a95e / 0x50ab3f)
+static tstring* troop_name(char* rec)
 {
-    tstring* s = UITEXT->find((tstring*)key);
-    return s->buf ? s->buf : (char*)&s->buf;
+    tstring* s = UITEXT->find((tstring*)(rec + 0x20));
+    return s ? s : (tstring*)rec;
+}
+
+// a faction record's display name: its own tstring at +0, replaced by the UITEXT entry for the key at +0x14 when the
+// record's flag byte at +0x10 is clear and the entry exists (0x50ae3b..0x50ae5d)
+static tstring* faction_name(char* rec)
+{
+    tstring* nm = (tstring*)rec;
+    if (*(char*)(rec + 0x10) == 0) {
+        tstring* s = UITEXT->find((tstring*)(rec + 0x14));
+        if (s)
+            nm = s;
+    }
+    return nm;
 }
 
 static const char* ts_chars(const tstring* s)
@@ -360,18 +377,22 @@ void note_window::build(int page_, int arg_)
 
     // a button is enabled only when its history has an entry to go to (0x50a5db: slot 0xbc enable, 0x50a5e8: 0xb8
     // disable; these calls predate the ui_widget.h enable/disable slot fix and were left inverted)
-    if (this->back_end == 0) {
+    // (the original takes the vector's size as (end - beg) >> 2 and indexes from beg: 0x50a588..0x50a5d0)
+    unsigned back_n = (unsigned)((char*)this->back_end - (char*)this->back_beg) >> 2;
+    if (this->back_beg == 0 || back_n == 0) {
         this->btn_back->disable();
     } else {
-        this->back_sel_a = this->back_end[-2];
-        this->back_sel_b = this->back_end[-1];
+        this->back_sel_a = this->back_beg[back_n - 2];
+        this->back_sel_b = this->back_beg[back_n - 1];
         this->btn_back->enable();
     }
-    if (this->fwd_end == 0) {
+    // (the original takes the vector's size as (end - beg) >> 2 and indexes from beg: 0x50a588..0x50a5d0)
+    unsigned fwd_n = (unsigned)((char*)this->fwd_end - (char*)this->fwd_beg) >> 2;
+    if (this->fwd_beg == 0 || fwd_n == 0) {
         this->btn_forward->disable();
     } else {
-        this->fwd_sel_a = this->fwd_end[-2];
-        this->fwd_sel_b = this->fwd_end[-1];
+        this->fwd_sel_a = this->fwd_beg[fwd_n - 2];
+        this->fwd_sel_b = this->fwd_beg[fwd_n - 1];
         this->btn_forward->enable();
     }
 
@@ -398,7 +419,7 @@ void note_window::build(int page_, int arg_)
 
     case 1: {
         // ---- troop report -------------------------------------------------
-        int ti = page_;
+        int ti = arg_;
         char* troop = ((char*)WORLD->troops) + ti * 0x508;
         if (*(int*)(troop + 0x4a0) >= 0) {
             int id = ti;
@@ -429,7 +450,7 @@ void note_window::build(int page_, int arg_)
         }
 
         if (line.len > 0) {
-            this->title->set_text(sz2, tstring(record_name(troop + 0x20)));
+            this->title->set_text(sz2, *troop_name(troop));
             float* r = (float*)this->links->set_text(sz3, line);
             x_cur = r[1];
             line.clear();
@@ -455,8 +476,8 @@ void note_window::build(int page_, int arg_)
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            const char* nm = record_name(((char*)WORLD->troops) + v * 0x508 + 0x20);
-            if (v == page_)
+            const char* nm = ts_chars(troop_name(((char*)WORLD->troops) + v * 0x508));
+            if (v == arg_)
                 sprintf(buf2, "%s\n", nm);
             else
                 sprintf(buf2, "<trp=%d>%s</>\n", v, nm);
@@ -472,7 +493,7 @@ void note_window::build(int page_, int arg_)
 
     case 2: {
         // ---- faction report -----------------------------------------------
-        int fi = page_;
+        int fi = arg_;
         char* fac = ((char*)WORLD->factions) + fi * 0x300;
         if (*(int*)(fac + 0x2fc) >= 0) {
             int id = fi;
@@ -502,13 +523,7 @@ void note_window::build(int page_, int arg_)
         }
 
         if (line.len > 0) {
-            tstring* nm = (tstring*)fac;
-            if (*(char*)(fac + 0x10) == 0) {
-                tstring* s = UITEXT->find((tstring*)(fac + 0x14));
-                if (s)
-                    nm = s;
-            }
-            this->title->set_text(sz6, *nm);
+            this->title->set_text(sz6, *faction_name(fac));
             float* r = (float*)this->links->set_text(sz7, line);
             x_cur = r[1];
             line.clear();
@@ -533,8 +548,8 @@ void note_window::build(int page_, int arg_)
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            const char* nm = record_name(((char*)WORLD->factions) + v * 0x300 + 0x14);
-            if (v == page_)
+            const char* nm = ts_chars(faction_name(((char*)WORLD->factions) + v * 0x300));
+            if (v == arg_)
                 sprintf(buf2, "%s\n", nm);
             else
                 sprintf(buf2, "<fac=%d>%s</>\n", v, nm);
@@ -550,7 +565,7 @@ void note_window::build(int page_, int arg_)
 
     case 3: {
         // ---- map party (location) report ----------------------------------
-        int pi = page_;
+        int pi = arg_;
         void* party = WORLDMAP->get(pi);
         if (*(int*)((char*)party + 0x5aa8) >= 0) {
             int id = pi;
@@ -618,7 +633,7 @@ void note_window::build(int page_, int arg_)
             int vi = ((Map10007*)WORLDMAP)->lookup(v);
             char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
             const char* nm = ts_chars(party_name(rec));
-            if (v == page_)
+            if (v == arg_)
                 sprintf(buf2, "%s\n", nm);
             else
                 sprintf(buf2, "<p=%d>%s</>\n", v, nm);
@@ -634,7 +649,7 @@ void note_window::build(int page_, int arg_)
 
     case 4: {
         // ---- quest report -------------------------------------------------
-        int qi = page_;
+        int qi = arg_;
         char* quest = ((char*)WORLD->quests) + qi * 0x138;
         if (*(int*)(quest + 0x108) >= 0) {
             int id = qi;
@@ -652,7 +667,7 @@ void note_window::build(int page_, int arg_)
             if (line.len > 0)
                 line.append(tstring("\n\n"));
             line.append(*(tstring*)(slot + 0x88));
-            int sid = *(int*)(quest + 0x68);
+            int sid = *(int*)(quest + 0x68 + k * 4);
             if (sid < 0)
                 continue;
             if (sid < WORLD->string_count) {
@@ -676,16 +691,24 @@ void note_window::build(int page_, int arg_)
         }
 
         for (int i = 0; i < WORLD->n_quests; i++) {
-            if (*(int*)(((char*)WORLD->quests) + i * 0x138 + 0x94) > 0)
-                vec.push_back(i);
+            char* rec = ((char*)WORLD->quests) + i * 0x138;
+            for (int k = 0; k < 8; k++) {
+                if (*(int*)(rec + 0x94 + k * 0x10) > 0) {
+                    vec.push_back(i);
+                    break;
+                }
+            }
         }
-        ::sort_list((sel_list*)&vec, 4);
+        ::sort_list((sel_list*)&vec, 3);
 
         for (int i = 0; i < vec.size(); i++) {
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            sprintf(buf2, "<qst=%d>%s</>\n", v, quest_title(v).c_str());
+            if (v == arg_)
+                sprintf(buf2, "%s\n", quest_title(v).c_str());
+            else
+                sprintf(buf2, "<qst=%d>%s</>\n", v, quest_title(v).c_str());
             line.append(tstring(buf2));
         }
         if (line.len > 0)
@@ -714,9 +737,9 @@ void note_window::build(int page_, int arg_)
                     continue;
                 if (((tstring*)(slot + 0x420))->find(acc, 0) < 0)
                     continue;
-                sprintf(buf, "<trp=%d>%s</>", i, record_name(rec + 0x20));
+                sprintf(buf, "<trp=%d>%s</>", i, ts_chars(troop_name(rec)));
                 tstring entry(buf);
-                if (other.find(entry, 0) < 0) {
+                if (link_text.find(entry, 0) < 0) {
                     if (other.len > 0)
                         other.append(tstring(", "));
                     other.append(entry);
@@ -732,15 +755,9 @@ void note_window::build(int page_, int arg_)
                     continue;
                 if (((tstring*)(slot + 0x27c))->find(acc, 0) < 0)
                     continue;
-                tstring* fnm = (tstring*)rec;
-                if (*(char*)(rec + 0x10) == 0) {
-                    tstring* s = UITEXT->find((tstring*)(rec + 0x14));
-                    if (s)
-                        fnm = s;
-                }
-                sprintf(buf, "<fac=%d>%s</>", i, ts_chars(fnm));
+                sprintf(buf, "<fac=%d>%s</>", i, ts_chars(faction_name(rec)));
                 tstring entry(buf);
-                if (other.find(entry, 0) < 0) {
+                if (link_text.find(entry, 0) < 0) {
                     if (other.len > 0)
                         other.append(tstring(", "));
                     other.append(entry);
@@ -760,7 +777,7 @@ void note_window::build(int page_, int arg_)
                         continue;
                     sprintf(buf, "<p=%d>%s</>", v, ts_chars(party_name(rec)));
                     tstring entry(buf);
-                    if (other.find(entry, 0) < 0) {
+                    if (link_text.find(entry, 0) < 0) {
                         if (other.len > 0)
                             other.append(tstring(", "));
                         other.append(entry);
@@ -771,15 +788,22 @@ void note_window::build(int page_, int arg_)
             }
         }
         for (int i = 0; i < WORLD->n_quests; i++) {
-            tstring qt = quest_title(i);
-            if (qt.find(acc, 0) < 0)
-                continue;
-            sprintf(buf, "<qst=%d>%s</>", i, qt.c_str());
-            tstring entry(buf);
-            if (other.find(entry, 0) < 0) {
-                if (other.len > 0)
-                    other.append(tstring(", "));
-                other.append(entry);
+            char* rec = ((char*)WORLD->quests) + i * 0x138;
+            for (int k = 0; k < 8; k++) {
+                char* slot = rec + k * 0x10;
+                if (*(int*)(slot + 0x94) <= 0)
+                    continue;
+                if (((tstring*)(slot + 0x88))->find(acc, 0) < 0)
+                    continue;
+                tstring qt = quest_title(i);
+                sprintf(buf, "<qst=%d>%s</>", i, qt.c_str());
+                tstring entry(buf);
+                if (link_text.find(entry, 0) < 0) {
+                    if (other.len > 0)
+                        other.append(tstring(", "));
+                    other.append(entry);
+                }
+                break;
             }
         }
     }
