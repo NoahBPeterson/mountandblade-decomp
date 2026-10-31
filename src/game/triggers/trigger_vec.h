@@ -26,6 +26,7 @@
 float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0 (the definition's signature, rgl/shapes/shapes.h; rec_tables.h declares it by reference)
 #include "../../rgl/resource.h"             // texture
 #include "../shadow_map.h"
+#include "../../include/ptr_tag.h"
 // The resource manager (object 0x5d6fa0) as rgl/core/resmgr.h's `resmgr` defines it; that header cannot be included next to
 // rec_tables.h (g_log), so this is its declaration of the three members the module loader calls (resmgr.cpp 0x4195e0 / 0x419640 / 0x41e150).
 // g_resmgr_full of resmgr.h is the same object as resource.h's g_resmgr.
@@ -181,7 +182,7 @@ extern int g_missile_damage_speed_power_int; // 0x5e29c8 (provisional)
 
 HRESULT build_shader();                                                     // 0x4c17c0
 HRESULT gfx_restore();                                                      // 0x4c1b00
-char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a); // 0x4c1b60 (catch funclet 0x4c1bcc)
+char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a, ptr_tag tag); // 0x4c1b60 (catch funclet 0x4c1bcc)
 void* __fastcall dialog_mgr_ctor(void* self);                               // 0x4c2470 (DialogMgr::DialogMgr)
 void* __cdecl read_psys_rec(stream_base* s, char* o);                       // 0x4bdc00 (cdecl; config.h declares it as the static member psys_record::read)
 
