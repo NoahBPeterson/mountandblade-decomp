@@ -85,7 +85,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     {
         tstring empty("");
-        g_strtable.load((const char*)&empty);
+        g_strtable.load(&empty);
     }   // destroyed here, once (0x4d94dd); an explicit ~tstring() plus the scope exit freed the buffer twice
 
     LoadLibraryA("riched20.dll");

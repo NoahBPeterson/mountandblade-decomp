@@ -360,12 +360,13 @@ bool graph_obj::split_edge(int e)
 
     int xs[4];
     int ys[4];
+    // ring order (0x4cb530..0x4cb5c3): f0's next two entries, then f1's next two
     xs[0] = f0->verts[(i0 + 1) % 3];
     ys[0] = f0->ends[(i0 + 1) % 3];
-    xs[1] = f1->verts[(i1 + 1) % 3];
-    ys[1] = f1->ends[(i1 + 1) % 3];
-    xs[2] = f0->verts[(i0 + 2) % 3];
-    ys[2] = f0->ends[(i0 + 2) % 3];
+    xs[1] = f0->verts[(i0 + 2) % 3];
+    ys[1] = f0->ends[(i0 + 2) % 3];
+    xs[2] = f1->verts[(i1 + 1) % 3];
+    ys[2] = f1->ends[(i1 + 1) % 3];
     xs[3] = f1->verts[(i1 + 2) % 3];
     ys[3] = f1->ends[(i1 + 2) % 3];
 
@@ -651,8 +652,9 @@ LangTables::LangTables()
 }
 
 // @ 0x4cda90
-void LangTables::load(const char* root)
+void LangTables::load(const tstring* root_t)
 {
+    const char* root = root_t->c_str();
     FILE* f = fopen("language.txt", "r");
     tstring line;
     char buf[5000];
@@ -668,8 +670,9 @@ void LangTables::load(const char* root)
     }
     fclose(f);
 
-    char pattern[0x2b8];
-    _finddata_t* fd = (_finddata_t*)&pattern[0x80];
+    char pattern[0x200];
+    _finddata_t fdata;
+    _finddata_t* fd = &fdata;
     sprintf(pattern, "%slanguages\\%s\\*", root, language.c_str());
     long h = _findfirst(pattern, fd);
     if (h == -1) {
@@ -679,7 +682,7 @@ void LangTables::load(const char* root)
     do {
         if ((fd->attrib & 0x10) != 0)
             continue;
-        char path[0x100];
+        char path[0x200];
         sprintf(path, "%slanguages\\%s\\%s", root, language.c_str(), fd->name);
         FILE* g = fopen(path, "r");
         tstring key;
@@ -687,10 +690,10 @@ void LangTables::load(const char* root)
         tstring text;
         bool first = true;
         while (fgets(buf, 5000, g)) {
-            if (first)
-                first = false;
+            bool first_line = first;            // the BOM is only looked for on the file's first line ([esp+0x13] at 0x4cdc71)
+            first = false;
             text.assign(buf);
-            if (text.len > 2 && text.buf[0] == '\xef' && text.buf[1] == '\xbb' && text.buf[2] == '\xbf')
+            if (first_line && text.len > 2 && text.buf[0] == '\xef' && text.buf[1] == '\xbb' && text.buf[2] == '\xbf')
                 text = text.substr(3, text.len);
             int i = 0;
             int len = text.len;
@@ -705,7 +708,7 @@ void LangTables::load(const char* root)
                     if (text.buf[0] == '"') a = 1;
                     if (text.buf[i - 1] == '"') stop = i - 1;
                     if (text.buf[kstart] == '"') kstart++;
-                    if (text.buf[end] == '"') end--;
+                    if (text.buf[end - 1] == '"') end--;   // 0x4cdd1e: the byte before the last (the last is the newline)
                     key = text.substr(a, stop);
                     value = text.substr(kstart, end);
                     unsigned hash = 0;

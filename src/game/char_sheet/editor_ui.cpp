@@ -289,7 +289,7 @@ int __cdecl engine_init()
         tstring n("core_pictures");
         g_alloc.load_pack((const rgl::string&)n, 0);
     }
-    g_strtable.load(g_path_prefix_chars);
+    g_strtable.load(&g_path_prefix);
     {
         FontDef* p = (FontDef*)::operator new(0x386c);
         if (p != 0)
