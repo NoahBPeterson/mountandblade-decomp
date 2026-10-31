@@ -182,8 +182,9 @@ int GameApp::Update()
     g_windows[current_screen_id()]->update(dt);
 
     if (g_game) {
-        if (current_screen_id() == 0xe) {
-            if (g_game->f1a090) {
+        // (0x50f057, the "hide" path, is reached whenever f1a090 is 0, on screen 0xe or not)
+        if (g_game->f1a090) {
+            if (current_screen_id() == 0xe) {
                 if (!g_game->f1a160) {
                     if (!m_hMapEditorDlg) {
                         m_hMapEditorDlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xc0, m_hWnd,
@@ -221,12 +222,11 @@ int GameApp::Update()
                     g_game->f1a1c8 = 0;
                 }
             }
-        } else if (!g_game->f1a090) {
+        } else {
             if (g_game->f1a160) {
-                if (m_hMapEditorDlg) {
+                if (m_hMapEditorDlg)
                     ShowWindow(m_hMapEditorDlg, 0);
-                    g_game->f1a160 = 0;
-                }
+                g_game->f1a160 = 0;
             }
         }
         if (g_game->f1a060) {
