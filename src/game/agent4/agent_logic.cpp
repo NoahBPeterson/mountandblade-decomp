@@ -623,8 +623,10 @@ void Agent::update_ai()
         bool far_ = true;
         if (target >= 0) {
             const vector4& cp = AG(target).pos;
-            vector4 dd = a_vsub(cp, pos);
-            far_ = !(sqrt(dd.y * dd.y + dd.z * dd.z + dd.x * dd.x) <= len + 1.0f);
+            double ex = (double)cp.x - (double)pos.x;       // float10 differences, nothing rounded (0x446660)
+            double ey = (double)cp.y - (double)pos.y;
+            double ez = (double)cp.z - (double)pos.z;
+            far_ = !(sqrt(ey * ey + (ez * ez + ex * ex)) <= (double)len + 1.0);
         }
         if (far_ && is_enemy(o))
             target = f55c0;
@@ -648,7 +650,7 @@ void Agent::update_ai()
                 bool ranged = false;
                 const vector4& op = AG(t).pos;
                 vector4 dd = a_vsub(pos, op);
-                float dist = (float)sqrt(dd.y * dd.y + dd.z * dd.z + dd.x * dd.x);
+                float dist = (float)sqrt(dd.y * dd.y + (dd.z * dd.z + dd.x * dd.x));
                 ItemRef p = AG(t).cur_pair_fi();
                 if (p.item >= 0 && g_items[p.item].is_ranged())
                     ranged = true;
@@ -706,8 +708,8 @@ void Agent::update_ai()
                     if (a->f10 == 0 && a->id != target && a->f14 == 1 && a->id != id) {
                         vector4 dv = a->pos - pos;
                         float len = dv.normalize();
-                        float k = 2.0f / (2.0f + len);
-                        float w2 = k * k;
+                        double k = 2.0 / (2.0 + len);       // float10, squared before it is rounded (0x446a..)
+                        float w2 = (float)(k * k);
                         int idx = 0;
                         if (is_enemy(a)) {
                             idx = 1;
@@ -1355,7 +1357,7 @@ done:
         } else if (n > 0) {
             for (int i = 0; i < nthreat; i++) {
                 Threat* t = &threats[i];
-                float score = -0.01f;
+                double score = (float)-0.01f;       // kept unrounded in the x87 stack once computed (0x448c7e)
                 Agent* ta = &AG((unsigned)t->id);
                 if (ta->f14 == 1) {
                     vector4 d;
@@ -1374,7 +1376,7 @@ done:
                             ItemRef p1 = slot_pair_fi(1);
                             if (p1.item >= 0) {
                                 ItemRef p1b = slot_pair(1);
-                                if ((char)g_items[p1b.item].type_flags == itp_type_bow) {
+                                if ((char)g_items[p1b.item].type_flags == itp_type_shield) {     // cmp cl, 7 (0x448bf6)
                                     ItemRef p0 = ta->slot_pair(0);
                                     if (p0.item >= 0) {
                                         ItemKind* ik = &g_items[p0.item];
@@ -1636,7 +1638,7 @@ process:
         }
         // ---- speed-dependent weave ---------------------------------------------------------------------------------
         float nv;
-        if (v56b4.length() < 0.3f) {
+        if (sqrt(v56b4.x * v56b4.x + (v56b4.z * v56b4.z + v56b4.y * v56b4.y)) < 0.3f) {
             if (f2c >= 0) {
                 if (!(speed > 0.9f))
                     goto weave_up;
@@ -2118,7 +2120,8 @@ melee:
             }
             if (combat_state == 3 && active == 1)
                 reach0 = reach0 * 0.5f;
-            vector4 l2(reach0 * o->v56a4.x + o->pos.x, reach0 * o->v56a4.y + o->pos.y, reach0 * o->v56a4.z + o->pos.z);
+            vector4 l2(reach0 * o->v56a4.x + o->pos.x, reach0 * o->v56a4.y + o->pos.y,
+                       (float)(reach0 * o->v56a4.z) + o->pos.z);   // z product spilled to a float (0x44b0..)
             vector4 dv(l2.x - P->x, l2.y - P->y, l2.z - P->z);
             float dl = rgl::length(dv);
             float vl = rgl::length(v56a4);
@@ -2130,7 +2133,7 @@ melee:
             } else {
                 float lpx = (float)(reach0 * v56a4.x + P->x);
                 double lpy = reach0 * v56a4.y + P->y;
-                double lpz = reach0 * v56a4.z + P->z;
+                double lpz = (float)(reach0 * v56a4.z) + P->z;   // the z product is spilled to a float (0x44b095)
                 vector4 d3;
                 d3.x = l2.x - lpx;
                 d3.y = (float)(l2.y - lpy);
@@ -2154,10 +2157,10 @@ melee:
             if (o->f2c >= 0)
                 reachf = reachf + 0.7f;
             op0 = o->slot_pair(0);
-            float r2base = 2.5f;
+            double r2base = 2.5f;
             if (op0.item != -1)
                 r2base = (float)g_items[op0.item].weight * 0.01f + 1.9f;
-            r2f = r2base * 1.3f;
+            r2f = (float)(r2base * 1.3f);       // no rounding of the sum before the *1.3 (0x44b1d5..0x44b1f2)
             b5b = false;
             op1 = o->slot_pair(1);
             b3e = false;
@@ -2182,7 +2185,10 @@ melee:
                     if (f10 == 0 && f2c == -1)
                         in_prev.v[0] = (in_prev.v[0] & 0xfffffffe) | 2;
                     if (b3f) {
-                        ((gui_timer*)&ai_timer2)->set_delay(-((frand() + frand()) + 1.3f));
+                        {
+                            float fr = frand();      // one rand call, doubled (0x44b4a0 fadd st0,st0)
+                            ((gui_timer*)&ai_timer2)->set_delay(-((fr + fr) + 1.3f));
+                        }
                         combat_state = 7;
                     }
                     goto bb72;
@@ -2213,7 +2219,10 @@ b53e:
                          (o->active == 2 && frand() < (float)g_game->troops[troop].fb0 * 0.05f + 0.5f)) &&
                         outlen < r2f) {
 b508:
-                        ((gui_timer*)&ai_timer2)->set_delay(-((frand() + frand()) + 1.3f));
+                        {
+                            float fr = frand();      // one rand call, doubled (0x44b4a0 fadd st0,st0)
+                            ((gui_timer*)&ai_timer2)->set_delay(-((fr + fr) + 1.3f));
+                        }
                         combat_state = 7;
                         goto bb72;
                     }
@@ -5365,7 +5374,7 @@ void Agent::update_controls(float dt)
                     mv.x = g_move_side * (1.0f / mag);
                     mv.y = (1.0f / mag) * g_move_fwd;
                 }
-                float lim = stamina_scale() * slope;
+                double lim = stamina_scale() * slope;     // kept unrounded in the x87 stack (0x455dde)
                 if (mag > speed_mul)
                     mag = speed_mul;
                 if (mag < speed_mul * -0.8f)
@@ -5377,11 +5386,13 @@ void Agent::update_controls(float dt)
                 int off = troop * 0x508;
                 Troop* tr = (Troop*)((char*)g_game->chars + off);
                 int ath = tr->nibble(0x19);
-                float skill = ((60.0f / (f24c + 60.0f)) * (ath * 5.0f + tr->f58[1]) + 100.0f) * 0.01f;
+                double skill = ((60.0f / (f24c + 60.0f)) * (ath * 5.0f + tr->f58[1]) + 100.0f) * 0.01f;   // stays unrounded (0x455e92)
                 v.y = ((mv.y * mag) * 2.8f) * skill;
                 if (v.y < 0.0f)
                     v.y = v.y * 0.8f;
-                v.x = (((mv.x * mag) * 2.8f) * skill) * 0.95f - vel_xy.x;
+                float vxa = (float)((mv.x * mag) * 2.8f);      // both partial products are spilled as floats (0x455eb0, 0x455ec0)
+                float vxb = (float)(vxa * skill);
+                v.x = vxb * 0.95f - vel_xy.x;
                 v.y = v.y - vel_xy.y;
                 tr = (Troop*)((char*)g_game->chars + off);
                 int ath2 = tr->nibble(0x19);
