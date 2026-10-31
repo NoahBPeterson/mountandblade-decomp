@@ -307,10 +307,11 @@ void VideoPage::update(int reason)
         fclose((FILE*)f);
         if (changed_config) {
             {
-                tstring explanation("ui_change_graphics_settings_explanation");
-                tstring pos((const char*)orig::g_empty_text);
-                tstring* e = g_strtable.lookup(pos);
-                g_main_menu.rec->setup(&explanation, e);
+                // 0x4d6ab9: the key is looked up and the text goes in as the body; the title is the empty string
+                tstring key("ui_change_graphics_settings_explanation");
+                tstring title((const char*)orig::g_empty_text);
+                tstring* e = g_strtable.lookup(key);
+                g_main_menu.rec->setup(&title, e);
             }
             ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         }
