@@ -104,7 +104,7 @@ struct localized {
     const char* c_str() const { return e->buf ? e->buf : (const char*)&e->buf; }
 };
 
-extern char g_empty_text[];                         // 0x54a480 (an empty C string)
+// g_empty_text (0x54a480, an empty C string): canonical declaration in include/image_addrs.h
 
 // 0xa70464: the caption the game object's text helper writes into before it is shown.
 extern tstring g_quest_text;                        // 0xa70464
@@ -138,7 +138,7 @@ void QuestPage::fill()
         tstring key("ui_given_on_date");
         Game* g = g_game;
         int days = (int)(g->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
-        g_quest_text.assign(g_empty_text);
+        g_quest_text.assign(orig::g_empty_text);
         ((SoundCtl*)g)->emit_event(0xf, days / 24, days);
         {
             tstring formatted(g_quest_text);

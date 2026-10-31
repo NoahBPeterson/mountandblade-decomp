@@ -29,7 +29,7 @@ __declspec(noinline) void quat_to_matrix(rgl::matrix* m, const quaternion* q);  
 __declspec(noinline) void quat_to_axis_angle(rgl::vector4* axis, float* angle, const quaternion* q);            // 0x423160
 
 
-extern __int64 g_bit[];                     // 0x5a8e68 g_bit[i] == 1 << i
+extern unsigned __int64 g_bit[];                   // 0x5a8e68 g_bit[i] == 1 << i
 extern int g_use_slerp;                     // 0xa171dc
 
 // ---- key tables ------------------------------------------------------------------------------------------------
