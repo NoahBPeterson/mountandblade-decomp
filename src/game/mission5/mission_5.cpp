@@ -1727,14 +1727,14 @@ void Mission_s29840::fn_529840(int)
             if (a->f1bc >= 0 && a->f1c0 >= 0) {
                 Troop_s29840* t = &troop_tbl_s29840()[a->troop];
                 if (!(t->flags & 0x10) && a->f1bc == g_game_s29840->cur_party && t->f50 > 0) {
-                    float xp = (float)a->f5730;
+                    // 0x529905..0x529920: the xp stays an exact integer / x87 value until the _ftol; no float rounding of the
+                    // int (a plain int when the troop is not above the player's level) or of the quotient
                     int cur = troop_tbl_s29840()[g_game_s29840->cur_troop].b0;
-                    if (t->b0 > cur) {
-                        int diff = t->b0 - cur;
-                        xp = xp / (diff + g_exp_rate);
-                        xp = xp * g_exp_rate;
-                    }
-                    int v = (int)xp;
+                    int v;
+                    if (t->b0 > cur)
+                        v = (int)(a->f5730 / ((t->b0 - cur) + g_exp_rate) * g_exp_rate);
+                    else
+                        v = a->f5730;
                     party_mgr_s29840()->get(a->f1bc)->add_xp_to_stack(a->f1c0, v);
                 }
                 t = &troop_tbl_s29840()[a->troop];
