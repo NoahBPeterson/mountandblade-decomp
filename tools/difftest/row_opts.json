@@ -420,5 +420,22 @@
       "arg0=0,1@0.5"
     ],
     "why": "Agent::hit_damage: the missile / melee / bow / couched-lance branches were behind inputs the default budget plateaued on (28.7% insns, 14/118 edges); more typed inputs, a longer plateau and a bias of the hand argument to 0/1 give 87.1% insns, 87/118 edges with no mismatch. Soft hints only."
+  },
+  "editor_dialog 004fe860": {
+    "args": [
+      "--inputs",
+      "4000",
+      "--plateau",
+      "3000",
+      "--typed-share",
+      "0.8",
+      "--hint",
+      "arg1=110,4e,111@0.97",
+      "--hint",
+      "arg2&ffff=2,431,433,434,438,43a,43b,453,454,46d,46e,46f,470,471,474,475,476,489,491,492,493,494,497,498,499,49a,49b,49d,4a3,4a4,4a5,4a6,4a7,4a8,4aa,4ac,4ad,4ae,4af,4cd,4ce,4cf,472,473,477,4c8,4c9,4ca@0.95",
+      "--hint",
+      "arg2&ffff0000=0,10000,20000,30000,2000000,4000000@0.7"
+    ],
+    "why": "EditorPanel::terrain_dialog is a window proc: a random msg is almost never WM_INITDIALOG/WM_NOTIFY/WM_COMMAND and a random wParam never a control id, so 0.8% of the insns were reached. Soft hints on msg (arg1) and the control id / notification code in wParam (arg2) reach 52%+ with nothing discarded. With --inputs 4000 --plateau 3000 --typed-share 0.8 and DIFFTEST_CONCOLIC=1: 69.7% insns, 178/286 edges, 4027 valid inputs, 0 mismatches (the remaining misses are the equal-string and listbox-selection paths that need matching GetDlgItemTextA/LB_ results)."
   }
 }

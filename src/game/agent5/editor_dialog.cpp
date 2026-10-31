@@ -21,7 +21,7 @@
 
 long __cdecl _atol(const char*);                    // 0x53734d
 char* __cdecl _itoa(int, char*, int);               // 0x5371f7
-int  __cdecl _stricmp(const char*, const char*);    // 0x536e9b
+#include <string.h>        // strcmp: /O2 inlines it (the original compares the digit strings inline, 0x4fed02..0x4fed2b)
 int  __cdecl _sprintf(char*, const char*, ...);     // 0x536f8f
 
 struct EditorSceneView;                                 // the editor's scene/document (0x5e292c)
@@ -228,18 +228,18 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                 char text[64];
                 _itoa(r, num, 10);
                 GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
-                if (_stricmp(num, text) != 0)
+                if (strcmp(num, text) != 0)
                     SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, num);
                 _itoa(g, num, 10);
                 GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
-                if (_stricmp(num, text) != 0)
+                if (strcmp(num, text) != 0)
                     SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, num);
                 _itoa(b, num, 10);
                 GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
-                if (_stricmp(num, text) != 0)
+                if (strcmp(num, text) != 0)
                     SetDlgItemTextA(m_hMapEditorDlg, 0x4ce, num);
-                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4cb), 0x443,
-                             (WPARAM)(((b & 0xff) << 16) | (r & 0xff) | ((g & 0xff) << 8)), 0);
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4cb), 0x443, 0,
+                             (LPARAM)(((b & 0xff) << 16) | (r & 0xff) | ((g & 0xff) << 8)));      // colour in lParam (0x4fee47..0x4fee79)
                 g_game->col_r = (float)r * g_color_unit;
                 g_game->col_g = (float)g * g_color_unit;
                 g_game->col_b = (float)b * g_color_unit;
