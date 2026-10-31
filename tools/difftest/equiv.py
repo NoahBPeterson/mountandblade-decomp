@@ -1525,9 +1525,18 @@ class TypedInputs:
             self.value(addr, f.kind, f.size, f.target, depth)
 
     def vector(self, addr, elem, depth):
-        """first <= last <= end, 0..4 typed elements."""
+        """first <= last <= end, 0..4 typed elements; last - first and end - first are whole multiples of the
+        element size (unknown size: the vector stays empty). A vector the layout does not declare (a `char pad[]`
+        over it) is not generated here at all: it is soup, and the layout has to name it."""
         rng, tt = self.rng, self.tt
         esz = tt.sizeof(elem)
+        if esz <= 0:
+            # element size unknown (incomplete / void element): no multiple of it can be built, so the vector
+            # stays empty rather than getting a (last - first) that is not a whole number of elements. NULL
+            # x3 is what the VC7.1 vector constructor leaves.
+            for k in range(3):
+                self.put(addr + 4 * k, 0, 4)
+            return
         # mostly non-empty: game state vectors rarely are, and code that reads back() / [n-1] of an empty one
         # (a NULL _Mylast - 4: fault at 0xfffffffc) makes a whole input useless
         n = 0 if rng.random() < 0.1 else rng.randrange(1, 5)
