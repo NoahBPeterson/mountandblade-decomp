@@ -50,7 +50,9 @@ struct MapStore {                                               // the global ma
     char pad0[4];
     ground_v36* first; ground_v36* last; ground_v36* end;       // +0 vector<ground_v36>
     vec136 groups;                                              // +0x10
-    char pad20[0x68 - 0x20];
+    char pad20[4];
+    ground_v36* edge_first; ground_v36* edge_last; ground_v36* edge_end;   // +0x20 vector<GeomEdge> (0x24-byte edges; PolyGeom::edges in mesh_pass.cpp)
+    char pad30[0x68 - 0x30];
 };
 extern MapStore* g_nav;                                         // 0xa732b8
 
