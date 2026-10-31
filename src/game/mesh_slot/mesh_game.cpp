@@ -79,7 +79,7 @@ struct AgentS {
     int f56f4[8];                       // +0x56f4
     int f5714;                          // +0x5714
     int f5718;                          // +0x5718
-    int f571c;                          // +0x571c
+    float f571c;                        // +0x571c (a copy of f5724: a float)
     float f5720;                        // +0x5720
     float f5724;                        // +0x5724
     char pad5728[0x5928 - 0x5728];

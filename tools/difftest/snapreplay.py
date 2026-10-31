@@ -27,6 +27,9 @@ CTX = {"edi": 0x9c, "esi": 0xa0, "ebx": 0xa4, "edx": 0xa8, "ecx": 0xac, "eax": 0
 CTX_FPCW = 0x1c
 
 
+WATCH = [int(x, 16) for x in os.environ.get("SNAP_WATCH", "").split(",") if x]   # debug: print writers of these addresses
+
+
 def read_snapshots(d):
     """[(seq, va, path)] sorted by seq."""
     out = []
@@ -170,9 +173,19 @@ class Replayer:
         esp0 = regs["esp"]
         ret_addr = struct.unpack("<I", uc.mem_read(esp0, 4))[0]
         uc.mem_write(esp0, struct.pack("<I", M.SENTINEL))
+        fillv = os.environ.get("SNAP_FILL")
+        if fillv:                                        # debug: equal stack residue on both sides
+            n = 0x4000
+            saved_stack = bytes(uc.mem_read(esp0 - n, n))
+            uc.mem_write(esp0 - n, struct.pack("<I", int(fillv, 16)) * (n // 4))
         written = {}
 
         def on_write(uc_, access, address, size, value, _):
+            if WATCH and any(address <= w < address + size for w in WATCH):
+                from unicorn.x86_const import UC_X86_REG_EIP
+                print("   WATCH %s write %08x size %d value %08x eip %08x esp %08x esi %08x edi %08x" % (
+                    "orig" if side is r.orig else "ours", address, size, value & 0xffffffff,
+                    uc_.reg_read(UC_X86_REG_EIP), uc_.reg_read(UC_X86_REG_ESP), uc_.reg_read(UC_X86_REG_ESI), uc_.reg_read(UC_X86_REG_EDI)) + " stk " + " ".join("%08x" % x for x in struct.unpack("<24I", uc_.mem_read(uc_.reg_read(UC_X86_REG_ESP), 96)) if 0x401000 <= x < 0x590000 or 0x30000000 <= x < 0x3000ffff), flush=True)
             for pg in {address & ~0xfff, (address + size - 1) & ~0xfff}:
                 if pg not in written:
                     try:
@@ -180,6 +193,48 @@ class Replayer:
                     except Exception:
                         written[pg] = None
         h = uc.hook_add(UC_HOOK_MEM_WRITE, on_write)
+        uninit_hooks = []
+        if os.environ.get("SNAP_UNINIT"):                # debug: every stack byte read before the run wrote it reads as 0 on both sides
+            from unicorn import UC_HOOK_MEM_READ
+            SPAN = 0x100000
+            seen = bytearray(SPAN)                       # index esp0 - 1 - addr; 1 = written (or already zeroed)
+
+            def mark_w(uc_, access, address, size, value, _):
+                for a_ in range(address, address + size):
+                    if esp0 - SPAN <= a_ < esp0:
+                        seen[esp0 - 1 - a_] = 1
+
+            def on_read(uc_, access, address, size, value, _):
+                for a_ in range(address, address + size):
+                    if esp0 - SPAN <= a_ < esp0 and not seen[esp0 - 1 - a_]:
+                        seen[esp0 - 1 - a_] = 1
+                        uc_.mem_write(a_, b"\0")
+            if os.environ["SNAP_UNINIT"] == "2":         # freed stack (esp rose) is uninitialised again
+                from unicorn import UC_HOOK_CODE
+                from unicorn.x86_const import UC_X86_REG_ESP as _ESP
+                st = [esp0]
+
+                def on_code(uc_, address, size, _):
+                    e = uc_.reg_read(_ESP)
+                    if e > st[0]:
+                        lo = esp0 - 1 - (e - 1)
+                        hi = esp0 - 1 - st[0]
+                        if hi >= 0 and e <= esp0:
+                            seen[max(lo, 0):hi + 1] = bytes(hi + 1 - max(lo, 0))
+                    st[0] = e
+                uninit_hooks.append(uc.hook_add(UC_HOOK_CODE, on_code))
+            uninit_hooks.append(uc.hook_add(UC_HOOK_MEM_WRITE, mark_w, begin=esp0 - SPAN, end=esp0 - 1))
+            uninit_hooks.append(uc.hook_add(UC_HOOK_MEM_READ, on_read, begin=esp0 - SPAN, end=esp0 - 1))
+        pin_hooks = []
+        if os.environ.get("SNAP_PIN"):                   # debug: "pc:reg=val[,pc:reg=val]" force a register before pc runs
+            from unicorn import UC_HOOK_CODE
+            import unicorn.x86_const as XC
+            for spec in os.environ["SNAP_PIN"].split(","):
+                pc, rv = spec.split(":")
+                reg, val = rv.split("=")
+                rid = getattr(XC, "UC_X86_REG_" + reg.upper())
+                pin_hooks.append(uc.hook_add(UC_HOOK_CODE, lambda u, a, sz, d, rid=rid, val=int(val, 16): u.reg_write(rid, val),
+                                             begin=int(pc, 16), end=int(pc, 16)))
 
         def on_unmapped(uc_, access, address, size, value, _):
             # a page the capture never saw non-zero: the process had it as zero memory (data only, never code;
@@ -196,6 +251,14 @@ class Replayer:
             return True
         from unicorn import UC_HOOK_MEM_READ_UNMAPPED, UC_HOOK_MEM_WRITE_UNMAPPED
         h2 = uc.hook_add(UC_HOOK_MEM_READ_UNMAPPED | UC_HOOK_MEM_WRITE_UNMAPPED, on_unmapped)
+        if os.environ.get("SNAP_ALLOC"):
+            _orig_alloc = type(m).dyn_alloc
+            def _la(self_, n, align=16, _s=("orig" if side is r.orig else "ours")):
+                a = _orig_alloc(self_, n, align)
+                esp = uc.reg_read(UC_X86_REG_ESP)
+                print("   ALLOC %s n=%#x -> %08x ret-ish %s" % (_s, n, a, " ".join("%08x" % x for x in struct.unpack("<48I", uc.mem_read(esp, 192)) if 0x401000 <= x < 0x590000 or 0x30000000 <= x < 0x3000ffff)), flush=True)
+                return a
+            m.dyn_alloc = _la.__get__(m)
         r.cur = side
         r.calls = []
         r.fakes = []
@@ -203,6 +266,10 @@ class Replayer:
         r.cur = None
         uc.hook_del(h)
         uc.hook_del(h2)
+        for ph in pin_hooks + uninit_hooks:
+            uc.hook_del(ph)
+        if os.environ.get("SNAP_ALLOC"):
+            del m.dyn_alloc
         fpsw = uc.reg_read(UC_X86_REG_FPSW)
         top = (fpsw >> 11) & 7
         out = {"status": status, "fault": m.last_fault, "eip": uc.reg_read(0x1a) if False else None,
@@ -235,6 +302,9 @@ class Replayer:
         m.take_dirty()
         m.take_image_dirty()
         uc.mem_write(esp0, struct.pack("<I", ret_addr))
+        if fillv:
+            uc.mem_write(esp0 - 0x4000, saved_stack)
+            uc.mem_write(esp0, struct.pack("<I", ret_addr))
         for p, n in mapped:
             uc.mem_unmap(p, n)
         for p, data in restore.items():
@@ -263,6 +333,9 @@ class Replayer:
             if va_ is not None and vb_ is not None and lo <= va_ < hi and lo <= vb_ < hi:
                 frame_ptr.update(range(d, d + 4))
         diff = [x for x in diff if x not in frame_ptr]
+        if diff and os.environ.get("SNAP_ALL"):
+            for x in diff:
+                print("   diff %08x%s orig %s ours %s" % (x, where(x), fmt(a["changes"].get(x)), fmt(b["changes"].get(x))))
         if diff:
             x = diff[0]
             return "DIFF", "%d bytes differ, first %08x%s: orig %s ours %s" % (
