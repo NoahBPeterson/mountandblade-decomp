@@ -2080,7 +2080,7 @@ static __forceinline rgl::vector4 t_cross(const rgl::vector4& a, const rgl::vect
 }
 static __forceinline void t_normalize(rgl::vector4& v)
 {
-    float len = (float)sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    float len = (float)sqrt(v.z * v.z + v.y * v.y + v.x * v.x);   // 0x46aa3e: z, y, x order
     if (len > 1e-10f) {
         float inv = 1.0f / len;
         v.x = v.x * inv; v.y = v.y * inv; v.z = v.z * inv;
