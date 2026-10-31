@@ -388,27 +388,29 @@ void CharSheet::init()
             float levels_w = config_float_walk(tstring("char_b_skill_levels_w"));
             float levels_x = config_float_walk(tstring("char_b_skill_levels_x"));
             tstring empty("");
-            row->levels = make_hint(sk, &empty, levels_x + skills_x, rowy,
+            // 0x507b6e: the level label goes only into this->label[i] (= [&skill_row[i] + 0xa8]), not into the row
+            label[i] = (Widget*)make_hint(sk, &empty, levels_x + skills_x, rowy,
                                      levels_w, skills_y);
-            row->levels->set_color((const unsigned*)&row->color);
-            label[i] = (Widget*)row->levels;                     // +0xd8: the per-row rank text update_skill_rows recolours
+            ((CharSheetWidget*)label[i])->set_color((const unsigned*)&row->color);                     // +0xd8: the per-row rank text update_skill_rows recolours
    // 0x507b9f pushes the row class's vptr+0x14c (an address, not a colour); row->color is the same byte the original reads
 
             float inc_h = config_float_walk(tstring("char_b_skill_increment_h_a"));
             float inc_y = config_float_walk(tstring("char_b_skill_increment_y_a"));
             float inc_x = config_float_walk(tstring("char_b_skill_increment_x"));
             tstring plus("+");
-            row->plus150 = make_button(sk, &plus, inc_x + skills_x, inc_y + rowy,
+            // 0x507d69: [&skill_row[i] + 0x150] = this->btn[i]; the row object itself is not written
+            CharSheetWidget* plus150 = make_button(sk, &plus, inc_x + skills_x, inc_y + rowy,
                                      1, skills_y - inc_h);
+            btn[i] = (Widget*)plus150;
 
             float ts_x = config_float_walk(tstring("char_b_skill_increment_t_s"));
             float ts_y = config_float_walk(tstring("char_b_skill_increment_t_s"));
             vector2 ts;
             ts.x = ts_y;
             ts.y = ts_x;
-            row->plus150->set_text_size(&ts);
-            row->plus150->set_text(&tx, tstring("+"));
-            btn[i] = (Widget*)row->plus150;                      // +0x180: the per-row upgrade button it shows/hides
+            plus150->set_text_size(&ts);
+            plus150->set_text(&tx, tstring("+"));
+                                 // +0x180: the per-row upgrade button it shows/hides
 
         }
     }
@@ -504,7 +506,8 @@ void CharSheet::init()
         float inc_ya = config_float_walk(tstring("char_b_weapon_proficiency_increment_y_a"));
         float inc_x = config_float_walk(tstring("char_b_weapon_proficiency_increment_x"));
         tstring plus("+");
-        row->plus1c = make_button(window, &plus, inc_x, inc_y - inc_ya * (float)i,
+        // 0x50845e: [&weapon_row[i] + 0x1c] = this->rows[i]; the row object itself is not written
+        CharSheetWidget* plus1c = make_button(window, &plus, inc_x, inc_y - inc_ya * (float)i,
                                 1, inc_h);      // 0x50844e: x = increment_x, y = increment_y - increment_y_a * i
 
         float ts_x = config_float_walk(tstring("char_b_weapon_proficiency_increment_t_s"));
@@ -512,16 +515,16 @@ void CharSheet::init()
         vector2 ts;
         ts.x = ts_y;
         ts.y = ts_x;
-        row->plus1c->set_text_size(&ts);
+        rows[i] = (Widget*)plus1c;
+        plus1c->set_text_size(&ts);
         {
             vector2 tx;
-            row->plus1c->set_text(&tx, tstring("+"));
+            plus1c->set_text(&tx, tstring("+"));
         }
 
-        rows[i] = (Widget*)row->plus1c;              // +0x494: update_weapons shows/hides this '+' per weapon class
         if (g_display_wp_one_handed[i] == 0) {
             row->show();
-            row->plus1c->show();
+            plus1c->show();
         }
     }
 
@@ -640,18 +643,19 @@ void CharSheet::init()
         float inc_ya = config_float_walk(tstring("char_b_attrib_increment_y_a"));
         float inc_x = config_float_walk(tstring("char_b_attrib_increment_x"));
         tstring plus("+");
-        row->plus10 = make_button(attribs, &plus, inc_x, rowy - inc_ya, 1, inc_h);
-        skill_val[i] = (Widget*)row->plus10;         // +0x45c: refresh_panels shows/hides the '+' per attribute
+        // [&attrib_row[i] + 0x10] = this->skill_val[i]; the row object itself is not written
+        CharSheetWidget* plus10 = make_button(attribs, &plus, inc_x, rowy - inc_ya, 1, inc_h);
+        skill_val[i] = (Widget*)plus10;         // +0x45c: refresh_panels shows/hides the '+' per attribute
 
         float ts_x = config_float_walk(tstring("char_b_attrib_increment_t_s"));
         float ts_y = config_float_walk(tstring("char_b_attrib_increment_t_s"));
         vector2 ts;
         ts.x = ts_y;
         ts.y = ts_x;
-        row->plus10->set_text_size(&ts);
+        plus10->set_text_size(&ts);
         {
             vector2 tx;
-            row->plus10->set_text(&tx, tstring("+"));
+            plus10->set_text(&tx, tstring("+"));
         }
     }
 
