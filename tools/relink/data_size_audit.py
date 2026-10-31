@@ -135,8 +135,8 @@ def claimed_sizes(jobs_n):
     import compile_all as C
     seen, jobs = set(), []
     for src, flags in C.sources():
-        if os.sep + "src" + os.sep not in src:
-            continue
+        if os.sep + "src" + os.sep not in src or os.path.basename(src).startswith("_dataaudit_"):
+            continue                                 # (a concurrent or killed audit's probe copies are not sources)
         entries = []
         for f in [src] + quoted_headers(src):
             if f in seen:

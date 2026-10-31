@@ -29,8 +29,16 @@ def kill_stale():
     debugger can also leave the debuggee: both then hold the window and write rgl_log.txt, which makes the next run's
     "menu is up" test fire on the old game's log. Called before every launch.
     """
-    for pattern in ("mb_standalone", "mb_original", "mb_check", "mb_hybrid", "Mount & Blade", "mount&blade", "winedbg"):
-        subprocess.run(["pkill", "-f", pattern], capture_output=True)
+    # Not `pkill -f`: a build's link.exe (and python tools) name mb_standalone.exe on their command lines too.
+    tools = ("link.exe", "cl.exe", "python", "build.py", "crashrun", "logwatch")
+    ps = subprocess.run(["ps", "-axo", "pid=,command="], capture_output=True, text=True).stdout
+    for line in ps.splitlines():
+        pid, _, cmd = line.strip().partition(" ")
+        if int(pid) == os.getpid() or any(t in cmd for t in tools):
+            continue
+        if any(p in cmd for p in ("mb_standalone", "mb_original", "mb_check", "mb_hybrid", "Mount & Blade",
+                                  "mount&blade", "winedbg")):
+            subprocess.run(["kill", pid], capture_output=True)
     time.sleep(1.0)
 
 

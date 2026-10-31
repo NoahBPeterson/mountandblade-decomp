@@ -36,3 +36,7 @@ pipeline, the progress counts or the gates' view of our source.
 
 - `profile`: `sampler.cpp`, a 1 ms sampling profiler of the main thread (writes `profile_samples.bin` in the game folder;
   `tools/relink/profile_report.py` symbolises it per load phase, `tools/relink/logwatch.py` stamps the phases).
+- `devfast`: shortcuts for test runs that **change behaviour** (never for play): `no_intro_videos.cpp` (binkplay
+  launches fail, as with binkplay.exe missing) and `no_sound_samples.cpp` (every FSOUND_Sample_Load returns 0: no
+  sound effects, ~55 s less start-up under Wine). Both swap one of our own import slots from a static constructor
+  (`iat_hook.h`), so no function of the reconstruction is replaced.
