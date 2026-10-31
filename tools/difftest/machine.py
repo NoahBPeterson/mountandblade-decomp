@@ -39,6 +39,9 @@ MODEL_BASE, MODEL_SIZE = 0x60000000, 0x00400000   # zeroed blocks for symbols on
 MODEL_SLOT = 0x1000                               # one modelled object per page
 MODEL_STUB_SLOTS = 128                            # spare import-thunk slots Machine.model_stub hands out
 STACK_TOP, STACK_SIZE = 0x7E000000, 0x00200000
+# Opt-in: a function whose own frame exceeds 2 MB (build_map_trees reserves 0x2ac270 bytes via __chkstk) needs a bigger stack.
+if os.environ.get("DIFFTEST_STACK_MB"):
+    STACK_SIZE = int(os.environ["DIFFTEST_STACK_MB"]) << 20
 SENTINEL = 0x7EFFF000
 STUB_BASE = 0x7F000000
 STUB_SLOT = 32
