@@ -869,7 +869,9 @@ int InputSet::init_devices(HWND hwnd)
                     keyboard->Acquire();
                     hr = dinput->CreateDevice(GUID_SysMouse, &mouse, 0);
                     if (hr >= 0) {
-                        hr = mouse->SetDataFormat(&c_dfDIMouse);
+                        // 0x59c6c4 is c_dfDIMouse2 (0x14 bytes, 11 objects): Slot::read_state (0x4876e0) reads 0x14 with
+                        // GetDeviceState, which fails against the 16-byte c_dfDIMouse (no mission mouse look or buttons)
+                        hr = mouse->SetDataFormat(&c_dfDIMouse2);
                         if (hr >= 0) {
                             hr = mouse->SetCooperativeLevel(hwnd, 6);
                             if (hr >= 0) {
