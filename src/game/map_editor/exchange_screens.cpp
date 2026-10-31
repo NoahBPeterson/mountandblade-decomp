@@ -292,8 +292,9 @@ after_scroll:
         }
 
         if ((sel->flags & 1) || sel->f14 < sel->count) {
-            if (!found)
-                goto merge;
+            if (found)
+                goto overflow_path;
+            goto merge;
         } else {
             if (found)
                 goto overflow_path;
@@ -407,7 +408,7 @@ tail:
         if (party_index(a)->stacks[b].flags & 1)
             action = 0xe;
         troop = party_index(a)->stacks[b].troop;
-        ((MissionCtx*)&g_mission_ctx)->build_hero_table(troop, STACK_IDS[1 + b * 0x80],
+        ((MissionCtx*)&g_mission_ctx)->build_hero_table(troop, STACK_IDS[1 + b * 0x20],
                     g_game->f78, action);
         g_menu_data[6] = 0xc;
         g_main_menu.set_state(0x10);
@@ -655,6 +656,15 @@ static __forceinline float anim_value(ValueSource* vs)
     float b = F(vs, 0x170, float) - F(vs, 0x16c, float);
     return (a / b) * (base[0] - F(vs, 0x17c, float))
          + ((float)g_mission_clock / base[0]) * F(vs, 0x17c, float) * g_char_scale;
+}
+
+// the first term of anim_value alone (0x533bda..0x533c09: no clock term)
+static __forceinline float anim_ratio(ValueSource* vs)
+{
+    float* base = (float*)((char*)vs + 0xf0 + F(vs, 0x178, int) * 4);
+    float a = F(vs, 0x168, float) - F(vs, 0x16c, float);
+    float b = F(vs, 0x170, float) - F(vs, 0x16c, float);
+    return (a / b) * (base[0] - F(vs, 0x17c, float));
 }
 
 static __forceinline void set_anim(TickScreen* s, int push_off, int resize_off)
@@ -987,20 +997,22 @@ void InputScreen::on_input(int code)
 
     if (W(this, 0x6c)->changed(0x10000)) {
         set_anim((TickScreen*)this, 0x88, 0x78);
-        if (F(this, 0xa8, int) == F(this, 0x98, int)) {
+        int a98 = F(this, 0x98, int);
+        if (F(this, 0xa8, int) == a98) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
-            F(this, 0xb0, float) = anim_value(vs);
+            F(this, 0xb0, float) = anim_ratio(vs);
         }
-        ((note_window*)(void*)this)->build(F(this, 0xa8, int), F(this, 0x9c, int));
+        ((note_window*)(void*)this)->build(a98, F(this, 0x9c, int));
     }
 
     if (W(this, 0x70)->changed(0x10000)) {
         set_anim((TickScreen*)this, 0x78, 0x88);
-        if (F(this, 0xa8, int) == F(this, 0xa0, int)) {
+        int aa0 = F(this, 0xa0, int);
+        if (F(this, 0xa8, int) == aa0) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
-            F(this, 0xb0, float) = anim_value(vs);
+            F(this, 0xb0, float) = anim_ratio(vs);
         }
-        ((note_window*)(void*)this)->build(F(this, 0xa8, int), F(this, 0xa4, int));
+        ((note_window*)(void*)this)->build(aa0, F(this, 0xa4, int));
     }
 
     if (W(this, 0x34)->changed(0x10000)) {
@@ -1022,9 +1034,9 @@ void InputScreen::on_input(int code)
             ((std::vector<int>*)V(this, 0x78))->push_back(F(this, 0xa8, int));
             ((std::vector<int>*)V(this, 0x78))->push_back(F(this, 0xac, int));
         }
-        if (F(this, 0xa8, int) == iv2) {
+        {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
-            F(this, 0xb0, float) = anim_value(vs);
+            F(this, 0xb0, float) = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(iv2, iv1);
     }
@@ -1050,7 +1062,7 @@ void InputScreen::on_input(int code)
         }
         if (F(this, 0xa8, int) == iv2) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x48) + 0x484);
-            F(this, 0xb0, float) = anim_value(vs);
+            F(this, 0xb0, float) = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(iv2, iv1);
     }

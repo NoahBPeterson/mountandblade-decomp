@@ -23,7 +23,7 @@ struct PartyX : Party {
     int sum_flagged();             // 0x4894e0 (Party::sum_flagged)
     int max_members();                 // 0x4b22d0 (game script 0x11 may override it; Party::max_members)
     int max_prisoners();                   // 0x4b2330 (game script 0x12 may override it; Party::max_prisoners)
-    int add_members(int troop, int count, char prisoners, int a4, int a5);  // 0x48c840 (ret 0x14)
+    int add_members(int troop, int count, int flags, int a4, int a5);  // 0x48c840 (ret 0x14; flags: full dword, stored at +0xb0 and tested & 1)
     Stack remove_stack(int index, void* rows);                            // 0x489540 (ret 0xc: hidden return; Party::remove_row spells the out pointer)  // old name of Party::remove_row, removed after the names merge
     void force_add_members(int troop, int count, char prisoners, int a4);   // 0x4b4470 (ret 0x10)
     void place_on_map();                                                // 0x4b2880 (Party::place_on_map)
