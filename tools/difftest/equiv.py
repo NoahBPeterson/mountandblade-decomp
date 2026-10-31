@@ -1405,8 +1405,11 @@ class TypedInputs:
             return self.rng.randrange(300)
         return self.rng.choice(self.gen.dic)
 
+    text_extra = b""            # --text-chars: extra characters the generated strings may contain
+
     def text(self, n):
-        return bytes(self.rng.choice(b"abcdefghijklmnopqrstuvwxyz_0123456789") for _ in range(n))
+        alpha = b"abcdefghijklmnopqrstuvwxyz_0123456789" + self.text_extra
+        return bytes(self.rng.choice(alpha) for _ in range(n))
 
     def string_at(self, n):
         a = self.alloc(n + 1, 4)
@@ -1866,6 +1869,7 @@ class Runner:
                 ti_, why = None, "%s: %s" % (type(e).__name__, e)
             if ti_ is not None:
                 self.gen.typed, self.gen.typed_share = ti_, share
+                ti_.text_extra = (getattr(opts, "text_chars", None) or "").encode("latin-1")
                 self.typed_info = ti_.describe()
             else:
                 self.typed_info = {"none": why}
@@ -6468,6 +6472,9 @@ def parse_args(argv=None):
                     help="share of fresh inputs whose `this` and pointer-to-class arguments are objects of their "
                          "declared class (CodeView types of a /Z7 compile: the original's vtable pointers, nested "
                          "objects, consistent vectors and strings, small counts); 0 = pointer soup only")
+    ap.add_argument("--text-chars", metavar="CHARS", default="",
+                    help="extra characters (besides a-z, 0-9, _) the typed inputs' generated strings may contain, "
+                         "for rows that scan for markup or delimiters ('<', '>', quotes, blanks)")
     ap.add_argument("--rand-seeded", action="store_true",
                     help="start the modelled rand() sequence from each input's seed instead of always from state 1 "
                          "(rows whose first rand() draw gates the whole body never leave the gate otherwise)")
