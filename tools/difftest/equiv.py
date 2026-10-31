@@ -1792,6 +1792,7 @@ class Runner:
         self.hooks = []
         self.cur = None
         self.calls = []
+        self.call_taint_fn, self.call_taint, self.last_call_uninit = None, [], None
         # Original's instruction cap: starts low (random inputs often send a loop into the
         # billions) and rises to --budget if a probe shows a real input needs more; see run_function.
         self.budget = min(getattr(opts, "start_budget", opts.budget), opts.budget)
@@ -2437,6 +2438,8 @@ class Runner:
             words = (0,) * 8
         self.calls.append((tgt, uc.reg_read(UC_X86_REG_ECX), uc.reg_read(UC_X86_REG_EDX), words,
                            info["add_esp"], info["is_jmp"]))
+        if self.call_taint_fn is not None:
+            self.call_taint.append(self.call_taint_fn(esp))     # uninit_copies: which argument dwords are leftovers
         if self.opts.call_regs:
             self.call_regs.append(call_reg_snapshot(uc))
 
@@ -3277,13 +3280,19 @@ class Runner:
                     tainted.discard(b)
 
         hs = [uc.hook_add(UC_HOOK_CODE, on_code), uc.hook_add(UC_HOOK_MEM_WRITE, on_write)]
+        # the same notion for call arguments: per recorded call (index-aligned with self.calls), the stack-argument
+        # dwords (of the 8 recorded) that are a plain copy of a never-written slot (Comparer.norm_calls masks them)
+        self.call_taint_fn = lambda esp: frozenset(k for k in range(8) if src_taint(esp + 4 * k, 4))
+        self.last_call_uninit = None
         try:
             self.run_side(self.orig, inp)
         finally:
+            self.call_taint_fn = None
             for h in hs:
                 uc.hook_del(h)
         if steps[0] > max_steps:
             return frozenset()
+        self.last_call_uninit = list(self.call_taint)
         # bytes, not dwords: a copy to an unaligned destination (cam widget + 0x1ac from a soup pointer) straddles
         # dwords, so the comparison excuses a dword whose differing bytes are all tainted (Comparer.uninit_excused)
         return frozenset(a for a in tainted if not (lo_s <= a < entry))
@@ -4168,6 +4177,7 @@ class Runner:
         for k in range(8):
             entry["xmm%d" % k] = uc.reg_read(UC_X86_REG_XMM0 + k)
         self.fakes, self.calls = [], []
+        self.call_taint = []
         self.call_regs, self.fake_regs, self.import_regs = [], [], []
         m.trace_imports = ImportTrace(uc, self.import_regs) if self.opts.call_regs else []
         m.fake_handler = (getattr(self, "fake_override", None) or self.fake_call) if self.opts.fake_calls else None
@@ -4363,6 +4373,7 @@ class Comparer:
                           "uninit-dword": 0, "stub-scratch": 0, "stale-return-address": 0}
         self.ro = runner.ro
         self.uninit_copy = frozenset()      # bytes excused for the input in hand (set by test_function)
+        self.uninit_args = None             # per original call: stack-arg dword indexes that are uninitialised leftovers
         self.last_kind = None
         self._thr, self._thr_key = None, None      # --uninit-mem: the pool/extra baseline of the page in hand
 
@@ -5178,10 +5189,13 @@ class Comparer:
                 return ("import call #%d" % k, fmt_call(x), fmt_call(y), "imports called (any depth), args normalised")
         return None
 
-    def norm_calls(self, calls):
+    def norm_calls(self, calls, uninit=None):
+        """uninit: the original's per-call masks (Runner.uninit_copies); a masked dword becomes UNINIT_ARG."""
         out = []
+        if uninit is not None and len(uninit) != len(calls):
+            uninit = None
         esp = self.r.stk_hi
-        for tgt, ecx, edx, words, add_esp, is_jmp in calls:
+        for ci, (tgt, ecx, edx, words, add_esp, is_jmp) in enumerate(calls):
             n = self.r.callee_arity(tgt)
             if n is None:
                 n = self.r.decl_arity.get(tgt)
@@ -5196,18 +5210,22 @@ class Comparer:
             regs = self.r.callee_regs(tgt)
             ent = [tgt, norm_val(ecx, esp) if "ecx" in regs else "-", norm_val(edx, esp) if "edx" in regs else "-"]
             widths = self.r.callee_arg_widths(tgt) if n else {}
-            out.append((ent, [norm_val(w & ((1 << 8 * widths[k]) - 1) if k in widths else w, esp)
+            um = uninit[ci] if uninit is not None else ()
+            out.append((ent, [UNINIT_ARG if k in um else
+                              norm_val(w & ((1 << 8 * widths[k]) - 1) if k in widths else w, esp)
                               for k, w in enumerate(words[:n])] if n else []))
         return out
 
     def compare_calls(self, ca, cb):
-        A, B = self.norm_calls(ca), self.norm_calls(cb)
+        A, B = self.norm_calls(ca, self.uninit_args), self.norm_calls(cb)
 
         def same(x, y):
             if x[0][0] != y[0][0] or not self.seq_eq(x[0][1:], y[0][1:]):
                 return False
             n = min(len(x[1]), len(y[1]))
-            return self.seq_eq(x[1][:n], y[1][:n])
+            # a dword the original passes from a never-written stack slot is indeterminate: any value of ours matches
+            return self.seq_eq([w for w, v in zip(x[1][:n], y[1][:n]) if w is not UNINIT_ARG],
+                               [v for w, v in zip(x[1][:n], y[1][:n]) if w is not UNINIT_ARG])
 
         def first_diff(A, B):
             for k in range(max(len(A), len(B))):
@@ -5576,6 +5594,9 @@ def fmt_call(x):
         return "(none)"
     n, args = x
     return "%s(%s)" % (n, ", ".join(a if isinstance(a, str) else "%#x" % a for a in args))
+
+
+UNINIT_ARG = "<uninit>"
 
 
 def fmt_tcall(x):
@@ -6073,12 +6094,15 @@ def _test_function(sid, va, opts, log=print):
                             cmp_.last_kind = None   # an fp judgement replaced the compared observable
                     else:
                         d = None
-                if d and d[0].startswith("memory") and getattr(opts, "uninit_copy", True):
-                    # the original may have copied an uninitialised local there: re-compare without those dwords
+                if d and d[0].startswith(("memory", "call #")) and getattr(opts, "uninit_copy", True):
+                    # the original may have copied an uninitialised local there (or passed one by value to a callee):
+                    # re-compare without those dwords
                     # (the original's run of this input is re-done once with copy taint; see uninit_copies)
                     u = runner.uninit_copies(inp)
-                    if u:
+                    cu = runner.last_call_uninit
+                    if u or (cu and any(cu)):
                         cmp_.uninit_copy = u
+                        cmp_.uninit_args = cu
                         try:
                             d2 = cmp_.compare(a, b, t)
                             if d2 and fpt is not None:
@@ -6086,6 +6110,7 @@ def _test_function(sid, va, opts, log=print):
                                 d2 = d2_ if kind_ == "real" else None
                         finally:
                             cmp_.uninit_copy = frozenset()
+                            cmp_.uninit_args = None
                         d = d2
             if d:
                 mism += 1
