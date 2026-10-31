@@ -141,50 +141,40 @@ void destroy_range_mission(mission_type* first, mission_type* last)
 // the per-frame update 0x50ec40 and the loading screen 0x50f440 call this one first, then that one).
 void load_data_files()
 {
-    {
-        text_reader_l ts;
-        if (!((text_stream*)&ts)->open_read_text("Data\\item_modifiers.txt"))
-            mb_error("Unable to open %s", "Data\\item_modifiers.txt");
-        for (item_mod* m = g_item_mods; m < &g_item_mods[43]; m++) {
-            ts.r_tstr((rgl::string*)&m->key);
-            ts.r_tstr((rgl::string*)&m->name);
-            m->name.underscores_to_spaces();
-            ts.r_float(&m->price);
-            ts.r_float(&m->rarity);
-        }
+    text_reader_l ts1;
+    if (!((text_stream*)&ts1)->open_read_text("Data\\item_modifiers.txt"))
+        mb_error("Unable to open %s", "Data\\item_modifiers.txt");
+    for (item_mod* m = g_item_mods; m < &g_item_mods[43]; m++) {
+        ts1.r_tstr((rgl::string*)&m->key);
+        ts1.r_tstr((rgl::string*)&m->name);
+        m->name.underscores_to_spaces();
+        ts1.r_float(&m->price);
+        ts1.r_float(&m->rarity);
     }
-    {
-        text_reader_l ts;
-        if (!((text_stream*)&ts)->open_read_text("Data\\flora_kinds.txt"))
-            mb_error("Unable to open %s", "Data\\flora_kinds.txt");
-        ts.r_int(&g_num_flora_kinds);
-        g_flora_kinds = new flora_kind[g_num_flora_kinds];
-        for (int i = 0; i < g_num_flora_kinds; i++)
-            ((ObjectList*)&g_flora_kinds[i])->read(&ts);   // 0x4cdfd0
-    }
-    {
-        text_reader_l ts;
-        if (!((text_stream*)&ts)->open_read_text("data\\ground_specs.txt"))
-            mb_error("Unable to open %s", "data\\ground_specs.txt");
-        for (ttype* t = g_ttypes; t < g_ttypes + sizeof g_ttypes / sizeof *g_ttypes; t++)   // 11 (to 0x8ed4f58)
-            ((rec20*)t)->read(&ts);           // 0x4be600
-    }
-    {
-        // data\skyboxes.txt: a count, then that many 0x4c-byte records (the table at 0x5e28f4 / 0x5e29ec)
-        text_reader_l ts;
-        if (!((text_stream*)&ts)->open_read_text("data\\skyboxes.txt"))
-            mb_error("Unable to open %s", "data\\skyboxes.txt");
-        ts.r_int(&g_num_ground_specs);
-        g_ground_specs = new ground_spec[g_num_ground_specs];
-        for (int i = 0; i < g_num_ground_specs; i++)
-            ((prsnt_record*)&g_ground_specs[i])->load_extras(ts);        // 0x4bddf0
-    }
-    {
-        text_reader_l ts;
-        if (!((text_stream*)&ts)->open_read_text("Data\\mission_types.txt"))
-            mb_error("Unable to open %s", "Data\\mission_types.txt");
-        for (mission_type* m = g_mission_types; m < g_mission_types + sizeof g_mission_types / sizeof *g_mission_types; m++)   // 11 (to 0xa73730)
-            ((Blk2dd0*)m)->read(&ts);                       // 0x4c2dd0
-    }
+    text_reader_l ts2;
+    if (!((text_stream*)&ts2)->open_read_text("Data\\flora_kinds.txt"))
+        mb_error("Unable to open %s", "Data\\flora_kinds.txt");
+    ts2.r_int(&g_num_flora_kinds);
+    g_flora_kinds = new flora_kind[g_num_flora_kinds];
+    for (int i = 0; i < g_num_flora_kinds; i++)
+        ((ObjectList*)&g_flora_kinds[i])->read(&ts2);   // 0x4cdfd0
+    text_reader_l ts3;
+    if (!((text_stream*)&ts3)->open_read_text("data\\ground_specs.txt"))
+        mb_error("Unable to open %s", "data\\ground_specs.txt");
+    for (ttype* t = g_ttypes; t < g_ttypes + sizeof g_ttypes / sizeof *g_ttypes; t++)   // 11 (to 0x8ed4f58)
+        ((rec20*)t)->read(&ts3);           // 0x4be600
+    // data\skyboxes.txt: a count, then that many 0x4c-byte records (the table at 0x5e28f4 / 0x5e29ec)
+    text_reader_l ts4;
+    if (!((text_stream*)&ts4)->open_read_text("data\\skyboxes.txt"))
+        mb_error("Unable to open %s", "data\\skyboxes.txt");
+    ts4.r_int(&g_num_ground_specs);
+    g_ground_specs = new ground_spec[g_num_ground_specs];
+    for (int i = 0; i < g_num_ground_specs; i++)
+        ((prsnt_record*)&g_ground_specs[i])->load_extras(ts4);        // 0x4bddf0
+    text_reader_l ts5;
+    if (!((text_stream*)&ts5)->open_read_text("Data\\mission_types.txt"))
+        mb_error("Unable to open %s", "Data\\mission_types.txt");
+    for (mission_type* m = g_mission_types; m < g_mission_types + sizeof g_mission_types / sizeof *g_mission_types; m++)   // 11 (to 0xa73730)
+        ((Blk2dd0*)m)->read(&ts5);                       // 0x4c2dd0
     load_skyboxes();                                        // 0x4c3350: the module's own skyboxes.txt
 }

@@ -56,14 +56,14 @@ void Screen::camera_update(float dt)
     f2c8 *= d;
 
     // --- keep the camera over the map --------------------------------------------------------------
-    if (f290 < *(float*)&g_map_min_x)
-        f290 = *(float*)&g_map_min_x;
-    else if (f290 > *(float*)&g_map_max_x)
-        f290 = *(float*)&g_map_max_x;
-    if (f294 < *(float*)&g_map_min_y)
-        f294 = *(float*)&g_map_min_y;
-    else if (f294 > *(float*)&g_map_max_y)
-        f294 = *(float*)&g_map_max_y;
+    if (f290 < g_map_min_x)
+        f290 = g_map_min_x;
+    else if (f290 > g_map_max_x)
+        f290 = g_map_max_x;
+    if (f294 < g_map_min_y)
+        f294 = g_map_min_y;
+    else if (f294 > g_map_max_y)
+        f294 = g_map_max_y;
 
     // --- the pitch follows the zoom ----------------------------------------------------------------
     f2b4 = f2b8 * C_590F7C + C_590E68;

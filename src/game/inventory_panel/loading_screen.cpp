@@ -115,8 +115,8 @@ struct LoadingMeshes {
 static void set_frame_color(mesh* m)
 {
     vector4 c;
-    c.x = 0.65f;
-    c.y = 0.65f;
+    c.x = 1.3f;
+    c.y = 1.3f;
     c.z = 1.0f;
     m->set_color(c);
     m->compute_normals();
@@ -146,7 +146,7 @@ void LoadingMeshes::build_frames()
     }
     {
         vector4 c;
-        c.x = 0.65f; c.y = 0.65f; c.z = 1.0f;
+        c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
         f1210->set_color(c);
     }
     f1210->compute_normals();
@@ -158,7 +158,7 @@ void LoadingMeshes::build_frames()
     }
     {
         vector4 c;
-        c.x = 0.65f; c.y = 0.65f; c.z = 1.0f;
+        c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
         f1214->set_color(c);
     }
     f1214->compute_normals();
@@ -170,7 +170,7 @@ void LoadingMeshes::build_frames()
     }
     {
         vector4 c;
-        c.x = 0.65f; c.y = 0.65f; c.z = 1.0f;
+        c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
         f1218->set_color(c);
     }
     f1218->compute_normals();
@@ -182,7 +182,7 @@ void LoadingMeshes::build_frames()
     }
     {
         vector4 c;
-        c.x = 0.65f; c.y = 0.65f; c.z = 1.0f;
+        c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
         f121c->set_color(c);
     }
     f121c->compute_normals();
