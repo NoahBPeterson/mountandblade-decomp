@@ -354,6 +354,7 @@ void label_refresh(MissionUi* self, tstring key)
         idx_y = g_game_vars.find(name);
         if (idx_y >= 0) {
             v[1] = g_game_vars.get_float(&idx_y);
+            any = true;                                     // 0x4e4e38: a found y also triggers the call
         }
         if (any)
             vt(self)->d22(v);
@@ -374,6 +375,7 @@ void label_refresh(MissionUi* self, tstring key)
         idx_y = g_game_vars.find(name);
         if (idx_y >= 0) {
             v[1] = g_game_vars.get_float(&idx_y);
+            any = true;                                     // 0x4e4e38: a found y also triggers the call
         }
         if (any)
             vt(self)->d25(v);
@@ -394,6 +396,7 @@ void label_refresh(MissionUi* self, tstring key)
         idx_y = g_game_vars.find(name);
         if (idx_y >= 0) {
             v[1] = g_game_vars.get_float(&idx_y);
+            any = true;                                     // 0x4e4e38: a found y also triggers the call
         }
         if (any)
             vt(self)->d27(v);
@@ -414,6 +417,7 @@ void label_refresh(MissionUi* self, tstring key)
         idx_y = g_game_vars.find(name);
         if (idx_y >= 0) {
             v[1] = g_game_vars.get_float(&idx_y);
+            any = true;                                     // 0x4e4e38: a found y also triggers the call
         }
         if (any)
             vt(self)->d28(v);
