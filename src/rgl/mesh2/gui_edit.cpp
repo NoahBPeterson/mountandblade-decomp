@@ -11,6 +11,7 @@
 #include "../../include/mat4.h"
 #include "../../include/ptr_vec.h"
 #include "../../include/vec.h"
+#include "../../include/ptr_tag.h"
 #include "../../include/phys_set.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -1037,7 +1038,7 @@ void MapDialog::clear_objects()
 // repeats z), so each call goes to the definition's own declaration through the five-parameter type of the original's call.
 void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al);                  // 0x4c3d90 (rec_tables.cpp)
 struct blk204;
-char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* al);                 // 0x4c1b60 (game/triggers/trigger_vec.cpp)
+char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* al, ptr_tag tag);    // 0x4c1b60 (game/triggers/trigger_vec.cpp)
 
 // @ 0x4c6eb0
 MapRecord* MapDialog::insert_a(MapRecord* arr, int index, int z)
