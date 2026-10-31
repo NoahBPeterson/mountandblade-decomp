@@ -184,7 +184,7 @@ void ItemRef::randomize_modifier(float quality)
             t == itp_type_pistol || t == itp_type_musket || t == itp_type_crossbow ||
             t == itp_type_bullets) {
             b.amount = 0;
-        } else if (t == itp_type_bow || t == itp_type_one_handed_wpn || t == itp_type_book) {
+        } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {   // 7, 1, 0x13 (0x48c7b1)
             int v = stat_1e8();
             *(unsigned short*)&m4 = 0;
             m4 |= (unsigned)v;
