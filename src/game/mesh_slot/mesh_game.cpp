@@ -445,7 +445,7 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
     }
     this->spawn(a);
     a->f2c8 = a6;
-    long long item = pick_slot_item(troop, 8, a6, cnt, arr, 0, (char*)&a6);
+    long long item = pick_slot_item(troop, 8, a5, cnt, arr, 0, (char*)&a5);   // 0x483b4f..0x483b6e: mask and found are both the a5 slot (esp+0x40), not a6
     if ((int)item >= 0) {
         int nid = this->create(m, (const ItemStackG*)&item, troop);
         AgentS* na = &POOL.pages[(unsigned)nid >> 4][nid & 0xf];
