@@ -159,6 +159,7 @@ class Replayer:
         m.dyn_next = M.DYN_BASE                         # the harness heap restarts per run: equal allocation
         m.dyn_sizes = {}                                # sequences give equal pointers on both sides
         m.rand_state = 1
+        m.ui_seed, m.ui_calls = 0, 0                    # user32 / FMOD query answers restart per run: both sides see the same answers
         m.alloc_fail, m.alloc_count = (), 0
         m.lazy = None
         m.trace_imports = []
