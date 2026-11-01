@@ -375,21 +375,10 @@ void ViewObj_s257f0::update()
     t = clamp01_s257f0(t);
     float inv = 1.0f - t;
 
-    float d0 = D.x * t, d1 = D.y * t, d2 = D.z * t;
-    m->s.x = inv * m->s.x + d0;
-    m->s.y = inv * m->s.y + d1;
-    m->s.z = inv * m->s.z + d2;
-    float e0 = E.x * t, e1 = E.y * t, e2 = E.z * t;
-    m->f.x = inv * m->f.x + e0;
-    m->f.y = inv * m->f.y + e1;
-    m->f.z = inv * m->f.z + e2;
-    float f0 = F.x * t, f1 = F.y * t, f2 = F.z * t;
-    m->u.x = inv * m->u.x + f0;
-    m->u.y = inv * m->u.y + f1;
-    m->u.z = inv * m->u.z + f2;
-    m->o.x = inv * m->o.x + G.x * t;
-    m->o.y = inv * m->o.y + G.y * t;
-    m->o.z = inv * m->o.z + G.z * t;
+    m->o = G * t + m->o * inv;
+    m->s = D * t + m->s * inv;
+    m->f = E * t + m->f * inv;
+    m->u = F * t + m->u * inv;
 
     m->orthonormalize();
     m_fc = *m;
