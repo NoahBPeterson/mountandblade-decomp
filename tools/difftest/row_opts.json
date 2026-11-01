@@ -874,5 +874,51 @@
       "--party-table=0.8"
     ],
     "why": "--item-table: item-type branches need g_items records of each type; the hints point the agent's slot item ids (this+0x1d0..) and slot indices (this+0x22c..) into the table; --party-table because the row reads g_game"
+  },
+  "mesh_3 0052da20": {
+    "args": [
+      "--typed-share",
+      "1.0",
+      "--inputs",
+      "3000",
+      "--extra-inputs",
+      "1000",
+      "--seed",
+      "7"
+    ],
+    "why": "pick_edge's ratio branch needs >= 2 typed vertices both under 0.1: full typed share, more inputs"
+  },
+  "mesh_3 0052dc00": {
+    "args": [
+      "--typed-share",
+      "1.0",
+      "--inputs",
+      "3000",
+      "--extra-inputs",
+      "1000",
+      "--seed",
+      "7",
+      "--plateau",
+      "5000"
+    ],
+    "why": "same shape as 0x52da20; needs a longer plateau"
+  },
+  "static_init 005484b0": {
+    "args": [
+      "--hint",
+      "g:a181fc=400100@0.7",
+      "--hint",
+      "g:a18200=400100@0.7"
+    ],
+    "why": "the static vector's first/last at 0xa181fc must be non-null to reach the destroy loop"
+  },
+  "static_init 00548520": {
+    "args": [
+      "--hint",
+      "g:a180ec=400100@0.7",
+      "--hint",
+      "g:a180f0=400100@0.7"
+    ],
+    "why": "the static vector's first/last at 0xa180ec must be non-null to reach the destroy loop"
   }
 }
