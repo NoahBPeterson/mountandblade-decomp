@@ -1,6 +1,6 @@
 {
-"when": "2026-11-01T12:26:00-06:00",
-"commit": "4811d30",
+"when": "2026-11-01T17:37:07-06:00",
+"commit": "55691ca",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,7 +9,7 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 473,
+"pass": 469,
 "weak": 386,
 "fail": 7,
 "inputs": 27,
@@ -18,7 +18,7 @@
 "comdatdiff": 10,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 168965,
+"pass_sz": 167732,
 "weak_sz": 587821,
 "fail_sz": 23581,
 "inputs_sz": 25127,
@@ -5742,13 +5742,6 @@
 "category": "pass",
 "size": 77
 },
-"004e9d10": {
-"module": "save_records",
-"file": "src/game/char_sheet/save_records.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 718
-},
 "004ea030": {
 "module": "save_records",
 "file": "src/game/char_sheet/save_records.nonmatching.txt",
@@ -7386,13 +7379,6 @@
 "category": "weak",
 "size": 2749
 },
-"0052da20": {
-"module": "mesh_3",
-"file": "src/game/mission5/mesh_3.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 188
-},
 "0052dae0": {
 "module": "mesh_3",
 "file": "src/game/mission5/mesh_3.nonmatching.txt",
@@ -7400,26 +7386,12 @@
 "category": "pass",
 "size": 282
 },
-"0052dc00": {
-"module": "mesh_3",
-"file": "src/game/mission5/mesh_3.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 188
-},
 "0052dcc0": {
 "module": "mesh_3",
 "file": "src/game/mission5/mesh_3.nonmatching.txt",
 "verdict": "PASS-FP",
 "category": "pass",
 "size": 636
-},
-"0052df40": {
-"module": "mesh_3",
-"file": "src/game/mission5/mesh_3.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 139
 },
 "0052dfd0": {
 "module": "mesh_3",
