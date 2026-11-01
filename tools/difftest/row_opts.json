@@ -594,9 +594,13 @@
   },
   "mission_5 00529c30": {
     "args": [
-      "--party-table"
+      "--party-table",
+      "--inputs",
+      "1000",
+      "--extra-inputs",
+      "500"
     ],
-    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable; a match only at the last history element needs more inputs"
   },
   "mission_ctx 00513f80": {
     "args": [
@@ -994,5 +998,121 @@
       "this+1c=fffffff6,fffffff0,fffffffb@0.7"
     ],
     "why": "the value lands in [0,1) only for a small negative this+0x1c"
+  },
+  "world_grid 00424cc0": {
+    "args": [
+      "--hint",
+      "arg0=0,1@0.7"
+    ],
+    "why": "the empty-vector path needs a size argument of 0"
+  },
+  "psys 00414960": {
+    "args": [
+      "--hint",
+      "this+10=40010400@1.0",
+      "--hint",
+      "this+14=400104c8@1.0"
+    ],
+    "why": "places a two-particle vector inside this so the particle loop runs more than once"
+  },
+  "mission_ui 00489e70": {
+    "args": [
+      "--hint",
+      "arg0=ffffffff,fffffffe@0.7",
+      "--hint",
+      "arg1=0,1@0.7",
+      "--typed-share",
+      "0.8"
+    ],
+    "why": "lo+rand%(hi-lo) can be -1 only with a negative lo"
+  },
+  "world_data 00490160": {
+    "args": [
+      "--time-limit",
+      "3000"
+    ],
+    "why": "covers every edge but needs more than the default time"
+  },
+  "party_screen 00504ba0": {
+    "args": [
+      "--hint",
+      "g:A44244=59a1fc@1",
+      "--hint",
+      "g:A4424C=10@1",
+      "--hint",
+      "g:A70240=1@1",
+      "--hint",
+      "g:A44260=596b98@1",
+      "--hint",
+      "arg3=2@1",
+      "--hint",
+      "arg1=0@1",
+      "--hint",
+      "this+4b8=40066666@1"
+    ],
+    "why": "a config-table entry for party_b_member_h (key 0x59a1fc, value \"1\") and a 2.1 width reach the clamp"
+  },
+  "agent_combat 0043e190": {
+    "args": [
+      "--hint",
+      "arg0=3e8@1",
+      "--hint",
+      "this+64=0@1",
+      "--hint",
+      "this+68=5@1",
+      "--hint",
+      "this+58=6000000@1",
+      "--hint",
+      "g:6000000=6000100@1",
+      "--hint",
+      "g:6000004=0@1",
+      "--hint",
+      "g:6000108=3e8@1"
+    ],
+    "why": "a bucket vector in spare .bss holding a node whose key equals the argument"
+  },
+  "fx_anim 00421df0": {
+    "args": [
+      "--hint",
+      "this+0=1@1",
+      "--hint",
+      "this+4=6000000@1",
+      "--hint",
+      "this+58=0@1",
+      "--hint",
+      "g:60001a0=6001000@1",
+      "--hint",
+      "g:60001a4=6001004@1",
+      "--hint",
+      "g:6001000=6002000@1",
+      "--hint",
+      "g:60020b4=6003000@1",
+      "--hint",
+      "g:60020b8=6003004@1"
+    ],
+    "why": "a node chain in spare .bss with a non-empty vector at node+0xb4"
+  },
+  "resmgr 0041b960": {
+    "args": [
+      "--hint",
+      "arg1=6000000@1",
+      "--hint",
+      "this+24=6000100@1",
+      "--hint",
+      "this+28=6000118@1",
+      "--hint",
+      "g:6000100=6000200@1",
+      "--hint",
+      "g:6000104=6000200@1",
+      "--hint",
+      "g:6000108=6000200@1",
+      "--hint",
+      "g:600010c=6000200@1",
+      "--hint",
+      "g:6000110=6000200@1",
+      "--hint",
+      "g:6000114=6000200@1"
+    ],
+    "why": "six passing entries: VC7.1 vector growth reaches spare capacity on the 6th push"
   }
 }

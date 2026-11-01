@@ -445,7 +445,8 @@ void GameIo::export_character(outfile* stream)
         skill = g_skills[i].name;
         skill.spaces_to_underscores();
         skill.to_lower();
-        sprintf(line, "%s = %ld\n", skill.c_str(), troop->nibble(i));
+        int level = troop->nibble(i);
+        sprintf(line, "%s = %ld\n", skill.c_str(), level);
         stream->write(line);
     }
     stream->write("\n");
@@ -453,18 +454,17 @@ void GameIo::export_character(outfile* stream)
     char weapon_text[0x100];
     tstring weapon_name;
     for (int i = 0; i < 7; i++) {
-        switch (i) {
-        case 0: strcpy(weapon_text, "one_handed_weapons"); break;
-        case 1: strcpy(weapon_text, "two_handed_weapons"); break;
-        case 2: strcpy(weapon_text, "polearms"); break;
-        case 3: strcpy(weapon_text, "archery"); break;
-        case 4: strcpy(weapon_text, "crossbows"); break;
-        case 5: strcpy(weapon_text, "throwing"); break;
-        case 6: strcpy(weapon_text, "firearms"); break;
-        }
+        if (i == 0) strcpy(weapon_text, "one_handed_weapons");
+        else if (i == 1) strcpy(weapon_text, "two_handed_weapons");
+        else if (i == 2) strcpy(weapon_text, "polearms");
+        else if (i == 3) strcpy(weapon_text, "archery");
+        else if (i == 4) strcpy(weapon_text, "crossbows");
+        else if (i == 5) strcpy(weapon_text, "throwing");
+        else if (i == 6) strcpy(weapon_text, "firearms");
         weapon_name.assign(weapon_text);
         weapon_name.spaces_to_underscores();
-        sprintf(line, "%s = %ld\n", weapon_name.c_str(), (int)troop->f80[i]);
+        int points = (int)troop->f80[i];
+        sprintf(line, "%s = %ld\n", weapon_name.c_str(), points);
         stream->write(line);
     }
     stream->write("\n");
