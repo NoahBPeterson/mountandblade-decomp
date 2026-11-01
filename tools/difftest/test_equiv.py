@@ -807,3 +807,86 @@ def test_regression_inputs_rerun():
         assert r2["first_mismatch"]["input"] == 0 and r2["first_mismatch"]["origin"] == "regress", r2
     finally:
         os.environ.pop("DIFFTEST_NO_CACHE", None)
+
+
+# ---------------------------------------------------------------------- (g) --prove-dead (deadedge.py)
+
+def _prove(hexcode):
+    import deadedge
+    c = cfg_of(bytes.fromhex(hexcode))
+    return {e: v[0] for e, v in deadedge.prove_dead(c, set(c.edges), budget_s=60).items()}
+
+
+def test_prove_dead_masked_compare():
+    # ebx = [esp+4] & 3; cmp ebx,5; ja: never taken (ebx <= 3); the fall-through is reachable
+    r = _prove("8b5c2404" "83e303" "83fb05" "7702" "9090" "c3")
+    assert r == {(0x100a, 0x100e): "dead", (0x100a, 0x100c): "unknown"}, r
+
+
+def test_prove_dead_if_chain_last_compare():
+    # the options_panel 0x4d86d0 shape: ebx in 0..3 tested against 0,1,2, then `cmp ebx,3; jne` cannot be taken
+    r = _prove("8b5c2404" "83e303" "83fb00" "7410" "83fb01" "740b" "83fb02" "7406" "83fb03" "7501" "90" "c3")
+    assert r[(0x1019, 0x101c)] == "dead", r
+    assert r[(0x1019, 0x101b)] == "unknown", r
+    assert [e for e, v in r.items() if v == "dead"] == [(0x1019, 0x101c)], r
+
+
+def test_prove_dead_rare_input_branch_not_proven():
+    # cmp eax,0x12345678; je on an argument: rare but reachable
+    r = _prove("8b442404" "3d78563412" "7402" "9090" "c3")
+    assert all(v == "unknown" for v in r.values()), r
+
+
+def test_prove_dead_call_result_not_proven():
+    # call; test eax,eax; jne: the result is a fresh symbol
+    r = _prove("e800000000" "85c0" "7502" "9090" "c3")
+    assert all(v == "unknown" for v in r.values()), r
+    # xor eax,eax before the call does not survive it either
+    r = _prove("31c0" "e800000000" "85c0" "7502" "9090" "c3")
+    assert all(v == "unknown" for v in r.values()), r
+    # a callee-saved register does (documented assumption): ebx = 5 across the call
+    r = _prove("bb05000000" "e800000000" "83fb05" "7501" "90" "c3")
+    assert r[(0x100d, 0x1010)] == "dead" and r[(0x100d, 0x100f)] == "unknown", r
+
+
+def test_prove_dead_loop_carried_not_overproven():
+    # eax = 0; L: cmp eax,1; je done; inc eax; jmp L: eax == 1 on the second iteration, so both edges are feasible
+    r = _prove("31c0" "83f801" "7403" "40" "ebf8" "c3")
+    assert all(v == "unknown" for v in r.values()), r
+    # ebx = 7; L: inc ebx; dec ecx; jnz L; cmp ebx,7; jne: ebx changes in the loop, nothing proven about the exit
+    r = _prove("bb07000000" "43" "49" "75fc" "83fb07" "7501" "90" "c3")
+    assert r[(0x100c, 0x100f)] == "unknown", r
+    # ebx = 7; L: dec ecx; jnz L; cmp ebx,7; jne: ebx is a loop invariant, so the jne cannot be taken
+    r = _prove("bb07000000" "49" "75fd" "83fb07" "7501" "90" "c3")
+    assert r[(0x100b, 0x100e)] == "dead", r
+    assert r[(0x1006, 0x1005)] == "unknown", r
+
+
+def test_prove_dead_counter_loop_bound():
+    # ebx = 0; L: cmp ebx,7; jae done; cmp ebx,9; ja X; inc ebx; X: jmp L: the head has ebx <= 7, the body ebx <= 6
+    r = _prove("31db" "83fb07" "730a" "83fb09" "7701" "43" "ebf3" "90" "90" "c3")
+    assert r[(0x100a, 0x100d)] == "dead", r
+    assert r[(0x1005, 0x1011)] == "unknown", r          # ebx == 7 does reach the exit
+    # the same loop with cmp ebx,5: ebx == 6 takes the ja, so it is not dead
+    r = _prove("31db" "83fb07" "730a" "83fb05" "7701" "43" "ebf3" "90" "90" "c3")
+    assert r[(0x100a, 0x100d)] == "unknown", r
+
+
+def test_prove_dead_address_taken_label_gets_unknown_entry():
+    import deadedge
+    # ebx = 5; push 0x100a; L(100a): cmp ebx,5; jne: dead on the straight path, but L's address is taken (a catch
+    # continuation is entered by the EH runtime with other registers), so nothing may be proven there
+    code = bytes.fromhex("bb05000000" "680a100000" "83fb05" "7501" "90" "c3")
+    c = cfg_of(code)
+    assert deadedge.prove_dead(c, {(0x100d, 0x1010)})[(0x100d, 0x1010)][0] == "dead"
+    extra = deadedge.code_refs(code, 0x1000, set(c.insns))
+    assert extra == {0x100a}, extra
+    assert deadedge.prove_dead(c, {(0x100d, 0x1010)}, extra_entries=extra)[(0x100d, 0x1010)][0] == "unknown"
+
+
+def test_prove_dead_covered_edge_refutes_model():
+    import deadedge
+    c = cfg_of(bytes.fromhex("8b5c2404" "83e303" "83fb05" "7702" "9090" "c3"))
+    # claiming the (infeasible) ja edge was covered must make the prover refuse everything
+    r = deadedge.prove_dead(c, {(0x100a, 0x100c)}, covered={(0x100a, 0x100e)}, budget_s=60)
+    assert all(v[0] == "unknown" for v in r.values()), r

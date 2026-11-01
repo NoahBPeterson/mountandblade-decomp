@@ -141,7 +141,7 @@ class Cfg:
                 work.append(dst)
         return got
 
-    def unreachable(self, covered, blocked_calls, nan=False):
+    def unreachable(self, covered, blocked_calls, nan=False, extra=None):
         """{edge: reason} for uncovered edges the harness cannot reach (see the module docstring).
         blocked_calls: {call-site addr: description}."""
         why = {}
@@ -150,6 +150,8 @@ class Cfg:
                 why[e] = "infeasible: no x87 comparison outcome takes this branch"
             elif not nan:
                 why[e] = "nan-only: only an unordered (NaN) x87 comparison takes this branch (no NaN inputs without --nan)"
+        for e, r in (extra or {}).items():
+            why.setdefault(e, r)
         base = set(why)
         reach = self.reachable(base, set(blocked_calls))
         for e in self.edges:

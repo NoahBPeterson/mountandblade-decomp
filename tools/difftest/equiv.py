@@ -6558,6 +6558,9 @@ def _test_function(sid, va, opts, log=print):
         all_insns = len(covered) >= total or not getattr(opts, "require_all", False)
         if valid >= opts.min_valid and not missed and all_insns:
             v, why = "PASS", "%d valid inputs, all edges covered (%s), %.1f%% insns" % (valid, edges_txt, cov)
+            npd = sum(len(ecov[nm].get("proven_dead", ())) for nm in ("orig", "ours"))
+            if npd:
+                why += "; %d edge(s) proven dead by z3 (--prove-dead)" % npd
         else:
             need = []
             if valid < opts.min_valid:
@@ -6670,6 +6673,9 @@ def faulting_edges(side, o):
     return out
 
 
+DE_CLOBBER = {0x539680, 0x53d01c, 0x5363e0}      # __EH_prolog, __SEH_prolog, __chkstk: they clobber every register
+
+
 def edge_report(runner, side, opts):
     """Edge coverage of one side: totals, the uncovered edges the harness cannot reach (each with its
     reason) and the remaining missed edges (which make the verdict WEAK)."""
@@ -6677,6 +6683,31 @@ def edge_report(runner, side, opts):
     allx = set(cfg.edges)
     cov = side.edges & allx
     unr = cfg.unreachable(cov, runner.blocked_calls(side), nan=opts.nan)
+    proven, pd_unknown = {}, {}
+    if getattr(opts, "prove_dead", False):
+        # an uncovered edge counts as covered only if z3 proves its branch condition unsatisfiable on every path that
+        # reaches it (deadedge.py); everything not proven stays missed. The proved edges join the unreachable set (so
+        # edges reachable only through them follow) with reason "proven-dead: ..."
+        import deadedge as DE
+        cand = allx - cov - set(unr)
+        lo, hi = side.span
+        rd = runner.img.read if side is runner.orig else runner.m.read
+        try:
+            code = bytes(rd(lo, hi - lo))
+            extra = DE.code_refs(code, lo, set(cfg.insns))
+        except Exception:
+            extra = set(cfg.insns) - {cfg.entry}      # cannot sweep the bytes: every block may have an unseen entry
+        # ours may call its own copy of a prolog helper: if the original calls one, ours clobbers everything at every call
+        tainted = side is runner.ours and any(
+            i.id == CX.X86_INS_CALL and i.operands and i.operands[0].type == CX.X86_OP_IMM
+            and (i.operands[0].imm & 0xFFFFFFFF) in DE_CLOBBER for i in runner.orig.cfg.insns.values())
+        res = DE.prove_dead(cfg, cand, cov, clobber_all=(lambda t: True) if tainted else (lambda t: t in DE_CLOBBER),
+                            budget_s=getattr(opts, "prove_dead_s", 240), extra_entries=extra)
+        proven = {e: v[1] for e, v in res.items() if v[0] == "dead"}
+        pd_unknown = {e: v[1] for e, v in res.items() if v[0] != "dead"}
+        if proven:
+            unr = cfg.unreachable(cov, runner.blocked_calls(side), nan=opts.nan,
+                                  extra={e: "proven-dead: " + n for e, n in proven.items()})
     # an edge into the faulting block of inputs on which BOTH builds fault, that no valid run took: the path
     # cannot complete -- the NULL-vector arm of `n = first ? (last - first) >> 2 : 0` that then reads
     # first[n - 1] (mission_4 0x48f480) -- so it is not coverage a valid input could add
@@ -6690,6 +6721,9 @@ def edge_report(runner, side, opts):
             "pct": round(100.0 * len(cov) / req, 1) if req else 100.0,
             "unreachable": [{"edge": CF.fmt_edge(e), "reason": unr[e]} for e in sorted(unr)],
             "missed_n": len(missed), "missed": [CF.fmt_edge(e) for e in missed[:None if getattr(opts, "full_edges", False) else 64]],
+            **({"proven_dead": [{"edge": CF.fmt_edge(e), "proof": n} for e, n in sorted(proven.items())],
+                "prove_unknown": [{"edge": CF.fmt_edge(e), "reason": pd_unknown.get(e, "")} for e in missed]}
+               if getattr(opts, "prove_dead", False) else {}),
             **({"covered_edges": [CF.fmt_edge(e) for e in sorted(cov)]} if getattr(opts, "full_edges", False) else {})}
 
 
@@ -6846,6 +6880,11 @@ def parse_args(argv=None):
     ap.add_argument("--no-regress", action="store_true",
                     help="do not run (or record) the row's regression inputs (work/difftest/regress: every input "
                          "that ever made the row mismatch, run first)")
+    ap.add_argument("--prove-dead", action="store_true",
+                    help="an uncovered edge counts as covered if z3 proves its branch condition unsatisfiable on every "
+                         "path reaching it (deadedge.py, run on the original and on ours separately); the proofs and "
+                         "the reasons the rest are unknown are in the JSON (edges.*.proven_dead / prove_unknown)")
+    ap.add_argument("--prove-dead-s", type=float, default=240, help="z3 time budget per side for --prove-dead")
     ap.add_argument("--full-edges", action="store_true",
                     help="JSON: every missed edge (not the first 64) and the covered edges of each side")
     ap.add_argument("--alias", type=float, default=0.0, help="probability that a generated pointer aliases an argument object")
@@ -6924,6 +6963,10 @@ def print_result(r):
                 groups = {}
                 for u in e["unreachable"]:
                     groups.setdefault(u["reason"], []).append(u["edge"])
+                for pdx in e.get("proven_dead", ()):
+                    print("      %s PROVEN DEAD %s: %s" % (nm, pdx["edge"], pdx["proof"]))
+                for pdx in e.get("prove_unknown", ()):
+                    print("      %s not proven %s: %s" % (nm, pdx["edge"], pdx["reason"]))
                 for why, es in groups.items():
                     print("      %s unreachable (%d): %s [%s%s]" % (nm, len(es), why, " ".join(es[:4]), " ..." if len(es) > 4 else ""))
         if r.get("fp_tol"):
