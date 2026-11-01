@@ -80,6 +80,23 @@ _md.detail = True
 
 # ------------------------------------------------------------------ the original image
 
+_EXTENT_MERGE = None
+
+
+def _extent_merge():
+    global _EXTENT_MERGE
+    if _EXTENT_MERGE is None:
+        _EXTENT_MERGE = set()
+        try:
+            for line in open(os.path.join(ROOT, "symbols", "extent_merge.txt")):
+                p = line.split("#", 1)[0].split()
+                if p:
+                    _EXTENT_MERGE.add(int(p[0], 16))
+        except OSError:
+            pass
+    return _EXTENT_MERGE
+
+
 class Image:
     """Static facts about the analysis image shared by every test."""
 
@@ -146,6 +163,10 @@ class Image:
 
     def func_extent(self, va):
         i = bisect.bisect_right(self.starts, va)
+        # Ghidra function starts that are really interior continuations of the preceding function
+        # (symbols/extent_merge.txt) do not end its extent: edge totals and coverage count the whole body.
+        while i < len(self.starts) and self.starts[i] in _extent_merge():
+            i += 1
         end = self.starts[i] if i < len(self.starts) else va + 0x1000
         data = self.read(va, end - va)
         n = len(data)

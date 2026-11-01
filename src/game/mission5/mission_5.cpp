@@ -589,7 +589,9 @@ void Screen_s261e0::tick(float dt)
             if ((unsigned)g_deque_s261e0.mapsize <= page)
                 page -= (unsigned)g_deque_s261e0.mapsize;
             int* blk = (int*)g_deque_s261e0.map[page];
-            b6 = (blk[sub] == 0);
+            b6 = false;
+            if (blk[sub] == 0)
+                b6 = true;
         }
     }
     if (g_pending_action != -1) {
@@ -659,10 +661,12 @@ void Screen_s261e0::tick(float dt)
         }
         if (g_keytable_s261e0.clicked(0x1f) || g_keytable_s261e0.clicked(0x20) || g_keytable_s261e0.clicked(0x21) ||
             g_keytable_s261e0.clicked(0x22) || g_keytable_s261e0.clicked(0x23)) {
-            bool b3 = (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157] || ((int*)((char*)&g_keyboard + 0xc))[42] || ((int*)((char*)&g_keyboard + 0xc))[54]);
-            if (b3)
+            bool mod = (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157] || ((int*)((char*)&g_keyboard + 0xc))[42] || ((int*)((char*)&g_keyboard + 0xc))[54]);
+            bool b3 = false;
+            if (mod) {
+                b3 = true;
                 *(int*)((char*)g_game_s261e0 + 0x1a1d4) = 1;
-            else
+            } else
                 *(int*)((char*)g_game_s261e0 + 0x1a1d4) = 0;
 
             int kind = page_agent_s261e0(g_mission_s261e0->local_id)->f1c4;
@@ -672,26 +676,36 @@ void Screen_s261e0::tick(float dt)
 
             if (g_keytable_s261e0.clicked(0x23)) {
                 bool changed = false;
-                for (int i = 0; i < 3; i++) {
-                    int* p = (int*)(base + 0x4c + i * 0x6c);
+                int* p = (int*)(base + 0x4c);
+                for (int m = 3; m != 0; m--) {                // the original counts down (cl unrolls an up-counting constant loop)
                     if (*p == 0) {
                         *p = 1;
                         changed = true;
                     } else {
                         *p = 0;
                     }
+                    p = (int*)((char*)p + 0x6c);
                 }
                 if (!changed) {
-                    for (int i = 0; i < 3; i++)
-                        *(int*)(base + 0x4c + i * 0x6c) = 1;
+                    int* q = (int*)(base + 0x4c);
+                    for (int m = 3; m != 0; m--) {
+                        *q = 1;
+                        q = (int*)((char*)q + 0x6c);
+                    }
                 }
             } else if (g_keytable_s261e0.clicked(0x1f)) {
-                for (int i = 0; i < 3; i++)
-                    *(int*)(base + 0x4c + i * 0x6c) = 1;
+                int* q = (int*)(base + 0x4c);
+                for (int m = 3; m != 0; m--) {
+                    *q = 1;
+                    q = (int*)((char*)q + 0x6c);
+                }
             } else {
                 if (!b3) {
-                    for (int i = 0; i < 3; i++)
-                        *(int*)(base + 0x4c + i * 0x6c) = 0;
+                    int* q = (int*)(base + 0x4c);
+                    for (int m = 3; m != 0; m--) {
+                        *q = 0;
+                        q = (int*)((char*)q + 0x6c);
+                    }
                 }
                 int idx = 0;
                 if (g_keytable_s261e0.clicked(0x20))
@@ -704,9 +718,11 @@ void Screen_s261e0::tick(float dt)
             }
 
             bool all = true;
-            for (int i = 0; i < 3; i++) {
-                if (*(int*)(base + 0x4c + i * 0x6c) == 0)
+            int* ap = (int*)(base + 0x4c);
+            for (int m = 3; m != 0; m--) {
+                if (*ap == 0)
                     all = false;
+                ap = (int*)((char*)ap + 0x6c);
             }
             if (all) {
                 g_gui_s261e0.add(*g_strtable_s261e0.lookup(&tstring("ui_everyone_hear_me")), 0xffddee88);
@@ -787,7 +803,7 @@ void Screen_s261e0::tick(float dt)
             int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
             for (int i = 0; i < *slots; i++)
                 ((SoundSlot_s261e0*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x16);
-            if ((*(int*)((char*)&g_script + 0x18)) != 0 || (*(int*)((char*)&g_script + 0x1c)) != 0)
+            if (((*(int*)((char*)&g_script + 0x18)) | (*(int*)((char*)&g_script + 0x1c))) != 0)
                 flag13 = 1;
         }
     }
@@ -808,7 +824,7 @@ void Screen_s261e0::tick(float dt)
         (*(int*)((char*)&g_script + 0x18)) = 0;
         (*(int*)((char*)&g_script + 0x1c)) = 0;
         ((SoundBank_s261e0*)rec_base_s261e0(g_mission_s261e0->cur_rec))->update_all(-0x15);
-        if ((*(int*)((char*)&g_script + 0x18)) != 0 || (*(int*)((char*)&g_script + 0x1c)) != 0)
+        if (((*(int*)((char*)&g_script + 0x18)) | (*(int*)((char*)&g_script + 0x1c))) != 0)
             b6 = false;
     }
 
@@ -925,7 +941,9 @@ void Screen_s261e0::tick(float dt)
             f2f2 = 1;
             char* rec = (char*)g_game_s261e0->chars;
             int v = (unsigned char)rec[0x7a] & 0xf;
-            if (v > g_clamp_max)
+            if (v < 0)                                    // (always false after the mask; the original tests it: and eax,0xf / jge)
+                v = 0;
+            else if (v > g_clamp_max)
                 v = g_clamp_max;
             f2f4 = *(int*)(rec + 0x58) + 0x23 + v * 2;
             g_w_a739bc_s261e0->f18 = 0xe;

@@ -599,8 +599,8 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 static __forceinline bool any_pressed_s261e0(const int* keys, int n)
 {
     bool r = false;
-    for (int i = 0; i < n; i++) {
-        int k = keys[i];
+    for (const int* p = keys; (int)p < (int)(keys + n); p++) {            // the original walks a pointer to a fixed end (cl unrolls the counted form)
+        int k = *p;
         if (k >= 0 && ((int*)((char*)&g_keyboard + 0xc))[k] != 0 && ((int*)((char*)&g_keyboard + 0x40c))[k] == 0)
             r = true;
     }

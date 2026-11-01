@@ -1788,7 +1788,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
         int zero = 0;
         float w = measure(buf, total, &zero, &total) * sc[0] * 1.001f;
         float avail = *xmax - *xmin;
-        if (avail < w && 0.0f < w) {
+        if (w > avail && w > 0.0f) {
             float k = avail / w;
             sc[0] *= k;
             sc[1] *= k;
@@ -1856,16 +1856,16 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                             name.push_back((char)buf[e]);
                         name.to_lower();
                         int code;
-                        if (name.find(tstring("color"), 0) == 0) {
+                        if (name.find(tstring("trp="), 0) == 0) {
                             code = 1;
                             VEC_INT_PUSH_BACK(codes, code);
-                        } else if (name.find(tstring("size"), 0) == 0) {
+                        } else if (name.find(tstring("fac="), 0) == 0) {
                             code = 2;
                             VEC_INT_PUSH_BACK(codes, code);
-                        } else if (name.find(tstring("font"), 0) == 0) {
+                        } else if (name.find(tstring("p="), 0) == 0) {
                             code = 3;
                             VEC_INT_PUSH_BACK(codes, code);
-                        } else if (name.find(tstring("alpha"), 0) == 0) {
+                        } else if (name.find(tstring("qst="), 0) == 0) {
                             code = 4;
                             VEC_INT_PUSH_BACK(codes, code);
                         }
@@ -1894,26 +1894,41 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                     if (ch == 9) {
                         int tab = (int)((inv_adv * pos.x - xpos) * 4.0f);
                         pos.x = (((float)tab + 1.0f) * 0.25f + xpos) * sc[0];
-                    } else {
-                        if (in_tag) {
-                            if (i2 == y) {                        // a span continues on a new row
-                                VEC_INT_PUSH_BACK(spare, spare->first[(spare->first ? (unsigned)(spare->last - spare->first) : 0) - 1]);
-                                VEC_INT_PUSH_BACK(codes, codes->first[(codes->first ? (unsigned)(codes->last - codes->first) : 0) - 1]);
-                                rects_b->push_back(pos);
-                                VEC_INT_PUSH_BACK(tags, tag_index);
-                            }
+                    } else if (in_tag) {
+                        if (i2 == y) {                            // a span continues on a new row
+                            VEC_INT_PUSH_BACK(spare, spare->first[(spare->first == 0 ? 0u : (unsigned)(spare->last - spare->first)) - 1]);
+                            VEC_INT_PUSH_BACK(codes, codes->first[(codes->first == 0 ? 0u : (unsigned)(codes->last - codes->first)) - 1]);
+                            rects_b->push_back(pos);
+                            VEC_INT_PUSH_BACK(tags, tag_index);
                         }
                         const Glyph* g;
-                        if (ch < 0x200)
-                            g = &ascii[ch];
-                        else {
+                        if (ch >= 0x200) {
                             GlyphNode* node;
                             int key = ch;
                             map.lower_bound(&node, &key);
-                            g = node == map.head ? &dflt : &node->val;
-                        }
+                            if (node != map.head)
+                                g = &node->val;
+                            else
+                                g = &dflt;
+                        } else
+                            g = &ascii[ch];
                         pos.x += sc[0] * g->f10;
-                        draw_glyph(ch, &pos, sc, m, (int)(in_tag ? (cur == tag_index ? col_hot : col_link) : col_text));
+                        draw_glyph(ch, &pos, sc, m, (int)(cur == tag_index ? col_hot : col_link));
+                        pos.x += sc[0] * g->f18;
+                    } else {
+                        const Glyph* g;
+                        if (ch >= 0x200) {
+                            GlyphNode* node;
+                            int key = ch;
+                            map.lower_bound(&node, &key);
+                            if (node != map.head)
+                                g = &node->val;
+                            else
+                                g = &dflt;
+                        } else
+                            g = &ascii[ch];
+                        pos.x += sc[0] * g->f10;
+                        draw_glyph(ch, &pos, sc, m, (int)col_text);
                         pos.x += sc[0] * g->f18;
                     }
                 }

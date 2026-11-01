@@ -106,6 +106,13 @@ def main():
 
     orig = Original()
     fstarts, _ = load_funcs()
+    # interior continuations the index lists as starts (symbols/extent_merge.txt) do not end the previous function
+    _em = set()
+    for _l in open(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "symbols", "extent_merge.txt")):
+        _p = _l.split("#", 1)[0].split()
+        if _p:
+            _em.add(int(_p[0], 16))
+    fstarts = [a for a in fstarts if a not in _em]
     best, sym_best = {}, {}
     names = [f[0] for f in funcs]
     consts = coff_constants(obj)
