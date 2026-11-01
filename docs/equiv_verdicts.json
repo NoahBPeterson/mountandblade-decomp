@@ -1,6 +1,6 @@
 {
 "when": "2026-11-01T12:26:00-06:00",
-"commit": "ffc4b36",
+"commit": "4811d30",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -111,7 +111,36 @@
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
 "verdict": "FAIL",
 "category": "fail",
-"size": 2993
+"size": 2993,
+"reason": "88/236 valid inputs mismatched; first: call #4 (depth 1); invalid-object: 1 input(s) discarded (declared face::count in [1..4]); e.g. face::count=1252327424 outside [1..4]; the local v[4] walk of a face (shape.h: vector4 w[4], count +0xb0)",
+"first_mismatch": {
+"input": 0,
+"profile": "pointery",
+"origin": "regress",
+"observable": "call #4 (depth 1)",
+"kind": "value",
+"orig": "00407e00 ?normalize@rgl@@YAXAAUvector4@1@ABU21@@Z ecx=- args=[STK, STK]",
+"ours": "(none)",
+"detail": "callee, this/edx and stack args (normalised)",
+"args": [
+"00000009",
+"00000044",
+"8040b5d2",
+"40050000",
+"40060000"
+],
+"regs": {
+"eax": "4afc00a4",
+"ecx": "00000000",
+"edx": "47ad0000"
+},
+"fake_calls": 0,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/shapes_0040b0f0.pkl"
+}
 },
 "0040c1b1": {
 "module": "shapes",
@@ -314,7 +343,8 @@
 "file": "src/rgl/particles/mesh_obj.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 787
+"size": 787,
+"reason": "only 0/400 inputs valid (discards: fault(read)=400)"
 },
 "00412150": {
 "module": "mesh_obj",
@@ -2393,7 +2423,8 @@
 "file": "src/game/terrain_b/terrain_b.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 33
+"size": 33,
+"reason": "not a verdict: 8 of 8 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "00472f90": {
 "module": "terrain_b",
@@ -2708,14 +2739,44 @@
 "file": "src/game/mesh_slot/mesh_char.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 285
+"size": 285,
+"reason": "not a verdict: 2 input(s) ran the emulated heap out of address space (2 in the original's pass, 0 in ours); neither run has a comparable end state"
 },
 "0047ff60": {
 "module": "mesh_terrain",
 "file": "src/game/mesh_slot/mesh_terrain.nonmatching.txt",
 "verdict": "FAIL",
 "category": "fail",
-"size": 3654
+"size": 3654,
+"reason": "4/200 valid inputs mismatched; first: memory heap @50008670 (fp-tol)",
+"first_mismatch": {
+"input": 39,
+"profile": "zeroish",
+"origin": "steer",
+"observable": "memory heap @50008670 (fp-tol)",
+"kind": "value",
+"orig": "-",
+"ours": "-",
+"detail": "orig 0.0 ours 0.9999936819076538 reference 0.0: err_orig 0 err_ours 1 (1.68e+07 ulp)",
+"args": [
+"0000000e",
+"00000003",
+"8047b7b0",
+"00000007",
+"c11bfd8c"
+],
+"regs": {
+"eax": "00000000",
+"ecx": "40010000",
+"edx": "00000000"
+},
+"fake_calls": 1,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/mesh_terrain_0047ff60.pkl"
+}
 },
 "00480db0": {
 "module": "mesh_terrain",
@@ -2736,14 +2797,16 @@
 "file": "src/game/mesh_slot/mesh_terrain.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 193
+"size": 193,
+"reason": "not a verdict: 5 of 5 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "00481d10": {
 "module": "mesh_terrain",
 "file": "src/game/mesh_slot/mesh_terrain.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 1111
+"size": 1111,
+"reason": "only 0/400 inputs valid (discards: budget=295, fault(pool-limit)=85, fault(write)=20)"
 },
 "00482170": {
 "module": "mesh_terrain",
@@ -2771,7 +2834,8 @@
 "file": "src/game/mesh_slot/mesh_game.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 1378
+"size": 1378,
+"reason": "not a verdict: 2 input(s) ran the emulated heap out of address space (2 in the original's pass, 0 in ours); neither run has a comparable end state"
 },
 "00483f60": {
 "module": "mesh_game",
@@ -2785,7 +2849,8 @@
 "file": "src/game/mesh_slot/mesh_start.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 12294
+"size": 12294,
+"reason": "not a verdict: 1 input(s) ran the emulated heap out of address space (1 in the original's pass, 0 in ours); neither run has a comparable end state"
 },
 "004875a0": {
 "module": "mesh_start",
@@ -3044,7 +3109,8 @@
 "file": "src/game/mission_ui2/mission_3.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 518
+"size": 518,
+"reason": "only 0/400 inputs valid (discards: budget=400)"
 },
 "0048cc40": {
 "module": "mission_3",
@@ -3296,7 +3362,8 @@
 "file": "src/game/world_data/world_data.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 118
+"size": 118,
+"reason": "original reads eax at entry but our declaration passes nothing there (custom/LTCG register ABI?); fix: pass an integer (the original does arithmetic/compare on it at 004904b2: cmp esi, -0x32) in eax: no MSVC declaration passes an argument in eax (an LTCG-only register argument; run with --ignore-abi)"
 },
 "004905c0": {
 "module": "world_data",
@@ -3919,21 +3986,24 @@
 "file": "src/game/party2/camera.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 804
+"size": 804,
+"reason": "only 0/400 inputs valid (discards: budget=283, fault(read)=75, fault(write)=37)"
 },
 "0049ef00": {
 "module": "camera",
 "file": "src/game/party2/camera.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 286
+"size": 286,
+"reason": "only 0/400 inputs valid (discards: budget=289, fault(read)=73, fault(write)=37)"
 },
 "0049f020": {
 "module": "camera",
 "file": "src/game/party2/camera.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 56
+"size": 56,
+"reason": "only 0/400 inputs valid (discards: fault(read)=295, budget=70, fault(pool-limit)=18)"
 },
 "0049f060": {
 "module": "camera",
@@ -4246,7 +4316,8 @@
 "file": "src/game/config/options_dlg.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 1464
+"size": 1464,
+"reason": "only 0/400 inputs valid (discards: fault=400)"
 },
 "004b9b90": {
 "module": "options_dlg",
@@ -4456,7 +4527,8 @@
 "file": "src/rgl/mesh2/rec_tables.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 1326
+"size": 1326,
+"reason": "only 0/400 inputs valid (discards: fault(write)=190, fault(read)=132, import:DirectInput8Create=77)"
 },
 "004c3df7": {
 "module": "rec_tables",
@@ -4519,7 +4591,8 @@
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 21
+"size": 21,
+"reason": "only 0/400 inputs valid (discards: fault=400)"
 },
 "004c4e50": {
 "module": "gui_edit",
@@ -4533,14 +4606,16 @@
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 21
+"size": 21,
+"reason": "only 0/400 inputs valid (discards: fault=400)"
 },
 "004c5074": {
 "module": "gui_edit",
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 9
+"size": 9,
+"reason": "only 0/400 inputs valid (discards: fault=400)"
 },
 "004c5080": {
 "module": "gui_edit",
@@ -4554,7 +4629,8 @@
 "file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 33
+"size": 33,
+"reason": "not a verdict: 13 of 13 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "004c5330": {
 "module": "gui_edit",
@@ -4757,7 +4833,8 @@
 "file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 189
+"size": 189,
+"reason": "not a verdict: time limit 800s after 119 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "004ca830": {
 "module": "mesh_2",
@@ -4925,7 +5002,8 @@
 "file": "src/game/options_panel/config_dialog.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 1700
+"size": 1700,
+"reason": "only 0/200 inputs valid (discards: import:malloc=122, fault(read)=38, fake-arity=37)"
 },
 "004cf7b0": {
 "module": "config_dialog",
@@ -4974,7 +5052,8 @@
 "file": "src/game/options_panel/module_load.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 37
+"size": 37,
+"reason": "not a verdict: 6 of 6 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "004d1230": {
 "module": "module_load",
@@ -4988,7 +5067,8 @@
 "file": "src/game/options_panel/module_load.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 33
+"size": 33,
+"reason": "only 0/400 inputs valid (discards: fault(read)=177, fault(write)=122, fault(pool-limit)=52)"
 },
 "004d12c0": {
 "module": "module_load",
@@ -5002,7 +5082,8 @@
 "file": "src/game/options_panel/module_load.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 43
+"size": 43,
+"reason": "not a verdict: 4 of 4 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "004d1360": {
 "module": "module_load",
@@ -5058,7 +5139,8 @@
 "file": "src/game/options_panel/ragdoll_models.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 581
+"size": 581,
+"reason": "only 0/400 inputs valid (discards: fault(read)=222, budget=178)"
 },
 "004d3720": {
 "module": "world_app",
@@ -5086,7 +5168,8 @@
 "file": "src/game/options_panel/world_app.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 27
+"size": 27,
+"reason": "only 0/400 inputs valid (discards: fault(pool-limit)=208, fault(write)=189, fault(write-prot)=3)"
 },
 "004d3e70": {
 "module": "world_app",
@@ -5177,7 +5260,8 @@
 "file": "src/game/options_panel/keys_page.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 334
+"size": 334,
+"reason": "only 0/400 inputs valid (discards: fault(read)=274, fake-arity=86, fault(write)=15)"
 },
 "004d7270": {
 "module": "keys_page",
@@ -5212,7 +5296,8 @@
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 1001
+"size": 1001,
+"reason": "only 0/400 inputs valid (discards: import:GetTimeZoneInformation=168, import:ord1=145, fault(read)=86)"
 },
 "004d99d0": {
 "module": "cls_map",
@@ -5261,7 +5346,8 @@
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 656
+"size": 656,
+"reason": "only 0/400 inputs valid (discards: import:ord2=214, fault(read)=71, budget=62)"
 },
 "004da900": {
 "module": "cls_map",
@@ -5359,21 +5445,24 @@
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 539
+"size": 539,
+"reason": "not a verdict: 3 of 3 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "004dcef0": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 2026
+"size": 2026,
+"reason": "not a verdict: time limit 300s after 7 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "004dd830": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 240
+"size": 240,
+"reason": "not a verdict: 3 of 3 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "004dd9e0": {
 "module": "cls_map",
@@ -5387,7 +5476,8 @@
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 1336
+"size": 1336,
+"reason": "not a verdict: time limit 800s after 133 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "004ddf80": {
 "module": "cls_map",
@@ -5422,7 +5512,8 @@
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 5721
+"size": 5721,
+"reason": "not a verdict: time limit 3600s after 21 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "004dfd50": {
 "module": "cls_map",
@@ -5443,7 +5534,30 @@
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
 "verdict": "FAIL",
 "category": "fail",
-"size": 8152
+"size": 8152,
+"reason": "6/6 valid inputs mismatched; first: memory heap @50253e18 (fp-tol)",
+"first_mismatch": {
+"input": 0,
+"profile": "zeroish",
+"origin": "regress",
+"observable": "memory heap @50253e18 (fp-tol)",
+"kind": "value",
+"orig": "-",
+"ours": "-",
+"detail": "orig 0.0 ours 4.249215517989034e+37 reference 0.0: err_orig 0 err_ours 4.25e+37 (1.68e+07 ulp)",
+"args": [],
+"regs": {
+"eax": "00000000",
+"ecx": "40010000",
+"edx": "00000000"
+},
+"fake_calls": 326,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/cls_map_004e05c0.pkl"
+}
 },
 "004e25a0": {
 "module": "cls_map",
@@ -5583,7 +5697,8 @@
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 192
+"size": 192,
+"reason": "only 0/400 inputs valid (discards: fault(read)=214, fault(write)=174, fault(pool-limit)=9); 1 modelled symbol(s)"
 },
 "004e7b30": {
 "module": "progress_bar",
@@ -5681,7 +5796,30 @@
 "file": "src/game/char_sheet/facegen_misc.nonmatching.txt",
 "verdict": "FAIL",
 "category": "fail",
-"size": 669
+"size": 669,
+"reason": "199/200 valid inputs mismatched; first: memory pool @4c1ba0e4 (fp-tol)",
+"first_mismatch": {
+"input": 0,
+"profile": "pointery",
+"origin": "regress",
+"observable": "memory pool @4c1ba0e4 (fp-tol)",
+"kind": "value",
+"orig": "-",
+"ours": "-",
+"detail": "orig 0.04999999701976776 ours 0.0 reference 0.04999999701976776: err_orig 0 err_ours 0.05 (1.34e+07 ulp)",
+"args": [],
+"regs": {
+"eax": "473b00bc",
+"ecx": "40010000",
+"edx": "00000011"
+},
+"fake_calls": 11,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/facegen_misc_004eb3c0.pkl"
+}
 },
 "004eb660": {
 "module": "facegen_misc",
@@ -5695,7 +5833,8 @@
 "file": "src/game/char_sheet/facegen_misc.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 85
+"size": 85,
+"reason": "only 0/200 inputs valid (discards: import:malloc=124, fault(pool-limit)=53, fault(read)=23)"
 },
 "004eb8c0": {
 "module": "facegen_misc",
@@ -5709,7 +5848,8 @@
 "file": "src/game/char_sheet/facegen_misc.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 13
+"size": 13,
+"reason": "only 0/400 inputs valid (discards: fault(read)=367, fault(fetch-prot)=10, fake-arity=8)"
 },
 "004eb8ed": {
 "module": "facegen_misc",
@@ -5744,7 +5884,8 @@
 "file": "src/game/char_sheet/screen_init.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 2063
+"size": 2063,
+"reason": "not a verdict: time limit 300s after 196 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "004ecce0": {
 "module": "screen_init",
@@ -5835,7 +5976,30 @@
 "file": "src/game/char_sheet/facegen_win.nonmatching.txt",
 "verdict": "FAIL",
 "category": "fail",
-"size": 4404
+"size": 4404,
+"reason": "2/2 valid inputs mismatched; first: memory pool @40010174; call-regs: call #11 reg esi: orig 500001a0 ours 50000000 (depth-1 call to 004931a0 ctor_window, 6185 call site(s) compared: 275 calls, 5802 imports, 108 fakes)",
+"first_mismatch": {
+"input": 0,
+"profile": "zeroish",
+"origin": "regress",
+"observable": "memory pool @40010174",
+"kind": "float-rounding",
+"orig": "0000000d",
+"ours": "0000000a",
+"detail": "differing dwords (addr: orig/ours): 40010174: 0000000d/0000000a, 4001019c: 0000000d/0000000a [as float32: 1.8216880036222622e-44 vs 1.401298464324817e-44, 3 ulp apart]",
+"args": [],
+"regs": {
+"eax": "00000000",
+"ecx": "40010000",
+"edx": "4bc60000"
+},
+"fake_calls": 162,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/facegen_win_004f1460.pkl"
+}
 },
 "004f25a0": {
 "module": "facegen_win",
@@ -5933,7 +6097,8 @@
 "file": "src/game/char_sheet/facegen_init.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 4936
+"size": 4936,
+"reason": "not a verdict: time limit 300s after 206 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "004f5fb0": {
 "module": "editor_ui",
@@ -5968,21 +6133,24 @@
 "file": "src/game/char_sheet/editor_ui.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 37
+"size": 37,
+"reason": "not a verdict: 22 of 22 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "004f6680": {
 "module": "editor_ui",
 "file": "src/game/char_sheet/editor_ui.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 87
+"size": 87,
+"reason": "not a verdict: 4 of 4 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "004f66e0": {
 "module": "conv_open",
 "file": "src/game/char_sheet/conv_open.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 3294
+"size": 3294,
+"reason": "not a verdict: time limit 300s after 108 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "004f73c0": {
 "module": "conv_refresh",
@@ -6017,7 +6185,33 @@
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
 "verdict": "FAIL",
 "category": "fail",
-"size": 660
+"size": 660,
+"reason": "35/200 valid inputs mismatched; first: memory extra @00000004",
+"first_mismatch": {
+"input": 0,
+"profile": "smallint",
+"origin": "regress",
+"observable": "memory extra @00000004",
+"kind": "value",
+"orig": "003f7fff",
+"ours": "003f0000",
+"detail": "differing dwords (addr: orig/ours): 00000004: 003f7fff/003f0000 [as float32: 5.8315526047339776e-39 vs 5.7856362579534463e-39, 32767 ulp apart]",
+"args": [
+"40020000",
+"00000003"
+],
+"regs": {
+"eax": "00000000",
+"ecx": "40010000",
+"edx": "00000000"
+},
+"fake_calls": 18,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/agent_hud_004faee0.pkl"
+}
 },
 "004fb180": {
 "module": "agent_hud",
@@ -6066,7 +6260,8 @@
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 2239
+"size": 2239,
+"reason": "not a verdict: time limit 2400s after 209 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "004fd150": {
 "module": "agent_hud",
@@ -6122,7 +6317,8 @@
 "file": "src/game/agent5/agent_vec.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 9
+"size": 9,
+"reason": "only 0/400 inputs valid (discards: fault=400)"
 },
 "004fe1e0": {
 "module": "agent_vec",
@@ -6143,7 +6339,8 @@
 "file": "src/game/agent5/agent_vec.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 9
+"size": 9,
+"reason": "only 0/400 inputs valid (discards: fault=400)"
 },
 "004fe6e9": {
 "module": "agent_vec",
@@ -6157,7 +6354,8 @@
 "file": "src/game/agent5/agent_vec.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 134
+"size": 134,
+"reason": "not a verdict: 12 of 12 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "004fe860": {
 "module": "editor_dialog",
@@ -6171,14 +6369,16 @@
 "file": "src/game/agent5/party_create.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 3688
+"size": 3688,
+"reason": "not a verdict: time limit 300s after 109 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "00501a20": {
 "module": "party_window",
 "file": "src/game/party/party_window.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 1932
+"size": 1932,
+"reason": "not a verdict: time limit 1500s after 173 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "00502320": {
 "module": "party_window",
@@ -6206,7 +6406,8 @@
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 2885
+"size": 2885,
+"reason": "not a verdict: time limit 300s after 172 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "00503810": {
 "module": "party_screen",
@@ -6248,7 +6449,8 @@
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 2765
+"size": 2765,
+"reason": "not a verdict: time limit 2400s after 175 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "005059c0": {
 "module": "party_screen",
@@ -6269,7 +6471,8 @@
 "file": "src/game/inventory_panel/char_sheet.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 8138
+"size": 8138,
+"reason": "not a verdict: time limit 300s after 143 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "005094a0": {
 "module": "char_window",
@@ -6290,7 +6493,8 @@
 "file": "src/game/inventory_panel/note_window.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 10904
+"size": 10904,
+"reason": "not a verdict: time limit 3000s after 108 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "0050cc70": {
 "module": "widget_text",
@@ -6346,7 +6550,8 @@
 "file": "src/game/inventory_panel/widget_text.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 178
+"size": 178,
+"reason": "not a verdict: 10 of 10 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "0050d5e0": {
 "module": "module_files",
@@ -6360,7 +6565,8 @@
 "file": "src/game/inventory_panel/game_app.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 1263
+"size": 1263,
+"reason": "only 0/400 inputs valid (discards: fault(read)=400)"
 },
 "0050f930": {
 "module": "loading_screen",
@@ -6402,7 +6608,8 @@
 "file": "src/game/inventory_panel/inventory_panel.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 5758
+"size": 5758,
+"reason": "not a verdict: time limit 300s after 84 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON"
 },
 "005129d0": {
 "module": "inventory_panel",
@@ -6507,14 +6714,16 @@
 "file": "src/game/inventory_panel/mission_ctx.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 109
+"size": 109,
+"reason": "not a verdict: 3 of 3 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "00514d40": {
 "module": "mission_ctx",
 "file": "src/game/inventory_panel/mission_ctx.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 4154
+"size": 4154,
+"reason": "only 0/400 inputs valid (discards: fault(read)=399, fault(write)=1)"
 },
 "00515d80": {
 "module": "mission_ctx",
@@ -6913,14 +7122,16 @@
 "file": "src/game/mission5/game_2.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 1594
+"size": 1594,
+"reason": "not a verdict: 1 of 1 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "005213d0": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 8066
+"size": 8066,
+"reason": "only 0/400 inputs valid (discards: fault(read)=400)"
 },
 "005234e0": {
 "module": "game_2",
@@ -7137,7 +7348,8 @@
 "file": "src/game/mission5/mission_5.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "inputs",
-"size": 601
+"size": 601,
+"reason": "only 0/400 inputs valid (discards: ret-misaligned=279, fault(write)=116, fault(read)=4)"
 },
 "0052bdb0": {
 "module": "mission_5",
@@ -7277,7 +7489,30 @@
 "file": "src/game/mission5/mesh_3.nonmatching.txt",
 "verdict": "FAIL",
 "category": "fail",
-"size": 3049
+"size": 3049,
+"reason": "179/648 valid inputs mismatched; first: memory pool @494ca0a8 (fp-tol)",
+"first_mismatch": {
+"input": 53,
+"profile": "smallint",
+"origin": "regress",
+"observable": "memory pool @494ca0a8 (fp-tol)",
+"kind": "value",
+"orig": "-",
+"ours": "-",
+"detail": "orig -107374176.0 ours 0.0 reference -107374176.0: err_orig 0 err_ours 1.07e+08 (1.34e+07 ulp)",
+"args": [],
+"regs": {
+"eax": "415c0000",
+"ecx": "40010000",
+"edx": "00000002"
+},
+"fake_calls": 1,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/mesh_3_0052f250.pkl"
+}
 },
 "0052fe40": {
 "module": "mesh_3",

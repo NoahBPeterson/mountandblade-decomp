@@ -28,6 +28,10 @@ from unicorn.x86_const import *  # noqa: F401,F403
 from coff import REL_DIR32, REL_DIR32NB, REL_REL32
 
 OBJ_BASE = 0x30000000
+# Opt-in: snapreplay.py moves our compiled sections above the game's own heap (under wine it reaches 0x37xxxxxx, and
+# captured pages inside a harness range cannot be mapped). Must stay below POOL_BASE.
+if os.environ.get("DIFFTEST_OBJ_BASE"):
+    OBJ_BASE = int(os.environ["DIFFTEST_OBJ_BASE"], 0)
 POOL_BASE, POOL_SIZE = 0x40000000, 0x10000000     # lazily materialised input objects (64 KB slots)
 SLOT = 0x10000
 # Pool objects (64 KB slots) one run may materialise: 4 MB. Each is one Unicorn mem_map, whose cost

@@ -1,0 +1,51 @@
+{
+ "_doc": "Short hand-written explanation of each FAIL row for docs/equiv_failures.md (verdicts.py). The full trace stays in the row's .nonmatching.txt note. Remove an entry when its row stops failing.",
+ "0040b0f0": [
+  "Every mismatching input has a face with more than 4 vertices, or 0",
+  "A face holds at most 4 (shape.h w[4]), so both builds index past a 4-entry local array into stack they lay out differently",
+  "Inputs with 1 to 4 vertices all match (3864 valid on a 6000-input run, 58/58 edges)",
+  "Such faces cannot exist in the game: face::load 0x408d60 would overwrite the count itself",
+  "Verdict: harness artefact, not a source bug"
+ ],
+ "0047ff60": [
+  "Everything emit_particle itself writes matches",
+  "rgl::mesh::add_vertex 0x413c50 (original code in both builds) copies a vertex from a stack temporary it never fully initialises",
+  "Vertex dwords +0x24/+0x2c are whatever earlier calls left on the stack: a return address, different in each binary",
+  "compute_tangents 0x41ce80 does arithmetic on them, so one build gets NaN and the other a finite value",
+  "Verdict: the original's value is indeterminate, not a source bug"
+ ],
+ "004e05c0": [
+  "The recorded run is from before the uninitialised-in-both rule (5c30f72)",
+  "Traced 2026-11-01: both builds make the same 326 calls with the same arguments",
+  "Every differing word is a vector4 w lane nothing ever writes, or a stale stack matrix word, copied on by original code (text_rect 0x49b4f0, add_quad 0x44f5f0)",
+  "Under the new rule there is no mismatch, but the function is too slow to finish enough inputs for a verdict",
+  "Verdict: needs a long re-run"
+ ],
+ "004eb3c0": [
+  "The first virtual call (0x4eb3f6) goes through a random vtable slot that lands in the middle of original code",
+  "That code passes the call's return address to the SendMessageA model, which differs between the two binaries (0.05 vs 0 stored)",
+  "A real slider vtable slot is always a method, so this cannot happen in the game",
+  "Only 13% of instructions are covered; the rest was checked by reading the disassembly",
+  "Verdict: harness artefact"
+ ],
+ "004f1460": [
+  "Every call matches",
+  "The only memory difference is the w lane of two 4-float temporaries copied to +0x168/+0x190",
+  "The original loads that w from a stack slot nothing writes (0x4f24f6/0x4f252f)",
+  "The recorded run is from before the uninitialised-in-both rule, and the function is too slow to finish enough inputs for a new verdict",
+  "Verdict: needs a long re-run"
+ ],
+ "004faee0": [
+  "2 of 200 inputs mismatch",
+  "ShadowMap::read_pixel 0x4641a0 (original code in both builds) reads the pointer that D3D LockRect should have written",
+  "The harness does not model LockRect, so each build dereferences its own stack leftover and the depth compare diverges",
+  "A real LockRect always writes the pointer",
+  "Verdict: harness artefact"
+ ],
+ "0052f250": [
+  "The original reads a stack slot it never writes (the harness fills it with 0xcccccccc, shown as -107374176.0)",
+  "Our compiler puts that temporary in the same slot as a local it has just zeroed, so ours reads 0",
+  "Fixing it would need stack-slot tricks, which we don't do",
+  "Verdict: the original's value is indeterminate"
+ ]
+}

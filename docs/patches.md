@@ -52,3 +52,16 @@ patched-SET+archSSE2 with --patches). Under Rosetta 2 (Apple Silicon CrossOver) 
 SSE2 scalar code (microbenchmark in the game's bottle: 18.4 s vs 10.4 s); VC7.1 emits movss/mulss/addss for float math
 with /arch:SSE2. Float results differ in the low bits (x87 keeps 80-bit intermediates), so a variant is for play, never
 for the equivalence or byte-exact checks.
+
+## Open tickets
+
+- Battle-load time (2026-11-01, parked: reconstruction work first). Loading a battle is slow; reading the files is
+  not the cause (4 GB on a >5 GB/s disk). Measure before patching:
+  - build with `--patches profile` and load one field battle; `tools/relink/profile_report.py` per load phase
+  - split the samples between the game's code and wine's D3D9 (texture/vertex-buffer creation, `Lock`, shader
+    compiles): a wine-side cost points at the D3D translation layer, a game-side one at a `perf` patch
+  - suspects in the game: the terrain builders (`Terrain::generate_heights` 0x4713d0, `make_river` 0x46bc70,
+    `mesh_terrain` 0x481570, `create_water` 0x480db0), whose hot path is `noise_gradient` 0x414ae0 and `__ftol2`
+    0x535a64; BRF parsing; per-agent setup
+  - only then a `perf` patch (SSE noise, cheaper rounding, caching the height field per scene seed), if the
+    numbers justify it

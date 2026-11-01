@@ -18,6 +18,10 @@ STOP (a side stopped: external call / fault / budget, with where), SKIP (no sour
 """
 import argparse, bisect, collections, glob, json, os, re, struct, sys
 
+# The game's heap under wine fills 0x30000000-0x37ffffff, the harness's default home for our compiled sections: move
+# those above it (before machine is imported) so the captured heap pages can be mapped
+os.environ.setdefault("DIFFTEST_OBJ_BASE", "0x38000000")
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
@@ -78,6 +82,7 @@ class Replayer:
         self.opts = opts
         self.runners = {}
         self.mem = {}           # page -> bytes: the memory as of the snapshot being replayed
+        self.left_out = set()   # captured pages inside a harness range, never mapped (reported at the end)
 
     def runner(self, va):
         import equiv as E
@@ -117,14 +122,15 @@ class Replayer:
                                        UC_X86_REG_EFLAGS, UC_X86_REG_FPCW, UC_X86_REG_FPSW, UC_X86_REG_FP0)
         m, uc = r.m, r.m.uc
         img_lo, img_hi = m.img.base, m.img.base + m.img.size
-        harness = [(M.OBJ_BASE, M.OBJ_BASE + 0x10000000), (M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE),
+        harness = [(M.OBJ_BASE, M.POOL_BASE), (M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE),
                    (M.DYN_BASE, M.DYN_BASE + M.DYN_SIZE), (M.TRAP_BASE, 0x100000000)]
         mapped = []
         restore = {}
         fresh = []
         for p in sorted(self.mem):
             if any(lo <= p < hi for lo, hi in harness):
-                continue                                 # collides with the harness's own map: left out
+                self.left_out.add(p)                     # collides with the harness's own map: left out
+                continue
             if img_lo <= p < img_hi:
                 if not m.in_image_writable(p):
                     continue
@@ -422,6 +428,9 @@ def main():
         results.append({"seq": seq, "va": "%08x" % va, "verdict": verdict, "detail": detail})
         print("%5d %08x %-5s %s" % (seq, va, verdict, detail), flush=True)
     print("; ".join("%s %d" % kv for kv in tally.most_common()))
+    if rp.left_out:
+        print("warning: %d captured page(s) collide with harness ranges and were left out (%08x..%08x)"
+              % (len(rp.left_out), min(rp.left_out), max(rp.left_out)))
     if a.json:
         json.dump(results, open(a.json, "w"), indent=1)
     return 0
