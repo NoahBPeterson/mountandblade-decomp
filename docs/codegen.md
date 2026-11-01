@@ -455,6 +455,41 @@ callee preserves it. To reproduce it:
 - A function with `ecx = this` and `ret 4` that uses no members is still a
   thiscall member.
 
+### 6.4 Scratch-register rotation in call-argument setup
+
+When the instructions match and only the scratch registers that set up a call's
+arguments are rotated (ours `ecx/edx/eax` where the original has `eax/ecx/edx`),
+first check that the callee is declared the way the original calls it (see 6.3).
+If it is, the cause is usually not the call itself. The first scratch register
+the allocator picks there depends on how many temporaries earlier code created,
+so look at the expressions before the call:
+
+- An earlier inline helper's form changes the temporary count. M&B
+  `Mesh::pick_vert`/`pick_edge`/`pick_poly` (0x52da20/0x52dc00/0x52df40, 8, 8
+  and 6 bytes, unmoved by ~60 spellings of the out-params, parameter order and
+  loop form) all matched when the list's `size()` used an early return instead
+  of `?:`:
+
+  ```cpp
+  int size() const { return first ? (int)(last - first) : 0; }      // rotated
+  int size() const { if (!first) return 0; return (int)(last - first); }   // exact
+  ```
+
+- Taking an argument into a named local ahead of the code before the call
+  changes which register its `lea` gets. M&B `Rec5ac8::write` 0x4e9d10 (2
+  bytes, `lea ecx` vs the original's `lea eax,[edi+0x5a08]` for `write_soa`'s
+  argument) matched when the pointer was taken from its member before the two
+  inlined `write_vec4` calls. The same change also replaced the
+  `(char*)this + 0x5a08` casts with the members, and the two were not tested
+  separately:
+
+  ```cpp
+  char* soa = f5a08;
+  write_vec4(&f8bc, out);
+  write_vec4(&f59f8, out);
+  write_soa(out, soa);
+  ```
+
 ---
 
 ## 7. Stack layout
