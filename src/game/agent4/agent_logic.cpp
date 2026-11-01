@@ -3080,9 +3080,6 @@ void Agent::ai_idle_tick(const float* dt)
 
 
 // ---- Agent::shoot: fire a missile from the agent's hand ---------------------------------------------------------------------
-static __forceinline vector4 vscale2(const vector4& v, float s) { return vector4(v.x * s, v.y * s, v.z * s); }
-static __forceinline vector4 vadd2(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
-
 // @ 0x44e2b0
 void Agent::shoot()
 {
