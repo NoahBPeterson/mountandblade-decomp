@@ -34,7 +34,7 @@ void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
         id.u.x *= o->f160; id.u.y *= o->f160; id.u.z *= o->f160;
         skin_rec* rec = o->skins->begin[i];
         mat4 M = id * rec->mat;
-        m->append_skinned(rec->m, &M, -1, color, flip);
+        m->append_skinned((mesh*)rec, &M, -1, color, flip);
     }
 }
 

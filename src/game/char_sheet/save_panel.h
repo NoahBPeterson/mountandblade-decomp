@@ -26,7 +26,7 @@ struct vertex60;
 #include "../rgl_mesh.h"
 using rgl::mesh;
 struct skin_rec {
-    mesh* m;                                            // +0
+    char pad0[4];                                       // +0: the record IS a mesh (0x4ea271 passes the record itself as append_skinned's other)
     char pad4[0xcc - 4];
     mat4 mat;                                           // +0xcc
 };
