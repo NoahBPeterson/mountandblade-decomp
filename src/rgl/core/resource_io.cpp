@@ -569,17 +569,13 @@ static inline rgl::vector4 add(const rgl::vector4& a, const rgl::vector4& b)
 {
     return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z);
 }
-static inline rgl::vector4 half(const rgl::vector4& a)
-{
-    return rgl::vector4(a.x * 0.5f, a.y * 0.5f, a.z * 0.5f);
-}
 
 // @ 0x416f70
 void rgl::aabb::update()
 {
     if (min.x <= max.x) {
         rgl::vector4* c = &center;
-        *c = half(add(max, min));
+        *c = add(max, min) * 0.5f;
         float dx = max.x - c->x;
         float dy = max.y - c->y;
         float dz = max.z - c->z;

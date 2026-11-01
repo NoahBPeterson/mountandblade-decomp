@@ -1113,7 +1113,7 @@ void Mission::replace_mark(int idx)
         vector4 t1, t2;
         vscale_to(t1, recs[idx].m.f, 0.7f);
         vscale_to(t2, *sv, -0.5f);
-        a = vsub3(t2, t1);
+        a = t2 - t1;
     }
     int n = 0;
     vector4 b;
@@ -1841,10 +1841,6 @@ void FaceGenome::breed(const unsigned __int64* a, const unsigned __int64* b, int
 
 // inline vector4 arithmetic as the game's header implements it: 3-component results, leaving the fourth lane
 // uninitialised (whole-struct copies carry it along)
-static __forceinline vector4 vscale(const vector4& a, const float& s)
-{
-    return vector4(a.x * s, a.y * s, a.z * s);
-}
 static __forceinline vector4 vsum(const vector4& a, const vector4& b)
 {
     return vector4(a.x + b.x, a.y + b.y, a.z + b.z);
@@ -2010,7 +2006,7 @@ void Mission::update_team_stats()
                         if (c.dir.length_squared() < 0.5f) {
                             c.dir = v;
                         } else {
-                            c.dir = vsum(vscale(c.dir, 0.8f), vscale(v, 0.2f));
+                            c.dir = vsum(c.dir * 0.8f, v * 0.2f);
                             normalize_inline(c.dir);
                         }
                     }

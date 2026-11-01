@@ -6,10 +6,6 @@
 #include "./mesh_edit.h"
 
 // The vector arithmetic is inlined in the original (rgl's out-of-line operator- / cross are not called).
-static inline vector4 vsub(const vector4& a, const vector4& b)
-{
-    return vector4(a.x - b.x, a.y - b.y, a.z - b.z);
-}
 static inline vector4 vcross(const vector4& a, const vector4& b)
 {
     return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
@@ -79,7 +75,7 @@ bool EditMesh::build_first_pass()
         MVert* p0 = &c.verts[nf.vid[0]];
         MVert* p1 = &c.verts[nf.vid[1]];
         MVert* p2 = &c.verts[nf.vid[2]];
-        nf.normal = vcross(vsub(p1->pos, p0->pos), vsub(p2->pos, p0->pos));
+        nf.normal = vcross(p1->pos - p0->pos, p2->pos - p0->pos);
         float len = (float)sqrt(nf.normal.x * nf.normal.x + nf.normal.y * nf.normal.y + nf.normal.z * nf.normal.z);
         if (len > 1e-10f) {
             len = 1.0f / len;

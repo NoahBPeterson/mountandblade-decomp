@@ -66,8 +66,6 @@ mesh* mesh_pool::get_mesh(skin* r)
 }
 
 static __forceinline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
-static __forceinline vector4 vsubl(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
-static __forceinline vector4 vmul(const vector4& a, const float& k) { return vector4(a.x * k, a.y * k, a.z * k); }
 
 static __forceinline float eval_curve(float t, const curve4& c)
 {
@@ -208,17 +206,17 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             out->add_face(fcs[i].a + nverts, fcs[i].b + nverts, fcs[i].c + nverts);
     } else {
         // camera-facing quad: half-width along s, half-height along u
-        vector4 hs0 = vmul(m->s, half_w);
-        vector4 hu0 = vmul(m->u, half_h);
-        vector4 hu = vmul(vmul(hu0, size), p->scale);
-        vector4 hs = vmul(vmul(hs0, size), p->scale);
+        vector4 hs0 = m->s * half_w;
+        vector4 hu0 = m->u * half_h;
+        vector4 hu = (hu0 * size) * p->scale;
+        vector4 hs = (hs0 * size) * p->scale;
         c.col[0] = (hu.x + p->pos.x) + hs.x; c.col[1] = (hu.y + p->pos.y) + hs.y; c.col[2] = (hu.z + p->pos.z) + hs.z;
         c.idx[0] = out->add_point((const vector4*)c.col);
-        vector4 vb = vsubl(vadd(hu, p->pos), hs);
+        vector4 vb = vadd(hu, p->pos) - hs;
         c.idx[1] = out->add_point(&vb);
-        vector4 vc = vsubl(vsubl(p->pos, hu), hs);
+        vector4 vc = (p->pos - hu) - hs;
         c.idx[2] = out->add_point(&vc);
-        vector4 vd = vadd(vsubl(p->pos, hu), hs);
+        vector4 vd = vadd(p->pos - hu, hs);
         c.idx[3] = out->add_point(&vd);
         unsigned colorv;
         int f5c;

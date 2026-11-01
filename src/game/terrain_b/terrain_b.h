@@ -32,7 +32,6 @@
 static inline float dot3(const rgl::vector4& a, const rgl::vector4& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 static inline void vscale_to(rgl::vector4& r, const rgl::vector4& v, float k) { r.x = v.x * k; r.y = v.y * k; r.z = v.z * k; }
 static inline rgl::vector4 vadd3(const rgl::vector4& a, const rgl::vector4& b) { rgl::vector4 r; r.x = a.x + b.x; r.y = a.y + b.y; r.z = a.z + b.z; return r; }
-static inline rgl::vector4 vsub3(const rgl::vector4& a, const rgl::vector4& b) { rgl::vector4 r; r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; return r; }
 static inline float max2(float a, float b) { return a > b ? a : b; }
 
 // ---- views that add members to shared classes (a class cannot be extended from outside) -------------------------------

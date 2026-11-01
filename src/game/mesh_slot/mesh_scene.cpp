@@ -318,7 +318,6 @@ void MissileU::update_ranged_mesh()
     }
 }
 
-static __forceinline vector4 vmul(const vector4& v, const float& k) { return vector4(v.x * k, v.y * k, v.z * k); }
 
 // @ 0x47d3e0
 // One integration step of a flying projectile: keep the previous / frame-start position samples, advance the position,
@@ -339,12 +338,12 @@ void MissileU::update(float dt)
 
     // the velocity is a sum of two vector temporaries (vel * speed, and the gravity step); like the original, only some of
     // the components are spilled to float locals
-    vector4 sv = vmul(vel, speed);
+    vector4 sv = vel * speed;
     vector4 gv(dt * 0.0f, dt * 0.0f, dt * g_f54b708);
     v.x = gv.x + sv.x;
     v.y = gv.y + sv.y;
     v.z = gv.z + sv.z;
-    vector4 dp = vmul(v, dt);
+    vector4 dp = v * dt;
     pos.x = dp.x + pos.x;
     pos.y = dp.y + pos.y;
     pos.z = dp.z + pos.z;

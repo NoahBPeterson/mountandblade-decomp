@@ -24,13 +24,12 @@
 
 using namespace rgl;
 
-static inline vector4 sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 
 // @ 0x41e470
 int plane::in_front(const vector4* p, float eps) const
 {
     vector4 d;
-    d = sub(*p, pos);
+    d = (*p - pos);
     float dist = d.x * normal.x + (d.z * normal.z + d.y * normal.y);
     if (dist < -eps) return 0;
     return 1;

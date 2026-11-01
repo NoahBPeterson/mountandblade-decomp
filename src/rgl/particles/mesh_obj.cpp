@@ -126,7 +126,7 @@ void emitter::spawn(emitter_particle* out)
     }
     if (flags & psf_emit_at_water_level)
         out->pos.z = water_z;
-    r = vmul(r, vel_scale) + vel_base;
+    r = (r * vel_scale) + vel_base;
     vector4* vel = &out->vel;
     *vel = r;
     if (!(flags & psf_global_emit_dir))
@@ -322,7 +322,7 @@ void emitter::update(const float* pdt, const matrix& frame)
     float* pv;
     for (it = particles.begin(), pv = (float*)((char*)&*it + 0x48); it != particles.end(); ++it, pv += 25) {
         vector4 g = vmul(accel, accel_scale);
-        vector4 gd = vmul(g, *pdt);
+        vector4 gd = (g * *pdt);
         pv[-2] = gd.x + pv[-2];
         pv[-1] = gd.y + pv[-1];
         pv[0] = gd.z + pv[0];
@@ -335,7 +335,7 @@ void emitter::update(const float* pdt, const matrix& frame)
             if (flags & 0x10000)
                 out.z = 0.0f;
             float f = noise_amount * *pdt;
-            vector4 nd = vmul(out, f);
+            vector4 nd = (out * f);
             pv[-2] = nd.x + pv[-2];
             pv[-1] = nd.y + pv[-1];
             pv[0] = nd.z + pv[0];
@@ -345,7 +345,7 @@ void emitter::update(const float* pdt, const matrix& frame)
         pv[-2] = k * pv[-2];
         pv[-1] = k * pv[-1];
         pv[0] = k * pv[0];
-        vector4 dp = vmul(*pdt, *(vector4*)&pv[-2]);
+        vector4 dp = (*pdt * *(vector4*)&pv[-2]);
         add_to(*(vector4*)&pv[-6], dp);
         float sk = 1.0f - spin_drag * *pdt;
         scale_f(pv[5], sk);
@@ -608,11 +608,11 @@ void mesh::update_morph()
             } else {
                 for (unsigned i = 0; i < v70.size(); i++) {
                     float u = 1.0f - t;
-                    v70[i].b = vadd(vscale(u, k.frames[a].verts[i]), vscale(t, k.frames[b].verts[i]));
+                    v70[i].b = vadd((u * k.frames[a].verts[i]), (t * k.frames[b].verts[i]));
                 }
                 for (unsigned i = 0; i < v50.size(); i++) {
                     float u = 1.0f - t;
-                    v50[i].normal = vadd(vscale(u, k.frames[a].norms[i]), vscale(t, k.frames[b].norms[i]));
+                    v50[i].normal = vadd((u * k.frames[a].norms[i]), (t * k.frames[b].norms[i]));
                     v50[i].normal.normalize();
                 }
             }

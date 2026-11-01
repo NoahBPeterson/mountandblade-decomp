@@ -43,11 +43,7 @@ using namespace rgl;
 #define QX(e) ((quaternion_x&)(e))
 
 // local stand-ins for the vector4 operators the effect code inlines (rgl_math.h declares them out of line)
-static inline vector4 vmul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
-static inline vector4 vmul(const float& s, const vector4& a) { return vector4(s * a.x, s * a.y, s * a.z); }
-static inline vector4 vmulv(const vector4& a, float s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
-static inline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 
 static inline float vnormalize(vector4& v)
 {
@@ -219,7 +215,7 @@ void FxAnim::update_poses2()
             }
             if (b == 0) {
                 float s = 1.0f - blend;
-                v0c = vadd(vmul(key0, blend), vmul(pos_old, s));
+                v0c = vadd((key0 * blend), (pos_old * s));
             }
         }
         BN(b).delta() = QX(saved).mul_conj(BN(b).rot());
@@ -243,11 +239,11 @@ void FxAnim::update_poses2()
             quat_to_axis_angle_x(&axis, &angle, &BN(b).delta());
             vnormalize(axis);
             vector4 w;
-            w = vmul(axis, angle);
-            BN(b).ang_vel() = vmulv(w, 1.0f / dt);
+            w = (axis * angle);
+            BN(b).ang_vel() = (w * (1.0f / dt));
         }
-        vector4 d = vsub(v0c, pos_old);
-        v6c = vmul(d, 1.0f / dt);
+        vector4 d = (v0c - pos_old);
+        v6c = (d * (1.0f / dt));
     }
     dt = 0.0f;
     b50 = 1;
@@ -403,7 +399,7 @@ vector4 FxAnim::lerp_value(int i)
 {
     float t = 1.0f - rec(i)->f18;
     AnimRec* r = rec(i);
-    vector4 v = vadd(vmul(r->v8c, r->f18), vmul(t, r->v7c));
+    vector4 v = vadd((r->v8c * r->f18), (t * r->v7c));
     return v;
 }
 // @ 0x423440
@@ -417,7 +413,7 @@ vector4 FxAnim::table_value(int i)
     ((KeyTable_x&)r.table->tbl).find(&f1c, &frac, &key);
     float s = 1.0f - frac;
     const vector4* e = &r.table->tbl.v4()[f1c];
-    vector4 v = vadd(vmul(frac, e[1]), vmul(s, e[0]));
+    vector4 v = vadd((frac * e[1]), (s * e[0]));
     return v;
 }
 
