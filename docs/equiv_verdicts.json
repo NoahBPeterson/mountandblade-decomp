@@ -1,6 +1,6 @@
 {
-"when": "2026-11-01T01:04:48-06:00",
-"commit": "a89a4c6",
+"when": "2026-11-01T02:12:36-06:00",
+"commit": "a559452",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,18 +9,18 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 468,
-"weak": 389,
-"fail": 9,
+"pass": 473,
+"weak": 383,
+"fail": 10,
 "inputs": 27,
 "harness": 32,
 "comdat": 118,
 "comdatdiff": 10,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 164388,
-"weak_sz": 583147,
-"fail_sz": 32832,
+"pass_sz": 168965,
+"weak_sz": 578112,
+"fail_sz": 33290,
 "inputs_sz": 25127,
 "harness_sz": 75206,
 "comdat_sz": 2793,
@@ -1523,8 +1523,8 @@
 "004428c0": {
 "module": "agent_fx_sound",
 "file": "src/game/agent3/agent_fx_sound.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 988
 },
 "00442ca0": {
@@ -2979,8 +2979,8 @@
 "0048be70": {
 "module": "stat_panel_x",
 "file": "src/game/mission_ui2/stat_panel_x.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 125
 },
 "0048bef0": {
@@ -3560,8 +3560,8 @@
 "00496100": {
 "module": "mesh_hud",
 "file": "src/game/world_data/mesh_hud.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 1455
 },
 "004966b0": {
@@ -3896,8 +3896,8 @@
 "0049dfe0": {
 "module": "camera",
 "file": "src/game/party2/camera.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 1432
 },
 "0049e780": {
@@ -4083,8 +4083,8 @@
 "004b36a0": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 577
 },
 "004b3910": {
@@ -5644,8 +5644,8 @@
 "004ea0c0": {
 "module": "save_panel",
 "file": "src/game/char_sheet/save_panel.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 458
 },
 "004ea290": {
