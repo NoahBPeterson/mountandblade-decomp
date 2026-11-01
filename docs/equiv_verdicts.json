@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T23:35:51-05:00",
-"commit": "29cc79e",
+"when": "2026-11-01T01:05:58-05:00",
+"commit": "780f80d",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,22 +9,22 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 470,
-"weak": 404,
+"pass": 458,
+"weak": 400,
 "fail": 8,
 "inputs": 27,
-"harness": 31,
+"harness": 33,
 "comdat": 118,
-"comdatdiff": 11,
+"comdatdiff": 10,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 164006,
-"weak_sz": 589963,
-"fail_sz": 32172,
+"pass_sz": 160360,
+"weak_sz": 582267,
+"fail_sz": 28341,
 "inputs_sz": 25127,
-"harness_sz": 73274,
+"harness_sz": 83358,
 "comdat_sz": 2793,
-"comdatdiff_sz": 1299,
+"comdatdiff_sz": 1203,
 "funclet_sz": 0,
 "not_run_sz": 2162
 },
@@ -1891,20 +1891,6 @@
 "category": "weak",
 "size": 2247
 },
-"004610b0": {
-"module": "dialog_manager",
-"file": "src/game/dialog_manager.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 18
-},
-"004610c2": {
-"module": "dialog_manager",
-"file": "src/game/dialog_manager.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(75 bytes, first at +0x0)",
-"category": "comdatdiff",
-"size": 96
-},
 "00461480": {
 "module": "wind",
 "file": "src/game/terrain_a/wind.nonmatching.txt",
@@ -1988,13 +1974,6 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 202
-},
-"004647e0": {
-"module": "terrain_a",
-"file": "src/game/terrain_a/terrain_a.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 370
 },
 "00464960": {
 "module": "terrain_a",
@@ -3529,34 +3508,6 @@
 "category": "pass",
 "size": 326
 },
-"00494560": {
-"module": "world_data",
-"file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 274
-},
-"00494680": {
-"module": "world_data",
-"file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 274
-},
-"004947a0": {
-"module": "world_data",
-"file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 274
-},
-"004948c0": {
-"module": "world_data",
-"file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 267
-},
 "00494b60": {
 "module": "world_data",
 "file": "src/game/world_data/world_data.nonmatching.txt",
@@ -4381,20 +4332,6 @@
 "category": "pass",
 "size": 282
 },
-"004be520": {
-"module": "config",
-"file": "src/game/config/config.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 52
-},
-"004be742": {
-"module": "trigger_vec",
-"file": "src/game/triggers/trigger_vec.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 123
-},
 "004bf170": {
 "module": "trigger_vec",
 "file": "src/game/triggers/trigger_vec.nonmatching.txt",
@@ -4576,13 +4513,6 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 253
-},
-"004c49f0": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 373
 },
 "004c4dc0": {
 "module": "gui_edit",
@@ -5270,13 +5200,6 @@
 "category": "pass",
 "size": 672
 },
-"004d86d0": {
-"module": "options_panel",
-"file": "src/game/options_panel/options_panel.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1348
-},
 "004d8c20": {
 "module": "options_panel",
 "file": "src/game/options_panel/options_panel.nonmatching.txt",
@@ -5525,8 +5448,8 @@
 "004e05c0": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "UNSUPPORTED",
+"category": "harness",
 "size": 8152
 },
 "004e25a0": {
@@ -5703,20 +5626,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1002
-},
-"004e8f10": {
-"module": "save_state",
-"file": "src/game/char_sheet/save_state.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 444
-},
-"004e9190": {
-"module": "save_state",
-"file": "src/game/char_sheet/save_state.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 601
 },
 "004e9620": {
 "module": "save_state",
@@ -6274,8 +6183,8 @@
 "00501a20": {
 "module": "party_window",
 "file": "src/game/party/party_window.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "UNSUPPORTED",
+"category": "harness",
 "size": 1932
 },
 "00502320": {
@@ -6757,8 +6666,8 @@
 "005191e0": {
 "module": "map_update",
 "file": "src/game/inventory_panel/map_update.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 4321
 },
 "0051a2d0": {
@@ -6886,13 +6795,6 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 390
-},
-"0051de70": {
-"module": "game",
-"file": "src/game/party/game.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 576
 },
 "0051e0b0": {
 "module": "game",
@@ -7180,13 +7082,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1136
-},
-"005295a0": {
-"module": "mission_5",
-"file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 95
 },
 "00529670": {
 "module": "mission_5",
