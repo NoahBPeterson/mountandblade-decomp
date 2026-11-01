@@ -3374,16 +3374,31 @@ void rgl::mesh::transform(mat4 m)
         p->a = ta;
         p = &(&*v70.begin())[i];
         tb.x = m.u.x * p->b.z + m.f.x * p->b.y + m.s.x * p->b.x + m.o.x;
-        tb.y = p->b.x * m.s.y + m.u.y * p->b.z + m.f.y * p->b.y + m.o.y;
-        tb.z = p->b.x * m.s.z + m.u.z * p->b.z + m.f.z * p->b.y + m.o.z;
+        // the original sums y and z as (f*by + u*bz) + s*bx (0x44f44a..0x44f4e8); MSVC reorders a commutative
+        // chain written in one expression, so the order is pinned with a running sum
+        float ty = m.f.y * p->b.y;
+        ty = ty + m.u.y * p->b.z;
+        ty = ty + m.s.y * p->b.x;
+        tb.y = ty + m.o.y;
+        float tz = m.f.z * p->b.y;
+        tz = tz + m.u.z * p->b.z;
+        tz = tz + m.s.z * p->b.x;
+        tb.z = tz + m.o.z;
         p->b = tb;
     }
     for (i = 0; i < v50.size(); i++) {
         vector4 tb;
         vertex60* v = &(&*v50.begin())[i];
-        tb.x = m.u.x * v->normal.z + m.f.x * v->normal.y + m.s.x * v->normal.x;
-        tb.y = m.u.y * v->normal.z + m.f.y * v->normal.y + m.s.y * v->normal.x;
-        tb.z = m.u.z * v->normal.z + m.f.z * v->normal.y + m.s.z * v->normal.x;
+        // the original sums (s*nx + f*ny) + u*nz (0x44f538..0x44f5a1); pinned with a running sum, see above
+        float nx = m.s.x * v->normal.x;
+        nx = nx + m.f.x * v->normal.y;
+        tb.x = nx + m.u.x * v->normal.z;
+        float ny = m.s.y * v->normal.x;
+        ny = ny + m.f.y * v->normal.y;
+        tb.y = ny + m.u.y * v->normal.z;
+        float nz = m.s.z * v->normal.x;
+        nz = nz + m.f.z * v->normal.y;
+        tb.z = nz + m.u.z * v->normal.z;
         v->normal = tb;
     }
     slots[0].f28 = 1;
