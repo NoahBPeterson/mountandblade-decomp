@@ -280,15 +280,21 @@ void* PartyWindow::build_page(int page)
     PartyPanel* p = new PartyPanel;
     { Vec2 v(0.0f, 0.0f); WOPS(p)->set_pos(&v.x); }
     { Vec2 v(0.264f, h); WOPS(p)->set_scale(&v.x); }
-    int col = 0, row = 1;
-    void** wp = widgets[page];
-    for (int i = 0; i < n; i++, wp++) {
-        MissionUi* w = make_slot(&INV(t, i));
-        *wp = w;
-        { Vec2 v((float)col * 0.088f, h - (float)row * 0.088f); WOPS(w)->set_pos(&v.x); }
-        col++; if (col >= 3) { col = 0; row++; }
-        WOPS(p)->add_child(*wp);
-        wp[0xc0] = (void*)2; wp[0x180] = (void*)0x12fd1;
+    int col = 0, row;
+    void** wp;
+    int i = 0;
+    if (i < n) {            // the original tests n before it sets row and the slot pointer (0x502402)
+        row = 1;
+        wp = widgets[page];
+        for (; i < n; i++, wp++) {
+            MissionUi* w = make_slot(&INV(t, i));
+            Vec2 v((float)col * 0.088f, h - (float)row * 0.088f);
+            *wp = w;
+            WOPS(w)->set_pos(&v.x);
+            col++; if (col >= 3) { col = 0; row++; }
+            WOPS(p)->add_child(*wp);
+            wp[0xc0] = (void*)2; wp[0x180] = (void*)0x12fd1;
+        }
     }
     return p;
 }
