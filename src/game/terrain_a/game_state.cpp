@@ -16,6 +16,7 @@
 #include "../../include/mat4.h"
 #include "../../include/vec.h"
 #include "../shadow_map.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 using rgl::vector4;
 using rgl::matrix;
@@ -189,6 +190,7 @@ vector4 ShadowMap::to_unit(const vector4& p)
 // (the original brackets this body with two inline-asm data markers: jmp +0x10; "WL  ", 12 resp. 13, 0, "WL  ")
 void ShadowMap::fit_bounds()
 {
+    WL_MARKER(12)
     LightCam* c = cam;
     c->center = vector4((c->vmax.x + c->vmin.x) * 0.5f, (c->vmin.y + c->vmax.y) * 0.5f, (c->vmin.z + c->vmax.z) * 0.5f);
     c = cam;
@@ -197,6 +199,7 @@ void ShadowMap::fit_bounds()
                          (c->world.s.z * c->center.x + c->world.u.z * c->center.z) + c->world.f.z * c->center.y + c->world.o.z);
     c = cam;
     c->size = vector4(c->vmax.x - c->vmin.x, c->vmax.y - c->vmin.y, c->vmax.z - c->vmin.z);
+    WL_MARKER(13)
 }
 
 // @ 0x463e10

@@ -5,6 +5,7 @@
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include <string.h>
 #include <stdlib.h>
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../ui/named_rec.h"   // NamedRec: the dialog box record (setup 0x48a3a0, setup2 0x48a3d0)
 // WindowMgrW (world_data/world_data.h; main_menu.h's `reset` is its old name): open(n) 0x494260 on the main menu object
 struct WindowMgrW { void open(int n); };
@@ -406,6 +407,7 @@ void options_panel::import_export(int)
 void GameIo::export_character(outfile* stream)
 {
     char line[0x400];
+    WL_MARKER(12)                                                   // 0x4d86da
     Troop* troop = &troops[cur_troop];
 
     sprintf(line, "%s = %ld\n", " charfile_version", 1);
@@ -473,6 +475,7 @@ void GameIo::export_character(outfile* stream)
     stream->write(line);
     sprintf(line, "%s = %I64x\n", "face_key_2", TROOP_I64(troop, 0x3c8));
     stream->write(line);
+    WL_MARKER(13)                                                   // 0x4d8bda
 }
 
 static const char* const weapon_names[7] = {
@@ -483,6 +486,7 @@ static const char* const weapon_names[7] = {
 // @ 0x4d8c20
 void GameIo::import_apply(ini_file* imp)
 {
+    WL_MARKER(4)
     Troop* troop = &troops[cur_troop];
 
     // one key/value pair for the whole loop, assigned per entry (0x4d8c65: two default constructors before it,
@@ -603,6 +607,7 @@ void GameIo::import_apply(ini_file* imp)
             }
         }
     }
+    WL_MARKER(5)
 }
 
 // @ 0x4d9260

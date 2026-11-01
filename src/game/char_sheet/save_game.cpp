@@ -85,10 +85,7 @@ struct file_writer : file_writer_base {
 STREAM_FWD_BIN_WRITER(file_writer)
 int file_writer::flush() { return ((bin_writer*)this)->bin_writer::flush(); }
 
-#define WL_MARK(id) \
-    __asm _emit 0xEB __asm _emit 0x10 __asm _emit 0x57 __asm _emit 0x4C __asm _emit 0x20 __asm _emit 0x20 \
-    __asm _emit id __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 \
-    __asm _emit 0 __asm _emit 0x57 __asm _emit 0x4C __asm _emit 0x20 __asm _emit 0x20
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 // @ 0x4e8980    int save_game(int version, tstring* name)
 int save_game(int version, tstring* name)
@@ -143,7 +140,7 @@ int save_game(int version, tstring* name)
                 }
                 r = rc;
                 if (!r) {
-                    WL_MARK(0x0c)
+                    WL_MARKER(0x0c)
                     LOG("Backing up old file name...");
                     sprintf(dirA, "");
                     save_path(dirA);
@@ -156,7 +153,7 @@ int save_game(int version, tstring* name)
                     rename(pathB, pathE);
                     LOG("Renaming new savegame file.");
                     r = rename(pathD, pathB);
-                    WL_MARK(0x0d)
+                    WL_MARKER(0x0d)
                     if (!r) {
                         LOG("Savegame succeded...");
                         g_msglog.add(*g_strtable.lookup(tstring("ui_game_saved_successfully")), -1);

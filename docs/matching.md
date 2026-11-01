@@ -201,6 +201,11 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
 
 **No assembly transcription.** `__declspec(naked)`, `_emit`, or long `__asm` blocks never count (run_all
 prints `ASM`). A block of at most 8 instructions is allowed where the original used an asm helper.
+One narrow exception: `WL_MARKER(id)` (`src/include/wl_marker.h`) emits the 18-byte WinLicense/Themida region marker
+(`eb 10 "WL  " id 0 "WL  "`) that the original's source left inline in some functions. It is the only place `_emit` is
+allowed (asm_audit.py rejects `_emit` in any other file and a re-definition of the macro in a function body), and a
+use of it is not counted as asm: the jmp skips the bytes, so it has no runtime effect, and the markers are bytes the
+original source itself emitted. Use it only where the original has those bytes.
 
 **Papercuts:** before finishing, append real friction (tool bugs, unclear docs, tricks you had to rediscover)
 to `docs/Papercuts.md`, following the format at its top. Read its Open section first.

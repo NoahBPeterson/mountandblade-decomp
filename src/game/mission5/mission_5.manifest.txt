@@ -13,3 +13,4 @@
 ../src/game/mission5/mission_5.cpp  ?clear@Terrain_s2bf40@@QAEXXZ  0052c290  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?clear@Elem_s2ce00@@QAEXXZ  0052ce00  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?put@Elem_s2ce00@@QAEXPAH00@Z  0052ce70  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?tick@MissionHud_s29130@@QAEXXZ  005295a0  /O2 /MT /Gy /TP

@@ -267,8 +267,7 @@ extern unsigned   g_rand_seed;    // 0x5d7078
 
 #include "../mission.h"
 
-// WinLicense SecureEngine marker (SDK macro): jmp over 16 bytes 'WL  ' id 0 0 0 0 0 0 0 'WL  '
-#define WL_MARK(id) __asm _emit 0xEB __asm _emit 0x10 __asm _emit 0x57 __asm _emit 0x4c __asm _emit 0x20 __asm _emit 0x20 __asm _emit id __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0x57 __asm _emit 0x4c __asm _emit 0x20 __asm _emit 0x20
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 #define RND() ((float)(rand() % 0x3dc9))
 #define RNDU(s) ((float)((s) % 0x3dc9))
@@ -332,7 +331,7 @@ void Mission::start_setup()
     mat3 tmp;
     int ptype;
 
-    WL_MARK(4);
+    WL_MARKER(4)
     reset();
     at<__int64>(0x62f0) = g_ticks[at<int>(0x62e8)];
     at<__int64>(0x6300) = g_ticks[at<int>(0x62f8)];
@@ -381,11 +380,11 @@ void Mission::start_setup()
         temp[12] = 0.2f; temp[13] = 0.2f; temp[14] = 0.2f; temp[15] = 0.2f;
     }
 
-    WL_MARK(5);
+    WL_MARKER(5)
     // ---- day time, anchor blend, weather ---------------------------------------------------
     at<float>(0x65e8) = (float)fmod((double)(g_ticks[1] * 1e-5f), 24.0);
     g_game->blend(&u.x, pa->pos.x, pa->pos.y);
-    WL_MARK(0xc);
+    WL_MARKER(0xc)
 
     float temper = temp[0] * 0.1f + (temp[8] * 0.01f + (temp[3] * 0.001f + (temp[11] * 0.002f +
                    (temp[4] * 0.005f + (temp[12] * 0.01f + (temp[1] * 0.003f + (temp[9] * 0.005f +
@@ -457,7 +456,7 @@ void Mission::start_setup()
     if (at<float>(0x6610) < 60.0f) at<float>(0x6610) = 60.0f;
     if (at<float>(0x6614) > 0.150000006f) at<float>(0x6614) = 0.150000006f;
 
-    WL_MARK(0xd);
+    WL_MARKER(0xd)
     {
         void* o = RAWAT(void*, pa, 0x5974);
         if (o != 0)

@@ -2,6 +2,7 @@
 // s004e4c70, s004e55f0, s004e5f80, s004e65e0, s004e6a70, s004e75a0, s004e7b30 and s004e85d0 (head). T-regime region: helpers sit
 // right after their first caller; the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
@@ -1221,6 +1222,7 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
 // @ 0x4e7a70
 void MapLoader::read(SlotReader* stream)
 {
+    WL_MARKER(12)
     int n;
     stream->get_int(&n);                        // vtable +0x4c: the block count
     E68 blank;
@@ -1230,6 +1232,7 @@ void MapLoader::read(SlotReader* stream)
     blank.m.c = 0;
     blank.t = 0;
     blocks.resize(n, blank);                    // 0x4e40f0
+    WL_MARKER(13)
     for (int i = 0; i < n; i++) {
         MapBlock* b = (MapBlock*)&blocks[0] + i;
         b->read_terrain(stream);                // 0x4c83a0

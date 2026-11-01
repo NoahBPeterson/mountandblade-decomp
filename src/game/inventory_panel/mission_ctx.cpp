@@ -95,6 +95,7 @@ struct MetaMission {
 #include "../item_sound.h"                                    // ItemSound: the one definition (play 0x48add0)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -314,6 +315,7 @@ unsigned MissionCtx::pop_key()
 // @ 0x513b40
 void MissionCtx::update_parties()
 {
+    WL_MARKER(12)
     if (f40 != 0) {
         f40 = 0;
         GV->clear_hero_ammo(g_game->f78);
@@ -357,6 +359,7 @@ void MissionCtx::update_parties()
 
         party_at(pm, ((Map10007*)pm)->lookup(g_game->f78))->dirty = 1;
     }
+    WL_MARKER(13)
 }
 
 // @ 0x513e10
@@ -405,6 +408,7 @@ void GameDataV::clear_hero_ammo(unsigned id)
 // @ 0x513f80
 void MissionCtx::setup(unsigned flags, int delta)
 {
+    WL_MARKER(12)
     int old = f1c;
     if (flags & 1)
         f20 = 1;
@@ -482,6 +486,7 @@ void MissionCtx::setup(unsigned flags, int delta)
         f3c = v;
         GD_C(0x13a18) = 0;
     }
+    WL_MARKER(13)
 }
 
 // @ 0x514360
@@ -1113,6 +1118,7 @@ mat2::mat2(const float* a, const float* b)
 // @ 0x516250
 void MissionCtx::init_battle(int id_)
 {
+    WL_MARKER(12)
     ((MetaMission*)this)->init();           // 0x4be742 (called through its WinLicense entry 0x4be730)
     f08 = id_;
     unsigned urow = (id_ & 0xf) * 0x98;
@@ -1144,11 +1150,13 @@ void MissionCtx::init_battle(int id_)
         mode = 4;
     }
     GD_C(0x13a18) = 1;
+    WL_MARKER(13)
 }
 
 // @ 0x516370
 void MissionCtx::frame(int tick)
 {
+    WL_MARKER(12)
     f2c4 = tick;
     if (f24 == 2 && tick <= 0) {
         unsigned aid = (unsigned)f08;                  // the page index is unsigned (shr edi,4 at 0x5163b9)
@@ -1189,6 +1197,7 @@ void MissionCtx::frame(int tick)
     else if (g_game->f78 == *(int*)((char*)self + 0x54))
         f10 |= 8;
 
+    WL_MARKER(13)
     update_anim();
 }
 
@@ -1208,6 +1217,7 @@ int PartyV::data_ready()
 // @ 0x516700
 void MissionCtx::update_anim()
 {
+    WL_MARKER(12)                                                   // 0x516705
     f2c0 = 0;
     reset_ids(g_game->f78);
     reset_ids(party[0]);
@@ -1226,7 +1236,7 @@ void MissionCtx::update_anim()
         int slot = p->stacks[0].troop;
         if (slot >= 0) {
             Troop* t = &g->troops[slot];
-            if ((t->flags32 & 0x10) != 0) {
+            if ((t->flags30 & 0x10) != 0) {
                 int k = ((char*)t)[0x7a] & 0xf;
                 if (k < 0)
                     k = 0;
@@ -1252,7 +1262,7 @@ void MissionCtx::update_anim()
     f274 = 0;
     f278 = 0;
     GV->reset_trade_ids();
-    f2c0 = 0;               // mirrors the original's trailing inline marker (blocks the tail call)
+    WL_MARKER(13)                                                   // 0x51688d (also blocks the tail call)
 }
 
 // @ 0x5168b0  clear the 0x60 (stride 8) trade ids of the record selected by f90

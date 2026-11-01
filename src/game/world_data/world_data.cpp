@@ -32,6 +32,7 @@
 #include "./tableau.h"
 #include "./widget_mgr_w.h"
 #include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 
 // ==== 0x490030: a random position around a point ===========================================================
@@ -950,6 +951,7 @@ void BattleW::refresh_rating()
 // @ 0x492530
 void GameW::transfer_stack(int a, int b, char flag)
 {
+    WL_MARKER(12)
     PartyMgrW* mgr = &pm();
     PartyW* pa = mgr->at(((Map10007*)(void*)mgr)->lookup(a));
     PartyW* pb = mgr->at(((Map10007*)(void*)mgr)->lookup(b));
@@ -992,11 +994,13 @@ void GameW::transfer_stack(int a, int b, char flag)
         }
     }
     remove_party(a);
+    WL_MARKER(13)
 }
 
 // @ 0x492750
 void BattleW::select_side(int s)
 {
+    WL_MARKER(12)
     int m = mode;
     if (m != 4)
         side = s;
@@ -1010,6 +1014,7 @@ void BattleW::select_side(int s)
             flags = fl | m;
         refresh_rating();
     }
+    WL_MARKER(13)
 }
 
 // ==== 0x4927d0: std::vector<int>::_Insert_n (with its cold tail 0x492930) ======================================
@@ -1776,6 +1781,7 @@ extern "C" const char s_ui_quest_failed_value[];                // 0x592688
 // @ 0x494410
 void GameW::quest_done(int _idx)
 {
+    WL_MARKER(12)
     char* _e = (char*)((char*)quests + _idx * 0x138);
     if ((*(unsigned*)(_e + 0x50) >> 1 & 1) != 0 ||
         ((*(unsigned*)(_e + 0x64) & 0x200) == 0 && (*(unsigned*)(_e + 0x64) & 0x100) != 0)) {
@@ -1784,7 +1790,7 @@ void GameW::quest_done(int _idx)
             char _buf[0x200];
             {
                 tstring _fmt(s_ui_quest_completed_value);
-                char* _f = _val.buf ? _val.buf : (char*)&_val;
+                char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
                 char* _r = (char*)g_strtable.lookup(_fmt) + 4;
                 if (*(char**)_r != 0)
                     _r = *(char**)_r;
@@ -1801,18 +1807,20 @@ void GameW::quest_done(int _idx)
         else
             *(int*)(_e + 0x64) = 0;
     }
+    WL_MARKER(13)
 }
 
 // @ 0x494560
 void GameW::quest_succeeded(int _idx)
 {
+    WL_MARKER(12)
     char* _e = (char*)((char*)quests + _idx * 0x138);
     *(unsigned*)(_e + 0x64) |= 0x1400;
     tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
     char _buf[0x200];
     {
         tstring _fmt(s_ui_quest_succeeded_value);
-        char* _f = _val.buf ? _val.buf : (char*)&_val;
+        char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
         char* _r = (char*)g_strtable.lookup(_fmt) + 4;
         if (*(char**)_r != 0)
             _r = *(char**)_r;
@@ -1823,18 +1831,20 @@ void GameW::quest_succeeded(int _idx)
         g_msglog.push(_txt, 0xff90ff28);
     }
     ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[1], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    WL_MARKER(13)
 }
 
 // @ 0x494680
 void GameW::quest_failed(int _idx)
 {
+    WL_MARKER(12)
     char* _e = (char*)((char*)quests + _idx * 0x138);
     *(unsigned*)(_e + 0x64) |= 0x1800;
     tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
     char _buf[0x200];
     {
         tstring _fmt(s_ui_quest_failed_value);
-        char* _f = _val.buf ? _val.buf : (char*)&_val;
+        char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
         char* _r = (char*)g_strtable.lookup(_fmt) + 4;
         if (*(char**)_r != 0)
             _r = *(char**)_r;
@@ -1845,6 +1855,7 @@ void GameW::quest_failed(int _idx)
         g_msglog.push(_txt, 0xffd02028);
     }
     ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[3], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    WL_MARKER(13)
 }
 
 // ==== 0x4947a0, 0x4948c0: quest concluded / cancelled ====================================================================
@@ -1860,39 +1871,51 @@ static __forceinline void log_add(const tstring& s)
 }
 
 // @ 0x4947a0
-void GameW::set_quest_concluded(int quest)
+void GameW::set_quest_concluded(int _idx)
 {
-    char buf[512];
-    QuestRec* q = &quests[quest];
-    q->flags |= 0x1000;
-    tstring id(q->text);                    // lives to the end of the function (the last dtor in the original)
+    WL_MARKER(12)
+    char* _e = (char*)((char*)quests + _idx * 0x138);
+    *(unsigned*)(_e + 0x64) |= 0x1000;
+    tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
+    char _buf[0x200];
     {
-        tstring key("ui_quest_concluded_value");
-        mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), id.c_str());
+        tstring _fmt("ui_quest_concluded_value");
+        char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
+        char* _r = (char*)g_strtable.lookup(_fmt) + 4;
+        if (*(char**)_r != 0)
+            _r = *(char**)_r;
+        mb_snprintf(_buf, 0x200, _r, _f);
     }
     {
-        tstring msg(buf);
-        g_msglog.push(msg, 0xffd02028);
+        tstring _txt(_buf);
+        g_msglog.push(_txt, 0xffd02028);
     }
     ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[2], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    WL_MARKER(13)
 }
 
 // @ 0x4948c0
-void GameW::set_quest_cancelled(int quest)
+void GameW::set_quest_cancelled(int _idx)
 {
-    char buf[512];
-    QuestRec* q = &quests[quest];
-    q->flags = 0;
-    tstring id(q->text);                    // lives to the end of the function (the last dtor in the original)
+    WL_MARKER(12)
+    char* _e = (char*)((char*)quests + _idx * 0x138);
+    *(unsigned*)(_e + 0x64) = 0;
+    tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
+    char _buf[0x200];
     {
-        tstring key("ui_quest_cancelled_value");
-        mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), id.c_str());
+        tstring _fmt("ui_quest_cancelled_value");
+        char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
+        char* _r = (char*)g_strtable.lookup(_fmt) + 4;
+        if (*(char**)_r != 0)
+            _r = *(char**)_r;
+        mb_snprintf(_buf, 0x200, _r, _f);
     }
     {
-        tstring msg(buf);
-        g_msglog.push(msg, 0xffd02028);
+        tstring _txt(_buf);
+        g_msglog.push(_txt, 0xffd02028);
     }
     ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[4], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    WL_MARKER(13)
 }
 
 
@@ -2240,6 +2263,7 @@ void WindowMgrW::set_state(int idx)
 // @ 0x4957d0
 void GameW::spread_party_experience(int amount)
 {
+    WL_MARKER(12)
     GameData::add_experience(player, amount);
     PartyMgrW* m = &pm();
     PartyW* p = m->at(((Map10007*)(void*)m)->lookup(f78));
@@ -2264,4 +2288,5 @@ void GameW::spread_party_experience(int amount)
         if (troops[troop].flags32 & 0x10)
             GameData::add_experience(troop, amount / heroes);
     }
+    WL_MARKER(13)
 }

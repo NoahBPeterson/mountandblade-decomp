@@ -18,3 +18,4 @@
 ../src/game/dialog_manager.cpp  ?collect@DialogMgr@@QAEXPAUDlgLine@@HPAHD@Z  00460de0  /O2 /MT /Gy /TP
 ../src/game/dialog_manager.cpp  ?advance@DialogMgr@@QAEXXZ  00460ff0  /O2 /MT /Gy /TP
 ../src/game/dialog_manager.cpp  ?advance_all@DialogMgr@@QAEXPAH@Z  00461140  /O2 /MT /Gy /TP
+../src/game/dialog_manager.cpp  ?start@DialogMgr@@QAEXHHHHD@Z  004610b0  /O2 /MT /Gy /TP

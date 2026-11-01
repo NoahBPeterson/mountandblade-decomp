@@ -12,3 +12,5 @@
 ../src/game/char_sheet/save_state.cpp  ?write300@Rec300@@QAEXPAUOutStream@@H@Z  004e9710  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_state.cpp  ?write_items@GameData@@QAEXPAUOutStream@@@Z  004e9790  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_state.cpp  ?write_records@GameData@@QAEXPAUOutStream@@@Z  004e97e0  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_state.cpp  ?save_state@GameData@@QAEHPAUOutStream@@@Z  004e8f10  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_state.cpp  ?write_clock@GameData@@QAEHPAUOutStream@@@Z  004e9190  /O2 /MT /Gy /TP

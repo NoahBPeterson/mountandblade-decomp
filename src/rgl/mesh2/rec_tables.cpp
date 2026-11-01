@@ -13,6 +13,7 @@
 #include "../../game/config/config.h"        // canonical: clip_slot (Entry18), music_player, InputSet, Config, loaded_snd_table, prsnt_record, sound_record
 #include "../../game/render_batch.h"          // render_batch (g_batch 0x5fe898)
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 // agent.h's allocator tag of the one-int record (0x436d80); declared here to avoid that header
 struct int1 { int a; };
@@ -105,6 +106,7 @@ extern const char g_key_file[];                     // 0x595788 the key file's n
 // @ 0x4c2ea0
 void __fastcall fn_4c2ea0(void* self)
 {
+    WL_MARKER(12)
     bin_reader r;
     char path[0x104];
     sprintf(path, g_key_file);
@@ -125,6 +127,7 @@ void __fastcall fn_4c2ea0(void* self)
         }
         r.failed = 1;
     }
+    WL_MARKER(13)
 }                                                   // ~bin_reader: the two strings (inlined in the original)
 
 // @ 0x4c2fb0

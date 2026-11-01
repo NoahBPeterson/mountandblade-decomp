@@ -14,6 +14,7 @@
 #include <new>                                             // declares operator new[]/delete[]: without it cl calls operator new/delete for arrays
 #include "./tstring.h"
 #include "./dialog_manager.h"
+#include "../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "./str_table.h"
 #include "../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -397,12 +398,11 @@ void DialogMgr::advance()
 
 // @ 0x4610b0
 // Starts a conversation: stores the parties / troop, resets the dialog globals and runs the automatic lines.
-// The body (0x4610c2) is bracketed by two 18-byte inline tags of the original: `jmp +0x10; "WL  ", id, 0, "WL  "`
-// with id 0x0c at the start (the 0x4610b0 "thunk") and 0x0d at the end (before the epilogue).
-// The tags cannot be written in C++ (the inline assembler here accepts only _emit for data, which the rules
-// forbid), so this source omits them and the row is nonmatching.
+// The body is bracketed by the original's two WinLicense markers (WL_MARKER): id 12 at 0x4610b0 (the entry) and
+// id 13 at 0x46111d (before the epilogue).
 void DialogMgr::start(int a, int b, int c, int d, char f)
 {
+    WL_MARKER(12)
     fc = a;
     f10 = c;
     fe024 = f;
@@ -414,6 +414,7 @@ void DialogMgr::start(int a, int b, int c, int d, char f)
     cur = -1;
     cur_idx = 0;
     advance();
+    WL_MARKER(13)
 }
 
 // @ 0x461140

@@ -20,6 +20,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 // ======================================================= slice s00525160: functions
 #undef g_mgr
@@ -1667,10 +1668,12 @@ void MissionHud_s29130::update_marks()
 // @ 0x5295a0
 void MissionHud_s29130::tick()
 {
+    WL_MARKER(12)
     g_game_s29130->more_start();
     if (f2c8 != 0 || (f154 >= 0 && (((char*)g_mission_templates)[f154 * 0x58 + 0x20] & 0x10))) {
         refresh_markers();
     }
+    WL_MARKER(13)
 }
 
 // @ 0x529600

@@ -12,6 +12,7 @@
 // trigger_entry_vec, big_obj) are one module.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -32,9 +33,10 @@
 
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
 
-// @ 0x4be742
+// @ 0x4be730
 void MetaMission::init()
 {
+    WL_MARKER(12)
     f014 = 0;
     f144 = 0;
     f138 = 0;
@@ -56,6 +58,7 @@ void MetaMission::init()
     f2c4 = 0;
     f2c8 = 0;
     f040 = 0;
+    WL_MARKER(13)
 }
 
 // @ 0x4be7c0
@@ -1456,6 +1459,7 @@ float frand();                                       // 0x40e400 (rand() % 15817
 // (the original brackets the monitor initialisation with two 18-byte WinLicense markers, at 0x4c2542 and 0x4c25c1)
 music_player::music_player()
 {
+    WL_MARKER(12)
     for (int i = 0; i < 0x100; i++)
         ((tstring*)((char*)this + 0x18 + i * 0x20))->tstring::tstring();
     TimedVal* t = (TimedVal*)&w[4];                 // +0x2418 / +0x2420
@@ -1471,6 +1475,7 @@ music_player::music_player()
     *(int*)this = 0;
     w[16] = 0;
     *((char*)this + 0x2478) = 0;
+    WL_MARKER(13)
 }
 
 // @ 0x4c25e0

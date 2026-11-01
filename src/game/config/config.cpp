@@ -31,6 +31,7 @@
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
 #include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 // ---- imports and library functions the slices declared by hand ------------------------------------------------------
 extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(HWND hwnd, int csidl, HANDLE token, DWORD flags, char* path);   // 0x5492c0
@@ -923,6 +924,7 @@ void buffer_pair::release()
 // @ 0x4bc5b0
 void render_batch::init_formats()
 {
+    WL_MARKER(12)
     cur_vf_a = -1;
     cur_ib = -1;
     cur_vf_b = -1;
@@ -969,6 +971,7 @@ void render_batch::init_formats()
     ib.bufs[1].type = 1;
     ib.bufs[0].count = n * 3 * 8;
     ib.bufs[1].count = n / 2 * 8;
+    WL_MARKER(13)
 }
 
 // @ 0x4bc830
@@ -1677,8 +1680,10 @@ int rec34::read(stream_base* s)
 // 0x547f10, 0x547f30 and 0x548010 for the tables at 0xa75eb0, 0xa75f2c and 0x8ed4f58.
 rec_table::rec_table()
 {
+    WL_MARKER(12)
     count = 0;
     records = 0;
+    WL_MARKER(13)
 }
 
 // @ 0x4be560
