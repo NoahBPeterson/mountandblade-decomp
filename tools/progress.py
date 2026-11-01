@@ -587,9 +587,14 @@ def treemap(path):
             if fw <= 0 or fh <= 0:
                 continue
             ax.add_patch(Rectangle((fx, fy), fw, fh, fill=False, lw=0.5, ec=MUTED, zorder=4))
+            # one cell per function, laid out together inside the file box (a one-item squarify fills the whole box,
+            # which painted every box in the colour of its last function: cls_map's FAIL/WEAK rows showed as PASS)
+            byc = {}
             for a, n, cat, fnm in files.get(f, []):
-                for _k, (x_, y_, w_, h_) in squarify([(cat, n)], fx, fy, fw, fh):
-                    ax.add_patch(Rectangle((x_, y_), w_, h_, fc=colour[cat], ec="none", lw=0, antialiased=False, zorder=2))
+                byc[cat] = byc.get(cat, 0) + n
+            for cat, (cx, cy, cw, ch) in squarify(list(byc.items()), fx, fy, fw, fh):   # one block per verdict ...
+                for a, (x_, y_, w_, h_) in squarify([(a, n) for a, n, c, _ in files.get(f, []) if c == cat], cx, cy, cw, ch):
+                    ax.add_patch(Rectangle((x_, y_), w_, h_, fc=colour[cat], ec=SURFACE, lw=0.15, zorder=2))  # ... one cell per function
             nm = f.rsplit("/", 1)[-1].replace(".nonmatching.txt", "").replace(".manifest.txt", "").replace(".txt", "")
             t = ax.text(fx + 0.25, fy + fh - 0.2, nm, ha="left", va="top", fontsize=FS, color=INK, zorder=6,
                         bbox=dict(boxstyle="square,pad=0.1", fc=SURFACE, ec="none", alpha=0.85))
