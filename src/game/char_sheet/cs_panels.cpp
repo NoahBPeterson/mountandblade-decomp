@@ -63,13 +63,13 @@ void CharSheet::refresh_panels()
 
     if ((c->flags32 & 0x10) != 0) {
         tstring k("ui_health_player");
-        i = c->nib[3] & 0xf;
+        i = ((unsigned char*)c)[0x7a] & 0xf;      // 0x4f0cc2: mov al,[esi+0x7a]; and eax,0xf
         if (i < 0) i = 0;
         else if (i > g_skill_clamp) i = g_skill_clamp;
         mb_vsprintf(line, g_strtable.lookup(k)->c_str(), (int)c->hp, c->lvl58 + i * 2 + 0x23);
     } else {
         tstring k("ui_health");
-        i = c->nib[3] & 0xf;
+        i = ((unsigned char*)c)[0x7a] & 0xf;      // 0x4f0d40: mov dl,[ebp+0x7a]; and edx,0xf
         if (i < 0) i = 0;
         else if (i > g_skill_clamp) i = g_skill_clamp;
         mb_vsprintf(line, g_strtable.lookup(k)->c_str(), c->lvl58 + i * 2 + 0x23);
