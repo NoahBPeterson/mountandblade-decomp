@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T22:17:00-05:00",
-"commit": "741f40c",
+"when": "2026-10-31T22:35:32-05:00",
+"commit": "bc679a2",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,8 +9,8 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 459,
-"weak": 423,
+"pass": 470,
+"weak": 412,
 "fail": 8,
 "inputs": 27,
 "harness": 31,
@@ -18,8 +18,8 @@
 "comdatdiff": 11,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 161001,
-"weak_sz": 594336,
+"pass_sz": 164006,
+"weak_sz": 591331,
 "fail_sz": 32172,
 "inputs_sz": 25127,
 "harness_sz": 73274,
@@ -361,8 +361,8 @@
 "00414960": {
 "module": "psys",
 "file": "src/rgl/psys.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 372
 },
 "00414ae0": {
@@ -515,8 +515,8 @@
 "0041b960": {
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 302
 },
 "0041c628": {
@@ -634,8 +634,8 @@
 "00421df0": {
 "module": "fx_anim",
 "file": "src/rgl/dynamic/fx_anim.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 245
 },
 "00422130": {
@@ -746,8 +746,8 @@
 "00424cc0": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 154
 },
 "00424fc4": {
@@ -1026,8 +1026,8 @@
 "00433cb0": {
 "module": "item_kind",
 "file": "src/game/agent/item_kind.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 216
 },
 "00433e40": {
@@ -1383,8 +1383,8 @@
 "0043e190": {
 "module": "agent_combat",
 "file": "src/game/agent3/agent_combat.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 97
 },
 "0043e47a": {
@@ -2916,8 +2916,8 @@
 "00489e70": {
 "module": "mission_ui",
 "file": "src/game/ui/mission_ui.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 105
 },
 "0048a000": {
@@ -3322,8 +3322,8 @@
 "00490160": {
 "module": "world_data",
 "file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 309
 },
 "004904a0": {
@@ -6043,8 +6043,8 @@
 "004f3e10": {
 "module": "dust",
 "file": "src/game/char_sheet/dust.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 579
 },
 "004f4060": {
@@ -6372,8 +6372,8 @@
 "00504ba0": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 422
 },
 "00504e20": {
@@ -7247,8 +7247,8 @@
 "00529c30": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 204
 },
 "00529d80": {
