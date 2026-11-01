@@ -3351,7 +3351,7 @@ class Runner:
             except Exception:
                 pass
 
-    def uninit_copies(self, inp, max_steps=30_000_000):
+    def uninit_copies(self, inp, max_steps=30_000_000, side=None):
         """Dword addresses whose content, at the end of the ORIGINAL's run of inp, is a plain copy of a stack slot
         below the entry esp that this run has not written since the slot last became live (an uninitialised local,
         whatever a returned callee's frame left there): the original's value there is
@@ -3362,10 +3362,21 @@ class Runner:
         shifted by a constant (inc / dec, add / sub of an immediate, lea reg, [reg + disp]: a leftover plus a constant
         is still indeterminate -- trigger_vec 0x4bf170 stores a D3D out-parameter the generated callee never wrote,
         minus 1), or, on the x87 stack, shifted by a memory operand (fadd / fsub / fsubr m32/m64); any other
-        instruction (multiplies, compares, register-register x87 ops) makes what it writes untainted."""
+        instruction (multiplies, compares, register-register x87 ops) makes what it writes untainted.
+
+        A stack byte is uninitialised for the tested function when no instruction of the function's own frame
+        activation (its own code, or a callee still running) has written it since the function was entered: once
+        the callee has returned, whatever it wrote there -- its dead frame, or an object of the function's frame it
+        filled through a pointer whose slot the function then reuses -- leaves the slot uninitialised until the
+        function's own code writes it (agent_logic 0x448eb0 copies [esp+0x38], last written by collect_boxed
+        through &ents, then reused for the vector4 temp). `side` picks which build is run
+        (default the original); the origin of each tainted byte, (slot, last writer pc, pc of the read that made
+        it tainted), is kept in self.uninit_origin for the report."""
+        side = side or self.orig
         m, uc = self.m, self.m.uc
         lo_s, entry = M.STACK_TOP - M.STACK_SIZE, self.esp_entry
-        written, tainted = set(), set()
+        written, tainted = set(), {}                    # tainted: byte -> origin tuple
+        calleew, away = set(), [False]  # bytes callees wrote since the function's own code last ran
         stale_hits = self.__dict__.setdefault("stale_w_slots", set())
         regt, fpu, pend, steps = {}, [], [False], [0]
         movs = [None]       # esi - edi of the string copy in progress: its writes take their source bytes' taint
@@ -3375,7 +3386,7 @@ class Runner:
 
         # per stack byte: (write sequence number, written by the tested function's own code) of its last write
         lastw, seq, cur_pc = {}, [0], [0]
-        span_lo, span_hi = self.orig.span
+        span_lo, span_hi = side.span
 
         def stale_w(a):
             """The dword at frame slot `a` is the w lane of a vector the function just built: the function's own
@@ -3402,8 +3413,10 @@ class Runner:
         def src_taint(a, n):
             if n == 4 and stale_w(a):
                 stale_hits.add(a)
-                return True
-            return all((b in tainted) or (lo_s <= b < entry and b not in written) for b in range(a, a + n))
+                return (a, lastw[a][2], cur_pc[0])
+            if not all((b in tainted) or (lo_s <= b < entry and b not in written) for b in range(a, a + n)):
+                return False
+            return tainted.get(a) or (a, lastw.get(a, (0, False, None))[2], cur_pc[0])
 
         def ea(o):
             mm = o.mem
@@ -3419,7 +3432,7 @@ class Runner:
 
         def on_code(uc_, address, size, _):
             steps[0] += 1
-            if self.cur is not self.orig or steps[0] > max_steps:
+            if self.cur is not side or steps[0] > max_steps:
                 return
             cur_pc[0] = address
             try:
@@ -3451,6 +3464,14 @@ class Runner:
                 for b in range(last_esp[0], min(esp_now, last_esp[0] + 0x10000)):
                     written.discard(b)
             last_esp[0] = esp_now
+            if span_lo <= address < span_hi:
+                if away[0]:
+                    # back in the tested function: what the callees wrote into their own frames is dead again
+                    written.difference_update(calleew)
+                    calleew.clear()
+                    away[0] = False
+            else:
+                away[0] = True
             try:
                 if mn == "mov" and len(ops) == 2 and ops[0].size == 4:
                     d, sop = ops
@@ -3478,7 +3499,7 @@ class Runner:
                     return
                 if mn == "pop" and ops and ops[0].type == CX.X86_OP_REG:
                     regt[ops[0].reg] = src_taint(uc_.reg_read(UC_X86_REG_ESP), 4) and \
-                        uc_.reg_read(UC_X86_REG_ESP) in tainted
+                        tainted.get(uc_.reg_read(UC_X86_REG_ESP), False)
                     return
                 if mn in ("inc", "dec") and ops and ops[0].size == 4:
                     if ops[0].type == CX.X86_OP_REG:
@@ -3520,7 +3541,7 @@ class Runner:
                 pend[0] = False
 
         def on_write(uc_, access, address, size, value, _):
-            if self.cur is not self.orig:
+            if self.cur is not side:
                 return
             seq[0] += 1
             inside = span_lo <= cur_pc[0] < span_hi
@@ -3528,11 +3549,16 @@ class Runner:
                 t_ = src_taint((b + movs[0]) & 0xFFFFFFFF, 1) if movs[0] is not None else pend[0]
                 if lo_s <= b < entry + 0x1000:
                     written.add(b)
-                    lastw[b] = (seq[0], inside)
+                    lastw[b] = (seq[0], inside, cur_pc[0])
+                    if inside:
+                        calleew.discard(b)
+                    elif b < entry:
+                        calleew.add(b)          # a callee's write: dead once it has returned (its frame, or an
+                                                # object of ours it filled that the function later reuses the slot of)
                 if t_:
-                    tainted.add(b)
+                    tainted[b] = t_
                 else:
-                    tainted.discard(b)
+                    tainted.pop(b, None)
 
         hs = [uc.hook_add(UC_HOOK_CODE, on_code), uc.hook_add(UC_HOOK_MEM_WRITE, on_write)]
         # the same notion for call arguments: per recorded call (index-aligned with self.calls), the stack-argument
@@ -3540,17 +3566,41 @@ class Runner:
         self.call_taint_fn = lambda esp: frozenset(k for k in range(8) if src_taint(esp + 4 * k, 4))
         self.last_call_uninit = None
         try:
-            self.run_side(self.orig, inp)
+            self.run_side(side, inp)
         finally:
             self.call_taint_fn = None
             for h in hs:
                 uc.hook_del(h)
         if steps[0] > max_steps:
+            self.uninit_origin = {}
             return frozenset()
         self.last_call_uninit = list(self.call_taint)
         # bytes, not dwords: a copy to an unaligned destination (cam widget + 0x1ac from a soup pointer) straddles
         # dwords, so the comparison excuses a dword whose differing bytes are all tainted (Comparer.uninit_excused)
-        return frozenset(a for a in tainted if not (lo_s <= a < entry))
+        self.uninit_origin = {a: o for a, o in tainted.items() if not (lo_s <= a < entry)}
+        return frozenset(self.uninit_origin)
+
+    def uninit_both(self, inp):
+        """{byte address: (original's origin, ours' origin)} of the bytes that are an uninitialised-slot copy in
+        BOTH builds' runs of inp (Runner.uninit_copies run once per side); a byte uninitialised on one side only
+        is a real difference and is not in it. Also sets self.last_call_uninit to the per-call argument masks
+        both sides agree on (none when the two runs made a different number of calls)."""
+        a = self.uninit_copies(inp)
+        oa, ca = dict(self.uninit_origin), self.last_call_uninit
+        if not a and not (ca and any(ca)):
+            self.last_call_uninit = None
+            return {}
+        if getattr(self.opts, "uninit_orig_only", False):
+            # the older, weaker rule: the original's leftover is excused whatever ours holds (ours may define a
+            # value there, e.g. camera 0x49bea0 / mesh_3 0x52f250 store 0.0 where the original copies 0xCCCCCCCC)
+            return {x: (o, o) for x, o in oa.items()}
+        b = self.uninit_copies(inp, side=self.ours)
+        ob, cb = self.uninit_origin, self.last_call_uninit
+        if ca and cb and len(ca) == len(cb):
+            self.last_call_uninit = [x & y for x, y in zip(ca, cb)]
+        else:
+            self.last_call_uninit = None
+        return {x: (oa[x], ob[x]) for x in oa if x in ob}
 
     def _traced_reads(self, inp):
         """[(address, dword)] of every 4-byte read the original makes from an input buffer, the
@@ -4629,7 +4679,8 @@ class Comparer:
         self.tolerated = {"stack-pointer": 0, "inline-calls": 0, "ulp": 0, "const-pointer": 0, "local-copy": 0,
                           "uninit-dword": 0, "stub-scratch": 0, "stale-return-address": 0}
         self.ro = runner.ro
-        self.uninit_copy = frozenset()      # bytes excused for the input in hand (set by test_function)
+        self.uninit_copy = {}               # bytes excused for the input in hand: byte -> (orig origin, ours origin)
+        self.uninit_log = {}                # every excused dword: addr -> report row (JSON uninit_slots)
         self.uninit_args = None             # per original call: stack-arg dword indexes that are uninitialised leftovers
         self.last_kind = None
         self._thr, self._thr_key = None, None      # --uninit-mem: the pool/extra baseline of the page in hand
@@ -4657,7 +4708,14 @@ class Comparer:
         if not self.uninit_copy:
             return False
         diff = [j for j in range(min(len(ba), len(bb))) if ba[j] != bb[j]]
-        return bool(diff) and all((addr + j) in self.uninit_copy for j in diff)
+        if not diff or not all((addr + j) in self.uninit_copy for j in diff):
+            return False
+        oo, uo = self.uninit_copy[addr + diff[0]]
+        key = (addr, oo[1], uo[1], oo[2])
+        if key not in self.uninit_log and len(self.uninit_log) < 500:
+            self.uninit_log[key] = {"addr": addr, "orig_writer_pc": oo[1], "ours_writer_pc": uo[1],
+                                    "read_pc": oo[2], "ours_read_pc": uo[2]}
+        return True
 
     def same_constant(self, x, y):
         """Two different pointers into read-only data whose 64 bytes (or C strings) are identical:
@@ -6412,7 +6470,7 @@ def _test_function(sid, va, opts, log=print):
                     # the original may have copied an uninitialised local there (or passed one by value to a callee):
                     # re-compare without those dwords
                     # (the original's run of this input is re-done once with copy taint; see uninit_copies)
-                    u = runner.uninit_copies(inp)
+                    u = runner.uninit_both(inp)
                     cu = runner.last_call_uninit
                     if u or (cu and any(cu)):
                         cmp_.uninit_copy = u
@@ -6423,7 +6481,7 @@ def _test_function(sid, va, opts, log=print):
                                 kind_, d2_ = fpt.judge(a, b, inp, t)
                                 d2 = d2_ if kind_ == "real" else None
                         finally:
-                            cmp_.uninit_copy = frozenset()
+                            cmp_.uninit_copy = {}
                             cmp_.uninit_args = None
                         d = d2
             if d:
@@ -6492,6 +6550,9 @@ def _test_function(sid, va, opts, log=print):
                tolerated=cmp_.tolerated, ours_traps=traps)
     # frame slots the uninit-copy taint read as a just-built vector's leftover w (Runner.uninit_copies, stale_w)
     out["stale_w_slots"] = len(getattr(runner, "stale_w_slots", ()) or ())
+    # every dword excused as an uninitialised-slot copy in both builds, with the writer pcs of each side
+    out["uninit_slots"] = [{k: ("0x%x" % v if v is not None else None) for k, v in e.items()}
+                           for e in cmp_.uninit_log.values()]
     ecov = out["edges"] = {nm: edge_report(runner, side, opts) for nm, side in (("orig", runner.orig), ("ours", runner.ours))}
     if opts.ulp:
         out["ulp"] = opts.ulp
@@ -6830,6 +6891,9 @@ def parse_args(argv=None):
     ap.add_argument("--no-loop-repair", dest="loop_repair", action="store_false")
     ap.add_argument("--no-force-results", dest="force_results", action="store_false",
                     help="never force the result of a branch-feeding callee (Runner._on_forced)")
+    ap.add_argument("--uninit-orig-only", action="store_true",
+                    help="excuse a dword the original copies from an uninitialised slot even when ours holds a defined "
+                         "value there (default: both builds must copy an uninitialised slot)")
     ap.add_argument("--no-uninit-copy", dest="uninit_copy", action="store_false",
                     help="compare every dword, including those the original only copied from an uninitialised stack "
                          "slot (Runner.uninit_copies: a vector4's unset w passed by value)")

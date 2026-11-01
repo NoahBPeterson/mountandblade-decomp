@@ -890,3 +890,101 @@ def test_prove_dead_covered_edge_refutes_model():
     # claiming the (infeasible) ja edge was covered must make the prover refuse everything
     r = deadedge.prove_dead(c, {(0x100a, 0x100c)}, covered={(0x100a, 0x100e)}, budget_s=60)
     assert all(v[0] == "unknown" for v in r.values()), r
+
+
+# ---------------------------------------------------------------------- uninitialised stack slots (Runner.uninit_copies)
+def _uninit_fake(orig_body, ours_body, imm=0x1234):
+    """A Runner stand-in around a real unicorn: the original's function at 0x10000 and ours at 0x30000 (each a
+    frame of 0x20 bytes; `callee` at 0x10200 fills the dword it is handed with imm), storing the dword at
+    [esp+0x10] to the global 0x20000 once the body has run. Returns (fake, inp)."""
+    import struct
+    from unicorn import Uc, UC_ARCH_X86, UC_MODE_32
+    from unicorn.x86_const import UC_X86_REG_ESP
+    uc = Uc(UC_ARCH_X86, UC_MODE_32)
+    top = M.STACK_TOP
+    uc.mem_map(top - M.STACK_SIZE, M.STACK_SIZE)
+    for base in (0x10000, 0x20000, 0x30000):
+        uc.mem_map(base, 0x1000)
+    callee = b"\x8b\x44\x24\x04" + b"\xc7\x00" + struct.pack("<I", imm) + b"\xc3"   # mov eax,[esp+4]; mov [eax],imm; ret
+    uc.mem_write(0x10200, callee)
+    pre = b"\x83\xec\x20"                                   # sub esp, 0x20
+    arg = b"\x8d\x44\x24\x10\x50"                           # lea eax,[esp+0x10]; push eax
+    post = b"\x83\xc4\x04"                                  # add esp, 4
+    tail = b"\x8b\x44\x24\x10\xa3" + struct.pack("<I", 0x20000) + b"\x83\xc4\x20\xc3"   # eax=[esp+0x10]; [D]=eax; ret
+    own = b"\xc7\x44\x24\x10\x05\x00\x00\x00"               # mov dword [esp+0x10], 5
+
+    def build(base, kind):
+        parts = {"callee_then_copy": [pre, arg, None, post, tail],
+                 "callee_then_own_write": [pre, arg, None, post, own, tail],
+                 "never_called": [pre, tail]}[kind]
+        code = b""
+        for p in parts:
+            if p is None:
+                p = b"\xe8" + struct.pack("<i", 0x10200 - (base + len(code) + 5))
+            code += p
+        uc.mem_write(base, code)
+
+    build(0x10000, orig_body)
+    build(0x30000, ours_body)
+
+    class Side:
+        def __init__(s, entry):
+            s.entry, s.span = entry, (entry, entry + 0x100)
+
+    class Fake:
+        pass
+    f = Fake()
+    f.m = type("MM", (), {"uc": uc})()
+    f.orig, f.ours, f.cur = Side(0x10000), Side(0x30000), None
+    f.esp_entry = top - 0x1000
+    f.call_taint_fn, f.call_taint, f.last_call_uninit = None, [], None
+
+    def run_side(side, inp):
+        uc.mem_write(0x20000, b"\0" * 4)
+        uc.mem_write(f.esp_entry, struct.pack("<I", 0x20800))        # return address: a hlt landing pad
+        uc.mem_write(0x20800, b"\xf4")
+        uc.reg_write(UC_X86_REG_ESP, f.esp_entry)
+        f.cur = side
+        try:
+            uc.emu_start(side.entry, 0x20800)
+        finally:
+            f.cur = None
+    f.run_side = run_side
+    f.uninit_copies = lambda *a, **k: equiv.Runner.uninit_copies(f, *a, **k)
+    return f, None
+
+
+def test_uninit_slot_written_by_returned_callee_is_excused():
+    """A slot only a callee that has since returned wrote (agent_logic 0x448eb0: collect_boxed filled the EntVec the
+    vector4 temp then reuses) is uninitialised for the tested function: the copy is tainted on both sides, excused,
+    and listed with each side's writer pc and the read pc."""
+    f, inp = _uninit_fake("callee_then_copy", "callee_then_copy")
+    both = equiv.Runner.uninit_both(f, inp)
+    assert set(both) == {0x20000, 0x20001, 0x20002, 0x20003}, both
+    oa, ob = both[0x20000]
+    assert oa[1] == 0x10204 and ob[1] == 0x10204, (oa, ob)            # the callee's `mov [eax], imm` wrote it
+    assert 0x10000 <= oa[2] < 0x10100 and 0x30000 <= ob[2] < 0x30100, (oa, ob)    # the read is in each function
+    c = equiv.Comparer.__new__(equiv.Comparer)
+    c.uninit_copy, c.uninit_log = both, {}
+    assert c.uninit_excused(0x20000, b"\x34\x12\0\0", b"\x99\0\0\0")
+    row, = c.uninit_log.values()
+    assert row["orig_writer_pc"] == row["ours_writer_pc"] == 0x10204 and row["addr"] == 0x20000, row
+
+
+def test_uninit_slot_written_by_the_function_itself_is_compared():
+    """The function's own write after the callee initialises the slot: its copy is a real value, never excused."""
+    f, inp = _uninit_fake("callee_then_own_write", "callee_then_own_write")
+    assert equiv.Runner.uninit_both(f, inp) == {}
+
+
+def test_uninit_on_one_side_only_is_compared():
+    """Uninitialised in the original but initialised by ours' own code (or the reverse): a real difference."""
+    f, inp = _uninit_fake("callee_then_copy", "callee_then_own_write")
+    assert equiv.Runner.uninit_both(f, inp) == {}
+    f, inp = _uninit_fake("callee_then_own_write", "callee_then_copy")
+    assert equiv.Runner.uninit_both(f, inp) == {}
+
+
+def test_uninit_leftover_slot_never_written_is_excused():
+    f, inp = _uninit_fake("never_called", "never_called")
+    assert set(equiv.Runner.uninit_both(f, inp)) == {0x20000, 0x20001, 0x20002, 0x20003}
