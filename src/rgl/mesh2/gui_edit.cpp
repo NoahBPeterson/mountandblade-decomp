@@ -1405,15 +1405,17 @@ void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
 void graph_obj::update_terrain(int idx, const float* d)
 {
     calc_vertex_mode(idx);
-    for (int i = 0, off = 0;; i++, off += 0x18) {
+    for (unsigned i = 0, off = 0;; i++, off += 0x18) {
         char* base = *(char**)((char*)this + 0x1c);
         if (!base)
             break;
-        int count = (*(char**)((char*)this + 0x20) - base) / 0x18;
+        // 0x4c7fc5 compares the index with the element count unsigned (jae), so a negative count never ends the loop
+        unsigned count = (unsigned)((*(char**)((char*)this + 0x20) - base) / 0x18);
         if (i >= count)
             break;
         float* p = (float*)(*(char**)((char*)this + 0x1c) + off);
-        if (p[5] != 0.0f) {
+        // 0x4c7fd2 tests the dword (test ecx,ecx): -0.0f counts as set
+        if (((int*)p)[5] != 0) {
             p[0] += d[0];
             p[1] += d[1];
             p[2] += d[2];
