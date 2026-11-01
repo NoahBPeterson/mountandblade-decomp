@@ -1108,6 +1108,7 @@ class InputGen:
         return inp
 
 
+TYPED_SEEDS = 4        # valid typed inputs kept as corpus seeds even when they reach no new edge
 TYPED_SHARE = 0.5      # share of fresh inputs whose `this` / pointer-to-class arguments are typed objects
 TYPED_DEPTH = 3        # nested object pointers followed (deeper ones stay soup)
 TYPED_OBJECTS = 48     # typed objects (incl. vector elements) per input
@@ -6103,6 +6104,7 @@ def _test_function(sid, va, opts, log=print):
     loop_tries = loop_ok = loop_calls = 0
     faked = 0
     saved_cover = 0
+    typed_seeds = 0         # valid typed inputs kept in the corpus without a new edge (see below)
     ran = 0
     ours_probe = 0
     probes = 0
@@ -6134,6 +6136,11 @@ def _test_function(sid, va, opts, log=print):
             if inp is None and i < len(regress):
                 inp = regress[i][1]
                 inp.origin = "regress" if i < n_regress else "cover"
+                if i >= n_regress and gen.typed is not None and not getattr(inp, "typed", 0):
+                    # a saved soup-only coverage input of a row that has typed objects: replaying it would make it
+                    # the corpus' only seed, every mutant/steered input would stay soup and the typed objects
+                    # (valid typed inputs 131 -> 1, obj_tbl 0x4991d0) would never be built; build a fresh input
+                    inp = None
             if inp is None:
                 if corpus and rng.random() < opts.mutate:
                     parent = steer.pick_parent(corpus, rng) if steer else \
@@ -6372,8 +6379,16 @@ def _test_function(sid, va, opts, log=print):
             if new:
                 corpus.append(inp)
                 last_new = i
-                if i >= len(regress) and new_edge:
+                if getattr(inp, "typed", 0):
+                    typed_seeds += 1
+                if i >= len(regress) and new_edge and (gen.typed is None or getattr(inp, "typed", 0)):
                     saved_cover += save_cover(sid, va, opts, inp) is not None
+            elif getattr(inp, "typed", 0) and typed_seeds < TYPED_SEEDS:
+                # a valid typed input that adds no edge is still a seed: mutants of it keep the typed objects. Without
+                # this the first valid SOUP input (3 edges) is the whole corpus, every mutant stays soup and typed
+                # inputs are only the fresh ones, mostly invalid (obj_tbl 0x4991d0: typed valid 131 or 1 by rng luck)
+                corpus.append(inp)
+                typed_seeds += 1
             if steer:
                 steer.note_valid(inp, {"orig": a["edges"], "ours": b["edges"] if sb[0] in FINISHED else set()})
             cmp_.last_kind = None
