@@ -156,10 +156,9 @@ void MapPanel::update_target()
             dy >= -0.01f && h + 0.01f >= dy) {
             if (dy >= 0.0f) {
                 int n = g_game->n_labels;
-                int i;
-                for (i = 0; i < n; i++)
-                    if ((float)(i + 1) * 0.015f > dy) break;
-                if (i < n) {
+                // the original handles the hit inside the scan loop (0x519347), so the loop is not unrolled
+                for (int i = 0; i < n; i++)
+                    if ((float)(i + 1) * 0.015f > dy) {
                     g_game->cur_label = n - i - 1;
                     if (view->is_key_down(8)) {
                         ((MapPickScreen*)this)->set_label(-1);
@@ -178,7 +177,8 @@ void MapPanel::update_target()
                             g_game->emit_event(0x16, f2d8, sel);
                         }
                     }
-                }
+                    break;
+                    }
             }
         } else if (dx < -0.2f || dx > w + 0.2f ||
                    dy < -0.2f || dy > h + 0.2f || view->is_key_down(8)) {
@@ -254,7 +254,7 @@ void MapPanel::update_target()
         float ddx = hp.x - nearp.x;
         float ddy = hp.y - nearp.y;
         float ddz = hp.z - nearp.z;
-        float d = sqrtf(ddx * ddx + ddy * ddy + ddz * ddz);
+        float d = sqrtf(ddz * ddz + ddy * ddy + ddx * ddx);   // the original sums z*z + y*y first, then x*x
         if (!(d < bestd)) continue;
         bestd  = d;
         bestpt = hp;
@@ -283,7 +283,7 @@ void MapPanel::update_target()
         float ddx = nearp.x - o->pos.x;
         float ddy = nearp.y - o->pos.y;
         float ddz = nearp.z - o->pos.z;
-        float d = sqrtf(ddx * ddx + ddy * ddy + ddz * ddz);
+        float d = sqrtf(ddz * ddz + ddy * ddy + ddx * ddx);   // the original sums z*z + y*y first, then x*x
         if (o->kind == 1) {
             d -= 0.4f;
             if (o->party == g_game->f78) d += 0.35f;
@@ -318,13 +318,13 @@ void MapPanel::update_target()
         // ---- 0x519a8b: ground items -----------------------------------------------------------------
         sphere sh;
         int best_item = -1;
-        for (int i = 0; g_game->fleet && i < (GroundItem*)g_game->fleet_end - (GroundItem*)g_game->fleet; i++) {
+        for (unsigned i = 0; g_game->fleet && i < (unsigned)((GroundItem*)g_game->fleet_end - (GroundItem*)g_game->fleet); i++) {   // 0x519b09: jae
             GroundItem* it = (GroundItem*)g_game->fleet + i;
             if (!(g_game->f95 || (it->flags & 0x20000000))) continue;
             float ddx = it->pos.x - nearp.x;
             float ddy = it->pos.y - nearp.y;
             float ddz = it->pos.z - nearp.z;
-            float d = sqrtf(ddx * ddx + ddy * ddy + ddz * ddz);
+            float d = sqrtf(ddz * ddz + ddy * ddy + ddx * ddx);   // the original sums z*z + y*y first, then x*x
             if (!(d < bestd)) continue;
             sh.radius = d * 0.01f + 0.03f;
             sh.center = it->pos;
@@ -356,7 +356,7 @@ void MapPanel::update_target()
                 }
             } else if (kind == 3) {
                 int id = ((MapSceneObj*)bestobj)->party;
-                AgentRec* rec = ((AgentRec**)g_game->agent_pages)[id >> 4] + (id & 0xf);
+                AgentRec* rec = ((AgentRec**)g_game->agent_pages)[(unsigned)id >> 4] + (id & 0xf)   /* 0x519d57: shr */;
                 if (rec->kind == 1) {
                     Party* pl = party_at(g_game, g_game->f78);
                     pl->action = 4;
