@@ -453,5 +453,305 @@
       "0.8"
     ],
     "why": "Party::update_nav switches on the order kind (+0x5998: 1, 2, 3), the moving flag (+0x5980) and the re-path flag (+0x5988); random ints are almost never 1/2/3, so the kind-2/3 branches, start_path success and the can_move advance loop were never entered (37/58 edges). Soft hints only, nothing is discarded: 52/57 edges, 80.6% insns, 476 valid inputs, 0 mismatches."
+  },
+  "agent_fx_sound 004428c0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "camera 0049bbb0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "camera 0049bea0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "camera 0049f060": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "cls_map 004db440": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "cls_map 004de1b0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "exchange_screens 00531800": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "exchange_screens 00532de0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "game_tick 005179f0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "game_tick 00517e70": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "game_tick 005181c0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "game_tick 00518680": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "game_tick 005189e0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "game_tick 00518d70": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "gui_edit 004c8ca0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "map_info 0051abd0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "map_picker 0051a420": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "map_tooltip 0051c090": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "map_update 005191e0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "mesh_game 004832b0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "mission_5 00529670": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "mission_5 00529840": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "mission_5 00529c30": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "mission_ctx 00513f80": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "mission_ctx 00514890": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "mission_ctx 00516370": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "mission_ctx 00516700": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_2 004b2c00": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_2 004b3910": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_2 004b4800": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_2 004b4a00": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_2 004b6070": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_2 004b6180": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_2 004b6870": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_screen 00503ed0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_screen 00504e20": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "party_screen 005059c0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "terrain_b 00473a60": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "troop_rec 0051f1a0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "widget_text 0050cc70": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 00490990": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 00490ce0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 004910a0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 00491430": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 004915d0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 004918d0": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 00491b20": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 00492530": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 00494b60": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+  },
+  "world_data 00494e40": {
+    "args": [
+      "--party-table"
+    ],
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   }
 }

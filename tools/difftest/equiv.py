@@ -3280,7 +3280,7 @@ class Runner:
             except Exception:
                 pass
 
-    def uninit_copies(self, inp, max_steps=3_000_000):
+    def uninit_copies(self, inp, max_steps=30_000_000):
         """Dword addresses whose content, at the end of the ORIGINAL's run of inp, is a plain copy of a stack slot
         below the entry esp that this run has not written since the slot last became live (an uninitialised local,
         whatever a returned callee's frame left there): the original's value there is
@@ -3295,13 +3295,43 @@ class Runner:
         m, uc = self.m, self.m.uc
         lo_s, entry = M.STACK_TOP - M.STACK_SIZE, self.esp_entry
         written, tainted = set(), set()
+        stale_hits = self.__dict__.setdefault("stale_w_slots", set())
         regt, fpu, pend, steps = {}, [], [False], [0]
         movs = [None]       # esi - edi of the string copy in progress: its writes take their source bytes' taint
         last_esp = [entry]
         # decoded instructions, kept across inputs (keyed by address AND bytes, so changed code is re-decoded)
         cache = self.__dict__.setdefault("_taint_insns", {})
 
+        # per stack byte: (write sequence number, written by the tested function's own code) of its last write
+        lastw, seq, cur_pc = {}, [0], [0]
+        span_lo, span_hi = self.orig.span
+
+        def stale_w(a):
+            """The dword at frame slot `a` is the w lane of a vector the function just built: the function's own
+            code wrote the three dwords below it (x, y, z) after the slot's last write, which came from outside
+            the function (a callee's object that shared the slot, e.g. a dead tstring's length, or a value left
+            before entry). The 3-argument vector4 constructor never sets w, so the original copies that leftover
+            (update_flags 0x4b7840, process_blow 0x457b40, text_rect 0x49b4f0, facegen_win::init 0x4f1460)."""
+            if a & 3 or not (lo_s <= a - 12 and a + 4 <= entry):
+                return False
+            w = lastw.get(a)
+            if w is None or w[1]:
+                return False
+            for k in (4, 8, 12):
+                for b in range(a - k, a - k + 4):
+                    x = lastw.get(b)
+                    if x is None or not x[1] or x[0] < w[0]:
+                        return False
+            for b in range(a + 1, a + 4):
+                x = lastw.get(b)
+                if x is None or x[1]:
+                    return False
+            return True
+
         def src_taint(a, n):
+            if n == 4 and stale_w(a):
+                stale_hits.add(a)
+                return True
             return all((b in tainted) or (lo_s <= b < entry and b not in written) for b in range(a, a + n))
 
         def ea(o):
@@ -3320,6 +3350,7 @@ class Runner:
             steps[0] += 1
             if self.cur is not self.orig or steps[0] > max_steps:
                 return
+            cur_pc[0] = address
             try:
                 raw = bytes(uc_.mem_read(address, size))
             except Exception:
@@ -3420,10 +3451,13 @@ class Runner:
         def on_write(uc_, access, address, size, value, _):
             if self.cur is not self.orig:
                 return
+            seq[0] += 1
+            inside = span_lo <= cur_pc[0] < span_hi
             for b in range(address, address + size):
                 t_ = src_taint((b + movs[0]) & 0xFFFFFFFF, 1) if movs[0] is not None else pend[0]
                 if lo_s <= b < entry + 0x1000:
                     written.add(b)
+                    lastw[b] = (seq[0], inside)
                 if t_:
                     tainted.add(b)
                 else:
@@ -6371,6 +6405,8 @@ def _test_function(sid, va, opts, log=print):
                          "all": len(covered) >= total,
                          "missed": ["%08x" % a for a in sorted(set(t.orig_insns) - covered)][:64]},
                tolerated=cmp_.tolerated, ours_traps=traps)
+    # frame slots the uninit-copy taint read as a just-built vector's leftover w (Runner.uninit_copies, stale_w)
+    out["stale_w_slots"] = len(getattr(runner, "stale_w_slots", ()) or ())
     ecov = out["edges"] = {nm: edge_report(runner, side, opts) for nm, side in (("orig", runner.orig), ("ours", runner.ours))}
     if opts.ulp:
         out["ulp"] = opts.ulp
