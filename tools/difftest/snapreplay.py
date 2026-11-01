@@ -195,7 +195,11 @@ class Replayer:
                         written[pg] = None
         h = uc.hook_add(UC_HOOK_MEM_WRITE, on_write)
         uninit_hooks = []
-        if os.environ.get("SNAP_UNINIT"):                # debug: every stack byte read before the run wrote it reads as 0 on both sides
+        # uninitialised stack (never written, or freed since: esp rose past it) reads as 0 on both sides, so a value the
+        # program never set is not compared; a byte only ONE build leaves unset still differs. SNAP_UNINIT=0 turns it off,
+        # =1 zeroes only bytes never written in the run
+        uninit_mode = os.environ.get("SNAP_UNINIT", "2")
+        if uninit_mode != "0":
             from unicorn import UC_HOOK_MEM_READ
             SPAN = 0x100000
             seen = bytearray(SPAN)                       # index esp0 - 1 - addr; 1 = written (or already zeroed)
@@ -210,7 +214,7 @@ class Replayer:
                     if esp0 - SPAN <= a_ < esp0 and not seen[esp0 - 1 - a_]:
                         seen[esp0 - 1 - a_] = 1
                         uc_.mem_write(a_, b"\0")
-            if os.environ["SNAP_UNINIT"] == "2":         # freed stack (esp rose) is uninitialised again
+            if uninit_mode == "2":                       # freed stack (esp rose) is uninitialised again
                 from unicorn import UC_HOOK_CODE
                 from unicorn.x86_const import UC_X86_REG_ESP as _ESP
                 st = [esp0]
