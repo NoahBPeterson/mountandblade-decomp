@@ -2277,25 +2277,11 @@ void OptionsWin::init()
 
     {   // resolution
         { tstring k("Resolution"); resolution = make_dropdown((MissionUi*)window, &k, 0.52f, 0.665f); }
-        // The original builds each of these vector4 with the 3-argument constructor and never sets w, so each call passes a stale
-        // stack word (0x4e1751 / 0x4e1797 / 0x4e17dd read [esp+0x2c]: a frame slot nothing in this function writes, which holds 0
-        // or a small integer on every harness input). Leaving w uninitialised would hand the mesh a leftover stack address in ours
-        // (whatever our frame held), so w is 0.0f here: the value the original's slot holds in practice, and compile-independent.
-        {
-            rgl::vector4 v(0.7f, 0.7f, 1.0f);
-            v.w = 0.0f;
-            ((gui_mesh*)resolution->tracks[2])->set_color(v);
-        }
-        {
-            rgl::vector4 v(0.7f, 0.7f, 1.0f);
-            v.w = 0.0f;
-            ((gui_mesh*)resolution->tracks[1])->set_color(v);
-        }
-        {
-            rgl::vector4 v(0.7f, 0.7f, 1.0f);
-            v.w = 0.0f;
-            ((gui_mesh*)resolution->tracks[3])->set_color(v);
-        }
+        // The original passes 3-argument vector4 temporaries (w never set, 0x4e1751 / 0x4e1797 / 0x4e17dd copy the temp's
+        // unwritten 4th float); set_color 0x47af30 reads only x, y, z
+        ((gui_mesh*)resolution->tracks[2])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
+        ((gui_mesh*)resolution->tracks[1])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
+        ((gui_mesh*)resolution->tracks[3])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
         float sc[2];
         sc[0] = 0.0139999995f;   // 0x3c656041 (0.014f would be 0x3c656042)
         sc[1] = 0.0139999995f;
