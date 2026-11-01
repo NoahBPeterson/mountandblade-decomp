@@ -70,7 +70,7 @@ struct GameW {                                                   // world_data/w
     void random_position_around(Vec2 pos, float r, Vec2* out);   // 0x490030 (ret 0x10)
 };
 struct RecPool {
-    void alloc_record();   // 0x493700 (world_data.cpp; declared void, the new id is left in eax)
+    unsigned alloc_record();   // 0x493700 (world_data.cpp; returns the new record id)
 };
 struct E68W {
     void* find_or_create(int* key);   // 0x493df0 (world_data.cpp, ret 4)

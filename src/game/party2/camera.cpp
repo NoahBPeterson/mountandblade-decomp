@@ -1719,13 +1719,7 @@ struct SpriteRec {
 
 // The child-id list at party+0xcc.
 struct ChildList {
-    int pop_front()
-    {   // RecPool::alloc_record is defined (and mangled) as returning void, but leaves the new id in eax: the same function through a
-        // pointer to a member of the same address that returns it
-        union { void (RecPool::*decl)(); int (ChildList::*call)(); } f;
-        f.decl = &RecPool::alloc_record;
-        return (this->*f.call)();
-    }                                    // 0x493700 (thiscall; RecPool::alloc_record is declared void, the id is its eax)
+    int pop_front() { return ((RecPool*)this)->alloc_record(); }   // 0x493700 (thiscall; RecPool::alloc_record returns the record id)
 };
 
 // The scene embedded at party+0xf8.
@@ -1754,7 +1748,7 @@ struct Party {
     Scene scene;                                         // +0xf8
 
     CharRec* chars() { return *scene.chars; }
-    SpriteRec* sprite(int id) { return sprites[id >> 4] + (id & 0xf); }
+    SpriteRec* sprite(unsigned id) { return sprites[id >> 4] + (id & 0xf); }
 
     int attach_party_center(float2* pos, int a, int b);        // 0x49e9c0
     int add_sprite(int x, int y, int troop);             // 0x49ebd0

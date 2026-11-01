@@ -1412,7 +1412,7 @@ PartyW* PartyW::construct()
 template void std::vector<int>::push_back(const int&);
 
 // @ 0x493700
-void RecPool::alloc_record()
+unsigned RecPool::alloc_record()
 {
     if (free_ids.size() <= 0) {
         Rec98* blk = (Rec98*)new Event[16];
@@ -1430,6 +1430,7 @@ void RecPool::alloc_record()
     r->f4 = 1;
     r->fc = serial;
     ++serial;
+    return idx;
 }
 
 // @ 0x493830
