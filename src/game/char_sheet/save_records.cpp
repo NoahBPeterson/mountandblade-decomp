@@ -202,9 +202,10 @@ void Rec5ac8::write(OutStream* out)
     out->w_raw((char*)this + 0x94);
     out->w_raw((char*)this + 0x8c8);
     out->w_int4((int*)((char*)this + 0x8cc));
-    write_vec4((List4*)((char*)this + 0x8bc), out);
-    write_vec4((List4*)((char*)this + 0x59f8), out);
-    write_soa(out, (char*)this + 0x5a08);
+    char* soa = f5a08;
+    write_vec4(&f8bc, out);
+    write_vec4(&f59f8, out);
+    write_soa(out, soa);
     f59d8.write8(out);
     return;
 }
