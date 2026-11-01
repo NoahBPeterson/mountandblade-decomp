@@ -3778,7 +3778,7 @@ class Runner:
         if not a and not (ca and any(ca)):
             self.last_call_uninit = None
             return {}
-        if getattr(self.opts, "uninit_orig_only", False):
+        if getattr(getattr(self, "opts", None), "uninit_orig_only", False):
             # the older, weaker rule: the original's leftover is excused whatever ours holds (ours may define a
             # value there, e.g. camera 0x49bea0 / mesh_3 0x52f250 store 0.0 where the original copies 0xCCCCCCCC)
             return {x: (o, o) for x, o in oa.items()}
