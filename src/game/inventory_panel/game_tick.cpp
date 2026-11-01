@@ -886,9 +886,9 @@ void GameG::train_troops()
         Stack& s = p->stacks[i];
         if (s.flags & 1)
             continue;
-        if (!(troops[s.troop].flags32 & 0x10))
+        if (!(troops[s.troop].flags30 & 0x10))
             continue;
-        if (troops[s.troop].hp < (s.troop == player ? g_player_wounded_treshold : g_hero_wounded_treshold))
+        if (s.troop == player ? troops[s.troop].hp < g_player_wounded_treshold : troops[s.troop].hp < g_hero_wounded_treshold)
             continue;
         int lvl = skill_level(s.troop, 0x11);
         if (lvl > 10)
@@ -897,7 +897,9 @@ void GameG::train_troops()
         if (!cost)
             continue;
 
-        for (int j = 0; j < p->nstacks; j++) {
+        int n = p->nstacks;
+        int j = 0;
+        if (n > 0) do {
             Stack& q = p->stacks[j];
             if (j == i)
                 continue;
@@ -905,8 +907,8 @@ void GameG::train_troops()
                 continue;
             if (troops[q.troop].level >= troops[s.troop].level)
                 continue;
-            if (troops[q.troop].flags32 & 0x10) {
-                if (troops[q.troop].hp < (q.troop == player ? g_player_wounded_treshold : g_hero_wounded_treshold))
+            if (troops[q.troop].flags30 & 0x10) {
+                if (q.troop == player ? troops[q.troop].hp < g_player_wounded_treshold : troops[q.troop].hp < g_hero_wounded_treshold)
                     continue;
                 gain[j] += cost;
                 total += cost;
@@ -917,7 +919,7 @@ void GameG::train_troops()
                 gain[j] += cost * (ready > 0 ? ready : 0);
                 total += cost * (ready > 0 ? ready : 0);
             }
-        }
+        } while (++j < n);
     }
 
     if (total != 0) {
@@ -930,7 +932,7 @@ void GameG::train_troops()
     bool changed = false;
     for (int i = 0; i < p->nstacks; i++) {
         Stack& q = p->stacks[i];
-        if (troops[q.troop].flags32 & 0x10) {
+        if (troops[q.troop].flags30 & 0x10) {
             add_experience(q.troop, gain[i]);
         } else {
             int old = q.f14;

@@ -65,15 +65,26 @@ void* __fastcall list_int_make_node(list_int* self, void* edx, void* node, void*
 struct C4c2d10 {
     char pad[0x140];
     C4c2d10();   // 0x4c2d10
+    void build();   // the same constructor as a plain thiscall: a placement new would add a null test the original lacks
 };
 struct clip_table {
     char pad[0x14c];
     clip_table();   // 0x4be6b0
+    void build();   // 0x4be6b0 (see C4c2d10::build)
 };
 struct growable_array {
     char pad[0x140];
     growable_array();   // 0x4d1360
+    void build();   // 0x4d1360 (see C4c2d10::build)
 };
+struct tstring_raw {
+    char pad[0x10];
+    void build();   // tstring::tstring() 0x42bbd0 (see C4c2d10::build)
+};
+#pragma comment(linker, "/alternatename:?build@C4c2d10@@QAEXXZ=??0C4c2d10@@QAE@XZ")
+#pragma comment(linker, "/alternatename:?build@clip_table@@QAEXXZ=??0clip_table@@QAE@XZ")
+#pragma comment(linker, "/alternatename:?build@growable_array@@QAEXXZ=??0growable_array@@QAE@XZ")
+#pragma comment(linker, "/alternatename:?build@tstring_raw@@QAEXXZ=??0tstring@@QAE@XZ")
 #include "../str_table.h"                                      // StrTable (0x5e2a18; was StrTab here: lookup 0x43a1e0)
 struct WindowMgrW {
     void open(int flag);   // 0x494260 (world_data/world_data.h; the main menu object 0xa73980)
@@ -206,7 +217,7 @@ Big* Big::init()
     p->f030 = 0;
     p->v48.end = 0; p->v58.alloc = 0;
     for (int i = 0; i < 0x40; i++)
-        new ((void*)(p->blocks + i * 0x130), raw_place()) C4c2d10;
+        ((C4c2d10*)(p->blocks + i * 0x130))->build();
 
     p->f5de0 = 2;
     p->f5de8 = ((int*)g_ticks)[4];
@@ -229,11 +240,11 @@ Big* Big::init()
     p->f6330 = ((int*)g_ticks)[4];
     p->f6334 = ((int*)g_ticks)[5];
     p->f63c4 = 0; p->f63c8 = 0; p->f63cc = 0;
-    new ((void*)p->f63d0, raw_place()) clip_table;
+    ((clip_table*)p->f63d0)->build();
 
     p->f667c = 0; p->f6680 = 0; p->f6684 = 0;
     p->f668c = 0; p->f6690 = 0; p->f6694 = 0;
-    new ((void*)p->f6698, raw_place()) growable_array;
+    ((growable_array*)p->f6698)->build();
 
     p->f67d8 = 2;
     p->f67e0 = ((int*)g_ticks)[4];
@@ -242,7 +253,7 @@ Big* Big::init()
     p->f6808 = ((int*)g_ticks)[4];
     p->f680c = ((int*)g_ticks)[5];
 
-    new ((void*)p->f6814, raw_place()) tstring;
+    ((tstring_raw*)p->f6814)->build();
     p->f000 = 0;
     *(int*)((char*)p + 0x5270) = 0;
     return this;

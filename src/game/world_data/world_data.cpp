@@ -1341,15 +1341,22 @@ void PartyW::thunk_4936a0()
     init();
 }
 
+// tstring::tstring() 0x42bbd0 as a plain thiscall on raw storage: a placement new adds a null test the original lacks.
+struct tstring_raw {
+    char pad[0x10];
+    void build();
+};
+#pragma comment(linker, "/alternatename:?build@tstring_raw@@QAEXXZ=??0tstring@@QAE@XZ")
+
 // @ 0x4934d0
 PartyW* PartyW::construct()
 {
     char* self = (char*)this;
 
     *(void**)(self) = (void*)vtbl_592644;
-    new ((tstring*)(self + 0xc)) tstring();
-    new ((tstring*)(self + 0x20)) tstring();
-    new ((tstring*)(self + 0x54)) tstring();
+    ((tstring_raw*)(self + 0xc))->build();
+    ((tstring_raw*)(self + 0x20))->build();
+    ((tstring_raw*)(self + 0x54))->build();
 
     {
         char* p = self + 0xa8;
@@ -1388,7 +1395,7 @@ PartyW* PartyW::construct()
     *(int*)(self + 0x5a00) = 0;
 
     for (int i = 0; i < 8; ++i)
-        new ((tstring*)(self + 0x5a28 + i * 0x10)) tstring();
+        ((tstring_raw*)(self + 0x5a28 + i * 0x10))->build();
 
     *(int*)(self + 0x5aa8) = -1;
     *(int*)(self + 0x5ab0) = 1;

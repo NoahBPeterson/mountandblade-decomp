@@ -220,13 +220,13 @@ static __forceinline int config_index(const tstring& key)
 {
     int found = -1;
     int i = 0;
-    while (i < g_game_vars.count) {
+    do {
+        if (i >= g_game_vars.count)
+            break;
         if (g_game_vars.entries[i].key.equals(key))
             found = i;
         ++i;
-        if (found != -1)
-            break;
-    }
+    } while (found == -1);
     return found;
 }
 
@@ -436,7 +436,7 @@ void label_refresh(MissionUi* self, tstring key)
 // ---- 0x4e51e0 / 0x4e5230: the two number getters of the ini table (an entry index in, the entry's string out) ----------------------------
 // the value pointer of entry i lives at +0x20 + 0x2c * i (a tstring's buf; a null pointer means the pointer field itself holds the string)
 // @ 0x4e51e0
-int ini_file::get_hex(int* idx)
+__declspec(noinline) int ini_file::get_hex(int* idx)    // called out of line by label_refresh (0x4e4c70)
 {
     int i = *idx;
     if (i < 0 || i >= count)
@@ -449,7 +449,7 @@ int ini_file::get_hex(int* idx)
 }
 
 // @ 0x4e5230
-float ini_file::get_float(int* idx)
+__declspec(noinline) float ini_file::get_float(int* idx)
 {
     int i = *idx;
     if (i < 0 || i >= count)

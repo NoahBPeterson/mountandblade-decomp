@@ -1349,13 +1349,25 @@ void TriggerEntryVec::dtor()
     delete[] base;
 }
 
+// RecH's vector deleting destructor 0x4315d0 (??_ERecH, rgl/xmlcfg/records.cpp) and tstring::tstring() 0x42bbd0 as plain
+// thiscalls: the original calls both out of line (an inline delete[] unrolls the element loop; a placement new adds a null test).
+struct RecH_vd {
+    void* vecdel(unsigned flags);
+};
+struct tstring_raw {
+    char pad[0x10];
+    void build();
+};
+#pragma comment(linker, "/alternatename:?vecdel@RecH_vd@@QAEPAXI@Z=??_ERecH@@QAEPAXI@Z")
+#pragma comment(linker, "/alternatename:?build@tstring_raw@@QAEXXZ=??0tstring@@QAE@XZ")
+
 // @ 0x4c2250
 int __cdecl entry_vec_resize(stream_base* sp, TriggerEntryVec* self)
 {
     stream_base& s = *sp;
     TriggerEntryVec* t = self;
     if (t->data != 0)
-        delete[] t->data;                  // RecH's vector deleting destructor 0x4315d0 (??_ERecH, rgl/xmlcfg/records.cpp: the same delete[])
+        ((RecH_vd*)t->data)->vecdel(3);    // 0x4315d0
     s.r_int(&t->count);
     int n = t->count;
     int* blk = (int*)operator new[](n * sizeof(RecH) + 4);
@@ -1363,10 +1375,11 @@ int __cdecl entry_vec_resize(stream_base* sp, TriggerEntryVec* self)
     if (blk != 0) {
         p = (RecH*)(blk + 1);
         blk[0] = n;
-        for (int i = 0; i < n; i++) {
-            new (&p[i].name) tstring();
-            new (&p[i].s.name) tstring();
-            p[i].s.ptr = 0;
+        RecH* q = p;
+        for (int i = n - 1; i >= 0; i--, q++) {
+            ((tstring_raw*)&q->name)->build();
+            ((tstring_raw*)&q->s.name)->build();
+            q->s.ptr = 0;
         }
     } else {
         p = 0;
@@ -1533,13 +1546,13 @@ void music_player::advance_piece()
             w[12] = -1;
         }
     } else if (g_music_volume > g_music_volume_floor) {
-        int forced = 0;
+        bool forced = false;
         int sel = -1;
         int best = -1;
         int a = (*(int*)((char*)&g_script + 0x34));
         if (a >= 0) {
             (*(int*)((char*)&g_script + 0x34)) = -1;
-            forced = 1;
+            forced = true;
             if (a != -1)
                 sel = a;
         }
@@ -1551,25 +1564,27 @@ void music_player::advance_piece()
             float sum = 0.0f;
             float now = (float)g_ticks[0] * 1e-5f + 1.0f;
             const float* times = (const float*)((char*)this + 0x2008);
-            for (int i = 0; i < count; i++) {
-                if (i != best && (TRACK(i, 8) & mode) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0))
+            int i = 0;
+            if (count > 0) do {
+                if (i != best && mode != 0 && (TRACK(i, 8) & mode) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0))
                 {
                     sum += now - times[i];
                     sum += 500.0f;
                 }
-            }
+            } while (++i < count);
             // 0x4c2888 fcomp 0; test ah,0x41; jne: only an ordered sum > 0 draws (a NaN sum keeps `best`)
             if (sum > 0.0f) {
                 int pick = (int)((float)(rand() % 0x3dc9) * sum * 6.3223117e-05f);
-                for (int i = 0; i < count; i++) {
-                    if (i != best && (TRACK(i, 8) & mode) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0)) {
+                i = 0;
+                if (count > 0) do {
+                    if (i != best && mode != 0 && (TRACK(i, 8) & mode) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0)) {
                         pick = (int)((float)pick - ((now - times[i]) + 500.0f));
                         if ((float)pick < 0.0f) {
                             sel = i;
                             break;
                         }
                     }
-                }
+                } while (++i < count);
             } else {
                 sel = best;
             }
@@ -1586,28 +1601,26 @@ void music_player::advance_piece()
         }
     }
     // slot 1: the piece being faded
-    if (w[1] != 0) {
-        if (w[3] == 0) {
-            int h = FSOUND_Stream_GetOpenState((void*)w[9]);
-            if (h == 0) {
-                w[3] = 1;
-                w[13] = FSOUND_Stream_Play(-1, (void*)w[9]);
-                *(__int64*)&w[24] = g_ticks[w[22]];
-            } else if (h != -2) {
-                tstring* nm = (tstring*)((char*)this + 0x18 + 0x20 * w[11]);
-                sprintf(buf, "Error: Unable to load %s", nm->c_str());
-                ((stream_base&)g_log).w_cstr(buf);
-                w[1] = 0;
-            }
-        } else {
-            int len = FSOUND_Stream_GetLengthMs((void*)w[9]);
-            if (FSOUND_Stream_GetTime((void*)w[9]) < len)
-                return;
-            FSOUND_Stream_Close((void*)w[9]);
-            w[9] = 0;
+    if (w[1] != 0 && w[3] == 0) {
+        int h = FSOUND_Stream_GetOpenState((void*)w[9]);
+        if (h == 0) {
+            w[3] = 1;
+            w[13] = FSOUND_Stream_Play(-1, (void*)w[9]);
+            *(__int64*)&w[24] = g_ticks[w[22]];
+        } else if (h != -2) {
+            tstring* nm = (tstring*)((char*)this + 0x18 + 0x20 * w[11]);
+            sprintf(buf, "Error: Unable to load %s", nm->c_str());
+            ((stream_base&)g_log).w_cstr(buf);
             w[1] = 0;
-            w[13] = -1;
         }
+    } else if (w[1] != 0) {
+        int len = FSOUND_Stream_GetLengthMs((void*)w[9]);
+        if (FSOUND_Stream_GetTime((void*)w[9]) < len)
+            return;
+        FSOUND_Stream_Close((void*)w[9]);
+        w[9] = 0;
+        w[1] = 0;
+        w[13] = -1;
     } else if ((*(int*)((char*)&g_script + 0x3c)) >= 0) {
         if (g_music_volume > g_music_volume_floor) {
             int slot = 1;
