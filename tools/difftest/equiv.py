@@ -227,6 +227,86 @@ def context():
     return _ctx
 
 
+def static_vptrs(ctx=None):
+    """{global VA: vtable VA} of the polymorphic objects the game's static initialisers construct.
+
+    The image's .data/.bss holds such a global's state BEFORE its constructor ran (g_log 0x5a9f60 holds the
+    abstract text_stream_base vtable 0x54a740, every slot but two a _purecall; the harness's fault repair and
+    steering also write random dwords into .data), whereas at run time it carries the vtable the initialiser
+    stores. Found by scanning the original's .text for
+      mov dword ptr [G], VT        (absolute store, VT an .rdata vtable whose slot 0 is code)   and
+      mov ecx, G / call ctor       (ctor's last `mov dword ptr [reg], VT` before its first ret: the most-derived store)
+    A global with several distinct stores (a constructor and the destructor's base-class vptr: g_log is stored
+    0x595990 at 0x547b16 and 0x595618 at 0x5482b7) takes the one stored within 24 bytes before a call to atexit
+    (the static initialiser registering the destructor); still ambiguous -> the global is left out."""
+    ctx = ctx or context()
+    if "static_vptrs" in ctx:
+        return ctx["static_vptrs"]
+    img, db, m = ctx["img"], ctx["db"], ctx["m"]
+    atexit = db.lib.get("atexit")
+    cands = {}                              # G -> {VT: stored right before an atexit call}
+    memo = {}
+
+    def is_vt(v):
+        try:
+            return 0x549000 <= v < 0x5a8000 and img.in_text(img.u32(v)) and img.in_data(v)
+        except Exception:                   # noqa: BLE001
+            return False
+
+    def note(g, v, at_exit):
+        if m.in_image_writable(g) and is_vt(v):
+            cands.setdefault(g, {})
+            cands[g][v] = cands[g].get(v, False) or at_exit
+
+    def ctor_vt(t, text, base):
+        if t not in memo:
+            out = None
+            for ins in _md.disasm(text[t - base:t - base + 300], t):
+                if ins.mnemonic == "ret":
+                    break
+                if ins.mnemonic == "mov" and len(ins.operands) == 2:
+                    o0, o1 = ins.operands
+                    if o0.type == CX.X86_OP_MEM and o1.type == CX.X86_OP_IMM and o0.size == 4 and \
+                            o0.mem.base and not o0.mem.index and o0.mem.disp == 0 and is_vt(o1.imm & 0xFFFFFFFF):
+                        out = o1.imm & 0xFFFFFFFF
+            memo[t] = out
+        return memo[t]
+
+    for _n, base, size, ch in img.sections:
+        if not ch & 0x20000000:
+            continue
+        text = bytes(img.read(base, size))
+        i = text.find(b"\xc7\x05")
+        while i >= 0:
+            g, v = struct.unpack_from("<II", text, i + 2)
+            tail = text[i + 10:i + 34]
+            at_exit = False
+            if atexit is not None:
+                for j in range(len(tail) - 4):
+                    if tail[j] == 0xE8 and (base + i + 10 + j + 5 + struct.unpack_from("<i", tail, j + 1)[0]) & \
+                            0xFFFFFFFF == atexit:
+                        at_exit = True
+            note(g, v, at_exit)
+            i = text.find(b"\xc7\x05", i + 1)
+        i = text.find(b"\xb9")
+        while i >= 0:
+            if text[i + 5:i + 6] == b"\xe8" and i + 10 <= len(text):
+                g = struct.unpack_from("<I", text, i + 1)[0]
+                t = (base + i + 10 + struct.unpack_from("<i", text, i + 6)[0]) & 0xFFFFFFFF
+                if m.in_image_writable(g) and base <= t < base + size:
+                    v = ctor_vt(t, text, base)
+                    if v:
+                        note(g, v, False)
+            i = text.find(b"\xb9", i + 1)
+    out = {}
+    for g, d in cands.items():
+        pick = list(d) if len(d) == 1 else [v for v, ae in d.items() if ae]
+        if len(pick) == 1:
+            out[g] = pick[0]
+    ctx["static_vptrs"] = out
+    return out
+
+
 def RS_db_lib_full():
     """lib_crt C symbol name -> va (symbols/lib_names.txt)."""
     return context()["db"].lib_full
@@ -1019,6 +1099,12 @@ class InputGen:
                 words.append(self.scalar(k, rng, profile, hot=2 + i % (HOT_SLOTS - 2)))
         return words
 
+    def realign(self, inp):
+        """Element-align the vector triples of the typed objects of an input (TypedInputs.realign); 0 without type info."""
+        if self.typed is None or getattr(self, "no_realign", False):
+            return 0
+        return self.typed.realign(self, inp)
+
     def fresh(self, rng):
         inp = Input()
         inp.seed = rng.getrandbits(32)
@@ -1106,6 +1192,23 @@ class InputGen:
             # governed fields back in range so the mutant stays a usable input rather than being discarded.
             INV.enforce(self.invs, self, inp, rng)
         return inp
+
+
+def align_triple(first, last, end, esz):
+    """(last, end) of a vector triple made element-aligned: `last - first` and `end - first` whole multiples of the
+    element size esz, first <= last <= end (unsigned, no wrap), and a NULL first only with NULL last / end. A triple
+    that already is so comes back unchanged."""
+    M32 = 0xFFFFFFFF
+    if first == 0:
+        return 0, 0
+    last = first + ((last - first) // esz) * esz if first <= last else first
+    end = first + ((end - first) // esz) * esz if first <= end else first
+    last, end = last & M32, end & M32
+    if first + (last - first) > M32 or last < first:
+        last = first
+    if end < last:
+        end = last
+    return last, end
 
 
 TYPED_SEEDS = 4        # valid typed inputs kept as corpus seeds even when they reach no new edge
@@ -1377,6 +1480,89 @@ class TypedInputs:
                 inp.overrides[a] = w
         self.bytes = self.gen = self.inp = self.rng = None
         return roots
+
+    # ---- element-aligned vectors (input model: no generator, mutator, repair or steering step may leave one broken)
+    def realign(self, gen, inp):
+        """Make every vector triple (first/last/end) of the input's typed objects element-aligned, in place.
+        -> number of triples rewritten.
+
+        A real std::vector-like holds `last - first` and `end - first` as whole multiples of the element size
+        with first <= last <= end (and first == NULL only with last == end == NULL). Typed generation builds
+        them that way, but a mutation of one pool dword, a steered value, a fault repair or an input saved by an
+        older harness can break the triple (read_map 0x520c00: first 0x43bf0000, last 0x43bf0010 over 0x24-byte
+        edges; the original's build then reads past the end into stack residue). The objects are walked from the
+        same roots the typed generator uses (`this`, pointer-to-class arguments, typed globals): breadth first,
+        through pointer-to-class members and the elements of class vectors, TYPED_DEPTH deep for a typed input
+        and the roots' own members only for a soup one (following soup pointers would materialise a 64 KB page
+        per hop), at most 2 * TYPED_OBJECTS objects. Only the `last` / `end` dwords of a violated triple are
+        rewritten (rounded DOWN to a whole element count; end never below last); a well formed triple, and every
+        input the generator built, is left byte-identical. Soup memory with no known type is not touched."""
+        tt = self.tt
+        maxdepth = TYPED_DEPTH if getattr(inp, "typed", 0) else 0
+        roots = []
+        if self.this_cls is not None:
+            roots.append((inp.regs.get("ecx", 0), self.this_cls))
+        for pos, c in self.arg_cls:
+            roots.append((inp.args[pos] if pos < len(inp.args) else 0, c))
+        for va, kind, c, _n in self.globs:
+            if kind == "obj":
+                roots.append((va, c))
+            else:
+                p = self._rd(gen, inp, va)
+                if p:
+                    roots.append((p, c))
+        queue = [(a, c, 0) for a, c in roots if a and not a & 3]
+        seen = set()
+        fixed = 0
+        k = 0
+        while k < len(queue) and len(seen) < 2 * TYPED_OBJECTS:
+            addr, cls, depth = queue[k]
+            k += 1
+            if addr in seen:
+                continue
+            seen.add(addr)
+            for f in tt.layout(cls):
+                fa = addr + f.off
+                if f.kind == "vector":
+                    esz = tt.sizeof(f.target)
+                    t = [self._rd(gen, inp, fa + 4 * j) for j in range(3)]
+                    if esz <= 0 or None in t:
+                        continue
+                    fixed += self._fix_triple(gen, inp, fa, t, esz)
+                    if depth < maxdepth and tt.is_class(f.target) and t[0] and not t[0] & 3:
+                        n = min(((self._rd(gen, inp, fa + 4) or 0) - t[0]) // esz, 8)
+                        queue += [(t[0] + i * esz, f.target, depth + 1) for i in range(max(n, 0))]
+                elif f.kind == "ptr_class" and depth < maxdepth:
+                    p = self._rd(gen, inp, fa)
+                    if p and not p & 3 and M.POOL_BASE <= p < M.POOL_BASE + M.POOL_SIZE:
+                        queue.append((p, f.target, depth + 1))
+        return fixed
+
+    def _rd(self, gen, inp, a):
+        """The dword the input holds at a: a pool object (soup + pool_over), an image global (override or the
+        image's value), else None."""
+        if M.POOL_BASE <= a < M.POOL_BASE + M.POOL_SIZE:
+            return INV._dword(gen, inp, a)
+        if a in inp.overrides:
+            return inp.overrides[a]
+        if self.image is not None and a < 0x80000000:
+            return struct.unpack("<I", self.image(a, 4))[0]
+        return None
+
+    def _wr(self, inp, a, v):
+        if M.POOL_BASE <= a < M.POOL_BASE + M.POOL_SIZE:
+            inp.pool_over[a] = v
+        else:
+            inp.overrides[a] = v
+
+    def _fix_triple(self, gen, inp, fa, t, esz):
+        nl, ne = align_triple(t[0], t[1], t[2], esz)
+        n = 0
+        for j, (old, new) in enumerate(zip(t, (t[0], nl, ne))):
+            if old != new:
+                self._wr(inp, fa + 4 * j, new)
+                n += 1
+        return 1 if n else 0
 
     def alloc(self, size, align=8):
         """Address of `size` fresh bytes in a cold slot (bump allocation: few slots get mapped), or 0."""
@@ -2094,6 +2280,8 @@ class Runner:
         # walks, with the declared capacity of the array they index. Attached once per row; `--no-invariants`
         # leaves the list empty and the generator/comparison behave exactly as before.
         self.gen.invs = INV.specs_for(t.sid, t.va, not getattr(opts, "no_invariants", False))
+        self.vptrs = {} if getattr(opts, "no_static_vptrs", False) else static_vptrs(ctx)
+        self.gen.no_realign = getattr(opts, "no_realign", False)
         self.gen.force_cands = list(self.forced_cands)
         # typed `this` / pointer-to-class argument objects (TypedInputs) for a share of the fresh inputs
         self.typed_info = None
@@ -3584,6 +3772,8 @@ class Runner:
                 out.args[k] = val
             else:
                 out.pad[k - len(out.args)] = val
+        elif addr in self.vptrs:
+            return None                     # a global object's vptr is fixed (static_vptrs)
         elif self.m.in_image_writable(addr):
             out.overrides[addr] = val
         else:
@@ -4389,6 +4579,10 @@ class Runner:
         m.pool_slots = []
         m.pool_entry = set()
         for a_, v_ in inp.overrides.items():
+            m.write(a_, struct.pack("<I", v_))
+        for a_, v_ in self.vptrs.items():
+            # a global polymorphic object always carries the vtable its static initialiser installed, never the
+            # image's pre-construction value or a repaired / steered / mutated dword (static_vptrs)
             m.write(a_, struct.pack("<I", v_))
         m.dyn_next = M.DYN_BASE
         m.dyn_sizes = {}
@@ -6104,6 +6298,7 @@ def _test_function(sid, va, opts, log=print):
     loop_tries = loop_ok = loop_calls = 0
     faked = 0
     saved_cover = 0
+    vec_fixed = 0           # vector triples made element-aligned (TypedInputs.realign)
     typed_seeds = 0         # valid typed inputs kept in the corpus without a new edge (see below)
     ran = 0
     ours_probe = 0
@@ -6154,6 +6349,7 @@ def _test_function(sid, va, opts, log=print):
                 inp.regs["ecx"] = M.POOL_BASE + M.SLOT
             if getattr(inp, "typed", 0):
                 typed_n += 1
+            vec_fixed += gen.realign(inp)       # vectors of known element size: whole elements (TypedInputs.realign)
             try:
                 a = runner.run_side(runner.orig, inp)
                 fixes = pure_fixes = heap_fixes = loop_fixes = shrunk = 0
@@ -6196,6 +6392,7 @@ def _test_function(sid, va, opts, log=print):
                     if rep is None:
                         break
                     inp = rep
+                    vec_fixed += gen.realign(inp)   # a repair may have rewritten a vector dword
                     a = runner.run_side(runner.orig, inp)
                 if loop_fixes:
                     # each round re-runs the input at the full cap: a row whose runaway loops the repair cannot
@@ -6480,6 +6677,8 @@ def _test_function(sid, va, opts, log=print):
     if gen.invs:
         out["input_invariants"] = describe_invariants(gen.invs)
     out["regress_inputs"] = n_regress
+    if vec_fixed:
+        out["vectors_realigned"] = vec_fixed
     out["cover_inputs"] = {"replayed": len(regress) - n_regress, "saved": saved_cover}
     # inputs that carry typed objects (fresh ones and the mutants/steered inputs made from them)
     out["typed_inputs"] = {"inputs": typed_n, "valid": typed_valid, "types": runner.typed_info}
@@ -6896,6 +7095,11 @@ def parse_args(argv=None):
                     help="share of fresh inputs whose `this` and pointer-to-class arguments are objects of their "
                          "declared class (CodeView types of a /Z7 compile: the original's vtable pointers, nested "
                          "objects, consistent vectors and strings, small counts); 0 = pointer soup only")
+    ap.add_argument("--no-static-vptrs", action="store_true",
+                    help="do not install the static initialisers' vtable pointers on global polymorphic objects "
+                         "(static_vptrs: g_log 0x5a9f60 ...); the image's pre-construction value / random .data returns")
+    ap.add_argument("--no-realign", action="store_true",
+                    help="do not make typed vectors element-aligned after generation / mutation / repair (TypedInputs.realign)")
     ap.add_argument("--text-chars", metavar="CHARS", default="",
                     help="extra characters (besides a-z, 0-9, _) the typed inputs' generated strings may contain, "
                          "for rows that scan for markup or delimiters ('<', '>', quotes, blanks)")

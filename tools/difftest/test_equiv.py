@@ -890,3 +890,118 @@ def test_prove_dead_covered_edge_refutes_model():
     # claiming the (infeasible) ja edge was covered must make the prover refuse everything
     r = deadedge.prove_dead(c, {(0x100a, 0x100c)}, covered={(0x100a, 0x100e)}, budget_s=60)
     assert all(v[0] == "unknown" for v in r.values()), r
+
+
+# ---- input model: element-aligned vectors, static-initialiser vtable pointers on global objects
+
+def test_align_triple():
+    at = equiv.align_triple
+    esz = 0x24
+    f = 0x43bf0000
+    assert at(f, f + 0x10, f + 0x10, esz) == (f, f)                       # read_map's edge vector: 0x10 bytes of 0x24
+    assert at(f, f + 2 * esz, f + 5 * esz, esz) == (f + 2 * esz, f + 5 * esz)      # well formed: unchanged
+    assert at(f, f + 2 * esz + 5, f + 5 * esz + 9, esz) == (f + 2 * esz, f + 5 * esz)       # rounded down
+    assert at(f, f + 3 * esz, f + esz, esz) == (f + 3 * esz, f + 3 * esz)                   # end below last: end = last
+    assert at(f, f - 4, f + esz, esz)[0] == f                              # last below first: empty
+    assert at(f, 0, 0, esz) == (f, f)
+    assert at(0, 0x43bf0000, 0x43bf0100, esz) == (0, 0)                    # NULL first: empty
+    assert at(0xFFFFFF00, 0xFFFFFF00 + 0x48, 0xFFFFFF00 + 0x48, 4)[0] >= 0xFFFFFF00
+
+
+class _Cls:
+    """Just enough cvtypes.TypeTable for TypedInputs: one `this` class holding a 0x24-byte-element vector at +0x20."""
+    ELEM, THIS = 1, 2
+
+    def layout(self, c):
+        import cvtypes as CV
+        return [CV.Field(0x20, "vector", 12, self.ELEM, "edges")] if c == self.THIS else []
+
+    def sizeof(self, c):
+        return {self.ELEM: 0x24, self.THIS: 0x40}[c]
+
+    def is_class(self, c):
+        return True
+
+    def scalar(self, c):
+        return None
+
+
+def _typed_fixture():
+    import random
+    ti = equiv.TypedInputs(_Cls(), _Cls.THIS, [], lambda n: None)
+    gen = object.__new__(equiv.InputGen)
+    gen.slot_cache, gen.dic, gen.nan, gen.code, gen.typed, gen.invs = {}, [0], False, [], ti, []
+    gen._slot_soup = lambda inp, slot: bytes(M.SLOT)
+    return ti, gen, random.Random(7)
+
+
+def _new_input(rng):
+    inp = equiv.Input()
+    inp.seed, inp.profile, inp.args, inp.pad = 1, "mixed", [], []
+    inp.pool_over, inp.regs, inp.xmm, inp.overrides, inp.touched = {}, {"ecx": M.POOL_BASE + M.SLOT}, [], {}, []
+    inp.typed, inp.origin = 1, "fresh"
+    return inp
+
+
+def test_typed_vectors_are_element_aligned_after_generation_and_mutation():
+    ti, gen, rng = _typed_fixture()
+    this = M.POOL_BASE + M.SLOT
+    for seed in range(60):
+        rng.seed(seed)
+        inp = _new_input(rng)
+        ti.build(gen, inp, rng)
+        rd = lambda a: equiv.INV._dword(gen, inp, a)
+        f, l, e = rd(this + 0x20), rd(this + 0x24), rd(this + 0x28)
+        assert (l - f) % 0x24 == 0 and (e - f) % 0x24 == 0 and f <= l <= e, (seed, f, l, e)
+        assert gen.realign(inp) == 0                                   # a generated input is left byte-identical
+        # mutation / steering / repair: any one of the three dwords replaced by something arbitrary
+        for k in range(3):
+            m = inp.copy()
+            m.pool_over[this + 0x20 + 4 * k] = rng.choice([0x43bf0010, 3, 0, 0xFFFFFFFF, f + 7, f + 0x13, (f - 0x24) & 0xFFFFFFFF])
+            gen.realign(m)
+            rd2 = lambda a: equiv.INV._dword(gen, m, a)
+            f2, l2, e2 = rd2(this + 0x20), rd2(this + 0x24), rd2(this + 0x28)
+            assert (l2 - f2) % 0x24 == 0 and (e2 - f2) % 0x24 == 0 and f2 <= l2 <= e2, (f2, l2, e2)
+            assert f2 != 0 or (l2 == 0 and e2 == 0)
+            assert gen.realign(m) == 0                                 # idempotent
+
+
+def test_realign_read_map_vector():
+    ti, gen, rng = _typed_fixture()
+    this = M.POOL_BASE + M.SLOT
+    inp = _new_input(rng)
+    inp.typed = 0                                                      # a soup `this` of a known class is still aligned
+    inp.pool_over.update({this + 0x20: 0x43bf0000, this + 0x24: 0x43bf0010, this + 0x28: 0x43bf0010})
+    assert gen.realign(inp) == 1
+    assert [inp.pool_over[this + 0x20 + 4 * k] for k in range(3)] == [0x43bf0000] * 3
+    inp.pool_over[this + 0x24] = 0x43bf0010
+    gen.no_realign = True
+    assert gen.realign(inp) == 0
+
+
+def test_static_vptrs_find_the_log_stream():
+    v = equiv.static_vptrs()
+    assert v[0x5a9f60] == 0x595990              # g_log: the constructor's vtable, not the destructor's 0x595618
+    assert v[0x5a9f30] == 0x54a7d0
+    img = equiv.context()["img"]
+    assert img.u32(v[0x5a9f60] + 0x28) == 0x4153a0                    # slot 10 is w_cstr
+    assert img.u32(0x5a9f60) != v[0x5a9f60]                           # .data holds the pre-construction vtable
+
+
+def test_static_vptrs_are_installed_and_not_repairable():
+    import random
+    t = equiv.prepare(RECT_SID, RECT_VA, log=lambda *a: None)
+    r = equiv.Runner(t, opts(), lambda *a: None)
+    assert r.vptrs[0x5a9f60] == 0x595990
+    inp = r.gen.fresh(random.Random(3))
+    inp.overrides[0x5a9f60] = 0x48b200                                 # a repaired / steered / mutated vptr
+    writes = []
+    real_write = r.m.write
+    r.m.write = lambda a, d, *x, **k: (writes.append((a, bytes(d))), real_write(a, d, *x, **k))[1]
+    try:
+        r.run_side(r.orig, inp)
+    finally:
+        del r.m.write
+    # the last pre-run write to the slot is the static initialiser's vtable, after the (bad) override
+    assert [d for a, d in writes if a == 0x5a9f60][-1] == (0x595990).to_bytes(4, "little")
+    assert r._put_dword(inp, 0x5a9f60, 0x48b200) is None
