@@ -1,6 +1,6 @@
 {
-"when": "2026-11-01T01:06:37-05:00",
-"commit": "ed02fd0",
+"when": "2026-11-01T01:04:48-06:00",
+"commit": "a89a4c6",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,8 +9,8 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 458,
-"weak": 400,
+"pass": 468,
+"weak": 389,
 "fail": 9,
 "inputs": 27,
 "harness": 32,
@@ -18,9 +18,9 @@
 "comdatdiff": 10,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 160360,
-"weak_sz": 582267,
-"fail_sz": 36493,
+"pass_sz": 164388,
+"weak_sz": 583147,
+"fail_sz": 32832,
 "inputs_sz": 25127,
 "harness_sz": 75206,
 "comdat_sz": 2793,
@@ -153,7 +153,7 @@
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
-"size": 421
+"size": 770
 },
 "0040ddf5": {
 "module": "shapes",
@@ -1075,8 +1075,8 @@
 "00435520": {
 "module": "agent",
 "file": "src/game/agent/agent.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 194
 },
 "00435c10": {
@@ -1334,8 +1334,8 @@
 "0043cb30": {
 "module": "agent_ai",
 "file": "src/game/agent2/agent_ai.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 249
 },
 "0043cc30": {
@@ -1369,8 +1369,8 @@
 "0043dd70": {
 "module": "agent_ai",
 "file": "src/game/agent2/agent_ai.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 481
 },
 "0043df60": {
@@ -2146,8 +2146,8 @@
 "00468da0": {
 "module": "terrain_a",
 "file": "src/game/terrain_a/terrain_a.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 532
 },
 "00468fc0": {
@@ -3032,13 +3032,6 @@
 "category": "weak",
 "size": 557
 },
-"0048c840": {
-"module": "mission_3",
-"file": "src/game/mission_ui2/mission_3.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 9
-},
 "0048c849": {
 "module": "mission_3",
 "file": "src/game/mission_ui2/mission_3.nonmatching.txt",
@@ -3462,8 +3455,8 @@
 "004934d0": {
 "module": "world_data",
 "file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 456
 },
 "00493700": {
@@ -3674,7 +3667,7 @@
 "file": "src/game/party2/camera.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
-"size": 445
+"size": 751
 },
 "0049b37d": {
 "module": "camera",
@@ -4412,8 +4405,8 @@
 "004c2250": {
 "module": "trigger_vec",
 "file": "src/game/triggers/trigger_vec.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 168
 },
 "004c24c0": {
@@ -5077,8 +5070,8 @@
 "004d3880": {
 "module": "world_app",
 "file": "src/game/options_panel/world_app.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 455
 },
 "004d3c00": {
@@ -5420,8 +5413,8 @@
 "004de3e0": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS-FP",
+"category": "pass",
 "size": 460
 },
 "004de6f0": {
@@ -6022,8 +6015,8 @@
 "004faee0": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "FAIL",
+"category": "fail",
 "size": 660
 },
 "004fb180": {
@@ -6547,8 +6540,8 @@
 "00516700": {
 "module": "mission_ctx",
 "file": "src/game/inventory_panel/mission_ctx.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 419
 },
 "005168b0": {
@@ -6666,8 +6659,8 @@
 "005191e0": {
 "module": "map_update",
 "file": "src/game/inventory_panel/map_update.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 4321
 },
 "0051a2d0": {
@@ -6953,8 +6946,8 @@
 "00524420": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 614
 },
 "00524710": {
@@ -7137,7 +7130,7 @@
 "file": "src/game/mission5/mission_5.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
-"size": 13
+"size": 614
 },
 "0052ba1d": {
 "module": "mission_5",
