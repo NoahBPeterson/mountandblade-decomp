@@ -34,18 +34,19 @@ res_obj* ItemKind::mesh_for(unsigned __int64 cls, int bit)
     unsigned __int64 mask = 1i64 << bit;
     int n = mesh_count;
     bit = -1;
-    if (n > 0) {
-        for (int i = 0; i < n; i++) {
-            unsigned __int64 c = meshes[i].flags & 0xF000000000000000ui64;
-            if (c != 0 && c == cls) {
-                if (bit == -1) bit = i;
-                if (meshes[i].flags & mask) bit = i;
-            }
+    if (n <= 0)
+        return none;
+    int i = 0;
+    do {
+        unsigned __int64 c = meshes[i].flags & 0xF000000000000000ui64;
+        if (c != 0 && c == cls) {
+            if (bit == -1) bit = i;
+            if (meshes[i].flags & mask) bit = i;
         }
-        if (bit == -1) return 0;
-        return g_resmgr.get_object(&meshes[bit].name);
-    }
-    return none;
+        i++;
+    } while (i < n);
+    if (bit == -1) return 0;
+    return g_resmgr.get_object(&meshes[bit].name);
 }
 // @ 0x433d90
 bool ItemKind::is_ranged()
