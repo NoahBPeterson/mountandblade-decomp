@@ -1338,11 +1338,11 @@ void Party::plan_order()
             float ang = ((float)r * 6.322312e-05f - 0.5f) * spread * 3.1415927f;
             float c = cosf(ang);
             float s = sinf(ang);
-            r = rand();
+            r = rand() % 15817;
             float len = speed_factor() * ((float)r * 0.00012644623f + 1.0f);
             p.x = (c * dirx - s * diry) * len + pos.x;
             p.y = (s * dirx + c * diry) * len + pos.y;
-            r = rand();
+            r = rand() % 15817;
             float k = (float)r / f8f4 * 6.322312e-05f;
             p.x = (to.x - pos.x) * k + p.x;
             p.y = (to.y - pos.y) * k + p.y;
