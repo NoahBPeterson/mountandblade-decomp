@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T16:45:53-05:00",
-"commit": "af9f546",
+"when": "2026-10-31T19:06:39-05:00",
+"commit": "466c5a1",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,20 +9,20 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 440,
+"pass": 444,
 "weak": 437,
-"fail": 11,
+"fail": 9,
 "inputs": 27,
-"harness": 33,
+"harness": 31,
 "comdat": 118,
 "comdatdiff": 11,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 154391,
-"weak_sz": 587387,
-"fail_sz": 43794,
+"pass_sz": 156308,
+"weak_sz": 597486,
+"fail_sz": 33715,
 "inputs_sz": 25127,
-"harness_sz": 75211,
+"harness_sz": 73274,
 "comdat_sz": 2793,
 "comdatdiff_sz": 1299,
 "funclet_sz": 0,
@@ -1859,8 +1859,8 @@
 "00457b40": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 9773
 },
 "0045a170": {
@@ -2790,8 +2790,8 @@
 "004832b0": {
 "module": "mesh_game",
 "file": "src/game/mesh_slot/mesh_game.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1067
 },
 "00483870": {
@@ -3350,15 +3350,15 @@
 "00490990": {
 "module": "world_data",
 "file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 150
 },
 "00490ce0": {
 "module": "world_data",
 "file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 689
 },
 "004910a0": {
@@ -3742,8 +3742,8 @@
 "0049b4f0": {
 "module": "camera",
 "file": "src/game/party2/camera.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 306
 },
 "0049b630": {
@@ -6379,8 +6379,8 @@
 "00504e20": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 208
 },
 "00504ef0": {
@@ -6638,8 +6638,8 @@
 "00514890": {
 "module": "mission_ctx",
 "file": "src/game/inventory_panel/mission_ctx.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "PASS",
+"category": "pass",
 "size": 870
 },
 "00514cd0": {
