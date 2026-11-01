@@ -1,0 +1,8 @@
+# Ghidra function starts (work/index/functions.csv) that are interior continuations of the function before them.
+# tools/difftest/resolve.py func_extent() does not end the previous function's extent there, so the harness counts
+# the whole body (edge totals, coverage). Unlike symbols/not_functions.txt this does not drop the row from status.py.
+# Format: <va>  # reason
+0048c849  # second Ghidra start inside Party::add_members 0x48c840 (357 bytes, byte-identical to ours)
+0052ba1d  # 601-byte interior continuation of Mission_s2b5c0::update_ui 0x52ba10 (13-byte prologue falls into it)
+0040ddf5  # catch(...) funclet inside the vector _Insert_n COMDAT 0x40dc50 (body continues after it)
+0049b37d  # catch(...) funclet inside the vector<NodeA*>::_Insert_n COMDAT 0x49b1c0 (0x49b1c0..0x49b4af)

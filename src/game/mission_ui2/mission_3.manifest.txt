@@ -16,3 +16,4 @@
 ../src/game/mission_ui2/mission_3.cpp  ?set_hilight_alpha@widget_mgr@@QAEXHI@Z  0048e270  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_limits@widget_mgr@@QAEXHHH@Z  0048e4c0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?add_item@widget_mgr@@QAEXHH@Z  0048e590  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?add_members@Party@@QAEHHHHHD@Z  0048c840  /O2 /MT /Gy /TP

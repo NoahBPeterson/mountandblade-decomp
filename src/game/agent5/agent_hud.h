@@ -437,7 +437,7 @@ struct V4List {                                                   // a VC7.1 vec
     vector4* last;
     vector4* end;
     struct iterator { vector4* p; iterator() {} };
-    void push_back(const vector4& v);                             // 0x4fdff0 (ret 4)
+    __declspec(noinline) void push_back(const vector4& v);       // 0x4fdff0 (ret 4; called out of line by 0x4fd700, which the optimizer would otherwise expand)
     __declspec(noinline) iterator insert(iterator where, const vector4& val);          // 0x4fe060 (ret 0xc: the iterator comes back through the hidden pointer)
     void free_block() { if (first) operator delete(first); first = 0; last = 0; end = 0; }
 };
