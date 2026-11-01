@@ -1,6 +1,6 @@
 {
-"when": "2026-11-01T01:05:58-05:00",
-"commit": "780f80d",
+"when": "2026-11-01T01:06:37-05:00",
+"commit": "ed02fd0",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -11,18 +11,18 @@
 "summary": {
 "pass": 458,
 "weak": 400,
-"fail": 8,
+"fail": 9,
 "inputs": 27,
-"harness": 33,
+"harness": 32,
 "comdat": 118,
 "comdatdiff": 10,
 "funclet": 0,
 "not_run": 4,
 "pass_sz": 160360,
 "weak_sz": 582267,
-"fail_sz": 28341,
+"fail_sz": 36493,
 "inputs_sz": 25127,
-"harness_sz": 83358,
+"harness_sz": 75206,
 "comdat_sz": 2793,
 "comdatdiff_sz": 1203,
 "funclet_sz": 0,
@@ -5448,8 +5448,8 @@
 "004e05c0": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "FAIL",
+"category": "fail",
 "size": 8152
 },
 "004e25a0": {
