@@ -315,7 +315,7 @@ void TerrainX::tessellate()
                     int* slot = (int*)((char*)this + 0x258);
                     float mult = 1.0f;
                     float* l = &c->w[14];
-                    for (int m = 0; m < 15; m++) {
+                    for (int m = 15; m != 0; m--) {     // a countdown, as the original (dec esi; jne at 0x481aa7): cl unrolls an up-count
                         if (*slot >= 0 && (g_x8ed4e14[*slot * 0x20] & 2))
                             acc += mult * *l;
                         slot -= 10;
