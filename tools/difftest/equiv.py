@@ -6506,8 +6506,11 @@ def _test_function(sid, va, opts, log=print):
         # The input stream is deterministic (--inputs + --seed); the wall clock is not. A row cut short by the
         # row-level deadline must not report a verdict at all: on a loaded machine that turned FAILs into WEAKs
         # (16 of 82 rows in one sweep). Raise --time-limit or run fewer workers.
+        eo, eu = ecov["orig"], ecov["ours"]
         v, why = "UNSUPPORTED", ("not a verdict: %s; the run was cut short by the wall-clock limit, everything "
-                                 "measured so far is in this JSON" % out["stopped_early"])
+                                 "measured so far is in this JSON (so far: %d valid, %d mismatched; edges orig %d/%d, "
+                                 "ours %d/%d)" % (out["stopped_early"], valid, mism, eo["covered"], eo["required"],
+                                                  eu["covered"], eu["required"]))
     elif not mism and out.get("wall_timeout"):
         v, why = "UNSUPPORTED", ("not a verdict: %d input run(s) were cut by the per-run wall-clock cap (--run-seconds); "
                                  "raise it so the verdict depends only on --inputs and --seed" % out["wall_timeout"])
