@@ -8,6 +8,7 @@
 // constructor the original inlined (vtable store, member constructors, field stores) is written out as the stores it
 // makes; the vtables it stores are the original's (their slots point at our functions after the glue relocates them).
 #include <new>
+#include "../../include/ptr_tag.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -123,7 +124,7 @@ void __fastcall destroy_tstring_pairs(tstring_pair** p);   // 0x4c4640
 void __fastcall destroy_elem48_array(elem48** p);   // 0x4c3f60
 void __fastcall core_dtor(Core* c);                 // 0x4bed90
 void destroy_range(NameVecRec* first, NameVecRec* last);   // 0x4f6680
-void destroy_range_e56(void* first, void* last, void* alloc, int tag);   // 0x43e6e0 (std::_Destroy_range<E56>)
+void destroy_range_e56(void* first, void* last, void* alloc, ptr_tag tag);   // 0x43e6e0 (std::_Destroy_range<E56>)
 void __fastcall nameholder_dtor(void* p);           // 0x4316b0 (NameHolder::~NameHolder)
 void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (__fastcall* dtor)(void*));   // 0x401830
 
@@ -285,7 +286,8 @@ void __cdecl static_dtor_5484b0()
 {
     void* first = AT(void*, g_a181f8, 4);
     if (first) {
-        destroy_range_e56(first, AT(void*, g_a181f8, 8), g_a181f8, 0);
+        ptr_tag tag;   // empty tag passed by value: the original pushes an uninitialised slot (src/include/ptr_tag.h)
+        destroy_range_e56(first, AT(void*, g_a181f8, 8), g_a181f8, tag);
         operator delete(AT(void*, g_a181f8, 4));
     }
     AT(void*, g_a181f8, 4) = 0;
