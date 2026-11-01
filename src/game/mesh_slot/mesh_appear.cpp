@@ -168,10 +168,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         float f = 3.1f;
         a->set_fbc(&f);
         a->fc0 = 2.1f;
-        a->vc4.x = 0.0f;
-        a->vc4.y = 0.0f;
-        a->vc4.z = 1.3f;
-        a->vc4.w = 0.0f;
+        a->vc4 = vector4(0.0f, 0.0f, 1.3f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
     } else {
         // ---- the character's weapon ---------------------------------------------------------------
         ItemRef* w = &eq->weapon;
@@ -381,10 +378,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         float f = 3.1f;
         a->set_fbc(&f);
         a->fc0 = 1.1f;
-        a->vc4.x = 0.0f;
-        a->vc4.y = 0.0f;
-        a->vc4.z = 1.1f;
-        a->vc4.w = 0.0f;
+        a->vc4 = vector4(0.0f, 0.0f, 1.1f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
     }
 
     // ---- common tail -----------------------------------------------------------------------------

@@ -657,11 +657,9 @@ struct Shape {
     int m40;                                        // +0x40 (the float* arg, copied)
 };
 typedef char Shape_size_check[sizeof(Shape) == 0x44 ? 1 : -1];
-__forceinline Shape* sphere_shape(Shape* mem, vector4 pos, const float* radius)   // 0x4332a0 (ret 0x14, ECX=mem): the constructor of ::sphere on the raw memory
+__forceinline Shape* sphere_shape(Shape* mem, rgl::vector4 pos, const float* radius)   // 0x4332a0 (ret 0x14, ECX=mem): the constructor of ::sphere on the raw memory
 {
-    rgl::vector4 c;
-    c.x = pos.x; c.y = pos.y; c.z = pos.z; c.w = pos.w;
-    new ((void*)mem) ::sphere(c, radius);
+    new ((void*)mem) ::sphere(pos, radius);
     return mem;
 }
 
@@ -798,7 +796,7 @@ static OrderObj* order_create_entity(int type)
 // @ 0x49bea0
 void MissionAgents::add_order_arrow(int id)
 {
-    vector4 zero = { 0, 0, 0, 0 };
+    rgl::vector4 zero(0.0f, 0.0f, 0.0f);
     float radius = 0.3f;
     float h;
     int idx = table.index_of(id);

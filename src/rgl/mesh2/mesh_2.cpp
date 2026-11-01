@@ -842,10 +842,7 @@ void MissionObj::read(stream_base* s)
             vmin(&mn, &mn, &a);
             j++;
         }
-        v58.x = (mn.x + mx.x) * HALF;
-        v58.y = (mn.y + mx.y) * HALF;
-        v58.z = (mn.z + mx.z) * HALF;
-        v58.w = 0;
+        v58 = vector4((mn.x + mx.x) * HALF, (mn.y + mx.y) * HALF, (mn.z + mx.z) * HALF);   // w: the temporary's unset lane
         radius = center_dist(mx, v58);
     }
     s->r_tstr((rgl::string*)&t1);
@@ -855,10 +852,7 @@ void MissionObj::read(stream_base* s)
         vector4 b;
         vmax(&mx, &mx, body->get_bounds_max(&b));
         vmin(&mn, &mn, body->get_bounds_min(&b));
-        v58.x = (mn.x + mx.x) * HALF;
-        v58.y = (mn.y + mx.y) * HALF;
-        v58.z = (mn.z + mx.z) * HALF;
-        v58.w = 0;
+        v58 = vector4((mn.x + mx.x) * HALF, (mn.y + mx.y) * HALF, (mn.z + mx.z) * HALF);   // w: the temporary's unset lane
         radius = center_dist(mx, v58);
     }
     _snprintf(buf, 0x200, "Mission object %s", name.c_str());

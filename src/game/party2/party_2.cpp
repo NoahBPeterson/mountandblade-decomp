@@ -2804,14 +2804,9 @@ void Party::update_flags()
     m->mask = mask;
     if (m2)
         m2->mask = mask;
-    model->color.x = 0.0f;
-    model->color.y = 0.0f;
-    model->color.z = 0.5f;
-    // The original builds (0, 0, 0.5) and copies the never-written w of that stack temp (0x4b7e11 [esp+0x2c] ->
-    // 0x4b7e24); nothing in update_flags writes the slot. In all four update_flags snapshots of a real session
-    // (work/capture, 2026-10-31) it held 0, so the colour the game shows is (0, 0, 0.5, 0). The scale `a` is never
-    // stored here.
-    model->color.w = 0.0f;
+    // The original assigns a (0, 0, 0.5) temporary (3-argument vector4 constructor: w left unset); the w lane it copies
+    // (0x4b7e11 [esp+0x2c] -> 0x4b7e24) is never read: the entity's +0xc4 is the box centre, whose consumers use x, y, z.
+    model->color = vector4(0.0f, 0.0f, 0.5f);
     float shade = 0.95f;
     model->set_color(&shade);
 }
