@@ -86,7 +86,8 @@ extern void* g_vt_595618[]; // 0x595618 outfile_b's vtable (its base)
 extern FILE* g_5a9f90;      // 0x5a9f90 the log's FILE
 
 // ---- callees --------------------------------------------------------------------------------------------------
-struct tstring { tstring(); ~tstring(); };          // 0x42bbd0, 0x42bc40
+struct tstring { tstring(); ~tstring(); char rec[0x20]; };   // 0x42bbd0, 0x42bc40; sized as the 0x20-byte table record the string heads
+struct tstring11 { tstring a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
 struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct LangTables { LangTables(); void release_strings(); };   // 0x4cda20, 0x4ca720
@@ -432,9 +433,7 @@ void __cdecl static_init_547e40() { ((MetaMission*)g_a73300)->init(); atexit(sta
 // @ 0x547e60
 void __cdecl static_init_547e60()
 {
-    char* p = g_a735d0;
-    for (int n = 0xb; n; n--, p += 0x20)
-        new (p) tstring;
+    new (g_a735d0) tstring11;
     atexit(static_dtor_548360);
 }
 // @ 0x547e90
@@ -475,9 +474,7 @@ void __cdecl static_init_547fc0() { new (g_a76630) Terrain; atexit(static_dtor_5
 // @ 0x547fe0
 void __cdecl static_init_547fe0()
 {
-    char* p = g_8ed4df8;
-    for (int n = 0xb; n; n--, p += 0x20)
-        new (p) tstring;
+    new (g_8ed4df8) tstring11;
     atexit(static_dtor_548250);
 }
 // @ 0x548010

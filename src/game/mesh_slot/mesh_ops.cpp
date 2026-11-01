@@ -235,10 +235,12 @@ void lod_mesh_x::append(lod_mesh* src, int bone, const matrix* m, const unsigned
         int old = count;
         count = src->count;
         if (old > 0) {
-            unsigned white = 0xffffffff;
             matrix ident;
-            for (int i = old; i < count; i++)
+            unsigned white;
+            for (int i = old; i < count; i++) {
+                white = 0xffffffff;
                 ((mesh_list_x*)&lists[i])->append(&lists[old - 1], -1, identity_pos(&ident), &white);
+            }
         }
     }
     if (src->count < count && src->count > 0) {

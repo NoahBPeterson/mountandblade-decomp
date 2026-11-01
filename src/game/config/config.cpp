@@ -1415,23 +1415,21 @@ void psys_record::load(stream_base& a)
 void loaded_psys_table::load_used()
 {
     extern const char* g_psys_names[];                  // 0x5a9c60 (11 names to 0x5a9c8c)
-    const char* const* nm = g_psys_names;
-    int* out = used;
-    for (; nm < g_psys_names + 11; ++nm) {
-        int i = 0;
+    for (int k = 0; k < 11; k++) {
         int found = -1;
+        int i = 0;
         int off = 0;
         while (found == -1) {
             if (i >= count)
                 break;
-            if (((tstring*)((char*)records + off))->equals(*nm))
+            if (((tstring*)((char*)records + off))->equals(g_psys_names[k]))
                 found = i;
             ++i;
             off += 0xc0;
         }
         if (found == -1)
-            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP Particle System CODE: ").w_cstr(*nm).w_cstr(g_eol);
-        *out++ = found;
+            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP Particle System CODE: ").w_cstr(g_psys_names[k]).w_cstr(g_eol);
+        used[k] = found;
     }
 }
 
@@ -1503,21 +1501,20 @@ void prsnt_record::load_extras(stream_base& a)
 void loaded_prsnt_table::load_used()
 {
     extern const char* g_prsnt_names[];                 // 0x5a9c8c (3 names to 0x5a9c98)
-    for (int k = 0; k < 3; ++k) {
+    for (int k = 0; k < 3; k++) {
         int found = -1;
         int i = 0;
-        const char* const* nm = g_prsnt_names + k;
-        char* rec = (char*)records;
-        do {
+        int off = 0;
+        while (found == -1) {
             if (i >= count)
                 break;
-            if (((tstring*)rec)->equals(*nm))
+            if (((tstring*)((char*)records + off))->equals(g_prsnt_names[k]))
                 found = i;
-            rec += 0x24;
             ++i;
-        } while (found == -1);
+            off += 0x24;
+        }
         if (found == -1)
-            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP GAME PRESENTATION CODE: ").w_cstr(*nm).w_cstr(g_eol);
+            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP GAME PRESENTATION CODE: ").w_cstr(g_prsnt_names[k]).w_cstr(g_eol);
         used[k] = found;
     }
 }
@@ -1614,21 +1611,20 @@ void sound_record::load(stream_base& a)
 void loaded_snd_table::load_used()
 {
     extern const char* g_snd_names[];                   // 0x5a9ca8 (0x7d names to 0x5a9e9c)
-    for (int k = 0; k < 0x7d; ++k) {
+    for (int k = 0; k < 0x7d; k++) {
         int found = -1;
         int i = 0;
-        const char* const* nm = g_snd_names + k;
-        char* rec = (char*)records;
-        do {
+        int off = 0;
+        while (found == -1) {
             if (i >= count)
                 break;
-            if (((tstring*)rec)->equals(*nm))
+            if (((tstring*)((char*)records + off))->equals(g_snd_names[k]))
                 found = i;
-            rec += 0x98;
             ++i;
-        } while (found == -1);
+            off += 0x98;
+        }
         if (found == -1)
-            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP SOUND CODE: ").w_cstr(*nm).w_cstr(g_eol);
+            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP SOUND CODE: ").w_cstr(g_snd_names[k]).w_cstr(g_eol);
         used[k] = found;
     }
 }

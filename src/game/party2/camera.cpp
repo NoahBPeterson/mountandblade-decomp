@@ -2722,22 +2722,22 @@ void DialogBlock::link()
                 try_end[depth] = i;
                 stack[depth++] = i;
             } else if (op == 5) {
-                if (depth <= 0) {
-                    report("Warning: Unmatched else_try.");
-                } else {
+                if (depth > 0) {
                     for (int j = stack[depth - 1] + 1; j < i; j++)
                         if (items[j].f90 < 0)
                             items[j].f90 = i;
                     stack[depth - 1] = i;
+                } else {
+                    report("Warning: Unmatched else_try.");
                 }
             } else if (op == 3) {
-                if (depth <= 0) {
-                    if ((*(int*)((char*)&g_cfg + 0x18))) report("Warning: Unmatched try_end");
-                } else {
+                if (depth > 0) {
                     for (int j = try_end[depth - 1]; j < i; j++)
                         if (items[j].f90 < 0)
                             items[j].f90 = i;
                     depth--;
+                } else {
+                    if ((*(int*)((char*)&g_cfg + 0x18))) report("Warning: Unmatched try_end");
                 }
             }
         }

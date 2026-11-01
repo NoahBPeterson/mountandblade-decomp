@@ -51,15 +51,17 @@ void progress_bar::set_ratio(float r)
     f184 = 1;
 }
 
+struct VDtor { virtual ~VDtor(); };   // slot 0 = the deleting destructor (delete p calls it with flag 1)
+
 // @ 0x4e3fb0
 void progress_bar::update()
 {
     if (tracks[2] != 0) {
         if (f184 == 0)
             return;
-        if (tracks[2] != 0)
-            ((VDel*)tracks[2])->del(1);
     }
+    if (tracks[2] != 0)
+        delete (VDtor*)tracks[2];
     if (handle != 0) {
         gui_mesh* c = handle->clone();
         float sx = v168;
