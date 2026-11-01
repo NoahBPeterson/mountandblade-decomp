@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T22:35:32-05:00",
-"commit": "bc679a2",
+"when": "2026-10-31T23:35:51-05:00",
+"commit": "29cc79e",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -10,7 +10,7 @@
 ],
 "summary": {
 "pass": 470,
-"weak": 412,
+"weak": 404,
 "fail": 8,
 "inputs": 27,
 "harness": 31,
@@ -19,7 +19,7 @@
 "funclet": 0,
 "not_run": 4,
 "pass_sz": 164006,
-"weak_sz": 591331,
+"weak_sz": 589963,
 "fail_sz": 32172,
 "inputs_sz": 25127,
 "harness_sz": 73274,
@@ -2612,13 +2612,6 @@
 "category": "pass",
 "size": 202
 },
-"0047b690": {
-"module": "mesh_ops",
-"file": "src/game/mesh_slot/mesh_ops.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 273
-},
 "0047b7b0": {
 "module": "mesh_ops",
 "file": "src/game/mesh_slot/mesh_ops.nonmatching.txt",
@@ -3949,13 +3942,6 @@
 "category": "weak",
 "size": 1024
 },
-"0049dd30": {
-"module": "camera",
-"file": "src/game/party2/camera.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 374
-},
 "0049deb0": {
 "module": "camera",
 "file": "src/game/party2/camera.nonmatching.txt",
@@ -4381,13 +4367,6 @@
 "category": "pass",
 "size": 461
 },
-"004bdb60": {
-"module": "config",
-"file": "src/game/config/config.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 156
-},
 "004bdc00": {
 "module": "config",
 "file": "src/game/config/config.nonmatching.txt",
@@ -4395,26 +4374,12 @@
 "category": "pass",
 "size": 335
 },
-"004bdec0": {
-"module": "config",
-"file": "src/game/config/config.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 153
-},
 "004be0e0": {
 "module": "config",
 "file": "src/game/config/config.nonmatching.txt",
 "verdict": "PASS",
 "category": "pass",
 "size": 282
-},
-"004be270": {
-"module": "config",
-"file": "src/game/config/config.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 157
 },
 "004be520": {
 "module": "config",
@@ -5619,13 +5584,6 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 78
-},
-"004e3fb0": {
-"module": "progress_bar",
-"file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 165
 },
 "004e43b0": {
 "module": "progress_bar",
@@ -7545,26 +7503,12 @@
 "category": "pass",
 "size": 447
 },
-"00547e60": {
-"module": "static_init",
-"file": "src/game/static_init/static_init.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 45
-},
 "00547f60": {
 "module": "static_init",
 "file": "src/game/static_init/static_init.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 53
-},
-"00547fe0": {
-"module": "static_init",
-"file": "src/game/static_init/static_init.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 45
 },
 "00548070": {
 "module": "static_init",
