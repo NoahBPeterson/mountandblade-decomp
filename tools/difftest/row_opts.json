@@ -971,5 +971,28 @@
       "500"
     ],
     "why": "the clamp branch depends on two rand() draws"
+  },
+  "progress_bar 004e5e60": {
+    "args": [
+      "--hint",
+      "g:a75f3c=ffffffff@0.7",
+      "--hint",
+      "this+40=ffffffff@0.8"
+    ],
+    "why": "a negative g_save_idx makes BlockOwner::init skip writing this+0x40, so a negative value survives"
+  },
+  "mission_ctx 00514360": {
+    "args": [
+      "--hint",
+      "g:5e2a04=2,3,4@0.8"
+    ],
+    "why": "the template count must be 2+ so several records match"
+  },
+  "exchange_screens 005316f0": {
+    "args": [
+      "--hint",
+      "this+1c=fffffff6,fffffff0,fffffffb@0.7"
+    ],
+    "why": "the value lands in [0,1) only for a small negative this+0x1c"
   }
 }

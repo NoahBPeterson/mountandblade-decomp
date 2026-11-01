@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T21:57:26-05:00",
-"commit": "fe1d1e1",
+"when": "2026-10-31T22:17:00-05:00",
+"commit": "741f40c",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,8 +9,8 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 456,
-"weak": 426,
+"pass": 459,
+"weak": 423,
 "fail": 8,
 "inputs": 27,
 "harness": 31,
@@ -18,8 +18,8 @@
 "comdatdiff": 11,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 160485,
-"weak_sz": 594852,
+"pass_sz": 161001,
+"weak_sz": 594336,
 "fail_sz": 32172,
 "inputs_sz": 25127,
 "harness_sz": 73274,
@@ -5665,8 +5665,8 @@
 "004e5e60": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 239
 },
 "004e602b": {
@@ -6617,8 +6617,8 @@
 "00514360": {
 "module": "mission_ctx",
 "file": "src/game/inventory_panel/mission_ctx.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 142
 },
 "005143f0": {
@@ -7471,8 +7471,8 @@
 "005316f0": {
 "module": "exchange_screens",
 "file": "src/game/map_editor/exchange_screens.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 135
 },
 "00531800": {
