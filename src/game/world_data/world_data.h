@@ -347,7 +347,7 @@ struct RecPool {                                                // an object wit
     std::vector<int> free_ids;                                  // +4 (allocator word, first at +8)
     std::vector<Rec98*> pages;                                  // +0x14 (first at +0x18)
     int serial;                                                 // +0x24
-    void alloc_record();                                        // 0x493700 (thiscall, ret 0)
+    unsigned alloc_record();                                    // 0x493700 (thiscall; returns the popped record id, in eax)
 };
 // The pool record's constructor is stat_panel_x's Event::Event (0x48c210), declared under the defining class's name; a party record
 // as `new Party[16]` builds it: vtable 0x592644 at +0, constructor 0x4934d0 (nothrow), whose body is PartyW::construct below (the
