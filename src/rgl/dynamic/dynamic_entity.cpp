@@ -37,8 +37,6 @@ void sort_range_x(std::vector<entity*>::iterator first, std::vector<entity*>::it
 #pragma comment(linker, "/alternatename:?box3_b@@YA_NPBUvector4@rgl@@000@Z=?box_overlap3@@YAHPBUvector4@rgl@@000@Z")
 #pragma comment(linker, "/alternatename:?box2_b@@YA_NPBUvector4@rgl@@000@Z=?box_overlap2@@YAHPBUvector4@rgl@@000@Z")
 
-static __forceinline vector4 vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
-static __forceinline vector4 vmul(const float& s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }   // inline copy of rgl::operator* (s by reference)
 static inline void scale3(vector4* v, float k) { v->x = k * v->x; v->y = k * v->y; v->z = k * v->z; }
 static __forceinline void set3(vector4* o, float x, float y, float z) { o->x = x; o->y = y; o->z = z; }
 
@@ -88,7 +86,7 @@ float dynamic_entity::impulse_response(const vector4* p, const vector4* n)
 {
     vector4 r(p->x - local.o.x, p->y - local.o.y, p->z - local.o.z);
     float k = 1.0f / inertia;
-    const vector4* d = &cross(vscale(k, cross(r, *n)), r);   // address of the call's temporary (MSVC extension)
+    const vector4* d = &cross(k * cross(r, *n), r);   // address of the call's temporary (MSVC extension)
     return d->x * n->x + (1.0f / mass + (d->y * n->y + d->z * n->z));
 }
 
@@ -111,7 +109,7 @@ void dynamic_entity::update(float t)
 void dynamic_entity::apply_forces(float t)
 {
     dt = t;
-    force = vmul(mass, vector4(0.0f, 0.0f, -9.8f));
+    force = mass * vector4(0.0f, 0.0f, -9.8f);
     torque = vector4(0.0f, 0.0f, 0.0f);
     scale3(&vel, 1.0f - t * lin_damp);
     scale3(&angvel, 1.0f - t * ang_damp);
@@ -151,8 +149,8 @@ void dynamic_entity::resolve()
                 if (d1 < k)
                     k = d1;
                 k = -k;
-                vector4 g = vscale(k, n);
-                vector4 dv = vscale(dt / mass, g);
+                vector4 g = k * n;
+                vector4 dv = (dt / mass) * g;
                 vel.x = dv.x + vel.x;
                 vel.y = dv.y + vel.y;
                 vel.z = dv.z + vel.z;
@@ -271,7 +269,7 @@ void dynamic_entity::integrate(float t)
     if (vel.length() < 0.2f && angvel.length() < 0.2f && grounded)
         asleep = true;
     matrix m = local;
-    vector4 dv = vscale(t, vel);
+    vector4 dv = t * vel;
     m.o.x = dv.x + m.o.x;
     m.o.y = m.o.y + dv.y;
     m.o.z = m.o.z + dv.z;
@@ -282,8 +280,8 @@ void dynamic_entity::integrate(float t)
     cu.x = angvel.y * local.u.z - angvel.z * local.u.y;
     cu.y = angvel.z * local.u.x - angvel.x * local.u.z;
     cu.z = angvel.x * local.u.y - angvel.y * local.u.x;
-    vector4 sf = vscale(t, cf);
-    vector4 su = vscale(t, cu);
+    vector4 sf = t * cf;
+    vector4 su = t * cu;
     m.f.x = sf.x + m.f.x; m.f.y = sf.y + m.f.y; m.f.z = sf.z + m.f.z;
     m.u.x = su.x + m.u.x; m.u.y = su.y + m.u.y; m.u.z = su.z + m.u.z;
     normalize(m.f, m.f);
@@ -527,8 +525,6 @@ template void std::_Insertion_sort<It>(It, It);
 template void std::_Rotate<It, int, u32>(It, It, It, int*, u32*);
 
 // ---- rigid_base::collide_entity / collide_shape --------------------------------------------------------------------
-static __forceinline vector4 vmulf(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
-static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline float vdot(const vector4& a, const vector4& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 // collide_entity's dots sum z first: (a.z*b.z + a.y*b.y) + a.x*b.x (0x4271ee, 0x427287, 0x42735d)
 static __forceinline float vdot_zyx(const vector4& a, const vector4& b) { return a.z * b.z + a.y * b.y + a.x * b.x; }
@@ -561,7 +557,7 @@ bool rigid_base::collide_entity(rigid_base* o)
         rec2.n = neg;
         ((contact_ops&)o->contacts).push_back(rec2);
         float vn = vdot_zyx(nrm, rel);
-        vector4 t = vsub(rel, vmulf(nrm, vn));
+        vector4 t = rel - nrm * vn;
         vector4 td;
         normalize(td, t);
         if (!(vn >= 0.0f)) {                    // true for a NaN vn too (0x42727e: test ah,1 = C0, set when unordered)
@@ -752,7 +748,7 @@ bool rigid_base::collide_shape(coll_shape* s)
         rec.n = nrm;
         ((contact_inl&)contacts).push_back(rec);
         float vn = nrm.x * v.x + nrm.y * v.y + v.z * nrm.z;
-        vector4 t = vsub(v, vmulf(nrm, vn));
+        vector4 t = v - nrm * vn;
         if (!(vn >= 0.0f)) {
             double j = -((restitution + 1.0) * (nrm.x * v.x + nrm.y * v.y + v.z * nrm.z));
             double mag = j / impulse_response(&pt, &nrm);
@@ -769,7 +765,7 @@ bool rigid_base::collide_shape(coll_shape* s)
         }
         if (c[i].depth > 0.01f) {
             float d = c[i].depth * 0.5f;
-            vector4 corr = vmulf(*(vector4*)&c[i].normal, d);
+            vector4 corr = *(vector4*)&c[i].normal * d;
             shift.x += corr.x;
             shift.y += corr.y;
             shift.z += corr.z;

@@ -26,7 +26,6 @@
 
 using namespace rgl;
 
-static __forceinline vector4 vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
 
 // @ 0x4291c0
 void FxDef::skin(mesh* mm, char flag)
@@ -71,7 +70,7 @@ void FxDef::skin(mesh* mm, char flag)
                 vector4 v(dx * M->s.x + (dy * M->f.x + dz * M->u.x) + M->o.x,
                           dx * M->s.y + (dy * M->f.y + dz * M->u.y) + M->o.y,
                           dx * M->s.z + (dy * M->f.z + dz * M->u.z) + M->o.z);
-                vector4 sc = vscale(w, v);
+                vector4 sc = w * v;
                 acc->x += sc.x;
                 acc->y += sc.y;
                 acc->z += sc.z;
@@ -79,7 +78,7 @@ void FxDef::skin(mesh* mm, char flag)
                 vector4 n(M->s.x * V->pos.x + (M->f.x * V->pos.y + M->u.x * V->pos.z),
                           M->s.y * V->pos.x + (M->f.y * V->pos.y + M->u.y * V->pos.z),
                           M->s.z * V->pos.x + (M->f.z * V->pos.y + M->u.z * V->pos.z));
-                vector4 sn = vscale(w, n);
+                vector4 sn = w * n;
                 nacc->x += sn.x;
                 nacc->y += sn.y;
                 nacc->z += sn.z;

@@ -206,9 +206,7 @@ void StratEnt::build_shadow_frame(matrix* m, vector4* amb)
     o->z = t.z + o->z;
 }
 
-static __forceinline vector4 vsubv(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline vector4 vscl(const float& s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
-static inline vector4 vmulr(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static inline float nrm(vector4& v)
 {
     float len = v.length();

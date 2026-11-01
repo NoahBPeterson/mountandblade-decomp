@@ -843,7 +843,6 @@ void Terrain::smooth_cells(int bit, float k)
 
 // ---- the terrain object's passes ------------------------------------------------------------------------------
 
-static inline vector4 t_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static inline void t_cross3(vector4& r, const vector4& a, const vector4& b) { r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x; }
 
 // @ 0x4661e0
@@ -937,9 +936,9 @@ void terrain_obj::pick_diagonals()
                 if (!(v[0] == v[3] || v[2] == v[3])) goto set1;
                 switch (r) {
                 case -1: {
-                    rgl::vector4 e1 = t_sub(this->at(x + 1, y + 1).P(), this->at(x, y).P());
-                    rgl::vector4 e2 = t_sub(this->at(x + 1, y).P(), this->at(x, y).P());
-                    rgl::vector4 e3 = t_sub(this->at(x, y + 1).P(), this->at(x, y).P());
+                    rgl::vector4 e1 = ((this->at(x + 1, y + 1).P()) - (this->at(x, y).P()));
+                    rgl::vector4 e2 = ((this->at(x + 1, y).P()) - (this->at(x, y).P()));
+                    rgl::vector4 e3 = ((this->at(x, y + 1).P()) - (this->at(x, y).P()));
                     rgl::vector4 cr;
                     t_cross3(cr, e2, e3);
                     if (e1.y * cr.y + e1.z * cr.z + e1.x * cr.x > 0.0f) q.diag = 0; else q.diag = 1;   // x is added last (0x46689a: the spilled cr component goes in after the other two)
@@ -1371,7 +1370,6 @@ elem52* __cdecl copy_backward52(elem52* f, elem52* l, elem52* d) { while (f != l
 
 // ---- timed transform tween of a scene prop --------------------------------------------------------------------------
 
-static inline vector4 p_scale(const vector4& v, float f) { return vector4(v.x * f, v.y * f, v.z * f); }
 static inline vector4 p_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 // @ 0x467c50
 void Prop::update(int unused)
@@ -1387,10 +1385,10 @@ void Prop::update(int unused)
         }
         if (state >= 0 && t != last_t) {
             matrix m;
-            m.o = p_add(p_scale(to.o, t), p_scale(from.o, 1.0f - t));
-            m.s = p_add(p_scale(to.s, t), p_scale(from.s, 1.0f - t));
-            m.f = p_add(p_scale(to.f, t), p_scale(from.f, 1.0f - t));
-            m.u = p_add(p_scale(to.u, t), p_scale(from.u, 1.0f - t));
+            m.o = p_add((to.o * t), (from.o * (1.0f - t)));
+            m.s = p_add((to.s * t), (from.s * (1.0f - t)));
+            m.f = p_add((to.f * t), (from.f * (1.0f - t)));
+            m.u = p_add((to.u * t), (from.u * (1.0f - t)));
             m.orthonormalize();
             cur = m;
             if (ent) ent->set_frame(&cur, extra);
@@ -2071,9 +2069,7 @@ void terrain_obj::spread_flow(unsigned mask, int mode, unsigned mark)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 using rgl::mat3;
 __declspec(noinline) mat3* identity3(mat3* out);                             // 0x40cd60
-static __forceinline rgl::vector4 t_mul(const rgl::vector4& a, const float& s) { return rgl::vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline rgl::vector4 t_add(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
-static __forceinline rgl::vector4 t_subf(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline rgl::vector4 t_cross(const rgl::vector4& a, const rgl::vector4& b)
 {
     return rgl::vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
@@ -2159,13 +2155,13 @@ void terrain_obj::spawn_particles(particle_list* list, int unused)
                                 const rgl::vector4& PA = (const rgl::vector4&)at(ca[0], ca[1]);
                                 const rgl::vector4& PB = (const rgl::vector4&)at(cb[0], cb[1]);
                                 const rgl::vector4& PC = (const rgl::vector4&)at(cc[0], cc[1]);
-                                m.o = t_add(t_add(t_mul(PA, 0.3333f), t_mul(PB, 0.3333f)), t_mul(PC, 0.3333f));
+                                m.o = t_add(t_add((PA * 0.3333f), (PB * 0.3333f)), (PC * 0.3333f));
                                 float r1 = RND();
-                                rgl::vector4 d1 = t_mul(t_subf(PA, m.o), r1);
+                                rgl::vector4 d1 = ((PA - m.o) * r1);
                                 float r2 = RND();
-                                rgl::vector4 d2 = t_mul(t_subf(PB, m.o), r2);
+                                rgl::vector4 d2 = ((PB - m.o) * r2);
                                 float r3 = RND();
-                                rgl::vector4 d3 = t_mul(t_subf(PC, m.o), r3);
+                                rgl::vector4 d3 = ((PC - m.o) * r3);
                                 m.o = t_add(t_add(t_add(d2, d1), d3), m.o);
                                 if ((pt->flags & 0x40000) != 0) {
                                     m.u = q.nrm[t];
@@ -2301,7 +2297,7 @@ void FireAgent::ray(FireRay* r)
     float s;
     if (troop >= 0) s = (float)item_f20c(troop) * 0.01f;
     else s = 0.8f;
-    vector4 d = p_scale(dir, s);
+    vector4 d = (dir * s);
     r->to = p_add(d, org);
 }
 
@@ -3077,7 +3073,6 @@ int GeomBuffer::upload(void* scratch, void* tag)
 
 // ---- shadow-view draw pass ---------------------------------------------------------------------------------------------------------------------
 
-static __forceinline vector4 sub_i(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 {
     return vector4(a.z * b.y - b.z * a.y, b.z * a.x - a.z * b.x, a.y * b.x - b.y * a.x);
@@ -3205,7 +3200,7 @@ void drawer::draw(view_t* v)
                         i = i + 1;
                     } else {
                         light_t* l = *pl;
-                        vector4 d = sub_i(l->pos, p->m->m194.o);
+                        vector4 d = (l->pos - p->m->m194.o);
                         if (d.length() - p->m->f44 < (*pl)->range) {
                             if (g_light_on[i] != 1) {
                                 g_light_on[i] = 1;

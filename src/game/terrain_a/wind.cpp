@@ -33,15 +33,14 @@ elem24* __cdecl copy_range(elem24* first, elem24* last, elem24* dest)
 elem24* __cdecl copy_backward24(elem24* f, elem24* l, elem24* d) { while (f != l) *--d = *--l; return d; }
 
 // @ 0x4612d0
-static inline vector4 sub_i(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static inline void cross_i(vector4& r, const vector4& a, const vector4& b)
 {
     r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x;
 }
 vector4 tri_normal(const vector4* p)
 {
-    vector4 a = sub_i(p[1], p[0]);
-    vector4 b = sub_i(p[2], p[0]);
+    vector4 a = (p[1] - p[0]);
+    vector4 b = (p[2] - p[0]);
     vector4 n;
     cross_i(n, a, b);
     n.normalize();

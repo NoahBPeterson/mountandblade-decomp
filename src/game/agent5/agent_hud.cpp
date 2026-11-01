@@ -382,10 +382,8 @@ void Agent::show()
 
 // Inline vector helpers as the original's TU had them (scalar by const reference: one float store per use).
 // The fourth lane of every result is left unset (the original copies whole vector4s with an unset w).
-static __forceinline vector4 hv_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 hv_mulv(const vector4& a, float s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 hv_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
-static __forceinline vector4 hv_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline vector4 hv_neg(const vector4& a) { return vector4(-a.x, -a.y, -a.z); }
 static __forceinline void hv_add_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
 static __forceinline void hv_sub_to(vector4& a, const vector4& b) { a.x = a.x - b.x; a.y = a.y - b.y; a.z = a.z - b.z; }
@@ -414,7 +412,7 @@ void MissionHud::update_camera(float dt)
             c.x = gcam.x - geye.x;
             c.y = gcam.y - geye.y;
             c.z = gcam.z - geye.z;
-            vector4 a = hv_add(geye, hv_mulv(c, (1.0f - dt) * c.normalize()));
+            vector4 a = hv_add(geye, (c * ((1.0f - dt) * c.normalize())));
             float ya = atan2(-(-c.x), -c.y);
             if (yaw > 6.2831855f)
                 yaw = yaw - 6.2831855f;
@@ -462,19 +460,19 @@ void MissionHud::update_camera(float dt)
         }
         if (g_cam_version != 0) {
             u = (float)GAME_AT(int, 0x1a0b0) * t;
-            hv_sub_to(gcam, hv_mul(hv_mul(k.u, u), dt));
+            hv_sub_to(gcam, ((k.u * u) * dt));
             f300 = dt * 25.0f + f300;
         }
         if (g_cam_left != 0) {
-            hv_add_to(gcam, hv_mul(hv_mul(k.u, t), dt));
+            hv_add_to(gcam, ((k.u * t) * dt));
             f300 = dt * 25.0f + f300;
         }
         if (g_cam_right != 0) {
-            hv_sub_to(gcam, hv_mul(hv_mul(k.s, t), dt));
+            hv_sub_to(gcam, ((k.s * t) * dt));
             f300 = dt * 17.5f + f300;
         }
         if (g_cam_in != 0) {
-            hv_add_to(gcam, hv_mul(hv_mul(k.s, t), dt));
+            hv_add_to(gcam, ((k.s * t) * dt));
             f300 = dt * 17.5f + f300;
         }
         if (g_cam_out != 0) {
@@ -506,10 +504,10 @@ void MissionHud::update_camera(float dt)
                 CAMSLOT.value = 0.0f;
             } else {
                 float u = 1.0f - t;
-                k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, u));
-                k.u = hv_neg(hv_add(hv_mulv(CAMSLOT.sway.f, t), hv_mulv(CAMSLOT.cur.f, u)));
-                k.f = hv_add(hv_mulv(CAMSLOT.sway.u, t), hv_mulv(CAMSLOT.cur.u, u));
-                k.s = hv_add(hv_mulv(CAMSLOT.sway.s, t), hv_mulv(CAMSLOT.cur.s, u));
+                k.o = hv_add((CAMSLOT.sway.o * t), (CAMSLOT.cur.o * u));
+                k.u = hv_neg(hv_add((CAMSLOT.sway.f * t), (CAMSLOT.cur.f * u)));
+                k.f = hv_add((CAMSLOT.sway.u * t), (CAMSLOT.cur.u * u));
+                k.s = hv_add((CAMSLOT.sway.s * t), (CAMSLOT.cur.s * u));
                 zoomL = CAMSLOT.zoom_to * t + CAMSLOT.zoom_cur * u;
             }
         } else {
@@ -549,7 +547,7 @@ void MissionHud::update_camera(float dt)
                 *(matrix*)&k = body->m.mul(*(matrix*)(sk->recs + 0x1140));
                 ang = 3.1415927f;
                 k.rotate_about_f(&ang);
-                hv_add_to(k.o, hv_mul(k.f, 0.15f));
+                hv_add_to(k.o, (k.f * 0.15f));
             } else {
                 float lo = 0.0f, hi = 1.0f, ang, radial;
                 vector4 c, n;
@@ -560,13 +558,13 @@ void MissionHud::update_camera(float dt)
                 c.y = n.y - lag.y;
                 c.z = n.z - lag.z;
                 radial = c.out_length() * dt * 200.0f;
-                hv_add_to(lag, hv_mulv(c, clamp(&radial, &lo, &hi)));
+                hv_add_to(lag, (c * (clamp(&radial, &lo, &hi))));
                 k.o = body->m.transform_point(lag);
                 ang = 1.5707964f;
                 k.rotate_about_s(ang);
                 k.rotate_about_f(&yaw);
                 k.rotate_about_s(pitch);
-                hv_add_to(k.o, hv_add(hv_mul(k.f, 0.15f), hv_mul(k.u, 0.11f)));
+                hv_add_to(k.o, hv_add((k.f * 0.15f), (k.u * 0.11f)));
             }
         } else if (id >= 0) {
             // third person: the player's own agent
@@ -602,8 +600,8 @@ void MissionHud::update_camera(float dt)
             k.rotate_about_f(&f284);
             k.o = head;
             d = (pitch < -3.0f ? -3.0f : (pitch < 3.0f ? pitch : 3.0f)) * 0.0f + f278 + f27c;
-            hv_add_to(k.o, hv_mul(k.u, d));
-            hv_add_to(k.o, hv_mul(hv_mul(k.f, 0.37f), d));
+            hv_add_to(k.o, (k.u * d));
+            hv_add_to(k.o, ((k.f * 0.37f) * d));
             if (GAME_AT(int, 0x1a090) == 0) {
                 // keep the camera out of the walls: sweep a thin capsule from the head to the camera
                 shape_base* list[0x2000];
@@ -611,10 +609,10 @@ void MissionHud::update_camera(float dt)
                 int count, i;
                 float t;
                 vector4 p0 = k.o;
-                vector4 q = hv_sub(k.o, hv_mul(k.u, d));
-                vector4 c = hv_sub(q, p0);
+                vector4 q = (k.o - (k.u * d));
+                vector4 c = (q - p0);
                 c.normalize();
-                vector4 a = hv_sub(p0, hv_mul(c, 0.4f));
+                vector4 a = (p0 - (c * 0.4f));
                 capsule cap(1e-5f, &q, &a);
                 ((level*)g_mission->scene)->query_segment(&p0.x, &q.x, 0x110, list, &count);
                 t = 1000.0f;
@@ -634,7 +632,7 @@ void MissionHud::update_camera(float dt)
                     }
                 }
                 f2ec = (d - f2ec) * dt * 11.0f + f2ec;
-                k.o = hv_add(hv_mul(k.u, f2ec), q);
+                k.o = hv_add((k.u * f2ec), q);
             }
         }
       }
@@ -668,10 +666,10 @@ pass2:
                     }
                 }
                 u = 1.0f - t;
-                k.o = hv_add(hv_mul(k.o, t), hv_mul(m.o, u));
-                k.u = hv_add(hv_mul(k.u, t), hv_mul(m.u, u));
-                k.f = hv_add(hv_mul(k.f, t), hv_mul(m.f, u));
-                k.s = hv_add(hv_mul(k.s, t), hv_mul(m.s, u));
+                k.o = hv_add((k.o * t), (m.o * u));
+                k.u = hv_add((k.u * t), (m.u * u));
+                k.f = hv_add((k.f * t), (m.f * u));
+                k.s = hv_add((k.s * t), (m.s * u));
                 zoomL = u * CAMSLOT.zoom_to + t * zoomL;
             }
             k.orthonormalize();
