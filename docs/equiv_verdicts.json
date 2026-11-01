@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T21:45:44-05:00",
-"commit": "7a6b91a",
+"when": "2026-10-31T21:57:26-05:00",
+"commit": "fe1d1e1",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,8 +9,8 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 450,
-"weak": 432,
+"pass": 456,
+"weak": 426,
 "fail": 8,
 "inputs": 27,
 "harness": 31,
@@ -18,8 +18,8 @@
 "comdatdiff": 11,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 157240,
-"weak_sz": 598097,
+"pass_sz": 160485,
+"weak_sz": 594852,
 "fail_sz": 32172,
 "inputs_sz": 25127,
 "harness_sz": 73274,
@@ -1719,8 +1719,8 @@
 "0044f240": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 377
 },
 "0044f3c0": {
@@ -1761,8 +1761,8 @@
 "00451710": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 728
 },
 "004519f0": {
@@ -2013,8 +2013,8 @@
 "00464d50": {
 "module": "terrain_a",
 "file": "src/game/terrain_a/terrain_a.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 441
 },
 "00464f10": {
@@ -2160,8 +2160,8 @@
 "00468c80": {
 "module": "terrain_a",
 "file": "src/game/terrain_a/terrain_a.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 285
 },
 "00468da0": {
@@ -2286,8 +2286,8 @@
 "0046c4f0": {
 "module": "terrain_a",
 "file": "src/game/terrain_a/terrain_a.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 1057
 },
 "0046c920": {
@@ -5518,8 +5518,8 @@
 "004de1b0": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 357
 },
 "004de320": {

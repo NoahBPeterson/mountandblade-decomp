@@ -486,9 +486,15 @@
   },
   "cls_map 004de1b0": {
     "args": [
-      "--party-table"
+      "--party-table",
+      "--typed-share",
+      "0.8",
+      "--inputs",
+      "1000",
+      "--extra-inputs",
+      "500"
     ],
-    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
+    "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable; the string-table hit needs typed objects and more inputs"
   },
   "exchange_screens 00531800": {
     "args": [
@@ -933,5 +939,37 @@
       "0.8"
     ],
     "why": "typed 0x1dc-byte elements let the virtual v08 return a negative value"
+  },
+  "terrain_a 00464d50": {
+    "args": [
+      "--hint",
+      "g:5e28fc=1",
+      "--hint",
+      "g:5a8e88=10",
+      "--hint",
+      "this+10=c0000000,40000000,0@0.3"
+    ],
+    "why": "the branch needs the global at 0x5e28fc set and a this+0x10 field selecting case 0xc"
+  },
+  "agent_logic 0044f240": {
+    "args": [
+      "--typed-share",
+      "0.8",
+      "--hint",
+      "this+ac=2,3,4@0.7"
+    ],
+    "why": "the outer loop runs twice only with a count of 2+ at this+0xac"
+  },
+  "agent_logic 00451710": {
+    "args": [
+      "--rand-seeded",
+      "--typed-share",
+      "0.8",
+      "--inputs",
+      "1000",
+      "--extra-inputs",
+      "500"
+    ],
+    "why": "the clamp branch depends on two rand() draws"
   }
 }
