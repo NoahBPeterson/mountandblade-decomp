@@ -191,7 +191,7 @@ struct PtrVec {                             // std::vector<char*> (the page list
     bool _Buy(unsigned n) { return ((VecIntBuy*)this)->buy(n); }     // 0x43e760 (std::vector<int>::_Buy, shared by every pointer vector)
 };
 struct RecPool {
-    void alloc_record();   // 0x493700 (world_data/world_data.h)
+    unsigned alloc_record();   // 0x493700 (world_data/world_data.h)
 };
 struct SpriteTable {
     int count;                              // +0     0x51e840

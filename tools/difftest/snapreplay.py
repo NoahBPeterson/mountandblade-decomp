@@ -159,6 +159,7 @@ class Replayer:
         m.dyn_next = M.DYN_BASE                         # the harness heap restarts per run: equal allocation
         m.dyn_sizes = {}                                # sequences give equal pointers on both sides
         m.rand_state = 1
+        m.ui_seed, m.ui_calls = 0, 0                    # user32 / FMOD query answers restart per run: both sides see the same answers
         m.alloc_fail, m.alloc_count = (), 0
         m.lazy = None
         m.trace_imports = []
@@ -287,12 +288,16 @@ class Replayer:
                 after[pg] = (before, cur)
             uc.mem_write(pg, before)                     # back to the snapshot for the other side
         frame_lo = esp0 - 0x100000
+        # a ret N function (stdcall/thiscall) pops its N bytes of arguments: MSVC uses those slots as scratch and no caller
+        # can see them after the return (cdecl, N = 0: the caller owns its argument slots, so they stay compared)
+        pop = getattr(r.t, "callee_pop", 0) or 0
+        out["ret"] = (getattr(r.t, "ret_kind", None), getattr(r.t, "ret_width", None))
         changes = {}
         for pg, (before, cur) in after.items():
             for k in range(0x1000):
                 a = pg + k
-                if frame_lo <= a < esp0 + 4:
-                    continue                             # the frame and the return slot
+                if frame_lo <= a < esp0 + 4 + pop:
+                    continue                             # the frame, the return slot and the popped argument slots
                 if M.MISC_BASE <= a < M.MISC_BASE + M.MISC_SIZE or M.DYN_BASE <= a < M.DYN_BASE + M.DYN_SIZE:
                     continue                             # harness scratch / its heap (malloc results differ)
                 if before[k] != cur[k]:
@@ -314,9 +319,19 @@ class Replayer:
     def compare(self, a, b):
         if a["status"][0] != "ok" or b["status"][0] != "ok":
             return "STOP", "orig %s / ours %s" % (a["status"], b["status"])
-        for k in ("eax", "esp"):
-            if a[k] != b[k]:
-                return "DIFF", "%s orig %08x ours %08x" % (k, a[k], b[k])
+        # eax is a result only when the function returns one there (equiv's ret_kind: a `void` the original
+        # nevertheless returns through eax is already "unknown" there, so it stays compared); a byte/bool result is al
+        kind, width = a.get("ret") or (None, None)
+        mask = 0 if kind in ("void", "float", "double") else 0xFF if kind == "bool" or (kind == "small" and width == 1) \
+            else 0xFFFF if kind == "small" and width == 2 else 0xFFFFFFFF
+        if (a["eax"] ^ b["eax"]) & mask:
+            return "DIFF", "eax orig %08x ours %08x" % (a["eax"], b["eax"])
+        if kind in ("float", "double") and a.get("st0") != b.get("st0"):
+            return "DIFF", "st0 orig %r ours %r" % (a.get("st0"), b.get("st0"))
+        if kind in ("i64", "int64", "uint64") and a["edx"] != b["edx"]:
+            return "DIFF", "edx orig %08x ours %08x" % (a["edx"], b["edx"])
+        if a["esp"] != b["esp"]:
+            return "DIFF", "esp orig %08x ours %08x" % (a["esp"], b["esp"])
         ka, kb = set(a["changes"]), set(b["changes"])
         diff = sorted(x for x in ka | kb if a["changes"].get(x) != b["changes"].get(x))
         # a dword both sides set to an address in the stack below the entry esp (a pointer to a local: each
