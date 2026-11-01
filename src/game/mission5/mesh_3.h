@@ -257,7 +257,7 @@ template<class T> struct vec_s2da20 {
     T*   first;     // +0x4
     T*   last;      // +0x8   (end of used range)
     T*   end;       // +0xc
-    int size() const { return first ? (int)(last - first) : 0; }
+    int size() const { if (!first) return 0; return (int)(last - first); }
     void clear();                       // 0x41f4b0
     void push_back(const T& v);         // 0x477c10 / 0x477d20 / 0x477e10
 };
