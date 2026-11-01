@@ -4,6 +4,7 @@
 // s0040c670, s0040cfe0, s0040d7d0 and s0040e060 (all but its last function 0x40e940).
 // Boundary: the start 0x407c10 follows dxutil's CArrayList; the end 0x40e940 is only the next agent's start (renderer::
 // set_blend_mode and the psys region continue the same emission order). See MIGRATION.md.
+#define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copies 0x407ca0 / 0x407cd0 / 0x407d00 of the inline vector4 operators
 #include <string>
 #include <exception>
 #include <stdlib.h>

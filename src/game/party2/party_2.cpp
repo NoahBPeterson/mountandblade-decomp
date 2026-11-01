@@ -11,6 +11,7 @@
 // Boundary: see MIGRATION.md (start 0x4b1160: the tableau render callback whose address 0x4b14b0 / 0x4b14f0 store; the
 // interpreter 0x49fa10 calls 0x4b14b0 forward).
 //-----------------------------------------------------------------------------
+#define RGL_VECTOR4_OPS_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding them
 #include "./party_2.h"
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_seeing_range
