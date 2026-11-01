@@ -11,6 +11,7 @@
 //     renumber, link, pop_try, run_line, emit. The slices viewed these as `Interp`, `Mission` and `ScriptHolder`.
 #define MB_CAMERA_TU
 #include "../../include/image_addrs.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <new>
 #include <string.h>
 #include "../../rgl/rgl_math.h"
@@ -2387,6 +2388,7 @@ void GameData::remove_gold(int gold, int troop)
 // @ 0x49b930
 void GameData::start_quest(int quest, int giver_troop)
 {
+    WL_MARKER(12)
     quests[quest].giver_troop = giver_troop;       // +0x118
     quests[quest].f11c = (float)(g_ticks[f13b18] - *(__int64*)&f13b20) * 1e-5f;   // +0x11c (game time when started)
     QuestRec* rec = &quests[quest];
@@ -2403,6 +2405,7 @@ void GameData::start_quest(int quest, int giver_troop)
         g_sound_mgr.play(g_snd_new_quest, 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
         rec->flags = 0x100;
     }
+    WL_MARKER(13)
 }
 
 // @ 0x49baa0

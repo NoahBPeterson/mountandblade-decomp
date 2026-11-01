@@ -82,3 +82,4 @@
 ../src/game/terrain_a/terrain_a.cpp  ?apply@mesh_list_x@@QAEXUmatrix@rgl@@@Z  0046c990  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?apply@lod_mesh_x@@QAEXPBUmatrix@rgl@@@Z  0046c9f0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?apply_state@RenderScene@@QAEXXZ  0046ca50  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?reset@Terrain@@QAEXXZ  004647e0  /O2 /MT /Gy /TP

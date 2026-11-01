@@ -35,6 +35,7 @@ extern int g_save_kind;                                     // 0x5e29bc
 extern int g_a75eb8;                                        // 0xa75eb8
 
 #include "../meta_mission.h"                                 // MetaMission (0xa73300): the one definition (init 0x4be742, entered through 0x4be730)
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 template<> void std::vector<int>::resize(size_t, int);       // 0x43f310 (agent3/agent_combat.cpp: the out-of-line instance, only declared)
 
@@ -715,6 +716,7 @@ void SimpleTag::read(stream_base* s)
 // @ 0x51de70
 void Game::load_clock(stream_base* s)
 {
+    WL_MARKER(12)
     s->r_i64(&timer13b18.t);
     s->r_int(&f13b28);
     s->r_int(&f13b2c);
@@ -754,6 +756,7 @@ void Game::load_clock(stream_base* s)
     s->r_int(&f13adc);
     s->r_int(&f13ad8);
     s->r_int(&f13ad4);
+    WL_MARKER(13)
 }
 
 // @ 0x51e0b0

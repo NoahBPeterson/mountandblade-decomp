@@ -3,6 +3,7 @@
 // (stream_base vtable 0x54a740, tstream2 0x54a890, tstream3 0x54ac88; see mbbin.h) and the item-kind array.
 // Names provisional; class names follow the Module System's record names.
 #include <windows.h>
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <new>
 #include <d3d9.h>
 #include "./module_load.h"
@@ -151,6 +152,7 @@ void load_data_files()
         ts1.r_float(&m->price);
         ts1.r_float(&m->rarity);
     }
+    WL_MARKER(4)
     text_reader_l ts2;
     if (!((text_stream*)&ts2)->open_read_text("Data\\flora_kinds.txt"))
         mb_error("Unable to open %s", "Data\\flora_kinds.txt");
@@ -176,5 +178,6 @@ void load_data_files()
         mb_error("Unable to open %s", "Data\\mission_types.txt");
     for (mission_type* m = g_mission_types; m < g_mission_types + sizeof g_mission_types / sizeof *g_mission_types; m++)   // 11 (to 0xa73730)
         ((Blk2dd0*)m)->read(&ts5);                       // 0x4c2dd0
+    WL_MARKER(5)
     load_skyboxes();                                        // 0x4c3350: the module's own skyboxes.txt
 }

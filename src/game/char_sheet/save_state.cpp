@@ -1,4 +1,5 @@
 #include "./save_state.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -10,10 +11,12 @@ extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 byt
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
 int GameData::save_state(OutStream* out)
 {
+    WL_MARKER(12)
     __int64 counter = g_time1;
     out->w_int8((int*)&counter);
     out->w_raw((char*)this + 4);
     out->w_raw((char*)this + 0xb4);
+    WL_MARKER(13)
     write_clock(out);
     g_list_a70480.write8(out);
     ((Rec78Tag*)((char*)this + 0x139e8))->write(out);
@@ -26,7 +29,9 @@ int GameData::save_state(OutStream* out)
     for (int i = 0; i < g_party_template_count; i++)
         g_party_templates[i].write(out);
     ((OutRecList*)(void*)this)->write_missions(out);
+    WL_MARKER(12)
     ((Table*)((char*)this + 0xcc))->write_table(out);
+    WL_MARKER(13)
     write_records(out);
     write_items(out);
     out->w_int8((int*)&records[f8c].f3c0);
@@ -66,6 +71,7 @@ void Rec30Tag::write(OutStream* out)
 // @ 0x4e9190    int GameData::write_clock(OutStream* out)   (thiscall, ret 4)
 int GameData::write_clock(OutStream* out)
 {
+    WL_MARKER(12)
     char* p = (char*)this;
     out->w_int1((int*)&f13b20);
     out->w_raw(p + 0x13b28);
@@ -103,6 +109,7 @@ int GameData::write_clock(OutStream* out)
     out->w_raw(p + 0x1a1e4);
     out->w_raw(p + 0x1a1e8);
     out->w_raw(p + 0x1a1ec);
+    WL_MARKER(13)
     out->w_int1(&f13a88);
     out->w_int(&f13ad0);
     out->w_raw(p + 0x13adc);

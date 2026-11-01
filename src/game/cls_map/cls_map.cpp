@@ -3,6 +3,7 @@
 // s004e05c0, s004e25a0, s004e2ea0 and s004e3780. T-regime region: helpers sit right after their first caller;
 // the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
@@ -73,6 +74,7 @@ struct SoundCtl {
 // @ 0x4d9450
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    WL_MARKER(12)
     (void)hPrevInstance;
 
     // skip the command line
@@ -84,6 +86,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     g_skin_name.assign("en");
 
     {
+        WL_MARKER(13)
         tstring empty("");
         g_strtable.load(&empty);
     }   // destroyed here, once (0x4d94dd); an explicit ~tstring() plus the scope exit freed the buffer twice
@@ -106,10 +109,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     SkinMagic_Load(chosen);
 
+    WL_MARKER(12)
     int r = g_app_obj.init_d3d();
     if (r < 0)
         return 0;
 
+    WL_MARKER(13)
     INT_PTR dlg = DialogBoxParamA(hInstance, MAKEINTRESOURCEA(0xaa), NULL, (DLGPROC)msg_proc_thunk, 0);
     if (dlg != 0x410)
         return (int)dlg;
@@ -2813,6 +2818,7 @@ void MeetingWindow::init()
         ADD_ROOT_REF(w);
     }
     {
+        WL_MARKER(12)
         tstring t("ui_done");
         done = new_medium_button(bg, g_strtable_c.lookup(t), 0.7f, 0.09f, 0.04f);
     }
@@ -2821,6 +2827,7 @@ void MeetingWindow::init()
     f40 = -1;
     f44 = -1;
     {
+        WL_MARKER(13)
         tstring t("ui_export_character");
         export_btn = new_long_button(bg, g_strtable_c.lookup(t), 0.5f, 0.6f, 0.04f);
     }

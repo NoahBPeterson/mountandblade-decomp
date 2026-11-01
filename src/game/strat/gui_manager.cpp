@@ -17,6 +17,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 // @ 0x42cb70
 void bump_counter() { g_gui_counter++; }
@@ -265,6 +266,7 @@ template class std::vector<vector4>;
 // @ 0x42d5c0
 gui_manager::gui_manager()
 {
+    WL_MARKER(12)
     reset();
     f16e0 = f1718 = -1;
     p24 = pair2(0, 0);
@@ -287,4 +289,5 @@ gui_manager::gui_manager()
     fb0ac = 0;
     fb028 = 1.0f;
     f1710 = 0;
+    WL_MARKER(13)
 }

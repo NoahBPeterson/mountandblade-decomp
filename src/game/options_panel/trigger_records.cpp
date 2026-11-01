@@ -1,8 +1,10 @@
 #include "./trigger_records.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 // @ 0x4d0620
 void init_mission_trigger_records()
 {
+    WL_MARKER(6)
     g_rec_9c = new RecCam;
     (*(RecMenu**)&g_windows.arr[0]) = new RecMenu;
     (*(RecProfile**)&g_windows.arr[1]) = new RecProfile;

@@ -27,6 +27,7 @@
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
 #define W(p, off) (*(ChoiceList**)((char*)(p) + (off)))
@@ -589,6 +590,7 @@ void PartyX::compact()
 // @ 0x532de0
 void GameDataX::update_party_sprites()
 {
+    WL_MARKER(12)
     PartyMgrX* mgr = (PartyMgrX*)&parties;
     PartyX* p = party_index(this, *(int*)((char*)this + 0x7c));
     if (((Party*)p)->sum_stat(0x10) != 0) {
@@ -632,6 +634,7 @@ void GameDataX::update_party_sprites()
     }
     Party* e = mgr->get(*(int*)((char*)this + 0x7c));
     *(int*)((char*)e + 0x8a8) = 0;
+    WL_MARKER(13)
 }
 
 

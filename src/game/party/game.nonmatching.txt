@@ -8,7 +8,6 @@
 0051dac0	143	NavGraph::score_triggers: complete. Different loop layout (177 vs 170 bytes). [equiv: WEAK, no mismatch, 100% insns]
 0051db70	69	NavGraph::trigger_score: complete. Float compare/branch layout differs (95 vs 94 bytes). [equiv: PASS, 321 valid, all edges]
 0051dbd0	307	Game::load_state: complete read sequence; the original embeds a WinLicense marker (not emittable from C++) so the stream layout differs (318 vs 390 bytes). [equiv: UNSUPPORTED, resolution audit has 2 disagree on g_tick1_hi in the harness]
-0051de70	554	Game::load_clock: complete; WinLicense marker in the original, plus scheduling differences (540 vs 576 bytes). [equiv: UNSUPPORTED, 0/400 valid (fake-arity, budget)]
 0051e0b0	6	I64Vec::read: complete. 6 bytes of register allocation/ordering. [equiv: UNSUPPORTED, 0/400 valid: RaiseException, fake-arity]
 0051e6c0	3	Game::load_tracks: complete. 3 bytes of instruction ordering. [equiv: UNSUPPORTED, stream vtable unmodelled (_purecall) in the harness]
 0051e7a0	32	TrackVec::resize: complete. Register allocation. [equiv: PASS, 367 valid, all edges]

@@ -5,6 +5,7 @@
 // Migrated from slices s004c46d0, s004c5080, s004c5a20, s004c6330, s004c6ca0, s004c7290, s004c7bf0, s004c84f0,
 // s004c8ca0 and s004ca550 (0x4ca550).
 #include "../../include/image_addrs.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./gui_edit.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
@@ -77,14 +78,16 @@ void rec34_list::load(stream_base& s)
 // @ 0x4c49f0
 head_cam::head_cam()
 {
-    fr.perspective = 1;
-    fr.nearz = 0.2f;
-    fr.farz = 300.0f;
-    fr.left = -0.1f;
-    fr.right = 0.1f;
-    fr.bottom = -0.07f;
-    fr.top = 0.07f;
-    fr.build_planes();
+    rgl::frustum* f = &fr;
+    WL_MARKER(12)
+    f->perspective = 1;
+    f->nearz = 0.2f;
+    f->farz = 300.0f;
+    f->left = -0.1f;
+    f->right = 0.1f;
+    f->bottom = -0.07f;
+    f->top = 0.07f;
+    f->build_planes();
     fr.m.o = vector4(0, 0, 10);
     p290 = vector4(0, 0, 0);
     p2a0 = vector4(0, 0, 0);
@@ -92,6 +95,7 @@ head_cam::head_cam()
     flag64 = 0;
     f2b4 = 1.0f;
     f2b8 = 5.0f;
+    WL_MARKER(13)
 }
 
 // @ 0x4c4b70
@@ -1565,6 +1569,7 @@ void Block::read_terrain(stream_base* stream)
 // @ 0x4c84f0
 void __fastcall conv_map_codes(conv_rec* self)
 {
+    WL_MARKER(12)
     char* p = (char*)self;
     const char** names = g_conv_names;
     int* out = (int*)(p + 0x24);
@@ -1587,6 +1592,7 @@ void __fastcall conv_map_codes(conv_rec* self)
         out++;
         names++;
     } while (names < g_conv_names + 3);
+    WL_MARKER(13)
 }
 
 // @ 0x4c85e0

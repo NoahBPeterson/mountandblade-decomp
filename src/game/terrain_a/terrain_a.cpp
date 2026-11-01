@@ -16,6 +16,7 @@
 #include "./wind.h"                          // tri_normal (0x4612d0)
 #include "../../include/frustum.h"            // rgl::frustum (to_clip 0x4621f0)
 #include "../../include/mat4.h"               // pos (identity_pos 0x40cd00)
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 using rgl::vector4;
 using rgl::matrix;
@@ -209,8 +210,8 @@ void terrain_quad::init()
 // @ 0x4647e0
 void Terrain::reset()
 {
-    int* a = (int*)((char*)this + 0x2c);
     int* b = (int*)((char*)this + 0x845da54);
+    int* a = (int*)((char*)this + 0x2c);
     for (int i = 0; i < 15; i++) {
         a[-1] = 0;
         a[0] = 0;
@@ -225,6 +226,7 @@ void Terrain::reset()
     }
     for (int o = 0x845d9f0; o <= 0x845da50; o += 4)
         BW(o) = 0;
+    WL_MARKER(12)
     BW(0x5c3b8f4) = 0;
     BW(0x843b8f8) = 0;
     BW(0xc3b0e4) = 0;
@@ -233,6 +235,7 @@ void Terrain::reset()
     BW(0x5c3b4f0) = 0;
     BW(0x845d97c) = 0;
     BW(0x845d980) = 0;
+    WL_MARKER(13)
 }
 
 // ---- bit-field accessors ---------------------------------------------------------------------------------------
@@ -573,6 +576,7 @@ void Terrain::scatter_all()
     rand();
     unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
     int s2 = 0;
+    WL_MARKER(12)
     if (t == 11) {
         b = rand() % 4 + 2;
         c = rand() % 2 + 2;
@@ -600,6 +604,7 @@ void Terrain::scatter_all()
     }
     if (g_terrain_gate < 10)
         s2 = 0;
+    WL_MARKER(13)
     scatter(&list_a, 1, c);
     scatter(&list_c, 2, s2);
     scatter(&list_b, 0, b);
@@ -608,6 +613,7 @@ void Terrain::scatter_all()
 // @ 0x4656c0
 void Terrain::fill_desc_named(TerrainDesc* d)
 {
+    WL_MARKER(12)
     d->init();
     d->dims.w = w + 1;
     d->dims.h = h + 1;
@@ -622,6 +628,7 @@ void Terrain::fill_desc_named(TerrainDesc* d)
     d->layers[d->n_minus1].type = -0x3115;
     d->layers[d->n_minus2].name.assign(g_name_elevation);
     d->layers[d->n_minus1].name.assign(g_name_leveling);
+    WL_MARKER(13)
     if (d->dims.w > 0x1a4 || d->dims.h > 0x1a4)
         mb_error("Illegal terrain size");
 }
@@ -629,6 +636,7 @@ void Terrain::fill_desc_named(TerrainDesc* d)
 // @ 0x4657c0
 void Terrain::fill_desc_none(TerrainDesc* d)
 {
+    WL_MARKER(12)
     d->init();
     d->dims.w = w + 1;
     d->dims.h = h + 1;
@@ -644,6 +652,7 @@ void Terrain::fill_desc_none(TerrainDesc* d)
     d->layers[d->n_minus2].name.assign(g_name_elevation);
     d->layers[d->n_minus1].name.assign(g_name_leveling);
     d->n = 0;
+    WL_MARKER(13)
     if (d->dims.w > 0x1a4 || d->dims.h > 0x1a4)
         mb_error("Illegal terrain size");
 }

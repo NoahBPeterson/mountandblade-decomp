@@ -62,6 +62,7 @@ struct render_cache {
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 using rgl::vector4;
 using rgl::matrix;
@@ -863,6 +864,7 @@ void GameData::blend(float* out, float x, float y)
 // @ 0x4711e0
 void ShadowMap::attach_camera(CellGrid* c)
 {
+    WL_MARKER(12)
     // marker "WL" 12 here in the original
     cam = (LightCam*)c;
     c->view.vmin = vector4(10000.0f, 10000.0f, 10000.0f);
@@ -878,6 +880,7 @@ void ShadowMap::attach_camera(CellGrid* c)
         g_shadow_quality = g_shadow_quality_req;
     }
     // marker "WL" 13 here in the original
+    WL_MARKER(13)
 }
 
 // @ 0x4713d0

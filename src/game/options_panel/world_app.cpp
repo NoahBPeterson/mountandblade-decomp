@@ -5,6 +5,7 @@
 // (Core, ../config/core.h): their constructors / destructors are the only functions here, written against partial
 // views because mission.h / core.h declare neither (see MIGRATION.md).
 #include "../../include/image_addrs.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <windows.h>
 #include <shellapi.h>
 #include <new>
@@ -481,6 +482,7 @@ extern char g_saved;                               // 0x5e2a08
 // @ 0x4d3ec0
 GameApp::GameApp()
 {
+    WL_MARKER(12)
     tstring* arrp = (tstring*)arr;
     *(void**)this = (void*)vtbl_5948e0;
 
@@ -557,6 +559,7 @@ GameApp::GameApp()
     m_hMapEditorDlg = 0;
     m_hScriptDlg = 0;
     f37c = 0;
+    WL_MARKER(13)
 }
 
 // @ 0x4d4130

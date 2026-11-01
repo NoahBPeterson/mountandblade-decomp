@@ -45,3 +45,7 @@
 ../src/game/world_data/world_data.cpp  ?push@SceneList@@QAEPAUSceneObject@@XZ  00495650  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_state@WindowMgrW@@QAEXH@Z  00495700  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?place@ContainerW@@QAEXPAH@Z  00490570  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?quest_succeeded@GameW@@QAEXH@Z  00494560  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?quest_failed@GameW@@QAEXH@Z  00494680  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?set_quest_concluded@GameW@@QAEXH@Z  004947a0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?set_quest_cancelled@GameW@@QAEXH@Z  004948c0  /O2 /MT /Gy /TP

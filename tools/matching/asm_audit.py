@@ -8,6 +8,7 @@ uses `_emit`, is `__declspec(naked)`, or has an `__asm` block longer than HELPER
 the old ">3 blocks" rule missed single-block transcriptions claimed as byte-exact). Helper-sized blocks (cvtss2si,
 maxss/minss clamps, fnstcw/fldcw, rdtsc) are EA's own inline-asm math helpers and are allowed; --review also lists
 bodies with more than 3 such blocks or mostly such blocks, for a human look (they do not fail run_all).
+Exception: `_emit` is allowed only inside the WL_MARKER macro (src/include/wl_marker.h); a WL_MARKER(id) use is not asm.
 By default only manifest (byte-exact) rows are checked; --all-rows also checks nonmatching.txt rows.
 Output: "<slice-or-tu> <va> <kind> <reason>"; exit 1 if any.
 run_all.py calls transcribed() and reports such rows as ASM instead of MATCH (docs/matching.md, "No assembly
@@ -61,7 +62,9 @@ def why(body, review=False):
     """Reason string when a function body is an assembly transcription, else None. With review=True also report
     bodies that only use helper-sized blocks but many of them or mostly (they need a human look, not a demotion)."""
     code = _strip_comments(body)
-    if re.search(r"\b_?_emit\b", code):
+    # WL_MARKER(id) (src/include/wl_marker.h) is the one allowed emitter of marker bytes: a use expands to no
+    # `_emit`/`__asm` token in the body, so it is not asm. A body that defines it or spells _emit itself is rejected.
+    if re.search(r"\b_?_emit\b", code) or re.search(r"#\s*define\s+WL_MARKER\b", code):
         return "_emit"
     if re.search(r"__declspec\s*\(\s*naked\s*\)", code):
         return "naked"
@@ -71,6 +74,20 @@ def why(body, review=False):
     if review and runs and (len(runs) > 3 or sum(runs) * 2 > n):
         return "review: %d helper-sized __asm blocks, %d asm of %d lines" % (len(runs), sum(runs), n)
     return None
+
+
+def marker_header_ok():
+    """The `_emit` exemption: only src/include/wl_marker.h may spell `_emit`, and only inside its WL_MARKER define.
+    Returns a list of offending files (any other src header/source that spells _emit)."""
+    bad = []
+    for ext in ("h", "cpp"):
+        for p in glob.glob(os.path.join(ROOT, "src", "**", "*." + ext), recursive=True):
+            code = _strip_comments(open(p, errors="ignore").read())
+            if os.path.basename(p) == "wl_marker.h":  # drop the WL_MARKER define (with its `\` continuations)
+                code = re.sub(r"#\s*define\s+WL_MARKER\s*\(\s*id\s*\)(?:[^\n]*\\\n)*[^\n]*", "", code)
+            if re.search(r"\b_?_emit\b", code):
+                bad.append(p)
+    return bad
 
 
 def transcribed(src, review=False):
@@ -116,6 +133,9 @@ def main(argv):
             d = os.path.join(ROOT, "match/slices", a)
             units.append((a, glob.glob(os.path.join(d, "*.cpp")), d))
     hits = 0
+    for p in marker_header_ok():
+        print("%s _emit outside the WL_MARKER definition" % os.path.relpath(p, ROOT))
+        hits += 1
     for label, srcs, d in units:
         kinds = {va: "manifest" for va in _rows(os.path.join(d, "manifest.txt"), True)}
         if all_rows:
