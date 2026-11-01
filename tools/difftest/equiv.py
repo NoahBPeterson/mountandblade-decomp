@@ -1704,6 +1704,74 @@ class PartyTable:
             else:
                 inp.overrides[a] = v
 
+# ---- --item-table: g_items points at a table of ItemKind records covering every item type (opt-in environment model) ----
+G_ITEMS_VA = 0x5e29d0           # ItemKind* g_items (include/item_kind.h)
+G_ITEM_COUNT_VA = 0x5e29d4      # int g_item_kind_count
+IT_SZ = 0x238                   # sizeof(ItemKind)
+IT_TYPES = tuple(range(1, 21))  # itp_type_horse .. itp_type_book
+
+
+class ItemTable:
+    """--item-table[=P]: in a share P of fresh inputs point g_items (0x5e29d0) at a table of ItemKind records with a mix of types.
+
+    What the original reads (0x448bd0..0x448bf6: eax = item * 0x238, edx = [0x5e29d0], `mov cl,[eax+edx+0x1c8]`; is_ranged
+    0x433d90 and the other type tests read the same dword and mask 0xff): record + 0x1c8 low byte = itp_type_* (1..20, see
+    include/item_kind.h). The model fills N = 100 records (a record is 0x238 bytes, a pool slot 64 KB: one cold slot holds 115):
+    record i < 20 gets type i + 1 (every enum value appears), the rest a random type from the enum, so a small item id (0..N-1)
+    finds a typed record. It also fills the fields the type branches read next, with plausible values: +0x1d0 capability
+    flags (a few bits), +0x1d8 value, +0x1e8..+0x1f4 stat bases (0..120: the damage/speed/armour numbers), +0x1fc/+0x200/+0x204
+    small ints, +0x208 float (base armour value), +0x20c weight, +0x210 stack size, +0x21c 1.0 and +0x224 a float. Names
+    (tstring at +0/+0x10/+0x20), the vector at +0x30 and the meshes (+0x44 mesh_count = 0) stay zero: a walk of them finds
+    nothing. g_item_kind_count (0x5e29d4) = N. Item ids >= N read whatever memory follows (the same for both builds).
+    Nothing is read from the original image: the bytes go to Input.pool_over (a free cold slot, chosen like PartyTable's) and
+    Input.overrides (the two globals), identically for both builds, and are saved with the input, so --replay reproduces
+    them. Bias small item-id arguments / fields toward 0..N-1 with --hint (e.g. --hint arg0=0,1,7,8@0.5; argN counts from 0). A row
+    that also reads g_game (0x5e2930, zero in the image) needs --party-table, which makes it non-null."""
+    N = 100
+
+    def __init__(self, share):
+        self.share = share
+        self._pt = PartyTable("", 0)
+
+    def __call__(self, gen, inp, rng):
+        if rng.random() >= self.share:
+            return
+        typed = getattr(gen, "typed", None)
+        base = self._pt._free_run(inp, rng, 1, typed)
+        if base is None:
+            return
+        w = {}
+
+        def put(a, v):
+            w[a] = v & 0xFFFFFFFF
+
+        def fbits(f):
+            return struct.unpack("<I", struct.pack("<f", f))[0]
+
+        flag_bits = (0x1, 0x2, 0x4, 0x8, 0x10, 0x100, 0x1000, 0x10000)
+        for i in range(self.N):
+            r = base + i * IT_SZ
+            t = IT_TYPES[i] if i < len(IT_TYPES) else rng.choice(IT_TYPES)
+            put(r + 0x1c8, t | (rng.choice((0, 0, 0x100, 0x200, 0x80000)) if t == 11 else rng.choice((0, 0, 0x100, 0x200))))
+            put(r + 0x1d0, rng.choice(flag_bits) | (rng.choice(flag_bits) if rng.random() < 0.4 else 0))
+            put(r + 0x1d4, 0)
+            put(r + 0x1d8, rng.choice((0, 5, 20, 100, 400, 2000, 10000)))
+            for o in (0x1e0, 0x1e4):
+                put(r + o, rng.choice((0, 0xFFFFFFFF, rng.getrandbits(32))))
+            for o in (0x1e8, 0x1ec, 0x1f0, 0x1f4, 0x1fc, 0x200, 0x204):
+                put(r + o, rng.choice((0, 1, 5, 10, 30, 60, 90, 120)))
+            put(r + 0x208, fbits(rng.choice((0.0, 1.0, 8.0, 25.0, 40.0))))
+            put(r + 0x20c, rng.choice((0, 1, 2, 5, 10, 40)))
+            put(r + 0x210, rng.choice((0, 1, 1, 2, 10, 30, 100)))
+            put(r + 0x214, rng.randrange(0, 4))
+            put(r + 0x218, rng.randrange(0, 4))
+            put(r + 0x21c, 0x3F800000)
+            put(r + 0x220, rng.choice((0, 1, 10)))
+            put(r + 0x224, fbits(rng.choice((0.0, 0.5, 1.0, 2.0))))
+        inp.overrides[G_ITEMS_VA] = base
+        inp.overrides[G_ITEM_COUNT_VA] = self.N
+        inp.pool_over.update(w)
+
 
 PROFILE_KW = {k: tuple(zip(*v)) for k, v in PROFILES.items()}
 
@@ -2050,6 +2118,8 @@ class Runner:
         self.gen.hints = [INV.hint(h) for h in (getattr(opts, "hint", None) or [])]
         if getattr(opts, "party_table", None):         # --party-table: a consistent party id -> index -> page -> Party chain
             self.gen.hints.append(PartyTable(t.sym, opts.party_table))
+        if getattr(opts, "item_table", None):          # --item-table: g_items -> records covering every item type
+            self.gen.hints.append(ItemTable(opts.item_table))
         self.gen.img_read = lambda va_, n_: bytes(self.img.read(va_, n_)).ljust(n_, b"\0")
         for h_ in self.gen.hints:       # --hint g:ADDR: the address must be image data both builds share (resolved to it)
             ga_ = getattr(h_, "gaddr", None)
@@ -6751,6 +6821,10 @@ def parse_args(argv=None):
                     help="opt-in environment (off by default): in a share P (default 0.5) of fresh inputs write a small consistent "
                          "party table (id -> index map, page table, Party records of type 1 and others with stacks) at the "
                          "PartyMgr of `this` / g_game for BOTH builds; saved with the input. See PartyTable")
+    ap.add_argument("--item-table", nargs="?", type=float, const=0.5, default=None, metavar="P",
+                    help="opt-in environment (off by default): in a share P (default 0.5) of fresh inputs point g_items (0x5e29d0) "
+                         "at a table of 100 ItemKind records whose types (+0x1c8 low byte) cover every itp_type_* value, with "
+                         "plausible weight/value/stat fields, for BOTH builds; saved with the input. See ItemTable")
     ap.add_argument("--edge-scope", metavar="FILE",
                     help="JSON list of the original's edges ('0049fafc->004ac670') the run is about: it continues past "
                          "--inputs and steers only while one of them is uncovered (a pinned switch case)")
