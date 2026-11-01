@@ -393,31 +393,31 @@ void MapPanel::update_target()
     if (party_at(g_game, g_game->f78)->action != 4) return;
     if (party_at(g_game, g_game->f78)->target < 0) return;
 
-    bool lost;
-    {
+    // Each access re-runs the party lookup (0x48ad00), exactly as the original does: alpha test 0x51a099, then
+    // f8c8 0x51a0f3 (fresh lookup), flags reuse that pointer; the body re-looks-up the player (target), the
+    // target (position) and the player (store).
+    bool lost = party_at(g_game, party_at(g_game, g_game->f78)->target)->alpha < 0.01f;
+    if (!lost) {
         Party* tgt = party_at(g_game, party_at(g_game, g_game->f78)->target);
-        // 0x51a099: f68 < 0.01 -> lost; 0x51a0fc: f8c8 >= 0 -> lost; 0x51a10f: (flags & 0x1080100)
-        // nonzero -> lost.  All three tests jump *into* the body, i.e. the body runs unless
-        // f68 >= 0.01 && f8c8 < 0 && the flags are clear.
-        lost = tgt->alpha < 0.01f ||
-               tgt->f8c8 >= 0 ||
-               (tgt->flags_lo & 0x1080100) != 0;
-        if (lost) {
-            Party* pl = party_at(g_game, g_game->f78);
-            pl->action      = 6;
-            pl->order_pos.x = tgt->pos.x;
-            pl->order_pos.y = tgt->pos.y;
-            pl->reissue_order();
+        lost = tgt->f8c8 >= 0 || (tgt->flags_lo & 0x1080100) != 0;
+    }
+    if (lost) {
+        party_at(g_game, g_game->f78)->action = 6;
+        int tid = party_at(g_game, g_game->f78)->target;
+        Party* src = party_at(g_game, tid);
+        Party* dst = party_at(g_game, g_game->f78);
+        dst->order_pos.x = src->pos.x;
+        dst->order_pos.y = src->pos.y;
+        party_at(g_game, g_game->f78)->reissue_order();
 
-            {
-                tstring tmp("ui_target_lost");
-                tstring* s = g_strtable.lookup(tmp);
-                if (g_msg_enabled && g_msg_count < 0x20) {
-                    int k = (g_msg_base + g_msg_count) % 0x20;
-                    g_msg_text[k] = *s;
-                    g_msg_id[k]   = -1;
-                    g_msg_count++;
-                }
+        {
+            tstring tmp("ui_target_lost");
+            tstring* s = g_strtable.lookup(tmp);
+            if (g_msg_enabled && g_msg_count < 0x20) {
+                int k = (g_msg_base + g_msg_count) % 0x20;
+                g_msg_text[k] = *s;
+                g_msg_id[k]   = -1;
+                g_msg_count++;
             }
         }
     }
