@@ -1,6 +1,6 @@
 {
-"when": "2026-10-31T21:41:58-05:00",
-"commit": "6eab904",
+"when": "2026-10-31T21:45:44-05:00",
+"commit": "7a6b91a",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,8 +9,8 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 448,
-"weak": 434,
+"pass": 450,
+"weak": 432,
 "fail": 8,
 "inputs": 27,
 "harness": 31,
@@ -18,8 +18,8 @@
 "comdatdiff": 11,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 156840,
-"weak_sz": 598497,
+"pass_sz": 157240,
+"weak_sz": 598097,
 "fail_sz": 32172,
 "inputs_sz": 25127,
 "harness_sz": 73274,
@@ -1572,8 +1572,8 @@
 "00443730": {
 "module": "agent_fx_sound",
 "file": "src/game/agent3/agent_fx_sound.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 307
 },
 "00443aa0": {
@@ -3133,8 +3133,8 @@
 "0048d5f0": {
 "module": "mission_3",
 "file": "src/game/mission_ui2/mission_3.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 93
 },
 "0048d650": {

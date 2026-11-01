@@ -920,5 +920,18 @@
       "g:a180f0=400100@0.7"
     ],
     "why": "the static vector's first/last at 0xa180ec must be non-null to reach the destroy loop"
+  },
+  "agent_fx_sound 00443730": {
+    "args": [
+      "--rand-seeded"
+    ],
+    "why": "the pitch term's sign depends on rand(): seed the modelled rand per input"
+  },
+  "mission_3 0048d5f0": {
+    "args": [
+      "--typed-share",
+      "0.8"
+    ],
+    "why": "typed 0x1dc-byte elements let the virtual v08 return a negative value"
   }
 }
