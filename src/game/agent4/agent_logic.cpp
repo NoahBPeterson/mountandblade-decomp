@@ -5816,6 +5816,18 @@ static __declspec(noinline) void ui_weapon_class_name(int type, char* out)
     }
 }
 
+#define PB_IMPULSE() if (flags3c & 1) { \
+        flags3c &= ~1u; \
+        ((gui_timer*)&t40)->set_delay(-0.6f); \
+        impulse.x = imp.x + impulse.x; \
+        impulse.y = imp.y + impulse.y; \
+        impulse.z = imp.z + impulse.z; \
+        if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 1) { \
+            impulse.x = impulse.x; \
+            impulse.y = impulse.y; \
+            impulse.z = impulse.z + 1.0f; \
+        } \
+    }
 // @ 0x457b40
 void Agent::process_blow(int unused)
 {
@@ -5847,17 +5859,16 @@ void Agent::process_blow(int unused)
     atk_rider = -1;
     if (attacker >= 0) {
         Agent** pg = &m->agents.pages[0];
-        int r = attacker;
-        if (pg[(unsigned)attacker >> 4][attacker & 0xf].f10 != 0) {
-            if (pg[(unsigned)attacker >> 4][attacker & 0xf].f30 < 0)
-                goto after_rider;
-            r = m->agents.get(attacker)->f30;
+        if (pg[(unsigned)attacker >> 4][attacker & 0xf].f10 == 0) {
+            atk_rider = attacker;
+            if (atk_rider >= 0)
+                atk_troop = pg[(unsigned)atk_rider >> 4][atk_rider & 0xf].troop;
+        } else if (pg[(unsigned)attacker >> 4][attacker & 0xf].f30 >= 0) {
+            atk_rider = m->agents.get(attacker)->f30;
+            if (atk_rider >= 0)
+                atk_troop = pg[(unsigned)atk_rider >> 4][atk_rider & 0xf].troop;
         }
-        atk_rider = r;
-        if (r >= 0)
-            atk_troop = pg[(unsigned)r >> 4][r & 0xf].troop;
     }
-after_rider:
     if ((f10 == 0 && last_blow().bone == 9) || (f10 == 1 && last_blow().bone == 7)) {
         if (last_blow().item >= 0 && g_items[last_blow().item].is_ranged()) {
             dmg = dmg * 1.75f;
@@ -6141,82 +6152,72 @@ after_rider:
                 anim_a = 0x11f;
             }
         }
-        goto common;
-    }
-    if (troop >= 0) {
-        if (dmg < 1.0f) {
-            float r = (frand() + 1.0f) * (float)(g_game->chars[troop].f58[1] + 15) * 0.2f;
-            if (!(last_blow().dmg_in < r)) goto bee;
-        } else {
-        bee:
-            if (!(dmg < g_damage_interrupt_attack_treshold)) goto c25;
+    } else {
+        if (troop >= 0) {
+            if (((dmg < 1.0f) && (last_blow().dmg_in < (frand() + 1.0f) * (float)(g_game->chars[troop].f58[1] + 15) * 0.2f)) ||
+                dmg < g_damage_interrupt_attack_treshold) {
+                if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 0)
+                    stunned = true;
+            }
         }
-        if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 0)
-            stunned = true;
-    }
-c25:
-    if (f2c == -1 && last_blow().item >= 0 &&
-        (ik = &g_items[last_blow().item], ik->is_ranged() || (ik->type_flags & 0xff) == itp_type_polearm)) {
-        if (stunned)
-            goto common;
-        if (((ik->type_flags & 0xff) == itp_type_polearm && frand() < 0.5f && last_blow().dmg_in > 15.0f) ||
-            ((g_items[last_blow().item].type_flags & 0xff) == itp_type_thrown && frand() < 0.4f && last_blow().dmg_in > 15.0f) ||
-            ((g_items[last_blow().item].type_flags & 0xff) == itp_type_bow && frand() < 0.3f && last_blow().dmg_in > 25.0f) ||
-            ((g_items[last_blow().item].type_flags & 0xff) == itp_type_crossbow && frand() < 0.3f && last_blow().dmg_in > 25.0f)) {
-            anim_a = move_anim(2);
-            float k = frand() * 0.2f + 2.1f;
-            hit_part = 0x82;
-            imp.x = k * last_blow().dir.x;
-            imp.y = k * last_blow().dir.y;
-            imp.z = k * last_blow().dir.z;
-            goto impulse;
-        }
-        anim_a = move_anim(1);
-        goto common;
-    }
-    if (f2c != -1)
-        goto h_mounted;
-ded:
-    {
-        float d = rgl::dot(vel, last_blow().dir);
-        if (!(d < 0.0f))
-            goto dfail;
-    }
-    if (!(((last_blow().flags & 0x10) && last_blow().dmg_in > 7.0f) || (last_blow().dmg_in > 24.0f && frand() < 0.4f)))
-        goto dfail;
-    if (last_blow().kind != 2)
-        goto dfail;
-    if (anim[0].cur == 0x125)
-        goto dfail;
-    anim_a = 0x125;
-    imp.x = vel.x * -0.6f;
-    anim_b = 0x126;
-    imp.y = vel.y * -0.6f;
-    imp.z = vel.z * -0.6f;
-    if (last_blow().flags & 0x10) {
-        float rr = frand() * 0.4f + 1.5f;
-        imp.x = rr * last_blow().dir.x + imp.x;
-        imp.y = rr * last_blow().dir.y + imp.y;
-        imp.z = rr * last_blow().dir.z + imp.z;
-    }
-ded_tail:
-    if (stunned)
-        goto common;
-impulse:
-    if (flags3c & 1) {
-        flags3c &= ~1u;
-        ((gui_timer*)&t40)->set_delay(-0.6f);
-        impulse.x = imp.x + impulse.x;
-        impulse.y = imp.y + impulse.y;
-        impulse.z = imp.z + impulse.z;
-        if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 1) {
-            impulse.x = impulse.x;
-            impulse.y = impulse.y;
-            impulse.z = impulse.z + 1.0f;
-        }
+        if (f2c == -1 && last_blow().item >= 0 &&
+            (ik = &g_items[last_blow().item], ik->is_ranged() || (ik->type_flags & 0xff) == itp_type_polearm)) {
+            if (!stunned) {
+                if (((ik->type_flags & 0xff) == itp_type_polearm && frand() < 0.5f && last_blow().dmg_in > 15.0f) ||
+                    ((g_items[last_blow().item].type_flags & 0xff) == itp_type_thrown && frand() < 0.4f && last_blow().dmg_in > 15.0f) ||
+                    ((g_items[last_blow().item].type_flags & 0xff) == itp_type_bow && frand() < 0.3f && last_blow().dmg_in > 25.0f) ||
+                    ((g_items[last_blow().item].type_flags & 0xff) == itp_type_crossbow && frand() < 0.3f && last_blow().dmg_in > 25.0f)) {
+                    anim_a = move_anim(2);
+                    float k = frand() * 0.2f + 2.1f;
+                    hit_part = 0x82;
+                    imp.x = k * last_blow().dir.x;
+                    imp.y = k * last_blow().dir.y;
+                    imp.z = k * last_blow().dir.z;
+                    goto impulse;
+                }
+                anim_a = move_anim(1);
+            }
+        } else if (f2c != -1) {
+            anim_b = move_anim(0);
+        } else do {
+            if (rgl::dot(vel, last_blow().dir) < 0.0f &&
+                (((last_blow().flags & 0x10) && last_blow().dmg_in > 7.0f) || (last_blow().dmg_in > 24.0f && frand() < 0.4f)) &&
+                last_blow().kind == 2 && anim[0].cur != 0x125) {
+                anim_a = 0x125;
+                imp.x = vel.x * -0.6f;
+                anim_b = 0x126;
+                imp.y = vel.y * -0.6f;
+                imp.z = vel.z * -0.6f;
+                if (last_blow().flags & 0x10) {
+                    float rr = frand() * 0.4f + 1.5f;
+                    imp.x = rr * last_blow().dir.x + imp.x;
+                    imp.y = rr * last_blow().dir.y + imp.y;
+                    imp.z = rr * last_blow().dir.z + imp.z;
+                }
+            } else {
+                anim_b = move_anim(1);
+                if (!(last_blow().flags & 0x10)) {
+                    if (!(last_blow().dmg_in > 15.0f))
+                        break;
+                    if (!(frand() < 0.3f))
+                        break;
+                }
+                {
+                    float e = (frand() - 0.5f) * 0.5f;
+                    float f = (frand() + 0.6f) * (last_blow().dmg_in + 30.0f) * 0.02f;
+                    vector4* sv = &body->m.s;
+                    imp.x = f * last_blow().dir.x + e * sv->x;
+                    imp.y = f * last_blow().dir.y + e * sv->y;
+                    imp.z = f * last_blow().dir.z + e * sv->z;
+                }
+            }
+            if (!stunned) {
+            impulse:
+                PB_IMPULSE()
+            }
+            } while (0);
     }
 
-common:
     cA = false;
     cB = false;
     if (health < 1.0f) {
@@ -6229,43 +6230,12 @@ common:
                 m = g_mission;
             }
         }
-        if (m->terrain.f158 & 1)
-            goto set_cB;
-        if ((g_game->chars[troop].flags30 & tf_allways_fall_dead) == 0) {
-            if (last_blow().kind == 2)
-                goto set_cB;
-            if (troop < 0)
-                goto set_cB;
-            if (g_game->chars[troop].is_hero())
-                goto set_cB;
-            if (!(frand() > surg))
-                goto set_cB;
-        }
-        cA = true;
-        goto ab_done;
-    dfail:
-        anim_b = move_anim(1);
-        if (!(last_blow().flags & 0x10)) {
-            if (!(last_blow().dmg_in > 15.0f))
-                goto common;
-            if (!(frand() < 0.3f))
-                goto common;
-        }
-        {
-            float e = (frand() - 0.5f) * 0.5f;
-            float f = (frand() + 0.6f) * (last_blow().dmg_in + 30.0f) * 0.02f;
-            vector4* sv = &body->m.s;
-            imp.x = f * last_blow().dir.x + e * sv->x;
-            imp.y = f * last_blow().dir.y + e * sv->y;
-            imp.z = f * last_blow().dir.z + e * sv->z;
-        }
-        goto ded_tail;
-    h_mounted:
-        anim_b = move_anim(0);
-        goto common;
-    set_cB:
-        cB = true;
-    ab_done:
+        if (!(m->terrain.f158 & 1) &&
+            ((g_game->chars[troop].flags30 & tf_allways_fall_dead) != 0 ||
+             (last_blow().kind != 2 && troop >= 0 && !g_game->chars[troop].is_hero() && frand() > surg)))
+            cA = true;
+        else
+            cB = true;
         f5830 = 3;
         tm.start = g_ticks[tm.clock];
         mount_id = f2c;
