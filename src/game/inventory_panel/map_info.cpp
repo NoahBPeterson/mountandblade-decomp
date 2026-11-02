@@ -18,6 +18,12 @@
 #include <stdio.h>
 #include <stddef.h>
 #include "../tstring.h"
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_sel_id = -1;                            // 0x5aa3b0
+int g_sel_type = -1;                          // 0x5aa3b4 last painted selection
+
 
 extern "C" int _fltused = 0;                 // static-CRT float marker
 
@@ -133,13 +139,7 @@ typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     
 // ------------------------------------------------------------------------------------- globals ------
 extern gui_manager g_gui;                    // 0x5d7080
 extern StrTable   g_strtable;                // 0x5e2a18
-extern int        g_sel_type;                // 0x5aa3b4  last painted selection
-extern int        g_sel_id;                  // 0x5aa3b0
-extern int        g_show_faction_color;      // 0xa181b0
-extern char       g_show_party_ids_instead_of_names;               // 0xa181b8
 
-extern unsigned   g_panel_color;             // 0x5d8760  name colour of the left column
-extern unsigned   g_panel_bg;                // 0x5d8764  background tint for the left column
 
 void mb_snprintf(char* buf, size_t n, const char* fmt, ...);   // 0x415100
 

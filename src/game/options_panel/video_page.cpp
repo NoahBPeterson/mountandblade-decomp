@@ -22,6 +22,7 @@
 using rgl::vector4;
 
 #include "../str_table.h"                                                 // StrTable g_strtable (0x5e2a18)
+#include "../shared_vars.h"
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0x536f8f
 extern "C" char* __cdecl _itoa(int, char*, int);                            // 0x5371f7
@@ -58,7 +59,6 @@ extern rgl_config g_cfg;                                        // 0x5a9f98
 // block at 0x5aa008 (ecx = 0x5aa008 at 0x4d6610 / 0x4d6642).
 struct Config { void set_triple_buffering(int t); void set_texture_quality(int q); };
 
-extern ID3DXEffect* g_effect;                                                // 0x5e293c (renderer.h)
 extern Game* g_game;                                                        // 0x5e2930
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
@@ -308,7 +308,7 @@ void VideoPage::update(int reason)
             {
                 // 0x4d6ab9: the key is looked up and the text goes in as the body; the title is the empty string
                 tstring key("ui_change_graphics_settings_explanation");
-                tstring title((const char*)orig::g_empty_text);
+                tstring title("");
                 tstring* e = g_strtable.lookup(key);
                 g_main_menu.rec->setup(&title, e);
             }

@@ -26,8 +26,6 @@
 
 extern StrTable g_strtable;                 // 0x5e2a18
 extern ini_file g_game_vars;                      // 0xa44240 (the option table: key tstring +0, value tstring +0x1c, count +0x2c000)
-extern int g_store0;                        // 0xa70458 (first out-slot of GameData::emit_event / sl_query)
-extern int g_store1;                        // 0xa7045c
 
 // ---- classes of other modules whose definitions own methods the game data view calls --------------------------------------
 // (the definitions carry these class names; a call through GameData / PartyMgr would name a symbol nothing defines)

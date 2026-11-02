@@ -22,12 +22,18 @@
 #include <shlobj.h>
 #include "../../tinyxml/tinyxml.h"
 #include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../shared_vars.h"
 struct OptionsDlg {
     void choose_dx_settings(Config* cfg, bool overwrite);   // 0x4b9b90 (config/options_dlg.h pulls winsock2.h: member-only stub)
 };
 #include "../../dxframework/dxutil.h"   // DXUtil_Timer 0x407660 (stdcall, TIMER_COMMAND)
 #include "../../rgl/options.h"       // options::save 0x4181c0
 #include <hash_map>
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_video_played;                              // 0x5e2a10 (1 once the intro video started, 2 once it was skipped)
+float g_5a9f24 = 0.65f;                          // 0x5a9f24 (the meeting window columns' top)
+float g_5a9f28[2] = { 0.0f, 0.21450001f };       // 0x5a9f28 {x, y} column size; [0] = 1.0f - 0x5a9f20 is set by static_init_547a60 (static_init owner)
 
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
 extern "C" void __stdcall SkinMagic_Init(HINSTANCE, const char*, int, int);   // 0x535452 (ordinal 1)
@@ -81,8 +87,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     for (char* p = lpCmdLine; *p > 0; p++)
         ;
 
-    g_hinstance = hInstance;
-    g_init_flag = 0;
+    g_app_obj.hinstance = hInstance;
+    g_app_obj.init_flag = 0;
     g_skin_name.assign("en");
 
     {
@@ -124,7 +130,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         g_cfg.load_file(f);
         fclose(f);
     }
-    ((options_record*)&orig::g_options)->load();
+    ((options_record*)&g_options)->load();
     ((OptionsDlg*)&g_app_obj)->choose_dx_settings(&g_cfg, false);
 
     DWORD_PTR proc_mask = 0, sys_mask = 0;
@@ -137,8 +143,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         _beginthread((void (__cdecl*)(void*))loader_thread_body, 0x40000, NULL);
     }
 
-    g_fullscreen_flag = (g_cfg.start_windowed == 0);
-    g_res_scale = 1.0f / (float)g_cfg.max_framerate;
+    g_app_obj.m_bStartFullscreen = (g_cfg.start_windowed == 0);
+    g_app_obj.m_fMinFrameTime = 1.0f / (float)g_cfg.max_framerate;
 
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
@@ -538,20 +544,17 @@ struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<i
 void __stdcall FSOUND_Close();                          // 0x534336 (the import thunk of fmod!FSOUND_Close)
 void crt_exit();                                        // 0x535458
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
-extern char* g_5e29d0;                                  // 0x5e29d0
-extern void* g_menus;                                  // 0x5e29b0
-extern char* g_5e2928;                                  // 0x5e2928
-extern void* g_mission_templates;                                  // 0x5e2a00
-extern void* g_propkinds;                                  // 0x5e29dc
-extern char* g_ptypes;                                  // 0x5e28f8
-extern char* g_env_rows;                                  // 0x5e28f4
-extern char* g_map_icons;                                  // 0x5e29f0
-extern void* g_party_templates;                                  // 0x5e29f8
+#include "../menu_rec.h"           // MenuRec* g_menus (0x5e29b0)
+#include "../prop_kind.h"         // PropKind* g_propkinds (0x5e29dc)
+#include "../ptype.h"             // ptype* g_ptypes (0x5e28f8)
+#include "../../include/item_kind.h"   // ItemKind* g_items (0x5e29d0)
+#include "../terrain_b/emit.h"     // EnvRow* g_env_rows (0x5e28f4)
+extern PartyTemplate* g_party_templates;                   // 0x5e29f8 (PartyTemplate: game_recs.h, via game_data.h; the type script_interpreter.h and party/game.h declare)
+extern void* g_mission_templates;                          // 0x5e2a00
+struct E24;
+E24* g_5e2928;                                          // 0x5e2928 (the array shutdown() deletes)
 extern Font* g_font;                                // 0x5e2934
 extern ScreenObj* g_windows[30];                        // 0xa73980 .. 0xa739f8
-extern char g_log_flag94;                                   // 0x5a9f94
-extern char g_log_flag95;                                   // 0x5a9f95
-extern FILE* g_log_file;                                  // 0x5a9f90
 
 // @ 0x4da5b0
 int shutdown()
@@ -567,8 +570,8 @@ int shutdown()
         delete (WorldDtor*)((void*)g_mission);
         (*(void**)&g_mission) = 0;
     }
-    if (g_5e29d0) {
-        delete[] (Item238*)g_5e29d0;
+    if (g_items) {
+        delete[] (Item238*)g_items;
     }
     if (g_menus) {
         elem60_vector_delete((elem60*)g_menus, 0, 3);              // ??_E, flags 3 (0x4c4f40)
@@ -665,11 +668,11 @@ void MissionScreen::fill_mission_grid()
         vt(overlay)->d41(pos, &none);
     }
     int kb = 0;
-    for (int k = 0; k < g_a73430; k++) {
+    for (int k = 0; k < g_mission_ctx.rows; k++) {
         int jb = 0;
-        for (int j = 0; j < g_a7342c; j++) {
-            int* cell = (int*)((char*)g_a73348 + kb + jb);
-            for (int i = 0; i < g_a73428; i++) {
+        for (int j = 0; j < g_mission_ctx.depth; j++) {
+            int* cell = (int*)((char*)g_mission_ctx.grid + kb + jb);
+            for (int i = 0; i < g_mission_ctx.cols; i++) {
                 Troop* u = &g_game->troops[*cell];
                 const tstring* txt = g_strtable.find(&u->key);
                 if (!txt)
@@ -739,9 +742,9 @@ void MissionScreen::init_mission_window()
 {
     row[4] = 0;
     NEW_OVERLAY("mission_window")
-    if (g_a73314 == 2)
+    if (g_mission_ctx.mode == 2)
         fill_mission_grid();
-    else if (g_a73314 == 3 || g_a73314 == 4 || g_a73314 == 5)
+    else if (g_mission_ctx.mode == 3 || g_mission_ctx.mode == 4 || g_mission_ctx.mode == 5)
         fill_single_mission();
     ADD_ROOT((void*)overlay);
     g_ui_changed = 1;
@@ -792,12 +795,12 @@ void MissionScreen::fill_mission_row(int side)
     int id;
     if (side == 0)
         id = g_game->f78;
-    else if (g_a73438 < 0)
-        id = g_a732fc[side];
+    else if (g_mission_ctx.side < 0)
+        id = g_mission_ctx.ids[side - 1];          // side 1 / 2: the two sides' party ids
     else if (side == 1)
-        id = g_mission_ctx[g_a73438];
+        id = g_mission_ctx.ids[g_mission_ctx.side];
     else
-        id = *(int*)(((char*)orig::g_a73304) - g_a73438 * 4);
+        id = g_mission_ctx.ids[1 - g_mission_ctx.side];
     if (id == -1)
         return;
     int pidx = ((Map10007*)&g_game->parties)->lookup(id);
@@ -1137,7 +1140,7 @@ UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, flo
         float v[2] = { tmp, c };
         vt(p)->d25(v);
     }
-    float r = g_549cdc / k2;
+    float r = 1.0f / k2;
     float s = r * c;
     {
         gui_mesh* m = res_get(name)->clone();
@@ -1153,11 +1156,11 @@ UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, flo
         int col = 0xff007700;
         vt(p)->d39(&col);                       // +0x9c highlight colour (0x4dcd7f)
     }
-    float v = c * g_590b6c;
+    float v = c * 0.65f;
     int len;
     int maxn = 0x800;
     decode_utf8(&text, &len, buf, &maxn);
-    float t = (float)len * v * g_54b3b0;
+    float t = (float)len * v * 0.39f;
     float e = tmp - (r * c) * k3;               // 0x4dcdc7: r, * c, * k3 in that order
     if (t > e)
         v = v * (e / t);
@@ -1168,7 +1171,7 @@ UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, flo
     {
         // the text's y offset uses the text size (0x4dcda2 stores v over the mesh scale's slot [esp+0xc], read at
         // 0x4dce1f whether or not the text was shrunk), not the mesh scale s
-        float pv[2] = { 0.0f, c * g_549d70 - v * g_549d68 };
+        float pv[2] = { 0.0f, c * 0.5f - v * 0.3f };
         vt(p)->d28(pv);
     }
     { struct { int a, b; } ret; vt(p)->d41(&ret, (void*)&text); }
@@ -1463,15 +1466,15 @@ void EscapeMenu::create()
     int color = ((((unsigned)r | 0xffffff00) << 8) | (unsigned)g) << 8 | (unsigned)b;
 
     {
-        tstring k(g_key_return);
+        tstring k("ui_return_to_game");
         row0 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.42f, 0.4f, 0.05f);
     }
     {
-        tstring k(g_key_options);
+        tstring k("ui_options");
         row2 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.36f, 0.4f, 0.05f);
     }
     {
-        tstring k(g_key_save_exit);
+        tstring k("ui_save_and_exit");
         row1 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.29f, 0.4f, 0.05f);
     }
     if (((char*)g_game)[0x18] != 0)
@@ -1485,17 +1488,17 @@ void EscapeMenu::create()
 
     if (*(int*)((char*)g_game + 0xb4) != 0) {
         {
-            tstring k(g_key_save);
+            tstring k("ui_save");
             row3 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.22f, 0.4f, 0.05f);
         }
         vt(row3)->d38(&color);
         {
-            tstring k(g_key_save_as);
+            tstring k("ui_save_as");
             row4 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.15f, 0.4f, 0.05f);
         }
         vt(row4)->d38(&color);
         {
-            tstring k(g_key_quit);
+            tstring k("ui_quit_without_saving");
             row5 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.08f, 0.4f, 0.05f);
         }
         vt(row5)->d38(&color);
@@ -1517,26 +1520,26 @@ void EscapeMenu::create()
     vt(lg)->d25(v);
 
     {
-        tstring n(g_img_logo);
+        tstring n("warrider_logo");
         vt(lg)->d31(0, res_get(n)->clone());
     }
     vt(win)->d50(lg);
 
     int pick = rand() % 0x3dc9;
-    float f = (float)pick * g_rand_range;
-    tstring pic(g_img_warrior);
-    if (f < g_pic_split1)
-        pic.assign(g_img_warrior2);
-    else if (f < g_pic_split2)
-        pic.assign(g_img_warrior3);
-    else if (f < g_pic_split3)
-        pic.assign(g_img_warrior4);
+    float f = (float)pick * (1.0f / 0x3dc9);
+    tstring pic("pic_mb_warrior_1");
+    if (f < 0.25f)
+        pic.assign("pic_mb_warrior_2");
+    else if (f < 0.5f)
+        pic.assign("pic_mb_warrior_3");
+    else if (f < 0.75f)
+        pic.assign("pic_mb_warrior_4");
 
     vt(win)->d32(2, res_get(pic)->clone());
 
     block.init(win, g_menu_kind_count);
     if (block.index < 0) {
-        tstring n(g_img_load);
+        tstring n("load_window");
         vt(win)->d31(0, res_get(n)->clone());
     }
     void* wv = win;
@@ -1565,7 +1568,7 @@ void MessageMenu::create_message()
 
     gui_mesh* m;
     {
-        tstring t(g_img_message);
+        tstring t("message_window");
         m = res_get(t)->clone();
     }
     vt(win)->d31(0, m);
@@ -1591,8 +1594,8 @@ void MessageMenu::create_message()
     rows[5] = 0;
 
     for (int i = 0; i < count; i++) {
-        tstring t1(g_key_button_down);
-        tstring t2(g_key_button);
+        tstring t1("longer_button_down");
+        tstring t2("longer_button");
         rows[i] = new_sized_button(win, texts[i], 0.05f,
                                    0.3f - (float)(i - count + 6) * 0.05f,
                                    0.04f, t2, t1, 9.7f, 0.072f, 0.085f);
@@ -1923,8 +1926,6 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
 // prototypes (make_hint 0x4dada0, new_medium_button 0x4dce70, make_slider 0x4dfd50, make_dropdown 0x4dfec0).
 #define set_enabled_text(o) ((KeysPage*)this)->set_enabled_text((Widget*)(o))   // 0x4d6dd0
 #define update_perf(w) ((KeysPage*)(w))->update_perf()                          // 0x4d6b80
-#define OPT_F(o) (*(float*)(((char*)&orig::g_music_volume) + (o)))   // the option block's float settings (0x5aa010..)
-#define OPT_C(o) (*(int*)(((char*)&orig::g_invert) + (o)))   // the option block's integer settings fed to select() (0x5aa01c..)
 #define COLOR_ENABLED 0xffdfcfbfu   // the ui colour word every label of the screen is tinted with (edi in the original)
 
 // @ 0x4de6f0
@@ -1980,46 +1981,46 @@ void OptionsScreen::open()
     { tstring k("ui_video_options"); b3c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.1f, 0.14f, 0.05f); }
     { tstring k("ui_done"); b40 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.65f, 0.03f, 0.05f); }
     s7c = make_slider((MissionUi*)root, 0.23f, 0.605f, 1.0f);
-    vt(s7c)->d13(orig::g_music_volume);
+    vt(s7c)->d13(g_options.f08);
     s80 = make_slider((MissionUi*)root, 0.23f, 0.555f, 1.0f);
-    vt(s80)->d13(orig::g_master_volume);
+    vt(s80)->d13(g_options.f0c);
     s84 = make_slider((MissionUi*)root, 0.23f, 0.455f, 1.0f);
-    vt(s84)->d13(orig::g_exp_arg);
+    vt(s84)->d13(g_options.f10);
     { tstring k("ui_enabled"); b88 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.23f, 0.405f, 0.03f); }
     ((UiAInline*)b88)->f184 = 1;
-    vt(b88)->d11(orig::g_invert);
+    vt(b88)->d11(g_options.i14);
     set_enabled_text(b88);
     { tstring k("Combat dif"); dd44 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.605f); }
     { tstring k("ui_reduced_to_1_over_4_easiest"); vt(dd44)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_reduced_to_1_over_2_easy"); vt(dd44)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_normal"); vt(dd44)->d50(g_strtable_c.lookup(k)); }
-    vt(dd44)->d11(orig::g_opt_dmg_to_player);
+    vt(dd44)->d11(g_options.i4c);
     { tstring k("Friend combat dif"); dd48 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.555f); }
     { tstring k("ui_reduced_to_1_over_2_easiest"); vt(dd48)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_reduced_to_3_over_4_easy"); vt(dd48)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_normal"); vt(dd48)->d50(g_strtable_c.lookup(k)); }
-    vt(dd48)->d11(orig::g_opt_dmg_to_friends);
+    vt(dd48)->d11(g_options.i50);
     { tstring k("Combat ai"); dd4c = make_dropdown((MissionUi*)root, &k, 0.7f, 0.505f); }
     { tstring k("ui_good"); vt(dd4c)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_average_caps"); vt(dd4c)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_poor"); vt(dd4c)->d50(g_strtable_c.lookup(k)); }
-    vt(dd4c)->d11(orig::g_difficulty);
+    vt(dd4c)->d11(g_options.i44);
     { tstring k("Combat speed"); dd50 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.455f); }
     { tstring k("ui_slower"); vt(dd50)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_normal"); vt(dd50)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_faster"); vt(dd50)->d50(g_strtable_c.lookup(k)); }
-    vt(dd50)->d11(orig::g_agent_count);
+    vt(dd50)->d11(g_options.i48);
     { tstring k(""); dd54 = make_dropdown((MissionUi*)root, &k, 0.23f, 0.305f); }
     { tstring k("ui_automatic_recommended"); vt(dd54)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_by_mouse_movement"); vt(dd54)->d50(g_strtable_c.lookup(k)); }
-    vt(dd54)->d11(orig::g_stick_mode);
+    vt(dd54)->d11(g_options.i70);
     { tstring k(""); dd58 = make_dropdown((MissionUi*)root, &k, 0.23f, 0.255f); }
     { tstring k("ui_by_relative_enemy_position"); vt(dd58)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_by_mouse_movement"); vt(dd58)->d50(g_strtable_c.lookup(k)); }
     { tstring k("ui_by_inverse_mouse_movement"); vt(dd58)->d50(g_strtable_c.lookup(k)); }
-    vt(dd58)->d11(orig::g_ctl_mode);
+    vt(dd58)->d11(g_options.i6c);
     sl78 = make_slider((MissionUi*)root, 0.67f, 0.405f, 1.0f);
-    vt(sl78)->d13(orig::g_speed_base);
+    vt(sl78)->d13(g_options.f74);
     { tstring k(""); h34 = make_hint((ContainerBase*)root, k, 0.93f, 0.4f, 0.05f, 0.035f); }
     { unsigned c = 0xffffffff; vt(h34)->d38(&c); }
     ((QuestPage*)this)->update_days();
@@ -2097,31 +2098,31 @@ void OptionsScreen::open()
     { unsigned c = COLOR_ENABLED; vt(hd0)->d37(&c); }
     { tstring k("ui_enabled"); b60 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.345f, 0.035f); }
     ((UiAInline*)b60)->f184 = 1;
-    vt(b60)->d11(orig::g_flag5aa070);
+    vt(b60)->d11(g_options.i68);
     set_enabled_text(b60);
     { tstring k("ui_enabled"); b5c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.305f, 0.035f); }
     ((UiAInline*)b5c)->f184 = 1;
-    vt(b5c)->d11(orig::g_flag5aa06c);
+    vt(b5c)->d11(g_options.i64);
     set_enabled_text(b5c);
     { tstring k("ui_enabled"); b64 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.265f, 0.035f); }
     ((UiAInline*)b64)->f184 = 1;
-    vt(b64)->d11(orig::g_fx_on);
+    vt(b64)->d11(g_options.i54);
     set_enabled_text(b64);
     { tstring k("ui_enabled"); b68 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.225f, 0.035f); }
     ((UiAInline*)b68)->f184 = 1;
-    vt(b68)->d11(orig::g_opt_damage_msgs);
+    vt(b68)->d11(g_options.i58);
     set_enabled_text(b68);
     { tstring k("ui_enabled"); b6c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.185f, 0.035f); }
     ((UiAInline*)b6c)->f184 = 1;
-    vt(b6c)->d11(orig::g_opt_shot_difficulty);
+    vt(b6c)->d11(g_options.i5c);
     set_enabled_text(b6c);
     { tstring k("ui_enabled"); b70 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.145f, 0.035f); }
     ((UiAInline*)b70)->f184 = 1;
-    vt(b70)->d11(orig::g_opt_kill_msgs);
+    vt(b70)->d11(g_options.i60);
     set_enabled_text(b70);
     { tstring k("ui_enabled"); b74 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.105f, 0.035f); }
     ((UiAInline*)b74)->f184 = 1;
-    vt(b74)->d11(orig::g_show_messages);
+    vt(b74)->d11(g_options.i78);
     set_enabled_text(b74);
     { tstring k(""); hd4 = make_hint((ContainerBase*)root, k, 0.34f, 0.03f, 0.3f, 0.04f); }
     { int v = 4; vt(hd4)->d29(&v); }
@@ -2140,7 +2141,7 @@ void OptionsScreen::open()
 
 // ---- 0x4e05c0: OptionsWin::init (the video-options page) -----------------------------------------------------------------------
 // Every widget of the original in order, with its callee prototypes (make_hint 0x4dada0, new_medium_button 0x4dce70, new_sized_button
-// 0x4dcc50, make_slider 0x4dfd50, make_dropdown 0x4dfec0): the overlay window, the done button, the gamma string (g_scale_x*100 shown
+// 0x4dcc50, make_slider 0x4dfd50, make_dropdown 0x4dfec0): the overlay window, the done button, the gamma string (g_options.f80*100 shown
 // as "2.20", or "ui_default" for the default) used for two labels, 25 text labels in two columns, update_perf, the change button, the
 // resolution drop-down (filled from list_modes), the gamma / texture-detail / ragdoll-limit / y / z sliders, the shadow, corpse, ragdoll,
 // blood and plant-shadow drop-downs, six toggle buttons (quality) and the shader-less tail that hides the gamma widgets.
@@ -2202,9 +2203,9 @@ void OptionsWin::init()
     }
     { tstring k("ui_done"); done = new_medium_button((MissionUi*)window, g_strtable_c.lookup(k), 0.75f, 0.02f, 0.05f); }
 
-    // the gamma as text: g_scale_x * 100 with a point after the first digit; the default 2.20 is shown as "ui_default"
+    // the gamma as text: g_options.f80 * 100 with a point after the first digit; the default 2.20 is shown as "ui_default"
     char buf[0x80];
-    _itoa((int)(g_scale_x * 100.0f), buf, 10);
+    _itoa((int)(g_options.f80 * 100.0f), buf, 10);
     tstring gamma_text(buf);
     { tstring dot("."); gamma_text.insert(1, dot); }
     if (gamma_text.equals("2.20")) {
@@ -2246,7 +2247,7 @@ void OptionsWin::init()
     {
         {
             tstring k("ui_percentage_value");
-            sprintf(buf, g_strtable_c.lookup(k)->c_str(), g_ragdoll_lim);
+            sprintf(buf, g_strtable_c.lookup(k)->c_str(), g_options.i34);
         }
         tstring t(buf);
         val_grass_density = make_hint(window, t, 0.823f, 0.495f, 0.3f, 0.035f);
@@ -2292,14 +2293,14 @@ void OptionsWin::init()
         vt(resolution)->d03();
         resolution->fD8 = 0.7f;
         resolution->fDC = 0.7f;
-        resolution->e[0] -= g_row_step;
-        resolution->e[1] -= g_row_step;
+        resolution->e[0] -= 0.00528f;
+        resolution->e[1] -= 0.00528f;
 
         std::vector<tstring> modes = list_modes();
         for (int i = (int)modes.size() - 1; i >= 0; i--) {
             DisplayMode& m = *(DisplayMode*)&modes[i];
             bool ok = false;
-            if (g_bpp == 16)
+            if (g_cfg.display_bits == 16)
                 ok = m.name.find(tstring("16 bits"), 0) >= 0;
             if (!ok)
                 ok = m.name.find(tstring("32 bits"), 0) >= 0;
@@ -2320,7 +2321,7 @@ void OptionsWin::init()
     ui_scale = make_slider((MissionUi*)window, 0.56f, 0.625f, 1.0f);
     SL_MIN(ui_scale) = 1.5f;
     SL_MAX(ui_scale) = 2.5f;
-    vt(ui_scale)->d13(g_scale_x);
+    vt(ui_scale)->d13(g_options.f80);
 
     {   // shadow quality
         { tstring k("ShadowQ"); shadow_quality = make_dropdown((MissionUi*)window, &k, 0.52f, 0.585f); }
@@ -2338,13 +2339,13 @@ void OptionsWin::init()
     ragdoll_limit = make_slider((MissionUi*)window, 0.56f, 0.505f, 1.0f);
     SL_MIN(ragdoll_limit) = 0.0f;
     SL_MAX(ragdoll_limit) = 100.0f;
-    vt(ragdoll_limit)->d13((float)g_ragdoll_lim);
+    vt(ragdoll_limit)->d13((float)g_options.i34);
 
     y_scale = make_slider((MissionUi*)window, 0.56f, 0.465f, 1.0f);
-    vt(y_scale)->d13(g_scale_y);
+    vt(y_scale)->d13(g_options.f84);
 
     z_scale = make_slider((MissionUi*)window, 0.56f, 0.425f, 1.0f);
-    vt(z_scale)->d13(g_scale_z);
+    vt(z_scale)->d13(g_options.f88);
 
     {   // corpses (0x5aa008)
         { tstring k("Corpses"); corpses = make_dropdown((MissionUi*)window, &k, 0.52f, 0.385f); }
@@ -2354,7 +2355,7 @@ void OptionsWin::init()
         DD_TEXT(corpses, "10")
         DD_TEXT(corpses, "5")
         DD_TEXT(corpses, "0")
-        vt(corpses)->d11(5 - g_ragdolls);
+        vt(corpses)->d11(5 - g_options.i00);
     }
     {   // ragdolls (0x5aa00c)
         { tstring k("Ragdolls"); ragdolls = make_dropdown((MissionUi*)window, &k, 0.52f, 0.345f); }
@@ -2364,28 +2365,28 @@ void OptionsWin::init()
         DD_TEXT(ragdolls, "3")
         DD_TEXT(ragdolls, "1")
         DD_TEXT(ragdolls, "0")
-        vt(ragdolls)->d11(5 - g_blood);
+        vt(ragdolls)->d11(5 - g_options.i04);
     }
     {   // blood (0x5aa020)
         { tstring k("Blood"); blood = make_dropdown((MissionUi*)window, &k, 0.52f, 0.305f); }
         DD_ITEM(blood, "ui_off2")
         DD_ITEM(blood, "ui_near_player_only")
         DD_ITEM(blood, "ui_on")
-        vt(blood)->d11(orig::g_opt_blood);
+        vt(blood)->d11(g_options.i18);
     }
 
-    QBTN(quality[0], 0.265f, g_char_detail)
-    QBTN(quality[1], 0.225f, g_ragdoll_q)
-    QBTN(quality[2], 0.185f, g_plant_shadow)
+    QBTN(quality[0], 0.265f, g_options.i1c)
+    QBTN(quality[1], 0.225f, g_options.i28)
+    QBTN(quality[2], 0.185f, g_options.i2c)
     {   // plant shadows (0x5aa084)
         { tstring k("PlantShadows"); plant_shadows = make_dropdown((MissionUi*)window, &k, 0.52f, 0.145f); }
         DD_ITEM(plant_shadows, "ui_none")
         DD_ITEM(plant_shadows, "ui_quick")
         DD_ITEM(plant_shadows, "ui_full")
-        vt(plant_shadows)->d11(orig::g_mesh_quality);
+        vt(plant_shadows)->d11(g_options.i7c);
     }
-    QBTN(quality[3], 0.105f, g_char_shadow)
-    QBTN(quality[4], 0.065f, g_particle)
+    QBTN(quality[3], 0.105f, g_options.i20)
+    QBTN(quality[4], 0.065f, g_options.i38)
     QBTN(quality[5], 0.025f, g_cfg.fake_reflections)
 
     {

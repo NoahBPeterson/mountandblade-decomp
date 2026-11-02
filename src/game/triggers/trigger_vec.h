@@ -27,6 +27,7 @@ float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0 (
 #include "../../rgl/resource.h"             // texture
 #include "../shadow_map.h"
 #include "../../include/ptr_tag.h"
+#include "../shared_vars.h"
 // The resource manager (object 0x5d6fa0) as rgl/core/resmgr.h's `resmgr` defines it; that header cannot be included next to
 // rec_tables.h (g_log), so this is its declaration of the three members the module loader calls (resmgr.cpp 0x4195e0 / 0x419640 / 0x41e150).
 // g_resmgr_full of resmgr.h is the same object as resource.h's g_resmgr.
@@ -107,7 +108,6 @@ void load_game_variables();                                                 // 0
 void parse_module_info();                                                   // 0x4c05b0
 
 // ---- globals of the device-object handlers and the module_info.txt parser -------------------------------------------------
-extern ID3DXEffect* g_effect;           // 0x5e293c
 extern int g_use_shaders;               // 0x5e28fc
 extern D3DCAPS9 g_caps;                 // 0xa17f2c (GetDeviceCaps fills it)
 extern int  g_renderer_vsync;           // 0xa180e4
@@ -121,20 +121,9 @@ extern ShadowMap g_shadow_map;          // 0xa70248 (w at +0x10 = 0xa70258, surf
 extern ini_file g_module_info;          // 0xa18238 module_info.txt table (count at 0xa44238)
 extern ini_file g_game_vars;            // 0xa44240 game_variables.txt table (rec_tables.h views it as ini_file_x g_ini)
 // g_resmgr_x: the view of g_resmgr (0x5d6fa0) declared in config.h
-extern int g_display_wp_one_handed;          // 0x5e2900
-extern int g_display_wp_two_handed;          // 0x5e2904
-extern int g_display_wp_polearms;            // 0x5e2908
-extern int g_display_wp_archery;             // 0x5e290c
-extern int g_display_wp_crossbows;           // 0x5e2910
-extern int g_display_wp_throwing;            // 0x5e2914
-extern int g_display_wp_firearms;            // 0x5e2918
 extern int g_compatible_module_version;      // 0x5e29b8
 extern int g_module_version;                 // 0x5e29c0
-extern int g_scan_module_textures;           // 0xa18108
-extern int g_scan_module_sounds;             // 0xa1810c
-extern float g_time_multiplier;              // 0xa18110
 extern float g_seeing_range;                 // 0xa18114
-extern float g_track_spotting;               // 0xa18118
 extern float g_blood_multiplier;             // 0xa1811c
 extern int g_skill_leadership_bonus;         // 0xa18120
 extern int g_skill_prisoner_management_bonus;// 0xa18124
@@ -146,11 +135,7 @@ extern float g_hero_wounded_treshold;        // 0xa18138
 extern float g_player_wounded_treshold;      // 0xa1813c
 extern int g_num_hints;                      // 0xa18140
 extern float g_map_sea_direction;            // 0xa18144
-extern float g_map_sea_speed_x;              // 0xa18148
-extern float g_map_sea_speed_y;              // 0xa1814c
 extern float g_map_river_direction;          // 0xa18150
-extern float g_map_river_speed_x;            // 0xa18154
-extern float g_map_river_speed_y;            // 0xa18158
 extern int g_map_tree_types;                 // 0xa1815c
 extern int g_map_snow_tree_types;            // 0xa18160
 extern int g_map_steppe_tree_types;          // 0xa18164

@@ -25,38 +25,28 @@
 #define ITYPE(i) (*(unsigned char*)&g_items[i].type_flags)
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
+#include "../shared_vars.h"
+#include "../key_names.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_snd_id_a;                                  // 0x5aa350
+int g_snd_id_b;                                  // 0x5aa2fc
+int g_num_valid;                                 // 0xa70470
+DragMesh* g_drag;                                // 0x5d75e4
+
 #define SOUNDMGR ((SoundMgr*)&orig::g_sound_mgr)                  // 0x5aa128
 
 // ---- globals and callees of other translation units -----------------------------------------------------------------
 extern MsgLog g_msglog;                                 // 0x5d7080
-extern int   g_snd_id_a;                                // 0x5aa350
-extern int   g_snd_id_b;                                // 0x5aa2fc
 
-extern int   g_a17148;                                  // 0xa17148
-extern int   g_a17348;                                  // 0xa17348
 extern int   g_a17188;                                  // 0xa17188
 extern int   g_a17588;                                  // 0xa17588
-extern int   g_a171b4;                                  // 0xa171b4
-extern int   g_a173b4;                                  // 0xa173b4
 
 extern int   g_trial_mode;                              // 0x5e29c4
-extern int   g_a170d8;                                  // 0xa170d8
-extern int   g_a174d8;                                  // 0xa174d8
 extern float g_ui_alpha;                                // 0x5d7094
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
-extern int   g_5d8760;                                  // 0x5d8760
-extern int   g_5d8764;                                  // 0x5d8764
-extern tstring g_5d7850[0x50];                          // 0x5d7850 .. 0x5d7d50
-extern int   g_5d8020;                                  // 0x5d8020
-extern int   g_5d8024;                                  // 0x5d8024
-extern float g_5d8028;                                  // 0x5d8028
-extern int   g_5d8780;                                  // 0x5d8780
-extern void* g_5d75e8;                                  // 0x5d75e8 (== the UI root's object at +0x568)
-extern const char g_empty[];                            // 0x54a480 ("")
 extern int   g_disable_food_slot;                               // 0xa181a8
 extern tstring g_num;                                   // 0xa70464
-extern int   g_num_valid;                               // 0xa70470
-extern __int64 g_result64;                              // 0xa70458 (read as one qword by the price rule)
 extern char  g_skill_tbl[];                           // 0x8ee3100 (skill records of 0x44 bytes)
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 int round_float(float* v);                              // 0x432540
@@ -107,7 +97,7 @@ void InventoryPanel::refresh_transaction(int unused)
         PSO(bar)->set_key_flags(0x10000);
     }
 
-    if ((g_a17148 != 0 || g_a17348 != 0) && g_a17188 != 0 && g_a17588 == 0 &&
+    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a17188 != 0 && g_a17588 == 0 &&
         g_cfg.cheat_mode != 0 && g_trial_mode != 0) {
         g_game->add_gold(1000, g_game->player);
         money_label(0);
@@ -129,7 +119,7 @@ void InventoryPanel::refresh_transaction(int unused)
     // the question boxes live on the dialog record g_main_menu.rec points at (0x51036e: ecx = [0xa73980]); the screen
     // state is then left through g_main_menu itself (0x510395: ecx = 0xa73980)
     char eaten = 0;
-    if (PSO(leave)->clicked_on(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0 && pending == 0)) {
+    if (PSO(leave)->clicked_on(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0 && pending == 0)) {
         if (locked == 0) {
             int worn = 0;
             if (mode == 0 && troop == GD_I(0x90)) {
@@ -324,18 +314,18 @@ void InventoryPanel::refresh_lists(int unused)
     }
 
     if (locked != 0) {
-        void* o = g_5d75e8;
+        void* o = g_overlay;
         if (o != 0)
             ((GuiObjV*)o)->d0(1);
-        g_5d8760 = -1;
-        g_5d8764 = 0xff101010;
-        for (tstring* s = g_5d7850; s < g_5d7850 + 0x50; s++)
-            s->assign(g_empty);
-        g_5d8024 = 0;
-        g_5d8028 = -0.03f;
-        g_5d8020 = 0;
-        g_5d75e8 = 0;
-        g_5d8780 = 0;
+        g_panel_color = -1;
+        g_panel_bg = 0xff101010;
+        for (tstring* s = g_strs; s < g_strs + 0x50; s++)
+            s->assign("");
+        g_list1 = 0;
+        g_list2 = -0.03f;
+        g_list0 = 0;
+        g_overlay = 0;
+        g_sel_ent = 0;
     }
 
     for (int page = 0; page < view_count; page++) {
@@ -363,7 +353,7 @@ void InventoryPanel::refresh_lists(int unused)
             }
             transfer_slot(&EQUIP(troop, idx), page, idx);
             place_slot(w[i], &EQUIP(troop, i), page, i);
-            if ((g_a17148 != 0 || g_a17348 != 0 || g_a171b4 != 0 || g_a173b4 != 0) &&
+            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
                 locked != 0 && view_count == 2) {
                 int other = (page == 0) ? this->troop : g_game->player;
                 int r = TROOP(other)->find_free();
@@ -386,7 +376,7 @@ void InventoryPanel::refresh_lists(int unused)
             ItemRef* slot = &GRID(troop, i);
             transfer_slot(slot, page + 2, i);
             place_slot(w[i], slot, 2, i);
-            if ((g_a17148 != 0 || g_a17348 != 0 || g_a171b4 != 0 || g_a173b4 != 0) &&
+            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
                 locked != 0 && view_count2 == 2 && page == 1) {
                 int t = g_game->player;
                 int count = TROOP(t)->inv_count();
@@ -742,14 +732,14 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
     }
 
     for (int i = 0; i < 8; i++) {
-        g_store0 = 0;
-        g_store1 = 0;
+        g_trigger_result.store0 = 0;
+        g_trigger_result.store1 = 0;
         g_num.assign("");
         GV->emit_event4(0x13, slot->item, i, *(signed char*)((char*)slot + 7));
         if (g_num_valid > 0) {
             unsigned int color = 0xffffffff;
-            if (g_store0 != 0 || g_store1 != 0)
-                color = g_store0 | 0xff000000;
+            if (g_trigger_result.store0 != 0 || g_trigger_result.store1 != 0)
+                color = g_trigger_result.store0 | 0xff000000;
             g_gui_root.draw_string(&g_num, 0.024f, color, 1);
         }
     }
@@ -880,10 +870,10 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
     if (plain) {
         result = (int)value;
     } else {
-        g_result64 = 100;
+        g_trigger_result.value = 100;
         int mode = adjust ? 4 : 3;
         if (emit_event(mode, item->item, (int)value)) {
-            result = (int)((float)g_result64 * value * 0.01f);
+            result = (int)((float)g_trigger_result.value * value * 0.01f);
         } else {
             if (scaled)
                 value = value * g_items[item->item].f21c;

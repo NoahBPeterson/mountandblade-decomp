@@ -21,6 +21,7 @@
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../key_names.h"
 
 // ======================================================= slice s00525160: functions
 #undef g_mgr
@@ -425,7 +426,7 @@ int find_listener_agent()
 #undef g_keytable_s261e0
 #define g_keytable_s261e0 (*(KeyTable_s261e0*)g_game_keys)
 #undef g_keyready_s261e0
-#define g_keyready_s261e0 (*(KeyReady_s261e0*)g_keyboard)
+#define g_keyready_s261e0 (*(KeyReady_s261e0*)&g_keyboard)
 #undef g_mission_s261e0
 #define g_mission_s261e0 (*(Mission_s261e0**)&g_mission)
 #undef g_game_s261e0
@@ -482,7 +483,7 @@ void Screen_s261e0::tick(float dt)
     if (f2e0)
         sdt = 0.0f;
     else if (f2e1)
-        sdt = dt * g_f54a6e4;
+        sdt = dt * 0.2f;
 
     // ---- scene time-scale blend --------------------------------------------------------------------
     if ((*(int*)((char*)&g_cfg + 0x24))) {
@@ -974,7 +975,7 @@ void Screen_s261e0::tick(float dt)
             goto after;
         }
 
-        if (g_a170d8 != 0 && g_a174d8 == 0) {
+        if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
             char c = g_mission_s261e0->mode_flag1();
             if (c == 0) {
                 g_w_a73994_s261e0->f18 = 0xe;
@@ -1303,7 +1304,7 @@ void ResourceOwner_s27c90::release()
 #undef g_keys_s284a0
 #define g_keys_s284a0 (*(KeyTable_s284a0*)g_game_keys)
 #undef g_key_names_s284a0
-#define g_key_names_s284a0 (*(KeyNames_s284a0*)g_keyboard)
+#define g_key_names_s284a0 (*(KeyNames_s284a0*)&g_keyboard)
 #undef AGENT
 #define AGENT(id) (g_mission_s284a0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 // @ 0x5284a0 ------------------------------------------------------------------------------------------

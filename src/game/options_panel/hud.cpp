@@ -11,6 +11,8 @@
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "quest_page.h"        // QuestPage: Hud is the quest page screen (QuestPage::sel is Hud::f250), fill() 0x4d5ba0
+#include "../shared_vars.h"
+#include "../key_names.h"
 
 // @ 0x4d4b80
 bool EditMesh::on_selection_changed()
@@ -247,8 +249,8 @@ void Hud::on_mission_start(int arg)
     *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_u32;
     g_u32 = g_u32 + 1;
     g_mission->start_setup();
-    g_screen->v4();                                 // +0x10 (0x4d59ad)
-    g_screen->f18 = f18;
+    window_slot<MenuScreen>(14)->v4();                                 // +0x10 (0x4d59ad)
+    window_slot<MenuScreen>(14)->f18 = f18;
     g_menu_w3[1] = 0;
     g_menu_w3[0x18 / 4] = f18;
     g_main_menu.set_state(0xe);
@@ -290,7 +292,7 @@ void Hud::on_update(int arg)
         }
         f04 = 1;
         g_main_menu.set_state(0xd);
-    } else if (f30->changed(0x10000) || (!g_a170d8 && g_a174d8)) {
+    } else if (f30->changed(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
         g_main_menu.set_state(f18);
     }
 }

@@ -5,6 +5,7 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../key_names.h"
 
 // @ 0x4eeb10 -------------------------------------------------------------------------------
 // The click handling of the rows is `selected |= press on either button` / `released |= release on either`;
@@ -128,8 +129,8 @@ void CharSheet::update(float dt)
         step = -1;
 
     if (f_2dc == 0) {
-        if (g_profile->troop != -1) {
-            g_game->fb4 = g_profile->troop;
+        if (window_slot<Profile>(1)->troop != -1) {
+            g_game->fb4 = window_slot<Profile>(1)->troop;
             f_2dc++;
             menu_choose(0xf);
             return;
@@ -193,10 +194,10 @@ void CharSheet::update(float dt)
             return;
         }
         // game keys: rest / export / learning
-        if (g_a170d8 == 0 && g_a174d8 != 0) {
+        if (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0) {
             menu_choose(f_18);
         } else {
-            if (g_a17148 == 0 && g_a17348 == 0)
+            if (g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0)
                 return;
             if (g_a17188 != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
                 WL_MARKER(12)
@@ -207,7 +208,7 @@ void CharSheet::update(float dt)
                 WL_MARKER(13)
                 return;
             }
-            if ((g_a17148 != 0 || g_a17348 != 0) && g_a17118 != 0 && g_a17518 == 0 && g_a5a9fbc != 0) {
+            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a17118 != 0 && g_a17518 == 0 && g_a5a9fbc != 0) {
                 WL_MARKER(12)
                 for (int i = 0; i < 7; i++)
                     g_game->chars->adjust(i, 50.0f);

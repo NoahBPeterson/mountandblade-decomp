@@ -35,6 +35,7 @@ using rgl::vector4;
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 #include "../bit_words.h"
+#include "../key_names.h"
 extern unsigned g_type_mask;                                // 0x5a8e88 (= 4: the terrain type is 4 bits wide)
 extern unsigned g_size_mask;                                // 0x5a8e78 (= 4: the terrain size is 2 bits wide)
 extern int g_use_shaders;                                   // 0x5e28fc (shaders on: the water checkbox stores the inverse)
@@ -69,7 +70,6 @@ extern int g_key_17150;                                     // 0xa17150  pan one
 extern int g_key_17118;                                     // 0xa17118  pan the other way
 extern int g_key_17458;                                     // 0xa17458  turn (heading)
 extern int g_key_17454;                                     // 0xa17454  roll with the vertical axis
-extern float g_axis_y;                                      // 0xa178d8  second input axis
 extern float g_axis_x;                                      // 0xa178d4  first input axis
 extern float g_look_y;                                     // 0x5d7094  vertical look axis compared with 0.5
 

@@ -172,18 +172,15 @@ extern int g_or_latch;          // 0x5e25a4  this_or_next chain already satisfie
 extern int g_presentation_count;        // 0xa75f30 (check_presentation 0x49cd50)
 extern int g_mesh_count;                // 0x8ed4f5c (check_mesh)
 extern int g_menu_count;                // 0x5e29b4 (check_menu 0x49ce90)
-extern int g_mission_template_count;    // 0x5e2a04 (0x49d070)
 // mission templates (0x58-byte records at 0x5e2a00) and their 0x4c-byte entry points
 #include "../mode_rec.h"             // MissionTemplate (the 0x58-byte records at 0x5e2a00) and SpawnRec (its 0x4c-byte entries): the one definition
 extern MissionTemplate* g_mission_templates;   // 0x5e2a00
 extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
-extern int g_map_icon_count;            // 0x5e29f4 (0x49d110)
 extern int g_particle_system_count;     // 0x8ed5094 (warn_particle_system)
 #define g_scene_prop_count g_tbl78_count    // 0x5e29e0: agent.h's 0x78-byte record table is the scene prop kinds
 extern int g_sound_count;               // 0x5aa130 (0x49d310)
 extern int g_track_count;               // 0xa73a14 (0x49d3d0)
 extern int g_animation_count;           // 0xa7662c (0x49d4b0)
-extern int g_warnings_off_a;            // 0x5a9fd4 (0x49d3d0)
 extern int g_warnings_off_b;            // 0x5a9fd8 (0x49d310, 0x49d3d0)
 
 // ---- message log and text log (report 0x49cc60) -----------------------------------------------------------------
@@ -224,17 +221,10 @@ inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
 extern tstring g_result_string;         // 0xa70464 (set_result_string 0x49fce6)
 
 // ---- input ---------------------------------------------------------------------------------------------------------
-struct Keyboard {
-    char pad0[0xc];
-    int down[256];                      // +0xc (key_is_down 0x49fd8c)
-    __forceinline char is_ready(int key) { return (char)((Slot*)this)->is_ready(key); }   // 0x487900 (thiscall, ret 4)
-};
-extern Keyboard g_keyboard;             // 0xa170c8
-struct GameKeys {
-    __forceinline char is_down(int key) { return ((OriginPairs*)this)->is_down(key); }   // 0x48ac50 (thiscall, ret 4)
-    __forceinline char clicked(int key) { return ((OriginPairs*)this)->clicked(key); }   // 0x48ac90
-};
-extern GameKeys g_game_keys;            // 0xa73730
+#include "../key_names.h"             // Keyboard g_keyboard (0xa170c8)
+#include "../game_keys.h"            // GameKeys g_game_keys (0xa73730)
+__forceinline char GameKeys::is_down(int key) { return ((OriginPairs*)this)->is_down(key); }   // 0x48ac50 (thiscall, ret 4)
+__forceinline char GameKeys::clicked(int key) { return ((OriginPairs*)this)->clicked(key); }   // 0x48ac90
 extern float g_mouse_x;                 // 0x5d7094 (mouse_get_position 0x49fe7f)
 extern float g_mouse_y;                 // 0x5d7098
 
@@ -498,7 +488,6 @@ __forceinline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; 
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
 extern int g_text_log_enabled;          // 0x5a9fb0 (display_message 0x4a305a)
-extern char g_show_messages;            // 0x5d8794 (set_show_messages 0x4a30a0)
 
 // ---- map battles (table at game +0xcc) ---------------------------------------------------------------------------
 #include "../battle_rec.h"            // BattleRec, BattleTable: the one definition (party2 and script)
@@ -687,7 +676,6 @@ struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
 extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)
 extern __int64 g_trigger_param_1;       // 0xa70448 (g_script +8)
 extern __int64 g_trigger_param_2;       // 0xa70450 (g_script +0x10)
-extern __int64 g_trigger_result;        // 0xa70458 (g_script +0x18; set_trigger_result 0x4ac3f2)
 extern unsigned g_battle_flags;         // 0xa73464 bit 0 = end the battle (end_current_battle 0x4a55fe)
 extern int g_skin_count;                // 0x8ed4f88 (troop_set_type)
 extern char g_party_battle_mode;         // 0xa735c8 (set_party_battle_mode 0x4a2ad0)

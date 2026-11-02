@@ -11,6 +11,18 @@
 
 // ---- tstring (0x10 bytes: read cursor, buffer, capacity, length) -------------------------------------
 #include "../tstring.h"
+#include "../shared_vars.h"
+#include "../key_names.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+char g_5d75e0;                                  // 0x5d75e0
+int g_5d8798;                                   // 0x5d8798
+float g_8ee42f0;                                // 0x8ee42f0
+char g_saved;   // 0x5e2a08
+int g_counter;   // 0x5e28cc
+char g_key_states[256];   // 0x5e27c8
+char g_5e2630;   // 0x5e2630
+
 
 // the engine's "null or pointer" read used all over the code base (buf == 0 -> the field itself)
 static __forceinline const char* c_str(const tstring* s)
@@ -39,20 +51,11 @@ extern ScreenObj* g_windows[30];       // 0xa73980 (.. 0xa739f4)
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // ---- globals ------------------------------------------------------------------------------------------
-extern int   g_counter;                 // 0x5e28cc
-extern float g_8ee42f0;                 // 0x8ee42f0
-extern __int64 g_5e2970;                // 0x5e2970 (frame time step, scaled)
 extern __int64 g_ticks;                 // 0x5e2948
 extern float g_5a9c20;                  // 0x5a9c20
-extern int   g_5d8798;                  // 0x5d8798
-extern int   g_5e293c;                  // 0x5e293c
-extern char  g_5d75e0;                  // 0x5d75e0
-extern char  g_saved;                  // 0x5e2a08
 extern int   g_no_cam;                  // 0x5a9fb0
-extern int   g_a17158, g_a17558, g_a17348, g_a17148;    // 0xa17158 ..
-extern int   g_a1719c, g_a1759c, g_a171ac, g_a1717c;    // 0xa1719c ..
-extern char  g_5e2630;                  // 0x5e2630
-extern char  g_key_states[256];               // 0x5e27c8
+extern int g_a17158;    // 0xa17158
+extern int g_a1717c;    // 0xa1717c
 // the Direct3D9 device (0xa17f28); __stdcall virtuals -> the COM-style call pattern
 struct IDev9 {
     virtual long __stdcall s0(); virtual long __stdcall s1(); virtual long __stdcall s2();
@@ -63,10 +66,8 @@ struct IDev9 {
     virtual int  __stdcall ShowCursor(int show);                              // slot 12 (+0x30)
 };
 
-extern char  g_a739b8[];                // 0xa739b8 (current editor entity)
 // the current editor entity (a pointer at 0xa739b8)
 #include "../editor_entity.h"
-extern EditorEntity* g_entity;          // 0xa739b8
 
 // gui manager object (0x5d7080) and a few of its member functions
 #include "../gui_mgr.h"
@@ -78,7 +79,6 @@ extern resmgr g_resmgr;                 // 0x5d6fa0
 struct Slot {                           // game/ui (slot.cpp): the input device at 0xa170c8
     void update(float dt);              // 0x487930
 };
-extern Slot g_keyboard;                   // 0xa170c8
 
 struct sound_engine {                   // rgl/mesh2/rec_tables.h: the music player at 0xa73a10
     void __fastcall tick();             // 0x4c4100
@@ -143,34 +143,34 @@ int GameApp::Update()
     dt = m_fElapsedTime;
     if (dt > 0.1f) dt = 0.1f;
     g_8ee42f0 = dt;
-    t = (__int64)(dt * orig::k_100000f);
-    g_5e2970 = t;
+    t = (__int64)(dt * 100000.0f);
+    g_ticks_dt[0] = t;   // 0x5e2970 (frame time step, scaled)
     g_ticks += t;
     g_5a9c20 = dt;
     g_5d8798 = m_34c;
     m_34c = -1;
 
     ((GuiScreen*)&g_gui)->process(*(int*)&dt);
-    g_keyboard.update(dt);
+    ((Slot*)&g_keyboard)->update(dt);   // 0x487930
     g_music_situation.tick();
     _FSOUND_Update();
 
     if (g_no_cam) {
-        if (g_a17158 && !g_a17558 && (g_a17348 || g_a17148)) {
+        if (g_a17158 && !g_keyboard.prev[0x21] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {
             if (build_shader() < 0) {
                 mb_error("Unable to compile the effect file.");
             } else {
                 g_gui.add(tstring("Effect file recompiled."), -1);
             }
-            ((resource_manager*)&g_resmgr)->resolve_effect_sets((ID3DXEffect*)g_5e293c);
+            ((resource_manager*)&g_resmgr)->resolve_effect_sets(g_effect);
         }
     }
     if (g_no_cam) {
-        if (g_a1719c && !g_a1759c) {
-            if ((g_a17348 || g_a17148) && (g_a171ac || g_a1717c)) {
+        if (g_keyboard.down[0x32] && !g_keyboard.prev[0x32]) {
+            if ((g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_a1717c)) {
                 load_skyboxes();
                 g_gui.add(tstring("Animation data restored."), -1);
-            } else if (g_a17348 || g_a17148) {
+            } else if (g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) {
                 load_data_files();
                 load_module_files();
                 g_gui.add(tstring("Module data restored."), -1);
@@ -216,8 +216,8 @@ int GameApp::Update()
                             }
                         }
                     }
-                    pick_entity((GuiCtx*)g_entity);
-                    g_entity->f2f9 = 1;
+                    pick_entity((GuiCtx*)window_slot<EditorEntity>(14));
+                    window_slot<EditorEntity>(14)->f2f9 = 1;
                     SetFocus(m_hWnd);
                     g_game->f1a1c8 = 0;
                 }

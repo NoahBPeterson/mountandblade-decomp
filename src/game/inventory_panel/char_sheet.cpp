@@ -23,6 +23,8 @@
 #include <windows.h>
 #include <stdio.h>
 #include "../../rgl/rgl_math.h"
+#include "../shared_vars.h"
+#include "../main_menu.h"
 
 extern "C" int _fltused = 0;
 
@@ -170,7 +172,6 @@ static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstri
 #include "../ini_file.h"
 
 extern int g_game_mode;                         // 0x5a9fb0
-extern int g_display_wp_one_handed[7];               // 0x5e2900
 extern char g_skill_tbl[];                    // 0x8ee3100 (records of 0x44 bytes)
 
 // the two mode/tutorial objects touched at the end
@@ -200,7 +201,6 @@ struct char_window {
     void open_view();                           // 0x509980
     void init(const tstring& msg, int type, const char* a, const char* b, const char* c, const char* d, const char* e, const char* f);   // 0x509410 (the message box)
 };
-extern char_window* g_dialog;                     // 0xa73984 (pointer variable)
 
 // ---- settings access ------------------------------------------------------------------------------------
 static const char* config_text(int i)
@@ -522,7 +522,7 @@ void CharSheet::init()
             plus1c->set_text(&tx, tstring("+"));
         }
 
-        if (g_display_wp_one_handed[i] == 0) {
+        if (g_display_wp[i] == 0) {
             row->show();
             plus1c->show();
         }
@@ -752,7 +752,7 @@ void CharSheet::init()
         tstring k3("ui_question_saving_policy");
         const char* nonreal = g_strtable.lookup(k1)->c_str();
         const char* real = g_strtable.lookup(k2)->c_str();
-        g_dialog->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
+        window_slot<char_window>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
         g_menu.open(1);
         return;
     } else if (mode == 1) {

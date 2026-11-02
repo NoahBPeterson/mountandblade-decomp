@@ -25,6 +25,7 @@
 // ---------------------------------------------------------------------------
 
 #include "../tstring.h"
+#include "../shared_vars.h"
 
 extern "C" int sprintf(char* dst, const char* fmt, ...);     // 0x536f8f
 extern "C" double atof(const char* s);                       // 0x537352
@@ -200,7 +201,7 @@ static const char* ts_chars(const tstring* s)
 // name tstring of a map-party record (record base from the party table)
 static tstring* party_name(char* rec)
 {
-    if (*(char*)&orig::g_show_party_ids_instead_of_names != 0)
+    if (*(char*)&g_show_party_ids_instead_of_names != 0)
         return (tstring*)(rec + 0x20);
     if (*(char*)(rec + 0x1c) == 0) {
         tstring* s = UITEXT->find((tstring*)(rec + 0x20));

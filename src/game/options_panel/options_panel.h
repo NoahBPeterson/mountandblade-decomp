@@ -12,7 +12,6 @@
 #include "../party/game.h"
 #include "../../include/troop.h"
 
-extern const char EMPTY_TEXT[];                                     // 0x54a480 ("")
 extern const float RENOWN_SCALE;                                    // 0x54ab28 (100.0f)
 
 // the game's localized-string table (0x5e2a18): lookup by a scratch tstring holding the text key

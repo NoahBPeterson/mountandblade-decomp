@@ -28,6 +28,8 @@
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../shared_vars.h"
+#include "../key_names.h"
 
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
 #define W(p, off) (*(ChoiceList**)((char*)(p) + (off)))
@@ -185,7 +187,7 @@ void XferWin::update(int)
     }
 
 after_scroll:
-    if (f8e4 >= 0 && (g_a17148 || g_a17348) && g_a17188 &&
+    if (f8e4 >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_a17188 &&
         !g_a17588 && g_a5a9fbc && g_trial_mode) {
         slot = slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
         pid = f8dc != 0 ? sel_party : g_game->f78;
@@ -212,7 +214,7 @@ after_scroll:
         pid = f8dc != 0 ? sel_party : g_game->f78;
         cmp_party = f8dc != 0 ? g_game->f78 : sel_party;
         count = 1;
-        if (g_a17148 || g_a17348)
+        if (g_keyboard.down[0x1d] || g_keyboard.down[0x9d])
             count = party_index(pid)->stacks[slot].count;
         flag = 0;
         for (i = 0; i < count; i++) {
@@ -223,10 +225,10 @@ after_scroll:
             if (state == 3) {
                 v = g_game->sl_party_price(troop);
             } else if (state == 2 && troop >= 0) {
-                g_a70458 = 0;
-                g_a7045c = 0;
+                g_trigger_result.store0 = 0;
+                g_trigger_result.store1 = 0;
                 bool ok = ((SoundCtl*)g_game)->emit_event(10, troop, g_game->f78);   // 0x435790
-                v = g_a70458;
+                v = g_trigger_result.store0;
                 if (!ok)
                     v = GI(0x13a20);
             }
@@ -389,7 +391,7 @@ tail:
         ((PartyScreen*)(void*)this)->refresh_selection();
     }
 
-    if (!w30->changed(0x10000) && (g_a170d8 != 0 || g_a174d8 == 0)) {
+    if (!w30->changed(0x10000) && (g_keyboard.down[0x1] != 0 || g_keyboard.prev[0x1] == 0)) {
         if (w34->changed(0x10000)) {
             apply(0);
             apply(1);
@@ -958,7 +960,7 @@ void TickScreen::on_tick(int code)
         g_main_menu.set_state(0x1a);
         return;
     }
-    if (W(this, 0x3c)->changed(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
+    if (W(this, 0x3c)->changed(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
             ((MapFlags*)&g_map_flags)->commit((char*)&slot);
@@ -1104,7 +1106,7 @@ void InputScreen::on_input(int code)
         g_main_menu.set_state(0x19);
         return;
     }
-    if (W(this, 0x68)->changed(0x10000) || (g_a170d8 == 0 && g_a174d8 != 0)) {
+    if (W(this, 0x68)->changed(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
             ((MapFlags*)&g_map_flags)->commit((char*)&slot);

@@ -19,6 +19,14 @@ using rgl::matrix;
 void* operator new(unsigned size);      // 0x53545e
 
 #include "../str_table.h"
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_sel_label = -2;                         // 0x5aa3a8 (its label index)
+int g_sel_party = -1;                         // 0x5aa3ac (currently selected party id)
+int g_5d8784;                                   // 0x5d8784 (zeroed with the current label object)
+rgl::mesh* g_label_obj;                           // 0x5d75ec (current label object)
+
 extern StrTable g_strtable;             // 0x5e2a18
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
@@ -38,12 +46,7 @@ using rgl::point20;
 using rgl::mesh;
 
 // ---- globals --------------------------------------------------------------------------------------------
-extern int   g_5d8784;          // 0x5d8784 (zeroed with the current label object)
-extern int   g_show_faction_color;     // 0xa181b0 (alternate label-colour mode)
-extern char  g_show_party_ids_instead_of_names;         // 0xa181b8 (show raw translation tokens)
 
-struct GuiObj { virtual ~GuiObj(); };   // deleted through vtable slot 0
-extern GuiObj* g_label_obj;     // 0x5d75ec (current label object)
 
 // the GUI root singleton at 0x5d7080 (layout from s0042c9b0 / s0042d360)
 struct gui_manager {
@@ -147,8 +150,6 @@ struct MapPickScreen {
     void set_label(int id);             // 0x51a420 ret 4
 };
 
-extern int g_sel_party;             // 0x5aa3ac (currently selected party id)
-extern int g_sel_label;             // 0x5aa3a8 (its label index)
 
 // @ 0x51a420
 void MapPickScreen::set_label(int id)

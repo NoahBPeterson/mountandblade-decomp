@@ -18,6 +18,8 @@
 #include "../mission.h"
 #include "../placed_obj.h"
 #include "../int_vec.h"
+#include "../key_names.h"
+#include "../main_menu.h"
 extern MapEditorDialog g_editor_dialog;          // 0x8ee3c48 (the application object seen as the map editor dialog)
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
@@ -82,11 +84,11 @@ static __forceinline float normalize_vec(vector4& v)
 void MapEditorDialog::update()
 {
     // 1. list-modifier: toggle the picked record in the multi-selection list
-    if (g_a17458 != 0 && g_a17858 == 0) {
+    if (g_a17458 != 0 && g_keyboard.prev[0xe1] == 0) {
         bool found = false;
         unsigned pos_ = 0;
 
-        if (g_a17148 == 0 && g_a17348 == 0) {
+        if (g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0) {
             ed_sel_list(g_game).resize(0, 0);
             ed_selected(g_game) = -1;
             f2f9 = 1;
@@ -138,7 +140,7 @@ refresh_list:
     }
 
     // 2. select-all modifier: select every record
-    if ((g_a17148 != 0 || g_a17348 != 0) && g_a1714c != 0 && g_a1754c == 0) {
+    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a1714c != 0 && g_a1754c == 0) {
         ed_sel_list(g_game).resize(0, 0);
         ed_selected(g_game) = -1;
         for (unsigned i = 0; i < (unsigned)record_count(); i++)
@@ -199,8 +201,8 @@ refresh_list:
         ed_selected(g_game) = -1;
         ed_sel_list(g_game).resize(0, 0);
         g_editor_dialog.update_objects();
-        pick_entity((GuiCtx*)(void*)g_editor);   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
-        g_editor->f2f9 = 1;
+        pick_entity((GuiCtx*)(void*)window_slot<EditorEntity>(14));   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
+        window_slot<EditorEntity>(14)->f2f9 = 1;
         SetFocus(g_editor_hwnd);
     }
 
@@ -260,7 +262,7 @@ refresh_list:
         }
 
         // 7. push the visual frames back into the scene objects
-        if (g_a17148 != 0 && g_a1712c != 0 && g_a1752c == 0)
+        if (g_keyboard.down[0x1d] != 0 && g_a1712c != 0 && g_a1752c == 0)
             for (unsigned i = 0; i < (unsigned)record_count(); i++) {
                 PlacedObj* r = rec_at(i);
                 *(matrix*)((char*)ent_of(r) + 0x58) = r->m58;

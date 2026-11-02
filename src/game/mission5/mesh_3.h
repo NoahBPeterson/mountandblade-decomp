@@ -22,6 +22,7 @@
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
 #include "../../rgl/mesh_x.h"
+#include "../key_names.h"
 
 // ---- canonical declarations -----------------------------------------------------------------------------------------------------
 // The slices below each saw the same objects through their own view classes. The members they call that other objects define are
@@ -222,7 +223,6 @@ void rotate_2x2(float angle);                       // 0x4f3b40 (thiscall, ret 4
 extern int g_a170dc;                                // 0xa170dc  held, code 0x37
 extern int g_a170e0;                                // 0xa170e0  held, code 0x38
 extern int g_a170e4;                                // 0xa170e4  held, code 0x39
-extern char g_keyboard[]; // 0xa170c8
 extern int g_a17128;                                // 0xa17128  held, code 0x4a
 extern int g_a1715c;                                // 0xa1715c  held, code 0x57
 extern int g_a1717c;                                // 0xa1717c  held, code 0x5f
@@ -230,9 +230,6 @@ extern int g_a17184;                                // 0xa17184  held, code 0x61
 extern int g_a17188;                                // 0xa17188  held, code 0x62
 extern int g_a17190;                                // 0xa17190  held, code 0x64
 extern int g_a17194;                                // 0xa17194  held, code 0x65
-extern int g_a171ac;                                // 0xa171ac  held, code 0x6b
-extern int g_a171b4;                                // 0xa171b4  held, code 0x6d
-extern int g_a173b4;                                // 0xa173b4  held, code 0xed
 extern int g_a17420;                                // 0xa17420  press, code 0x08
 extern int g_a174dc;                                // 0xa174dc  press, code 0x37
 extern int g_a174e0;                                // 0xa174e0  press, code 0x38
@@ -751,8 +748,6 @@ struct MapEditor_s2f250 {
 
 // ---- global input axes / camera flags (0xa17xxx block; names provisional) -------------------------------
 extern int   g_a1715c;                                  // 0xa1715c
-extern int   g_a171b4;                                  // 0xa171b4
-extern int   g_a173b4;                                  // 0xa173b4
 extern int   g_a17120;                                  // 0xa17120
 extern int   g_a17520;                                  // 0xa17520
 extern int   g_a17188;                                  // 0xa17188

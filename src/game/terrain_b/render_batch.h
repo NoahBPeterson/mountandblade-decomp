@@ -14,6 +14,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
 #include "./frustum.h"
+#include "../shared_vars.h"
 
 using rgl::vector4;
 using rgl::matrix;
@@ -22,7 +23,6 @@ using rgl::face20;
 using rgl::vertex60;
 
 // ---- globals ------------------------------------------------------------------------------------------------
-extern ID3DXEffect* g_effect;               // 0x5e293c
 extern __int64 g_ticks[];                   // 0x5e2948 clock table (1e-5 s ticks)
 extern int g_mesh_quality;                  // 0x5aa084 (2: shader quality / mode)
 extern int g_x5aa034;                       // 0x5aa034

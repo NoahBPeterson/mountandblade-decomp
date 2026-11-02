@@ -36,5 +36,6 @@ struct MsgLog {
     void reset();                                       // 0x42d1b0 (char_sheet/facegen_init.cpp 0x4f49d0: the UI manager reset; the 0x5d7080 object is also the gui manager)
     void build_scene();                                 // 0x4e6050 (the frame's scene build, src/game/cls_map/progress_bar.cpp; char_sheet/facegen_misc.cpp calls it)
 };
+extern MsgLog g_msglog;                                 // 0x5d7080 (the UI root g_gui seen as the log; one definition with the gui manager)
 
 #endif // MB_MSG_LOG_H

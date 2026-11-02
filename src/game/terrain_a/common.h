@@ -17,7 +17,6 @@ typedef bool (*Pr8)(const E8&, const E8&);
 
 // ---- engine globals ---------------------------------------------------------------------------------------------
 extern __int64 g_ticks[];                   // 0x5e2948 clock table, 1e-5 s ticks (indexed by a clock id)
-extern __int64 g_ticks_dt[];                // 0x5e2970 per-clock last step (ticks)
 extern float g_step_tbl[];                  // 0x5a9c20 per-clock step (seconds)
 
 // cdecl helpers of earlier objects

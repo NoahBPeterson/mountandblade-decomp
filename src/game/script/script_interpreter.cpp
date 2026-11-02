@@ -49,6 +49,11 @@
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../world.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+TriggerResult g_trigger_result;   // 0xa70458
+
 
 // ==== by-reference helpers with their bodies in this object ================================================
 // The original's interpreter sees these bodies (header inlines its inliner left out of line in the 70 KB execute()):
@@ -426,7 +431,7 @@ __declspec(noinline) char __fastcall warn_track(const int& value)
     int v = value;
     char r = 1;
     if (v < 0 || v >= g_track_count) {
-        if (g_warnings_off_a == 0 && g_warnings_off_b == 0) {
+        if (g_sound_paused == 0 && g_warnings_off_b == 0) {
             sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Track ID: %d", g_cur_opcode, v);
             report(buf);
         }
@@ -576,7 +581,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::key_clicked:
         if (IN_RANGE(params[0], 0, 0x100))
-            result = g_keyboard.is_ready((int)params[0]);
+            result = (char)((Slot*)&g_keyboard)->is_ready((int)params[0]);   // 0x487900
         break;
     case op::game_key_is_down:
         if (IN_RANGE(params[0], 0, 0x25))
@@ -1430,7 +1435,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::set_show_messages:
-        g_show_messages = params[0] != 0;
+        g_msglog.enabled = params[0] != 0;      // 0x4a30a0
         break;
     case op::add_troop_note_tableau_mesh:
         if (check_troop((int)params[0]) && warn_tableau((int)params[1]))
@@ -3866,7 +3871,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         set_lvalue(locals, g_trigger_param_2);
         break;
     case op::set_trigger_result:
-        g_trigger_result = params[0];
+        g_trigger_result.value = params[0];
         break;
 
     // ---- arithmetic (64-bit; fixed point by g_fixed_point_multiplier) ------------------------------------------

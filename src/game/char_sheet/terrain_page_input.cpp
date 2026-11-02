@@ -2,6 +2,7 @@
 #include "../bit_words.h"      // g_bits 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../key_names.h"
 
 // @ 0x4f3570
 void TerrainPage::read_fields()
@@ -68,10 +69,10 @@ void TerrainPage::simulate(float dt)
     if (g_look_y < 0.5f) {
         if (g_key_17458) {
             yaw = (g_axis_x * dt) * 1.7f + yaw;
-            pitch = pitch - (g_axis_y * dt) * 1.7f;
+            pitch = pitch - (g_keyboard.axis[2] * dt) * 1.7f;
         }
         if (g_key_17454)
-            zoom = ((g_axis_y * dt) * 0.5f + 1.0f) * zoom;
+            zoom = ((g_keyboard.axis[2] * dt) * 0.5f + 1.0f) * zoom;
     }
 
     if (pitch < 0.1f)
