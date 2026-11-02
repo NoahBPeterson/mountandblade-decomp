@@ -1958,8 +1958,6 @@ typedef unsigned int uint;
 // globals (addresses from the annotations in the disassembly)
 #define g_game_c ((char*)g_game)
 extern float g_00;                   // 0x549ca8  0.0f
-extern float g_10;                   // 0x549cdc  1.0f
-extern float g_098;                  // 0x5911d8  0.98f (scan threshold)
 extern double g_001;                 // 0x59c480  unused here (other slices)
 
 void* __cdecl operator new[](uint size);      // 0x535482  ??_U@YAPAXI@Z operator new[]

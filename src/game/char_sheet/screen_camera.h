@@ -113,7 +113,7 @@ extern Listener3D g_listener;                   // 0x5aa138
 // ---- callees ------------------------------------------------------------------------------------------
 #include "./cs_common.h"
 #include "./cs_mat.h"                                      // identity_pos 0x40cd00
-#include "../ui_globals.h"      // UI / core globals
+#include "../game_globals.h"      // canonical global declarations (g_map_min_x ...)
 using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl_mesh.h)
 
 struct envelope;                                            // the scene-envelope object 0x4624c0 works on

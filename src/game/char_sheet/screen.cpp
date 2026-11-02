@@ -2,7 +2,7 @@
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../ui_globals.h"      // UI / core globals
+#include "../game_globals.h"      // canonical global declarations (g_module_name ...)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_a1741c;   // 0xa1741c screenshot requested

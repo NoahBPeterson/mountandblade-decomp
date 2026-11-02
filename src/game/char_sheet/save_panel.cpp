@@ -75,7 +75,7 @@ extern char g_main_menu_obj[];                                  // 0xa73980
 
 // main menu layout (see s004d7d10)
 #include "../main_menu.h"
-#include "../ui_globals.h"      // UI / core globals
+#include "../game_globals.h"      // canonical global declarations (g_module_name ...)
 #define g_main_menu (*(main_menu*)g_main_menu_obj)
 // The menu record's tstrings/fields live on the object g_main_menu.rec points at, NOT on the screen manager itself:
 // the manager (0xa73980) is 30 screen pointers plus the open-screen deque at +0x78, so writing the record's
