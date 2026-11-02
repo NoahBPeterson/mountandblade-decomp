@@ -352,6 +352,9 @@ def patch_objects(sets, rmap):
 # linked unless --no-default-patches: lazy FMOD sample loading (start-up without the ~58 s of sample loads; user, 2026-11-02:
 # "the default unless we're testing sounds")
 DEFAULT_PATCHES = ["perf_sound"]
+# the play build compiles with SSE2: under Rosetta the x87 code runs ~3x slower (module load 11.7 s -> 4.0 s, 2026-11-02);
+# floats differ only in the low bits. --faithful builds the x87 reconstruction as compiled for the checks
+DEFAULT_CFLAGS = "/arch:SSE2"
 
 
 def main():
@@ -369,7 +372,13 @@ def main():
                     "Changes codegen, so never for the faithful build; the output goes to work/relink/variant-...")
     ap.add_argument("--no-default-patches", action="store_true",
                     help="leave out the default sets (%s), e.g. when testing sounds" % ", ".join(DEFAULT_PATCHES))
+    ap.add_argument("--faithful", action="store_true",
+                    help="the reconstruction exactly as the checks compile it: no default sets, no default cflags (%s)"
+                         % DEFAULT_CFLAGS)
     a = ap.parse_args()
+    if a.faithful:
+        a.no_default_patches = True
+    default_cflags = "" if a.faithful or a.cflags else DEFAULT_CFLAGS
     # the default sets replace no function of the reconstruction (perf_sound only swaps our own fmod import slots),
     # so they do not change which code the build runs; the output directory is named after the requested sets only
     # (devfast's no_sound_samples swaps the same FSOUND_Sample_Load slot: never both)
@@ -380,6 +389,9 @@ def main():
         tag = "+".join(a.patches + [re.sub(r"[^A-Za-z0-9]+", "", f) for f in a.cflags.split()])
         a.out = os.path.join(ROOT, "work", "relink", ("patched-" if a.patches else "variant-") + tag)
     a.patches += defaults
+    if default_cflags:
+        a.cflags = default_cflags
+        os.environ["MB_EXTRA_CFLAGS"] = a.cflags
     out = os.path.abspath(a.out)
     os.makedirs(out, exist_ok=True)
     rel = lambda p: os.path.relpath(p, ROOT)

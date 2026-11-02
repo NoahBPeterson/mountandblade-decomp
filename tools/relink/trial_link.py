@@ -60,7 +60,7 @@ def link(objs, out_dir, glue=None, extra=(), name="trial.exe", icf=True):
         libs = [l for l in LIBS if l != "d3dx9.lib"] + [winpath(l) for l in own]
     rsp = os.path.join(out_dir, "objs.rsp")
     open(rsp, "w").write("\n".join('"%s"' % winpath(o) for o in objs) + "\n")
-    env = dict(os.environ, WINEPREFIX=os.path.join(TC, "wineprefix-mb"), WINEDEBUG="-all",
+    env = dict(os.environ, WINEPREFIX=os.environ.get("CL_WINEPREFIX") or os.path.join(TC, "wineprefix-mb"), WINEDEBUG="-all",
                LIB=";".join(winpath(p) for p in (os.path.join(TC, "vc71tk", "lib"), os.path.join(TC, "vc9sp1", "WinSDK", "Lib"),
                                                    os.path.join(ROOT, "work", "ext", "dxsdk_jun10", "DXSDK", "Lib", "x86"))))
     cmd = ["wine", os.path.join(TC, "vc71tk", "bin", "link.exe"), "/NOLOGO", "/OUT:" + winpath(os.path.join(out_dir, name)),

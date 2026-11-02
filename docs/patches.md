@@ -76,6 +76,11 @@ lines are background, `GAME` lines are first-play stalls), and with the profile 
 
 ## Variant builds
 
+**Default since 2026-11-02:** a plain `build.py` is the play build: `/arch:SSE2` plus the default patch sets (perf_sound).
+Module loading under CrossOver went from 11.7 s to 4.0 s (x87 math is ~3x slower under Rosetta; mesh_x::compute_tangents
+was 77% of it). `build.py --faithful` builds the x87 reconstruction with no patches, as the byte-exact and equivalence
+checks compile it: use that for independence/runtime checks of the faithful code.
+
 `build.py --cflags "/arch:SSE2"` compiles every src/ object with extra flags (output: work/relink/variant-archSSE2, or
 patched-SET+archSSE2 with --patches). Under Rosetta 2 (Apple Silicon CrossOver) x87 float code runs ~1.8x slower than
 SSE2 scalar code (microbenchmark in the game's bottle: 18.4 s vs 10.4 s); VC7.1 emits movss/mulss/addss for float math

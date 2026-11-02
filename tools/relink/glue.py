@@ -234,7 +234,7 @@ def make_import_libs(img, out_dir, needed):
         if dll in OWN_IMPORTS:
             by_dll[dll].append(name)
     decorated = {}
-    env = dict(os.environ, WINEPREFIX=os.path.join(TC, "wineprefix-mb"), WINEDEBUG="-all")
+    env = dict(os.environ, WINEPREFIX=os.environ.get("CL_WINEPREFIX") or os.path.join(TC, "wineprefix-mb"), WINEDEBUG="-all")
     for dll, names in sorted(by_dll.items()):
         exports = {}
         if dll == "skinmagic":
