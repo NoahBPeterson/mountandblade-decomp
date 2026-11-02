@@ -18,6 +18,8 @@
 #include <memory>
 #include <algorithm>
 #include "./rgl_string.h"
+#include "../game/tstring.h"      // tstring: the class that defines the rgl::string members called below (same 16-byte object)
+#define TS(s) ((tstring&)(s))
 #include "./rgl_math.h"
 #include "./stream.h"
 #include "./resource.h"
@@ -56,38 +58,38 @@ bin_writer::bin_writer() {}
 stream_base& bin_writer::w_stream(stream_base* o)
 {
     int n = o->buf.len - o->buf.pos;
-    buf.write(&n, 4);
+    TS(buf).write(&n, 4);
     if (n > 0) {
         const char* p;
         if (o->buf.buf)
             p = o->buf.pos + o->buf.buf;
         else
             p = (const char*)&o->buf.buf;
-        buf.write(p, n);
+        TS(buf).write(p, n);
     }
     return *this;
 }
 stream_base& bin_writer::w_cstr(const char* s)
 {
     int n = strlen(s);
-    buf.write(&n, 4);
-    buf.write(s, n);
+    TS(buf).write(&n, 4);
+    TS(buf).write(s, n);
     return *this;
 }
-stream_base& bin_writer::w_int(int* v) { buf.write(v, 4); return *this; }
-stream_base& bin_writer::w_float(float* v) { buf.write(v, 4); return *this; }
-stream_base& bin_writer::w_uint(unsigned* v) { buf.write(v, 4); return *this; }
-stream_base& bin_writer::w_i64(__int64* v) { buf.write(v, 8); return *this; }
-stream_base& bin_writer::w_u64(unsigned __int64* v) { buf.write(v, 8); return *this; }
+stream_base& bin_writer::w_int(int* v) { TS(buf).write(v, 4); return *this; }
+stream_base& bin_writer::w_float(float* v) { TS(buf).write(v, 4); return *this; }
+stream_base& bin_writer::w_uint(unsigned* v) { TS(buf).write(v, 4); return *this; }
+stream_base& bin_writer::w_i64(__int64* v) { TS(buf).write(v, 8); return *this; }
+stream_base& bin_writer::w_u64(unsigned __int64* v) { TS(buf).write(v, 8); return *this; }
 stream_base& bin_writer::w_tstr(const rgl::string* s)
 {
     int n = s->len;
-    buf.write(&n, 4);
-    buf.write(s->c_str(), n);
+    TS(buf).write(&n, 4);
+    TS(buf).write(s->c_str(), n);
     return *this;
 }
-stream_base& bin_writer::w_byte(unsigned char* v) { buf.write(v, 1); return *this; }
-stream_base& bin_writer::w_bool(char* v) { buf.write(v, 1); return *this; }
+stream_base& bin_writer::w_byte(unsigned char* v) { TS(buf).write(v, 1); return *this; }
+stream_base& bin_writer::w_bool(char* v) { TS(buf).write(v, 1); return *this; }
 stream_base& bin_writer::r_stream(stream_base* o)
 {
     int n;
@@ -95,12 +97,12 @@ stream_base& bin_writer::r_stream(stream_base* o)
     o->reset();
     for (int i = 0; i < n; i++) {
         char c;
-        buf.read(&c, 1);
-        o->buf.push_back(c);
+        TS(buf).read(&c, 1);
+        TS(o->buf).push_back(c);
     }
     return *this;
 }
-stream_base& bin_writer::r_byte(char* v) { buf.read(v, 1); return *this; }
+stream_base& bin_writer::r_byte(char* v) { TS(buf).read(v, 1); return *this; }
 stream_base& bin_writer::slot12(void* v) { return *this; }
 stream_base& bin_writer::slot22(void* v) { return *this; }
 stream_base& bin_writer::r_float(float* v) { return *this; }
