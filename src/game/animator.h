@@ -27,7 +27,8 @@ struct Animator {
         EChar* chars;            // 0x1c (mesh_slot view)
         SkinSet* skins;          // 0x1c (g_skins_begin, 0x8ed4f7c: 0x1f8-byte sets; face-gen view)
     };
-    char pad20[8];
+    SkinSet* skins_end;          // 0x20 (g_skins_end, 0x8ed4f80)
+    int pad24;
     int char_count;              // 0x28 (g_char_count 0x8ed4f88 is the same word)
     float weights[63];           // 0x2c (one weight per bone / deform key, up to +0x128)
     float scale;                 // 0x128

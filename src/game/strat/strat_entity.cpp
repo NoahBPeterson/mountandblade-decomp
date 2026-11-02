@@ -23,6 +23,7 @@
 #include "../cell.h"
 #include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/clock_table.h"
 
 // @ 0x42a090
 void StratEnt::render(scene* sc, render_info* out)

@@ -44,7 +44,6 @@ extern float g_day_scale;                           // 0x591834 (fmul dword)
 extern double g_day_period;                         // 0x54a5d8
 extern float g_hour_scale;                          // 0x590c90
 extern float g_hour_base;                           // 0x54ab28
-extern int g_ticks_[2];                             // 0x5e2948 (the 64-bit tick clock)
 extern int g_mission_clock;                         // 0x5d8790 (mission time; 0 = no mission)
 
 extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
@@ -127,6 +126,7 @@ inline ValueWidget* item_value(MissionItem* it) { return *(ValueWidget**)((char*
 // item family at +0x10 (its sound is the family-th ItemSound), the current clock slot at +0x18 and the
 // 64-bit tick the slot was entered at (+0x20/+0x24).
 #include "../mission_source.h"                  // MissionSource (pick 0x4d5410)
+#include "../../include/clock_table.h"
 
 
 // ---- the screen object owning the callbacks -------------------------------------------------------------

@@ -29,6 +29,9 @@ struct OptionsDlg {
 #include "../../dxframework/dxutil.h"   // DXUtil_Timer 0x407660 (stdcall, TIMER_COMMAND)
 #include "../../rgl/options.h"       // options::save 0x4181c0
 #include <hash_map>
+#include "../../include/rec78.h"
+#include "../ptype.h"
+#include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_video_played;                              // 0x5e2a10 (1 once the intro video started, 2 once it was skipped)
@@ -823,8 +826,8 @@ void MissionScreen::fill_mission_row(int side)
         char buf[0x14];   // 0x14 like the original: its sprintf of a long count pair overflows into the line buffer that follows
         if (u->flags32 & 0x10) {
             int h = ((unsigned char*)u)[0x7a] & 0xf;
-            if (h > g_skill_tbl[36].cap)
-                h = g_skill_tbl[36].cap;
+            if (h > g_skill_tbl[36].max_rank)
+                h = g_skill_tbl[36].max_rank;
             sprintf(buf, " %d%%",
                     (int)(u->hp * 100.0f / (u->lvl58 + h * 2 + 0x23) + 0.0001f));
         } else {

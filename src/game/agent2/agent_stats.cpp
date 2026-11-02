@@ -161,7 +161,7 @@ int GameData::skill_level(int agent, int skill)
     lvl += (*(int*)((char*)&g_script + 0x18));
     if (lvl < 0)
         return 0;
-    int cap = g_skill_tbl[skill].cap;
+    int cap = g_skill_tbl[skill].max_rank;
     if (lvl > cap)
         return cap;
     return lvl;

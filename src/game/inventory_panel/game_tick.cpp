@@ -23,6 +23,12 @@
 #include "../battle_rec.h"      // BattleRec (update_nav_anim 0x4b71e0)
 #include "../shared_vars.h"
 #include "../key_names.h"
+#include "../game_globals.h"
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+float g_step_tbl[5] = {0.01f, 0.01f, 0.01f, 0.01f, 0.01f};  // 0x5a9c20 per-clock step (seconds); [0] is the frame step
+
 
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
 #define FLD(T, off) (*(T*)((char*)this + (off)))
@@ -228,7 +234,7 @@ void GameG::tick(float dt)
         }
     }
 
-    g_map_scene->step(g_step);
+    g_map_scene->step(g_step_tbl[0]);
 
     if (g_cfg.cheat_mode && g_keyboard.down[0x14] && !g_keyboard.prev[0x14] && g_keyboard.down[0x1d])
         f95 = !f95;
@@ -286,7 +292,7 @@ void GameG::update_markers()
 // @ 0x517350
 void GameG::update_colors()
 {
-    float t = g_step * 0.9f;
+    float t = g_step_tbl[0] * 0.9f;
     float s = 1.0f - t;
 
     rgl::vector4 c;

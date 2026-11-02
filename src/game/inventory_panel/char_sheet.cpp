@@ -118,6 +118,7 @@ extern StrTable g_strtable;                     // 0x5e2a18
 
 // settings table at 0xa44240: 0x2c-byte records, key tstring at +0, text pointer at +0x20
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
+#include "../skill_cap.h"
 
 
 extern "C" double atof(const char* s);          // 0x537352
@@ -172,7 +173,6 @@ static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstri
 #include "../ini_file.h"
 
 extern int g_game_mode;                         // 0x5a9fb0
-extern char g_skill_tbl[];                    // 0x8ee3100 (records of 0x44 bytes)
 
 // the two mode/tutorial objects touched at the end
 struct TutorialMenuRec {                        // the menu record the holder's first dword points to (renamed from MainMenu: 0xa73980 itself is main_menu.h's MainMenu)

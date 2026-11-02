@@ -38,7 +38,6 @@ using rgl::vector4;
 #include "../key_names.h"
 extern unsigned g_type_mask;                                // 0x5a8e88 (= 4: the terrain type is 4 bits wide)
 extern unsigned g_size_mask;                                // 0x5a8e78 (= 4: the terrain size is 2 bits wide)
-extern int g_use_shaders;                                   // 0x5e28fc (shaders on: the water checkbox stores the inverse)
 
 // ---- the world / scene --------------------------------------------------------------------------------
 struct FrustumBlock { int d[0x48]; };                        // the 0x120-byte frustum (copied page +0x70 -> world +0x1ac)
@@ -58,6 +57,7 @@ __declspec(noinline) void identity_2x2(float* m);          // 0x4f3be0 (the orig
 
 // ---- the page: src/game/terrain_page.h ------------------------------------------------------------------
 #include "../terrain_page.h"
+#include "../../include/render_flags.h"
 
 // the input flags the camera reads (0xa17xxx block; names provisional)
 extern int g_key_17204;                                     // 0xa17204  pitch down

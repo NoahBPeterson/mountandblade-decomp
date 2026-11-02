@@ -41,7 +41,6 @@ typedef Widget UiWidget;                // the slice's name for it
 
 // skill table at 0x8ee3100, stride 0x44
 #include "../../include/skill_rec.h"            // SkillRec (shared with src/rgl/mesh2/gui_edit.h)
-extern SkillRec g_skill_tbl[];                         // 0x8ee3100
 #define SKILL_ATTR(id) (g_skill_tbl[id].attr & 0xf)
 
 // the ini table at 0xa44240 (0x2c-byte entries, see s004bd170)
@@ -55,6 +54,7 @@ extern const char* g_skill_prisoner_management_bonus;                // 0xa18124
 
 // the character sheet panel (full layout in s004eeb10)
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
+#include "../skill_cap.h"
 
 // 0x4f04f0: the proficiency group name of proficiency idx into buf (another slice)
 void weapon_class_caption(int idx, char* buf);           // 0x4f04f0

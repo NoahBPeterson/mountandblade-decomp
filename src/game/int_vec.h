@@ -61,4 +61,6 @@ struct RawVec {
 };
 extern RawVec g_mat_vec[4];             // 0xa732c0 / 0xa732d0 / 0xa732e0 / 0xa732f0 the map scene's material lists (sea, sea 2, river, ...)
 
+extern RawVec g_mat_vec[4];                    // 0xa732bc: four std::vector<T*> (map tree meshes by material; the marker lists of game_tick) -- the allocator dword of the first is 0xa732bc, its first/last/end 0xa732c0..0xa732c8
+
 #endif // GAME_INT_VEC_H

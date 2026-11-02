@@ -225,8 +225,8 @@ void GuiScreen::process(int param)
                         ((gui_view*)(void*)this)->wheel_step(0x200);
                     }
                     else {
-                        cr->x = g_ticks[cr->idx * 2];
-                        cr->y = g_ticks[cr->idx * 2 + 1];
+                        cr->x = ((float*)g_ticks)[cr->idx * 2];
+                        cr->y = ((float*)g_ticks)[cr->idx * 2 + 1];
                     }
                 }
                 else {
@@ -241,8 +241,8 @@ void GuiScreen::process(int param)
                         ((gui_view*)(void*)this)->wheel_step(0x400);
                     }
                     else {
-                        cr->x = g_ticks[cr->idx * 2];
-                        cr->y = g_ticks[cr->idx * 2 + 1];
+                        cr->x = ((float*)g_ticks)[cr->idx * 2];
+                        cr->y = ((float*)g_ticks)[cr->idx * 2 + 1];
                     }
                 }
                 else {
@@ -257,8 +257,8 @@ void GuiScreen::process(int param)
                         ((gui_view*)(void*)this)->wheel_step(0x800);
                     }
                     else {
-                        cr->x = g_ticks[cr->idx * 2];
-                        cr->y = g_ticks[cr->idx * 2 + 1];
+                        cr->x = ((float*)g_ticks)[cr->idx * 2];
+                        cr->y = ((float*)g_ticks)[cr->idx * 2 + 1];
                     }
                 }
                 else {

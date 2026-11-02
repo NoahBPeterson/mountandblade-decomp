@@ -402,7 +402,7 @@ void MapPanel::update(int type, int id)
                         if (t->flags32 & 0x10) {
                             int tier = t->nib_b[0x7a - 0x68] & 0xf;
                             if (tier < 0)                tier = 0;
-                            else if (tier > (*(int*)&g_skill_tbl[36].cap)) tier = (*(int*)&g_skill_tbl[36].cap);
+                            else if (tier > (*(int*)&g_skill_tbl[36].max_rank)) tier = (*(int*)&g_skill_tbl[36].max_rank);
                             int pct = (int)(t->hp * 100.0f / (float)(t->f58[0] + tier * 2 + 0x23) + 1e-4f);
                             sprintf(buf, "%s (%d%%)", troop_name_c(t), pct);
                             g_gui.draw_string(tstring(buf), 0.015f, tcol | 0x0f0f0f, 0);

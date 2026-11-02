@@ -54,10 +54,6 @@ struct Game;                                                                // 0
 struct rgl_config {
     void save(FILE* f);   // 0x415fb0
 };
-extern rgl_config g_cfg;                                        // 0x5a9f98
-// 0x4bc090 / 0x4bc100: Config's (config/config.h, whose headers clash with this TU's) quality setters, called on the options
-// block at 0x5aa008 (ecx = 0x5aa008 at 0x4d6610 / 0x4d6642).
-struct Config { void set_triple_buffering(int t); void set_texture_quality(int q); };
 
 extern Game* g_game;                                                        // 0x5e2930
 
@@ -67,11 +63,11 @@ extern Game* g_game;                                                        // 0
 
 // 0x415160: open a user file ("rgl_config.txt").
 #include "../../rgl/text_stream.h"             // mb_open_user_file (0x415160)
+#include "../config/config_block.h"
+#include "../../rgl/options.h"
 // 0x4b99c0: settings refresh.
 void run_settings_probe();                            // 0x4b99c0 (options_dlg.h; that header's winsock2.h cannot follow windows.h)
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index (clamped to 5).
-struct GraphicsQuality { int a; int b; };
-extern GraphicsQuality g_graphics_quality;                                  // 0x5aa008
 
 // 0x4d6b80 and 0x4d6dd0 live in slice s004d6b80.
 // WindowMgrW (world_data/world_data.h; main_menu.h's `reset` is its old name): open(n) 0x494260 on the main menu object
@@ -91,7 +87,7 @@ static inline void set_enabled_text_local(Widget* w, void* page) { ((KeysPage*)p
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index.
 static inline void set_quality(int v, int which)
 {
-    Config* c = (Config*)(void*)&g_graphics_quality;
+    Config* c = (Config*)(void*)&g_options;
     if (which) c->set_texture_quality(v); else c->set_triple_buffering(v);
 }
 
@@ -301,8 +297,8 @@ void VideoPage::update(int reason)
             g_resmgr.unload_textures();
             g_resmgr.load_textures();
         }
-        void* f = mb_open_user_file("rgl_config.txt", (const char*)orig::g_rgl_name);
-        g_cfg.save((FILE*)f);
+        void* f = mb_open_user_file("rgl_config.txt", "w");
+        ((rgl_config&)g_cfg).save((FILE*)f);
         fclose((FILE*)f);
         if (changed_config) {
             {

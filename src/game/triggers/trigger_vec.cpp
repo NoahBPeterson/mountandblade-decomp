@@ -45,6 +45,11 @@ int g_show_faction_color;   // 0xa181b0
 unsigned char g_show_party_ids_instead_of_names;   // 0xa181b8
 int g_display_wp[7];   // 0x5e2900
 ID3DXEffect* g_effect;   // 0x5e293c
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_dlg_display_bits = 0x20;                    // 0x5aa0fc launcher dialog: chosen colour depth
+int g_dlg_multisample = 1;                         // 0x5aa100 launcher dialog: chosen multisample type
 
 
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
@@ -966,16 +971,16 @@ void parse_module_info()
             g_map_river_speed_y = (float)atof(val.c_str());
         }
         else if (msg.equals("map_tree_types")) {
-            g_map_tree_types = atoi(val.c_str());
+            g_map_tree_types[0] = atoi(val.c_str());
         }
         else if (msg.equals("map_snow_tree_types")) {
-            g_map_snow_tree_types = atoi(val.c_str());
+            g_map_tree_types[1] = atoi(val.c_str());
         }
         else if (msg.equals("map_steppe_tree_types")) {
-            g_map_steppe_tree_types = atoi(val.c_str());
+            g_map_tree_types[2] = atoi(val.c_str());
         }
         else if (msg.equals("map_desert_tree_types")) {
-            g_map_desert_tree_types = atoi(val.c_str());
+            g_map_tree_types[3] = atoi(val.c_str());
         }
         else if (msg.equals("display_wp_one_handed")) {
             g_display_wp[0] = atoi(val.c_str());
@@ -1113,7 +1118,7 @@ HRESULT Core::RestoreDeviceObjects()
     IDirect3DDevice9* dev = m_pd3dDevice;
     g_render.dev = dev;
     dev->GetDeviceCaps(&g_caps);
-    g_renderer_vsync = -1;
+    g_render.vsync = -1;
     g_render.pad504 = 0;
     if (g_use_shaders) {
         if (build_shader() < 0)
@@ -1441,17 +1446,9 @@ void PresentationRec::read(stream_base& s)
 // @ 0x4c2470
 // (the dialog manager, ../dialog_manager.h DialogMgr; that header cannot be mixed with the stream.h-based ones, so the
 //  constructor works on the raw object: 0x400 + 0x400 lines of 0x1c bytes whose text sits at +0xc, cur_text at +0xe028)
-void* __fastcall dialog_mgr_ctor(void* self)
+DialogMgr::DialogMgr()
 {
-    char* p = (char*)self + 0x30;
-    for (int i = 0; i < 0x400; i++, p += 0x1c)
-        ((tstring*)p)->tstring::tstring();
-    p = (char*)self + 0x7030;
-    for (int i = 0; i < 0x400; i++, p += 0x1c)
-        ((tstring*)p)->tstring::tstring();
-    ((tstring*)((char*)self + 0xe028))->tstring::tstring();
-    *(int*)((char*)self + 4) = 0;
-    return self;
+    recs = 0;
 }
 
 // @ 0x4c2b20
@@ -1561,7 +1558,7 @@ void music_player::advance_piece()
             w[0] = 0;
             w[12] = -1;
         }
-    } else if (g_music_volume > g_music_volume_floor) {
+    } else if (g_music_volume > 0.02f) {
         bool forced = false;
         int sel = -1;
         int best = -1;
@@ -1638,7 +1635,7 @@ void music_player::advance_piece()
         w[1] = 0;
         w[13] = -1;
     } else if ((*(int*)((char*)&g_script + 0x3c)) >= 0) {
-        if (g_music_volume > g_music_volume_floor) {
+        if (g_music_volume > 0.02f) {
             int slot = 1;
             play((*(int*)((char*)&g_script + 0x3c)), &slot);
         }

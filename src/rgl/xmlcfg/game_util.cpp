@@ -30,6 +30,10 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+PendingForce g_pending_force;                         // 0xa18210 (.bss: the force the physics step applies to one body)
+
+
 // ---- Newton Game Dynamics imports (cdecl) -----------------------------------------------------------
 extern "C" {
 __declspec(dllimport) void __cdecl NewtonBodyGetMassMatrix(const NewtonBody* body, float* mass, float* ixx, float* iyy, float* izz);   // 0x549298
@@ -257,22 +261,22 @@ void __cdecl apply_force_and_torque(const NewtonBody* body)
 {
     float mass, ixx, iyy, izz;
     NewtonBodyGetMassMatrix(body, &mass, &ixx, &iyy, &izz);
-    if (g_pending.body == body) {
+    if (g_pending_force.body == body) {
         float f[3];
-        f[0] = g_pending.force.x * mass;
-        f[1] = g_pending.force.y * mass;
-        f[2] = (g_pending.force.z - 9.8f) * mass;
+        f[0] = g_pending_force.force.x * mass;
+        f[1] = g_pending_force.force.y * mass;
+        f[2] = (g_pending_force.force.z - 9.8f) * mass;
         NewtonBodyAddForce(body, f);
-        if (g_pending.torque.x * g_pending.torque.x + g_pending.torque.y * g_pending.torque.y +
-                g_pending.torque.z * g_pending.torque.z > 0.0f) {
-            f[0] = g_pending.torque.x * mass;
-            f[1] = g_pending.torque.y * mass;
-            f[2] = g_pending.torque.z * mass;
+        if (g_pending_force.torque.x * g_pending_force.torque.x + g_pending_force.torque.y * g_pending_force.torque.y +
+                g_pending_force.torque.z * g_pending_force.torque.z > 0.0f) {
+            f[0] = g_pending_force.torque.x * mass;
+            f[1] = g_pending_force.torque.y * mass;
+            f[2] = g_pending_force.torque.z * mass;
             NewtonBodyAddTorque(body, f);
         }
-        g_pending.force = vector4(0.0f, 0.0f, 0.0f);
-        g_pending.body = 0;
-        g_pending.torque = vector4(0.0f, 0.0f, 0.0f);
+        g_pending_force.force = vector4(0.0f, 0.0f, 0.0f);
+        g_pending_force.body = 0;
+        g_pending_force.torque = vector4(0.0f, 0.0f, 0.0f);
     } else {
         float f[3];
         f[0] = 0.0f;

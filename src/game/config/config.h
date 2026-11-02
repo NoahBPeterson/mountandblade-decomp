@@ -20,47 +20,7 @@
 #include "../tstring.h"
 #include "../strat/gui_manager.h"
 
-// ---- the option block (rgl_config.txt), global object g_cfg at 0x5a9f98 ----------------------------------------
-// Offsets from the setters 0x4bc020..0x4bc170 and the readers; the block is the int array that
-// src/rgl/core/resource_io.cpp (0x415fb0, rgl_config::save) writes out. Field names are the file's keys.
-struct Config {
-    int first_time;                 // +0x00  0x4bc020, 0x4badf0 (selects the present interval)
-    int texture_detail;             // +0x04
-    int show_framerate;             // +0x08
-    int max_framerate;              // +0x0c
-    int start_windowed;             // +0x10
-    int skip_tutorial;              // +0x14
-    int enable_edit_mode;           // +0x18
-    int force_single_threading;     // +0x1c
-    int debug_mode;                 // +0x20
-    int cheat_mode;                 // +0x24
-    int enable_blood;               // +0x28
-    int fake_reflections;           // +0x2c
-    int disable_frequency_variation;// +0x30
-    int use_vertex_shaders;         // +0x34
-    int use_pixel_shaders;          // +0x38
-    int disable_music;              // +0x3c
-    int disable_sound;              // +0x40
-    int unk44;                      // +0x44
-    int render_buffer_size;         // +0x48  megabytes of buffer memory (0x4bc5b0 reads 0x5a9fe0)
-    int display_width;              // +0x4c  0x5a9fe4 (0x4badf0)
-    int display_height;             // +0x50  0x5a9fe8
-    int display_bits;               // +0x54  0x5a9fec (16: R5G6B5, else X8R8G8B8)
-    int antialiasing;               // +0x58  0x5a9ff0 (multisample type 2 / 4)
-    int sample_quality;             // +0x5c  0x5a9ff4
-    int force_vsync;                // +0x60  0x5a9ff8 (0x4badf0: present interval ONE)
-    int unk64;                      // +0x64
-    int shadowmap_quality;          // +0x68
-    int unk6c;                      // +0x6c
-    void init_defaults();                           // 0x4bc020
-    void set(tstring& key, tstring& value);         // 0x4bbba0 (fastcall-like: thiscall, ret 8)
-    void load_file(FILE* f);                        // 0x4bbf70
-    void set_triple_buffering(int t);               // 0x4bc090
-    void set_texture_quality(int q);                // 0x4bc100
-    void split_line(const char* line, tstring* first, tstring* second);   // 0x4bba90 (thiscall: `this` unused)
-    int value_as_int(const tstring& s);             // 0x4bbb70 (thiscall: `this` unused)
-};
-extern Config g_cfg;                                // 0x5a9f98
+#include "./config_block.h"             // Config g_cfg (0x5a9f98)
 
 
 // ---- globals ---------------------------------------------------------------------------------------------------
@@ -70,13 +30,11 @@ extern int g_view_x;                                // 0x5d75d4 view rectangle (
 extern int g_view_y;                                // 0x5d75d0
 extern char g_screenshot_cropped;                   // 0x8ee3cec (the Core's m_bWindowed byte, see core.h)
 #include "../../include/renderer.h"            // g_render 0xa17910 (dev at +0x618 = 0xa17f28)
-extern int g_use_shaders;                        // 0x5e28fc (also g_use_shaders)
 extern int g_edit_key;                              // 0x5e28d0 first value of the line being edited
 extern int g_edit_value;                            // 0x5e28d4 second value of the line being edited
 extern float g_line_pitch_ratio;                    // 0x590d94 0.6f: visible lines vs window height
 extern "C" const char g_eq_sep[];                   // 0x593160 " = "
 extern const char g_eol[];                          // 0x54b118 ""
-extern __int64 g_ticks[];                           // 0x5e2948 clock table, 1e-5 s ticks (same table as gui_manager.h's g_time)
 
 void __cdecl refresh_settings_list(const tstring* page, char detailed);        // 0x4bb3f0
 void set_list_scroll(int delta);                    // 0x4bb260
@@ -121,16 +79,6 @@ struct CreateGameOptionsPage {
 // ---- input state and device set (0x4bc2d0..0x4bc430) -------------------------------------------------------------
 struct Matrix { float m[16]; };
 struct pos;                                          // src/include/mat4.h: the frame type the definition of 0x40cd00 names (config.cpp declares the function)
-struct DisplayState {                               // the input state prefix of InputSet plus two view matrices
-    char unk000[0x618];
-    int  unk618;                                    // +0x618 (cleared by 0x4bc2d0, 0x4bc350 reads +0x74c)
-    char unk61c[0x130];
-    int  unk74c;                                    // +0x74c
-    int  unk750;                                    // +0x750
-    Matrix mat1;                                    // +0x754
-    Matrix mat2;                                    // +0x794
-    DisplayState();                                 // 0x4bc2d0
-};
 struct InputSet {
     IDirectInput8A* dinput;                         // +0x000 0x4bc430
     IDirectInputDevice8A* keyboard;                 // +0x004
@@ -145,10 +93,10 @@ struct InputSet {
     int unk3[0x130 / 4];                            // +0x61c
     int unk74c;                                     // +0x74c a COM-style object whose vtable slot +0x28 is called by 0x4bc350
     int unk750;                                     // +0x750
-    int init_devices(HWND hwnd);                    // 0x4bc430
 };
 void __fastcall apply_input_settings(InputSet* self);   // 0x4bc350
-void __fastcall release_input_devices(InputSet* self);  // 0x4bc3d0
+struct Slot;
+void __fastcall release_input_devices(Slot* self);  // 0x4bc3d0
 
 // ---- the render batch's buffer table (0x4bc540..0x4bd0c0): dev_buffer / buffer_pair
 #include "../dev_buffer.h"
@@ -166,6 +114,7 @@ struct resource_manager_x {                         // the resource manager (0x5
 #include "../../rgl/resource.h"          // resource_manager g_resmgr 0x5d6fa0 (the one declaration)
 #define g_resmgr_x (*(resource_manager_x*)&g_resmgr)   // the 0x5d6fa0 object seen through the shader / texture view above
 #include "../render_batch.h"                   // render_batch (shared with terrain_b)
+#include "../../include/render_flags.h"
 struct font_details {                               // 0x1c: the staged glyph record Font::load 0x4d9aa0 copies into the
     float a, b, c, d, e, f, g;                      // table (a = u/f0, b = h/f4, c = w/f8, d = v/fc, e..g = shifts)
     font_details();                                 // 0x4bd120 (zeroes all seven)

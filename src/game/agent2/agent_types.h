@@ -27,7 +27,6 @@ using rgl::matrix;
 struct shape_base; struct face; struct capsule; struct contact;
 
 // ---- globals ------------------------------------------------------------------------------------------------
-extern __int64 g_ticks[];              // 0x5e2948 clock table, 8 bytes per clock (0x43c9c0: g_ticks[2] is "now")
 #include "../../include/fx.h"            // g_step_tbl 0x5a9c20 (entry 0 is the frame step)
 extern float g_step_tbl[]; // 0x5a9c20 per-clock step (seconds; fx.h; named again here for the resolution audit, which reads only the headers a source includes itself)
 #include "../dialog_manager.h"            // g_script 0xa70440

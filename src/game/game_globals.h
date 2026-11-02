@@ -15,6 +15,8 @@ struct DialogMgr;   // dialog_manager.h
 
 // The table of single-bit masks (8-byte entries 1<<i) starts here;
 extern unsigned __int64 g_bit[]; // 0x5a8e68 (g_bit[i] == 1 << i)
+// Experience needed per level (rdata, 64 entries; game_2.cpp defines it; entry n+1 is the next level's bound).
+extern const int g_level_xp[64]; // 0x5937c8
 // -1 = nothing pending: set to -1 by agent_hud (0x4f7f00 path) and world_app, tested in mission_5.cpp (0 = rebuild mission geometry, then reset to -1).
 extern int g_pending_action; // 0x5a9f18 -1 = none; 0 = rebuild mission geometry
 // Log file handle shared by cls_map.cpp (g_5a9f90) and char_sheet/editor_ui.h (g_log_file).
@@ -97,7 +99,7 @@ extern float g_map_sea_direction; // 0xa18144
 // game_variables.txt key "map_river_direction" (trigger_vec.cpp loader);
 extern float g_map_river_direction; // 0xa18150
 // game_variables keys map_tree_types / map_snow / map_steppe / map_desert_tree_types are four consecutive ints (0xa1815c..0xa18168).
-extern int g_map_tree_types; // 0xa1815c
+extern int g_map_tree_types[4]; // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
 // game_variables.txt key "damage_interrupt_attack_treshold" (trigger_vec.cpp loader);
 extern float g_damage_interrupt_attack_treshold; // 0xa18178
 // game_variables keys armor_soak_factor_against_cut/pierce/blunt are consecutive floats (g_armor_a[3] is the array view).
@@ -141,7 +143,6 @@ extern AnimDefV* g_anims; // 0xa76628
 // module_files.cpp loads this table;
 extern AnimTable g_anim_table; // 0x8ed4f60
 // Count belonging to the skin table (script troop_set_type validates against it);
-extern int g_skin_count; // 0x8ed4f88
 // DialogMgr (dialog_manager.h, +0 count, +4 recs ...);
 extern DialogMgr g_dialogs; // 0x8ed50c8
 // The module directory string;

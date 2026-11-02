@@ -4,6 +4,7 @@
 #include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../slot.h"
 
 // the original inlines set_enabled_text (0x4f28a0) and refresh_hex (0x4f2960) into the two "Enable terrain" branches
 // (they stay calls in the other branches); same behaviour, spelled out so the call sequence matches
@@ -129,7 +130,7 @@ done:
     simulate(dt);
     world->step(dt);
     path(dt);
-    if (page_changed(back_btn) || (g_a17110 != 0 && g_a17510 == 0))
+    if (page_changed(back_btn) || (g_keyboard.key[15] != 0 && g_keyboard.now[15] == 0))
         g_main_menu.set_state(option);
 }
 

@@ -18,11 +18,12 @@
 #include <vector>
 #include "./rgl_base.h"
 #include "./mat4.h"
+#include "clock_table.h"
+#include "./clock_table.h"
 
 namespace rgl { struct lod_mesh; struct mesh; struct lod_mesh2; struct psys; struct scene; }
 struct Psys;                                                    // src/game/agent3/agent_fx_sound.h (a particle mesh as the game sees it)
 struct PsysGroup;
-extern __int64 g_ticks[];                                       // 0x5e2948 clock table, 1e-5 s ticks (indexed by a clock id)
 
 // unit-length-ish rotation as w, x, y, z (stored x y z first in the original's arrays; see FxElem::q)
 struct quat4 {

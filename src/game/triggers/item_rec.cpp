@@ -5,6 +5,7 @@
 //       Flags: /O2 /MT /Gy /TP. Boundary: see MIGRATION.md (class change only; no call evidence either way).
 //-----------------------------------------------------------------------------
 #include "./item_rec.h"
+#include "../../include/clock_table.h"
 
 // A compiler fence (no code): pins the store order of the base ctor's id store, the derived vptr store and
 // the zero/load stores, which cl 13.10 otherwise schedules differently from the original (docs/codegen.md 10.9).

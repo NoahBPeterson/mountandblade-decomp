@@ -15,6 +15,7 @@
 #include "../../include/party.h"
 #include "../../include/game_recs.h"
 #include "../../include/game_data.h"
+#include "../../include/clock_table.h"
 
 extern PartyTemplate* g_party_templates;        // 0x5e29f8 the party templates (0xb0 bytes each)
 

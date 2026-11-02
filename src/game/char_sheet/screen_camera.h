@@ -104,17 +104,17 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #define C_590D8C (orig::k_3_5f)             // 3.5
 #define C_590AF0 (orig::k_9_8f)             // 9.8
 #define C_590F7C (orig::k_0_014f)             // 0.014
-#define C_590E68 (orig::k_0_23f)             // 0.23
+#define C_590E68 (0.23f)             // 0.23
 #define C_54B4D0 (orig::k_0_05f)             // 0.05
 #define C_5915A0 (orig::k_m10f)             // -10.0
 #define C_5935C8 (orig::g_four)             // 4.0
 #define C_54B3B8 (orig::k_0_4f)             // 0.4
 #define C_590C74 (orig::k_0_08f)             // 0.08
-#define C_590FA4 (orig::k_1_7f)             // 1.7
+#define C_590FA4 (1.7f)             // 1.7
 #define C_591AF4 (orig::k_0_94f)             // 0.94
 #define C_590C48 (orig::k_1_6f)             // 1.6
 #define C_5911D8 (orig::k_0_98f)             // 0.98
-#define C_54B8B0 (orig::k_1_5f)             // 1.5
+#define C_54B8B0 (1.5f)             // 1.5
 #define C_549D6C (orig::k_0_9f)             // 0.9
 
 // the listener block (written by 0x5342dc, from the map frame)

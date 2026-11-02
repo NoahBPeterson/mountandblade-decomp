@@ -30,7 +30,6 @@ __declspec(noinline) void quat_to_axis_angle(rgl::vector4* axis, float* angle, c
 
 
 extern unsigned __int64 g_bit[];                   // 0x5a8e68 g_bit[i] == 1 << i
-extern int g_use_slerp;                     // 0xa171dc
 
 // ---- key tables ------------------------------------------------------------------------------------------------
 // One table: values (vector4 or quaternion records), key array (ints), key count. KeyTable::find 0x423a50.

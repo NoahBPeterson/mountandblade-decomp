@@ -14,6 +14,7 @@
 #include <string.h>
 #include <string>
 #include "../last_scene.h"
+#include "../../include/clock_table.h"
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
@@ -35,21 +36,17 @@ extern char g_5e2a18[];     // 0x5e2a18 the string tables
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
 extern char g_5fe898[];     // 0x5fe898
-extern char g_5e2948[];     // 0x5e2948 the tick counter (64-bit)
 extern char g_a178f0[];     // 0xa178f0
 extern char g_a17900[];     // 0xa17900
 extern char g_a170d4[];     // 0xa170d4 the key state table (0x100 dwords)
 extern char g_a178d4[];     // 0xa178d4
 extern char g_a178e0[];     // 0xa178e0
-extern char g_a17910[];     // 0xa17910 the display state
-extern char g_a180e8[];     // 0xa180e8 the skeleton name vector (allocator, first, last, end)
 extern char g_a180f8[];     // 0xa180f8 module.ini settings (name, then the values)
 extern char g_a181f8[];     // 0xa181f8 the physics set (vector of E56)
 extern char g_a18238[];     // 0xa18238 module.ini (ini file: 0x1000 entries of 0x2c)
 extern char g_a44238[];     // 0xa44238 (end of its entries)
 extern char g_a44240[];     // 0xa44240 the game config (ini file)
 extern char g_a70240[];     // 0xa70240 (end of its entries)
-extern char g_a70248[];     // 0xa70248
 extern char g_a70260[];     // 0xa70260 the scene
 extern char g_a70440[];     // 0xa70440
 extern char g_a73300[];     // 0xa73300 the mission context
@@ -65,16 +62,13 @@ extern char g_a75ea0[];     // 0xa75ea0 the game strings
 extern char g_a75eb0[];     // 0xa75eb0 the scripts
 extern char g_a75f2c[];     // 0xa75f2c the presentations
 extern char g_a75f40[];     // 0xa75f40 the tableaus
-extern char g_a75f70[];     // 0xa75f70 0x2b item modifiers of 0x28
 extern char g_a76628[];     // 0xa76628
 extern char g_a76630[];     // 0xa76630 the terrain
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 extern char g_8ed4f58[];    // 0x8ed4f58 the meshes
 extern char g_8ed4f78[];    // 0x8ed4f78
 extern char g_8ed5090[];    // 0x8ed5090 the particle systems
-extern char g_8ed50c8[];    // 0x8ed50c8 the dialogs
 extern char g_8ee3120[];    // 0x8ee3120 0x2a records of 0x44 (three strings each, at -0x20, -0x10, 0)
-extern char g_8ee3c28[];    // 0x8ee3c28 the module path
 extern char g_8ee3c38[];    // 0x8ee3c38 the module name
 extern char g_8ee3c48[];    // 0x8ee3c48 the application
 extern char g_5aa128[];     // 0x5aa128 the sound manager
@@ -93,7 +87,6 @@ struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct LangTables { LangTables(); void release_strings(); };   // 0x4cda20, 0x4ca720
 struct GuiScreen { GuiScreen(); };                  // 0x4ebea0
 struct big_holder { void release(); };              // 0x4ca830
-struct DisplayState { DisplayState(); };            // 0x4bc2d0
 struct PhysSet { void reset(); };                   // 0x47dc50
 struct ini_file { ini_file(); };                    // 0x4c1be0
 namespace rgl { struct scene { scene(); ~scene(); }; }   // 0x429740, 0x41f4e0
@@ -112,7 +105,6 @@ struct ItemPage { void clear(); };                  // 0x4c6aa0
 struct world_obj { ~world_obj(); };                 // 0x4c4ee0
 struct BigArray { void destroy(); };                // 0x4eb810
 struct loaded_psys_table { void clear(); };         // 0x4c1f20
-struct scenefile_obj { ~scenefile_obj(); };         // 0x4c4090
 struct RecK { void* vec_del(unsigned flags); };     // 0x4318c0 (the vector deleting destructor)
 struct tstring_pair;
 struct elem48;
@@ -120,7 +112,6 @@ struct Core;
 struct NameVecRec;
 void __fastcall fn_4c2ea0(void* keys);              // 0x4c2ea0
 void* __fastcall conv_zero_node(void* p);           // 0x4c8c20
-void* __fastcall dialog_mgr_ctor(void* p);          // 0x4c2470
 void __fastcall destroy_tstring_pairs(tstring_pair** p);   // 0x4c4640
 void __fastcall destroy_elem48_array(elem48** p);   // 0x4c3f60
 void __fastcall core_dtor(Core* c);                 // 0x4bed90
@@ -136,8 +127,6 @@ void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (_
 void __cdecl static_dtor_548130() { ((resmgr*)g_5d6fa0)->~resmgr(); }
 // @ 0x548140
 void __cdecl static_dtor_548140() { ((gui_manager*)g_5d7080)->~gui_manager(); }
-// @ 0x548150
-void __cdecl static_dtor_548150() { ((tstring*)g_8ee3c28)->~tstring(); }
 // @ 0x548160
 void __cdecl static_dtor_548160() { ((tstring*)g_8ee3c38)->~tstring(); }
 // @ 0x548170
@@ -172,16 +161,6 @@ void __cdecl static_dtor_5481d0()
 void __cdecl static_dtor_548200() {}
 // @ 0x548210
 void __cdecl static_dtor_548210() {}
-// @ 0x548220
-void __cdecl static_dtor_548220()
-{
-    char* p = g_a76628;
-    for (int n = 0x2b; n; n--) {
-        p -= 0x28;
-        ((tstring*)(p + 0x10))->~tstring();
-        ((tstring*)p)->~tstring();
-    }
-}
 // @ 0x548250
 void __cdecl static_dtor_548250()
 {
@@ -262,8 +241,6 @@ void __cdecl static_dtor_5483c0()
 }
 // @ 0x5483e0
 void __cdecl static_dtor_5483e0() { destroy_elem48_array((elem48**)g_8ed4f58); }
-// @ 0x5483f0
-void __cdecl static_dtor_5483f0() { ((scenefile_obj*)g_8ed50c8)->~scenefile_obj(); }
 // @ 0x548400
 void __cdecl static_dtor_548400() { ((RefList*)g_a75f2c)->retire(); }
 // @ 0x548410
@@ -299,18 +276,6 @@ void __cdecl static_dtor_5484b0()
 void __cdecl static_dtor_548500() { ((TwoVec*)g_a75f40)->~TwoVec(); }
 // @ 0x548510
 void __cdecl static_dtor_548510() { ((BigArray*)g_8ed4f78)->destroy(); }
-// @ 0x548520   std::vector<NameVecRec>::~vector of the skeleton names
-void __cdecl static_dtor_548520()
-{
-    NameVecRec* first = AT(NameVecRec*, g_a180e8, 4);
-    if (first) {
-        destroy_range(first, AT(NameVecRec*, g_a180e8, 8));
-        operator delete(AT(void*, g_a180e8, 4));
-    }
-    AT(void*, g_a180e8, 4) = 0;
-    AT(void*, g_a180e8, 8) = 0;
-    AT(void*, g_a180e8, 0xc) = 0;
-}
 
 // ---- initializers, in the original table order -----------------------------------------------------------------
 // @ 0x5479a0
@@ -364,7 +329,7 @@ void __cdecl static_init_547b30() { new (g_5fe898) GuiScreen; atexit(static_dtor
 // @ 0x547b50   input state: both tick snapshots, the key table, the axes
 void __cdecl static_init_547b50()
 {
-    int lo = AT(int, g_5e2948, 0), hi = AT(int, g_5e2948, 4);
+    int lo = ((int*)g_ticks)[0], hi = ((int*)g_ticks)[1];
     AT(int, g_a178f0, 0) = lo;
     AT(int, g_a178f0, 4) = hi;
     AT(int, g_a17900, 0) = lo;
@@ -375,10 +340,6 @@ void __cdecl static_init_547b50()
     AT(int, g_a178d4, 0) = 0;
     AT(int, g_a178d4, 4) = 0;
 }
-// @ 0x547ba0
-void __cdecl static_init_547ba0() { new (g_a17910) DisplayState; }
-// @ 0x547bb0
-void __cdecl static_init_547bb0() { atexit(static_dtor_548520); }
 // @ 0x547bc0   module.ini settings: the defaults before module.ini is read
 void __cdecl static_init_547bc0()
 {
@@ -422,7 +383,6 @@ void __cdecl static_init_547dc0() { new (g_a44240) ini_file; atexit(static_dtor_
 void __cdecl static_init_547de0()
 {
     new (g_a70260) rgl::scene;
-    AT(int, g_a70248, 0) = 0;  AT(int, g_a70248, 4) = 0;  AT(int, g_a70248, 8) = 0;  AT(int, g_a70248, 0xc) = 0;
     g_a70438 = 0;
     atexit(static_dtor_548490);
 }
@@ -455,16 +415,6 @@ void __cdecl static_init_547f10() { new (g_a75eb0) rec_table; atexit(static_dtor
 void __cdecl static_init_547f30() { new (g_a75f2c) rec_table; atexit(static_dtor_548400); }
 // @ 0x547f50
 void __cdecl static_init_547f50() { atexit(static_dtor_548500); }
-// @ 0x547f60
-void __cdecl static_init_547f60()
-{
-    char* p = g_a75f70;
-    for (int n = 0x2b; n; n--, p += 0x28) {
-        new (p) tstring;
-        new (p + 0x10) tstring;
-    }
-    atexit(static_dtor_548220);
-}
 // @ 0x547fa0
 void __cdecl static_init_547fa0() { atexit(static_dtor_548340); }
 // @ 0x547fb0
@@ -483,8 +433,6 @@ void __cdecl static_init_548010() { new (g_8ed4f58) rec_table; atexit(static_dto
 void __cdecl static_init_548030() { atexit(static_dtor_548510); }
 // @ 0x548040
 void __cdecl static_init_548040() { atexit(static_dtor_548350); }
-// @ 0x548050
-void __cdecl static_init_548050() { dialog_mgr_ctor(g_8ed50c8); atexit(static_dtor_5483f0); }
 // @ 0x548070
 void __cdecl static_init_548070()
 {
@@ -496,8 +444,6 @@ void __cdecl static_init_548070()
     }
     atexit(static_dtor_548270);
 }
-// @ 0x5480b0
-void __cdecl static_init_5480b0() { new (g_8ee3c28) tstring; atexit(static_dtor_548150); }
 // @ 0x5480d0
 void __cdecl static_init_5480d0() { new (g_8ee3c38) tstring; atexit(static_dtor_548160); }
 // @ 0x5480f0
@@ -512,12 +458,12 @@ init_fn g_static_init_table[] = {
     static_init_5479a0, static_init_5479c0, static_init_5479e0, static_init_5479f0, static_init_547a00,
     static_init_547a20, static_init_547a30, static_init_547a40, static_init_547a50, static_init_547a60,
     static_init_547a80, static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
-    static_init_547ba0, static_init_547bb0, static_init_547bc0, static_init_547d80, static_init_547da0,
+    static_init_547bc0, static_init_547d80, static_init_547da0,
     static_init_547dc0, static_init_547de0, static_init_547e20, static_init_547e40, static_init_547e60,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
-    static_init_547f30, static_init_547f50, static_init_547f60, static_init_547fa0, static_init_547fb0,
+    static_init_547f30, static_init_547f50, static_init_547fa0, static_init_547fb0,
     static_init_547fc0, static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,
-    static_init_548050, static_init_548070, static_init_5480b0, static_init_5480d0, static_init_5480f0,
+    static_init_548070, static_init_5480d0, static_init_5480f0,
     static_init_548110,
 };
 #pragma data_seg()

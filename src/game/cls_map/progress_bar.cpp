@@ -82,6 +82,7 @@ void progress_bar::update()
 // the whole-class instantiation below also emits vector(n) / resize(n), which default-construct one; they reach the record's
 // constructor (0x4d3640, the one definition: options_panel/ragdoll_models.cpp) through this forwarder.
 #include "../model_b.h"
+#include "../../include/render_flags.h"
 inline loading_config::loading_config() { new ((void*)this) model_b; }
 template class std::vector<E50>;
 template class std::vector<E68>;
@@ -98,7 +99,6 @@ struct gui_view { void set_view(const float* v); };                             
 extern const float g_half_ratio;                // 0x549d78
 extern const float g_ratio_a;                   // 0x597fec
 extern const float g_ratio_b;                   // 0x597fe8
-extern const float g_pad_out;                   // 0x590cd0
 extern const float g_pad_in;                    // 0x54a6f0
 
 // @ 0x4e43e0
@@ -150,8 +150,8 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     float h = hi.y - lo.y;
     float sz[2];
     float at[2];
-    sz[0] = w + g_pad_out;
-    sz[1] = h + g_pad_out;
+    sz[0] = w + 0.02f;
+    sz[1] = h + 0.02f;
     at[0] = lo.x - g_pad_in;
     at[1] = lo.y - g_pad_in;
     ((FrameGui*)self)->set_rect(at, sz);
@@ -1242,7 +1242,6 @@ void MapLoader::read(SlotReader* stream)
 }
 
 // ---- 0x4e85d0 / 0x4e8720: MapScreen::init and MapScreen::frame_step ------------------------------------------------------------------------
-extern int      g_use_shaders;                  // 0x5e28fc
 extern unsigned g_mask_w;                       // 0x5a8e78
 extern unsigned g_a76644;                       // 0xa76644
 extern float    g_chunk_scale;                  // 0x549d68

@@ -1,4 +1,5 @@
 #include "./dust.h"
+#include "../../include/render_flags.h"
 
 // @ 0x4f3e10
 void DustTerrain::update_particles(const matrix* view)

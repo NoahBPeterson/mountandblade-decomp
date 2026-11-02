@@ -116,7 +116,6 @@ extern SkillRow g_skill_rows[];                     // 0x8ee3110
 
 // ---- objects and functions of other translation units --------------------------------------------------------------
 extern char g_ui_changed;                           // 0x5d8788 (set to 1 whenever a window was installed)
-extern float g_hero_wounded_treshold;                     // 0xa18138
 extern float g_player_wounded_treshold;                   // 0xa1813c
 extern int g_item_sel;                              // 0xa75f6c (the selected item index; negative = nothing selected)
 extern ObjTable g_tableaus;                          // 0xa75f40

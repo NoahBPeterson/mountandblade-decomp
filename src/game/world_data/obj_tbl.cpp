@@ -16,6 +16,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../include/mesh_parts.h"
 #include "../../include/mesh_prims.h"
+#include "../../include/render_flags.h"
 
 // the mesh widget (MissionUi-derived, vtable 0x5922e8, 0x178 bytes): the slots the factories call
 struct MeshWidgetVt {

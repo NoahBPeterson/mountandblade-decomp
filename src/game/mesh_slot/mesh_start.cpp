@@ -55,11 +55,6 @@ struct resmgr {
 struct resource_manager {
     skin* get_material(const rgl::string& name);   // 0x418a70 (src/rgl/resource.h)
 };
-struct ShadowMap {                                           // terrain_a/game_state.h, terrain_b/shadow_map.h
-    void attach_camera(CellGrid* c);                         // 0x4711e0
-    void extend(const vector4* p);                           // 0x468c20
-    void fit_bounds();                                       // 0x463cc0
-};
 struct ShadowMapP {
     void render();   // 0x47fef0 (mesh_char.cpp)
 };
@@ -105,9 +100,15 @@ float __cdecl frand();                                       // 0x40e400
 void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out);   // 0x414fc0
 
 #include "../tstring.h"
-extern tstring g_tstr;                                       // 0x8ed4db4
 
 #include "../../include/rec1c8.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_snd_count;                                    // 0x5e29ec
+vector4 g_world_color[2];                           // 0x8eb235c (the scene colour and the first light colour, set by the mission start)
+tstring g_tstr;                                     // 0x8ed4db4
+unsigned g_rand_seed;                               // 0x5d7078
+
 struct Rec1c8Vec {                                              // std::vector<Rec1c8> (allocator lane at +0)
     int alloc; Rec1c8* first; Rec1c8* last; Rec1c8* end;
     Rec1c8Vec& operator=(const Rec1c8Vec& o);                      // 0x477160
@@ -127,6 +128,10 @@ struct Mesh : Raw {                                          // rgl::mesh, 0x260
     void scale(float s) { ((rgl::mesh*)this)->scale(s); }    // 0x44f0c0
 };
 #include "../emit.h"
+#include "../ptype.h"
+#include "../../include/render_flags.h"
+#include "../config/config_block.h"
+#include "../shadow_map.h"
 
 
 struct Entity : Raw {                                        // scene entity (vtable object)
@@ -183,7 +188,6 @@ struct Psys {
     void fit_bounds() { ((ShadowMap*)this)->fit_bounds(); }                              // 0x463cc0
     void render() { ((ShadowMapP*)this)->render(); }                                    // 0x47fef0
 };
-extern Psys g_shadow_map;                                          // 0xa70248
 struct ResMgr {
     Mesh* get_object(const tstring& name) { return (Mesh*)((::resmgr*)this)->get_object((const rgl::string*)&name); }     // 0x419540
     Mesh* get_object(void* name) { return (Mesh*)((::resmgr*)this)->get_object((const rgl::string*)name); }
@@ -229,7 +233,6 @@ struct log_stream : log_base {
     virtual log_base& w_cstr(const char* s);
 };
 extern log_stream g_log;                                     // 0x5a9f60
-extern vector4 g_emit_pos[2];                                // 0x8eb235c
 
 struct SceneObjRec : Raw { char b[0x88]; };
 struct SceneObjs { char pad0[0x14]; SceneObjRec* first; SceneObjRec* last; };    // g_level +0xb0
@@ -254,17 +257,11 @@ struct SceneSlot {                                                // 0x130 bytes
 extern ModeRec*   g_mission_templates;        // 0x5e2a00  mode table (0x58-byte records)
 static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)((char*)m + 0x4c); }   // the sound bank at mode record +0x4c
 extern SndRec*    g_env_rows;          // 0x5e28f4  sound slot records (0x4c bytes)
-extern int        g_snd_count;    // 0x5e29ec
-extern char*      g_ptypes;          // 0x5e28f8  ground-spec records, 0x20 bytes each, name tstring at +0 (ptype.h)
-extern int        g_ptype_count;    // 0x5e29e8
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../prop_kind.h"
-extern int        g_use_shaders;   // 0x5e28fc
 extern char g_script[]; // 0xa70440
 extern Scene*     g_level;        // 0xa732b4
-extern char g_cfg[]; // 0x5a9f98
 extern unsigned __int64 g_bit[]; // 0x5a8e68
-extern unsigned   g_rand_seed;    // 0x5d7078
 
 #include "../mission.h"
 
@@ -615,11 +612,11 @@ void Mission::start_setup()
         Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
             PropKind* k = &g_propkinds[RAWAT(int, p, 0x18c)];
-            v.x = (RAWAT(float, p, 0x28) * k->f5c + RAWAT(float, p, 0x38) * k->f60 +
+            v.x = (RAWAT(float, p, 0x28) * k->f5c + RAWAT(float, p, 0x38) * k->fx60 +
                    RAWAT(float, p, 0x18) * k->f58) + RAWAT(float, p, 0x48);
-            v.y = (RAWAT(float, p, 0x2c) * k->f5c + RAWAT(float, p, 0x3c) * k->f60 +
+            v.y = (RAWAT(float, p, 0x2c) * k->f5c + RAWAT(float, p, 0x3c) * k->fx60 +
                    RAWAT(float, p, 0x1c) * k->f58) + RAWAT(float, p, 0x4c);
-            v.z = (RAWAT(float, p, 0x30) * k->f5c + RAWAT(float, p, 0x40) * k->f60 +
+            v.z = (RAWAT(float, p, 0x30) * k->f5c + RAWAT(float, p, 0x40) * k->fx60 +
                    RAWAT(float, p, 0x20) * k->f58) + RAWAT(float, p, 0x50);
             vector4 hi = v;
             v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
@@ -634,11 +631,11 @@ void Mission::start_setup()
         Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
             PropKind* k = &g_propkinds[RAWAT(int, p, 0x18c)];
-            v.x = (RAWAT(float, p, 0x38) * k->f60 + RAWAT(float, p, 0x28) * k->f5c +
+            v.x = (RAWAT(float, p, 0x38) * k->fx60 + RAWAT(float, p, 0x28) * k->f5c +
                    RAWAT(float, p, 0x18) * k->f58) + RAWAT(float, p, 0x48);
-            v.y = (RAWAT(float, p, 0x1c) * k->f58 + RAWAT(float, p, 0x3c) * k->f60 +
+            v.y = (RAWAT(float, p, 0x1c) * k->f58 + RAWAT(float, p, 0x3c) * k->fx60 +
                    RAWAT(float, p, 0x2c) * k->f5c) + RAWAT(float, p, 0x4c);
-            v.z = (RAWAT(float, p, 0x20) * k->f58 + RAWAT(float, p, 0x40) * k->f60 +
+            v.z = (RAWAT(float, p, 0x20) * k->f58 + RAWAT(float, p, 0x40) * k->fx60 +
                    RAWAT(float, p, 0x30) * k->f5c) + RAWAT(float, p, 0x50);
             vector4 hi = v;
             v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
@@ -681,8 +678,8 @@ void Mission::start_setup()
 
     // ---- terrain generate / interior ----------------------------------------------------------
     if (LV.flags.b8) {
-        g_emit_pos[0] = at<World*>(0)->color;
-        g_emit_pos[1] = *(vector4*)(at<char*>(0x65b0) + 4);
+        g_world_color[0] = at<World*>(0)->color;
+        g_world_color[1] = *(vector4*)(at<char*>(0x65b0) + 4);
         Streamer* s414 = (Streamer*)((char*)lrec + 0x414);
         char flagc = 1;
         s414->v1();
@@ -797,7 +794,7 @@ void Mission::start_setup()
         if ((*(int*)((char*)&g_cfg + 0x18)) == 0 && RAWAT(int, p, 0x188) == 4 && LV.flags.b8) {
             int j;
             for (j = 0; j < g_ptype_count; j++)
-                if (((tstring*)(g_ptypes + j * 0x20))->equals(RAWAT(tstring, p, 0x190)))   // 0x4866c0: add esi, 0x20
+                if (g_ptypes[j].name.equals(RAWAT(tstring, p, 0x190)))   // 0x4866c0: add esi, 0x20
                     goto found;
             j = 0;
         found:
@@ -830,8 +827,8 @@ void Mission::start_setup()
         at<Entity*>(0x65b8) = fx;
         u.x = 0.0f; u.y = 0.0f; u.z = 30.0f;
         fx->at<vector4>(0x88) = u;
-        float far = 1.0e7f;
-        at<Entity*>(0x65b8)->v6(&far);
+        float far_clip = 1.0e7f;
+        at<Entity*>(0x65b8)->v6(&far_clip);
         matrix mx;
         u.x = 0.0f; u.y = 0.0f; u.z = 0.0f;
         *(mat3*)&mx.r[0] = *identity3(&tmp);
@@ -1055,11 +1052,11 @@ void Mission::start_setup()
         if (f3.b8) {
             g_terrain.destroy_water(&at<char>(0x63c0));
         } else if (!f3.b0 && g_use_shaders) {
-            g_shadow_map.attach_camera(at<World*>(0));
+            ((Psys*)&g_shadow_map)->attach_camera(at<World*>(0));
             for (unsigned i = 0; i < RAWAT(BodyVec*, at<World*>(0), 0xb0)->size(); i++)
-                g_shadow_map.extend(&RAWAT(BodyVec*, at<World*>(0), 0xb0)->first[i]);
-            g_shadow_map.fit_bounds();
-            g_shadow_map.render();
+                ((Psys*)&g_shadow_map)->extend(&RAWAT(BodyVec*, at<World*>(0), 0xb0)->first[i]);
+            ((Psys*)&g_shadow_map)->fit_bounds();
+            ((Psys*)&g_shadow_map)->render();
         }
     }
     ((log_base&)g_log).w_cstr("end_setup");

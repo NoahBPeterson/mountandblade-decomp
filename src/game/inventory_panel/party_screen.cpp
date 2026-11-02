@@ -19,6 +19,7 @@
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_item_sel;                                  // 0xa75f6c (the selected item index; negative = nothing selected)
 
+#include "../game_globals.h"
 
 extern tstring g_module_name;                       // 0x8ee3c38 (end of the skill table)
 extern int g_skill_clamp;                  // 0x8ee3ac4

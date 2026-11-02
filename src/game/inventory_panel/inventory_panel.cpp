@@ -47,7 +47,6 @@ extern float g_ui_alpha;                                // 0x5d7094
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
 extern int   g_disable_food_slot;                               // 0xa181a8
 extern tstring g_num;                                   // 0xa70464
-extern char  g_skill_tbl[];                           // 0x8ee3100 (skill records of 0x44 bytes)
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 int round_float(float* v);                              // 0x432540
 void item_events(int item_no, int* a, int* b, int* c);  // 0x4ef730
@@ -65,19 +64,15 @@ struct SkillNames {                                     // a skill record seen f
 };
 
 // modifier record, 0x28 bytes (array at 0xa75f70): format string, translation key, value weight
-struct Modifier {
-    tstring fmt;                                        // +0
-    tstring key;                                        // +0x10
-    float weight;                                       // +0x20
-    char pad24[0x4];
-};
-extern Modifier g_item_modifiers[];                          // 0xa75f70
+#include "../../include/item_mod.h"                  // item_mod, g_item_mods (0xa75f70)
 
 // script emitter record (0x34 bytes, array pointer at 0xa75eb0, parallel index array at 0xa75ebc)
 #include "../emitter_rec.h"
 #include "../main_menu.h"
 #include "../ui/named_rec.h"      // NamedRec::setup2 0x48a3d0 (main_menu::ask is the same function)      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config/config.h"
+#include "../slot.h"
+#include "../skill_cap.h"
 
 // @ 0x50fe20
 void InventoryPanel::refresh_transaction(int unused)
@@ -701,7 +696,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
                 if (c >= 0)
                     weapon_class_caption(c, need);
             } else {
-                SkillNames* sk = (SkillNames*)(g_skill_tbl + b * 0x44);
+                SkillNames* sk = (SkillNames*)&g_skill_tbl[b];
                 const tstring* name = g_strtable.find(&sk->f20);
                 if (!name)
                     name = &sk->f10;
@@ -788,7 +783,7 @@ void ItemRef::name(char* out)
     nm.underscores_to_spaces();
     if (mod != 0) {
         const char* s = nm.c_str();
-        Modifier* m = &g_item_modifiers[mod];
+        item_mod* m = &g_item_mods[mod];
         tstring* mk = g_strtable.find(&m->key);
         const char* fmt = (mk ? mk : (tstring*)m)->c_str();
         _snprintf(out, 0x80, fmt, s);

@@ -4,6 +4,7 @@
 // the function needs. vtbl_*: a vtable in .rdata (named for its class where one is known).
 #ifndef IMAGE_ADDRS_H
 #define IMAGE_ADDRS_H
+#include "render_flags.h"
 
 struct AnimDefV;
 struct Config;
@@ -12,7 +13,6 @@ struct ItemKind;
 struct MapFlags;
 struct Mission;
 struct MissionCtx;
-struct PropKind;
 struct ShadowMap;
 struct SoundMgr;
 struct StrTable;
@@ -41,12 +41,10 @@ extern const double g_day_period;          // 0x54a5d8
 extern const float k_1em05f;               // 0x54a6d0
 extern const float g_three;                // 0x54a710
 extern const float k_100f;                 // 0x54ab28
-extern const char g_rgl_name[];                        // 0x54b048
 extern const float k_0_39f;                // 0x54b3b0
 extern const float k_0_4f;                 // 0x54b3b8
 extern const float k_0_05f;                // 0x54b4d0
 extern const float k_1_1f;                 // 0x54b888
-extern const float k_1_5f;                 // 0x54b8b0
 extern const float k_0_03f;                // 0x54b8b4
 extern const float k_9_8f;                 // 0x590af0
 extern const float k_300f;                 // 0x590b20
@@ -58,12 +56,9 @@ extern const float k_1_6f;                 // 0x590c48
 extern const float k_0_08f;                // 0x590c74
 extern const float k_0_002f;               // 0x590c78
 extern const float k_1_25f;                // 0x590c80
-extern const float k_0_02f;                // 0x590cd0
 extern const float k_0_0005f;              // 0x590d7c
 extern const float k_3_5f;                 // 0x590d8c
-extern const float k_0_23f;                // 0x590e68
 extern const float k_0_014f;               // 0x590f7c
-extern const float k_1_7f;                 // 0x590fa4
 extern const float k_75f;                  // 0x5910fc
 extern const float k_0_98f;                // 0x5911d8
 extern const float k_m10f;                 // 0x5915a0
@@ -84,8 +79,6 @@ extern const float k_105f;                 // 0x598690
 extern const char str_plants[];                        // 0x5999ac
 extern const char str_item_kinds[];                    // 0x5999b4
 extern const char str_scene_props[];                   // 0x5999c0
-extern const float k_0_00105f;             // 0x59c268
-extern unsigned __int64 g_bit[];                             // 0x5a8e68
 extern const char str_m[];                             // 0x5a9c3c
 extern const char str_mount_and_blade[];               // 0x5a9c54
 extern text_stream g_log;                  // 0x5a9f60
@@ -96,7 +89,6 @@ extern int g_sound_muted;                  // 0x5a9fd8
 extern int g_iWindowWidth;                 // 0x5a9fe4
 extern int g_iWindowHeight;                // 0x5a9fe8
 extern int g_shadow_quality_req;           // 0x5aa004
-extern options_record g_options;           // 0x5aa008
 extern float g_music_volume;               // 0x5aa010
 extern float g_master_volume;              // 0x5aa014
 extern float g_exp_arg;                    // 0x5aa018
@@ -137,31 +129,21 @@ extern gui_manager g_gui_mgr;                  // 0x5d7080
 extern float g_mouse_x;                    // 0x5d7094
 extern float g_mouse_y;                    // 0x5d7098
 extern int g_mission_clock;                // 0x5d8790
-extern ptype* g_ptypes;                    // 0x5e28f8
-extern int g_use_shaders;                  // 0x5e28fc
 extern MapFlags g_map_flags;               // 0x5e291c
 extern Mission* g_mission;                 // 0x5e292c
 extern int g_trial_mode;                   // 0x5e29c4
 extern ItemKind* g_items;                  // 0x5e29d0
 extern int g_item_kind_count;              // 0x5e29d4
-extern PropKind* g_propkinds;              // 0x5e29dc
 extern int g_propkind_count;               // 0x5e29e0
-extern int g_ptype_count;                  // 0x5e29e8
 extern StrTable g_strtable;                // 0x5e2a18
 extern render_batch g_batch;               // 0x5fe898
-extern InputSet g_input_a;                 // 0xa170c8
-extern void* g_a17110;                     // 0xa17110
 extern int g_a1711c;                       // 0xa1711c
 extern int g_a17454;                       // 0xa17454
-extern void* g_a17510;                     // 0xa17510
 extern int g_a1751c;                       // 0xa1751c
 extern int g_a17854;                       // 0xa17854
-extern renderer g_render;                  // 0xa17910
-extern char g_use_hw_shadow;               // 0xa17f24
 extern int g_works_with_version_min;       // 0xa181c8
 extern int g_works_with_version_max;       // 0xa181cc
 extern ini_file g_module_info;             // 0xa18238
-extern ShadowMap g_shadow_map;             // 0xa70248
 extern MissionCtx g_mission_ctx;           // 0xa73300
 extern int g_a73304[];                          // 0xa73304
 extern main_menu g_main_menu_obj;              // 0xa73980

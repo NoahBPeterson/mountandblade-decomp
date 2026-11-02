@@ -25,7 +25,6 @@
 #include "../mesh_slot/mesh_slot.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-extern float g_scene_rate;                          // 0x59bfec (rdata: scales the byte at +0xa6 of a party record)
 
 // @ 0x51eb90
 void Scene::read(stream_base* s, int flag)
@@ -174,22 +173,17 @@ void PartyRecIO::read(stream_base* s, int flag)
         for (int i = 0; i < n3; i++)
             s->r_i64(slots->_Myfirst + i);
     } else {
-        *(float*)(data + 0x78) = (float)*(unsigned char*)(data + 0xa6) * g_scene_rate;
+        *(float*)(data + 0x78) = (float)*(unsigned char*)(data + 0xa6) * 0.033333335f;
     }
 }
 
 // the globals the start-up resets (the spawn / slider block at 0xa70440 and the free list behind it)
 extern int g_script;                                // 0xa70440
-extern int g_spawn_hi;                              // 0xa7044c
-extern int g_a70454;                                // 0xa70454
-extern void* g_a70484;                              // 0xa70484
-extern void* g_a70488;                              // 0xa70488
-extern void* g_a7048c;                              // 0xa7048c
 extern void* g_windows[];                         // 0xa73980 (30 menu pointers)
 
 static inline int clamp_rank(int v)
 {
-    return v < 0 ? 0 : (v > g_skill_tbl[36].cap ? g_skill_tbl[36].cap : v);
+    return v < 0 ? 0 : (v > g_skill_tbl[36].max_rank ? g_skill_tbl[36].max_rank : v);
 }
 
 // @ 0x51f1a0
@@ -204,18 +198,18 @@ void Game::start_new_game()
     (*(int*)((char*)&g_script + 0x34)) = -1;                                  // 0xa70474
     (*(int*)((char*)&g_script + 0x38)) = 0;                                   // 0xa70478
     (*(int*)((char*)&g_script + 0x3c)) = -1;                                  // 0xa7047c
-    g_spawn_hi = -1;                                // 0xa7044c
-    g_a70454 = -1;                                  // 0xa70454
+    (*(int*)((char*)&g_script + 0xc)) = -1;                                // 0xa7044c
+    (*(int*)((char*)&g_script + 0x14)) = -1;                                  // 0xa70454
     (*(int*)((char*)&g_script + 0x18)) = 0;                                   // 0xa70458
     (*(int*)((char*)&g_script + 0x1c)) = 0;                                   // 0xa7045c
     (*(int*)((char*)&g_script + 0x20)) = 100;                                 // 0xa70460
-    if (g_a70484)
-        operator delete(g_a70484);
-    g_a70484 = 0;
-    g_a70488 = 0;
-    g_a7048c = 0;
+    if ((*(void**)((char*)&g_script + 0x44)))
+        operator delete((*(void**)((char*)&g_script + 0x44)));
+    (*(void**)((char*)&g_script + 0x44)) = 0;
+    (*(void**)((char*)&g_script + 0x48)) = 0;
+    (*(void**)((char*)&g_script + 0x4c)) = 0;
 
-    g_ticks[1] = (__int64)g_start_time;
+    g_ticks[1] = (__int64)600000.0f;
 
     ((snd_bank*)&triggers)->randomize();            // 0x462790 (the sound bank sits at +0x139e8)
     simple.arm();                                   // 0x51f7c0
@@ -289,12 +283,12 @@ void Game::start_new_game()
     ((tstring*)&TROOP(cur_troop))[0] = "";
 
     if (g_cfg.skip_tutorial != 0) {
-        int a1 = g_skill_tbl[1].cap < 3 ? g_skill_tbl[1].cap : 3;
+        int a1 = g_skill_tbl[1].max_rank < 3 ? g_skill_tbl[1].max_rank : 3;
         ((NibWord*)&TROOP(cur_troop).nib[0])->n1 = a1;
         int y = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
         if ((float)y < TROOP(cur_troop).hp)
             TROOP(cur_troop).hp = (float)(TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2);
-        int a2 = g_skill_tbl[2].cap < 2 ? g_skill_tbl[2].cap : 2;
+        int a2 = g_skill_tbl[2].max_rank < 2 ? g_skill_tbl[2].max_rank : 2;
         ((NibWord*)&TROOP(cur_troop).nib[0])->n2 = a2;
         int z = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
         if ((float)z < TROOP(cur_troop).hp)
@@ -339,7 +333,7 @@ static __forceinline int slot_cap(ItemRef* s)
         return 0;
     int v = g_items[s->item].f210;
     if (v != 0 && (s->m4 & 0xff000000) == 0x2a000000) {
-        float f = (float)v * g_inv_gain;
+        float f = (float)v * 0.13f;
         double d = floor(f);                        // 0x536b10
         int q = (int)d;
         if (f - d > g_half)
@@ -555,7 +549,7 @@ static __forceinline int get_skill(TroopRec* t, T i)
     int v = (t->nib[i / 8] >> ((i % 8) * 4)) & 0xf;
     if (v < 0)
         return 0;
-    int cap = g_skill_tbl[i].cap;
+    int cap = g_skill_tbl[i].max_rank;
     if (v > cap)
         return cap;
     return v;
@@ -593,7 +587,7 @@ void TroopRec::raise_skills()
     int n = 0;
     for (;;) {
         int s = rand() % 0x2a;                      // 0x536a9f
-        if (fa4 < 1 || get_skill(this, s) >= g_skill_tbl[s].cap) {
+        if (fa4 < 1 || get_skill(this, s) >= g_skill_tbl[s].max_rank) {
             if (fa4 <= 0 || ++n > 10000)
                 break;
             continue;

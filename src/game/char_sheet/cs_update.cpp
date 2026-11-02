@@ -6,6 +6,7 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../key_names.h"
+#include "../slot.h"
 
 // @ 0x4eeb10 -------------------------------------------------------------------------------
 // The click handling of the rows is `selected |= press on either button` / `released |= release on either`;
@@ -50,8 +51,8 @@ void CharSheet::update(float dt)
                 int rank = (int)((unsigned)((int*)tb)[troop * 0x142 + id / 8 + 0x1a] >> (id % 8 * 4)) & 0xf;
                 if (rank < 0)
                     rank = 0;
-                else if (rank > g_skill_tbl[id].cap)
-                    rank = g_skill_tbl[id].cap;
+                else if (rank > g_skill_tbl[id].max_rank)
+                    rank = g_skill_tbl[id].max_rank;
                 tb[troop].set_skill(id, rank + 1);
                 g_game->chars[f_14].skill_points--;
                 f_4d4 = 1;
@@ -199,7 +200,7 @@ void CharSheet::update(float dt)
         } else {
             if (g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0)
                 return;
-            if (g_a17188 != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
+            if (g_keyboard.key[45] != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
                 WL_MARKER(12)
                 if (g_trial_mode != 0) {
                     g_game->add_experience(f_14, 1000);

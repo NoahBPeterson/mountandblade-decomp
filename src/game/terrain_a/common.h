@@ -16,7 +16,6 @@ struct s516 { int a[129]; };               // 0x204: vec516::size 0x467b20
 typedef bool (*Pr8)(const E8&, const E8&);
 
 // ---- engine globals ---------------------------------------------------------------------------------------------
-extern __int64 g_ticks[];                   // 0x5e2948 clock table, 1e-5 s ticks (indexed by a clock id)
 extern float g_step_tbl[];                  // 0x5a9c20 per-clock step (seconds)
 
 // cdecl helpers of earlier objects

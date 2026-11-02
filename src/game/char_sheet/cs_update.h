@@ -36,7 +36,6 @@ typedef UiVt UiWidget;                              // widget pointers point at 
 
 // skill table at 0x8ee3100, stride 0x44; the max rank of a skill is at +0x34
 #include "../skill_cap.h"
-extern SkillCap g_skill_tbl[];                      // 0x8ee3100
 
 // the character portrait: its face-page visibility check and the name buffer at +0x128
 struct Portrait {
@@ -86,7 +85,6 @@ extern "C" {
 extern int* g_menu_state;                           // 0xa739f4 (menu data, +0x14/+0x18 fields)
 extern int* g_army_state;                           // 0xa739e0
 extern int g_a17118;                                // 0xa17118
-extern int g_a17188;                                // 0xa17188
 extern int g_a17518;                                // 0xa17518
 extern int g_a17588;                                // 0xa17588
 extern int g_a5a9fbc;                               // 0x5a9fbc

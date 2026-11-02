@@ -126,7 +126,6 @@ extern int g_no_cam;                                    // 0x5a9fb0
 extern float g_dummy_mat;                               // 0x8ed4f8c
 extern float g_dummy0;                                  // 0x8ed5088
 extern float g_dummy1;                                  // 0x8ed508c
-extern int g_char_count;                                // 0x8ed4f88
 extern float g_k0_01;                                   // 0x54a6f0 = 0.01f
 extern float g_fov_k;                                   // 0x5e20a8
 extern const double g_tan_ang;                          // 0x598e90

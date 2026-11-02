@@ -92,7 +92,6 @@ extern resmgr g_resmgr;                                     // 0x5d6fa0
 // ---- the global animator ---------------------------------------------------------------------------------
 #include "../animator.h"                                  // Animator, g_anim
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-extern int g_skin_count;                                    // 0x8ed4f88
 int clamp_index(int* skin, int* flags, int* count);       // 0x432510
 
 // ---- the game singleton ----------------------------------------------------------------------------------
@@ -223,7 +222,7 @@ void char_window::open_view()
             char* rec = g_game->chars_c + troop * 0x508;
             int skin = *(int*)(rec + 0x30) & 0xf;
             int flags = 0;
-            g_anim.cur = clamp_index(&skin, &flags, &g_skin_count);
+            g_anim.cur = clamp_index(&skin, &flags, &g_anim.char_count);
             g_anim.unpack(rec + 0x3c0);
             void* ra = 0;
             void* rb = 0;

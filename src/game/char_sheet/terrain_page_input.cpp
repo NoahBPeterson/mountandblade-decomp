@@ -3,6 +3,7 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../key_names.h"
+#include "../../include/render_flags.h"
 
 // @ 0x4f3570
 void TerrainPage::read_fields()

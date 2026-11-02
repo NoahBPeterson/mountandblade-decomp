@@ -51,11 +51,11 @@ extern const int g_mask_w[1];                               // 0x5a8e78 (= 2: th
 extern const int g_type_mask[1];                            // 0x5a8e88 (= 4: the terrain type is 4 bits wide)
 #include "../bit_words.h"
 
-extern int g_use_shaders;                                          // 0x5e28fc (shaders on)
 extern int g_size_modes[8];                                 // 0x59394c terrain-size mode table (only [0] is ours)
 
 // ---- the page: src/game/terrain_page.h ------------------------------------------------------------------
 #include "../terrain_page.h"
+#include "../../include/render_flags.h"
 
 void format_hex(unsigned v, char* out);                     // 0x4f2a10 (argument order recovered from the codegen)
 void read_fields(TerrainPage* p);                               // 0x4f3570

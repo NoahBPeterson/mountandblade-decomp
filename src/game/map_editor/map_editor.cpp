@@ -22,6 +22,7 @@
 #include "../main_menu.h"
 extern MapEditorDialog g_editor_dialog;          // 0x8ee3c48 (the application object seen as the map editor dialog)
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../slot.h"
 
 struct skin_owner;
 void __stdcall select_entity(rgl::mesh* m, skin_owner* o, unsigned color);   // 0x4ea0c0 (char_sheet/save_panel.cpp)

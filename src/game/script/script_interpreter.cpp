@@ -54,6 +54,7 @@
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 TriggerResult g_trigger_result;   // 0xa70458
 
+#include "../animator.h"
 
 // ==== by-reference helpers with their bodies in this object ================================================
 // The original's interpreter sees these bodies (header inlines its inliner left out of line in the 70 KB execute()):
@@ -577,11 +578,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::key_is_down:
         if (IN_RANGE(params[0], 0, 0x100))
-            result = g_keyboard.down[(int)params[0]] != 0;
+            result = g_keyboard.key[(int)params[0]] != 0;
         break;
     case op::key_clicked:
         if (IN_RANGE(params[0], 0, 0x100))
-            result = (char)((Slot*)&g_keyboard)->is_ready((int)params[0]);   // 0x487900
+            result = (char)g_keyboard.is_ready((int)params[0]);   // 0x487900
         break;
     case op::game_key_is_down:
         if (IN_RANGE(params[0], 0, 0x25))
@@ -650,13 +651,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::party_can_join:
-        if (g_encountered_party < 0 || !game()->can_transfer(g_encountered_party, game()->main_party, 0))
+        if (g_dialogs.f10 < 0 || !game()->can_transfer(g_dialogs.f10, game()->main_party, 0))
             result = 0;
         else
             result = 1;
         break;
     case op::party_can_join_as_prisoner:
-        if (g_encountered_party < 0 || !game()->can_transfer(g_encountered_party, game()->main_party, 1))
+        if (g_dialogs.f10 < 0 || !game()->can_transfer(g_dialogs.f10, game()->main_party, 1))
             result = 0;
         else
             result = 1;
@@ -1460,7 +1461,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
             quest((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
             quest((int)params[0])->notes[(int)params[1]].append(tstring(": "));
-            quest((int)params[0])->notes[(int)params[1]].append(g_dialogs.get_name());
+            quest((int)params[0])->notes[(int)params[1]].append(((DialogMgrX&)g_dialogs).get_name());
             quest((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
         }
         break;
@@ -1475,7 +1476,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
             troop((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
             troop((int)params[0])->notes[(int)params[1]].append(tstring(": "));
-            troop((int)params[0])->notes[(int)params[1]].append(g_dialogs.get_name());
+            troop((int)params[0])->notes[(int)params[1]].append(((DialogMgrX&)g_dialogs).get_name());
             troop((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
         }
         break;
@@ -1483,7 +1484,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_faction((int)params[0]) && params[1] < 8) {
             faction((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
             faction((int)params[0])->notes[(int)params[1]].append(tstring(": "));
-            faction((int)params[0])->notes[(int)params[1]].append(g_dialogs.get_name());
+            faction((int)params[0])->notes[(int)params[1]].append(((DialogMgrX&)g_dialogs).get_name());
             faction((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
         }
         break;
@@ -1491,7 +1492,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_party((int)params[0]) && params[1] < 8) {
             party((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
             party((int)params[0])->notes[(int)params[1]].append(tstring(": "));
-            party((int)params[0])->notes[(int)params[1]].append(g_dialogs.get_name());
+            party((int)params[0])->notes[(int)params[1]].append(((DialogMgrX&)g_dialogs).get_name());
             party((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
         }
         break;
@@ -1575,20 +1576,20 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_join:
         {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
             tstring key("ui_value_joined_your_party");
-            const char* arg0 = CS(party(g_encountered_party)->display_name());
+            const char* arg0 = CS(party(g_dialogs.f10)->display_name());
             sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
         }
         g_msglog.push(tstring(buf), -1);
-        game()->transfer_stack(g_encountered_party, game()->main_party, 0);
+        game()->transfer_stack(g_dialogs.f10, game()->main_party, 0);
         break;
     case op::party_join_as_prisoner:
         {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
             tstring key("ui_value_joined_party_as_prisoner");
-            const char* arg0 = CS(party(g_encountered_party)->display_name());
+            const char* arg0 = CS(party(g_dialogs.f10)->display_name());
             sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
         }
         g_msglog.push(tstring(buf), -1);
-        game()->transfer_stack(g_encountered_party, game()->main_party, 1);
+        game()->transfer_stack(g_dialogs.f10, game()->main_party, 1);
         break;
     case op::troop_join:
         if (check_troop((int)params[0])) {
@@ -1844,7 +1845,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[1] > 0 && check_troop((int)params[1]))
                 giver = params[1];
             else
-                giver = g_conversation_troop;
+                giver = g_dialogs.fc;
             game()->start_quest((int)params[0], (int)giver);
         }
         break;
@@ -1932,7 +1933,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // ---- troops ------------------------------------------------------------------------------------------------
     case op::troop_set_type:
         if (check_troop((int)params[0])) {
-            troop((int)params[0])->set_flags_low(clamp_index((int)params[1], 0, g_skin_count));
+            troop((int)params[0])->set_flags_low(clamp_index((int)params[1], 0, g_anim.char_count));
         }
         break;
     case op::troop_get_type:
@@ -4169,14 +4170,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // the dialog's agent for non-heroes; else the last agent of the conversation troop
         {
             int v = -1;
-            if (!troop(g_conversation_troop)->is_hero() && g_conversation_agent != -1) {
+            if (!troop(g_dialogs.fc)->is_hero() && g_conversation_agent != -1) {
                 v = g_conversation_agent;
                 SET_LV((__int64)v);
             } else {
                 AgentTable* t = &mission()->agents;
                 unsigned id = t->first_used();
                 while (id < (unsigned)t->count) {
-                    if (t->get(id)->troop == g_conversation_troop)
+                    if (t->get(id)->troop == g_dialogs.fc)
                         v = id;
                     t->next_used(&id);
                 }
@@ -4185,10 +4186,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::store_conversation_troop:
-        SET_LV((__int64)g_conversation_troop);
+        SET_LV((__int64)g_dialogs.fc);
         break;
     case op::store_partner_faction:
-        SET_LV((__int64)troop(g_conversation_troop)->faction);
+        SET_LV((__int64)troop(g_dialogs.fc)->faction);
         break;
     case op::store_encountered_party:
         SET_LV((__int64)game()->encountered_party);
@@ -4219,7 +4220,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int n = game()->num_quests;
             for (int k = 0; k < n; ++k) {
                 QuestRec* q = &game()->quests[k];
-                if ((q->flags & 0x100) && (q->flags2 & 2) && q->giver_troop == g_conversation_troop)
+                if ((q->flags & 0x100) && (q->flags2 & 2) && q->giver_troop == g_dialogs.fc)
                     v = k;
             }
             SET_LV((__int64)v);

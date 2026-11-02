@@ -9,6 +9,10 @@
 #include "./module_load.h"
 #include "./elem_calls.h"      // E50 / E68 / E176: the copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+item_mod g_item_mods[43];                           // 0xa75f70 (constructed and destroyed by the compiler: two tstrings per record)
+
+
 // ---- string table (Data/strings.txt lookup, ctor 0x4230f0) ----
 int find_string(const char* s);                  // 0x4230f0 (this = 0x8ed3c0)
 

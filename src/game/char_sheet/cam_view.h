@@ -41,7 +41,7 @@ extern char* g_game;                                    // 0x5e2930
 extern float g_dummy_mat;                               // 0x8ed4f8c (float; one per deform key)
 extern float g_dummy1;                                  // 0x8ed508c
 
-#include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
+#include "../../include/skin_set.h"              // SkinSet, g_anim.skins (shared with src/rgl/mesh2/gui_edit.h)
 extern int g_cur;                                       // 0x8ed4f68
 
 #include "../scene_world.h"                              // World::step 0x427f40
@@ -129,7 +129,7 @@ struct CamView {
     void update_model(float dt);
 };
 
-#define SKIN_INT(off) (*(int*)((char*)g_skins_begin + g_cur * 0x1f8 + (off)))
+#define SKIN_INT(off) (*(int*)((char*)g_anim.skins + g_cur * 0x1f8 + (off)))
 #define g_dummy_mat_arr (&g_dummy_mat)
 
 #endif

@@ -90,7 +90,6 @@ struct emitter {
     void spawn(emitter_particle* out);                      // 0x40ec90
     void update(scene* sc);                          // 0x414960 (src/rgl/psys.cpp: psys::update)
 };
-extern __int64 g_ticks[];                             // 0x5e2948
 
 } // namespace rgl
 

@@ -30,11 +30,11 @@
 #include "../../include/rec78.h"
 #include "../../include/shape.h"
 #include "../../include/game_data.h"
+#include "../../include/clock_table.h"
 
 extern StrTable g_strtable;                     // 0x5e2a18
 extern char g_script[]; // 0xa70440
 extern LevelGrid* g_level;                 // 0xa732b4
-extern Rec78* g_tbl78;                          // 0x5e29dc the scene prop kinds (0x78-byte records)
 
 // the animators fold the clock delta since the last start into the busy time: (g_ticks[clock] - stamp) * 1e-5 + seconds + 1
 #define ANIMATE(slot, value)                                                                      \
@@ -225,10 +225,10 @@ void Mission::retag_props(int from, int to)
         Rec1c8* r = base + i;
         if (r->destroyed)
             continue;
-        if (!r->name.equals(g_tbl78[from].name))
+        if (!r->name.equals(g_propkinds[from].name))
             continue;
         r->kind = to;
-        r->name = g_tbl78[to].name;
+        r->name = g_propkinds[to].name;
     }
 }
 

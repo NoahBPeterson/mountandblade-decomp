@@ -27,12 +27,17 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../scene/emitter.h"      // psys (update 0x414960)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/clock_table.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int rgl::g_vert_budget = 30;                      // 0x5a9c34 base vertex budget of should_batch
+
 
 using namespace rgl;
 
 // ---- render-state setters (global object 0xa17910) ----------------------------------------------------------------
 // @ 0x40e940
-void render_cache::set_blend_mode(int mode)
+void renderer::set_blend_mode(int mode)
 {
     if (mode != blend_mode) {
         blend_mode = mode;
@@ -57,7 +62,7 @@ void render_cache::set_blend_mode(int mode)
 }
 
 // @ 0x40ea00
-void render_cache::set_texcoord_gen(int stage, int mode)
+void renderer::set_texcoord_gen(int stage, int mode)
 {
     if (stage_texgen[stage] != mode) {
         if (mode <= 1) {

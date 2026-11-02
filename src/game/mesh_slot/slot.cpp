@@ -9,11 +9,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../tstring.h"
+#include "../slot.h"
 
 
 #define NOINL __declspec(noinline)     // keeps the definition's name visible to tools/difftest/slice.py's marker scan
 #include "../../include/fx.h"
 #include "../../include/dialog_rec.h"   // DialogBlock: the 0x1c-byte script block, whose runner emit 0x4b09e0 the channel play calls
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+Slot g_keyboard;                                    // 0xa170c8 (.bss)
+
 
 // DirectInput-style device interface (vtable: +0x1c poll/acquire, +0x24 GetDeviceState).
 struct SomeIface {
@@ -49,29 +54,6 @@ struct TimeKey {
     void calc();                                            // 0x487620
 };
 
-struct Slot {
-    char pad0[4];
-    SomeIface* kb;                                          // +4  (0x100-byte key device)
-    SomeIface* state;                                       // +8  (0x14-byte state device)
-    int key[0x100];                                         // +0xc  (key[0xe0..0xe7] + edges are filled by read_state)
-    int now[0x100];                                         // +0x40c (snapshot of key taken at the top of update)
-    float f80c;                                             // +0x80c
-    float f810;                                             // +0x810
-    float f814;                                             // +0x814
-    float f818;                                             // +0x818
-    float f81c;                                             // +0x81c
-    int clock820;                                           // +0x820
-    __int64 t828;                                           // +0x828
-    int clock830;                                           // +0x830
-    __int64 t838;                                           // +0x838
-    char b840;                                              // +0x840
-    char pad841[0x878 - 0x841];
-
-    void update(float dt);                                  // 0x487930
-    int read_keys();                                        // 0x487640
-    int read_state();                                       // 0x4876e0
-    int is_ready(int i);                                    // 0x487900
-};
 
 struct Buffer {                                             // the widget base (vtable 0x591c80), as far as its destructor goes
     // Only the destructor is declared: slot 0 of MissionUi's 49-slot table (ui/mission_ui.h; the other slots are defined in
@@ -106,9 +88,9 @@ int Slot::read_keys()
     if (kb) {
         int keys[0x40];
         memset(keys, 0, sizeof keys);
-        if (kb->Read(0x100, keys) < 0) {
-            if (kb->GetStatus() == 0x8007001e) {
-                while (kb->GetStatus() == 0x8007001e)
+        if (((SomeIface*)kb)->Read(0x100, keys) < 0) {
+            if (((SomeIface*)kb)->GetStatus() == 0x8007001e) {
+                while (((SomeIface*)kb)->GetStatus() == 0x8007001e)
                     ;
             }
         } else {
@@ -125,9 +107,9 @@ int Slot::read_state()
 {
     if (state) {
         int buf[5] = {0};
-        if (state->Read(0x14, buf) < 0) {
-            if (state->GetStatus() == 0x8007001e) {
-                while (state->GetStatus() == 0x8007001e)
+        if (((SomeIface*)state)->Read(0x14, buf) < 0) {
+            if (((SomeIface*)state)->GetStatus() == 0x8007001e) {
+                while (((SomeIface*)state)->GetStatus() == 0x8007001e)
                     ;
             }
         } else {
@@ -250,7 +232,6 @@ extern "C" double floor(double v);     // 0x536b10 CRT floor (x87 double arg on 
 extern const float g_one;               // 0x549cdc 1.0f
 extern const float g_half;              // 0x549d70 0.5f
 extern const float g_zero;              // 0x549ca8 0.0f
-extern const float g_k002;              // 0x590cd0 0.02f
 
 // The tick table's scale: a float at 0x54a6d0 (loaded with fmul, so it must be a global, not a literal).
 float g_tick_scale = 1e-5f;             // 0x54a6d0
@@ -372,16 +353,16 @@ void Effect::animate(float dt)
         volatile float sum = sp + q;
         out0 = (e4 * f88 + (periodE - e4) * a8) * (g_one / periodE);
         out1 = sum * (g_one / periodE);
-        pair[0] = out0 * g_k002;
-        pair[1] = out1 * g_k002;
+        pair[0] = out0 * 0.02f;
+        pair[1] = out1 * 0.02f;
         d27(pair);
         changed = true;
     } else if (c4) {
         out0 = f88;
         out1 = f8c;
         c4 = 0;
-        pair[0] = out0 * g_k002;
-        pair[1] = out1 * g_k002;
+        pair[0] = out0 * 0.02f;
+        pair[1] = out1 * 0.02f;
         d27(pair);
         changed = true;
     }

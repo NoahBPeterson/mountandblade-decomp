@@ -24,6 +24,7 @@
 #include "../config/widget_mgr.h"
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/options.h"
 
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160
@@ -245,7 +246,6 @@ extern float g_k1_05;                               // 0x590f24
 extern float g_k1;                                  // 0x549cdc
 extern float g_k0;                                  // 0x549ca8
 extern float g_k3;                                  // 0x54a710
-extern float g_k0_02;                               // 0x590cd0
 extern float g_k0_4;                                // 0x54b3b8
 
 // @ 0x4b1b20
@@ -437,7 +437,7 @@ float Party::strength()
             b += s.count;
         }
     }
-    float v = ((float)a * g_k3 + (float)b) * g_k0_02 + g_k0_4;
+    float v = ((float)a * g_k3 + (float)b) * 0.02f + g_k0_4;
     if (v < g_k0) {
         return g_k0;
     }
@@ -879,7 +879,6 @@ extern float g_k0_1;                                 // 0x54b8b0  0.1f
 extern float g_rand_k;                               // 0x54a6bc  1/15817
 extern float g_k_item_weight;                        // 0x593640  per-item weight of the equipped grid item
 struct options;
-extern options g_options;                   // 0x5aa008
 extern int g_skill_clamp;                       // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp               // outside the annotation range, so a literal cast
 
