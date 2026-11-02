@@ -22,8 +22,6 @@ extern int g_int_5aa054;                    // 0x5aa054
 extern int g_int_5aa058;                    // 0x5aa058
 extern int g_stick_mode;                    // 0x5aa078
 extern float g_speed_base;                  // 0x5aa07c (1.0f)
-extern int g_store0;                        // 0xa70458 first out-slot of sl_query
-extern int g_store1;                        // 0xa7045c
 
 #include "./named_rec.h"
 

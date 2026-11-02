@@ -27,6 +27,7 @@ float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0 (
 #include "../../rgl/resource.h"             // texture
 #include "../shadow_map.h"
 #include "../../include/ptr_tag.h"
+#include "../shared_vars.h"
 // The resource manager (object 0x5d6fa0) as rgl/core/resmgr.h's `resmgr` defines it; that header cannot be included next to
 // rec_tables.h (g_log), so this is its declaration of the three members the module loader calls (resmgr.cpp 0x4195e0 / 0x419640 / 0x41e150).
 // g_resmgr_full of resmgr.h is the same object as resource.h's g_resmgr.
@@ -107,7 +108,6 @@ void load_game_variables();                                                 // 0
 void parse_module_info();                                                   // 0x4c05b0
 
 // ---- globals of the device-object handlers and the module_info.txt parser -------------------------------------------------
-extern ID3DXEffect* g_effect;           // 0x5e293c
 extern int g_use_shaders;               // 0x5e28fc
 extern D3DCAPS9 g_caps;                 // 0xa17f2c (GetDeviceCaps fills it)
 extern int  g_renderer_vsync;           // 0xa180e4

@@ -639,11 +639,11 @@ void PartyScreen::money_label(int type, int troop)
 // @ 0x504e20
 int GameDataV::weekly_cost()
 {
-    g_store0 = 0;
-    g_store1 = 0;
+    g_trigger_result.store0 = 0;
+    g_trigger_result.store1 = 0;
     int total = 0;
     if (sl_query(8, 0, 0))
-        return g_store0;
+        return g_trigger_result.store0;
 
     int id = ((Map10007*)&parties)->lookup(f78);
     int* blk = (int*)parties.pages._Myfirst[id >> 4];
@@ -1080,10 +1080,10 @@ void PartyScreen::refresh_selection()
             label = *g_strtable.lookup(k);
         }
         if (sel_type == 0 && (stk.flags & 1) != 0) {
-            g_store0 = 1;
-            g_store1 = 0;
+            g_trigger_result.store0 = 1;
+            g_trigger_result.store1 = 0;
             // a script that answers and leaves both out-slots clear refuses the sale (0x506684..0x50669e)
-            if (!(g_game->emit_event(0xb, stk.troop, 0) != 0 && g_store0 == 0 && g_store1 == 0))
+            if (!(g_game->emit_event(0xb, stk.troop, 0) != 0 && g_trigger_result.store0 == 0 && g_trigger_result.store1 == 0))
                 action = true;
         }
     } else if (cmd == 3) {
@@ -1154,10 +1154,10 @@ void PartyScreen::refresh_selection()
             int v;
             {
                 tstring k("ui_price");
-                g_store0 = 0;
-                g_store1 = 0;
+                g_trigger_result.store0 = 0;
+                g_trigger_result.store1 = 0;
                 if (g_game->emit_event(10, stk.troop, g_game->f78) != 0)
-                    v = g_store0;
+                    v = g_trigger_result.store0;
                 else
                     v = GD_I(0x13a20);
                 sprintf(cost_buf, g_strtable.lookup(k)->c_str(), v);

@@ -50,10 +50,8 @@ extern ScreenObj* g_windows[30];       // 0xa73980 (.. 0xa739f4)
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // ---- globals ------------------------------------------------------------------------------------------
-extern __int64 g_5e2970;                // 0x5e2970 (frame time step, scaled)
 extern __int64 g_ticks;                 // 0x5e2948
 extern float g_5a9c20;                  // 0x5a9c20
-extern int   g_5e293c;                  // 0x5e293c
 extern int   g_no_cam;                  // 0x5a9fb0
 extern int   g_a17158, g_a17558, g_a17348, g_a17148;    // 0xa17158 ..
 extern int   g_a1719c, g_a1759c, g_a171ac, g_a1717c;    // 0xa1719c ..
@@ -148,7 +146,7 @@ int GameApp::Update()
     if (dt > 0.1f) dt = 0.1f;
     g_8ee42f0 = dt;
     t = (__int64)(dt * 100000.0f);
-    g_5e2970 = t;
+    g_ticks_dt[0] = t;   // 0x5e2970 (frame time step, scaled)
     g_ticks += t;
     g_5a9c20 = dt;
     g_5d8798 = m_34c;
@@ -166,7 +164,7 @@ int GameApp::Update()
             } else {
                 g_gui.add(tstring("Effect file recompiled."), -1);
             }
-            ((resource_manager*)&g_resmgr)->resolve_effect_sets((ID3DXEffect*)g_5e293c);
+            ((resource_manager*)&g_resmgr)->resolve_effect_sets(g_effect);
         }
     }
     if (g_no_cam) {

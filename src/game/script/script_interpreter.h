@@ -683,7 +683,6 @@ struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
 extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)
 extern __int64 g_trigger_param_1;       // 0xa70448 (g_script +8)
 extern __int64 g_trigger_param_2;       // 0xa70450 (g_script +0x10)
-extern __int64 g_trigger_result;        // 0xa70458 (g_script +0x18; set_trigger_result 0x4ac3f2)
 extern unsigned g_battle_flags;         // 0xa73464 bit 0 = end the battle (end_current_battle 0x4a55fe)
 extern int g_skin_count;                // 0x8ed4f88 (troop_set_type)
 extern char g_party_battle_mode;         // 0xa735c8 (set_party_battle_mode 0x4a2ad0)

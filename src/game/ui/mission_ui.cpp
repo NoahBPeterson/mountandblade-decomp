@@ -35,6 +35,7 @@
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../shared_vars.h"
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
 static __forceinline int rnd(const float* p)
@@ -1232,10 +1233,10 @@ void __stdcall sl_item_set_all(float v)
 int GameData::sl_party_value(int party)
 {
     if (party >= 0) {
-        g_store0 = 0;
-        g_store1 = 0;
+        g_trigger_result.store0 = 0;
+        g_trigger_result.store1 = 0;
         if (emit_event(7, party, cur_party) != 0)
-            return g_store0;
+            return g_trigger_result.store0;
         Troop* r = &troops[party];
         if (((__int64)r->flags30 & 0x10) != 0)
             return 0;
@@ -1249,10 +1250,10 @@ int GameData::sl_party_price(int party)
 {
     if (party < 0)
         return 0;
-    g_store0 = 0;
-    g_store1 = 0;
+    g_trigger_result.store0 = 0;
+    g_trigger_result.store1 = 0;
     if (emit_event(9, party, cur_party))
-        return g_store0;
+        return g_trigger_result.store0;
     int v = sl_party_value(party);
     return (int)((float)v * 5.0f + 2.0f);
 }

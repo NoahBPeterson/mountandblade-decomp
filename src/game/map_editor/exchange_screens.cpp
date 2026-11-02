@@ -28,6 +28,7 @@
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../shared_vars.h"
 
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
 #define W(p, off) (*(ChoiceList**)((char*)(p) + (off)))
@@ -223,10 +224,10 @@ after_scroll:
             if (state == 3) {
                 v = g_game->sl_party_price(troop);
             } else if (state == 2 && troop >= 0) {
-                g_a70458 = 0;
-                g_a7045c = 0;
+                g_trigger_result.store0 = 0;
+                g_trigger_result.store1 = 0;
                 bool ok = ((SoundCtl*)g_game)->emit_event(10, troop, g_game->f78);   // 0x435790
-                v = g_a70458;
+                v = g_trigger_result.store0;
                 if (!ok)
                     v = GI(0x13a20);
             }

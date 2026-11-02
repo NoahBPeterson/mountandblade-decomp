@@ -276,8 +276,6 @@ extern int g_a17588;                        // 0xa17588
 extern int g_a5a9fbc;                       // 0x5a9fbc
 extern int g_trial_mode;                    // 0x5e29c4
 extern int g_a735c4;                        // 0xa735c4
-extern int g_a70458;                        // 0xa70458
-extern int g_a7045c;                        // 0xa7045c
 extern int g_show_quest_notes;                        // 0xa181b4
 extern int g_a7333c;                        // 0xa7333c
 extern int* g_menu_data;                    // 0xa739c0

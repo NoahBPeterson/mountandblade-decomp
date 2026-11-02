@@ -25,6 +25,9 @@ extern char g_key_states[256]; // 0x5e27c8
 // Incremented in game_app / gui_manager.cpp bump_counter, cleared in world_app.
 extern int g_counter; // 0x5e28cc
 extern int g_display_wp[7]; // 0x5e2900 game_variables.txt display_wp_one_handed, _two_handed, _polearms, _archery, _crossbows, _throwing, _firearms (the weapon-proficiency rows the character sheet shows)
+struct ID3DXEffect;
+extern ID3DXEffect* g_effect; // 0x5e293c the D3DX effect (shader file) in use
+extern __int64 g_ticks_dt[5]; // 0x5e2970 per-clock last step (ticks); [0] is the frame step
 extern int g_map_icon_count; // 0x5e29f4
 // Count of g_mission_templates (script 0x49d070).
 extern int g_mission_template_count; // 0x5e2a04
@@ -49,5 +52,9 @@ extern float g_map_river_speed_y; // 0xa18158
 extern int g_show_faction_color; // 0xa181b0
 // game_variables.txt key "show_party_ids_instead_of_names" (trigger_vec.cpp loader);
 extern unsigned char g_show_party_ids_instead_of_names; // 0xa181b8
+// The script engine's trigger result: set_trigger_result (0x4ac3f2) stores one 64-bit value, the event dispatch (GameData::emit_event / sl_query)
+// reads and clears it as two dwords.
+union TriggerResult { __int64 value; struct { int store0; int store1; }; };
+extern TriggerResult g_trigger_result; // 0xa70458 (the script object's +0x18)
 
 #endif // GAME_SHARED_VARS_H

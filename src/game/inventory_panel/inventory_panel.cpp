@@ -52,7 +52,6 @@ extern float g_ui_alpha;                                // 0x5d7094
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
 extern int   g_disable_food_slot;                               // 0xa181a8
 extern tstring g_num;                                   // 0xa70464
-extern __int64 g_result64;                              // 0xa70458 (read as one qword by the price rule)
 extern char  g_skill_tbl[];                           // 0x8ee3100 (skill records of 0x44 bytes)
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 int round_float(float* v);                              // 0x432540
@@ -738,14 +737,14 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
     }
 
     for (int i = 0; i < 8; i++) {
-        g_store0 = 0;
-        g_store1 = 0;
+        g_trigger_result.store0 = 0;
+        g_trigger_result.store1 = 0;
         g_num.assign("");
         GV->emit_event4(0x13, slot->item, i, *(signed char*)((char*)slot + 7));
         if (g_num_valid > 0) {
             unsigned int color = 0xffffffff;
-            if (g_store0 != 0 || g_store1 != 0)
-                color = g_store0 | 0xff000000;
+            if (g_trigger_result.store0 != 0 || g_trigger_result.store1 != 0)
+                color = g_trigger_result.store0 | 0xff000000;
             g_gui_root.draw_string(&g_num, 0.024f, color, 1);
         }
     }
@@ -876,10 +875,10 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
     if (plain) {
         result = (int)value;
     } else {
-        g_result64 = 100;
+        g_trigger_result.value = 100;
         int mode = adjust ? 4 : 3;
         if (emit_event(mode, item->item, (int)value)) {
-            result = (int)((float)g_result64 * value * 0.01f);
+            result = (int)((float)g_trigger_result.value * value * 0.01f);
         } else {
             if (scaled)
                 value = value * g_items[item->item].f21c;

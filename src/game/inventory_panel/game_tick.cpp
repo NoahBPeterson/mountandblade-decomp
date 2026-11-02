@@ -465,10 +465,10 @@ void GameG::update_cursor(float dt)
                 float dist = (float)sqrt(dx * dx + dy * dy);
                 if ((flags & 0x4000) == 0) {
                     if (dist <= radius && dist <= p->strength() * radius) {
-                        g_store1 = 0;
-                        g_store0 = 1;
+                        g_trigger_result.store1 = 0;
+                        g_trigger_result.store0 = 1;
                         emit_event(0x19, main_party, (int)cur);
-                        if ((g_store0 | g_store1) != 0) {
+                        if ((g_trigger_result.store0 | g_trigger_result.store1) != 0) {
                             float f = p->alpha + dt * 30.0f;
                             p->alpha = f;
                             if (f > 1.0f || f < -100.0f)

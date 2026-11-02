@@ -44,6 +44,7 @@ float g_map_river_speed_y;   // 0xa18158
 int g_show_faction_color;   // 0xa181b0
 unsigned char g_show_party_ids_instead_of_names;   // 0xa181b8
 int g_display_wp[7];   // 0x5e2900
+ID3DXEffect* g_effect;   // 0x5e293c
 
 
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)

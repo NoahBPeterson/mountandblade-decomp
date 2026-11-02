@@ -51,6 +51,10 @@
 #include "../world.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../shared_vars.h"
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+TriggerResult g_trigger_result;   // 0xa70458
+
+
 // ==== by-reference helpers with their bodies in this object ================================================
 // The original's interpreter sees these bodies (header inlines its inliner left out of line in the 70 KB execute()):
 // a temporary or local whose address is passed to a callee cl can see is known not to escape, so it shares the
@@ -3867,7 +3871,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         set_lvalue(locals, g_trigger_param_2);
         break;
     case op::set_trigger_result:
-        g_trigger_result = params[0];
+        g_trigger_result.value = params[0];
         break;
 
     // ---- arithmetic (64-bit; fixed point by g_fixed_point_multiplier) ------------------------------------------
