@@ -98,8 +98,6 @@ struct rigid_base : collision_entity {
         asleep = false;
         restitution = 0.9f;
     }
-    bool collide_entity(rigid_base* o);                             // 0x427000
-    bool collide_shape(coll_shape* s);                              // 0x427900
 };
 
 // vtable 0x54b668, 0x1d8 bytes
@@ -118,8 +116,8 @@ struct dynamic_entity : rigid_base {
     virtual void resolve();                                                // 31: 0x4259a0
     virtual void add_torque(const vector4* t);                             // 32: 0x4258e0
     virtual void add_torque_at(const vector4* p, const vector4* f);        // 33: 0x425920
-    virtual void on_entity(entity* e);                                     // 34 (another object)
-    virtual void on_shape(grid_shape* s);                                  // 35 (another object)
+    virtual bool on_entity(entity* e);                                     // 34: 0x427000 (the other entity as a rigid body)
+    virtual bool on_shape(grid_shape* s);                                  // 35: 0x427900 (the shape as the entity's collision shape)
 };
 
 } // namespace rgl
