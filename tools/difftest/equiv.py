@@ -2807,7 +2807,7 @@ class Runner:
             return
         if self._thunk(tgt):
             return
-        if side is self.orig and self.midfn is None and info["ins"].operands[0].type != CX.X86_OP_IMM and \
+        if self.midfn is None and info["ins"].operands[0].type != CX.X86_OP_IMM and \
                 self.img.in_text(tgt) and tgt not in self.img.start_set:
             # an indirect call (vtable slot / function pointer) into the middle of the original's code: no
             # object the game builds has such a slot (see the call-midfunction discard in the input loop)
@@ -6476,15 +6476,17 @@ def _test_function(sid, va, opts, log=print):
                         a = a2
                         out["budget_raised"] = "input %d needed more than %d instructions" % (i, low)
                 st = a["status"][0]
-                if a.get("midfn"):
+                if a.get("midfn") and (runner.run_side(runner.ours, inp).get("midfn") or (None,))[0] == a["midfn"][0]:
                     # An indirect call (virtual / through a pointer) that lands in the MIDDLE of the original's
                     # code (not on a function entry of the symbol table) cannot happen in the game: a real
                     # vtable slot or function pointer holds a method entry, an import thunk or a harness fake.
                     # The generated object (random soup dword, steering, fault repair) is impossible, and the
                     # original then runs mid-instruction bytes (facegen_misc 0x4eb3c0: slot 0x4fef00 inside
                     # 0x4fe860 answered the SendMessageA model with the return address). Judged on the
-                    # ORIGINAL's run only, so ours is never skipped on a call the original made legitimately;
-                    # it hides nothing when the target is a real entry (those never set midfn).
+                    # Discarded only when BOTH builds make an indirect call to the same mid-function target (the
+                    # impossible slot is in the input, so both read it); if only one does, or ours calls somewhere
+                    # else, the input is compared as usual and the difference stays a mismatch. A real entry never
+                    # sets midfn, so nothing is hidden on a legitimate call.
                     discarded["call-midfunction"] = discarded.get("call-midfunction", 0) + 1
                     why_ = "call at %08x targets %08x (inside %08x, not a function entry)" % (
                         a["midfn"][1], a["midfn"][0],
