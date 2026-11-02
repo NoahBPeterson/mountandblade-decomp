@@ -263,7 +263,7 @@ refresh_list:
         }
 
         // 7. push the visual frames back into the scene objects
-        if (g_keyboard.down[0x1d] != 0 && g_a1712c != 0 && g_a1752c == 0)
+        if (g_keyboard.down[0x1d] != 0 && g_keyboard.down[22] != 0 && g_a1752c == 0)
             for (unsigned i = 0; i < (unsigned)record_count(); i++) {
                 PlacedObj* r = rec_at(i);
                 *(matrix*)((char*)ent_of(r) + 0x58) = r->m58;

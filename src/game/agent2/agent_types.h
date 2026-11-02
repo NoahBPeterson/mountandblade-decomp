@@ -28,7 +28,6 @@ struct shape_base; struct face; struct capsule; struct contact;
 
 // ---- globals ------------------------------------------------------------------------------------------------
 #include "../../include/fx.h"            // g_step_tbl 0x5a9c20 (entry 0 is the frame step)
-extern float g_step_tbl[]; // 0x5a9c20 per-clock step (seconds; fx.h; named again here for the resolution audit, which reads only the headers a source includes itself)
 #include "../dialog_manager.h"            // g_script 0xa70440
 extern int g_agent_count;              // 0x5aa050 number of agents (0x4385e0)
 
@@ -143,6 +142,7 @@ float __cdecl hit_chance(int* who, Agent* a);           // 0x438cb0
 #include "../../include/ptr_tag.h"
 #include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 #include "../hnode.h"                             // hnode / node_gt (shared with agent4: NavMesh::open)
+#include "../../include/clock_table.h"
 typedef PlacedObj E1c8;                                  // the 0x1c8-byte polymorphic record
 struct allocE12  { void construct(E12* p, const E12& v); };             // 0x436cf0
 struct allocstr  { void construct(tstring* p, const tstring& v); };     // 0x436c90

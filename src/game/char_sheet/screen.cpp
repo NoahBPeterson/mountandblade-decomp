@@ -296,6 +296,6 @@ void __cdecl frame_hook(void)
 {
     if ((g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_a1741c && !g_a1781c)
         take_screenshot();
-    else if (g_5a9fb0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && (g_a1717c || g_keyboard.down[0x36]) && g_a17190 && !g_a17590)
+    else if (g_5a9fb0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && (g_keyboard.down[42] || g_keyboard.down[0x36]) && g_keyboard.down[47] && !g_keyboard.prev[47])
         menu_variables_loaded(0);   // 0x4ebb80
 }

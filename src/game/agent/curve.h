@@ -14,7 +14,7 @@ using rgl::vector4;
 #include "../../include/timer.h"
 
 #include "../../include/fx.h"
-extern float g_step_tbl[];      // 0x5a9c20 (step_reached)
+#include "../../include/clock_table.h"
 
 // The canonical class of this record: AnimRec (src/rgl/dynamic/fx_anim.h), whose AnimRec::phase is the function at 0x4231f0. That header
 // cannot be included next to rgl.h (it brings the src/rgl family of rgl_math.h), so only the member is declared, under its own name.

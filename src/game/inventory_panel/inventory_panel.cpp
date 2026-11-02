@@ -39,7 +39,6 @@ DragMesh* g_drag;                                // 0x5d75e4
 // ---- globals and callees of other translation units -----------------------------------------------------------------
 extern MsgLog g_msglog;                                 // 0x5d7080
 
-extern int   g_a17188;                                  // 0xa17188
 extern int   g_a17588;                                  // 0xa17588
 
 extern int   g_trial_mode;                              // 0x5e29c4
@@ -92,7 +91,7 @@ void InventoryPanel::refresh_transaction(int unused)
         PSO(bar)->set_key_flags(0x10000);
     }
 
-    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a17188 != 0 && g_a17588 == 0 &&
+    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[45] != 0 && g_a17588 == 0 &&
         g_cfg.cheat_mode != 0 && g_trial_mode != 0) {
         g_game->add_gold(1000, g_game->player);
         money_label(0);

@@ -128,7 +128,6 @@ extern int g_psys_scene;            // 0xa170c0
 extern int g_show_quest_notes;            // 0xa181b4
 extern int g_a17454;            // 0xa17454
 extern int g_a17854;            // 0xa17854
-extern int g_use_shaders;       // 0x5e28fc
 extern int g_no_cam;            // 0x5a9fb0
 extern int g_trial_mode;        // 0x5e29c4
 extern int g_a735c8;            // 0xa735c8
@@ -976,7 +975,7 @@ no_party:
                 || PARTIES->get(bpid)->action == 6 || PARTIES->get(bpid)->action == 9)
                 GD_I(0x13aa4) = 1;
         }
-        if (g_keyboard.key[57] != 0) {
+        if (g_keyboard.down[57] != 0) {
             PARTIES->get(GD_I(0x78))->action = 0;
             PARTIES->get(GD_I(0x78))->reissue_order();
             GD_I(0x13aa4) = 2;

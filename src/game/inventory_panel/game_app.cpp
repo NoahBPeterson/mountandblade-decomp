@@ -53,7 +53,6 @@ extern ScreenObj* g_windows[30];       // 0xa73980 (.. 0xa739f4)
 // ---- globals ------------------------------------------------------------------------------------------
 extern int   g_no_cam;                  // 0x5a9fb0
 extern int g_a17158;    // 0xa17158
-extern int g_a1717c;    // 0xa1717c
 // the Direct3D9 device (0xa17f28); __stdcall virtuals -> the COM-style call pattern
 struct IDev9 {
     virtual long __stdcall s0(); virtual long __stdcall s1(); virtual long __stdcall s2();
@@ -168,7 +167,7 @@ int GameApp::Update()
     }
     if (g_no_cam) {
         if (g_keyboard.down[0x32] && !g_keyboard.prev[0x32]) {
-            if ((g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_a1717c)) {
+            if ((g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_keyboard.down[42])) {
                 load_skyboxes();
                 g_gui.add(tstring("Animation data restored."), -1);
             } else if (g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) {

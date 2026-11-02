@@ -200,7 +200,7 @@ void CharSheet::update(float dt)
         } else {
             if (g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0)
                 return;
-            if (g_keyboard.key[45] != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
+            if (g_keyboard.down[45] != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
                 WL_MARKER(12)
                 if (g_trial_mode != 0) {
                     g_game->add_experience(f_14, 1000);

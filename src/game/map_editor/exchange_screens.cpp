@@ -188,7 +188,7 @@ void XferWin::update(int)
     }
 
 after_scroll:
-    if (f8e4 >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_a17188 &&
+    if (f8e4 >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[45] &&
         !g_a17588 && g_a5a9fbc && g_trial_mode) {
         slot = slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
         pid = f8dc != 0 ? sel_party : g_game->f78;

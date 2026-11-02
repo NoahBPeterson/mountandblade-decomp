@@ -147,7 +147,7 @@ done:
 
     if (v == 1)
         goto case1;
-    if (orig::g_no_cam != 0 && *(int*)&g_keyboard.key[15] != 0 && *(int*)&g_keyboard.now[15] == 0)
+    if (orig::g_no_cam != 0 && *(int*)&g_keyboard.down[15] != 0 && *(int*)&g_keyboard.prev[15] == 0)
         goto case1;
 
     if (v == 0x10)
@@ -1316,12 +1316,12 @@ void ResourceOwner_s27c90::release()
 void ViewCtrl_s284a0::update(float dt)
 {
     if (g_game_s284a0->f1a090) {
-        if (g_keyboard.key[45]) return;
-        if (g_keyboard.key[21]) return;
-        if (g_keyboard.key[44]) return;
-        if (g_keyboard.key[22]) return;
-        if (g_keyboard.key[47]) return;
-        if (g_keyboard.key[34]) return;
+        if (g_keyboard.down[45]) return;
+        if (g_keyboard.down[21]) return;
+        if (g_keyboard.down[44]) return;
+        if (g_keyboard.down[22]) return;
+        if (g_keyboard.down[47]) return;
+        if (g_keyboard.down[34]) return;
         if ((*(int*)((char*)&g_keyboard + 0x5c))) return;
         if (g_game_s284a0->f1a090)
             dt = g_step_tbl[0];
@@ -1420,7 +1420,7 @@ void ViewCtrl_s284a0::update(float dt)
     // ---- movement / action bits ---------------------------------------------------------------------
     a->in_flags = 0;
     if (!g_game_s284a0->f1a090) {
-        if (g_keyboard.key[42] == 0)
+        if (g_keyboard.down[42] == 0)
             a->in_flags = 0x200000;
         if (g_keys_s284a0.clicked(5))
             a->in_flags |= 0x100000;
@@ -1494,7 +1494,7 @@ void ViewCtrl_s284a0::update(float dt)
         fov = limit;
 
     // ---- the "use / attack" keys walk the agent table and hit the agent under the crosshair ---------
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) && g_keyboard.key[63] != 0 && g_keyboard.now[63] == 0) {
+    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) && g_keyboard.down[63] != 0 && g_keyboard.prev[63] == 0) {
         Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
         int old = t->f7c;
         t->f7c = (old == 2) ? 1 : 2;
@@ -1514,14 +1514,14 @@ void ViewCtrl_s284a0::update(float dt)
                 b.pos = AGENT(i)->pos;
                 b.damage = 100.0f;
                 AGENT(i)->note_blow(&b);
-                if (g_keyboard.key[42] == 0)
+                if (g_keyboard.down[42] == 0)
                     done = true;
             }
             t->next_used(&i);
         }
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_keyboard.key[64] != 0 && g_keyboard.now[64] == 0) {
+    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_keyboard.down[64] != 0 && g_keyboard.prev[64] == 0) {
         AgentTable_s284a0* t = &g_mission_s284a0->agents;
         bool done = false;
         unsigned i = t->first_used();
@@ -1536,14 +1536,14 @@ void ViewCtrl_s284a0::update(float dt)
                 b.pos = AGENT(i)->pos;
                 b.damage = 100.0f;
                 AGENT(i)->note_blow(&b);
-                if (g_keyboard.key[42] == 0)
+                if (g_keyboard.down[42] == 0)
                     done = true;
             }
             t->next_used(&i);
         }
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_keyboard.key[61] != 0 && g_keyboard.now[61] == 0) {
+    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_keyboard.down[61] != 0 && g_keyboard.prev[61] == 0) {
         Blow_s284a0 b;
         b.f48 = 2;
         b.f38 = 0;
@@ -1554,7 +1554,7 @@ void ViewCtrl_s284a0::update(float dt)
     }
 
     if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) {
-        if (g_keyboard.key[35] != 0 && g_keyboard.now[35] == 0 && (*(int*)((char*)&g_cfg + 0x24)) != 0) {
+        if (g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0 && (*(int*)((char*)&g_cfg + 0x24)) != 0) {
             Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
             t->f5724 = t->f5720;
         }
@@ -2344,7 +2344,7 @@ void Screen_s2ae70::order_tick()
     int kind = a->kind;
     if (kind < 0 || kind >= 8)
         kind = 7;
-    if ((*(int*)((char*)&g_cfg + 0x24)) && g_keyboard.key[42] && (*(int*)((char*)&g_keyboard + 0x80)))
+    if ((*(int*)((char*)&g_cfg + 0x24)) && g_keyboard.down[42] && (*(int*)((char*)&g_keyboard + 0x80)))
         kind = 1;
 
     m->order(kind, f2a0);
@@ -2541,7 +2541,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
 // @ 0x52ba10
 void Mission_s2b5c0::update_ui()
 {
-    if (g_keyboard.key[35] != 0 && g_keyboard.now[35] == 0)
+    if (g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0)
         g_game_s2b5c0->f1a20c = (g_game_s2b5c0->f1a20c == 0);
 
     g_mission_s2b5c0->f65d0->f140 = 0;
@@ -2563,7 +2563,7 @@ void Mission_s2b5c0::update_ui()
     if (g_game_s2b5c0->f1a20c != 0)
         return;
 
-    if (g_keyboard.key[57] == 0 || g_keyboard.now[57] != 0)
+    if (g_keyboard.down[57] == 0 || g_keyboard.prev[57] != 0)
         goto L_bb21;
 
     g_game_s2b5c0->f1a098 = 1 - g_game_s2b5c0->f1a098;
@@ -2619,7 +2619,7 @@ L_bbc5:
 // epilogue); the whole state machine is emitted once at 0x52ba10 in Mission_s2b5c0::update_ui.
 void Mission_s2b5c0::update_ui_continue()
 {
-    if (g_keyboard.key[35] != 0 && g_keyboard.now[35] == 0)
+    if (g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0)
         g_game_s2b5c0->f1a20c = (g_game_s2b5c0->f1a20c == 0);
 
     g_mission_s2b5c0->f65d0->f140 = 0;
@@ -2641,7 +2641,7 @@ void Mission_s2b5c0::update_ui_continue()
     if (g_game_s2b5c0->f1a20c != 0)
         return;
 
-    if (g_keyboard.key[57] == 0 || g_keyboard.now[57] != 0)
+    if (g_keyboard.down[57] == 0 || g_keyboard.prev[57] != 0)
         goto L_bb21;
 
     g_game_s2b5c0->f1a098 = 1 - g_game_s2b5c0->f1a098;
@@ -2704,12 +2704,12 @@ void Mission_s2b5c0::update_cursor()
     // union reproduces both the byte store and the dword load.
     union { bool b; int i; } f;
 
-    if ((*(int*)((char*)&g_keyboard + 0x390)) == 0 && g_keyboard.key[226] == 0)
+    if ((*(int*)((char*)&g_keyboard + 0x390)) == 0 && g_keyboard.down[226] == 0)
         goto L_bd6f;
 
     if ((*(float*)((char*)&g_keyboard + 0x810)) != 0.0f || (*(float*)((char*)&g_keyboard + 0x80c)) != 0.0f) {
         this->find_position(&ok, &pos);
-        f.b = (g_keyboard.key[226] != 0);
+        f.b = (g_keyboard.down[226] != 0);
         if (ok) {
             int mode = 0;
             if (g_game_s2b5c0->game_mode == 2)
@@ -2731,9 +2731,9 @@ L_bd6f:
     if ((*(int*)((char*)&g_keyboard + 0x790)) != 0)
         goto L_bd8a;
 L_bd78:
-    if (g_keyboard.key[226] != 0)
+    if (g_keyboard.down[226] != 0)
         return;
-    if (g_keyboard.now[226] == 0)
+    if (g_keyboard.prev[226] == 0)
         return;
 L_bd8a:
     if (this->f2f0 != 0) {

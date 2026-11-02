@@ -578,7 +578,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::key_is_down:
         if (IN_RANGE(params[0], 0, 0x100))
-            result = g_keyboard.key[(int)params[0]] != 0;
+            result = g_keyboard.down[(int)params[0]] != 0;
         break;
     case op::key_clicked:
         if (IN_RANGE(params[0], 0, 0x100))

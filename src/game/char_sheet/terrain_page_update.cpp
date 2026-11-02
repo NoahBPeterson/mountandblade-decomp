@@ -130,7 +130,7 @@ done:
     simulate(dt);
     world->step(dt);
     path(dt);
-    if (page_changed(back_btn) || (g_keyboard.key[15] != 0 && g_keyboard.now[15] == 0))
+    if (page_changed(back_btn) || (g_keyboard.down[15] != 0 && g_keyboard.prev[15] == 0))
         g_main_menu.set_state(option);
 }
 

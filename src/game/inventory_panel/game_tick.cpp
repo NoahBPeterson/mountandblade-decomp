@@ -84,15 +84,11 @@ struct Cfg30 {                                      // the object at game+0x30
 };
 
 // ---- globals and callees of other translation units ----------------------------------------------------------------
-extern float    g_step;                 // 0x5a9c20  frame step (seconds)
-extern const float g_rate_marker;       // 0x590cd0  marker decay per second
 extern int      g_disable_food_slot;             // 0xa181a8  0: allow the "loading" clock message
 
-extern int g_use_shaders;                                   // 0x5e28fc  0 = linear colour path
 extern int g_page_rows;                              // 0xa73298
 extern int g_page_cols;                              // 0xa73294
 extern char g_map_pages[];                                // 0xa73094  host grid (array of cell pointers)
-extern float g_hero_wounded_treshold;                     // 0xa18138
 extern float g_player_wounded_treshold;                // 0xa1813c
 extern MsgLog g_msglog;                                 // 0x5d7080
 void set_clock_step(int* clock, float step);            // 0x461420
@@ -266,24 +262,24 @@ void GameG::resume_strings(tstring* a, tstring* b)
 void GameG::update_markers()
 {
     for (unsigned i = 0; i < (unsigned)g_mat_vec[0].count(); i++) {
-        g_mat_vec[0].at<Marker>(i)->f1f8 -= g_step * g_rate_marker;
+        g_mat_vec[0].at<Marker>(i)->f1f8 -= g_step_tbl[0] * 0.02f;
         g_mat_vec[0].at<Marker>(i)->f208 = g_mat_vec[0].at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_mat_vec[2].count(); i++) {
-        g_mat_vec[2].at<Marker>(i)->f1f4 += g_step * g_map_sea_speed_x * 3.0f;
-        g_mat_vec[2].at<Marker>(i)->f1f8 += g_step * g_map_sea_speed_y * 3.0f;
+        g_mat_vec[2].at<Marker>(i)->f1f4 += g_step_tbl[0] * g_map_sea_speed_x * 3.0f;
+        g_mat_vec[2].at<Marker>(i)->f1f8 += g_step_tbl[0] * g_map_sea_speed_y * 3.0f;
         g_mat_vec[2].at<Marker>(i)->f204 = g_mat_vec[2].at<Marker>(i)->f1f4;
         g_mat_vec[2].at<Marker>(i)->f208 = g_mat_vec[2].at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_mat_vec[3].count(); i++) {
-        g_mat_vec[3].at<Marker>(i)->f1f4 -= g_step * g_map_sea_speed_x * 2.0f;
-        g_mat_vec[3].at<Marker>(i)->f1f8 -= g_step * g_map_sea_speed_y * 2.0f;
+        g_mat_vec[3].at<Marker>(i)->f1f4 -= g_step_tbl[0] * g_map_sea_speed_x * 2.0f;
+        g_mat_vec[3].at<Marker>(i)->f1f8 -= g_step_tbl[0] * g_map_sea_speed_y * 2.0f;
         g_mat_vec[3].at<Marker>(i)->f204 = g_mat_vec[3].at<Marker>(i)->f1f4;
         g_mat_vec[3].at<Marker>(i)->f208 = g_mat_vec[3].at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_mat_vec[1].count(); i++) {
-        g_mat_vec[1].at<Marker>(i)->f1f4 += g_step * g_map_river_speed_x;
-        g_mat_vec[1].at<Marker>(i)->f1f8 += g_step * g_map_river_speed_y;
+        g_mat_vec[1].at<Marker>(i)->f1f4 += g_step_tbl[0] * g_map_river_speed_x;
+        g_mat_vec[1].at<Marker>(i)->f1f8 += g_step_tbl[0] * g_map_river_speed_y;
         g_mat_vec[1].at<Marker>(i)->f204 = g_mat_vec[1].at<Marker>(i)->f1f4;
         g_mat_vec[1].at<Marker>(i)->f208 = g_mat_vec[1].at<Marker>(i)->f1f8;
     }

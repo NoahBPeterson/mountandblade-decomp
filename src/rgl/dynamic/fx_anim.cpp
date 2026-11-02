@@ -463,7 +463,7 @@ quaternion* FxAnim::value(quaternion* out, int i, int j, int k)
             BK->kb()[2 * i + j].w = -BK->kb()[2 * i + j].w;
         }
     }
-    if (g_keyboard.key[66] != 0) {
+    if (g_keyboard.down[66] != 0) {
         quaternion* va = r->table->tables[k].qv();
         slerp_x(&q, &va[cur], &va[cur + 1], &frac);
     } else {

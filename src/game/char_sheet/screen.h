@@ -227,9 +227,6 @@ extern int g_module_name;                   // 0x8ee3c38
 extern int g_5a9fb0;                    // 0x5a9fb0 (camera enabled)
 extern int g_a1741c;                    // 0xa1741c (screenshot requested)
 extern int g_a1781c;                    // 0xa1781c (screenshot already done)
-extern int g_a1717c;                    // 0xa1717c
-extern int g_a17190;                    // 0xa17190
-extern int g_a17590;                    // 0xa17590
 extern float g_a178d4;                  // 0xa178d4 mouse dx
 extern float g_a178d8;                  // 0xa178d8 mouse dy
 

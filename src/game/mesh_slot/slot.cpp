@@ -96,7 +96,7 @@ int Slot::read_keys()
         } else {
             const unsigned char* b = (const unsigned char*)keys;
             for (int i = 0; i < 0xe0; i++)
-                key[i] = b[i] & 0x80;
+                down[i] = b[i] & 0x80;
         }
     }
     return 0;
@@ -115,21 +115,21 @@ int Slot::read_state()
         } else {
             const unsigned char* b = (const unsigned char*)buf;
             for (int i = 0; i < 8; i++)
-                key[0xe0 + i] = b[12 + i] & 0x80;
-            key[0xee] = 0;
-            f80c = (float)buf[0];
-            f810 = (float)buf[1];
-            f814 = (float)buf[2];
-            key[0xef] = 0;
+                down[0xe0 + i] = b[12 + i] & 0x80;
+            down[0xee] = 0;
+            axis[0] = (float)buf[0];
+            axis[1] = (float)buf[1];
+            axis[2] = (float)buf[2];
+            down[0xef] = 0;
             if (buf[2] > 0) {
                 if ((float)(g_ticks[clock830] - t838) * 0.00001f > 0.5f) {
                     t838 = g_ticks[clock830];
-                    key[0xee] = 1;
+                    down[0xee] = 1;
                 }
             } else if (buf[2] < 0) {
                 if ((float)(g_ticks[clock830] - t838) * 0.00001f > 0.5f) {
                     t838 = g_ticks[clock830];
-                    key[0xef] = 1;
+                    down[0xef] = 1;
                 }
             }
         }
@@ -140,7 +140,7 @@ int Slot::read_state()
 // @ 0x487900
 int Slot::is_ready(int i)
 {
-    if (key[i] && !now[i])
+    if (down[i] && !prev[i])
         return 1;
     return 0;
 }
@@ -148,7 +148,7 @@ int Slot::is_ready(int i)
 // @ 0x487930
 void Slot::update(float dt)
 {
-    memcpy(now, key, sizeof(key));
+    memcpy(prev, down, sizeof(down));
     read_keys();
     read_state();
     bool ch = false;
@@ -159,12 +159,12 @@ void Slot::update(float dt)
     if (0.2f > f)
         f = 0.2f;
     f81c *= f;
-    if (f80c != 0.0f || f810 != 0.0f) {
-        f818 = f818 * 0.5f + f80c;
-        f81c = f81c * 0.5f + f810;
+    if (axis[0] != 0.0f || axis[1] != 0.0f) {
+        f818 = f818 * 0.5f + axis[0];
+        f81c = f81c * 0.5f + axis[1];
     }
     for (int i = 0; i < 0x100; i++) {
-        if (now[i] != key[i])
+        if (prev[i] != down[i])
             ch = true;
     }
     if (ch)

@@ -16,11 +16,9 @@ struct Slot {
     IDirectInput8A* dinput;                                 // +0   0x4bc430 (DirectInput8Create)
     IDirectInputDevice8A* kb;                               // +4   the keyboard device (0x100-byte state)
     IDirectInputDevice8A* state;                            // +8   the mouse device (0x14-byte state, c_dfDIMouse2)
-    int key[0x100];                                         // +0xc  held state per scan code (key[0xe0..0xe7] = mouse buttons, filled by read_state)
-    int now[0x100];                                         // +0x40c the previous frame's snapshot of key (taken at the top of update)
-    float f80c;                                             // +0x80c mouse x delta
-    float f810;                                             // +0x810 mouse y delta
-    float f814;                                             // +0x814
+    int down[0x100];                                        // +0xc  held state per scan code (down[0xe0..0xe7] = mouse buttons, filled by read_state)
+    int prev[0x100];                                        // +0x40c the previous frame's snapshot of down (taken at the top of update; a press is down && !prev)
+    float axis[3];                                          // +0x80c mouse look axes (x, y, wheel)
     float f818;                                             // +0x818
     float f81c;                                             // +0x81c
     int clock820;                                           // +0x820
