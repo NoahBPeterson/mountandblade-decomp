@@ -581,7 +581,6 @@ struct IntDeque_s261e0 {
 
 
 // float constants in .rdata
-extern const float g_f54a6e4;                           // 0x54a6e4 = 0.2f
 extern const float g_f549ca8;                           // 0x549ca8 = 0.0f
 extern const float g_f54a6d0;                           // 0x54a6d0 = 1e-05f
 extern const float g_f549cdc;                           // 0x549cdc = 1.0f

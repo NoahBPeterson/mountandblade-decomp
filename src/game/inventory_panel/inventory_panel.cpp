@@ -25,12 +25,18 @@
 #define ITYPE(i) (*(unsigned char*)&g_items[i].type_flags)
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_snd_id_a;                                  // 0x5aa350
+int g_snd_id_b;                                  // 0x5aa2fc
+int g_num_valid;                                 // 0xa70470
+DragMesh* g_drag;                                // 0x5d75e4
+
 #define SOUNDMGR ((SoundMgr*)&orig::g_sound_mgr)                  // 0x5aa128
 
 // ---- globals and callees of other translation units -----------------------------------------------------------------
 extern MsgLog g_msglog;                                 // 0x5d7080
-extern int   g_snd_id_a;                                // 0x5aa350
-extern int   g_snd_id_b;                                // 0x5aa2fc
 
 extern int   g_a17148;                                  // 0xa17148
 extern int   g_a17348;                                  // 0xa17348
@@ -44,18 +50,8 @@ extern int   g_a170d8;                                  // 0xa170d8
 extern int   g_a174d8;                                  // 0xa174d8
 extern float g_ui_alpha;                                // 0x5d7094
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
-extern int   g_5d8760;                                  // 0x5d8760
-extern int   g_5d8764;                                  // 0x5d8764
-extern tstring g_5d7850[0x50];                          // 0x5d7850 .. 0x5d7d50
-extern int   g_5d8020;                                  // 0x5d8020
-extern int   g_5d8024;                                  // 0x5d8024
-extern float g_5d8028;                                  // 0x5d8028
-extern int   g_5d8780;                                  // 0x5d8780
-extern void* g_5d75e8;                                  // 0x5d75e8 (== the UI root's object at +0x568)
-extern const char g_empty[];                            // 0x54a480 ("")
 extern int   g_disable_food_slot;                               // 0xa181a8
 extern tstring g_num;                                   // 0xa70464
-extern int   g_num_valid;                               // 0xa70470
 extern __int64 g_result64;                              // 0xa70458 (read as one qword by the price rule)
 extern char  g_skill_tbl[];                           // 0x8ee3100 (skill records of 0x44 bytes)
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
@@ -324,18 +320,18 @@ void InventoryPanel::refresh_lists(int unused)
     }
 
     if (locked != 0) {
-        void* o = g_5d75e8;
+        void* o = g_overlay;
         if (o != 0)
             ((GuiObjV*)o)->d0(1);
-        g_5d8760 = -1;
-        g_5d8764 = 0xff101010;
-        for (tstring* s = g_5d7850; s < g_5d7850 + 0x50; s++)
-            s->assign(g_empty);
-        g_5d8024 = 0;
-        g_5d8028 = -0.03f;
-        g_5d8020 = 0;
-        g_5d75e8 = 0;
-        g_5d8780 = 0;
+        g_panel_color = -1;
+        g_panel_bg = 0xff101010;
+        for (tstring* s = g_strs; s < g_strs + 0x50; s++)
+            s->assign("");
+        g_list1 = 0;
+        g_list2 = -0.03f;
+        g_list0 = 0;
+        g_overlay = 0;
+        g_sel_ent = 0;
     }
 
     for (int page = 0; page < view_count; page++) {

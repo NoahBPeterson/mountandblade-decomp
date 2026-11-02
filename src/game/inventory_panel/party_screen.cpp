@@ -14,8 +14,12 @@
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
+#include "../shared_vars.h"
 
-extern const char g_empty_string[];                 // 0x54a480 ("")
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_item_sel;                                  // 0xa75f6c (the selected item index; negative = nothing selected)
+
+
 extern tstring g_module_name;                       // 0x8ee3c38 (end of the skill table)
 extern int g_skill_clamp;                  // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp              // (clamped level value of the hero percentage; lives outside the loaded image)
@@ -573,7 +577,7 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     }
     float total = (float)count * unit;
     if (total < bar_amount[type]) {
-        total += unit * g_grow_frac;
+        total += unit * 0.2f;
         if (!(total < bar_amount[type]))
             total = bar_amount[type];
     }
@@ -828,7 +832,7 @@ void PartyScreen::setup_skills()
     skills_base = w;
     label_refresh(skills_base, tstring("party_bo_skills"));
     {
-        tstring empty(g_empty_string);
+        tstring empty("");
         float pos[2];                                   // passed uninitialised by the original
         PSO(skills_base)->set_text(pos, &empty);
     }

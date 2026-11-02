@@ -200,7 +200,8 @@ struct char_window {
     void open_view();                           // 0x509980
     void init(const tstring& msg, int type, const char* a, const char* b, const char* c, const char* d, const char* e, const char* f);   // 0x509410 (the message box)
 };
-extern char_window* g_dialog;                     // 0xa73984 (pointer variable)
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+char_window* g_dialog;                          // 0xa73984 (pointer variable)
 
 // ---- settings access ------------------------------------------------------------------------------------
 static const char* config_text(int i)

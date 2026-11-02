@@ -9,6 +9,12 @@
 #include <windows.h>
 #include <math.h>
 #include "../../rgl/rgl_math.h"
+#include "../../include/msg_log.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+float g_box_x;                                // 0x5d8778
+float g_box_y;                                // 0x5d877c
+
 
 using rgl::vector4;
 using rgl::matrix;
@@ -118,19 +124,12 @@ static inline Party* party_at(GameData* g, int id)
 // --------------------------------------------------------------------------------- globals -------------
 extern world*    g_level;                    // 0xa732b4
 extern rgl::mesh* g_label_obj;                // 0x5d75ec
-extern float     g_box_x;                    // 0x5d8778
-extern float     g_box_y;                    // 0x5d877c
 extern float     g_mouse_x;                  // 0x5d7094 (float: ?g_mouse_x@@3MA)
 extern float     g_mouse_y;                  // 0x5d7098
 extern int       g_a17458;                   // 0xa17458
 extern int       g_a17858;                   // 0xa17858
 extern int       g_a17148;                   // 0xa17148
 extern int       g_5a9fbc;                   // 0x5a9fbc
-extern char      g_msg_enabled;              // 0x5d8794
-extern int       g_msg_count;                // 0x5e2138
-extern int       g_msg_base;                 // 0x5e213c
-extern tstring   g_msg_text[32];             // 0x5e2140
-extern int       g_msg_id[32];               // 0x5e2340
 
 // ======================================================================================================
 // @ 0x5191e0
@@ -413,11 +412,11 @@ void MapPanel::update_target()
         {
             tstring tmp("ui_target_lost");
             tstring* s = g_strtable.lookup(tmp);
-            if (g_msg_enabled && g_msg_count < 0x20) {
-                int k = (g_msg_base + g_msg_count) % 0x20;
-                g_msg_text[k] = *s;
-                g_msg_id[k]   = -1;
-                g_msg_count++;
+            if (g_msglog.enabled && g_msglog.ring.count < 0x20) {
+                int k = (g_msglog.ring.head + g_msglog.ring.count) % 0x20;
+                g_msglog.ring.names[k] = *s;
+                g_msglog.ring.vals[k]   = -1;
+                g_msglog.ring.count++;
             }
         }
     }

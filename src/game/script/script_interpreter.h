@@ -172,18 +172,15 @@ extern int g_or_latch;          // 0x5e25a4  this_or_next chain already satisfie
 extern int g_presentation_count;        // 0xa75f30 (check_presentation 0x49cd50)
 extern int g_mesh_count;                // 0x8ed4f5c (check_mesh)
 extern int g_menu_count;                // 0x5e29b4 (check_menu 0x49ce90)
-extern int g_mission_template_count;    // 0x5e2a04 (0x49d070)
 // mission templates (0x58-byte records at 0x5e2a00) and their 0x4c-byte entry points
 #include "../mode_rec.h"             // MissionTemplate (the 0x58-byte records at 0x5e2a00) and SpawnRec (its 0x4c-byte entries): the one definition
 extern MissionTemplate* g_mission_templates;   // 0x5e2a00
 extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
-extern int g_map_icon_count;            // 0x5e29f4 (0x49d110)
 extern int g_particle_system_count;     // 0x8ed5094 (warn_particle_system)
 #define g_scene_prop_count g_tbl78_count    // 0x5e29e0: agent.h's 0x78-byte record table is the scene prop kinds
 extern int g_sound_count;               // 0x5aa130 (0x49d310)
 extern int g_track_count;               // 0xa73a14 (0x49d3d0)
 extern int g_animation_count;           // 0xa7662c (0x49d4b0)
-extern int g_warnings_off_a;            // 0x5a9fd4 (0x49d3d0)
 extern int g_warnings_off_b;            // 0x5a9fd8 (0x49d310, 0x49d3d0)
 
 // ---- message log and text log (report 0x49cc60) -----------------------------------------------------------------
@@ -498,7 +495,6 @@ __forceinline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; 
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
 extern int g_text_log_enabled;          // 0x5a9fb0 (display_message 0x4a305a)
-extern char g_show_messages;            // 0x5d8794 (set_show_messages 0x4a30a0)
 
 // ---- map battles (table at game +0xcc) ---------------------------------------------------------------------------
 #include "../battle_rec.h"            // BattleRec, BattleTable: the one definition (party2 and script)

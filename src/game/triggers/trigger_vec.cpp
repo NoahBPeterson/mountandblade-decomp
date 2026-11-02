@@ -31,6 +31,19 @@
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../menu_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_scan_module_textures;   // 0xa18108
+int g_scan_module_sounds;   // 0xa1810c
+float g_time_multiplier;   // 0xa18110
+float g_track_spotting;   // 0xa18118
+float g_map_sea_speed_x;   // 0xa18148
+float g_map_sea_speed_y;   // 0xa1814c
+float g_map_river_speed_x;   // 0xa18154
+float g_map_river_speed_y;   // 0xa18158
+int g_show_faction_color;   // 0xa181b0
+unsigned char g_show_party_ids_instead_of_names;   // 0xa181b8
+
+
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
 
 // @ 0x4be730

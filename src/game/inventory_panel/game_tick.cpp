@@ -21,6 +21,13 @@
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/config.h"
 #include "../battle_rec.h"      // BattleRec (update_nav_anim 0x4b71e0)
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+MarkerList g_list_b;                          // 0xa732e0
+MarkerList g_list_c;                          // 0xa732f0
+MarkerList g_list_d;                          // 0xa732d0
+
 
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
 #define FLD(T, off) (*(T*)((char*)this + (off)))
@@ -77,38 +84,21 @@ struct Cfg30 {                                      // the object at game+0x30
 
 // ---- globals and callees of other translation units ----------------------------------------------------------------
 extern float    g_step;                 // 0x5a9c20  frame step (seconds)
-extern int      g_clock_step;           // 0x5937b4  clock index used by set_clock_step
-extern const float g_time_multiplier;       // 0xa18110  map speed scale
-extern const float g_speed_eps;         // 0x591390  "the map is moving" threshold
 extern const float g_rate_marker;       // 0x590cd0  marker decay per second
-extern const float g_rate_second;       // 0x596774  ticker 2 rate
-extern const float g_rate_third;        // 0x59b998  ticker 3 rate
-extern const float g_rate_fourth;       // 0x59b994  ticker 4 rate
-extern const float g_rate_fifth;        // 0x59b990  ticker 5 rate
-extern const float g_map_sea_speed_x;            // 0xa18148  marker drift rate x
-extern const float g_map_sea_speed_y;            // 0xa1814c  marker drift rate y
-extern const float g_map_river_speed_x;            // 0xa18154  marker drift rate x (second set)
-extern const float g_map_river_speed_y;            // 0xa18158  marker drift rate y (second set)
 extern int      g_disable_food_slot;             // 0xa181a8  0: allow the "loading" clock message
 
 extern int      g_in_a;                 // 0xa17124  input flags
 extern int      g_in_b;                 // 0xa17524
 extern int      g_in_c;                 // 0xa17148
 extern int      g_in_d;                 // 0xa17348
-extern const char g_resume_text[];      // 0x54a480  resume marker string
-extern const char g_msg_key[];          // 0x59b99c  message log key
 extern int g_use_shaders;                                   // 0x5e28fc  0 = linear colour path
 extern int g_page_rows;                              // 0xa73298
 extern int g_page_cols;                              // 0xa73294
 extern char g_map_pages[];                                // 0xa73094  host grid (array of cell pointers)
-extern float g_track_spotting;                             // 0xa18118
 extern float g_hero_wounded_treshold;                     // 0xa18138
 extern float g_player_wounded_treshold;                // 0xa1813c
 extern MsgLog g_msglog;                                 // 0x5d7080
 extern MarkerList g_list_a;                             // 0xa732c0
-extern MarkerList g_list_b;                             // 0xa732e0
-extern MarkerList g_list_c;                             // 0xa732f0
-extern MarkerList g_list_d;                             // 0xa732d0
 void set_clock_step(int* clock, float step);            // 0x461420
 bool is_daytime();                                          // 0x435700 (true in the 4..20 h window; game/agent/agent.cpp)
 // GameW (inv_common.h): remove_party 0x4915d0 (game/world_data, GameData::remove_party)
@@ -172,7 +162,8 @@ void GameG::tick(float dt)
             speed = g_time_multiplier * dt;
     }
 
-    set_clock_step(&g_clock_step, speed);
+    static const int map_clock = 1;                 // 0x5937b4 (the map clock's index in g_ticks)
+    set_clock_step(const_cast<int*>(&map_clock), speed);
     f13af8 = 0;
     ((TimerList*)((char*)this + 0x139f4))->update(flags);   // 0x48add0
     ((snd_bank*)((char*)this + 0x139e8))->update_all(flags);   // 0x462760
@@ -184,7 +175,7 @@ void GameG::tick(float dt)
         float d = (g_ticks[msg_timer.clock] - msg_timer.t) * 1e-5f;
         if (d > 1.0f) {
             msg_timer.set_delay(-2.0f);
-            tstring msg(g_msg_key);
+            tstring msg("ui_party_has_nothing_to_eat");
             g_msglog.add(*g_strtable.lookup(msg), 0xffdd4444);
         }
     }
@@ -199,29 +190,29 @@ void GameG::tick(float dt)
         }
     }
     {
-        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * g_rate_second);
+        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * (1.0f / 24));
         if (v > f13b2c) {
             train_troops();
             f13b2c = v;
         }
     }
     {
-        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * g_rate_third);
+        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * (1.0f / 720));
         if (v > f13b30)
             f13b30 = v;
     }
     {
-        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * g_rate_fourth);
+        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * (1.0f / 8640));
         if (v > f13b34)
             f13b34 = v;
     }
     {
-        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * g_rate_fifth);
+        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * (1.0f / 168));
         if (v > f13b38)
             f13b38 = v;
     }
 
-    if (speed > g_speed_eps) {
+    if (speed > 1e-8f) {
         track_parties(speed);
         update_tracks();
     }
@@ -261,7 +252,7 @@ void GameG::tick(float dt)
             f13aa0 = 0;
             Party* p = party_at(&parties, ((Map10007*)&parties)->lookup(cur_agent));
             *(__int64*)&p->flags_lo &= ~(__int64)0x100;
-            tstring s(g_resume_text);
+            tstring s("");
             resume_strings(&s, &resume_old);
         }
     }

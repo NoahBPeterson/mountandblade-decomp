@@ -130,11 +130,7 @@ extern int g_display_wp_throwing;            // 0x5e2914
 extern int g_display_wp_firearms;            // 0x5e2918
 extern int g_compatible_module_version;      // 0x5e29b8
 extern int g_module_version;                 // 0x5e29c0
-extern int g_scan_module_textures;           // 0xa18108
-extern int g_scan_module_sounds;             // 0xa1810c
-extern float g_time_multiplier;              // 0xa18110
 extern float g_seeing_range;                 // 0xa18114
-extern float g_track_spotting;               // 0xa18118
 extern float g_blood_multiplier;             // 0xa1811c
 extern int g_skill_leadership_bonus;         // 0xa18120
 extern int g_skill_prisoner_management_bonus;// 0xa18124
@@ -146,11 +142,7 @@ extern float g_hero_wounded_treshold;        // 0xa18138
 extern float g_player_wounded_treshold;      // 0xa1813c
 extern int g_num_hints;                      // 0xa18140
 extern float g_map_sea_direction;            // 0xa18144
-extern float g_map_sea_speed_x;              // 0xa18148
-extern float g_map_sea_speed_y;              // 0xa1814c
 extern float g_map_river_direction;          // 0xa18150
-extern float g_map_river_speed_x;            // 0xa18154
-extern float g_map_river_speed_y;            // 0xa18158
 extern int g_map_tree_types;                 // 0xa1815c
 extern int g_map_snow_tree_types;            // 0xa18160
 extern int g_map_steppe_tree_types;          // 0xa18164

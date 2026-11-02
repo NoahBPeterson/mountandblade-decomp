@@ -7,6 +7,7 @@
 #include "../../include/fx.h"           // FxDef (the skeleton of an agent entity: ctor 0x428820, init 0x4288c0, set_env_count 0x46b9d0, f5c)
 #include "../../include/phys_set.h"     // PhysSet::update 0x472dc0
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/msg_log.h"
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
@@ -221,10 +222,6 @@ extern int g_skin_count;                // g_char_count 0x8ed4f88
 extern ItemKindT* g_skins_begin;         // 0x8ed4f7c
 #include "../skill_cap.h"
 extern char g_gui[]; // 0x5d7080
-extern int g_msg_count;                 // 0x5e2138
-extern int g_msg_base;                  // 0x5e213c
-extern tstring g_msg_text[32];          // 0x5e2140
-extern int g_msg_id[32];                // 0x5e2340
 struct StrTable {                       // game/str_table.h (the translation table; its lookup takes the key by reference)
     tstring* lookup(const tstring& key);    // 0x43a1e0
 };
@@ -487,11 +484,11 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
         if (lit != 0) {
             tstring msg(lit);
             tstring* t2 = g_strtable.lookup(msg);
-            if ((*(char*)((char*)&g_gui + 0x1714)) && g_msg_count < 0x20) {
-                int k3 = (g_msg_base + g_msg_count) % 0x20;
-                g_msg_text[k3] = *t2;
-                g_msg_id[k3] = -1;
-                g_msg_count++;
+            if (g_msglog.enabled && g_msglog.ring.count < 0x20) {
+                int k3 = (g_msglog.ring.head + g_msglog.ring.count) % 0x20;
+                g_msglog.ring.names[k3] = *t2;
+                g_msglog.ring.vals[k3] = -1;
+                g_msglog.ring.count++;
             }
         }
     }

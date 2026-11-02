@@ -11,6 +11,17 @@
 
 // ---- tstring (0x10 bytes: read cursor, buffer, capacity, length) -------------------------------------
 #include "../tstring.h"
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+char g_5d75e0;                                  // 0x5d75e0
+int g_5d8798;                                   // 0x5d8798
+float g_8ee42f0;                                // 0x8ee42f0
+char g_saved;   // 0x5e2a08
+int g_counter;   // 0x5e28cc
+char g_key_states[256];   // 0x5e27c8
+char g_5e2630;   // 0x5e2630
+
 
 // the engine's "null or pointer" read used all over the code base (buf == 0 -> the field itself)
 static __forceinline const char* c_str(const tstring* s)
@@ -39,20 +50,13 @@ extern ScreenObj* g_windows[30];       // 0xa73980 (.. 0xa739f4)
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // ---- globals ------------------------------------------------------------------------------------------
-extern int   g_counter;                 // 0x5e28cc
-extern float g_8ee42f0;                 // 0x8ee42f0
 extern __int64 g_5e2970;                // 0x5e2970 (frame time step, scaled)
 extern __int64 g_ticks;                 // 0x5e2948
 extern float g_5a9c20;                  // 0x5a9c20
-extern int   g_5d8798;                  // 0x5d8798
 extern int   g_5e293c;                  // 0x5e293c
-extern char  g_5d75e0;                  // 0x5d75e0
-extern char  g_saved;                  // 0x5e2a08
 extern int   g_no_cam;                  // 0x5a9fb0
 extern int   g_a17158, g_a17558, g_a17348, g_a17148;    // 0xa17158 ..
 extern int   g_a1719c, g_a1759c, g_a171ac, g_a1717c;    // 0xa1719c ..
-extern char  g_5e2630;                  // 0x5e2630
-extern char  g_key_states[256];               // 0x5e27c8
 // the Direct3D9 device (0xa17f28); __stdcall virtuals -> the COM-style call pattern
 struct IDev9 {
     virtual long __stdcall s0(); virtual long __stdcall s1(); virtual long __stdcall s2();
@@ -143,7 +147,7 @@ int GameApp::Update()
     dt = m_fElapsedTime;
     if (dt > 0.1f) dt = 0.1f;
     g_8ee42f0 = dt;
-    t = (__int64)(dt * orig::k_100000f);
+    t = (__int64)(dt * 100000.0f);
     g_5e2970 = t;
     g_ticks += t;
     g_5a9c20 = dt;

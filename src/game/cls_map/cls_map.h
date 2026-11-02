@@ -254,7 +254,6 @@ extern int g_a73348[];                          // 0xa73348 (grid of unit indice
 extern int g_a73438;                            // 0xa73438 (selected index, -1 = none)
 extern int g_mission_ctx[];                          // 0xa73300 (selection table)
 extern int g_a732fc[];                          // 0xa732fc (per-side fallback ids)
-extern char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
 #include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
 extern float g_5a9f24;                          // 0x5a9f24 0.65 (the meeting window columns' top)
 extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145} ([1] is 0.21450001, not the literal 0.2145f)

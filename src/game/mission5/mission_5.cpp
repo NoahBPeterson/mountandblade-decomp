@@ -482,7 +482,7 @@ void Screen_s261e0::tick(float dt)
     if (f2e0)
         sdt = 0.0f;
     else if (f2e1)
-        sdt = dt * g_f54a6e4;
+        sdt = dt * 0.2f;
 
     // ---- scene time-scale blend --------------------------------------------------------------------
     if ((*(int*)((char*)&g_cfg + 0x24))) {

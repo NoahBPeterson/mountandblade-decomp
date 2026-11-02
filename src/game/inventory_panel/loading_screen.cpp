@@ -3,6 +3,11 @@
 #include <stdio.h>
 
 #include "../tstring.h"
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_sound_paused;   // 0x5a9fd4 (1 = sound paused; the script engine mutes warnings while it is set)
+
 
 // source record stream: the readers call three virtual slots
 struct Src {
@@ -284,9 +289,7 @@ extern EditorDialog g_app_obj;                 // 0x8ee3c48
 extern GuiManager g_gui;                                 // 0x5d7080
 
 
-extern int   g_sound_paused;                         // 0x5a9fd4
 extern int   g_sound_muted;                          // 0x5a9fd8
-extern int   g_scan_module_textures;                 // 0xa18108
 extern char* g_xa44238;                              // 0xa44238
 
 #include "../loading_screen.h"       // LoadingScreen: advance 0x50f440 here

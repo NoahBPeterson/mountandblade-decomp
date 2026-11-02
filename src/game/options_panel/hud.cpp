@@ -11,6 +11,7 @@
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "quest_page.h"        // QuestPage: Hud is the quest page screen (QuestPage::sel is Hud::f250), fill() 0x4d5ba0
+#include "../shared_vars.h"
 
 // @ 0x4d4b80
 bool EditMesh::on_selection_changed()

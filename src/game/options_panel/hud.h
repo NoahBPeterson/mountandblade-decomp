@@ -17,7 +17,6 @@ extern int* g_menu_w3;                              // 0xa739ac
 extern int* g_menu_w4;                              // 0xa739c8
 extern int* g_menu_w5;                              // 0xa739d4
 extern int* g_menu_w6;                              // 0xa739f0
-extern char g_saved;                               // 0x5e2a08
 
 struct MenuScreen {
     virtual void v0();

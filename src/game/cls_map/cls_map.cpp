@@ -22,6 +22,7 @@
 #include <shlobj.h>
 #include "../../tinyxml/tinyxml.h"
 #include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../shared_vars.h"
 struct OptionsDlg {
     void choose_dx_settings(Config* cfg, bool overwrite);   // 0x4b9b90 (config/options_dlg.h pulls winsock2.h: member-only stub)
 };

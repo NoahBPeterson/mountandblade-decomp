@@ -165,7 +165,7 @@ void KeysPage::update_perf()
     perf += orig::g_char_shadow * 6;
     int limit = *(int*)&orig::g_max_dead;
     if (limit >= 100) limit = 100;
-    perf += limit * orig::k_0_2f;
+    perf += limit * 0.2f;
     limit = orig::g_tick_a;
     if (limit >= 5) limit = 5;
     perf += limit;

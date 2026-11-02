@@ -49,6 +49,7 @@
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../world.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../shared_vars.h"
 
 // ==== by-reference helpers with their bodies in this object ================================================
 // The original's interpreter sees these bodies (header inlines its inliner left out of line in the 70 KB execute()):
@@ -426,7 +427,7 @@ __declspec(noinline) char __fastcall warn_track(const int& value)
     int v = value;
     char r = 1;
     if (v < 0 || v >= g_track_count) {
-        if (g_warnings_off_a == 0 && g_warnings_off_b == 0) {
+        if (g_sound_paused == 0 && g_warnings_off_b == 0) {
             sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Track ID: %d", g_cur_opcode, v);
             report(buf);
         }
@@ -1430,7 +1431,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::set_show_messages:
-        g_show_messages = params[0] != 0;
+        g_msglog.enabled = params[0] != 0;      // 0x4a30a0
         break;
     case op::add_troop_note_tableau_mesh:
         if (check_troop((int)params[0]) && warn_tableau((int)params[1]))

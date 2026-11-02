@@ -308,7 +308,7 @@ void VideoPage::update(int reason)
             {
                 // 0x4d6ab9: the key is looked up and the text goes in as the body; the title is the empty string
                 tstring key("ui_change_graphics_settings_explanation");
-                tstring title((const char*)orig::g_empty_text);
+                tstring title("");
                 tstring* e = g_strtable.lookup(key);
                 g_main_menu.rec->setup(&title, e);
             }

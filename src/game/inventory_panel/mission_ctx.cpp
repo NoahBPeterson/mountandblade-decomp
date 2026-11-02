@@ -22,6 +22,14 @@
 #include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+MenuWidget* g_w94;                               // 0xa73994
+MenuWidget* g_w98;                               // 0xa73998
+MenuWidget* g_wA8;                               // 0xa739a8
+MenuWidget* g_wD8;                               // 0xa739d8
+
 
 #define SCENE ((MissionV*)g_mission)
 
@@ -40,7 +48,6 @@ struct BattleRec {                                      // the 0x98-byte object 
 };
 #include "../mode_rec.h"                              // MissionTemplate (0x58 bytes, array at 0x5e2a00): the one definition
 extern MissionTemplate* g_mission_templates;                    // 0x5e2a00
-extern int g_mission_template_count;                            // 0x5e2a04
 
 using rgl::mat3;
 mat3* identity3(mat3* m);                               // 0x40cd60 (cdecl)
@@ -136,7 +143,6 @@ extern int g_a17348;            // 0xa17348
 extern int g_a70438;            // 0xa70438
 extern int g_use_shaders;       // 0x5e28fc
 extern int g_no_cam;            // 0x5a9fb0
-extern char g_saved;            // 0x5e2a08
 extern int g_trial_mode;        // 0x5e29c4
 extern int g_a735c8;            // 0xa735c8
 extern float g_view_a;          // 0x5d75d8
@@ -145,7 +151,6 @@ extern int g_level;         // 0xa732b4
 extern const float g_zero;          // 0x549ca8  0.0f
 extern const float g_ten;           // 0x549d74  10.0f
 extern const float g_oneone;        // 0x54b888  1.1f
-extern const float g_pttwo;         // 0x54a6e4  0.2f
 extern const float g_three;         // 0x54a710  3.0f
 extern const float g_quarter;       // 0x54b868  0.25f
 extern const float g_four;          // 0x5935c8  4.0f
@@ -1100,9 +1105,9 @@ void Screen::camera_move(float dt)
     if (w != 0.0f || g_axis_y != 0.0f) {
         y = y - w * height * dt;
         if (g_axis_y > 0.0f)
-            y = y - height * g_pttwo;
+            y = y - height * 0.2f;
         else if (g_axis_y < 0.0f)
-            y = height * g_pttwo + y;
+            y = height * 0.2f + y;
     }
 }
 
