@@ -376,9 +376,11 @@ def main():
             report["unresolved"][s] = "no address (the resolver never saw it)"
             continue
         if len(vas) > 1:
-            best = max(vas, key=lambda v: vas[v].get("nrows", 0))
+            # one name, two original addresses: some declaration is wrong (the wrong one won by row count before
+            # 2026-11-02 and bound renderer::set_view's matrix product to the scalar-times-vector operator). The glue
+            # fails below rather than guess.
             report["conflicts"][s] = sorted(vas)
-            vas = {best: vas[best]}
+            continue
         va = int(next(iter(vas)), 16)
         if va in iat_of:
             t = import_symbol(iat_of[va], True)
@@ -471,12 +473,17 @@ def main():
     report["traps"] = {"%08x" % v: "int 3 at _mb_trap_%08x" % v for v in sorted(traps)}
     report["pointers"] = dict(report["pointers"])
     json.dump(report, open(os.path.join(a.out, "glue.json"), "w"), indent=1)
-    print("unresolved in: %d; data labels %d, aliases %d, left unresolved %d (conflicts resolved by row count: %d)"
+    print("unresolved in: %d; data labels %d, aliases %d, left unresolved %d, conflicts %d"
           % (len(unres), len(labels), len(aliases), len(report["unresolved"]), len(report["conflicts"])))
     print("pointers relocated: %s; traps for %d code addresses without a definition" % (report["pointers"], len(traps)))
-    if report["conv_mismatch"]:
-        print("WARNING: %d aliases join different calling conventions (glue.json conv_mismatch)" % len(report["conv_mismatch"]))
-    return 0
+    bad = 0
+    for n, vs in sorted(report["conflicts"].items()):
+        print("CONFLICT: %s resolves to %s (fix the declaration or annotation that gives the wrong address)" % (n, ", ".join(vs)))
+        bad = 1
+    for n in sorted(report["conv_mismatch"]):
+        print("CONV MISMATCH: alias %s joins different calling conventions (glue.json conv_mismatch)" % n)
+        bad = 1
+    return bad
 
 
 if __name__ == "__main__":

@@ -81,6 +81,7 @@ struct coll_base : entity {
     float restitution;          // 0x15c (0.9, set by the constructor of the rigid body)
     contact_list_m contacts;    // 0x160
     virtual ~coll_base() { contacts._Tidy(); }                      // 0: 0x427cd0 (body), 0x427d20 (deleting)
+    virtual int type_id() { return 3; }                             // 1: 0x48b880 (the original's ICF shares it with UiC::type)
     virtual bool is_dynamic();                                      // 24: 0x48b170
     virtual vector4* point_velocity(vector4* out, const vector4* p);        // 25: 0x421520 (default: zero)
     virtual void apply_impulse(const vector4* p, const vector4* j);         // 26: 0x421540 (default: nothing)
@@ -121,7 +122,8 @@ struct rigid_base : coll_base {
 // vtable 0x54b668, 0x1d8 bytes
 struct dynamic_entity : rigid_base {
     dynamic_entity();                                                      // 0x425370
-    virtual string type_name();                                            // 2: 0x425490
+    virtual int type_id() { return 7; }                                    // 1: 0x49df30 (ICF-shared with Camera::type)
+    virtual string type_name();                                           // 2: 0x425490
     virtual void update(float dt);                                         // 7: 0x425730
     virtual bool awake();                                                  // 10: 0x4254b0
     virtual vector4* point_velocity(vector4* out, const vector4* p);       // 25: 0x4254c0 v + w x (p - origin)
