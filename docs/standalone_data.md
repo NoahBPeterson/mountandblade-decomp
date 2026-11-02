@@ -129,3 +129,31 @@ hand stub gone. Never define it and keep the stub (double construction). In the 
 4. `build.py --out <scratch>`: the glue data-label count in `build.json` drops by what you converted; the data gate
    passes.
 5. Spot-check `equiv.py <module> <va> --src ...` for two or three touched functions.
+
+## 7. Pilot result (cls_map)
+
+Glue data labels 1412 -> 1352 (rdata 320 -> 297, data 264 -> 245, bss 866 -> 847; `build.py` data gate: 24 definitions at
+original addresses, one storage each). Of the 66 labels only cls_map referenced by name, 60 are gone:
+
+| kind | labels | how |
+|---|---|---|
+| rdata float constants | 9 (+ the cls_map references of `g_549cdc`, `g_549d70`) | literals (`0.3f`, `0.39f`, `0.65f`, `0.25f/0.5f/0.75f`, `0.00528f`, `1.0f / 0x3dc9`) |
+| rdata string labels | 15 | string literals |
+| data: option block / config fields | 11 `g_options` aliases + `g_bpp` (+ 20 `orig::` option aliases shared with quest_page etc.) | `g_options.i1c`, `g_cfg.display_bits` |
+| data: owned | `g_5a9f24`, `g_5a9f28[2]` | definitions with gen_data values |
+| data: log flags | 2 | the canonical `unsigned char` types (`game_globals.h`) |
+| bss: application object | 4 | `Core` members (`init_flag`, `hinstance`, `m_bStartFullscreen`, `m_fMinFrameTime`) |
+| bss: mission context | 7 | `MissionCtx` members (`mode`, `grid`, `cols`, `depth`, `rows`, `side`, `party[]`) |
+| bss: tables | 7 (`g_menus`, `g_5e29d0` -> `g_items`, `g_propkinds`, `g_ptypes`, `g_env_rows`, `g_map_icons`, `g_party_templates`) | the canonical typed declaration instead of a `void*`/`char*` alias |
+| bss: owned | `g_video_played`, `g_5e2928` | definitions in cls_map.cpp |
+
+Still labels (6, all bss): `g_presentations`, `g_main_menu_kind`, `g_menu_kind_count` (one object at 0xa75f2c that
+static_init constructs), `g_game_keys` (0xa73730, static_init memsets and fills it), `g_presentation` (5 incompatible
+types in other modules), `g_meeting_name` (a `tstring` with a constructor, 5 names for 0xa70464).
+
+Not data: `stop_all`, `GlyphMap::insert`, `M28::M28`, `SkinMagic_Load/Init` are code symbols (the code lane).
+
+Effort: a literal or a string label is minutes (grep, replace, delete the extern); a field alias is ~10 minutes (find the
+member, rename); a canonical-header unification is 20-40 minutes because of header conflicts (cl compile loop 3-5 min on
+a loaded machine; `cl /Zs` syntax-only is the fast check). The pilot took about 4 hours, dominated by waiting for
+compiles, builds (resolve_map alone 15 min under load) and run_all.
