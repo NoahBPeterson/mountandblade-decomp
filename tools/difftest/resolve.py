@@ -861,6 +861,17 @@ class Resolver:
         if ids is None:
             return None, "special member"
         ident_cands, scopes, op = ids
+        # the symbol's innermost scope (its class, or its namespace for a free function): an annotation must sit
+        # directly in it, not merely in an enclosing namespace. Without this, rgl_math.h's free
+        # `operator*(const float&, const vector4&) // 0x407d00` (in namespace rgl) matched the member
+        # rgl::mat4::operator* in every TU that no longer referenced the free one (inline since the rgl.h migration),
+        # and the glue bound renderer::set_view's matrix product to the scalar-times-vector operator
+        if op:
+            inner = op[1][0] if op[1] else None
+        elif name.startswith(("??0", "??1")):
+            inner = base_ident(name).lstrip("?$")       # a ctor / dtor is declared in its own class
+        else:
+            inner = next(iter(mangled_scopes(name)), None)
         hits = []
         c_name = not name.startswith("?")          # extern "C": a namespace around the declaration is irrelevant
         for a_ident, a_scopes, va, loc, ptext in annots:
@@ -868,7 +879,7 @@ class Resolver:
                 continue
             real = [] if c_name else [x for x in a_scopes if x != "<anon>"]
             if real:
-                if real[-1] not in scopes:
+                if real[-1] not in scopes or (inner is not None and real[-1] != inner):
                     continue
             elif scopes and not op:
                 continue
