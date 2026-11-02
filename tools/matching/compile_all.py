@@ -37,6 +37,8 @@ def sources():
         if os.path.exists(src):
             out.append((src, manifest_flags(os.path.join(d, "manifest.txt")) or DEFAULT))
     for src in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.cpp"), recursive=True)):
+        if os.path.basename(src).startswith("_dataaudit_"):
+            continue        # data_size_audit.py's probe copies (left behind when a build is killed mid-audit)
         out.append((src, manifest_flags(src[:-4] + ".manifest.txt") or DEFAULT))
     return out
 

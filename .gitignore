@@ -7,3 +7,4 @@ __pycache__/
 .venv/
 /game
 .opencode/
+src/**/_dataaudit_*.cpp
