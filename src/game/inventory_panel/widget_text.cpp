@@ -136,7 +136,6 @@ template<> RagModel* _Copy_backward_opt<RagModel*, RagModel*>(RagModel*, RagMode
 void  tstring_dtor(tstring* s);                                          // 0x42bc40
 
 // ------------------------------------------------------------------ globals --------------------------------
-char* g_game;                                       // 0x5e2930
 char  g_flag_a181b8;                                // 0xa181b8
 
 #include "../str_table.h"                                       // StrTable: the translated-string table 0x5e2a18 (find 0x4c6010)
