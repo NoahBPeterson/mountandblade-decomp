@@ -140,7 +140,7 @@ def one_module(job):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--jobs", type=int, default=max(1, (os.cpu_count() or 2) - 2))
+    ap.add_argument("--jobs", type=int, default=int(os.environ.get("MB_JOBS") or max(1, (os.cpu_count() or 2) - 2)))
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "relink", "resolve_map.json"))
     a = ap.parse_args()
     os.chdir(ROOT)
