@@ -7,6 +7,7 @@
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copies 0x407ca0 / 0x407cd0 / 0x407d00 of the inline vector4 operators
 #include <string>
 #include <exception>
+#include <stdexcept>
 #include <stdlib.h>
 #include "./shapes.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -1069,35 +1070,10 @@ template str& str::assign(const char*, size_t);
 // @ 0x40c540
 template str::basic_string(const char*);
 
-// copies of <stdexcept>, out-of-line so that they are emitted
-class logic_error : public std::exception {
-public:
-    explicit logic_error(const std::string& m);
-    logic_error(const logic_error&);
-    virtual ~logic_error();
-    virtual const char* what() const;               // 0x40c300 (libcpmt)
-private:
-    std::string _Str;
-};
-class length_error : public logic_error {
-public:
-    explicit length_error(const std::string& m) : logic_error(m) {}   // inline, as <stdexcept>'s: the original has no out-of-line copy (0x43e2a0 builds it in place)
-    length_error(const length_error&);
-    virtual ~length_error() {}                      // ??_G at 0x40c5c0
-};
-// @ 0x40c2c0
-logic_error::~logic_error() {}
-// 0x40c310
-// (scalar deleting destructor of logic_error, vtable 0x59c978 slot 0: generated; forced into the object here)
-void* force_vtables(const std::string& s) { logic_error* p = new logic_error(s); delete p; length_error* q = new length_error(s); delete q; return 0; }
-// @ 0x40c580
-logic_error::logic_error(const std::string& m) : _Str(m) {}
-// @ 0x40c5c0
-// (length_error scalar deleting destructor, vtable 0x59c984 slot 0: generated from the inline ~length_error)
-// @ 0x40c5f0
-logic_error::logic_error(const logic_error& o) : std::exception(o), _Str(o._Str) {}
-// @ 0x40c630
-length_error::length_error(const length_error& o) : logic_error(o) {}
+// 0x40c2c0..0x40c630: std::logic_error / std::length_error of <stdexcept> (all inline there): ~logic_error 0x40c2c0, the scalar deleting
+// destructors 0x40c310 / 0x40c5c0, logic_error(const string&) 0x40c580 and the copy constructors 0x40c5f0 / 0x40c630 that a `throw` of
+// them needs. They have no source of their own: cl emits them (COMDAT) wherever one is thrown; their rows are in
+// agent_combat.manifest.txt (vec_xlen 0x43e2a0 throws std::length_error), where the compiled bytes equal the original's.
 
 // ---- manifold (0x40c670..0x40cb60) -----------------------------------------------------------------------------
 // @ 0x40c6c0
