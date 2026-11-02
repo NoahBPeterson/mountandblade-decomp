@@ -253,10 +253,17 @@ class Steer:
         self._last_ranges = []
         inner = self._callee_compares(cfg, cins) if kind == "int" else []
         windows = list(self._last_ranges)
+        # the uncovered successors of src: a run "flips" the branch when the instruction executed right after src
+        # is one of them (the climb in _float_climb stops there)
+        succ = {d for (s_, d) in cfg.edges if s_ == src}
+        goal = {d for d in succ if (src, d) not in side.edges}
+        goalhit, armed, freads = [], [], []
+
         def replay(inp):
             """Run inp with the compare (and the callee's compares) instrumented -> (occ, iocc, allocs)."""
             recent = collections.deque(maxlen=RECENT)
             occ, iocc, allocs = [], [], []
+            del goalhit[:], armed[:], freads[:]
 
             def on_read(uc_, access, address, size, value, _):
                 try:
@@ -264,7 +271,10 @@ class Steer:
                 except Exception:
                     return
                 if v is not None:
-                    recent.append((address, size, v, uc_.reg_read(U.UC_X86_REG_EIP)))
+                    pc = uc_.reg_read(U.UC_X86_REG_EIP)
+                    recent.append((address, size, v, pc))
+                    if size == 4 and kind == "float" and len(freads) < 256 and r.cur is side:
+                        freads.append((address, pc))
 
             def on_cmp(uc_, address, size, _):
                 if r.cur is not side or len(occ) >= MAX_OCC:
@@ -286,6 +296,17 @@ class Steer:
             ranges += [(lo, hi) for _nm, lo, hi in m.writable]
             hooks = [uc.hook_add(UC_HOOK_MEM_READ, on_read, begin=lo, end=hi - 1) for lo, hi in ranges]
             hooks.append(uc.hook_add(UC_HOOK_CODE, on_cmp, begin=cins.address, end=cins.address))
+            if goal and kind == "float":
+                def on_src(uc_, address, size, _):
+                    armed[:] = [1]
+
+                def on_succ(uc_, address, size, _):
+                    if armed and address in goal and r.cur is side:
+                        goalhit.append(address)
+                    del armed[:]
+                hooks.append(uc.hook_add(UC_HOOK_CODE, on_src, begin=src, end=src))
+                for d in succ:
+                    hooks.append(uc.hook_add(UC_HOOK_CODE, on_succ, begin=d, end=d))
             for ins in inner:
                 hooks.append(uc.hook_add(UC_HOOK_CODE, on_icmp, user_data=ins, begin=ins.address, end=ins.address))
             m.alloc_log = allocs
@@ -371,13 +392,93 @@ class Steer:
                       [(("%x" % o[0]) if o[0] is not None else None, o[3]) for o in ops], locs), flush=True)
             for c in self._candidates(ins, "int", ops, rec, inp0, allocs, jins, rng)[:8]:
                 out.append(c)
+        self.fpcs = {a for a, i in cfg.insns.items() if i.mnemonic.startswith("f")}
+        if kind == "float" and goal and occ and not getattr(self, "_boundary", False):
+            out.extend(self._float_climb(side, src, inp0, replay, goalhit, freads, occ, rng))
         for ops, rec in occ:
-            self.fpcs = {a for a, i in cfg.insns.items() if i.mnemonic.startswith("f")}
             for c in self._candidates(cins, kind, ops, rec, inp0, allocs, jins, rng):
                 out.append(c)
                 if len(out) >= 24 + 8 * len(seen):
                     return out
         return out
+
+    CLIMB_TRIES = 2          # climbs per (side, branch)
+    CLIMB_REPLAYS = 400      # instrumented replays per climb
+
+    def _float_climb(self, side, src, inp0, replay, goalhit, freads, occ, rng):
+        """Branch-distance hill climbing for a float compare whose operands are COMPUTED (a dot product of
+        three loaded vectors against another: no input location holds either value, so input-to-state has
+        nothing to copy and z3 times out on the float multiplications). The compare's two operands are
+        read back at every replay; one recently-read float input field at a time is moved (negated, scaled,
+        stepped, zeroed) and the move kept while it pushes x - y toward the side the uncovered edge needs.
+        A move that stops the run reaching the compare is dropped, so the path to the branch is preserved
+        by construction; the climb ends the moment the instruction after the branch is an uncovered
+        successor. Every returned input is an ordinary Input that both builds run and compare."""
+        key = ("climb", side.name, src)
+        n = self.tries.get(key, 0)
+        if n >= self.CLIMB_TRIES:
+            return []
+        self.tries[key] = n + 1
+
+        def diff(oc):
+            if not oc:
+                return None
+            ops = oc[-1][0]
+            if len(ops) < 2 or ops[0][0] is None or ops[1][0] is None:
+                return None
+            x, y = ops[0][0], ops[1][0]
+            return x - y if math.isfinite(x) and math.isfinite(y) else None
+        d0 = diff(occ)
+        if os.environ.get("DIFFTEST_STEER_DEBUG"):
+            print("  climb %s %08x: d0 %r" % (side.name, src, d0), flush=True)
+        if d0 is None:
+            return []
+        locs = []
+        for a, pc in freads:                    # every float the run read from the input, not just the last few
+            if pc in self.fpcs and self.region(a) in ("pool", "data", "arg") and (a, 4) not in locs:
+                locs.append((a, 4))
+        rng.shuffle(locs)
+        locs = locs[:24]
+        want = (1.0, -1.0) if d0 == 0 else (-1.0 if d0 > 0 else 1.0,)
+        best = None
+        budget = self.CLIMB_REPLAYS
+        for sg in want:
+            cur, cur_g = inp0, sg * d0
+            for _round in range(12):
+                nxt, nxt_g = None, cur_g
+                for loc in locs:
+                    v = self._loc_value(cur, loc)
+                    if v is None:
+                        continue
+                    f = f32(v)
+                    if not math.isfinite(f):
+                        continue
+                    for nv in (-f, 2.0 * f, 0.5 * f, 0.1 * f, 10.0 * f, f + 1.0, f - 1.0, 0.0, 1.0, -1.0):
+                        if budget <= 0:
+                            break
+                        budget -= 1
+                        c = self.set_loc(cur, loc, nv, "float")
+                        if c is None:
+                            continue
+                        oc, _io, _al = replay(c)
+                        if goalhit:
+                            self.stats["climb-win"] += 1
+                            c.origin = "steer"
+                            return [c]
+                        d = diff(oc)
+                        if d is not None and sg * d > nxt_g:
+                            nxt, nxt_g = c, sg * d
+                if nxt is None or budget <= 0:
+                    break
+                cur, cur_g = nxt, nxt_g
+            if cur is not inp0 and (best is None or cur_g > best[0]):
+                best = (cur_g, cur)
+        if os.environ.get("DIFFTEST_STEER_DEBUG"):
+            print("  climb result: best %s, budget left %d, nlocs %d" % (best and best[0], budget, len(locs)), flush=True)
+        if best is not None:
+            self.stats["climb-near"] += 1
+            return [best[1]]
+        return []
 
     def _callee_compares(self, cfg, cins):
         """The cmp/test instructions of the function whose result `cins` tests (`call f` within the three

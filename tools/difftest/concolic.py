@@ -159,12 +159,31 @@ class Trace:
             out[f] = e
             return
         full = self.regs.get(f) if f not in out else out[f]
+        if callable(full):                  # (a deferred concrete partial write earlier in this instruction)
+            full = self.regs.get(f)
         if e is None and full is None:
             out[f] = None
             return
         cur = self.uc.reg_read(FULL[f])
         base = full if full is not None else z3.BitVecVal(cur, 32)
-        val = e if e is not None else z3.BitVecVal((cur >> lo) & ((1 << w) - 1), w)
+        if e is None:
+            # A CONCRETE write into part of a symbolic register. This hook runs BEFORE the instruction, so
+            # `cur` still holds the bits it is about to overwrite: reading the new low byte from it kept the
+            # stale value (`mov al, [esp+33]` left al = the old al in the model while the run had the loaded
+            # byte, so a later `test al, al` made a constant, false path constraint and every flip of the
+            # compares after it was unsat). Resolve it in apply_pending, from the register after the instruction.
+            def late(base=base, lo=lo, w=w, f=f):
+                new = self.uc.reg_read(FULL[f])
+                parts = []
+                if lo + w < 32:
+                    parts.append(z3.Extract(31, lo + w, base))
+                parts.append(z3.BitVecVal((new >> lo) & ((1 << w) - 1), w))
+                if lo > 0:
+                    parts.append(z3.Extract(lo - 1, 0, base))
+                return z3.Concat(*parts) if len(parts) > 1 else parts[0]
+            out[f] = late
+            return
+        val = e
         parts = []
         if lo + w < 32:
             parts.append(z3.Extract(31, lo + w, base))
@@ -273,6 +292,8 @@ class Trace:
             return
         regs, stores, flags = p
         for f, e in regs.items():
+            if callable(e):
+                e = e()
             if e is None or (z3.is_bv_value(z3.simplify(e)) if e is not None else False):
                 self.regs.pop(f, None)
             else:
