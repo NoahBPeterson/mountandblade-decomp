@@ -309,6 +309,15 @@ entity::~entity()
 // 0x4214e0 is the compiler-generated scalar deleting destructor ??_Gentity (calls ~entity above, then operator
 // delete if bit 0 of the flag is set); it has no source of its own.
 
+// The type ids and the no-op slot of the entity classes: one-instruction functions the original's linker folded with the identical ones
+// of other classes (0x408020 `return 0`, 0x48b1f0 `return 1`, 0x493300 `return 5`, 0x48b390 `return 9`, 0x408030 `ret 4`). Each class defines
+// its own copy, in a different object from the entity factory that compares them (0x428240 calls them out of line).
+int entity::type_id() { return 0; }
+int mesh_entity::type_id() { return 1; }
+int static_entity::type_id() { return 5; }
+int strategic_entity::type_id() { return 9; }
+void entity::slot17(int) {}
+
 // @ 0x4214c0
 string mesh_entity::type_name() { return string("mesh_entity"); }
 

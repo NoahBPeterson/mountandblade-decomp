@@ -30,10 +30,6 @@ void sort_range_x(std::vector<entity*>::iterator first, std::vector<entity*>::it
 #pragma comment(linker, "/alternatename:?sort_range_x@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0H@Z=?sort_range@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0H@Z")
 #pragma comment(linker, "/alternatename:?ufill_ext@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@std@@@Z=??$_Uninitialized_fill_n@PAUContact@rgl@@IU12@V?$allocator@UContact@rgl@@@std@@@std@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@0@@Z")
 #pragma comment(linker, "/alternatename:?_Insert_n@contact_inl@@QAEXPAUContact@rgl@@IABU23@@Z=?_Insert_n@contact_ops@rgl@@QAEXPAUContact@2@IABU32@@Z")
-#pragma comment(linker, "/alternatename:?is_dynamic@coll_base@rgl@@UAE_NXZ=?is_dynamic@collision_entity@rgl@@UAE_NXZ")
-#pragma comment(linker, "/alternatename:?point_velocity@coll_base@rgl@@UAEPAUvector4@2@PAU32@PBU32@@Z=?point_velocity@collision_entity@rgl@@UAEPAUvector4@2@PAU32@PBU32@@Z")
-#pragma comment(linker, "/alternatename:?apply_impulse@coll_base@rgl@@UAEXPBUvector4@2@0@Z=?apply_impulse@collision_entity@rgl@@UAEXPBUvector4@2@0@Z")
-#pragma comment(linker, "/alternatename:?impulse_response@coll_base@rgl@@UAEMPBUvector4@2@0@Z=?impulse_response@collision_entity@rgl@@UAEMPBUvector4@2@0@Z")
 #pragma comment(linker, "/alternatename:?box3_b@@YA_NPBUvector4@rgl@@000@Z=?box_overlap3@@YAHPBUvector4@rgl@@000@Z")
 #pragma comment(linker, "/alternatename:?box2_b@@YA_NPBUvector4@rgl@@000@Z=?box_overlap2@@YAHPBUvector4@rgl@@000@Z")
 

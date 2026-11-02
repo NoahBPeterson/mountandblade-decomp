@@ -3,7 +3,8 @@
 // pass, the std::vector<Contact> instantiations, the sort of the query result, and the collision entity's destructor.
 // One header for the classes of this object.
 //
-// rgl::collision_entity (../scene/scene_entity.h, vtable 0x54b548) is the base; scene_entity.h only forward-declares
+// rgl::collision_entity (../scene/scene_entity.h, vtable 0x54b548) is the base (one class: the dynamic entity's constructor
+// zeroes its contact list through the member initializer, which is where the original does); scene_entity.h only forward-declares
 // rgl::dynamic_entity (the entity factory in entity_types.cpp includes this header). The slices' names (rigid_base: the base with the state; dyn.h's Obj,
 // entity, cell, cell_ref, enode, contact_list) are the shared classes: the queries below are members of derived views
 // (world_q : rgl::world, cell_q : rgl::cell) because world.h cannot be extended from here.
@@ -70,28 +71,10 @@ struct world_q : world {
     bool less(entity* a, entity* b);                                                                          // 0x426960
 };
 
-// The collision entity (vtable 0x54b548) as dynamic_entity::dynamic_entity (0x425370) constructs it. rgl::collision_entity
-// (../scene/scene_entity.h) has the same layout and virtuals, but writes the contact list's zeroing in its constructor
-// body; with that inline body cl stores the three pointers after the rigid-body state (174 bytes differ from 0x425370),
-// while the original zeroes them first, right after the entity constructor, as a member initializer would. This class
-// is the same entity with the contact list as a member that zeroes itself. Its destructor and deleting destructor
-// (0x427cd0, 0x427d20) are the inline ones that come out of the vtable's emission in this object.
-struct contact_list_m : contact_vec { contact_list_m() { first = 0; last = 0; end = 0; } };   // zeroed by a member initializer
-struct coll_base : entity {
-    float restitution;          // 0x15c (0.9, set by the constructor of the rigid body)
-    contact_list_m contacts;    // 0x160
-    virtual ~coll_base() { contacts._Tidy(); }                      // 0: 0x427cd0 (body), 0x427d20 (deleting)
-    virtual int type_id() { return 3; }                             // 1: 0x48b880 (the original's ICF shares it with UiC::type)
-    virtual bool is_dynamic();                                      // 24: 0x48b170
-    virtual vector4* point_velocity(vector4* out, const vector4* p);        // 25: 0x421520 (default: zero)
-    virtual void apply_impulse(const vector4* p, const vector4* j);         // 26: 0x421540 (default: nothing)
-    virtual float impulse_response(const vector4* p, const vector4* n);     // 27: 0x421550 (default: 0.0)
-};
-
 // ---- the rigid body ----------------------------------------------------------------------------------------------------
 // Fields read or written by the function cited. Its constructor is inline (forced) in dynamic_entity::dynamic_entity
 // (0x425370), which is why the vptr store of that function sits between the contact list and the mass.
-struct rigid_base : coll_base {
+struct rigid_base : collision_entity {
     float mass;                 // 0x170  ctor 0x425370 (5.0), apply_impulse 0x425550
     float inertia;              // 0x174  (2.0), resolve 0x4259a0
     float dt;                   // 0x178  apply_forces 0x4257e0

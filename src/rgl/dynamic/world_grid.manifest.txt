@@ -6,7 +6,7 @@
 ../src/rgl/dynamic/world_grid.cpp  ?push_back@shape_vec@@QAEXABQAUgrid_shape@@@Z  00423fc0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?insert@?$vector@PAUitem_obj@rgl@@V?$allocator@PAUitem_obj@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABQAUitem_obj@rgl@@@Z  00424010  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?remove@shape_vec@@QAEXPAUgrid_shape@@@Z  00424060  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_grid.cpp  ?add_shape@entity_grid@@QAEXPAUitem_obj@rgl@@@Z  00424100  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_grid.cpp  ?add_shape@strategic_entity@rgl@@UAEXPAUitem_obj@2@@Z  00424100  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?reg_shape@world_grid@@QAEXPAUgrid_shape@@@Z  00424170  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ??0Group@@QAE@XZ  004246f0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ??Hiter@V136@@QBE?AU01@H@Z  00424720  /O2 /MT /Gy /TP
