@@ -173,48 +173,7 @@ struct XWidget : Widget {                   // a window button: the flag byte at
     char f104;                              // +0x104
 };
 
-struct XferWin {
-    char pad0[4];
-    int state;                              // +0x04 (0x531800)
-    char pad8[8];
-    int sel_party;                          // +0x10
-    int troop;                              // +0x14 (0x532560, 0x5325b0)
-    int f18;                                // +0x18
-    char pad1c[0x30 - 0x1c];
-    Widget* w30;                            // +0x30
-    Widget* w34;                            // +0x34
-    char pad38[0x44 - 0x38];
-    Widget* w44;                            // +0x44
-    Widget* w48;                            // +0x48
-    Widget* w4c;                            // +0x4c
-    XWidget* w50;                           // +0x50
-    Widget* w54;                            // +0x54
-    Widget* w58;                            // +0x58
-    char pad5c[0x90 - 0x5c];
-    TargetW* f90;                           // +0x90
-    TargetW* f94;                           // +0x94
-    char pad98[0xb8 - 0x98];
-    Widget* grid[2][2][64];                 // +0xb8
-    char pad4b8[0x4c8 - 0x4b8];
-    int slots[256];                         // +0x4c8
-    int f8c8;                               // +0x8c8
-    char pad8cc[0x8dc - 0x8cc];
-    int f8dc;                               // +0x8dc
-    int f8e0;                               // +0x8e0
-    int f8e4;                               // +0x8e4
-    char pad8e8[0x3908 - 0x8e8];
-    char f3908;                             // +0x3908
-
-    void update(int);                       // 0x531800
-    // (refresh_selection 0x5063e0, refresh_party_members 0x503ed0, refresh_morale 0x503a50 are PartyScreen's)
-    __declspec(noinline) void clear_selection();                 // 0x5324d0
-    __declspec(noinline) void get_cell(int a, int b, int c, int* main, int* cell);   // 0x532520
-    __declspec(noinline) void move_men(int amount);              // 0x532560
-    __declspec(noinline) void apply(int which);                  // 0x5325b0
-    __declspec(noinline) void swap_rows(int which);              // 0x532740
-    __declspec(noinline) void stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed);   // 0x532830 (ret 0x14)
-    __declspec(noinline) void set_selection(int a, int b, int c);   // 0x533020 (ret 0xc)
-};
+typedef C4c3160 XferWin;       // the party exchange window: the record of rgl/mesh2/rec_tables.h (slot 3 is update 0x531800)
 
 // ---- the screens with raw layouts -------------------------------------------------------------------------------------
 struct ChoiceList : Widget {                // a choice list (was ListWidget; not agent5's 0x4a8-byte ListWidget, ctor 0x49deb0, whose +0x188 holds a scene): current index +0x1cc into the arrays at +0x19c / +0x1ac

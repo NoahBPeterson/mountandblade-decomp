@@ -122,7 +122,6 @@ struct MapScreen {
     void fill_desc_named(void* desc);               // 0x4656c0 (ret 4)
     void init(void* desc);                              // 0x4e85d0 (ret 4)
     void frame_step();                                  // 0x4e8720
-    void buttons(int arg);                              // 0x4e87d0 (ret 4)
 };
 
 // ---- callees --------------------------------------------------------------------------------------------

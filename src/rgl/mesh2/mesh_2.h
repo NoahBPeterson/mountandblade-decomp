@@ -118,16 +118,6 @@ struct rec_2e4 {
     char pad0[0x2e4];
     res_rec* p;                                  // +0x2e4
 };
-struct rec_1ac {
-    void release();                              // 0x4cb650
-    char pad0[0x1ac];
-    res_rec* p;                                  // +0x1ac
-};
-struct rec_178 {
-    void release();                              // 0x4cb680
-    char pad0[0x178];
-    res_rec* p;                                  // +0x178
-};
 
 struct vec3_holder {
     void clear();                                // 0x4cb6b0

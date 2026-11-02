@@ -401,7 +401,7 @@ void rec_2e4::release()
 
 // @ 0x4cb650
 
-void rec_1ac::release()
+void Rec23c::slot_empty_1()
 {
     g_gui.reset();
     res_rec* r = p;
@@ -413,14 +413,10 @@ void rec_1ac::release()
 
 // @ 0x4cb680
 
-void rec_178::release()
+void Rec428::slot_empty_1()
 {
-    // TEMP (profiling run): the widget dispatch that lands here during FaceGen::init passes a 0x178-byte widget,
-    // so the destructor below frees the neighbouring heap block. Skipped so the run can reach the loading screen.
-    return;
-    void* self = this;
     g_gui.reset();
-    res_rec* r = ((rec_178*)self)->p;
+    res_rec* r = p;
     if (r) {
         ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);

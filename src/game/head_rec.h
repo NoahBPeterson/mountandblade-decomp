@@ -53,7 +53,7 @@ struct head_rec {
     int     w08;               // +8     0x63
     char    pad0c[4];          // +0xc
     int     w10;               // +0x10 (the party / object the screen shows, set by whoever opens it)
-    char    pad14[4];          // +0x14
+    int     w14;               // +0x14 (a troop / object id some screens keep)
     int     w18;               // +0x18 (the menu state a screen returns to; the screens' slot 3 passes it to set_state)
     tstring name;              // +0x1c
     head_rec() : name() { w04 = 0; w08 = 0x63; }

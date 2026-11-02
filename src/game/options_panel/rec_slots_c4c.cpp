@@ -21,7 +21,6 @@ void C4c3290::slot_empty_1() { g_gui.reset(); }
 // C4c3160
 void C4c3160::slot_empty_1() { reset_gui(); }
 void C4c3160::slot_empty_2() { ((PartyScreen*)this)->open_party_window(); }
-void C4c3160::scale_3(float a) { ((XferWin*)this)->update(*(int*)&a); }
 
 void C4c31c0::slot_empty_1() { g_gui.reset(); }
 

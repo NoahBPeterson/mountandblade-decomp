@@ -54,18 +54,7 @@ struct C4c2d10 {
     C4c2d10();               // 0x4c2d10
 };
 
-struct Slot20 {              // 0x20 bytes
-    int a, b, c, d, e, f, g, h;
-};
-struct C4c3160 : head_rec {  // vtable 0x595870
-    char   body[0x8e8 - 0x2c];
-    Slot20 slots[0x80];      // +0x8e8
-    C4c3160();               // 0x4c3160
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-};
+// C4c3160 (vtable 0x595870, the party exchange window) is declared in game/screen_records.h
 
 // 0x18-byte entry of the block read by 0x4c2dd0 (tstring, two ints): config.h's clip_slot (same layout; its constructor
 // 0x4be720 is out of line, the array new goes through the vector constructor iterator). rec_tables.cpp includes config.h.

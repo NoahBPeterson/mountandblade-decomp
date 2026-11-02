@@ -12,6 +12,7 @@
 
 struct ContainerBase;
 struct MissionUi;
+struct res_rec;
 struct UiAInline;
 struct UiB;
 struct DropDown;
@@ -346,7 +347,9 @@ struct Rec1bc : head_rec { MB_ZERO_TAIL(Rec1bc)   // vtable 0x595900 (the key-bi
 struct Rec23c : head_rec { MB_ZERO_TAIL(Rec23c)   // vtable 0x595c44
     char pad2c[0x44];
     rgl::frustum fr;    // +0x70
-    char tail[0x23c - 0x190];
+    char pad190[0x1ac - 0x190];
+    res_rec* p;         // +0x1ac the grid slot 1 releases (rgl/mesh2/mesh_2.cpp 0x4cb650)
+    char tail[0x23c - 0x1b0];
     virtual void slot_empty_1();
     virtual void slot_empty_2();
     virtual void scale_3(float);
@@ -393,7 +396,9 @@ struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
     // the head and the frustum.
     char pad2c[0x8];
     rgl::frustum fr;    // +0x34
-    char tail[0x428 - 0x154];
+    char pad154[0x178 - 0x154];
+    res_rec* p;         // +0x178 the grid slot 1 releases (rgl/mesh2/mesh_2.cpp 0x4cb680)
+    char tail[0x428 - 0x17c];
     virtual void slot_empty_1();
     virtual void slot_empty_2();
     virtual void scale_3(float);
@@ -403,5 +408,53 @@ struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
     // CamView::update_model), so this record only overrides slot 0 with its own vfunc.
 };
 
+
+
+struct Slot20 {              // 0x20 bytes
+    int a, b, c, d, e, f, g, h;
+};
+struct Widget;
+struct XWidget;
+struct TargetW;
+struct C4c3160 : head_rec {  // vtable 0x595870 (the party exchange window: slot 2 party_screen.cpp 0x50xxxx, slot 3 map_editor/exchange_screens.cpp 0x531800)
+    char pad2c[4];
+    Widget* w30;                            // +0x30
+    Widget* w34;                            // +0x34
+    char pad38[0x44 - 0x38];
+    Widget* w44;                            // +0x44
+    Widget* w48;                            // +0x48
+    Widget* w4c;                            // +0x4c
+    XWidget* w50;                           // +0x50
+    Widget* w54;                            // +0x54
+    Widget* w58;                            // +0x58
+    char pad5c[0x90 - 0x5c];
+    TargetW* f90;                           // +0x90
+    TargetW* f94;                           // +0x94
+    char pad98[0xb8 - 0x98];
+    Widget* grid[2][2][64];                 // +0xb8
+    char pad4b8[0x4c8 - 0x4b8];
+    int sel_slots[256];                     // +0x4c8
+    int f8c8;                               // +0x8c8
+    char pad8cc[0x8dc - 0x8cc];
+    int f8dc;                               // +0x8dc
+    int f8e0;                               // +0x8e0
+    int f8e4;                               // +0x8e4
+    Slot20 slots[0x80];                     // +0x8e8
+    char pad18e8[0x3908 - 0x18e8];
+    char f3908;                             // +0x3908
+    char pad3909[0x3910 - 0x3909];
+    C4c3160();               // 0x4c3160
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();
+    virtual void scale_3(float);
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
+    __declspec(noinline) void clear_selection();                 // 0x5324d0
+    __declspec(noinline) void get_cell(int a, int b, int c, int* main, int* cell);   // 0x532520
+    __declspec(noinline) void move_men(int amount);              // 0x532560
+    __declspec(noinline) void apply(int which);                  // 0x5325b0
+    __declspec(noinline) void swap_rows(int which);              // 0x532740
+    __declspec(noinline) void stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed);   // 0x532830 (ret 0x14)
+    __declspec(noinline) void set_selection(int a, int b, int c);   // 0x533020 (ret 0xc)
+};
 
 #endif

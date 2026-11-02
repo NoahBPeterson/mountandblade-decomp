@@ -106,7 +106,6 @@ void Rec1208::slot_empty_1() { g_gui.reset(); }
 void Rec1bc::slot_empty_1() { g_gui.reset(); }
 
 // Rec23c
-void Rec23c::slot_empty_1() { ((rec_1ac*)this)->release(); }
 void Rec23c::slot_empty_2() { ((facegen_win*)this)->init(); }
 void Rec23c::scale_3(float a) { ((TerrainPage*)this)->update(a); }
 
@@ -117,7 +116,6 @@ void Rec34::slot_empty_1() { g_gui.f1709 = 1; }       // the function of slot 1 
 void Rec3c::slot_empty_1() { g_gui.reset(); }
 
 // Rec428
-void Rec428::slot_empty_1() { ((rec_178*)this)->release(); }
 void Rec428::slot_empty_2() { ((FaceGen*)this)->init(); }
 void Rec428::scale_3(float a) { ((CamView*)this)->update_model(a); }
 
