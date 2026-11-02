@@ -65,49 +65,34 @@ extern int g_trial_mode;                                            // 0x5e29c4
 // the character file is read into the shared ini table (0x2c-byte entries: key +0, value +0x1c; ctor 0x4c1be0, load 0x4bd630, dtor 0x4be920)
 #include "../ini_file.h"
 
-// the export file object: three classes in a chain (vtables 0x54a740 / 0x595618 / 0x595990); the middle one's
-// destructor closes the file (virtual close at slot 26 = +0x68, called through the class's own vtable). Slot 10
-// (+0x28) writes a text line (0x4d86d0).
-#include "../../rgl/stream_fwd.h"
-// (rgl/stream.h's stream_base with the file fields; this header keeps its own tstring-based copy, see stream_fwd.h)
-struct outfile_a {                                                  // vtable 0x54a740: every typed slot abstract
-    virtual void reset();                                           // 0
-    virtual void rewind();                                          // 1
-    STREAM_SLOTS_OF(outfile_a, tstring, = 0)                        // 2 .. 22; slot 10 (+0x28) writes a text line
-    virtual bool at_end();                                          // 23
-    virtual void set_autoflush(char f);                             // 24
-    virtual char get_autoflush();                                   // 25
-    virtual int flush();                                            // 26 (+0x68)
-    outfile_a& write(const char* text) { return w_cstr(text); }     // slot 10
-    tstring path;                                                   // +0x04
-    int f14;                                                        // +0x14
-    char f18;                                                       // +0x18
-    int f1c;                                                        // +0x1c
-    tstring t20;                                                    // +0x20
-    FILE* fp;                                                       // +0x30
-    char failed;                                                    // +0x34
-    char open;                                                      // +0x35
-};
-// 0x595618: text_stream's slots, flush (slot 26) is the log file's (0x42cc10)
-struct outfile_b : outfile_a {
-    outfile_b() { f18 = 0; f1c = 0; failed = 1; open = 0; f14 = 0; }
-    STREAM_SLOTS_OF(outfile_a, tstring, )
+// the export file object: the text log's classes. 0x595618 is text_stream (vtable 0x54a7d0 level: text_stream2's slots) with the log file's
+// flush (slot 26, 0x42cc10) and a destructor that closes the file; 0x595990 (outfile) is the same with the read slots
+// returning *this. Slot 10 (+0x28) writes a text line (0x4d86d0).
+#include "../../rgl/stream.h"
+struct outfile_b : text_stream {
+    outfile_b() {}
     virtual int flush();                                            // 0x42cc10
     void shut()
     {
-        if (open) {
+        if (is_open) {
             if (flush() == 0)
                 fclose(fp);
             failed = 1;
-            open = 0;
+            is_open = 0;
         }
     }
     ~outfile_b() { shut(); }
 };
 // 0x595990 (outfile): the log stream's table, 27 slots like the others
 struct outfile : outfile_b {
-    outfile(const char* p) { path.assign(p); }
-    STREAM_SLOTS_OF(outfile_a, tstring, )
+    outfile(const char* p) { ((tstring&)name).assign(p); }
+    virtual stream_base& r_float(float* v);                         // 0x415870
+    virtual stream_base& r_bool(char* v);                           // 0x415870
+    virtual stream_base& r_uint(unsigned* v);                       // 0x415870
+    virtual stream_base& r_u64(unsigned __int64* v);                // 0x415870
+    virtual stream_base& r_i64(__int64* v);                         // 0x415870
+    virtual stream_base& r_int(int* v);                             // 0x415870
+    virtual stream_base& r_tstr(rgl::string* v);                    // 0x415870
     virtual int flush();                                            // 0x42cc10
 };
 

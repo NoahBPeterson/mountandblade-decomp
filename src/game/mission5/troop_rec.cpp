@@ -238,10 +238,10 @@ void Game::start_new_game()
     f13b60 = -1;
     f13a34 = 0;
 
-    TextReader stream;
+    tstream3 stream;
     {
         const char* path = ((GameData*)this)->module_path("parties.txt");
-        if (!((text_stream*)&stream)->open_read_text(path))
+        if (!stream.open_read_text(path))
             mb_error("Unable to open %s", path);
         stream_base* sp = &stream;                  // the original calls the slots through the vtable
         sp->r_tstr(rs(&a));
@@ -678,6 +678,3 @@ void Animator::reset(void* a, void* b)
 
     pack_state((PackedState*)a);
 }
-
-// ---- TextReader's slots (folded into text_stream's by the original's linker) ----
-STREAM_FWD_TEXT_READER(TextReader)

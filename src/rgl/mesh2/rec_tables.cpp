@@ -441,7 +441,7 @@ static __declspec(noinline) void user_path(char* name)
 void options_record::load()
 {
     char path[0x104];
-    opt_reader br;
+    bin_reader br;
     sprintf(path, "options.dat");
     user_path(path);
     ((text_stream*)&br)->open_read(path);
@@ -740,6 +740,3 @@ void pair_holder::load2(stream_base* s)
     }
 }
 
-// ---- the options reader chain's slots (folded into mem_stream's / text_stream's by the original's linker) ----
-STREAM_FWD_MEM(opt_mem_stream)
-STREAM_FWD_BIN_READER(opt_reader)

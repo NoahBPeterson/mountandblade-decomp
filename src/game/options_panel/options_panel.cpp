@@ -289,7 +289,7 @@ void options_panel::import_export(int)
         file.fp = fopen(buf_a, MODE_W);
         if (file.fp) {
             file.failed = 0;
-            file.open = 1;
+            file.is_open = 1;
         } else {
             file.failed = 1;
         }
@@ -411,36 +411,36 @@ void GameIo::export_character(outfile* stream)
     Troop* troop = &troops[cur_troop];
 
     sprintf(line, "%s = %ld\n", " charfile_version", 1);
-    stream->write(line);
+    stream->w_cstr(line);
 
     tstring name(troop->name);
     name.spaces_to_underscores();
     mb_snprintf(line, 0x400, "%s = %s\n", "name", name.c_str());
-    stream->write(line);
+    stream->w_cstr(line);
 
     sprintf(line, "%s = %ld\n", "xp", troop->exp);
-    stream->write(line);
+    stream->w_cstr(line);
     sprintf(line, "%s = %ld\n", "money", troop->f3b4);
-    stream->write(line);
-    stream->write("\n");
+    stream->w_cstr(line);
+    stream->w_cstr("\n");
 
     sprintf(line, "%s = %ld\n", "attribute_points", troop->fa8);
-    stream->write(line);
+    stream->w_cstr(line);
     sprintf(line, "%s = %ld\n", "skill_points", troop->fa4);
-    stream->write(line);
+    stream->w_cstr(line);
     sprintf(line, "%s = %ld\n", "weapon_points", troop->fac);
-    stream->write(line);
-    stream->write("\n");
+    stream->w_cstr(line);
+    stream->w_cstr("\n");
 
     sprintf(line, "%s = %ld\n", "strength", troop->f58[0]);
-    stream->write(line);
+    stream->w_cstr(line);
     sprintf(line, "%s = %ld\n", "agility", troop->f58[1]);
-    stream->write(line);
+    stream->w_cstr(line);
     sprintf(line, "%s = %ld\n", "intelligence", TROOP_INT(troop, 0x60));
-    stream->write(line);
+    stream->w_cstr(line);
     sprintf(line, "%s = %ld\n", "charisma", troop->f64);
-    stream->write(line);
-    stream->write("\n");
+    stream->w_cstr(line);
+    stream->w_cstr("\n");
 
     tstring skill;
     for (int i = 0; i < 42; i++) {
@@ -449,9 +449,9 @@ void GameIo::export_character(outfile* stream)
         skill.to_lower();
         int level = troop->nibble(i);
         sprintf(line, "%s = %ld\n", skill.c_str(), level);
-        stream->write(line);
+        stream->w_cstr(line);
     }
-    stream->write("\n");
+    stream->w_cstr("\n");
 
     char weapon_text[0x100];
     tstring weapon_name;
@@ -467,14 +467,14 @@ void GameIo::export_character(outfile* stream)
         weapon_name.spaces_to_underscores();
         int points = (int)troop->f80[i];
         sprintf(line, "%s = %ld\n", weapon_name.c_str(), points);
-        stream->write(line);
+        stream->w_cstr(line);
     }
-    stream->write("\n");
+    stream->w_cstr("\n");
 
     sprintf(line, "%s = %I64x\n", "face_key_1", TROOP_I64(troop, 0x3c0));
-    stream->write(line);
+    stream->w_cstr(line);
     sprintf(line, "%s = %I64x\n", "face_key_2", TROOP_I64(troop, 0x3c8));
-    stream->write(line);
+    stream->w_cstr(line);
     WL_MARKER(13)                                                   // 0x4d8bda
 }
 
@@ -622,32 +622,27 @@ void options_panel::export_path(char* out)
     sprintf(out, "CharExport\\%s.txt", name);
 }
 
-// ---- the export file object's slots (the original's linker folded them into text_stream's / stream_base's) ----
-#undef SF_RT
-#define SF_RT outfile_a
-#undef SF_STR
-#define SF_STR tstring
-void outfile_a::reset() { ((stream_base*)this)->stream_base::reset(); }
-void outfile_a::rewind() { ((stream_base*)this)->stream_base::rewind(); }
-bool outfile_a::at_end() { return ((stream_base*)this)->stream_base::at_end(); }
-void outfile_a::set_autoflush(char f) { ((stream_base*)this)->stream_base::set_autoflush(f); }
-char outfile_a::get_autoflush() { return ((stream_base*)this)->stream_base::get_autoflush(); }
-int outfile_a::flush() { return ((stream_base*)this)->stream_base::flush(); }
-STREAM_FWD_TEXT_BOTH(outfile_b)
-STREAM_FWD_LOG_OUT(outfile)
+// the read slots the log file does not have: "return *this" (0x415870, folded by the original's linker)
+stream_base& outfile::r_float(float* v) { return *this; }
+stream_base& outfile::r_bool(char* v) { return *this; }
+stream_base& outfile::r_uint(unsigned* v) { return *this; }
+stream_base& outfile::r_u64(unsigned __int64* v) { return *this; }
+stream_base& outfile::r_i64(__int64* v) { return *this; }
+stream_base& outfile::r_int(int* v) { return *this; }
+stream_base& outfile::r_tstr(rgl::string* v) { return *this; }
 // 0x42cc10: writes the unwritten part of the buffer and flushes (the log file's flush, shared by 0x595618 and 0x595990)
 int outfile_b::flush()
 {
     int r = 0;
-    if (open) {
-        int len = t20.len;
-        if (f1c < len) {
+    if (is_open) {
+        int len = buf.len;
+        if (flushed < len) {
             int bad = 0;
-            size_t n = fwrite(f1c + t20.c_str(), 1, len - f1c, fp);
-            if (n != (size_t)(len - f1c))
+            size_t n = fwrite(flushed + buf.c_str(), 1, len - flushed, fp);
+            if (n != (size_t)(len - flushed))
                 bad = 1;
             fflush(fp);
-            f1c = len;
+            flushed = len;
             r = bad;
         }
     }
@@ -656,15 +651,15 @@ int outfile_b::flush()
 int outfile::flush()
 {
     int r = 0;
-    if (open) {
-        int len = t20.len;
-        if (f1c < len) {
+    if (is_open) {
+        int len = buf.len;
+        if (flushed < len) {
             int bad = 0;
-            size_t n = fwrite(f1c + t20.c_str(), 1, len - f1c, fp);
-            if (n != (size_t)(len - f1c))
+            size_t n = fwrite(flushed + buf.c_str(), 1, len - flushed, fp);
+            if (n != (size_t)(len - flushed))
                 bad = 1;
             fflush(fp);
-            f1c = len;
+            flushed = len;
             r = bad;
         }
     }

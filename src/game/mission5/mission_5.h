@@ -26,12 +26,6 @@
 using rgl::vector4;
 using rgl::matrix;
 
-// vtable 0x54add8 (stream.h: bin_writer) with its constructor inline, as 0x527c90 builds it on the stack
-struct bin_writer_i : file_writer_base {
-    bin_writer_i() {}
-    STREAM_SLOTS
-    virtual int flush();
-};
 
 // ---- the globals the slices saw with their own view types (one raw declaration each)
 extern void* g_mission; // 0x5e292c
