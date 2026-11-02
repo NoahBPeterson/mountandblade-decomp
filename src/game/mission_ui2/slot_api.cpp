@@ -31,7 +31,6 @@
 #include "../../include/shape.h"
 #include "../../include/game_data.h"
 
-extern StrTable g_strtable;                     // 0x5e2a18
 extern char g_script[]; // 0xa70440
 extern LevelGrid* g_level;                 // 0xa732b4
 extern Rec78* g_tbl78;                          // 0x5e29dc the scene prop kinds (0x78-byte records)

@@ -13,7 +13,6 @@
 #include "../tstring.h"
 
 #include "../str_table.h"
-extern StrTable g_strtable;                             // 0x5e2a18
 
 struct gui_manager {                                    // game/strat/gui_manager.h (cannot be included next to this slice's types)
     void draw_string(tstring* s, float height, int color, char wrap);   // 0x4e43e0 (ret 0x10)

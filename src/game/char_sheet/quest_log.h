@@ -33,7 +33,6 @@ using rgl::mesh;
 void __cdecl mb_error(const char* fmt, ...);            // 0x42cc80
 #include "../../rgl/text_stream.h"                // mb_snprintf 0x415100
 #include "../str_table.h"
-extern StrTable g_strtable;
 extern resmgr g_resmgr;
 
 // ---- constants ----------------------------------------------------------------------------------------------

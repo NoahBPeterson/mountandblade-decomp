@@ -112,7 +112,6 @@ struct gui_mgr {
 };
 extern gui_mgr g_gui;                                   // 0x5d7080
 #include "../str_table.h"   // 0x43a1e0
-extern StrTable g_strtable;                             // 0x5e2a18
 #include "../ini_file.h"
 #include "../ui_globals.h"      // UI / core globals
 extern ini_file g_config;                               // 0xa44240

@@ -37,7 +37,7 @@ struct Rect {                                   // the 0x10-byte region copied i
 #include "../str_table.h"                      // StrTable (0x5e2a18; was StrTab here: find(name) was lookup 0x43a1e0)
 
 #define g_gui     (*(GuiManager*)&orig::g_gui_mgr)
-#define g_strtab  (orig::g_strtable)
+#define g_strtab  g_strtable
 
 extern char g_5e212c;                           // 0x5e212c
 #include "../renderer.h"

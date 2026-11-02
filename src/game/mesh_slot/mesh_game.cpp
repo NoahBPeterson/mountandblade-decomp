@@ -225,10 +225,7 @@ extern int g_msg_count;                 // 0x5e2138
 extern int g_msg_base;                  // 0x5e213c
 extern tstring g_msg_text[32];          // 0x5e2140
 extern int g_msg_id[32];                // 0x5e2340
-struct StrTable {                       // game/str_table.h (the translation table; its lookup takes the key by reference)
-    tstring* lookup(const tstring& key);    // 0x43a1e0
-};
-extern StrTable g_strtable;             // 0x5e2a18
+#include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
 long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
 
 // the mission object as the spawner sees it

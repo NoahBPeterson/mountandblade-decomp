@@ -134,7 +134,6 @@ extern int g_item_kind_count;              // 0x5e29d4
 extern PropKind* g_propkinds;              // 0x5e29dc
 extern int g_propkind_count;               // 0x5e29e0
 extern int g_ptype_count;                  // 0x5e29e8
-extern StrTable g_strtable;                // 0x5e2a18
 extern render_batch g_batch;               // 0x5fe898
 extern InputSet g_input_a;                 // 0xa170c8
 extern void* g_a17110;                     // 0xa17110

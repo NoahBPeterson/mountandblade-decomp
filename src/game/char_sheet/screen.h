@@ -33,7 +33,6 @@ using rgl::mesh;
 #include "../tstring.h"
 
 #include "../str_table.h"
-extern StrTable g_strtable;                             // 0x5e2a18
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 

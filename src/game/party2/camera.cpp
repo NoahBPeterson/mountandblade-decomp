@@ -79,9 +79,6 @@ struct FieldPanel {                                                             
     void set_color(unsigned rgb);                                                   // 0x48d350
     void set_alpha(unsigned a);                                                     // 0x48d3c0
 };
-struct LangTables {
-    tstring* find(const tstring* key);   // 0x4c6010 rgl/mesh2/gui_edit.cpp (the string table's find)
-};
 struct SphereC {
     SphereC(rgl::vector4 c, const float* r);   // 0x4332a0 rgl/xmlcfg/game_util.cpp (named `sphere` there)
 };
@@ -418,8 +415,6 @@ using rgl::matrix;
 using rgl::mesh;
 
 // ---- engine tables / globals ---------------------------------------------------------------------
-struct StrTable { tstring* lookup(const tstring& key) { return ((::StrTable*)this)->lookup(key); } };   // 0x43a1e0
-extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };        // 0x452c00 (thiscall, ret 0x14)
 extern MsgLog g_gui;                             // 0x5d7080
 
@@ -628,11 +623,6 @@ namespace c49bea0 {
 
 #define MB_NOTHROW throw()
 
-struct StrTable {                                   // 0x5e2a18
-    tstring* lookup(const tstring& key) { return ((::StrTable*)this)->lookup(key); }                    // 0x43a1e0
-    char* find(const tstring* key) { return (char*)((::LangTables*)this)->find(key); }                  // 0x4c6010 (LangTables::find)
-};
-extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };                    // 0x452c00 (thiscall, ret 0x14)
 extern MsgLog g_gui;                             // 0x5d7080
 
@@ -903,8 +893,6 @@ namespace c49c2c0 {
 
 #define MB_NOTHROW throw()
 
-struct StrTable { tstring* lookup(const tstring& key) { return ((::StrTable*)this)->lookup(key); } };   // 0x43a1e0 (lookup)
-extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };        // 0x452c00 (thiscall, ret 0x14)
 extern MsgLog g_gui;                             // 0x5d7080
 
@@ -1605,9 +1593,6 @@ extern float g_rand_scale;                               // 0x54a6e0 (angle per 
 extern void* g_party_templates;                               // 0x5e29f8 (0xb0-byte troop record table)
 
 // The global string table (this = 0x5e2a18) and its lookup (0 when absent).
-struct Golist {
-    tstring* find(tstring* key) { return ((LangTables*)this)->find(key); }                          // 0x4c6010
-};
 
 
 // The 0xb0-byte troop-type record (the name at +0x10; the field offsets are relative to the record).
@@ -1907,7 +1892,7 @@ int Party::add_sprite(int x, int y, int troop)
     float ox = ro->rot.x;
     ro->rot.y = c * oy + s * ox;
     ro->rot.x = c * ox - s * oy;
-    tstring* n = ((Golist*)&orig::g_strtable)->find(&tr->name);    // 0x4c6010
+    tstring* n = g_strtable.find(&tr->name);    // 0x4c6010
     if (n == 0)
         n = (tstring*)tr;
     scene.obj(id)->name = *n;
@@ -1933,7 +1918,7 @@ int Party::add_sprite(int x, int y, int troop)
 int Party::create_companion_party(int slot, int x, int y, int a)
 {
     int id = add_sprite(x, y, 3);                        // 0x49ebd0
-    tstring* n = ((Golist*)&orig::g_strtable)->find(&chars()[slot].name); // 0x4c6010
+    tstring* n = g_strtable.find(&chars()[slot].name); // 0x4c6010
     if (n == 0)
         n = &chars()[slot].name;
     scene.obj(id)->name = *n;

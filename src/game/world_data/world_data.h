@@ -425,7 +425,6 @@ extern SoundW g_sound_mgr;                                          // 0x5aa128
 extern int g_quest_sounds[];                                    // 0x5aa184 .. (completed 0x5aa184, succeeded 0x5aa188, concluded 0x5aa18c, failed 0x5aa190, cancelled 0x5aa194)
 
 #define g_msglog (*(MsgLog*)&g_gui)                          // the on-screen message log view of the UI root g_gui (0x5d7080)
-extern StrTable g_strtable;                                     // 0x5e2a18
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100
 #include "../config/config.h"                                  // g_cfg 0x5a9f98
 #include "../strat/gui_manager.h"                             // gui_manager g_gui 0x5d7080 (UI root: set_o568, reset, f560)

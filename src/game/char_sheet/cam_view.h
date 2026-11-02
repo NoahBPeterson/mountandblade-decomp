@@ -32,7 +32,6 @@ extern char* g_game;                                    // 0x5e2930
 #include "../scene_world.h"                              // World::step 0x427f40
 #include "../tstring.h"
 #include "../str_table.h"      // 0x43a1e0
-extern StrTable g_strtable;                             // 0x5e2a18
 #include "../main_menu.h"
 #define g_main_menu (orig::g_main_menu_obj)
 

@@ -19,7 +19,6 @@ using rgl::matrix;
 void* operator new(unsigned size);      // 0x53545e
 
 #include "../str_table.h"
-extern StrTable g_strtable;             // 0x5e2a18
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                 // 0x5d6fa0

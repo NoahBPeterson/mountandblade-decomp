@@ -424,7 +424,7 @@ int find_listener_agent()
 
 // ======================================================= slice s005261e0: functions
 #undef g_strtable_s261e0
-#define g_strtable_s261e0 (*(StrTable_s261e0*)g_strtable)
+#define g_strtable_s261e0 g_strtable
 #undef g_gui_s261e0
 #define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
 #undef g_keytable_s261e0
@@ -718,11 +718,11 @@ void Screen_s261e0::tick(float dt)
                 ap = (int*)((char*)ap + 0x6c);
             }
             if (all) {
-                g_gui_s261e0.add(*g_strtable_s261e0.lookup(&tstring("ui_everyone_hear_me")), 0xffddee88);
+                g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_everyone_hear_me")), 0xffddee88);
             } else {
                 char label[512];
                 ((LabelSub_s261e0*)base)->make_label(label);
-                const char* fmt = g_strtable_s261e0.lookup(&tstring("ui_str_hear_me"))->c_str();
+                const char* fmt = g_strtable.lookup(tstring("ui_str_hear_me"))->c_str();
                 char buf[512];
                 sprintf(buf, fmt, label, buf);
                 g_gui_s261e0.add(tstring(buf), 0xffddee88);
@@ -859,13 +859,13 @@ void Screen_s261e0::tick(float dt)
                     f2dc = -1;
                     // 0x527591: ecx = [0xa73980] (the dialog box the menu points to), unlike set_state/open (ecx = 0xa73980)
                     (*(MainMenu_s261e0**)g_windows)->setup2(
-                        g_strtable_s261e0.lookup(&tstring("ui_question_leave_area")),
-                        g_strtable_s261e0.lookup(&tstring("ui_yes")),
-                        g_strtable_s261e0.lookup(&tstring("ui_no")),
+                        g_strtable.lookup(tstring("ui_question_leave_area")),
+                        g_strtable.lookup(tstring("ui_yes")),
+                        g_strtable.lookup(tstring("ui_no")),
                         &f2dc);
                     g_main_menu_s261e0.open(0);
                 } else {
-                    g_gui_s261e0.add(*g_strtable_s261e0.lookup(&tstring("ui_cant_retreat_there_are_enemies_nearby")),
+                    g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_cant_retreat_there_are_enemies_nearby")),
                               0xffff3344);
                 }
             }
@@ -994,7 +994,7 @@ void Screen_s261e0::tick(float dt)
             if (!g_mission_s261e0->mode_flag1() && g_game_s261e0->b18 == 0) {
                 quick_save_msg();
             } else {
-                g_gui_s261e0.add(*g_strtable_s261e0.lookup(&tstring("ui_cant_quick_save")), 0xffffffff);
+                g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_cant_quick_save")), 0xffffffff);
             }
             goto after;
         }
@@ -1865,7 +1865,7 @@ void Mission_s29840::fn_529d80()
 #undef g_gui_s29ec0
 #define g_gui_s29ec0 (*(gui_manager_s29ec0*)g_gui)
 #undef g_strtable_s29ec0
-#define g_strtable_s29ec0 (*(StrTable_s29ec0*)g_strtable)
+#define g_strtable_s29ec0 g_strtable
 #undef g_items_s29ec0
 #define g_items_s29ec0 (*(ItemKind_s29ec0**)&g_items)
 #undef g_game_s29ec0
@@ -2241,7 +2241,7 @@ no_selection:
 #undef g_gui_s2ae70
 #define g_gui_s2ae70 (*(gui_manager_s2ae70*)g_gui)
 #undef g_strtable_s2ae70
-#define g_strtable_s2ae70 (*(StrTable_s2ae70*)g_strtable)
+#define g_strtable_s2ae70 g_strtable
 #undef g_mission_s2ae70
 #define g_mission_s2ae70 (*(Mission_s2ae70**)&g_mission)
 // @ 0x52ae70
@@ -2367,7 +2367,7 @@ void Screen_s2ae70::draw_order_menu()
 
     {
         tstring s("ui_order_group");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.035f, 0xfff0e0d0, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.035f, 0xfff0e0d0, 1);
     }
 
     unsigned base = (f29c == 1) ? 0xffffffff : 0xff50ff60;
@@ -2376,37 +2376,37 @@ void Screen_s2ae70::draw_order_menu()
     c = (f2a0 == 0) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_hold");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 1) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_follow");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 2) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_charge");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 3) ? base : 0xffd0d0d0;
     {
         tstring s("ui_mount");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 4) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_dismount_toggle");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 }
 
 // ======================================================= slice s0052b5c0: functions
 #undef g_strtable_s2b5c0
-#define g_strtable_s2b5c0 (*(StrTable_s2b5c0*)g_strtable)
+#define g_strtable_s2b5c0 g_strtable
 #undef g_gui_s2b5c0
 #define g_gui_s2b5c0 (*(Gui_s2b5c0*)g_gui)
 #undef g_items_s2b5c0

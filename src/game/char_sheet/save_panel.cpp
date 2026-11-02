@@ -60,7 +60,6 @@ struct SavePanel {
 };
 
 #include "../str_table.h"
-extern StrTable g_strtable;                                     // 0x5e2a18
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                         // 0x5d7080
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);  // 0x415100

@@ -111,7 +111,6 @@ extern ResMgr g_resmgr;                         // 0x5d6fa0
 extern GuiManager g_gui;                        // 0x5d7080
 
 #include "../str_table.h"
-extern StrTable g_strtable;                     // 0x5e2a18
 
 // settings table at 0xa44240: 0x2c-byte records, key tstring at +0, text pointer at +0x20
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition

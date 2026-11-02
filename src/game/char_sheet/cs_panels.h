@@ -15,7 +15,6 @@
 
 // translation table object at 0x5e2a18
 #include "../str_table.h"
-extern StrTable g_strtable;                         // 0x5e2a18
 
 // ---- the character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) is the troop record,
 // src/include/troop.h (the slice called it CharRec): +0x20 key, +0x30 flags32, +0x58 attrs / lvl58, +0x78 nib[3], +0x9c exp,

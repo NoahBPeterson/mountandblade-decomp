@@ -1185,7 +1185,7 @@ void QuestFile::read_file(stream_base& s)
     f0.underscores_to_spaces();
     f10.underscores_to_spaces();
     f30 = *((QuestRec*)this)->raw_title();       // QuestRec (include/game_recs.h) is this record: raw_title 0x48d750
-    tstring* p = ((LangTables*)&g_strtable)->find(&f54);
+    tstring* p = g_strtable.find(&f54);
     f40 = p ? *p : f0;
 }
 

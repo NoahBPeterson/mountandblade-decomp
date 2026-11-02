@@ -132,7 +132,6 @@ typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     
 
 // ------------------------------------------------------------------------------------- globals ------
 extern gui_manager g_gui;                    // 0x5d7080
-extern StrTable   g_strtable;                // 0x5e2a18
 extern int        g_sel_type;                // 0x5aa3b4  last painted selection
 extern int        g_sel_id;                  // 0x5aa3b0
 extern int        g_show_faction_color;      // 0xa181b0

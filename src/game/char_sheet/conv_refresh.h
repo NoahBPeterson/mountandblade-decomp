@@ -51,7 +51,7 @@ static float setting_float(const char* name)
 // ---- game data --------------------------------------------------------------------------------------
 #include "../dialog_manager.h"
 
-extern StrTable g_strtable;                              // 0x5e2a18
+#include "../str_table.h"      // StrTable g_strtable (0x5e2a18): the one definition
 
 // the troop's translated id, falling back to its name (the original's inlined 0x4c6010 use)
 static const char* troop_text(int id)

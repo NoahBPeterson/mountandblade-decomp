@@ -303,9 +303,9 @@ void restore_defaults()
             tstring s1("ui_no_discard_changes");
             tstring s2("ui_yes_save");
             tstring s3("ui_question_save_changes");
-            const tstring* r1 = ((StrTable*)&orig::g_strtable)->lookup(s1);
-            const tstring* r2 = ((StrTable*)&orig::g_strtable)->lookup(s2);
-            const tstring* r3 = ((StrTable*)&orig::g_strtable)->lookup(s3);
+            const tstring* r1 = g_strtable.lookup(s1);
+            const tstring* r2 = g_strtable.lookup(s2);
+            const tstring* r3 = g_strtable.lookup(s3);
             char* ui = g_windows;
             ((tstring*)(ui + 0x68))->clear();
             *(tstring*)(ui + 0x1c) = *r3;
@@ -594,7 +594,7 @@ struct ini_file {
 };
 int __stdcall   SkinDialog(HWND h, const char* s);       // 0x535446 (SkinMagic SetSingleDialogSkin: stdcall, the callers do not pop)
 
-#define STRTAB ((StrTable*)&orig::g_strtable)
+#define STRTAB (&g_strtable)
 #define UI(s) STRTAB->lookup(tstring(s))
 
 // @ 0x4d4140

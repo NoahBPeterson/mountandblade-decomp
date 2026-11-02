@@ -78,7 +78,6 @@ struct gui_manager_s;
 extern gui_manager_s* g_gui;
 // (g_gui is at 0x5d7080)
 #include "../str_table.h"
-extern StrTable g_strtable;                              // 0x5e2a18
 
 // ---- widget slots used here (s004f73c0 / s0042d360 gui.h) ----------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)

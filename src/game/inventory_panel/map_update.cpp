@@ -20,7 +20,6 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 
 #include "../str_table.h"
 #include "../world.h"                          // world (= Level): the scene object g_level points to
-extern StrTable g_strtable;                  // 0x5e2a18
 
 // --------------------------------------------------------------------------------- collision shapes ----
 // shape_base: 0x20 bytes; slot 0 dtor, slot 1 shape_type (the picker's `v1() != 2` mask key).

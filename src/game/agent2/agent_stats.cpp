@@ -1107,10 +1107,10 @@ void Skeleton::all_shapes(shape_base** out, int* n)
 tstring* StrTable::lookup(const tstring& key)
 {
     unsigned h = hash_string(&key);
-    unsigned n = keys[h].v.size();
+    unsigned n = keys[h].v().size();
     for (unsigned i = 0; (int)i < (int)n; i++) {
-        if (keys[h].v[i].equals(key))
-            return &vals[h].v[i];
+        if (keys[h].v()[i].equals(key))
+            return &vals[h].v()[i];
     }
     notfound.assign("STR NOT FOUND: ");
     notfound.append(key);

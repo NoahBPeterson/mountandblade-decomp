@@ -4241,7 +4241,6 @@ void Agent::refresh_carried(Missile* other)
 
 // ---- Agent::drop_held, the text layout wrapper, the message log, the animator visibility switch, Agent::get_label_box -----------
 extern MsgLog g_gui;                                 // 0x5d7080
-extern StrTable g_strtable;                             // 0x5e2a18
 extern Font* g_font;                                    // 0x5e2934
 // the animator's inline accessor of a bone record's world frame (brings the poses up to date first)
 static __forceinline char* skel_rec_inl(Skeleton* sk, int i)

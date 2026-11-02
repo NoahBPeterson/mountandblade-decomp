@@ -212,7 +212,7 @@ static inline const char* name_of_1(int id)
 {
     char* base = *(char**)(g_game + 0x13a00);
     char* rec = base + id * 0x508;
-    const tstring* t = ((StrTable*)&orig::g_strtable)->find((const tstring*)(rec + 0x20));
+    const tstring* t = g_strtable.find((const tstring*)(rec + 0x20));
     if (t == 0)
         t = (const tstring*)rec;
     return t->c_str();
@@ -224,7 +224,7 @@ static inline const char* name_of_2(int id)
     char* rec = base + id * 0x300;
     const tstring* t = (const tstring*)rec;
     if (rec[0x10] == 0) {
-        const tstring* q = ((StrTable*)&orig::g_strtable)->find((const tstring*)(rec + 0x14));
+        const tstring* q = g_strtable.find((const tstring*)(rec + 0x14));
         if (q != 0)
             t = q;
     }
@@ -240,7 +240,7 @@ static inline const char* name_of_3(int id)
     if (g_flag_a181b8) {
         t = (const tstring*)(rec + 0x20);
     } else if (rec[0x1c] == 0) {
-        const tstring* q = ((StrTable*)&orig::g_strtable)->find((const tstring*)(rec + 0x20));
+        const tstring* q = g_strtable.find((const tstring*)(rec + 0x20));
         if (q != 0)
             t = q;
     }

@@ -31,12 +31,9 @@
 #include "../config/ui_widgets_c.h"
 #include "../../include/game_data.h"
 
-// 0x43a1e0 is StrTable::lookup (agent2/agent_stats.cpp; the table g_strtable 0x5e2a18 seen by mesh2_common.h as LangTables), which takes its key by reference:
-// only the member is declared, under the defining class
-struct StrTable {
-    tstring* lookup(const tstring& key);   // 0x43a1e0
-};
-#define g_strtable_c (*(StrTable*)&g_strtable)
+// 0x43a1e0 is StrTable::lookup (agent2/agent_stats.cpp), which takes its key by reference: the one class, game/str_table.h
+#include "../str_table.h"
+#define g_strtable_c g_strtable
 struct Map10007 {
     int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party pool, ret 4)
 };
