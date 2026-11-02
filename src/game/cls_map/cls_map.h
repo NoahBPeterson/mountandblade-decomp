@@ -48,16 +48,16 @@ struct HOut { GlyphNode* node; char inserted; };
 struct node_pair { int key; Glyph value; };
 
 // ---- 0x4d9450: WinMain's globals and callees ---------------------------------------------------------------------
-// fields of the application object g_app_obj (../config/core.h, 0x8ee3c48) that the framework class keeps protected
-extern HINSTANCE g_hinstance;                    // 0x8ee3fa0 (g_app_obj + 0x358)
-extern int       g_init_flag;                    // 0x8ee3f9c (g_app_obj + 0x354)
 extern HWND      g_editor_hwnd;                  // 0x8ee3d30 (m_hWnd)
-extern unsigned char g_fullscreen_flag;          // 0x8ee3f8e (m_bStartFullscreen)
-extern float     g_res_scale;                    // 0x8ee3c50 (m_fMinFrameTime)
 extern tstring   g_skin_name;                         // 0x5fe888 the language of the skin file name
 extern unsigned char g_mt_inited;                // 0x5e2a09
 extern void*     g_mt_event;                     // 0x5e28d8
 extern CRITICAL_SECTION g_mt_cs;                 // 0x5e28dc
+extern FILE*     g_log_file;                     // 0x5a9f90 (game_globals.h: the log stream's FILE*)
+extern unsigned char g_log_flag94;               // 0x5a9f94 (game_globals.h)
+extern unsigned char g_log_flag95;               // 0x5a9f95 (game_globals.h)
+struct MapIcon;
+extern MapIcon*  g_map_icons;                    // 0x5e29f0 (game_globals.h)
 extern int       g_video_played;                 // 0x5e2a10
 // (the options dialog's choose_dx_settings 0x4b9b90 is OptionsDlg's own member, ../config/options_dlg.h; DXUtil_Timer 0x407660 is dxframework/dxutil.h's)
 FILE* __cdecl mb_open_user_file(const char* name, const char* mode);   // 0x415160
@@ -246,16 +246,9 @@ UiAInline* __cdecl new_button(ContainerBase* o, const tstring& text, float px, f
 extern GameData* g_game;                        // 0x5e2930
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern void* g_mission_templates;                          // 0x5e2a00 (mission table, 0x58-byte records; +0x24 = name)
-extern int g_a73314;                            // 0xa73314 (mission stage)
-extern int g_a73430;                            // 0xa73430 (grid rows)
-extern int g_a73428;                            // 0xa73428 (grid columns)
-extern int g_a7342c;                            // 0xa7342c (grid depth)
-extern int g_a73348[];                          // 0xa73348 (grid of unit indices)
-extern int g_a73438;                            // 0xa73438 (selected index, -1 = none)
-extern int g_mission_ctx[];                          // 0xa73300 (selection table)
-extern int g_a732fc[];                          // 0xa732fc (per-side fallback ids)
-extern char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
+extern unsigned char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
 #include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): the one definition
 extern float g_5a9f24;                          // 0x5a9f24 0.65 (the meeting window columns' top)
 extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145} ([1] is 0.21450001, not the literal 0.2145f)
 void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main mission UI)
@@ -263,7 +256,6 @@ void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main miss
 // ---- 0x4dc630..0x4dce70: the message (result) window and its button makers ----------------------------------------------
 // the option table (0xa44240): ini_file, entries of 0x2c bytes with the value string at +0x1c of each entry (from +0x1c: 0xa4425c)
 extern ini_file g_game_vars;                          // 0xa44240
-extern float g_549cdc, g_590b6c, g_54b3b0, g_549d70, g_549d68;   // button metrics (rdata floats)
 #include "../result_window.h"                    // ResultWindow: the head_rec record of vtable 0x595740 (its slot 2 is the window maker below)
 UiAInline* new_long_button(MissionUi* parent, const tstring* text, float a, float b, float c);     // 0x4dcbd0
 UiAInline* new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4dce70
@@ -372,25 +364,6 @@ extern int g_main_menu_font_color_blue;                    // 0xa181c4
 extern int g_main_menu_kind;                    // 0xa75f34
 extern char* g_save_prefix;                     // 0x8ee3c3c (the c_str idiom falls back to its own address)
 extern BlockOwner* g_presentation;               // 0x5e299c
-extern float g_rand_range;                      // 0x54a6bc
-extern float g_pic_split1;                      // 0x54b868
-extern float g_pic_split2;                      // 0x549d70
-extern float g_pic_split3;                      // 0x54b8ac
-extern char g_key_return[];                     // 0x59736c "ui_return_to_game"
-extern char g_key_options[];                    // 0x597234 "ui_options"
-extern char g_key_save_exit[];                  // 0x597358 "ui_save_and_exit"
-extern char g_key_save[];                       // 0x597350 "ui_save"
-extern char g_key_save_as[];                    // 0x597344 "ui_save_as"
-extern char g_key_quit[];                       // 0x59732c "ui_quit_without_saving"
-extern char g_img_logo[];                       // 0x597020 "warrider_logo"
-extern char g_img_warrior[];                    // 0x597318 "pic_mb_warrior_1"
-extern char g_img_warrior2[];                   // 0x597304
-extern char g_img_warrior3[];                   // 0x5972f0
-extern char g_img_warrior4[];                   // 0x5972dc
-extern char g_img_load[];                       // 0x597030 "load_window"
-extern char g_img_message[];                    // 0x5971b0 "message_window"
-extern char g_key_button_down[];                // 0x5971d0 "longer_button_down"
-extern char g_key_button[];                     // 0x5971c0 "longer_button"
 
 // 0x4de3e0: builds a textured quad (four points, four vertices, two faces) in a mesh; a member of the mesh class
 struct PanelMesh : rgl::mesh {
@@ -472,20 +445,7 @@ struct OptionsWin {
     char f_ed;                                  // +0xed
     void init();                                // 0x4e05c0
 };
-extern int g_bpp;                   // 0x5a9fec
-extern int g_ragdolls;              // 0x5aa008
-extern int g_blood;                 // 0x5aa00c
-extern int g_char_detail;           // 0x5aa024
-extern int g_char_shadow;           // 0x5aa028
-extern int g_ragdoll_q;             // 0x5aa030
-extern int g_plant_shadow;          // 0x5aa034
-extern int g_ragdoll_lim;           // 0x5aa03c
-extern int g_particle;              // 0x5aa040
-extern float g_scale_x;             // 0x5aa088
-extern float g_scale_y;             // 0x5aa08c
-extern float g_scale_z;             // 0x5aa090
 extern int g_use_shaders;        // 0x5e28fc
-extern const float g_row_step;      // 0x597944 = 0.00528f
 
 // ---- 0x4e25a0..0x4e3780: the key-binding page of the options menu (global at 0xa73730; the key table and the page share it) -----------
 struct OptionsMenu {
