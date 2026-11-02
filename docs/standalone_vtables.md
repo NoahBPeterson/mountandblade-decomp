@@ -69,30 +69,53 @@ void ResultWindow::slot_empty_1() { g_gui.f1709 = 1; }
 void Rec34::slot_empty_1()     { g_gui.f1709 = 1; }
 ```
 
-## Head records: what was done and what the rest needs (lane 1)
+## Head records: what was done and what the rest needs (lane V1)
 
-`game/screen_records.h` holds the head_rec records that are screens, one class each, shared by every TU that holds one of
-their members. Done: C4c2fb0 (the "creating game" panel: slot 2 `cls_map.cpp` 0x4daa10, slot 3 `party/game.cpp` 0x51c5a0, plus
-`sub` 0x51c720), C4c3050 (message window: 0x4ddf80, 0x4ca6c0), C4c31c0 (save / load window: 0x4e4790, 0x4ea290, `list_saves`,
-`slot_button`, `select`), C4c3290 (start-up loading screen: 0x4e3aa0, 0x50f390, `advance` 0x50f440). Their destructors are
-the compiler's (`~X()` for the part the original calls out of line, implicit `??_GX`), `head_rec_delete` is gone (the
-base's `??_Ghead_rec` is compiler-emitted: the derived classes' deleting destructors differ from it only in the vptr they
-store, which is the same `??_7head_rec` now), slot 3 is `scale_3(float)` (it is the per-frame update), and the fake classes
-the slices had invented for the halves (`LoadingScreen`, `LoadingPanel`, `MessageMenu`, `dev_list`, `SaveWindow`,
-`SavePanel`, `MeetingWindow::init2`) are gone.
+`game/screen_records.h` holds the head_rec records, one class each, shared by every TU that holds one of their members
+(`MB_ZERO_TAIL`, the opaque `RecX` creation types and the C4c / Rec* classes). Rec1208 lives in `game/conv_screen.h`, ItemRec /
+ItemRec2 in `game/triggers/item_rec.h`, C4c3160 + `Slot20` in screen_records.h, the old views are `typedef`s of the record
+(`OptionsScreen`/`OptionsWin`/`MeetingWindow`/`XferWin`/`LogScreen`/`quest_window`/`ConvScreen`) where one view was the
+whole record. Their overrides are defined in the TU of the original function (`// @ 0xADDR`), their destructors are the
+compiler's (`~X()` for the part the original calls out of line, implicit `??_GX`; the plain records need none: the
+compiler-emitted deleting destructors fold with the base's under ICF), slot 3 is `scale_3(float)` (the per-frame / event
+handler; the parameter is the frame time, a handler that forwards its address, as `pick(&arg)` does, takes
+`(int*)&arg`), slot 1 is `g_gui.reset()` once per class (`g_gui.f1709 = 1` for the 0x4c30b0 group, `reset(); overlay = 0` for 0x4c6e10).
 
-Two things made the remaining ~20 tables expensive and are why they are not done:
+Done (slot 1 + 2 + 3 unless noted): C4c2fb0, C4c3050, C4c31c0, C4c3290, Rec38 (debrief report / leave), Rec44 (mission window),
+Rec34 (debrief), Rec118 (meeting window / mission start menu), Rec3c (done window), Rec454 (quest log), Rec48 (import /
+export window), Rec58 (game log), Rec1208 (conversation), Rec1bc (key bindings), Recd8 (options), Recf0 (video options),
+ItemRec (main menu), ItemRec2 (escape menu; slot 2 EscapeMenu::create, slot 3 buttons), C4c3160 slot 3, Rec23c / Rec428 slot 1.
 
-* The slice tooling's screen classes (`Hud`, `MissionScreen`, `QuestPage`, `options_panel`, `DebriefMenu`, `PartyScreen` +
-  `XferWin`, `TerrainPage`, `PartyWindow` + `InventoryPanel`) are views that span SEVERAL records: `Hud::handle_buttons` is the
-  main-menu record (ItemRec), `Hud::on_leave` Rec38, `Hud::on_mission_start` Rec44, `Hud::on_update` Rec454. Each function has to
-  be given the fields of its own record (the offsets agree with the record sizes: Rec38 0x38, Rec44 0x44, Rec454 0x454) and
-  the helper members it calls have to move to that record too.
-* The screens are written against two widget universes: `ui/mission_ui.h` (MissionUi / UiB / UiAInline, what `cls_map` and
-  `progress_bar` use) and `ui_widget.h` (Widget, what `char_sheet` / `options_panel` use). A record shared by both can only
-  declare its buttons as one of them (C4c31c0 uses `Widget*` and `cls_map/progress_bar.cpp` casts at the three creation
-  sites); `char_sheet` cannot include `mission_ui.h` (`rgl_mesh.h` redefines `rgl::mesh_list`), `mesh_2.cpp` cannot either
-  without the `resource_manager` merge done here. Unifying Widget and MissionUi would remove both.
+Lessons that cost time:
+
+* Inside a member of a class that has `MB_ZERO_TAIL` (a class-scope `operator new`), an unqualified `operator new(0x190)`
+  is the class's zeroing allocator: `NEW_OVERLAY_WINDOW` and quest_log's window maker write `::operator new`.
+* The slice tooling's "views" often spanned SEVERAL records (Hud = main menu / Rec38 / Rec44 / Rec454, MissionScreen = Rec44 /
+  Rec118 / Rec3c, DebriefMenu = Rec34 / Rec38, KeysPage / QuestPage / VideoPage = pages of Rec1bc / Recd8 / Recf0). Give each
+  record the fields its own functions use, move the function, keep the helper members that remain shared on the view
+  (`((MissionScreen*)this)->fill_mission_grid()`).
+* A parameter the original forwards by address (`pick(&arg)`, `m(&code)`) stays the function's own parameter (`float`),
+  taken as `(int*)&arg`; an `int arg` copy changes the code.
+* ConvScreen::open had `(int dialog, int* out)` in the slices; the original is a plain `ret` with `refresh(-1, 0)`.
+
+## What is left in the V1 scope (and why)
+
+* Rec23c (terrain page) slot 2 `facegen_win::init` 0x4f1460, slot 3 `TerrainPage::update` 0x4f2d70; Rec428 (face generator)
+  slots 2 / 3 `FaceGen::init` 0x4f49d0 and `CamView::update_model` 0x4ea8e0: two views with different names and widget types
+  of one record (char_sheet/facegen_init.h and cam_view.h); merge their fields into Rec428, as was done for Rec58 / Rec454.
+* Recacc (party / inventory window) slots 2 / 3: `PartyWindow` (party/party_window.h, 36 placeholder virtuals) and
+  `InventoryPanel` (inventory_panel/inventory_panel.h) are two views of it; PartyWindow's placeholder virtuals have to go with
+  the merge.
+* C4c3160 slot 2 `PartyScreen::open_party_window` 0x500ad0.. (party_screen.cpp, a 1,300-line view with its own helpers).
+* mission_items: ItemA / ItemB / ItemC / ItemD / MissionBlocker. Their deleting destructor in the original is 0x4ce930, the
+  ItemRec one: ItemA..C start with the same `owned_block` at +0x30 as ItemRec (their `f34 f38 f3c` are its begin/end/cap), so
+  the item family has a shared base class (head_rec + owned_block + clock / stamp), ItemRec / ItemRec2 / ItemA..C derive from
+  it and the base's destructor is the folded one. The slot 2 / 3 targets are `GameScreen::build` / `EventScreen::on_event`
+  (ItemA), `SaveWinCtl::create` / `SourceScreen::hook_a` (ItemB: its slot 2 0x4e5d80 is a `jmp` thunk to create),
+  `create_flagged` / `hook_b` (ItemC), `view_obj::reset` / `InputScreen::on_input` (ItemD), `MissionHud::refresh` /
+  `Screen_s261e0::tick` (MissionBlocker, slot 4 `MissionParams::init` is in the TU). Their views (SourceScreen = MissionSource at
+  +0x30 + interval, ScreenBase) are the same record.
+* head_cam / head_obj2 (rec_slots_hc.cpp): `Screen::init_screen` / `frame_update`, `CharSheet::init` / `update`, `rec_2e4::release`.
 
 ## Still open (see the audit)
 
