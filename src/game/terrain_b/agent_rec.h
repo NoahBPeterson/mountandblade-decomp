@@ -29,9 +29,10 @@ struct EmitterSink {
     virtual void add_emitter(Emit* e);          // slot 25 (+0x64) (0x47a0c0)
 };
 
+#include "../../include/iface.h"       // IfaceB
 #include "../../include/tail2.h"      // Tail2 (~Tail2 0x4c4d10): the list the destructor releases at +0x53c0
-struct MAgent {
-    // vtable 0x591848 (stored first by the constructor). The destructor is inline, as the original's: there is no out-of-line
+struct MAgent : IfaceB {
+    // vtable 0x591848 (stored by the constructor). The destructor is inline, as the original's: there is no out-of-line
     // agent destructor; slot 0 is the vector deleting destructor 0x431f40 (= ??_ERecZ of rgl/xmlcfg/records.cpp, the same
     // 0x5928-byte record), which destroys the Tail2 at +0x53c0 and then frees the vector<int> buffer at +0x20 (allocator +0x1c).
     virtual ~MAgent()
@@ -41,11 +42,9 @@ struct MAgent {
             operator delete(f20);
         f20 = 0; f24 = 0; f28 = 0;
     }
-    virtual void slot1();       // 0x477b70 (empty)
-    virtual void slot2();
-    int used;                   // +0x04 0 = free slot (the pool's in-use flag)
-    int id;                     // +0x08
-    int serial;                 // +0x0c
+    // IfaceB (vtable 0x5908f8, src/include/iface.h) is the base: its slots 1 / 2 (the empty function 0x477b70) are the table's, its words
+    // f4 / f8 / fc are the pool's in-use flag (0 = free slot), id and serial; ~IfaceB stores the base vptr at the end of the vector deleting
+    // destructor 0x431f40, which is why that function ends with `mov [edi], 0x5908f8`.
     int f10;   // +0x10
     int f14;   // +0x14
     int f18;   // +0x18
