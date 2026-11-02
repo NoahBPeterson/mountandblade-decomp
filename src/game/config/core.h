@@ -17,12 +17,17 @@ struct Core : CD3DApplication {
     using CD3DApplication::ChooseInitialD3DSettings;    // 0x402100
     using CD3DApplication::ToggleFullscreen;            // 0x402be0 (the slice called it HandleSizeChange)
     using CD3DApplication::DisplayErrorMsg;             // 0x4014f0
+    using CD3DApplication::m_bStartFullscreen;          // +0x346 WinMain sets it from the config (cls_map.cpp)
+    using CD3DApplication::m_fMinFrameTime;             // +0x008 WinMain sets it to 1 / max_framerate
     using CD3DApplication::m_bWindowed;                 // +0xa4 = 0x8ee3cec: the 'settings probed' flag of 0x4b99c0 and the
                                                         // crop flag of 0x4bace0 / 0x4bb9c0 (the slices' g_settings_probed / g_screenshot_cropped)
 
     // +0x348..+0x590 (was one pad; split by the functions of src/game/triggers, offsets unchanged):
     CD3DFont* font;                                     // +0x348 deleted by the destructor 0x4bed90, device-object handlers 0x4c1940, 0x4c1a60, 0x4c1ad0
-    char pad34c[0x374 - 0x34c];
+    char pad34c[0x354 - 0x34c];
+    int init_flag;                                      // +0x354 WinMain clears it before the window exists (cls_map.cpp)
+    HINSTANCE hinstance;                                // +0x358 the instance handle WinMain stores (the slices' g_hinstance)
+    char pad35c[0x374 - 0x35c];
     HWND page_hwnd;                                     // +0x374 the create-game page dialog 0x4bf640 (CreateGameOptionsPage::hDlg)
     HWND script_dlg;                                    // +0x378 the script debugger dialog 0x4bf870
     char pad37c[0x380 - 0x37c];
