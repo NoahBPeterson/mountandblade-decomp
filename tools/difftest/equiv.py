@@ -3305,6 +3305,65 @@ class Runner:
             self.targets_cache[key] = v
         return v
 
+    def _call_vtable_slot(self, ret):
+        """Displacement of the `call [reg+disp]` ending at `ret` (the vtable slot * 4), or None."""
+        key = ("via-disp", ret)
+        v = self.targets_cache.get(key, 0)
+        if v == 0:
+            v = None
+            try:
+                for n in (3, 6, 2):
+                    ins = next(_md.disasm(self.m.read(ret - n, n), ret - n, 1), None)
+                    if ins is not None and ins.id == CX.X86_INS_CALL and ins.address + ins.size == ret:
+                        o = ins.operands[0]
+                        if o.type == CX.X86_OP_MEM and o.mem.base and not o.mem.index:
+                            v = o.mem.disp & 0xFFFFFFFF
+                        break
+            except Exception:           # noqa: BLE001
+                v = None
+            self.targets_cache[key] = v
+        return v
+
+    # Direct3D 9 lock methods, identified by the COM interface's slot and the call's argument count (the stack
+    # dwords including the object; stdcall, the callee pops them): {(vtable disp, n): (pLockedRect index, kind)}
+    #   IDirect3DSurface9::LockRect   slot 13 (+0x34)  (this, D3DLOCKED_RECT*, const RECT*, DWORD flags)   n=4
+    #   IDirect3DSurface9::UnlockRect slot 14 (+0x38)  (this)                                              n=1
+    #   IDirect3DTexture9::LockRect   slot 19 (+0x4c)  (this, UINT level, D3DLOCKED_RECT*, RECT*, flags)   n=5
+    #   IDirect3DTexture9::UnlockRect slot 20 (+0x50)  (this, UINT level)                                  n=2
+    # (IDirect3DDevice9 slot 13 CreateAdditionalSwapChain takes 3, slot 14 GetSwapChain 3: the count tells them apart.)
+    D3D_LOCKS = {(0x34, 4): (1, "lock"), (0x38, 1): (None, "unlock"),
+                 (0x4C, 5): (2, "lock"), (0x50, 2): (None, "unlock")}
+    D3D_LOCK_PITCH, D3D_LOCK_ROWS = 1024, 256       # 256 x 256 A8R8G8B8 = 256 KB, zero-filled
+
+    def _stdcall_com_object(self, ret, esp):
+        """The `call [R+disp]` ending at `ret` has R holding the vtable of its first stack argument (a COM method
+        called on a stack object), whatever ecx holds."""
+        base = self._call_vtable_base(ret)
+        if base is None or base not in self._CS_TO_UC:
+            return False
+        try:
+            return self.m.u32(self.m.u32(esp + 4)) == self.m.uc.reg_read(self._CS_TO_UC[base])
+        except Exception:               # noqa: BLE001
+            return False
+
+    def _d3d_lock(self, ret, esp, n):
+        """Model of IDirect3D{Surface,Texture}9::LockRect / UnlockRect for the `call [reg+disp]` ending at `ret`:
+        LockRect writes D3DLOCKED_RECT {Pitch, pBits} into the caller's structure, pBits pointing at a zeroed
+        256 x 256 x 4 byte block (Machine.model_data, the same address and the same zero contents for both builds;
+        it is large enough that a clamped texel coordinate stays inside), and returns D3D_OK; UnlockRect returns
+        D3D_OK. Returns the result dword, or None when the call is not one of these."""
+        disp = self._call_vtable_slot(ret)
+        ent = self.D3D_LOCKS.get((disp, n))
+        if ent is None or not self._stdcall_com_object(ret, esp):
+            return None
+        idx, kind = ent
+        if kind == "lock":
+            out = self.m.u32(esp + 4 + 4 * idx)
+            if out:
+                self.m.write(out, struct.pack("<II", self.D3D_LOCK_PITCH, self.m.model_data(
+                    "D3D.LockRect.bits", self.D3D_LOCK_PITCH * self.D3D_LOCK_ROWS)))
+        return 0
+
     def _call_via_ecx(self, ret):
         """The call ending at `ret` is `call [ecx+disp]` (ecx the vtable base, so not a thiscall `this`)."""
         return self._call_vtable_base(ret) == CX.X86_REG_ECX
@@ -3406,6 +3465,7 @@ class Runner:
         dead = self._call_via_ecx(ret) or self._com_call(ret, esp, n) or (n > 0 and not pops)
         ecx = DEAD_ECX if dead else self.norm_key(uc.reg_read(UC_X86_REG_ECX))
         h = zlib.crc32(repr((target, ecx, args)).encode())
+        d3d = self._d3d_lock(ret, esp, n) if n and pops else None
         k = h % 4
         eax = (0, 1, h % 9, M.POOL_BASE + M.SLOT * (HOT_SLOTS + (h >> 8) % (NSLOTS - HOT_SLOTS)))[k]
         if self._bool_result(ret):
@@ -3414,8 +3474,10 @@ class Runner:
             # sending it into work the method was supposed to do (cam_view 0x4eaa05: the model-record
             # check gates the clipboard copy, whose GlobalAlloc is not modelled)
             eax = 0
+        if d3d is not None:         # a modelled D3D lock call: the documented result (D3D_OK)
+            eax = d3d
         ov = self.cur_fake_ret.get(target)
-        if ov is not None:          # the input chooses this callee's result (concolic steering, concolic.py)
+        if ov is not None and d3d is None:  # the input chooses this callee's result (concolic steering, concolic.py)
             eax = ov & 0xFFFFFFFF
         self.fake_seq += 1
         self.last_fake = target
