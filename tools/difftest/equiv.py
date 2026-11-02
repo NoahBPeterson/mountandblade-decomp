@@ -6406,6 +6406,14 @@ def _test_function(sid, va, opts, log=print):
     regress = regress_inputs(sid, va, opts)
     n_regress = len(regress)
     regress += cover_inputs(sid, va, opts)          # then the saved coverage inputs (see cover_dir)
+    if getattr(opts, "shard", None):
+        # --shard K/N: this process runs saved input j only when j % N == K, so the N shards together replay every
+        # saved input exactly once (none skipped, none counted twice); fresh inputs come from this shard's own
+        # seed (--seed + K). merge_shards.py adds the shards' valid inputs and unions their edges.
+        k, n = opts.shard
+        n_regress = sum(1 for j in range(n_regress) if j % n == k)
+        regress = [r for j, r in enumerate(regress) if j % n == k]
+        out["shard"] = "%d/%d" % (k, n)
     opts.regress_set = [f for f, _i in regress]      # keyed: a new regression input re-runs the row
     key = _cache_key(t, out, opts)
     if key:
@@ -6419,7 +6427,7 @@ def _test_function(sid, va, opts, log=print):
     runner = Runner(t, opts, log)
     cmp_ = Comparer(runner, opts)
     fpt = FpTol(runner, cmp_, opts) if getattr(opts, "fp_tol", False) else None
-    rng_master = random.Random("%s:%08x:%d" % (sid, va, opts.seed))
+    rng_master = random.Random("%s:%08x:%d" % (sid, va, opts.seed + (opts.shard[0] if getattr(opts, "shard", None) else 0)))
     gen = runner.gen
     corpus = []
     valid, discarded, mism, first = 0, {}, 0, None
@@ -7140,6 +7148,9 @@ def parse_args(argv=None):
                     help="stop once this many inputs in a row reach no new block or edge (and --min-valid inputs "
                          "are valid); 0 runs every input, for a fix's confirmation run")
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--shard", type=lambda v: tuple(int(x) for x in v.split("/")), default=None, metavar="K/N",
+                    help="run shard K of N (0-based): every N-th saved input from K, fresh inputs from --seed + K; "
+                         "combine the shards' JSON with merge_shards.py")
     ap.add_argument("--json")
     ap.add_argument("--min-valid", type=int, default=DEFAULT_K)
     ap.add_argument("--min-cov", type=float, default=DEFAULT_C)
