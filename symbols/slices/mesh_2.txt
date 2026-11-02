@@ -1,5 +1,5 @@
 004ca600 ?apply@screen_cfg@@QAEXXZ
-004ca6c0 ?select_windowed@dev_list@@QAEXH@Z
+004ca6c0 ?scale_3@C4c3050@@UAEXM@Z
 004ca720 ?release_strings@LangTables@@QAEXXZ
 004ca7e0 ??$_Destroy_range@UE176@@V?$allocator@UE176@@@std@@@std@@YAXPAUE176@@0AAV?$allocator@UE176@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
 004ca830 ?release@big_holder@@QAEXXZ

@@ -213,4 +213,4 @@ void GameData::load_header(SaveCtx* h)
 
 // ItemRec2 slot 3 (0x4e87d0 MapScreen::buttons).
 #include "../triggers/item_rec.h"
-void ItemRec2::scale_3(const float* a) { ((MapScreen*)this)->buttons((int)a); }
+void ItemRec2::scale_3(float a) { ((MapScreen*)this)->buttons(*(int*)&a); }

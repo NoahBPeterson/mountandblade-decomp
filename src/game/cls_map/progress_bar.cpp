@@ -243,7 +243,7 @@ static __forceinline float config_value(int i)
 }
 
 // @ 0x4e4790
-void SaveWindow::init()
+void C4c31c0::slot_empty_2()
 {
     is_load = (*(int*)(*(char**)&orig::g_a739d4 + 0x18) == 5);
     g_gui.reset();
@@ -290,30 +290,30 @@ void SaveWindow::init()
         tstring h("save_b_done_h");
         tstring caption("ui_save");
         float f = config_value(config_index(h));
-        btn_done = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_done = (Widget*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     } else {
         tstring h("save_b_done_h");
         tstring caption("ui_restore");
         float f = config_value(config_index(h));
-        btn_done = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_done = (Widget*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
-    label_refresh(btn_done, "save_b_done");
+    label_refresh((MissionUi*)(void*)btn_done, "save_b_done");
     vt(btn_done)->d46();
 
     {
         tstring h("save_b_cancel_h");
         tstring caption("ui_cancel");
         float f = config_value(config_index(h));
-        btn_cancel = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_cancel = (Widget*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
-    label_refresh(btn_cancel, "save_b_cancel");
+    label_refresh((MissionUi*)(void*)btn_cancel, "save_b_cancel");
     {
         tstring h("save_b_delete_h");
         tstring caption("ui_delete");
         float f = config_value(config_index(h));
-        btn_delete = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_delete = (Widget*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
-    label_refresh(btn_delete, "save_b_delete");
+    label_refresh((MissionUi*)(void*)btn_delete, "save_b_delete");
     vt(btn_delete)->d46();
 
     {
@@ -461,17 +461,6 @@ __declspec(noinline) float ini_file::get_float(int* idx)
 
 // ---- 0x4e5270: list the nine save files ("sgDD.sav") and read their headers ----------------------------------------------------------------
 // the header 0x4e54e0 reads out of a slot file (list_saves keeps one on its stack; fields by offset)
-struct SlotReader;
-struct SlotHeader {
-    tstring title;                              // +0x00
-    tstring body;                               // +0x10
-    int f20;                                    // +0x20 (the sub-reader's record: first word + 4 pad)
-    float time;                                 // +0x24 (game hours)
-    int year;                                   // +0x28
-    int month;                                  // +0x2c (the magic "WRDR" word in a valid file)
-    int f30;                                    // +0x30
-    bool read_slot(SlotReader* r);              // 0x4e54e0 (ret 4)
-};
 // the stream object 0x4e5270 builds (0x54ae48 reader -> 0x54ad68 mem_stream) and 0x4e54e0 reads
 struct SlotStreamBase {
     void* vptr;                                 // +0x00
@@ -511,7 +500,7 @@ struct SlotReader {                             // the 0x54ae48 reader's virtual
 };
 
 // @ 0x4e5270
-void SaveWindow::list_saves()
+void C4c31c0::list_saves()
 {
     SlotHeader hdr;
     char dir[0x104];
@@ -630,7 +619,7 @@ static __forceinline float config_float(const char* name)
 
 // @ 0x4e55f0
 // `slot` is the slot index (the geometry divides it by three: three columns); `out` receives the button
-void SaveWindow::slot_button(ContainerBase* parent, int slot, UiAInline** out)
+void C4c31c0::slot_button(ContainerBase* parent, int slot, Widget** out)
 {
     float save_x = config_float("save_b_save_x");
     float save_y = config_float("save_b_save_y");
@@ -646,13 +635,13 @@ void SaveWindow::slot_button(ContainerBase* parent, int slot, UiAInline** out)
         tstring empty("");
         tstring key_down("restore_game_panel_down");
         tstring key("restore_game_panel");
-        *out = new_sized_button(parent, empty,
+        *out = (Widget*)(void*)new_sized_button(parent, empty,
                                 save_x + (float)col * save_x_a,
                                 save_y - (float)row * save_y_a,
                                 save_size_y, key, key_down,
                                 1.5544f, save_button_h, 0.085f);
     }
-    (*out)->f184 = 1;
+    ((UiAInline*)(void*)*out)->f184 = 1;
 
     // one full expression: both lookups' key strings live until d27 returns (0x4e5734..0x4e5767 destroy them after it)
     vt(*out)->d27(pair_ref(PairF(config_float_key(tstring("save_b_save_t_s")), config_float_key(tstring("save_b_save_t_s")))));

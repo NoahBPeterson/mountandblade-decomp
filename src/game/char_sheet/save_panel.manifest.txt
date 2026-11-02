@@ -1,1 +1,1 @@
-../src/game/char_sheet/save_panel.cpp  ?select@SavePanel@@QAEXH@Z  004ea850  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_panel.cpp  ?select@C4c31c0@@QAEXH@Z  004ea850  /O2 /MT /Gy /TP

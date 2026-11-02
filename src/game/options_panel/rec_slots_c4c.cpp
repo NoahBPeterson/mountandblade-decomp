@@ -7,55 +7,22 @@
 // argument unchanged.
 #include "../../rgl/mesh2/rec_tables.h"
 
-struct LoadingScreen {
-    void init();
-    void update(int);
-};
-struct LoadingPanel {
-    void update(int);
-};
-struct MessageMenu {
-    void create_message();
-};
-struct dev_list {
-    void select_windowed(int);
-};
 struct PartyScreen {
     void open_party_window();
 };
 struct XferWin {
     void update(int);
 };
-struct SaveWindow {
-    void init();
-};
-struct SavePanel {
-    void update(int);
-};
-struct MeetingWindow {
-    void init2();
-};
 
-// C4c2fb0
-void C4c2fb0::slot_empty_1() { reset_gui(); }
-void C4c2fb0::slot_empty_2() { ((LoadingScreen*)this)->init(); }
-void C4c2fb0::scale_3(const float* a) { ((LoadingPanel*)this)->update((int)a); }
-
-// C4c3050
-void C4c3050::slot_empty_2() { ((MessageMenu*)this)->create_message(); }
-void C4c3050::scale_3(const float* a) { ((dev_list*)this)->select_windowed((int)a); }
+// slot 1 of C4c2fb0 / C4c3290: 0x4c6e00 (gui_edit.cpp reset_gui), once per class (the original's linker folded the copies)
+void C4c2fb0::slot_empty_1() { g_gui.reset(); }
+void C4c3290::slot_empty_1() { g_gui.reset(); }
 
 // C4c3160
 void C4c3160::slot_empty_1() { reset_gui(); }
 void C4c3160::slot_empty_2() { ((PartyScreen*)this)->open_party_window(); }
-void C4c3160::scale_3(const float* a) { ((XferWin*)this)->update((int)a); }
+void C4c3160::scale_3(float a) { ((XferWin*)this)->update(*(int*)&a); }
 
-// C4c31c0
-void C4c31c0::slot_empty_1() { reset_gui(); }
-void C4c31c0::slot_empty_2() { ((SaveWindow*)this)->init(); }
-void C4c31c0::scale_3(const float* a) { ((SavePanel*)this)->update((int)a); }
+void C4c31c0::slot_empty_1() { g_gui.reset(); }
 
-// C4c3290
-void C4c3290::slot_empty_1() { reset_gui(); }
-void C4c3290::slot_empty_2() { ((MeetingWindow*)this)->init2(); }
-void C4c3290::scale_3(const float* a) { ((LoadingScreen*)this)->update((int)a); }
+

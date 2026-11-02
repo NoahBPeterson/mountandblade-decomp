@@ -13,7 +13,7 @@
 //   slot 1  0x477b70  slot_empty_1()       `ret` - an empty function (the base's default; most derived classes
 //                                          override it with a screen reset)
 //   slot 2  0x477b70  slot_empty_2()       the same empty function
-//   slot 3  0x408030  scale_3(const float*)  `ret 4` - takes its argument and returns (shape_base::scale)
+//   slot 3  0x408030  scale_3(float)  `ret 4` - takes its argument (the frame time) and returns (shape_base::scale)
 //   slot 4  0x477b70  slot_empty_4()       the same empty function (MissionBlocker overrides it with
 //                                          MissionParams::init, 0x4cea10)
 //   slot 5  0x408030  scale_5(const float*)  `ret 4` (the same function as slot 3)
@@ -41,7 +41,7 @@ struct head_rec {
     virtual ~head_rec() {}                                          // slot 0  0x4c4c90
     virtual void slot_empty_1() {}                                  // slot 1  0x477b70 (empty)
     virtual void slot_empty_2() {}                                  // slot 2  0x477b70 (the same function)
-    virtual void scale_3(const float*) {}                           // slot 3  0x408030 (ret 4)
+    virtual void scale_3(float) {}                           // slot 3  0x408030 (ret 4)
     virtual void slot_empty_4() {}                                  // slot 4  0x477b70 (the same function)
     virtual void scale_5(const float*) {}                           // slot 5  0x408030 (the same function)
     virtual void scale_6(const float*) {}                           // slot 6  0x408030 (the same function)
@@ -51,7 +51,10 @@ struct head_rec {
     virtual char always_true() { return 1; }                        // slot 8  0x48b170
     int     w04;               // +4     0x4c2c50
     int     w08;               // +8     0x63
-    char    pad0c[0x10];       // +0xc
+    char    pad0c[4];          // +0xc
+    int     w10;               // +0x10 (the party / object the screen shows, set by whoever opens it)
+    char    pad14[4];          // +0x14
+    int     w18;               // +0x18 (the menu state a screen returns to; the screens' slot 3 passes it to set_state)
     tstring name;              // +0x1c
     head_rec() : name() { w04 = 0; w08 = 0x63; }
     struct no_w04 {};

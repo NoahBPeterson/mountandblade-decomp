@@ -10,6 +10,8 @@
 #include "../mission.h"                               // Mission::destroy 0x4d51d0 (the world object 0x5e292c is the mission)
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../screen_records.h"   // Rec38 / Rec44 / Rec454: the records whose slot 3 these are (vtables 0x595828 / 0x5957e0 / 0x595894)
+#include "../triggers/item_rec.h"   // ItemRec: slot 3 is handle_buttons (vtable 0x596124)
 #include "quest_page.h"        // QuestPage: Hud is the quest page screen (QuestPage::sel is Hud::f250), fill() 0x4d5ba0
 #include "../shared_vars.h"
 #include "../key_names.h"
@@ -149,48 +151,51 @@ struct ItemSource {
 };
 #pragma comment(linker, "/alternatename:?pick@ItemSource@@QAEXPAH@Z=?pick@MissionSource@@QAEXPAH@Z")
 
+#define W(x) ((Widget*)(void*)(x))
 // @ 0x4d5290
-void Hud::handle_buttons(int arg)
+void ItemRec::scale_3(float arg)
 {
-    ((ItemSource*)((char*)(void*)this + 0x30))->pick(&arg);
-    if (f60->changed(0x10000)) {
+    ((ItemSource*)((char*)(void*)this + 0x30))->pick((int*)&arg);
+    if (W(row_tutorial)->changed(0x10000)) {
         g_menu_w1[6] = 4;
         g_menu_w1[1] = 3;
         g_menu_w1[0x8c / 4] = 0;
         g_main_menu.set_state(3);
         return;
     }
-    if (f64->changed(0x10000)) {
+    if (W(row_new_game)->changed(0x10000)) {
         g_menu_w1[1] = 0;
-        g_menu_w1[0x8c / 4] = f88;
+        g_menu_w1[0x8c / 4] = first_free;
         g_main_menu.set_state(3);
         return;
     }
-    if (f68->changed(0x10000)) {
+    if (W(row_restore)->changed(0x10000)) {
         g_menu_w5[6] = 4;
         g_main_menu.set_state(0x15);
         return;
     }
-    if (f6c != 0 && f6c->changed(0x10000)) {
+    if (row_custom != 0 && W(row_custom)->changed(0x10000)) {
         g_menu_w1[6] = 4;
         g_menu_w1[1] = 2;
         g_menu_w1[0x8c / 4] = 0;
         g_main_menu.set_state(3);
         return;
     }
-    if (f70->changed(0x10000)) {
+    if (W(row_options)->changed(0x10000)) {
         g_menu_w4[6] = 4;
         g_main_menu.set_state(0x12);
         return;
     }
-    if (f74->changed(0x10000)) {
+    if (W(row_credits)->changed(0x10000)) {
         g_menu_w6[6] = 4;
         g_main_menu.set_state(0x1c);
         return;
     }
-    if (f78->changed(0x10000))
+    if (W(row_exit)->changed(0x10000))
         g_saved = 1;
 }
+
+#undef W
 
 // ---- the world object (0x5e292c) -------------------------------------------------------------------------
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
@@ -244,27 +249,27 @@ __declspec(noinline) void ValueSource::on_value_changed(float arg)
 }
 
 // @ 0x4d5980
-void Hud::on_mission_start(int arg)
+void Rec44::scale_3(float)
 {
     *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_u32;
     g_u32 = g_u32 + 1;
     g_mission->start_setup();
     window_slot<MenuScreen>(14)->v4();                                 // +0x10 (0x4d59ad)
-    window_slot<MenuScreen>(14)->f18 = f18;
+    window_slot<MenuScreen>(14)->f18 = w18;
     g_menu_w3[1] = 0;
-    g_menu_w3[0x18 / 4] = f18;
+    g_menu_w3[0x18 / 4] = w18;
     g_main_menu.set_state(0xe);
 }
 
 // @ 0x4d59f0
-void Hud::on_leave(int arg)
+void Rec38::scale_3(float)
 {
-    if (f34->changed(0x10000))
+    if (((Widget*)(void*)f34)->changed(0x10000))
         g_main_menu.set_state(7);
 }
 
 // @ 0x4d5a20
-void Hud::on_update(int arg)
+void Rec454::scale_3(float)
 {
     if (g_mission_clock) {
         ValueWidget* u = item_value(f3c);
@@ -279,21 +284,21 @@ void Hud::on_update(int arg)
         }
     }
     if (f34->changed(0x10000)) {
-        if (f04 == 0) {
+        if (w04 == 0) {
             f34->activate(1);
             return;
         }
-        f04 = 0;
+        w04 = 0;
         g_main_menu.set_state(0xd);
     } else if (f38->changed(0x10000)) {
-        if (f04 == 1) {
+        if (w04 == 1) {
             f38->activate(1);
             return;
         }
-        f04 = 1;
+        w04 = 1;
         g_main_menu.set_state(0xd);
     } else if (f30->changed(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
-        g_main_menu.set_state(f18);
+        g_main_menu.set_state(w18);
     }
 }
 
@@ -389,6 +394,3 @@ void MissionSource::pick(int* arg)
     }
 }
 
-// ItemRec slot 3 (0x4d5290 Hud::handle_buttons).
-#include "../triggers/item_rec.h"
-void ItemRec::scale_3(const float* a) { ((Hud*)this)->handle_buttons((int)a); }

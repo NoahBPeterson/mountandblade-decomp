@@ -9,7 +9,7 @@
 ../src/game/cls_map/progress_bar.cpp  ?load@RagModel@@QAEXPAVTiXmlElement@@@Z  004e4690  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?get_hex@ini_file@@QAEHPAH@Z  004e51e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?get_float@ini_file@@QAEMPAH@Z  004e5230  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?list_saves@SaveWindow@@QAEXXZ  004e5270  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?list_saves@C4c31c0@@QAEXXZ  004e5270  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?read_slot@SlotHeader@@QAE_NPAUSlotReader@@@Z  004e54e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?make_short_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z  004e5570  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?hex_field@ini_file@@QAEHABUtstring@@@Z  004e5d30  /O2 /MT /Gy /TP

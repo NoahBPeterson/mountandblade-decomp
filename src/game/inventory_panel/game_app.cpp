@@ -127,7 +127,7 @@ void script_dialog_proc();                                   // 0x4c3340
 void global_4bf870(void);                                    // 0x4c3330 (rgl/mesh2/rec_tables.cpp: the thunk to the script debugger proc)
 
 // ---- the loading screen (0x50f440 lives in slice s0050f440; see there) ------------------------------
-#include "../loading_screen.h"       // LoadingScreen: update 0x50f390 here, advance 0x50f440 in loading_screen.cpp
+#include "../screen_records.h"       // C4c3290: update 0x50f390 here (slot 3), advance 0x50f440 in loading_screen.cpp
 #include "../../include/renderer.h"
 
 // ---- the per-frame update ---------------------------------------------------------------------------
@@ -332,7 +332,7 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
 
 // ---- the loading screen's step ----------------------------------------------------------------------
 // @ 0x50f390
-void LoadingScreen::update(int unused)
+void C4c3290::scale_3(float)
 {
     char buf[0x100];
     tstring text;
@@ -341,7 +341,7 @@ void LoadingScreen::update(int unused)
     const char* fmt = "%d";
     _snprintf(buf, 0x100, fmt, step);
     ((ScreenObj*)hint)->set_text(tmp, text);
-    ((ScreenObj*)logo)->set_value((float)step * 0.14285715f);
+    ((ScreenObj*)bar)->set_value((float)step * 0.14285715f);
     if (finished) {
         g_main_menu.set_state(4);
         ((Output*)&orig::g_log)->print("Finished All...\n");

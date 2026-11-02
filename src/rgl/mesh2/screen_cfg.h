@@ -10,29 +10,6 @@
 #include "../../game/tstring.h"
 #include "../../game/strat/gui_manager.h"
 
-// the render-device record's vtable
-struct dev_rec {
-    virtual void s00() = 0;
-    virtual void s04() = 0;
-    virtual void s08() = 0;
-    virtual void s0c() = 0;
-    virtual void s10() = 0;
-    virtual void s14() = 0;
-    virtual void s18() = 0;
-    virtual void s1c() = 0;
-    virtual void s20() = 0;
-    virtual void s24() = 0;
-    virtual void s28() = 0;
-    virtual void s2c() = 0;
-    virtual void s30() = 0;
-    virtual void s34() = 0;
-    virtual void s38() = 0;
-    virtual void s3c() = 0;
-    virtual void s40() = 0;
-    virtual bool is_fullscreen(int which) = 0;   // +0x44
-    virtual void s48() = 0;
-};
-
 // slots 0x04 (no-arg restore) and 0x20 (the state index stored in g_5d75e0)
 struct dev_item {
     virtual void s00() = 0;
@@ -82,14 +59,6 @@ struct screen_gadget {
     int* flag;                                   // +0x0c
     char pad10[0x14];
     tstring* text;                               // +0x24
-};
-
-// a list of device records: +0x38 .. +0x50 (the last slot holds the selected index)
-struct dev_list {
-    void select_windowed(int a);                 // 0x4ca6c0
-    char pad0[0x38];
-    dev_rec* dev[7];                             // +0x38 .. +0x50
-    int nreg;                                    // +0x54
 };
 
 #endif

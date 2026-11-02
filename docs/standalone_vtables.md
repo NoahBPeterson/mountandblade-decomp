@@ -69,6 +69,31 @@ void ResultWindow::slot_empty_1() { g_gui.f1709 = 1; }
 void Rec34::slot_empty_1()     { g_gui.f1709 = 1; }
 ```
 
+## Head records: what was done and what the rest needs (lane 1)
+
+`game/screen_records.h` holds the head_rec records that are screens, one class each, shared by every TU that holds one of
+their members. Done: C4c2fb0 (the "creating game" panel: slot 2 `cls_map.cpp` 0x4daa10, slot 3 `party/game.cpp` 0x51c5a0, plus
+`sub` 0x51c720), C4c3050 (message window: 0x4ddf80, 0x4ca6c0), C4c31c0 (save / load window: 0x4e4790, 0x4ea290, `list_saves`,
+`slot_button`, `select`), C4c3290 (start-up loading screen: 0x4e3aa0, 0x50f390, `advance` 0x50f440). Their destructors are
+the compiler's (`~X()` for the part the original calls out of line, implicit `??_GX`), `head_rec_delete` is gone (the
+base's `??_Ghead_rec` is compiler-emitted: the derived classes' deleting destructors differ from it only in the vptr they
+store, which is the same `??_7head_rec` now), slot 3 is `scale_3(float)` (it is the per-frame update), and the fake classes
+the slices had invented for the halves (`LoadingScreen`, `LoadingPanel`, `MessageMenu`, `dev_list`, `SaveWindow`,
+`SavePanel`, `MeetingWindow::init2`) are gone.
+
+Two things made the remaining ~20 tables expensive and are why they are not done:
+
+* The slice tooling's screen classes (`Hud`, `MissionScreen`, `QuestPage`, `options_panel`, `DebriefMenu`, `PartyScreen` +
+  `XferWin`, `TerrainPage`, `PartyWindow` + `InventoryPanel`) are views that span SEVERAL records: `Hud::handle_buttons` is the
+  main-menu record (ItemRec), `Hud::on_leave` Rec38, `Hud::on_mission_start` Rec44, `Hud::on_update` Rec454. Each function has to
+  be given the fields of its own record (the offsets agree with the record sizes: Rec38 0x38, Rec44 0x44, Rec454 0x454) and
+  the helper members it calls have to move to that record too.
+* The screens are written against two widget universes: `ui/mission_ui.h` (MissionUi / UiB / UiAInline, what `cls_map` and
+  `progress_bar` use) and `ui_widget.h` (Widget, what `char_sheet` / `options_panel` use). A record shared by both can only
+  declare its buttons as one of them (C4c31c0 uses `Widget*` and `cls_map/progress_bar.cpp` casts at the three creation
+  sites); `char_sheet` cannot include `mission_ui.h` (`rgl_mesh.h` redefines `rgl::mesh_list`), `mesh_2.cpp` cannot either
+  without the `resource_manager` merge done here. Unifying Widget and MissionUi would remove both.
+
 ## Still open (see the audit)
 
 Base classes whose placeholder virtuals (`s00()`, `d10()`) the derived classes override in the original; the stream

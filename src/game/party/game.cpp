@@ -13,7 +13,10 @@
 #include "./game.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "./nav_graph.h"
-#include "./loading_panel.h"
+#include "../tstring.h"
+#include "../../rgl/stream.h"
+#include "./widget_ops.h"
+#include "../screen_records.h"        // C4c2fb0: the "creating game" panel (slot 3 is update 0x51c5a0, sub 0x51c720)
 #include "./externs.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../int_vec.h"
@@ -40,7 +43,7 @@ extern int g_a75eb8;                                        // 0xa75eb8
 template<> void std::vector<int>::resize(size_t, int);       // 0x43f310 (agent3/agent_combat.cpp: the out-of-line instance, only declared)
 
 // @ 0x51c5a0
-void LoadingPanel::update(int arg)
+void C4c2fb0::scale_3(float)
 {
     char tmp;
     tstring s;
@@ -50,11 +53,11 @@ void LoadingPanel::update(int arg)
     _snprintf(buf, 0x100, "%d", counter);
     {
         float out[2];
-        WOPS(text)->set_text(out, &s);
+        WOPS(hint)->set_text(out, &s);
     }
 
     if (ok) {
-        int m = mode;
+        int m = w04;
         if (m == 0) {
             log_stream_ptr()->w_cstr("Switching to menu window...\n");
             g_game->f13aec = 0;
@@ -84,20 +87,20 @@ void LoadingPanel::update(int arg)
 }
 
 // @ 0x51c720
-bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
+bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
 {
     (void)unused;
     bool r = false;
     out->assign("");
     int step = *counter;
     if (step == 0) {
-        if (mode == 1) {
+        if (w04 == 1) {
             bin_reader* sg = new bin_reader;
             save = sg;
             if (!((text_stream*)sg)->open_read(path.c_str()))
                 mb_error("Unable to open found savegame!!!");
-            header.read_slot(save);
-            g_save_kind = header.f28;
+            header.read_slot((SlotReader*)save);
+            g_save_kind = header.year;
         }
         *counter = *counter + 1;
         tstring k("ui_creating_game");
@@ -108,7 +111,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         Game* g = new Game;
         g_game = g;
         g->reset();
-        g_game->init(g_module_name, header.f34, mode == 2 || mode == 3);
+        g_game->init(g_module_name, f8c, w04 == 2 || w04 == 3);
         g_game->f1a05c = 1;
         *counter = *counter + 1;
         tstring k("ui_loading_setting_data");
@@ -117,10 +120,10 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
     }
     if (step == 2) {
         g_game->load_game_data(g_a75eb8);   // 0x5236f0
-        if (mode == 1) {
+        if (w04 == 1) {
             Game* g = g_game;
             {
-                tstring tmp(header.hero);
+                tstring tmp(header.body);
                 troop_name(&g->troops[g->cur_troop]) = tmp;
             }
             g_game->title = header.title;
@@ -131,7 +134,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         return false;
     }
     if (step == 3) {
-        if (mode == 1) {
+        if (w04 == 1) {
             g_game->load_state(save);
             save->failed = 1;
             if (save) {
@@ -146,17 +149,17 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         return false;
     }
     if (step == 4) {
-        int m = mode;
+        int m = w04;
         if (m == 0 || m == 2 || m == 3) {
             g_game->start_new_game();          // 0x51f1a0
-            if (mode == 2 || mode == 3) {      // re-read after the call (0x51ca17)
+            if (w04 == 2 || w04 == 3) {      // re-read after the call (0x51ca17)
                 Game* g = g_game;
                 tstring key("ui_player");
                 tstring name(*g_strtable.lookup(&key));
                 troop_name(&g->troops[g->cur_troop]) = name;
             }
         }
-        if (mode != 2 && mode != 3)
+        if (w04 != 2 && w04 != 3)
             g_game->build_map();               // 0x520b20
         log_stream_ptr()->w_cstr("load_map_data complete.\n");
         *counter = *counter + 1;
@@ -165,7 +168,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         return false;
     }
     if (step == 5) {
-        if (mode != 2 && mode != 3)
+        if (w04 != 2 && w04 != 3)
             g_game->init_map();
         *counter = *counter + 1;
         {
@@ -178,7 +181,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
     if (step == 6) {
         ((MetaMission*)&orig::g_mission_ctx)->init();
         log_stream_ptr()->w_cstr("init_meta_mission complete.\n");
-        if (mode != 2 && mode != 3) {
+        if (w04 != 2 && w04 != 3) {
             g_game->build_scene();             // 0x520d60
             g_new_game_done = 1;
         }

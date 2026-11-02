@@ -4,7 +4,7 @@
 004c49f0 ??0head_cam@@QAE@XZ  # ctor, vtable 0x595bd8, head_rec base + frustum at +0x170, vector4 at +0x268
 004c4b70 ?write_stream@head_cam@@QAEXPAUw_stream@@@Z  # chained float writer (slot 3 = 0xc), p290/p2a0/+0x2b0/+0x2b4/+0x2b8
 004c4c00 ?read_stream@head_cam@@QAEXPAUw_stream@@@Z  # chained float reader (slot 14 = 0x38), same fields
-004c4c90 ?head_rec_delete@@YIPAXPAUhead_rec@@PAXI@Z  # deleting dtor (ret 4): head vtable 0x5947d8, name at +0x1c, optional free
+004c4c90 ??_Ghead_rec@@UAEPAXI@Z  # deleting dtor (ret 4): head vtable 0x5947d8, name at +0x1c, optional free
 004c4cc0 ??0head_obj2@@QAE@XZ  # ctor, vtable 0x595c20, frustum at +0x2ec, +0x2dc=-1, +0x2e4=0
 004c4d10 ??1Tail2@@QAE@XZ  # dtor: drains +0x10 refcap, frees +4 pointer vector back-to-front, drops the array
 004c4d80 ?clear@list_int@@QAEXXZ  # std::list<int>::clear: walk next from head+4, free every node

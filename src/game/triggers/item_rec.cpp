@@ -5,6 +5,7 @@
 //       Flags: /O2 /MT /Gy /TP. Boundary: see MIGRATION.md (class change only; no call evidence either way).
 //-----------------------------------------------------------------------------
 #include "./item_rec.h"
+#include "../strat/gui_manager.h"     // g_gui
 
 // A compiler fence (no code): pins the store order of the base ctor's id store, the derived vptr store and
 // the zero/load stores, which cl 13.10 otherwise schedules differently from the original (docs/codegen.md 10.9).
@@ -52,5 +53,5 @@ ItemRec2::ItemRec2()
 
 // Slot 1 of both records is the free function 0x4c6e00 (reset_gui); the body is a tail call to it, which is what the
 // image's slot holds. Slot 7 is always_true (declared inline above).
-void ItemRec::slot_empty_1()  { reset_gui(); }
-void ItemRec2::slot_empty_1() { reset_gui(); }
+void ItemRec::slot_empty_1()  { g_gui.reset(); }
+void ItemRec2::slot_empty_1() { g_gui.reset(); }
