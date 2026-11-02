@@ -439,6 +439,15 @@ def test_tail_call_through_pointer_is_a_fake_method():
     assert r["verdict"] == "PASS" and not r["discarded"].get("fake-arity"), r
 
 
+def test_indirect_call_into_midfunction_is_discarded():
+    """0x4eb3c0 (FaceGen::refresh): a repair-mapped null page of soup bytes read at an odd offset gives the vtable
+    call at 0x4eb3f6 a target such as 0x4fef00 (the middle of 0x4fe860). No game object has such a slot: the input is
+    discarded as call-midfunction (reason with target and call site), not compared as a FAIL."""
+    r = _row("facegen_misc", 0x4eb3c0, "src/game/char_sheet/facegen_misc.cpp", "--fp-tol", "--inputs", "60")
+    assert r["verdict"] != "FAIL" and r["discarded"].get("call-midfunction"), r
+    assert "call at 004eb3f6 targets" in r["call_midfunction"][0] and "not a function entry" in r["call_midfunction"][0], r
+
+
 def _static_arity(call_va):
     """Argument dwords Runner's call-site inference gives the image call at call_va (no run needed)."""
     class _T:

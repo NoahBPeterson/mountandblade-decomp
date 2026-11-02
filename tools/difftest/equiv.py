@@ -59,7 +59,7 @@ copy of a block with identical bytes, --ulp), with the call index, its callee an
 mismatch (only for an input whose every other observable agrees, and only at a call pair whose callee and
 arguments agree).
 """
-import argparse, collections, glob, json, math, os, random, re, struct, sys, time, zlib
+import argparse, bisect, collections, glob, json, math, os, random, re, struct, sys, time, zlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -2186,6 +2186,7 @@ class Runner:
         self.code_cache = {}      # image function start -> (sorted addrs, insns) for fake-call arity
         self.targets_cache = {}   # id(insns) -> addresses a branch/call in that code lands on (block starts)
         self.fakes = []
+        self.midfn = None         # (target, call site) of the original's indirect call into mid-function code
         self.orig = Side("orig", t.va, [(t.orig_lo, t.orig_hi)], self._sites_orig(), t.orig_cfg, (t.orig_lo, t.orig_hi))
         self.ours = Side("ours", obj["entry"], obj["code"], self._sites_ours(), self._cfg_ours(), obj["func_range"])
         for side in (self.orig, self.ours):
@@ -2806,6 +2807,11 @@ class Runner:
             return
         if self._thunk(tgt):
             return
+        if side is self.orig and self.midfn is None and info["ins"].operands[0].type != CX.X86_OP_IMM and \
+                self.img.in_text(tgt) and tgt not in self.img.start_set:
+            # an indirect call (vtable slot / function pointer) into the middle of the original's code: no
+            # object the game builds has such a slot (see the call-midfunction discard in the input loop)
+            self.midfn = (tgt, address)
         esp = uc.reg_read(UC_X86_REG_ESP)
         while self.tr_stack and esp >= self.tr_stack[-1]:
             self.tr_stack.pop()                         # transparent calls that already returned
@@ -4676,6 +4682,7 @@ class Runner:
         for k in range(8):
             entry["xmm%d" % k] = uc.reg_read(UC_X86_REG_XMM0 + k)
         self.fakes, self.calls = [], []
+        self.midfn = None
         self.call_esps = []
         self.call_taint = []
         self.call_regs, self.fake_regs, self.import_regs = [], [], []
@@ -4831,6 +4838,7 @@ class Runner:
         o["imports"] = list(m.trace_imports)
         o["fakes"] = list(self.fakes)
         o["calls"] = list(self.calls)
+        o["midfn"] = self.midfn
         o["call_esps"] = list(self.call_esps)
         if self.opts.call_regs:
             # index-aligned with the three traces above: the register file at each recorded call (copied: a
@@ -6468,6 +6476,24 @@ def _test_function(sid, va, opts, log=print):
                         a = a2
                         out["budget_raised"] = "input %d needed more than %d instructions" % (i, low)
                 st = a["status"][0]
+                if a.get("midfn"):
+                    # An indirect call (virtual / through a pointer) that lands in the MIDDLE of the original's
+                    # code (not on a function entry of the symbol table) cannot happen in the game: a real
+                    # vtable slot or function pointer holds a method entry, an import thunk or a harness fake.
+                    # The generated object (random soup dword, steering, fault repair) is impossible, and the
+                    # original then runs mid-instruction bytes (facegen_misc 0x4eb3c0: slot 0x4fef00 inside
+                    # 0x4fe860 answered the SendMessageA model with the return address). Judged on the
+                    # ORIGINAL's run only, so ours is never skipped on a call the original made legitimately;
+                    # it hides nothing when the target is a real entry (those never set midfn).
+                    discarded["call-midfunction"] = discarded.get("call-midfunction", 0) + 1
+                    why_ = "call at %08x targets %08x (inside %08x, not a function entry)" % (
+                        a["midfn"][1], a["midfn"][0],
+                        runner.img.starts[max(0, bisect.bisect_right(runner.img.starts, a["midfn"][0]) - 1)])
+                    if len(out.setdefault("call_midfunction", [])) < 3:
+                        out["call_midfunction"].append(why_)
+                    if opts.verbose:
+                        log("  discard input %d: %s" % (i, why_))
+                    continue
                 if st == "import" and ours_probe < OURS_IMPORT_PROBES and \
                         not M.is_heap_exhausted(a["status"][1]):
                     # our side's call sites that stop at the same import (for its 'blocked' edges): run it,
