@@ -45,6 +45,31 @@ pipeline, the progress counts or the gates' view of our source.
 - `diag`: runtime diagnostics. `rootwatch.cpp` logs the GUI root-widget stack (g_gui's vector) to rootwatch.txt
   whenever it changes (found the dropdown list that never closed).
 
+- `perf`: behaviour-preserving load-time patches (record: `docs/patch_verdicts.json`). All replace byte-exact functions.
+  - `stream_read_slots.cpp` replaces `mem_stream::r_int/r_i64/r_byte/r_tstr` (0x417b10/0x417b30/0x417af0/0x417a90): the
+    binary reader's scalar read is one inline copy instead of forwarder -> slot -> `rgl::string::read` -> `memcpy`, and
+    a string is one append instead of one `push_back` per character. A .brf is ~19.7 M scalars and 14.9 k strings.
+  - `resmgr_add_index.cpp` replaces `resmgr::add` (0x41ba90): the "attempt to reregister mesh" check is a hash lookup
+    instead of a scan of all registered meshes (11.2 M `equals` calls for 4740 meshes).
+  - Where the time goes (static counts and a native model, see the header comments and the 2026-11-02 notes in
+    docs/tickets/013): the stream layer is NOT the main cost of the 11 s on its own (modelled 0.115 s -> 0.043 s native
+    for all 75 MB); measure with `--patches profile` before expecting more from this set.
+- `perf_sound`: `lazy_samples.cpp`, deferred and background loading of the ~360 FMOD sound samples. **Changes timing and
+  a few edge-case behaviours** (header comment lists them), so it is a separate set; do not combine with
+  `devfast/no_sound_samples`. `MB_SOUND_LAZY=demand` loads only on first play (no background thread).
+
+### Measuring the perf sets (runtime, under CrossOver)
+
+    uv run python tools/relink/build.py --patches perf --out <dir A>                         # BRF/stream/add patches
+    uv run python tools/relink/build.py --patches perf --patches perf_sound --out <dir B>   # plus lazy sound
+    uv run python tools/relink/build.py --patches perf --patches profile --out <dir C>      # to see where step 2 goes
+
+Copy the exe (and its .map for the profile build) into the game folder and compare with the unpatched standalone:
+`step2_timing.txt` ("parse_module_info: N ms", reference 11-13 s), `load_timing.txt` (step 2 -> 3 etc.), `mod_timing.txt` and
+`snd_timing.txt` ("sounds.txt N" / "part 1: N ms", reference 58 s), `lazy_sound.txt` (perf_sound: per real load, `BG`
+lines are background, `GAME` lines are first-play stalls), and with the profile build `profile_samples.bin` ->
+`tools/relink/profile_report.py --samples ... --exe <dir C>/mb_standalone.exe` (use a map of the SAME build).
+
 ## Variant builds
 
 `build.py --cflags "/arch:SSE2"` compiles every src/ object with extra flags (output: work/relink/variant-archSSE2, or
