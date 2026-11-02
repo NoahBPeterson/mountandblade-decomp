@@ -1,6 +1,6 @@
 {
-"when": "2026-11-01T17:37:07-06:00",
-"commit": "55691ca",
+"when": "2026-11-01T19:03:03-06:00",
+"commit": "ae8530e",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,20 +9,20 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 469,
-"weak": 386,
-"fail": 7,
+"pass": 468,
+"weak": 389,
+"fail": 4,
 "inputs": 27,
-"harness": 32,
+"harness": 33,
 "comdat": 118,
 "comdatdiff": 10,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 167732,
-"weak_sz": 587821,
-"fail_sz": 23581,
+"pass_sz": 166389,
+"weak_sz": 592817,
+"fail_sz": 19259,
 "inputs_sz": 25127,
-"harness_sz": 75206,
+"harness_sz": 75875,
 "comdat_sz": 2793,
 "comdatdiff_sz": 1203,
 "funclet_sz": 0,
@@ -88,8 +88,8 @@
 "0040a000": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1343
 },
 "0040a640": {
@@ -109,38 +109,9 @@
 "0040b0f0": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 2993,
-"reason": "88/236 valid inputs mismatched; first: call #4 (depth 1); invalid-object: 1 input(s) discarded (declared face::count in [1..4]); e.g. face::count=1252327424 outside [1..4]; the local v[4] walk of a face (shape.h: vector4 w[4], count +0xb0)",
-"first_mismatch": {
-"input": 0,
-"profile": "pointery",
-"origin": "regress",
-"observable": "call #4 (depth 1)",
-"kind": "value",
-"orig": "00407e00 ?normalize@rgl@@YAXAAUvector4@1@ABU21@@Z ecx=- args=[STK, STK]",
-"ours": "(none)",
-"detail": "callee, this/edx and stack args (normalised)",
-"args": [
-"00000009",
-"00000044",
-"8040b5d2",
-"40050000",
-"40060000"
-],
-"regs": {
-"eax": "4afc00a4",
-"ecx": "00000000",
-"edx": "47ad0000"
-},
-"fake_calls": 0,
-"repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work/difftest/fail_inputs/shapes_0040b0f0.pkl"
-}
+"verdict": "WEAK",
+"category": "weak",
+"size": 2993
 },
 "0040c1b1": {
 "module": "shapes",
@@ -5787,32 +5758,10 @@
 "004eb3c0": {
 "module": "facegen_misc",
 "file": "src/game/char_sheet/facegen_misc.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "UNSUPPORTED",
+"category": "harness",
 "size": 669,
-"reason": "199/200 valid inputs mismatched; first: memory pool @4c1ba0e4 (fp-tol)",
-"first_mismatch": {
-"input": 0,
-"profile": "pointery",
-"origin": "regress",
-"observable": "memory pool @4c1ba0e4 (fp-tol)",
-"kind": "value",
-"orig": "-",
-"ours": "-",
-"detail": "orig 0.04999999701976776 ours 0.0 reference 0.04999999701976776: err_orig 0 err_ours 0.05 (1.34e+07 ulp)",
-"args": [],
-"regs": {
-"eax": "473b00bc",
-"ecx": "40010000",
-"edx": "00000011"
-},
-"fake_calls": 11,
-"repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work/difftest/fail_inputs/facegen_misc_004eb3c0.pkl"
-}
+"reason": "not a verdict: 6 input(s) ran the emulated heap out of address space (6 in the original's pass, 0 in ours); neither run has a comparable end state"
 },
 "004eb660": {
 "module": "facegen_misc",
@@ -6176,35 +6125,9 @@
 "004faee0": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 660,
-"reason": "35/200 valid inputs mismatched; first: memory extra @00000004",
-"first_mismatch": {
-"input": 0,
-"profile": "smallint",
-"origin": "regress",
-"observable": "memory extra @00000004",
-"kind": "value",
-"orig": "003f7fff",
-"ours": "003f0000",
-"detail": "differing dwords (addr: orig/ours): 00000004: 003f7fff/003f0000 [as float32: 5.8315526047339776e-39 vs 5.7856362579534463e-39, 32767 ulp apart]",
-"args": [
-"40020000",
-"00000003"
-],
-"regs": {
-"eax": "00000000",
-"ecx": "40010000",
-"edx": "00000000"
-},
-"fake_calls": 18,
-"repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work/difftest/fail_inputs/agent_hud_004faee0.pkl"
-}
+"verdict": "WEAK",
+"category": "weak",
+"size": 660
 },
 "004fb180": {
 "module": "agent_hud",
