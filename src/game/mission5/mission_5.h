@@ -130,7 +130,6 @@ struct Game_s25160 {
     int f1204;                                                  // +0x1204
     __forceinline void refresh(int i, int* out);                             // 0x4f73c0
     __forceinline void update();                                            // 0x5257f0
-    void handle_event(int code);                                // 0x525160
 };
 
 // ===========================================================================
@@ -2045,7 +2044,7 @@ struct level {
 struct RecZSubB {
     RecZSubB* init();   // 0x4353a0
 };
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct ConvScreen; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionHud; struct MissionSource; struct MsgLog; struct NamedRec; struct OriginPairs; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct TerrainX; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct conv_rec; struct gui_manager; struct gui_obj; struct gui_view; struct level; struct pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct terrain_obj; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionHud; struct MissionSource; struct MsgLog; struct NamedRec; struct OriginPairs; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct TerrainX; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct conv_rec; struct gui_manager; struct gui_obj; struct gui_view; struct level; struct pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct terrain_obj; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -2069,9 +2068,6 @@ struct AgentX {
 };
 struct BlockOwner {
     void init(ContainerBase*, int);   // 0x4dd920
-};
-struct ConvScreen {
-    void refresh(int, int*);   // 0x4f73c0
 };
 struct CreateGameOptionsPage {
     void update_checks();   // 0x4bf640
@@ -2305,7 +2301,7 @@ __forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((Shape
 __forceinline void BrushElem_s2c2b0::put(int* a0, int* a1, int* a2) { ((Elem_s2ce00*)this)->put(a0, a1, a2); }
 __forceinline void MissionSub_s27c90::read(stream_base* a0) { ((Local*)this)->read(*(stream_base*)a0); }
 __forceinline void Editor_s2b5c0::refresh() { ((MapEditorDialog*)this)->refresh(); }
-__forceinline void Game_s25160::refresh(int a0, int* a1) { ((ConvScreen*)this)->refresh(a0, a1); }
+
 __forceinline void Mission_s261e0::release_item(int a0) { ((Mission_s27c90*)this)->release_item(a0); }
 __forceinline void MatrixExt_s284a0::rotate_fu(float* a0) { ((rgl::matrix*)this)->rotate_about_s((float const*)a0); }
 __forceinline void MatrixExt_s284a0::rotate_sf(float* a0) { ((rgl::matrix*)this)->rotate_about_u((float const*)a0); }

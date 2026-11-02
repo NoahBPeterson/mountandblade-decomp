@@ -101,8 +101,6 @@ void Rec118::slot_empty_1() { g_gui.reset(); overlay = 0; }       // 0x4c6e10 (I
 
 // Rec1208
 void Rec1208::slot_empty_1() { g_gui.reset(); }
-__declspec(naked) void Rec1208::slot_empty_2() { __asm jmp ConvScreen::open }
-void Rec1208::scale_3(float a) { ((Game_s25160*)this)->handle_event(*(int*)&a); }
 
 // Rec1bc
 void Rec1bc::slot_empty_1() { g_gui.reset(); }
@@ -143,5 +141,4 @@ void Recf0::slot_empty_1() { g_gui.reset(); }
 void Rec38::slot_empty_1() { g_gui.f1709 = 1; }
 void Rec44::slot_empty_1() { g_gui.reset(); }
 void Rec454::slot_empty_1() { g_gui.reset(); }
-void Rec454::slot_empty_2() { ((quest_window*)this)->build(); }
 void Rec58::slot_empty_1() { g_gui.reset(); }

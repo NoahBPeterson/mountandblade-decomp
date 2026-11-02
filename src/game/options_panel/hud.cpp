@@ -268,39 +268,41 @@ void Rec38::scale_3(float)
         g_main_menu.set_state(7);
 }
 
+#define W(x) ((Widget*)(void*)(x))
 // @ 0x4d5a20
 void Rec454::scale_3(float)
 {
     if (g_mission_clock) {
-        ValueWidget* u = item_value(f3c);
+        ValueWidget* u = item_value((MissionItem*)(void*)list);
         float v = (u->f168 - u->f16c) / (u->f170 - u->f16c) * (u->slot[u->idx] - u->step);
         u->set_value((float)g_mission_clock / u->slot[u->idx] * u->step * g_char_scale + v);
-        item_value(f3c)->set_key_flags(0x10000);
+        item_value((MissionItem*)(void*)list)->set_key_flags(0x10000);
     }
-    for (int i = 0; i < f24c; i++) {
-        if (wi[i]->changed(0x10000)) {
+    for (int i = 0; i < count; i++) {
+        if (W(rows[i])->changed(0x10000)) {
             f250 = i;
             ((QuestPage*)(void*)this)->fill();
         }
     }
-    if (f34->changed(0x10000)) {
+    if (W(active_tab)->changed(0x10000)) {
         if (w04 == 0) {
-            f34->activate(1);
+            W(active_tab)->activate(1);
             return;
         }
         w04 = 0;
         g_main_menu.set_state(0xd);
-    } else if (f38->changed(0x10000)) {
+    } else if (W(finished_tab)->changed(0x10000)) {
         if (w04 == 1) {
-            f38->activate(1);
+            W(finished_tab)->activate(1);
             return;
         }
         w04 = 1;
         g_main_menu.set_state(0xd);
-    } else if (f30->changed(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
+    } else if (W(done)->changed(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
         g_main_menu.set_state(w18);
     }
 }
+#undef W
 
 // @ 0x4d5410
 void MissionSource::pick(int* arg)

@@ -21,7 +21,7 @@ void __fastcall quest_window::refresh()
             break;
         unsigned f = *(unsigned*)(q + off + 0x64);
         if (f & 0x100) {
-            int m = mode;
+            int m = w04;
             if (m == 0 && !(f & 0x200)) {
                 indices[count] = i;
                 count++;
@@ -89,11 +89,11 @@ widget* make_quest_list(widget* parent, const float* pos, const float* size, int
 }
 
 // @ 0x4ee230
-void __fastcall quest_window::build()
+void Rec454::slot_empty_2()
 {
     ((gui_manager*)&orig::g_gui_mgr)->reset();   // 0x42d1b0
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared
-    widget* win = (widget*)operator new(0x190);
+    widget* win = (widget*)::operator new(0x190);
     if (win) {
         ((ContainerW*)win)->construct();     // 0x4931a0
         *(void**)win = (void*)vtbl_592848;      // 0x4ee268
@@ -118,7 +118,7 @@ void __fastcall quest_window::build()
     ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)win);   // 0x49b120
 
     // the two panels behind the tabs
-    widget* p1 = (widget*)operator new(0x178);
+    widget* p1 = (widget*)::operator new(0x178);
     panel1 = p1 ? (widget*)new (p1, raw_place()) MissionUi : 0;
     pos[0] = 0.58f;
     pos[1] = 0.21875f;
@@ -134,7 +134,7 @@ void __fastcall quest_window::build()
     panel1->set_color(tint);
     win->add_child(panel1);
 
-    widget* p2 = (widget*)operator new(0x178);
+    widget* p2 = (widget*)::operator new(0x178);
     panel2 = p2 ? (widget*)new (p2, raw_place()) MissionUi : 0;
     panel2->set_pos(pos);
     panel2->set_size(size);
@@ -158,7 +158,7 @@ void __fastcall quest_window::build()
     }
     *(int*)((char*)active_tab + 0x184) = 1;
     *(int*)((char*)finished_tab + 0x184) = 1;
-    if (mode == 0)
+    if (w04 == 0)
         active_tab->set_focus(1);     // 0x4ee532: push 1; call [vtbl+0x2c]
     else
         finished_tab->set_focus(1);
@@ -169,7 +169,7 @@ void __fastcall quest_window::build()
     float h = (float)count * g_54ab1c + g_591d54;
     if (h < g_5987e4)     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
         h = 0.56f;
-    widget* fr = (widget*)operator new(0x188);
+    widget* fr = (widget*)::operator new(0x188);
     if (fr) {
         fr = (widget*)new (fr, raw_place()) MissionUi;
         *(void**)fr = (void*)vtbl_5924a0;
@@ -198,7 +198,7 @@ void __fastcall quest_window::build()
         } else {
             mb_snprintf(buf, 0x200, "%s", text.buf ? text.buf : (char*)&text);
         }
-        widget* row = (widget*)operator new(0x188);
+        widget* row = (widget*)::operator new(0x188);
         if (row) {
             row = (widget*)new (row, raw_place()) MissionUi;
             *(int*)((char*)row + 0x178) = 0;

@@ -17,6 +17,7 @@ void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 #include "../head_rec.h"
 
 #include "../screen_records.h"   // the record classes (vtables 0x595740..0x596c68)
+#include "../conv_screen.h"      // Rec1208: the conversation screen
 
 extern RecCam* g_rec_9c;   // 0xa7399c
 #include "../world_data/world_data.h"   // canonical: g_windows (0xa73980)
