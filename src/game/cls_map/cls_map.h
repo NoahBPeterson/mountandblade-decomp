@@ -264,26 +264,7 @@ void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main miss
 // the option table (0xa44240): ini_file, entries of 0x2c bytes with the value string at +0x1c of each entry (from +0x1c: 0xa4425c)
 extern ini_file g_game_vars;                          // 0xa44240
 extern float g_549cdc, g_590b6c, g_54b3b0, g_549d70, g_549d68;   // button metrics (rdata floats)
-struct ResultWindow {
-    char pad0[4];
-    int outcome;                                // +0x04
-    char pad8[0x1c - 8];
-    tstring s1c;                                // +0x1c
-    ContainerBase* win;                         // +0x2c
-    MissionUi* panel30;                         // +0x30
-    MissionUi* panel34;                         // +0x34
-    UiE* box38;                                 // +0x38
-    UiAInline* b3c;                             // +0x3c
-    UiAInline* b40;                             // +0x40
-    char pad44[0x54 - 0x44];
-    tstring s54;                                // +0x54
-    unsigned char f64;                          // +0x64
-    char pad65[3];
-    tstring s68;                                // +0x68
-    tstring s78;                                // +0x78
-    tstring s88;                                // +0x88
-    void init();                                // 0x4dc630
-};
+#include "../result_window.h"                    // ResultWindow: the head_rec record of vtable 0x595740 (its slot 2 is the window maker below)
 UiAInline* new_long_button(MissionUi* parent, const tstring* text, float a, float b, float c);     // 0x4dcbd0
 UiAInline* new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4dce70
 

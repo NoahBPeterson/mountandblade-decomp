@@ -960,10 +960,10 @@ void FrameGui::set_rect(const float* a, const float* b)
 // the long / medium button makers sit after init(); the shared maker 0x4dcc50 follows (T regime: kept out of line)
 
 // @ 0x4dc630
-void ResultWindow::init()
+void ResultWindow::slot_empty_2()
 {
     float mv[4];
-    if (outcome == 0) {
+    if (w04 == 0) {
         tstring key("ui_ok");
         s78 = *g_strtable_c.lookup(key);
     }
@@ -1007,13 +1007,13 @@ void ResultWindow::init()
         float v[2] = { 0.02f, 0.02f };
         vt(panel34)->d27(v);
     }
-    { struct { int a, b; } ret; vt(panel34)->d41(&ret, &s1c); }
+    { struct { int a, b; } ret; vt(panel34)->d41(&ret, &name); }
     vt(win)->d50(panel34);
 
     b3c = 0;
     b40 = 0;
     box38 = 0;
-    if (outcome == 3) {
+    if (w04 == 3) {
         b3c = new_medium_button(win, &s78, 0.15f, 0.085f, 0.045f);
         b40 = new_medium_button(win, &s88, 0.15f, 0.03f, 0.045f);
         box38 = new UiE;
@@ -1060,10 +1060,10 @@ void ResultWindow::init()
         box38->f180 = 1;
         g_gui.f10 = (int)box38;
         vt(win)->d50(box38);
-    } else if (outcome == 2) {
+    } else if (w04 == 2) {
         b3c = new_long_button(win, &s78, 0.03f, 0.085f, 0.045f);
         b40 = new_long_button(win, &s88, 0.03f, 0.03f, 0.045f);
-    } else if (outcome == 1) {
+    } else if (w04 == 1) {
         b3c = new_medium_button(win, &s78, 0.15f, 0.085f, 0.045f);
         b40 = new_medium_button(win, &s88, 0.15f, 0.03f, 0.045f);
     } else {

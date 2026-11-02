@@ -19,6 +19,7 @@
 #include "../../game/ini_file.h"               // ini_file (canonical owner of find 0x4bd5a0; ini_file_x below is a view of g_game_vars)
 #include "./mesh2_common.h"
 #include "./head_rec.h"
+#include "../../game/result_window.h"
 
 using rgl::vector4;
 
@@ -26,23 +27,7 @@ using rgl::vector4;
 void __cdecl vector_constructor_iterator(void* dst, int size, int n, void* ctor);     // 0x401800
 
 // ---- the C4c* record classes (vtable 0x5947d8 base, own vtable stored after the base ctor) ---------------
-// 0x4c2c50 (vtable 0x595740): tstrings +0x54/+0x68/+0x78/+0x88
-struct C4c2c50 : head_rec {
-    char  pad2c[0x20];       // +0x2c
-    int   v4c;               // +0x4c
-    int   v50;               // +0x50
-    tstring t54;             // +0x54
-    int   v64;               // +0x64
-    tstring t68;             // +0x68
-    tstring t78;             // +0x78
-    tstring t88;             // +0x88
-    C4c2c50();               // 0x4c2c50
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(const float*);
-    virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
-    __declspec(noinline) void dtor();   // 0x4c2cd0 (called, not inlined, by the deleting dtor 0x4c2cb0)
-};
+// ResultWindow (vtable 0x595740, ctor 0x4c2c50): game/result_window.h
 
 struct M44 { float f[16]; };
 struct pos;                                          // include/mat4.h: the 0x40-byte frame, layout of M44

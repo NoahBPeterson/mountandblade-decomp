@@ -1,6 +1,6 @@
-004c2c50 ??0C4c2c50@@QAE@XZ
-004c2cb0 ?destroy_C4c2c50@@YIPAXPAUC4c2c50@@HH@Z
-004c2cd0 ?dtor@C4c2c50@@QAEXXZ
+004c2c50 ??0ResultWindow@@QAE@XZ
+004c2cb0 ??_GResultWindow@@UAEPAXI@Z
+004c2cd0 ??1ResultWindow@@UAE@XZ
 004c2d10 ??0C4c2d10@@QAE@XZ
 004c2dd0 ?read@Blk2dd0@@QAEXPAUstream_base@@@Z
 004c2ea0 ?fn_4c2ea0@@YIXPAX@Z
@@ -8,7 +8,7 @@
 004c3000 ?destroy_C4c2fb0@@YIPAXPAUC4c2fb0@@HH@Z
 004c3020 ?dtor@C4c2fb0@@QAEXXZ
 004c3050 ??0C4c3050@@QAE@XZ
-004c30b0 ?set_flag_5d8789@@YAXXZ
+004c30b0 ?slot_empty_1@C4c3050@@UAEXXZ
 004c30c0 ?destroy_C4c3050@@YIPAXPAUC4c3050@@HH@Z
 004c30e0 ?dtor@C4c3050@@QAEXXZ
 004c3120 ?destroy_C4c3120@@YIPAXPAXHH@Z
@@ -39,7 +39,7 @@
 004c47d0 ?load2@pair_holder@@QAEXPAUstream_base@@@Z
 0040cd00 identity_pos  # fills the 4x4 out matrix (arg) with the identity rotation and zero origin, returns the out pointer (used by 0x4c2d10)
 005947d8 ??_7head_rec@@6B@  # head record base vtable stored by every ctor of this module before the own vtable
-00595740 ??_7C4c2c50@@6B@  # ctor 0x4c2c50
+00595740 ??_7ResultWindow@@6B@  # ctor 0x4c2c50
 00595798 ??_7C4c2fb0@@6B@  # ctor 0x4c2fb0
 005957bc ??_7C4c3050@@6B@  # ctor 0x4c3050
 00595870 ??_7C4c3160@@6B@  # ctor 0x4c3160

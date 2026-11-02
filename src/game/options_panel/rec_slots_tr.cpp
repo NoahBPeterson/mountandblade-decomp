@@ -6,8 +6,7 @@
 // base signature is scale_3(const float*) while the real functions take int/float: the stub forwards the 4-byte
 // argument unchanged.
 #include "./trigger_records.h"
-
-void set_flag_5d8789();     // 0x4c30b0 (rec_tables.cpp)
+#include "../strat/gui_manager.h"     // g_gui
 
 struct MapDialog {
     void reset_state();
@@ -118,12 +117,12 @@ void Rec23c::slot_empty_2() { ((facegen_win*)this)->init(); }
 void Rec23c::scale_3(const float* a) { ((TerrainPage*)this)->update(*(float*)&a); }
 
 // Rec34
-void Rec34::slot_empty_1() { set_flag_5d8789(); }
+void Rec34::slot_empty_1() { g_gui.f1709 = 1; }       // the function of slot 1 at 0x4c30b0, which the original's linker folded
 void Rec34::slot_empty_2() { ((DebriefMenu*)this)->create_debrief(); }
 void Rec34::scale_3(const float* a) { ((ContinueMenu*)this)->update((int)a); }
 
 // Rec38
-void Rec38::slot_empty_1() { set_flag_5d8789(); }
+void Rec38::slot_empty_1() { g_gui.f1709 = 1; }
 void Rec38::slot_empty_2() { ((DebriefMenu*)this)->create_report(); }
 void Rec38::scale_3(const float* a) { ((Hud*)this)->on_leave((int)a); }
 

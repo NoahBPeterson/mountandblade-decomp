@@ -28,31 +28,15 @@ struct resmgr {
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 
 // @ 0x4c2c50
-C4c2c50::C4c2c50()
+ResultWindow::ResultWindow()
 {
-    v4c = 0;
-    v50 = 0;
-}
-
-// @ 0x4c2cb0
-void* __fastcall destroy_C4c2c50(C4c2c50* self, int, int flags)
-{
-    self->dtor();
-    if (flags & 1)
-        operator delete(self);
-    return self;
+    flag = 0;
+    text = 0;
 }
 
 // @ 0x4c2cd0
-void C4c2c50::dtor()
+ResultWindow::~ResultWindow()
 {
-    *(void**)this = (void*)vtbl_C4c2c50;
-    t88.~tstring();
-    t78.~tstring();
-    t68.~tstring();
-    t54.~tstring();
-    *(void**)this = (void*)vtbl_5947d8;
-    name.~tstring();
 }
 
 // @ 0x4c2d10
@@ -171,7 +155,13 @@ C4c3050::C4c3050()
 }
 
 // @ 0x4c30b0
-void set_flag_5d8789()
+void C4c3050::slot_empty_1()
+{
+    g_gui.f1709 = 1;
+}
+
+// the same one-store function, once per class that has it as slot 1 (the original's linker folded the copies into 0x4c30b0)
+void ResultWindow::slot_empty_1()
 {
     g_gui.f1709 = 1;
 }

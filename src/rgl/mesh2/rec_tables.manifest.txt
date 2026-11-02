@@ -1,12 +1,12 @@
-../src/rgl/mesh2/rec_tables.cpp  ??0C4c2c50@@QAE@XZ  004c2c50  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?destroy_C4c2c50@@YIPAXPAUC4c2c50@@HH@Z  004c2cb0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?dtor@C4c2c50@@QAEXXZ  004c2cd0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??0ResultWindow@@QAE@XZ  004c2c50  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??_GResultWindow@@UAEPAXI@Z  004c2cb0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??1ResultWindow@@UAE@XZ  004c2cd0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?read@Blk2dd0@@QAEXPAUstream_base@@@Z  004c2dd0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??0C4c2fb0@@QAE@XZ  004c2fb0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?destroy_C4c2fb0@@YIPAXPAUC4c2fb0@@HH@Z  004c3000  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?dtor@C4c2fb0@@QAEXXZ  004c3020  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??0C4c3050@@QAE@XZ  004c3050  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?set_flag_5d8789@@YAXXZ  004c30b0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?slot_empty_1@C4c3050@@UAEXXZ  004c30b0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?destroy_C4c3050@@YIPAXPAUC4c3050@@HH@Z  004c30c0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?dtor@C4c3050@@QAEXXZ  004c30e0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?destroy_C4c3120@@YIPAXPAXHH@Z  004c3120  /O2 /MT /Gy /TP

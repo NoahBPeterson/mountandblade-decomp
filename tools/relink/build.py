@@ -509,6 +509,7 @@ def main():
     icf_map_path = os.path.join(icf_dir, "icf.map")
     T.link(objs, icf_dir, os.path.join(out, "glue"), extra=["/MAP:" + T.winpath(icf_map_path), "/STACK:0x3e8480,0x3e8480"]
            + ["/INCLUDE:" + k for k in keep], name="icf.exe", icf=True)
+    open(os.path.join(out, "mb_standalone.prefix.exe"), "wb").write(exe.d)      # as linked: tools/relink/vtable_audit.py reads our own tables here
     vt = fix_vtables(exe, read_map(map_path), rmap, img, lib_names, read_map(icf_map_path))
     lit = fix_literals(exe, read_map(map_path), rmap, img, lib_names, read_map_by_object(map_path))
     exe.save()

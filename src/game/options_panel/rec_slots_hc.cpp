@@ -7,8 +7,6 @@
 // argument unchanged.
 #include "../../rgl/mesh2/head_rec.h"
 
-void set_flag_5d8789();     // 0x4c30b0 (rec_tables.cpp)
-
 struct Screen {
     void init_screen();
     void frame_update(float);

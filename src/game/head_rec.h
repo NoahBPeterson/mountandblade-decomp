@@ -46,7 +46,7 @@ struct head_rec {
     virtual void scale_5(const float*) {}                           // slot 5  0x408030 (the same function)
     virtual void scale_6(const float*) {}                           // slot 6  0x408030 (the same function)
     // slot 7: pure here (the base table 0x5947d8 holds __purecall there); EVERY derived class overrides it - 0x48b170
-    // (`return 1`) in most, 0x4280e0 (`return 0`) in C4c2c50, C4c3050, Rec34 and Rec38.
+    // (`return 1`) in most, 0x4280e0 (`return 0`) in ResultWindow, C4c3050, Rec34 and Rec38.
     virtual char pure_7() = 0;                                      // slot 7: __purecall; every derived class overrides it
     virtual char always_true() { return 1; }                        // slot 8  0x48b170
     int     w04;               // +4     0x4c2c50

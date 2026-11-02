@@ -26,6 +26,7 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                 // 0x40cd60 (rgl/s
 // canonical declarations of the callees this module reaches through its layout views (definitions in other modules)
 #include "../../game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10)
+#include "../../game/ui/mission_ui.h"      // MissionUi (ResultWindow's buttons)
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
 struct OptionsDlg {
     void choose_dx_settings(struct Config* cfg, bool overwrite);   // 0x4b9b90 (game/config/options_dlg.h, which cannot be mixed with windows.h here)
@@ -39,7 +40,6 @@ struct mnode {
 struct PresentationRec {
     void read(stream_base& s);   // 0x4c23f0 (game/triggers/trigger_vec.h)
 };
-namespace rgl { struct keyframes { void find(int* lo, int* hi, float* frac, const float* t); }; }   // 0x40f0d0 (include/keyframes.h, which needs rgl::frame_t first)
 struct StrTable {
     tstring* lookup(const tstring& key);   // 0x43a1e0 (game/agent2/agent_stats.h): the UI string table
 };
@@ -2072,12 +2072,12 @@ void GameData::save_language_files(bool translated)
 }
 
 // @ 0x4ca550
-void screen_text::refresh(int handle)
+void ResultWindow::scale_3(const float*)
 {
-    if (dev1->is_fullscreen(0x10000))
+    if (b3c->d17(0x10000))
         goto off;
-    if (dev2) {
-        if (dev2->is_fullscreen(0x10000))
+    if (b40) {
+        if (b40->d17(0x10000))
             goto on;
         return;
     } else {
@@ -2088,15 +2088,15 @@ void screen_text::refresh(int handle)
 on:
     if (flag)
         *flag = 1;
-    if (text && win)
+    if (text && box38)
         text->assign("");
     g_windows.apply();
     return;
 off:
     if (flag)
         *flag = 0;
-    if (text && win)
-        *text = *(tstring*)((char*)win + 0x128);
+    if (text && box38)
+        *text = *(tstring*)((char*)box38 + 0x128);
     g_windows.apply();
 }
 

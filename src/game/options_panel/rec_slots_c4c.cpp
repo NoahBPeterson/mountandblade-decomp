@@ -7,14 +7,6 @@
 // argument unchanged.
 #include "../../rgl/mesh2/rec_tables.h"
 
-void set_flag_5d8789();     // 0x4c30b0 (rec_tables.cpp)
-
-struct ResultWindow {
-    void init();
-};
-struct screen_text {
-    void refresh(int);
-};
 struct LoadingScreen {
     void init();
     void update(int);
@@ -44,18 +36,12 @@ struct MeetingWindow {
     void init2();
 };
 
-// C4c2c50
-void C4c2c50::slot_empty_1() { set_flag_5d8789(); }
-void C4c2c50::slot_empty_2() { ((ResultWindow*)this)->init(); }
-void C4c2c50::scale_3(const float* a) { ((screen_text*)this)->refresh((int)a); }
-
 // C4c2fb0
 void C4c2fb0::slot_empty_1() { reset_gui(); }
 void C4c2fb0::slot_empty_2() { ((LoadingScreen*)this)->init(); }
 void C4c2fb0::scale_3(const float* a) { ((LoadingPanel*)this)->update((int)a); }
 
 // C4c3050
-void C4c3050::slot_empty_1() { set_flag_5d8789(); }
 void C4c3050::slot_empty_2() { ((MessageMenu*)this)->create_message(); }
 void C4c3050::scale_3(const float* a) { ((dev_list*)this)->select_windowed((int)a); }
 
