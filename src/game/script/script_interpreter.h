@@ -222,11 +222,9 @@ extern tstring g_result_string;         // 0xa70464 (set_result_string 0x49fce6)
 
 // ---- input ---------------------------------------------------------------------------------------------------------
 #include "../key_names.h"             // Keyboard g_keyboard (0xa170c8)
-struct GameKeys {
-    __forceinline char is_down(int key) { return ((OriginPairs*)this)->is_down(key); }   // 0x48ac50 (thiscall, ret 4)
-    __forceinline char clicked(int key) { return ((OriginPairs*)this)->clicked(key); }   // 0x48ac90
-};
-extern GameKeys g_game_keys;            // 0xa73730
+#include "../game_keys.h"            // GameKeys g_game_keys (0xa73730)
+__forceinline char GameKeys::is_down(int key) { return ((OriginPairs*)this)->is_down(key); }   // 0x48ac50 (thiscall, ret 4)
+__forceinline char GameKeys::clicked(int key) { return ((OriginPairs*)this)->clicked(key); }   // 0x48ac90
 extern float g_mouse_x;                 // 0x5d7094 (mouse_get_position 0x49fe7f)
 extern float g_mouse_y;                 // 0x5d7098
 

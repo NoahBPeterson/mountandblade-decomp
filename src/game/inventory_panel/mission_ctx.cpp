@@ -23,6 +23,8 @@
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../shared_vars.h"
+#include "../last_scene.h"
+#include "../game_keys.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 MenuWidget* g_w94;                               // 0xa73994
@@ -135,7 +137,6 @@ extern int g_show_quest_notes;            // 0xa181b4
 extern int g_a171b8;            // 0xa171b8
 extern int g_a17454;            // 0xa17454
 extern int g_a17854;            // 0xa17854
-extern int g_a70438;            // 0xa70438
 extern int g_use_shaders;       // 0x5e28fc
 extern int g_no_cam;            // 0x5a9fb0
 extern int g_trial_mode;        // 0x5e29c4
@@ -152,14 +153,6 @@ extern const float g_four;          // 0x5935c8  4.0f
 extern const float g_003;           // 0x54b8b4  0.03f
 extern const float g_axis_x;        // 0xa178d4
 extern const float g_exp_arg;       // 0x5aa018
-extern int g_key_1730;              // 0xa73730
-extern int g_key_1734;              // 0xa73734
-extern int g_key_1738;              // 0xa73738
-extern int g_key_173c;              // 0xa7373c
-extern int g_key_1740;              // 0xa73740
-extern int g_key_1744;              // 0xa73744
-extern int g_key_1748;              // 0xa73748
-extern int g_key_174c;              // 0xa7374c
 extern int g_in_17204;              // 0xa17204
 extern int g_in_17214;              // 0xa17214
 extern int g_in_17458;              // 0xa17458
@@ -1033,32 +1026,32 @@ void Screen::camera_move(float dt)
     mat2 m(&src[0][0], &src[1][0]);
     m.rotate_2x2(-yaw);
 
-    bool b = g_key_1740 >= 0 && g_keyboard.down[g_key_1740] != 0;
-    if ((g_key_1744 >= 0 && g_keyboard.down[g_key_1744] != 0) || b) {
+    bool b = g_game_keys.bind[4] >= 0 && g_keyboard.down[g_game_keys.bind[4]] != 0;
+    if ((g_game_keys.bind[5] >= 0 && g_keyboard.down[g_game_keys.bind[5]] != 0) || b) {
         float h = height + g_ten;
         x -= m.m[0] * h * dt;
         z -= m.m[1] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_key_1748 >= 0 && g_keyboard.down[g_key_1748] != 0;
-    if ((g_key_174c >= 0 && g_keyboard.down[g_key_174c] != 0) || b) {
+    b = g_game_keys.bind[6] >= 0 && g_keyboard.down[g_game_keys.bind[6]] != 0;
+    if ((g_game_keys.bind[7] >= 0 && g_keyboard.down[g_game_keys.bind[7]] != 0) || b) {
         float h = height + g_ten;
         x += m.m[0] * h * dt;
         z += m.m[1] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_key_1730 >= 0 && g_keyboard.down[g_key_1730] != 0;
-    if ((g_key_1734 >= 0 && g_keyboard.down[g_key_1734] != 0) || b) {
+    b = g_game_keys.bind[0] >= 0 && g_keyboard.down[g_game_keys.bind[0]] != 0;
+    if ((g_game_keys.bind[1] >= 0 && g_keyboard.down[g_game_keys.bind[1]] != 0) || b) {
         float h = height + g_ten;
         x += m.m[2] * h * dt;
         z += m.m[3] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_key_1738 >= 0 && g_keyboard.down[g_key_1738] != 0;
-    if ((g_key_173c >= 0 && g_keyboard.down[g_key_173c] != 0) || b) {
+    b = g_game_keys.bind[2] >= 0 && g_keyboard.down[g_game_keys.bind[2]] != 0;
+    if ((g_game_keys.bind[3] >= 0 && g_keyboard.down[g_game_keys.bind[3]] != 0) || b) {
         float h = height + g_ten;
         x -= m.m[2] * h * dt;
         z -= m.m[3] * h * dt;

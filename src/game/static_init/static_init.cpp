@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include "../last_scene.h"
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
@@ -50,7 +51,6 @@ extern char g_a44240[];     // 0xa44240 the game config (ini file)
 extern char g_a70240[];     // 0xa70240 (end of its entries)
 extern char g_a70248[];     // 0xa70248
 extern char g_a70260[];     // 0xa70260 the scene
-extern char g_a70438[];     // 0xa70438
 extern char g_a70440[];     // 0xa70440
 extern char g_a73300[];     // 0xa73300 the mission context
 extern char g_a735d0[];     // 0xa735d0 11 templates of 0x20
@@ -423,7 +423,7 @@ void __cdecl static_init_547de0()
 {
     new (g_a70260) rgl::scene;
     AT(int, g_a70248, 0) = 0;  AT(int, g_a70248, 4) = 0;  AT(int, g_a70248, 8) = 0;  AT(int, g_a70248, 0xc) = 0;
-    AT(int, g_a70438, 0) = 0;
+    g_a70438 = 0;
     atexit(static_dtor_548490);
 }
 // @ 0x547e20
