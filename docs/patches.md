@@ -57,6 +57,10 @@ pipeline, the progress counts or the gates' view of our source.
 - `perf_sound`: `lazy_samples.cpp`, deferred and background loading of the ~360 FMOD sound samples. **Changes timing and
   a few edge-case behaviours** (header comment lists them), so it is a separate set; do not combine with
   `devfast/no_sound_samples`. `MB_SOUND_LAZY=demand` loads only on first play (no background thread).
+  **Linked by default** (user, 2026-11-02): every build.py run adds it (it replaces no function of the reconstruction,
+  only our own fmod import slots), except with `--no-default-patches` (use that when testing sounds) or `--patches
+  devfast` (same import slot). The output directory is still named after the sets you ask for, so a plain build still
+  lands in work/relink/standalone.
 
 ### Measuring the perf sets (runtime, under CrossOver)
 

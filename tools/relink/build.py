@@ -349,6 +349,11 @@ def patch_objects(sets, rmap):
     return objs, replaced
 
 
+# linked unless --no-default-patches: lazy FMOD sample loading (start-up without the ~58 s of sample loads; user, 2026-11-02:
+# "the default unless we're testing sounds")
+DEFAULT_PATCHES = ["perf_sound"]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "relink", "standalone"))
@@ -362,12 +367,19 @@ def main():
     ap.add_argument("--cflags", default="", help="extra compiler flags for every src/ object, e.g. '/arch:SSE2' "
                     "(a variant build: under Rosetta the original's x87 float code runs ~1.8x slower than SSE2). "
                     "Changes codegen, so never for the faithful build; the output goes to work/relink/variant-...")
+    ap.add_argument("--no-default-patches", action="store_true",
+                    help="leave out the default sets (%s), e.g. when testing sounds" % ", ".join(DEFAULT_PATCHES))
     a = ap.parse_args()
+    # the default sets replace no function of the reconstruction (perf_sound only swaps our own fmod import slots),
+    # so they do not change which code the build runs; the output directory is named after the requested sets only
+    # (devfast's no_sound_samples swaps the same FSOUND_Sample_Load slot: never both)
+    defaults = [] if a.no_default_patches or "devfast" in a.patches else [p for p in DEFAULT_PATCHES if p not in a.patches]
     if a.cflags:
         os.environ["MB_EXTRA_CFLAGS"] = a.cflags                # trial_link.objects() and the pre-link subprocess read it
     if (a.patches or a.cflags) and a.out == ap.get_default("out"):
         tag = "+".join(a.patches + [re.sub(r"[^A-Za-z0-9]+", "", f) for f in a.cflags.split()])
         a.out = os.path.join(ROOT, "work", "relink", ("patched-" if a.patches else "variant-") + tag)
+    a.patches += defaults
     out = os.path.abspath(a.out)
     os.makedirs(out, exist_ok=True)
     rel = lambda p: os.path.relpath(p, ROOT)
