@@ -38,11 +38,11 @@
 #define STACK_IDS ((int*)((char*)g_game + 0x14058))   // GameData +0x14058: the per-stack random ids (0x20 per stack); +0x1405c is the tbl of game_data.h
 
 // @ 0x531590
-void StartMenu::select(int arg)
+void Rec118::scale_3(float)
 {
     int idx = -1;
     for (int i = 0; i < count; i++)
-        if (buttons[i]->changed(0x10000))
+        if (((Widget*)(void*)row[i])->changed(0x10000))
             idx = i;
     if (idx != -1)
     {
@@ -105,19 +105,19 @@ int MenuCtl::weight(unsigned flags)
 }
 
 // @ 0x531780
-void ContinueMenu::update(int arg)
+void Rec34::scale_3(float)
 {
     g_gui.flush();
-    if (f4 == 0)
+    if (w04 == 0)
     {
         char b;
-        if (buttons[0]->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
+        if (((Widget*)(void*)f30)->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
             ((MapFlags*)&g_map_flags)->commit((char*)&b);
     }
     else
     {
         char b;
-        if (buttons[0]->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
+        if (((Widget*)(void*)f30)->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
             ((MapFlags*)&g_map_flags)->commit((char*)&b);
     }
 }
@@ -909,7 +909,7 @@ dispatch:
 }
 
 // @ 0x5337a0
-void TickScreen::on_tick(int code)
+void Rec58::scale_3(float)
 {
     if (W(this, 0x40)->changed(0x10000))
         ((LogScreen*)(void*)this)->build(1 != 0);

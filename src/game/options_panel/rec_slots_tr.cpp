@@ -98,7 +98,6 @@ struct VideoPage {
 
 // Rec118
 void Rec118::slot_empty_1() { g_gui.reset(); overlay = 0; }       // 0x4c6e10 (ICF-folded with ItemA's copy)
-void Rec118::scale_3(float a) { ((StartMenu*)this)->select(*(int*)&a); }
 
 // Rec1208
 void Rec1208::slot_empty_1() { g_gui.reset(); }
@@ -107,7 +106,6 @@ void Rec1208::scale_3(float a) { ((Game_s25160*)this)->handle_event(*(int*)&a); 
 
 // Rec1bc
 void Rec1bc::slot_empty_1() { g_gui.reset(); }
-void Rec1bc::scale_3(float a) { ((KeysPage*)this)->update(*(int*)&a); }
 
 // Rec23c
 void Rec23c::slot_empty_1() { ((rec_1ac*)this)->release(); }
@@ -116,11 +114,9 @@ void Rec23c::scale_3(float a) { ((TerrainPage*)this)->update(a); }
 
 // Rec34
 void Rec34::slot_empty_1() { g_gui.f1709 = 1; }       // the function of slot 1 at 0x4c30b0, which the original's linker folded
-void Rec34::scale_3(float a) { ((ContinueMenu*)this)->update(*(int*)&a); }
 
 // Rec3c
 void Rec3c::slot_empty_1() { g_gui.reset(); }
-void Rec3c::scale_3(float a) { ((options_panel*)this)->on_key_event(*(int*)&a); }
 
 // Rec428
 void Rec428::slot_empty_1() { ((rec_178*)this)->release(); }
@@ -129,12 +125,8 @@ void Rec428::scale_3(float a) { ((CamView*)this)->update_model(a); }
 
 // Rec48
 void Rec48::slot_empty_1() { g_gui.reset(); }
-void Rec48::scale_3(float a) { ((options_panel*)this)->import_export(*(int*)&a); }
 
 // Rec58
-void Rec58::slot_empty_1() { g_gui.reset(); }
-void Rec58::slot_empty_2() { ((LogScreen*)this)->build_thunk(); }
-void Rec58::scale_3(float a) { ((TickScreen*)this)->on_tick(*(int*)&a); }
 
 // Recacc
 void Recacc::slot_empty_1() { g_gui.reset(); }
@@ -143,14 +135,13 @@ void Recacc::scale_3(float a) { ((InventoryPanel*)this)->refresh_transaction(*(i
 
 // Recd8
 void Recd8::slot_empty_1() { g_gui.reset(); }
-void Recd8::scale_3(float a) { ((QuestPage*)this)->update_settings(*(int*)&a); }
 
 // Recf0
 void Recf0::slot_empty_1() { g_gui.reset(); }
-void Recf0::scale_3(float a) { ((VideoPage*)this)->update(*(int*)&a); }
 
 // Rec38 / Rec44 / Rec454 (their slot 3 is defined in hud.cpp, slot 2 of Rec38 / Rec44 in cls_map.cpp)
 void Rec38::slot_empty_1() { g_gui.f1709 = 1; }
 void Rec44::slot_empty_1() { g_gui.reset(); }
 void Rec454::slot_empty_1() { g_gui.reset(); }
 void Rec454::slot_empty_2() { ((quest_window*)this)->build(); }
+void Rec58::slot_empty_1() { g_gui.reset(); }

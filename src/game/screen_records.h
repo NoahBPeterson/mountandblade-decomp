@@ -17,6 +17,8 @@ struct UiB;
 struct DropDown;
 struct bin_reader;
 
+struct MenuEntry { int id; int value; };      // an entry of the mission start menu (Rec118::entries)
+
 struct tstring_pair {
     tstring a;       // +0
     tstring b;       // +0x10
@@ -173,7 +175,8 @@ struct Rec118 : head_rec { MB_ZERO_TAIL(Rec118)   // vtable 0x595804
     ContainerBase* col[3];    // +0x70 per-side column windows
     char pad7c[8];
     tstring second;     // +0x84
-    char tail[0x118 - 0x94];
+    MenuEntry entries[16];    // +0x94 the mission start menu's entries (slot 3 0x531590 picks the pressed one)
+    int count;                // +0x114
     virtual void slot_empty_1();
     virtual void slot_empty_2();
     virtual void scale_3(float);
@@ -370,8 +373,21 @@ struct Rec48 : head_rec { MB_ZERO_TAIL(Rec48) // vtable 0x59596c
     virtual void scale_3(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
 };
-struct Rec58 : head_rec { MB_ZERO_TAIL(Rec58)   // vtable 0x5959fc
-    char body[0x2c];
+struct FrameWidget;
+struct MWidget;
+struct Rec58 : head_rec { MB_ZERO_TAIL(Rec58)   // vtable 0x5959fc (the game-log window; w04 nonzero: the full log. slot 2 agent5/agent_hud.cpp 0x4fc810, slot 3 map_editor/exchange_screens.cpp 0x5337a0)
+    FrameWidget* frame;                                           // +0x2c
+    MWidget* log;                                                 // +0x30
+    MissionUi* bar;                                               // +0x34
+    MissionUi* slider;                                            // +0x38
+    MissionUi* tab_return;                                        // +0x3c
+    MissionUi* tab_log;                                           // +0x40
+    MissionUi* tab_recent;                                        // +0x44
+    MissionUi* tab_troops;                                        // +0x48
+    MissionUi* tab_locations;                                     // +0x4c
+    MissionUi* tab_factions;                                      // +0x50
+    MissionUi* tab_quests;                                        // +0x54
+    void build(bool show);                                        // 0x4fc820 (ret 4)
     virtual void slot_empty_1();
     virtual void slot_empty_2();
     virtual void scale_3(float);

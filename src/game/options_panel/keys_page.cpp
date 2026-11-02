@@ -142,6 +142,7 @@ struct KeysPageView {
     int     editing;                                        // +0x1b8 the row being assigned, -1 for none
 };
 
+#include "../screen_records.h"       // Rec1bc: the key-binding page record (slot 3 is update 0x4d6e50)
 struct KeysPage {
     char    pad00[0xe4];
     Widget* perf_caption;                                   // +0xe4 the performance caption
@@ -149,7 +150,6 @@ struct KeysPage {
 
     void update_perf();                                     // 0x4d6b80
     void set_enabled_text(Widget* w);                       // 0x4d6dd0
-    void update(int reason);                                // 0x4d6e50
     void refresh();                                         // 0x4d7120
 };
 
@@ -230,44 +230,45 @@ void KeysPage::set_enabled_text(Widget* w)
 }
 
 // @ 0x4d6e50
-void KeysPage::update(int reason)
+void Rec1bc::scale_3(float)
 {
-    KeysPageView* p = head(this);
-    if (p->editing >= 0) {
-        p->w164->show();
+#define W(x) ((Widget*)(void*)(x))
+    if (f1b8 >= 0) {
+        W(f164)->show();
         int pressed = -1;
         for (int i = 0; i < 0x100; i++)             // the last bound key wins
             if ((char)((Slot*)(void*)&g_key_names)->is_ready(i))   // the caller tests al only
                 pressed = i;
         if (pressed >= 0) {
             if (pressed != 1) {
-                g_game_keys.forget(p->editing, pressed);
-                p->modified = 1;
+                g_game_keys.forget(f1b8, pressed);
+                f1b4 = 1;
             }
-            refresh();
-            p->editing = -1;
+            ((KeysPage*)this)->refresh();
+            f1b8 = -1;
         }
     } else {
-        p->w164->hide();
+        W(f164)->hide();
         for (int i = 0; i < 0x25; i++)
-            if (p->keys[i]->changed(0x10000))
-                p->editing = i;
-        if (p->w38->changed(0x10000)) {
+            if (W(slot_buttons[i])->changed(0x10000))
+                f1b8 = i;
+        if (W(f38)->changed(0x10000)) {
             ((code_table*)(void*)&g_game_keys)->init();
-            p->modified = 1;
-            refresh();
+            f1b4 = 1;
+            ((KeysPage*)this)->refresh();
         }
-        if (p->w34->changed(0x10000)) {
+        if (W(f34)->changed(0x10000)) {
             g_game_keys.restore();
-            p->modified = 0;
-            refresh();
+            f1b4 = 0;
+            ((KeysPage*)this)->refresh();
         }
-        if (p->w30->changed(0x10000)) {
-            if (p->modified)
+        if (W(f30)->changed(0x10000)) {
+            if (f1b4)
                 g_game_keys.save();
-            g_main_menu.set_state(p->option);
+            g_main_menu.set_state(w18);
         }
     }
+#undef W
 }
 
 // @ 0x4d6f90

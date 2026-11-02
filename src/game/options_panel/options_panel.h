@@ -145,11 +145,9 @@ struct options_panel {
 
     void key_name(int which, tstring* out);                         // 0x4d7370
     void key_binding_name(int slot, tstring* out, int* translated);  // 0x4d7d10
-    void on_key_event(int);                                         // 0x4d7d90
     __declspec(noinline) void update_cursor();                      // 0x4d7de0
     __declspec(noinline) void refresh_texts();                      // 0x4d7e00
     __declspec(noinline) void draw_faction_report();                // 0x4d7e50
     void export_path(char* out);                                    // 0x4d9260 (ret 4)
-    void import_export(int);                                        // 0x4d8000
 };
 #endif

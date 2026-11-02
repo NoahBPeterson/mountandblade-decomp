@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "../options_panel/hud.h"
+#include "../screen_records.h"          // MenuEntry, Rec118 / Rec34 (the mission start menus)
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
@@ -62,9 +63,7 @@ struct MissionCtx {
 struct note_window {
     void build(int a, int b);   // 0x50a1c0 (ret 8)
 };
-struct LogScreen {
-    void build(bool arg);   // 0x4fc820 (ret 4)
-};
+typedef Rec58 LogScreen;   // the game-log window (screen_records.h; build 0x4fc820)
 namespace std {
 template<> void vector<int, allocator<int> >::push_back(const int& x);        // 0x440b30
 }
@@ -134,7 +133,6 @@ struct MenuCtl {
 extern MenuCtl g_mission_ctx;                       // 0xa73300
 
 // one menu option (8 bytes, array at Menu+0x94)
-struct MenuEntry { int id; int value; };
 
 // the screens' option records (g_a739a0 ...): id +4, +0x10/+0x14 arguments, +0x18 the option to return to
 struct MenuItem {
@@ -161,21 +159,7 @@ struct TplRec {
 };
 extern TplRec g_templates[];                // 0xa735d0
 
-// ---- the mission start menus: vtables 0x595810 / 0x595858, same member layout -------------------------------------------
-struct MenuBase {
-    char pad0[4];
-    int f4;                                 // +0x04
-    char pad8[0x30 - 8];
-    Widget* buttons[0x19];                  // +0x30 (25 pointers, ends at +0x94)
-    MenuEntry entries[16];                  // +0x94
-    int count;                              // +0x114
-};
-struct StartMenu : MenuBase {               // vtable 0x595810
-    __declspec(noinline) void select(int arg);                   // 0x531590
-};
-struct ContinueMenu : MenuBase {            // vtable 0x595858
-    void update(int arg);                   // 0x531780
-};
+// (the mission start menus, vtables 0x595804 and 0x59584c, are the records Rec118 and Rec34 of screen_records.h)
 
 // ---- the party exchange window (vtable 0x59587c) ---------------------------------------------------------------------
 struct TargetW {                            // a scroll target (a list widget): the value source behind +0x484
@@ -250,7 +234,6 @@ struct ScreenBase {                         // what the raw-layout screens share
     int f18;                                // +0x18
 };
 struct TickScreen : ScreenBase {            // vtable 0x595a08
-    void on_tick(int code);                 // 0x5337a0 (ret 4)
     // (build(a, b) 0x50a1c0 is note_window's, build(arg) 0x4fc820 is LogScreen's)
 };
 struct EventScreen : ScreenBase {           // vtable 0x59619c

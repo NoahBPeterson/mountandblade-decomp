@@ -3,7 +3,7 @@
 ../src/game/agent5/agent_hud.cpp  ?update_equipment@MissionHud@@QAEXXZ  004f8b40  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?hide@Agent@@QAEXXZ  004f8bc0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?show@Agent@@QAEXXZ  004f8c20  /O2 /MT /Gy /TP
-../src/game/agent5/agent_hud.cpp  ?build_thunk@LogScreen@@QAEXXZ  004fc810  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?slot_empty_2@Rec58@@UAEXXZ  004fc810  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?destroy@TStringArray@@QAEPAXI@Z  004fd0e0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?destroy@MWidget@@QAEPAXI@Z  004fd3b0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ??1MWidget@@QAE@XZ  004fd3d0  /O2 /MT /Gy /TP

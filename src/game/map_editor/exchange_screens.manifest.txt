@@ -1,6 +1,6 @@
-../src/game/map_editor/exchange_screens.cpp  ?select@StartMenu@@QAEXH@Z  00531590  /O2 /MT /Gy /TP
+../src/game/map_editor/exchange_screens.cpp  ?scale_3@Rec118@@UAEXM@Z  00531590  /O2 /MT /Gy /TP
 ../src/game/map_editor/exchange_screens.cpp  ?setup_entry@MenuCtl@@QAEXPAUMenuEntry@@@Z  00531600  /O2 /MT /Gy /TP
-../src/game/map_editor/exchange_screens.cpp  ?update@ContinueMenu@@QAEXH@Z  00531780  /O2 /MT /Gy /TP
+../src/game/map_editor/exchange_screens.cpp  ?scale_3@Rec34@@UAEXM@Z  00531780  /O2 /MT /Gy /TP
 ../src/game/map_editor/exchange_screens.cpp  ?clear_selection@XferWin@@QAEXXZ  005324d0  /O2 /MT /Gy /TP
 ../src/game/map_editor/exchange_screens.cpp  ?get_cell@XferWin@@QAEXHHHPAH0@Z  00532520  /O2 /MT /Gy /TP
 ../src/game/map_editor/exchange_screens.cpp  ?move_men@XferWin@@QAEXH@Z  00532560  /O2 /MT /Gy /TP

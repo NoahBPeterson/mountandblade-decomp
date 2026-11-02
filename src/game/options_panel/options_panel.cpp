@@ -2,6 +2,7 @@
 // character import / export flow, the character file writer (0x4d86d0), the character import reader (0x4d8c20)
 // and the export path builder (0x4d9260). Names provisional; see options_panel.h.
 #include "./options_panel.h"
+#include "../screen_records.h"       // Rec3c / Rec48: the "done" window and the character import / export window records (slot 3: 0x4d7d90 / 0x4d8000)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include <string.h>
 #include <stdlib.h>
@@ -202,15 +203,15 @@ void options_panel::key_binding_name(int slot, tstring* out, int* translated)
 }
 
 // @ 0x4d7d90
-void options_panel::on_key_event(int)
+void Rec3c::scale_3(float)
 {
-    if (cursor_control->is_key_down(0x10000)) {
-        menu_open = 0;
-        update_cursor();
-        refresh_texts();
+    if (((ui_control*)row[2])->is_key_down(0x10000)) {
+        w04 = 0;
+        ((options_panel*)this)->update_cursor();
+        ((options_panel*)this)->refresh_texts();
     }
-    if (menu_keys->is_key_down(0x10000))
-        g_main_menu.set_state(menu_choice);
+    if (((ui_control*)row[0])->is_key_down(0x10000))
+        g_main_menu.set_state(w18);
 }
 
 // @ 0x4d7de0
@@ -278,13 +279,13 @@ void options_panel::draw_faction_report()
 }
 
 // @ 0x4d8000
-void options_panel::import_export(int)
+void Rec48::scale_3(float)
 {
     char buf_a[512];
     char buf_b[512];
-    if (export_pending == 0) {
-        export_path(buf_a);
-        export_pending = -1;
+    if (f40 == 0) {
+        ((options_panel*)this)->export_path(buf_a);
+        f40 = -1;
         outfile file(buf_a);
         file.fp = fopen(buf_a, MODE_W);
         if (file.fp) {
@@ -311,9 +312,9 @@ void options_panel::import_export(int)
         ((WindowMgrW*)(void*)&g_main_menu)->open(0);
         return;
     }
-    if (import_pending == 0) {
-        export_path(buf_b);
-        import_pending = -1;
+    if (f44 == 0) {
+        ((options_panel*)this)->export_path(buf_b);
+        f44 = -1;
         ini_file table;
         FILE* f = fopen(buf_b, MODE_R);
         if (f) {
@@ -344,11 +345,11 @@ void options_panel::import_export(int)
         }
         return;
     }
-    if (import_key->is_key_down(0x10000)) {
+    if (((ui_control*)import_btn)->is_key_down(0x10000)) {
         if (g_trial_mode) {
-            export_path(buf_b);
+            ((options_panel*)this)->export_path(buf_b);
             if (mb_file_exists(buf_b)) {
-                import_pending = -1;
+                f44 = -1;
                 {
                     tstring msg("ui_are_you_sure_you_want_to_import_the_character");   // 0x596c9c
                     sprintf(buf_a, g_strtable.lookup(msg)->c_str());
@@ -357,7 +358,7 @@ void options_panel::import_export(int)
                     tstring no("ui_no");                            // 0x596c94
                     tstring yes("ui_yes");                          // 0x596c8c
                     tstring text(buf_a);
-                    ((NamedRec*)(void*)g_main_menu.rec)->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&import_pending);
+                    ((NamedRec*)(void*)g_main_menu.rec)->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&f44);
                 }
                 g_main_menu.set_state(0);
             } else {
@@ -378,10 +379,10 @@ void options_panel::import_export(int)
         }
         return;
     }
-    if (cursor_control->is_key_down(0x10000)) {
-        export_path(buf_b);
+    if (((ui_control*)export_btn)->is_key_down(0x10000)) {
+        ((options_panel*)this)->export_path(buf_b);
         if (mb_file_exists(buf_b)) {
-            export_pending = -1;
+            f40 = -1;
             {
                 tstring msg("ui_export_file_for_character_playername_already_exists_overwrite_it"); // 0x596bc0
                 Troop* t = &g_game->troops[g_game->cur_troop];
@@ -391,16 +392,16 @@ void options_panel::import_export(int)
                 tstring no("ui_no");
                 tstring yes("ui_yes");
                 tstring text(buf_a);
-                ((NamedRec*)(void*)g_main_menu.rec)->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&export_pending);
+                ((NamedRec*)(void*)g_main_menu.rec)->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&f40);
             }
             g_main_menu.set_state(0);
         } else {
-            export_pending = 0;
+            f40 = 0;
         }
         return;
     }
-    if (menu_keys->is_key_down(0x10000))
-        g_main_menu.set_state(menu_choice);
+    if (((ui_control*)done)->is_key_down(0x10000))
+        g_main_menu.set_state(w18);
 }
 
 // @ 0x4d86d0
