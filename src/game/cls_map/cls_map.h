@@ -248,19 +248,7 @@ extern GameData* g_game;                        // 0x5e2930
 extern void* g_mission_templates;                          // 0x5e2a00 (mission table, 0x58-byte records; +0x24 = name)
 extern unsigned char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
 #include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
-// the fields of the mission context (g_mission_ctx 0xa73300) the diary screens read. The canonical class is inventory_panel/mission_ctx.h,
-// whose includes (str_table.h, inv_common.h) redefine this header's local views of StrTable / resmgr / NodeVec: partial view.
-struct MissionCtx {
-    int party[2];                               // +0x00 the two sides' party ids
-    char pad8[0x14 - 8];
-    int mode;                                   // +0x14 mission stage (2: grid, 3..5: single mission)
-    char pad18[0x48 - 0x18];
-    int grid[0x38];                             // +0x48 unit indices of the diary grid
-    int cols, depth, rows;                      // +0x128
-    char pad134[4];
-    int side;                                   // +0x138 selected index, -1 = none
-};
-extern MissionCtx g_mission_ctx;                // 0xa73300
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): the one definition
 extern float g_5a9f24;                          // 0x5a9f24 0.65 (the meeting window columns' top)
 extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145} ([1] is 0.21450001, not the literal 0.2145f)
 void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main mission UI)

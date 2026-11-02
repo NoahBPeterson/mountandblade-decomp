@@ -795,11 +795,11 @@ void MissionScreen::fill_mission_row(int side)
     if (side == 0)
         id = g_game->f78;
     else if (g_mission_ctx.side < 0)
-        id = g_mission_ctx.party[side - 1];          // side 1 / 2: the two sides' party ids
+        id = g_mission_ctx.ids[side - 1];          // side 1 / 2: the two sides' party ids
     else if (side == 1)
-        id = ((int*)&g_mission_ctx)[g_mission_ctx.side];       // the context read as its table of ids (party[], then the fields after them)
+        id = g_mission_ctx.ids[g_mission_ctx.side];
     else
-        id = ((int*)&g_mission_ctx)[1 - g_mission_ctx.side];
+        id = g_mission_ctx.ids[1 - g_mission_ctx.side];
     if (id == -1)
         return;
     int pidx = ((Map10007*)&g_game->parties)->lookup(id);
