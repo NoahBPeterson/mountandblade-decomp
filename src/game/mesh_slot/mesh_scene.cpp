@@ -46,7 +46,6 @@ extern float g_f54b708;        // 0x54b708 (per-tick gravity coefficient)
 extern float g_f54a6f0;        // 0x54a6f0 (0.01f)
 extern float g_f590fa4;        // 0x590fa4 (1.7f: first-sample distance)
 extern float g_f590e68;        // 0x590e68 (0.23f)
-extern float g_f549cdc;        // 0x549cdc (1.0f)
 extern float g_f591334;        // 0x591334 (20.0f)
 extern float g_f590c74;        // 0x590c74 (0.08f)
 extern float g_f59190c;        // 0x59190c (0.92f)
@@ -398,7 +397,7 @@ void MissileU::update(float dt)
                 d.y = g_mission->view.o.y - pa.y;
                 d.z = g_mission->view.o.z - pa.z;
                 if (d.x * vel.x + (d.y * vel.y + d.z * vel.z) < 0.0f
-                    && g_mission->view.o.z - g_f549cdc < pa.z) {
+                    && g_mission->view.o.z - 1.0f < pa.z) {
                     mode = 3;
                     if (d.out_length() < g_f591334) {
                         tmp = v.out_length();

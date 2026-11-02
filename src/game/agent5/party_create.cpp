@@ -76,7 +76,6 @@ extern void* g_windows[];                       // 0xa73980 (the window manager:
 struct WindowOpener {                           // the window manager (world_data.h WindowMgrW)
     void open(int window);                      // 0x494260 (ret 4)
 };
-extern float g_row_unit;                        // 0x599ae8 (0.088f: the height of one row of the 3-column item grid)
 MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
 
@@ -210,7 +209,7 @@ void PartyWindow::create()
         else
             n = g_game->troops[idx].inv_count();
         int nrows = (n + 2) / 3;
-        float rows_h = (float)nrows * g_row_unit;
+        float rows_h = (float)nrows * 0.088f;
         float visible = cfg(tstring("inv_visible_inventory_area"));
 
         InvList* v;

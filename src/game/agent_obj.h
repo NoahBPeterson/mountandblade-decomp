@@ -584,4 +584,8 @@ struct AgentTable {
     int serial;                                         // +0x24 (terrain_b: Pool<MAgent>::serial)
 };
 
+// per-variant {lo, hi} turn range of Agent::smooth_turn (0x438860, agent_stats.cpp defines it) and the hit test of 0x43fd10
+struct RangePair { float lo, hi; };
+extern const RangePair g_range_tbl[6];                  // 0x590aac, indexed by Agent::variant
+
 #endif // GAME_AGENT_OBJ_H

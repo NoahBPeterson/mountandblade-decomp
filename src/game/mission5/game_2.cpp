@@ -1150,7 +1150,7 @@ void TroopFile::read_file(stream_base& s)
         n = 1;
     fb0 = n;
     int base = g_level_lo[n];
-    float t = (float)(rand() % 0x3dc9) * (float)(g_level_hi[n] - base) * g_troop_rand_scale;
+    float t = (float)(rand() % 0x3dc9) * (float)(g_level_hi[n] - base) * (1.0f / 0x3dc9);
     f9c = base + ftoi_floor(t);
 
     for (int i = 0; i < 7; ++i) {

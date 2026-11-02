@@ -46,7 +46,6 @@ extern int g_5a9fb0;                            // 0x5a9fb0 (no terrain camera)
 extern int g_level;                            // 0xa732b4 (current scene)
 extern int g_a70438;                            // 0xa70438 (last-loaded scene)
 extern float g_590bb8;                          // 0x590bb8
-extern float g_549cdc;                          // 0x549cdc (1.0f)
 extern float g_54b3b4;                          // 0x54b3b4
 
 // ---- callees -------------------------------------------------------------------------------------------

@@ -37,11 +37,7 @@ extern EditorGameView* g_game;                          // 0x5e2930 (defined onc
 // was 4 bytes and overlapped the globals after it. Declared only: the glue binds this name to the definition.
 extern char* g_object_names[];                      // 0x8ed4df8
 
-// These live in the original's shared float-constant pool (.rdata). Defined without an initialiser they are
-// zero in our build, which silently broke every use: g_one = 0 made GuiScreen::process's cursor y negative
-// ((-y/h)*f514) so no widget ever hit-tested (menus unclickable), and g_hundred / g_color_unit are the
-// 0..100 slider range and the byte->float colour unit.
-float g_one = 1.0f;                                 // 0x549cdc   1.0f
+// Fake named constants standing in for literals (0..100 slider range, byte->float colour unit); left for the lane that owns them.
 float g_hundred = 100.0f;                           // 0x54ab28 100.0f
 float g_color_unit = 1.0f / 255.0f;                 // 0x54a6c4   1/255
 
@@ -265,9 +261,9 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         SendMessageA(GetDlgItem(hDlg, 0x4c8), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
         SendMessageA(GetDlgItem(hDlg, 0x4c9), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
         SendMessageA(GetDlgItem(hDlg, 0x4ca), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
-        g_game->col_r = g_one;
-        g_game->col_g = g_one;
-        g_game->col_b = g_one;
+        g_game->col_r = 1.0f;
+        g_game->col_g = 1.0f;
+        g_game->col_b = 1.0f;
         g_game->col_a = 0.0f;
         SendMessageA(GetDlgItem(hDlg, 0x4c8), TBM_SETPOS, TRUE, 255);
         SendMessageA(GetDlgItem(hDlg, 0x4c9), TBM_SETPOS, TRUE, 255);
@@ -291,15 +287,15 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
         SendMessageA(combo, CB_RESETCONTENT, 0, 0);
         if (combo == 0)
             return 1;
-        WPARAM idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_scene_props);
+        WPARAM idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Scene Props");
         SendMessageA(combo, CB_SETITEMDATA, idx, 0);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_entry_point);
+        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Entry Point");
         SendMessageA(combo, CB_SETITEMDATA, idx, 1);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_item_kinds);
+        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Item Kinds");
         SendMessageA(combo, CB_SETITEMDATA, idx, 2);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_plants);
+        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Plants");
         SendMessageA(combo, CB_SETITEMDATA, idx, 4);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)orig::str_passage);
+        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Passage");
         SendMessageA(combo, CB_SETITEMDATA, idx, 5);
         *(int*)((char*)g_editor + 0x651c) = 0;                        // the object kind resets to the first entry (0x4fec16)
         SendMessageA(combo, CB_SETCURSEL, 0, 0);
@@ -328,9 +324,9 @@ command:
     case 0x434: {
         LRESULT v = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x434), BM_GETCHECK, 0, 0);
         g_game->rt_flag = (v == 1);
-        g_game->rt_x = g_one;
-        g_game->rt_y = g_one;
-        g_game->rt_z = g_one;
+        g_game->rt_x = 1.0f;
+        g_game->rt_y = 1.0f;
+        g_game->rt_z = 1.0f;
         g_game->rt_w = 0.0f;
         g_game->rt_extra = 0;
         if (g_game->rt_flag == 0)
@@ -526,15 +522,15 @@ command:
         if (g_game->sel_index < 1 && g_game->rt_flag == 0)
             return 1;
         {
-            float fx = g_one;
-            float fy = g_one;
-            float fz = g_one;
+            float fx = 1.0f;
+            float fy = 1.0f;
+            float fz = 1.0f;
             if ((short)wParam == 0x491)
-                fx = -g_one;
+                fx = -1.0f;
             else if ((short)wParam == 0x492)
-                fy = -g_one;
+                fy = -1.0f;
             else if ((short)wParam == 0x493)
-                fz = -g_one;
+                fz = -1.0f;
             if (g_game->rt_flag) {
                 float ox = g_game->rt_x;
                 float oy = g_game->rt_y;
@@ -546,9 +542,9 @@ command:
                 char* so = *(char**)((char*)g_editor + 0x65e4);                   // the edit scene's mesh list: vector at +0x118
                 if (vsize((IntVec*)(so + 0x118)) == 0)
                     return 1;
-                float invx = g_one / ox;
-                float invy = g_one / oy;
-                float invz = g_one / oz;
+                float invx = 1.0f / ox;
+                float invy = 1.0f / oy;
+                float invz = 1.0f / oz;
                 int i = 0;
                 do {
                     rgl::vector4 inv;

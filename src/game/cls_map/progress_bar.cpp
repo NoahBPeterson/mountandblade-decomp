@@ -19,7 +19,6 @@
 // ---- 0x4e3eb0: the progress bar widget (vtable 0x597f20) -----------------------------------------------------------------------
 extern const float g_progressbar_scale;         // 0x590e0c-ish constant 0.01f (the ctor stores it as the initial value)
 extern const float g_min_ratio;                 // 0x54a6f0 = 0.01f
-extern const float g_max_ratio;                 // 0x549cdc = 1.0f
 
 // @ 0x4e3eb0
 progress_bar::progress_bar()
@@ -48,7 +47,7 @@ void progress_bar::set_ratio(float r)
         v168 = g_min_ratio;
         return;
     }
-    v168 = (r > g_max_ratio) ? g_max_ratio : r;
+    v168 = (r > 1.0f) ? 1.0f : r;
     f184 = 1;
 }
 
@@ -95,9 +94,6 @@ struct mnode {
     void calc_bounds(rgl::vector4* mn, rgl::vector4* mx);   // 0x438d80 (thiscall, ret 8: the mesh's min / max corners; agent2/agent_stats.cpp)
 };
 struct gui_view { void set_view(const float* v); };                               // 0x4c5190 (thiscall, ret 4: the view state pair; rgl/mesh2/gui_edit.h)
-extern const float g_half_ratio;                // 0x549d78
-extern const float g_ratio_a;                   // 0x597fec
-extern const float g_ratio_b;                   // 0x597fe8
 extern const float g_pad_out;                   // 0x590cd0
 extern const float g_pad_in;                    // 0x54a6f0
 
@@ -172,10 +168,10 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     float d = widest - w;
     float n = run + d;
     run = n;
-    if (!(n >= widest * g_half_ratio)) {
-        n = n - d * g_ratio_a;
+    if (!(n >= widest * (-0.5f))) {
+        n = n - d * 0.525f;
         run = n;
-        widest = n * g_ratio_b;
+        widest = n * (-2.1f);
     } else {
         widest = w;
     }
@@ -210,7 +206,7 @@ void RagModel::load(TiXmlElement* e)
 // ---- 0x4e4790: the save / load screen ----------------------------------------------------------------------------------------------
 extern tstring g_module_name;               // 0x8ee3c38 (the save-directory prefix string)
 extern int g_compatible_module_version;                          // 0x5e29b8
-extern float g_time_scale;                      // 0x590e28
+extern const float g_time_scale;                // 0x590e28 (60.0f; defined in cls_map.cpp: a literal here is folded to a double operand)
 extern const float g_minus_one;                 // 0x549ca8 (-1.0f)
 extern "C" int __cdecl sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
@@ -1245,7 +1241,6 @@ void MapLoader::read(SlotReader* stream)
 extern int      g_use_shaders;                  // 0x5e28fc
 extern unsigned g_mask_w;                       // 0x5a8e78
 extern unsigned g_a76644;                       // 0xa76644
-extern float    g_chunk_scale;                  // 0x549d68
 
 // @ 0x4e85d0   MapScreen::init(void* desc)   (thiscall, ret 4)
 void MapScreen::init(void* desc)
@@ -1267,7 +1262,7 @@ void MapScreen::init(void* desc)
     }
     rgl::vector4 box = *(rgl::vector4*)(mapview + 0x68);
     float f = box.z + box.y;
-    f = (f + box.x) * g_chunk_scale;
+    f = (f + box.x) * 0.3f;
     int row;
     for (row = 0; row < nchunk_rows; row++) {
         int col;
@@ -1458,7 +1453,7 @@ void MapSceneRec::read(MsStream* s)
     stream_str(s, &name28);
     lod38 = MAP_RESMGR->get_lod_mesh(&name28);
     if (lod38->has == 0)
-        mb_error((const char*)orig::str_no_face_mesh, name28.c_str());
+        mb_error("Unable to find face mesh: %s", name28.c_str());
 
     // the poses
     stream_i(s, &npose);
@@ -1528,7 +1523,7 @@ void MapSceneRec::read(MsStream* s)
         stream_str(s, &mats[i].name);
         mats[i].res14 = MAP_RESMGR->get_lod_mesh(&mats[i].name);
         if (lod38->has == 0)                                        // the original tests [+0x38], not the material
-            mb_error((const char*)orig::str_no_beard_mesh, mats[i].name.c_str());
+            mb_error("Unable to find beard mesh: %s", mats[i].name.c_str());
         ((TroopMgr*)this)->copy_troop(&matrecs[i], (const MeshGroupRec*)mats[i].res14);   // 0x473570
     }
 

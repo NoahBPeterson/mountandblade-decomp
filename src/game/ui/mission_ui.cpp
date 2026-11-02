@@ -35,6 +35,7 @@
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../rgl/options.h"   // g_options 0x5aa008
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
 static __forceinline int rnd(const float* p)
@@ -1149,12 +1150,12 @@ int GameData::sl_value_factor()
     float f = 1.0f;
     if (fb4)
         f = 0.75f;
-    f = (1.0f - (float)g_difficulty * 0.09f) * (((g_speed_base - 0.5f) * 0.15f + 1.0f) * f);
-    f = f * ((float)(g_int_5aa054 - 2) * 0.15f + 1.0f);
-    f = f * ((float)(g_int_5aa058 - 2) * 0.2f + 1.0f);
-    if (g_stick_mode == 1)
+    f = (1.0f - (float)g_options.i44 * 0.09f) * (((g_options.f74 - 0.5f) * 0.15f + 1.0f) * f);
+    f = f * ((float)(g_options.i4c - 2) * 0.15f + 1.0f);
+    f = f * ((float)(g_options.i50 - 2) * 0.2f + 1.0f);
+    if (g_options.i70 == 1)
         f = f * 1.2f;
-    return (int)(((float)(g_agent_count - 2) * 0.05f + 1.05f) * f * 100.01f);
+    return (int)(((float)(g_options.i48 - 2) * 0.05f + 1.05f) * f * 100.01f);
 }
 
 // @ 0x48a000

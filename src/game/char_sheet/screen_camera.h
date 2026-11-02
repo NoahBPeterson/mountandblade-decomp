@@ -93,7 +93,7 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 // the by-name float constants (the originals live in the read-only pools noted here)
 #define C_549D74 (orig::g_ten)             // 10.0
 #define C_549D70 (orig::g_half)             // 0.5
-#define C_549CDC (orig::g_one)             // 1.0
+#define C_549CDC (1.0f)             // 1.0
 #define C_549CA8 (orig::g_zero)             // 0.0
 #define C_549D7C (orig::k_0_1f)             // 0.1
 #define C_54A534 (orig::k_1_5708f)             // 1.5707964

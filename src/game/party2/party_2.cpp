@@ -242,7 +242,6 @@ extern float g_k0_6;                                // 0x590d94
 extern float g_k1_2;                                // 0x590b94
 extern float g_k1_25;                               // 0x590c80
 extern float g_k1_05;                               // 0x590f24
-extern float g_k1;                                  // 0x549cdc
 extern float g_k0;                                  // 0x549ca8
 extern float g_k3;                                  // 0x54a710
 extern float g_k0_02;                               // 0x590cd0
@@ -422,7 +421,7 @@ void Party::prepare()
 float Party::strength()
 {
     if (f88 != -1) {
-        return g_k1;
+        return 1.0f;
     }
     int a = 0;
     int b = 0;
@@ -441,8 +440,8 @@ float Party::strength()
     if (v < g_k0) {
         return g_k0;
     }
-    if (v >= g_k1) {
-        return g_k1;
+    if (v >= 1.0f) {
+        return 1.0f;
     }
     return v;
 }
@@ -505,7 +504,7 @@ float Troop::food_factor()
     if (f & 0x400) {
         return (nibble(0x18) * g_k0_04 + g_k1_2) * g_k6_9;
     }
-    return (nibble(0x19) * g_k0_04 + g_k1) * g_k6_9;
+    return (nibble(0x19) * g_k0_04 + 1.0f) * g_k6_9;
 }
 
 // @ 0x4b22b0
@@ -876,7 +875,6 @@ void Party::set_order_agent(int* t)
 
 // ---- the per-frame party stats --------------------------------------------------------------------------------------------
 extern float g_k0_1;                                 // 0x54b8b0  0.1f
-extern float g_rand_k;                               // 0x54a6bc  1/15817
 extern float g_k_item_weight;                        // 0x593640  per-item weight of the equipped grid item
 struct options;
 extern options g_options;                   // 0x5aa008
@@ -908,7 +906,7 @@ void Party::tick_stats()
             }
             float limit = (float)(ch->lvl58 + level * 2 + 0x23);
             if (ch->hp < limit) {
-                float add = ((float)(rand() % 15817) * g_rand_k + 0.5f) * 0.5f * speed;
+                float add = ((float)(rand() % 15817) * (1.0f / 0x3dc9) + 0.5f) * 0.5f * speed;
                 if (troop == g_game->player) {
                     add = add * (3 - (*(int*)((char*)&g_options + 0x4c)));
                 }
@@ -921,7 +919,7 @@ void Party::tick_stats()
             int n = stacks[i].wounded;
             float chance = speed * 0.04f;
             do {
-                if ((float)(rand() % 15817) * g_rand_k < chance) {
+                if ((float)(rand() % 15817) * (1.0f / 0x3dc9) < chance) {
                     stacks[i].wounded--;
                 }
             } while (--n);
@@ -950,7 +948,7 @@ void Party::tick_stats()
                 if (zoom > 0.1f) {
                     chance = chance * 3.0f;
                 }
-                while ((float)(rand() % 15817) * g_rand_k < chance) {
+                while ((float)(rand() % 15817) * (1.0f / 0x3dc9) < chance) {
                     if (slot->item < 0) {
                         break;
                     }
@@ -1033,7 +1031,7 @@ void Party::tick_stats()
         if (g->item >= 0
             && *(unsigned char*)&g_items[g->item].type_flags == 1
             && (g->m4 & 0xff000000) == 0x1e000000
-            && (float)(rand() % 15817) * g_rand_k < grid_chance) {
+            && (float)(rand() % 15817) * (1.0f / 0x3dc9) < grid_chance) {
             *((unsigned char*)g + 7) = 0;
             g->reduce(0);
         }
@@ -2318,7 +2316,6 @@ void Party::leave_battle()
 
 // ---- the world-map path finder and the nav drivers ----------------------------------------------------------------------
 extern float g_half;        // 0x549d70 = 0.5f
-extern float g_one;         // 0x549cdc = 1.0f
 extern float g_105;         // 0x59364c = 10.5f
 extern float g_10;          // 0x549d74 = 10.0f
 extern float g_005;         // 0x54b4d0 = 0.05f
@@ -2537,7 +2534,7 @@ void BattleRec::update_nav_anim(int)
             __int64 elapsed = g_ticks[born.clock] - born.start;
             float secs = (float)elapsed * g_scale;
             if (next_simulation_time < secs) {
-                next_simulation_time = frand() + g_one;
+                next_simulation_time = frand() + 1.0f;
                 born.start = g_ticks[born.clock];
                 commit();
             }

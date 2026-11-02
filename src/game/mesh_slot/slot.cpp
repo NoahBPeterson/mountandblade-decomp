@@ -247,7 +247,6 @@ Buffer::~Buffer()
 extern "C" double floor(double v);     // 0x536b10 CRT floor (x87 double arg on the stack)
 
 // float constants in the image's read-only data (each 4 bytes, cited by address).
-extern const float g_one;               // 0x549cdc 1.0f
 extern const float g_half;              // 0x549d70 0.5f
 extern const float g_zero;              // 0x549ca8 0.0f
 extern const float g_k002;              // 0x590cd0 0.02f
@@ -370,8 +369,8 @@ void Effect::animate(float dt)
         volatile float q = e4 * f8c;
         volatile float sp = (periodE - e4) * ac;
         volatile float sum = sp + q;
-        out0 = (e4 * f88 + (periodE - e4) * a8) * (g_one / periodE);
-        out1 = sum * (g_one / periodE);
+        out0 = (e4 * f88 + (periodE - e4) * a8) * (1.0f / periodE);
+        out1 = sum * (1.0f / periodE);
         pair[0] = out0 * g_k002;
         pair[1] = out1 * g_k002;
         d27(pair);
@@ -394,21 +393,21 @@ void Effect::animate(float dt)
         double fl;
         int c;
 
-        p = ((float)(srcA & 0xff) * (periodA - e0) + (float)(valA & 0xff) * e0) * (g_one / periodA);
+        p = ((float)(srcA & 0xff) * (periodA - e0) + (float)(valA & 0xff) * e0) * (1.0f / periodA);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col = (unsigned)c;
 
-        p = ((float)ss[1] * (periodA - e0) + (float)vs[1] * e0) * (g_one / periodA);
+        p = ((float)ss[1] * (periodA - e0) + (float)vs[1] * e0) * (1.0f / periodA);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col += (unsigned)c << 8;
 
-        p = ((float)ss[2] * (periodA - e0) + (float)vs[2] * e0) * (g_one / periodA);
+        p = ((float)ss[2] * (periodA - e0) + (float)vs[2] * e0) * (1.0f / periodA);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
@@ -429,7 +428,7 @@ void Effect::animate(float dt)
     if (e1 < periodB) {
         unsigned char* ss = (unsigned char*)&srcB;
         unsigned char* vs = (unsigned char*)&valB;
-        float p = ((float)ss[3] * (periodB - e1) + (float)vs[3] * e1) * (g_one / periodB);
+        float p = ((float)ss[3] * (periodB - e1) + (float)vs[3] * e1) * (1.0f / periodB);
         double fl = floor((double)p);
         int c = (int)fl;
         if (!(p - fl <= 0.5f))
@@ -452,21 +451,21 @@ void Effect::animate(float dt)
         double fl;
         int c;
 
-        p = ((float)(srcC & 0xff) * (periodC - e2) + (float)(valC & 0xff) * e2) * (g_one / periodC);
+        p = ((float)(srcC & 0xff) * (periodC - e2) + (float)(valC & 0xff) * e2) * (1.0f / periodC);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col = (unsigned)c;
 
-        p = ((float)ss[1] * (periodC - e2) + (float)vs[1] * e2) * (g_one / periodC);
+        p = ((float)ss[1] * (periodC - e2) + (float)vs[1] * e2) * (1.0f / periodC);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col += (unsigned)c << 8;
 
-        p = ((float)ss[2] * (periodC - e2) + (float)vs[2] * e2) * (g_one / periodC);
+        p = ((float)ss[2] * (periodC - e2) + (float)vs[2] * e2) * (1.0f / periodC);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
@@ -487,7 +486,7 @@ void Effect::animate(float dt)
     if (e3 < periodD) {
         unsigned char* ss = (unsigned char*)&srcD;
         unsigned char* vs = (unsigned char*)&valD;
-        float p = ((float)ss[3] * (periodD - e3) + (float)vs[3] * e3) * (g_one / periodD);
+        float p = ((float)ss[3] * (periodD - e3) + (float)vs[3] * e3) * (1.0f / periodD);
         double fl = floor((double)p);
         int c = (int)fl;
         if (!(p - fl <= 0.5f))
@@ -510,8 +509,8 @@ void Effect::animate(float dt)
             h0 = f0f0 * g_half;
         if (flags148 & 0x1000)
             h1 = f0f4 * g_half;
-        pair[0] = ((f80 - h0) * e5 + (periodF - e5) * a0) * (g_one / periodF);
-        pair[1] = ((periodF - e5) * a4 + (f84 - h1) * e5) * (g_one / periodF);
+        pair[0] = ((f80 - h0) * e5 + (periodF - e5) * a0) * (1.0f / periodF);
+        pair[1] = ((periodF - e5) * a4 + (f84 - h1) * e5) * (1.0f / periodF);
         d22(pair);
         changed = true;
     } else if (c5) {

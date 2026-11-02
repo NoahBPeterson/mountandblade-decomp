@@ -32,6 +32,7 @@ struct OptionsDlg {
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_video_played;                              // 0x5e2a10 (1 once the intro video started, 2 once it was skipped)
 float g_5a9f24 = 0.65f;                          // 0x5a9f24 (the meeting window columns' top)
+extern const float g_time_scale = 60.0f;         // 0x590e28 read by SaveWindow::list_saves (progress_bar.cpp)
 float g_5a9f28[2] = { 0.0f, 0.21450001f };       // 0x5a9f28 {x, y} column size; [0] = 1.0f - 0x5a9f20 is set by static_init_547a60 (static_init owner)
 
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------

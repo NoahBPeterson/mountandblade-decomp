@@ -259,7 +259,6 @@ extern float g_ticks[];                // 0x5e2948 (float pairs: x at [i*2], y a
 extern float g_four_tenths;             // 0x54b3b8  0.4f
 
 extern float zero;                      // 0x549ca8  0.0f
-extern float g_one;                     // 0x549cdc  1.0f
 extern float g_eps;                     // 0x54a6f0  0.01f
 extern float g_ninety_nine;             // 0x54a5cc  0.99f
 extern float g_seventy_four;            // 0x5985f4  0.74f

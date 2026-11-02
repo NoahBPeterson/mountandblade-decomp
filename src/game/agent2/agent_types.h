@@ -31,7 +31,6 @@ extern __int64 g_ticks[];              // 0x5e2948 clock table, 8 bytes per cloc
 #include "../../include/fx.h"            // g_step_tbl 0x5a9c20 (entry 0 is the frame step)
 extern float g_step_tbl[]; // 0x5a9c20 per-clock step (seconds; fx.h; named again here for the resolution audit, which reads only the headers a source includes itself)
 #include "../dialog_manager.h"            // g_script 0xa70440
-extern int g_agent_count;              // 0x5aa050 number of agents (0x4385e0)
 
 // ---- polymorphic records derived from IfaceB (vtable 0x5908f8 = ??_7IfaceB@@6B@) --------------------------------
 #include "../placed_obj.h"             // IfaceB, Quad, PlacedObj (shared with src/game/agent)
@@ -48,7 +47,6 @@ float __cdecl closer_angle(const float* v, const float* lo, const float* hi);   
 float __cdecl fmin_ref(const float* a, const float* b);         // 0x4324b0
 float __cdecl fmax_ref(const float* a, const float* b);         // 0x4324d0
 void __cdecl noise_gradient(float scale, const float* in, float* out);   // 0x414ae0
-extern char g_range_tbl[];             // 0x590aac per-mode {lo, hi} float pairs of Agent::smooth_turn (0x438860)
 
 // ---- the navigation mesh: src/game/nav_mesh.h ----
 #include "../nav_mesh.h"

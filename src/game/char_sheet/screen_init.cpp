@@ -213,7 +213,7 @@ void Screen::init_screen()
 // @ 0x4ecce0
 void Screen::camera_mark_entities()
 {
-    g_game->f13acc = (f2b8 * g_590bb8 + g_549cdc) * g_54b3b4;
+    g_game->f13acc = (f2b8 * g_590bb8 + 1.0f) * g_54b3b4;
     PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
     for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties.n_parties; mgr->next_party_id((int*)&id)) {
         int idx = ((Map10007*)(void*)mgr)->lookup(id);

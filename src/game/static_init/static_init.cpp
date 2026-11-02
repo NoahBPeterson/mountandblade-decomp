@@ -21,7 +21,6 @@ extern unsigned g_5a8e78;   // 0x5a8e78 (size mask)
 extern unsigned g_5a8e88;   // 0x5a8e88 (type mask)
 extern unsigned g_5e2464;   // 0x5e2464
 extern unsigned g_5e2468;   // 0x5e2468
-extern float g_549cdc;      // 0x549cdc
 extern float g_5a9be0;      // 0x5a9be0
 extern float g_5a9be8;      // 0x5a9be8
 extern unsigned g_5e2584;   // 0x5e2584
@@ -79,7 +78,6 @@ extern char g_8ee3c38[];    // 0x8ee3c38 the module name
 extern char g_8ee3c48[];    // 0x8ee3c48 the application
 extern char g_5aa128[];     // 0x5aa128 the sound manager
 extern std::string g_5aa380;   // 0x5aa380
-extern char g_59c490[];     // 0x59c490 (its 0x40-character initial value)
 extern void* g_vt_54a7d0[]; // 0x54a7d0 the debug text log's vtable
 extern void* g_vt_595990[]; // 0x595990 outfile's vtable
 extern void* g_vt_595618[]; // 0x595618 outfile_b's vtable (its base)
@@ -322,7 +320,7 @@ void __cdecl static_init_5479e0() { g_5e2464 = g_5a8e78; }
 // @ 0x5479f0
 void __cdecl static_init_5479f0() { g_5e2468 = g_5a8e88; }
 // @ 0x547a00
-void __cdecl static_init_547a00() { g_5a9be8 = g_549cdc - g_5a9be0; }
+void __cdecl static_init_547a00() { g_5a9be8 = 1.0f - g_5a9be0; }
 // @ 0x547a20
 void __cdecl static_init_547a20() { g_5e2584 = g_5a8e78; }
 // @ 0x547a30
@@ -332,7 +330,7 @@ void __cdecl static_init_547a40() { g_8ee41ec = g_5a8e78; }
 // @ 0x547a50
 void __cdecl static_init_547a50() { g_8ee41e8 = g_5a8e88; }
 // @ 0x547a60
-void __cdecl static_init_547a60() { g_5a9f28[0] = g_549cdc - g_5a9f20; }
+void __cdecl static_init_547a60() { g_5a9f28[0] = 1.0f - g_5a9f20; }
 // @ 0x547a80
 void __cdecl static_init_547a80() { new (g_5e2a18) LangTables; atexit(static_dtor_548470); }
 // @ 0x547aa0   the debug text log: its two strings, flags, and vtable
@@ -501,7 +499,7 @@ void __cdecl static_init_5480b0() { new (g_8ee3c28) tstring; atexit(static_dtor_
 // @ 0x5480d0
 void __cdecl static_init_5480d0() { new (g_8ee3c38) tstring; atexit(static_dtor_548160); }
 // @ 0x5480f0
-void __cdecl static_init_5480f0() { g_5aa380.assign(g_59c490, 0x40); atexit(static_dtor_548430); }
+void __cdecl static_init_5480f0() { g_5aa380.assign("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0x40); atexit(static_dtor_548430); }
 // @ 0x548110
 void __cdecl static_init_548110() { new (g_8ee3c48) GameApp; atexit(static_dtor_5482a0); }
 

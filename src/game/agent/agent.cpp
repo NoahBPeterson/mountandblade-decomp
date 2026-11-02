@@ -30,6 +30,11 @@
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+static const int g_value_max = 64;   // upper bound of a placed object's value (0x435860), passed by address
+const int g_tier_dist[11] = { 60, 100, 140, 180, 220, 260, 300, 340, 380, 420, 460 };   // 0x590a70
+
+
 // inline helpers: the original compiled them into the callers (no out-of-line copies in this object)
 static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)
 { r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x; }

@@ -517,7 +517,7 @@ void GameW::recruit(int id, int count, PartyW* dest)
                     if ((float)(rand() % 0x3dc9) * (float)hp * 6.322312e-05f < 2.0f) {
                         tr = &troops[troop];
                         if ((tr->flags30 & 0x10) == 0) {
-                            if ((float)(rand() % 0x3dc9) * 6.322312e-05f < g_k065
+                            if ((float)(rand() % 0x3dc9) * 6.322312e-05f < 0.65f
                                 || (troops[troop].flags30 & 0x80) != 0) {
                                 st->count--;
                                 if (dest != 0)

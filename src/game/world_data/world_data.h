@@ -153,7 +153,6 @@ int trigger_item_mesh(int context);                             // 0x4904a0 (con
 
 extern char* g_party_templates;                                     // 0x5e29f8 (0xb0-byte party-template rows, +0x38 counter: 0x4915d0)
 extern float g_k15;                                             // 0x590da0 (15.0f)
-extern float g_k065;                                            // 0x590b6c (0.65f)
 
 struct GameW : GameData {
     rgl::vector4& cur_color() { return WD_FLD(rgl::vector4, 0x13fb4); }     // +0x13fb4 (0x4952f0)

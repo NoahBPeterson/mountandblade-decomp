@@ -101,12 +101,9 @@ int __cdecl rand_below(const int* n);                                   // 0x432
 extern SoundMgr g_sound_mgr;                                // 0x5aa128
 extern int g_sound_ids[];                               // 0x5aa178 sound id table (g_sound_ids[0x11] = pain)
 extern int g_levelup_sound;                             // 0x5aa17c
-extern int g_show_messages;                             // 0x5aa080
 extern int g_sound_off;                                 // 0x5a9fd8
 extern int g_no_freq;                                   // 0x5a9fc8
-extern float g_master_volume;                           // 0x5aa014
-extern int g_xp_table[];                                // 0x590974: experience needed for each level
-extern unsigned g_max_dead;                             // 0x5aa044
+extern const int g_xp_table[63];                        // 0x590974: experience needed for each level
 
 // ---- message log (object at 0x5d7080): enabled byte at +0x1714, 32-entry ring at +0xb0b8 ------------------------------------
 #include "../str_table.h"

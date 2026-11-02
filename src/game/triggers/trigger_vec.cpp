@@ -30,6 +30,7 @@
 #include "../meta_mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../menu_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../rgl/options.h"   // g_options 0x5aa008
 
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
 
@@ -1545,7 +1546,7 @@ void music_player::advance_piece()
             w[0] = 0;
             w[12] = -1;
         }
-    } else if (g_music_volume > g_music_volume_floor) {
+    } else if (g_options.f08 > g_music_volume_floor) {
         bool forced = false;
         int sel = -1;
         int best = -1;
@@ -1622,7 +1623,7 @@ void music_player::advance_piece()
         w[1] = 0;
         w[13] = -1;
     } else if ((*(int*)((char*)&g_script + 0x3c)) >= 0) {
-        if (g_music_volume > g_music_volume_floor) {
+        if (g_options.f08 > g_music_volume_floor) {
             int slot = 1;
             play((*(int*)((char*)&g_script + 0x3c)), &slot);
         }

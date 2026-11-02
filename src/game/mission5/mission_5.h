@@ -584,7 +584,6 @@ struct IntDeque_s261e0 {
 extern const float g_f54a6e4;                           // 0x54a6e4 = 0.2f
 extern const float g_f549ca8;                           // 0x549ca8 = 0.0f
 extern const float g_f54a6d0;                           // 0x54a6d0 = 1e-05f
-extern const float g_f549cdc;                           // 0x549cdc = 1.0f
 extern const float g_f54b8b0;                           // 0x54b8b0 = 1.5f
 extern const float g_f590b38;                           // 0x590b38 = 8.0f
 extern const float g_f549d7c;                           // 0x549d7c = 0.1f
@@ -1010,8 +1009,6 @@ extern int g_a17560;                                    // 0xa17560
 extern int g_a73790;                                    // 0xa73790
 extern int g_a73794;                                    // 0xa73794
 extern int g_presentation;                                    // 0x5e299c
-extern int g_invert;                                    // 0x5aa01c
-extern int g_stick_mode;                                // 0x5aa078
 #include "../../include/fx.h"
 #include "../../rgl/resource_manager.h"
 
@@ -1170,8 +1167,6 @@ struct MissionHud_s29130 {
 // ---- externals -----------------------------------------------------------------------------------------
 
 
-extern int g_flag5aa06c;                                      // 0x5aa06c
-extern int g_flag5aa070;                                      // 0x5aa070
 struct ItemKind_s29130 { char pad[0x1c8]; int type; char pad1cc[0x238 - 0x1cc]; };
 
 extern float g_deg2rad;                                       // 0x590ce4 (0.017453292)
@@ -1181,7 +1176,6 @@ extern float g_2p5;                                           // 0x590c4c (2.5f)
 extern float g_1p2;                                           // 0x590b94 (1.2f)
 extern float g_255;                                           // 0x590cec (255.0f)
 extern float g_0;                                             // 0x549ca8 (0.0f)
-extern float g_1;                                             // 0x549cdc (1.0f)
 extern float g_range_tbl[];                                   // 0x59390c (lo/hi pairs)
 
 float __cdecl signed_angle(void* a, void* b);                 // 0x4381e0
@@ -1972,7 +1966,6 @@ typedef unsigned int uint;
 // globals (addresses from the annotations in the disassembly)
 #define g_game_c ((char*)g_game)
 extern float g_00;                   // 0x549ca8  0.0f
-extern float g_10;                   // 0x549cdc  1.0f
 extern float g_098;                  // 0x5911d8  0.98f (scan threshold)
 extern double g_001;                 // 0x59c480  unused here (other slices)
 

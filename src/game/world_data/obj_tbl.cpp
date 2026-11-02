@@ -53,7 +53,7 @@ rgl::mesh* scene_tbl::placed(int index)
     ((rgl::matrix*)&frame)->rotate_about_f(&a);
     a = r->rz * 0.017453292f;
     ((rgl::matrix*)&frame)->rotate_about_u(&a);
-    if (r->sx != g_one || r->sy != g_one || r->sz != g_one)
+    if (r->sx != 1.0f || r->sy != 1.0f || r->sz != 1.0f)
         m->set_color(sc);
     m->set_part(*(rgl::matrix*)&frame);
     if (pos.z * pos.z + pos.y * pos.y + pos.x * pos.x != g_zero)

@@ -29,6 +29,15 @@
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/options.h"   // g_options 0x5aa008
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+const int g_xp_table[63] = {                             // 0x590974
+    0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362, 40682, 47892, 56103, 65441, 77233,
+    90809, 106425, 124371, 144981, 168636, 195769, 226879, 262533, 303381, 350164, 412091, 484440, 568947, 667638, 782877, 917424,
+    1074494, 1257843, 1471851, 1721626, 2070551, 2489361, 2992033, 3595340, 4319408, 5188389, 6231267, 7482821, 8984785, 11236531,
+    14051314, 17569892, 21968215, 27466219, 34338823, 42929679, 53668349, 67091786, 83871183, 160204600, 320304600, 644046000, 2050460000 };
+
 
 // 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
 template<> void std::vector<int>::push_back(const int&);
@@ -194,7 +203,7 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                 int looping = groups[idx].flags & 2;
                 int hi = 0x100;
                 int vol = 0;
-                int r = round_i(((const Agent*)&groups[idx])->volume_scale() * g_master_volume * 255.0f);
+                int r = round_i(((const Agent*)&groups[idx])->volume_scale() * g_options.f0c * 255.0f);
                 vol = clamp_index(&r, &vol, &hi);
                 int prio;
                 if (flags & 1) {
@@ -253,7 +262,7 @@ void GameData::add_experience(int troop, int amount)
         amount = 0;
     else if (amount >= 30000)
         amount = 29999;
-    if (troop == player && amount > 0 && f13a34 != 0 && g_show_messages != 0) {
+    if (troop == player && amount > 0 && f13a34 != 0 && g_options.i78 != 0) {
         {
             tstring key("ui_you_got_number_experience");
             sprintf(buf1, g_strtable.lookup(key)->c_str(), amount);
@@ -339,7 +348,7 @@ Emit* Mission::spawn_effect(int idx, const mat4* m, int duration)
 void Mission::queue_dead(Agent* a)
 {
     dead.push_back(a);
-    while (dead.size() > g_max_dead) {
+    while (dead.size() > g_options.i3c) {
         dead[0]->f5830 = 4;
         Agent* o = dead[0];
         Timer* tm = &o->tm;

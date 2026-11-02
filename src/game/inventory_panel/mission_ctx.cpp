@@ -96,6 +96,7 @@ struct MetaMission {
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../../rgl/options.h"   // g_options 0x5aa008
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -147,14 +148,12 @@ extern const float g_ten;           // 0x549d74  10.0f
 extern const float g_oneone;        // 0x54b888  1.1f
 extern const float g_pttwo;         // 0x54a6e4  0.2f
 extern const float g_three;         // 0x54a710  3.0f
-extern const float g_quarter;       // 0x54b868  0.25f
 extern const float g_four;          // 0x5935c8  4.0f
 extern const float g_003;           // 0x54b8b4  0.03f
 extern const float g_axis_x;        // 0xa178d4
 extern const float g_axis_y;        // 0xa178dc
 extern const float g_mouse_dx;      // 0x5d70a4
 extern const float g_mouse_dy;      // 0x5d70a8
-extern const float g_exp_arg;       // 0x5aa018
 extern int g_key_1730;              // 0xa73730
 extern int g_key_1734;              // 0xa73734
 extern int g_key_1738;              // 0xa73738
@@ -1094,7 +1093,7 @@ void Screen::camera_move(float dt)
 
     vy = v * dt + vy;
     if (g_in_17458) {
-        vy = expf(g_four * g_exp_arg) * g_003 * g_axis_x * dt + vy;
+        vy = expf(g_four * g_options.f10) * g_003 * g_axis_x * dt + vy;
     }
 
     if (w != 0.0f || g_axis_y != 0.0f) {
@@ -1208,7 +1207,7 @@ int PartyV::data_ready()
     __int64 start = *(__int64*)((char*)this + 0x59b8);
     if ((*(__int64*)&flags_lo & 0x1000000) == 0) {
         __int64 d = g_ticks[clk] - start;
-        if (!((float)d * g_tick_scale < g_quarter))
+        if (!((float)d * g_tick_scale < 0.25f))
             return 0;
     }
     return 1;

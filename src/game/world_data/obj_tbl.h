@@ -49,7 +49,6 @@ struct SceneRec48 {
     float sx, sy, sz;                                           // +0x3c scale
 };
 
-extern float g_one;                                             // 0x549cdc (1.0f)
 extern float g_zero;                                            // 0x549ca8 (0.0f)
 extern int g_use_shaders;                                        // 0x5e28fc (non-zero: gamma on colours)
 

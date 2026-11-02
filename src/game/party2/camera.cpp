@@ -1196,7 +1196,6 @@ inline void identity_pos(float* m) { ::identity_pos((::pos*)m); }               
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
 extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> seconds); defined once, in mesh_slot/slot.cpp
-extern const float g_549cdc;                    // 0x549cdc  1.0f
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
 extern const float g_549d70;                    // 0x549d70  0.5f
 extern const float g_590cd0;                    // 0x590cd0  0.02f
@@ -1517,7 +1516,7 @@ void Camera::update(int)
 
     // shake: blend toward the far weights and hand the offset to the object
     if (d5 < lim[5]) {
-        float inv = g_549cdc / lim[5];
+        float inv = 1.0f / lim[5];
         float rest = lim[5] - d5;
         v.x = (d5 * w40 + rest * w42) * inv;
         v.y = (d5 * w41 + rest * w43) * inv;

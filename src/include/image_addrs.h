@@ -30,8 +30,6 @@ struct text_stream;
 
 namespace orig {
 extern const float g_zero;                 // 0x549ca8
-extern const float g_one;                  // 0x549cdc
-extern const float k_0_3f;                 // 0x549d68
 extern const float k_0_9f;                 // 0x549d6c
 extern const float g_half;                 // 0x549d70
 extern const float g_ten;                  // 0x549d74
@@ -44,7 +42,6 @@ extern const float k_0_2f;                 // 0x54a6e4
 extern const float g_three;                // 0x54a710
 extern const float k_100f;                 // 0x54ab28
 extern const char g_rgl_name[];                        // 0x54b048
-extern const float k_0_39f;                // 0x54b3b0
 extern const float k_0_4f;                 // 0x54b3b8
 extern const float k_0_05f;                // 0x54b4d0
 extern const float k_100000f;              // 0x54b86c
@@ -55,7 +52,6 @@ extern const float k_9_8f;                 // 0x590af0
 extern const float k_300f;                 // 0x590b20
 extern const float k_400f;                 // 0x590b58
 extern const float k_250f;                 // 0x590b60
-extern const float k_0_65f;                // 0x590b6c
 extern const float k_1_2f;                 // 0x590b94
 extern const float k_1_6f;                 // 0x590c48
 extern const float k_0_08f;                // 0x590c74
@@ -73,20 +69,13 @@ extern const float k_m10f;                 // 0x5915a0
 extern const float k_0_94f;                // 0x591af4
 extern const float g_four;                 // 0x5935c8
 extern const float k_5f;                   // 0x59393c
-extern const char str_passage[];                       // 0x595e6c
-extern const char str_entry_point[];                   // 0x595e74
 extern const char str_ui_difficulty_rating_percentage[]; // 0x5967a0
 extern const float k_30000f;               // 0x596854
 extern const float k_0_00117647f;          // 0x596858
 extern const float k_0_000909091f;         // 0x59685c
-extern const char str_no_beard_mesh[];                 // 0x598308
-extern const char str_no_face_mesh[];                  // 0x598328
 extern const float k_m1em05f;              // 0x598688
 extern const float k_235f;                 // 0x59868c
 extern const float k_105f;                 // 0x598690
-extern const char str_plants[];                        // 0x5999ac
-extern const char str_item_kinds[];                    // 0x5999b4
-extern const char str_scene_props[];                   // 0x5999c0
 extern const float k_0_00105f;             // 0x59c268
 extern unsigned __int64 g_bit[];                             // 0x5a8e68
 extern const char str_m[];                             // 0x5a9c3c
@@ -100,37 +89,12 @@ extern int g_iWindowWidth;                 // 0x5a9fe4
 extern int g_iWindowHeight;                // 0x5a9fe8
 extern int g_shadow_quality_req;           // 0x5aa004
 extern options_record g_options;           // 0x5aa008
-extern float g_music_volume;               // 0x5aa010
-extern float g_master_volume;              // 0x5aa014
-extern float g_exp_arg;                    // 0x5aa018
-extern int g_invert;                       // 0x5aa01c
-extern int g_opt_blood;                    // 0x5aa020
-extern int g_char_detail;                  // 0x5aa024
 extern int g_char_shadow;                  // 0x5aa028
 extern int g_shadows_on;                   // 0x5aa030
 extern int g_plant_shadow;                 // 0x5aa034
 extern int g_ragdoll_lim;                  // 0x5aa03c
 extern int g_particle;                     // 0x5aa040
-extern unsigned g_max_dead;                // 0x5aa044
-extern int g_tick_a;                       // 0x5aa048
-extern int g_difficulty;                   // 0x5aa04c
-extern int g_agent_count;                  // 0x5aa050
-extern int g_opt_dmg_to_player;            // 0x5aa054
-extern int g_opt_dmg_to_friends;           // 0x5aa058
-extern int g_fx_on;                        // 0x5aa05c
-extern int g_opt_damage_msgs;              // 0x5aa060
-extern int g_opt_shot_difficulty;          // 0x5aa064
-extern int g_opt_kill_msgs;                // 0x5aa068
-extern int g_flag5aa06c;                   // 0x5aa06c
-extern int g_flag5aa070;                   // 0x5aa070
-extern int g_ctl_mode;                     // 0x5aa074
-extern int g_stick_mode;                   // 0x5aa078
-extern float g_speed_base;                 // 0x5aa07c
-extern int g_show_messages;                // 0x5aa080
 extern int g_mesh_quality;                 // 0x5aa084
-extern float g_scale_x;                    // 0x5aa088
-extern float g_scale_y;                    // 0x5aa08c
-extern float g_scale_z;                    // 0x5aa090
 extern Config g_launcher_cfg;              // 0x5aa0a8
 extern int g_opt_5aa0ac;                   // 0x5aa0ac
 extern int g_opt_5aa0b4;                   // 0x5aa0b4

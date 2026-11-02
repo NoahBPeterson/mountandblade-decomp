@@ -308,7 +308,6 @@ extern const float g_590b60;   // 0x590b60 (250.0f)
 extern const float g_549d70;   // 0x549d70 (0.5f)
 extern int    g_sound_paused;   // 0x5a9fd4
 extern int    g_sound_muted;    // 0x5a9fd8
-extern float  g_music_volume;   // 0x5aa010
 
 // a clock reading: slot into g_time[] and the start tick; elapsed() = (g_time[slot] - start) * 1e-5f
 // (include/timer.h's Timer: {clock index, pad, start}; elapsed() is 0x432c10)

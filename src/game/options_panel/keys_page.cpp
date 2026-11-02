@@ -40,6 +40,7 @@ using rgl::vector4;
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 // 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
 #include "../key_names.h"
+#include "../../rgl/options.h"   // g_options 0x5aa008
 
 // 0x4bab70 (byte-exact in s004bab70): build the user path of a file name in place. A static function in the
 // original, so cl passes `out` in esi; this is a local copy with the same body.
@@ -160,20 +161,20 @@ void KeysPage::update_perf()
 {
     float perf = orig::k_100f;
     if (orig::g_shadows_on)
-        perf = orig::g_scale_z * orig::k_5f + orig::k_100f;
-    perf += orig::g_opt_blood * 5;
+        perf = g_options.f88 * orig::k_5f + orig::k_100f;
+    perf += g_options.i18 * 5;
     perf += orig::g_char_shadow * 6;
-    int limit = *(int*)&orig::g_max_dead;
+    int limit = *(int*)&g_options.i3c;
     if (limit >= 100) limit = 100;
     perf += limit * orig::k_0_2f;
-    limit = orig::g_tick_a;
+    limit = g_options.i40;
     if (limit >= 5) limit = 5;
     perf += limit;
     int d3d = orig::g_plant_shadow;
     char high = orig::g_use_hw_shadow;
     perf += orig::g_ragdoll_lim * orig::k_0_1f;
     int shadows = orig::g_use_shaders;
-    perf += orig::g_scale_y * orig::g_ten;
+    perf += g_options.f84 * orig::g_ten;
 
     if (d3d) {
         if (orig::g_shadow_quality_req >= 2)
@@ -192,7 +193,7 @@ void KeysPage::update_perf()
         }
     }
     if (shadows)
-        perf *= (1 - orig::g_simple_reflect) * orig::k_0_65f + orig::g_one;
+        perf *= (1 - orig::g_simple_reflect) * 0.65f + 1.0f;
     perf *= orig::g_particle * orig::k_0_03f + orig::g_day_period;
     perf *= orig::g_texture_detail + orig::k_400f;
     perf *= orig::k_0_002f;
@@ -366,12 +367,12 @@ void KeysPage::refresh()
 // @ 0x4d7270
 void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, float bw)
 {
-    float s = bx * orig::k_0_65f;
+    float s = bx * 0.65f;
     int maxn = 0x800;
     int len;
     int buf[0x800];
     decode_utf8(text, &len, buf, &maxn);
-    float tw = len * s * orig::k_0_39f;
+    float tw = len * s * 0.39f;
     float room = bx * by - bx / bz * bw;
     if (tw > room)
         s *= room / tw;
@@ -381,7 +382,7 @@ void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, 
     row->set_size((const float*)&scale);
     vector2 pos;
     pos.x = 0;
-    pos.y = bx * orig::g_half - s * orig::k_0_3f;
+    pos.y = bx * orig::g_half - s * 0.3f;
     row->set_offset((const float*)&pos);
     { char r[8]; row->set_text(r, *text); }
 }

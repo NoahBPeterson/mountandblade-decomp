@@ -99,7 +99,6 @@ struct GameData { const char* module_path(const char* sub); void init_event(stru
 #define MODULE_PATH(sub) (((GameData*)this)->module_path(sub))
 extern int g_level_lo[];                            // 0x5937c8
 extern int g_level_hi[];                            // 0x5937cc
-extern float g_troop_rand_scale;                    // 0x54a6bc
 
 // (item, modifier word) pairs of the statement / troop / scene records are the shared ItemRef (../item_ref.h; item -1 = none)
 

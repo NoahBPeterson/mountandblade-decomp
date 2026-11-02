@@ -833,12 +833,12 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
 {
     float px = (float)(g_screen_w + g_screen_h);
     float area = (px * 0.5f) * 0.00086956524f;
-    float size_v = ((g_scale_a * 0.5f + 0.75f) * *scale) * area;
+    float size_v = ((g_options.f84 * 0.5f + 0.75f) * *scale) * area;
     float& size = *(float*)&scale;       // the original stores the result back into the (dead) parameter slot
     size = size_v;
     if (g_flag_a17108 && (g_flag_a17148 || g_flag_a17348))
         size = 1000.0f;
-    float range = g_scale_b * area;
+    float range = g_options.f88 * area;
     ViewLight* vl = (ViewLight*)this;
     AgentTable* tbl = (AgentTable*)((char*)this + 4);
     int n = *(int*)tbl;
@@ -1740,7 +1740,7 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
         } while (i < n);
     }
 }
-extern const int g_text_maxn;                                     // 0x5937ac (0x2000: the decode buffer's capacity)
+static const int g_text_maxn = 0x2000;                             // the decode buffer's capacity, passed by address
 
 // the inlined vector<int>::push_back
 static __forceinline void ints_push(IntList* v, const int& x)
