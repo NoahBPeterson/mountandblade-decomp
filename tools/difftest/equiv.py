@@ -7008,6 +7008,13 @@ def replay(sid, va, path, opts):
     inp = Input()
     inp.__dict__.update(pickle.load(open(path, "rb")))
     inp.__dict__.setdefault("pagegen", 1)       # saved before pagegen existed
+    if runner.gen.invs:                         # the same final-input check as the main loop: never compare an impossible object
+        bad = INV.check(runner.gen.invs, runner.gen, inp)
+        if bad:
+            print("invalid-object (discarded, not compared): %s=%#x outside [%d..%d]; %s" % (
+                bad[0], bad[1], bad[2], bad[3], bad[4].why))
+            runner.close()
+            return 0
     a = runner.run_side(runner.orig, inp)
     b = runner.run_side(runner.ours, inp)
     cmp_ = Comparer(runner, opts)

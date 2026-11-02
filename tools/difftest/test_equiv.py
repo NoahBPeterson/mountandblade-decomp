@@ -771,6 +771,36 @@ def test_pin_spec():
         INV.pin_invariant("ecx=1")
 
 
+def test_face_count_invariant_governs_fault_mapped_memory():
+    """face::count is judged on a face that lives in memory fault repair mapped (inp.extra), using the same
+    soup bytes run_side maps; a valid count there is not a violation."""
+    import struct
+    import invariants as INV
+
+    class Gen:
+        def __init__(self, count):
+            self.buf = bytearray(0x10000)
+            struct.pack_into("<I", self.buf, 0xB9, count)       # poly = 9: count at 9 + 0xb0
+
+        def _slot_soup(self, inp, base):
+            return bytes(self.buf)
+
+        def slot_pages(self, inp, slot):
+            return {}
+
+    class Inp:
+        args = [9, 0x44]
+        extra = {0: 0x10000}
+
+    for count, bad in ((0, True), (5, True), (0x4B8500, True), (1, False), (4, False)):
+        got = INV.check([INV.FACE_INV], Gen(count), Inp())
+        assert (got is not None) == bad, (count, got)
+        if bad:
+            assert got[0] == "face::count" and got[1] == count
+    Inp.extra = {}                                               # nothing mapped there: not judged
+    assert INV.check([INV.FACE_INV], Gen(0), Inp()) is None
+
+
 def test_char_return_compares_al_only():
     """A char return (mangled D/C/E) is compared on al; a short (F/G) on ax."""
     import sig

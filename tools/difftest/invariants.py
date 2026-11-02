@@ -141,17 +141,26 @@ class Invariant:
 
 
 def _dword(gen, inp, addr):
-    """The dword an input holds at an absolute address of the lazily materialised pool, or None when the
-    address is not in the pool (the object the pointer names was never mapped) - exactly the bytes
-    `run_side` would see, since both go through InputGen.slot_pages."""
-    if not (POOL_BASE <= addr < POOL_BASE + NSLOTS * SLOT):
-        return None
-    slot = (addr - POOL_BASE) & ~(SLOT - 1)
-    page = addr & ~0xFFF
-    buf = gen.slot_pages(inp, POOL_BASE + slot).get(page)
-    if buf is None or addr & 0xFFF > len(buf) - 4:
-        return None
-    return struct.unpack_from("<I", buf, addr & 0xFFF)[0]
+    """The dword an input holds at an absolute address, or None when nothing the input defines lives there.
+
+    Two sources, exactly the bytes `run_side` maps for BOTH sides before the first instruction:
+      * the lazily materialised pool (InputGen.slot_pages, with the input's pool_over edits);
+      * memory fault repair mapped at a faulting address (`inp.extra` = {base: size}): run_side fills it
+        with `gen._slot_soup(inp, base)[:size]` and nothing else, so the same call gives the same bytes.
+    A face reached through such a pointer (e.g. poly = 0x9 with the null slot mapped) is therefore judged
+    on its input bytes like a pool face. The decision depends only on the input, never on one side's run,
+    so both builds are discarded or compared together. Anything else (unmapped, image, heap) is None."""
+    if POOL_BASE <= addr < POOL_BASE + NSLOTS * SLOT:
+        slot = (addr - POOL_BASE) & ~(SLOT - 1)
+        page = addr & ~0xFFF
+        buf = gen.slot_pages(inp, POOL_BASE + slot).get(page)
+        if buf is None or addr & 0xFFF > len(buf) - 4:
+            return None
+        return struct.unpack_from("<I", buf, addr & 0xFFF)[0]
+    for base, size in sorted((getattr(inp, "extra", None) or {}).items()):
+        if base <= addr and addr + 4 <= base + size:
+            return struct.unpack_from("<I", gen._slot_soup(inp, base), addr - base)[0]
+    return None
 
 
 def _signed(v):
@@ -166,9 +175,7 @@ FACE_CAP = declared_array_len("face", "w", required=r"vector4\s+w\s*\[", default
 
 
 def _face_count(gen, inp):
-    a = inp.args[0] if inp.args else 0
-    if not (POOL_BASE <= a < POOL_BASE + NSLOTS * SLOT):
-        return
+    a = inp.args[0] if inp.args else 0       # pool, or fault-mapped (inp.extra) memory: see _dword
     yield "face::count", _dword(gen, inp, a + 0xB0), 1, FACE_CAP
 
 
