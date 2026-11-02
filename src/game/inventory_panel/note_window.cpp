@@ -17,7 +17,8 @@
 #include <dinput.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
+#include "../../rgl/rgl_string.h"
 
 // ---------------------------------------------------------------------------
 // string object (0x42bbd0 family)

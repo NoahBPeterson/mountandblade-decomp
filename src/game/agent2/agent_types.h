@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <math.h>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "../tstring.h"
 #include "../mat4.h"
 #include "../agent/item_kind.h"       // ItemKind, g_items, item type enum

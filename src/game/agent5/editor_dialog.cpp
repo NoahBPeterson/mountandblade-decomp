@@ -15,7 +15,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 // GetDlgItem: User32 exports it as GetDlgItem (IAT 0x54932c); windows.h's A/W-neutral macro maps to it.
 

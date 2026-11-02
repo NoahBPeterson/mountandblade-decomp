@@ -17,7 +17,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
+#include "../../rgl/rgl_string.h"
 
 // ---------------------------------------------------------------------------
 // Local layouts (names provisional)

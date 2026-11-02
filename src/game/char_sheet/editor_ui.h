@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <new>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 // ---- engine string --------------------------------------------------------------------------------
 #include "../tstring.h"

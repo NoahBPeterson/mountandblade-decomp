@@ -9,7 +9,7 @@
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);    // 0x536f8f
 

@@ -17,6 +17,7 @@
 //       Case bodies are in opcode order (the original emits them in that order, 581 of 591 monotone). See NOTES.md.
 //       Flags: /O2 /MT /Gy /TP. Names provisional except the Module System ones.
 //-----------------------------------------------------------------------------
+#define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
 #include <stdlib.h>
 #include "./script_interpreter.h"

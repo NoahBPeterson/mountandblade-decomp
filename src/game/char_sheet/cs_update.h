@@ -14,7 +14,7 @@
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "./cs_common.h"
 
 // the strategy world stepped at the top of the frame (0x427f40)

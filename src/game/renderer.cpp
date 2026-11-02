@@ -14,7 +14,7 @@
 #include <math.h>
 #include <string.h>
 #include <new>
-#include "rgl.h"
+#include "../rgl/rgl_math.h"
 #include "./mat4.h"
 #include "./renderer.h"
 struct Config;

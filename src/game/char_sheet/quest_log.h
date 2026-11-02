@@ -19,7 +19,7 @@
 // Class, member and function names are provisional.
 #include <stdio.h>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 using rgl::vector4;
 

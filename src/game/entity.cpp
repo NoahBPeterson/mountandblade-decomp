@@ -13,7 +13,7 @@
 #include <memory>
 #include <string.h>
 #include <new>
-#include "rgl.h"
+#include "../rgl/rgl_math.h"
 #include "./entity.h"
 #include "./world_data/thiscall_free.h"   // CALL_STDCALL_ON
 struct named_object;

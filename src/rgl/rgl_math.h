@@ -1,6 +1,7 @@
-// rgl_math.h: rgl::vector4 / rgl::matrix as src/rgl uses them. The declarations of vector4 are the ones of
-// match/include/rgl.h (verified there; the inline bodies matter for codegen, keep them as they are). src/rgl
-// does not include rgl.h because of its unverified rgl::string (see rgl_string.h), so they are repeated here.
+// rgl_math.h: rgl::vector4 / rgl::matrix, shared by src/rgl and src/game (the former match/include/rgl.h
+// declarations of vector4/matrix live here; the inline bodies matter for codegen, keep them as they are).
+// A TU whose original calls the out-of-line copies 0x407ca0 / 0x407cd0 / 0x407d00 defines
+// RGL_VECTOR4_OPS_OUT_OF_LINE before including this header. rgl::string is rgl_string.h.
 // The matrix members after transform_point_to_local come from the mesh slices (s00412a90..s00413e50).
 #ifndef RGL_MATH_H
 #define RGL_MATH_H

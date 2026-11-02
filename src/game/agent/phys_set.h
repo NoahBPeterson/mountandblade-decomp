@@ -7,7 +7,7 @@
 #define AGENT_PHYS_SET_H
 #include <stddef.h>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "./agent.h"
 
 using rgl::matrix;

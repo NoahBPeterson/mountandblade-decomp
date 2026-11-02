@@ -4,7 +4,7 @@
 #ifndef GAME_WORLD_H
 #define GAME_WORLD_H
 #include <vector>
-#include "rgl.h"
+#include "../rgl/rgl_math.h"
 #include "./cell.h"
 
 namespace rgl { struct entity; }

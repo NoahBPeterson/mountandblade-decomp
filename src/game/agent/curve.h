@@ -5,7 +5,7 @@
 #ifndef AGENT_CURVE_H
 #define AGENT_CURVE_H
 #include <math.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "../tstring.h"
 
 using rgl::vector4;

@@ -8,7 +8,7 @@
 //   0x51aa20  gui_manager::set_quad        (write the 4 corner points of the label background)
 // Names and field names are provisional; every offset is read off the disassembly.
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 using rgl::vector4;
 using rgl::matrix;

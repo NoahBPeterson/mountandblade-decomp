@@ -8,7 +8,7 @@
 #ifndef GAME_RGL_MESH_H
 #define GAME_RGL_MESH_H
 #include <vector>
-#include "rgl.h"
+#include "../rgl/rgl_math.h"
 #include "../include/vec.h"
 #include "../include/mesh_parts.h"
 #include "../include/mesh_prims.h"
@@ -26,9 +26,7 @@ struct mstr {
     ~mstr();                                    // 0x42bc40
 };
 
-vector4* unpack_color(vector4* out, const unsigned* argb);   // 0x40e4e0 (cdecl; returns out)
-vector4 unpack_color(const unsigned* argb);                  // 0x40e4e0 (cdecl, hidden return pointer: the definition's signature)
-unsigned pack_color(const vector4* c);                       // 0x40e440 (cdecl)
+vector4 unpack_color(const unsigned* argb);                  // 0x40e4e0 (cdecl, hidden return pointer: the definition's signature; rgl_math.h declares the out-parameter form and pack_color 0x40e440)
 
 // std::vector helpers: the original inlines push_back's fast path and indexes through &*begin()
 template<class T> __forceinline void vpush(std::vector<T>& v, const T& x)

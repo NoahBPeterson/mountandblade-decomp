@@ -8,7 +8,7 @@
 // shapes, level::query_segment) and s00483870 (the message ring).
 #include <windows.h>
 #include <math.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 using rgl::vector4;
 using rgl::matrix;

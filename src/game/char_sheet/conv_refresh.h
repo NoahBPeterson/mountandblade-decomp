@@ -17,7 +17,7 @@
 #include <math.h>
 #include <new>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 using rgl::vector4;
 

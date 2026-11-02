@@ -6,7 +6,7 @@
 #include "../../include/image_addrs.h"
 #include <windows.h>
 #include <math.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 using rgl::vector4;
 

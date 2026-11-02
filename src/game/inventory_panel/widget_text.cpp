@@ -12,7 +12,7 @@
 #include <string.h>
 #include <new>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 // ------------------------------------------------------------------ engine string (0x10 bytes) -----------
 #include "../tstring.h"

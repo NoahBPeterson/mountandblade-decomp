@@ -7,7 +7,7 @@
 #ifndef AGENT_AGENT_H
 #define AGENT_AGENT_H
 #include <math.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "../tstring.h"
 #include "../mat4.h"
 #include "./item_kind.h"

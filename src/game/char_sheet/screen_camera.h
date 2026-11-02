@@ -34,7 +34,7 @@
 #include <new>
 #include <string.h>
 #include <math.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 using rgl::vector4;
 #include "../../include/mat4.h"   // rgl::mat4: the 0x40-byte frame; rotate_fu 0x40e570 / rotate_su 0x40e670 are its members

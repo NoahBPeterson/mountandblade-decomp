@@ -6,7 +6,7 @@
 // Class and member names are provisional.
 #include <math.h>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "./cs_common.h"
 
 using rgl::vector4;

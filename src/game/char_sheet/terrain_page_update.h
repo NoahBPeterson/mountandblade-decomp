@@ -10,7 +10,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <math.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 using rgl::vector4;
 

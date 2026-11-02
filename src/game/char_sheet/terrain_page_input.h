@@ -18,7 +18,7 @@
 #pragma intrinsic(sqrt, fabs, sin, cos, tan, fsin, fcos)
 // the x87 inline sin/cos used by rotate_2x2 (inline FP is off in this build, so the intrinsics need the asm form)
 
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "./cs_common.h"
 #include "./cs_mat.h"
 #include "../../include/frustum.h"                    // rgl::frustum::build_planes (0x41e4f0)

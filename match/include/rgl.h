@@ -1,6 +1,9 @@
-// rgl: TaleWorlds' engine layer (name from the community's Warband RE, e.g. WSE's rgl:: headers).
-// Shared, verified layouts only. Every member here was confirmed by a byte-exact match; cite it.
-// Inline bodies matter for codegen (they are what callers inline), so do not "improve" them.
+// rgl.h: the declarations the not yet migrated slices (match/slices/*) are built on. src/ no longer includes this
+// header: its rgl::vector4 / rgl::matrix / rgl::string live in src/rgl/rgl_math.h and rgl_string.h.
+// Kept for the slices only because they declare their own pack_color/unpack_color, tstring and by-value
+// rgl::string users next to these (the shared string has a dtor, which changes the by-value returns of s00407c10
+// and s00408110, and its colour helpers clash with the slices' own). Retire it together with those slices.
+// Shared, verified layouts only. Inline bodies matter for codegen (they are what callers inline), so do not "improve" them.
 #ifndef MB_RGL_H
 #define MB_RGL_H
 #include <math.h>
@@ -35,13 +38,13 @@ struct matrix {
     vector4 s, f, u, o;
     void orthonormalize();                                                  // 0x407ef0
     vector4 transform_point_to_local(const vector4& p) const;               // 0x407f70
-    void rotate_about_s(const float* angle);                                // 0x40e570 (rgl/rgl_math.h declares the same members)
+    void rotate_about_s(const float* angle);                                // 0x40e570
     void rotate_about_f(const float* angle);                                // 0x40e670
     void rotate_about_u(const float* angle);                                // 0x40e770
 };
 
-// 16 bytes; ctor from a C string at 0x42bbe0 (zeroes all four dwords, then copies). Layout from the
-// disassembly (0x4f34c0 and src/rgl): pos +0, buffer +4, capacity +8, length +0xc.
+// 16 bytes; ctor from a C string at 0x42bbe0 (zeroes all four dwords, then copies). Layout (src/rgl/rgl_string.h):
+// pos +0, buffer +4, capacity +8, length +0xc.
 struct string {
     int pos; char* p; int cap, size;
     string(const char* s);                                                  // 0x42bbe0

@@ -4,7 +4,8 @@
 #ifndef AGENT_ITEM_KIND_H
 #define AGENT_ITEM_KIND_H
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
+#include "../../rgl/rgl_string.h"
 #include "../tstring.h"
 #include "../../include/item_kind.h"
 

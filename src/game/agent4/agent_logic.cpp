@@ -26,7 +26,7 @@
 #include <memory>
 #include <new>
 #include <algorithm>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "./agent_logic.h"
 #include "../rgl_mesh.h"
 #include "../agent3/agent_types.h"

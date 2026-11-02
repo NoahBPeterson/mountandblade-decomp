@@ -6,7 +6,7 @@
 #include <windows.h>
 #include <math.h>
 #include <stdio.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 #define MB_NOTHROW throw()
 

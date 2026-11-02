@@ -21,7 +21,7 @@
 //             entries of the cell are relit (0x471b30) unless shaders are on in quality 2.
 // Layouts: mission / dust entry from s0047a0c0, chain node + vector accessors from s0040ea00. Names provisional.
 #include <math.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 using rgl::matrix;
 using rgl::vector4;
