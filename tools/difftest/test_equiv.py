@@ -685,6 +685,24 @@ def test_heap_exhausted_is_recognised():
     assert not equiv.M.is_heap_exhausted("huge memcpy 0x9000000")
 
 
+def test_global_pointing_into_unallocated_heap_is_invalid():
+    """The emulated malloc heap is empty at entry, so an image global cannot hold an address in it (facegen_win
+    0x4f1460 [0x5e2934] = 0x5003e911, a malloc result +1 from a pointer compare's boundary, became an unaligned
+    `this`): such an input is discarded and steering never builds one."""
+    import steer
+    inp = equiv.Input()
+    inp.overrides = {0x5e2934: M.DYN_BASE + 0x3e911, 0x5e2938: 0x40010000}
+    assert equiv.unallocated_heap_global(inp) == (0x5e2934, M.DYN_BASE + 0x3e911)
+    inp.overrides = {0x5e2934: 0x40010000, 0x5e2938: M.DYN_BASE - 1, 0x5e293c: M.DYN_BASE + M.DYN_SIZE}
+    assert equiv.unallocated_heap_global(inp) is None
+    st = steer.Steer.__new__(steer.Steer)
+    inp.seed, inp.profile, inp.args, inp.pad, inp.pool_over, inp.regs, inp.xmm = 1, "zeroish", [0], [], {}, {}, []
+    inp.origin, inp.touched = "fresh", []
+    for loc in (("arg", 0), ("reg", "ecx"), (0x5e2934, 4)):
+        assert st.set_loc(inp, loc, M.DYN_BASE + 0x3e910 + 1, "int") is None
+    assert st.set_loc(inp, ("arg", 0), 5, "int").args[0] == 5
+
+
 def test_shrink_relations():
     """repair_heap / repair_loop find the input dword a trip count or allocation size follows from: equal, a count
     times a stride plus a header (also modulo 2**32: new[] of 0xff7fffff elements of 0x78 + 4 wraps), a byte size

@@ -853,6 +853,21 @@ def f2u(x):
     return struct.unpack("<I", struct.pack("<f", x))[0]
 
 
+def unallocated_heap_global(inp):
+    """(address, value) of the first image-global override that points into the emulated malloc heap, else None.
+
+    Validity rule: the heap is empty at entry (dyn_next = DYN_BASE), so no state the caller could have left in a
+    global names a block there; the pointer is to memory the function itself is about to be handed. Steering
+    produced these by copying a malloc result it saw into a global with +-1 (a pointer compare's boundary):
+    facegen_win 0x4f1460 [0x5e2934] = 0x5003e911, an unaligned `this` for the font/text code that glyph-rect
+    reads then landed on a heap block holding a stack address. Arguments / entry registers have the same rule
+    (arg-in-unallocated-heap, main loop)."""
+    for a, v in sorted(inp.overrides.items()):
+        if M.DYN_BASE <= v < M.DYN_BASE + M.DYN_SIZE:
+            return a, v
+    return None
+
+
 class Input:
     """One test input. Input objects live in the lazily materialised pool: the content of every
     4 KB pool page is a pure function of (seed, profile, page) plus `pool_over` edits, so both
@@ -6600,6 +6615,11 @@ def _test_function(sid, va, opts, log=print):
                 # 0x4f7f00: this = 0x50000001 aliases the frame engine_new returns, this->fr overlaps frame->kids)
                 discarded["arg-in-unallocated-heap"] = discarded.get("arg-in-unallocated-heap", 0) + 1
                 continue
+            if unallocated_heap_global(inp):
+                # the same rule for an image global (see unallocated_heap_global): steering's pointer-compare
+                # boundary values (a malloc result +-1) stored into a global no caller could have pointed there
+                discarded["global-in-unallocated-heap"] = discarded.get("global-in-unallocated-heap", 0) + 1
+                continue
             if t.reg_kinds.get("ecx") == "this" and not inp.regs.get("ecx"):
                 # a member function called on NULL: no caller does that (agent_hud 0x4f7f00: this = 0 put frame->kids at
                 # 0x178, overlapping this->fr)
@@ -7115,6 +7135,10 @@ def replay(sid, va, path, opts):
         if bad:
             print("invalid-object (a sweep discards this input, never compares it): %s=%#x outside [%d..%d]; %s" % (
                 bad[0], bad[1], bad[2], bad[3], bad[4].why))
+    bad_g = unallocated_heap_global(inp)
+    if bad_g:
+        print("invalid-input (a sweep discards this input, never compares it): global %08x = %08x points into the "
+              "empty emulated heap at entry (global-in-unallocated-heap)" % bad_g)
     a = runner.run_side(runner.orig, inp)
     b = runner.run_side(runner.ours, inp)
     cmp_ = Comparer(runner, opts)

@@ -676,7 +676,15 @@ class Steer:
         return None
 
     def set_loc(self, inp, loc, val, kind):
-        """Copy of inp with the location set to val; None if the location cannot be set."""
+        """Copy of inp with the location set to val; None if the location cannot be set.
+
+        A pointer-sized integer in the emulated malloc heap is refused: the heap is empty at entry, so no input
+        location can hold the address of a block the function allocates later (the compared operand was a malloc
+        result; its +-1 boundary values stored in a global gave facegen_win 0x4f1460 an unaligned `this` at
+        0x5003e911). The run loop discards such inputs too (unallocated_heap_global, arg-in-unallocated-heap)."""
+        if kind != "float" and M.DYN_BASE <= (val & 0xFFFFFFFF) < M.DYN_BASE + M.DYN_SIZE and \
+                (loc[0] in ("arg", "reg") or loc[1] == 4):
+            return None
         out = inp.copy()
         if loc[0] == "arg":
             out.args[loc[1]] = val & 0xFFFFFFFF
