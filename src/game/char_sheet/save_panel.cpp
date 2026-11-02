@@ -68,7 +68,6 @@ int  __cdecl crt_sprintf(char* buf, const char* fmt, ...);      // 0x536f8f
 int  __cdecl crt_remove(const char* path);                      // 0x539023
 void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
-extern char* g_save_prefix;                                     // 0x8ee3c3c (prefix string pointer)
 extern char* g_game;                                            // 0x5e2930
 extern int g_a17420;                                            // 0xa17420
 extern int g_a17820;                                            // 0xa17820
@@ -77,6 +76,7 @@ extern char g_main_menu_obj[];                                  // 0xa73980
 
 // main menu layout (see s004d7d10)
 #include "../main_menu.h"
+#include "../ui_globals.h"      // UI / core globals
 #define g_main_menu (*(main_menu*)g_main_menu_obj)
 // The menu record's tstrings/fields live on the object g_main_menu.rec points at, NOT on the screen manager itself:
 // the manager (0xa73980) is 30 screen pointers plus the open-screen deque at +0x78, so writing the record's
@@ -137,9 +137,7 @@ void SavePanel::update(int)
             crt_sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
-            const char* pf = g_save_prefix;
-            if (!pf)
-                pf = (char*)&g_save_prefix;
+            const char* pf = g_module_name.c_str();
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
                         selected / 10, selected % 10);
             *(int*)(g_save_dialog + 4) = 1;
@@ -169,9 +167,7 @@ void SavePanel::update(int)
             crt_sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
-            const char* pf = g_save_prefix;
-            if (!pf)
-                pf = (char*)&g_save_prefix;
+            const char* pf = g_module_name.c_str();
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
                         selected / 10, selected % 10);
             if (crt_remove(name) != 0) {

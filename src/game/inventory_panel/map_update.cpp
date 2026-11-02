@@ -114,6 +114,7 @@ static inline Party* party_at(GameData* g, int id)
 #include "../rgl_mesh.h"                                           // rgl::mesh (calc_bounds 0x438d80)
 
 #include "map_panel.h"                      // MapPanel / MapView (shared with map_info.cpp)
+#include "../ui_globals.h"      // UI / core globals
 
 // --------------------------------------------------------------------------------- globals -------------
 extern world*    g_level;                    // 0xa732b4
@@ -122,7 +123,6 @@ extern float     g_box_x;                    // 0x5d8778
 extern float     g_box_y;                    // 0x5d877c
 extern float     g_mouse_x;                  // 0x5d7094 (float: ?g_mouse_x@@3MA)
 extern float     g_mouse_y;                  // 0x5d7098
-extern int       g_a17458;                   // 0xa17458
 extern int       g_a17858;                   // 0xa17858
 extern int       g_a17148;                   // 0xa17148
 extern int       g_5a9fbc;                   // 0x5a9fbc
@@ -296,7 +296,7 @@ void MapPanel::update_target()
 
     // ---- 0x519997: commit the pick -----------------------------------------------------------------
     if (bestobj) {
-        if (g_a17458 == 0 && g_a17858 != 0 && f2d4 == 0) {
+        if (g_key_17458 == 0 && g_a17858 != 0 && f2d4 == 0) {
             g_game->n_labels  = 0;
             g_game->cur_label = -1;
             f2d8 = ((MapSceneObj*)bestobj)->party;

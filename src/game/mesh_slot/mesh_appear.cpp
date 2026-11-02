@@ -42,10 +42,8 @@ struct lod2_a : lod_mesh2 {                      // the 0xe0-byte lod record
 };
 EChar* append_mesh(int colour, int kind, void** ap, void** a, void** b, char carried, int* out);   // 0x481c40 (mesh_terrain.cpp)
 extern int g_item_kind_count;                         // g_item_kind_count 0x5e29d4
-extern int g_cur;                                // 0x8ed4f68
 extern EChar* g_skins_begin;                           // 0x8ed4f7c
 extern int g_skin_count;                         // 0x8ed4f88
-extern float g_dummy_mat;                        // 0x8ed4f8c
 extern float g_lod_scale;                        // 0x54b890 (0.95)
 extern char g_script[]; // 0xa70440
 
@@ -209,7 +207,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             lod_mesh2* wl = make_item_lod(w, w->m4 >> 24);
             unsigned wflags = g_items[w->item].type_flags;
             if ((wflags & 0x80000000) == 0)
-                g_skins_begin[g_cur].use_carry((lod_mesh*)wl, &g_dummy_mat);      // 0x47de60
+                g_skins_begin[g_anim.cur].use_carry((lod_mesh*)wl, g_anim.weights);      // 0x47de60
             ((lod2_a*)wl)->apply((matrix*)mtx);
             if ((wflags & 0xf00) == 0xf00)
                 ((IdHolder*)a->fx)->add((int)wl);           // 0x478fb0 (IdHolder::add: pushes onto the int list at +0x30)

@@ -18,32 +18,16 @@ using rgl::mat3;
 #include "./cs_mat.h"                                // identity_pos, UiD, WindowMgrW, FaceRace, FaceGen
 
 // key state / settings globals
-extern int g_a17204;                                    // 0xa17204
-extern int g_a17214;                                    // 0xa17214
-extern int g_a1720c;                                    // 0xa1720c
-extern int g_a171fc;                                    // 0xa171fc
-extern int g_a17454;                                    // 0xa17454
-extern int g_a17854;                                    // 0xa17854
-extern int g_a17458;                                    // 0xa17458
 extern float g_5d7094;                                  // 0x5d7094
 extern float g_5d7098;                                  // 0x5d7098
-extern float g_a178d4;                                  // 0xa178d4
-extern float g_a178d8;                                  // 0xa178d8
 
 // globals of the face-generator update (0x4ea8e0)
-extern int g_no_cam;                                    // 0x5a9fb0
 extern int g_a17148;                                    // 0xa17148
 extern int g_a17348;                                    // 0xa17348
-extern int g_a1711c;                                    // 0xa1711c
-extern int g_a1751c;                                    // 0xa1751c
-extern int g_world_time;                                // 0x5d8790
 extern float g_scroll;                                  // 0x590d7c
 extern char* g_game;                                    // 0x5e2930
-extern float g_dummy_mat;                               // 0x8ed4f8c (float; one per deform key)
-extern float g_dummy1;                                  // 0x8ed508c
 
 #include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
-extern int g_cur;                                       // 0x8ed4f68
 
 #include "../scene_world.h"                              // World::step 0x427f40
 #include "../tstring.h"
@@ -54,6 +38,7 @@ extern StrTable g_strtable;                             // 0x5e2a18
 
 #include "../../rgl/text_stream.h"                    // mb_snprintf (0x415100)
 #include "../animator.h"                              // Animator, g_anim
+#include "../ui_globals.h"      // UI / core globals
 
 // a UI element; only the vtable slots this function calls are named
 struct Ctrl {
@@ -130,7 +115,7 @@ struct CamView {
     void update_model(float dt);
 };
 
-#define SKIN_INT(off) (*(int*)((char*)g_skins_begin + g_cur * 0x1f8 + (off)))
-#define g_dummy_mat_arr (&g_dummy_mat)
+#define SKIN_INT(off) (*(int*)((char*)g_skins_begin + g_anim.cur * 0x1f8 + (off)))
+#define g_dummy_mat_arr (g_anim.weights)
 
 #endif

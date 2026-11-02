@@ -33,9 +33,7 @@ using rgl::vector4;
 struct cfg_entry { int f0; char* value; char pad[0x2c - 8]; };  // config-table entry (0xa4425c + 0x2c*i)
 extern int g_n_strings;                                  // 0xa70240
 extern cfg_entry g_strings;                                  // 0xa44240 (indexed from 0xa4425c)
-extern tstring g_empty_string;                           // 0x8ee30f0
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
-extern unsigned char g_ui_dirty;                         // 0x5d8788
 
 // lookup of one setting (0x4bd5a0 + atof), 0.0f when the key is missing
 static float config_float(const char* name)
@@ -103,6 +101,7 @@ Widget* make_body_button(Widget* parent, const tstring& a, const tstring& b, con
 
 // ---- mission / agent list helpers ---------------------------------------------------------------------
 #include "../mission.h"
+#include "../ui_globals.h"      // UI / core globals
 
 
 extern Mission* g_mission;                               // 0x5e292c

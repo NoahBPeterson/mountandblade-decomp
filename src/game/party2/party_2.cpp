@@ -235,7 +235,6 @@ extern float g_k6_9;                                // 0x5935d0
 extern float g_k0_04;                               // 0x54ab1c
 extern float g_k0_006;                              // 0x5935cc
 extern float g_k30;                                 // 0x54b658
-extern float g_k0_01;                               // 0x54a6f0
 extern float g_k15;                                 // 0x590da0
 extern float g_k0_7;                                // 0x54b3c8
 extern float g_k0_6;                                // 0x590d94
@@ -469,7 +468,7 @@ void Party::set_speed_from_stat()
 {
     (*(__int64*)((char*)&g_script + 0x18)) = 100;
     g_game->emit_event(0x1a, id, 0);
-    f8b0 = (float)(*(__int64*)((char*)&g_script + 0x18)) * g_k0_01;
+    f8b0 = (float)(*(__int64*)((char*)&g_script + 0x18)) * 0.01f;
 }
 
 // @ 0x4b2180
@@ -657,7 +656,6 @@ int EventVec::size() const
 
 // ---- STL helper instances of the 0xc-byte open-list element and the 0x5c-byte event record --------------------------------
 extern float g_gk3;                                  // 0x54a710  3.0f
-extern float g_gk0_05a;                              // 0x549d74
 extern float g_gk0_05b;                              // 0x549d7c
 extern float g_gk0_03;                               // 0x549d70
 
@@ -862,9 +860,9 @@ void Party::set_order_agent(int* t)
     const PartyV4* qq = &party_of(mgr, id)->pos;
     float ex = qq->x - f5990;
     float ey = qq->y - f5994;
-    if (ex * ex + ey * ey > g_gk0_05a) {
+    if (ex * ex + ey * ey > 10.0f) {
         moving = 0;
-        if (d.z * d.z + d.y * d.y + d.x * d.x > g_gk0_05a) {
+        if (d.z * d.z + d.y * d.y + d.x * d.x > 10.0f) {
             f5988 = 1;
         }
         PartyV4& rp = party_of(&g_game->parties, tgt_id)->pos;
@@ -880,7 +878,6 @@ extern float g_rand_k;                               // 0x54a6bc  1/15817
 extern float g_k_item_weight;                        // 0x593640  per-item weight of the equipped grid item
 struct options;
 extern options g_options;                   // 0x5aa008
-extern int g_skill_clamp;                       // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp               // outside the annotation range, so a literal cast
 
 // @ 0x4b2c00
@@ -2317,12 +2314,8 @@ void Party::leave_battle()
 
 
 // ---- the world-map path finder and the nav drivers ----------------------------------------------------------------------
-extern float g_half;        // 0x549d70 = 0.5f
 extern float g_one;         // 0x549cdc = 1.0f
 extern float g_105;         // 0x59364c = 10.5f
-extern float g_10;          // 0x549d74 = 10.0f
-extern float g_005;         // 0x54b4d0 = 0.05f
-extern float g_vis;         // 0x54a6f0 = 0.01f
 extern float g_scale;       // 0x54a6d0 = 1e-5f
 extern float g_nav_jitter_chance;                    // 0x54b3c4 (0.35)
 
@@ -2523,14 +2516,14 @@ void BattleRec::update_nav_anim(int)
     }
 
     if (type == 1) {
-        if (opacity > g_half && GDP(char, 0x95) == 0) {
+        if (opacity > 0.5f && GDP(char, 0x95) == 0) {
             if (anim.elapsed() > g_105) {
                 sound = g_sound_mgr.play(g_sound_bank, 0, obj->pos, 1.0f, 0);
                 anim.start = g_ticks[anim.clock];
             }
         }
-        if (opacity < g_005 && sound != -1) {
-            if (anim.elapsed() < g_10)
+        if (opacity < 0.05f && sound != -1) {
+            if (anim.elapsed() < 10.0f)
                 FSOUND_StopSound(sound);
         }
         {
@@ -2552,7 +2545,7 @@ void BattleRec::update_nav_anim(int)
         rgba[2] = 1.0f;
         rgba[3] = opacity;
         unsigned color = rgl::pack_color((const vector4*)rgba);
-        o->visible = (opacity > g_vis) ? 1 : 0;
+        o->visible = (opacity > 0.01f) ? 1 : 0;
         unsigned i = 0;
         for (;;) {
             int* b = obj->begin;

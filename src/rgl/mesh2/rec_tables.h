@@ -305,7 +305,6 @@ int   __stdcall FSOUND_Sample_GetDefaults(FSOUND_SAMPLE* s, int* freq, int* vol,
 
 extern const float g_54ab2c;   // 0x54ab2c (0.0625f)
 extern const float g_590b60;   // 0x590b60 (250.0f)
-extern const float g_549d70;   // 0x549d70 (0.5f)
 extern int    g_sound_paused;   // 0x5a9fd4
 extern int    g_sound_muted;    // 0x5a9fd8
 extern float  g_music_volume;   // 0x5aa010

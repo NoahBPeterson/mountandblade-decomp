@@ -2,6 +2,13 @@
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../ui_globals.h"      // UI / core globals
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_a1741c;   // 0xa1741c screenshot requested
+int g_a1781c;   // 0xa1781c screenshot already done
+DiDev* g_a170d0;   // 0xa170d0 DirectInput device of the mouse, may be null
+
 
 // @ 0x4ebc10
 // Saves the next free screenshot file, then logs "ui_screenshot_taken_to_value" with the file name, or
@@ -15,14 +22,14 @@ void __cdecl take_screenshot(void)
     tstring* s;
     HANDLE h;
 
-    _sprintf(dir, "", g_save_prefix ? g_save_prefix : (char*)&g_save_prefix);
+    _sprintf(dir, "", g_module_name.c_str());
     screenshots_path(dir);
-    _sprintf(name, "%s%s", dir, g_save_prefix ? g_save_prefix : (char*)&g_save_prefix);
+    _sprintf(name, "%s%s", dir, g_module_name.c_str());
     CreateDirectoryA(name, 0);
     for (;;) {
         g_screenshots_counter++;
         mb_snprintf(name, 0x200, "%s%s\\mb%d.bmp", dir,
-                    g_save_prefix ? g_save_prefix : (char*)&g_save_prefix,
+                    g_module_name.c_str(),
                     g_screenshots_counter);
         h = FindFirstFileA(name, &fd);
         if (h == (HANDLE)-1)
@@ -127,31 +134,31 @@ void GuiScreen::process(int param)
 
     this->dmx = 0.0f;
     this->dmy = 0.0f;
-    if (this->mx <= g_eps) {
-        if (g_a178d4 < 0.0f) {
-            this->dmx = g_a178d4;
-            this->ax = this->ax + g_a178d4;
+    if (this->mx <= 0.01f) {
+        if (g_axis_x < 0.0f) {
+            this->dmx = g_axis_x;
+            this->ax = this->ax + g_axis_x;
         }
     }
-    else if (this->mx >= g_ninety_nine) {
-        if (g_a178d4 > 0.0f) {
-            this->dmx = g_a178d4;
-            this->ax = this->ax + g_a178d4;
+    else if (this->mx >= 0.99f) {
+        if (g_axis_x > 0.0f) {
+            this->dmx = g_axis_x;
+            this->ax = this->ax + g_axis_x;
         }
     }
     else {
         this->ax = 0.0f;
     }
-    if (this->my <= g_eps) {
-        if (g_a178d8 > 0.0f) {
-            this->dmy = -g_a178d8;
-            this->ay = this->ay - g_a178d8;
+    if (this->my <= 0.01f) {
+        if (g_axis_vert > 0.0f) {
+            this->dmy = -g_axis_vert;
+            this->ay = this->ay - g_axis_vert;
         }
     }
-    else if (this->my >= g_seventy_four) {
-        if (g_a178d8 < 0.0f) {
-            this->dmy = -g_a178d8;
-            this->ay = this->ay - g_a178d8;
+    else if (this->my >= 0.74f) {
+        if (g_axis_vert < 0.0f) {
+            this->dmy = -g_axis_vert;
+            this->ay = this->ay - g_axis_vert;
         }
     }
     else {
@@ -295,6 +302,6 @@ void __cdecl frame_hook(void)
 {
     if ((g_a17148 || g_a17348) && g_a1741c && !g_a1781c)
         take_screenshot();
-    else if (g_5a9fb0 && (g_a17148 || g_a17348) && (g_a1717c || g_a171ac) && g_a17190 && !g_a17590)
+    else if (g_dev_mode && (g_a17148 || g_a17348) && (g_a1717c || g_a171ac) && g_a17190 && !g_a17590)
         menu_variables_loaded(0);   // 0x4ebb80
 }

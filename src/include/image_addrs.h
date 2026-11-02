@@ -32,12 +32,8 @@ namespace orig {
 extern const float g_zero;                 // 0x549ca8
 extern const float g_one;                  // 0x549cdc
 extern const float k_0_3f;                 // 0x549d68
-extern const float k_0_9f;                 // 0x549d6c
-extern const float g_half;                 // 0x549d70
-extern const float g_ten;                  // 0x549d74
 extern const float k_0_1f;                 // 0x549d7c
 extern const char g_empty_text[];                      // 0x54a480
-extern const float k_1_5708f;              // 0x54a534
 extern const double g_day_period;          // 0x54a5d8
 extern const float k_1em05f;               // 0x54a6d0
 extern const float k_0_2f;                 // 0x54a6e4
@@ -51,26 +47,18 @@ extern const float k_100000f;              // 0x54b86c
 extern const float k_1_1f;                 // 0x54b888
 extern const float k_1_5f;                 // 0x54b8b0
 extern const float k_0_03f;                // 0x54b8b4
-extern const float k_9_8f;                 // 0x590af0
 extern const float k_300f;                 // 0x590b20
 extern const float k_400f;                 // 0x590b58
 extern const float k_250f;                 // 0x590b60
 extern const float k_0_65f;                // 0x590b6c
 extern const float k_1_2f;                 // 0x590b94
-extern const float k_1_6f;                 // 0x590c48
 extern const float k_0_08f;                // 0x590c74
 extern const float k_0_002f;               // 0x590c78
 extern const float k_1_25f;                // 0x590c80
 extern const float k_0_02f;                // 0x590cd0
-extern const float k_0_0005f;              // 0x590d7c
-extern const float k_3_5f;                 // 0x590d8c
 extern const float k_0_23f;                // 0x590e68
-extern const float k_0_014f;               // 0x590f7c
 extern const float k_1_7f;                 // 0x590fa4
 extern const float k_75f;                  // 0x5910fc
-extern const float k_0_98f;                // 0x5911d8
-extern const float k_m10f;                 // 0x5915a0
-extern const float k_0_94f;                // 0x591af4
 extern const float g_four;                 // 0x5935c8
 extern const float k_5f;                   // 0x59393c
 extern const char str_passage[];                       // 0x595e6c
@@ -81,9 +69,6 @@ extern const float k_0_00117647f;          // 0x596858
 extern const float k_0_000909091f;         // 0x59685c
 extern const char str_no_beard_mesh[];                 // 0x598308
 extern const char str_no_face_mesh[];                  // 0x598328
-extern const float k_m1em05f;              // 0x598688
-extern const float k_235f;                 // 0x59868c
-extern const float k_105f;                 // 0x598690
 extern const char str_plants[];                        // 0x5999ac
 extern const char str_item_kinds[];                    // 0x5999b4
 extern const char str_scene_props[];                   // 0x5999c0
@@ -93,7 +78,6 @@ extern const char str_m[];                             // 0x5a9c3c
 extern const char str_mount_and_blade[];               // 0x5a9c54
 extern text_stream g_log;                  // 0x5a9f60
 extern int g_texture_detail;               // 0x5a9f9c
-extern int g_no_cam;                       // 0x5a9fb0
 extern int g_simple_reflect;               // 0x5a9fc4
 extern int g_sound_muted;                  // 0x5a9fd8
 extern int g_iWindowWidth;                 // 0x5a9fe4
@@ -139,7 +123,6 @@ extern resmgr g_resmgr_obj;                    // 0x5d6fa0
 extern gui_manager g_gui_mgr;                  // 0x5d7080
 extern float g_mouse_x;                    // 0x5d7094
 extern float g_mouse_y;                    // 0x5d7098
-extern int g_mission_clock;                // 0x5d8790
 extern char g_5e2630;                      // 0x5e2630
 extern ptype* g_ptypes;                    // 0x5e28f8
 extern int g_use_shaders;                  // 0x5e28fc
@@ -155,11 +138,7 @@ extern StrTable g_strtable;                // 0x5e2a18
 extern render_batch g_batch;               // 0x5fe898
 extern InputSet g_input_a;                 // 0xa170c8
 extern void* g_a17110;                     // 0xa17110
-extern int g_a1711c;                       // 0xa1711c
-extern int g_a17454;                       // 0xa17454
 extern void* g_a17510;                     // 0xa17510
-extern int g_a1751c;                       // 0xa1751c
-extern int g_a17854;                       // 0xa17854
 extern renderer g_render;                  // 0xa17910
 extern char g_use_hw_shadow;               // 0xa17f24
 extern unsigned char g_show_party_ids_instead_of_names; // 0xa181b8

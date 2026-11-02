@@ -129,7 +129,6 @@ extern int g_display_wp_crossbows;           // 0x5e2910
 extern int g_display_wp_throwing;            // 0x5e2914
 extern int g_display_wp_firearms;            // 0x5e2918
 extern int g_compatible_module_version;      // 0x5e29b8
-extern int g_module_version;                 // 0x5e29c0
 extern int g_scan_module_textures;           // 0xa18108
 extern int g_scan_module_sounds;             // 0xa1810c
 extern float g_time_multiplier;              // 0xa18110
@@ -174,10 +173,6 @@ extern int g_main_menu_font_color_green;     // 0xa181c0
 extern int g_main_menu_font_color_blue;      // 0xa181c4
 extern int g_works_with_version_min;         // 0xa181c8
 extern int g_works_with_version_max;         // 0xa181cc
-extern float g_map_min_x;                    // 0x5aa120
-extern float g_map_min_y;                    // 0x5aa124
-extern float g_map_max_x;                    // 0x5aa118
-extern float g_map_max_y;                    // 0x5aa11c
 extern int g_missile_damage_speed_power_int; // 0x5e29c8 (provisional)
 
 HRESULT build_shader();                                                     // 0x4c17c0

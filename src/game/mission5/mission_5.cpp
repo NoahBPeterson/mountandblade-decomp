@@ -21,6 +21,11 @@
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../ui_globals.h"      // UI / core globals
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_skill_clamp;   // 0x8ee3ac4 upper clamp of the skill offset
+
 
 // ======================================================= slice s00525160: functions
 #undef g_mgr
@@ -38,7 +43,7 @@ void Game_s25160::handle_event(int code)
 {
     g_mgr.update();
 
-    if (orig::g_mission_clock != 0)
+    if (g_mission_clock != 0)
     {
         // camera/sky interpolation over the current site's passage table
         char* o = *(char**)(f188 + 0x484);
@@ -46,8 +51,8 @@ void Game_s25160::handle_event(int code)
         float v = (*(float*)(o + 0x168) - *(float*)(o + 0x16c))
                 / (*(float*)(o + 0x170) - *(float*)(o + 0x16c))
                 * (*pa - *(float*)(o + 0x17c))
-                + ((float)orig::g_mission_clock / *pa * *(float*)(o + 0x17c))
-                  * orig::k_0_0005f;
+                + ((float)g_mission_clock / *pa * *(float*)(o + 0x17c))
+                  * 0.0005f;
         ((UiD*)o)->set_value(v);   // 0x48baa0: UiD::set_value, this = the object o (ecx is still o at the call)
         ((VObj_s25160*)o)->v18(0x10000);
     }
@@ -130,7 +135,7 @@ done:
             refresh(i, &res);
         }
     }
-    else if (orig::g_a17454 == 0 && orig::g_a17854 != 0)
+    else if (g_key_17454 == 0 && g_a17854 != 0)
     {
         refresh(-2, &res);
     }
@@ -141,7 +146,7 @@ done:
 
     if (v == 1)
         goto case1;
-    if (orig::g_no_cam != 0 && *(int*)&orig::g_a17110 != 0 && *(int*)&orig::g_a17510 == 0)
+    if (g_dev_mode != 0 && *(int*)&orig::g_a17110 != 0 && *(int*)&orig::g_a17510 == 0)
         goto case1;
 
     if (v == 0x10)
@@ -457,7 +462,6 @@ int find_listener_agent()
 #undef g_deque_s261e0
 #define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 #undef g_clamp_max
-extern int g_skill_clamp;                       // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
 // @ 0x5261e0
 void Screen_s261e0::tick(float dt)
@@ -1567,7 +1571,7 @@ void MissionHud_s29130::update_marks()
 {
     Agent_s29130* a = &g_scene_s29130->agents.pages[g_scene_s29130->cur_agent_s29130 >> 4][g_scene_s29130->cur_agent_s29130 & 0xf];
 
-    float y = (g_half / tanf(f288 * g_deg2rad * g_half)) * tanf(a->aim_error);
+    float y = (0.5f / tanf(f288 * g_deg2rad * 0.5f)) * tanf(a->aim_error);
 
     float p[2];
     p[0] = 0.5f;
@@ -1581,7 +1585,7 @@ void MissionHud_s29130::update_marks()
     float s = (float)sin(2.268928f);
     float nx = p[0] * c - p[1] * s;
     float ny = p[0] * s + p[1] * c;
-    p[0] = nx + g_half;
+    p[0] = nx + 0.5f;
     p[1] = ny + g_0375;
     w[1]->set_pos(p);
 
@@ -1591,7 +1595,7 @@ void MissionHud_s29130::update_marks()
     s = (float)sin(-2.268928f);
     nx = p[0] * c - p[1] * s;
     ny = p[0] * s + p[1] * c;
-    p[0] = nx + g_half;
+    p[0] = nx + 0.5f;
     p[1] = ny + g_0375;
     w[2]->set_pos(p);
 

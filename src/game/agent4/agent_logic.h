@@ -60,7 +60,8 @@ struct VoiceTable {
         return -1;
     }
 };
-extern VoiceTable g_anim_table;                             // 0x8ed4f60
+#include "../animator.h"                            // Animator g_anim (0x8ed4f60): the voice table is the same object
+#define g_anim_table (*(VoiceTable*)&g_anim)         // g_anim seen as the voice table (recs at +0x18, count at +0x28)
 
 // ---- free functions of earlier objects the module calls -------------------------------------------------------------
 float frand();                                                          // 0x40e400 (rand() % 15817) / 15817

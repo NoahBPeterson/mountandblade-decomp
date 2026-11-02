@@ -241,7 +241,6 @@ extern int g_a1758c;                                // 0xa1758c  press, code 0x6
 extern int g_a17590;                                // 0xa17590  press, code 0x64
 extern int g_a17820;                                // 0xa17820  previous, code 0x08
 extern const float g_one;                           // 0x549cdc = 1.0f
-extern const float g_hilite_dim;                    // 0x54b4d0 = 0.05f
 extern const float g_rot_step;                      // 0x590c60 = 0.005f
 extern const double g_percent;                      // 0x59c480 = 0.01
 
@@ -765,7 +764,6 @@ extern int   g_a17594;                                  // 0xa17594
 extern float  g_k005;                                   // 0x590c60 (0.005f)
 extern double g_d001;                                   // 0x59c480 (0.01)
 extern const float g_one;                                    // 0x549cdc (1.0f)
-extern float  g_k005b;                                  // 0x54b4d0 (0.05f)
 
 // ---- game tables ---------------------------------------------------------------------------------------
 namespace rgl {

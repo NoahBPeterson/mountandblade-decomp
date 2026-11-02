@@ -1198,7 +1198,6 @@ inline void identity_pos(float* m) { ::identity_pos((::pos*)m); }               
 extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> seconds); defined once, in mesh_slot/slot.cpp
 extern const float g_549cdc;                    // 0x549cdc  1.0f
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
-extern const float g_549d70;                    // 0x549d70  0.5f
 extern const float g_590cd0;                    // 0x590cd0  0.02f
 
 // int globals: the view's z/w scale factors (zero in the image, set at startup by the game).

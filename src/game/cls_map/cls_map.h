@@ -215,7 +215,7 @@ struct resmgr { rgl::mesh* get_object(const rgl::string* name);      // 0x419540
                 lod_group* get_lod_mesh(const rgl::string& name); };   // 0x41cdc0 (rgl/core/resmgr.h)
 inline gui_mesh* res_get(const tstring& name) { return (gui_mesh*)((resmgr*)&g_resmgr)->get_object((const rgl::string*)&name); }
 extern gui_manager g_gui;                       // 0x5d7080
-extern unsigned char g_ui_changed;              // 0x5d8788 (set to 1 whenever a window was installed)
+extern unsigned char g_gui_dirty;               // 0x5d8788 (set to 1 whenever a window was installed; game_globals.h declares it, which clashes with this header's table views)
 
 // ---- 0x4dada0..0x4db660: the campaign diary screens (mission window, meeting window, "done" window) --------------------
 // The screen manager (`this` of 0x4db020..0x4db660, 0x4de1b0..): one of the screen objects, a window pointer table.
@@ -263,7 +263,7 @@ void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main miss
 // ---- 0x4dc630..0x4dce70: the message (result) window and its button makers ----------------------------------------------
 // the option table (0xa44240): ini_file, entries of 0x2c bytes with the value string at +0x1c of each entry (from +0x1c: 0xa4425c)
 extern ini_file g_game_vars;                          // 0xa44240
-extern float g_549cdc, g_590b6c, g_54b3b0, g_549d70, g_549d68;   // button metrics (rdata floats)
+extern float g_549cdc, g_590b6c, g_54b3b0, g_549d68;   // button metrics (rdata floats)
 #include "../result_window.h"                    // ResultWindow: the head_rec record of vtable 0x595740 (its slot 2 is the window maker below)
 UiAInline* new_long_button(MissionUi* parent, const tstring* text, float a, float b, float c);     // 0x4dcbd0
 UiAInline* new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4dce70
@@ -370,11 +370,9 @@ extern int g_main_menu_font_color_red;                     // 0xa181bc
 extern int g_main_menu_font_color_green;                   // 0xa181c0
 extern int g_main_menu_font_color_blue;                    // 0xa181c4
 extern int g_main_menu_kind;                    // 0xa75f34
-extern char* g_save_prefix;                     // 0x8ee3c3c (the c_str idiom falls back to its own address)
 extern BlockOwner* g_presentation;               // 0x5e299c
 extern float g_rand_range;                      // 0x54a6bc
 extern float g_pic_split1;                      // 0x54b868
-extern float g_pic_split2;                      // 0x549d70
 extern float g_pic_split3;                      // 0x54b8ac
 extern char g_key_return[];                     // 0x59736c "ui_return_to_game"
 extern char g_key_options[];                    // 0x597234 "ui_options"

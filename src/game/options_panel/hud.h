@@ -32,7 +32,6 @@ extern MenuScreen* g_screen;                        // 0xa739b8
 
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern int   g_u32;                                 // 0xa735c0
-extern float g_char_scale;                          // 0x590d7c
 
 // the strings the mission items write and the numbers their sounds depend on
 #include "../dialog_manager.h"   // canonical: g_script (0xa70440)
@@ -46,7 +45,6 @@ extern double g_day_period;                         // 0x54a5d8
 extern float g_hour_scale;                          // 0x590c90
 extern float g_hour_base;                           // 0x54ab28
 extern int g_ticks_[2];                             // 0x5e2948 (the 64-bit tick clock)
-extern int g_mission_clock;                         // 0x5d8790 (mission time; 0 = no mission)
 extern int g_a170d8;                                // 0xa170d8
 extern int g_a174d8;                                // 0xa174d8
 
@@ -73,6 +71,7 @@ inline void play_family_sound(int family, int id)
 // control widget: "activate" at vtable +0x2c, "value" at +0x30, "float" at +0x38, "used" at +0x44,
 // "key flags" at +0x48, "kind" at +0xc0 (slots cross-checked with s004cf7b0 / s004dd830).
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_globals.h"      // UI / core globals
 
 // the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
 // +0x178 the slot index, +0x17c the step, +0xf0 the per-slot screen values.

@@ -80,8 +80,8 @@ void __cdecl build_appearance(AgentBody* b, int kind, int troop, int f94, ItemRe
 
 // ---- globals and engine objects the HUD code uses ---------------------------------------------------------------------
 #include "../gui_mgr.h"                                         // GuiManager: the gui manager at 0x5d7080
+#include "../ui_globals.h"      // UI / core globals
 extern GuiManager g_gui;                                              // 0x5d7080
-extern char g_gui_dirty;                                          // 0x5d8788 (set after a screen was built)
 extern char g_hud_flag;                                           // 0x5e212c (set to 1 by 0x4f7f00)
 extern char g_scene_dirty;                                          // 0x5e2938 (set with 5% probability by 0x4f7f00)
 extern int g_pending_action;                                            // 0x5a9f18 (set to -1)
@@ -189,8 +189,6 @@ extern matrix g_listener;                                         // 0x5aa138 (s
 extern int g_use_shaders;                                      // 0x5e28fc
 extern ShadowMap g_shadow_map;                                        // 0xa70248
 extern int g_flag_a17108, g_flag_a17148, g_flag_a17348;           // 0xa17108, 0xa17148, 0xa17348 (key states that force the sun to full size)
-extern int g_screen_w;                                            // 0x5d75c8
-extern int g_screen_h;                                            // 0x5d75cc
 extern float g_scale_a;                                           // 0x5aa08c
 extern float g_scale_b;                                           // 0x5aa090
 

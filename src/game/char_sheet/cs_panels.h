@@ -29,8 +29,6 @@ extern StrTable g_strtable;                         // 0x5e2a18
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
 extern "C" double atof(const char* s);              // 0x537352
 
-extern int g_level_table[];                         // 0x5937cc (char_t_next_level_at_ values)
-extern int g_skill_clamp;                           // 0x8ee3ac4 (upper clamp of the skill offset)
 #include "../../rgl/text_stream.h"           // mb_snprintf 0x415100 (size-limited formatter)
 void mb_vsprintf(char* buf, const char* fmt, ...);          // 0x536f8f (unlimited formatter)
 
@@ -61,5 +59,6 @@ typedef SheetWidget SkillLine;
 
 // ---- the character-sheet panel (only the slots this function touches) -----------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
+#include "../ui_globals.h"      // UI / core globals
 
 #endif

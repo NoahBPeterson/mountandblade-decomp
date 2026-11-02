@@ -5,11 +5,11 @@
 #include <windows.h>
 #include <stdio.h>
 #include "tstring.h"
+#include "./ui_globals.h"   // screen size, ui-dirty flag, mission clock, dev mode, input key/axis state (a leaf header the UI modules include without the rest)
 
 struct MapIcon;
 struct PresentationTable;
 struct AnimDefV;
-struct AnimTable;
 struct DialogMgr;   // dialog_manager.h
 
 // The table of single-bit masks (8-byte entries 1<<i) starts here;
@@ -138,7 +138,7 @@ extern float g_couched_lance_damage_multiplier; // 0xa181a0
 extern int g_enable_quick_battles; // 0xa181a4
 // game_variables.txt key "disable_food_slot" (trigger_vec.cpp loader);
 extern int g_disable_food_slot; // 0xa181a8
-// game_variables.txt key "limit_hair_colors" (trigger_vec.cpp loader);
+// game_variables.txt key "limit_hair_colors" (trigger_vec.cpp loader); also the shader-on flag (char_sheet/facegen_misc.cpp).
 extern int g_limit_hair_colors; // 0xa181ac
 // game_variables.txt key "show_faction_color" (trigger_vec.cpp loader);
 extern int g_show_faction_color; // 0xa181b0
@@ -164,12 +164,12 @@ extern int g_music_situation; // 0xa73a10
 extern PresentationTable g_presentations; // 0xa75f2c
 // 0x30-byte animation definitions indexed by animation id (agent_logic.cpp g_anims[0x1a3]).
 extern AnimDefV* g_anims; // 0xa76628
-// module_files.cpp loads this table;
-extern AnimTable g_anim_table; // 0x8ed4f60
 // Count belonging to the skin table (script troop_set_type validates against it);
 extern int g_skin_count; // 0x8ed4f88
 // DialogMgr (dialog_manager.h, +0 count, +4 recs ...);
 extern DialogMgr g_dialogs; // 0x8ed50c8
+// The empty string copied by the conversation refresh (conv_refresh.cpp);
+extern tstring g_empty_string; // 0x8ee30f0
 // The module directory string;
 extern tstring g_module_path; // 0x8ee3c28
 // trigger_vec.cpp load_game_variables: the selected module name;

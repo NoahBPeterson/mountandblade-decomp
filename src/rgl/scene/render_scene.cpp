@@ -30,8 +30,8 @@ using namespace rgl;
 
 // logging globals of another object
 #include "../../include/logger.h"                       // Logger (shared with game/terrain_b/scene_file.h)
+#include "../../game/ui_globals.h"      // UI / core globals
 extern char g_log_obj[];                                // 0x5a9f30 (a Logger)
-extern int g_log_on;                                    // 0x5a9fb0
 extern int g_simple_reflect;                            // 0x5a9fc4: the reflection pass renders only the backdrop entity
 
 namespace rgl {
@@ -253,7 +253,7 @@ void world::render_scene(scene* sc, bool reflect)
     if (!sc->rt->loaded)
         return;
     sc->refl->reset();
-    if (g_log_on)
+    if (g_dev_mode)
         ((Logger*)g_log_obj)->get("RENDERING REFLECTIONS;");
     if (!g_simple_reflect)
         sc->refl->flags |= 0x200;

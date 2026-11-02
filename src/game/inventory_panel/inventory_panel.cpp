@@ -43,7 +43,6 @@ extern int   g_trial_mode;                              // 0x5e29c4
 extern int   g_a170d8;                                  // 0xa170d8
 extern int   g_a174d8;                                  // 0xa174d8
 extern float g_ui_alpha;                                // 0x5d7094
-extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
 extern int   g_5d8760;                                  // 0x5d8760
 extern int   g_5d8764;                                  // 0x5d8764
 extern tstring g_5d7850[0x50];                          // 0x5d7850 .. 0x5d7d50
@@ -88,6 +87,7 @@ extern Modifier g_item_modifiers[];                          // 0xa75f70
 #include "../main_menu.h"
 #include "../ui/named_rec.h"      // NamedRec::setup2 0x48a3d0 (main_menu::ask is the same function)      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config/config.h"
+#include "../ui_globals.h"      // UI / core globals
 
 // @ 0x50fe20
 void InventoryPanel::refresh_transaction(int unused)
@@ -98,10 +98,10 @@ void InventoryPanel::refresh_transaction(int unused)
     if (g_ui_alpha < 0.5f && view_count == 2)
         page = 1;
 
-    if (g_ui_tick != 0) {
+    if (g_mission_clock != 0) {
         InvBar* bar = view[page]->bar;
         int stop = bar->stop;
-        bar->set_value((g_ui_tick / bar->stops[stop]) * bar->scale * 0.0005f +
+        bar->set_value((g_mission_clock / bar->stops[stop]) * bar->scale * 0.0005f +
                        (bar->stops[stop] - bar->scale) *
                        ((bar->thumb - bar->track_start) / (bar->track_end - bar->track_start)));
         PSO(bar)->set_key_flags(0x10000);

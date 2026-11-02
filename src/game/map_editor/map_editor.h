@@ -26,7 +26,6 @@ using rgl::matrix;
 using rgl::vector4;
 
 // ---- engine globals (the input state words of the keyboard object; the editor's modifier / action keys) --------------
-extern int g_a17458;                    // 0xa17458
 extern int g_a17858;                    // 0xa17858
 extern int g_a17148;                    // 0xa17148  select-all modifier
 extern int g_a17348;                    // 0xa17348
@@ -56,6 +55,7 @@ extern EditorEntity* g_editor;                                  // 0xa739b8
 
 // ---- Mission: the editor's view (0x5305b0) ---------------------------------------------------------------------------
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
+#include "../ui_globals.h"      // UI / core globals
 
 struct MapMission : Mission {
     rgl::entity* cursor() { return (rgl::entity*)f65d0; }       // +0x65d0 the selection cursor object

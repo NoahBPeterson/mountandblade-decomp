@@ -49,6 +49,7 @@
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../world.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ui_globals.h"      // UI / core globals
 
 // ==== by-reference helpers with their bodies in this object ================================================
 // The original's interpreter sees these bodies (header inlines its inliner left out of line in the 70 KB execute()):
@@ -1410,7 +1411,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             game()->message_log.append(tstring(num));
             game()->message_log.push_back('|');
             game()->message_log.append(text);
-            if (g_text_log_enabled) {
+            if (g_dev_mode) {
                 text.push_back('\n');
                 ((stream_base*)g_log)->w_tstr(&text);
             }
@@ -1423,7 +1424,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 color = (int)params[1];
             tstring text = g_script.expand(g_strings.get_string((int)params[0], types[0]));
             g_msglog.add(text, color);
-            if (g_text_log_enabled) {
+            if (g_dev_mode) {
                 text.push_back('\n');
                 ((stream_base*)g_log)->w_tstr(&text);
             }

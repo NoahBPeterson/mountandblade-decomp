@@ -11,6 +11,11 @@
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "quest_page.h"        // QuestPage: Hud is the quest page screen (QuestPage::sel is Hud::f250), fill() 0x4d5ba0
+#include "../ui_globals.h"      // UI / core globals
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_mission_clock;   // 0x5d8790 mission time; 0 = no mission
+
 
 // @ 0x4d4b80
 bool EditMesh::on_selection_changed()
@@ -238,7 +243,7 @@ void Mission::destroy()
 // @ 0x4d5940
 __declspec(noinline) void ValueSource::on_value_changed(float arg)
 {
-    ((UiD*)(void*)this)->set_value((step / slot[idx] * arg) * g_char_scale + ((UiD*)(void*)this)->value());
+    ((UiD*)(void*)this)->set_value((step / slot[idx] * arg) * 0.0005f + ((UiD*)(void*)this)->value());
 }
 
 // @ 0x4d5980
@@ -267,7 +272,7 @@ void Hud::on_update(int arg)
     if (g_mission_clock) {
         ValueWidget* u = item_value(f3c);
         float v = (u->f168 - u->f16c) / (u->f170 - u->f16c) * (u->slot[u->idx] - u->step);
-        u->set_value((float)g_mission_clock / u->slot[u->idx] * u->step * g_char_scale + v);
+        u->set_value((float)g_mission_clock / u->slot[u->idx] * u->step * 0.0005f + v);
         item_value(f3c)->set_key_flags(0x10000);
     }
     for (int i = 0; i < f24c; i++) {

@@ -5,32 +5,47 @@
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_globals.h"      // UI / core globals
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+float g_axis_x;   // 0xa178d4 first input axis (mouse dx)
+float g_axis_vert;   // 0xa178d8 second input axis (mouse dy)
+int g_a17854;   // 0xa17854
+int g_a1751c;   // 0xa1751c
+int g_key_17458;   // 0xa17458 turn (heading)
+int g_key_17454;   // 0xa17454 roll with the vertical axis
+int g_key_17214;   // 0xa17214 pitch up
+int g_key_1720c;   // 0xa1720c zoom in
+int g_key_17204;   // 0xa17204 pitch down
+int g_key_171fc;   // 0xa171fc zoom out
+int g_a1711c;   // 0xa1711c
+
 
 // @ 0x4eb050
 void CamView::update(float dt)
 {
-    if (g_a17204)
+    if (g_key_17204)
         pitch = pitch - dt * 1.1f;
-    if (g_a17214)
+    if (g_key_17214)
         pitch = dt * 1.1f + pitch;
-    if (g_a1720c)
+    if (g_key_1720c)
         zoom = zoom - dt * 2.1f;
-    if (g_a171fc)
+    if (g_key_171fc)
         zoom = dt * 2.1f + zoom;
-    if (g_a17454) {
+    if (g_key_17454) {
         if (g_a17854 == 0 &&
             g_5d7094 < *(float*)(target + 0xf0) &&
             g_5d7098 > *(float*)(target + 0xe4))
             follow = 1;
-        if (g_a17454)
+        if (g_key_17454)
             goto check_follow;
     }
     if (g_a17854)
         follow = 0;
 check_follow:
-    if (g_a17458 || follow) {
-        yaw = (g_a178d4 * dt) * 1.7f + yaw;
-        pitch = pitch - (g_a178d8 * dt) * 1.7f;
+    if (g_key_17458 || follow) {
+        yaw = (g_axis_x * dt) * 1.7f + yaw;
+        pitch = pitch - (g_axis_vert * dt) * 1.7f;
     }
     if (pitch < -0.6519978f)
         pitch = -0.6519978f;
@@ -56,7 +71,7 @@ void CamView::update_model(float dt)
 {
     int n = *(int*)((char*)g_skins_begin + skin * 0x1f8 + 0x3c) - 1;
 
-    if (g_no_cam && (g_a17148 || g_a17348) && orig::g_a1711c && !orig::g_a1751c) {
+    if (g_dev_mode && (g_a17148 || g_a17348) && g_a1711c && !g_a1751c) {
         if (*(int*)(g_game + 0x1a090) == 0) {
             *(int*)(g_game + 0x1a090) = 1;
             cam_btn->vb4();
@@ -67,12 +82,12 @@ void CamView::update_model(float dt)
     }
 
     Ctrl* sl = *(Ctrl**)(*(char**)((char*)this + 0x17c) + 0x484);
-    if (g_world_time != 0) {
+    if (g_mission_clock != 0) {
         float a = *(float*)((char*)sl + 0x168) - *(float*)((char*)sl + 0x16c);
         float b = *(float*)((char*)sl + 0x170) - *(float*)((char*)sl + 0x16c);
         float* arr = (float*)((char*)sl + *(int*)((char*)sl + 0x178) * 4 + 0xf0);
         float v = (a / b) * (arr[0] - *(float*)((char*)sl + 0x17c))
-                + ((float)g_world_time / arr[0]) * *(float*)((char*)sl + 0x17c) * orig::k_0_0005f;
+                + ((float)g_mission_clock / arr[0]) * *(float*)((char*)sl + 0x17c) * 0.0005f;
         ((UiD*)(void*)sl)->set_value(v);
         sl->v48(0x10000);
     }
@@ -106,7 +121,7 @@ void CamView::update_model(float dt)
         Ctrl* row = rows[i];
         if (row->v44(0x10000)) {
             g_dummy_mat_arr[i] = row->v38();
-            SkinSet* set = (SkinSet*)((char*)g_skins_begin + g_cur * 0x1f8);
+            SkinSet* set = (SkinSet*)((char*)g_skins_begin + g_anim.cur * 0x1f8);
             ((FaceRace*)set)->relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
                 rows[j]->v34(g_dummy_mat_arr[j]);
@@ -154,14 +169,14 @@ void CamView::update_model(float dt)
         f350 = rand();
         f35c = rand();
         f358 = rand();
-        sl_hair_color->v34(g_dummy1);
+        sl_hair_color->v34(g_anim.time);
         flag = 1;
     }
     if (b_reset->v44(0x10000)) {
         float* p = g_dummy_mat_arr;
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
-        SkinSet* set = (SkinSet*)((char*)g_skins_begin + g_cur * 0x1f8);
+        SkinSet* set = (SkinSet*)((char*)g_skins_begin + g_anim.cur * 0x1f8);
         ((FaceRace*)set)->relax(-1, g_dummy_mat_arr);
         flag = 1;
         for (int i = 0; i < n; i++)

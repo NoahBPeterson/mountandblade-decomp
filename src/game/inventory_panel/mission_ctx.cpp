@@ -96,6 +96,7 @@ struct MetaMission {
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../ui_globals.h"      // UI / core globals
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -129,13 +130,10 @@ extern int g_a170d8;            // 0xa170d8
 extern int g_a174d8;            // 0xa174d8
 extern int g_show_quest_notes;            // 0xa181b4
 extern int g_a171b8;            // 0xa171b8
-extern int g_a17454;            // 0xa17454
-extern int g_a17854;            // 0xa17854
 extern int g_a17148;            // 0xa17148
 extern int g_a17348;            // 0xa17348
 extern int g_a70438;            // 0xa70438
 extern int g_use_shaders;       // 0x5e28fc
-extern int g_no_cam;            // 0x5a9fb0
 extern char g_saved;            // 0x5e2a08
 extern int g_trial_mode;        // 0x5e29c4
 extern int g_a735c8;            // 0xa735c8
@@ -143,14 +141,12 @@ extern float g_view_a;          // 0x5d75d8
 extern float g_view_b;          // 0x5d75dc
 extern int g_level;         // 0xa732b4
 extern const float g_zero;          // 0x549ca8  0.0f
-extern const float g_ten;           // 0x549d74  10.0f
 extern const float g_oneone;        // 0x54b888  1.1f
 extern const float g_pttwo;         // 0x54a6e4  0.2f
 extern const float g_three;         // 0x54a710  3.0f
 extern const float g_quarter;       // 0x54b868  0.25f
 extern const float g_four;          // 0x5935c8  4.0f
 extern const float g_003;           // 0x54b8b4  0.03f
-extern const float g_axis_x;        // 0xa178d4
 extern const float g_axis_y;        // 0xa178dc
 extern const float g_mouse_dx;      // 0x5d70a4
 extern const float g_mouse_dy;      // 0x5d70a8
@@ -164,13 +160,9 @@ extern int g_key_1744;              // 0xa73744
 extern int g_key_1748;              // 0xa73748
 extern int g_key_174c;              // 0xa7374c
 extern int g_keydown[];             // 0xa170d4
-extern int g_in_17204;              // 0xa17204
 extern int g_in_17210;              // 0xa17210
-extern int g_in_17214;              // 0xa17214
 extern int g_in_17218;              // 0xa17218
-extern int g_in_17458;              // 0xa17458
 extern int g_in_17858;              // 0xa17858
-extern const float g_half;          // 0x549d70  0.5f
 
 // the party record behind an id (the page table at +0x139c8)
 static Party* party_by_id(int id)
@@ -980,7 +972,7 @@ no_party:
     g_msglog.flush();
     if (GD_F(0x13ad0) > 0.0f && GD_I(0x13ad8) != 0) {
         PSO(f58)->act_b4();
-        if (g_a17454 == 0 && g_a17854 != 0)
+        if (g_key_17454 == 0 && g_a17854 != 0)
             GD_F(0x13ad0) = 0.0f;
     } else {
         PSO(f58)->clear();
@@ -1018,7 +1010,7 @@ no_party:
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_no_cam != 0 && (g_a17148 != 0 || g_a17348 != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
+    if (g_dev_mode != 0 && (g_a17148 != 0 || g_a17348 != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {
@@ -1042,7 +1034,7 @@ void Screen::camera_move(float dt)
 
     bool b = g_key_1740 >= 0 && g_keydown[g_key_1740] != 0;
     if ((g_key_1744 >= 0 && g_keydown[g_key_1744] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x -= m.m[0] * h * dt;
         z -= m.m[1] * h * dt;
         GD_C(0x88) = 0;
@@ -1050,7 +1042,7 @@ void Screen::camera_move(float dt)
     }
     b = g_key_1748 >= 0 && g_keydown[g_key_1748] != 0;
     if ((g_key_174c >= 0 && g_keydown[g_key_174c] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x += m.m[0] * h * dt;
         z += m.m[1] * h * dt;
         GD_C(0x88) = 0;
@@ -1058,7 +1050,7 @@ void Screen::camera_move(float dt)
     }
     b = g_key_1730 >= 0 && g_keydown[g_key_1730] != 0;
     if ((g_key_1734 >= 0 && g_keydown[g_key_1734] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x += m.m[2] * h * dt;
         z += m.m[3] * h * dt;
         GD_C(0x88) = 0;
@@ -1066,19 +1058,19 @@ void Screen::camera_move(float dt)
     }
     b = g_key_1738 >= 0 && g_keydown[g_key_1738] != 0;
     if ((g_key_173c >= 0 && g_keydown[g_key_173c] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x -= m.m[2] * h * dt;
         z -= m.m[3] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
 
-    if (g_in_17204) speed += dt * g_oneone;
-    if (g_in_17214) speed -= dt * g_oneone;
+    if (g_key_17204) speed += dt * g_oneone;
+    if (g_key_17214) speed -= dt * g_oneone;
     if (g_in_17210) vy += dt * g_oneone;
     if (g_in_17218) vy -= dt * g_oneone;
 
-    if (g_in_17458 && !g_in_17858)
+    if (g_key_17458 && !g_in_17858)
         f2d4 = 0;
 
     float v = g_mouse_dx * 0.1f;
@@ -1093,7 +1085,7 @@ void Screen::camera_move(float dt)
         f2d4 = 1;
 
     vy = v * dt + vy;
-    if (g_in_17458) {
+    if (g_key_17458) {
         vy = expf(g_four * g_exp_arg) * g_003 * g_axis_x * dt + vy;
     }
 
@@ -1243,7 +1235,7 @@ void MissionCtx::update_anim()
                 else if (k > (*(int*)&g_skill_tbl[36].cap))
                     k = (*(int*)&g_skill_tbl[36].cap);
                 int n = t->f58[0] + k * 2 + 0x23;
-                float g = (float)(int)((float)n * g_half + g_three);
+                float g = (float)(int)((float)n * 0.5f + g_three);
                 if (g > t->hp)          // fcom; test ah,0x41; jne skip (0x516834): a NaN hp skips
                     t->hp = g;
             }

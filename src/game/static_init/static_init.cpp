@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include "../ui_globals.h"      // g_axis_x / g_axis_vert (the leaf header: this file otherwise declares its storage as raw labels)
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
@@ -38,7 +39,6 @@ extern char g_5e2948[];     // 0x5e2948 the tick counter (64-bit)
 extern char g_a178f0[];     // 0xa178f0
 extern char g_a17900[];     // 0xa17900
 extern char g_a170d4[];     // 0xa170d4 the key state table (0x100 dwords)
-extern char g_a178d4[];     // 0xa178d4
 extern char g_a178e0[];     // 0xa178e0
 extern char g_a17910[];     // 0xa17910 the display state
 extern char g_a180e8[];     // 0xa180e8 the skeleton name vector (allocator, first, last, end)
@@ -372,8 +372,8 @@ void __cdecl static_init_547b50()
     memset(g_a170d4, 0, 0x400);
     AT(int, g_a178e0, 0) = 0;
     AT(int, g_a178e0, 4) = 0;
-    AT(int, g_a178d4, 0) = 0;
-    AT(int, g_a178d4, 4) = 0;
+    g_axis_x = 0;
+    g_axis_vert = 0;
 }
 // @ 0x547ba0
 void __cdecl static_init_547ba0() { new (g_a17910) DisplayState; }

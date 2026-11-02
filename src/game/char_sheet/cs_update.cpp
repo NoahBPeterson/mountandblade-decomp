@@ -5,6 +5,7 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_globals.h"      // UI / core globals
 
 // @ 0x4eeb10 -------------------------------------------------------------------------------
 // The click handling of the rows is `selected |= press on either button` / `released |= release on either`;
@@ -24,10 +25,10 @@ void CharSheet::update(float dt)
         f_430->hide();
 
     if (f_4c8 != 0) {
-        if (g_world_time != 0) {
+        if (g_mission_clock != 0) {
             ScrollHost* host = (ScrollHost*)f_4bc;
             UiDsv* bar = host->bar;
-            ((UiD*)(void*)bar)->set_value(((float)g_world_time / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
+            ((UiD*)(void*)bar)->set_value(((float)g_mission_clock / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
                            (bar->stops[bar->f_178] - bar->f_17c) *
                                ((bar->f_168 - bar->f_16c) / (bar->f_170 - bar->f_16c)));
             ((UiVt*)((ScrollHost*)f_4bc)->bar)->set_key_flags(0x10000);

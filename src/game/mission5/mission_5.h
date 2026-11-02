@@ -54,6 +54,7 @@ extern char g_keyboard[]; // 0xa170c8
 #include "../std_vec_out_of_line.h"
 #include "../prop_kind.h"
 #include "../menu_rec.h"
+#include "../ui_globals.h"      // UI / core globals
 extern void* g_mission_templates; // 0x5e2a00
 extern char g_terrain[]; // 0xa76630
 extern char g_app_obj[]; // 0x8ee3c48
@@ -561,7 +562,6 @@ extern unsigned char g_a17908;                          // 0xa17908
 extern int  g_presentation;                                  // 0x5e299c
 #include "../../include/renderer.h"
 extern char g_script[]; // 0xa70440
-extern int g_skill_clamp;                       // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
 extern int  g_a7333c;                                   // 0xa7333c
 struct Obj73300_s261e0 { void f_5295a0(); };                   // 0x5295a0
@@ -1175,7 +1175,6 @@ extern int g_flag5aa070;                                      // 0x5aa070
 struct ItemKind_s29130 { char pad[0x1c8]; int type; char pad1cc[0x238 - 0x1cc]; };
 
 extern float g_deg2rad;                                       // 0x590ce4 (0.017453292)
-extern float g_half;                                          // 0x549d70 (0.5f)
 extern float g_0375;                                          // 0x59c310 (0.375f)
 extern float g_2p5;                                           // 0x590c4c (2.5f)
 extern float g_1p2;                                           // 0x590b94 (1.2f)

@@ -14,6 +14,7 @@
 #include <math.h>
 #include <string.h>
 #include "./game_2.h"
+#include "../../include/troop.h"          // g_level_xp
 #include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../party/game.h"
@@ -1149,8 +1150,8 @@ void TroopFile::read_file(stream_base& s)
     if (n < 1)
         n = 1;
     fb0 = n;
-    int base = g_level_lo[n];
-    float t = (float)(rand() % 0x3dc9) * (float)(g_level_hi[n] - base) * g_troop_rand_scale;
+    int base = g_level_xp[n];
+    float t = (float)(rand() % 0x3dc9) * (float)(g_level_xp[n + 1] - base) * g_troop_rand_scale;
     f9c = base + ftoi_floor(t);
 
     for (int i = 0; i < 7; ++i) {

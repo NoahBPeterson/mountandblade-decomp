@@ -8,6 +8,9 @@
 
 #include "../game_globals.h"      // g_dialogs 0x8ed50c8 (listed directly: the resolution audit reads only the source's own includes)
 
+// ---- data this module owns (docs/standalone_data.md) ----
+tstring g_empty_string;   // 0x8ee30f0 the empty string conv_refresh copies
+
 // UTF-8 -> int code points (0x487b00; a static of another object with cl's register convention: text in edi, count out
 // in edx, buf and &capacity on the stack, as 0x4f7926 calls it). Local copy (as in cls_map.cpp, ui_widgets_a.cpp).
 static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int* buf, const int* maxn)   // 0x487b00

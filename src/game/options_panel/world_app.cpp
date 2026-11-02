@@ -478,7 +478,6 @@ void __stdcall FSOUND_3D_SetRolloffFactor(float factor);      // 0x5342ee
 
 // ---- globals -------------------------------------------------------------------------------------------
 extern int g_use_shaders;                                // 0x5e28fc
-extern int g_5e28c8;                                // 0x5e28c8
 extern int g_counter;                                // 0x5e28cc
 extern char g_saved;                               // 0x5e2a08
 // g_cfg.disable_sound (config/config.h Config +0x40 of g_cfg 0x5a9f98; that header brings d3dapp.h, which would redefine
