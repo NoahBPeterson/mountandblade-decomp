@@ -109,7 +109,7 @@ struct Mission {
     char pad7e0[0x5280 - 0x6b0 - sizeof(MarkRec)];
     TeamRec teams[8];                           // +0x5280 (0x474e60, 0x435b90, 0x43b300, 0x48a9e0)
     Timer tm;                                   // +0x5de0
-    int mode;                                   // +0x5df0 index into g_modes2 (0x473a60, 0x435840)
+    int mode;                                   // +0x5df0 index into g_mission_templates (0x473a60, 0x435840)
     int f5df4;                                  // +0x5df4 index of the active level slot (0x4435c0)
     int f5df8;                                  // +0x5df8
     std::vector<int> v5dfc;                     // +0x5dfc (retire list, 0x479160)

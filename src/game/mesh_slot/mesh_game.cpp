@@ -7,6 +7,7 @@
 #include "../../include/fx.h"           // FxDef (the skeleton of an agent entity: ctor 0x428820, init 0x4288c0, set_env_count 0x46b9d0, f5c)
 #include "../../include/phys_set.h"     // PhysSet::update 0x472dc0
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
@@ -214,7 +215,6 @@ struct SkelBodyV;                        // 0x47cfe0 (mesh_scene.cpp) names the 
 void agent_equip_fill(EntityG* e, int kind, int troop, int f94, void* s0, void* inv, void* f240, void* f194,
                       void* f1a4, void* f1a8, void* slots, int id);   // 0x482240 (__stdcall, ret 0x34)
 void setup_item_meshes(SkelBodyV* body, int kind, int troop, char* inv, int f130, ItemRef* slots, int id);  // 0x47cfe0 (cdecl)
-extern char* g_mission_templates;                // 0x5e2a00 (the mission mode table base)
 extern char g_script[]; // 0xa70440
 extern int g_spawn_hi;                  // 0xa7044c
 extern int g_skin_count;                // g_char_count 0x8ed4f88
@@ -374,7 +374,7 @@ int MissionG::create(const matrix* m, const ItemStackG* it, int troop)
     a->f248 = ((ItemStack2*)it)->value();
     *(long long*)&(*(int*)((char*)&g_script + 0x8)) = own;
     struct SndBody { int num; SndSlotS* slots; };
-    SndBody* p = (SndBody*)(g_mission_templates + this->mode * 0x58 + 0x4c);
+    SndBody* p = (SndBody*)((char*)g_mission_templates + this->mode * 0x58 + 0x4c);
     for (int i = 0; i < p->num; i++)
         p->slots[i].update(-25);
     return own;
@@ -457,7 +457,7 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
             this->f60 = nid;
     }
     if (a->id == this->f5c) {
-        if ((MAT(char, 0x6528) & 1) || ((*(unsigned*)(g_mission_templates + this->mode * 0x58 + 0x20) >> 1) & 1) != 0) {
+        if ((MAT(char, 0x6528) & 1) || ((*(unsigned*)((char*)g_mission_templates + this->mode * 0x58 + 0x20) >> 1) & 1) != 0) {
             a->cycle_slot(0);
             a->cycle_slot(1);
         }
@@ -496,7 +496,7 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
         }
     }
     *(long long*)&(*(int*)((char*)&g_script + 0x8)) = own;
-    SpawnSetG* p = (SpawnSetG*)(g_mission_templates + this->mode * 0x58);
+    SpawnSetG* p = (SpawnSetG*)((char*)g_mission_templates + this->mode * 0x58);
     for (int i = 0; i < p->num; i++)
         p->slots[i].update(-25);
     return own;
@@ -510,7 +510,7 @@ NOINL bool MissionG::spawn_one(int id)
     pick_spawn(id, &o2, &o3, &id, &o5, &o6, &o7);
     if (id < 0)
         return false;
-    SpawnRecG* r = (SpawnRecG*)(*(int*)(g_mission_templates + this->mode * 0x58 + 0x34) + orig * 0x4c);
+    SpawnRecG* r = (SpawnRecG*)(*(int*)((char*)g_mission_templates + this->mode * 0x58 + 0x34) + orig * 0x4c);
     int nid = spawn_full((matrix*)((char*)this + r->f0 * 0x130 + 0x6b0), id, o2, o3, o5, o7,
                          r->f8, r->f20, r->f24, r->arr);
     if (nid >= 0)
@@ -521,7 +521,7 @@ NOINL bool MissionG::spawn_one(int id)
 // @ 0x483eb0 -- up to 100 passes over the current wave set, spawning every pending entry whose done flag is clear
 void MissionG::run_spawns()
 {
-    SpawnSetG* p = (SpawnSetG*)(g_mission_templates + this->mode * 0x58);
+    SpawnSetG* p = (SpawnSetG*)((char*)g_mission_templates + this->mode * 0x58);
     char done = 0;
     int iter = 0;
     do {
@@ -653,7 +653,7 @@ void MissionG::frame(float dt, bool spawn)
         run_spawns();
 
     if (MAT(unsigned, 0x6550) != 0) {
-        char* set = g_mission_templates + this->mode * 0x58;
+        char* set = (char*)g_mission_templates + this->mode * 0x58;
         int n = *(int*)(set + 0x4c);
         char* slot = *(char**)(set + 0x50);
         for (int i = 0; i < n; i++, slot += 0x78)

@@ -22,12 +22,24 @@
 #include "../../rgl/resource_manager.h"
 #include "../../include/renderer.h"
 #include "../skill_cap.h"
+#include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
+#include "../menu_rec.h"   // g_menus 0x5e29b0
+#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+extern int g_sound_muted;                                   // 0x5a9fd8
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_cam_roll;                                             // 0xa1718c
+int g_cam_out;                                              // 0xa17158
+tstring* g_msg_end;                                         // 0x5e23c8
+tstring* g_msg_begin;                                       // 0x5e23c4 (the recent-messages ring: 0x10-byte tstrings)
+int g_cam_sens;                                             // 0x5a9fdc
+
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
 // ---- the mission's agent (re)initialisation ------------------------------------------------------------------
 struct ModeFlag {
     // 0x435840 as the caller inlines it (Mission::mode_flag1 is out of line elsewhere)
-    static __forceinline char of(const Mission* m) { return ((g_modes2[m->mode].flags >> 1) & 1) != 0; }
+    static __forceinline char of(const Mission* m) { return ((g_mission_templates[m->mode].flags >> 1) & 1) != 0; }
 };
 
 // @ 0x4f7d70
@@ -713,11 +725,11 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     lis.o.x = lis.o.x - back.x;
     lis.o.y = lis.o.y - back.y;
     lis.o.z = lis.o.z - back.z;
-    if (g_listener_off == 0) {
-        g_listener = lis;
+    if (g_sound_muted == 0) {
+        g_sound_mgr.frame = lis;
         // FMOD is y-up: y and z swap (0x4fa887..0x4fa8ae push f.x, f.z, f.y, u.x, u.z, u.y)
-        FSOUND_3D_Listener_SetAttributes(&g_listener.o.x, 0, g_listener.f.x, g_listener.f.z, g_listener.f.y, g_listener.u.x,
-                                         g_listener.u.z, g_listener.u.y);
+        FSOUND_3D_Listener_SetAttributes(&g_sound_mgr.frame.o.x, 0, g_sound_mgr.frame.f.x, g_sound_mgr.frame.f.z, g_sound_mgr.frame.f.y, g_sound_mgr.frame.u.x,
+                                         g_sound_mgr.frame.u.z, g_sound_mgr.frame.u.y);
     }
     FrameNode* sun = (FrameNode*)f65b8;
     if (sun) {
@@ -728,7 +740,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         sun->pos.s.normalize();
         sun->pos.f = cross(sun->pos.u, sun->pos.s);
         if (f6664 < 0 && fog_dense == 1)
-            f6664 = g_sound_mgr.play_slot(8, 3, &g_listener.o.x, 1.0f, 0);
+            f6664 = g_sound_mgr.play_slot(8, 3, &g_sound_mgr.frame.o.x, 1.0f, 0);
     }
     FrameNode* flare = (FrameNode*)f65c0;
     if (flare) {          // (no flare: the original jumps to the particle update at 0x4faea5, it does not return)
@@ -1206,18 +1218,18 @@ void GameScreen::build()
 {
     float v[2];
     g_gui.reset();
-    ((SoundW*)&g_sound_mgr)->stop_all();
+    g_sound_mgr.stop_all();
 
-    char* rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
+    char* rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
     bool ok = true;
     int color = (int)(*(__int64*)(rec + 0x20) >> 32) | 0xff000000;
     GAME_AT(int, 0xc8) = 0;
     GAME_AT(int, 0xa8) = 0;
-    rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
+    rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
     struct MenuMesh { char pad0[0x28]; tstring mesh; };   // menu_rec.h's MenuRec, of which this path uses +0x28 only
     g_game->mesh1a210 = ((MenuMesh*)rec)->mesh;      // the game menu's mesh override (+0x1a210)
     GAME_AT(int, 0x1a220) = -1;
-    ((DialogBlock*)(g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->play(8);
+    ((DialogBlock*)((char*)g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->play(8);
     if (GAME_AT(int, 0xc8) != 0)
         ok = false;
 
@@ -1249,7 +1261,7 @@ void GameScreen::build()
             rgl::mesh* src = g_resmgr_full.get_object((const rgl::string*)((char*)g_game + 0x1a210));
             if (src) {
                 rgl::mesh* m = src->clone();
-                rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
+                rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
                 if ((*(unsigned*)(rec + 0x20) & 0x1000) && 1.35f < g_screen_b / g_screen_a) {
                     float f = 1.33f / (g_screen_b / g_screen_a);
                     vector4 c;

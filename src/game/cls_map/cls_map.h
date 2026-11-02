@@ -245,13 +245,12 @@ UiAInline* __cdecl new_button(ContainerBase* o, const tstring& text, float px, f
 // globals of the campaign diary screens (addresses; names provisional)
 extern GameData* g_game;                        // 0x5e2930
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
-extern void* g_mission_templates;                          // 0x5e2a00 (mission table, 0x58-byte records; +0x24 = name)
 extern unsigned char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
 #include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): the one definition
 extern float g_5a9f24;                          // 0x5a9f24 0.65 (the meeting window columns' top)
 extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145} ([1] is 0.21450001, not the literal 0.2145f)
-void __fastcall stop_all(void* p);    // 0x494310 (ecx = 0x5aa128: the main mission UI)
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128: stop_all 0x494310
 
 // ---- 0x4dc630..0x4dce70: the message (result) window and its button makers ----------------------------------------------
 // the option table (0xa44240): ini_file, entries of 0x2c bytes with the value string at +0x1c of each entry (from +0x1c: 0xa4425c)

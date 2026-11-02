@@ -18,6 +18,7 @@
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 

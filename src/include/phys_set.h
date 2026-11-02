@@ -30,6 +30,7 @@ struct PhysSet {
     int f14, f18;                                 // +0x14, +0x18 (cleared by 0x47dc50)
     char pad1c[0x3c - 0x1c];
     int nworlds;                                  // +0x3c (0x441360; cleared by 0x47dc50)
+    PhysSet() { reset(); }                        // the global's constructor (0x547d80 calls reset out of line)
     void reset();                                 // 0x47dc50 (game/mesh_slot/mesh_scene.cpp: destroys every world, resets the handle and the vector)
     void destroy_world(int idx);                  // 0x441360
     const NewtonRagDollBone* add_bone(int idx, const NewtonRagDollBone* parent, const float* mass, rgl::matrix m0,

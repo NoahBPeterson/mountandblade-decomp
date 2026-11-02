@@ -83,7 +83,6 @@ extern WorldCam* g_level;                       // 0xa732b4
 extern int g_a17148;                            // 0xa17148
 extern int g_a1717c;                            // 0xa1717c
 extern int g_5a9fbc;                            // 0x5a9fbc
-extern int g_5a9fd8;                            // 0x5a9fd8  listener already set
 extern float g_map_min_x;                            // 0x5aa120  map min x (-50)
 extern float g_map_max_x;                            // 0x5aa118  map max x ( 50)
 extern float g_map_min_y;                            // 0x5aa124  map min y (-50)
@@ -117,15 +116,8 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #define C_54B8B0 (orig::k_1_5f)             // 1.5
 #define C_549D6C (orig::k_0_9f)             // 0.9
 
-// the listener block (written by 0x5342dc, from the map frame)
-struct Listener3D {
-    vector4 pos;                                // +0 (0x5aa138)
-    vector4 vel;                                // +0x10 (0x5aa148)
-    vector4 dir;                                // +0x20 (0x5aa158)
-    vector4 up;                                 // +0x30 (0x5aa168)
-    float extra[2];                             // +0x40 (0x5aa178)
-};
-extern Listener3D g_listener;                   // 0x5aa138
+// the listener frame (written by 0x5342dc, from the map frame) is g_sound_mgr.frame
+#include "../../include/sound_mgr.h"
 
 
 // ---- callees ------------------------------------------------------------------------------------------

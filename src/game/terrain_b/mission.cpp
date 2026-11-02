@@ -58,6 +58,10 @@ extern ptype* g_ptypes;                         // 0x5e28f8
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+Mission* g_mission;                                         // 0x5e292c the mission (world) object
+
 using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);             // 0x40cd60
 matrix* __cdecl identity_pos(matrix* out);      // 0x40cd00

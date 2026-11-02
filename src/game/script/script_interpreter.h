@@ -64,7 +64,6 @@ struct MissionW {                                                            // 
 };
 struct BattleW { void select_side(int side); };                              // 0x492750 (world_data.cpp)
 struct WindowMgrW { void open(int window); void set_state(int state); };     // 0x494260 / 0x495700 (world_data.cpp)
-struct SoundW { void play_ui(int sound, unsigned flags); void stop_all(); }; // 0x4942f0 / 0x494310 (world_data.cpp)
 struct Mission3 {                                                            // terrain_a/misc.cpp
     void add_amount(int idx, unsigned flags);                               // 0x4677a0
     void clear_done();                                                      // 0x4676c0
@@ -179,12 +178,10 @@ extern MissionTemplate* g_mission_templates;   // 0x5e2a00
 extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
 extern int g_map_icon_count;            // 0x5e29f4 (0x49d110)
 extern int g_particle_system_count;     // 0x8ed5094 (warn_particle_system)
-#define g_scene_prop_count g_tbl78_count    // 0x5e29e0: agent.h's 0x78-byte record table is the scene prop kinds
-extern int g_sound_count;               // 0x5aa130 (0x49d310)
+#define g_scene_prop_count g_propkind_count    // 0x5e29e0: agent.h's 0x78-byte record table is the scene prop kinds
 extern int g_track_count;               // 0xa73a14 (0x49d3d0)
 extern int g_animation_count;           // 0xa7662c (0x49d4b0)
 extern int g_warnings_off_a;            // 0x5a9fd4 (0x49d3d0)
-extern int g_warnings_off_b;            // 0x5a9fd8 (0x49d310, 0x49d3d0)
 
 // ---- message log and text log (report 0x49cc60) -----------------------------------------------------------------
 // the message log object (MsgLog, src/include/msg_log.h)
@@ -336,12 +333,7 @@ int __fastcall trigger_mesh_obj(int context);                              // 0x
 
 
 // ---- sound and music -------------------------------------------------------------------------------------------------
-struct SoundSys {
-    __forceinline int play_at(int sound, int flags, const rgl::vector4* pos, float pitch, int out) { return ((SoundMgr*)this)->play(sound, flags, (const float*)pos, pitch, (int*)out); }   // 0x442650 (ret 0x14)
-    __forceinline void play(int sound, int flags) { ((SoundW*)this)->play_ui(sound, flags); }                            // 0x4942f0 (ret 8)
-    __forceinline void stop_all() { ((SoundW*)this)->stop_all(); }                                                       // 0x494310
-};
-extern SoundSys g_sound;                // 0x5aa128
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128: play 0x442650, play_ui 0x4942f0, stop_all 0x494310
 extern int g_next_track;                // 0xa70474 (play_track 0x4a1716)
 extern int g_next_track_options;        // 0xa70478
 extern int g_cue_track;                 // 0xa7047c (play_cue_track 0x4a173f)
@@ -682,7 +674,7 @@ struct MissionUiX {
 extern MissionUiX g_mission_ctx;         // 0xa73300
 extern int g_battle_advantage;           // 0xa7331c (set_battle_advantage 0x4a87af)
 extern int g_passage_menu;              // 0xa735c4 (set_passage_menu 0x4a55f3)
-extern int g_menu_b;                    // 0x5e2924 (jump_to_menu 0x4ac3a0)
+#include "../map_flags.h"   // g_map_flags.f8 = 0x5e2924 (jump_to_menu 0x4ac3a0)
 struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
 extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)
 extern __int64 g_trigger_param_1;       // 0xa70448 (g_script +8)

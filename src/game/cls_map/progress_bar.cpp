@@ -206,6 +206,8 @@ void RagModel::load(TiXmlElement* e)
 // ---- 0x4e4790: the save / load screen ----------------------------------------------------------------------------------------------
 extern tstring g_module_name;               // 0x8ee3c38 (the save-directory prefix string)
 extern int g_compatible_module_version;                          // 0x5e29b8
+float g_5a9be0 = 0.6f;                          // 0x5a9be0
+float g_5a9f20 = 0.6f;                          // 0x5a9f20 the meeting window columns' left edge (cls_map.cpp computes the column x from it)
 extern const float g_time_scale;                // 0x590e28 (60.0f; defined in cls_map.cpp: a literal here is folded to a double operand)
 extern const float g_minus_one;                 // 0x549ca8 (-1.0f)
 extern "C" int __cdecl sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
@@ -722,7 +724,7 @@ __declspec(noinline) int ini_file::hex_field(const tstring& key)
 }
 
 // ---- 0x4e5d80..0x4e5f50: the panel that wraps a menu block --------------------------------------------------------------------------------
-extern int g_menu_kind_sel;                     // 0xa75f3c (the menu kind create2 builds; g_menu_kind_count is 0xa75f38)
+int g_menu_kind_sel;                                        // 0xa75f3c (the menu kind create2 builds; g_menu_kind_count is 0xa75f38)
 
 // @ 0x4e5d80 (a jump to 0x4e5d90; not reproducible from source, see the partial list)
 void SaveWinCtl::create_stub()
@@ -793,7 +795,7 @@ struct GuiChild {
     virtual void build(rgl::scene* s, float* t, const float* pos, const float* size);   // +0x28
 };
 struct SceneWalk { void scene_walk(rgl::scene* s, float* t); };      // 0x4bd170 (thiscall, ret 8; this = the gui_manager)
-extern int g_pending;                           // 0x5e2a14
+int g_pending;                                              // 0x5e2a14
 extern char g_pending_text[];                   // 0x5e25b0
 
 // the 12-float basis + three scalars the scene build hands to mesh::render
@@ -1240,7 +1242,7 @@ void MapLoader::read(SlotReader* stream)
 // ---- 0x4e85d0 / 0x4e8720: MapScreen::init and MapScreen::frame_step ------------------------------------------------------------------------
 extern int      g_use_shaders;                  // 0x5e28fc
 extern unsigned g_mask_w;                       // 0x5a8e78
-extern unsigned g_a76644;                       // 0xa76644
+unsigned g_a76644;                                          // 0xa76644
 
 // @ 0x4e85d0   MapScreen::init(void* desc)   (thiscall, ret 4)
 void MapScreen::init(void* desc)
@@ -1389,7 +1391,6 @@ struct face204 {
 
 // the front table the slot ids are looked up in (0x5aa130 count, 0x5aa134 entries of 0x98 bytes, the name at +0)
 #include "../../include/sound_mgr.h"   // canonical: g_sound_mgr.ngroups (0x5aa130)
-extern char* g_front;                           // 0x5aa134
 struct front_rec {
     tstring name;                               // +0x00
 };
@@ -1595,7 +1596,7 @@ void MapSceneRec::read(MsStream* s)
         if (id >= 0 && id < 7) {
             int found = -1;
             for (int j = 0; found == -1 && j < g_sound_mgr.ngroups; j++) {
-                if (((front_rec*)(g_front + j * 0x98))->name.equals(nm))
+                if (((front_rec*)((char*)g_sound_mgr.groups + j * 0x98))->name.equals(nm))
                     found = j;
             }
             slot1cc[id] = found;

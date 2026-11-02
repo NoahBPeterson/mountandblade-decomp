@@ -108,7 +108,6 @@ extern unsigned char g_5d706c;                  // 0x5d706c
 extern unsigned char g_5d706d;                  // 0x5d706d
 extern int g_5e29a4;                            // 0x5e29a4
 #include "../game_globals.h"
-extern void* g_font;                        // 0x5e2934
 
 struct GuiState {
     void init_widgets();   // 0x5d7080

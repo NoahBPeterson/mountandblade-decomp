@@ -27,6 +27,10 @@ extern options g_options;                   // 0x5aa008 (rgl/resource_manager.h:
 #include "../include/mat4.h"
 #include "../include/height_field.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+unsigned g_stage_arg[6] = { D3DTA_CURRENT, D3DTA_DIFFUSE, D3DTA_SPECULAR, D3DTA_TEMP, D3DTA_TEXTURE, D3DTA_TFACTOR };   // 0x5a9c00 D3DTA_* by 3-bit code
+
+
 using rgl::vector4;
 using rgl::mat4;
 

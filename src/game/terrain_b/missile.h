@@ -5,8 +5,6 @@
 #define TERRAIN_B_MISSILE_H
 #include "../../rgl/rgl_math.h"
 
-struct ItemKindG { char pad0[0x20c]; int f20c; char pad210[0x238 - 0x210]; };   // 0x238-byte item records
-extern ItemKindG* g_items_g;                       // 0x5e29d0
 struct MissileOwner { char pad[0x88]; rgl::vector4 hit; };
 struct QueryPt { char pad0[0x30]; float x, y, z; };
 namespace {

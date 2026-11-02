@@ -26,14 +26,15 @@
 #include "../item_sound.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 // the definition (cls_map/progress_bar.cpp) takes the widget: this module calls it under that signature (the header keeps the void* spelling other modules use)
 void __cdecl label_refresh(MissionUi* w, tstring name);      // 0x4e4c70 (cdecl, the name by value)
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
-#define EQUIP(t, k) (g_game->troops[(t)].equip[(k)])
-#define INV(t, k) (g_game->troops[(t)].inv[(k)])
+#define EQUIP(t, k) (g_game_G->troops[(t)].equip[(k)])
+#define INV(t, k) (g_game_G->troops[(t)].inv[(k)])
 
 struct ini_file;
 extern ini_file g_game_vars;                // 0xa44240 (viewed as the ConfigTable of config_table.h)
@@ -176,7 +177,7 @@ void* PartyWindow::make_inventory_menu(int idx)
         WOPS(panel)->add_child(w);
     }
 
-    int troop_idx = g_game->cur_troop;
+    int troop_idx = g_game_G->cur_troop;
     if (idx != 0)
         troop_idx = troop;
     for (int i = 0; i < 10; i++) {
@@ -267,7 +268,7 @@ void* WidgetDtor::destroy(unsigned char flag)
 // @ 0x502320
 void* PartyWindow::build_page(int page)
 {
-    Game* g = g_game;
+    Game* g = g_game_G;
     int t = g->cur_troop;
     if (page != 0)
         t = troop;
@@ -322,7 +323,7 @@ void PartyWindow::init_window()
         refresh_page(i);
     for (int i = 0; i < rows; i++)
         refresh_stash(i);
-    refresh_armor(armor_labels[0], g_game->cur_troop);
+    refresh_armor(armor_labels[0], g_game_G->cur_troop);
     if (rows == 2)
         refresh_armor(armor_labels[1], troop);
 }
@@ -392,7 +393,7 @@ void PartyWindow::refresh_armor(void** labels, int t)
 // @ 0x502920
 void PartyWindow::refresh_page(int page)
 {
-    Game* g = g_game;
+    Game* g = g_game_G;
     int t = g->cur_troop;
     if (page != 0)
         t = troop;
@@ -416,7 +417,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
         if (flag != 0 && idx < 9)
             w->b11c[0] = 0;
     } else {
-        int t = g_game->cur_troop;
+        int t = g_game_G->cur_troop;
         if (page == 1) {
             if ((fl & 1) == 0)
                 t = troop;
@@ -435,7 +436,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
     state[idx] &= ~2u;
     if (icon_a84 != 0 && flag != 0) {
         tstring n("inv_i_character");
-        add_strip_icon((char*)&icon_a84, n, g_game->cur_troop, spec_ac0);
+        add_strip_icon((char*)&icon_a84, n, g_game_G->cur_troop, spec_ac0);
     }
     if (icon_a88 != 0 && flag != 0) {
         tstring n("inv_i_character2");
@@ -450,11 +451,11 @@ MB_NOINLINE ResMesh* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
     if (item->item >= 0) {
         float s = 0.088f;
         m = (ResMesh*)make_item_mesh(item, &s);
-        g_game->f1a1f4 = -1;
-        g_game->f1a1f8 = t;
-        g_game->f1a204 = -10000;
-        g_game->f1a200 = (int)m;
-        g_game->f1a1fc = 0;
+        g_game_G->f1a1f4 = -1;
+        g_game_G->f1a1f8 = t;
+        g_game_G->f1a204 = -10000;
+        g_game_G->f1a200 = (int)m;
+        g_game_G->f1a1fc = 0;
         (*(SpawnSliders*)((char*)&g_script + 8)).lo = -1;
         (*(SpawnSliders*)((char*)&g_script + 8)).hi = -1;
         (*(SpawnSliders*)((char*)&g_script + 8)).pos = t;
@@ -466,7 +467,7 @@ MB_NOINLINE ResMesh* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
 // @ 0x502c30  (the last function of the object; the slice listed 0x502c30 as exact in s00502300)
 void PartyWindow::refresh_stash(int row)
 {
-    int t = g_game->cur_troop;
+    int t = g_game_G->cur_troop;
     if (row != 0)
         t = troop;
     for (int n = 0; n < 10; n++) {

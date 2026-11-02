@@ -32,9 +32,12 @@ struct bin_writer_i : file_writer_base {
     virtual int flush();
 };
 
-// ---- the globals the slices saw with their own view types (one raw declaration each)
-extern void* g_mission; // 0x5e292c
-extern void* g_game; // 0x5e2930
+// ---- the globals the slices saw with their own view types (the canonical declaration; the per-slice views below cast it)
+struct Mission; struct GameData; struct ItemKind; struct MissionTemplate;
+extern Mission* g_mission;                       // 0x5e292c
+extern GameData* g_game;                         // 0x5e2930
+extern ItemKind* g_items;                        // 0x5e29d0
+extern MissionTemplate* g_mission_templates;     // 0x5e2a00
 extern char g_dialogs[]; // 0x8ed50c8
 extern int g_conversation_troop;   // 0x8ed50d4
 extern int g_encountered_party;    // 0x8ed50d8
@@ -46,7 +49,6 @@ extern char g_keyboard[]; // 0xa170c8
 extern char g_windows[]; // 0xa73980
 extern char g_map_flags[]; // 0x5e291c
 extern char g_mission_ctx[]; // 0xa73300
-extern void* g_items; // 0x5e29d0
 extern char g_game_keys[]; // 0xa73730
 extern char g_keyboard[]; // 0xa170c8
 #include "../placed_obj.h"
@@ -54,7 +56,6 @@ extern char g_keyboard[]; // 0xa170c8
 #include "../std_vec_out_of_line.h"
 #include "../prop_kind.h"
 #include "../menu_rec.h"
-extern void* g_mission_templates; // 0x5e2a00
 extern char g_terrain[]; // 0xa76630
 extern char g_app_obj[]; // 0x8ee3c48
 
@@ -107,7 +108,7 @@ struct Big5e292c_s25160 { void m_483f60(int a, int b); };
 #define g_mgr       (*(Mgr_s25160*)&orig::g_gui_mgr)
 #define g_dlg       (*(Dlg_s25160*)&orig::g_main_menu_obj)
 #define g_513710    (*(Mgr513710_s25160*)&orig::g_map_flags)
-#define g_big       (*(Big5e292c_s25160**)&orig::g_mission)
+#define g_big       (*(Big5e292c_s25160**)&g_mission)
 
 // ---------------------------------------------------------------------------
 // the game object (only the members this handler touches)

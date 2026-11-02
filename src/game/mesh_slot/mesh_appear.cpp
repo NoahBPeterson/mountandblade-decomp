@@ -5,6 +5,7 @@
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
 #include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
+#include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 
 namespace rgl { struct mat3; }
 rgl::mat3* __cdecl identity3(rgl::mat3* out);     // 0x40cd60 (rgl/shapes/shapes.cpp: the global function; fills the 3x3 and returns out)

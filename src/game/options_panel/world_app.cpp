@@ -141,6 +141,10 @@ struct RowVec {                                      // 0xb0-byte rows, destroye
 #include "../../include/fx.h"   // canonical: g_ticks (0x5e2958)
 extern int g_pending_action;                                // 0x5a9f18
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_pending_action = -1;                                  // 0x5a9f18 -1 = nothing pending
+
 extern char* g_windows;                                  // 0xa73980
 
 // ---- the large record (all members are nominal; accesses are by offset) --------------------------------
@@ -283,12 +287,12 @@ void Big::destroy()
 // @ 0x4d3a50
 void restore_defaults()
 {
-    g_game->f1a090 = 0;
-    g_game->f1a098 = 0;
-    g_game->f1a0b8 = -1;
-    g_game->f1a0bc = -1;
-    g_game->f1a0c0 = -1;
-    g_game->f1a0c4 = -1;
+    g_game_G->f1a090 = 0;
+    g_game_G->f1a098 = 0;
+    g_game_G->f1a0b8 = -1;
+    g_game_G->f1a0bc = -1;
+    g_game_G->f1a0c0 = -1;
+    g_game_G->f1a0c4 = -1;
 
     *(char*)(*(int*)(((char*)g_mission) + 0x65d0) + 0x140) = 0;
     *(char*)(*(int*)(((char*)g_mission) + 0x65dc) + 0x140) = 0;
@@ -296,8 +300,8 @@ void restore_defaults()
     if (*(int*)(((char*)g_mission) + 0x6738)) *(char*)(*(int*)(((char*)g_mission) + 0x6738) + 0x140) = 0;
     if (*(int*)(((char*)g_mission) + 0x6740)) *(char*)(*(int*)(((char*)g_mission) + 0x6740) + 0x140) = 0;
 
-    if (g_game->f1a1cc) {
-        g_game->f1a1cc = 0;
+    if (g_game_G->f1a1cc) {
+        g_game_G->f1a1cc = 0;
         g_pending_action = -1;
         {
             tstring s1("ui_no_discard_changes");
@@ -316,7 +320,7 @@ void restore_defaults()
             *(int*)(ui + 0x4) = 1;
         }
         ((WindowMgrW*)&orig::g_main_menu_obj)->open(0);
-        g_game->f1a090 = 0;
+        g_game_G->f1a090 = 0;
     }
 }
 
@@ -483,7 +487,7 @@ extern int g_counter;                                // 0x5e28cc
 extern char g_saved;                               // 0x5e2a08
 // g_cfg.disable_sound (config/config.h Config +0x40 of g_cfg 0x5a9f98; that header brings d3dapp.h, which would redefine
 // CD3DApplication here)
-#define CFG_DISABLE_SOUND (orig::g_sound_muted)
+#define CFG_DISABLE_SOUND (g_sound_muted)
 #include "../game_globals.h"      // canonical g_key_states (listed directly: the audit reads only the source's own includes)
 #define g_key_states_i (*(int(*)[0x40])g_key_states)     // g_key_states (0x5e27c8, game_globals.h) as 0x40 ints
 
@@ -551,7 +555,7 @@ GameApp::GameApp()
 
     g_use_shaders = 0;
     g_saved = 0;
-    g_game = 0;
+    g_game_G = 0;
     {
         // 0x4d4083..0x4d40b4: operator new(0x6868), then the constructor 0x4d3880 on a non-null block
         Big* b = (Big*)operator new(sizeof(Big));

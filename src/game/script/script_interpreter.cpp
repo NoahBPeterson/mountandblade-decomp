@@ -49,6 +49,27 @@
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../world.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+#include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
+extern int g_propkind_count;                                // 0x5e29e0
+extern int g_sound_muted;                                   // 0x5a9fd8
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_fixed_point_multiplier;                               // 0xa70460 (g_script + 0x20; position_get_x 0x4a1d65)
+int g_cue_track;                                            // 0xa7047c (play_cue_track 0x4a173f)
+int g_next_track_options;                                   // 0xa70478
+int g_next_track;                                           // 0xa70474 (play_track 0x4a1716)
+unsigned g_battle_flags;                                    // 0xa73464 bit 0 = end the battle (end_current_battle 0x4a55fe)
+int g_battle_advantage;                                     // 0xa7331c (set_battle_advantage 0x4a87af)
+char g_in_meta_mission;                                     // 0x8ee30ec (read by in_meta_mission)
+int g_particle_system_count;                                // 0x8ed5094 (warn_particle_system)
+int g_animation_count;                                      // 0xa7662c (0x49d4b0)
+int g_presentation_count;                                   // 0xa75f30 (check_presentation 0x49cd50)
+int g_music_culture;                                        // 0xa75e58 (music_set_culture 0x4a1755)
+int g_track_count;                                          // 0xa73a14 (0x49d3d0)
+int g_visitor_scene;                                        // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
+float g_spawn_radius = 3.0f;                                // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
+
 
 // ==== by-reference helpers with their bodies in this object ================================================
 // The original's interpreter sees these bodies (header inlines its inliner left out of line in the 70 KB execute()):
@@ -394,8 +415,8 @@ __declspec(noinline) char __fastcall warn_sound(const int& value)
     char buf[512];
     int v = value;
     char r = 1;
-    if (v < 0 || v >= g_sound_count) {
-        if (g_warnings_off_b == 0) {
+    if (v < 0 || v >= g_sound_mgr.ngroups) {
+        if (g_sound_muted == 0) {
             sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Sound ID: %d", g_cur_opcode, v);
             report(buf);
         }
@@ -426,7 +447,7 @@ __declspec(noinline) char __fastcall warn_track(const int& value)
     int v = value;
     char r = 1;
     if (v < 0 || v >= g_track_count) {
-        if (g_warnings_off_a == 0 && g_warnings_off_b == 0) {
+        if (g_warnings_off_a == 0 && g_sound_muted == 0) {
             sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Track ID: %d", g_cur_opcode, v);
             report(buf);
         }
@@ -950,9 +971,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (warn_sound((int)params[0])) {
             int ent = trigger_entity(*context);
             if (ent)
-                g_sound.play_at((int)params[0], (int)params[1], (rgl::vector4*)(ent + 0x88), 1.0f, 0);
+                g_sound_mgr.play((int)params[0], (int)params[1], (const float*)(ent + 0x88), 1.0f, 0);
             else
-                g_sound.play((int)params[0], (int)params[1]);
+                g_sound_mgr.play_ui((int)params[0], (int)params[1]);
         }
         break;
     case op::play_track:
@@ -972,7 +993,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         g_music_culture = (int)params[0];
         break;
     case op::stop_all_sounds:
-        g_sound.stop_all();
+        g_sound_mgr.stop_all();
         break;
 
     // ---- positions -------------------------------------------------------------------------------------------------
@@ -3852,7 +3873,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_menu((int)params[0])) {
             game()->current_menu = (int)params[0];
             g_passage_menu = (int)params[0];
-            g_menu_b = (int)params[0];
+            g_map_flags.f8 = (int)params[0];
             game()->next_window = 0x12;
         }
         break;

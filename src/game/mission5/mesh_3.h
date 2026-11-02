@@ -96,13 +96,14 @@ template<> void vector<MEdge, allocator<MEdge> >::push_back(const MEdge&);      
 using rgl::vector4;
 using rgl::matrix;
 
-// ---- the globals the slices saw with their own view types (one raw declaration each)
-extern void* g_game; // 0x5e2930
+// ---- the globals the slices saw with their own view types (the canonical declaration; the per-slice views below cast it)
+struct Mission; struct GameData; struct ItemKind;
+extern ItemKind* g_items;                        // 0x5e29d0
+extern Mission* g_mission;                       // 0x5e292c
+extern GameData* g_game;                         // 0x5e2930
 extern char g_app_obj[]; // 0x8ee3c48
-extern char g_mission[]; // 0x5e292c
 #include "../ptype.h"
 extern char g_windows[]; // 0xa73980
-extern void* g_items; // 0x5e29d0
 #include "../prop_kind.h"
 
 

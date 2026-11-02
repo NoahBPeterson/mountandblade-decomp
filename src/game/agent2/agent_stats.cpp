@@ -46,6 +46,7 @@
 #include "../int_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 const RangePair g_range_tbl[6] = {                       // 0x590aac

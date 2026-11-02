@@ -63,6 +63,7 @@ struct render_cache {
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 using rgl::vector4;
 using rgl::matrix;
@@ -1213,7 +1214,7 @@ ArrSet* vecArr::ucopy(ArrSet* f, ArrSet* l, ArrSet* d)
 float MissileG::ammo_scale()
 {
     if (ammo_item >= 0)
-        return (float)g_items_g[ammo_item].f20c * 0.01f;
+        return (float)g_items[ammo_item].weight * 0.01f;
     return 0.8f;
 }
 // @ 0x472650
@@ -1607,7 +1608,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
 {
     *out_party = -1;
     *out_stack = -1;
-    SpawnRec* r = &g_modes2[mode].recs[idx];
+    SpawnRec* r = &g_mission_templates[mode].recs[idx];
     *out_side = -1;
     *out_flag = -1;
     *out_seed = -1;

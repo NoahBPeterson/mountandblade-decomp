@@ -24,6 +24,7 @@ void mb_error(const char* fmt, ...);                 // 0x42cc80
 // Root of the reader-stream hierarchy (vtable 0x54a740): vptr, name at +4. This file's own tstring-based copy of rgl/stream.h's
 // stream_base (stream.h cannot be included here: see stream_fwd.h); every typed slot is abstract, as in the original.
 #include "../../rgl/stream_fwd.h"
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 struct stream_root {
     virtual void reset();                            // slot 0
     virtual void rewind();                           // 1
@@ -139,6 +140,14 @@ struct MapIcon {
 // mission_templates.txt element (0x58 bytes): inline ctor, read 0x4c2300, array reject 0x4c3430 (../mode_rec.h: ModeRec).
 #include "../mode_rec.h"
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+MissionTemplate* g_mission_templates;                       // 0x5e2a00 mission templates (0x58-byte records, count 0x5e2a04)
+MenuRec* g_menus;                                           // 0x5e29b0 the game menus (0x60-byte records)
+ItemKind* g_items;                                          // 0x5e29d0 array of 0x238-byte item kinds
+int g_propkind_count;                                       // 0x5e29e0 number of scene prop kinds
+int g_item_kind_count;                                      // 0x5e29d4 number of item kinds (g_items)
+
+
 // party_templates.txt element (0xb0 bytes): inline ctor, read 0x4bdff0, array reject 0x4c8980.
 struct PartyTplRec {
     tstring a;                   // +0x00
@@ -156,10 +165,6 @@ struct sound_def {
 // ---------------------------------------------------------------- table objects
 
 // each one is a global singleton that swallows a stream; only the entry points matter here.
-struct SoundTable {                                  // 0x5aa128
-    int pad0;                                        // +0x00
-    int* p4;                                         // +0x04  -> sound count
-};
 struct music_set {
     void load(stream_base* s, int count, const tstring* path);   // 0x4c4340 (rgl/mesh2/rec_tables.h: SoundTable::load)
 };
@@ -203,7 +208,6 @@ struct csv_row {
     csv_row();   // 0x4cdf20 (ItemKind::ItemKind: rgl/mesh2)
 };
 
-extern SoundTable g_sound_mgr;                          // 0x5aa128
 extern EmitTable g_emit_defs;                        // 0x8ed5090
 extern AnimTable g_anim_table;                            // 0x8ed4f60
 extern TableauTable g_tableaus;                       // 0xa75f40
@@ -234,8 +238,8 @@ extern MenuRec* g_menus;                             // 0x5e29b0
 extern int g_map_icon_count;                         // 0x5e29f4
 extern MapIcon* g_map_icons;                         // 0x5e29f0
 
-extern int g_item_kind_count;                             // 0x5e29d4
 extern ItemKind* g_items;                            // 0x5e29d0
+extern int g_item_kind_count;                             // 0x5e29d4
 
 extern int g_mission_template_count;                             // 0x5e2a04
 extern ModeRec* g_mission_templates;                             // 0x5e2a00
@@ -273,7 +277,7 @@ void load_module_files()
     in_sounds.r_tstr(&str2);
     in_sounds.r_int(&version);
     ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_scan_module_sounds, &g_module_path);
-    g_loaded_sound_count = *g_sound_mgr.p4;
+    g_loaded_sound_count = *(int*)g_sound_mgr.defs;
     s_sounds.failed = 1;
 
     // particle_systems.txt

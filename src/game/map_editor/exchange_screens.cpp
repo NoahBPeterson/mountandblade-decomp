@@ -28,6 +28,7 @@
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../menu_rec.h"   // g_menus 0x5e29b0
 
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
 #define W(p, off) (*(ChoiceList**)((char*)(p) + (off)))
@@ -701,7 +702,7 @@ void EventScreen::on_event(int code)
     int slot = (int)this;
     ((MissionSource*)((char*)this + 0x30))->pick(&slot);
 
-    char* rec = g_menus + *(int*)((char*)g_game + 0x13aec) * 0x60;
+    char* rec = (char*)g_menus + *(int*)((char*)g_game + 0x13aec) * 0x60;
     int local = -1;
 
     if (g_mission_clock != 0) {

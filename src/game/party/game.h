@@ -20,6 +20,10 @@
 #include "../ui/ui_common.h"
 #include "../ui/troop_inv.h"
 
+// the one global g_game (0x5e2930) is declared by include/game_data.h as GameData*: this header's class Game is the same object (see above)
+struct GameData;
+extern GameData* g_game;                    // 0x5e2930
+#define g_game_G (*(Game**)&g_game)         // this header's view of it
 // ---- globals -----------------------------------------------------------------------------------------
 // the second element of the clock table g_ticks (ui_common.h, 0x5e2948) as two dwords: the original reads and
 // writes the halves separately (0x51cfa0 copies lo then hi; 0x51dbd0 stores them from the loaded value)
@@ -438,7 +442,6 @@ struct Game {
     void build_map_trees();                 // 0x5213d0 (rebuilds the campaign-map tree meshes)
     void load_game_data(int extra_triggers);   // 0x5236f0 (ret 4: opens the Data\*.txt tables in turn)
 };
-extern Game* g_game;                        // 0x5e2930
 extern I64Vec g_list_a70480;                // 0xa70480 (read first by 0x51dbd0 after the clock)
 extern PartyTemplate* g_party_templates;    // 0x5e29f8 (0xb0-byte records)
 extern int g_party_template_count;             // 0x5e29fc

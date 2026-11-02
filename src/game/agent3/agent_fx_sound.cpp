@@ -30,8 +30,12 @@
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_sound_muted;                                          // 0x5a9fd8 non-zero: sound is off (the listener does not follow the camera, script sound ops warn)
+SoundMgr g_sound_mgr;                                       // 0x5aa128 the sound player (defs, groups, listener frame, named sound slots)
+int g_no_freq;                                              // 0x5a9fc8
 const int g_xp_table[63] = {                             // 0x590974
     0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362, 40682, 47892, 56103, 65441, 77233,
     90809, 106425, 124371, 144981, 168636, 195769, 226879, 262533, 303381, 350164, 412091, 484440, 568947, 667638, 782877, 917424,
@@ -187,7 +191,7 @@ static __forceinline int round_i(float v) { return round_float(&v); }
 int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id)
 {
     int ret = -1;
-    if (g_sound_off == 0 && idx >= 0 && idx < ngroups) {
+    if (g_sound_muted == 0 && idx >= 0 && idx < ngroups) {
         int* pn = &groups[idx].nvar;
         int n = *pn;
         if (n > 0) {
@@ -211,7 +215,7 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                     prio = 0xff;
                 } else {
                     FSOUND_3D_SetAttributes(ch, pos, 0);
-                    float dist = (listener - *(const vector4*)pos).out_length();
+                    float dist = (frame.o - *(const vector4*)pos).out_length();
                     float f = 3.0f / (dist + 3.0f);
                     int lo = 0;
                     int hi2 = 0x100;
@@ -280,7 +284,7 @@ void GameData::add_experience(int troop, int amount)
         c->fac += 10;
         c->level++;
         if (troop == player) {
-            g_sound_mgr.play(g_levelup_sound, 1, ((const float*)&g_sound_mgr.listener), 1.0f, 0);
+            g_sound_mgr.play(g_sound_mgr.slot[1], 1, ((const float*)&g_sound_mgr.frame.o), 1.0f, 0);
             {
                 tstring key("ui_you_have_advanced_to_level_number");
                 sprintf(buf2, g_strtable.lookup(key)->c_str(), c->level);
@@ -568,7 +572,7 @@ void Agent::play_hit_sound(int* kind)
     }
     int r = rand();
     float pitch = (float)(r % 0x3dc9) * 2.5289246e-05f + 0.8f;
-    g_sound_mgr.play(g_sound_ids[snd], 0, &body->m.o.x, pitch, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &body->m.o.x, pitch, 0);
 }
 
 // @ 0x443730
@@ -590,7 +594,7 @@ void Agent::play_sound_var(int* kind, float* var)
         vector4 p = body->m.o;
         float h = (f10 == 0 && f2c != -1) ? 2.4f : 1.5f;
         p.z = (h - 0.3f) + p.z;
-        g_sound_mgr.play(g_sound_ids[*kind], own, &p.x, pitch, (int*)&pitch);
+        g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p.x, pitch, (int*)&pitch);
     }
 }
 
@@ -633,7 +637,7 @@ void Agent::play_pain_sound(float health)
     float v = (health < 0.0f) ? 0.0f : ((health >= 0.5f) ? 0.5f : health);
     int r = rand();
     float pitch = (float)(r % 0x3dc9) * 6.3223115e-06f + (v + 0.95f);
-    g_sound_mgr.play(g_sound_ids[0x11], 0, &body->m.o.x, pitch, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[0x11], 0, &body->m.o.x, pitch, 0);
 }
 
 // ---- the equipment display ----------------------------------------------------------------------------------------------------------------
@@ -919,9 +923,9 @@ void Agent::on_wield_changed()
     }
 skip:
     if (snd1 != -1 && (float)(g_ticks[g_mission->time_idx] - g_mission->time_base) * 1e-05f > 1.0f)
-        g_sound_mgr.play(g_sound_ids[snd1], 0, &pos.x, 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[snd1], 0, &pos.x, 1.0f, 0);
     if (snd2 != -1 && (float)(g_ticks[g_mission->time_idx] - g_mission->time_base) * 1e-05f > 1.0f)
-        g_sound_mgr.play(g_sound_ids[snd2], 0, &pos.x, 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[snd2], 0, &pos.x, 1.0f, 0);
     f130 = 0;
     for (j = 0; j < 2; j++) {
         int s = wield[j];

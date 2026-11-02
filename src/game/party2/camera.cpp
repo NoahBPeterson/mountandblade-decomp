@@ -35,6 +35,7 @@
 #include "../../include/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
 #include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
 #include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
+#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 extern Font* g_font;                                // 0x5e2934
@@ -716,13 +717,6 @@ struct Reinf {                                      // 0x4c-byte reinforcement r
     int flags;                                      // +4
     char pad8[0x4c - 8];
 };
-struct ReinfSet {                                   // 0x58-byte reinforcement packet
-    char pad0[0x34];
-    Reinf* recs;                                    // +0x34
-    int count;                                      // +0x38
-    char pad3c[0x58 - 0x3c];
-};
-extern ReinfSet* g_mission_templates;                           // 0x5e2a00
 
 struct Unit {                                       // 0x130-byte leader/unit record inside Mission
     char pad0[0x6b0];
@@ -860,8 +854,8 @@ void MissionAgents::add_order_arrow(int id)
 // @ 0x49c170
 void Mission::check_slot(int id, unsigned bits)
 {
-    if (id >= 0 && id < g_mission_templates[cur_set].count) {
-        Reinf* r = &g_mission_templates[cur_set].recs[id];
+    if (id >= 0 && id < g_mission_templates[cur_set].n_spawns) {
+        Reinf* r = (Reinf*)&g_mission_templates[cur_set].recs[id];
         int eax_, ebx_;
 
         memcpy((char*)this + r->idx * 0x130 + 0x6b0, (char*)this + r->idx * 0x130 + 0x6f0, 0x40);
@@ -2353,7 +2347,7 @@ static __forceinline void value_message(GameData* m, int amount, const char* key
         sprintf(buf, g_strtable.lookup(s)->c_str(), m->string_value(amount).c_str());
     }
     g_gui.add(tstring(buf), -1);
-    g_sound_mgr.play(*sound_id, 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    g_sound_mgr.play(*sound_id, 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
 }
 
 // @ 0x49b720
@@ -2393,7 +2387,7 @@ void GameData::start_quest(int quest, int giver_troop)
             mb_snprintf(buf, 0x200, f->c_str(), n);
         }
         g_gui.add(tstring(buf), 0xffd0f0c8);
-        g_sound_mgr.play(g_snd_new_quest, 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+        g_sound_mgr.play(g_snd_new_quest, 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
         rec->flags = 0x100;
     }
     WL_MARKER(13)

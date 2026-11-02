@@ -98,10 +98,6 @@ int __cdecl round_float(float* p);                                      // 0x432
 int __cdecl rand_below(const int* n);                                   // 0x432580
 
 #include "../../include/sound_mgr.h"             // SoundDef, SoundGroup, SoundMgr (shared with agent5, party2, inventory_panel)
-extern SoundMgr g_sound_mgr;                                // 0x5aa128
-extern int g_sound_ids[];                               // 0x5aa178 sound id table (g_sound_ids[0x11] = pain)
-extern int g_levelup_sound;                             // 0x5aa17c
-extern int g_sound_off;                                 // 0x5a9fd8
 extern int g_no_freq;                                   // 0x5a9fc8
 extern const int g_xp_table[63];                        // 0x590974: experience needed for each level
 

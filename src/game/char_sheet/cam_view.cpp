@@ -5,6 +5,8 @@
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (listed directly: the resolution audit reads only the source's own includes)
+struct GameData;
+extern GameData* g_game;                                    // 0x5e2930
 
 // @ 0x4eb050
 void CamView::update(float dt)
@@ -57,11 +59,11 @@ void CamView::update_model(float dt)
     int n = *(int*)((char*)g_skins_begin + skin * 0x1f8 + 0x3c) - 1;
 
     if (g_no_cam && (g_a17148 || g_a17348) && orig::g_a1711c && !orig::g_a1751c) {
-        if (*(int*)(g_game + 0x1a090) == 0) {
-            *(int*)(g_game + 0x1a090) = 1;
+        if (*(int*)((char*)g_game + 0x1a090) == 0) {
+            *(int*)((char*)g_game + 0x1a090) = 1;
             cam_btn->vb4();
         } else {
-            *(int*)(g_game + 0x1a090) = 0;
+            *(int*)((char*)g_game + 0x1a090) = 0;
             cam_btn->vb0();
         }
     }
@@ -200,7 +202,7 @@ void CamView::update_model(float dt)
 
     if (b_done->v44(0x10000)) {
         if (troop >= 0) {
-            char* rec = *(char**)(g_game + 0x13a00);
+            char* rec = *(char**)((char*)g_game + 0x13a00);
             int idx = troop;
             *(float*)(rec + idx * 0x508 + 0x3c0) = pose[0];
             *(float*)(rec + idx * 0x508 + 0x3c4) = pose[1];
@@ -214,7 +216,7 @@ void CamView::update_model(float dt)
         int ch;
         if (state == 1) {
             state = -1;
-            *(int*)(g_game + 0x13aec) = 1;
+            *(int*)((char*)g_game + 0x13aec) = 1;
             *(int*)(*(char**)&orig::g_wDC + 0x18) = 7;
             ch = 0x17;
         } else {

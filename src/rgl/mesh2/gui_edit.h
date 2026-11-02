@@ -358,14 +358,6 @@ struct MenuDoor {
     tstring translated();                                               // 0x4c62b0
     tstring translated_door();                                          // 0x4c6d00
 };
-struct GameMenu {
-    tstring name;                                                       // +0x00
-    tstring key;                                                        // +0x10
-    char pad20[0x54 - 0x20];
-    int n_doors;                                                        // +0x54
-    MenuDoor* doors;                                                    // +0x58
-    char pad5c[4];
-};
 
 
 // ============================================================================================================
@@ -814,7 +806,6 @@ extern int g_n_dialogs;                                                 // 0x8ed
 extern ModRec g_item_modifiers[];                                            // 0xa75f70 (43 x 0x28)
 extern ModRec g_item_modifiers[]; // 0xa75f70 (43 x 0x28)
 extern SkillRec g_skill_tbl[];                                             // 0x8ee3100 (42 x 0x44)
-extern GameMenu* g_menus;                                               // 0x5e29b0
 extern int g_menu_count;                                                   // 0x5e29b4
 extern char g_show_party_ids_instead_of_names;                                                  // 0xa181b8
 

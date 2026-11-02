@@ -38,7 +38,6 @@ extern int g_a1711c;                                    // 0xa1711c
 extern int g_a1751c;                                    // 0xa1751c
 extern int g_world_time;                                // 0x5d8790
 extern float g_scroll;                                  // 0x590d7c
-extern char* g_game;                                    // 0x5e2930
 extern float g_dummy_mat;                               // 0x8ed4f8c (float; one per deform key)
 extern float g_dummy1;                                  // 0x8ed508c
 

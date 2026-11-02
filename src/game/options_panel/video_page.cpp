@@ -59,7 +59,6 @@ extern rgl_config g_cfg;                                        // 0x5a9f98
 struct Config { void set_triple_buffering(int t); void set_texture_quality(int q); };
 
 extern ID3DXEffect* g_effect;                                                // 0x5e293c (renderer.h)
-extern Game* g_game;                                                        // 0x5e2930
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
 #include "../id_stack.h"                         // the screen id stack (0xa739f8)

@@ -58,6 +58,13 @@
 #include "../agent/curve.h"   // Curve: set_rec_phase 0x433b20 (the canonical class of the Skeleton record)
 #include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+extern int g_propkind_count;                                // 0x5e29e0
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_opt_hit_fx = 1;                                       // 0x5a9fc0 non-zero: hits spawn their effect
+unsigned g_input_mask;                                      // 0x5e2474
+
 
 #undef resmgr
 #undef g_resmgr
@@ -588,8 +595,8 @@ float frand();                                                          // 0x40e
 float clamp(const float* x, const float* lo, const float* hi);          // 0x40e3d0
 float __cdecl fmin_ref(const float* a, const float* b);                 // 0x4324b0
 float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0
-extern float g_dt_scale;                                                // 0x5a9bf0
-extern unsigned g_input_flags;                                         // 0x5e2470
+float g_dt_scale = 1.0f;                                    // 0x5a9bf0
+unsigned g_input_flags;                                     // 0x5e2470
 extern int g_player_agent;                                              // 0x8ed50dc
 
 __forceinline ClassInfo* Agent::class_rec()
@@ -2541,7 +2548,7 @@ void Mission::spawn_prop(int* idx, int* id)
         tbl = find_in_table78(&r->name);
         if (tbl < 0)
             tbl = r->id;
-        if (tbl < 0 || tbl >= g_tbl78_count) {
+        if (tbl < 0 || tbl >= g_propkind_count) {
             tbl = -1;
         } else {
             Rec78* rec = &g_tbl78[tbl];
@@ -2603,7 +2610,7 @@ after:
                 vector4 dir, col;
                 ((level*)scene_world)->light_at(r->m18.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
             }
-            if (r->kind == 0 && tbl >= 0 && tbl < g_tbl78_count && (r78_flags(&g_tbl78[tbl]) & 0x12000))
+            if (r->kind == 0 && tbl >= 0 && tbl < g_propkind_count && (r78_flags(&g_tbl78[tbl]) & 0x12000))
                 m->f10c = 0xffff;
             else
                 m->f10c = 0x1ffff;
@@ -2676,7 +2683,7 @@ done_shape:
     int ty = r->kind;
     if (ty == 0) {
         int ri = r->id;
-        if (ri >= 0 && ri < g_tbl78_count && rsnd(&g_tbl78[ri]).count > 0) {
+        if (ri >= 0 && ri < g_propkind_count && rsnd(&g_tbl78[ri]).count > 0) {
             SoundSet* ss = &rsnd(&g_tbl78[ri]);
             ((Placement*)g_game)->set_matrix(&r->m18);
             g_game->f1a1f0 = *idx;
@@ -4153,11 +4160,10 @@ void FxDef::skin_lods(rgl::lod_mesh* g, int flag)
             skin(*it, flag);
     }
 }
-extern int g_blood_enabled;                             // 0x5a9fc0 (provisional)
 // @ 0x4525a0
 void Mission::blood_burst(float x, float y, float z, int unused, float amount)
 {
-    if (g_blood_enabled) {
+    if (g_opt_hit_fx) {
         unsigned i = agents.first_used();
         if (i < (unsigned)agents.count) {
             do {
@@ -4791,7 +4797,7 @@ void Agent::ragdoll_update()
                                 lim = 0.35f;
                             if (!f58c4 && !f58d8 && hold.o.z - w->o.z < 0.0f &&
                                 w->o.z - ((level*)g_mission->scene_world)->floor_z(&w->o.x) < lim) {
-                                g_sound_mgr.play(g_sound_blood, 0, (const float*)&body->m.o, frand() * 0.4f + 0.8f, 0);
+                                g_sound_mgr.play(g_sound_mgr.slot[74], 0, (const float*)&body->m.o, frand() * 0.4f + 0.8f, 0);
                                 f58d8 = 1;
                             }
                             hold = *w;
@@ -5180,8 +5186,8 @@ extern const GaitBand g_gait_walk[3];
 extern const GaitBand g_gait_mount[6];
 const GaitBand g_gait_walk[3] = { { -10000.0f, 0.3f }, { 0.27f, 2.32f }, { 2.27f, 10000.08f } };       // 0x590940 {lo, hi} per speed band
 const GaitBand g_gait_mount[6] = { { -3.0f, -0.01f }, { -0.01f, 0.01f }, { 0.2f, 2.1f }, { 2.0f, 3.9f }, { 3.8f, 6.3f }, { 6.2f, 200.5f } };   // 0x590910
-extern float g_move_fwd;                                // 0x5e2478
-extern float g_move_side;                               // 0x5e247c
+float g_move_fwd;                                           // 0x5e2478
+float g_move_side;                                          // 0x5e247c
 #define PICK(m2, m3, m1, m0) (mode == 2 ? (m2) : mode == 3 ? (m3) : mode == 1 ? (m1) : (m0))
 static __forceinline bool aset_inl(AnimSlot& s, int id, unsigned prio)         // 0x4378a0 inlined (AnimSlot::set is a call elsewhere in this object)
 {
@@ -5773,14 +5779,13 @@ void Agent::update_controls(float dt)
 }
 
 // ---- Agent::process_blow: the handler of a pending blow ---------------------------------------------------------------------------
-extern int g_opt_hit_fx;                            // 0x5a9fc0
 extern float g_damage_interrupt_attack_treshold;                            // 0xa18178
 extern float g_blood_multiplier;                            // 0xa1811c
 extern float g_player_xp_multiplier;                            // 0xa1812c
 extern float g_hero_xp_multiplier;                            // 0xa18130
 extern float g_regulars_xp_multiplier;                            // 0xa18134
-extern int g_voice_default_a;                       // 0x8ed50a0
-extern int g_voice_default_b;                       // 0x8ed50a4
+int g_voice_default_a;                                      // 0x8ed50a0
+int g_voice_default_b;                                      // 0x8ed50a4
 struct AnimInfo { char pad0[0x3c]; float length; }; // +0x3c
 struct AnimDefV { char pad0[0x10]; AnimInfo* info; char pad14[0x30 - 0x14]; };   // g_anims entry as 0x457b40 reads it (agent_obj.h's AnimDef calls +0x10 `subs`)
 extern AnimDefV* g_anims;                           // 0xa76628
@@ -7876,12 +7881,7 @@ reset_pos:
 // ---- Agent::update, Agent::tick: the per-frame agent update ---------------------------------------------------------------------------
 struct SubV { char pad0[8]; unsigned flags; char padc[0x1c - 0xc]; float ev[4]; char pad2c[0x40 - 0x2c]; };   // 0x40 bytes: a part of an animation (flags: 0x100 footstep dust, 0x200 sound)
 struct AnimDefW { char pad0[0x10]; SubV* subs; char pad14[0x30 - 0x14]; };   // g_anims entry as 0x45f660 reads it
-extern int g_default_fx;                                // 0x8ed50a8
-extern int g_snd_224;                                   // 0x5aa224 (footstep sounds)
-extern int g_snd_228;                                   // 0x5aa228
-extern int g_snd_22c;                                   // 0x5aa22c
-extern int g_snd_230;                                   // 0x5aa230
-extern int g_snd_2e0;                                   // 0x5aa2e0
+int g_default_fx;                                           // 0x8ed50a8
 // @ 0x45f660
 void Agent::update(float dt)
 {
@@ -7919,12 +7919,12 @@ void Agent::update(float dt)
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_snd_230, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[46], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_snd_224, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[43], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     }
                 } else if (k == 1) {
@@ -7933,12 +7933,12 @@ void Agent::update(float dt)
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_snd_22c, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[45], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.4f + 0.8f;
-                        g_sound_mgr.play(g_snd_228, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[44], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     }
                 }
@@ -7975,7 +7975,7 @@ void Agent::update(float dt)
                         case 0x1a3:
                         case 0x1a4: {
                             pitch = frand() * 0.4f + 0.8f;
-                            g_sound_mgr.play(g_snd_2e0, 0, (const float*)&body->m.o, pitch, 0);
+                            g_sound_mgr.play(g_sound_mgr.slot[73], 0, (const float*)&body->m.o, pitch, 0);
                         }
                         }
                     }

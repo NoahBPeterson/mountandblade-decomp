@@ -65,6 +65,6 @@ struct MissionTemplate {                        // 0x58 bytes: a mission mode / 
 };
 typedef MissionTemplate ModeRec2;               // the slices' names for the same record
 typedef ModeRec2 ModeRec;                       // agent.h's name for the same record
-extern ModeRec2* g_modes2;                      // 0x5e2a00 (g_modes of agent.h, g_mission_templates of script)  // old name of g_mission_templates, removed after the names merge
+extern MissionTemplate* g_mission_templates;                // 0x5e2a00 mission templates (0x58-byte records, count 0x5e2a04; g_modes of agent.h)
 
 #endif // GAME_MODE_REC_H

@@ -110,6 +110,7 @@ struct vec_model {                                  // vector<model_b>
 };
 
 #include "../int_vec.h"                                 // IntVec (was vec_int here)
+#include "../../include/game_data.h"   // GameData, g_game 0x5e2930
 
 struct vec_widget {                                 // vector<widget*> (allocator word not initialised)
     void* alloc;                                    // +0
@@ -139,6 +140,10 @@ char* g_game;                                       // 0x5e2930
 char  g_flag_a181b8;                                // 0xa181b8
 
 #include "../str_table.h"                                       // StrTable: the translated-string table 0x5e2a18 (find 0x4c6010)
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+GameData* g_game;                                           // 0x5e2930 the game state object
+
 // 0x48ad00 is Map10007::lookup (ui/mission.h, ui/mission_ui.cpp: the id -> index hash at the start of the party manager)
 struct Map10007 {
     int lookup(unsigned id);                                    // 0x48ad00 (ret 4)
@@ -210,7 +215,7 @@ void sel_list::add(int val)
 // load into the record-address arithmetic (`add esi,[eax+0x13a00]`).
 static inline const char* name_of_1(int id)
 {
-    char* base = *(char**)(g_game + 0x13a00);
+    char* base = *(char**)((char*)g_game + 0x13a00);
     char* rec = base + id * 0x508;
     const tstring* t = ((StrTable*)&orig::g_strtable)->find((const tstring*)(rec + 0x20));
     if (t == 0)
@@ -220,7 +225,7 @@ static inline const char* name_of_1(int id)
 
 static inline const char* name_of_2(int id)
 {
-    char* base = *(char**)(g_game + 0x13a48);
+    char* base = *(char**)((char*)g_game + 0x13a48);
     char* rec = base + id * 0x300;
     const tstring* t = (const tstring*)rec;
     if (rec[0x10] == 0) {
@@ -233,7 +238,7 @@ static inline const char* name_of_2(int id)
 
 static inline const char* name_of_3(int id)
 {
-    char* mgr = g_game + 0xf8;
+    char* mgr = (char*)g_game + 0xf8;
     int v = ((Map10007*)mgr)->lookup(id);
     char* rec = (*(char***)(mgr + 0x138d0))[v >> 4] + (v & 0xf) * 0x5ac8;      // the page table is a pointer (0x50ce86)
     const tstring* t = (const tstring*)(rec + 0xc);
@@ -253,7 +258,7 @@ struct row138 {
 };
 static inline const tstring& name_of_4(int id)
 {
-    return *(const tstring*)(*(char**)(g_game + 0x13a58) + id * 0x138 + 0x40);
+    return *(const tstring*)(*(char**)((char*)g_game + 0x13a58) + id * 0x138 + 0x40);
 }
 
 static inline void swap_index(sel_list* l, unsigned i, unsigned j)

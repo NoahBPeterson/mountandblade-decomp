@@ -28,12 +28,18 @@ struct OptionsDlg {
 #include "../../dxframework/dxutil.h"   // DXUtil_Timer 0x407660 (stdcall, TIMER_COMMAND)
 #include "../../rgl/options.h"       // options::save 0x4181c0
 #include <hash_map>
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+Font* g_font;                                               // 0x5e2934 the game font
 int g_video_played;                              // 0x5e2a10 (1 once the intro video started, 2 once it was skipped)
 float g_5a9f24 = 0.65f;                          // 0x5a9f24 (the meeting window columns' top)
 extern const float g_time_scale = 60.0f;         // 0x590e28 read by SaveWindow::list_saves (progress_bar.cpp)
-float g_5a9f28[2] = { 0.0f, 0.21450001f };       // 0x5a9f28 {x, y} column size; [0] = 1.0f - 0x5a9f20 is set by static_init_547a60 (static_init owner)
+extern float g_5a9f20;                                      // 0x5a9f20 the meeting window columns' left edge (progress_bar.cpp: a definition in this TU would be folded)
+extern float g_5a9be0;                                      // 0x5a9be0 (progress_bar.cpp)
+float g_5a9be8 = 1.0f - g_5a9be0;                           // 0x5a9be8 computed at startup
+float g_5a9f28[2] = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} column size (x is computed at startup)
 
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
 extern "C" void __stdcall SkinMagic_Init(HINSTANCE, const char*, int, int);   // 0x535452 (ordinal 1)
@@ -550,7 +556,6 @@ void crt_exit();                                        // 0x535458
 #include "../../include/item_kind.h"   // ItemKind* g_items (0x5e29d0)
 #include "../terrain_b/emit.h"     // EnvRow* g_env_rows (0x5e28f4)
 extern PartyTemplate* g_party_templates;                   // 0x5e29f8 (PartyTemplate: game_recs.h, via game_data.h; the type script_interpreter.h and party/game.h declare)
-extern void* g_mission_templates;                          // 0x5e2a00
 struct E24;
 E24* g_5e2928;                                          // 0x5e2928 (the array shutdown() deletes)
 extern Font* g_font;                                // 0x5e2934
@@ -693,7 +698,7 @@ void MissionScreen::fill_mission_grid()
 // the base construction shared by 0x4dae40 and 0x4db1f0 (both build the same sequence with a different overlay mesh name)
 #define NEW_OVERLAY_BASE(name_string)                                                   \
     g_gui.reset();                                                                      \
-    stop_all((void*)&orig::g_sound_mgr);                                                \
+    g_sound_mgr.stop_all();                                                \
     { NEW_OVERLAY_WINDOW(p_) overlay = p_; }                                            \
     {                                                                                   \
         float v[2] = { 0.0f, 0.0f };                                                    \
@@ -1748,7 +1753,7 @@ void PanelMesh::build_panel(const float* base, const float* size, const float* u
 // @ 0x4de5b0
 void DebriefMenu::create_debrief()
 {
-    stop_all((void*)&orig::g_sound_mgr);
+    g_sound_mgr.stop_all();
 
     ContainerBase* w;
     {

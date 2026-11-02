@@ -84,7 +84,6 @@ extern text_stream g_log;                  // 0x5a9f60
 extern int g_texture_detail;               // 0x5a9f9c
 extern int g_no_cam;                       // 0x5a9fb0
 extern int g_simple_reflect;               // 0x5a9fc4
-extern int g_sound_muted;                  // 0x5a9fd8
 extern int g_iWindowWidth;                 // 0x5a9fe4
 extern int g_iWindowHeight;                // 0x5a9fe8
 extern int g_shadow_quality_req;           // 0x5aa004
@@ -98,7 +97,6 @@ extern int g_mesh_quality;                 // 0x5aa084
 extern Config g_launcher_cfg;              // 0x5aa0a8
 extern int g_opt_5aa0ac;                   // 0x5aa0ac
 extern int g_opt_5aa0b4;                   // 0x5aa0b4
-extern SoundMgr g_sound_mgr;               // 0x5aa128
 extern resmgr g_resmgr_obj;                    // 0x5d6fa0
 extern gui_manager g_gui_mgr;                  // 0x5d7080
 extern float g_mouse_x;                    // 0x5d7094
@@ -108,12 +106,8 @@ extern char g_5e2630;                      // 0x5e2630
 extern ptype* g_ptypes;                    // 0x5e28f8
 extern int g_use_shaders;                  // 0x5e28fc
 extern MapFlags g_map_flags;               // 0x5e291c
-extern Mission* g_mission;                 // 0x5e292c
 extern int g_trial_mode;                   // 0x5e29c4
-extern ItemKind* g_items;                  // 0x5e29d0
-extern int g_item_kind_count;              // 0x5e29d4
 extern PropKind* g_propkinds;              // 0x5e29dc
-extern int g_propkind_count;               // 0x5e29e0
 extern int g_ptype_count;                  // 0x5e29e8
 extern StrTable g_strtable;                // 0x5e2a18
 extern render_batch g_batch;               // 0x5fe898

@@ -29,8 +29,10 @@
 #include "../../include/key_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+extern int g_propkind_count;                                // 0x5e29e0
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_clamp_level;                                          // 0x8ee3860
 static const int g_value_max = 64;   // upper bound of a placed object's value (0x435860), passed by address
 const int g_tier_dist[11] = { 60, 100, 140, 180, 220, 260, 300, 340, 380, 420, 460 };   // 0x590a70
 
@@ -312,7 +314,7 @@ int find_in_table20(const tstring* name)
 int find_in_table78(const tstring* name)
 {
     int r = -1;
-    for (int i = 0; i < g_tbl78_count && r == -1; i++)
+    for (int i = 0; i < g_propkind_count && r == -1; i++)
         if (g_tbl78[i].name.equals(*name)) r = i;
     return r;
 }

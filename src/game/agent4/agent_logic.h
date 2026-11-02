@@ -244,7 +244,6 @@ __declspec(dllimport) void __cdecl NewtonBodyGetVelocity(const NewtonBody* b, fl
 __declspec(dllimport) void __cdecl NewtonRagDollBoneGetGlobalMatrix(const NewtonRagDollBone* b, float* m);       // 0x549248
 }
 #include "../../include/fx.h"   // canonical: g_step_tbl (0x5a9c20)
-extern int g_sound_blood;                           // 0x5aa2e4
 extern int g_tick_b;                                // 0xa18234
 float __cdecl capsule_sphere_gap(capsule* c, sphere* s);   // 0x409d20
 extern float g_armor_soak_factor_against_cut[3];                          // 0xa1817c

@@ -27,7 +27,6 @@ struct Rec20 { tstring name; char pad[0x10]; };      // 0x20-byte named record (
 extern Rec20* g_tbl20;                  // 0x5e28f8
 #include "../ptype.h"
 extern Rec78* g_tbl78;                  // 0x5e29dc
-extern int g_tbl78_count;               // 0x5e29e0
 int find_in_table20(const tstring* name);   // 0x435260 (cdecl)
 int find_in_table78(const tstring* name);   // 0x4352a0 (cdecl)
 int ftoi_helper(int x);                     // 0x435440

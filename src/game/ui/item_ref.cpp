@@ -92,7 +92,7 @@ tstring ItemKind::mesh_name(unsigned __int64 cls, int bit)
 // @ 0x462900
 tstring ItemRef::mesh_name(unsigned __int64 cls)
 {
-    if (item >= 0 && item < g_item_count)
+    if (item >= 0 && item < g_item_kind_count)
         return g_items[item].mesh_name(cls, b.mod);
     return tstring("");
 }

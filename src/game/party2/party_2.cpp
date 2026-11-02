@@ -24,6 +24,7 @@
 #include "../config/widget_mgr.h"
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160

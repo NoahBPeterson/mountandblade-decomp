@@ -7,6 +7,7 @@
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 bytes)
 #include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
+#include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
 int GameData::save_state(OutStream* out)

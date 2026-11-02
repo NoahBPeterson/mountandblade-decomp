@@ -21,6 +21,9 @@
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
+#include "../menu_rec.h"   // g_menus 0x5e29b0
+#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 
 // ======================================================= slice s00525160: functions
 #undef g_mgr
@@ -30,7 +33,7 @@
 #undef g_513710
 #define g_513710    (*(Mgr513710_s25160*)&orig::g_map_flags)
 #undef g_big
-#define g_big       (*(Big5e292c_s25160**)&orig::g_mission)
+#define g_big       (*(Big5e292c_s25160**)&g_mission)
 // agent record i of the mission (pages of 16, 0x5928 bytes each)
 #define REC_S25160(i) ((*(char***)((char*)g_big + 0x1c))[(i) >> 4] + ((i) & 0xf) * 0x5928)
 // @ 0x525160

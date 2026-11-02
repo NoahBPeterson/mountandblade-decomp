@@ -25,7 +25,6 @@
 #define ITYPE(i) (*(unsigned char*)&g_items[i].type_flags)
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
-#define SOUNDMGR ((SoundMgr*)&orig::g_sound_mgr)                  // 0x5aa128
 
 // ---- globals and callees of other translation units -----------------------------------------------------------------
 extern MsgLog g_msglog;                                 // 0x5d7080
@@ -241,8 +240,8 @@ void InventoryPanel::refresh_transaction(int unused)
         rec->equip[9].m4 = 0;
         rec->equip[9].reduce(0);
         set_slot_flag(2, 9, 2, 1);
-        SOUNDMGR->play(g_snd_id_a, 1, ((float*)&g_sound_mgr.listener), 1.0f, 0);
-        SOUNDMGR->play(g_snd_id_b, 1, ((float*)&g_sound_mgr.listener), 1.0f, 0);
+        g_sound_mgr.play(g_snd_id_a, 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
+        g_sound_mgr.play(g_snd_id_b, 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
         init_window();
     }
 

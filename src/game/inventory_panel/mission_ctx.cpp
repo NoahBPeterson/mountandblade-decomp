@@ -63,9 +63,6 @@ struct SceneSub { int dummy; void f(int v, PlacedObj o); };   // 0x4777c0 (ret 0
 struct Terrain {
     void reset();   // 0x4647e0 (this = 0xa76630; game/terrain_a/terrain.h)
 };
-struct GenB {
-    void f();                                           // 0x494310 (this = 0x5aa128; SoundW::stop_all of world_data/world_data.cpp)
-};
 int save_game(int id, tstring* name);                  // 0x4e8980
 struct DialogMgr {                                      // the dialog manager at 0x8ed50c8
     void start(int a, int b, int c, int d, char e);     // 0x4610b0 (ret 0x14)
@@ -97,6 +94,7 @@ struct MetaMission {
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -568,7 +566,7 @@ void MissionV::init_scene()
     t.out.d = t.f1c;
     *(FramePlacement*)((char*)this + 0x6624) = t.out;
     ((Terrain*)&orig::g_terrain)->reset();
-    ((GenB*)&orig::g_sound_mgr)->f();
+    g_sound_mgr.stop_all();
     ((IVector*)((char*)this + 0x63c0))->resize(0, 0);
     *((char*)this + 0x6668) = 0;
     *((char*)this + 0x6669) = 0;

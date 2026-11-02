@@ -26,6 +26,11 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+shape_base* g_hit_shape;                                    // 0x5e246c: last shape hit by trace_ray
+
 
 // signed_angle reads the x and y words of its two arguments (agent2/agent_types.h declares them vec2*); the agent's vel / fx are
 // float records (vector4 or float[]) whose first two words are x and y, so the pointer is the same

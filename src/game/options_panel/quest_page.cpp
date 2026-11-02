@@ -119,7 +119,7 @@ struct KeysPage { void set_enabled_text(Widget* w); };
 
 // @ 0x4d5ba0
 // The selected quest's record: the selection indexes the int table at this+0x4c.
-#define QREC (&g_game->quests[((int*)((char*)this + 0x4c))[sel]])
+#define QREC (&g_game_G->quests[((int*)((char*)this + 0x4c))[sel]])
 
 void QuestPage::fill()
 {
@@ -136,7 +136,7 @@ void QuestPage::fill()
     // the date line: "ui_given_on_date" formatted with g_quest_text, which the game's text helper fills
     {
         tstring key("ui_given_on_date");
-        Game* g = g_game;
+        Game* g = g_game_G;
         int days = (int)(g->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
         g_quest_text.assign(orig::g_empty_text);
         ((SoundCtl*)g)->emit_event(0xf, days / 24, days);
@@ -219,7 +219,7 @@ void QuestPage::update_days()
 // @ 0x4d6300
 void QuestPage::update_difficulty()
 {
-    if (g_game == 0) {
+    if (g_game_G == 0) {
         wd4->hide();   // slot +0xb0 (the slice called it show)
         return;
     }
@@ -229,7 +229,7 @@ void QuestPage::update_difficulty()
         tstring key((const char*)orig::str_ui_difficulty_rating_percentage);
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
-        sprintf(buf, fmt, ((GameData*)g_game)->sl_value_factor());
+        sprintf(buf, fmt, ((GameData*)g_game_G)->sl_value_factor());
     }
     {
         tstring text((const char*)&buf[0]);

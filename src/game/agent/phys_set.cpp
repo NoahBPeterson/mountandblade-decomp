@@ -24,6 +24,9 @@ struct Ctx {
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+PhysSet g_phys;                                             // 0xa181f8 the physics set (its constructor and destructor run as dynamic initialisers)
+
 // @ 0x441360
 void PhysSet::destroy_world(int idx)
 {

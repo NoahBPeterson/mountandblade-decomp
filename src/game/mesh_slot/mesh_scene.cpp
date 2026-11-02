@@ -9,6 +9,7 @@
 #include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
 #include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
 #include "../../include/sound_mgr.h"   // SoundMgr, g_sound_mgr 0x5aa128 (play 0x442650)
+#include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through troop_mgr.h) declares a global ::vat with the same signature
@@ -36,7 +37,6 @@ struct SceneQuery { int query(capsule* c); };
 struct mesh_node {
     void set_time(const float* t);   // 0x433190 (rgl/xmlcfg/game_util.cpp: sets the morph time)
 };
-extern int g_sound_ids[];                        // 0x5aa178
 extern "C" int __stdcall FSOUND_StopSound(int channel);   // 0x5342a6
 float frand();                                   // 0x40e400
 
@@ -413,7 +413,7 @@ void MissileU::update(float dt)
                             else if (sub == 0x20000) snd = 0x34;
                         }
                         tmp = tmp * g_f54a6f0 + frand() * g_f590c74 + g_f59190c;
-                        sound = g_sound_mgr.play(g_sound_ids[snd], 0, &pa.x, tmp, 0);
+                        sound = g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &pa.x, tmp, 0);
                         sound_t = (float)g_ticks[0] * g_f54a6d0;
                     }
                 }
@@ -470,7 +470,7 @@ void MissileU::update(float dt)
             if (sound >= 0 && (float)g_ticks[0] * g_f54a6d0 - g_f590d94 < sound_t)
                 FSOUND_StopSound(sound);
             if (snd >= 0)
-                g_sound_mgr.play(g_sound_ids[snd], 0, &pos.x, 1.0f, 0);
+                g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &pos.x, 1.0f, 0);
         }
     }
 

@@ -1218,14 +1218,14 @@ int GameData::template_count(int party, int cell, float)
 // @ 0x48a210
 void sl_item_flag_all()
 {
-    for (int i = 0; i < g_item_count; i++)
+    for (int i = 0; i < g_item_kind_count; i++)
         g_items[i].f21c = 1.0f;
 }
 
 // @ 0x48a250
 void __stdcall sl_item_set_all(float v)
 {
-    for (int i = 0; i < g_item_count; i++)
+    for (int i = 0; i < g_item_kind_count; i++)
         g_items[i].f224 = v;
 }
 

@@ -408,19 +408,8 @@ struct GlobVec {                                                // the running p
 };
 extern GlobVec* g_presentation;                            // 0x5e299c
 
-// ---- the sound player (g_sound_mgr 0x5aa128; agent3/agent_fx_sound.h has the full class under src/rgl-based headers) ----------------
-// agent3/agent_fx_sound.h's SoundMgr::play (0x442650); the header does not go with this one
-struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int* out_id); };
-struct SoundW {
-    char pad0[0x40];
-    rgl::vector4 listener;                                      // +0x40
-    char pad50[0x248 - 0x50];
-    std::vector<int> channels;                                  // +0x248 looping channels (allocator word, first at +0x24c)
-    rgl::matrix& listener_frame() { return WD_FLD(rgl::matrix, 0x10); }   // +0x10 the listener frame (position at +0x40: 0x494310)
-    void play_ui(int sound, unsigned flags);                    // 0x4942f0 (ret 8)
-    void stop_all();                                            // 0x494310
-};
-extern SoundW g_sound_mgr;                                          // 0x5aa128
+// ---- the sound player (g_sound_mgr 0x5aa128): include/sound_mgr.h ----------------
+#include "../../include/sound_mgr.h"
 extern int g_quest_sounds[];                                    // 0x5aa184 .. (completed 0x5aa184, succeeded 0x5aa188, concluded 0x5aa18c, failed 0x5aa190, cancelled 0x5aa194)
 
 #define g_msglog (*(MsgLog*)&g_gui)                          // the on-screen message log view of the UI root g_gui (0x5d7080)

@@ -281,7 +281,6 @@ extern int g_a7045c;                        // 0xa7045c
 extern int g_show_quest_notes;                        // 0xa181b4
 extern int g_a7333c;                        // 0xa7333c
 extern int* g_menu_data;                    // 0xa739c0
-extern char* g_menus;                   // 0x5e29b0 (GameMenu* in rgl/mesh2/gui_edit.h; the rows of 0x60 bytes are read raw here)
 extern float g_k59c48c;                     // 0x59c48c (weight ramp constant)
 extern float g_half;                        // 0x549d70 (0.5f)
 extern float g_033;                         // 0x54b894 (0.33f)
