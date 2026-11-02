@@ -53,6 +53,16 @@ stream_base& text_stream::r_int(int* v)
     *v = mb_parse_int(tok);
     return *this;
 }
+// the original's linker folded this with r_int (0x415930): the same code, its own body
+stream_base& text_stream::r_uint(unsigned* v)
+{
+    char tok[8192];
+    int toklen;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &toklen);
+    *v = mb_parse_int(tok);
+    return *this;
+}
 
 // @ 0x4159a0
 int mb_parse_int(const char* s)
@@ -589,6 +599,16 @@ void rgl::aabb::update()
 void text_stream2::expect_token() { EXPECT_TOKEN(); }
 // @ 0x415930
 stream_base& text_stream2::r_int(int* v)
+{
+    char tok[8192];
+    int toklen;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &toklen);
+    *v = mb_parse_int(tok);
+    return *this;
+}
+// the original's linker folded this with r_int (0x415930): the same code, its own body
+stream_base& text_stream2::r_uint(unsigned* v)
 {
     char tok[8192];
     int toklen;

@@ -275,8 +275,17 @@ stream_base& text_stream::w_stream(stream_base* o)
 // (also slot 22, and every "return *this" slot of the other stream classes: ICF)
 stream_base& text_stream::slot12(void* v) { return *this; }
 stream_base& text_stream::slot22(void* v) { return *this; }   // folded with slot12
-stream_base& text_stream::w_uint(unsigned* v) { return text_stream::w_int((int*)v); }   // folded with w_int
-stream_base& text_stream::r_uint(unsigned* v) { return text_stream::r_int((int*)v); }   // folded with r_int
+// the original's linker folded this with w_int (0x415500): the same code, its own body
+stream_base& text_stream::w_uint(unsigned* v)
+{
+    char tmp[128];
+    _itoa(*v, tmp, 10);
+    { tstring t(tmp); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
 
 // @ 0x415880
 stream_base& text_stream::r_tstr(rgl::string* v)
@@ -445,8 +454,17 @@ stream_base& text_stream2::w_stream(stream_base* o)
 // (also slot 22, and every "return *this" slot of the other stream classes: ICF)
 stream_base& text_stream2::slot12(void* v) { return *this; }
 stream_base& text_stream2::slot22(void* v) { return *this; }   // folded with slot12
-stream_base& text_stream2::w_uint(unsigned* v) { return text_stream2::w_int((int*)v); }   // folded with w_int
-stream_base& text_stream2::r_uint(unsigned* v) { return text_stream2::r_int((int*)v); }   // folded with r_int
+// the original's linker folded this with w_int (0x415500): the same code, its own body
+stream_base& text_stream2::w_uint(unsigned* v)
+{
+    char tmp[128];
+    _itoa(*v, tmp, 10);
+    { tstring t(tmp); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
 
 // @ 0x415880
 stream_base& text_stream2::r_tstr(rgl::string* v)
