@@ -1,0 +1,31 @@
+{
+  "when": "2026-11-02",
+  "note": "Verdicts for patches/ (docs/patches.md). Never merged into docs/equiv_verdicts.json. Command shape: equiv.py <slice> <va> --src <patch .cpp> compares the patch's definition with the ORIGINAL binary's function. 'model' rows are the offline check scratch brf_check.cpp (see notes).",
+  "rows": {
+    "perf/stream_read_slots.cpp 0x417b10 mem_stream::r_int": {
+      "faithful": "byte-exact", "equiv": "PASS", "detail": "s00417850 417b10: 200 valid inputs, all edges covered, 100% insns"
+    },
+    "perf/stream_read_slots.cpp 0x417b30 mem_stream::r_i64": {
+      "faithful": "byte-exact", "equiv": "PASS", "detail": "s00417850 417b30: 200 valid inputs, 100% insns"
+    },
+    "perf/stream_read_slots.cpp 0x417af0 mem_stream::r_byte": {
+      "faithful": "byte-exact", "equiv": "PASS", "detail": "s00417850 417af0: 200 valid inputs, 100% insns"
+    },
+    "perf/stream_read_slots.cpp 0x417a90 mem_stream::r_tstr": {
+      "faithful": "byte-exact", "equiv": "FAIL, JUSTIFIED",
+      "detail": "s00417850 417a90: 1/14 valid inputs mismatched, one signature: 'heap size' (orig 0x10f80 vs ours 0x7473 bytes allocated): one string append sizes the buffer once, the original regrows it character by character. Contents, length, cursor and return value agree; the capacity of the string buffer is unobservable to the game."
+    },
+    "perf/resmgr_add_index.cpp 0x41ba90 resmgr::add": {
+      "faithful": "byte-exact", "equiv": "FAIL, JUSTIFIED (heap size)",
+      "detail": "s0041b5a0 41ba90: 5/30 valid inputs mismatched, first signature 'heap size' (orig 0x14 vs ours 0x1014): the mesh name index allocates its bucket table. Coverage is only 32.6% of the original's instructions (random inputs rarely pass the type() dispatch with valid vectors), so the model check below carries the duplicate-detection claim."
+    },
+    "model: brf_check (offline, real .brf files)": {
+      "equiv": "IDENTICAL",
+      "detail": "146 CommonRes .brf files (75.2 MB): a hash of every scalar, string and mesh name through the faithful path (forwarder -> tstring::read, one push_back per char) and the patched path is identical (16f27fd88dbf0a0c), and every file is consumed exactly; the duplicate-name check (O(n^2) equals vs hashed index) agrees on the real 4740 mesh names and on a variant with 51 injected duplicates and two empty names. Native (Apple clang -O2) times: reader 0.115 s -> 0.043 s (2.6x), name check 0.030 s -> 0.0002 s. Source: tools/perf/brf_check.cpp (clang++ -std=c++17 -O2; run on the CommonRes folder); record counts: tools/perf/brfstat.py; the walker mirrors load_stream/read_mesh/read_body/material::load/skin::load/read_frame_set/read_skel_anim."
+    },
+    "perf_sound/lazy_samples.cpp": {
+      "faithful": "n/a (import hooks, no function replaced)", "equiv": "not applicable",
+      "detail": "Changes timing and the edge cases listed in its header comment. Built only; never run (the game was not launched for this work)."
+    }
+  }
+}
