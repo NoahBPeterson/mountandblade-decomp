@@ -157,3 +157,38 @@ Effort: a literal or a string label is minutes (grep, replace, delete the extern
 member, rename); a canonical-header unification is 20-40 minutes because of header conflicts (cl compile loop 3-5 min on
 a loaded machine; `cl /Zs` syntax-only is the fast check). The pilot took about 4 hours, dominated by waiting for
 compiles, builds (resolve_map alone 15 min under load) and run_all.
+
+## 8. Lane D6 (agents / script / static_init / game roots): what was done, patterns, what is left
+
+New patterns beyond the pilot:
+
+- **Element of a table another global already is**: `g_mask_a8/ed0/ef8/f18` are `g_bit[8/13/18/22]` (the 1<<i table at
+  0x5a8e68), `g_size_mask`/`g_type_mask`/`g_mask_w` are `(unsigned)g_bit[2]`/`g_bit[4]`. `g_sound_ids`, `g_levelup_sound`,
+  `g_snd_224..2e0`, `g_sound_blood` are `g_sound_mgr.slot[1/43/44/45/46/73/74]`; `g_sound_count` is `g_sound_mgr.ngroups`;
+  `g_front` is `g_sound_mgr.groups`; `g_listener` is `g_sound_mgr.frame` (the listener frame, position `.o`). `g_menu_b` is
+  `g_map_flags.f8`. One `SoundMgr g_sound_mgr` (agent_fx_sound.cpp) replaces the `SoundW`/`SoundSys`/`SoundTable`/`music_set`
+  views (their member functions are SoundMgr members now: `play_ui`, `stop_all`).
+- **Startup initialisers as real definitions** (`float g_5a9f28[2] = { 1.0f - g_5a9f20, ... }`, `unsigned g_river_mask_b =
+  (unsigned)g_bit[2]`, `std::string g_base64_chars("A..Z..+/", 0x40)`, `PhysSet g_phys;` with `PhysSet() { reset(); }`): cl emits
+  the dynamic initialiser (`_$E1`, `_$E3`, the destructor `_$F`/`_$E2`) and it is byte-identical to the original's, so the
+  hand stub in static_init.cpp is deleted and its manifest row moves to the defining module (`_$E<n>` rows; the numbers skip
+  by two when the variable is a scalar: check the object's symbol list). The initialiser is only emitted when the
+  initialising expression is not constant-foldable: if both objects are defined in one TU cl folds
+  `float b = 1.0f - a` into a static value and no `_$E` exists. Put the source object in another TU (here g_5a9f20 and
+  g_5a9be0 live in progress_bar.cpp, their derived partners in cls_map.cpp).
+- **`const` datum a literal cannot replace**: `g_time_scale` (0x590e28, 60.0f) multiplies a `double`; a literal makes cl use the
+  double constant and changes list_saves (2 bytes). It stays a defined datum, defined in a TU other than its reader.
+- **Typed views of a root** (g_game): `party/game.h`'s `Game` and `include/game_data.h`'s `GameData` describe one object and cannot
+  be included together. The one symbol is `GameData* g_game` (widget_text.cpp); a module that sees the object through another
+  class casts it with a macro (`g_game_G`, `g_game_ed`) instead of declaring a second `g_game` of another type (which is a
+  second mangled name and a glue alias).
+- Do not let a script add `#include "game_globals.h"` / `game_data.h` / `mission.h` to every user of a name: those headers
+  clash with the local view structs of many modules. Redeclaring the same type (`extern int g_sound_muted;`) is legal and keeps
+  the module compiling; the aliases (different names or different types at one address) are what must go.
+
+Still open (and why): the module.ini settings block 0xa180f8..0xa181d0 is one object (`static_init_547bc0` constructs it) whose
+members are split over lanes D1/D3/D5/D6; it needs one `ModuleInfo` struct + ctor and every lane switching to its members at
+once. The log objects 0x5a9f30/0x5a9f60 (debug log, `g_log`, with `g_log_file`/`g_log_flag94/95` as members) belong to D1/D3;
+the key table members `g_cam_*`/`g_key_*` (0xa17108.., elements of `g_keyboard.down[]`, D3) and the mouse pair 0x5d7094/98
+likewise. `tstring` globals without a static_init constructor (`g_meeting_name` x5 names, `g_skin_name`, `g_module_path_copy`)
+need a decision: a plain definition adds a constructor call the original does not run.
