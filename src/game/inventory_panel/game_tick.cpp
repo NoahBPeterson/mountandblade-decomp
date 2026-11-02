@@ -22,6 +22,7 @@
 #include "../config/config.h"
 #include "../battle_rec.h"      // BattleRec (update_nav_anim 0x4b71e0)
 #include "../shared_vars.h"
+#include "../key_names.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 MarkerList g_list_b;                          // 0xa732e0
@@ -87,10 +88,6 @@ extern float    g_step;                 // 0x5a9c20  frame step (seconds)
 extern const float g_rate_marker;       // 0x590cd0  marker decay per second
 extern int      g_disable_food_slot;             // 0xa181a8  0: allow the "loading" clock message
 
-extern int      g_in_a;                 // 0xa17124  input flags
-extern int      g_in_b;                 // 0xa17524
-extern int      g_in_c;                 // 0xa17148
-extern int      g_in_d;                 // 0xa17348
 extern int g_use_shaders;                                   // 0x5e28fc  0 = linear colour path
 extern int g_page_rows;                              // 0xa73298
 extern int g_page_cols;                              // 0xa73294
@@ -148,7 +145,7 @@ void GameG::tick(float dt)
     } else if (f13aa4 == 2) {
         float v = g_time_multiplier * dt;
         speed = v;
-        if (g_in_c || g_in_d)
+        if (g_keyboard.down[0x1d] || g_keyboard.down[0x9d])
             speed = v * 10.0f;
     } else {
         Party* a = parties.get(cur_agent);
@@ -240,7 +237,7 @@ void GameG::tick(float dt)
 
     g_map_scene->step(g_step);
 
-    if (g_cfg.cheat_mode && g_in_a && !g_in_b && g_in_c)
+    if (g_cfg.cheat_mode && g_keyboard.down[0x14] && !g_keyboard.prev[0x14] && g_keyboard.down[0x1d])
         f95 = !f95;
 
     update_colors();

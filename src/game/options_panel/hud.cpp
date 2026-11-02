@@ -12,6 +12,7 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "quest_page.h"        // QuestPage: Hud is the quest page screen (QuestPage::sel is Hud::f250), fill() 0x4d5ba0
 #include "../shared_vars.h"
+#include "../key_names.h"
 
 // @ 0x4d4b80
 bool EditMesh::on_selection_changed()
@@ -291,7 +292,7 @@ void Hud::on_update(int arg)
         }
         f04 = 1;
         g_main_menu.set_state(0xd);
-    } else if (f30->changed(0x10000) || (!g_a170d8 && g_a174d8)) {
+    } else if (f30->changed(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
         g_main_menu.set_state(f18);
     }
 }

@@ -221,12 +221,7 @@ inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
 extern tstring g_result_string;         // 0xa70464 (set_result_string 0x49fce6)
 
 // ---- input ---------------------------------------------------------------------------------------------------------
-struct Keyboard {
-    char pad0[0xc];
-    int down[256];                      // +0xc (key_is_down 0x49fd8c)
-    __forceinline char is_ready(int key) { return (char)((Slot*)this)->is_ready(key); }   // 0x487900 (thiscall, ret 4)
-};
-extern Keyboard g_keyboard;             // 0xa170c8
+#include "../key_names.h"             // Keyboard g_keyboard (0xa170c8)
 struct GameKeys {
     __forceinline char is_down(int key) { return ((OriginPairs*)this)->is_down(key); }   // 0x48ac50 (thiscall, ret 4)
     __forceinline char clicked(int key) { return ((OriginPairs*)this)->clicked(key); }   // 0x48ac90

@@ -9,6 +9,7 @@
 
 // 0x495700 (thiscall, ret 4) on 0xa73980: pick a main-menu option.
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../key_names.h"
 
 // the widgets the menu options write back into (each int* is a widget: +0x4 = option index, +0x18 = a second
 // index, +0x8c = value)
@@ -46,8 +47,6 @@ extern float g_hour_scale;                          // 0x590c90
 extern float g_hour_base;                           // 0x54ab28
 extern int g_ticks_[2];                             // 0x5e2948 (the 64-bit tick clock)
 extern int g_mission_clock;                         // 0x5d8790 (mission time; 0 = no mission)
-extern int g_a170d8;                                // 0xa170d8
-extern int g_a174d8;                                // 0xa174d8
 
 extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 #include "../../include/crt.h"   // canonical: ftol2 (0x535a64)

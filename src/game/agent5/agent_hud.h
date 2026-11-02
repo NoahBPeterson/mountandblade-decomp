@@ -34,6 +34,7 @@
 #include "../terrain_b/emit.h"
 #define vec cell_grid_vec                 // cell_grid.h's vec (no clear) under another name: the global vec below is the one whose clear() 0x41f4b0 is called
 #include "../terrain_b/cell_grid.h"
+#include "../key_names.h"
 #undef vec
 
 using rgl::vector4;
@@ -123,8 +124,6 @@ extern int g_cam_right;                                           // 0xa1714c
 extern int g_cam_in;                                              // 0xa17154
 extern int g_cam_out;                                             // 0xa17158
 extern int g_cam_roll;                                            // 0xa1718c
-extern int g_cam_lock;                                            // 0xa17148
-extern int g_cam_lock2;                                           // 0xa17348
 extern int g_cam_sens;                                            // 0x5a9fdc
 
 extern float g_screen_a;                                          // 0x5d75dc
@@ -188,7 +187,6 @@ extern matrix g_listener;                                         // 0x5aa138 (s
 
 extern int g_use_shaders;                                      // 0x5e28fc
 extern ShadowMap g_shadow_map;                                        // 0xa70248
-extern int g_flag_a17108, g_flag_a17148, g_flag_a17348;           // 0xa17108, 0xa17148, 0xa17348 (key states that force the sun to full size)
 extern int g_screen_w;                                            // 0x5d75c8
 extern int g_screen_h;                                            // 0x5d75cc
 extern float g_scale_a;                                           // 0x5aa08c
@@ -204,6 +202,7 @@ extern char* g_menus;                                         // 0x5e29b0 (the g
 struct TableauTbl {                                            // the object table at 0xa75f40 (world_data/tableau.h: TableauTbl)
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (ret 8)
 };
+extern int g_flag_a17108;   // 0xa17108 (a key state that forces the sun to full size)
 extern TableauTbl g_tableaus;                                    // 0xa75f40
 struct MenuLayout { char pad[1]; };                               // the part of the game screen at +0x30; its build (0x4dd920, ret 8) is BlockOwner::init above
 

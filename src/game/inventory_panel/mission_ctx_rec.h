@@ -35,7 +35,8 @@ struct MissionCtx {
     int cols, depth, rows;                              // +0x128 grid dimensions
     char pad134[4];
     int side;                                           // +0x138 the page / side displayed
-    char pad13c[0x144 - 0x13c];
+    int f13c;                                           // +0x13c the party of page 1 (the diary reads it as ids[page + ..])
+    int f140;                                           // +0x140 the party of page 0
     int f144;                                           // +0x144
     char pad148[0x154 - 0x148];
     int f154, f158, f15c;                               // +0x154 launch arguments (0x5147e0)

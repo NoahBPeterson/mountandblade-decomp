@@ -6,6 +6,7 @@
 #include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../key_names.h"
 
 // @ 0x4ece20
 void Screen::camera_update(float dt)
@@ -20,7 +21,7 @@ void Screen::camera_update(float dt)
     f2b0 = dt * f2c4 * 10.0f + f2b0;        // a literal: with the 0x549d74 global cl evaluates (10 * f2c4) * dt
 
     float max_zoom = C_598690;                  // 105
-    if (g_a17148 != 0 && g_a1717c != 0 && g_5a9fbc != 0) {
+    if (g_keyboard.down[0x1d] != 0 && g_a1717c != 0 && g_5a9fbc != 0) {
         f2b0 = 0.0f;
         f2c4 = 0.0f;
         max_zoom = C_59868C;                    // 235

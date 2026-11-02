@@ -17,6 +17,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
+#include "../key_names.h"
 
 // ======================================================= slice s0052cf60: functions
 #undef g_game_s2cf60
@@ -112,7 +113,7 @@ void MapEditor_s2cf60::update()
         vector4 pos;
         pos.x = 0.0f;
         pos.y = 0.0f;
-        if (g_a171b4 == 0 && g_a173b4 == 0)
+        if (g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0)
             pos.z = -((dt * g_percent) * (*(float*)((char*)&g_keyboard + 0x810)));
         else
             pos.z = 0.0f;
@@ -124,7 +125,7 @@ void MapEditor_s2cf60::update()
     }
 
     // --- the three per-mode rotate keys (blocked while a modifier is held) -----------------------
-    if (g_a17188 != 0 && g_a171b4 == 0 && g_a173b4 == 0 && g_a17194 == 0) {
+    if (g_a17188 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
         mat3_s2cf60  m;
         float angle;
         identity3(&m);
@@ -136,7 +137,7 @@ void MapEditor_s2cf60::update()
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
         g_game_s2cf60->dirty = 1;
     }
-    if (g_a17128 != 0 && g_a171b4 == 0 && g_a173b4 == 0 && g_a17194 == 0) {
+    if (g_a17128 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
         mat3_s2cf60  m;
         float angle;
         identity3(&m);
@@ -148,7 +149,7 @@ void MapEditor_s2cf60::update()
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
         g_game_s2cf60->dirty = 1;
     }
-    if (g_a17184 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
+    if (g_a17184 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         if (g_a17194 != 0)
             goto L5c6;
         {
@@ -167,7 +168,7 @@ void MapEditor_s2cf60::update()
 
     // --- highlight colour: the "no key" colour dims all three lanes, a held rotate key dims one -
 L59f:
-    if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0)
+    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0)
         goto L5c6;
     goto L666;
 
@@ -195,7 +196,7 @@ L666:
     if (g_a17188 == 0)
         goto L71b;
 L673:
-    if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
+    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = dim;
@@ -212,7 +213,7 @@ L71b:
     if (g_a17128 == 0)
         goto L7d0;
 L728:
-    if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
+    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
@@ -229,7 +230,7 @@ L7d0:
     if (g_a17184 == 0)
         goto L885;
 L7dd:
-    if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
+    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
@@ -257,7 +258,7 @@ L885:
         g_scene_s2cf60->mesh_s2cf60.make_copy(this->drag_state);
 
     if (g_a17190 != 0 && g_a17590 == 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) &&
-        g_a1717c == 0 && g_a171ac == 0) {
+        g_a1717c == 0 && g_keyboard.down[0x36] == 0) {
         g_scene_s2cf60->mesh_s2cf60.apply_copy(this->drag_state);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
@@ -1044,7 +1045,7 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
     }
 
     if ((*(int*)((char*)&g_keyboard + 0x5c)) != 0) {
-        if (g_a171b4 == 0 && g_a173b4 == 0) {
+        if (g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
             // (k*0.01) first, then *axis_y, to match the original's 24-bit rounding order
             double dz = k * g_d001;
             pos[2] = pos[2] - dz * (*(float*)((char*)&g_keyboard + 0x810));
@@ -1061,19 +1062,19 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         *f2 = 1;
     }
 
-    if (g_a17188 != 0 && g_a171b4 == 0 && g_a173b4 == 0 && g_a17194 == 0) {
+    if (g_a17188 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
         ((Matrix12_s2fe40*)out)->rotate_fu(&angle);
         *f2 = 1;
         *f4 = 1;
     }
 
-    if (g_a17128 != 0 && g_a171b4 == 0 && g_a173b4 == 0 && g_a17194 == 0) {
+    if (g_a17128 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
         ((Matrix12_s2fe40*)out)->rotate_su(&angle);
         *f2 = 1;
         *f4 = 1;
     }
 
-    if (g_a17184 != 0 && g_a171b4 == 0 && g_a173b4 == 0 && g_a17194 == 0) {
+    if (g_a17184 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
         ((Matrix12_s2fe40*)out)->rotate_sf(&angle);
         *f2 = 1;
         *f4 = 1;
@@ -1089,7 +1090,7 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         *f4 = 1;
     }
 
-    if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0 &&
+    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 &&
         g_a17188 == 0 && g_a17128 == 0 && g_a17184 == 0) {
         float s = g_one - angle * g_k005b;
         vec[0] = vec[0] * s;
@@ -1098,25 +1099,25 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         *f3 = 1;
         *f4 = 1;
     }
-    if (g_a17188 != 0 && g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
+    if (g_a17188 != 0 && g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         float s = g_one - angle * g_k005b;
         vec[0] = vec[0] * s;
         *f3 = 1;
         *f4 = 1;
     }
-    if (g_a17128 != 0 && g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
+    if (g_a17128 != 0 && g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         float s = g_one - angle * g_k005b;
         vec[1] = vec[1] * s;
         *f3 = 1;
         *f4 = 1;
     }
-    if (g_a17184 != 0 && g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
+    if (g_a17184 != 0 && g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         float s = g_one - angle * g_k005b;
         vec[2] = vec[2] * s;
         *f3 = 1;
         *f4 = 1;
     }
-    if (g_a17194 != 0 && g_a17594 == 0 && (g_a171b4 != 0 || g_a173b4 != 0)) {
+    if (g_a17194 != 0 && g_a17594 == 0 && (g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0)) {
         vec[0] = 1.0f;
         vec[1] = 1.0f;
         vec[2] = 1.0f;

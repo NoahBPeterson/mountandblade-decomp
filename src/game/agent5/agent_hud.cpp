@@ -22,6 +22,7 @@
 #include "../../rgl/resource_manager.h"
 #include "../../include/renderer.h"
 #include "../skill_cap.h"
+#include "../key_names.h"
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
 // ---- the mission's agent (re)initialisation ------------------------------------------------------------------
@@ -479,7 +480,7 @@ void MissionHud::update_camera(float dt)
             gcam.z = t * dt * 0.5f + gcam.z;
             f300 = dt * 17.5f + f300;
         }
-        if (g_cam_roll != 0 && g_cam_lock == 0 && g_cam_lock2 == 0) {
+        if (g_cam_roll != 0 && g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0) {
             gcam.z = gcam.z - t * dt * 0.5f;
             f300 = dt * 17.5f + f300;
         }
@@ -836,7 +837,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
     float size_v = ((g_scale_a * 0.5f + 0.75f) * *scale) * area;
     float& size = *(float*)&scale;       // the original stores the result back into the (dead) parameter slot
     size = size_v;
-    if (g_flag_a17108 && (g_flag_a17148 || g_flag_a17348))
+    if (g_flag_a17108 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]))
         size = 1000.0f;
     float range = g_scale_b * area;
     ViewLight* vl = (ViewLight*)this;

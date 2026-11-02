@@ -30,6 +30,7 @@
 #define GF(off) (*(float*)((char*)g_game + (off)))
 
 #include "../party_x.h"                   // PartyX : Party: the one definition (map_editor and script)
+#include "../key_names.h"
 
 struct PartyMgrX : PartyMgr {};
 // the party-by-id getter 0x51ee50 (Scene::get(int), ret 4) and the other canonical classes the exchange screens call
@@ -269,8 +270,6 @@ struct SourceScreen : ScreenBase {          // vtables 0x5961f0 / 0x596214: +0x3
 // ---- globals -----------------------------------------------------------------------------------------------------------
 extern int g_a17144;                        // 0xa17144
 extern int g_a17544;                        // 0xa17544
-extern int g_a17148;                        // 0xa17148
-extern int g_a17348;                        // 0xa17348
 extern int g_a17188;                        // 0xa17188
 extern int g_a17588;                        // 0xa17588
 extern int g_a5a9fbc;                       // 0x5a9fbc

@@ -11,6 +11,7 @@
 
 // ---- the mission record is the shared src/game/mission.h (replay frames, per-team counters, per-team class blocks) ----
 #include "../mission.h"
+#include "../key_names.h"
 
 // ---- combatant record seen from +0x527c: the 0x16c-byte TeamRec (mission.h, at +0x5280) with its three ClassInfo blocks, as the
 // ui accessors address it (the displacements of their code are relative to 0x527c, so they cannot go through TeamRec) -------
@@ -37,8 +38,6 @@ struct OriginPairs {
     bool is_down(int i);                 // 0x48ac50
     bool clicked(int i);            // 0x48ac90
 };
-extern void* g_origin_table[];              // 0xa170d4 object per origin id
-extern int g_origin_state[];                // 0xa174d4 0 = origin idle / free
 
 // ---- the view: three 16-int vectors and a render-target factory --------------------------------------------
 struct ViewObj {                            // interface at +0x1b4 (virtual 23 = +0x5c)

@@ -581,7 +581,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::key_clicked:
         if (IN_RANGE(params[0], 0, 0x100))
-            result = g_keyboard.is_ready((int)params[0]);
+            result = (char)((Slot*)&g_keyboard)->is_ready((int)params[0]);   // 0x487900
         break;
     case op::game_key_is_down:
         if (IN_RANGE(params[0], 0, 0x25))

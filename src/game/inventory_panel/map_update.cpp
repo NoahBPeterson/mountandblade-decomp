@@ -11,6 +11,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../include/msg_log.h"
 #include "../shared_vars.h"
+#include "../key_names.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 float g_box_x;                                // 0x5d8778
@@ -127,8 +128,6 @@ extern world*    g_level;                    // 0xa732b4
 extern float     g_mouse_x;                  // 0x5d7094 (float: ?g_mouse_x@@3MA)
 extern float     g_mouse_y;                  // 0x5d7098
 extern int       g_a17458;                   // 0xa17458
-extern int       g_a17858;                   // 0xa17858
-extern int       g_a17148;                   // 0xa17148
 extern int       g_5a9fbc;                   // 0x5a9fbc
 
 // ======================================================================================================
@@ -295,7 +294,7 @@ void MapPanel::update_target()
 
     // ---- 0x519997: commit the pick -----------------------------------------------------------------
     if (bestobj) {
-        if (g_a17458 == 0 && g_a17858 != 0 && f2d4 == 0) {
+        if (g_a17458 == 0 && g_keyboard.prev[0xe1] != 0 && f2d4 == 0) {
             g_game->n_labels  = 0;
             g_game->cur_label = -1;
             f2d8 = ((MapSceneObj*)bestobj)->party;
@@ -370,7 +369,7 @@ void MapPanel::update_target()
             }
         } else if (best >= 0) {
             bool go = true;
-            if (g_a17148 && g_5a9fbc) {
+            if (g_keyboard.down[0x1d] && g_5a9fbc) {
                 *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
             } else if (!((RiderTable*)g_level->wmap)->shares(rec_index,
                                                *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {

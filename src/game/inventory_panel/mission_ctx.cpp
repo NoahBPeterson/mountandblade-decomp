@@ -37,10 +37,7 @@ float g_mouse_dy;                                // 0x5d70a8
 
 extern MsgLog g_msglog;                                 // 0x5d7080
 extern int g_a735c0;                                    // 0xa735c0 (scene counter)
-extern char g_a73320;                                   // 0xa73320
 extern int g_a73438;                                    // 0xa73438 (page index)
-extern int g_a7343c;                                    // 0xa7343c (page 1 party slot)
-extern int g_a73440;                                    // 0xa73440 (page 0 party slot)
 
 void autosave_notice();                                 // 0x514830
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (cdecl)
@@ -134,14 +131,10 @@ extern UiKeyState g_keys;                                 // 0xa73730
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
 extern ShadowMapP* g_shadow_map;                                    // 0xa70248
 extern int g_psys_scene;            // 0xa170c0
-extern int g_a170d8;            // 0xa170d8
-extern int g_a174d8;            // 0xa174d8
 extern int g_show_quest_notes;            // 0xa181b4
 extern int g_a171b8;            // 0xa171b8
 extern int g_a17454;            // 0xa17454
 extern int g_a17854;            // 0xa17854
-extern int g_a17148;            // 0xa17148
-extern int g_a17348;            // 0xa17348
 extern int g_a70438;            // 0xa70438
 extern int g_use_shaders;       // 0x5e28fc
 extern int g_no_cam;            // 0x5a9fb0
@@ -158,7 +151,6 @@ extern const float g_quarter;       // 0x54b868  0.25f
 extern const float g_four;          // 0x5935c8  4.0f
 extern const float g_003;           // 0x54b8b4  0.03f
 extern const float g_axis_x;        // 0xa178d4
-extern const float g_axis_y;        // 0xa178dc
 extern const float g_exp_arg;       // 0x5aa018
 extern int g_key_1730;              // 0xa73730
 extern int g_key_1734;              // 0xa73734
@@ -168,13 +160,9 @@ extern int g_key_1740;              // 0xa73740
 extern int g_key_1744;              // 0xa73744
 extern int g_key_1748;              // 0xa73748
 extern int g_key_174c;              // 0xa7374c
-extern int g_keydown[];             // 0xa170d4
 extern int g_in_17204;              // 0xa17204
-extern int g_in_17210;              // 0xa17210
 extern int g_in_17214;              // 0xa17214
-extern int g_in_17218;              // 0xa17218
 extern int g_in_17458;              // 0xa17458
-extern int g_in_17858;              // 0xa17858
 extern const float g_half;          // 0x549d70  0.5f
 
 // the party record behind an id (the page table at +0x139c8)
@@ -215,11 +203,11 @@ void MapFlags::commit(char* out)
         g_mission_ctx.start_mission();
     }
     else if (key == 2) {
-        g_mission_ctx.build_hero_table(g_a73440, -1, -1, 3);
+        g_mission_ctx.build_hero_table(g_mission_ctx.f140, -1, -1, 3);
     }
     else if (key == 0x40 || key == 0x20) {
         if (key == 0x20) {
-            int p = g_a7343c;
+            int p = g_mission_ctx.f13c;
             g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 2);
         }
         else if (key == 0x40) {
@@ -229,7 +217,7 @@ void MapFlags::commit(char* out)
     }
     else if (key == 0x10) {
         g_wAC->f4 = 0;
-        if (g_a73320 != 0)
+        if (g_mission_ctx.f20 != 0)
             g_wAC->f4 = 2;
         g_wAC->f18 = 0x64;
         g_wAC->f4 = 0;
@@ -816,7 +804,7 @@ void Screen::frame_update(float dt)
         g_main_menu.set_state(0x1a);
         return;
     }
-    if (g_a170d8 != 0 && g_a174d8 == 0) {
+    if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
         g_w94->f18 = 7;
         g_main_menu.set_state(5);
         return;
@@ -1023,7 +1011,7 @@ no_party:
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_no_cam != 0 && (g_a17148 != 0 || g_a17348 != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
+    if (g_no_cam != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {
@@ -1045,32 +1033,32 @@ void Screen::camera_move(float dt)
     mat2 m(&src[0][0], &src[1][0]);
     m.rotate_2x2(-yaw);
 
-    bool b = g_key_1740 >= 0 && g_keydown[g_key_1740] != 0;
-    if ((g_key_1744 >= 0 && g_keydown[g_key_1744] != 0) || b) {
+    bool b = g_key_1740 >= 0 && g_keyboard.down[g_key_1740] != 0;
+    if ((g_key_1744 >= 0 && g_keyboard.down[g_key_1744] != 0) || b) {
         float h = height + g_ten;
         x -= m.m[0] * h * dt;
         z -= m.m[1] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_key_1748 >= 0 && g_keydown[g_key_1748] != 0;
-    if ((g_key_174c >= 0 && g_keydown[g_key_174c] != 0) || b) {
+    b = g_key_1748 >= 0 && g_keyboard.down[g_key_1748] != 0;
+    if ((g_key_174c >= 0 && g_keyboard.down[g_key_174c] != 0) || b) {
         float h = height + g_ten;
         x += m.m[0] * h * dt;
         z += m.m[1] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_key_1730 >= 0 && g_keydown[g_key_1730] != 0;
-    if ((g_key_1734 >= 0 && g_keydown[g_key_1734] != 0) || b) {
+    b = g_key_1730 >= 0 && g_keyboard.down[g_key_1730] != 0;
+    if ((g_key_1734 >= 0 && g_keyboard.down[g_key_1734] != 0) || b) {
         float h = height + g_ten;
         x += m.m[2] * h * dt;
         z += m.m[3] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_key_1738 >= 0 && g_keydown[g_key_1738] != 0;
-    if ((g_key_173c >= 0 && g_keydown[g_key_173c] != 0) || b) {
+    b = g_key_1738 >= 0 && g_keyboard.down[g_key_1738] != 0;
+    if ((g_key_173c >= 0 && g_keyboard.down[g_key_173c] != 0) || b) {
         float h = height + g_ten;
         x -= m.m[2] * h * dt;
         z -= m.m[3] * h * dt;
@@ -1080,10 +1068,10 @@ void Screen::camera_move(float dt)
 
     if (g_in_17204) speed += dt * g_oneone;
     if (g_in_17214) speed -= dt * g_oneone;
-    if (g_in_17210) vy += dt * g_oneone;
-    if (g_in_17218) vy -= dt * g_oneone;
+    if (g_keyboard.down[0x4f]) vy += dt * g_oneone;
+    if (g_keyboard.down[0x51]) vy -= dt * g_oneone;
 
-    if (g_in_17458 && !g_in_17858)
+    if (g_in_17458 && !g_keyboard.prev[0xe1])
         f2d4 = 0;
 
     float v = g_mouse_dx * 0.1f;
@@ -1102,11 +1090,11 @@ void Screen::camera_move(float dt)
         vy = expf(g_four * g_exp_arg) * g_003 * g_axis_x * dt + vy;
     }
 
-    if (w != 0.0f || g_axis_y != 0.0f) {
+    if (w != 0.0f || g_keyboard.axis[2] != 0.0f) {
         y = y - w * height * dt;
-        if (g_axis_y > 0.0f)
+        if (g_keyboard.axis[2] > 0.0f)
             y = y - height * 0.2f;
-        else if (g_axis_y < 0.0f)
+        else if (g_keyboard.axis[2] < 0.0f)
             y = height * 0.2f + y;
     }
 }
