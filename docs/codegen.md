@@ -336,6 +336,20 @@ compiler cannot fold: a constructor-expression temporary, or a union overlay.
 - M&B: VC7.1 `std::vector`/`std::deque` members start with an allocator word (the
   first pointer is at +4). That is why `size()` shows as `first ? (last-first)/N
   : 0` and reproduces the original's reloads (`reaudit-b07`).
+- **Spell such a member as the real `std::vector<T*>`, not a hand-rolled view.**
+  A `{int lead; T** first; T** last; T** end;}` struct has the same 16-byte
+  layout: the allocator word, then first/last/end pointers into a heap array
+  whose length is only known at run time, so no `T* x[N]` can stand in for it.
+  But it is not what the original wrote, and the equivalence harness's typed
+  inputs only build realistic elements for the real type. M&B
+  `rgl::entity::lods` and `meshes` (+0x108/+0x118) are
+  `std::vector<lod_mesh2*>` and `std::vector<mesh*>` in
+  `src/rgl/scene/scene_entity.h:92`. A module that copies such a class locally
+  (`facegen_misc.h`: `ent_vec<T>`, `ui_vec`, and placeholder virtuals `s00()` to
+  `s48()` to reach slot +0x4c) usually does so because its slice `rgl.h`
+  redefines `rgl::string`/`rgl::vector4` and clashes with the shared header.
+  Fix the include, not the class: move the module onto the shared headers and
+  include the real declaration (check with chk that the codegen is unchanged).
 - M&B: splitting a `char padN[..]` array of a shared class into several members
   changed the register allocation of unrelated functions that merely include the
   header (`party_screen` 0x5059c0: two loads swapped; `terrain_b` 0x46e590: 18
