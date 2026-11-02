@@ -99,7 +99,9 @@ struct MissionCtx {
     char f40;                                           // +0x40 dirty flag
     char pad41[3];
     int f44;                                            // +0x44
-    char pad48[0x138 - 0x48];
+    int grid[0x38];                                     // +0x48 the unit indices of the diary grid (cols x depth x rows; cls_map.cpp fill_mission_grid 0x4db090)
+    int cols, depth, rows;                              // +0x128 grid dimensions
+    char pad134[4];
     int side;                                           // +0x138 the page / side displayed
     char pad13c[0x144 - 0x13c];
     int f144;                                           // +0x144

@@ -29,7 +29,7 @@ extern unsigned g_5e2580;   // 0x5e2580
 extern unsigned g_8ee41ec;  // 0x8ee41ec
 extern unsigned g_8ee41e8;  // 0x8ee41e8
 extern float g_5a9f20;      // 0x5a9f20
-extern float g_5a9f28;      // 0x5a9f28
+extern float g_5a9f28[2];   // 0x5a9f28 (defined in cls_map.cpp: {x, y})
 extern char g_5e2a18[];     // 0x5e2a18 the string tables
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
@@ -332,7 +332,7 @@ void __cdecl static_init_547a40() { g_8ee41ec = g_5a8e78; }
 // @ 0x547a50
 void __cdecl static_init_547a50() { g_8ee41e8 = g_5a8e88; }
 // @ 0x547a60
-void __cdecl static_init_547a60() { g_5a9f28 = g_549cdc - g_5a9f20; }
+void __cdecl static_init_547a60() { g_5a9f28[0] = g_549cdc - g_5a9f20; }
 // @ 0x547a80
 void __cdecl static_init_547a80() { new (g_5e2a18) LangTables; atexit(static_dtor_548470); }
 // @ 0x547aa0   the debug text log: its two strings, flags, and vtable

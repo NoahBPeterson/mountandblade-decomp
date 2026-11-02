@@ -46,18 +46,11 @@ def game_functions():
     return st["starts"], st["game"]
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--record", action="store_true")
-    ap.add_argument("--map", default=os.path.join(ROOT, "work", "relink", "resolve_map.json"))
-    ap.add_argument("--json")
-    a = ap.parse_args()
-    os.chdir(ROOT)
+def data_items(img, rmap, starts, game):
+    """[[start, end, class]] items of the static data (see the module docstring), plus the instruction uses
+    {address: {'game'|'lib'}} and the names {address: [defined, [names]]}. gen_data.py reuses this."""
     import capstone
-    import resolve as R
     from glue import RDATA, DATA, BSS, IAT_LO, IAT_HI, section_of
-    img = R.Image()
-    starts, game = game_functions()
     lo_all, hi_all = RDATA[1], BSS[2]
 
     def in_data(v):
@@ -98,7 +91,6 @@ def main():
         if len(run) >= 4:
             tabled.update(run)
 
-    rmap = json.load(open(a.map))
     named = collections.defaultdict(lambda: [False, []])      # va -> [defined anywhere, names]
     for n, d in rmap["names"].items():
         for va, e in d.items():
@@ -129,6 +121,23 @@ def main():
             items[-1][1] = nxt       # a field of the item before
             continue
         items.append([v, nxt, cls])
+    return items, uses, named
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--record", action="store_true")
+    ap.add_argument("--map", default=os.path.join(ROOT, "work", "relink", "resolve_map.json"))
+    ap.add_argument("--json")
+    a = ap.parse_args()
+    os.chdir(ROOT)
+    import capstone
+    import resolve as R
+    from glue import RDATA, DATA, BSS, IAT_LO, IAT_HI, section_of
+    img = R.Image()
+    starts, game = game_functions()
+    rmap = json.load(open(a.map))
+    items, uses, named = data_items(img, rmap, starts, game)
     by = {c: [0, 0] for c in CLASSES}
     per_sec = {s[0]: {c: 0 for c in CLASSES} for s in (RDATA, DATA, BSS)}
     for s, e, c in items:
