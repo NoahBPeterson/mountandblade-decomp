@@ -83,7 +83,6 @@ struct ScrollHost { char pad[0x484]; UiDsv* bar; }; // +0x484
 struct Profile { char pad[0x50]; int troop; };      // +0x50
 
 extern "C" {
-extern Profile* g_profile;                          // 0xa73984
 extern int* g_menu_state;                           // 0xa739f4 (menu data, +0x14/+0x18 fields)
 extern int* g_army_state;                           // 0xa739e0
 extern int g_a17118;                                // 0xa17118

@@ -66,10 +66,8 @@ struct IDev9 {
     virtual int  __stdcall ShowCursor(int show);                              // slot 12 (+0x30)
 };
 
-extern char  g_a739b8[];                // 0xa739b8 (current editor entity)
 // the current editor entity (a pointer at 0xa739b8)
 #include "../editor_entity.h"
-extern EditorEntity* g_entity;          // 0xa739b8
 
 // gui manager object (0x5d7080) and a few of its member functions
 #include "../gui_mgr.h"
@@ -218,8 +216,8 @@ int GameApp::Update()
                             }
                         }
                     }
-                    pick_entity((GuiCtx*)g_entity);
-                    g_entity->f2f9 = 1;
+                    pick_entity((GuiCtx*)window_slot<EditorEntity>(14));
+                    window_slot<EditorEntity>(14)->f2f9 = 1;
                     SetFocus(m_hWnd);
                     g_game->f1a1c8 = 0;
                 }

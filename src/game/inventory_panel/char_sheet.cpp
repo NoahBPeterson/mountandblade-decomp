@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include "../../rgl/rgl_math.h"
 #include "../shared_vars.h"
+#include "../main_menu.h"
 
 extern "C" int _fltused = 0;
 
@@ -200,8 +201,6 @@ struct char_window {
     void open_view();                           // 0x509980
     void init(const tstring& msg, int type, const char* a, const char* b, const char* c, const char* d, const char* e, const char* f);   // 0x509410 (the message box)
 };
-// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-char_window* g_dialog;                          // 0xa73984 (pointer variable)
 
 // ---- settings access ------------------------------------------------------------------------------------
 static const char* config_text(int i)
@@ -753,7 +752,7 @@ void CharSheet::init()
         tstring k3("ui_question_saving_policy");
         const char* nonreal = g_strtable.lookup(k1)->c_str();
         const char* real = g_strtable.lookup(k2)->c_str();
-        g_dialog->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
+        window_slot<char_window>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
         g_menu.open(1);
         return;
     } else if (mode == 1) {

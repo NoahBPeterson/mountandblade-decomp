@@ -27,10 +27,6 @@
 #include "../game_keys.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-MenuWidget* g_w94;                               // 0xa73994
-MenuWidget* g_w98;                               // 0xa73998
-MenuWidget* g_wA8;                               // 0xa739a8
-MenuWidget* g_wD8;                               // 0xa739d8
 float g_mouse_dx;                                // 0x5d70a4
 float g_mouse_dy;                                // 0x5d70a8
 
@@ -228,7 +224,7 @@ void MapFlags::commit(char* out)
     }
     else if (key == 4) {
         g_mission_ctx.pick_template();
-        g_wA8->f18 = 0x64;
+        window_slot<MenuWidget>(10)->f18 = 0x64;
         return g_main_menu.set_state(0xa);
     }
     else if (key == 0x800) {
@@ -248,8 +244,8 @@ void MapFlags::commit(char* out)
         g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
         MI(g_mission, 0x5270) = g_a735c0++;
         SCENE->start_setup();
-        g_wB8->v4();
-        g_wB8->f18 = 0x64;
+        window_slot<MenuWidget>(14)->v4();
+        window_slot<MenuWidget>(14)->f18 = 0x64;
         return g_main_menu.set_state(0xe);
     }
     else if (key == 0x200) {
@@ -258,7 +254,7 @@ void MapFlags::commit(char* out)
         return g_main_menu.set_state(7);
     }
     else if (key == 0x400 && f8 <= 0) {
-        g_w98->f18 = 0x64;
+        window_slot<MenuWidget>(6)->f18 = 0x64;
         return g_main_menu.set_state(6);
     }
     else if (g_game->fc8 == 1) {
@@ -268,7 +264,7 @@ void MapFlags::commit(char* out)
         return g_main_menu.set_state(7);
     }
     else if (f8 <= 0) {
-        g_w98->f18 = 0x64;
+        window_slot<MenuWidget>(6)->f18 = 0x64;
         return g_main_menu.set_state(6);
     }
     else {
@@ -798,13 +794,13 @@ void Screen::frame_update(float dt)
         return;
     }
     if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
-        g_w94->f18 = 7;
+        window_slot<MenuWidget>(5)->f18 = 7;
         g_main_menu.set_state(5);
         return;
     }
     if (f48 != 0 && PSO(f48)->clicked_on(0x10000)) {
-        g_wD8->f18 = 7;
-        g_wD8->f4 = 0;
+        window_slot<MenuWidget>(22)->f18 = 7;
+        window_slot<MenuWidget>(22)->f4 = 0;
         g_main_menu.set_state(0x16);
         return;
     }

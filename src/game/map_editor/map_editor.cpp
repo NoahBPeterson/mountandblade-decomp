@@ -19,6 +19,7 @@
 #include "../placed_obj.h"
 #include "../int_vec.h"
 #include "../key_names.h"
+#include "../main_menu.h"
 extern MapEditorDialog g_editor_dialog;          // 0x8ee3c48 (the application object seen as the map editor dialog)
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
@@ -200,8 +201,8 @@ refresh_list:
         ed_selected(g_game) = -1;
         ed_sel_list(g_game).resize(0, 0);
         g_editor_dialog.update_objects();
-        pick_entity((GuiCtx*)(void*)g_editor);   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
-        g_editor->f2f9 = 1;
+        pick_entity((GuiCtx*)(void*)window_slot<EditorEntity>(14));   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
+        window_slot<EditorEntity>(14)->f2f9 = 1;
         SetFocus(g_editor_hwnd);
     }
 

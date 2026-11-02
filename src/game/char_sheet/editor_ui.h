@@ -118,7 +118,6 @@ struct EditorGame {
     char pad[0x2f9];
     unsigned char f2f9;                         // +0x2f9
 };
-extern EditorGame* g_editor_game;               // 0xa739b8
 
 struct EditorApp {
     char pad[0xe8];

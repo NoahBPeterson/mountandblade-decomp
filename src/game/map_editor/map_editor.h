@@ -22,6 +22,7 @@
 #include "../placed_obj.h"
 #include "../int_vec.h"      // IntVec: push_back with the inlined fast path and the library insert_n (0x43e7b0), as 0x5305b0 uses it
 #include "../key_names.h"
+#include "../main_menu.h"
 
 using rgl::matrix;
 using rgl::vector4;
@@ -50,7 +51,6 @@ inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->m1b4; }
 
 // the current editor entity (0xa739b8)
 #include "../editor_entity.h"
-extern EditorEntity* g_editor;                                  // 0xa739b8
 
 // ---- Mission: the editor's view (0x5305b0) ---------------------------------------------------------------------------
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)

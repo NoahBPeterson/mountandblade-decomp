@@ -129,8 +129,8 @@ void CharSheet::update(float dt)
         step = -1;
 
     if (f_2dc == 0) {
-        if (g_profile->troop != -1) {
-            g_game->fb4 = g_profile->troop;
+        if (window_slot<Profile>(1)->troop != -1) {
+            g_game->fb4 = window_slot<Profile>(1)->troop;
             f_2dc++;
             menu_choose(0xf);
             return;

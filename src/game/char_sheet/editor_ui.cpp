@@ -243,8 +243,8 @@ void __fastcall pick_entity(GuiCtx* self);   // 0x4ed8d0 (char_sheet/pick_entity
 // @ 0x4f6390
 void EditorApp::refresh_dialog()
 {
-    pick_entity((GuiCtx*)g_editor_game);     // 0x4ed8d0 (char_sheet/pick_entity.cpp), not FaceGen::refresh
-    g_editor_game->f2f9 = 1;
+    pick_entity((GuiCtx*)window_slot<EditorGame>(14));     // 0x4ed8d0 (char_sheet/pick_entity.cpp), not FaceGen::refresh
+    window_slot<EditorGame>(14)->f2f9 = 1;
     SetFocus(hwnd);
 }
 

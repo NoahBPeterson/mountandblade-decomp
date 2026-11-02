@@ -24,12 +24,6 @@
 #include "../shared_vars.h"
 #include "../key_names.h"
 
-// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-MarkerList g_list_b;                          // 0xa732e0
-MarkerList g_list_c;                          // 0xa732f0
-MarkerList g_list_d;                          // 0xa732d0
-
-
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
 #define FLD(T, off) (*(T*)((char*)this + (off)))
 #define main_party f78
@@ -95,7 +89,6 @@ extern char g_map_pages[];                                // 0xa73094  host grid
 extern float g_hero_wounded_treshold;                     // 0xa18138
 extern float g_player_wounded_treshold;                // 0xa1813c
 extern MsgLog g_msglog;                                 // 0x5d7080
-extern MarkerList g_list_a;                             // 0xa732c0
 void set_clock_step(int* clock, float step);            // 0x461420
 bool is_daytime();                                          // 0x435700 (true in the 4..20 h window; game/agent/agent.cpp)
 // GameW (inv_common.h): remove_party 0x4915d0 (game/world_data, GameData::remove_party)
@@ -266,27 +259,27 @@ void GameG::resume_strings(tstring* a, tstring* b)
 // @ 0x517140
 void GameG::update_markers()
 {
-    for (unsigned i = 0; i < (unsigned)g_list_a.count(); i++) {
-        g_list_a[i]->f1f8 -= g_step * g_rate_marker;
-        g_list_a[i]->f208 = g_list_a[i]->f1f8;
+    for (unsigned i = 0; i < (unsigned)g_mat_vec[0].count(); i++) {
+        g_mat_vec[0].at<Marker>(i)->f1f8 -= g_step * g_rate_marker;
+        g_mat_vec[0].at<Marker>(i)->f208 = g_mat_vec[0].at<Marker>(i)->f1f8;
     }
-    for (unsigned i = 0; i < (unsigned)g_list_b.count(); i++) {
-        g_list_b[i]->f1f4 += g_step * g_map_sea_speed_x * 3.0f;
-        g_list_b[i]->f1f8 += g_step * g_map_sea_speed_y * 3.0f;
-        g_list_b[i]->f204 = g_list_b[i]->f1f4;
-        g_list_b[i]->f208 = g_list_b[i]->f1f8;
+    for (unsigned i = 0; i < (unsigned)g_mat_vec[2].count(); i++) {
+        g_mat_vec[2].at<Marker>(i)->f1f4 += g_step * g_map_sea_speed_x * 3.0f;
+        g_mat_vec[2].at<Marker>(i)->f1f8 += g_step * g_map_sea_speed_y * 3.0f;
+        g_mat_vec[2].at<Marker>(i)->f204 = g_mat_vec[2].at<Marker>(i)->f1f4;
+        g_mat_vec[2].at<Marker>(i)->f208 = g_mat_vec[2].at<Marker>(i)->f1f8;
     }
-    for (unsigned i = 0; i < (unsigned)g_list_c.count(); i++) {
-        g_list_c[i]->f1f4 -= g_step * g_map_sea_speed_x * 2.0f;
-        g_list_c[i]->f1f8 -= g_step * g_map_sea_speed_y * 2.0f;
-        g_list_c[i]->f204 = g_list_c[i]->f1f4;
-        g_list_c[i]->f208 = g_list_c[i]->f1f8;
+    for (unsigned i = 0; i < (unsigned)g_mat_vec[3].count(); i++) {
+        g_mat_vec[3].at<Marker>(i)->f1f4 -= g_step * g_map_sea_speed_x * 2.0f;
+        g_mat_vec[3].at<Marker>(i)->f1f8 -= g_step * g_map_sea_speed_y * 2.0f;
+        g_mat_vec[3].at<Marker>(i)->f204 = g_mat_vec[3].at<Marker>(i)->f1f4;
+        g_mat_vec[3].at<Marker>(i)->f208 = g_mat_vec[3].at<Marker>(i)->f1f8;
     }
-    for (unsigned i = 0; i < (unsigned)g_list_d.count(); i++) {
-        g_list_d[i]->f1f4 += g_step * g_map_river_speed_x;
-        g_list_d[i]->f1f8 += g_step * g_map_river_speed_y;
-        g_list_d[i]->f204 = g_list_d[i]->f1f4;
-        g_list_d[i]->f208 = g_list_d[i]->f1f8;
+    for (unsigned i = 0; i < (unsigned)g_mat_vec[1].count(); i++) {
+        g_mat_vec[1].at<Marker>(i)->f1f4 += g_step * g_map_river_speed_x;
+        g_mat_vec[1].at<Marker>(i)->f1f8 += g_step * g_map_river_speed_y;
+        g_mat_vec[1].at<Marker>(i)->f204 = g_mat_vec[1].at<Marker>(i)->f1f4;
+        g_mat_vec[1].at<Marker>(i)->f208 = g_mat_vec[1].at<Marker>(i)->f1f8;
     }
 }
 
