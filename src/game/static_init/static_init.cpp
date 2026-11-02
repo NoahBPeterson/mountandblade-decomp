@@ -18,14 +18,6 @@
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
 extern char g_5d7080[];     // 0x5d7080 the gui manager
-extern unsigned g_5a8e78;   // 0x5a8e78 (size mask)
-extern unsigned g_5a8e88;   // 0x5a8e88 (type mask)
-extern unsigned g_5e2464;   // 0x5e2464
-extern unsigned g_5e2468;   // 0x5e2468
-extern unsigned g_5e2584;   // 0x5e2584
-extern unsigned g_5e2580;   // 0x5e2580
-extern unsigned g_8ee41ec;  // 0x8ee41ec
-extern unsigned g_8ee41e8;  // 0x8ee41e8
 extern char g_5e2a18[];     // 0x5e2a18 the string tables
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
@@ -74,7 +66,6 @@ extern char g_8ee3c38[];    // 0x8ee3c38 the module name
 extern char g_8ee3c48[];    // 0x8ee3c48 the application
 struct SoundMgr;
 extern SoundMgr g_sound_mgr;   // 0x5aa128 the sound player (defined in agent_fx_sound.cpp; no constructor, only the destructor registered below)
-extern std::string g_5aa380;   // 0x5aa380
 extern void* g_vt_54a7d0[]; // 0x54a7d0 the debug text log's vtable
 extern void* g_vt_595990[]; // 0x595990 outfile's vtable
 extern void* g_vt_595618[]; // 0x595618 outfile_b's vtable (its base)
@@ -263,8 +254,6 @@ void __cdecl static_dtor_548400() { ((RefList*)g_a75f2c)->retire(); }
 void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
 // @ 0x548420
 void __cdecl static_dtor_548420() { ((world_obj*)g_a76630)->~world_obj(); }
-// @ 0x548430
-void __cdecl static_dtor_548430() { g_5aa380.~basic_string(); }
 // @ 0x548460
 void __cdecl static_dtor_548460() { ((Tail2*)g_a739f8)->~Tail2(); }
 // @ 0x548470
@@ -297,18 +286,6 @@ void __cdecl static_dtor_548520()
 void __cdecl static_init_5479a0() { new (g_5d6fa0) resmgr; atexit(static_dtor_548130); }
 // @ 0x5479c0
 void __cdecl static_init_5479c0() { new (g_5d7080) gui_manager; atexit(static_dtor_548140); }
-// @ 0x5479e0
-void __cdecl static_init_5479e0() { g_5e2464 = g_5a8e78; }
-// @ 0x5479f0
-void __cdecl static_init_5479f0() { g_5e2468 = g_5a8e88; }
-// @ 0x547a20
-void __cdecl static_init_547a20() { g_5e2584 = g_5a8e78; }
-// @ 0x547a30
-void __cdecl static_init_547a30() { g_5e2580 = g_5a8e88; }
-// @ 0x547a40
-void __cdecl static_init_547a40() { g_8ee41ec = g_5a8e78; }
-// @ 0x547a50
-void __cdecl static_init_547a50() { g_8ee41e8 = g_5a8e88; }
 // @ 0x547a80
 void __cdecl static_init_547a80() { new (g_5e2a18) LangTables; atexit(static_dtor_548470); }
 // @ 0x547aa0   the debug text log: its two strings, flags, and vtable
@@ -474,8 +451,6 @@ void __cdecl static_init_548070()
 void __cdecl static_init_5480b0() { new (g_8ee3c28) tstring; atexit(static_dtor_548150); }
 // @ 0x5480d0
 void __cdecl static_init_5480d0() { new (g_8ee3c38) tstring; atexit(static_dtor_548160); }
-// @ 0x5480f0
-void __cdecl static_init_5480f0() { g_5aa380.assign("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0x40); atexit(static_dtor_548430); }
 // @ 0x548110
 void __cdecl static_init_548110() { new (g_8ee3c48) GameApp; atexit(static_dtor_5482a0); }
 
@@ -483,13 +458,12 @@ void __cdecl static_init_548110() { new (g_8ee3c48) GameApp; atexit(static_dtor_
 typedef void (__cdecl* init_fn)();
 #pragma data_seg(".CRT$XCU")
 init_fn g_static_init_table[] = {
-    static_init_5479a0, static_init_5479c0, static_init_5479e0, static_init_5479f0, static_init_547a20, static_init_547a30, static_init_547a40, static_init_547a50, static_init_547a80, static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
+    static_init_5479a0, static_init_5479c0, static_init_547a80, static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
     static_init_547ba0, static_init_547bb0, static_init_547bc0, static_init_547da0,
     static_init_547dc0, static_init_547de0, static_init_547e20, static_init_547e40, static_init_547e60,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547f60, static_init_547fa0, static_init_547fb0,
     static_init_547fc0, static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,
-    static_init_548050, static_init_548070, static_init_5480b0, static_init_5480d0, static_init_5480f0,
-    static_init_548110,
+    static_init_548050, static_init_548070, static_init_5480b0, static_init_5480d0, static_init_548110,
 };
 #pragma data_seg()

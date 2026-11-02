@@ -3,6 +3,9 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
+unsigned g_5e2464 = (unsigned)g_bit[2];                       // 0x5e2464 (no reader in this source; set at startup like its twin)
+unsigned g_5e2468 = (unsigned)g_bit[4];                       // 0x5e2468
+
 // @ 0x4f3570
 void TerrainPage::read_fields()
 {
@@ -19,8 +22,8 @@ void TerrainPage::read_fields()
     layer_bits[2] = g_bits.get(0x40, 0x5e);
     water_level = g_bits.get(0x8e, 0x94);
     water_height = (float)g_bits.get(0x95, 0x9b) * 0.01f;
-    terrain_type = (g_bits.w[4] >> 0x1c) & (g_type_mask - 1);
-    map_size = g_bits.w[5] & (g_size_mask - 1);
+    terrain_type = (g_bits.w[4] >> 0x1c) & ((unsigned)g_bit[4] - 1);
+    map_size = g_bits.w[5] & ((unsigned)g_bit[2] - 1);
 }
 
 // @ 0x4f37f0

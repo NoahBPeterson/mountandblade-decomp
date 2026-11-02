@@ -35,8 +35,7 @@ using rgl::vector4;
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 #include "../bit_words.h"
-extern unsigned g_type_mask;                                // 0x5a8e88 (= 4: the terrain type is 4 bits wide)
-extern unsigned g_size_mask;                                // 0x5a8e78 (= 4: the terrain size is 2 bits wide)
+extern unsigned __int64 g_bit[];                            // 0x5a8e68 (game_globals.h): g_bit[4] is the terrain type mask (4 bits wide), g_bit[2] the size mask (2 bits)
 extern int g_use_shaders;                                   // 0x5e28fc (shaders on: the water checkbox stores the inverse)
 
 // ---- the world / scene --------------------------------------------------------------------------------

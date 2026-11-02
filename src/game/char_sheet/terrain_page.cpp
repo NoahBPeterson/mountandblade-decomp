@@ -3,6 +3,10 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
+extern unsigned __int64 g_bit[];                            // 0x5a8e68 (game_globals.h): g_bit[2] = 4 (size mask), g_bit[4] = 0x10 (type mask)
+unsigned g_8ee41ec = (unsigned)g_bit[2];                       // 0x8ee41ec (no reader in this source; set at startup)
+unsigned g_8ee41e8 = (unsigned)g_bit[4];                       // 0x8ee41e8
+
 // @ 0x4f2730
 void TerrainPage::update()
 {

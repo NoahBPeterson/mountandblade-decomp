@@ -612,12 +612,6 @@ static inline Agent* AGENT(unsigned id)
     return *pp + (id & 0xf);
 }
 
-// Bone-mask bits (64-bit values stored in .data; provisional names)
-__int64 g_mask_a8 = 0x0000000000000100i64;                  // 0x5a8ea8
-__int64 g_mask_ed0 = 0x0000000000002000i64;                 // 0x5a8ed0
-__int64 g_mask_ef8 = 0x0000000000040000i64;                 // 0x5a8ef8
-__int64 g_mask_f18 = 0x0000000000400000i64;                 // 0x5a8f18
-
 // per-tick update of the two animation slots: next sub-animation, bone masks, channel weights from the pitch,
 // head / torso rotations from the look angles
 // @ 0x43d040
@@ -753,7 +747,7 @@ void Agent::update_anims(int unused)
                 body->skel->chans[i].mask_lo |= (unsigned)((__int64)g_bit[7]);
                 body->skel->chans[i].mask_hi |= (unsigned)(((__int64)g_bit[7]) >> 32);
                 *(vector4*)(body->skel->chans[i].xform + 0x80 / 4) = q;
-                *(__int64*)&body->skel->chans[i].mask_lo |= g_mask_a8;
+                *(__int64*)&body->skel->chans[i].mask_lo |= g_bit[8];
             }
             if (f10 != 0 && (d->flags & 0x8000) == 0) {
                 double h = -f56cc * 0.5f;
@@ -781,16 +775,16 @@ void Agent::update_anims(int unused)
                 body->skel->chans[i].mask_hi |= (unsigned)(((__int64)g_bit[0]) >> 32);
                 q.y = -q.y;
                 *(vector4*)(body->skel->chans[i].xform + 0x80 / 4) = q;
-                body->skel->chans[i].mask_lo |= (unsigned)g_mask_a8;
-                body->skel->chans[i].mask_hi |= (unsigned)(g_mask_a8 >> 32);
+                body->skel->chans[i].mask_lo |= (unsigned)g_bit[8];
+                body->skel->chans[i].mask_hi |= (unsigned)(g_bit[8] >> 32);
                 *(vector4*)(body->skel->chans[i].xform + 0xd0 / 4) = q;
-                body->skel->chans[i].mask_lo |= (unsigned)g_mask_ed0;
-                body->skel->chans[i].mask_hi |= (unsigned)(g_mask_ed0 >> 32);
+                body->skel->chans[i].mask_lo |= (unsigned)g_bit[13];
+                body->skel->chans[i].mask_hi |= (unsigned)(g_bit[13] >> 32);
                 *(vector4*)(body->skel->chans[i].xform + 0x120 / 4) = q;
-                body->skel->chans[i].mask_lo |= (unsigned)g_mask_ef8;
-                body->skel->chans[i].mask_hi |= (unsigned)(g_mask_ef8 >> 32);
+                body->skel->chans[i].mask_lo |= (unsigned)g_bit[18];
+                body->skel->chans[i].mask_hi |= (unsigned)(g_bit[18] >> 32);
                 *(vector4*)(body->skel->chans[i].xform + 0x160 / 4) = q;
-                *(__int64*)&body->skel->chans[i].mask_lo |= g_mask_f18;
+                *(__int64*)&body->skel->chans[i].mask_lo |= g_bit[22];
             }
         }
         i++;

@@ -1241,7 +1241,7 @@ void MapLoader::read(SlotReader* stream)
 
 // ---- 0x4e85d0 / 0x4e8720: MapScreen::init and MapScreen::frame_step ------------------------------------------------------------------------
 extern int      g_use_shaders;                  // 0x5e28fc
-extern unsigned g_mask_w;                       // 0x5a8e78
+extern unsigned __int64 g_bit[];                // 0x5a8e68 (game_globals.h): g_bit[2] = 4, the terrain size mask
 unsigned g_a76644;                                          // 0xa76644
 
 // @ 0x4e85d0   MapScreen::init(void* desc)   (thiscall, ret 4)
@@ -1291,9 +1291,9 @@ void MapScreen::frame_step()
     if (!(*(unsigned*)(*(char**)((char*)g_game + 0x13a50) + f5df4 * 0x494 + 0x30) & 0x100))
         return;
     int mode = 3;
-    if (((g_mask_w - 1) & g_a76644) != 0 &&
-        ((g_a76644 & (g_mask_w - 1)) == 1 || (g_a76644 & (g_mask_w - 1)) == 2 ||
-         ((g_mask_w - 1) & g_a76644) == 3))
+    if ((((unsigned)g_bit[2] - 1) & g_a76644) != 0 &&
+        ((g_a76644 & ((unsigned)g_bit[2] - 1)) == 1 || (g_a76644 & ((unsigned)g_bit[2] - 1)) == 2 ||
+         (((unsigned)g_bit[2] - 1) & g_a76644) == 3))
         mode = 2;
     mesh.build(*(void**)((char*)view + 0x64), mode);
     mesh.polygon_to_mesh(mesh.poly_mesh);
