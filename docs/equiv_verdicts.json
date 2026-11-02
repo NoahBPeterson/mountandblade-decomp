@@ -1,6 +1,6 @@
 {
-"when": "2026-11-01T19:03:03-06:00",
-"commit": "ae8530e",
+"when": "2026-11-01T21:34:15-06:00",
+"commit": "020276c",
 "sources": [
 "work/sweep",
 "work/sweep_stale/20261028_2353",
@@ -9,8 +9,8 @@
 "work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 468,
-"weak": 389,
+"pass": 471,
+"weak": 386,
 "fail": 4,
 "inputs": 27,
 "harness": 33,
@@ -18,8 +18,8 @@
 "comdatdiff": 10,
 "funclet": 0,
 "not_run": 4,
-"pass_sz": 166389,
-"weak_sz": 592817,
+"pass_sz": 171385,
+"weak_sz": 587821,
 "fail_sz": 19259,
 "inputs_sz": 25127,
 "harness_sz": 75875,
@@ -88,8 +88,8 @@
 "0040a000": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 1343
 },
 "0040a640": {
@@ -109,8 +109,8 @@
 "0040b0f0": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 2993
 },
 "0040c1b1": {
@@ -6125,8 +6125,8 @@
 "004faee0": {
 "module": "agent_hud",
 "file": "src/game/agent5/agent_hud.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 660
 },
 "004fb180": {
