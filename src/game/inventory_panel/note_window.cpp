@@ -63,6 +63,7 @@ extern "C" Widget* make_scroll2(Widget* parent, const tstring* name,
                                 Widget* other);                            // 0x4f62f0
 
 #include "../party/widget_ops.h"            // WidgetOps: the one definition (relayout 0x488d50, visible 0x50cc60)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct MissionPanel {
     void draw();   // 0x488d50 (game/ui/mission_ui.h): WidgetOps::draw is the same code
 };
@@ -200,7 +201,7 @@ static const char* ts_chars(const tstring* s)
 // name tstring of a map-party record (record base from the party table)
 static tstring* party_name(char* rec)
 {
-    if (*(char*)&orig::g_show_party_ids_instead_of_names != 0)
+    if (*(char*)&g_module_settings.show_party_ids_instead_of_names != 0)
         return (tstring*)(rec + 0x20);
     if (*(char*)(rec + 0x1c) == 0) {
         tstring* s = UITEXT->find((tstring*)(rec + 0x20));

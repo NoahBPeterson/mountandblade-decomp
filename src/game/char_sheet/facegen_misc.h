@@ -63,6 +63,7 @@ typedef rgl::strategic_entity Entity;
 
 // ---- skin record table (0x8ed4f7c, 0x1f8-byte records) -------------------------------------------------
 #include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ---- face-gen window (ctor 0x4f49d0) --------------------------------------------------------------------
 struct FaceGen {
@@ -125,7 +126,6 @@ extern float g_dummy0;                                  // 0x8ed5088
 extern float g_dummy1;                                  // 0x8ed508c
 // (0x432510 is clamp_index, cs_common.h)
 
-extern unsigned g_xa181ac;                              // 0xa181ac (shader-on flag)
 extern const float g_590c54;                            // 0x590c54 = 7.0f
 extern const float g_598588;                            // 0x598588 = 63.0f
 extern const float g_549d70;                            // 0x549d70 = 0.5f

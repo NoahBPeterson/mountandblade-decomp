@@ -40,6 +40,7 @@ struct MusicTable {
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/rgl_string.h"
 #include "../rgl_mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 using rgl::vector4;
 using rgl::mesh;
 
@@ -286,7 +287,6 @@ extern GuiManager g_gui;                                 // 0x5d7080
 
 extern int   g_sound_paused;                         // 0x5a9fd4
 extern int   g_sound_muted;                          // 0x5a9fd8
-extern int   g_scan_module_textures;                 // 0xa18108
 extern char* g_xa44238;                              // 0xa44238
 
 #include "../loading_screen.h"       // LoadingScreen: advance 0x50f440 here
@@ -350,7 +350,7 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         (*step)++;
     } else if (*step == 7) {
         g_log << "Loading Textures...\n";
-        g_res.load_all(g_scan_module_textures, (rgl::string*)&g_module_path);
+        g_res.load_all(g_module_settings.scan_module_textures, (rgl::string*)&g_module_path);
         g_log << "Finished Loading Textures...\n";
         { tstring key("ui_finished"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;

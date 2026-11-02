@@ -22,7 +22,7 @@ ground_spec* g_ground_specs;                     // 0x5e28f4
 int g_num_ground_specs;                          // 0x5e29ec
 
 // mission-type table: 0x20-byte records 0xa735d0..0xa73730.
-mission_type g_mission_types[(0xa73730 - 0xa735d0) / 0x20];   // 0xa735d0
+mission_type g_mission_types[(0xa73730 - 0xa735d0) / 0x20];   // 0xa735d0 (.bss; built / destroyed by the compiler: see mission_type.h)
 
 ttype g_ttypes[(0x8ed4f58 - 0x8ed4df8) / 0x20];  // 0x8ed4df8
 

@@ -16,7 +16,6 @@
 #include "../../include/game_recs.h"
 #include "../../include/game_data.h"
 
-extern PartyTemplate* g_party_templates;        // 0x5e29f8 the party templates (0xb0 bytes each)
 
 // the six member slots of a party template (+0x40): troop, minimum, maximum and flags (bit 0: prisoners)
 struct TplSlot {

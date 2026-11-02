@@ -13,6 +13,9 @@
 #include <new>
 #include "./party_window.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
+
+// ---- data this module owns (docs/standalone_data.md) ----
+int g_equip_page;                                    // 0xa75f68 (.bss) the equipment page shown by the party window (negative: nothing selected)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../int_vec.h"
 #include "../str_table.h"
@@ -26,6 +29,7 @@
 #include "../item_sound.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // the definition (cls_map/progress_bar.cpp) takes the widget: this module calls it under that signature (the header keeps the void* spelling other modules use)
 void __cdecl label_refresh(MissionUi* w, tstring name);      // 0x4e4c70 (cdecl, the name by value)
@@ -155,7 +159,7 @@ void* PartyWindow::make_inventory_menu(int idx)
         }
         WOPS(panel)->add_child(w);
     }
-    if (idx == 0 && g_disable_food_slot == 0) {
+    if (idx == 0 && g_module_settings.disable_food_slot == 0) {
         MissionUi* w = new MissionUi;
         {
             Vec2 v(pos[9].x, pos[9].y + 0.095f);
@@ -180,7 +184,7 @@ void* PartyWindow::make_inventory_menu(int idx)
     if (idx != 0)
         troop_idx = troop;
     for (int i = 0; i < 10; i++) {
-        if ((idx < 1 && g_disable_food_slot == 0) || i != 9) {
+        if ((idx < 1 && g_module_settings.disable_food_slot == 0) || i != 9) {
             MissionUi* slot = make_slot(&EQUIP(troop_idx, i));
             row_slot[idx][i] = slot;
             if (i != 9)

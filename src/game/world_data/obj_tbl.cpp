@@ -56,7 +56,7 @@ rgl::mesh* scene_tbl::placed(int index)
     if (r->sx != g_one || r->sy != g_one || r->sz != g_one)
         m->set_color(sc);
     m->set_part(*(rgl::matrix*)&frame);
-    if (pos.z * pos.z + pos.y * pos.y + pos.x * pos.x != g_zero)
+    if (pos.z * pos.z + pos.y * pos.y + pos.x * pos.x != 0.0f)
         m->translate(&pos);
     return m;
 }

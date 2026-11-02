@@ -1,5 +1,6 @@
 #include "../../include/image_addrs.h"
 #include "./screen_camera.h"
+#include "../config/config_block.h"      // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -20,14 +21,14 @@ void Screen::camera_update(float dt)
     f2b0 = dt * f2c4 * 10.0f + f2b0;        // a literal: with the 0x549d74 global cl evaluates (10 * f2c4) * dt
 
     float max_zoom = C_598690;                  // 105
-    if (g_a17148 != 0 && g_a1717c != 0 && g_5a9fbc != 0) {
+    if (g_a17148 != 0 && g_a1717c != 0 && g_cfg.cheat_mode != 0) {
         f2b0 = 0.0f;
         f2c4 = 0.0f;
         max_zoom = C_59868C;                    // 235
     }
 
     // --- zoom -------------------------------------------------------------------------------------
-    if (f2c8 > C_54A6D0 || f2c8 < C_598688) {
+    if (f2c8 > 1e-5f || f2c8 < C_598688) {
         f2b8 = dt * f2c8 * C_549D74 + f2b8;
         if (f2b8 < C_590D8C) {
             f2b8 = 3.5f;
@@ -39,19 +40,19 @@ void Screen::camera_update(float dt)
 
     // --- ease the four rates back to zero (each through its own 0-floor clamp) ---------------------
     float d = 1.0f - dt * C_590AF0;
-    if (d < C_549CA8)
+    if (d < 0.0f)
         d = 0.0f;
     f2bc *= d;
     d = 1.0f - dt * C_590AF0;
-    if (d < C_549CA8)
+    if (d < 0.0f)
         d = 0.0f;
     f2c0 *= d;
     d = 1.0f - dt * C_590AF0;
-    if (d < C_549CA8)
+    if (d < 0.0f)
         d = 0.0f;
     f2c4 *= d;
     d = 1.0f - dt * C_590AF0;
-    if (d < C_549CA8)
+    if (d < 0.0f)
         d = 0.0f;
     f2c8 *= d;
 
@@ -99,9 +100,9 @@ void Screen::camera_update(float dt)
                 f2a8 += (dz * C_5935C8) * dt;
             }
         } else {
-            f2a0 *= C_549CA8;
-            f2a4 *= C_549CA8;
-            f2a8 *= C_549CA8;
+            f2a0 *= 0.0f;
+            f2a4 *= 0.0f;
+            f2a8 *= 0.0f;
         }
     }
 
@@ -157,7 +158,7 @@ void Screen::camera_update(float dt)
     ((frustum*)((char*)this + 0x170))->build_planes();
     MapWidget* w = f30;
     memcpy((char*)w + 0x1ac, (char*)this + 0x170, 0x120);
-    WorldCam* sc = g_level;
+    WorldCam* sc = (WorldCam*)g_level;
     sc->f30c = vector4(-frame.u.x, -frame.u.y, -frame.u.z);   // w never written (3-component constructor)
     sc->f31c = frame.o;
     if (!g_5a9fd8) {

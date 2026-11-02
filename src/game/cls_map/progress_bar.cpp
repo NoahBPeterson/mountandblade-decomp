@@ -82,6 +82,7 @@ void progress_bar::update()
 // the whole-class instantiation below also emits vector(n) / resize(n), which default-construct one; they reach the record's
 // constructor (0x4d3640, the one definition: options_panel/ragdoll_models.cpp) through this forwarder.
 #include "../model_b.h"
+#include "../module_name.h"      // g_module_name (0x8ee3c38)
 inline loading_config::loading_config() { new ((void*)this) model_b; }
 template class std::vector<E50>;
 template class std::vector<E68>;
@@ -208,10 +209,8 @@ void RagModel::load(TiXmlElement* e)
 }
 
 // ---- 0x4e4790: the save / load screen ----------------------------------------------------------------------------------------------
-extern tstring g_module_name;               // 0x8ee3c38 (the save-directory prefix string)
 extern int g_compatible_module_version;                          // 0x5e29b8
 extern float g_time_scale;                      // 0x590e28
-extern const float g_minus_one;                 // 0x549ca8 (-1.0f)
 extern "C" int __cdecl sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
 // The screen searches the settings table by hand: it walks 0x2c bytes at a time from 0xa44240, calls tstring::equals (0x42bdd0) on each
@@ -453,7 +452,7 @@ __declspec(noinline) float ini_file::get_float(int* idx)
 {
     int i = *idx;
     if (i < 0 || i >= count)
-        return g_minus_one;
+        return 0.0f;
     char* e = (char*)this + 0x1c + 0x2c * i;
     char* v = *(char**)(e + 4);
     return (float)atof(v ? v : e + 4);

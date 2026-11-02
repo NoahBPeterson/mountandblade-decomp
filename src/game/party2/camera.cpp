@@ -35,7 +35,14 @@
 #include "../../include/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
 #include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
 #include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/game_recs.h"
+#include "../../include/level_global.h"      // g_level (0xa732b4)
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
+
+// ---- data this module owns (docs/standalone_data.md) ----
+ScriptReg g_registers[0x80];                        // 0xa70490 (.bss) the script registers
+int g_emitter_count;                                // 0xa75eb4 (.bss) number of script emitters (g_scripts, party2/camera.h)
 
 extern Font* g_font;                                // 0x5e2934
 
@@ -423,9 +430,6 @@ extern StrTable g_strtable;                         // 0x5e2a18
 struct MsgLog { void add(tstring msg, int color); };        // 0x452c00 (thiscall, ret 0x14)
 extern MsgLog g_gui;                             // 0x5d7080
 
-extern int g_snd_got_value;                         // 0x5aa1a0 (sound id)
-extern int g_snd_lost_value;                        // 0x5aa19c
-extern int g_snd_new_quest;                         // 0x5aa180
 struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int* out); };  // 0x442650
 
 struct ResMgr {
@@ -473,7 +477,6 @@ struct EntityFull {
     void add_extra(mesh* m) { ((Poser*)this)->add_extra((int)m); }                         // 0x442110 (thiscall, ret 4)
 };
 struct EntityHost { EntityFull* create_entity(int type) { return (EntityFull*)((rgl::world*)this)->create_entity(type); } };   // 0x428440 (ret 4)
-extern EntityHost* g_level;                   // 0xa732b4 (points to the host object)
 
 
 // ---- records ---------------------------------------------------------------------------------------
@@ -561,7 +564,7 @@ void HudRoot::set_font_mesh(const tstring* text, int arg)
 void Mission::spawn_battle_icon(unsigned id)
 {
     Rec98* rec = (Rec98*)((id & 0xf) * 0x98 + *(f0e0.begin() + (id >> 4)));
-    EntityFull* e = g_level->create_entity(9);
+    EntityFull* e = ((EntityHost*)g_level)->create_entity(9);
     rec->f50 = (int)e;
 
     Shape* shape;
@@ -751,7 +754,6 @@ struct MissionAgents {
 struct OrderObjHost {
     virtual OrderObj* create_entity(int type);       // 0x428440 (ret 4)
 };
-extern void* g_level;                            // 0xa732b4 (pointer to the host object)
 
 struct Mission {
     char pad0[0x527c];
@@ -776,7 +778,6 @@ struct Mission {
     Sprite* build_legend_mesh(OrderObj* o) { return (Sprite*)::build_legend_mesh((ColourOwner*)o); }                // 0x495b20 (ret 4)
     void check_slot(int id, unsigned bits);         // 0x49c170 (ret 8)
 };
-extern char g_show_party_ids_instead_of_names;                              // 0xa181b8
 struct ResMgr {   // 0x418a70: the original builds a tstring from the literal first (0x42bbe0), passes it, frees it
     Sprite* material(const char* name) {
         tstring tmp(name);
@@ -827,7 +828,7 @@ void MissionAgents::add_order_arrow(int id)
                 h = 0.75f;
             else
                 h = 1.0f;
-            if (g_show_party_ids_instead_of_names) {
+            if (g_module_settings.show_party_ids_instead_of_names) {
                 nm = &e->text;
             } else {
                 // the found tstring* (or the record's own name tstring at +0xc) goes straight to label_text
@@ -1195,7 +1196,6 @@ using rgl::vector4;
 inline void identity_pos(float* m) { ::identity_pos((::pos*)m); }                   // 0x40cd00  out-only 4x4 identity (cdecl)
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
-extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> seconds); defined once, in mesh_slot/slot.cpp
 extern const float g_549cdc;                    // 0x549cdc  1.0f
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
 extern const float g_549d70;                    // 0x549d70  0.5f
@@ -1464,10 +1464,10 @@ void Camera::update(int)
     }
     ((view_iface*)this)->s23(target);
 
-    float d0 = (float)(g_ticks[timer[0].key] - timer[0].stamp) * g_tick_scale;    // colour
-    float d1 = (float)(g_ticks[timer[1].key] - timer[1].stamp) * g_tick_scale;    // level
-    float d4 = (float)(g_ticks[timer[4].key] - timer[4].stamp) * g_tick_scale;    // zoom
-    float d5 = (float)(g_ticks[timer[5].key] - timer[5].stamp) * g_tick_scale;    // shake
+    float d0 = (float)(g_ticks[timer[0].key] - timer[0].stamp) * 1e-5f;    // colour
+    float d1 = (float)(g_ticks[timer[1].key] - timer[1].stamp) * 1e-5f;    // level
+    float d4 = (float)(g_ticks[timer[4].key] - timer[4].stamp) * 1e-5f;    // zoom
+    float d5 = (float)(g_ticks[timer[5].key] - timer[5].stamp) * 1e-5f;    // shake
 
     // zoom: blend the target's zoom from the near weights toward the far ones
     if (d4 < lim[4]) {
@@ -1602,8 +1602,6 @@ struct float2 {
 // ---- engine services that live in other slices -----------------------------------------------------
 struct scene_api;                                        // 0x498420 (thiscall scene position, below)
 
-extern float g_rand_scale;                               // 0x54a6e0 (angle per rand() step)
-extern void* g_party_templates;                               // 0x5e29f8 (0xb0-byte troop record table)
 
 // The global string table (this = 0x5e2a18) and its lookup (0 when absent).
 struct Golist {
@@ -1763,7 +1761,7 @@ struct Party {
     }
 };
 
-inline TroopRec* troop_rec(int troop) { return (TroopRec*)((char*)g_party_templates + 0xb0 * troop); }
+inline TroopRec* troop_rec(int troop) { return (TroopRec*)&g_party_templates[troop]; }
 
 // The view (`this`) seen from here: the child list object at +0x2c and its own vector at +4/+8.
 struct View {
@@ -1900,7 +1898,7 @@ int Party::add_sprite(int x, int y, int troop)
     scene.obj(id)->f34 = y;
     scene.obj(id)->rot.x = 1.0f;
     scene.obj(id)->rot.y = 0;
-    float ang = (float)(rand() % 0x3dc9) * g_rand_scale; // 0x536a9f / 0x54a6e0
+    float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
     float c = (float)cos(ang);
     float s = (float)sin(ang);
     ObjRec* ro = scene.obj(id);
@@ -2222,9 +2220,10 @@ struct World {
 struct PtrVec {                                                                   // a vector of pointers (begin/end)
     void** begin;                                                                 // +0 (0xa75f54)
     void** end;                                                                   // +4 (0xa75f58)
+    void** cap;                                                                   // +8 (0xa75f5c)
     int size() { return (int)(end - begin); }
 };
-extern PtrVec g_world_list;                                                       // 0xa75f54
+PtrVec g_world_list;                                                              // 0xa75f54 (.bss) the open worlds (its allocator word sits at 0xa75f50)
 struct MeshNodeList { void cap_all(float* v); };                                  // 0x438f90 (ret 4)
 
 // appearance / agent builders (other slices; the argument lists are taken from the disassembly)
@@ -2339,9 +2338,6 @@ void Mission::exec_trigger(int val)
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/msg_log.h"
 extern MsgLog g_gui;                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
-extern int g_snd_got_value;                         // 0x5aa1a0 (sound id)
-extern int g_snd_lost_value;                        // 0x5aa19c
-extern int g_snd_new_quest;                         // 0x5aa180
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);  // 0x415100
 
 // ---- shared log tail of 0x49b720 / 0x49b820 (inlined in both; the source of the original
@@ -2363,7 +2359,7 @@ void GameData::add_gold(int gold, int troop)
     Troop* rec = troops + troop;
     rec->f3b4 += gold;                             // Troop +0x3b4 (gold)
     if (troop == 0 && f13a34 != 0 && gold != 0)
-        value_message(this, gold, "ui_you_got_value", &g_snd_got_value);
+        value_message(this, gold, "ui_you_got_value", &g_sound_mgr.slot[10]);
 }
 
 // @ 0x49b820
@@ -2374,7 +2370,7 @@ void GameData::remove_gold(int gold, int troop)
     if (rec->f3b4 < 0)
         rec->f3b4 = 0;
     if (troop == 0 && f13a34 != 0 && gold != 0)
-        value_message(this, gold, "ui_you_lost_value", &g_snd_lost_value);
+        value_message(this, gold, "ui_you_lost_value", &g_sound_mgr.slot[9]);
 }
 
 // @ 0x49b930
@@ -2394,7 +2390,7 @@ void GameData::start_quest(int quest, int giver_troop)
             mb_snprintf(buf, 0x200, f->c_str(), n);
         }
         g_gui.add(tstring(buf), 0xffd0f0c8);
-        g_sound_mgr.play(g_snd_new_quest, 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[2], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
         rec->flags = 0x100;
     }
     WL_MARKER(13)
@@ -2489,8 +2485,8 @@ void Elem::set_lvalue(__int64* locals, const __int64& value)
             report("illegal register no.");
             return;
         } else {
-            g_reg_lo[idx*2] = v[0];
-            g_reg_hi[idx*2] = v[1];
+            g_registers[idx].lo = v[0];
+            g_registers[idx].hi = v[1];
             return;
         }
     } else if (kind == 2) {
@@ -2535,9 +2531,9 @@ __int64 Elem::get_operand(__int64* locals, int* i, int* type)
         return ((__int64)(unsigned)k << 32) | (unsigned)p;
     if (kind == 1) {
         if (p >= 0 && p < 0x80) {
-            unsigned lo = g_reg_lo[p*2];
+            unsigned lo = g_registers[p].lo;
             _ReadWriteBarrier();
-            int hi = g_reg_hi[p*2];
+            int hi = g_registers[p].hi;
             return (__int64)lo | ((__int64)hi << 32);
         }
         sprintf(buf, "Invalid register no in operation = %d, param0 = %d param1 = %d", id, ((int*)vals)[0], ((int*)vals)[2]);

@@ -17,6 +17,7 @@ struct Core : CD3DApplication {
     using CD3DApplication::ChooseInitialD3DSettings;    // 0x402100
     using CD3DApplication::ToggleFullscreen;            // 0x402be0 (the slice called it HandleSizeChange)
     using CD3DApplication::DisplayErrorMsg;             // 0x4014f0
+    using CD3DApplication::m_pD3D;                      // +0xf4 = 0x8ee3d3c: the IDirect3D9 the options page lists the display modes from
     using CD3DApplication::m_bWindowed;                 // +0xa4 = 0x8ee3cec: the 'settings probed' flag of 0x4b99c0 and the
                                                         // crop flag of 0x4bace0 / 0x4bb9c0 (the slices' g_settings_probed / g_screenshot_cropped)
 

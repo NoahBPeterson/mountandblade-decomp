@@ -163,10 +163,7 @@ inline int fbits(float f) { return *(int*)&f; }
 #define SI_ASSERT(name, cond) typedef char si_assert_##name[(cond) ? 1 : -1]
 
 // ---- the interpreter's own globals ----------------------------------------------------------------------------
-extern int g_lineno;            // 0x5e2598  line of the statement being run (report)
-extern int g_script_error;      // 0x5e259c  set by report(); copied to *error at the end of execute
-extern int g_cur_opcode;        // 0x5e25a0  opcode word of the statement being run (validators print it)
-extern int g_or_latch;          // 0x5e25a4  this_or_next chain already satisfied: skip until the chain ends
+#include "./script_globals.h"   // g_cur_param, g_lineno, g_script_error, g_cur_opcode, g_or_latch (defined in script_interpreter.cpp)
 
 // ---- counters and small tables (bounds of the validators) -----------------------------------------------------
 extern int g_presentation_count;        // 0xa75f30 (check_presentation 0x49cd50)
@@ -475,7 +472,6 @@ struct SceneRec {
 };
 SI_ASSERT(scene_size, sizeof(SceneRec) == 0x494);
 SI_ASSERT(ptemplate_size, sizeof(PartyTemplate) == 0xb0);
-extern PartyTemplate* g_party_templates;     // 0x5e29f8 (0xb0-byte records; PartyTemplate in src/include/game_recs.h)
 // ItemKindX: view of the item kind record (ItemKind in src/game/agent/item_kind.h, array g_items 0x5e29d0)
 struct ItemKindX {
     char pad0[0x30];
@@ -677,11 +673,12 @@ extern int g_encountered_party;         // 0x8ed50d8 (g_dialogs +0x10; party_can
 extern int g_siege_attack;              // 0xa73438 (store_defender_count 0x4ae36e)
 extern int g_conversation_agent;        // 0x8ed50dc (g_dialogs +0x14; store_conversation_agent)
 struct MissionUiX {
+    char pad0[0x2c4];
+    int passage_menu;                    // +0x2c4 (set_passage_menu 0x4a55f3)
     __forceinline void select_side(int side) { ((BattleW*)this)->select_side(side); }        // 0x492750 (thiscall, ret 4)
 };
 extern MissionUiX g_mission_ctx;         // 0xa73300
 extern int g_battle_advantage;           // 0xa7331c (set_battle_advantage 0x4a87af)
-extern int g_passage_menu;              // 0xa735c4 (set_passage_menu 0x4a55f3)
 extern int g_menu_b;                    // 0x5e2924 (jump_to_menu 0x4ac3a0)
 struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
 extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)

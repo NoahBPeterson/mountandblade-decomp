@@ -30,17 +30,17 @@
 #include "../../include/rec78.h"
 #include "../../include/shape.h"
 #include "../../include/game_data.h"
+#include "../../include/level_global.h"      // g_level (0xa732b4)
 
 extern StrTable g_strtable;                     // 0x5e2a18
 extern char g_script[]; // 0xa70440
-extern LevelGrid* g_level;                 // 0xa732b4
 extern Rec78* g_tbl78;                          // 0x5e29dc the scene prop kinds (0x78-byte records)
 
 // the animators fold the clock delta since the last start into the busy time: (g_ticks[clock] - stamp) * 1e-5 + seconds + 1
 #define ANIMATE(slot, value)                                                                      \
     ((AnimVt*)widgets[idx])->slot(t, value);                                                      \
     {                                                                                             \
-        float done = (float)(g_ticks[clock] - *(__int64*)&stamp_lo) * g_tick_scale + t + 1.0f;   \
+        float done = (float)(g_ticks[clock] - *(__int64*)&stamp_lo) * 1e-5f + t + 1.0f;   \
         busy_until = (done < busy_until) ? busy_until : done;                                     \
     }
 
@@ -138,7 +138,7 @@ face* GameData::find_at(const float* p)
     q[2] = 0;                                      // 0x48ea80 builds a 3-float point with z = 0
     ((rgl::world*)g_level)->to_cell(q, idx);       // g_level (0xa732b4) is the rgl::world: world.h rows +0x28 = LevelGrid::cells
     flag = 0;
-    cell* c = &g_level->cells[idx[0]][idx[1]];
+    cell* c = &((LevelGrid*)g_level)->cells[idx[0]][idx[1]];
     c->collect_point(q, &flag, 0x100, cand, &count);
     for (int k = 0; k < count; k++) {
         shape_base* s = cand[k];

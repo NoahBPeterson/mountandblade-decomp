@@ -27,8 +27,7 @@ struct Block16 {                                // 16-byte default block (0, 0.5
 // ---- game state (global object 0x5e2930 = GameData, src/include/game_data.h: its path helpers agent_low 0x4638f0, scene_path 0x463950,
 // module_path 0x4639d0 are defined in game_state.cpp) ----
 #include "../../include/game_data.h"
-extern float g_player_wounded_treshold;                        // 0xa1813c (0x4638f0)
-extern float g_hero_wounded_treshold;                       // 0xa18138 (0x4638f0)
+#include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp_one_handed (canonical, defined in triggers/trigger_vec.cpp)
 extern char g_path_buf[];                       // 0x5e2480 (0x4639d0)
 
 
@@ -79,6 +78,7 @@ extern int g_max_tex_w;                         // 0xa17f84 (0x463bc0)
 extern int g_max_tex_h;                         // 0xa17f88 (0x463bc0)
 extern char g_use_hw_shadow;                    // 0xa17f24 (0x463e10, 0x464070, 0x4640d0)
 #include "../../include/renderer.h"   // canonical: g_render.dev (0xa17f28)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../rgl/options.h"   // canonical: g_options.i7c (0x5aa084)
 #include "../../rgl/resource.h"   // g_resmgr (0x5d6fa0)
 #define g_resmgr_sh (*(ShResMgr*)&g_resmgr)       // ShResMgr: the calls game_state.cpp makes on the resource manager (a view of resource.h's g_resmgr)

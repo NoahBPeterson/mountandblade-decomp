@@ -44,7 +44,7 @@ extern char g_gui[]; // 0x5d7080
 extern char g_game_keys[]; // 0xa73730
 extern char g_keyboard[]; // 0xa170c8
 extern char g_windows[]; // 0xa73980
-extern char g_map_flags[]; // 0x5e291c
+#include "../map_flags.h"      // MapFlags, g_map_flags (0x5e291c): the one definition
 extern char g_mission_ctx[]; // 0xa73300
 extern void* g_items; // 0x5e29d0
 extern char g_game_keys[]; // 0xa73730
@@ -54,6 +54,7 @@ extern char g_keyboard[]; // 0xa170c8
 #include "../std_vec_out_of_line.h"
 #include "../prop_kind.h"
 #include "../menu_rec.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 extern void* g_mission_templates; // 0x5e2a00
 extern char g_terrain[]; // 0xa76630
 extern char g_app_obj[]; // 0x8ee3c48
@@ -106,7 +107,7 @@ struct Big5e292c_s25160 { void m_483f60(int a, int b); };
 
 #define g_mgr       (*(Mgr_s25160*)&orig::g_gui_mgr)
 #define g_dlg       (*(Dlg_s25160*)&orig::g_main_menu_obj)
-#define g_513710    (*(Mgr513710_s25160*)&orig::g_map_flags)
+#define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #define g_big       (*(Big5e292c_s25160**)&orig::g_mission)
 
 // ---------------------------------------------------------------------------
@@ -308,7 +309,7 @@ struct DialogMgr_s26130 {
 #define g_w_a73994_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x14)))
 #define g_w_a739c8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x48)))
 #define g_w_a739c0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x40)))
-#define g_flags_s261e0 (*(Flags5e291c_s261e0*)g_map_flags)
+#define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
 #define g_a73300_s261e0 (*(Obj73300_s261e0*)g_mission_ctx)
 #define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 // Slice s005261e0: the mission screen / game-loop tick (0x5261e0, 6818 bytes, thiscall, ret 4).
@@ -563,10 +564,13 @@ extern int  g_presentation;                                  // 0x5e299c
 extern char g_script[]; // 0xa70440
 extern int g_skill_clamp;                       // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
-extern int  g_a7333c;                                   // 0xa7333c
-struct Obj73300_s261e0 { void f_5295a0(); };                   // 0x5295a0
+struct Obj73300_s261e0 {                                        // g_mission_ctx (0xa73300)
+    char pad0[0x3c];
+    unsigned f3c;                                               // +0x3c accumulated key mask (0xa7333c)
+    void f_5295a0();
+};                   // 0x5295a0
 
-extern int  g_show_quest_notes;                                   // 0xa181b4
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 extern int  g_a170d8;                                   // 0xa170d8
 extern int  g_a174d8;                                   // 0xa174d8
 
@@ -583,7 +587,6 @@ struct IntDeque_s261e0 {
 // float constants in .rdata
 extern const float g_f54a6e4;                           // 0x54a6e4 = 0.2f
 extern const float g_f549ca8;                           // 0x549ca8 = 0.0f
-extern const float g_f54a6d0;                           // 0x54a6d0 = 1e-05f
 extern const float g_f549cdc;                           // 0x549cdc = 1.0f
 extern const float g_f54b8b0;                           // 0x54b8b0 = 1.5f
 extern const float g_f590b38;                           // 0x590b38 = 8.0f
@@ -2121,9 +2124,6 @@ struct MapEditor_s2cf60 {
 };
 struct MapEditor_s2f250 {
     void update();   // 0x52f250
-};
-struct MapFlags {
-    void commit(char*);   // 0x513710
 };
 struct MapObject {
     tstring* mesh_ptr();   // 0x4c6ca0

@@ -114,9 +114,9 @@ static inline Party* party_at(GameData* g, int id)
 #include "../rgl_mesh.h"                                           // rgl::mesh (calc_bounds 0x438d80)
 
 #include "map_panel.h"                      // MapPanel / MapView (shared with map_info.cpp)
+#include "../../include/level_global.h"      // g_level (0xa732b4)
 
 // --------------------------------------------------------------------------------- globals -------------
-extern world*    g_level;                    // 0xa732b4
 extern rgl::mesh* g_label_obj;                // 0x5d75ec
 extern float     g_box_x;                    // 0x5d8778
 extern float     g_box_y;                    // 0x5d877c
@@ -125,7 +125,7 @@ extern float     g_mouse_y;                  // 0x5d7098
 extern int       g_a17458;                   // 0xa17458
 extern int       g_a17858;                   // 0xa17858
 extern int       g_a17148;                   // 0xa17148
-extern int       g_5a9fbc;                   // 0x5a9fbc
+#include "../config/config_block.h"                // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 extern char      g_msg_enabled;              // 0x5d8794
 extern int       g_msg_count;                // 0x5e2138
 extern int       g_msg_base;                 // 0x5e213c
@@ -202,9 +202,9 @@ void MapPanel::update_target()
     vector4 fp = farp;
 
     // ---- 0x519517: clip against the world's z range ------------------------------------------------
-    if (g_level->wmap) {
-        float zmin = g_level->wmap->zmin;
-        float zmax = g_level->wmap->zmax;
+    if (((::world*)g_level)->wmap) {
+        float zmin = ((::world*)g_level)->wmap->zmin;
+        float zmax = ((::world*)g_level)->wmap->zmax;
         if (np.z < zmin) {
             float t = fabsf((zmin - np.z) / dir.z);
             np.x += dir.x * t; np.y += dir.y * t; np.z += dir.z * t;
@@ -265,14 +265,14 @@ void MapPanel::update_target()
     int rec_mask  = -1;
     if (best >= 0) {
         rec_index = hits[best]->m4;
-        rec_mask  = (int)g_level->wmap->recs[rec_index].mask;
+        rec_mask  = (int)((::world*)g_level)->wmap->recs[rec_index].mask;
     }
 
     // ---- 0x519829: party agents under the cursor ---------------------------------------------------
     shape_base* bestobj = 0;
     shape_base* agents[0x2000];                // Picker::collect does not bound *count, so the size matters
     int       acount;
-    g_level->collect(9, agents, &acount);
+    ((::world*)g_level)->collect(9, agents, &acount);
     bestd += 1.0f;
 
     for (int i = 0; i < acount; i++) {
@@ -371,9 +371,9 @@ void MapPanel::update_target()
             }
         } else if (best >= 0) {
             bool go = true;
-            if (g_a17148 && g_5a9fbc) {
+            if (g_a17148 && g_cfg.cheat_mode) {
                 *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
-            } else if (!((RiderTable*)g_level->wmap)->shares(rec_index,
+            } else if (!((RiderTable*)((::world*)g_level)->wmap)->shares(rec_index,
                                                *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
                 go = false;        // 0x519f15: jumps to 0x519fe2 (the target-lost check below), not out of the function
             }

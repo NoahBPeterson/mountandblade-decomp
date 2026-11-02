@@ -78,6 +78,7 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 #include "../rec98.h"                                  // Rec98: the 0x98-byte scene node record (pages at game+0xe4)
 // ---- objects and constants of other translation units ----------------------------------------------------------------
 #include "../ui/named_rec.h"                            // NamedRec: setup 0x48a3a0 (ret 8)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct Slot {
     int is_ready(int index);   // 0x487900 (ret 4; game/mesh_slot: Slot::is_ready, the keyboard slot table)
 };
@@ -96,6 +97,8 @@ struct MetaMission {
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../window_mgr.h"      // slot_as<T>(i)
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -127,7 +130,7 @@ extern ShadowMapP* g_shadow_map;                                    // 0xa70248
 extern int g_psys_scene;            // 0xa170c0
 extern int g_a170d8;            // 0xa170d8
 extern int g_a174d8;            // 0xa174d8
-extern int g_show_quest_notes;            // 0xa181b4
+#include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp_one_handed (canonical, defined in triggers/trigger_vec.cpp)
 extern int g_a171b8;            // 0xa171b8
 extern int g_a17454;            // 0xa17454
 extern int g_a17854;            // 0xa17854
@@ -141,8 +144,6 @@ extern int g_trial_mode;        // 0x5e29c4
 extern int g_a735c8;            // 0xa735c8
 extern float g_view_a;          // 0x5d75d8
 extern float g_view_b;          // 0x5d75dc
-extern int g_level;         // 0xa732b4
-extern const float g_zero;          // 0x549ca8  0.0f
 extern const float g_ten;           // 0x549d74  10.0f
 extern const float g_oneone;        // 0x54b888  1.1f
 extern const float g_pttwo;         // 0x54a6e4  0.2f
@@ -179,6 +180,9 @@ static Party* party_by_id(int id)
     int idx = ((Map10007*)mgr)->lookup(id);
     return (Party*)((char*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8);
 }
+
+// ---- data this module owns (docs/standalone_data.md) ----
+MapFlags g_map_flags;                                    // 0x5e291c (.bss) the commit-state block
 
 // @ 0x513710
 void MapFlags::commit(char* out)
@@ -231,13 +235,13 @@ void MapFlags::commit(char* out)
         return g_main_menu.reset(0xb);
     }
     else if (key == 0x80) {
-        g_wA0->f4 = 1;
-        g_wA0->f18 = 0x64;
+        slot_as<MenuWidget>(8)->f4 = 1;
+        slot_as<MenuWidget>(8)->f18 = 0x64;
         return g_main_menu.set_state(8);
     }
     else if (key == 0x100) {
-        g_wB0->f4 = 4;
-        g_wB0->f18 = 0x64;
+        slot_as<MenuWidget>(12)->f4 = 4;
+        slot_as<MenuWidget>(12)->f18 = 0x64;
         return g_main_menu.set_state(0xc);
     }
     else if (key == 4) {
@@ -247,15 +251,15 @@ void MapFlags::commit(char* out)
     }
     else if (key == 0x800) {
         g_mission_ctx.start_battle(GD_I(0x13af0), GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
-        g_wC0->f18 = 0x64;
+        slot_as<MenuWidget>(16)->f18 = 0x64;
         return g_main_menu.set_state(0x10);
     }
     else if (key == 0x1000) {
-        g_wEC->f18 = 0x64;
+        slot_as<MenuWidget>(27)->f18 = 0x64;
         return g_main_menu.set_state(0x1b);
     }
     else if (key == 0x2000) {
-        g_wE8->f18 = 0x64;
+        slot_as<MenuWidget>(26)->f18 = 0x64;
         return g_main_menu.set_state(0x1a);
     }
     else if (key == 8) {
@@ -292,7 +296,7 @@ void MapFlags::commit(char* out)
         return g_main_menu.set_state(0x17);
     }
 
-    g_wC0->f18 = 0x64;
+    slot_as<MenuWidget>(16)->f18 = 0x64;
     return g_main_menu.set_state(0x10);
 }
 
@@ -740,7 +744,7 @@ void Screen::frame_update(float dt)
     bool start;
 
     if (g_shadow_map != 0 && g_shadow_map->f48[0x50 / 4] != g_psys_scene
-        && g_a70438 == g_level && g_use_shaders != 0)
+        && g_a70438 == (int)g_level && g_use_shaders != 0)
         g_shadow_map->render();
 
     cam.perspective = 1;
@@ -801,13 +805,13 @@ void Screen::frame_update(float dt)
     }
     if (cmd == 0xf) {
         GD_I(0xc8) = 0;
-        g_wEC->f18 = 7;
+        slot_as<MenuWidget>(27)->f18 = 7;
         g_main_menu.set_state(0x1b);
         return;
     }
     if (cmd == 0x10) {
         GD_I(0xc8) = 0;
-        g_wE8->f18 = 7;
+        slot_as<MenuWidget>(26)->f18 = 7;
         g_main_menu.set_state(0x1a);
         return;
     }
@@ -824,15 +828,15 @@ void Screen::frame_update(float dt)
     }
     if (flag) {
         if (PSO(f50)->clicked_on(0x10000) || g_keys.down(0x12)) {
-            if (g_show_quest_notes != 0) {
-                g_wE8->f18 = 7;
+            if (g_module_settings.show_quest_notes != 0) {
+                slot_as<MenuWidget>(26)->f18 = 7;
                 GD_I(0x13b08) = 4;
                 GD_I(0x13b0c) = 0;
                 g_main_menu.set_state(0x1a);
                 return;
             }
-            g_wB4->f18 = 7;
-            g_wB4->f4 = 0;
+            slot_as<MenuWidget>(13)->f18 = 7;
+            slot_as<MenuWidget>(13)->f4 = 0;
             g_main_menu.set_state(0xd);
             return;
         }
@@ -853,7 +857,7 @@ void Screen::frame_update(float dt)
     if (GD_C(0x13a3c) != 0) {
         GD_C(0x13a3c) = 0;
         g_mission_ctx.build_hero_table(GD_I(0x13a44), -1, -1, GD_I(0x13a40));
-        g_wC0->f18 = 7;
+        slot_as<MenuWidget>(16)->f18 = 7;
         g_main_menu.set_state(0x10);
         return;
     }
@@ -937,27 +941,27 @@ void Screen::frame_update(float dt)
 no_party:
     if (flag) {
         if (PSO(f40)->clicked_on(0x10000) || g_keys.down(0x10)) {
-            g_wA0->f18 = 7;
-            g_wA0->f4 = 0;
+            slot_as<MenuWidget>(8)->f18 = 7;
+            slot_as<MenuWidget>(8)->f4 = 0;
             g_main_menu.set_state(8);
             return;
         }
         if (PSO(f3c)->clicked_on(0x10000) || g_keys.down(0x11)) {
-            g_wB0->f18 = 7;
-            g_wB0->f4 = 0;
+            slot_as<MenuWidget>(12)->f18 = 7;
+            slot_as<MenuWidget>(12)->f4 = 0;
             g_main_menu.set_state(0xc);
             return;
         }
         if (PSO(f44)->clicked_on(0x10000) || g_keys.down(0xf)) {
-            g_wBC->f18 = 7;
-            g_wBC->f4 = 0;
-            g_wBC->f14 = GD_I(0x8c);
+            slot_as<MenuWidget>(15)->f18 = 7;
+            slot_as<MenuWidget>(15)->f4 = 0;
+            slot_as<MenuWidget>(15)->f14 = GD_I(0x8c);
             g_main_menu.set_state(0xf);
             return;
         }
         if (g_keys.down(0x13)) {
-            g_wE4->f18 = 7;
-            g_wE4->f4 = 0;
+            slot_as<MenuWidget>(25)->f18 = 7;
+            slot_as<MenuWidget>(25)->f4 = 0;
             g_main_menu.set_state(0x19);
             return;
         }
@@ -1208,7 +1212,7 @@ int PartyV::data_ready()
     __int64 start = *(__int64*)((char*)this + 0x59b8);
     if ((*(__int64*)&flags_lo & 0x1000000) == 0) {
         __int64 d = g_ticks[clk] - start;
-        if (!((float)d * g_tick_scale < g_quarter))
+        if (!((float)d * 1e-5f < g_quarter))
             return 0;
     }
     return 1;

@@ -78,18 +78,12 @@ struct Cfg30 {                                      // the object at game+0x30
 // ---- globals and callees of other translation units ----------------------------------------------------------------
 extern float    g_step;                 // 0x5a9c20  frame step (seconds)
 extern int      g_clock_step;           // 0x5937b4  clock index used by set_clock_step
-extern const float g_time_multiplier;       // 0xa18110  map speed scale
 extern const float g_speed_eps;         // 0x591390  "the map is moving" threshold
 extern const float g_rate_marker;       // 0x590cd0  marker decay per second
 extern const float g_rate_second;       // 0x596774  ticker 2 rate
 extern const float g_rate_third;        // 0x59b998  ticker 3 rate
 extern const float g_rate_fourth;       // 0x59b994  ticker 4 rate
 extern const float g_rate_fifth;        // 0x59b990  ticker 5 rate
-extern const float g_map_sea_speed_x;            // 0xa18148  marker drift rate x
-extern const float g_map_sea_speed_y;            // 0xa1814c  marker drift rate y
-extern const float g_map_river_speed_x;            // 0xa18154  marker drift rate x (second set)
-extern const float g_map_river_speed_y;            // 0xa18158  marker drift rate y (second set)
-extern int      g_disable_food_slot;             // 0xa181a8  0: allow the "loading" clock message
 
 extern int      g_in_a;                 // 0xa17124  input flags
 extern int      g_in_b;                 // 0xa17524
@@ -101,9 +95,7 @@ extern int g_use_shaders;                                   // 0x5e28fc  0 = lin
 extern int g_page_rows;                              // 0xa73298
 extern int g_page_cols;                              // 0xa73294
 extern char g_map_pages[];                                // 0xa73094  host grid (array of cell pointers)
-extern float g_track_spotting;                             // 0xa18118
-extern float g_hero_wounded_treshold;                     // 0xa18138
-extern float g_player_wounded_treshold;                // 0xa1813c
+#include "../game_globals.h"      // g_module_settings.disable_food_slot, g_module_settings.player_wounded_treshold (canonical)
 extern MsgLog g_msglog;                                 // 0x5d7080
 extern MarkerList g_list_a;                             // 0xa732c0
 extern MarkerList g_list_b;                             // 0xa732e0
@@ -149,14 +141,14 @@ void GameG::tick(float dt)
 
     if (f13aa0 || f13ad0 > 0.0f) {
         int n = f13adc;
-        float v = (n ? (float)n : 10.0f) * g_time_multiplier * dt;
+        float v = (n ? (float)n : 10.0f) * g_module_settings.time_multiplier * dt;
         flags = 0x10001;
         speed = v;
         f13ad0 -= v;
     } else if (f13aa4 == 0) {
         speed = 0.0f;
     } else if (f13aa4 == 2) {
-        float v = g_time_multiplier * dt;
+        float v = g_module_settings.time_multiplier * dt;
         speed = v;
         if (g_in_c || g_in_d)
             speed = v * 10.0f;
@@ -169,7 +161,7 @@ void GameG::tick(float dt)
         if (d == 0.0f)
             speed = 0.0f;
         else
-            speed = g_time_multiplier * dt;
+            speed = g_module_settings.time_multiplier * dt;
     }
 
     set_clock_step(&g_clock_step, speed);
@@ -179,7 +171,7 @@ void GameG::tick(float dt)
 
     int target = -1;
 
-    if (g_disable_food_slot == 0 &&
+    if (g_module_settings.disable_food_slot == 0 &&
         ((Troop*)((char*)troops + player * 0x508))->equip[9].item == -1) {
         float d = (g_ticks[msg_timer.clock] - msg_timer.t) * 1e-5f;
         if (d > 1.0f) {
@@ -247,7 +239,7 @@ void GameG::tick(float dt)
         }
     }
 
-    g_map_scene->step(g_step);
+    ((World*)g_level)->step(g_step);
 
     if (g_cfg.cheat_mode && g_in_a && !g_in_b && g_in_c)
         f95 = !f95;
@@ -283,20 +275,20 @@ void GameG::update_markers()
         g_list_a[i]->f208 = g_list_a[i]->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_list_b.count(); i++) {
-        g_list_b[i]->f1f4 += g_step * g_map_sea_speed_x * 3.0f;
-        g_list_b[i]->f1f8 += g_step * g_map_sea_speed_y * 3.0f;
+        g_list_b[i]->f1f4 += g_step * g_module_settings.map_sea_speed_x * 3.0f;
+        g_list_b[i]->f1f8 += g_step * g_module_settings.map_sea_speed_y * 3.0f;
         g_list_b[i]->f204 = g_list_b[i]->f1f4;
         g_list_b[i]->f208 = g_list_b[i]->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_list_c.count(); i++) {
-        g_list_c[i]->f1f4 -= g_step * g_map_sea_speed_x * 2.0f;
-        g_list_c[i]->f1f8 -= g_step * g_map_sea_speed_y * 2.0f;
+        g_list_c[i]->f1f4 -= g_step * g_module_settings.map_sea_speed_x * 2.0f;
+        g_list_c[i]->f1f8 -= g_step * g_module_settings.map_sea_speed_y * 2.0f;
         g_list_c[i]->f204 = g_list_c[i]->f1f4;
         g_list_c[i]->f208 = g_list_c[i]->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_list_d.count(); i++) {
-        g_list_d[i]->f1f4 += g_step * g_map_river_speed_x;
-        g_list_d[i]->f1f8 += g_step * g_map_river_speed_y;
+        g_list_d[i]->f1f4 += g_step * g_module_settings.map_river_speed_x;
+        g_list_d[i]->f1f8 += g_step * g_module_settings.map_river_speed_y;
         g_list_d[i]->f204 = g_list_d[i]->f1f4;
         g_list_d[i]->f208 = g_list_d[i]->f1f8;
     }
@@ -346,14 +338,14 @@ void GameG::update_colors()
                             (float)pow(color_base.y, GAMMA),
                             (float)pow(color_base.z, GAMMA));
         target_obj->v.w = 1.0f;                      // the original copies the sun's w lane here
-        g_map_scene->color = rgl::vector4((float)pow(color_sky.x, GAMMA),
+        ((World*)g_level)->color = rgl::vector4((float)pow(color_sky.x, GAMMA),
                                  (float)pow(color_sky.y, GAMMA),
                                  (float)pow(color_sky.z, GAMMA));
     } else {
         target_obj->v = color_base;
-        g_map_scene->color = color_sky;
+        ((World*)g_level)->color = color_sky;
     }
-    g_map_scene->color.w = 1.0f;                         // +0x74 is the scene alpha
+    ((World*)g_level)->color.w = 1.0f;                         // +0x74 is the scene alpha
 }
 
 // @ 0x5176e0
@@ -738,7 +730,7 @@ void GameG::track_parties(float dt)
 {
     PartyV4 pos = player_party()->pos;
     int skill = player_party()->skill_level(0x10);
-    float radius = ((float)skill * 0.125f + 1.0f) * g_track_spotting;
+    float radius = ((float)skill * 0.125f + 1.0f) * g_module_settings.track_spotting;
     if (!is_daytime())
         radius *= 0.3f;
     float threshold = radius * radius;
@@ -888,7 +880,7 @@ void GameG::train_troops()
             continue;
         if (!(troops[s.troop].flags30 & 0x10))
             continue;
-        if (s.troop == player ? troops[s.troop].hp < g_player_wounded_treshold : troops[s.troop].hp < g_hero_wounded_treshold)
+        if (s.troop == player ? troops[s.troop].hp < g_module_settings.player_wounded_treshold : troops[s.troop].hp < g_module_settings.hero_wounded_treshold)
             continue;
         int lvl = skill_level(s.troop, 0x11);
         if (lvl > 10)
@@ -908,7 +900,7 @@ void GameG::train_troops()
             if (troops[q.troop].level >= troops[s.troop].level)
                 continue;
             if (troops[q.troop].flags30 & 0x10) {
-                if (q.troop == player ? troops[q.troop].hp < g_player_wounded_treshold : troops[q.troop].hp < g_hero_wounded_treshold)
+                if (q.troop == player ? troops[q.troop].hp < g_module_settings.player_wounded_treshold : troops[q.troop].hp < g_module_settings.hero_wounded_treshold)
                     continue;
                 gain[j] += cost;
                 total += cost;

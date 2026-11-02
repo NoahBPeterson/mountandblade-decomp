@@ -1,4 +1,5 @@
 #include "./cs_update.h"
+#include "../config/config_block.h"      // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -198,7 +199,7 @@ void CharSheet::update(float dt)
         } else {
             if (g_a17148 == 0 && g_a17348 == 0)
                 return;
-            if (g_a17188 != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
+            if (g_a17188 != 0 && g_a17588 == 0 && g_cfg.cheat_mode != 0) {
                 WL_MARKER(12)
                 if (g_trial_mode != 0) {
                     g_game->add_experience(f_14, 1000);
@@ -207,7 +208,7 @@ void CharSheet::update(float dt)
                 WL_MARKER(13)
                 return;
             }
-            if ((g_a17148 != 0 || g_a17348 != 0) && g_a17118 != 0 && g_a17518 == 0 && g_a5a9fbc != 0) {
+            if ((g_a17148 != 0 || g_a17348 != 0) && g_a17118 != 0 && g_a17518 == 0 && g_cfg.cheat_mode != 0) {
                 WL_MARKER(12)
                 for (int i = 0; i < 7; i++)
                     g_game->chars->adjust(i, 50.0f);

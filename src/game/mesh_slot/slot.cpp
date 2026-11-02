@@ -249,11 +249,9 @@ extern "C" double floor(double v);     // 0x536b10 CRT floor (x87 double arg on 
 // float constants in the image's read-only data (each 4 bytes, cited by address).
 extern const float g_one;               // 0x549cdc 1.0f
 extern const float g_half;              // 0x549d70 0.5f
-extern const float g_zero;              // 0x549ca8 0.0f
 extern const float g_k002;              // 0x590cd0 0.02f
 
 // The tick table's scale: a float at 0x54a6d0 (loaded with fmul, so it must be a global, not a literal).
-float g_tick_scale = 1e-5f;             // 0x54a6d0
 
 struct Effect {
     virtual void d00(int release);      // +0x00 slots follow the naming used in slice s004885e0
@@ -352,12 +350,12 @@ void Effect::animate(float dt)
 {
     (void)dt;
 
-    float e0 = (float)(g_ticks[clock0] - t0) * g_tick_scale;
-    float e1 = (float)(g_ticks[clock1] - t1) * g_tick_scale;
-    float e2 = (float)(g_ticks[clock2] - t2) * g_tick_scale;
-    float e3 = (float)(g_ticks[clock3] - t3) * g_tick_scale;
-    float e4 = (float)(g_ticks[clock4] - t4) * g_tick_scale;
-    float e5 = (float)(g_ticks[clock5] - t5) * g_tick_scale;
+    float e0 = (float)(g_ticks[clock0] - t0) * 1e-5f;
+    float e1 = (float)(g_ticks[clock1] - t1) * 1e-5f;
+    float e2 = (float)(g_ticks[clock2] - t2) * 1e-5f;
+    float e3 = (float)(g_ticks[clock3] - t3) * 1e-5f;
+    float e4 = (float)(g_ticks[clock4] - t4) * 1e-5f;
+    float e5 = (float)(g_ticks[clock5] - t5) * 1e-5f;
 
     bool changed = false;
 
@@ -504,8 +502,8 @@ void Effect::animate(float dt)
 
     // --- track F (+0x7c): fade +0xa0/+0xa4 toward +0x80/+0x84 (each half halved when +0x148 says so)
     if (e5 < periodF) {
-        float h0 = g_zero;
-        float h1 = g_zero;
+        float h0 = 0.0f;
+        float h1 = 0.0f;
         if (flags148 & 0x10)
             h0 = f0f0 * g_half;
         if (flags148 & 0x1000)
@@ -515,8 +513,8 @@ void Effect::animate(float dt)
         d22(pair);
         changed = true;
     } else if (c5) {
-        float h0 = g_zero;
-        float h1 = g_zero;
+        float h0 = 0.0f;
+        float h1 = 0.0f;
         if (flags148 & 0x10)
             h0 = f0f0 * g_half;
         if (flags148 & 0x1000)

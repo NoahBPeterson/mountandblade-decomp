@@ -74,6 +74,7 @@ template<> void std::vector<named_object*, std::allocator<named_object*> >::push
 
 // ---- the 0x358 portrait body (ctor 0x4ed630) -------------------------------------------------------------
 #include "../map_widget.h"                 // MapWidget (the slice's face_body)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 typedef MapWidget face_body;
 
 // ---- the object table and the resource manager -----------------------------------------------------------
@@ -94,7 +95,6 @@ int clamp_index(int* skin, int* flags, int* count);       // 0x432510
 // ---- the game singleton ----------------------------------------------------------------------------------
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 extern float g_fov_k;                                       // 0x5e20a8
-extern int g_limit_hair_colors;                                        // 0xa181ac
 extern int g_a75f64;                                        // 0xa75f64
 
 void free_535712(void* p);                                  // 0x535712 (operator delete)
@@ -225,7 +225,7 @@ void char_window::open_view()
             void* ra = 0;
             void* rb = 0;
             void* rc = 0;
-            g_anim.collect(g_limit_hair_colors != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
+            g_anim.collect(g_module_settings.limit_hair_colors != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
             e->on_anim_end();
             std::vector<named_object*>* rl = (std::vector<named_object*>*)((char*)e + 0x108);
             rl->push_back((named_object*&)ra);

@@ -39,8 +39,6 @@ using rgl::mesh;
 
 // ---- globals --------------------------------------------------------------------------------------------
 extern int   g_5d8784;          // 0x5d8784 (zeroed with the current label object)
-extern int   g_show_faction_color;     // 0xa181b0 (alternate label-colour mode)
-extern char  g_show_party_ids_instead_of_names;         // 0xa181b8 (show raw translation tokens)
 
 struct GuiObj { virtual ~GuiObj(); };   // deleted through vtable slot 0
 extern GuiObj* g_label_obj;     // 0x5d75ec (current label object)
@@ -65,6 +63,7 @@ extern gui_manager g_gui;           // 0x5d7080
 // ---- game data ------------------------------------------------------------------------------------------
 
 #include "../../include/game_data.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ---- 0x51a2d0 -------------------------------------------------------------------------------------------
 // a plane record: point at +0x20, normal at +0xa0 (it is the face shape of include/shape.h, whose intersect() is the same function;
@@ -176,7 +175,7 @@ void MapPickScreen::set_label(int id)
     vector4 pos = *(vector4*)(rec + 0x30);
 
     unsigned color;
-    if (g_show_faction_color == 0) {
+    if (g_module_settings.show_faction_color == 0) {
         float rel = g_game->relation(id, g_game->f78);
         color = g_game->color_of(rel, 1);
     } else {
@@ -188,7 +187,7 @@ void MapPickScreen::set_label(int id)
     int idx3 = pool->index_of(id);
     char* rec3 = (char*)g_game->parties.pages._Myfirst[idx3 >> 4] + (idx3 & 0xf) * 0x5ac8;
     const tstring* name;
-    if (g_show_party_ids_instead_of_names)
+    if (g_module_settings.show_party_ids_instead_of_names)
         name = (const tstring*)(rec3 + 0x20);
     else if (*(char*)(rec3 + 0x1c) == 0 && (name = g_strtable.find((const tstring*)(rec3 + 0x20))) != 0)
         ;

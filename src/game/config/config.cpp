@@ -670,7 +670,7 @@ void Config::set(tstring& key, tstring& value)
     if (key.equals("shadowmap_quality")) {
         int q = value_as_int(value);
         shadowmap_quality = q;
-        unk6c = q;
+        shadow_quality_req = q;
     }
 }
 
@@ -729,7 +729,7 @@ void Config::init_defaults()
     force_vsync = 0;
     unk64 = 1;
     shadowmap_quality = 1;
-    unk6c = 1;
+    shadow_quality_req = 1;
 }
 
 // @ 0x4bc090

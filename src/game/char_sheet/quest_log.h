@@ -37,7 +37,6 @@ extern StrTable g_strtable;
 extern resmgr g_resmgr;
 
 // ---- constants ----------------------------------------------------------------------------------------------
-extern const float g_54ab1c;            // 0x54ab1c  0.04f
 extern const float g_54b4d0;            // 0x54b4d0  0.05f
 extern const float g_591d54;            // 0x591d54  0.09f
 extern const float g_5987e4;            // 0x5987e4  0.56f

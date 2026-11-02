@@ -28,6 +28,7 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                 // 0x40cd60 (rgl/s
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10)
 #include "../../game/ui/mission_ui.h"      // MissionUi (ResultWindow's buttons)
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
+#include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct OptionsDlg {
     void choose_dx_settings(struct Config* cfg, bool overwrite);   // 0x4b9b90 (game/config/options_dlg.h, which cannot be mixed with windows.h here)
 };
@@ -1094,7 +1095,7 @@ void MapDialog::refresh_list(char use_sel)
     for (int i = 0; i < count; ++i) {
         int kind;
         if (use_sel) {
-            kind = g_dlg_display_bits;
+            kind = g_launcher_cfg.display_bits;
             if (kind == 0) {
                 int m = this->mode;
                 if (m == 0x17 || m == 0x19 || m == 0x1a || m == 0x18 || m == 0x1e)
@@ -1151,9 +1152,9 @@ void MapDialog::refresh_list(char use_sel)
     }
     int cur = 0;
     if (use_sel) {
-        if (g_dlg_multisample == 2)
+        if (g_launcher_cfg.antialiasing == 2)
             cur = 1;
-        else if (g_dlg_multisample == 4)
+        else if (g_launcher_cfg.antialiasing == 4)
             cur = 2;
     }
     SendMessageA(hWnd, 0x14e, cur, 0);                  // 0x186
@@ -1859,7 +1860,7 @@ void GameData::save_language_files(bool translated)
                 } else {
                     Party* p = parties.get_party(i);
                     const tstring* v;
-                    if (g_show_party_ids_instead_of_names)
+                    if (g_module_settings.show_party_ids_instead_of_names)
                         v = &p->key;
                     else if (p->flag)
                         v = &p->name;

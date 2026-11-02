@@ -49,6 +49,7 @@ struct rec34_list {
 #include "../../include/rec_dtors.h"    // RecI (destroy 0x431810 = ??_ERecI deleting destructor), shared with rgl/xmlcfg/records.h
 
 #include "../../include/tail2.h"      // Tail2 (shared with rgl/xmlcfg/records.h)
+#include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 struct list_node_int {
     list_node_int* next;
@@ -460,8 +461,6 @@ struct MapDialog {
     void refresh_list(char use_sel);                             // 0x4c6f90
 };
 
-extern int g_dlg_display_bits;                                   // 0x5aa0fc (selection of the map dialog)
-extern int g_dlg_multisample;                                 // 0x5aa100
 
 // ============================================================================================================
 // 0x4c7290..0x4c7f90: the configuration dialog and the map editor's object dialog
@@ -803,7 +802,6 @@ struct item38_vec {
 // ============================================================================================================
 inline const tstring* QuestRec::text_name() { return suffix_or(key, "_text", desc); }
 
-extern PartyTemplate* g_party_templates;                                // 0x5e29f8
 extern int g_party_template_count;                                         // 0x5e29fc
 extern GameString* g_strings;                                      // 0xa75ea0
 extern int g_n_game_strings;                                            // 0xa75ea8
@@ -816,7 +814,6 @@ extern ModRec g_item_modifiers[]; // 0xa75f70 (43 x 0x28)
 extern SkillRec g_skill_tbl[];                                             // 0x8ee3100 (42 x 0x44)
 extern GameMenu* g_menus;                                               // 0x5e29b0
 extern int g_menu_count;                                                   // 0x5e29b4
-extern char g_show_party_ids_instead_of_names;                                                  // 0xa181b8
 
 
 // the text log is written through its virtual w_cstr slot (+0x28), as the call sites do

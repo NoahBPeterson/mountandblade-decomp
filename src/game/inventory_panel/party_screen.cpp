@@ -14,9 +14,9 @@
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
+#include "../module_name.h"      // g_module_name (0x8ee3c38)
 
 extern const char g_empty_string[];                 // 0x54a480 ("")
-extern tstring g_module_name;                       // 0x8ee3c38 (end of the skill table)
 extern int g_skill_clamp;                  // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp              // (clamped level value of the hero percentage; lives outside the loaded image)
 #define WINT(w, off) (*(int*)((char*)(w) + (off)))
@@ -47,10 +47,10 @@ static inline int skill_of(const Stack* ms, int skill)
     int v = g_game->skill_level(ms->troop, skill);
     Troop* r = rec_of(ms->troop);
     if (ms->troop == g_game->player) {
-        if (r->hp < g_player_wounded_treshold)
+        if (r->hp < g_module_settings.player_wounded_treshold)
             v = 0;
     } else {
-        if (r->hp < g_hero_wounded_treshold)
+        if (r->hp < g_module_settings.hero_wounded_treshold)
             v = 0;
     }
     return v;
@@ -784,7 +784,7 @@ void PartyScreen::setup_party(int side)
                                                 + (idx & 0xf) * 0x5ac8);
             // Party::display_name inlined (0x505949): the ids, else the string-table entry, else the name (+0xc)
             tstring* name;
-            if (g_show_party_ids_instead_of_names)
+            if (g_module_settings.show_party_ids_instead_of_names)
                 name = &rec->key;
             else {
                 name = 0;

@@ -14,7 +14,7 @@
 #include <vector>
 #include "../terrain_b/terrain_b.h"
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
-#include "../game_globals.h"      // canonical g_skill_leadership_bonus
+#include "../game_globals.h"      // canonical g_module_settings.skill_leadership_bonus
 #include "../ui/mission_ui.h"
 #include "../emit.h"
 #include "../config/widget_mgr.h"
@@ -52,6 +52,7 @@ struct Poser {
     void add_extra(int val);   // 0x442110 (agent3/agent_fx_sound.cpp, ret 4)
 };
 #include "../../rgl/mesh_x.h"      // mesh_x::clone 0x41c6d0 (the canonical class)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct int3 { int v[3]; };
 struct alloc_int3 {
     void construct(int3* p, const int3& v);   // 0x436cf0 (agent/agent.cpp, ret 8)
@@ -273,7 +274,7 @@ struct NavRec : NavCell {
     float* pos() { return (float*)((char*)this + 0x74); }   // +0x74 x, y, z                         0x4b6b40
     float& limit() { return *(float*)((char*)this + 0x80); }// +0x80 keep distance of the node       0x4b6b40
 };
-inline NavRec* nav_recs() { return (NavRec*)g_level->core->cells.first; }       // the record array (+0x14 of the nav data)
+inline NavRec* nav_recs() { return (NavRec*)((CellGrid*)g_level)->core->cells.first; }       // the record array (+0x14 of the nav data)
 
 #include "../battle_rec.h"            // BattleObj, BattleRec, BattleTable: the one definition (party2 and script)
 inline BattleTable* battles() { return (BattleTable*)((char*)g_game + 0xcc); }
@@ -283,7 +284,6 @@ inline Party* party_of(PartyMgr* m, int id) { return party_at(m, ((Map10007*)m)-
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
 extern SoundMgr g_sound_mgr;                            // 0x5aa128
-extern int g_sound_bank;                                // 0x5aa304 (the sound index, passed by value)
 extern "C" void __stdcall FSOUND_StopSound(int id);                      // 0x5342a6 (FSOUND_StopSound@4)
 
 struct resmgr { texture* get_texture(int w, int h, int fmt);      // 0x41c400 (rgl/core/resmgr.cpp)

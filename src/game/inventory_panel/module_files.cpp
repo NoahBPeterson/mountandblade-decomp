@@ -24,6 +24,8 @@ void mb_error(const char* fmt, ...);                 // 0x42cc80
 // Root of the reader-stream hierarchy (vtable 0x54a740): vptr, name at +4. This file's own tstring-based copy of rgl/stream.h's
 // stream_base (stream.h cannot be included here: see stream_fwd.h); every typed slot is abstract, as in the original.
 #include "../../rgl/stream_fwd.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/game_recs.h"
 struct stream_root {
     virtual void reset();                            // slot 0
     virtual void rewind();                           // 1
@@ -222,7 +224,6 @@ extern LogSink g_log;                                // 0x5a9f60
 
 // ---------------------------------------------------------------- module state
 
-extern int g_scan_module_sounds;                        // 0xa1810c
 extern int g_loaded_sound_count;                            // 0x5d878c
 
 extern int g_propkind_count;                        // 0x5e29e0
@@ -232,7 +233,7 @@ extern int g_menu_count;                             // 0x5e29b4
 extern MenuRec* g_menus;                             // 0x5e29b0
 
 extern int g_map_icon_count;                         // 0x5e29f4
-extern MapIcon* g_map_icons;                         // 0x5e29f0
+MapIcon* g_map_icons;                               // 0x5e29f0 (.bss) the map-icon table, built by the loader below
 
 extern int g_item_kind_count;                             // 0x5e29d4
 extern ItemKind* g_items;                            // 0x5e29d0
@@ -241,7 +242,9 @@ extern int g_mission_template_count;                             // 0x5e2a04
 extern ModeRec* g_mission_templates;                             // 0x5e2a00
 
 extern int g_party_template_count;                   // 0x5e29fc
-extern PartyTplRec* g_party_templates;                  // 0x5e29f8
+
+// ---- data this module owns (docs/standalone_data.md) ----
+PartyTemplate* g_party_templates;                    // 0x5e29f8 (.bss) the party-template table, built by the loader below
 
 // ---------------------------------------------------------------- loader
 
@@ -272,7 +275,7 @@ void load_module_files()
     in_sounds.r_tstr(&str1);
     in_sounds.r_tstr(&str2);
     in_sounds.r_int(&version);
-    ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_scan_module_sounds, &g_module_path);
+    ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_module_settings.scan_module_sounds, &g_module_path);
     g_loaded_sound_count = *g_sound_mgr.p4;
     s_sounds.failed = 1;
 
@@ -437,7 +440,7 @@ void load_module_files()
         conv_item_array_dtor((conv_rec*)g_party_templates, 0, 3);
         g_party_templates = 0;
     }
-    g_party_templates = new PartyTplRec[g_party_template_count];
+    g_party_templates = (PartyTemplate*)new PartyTplRec[g_party_template_count];
     for (int i = 0; i < g_party_template_count; i++)
         ((sound_def*)&g_party_templates[i])->save(*(stream_base*)&s_party);
     s_party.failed = 1;

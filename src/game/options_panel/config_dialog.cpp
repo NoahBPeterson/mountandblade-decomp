@@ -164,11 +164,13 @@ bool mb_file_exists(const char* path);           // 0x415120
 // 0x4b9b90 and passes the same register (edi) to 0x4bee10 / 0x4bf170 / 0x4c6f90 / 0x4b9790. Core, OptionsDlg and
 // MapDialog all keep the dialog window at +0x380 (Core::options_hwnd, OptionsDlg::hwnd, MapDialog::hwnd); the code at
 // 0x4b9790 / 0x4c6f90 serves the dialog through those views, so the calls go through the canonical classes.
-// The launcher's option block is the Config at 0x5aa0a8 (+4 = 0x5aa0ac, the first combo's selection).
+// The launcher's option block is g_launcher_cfg, the Config at 0x5aa0a8 (+4 = texture_detail, the first combo's selection).
 // rgl_config::save (0x415fb0): src/rgl/resource_manager.h declares it, but that header's g_log clashes with config.h's
 // (strat/gui_manager.h), so the one-member class is repeated verbatim.
 struct rgl_config { void save(FILE* f); };
-#define LAUNCHER_CFG ((Config*)&orig::g_launcher_cfg)
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+Config g_launcher_cfg = { 1, 50, 0, 100, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 15, 0, 0, 32, 1, 0, 0, 1, 1, 1 };   // 0x5aa0a8
+#define LAUNCHER_CFG (&g_launcher_cfg)
 
 const char k_config[] = "rgl_config.txt";        // 0x54b048
 
@@ -293,7 +295,7 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             LAUNCHER_CFG->load_file(f);
             fclose(f);
         } else {
-            orig::g_opt_5aa0ac = 0x46;
+            g_launcher_cfg.texture_detail = 0x46;
         }
         ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, false);
         fill_video_tab();
@@ -329,15 +331,15 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 BOOL ok;
                 int v = (int)GetDlgItemInt(m_hwnd, 0x448, &ok, 0);   // signed compares (jl / jge)
                 if (ok && v >= 10 && v < 1000) {
-                    orig::g_opt_5aa0b4 = v;
+                    g_launcher_cfg.max_framerate = v;
                 } else {
-                    SetDlgItemInt(m_hwnd, 0x448, orig::g_opt_5aa0b4, 0);
+                    SetDlgItemInt(m_hwnd, 0x448, g_launcher_cfg.max_framerate, 0);
                 }
             }
             return 1;
         case 0x45e:             // auto adjust: re-detect and re-read the config
             ((Core*)this)->read_options();
-            *(int*)&orig::g_launcher_cfg = 0;
+            g_launcher_cfg.first_time = 0;
             ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, true);
             ((Core*)this)->show_options();
             return 1;

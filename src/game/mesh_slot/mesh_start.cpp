@@ -108,6 +108,7 @@ void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, con
 extern tstring g_tstr;                                       // 0x8ed4db4
 
 #include "../../include/rec1c8.h"
+#include "../../include/level_global.h"      // g_level (0xa732b4)
 struct Rec1c8Vec {                                              // std::vector<Rec1c8> (allocator lane at +0)
     int alloc; Rec1c8* first; Rec1c8* last; Rec1c8* end;
     Rec1c8Vec& operator=(const Rec1c8Vec& o);                      // 0x477160
@@ -261,7 +262,6 @@ extern int        g_ptype_count;    // 0x5e29e8
 #include "../prop_kind.h"
 extern int        g_use_shaders;   // 0x5e28fc
 extern char g_script[]; // 0xa70440
-extern Scene*     g_level;        // 0xa732b4
 extern char g_cfg[]; // 0x5a9f98
 extern unsigned __int64 g_bit[]; // 0x5a8e68
 extern unsigned   g_rand_seed;    // 0x5d7078
@@ -362,7 +362,7 @@ void Mission::start_setup()
     u = *(vector4*)&party_rec(pm, pid)->pos;
 
     if (g_level != 0) {
-        for (unsigned p = (unsigned)g_level->objs->first; p < (unsigned)g_level->objs->last; p += 0x88) {
+        for (unsigned p = (unsigned)((Scene*)g_level)->objs->first; p < (unsigned)((Scene*)g_level)->objs->last; p += 0x88) {
             float dx = *(float*)(p + 0x74) - u.x;
             float dy = *(float*)(p + 0x78) - u.y;
             float d2 = dy * dy + dx * dx;

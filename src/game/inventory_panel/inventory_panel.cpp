@@ -53,7 +53,8 @@ extern float g_5d8028;                                  // 0x5d8028
 extern int   g_5d8780;                                  // 0x5d8780
 extern void* g_5d75e8;                                  // 0x5d75e8 (== the UI root's object at +0x568)
 extern const char g_empty[];                            // 0x54a480 ("")
-extern int   g_disable_food_slot;                               // 0xa181a8
+#include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp_one_handed (canonical, defined in triggers/trigger_vec.cpp)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 extern tstring g_num;                                   // 0xa70464
 extern int   g_num_valid;                               // 0xa70470
 extern __int64 g_result64;                              // 0xa70458 (read as one qword by the price rule)
@@ -641,7 +642,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
-    } else if (kind == 0xb && g_disable_food_slot == 0 && slot->item >= 0 && it->f1fc > 0) {
+    } else if (kind == 0xb && g_module_settings.disable_food_slot == 0 && slot->item >= 0 && it->f1fc > 0) {
         const tstring* p = g_strtable.lookup(tstring("ui_value_to_morale"));
         float v = slot->item < 0 ? 0.0f : (float)it->f1fc;
         sprintf(buf, p->c_str(), (double)(v * 0.02f));

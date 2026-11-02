@@ -3,6 +3,7 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/msg_log.h"      // MsgLog::build_scene 0x4e6050 (listed directly: the resolution audit reads only the source's own includes)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // @ 0x4eb270
 void FaceGen::update_view(int unused)
@@ -64,7 +65,7 @@ void FaceGen::refresh()
     g_anim.variant = r;
     g_anim.f10 = r;
     void *a, *b, *c;
-    g_anim.collect(g_xa181ac != 0, (rgl::lod_mesh**)&a, (rgl::lod_mesh**)&b, (rgl::lod_mesh**)&c);
+    g_anim.collect(g_module_settings.limit_hair_colors != 0, (rgl::lod_mesh**)&a, (rgl::lod_mesh**)&b, (rgl::lod_mesh**)&c);
     void* p;
     p = a;
     ((std::vector<named_object*>*)&ent->lods)->push_back((named_object* const&)p);
