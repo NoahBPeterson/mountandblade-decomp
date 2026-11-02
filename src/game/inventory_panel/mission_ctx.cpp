@@ -29,6 +29,8 @@ MenuWidget* g_w94;                               // 0xa73994
 MenuWidget* g_w98;                               // 0xa73998
 MenuWidget* g_wA8;                               // 0xa739a8
 MenuWidget* g_wD8;                               // 0xa739d8
+float g_mouse_dx;                                // 0x5d70a4
+float g_mouse_dy;                                // 0x5d70a8
 
 
 #define SCENE ((MissionV*)g_mission)
@@ -157,8 +159,6 @@ extern const float g_four;          // 0x5935c8  4.0f
 extern const float g_003;           // 0x54b8b4  0.03f
 extern const float g_axis_x;        // 0xa178d4
 extern const float g_axis_y;        // 0xa178dc
-extern const float g_mouse_dx;      // 0x5d70a4
-extern const float g_mouse_dy;      // 0x5d70a8
 extern const float g_exp_arg;       // 0x5aa018
 extern int g_key_1730;              // 0xa73730
 extern int g_key_1734;              // 0xa73734

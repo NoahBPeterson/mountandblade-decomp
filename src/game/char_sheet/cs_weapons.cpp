@@ -42,6 +42,7 @@ void weapon_class_caption(int type, char* out)
 
 // ---- the character-sheet panel that posts the weapon rows ------------------------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
+#include "../shared_vars.h"
 
 // @ 0x4f06f0
 void CharSheet::update_weapons()
@@ -60,7 +61,7 @@ void CharSheet::update_weapons()
         }
         if (c->prof_points > 0
             && (float)g_weapon_xp[g_game->skill_level(player, 0x1b)] >= c->f80[i]
-            && g_display_wp_one_handed[i] != 0
+            && g_display_wp[i] != 0
             && c->steps_to_point(i) <= c->prof_points)
             rows[i]->show();   // slot +0xb4 (the slice called it show_selected)
         else

@@ -30,6 +30,7 @@
 #include "../meta_mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../menu_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_scan_module_textures;   // 0xa18108
@@ -42,6 +43,7 @@ float g_map_river_speed_x;   // 0xa18154
 float g_map_river_speed_y;   // 0xa18158
 int g_show_faction_color;   // 0xa181b0
 unsigned char g_show_party_ids_instead_of_names;   // 0xa181b8
+int g_display_wp[7];   // 0x5e2900
 
 
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
@@ -807,13 +809,13 @@ void parse_module_info()
 {
     int n = g_module_info.count;
     tstring msg, val;
-    g_display_wp_one_handed = 1;
-    g_display_wp_two_handed = 1;
-    g_display_wp_polearms = 1;
-    g_display_wp_archery = 1;
-    g_display_wp_crossbows = 1;
-    g_display_wp_throwing = 1;
-    g_display_wp_firearms = 1;
+    g_display_wp[0] = 1;
+    g_display_wp[1] = 1;
+    g_display_wp[2] = 1;
+    g_display_wp[3] = 1;
+    g_display_wp[4] = 1;
+    g_display_wp[5] = 1;
+    g_display_wp[6] = 1;
     for (int i = 0; n > 0 && i < n; i++) {
         if (i >= 0 && i < g_module_info.count) {
             msg = g_module_info.entries[i].key;
@@ -975,25 +977,25 @@ void parse_module_info()
             g_map_desert_tree_types = atoi(val.c_str());
         }
         else if (msg.equals("display_wp_one_handed")) {
-            g_display_wp_one_handed = atoi(val.c_str());
+            g_display_wp[0] = atoi(val.c_str());
         }
         else if (msg.equals("display_wp_two_handed")) {
-            g_display_wp_two_handed = atoi(val.c_str());
+            g_display_wp[1] = atoi(val.c_str());
         }
         else if (msg.equals("display_wp_polearms")) {
-            g_display_wp_polearms = atoi(val.c_str());
+            g_display_wp[2] = atoi(val.c_str());
         }
         else if (msg.equals("display_wp_archery")) {
-            g_display_wp_archery = atoi(val.c_str());
+            g_display_wp[3] = atoi(val.c_str());
         }
         else if (msg.equals("display_wp_crossbows")) {
-            g_display_wp_crossbows = atoi(val.c_str());
+            g_display_wp[4] = atoi(val.c_str());
         }
         else if (msg.equals("display_wp_throwing")) {
-            g_display_wp_throwing = atoi(val.c_str());
+            g_display_wp[5] = atoi(val.c_str());
         }
         else if (msg.equals("display_wp_firearms")) {
-            g_display_wp_firearms = atoi(val.c_str());
+            g_display_wp[6] = atoi(val.c_str());
         }
         else if (msg.equals("module_version")) {
             g_module_version = atoi(val.c_str());

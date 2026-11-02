@@ -25,6 +25,7 @@ void* operator new(unsigned size);      // 0x53545e
 int g_sel_label = -2;                         // 0x5aa3a8 (its label index)
 int g_sel_party = -1;                         // 0x5aa3ac (currently selected party id)
 int g_5d8784;                                   // 0x5d8784 (zeroed with the current label object)
+rgl::mesh* g_label_obj;                           // 0x5d75ec (current label object)
 
 extern StrTable g_strtable;             // 0x5e2a18
 
@@ -46,8 +47,6 @@ using rgl::mesh;
 
 // ---- globals --------------------------------------------------------------------------------------------
 
-struct GuiObj { virtual ~GuiObj(); };   // deleted through vtable slot 0
-extern GuiObj* g_label_obj;     // 0x5d75ec (current label object)
 
 // the GUI root singleton at 0x5d7080 (layout from s0042c9b0 / s0042d360)
 struct gui_manager {

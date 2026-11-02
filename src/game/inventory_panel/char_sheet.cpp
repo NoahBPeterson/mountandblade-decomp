@@ -23,6 +23,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include "../../rgl/rgl_math.h"
+#include "../shared_vars.h"
 
 extern "C" int _fltused = 0;
 
@@ -170,7 +171,6 @@ static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstri
 #include "../ini_file.h"
 
 extern int g_game_mode;                         // 0x5a9fb0
-extern int g_display_wp_one_handed[7];               // 0x5e2900
 extern char g_skill_tbl[];                    // 0x8ee3100 (records of 0x44 bytes)
 
 // the two mode/tutorial objects touched at the end
@@ -523,7 +523,7 @@ void CharSheet::init()
             plus1c->set_text(&tx, tstring("+"));
         }
 
-        if (g_display_wp_one_handed[i] == 0) {
+        if (g_display_wp[i] == 0) {
             row->show();
             plus1c->show();
         }

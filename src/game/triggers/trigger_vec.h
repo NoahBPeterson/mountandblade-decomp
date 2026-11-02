@@ -121,13 +121,6 @@ extern ShadowMap g_shadow_map;          // 0xa70248 (w at +0x10 = 0xa70258, surf
 extern ini_file g_module_info;          // 0xa18238 module_info.txt table (count at 0xa44238)
 extern ini_file g_game_vars;            // 0xa44240 game_variables.txt table (rec_tables.h views it as ini_file_x g_ini)
 // g_resmgr_x: the view of g_resmgr (0x5d6fa0) declared in config.h
-extern int g_display_wp_one_handed;          // 0x5e2900
-extern int g_display_wp_two_handed;          // 0x5e2904
-extern int g_display_wp_polearms;            // 0x5e2908
-extern int g_display_wp_archery;             // 0x5e290c
-extern int g_display_wp_crossbows;           // 0x5e2910
-extern int g_display_wp_throwing;            // 0x5e2914
-extern int g_display_wp_firearms;            // 0x5e2918
 extern int g_compatible_module_version;      // 0x5e29b8
 extern int g_module_version;                 // 0x5e29c0
 extern float g_seeing_range;                 // 0xa18114

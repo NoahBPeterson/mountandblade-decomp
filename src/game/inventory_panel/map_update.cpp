@@ -10,6 +10,7 @@
 #include <math.h>
 #include "../../rgl/rgl_math.h"
 #include "../../include/msg_log.h"
+#include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 float g_box_x;                                // 0x5d8778
@@ -123,7 +124,6 @@ static inline Party* party_at(GameData* g, int id)
 
 // --------------------------------------------------------------------------------- globals -------------
 extern world*    g_level;                    // 0xa732b4
-extern rgl::mesh* g_label_obj;                // 0x5d75ec
 extern float     g_mouse_x;                  // 0x5d7094 (float: ?g_mouse_x@@3MA)
 extern float     g_mouse_y;                  // 0x5d7098
 extern int       g_a17458;                   // 0xa17458

@@ -46,7 +46,6 @@ extern HANDLE g_mt_event; // 0x5e28d8
 // Critical section guarded by g_mt_inited (mission_5.cpp Enter/LeaveCriticalSection(&g_cs)).
 extern CRITICAL_SECTION g_mt_cs; // 0x5e28dc
 // game_variables key display_wp_one_handed ...
-extern int g_display_wp_one_handed; // 0x5e2900
 // Consumers: mesh_pass.cpp (rebuild before the next pass, then cleared), facegen_misc (test and clear).
 extern char g_scene_dirty; // 0x5e2938 rebuild latch
 // Script op check_menu (0x49ce90) bounds-checks against it.
