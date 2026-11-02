@@ -2,7 +2,7 @@
 // take the <Skeletons> element and for every sibling element append a fresh bone-list record to this
 // vector and read the record from the element.
 #include <string.h>
-#include "skeleton_tinyxml.h"
+#include "../../tinyxml/tinyxml.h"
 
 // ------------------------------------------------------------------ tstring -------------------------------
 #include "../tstring.h"
@@ -86,12 +86,12 @@ void SkeletonBody::load(const tstring& filename)
 
     TiXmlHandle hdoc(&doc);
     TiXmlHandle hskel(0);
-    TiXmlElement* root = hdoc.FirstChildElement().ToElement();
+    TiXmlElement* root = hdoc.FirstChildElement().Element();
     if (!root)
         return;
     hskel = TiXmlHandle(root);
 
-    TiXmlElement* e = hskel.FirstChild("Skeletons").FirstChild().ToElement();
+    TiXmlElement* e = hskel.FirstChild("Skeletons").FirstChild().Element();
     for (; e; e = e->NextSiblingElement()) {
         add(row20());
         back()->load(e);
