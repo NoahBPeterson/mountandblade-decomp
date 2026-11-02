@@ -43,8 +43,12 @@ extern MsgLog g_msglog;                                 // 0x5d7080
 // ---- UI widget (vtable family 0x597050; s004f49d0 / s004dada0) ------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 typedef Widget UiVt;                    // the slice's name for it
+struct UiB : Widget {                   // the slider widget (ui/ui_widgets.h; vtable 0x591fb0, 0x188 bytes): its slot +0x38 is the base's get168
+    char pad04[0x168 - 4];
+    float value168;                     // +0x168 what slot +0x38 returns
+    char pad16c[0x188 - 0x16c];
+};
 struct Ui { UiVt* vt; };
-struct Entity;
 struct World;
 
 #include "../map_widget.h"                 // MapWidget (the slice's face_body: the 0x358-byte camera body, ctor 0x4ed630)
@@ -54,11 +58,23 @@ struct ui_vec {                                         // engine vector of void
     int lead; void** first; void** last; void** end;
     // (push_back 0x41b750 is std::vector<named_object*>::push_back, cs_common.h)
 };
-struct Entity {                                         // 0x34c entity (EChar-like)
-    UiVt* vt;                                           // +0x000
-    char pad4[0x108 - 4];
-    ui_vec lods;                                        // +0x108
+namespace rgl {
+struct lod_mesh2; struct mesh;                          // (declared by pointer only: the bodies are not this module's)
+template <class T> struct ent_vec {                     // engine vector of T* (allocator word, first / last / end)
+    int lead; T** first; T** last; T** end;
 };
+struct strategic_entity {                               // the preview entity: world::create_entity(9) makes this (vtable 0x54b5d0, rgl/scene/scene_entity.h)
+    virtual void s00(); virtual void s04(); virtual void s08(); virtual void s0c(); virtual void s10(); virtual void s14();
+    virtual void s18(); virtual void s1c(); virtual void s20(); virtual void s24(); virtual void s28(); virtual void s2c();
+    virtual void s30(); virtual void s34(); virtual void s38(); virtual void s3c(); virtual void s40(); virtual void s44();
+    virtual void s48();
+    virtual void clear();                               // +0x4c 0x420960
+    char pad04[0x108 - 4];
+    ent_vec<lod_mesh2> lods;                            // +0x108 (the LOD records refresh pushes; clear() deletes them)
+    ent_vec<mesh> meshes;                               // +0x118 (the meshes clear() deletes through their vtables)
+};
+}
+typedef rgl::strategic_entity Entity;
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 
 // ---- skin record table (0x8ed4f7c, 0x1f8-byte records) -------------------------------------------------
@@ -84,7 +100,7 @@ struct FaceGen {
     UiVt* deform;                                       // +0x180
     UiVt* buttons;                                      // +0x184
     UiVt* cam_btn;                                      // +0x188
-    UiVt* deform_rows[0x30];                            // +0x18c (one row per deform key; 0x30 slots up to key_labels)
+    UiB* deform_rows[0x30];                             // +0x18c (one row per deform key; 0x30 slots up to key_labels)
     UiVt* key_labels[0x30];                             // +0x24c (up to b_next_beard)
     UiVt* b_next_beard;                                 // +0x30c
     UiVt* b_next_hair;                                  // +0x310
@@ -95,8 +111,8 @@ struct FaceGen {
     UiVt* t_change_beard;                               // +0x324
     UiVt* t_change_hair;                                // +0x328
     UiVt* t_change_face;                                // +0x32c
-    UiVt* sl_age;                                       // +0x330
-    UiVt* sl_hair_color;                                // +0x334
+    UiB* sl_age;                                        // +0x330
+    UiB* sl_hair_color;                                 // +0x334
     UiVt* t_age;                                        // +0x338
     UiVt* t_hair_color;                                 // +0x33c
     UiVt* b_done;                                       // +0x340

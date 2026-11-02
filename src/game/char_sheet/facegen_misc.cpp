@@ -51,7 +51,7 @@ void FaceGen::refresh()
         (&g_dummy_mat)[i] = deform_rows[i]->get_float();
     f360 = sl_age->get_float();
     f364 = sl_hair_color->get_float();
-    ((UiVt*)ent)->refresh_anim();
+    ent->clear();
     int flags = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
     int zero = 0;
     g_cur = clamp_index(&flags, &zero, &g_char_count);
