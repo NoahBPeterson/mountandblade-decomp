@@ -104,6 +104,7 @@ extern char g_mission[]; // 0x5e292c
 extern char g_windows[]; // 0xa73980
 extern void* g_items; // 0x5e29d0
 #include "../prop_kind.h"
+#include "../key_state.h"      // g_a17144 .. g_a17820
 
 
 // ======================================================= slice s0052cf60: classes, globals, helpers
@@ -233,13 +234,11 @@ extern int g_a17194;                                // 0xa17194  held, code 0x65
 extern int g_a171ac;                                // 0xa171ac  held, code 0x6b
 extern int g_a171b4;                                // 0xa171b4  held, code 0x6d
 extern int g_a173b4;                                // 0xa173b4  held, code 0xed
-extern int g_a17420;                                // 0xa17420  press, code 0x08
 extern int g_a174dc;                                // 0xa174dc  press, code 0x37
 extern int g_a174e0;                                // 0xa174e0  press, code 0x38
 extern int g_a174e4;                                // 0xa174e4  press, code 0x39
 extern int g_a1758c;                                // 0xa1758c  press, code 0x63
 extern int g_a17590;                                // 0xa17590  press, code 0x64
-extern int g_a17820;                                // 0xa17820  previous, code 0x08
 extern const float g_one;                           // 0x549cdc = 1.0f
 extern const float g_hilite_dim;                    // 0x54b4d0 = 0.05f
 extern const float g_rot_step;                      // 0x590c60 = 0.005f

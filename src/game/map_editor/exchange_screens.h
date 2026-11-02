@@ -109,6 +109,7 @@ inline int troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }
 // ---- small objects ----------------------------------------------------------------------------------------------------
 #include "../map_flags.h"                            // MapFlags, g_map_flags (0x5e291c): the one definition (defined in inventory_panel/mission_ctx.cpp)
 #include "../window_mgr.h"      // g_windows (0xa73980), slot_as<T>(i): the screens are its slots
+#include "../key_state.h"      // g_a17144 .. g_a17820
 extern MsgLog g_gui;                             // 0x5d7080
 
 // the menu / mission controller object at 0xa73300 (the slices called it MissionUi, Screen and AuxObj)
@@ -255,12 +256,9 @@ struct SourceScreen : ScreenBase {          // vtables 0x5961f0 / 0x596214: +0x3
 };
 
 // ---- globals -----------------------------------------------------------------------------------------------------------
-extern int g_a17144;                        // 0xa17144
-extern int g_a17544;                        // 0xa17544
 extern int g_a17148;                        // 0xa17148
 extern int g_a17348;                        // 0xa17348
 extern int g_a17188;                        // 0xa17188
-extern int g_a17588;                        // 0xa17588
 extern int g_trial_mode;                    // 0x5e29c4
 extern int g_a70458;                        // 0xa70458
 extern int g_a7045c;                        // 0xa7045c

@@ -65,8 +65,7 @@ struct dev_index {
 
 extern gui_manager g_gui;                        // 0x5d7080
 #include "../../include/renderer.h"   // canonical: g_render.dev (0xa17f28)
-extern int g_windowed_setting;                   // 0xa17144
-extern int g_windowed_other;                     // 0xa17544
+#include "../../game/key_state.h"      // g_a17144 .. g_a17820
 
 struct screen_cfg {
     __declspec(noinline) void apply();           // 0x4ca600

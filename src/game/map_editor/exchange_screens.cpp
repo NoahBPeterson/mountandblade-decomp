@@ -31,6 +31,11 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
+// ---- data this module owns (docs/standalone_data.md; key_state.h) ----
+int g_a17144;                                   // 0xa17144 (.bss)
+int g_a17544;                                   // 0xa17544 (.bss)
+int g_a17588;                                   // 0xa17588 (.bss)
+
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
 #define W(p, off) (*(ChoiceList**)((char*)(p) + (off)))
 #define V(p, off) ((OutIntVec*)((char*)(p) + (off)))

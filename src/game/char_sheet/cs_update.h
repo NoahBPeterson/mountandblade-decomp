@@ -62,6 +62,7 @@ struct SkillRows { UiWidget* w[5]; };
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                             // 0x5d7080
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../key_state.h"      // g_a17144 .. g_a17820
 extern int g_world_time;                            // 0x5d8790 (compared as an int)
 
 // scroll bar / slider (0x48baa0 set_value)
@@ -92,7 +93,6 @@ extern int g_a17188;                                // 0xa17188
 extern int g_a17348;                                // 0xa17348
 extern int g_a174d8;                                // 0xa174d8
 extern int g_a17518;                                // 0xa17518
-extern int g_a17588;                                // 0xa17588
 extern int g_trial_mode;                            // 0x5e29c4
 }
 

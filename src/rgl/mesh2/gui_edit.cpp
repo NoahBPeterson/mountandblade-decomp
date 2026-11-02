@@ -2082,7 +2082,7 @@ void ResultWindow::scale_3(const float*)
             goto on;
         return;
     } else {
-        if (!g_windowed_setting || g_windowed_other)
+        if (!g_a17144 || g_a17544)
             return;
         goto off;   // 0x4ca573/0x4ca57d: windowed setting on and other off -> the 'off' tail at 0x4ca5c7
     }

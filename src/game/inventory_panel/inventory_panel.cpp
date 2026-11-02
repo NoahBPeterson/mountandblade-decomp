@@ -35,7 +35,6 @@ extern int   g_snd_id_b;                                // 0x5aa2fc
 extern int   g_a17148;                                  // 0xa17148
 extern int   g_a17348;                                  // 0xa17348
 extern int   g_a17188;                                  // 0xa17188
-extern int   g_a17588;                                  // 0xa17588
 extern int   g_a171b4;                                  // 0xa171b4
 extern int   g_a173b4;                                  // 0xa173b4
 
@@ -89,6 +88,7 @@ extern Modifier g_item_modifiers[];                          // 0xa75f70
 #include "../main_menu.h"
 #include "../ui/named_rec.h"      // NamedRec::setup2 0x48a3d0 (main_menu::ask is the same function)      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config/config.h"
+#include "../key_state.h"      // g_a17144 .. g_a17820
 
 // @ 0x50fe20
 void InventoryPanel::refresh_transaction(int unused)

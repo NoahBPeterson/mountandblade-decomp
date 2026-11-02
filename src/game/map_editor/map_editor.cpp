@@ -21,6 +21,13 @@
 extern MapEditorDialog g_editor_dialog;          // 0x8ee3c48 (the application object seen as the map editor dialog)
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
+// ---- data this module owns (docs/standalone_data.md; key_state.h) ----
+int g_a17420;                                   // 0xa17420 (.bss)
+int g_a17820;                                   // 0xa17820 (.bss)
+int g_a1752c;                                   // 0xa1752c (.bss)
+int g_a1754c;                                   // 0xa1754c (.bss)
+
+
 struct skin_owner;
 void __stdcall select_entity(rgl::mesh* m, skin_owner* o, unsigned color);   // 0x4ea0c0 (char_sheet/save_panel.cpp)
 struct GuiCtx;

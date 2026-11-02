@@ -70,13 +70,12 @@ void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
 extern char* g_save_prefix;                                     // 0x8ee3c3c (prefix string pointer)
 extern char* g_game;                                            // 0x5e2930
-extern int g_a17420;                                            // 0xa17420
-extern int g_a17820;                                            // 0xa17820
 extern char* g_save_dialog;                                     // 0xa7398c
 extern char g_main_menu_obj[];                                  // 0xa73980
 
 // main menu layout (see s004d7d10)
 #include "../main_menu.h"
+#include "../key_state.h"      // g_a17144 .. g_a17820
 #define g_main_menu (*(main_menu*)g_main_menu_obj)
 // The menu record's tstrings/fields live on the object g_main_menu.rec points at, NOT on the screen manager itself:
 // the manager (0xa73980) is 30 screen pointers plus the open-screen deque at +0x78, so writing the record's
