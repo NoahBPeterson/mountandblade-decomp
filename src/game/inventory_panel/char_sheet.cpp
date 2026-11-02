@@ -22,7 +22,7 @@
 // float surface is atof (0x537352).
 #include <windows.h>
 #include <stdio.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 extern "C" int _fltused = 0;
 

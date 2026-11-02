@@ -11,7 +11,7 @@
 // 0x28 writes a C string and 0x2c writes a nested structure. Every call returns the stream (eax).
 #include <windows.h>
 #include <new>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 #define MB_NOTHROW throw()
 

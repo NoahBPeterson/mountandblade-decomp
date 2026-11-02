@@ -8,7 +8,7 @@
 #include <string.h>
 #include <math.h>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "./cs_common.h"
 #include "./cs_mat.h"
 

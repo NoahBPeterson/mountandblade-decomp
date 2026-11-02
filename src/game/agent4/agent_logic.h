@@ -8,7 +8,7 @@
 #include <vector>
 #include "../tstring.h"
 #include "../item_ref.h"
-#include "rgl.h"   // first: rgl_base.h would otherwise pull rgl_math.h in before agent/item_kind.h includes rgl.h
+#include "../../rgl/rgl_math.h"   // first: rgl_base.h would otherwise pull rgl_math.h in before agent/item_kind.h includes rgl.h
 #include "../../include/rgl_base.h"
 
 // ---- canonical declarations -----------------------------------------------------------------------------------------------
@@ -171,7 +171,7 @@ extern __int64 g_a70450;                                // 0xa70450
 
 // ---- the second half of the object (formerly agent_update.h) ------------------------------------------------------------------------
 
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "../../include/mat4.h"
 #include "../../include/phys_set.h"
 #include "../../include/shape.h"

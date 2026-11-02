@@ -37,7 +37,8 @@ struct MusicTable {
     void build(Src* src);               // 0x50f7e0
 };
 
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
+#include "../../rgl/rgl_string.h"
 #include "../rgl_mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
 using rgl::vector4;
 using rgl::mesh;

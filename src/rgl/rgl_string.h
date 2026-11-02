@@ -6,8 +6,8 @@
 //   +4  buf   heap buffer or null    (c_str() below; tstring::read_from 0x4151e0 writes buf[got] = 0)
 //   +8  cap
 //   +0xc len                         (read_from 0x4151e0, bin_writer::flush 0x417bb0)
-// match/include/rgl.h declares rgl::string as {p, size, cap, extra} with "fields unverified": that order is
-// wrong (the buffer is at +4), so src/rgl does not include rgl.h and uses this header instead.
+// (The slice header match/include/rgl.h still has its own ctor-only rgl::string {pos, p, cap, size} for the
+// not yet migrated slices; src/ does not include it.)
 #ifndef RGL_STRING_H
 #define RGL_STRING_H
 #include <stdio.h>

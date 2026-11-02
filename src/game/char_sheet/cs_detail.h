@@ -11,7 +11,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <string.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 extern "C" void __cdecl mb_snprintf(char*, unsigned, const char*, ...);    // 0x415100
 

@@ -10,7 +10,7 @@
 #define AGENT3_TYPES_H
 #include <stddef.h>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "../tstring.h"
 #include "../agent/item_kind.h"       // ItemKind, g_items, pos2
 #include "../mat4.h"                   // rgl::mat4

@@ -8,7 +8,7 @@
 #define STRAT_EXT_H
 #include <stddef.h>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 #include "../mat4.h"
 #include "../tstring.h"
 #include "../rgl_mesh.h"                    // rgl::res_t / mat_t / res_obj4 / elem30 / elem14 / mesh_base (one definition for the rgl.h universe)

@@ -2,6 +2,6 @@
 // mat4, smat, pos, identity). The classes themselves live there since two areas (rgl and game) use them.
 #ifndef GAME_MAT4_H
 #define GAME_MAT4_H
-#include "rgl.h"
+#include "../rgl/rgl_math.h"
 #include "../include/mat4.h"
 #endif // GAME_MAT4_H

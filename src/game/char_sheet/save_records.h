@@ -11,7 +11,7 @@
 #include <windows.h>
 #include <new>
 #include <vector>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 #define MB_NOTHROW throw()
 

@@ -6,7 +6,7 @@
 #define GAME_ENTITY_H
 #include <vector>
 #include <list>
-#include "rgl.h"
+#include "../rgl/rgl_math.h"
 #include "./mat4.h"
 #include "../include/mesh_prims.h"
 #include "../include/mesh_parts.h"             // rgl::render_info (and the other mesh records)

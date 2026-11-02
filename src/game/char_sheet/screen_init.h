@@ -12,7 +12,7 @@
 #include "../../include/image_addrs.h"
 #include <new>
 #include <string.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
 
 // ---- engine string (16 bytes, see s0042a1f0/tstring.h) --------------------------------------------------
 #include "../tstring.h"
