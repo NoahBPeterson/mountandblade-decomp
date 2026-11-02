@@ -8,7 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rgl.h"
+#include "../../rgl/rgl_math.h"
+#include "../../rgl/scene/scene_entity.h"   // rgl::entity / rgl::strategic_entity (the preview entity)
 #define CS_REAL_FACEGEN                                 // (this header defines FaceGen)
 #include "./cs_common.h"
 #include "./cs_mat.h"
@@ -54,26 +55,9 @@ struct World;
 #include "../map_widget.h"                 // MapWidget (the slice's face_body: the 0x358-byte camera body, ctor 0x4ed630)
 typedef MapWidget face_body;
 
-struct ui_vec {                                         // engine vector of void*
-    int lead; void** first; void** last; void** end;
-    // (push_back 0x41b750 is std::vector<named_object*>::push_back, cs_common.h)
-};
-namespace rgl {
-struct lod_mesh2; struct mesh;                          // (declared by pointer only: the bodies are not this module's)
-template <class T> struct ent_vec {                     // engine vector of T* (allocator word, first / last / end)
-    int lead; T** first; T** last; T** end;
-};
-struct strategic_entity {                               // the preview entity: world::create_entity(9) makes this (vtable 0x54b5d0, rgl/scene/scene_entity.h)
-    virtual void s00(); virtual void s04(); virtual void s08(); virtual void s0c(); virtual void s10(); virtual void s14();
-    virtual void s18(); virtual void s1c(); virtual void s20(); virtual void s24(); virtual void s28(); virtual void s2c();
-    virtual void s30(); virtual void s34(); virtual void s38(); virtual void s3c(); virtual void s40(); virtual void s44();
-    virtual void s48();
-    virtual void clear();                               // +0x4c 0x420960
-    char pad04[0x108 - 4];
-    ent_vec<lod_mesh2> lods;                            // +0x108 (the LOD records refresh pushes; clear() deletes them)
-    ent_vec<mesh> meshes;                               // +0x118 (the meshes clear() deletes through their vtables)
-};
-}
+// the preview entity: world::create_entity(9) makes a strategic_entity (vtable 0x54b5d0); refresh calls its
+// clear() (slot 19, +0x4c, 0x420960) and pushes LOD records onto lods (std::vector<lod_mesh2*> at +0x108) through
+// std::vector<named_object*>::push_back 0x41b750 (cs_common.h)
 typedef rgl::strategic_entity Entity;
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 
