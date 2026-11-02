@@ -3339,7 +3339,11 @@ class Runner:
     # (IDirect3DDevice9 slot 13 CreateAdditionalSwapChain takes 3, slot 14 GetSwapChain 3: the count tells them apart.)
     D3D_LOCKS = {(0x34, 4): (1, "lock"), (0x38, 1): (None, "unlock"),
                  (0x4C, 5): (2, "lock"), (0x50, 2): (None, "unlock")}
-    D3D_LOCK_PITCH, D3D_LOCK_ROWS = 1024, 256       # 256 x 256 A8R8G8B8 = 256 KB, zero-filled
+    D3D_LOCK_PITCH, D3D_LOCK_ROWS = 1024, 256       # 256 x 256 A8R8G8B8 = 256 KB (4 pool slots)
+    # The locked surface lives in the input's pool, the last D3D_LOCK_ROWS * D3D_LOCK_PITCH bytes: its texels are the
+    # input's soup there (a pure function of the seed, plus pool_over edits), identical for both builds, different
+    # between inputs, and reachable by mutation / pool steering like any other pool memory.
+    D3D_LOCK_BITS = M.POOL_BASE + M.POOL_SIZE - D3D_LOCK_PITCH * D3D_LOCK_ROWS
 
     def _stdcall_com_object(self, ret, esp):
         """The `call [R+disp]` ending at `ret` has R holding the vtable of its first stack argument (a COM method
@@ -3354,9 +3358,10 @@ class Runner:
 
     def _d3d_lock(self, ret, esp, n):
         """Model of IDirect3D{Surface,Texture}9::LockRect / UnlockRect for the `call [reg+disp]` ending at `ret`:
-        LockRect writes D3DLOCKED_RECT {Pitch, pBits} into the caller's structure, pBits pointing at a zeroed
-        256 x 256 x 4 byte block (Machine.model_data, the same address and the same zero contents for both builds;
-        it is large enough that a clamped texel coordinate stays inside), and returns D3D_OK; UnlockRect returns
+        LockRect writes D3DLOCKED_RECT {Pitch, pBits} into the caller's structure, pBits pointing at the
+        input's own 256 x 256 x 4 byte block in the pool (D3D_LOCK_BITS: the same address for both builds, texels from
+        the input's soup so a pixel test can go either way; large enough that a clamped texel coordinate stays
+        inside), and returns D3D_OK; UnlockRect returns
         D3D_OK. Returns the result dword, or None when the call is not one of these."""
         disp = self._call_vtable_slot(ret)
         ent = self.D3D_LOCKS.get((disp, n))
@@ -3366,8 +3371,7 @@ class Runner:
         if kind == "lock":
             out = self.m.u32(esp + 4 + 4 * idx)
             if out:
-                self.m.write(out, struct.pack("<II", self.D3D_LOCK_PITCH, self.m.model_data(
-                    "D3D.LockRect.bits", self.D3D_LOCK_PITCH * self.D3D_LOCK_ROWS)))
+                self.m.write(out, struct.pack("<II", self.D3D_LOCK_PITCH, self.D3D_LOCK_BITS))
         return 0
 
     def _call_via_ecx(self, ret):

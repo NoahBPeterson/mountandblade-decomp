@@ -1142,3 +1142,14 @@ def test_static_vptrs_are_installed_and_not_repairable():
     # the last pre-run write to the slot is the static initialiser's vtable, after the (bad) override
     assert [d for a, d in writes if a == 0x5a9f60][-1] == (0x595990).to_bytes(4, "little")
     assert r._put_dword(inp, 0x5a9f60, 0x48b200) is None
+
+
+def test_d3d_lockrect_surface_comes_from_the_input():
+    """ShadowMap::sample 0x4faee0 branches on a texel ShadowMap::read_pixel reads through IDirect3DSurface9::LockRect's
+    pBits. The locked surface is the input's own pool memory (Runner.D3D_LOCK_BITS, the same address for both builds),
+    not a zero block, so lit and shadowed pixels both occur and the row covers every edge (it was WEAK: the skip edge
+    was never taken). A lock call writes {Pitch, pBits} with that address and returns D3D_OK."""
+    r = _row("agent_hud", 0x4faee0, "src/game/agent5/agent_hud.cpp", "--fp-tol")
+    assert r["verdict"] == "PASS" and not r["fp_tol"]["real_mismatches"], r
+    assert equiv.Runner.D3D_LOCK_BITS == equiv.M.POOL_BASE + equiv.M.POOL_SIZE - 0x40000
+    assert equiv.Runner.D3D_LOCK_BITS % equiv.M.SLOT == 0
