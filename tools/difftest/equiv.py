@@ -216,6 +216,142 @@ CS2UC = {}
 for _n in ("EAX", "EBX", "ECX", "EDX", "ESI", "EDI", "EBP", "ESP"):
     CS2UC[getattr(CX, "X86_REG_" + _n)] = globals()["UC_X86_REG_" + _n]
 
+
+
+def _taint_decode(cache, address, raw):
+    """(mnemonic, operands, written registers) of the instruction at `address` with bytes `raw`, as the uninit-copy
+    taint pass reads it; None when it does not decode. Kept in `cache` (keyed by address AND bytes, so changed code is
+    re-decoded). capstone rebuilds .operands on every access: decode once, with the registers it writes."""
+    dec = cache.get((address, raw))
+    if dec is None:
+        try:
+            ins = next(_md.disasm(raw, address))
+        except Exception:
+            return None
+        mn = ins.mnemonic
+        if mn.startswith("rep "):
+            mn = mn[4:]             # capstone spells the prefix into the mnemonic ("rep movsd")
+        try:
+            wr = tuple(ins.regs_access()[1])
+        except Exception:
+            wr = None               # re-raised below, where the instruction needs it
+        dec = cache[(address, raw)] = (mn, ins.operands, wr)
+    return dec
+
+
+def _taint_fill(dec, d):
+    """Fill the native descriptor `d` (eqnative.Desc) with what the taint pass's on_code does for the decoded
+    instruction `dec`: the same if/elif chain, in the same order, as Runner.uninit_copies.on_code."""
+    EN = ENV_NATIVE
+    mn, ops, wr = dec
+
+    def ea(o):
+        mm = o.mem
+        d.ea_disp = mm.disp
+        d.ea_base = CS2UC[mm.base] if mm.base and mm.base in CS2UC else 0
+        d.ea_index = CS2UC[mm.index] if mm.index and mm.index in CS2UC else 0
+        d.ea_scale = mm.scale
+
+    def reg(r):
+        if not 0 <= r < EN.NREG:
+            raise ValueError("register id %d outside the native table" % r)
+        return r
+    d.kind = EN.K_ERR                   # an exception while evaluating the chain: the Python hook drops the pending taint
+    try:
+        if mn == "mov" and len(ops) == 2 and ops[0].size == 4:
+            dd, sop = ops
+            if sop.type == CX.X86_OP_MEM:
+                d.src = EN.S_MEM
+                ea(sop)
+            elif sop.type == CX.X86_OP_REG:
+                d.src, d.src_reg = EN.S_REG, reg(sop.reg)
+            else:
+                d.src = EN.S_NONE
+            d.dst_reg = reg(dd.reg) if dd.type == CX.X86_OP_REG else 0
+            d.kind = EN.K_MOV
+            return
+        if mn.startswith("movs") and mn in ("movsd", "movsb", "movsw") and not ops or \
+                (mn in ("movsd", "movsb", "movsw") and all(o.type == CX.X86_OP_MEM for o in ops)):
+            d.kind = EN.K_MOVS
+            return
+        if mn == "push" and ops:
+            o = ops[0]
+            if o.type == CX.X86_OP_REG:
+                d.src, d.src_reg = EN.S_REG, reg(o.reg)
+            elif o.type == CX.X86_OP_MEM:
+                d.src = EN.S_MEM
+                ea(o)
+            else:
+                d.src = EN.S_NONE
+            d.kind = EN.K_PUSH
+            return
+        if mn == "pop" and ops and ops[0].type == CX.X86_OP_REG:
+            d.dst_reg = reg(ops[0].reg)
+            d.kind = EN.K_POP
+            return
+        if mn in ("inc", "dec") and ops and ops[0].size == 4:
+            if ops[0].type == CX.X86_OP_REG:
+                d.kind = EN.K_NOP
+                return
+            if ops[0].type == CX.X86_OP_MEM:
+                ea(ops[0])
+                d.kind = EN.K_PENDMEM
+                return
+        if mn in ("add", "sub") and len(ops) == 2 and ops[0].type == CX.X86_OP_REG and ops[0].size == 4 \
+                and ops[1].type == CX.X86_OP_IMM:
+            d.kind = EN.K_NOP
+            return
+        if mn == "lea" and len(ops) == 2 and ops[0].type == CX.X86_OP_REG and ops[1].mem.base \
+                and not ops[1].mem.index:
+            d.dst_reg, d.src_reg = reg(ops[0].reg), reg(ops[1].mem.base)
+            d.kind = EN.K_LEA
+            return
+        if mn == "fld" and ops and ops[0].type == CX.X86_OP_MEM and ops[0].size == 4:
+            ea(ops[0])
+            d.kind = EN.K_FLD
+            return
+        if mn in ("fadd", "fsub", "fsubr") and len(ops) == 1 and ops[0].type == CX.X86_OP_MEM \
+                and ops[0].size in (4, 8):
+            ea(ops[0])
+            d.esize = ops[0].size
+            d.kind = EN.K_FADD
+            return
+        if mn in ("fst", "fstp") and ops and ops[0].type == CX.X86_OP_MEM and ops[0].size == 4:
+            d.fpop = 1 if mn == "fstp" else 0
+            d.kind = EN.K_FST
+            return
+        if wr is None:
+            return                      # K_ERR: regs_access failed
+        clr = []
+        for r_ in wr:
+            for x in (r_, CX.X86_REG_EAX if r_ in (CX.X86_REG_AX, CX.X86_REG_AL) else r_):
+                if x not in clr:
+                    clr.append(reg(x))
+        if len(clr) > EN.MAXCLR:
+            raise ValueError("instruction writes %d registers" % len(clr))
+        for i, x in enumerate(clr):
+            d.clr[i] = x
+        d.nclr = len(clr)
+        d.fclear = 1 if mn.startswith("f") else 0
+        d.kind = EN.K_GEN
+    except (AttributeError, TypeError, KeyError, IndexError, capstone.CsError):
+        d.kind = EN.K_ERR
+        d.nclr = 0
+
+
+def _native():
+    """eqnative when the native tracing library is usable (see tools/difftest/native/), else None."""
+    try:
+        import eqnative
+    except ImportError:
+        return None
+    if not eqnative.available() or CX.X86_REG_ENDING > eqnative.NREG:
+        return None
+    return eqnative
+
+
+import eqnative as ENV_NATIVE                      # noqa: E402  (constants for _taint_fill)
+
 _ctx = {}
 
 
@@ -3741,21 +3877,9 @@ class Runner:
                 raw = bytes(uc_.mem_read(address, size))
             except Exception:
                 return
-            dec = cache.get((address, raw))
+            dec = _taint_decode(cache, address, raw)
             if dec is None:
-                try:
-                    ins = next(_md.disasm(raw, address))
-                except Exception:
-                    return
-                mn = ins.mnemonic
-                if mn.startswith("rep "):
-                    mn = mn[4:]             # capstone spells the prefix into the mnemonic ("rep movsd")
-                try:
-                    wr = tuple(ins.regs_access()[1])
-                except Exception:
-                    wr = None               # re-raised below, where the instruction needs it
-                # capstone rebuilds .operands on every access: decode once, with the registers it writes
-                dec = cache[(address, raw)] = (mn, ins.operands, wr)
+                return
             mn, ops, wr = dec
             pend[0] = False
             movs[0] = None
@@ -3862,10 +3986,29 @@ class Runner:
                 else:
                     tainted.pop(b, None)
 
-        hs = [uc.hook_add(UC_HOOK_CODE, on_code), uc.hook_add(UC_HOOK_MEM_WRITE, on_write)]
-        # the same notion for call arguments: per recorded call (index-aligned with self.calls), the stack-argument
-        # dwords (of the 8 recorded) that are a plain copy of a never-written slot (Comparer.norm_calls masks them)
-        self.call_taint_fn = lambda esp: frozenset(k for k in range(8) if src_taint(esp + 4 * k, 4))
+        # the native path (tools/difftest/native/eqhooks.c, EQUIV_NATIVE=0 forces the Python hooks below) runs the same
+        # bookkeeping in C callbacks; instruction decoding stays here, asked once per distinct instruction
+        nat = _native()
+        tr = None
+        if nat is not None:
+            ic = self.__dict__.get("_native_icache")
+            if ic is None:
+                ic = self._native_icache = nat.icache()
+            tr = nat.TaintRun(uc, ic, lambda a_, r_: _taint_decode(cache, a_, r_), _taint_fill,
+                              lo_s, entry, span_lo, span_hi, max_steps)
+            try:
+                tr.start()
+            except OSError:
+                tr.close()
+                tr = None
+        if tr is not None:
+            hs = []
+            self.call_taint_fn = lambda esp: tr.args(esp)
+        else:
+            hs = [uc.hook_add(UC_HOOK_CODE, on_code), uc.hook_add(UC_HOOK_MEM_WRITE, on_write)]
+            # the same notion for call arguments: per recorded call (index-aligned with self.calls), the stack-argument
+            # dwords (of the 8 recorded) that are a plain copy of a never-written slot (Comparer.norm_calls masks them)
+            self.call_taint_fn = lambda esp: frozenset(k for k in range(8) if src_taint(esp + 4 * k, 4))
         self.last_call_uninit = None
         try:
             self.run_side(side, inp)
@@ -3873,12 +4016,26 @@ class Runner:
             self.call_taint_fn = None
             for h in hs:
                 uc.hook_del(h)
+            if tr is not None:
+                tr.stop()
+        if tr is not None:
+            try:
+                if tr.errors:
+                    raise tr.errors[0]
+                steps[0] = tr.steps()
+                for a_ in tr.stale():
+                    stale_hits.add(a_)
+                if steps[0] <= max_steps:
+                    tainted = tr.origins()
+            finally:
+                tr.close()
         if steps[0] > max_steps:
             self.uninit_origin = {}
             return frozenset()
         self.last_call_uninit = list(self.call_taint)
         # bytes, not dwords: a copy to an unaligned destination (cam widget + 0x1ac from a soup pointer) straddles
         # dwords, so the comparison excuses a dword whose differing bytes are all tainted (Comparer.uninit_excused)
+        # (the native dump already leaves out the entry frame: the filter is then a no-op)
         self.uninit_origin = {a: o for a, o in tainted.items() if not (lo_s <= a < entry)}
         return frozenset(self.uninit_origin)
 
@@ -6000,13 +6157,41 @@ class FpTol:
                     self.huge_in = True
                 elif e == 0 and v & 0x7FFFFF:
                     self.denorm_in = True
-        h = m.uc.hook_add(UC_HOOK_MEM_WRITE, on_write)
-        h2 = m.uc.hook_add(UC_HOOK_MEM_READ, on_read)
+        # native path (tools/difftest/native/eqhooks.c; EQUIV_NATIVE=0 forces the Python hooks above): the same write /
+        # read tracking in C callbacks, the (pc, bytes) -> float-store classification still decided here, once each
+        nat = _native()
+        trk = None
+        if nat is not None:
+            trk = self.__dict__.get("_native_track")
+            if trk is None:
+                def classify(pc, raw):
+                    try:
+                        ins = next(_md.disasm(raw, pc))
+                        return ins.mnemonic.startswith("fst") or ins.mnemonic in FP_STORES
+                    except (StopIteration, Exception):      # noqa: BLE001
+                        return False
+                trk = self._native_track = nat.RefTrack(classify)
+            try:
+                trk.start(m.uc)
+            except OSError:
+                trk = None
+        if trk is not None:
+            h = h2 = None
+        else:
+            h = m.uc.hook_add(UC_HOOK_MEM_WRITE, on_write)
+            h2 = m.uc.hook_add(UC_HOOK_MEM_READ, on_read)
         try:
             return self.r.run_side(self.r.orig, inp)
         finally:
-            m.uc.hook_del(h)
-            m.uc.hook_del(h2)
+            if trk is not None:
+                trk.stop()
+                if trk.errors:
+                    raise trk.errors[0]
+                self.huge_in, self.denorm_in = trk.flags()
+                self.fstore = trk.fstore()
+            else:
+                m.uc.hook_del(h)
+                m.uc.hook_del(h2)
             m.set_fpcw(self.cw)
             inp.touched = touched
 
