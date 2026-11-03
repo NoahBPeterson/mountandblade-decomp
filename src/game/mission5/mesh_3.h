@@ -807,7 +807,7 @@ struct MapPoint_s2fe40 {
 
 #include "../game_globals.h"
 int find_in_table78(const tstring* name);               // 0x4352a0
-extern char g_cfg[]; // 0x5a9f98
+#include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 
 // ---- resource manager (0x5d6fa0) -----------------------------------------------------------------------
 struct resmgr_s2fe40 {

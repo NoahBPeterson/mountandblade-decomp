@@ -217,11 +217,11 @@ void Core::update_view_rect()
     RECT r;
     GetWindowRect(m_hWnd, &r);
     if (m_bWindowed) {
-        g_view_x = r.left + 4;
-        g_view_y = (r.bottom - m_d3dsdBackBuffer.Height) - 4;
+        g_gui.view_x = r.left + 4;
+        g_gui.view_y = (r.bottom - m_d3dsdBackBuffer.Height) - 4;
     } else {
-        g_view_x = 0;
-        g_view_y = 0;
+        g_gui.view_x = 0;
+        g_gui.view_y = 0;
     }
     (*(int*)((char*)&g_gui + 0x548)) = m_d3dsdBackBuffer.Width;
     (*(int*)((char*)&g_gui + 0x54c)) = m_d3dsdBackBuffer.Height;
@@ -383,8 +383,8 @@ EndFullscreenDeviceComboSearch:
 // top-visible and selected entry in the game data object.
 void set_list_scroll(int delta)
 {
-    HWND list = GetDlgItem(g_hwnd_page, 0x431);
-    HWND combo = GetDlgItem(g_hwnd_page, 0x433);
+    HWND list = GetDlgItem(g_app_obj.page_hwnd, 0x431);
+    HWND combo = GetDlgItem(g_app_obj.page_hwnd, 0x433);
     ((GameConfig*)g_game)->list_top = SendMessageA(list, 0x150, SendMessageA(list, 0x147, 0, 0), 0);
     int cur = SendMessageA(combo, 0x188, 0, 0);             // CB_GETCOUNT
     int count = SendMessageA(combo, 0x18b, 0, 0);
@@ -413,7 +413,7 @@ void pump_messages()
 // @ 0x4bb390
 void set_debug_label()
 {
-    SetDlgItemTextA(g_hwnd_dlg, 0x4b3, "Debug");
+    SetDlgItemTextA(g_app_obj.script_dlg, 0x4b3, "Debug");
     return;
 }
 
@@ -424,7 +424,7 @@ void set_progress_range(int low, int high)
     int range[2];
     range[0] = low;
     range[1] = high;
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)range);
+    SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x437, 0, (LPARAM)range);
 }
 
 // @ 0x4bb3f0
@@ -442,20 +442,20 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
     RECT window;
     char quote;
 
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x434, 0, (LPARAM)&sel);
+    SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x434, 0, (LPARAM)&sel);
     // EM_EXGETSEL fills a CHARRANGE (cpMin, cpMax)
     ((GameConfig*)g_game)->settings_text.erase_range(sel.cpMin, sel.cpMax);
     ((GameConfig*)g_game)->settings_text.insert(sel.cpMin, *page);
 
     tstring sel_text;
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x43e, 0, (LPARAM)text);
+    SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x43e, 0, (LPARAM)text);
     {
         tstring line(text);
         sel_text.append(line);
     }
 
     stx.flags = 2;
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x461, (WPARAM)&stx, (LPARAM)page->c_str());
+    SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x461, (WPARAM)&stx, (LPARAM)page->c_str());
 
     const int L = sel.cpMin;                        // the base every coloured span is measured from (never modified)
     sel.cpMax = page->len + L;                      // 0x4bb4f2: [esp+0x18]
@@ -470,9 +470,9 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
     for (;;) {
         range.cpMin = separated + L;
         range.cpMax = first < 0 ? sel.cpMax : first + L;
-        SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
+        SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
         cf.crTextColor = color;
-        SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
+        SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
         if (first < 0) {
             break;
         }
@@ -482,9 +482,9 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
         } else {
             range.cpMin = first + L;
             range.cpMax = L + separated;
-            SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
+            SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
             cf.crTextColor = (detailed ? 0x00c80000 : 0) + 0xc800;
-            SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
+            SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
             first = page->find(quote, separated);
         }
     }
@@ -512,36 +512,36 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
             if (mark) {
                 range.cpMin = L + first;
                 range.cpMax = L + k;
-                SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
+                SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
                 cf.crTextColor = 0xff;
-                SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
+                SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
             }
             first = page->find(tstring(g_eq_sep), first) + 3;
             key_end = sel_text.find(tstring(g_eq_sep), key_end) + 3;
         }
     }
 
-    int top = (int)SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x436, 0, L);    // EM_EXLINEFROMCHAR
-    GetWindowRect(GetDlgItem(g_hwnd_dlg, 0x4b0), &window);
+    int top = (int)SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x436, 0, L);    // EM_EXLINEFROMCHAR
+    GetWindowRect(GetDlgItem(g_app_obj.script_dlg, 0x4b0), &window);
     int prev = g_edit_value;
     int lineheight = (top - 5) * 0x11;
     scroll.x = 0;
     scroll.y = lineheight;
     int count = window.bottom - window.top;
-    if ((float)abs(lineheight - prev) > (float)count * g_line_pitch_ratio) {
-        SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x4de, 0, (LPARAM)&scroll);
+    if ((float)abs(lineheight - prev) > (float)count * 0.6f) {
+        SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x4de, 0, (LPARAM)&scroll);
         g_edit_key = scroll.x;
         g_edit_value = scroll.y;
     }
 
     // back to the caller's selection (L, L + length), embolden it per `detailed`, then collapse it to its start (0x4bb924..0x4bb9a0)
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&sel);
+    SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x437, 0, (LPARAM)&sel);
     cf.cbSize = 0x3c;
     cf.dwMask = 1;
     cf.dwEffects = detailed != 0;
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
+    SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
     sel.cpMax = sel.cpMin;                          // cpMax = cpMin (0x4bb99c)
-    SendMessageA(GetDlgItem(g_hwnd_dlg, 0x4b0), 0x437, 0, (LPARAM)&sel);
+    SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x437, 0, (LPARAM)&sel);
 }
 
 // @ 0x4bb9c0
@@ -558,11 +558,11 @@ bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format)
                                               D3DPOOL_SYSTEMMEM, &surface, 0);
     bool ok = false;
     if (SUCCEEDED(g_render.dev->GetFrontBufferData(0, surface))) {
-        if (g_screenshot_cropped) {
-            rect.left = g_view_x;
-            rect.right = g_view_x + (*(int*)((char*)&g_gui + 0x548));
-            rect.top = g_view_y;
-            rect.bottom = g_view_y + (*(int*)((char*)&g_gui + 0x54c));
+        if (g_app_obj.m_bWindowed) {
+            rect.left = g_gui.view_x;
+            rect.right = g_gui.view_x + (*(int*)((char*)&g_gui + 0x548));
+            rect.top = g_gui.view_y;
+            rect.bottom = g_gui.view_y + (*(int*)((char*)&g_gui + 0x54c));
             ok = SUCCEEDED(D3DXSaveSurfaceToFileA(file_name, format, surface, 0, &rect));
         } else {
             ok = SUCCEEDED(D3DXSaveSurfaceToFileA(file_name, format, surface, 0, 0));
@@ -670,7 +670,7 @@ void Config::set(tstring& key, tstring& value)
     if (key.equals("shadowmap_quality")) {
         int q = value_as_int(value);
         shadowmap_quality = q;
-        unk6c = q;
+        shadow_quality_req = q;
     }
 }
 
@@ -716,7 +716,7 @@ void Config::init_defaults()
     debug_mode = 0;
     cheat_mode = 0;
     enable_blood = 1;
-    unk44 = 0;
+    use_wbuffer = 0;
     disable_frequency_variation = 0;
     render_buffer_size = 15;
     fake_reflections = 1;
@@ -729,7 +729,7 @@ void Config::init_defaults()
     force_vsync = 0;
     unk64 = 1;
     shadowmap_quality = 1;
-    unk6c = 1;
+    shadow_quality_req = 1;
 }
 
 // @ 0x4bc090
@@ -1203,7 +1203,7 @@ void camera_ray::screen_to_world(vector4* near_pt, vector4* far_pt)
         float ox;
     } f;
     float oy;
-    struct V2 { float x, y; } d = { g_mouse_x - vx, g_mouse_y - vy };
+    struct V2 { float x, y; } d = { g_gui.mouse[0] - vx, g_gui.mouse[1] - vy };
     f.px = d.x / vw;
     float sy = d.y / vh;
     f.px = (zb8 - zb4) * f.px + zb4;
@@ -1414,10 +1414,70 @@ void psys_record::load(stream_base& a)
     RF(a, o + 0xbc);
 }
 
+// ---- data this module owns (.bss, no initialiser) ----
+int g_edit_key;                                     // 0x5e28d0 first value of the line being edited
+int g_edit_value;                                   // 0x5e28d4 second value of the line being edited
+
+// ---- data this module owns (the name tables of the module-file loaders; values read from the image once by tools/relink/gen_data.py) ----
+const char* g_psys_names[] =   // 0x5a9c60 (11 names)
+{
+	"psys_game_rain", "psys_game_snow", "psys_game_blood", "psys_game_blood_2", "psys_game_hoof_dust",
+	"psys_game_hoof_dust_snow", "psys_game_hoof_dust_mud", "psys_game_water_splash_1",
+	"psys_game_water_splash_2", "psys_game_water_splash_3", "psys_game_rain"
+};
+const char* g_prsnt_names[] =   // 0x5a9c8c (3 names)
+{
+	"prsnt_game_start", "prsnt_game_escape", "prsnt_game_credits"
+};
+const char* g_snd_names[] =   // 0x5a9ca8 (0x7d names and a null terminator)
+{
+	"snd_click", "snd_gong", "snd_quest_taken", "snd_quest_completed", "snd_quest_succeeded",
+	"snd_quest_concluded", "snd_quest_failed", "snd_quest_cancelled", "snd_rain", "snd_money_paid",
+	"snd_money_received", "snd_sword_clash_1", "snd_sword_clash_2", "snd_sword_clash_3", "snd_sword_swing",
+	"snd_footstep_grass", "snd_footstep_wood", "snd_footstep_water", "snd_footstep_horse",
+	"snd_footstep_horse_1b", "snd_footstep_horse_1f", "snd_footstep_horse_2b", "snd_footstep_horse_2f",
+	"snd_footstep_horse_3b", "snd_footstep_horse_3f", "snd_footstep_horse_4b", "snd_footstep_horse_4f",
+	"snd_footstep_horse_5b", "snd_footstep_horse_5f", "snd_jump_begin", "snd_jump_end", "snd_jump_begin_water",
+	"snd_jump_end_water", "snd_horse_jump_begin", "snd_horse_jump_end", "snd_horse_jump_begin_water",
+	"snd_horse_jump_end_water", "snd_release_bow", "snd_release_crossbow", "snd_throw_javelin", "snd_throw_axe",
+	"snd_throw_knife", "snd_throw_stone", "snd_reload_crossbow", "snd_reload_crossbow_continue", "snd_pull_bow",
+	"snd_pull_arrow", "snd_arrow_pass_by", "snd_bolt_pass_by", "snd_javelin_pass_by", "snd_stone_pass_by",
+	"snd_axe_pass_by", "snd_knife_pass_by", "snd_bullet_pass_by", "snd_incoming_arrow_hit_ground",
+	"snd_incoming_bolt_hit_ground", "snd_incoming_javelin_hit_ground", "snd_incoming_stone_hit_ground",
+	"snd_incoming_axe_hit_ground", "snd_incoming_knife_hit_ground", "snd_incoming_bullet_hit_ground",
+	"snd_outgoing_arrow_hit_ground", "snd_outgoing_bolt_hit_ground", "snd_outgoing_javelin_hit_ground",
+	"snd_outgoing_stone_hit_ground", "snd_outgoing_axe_hit_ground", "snd_outgoing_knife_hit_ground",
+	"snd_outgoing_bullet_hit_ground", "snd_draw_sword", "snd_put_back_sword", "snd_draw_greatsword",
+	"snd_put_back_greatsword", "snd_draw_axe", "snd_put_back_axe", "snd_draw_greataxe", "snd_put_back_greataxe",
+	"snd_draw_spear", "snd_put_back_spear", "snd_draw_crossbow", "snd_put_back_crossbow", "snd_draw_revolver",
+	"snd_put_back_revolver", "snd_draw_dagger", "snd_put_back_dagger", "snd_draw_bow", "snd_put_back_bow",
+	"snd_draw_shield", "snd_put_back_shield", "snd_draw_other", "snd_put_back_other", "snd_body_fall_small",
+	"snd_body_fall_big", "snd_horse_body_fall_begin", "snd_horse_body_fall_end", "snd_shield_broken", "snd_hide",
+	"snd_unhide", "snd_neigh", "snd_gallop", "snd_battle", "snd_arrow_hit_body", "snd_blunt_hit",
+	"snd_player_hit_by_arrow", "snd_horse_walk", "snd_horse_trot", "snd_horse_canter", "snd_horse_gallop",
+	"snd_horse_breath", "snd_horse_snort", "snd_block_fist", "snd_hit_wood_wood", "snd_hit_metal_metal",
+	"snd_hit_wood_metal", "snd_shield_hit_wood_wood", "snd_shield_hit_metal_metal", "snd_shield_hit_wood_metal",
+	"snd_shield_hit_metal_wood", "snd_metal_hit_low_armor_low_damage", "snd_metal_hit_low_armor_high_damage",
+	"snd_metal_hit_high_armor_low_damage", "snd_metal_hit_high_armor_high_damage",
+	"snd_wooden_hit_low_armor_low_damage", "snd_wooden_hit_low_armor_high_damage",
+	"snd_wooden_hit_high_armor_low_damage", "snd_wooden_hit_high_armor_high_damage", 0
+};
+const char* g_script_names[] =   // 0x5a9ea0 (the 28 script-code names)
+{
+	"game_start", "game_event_party_encounter", "game_event_simulate_battle", "game_get_item_buy_price_factor",
+	"game_get_item_sell_price_factor", "game_event_buy_item", "game_event_sell_item", "game_get_troop_wage",
+	"game_get_total_wage", "game_get_join_cost", "game_get_prisoner_price", "game_check_prisoner_can_be_sold",
+	"game_event_detect_party", "game_event_undetect_party", "game_get_statistics_line", "game_get_date_text",
+	"game_get_money_text", "game_get_party_companion_limit", "game_get_party_prisoner_limit",
+	"game_get_item_extra_text", "game_on_disembark", "game_context_menu_get_buttons",
+	"game_event_context_menu_button_clicked", "game_get_skill_modifier_for_troop",
+	"game_reset_player_party_name", "game_check_party_sees_party", "game_get_party_speed_multiplier",
+	"game_event_battle_end"
+};
+
 // @ 0x4bdb60
 void loaded_psys_table::load_used()
 {
-    extern const char* g_psys_names[];                  // 0x5a9c60 (11 names to 0x5a9c8c)
     for (int k = 0; k < 11; k++) {
         int found = -1;
         int i = 0;
@@ -1431,7 +1491,7 @@ void loaded_psys_table::load_used()
             off += 0xc0;
         }
         if (found == -1)
-            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP Particle System CODE: ").w_cstr(g_psys_names[k]).w_cstr(g_eol);
+            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP Particle System CODE: ").w_cstr(g_psys_names[k]).w_cstr("\n");
         used[k] = found;
     }
 }
@@ -1503,7 +1563,6 @@ void prsnt_record::load_extras(stream_base& a)
 // @ 0x4bdec0
 void loaded_prsnt_table::load_used()
 {
-    extern const char* g_prsnt_names[];                 // 0x5a9c8c (3 names to 0x5a9c98)
     for (int k = 0; k < 3; k++) {
         int found = -1;
         int i = 0;
@@ -1517,7 +1576,7 @@ void loaded_prsnt_table::load_used()
             off += 0x24;
         }
         if (found == -1)
-            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP GAME PRESENTATION CODE: ").w_cstr(g_prsnt_names[k]).w_cstr(g_eol);
+            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP GAME PRESENTATION CODE: ").w_cstr(g_prsnt_names[k]).w_cstr("\n");
         used[k] = found;
     }
 }
@@ -1613,7 +1672,6 @@ void sound_record::load(stream_base& a)
 // @ 0x4be270
 void loaded_snd_table::load_used()
 {
-    extern const char* g_snd_names[];                   // 0x5a9ca8 (0x7d names to 0x5a9e9c)
     for (int k = 0; k < 0x7d; k++) {
         int found = -1;
         int i = 0;
@@ -1627,7 +1685,7 @@ void loaded_snd_table::load_used()
             off += 0x98;
         }
         if (found == -1)
-            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP SOUND CODE: ").w_cstr(g_snd_names[k]).w_cstr(g_eol);
+            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP SOUND CODE: ").w_cstr(g_snd_names[k]).w_cstr("\n");
         used[k] = found;
     }
 }
@@ -1689,7 +1747,6 @@ rec_table::rec_table()
 // @ 0x4be560
 void rec34_table::load_used()
 {
-    extern const char* const g_script_names[];          // 0x5a9ea0 (the 28 script-code names)
     for (int k = 0; k < 28; ++k) {
         int found = -1;
         int i = 0;
@@ -1698,7 +1755,7 @@ void rec34_table::load_used()
                 found = i;
         }
         if (found == -1)
-            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP GAME SCRIPT CODE: ").w_cstr(g_script_names[k]).w_cstr(g_eol);
+            ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP GAME SCRIPT CODE: ").w_cstr(g_script_names[k]).w_cstr("\n");
         used[k] = found;
     }
 }

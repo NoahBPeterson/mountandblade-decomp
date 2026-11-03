@@ -473,7 +473,6 @@ struct RenderConfig {                                   // game/config/config.h 
 };   // the methods are Config's init_defaults 0x4bc020 / load_file 0x4bbf70 and rgl_config::save 0x415fb0 (called through casts in gui_edit.cpp)
 
 extern tstring g_skin_name;                             // 0x5fe888 (the skin name; buf at 0x5fe88c)
-extern int g_trial_mode;                             // 0x5e29c4 (show the download button)
 extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb_skin_%s.smf")
 extern char g_rgl_name[];                               // 0x54b048 ("rgl_config.txt")
 extern const char g_mode_rb[];                          // 0x54a8fc ("rb")
@@ -655,7 +654,6 @@ void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/st
 // ============================================================================================================
 // ---- the tableau-code names (0x5a9c98; three const char* in a row) ------------------------------------
 extern const char* g_conv_names[3];                          // 0x5a9c98
-extern const char g_empty_b[];                               // 0x54b118 (an empty string literal)
 
 // ---- the layout record (conv_rec) and its pieces -------------------------------------------------------
 // +0x1c is a std::vector-like triple of pointers into an array of 0x68-byte entries.

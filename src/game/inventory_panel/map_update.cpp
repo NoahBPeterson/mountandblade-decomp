@@ -25,6 +25,7 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 
 // ---------------------------------------------------------------------------------- small engine types --
 #include "../tstring.h"
+#include "../strat/gui_manager.h"            // g_gui.mouse (0x5d7094 / 0x5d7098)
 
 #include "../str_table.h"
 #include "../world.h"                          // world (= Level): the scene object g_level points to
@@ -125,8 +126,6 @@ static inline Party* party_at(GameData* g, int id)
 
 // --------------------------------------------------------------------------------- globals -------------
 extern world*    g_level;                    // 0xa732b4
-extern float     g_mouse_x;                  // 0x5d7094 (float: ?g_mouse_x@@3MA)
-extern float     g_mouse_y;                  // 0x5d7098
 extern int       g_a17458;                   // 0xa17458
 extern int       g_5a9fbc;                   // 0x5a9fbc
 
@@ -144,8 +143,8 @@ void MapPanel::update_target()
         float h  = (g_box_y + mx.y) - (g_box_y + mn.y);
         float x0 = g_box_x + mn.x;
         float y0 = g_box_y + mn.y;
-        float dx = g_mouse_x - x0;
-        float dy = g_mouse_y - y0;
+        float dx = g_gui.mouse[0] - x0;
+        float dy = g_gui.mouse[1] - y0;
         g_game->cur_label = -1;
 
         // The original tests the band with `test ah,1; jne` (C0 = less-than *or* unordered), so a NaN

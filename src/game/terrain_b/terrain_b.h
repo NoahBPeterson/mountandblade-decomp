@@ -42,7 +42,6 @@ struct mesh_flip : rgl::mesh {
 // ---- globals ---------------------------------------------------------------------------------------------------------
 extern __int64 g_ticks[];                       // 0x5e2948 clock table, 1e-5 s ticks (the slices' g_time / g_ticks)
 extern int g_use_shaders;                       // 0x5e28fc programmable pipeline in use / detail resources present
-extern int g_mesh_quality;                      // 0x5aa084 (2 = high detail; shader quality)
 extern ptype* g_ptypes;                         // 0x5e28f8 particle / prop type table
 #include "../shadow_map.h"
 extern CellGrid* g_level;                       // 0xa732b4

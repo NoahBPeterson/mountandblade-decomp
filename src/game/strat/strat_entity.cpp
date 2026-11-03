@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #define GM_RGL_NS                 // gui_manager.h: the scene / mesh stand-ins in namespace rgl (the defined symbols)
 #include <math.h>
+#include "../../rgl/options.h"   // g_options
 #include <stdlib.h>
 #include "./strat_ext.h"       // (listed directly: the resolution audit scans only the source's own includes)
 #include "./strat_entity.h"
@@ -31,7 +32,7 @@ void StratEnt::render(scene* sc, render_info* out)
         if (fx)
             fx->draw(sc, &pos, &f144);
         ((rgl::entity*)this)->rgl::entity::render((rgl::scene*)sc, out);
-        if ((sc->mask & 1) && (mode & 3) && g_shadows_on) {
+        if ((sc->mask & 1) && (mode & 3) && g_options.i28) {
             Light* l = ctx->first_dir_light();
             if (l && !(l->flags & 2)) {
                 bool a = f160 * f294 > 0.05f;

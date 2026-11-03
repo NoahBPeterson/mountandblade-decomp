@@ -1061,7 +1061,7 @@ void ResultWindow::slot_empty_2()
         vt(box38)->d03();
         { struct { int a, b; } ret; vt(box38)->d41(&ret, &s54); }
         box38->f180 = 1;
-        g_gui.f10 = (int)box38;
+        g_gui.ui_active = box38;
         vt(win)->d50(box38);
     } else if (w04 == 2) {
         b3c = new_long_button(win, &s78, 0.03f, 0.085f, 0.045f);
@@ -2328,7 +2328,7 @@ void OptionsWin::init()
         DD_ITEM(shadow_quality, "ui_m_ultra_high2")
         DD_ITEM(shadow_quality, "ui_m_high2")
         DD_ITEM(shadow_quality, "ui_m_low2")
-        vt(shadow_quality)->d11(2 - g_cfg.unk6c);   // 0x5aa004
+        vt(shadow_quality)->d11(2 - g_cfg.shadow_quality_req);   // 0x5aa004
     }
 
     days = make_slider((MissionUi*)window, 0.56f, 0.545f, 1.0f);

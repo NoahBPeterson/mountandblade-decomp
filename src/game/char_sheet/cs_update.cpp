@@ -1,6 +1,8 @@
 #include "./cs_update.h"
+#include "../game_globals.h"   // g_trial_mode (canonical)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../window_mgr.h"      // g_windows (0xa73980): the menu / army screens are its slots 29 (0xa739f4) and 24 (0xa739e0)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -129,8 +131,8 @@ void CharSheet::update(float dt)
         step = -1;
 
     if (f_2dc == 0) {
-        if (window_slot<Profile>(1)->troop != -1) {
-            g_game->fb4 = window_slot<Profile>(1)->troop;
+        if (slot_as<Profile>(1)->troop != -1) {
+            g_game->fb4 = slot_as<Profile>(1)->troop;
             f_2dc++;
             menu_choose(0xf);
             return;
@@ -147,7 +149,7 @@ void CharSheet::update(float dt)
         if (f_42c->changed(0x10000)) {
             f_2dc = -1;
             ((TroopEq*)&g_game->chars[g_game->player])->auto_equip(-1, 0, 0, 0);
-            g_menu_state[5] = f_14;
+            slot_as<int>(29)[5] = f_14;
             menu_choose(0x1d);
             return;
         }
@@ -169,14 +171,14 @@ void CharSheet::update(float dt)
             return;
         }
         if (f_52c != 0 && f_4cc != 0 && f_4cc->changed(0x10000)) {
-            g_menu_state[5] = f_14;
-            g_menu_state[6] = 0xf;
+            slot_as<int>(29)[5] = f_14;
+            slot_as<int>(29)[6] = 0xf;
             menu_choose(0x1d);
             return;
         }
         if (f_440 != 0 && f_440->changed(0x10000)) {
-            g_army_state[5] = f_14;
-            g_army_state[6] = 0xf;
+            slot_as<int>(24)[5] = f_14;
+            slot_as<int>(24)[6] = 0xf;
             menu_choose(0x18);
             return;
         }

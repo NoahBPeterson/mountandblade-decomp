@@ -395,12 +395,7 @@ struct SceneBaseCtor {                                          // the scene bas
 
 // ---- the window manager (g_windows 0xa73980: 30 screen objects, the open-screen deque at +0x78) --------------------------------
 #include "../screen_obj.h"                                    // ScreenObj: the vtable view of a screen (slot 0 = deleting destructor)
-struct WindowMgrW {
-    ScreenObj* arr[30];                                         // +0x00
-    std::deque<int> dq;                                         // +0x78 (allocator word at +0x78; map at +0x7c)
-    void open(int window);                                      // 0x494260 (ret 4)
-    void set_state(int state);                                  // 0x495700 (ret 4)
-};
+#include "../window_mgr.h"                                   // WindowMgrW g_windows (0xa73980)
 struct GlobVec {                                                // the running presentation's list holder (global 0x5e299c)
     int f0;
     void* first;                                                // +4
@@ -529,5 +524,4 @@ struct CellGrid {
     void init(const float* lo, const float* hi, int dimx, int dimy);   // 0x478830
 };
 
-extern WindowMgrW g_windows; // 0xa73980
 #endif // GAME_WORLD_DATA_H

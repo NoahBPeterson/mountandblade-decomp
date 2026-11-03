@@ -18,8 +18,7 @@ struct ScriptState;
 extern ScriptState g_script;                        // 0xa70440 (seen through VarTable below)
 extern int g_cur_opcode;                            // 0x5e25a0
 extern int g_cur_param;                             // 0x5e2590
-struct Config;
-extern Config g_cfg;                        // 0x5a9f98 (config.h cannot be included here)
+#include "../config/config_block.h"           // Config g_cfg (0x5a9f98)
 extern int g_lineno;                                // 0x5e2598  script line number
 // report(msg) (0x49cc60): a file-static of the original translation unit (msg in ecx); camera.cpp has a local copy of
 // src/game/script/script_interpreter.cpp's definition, as for check_party (0x49d160).

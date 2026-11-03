@@ -7,6 +7,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./map_editor.h"
 #include "../editor_entity.h"     // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -201,8 +202,8 @@ refresh_list:
         ed_selected(g_game) = -1;
         ed_sel_list(g_game).resize(0, 0);
         g_editor_dialog.update_objects();
-        pick_entity((GuiCtx*)(void*)window_slot<EditorEntity>(14));   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
-        window_slot<EditorEntity>(14)->f2f9 = 1;
+        pick_entity((GuiCtx*)(void*)slot_as<EditorEntity>(14));   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
+        slot_as<EditorEntity>(14)->f2f9 = 1;
         SetFocus(g_editor_hwnd);
     }
 

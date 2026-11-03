@@ -36,6 +36,26 @@ distribution.
 
 //#define DEBUG_PARSER
 
+const char* TiXmlBase::errorString[ TIXML_ERROR_STRING_COUNT ] =   // 0x5a9070
+{
+	"No error",
+	"Error",
+	"Failed to open file",
+	"Memory allocation failed.",
+	"Error parsing Element.",
+	"Failed to read Element name",
+	"Error reading Element value.",
+	"Error reading Attributes.",
+	"Error: empty tag.",
+	"Error reading end tag.",
+	"Error parsing Unknown.",
+	"Error parsing Comment.",
+	"Error parsing Declaration.",
+	"Error document empty.",
+	"Error null (0) or unexpected EOF found in input stream.",
+	"Error parsing CDATA."
+};
+
 // Note tha "PutString" hardcodes the same list. This
 // is less flexible than it appears. Changing the entries
 // or order will break putstring.

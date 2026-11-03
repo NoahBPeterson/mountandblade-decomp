@@ -51,8 +51,6 @@ extern float g_f591334;        // 0x591334 (20.0f)
 extern float g_f590c74;        // 0x590c74 (0.08f)
 extern float g_f59190c;        // 0x59190c (0.92f)
 extern float g_f54a6d0;        // 0x54a6d0 (1e-5f)
-extern float g_f590c90;        // 0x590c90 (40.0f)
-extern float g_f590d94;        // 0x590d94 (0.6f)
 extern float g_f591908;        // 0x591908 (0.0027f)
 extern float g_f54b660;        // 0x54b660 (0.0001f)
 extern float g_f54b8b0;        // 0x54b8b0 (1.5f)
@@ -451,7 +449,7 @@ void MissileU::update(float dt)
         pb.x = ms_->view.o.x - pos.x;
         pb.y = ms_->view.o.y - pos.y;
         pb.z = ms_->view.o.z - pos.z;
-        if (pb.normalize() < g_f590c90) {
+        if (pb.normalize() < 40.0f) {
             int m = mode;
             int snd = -1;
             if (m == 1 || m == 3 || (m == 0 && shooter == (unsigned)ms_->player_id)) {
@@ -468,7 +466,7 @@ void MissileU::update(float dt)
                     else snd = (-(unsigned)(m != 1) & 7) + 0x3c;
                 }
             }
-            if (sound >= 0 && (float)g_ticks[0] * g_f54a6d0 - g_f590d94 < sound_t)
+            if (sound >= 0 && (float)g_ticks[0] * g_f54a6d0 - 0.6f < sound_t)
                 FSOUND_StopSound(sound);
             if (snd >= 0)
                 g_sound_mgr.play(g_sound_ids[snd], 0, &pos.x, 1.0f, 0);

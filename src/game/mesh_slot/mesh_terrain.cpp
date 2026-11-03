@@ -15,7 +15,7 @@ using namespace rgl;
 int rand();                            // 0x536a9f rand()
 void seed_rng(unsigned s);              // 0x536a92 srand
 extern unsigned __int64 g_bit[]; // 0x5a8e68
-extern char g_cfg[]; // 0x5a9f98
+#include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 
 // Naming note: the slices called the +0x278 extent `h` and the +0x27c extent `w`; terrain_a/terrain.h has them the other
 // way round (w = last cell index in x, h = last in y). The terrain cell of terrain_a/terrain.h is the record these
@@ -464,7 +464,7 @@ void TerrainX::generate(int seed, int* objs, char flag)
     ((terrain_obj*)this)->erode();
 
     if (objs != 0 && flag) {
-        if ((*(int*)((char*)&g_cfg + 0x18)))
+        if (g_cfg.enable_edit_mode)
             fill_desc_named((TerrainDesc*)objs);
         else
             fill_desc_none((TerrainDesc*)objs);

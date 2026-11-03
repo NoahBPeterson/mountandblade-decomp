@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <stddef.h>
 // Slice s00507400: the character sheet's window builder (0x507400).
 //
@@ -186,13 +187,8 @@ struct TutorialMenuRec {                        // the menu record the holder's 
     char pad54[0x68 - 0x54];
     tstring b;                                  // +0x68
 };
-// 0xa73980 is the menu holder object itself; its first dword points at the menu the tutorial
-// branch fills in (tstrings at +0x1c and +0x68, the three ints at +4/+0x4c/+0x50).
-struct WindowMgrW {
-    TutorialMenuRec* target;                    // +0
-    void open(int v);                           // 0x494260
-};
-extern WindowMgrW g_menu;                   // 0xa73980
+// 0xa73980 is the window manager (window_mgr.h); its slot 0 is the menu the tutorial branch fills in
+// (tstrings at +0x1c and +0x68, the three ints at +4/+0x4c/+0x50).
 
 // the character window's methods (src/game/inventory_panel/char_window.cpp) run on this same object
 struct char_window {
@@ -752,20 +748,20 @@ void CharSheet::init()
         tstring k3("ui_question_saving_policy");
         const char* nonreal = g_strtable.lookup(k1)->c_str();
         const char* real = g_strtable.lookup(k2)->c_str();
-        window_slot<char_window>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
-        g_menu.open(1);
+        slot_as<char_window>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
+        g_windows.open(1);
         return;
     } else if (mode == 1) {
         tstring k1("ui_tutorial_character_generation");
         tstring k2("ui_tutorial");
         tstring* gen = g_strtable.lookup(k1);
         tstring* tut = g_strtable.lookup(k2);
-        TutorialMenuRec* m = g_menu.target;
+        TutorialMenuRec* m = slot_as<TutorialMenuRec>(0);
         m->b = *tut;
         m->a = *gen;
         m->f4c = 0;
         m->f50 = 0;
         m->f4 = 0;
-        g_menu.open(0);
+        g_windows.open(0);
     }
 }

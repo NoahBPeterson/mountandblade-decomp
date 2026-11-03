@@ -5,6 +5,7 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
+#include "../window_mgr.h"      // g_windows slot 21 (0xa739d4)
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
 #include "../config/config.h"
 #include "../config/widget_mgr.h"
@@ -245,7 +246,7 @@ static __forceinline float config_value(int i)
 // @ 0x4e4790
 void SaveWindow::init()
 {
-    is_load = (*(int*)(*(char**)&orig::g_a739d4 + 0x18) == 5);
+    is_load = (*(int*)(slot_as<char>(21) + 0x18) == 5);
     g_gui.reset();
 
     NEW_OVERLAY_WINDOW(w)

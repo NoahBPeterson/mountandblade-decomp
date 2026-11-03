@@ -679,7 +679,7 @@ void music_set::load(stream_base* s, int load_samples, const tstring* dir)
             int ch = (recs[i].level >> 4) & 0xf;
             if (ch == 0)
                 ch = 5;
-            FSOUND_Sample_SetDefaults(smp, -1, -1, -1, (int)((float)ch * g_590b60 * g_54ab2c));
+            FSOUND_Sample_SetDefaults(smp, -1, -1, -1, (int)((float)ch * 250.0f * g_54ab2c));
             int len = FSOUND_Sample_GetLength(recs[i].sample);
             FSOUND_Sample_GetDefaults(recs[i].sample, &recs[i].freq, 0, 0, 0);
             recs[i].ratio = (float)len / recs[i].freq;

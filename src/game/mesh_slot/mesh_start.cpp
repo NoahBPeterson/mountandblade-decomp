@@ -262,7 +262,7 @@ extern int        g_ptype_count;    // 0x5e29e8
 extern int        g_use_shaders;   // 0x5e28fc
 extern char g_script[]; // 0xa70440
 extern Scene*     g_level;        // 0xa732b4
-extern char g_cfg[]; // 0x5a9f98
+#include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 extern unsigned __int64 g_bit[]; // 0x5a8e68
 extern unsigned   g_rand_seed;    // 0x5d7078
 
@@ -794,7 +794,7 @@ void Mission::start_setup()
     for (pi = 0; pi < (int)props.size(); ) {
         Rec1c8* p = &at<Rec1c8*>(0x668c)[pi];
         RAWAT(int, p, 0x1b4) = 0;
-        if ((*(int*)((char*)&g_cfg + 0x18)) == 0 && RAWAT(int, p, 0x188) == 4 && LV.flags.b8) {
+        if (g_cfg.enable_edit_mode == 0 && RAWAT(int, p, 0x188) == 4 && LV.flags.b8) {
             int j;
             for (j = 0; j < g_ptype_count; j++)
                 if (((tstring*)(g_ptypes + j * 0x20))->equals(RAWAT(tstring, p, 0x190)))   // 0x4866c0: add esi, 0x20

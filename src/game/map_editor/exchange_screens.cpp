@@ -10,6 +10,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../game_globals.h"   // g_trial_mode (canonical)
 #include <stdlib.h>
 #include <math.h>
 #include "./exchange_screens.h"
@@ -159,18 +160,18 @@ void XferWin::update(int)
     char commit_out[4];
 
     if (f94 != 0 && f94->f_f4 < f90->f_f4) {
-        if (g_mouse_x < g_half) {
+        if (g_gui.mouse[0] < g_half) {
             f94->src->on_value_changed((float)g_mission_clock);
             f94->src->set_key_flags(0x10000);
             goto after_scroll;
         }
     } else {
-        if (g_mouse_x < g_half && f8c8 == 2)
+        if (g_gui.mouse[0] < g_half && f8c8 == 2)
             extra = 1;
     }
 
     slot = 0x26 + extra * 2;
-    if (g_mouse_y < g_033)
+    if (g_gui.mouse[1] < g_033)
         slot += 1;
     if (g_mission_clock != 0) {
         TargetW** pt = &((TargetW**)this)[slot];
@@ -707,7 +708,7 @@ void EventScreen::on_event(int code)
     int local = -1;
 
     if (g_mission_clock != 0) {
-        if (g_mouse_y < 0.3f) {
+        if (g_gui.mouse[1] < 0.3f) {
             ValueSource* vs = *(ValueSource**)((char*)F(this, 0xec, void*) + 0x484);
             vs->set_value(anim_value(vs));
             ValueSource* vs2 = *(ValueSource**)((char*)F(this, 0xec, void*) + 0x484);
@@ -986,7 +987,7 @@ void ChoiceList::get3(int* a, int* b, int* c)
 void InputScreen::on_input(int code)
 {
     if (g_mission_clock != 0) {
-        if (g_mouse_x < 0.7f
+        if (g_gui.mouse[0] < 0.7f
             && F(W(this, 0x4c), 0xf4, float) < F(W(this, 0x44), 0xf4, float)) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x4c) + 0x484);
             vs->on_value_changed((float)g_mission_clock);

@@ -20,8 +20,8 @@ void CamView::update(float dt)
         zoom = dt * 2.1f + zoom;
     if (g_a17454) {
         if (g_a17854 == 0 &&
-            g_5d7094 < *(float*)(target + 0xf0) &&
-            g_5d7098 > *(float*)(target + 0xe4))
+            g_gui.mouse[0] < *(float*)(target + 0xf0) &&
+            g_gui.mouse[1] > *(float*)(target + 0xe4))
             follow = 1;
         if (g_a17454)
             goto check_follow;

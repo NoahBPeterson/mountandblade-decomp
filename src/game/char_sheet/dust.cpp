@@ -1,4 +1,5 @@
 #include "./dust.h"
+#include "../../rgl/options.h"   // g_options
 
 // @ 0x4f3e10
 void DustTerrain::update_particles(const matrix* view)
@@ -152,7 +153,7 @@ void DustTerrain::emit_cell(int x, int y)
             fr->xy = t;
         }
     }
-    if (g_use_shaders == 0 || g_x5aa084 != 2) {
+    if (g_use_shaders == 0 || g_options.i7c != 2) {
         for (int i = 0; i < dust_count; i++) {
             DustParticle* p = &dust[i];
             int ix = (int)(p->frame.o.x * g_k_1_20);

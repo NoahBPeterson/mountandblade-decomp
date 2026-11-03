@@ -164,8 +164,8 @@ char gui_window::mouse_event(unsigned mask)
             widget* c = *it;
             if ((c->flags & 3) == 0) {
                 bool inside = false;
-                if (c->x_lo + c->x0 <= g_mouse_x && g_mouse_x < c->x1 + c->x0 &&
-                    c->y_lo + c->y0 <= g_mouse_y && g_mouse_y < c->y1 + c->y0)
+                if (c->x_lo + c->x0 <= g_gui.mouse[0] && g_gui.mouse[0] < c->x1 + c->x0 &&
+                    c->y_lo + c->y0 <= g_gui.mouse[1] && g_gui.mouse[1] < c->y1 + c->y0)
                     inside = true;
                 if (!(mask & 4) && inside) {
                     if (c->hover) {
@@ -185,8 +185,8 @@ char gui_window::mouse_event(unsigned mask)
             widget* c = children[i];
             r = 0;
             if ((c->flags & 3) == 0) {
-                if (c->x0 + c->x_lo <= g_mouse_x && g_mouse_x < c->x0 + c->x1 &&
-                    c->y0 + c->y_lo <= g_mouse_y && g_mouse_y < c->y0 + c->y1)
+                if (c->x0 + c->x_lo <= g_gui.mouse[0] && g_gui.mouse[0] < c->x0 + c->x1 &&
+                    c->y0 + c->y_lo <= g_gui.mouse[1] && g_gui.mouse[1] < c->y0 + c->y1)
                     r = c->on_event(mask);
             }
         }
@@ -213,7 +213,7 @@ void gui_manager::reset()
     f1714 = 1;
     fb0ac = 0;
     f514 = 0.75f;
-    f10 = 0;
+    ui_active = 0;
     t0.rewind();
     t1.rewind();
     t2.rewind();
@@ -270,7 +270,8 @@ gui_manager::gui_manager()
     reset();
     f16e0 = f1718 = -1;
     p24 = pair2(0, 0);
-    p14 = pair2(0, 0);
+    mouse[0] = 0;
+    mouse[1] = 0;
     p2c = pair2(0, 0);
     f560 = 1;
     o564 = 0;

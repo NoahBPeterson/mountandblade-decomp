@@ -10,8 +10,7 @@
 #include "../../include/image_addrs.h"
 #include "../tstring.h"
 #include "./ui_widgets_c.h"
-struct gui_manager;
-extern gui_manager g_gui;                   // 0x5d7080 (f1718 = last keyboard character; strat/gui_manager.h clashes with the mesh stubs here)
+#include "../strat/gui_manager.h"             // gui_manager g_gui (0x5d7080): f1718 = last keyboard character, ui_active, mouse
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/keyframes.h"
 #include "../../include/mat4.h"
@@ -104,7 +103,7 @@ char UiE::key(unsigned p)
             char buf[0x2000];
             int out_len[2];
             b = 1;
-            int ch = (*(int*)((char*)&g_gui + 0x1718));
+            int ch = g_gui.f1718;
             int maxn = 0x800;
             decode_utf8(&name, out_len, (int*)buf, &maxn);
             if (ch >= 0x20 && out_len[0] < f184) {
@@ -138,20 +137,20 @@ char UiE::key(unsigned p)
                 }
                 get_xy((float*)out_len);
             }
-            if ((*(int*)((char*)&g_gui + 0x1718)) == 0xd)
+            if (g_gui.f1718 == 0xd)
                 goto leave_edit;
         } else if (p == 0x10) {
 leave_edit:
             f180 = 0;
             b = 1;
-            g_ui_active = 0;
+            g_gui.ui_active = 0;
             ::play_sound(&g_ui_sound);
             set_key_flags(0x10000);
         }
     } else if (p == 0x10) {
         f180 = 1;
         b = 1;
-        g_ui_active = this;
+        g_gui.ui_active = this;
         ::play_sound(&g_ui_sound);
         if (f181) {
             {

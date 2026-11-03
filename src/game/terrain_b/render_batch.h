@@ -24,8 +24,6 @@ using rgl::vertex60;
 
 // ---- globals ------------------------------------------------------------------------------------------------
 extern __int64 g_ticks[];                   // 0x5e2948 clock table (1e-5 s ticks)
-extern int g_mesh_quality;                  // 0x5aa084 (2: shader quality / mode)
-extern int g_x5aa034;                       // 0x5aa034
 
 using rgl::unpack_color;                    // 0x40e4e0 (cdecl)
 

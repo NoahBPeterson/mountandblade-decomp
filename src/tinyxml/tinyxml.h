@@ -281,7 +281,7 @@ protected:
 								bool ignoreCase,
 								TiXmlEncoding encoding );       // 0x42fbc0
 
-	static const char* errorString[ TIXML_ERROR_STRING_COUNT ];  // 0x5a9070 (tinyxmlerror.cpp: data only)
+	static const char* errorString[ TIXML_ERROR_STRING_COUNT ];  // 0x5a9070 (defined in tinyxmlparser.cpp)
 
 	TiXmlCursor location;
 

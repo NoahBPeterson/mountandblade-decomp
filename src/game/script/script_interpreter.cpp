@@ -21,6 +21,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include "./script_interpreter.h"
+#include "../../include/msg_log.h"          // MsgLog: the UI root view with the pointer position
+extern MsgLog g_gui;                          // 0x5d7080 (g_gui.mouse: 0x5d7094 / 0x5d7098)
 // the shared headers it builds on (included again here so their address annotations are read with this file)
 #include "../dialog_manager.h"
 #include "../agent/agent.h"
@@ -595,7 +597,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_register((int)params[0])) {
             sf_0 = 0;
             sv4_0;
-            script_pos((int)params[0]).o = sv4_0.set(g_mouse_x, g_mouse_y, sf_0);
+            script_pos((int)params[0]).o = sv4_0.set(g_gui.mouse[0], g_gui.mouse[1], sf_0);
         }
         break;
     case op::get_global_cloud_amount:

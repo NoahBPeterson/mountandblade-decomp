@@ -8,6 +8,7 @@
 // r_int (0x415930) -> mb_parse_int (0x4159a0), material::load -> stage_t::load (0x4169a0 -> 0x416ad0) and
 // material::save -> stage_t::save are callees emitted after their first caller (header-inline functions).
 #include <windows.h>
+#include "../../game/config/config_block.h"   // g_cfg
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <stdio.h>
@@ -304,14 +305,14 @@ int texture::load(int check_exists, rgl::string* root)
     if (!loaded) {
         if (!kind) {
             int skip = 0;
-            if (g_texture_detail >= 25) {
+            if (g_cfg.texture_detail >= 25) {
                 int h = noise_hash(f1c);
-                if ((float)(h & 0xf) * 0.0625f < (100.0f - (float)g_texture_detail) * 0.013333334f)
+                if ((float)(h & 0xf) * 0.0625f < (100.0f - (float)g_cfg.texture_detail) * 0.013333334f)
                     skip = 1;
             } else {
                 skip = 1;
                 int h = noise_hash(f1c);
-                if ((float)(h & 0xf) * 0.0625f < (25.0f - (float)g_texture_detail) * 0.04f)
+                if ((float)(h & 0xf) * 0.0625f < (25.0f - (float)g_cfg.texture_detail) * 0.04f)
                     skip = 2;
             }
             if (fl & 2)

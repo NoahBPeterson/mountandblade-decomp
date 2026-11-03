@@ -40,9 +40,7 @@ struct resmgr {
 #include "../render_batch.h"
 
 // ---- the options dialog's persistent values (0x4bf170 reads them, 0x4bee10 writes them back) -------------------------
-extern int g_opt_5aa0ac;    // 0x5aa0ac  first combo's selection (control 0x43e)
 extern int g_opt_5aa0b0;    // 0x5aa0b0  0x445
-extern int g_opt_5aa0b4;    // 0x5aa0b4  fps limit (10..999), edit control 0x448
 extern int g_opt_5aa0b8;    // 0x5aa0b8  0x444
 extern int g_opt_5aa0c0;    // 0x5aa0c0  0x44c
 extern int g_opt_5aa0c4;    // 0x5aa0c4  0x44a

@@ -38,7 +38,6 @@ extern GroundType g_ground_types[11];           // 0x8ed4df8 (beyond the annotat
 
 #include "../game_globals.h"   // canonical: g_bit (0x5a8e68)
 extern int g_use_shaders;                       // 0x5e28fc
-extern int g_terrain_gate;                      // 0x5aa03c
 extern unsigned g_river_mask_a;                 // 0x5e2580 (0x46bc70: flag bit of the river path)
 extern unsigned g_river_mask_b;                 // 0x5e2584
 extern const char* g_name_elevation;            // 0x5a9bf4 "ground_elevation"

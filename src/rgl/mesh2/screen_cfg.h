@@ -9,6 +9,7 @@
 #include <d3d9.h>
 #include "../../game/tstring.h"
 #include "../../game/strat/gui_manager.h"
+#include "../../game/window_mgr.h"
 
 // the render-device record's vtable
 struct dev_rec {
@@ -68,13 +69,12 @@ extern gui_manager g_gui;                        // 0x5d7080
 extern int g_windowed_setting;                   // 0xa17144
 extern int g_windowed_other;                     // 0xa17544
 
-struct screen_cfg {
+// the window manager (game/window_mgr.h, g_windows 0xa73980: 30 screen objects, then the request queue at +0x78) with the
+// apply step of this module; the screens are read as dev_item here
+struct screen_cfg : WindowMgrW {
     __declspec(noinline) void apply();           // 0x4ca600
-    dev_item* items[1];                          // +0x00: array of records, indexed by the queue
-    char pad4[0x74];
-    std::deque<int> req;                         // +0x78 the request queue (VC7.1 deque of 4-int blocks)
 };
-extern screen_cfg g_windows;                      // 0xa73980
+inline screen_cfg& windows_cfg() { return static_cast<screen_cfg&>(g_windows); }
 
 // a gadget with the current-mode flag at +0x0c and the name text at +0x24
 struct screen_gadget {

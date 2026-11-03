@@ -6,6 +6,7 @@
 // 0x42a090 is the TU map's (first byte of strategic_entity::render, whose class differs: low). No forward call or
 // shared literal ties 0x429740 / 0x429890 to the helpers before them, so the single object is kept.
 #include <vector>
+#include "../../game/config/config_block.h"   // g_cfg
 #include <new>
 #include "../rgl_string.h"
 #include "../rgl_math.h"
@@ -32,7 +33,6 @@ using namespace rgl;
 #include "../../include/logger.h"                       // Logger (shared with game/terrain_b/scene_file.h)
 extern char g_log_obj[];                                // 0x5a9f30 (a Logger)
 extern int g_log_on;                                    // 0x5a9fb0
-extern int g_simple_reflect;                            // 0x5a9fc4: the reflection pass renders only the backdrop entity
 
 namespace rgl {
 
@@ -255,7 +255,7 @@ void world::render_scene(scene* sc, bool reflect)
     sc->refl->reset();
     if (g_log_on)
         ((Logger*)g_log_obj)->get("RENDERING REFLECTIONS;");
-    if (!g_simple_reflect)
+    if (!g_cfg.fake_reflections)
         sc->refl->flags |= 0x200;
     matrix cam = sc->fr.m;
     cam.o.z = (info.depth + info.depth) - cam.o.z;
@@ -273,7 +273,7 @@ void world::render_scene(scene* sc, bool reflect)
     sc->refl->list = (const ptr_list&)lights;
     render_info rinfo;
     rinfo.valid = 0;
-    if (g_simple_reflect) {
+    if (g_cfg.fake_reflections) {
         if (sky)
             sky->render(sc->refl, &rinfo);
         return;

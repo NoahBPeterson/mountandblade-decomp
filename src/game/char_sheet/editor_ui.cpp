@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./editor_ui.h"
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -243,8 +244,8 @@ void __fastcall pick_entity(GuiCtx* self);   // 0x4ed8d0 (char_sheet/pick_entity
 // @ 0x4f6390
 void EditorApp::refresh_dialog()
 {
-    pick_entity((GuiCtx*)window_slot<EditorGame>(14));     // 0x4ed8d0 (char_sheet/pick_entity.cpp), not FaceGen::refresh
-    window_slot<EditorGame>(14)->f2f9 = 1;
+    pick_entity((GuiCtx*)slot_as<EditorGame>(14));     // 0x4ed8d0 (char_sheet/pick_entity.cpp), not FaceGen::refresh
+    slot_as<EditorGame>(14)->f2f9 = 1;
     SetFocus(hwnd);
 }
 

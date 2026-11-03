@@ -1178,16 +1178,16 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
             pi = o->f18c;
         if (pi >= 0 && pi < g_propkind_count) {
             MapPoint_s2fe40* p = &g_map_points_s2fe40[pi];
-            if ((*(int*)((char*)&g_cfg + 0x18)) != 0 || (p->flags & 0x4000) == 0)
+            if (g_cfg.enable_edit_mode != 0 || (p->flags & 0x4000) == 0)
                 *out = p->meshes;
         }
     } else if (kind == 1) {
-        if ((*(int*)((char*)&g_cfg + 0x18)) != 0)
+        if (g_cfg.enable_edit_mode != 0)
             name.assign("entry_arrow");
         else
             name.assign("");
     } else if (kind == 5) {
-        if ((*(int*)((char*)&g_cfg + 0x18)) != 0)
+        if (g_cfg.enable_edit_mode != 0)
             name.assign("_mesh_passage");
         else
             name.assign("");

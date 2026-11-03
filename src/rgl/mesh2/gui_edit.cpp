@@ -5,6 +5,7 @@
 // Migrated from slices s004c46d0, s004c5080, s004c5a20, s004c6330, s004c6ca0, s004c7290, s004c7bf0, s004c84f0,
 // s004c8ca0 and s004ca550 (0x4ca550).
 #include "../../include/image_addrs.h"
+#include "../../game/trial_mode.h"   // g_trial_mode (canonical)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./gui_edit.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -1582,7 +1583,7 @@ void __fastcall conv_map_codes(conv_rec* self)
         unsigned i = 0;
         do {
             if (begin == 0 || i >= (unsigned)((int)((char*)end - (char*)begin) / 0x68)) {
-                log_cstr("WARNING: UNABLE TO MAP GAME TABLEAU CODE: ").w_cstr(nm).w_cstr(g_empty_b);
+                log_cstr("WARNING: UNABLE TO MAP GAME TABLEAU CODE: ").w_cstr(nm).w_cstr("\n");
                 break;
             }
             if (((ConvItem16*)((char*)begin + i * 0x68))->name.equals(nm))
@@ -2091,13 +2092,13 @@ on:
         *flag = 1;
     if (text && box38)
         text->assign("");
-    g_windows.apply();
+    windows_cfg().apply();
     return;
 off:
     if (flag)
         *flag = 0;
     if (text && box38)
         *text = *(tstring*)((char*)box38 + 0x128);
-    g_windows.apply();
+    windows_cfg().apply();
 }
 

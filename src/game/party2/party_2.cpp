@@ -239,12 +239,9 @@ extern float g_k0_01;                               // 0x54a6f0
 extern float g_k15;                                 // 0x590da0
 extern float g_k0_7;                                // 0x54b3c8
 extern float g_k0_6;                                // 0x590d94
-extern float g_k1_2;                                // 0x590b94
-extern float g_k1_25;                               // 0x590c80
 extern float g_k1_05;                               // 0x590f24
 extern float g_k1;                                  // 0x549cdc
 extern float g_k0;                                  // 0x549ca8
-extern float g_k3;                                  // 0x54a710
 extern float g_k0_02;                               // 0x590cd0
 extern float g_k0_4;                                // 0x54b3b8
 
@@ -437,7 +434,7 @@ float Party::strength()
             b += s.count;
         }
     }
-    float v = ((float)a * g_k3 + (float)b) * g_k0_02 + g_k0_4;
+    float v = ((float)a * 3.0f + (float)b) * g_k0_02 + g_k0_4;
     if (v < g_k0) {
         return g_k0;
     }
@@ -498,12 +495,12 @@ float Troop::food_factor()
     unsigned __int64 f = flags30;
     if (f & 0x10) {
         if (f4e4 >= 0) {
-            return (nibble(0x18) * g_k0_04 + g_k1_25) * g_k6_9;
+            return (nibble(0x18) * g_k0_04 + 1.25f) * g_k6_9;
         }
         return (nibble(0x19) * g_k0_04 + g_k1_05) * g_k6_9;
     }
     if (f & 0x400) {
-        return (nibble(0x18) * g_k0_04 + g_k1_2) * g_k6_9;
+        return (nibble(0x18) * g_k0_04 + 1.2f) * g_k6_9;
     }
     return (nibble(0x19) * g_k0_04 + g_k1) * g_k6_9;
 }
@@ -656,9 +653,7 @@ int EventVec::size() const
 
 
 // ---- STL helper instances of the 0xc-byte open-list element and the 0x5c-byte event record --------------------------------
-extern float g_gk3;                                  // 0x54a710  3.0f
 extern float g_gk0_05a;                              // 0x549d74
-extern float g_gk0_05b;                              // 0x549d7c
 extern float g_gk0_03;                               // 0x549d70
 
 // @ 0x4b24b0
@@ -707,7 +702,7 @@ OpenItem* ElemCopier::fill_elems(OpenItem* first, OpenItem* last, OpenItem* dst)
 // @ 0x4b25c0
 float Party::map_speed()
 {
-    float v = (skill_level(0xd) * g_gk0_05b + 1.0f) * g_seeing_range;
+    float v = (skill_level(0xd) * 0.1f + 1.0f) * g_seeing_range;
     if (g_game->is_night()) {
         return v * 0.5f;
     }
@@ -841,7 +836,7 @@ void Party::set_order_party(int* t)
         float dy = pp->y - pos.y;
         float dz = pp->z - pos.z;
         moving = 0;
-        if (sqrtf(dx * dx + dy * dy + dz * dz) > g_gk3) {
+        if (sqrtf(dx * dx + dy * dy + dz * dz) > 3.0f) {
             f5988 = 1;
         }
     }

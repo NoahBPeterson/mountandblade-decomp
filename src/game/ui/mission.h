@@ -55,7 +55,6 @@ struct resmgr {
 };
 
 extern resmgr g_alloc;                       // 0x5d6fa0
-extern int g_day;                           // 0x5a9f9c (day / quality threshold: 0x19, 0x3c)
 
 struct Blob16 { int a, b, c, d; };
 struct Prop {

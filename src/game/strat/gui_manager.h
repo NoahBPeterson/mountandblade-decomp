@@ -47,8 +47,6 @@ struct mesh {
 using rgl::mesh;
 #endif
 
-extern float g_mouse_x;             // 0x5d7094 (mouse_event 0x42cf50)
-extern float g_mouse_y;             // 0x5d7098
 extern char  g_error_flag;          // 0x5d7070 (mb_error 0x42cc80)
 extern int   g_gui_counter;         // 0x5d7074 (bump_counter 0x42cb70)
 
@@ -102,8 +100,8 @@ struct pair2 {
 
 struct gui_manager {
     std::vector<gui_obj*> objs;     // +0      reset 0x42d1b0 (deletes the elements, erases the range)
-    int f10;                        // +0x10   reset
-    pair2 p14;                      // +0x14   ctor 0x42d5c0
+    void* ui_active;                // +0x10   reset; the slider / widget being dragged (g_ui_active 0x5d7090: ui_d_key, ui_slider_key, ui_widgets_c)
+    float mouse[2];                 // +0x14   ctor 0x42d5c0; the pointer position x, y (0x5d7094 / 0x5d7098: mouse_event 0x42cf50, the widgets' hit tests, the sliders' target)
     char pad1c[0x24 - 0x1c];
     pair2 p24;                      // +0x24   ctor
     pair2 p2c;                      // +0x2c   ctor
@@ -113,7 +111,10 @@ struct gui_manager {
     frustum y3f4;                   // +0x3f4  ctor: frustum::frustum 0x41ef60 (0x120 bytes)
     float f514;                     // +0x514  reset
     gui_timer t0, t1, t2;           // +0x518, +0x528, +0x538   ctor / reset
-    char pad548[0x560 - 0x548];
+    char pad548[0x550 - 0x548];
+    int view_y;                     // +0x550  update_view_rect 0x4bace0 (the 3D view's origin inside the window)
+    int view_x;                     // +0x554
+    char pad558[0x560 - 0x558];
     char f560;                      // +0x560  ctor
     char pad561[3];
     gui_obj* o564;                  // +0x564  set_o564 0x42cd80, reset, dtor 0x42d3e0

@@ -1,5 +1,6 @@
 #include "../../include/image_addrs.h"
 #include "./save_game.h"
+#include "../window_mgr.h"      // g_windows slots 18 (0xa739c8), 21 (0xa739d4)
 #include "../tstring.h"
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -16,7 +17,7 @@ void MapScreen::buttons(int arg)
     if (!f64->changed(0x10000)) {
         if (f74 == 0 || !f74->changed(0x10000)) {
             if (f68->changed(0x10000)) {
-                *(int*)(g_a739c8 + 0x18) = 5;
+                *(int*)(slot_as<char>(18) + 0x18) = 5;
                 g_main_menu.set_state(0x12);
                 return;
             }
@@ -27,7 +28,7 @@ void MapScreen::buttons(int arg)
                 return;
             }
             if (f70 != 0 && f70->changed(0x10000)) {
-                *(int*)(g_a739d4 + 0x18) = 5;
+                *(int*)(slot_as<char>(21) + 0x18) = 5;
                 g_main_menu.set_state(0x15);
                 return;
             }

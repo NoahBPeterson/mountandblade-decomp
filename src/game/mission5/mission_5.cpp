@@ -56,9 +56,9 @@ void Game_s25160::handle_event(int code)
     char* b = *(char**)&g_game;
     if (f1204 == *(int*)(b + 0x8c) || *(int*)(b + 0x1a23c) == 0)
         goto hide;
-    if (!(orig::g_mouse_x < *(float*)(f30 + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
+    if (!(((gui_manager*)g_gui)->mouse[0] < *(float*)(f30 + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
         goto hide;
-    if (!(*(float*)(f30 + 0xe4) + orig::k_0_1f < orig::g_mouse_y))
+    if (!(*(float*)(f30 + 0xe4) + 0.1f < ((gui_manager*)g_gui)->mouse[1]))
         goto hide;
     {
         f11e0->v45();
@@ -365,7 +365,7 @@ void ViewObj_s257f0::update()
               (m->o.z - G.z) * (m->o.z - G.z)) > 0.3f ||
         sqrtf((m->u.x - F.x) * (m->u.x - F.x) + (m->u.y - F.y) * (m->u.y - F.y) +
               (m->u.z - F.z) * (m->u.z - F.z)) > 0.1f) {
-        blend = blend - g_look_rate * g_step_tbl[2];
+        blend = blend - 4.0f * g_step_tbl[2];
     }
 
     float t = clamp01_s257f0(1.0f - blend);
@@ -474,10 +474,10 @@ void Screen_s261e0::tick(float dt)
         EnterCriticalSection(&g_mt_cs);
 
     // ---- key toggles (slow-motion / pause) ----------------------------------------------------------
-    if ((*(int*)((char*)&g_cfg + 0x24))) {
+    if (g_cfg.cheat_mode) {
         if ((((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[67] && !((int*)((char*)&g_keyboard + 0x40c))[67])
             f2e1 = (unsigned char)!f2e1;
-        if ((*(int*)((char*)&g_cfg + 0x24)) && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[87] && !((int*)((char*)&g_keyboard + 0x40c))[87])
+        if (g_cfg.cheat_mode && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[87] && !((int*)((char*)&g_keyboard + 0x40c))[87])
             f2e0 = (unsigned char)!f2e0;
     }
     if (f2e0)
@@ -486,7 +486,7 @@ void Screen_s261e0::tick(float dt)
         sdt = dt * 0.2f;
 
     // ---- scene time-scale blend --------------------------------------------------------------------
-    if ((*(int*)((char*)&g_cfg + 0x24))) {
+    if (g_cfg.cheat_mode) {
         Mission_s261e0* m = g_mission_s261e0;
         if (m->f6810 > 0.0f) {
             __int64 d = g_ticks[m->f6800] - *(__int64*)((char*)m + 0x6808);
@@ -526,7 +526,7 @@ void Screen_s261e0::tick(float dt)
     g_gui_s261e0.flush();
 
     // ---- no-camera position save -------------------------------------------------------------------
-    if ((*(int*)((char*)&g_cfg + 0x18)) && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[18] && !((int*)((char*)&g_keyboard + 0x40c))[18]) {
+    if (g_cfg.enable_edit_mode && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[18] && !((int*)((char*)&g_keyboard + 0x40c))[18]) {
         if (g_game_s261e0->f1a090 != 0) {
             restore_defaults();
             if (g_mt_inited) {
@@ -733,7 +733,7 @@ void Screen_s261e0::tick(float dt)
         if ((float)d * g_f54a6d0 > g_f590b38 && g_mission_s261e0->local_id >= 0) {
             f29c = 0;
             __int64 d2 = g_ticks[f2b8] - f2c0;
-            if ((float)d2 * g_f54a6d0 > g_f549d7c) {
+            if ((float)d2 * g_f54a6d0 > 0.1f) {
                 f_529ec0();
                 f2c0 = g_ticks[f2b8];
             }
@@ -798,7 +798,7 @@ void Screen_s261e0::tick(float dt)
         }
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x18)) && ((int*)((char*)&g_keyboard + 0xc))[56] && ((int*)((char*)&g_keyboard + 0xc))[38] == 0 && ((int*)((char*)&g_keyboard + 0x40c))[38] != 0)
+    if (g_cfg.enable_edit_mode && ((int*)((char*)&g_keyboard + 0xc))[56] && ((int*)((char*)&g_keyboard + 0xc))[38] == 0 && ((int*)((char*)&g_keyboard + 0x40c))[38] != 0)
         ((TerrainX*)g_mission_s261e0)->light_entities((rgl::mesh**)((char*)g_mission_s261e0 + 0x6340), g_mission_s261e0->f633c);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
 
     if (f2d8 == 0) {
@@ -1489,13 +1489,13 @@ void ViewCtrl_s284a0::update(float dt)
         fov = limit;
 
     // ---- the "use / attack" keys walk the agent table and hit the agent under the crosshair ---------
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) && g_a171d0 != 0 && g_a175d0 == 0) {
+    if (g_cfg.cheat_mode != 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) && g_a171d0 != 0 && g_a175d0 == 0) {
         Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
         int old = t->f7c;
         t->f7c = (old == 2) ? 1 : 2;
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_key_names_s284a0.is_ready(0x3e)) {
+    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_key_names_s284a0.is_ready(0x3e)) {
         AgentTable_s284a0* t = &g_mission_s284a0->agents;
         bool done = false;
         unsigned i = t->first_used();
@@ -1516,7 +1516,7 @@ void ViewCtrl_s284a0::update(float dt)
         }
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171d4 != 0 && g_a175d4 == 0) {
+    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171d4 != 0 && g_a175d4 == 0) {
         AgentTable_s284a0* t = &g_mission_s284a0->agents;
         bool done = false;
         unsigned i = t->first_used();
@@ -1538,7 +1538,7 @@ void ViewCtrl_s284a0::update(float dt)
         }
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171c8 != 0 && g_a175c8 == 0) {
+    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171c8 != 0 && g_a175c8 == 0) {
         Blow_s284a0 b;
         b.f48 = 2;
         b.f38 = 0;
@@ -1549,7 +1549,7 @@ void ViewCtrl_s284a0::update(float dt)
     }
 
     if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) {
-        if (g_a17160 != 0 && g_a17560 == 0 && (*(int*)((char*)&g_cfg + 0x24)) != 0) {
+        if (g_a17160 != 0 && g_a17560 == 0 && g_cfg.cheat_mode != 0) {
             Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
             t->f5724 = t->f5720;
         }
@@ -1652,7 +1652,7 @@ void MissionHud_s29130::update_marks()
     for (int i = 0; i < 7; i++) {
         float step = g_step_tbl[0] * (i < 3 ? 0.5f : 2.5f);
         if (target[i] > color[i]) {
-            color[i] += step * g_1p2;
+            color[i] += step * 1.2f;
             if (color[i] > target[i]) color[i] = target[i];
         } else if (target[i] < color[i]) {
             color[i] -= step;
@@ -2339,7 +2339,7 @@ void Screen_s2ae70::order_tick()
     int kind = a->kind;
     if (kind < 0 || kind >= 8)
         kind = 7;
-    if ((*(int*)((char*)&g_cfg + 0x24)) && g_a1717c && (*(int*)((char*)&g_keyboard + 0x80)))
+    if (g_cfg.cheat_mode && g_a1717c && (*(int*)((char*)&g_keyboard + 0x80)))
         kind = 1;
 
     m->order(kind, f2a0);

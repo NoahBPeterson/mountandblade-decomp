@@ -32,10 +32,10 @@ static const float HALF = 0.5f;                                 // 0x549d70
 void screen_cfg::apply()
 {
     g_gui.set_o568(0, true);
-    items[req.back()]->restore();
-    req.pop_back();
-    if (!req.empty()) {
-        unsigned char v = items[req.back()]->index();
+    ((dev_item*)arr[dq.back()])->restore();
+    dq.pop_back();
+    if (!dq.empty()) {
+        unsigned char v = ((dev_item*)arr[dq.back()])->index();
         if (g_render.dev)
             g_render.dev->ShowCursor(v);
         g_gui.f560 = v;
@@ -55,7 +55,7 @@ void dev_list::select_windowed(int a)
     if (found != -1) {
         dev[6] = (dev_rec*)found;
         found = (int)&g_windows;
-        g_windows.apply();
+        windows_cfg().apply();
     }
 }
 

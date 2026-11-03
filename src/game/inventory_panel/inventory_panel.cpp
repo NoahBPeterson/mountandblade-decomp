@@ -7,6 +7,7 @@
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./inventory_panel.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -42,8 +43,6 @@ extern MsgLog g_msglog;                                 // 0x5d7080
 extern int   g_a17188;                                  // 0xa17188
 extern int   g_a17588;                                  // 0xa17588
 
-extern int   g_trial_mode;                              // 0x5e29c4
-extern float g_ui_alpha;                                // 0x5d7094
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
 extern int   g_disable_food_slot;                               // 0xa181a8
 extern tstring g_num;                                   // 0xa70464
@@ -85,7 +84,7 @@ void InventoryPanel::refresh_transaction(int unused)
     g_msglog.flush();
 
     int page = 0;
-    if (g_ui_alpha < 0.5f && view_count == 2)
+    if (g_gui_root.mouse[0] < 0.5f && view_count == 2)
         page = 1;
 
     if (g_ui_tick != 0) {

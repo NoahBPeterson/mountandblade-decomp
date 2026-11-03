@@ -141,8 +141,7 @@ void log_save_path();                                   // 0x4e8df0
 extern int      g_use_shaders;                          // 0x5e28fc
 extern unsigned g_mask_w;                               // 0x5a8e78
 extern unsigned g_a76644;                               // 0xa76644
-extern int      g_a739c8;                               // 0xa739c8
-extern int      g_a739d4;                               // 0xa739d4
+#include "../window_mgr.h"                              // the save-game menu screens are slots of g_windows: 18 (0xa739c8), 21 (0xa739d4)
 extern float    g_chunk_scale;                          // 0x549d68
 
 #endif

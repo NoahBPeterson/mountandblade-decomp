@@ -4,6 +4,7 @@ struct mesh_ext {                                   // rgl/scene/scene.h: the me
     void clear_geometry();                          // 0x428e80
 };
 }
+#include "../window_mgr.h"      // g_windows slot 3 (0xa7398c): the save dialog
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ea0c0
@@ -72,7 +73,6 @@ extern char* g_save_prefix;                                     // 0x8ee3c3c (pr
 extern char* g_game;                                            // 0x5e2930
 extern int g_a17420;                                            // 0xa17420
 extern int g_a17820;                                            // 0xa17820
-extern char* g_save_dialog;                                     // 0xa7398c
 extern char g_main_menu_obj[];                                  // 0xa73980
 
 // main menu layout (see s004d7d10)
@@ -142,9 +142,9 @@ void SavePanel::update(int)
                 pf = (char*)&g_save_prefix;
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
                         selected / 10, selected % 10);
-            *(int*)(g_save_dialog + 4) = 1;
-            ((tstring*)(g_save_dialog + 0x48))->assign(name);
-            *(int*)(g_save_dialog + 0x8c) = selected;
+            *(int*)(slot_as<char>(3) + 4) = 1;
+            ((tstring*)(slot_as<char>(3) + 0x48))->assign(name);
+            *(int*)(slot_as<char>(3) + 0x8c) = selected;
             g_main_menu.set_state(3);
             return;
         }

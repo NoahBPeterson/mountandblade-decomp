@@ -9,6 +9,7 @@
 //       order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../../rgl/options.h"   // g_options
 #include <new>
 #include "../../rgl/mesh.h"
 #include "../../rgl/stream.h"
@@ -35,7 +36,6 @@ using rgl::matrix;
 // ---- calls into other objects -----------------------------------------------------------------------------------------
 void mb_error(const char* fmt, ...);            // 0x42cc80
 extern int g_use_shaders;                       // 0x5e28fc
-extern int g_mesh_quality;                      // 0x5aa084
 extern int g_nav_param;                         // 0x59132c
 extern __int64 g_ticks[];                       // 0x5e2948
 extern ptype* g_ptypes;                         // 0x5e28f8
@@ -576,7 +576,7 @@ void Mission::post_spawn(MAgent* a)
     pos.z = 0.1f;
     int idx;
     int owner = 0;
-    if (g_env_on == 0)
+    if (g_options.i20 == 0)
         return;
     if ((g_game->levels[f5df4].flags & 1) == 0 && f6608 != 4) {
         if (fog_dense == 0) {
@@ -603,7 +603,7 @@ void Mission::post_spawn(MAgent* a)
         }
     }
 layers:
-    if (g_env_on != 0) {
+    if (g_options.i20 != 0) {
         pos.x = 0.0f;
         pos.z = 0.0f;
         pos.y = 0.15f;
@@ -664,7 +664,7 @@ void Terrain::make_grid()
             boxes[y][x].reset();
         }
     }
-    if (g_fog_density >= 10) {
+    if (g_options.i34 >= 10) {
         n_inner = (int)ceil(wx * 0.05f);
         n_outer = (int)ceil(wy * 0.05f);
         if (n_inner > 0x30)
@@ -675,7 +675,7 @@ void Terrain::make_grid()
             for (int y = 0; y < n_inner; y++) {
                 gridA[y][x] = grid->create_entity(9);
                 rgl::mesh* m = new rgl::mesh;
-                if (g_use_shaders != 0 && g_mesh_quality == 2)
+                if (g_use_shaders != 0 && g_options.i7c == 2)
                     m->res = g_resmgr.get_material(rs(tstring("grass")));
                 else
                     m->res = g_resmgr.get_material(rs(tstring("grass_no_shadow")));

@@ -24,8 +24,7 @@
 #include "./text_stream.h"
 #include "./mem_stream.h"
 #include "../include/renderer.h"      // g_render 0xa17910 (dev = g_render.dev 0xa17f28)
-struct Config;
-extern Config g_cfg;                        // 0x5a9f98 (saved through rgl_config::save)
+#include "../game/config/config_block.h"   // Config g_cfg (0x5a9f98; saved through rgl_config::save)
 #include "./resource_manager.h"
 #include "../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
 

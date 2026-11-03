@@ -66,7 +66,7 @@ void TerrainPage::simulate(float dt)
     else if (view_y > 250.0f)
         view_y = 250.0f;
 
-    if (g_look_y < 0.5f) {
+    if (g_gui.mouse[0] < 0.5f) {
         if (g_key_17458) {
             yaw = (g_axis_x * dt) * 1.7f + yaw;
             pitch = pitch - (g_keyboard.axis[2] * dt) * 1.7f;

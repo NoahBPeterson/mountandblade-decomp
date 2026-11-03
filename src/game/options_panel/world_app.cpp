@@ -504,8 +504,8 @@ GameApp::GameApp()
 
     f350 = 0;
 
-    *(int*)((char*)this + 0x334) = (int)orig::str_m;
-    *(int*)((char*)this + 0x338) = (int)orig::str_mount_and_blade;
+    *(int*)((char*)this + 0x334) = (int)"m";
+    *(int*)((char*)this + 0x338) = (int)"Mount&Blade";
     *(char*)((char*)this + 0x30) = 1;
     *(int*)((char*)this + 0x33c) = 0x190;
     *(int*)((char*)this + 0x340) = 0x12c;
@@ -571,8 +571,12 @@ GameApp::GameApp()
     WL_MARKER(13)
 }
 
+// ---- data this module owns (.bss, no initialiser) ----
+int g_trial_mode;                                   // 0x5e29c4 (set when the game runs as the trial; 6 modules read it)
+
 // @ 0x4d4130
 #include "./config_dialog.h"                      // Dialog: proc 0x4d0240 (the dialog procedure of the application object)
+
 extern Dialog g_app_dialog;                                        // 0x8ee3c48 (the application object)
 int __stdcall wndproc_thunk(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -604,9 +608,9 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     switch (msg) {
     case 0xf: {                                             // WM_PAINT
         ((OptionsDlg*)(void*)this)->paint();
-        if (orig::g_trial_mode == 0 && f350 == 0) {
+        if (g_trial_mode == 0 && f350 == 0) {
             f350 = 1;
-            orig::g_trial_mode = 1;
+            g_trial_mode = 1;
         }
         return 1;
     }

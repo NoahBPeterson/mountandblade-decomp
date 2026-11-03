@@ -95,7 +95,6 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #define C_549D70 (orig::g_half)             // 0.5
 #define C_549CDC (orig::g_one)             // 1.0
 #define C_549CA8 (orig::g_zero)             // 0.0
-#define C_549D7C (orig::k_0_1f)             // 0.1
 #define C_54A534 (orig::k_1_5708f)             // 1.5707964
 #define C_54A6D0 (orig::k_1em05f)             // 1e-05
 #define C_598690 (orig::k_105f)             // 105.0
@@ -107,7 +106,6 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #define C_590E68 (orig::k_0_23f)             // 0.23
 #define C_54B4D0 (orig::k_0_05f)             // 0.05
 #define C_5915A0 (orig::k_m10f)             // -10.0
-#define C_5935C8 (orig::g_four)             // 4.0
 #define C_54B3B8 (orig::k_0_4f)             // 0.4
 #define C_590C74 (orig::k_0_08f)             // 0.08
 #define C_590FA4 (orig::k_1_7f)             // 1.7

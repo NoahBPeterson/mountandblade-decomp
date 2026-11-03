@@ -461,8 +461,6 @@ struct MWidget {
     ~MWidget();                                                   // 0x4fd3d0
     MapText text_rect();                                          // 0x4fd4f0
 };
-extern const float g_cursor_x;                                    // 0x5d7094 (the pointer position the widgets hit-test against)
-extern const float g_cursor_y;                                    // 0x5d7098
 struct ParamEntry {                                               // 0x2c-byte record of the parameter table at 0xa44240 (the value text at +0x20)
     tstring name;
     char pad10[0x20 - 0x10];

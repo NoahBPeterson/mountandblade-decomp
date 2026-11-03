@@ -21,24 +21,6 @@
 static __forceinline tstring* strtab_entry(const tstring& key) { return g_strtable.lookup(const_cast<tstring&>(key)); }
 static __forceinline const char* strtab_lookup(const tstring& key) { return strtab_entry(key)->c_str(); }
 
-// 0x08ee3d3c: g_app_obj's m_pD3D (CD3DApplication +0xf4), the IDirect3D9: +0x10 GetAdapterCount, +0x14
-// GetAdapterIdentifier, +0x18 GetAdapterModeCount, +0x1c EnumAdapterModes. COM methods are __stdcall with this pushed
-// (0x4cf115 push eax / call [ecx+0x10]); declared as plain virtuals they were thiscall, and d3d9 read its this from a
-// stale stack slot (the in-game Video Options crash, a fault on 0x3f800010).
-struct IModeEnum {
-    virtual void __stdcall v0();
-    virtual int __stdcall v1();
-    virtual int __stdcall v2();
-    virtual int __stdcall v3();
-    virtual int __stdcall count();                                                         // +0x10
-    virtual void __stdcall adapter_identifier(int adapter, int flags, D3DADAPTER_IDENTIFIER9* id); // +0x14
-    virtual int __stdcall mode_count(int adapter, int fmt);                                // +0x18
-    virtual void __stdcall enum_mode(int adapter, int fmt, int index, D3DDISPLAYMODE* m);  // +0x1c
-};
-
-// 0x08ee3d3c: renderer singleton pointer.
-extern IModeEnum* g_mode_enum;               // 0x8ee3d3c
-#define g_renderer g_mode_enum
 
 // Temporary sorted result, copied into the return value at the end (as the original does).
 struct ModeList {
@@ -55,20 +37,20 @@ std::vector<tstring> list_modes()
     std::vector<int> heights;
     std::vector<int> bpps;
 
-    unsigned adapters = g_renderer->count();
+    unsigned adapters = g_app_obj.m_pD3D->GetAdapterCount();
     for (unsigned a = 0; a < adapters; a++) {
         // 0x4cf194: GetAdapterIdentifier into a 0x448-byte frame buffer ([esp+0x14c]) that is never read again (a
         // D3DDISPLAYMODE here let d3d9 write 1.1 KB over the frame: the in-game Video Options crash)
         D3DADAPTER_IDENTIFIER9 id;
-        g_renderer->adapter_identifier(a, 0, &id);
+        g_app_obj.m_pD3D->GetAdapterIdentifier(a, 0, &id);
         D3DFORMAT formats[2];
         formats[0] = D3DFMT_R5G6B5;      // 16-bit
         formats[1] = D3DFMT_X8R8G8B8;    // 32-bit
         for (int f = 0; f < 2; f++) {
-            int modes = g_renderer->mode_count(a, formats[f]);
+            int modes = g_app_obj.m_pD3D->GetAdapterModeCount(a, formats[f]);
             for (int m = 0; m < modes; m++) {
                 D3DDISPLAYMODE mode;
-                g_renderer->enum_mode(a, formats[f], m, &mode);
+                g_app_obj.m_pD3D->EnumAdapterModes(a, formats[f], m, &mode);
                 if (mode.Width < 640 || mode.Height < 480)
                     continue;
                 char buf[128];
@@ -168,7 +150,9 @@ bool mb_file_exists(const char* path);           // 0x415120
 // rgl_config::save (0x415fb0): src/rgl/resource_manager.h declares it, but that header's g_log clashes with config.h's
 // (strat/gui_manager.h), so the one-member class is repeated verbatim.
 struct rgl_config { void save(FILE* f); };
-#define LAUNCHER_CFG ((Config*)&orig::g_launcher_cfg)
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+Config g_launcher_cfg = { 1, 50, 0, 100, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 15, 0, 0, 32, 1, 0, 0, 1, 1, 1 };   // 0x5aa0a8
+#define LAUNCHER_CFG (&g_launcher_cfg)
 
 const char k_config[] = "rgl_config.txt";        // 0x54b048
 
@@ -293,7 +277,7 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             LAUNCHER_CFG->load_file(f);
             fclose(f);
         } else {
-            orig::g_opt_5aa0ac = 0x46;
+            g_launcher_cfg.texture_detail = 0x46;
         }
         ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, false);
         fill_video_tab();
@@ -329,15 +313,15 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 BOOL ok;
                 int v = (int)GetDlgItemInt(m_hwnd, 0x448, &ok, 0);   // signed compares (jl / jge)
                 if (ok && v >= 10 && v < 1000) {
-                    orig::g_opt_5aa0b4 = v;
+                    g_launcher_cfg.max_framerate = v;
                 } else {
-                    SetDlgItemInt(m_hwnd, 0x448, orig::g_opt_5aa0b4, 0);
+                    SetDlgItemInt(m_hwnd, 0x448, g_launcher_cfg.max_framerate, 0);
                 }
             }
             return 1;
         case 0x45e:             // auto adjust: re-detect and re-read the config
             ((Core*)this)->read_options();
-            *(int*)&orig::g_launcher_cfg = 0;
+            g_launcher_cfg.first_time = 0;
             ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, true);
             ((Core*)this)->show_options();
             return 1;

@@ -9,7 +9,9 @@
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
+#include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
@@ -34,7 +36,6 @@ float g_mouse_dy;                                // 0x5d70a8
 #define SCENE ((MissionV*)g_mission)
 
 extern MsgLog g_msglog;                                 // 0x5d7080
-extern int g_a735c0;                                    // 0xa735c0 (scene counter)
 extern int g_a73438;                                    // 0xa73438 (page index)
 
 void autosave_notice();                                 // 0x514830
@@ -100,6 +101,10 @@ struct MetaMission {
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+
+// ---- data this module owns (.bss, no initialiser; sizes from the code) ----
+int g_scene_counter;                                // 0xa735c0
+
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -135,18 +140,13 @@ extern int g_a17454;            // 0xa17454
 extern int g_a17854;            // 0xa17854
 extern int g_use_shaders;       // 0x5e28fc
 extern int g_no_cam;            // 0x5a9fb0
-extern int g_trial_mode;        // 0x5e29c4
 extern int g_a735c8;            // 0xa735c8
 extern float g_view_a;          // 0x5d75d8
 extern float g_view_b;          // 0x5d75dc
 extern int g_level;         // 0xa732b4
 extern const float g_zero;          // 0x549ca8  0.0f
 extern const float g_ten;           // 0x549d74  10.0f
-extern const float g_oneone;        // 0x54b888  1.1f
-extern const float g_three;         // 0x54a710  3.0f
 extern const float g_quarter;       // 0x54b868  0.25f
-extern const float g_four;          // 0x5935c8  4.0f
-extern const float g_003;           // 0x54b8b4  0.03f
 extern const float g_axis_x;        // 0xa178d4
 extern const float g_exp_arg;       // 0x5aa018
 extern int g_in_17204;              // 0xa17204
@@ -205,11 +205,11 @@ void MapFlags::commit(char* out)
         }
     }
     else if (key == 0x10) {
-        g_wAC->f4 = 0;
+        slot_as<MenuWidget>(11)->f4 = 0;
         if (g_mission_ctx.f20 != 0)
-            g_wAC->f4 = 2;
-        g_wAC->f18 = 0x64;
-        g_wAC->f4 = 0;
+            slot_as<MenuWidget>(11)->f4 = 2;
+        slot_as<MenuWidget>(11)->f18 = 0x64;
+        slot_as<MenuWidget>(11)->f4 = 0;
         return g_main_menu.reset(0xb);
     }
     else if (key == 0x80) {
@@ -224,7 +224,7 @@ void MapFlags::commit(char* out)
     }
     else if (key == 4) {
         g_mission_ctx.pick_template();
-        window_slot<MenuWidget>(10)->f18 = 0x64;
+        slot_as<MenuWidget>(10)->f18 = 0x64;
         return g_main_menu.set_state(0xa);
     }
     else if (key == 0x800) {
@@ -242,10 +242,10 @@ void MapFlags::commit(char* out)
     }
     else if (key == 8) {
         g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
-        MI(g_mission, 0x5270) = g_a735c0++;
+        MI(g_mission, 0x5270) = g_scene_counter++;
         SCENE->start_setup();
-        window_slot<MenuWidget>(14)->v4();
-        window_slot<MenuWidget>(14)->f18 = 0x64;
+        slot_as<MenuWidget>(14)->v4();
+        slot_as<MenuWidget>(14)->f18 = 0x64;
         return g_main_menu.set_state(0xe);
     }
     else if (key == 0x200) {
@@ -254,7 +254,7 @@ void MapFlags::commit(char* out)
         return g_main_menu.set_state(7);
     }
     else if (key == 0x400 && f8 <= 0) {
-        window_slot<MenuWidget>(6)->f18 = 0x64;
+        slot_as<MenuWidget>(6)->f18 = 0x64;
         return g_main_menu.set_state(6);
     }
     else if (g_game->fc8 == 1) {
@@ -264,7 +264,7 @@ void MapFlags::commit(char* out)
         return g_main_menu.set_state(7);
     }
     else if (f8 <= 0) {
-        window_slot<MenuWidget>(6)->f18 = 0x64;
+        slot_as<MenuWidget>(6)->f18 = 0x64;
         return g_main_menu.set_state(6);
     }
     else {
@@ -794,13 +794,13 @@ void Screen::frame_update(float dt)
         return;
     }
     if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
-        window_slot<MenuWidget>(5)->f18 = 7;
+        slot_as<MenuWidget>(5)->f18 = 7;
         g_main_menu.set_state(5);
         return;
     }
     if (f48 != 0 && PSO(f48)->clicked_on(0x10000)) {
-        window_slot<MenuWidget>(22)->f18 = 7;
-        window_slot<MenuWidget>(22)->f4 = 0;
+        slot_as<MenuWidget>(22)->f18 = 7;
+        slot_as<MenuWidget>(22)->f4 = 0;
         g_main_menu.set_state(0x16);
         return;
     }
@@ -1055,10 +1055,10 @@ void Screen::camera_move(float dt)
         GD_I(0x84) = g_game->f78;
     }
 
-    if (g_in_17204) speed += dt * g_oneone;
-    if (g_in_17214) speed -= dt * g_oneone;
-    if (g_keyboard.down[0x4f]) vy += dt * g_oneone;
-    if (g_keyboard.down[0x51]) vy -= dt * g_oneone;
+    if (g_in_17204) speed += dt * 1.1f;
+    if (g_in_17214) speed -= dt * 1.1f;
+    if (g_keyboard.down[0x4f]) vy += dt * 1.1f;
+    if (g_keyboard.down[0x51]) vy -= dt * 1.1f;
 
     if (g_in_17458 && !g_keyboard.prev[0xe1])
         f2d4 = 0;
@@ -1076,7 +1076,7 @@ void Screen::camera_move(float dt)
 
     vy = v * dt + vy;
     if (g_in_17458) {
-        vy = expf(g_four * g_exp_arg) * g_003 * g_axis_x * dt + vy;
+        vy = expf(4.0f * g_exp_arg) * 0.03f * g_axis_x * dt + vy;
     }
 
     if (w != 0.0f || g_keyboard.axis[2] != 0.0f) {
@@ -1225,7 +1225,7 @@ void MissionCtx::update_anim()
                 else if (k > (*(int*)&g_skill_tbl[36].cap))
                     k = (*(int*)&g_skill_tbl[36].cap);
                 int n = t->f58[0] + k * 2 + 0x23;
-                float g = (float)(int)((float)n * g_half + g_three);
+                float g = (float)(int)((float)n * g_half + 3.0f);
                 if (g > t->hp)          // fcom; test ah,0x41; jne skip (0x516834): a NaN hp skips
                     t->hp = g;
             }

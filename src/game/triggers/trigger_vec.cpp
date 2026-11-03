@@ -303,8 +303,8 @@ void Core::show_options()
 {
     char buf[0x200];
 
-    SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x405, 1, g_opt_5aa0ac);
-    sprintf(buf, "%d", g_opt_5aa0ac);
+    SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x405, 1, g_launcher_cfg.texture_detail);
+    sprintf(buf, "%d", g_launcher_cfg.texture_detail);
     SetWindowTextA(GetDlgItem(options_hwnd, 0x450), buf);
     SendMessageA(GetDlgItem(options_hwnd, 0x441), BM_SETCHECK, g_opt_5aa0e0 != 0, 0);
     SendMessageA(GetDlgItem(options_hwnd, 0x444), BM_SETCHECK, g_opt_5aa0b8 != 0, 0);
@@ -313,7 +313,7 @@ void Core::show_options()
     SendMessageA(GetDlgItem(options_hwnd, 0x452), BM_SETCHECK, g_opt_5aa0e8 != 0, 0);
     SendMessageA(GetDlgItem(options_hwnd, 0x446), BM_SETCHECK, g_opt_5aa0e4 != 0, 0);
     SendMessageA(GetDlgItem(options_hwnd, 0x44d), BM_SETCHECK, g_opt_5aa0d8 == 0, 0);
-    SetDlgItemInt(options_hwnd, 0x448, g_opt_5aa0b4, FALSE);
+    SetDlgItemInt(options_hwnd, 0x448, g_launcher_cfg.max_framerate, FALSE);
     SendMessageA(GetDlgItem(options_hwnd, 0x442), BM_SETCHECK, g_opt_5aa0cc != 0, 0);
     SendMessageA(GetDlgItem(options_hwnd, 0x443), BM_SETCHECK, g_opt_5aa0d0 == 0, 0);
     SendMessageA(GetDlgItem(options_hwnd, 0x44c), BM_SETCHECK, g_opt_5aa0c0 != 0, 0);
@@ -342,7 +342,7 @@ void Core::show_options()
 // @ 0x4bf170
 void Core::read_options()
 {
-    g_opt_5aa0ac = SendMessageA(GetDlgItem(options_hwnd, 0x43e), WM_USER, 0, 0);
+    g_launcher_cfg.texture_detail = SendMessageA(GetDlgItem(options_hwnd, 0x43e), WM_USER, 0, 0);
     g_opt_5aa0e0 = SendMessageA(GetDlgItem(options_hwnd, 0x441), BM_GETCHECK, 0, 0) == 1;
     g_opt_5aa0dc = SendMessageA(GetDlgItem(options_hwnd, 0x468), CB_GETCURSEL, 0, 0) == 1;
     g_opt_5aa0cc = SendMessageA(GetDlgItem(options_hwnd, 0x442), BM_GETCHECK, 0, 0) == 1;
@@ -359,11 +359,11 @@ void Core::read_options()
         if (ok != 0) {
             int iv = (int)v;
             if (iv < 10)
-                g_opt_5aa0b4 = 10;
+                g_launcher_cfg.max_framerate = 10;
             else if (iv >= 1000)
-                g_opt_5aa0b4 = 999;
+                g_launcher_cfg.max_framerate = 999;
             else
-                g_opt_5aa0b4 = iv;
+                g_launcher_cfg.max_framerate = iv;
         }
     }
     g_opt_5aa0c0 = SendMessageA(GetDlgItem(options_hwnd, 0x44c), BM_GETCHECK, 0, 0) == 1;

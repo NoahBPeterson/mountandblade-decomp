@@ -68,7 +68,7 @@ void Screen::camera_update(float dt)
 
     // --- the pitch follows the zoom ----------------------------------------------------------------
     f2b4 = f2b8 * C_590F7C + C_590E68;
-    if (f2b4 < C_549D7C) {
+    if (f2b4 < 0.1f) {
         f2b4 = 0.1f;
     } else if (f2b4 > C_54A534) {
         f2b4 = 1.5707964f;
@@ -95,9 +95,9 @@ void Screen::camera_update(float dt)
                     dy = -10.0f;
                 else if (dy > C_549D74)
                     dy = 10.0f;
-                f2a0 += (dx * C_5935C8) * dt;
-                f2a4 += (dy * C_5935C8) * dt;
-                f2a8 += (dz * C_5935C8) * dt;
+                f2a0 += (dx * 4.0f) * dt;
+                f2a4 += (dy * 4.0f) * dt;
+                f2a8 += (dz * 4.0f) * dt;
             }
         } else {
             f2a0 *= C_549CA8;

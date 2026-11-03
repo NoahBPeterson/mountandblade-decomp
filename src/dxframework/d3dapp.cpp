@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 #define _MBCS   // project setting: multi-byte character set (TCHAR = char, _tcs* = _mbs*)
 #include <windows.h>
+#include "../game/config/config_block.h"   // g_cfg
 #include <tchar.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,8 +27,6 @@ static CD3DApplication* g_pD3DApp = NULL;   // 0x5d6f40
 static bool s_bFatalErrorReported = false;  // 0x5d6f48 (DisplayErrorMsg's latch; also read by the inlined copies)
 
 // Default window size, set by the game before Create() (M&B; provisional names)
-extern int g_iWindowWidth;                  // 0x5a9fe4
-extern int g_iWindowHeight;                 // 0x5a9fe8
 
 //-----------------------------------------------------------------------------
 // Name: WndProc()
@@ -77,8 +76,8 @@ HRESULT CD3DApplication::Create( HINSTANCE hInstance )
         if (m_hWnd == NULL) {
             m_dwWindowStyle = m_bStartFullscreen ? WS_POPUP : WS_OVERLAPPEDWINDOW;
             RECT rc;
-            if (g_iWindowWidth > 0) {
-                SetRect(&rc, 0, 0, g_iWindowWidth, g_iWindowHeight);
+            if (g_cfg.display_width > 0) {
+                SetRect(&rc, 0, 0, g_cfg.display_width, g_cfg.display_height);
             } else {
                 // Default: the largest window that fits the work area
                 int fx = GetSystemMetrics(SM_CXSIZEFRAME) * 4;

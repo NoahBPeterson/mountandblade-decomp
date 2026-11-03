@@ -210,7 +210,6 @@ struct DialogMgr_s257f0 {
 
 int find_listener_agent();                          // 0x526130 (defined in slice s00526130)
 
-extern float g_look_rate;                           // 0x5935c8 (4.0)
 
 // ---- the view object (only the members this function touches) --------------------------------------------
 struct ViewObj_s257f0 {
@@ -555,7 +554,7 @@ extern CRITICAL_SECTION g_mt_cs;                           // 0x5e28dc
 extern HANDLE g_mt_event;                                  // 0x5e28d8
 extern int  g_pending_action;                                  // 0x5a9f18
 extern int  g_vert_budget;                                  // 0x5a9c34
-extern char g_cfg[]; // 0x5a9f98
+#include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 extern unsigned char g_a17908;                          // 0xa17908
 extern int  g_presentation;                                  // 0x5e299c
 #include "../../include/renderer.h"
@@ -583,7 +582,6 @@ extern const float g_f54a6d0;                           // 0x54a6d0 = 1e-05f
 extern const float g_f549cdc;                           // 0x549cdc = 1.0f
 extern const float g_f54b8b0;                           // 0x54b8b0 = 1.5f
 extern const float g_f590b38;                           // 0x590b38 = 8.0f
-extern const float g_f549d7c;                           // 0x549d7c = 0.1f
 
 // ---- plain callees ----------------------------------------------------------------------------------
 void __cdecl restore_defaults();                        // 0x4d3a50
@@ -1174,7 +1172,6 @@ extern float g_deg2rad;                                       // 0x590ce4 (0.017
 extern float g_half;                                          // 0x549d70 (0.5f)
 extern float g_0375;                                          // 0x59c310 (0.375f)
 extern float g_2p5;                                           // 0x590c4c (2.5f)
-extern float g_1p2;                                           // 0x590b94 (1.2f)
 extern float g_255;                                           // 0x590cec (255.0f)
 extern float g_0;                                             // 0x549ca8 (0.0f)
 extern float g_1;                                             // 0x549cdc (1.0f)
@@ -2202,6 +2199,9 @@ struct camera_ray {
     void screen_to_world(rgl::vector4*, rgl::vector4*);   // 0x4bd2f0
 };
 struct gui_manager {
+    char pad00[0x10];
+    void* ui_active;   // +0x10 (strat/gui_manager.h)
+    float mouse[2];   // +0x14 the pointer position (0x5d7094 / 0x5d7098)
     void draw_string(tstring*, float, int, char);   // 0x4e43e0
     void set_o568(gui_obj*, bool);   // 0x42cdb0
 };

@@ -55,7 +55,7 @@ extern int g_compatible_module_version; // 0x5e29b8
 // game_variables key module_version.
 extern int g_module_version; // 0x5e29c0
 // 6 declarations; the "show download button" reading is the same trial-version flag.
-extern int g_trial_mode; // 0x5e29c4
+#include "./trial_mode.h"   // g_trial_mode (0x5e29c4)
 // Count of g_propkinds (prop_kind.h header comment: count 0x5e29e0).
 extern int g_propkind_count; // 0x5e29e0
 // module_files.cpp loader (count g_map_icon_count at 0x5e29f4);
@@ -134,6 +134,8 @@ extern int g_page_cols; // 0xa73294
 extern int g_page_rows; // 0xa73298
 // Script op music_set_situation 0x4a174a writes it;
 extern int g_music_situation; // 0xa73a10
+// Number of scenes opened so far: each mission stamps its id at +0x5270 (hud.cpp, mission_ctx.cpp).
+extern int g_scene_counter; // 0xa735c0
 // module_files.cpp loads presentations into it (0x4c6950);
 extern PresentationTable g_presentations; // 0xa75f2c
 // 0x30-byte animation definitions indexed by animation id (agent_logic.cpp g_anims[0x1a3]).

@@ -76,7 +76,6 @@ extern int   g_size_modes[8];                               // 0x59394c terrain-
 extern float g_clamp_lo;                                    // 0x593948
 extern float g_500;                                         // 0x590b40 (500.0f)
 extern float g_140;                                         // 0x598e6c (140.0f)
-extern float g_0_01;                                        // 0x54ab28 (0.01f)
 extern float g_one;                                         // 0x549d74 (1.0f)
 extern float g_half;                                        // 0x549d70 (0.5f)
 #include "../renderer.h"

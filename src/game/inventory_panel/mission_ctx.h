@@ -20,7 +20,6 @@ struct MenuWidget {
     int f18;                                            // +0x18
 };
 extern MenuWidget* g_wA0;                               // 0xa739a0
-extern MenuWidget* g_wAC;                               // 0xa739ac
 extern MenuWidget* g_wB0;                               // 0xa739b0
 extern MenuWidget* g_wB4;                               // 0xa739b4
 extern MenuWidget* g_wBC;                               // 0xa739bc

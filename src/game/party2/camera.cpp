@@ -2731,7 +2731,7 @@ void DialogBlock::link()
                             items[j].f90 = i;
                     depth--;
                 } else {
-                    if ((*(int*)((char*)&g_cfg + 0x18))) report("Warning: Unmatched try_end");
+                    if (g_cfg.enable_edit_mode) report("Warning: Unmatched try_end");
                 }
             }
         }

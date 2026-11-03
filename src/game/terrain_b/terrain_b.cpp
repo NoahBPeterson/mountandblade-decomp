@@ -10,6 +10,8 @@
 //       Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./terrain_b.h"
+#include "../../rgl/options.h"   // g_options
+#include "../config/config_block.h"   // g_cfg
 #include "./frustum.h"
 #include "./render_batch.h"
 #include "./poly_mesh.h"
@@ -476,10 +478,10 @@ void render_batch::render_scene(scene* sc)
             if (AT(material*, this, 0x4183c8) != mat) {
                 AT(material*, this, 0x4183c8) = mat;
                 int v = 0;
-                if ((mat->flags20 & 0x1000) && g_mesh_quality != 2) {
+                if ((mat->flags20 & 0x1000) && g_options.i7c != 2) {
                     v = 3;
                 } else if (sun_shadow) {
-                    if (scene_sky(sc) && scene_sky(sc)->sun_shadows && g_x5aa034) {
+                    if (scene_sky(sc) && scene_sky(sc)->sun_shadows && g_options.i2c) {
                         v = (g_render.b614 != 0) + 1;
                     }
                 }
@@ -875,9 +877,9 @@ void ShadowMap::attach_camera(CellGrid* c)
     c->build_light_frame(&c->view.world, &c->shadow_amb);
     vector4 z(0.0f, 0.0f, 0.0f);
     c->view.world.o = z;
-    if (g_shadow_quality != g_shadow_quality_req) {
+    if (g_shadow_quality != g_cfg.shadow_quality_req) {
         release_all();
-        g_shadow_quality = g_shadow_quality_req;
+        g_shadow_quality = g_cfg.shadow_quality_req;
     }
     // marker "WL" 13 here in the original
     WL_MARKER(13)
@@ -998,7 +1000,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
 {
     TerrainParticle* p = &l->items[idx];
     ptype* pt = &g_ptypes[p->type];
-    if (g_use_shaders == 0 || g_mesh_quality != 2) {
+    if (g_use_shaders == 0 || g_options.i7c != 2) {
         for (int k = 0; k < p->nmesh; k++) {
             mesh* m = p->meshes[k];
             if (m->res->flags & 0x40) {
@@ -1008,7 +1010,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                     n.x = -sun_dir[0]; n.y = -sun_dir[1]; n.z = -sun_dir[2];
                     light = max2(0.0f, dot3(n, p->frame.u));
                 }
-                if (g_use_shaders == 0 || g_mesh_quality == 0) {
+                if (g_use_shaders == 0 || g_options.i7c == 0) {
                     AnimBox* bx = &pt->boxes[p->anim];
                     vector4 sum, c;
                     sum.x = bx->mn[0] + bx->mx[0];
@@ -1041,7 +1043,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                 wp.w = 1.0f;
                 for (int j = p->first[k]; j < p->last[k]; j++) {
                     float lf = light;
-                    if (g_use_shaders != 0 && g_mesh_quality == 1) {
+                    if (g_use_shaders != 0 && g_options.i7c == 1) {
                         vector4 q = m->v70[m->v50[j].index].a;
                         wp.x = q.x * m->m_cc.s.x + (q.z * m->m_cc.u.x + q.y * m->m_cc.f.x) + m->m_cc.o.x;
                         wp.y = q.x * m->m_cc.s.y + (q.z * m->m_cc.u.y + q.y * m->m_cc.f.y) + m->m_cc.o.y;

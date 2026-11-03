@@ -11,6 +11,9 @@
 
 struct Widget;
 struct GuiManager {
+    char pad00[0x10];
+    void* ui_active;                            // +0x10 the widget being dragged (gui_manager::ui_active, g_ui_active 0x5d7090)
+    float mouse[2];                             // +0x14 the pointer position (gui_manager::mouse, 0x5d7094 / 0x5d7098)
     void reset();                               // 0x42d1b0
     void add_root(void* window);                // 0x49b120 (ret 4: the address of a pointer to the window)
     void process(float dt);                       // 0x4ebfd0

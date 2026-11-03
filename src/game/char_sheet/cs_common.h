@@ -11,9 +11,7 @@ struct UiD {                                                        // ui/ui_wid
     float value();                                                  // 0x48b930
     void set_value(float x);                                        // 0x48baa0
 };
-struct WindowMgrW {                                                 // world_data/world_data.h; the main menu object 0xa73980
-    void open(int window);                                          // 0x494260
-};
+#include "../window_mgr.h"                                    // WindowMgrW g_windows (0xa73980): the one definition
 struct FaceRace {                                                   // terrain_b
     void relax(int index, float* values);                           // 0x4735e0
 };
@@ -183,6 +181,9 @@ struct MissionPanel {                                               // ui/missio
 };
 struct gui_obj;
 struct gui_manager {                                                // strat/gui_manager.h (the object at 0x5d7080)
+    char pad00[0x10];
+    void* ui_active;                                                // +0x10 the widget being dragged (g_ui_active 0x5d7090)
+    float mouse[2];                                                 // +0x14 the pointer position (0x5d7094 / 0x5d7098)
     void reset();                                                   // 0x42d1b0
     void draw_string(tstring* s, float size, int color, char b);    // 0x4e43e0 (ret 0xc)
     void set_o568(gui_obj* o, bool reinit);                         // 0x42cdb0 (ret 8)
