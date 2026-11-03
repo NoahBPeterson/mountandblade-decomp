@@ -66,6 +66,10 @@ pc = lambda n, d: "%.2f%%" % (100.0 * n / d) if d else "-"
 TI = sum(INS.get(a, 0) for a in game) or 1
 row = lambda label, s: [label, len(s), pc(len(s), G), "%d" % ninsn(s), pc(ninsn(s), TI),
                         "%.1f KB" % (nbytes(s) / 1024), pc(nbytes(s), B)]
+CHARTS = ("--treemap", "--treemap-data", "--plot-standalone", "--plot")
+_report = sys.stdout
+if any(f in sys.argv for f in CHARTS):          # a chart run prints only the chart's own data, not the report
+    sys.stdout = io.StringIO()
 print("Mount & Blade 1.011 decompilation: %d game functions, %.2f MB (static CRT/C++ library excluded)\n" % (G, B / 1e6))
 print(table(["Tier", "Functions", "Share", "Insns", "Share (insns)", "Code size", "Share (size)"],
             [row("Byte-exact", exact), row("Equivalent (STRONG pass)", equiv),
@@ -203,6 +207,8 @@ for bf in sorted(glob.glob(W("work", "batches", "*.json")), key=os.path.getmtime
 if rows:
     print()
     print(table(["Batch", "Slices started", "Functions", "Exact", "Equiv", "Partial", "Open", "Exact %", "Exact % (size)"], rows))
+
+sys.stdout = _report
 
 
 def record_verdicts():
@@ -842,6 +848,16 @@ def treemap_data(path):
     src = [cnt["defined in source"][i] + cnt["generated from source"][i] for i in (0, 1)]
     bor = cnt["borrowed from image"]
     n_items, n_bytes = sum(v[0] for v in cnt.values()), sum(v[1] for v in cnt.values())
+    print()                                     # the chart's data: who provides the bytes of each section, and the labelled blocks
+    print(table(["Provider"] + ["%s items" % s[1:] for s in SECS] + ["%s bytes" % s[1:] for s in SECS],
+                [[k] + [sec_tot[s][k][0] for s in SECS] + [_bytes_str(sec_tot[s][k][1]) for s in SECS]
+                 for k, _l, _c in DATA_CATS]))
+    big = sorted(((b, sec, m, i) for sec in SECS for m, v in cells[sec].items() for _c, b, i in v if i), key=lambda x: -x[0])
+    print()
+    print(table(["Labelled block", "Section", "Module", "Size", "Members"],
+                [["%s : %s" % (i["name"], i["type"]) if i["type"] else i["name"], sec, m, _bytes_str(b),
+                  ", ".join("%s %s" % (n, _bytes_str(sz)) for n, sz in sorted(i["subs"], key=lambda x: -x[1])[:5])
+                  if i["subs"] else ""] for b, sec, m, i in big]))
 
     fig = plt.figure(figsize=(16.0, 13.5), dpi=150)
     fig.patch.set_facecolor(SURFACE)
