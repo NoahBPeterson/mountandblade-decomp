@@ -222,24 +222,24 @@ void rotate_2x2(float angle);                       // 0x4f3b40 (thiscall, ret 4
 // Three 0x400-byte tables of per-scan-code ints at 0xa17000 / 0xa17400 / 0xa17800: held state,
 // this frame's press, and the previous frame's press (s0052f250 names 0xa17458/0xa17858
 // (*(int*)((char*)&g_keyboard + 0x390))/(*(int*)((char*)&g_keyboard + 0x790))).  Only the codes read here are declared.
-extern int g_a170dc;                                // 0xa170dc  held, code 0x37
-extern int g_a170e0;                                // 0xa170e0  held, code 0x38
-extern int g_a170e4;                                // 0xa170e4  held, code 0x39
-extern int g_a17128;                                // 0xa17128  held, code 0x4a
-extern int g_a1715c;                                // 0xa1715c  held, code 0x57
-extern int g_a1717c;                                // 0xa1717c  held, code 0x5f
-extern int g_a17184;                                // 0xa17184  held, code 0x61
-extern int g_a17188;                                // 0xa17188  held, code 0x62
-extern int g_a17190;                                // 0xa17190  held, code 0x64
-extern int g_a17194;                                // 0xa17194  held, code 0x65
-extern int g_a174dc;                                // 0xa174dc  press, code 0x37
-extern int g_a174e0;                                // 0xa174e0  press, code 0x38
-extern int g_a174e4;                                // 0xa174e4  press, code 0x39
-extern int g_a1758c;                                // 0xa1758c  press, code 0x63
-extern int g_a17590;                                // 0xa17590  press, code 0x64
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include "../slot.h"                        // Slot, g_keyboard (0xa170c8)
-extern int g_a17420;                                // 0xa17420  press, code 0x08
-extern int g_a17820;                                // 0xa17820  previous, code 0x08
+
+
 extern const float g_one;                           // 0x549cdc = 1.0f
 extern const float g_hilite_dim;                    // 0x54b4d0 = 0.05f
 
@@ -664,10 +664,10 @@ struct MapEditorDialog_s2f250 {
 
 
 
-extern int g_warp_x;                          // 0x5d70b4
-extern int g_warp_y;                          // 0x5d70b8
-extern int g_saved_x;                           // 0x5e2130
-extern int g_saved_y;                           // 0x5e2134
+
+
+
+
 extern HWND g_editor_hwnd;                      // 0x8ee3d30
 
 

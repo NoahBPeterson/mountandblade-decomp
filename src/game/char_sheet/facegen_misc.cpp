@@ -1,4 +1,5 @@
 #include "./facegen_misc.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -160,12 +161,12 @@ extern int g_5e28c8;                                    // 0x5e28c8
 extern int g_a16c58;                                    // 0xa16c58
 extern int g_5d75c8;                                    // 0x5d75c8 (view width)
 extern int g_5d75cc;                                    // 0x5d75cc (view height)
-extern void* g_a17f28;                                  // 0xa17f28 (IDirect3DDevice9*)
+
 extern char* g_5a9f54;                                  // 0x5a9f54 (save/load text)
 extern int g_5a9f5c;                                    // 0x5a9f5c (text length)
-extern int g_5a9fa0;                                    // 0x5a9fa0
-extern int g_5a9fb8;                                    // 0x5a9fb8
-extern int g_5a9fb0;                                    // 0x5a9fb0
+
+
+
 extern tstring g_5a9f50;                                // 0x5a9f50
 
 struct Viewport { int x, y, w, h; float minz, maxz; };
@@ -285,7 +286,7 @@ void Animator::pack_state(PackedState* out)
 }
 
 // @ 0x4ebb80
-extern int g_no_cam;                                    // 0x5a9fb0
+
 #include "../main_menu.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_editor_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)

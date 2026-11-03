@@ -12,6 +12,7 @@
 //       kept: 0x5236f0 calls 0x524360..0x524d60 in turn and they are its record helpers (see MIGRATION.md).
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <string.h>
 #include "./game_2.h"
 #include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
@@ -46,9 +47,9 @@ float g_maxy;                                       // 0xa732a8
 float g_sizex;                                      // 0xa732ac
 float g_sizey;                                      // 0xa732b0
 RawVec g_mat_vec[4];                                // 0xa732bc
-float g_map_sea_direction;                          // 0xa18144
-float g_map_river_direction;                        // 0xa18150
-int g_map_tree_types[4];                            // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
+
+
+
 extern const int g_level_xp[64] = {  // 0x5937c8 experience bound per level (rdata)
     0, 0, 600, 1360, 2296, 3426, 4768, 6345,
     8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362,

@@ -13,6 +13,7 @@
 // 0x42c080 find, 0x42c4a0 substr, 0x42c900 insert. 0x5e293c holds the game's ID3DXEffect*: the gamma values go to
 // its SetVector (COM, +0x88).
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/options.h"   // g_options
 #include "../config/config_block.h"   // g_cfg
 #include <windows.h>
@@ -136,7 +137,7 @@ struct VideoPage {
 void VideoPage::update(int reason)
 {
     if (w50->changed(0x10000)) {
-        orig::g_opt_blood = settings_value(w50);
+        g_opt_blood = settings_value(w50);
         update_performance_caption(this);
     }
 
@@ -157,7 +158,7 @@ void VideoPage::update(int reason)
     }
 
     if (w64->changed(0x10000)) {
-        orig::g_char_detail = settings_value(w64);
+        g_char_detail = settings_value(w64);
         set_enabled_text_local(w64, this);
         update_performance_caption(this);
     }
@@ -210,7 +211,7 @@ void VideoPage::update(int reason)
     if (w34->changed(0x10000)) {
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
         float gamma = w34->get_float();
-        orig::g_scale_x = gamma;
+        g_scale_x = gamma;
         float inv = orig::g_one / gamma;
         vector4 v, vi;
         v.x = v.y = v.z = v.w = gamma;
@@ -251,11 +252,11 @@ void VideoPage::update(int reason)
     }
 
     if (w38->changed(0x10000)) {
-        orig::g_scale_y = w38->get_float();
+        g_scale_y = w38->get_float();
         update_performance_caption(this);
     }
     if (w3c->changed(0x10000)) {
-        orig::g_scale_z = w3c->get_float();
+        g_scale_z = w3c->get_float();
         update_performance_caption(this);
     }
     if (w40->changed(0x10000)) {

@@ -8,6 +8,7 @@
 // constructor the original inlined (vtable store, member constructors, field stores) is written out as the stores it
 // makes; the vtables it stores are the original's (their slots point at our functions after the glue relocates them).
 #include <new>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/ptr_tag.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,8 +20,8 @@
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
 extern char g_5d7080[];     // 0x5d7080 the gui manager
-extern unsigned g_5a8e78;   // 0x5a8e78 (size mask)
-extern unsigned g_5a8e88;   // 0x5a8e88 (type mask)
+
+
 extern unsigned g_5e2464;   // 0x5e2464
 extern unsigned g_5e2468;   // 0x5e2468
 extern float g_549cdc;      // 0x549cdc
@@ -36,17 +37,17 @@ extern char g_5e2a18[];     // 0x5e2a18 the string tables
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
 extern char g_5fe898[];     // 0x5fe898
-extern char g_a178f0[];     // 0xa178f0
-extern char g_a17900[];     // 0xa17900
-extern char g_a170d4[];     // 0xa170d4 the key state table (0x100 dwords)
-extern char g_a178d4[];     // 0xa178d4
-extern char g_a178e0[];     // 0xa178e0
+
+
+
+
+
 extern char g_a181f8[];     // 0xa181f8 the physics set (vector of E56)
 extern char g_a18238[];     // 0xa18238 module.ini (ini file: 0x1000 entries of 0x2c)
 extern char g_a44238[];     // 0xa44238 (end of its entries)
 extern char g_a44240[];     // 0xa44240 the game config (ini file)
 extern char g_a70240[];     // 0xa70240 (end of its entries)
-extern char g_a70260[];     // 0xa70260 the scene
+
 struct ShadowMap;
 extern ShadowMap g_shadow_map;   // 0xa70248 (game_state.cpp)
 extern char g_a70440[];     // 0xa70440
@@ -68,7 +69,7 @@ extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 extern char g_8ed4f58[];    // 0x8ed4f58 the meshes
 extern char g_8ed4f78[];    // 0x8ed4f78
 extern char g_8ed5090[];    // 0x8ed5090 the particle systems
-extern char g_8ee3120[];    // 0x8ee3120 0x2a records of 0x44 (three strings each, at -0x20, -0x10, 0)
+
 extern char g_8ee3c38[];    // 0x8ee3c38 the module name
 extern char g_8ee3c48[];    // 0x8ee3c48 the application
 extern char g_5aa128[];     // 0x5aa128 the sound manager
@@ -316,8 +317,8 @@ void __cdecl static_init_547b50()
     memset(g_a170d4, 0, 0x400);
     AT(int, g_a178e0, 0) = 0;
     AT(int, g_a178e0, 4) = 0;
-    AT(int, g_a178d4, 0) = 0;
-    AT(int, g_a178d4, 4) = 0;
+    AT(int, (char*)&g_a178d4, 0) = 0;
+    AT(int, (char*)&g_a178d4, 4) = 0;
 }
 // @ 0x547d80
 void __cdecl static_init_547d80() { ((PhysSet*)g_a181f8)->reset(); atexit(static_dtor_5484b0); }

@@ -79,37 +79,37 @@ extern unsigned __int64 g_bit[];                             // 0x5a8e68
 extern const char str_m[];                             // 0x5a9c3c
 extern const char str_mount_and_blade[];               // 0x5a9c54
 extern text_stream g_log;                  // 0x5a9f60
-extern int g_no_cam;                       // 0x5a9fb0
-extern int g_sound_muted;                  // 0x5a9fd8
+
+
 extern options_record g_options;           // 0x5aa008
 extern int g_iWindowWidth;                 // 0x5a9fe4
 extern int g_iWindowHeight;                // 0x5a9fe8
 extern int g_shadow_quality_req;           // 0x5aa004
-extern float g_music_volume;               // 0x5aa010
-extern float g_master_volume;              // 0x5aa014
-extern float g_exp_arg;                    // 0x5aa018
-extern int g_invert;                       // 0x5aa01c
-extern int g_opt_blood;                    // 0x5aa020
-extern int g_char_detail;                  // 0x5aa024
-extern unsigned g_max_dead;                // 0x5aa044
-extern int g_tick_a;                       // 0x5aa048
-extern int g_difficulty;                   // 0x5aa04c
-extern int g_agent_count;                  // 0x5aa050
-extern int g_opt_dmg_to_player;            // 0x5aa054
-extern int g_opt_dmg_to_friends;           // 0x5aa058
-extern int g_fx_on;                        // 0x5aa05c
-extern int g_opt_damage_msgs;              // 0x5aa060
-extern int g_opt_shot_difficulty;          // 0x5aa064
-extern int g_opt_kill_msgs;                // 0x5aa068
-extern int g_flag5aa06c;                   // 0x5aa06c
-extern int g_flag5aa070;                   // 0x5aa070
-extern int g_ctl_mode;                     // 0x5aa074
-extern int g_stick_mode;                   // 0x5aa078
-extern float g_speed_base;                 // 0x5aa07c
-extern int g_show_messages;                // 0x5aa080
-extern float g_scale_x;                    // 0x5aa088
-extern float g_scale_y;                    // 0x5aa08c
-extern float g_scale_z;                    // 0x5aa090
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 extern SoundMgr g_sound_mgr;               // 0x5aa128
 extern resmgr g_resmgr_obj;                    // 0x5d6fa0
 extern gui_manager g_gui_mgr;                  // 0x5d7080
@@ -123,12 +123,12 @@ extern int g_item_kind_count;              // 0x5e29d4
 extern int g_propkind_count;               // 0x5e29e0
 extern StrTable g_strtable;                // 0x5e2a18
 extern render_batch g_batch;               // 0x5fe898
-extern int g_a1711c;                       // 0xa1711c
-extern int g_a17454;                       // 0xa17454
-extern int g_a1751c;                       // 0xa1751c
-extern int g_a17854;                       // 0xa17854
+
+
+
+
 extern renderer g_render;                  // 0xa17910
-extern char g_use_hw_shadow;               // 0xa17f24
+
 extern ini_file g_module_info;             // 0xa18238
 extern MissionCtx g_mission_ctx;           // 0xa73300
 extern int g_a73304[];                          // 0xa73304

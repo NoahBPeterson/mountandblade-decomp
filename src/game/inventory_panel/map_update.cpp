@@ -7,6 +7,7 @@
 // PlaneTrace::intersect, Picker::collect), s0051abd0 (MapPanel / GameData / RecR), s00439100 (collision
 // shapes, level::query_segment) and s00483870 (the message ring).
 #include <windows.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <math.h>
 #include "../../rgl/rgl_math.h"
 #include "../../include/msg_log.h"
@@ -126,7 +127,7 @@ static inline Party* party_at(GameData* g, int id)
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 
 // --------------------------------------------------------------------------------- globals -------------
-extern int       g_a17458;                   // 0xa17458
+
 #include "../config/config_block.h"                // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 
 // ======================================================================================================

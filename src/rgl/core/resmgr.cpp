@@ -7,6 +7,7 @@
 // `resource_manager` is the other half of this object) and ends where core/frustum_grid.cpp (0x41e470) begins;
 // the forward calls 0x41a2c0 -> 0x41ef30, 0x41ca60 -> 0x41f970 only put a boundary below world_items.cpp.
 #include <windows.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <stdio.h>
@@ -43,7 +44,7 @@
 
 using namespace rgl;
 
-extern int g_use_text_res;                     // 0x5a9fb0 (the text resources .trf are read when set)
+
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_mesh_npts;                                    // 0x5e2998 (point count of the mesh being read)
 unsigned __int64 g_bit[64] = {  // 0x5a8e68 (g_bit[i] == 1 << i; the table of single-bit masks)

@@ -9,6 +9,7 @@
 // object; UiB::show (0x48b4f0) calls UiB::value (0x48b550) forward, so the object ends before 0x48b550.
 //-----------------------------------------------------------------------------
 #include "../tstring.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./ui_common.h"
 #include "./item_ref.h"
 #include "./mission_ui.h"

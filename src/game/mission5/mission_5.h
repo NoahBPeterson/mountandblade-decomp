@@ -9,6 +9,7 @@
 #ifndef MISSION5_MISSION_5_H
 #define MISSION5_MISSION_5_H
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
@@ -37,7 +38,7 @@ struct bin_writer_i : file_writer_base {
 extern void* g_mission; // 0x5e292c
 extern void* g_game; // 0x5e2930
 #include "../dialog_mgr.h"           // DialogMgr g_dialogs (0x8ed50c8)
-extern int g_conversation_agent;   // 0x8ed50dc
+
 extern char g_strtable[]; // 0x5e2a18
 extern char g_gui[]; // 0x5d7080
 extern char g_game_keys[]; // 0xa73730
@@ -556,11 +557,11 @@ extern HANDLE g_mt_event;                                  // 0x5e28d8
 extern int  g_pending_action;                                  // 0x5a9f18
 extern int  g_vert_budget;                                  // 0x5a9c34
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
-extern unsigned char g_a17908;                          // 0xa17908
+
 extern int  g_presentation;                                  // 0x5e299c
 #include "../../include/renderer.h"
 extern char g_script[]; // 0xa70440
-extern int g_skill_clamp;                       // 0x8ee3ac4
+
 #define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
 struct Obj73300_s261e0 {                                        // g_mission_ctx (0xa73300)
     char pad0[0x3c];
@@ -993,8 +994,8 @@ struct KeyNames_s284a0 {                                       // 0xa170c8
 #define g_a73790 (*(int*)(g_game_keys + 0x60))           // 0xa73790
 #define g_a73794 (*(int*)(g_game_keys + 0x64))           // 0xa73794
 extern int g_presentation;                                    // 0x5e299c
-extern int g_invert;                                    // 0x5aa01c
-extern int g_stick_mode;                                // 0x5aa078
+
+
 #include "../../include/fx.h"
 #include "../../rgl/resource_manager.h"
 
@@ -1153,8 +1154,8 @@ struct MissionHud_s29130 {
 // ---- externals -----------------------------------------------------------------------------------------
 
 
-extern int g_flag5aa06c;                                      // 0x5aa06c
-extern int g_flag5aa070;                                      // 0x5aa070
+
+
 struct ItemKind_s29130 { char pad[0x1c8]; int type; char pad1cc[0x238 - 0x1cc]; };
 
 extern float g_half;                                          // 0x549d70 (0.5f)

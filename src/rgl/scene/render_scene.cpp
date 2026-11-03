@@ -6,6 +6,7 @@
 // 0x42a090 is the TU map's (first byte of strategic_entity::render, whose class differs: low). No forward call or
 // shared literal ties 0x429740 / 0x429890 to the helpers before them, so the single object is kept.
 #include <vector>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../game/config/config_block.h"   // g_cfg
 #include <new>
 #include "../rgl_string.h"
@@ -32,7 +33,7 @@ using namespace rgl;
 // logging globals of another object
 #include "../../include/logger.h"                       // Logger (shared with game/terrain_b/scene_file.h)
 extern char g_log_obj[];                                // 0x5a9f30 (a Logger)
-extern int g_log_on;                                    // 0x5a9fb0
+
 
 namespace rgl {
 

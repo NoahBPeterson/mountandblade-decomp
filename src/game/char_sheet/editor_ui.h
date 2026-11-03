@@ -95,7 +95,7 @@ void* make_medium_button(void* parent, const tstring* text, int a2, int a3, floa
 
 
 // ---- globals ---------------------------------------------------------------------------------------
-extern int g_no_cam;                            // 0x5a9fb0
+
 extern tstring g_log_path;                      // 0x5a9f64
 extern FILE* g_log_file;                        // 0x5a9f90
 extern unsigned char g_log_flag94;              // 0x5a9f94

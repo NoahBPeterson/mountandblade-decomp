@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./editor_ui.h"
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON

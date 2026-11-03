@@ -9,6 +9,7 @@
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
 #include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
@@ -135,20 +136,20 @@ extern UiKeyState g_keys;                                 // 0xa73730
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
 extern int g_psys_scene;            // 0xa170c0
 #include "../game_globals.h"      // g_module_settings.show_quest_notes (canonical)
-extern int g_a171b8;            // 0xa171b8
-extern int g_a17454;            // 0xa17454
-extern int g_a17854;            // 0xa17854
-extern int g_no_cam;            // 0x5a9fb0
+
+
+
+
 extern int g_a735c8;            // 0xa735c8
 extern float g_view_a;          // 0x5d75d8
 extern float g_view_b;          // 0x5d75dc
 extern const float g_ten;           // 0x549d74  10.0f
 extern const float g_quarter;       // 0x54b868  0.25f
-extern const float g_axis_x;        // 0xa178d4
-extern const float g_exp_arg;       // 0x5aa018
-extern int g_in_17204;              // 0xa17204
-extern int g_in_17214;              // 0xa17214
-extern int g_in_17458;              // 0xa17458
+
+
+
+
+
 extern const float g_half;          // 0x549d70  0.5f
 
 // the party record behind an id (the page table at +0x139c8)

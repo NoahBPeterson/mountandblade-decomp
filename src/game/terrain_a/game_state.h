@@ -72,9 +72,9 @@ struct named_object;
 void __stdcall clear_f14(named_object* r);      // 0x4175f0
 union ReleaseFn { void (ShResMgr::*as_member)(void*); void (__stdcall *clear_f14)(named_object*); };
 extern ShResMgr g_shadow_resmgr;                // 0x5d6fa0
-extern int g_max_tex_w;                         // 0xa17f84 (0x463bc0)
-extern int g_max_tex_h;                         // 0xa17f88 (0x463bc0)
-extern char g_use_hw_shadow;                    // 0xa17f24 (0x463e10, 0x464070, 0x4640d0)
+
+
+
 #include "../../include/renderer.h"   // canonical: g_render.dev (0xa17f28)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../rgl/options.h"   // canonical: g_options.i7c (0x5aa084)

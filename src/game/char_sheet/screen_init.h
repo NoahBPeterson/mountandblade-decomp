@@ -41,7 +41,7 @@ struct Rect {                                   // the 0x10-byte region copied i
 
 extern char g_5e212c;                           // 0x5e212c
 extern char g_5d8788;                           // 0x5d8788
-extern int g_5a9fb0;                            // 0x5a9fb0 (no terrain camera)
+
 #include "../renderer.h"
 extern float g_590bb8;                          // 0x590bb8
 extern float g_549cdc;                          // 0x549cdc (1.0f)

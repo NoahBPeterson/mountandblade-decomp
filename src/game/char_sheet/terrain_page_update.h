@@ -53,7 +53,7 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
-extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[n] = 2 << n
+
 #include "../bit_words.h"
 // (set_field_a 0x464a60 is Terrain's: cs_common.h)
 

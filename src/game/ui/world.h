@@ -15,12 +15,12 @@
 // offsets (+0x78 default party, +0x8c player troop, +0xc8, +0x13a00 troop table, +0x13a58 quest table, +0x13b44 ...) and the same
 // member function 0x48a150 (GameData::template_count; the slices called it sl_cell_coord). The ui members of it are defined in mission_ui.cpp.
 
-extern int g_difficulty;                    // 0x5aa04c
-extern int g_agent_count;                   // 0x5aa050
-extern int g_int_5aa054;                    // 0x5aa054
-extern int g_int_5aa058;                    // 0x5aa058
-extern int g_stick_mode;                    // 0x5aa078
-extern float g_speed_base;                  // 0x5aa07c (1.0f)
+
+
+
+
+
+
 
 #include "./named_rec.h"
 

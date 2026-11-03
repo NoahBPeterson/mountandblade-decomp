@@ -7,6 +7,7 @@
 //       ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include <string.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <new>
 #include "./game_state.h"
 #include "../config/config_block.h"           // Config g_cfg (0x5a9f98): shadowmap_quality
@@ -23,10 +24,10 @@
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 ShadowMap g_shadow_map;                             // 0xa70248 (.bss: target, target2, surf, w, h, ... zero until setup())
-int g_max_tex_w;                                    // 0xa17f84 (0x463bc0)
-int g_max_tex_h;                                    // 0xa17f88 (0x463bc0)
-char g_use_hw_shadow;                               // 0xa17f24 (0x463e10, 0x464070, 0x4640d0)
-float g_hero_wounded_treshold;                      // 0xa18138 (0x4638f0)
+
+
+
+
 char g_path_buf[256];                               // 0x5e2480 (0x4639d0)
 float g_ramp_gamma = 0.45454544f;                   // 0x5a9bfc (1 / 2.2: gamma exponent of the software colour path)
 

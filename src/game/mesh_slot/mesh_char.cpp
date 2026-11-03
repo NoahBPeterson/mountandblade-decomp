@@ -1,6 +1,7 @@
 // mesh_char.cpp: TU 63 "mesh", part 4 (0x47f650..0x47ff60): the character mesh collector and its animation-state wrapper,
 // the scene-object loader and the shadow-map passes. See MIGRATION.md.
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./mesh_slot.h"
 #include "../terrain_a/game_state.h"
 #include "../terrain_b/scene_file.h"

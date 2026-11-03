@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./facegen_init.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)

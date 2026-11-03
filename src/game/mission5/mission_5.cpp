@@ -14,6 +14,7 @@
 //       map editor starts (0x52cf60, class Mesh | Elem). The map's boundary 0x5249f0 is not kept (see game_2.cpp).
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./mission_5.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../tstring.h"
@@ -137,7 +138,7 @@ done:
             refresh(i, &res);
         }
     }
-    else if (orig::g_a17454 == 0 && orig::g_a17854 != 0)
+    else if (g_a17454 == 0 && g_a17854 != 0)
     {
         refresh(-2, &res);
     }
@@ -148,7 +149,7 @@ done:
 
     if (v == 1)
         goto case1;
-    if (orig::g_no_cam != 0 && *(int*)&g_keyboard.down[15] != 0 && *(int*)&g_keyboard.prev[15] == 0)
+    if (g_no_cam != 0 && *(int*)&g_keyboard.down[15] != 0 && *(int*)&g_keyboard.prev[15] == 0)
         goto case1;
 
     if (v == 0x10)
@@ -464,7 +465,7 @@ int find_listener_agent()
 #undef g_deque_s261e0
 #define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 #undef g_clamp_max
-extern int g_skill_clamp;                       // 0x8ee3ac4
+
 #define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
 // @ 0x5261e0
 void Screen_s261e0::tick(float dt)

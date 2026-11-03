@@ -10,6 +10,7 @@
 //       view draw pass. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./common.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/options.h"   // g_options
 #include "./terrain.h"
 #include "./game_state.h"
@@ -21,16 +22,16 @@
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-char g_light_on[64];                                // 0xa17e17 per-light enable cache (.bss)
-IDirect3DBaseTexture9* g_tex_cache[3];              // 0xa17e5c texture bound per stage
-int g_e68;                                          // 0xa17e68 pixel shader bound
-int g_tss_a;                                        // 0xa17e6c
-int g_tss_b;                                        // 0xa17e70
-int g_tss_c;                                        // 0xa17e78
-int g_tss_d;                                        // 0xa17e7c
-int g_alpha_test;                                   // 0xa17ea0
-int g_texfactor;                                    // 0xa17ea4
-int g_cull_cur;                                     // 0xa17ed0
+
+
+
+
+
+
+
+
+
+
 const ivec2 g_nbr[8] = {{0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}};  // 0x591340 (rdata)
 const char* g_name_elevation = "ground_elevation";  // 0x5a9bf4
 const char* g_name_leveling = "ground_leveling";    // 0x5a9bf8

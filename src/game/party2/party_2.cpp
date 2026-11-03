@@ -13,6 +13,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding them
 #include "./party_2.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_module_settings.seeing_range
 #include "../terrain_b/terrain_b.h"
@@ -879,7 +880,7 @@ void Party::set_order_agent(int* t)
 extern float g_k0_1;                                 // 0x54b8b0  0.1f
 extern float g_rand_k;                               // 0x54a6bc  1/15817
 struct options;
-extern int g_skill_clamp;                       // 0x8ee3ac4
+
 #define g_clamp_max g_skill_clamp               // outside the annotation range, so a literal cast
 
 // @ 0x4b2c00

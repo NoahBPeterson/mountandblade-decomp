@@ -81,8 +81,8 @@ struct WorldCam {
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
 // ---- globals ------------------------------------------------------------------------------------------
-extern int g_a1717c;                            // 0xa1717c
-extern int g_5a9fd8;                            // 0x5a9fd8  listener already set
+
+
 extern float g_map_min_x;                            // 0x5aa120  map min x (-50)
 extern float g_map_max_x;                            // 0x5aa118  map max x ( 50)
 extern float g_map_min_y;                            // 0x5aa124  map min y (-50)

@@ -11,6 +11,7 @@
 //     renumber, link, pop_try, run_line, emit. The slices viewed these as `Interp`, `Mission` and `ScriptHolder`.
 #define MB_CAMERA_TU
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <new>
 #include <string.h>

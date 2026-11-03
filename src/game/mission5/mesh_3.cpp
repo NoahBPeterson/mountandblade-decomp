@@ -12,6 +12,7 @@
 //       0x52f250 and 0x5305b0 in turn, so all three may belong to the caller's object).
 //-----------------------------------------------------------------------------
 #include "./mesh_3.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
@@ -20,10 +21,10 @@
 #include "../key_names.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_warp_x;                                     // 0x5d70b4
-int g_warp_y;                                     // 0x5d70b8
-int g_saved_x;                                      // 0x5e2130
-int g_saved_y;                                      // 0x5e2134
+
+
+
+
 
 
 // ======================================================= slice s0052cf60: functions

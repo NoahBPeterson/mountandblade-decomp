@@ -10,6 +10,7 @@
 //       Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./terrain_b.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/options.h"   // g_options
 #include "../config/config_block.h"   // g_cfg
 #include "./frustum.h"

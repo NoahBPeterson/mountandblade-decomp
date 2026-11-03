@@ -7,6 +7,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdlib.h>
 #include <string.h>
 #include <new>
@@ -612,10 +613,10 @@ static inline Agent* AGENT(unsigned id)
 }
 
 // Bone-mask bits (64-bit values stored in .data; provisional names)
-extern __int64 g_mask_a8;       // 0x5a8ea8
-extern __int64 g_mask_ed0;      // 0x5a8ed0
-extern __int64 g_mask_ef8;      // 0x5a8ef8
-extern __int64 g_mask_f18;      // 0x5a8f18
+
+
+
+
 
 // per-tick update of the two animation slots: next sub-animation, bone masks, channel weights from the pitch,
 // head / torso rotations from the look angles

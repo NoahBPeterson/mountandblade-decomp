@@ -83,8 +83,8 @@ struct ScrollHost { char pad[0x484]; UiDsv* bar; }; // +0x484
 struct Profile { char pad[0x50]; int troop; };      // +0x50
 
 extern "C" {
-extern int g_a17118;                                // 0xa17118
-extern int g_a17518;                                // 0xa17518
+
+
 }
 
 // 0x495700 "choose menu option" (tail-called through g_main_menu)

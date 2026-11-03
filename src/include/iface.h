@@ -1,3 +1,4 @@
+#include "data_views.h"   // views of names inside bigger objects (data_views.h)
 // iface.h: IfaceB, the polymorphic base of the engine's record classes (vtable 0x5908f8 = ??_7IfaceB@@6B@; slots 1 and 2 are
 // the empty function 0x477b70, slot 0 is the scalar deleting destructor 0x431420), and Quad, the tick record the
 // 0x1c8-byte placed object embeds. ONE definition for src/game (placed_obj.h, terrain_b/records.h, agent) and src/rgl/xmlcfg
@@ -7,8 +8,8 @@
 #ifndef MB_IFACE_H
 #define MB_IFACE_H
 
-extern int g_tick_lo;                  // 0x5e2958 (g_time[2], 1e-5 s ticks)  // old name of g_ticks, removed after the names merge
-extern int g_tick_hi;                  // 0x5e295c  // old name of g_ticks, removed after the names merge
+
+
 
 struct IfaceB {
     int f4, f8, fc;

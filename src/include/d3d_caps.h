@@ -3,5 +3,5 @@
 #ifndef MB_D3D_CAPS_H
 #define MB_D3D_CAPS_H
 #include <d3d9.h>
-extern D3DCAPS9 g_caps;                      // 0xa17f2c
+
 #endif // MB_D3D_CAPS_H

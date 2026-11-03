@@ -4,6 +4,7 @@
 // (s00401010: CD3DApplication = `Application`) and the engine's tstring (s0042a1f0) / widget vtables.
 // Names are provisional.
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <windows.h>
 #include <d3d9.h>
@@ -49,8 +50,8 @@ void __cdecl frame_hook(void);                               // 0x4ec460 (game/c
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // ---- globals ------------------------------------------------------------------------------------------
-extern int   g_no_cam;                  // 0x5a9fb0
-extern int g_a17158;    // 0xa17158
+
+
 // the Direct3D9 device (0xa17f28); __stdcall virtuals -> the COM-style call pattern
 struct IDev9 {
     virtual long __stdcall s0(); virtual long __stdcall s1(); virtual long __stdcall s2();

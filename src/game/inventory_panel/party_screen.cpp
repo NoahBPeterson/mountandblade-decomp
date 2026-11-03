@@ -7,6 +7,7 @@
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./party_screen.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -20,7 +21,7 @@
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_item_sel;                                  // 0xa75f6c (the selected item index; negative = nothing selected)
 
-extern int g_skill_clamp;                  // 0x8ee3ac4
+
 #define g_clamp_max g_skill_clamp              // (clamped level value of the hero percentage; lives outside the loaded image)
 #define WINT(w, off) (*(int*)((char*)(w) + (off)))
 

@@ -1,4 +1,5 @@
 #include "./cs_update.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "../config/config_block.h"      // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers

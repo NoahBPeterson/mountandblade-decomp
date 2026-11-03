@@ -20,7 +20,7 @@
 
 // ---- the writer: src/game/out_stream.h ---------------------------------------------------------------------
 #include "../out_stream.h"
-extern __int64 g_time1;                             // 0x5e2950 (the 64-bit clock counter)
+
 
 // the record the scalar block writes: src/game/rec5c.h; the 8-byte element vector: src/game/list8.h; the 0x508-byte
 // game record (GameRecord in the slices) is the troop record, src/include/troop.h

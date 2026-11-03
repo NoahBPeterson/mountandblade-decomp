@@ -1,4 +1,5 @@
 #include "./conv_refresh.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)

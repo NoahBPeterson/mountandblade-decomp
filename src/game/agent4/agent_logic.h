@@ -70,7 +70,7 @@ float __cdecl fmin_ref(const float* a, const float* b);                 // 0x432
 float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0
 float __cdecl clamp(const float* x, const float* lo, const float* hi);  // 0x40e3d0
 int __stdcall in_id_set(int id);                                        // 0x432640
-extern int g_difficulty;                                                // 0x5aa04c
+
 extern unsigned g_input_mask;                                           // 0x5e2474
 extern unsigned g_input_flags;                                          // 0x5e2470
 
@@ -202,7 +202,7 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                                   
 struct V4 { float x, y, z, w; };               // constructor-free storage for the local arrays of start_ragdoll
 struct M4 { V4 s, f, u, o; };
 
-extern int g_ui_enabled;                // 0x5aa060
+
 
 // ---- the blow record (0x58 bytes; agent/agent.h calls it RecZSubB with the fields m0..m54 and the initialiser 0x4353a0, which the
 // manifests bind by that name, so this is the second declaration of the same record, with the names the blow code uses) ----
@@ -244,9 +244,9 @@ __declspec(dllimport) void __cdecl NewtonBodyGetVelocity(const NewtonBody* b, fl
 __declspec(dllimport) void __cdecl NewtonRagDollBoneGetGlobalMatrix(const NewtonRagDollBone* b, float* m);       // 0x549248
 }
 #include "../../include/fx.h"   // canonical: g_step_tbl (0x5a9c20)
-extern int g_fx_on;                                 // 0x5aa05c
+
 extern int g_sound_blood;                           // 0x5aa2e4
-extern int g_tick_a;                                // 0x5aa048
+
 extern int g_tick_b;                                // 0xa18234
 float __cdecl capsule_sphere_gap(capsule* c, sphere* s);   // 0x409d20
 

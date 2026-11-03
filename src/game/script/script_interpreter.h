@@ -178,7 +178,7 @@ extern int g_particle_system_count;     // 0x8ed5094 (warn_particle_system)
 extern int g_sound_count;               // 0x5aa130 (0x49d310)
 extern int g_track_count;               // 0xa73a14 (0x49d3d0)
 extern int g_animation_count;           // 0xa7662c (0x49d4b0)
-extern int g_warnings_off_b;            // 0x5a9fd8 (0x49d310, 0x49d3d0)
+
 
 // ---- message log and text log (report 0x49cc60) -----------------------------------------------------------------
 // the message log object (MsgLog, src/include/msg_log.h)
@@ -481,7 +481,7 @@ __forceinline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; 
 
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
-extern int g_text_log_enabled;          // 0x5a9fb0 (display_message 0x4a305a)
+
 
 // ---- map battles (table at game +0xcc) ---------------------------------------------------------------------------
 #include "../battle_rec.h"            // BattleRec, BattleTable: the one definition (party2 and script)
@@ -656,7 +656,7 @@ __forceinline FactionRec* faction(int id) { return &game()->factions[id]; }
 __forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }
 
 extern int g_siege_attack;              // 0xa73438 (store_defender_count 0x4ae36e)
-extern int g_conversation_agent;        // 0x8ed50dc (g_dialogs +0x14; store_conversation_agent)
+
 struct MissionUiX {
     char pad0[0x2c4];
     int passage_menu;                    // +0x2c4 (set_passage_menu 0x4a55f3)
@@ -671,7 +671,7 @@ extern __int64 g_trigger_param_1;       // 0xa70448 (g_script +8)
 extern __int64 g_trigger_param_2;       // 0xa70450 (g_script +0x10)
 extern unsigned g_battle_flags;         // 0xa73464 bit 0 = end the battle (end_current_battle 0x4a55fe)
 extern char g_party_battle_mode;         // 0xa735c8 (set_party_battle_mode 0x4a2ad0)
-extern char g_in_meta_mission;          // 0x8ee30ec (read by in_meta_mission)
+
 
 // ---- the mission (g_mission, 0x5e292c; Mission in agent.h) --------------------------------------------------------
 // The agent record is Agent (src/game/agent_obj.h; 0x5928 bytes, pages of 16): the slices' AgentX.

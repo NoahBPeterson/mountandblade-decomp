@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdlib.h>
 #include "./script_interpreter.h"
 #include "../../include/msg_log.h"          // MsgLog: the UI root view with the pointer position

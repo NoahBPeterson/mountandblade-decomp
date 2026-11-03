@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./screen_init.h"
 #include "../gui_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)

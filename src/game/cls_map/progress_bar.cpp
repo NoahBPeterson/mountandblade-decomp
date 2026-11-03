@@ -2,6 +2,7 @@
 // s004e4c70, s004e55f0, s004e5f80, s004e65e0, s004e6a70, s004e75a0, s004e7b30 and s004e85d0 (head). T-regime region: helpers sit
 // right after their first caller; the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
@@ -1242,7 +1243,7 @@ void MapLoader::read(SlotReader* stream)
 }
 
 // ---- 0x4e85d0 / 0x4e8720: MapScreen::init and MapScreen::frame_step ------------------------------------------------------------------------
-extern unsigned g_mask_w;                       // 0x5a8e78
+
 extern unsigned g_a76644;                       // 0xa76644
 extern float    g_chunk_scale;                  // 0x549d68
 

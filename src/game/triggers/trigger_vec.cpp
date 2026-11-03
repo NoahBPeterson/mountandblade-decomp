@@ -12,6 +12,7 @@
 // trigger_entry_vec, big_obj) are one module.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <string.h>
 #include <stdlib.h>
@@ -38,8 +39,8 @@ ID3DXEffect* g_effect;   // 0x5e293c
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_dlg_display_bits = 0x20;                    // 0x5aa0fc launcher dialog: chosen colour depth
-int g_dlg_multisample = 1;                         // 0x5aa100 launcher dialog: chosen multisample type
+
+
 
 
 // ---- data this module owns (docs/standalone_data.md) ----

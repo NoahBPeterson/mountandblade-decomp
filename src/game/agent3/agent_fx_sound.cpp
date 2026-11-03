@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Agent::update_alarm 0x443140 calls vector4::operator- 0x407ca0 instead of expanding it
 #include "./agent_fx_sound.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../tstring.h"
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)

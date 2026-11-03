@@ -222,11 +222,11 @@ extern GameMgr g_game;                  // 0x5e2930
 // ---- globals --------------------------------------------------------------------------------------------
 extern int g_screenshots_counter;       // 0xa70440
 
-extern int g_5a9fb0;                    // 0x5a9fb0 (camera enabled)
-extern int g_a1741c;                    // 0xa1741c (screenshot requested)
-extern int g_a1781c;                    // 0xa1781c (screenshot already done)
-extern float g_a178d4;                  // 0xa178d4 mouse dx
-extern float g_a178d8;                  // 0xa178d8 mouse dy
+
+
+
+
+
 
 // the DirectInput device at 0xa170d0 is a C-style COM object: its vtable holds function pointers that
 // take the device as their first (stack) argument.  Only Acquire (+0x1c) and GetDeviceData (+0x28) are used.
@@ -238,7 +238,7 @@ struct DiVtbl {
                                     unsigned* count, unsigned flags);                // +0x28
 };
 struct DiDev { DiVtbl* vtbl; };
-extern DiDev* g_a170d0;                 // 0xa170d0 (input device, may be null)
+
 
 // input records handed back by GetDeviceData (DIDEVICEOBJECTDATA, 0x14 bytes each).
 struct DiObjectData {

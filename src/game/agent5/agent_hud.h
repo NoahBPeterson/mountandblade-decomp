@@ -117,14 +117,14 @@ struct OriginPairs {                                              // the key tab
     bool is_down(int key);                                           // 0x48ac50 (ret 4)
 };
 extern OriginPairs g_game_keys;                                         // 0xa73730
-extern int g_cam_version;                                         // 0xa17118
-extern int g_cam_down;                                            // 0xa17518
-extern int g_cam_left;                                            // 0xa17150
-extern int g_cam_right;                                           // 0xa1714c
-extern int g_cam_in;                                              // 0xa17154
-extern int g_cam_out;                                             // 0xa17158
-extern int g_cam_roll;                                            // 0xa1718c
-extern int g_cam_sens;                                            // 0x5a9fdc
+
+
+
+
+
+
+
+
 
 extern float g_screen_a;                                          // 0x5d75dc
 extern float g_screen_b;                                          // 0x5d75d8
@@ -182,13 +182,13 @@ extern DustTerrain g_terrain;                                 // 0xa76630 (the m
 #include "../../include/renderer.h"
 #include "../skill_cap.h"
 extern SoundMgr g_sound_mgr;                                          // 0x5aa128
-extern int g_listener_off;                                        // 0x5a9fd8 (nonzero: the sound listener does not follow the camera)
+
 extern matrix g_listener;                                         // 0x5aa138 (s, f, u rows and the position o at 0x5aa168)
 
 extern int g_screen_w;                                            // 0x5d75c8
 extern int g_screen_h;                                            // 0x5d75cc
-extern float g_scale_a;                                           // 0x5aa08c
-extern float g_scale_b;                                           // 0x5aa090
+
+
 
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);   // 0x432510 (max(lo, min(v, hi - 1)))
 int __stdcall FSOUND_3D_Listener_SetAttributes(float* pos, float* vel, float fx, float fy, float fz, float ux, float uy, float uz);   // 0x5342dc (_FSOUND_3D_Listener_SetAttributes@32)
@@ -200,7 +200,7 @@ extern char* g_menus;                                         // 0x5e29b0 (the g
 struct TableauTbl {                                            // the object table at 0xa75f40 (world_data/tableau.h: TableauTbl)
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (ret 8)
 };
-extern int g_flag_a17108;   // 0xa17108 (a key state that forces the sun to full size)
+
 extern TableauTbl g_tableaus;                                    // 0xa75f40
 struct MenuLayout { char pad[1]; };                               // the part of the game screen at +0x30; its build (0x4dd920, ret 8) is BlockOwner::init above
 

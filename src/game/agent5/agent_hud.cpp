@@ -9,6 +9,7 @@
 //       caller are __declspec(noinline). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdlib.h>
 #include <stdio.h>
 #include "./agent_hud.h"

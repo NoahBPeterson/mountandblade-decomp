@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <stddef.h>
 // Slice s00507400: the character sheet's window builder (0x507400).
@@ -174,7 +175,7 @@ static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstri
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ini_file.h"
 
-extern int g_game_mode;                         // 0x5a9fb0
+
 #include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp_one_handed (canonical, defined in triggers/trigger_vec.cpp)
 
 // the two mode/tutorial objects touched at the end

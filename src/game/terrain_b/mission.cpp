@@ -38,7 +38,7 @@ void mb_error(const char* fmt, ...);            // 0x42cc80
 extern int g_use_shaders;                       // 0x5e28fc
 extern __int64 g_ticks[];                       // 0x5e2948
 extern ptype* g_ptypes;                         // 0x5e28f8
-extern int g_mesh_quality;                      // 0x5aa084
+
 #include "../../include/mat4.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"

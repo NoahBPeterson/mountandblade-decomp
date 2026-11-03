@@ -7,6 +7,7 @@
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./inventory_panel.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -40,7 +41,7 @@ DragMesh* g_drag;                                // 0x5d75e4
 // ---- globals and callees of other translation units -----------------------------------------------------------------
 extern MsgLog g_msglog;                                 // 0x5d7080
 
-extern int   g_a17188;                                  // 0xa17188
+
 
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
 #include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp (canonical, defined in triggers/trigger_vec.cpp)

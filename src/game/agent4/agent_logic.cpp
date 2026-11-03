@@ -20,6 +20,7 @@
 #define resmgr resmgr_agent_view
 #define g_resmgr g_resmgr_agent_view      // its `extern resmgr g_resmgr`: the defining declaration is `resource_manager g_resmgr` (rgl/resource.h), declared below
 #include <stdlib.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <math.h>
 #include <string.h>
 #include <vector>
@@ -590,9 +591,9 @@ float clamp(const float* x, const float* lo, const float* hi);          // 0x40e
 float __cdecl fmin_ref(const float* a, const float* b);                 // 0x4324b0
 float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0
 extern float g_dt_scale;                                                // 0x5a9bf0
-extern int g_int_5aa04c;                                                // 0x5aa04c
+
 extern unsigned g_input_flags;                                         // 0x5e2470
-extern int g_player_agent;                                              // 0x8ed50dc
+
 
 __forceinline ClassInfo* Agent::class_rec()
 {
@@ -2488,7 +2489,7 @@ static inline std::vector<res_obj*>& r78_meshes(Rec78* r) { return *(std::vector
 static inline res_shape* r78_shape(Rec78* r) { return *(res_shape**)((char*)r + 0x50); }
 static inline SoundSet& rsnd(Rec78* r) { return *(SoundSet*)((char*)r + 0x6c); }
 static inline SoundSet& isnd(ItemKind* k) { return *(SoundSet*)((char*)k + 0x228); }
-extern int g_flag5a9fb0;                                // 0x5a9fb0
+
 #define P_ENT(r) (*(SceneEnt**)&(r)->m1b4)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop
 #define P_ENT2(r) (*(SceneEnt**)&(r)->m1b8)
 #define ents (*(EntVec*)((char*)this + 0x63c0))         // Mission +0x63c0: the entity list of the props
@@ -4155,7 +4156,7 @@ void FxDef::skin_lods(rgl::lod_mesh* g, int flag)
             skin(*it, flag);
     }
 }
-extern int g_blood_enabled;                             // 0x5a9fc0 (provisional)
+
 // @ 0x4525a0
 void Mission::blood_burst(float x, float y, float z, int unused, float amount)
 {
@@ -5773,15 +5774,15 @@ void Agent::update_controls(float dt)
 }
 
 // ---- Agent::process_blow: the handler of a pending blow ---------------------------------------------------------------------------
-extern int g_opt_dmg_to_player;                     // 0x5aa054
-extern int g_opt_dmg_to_friends;                    // 0x5aa058
-extern int g_opt_damage_msgs;                       // 0x5aa060
-extern int g_opt_shot_difficulty;                   // 0x5aa064
-extern int g_opt_kill_msgs;                         // 0x5aa068
-extern int g_opt_blood;                             // 0x5aa020
-extern int g_opt_hit_fx;                            // 0x5a9fc0
-extern int g_voice_default_a;                       // 0x8ed50a0
-extern int g_voice_default_b;                       // 0x8ed50a4
+
+
+
+
+
+
+
+
+
 struct AnimInfo { char pad0[0x3c]; float length; }; // +0x3c
 struct AnimDefV { char pad0[0x10]; AnimInfo* info; char pad14[0x30 - 0x14]; };   // g_anims entry as 0x457b40 reads it (agent_obj.h's AnimDef calls +0x10 `subs`)
 extern AnimDefV* g_anims;                           // 0xa76628
@@ -6947,8 +6948,8 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
 #define itcf_reload_pistol 0x0000007000000000i64
 #define itcf_reload_musket 0x0000008000000000i64
 #define itcf_reload_mask   0x000000f000000000i64
-extern int g_ctl_mode;                              // 0x5aa074
-extern int g_stick_mode;                            // 0x5aa078
+
+
 int __cdecl ftoi_helper(int x);                     // 0x435440
 static __forceinline ItemRef* cur_ptr(Agent* a) { ItemRef* p = 0; if (a->wield[0] >= 0) p = &a->pairs[a->wield[0]]; return p; }
 #define ACT anim[1].cur          // +0x100 current animation id

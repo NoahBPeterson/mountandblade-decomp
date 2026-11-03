@@ -6,13 +6,14 @@
 //       setter and the wind object. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include <stdlib.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./common.h"
 #include "./wind.h"
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-__int64 g_ticks_dt[5];   // 0x5e2970
+
 
 #include "../../include/clock_table.h"
 

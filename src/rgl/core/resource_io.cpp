@@ -8,6 +8,7 @@
 // r_int (0x415930) -> mb_parse_int (0x4159a0), material::load -> stage_t::load (0x4169a0 -> 0x416ad0) and
 // material::save -> stage_t::save are callees emitted after their first caller (header-inline functions).
 #include <windows.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../game/config/config_block.h"   // g_cfg
 #include <d3d9.h>
 #include <d3dx9.h>

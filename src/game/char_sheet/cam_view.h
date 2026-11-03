@@ -20,20 +20,20 @@ using rgl::mat3;
 
 // key state / settings globals
 extern gui_manager g_gui;                              // 0x5d7080 (cs_common.h view: the pointer position g_gui.mouse, 0x5d7094 / 0x5d7098)
-extern int g_a17204;                                    // 0xa17204
-extern int g_a17214;                                    // 0xa17214
-extern int g_a1720c;                                    // 0xa1720c
-extern int g_a171fc;                                    // 0xa171fc
-extern int g_a17454;                                    // 0xa17454
-extern int g_a17854;                                    // 0xa17854
-extern int g_a17458;                                    // 0xa17458
-extern float g_a178d4;                                  // 0xa178d4
-extern float g_a178d8;                                  // 0xa178d8
+
+
+
+
+
+
+
+
+
 
 // globals of the face-generator update (0x4ea8e0)
-extern int g_no_cam;                                    // 0x5a9fb0
-extern int g_a1711c;                                    // 0xa1711c
-extern int g_a1751c;                                    // 0xa1751c
+
+
+
 extern int g_world_time;                                // 0x5d8790
 extern float g_scroll;                                  // 0x590d7c
 extern char* g_game;                                    // 0x5e2930

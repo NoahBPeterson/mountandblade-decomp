@@ -46,9 +46,9 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 typedef Widget RangeWidget;
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
-extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[n] = 2 << n
-extern const int g_mask_w[1];                               // 0x5a8e78 (= 2: the terrain size is 2 bits wide)
-extern const int g_type_mask[1];                            // 0x5a8e88 (= 4: the terrain type is 4 bits wide)
+
+
+
 #include "../bit_words.h"
 
 extern int g_size_modes[8];                                 // 0x59394c terrain-size mode table (only [0] is ours)

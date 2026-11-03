@@ -10,6 +10,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include <stdlib.h>
 #include <math.h>

@@ -26,7 +26,7 @@ using rgl::vector4;
 struct setting { int f0; char* value; char pad[0x2c - 8]; };   // string pointer +4 (null: field is the text)
 extern int g_n_settings;                                 // 0xa70240
 extern setting g_settings;                               // 0xa44240 (entry i at 0xa4425c + 0x2c*i)
-extern tstring g_empty_string;                           // 0x8ee30f0 (?g_empty_string@@3Utstring@@A)
+
 
 // lookup of one setting, 0.0f when the key is missing (the original inlines this seven times)
 static float setting_float(const char* name)

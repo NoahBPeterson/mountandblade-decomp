@@ -8,6 +8,7 @@
 //       provisional. Functions in ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"   // g_cfg
 #include <string.h>
 #include <stdlib.h>
@@ -40,7 +41,7 @@
 #include "../key_names.h"
 
 // ---- data this module owns (.bss, no initialiser; sizes from the code) ----
-int g_origin_state[256];                            // 0xa174d4 0 = origin idle / free (one per origin id, g_origin_table 0xa170d4 is the 256 objects before it)
+
 SortVal g_sort_val[0x2a * 5 + 1];                   // 0xa75f90 weights per (modifier bit, 5): up to index 0x2a * 5 (mission_3.cpp), ends at g_anim_set 0xa76628
 
 

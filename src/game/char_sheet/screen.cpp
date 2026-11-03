@@ -1,4 +1,5 @@
 #include "./screen.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)

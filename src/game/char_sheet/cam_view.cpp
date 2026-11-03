@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./cam_view.h"
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -58,7 +59,7 @@ void CamView::update_model(float dt)
 {
     int n = *(int*)((char*)g_anim.skins + skin * 0x1f8 + 0x3c) - 1;
 
-    if (g_no_cam && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && orig::g_a1711c && !orig::g_a1751c) {
+    if (g_no_cam && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_a1711c && !g_a1751c) {
         if (*(int*)(g_game + 0x1a090) == 0) {
             *(int*)(g_game + 0x1a090) = 1;
             cam_btn->vb4();

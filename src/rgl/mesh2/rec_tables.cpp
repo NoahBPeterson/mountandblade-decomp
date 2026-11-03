@@ -5,6 +5,7 @@
 // 0x4c3050..0x4c48d0 is the "T regime" region (docs/tu_map.md): helpers sit right after their caller, so
 // the functions stay in binary order and the helpers defined after a caller are kept out of line.
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./rec_tables.h"
 #include "../../game/ini_file.h"      // g_game_vars (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -19,7 +20,7 @@
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-D3DCAPS9 g_caps;                                    // 0xa17f2c
+
 int g_use_shaders;                                  // 0x5e28fc
 
 

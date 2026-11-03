@@ -120,7 +120,7 @@ extern "C" double atof(const char* s);                  // 0x537352
 
 #include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
 #include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
-extern int g_no_cam;                                    // 0x5a9fb0
+
 
 #include "../animator.h"                              // Animator, g_anim
 extern float g_dummy_mat;                               // 0x8ed4f8c
