@@ -48,10 +48,6 @@ using rgl::matrix;
 
 namespace rgl { struct entity; struct world { entity* create_entity(int type_id); }; }   // 0x428440 (rgl/scene/world.h)
 
-// 0x466cd0 (emit_particle) calls the cell lookup as a function with a void result; terrain.h declares that view as
-// terrain_obj::cell_of, which is the function Terrain::cell_of (0x464b40) defined below.
-#pragma comment(linker, "/alternatename:?cell_of@terrain_obj@@QAEXPAHPBM@Z=?cell_of@Terrain@@QAEPAHPAHPBM@Z")
-
 static inline float fmin_(float a, float b) { return b < a ? b : a; }
 static inline float fmax_(float a, float b) { return b > a ? b : a; }
 #define IFLOOR(e) ((int)((e) > 0.0f ? (e) : (e) - 0.99999988f))
@@ -263,7 +259,7 @@ void Terrain::reset()
 // ---- bit-field accessors ---------------------------------------------------------------------------------------
 
 // @ 0x464960
-void BitWords::set(const unsigned& lo, const int& hi, const unsigned& v)
+void Terrain::set_bits(const unsigned& lo, const int& hi, const unsigned& v)
 {
     unsigned a = lo;
     int b = hi;
@@ -273,20 +269,20 @@ void BitWords::set(const unsigned& lo, const int& hi, const unsigned& v)
         vv = mask;
     unsigned sh = a & 0x1f;
     unsigned idx = a >> 5;
-    unsigned old = w[idx];
-    w[idx] = (~(mask << sh) & old) | (vv << sh);
+    unsigned old = bits[idx];
+    bits[idx] = (~(mask << sh) & old) | (vv << sh);
 }
 
 // @ 0x4649b0
-unsigned BitWords::get(const unsigned& lo, const int& hi)
+unsigned Terrain::get_bits(const unsigned& lo, const int& hi)
 {
     unsigned mask = (unsigned)(g_bit + 1)[hi - lo] - 1;
     unsigned sh = lo & 0x1f;
-    return ((w[lo >> 5] & (mask << sh)) >> sh) & mask;
+    return ((bits[lo >> 5] & (mask << sh)) >> sh) & mask;
 }
 
 // @ 0x4649f0
-void BitWords::set_pct(const float& f)
+void Terrain::set_pct(const float& f)
 {
     float x = f * 100.0f;
     float fl = (float)floor(x);
@@ -300,7 +296,7 @@ void BitWords::set_pct(const float& f)
     unsigned mask = ((unsigned*)g_bit)[14] - 1;
     if ((unsigned)i > mask)
         i = mask;
-    w[4] = (~mask & w[4]) | i;      // the percentage rides in the low bits of w[4] (+0x10 = Terrain::flags)
+    bits[4] = (~mask & bits[4]) | i;      // the percentage rides in the low bits of bits[4] (+0x10 = Terrain::flags)
 }
 
 // ---- the ground generator -----------------------------------------------------------------------------------------
@@ -326,20 +322,6 @@ void Terrain::set_field_b(const float* p)
     unsigned m = ((unsigned*)g_bit)[14] - 1;
     if (v > m) v = m;
     flags = (flags & ~(m << 21)) | (v << 21);
-}
-
-// @ 0x464b40
-int* Terrain::cell_of(int* out, const float* p)
-{
-    float s = 1.0f / scale;
-    int x = IFLOOR(s * p[0]);
-    int ix;
-    if (x < 0) ix = 0; else { ix = w - 1; if (x < w) ix = x; }
-    int y = IFLOOR(s * p[1]);
-    int iy;
-    if (y < 0) iy = 0; else if (y >= h) iy = h - 1; else iy = y;
-    out[0] = ix; out[1] = iy;
-    return out;
 }
 
 // @ 0x464bf0
@@ -680,10 +662,10 @@ void Terrain::fill_desc_none(TerrainDesc* d)
 }
 
 // @ 0x4658c0
-void HexWords::parse(const tstring& s)
+void Terrain::parse(const tstring& s)
 {
     int start = 0;
-    v[0] = 0; v[1] = 0; v[2] = 0; v[3] = 0; v[4] = 0; v[5] = 0;
+    bits[0] = 0; bits[1] = 0; bits[2] = 0; bits[3] = 0; bits[4] = 0; bits[5] = 0;
     int end = s.len;
     int count = 0;
     int lo;
@@ -715,7 +697,7 @@ void HexWords::parse(const tstring& s)
                     i++;
                 } while (i < t.len);
             }
-            v[count] = val;
+            bits[count] = val;
             count++;
             end = lo;
         } while (lo > start);
@@ -877,7 +859,7 @@ void Terrain::smooth_cells(int bit, float k)
 static inline void t_cross3(vector4& r, const vector4& a, const vector4& b) { r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x; }
 
 // @ 0x4661e0
-void terrain_obj::smooth_heights()
+void Terrain::smooth_heights()
 {
     for (int y = 0; y <= this->h; y++) {
         for (int x = 0; x <= this->w; x++) {
@@ -904,7 +886,7 @@ void terrain_obj::smooth_heights()
 }
 
 // @ 0x466480
-void terrain_obj::clear_flags(unsigned mask)
+void Terrain::clear_flags(unsigned mask)
 {
     unsigned inv = ~mask;
     for (int y = 0; y <= this->h; y++)
@@ -913,7 +895,7 @@ void terrain_obj::clear_flags(unsigned mask)
 }
 
 // @ 0x4664e0
-void terrain_obj::compute_weights()
+void Terrain::compute_weights()
 {
     struct { float lead; float big; float z[13]; } lim = { 0.0f, 10000.0f };
     for (int y = 0; y <= this->h; y++) {
@@ -944,7 +926,7 @@ void terrain_obj::compute_weights()
 }
 
 // @ 0x4666b0
-void terrain_obj::pick_diagonals()
+void Terrain::pick_diagonals()
 {
     for (int y = 0; y < this->h; y++) {
         if (this->w > 0) {
@@ -989,7 +971,7 @@ void terrain_obj::pick_diagonals()
 }
 
 // @ 0x466930
-void terrain_obj::pick_triangle_types()
+void Terrain::pick_triangle_types()
 {
     for (int y = 0; y < this->h; y++) {
         if (this->w > 0) {
@@ -1019,7 +1001,7 @@ void terrain_obj::pick_triangle_types()
 }
 
 // @ 0x466aa0
-void terrain_obj::accumulate_kinds()
+void Terrain::accumulate_kinds()
 {
     for (int y = 0; y < this->h; y++) {
         if (this->w > 0) {
@@ -1047,7 +1029,7 @@ void terrain_obj::accumulate_kinds()
 }
 
 // @ 0x466c10
-void terrain_obj::erode()
+void Terrain::erode()
 {
     for (int y = 0; y <= this->h; y++) {
         for (int x = 0; x <= this->w; x++) {
@@ -1063,7 +1045,7 @@ void terrain_obj::erode()
 }
 
 // @ 0x466cd0
-void terrain_obj::emit_particle(particle_list* l, int type, const rgl::matrix* frame, const rgl::vector4* dir, int anim)
+void Terrain::emit_particle(particle_list* l, int type, const rgl::matrix* frame, const rgl::vector4* dir, int anim)
 {
     if (l->count < 0x40000) {
         TerrainParticle* e = &l->items[l->count];
@@ -1087,7 +1069,7 @@ void terrain_obj::emit_particle(particle_list* l, int type, const rgl::matrix* f
 }
 
 // @ 0x466d90
-void terrain_obj::emit_by_type(int type, const rgl::matrix* frame, const rgl::vector4* dir, int anim)
+void Terrain::emit_by_type(int type, const rgl::matrix* frame, const rgl::vector4* dir, int anim)
 {
     __int64 flags = g_ptypes[type].flags;
     if (flags & 0x80000) {
@@ -1101,7 +1083,7 @@ void terrain_obj::emit_by_type(int type, const rgl::matrix* frame, const rgl::ve
 }
 
 // @ 0x466e20
-void terrain_obj::triangle_corners(int x, int y, int flip, int* a, int* b, int* c)
+void Terrain::triangle_corners(int x, int y, int flip, int* a, int* b, int* c)
 {
     if (this->quad(x, y).diag != 0) {
         if (flip == 0) {
@@ -1127,13 +1109,13 @@ void terrain_obj::triangle_corners(int x, int y, int flip, int* a, int* b, int* 
 }
 
 // @ 0x466ed0
-void terrain_obj::sun_light(rgl::vector4* out, const float* dir, const float* scale)
+void Terrain::sun_light(rgl::vector4* out, const float* dir, const float* scale)
 {
     rgl::vector4 amb = sun_ambient;
     float t = -(sun_dir[2] * dir[2] + sun_dir[1] * dir[1] + sun_dir[0] * dir[0]);
     if (0.0f > t) t = 0.0f;
     t = t * scale[0];
-    rgl::vector4 d(t * sun_diffuse[0], t * sun_diffuse[1], t * sun_diffuse[2]);
+    rgl::vector4 d(t * sun_diffuse.x, t * sun_diffuse.y, t * sun_diffuse.z);
     rgl::vector4 r;                 // r.w is never written: the original copies the stack slot as is
     r.x = amb.x + d.x;
     r.y = amb.y + d.y;
@@ -1142,7 +1124,7 @@ void terrain_obj::sun_light(rgl::vector4* out, const float* dir, const float* sc
 }
 
 // @ 0x466fa0
-void terrain_obj::create_chunk_entities()
+void Terrain::create_chunk_entities()
 {
     TEntity** p = ents;
     for (int a = 5; a; a--) {
@@ -1193,7 +1175,7 @@ void terrain_obj::create_chunk_entities()
 }
 
 // @ 0x467250
-void terrain_obj::load_layer(int* set, int idx)
+void Terrain::load_layer(int* set, int idx)
 {
     // set[0] = count; entry idx has its type at set[idx * 6 + 7] and its data pointer at set[idx * 6 + 8]
     if (set != 0 && idx < *set) {
@@ -1247,7 +1229,7 @@ void terrain_obj::load_layer(int* set, int idx)
 }
 
 // @ 0x467530
-int terrain_obj::count_low_quads()
+int Terrain::count_low_quads()
 {
     int count = 0;
     for (int y = 20; y < h - 20; y++)
@@ -1862,7 +1844,7 @@ static __forceinline void vnorm(vec2& v)
 }
 
 // @ 0x468fc0
-void terrain_obj::trace_path(const int* from, const int* to, unsigned char bit, int* steps, float* minz, float w1, float w2, int unused, char record)
+void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int* steps, float* minz, float w1, float w2, int unused, char record)
 {
     *minz = 10000.0f;
     ivec2 pos = *(const ivec2*)from;
@@ -2011,7 +1993,7 @@ void terrain_obj::trace_path(const int* from, const int* to, unsigned char bit, 
 static const int kStride = 251;
 
 // @ 0x469a70
-void terrain_obj::spread_flow(unsigned mask, int mode, unsigned mark)
+void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
 {
     int order[9];
     unsigned n;
@@ -2118,7 +2100,7 @@ static __forceinline void t_normalize(rgl::vector4& v)
 #define RND() ((float)(rand() % 0x3dc9) * 6.322312e-05f)
 
 // @ 0x46a270
-void terrain_obj::spawn_particles(particle_list* list, int unused)
+void Terrain::spawn_particles(particle_list* list, int unused)
 {
     list->count = 0;
     unsigned lv = (flags >> 0x15) & (((unsigned*)g_bit)[14] - 1);
@@ -2219,7 +2201,7 @@ void terrain_obj::spawn_particles(particle_list* list, int unused)
 
 
 // @ 0x46ad50
-void terrain_obj::compute_normals()
+void Terrain::compute_normals()
 {
     int x, y, flip;
     vector4 tri[3];
@@ -2486,7 +2468,7 @@ void Terrain::seed_brushes(float size, float density, float scale)
 #define RAND01() ((float)(rand() % 15817) * 6.3223117e-05f)
 
 // @ 0x46bc70
-void terrain_obj::make_river()
+void Terrain::make_river()
 {
     int a[2];
     int b[2];

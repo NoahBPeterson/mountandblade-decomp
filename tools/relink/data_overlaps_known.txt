@@ -34,7 +34,5 @@
 00a75f40 00a75f54  # g_a75f40 (0x24 bytes) holds ?g_world_list@c49f060@@3UPtrVec@1@A, g_world_list
 00a75f40 00a75f60  # g_a75f40 (0x24 bytes) holds ?g_5a75f60@@3HA, g_5a75f60
 00a75f70 00a75f90  # g_a75f70 (0x6b8 bytes) holds ?g_sort_val@@3PAUSortVal@@A, g_sort_val
-00a76630 08eb235c  # g_a76630 (0x845e7c8 bytes) holds ?g_world_color@@3PAUvector4@rgl@@A, g_world_color
-00a76630 08ed4db4  # g_a76630 (0x845e7c8 bytes) holds ?g_tstr@@3Utstring@@A, g_tstr
 08ed4df8 08ed4e14  # ?g_ttypes@@3PAUttype@@A (0x160 bytes) holds ?g_x8ed4e14@@3PAEA, g_x8ed4e14
 08ee3c48 08ee3fc4  # g_8ee3c48 (0x5a0 bytes) holds ?g_dlg_options@@3PAXA, g_dlg_options

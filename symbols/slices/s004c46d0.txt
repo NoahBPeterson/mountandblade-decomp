@@ -12,7 +12,7 @@
 004c4e2f ?list_int_buynode_funclet@@YAXPAUlist_node_int@@@Z  # EH funclet of 0x4c4dc0 (delete + rethrow)
 004c4e50 ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z  # scalar new of a node initialised through 0x4be9c0 (ret 0xc)
 004c4ebd ?list_int_make_node_funclet@@YAXPAX@Z  # EH funclet of 0x4c4e50 (delete + rethrow)
-004c4ee0 ??1world_obj@@QAE@XZ  # big object dtor: free +0x845e7bc, clear 3 words, dtor name + 15 0x28-stride strings
+004c4ee0 ??1Terrain@@QAE@XZ  # big object dtor: free +0x845e7bc, clear 3 words, dtor name + 15 0x28-stride strings
 004c4f40 ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z  # deleting dtor (ret 4) of a 0x60-byte element / its vector
 004c5010 ?fill_records@@YAXPAXIPBXPAUblock_copier@@@Z  # uninitialized fill of n 0x2c-byte records through 0x4c1b20, EH-guarded
 004c5074 ?fill_records_funclet@@YAXXZ  # EH funclet of 0x4c5010 (rethrow)

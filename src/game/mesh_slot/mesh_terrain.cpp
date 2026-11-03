@@ -29,8 +29,6 @@ extern unsigned __int64 g_bit[]; // 0x5a8e68
 // functions index as cells[x * 251 + y]: the slices' wet = pz, water_id = f10, rec = f14, nx/ny/nz = nrm, u/v = disp,
 // light = f40, lum[] = w[].
 
-struct TerrainW : TerrainX {                     // members of the world map object past the end of Terrain
-};
 
 // 0x4746e0 / 0x473800 are FaceGenome::breed / unpack (terrain_b/face_gen.h), which g_anim_view (animator.h) sees as Animator members: the
 // stubs name the defining class (the header would bring the Animator's other layout)
@@ -48,7 +46,7 @@ struct Ctx {
 
 // @ 0x480db0 -- the water of the world map: the river light term, one water particle per chunk of every active water
 // type, and the "river" mesh over the wet triangles
-void TerrainX::create_water(void** out)
+void Terrain::create_water(void** out)
 {
     Entity* e = (Entity*)((rgl::world*)grid)->create_entity(9);       // CellGrid is the rgl::world of src/rgl/scene/world.h (its reset 0x421390 is rgl::world::reset)
     float cmap = (*(float*)((char*)this + 0x843bd24) + *(float*)((char*)this + 0x843bd20) + *(float*)((char*)this + 0x843bd1c)) * 0.33f;   // summed z, y, x as at 0x480dce
@@ -93,9 +91,9 @@ void TerrainX::create_water(void** out)
     *out = 0;
 
     vector4 col;
-    col.x = sun_diffuse[0] * 0.5f + sun_ambient.x * 1.3f;
-    col.y = sun_diffuse[1] * 0.5f + sun_ambient.y * 1.3f;
-    col.z = sun_diffuse[2] * 0.5f + sun_ambient.z * 1.3f;
+    col.x = sun_diffuse.x * 0.5f + sun_ambient.x * 1.3f;
+    col.y = sun_diffuse.y * 0.5f + sun_ambient.y * 1.3f;
+    col.z = sun_diffuse.z * 0.5f + sun_ambient.z * 1.3f;
     col.w = 0.9f;
     unsigned argb = pack_color(&col);
 
@@ -149,7 +147,7 @@ void TerrainX::create_water(void** out)
 }
 
 // @ 0x4814a0
-void TerrainX::destroy_water(int a)
+void Terrain::destroy_water(int a)
 {
     if (g_use_shaders) {
         ((ShadowMapP*)&g_shadow_map)->render();
@@ -213,7 +211,7 @@ struct cell_rows_t {                    // 0x20
     float scale;                        // 0x1c
     void alloc(const int* nums) { ((cell_rows*)this)->alloc(nums); }       // 0x462420 (nums[0] = cells along x, nums[1] = along y)
 };
-struct world_t {                        // the scene object at terrain_obj+0xc3b0dc (CellGrid of terrain_b)
+struct world_t {                        // the scene object at Terrain+0xc3b0dc (CellGrid of terrain_b)
     char pad0[0x64];
     cell_rows_t* cells;                 // 0x64 current cell-row table
     void build_faces(Geom_t* g) { ((CellGrid*)this)->build_faces((NavData*)g); }       // 0x479980 (CellGrid::build_faces, terrain_b/cell_grid.h)
@@ -227,7 +225,7 @@ rgl::vector4 tri_normal(const rgl::vector4* tri);
 // @ 0x481570 -- re-tessellate every terrain quad into two triangles (four when the half-quad normals disagree), assigning
 // each touched corner cell a point in the new Geom and each quad a 0x88-byte element record with the final lighting, then
 // rebuild the world mesh, install a fresh cell_rows table and relight the scene
-void TerrainX::tessellate()
+void Terrain::tessellate()
 {
     Geom_t* g = new Geom_t;                 // the mesh being rebuilt: a local, as in the original ([esp+0x28])
 
@@ -399,9 +397,9 @@ EChar* append_mesh(int colour, int kind, void** c, void** a, void** b, char carr
 
 // @ 0x481d10 -- derive the seed fields from the caller's seed word, size the cell grid from the map scale, place every cell
 // at (x, y) * scale, pick the quad diagonals from the cell heights, run the generation chain (layers, rivers, flow,
-// placeables, scatter sets, noise offsets) and re-tessellate. `seed` is the scene container handed in (TerrainX::world).
+// placeables, scatter sets, noise offsets) and re-tessellate. `seed` is the scene container handed in (Terrain::world).
 #define hword (*(int*)((char*)this + 0xc))
-void TerrainX::generate(int seed, int* objs, char flag)
+void Terrain::generate(int seed, int* objs, char flag)
 {
     reset();
 
@@ -455,13 +453,13 @@ void TerrainX::generate(int seed, int* objs, char flag)
     generate_heights();
     seed_rng(*(int*)((char*)this + 4) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
 
-    ((terrain_obj*)this)->make_river();
-    ((terrain_obj*)this)->smooth_heights();
-    ((terrain_obj*)this)->compute_normals();
-    ((terrain_obj*)this)->compute_weights();
-    ((terrain_obj*)this)->pick_diagonals();
-    ((terrain_obj*)this)->pick_triangle_types();
-    ((terrain_obj*)this)->erode();
+    ((Terrain*)this)->make_river();
+    ((Terrain*)this)->smooth_heights();
+    ((Terrain*)this)->compute_normals();
+    ((Terrain*)this)->compute_weights();
+    ((Terrain*)this)->pick_diagonals();
+    ((Terrain*)this)->pick_triangle_types();
+    ((Terrain*)this)->erode();
 
     if (objs != 0 && flag) {
         if (g_cfg.enable_edit_mode)
@@ -478,17 +476,17 @@ void TerrainX::generate(int seed, int* objs, char flag)
 
     if (objs != 0) {
         for (int i = 0; i < *objs; i++)
-            ((terrain_obj*)this)->load_layer(objs, i);
+            ((Terrain*)this)->load_layer(objs, i);
     }
 
-    ((terrain_obj*)this)->compute_normals();
-    ((terrain_obj*)this)->accumulate_kinds();
+    ((Terrain*)this)->compute_normals();
+    ((Terrain*)this)->accumulate_kinds();
     build_entity();
     scatter_all();
     spawn_particles(&list_b, 0);
     spawn_particles(&list_a, 0);
     spawn_particles(&list_c, 2);
-    ((terrain_obj*)this)->create_chunk_entities();
+    ((Terrain*)this)->create_chunk_entities();
     g_shadow_map.attach_camera((CellGrid*)world);
     float v[3];
     v[0] = 0.0f;
@@ -502,7 +500,7 @@ void TerrainX::generate(int seed, int* objs, char flag)
 
 // @ 0x482170 -- regenerate the water of a finished map: drop both scatter sets, rebuild the water mesh, relight both particle
 // lists when the high-quality water path is off, and store fresh values into the two height fields of the seed word
-void TerrainX::regenerate_water(void** out, bool mode)
+void Terrain::regenerate_water(void** out, bool mode)
 {
     spawn_bodies((SpawnSet*)&list_b);
     spawn_bodies((SpawnSet*)&list_a);
@@ -549,7 +547,7 @@ static __forceinline unsigned round_clamp255(float v)       // fl = floor(v); i 
 }
 struct vec_i4 { int pad; int* first; int* last; int* end; };    // std::vector<int>-shaped list in the entity's mesh vector (allocator word at +0)
 // @ 0x47ff60
-void TerrainX::emit_particle(int layerno, int blend, int cx, int cy, float z)
+void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
 {
     TerrainLayer* L = &layer[layerno];
     if (L->type < 0)
@@ -709,7 +707,7 @@ void TerrainX::emit_particle(int layerno, int blend, int cx, int cy, float z)
                             float Lt = Ld.z * t.z + Ld.y * t.y + Ld.x * t.x;
                             float Lb = Ld.z * bz + Ld.y * by + Ld.x * bx;
                             float Ln = Ld.z * n.z + Ld.y * n.y + Ld.x * n.x;
-                            float s = ((sun_diffuse[0] + sun_diffuse[2]) + sun_diffuse[1]) * 0.33333334f * (c->f40 + 0.02f);
+                            float s = ((sun_diffuse.x + sun_diffuse.z) + sun_diffuse.y) * 0.33333334f * (c->f40 + 0.02f);
                             vector4 cv;
                             cv.x = Lt * s;
                             cv.y = -(Lb * s);

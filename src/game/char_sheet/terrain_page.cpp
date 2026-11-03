@@ -1,5 +1,5 @@
 #include "./terrain_page.h"
-#include "../bit_words.h"      // g_bits 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
+#include "../terrain_a/terrain.h"      // g_terrain 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
@@ -43,13 +43,17 @@ void TerrainPage::update()
     set_hex3_text(1);
     set_hex3_text(2);
 }
+// The original calls the string constructor through an inline wrapper in these two functions (cl hoists the widget's vptr load
+// above the out-of-line constructor call otherwise): a constructor wrapper over the shared tstring.
+struct tstr_c : tstring { tstr_c(const char* s) : tstring(s) {} };      // 0x42bbe0
+
 // @ 0x4f28a0
 void TerrainPage::set_enabled_text(Widget* w)
 {
     if (w->get_value())
-        { char r[8]; w->set_text(r, tstring("Enabled")); }
+        { char r[8]; w->set_text(r, tstr_c("Enabled")); }
     else
-        { char r[8]; w->set_text(r, tstring("Disabled")); }
+        { char r[8]; w->set_text(r, tstr_c("Disabled")); }
 }
 
 // @ 0x4f28f0
@@ -66,18 +70,18 @@ void TerrainPage::refresh_hex()
 {
     sync_bits();
     tstring text;
-    g_bits.build_hex_text(text);            // 0x4f29b0, this = the bit-word object at 0xa76630
+    g_terrain.build_hex_text(text);            // 0x4f29b0, this = the bit-word object at 0xa76630
     { char r[8]; hexbox->set_text(r, text); }
 }
 
 // @ 0x4f29b0
-void BitWords::build_hex_text(tstring& out)
+void Terrain::build_hex_text(tstring& out)
 {
     char buf[12];
     out.assign("0x");
     for (int i = 5; i >= 0; i--) {
-        format_hex(w[i], buf);
-        out.append(tstring(buf));
+        format_hex(bits[i], buf);
+        out.append(tstr_c(buf));
     }
 }
 
@@ -96,19 +100,19 @@ void format_hex(unsigned v, char* out)
 // @ 0x4f2ae0
 void TerrainPage::sync_bits()
 {
-    g_bits.set(0x7e, 0x7e, water_on != 0);
-    g_bits.set(0xa2, 0xa3, river_on);
-    g_bits.set(0x7f, 0x7f, terrain_on != 0);
-    g_bits.set(0x3f, 0x3f, terraingen_on != 0);
-    g_bits.set(0x60, 0x69, (unsigned)(int)camera_x);
-    g_bits.set(0x6a, 0x73, (unsigned)(int)camera_y);
-    ((Terrain*)(void*)&g_bits)->set_field_a(&camera_z);   // 0x464a60
-    g_bits.set_pct(fog);
-    g_bits.set(0, 0x1e, layer_bits[0]);
-    g_bits.set(0x20, 0x3e, layer_bits[1]);
-    g_bits.set(0x40, 0x5e, layer_bits[2]);
-    g_bits.set(0x8e, 0x94, water_level);
-    ((Terrain*)(void*)&g_bits)->set_field_b(&water_height);   // 0x464ac0
-    g_bits.set(0x9c, 0x9f, terrain_type);
-    g_bits.set(0xa0, 0xa1, map_size);
+    g_terrain.set_bits(0x7e, 0x7e, water_on != 0);
+    g_terrain.set_bits(0xa2, 0xa3, river_on);
+    g_terrain.set_bits(0x7f, 0x7f, terrain_on != 0);
+    g_terrain.set_bits(0x3f, 0x3f, terraingen_on != 0);
+    g_terrain.set_bits(0x60, 0x69, (unsigned)(int)camera_x);
+    g_terrain.set_bits(0x6a, 0x73, (unsigned)(int)camera_y);
+    g_terrain.set_field_a(&camera_z);   // 0x464a60
+    g_terrain.set_pct(fog);
+    g_terrain.set_bits(0, 0x1e, layer_bits[0]);
+    g_terrain.set_bits(0x20, 0x3e, layer_bits[1]);
+    g_terrain.set_bits(0x40, 0x5e, layer_bits[2]);
+    g_terrain.set_bits(0x8e, 0x94, water_level);
+    g_terrain.set_field_b(&water_height);   // 0x464ac0
+    g_terrain.set_bits(0x9c, 0x9f, terrain_type);
+    g_terrain.set_bits(0xa0, 0xa1, map_size);
 }

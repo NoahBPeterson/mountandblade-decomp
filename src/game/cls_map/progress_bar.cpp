@@ -7,6 +7,7 @@
 #include "./cls_map.h"
 #include "./progress_bar.h"
 #include "../../include/data_views.h"
+#include "../terrain_a/terrain.h"   // Terrain::init_map (0x4e85d0), g_terrain
 #include "../window_mgr.h"      // g_windows slot 21 (0xa739d4)
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
 #include "../config/config.h"
@@ -1239,35 +1240,34 @@ extern int      g_use_shaders;                  // 0x5e28fc
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (game_globals.h): g_bit[2] = 4, the terrain size mask
 
 
-// @ 0x4e85d0   MapScreen::init(void* desc)   (thiscall, ret 4)
-void MapScreen::init(void* desc)
+// @ 0x4e85d0   Terrain::init_map(void* desc)   (thiscall, ret 4)
+void Terrain::init_map(void* desc)
 {
     ((TerrainDesc*)desc)->init();
     int r;
-    for (r = 0; r <= nrows; r++) {
-        float* p = (float*)(cells + 0x84 + r * 0x94);
+    for (r = 0; r <= h; r++) {
         int i;
-        for (i = 0; i <= ncols; i++, p = (float*)((char*)p + 0x911c)) {
-            ((int*)p)[1] = 0;
-            ((int*)p)[2] = -1;
-            p[-0x1f] = p[1] + p[0];
-            int* z = (int*)((char*)p - 0x2c);
+        for (i = 0; i <= w; i++) {
+            terrain_cell& c = cell[i][r];
+            c.f88 = 0.0f;
+            c.f8c = -1;
+            c.pz = c.f88 + c.h2;
             int k;
             for (k = 0; k < 11; k++)
-                z[k] = 0;
+                c.layer[k] = 0;
         }
     }
-    rgl::vector4 box = *(rgl::vector4*)(mapview + 0x68);
+    rgl::vector4 box = *(rgl::vector4*)((char*)world + 0x68);
     float f = box.z + box.y;
     f = (f + box.x) * g_chunk_scale;
     int row;
-    for (row = 0; row < nchunk_rows; row++) {
+    for (row = 0; row < nx; row++) {
         int col;
-        for (col = 0; col < nchunk_cols; col++) {
+        for (col = 0; col < ny; col++) {
             int slot;
             for (slot = 0; slot < 0xf; slot++) {
                 int type = -1;
-                if (g_use_shaders && f60) {
+                if (g_use_shaders && layer[1].f10) {
                     if (slot == 1)
                         type = 2;
                     else if (slot == 2)
@@ -1277,7 +1277,7 @@ void MapScreen::init(void* desc)
             }
         }
     }
-    fill_desc_named(desc);
+    fill_desc_named((TerrainDesc*)desc);
 }
 
 // @ 0x4e8720   MapScreen::frame_step()
@@ -1286,9 +1286,9 @@ void MapScreen::frame_step()
     if (!(*(unsigned*)(*(char**)((char*)g_game + 0x13a50) + f5df4 * 0x494 + 0x30) & 0x100))
         return;
     int mode = 3;
-    if ((((unsigned)g_bit[2] - 1) & g_a76644) != 0 &&
-        ((g_a76644 & ((unsigned)g_bit[2] - 1)) == 1 || (g_a76644 & ((unsigned)g_bit[2] - 1)) == 2 ||
-         (((unsigned)g_bit[2] - 1) & g_a76644) == 3))
+    if ((((unsigned)g_bit[2] - 1) & g_terrain.flags14) != 0 &&
+        ((g_terrain.flags14 & ((unsigned)g_bit[2] - 1)) == 1 || (g_terrain.flags14 & ((unsigned)g_bit[2] - 1)) == 2 ||
+         (((unsigned)g_bit[2] - 1) & g_terrain.flags14) == 3))
         mode = 2;
     mesh.build(*(void**)((char*)view + 0x64), mode);
     mesh.polygon_to_mesh(mesh.poly_mesh);

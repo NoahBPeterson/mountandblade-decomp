@@ -5,7 +5,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ??0head_obj2@@QAE@XZ  004c4cc0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1Tail2@@QAE@XZ  004c4d10  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?clear@list_int@@QAEXXZ  004c4d80  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ??1world_obj@@QAE@XZ  004c4ee0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ??1Terrain@@QAE@XZ  004c4ee0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z  004c4f40  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?uninit_fill_n@@YAXPAXIPBXPAUblock_copier@@@Z  004c5010  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?clear_vec38@editor@@QAEXXZ  004c5110  /O2 /MT /Gy /TP

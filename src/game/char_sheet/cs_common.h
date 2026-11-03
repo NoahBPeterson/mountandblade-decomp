@@ -47,19 +47,6 @@ struct world {                                                      // the scene
 };
 }
 
-// the terrain object (g_terrain 0xa76630; terrain_a): the members the char_sheet views call on it
-struct particle_list;
-struct HexWords {                                                   // terrain bit words at 0xa76630
-    void parse(const tstring& s);                                   // 0x4658c0
-};
-struct Terrain {
-    void set_field_a(const float* p);                               // 0x464a60
-    void set_field_b(const float* p);                               // 0x464ac0
-    void reset();                                                   // 0x4647e0
-    rgl::vector4* ground_color(rgl::vector4* out, const float* pos);   // 0x464d50 (ret 8)
-    void light_particle(particle_list* list, int idx, bool trace);  // 0x471b30 (ret 0xc)
-};
-
 // ---- widgets: the constructors that the char_sheet views (Widget / WidgetObj / Overlay / TextBox) stand for -------------------
 // ui_widget.h's Widget() and overlay.h's Overlay() are declarations of the constructors that the definitions name MissionUi::MissionUi
 // (0x48ae20) and ContainerW::construct (0x4931a0, which stores the container vptr 0x5924a0, clears +0x17c..+0x184 and returns this). An

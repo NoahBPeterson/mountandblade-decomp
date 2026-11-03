@@ -2,19 +2,23 @@
 #include "../../rgl/options.h"   // g_options
 #include "../../include/render_flags.h"
 
+// the dust cells' scene objects and particles as this pass sees them (cell_obj / DustParticle: dust.h)
+static inline cell_obj* cell_at(Terrain* t, int x, int y) { return (cell_obj*)t->gridA[x][y]; }
+static inline DustParticle* dust_at(Terrain* t, int i) { return (DustParticle*)&t->list_c.items[i]; }
+
 // @ 0x4f3e10
-void DustTerrain::update_particles(const matrix* view)
+void Terrain::update_particles(const matrix* view)
 {
     for (int a = 0; a < n_outer; a++) {
         for (int b = 0; b < n_inner; b++) {
-            cell_rec* rec = &cells[b][a];
+            rgl::aabb* rec = &boxes[b][a];
             if (emitted[b][a] == 0) {
-                float dx = rec->x - view->o.x;
-                float dy = rec->y - view->o.y;
-                if ((float)sqrt(dy * dy + dx * dx) < rec->reach + 36.0f)
+                float dx = rec->center.x - view->o.x;
+                float dy = rec->center.y - view->o.y;
+                if ((float)sqrt(dy * dy + dx * dx) < rec->radius + 36.0f)
                     emit_cell(b, a);
             }
-            cell_obj* o = grid[b][a];
+            cell_obj* o = cell_at(this, b, a);
             if (o->list && (o->list_end - o->list) != 0) {
                 float dx = o->pos.x - view->o.x;
                 float dy = o->pos.y - view->o.y;
@@ -54,15 +58,15 @@ static inline int cell_clamp(int v, int n)
 }
 
 // @ 0x4f4060
-void DustTerrain::emit_cell(int x, int y)
+void Terrain::emit_cell(int x, int y)
 {
     emitted[x][y] = 1;
-    int n = dust_count;
+    int n = list_c.count;
     unsigned nf = 0, nr = 0, no = 0;
     if (n > 0) {
         int i = 0;
         do {
-            DustParticle* p = &dust[i];
+            DustParticle* p = dust_at(this, i);
             int ix = (int)(p->frame.o.x * 0.05f);
             int cx;
             if (ix < 0) {
@@ -86,17 +90,17 @@ void DustTerrain::emit_cell(int x, int y)
             i++;
         } while (--n);
     }
-    vec32* v70 = &grid[x][y]->list[0]->f70;
+    vec32* v70 = &cell_at(this, x, y)->list[0]->f70;
     if (nr > v70->capacity_pt())
         v70->reserve_nr(nr);
-    vec96* v50 = &grid[x][y]->list[0]->f50;
+    vec96* v50 = &cell_at(this, x, y)->list[0]->f50;
     if (nf > v50->capacity())
         v50->reserve(nf);
-    vec32* v90 = &grid[x][y]->list[0]->f90;
+    vec32* v90 = &cell_at(this, x, y)->list[0]->f90;
     if (no > v90->capacity_face())
         v90->reserve_nr(no);
-    for (int i = 0; i < dust_count; i++) {
-        DustParticle* p = &dust[i];
+    for (int i = 0; i < list_c.count; i++) {
+        DustParticle* p = dust_at(this, i);
         int cx = (int)(p->frame.o.x * 0.05f);
         if (cx < 0)
             cx = 0;
@@ -120,23 +124,23 @@ void DustTerrain::emit_cell(int x, int y)
             mm.r = ((pos*)&p->frame)->rot3(*(const matrix*)&m3);
             mm.o = p->frame.o;
             p->nmesh = 1;
-            p->meshes[0] = grid[cx][cy]->list[0];
-            p->first[0] = grid[cx][cy]->list[0]->f50.size();
+            p->meshes[0] = cell_at(this, cx, cy)->list[0];
+            p->first[0] = cell_at(this, cx, cy)->list[0]->f50.size();
             ptype* pt = &g_ptypes[p->type];
             p->anim = p->anim % pt->nframes;
             dmesh* src = (dmesh*)pt->boxes[p->anim].meshes[0];
             if ((pt->flags & 0x20000i64) != 0)
-                ((mesh_x*)grid[cx][cy]->list[0])->transform((rgl::mesh*)src, (const matrix*)&mm, color);
+                ((mesh_x*)cell_at(this, cx, cy)->list[0])->transform((rgl::mesh*)src, (const matrix*)&mm, color);
             else
-                ((rgl::mesh*)grid[cx][cy]->list[0])->append_skinned((rgl::mesh*)src, (const rgl::mat4*)&mm, -1, color, 0);
-            p->last[0] = grid[cx][cy]->list[0]->f50.size();
+                ((rgl::mesh*)cell_at(this, cx, cy)->list[0])->append_skinned((rgl::mesh*)src, (const rgl::mat4*)&mm, -1, color, 0);
+            p->last[0] = cell_at(this, cx, cy)->list[0]->f50.size();
         }
     }
-    cell_obj* o = grid[x][y];
+    cell_obj* o = cell_at(this, x, y);
     if (o->list && (o->list_end - o->list) != 0) {
         dmesh* m = o->list[0];
         ((mesh_x*)m)->compute_bounds();
-        grid[x][y]->refresh();
+        cell_at(this, x, y)->refresh();
         vector4 zv(0.0f, 0.0f, 0.0f);
         mat3 tmp;
         mxo mm;
@@ -155,8 +159,8 @@ void DustTerrain::emit_cell(int x, int y)
         }
     }
     if (g_use_shaders == 0 || g_options.i7c != 2) {
-        for (int i = 0; i < dust_count; i++) {
-            DustParticle* p = &dust[i];
+        for (int i = 0; i < list_c.count; i++) {
+            DustParticle* p = dust_at(this, i);
             int ix = (int)(p->frame.o.x * 0.05f);
             int cx;
             if (ix < 0) {
@@ -172,7 +176,7 @@ void DustTerrain::emit_cell(int x, int y)
             else if (cy >= n_outer)
                 cy = n_outer - 1;
             if (cx == x && cy == y)
-                ((Terrain*)this)->light_particle((particle_list*)&dust_count, i, false);
+                light_particle(&list_c, i, false);
         }
     }
 }

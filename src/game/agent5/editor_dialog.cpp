@@ -10,6 +10,7 @@
 //       Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../terrain_a/terrain.h"   // Terrain, g_terrain (0xa76630)
 #include <windows.h>
 #include <commctrl.h>
 #include <d3d9.h>
@@ -72,15 +73,13 @@ struct graph_obj {                                    // mesh_2.cpp / gui_edit.c
     void update_vertex_mode();                        // 0x4c5a20
 };
 struct TearObj { char teardown(); };                  // 0x4d9e80 (cls_map.cpp): the caller tests the success flag in AL, which the definition (declared void, "void hides eax") does not type; the row stays unresolved until cls_map.cpp declares the flag
-struct MapScreen { void frame_step(); void init(void* scene); };      // 0x4e8720 / 0x4e85d0 (progress_bar.cpp)
+struct MapScreen { void frame_step(); };      // 0x4e8720 (progress_bar.cpp)
 struct MapDialog { void set_object_target(int sel); };               // 0x4c6dc0 (gui_edit.cpp)
 struct MapEditorDialog { void refresh(); void update_object_type(); };   // 0x4c77c0 / 0x4c7bf0 (gui_edit.cpp): the dialog procedure's own object
 struct EditorApp { void refresh_dialog(); };                         // 0x4f6390 (editor_ui.cpp)
 struct CreateGameOptionsPage { void update_checks(); };              // 0x4bf640 (trigger_vec.cpp)
 struct gui_timer { void set_delay(float seconds); };                 // 0x42cd20 (gui_manager.cpp)
 struct ptr_vec { void pop_back_if(); };                              // 0x438bf0 (agent_stats.cpp)
-struct conv_rec;
-void __fastcall conv_build_scene(conv_rec* p);                       // 0x4c8630 (gui_edit.cpp; ecx = the object at 0xa76630)
 struct mesh_x { void set_color(rgl::vector4 c); };                    // 0x47af30 (mesh_ops.cpp; the colour by value, ret 0x10)
 // the vector<int> members of the game object / scene (VC7.1 layout: allocator slot, first, last, end); size, push_back and the release are the library's
 // instantiations (mesh_obj.cpp 0x40f010, agent_combat.cpp 0x440b30, entity.cpp 0x41f4b0), called out of line through their member pointers
@@ -731,9 +730,9 @@ command:
         return 1;
     case 0x4af:
         if (MessageBoxA(m_hMapEditorDlg, "This action will clear all texture and height data of the terrain that are added manually. Are you sure?", "Warning", 1) == 1) {
-            ((MapScreen*)&orig::g_terrain)->init((char*)g_editor + 0x63d0);
+            g_terrain.init_map((char*)g_editor + 0x63d0);
             g_game_ed->dirty = 1;
-            conv_build_scene((conv_rec*)&orig::g_terrain);
+            g_terrain.conv_build_scene();
         }
         return 1;
     case 0x4cd: {

@@ -54,19 +54,13 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 
-#include "../bit_words.h"
+#include "../terrain_a/terrain.h"                   // Terrain (g_terrain 0xa76630)
 // (set_field_a 0x464a60 is Terrain's: cs_common.h)
 
 // ---- the world / scene --------------------------------------------------------------------------------
 // effect object created by 0x478f30 (0x7c bytes; layout from s00494e40)
 #include "../eff_obj.h"                                     // EffObj / EffMgr
 #include "../scene_world.h"                              // World: the page's +0x1ac; scene object 0x421390 resets
-struct terrain_obj {};                                      // the object at 0xa76630 (see s00481d10): TerrainX
-struct TerrainX {                                           // mesh_terrain
-    void generate(int world, int* b, char c);               // 0x481d10
-    void regenerate_water(void** out, bool a);              // 0x482170
-    void destroy_water(int owner);                          // 0x4814a0
-};
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 float  clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
@@ -78,7 +72,6 @@ extern float g_0_01;                                        // 0x54ab28 (0.01f)
 extern const float g_ten;                                   // 0x549d74 (10.0f; this was declared g_one, which the linker bound to a 1.0f definition of another address)
 extern float g_half;                                        // 0x549d70 (0.5f)
 #include "../renderer.h"
-extern terrain_obj g_terrain_obj;                           // 0xa76630
 
 // the page: src/game/terrain_page.h (Paged, TerrainPage)
 #include "../terrain_page.h"

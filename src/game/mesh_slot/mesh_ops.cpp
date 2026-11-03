@@ -557,7 +557,7 @@ void EChar::blend_indexed(mesh* m, void* set, int* index, const float* weights)
 }
 
 // @ 0x47c9b0 -- pull the points of a mesh toward the terrain height near the map edge
-void TerrainX::snap(mesh* m)
+void Terrain::snap(mesh* m)
 {
     m->ensure_local();
     int off = 0;

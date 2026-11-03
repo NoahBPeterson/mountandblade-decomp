@@ -12,6 +12,7 @@
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
+#include "../terrain_a/terrain.h"   // Terrain, g_terrain (0xa76630)
 #include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
 #include "../game_globals.h"      // g_bit (0x5a8e68)
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -67,9 +68,6 @@ struct IVector {
     void resize(unsigned n, int v);                     // 0x43f310 (ret 8; std::vector<int>::resize of agent3/agent_combat.cpp)
 };
 struct SceneSub { int dummy; void f(int v, PlacedObj o); };   // 0x4777c0 (ret 0x1cc: the 0x1c8 object by value, then the int)
-struct Terrain {
-    void reset();   // 0x4647e0 (this = 0xa76630; game/terrain_a/terrain.h)
-};
 int save_game(int id, tstring* name);                  // 0x4e8980
 #include "../dialog_mgr.h"                              // DialogMgr g_dialogs (0x8ed50c8)
 
@@ -551,7 +549,7 @@ void MissionV::init_scene()
     t.out.c = t.f18;
     t.out.d = t.f1c;
     *(FramePlacement*)((char*)this + 0x6624) = t.out;
-    ((Terrain*)&orig::g_terrain)->reset();
+    g_terrain.reset();
     g_sound_mgr.stop_all();
     ((IVector*)((char*)this + 0x63c0))->resize(0, 0);
     *((char*)this + 0x6668) = 0;

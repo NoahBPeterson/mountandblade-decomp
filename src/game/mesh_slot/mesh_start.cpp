@@ -58,16 +58,6 @@ struct resource_manager {
 struct ShadowMapP {
     void render();   // 0x47fef0 (mesh_char.cpp)
 };
-struct TerrainX {                                            // mesh_slot/mesh_slot.h (mesh_terrain.cpp, mesh_scene.cpp)
-    void generate(int seed, int* objs, char flag);           // 0x481d10
-    void regenerate_water(void** out, bool mode);            // 0x482170
-    void destroy_water(int a);                               // 0x4814a0
-    void light_entities(rgl::mesh** list, int count);        // 0x47ce00
-    void light_props();                                      // 0x47ced0
-};
-struct HexWords {
-    void parse(const struct tstring& s);   // 0x4658c0 (terrain_a/terrain_a.cpp)
-};
 struct PolyMesh { void build_geometry(); void compute_edge_creases(); };    // 0x470a00 / 0x470750 (terrain_b/poly_mesh.h)
 struct Mission3 {
     void copy_slot(int i);   // 0x4676e0 (terrain_a/misc.h)
@@ -105,8 +95,6 @@ void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, con
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-vector4 g_world_color[2];                           // 0x8eb235c (the scene colour and the first light colour, set by the mission start)
-tstring g_tstr;                                     // 0x8ed4db4
 unsigned g_rand_seed;                               // 0x5d7078
 
 struct Rec1c8Vec {                                              // std::vector<Rec1c8> (allocator lane at +0)
@@ -172,16 +160,10 @@ struct PropObj {                                             // object at prop +
 #include "../scene_world.h"                                    // World: the scene container (Mission +0): create_entity, set_fade, set_params, floor_at, f478c50
 #include "../nav_mesh.h"
 #include "../terrain_desc.h"
-struct terrain_obj {                                         // global at 0xa76630 (sky/terrain generator)
-    unsigned s0, s1, s2, s3, s4;
-    void parse(void* spec) { ((HexWords*)this)->parse(*(const tstring*)spec); }      // 0x4658c0
-    void generate(World* w, void* desc, char flag) { ((TerrainX*)this)->generate((int)w, (int*)desc, flag); }   // 0x481d10
-    int count_low_quads();                                   // 0x467530
-    void emit_by_type(int idx, const rgl::matrix* m, const rgl::vector4* p, int what);   // 0x466d90
-    void regenerate_water(void** out, char flag) { ((TerrainX*)this)->regenerate_water(out, flag); }     // 0x482170
-    void destroy_water(void* p) { ((TerrainX*)this)->destroy_water((int)p); }          // 0x4814a0
-};
-extern terrain_obj g_terrain;                                // 0xa76630
+#include "../terrain_a/terrain.h"                         // Terrain, g_terrain (0xa76630)
+
+// ---- data this module owns ----
+Terrain g_terrain;                                  // 0xa76630 (the world-map terrain, used by Mission::start_setup: 0x845e7c8 bytes; constructed by Terrain::Terrain 0x4ce720)
 struct Psys {
     void attach_camera(World* w) { ((ShadowMap*)this)->attach_camera((CellGrid*)w); }       // 0x4711e0
     void extend(BodyRec* b) { ((ShadowMap*)this)->extend((const vector4*)b); }          // 0x468c20
@@ -503,7 +485,7 @@ void Mission::start_setup()
 
     // ---- sky / cloud / fog bit fields -------------------------------------------------------
     if (LV.flags.b8) {
-        g_terrain.parse((char*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494) + 0x68);
+        g_terrain.parse(*(const tstring*)((char*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494) + 0x68));
         GameData* gg = g_game;
         if (((LevelRaw*)(RAWAT(char*, gg, 0x13a50) + at<int>(0x5df4) * 0x494))->flags.b9) {
             PartyMgr* pm2 = (PartyMgr*)((char*)gg + 0xf8);
@@ -516,9 +498,9 @@ void Mission::start_setup()
             unsigned c = (fr * 0xf4d + parity + y * 0x16a1 + x * 19) & 0x7fffff;
             unsigned b = (y * 0x19c9 + parity + fr * 0x1e6f + x * 31) & 0x7fffff;
             unsigned mc = (*(unsigned*)((char*)&g_bit + 0xf8)) - 1;
-            put(g_terrain.s0, mc, 0, a);
-            put(g_terrain.s2, mc, 0, c);
-            put(g_terrain.s1, mc, 0, b);
+            put(g_terrain.bits[0], mc, 0, a);
+            put(g_terrain.bits[2], mc, 0, c);
+            put(g_terrain.bits[1], mc, 0, b);
 
             unsigned seed = (at<int>(0x5270) % 3 + RAWAT(int, g_game, 4) * 0x4abb + y * 0xb1 + x * 0x17 + 0x8a767) *
                             0x1ddcf5f + 0x2f784719;
@@ -532,9 +514,9 @@ void Mission::start_setup()
             } else if ((ptype == 3 || ptype == 0xb) && chance < 0.150000006f) {
                 storm = 1;
             }
-            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x20)) - 1, 28, ptype);
-            put(g_terrain.s3, (*(unsigned*)((char*)&g_bit + 0x8)) - 1, 31, storm != 0);
-            put(g_terrain.s3, (*(unsigned*)((char*)&g_bit + 0x8)) - 1, 30, 0);
+            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x20)) - 1, 28, ptype);
+            put(g_terrain.bits[3], (*(unsigned*)((char*)&g_bit + 0x8)) - 1, 31, storm != 0);
+            put(g_terrain.bits[3], (*(unsigned*)((char*)&g_bit + 0x8)) - 1, 30, 0);
             seed = lcg(seed);
             g_rand_seed = seed;
             float ff = RNDU(seed) * 6.32231149e-06f + 0.449999988f;
@@ -554,7 +536,7 @@ void Mission::start_setup()
             int ai = iround(ff * 100.0f);
             if (ai < 0) ai = 0;
             else if (ai >= 100) ai = 99;
-            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 0, ai);
+            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 0, ai);
 
             seed = lcg(g_rand_seed);
             int cc = (int)(RNDU(seed) * 0.00126446225f + 12.0f);
@@ -568,7 +550,7 @@ void Mission::start_setup()
                 cc += iround((RNDU(seed) * 6.32231167e-05f + 0.400000006f) * temp[1] * 0.449999988f);
             }
             if (cc > 0x41) cc = 0x41;
-            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 14, cc);
+            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 14, cc);
 
             seed = lcg(seed);
             g_rand_seed = seed;
@@ -581,17 +563,17 @@ void Mission::start_setup()
             int ti = ifloor(tot);
             if (ti < 0) ti = 0;
             else if (ti >= 0x80) ti = 0x7f;
-            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 7, ti);
+            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 7, ti);
 
             int ri = iround((RND() * 1.2644623e-05f + 0.800000012f) * 100.0f);
             if (ri < 0) ri = 0;
             else if (ri >= 100) ri = 99;
-            put(g_terrain.s4, (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 21, ri);
+            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 21, ri);
         }
         at<RectF>(0x652c).x0 = 0.0f;
         at<RectF>(0x652c).y0 = 0.0f;
-        at<float>(0x6534) = (float)(g_terrain.s3 & ((*(unsigned*)((char*)&g_bit + 0x50)) - 1));
-        at<float>(0x6538) = (float)((g_terrain.s3 >> 10) & ((*(unsigned*)((char*)&g_bit + 0x50)) - 1));
+        at<float>(0x6534) = (float)(g_terrain.bits[3] & ((*(unsigned*)((char*)&g_bit + 0x50)) - 1));
+        at<float>(0x6538) = (float)((g_terrain.bits[3] >> 10) & ((*(unsigned*)((char*)&g_bit + 0x50)) - 1));
         at<RectF>(0x653c) = at<RectF>(0x652c);
         at<float>(0x654c) = -0.300000012f;
     } else {
@@ -605,7 +587,7 @@ void Mission::start_setup()
         at<int>(0x6534) = at<int>(0x6544);
         at<int>(0x6538) = at<int>(0x6548);
     }
-    g_tstr = at<tstring>(0x6814);
+    g_terrain.tail = at<tstring>(0x6814);
 
     // ---- prop bounding box, two passes ------------------------------------------------------
     for (unsigned i = 0; i < props.size(); i++) {
@@ -678,8 +660,8 @@ void Mission::start_setup()
 
     // ---- terrain generate / interior ----------------------------------------------------------
     if (LV.flags.b8) {
-        g_world_color[0] = at<World*>(0)->color;
-        g_world_color[1] = *(vector4*)(at<char*>(0x65b0) + 4);
+        g_terrain.sun_ambient = at<World*>(0)->color;
+        g_terrain.sun_diffuse = *(vector4*)(at<char*>(0x65b0) + 4);
         Streamer* s414 = (Streamer*)((char*)lrec + 0x414);
         char flagc = 1;
         s414->v1();
@@ -691,7 +673,7 @@ void Mission::start_setup()
             }
             flagc = 0;
         }
-        g_terrain.generate(at<World*>(0), &at<TerrainDesc>(0x63d0), flagc);
+        g_terrain.generate((int)at<World*>(0), (int*)&at<TerrainDesc>(0x63d0), flagc);
     } else {
         build_interior(at<int>(0x5df4), (rgl::mesh**)&at<Mesh*>(0x6340), &at<int>(0x633c));
     }
@@ -812,9 +794,9 @@ void Mission::start_setup()
         if (f.b8)
             g_terrain.regenerate_water(&at<void*>(0x65a8), f.b9 == 0);
     }
-    ((TerrainX*)this)->light_props();
+    light_props();
     if (!LV.flags.b8)
-        ((TerrainX*)this)->light_entities((rgl::mesh**)&at<Mesh*>(0x6340), at<int>(0x633c));
+        light_entities((rgl::mesh**)&at<Mesh*>(0x6340), at<int>(0x633c));
     at<int>(0x65bc) = 0;
     at<int>(0x65b8) = 0;
 
@@ -1050,7 +1032,7 @@ void Mission::start_setup()
     {
         LevelBits f3 = LV.flags;
         if (f3.b8) {
-            g_terrain.destroy_water(&at<char>(0x63c0));
+            g_terrain.destroy_water((int)&at<char>(0x63c0));
         } else if (!f3.b0 && g_use_shaders) {
             ((Psys*)&g_shadow_map)->attach_camera(at<World*>(0));
             for (unsigned i = 0; i < RAWAT(BodyVec*, at<World*>(0), 0xb0)->size(); i++)

@@ -1,5 +1,5 @@
 #include "./terrain_page_input.h"
-#include "../bit_words.h"      // g_bits 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
+#include "../terrain_a/terrain.h"      // g_terrain 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../key_names.h"
@@ -12,20 +12,20 @@ unsigned g_5e2468 = (unsigned)g_bit[4];                       // 0x5e2468
 void TerrainPage::read_fields()
 {
     water_on = (g_use_shaders == 0) ? 1 : 0;                // "Enable water" holds the inverse of the shader flag
-    river_on = g_bits.get(0xa2, 0xa3);                      // the raw two bits of the "Enable river" checkbox
-    terrain_on = g_bits.get(0x7f, 0x7f);
-    terraingen_on = g_bits.get(0x3f, 0x3f);
-    camera_x = (float)g_bits.get(0x60, 0x69);
-    camera_y = (float)g_bits.get(0x6a, 0x73);
-    camera_z = (float)g_bits.get(0x87, 0x8d);
-    fog = (float)g_bits.get(0x80, 0x86) * 0.01f;
-    layer_bits[0] = g_bits.get(0x00, 0x1e);
-    layer_bits[1] = g_bits.get(0x20, 0x3e);
-    layer_bits[2] = g_bits.get(0x40, 0x5e);
-    water_level = g_bits.get(0x8e, 0x94);
-    water_height = (float)g_bits.get(0x95, 0x9b) * 0.01f;
-    terrain_type = (g_bits.w[4] >> 0x1c) & ((unsigned)g_bit[4] - 1);
-    map_size = g_bits.w[5] & ((unsigned)g_bit[2] - 1);
+    river_on = g_terrain.get_bits(0xa2, 0xa3);                      // the raw two bits of the "Enable river" checkbox
+    terrain_on = g_terrain.get_bits(0x7f, 0x7f);
+    terraingen_on = g_terrain.get_bits(0x3f, 0x3f);
+    camera_x = (float)g_terrain.get_bits(0x60, 0x69);
+    camera_y = (float)g_terrain.get_bits(0x6a, 0x73);
+    camera_z = (float)g_terrain.get_bits(0x87, 0x8d);
+    fog = (float)g_terrain.get_bits(0x80, 0x86) * 0.01f;
+    layer_bits[0] = g_terrain.get_bits(0x00, 0x1e);
+    layer_bits[1] = g_terrain.get_bits(0x20, 0x3e);
+    layer_bits[2] = g_terrain.get_bits(0x40, 0x5e);
+    water_level = g_terrain.get_bits(0x8e, 0x94);
+    water_height = (float)g_terrain.get_bits(0x95, 0x9b) * 0.01f;
+    terrain_type = (g_terrain.bits[4] >> 0x1c) & ((unsigned)g_bit[4] - 1);
+    map_size = g_terrain.bits[5] & ((unsigned)g_bit[2] - 1);
 }
 
 // @ 0x4f37f0
@@ -136,7 +136,7 @@ void TerrainPage::paste_clipboard()
         if (h) {
             const char* p = (const char*)GlobalLock(h);
             if (p) {
-                ((HexWords*)(void*)&g_bits)->parse(tstring(p));   // 0x4658c0
+                g_terrain.parse(tstring(p));   // 0x4658c0
                 { char r[8]; hexbox->set_text(r, tstring(p)); }
                 GlobalUnlock(h);
                 read_fields();
@@ -173,5 +173,5 @@ void TerrainPage::path(float dt)
     *(rgl::matrix*)frame = m;                               // page +0x138
     ((rgl::frustum*)map_block)->build_planes();                    // 0x41e4f0: thiscall on this+0x70
     *(FrustumBlock*)world6c->block = *(FrustumBlock*)map_block;             // 0x120 bytes: page +0x70 -> world +0x1ac
-    ((DustTerrain*)(void*)&g_bits)->update_particles(&m);        // 0x4f3e10
+    g_terrain.update_particles(&m);        // 0x4f3e10
 }

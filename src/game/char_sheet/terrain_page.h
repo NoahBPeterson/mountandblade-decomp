@@ -24,18 +24,8 @@
 
 using rgl::vector4;
 
-// ---- tstring / rgl::string ---------------------------------------------------------------------------
-// Kept as this derived view (not src/game/tstring.h): the byte-exact rows of this module (set_enabled_text 0x4f28a0,
-// build_hex_text 0x4f29b0) need the inline constructor wrapper `tstring(const char*) : rgl::string(s) {}`; with the
-// canonical out-of-line constructor cl hoists the widget's vptr load above the constructor call (56 / 21 bytes differ).
-struct tstring : rgl::string {
-    tstring(const char* s) : rgl::string(s) {}                              // 0x42bbe0
-    tstring();                                                              // 0x42bbd0
-    void assign(const char* s);                                             // 0x42bcb0 (the const char* assignment)
-    void append(const tstring& o);                                          // 0x42c1e0
-    ~tstring();                                                             // 0x42bc40
-    const char* c_str() const { return buf ? buf : (const char*)&buf; }
-};
+// ---- tstring: the shared one (src/game/tstring.h)
+#include "../tstring.h"
 extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0x536f8f
 extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0x535fe4
 
@@ -49,7 +39,7 @@ typedef Widget RangeWidget;
 
 
 
-#include "../bit_words.h"
+#include "../terrain_a/terrain.h"                   // Terrain (g_terrain 0xa76630)
 
 extern int g_size_modes[8];                                 // 0x59394c terrain-size mode table (only [0] is ours)
 extern int g_use_shaders;                                          // 0x5e28fc (shaders on)

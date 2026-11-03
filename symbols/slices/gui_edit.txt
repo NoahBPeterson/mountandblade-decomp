@@ -10,7 +10,7 @@
 004c4e2f ?list_int_buynode_funclet@@YAXPAUlist_node_int@@@Z
 004c4e50 ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z
 004c4ebd ?list_int_make_node_funclet@@YAXPAX@Z
-004c4ee0 ??1world_obj@@QAE@XZ
+004c4ee0 ??1Terrain@@QAE@XZ
 004c4f40 ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z
 004c5010 ?uninit_fill_n@@YAXPAXIPBXPAUblock_copier@@@Z
 004c5074 ?fill_records_funclet@@YAXXZ

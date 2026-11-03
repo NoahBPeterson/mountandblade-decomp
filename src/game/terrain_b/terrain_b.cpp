@@ -1055,7 +1055,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                     vector4 col;
                     rgl::unpack_color(&col, (const unsigned*)&v.f58);
                     vector4 t1, t2, t3, r;
-                    vscale_to(t1, *(vector4*)sun_diffuse, lf);
+                    vscale_to(t1, sun_diffuse, lf);
                     vscale_to(t2, sun_ambient, 1.5f);
                     t3.x = t2.x + t1.x; t3.y = t2.y + t1.y; t3.z = t2.z + t1.z;
                     r.x = t3.x * col.x; r.y = t3.y * col.y; r.z = t3.z * col.z;

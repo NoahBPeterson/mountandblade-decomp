@@ -1,5 +1,5 @@
-00467250 ?load_layer@terrain_obj@@QAEXPAHH@Z  # copies layer idx of a layer set (type 0xffffe18f = height offset, 0xffffceeb = class id, else a per-cell weight slot) into every cell
-00467530 ?count_low_quads@terrain_obj@@QAEHXZ  # counts quads in the interior (20-cell border) with f14 < 0.6 or f24 < 0.45
+00467250 ?load_layer@Terrain@@QAEXPAHH@Z  # copies layer idx of a layer set (type 0xffffe18f = height offset, 0xffffceeb = class id, else a per-cell weight slot) into every cell
+00467530 ?count_low_quads@Terrain@@QAEHXZ  # counts quads in the interior (20-cell border) with f14 < 0.6 or f24 < 0.45
 004676c0 ?clear_done@Mission3@@QAEXXZ  # zeroes the 64 flag bytes at mission+0x6824
 004676e0 ?copy_slot@Mission3@@QAEXH@Z  # slot idx (0x130 stride from +0x6b0): copies the 64-byte block at +0x40 over +0x00 and +0x80, clears three fields
 00467740 ?speed_factor@Mission3@@QAEMM@Z  # (x + 15) / 15 clamped to [0.2, 2.5] times (2.5 * g_5aa07c + 0.8333)

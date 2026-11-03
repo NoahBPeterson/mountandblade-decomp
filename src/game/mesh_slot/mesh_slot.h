@@ -125,8 +125,8 @@ struct EChar : TroopMgr {
 
 // ---- members of Terrain (src/game/terrain_a/terrain.h) defined in this TU --------------------------------------------
 // The object is the Terrain of terrain_a/terrain.h when the world map is up and the Mission (game/mission.h) in a battle: the
-// same ~138 MB global (props at +0x6688 is Mission::props, wx/wy at +0x270 Terrain::wx). TerrainX adds the members past
-// the end of Terrain (arr3 ends at 0x845e030) that the scene-entity builder uses.
+// same ~138 MB global (props at +0x6688 is Mission::props, wx/wy at +0x270 Terrain::wx). Its scene-entity builder methods are
+// members of Terrain (terrain.h).
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../../include/render_flags.h"
 struct ShadowMapP : ShadowMap {
@@ -134,26 +134,6 @@ struct ShadowMapP : ShadowMap {
     NOINL void build_hw();   // 0x47fce0
     NOINL void build_sw();   // 0x47fdd0
     NOINL void render();     // 0x47fef0
-};
-struct TerrainX : terrain_obj {
-    // The object ends with Terrain's own members: the scene name is Terrain::tail (+0x845e784) and the mesh list is
-    // Terrain::v845e7b8.  TerrainX only adds the 9 entity slots, which sit in Terrain's +0x845e794 hole and so are
-    // reachable by address only (a derived class cannot place members inside its base).
-    // (TerrainLayer::f14 as the float scale of a layer's texture coordinates: layer[l].f14f())
-    tstring& name() { return tail; }                          // +0x845e784 scene name (0x47cae0: shorter than 4 = none)
-    rgl::entity** sent() { return (rgl::entity**)((char*)this + 0x845e794); }   // 3x3 entities by the sign of the mesh centre
-    std::vector<rgl::mesh*>& smeshes() { return *(std::vector<rgl::mesh*>*)&v845e7b8; }   // the meshes find_meshes returned
-    void snap(rgl::mesh* m);                         // 0x47c9b0
-    void build_entity();                             // 0x47cae0
-    void light_entities(rgl::mesh** list, int count);   // 0x47ce00
-    void light_props();                              // 0x47ced0
-    void gen_set_init(particle_list* s);             // 0x47df80
-    void create_water(void** out);                   // 0x480db0
-    void destroy_water(int a);                       // 0x4814a0
-    void emit_particle(int type, int v, int x, int y, float z);   // 0x47ff60
-    void tessellate();                               // 0x481570
-    void generate(int seed, int* objs, char flag);   // 0x481d10
-    void regenerate_water(void** out, bool mode);    // 0x482170 (mode is forwarded to light_all unchanged)
 };
 
 #endif // MESH_SLOT_H

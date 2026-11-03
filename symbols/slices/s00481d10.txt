@@ -1,5 +1,5 @@
-0x481d10 ?generate@terrain_obj@@QAEXHPAHD@Z  # 3 args (seed word 0 -> world; object list; flag, sign-extended by the callee); rebuilds the whole terrain: resets, derives the cell scale and the two height fields, sizes the cell grid, clamps it to 40..250, places every cell and sets every quad diagonal, then runs the generation chain (layers, rivers, flow, placeables, objects with the g_no_cam branch, noise offsets from a second srand, scatter sets 0/1/2, particles), re-centres the camera (world->main_camera 0x42ad60 with v = (0,0,0), sun_dir 0x843bd0c, map_centre 0x843bd1c), tessellates and finishes (0x473980)
-0x482170 ?regenerate_water@terrain_obj@@QAEXPAPAXH@Z  # 2 args (out water mesh, mode); drops set0/set1 (0x479da0), rebuilds the water (create_water 0x480db0), re-inits both sets (0x47df80), relights (0x47a460) and, when g_env2 == 0 or g_water_mode == 0, relights both particle sets (0x472020) with `mode`; finally stores min(ftol(size_x), g_mask_h-1) into seed2 bits 0..9 and min(ftol(size_y), g_mask_h-1) into bits 10..19
+0x481d10 ?generate@Terrain@@QAEXHPAHD@Z  # 3 args (seed word 0 -> world; object list; flag, sign-extended by the callee); rebuilds the whole terrain: resets, derives the cell scale and the two height fields, sizes the cell grid, clamps it to 40..250, places every cell and sets every quad diagonal, then runs the generation chain (layers, rivers, flow, placeables, objects with the g_no_cam branch, noise offsets from a second srand, scatter sets 0/1/2, particles), re-centres the camera (world->main_camera 0x42ad60 with v = (0,0,0), sun_dir 0x843bd0c, map_centre 0x843bd1c), tessellates and finishes (0x473980)
+0x482170 ?regenerate_water@Terrain@@QAEXPAPAXH@Z  # 2 args (out water mesh, mode); drops set0/set1 (0x479da0), rebuilds the water (create_water 0x480db0), re-inits both sets (0x47df80), relights (0x47a460) and, when g_env2 == 0 or g_water_mode == 0, relights both particle sets (0x472020) with `mode`; finally stores min(ftol(size_x), g_mask_h-1) into seed2 bits 0..9 and min(ftol(size_y), g_mask_h-1) into bits 10..19
 0x5a8e70 g_mask_flag     # mask applied to the seed for the negative-height flag
 0x5a8e78 g_mask_w        # mask on f14 for the cell scale
 0x5a8eb8 g_mask_h        # mask on the two height bands of seed2
@@ -32,10 +32,10 @@
 0x46a270 gen_scatter         # (set, mode): set1/0 with mode 0, set2 with mode 2
 0x466fa0 gen_466fa0
 0x42ad60 World::main_camera  # (v, sun_dir, centre), this = the world object
-0x481570 terrain_obj::tessellate
+0x481570 Terrain::tessellate
 0x473980 gen_473980
 0x479da0 gen_set_clear      # __stdcall, drops one scatter generator set
-0x480db0 terrain_obj::create_water
+0x480db0 Terrain::create_water
 0x47df80 gen_set_init       # re-initialises a scatter generator set
 0x47a460 gen_47a460         # water relight
-0x472020 terrain_obj::light_particles  # (set, mode)
+0x472020 Terrain::light_particles  # (set, mode)

@@ -165,10 +165,7 @@ struct SunBody {                                                  // an agent's 
     vector4 origin;                                               // +0x88 (the body frame's origin)
     void set_fade(const float* v);                                // 0x4b1800 (ret 4)
 };
-struct DustTerrain {                                            // the mission object's dust-grid pass (src/game/char_sheet/dust.h declares the same function on its own view of the object)
-    void update_particles(const matrix* view);                    // 0x4f3e10 (ret 4)
-};
-extern DustTerrain g_terrain;                                 // 0xa76630 (the mission object itself; g_mission points to it)
+#include "../terrain_a/terrain.h"                          // Terrain, g_terrain (0xa76630): update_particles 0x4f3e10
 #include "../../include/sound_mgr.h"                             // SoundMgr (play_slot 0x4428a0, stop_all 0x494310)
 #include "../../rgl/resource_manager.h"
 #include "../../include/renderer.h"

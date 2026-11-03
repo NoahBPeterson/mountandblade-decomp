@@ -815,7 +815,7 @@ void Screen_s261e0::tick(float dt)
     }
 
     if (g_cfg.enable_edit_mode && ((int*)((char*)&g_keyboard + 0xc))[56] && ((int*)((char*)&g_keyboard + 0xc))[38] == 0 && ((int*)((char*)&g_keyboard + 0x40c))[38] != 0)
-        ((TerrainX*)g_mission_s261e0)->light_entities((rgl::mesh**)((char*)g_mission_s261e0 + 0x6340), g_mission_s261e0->f633c);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
+        ((Mission*)g_mission_s261e0)->light_entities((rgl::mesh**)((char*)g_mission_s261e0 + 0x6340), g_mission_s261e0->f633c);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
 
     if (f2d8 == 0) {
         b6 = false;
@@ -2424,8 +2424,6 @@ void Screen_s2ae70::draw_order_menu()
 #define g_gui_s2b5c0 (*(Gui_s2b5c0*)g_gui)
 #undef g_items_s2b5c0
 #define g_items_s2b5c0 (*(ItemKind_s2b5c0**)&g_items)
-#undef g_terrain_s2b5c0
-#define g_terrain_s2b5c0 (*(Terrain_s2b5c0*)g_terrain)
 #undef g_game_s2b5c0
 #define g_game_s2b5c0 (*(CampaignGame_s2b5c0**)&g_game)
 #undef g_mission_s2b5c0
@@ -2729,7 +2727,7 @@ void Mission_s2b5c0::update_cursor()
                 mode = 2;
             if (mode != 0)
                 this->f2f0 = 1;
-            g_terrain_s2b5c0.update((int*)((char*)g_mission_s2b5c0 + 0x63d0), &pos,
+            g_terrain.update((int*)((char*)g_mission_s2b5c0 + 0x63d0), &pos,
                              g_mission_s2b5c0->f651c, mode, f.i);
             g_game_s2b5c0->f1a1cc = 1;
         }
@@ -2748,7 +2746,7 @@ L_bd78:
         return;
 L_bd8a:
     if (this->f2f0 != 0) {
-        g_terrain_s2b5c0.conv_build_scene();
+        g_terrain.conv_build_scene();
         this->f2f0 = 0;
     }
 }
@@ -2802,12 +2800,10 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
 // ======================================================= slice s0052bf40: functions
 #undef g_game_s2bf40
 #define g_game_s2bf40 (*(CampaignGame_s2bf40**)&g_game)
-#undef g_terrain_s2bf40
-#define g_terrain_s2bf40 (*(Terrain_s2bf40*)g_terrain)
 // @ 0x52bf40
-void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag)
+void Terrain::update(int* objs, vector4* pos, int sel, int mode, int flag)
 {
-    clear();
+    clear_brushed();
 
     int m = mode;
     if (m == 1)
@@ -2824,22 +2820,22 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
         speed = g_game_s2bf40->f1a0d8;
 
     float r1 = speed * speed;
-    float r2 = this->f_c3b0e0 * 10.0f + speed;
+    float r2 = this->scale * 10.0f + speed;
     r2 = r2 * r2;
 
     int cell[2];   // brush() reads {col, row} through one pointer (0x52c0a1: [esp+0x1c], [esp+0x20])
     int& row = cell[1];
     int& col = cell[0];
     row = 0;
-    if (this->f27c >= 0) {
+    if (this->h >= 0) {
         do {
             col = 0;
-            if (this->f278 >= 0) {
+            if (this->w >= 0) {
                 do {
-                    int off = (col * 0xfb + row) * 0x94;
-                    float dx = *(float*)((char*)this + off + 0x288) - pos->x;
-                    float dy = *(float*)((char*)this + off + 0x28c) - pos->y;
-                    float dz = *(float*)((char*)this + off + 0x290) - pos->z;
+                    terrain_cell& tc = this->cell[col][row];
+                    float dx = tc.px - pos->x;
+                    float dy = tc.py - pos->y;
+                    float dz = tc.pz - pos->z;
                     float d2 = dx * dx + (dz * dz + dy * dy);
                     if ((m == 0 && d2 <= r2) || d2 <= r1) {
                         char place = 1;
@@ -2853,10 +2849,10 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
                         brush(objs, &sel, cell, &d, &m, &flag, &place);
                     }
                     col++;
-                } while (col <= this->f278);
+                } while (col <= this->w);
             }
             row++;
-        } while (row <= this->f27c);
+        } while (row <= this->h);
     }
 
     if (m == 0) {
@@ -2865,21 +2861,21 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
             int rowbase = 0;
             do {
                 char found = 0;
-                if (this->f845d984 >= 0) {
+                if (nx >= 0) {
                     int j = 0;
                     do {
-                        if (this->f845d988 >= 0) {
+                        if (ny >= 0) {
                             int k = 0;
                             if (i + 4 < 0xf) {
                                 do {
-                                    if (this->f845e094[k + (rowbase + j) * 5] != 0)
+                                    if (brushed[i + 4][j][k] != 0)
                                         found = 1;
                                     k++;
-                                } while (k <= this->f845d988);
+                                } while (k <= ny);
                             }
                         }
                         j++;
-                    } while (j <= this->f845d984);
+                    } while (j <= nx);
                 }
                 if (found)
                     this->load_layer(objs, i);
@@ -2893,20 +2889,20 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
         this->load_layer(objs, objs[2]);
     }
 
-    char* rec = (char*)this->f_c3b0dc;
+    char* rec = (char*)this->world;
     float a = *(float*)(rec + 0x68);
     float b = *(float*)(rec + 0x6c);
     float c = *(float*)(rec + 0x70);
     float h = (c + b + a) * 0.3f;
 
-    if (this->f845d984 > 0) {
-        for (int bx = 0; bx < this->f845d984; bx++) {
-            if (this->f845d988 > 0) {
-                for (int by = 0; by < this->f845d988; by++) {
+    if (this->nx > 0) {
+        for (int bx = 0; bx < this->nx; bx++) {
+            if (this->ny > 0) {
+                for (int by = 0; by < this->ny; by++) {
                     for (int layer = 0; layer < 0xf; layer++) {
-                        if (this->f845e030[by + (bx + layer * 5) * 5] != 0) {
+                        if (brushed[layer][bx][by] != 0) {
                             int blend = -1;
-                            if (g_use_shaders != 0 && this->f60 != 0) {
+                            if (g_use_shaders != 0 && this->layer[1].f10 != 0) {
                                 if (layer == 1)
                                     blend = 2;
                                 else if (layer == 2)
@@ -2925,12 +2921,12 @@ void Terrain_s2bf40::update(int* objs, vector4* pos, int sel, int mode, int flag
 //  Terrain_s2bf40::clear
 // =====================================================================================================
 // @ 0x52c290
-__declspec(noinline) void Terrain_s2bf40::clear()
+__declspec(noinline) void Terrain::clear_brushed()
 {
     // written as a byte loop (not memset) so cl expands it exactly like the
     // original: lea edi,[ecx+0x845e030]; xor eax,eax; mov ecx,0x5d;
     // rep stosd; stosw; stosb.
-    char* p = (char*)this + 0x845e030;
+    char* p = (char*)brushed;
     for (int i = 0; i < 0x177; i++)
         p[i] = 0;
 }
@@ -2939,9 +2935,8 @@ __declspec(noinline) void Terrain_s2bf40::clear()
 #undef g_game_c
 #define g_game_c ((char*)g_game)
 // @ 0x52c2b0
-void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB)
+void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB)
 {
-    char* me = (char*)this;
     BrushElem_s2c2b0* const e = (BrushElem_s2c2b0*)((char*)elems + 0xc);
     const int ci = cell[0] * 0x1a4 + cell[1];
 
@@ -3034,59 +3029,59 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
                 int cnt = 0;
                 float sum = 0.0f;
                 if (x >= 0 && x < w && yp1 >= 0 && yp1 < h) {
-                    sum = *(float*)(me + (x * 0xfb + yp1) * 0x94 + 0x310)
-                        + *(float*)(me + (x * 0xfb + yp1) * 0x94 + 0x30c);
+                    sum = cells[x * 251 + yp1].f88
+                        + cells[x * 251 + yp1].h2;
                     cnt = 1;
                 }
                 int xp1 = x + 1;
                 if (xp1 >= 0) {
                     if (xp1 < w && yp1 >= 0 && yp1 < h) {
-                        sum += *(float*)(me + (xp1 * 0xfb + yp1) * 0x94 + 0x310)
-                             + *(float*)(me + (xp1 * 0xfb + yp1) * 0x94 + 0x30c);
+                        sum += cells[xp1 * 251 + yp1].f88
+                             + cells[xp1 * 251 + yp1].h2;
                         cnt++;
                     }
                     if (xp1 >= 0 && xp1 < w && cell[1] >= 0 && cell[1] < h) {
                         cnt++;
-                        sum += *(float*)(me + (xp1 * 0xfb + cell[1]) * 0x94 + 0x310)
-                             + *(float*)(me + (xp1 * 0xfb + cell[1]) * 0x94 + 0x30c);
+                        sum += cells[xp1 * 251 + cell[1]].f88
+                             + cells[xp1 * 251 + cell[1]].h2;
                     }
                 }
                 int ym1 = cell[1] - 1;
                 if (xp1 >= 0 && xp1 < w && ym1 >= 0 && ym1 < h) {
-                    sum += *(float*)(me + (xp1 * 0xfb + ym1) * 0x94 + 0x310)
-                         + *(float*)(me + (xp1 * 0xfb + ym1) * 0x94 + 0x30c);
+                    sum += cells[xp1 * 251 + ym1].f88
+                         + cells[xp1 * 251 + ym1].h2;
                     cnt++;
                 }
                 if (x >= 0 && x < w && ym1 >= 0 && ym1 < h) {
-                    sum += *(float*)(me + (x * 0xfb + ym1) * 0x94 + 0x310)
-                         + *(float*)(me + (x * 0xfb + ym1) * 0x94 + 0x30c);
+                    sum += cells[x * 251 + ym1].f88
+                         + cells[x * 251 + ym1].h2;
                     cnt++;
                 }
                 int xm1 = x - 1;
                 if (xm1 >= 0) {
                     if (xm1 < w && ym1 >= 0 && ym1 < h) {
                         cnt++;
-                        sum += *(float*)(me + (xm1 * 0xfb + ym1) * 0x94 + 0x310)
-                             + *(float*)(me + (xm1 * 0xfb + ym1) * 0x94 + 0x30c);
+                        sum += cells[xm1 * 251 + ym1].f88
+                             + cells[xm1 * 251 + ym1].h2;
                     }
                     if (xm1 >= 0 && xm1 < w && cell[1] >= 0 && cell[1] < h) {
                         cnt++;
-                        sum += *(float*)(me + (xm1 * 0xfb + cell[1]) * 0x94 + 0x310)
-                             + *(float*)(me + (xm1 * 0xfb + cell[1]) * 0x94 + 0x30c);
+                        sum += cells[xm1 * 251 + cell[1]].f88
+                             + cells[xm1 * 251 + cell[1]].h2;
                     }
                     if (xm1 >= 0 && xm1 < w && yp1 >= 0 && yp1 < h) {
-                        sum += *(float*)(me + (xm1 * 0xfb + yp1) * 0x94 + 0x310)
-                             + *(float*)(me + (xm1 * 0xfb + yp1) * 0x94 + 0x30c);
+                        sum += cells[xm1 * 251 + yp1].f88
+                             + cells[xm1 * 251 + yp1].h2;
                         cnt++;
                     }
                 }
                 if (x >= 0 && x < w && cell[1] >= 0 && cell[1] < h) {
                     cnt++;
-                    sum += *(float*)(me + (x * 0xfb + cell[1]) * 0x94 + 0x310)
-                         + *(float*)(me + (x * 0xfb + cell[1]) * 0x94 + 0x30c);
+                    sum += cells[x * 251 + cell[1]].f88
+                         + cells[x * 251 + cell[1]].h2;
                 }
-                float centre = *(float*)(me + (x * 0xfb + cell[1]) * 0x94 + 0x310)
-                             + *(float*)(me + (x * 0xfb + cell[1]) * 0x94 + 0x30c);
+                float centre = cells[x * 251 + cell[1]].f88
+                             + cells[x * 251 + cell[1]].h2;
                 v = ((1.0f - amount) * centre + ((centre + sum) * amount) / (float)(cnt + 1)) + v - centre;
             }
             if (E->v == 0) {
@@ -3157,18 +3152,18 @@ void SceneBrush_s2c2b0::brush(int* elems, int* pidx, int* cell, float* amt, int*
 
 done:
     int P1[2], P2[2], P3[2];
-    this->clamp(P1, cell);
+    clamp_cell(P1, cell);
     int up[2]   = { cell[0] + 1, cell[1] + 1 };
     int down[2] = { cell[0] - 1, cell[1] - 1 };
-    this->clamp(P2, up);
-    this->clamp(P3, down);
+    clamp_cell(P2, up);
+    clamp_cell(P3, down);
 
     if (stampbase < 0xf) {
         int k = stampbase * 5;
         do {
-            me[0x845e030 + (P1[0] + k) * 5 + P1[1]] = 1;
-            me[0x845e030 + (P2[0] + k) * 5 + P2[1]] = 1;
-            me[0x845e030 + (P3[0] + k) * 5 + P3[1]] = 1;
+            ((char*)brushed)[(P1[0] + k) * 5 + P1[1]] = 1;
+            ((char*)brushed)[(P2[0] + k) * 5 + P2[1]] = 1;
+            ((char*)brushed)[(P3[0] + k) * 5 + P3[1]] = 1;
             k += 5;
         } while (k < 0x4b);
     }
@@ -3200,26 +3195,26 @@ void Elem_s2ce00::put(int* ix, int* iy, int* value)
 }
 
 // @ 0x52cef0
-int* Scene_s2ce00::clamp(int* out, int* in)
+int* Terrain::clamp_cell(int* out, int* in)
 {
     int ox;
-    int ix = in[0] / *(int*)((char*)this + 0x843bd70);
+    int ix = in[0] / block;
     if (ix < 0) {
         ox = 0;
     } else {
-        int m = *(int*)((char*)this + 0x845d984);
+        int m = nx;
         ox = m - 1;
         if (ix < m)
             ox = ix;
     }
 
-    int iy = in[1] / *(int*)((char*)this + 0x843bd70);
+    int iy = in[1] / block;
     if (iy < 0) {
         out[0] = ox;
         out[1] = 0;
         return out;
     }
-    int mx = *(int*)((char*)this + 0x845d988);
+    int mx = ny;
     if (iy >= mx) {
         out[0] = ox;
         out[1] = mx - 1;

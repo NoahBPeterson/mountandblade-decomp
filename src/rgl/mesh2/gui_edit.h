@@ -70,18 +70,6 @@ struct tstr28 {
     char    pad[0x18];
 };
 
-struct world_obj {
-    char    head[0x18];        // +0
-    tstr28  strs[0xf];         // +0x18  0x28 apart, up to +0x270
-    char    pad[0x845e784 - 0x270];
-    tstring name;              // +0x845e784
-    char    pad2[0x845e7bc - 0x845e794];
-    void*   blk;               // +0x845e7bc
-    void*   blk2;              // +0x845e7c0
-    void*   blk3;              // +0x845e7c4
-    ~world_obj();              // 0x4c4ee0
-};
-
 struct elem60 {
     tstring s0;          // +0
     tstring s10;         // +0x10
@@ -665,14 +653,6 @@ struct scene_vert {
     char pad14[0x10];
 };
 
-// one cell of the tableau grid (conv_build_scene 0x4c8630): the cells of a column are 0x94 bytes apart, the
-// columns 0x911c bytes apart, starting at conv_rec+0x288
-struct tab_cell {
-    vector4 v;                                               // +0 (v.z holds the code stored in the scene cell)
-    int f10;                                                 // +0x10
-    int vert;                                                // +0x14 (scene vertex index, < 0 = none)
-};
-
 // 0x88-byte record of the scene's list at +0x14: n (+0) vertex indices (+4), the scene object at +0x84
 struct scene_obj {                                           // polymorphic scene object, vertices (vector4) at +0x60
     virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
@@ -767,6 +747,5 @@ extern int g_menu_count;                                                   // 0x
 inline stream_base& log_cstr(const char* s) { return ((stream_base&)g_log).w_cstr(s); }
 
 void __fastcall conv_clear(void** self); // 0x4c8bf0
-void __fastcall conv_build_scene(conv_rec* self); // 0x4c8630
 void __fastcall conv_map_codes(conv_rec* self); // 0x4c84f0
 #endif
