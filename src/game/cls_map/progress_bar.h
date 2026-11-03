@@ -14,14 +14,11 @@ struct progress_bar : MissionUi {               // vtable 0x597f20
     unsigned char f184;                         // +0x184 dirty flag (the ctor sets it)
     unsigned char f185, f186, f187;             // +0x185
     rgl::vector4 rect;                          // +0x188 (1, 1, 1, 0 after the ctor)
-    virtual void update_children();             // +0xc4, vtable slot 49: update 0x4e3fb0 (called by draw_label)
+    virtual void update_children();             // +0xc4, vtable slot 49 0x4e3fb0 (rebuilds the scaled mesh when dirty; called by render)
     progress_bar();                             // 0x4e3eb0
-    void set_ratio(float r);                    // 0x4e3f60 (clamp to [0.01, 1], mark dirty)
-    void update();                              // 0x4e3fb0 (rebuilds the scaled mesh when dirty)
-    void draw_label(rgl::scene* sc, float* count, int c, int d);   // 0x4e3f20 (ret 0x10)
-    // slots of vtable 0x597f20 that differ from the base's (cls_map/progress_bar_slots.cpp: jmps)
-    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> draw_label
-    void d13(int v);                            // +0x34 -> set_ratio
+    // slots of vtable 0x597f20 that differ from the base's
+    virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x4e3f20 (ret 0x10)
+    virtual void set168(float r);               // +0x34 0x4e3f60 (clamp to [0.01, 1], mark dirty)
 };
 progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, float b);   // 0x4e3d50
 
@@ -38,32 +35,8 @@ struct RagModel {
 };
 
 // ---- 0x4e4790..0x4e5d90: the save / load screen -----------------------------------------------------------------------------------
-// the nine slot records (list_saves 0x4e5270 fills them from "sgDD.sav"); also read by slot_button 0x4e55f0
-struct SlotRec {
-    tstring name;                               // +0x00 the save's title
-    tstring date;                               // +0x10 the formatted date line
-    int seconds;                                // +0x20 non-zero when the slot holds a save
-    int year;                                   // +0x24 the file version word
-    int month;                                 // +0x28 the module version word
-    unsigned char bad_type, bad_version, bad_module, pad2f;    // +0x2c the three "incompatible" flags
-};
-struct SaveWindow {
-    char pad0[0x2c];
-    SlotRec slots[9];                           // +0x2c (stride 0x30)
-    char pad1dc[4];
-    ContainerBase* window;                      // +0x1e0
-    UiAInline* labels[9];                       // +0x1e4 one long button per slot
-    MissionUi* btn_done;                        // +0x208
-    MissionUi* btn_cancel;                      // +0x20c
-    MissionUi* btn_delete;                      // +0x210
-    char pad214[4];
-    int sel218, sel21c, sel220;                 // +0x218 (-1)
-    char pad224[0x234 - 0x224];
-    bool is_load;                               // +0x234
-    void init();                                // 0x4e4790
-    void list_saves();                          // 0x4e5270
-    void slot_button(ContainerBase* parent, int slot, UiAInline** out);   // 0x4e55f0 (ret 0xc)
-};
+// (the save window is C4c31c0, game/screen_records.h: its nine SlotRecs, list_saves 0x4e5270 and slot_button 0x4e55f0)
+#include "../screen_records.h"
 void label_refresh(MissionUi* w, tstring key);  // 0x4e4c70 (cdecl, the prefix by value)
 __declspec(noinline) UiAInline* make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4e5570
 
@@ -183,17 +156,6 @@ struct MapScreen {
 };
 
 // the meeting window (character sheet) and the loading window (TU 107, 0x4e3780..0x4e3d50)
-struct MeetingWindow {
-    char pad0[0x2c];
-    ContainerBase* bg;                          // +0x2c the window
-    MissionUi* done;                            // +0x30 ui_done (meeting) / the hint label (loading)
-    MissionUi* import_btn;                      // +0x34 ui_import_character / the logo
-    MissionUi* export_btn;                      // +0x38 ui_export_character / the progress bar
-    MissionUi* panel;                           // +0x3c the character list panel (0x597050)
-    int f40;                                    // +0x40
-    int f44;                                    // +0x44
-    int f48;                                    // +0x48
-    void init();                                // 0x4e3780
-    void init2();                               // 0x4e3aa0
-};
+#include "../screen_records.h"
+typedef Rec48 MeetingWindow;      // the record of screen_records.h (vtable class); its members live there
 #endif // GAME_CLS_MAP_PROGRESS_BAR_H

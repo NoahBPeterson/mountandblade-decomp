@@ -140,17 +140,6 @@ void head_cam::read_stream(w_stream* w)
     w->r_float(&f2b8);
 }
 
-// @ 0x4c4c90
-// Deleting destructor (ret 4): the head vtable, the string at +0x1c, then the object itself for bit 0.
-void* __fastcall head_rec_delete(head_rec* self, void*, unsigned flags)
-{
-    *(void**)self = (void*)vtbl_5947d8;
-    self->name.~tstring();
-    if (flags & 1)
-        operator delete(self);
-    return self;
-}
-
 // @ 0x4c4cc0
 head_obj2::head_obj2()
 {
@@ -2087,12 +2076,12 @@ void GameData::save_language_files(bool translated)
 }
 
 // @ 0x4ca550
-void ResultWindow::scale_3(const float*)
+void ResultWindow::scale_3(float)
 {
-    if (b3c->d17(0x10000))
+    if (b3c->clear_mask(0x10000))
         goto off;
     if (b40) {
-        if (b40->d17(0x10000))
+        if (b40->clear_mask(0x10000))
             goto on;
         return;
     } else {

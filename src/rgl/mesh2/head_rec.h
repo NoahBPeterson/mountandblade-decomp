@@ -48,7 +48,7 @@ struct head_cam : head_rec {
     head_cam();                // 0x4c49f0
     virtual void slot_empty_1();
     virtual void slot_empty_2();
-    virtual void scale_3(const float*);
+    virtual void scale_3(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     virtual void scale_5(const float*);
     virtual void scale_6(const float*);
@@ -68,7 +68,7 @@ struct head_obj2 : head_rec {
     head_obj2();               // 0x4c4cc0
     virtual void slot_empty_1();
     virtual void slot_empty_2();
-    virtual void scale_3(const float*);
+    virtual void scale_3(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };

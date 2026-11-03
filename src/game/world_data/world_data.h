@@ -112,23 +112,10 @@ struct EntVt {                                                  // vtable view o
     virtual void v24();                                         // +0x60 (0x490570, 0x4905c0)
 };
 
-// ---- the container widget (MissionUi-derived, vtable 0x5924a0; widget_mgr.h ContainerBase, size 0x190) -------------------------
-struct ContainerW : ContainerBase {
-    std::vector<MissionUi*>& children() { return WD_FLD(std::vector<MissionUi*>, 0x178); }   // +0x178 the child widgets (first at +0x17c; 0x493a30)
-    void**& ents_first() { return WD_FLD(void**, 0x17c); }      // +0x17c std::vector<child*> (0x4906b0, 0x490520)
-    void**& ents_last() { return WD_FLD(void**, 0x180); }       // +0x180
-    void**& ents_end() { return WD_FLD(void**, 0x184); }        // +0x184
-    // release 0x48ef40 is mission_ui2's FrameBox::release; the base destructor 0x487c00 is Buffer's (see world_data.cpp)
-    void dtor_common();                                         // 0x490520 (~ContainerBase)
-    void place(int* a);                                         // 0x490570 (ret 4)
-    void track_bounds(void* p);                                 // 0x4905c0 (ret 4)
-    void activate_all();                                        // 0x4906b0
-    void reset_all();                                           // 0x4906e0
-    void bounds_of(int* a, float* p3, float* p4, float* p5);    // 0x490710 (ret 0x10)
-    void update_all(int p);                                     // 0x4908c0 (ret 4)
-    ContainerW* destroy(unsigned flag);                         // 0x490930 (scalar deleting destructor, ret 4)
-    void* construct();                                          // 0x4931a0 (the constructor body: returns this)
-    void add_child(MissionUi* child);                           // 0x493a30 (thiscall, ret 4)
+// the container widget is ui/container.h's ContainerBase (its members are defined below, in world_data.cpp)
+// (view of the constructor body, kept for the sources that still build a container by calling it: 0x4931a0)
+struct ContainerW {
+    void* construct();                                          // 0x4931a0 (new (this) ContainerBase)
 };
 
 inline int& troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }   // +0x54 second upgrade troop (0x494e40)
@@ -330,7 +317,6 @@ struct TailVec : std::vector<tstring> { using std::vector<tstring>::_Tidy; };
 int panel_count_493300();                                       // 0x493300 (returns 5)
 extern char vtbl_5924a0[];                                      // 0x5924a0
 extern char vtbl_592570[];                                      // 0x592570
-extern char vtbl_591d58[];                                      // 0x591d58
 extern char vtbl_592644[];                                      // 0x592644
 
 struct PtrStack14 {                                             // an object with a pointer vector (no allocator word) at +0x14

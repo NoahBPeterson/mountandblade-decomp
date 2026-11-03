@@ -11,15 +11,7 @@
 #include "../../include/frustum.h"
 #include "./field_panel.h"
 
-// ---- 0x48ef40: a container widget that owns a vector of objects (the same object as UiFrame in party/party_window.h) ----------------
-struct VDtor { virtual ~VDtor(); };         // an object with a virtual deleting destructor in slot 0
-struct FrameBox : MissionUi {
-    int f178;                               // +0x178 the vector's allocator word
-    VDtor** first;                          // +0x17c
-    VDtor** last;                           // +0x180
-    VDtor** cap;                            // +0x184
-    void release();                         // 0x48ef40 (deletes every object, frees the block, clears the vector)
-};
+// ---- 0x48ef40: the container widget's release is ContainerBase::update_children (ui/container.h) ----------------
 
 // ---- 0x48efa0: the rider rows (0x88 bytes each) of an object ---------------------------------------------------------------
 struct RiderRow {

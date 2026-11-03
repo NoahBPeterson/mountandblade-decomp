@@ -42,7 +42,6 @@ struct QuestPage {
     void fill();
     void update_days();
     void update_difficulty();
-    void update_settings(int reason);
 };
 
 #endif

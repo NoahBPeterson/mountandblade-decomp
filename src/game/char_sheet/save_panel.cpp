@@ -44,21 +44,7 @@ void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
 #include "../ui_widget.h"
 typedef Widget Control;
 
-// the save/load panel: nine slot buttons at +0x1e4, the two sub-panels at +0x208/+0x210, the
-// selected slot at +0x218 and the slot records at +0 (stride 0x30, selected flag at +0x4c).
-struct SavePanel {
-    char pad0[0x1e4];
-    Control* buttons[9];                                // +0x1e4
-    Control* list_panel;                                // +0x208
-    char pad20c[4];
-    Control* info_panel;                                // +0x210
-    char pad214[4];
-    int selected;                                       // +0x218
-    char pad21c[0x234 - 0x21c];
-    char deleting;                                      // +0x234
-    void update(int arg);
-    void select(int idx);
-};
+#include "../screen_records.h"       // C4c31c0: the save / load window (slot 3 is update 0x4ea290, select 0x4ea850)
 
 #include "../str_table.h"
 #include "../../include/msg_log.h"
@@ -92,7 +78,7 @@ static const char* text_of(const tstring* s)
 }
 
 // @ 0x4ea290
-void SavePanel::update(int)
+void C4c31c0::scale_3(float)
 {
     // save_path reads this as a C string, then WRITES the whole "%s\Mount&Blade Savegames\%s" path back into
     // it (its own local buffer is 0x104), so this is a char buffer of that size - the 16 bytes it used to have
@@ -100,12 +86,12 @@ void SavePanel::update(int)
     char pathbuf[0x200];
     char name[0x200];
     for (int i = 0; i < 9; i++) {
-        Control* button = buttons[i];
+        Widget* button = labels[i];
         if (button && button->changed(0x10000))
             select(i);
     }
-    if (list_panel->changed(0x10000)) {
-        if (deleting) {
+    if (btn_done->changed(0x10000)) {
+        if (is_load) {
         *(int*)((char*)this + 0x220) = -1;
         tstring title("ui_set_save_file_name");
         const tstring* r = g_strtable.lookup(title);
@@ -124,8 +110,8 @@ void SavePanel::update(int)
         g_menu_rec->choice = (int)((char*)this + 0x220);
         g_menu_rec->v50 = (int)((char*)this + 0x224);
         int* slotname;
-        if (*(int*)((char*)this + selected * 0x30 + 0x4c) != 0)
-            slotname = (int*)((char*)this + selected * 0x30 + 0x2c);
+        if (*(int*)((char*)this + sel218 * 0x30 + 0x4c) != 0)
+            slotname = (int*)((char*)this + sel218 * 0x30 + 0x2c);
         else
             slotname = (int*)(*(int*)((char*)g_game + 0x8c) * 0x508 +
                               *(int*)((char*)g_game + 0x13a00));
@@ -134,27 +120,27 @@ void SavePanel::update(int)
         g_main_menu.set_state(0);
         return;
         } else {
-        char* slot = (char*)this + selected * 0x30;
+        char* slot = (char*)this + sel218 * 0x30;
         if (slot[0x58] == 0 && slot[0x59] == 0 && slot[0x5a] == 0) {
             crt_sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
             const char* pf = g_module_name.c_str();
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
-                        selected / 10, selected % 10);
+                        sel218 / 10, sel218 % 10);
             *(int*)(slot_as<char>(3) + 4) = 1;
             ((tstring*)(slot_as<char>(3) + 0x48))->assign(name);
-            *(int*)(slot_as<char>(3) + 0x8c) = selected;
+            *(int*)(slot_as<char>(3) + 0x8c) = sel218;
             g_main_menu.set_state(3);
             return;
         }
         }
     }
-    if (((Control*)*(void**)((char*)this + 0x20c))->changed(0x10000)) {
+    if (btn_cancel->changed(0x10000)) {
         g_main_menu.set_state(*(int*)((char*)this + 0x18));
         return;
     }
-    Control* panel = *(Control**)((char*)this + 0x210);
+    Widget* panel = btn_delete;
     // The original (verified by the byte-level reconstruction in match/slices/save_panel) reaches the delete
     // confirmation on the delete widget OR (a17420 set, a17820 clear, AND the panel's +0x104 bit 1 clear); the
     // remaining case is the save/remove path. Ours had that second test as an OR of the positive bit, which sent
@@ -171,7 +157,7 @@ void SavePanel::update(int)
             const char* path = pathbuf;
             const char* pf = g_module_name.c_str();
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
-                        selected / 10, selected % 10);
+                        sel218 / 10, sel218 % 10);
             if (crt_remove(name) != 0) {
                 tstring err("ui_error_removing_file");
                 g_msglog.add(*g_strtable.lookup(err), 0xffff0000);
@@ -181,7 +167,7 @@ void SavePanel::update(int)
         }
         if (*(int*)((char*)this + 0x220) != 0)
             return;
-        save_game(selected, (tstring*)((char*)this + 0x224));
+        save_game(sel218, (tstring*)((char*)this + 0x224));
         ((tstring*)((char*)g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
         tstring ok("ui_game_saved");
         g_msglog.add(*g_strtable.lookup(ok), -1);
@@ -210,20 +196,20 @@ confirm_delete:
 }
 
 // @ 0x4ea850
-void SavePanel::select(int idx)
+void C4c31c0::select(int idx)
 {
-    if (selected != -1)
-        buttons[selected]->activate(0);
-    selected = idx;
-    if (selected != -1) {
-        buttons[selected]->activate(1);
-        list_panel->enable();
-        if (*(int*)((char*)this + selected * 0x30 + 0x4c))
-            info_panel->enable();
+    if (sel218 != -1)
+        labels[sel218]->activate(0);
+    sel218 = idx;
+    if (sel218 != -1) {
+        labels[sel218]->activate(1);
+        btn_done->enable();
+        if (*(int*)((char*)this + sel218 * 0x30 + 0x4c))
+            btn_delete->enable();
         else
-            info_panel->disable();
+            btn_delete->disable();
     } else {
-        list_panel->disable();
-        info_panel->disable();
+        btn_done->disable();
+        btn_delete->disable();
     }
 }

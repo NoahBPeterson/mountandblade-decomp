@@ -6,6 +6,7 @@
 #include "../include/rgl_base.h"
 #include "../include/vec.h"
 #include "../include/clock_table.h"
+#include "../include/tail2.h"      // Tail2 (~Tail2 0x4c4d10): the list at +0x5168, destroyed with the agent
 
 
 // 8-byte tick values stored as two dwords: the agent's sub-objects are not 8-byte aligned (ViewState is 0x5374 long)
@@ -35,9 +36,9 @@ struct ViewBody {
     char pad50f0[0x5118 - 0x50f0];
     Timer16 t5118;              // +0x5118
     Timer16 t5128;              // +0x5128
-    char pad5138[0x516c - 0x5138];
-    Vec4z v516c;                // +0x516c
-    char pad517c[0x5374 - 0x517c];
+    char pad5138[0x5168 - 0x5138];
+    Tail2 tail2;                // +0x5168 (agent +0x53c0): the constructor 0x475e50 zeroes arr / count / refbase / refcap; the agent's destructor 0x431f40 runs ~Tail2
+    char pad5188[0x5374 - 0x5188];
     void init_timers();         // 0x475e50  // old name of ViewState::ViewState, removed after the names merge
     void init();                // 0x463370 (src/game/ui/troop_inv.cpp: the reset path)
     rgl::vector4 get_dir(int a, int b);     // 0x463610 (troop_inv.cpp)

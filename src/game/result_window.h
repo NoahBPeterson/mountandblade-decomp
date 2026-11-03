@@ -34,7 +34,7 @@ struct ResultWindow : head_rec {              // vtable 0x595740; outcome (w04):
     __declspec(noinline) ~ResultWindow();     // 0x4c2cd0 (not inlined into the deleting destructor 0x4c2cb0)
     virtual void slot_empty_1();              // slot 1  0x4c30b0: g_gui.f1709 = 1
     virtual void slot_empty_2();              // slot 2  0x4dc630: builds the window and its buttons
-    virtual void scale_3(const float*);       // slot 3  0x4ca550: the fullscreen / windowed toggle (the argument is unused)
+    virtual void scale_3(float);       // slot 3  0x4ca550: the fullscreen / windowed toggle (the argument is unused)
     virtual char pure_7() { return 0; }       // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
 };
 

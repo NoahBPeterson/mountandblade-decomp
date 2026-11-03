@@ -9,7 +9,7 @@
 // gui_manager (../strat/gui_manager.h), LangTables (the string table; ../../rgl/mesh2/mesh2_common.h), E50 / E176 / R44 /
 // b16 (../../include/vec_elems.h), E68 (../../include/e68.h), Config / ini_file (../config/config.h), Core (the
 // application object; ../config/core.h), MissionUi and its widget classes (../ui), the widget factories' classes
-// (../config/widget_mgr.h: WVt, ButtonBase, UiAInline, ContainerBase, DropDown, gui_mesh).
+// (../config/widget_mgr.h: WVt, DropDown, gui_mesh; ../ui/ui_widgets.h: UiAInline; ../ui/container.h: ContainerBase).
 #ifndef GAME_CLS_MAP_CLS_MAP_H
 #define GAME_CLS_MAP_CLS_MAP_H
 #include "../../include/image_addrs.h"
@@ -182,7 +182,8 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 
 // ---- 0x4daa10: the loading-screen object (a screen like the menus below: the overlay window at +0x2c, three child widgets) ----
 // (0x4da900 is gui_manager::rebuild, ../strat/gui_manager.h; this object only shares the offsets +0x568.. with it by accident of the slice)
-#include "../loading_screen.h"        // LoadingScreen: one definition (update 0x50f390, advance 0x50f440 are in inventory_panel)
+#include "../triggers/item_rec.h"       // ItemRec / ItemRec2: the main menu and the escape menu (slot 2 is create)
+#include "../screen_records.h"        // C4c2fb0 (the "creating game" panel; slot 2 is the loading-window builder 0x4daa10) and C4c3290 (the start-up loading screen)
 
 // ---- widgets: this module's call sites go through vt() (../config/widget_mgr.h): slot n of the widget vtable is dNN at +4n ----
 // The slots and the call sites that name them (offset: role: callers in this module):
@@ -191,13 +192,15 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 //   +0x80 d32 install mesh(slot)   +0x98 d38 colour   +0x9c d39 highlight colour   +0xa4 d41 set text (out, text)
 //   +0xac d43 set text (text, pos): 0x4db090   +0xb8 d46 hide: 0x4dcef0   +0xc8 d50 add child
 // The overlay window (vtable 0x592848, 0x190 bytes): the base constructor 0x4931a0 (ContainerBase), then the vptr and the byte at +0x188.
+// The two sites that build it (DebriefMenu::create_debrief 0x4de5b0, SaveWinCtl::create 0x4e5d90) call the constructor out of line;
+// the other sites (text_box columns, MeetingWindow::init) have it inlined (`new text_box`).
 struct ContainerW {
     void* construct();   // 0x4931a0: the base constructor of the overlay window (world_data/world_data.cpp ContainerW::construct, returns this)
 };
 #define NEW_OVERLAY_WINDOW(var) \
     ContainerBase* var; \
-    { ContainerBase* np_ = (ContainerBase*)operator new(0x190); \
-      var = np_ != 0 ? (((ContainerW*)np_)->construct(), *(void**)np_ = (void*)vtbl_592848, np_->f188 = 0, np_) : 0; }
+    { ContainerBase* np_ = (ContainerBase*)::operator new(0x190); \
+      var = np_ != 0 ? (((ContainerW*)np_)->construct(), *(void**)np_ = (void*)vtbl_592848, ((NodeA*)np_)->f188 = 0, np_) : 0; }
 // the resource manager's get_object (0x419540) for tstring keys, and the UI globals
 // 0x419540 is resmgr::get_object (rgl/core/resmgr.h), which cannot be included next to resource.h: only the member is declared
 // 0x49b120 is NodeVec::push_back (config/widget_node.cpp: the UI root vector at the start of g_gui / g_ui_sound), not gui_manager::add_root:
@@ -229,10 +232,7 @@ struct MissionScreen {
     int f184;                                   // +0x184
     void fill_single_mission();                 // 0x4db020
     void fill_mission_grid();                   // 0x4db090
-    void init_mission_window();                 // 0x4dae40
-    void init_meeting_window();                 // 0x4db1f0
     void fill_mission_row(int side);            // 0x4db440
-    void init_done_window();                    // 0x4db660
     void draw_faction_report() { ((options_panel*)this)->draw_faction_report(); }      // 0x4d7e50 (options_panel/options_panel.cpp)
 };
 // the hint bar / label maker (0x4dada0) and the 0x4db810 button maker
@@ -270,7 +270,6 @@ extern int g_menu_kind_count;                   // 0xa75f38
 // the menu block: a widget (vtable 0x5924a0, 0x188 bytes) that owns a vector (alloc +0x178, first +0x17c, last, end). The UiFrame of
 // ../party/party_window.h (destroying destructor 0x5021f0); that header conflicts with game_data.h on g_game, so this is its view here.
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
-struct MissionUiCtor { void ctor(); };          // 0x48ae20 (MissionUi's constructor on raw memory)
 // a menu block owner: the selected kind, its value and a tick (embedded at +0x30 of the main / escape menu)
 struct BlockOwner {
     char pad0[0x10];
@@ -289,66 +288,7 @@ void mb_snprintf(char* dest, unsigned size, const char* fmt, ...);   // 0x415100
 void scan_saves(int ids, int* count, int* first, const char* prefix);   // 0x4dd6e0
 void save_path(char* out);                                              // 0x4dd7b0
 
-struct MainMenuScreen {
-    char pad0[0x2c];
-    ContainerBase* win;                         // +0x2c
-    BlockOwner block;                           // +0x30
-    MissionUi* row_tutorial;                    // +0x60
-    MissionUi* row_new_game;                    // +0x64
-    MissionUi* row_restore;                     // +0x68
-    MissionUi* row_custom;                      // +0x6c
-    MissionUi* row_options;                     // +0x70
-    MissionUi* row_credits;                     // +0x74
-    MissionUi* row_exit;                        // +0x78
-    MissionUi* version;                         // +0x7c
-    MissionUi* logo;                            // +0x80
-    MissionUi* pic;                             // +0x84
-    int first_free;                             // +0x88
-    void create();                              // 0x4dcef0
-};
-
-struct EscapeMenu {
-    char pad0[0x2c];
-    ContainerBase* win;                         // +0x2c
-    BlockOwner block;                           // +0x30
-    MissionUi* row0;                            // +0x60
-    MissionUi* row1;                            // +0x64
-    MissionUi* row2;                            // +0x68
-    MissionUi* row3;                            // +0x6c
-    MissionUi* row4;                            // +0x70
-    MissionUi* row5;                            // +0x74
-    MissionUi* logo;                            // +0x78
-    char pad7c[0x88 - 0x7c];
-    int count;                                  // +0x88
-    void create();                              // 0x4dda40
-};
-
-// the object built by 0x4ddf80: a message window with up to six longer buttons
-struct MessageMenu {
-    char pad0[0x1c];
-    tstring text;                               // +0x1c
-    ContainerBase* win;                         // +0x2c
-    char pad30[0x34 - 0x30];
-    MissionUi* image;                           // +0x34
-    MissionUi* rows[6];                         // +0x38
-    char pad50[0x54 - 0x50];
-    int count;                                  // +0x54
-    char f58;                                   // +0x58
-    char pad59[0x6c - 0x59];
-    tstring texts[1];                           // +0x6c
-    void create_message();                      // 0x4ddf80
-};
-
-struct DebriefMenu {
-    char pad0[0x10];
-    int f10;                                    // +0x10
-    char pad14[0x2c - 0x14];
-    ContainerBase* win;                         // +0x2c
-    MissionUi* f30;                             // +0x30
-    MissionUi* f34;                             // +0x34
-    void create_report();                       // 0x4de1b0
-    void create_debrief();                      // 0x4de5b0
-};
+#include "../screen_records.h"          // C4c3050: the message window record (slot 2 is the window maker 0x4ddf80)
 
 // globals of the menus
 extern int g_music_situation;                      // 0xa73a10 (set to 0x400000)
@@ -366,75 +306,15 @@ UiB* make_slider(MissionUi* parent, float x, float y, float k);                 
 DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y);       // 0x4dfec0
 
 // ---- 0x4de6f0: the main-menu options screen (the screen object; fields are widget pointers) ------------------------------------
-struct OptionsScreen {
-    char pad0[0x2c];
-    ContainerBase* root;                        // +0x2c options_window container
-    MissionUi* header;                          // +0x30 warrider_logo container
-    MissionUi* h34;                             // +0x34 the "days" caption (update_days 0x4d6270 rewrites it)
-    UiAInline* b38, *b3c, *b40;                 // +0x38 ui_controls, +0x3c ui_video_options, +0x40 ui_done
-    DropDown* dd44, *dd48, *dd4c, *dd50, *dd54, *dd58;   // +0x44..0x58 the drop-downs
-    UiAInline* b5c, *b60, *b64, *b68, *b6c, *b70, *b74;  // +0x5c..0x74 the ui_enabled toggles
-    UiB* sl78;                                  // +0x78
-    UiB* s7c, *s80, *s84;                       // +0x7c..0x84 the sliders
-    UiAInline* b88;                             // +0x88
-    MissionUi* h8c, *h90, *h94, *h98, *h9c, *ha0, *ha4, *ha8, *hac, *hb0, *hb4, *hb8, *hbc, *hc0, *hc4, *hc8, *hcc, *hd0, *hd4;   // +0x8c..0xd4 the hint labels
-    void update_difficulty() { ((QuestPage*)this)->update_difficulty(); } // 0x4d6300 (options_panel/quest_page.cpp)
-    void open();                                // 0x4de6f0
-};
+typedef Recd8 OptionsScreen;
+inline void Recd8::update_difficulty() { ((QuestPage*)this)->update_difficulty(); } // 0x4d6300 (options_panel/quest_page.cpp)      // the record of screen_records.h (vtable class); its members live there
 
 // ---- 0x4e05c0: the options screen ("Win" of the slice) ---------------------------------------------------------------------------------
 // a display mode of the mode list (0x4cf100): "WxH ... 16 bits / 32 bits"
 struct DisplayMode { tstring name; int w, h, bpp; };
 std::vector<tstring> list_modes();                // 0x4cf100 (options_panel/config_dialog.cpp; hidden return pointer; a DisplayMode starts with its name)
-struct OptionsWin {
-    char pad0[0x2c];
-    ContainerBase* window;                      // +0x2c
-    MissionUi* done;                            // +0x30
-    UiB* ui_scale;                              // +0x34
-    UiB* y_scale;                               // +0x38
-    UiB* z_scale;                               // +0x3c
-    UiB* days;                                  // +0x40
-    UiB* ragdoll_limit;                         // +0x44
-    DropDown* corpses;                          // +0x48
-    DropDown* ragdolls;                         // +0x4c
-    DropDown* blood;                            // +0x50
-    DropDown* plant_shadows;                    // +0x54
-    DropDown* resolution;                       // +0x58
-    DropDown* shadow_quality;                   // +0x5c
-    MissionUi* change;                          // +0x60
-    UiAInline* quality[6];                      // +0x64..0x78
-    MissionUi* lbl_texture_detail;              // +0x7c "ui_texture_detail"
-    MissionUi* val_texture_detail;              // +0x80 texture detail percentage text
-    MissionUi* lbl_shadow_quality;              // +0x84 "ui_shadow_quality2"
-    MissionUi* lbl_vertex_shaders;              // +0x88 "ui_enable_vertex_shaders2"
-    MissionUi* val_vertex_shaders;              // +0x8c gamma text, replaced by "DirectX 9/7"
-    MissionUi* lbl_screen_size;                 // +0x90 "ui_screen_size2"
-    MissionUi* lbl_gamma;                       // +0x94 "ui_gamma" (hidden without shaders)
-    MissionUi* val_gamma;                       // +0x98 the gamma text, e.g. 2.20 (hidden without shaders)
-    MissionUi* lbl_grass_density;               // +0x9c "ui_grass_density"
-    MissionUi* val_grass_density;               // +0xa0 ragdoll-limit percentage text
-    MissionUi* lbl_char_detail;                 // +0xa4 "ui_character_detail"
-    MissionUi* lbl_char_low;                    // +0xa8 "ui_low"
-    MissionUi* lbl_char_high;                   // +0xac "ui_high"
-    MissionUi* lbl_char_shadow_detail;          // +0xb0 "ui_character_shadow_detail"
-    MissionUi* lbl_shadow_low;                  // +0xb4 "ui_low"
-    MissionUi* lbl_shadow_high;                 // +0xb8 "ui_high"
-    MissionUi* lbl_blood_stains;                // +0xbc "ui_blood_stains"
-    MissionUi* lbl_dynamic_lighting;            // +0xc0 "ui_dynamic_lighting"
-    MissionUi* lbl_character_shadows;           // +0xc4 "ui_character_shadows"
-    MissionUi* lbl_environment_shadows;         // +0xc8 "ui_environment_shadows"
-    MissionUi* lbl_realistic_shadows;           // +0xcc "ui_realistic_shadows_on_plants"
-    MissionUi* lbl_particle_systems;            // +0xd0 "ui_particle_systems"
-    MissionUi* lbl_anisotropic;                 // +0xd4 "ui_anisotropic_filtering"
-    MissionUi* lbl_fast_water;                  // +0xd8 "ui_fast_water_reflection"
-    MissionUi* lbl_corpses;                     // +0xdc "ui_number_of_corpses"
-    MissionUi* lbl_ragdolls;                    // +0xe0 "ui_number_of_ragdolls"
-    MissionUi* quality_label;                   // +0xe4 empty text (set by update_perf)
-    int day_saved;                              // +0xe8
-    char f_ec;                                  // +0xec
-    char f_ed;                                  // +0xed
-    void init();                                // 0x4e05c0
-};
+typedef Recf0 OptionsWin;      // the record of screen_records.h (vtable class); its members live there
+extern int g_use_shaders;        // 0x5e28fc
 
 // ---- 0x4e25a0..0x4e3780: the key-binding page of the options menu (global at 0xa73730; the key table and the page share it) -----------
 struct OptionsMenu {

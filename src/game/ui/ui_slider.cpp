@@ -25,4 +25,4 @@ float UiB::value()
 }
 
 // @ 0x48b590
-int UiB::type2() { return 2; }
+int UiB::kind() { return 2; }

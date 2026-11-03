@@ -1,6 +1,6 @@
 # slice s0050f440 (batch ds1, entry 408) - loading screen: module table load, frame/quads meshes, record reader.
 # Status column is the current chk/run_all verdict for the VA.
-0050f440 ?advance@LoadingScreen@@QAE_NPAH0PAUtstring@@@Z  # LoadingScreen::advance (MATCH, 922 bytes) - the module-load state machine step; called as advance(&this->step, &this->total, &text)
+0050f440 ?advance@C4c3290@@QAE_NPAH0PAUtstring@@@Z  # LoadingScreen::advance (MATCH, 922 bytes) - the module-load state machine step; called as advance(&this->step, &this->total, &text)
 0050f7e0 ?build@Table@@QAEXPAUSrc@@@Z  # Table::build (MATCH) - 0x100-entry 0x20-byte record table + index array at +0x2008
 0050f840 ?read@Rec@@QAEXPAUSrc@@@Z  # Rec::read (MATCH) - one 0x20-byte table record through the Src virtuals (+0x4c out_int, +0x54 out_vec)
 0050f8a0 ?build_quad@Frame570@@QAEXXZ  # Frame570::build_quad (MATCH)

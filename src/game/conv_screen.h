@@ -8,6 +8,8 @@
 #ifndef MB_GAME_CONV_SCREEN_H
 #define MB_GAME_CONV_SCREEN_H
 #include "./ui_widget.h"
+#include "./head_rec.h"
+#include "../include/frustum.h"
 #include "./overlay.h"
 #include "./map_widget.h"
 
@@ -21,11 +23,11 @@ struct Choices : WidgetObj {                             // vtable 0x5924a0, cto
     int f17c, f180, f184;                                // +0x17c/+0x180/+0x184
 };
 
-struct ConvScreen {
-    char pad0[0x2c];
+struct Rec1208 : head_rec {                              // vtable 0x595bfc, size 0x1208: slot 2 is the opener 0x4f66e0 (char_sheet/conv_open.cpp), slot 3 the event handler 0x525160 (mission5/mission_5.cpp)
     Overlay* talk;                                       // +0x2c
     MapWidget* window;                                   // +0x30
-    char pad34[0x174 - 0x34];
+    rgl::frustum fr;                                     // +0x34 (0x120 bytes, built by the creation function; canonical src/include/frustum.h)
+    char pad154[0x174 - 0x154];
     Widget* label_speaker;                               // +0x174
     Widget* label_text;                                  // +0x178
     Widget* input_label;                                 // +0x17c (the refresher called it body)
@@ -45,8 +47,13 @@ struct ConvScreen {
     Widget* lines[5];                                    // +0x11ec
     int target;                                          // +0x1200
     int speaker_id;                                      // +0x1204
-    void open(int dialog, int* out);
+    Rec1208() { target = -1; }
+    virtual void slot_empty_1();
+    virtual void slot_empty_2();                         // 0x4f66e0
+    virtual void scale_3(float);                         // 0x525160
+    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     void refresh(int sel, int* out);                     // 0x4f73c0
 };
+typedef Rec1208 ConvScreen;
 
 #endif // MB_GAME_CONV_SCREEN_H

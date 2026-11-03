@@ -39,69 +39,38 @@ MeshX* MeshX::copy_of()
 }
 
 // ==== 0x495970: build the horizontal slider widget and append it to the manager ================================
-// The slider widget (UiB layout, vtable 0x591fb0) is called through the slots the call sites show.
-struct SliderVt {
-    virtual void s00(); virtual void s01(); virtual void s02();
-    virtual void s03();                                         // +0x0c
-    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07(); virtual void s08();
-    virtual void s09(); virtual void s10(); virtual void s11(); virtual void s12();
-    virtual void s13(float v);                                  // +0x34 set the value
-    virtual void s14(); virtual void s15(); virtual void s16(); virtual void s17(); virtual void s18();
-    virtual void s19(); virtual void s20(); virtual void s21();
-    virtual void s22(void* range);                              // +0x58
-    virtual void s23(); virtual void s24();
-    virtual void s25(const void* v);                            // +0x64
-    virtual void s26(); virtual void s27(); virtual void s28(); virtual void s29(); virtual void s30(); virtual void s31();
-    virtual void s32(int slot, void* mesh);                     // +0x80
-};
-struct SliderW : MissionUi {                                    // 0x188 bytes
-    int f178;                                                   // +0x178
-    float f17c;                                                 // +0x17c
-    int f180;                                                   // +0x180
-    int f184;                                                   // +0x184
-};
+// The slider widget is a UiB (ui/ui_widgets.h, vtable 0x591fb0; the original inlines its constructor 0x48b4b0 here).
 // @ 0x495970
 int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
 {
-    // built by hand: SliderW's constructor would emit a vtable of unresolved MissionUi slots (the real one is 0x591fb0, UiB's)
-    SliderW* w = (SliderW*)operator new(sizeof(SliderW));
-    if (w) {
-        // the slider's own fields belong to its construction (0x495991..0x4959bf, inside the null check)
-        new ((void*)w, raw_place()) MissionUi;                  // 0x48ae20
-        *(void**)w = (void*)vtbl_591fb0;
-        w->f178 = 0;
-        w->f17c = 0.008f;                                       // 0x3c03126f
-        w->v168 = 1.0f;
-        w->f180 = 0;
-        w->f184 = 0;
-    }
+    UiB* w = new UiB;
     {
         float pos[2] = { 0.0f, 0.0f };                          // 0x4959d7: both halves stored before the call
-        ((SliderVt*)w)->s22(pos);
+        w->move_a(pos);
     }
     {
         tstring n("slider_hor");
         gui_mesh* m = (gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&n);
         void* object = m->clone();
-        ((SliderVt*)w)->s32(0, object);
+        w->set_track(0, (rgl::mesh*)object);
     }
     {
         tstring n("handle_hor");
         gui_mesh* m = (gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&n);
         void* object = m->clone();
-        ((SliderVt*)w)->s32(2, object);
+        w->set_track(2, (rgl::mesh*)object);
     }
-    ((SliderVt*)w)->s03();
+    w->update_bounds();
     {
         float size[2];
         size[0] = 0.25f;
         size[1] = w->screen[1];                                 // 0x495a65 (+0xf4)
-        ((SliderVt*)w)->s25(size);
+        w->set_xy(size);
     }
     float fmin = (float)vmin;
     w->f16c = fmin;
     w->f170 = (float)vmax;
-    ((SliderVt*)w)->s13(fmin);                                  // 0x495a99: the float's bits are pushed
+    w->set168(fmin);                                            // 0x495a99: the float's bits are pushed
     scene->d50(w);
     widgets.push_back(w);
     return (int)(widgets.size() - 1);
@@ -207,8 +176,9 @@ void MeshX::set_alpha(float a)
 
 // ==== 0x495fa0: rescale `src`'s uv records into this mesh's uv rectangle ==========================================
 // @ 0x495fa0
-void MeshX::normalize_uv(MeshX* src)
+void MissionUi::normalize_uv(rgl::mesh* src_mesh)
 {
+    MeshX* src = (MeshX*)src_mesh;
     float u0 = 0.0f, v0 = 0.0f, u1 = 0.0f, v1 = 0.0f;
     src->ensure_local();
     rgl::point20* p = src->v70._Myfirst;
@@ -228,8 +198,8 @@ void MeshX::normalize_uv(MeshX* src)
     }
     if (u0 == 0.0f || v0 == 0.0f)
         return;
-    float su = (uv(0) - uv(2)) / (u0 - u1);
-    float sv = (uv(1) - uv(3)) / (v0 - v1);
+    float su = (screen[0] - screen[2]) / (u0 - u1);
+    float sv = (screen[1] - screen[3]) / (v0 - v1);
     float sm = (sv + su) * 0.5f;
     rgl::point20* q = src->v70._Myfirst;
     if (q == end)
@@ -317,7 +287,7 @@ void HudBar::update_1(int)
 }
 
 // @ 0x4966b0
-void HudBar::update_2(int)
+void XyzButton::animate(int)
 {
     float e0 = elapsed(0);
     float e1 = elapsed(1);
@@ -328,16 +298,16 @@ void HudBar::update_2(int)
         float k = 1.0f / dur(4);
         float x = (e2 * f88 + (dur(4) - e2) * a8) * k;
         float y = ((dur(4) - e2) * ac + e2 * f8c) * k;
-        msh(2)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(1)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        s03();
+        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        update_bounds();
         fD8 = x;
         fDC = y;
     } else if (c4) {
         c4 = 0;
-        msh(2)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(1)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        s03();
+        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        update_bounds();
         fD8 = f88;
         fDC = f8c;
     }
@@ -386,9 +356,9 @@ alpha_done:
         rgl::vector4 v;
         v.x = (e3 * f80 + (dur(5) - e3) * a0) * k;
         v.y = ((dur(5) - e3) * a4 + e3 * f84) * k;
-        s22(&v);
+        move_a((float*)&v);
     } else if (c5) {
-        s22(&f80);
+        move_a((float*)&f80);
         c5 = 0;
     }
 }
@@ -528,7 +498,7 @@ void HudBar::update_3(int)
 }
 
 // @ 0x497880
-void HudBar::update_4(int)
+void UiB::animate(int)
 {
     float t1 = elapsed(1);
     float t4 = elapsed(4);
@@ -539,23 +509,23 @@ void HudBar::update_4(int)
         float x = (t4 * f88 + (dur(4) - t4) * a8) * k;
         float y = (t4 * f8c + (dur(4) - t4) * ac) * k;
         rgl::vector4 v(x / fD8, y / fDC, 1.0f);
-        msh(0)->set_color(v);
-        msh(2)->set_color(v);
-        s03();
+        ((gui_mesh*)tracks[0])->set_color(v);
+        ((gui_mesh*)tracks[2])->set_color(v);
+        update_bounds();
         v.x = x * 0.25f;
         v.y = screen[1];
-        s25(&v);
+        set_xy((float*)&v);
         fD8 = x;
         fDC = y;
     } else if (c4) {
         rgl::vector4 v(f88 / fD8, f8c / fDC, 1.0f);
         c4 = 0;
-        msh(0)->set_color(v);
-        msh(2)->set_color(v);
-        s03();
+        ((gui_mesh*)tracks[0])->set_color(v);
+        ((gui_mesh*)tracks[2])->set_color(v);
+        update_bounds();
         v.x = f88 * 0.25f;
         v.y = screen[1];
-        s25(&v);
+        set_xy((float*)&v);
         fD8 = f88;
         fDC = f8c;
     }
@@ -566,14 +536,14 @@ void HudBar::update_4(int)
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        s38(&col);
+        set_color(&col);
     } else if (c1) {
         c1 = 0;
         unsigned col = aa().dword;
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        s38(&col);
+        set_color(&col);
     }
 
     if (t5 < dur(5)) {
@@ -581,15 +551,15 @@ void HudBar::update_4(int)
         rgl::vector4 v;
         v.x = (t5 * f80 + (dur(5) - t5) * a0) * k;
         v.y = (t5 * f84 + (dur(5) - t5) * a4) * k;
-        s22(&v);
+        move_a((float*)&v);
     } else if (c5) {
-        s22(&f80);
+        move_a((float*)&f80);
         c5 = 0;
     }
 }
 
 // @ 0x497e30
-void HudBar::update_5(int)
+void UiC::animate(int)
 {
     float t1 = elapsed(1);
     float t4 = elapsed(4);
@@ -602,11 +572,11 @@ void HudBar::update_5(int)
         f194 = -23234124.0f;                     // 0xcbb14326: never a real frame, so refresh rebuilds
         rgl::vector4 c(x * 0.38940808f, y, 1.0f);
         v198 = c;
-        msh(0)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(2)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        s03();
+        ((gui_mesh*)tracks[0])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        update_bounds();
         rgl::vector4 s(x * 0.25f, screen[1], 1.0f);
-        s25(&s);
+        set_xy((float*)&s);
         fD8 = x;
         fDC = y;
     } else if (c4) {
@@ -614,11 +584,11 @@ void HudBar::update_5(int)
         v198 = c;
         c4 = 0;
         f194 = -23234124.0f;
-        msh(0)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(2)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        s03();
+        ((gui_mesh*)tracks[0])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        update_bounds();
         rgl::vector4 s(f88 * 0.25f, screen[1], 1.0f);
-        s25(&s);
+        set_xy((float*)&s);
         fD8 = f88;
         fDC = f8c;
     }
@@ -631,7 +601,7 @@ void HudBar::update_5(int)
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        s38(&col);
+        set_color(&col);
     } else if (c1) {
         unsigned col = aa().dword;
         mask = col;
@@ -640,7 +610,7 @@ void HudBar::update_5(int)
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        s38(&col);
+        set_color(&col);
     }
 
     if (t5 < dur(5)) {
@@ -648,15 +618,15 @@ void HudBar::update_5(int)
         rgl::vector4 v;
         v.x = (t5 * f80 + (dur(5) - t5) * a0) * k;
         v.y = (t5 * f84 + (dur(5) - t5) * a4) * k;
-        s22(&v);
+        move_a((float*)&v);
     } else if (c5) {
-        s22(&f80);
+        move_a((float*)&f80);
         c5 = 0;
     }
 }
 
 // @ 0x4985f0
-void HudBar::update_full(int)
+void UiE::animate(int)
 {
     float t0 = elapsed(0);
     float t1 = elapsed(1);
@@ -671,27 +641,27 @@ void HudBar::update_full(int)
         float k = 1.0f / dur(4);
         float x = (t4 * f88 + (dur(4) - t4) * a8) * k;
         float y = (t4 * f8c + (dur(4) - t4) * ac) * k;
-        msh(2)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(1)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         rgl::vector4 v(y * 0.02f, y * 0.02f, 1.0f);
-        s27(&v);
+        set_size((float*)&v);
         v.x = 0.0f;
         v.y = y * 0.009f;
-        s28(&v);
-        s03();
+        set_offset((float*)&v);
+        update_bounds();
         fD8 = x;
         fDC = y;
         changed = true;
     } else if (c4) {
         c4 = 0;
-        msh(2)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(1)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         rgl::vector4 v(f8c * 0.02f, f8c * 0.02f, 1.0f);
-        s27(&v);
+        set_size((float*)&v);
         v.x = 0.0f;
         v.y = f8c * 0.009f;
-        s28(&v);
-        s03();
+        set_offset((float*)&v);
+        update_bounds();
         fD8 = f88;
         fDC = f8c;
         changed = true;
@@ -707,12 +677,12 @@ void HudBar::update_full(int)
         f = (ca().b * t0 + cb().b * (dur(0) - t0)) * (1.0f / dur(0));
         col += round_float(&f) << 16;
         col |= color14c & 0xff000000;
-        s38(&col);
+        set_color(&col);
         changed = true;
     } else if (c0) {
         col = (ca().dword & 0xffffff) | (color14c & 0xff000000);
         c0 = 0;
-        s38(&col);
+        set_color(&col);
         changed = true;
     }
 
@@ -723,7 +693,7 @@ void HudBar::update_full(int)
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        s38(&col);
+        set_color(&col);
         changed = true;
     } else if (c1) {
         col = aa().dword;
@@ -731,7 +701,7 @@ void HudBar::update_full(int)
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         c1 = 0;
         col = (col & 0xff000000) | (color14c & 0xffffff);
-        s38(&col);
+        set_color(&col);
         changed = true;
     }
 
@@ -744,25 +714,25 @@ void HudBar::update_full(int)
         f = (ca2().b * t2 + cb2().b * (dur(2) - t2)) * (1.0f / dur(2));
         col += round_float(&f) << 16;
         col |= color150 & 0xff000000;
-        s39(&col);
+        set_target(&col);
         changed = true;
     } else if (c2) {
         col = (ca2().dword & 0xffffff) | (color150 & 0xff000000);
         c2 = 0;
-        s39(&col);
+        set_target(&col);
         changed = true;
     }
 
     if (t3 < dur(3)) {
         float f = (aa2().a * t3 + ab2().a * (dur(3) - t3)) * (1.0f / dur(3));
         col = (color150 & 0xffffff) | (round_float(&f) << 24);
-        s39(&col);
+        set_target(&col);
         changed = true;
     } else if (c3) {
         c3 = 0;
         col = aa2().dword;
         col = (col & 0xff000000) | (color150 & 0xffffff);
-        s39(&col);
+        set_target(&col);
         changed = true;
     }
 
@@ -772,21 +742,21 @@ void HudBar::update_full(int)
         rgl::vector4 v;
         v.x = (t5 * f80 + (dur(5) - t5) * a0) * k;
         v.y = (t5 * f84 + (dur(5) - t5) * a4) * k;
-        s22(&v);
+        move_a((float*)&v);
     } else if (c5) {
-        s22(&f80);
+        move_a((float*)&f80);
         c5 = 0;
     }
 
     if (changed) {
         rgl::vector4 v;
-        s37(&v);
+        get_xy((float*)&v);
     }
 }
 
 // ==== 0x497d10: rebuild the frame mesh from the current frame ===================================================
 // @ 0x497d10
-void HudBar::rebuild_frame()
+void UiC::update_children()
 {
     if (tracks[1]) {
         if (f194 == v168)
@@ -797,7 +767,7 @@ void HudBar::rebuild_frame()
         gui_mesh* m = clone_gui(src);
         float f = (1.0f / screen[0]) * f17c;
         vector4 col = v198;
-        ((float*)&col)[idx] = ((1.0f - 2.0f * f) * ((v168 - f16c) / (f170 - f16c)) + f) * ((float*)&col)[idx];
+        ((float*)&col)[f178] = ((1.0f - 2.0f * f) * ((v168 - f16c) / (f170 - f16c)) + f) * ((float*)&col)[f178];
         tracks[1] = m;
         m->set_color(col);
         tracks[1]->color = (tracks[1]->color & 0xffffff) | mask;
@@ -807,13 +777,13 @@ void HudBar::rebuild_frame()
 }
 
 // @ 0x498390
-void HudBar::scale_lane(float arg)
+void UiD::update_children(float arg)
 {
     if (tracks[2]) {
         vector4 v(1.0f, 1.0f, 1.0f);
-        ((float*)&v)[idx] = screen[idx] / f17c * arg;
+        ((float*)&v)[f178] = screen[f178] / f17c * arg;
         ((gui_mesh*)tracks[2])->set_color(v);
-        f17c = arg * screen[idx];
+        f17c = arg * screen[f178];
     }
 }
 
@@ -831,7 +801,7 @@ void HudOuter::scroll_refresh(vector4* arg)
     vector4 v1;
     v1.x = 0.01f;
     v1.y = arg->y;
-    bar->s25(&v1);
+    bar->set_xy(&v1.x);
     bar->f17c = (float)(arg->y * 1.5576323f) * 0.31f;    // two fmuls (0x4984ac, 0x4984ba): the cast stops cl folding the constants
 
     delete bar->tracks[0];
@@ -845,8 +815,8 @@ void HudOuter::scroll_refresh(vector4* arg)
     a->set_color(scale);
     gui_mesh* b = ((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)&tstring("scrollbar_handle")))->clone();
     b->set_color(scale);
-    bar->s32(0, a);
-    bar->s32(2, b);
+    bar->set_track(0, a);
+    bar->set_track(2, b);
 
     ((FieldPanel*)(void*)this)->update();            // 0x48d470
 }

@@ -98,42 +98,9 @@ struct lod_group {
     lod_group();                               // 0x41c2a0
 };
 
-// Resource-file readers. The original's file reader classes, as load_pack (0x41e150) builds them on its stack:
-// the destructor of the in-memory stream (0x417c90) and of the text stream class 0x54a890 are user-declared
-// (empty) and inlined there, which leaves their vtable stores in the temporaries' destructors. ./stream.h's
-// classes have these destructors out of line (or not at all), so the two reader chains are repeated here.
-// vtable 0x54a890: the text stream class with a user-declared destructor (stream.h: text_stream2)
-struct text_reader_b : stream_base {
-    FILE* fp;                                  // +0x30
-    char failed;                               // +0x34
-    STREAM_SLOTS
-    __forceinline text_reader_b() {}
-    ~text_reader_b() {}
-};
-struct text_reader_base : text_reader_b {
-    __forceinline text_reader_base() { failed = 1; fp = 0; state = 0; }
-};
-// vtable 0x54ac88: the text resource reader (stream.h: tstream3)
-struct text_reader : text_reader_base {
-    __forceinline text_reader() {}
-    STREAM_SLOTS
-};
-// vtable 0x54ad68: in-memory stream with the inline destructor body of 0x417c90
-struct mem_stream_inl : stream_base {
-    STREAM_SLOTS
-    __forceinline mem_stream_inl() {}
-    ~mem_stream_inl() {}
-};
-struct bin_reader_b : mem_stream_inl {
-    FILE* fp;                                  // +0x30
-    char failed;                               // +0x34
-    __forceinline bin_reader_b() { failed = 1; fp = 0; state = 0; }
-};
-// vtable 0x54ae48: binary file reader (stream.h: bin_reader; ctor 0x417c50 inline here)
-struct file_reader : bin_reader_b {
-    __forceinline file_reader() {}
-    STREAM_SLOTS
-};
+// load_pack (0x41e150) builds the file readers on its stack: the user-declared (empty) destructors of the in-memory stream
+// (0x417c90) and of the text stream class 0x54a890 and the readers' constructors are inlined there (stream_inline.h).
+#include "../stream_inline.h"
 
 // ---- the resource manager (global object at 0x5d6fa0) -----------------------------------------------------------------
 // Full layout, from the constructor 0x41b000, add 0x41ba90, save 0x419a30 and the destructor 0x419e90.

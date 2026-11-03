@@ -863,7 +863,7 @@ void MapEditor_s2f250::update()
     {
         g_map_s2f250->object->clear();
 
-        PlacedObj_s2f250 rec;
+        PlacedObj rec;
         MeshVec_s2f250 list;
         int value = 0;
         if (g_game_s2f250->mode == 4)
@@ -970,10 +970,10 @@ place:
                 g_game_s2f250->sel.resize(0, 0);
                 g_game_s2f250->sel.push_back_out(g_game_s2f250->selected);
 
-                PlacedObj_s2f250* p = &g_map_s2f250->records[g_game_s2f250->selected];
+                PlacedObj* p = &g_map_s2f250->records[g_game_s2f250->selected];
                 p->v158 = g_game_s2f250->color;
-                if (p->f1b4 != 0)
-                    ((Prop_s2f250*)p->f1b4)->apply(&p->a18, &p->v158);
+                if (p->m1b4 != 0)
+                    ((Prop_s2f250*)p->m1b4)->apply(&p->m18, &p->v158);
 
                 g_game_s2f250->dirty = 1;
                 g_editor_dialog_s2f250.update_objects();

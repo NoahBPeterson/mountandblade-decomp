@@ -26,26 +26,13 @@
 void __cdecl mb_error(const char* fmt, ...);        // 0x42cc80
 
 // 0x415d60 is text_stream::open_read_text (rgl/stream.h); the readers here have the same file fields (fp +0x30, failed +0x34)
-#define OPEN_READ_TEXT(s, path) (((text_stream*)&(s))->open_read_text(path))
+#define OPEN_READ_TEXT(s, path) ((s).open_read_text(path))
 
 #define RSTR(p) ((rgl::string*)(p))                 // the stream's string slot takes rgl::string* (same 16-byte tstring)
 
-// ---- the text reader the loaders build on their stack (vtable 0x54ac88; three inline constructor levels) -----------
-// vtable 0x54a890 level: the class with a user-declared (empty) destructor, as in src/rgl/core/resmgr.h
-struct file_text_b : stream_base {
-    FILE* fp;                                       // +0x30
-    char failed;                                    // +0x34
-    STREAM_SLOTS
-    __forceinline file_text_b() {}
-    ~file_text_b() {}
-};
-struct file_text_base : file_text_b {
-    __forceinline file_text_base() { failed = 1; fp = 0; state = 0; }
-};
-struct file_text : file_text_base {                 // vtable 0x54ac88: text reader
-    __forceinline file_text() {}
-    STREAM_SLOTS
-};
+// ---- the text reader the loaders build on their stack (vtable 0x54ac88, tstream3): its constructor and the user-declared
+// empty destructor of text_stream2 are inlined there (stream_inline.h) ----
+#include "../../rgl/stream_inline.h"
 
 // ---- std::vector<tstring> internals (VC7.1, 0x10-byte element) ---------------------------------------------------
 #include "../../include/ptr_tag.h"             // ptr_tag: std::_Nonscalar_ptr_iterator_tag (empty, passed by value)

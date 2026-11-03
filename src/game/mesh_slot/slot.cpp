@@ -10,6 +10,7 @@
 #include <string.h>
 #include "../tstring.h"
 #include "../slot.h"
+#include "../ui/mission_ui.h"
 
 
 #define NOINL __declspec(noinline)     // keeps the definition's name visible to tools/difftest/slice.py's marker scan
@@ -40,10 +41,6 @@ struct SlotChan {                                            // element of the c
     void play(int arg);                                     // 0x4875e0 (thiscall, ret 4)
 };
 
-struct BufferSub {                                          // element of the 5-pointer array at +4
-    virtual void dtor(char) = 0;                            // +0
-};
-
 // A 0x60-byte record (a "vector3-plus-state" used by the slot's clock helpers).
 struct TimeKey {
     int mode;                                               // +0x00
@@ -55,17 +52,6 @@ struct TimeKey {
     void calc();                                            // 0x487620
 };
 
-
-struct Buffer {                                             // the widget base (vtable 0x591c80), as far as its destructor goes
-    // Only the destructor is declared: slot 0 of MissionUi's 49-slot table (ui/mission_ui.h; the other slots are defined in
-    // ui/widget_slots.cpp, so no invented virtuals here). 0x487c00 stores the vptr, deletes the five child meshes, then runs
-    // ~tstring on the name.
-    virtual ~Buffer();                                      // 0x487c00
-    char body[0x108 - 4];
-    BufferSub* subs[5];                                     // +0x108
-    int pad11c[3];
-    tstring name;                                           // +0x128
-};
 
 // @ 0x4875e0
 void SlotChan::play(int arg)
@@ -216,12 +202,14 @@ static NOINL void decode_utf8(int* out_len, const tstring* s, int* buf, const in
 void use_decode(const tstring* s, int* buf) { int len; decode_utf8(&len, s, buf, &g_max_chars); }
 
 // @ 0x487c00
-Buffer::~Buffer()
+// The widget base's destructor: the five child meshes are deleted through their virtual destructors, then the name string.
+// The scalar deleting destructor 0x502300 (slot 0 of every widget table) is the compiler's.
+MissionUi::~MissionUi()
 {
     for (int i = 0; i < 5; i++) {
-        if (subs[i]) {
-            subs[i]->dtor(1);
-            subs[i] = 0;
+        if (tracks[i]) {
+            delete tracks[i];
+            tracks[i] = 0;
         }
     }
 }
@@ -237,92 +225,6 @@ extern const float g_zero;              // 0x549ca8 0.0f
 
 // The tick table's scale: a float at 0x54a6d0 (loaded with fmul, so it must be a global, not a literal).
 
-struct Effect {
-    virtual void d00(int release);      // +0x00 slots follow the naming used in slice s004885e0
-    virtual void d01();                 // +0x04
-    virtual void d02();                 // +0x08
-    virtual void d03();                 // +0x0c
-    virtual void d04();                 // +0x10
-    virtual void d05();                 // +0x14
-    virtual void d06();                 // +0x18
-    virtual void d07();                 // +0x1c
-    virtual void d08();                 // +0x20
-    virtual void d09();                 // +0x24
-    virtual void d10();                 // +0x28
-    virtual void d11();                 // +0x2c
-    virtual void d12();                 // +0x30
-    virtual void d13();                 // +0x34
-    virtual void d14();                 // +0x38
-    virtual void d15();                 // +0x3c
-    virtual void d16();                 // +0x40
-    virtual void d17();                 // +0x44
-    virtual void d18();                 // +0x48
-    virtual void d19();                 // +0x4c
-    virtual void d20();                 // +0x50
-    virtual void d21();                 // +0x54
-    virtual void d22(void* p);          // +0x58  position/offset pair
-    virtual void d23();                 // +0x5c
-    virtual void d24();                 // +0x60
-    virtual void d25();                 // +0x64
-    virtual void d26();                 // +0x68
-    virtual void d27(void* p);          // +0x6c  scaled pair
-    virtual void d28();                 // +0x70
-    virtual void d29();                 // +0x74
-    virtual void d30();                 // +0x78
-    virtual void d31();                 // +0x7c
-    virtual void d32();                 // +0x80
-    virtual void d33();                 // +0x84
-    virtual void d34();                 // +0x88
-    virtual void d35();                 // +0x8c
-    virtual void d36();                 // +0x90
-    virtual void d37(void* p);          // +0x94  finish/refresh
-    virtual void d38(void* p);          // +0x98  colour word
-    virtual void d39(void* p);          // +0x9c  colour word (second palette)
-    int clock0;                         // +0x08  g_ticks index of track 0
-    __int64 t0;                         // +0x10  g_ticks[clock0] start stamp
-    int clock1;                         // +0x18
-    __int64 t1;                         // +0x20
-    int clock2;                         // +0x28
-    __int64 t2;                         // +0x30
-    int clock3;                         // +0x38
-    __int64 t3;                         // +0x40
-    int clock4;                         // +0x48
-    __int64 t4;                         // +0x50
-    int clock5;                         // +0x58
-    __int64 t5;                         // +0x60
-    float periodA;                      // +0x68
-    float periodB;                      // +0x6c
-    float periodC;                      // +0x70
-    float periodD;                      // +0x74
-    float periodE;                      // +0x78
-    float periodF;                      // +0x7c
-    float f80, f84;                     // +0x80, +0x84
-    float f88, f8c;                     // +0x88, +0x8c
-    int valA;                           // +0x90
-    int valB;                           // +0x94
-    int valC;                           // +0x98
-    int valD;                           // +0x9c
-    float a0, a4, a8, ac;               // +0xa0..+0xac
-    int srcA;                           // +0xb0
-    int srcB;                           // +0xb4
-    int srcC;                           // +0xb8
-    int srcD;                           // +0xbc
-    unsigned char c0, c1, c2, c3, c4, c5;  // +0xc0..+0xc5 restart flags
-    char padc6[0xd8 - 0xc6];
-    float out0, out1;                   // +0xd8, +0xdc
-    char pade0[0xf0 - 0xe0];
-    float f0f0, f0f4;                   // +0xf0, +0xf4
-    char padf8[0x148 - 0xf8];
-    unsigned flags148;                  // +0x148
-    unsigned color14c;                  // +0x14c
-    unsigned color150;                  // +0x150
-
-    void set_a(float a, int b);         // 0x488560
-    void set_b(float a, int b);         // 0x4885a0
-    void animate(float dt);             // 0x487c40
-};
-
-
 // @ 0x487c40
 // Per-frame per-track animator. Six (clock, start-stamp) pairs produce six elapsed times
 // (fild(ticks - stamp) * 1e-5f). Each track then either fades its destination toward its source over the
@@ -330,9 +232,8 @@ struct Effect {
 // takes the "restart" byte branch the matching setter raised (+0xc0..+0xc3, +0xc4, +0xc5), which XORs the
 // stored source colour back in. Every active track dispatches one virtual; if anything ran, the trailing
 // object refresh (+0x94) is called with the +0x58 track's pair.
-void Effect::animate(float dt)
+void MissionUi::animate(int)
 {
-    (void)dt;
 
     float e0 = (float)(g_ticks[clock0] - t0) * 1e-5f;
     float e1 = (float)(g_ticks[clock1] - t1) * 1e-5f;
@@ -348,23 +249,23 @@ void Effect::animate(float dt)
 
     // --- track E (+0x78): fade +0xa8/+0xac toward +0x88/+0x8c, hand the scaled pair to +0x6c
     if (e4 < periodE) {
-        // the original spills the out1 partial products as floats (rounded) and reloads them
+        // the original spills the fDC partial products as floats (rounded) and reloads them
         volatile float q = e4 * f8c;
         volatile float sp = (periodE - e4) * ac;
         volatile float sum = sp + q;
-        out0 = (e4 * f88 + (periodE - e4) * a8) * (g_one / periodE);
-        out1 = sum * (g_one / periodE);
-        pair[0] = out0 * 0.02f;
-        pair[1] = out1 * 0.02f;
-        d27(pair);
+        fD8 = (e4 * f88 + (periodE - e4) * a8) * (g_one / periodE);
+        fDC = sum * (g_one / periodE);
+        pair[0] = fD8 * g_k002;
+        pair[1] = fDC * g_k002;
+        set_size(pair);
         changed = true;
     } else if (c4) {
-        out0 = f88;
-        out1 = f8c;
+        fD8 = f88;
+        fDC = f8c;
         c4 = 0;
-        pair[0] = out0 * 0.02f;
-        pair[1] = out1 * 0.02f;
-        d27(pair);
+        pair[0] = fD8 * g_k002;
+        pair[1] = fDC * g_k002;
+        set_size(pair);
         changed = true;
     }
 
@@ -398,12 +299,12 @@ void Effect::animate(float dt)
         col += (unsigned)c << 16;
 
         col |= color14c & 0xff000000u;
-        d38(&col);
+        set_color(&col);
         changed = true;
     } else if (c0) {
         col = color14c ^ ((color14c ^ valA) & 0xffffffu);
         c0 = 0;
-        d38(&col);
+        set_color(&col);
         changed = true;
     }
 
@@ -417,12 +318,12 @@ void Effect::animate(float dt)
         if (!(p - fl <= 0.5f))
             c++;
         col = (color14c & 0xffffffu) | ((unsigned)c << 24);
-        d38(&col);
+        set_color(&col);
         changed = true;
     } else if (c1) {
         col = ((color14c ^ valB) & 0xffffffu) ^ valB;
         c1 = 0;
-        d38(&col);
+        set_color(&col);
         changed = true;
     }
 
@@ -456,12 +357,12 @@ void Effect::animate(float dt)
         col += (unsigned)c << 16;
 
         col |= color150 & 0xff000000u;
-        d39(&col);
+        set_target(&col);
         changed = true;
     } else if (c2) {
         col = color150 ^ ((color150 ^ valC) & 0xffffffu);
         c2 = 0;
-        d39(&col);
+        set_target(&col);
         changed = true;
     }
 
@@ -475,12 +376,12 @@ void Effect::animate(float dt)
         if (!(p - fl <= 0.5f))
             c++;
         col = (color150 & 0xffffffu) | ((unsigned)c << 24);
-        d39(&col);
+        set_target(&col);
         changed = true;
     } else if (c3) {
         col = ((color150 ^ valD) & 0xffffffu) ^ valD;
         c3 = 0;
-        d39(&col);
+        set_target(&col);
         changed = true;
     }
 
@@ -488,28 +389,28 @@ void Effect::animate(float dt)
     if (e5 < periodF) {
         float h0 = 0.0f;
         float h1 = 0.0f;
-        if (flags148 & 0x10)
-            h0 = f0f0 * 0.5f;
-        if (flags148 & 0x1000)
-            h1 = f0f4 * 0.5f;
+        if (f148 & 0x10)
+            h0 = screen[0] * 0.5f;
+        if (f148 & 0x1000)
+            h1 = screen[1] * 0.5f;
         pair[0] = ((f80 - h0) * e5 + (periodF - e5) * a0) * (g_one / periodF);
         pair[1] = ((periodF - e5) * a4 + (f84 - h1) * e5) * (g_one / periodF);
-        d22(pair);
+        move_a(pair);
         changed = true;
     } else if (c5) {
         float h0 = 0.0f;
         float h1 = 0.0f;
-        if (flags148 & 0x10)
-            h0 = f0f0 * 0.5f;
-        if (flags148 & 0x1000)
-            h1 = f0f4 * 0.5f;
+        if (f148 & 0x10)
+            h0 = screen[0] * 0.5f;
+        if (f148 & 0x1000)
+            h1 = screen[1] * 0.5f;
         pair[0] = f80 - h0;
         pair[1] = f84 - h1;
-        d22(pair);
+        move_a(pair);
         c5 = 0;
         changed = true;
     }
 
     if (changed)
-        d37(pair);
+        get_xy(pair);
 }

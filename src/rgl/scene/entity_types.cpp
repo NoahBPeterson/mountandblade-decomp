@@ -96,6 +96,12 @@ void world::step(float dt)
 string static_entity::type_name() { return string("static_entity"); }
 // @ 0x4280e0
 bool static_entity::awake() { return false; }
+// The one-instruction virtuals of the entity classes. The original's linker folded each with the identical function of other
+// classes (0x4280e0 `return false`, 0x48b170 `return true`, 0x408020 `return 0`, 0x408030 `ret 4`, ...); every class defines its own copy.
+bool entity::awake() { return false; }
+bool entity::s11() { return false; }
+bool static_entity::s11() { return true; }
+bool strategic_entity::awake() { return true; }
 // 0x4280f0 is the compiler-generated scalar deleting destructor of static_entity (sets the vptr, calls ~entity
 // 0x4213f0, deletes)
 

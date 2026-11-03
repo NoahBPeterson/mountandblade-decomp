@@ -1,4 +1,4 @@
-../src/game/cls_map/progress_bar.cpp  ?draw_label@progress_bar@@QAEXPAUscene@rgl@@PAMHH@Z  004e3f20  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?render@progress_bar@@UAEXPAUscene@rgl@@PAMHH@Z  004e3f20  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?push_back@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAEXABUE50@@@Z  004e4060  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?resize@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@QAEXIUE68@@@Z  004e40f0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?resize@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@QAEXIUE176@@@Z  004e41e0  /O2 /MT /Gy /TP
@@ -9,7 +9,7 @@
 ../src/game/cls_map/progress_bar.cpp  ?load@RagModel@@QAEXPAVTiXmlElement@@@Z  004e4690  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?get_hex@ini_file@@QAEHPAH@Z  004e51e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?get_float@ini_file@@QAEMPAH@Z  004e5230  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?list_saves@SaveWindow@@QAEXXZ  004e5270  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?list_saves@C4c31c0@@QAEXXZ  004e5270  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?read_slot@SlotHeader@@QAE_NPAUSlotReader@@@Z  004e54e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?make_short_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z  004e5570  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?hex_field@ini_file@@QAEHABUtstring@@@Z  004e5d30  /O2 /MT /Gy /TP
@@ -21,4 +21,4 @@
 ../src/game/cls_map/progress_bar.cpp  ?reset_geometry@MsgLog@@QAEXXZ  004e64b0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?update@MsgLog@@QAEXM@Z  004e6510  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?create@SaveWinCtl@@QAEXXZ  004e5d90  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?update@progress_bar@@QAEXXZ  004e3fb0  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?update_children@progress_bar@@UAEXXZ  004e3fb0  /O2 /MT /Gy /TP

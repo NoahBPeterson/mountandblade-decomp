@@ -1,4 +1,4 @@
-// entity.h: classes of entity.cpp (0x41f1d0..0x41fee0): the scene entity (rgl::entity, vtable 0x54b460), the
+// entity.h: classes of entity.cpp (0x41f1d0..0x41fba0): the
 // effect element FxElem (vtable 0x54b454), the scene's teardown, the chunked free-list pool, and the element types
 // of the STL instantiations the linker placed in this object. Engine (rgl) code; all names provisional.
 // Every offset below is read by a function of this module (cited); the rest of each object is padding.
@@ -73,66 +73,8 @@ struct scene {
 };
 
 
-// the optional frame source behind entity::parent (vtable slots used: 8, 10, 11)
-struct frame_src {
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
-    virtual void apply(const mat4* m);                      // slot 8  (+0x20)
-    virtual void s9();
-    virtual vector4 get_a();                                // slot 10 (+0x28)
-    virtual vector4 get_b();                                // slot 11 (+0x2c)
-};
-
-
-struct lod_mesh2;
-
-struct entity {
-    virtual ~entity();                                  // 0: 0x4214e0
-    virtual int slot1();                                // 1: 0x408020
-    virtual tstring type_name();                        // 2: 0x41fcb0  "entity"
-    virtual void sync();                                // 3: 0x41fcd0
-    virtual void recalc();                              // 4: 0x41ffe0
-    virtual float get_fbc();                            // 5: 0x41fd80
-    virtual void set_fbc(const float* p);               // 6: 0x41fd90
-    virtual void commit(int unused);                    // 7: 0x41fda0
-    virtual void set_f144(const float* p);              // 8: 0x41fdd0
-    virtual void render(scene* sc, render_info* out);   // 9: 0x420310
-    virtual void awake();                                 // 10: 0x4280e0
-    virtual void s11();                                 // 11: 0x4280e0
-    virtual const vector4* local_origin();              // 12: 0x41fde0
-    virtual const vector4* get_vac();                   // 13: 0x41fdf0
-    virtual const vector4* get_v9c();                   // 14: 0x41fe00
-    virtual int is_dirty();                             // 15: 0x41fe10
-    virtual void load();                                 // 16: 0x4284e0
-    virtual int slot17();                               // 17: 0x408030
-    virtual void set_mode(unsigned m);                  // 18: 0x41fe30
-    virtual void clear();                               // 19: 0x420960
-    virtual void set_local(const mat4* m);              // 20: 0x41fe50
-    virtual void set_local_dirty(const mat4* m);        // 21: 0x41fe70
-    virtual void set_local_scaled(const mat4* m, const vector4* k);        // 22: 0x41fe90
-    virtual void set_local_scaled_dirty(const mat4* m, const vector4* k);  // 23: 0x41ff40
-
-    int f4, f8, fc, f10, f14;   // +8: id (world::remove_entity 0x41f0d0 compares it)
-    mat4 world;                 // 0x18
-    smat local;                 // 0x58
-    frame_src* parent;          // 0x98
-    vector4 v9c;                // 0x9c
-    vector4 vac;                // 0xac
-    float fbc;                  // 0xbc
-    float fc0;                  // 0xc0
-    vector4 vc4;                // 0xc4
-    aabb box;                   // 0xd4
-    std::vector<lod_mesh2*> lods;   // 0x108
-    std::vector<mesh*> meshes;      // 0x118
-    std::vector<Obj*> v128;         // 0x128
-    int f138, f13c;
-    char f140, f141, f142;
-    float f144;
-    unsigned mode;              // 0x148
-    vector4 scale;              // 0x14c
-
-    entity();                                           // 0x41fba0
-};
+// rgl::entity (vtable 0x54b460) is the one class of src/rgl/scene/scene_entity.h; this module's functions on it are in
+// src/rgl/scene/entity_base.cpp. (This header used to declare a second, partial entity with other names for the same slots.)
 
 } // namespace rgl
 

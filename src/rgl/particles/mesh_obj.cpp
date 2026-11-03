@@ -422,6 +422,8 @@ void mesh::ensure_skin()
         p->build_skin();
 }
 
+int mesh::type() { return 1; }                                // 0x48b1f0 (folded with UiA::type)
+int named_object::type() { return 0; }                        // 0x408020 (the root of the resources: folded with sphere::shape_type)
 // @ 0x4127f0
 mesh::~mesh()
 {

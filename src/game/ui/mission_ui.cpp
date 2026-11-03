@@ -7,6 +7,7 @@
 //       frame interpolation, per-team counters and combatant slots, and the first widget's key handler. Names
 //       provisional. Functions in ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#define UIA_CTOR_OUT_OF_LINE   // UiA::UiA is defined below (0x48b1c0)
 #include <math.h>
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"   // g_cfg
@@ -142,7 +143,7 @@ void MissionUi::render(rgl::scene* a, float* t, int, int)
         if (f104 & 2)
             tracks[4]->color = color14c & 0x77ffffffu;
         else
-            tracks[4]->color = (b121 && d01()) ? color150 : color14c;
+            tracks[4]->color = (b121 && is_active()) ? color150 : color14c;
     }
     rgl::identity_pos((rgl::matrix*)xf);
     float pos[4];                   // (fE0, fE4, *t) and an unset 4th word, copied whole into the position row
@@ -159,7 +160,7 @@ void MissionUi::render(rgl::scene* a, float* t, int, int)
             continue;
         if (i == 3)
         {
-            if (!(b121 && d01() && !(tracks[1] && b11c[1])))
+            if (!(b121 && is_active() && !(tracks[1] && b11c[1])))
                 ;
             else
             {
@@ -171,7 +172,7 @@ void MissionUi::render(rgl::scene* a, float* t, int, int)
         }
         else if (i == 2)
         {
-            if (b121 && d01() && tracks[3])
+            if (b121 && is_active() && tracks[3])
                 continue;
         }
         if (!b11c[i])
@@ -195,9 +196,9 @@ int MissionUi::get15c()
 }
 
 // @ 0x4888b0
-void MissionUi::set168(int v)
+void MissionUi::set168(float v)
 {
-    *(int*)&v168 = v;
+    v168 = v;
 }
 
 // @ 0x4888c0
@@ -227,7 +228,7 @@ bool MissionUi::clear_mask(int m)
 }
 
 // @ 0x488910
-void MissionUi::or_flags(int m)
+void MissionUi::set_key_flags(int m)
 {
     fC8 |= m;
     fCC |= m;
@@ -260,7 +261,7 @@ void MissionUi::move_a(float* p)
     fEC = p[1];
     if (p154)
     {
-        p154->d23(this);
+        p154->on_child_moved(this);
         return;
     }
     fE0 = p[0];
@@ -268,13 +269,13 @@ void MissionUi::move_a(float* p)
 }
 
 // @ 0x4889b0
-void MissionUi::move_f0(float* p)
+void MissionUi::set_xy(float* p)
 {
     screen[0] = p[0];
     screen[1] = p[1];
     if (p154)
     {
-        p154->d23(this);
+        p154->on_child_moved(this);
         return;
     }
 }
@@ -286,13 +287,13 @@ void MissionUi::move_f8(float* p)
     screen[3] = p[1];
     if (p154)
     {
-        p154->d23(this);
+        p154->on_child_moved(this);
         return;
     }
 }
 
 // @ 0x488a10
-void MissionUi::set138(float* p)
+void MissionUi::set_offset(float* p)
 {
     if (f148 & 1)
         f148 &= ~1u;
@@ -319,8 +320,8 @@ void MissionUi::or148(float* p)
 // @ 0x488aa0
 void MissionUi::run(int a, int b)
 {
-    d33(b);
-    d32(a, b);
+    normalize_uv((rgl::mesh*)b);
+    set_track(a, (rgl::mesh*)b);
 }
 
 // @ 0x488ad0
@@ -329,13 +330,13 @@ void MissionUi::set_track(int i, rgl::mesh* p)
     if (tracks[i])
         delete tracks[i];
     tracks[i] = p;
-    d34(p);
+    on_track_set(p);
 }
 
 // @ 0x488b10
-void MissionUi::set14c(float* p)
+void MissionUi::set_color(unsigned* p)
 {
-    color14c = *(unsigned*)p;
+    color14c = *p;
 }
 
 
@@ -354,7 +355,7 @@ void MissionUi::set_pos(int p)
 }
 
 // @ 0x488b50
-void MissionUi::set_text(float* out, const tstring* s)
+float* MissionUi::set_text(float* out, const tstring* s)
 {
     if (f148 & 2) {
         float v = screen[1] * 0.95f;
@@ -387,6 +388,7 @@ void MissionUi::set_text(float* out, const tstring* s)
     }
     b11c[4] = 1;
     *(vec2*)out = *(vec2*)var;
+    return out;
 }
 
 // @ 0x488c70
@@ -460,7 +462,7 @@ void MissionPanel::draw()
         float xy[2];
         xy[0] = 0.0f;
         xy[1] = 0.0f;
-        host->d22(xy);
+        host->move_a(xy);
     }
 }
 
@@ -1667,7 +1669,7 @@ MissionUi::MissionUi()
 }
 
 // @ 0x48b090
-void MissionUi::set_text_pos(const float* p)
+void MissionUi::set_size(const float* p)
 {
     float v[2];
     float o[2];
@@ -1693,34 +1695,35 @@ void MissionUi::set_text_pos(const float* p)
     }
 }
 
+// The constructor 0x48b1c0, out of line: the TUs that see the body in ui_widgets.h (all but this one and party_window.cpp) inline it.
+UiA::UiA() { f180 = 0; f184 = 0; }
+
+// The constructor on raw memory, for the callers that build a toggle button by hand (char_sheet/view_open.cpp elem2).
+void* UiA::construct()
+{
+    new (this) UiA;
+    return this;
+}
+
 // @ 0x48b170
-char MissionUi::always1() { return 1; }
+bool UiA::is_active() { return true; }
 
 // @ 0x48b180
-void MissionUi::flag2()
+void UiA::flag2_set()
 {
     b121 = 0;
     f104 |= 2;
 }
 
 // @ 0x48b1a0
-void MissionUi::flag1()
+void UiA::hide()
 {
     b121 = 0;
     f104 |= 1;
 }
 
-// @ 0x48b1c0
-UiA::UiA()
-{
-    f178 = 0;
-    b121 = 0;
-    f180 = 0;
-    f184 = 0;
-}
-
 // @ 0x48b1f0
-int UiA::type() { return 1; }
+int UiA::kind() { return 1; }
 
 // @ 0x48b200
 char UiA::key(unsigned p)

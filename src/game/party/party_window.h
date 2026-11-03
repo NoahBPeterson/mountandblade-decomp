@@ -16,7 +16,7 @@
 #define GAME_PARTY_PARTY_WINDOW_H
 #include "../../include/image_addrs.h"
 #include "../tstring.h"
-#include "../game_globals.h"      // canonical g_module_settings.disable_food_slot
+#include "../game_globals.h"      // canonical g_disable_food_slot
 #include "../../rgl/rgl_math.h"
 #include "../ui/item_ref.h"
 #include "../ui/troop_inv.h"
@@ -59,18 +59,14 @@ struct PartyPanel : UiWindow {              // vtable 0x599bf8 (the equipment me
 struct PartySlot : MissionUi {              // vtable 0x599d28, size 0x178 (the item slot)
     PartySlot() { *(void**)this = (void*)vtbl_599d28; }
 };
-struct StripIcon : UiA {                    // vtable 0x591ee8, size 0x188 (constructor 0x48b1c0 of UiA)
-    StripIcon() { *(void**)this = (void*)vtbl_XyzButton; }
+struct StripIcon : XyzButton {              // the strip icons are XyzButtons (vtable 0x591ee8, size 0x188)
 };
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
-#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 // the widget base's destructor body (0x487c00) and the scalar deleting destructor built on it (0x502300, the shared
 // slot 0 of vtable 0x591c80; mission_ui.h declares that slot as d00(int) without a body)
-// 0x487c00 is Buffer::~Buffer (mesh_slot/slot.cpp, virtual; called here as the base destructor, so qualified)
-struct Buffer { virtual ~Buffer(); };
+// 0x487c00 is MissionUi::~MissionUi (mesh_slot/slot.cpp, virtual; called here as the base destructor, so qualified)
 struct WidgetDtor {
-    void base_dtor() { ((Buffer*)this)->Buffer::~Buffer(); }      // 0x487c00
-    void* destroy(unsigned char flag);      // 0x502300 (ret 4)
+    void base_dtor() { ((MissionUi*)this)->MissionUi::~MissionUi(); }      // 0x487c00
 };
 // 0x41f4b0 is vec<mface>::clear (rgl/shapes/shapes.h: the vector's out-of-line clear, shared by every pointer vector); only the member is declared
 struct mface;

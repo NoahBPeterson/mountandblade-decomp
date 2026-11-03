@@ -18,6 +18,8 @@
 #include <memory>
 #include <algorithm>
 #include "./rgl_string.h"
+#include "../game/tstring.h"      // tstring: the class that defines the rgl::string members called below (same 16-byte object)
+#define TS(s) ((tstring&)(s))
 #include "./rgl_math.h"
 #include "./stream.h"
 #include "./resource.h"
@@ -63,11 +65,75 @@ int bin_writer::flush()
 
 // @ 0x417c10
 bin_writer::bin_writer() {}
-STREAM_FWD_BIN_WRITER(bin_writer)
+// the slots the original's linker folded with mem_stream's (0x417930..0x417b50) and text_stream's (0x415870): own bodies
+stream_base& bin_writer::w_stream(stream_base* o)
+{
+    int n = o->buf.len - o->buf.pos;
+    TS(buf).write(&n, 4);
+    if (n > 0) {
+        const char* p;
+        if (o->buf.buf)
+            p = o->buf.pos + o->buf.buf;
+        else
+            p = (const char*)&o->buf.buf;
+        TS(buf).write(p, n);
+    }
+    return *this;
+}
+stream_base& bin_writer::w_cstr(const char* s)
+{
+    int n = strlen(s);
+    TS(buf).write(&n, 4);
+    TS(buf).write(s, n);
+    return *this;
+}
+stream_base& bin_writer::w_int(int* v) { TS(buf).write(v, 4); return *this; }
+stream_base& bin_writer::w_float(float* v) { TS(buf).write(v, 4); return *this; }
+stream_base& bin_writer::w_uint(unsigned* v) { TS(buf).write(v, 4); return *this; }
+stream_base& bin_writer::w_i64(__int64* v) { TS(buf).write(v, 8); return *this; }
+stream_base& bin_writer::w_u64(unsigned __int64* v) { TS(buf).write(v, 8); return *this; }
+stream_base& bin_writer::w_tstr(const rgl::string* s)
+{
+    int n = s->len;
+    TS(buf).write(&n, 4);
+    TS(buf).write(s->c_str(), n);
+    return *this;
+}
+stream_base& bin_writer::w_byte(unsigned char* v) { TS(buf).write(v, 1); return *this; }
+stream_base& bin_writer::w_bool(char* v) { TS(buf).write(v, 1); return *this; }
+stream_base& bin_writer::r_stream(stream_base* o)
+{
+    int n;
+    r_int(&n);
+    o->reset();
+    for (int i = 0; i < n; i++) {
+        char c;
+        TS(buf).read(&c, 1);
+        TS(o->buf).push_back(c);
+    }
+    return *this;
+}
+stream_base& bin_writer::r_byte(char* v) { TS(buf).read(v, 1); return *this; }
+stream_base& bin_writer::slot12(void* v) { return *this; }
+stream_base& bin_writer::slot22(void* v) { return *this; }
+stream_base& bin_writer::r_float(float* v) { return *this; }
+stream_base& bin_writer::r_bool(char* v) { return *this; }
+stream_base& bin_writer::r_uint(unsigned* v) { return *this; }
+stream_base& bin_writer::r_u64(unsigned __int64* v) { return *this; }
+stream_base& bin_writer::r_i64(__int64* v) { return *this; }
+stream_base& bin_writer::r_int(int* v) { return *this; }
+stream_base& bin_writer::r_tstr(rgl::string* v) { return *this; }
 
 // @ 0x417c50
 bin_reader::bin_reader() {}
-STREAM_FWD_BIN_READER(bin_reader)
+// the write slots a reader does not have
+stream_base& bin_reader::w_float(float* v) { return *this; }
+stream_base& bin_reader::w_bool(char* v) { return *this; }
+stream_base& bin_reader::w_u64(unsigned __int64* v) { return *this; }
+stream_base& bin_reader::w_i64(__int64* v) { return *this; }
+stream_base& bin_reader::w_uint(unsigned* v) { return *this; }
+stream_base& bin_reader::w_int(int* v) { return *this; }
+stream_base& bin_reader::w_tstr(const rgl::string* s) { return *this; }
 
 // @ 0x417c90
 mem_stream::~mem_stream() {}
@@ -86,6 +152,7 @@ vec_table::vec_table()
         }
 }
 
+int frame_set::type() { return 7; }                          // 0x49df30 (folded with Camera::type)
 // @ 0x417e10
 frame_set::frame_set()
 {

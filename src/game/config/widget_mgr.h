@@ -12,6 +12,7 @@
 #include <vector>
 #include "../tstring.h"
 #include "../ui/ui_widgets.h"
+#include "../ui/container.h"
 #include "./ui_widgets_c.h"
 #include "../../rgl/resource.h"
 
@@ -85,83 +86,8 @@ struct scene_tbl {
 extern scene_tbl g_meshes;                       // 0x8ed4f58
 extern scene_tbl g_scene;                       // 0x8ed4f58  // old name of g_meshes, removed after the names merge
 
-// ---- widget classes (vtable addresses in the comments) ---------------------------------------------------------
-// The field initialisation of these sits in an intermediate base whose inline constructor the concrete classes
-// inherit, so cl stores the concrete class's vptr after the field stores (0x499830, 0x499a20).
-struct ButtonBase : MissionUi {
-    int f178;                                   // +0x178  0x499830
-    char pad17c[4];
-    unsigned char b180;                         // +0x180
-    char pad181[3];
-    int f184;                                   // +0x184
-    ButtonBase() { f178 = 0; b121 = 0; b180 = 0; f184 = 0; }
-    void set_flag() { f184 = 1; }               // 0x499b50
-};
-// The slots these widgets override (config/widget_slots.cpp: each a leaf or a jmp to the function the original's table names)
-struct MediumButton : ButtonBase {              // vtable 0x591e20, size 0x188
-    bool d01();                                 // +0x04 returns 1 (0x48b170)
-    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> UiA::update 0x48b320
-    char d35(unsigned mask);                    // +0x8c -> UiA::key 0x48b200
-    void d41(float* out, const tstring* s);     // +0xa4 -> MissionUi::make_text 0x48b3a0
-    void d44();                                 // +0xb0 -> MissionUi::flag1 0x48b1a0
-    void d46();                                 // +0xb8 -> MissionUi::flag2 0x48b180
-    int d48();                                  // +0xc0 -> UiA::type9 0x48b390
-};
-struct XyzButton : ButtonBase {                 // vtable 0x591ee8, size 0x188
-    bool d01();                                 // +0x04 returns 1 (0x48b170)
-    void d02(int a);                            // +0x08 -> HudBar::update_2 0x4966b0
-    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> UiA::update 0x48b320
-    char d35(unsigned mask);                    // +0x8c -> UiA::key 0x48b200
-    void d44();                                 // +0xb0 -> MissionUi::flag1 0x48b1a0
-    void d46();                                 // +0xb8 -> MissionUi::flag2 0x48b180
-    int d48();                                  // +0xc0 -> UiA::type8 0x48b4a0
-};
-
-// UiA (../ui/ui_widgets.h, vtable 0x591d58) as DropDown::create builds it: the constructor 0x48b1c0 is inlined there
-// (intermediate base stores f178/b121, then the vptr, then f180/f184), so it needs its own inline constructor.
-struct UiABase : MissionUi {
-    int f178;                                   // +0x178
-    char pad17c[4];
-    char f180;                                  // +0x180
-    char pad181[3];
-    int f184;                                   // +0x184
-    UiABase() { f178 = 0; b121 = 0; }
-};
-struct UiAInline : UiABase {                    // vtable 0x591d58 (= UiA's; the same overrides, config/widget_slots.cpp)
-    bool d01();                                 // +0x04 returns 1 (0x48b170)
-    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> UiA::update 0x48b320
-    char d35(unsigned mask);                    // +0x8c -> UiA::key 0x48b200
-    void d44();                                 // +0xb0 -> MissionUi::flag1 0x48b1a0
-    void d46();                                 // +0xb8 -> MissionUi::flag2 0x48b180
-    int d48();                                  // +0xc0 -> UiA::type 0x48b1f0
-    UiAInline() { f180 = 0; f184 = 0; }
-};
-
-// The list container a drop-down opens (vtable 0x592848, size 0x190). Its base constructor 0x4931a0 and base
-// destructor 0x490520 belong to the object at 0x493xxx; the vptr store and f188 = 1 are NodeA's own (0x49ad20).
-struct ContainerBase : MissionUi {
-    ContainerBase();                            // 0x4931a0
-    ~ContainerBase();                           // 0x490520
-    char pad178[0x188 - 0x178];
-    char f188;                                  // +0x188 (1 for a NodeA)
-    char pad189[0x190 - 0x189];
-};
-struct NodeA : ContainerBase {
-    // the slots vtable 0x592848 holds that the base's does not (config/widget_slots.cpp: jmps to ContainerW's members)
-    void d00(int release);                      // +0x00 -> destroy 0x49b0f0
-    void d02(int a);                            // +0x08 -> ContainerW::update_all 0x4908c0
-    void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> ContainerW::bounds_of 0x490710
-    void d16();                                 // +0x40 -> ContainerW::reset_all 0x4906e0
-    void d22(void* p);                          // +0x58 -> ContainerW::place 0x490570
-    void d23(MissionUi* child);                 // +0x5c -> ContainerW::track_bounds 0x4905c0
-    void d24();                                 // +0x60 -> ContainerW::activate_all 0x4906b0
-    char d35(unsigned mask);                    // +0x8c -> gui_window::handle_event 0x42d170
-    void refresh();                             // +0x90 -> gui_window::wheel_focus 0x42cec0
-    virtual void update_children();             // +0xc4, vtable slot 49 (0x48ef40, FrameBox::release)
-    virtual void d50(MissionUi* child);         // +0xc8, vtable slot 50 -> ContainerW::add_child 0x493a30
-    NodeA() { f188 = 1; }
-    void* destroy(unsigned flags);              // 0x49b0f0 (scalar deleting destructor)
-};
+// ---- widget classes (vtable addresses in the comments); the button family (UiA, MediumButton, XyzButton, UiAInline) is in ../ui/ui_widgets.h ----
+// The list container a drop-down opens (NodeA, vtable 0x592848) and the container it derives from are in ../ui/container.h.
 
 struct DropDown : MissionUi {                   // ctor 0x4931d0 (installs its own vtable), size 0x1d0
     char pad178[0x180 - 0x178];
@@ -191,11 +117,7 @@ struct WItem : MissionUi {
     void scroll_refresh(const float* pos);   // 0x498420 (ret 4; the definition is HudOuter::scroll_refresh, world_data/mesh_hud.h: widget_mgr.cpp calls that)
 };
 
-// MissionUi::layout_text_to (0x49abc0) lives in this object; ../ui/mission_ui.h lacks it
 struct Font;
-struct MissionUiText : MissionUi {
-    void layout_text_to(const tstring* text, const float* pos);     // 0x49abc0 (ret 8)
-};
 #include "../font.h"
 extern Font* g_font;                            // 0x5e2934
 

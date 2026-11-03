@@ -460,29 +460,29 @@ static __forceinline float fmax2(float a, float b) { return (a > b) ? a : b; }
 static __forceinline float fmin2(float a, float b) { return (a < b) ? a : b; }
 
 // @ 0x48d020
-void FieldPanel::update_bounds()
+void MissionUi::update_bounds()
 {
     FieldV2 mx(0.0f, 0.0f);
     FieldV2 mn(999999.0f, 999999.0f);
-    if (shape(0)) {
-        shape(0)->compute_bounds();
-        mx = FieldV2(fmax2(mx.x, shape(0)->bounds.max.x), fmax2(mx.y, shape(0)->bounds.max.y));
-        mn = FieldV2(fmin2(mn.x, shape(0)->bounds.min.x), fmin2(mn.y, shape(0)->bounds.min.y));
+    if (((FieldShape*)tracks[0])) {
+        ((FieldShape*)tracks[0])->compute_bounds();
+        mx = FieldV2(fmax2(mx.x, ((FieldShape*)tracks[0])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[0])->bounds.max.y));
+        mn = FieldV2(fmin2(mn.x, ((FieldShape*)tracks[0])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[0])->bounds.min.y));
     }
-    if (shape(2)) {
-        shape(2)->compute_bounds();
-        mx = FieldV2(fmax2(mx.x, shape(2)->bounds.max.x), fmax2(mx.y, shape(2)->bounds.max.y));
-        mn = FieldV2(fmin2(mn.x, shape(2)->bounds.min.x), fmin2(mn.y, shape(2)->bounds.min.y));
+    if (((FieldShape*)tracks[2])) {
+        ((FieldShape*)tracks[2])->compute_bounds();
+        mx = FieldV2(fmax2(mx.x, ((FieldShape*)tracks[2])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[2])->bounds.max.y));
+        mn = FieldV2(fmin2(mn.x, ((FieldShape*)tracks[2])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[2])->bounds.min.y));
     }
-    if (shape(1)) {
-        shape(1)->compute_bounds();
-        mx = FieldV2(fmax2(mx.x, shape(1)->bounds.max.x), fmax2(mx.y, shape(1)->bounds.max.y));
-        mn = FieldV2(fmin2(mn.x, shape(1)->bounds.min.x), fmin2(mn.y, shape(1)->bounds.min.y));
+    if (((FieldShape*)tracks[1])) {
+        ((FieldShape*)tracks[1])->compute_bounds();
+        mx = FieldV2(fmax2(mx.x, ((FieldShape*)tracks[1])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[1])->bounds.max.y));
+        mn = FieldV2(fmin2(mn.x, ((FieldShape*)tracks[1])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[1])->bounds.min.y));
     }
-    if (shape(3)) {
-        shape(3)->compute_bounds();
-        mx = FieldV2(fmax2(mx.x, shape(3)->bounds.max.x), fmax2(mx.y, shape(3)->bounds.max.y));
-        mn = FieldV2(fmin2(mn.x, shape(3)->bounds.min.x), fmin2(mn.y, shape(3)->bounds.min.y));
+    if (((FieldShape*)tracks[3])) {
+        ((FieldShape*)tracks[3])->compute_bounds();
+        mx = FieldV2(fmax2(mx.x, ((FieldShape*)tracks[3])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[3])->bounds.max.y));
+        mn = FieldV2(fmin2(mn.x, ((FieldShape*)tracks[3])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[3])->bounds.min.y));
     }
     if (sqrt(mx.x * mx.x + mx.y * mx.y) > 0.0f) {
         set_xy(&mx.x);
@@ -553,7 +553,7 @@ void FieldPanel::update()
     float m[2];
     m[0] = screen[0] + e[0] + 0.01f;
     m[1] = e[1];
-    mirror()->d22(m);
+    mirror()->move_a(m);
     draw();
 }
 

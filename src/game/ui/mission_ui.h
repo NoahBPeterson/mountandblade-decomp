@@ -15,63 +15,70 @@
 #include "../tstring.h"
 #include "./ui_common.h"
 #include "./item_ref.h"
+#include "../../include/clock_table.h"   // g_ticks (elapsed() below)
 #include "../../rgl/mesh.h"
 
+
+// a packed RGBA word with its channels (the animate overrides lerp them: valA.. / srcA.. below)
+union Color4 {
+    unsigned dword;
+    struct { unsigned char r, g, b, a; };
+};
 
 struct MissionUi {
     // vtable 0x591c80, 49 slots. Names where a caller shows the signature; the rest are placeholders. Every slot is
     // defined in widget_slots.cpp: a leaf the original's slot also holds (`return 0`, `ret`), or a bare `jmp` to the
     // function the original's slot names (the comment on each: slot, its address and owner). A derived widget class
     // overrides a slot with the same name and its own jmp.
-    virtual void d00(int release);          // +0x00 deleting destructor (called with push 1 by 0x488ad0)  -> WidgetDtor::destroy 0x502300
-    virtual bool d01();                     // +0x04 "is active" (tested by 0x488720): returns 0 (0x4280e0; UiA & co. return 1: 0x48b170)
-    virtual void d02(int a);                // +0x08 -> Effect::animate 0x487c40 (the widgets' per-frame update; the argument is not used)
-    virtual void d03();                     // +0x0c -> FieldPanel::update_bounds 0x48d020
-    virtual void d04(float a, int b);       // +0x10 -> set_a 0x488560
-    virtual void d05(float a, int b);       // +0x14 -> set_b 0x4885a0
-    virtual void d06(float a, int b);       // +0x18 -> set_c 0x4885e0
-    virtual void d07(float a, int b);       // +0x1c -> set_d 0x488620
-    virtual void d08(float a, float* p);    // +0x20 -> set_e 0x488660
-    virtual void d09(float a, float* p);    // +0x24 -> set_f 0x4886c0
-    virtual void d10(rgl::scene* sc, float* count, int c, int d);   // +0x28 -> render 0x488720 (the derived widgets' update / show)
-    virtual void d11(int v);                // +0x2c -> set15c 0x488890
-    virtual int d12();                      // +0x30 -> get15c 0x4888a0
-    virtual void d13(int v);                // +0x34 -> set168 0x4888b0
-    virtual float d14();                    // +0x38 -> get168 0x4888c0
-    virtual bool d15(int m);                // +0x3c -> test_c8 0x4888d0
-    virtual void d16();                     // +0x40 -> clear_c8 0x4888e0
-    virtual bool d17(int m);                // +0x44 -> clear_mask 0x4888f0
-    virtual void set_key_flags(int f);      // +0x48 -> or_flags 0x488910 (0x48b200, 0x48b5a0)
-    virtual void d19(int v);                // +0x4c -> set_d0 0x488930
-    virtual void d20(int v);                // +0x50 -> set_d4 0x488940
-    virtual void d21(int m);                // +0x54 -> or_d4 0x488950
-    virtual void d22(void* p);              // +0x58 -> move_a 0x488970: position/offset pair (0x487c40)
-    virtual void d23(MissionUi* src);       // +0x5c "child moved" notification, passed this (0x488970): `ret 4` (0x408030)
-    virtual void d24();                     // +0x60 `ret` (0x477b70)
-    virtual void set_xy(float* v);          // +0x64 -> move_f0 0x4889b0 (0x488b50, 0x48b090)
-    virtual void d26(float* v);             // +0x68 -> move_f8 0x4889e0
-    virtual void set_size(float* v);        // +0x6c -> set_text_pos 0x48b090 (0x48b3a0)
-    virtual void set_offset(float* v);      // +0x70 -> set138 0x488a10 (0x48b3a0)
-    virtual void d29(float* v);             // +0x74 -> set148 0x488a40
-    virtual void d30(float* v);             // +0x78 -> or148 0x488a70
-    virtual void d31(int a, int b);         // +0x7c -> run 0x488aa0
-    virtual void d32(int a, int b);         // +0x80 -> set_track 0x488ad0 (0x488aa0)
-    virtual void d33(int a);                // +0x84 -> normalize_uv 0x495fa0 (0x488aa0)
-    virtual void d34(void* a);              // +0x88 `ret 4` (0x408030) (0x488ad0)
-    virtual char d35(unsigned mask);        // +0x8c -> gui_window::refresh_all 0x42cd60 (the derived widgets' key handler)
-    virtual void refresh();                 // +0x90 -> gui_window::wheel_step 0x42ce50 (0x48b200)
-    virtual void get_xy(float* v);          // +0x94 -> PObj::text_rect 0x49b4f0, hidden result pointer (0x488b30, 0x488a40)
-    virtual void set_color(unsigned* c);    // +0x98 -> set14c 0x488b10 (0x487c40)
-    virtual void d39(void* p);              // +0x9c -> set_target 0x488b20 (0x487c40)
-    virtual void d40(int p);                // +0xa0 -> set_pos 0x488b30
-    virtual void d41(float* out, const tstring* s);   // +0xa4 -> set_text 0x488b50
-    virtual void d42(tstring* out);         // +0xa8 -> put 0x488c70
-    virtual void d43(const tstring* s, const float* p);   // +0xac -> MissionUiText::layout_text_to 0x49abc0
-    virtual void d44();                     // +0xb0 -> hide 0x488c90
-    virtual void d45();                     // +0xb4 -> show 0x488ca0
-    virtual void d46();                     // +0xb8 -> flag2_set 0x488cb0
-    virtual void d47();                     // +0xbc -> flag2_clear 0x488cc0
-    virtual int d48();                      // +0xc0 widget type code: returns 0 (0x408020; the derived widgets return their kind)
+    __declspec(noinline) virtual ~MissionUi();   // +0x00 0x487c00 (mesh_slot/slot.cpp); the deleting destructor 0x502300 is the compiler's (called with push 1 by 0x488ad0)
+    virtual bool is_active();                     // +0x04 "is active" (tested by 0x488720): returns 0 (0x4280e0; UiA & co. return 1: 0x48b170)
+    virtual void animate(int unused);       // +0x08 0x487c40 (mesh_slot/slot.cpp: the widgets' per-frame track animator; the argument is not used)
+    virtual void update_bounds();           // +0x0c 0x48d020 (mission_ui2/mission_3.cpp: the union of the four shapes' bounds)
+    virtual void set_a(float a, int b);                         // +0x10 0x488560
+    virtual void set_b(float a, int b);                         // +0x14 0x4885a0
+    virtual void set_c(float a, int b);                         // +0x18 0x4885e0
+    virtual void set_d(float a, int b);                         // +0x1c 0x488620
+    virtual void set_e(float a, float* p);                      // +0x20 0x488660
+    virtual void set_f(float a, float* p);                      // +0x24 0x4886c0
+    virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x488720 per-child draw loop (ret 0x10; the derived widgets' update / show)
+    virtual void set15c(int v);                                 // +0x2c 0x488890
+    virtual int  get15c();                                      // +0x30 0x4888a0
+    virtual void set168(float v);                               // +0x34 0x4888b0
+    virtual float get168();                                     // +0x38 0x4888c0
+    virtual bool test_c8(int m);                                // +0x3c 0x4888d0
+    virtual void clear_c8();                                    // +0x40 0x4888e0
+    virtual bool clear_mask(int m);                             // +0x44 0x4888f0
+    virtual void set_key_flags(int m);                          // +0x48 0x488910 (0x48b200, 0x48b5a0)
+    virtual void set_d0(int v);                                 // +0x4c 0x488930
+    virtual void set_d4(int v);                                 // +0x50 0x488940
+    virtual void or_d4(int m);                                  // +0x54 0x488950
+    virtual void move_a(float* p);                              // +0x58 0x488970: position/offset pair (0x487c40)
+    virtual void on_child_moved(MissionUi* src);       // +0x5c "child moved" notification, passed this (0x488970): `ret 4` (0x408030)
+    virtual void on_moved();                     // +0x60 `ret` (0x477b70)
+    virtual void set_xy(float* p);                              // +0x64 0x4889b0 (0x488b50, 0x48b090)
+    virtual void move_f8(float* p);                             // +0x68 0x4889e0
+    virtual void set_size(const float* p);                      // +0x6c 0x48b090 (0x48b3a0)
+    virtual void set_offset(float* p);                          // +0x70 0x488a10 (0x48b3a0)
+    virtual void set148(float* p);                              // +0x74 0x488a40
+    virtual void or148(float* p);                               // +0x78 0x488a70
+    virtual void run(int a, int b);                             // +0x7c 0x488aa0
+    virtual void set_track(int i, rgl::mesh* p);                // +0x80 0x488ad0 (0x488aa0)
+    virtual void normalize_uv(rgl::mesh* src);   // +0x84 0x495fa0 (world_data/mesh_hud.cpp: rescales src's uv records into the rectangle screen[] holds; 0x488aa0)
+    virtual void on_track_set(void* a);              // +0x88 `ret 4` (0x408030) (0x488ad0)
+    virtual char key(unsigned mask);        // +0x8c 0x42cd60 (widget_slots.cpp; the derived widgets override it with their key handler)
+    virtual void refresh();                 // +0x90 0x42ce50 (widget_slots.cpp; 0x48b200)
+    virtual void get_xy(float* v);          // +0x94 0x49b4f0 (config/widget_mgr.cpp: the text rect, through a hidden result pointer; 0x488b30, 0x488a40)
+    virtual void set_color(unsigned* p);                          // +0x98 0x488b10 (0x487c40)
+    virtual void set_target(void* p);                           // +0x9c 0x488b20 (0x487c40)
+    virtual void set_pos(int p);                                // +0xa0 0x488b30
+    virtual float* set_text(float* out, const tstring* s);      // +0xa4 0x488b50 (MediumButton overrides it: 0x48b3a0)
+    virtual void put(tstring* out);                             // +0xa8 0x488c70
+    virtual void layout_text_to(const tstring* text, const float* pos);   // +0xac 0x49abc0 (config/widget_mgr.cpp; ret 8)
+    virtual void hide();                                        // +0xb0 0x488c90
+    virtual void show();                                        // +0xb4 0x488ca0
+    virtual void flag2_set();                                   // +0xb8 0x488cb0
+    virtual void flag2_clear();                                 // +0xbc 0x488cc0
+    virtual int kind();                     // +0xc0 widget type code: returns 0 (0x408020; the derived widgets return their kind)
     // 49 slots: the original vtable 0x591c80 ends here. A 50th (+0xc4, `update_children`) exists only in the classes
     // that add it, each with its own function: UiC 0x497d10, UiD 0x498390, progress_bar 0x4e3fb0, NodeA 0x48ef40.
 
@@ -120,48 +127,18 @@ struct MissionUi {
     int f174;                               // +0x174
 
     MissionUi();                                        // 0x48ae20
-    void set_a(float a, int b);                         // 0x488560
-    void set_b(float a, int b);                         // 0x4885a0
-    void set_c(float a, int b);                         // 0x4885e0
-    void set_d(float a, int b);                         // 0x488620
-    void set_e(float a, float* p);                      // 0x488660
-    void set_f(float a, float* p);                      // 0x4886c0
-    void render(rgl::scene* sc, float* count, int c, int d);   // 0x488720 per-child draw loop (ret 0x10)
-    void set15c(int v);                                 // 0x488890
-    int  get15c();                                      // 0x4888a0
-    void set168(int v);                                 // 0x4888b0
-    float get168();                                     // 0x4888c0
-    bool test_c8(int m);                                // 0x4888d0
-    void clear_c8();                                    // 0x4888e0
-    bool clear_mask(int m);                             // 0x4888f0
-    void or_flags(int m);                               // 0x488910
-    void set_d0(int v);                                 // 0x488930
-    void set_d4(int v);                                 // 0x488940
-    void or_d4(int m);                                  // 0x488950
-    void move_a(float* p);                              // 0x488970
-    void move_f0(float* p);                             // 0x4889b0
-    void move_f8(float* p);                             // 0x4889e0
-    void set138(float* p);                              // 0x488a10
-    void set148(float* p);                              // 0x488a40
-    void or148(float* p);                               // 0x488a70
-    void run(int a, int b);                             // 0x488aa0
-    void set_track(int i, rgl::mesh* p);                // 0x488ad0
-    void set14c(float* p);                              // 0x488b10
-    void set_target(void* p);                           // 0x488b20
-    void set_pos(int p);                                // 0x488b30
-    void set_text(float* out, const tstring* s);   // 0x488b50
-    void put(tstring* out);                             // 0x488c70
-    void hide();                                   // 0x488c90
-    void show();                                 // 0x488ca0
-    void flag2_set();                                   // 0x488cb0
-    void flag2_clear();                                 // 0x488cc0
+    // views of the track records for the animate overrides (mesh_hud.cpp)
+    float elapsed(int i) const { return (float)(g_ticks[*(const int*)((const char*)this + 8 + i * 0x10)] - *(const __int64*)((const char*)this + 0x10 + i * 0x10)) * 1e-5f; }
+    float& dur(int i) { return (&periodA)[i]; }                 // +0x68 + 4i
+    Color4& ca() { return *(Color4*)&valA; }                    // +0x90
+    Color4& aa() { return *(Color4*)&valB; }                    // +0x94
+    Color4& ca2() { return *(Color4*)&valC; }                   // +0x98
+    Color4& aa2() { return *(Color4*)&valD; }                   // +0x9c
+    Color4& cb() { return *(Color4*)&srcA; }                    // +0xb0
+    Color4& ab() { return *(Color4*)&srcB; }                    // +0xb4
+    Color4& cb2() { return *(Color4*)&srcC; }                   // +0xb8
+    Color4& ab2() { return *(Color4*)&srcD; }                   // +0xbc
     void set_fog(const float* ref, const float* lo, const float* hi);   // 0x488cd0
-    void set_text_pos(const float* p);                  // 0x48b090
-    char always1();                                     // 0x48b170
-    void flag2();                                       // 0x48b180
-    void flag1();                                       // 0x48b1a0
-    void* make_text(void* out, const tstring* s);       // 0x48b3a0 (in ui_widgets_a.cpp)
-    void animate(float dt);                             // 0x487c40 (not in this module)
 };
 
 // A panel of two child widgets drawn through MissionUi's virtuals; offsets from 0x488d50 (draw). It shares the

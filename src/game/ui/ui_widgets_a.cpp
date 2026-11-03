@@ -77,7 +77,7 @@ void __fastcall play_sound(UiSoundHost* m)
 }
 
 // @ 0x48b320
-void UiA::update(void* a, float* b, int c, int d)
+void UiA::render(rgl::scene* a, float* b, int c, int d)
 {
     if (((f184 & 1) == 0 || v15c != 0) && ((f184 & 1) != 0 || f180 != 0))
         f178 = 0;
@@ -91,14 +91,14 @@ void UiA::update(void* a, float* b, int c, int d)
         b11c[2] = 0;
         b11c[1] = 1;
     }
-    render((rgl::scene*)a, b, c, d);
+    MissionUi::render(a, b, c, d);
 }
 
 // @ 0x48b390
-int UiA::type9() { return 9; }
+int MediumButton::kind() { return 9; }
 
 // @ 0x48b3a0
-void* MissionUi::make_text(void* out, const tstring* s)
+float* MediumButton::set_text(float* out, const tstring* s)
 {
     float sw = screen[0];
     float h = screen[1];
@@ -119,12 +119,11 @@ void* MissionUi::make_text(void* out, const tstring* s)
     pos[0] = 0.0f;
     pos[1] = h * 0.5f - scale * 0.3f;
     set_offset(pos);
-    set_text((float*)out, s);
-    return out;
+    return MissionUi::set_text(out, s);
 }
 
 // @ 0x48b4a0
-int UiA::type8() { return 8; }
+int XyzButton::kind() { return 8; }
 
 // @ 0x48b4b0
 UiB::UiB()
@@ -137,7 +136,7 @@ UiB::UiB()
 }
 
 // @ 0x48b4f0
-void UiB::show(void* a, float* b, int c, int d)
+void UiB::render(rgl::scene* a, float* b, int c, int d)
 {
     b11c[2] = 1;
     b11c[0] = 1;
@@ -145,5 +144,5 @@ void UiB::show(void* a, float* b, int c, int d)
         float v = value();
         *(float*)((char*)tracks[2] + 0xfc + f178 * 4) = v;
     }
-    render((rgl::scene*)a, b, c, d);
+    MissionUi::render(a, b, c, d);
 }

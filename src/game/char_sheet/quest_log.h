@@ -67,25 +67,7 @@ mesh* make_background(float* col, int rgb);              // 0x4de320
 #define QUEST(i)    (QUESTS + (i) * 0x138)
 
 // ---- the quest log window ----------------------------------------------------------------------------------
-struct quest_window {
-    char pad000[4];
-    int mode;                           // +0x04  0 = active quests, else finished
-    char pad008[0x2c - 8];
-    widget* window;                     // +0x2c
-    widget* done;                       // +0x30  the "done" text
-    widget* active_tab;                 // +0x34
-    widget* finished_tab;               // +0x38
-    widget* list;                       // +0x3c
-    widget* frame;                      // +0x40  the quest row frame
-    widget* panel1;                     // +0x44
-    widget* panel2;                     // +0x48
-    int indices[0x80];                  // +0x4c
-    int count;                          // +0x24c
-    int f250;                           // +0x250
-    widget* rows[0x80];                 // +0x254
-
-    void __fastcall build();            // 0x4ee230
-    void __fastcall refresh();          // 0x4ee840
-};
+#include "../screen_records.h"
+typedef Rec454 quest_window;          // the quest log: the record of screen_records.h (slot 2 is build 0x4ee230)
 
 #endif

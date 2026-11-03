@@ -22,7 +22,10 @@
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
+#include "../../rgl/stream_inline.h"   // the file writer built on save_scene's stack: constructor inline
+__forceinline bin_writer::bin_writer() {}   // inline here (resmgr.cpp load_pack calls the out-of-line 0x417c10)
 #include "../../rgl/mesh.h"
+#include "../conv_screen.h"      // Rec1208 (ConvScreen): the conversation screen record, whose slot 3 is handle_event 0x525160
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../menu_rec.h"   // g_menus 0x5e29b0
@@ -50,14 +53,14 @@ extern const float g_aim_range_tbl[14] = {-0.5f, 3.1415927f, -2.0f, 2.0f, -1.5f,
 // agent record i of the mission (pages of 16, 0x5928 bytes each)
 #define REC_S25160(i) ((*(char***)((char*)g_big + 0x1c))[(i) >> 4] + ((i) & 0xf) * 0x5928)
 // @ 0x525160
-void Game_s25160::handle_event(int code)
+void Rec1208::scale_3(float code_f)
 {
     g_mgr.update();
 
     if (g_mission_clock != 0)
     {
         // camera/sky interpolation over the current site's passage table
-        char* o = *(char**)(f188 + 0x484);
+        char* o = *(char**)(((char*)(void*)question) + 0x484);
         float* pa = (float*)(o + *(int*)(o + 0x178) * 4 + 0xf0);
         float v = (*(float*)(o + 0x168) - *(float*)(o + 0x16c))
                 / (*(float*)(o + 0x170) - *(float*)(o + 0x16c))
@@ -69,28 +72,28 @@ void Game_s25160::handle_event(int code)
     }
 
     char* b = *(char**)&g_game;
-    if (f1204 == *(int*)(b + 0x8c) || *(int*)(b + 0x1a23c) == 0)
+    if (speaker_id == *(int*)(b + 0x8c) || *(int*)(b + 0x1a23c) == 0)
         goto hide;
-    if (!(((gui_manager*)g_gui)->mouse[0] < *(float*)(f30 + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
+    if (!(((gui_manager*)g_gui)->mouse[0] < *(float*)(((char*)(void*)window) + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
         goto hide;
-    if (!(*(float*)(f30 + 0xe4) + 0.1f < ((gui_manager*)g_gui)->mouse[1]))
+    if (!(*(float*)(((char*)(void*)window) + 0xe4) + 0.1f < ((gui_manager*)g_gui)->mouse[1]))
         goto hide;
     {
-        f11e0->v45();
+        ((VObj_s25160*)(void*)msg_window)->v45();
         int s = *(int*)(b + 0x1a238);
         if (s < -0x65 || s > 0x65)
         {
-            f11e8->v44();
-            f11e4->v44();
+            ((VObj_s25160*)(void*)relation_bar)->v44();
+            ((VObj_s25160*)(void*)reln_pointer)->v44();
         }
         else
         {
             float pair[2];
             pair[0] = (float)(s + 0x64) * 0.00105f + 0.02f;
             pair[1] = 0.02f;
-            f11e4->v22(pair);
-            f11e8->v45();
-            f11e4->v45();
+            ((VObj_s25160*)(void*)reln_pointer)->v22(pair);
+            ((VObj_s25160*)(void*)relation_bar)->v45();
+            ((VObj_s25160*)(void*)reln_pointer)->v45();
         }
     }
     {
@@ -101,14 +104,14 @@ void Game_s25160::handle_event(int code)
                 continue;
             int l1;
             int l2;
-            f11ec[i]->v41(&l1, (void*)(b + 0x1a240 + i * 0x10));   // out value first, the record second (0x525301)
-            f11ec[i]->v37(&l2);
+            ((VObj_s25160*)(void*)lines[i])->v41(&l1, (void*)(b + 0x1a240 + i * 0x10));   // out value first, the record second (0x525301)
+            ((VObj_s25160*)(void*)lines[i])->v37(&l2);
             *(char*)(*(char**)&g_game + 0x1a290 + i) = 0;   // the calls above may have swapped the global: 0x525322 re-reads it
         }
     }
     goto done;
 hide:
-    f11e0->v44();
+    ((VObj_s25160*)(void*)msg_window)->v44();
 done:
 
     *(char*)(g_big + 0x6554) = 1;
@@ -123,7 +126,7 @@ done:
         ((Chunk_s25160*)rec)->m_4464d0(0);
     }
 
-    g_big->m_483f60(code, 0);
+    g_big->m_483f60(*(int*)&code_f, 0);
 
     {
         if (*(int*)((char*)g_big + 0x5c) >= 0)
@@ -134,14 +137,14 @@ done:
         }
     }
 
-    if (f1190 > 1)
+    if (n_lines > 1)
     {
         int i;
         for (i = 0; i < 0x400; ++i)
         {
-            if (!arr190[i]->v17(0x10000))
+            if (!((VObj_s25160*)(void*)buttons[i])->v17(0x10000))
                 continue;
-            if (i >= f1190)
+            if (i >= n_lines)
                 continue;
             refresh(i, &res);
         }
@@ -151,7 +154,7 @@ done:
         refresh(-2, &res);
     }
 
-    update();
+    ((ViewObj_s257f0*)(void*)this)->update();
 
     int v = res;
 
@@ -189,7 +192,7 @@ done:
     }
 
     if (v == 3)
-        f1200 = g_dialogs.fc;
+        target = g_dialogs.fc;
     if (v == 2 || v == 3)
     {
         char* t = *(char**)(g_windows + 0x20);
@@ -260,9 +263,9 @@ done:
 
 case1:
     {
-        int x = f18;
+        int x = w18;
         if (x == 0x64)
-            g_513710.m(&code);
+            g_513710.m((int*)&code_f);
         else
             g_dlg.open(x);
     }
@@ -1067,7 +1070,7 @@ unlock:
 void GameData_s27c90::save_scene(int idx)
 {
     tstring path = scene_path(idx);
-    bin_writer_i w;
+    bin_writer w;
     const char* p = module_path(path.c_str());
     ((tstring*)&w.name)->assign(p);
     w.is_open = 0;
@@ -3227,7 +3230,3 @@ int* Scene_s2ce00::clamp(int* out, int* in)
     out[1] = iy;
     return out;
 }
-
-// ---- bin_writer_i's slots (the original's linker folded them into mem_stream's / text_stream's) ----
-STREAM_FWD_BIN_WRITER(bin_writer_i)
-int bin_writer_i::flush() { return ((bin_writer*)this)->bin_writer::flush(); }

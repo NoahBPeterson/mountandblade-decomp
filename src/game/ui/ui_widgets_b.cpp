@@ -40,24 +40,24 @@ UiC::UiC()
 {
     float v[4];
     float* p = v;
-    f198 = p[0] = 1.0f;
-    f19c = p[1] = 1.0f;
-    f1a0 = p[2] = 1.0f;
-    f1a4 = p[3];
+    v198.x = p[0] = 1.0f;
+    v198.y = p[1] = 1.0f;
+    v198.z = p[2] = 1.0f;
+    v198.w = p[3];
     int z = 0;
     f178 = z;
     f180 = z;
     f184 = z;
-    f18c = z;
+    src = 0;
     f17c = 0.008f;
     v168 = 1.0f;
     f190 = 1;
-    f1a8 = 0xff000000;
+    mask = 0xff000000;
     f194 = 1.0f;
 }
 
 // @ 0x48b7f0
-void UiC::show(void* a, float* b, int c, int d)
+void UiC::render(rgl::scene* a, float* b, int c, int d)
 {
     b11c[0] = b11c[1] = b11c[2] = 1;
     update_children();
@@ -66,11 +66,11 @@ void UiC::show(void* a, float* b, int c, int d)
         float v = (screen[i] - (f17c + f17c)) * ((v168 - f16c) / (f170 - f16c)) + f17c;
         *(float*)((char*)tracks[2] + 0xfc + i * 4) = v;
     }
-    render((rgl::scene*)a, b, c, d);
+    MissionUi::render(a, b, c, d);
 }
 
 // @ 0x48b880
-int UiC::type() { return 3; }
+int UiC::kind() { return 3; }
 
 // @ 0x48b890
 UiD::UiD()
@@ -83,10 +83,10 @@ UiD::UiD()
 }
 
 // @ 0x48b8d0
-void UiD::show(void* a, float* b, int c, int d)
+void UiD::render(rgl::scene* a, float* b, int c, int d)
 {
     b11c[0] = b11c[2] = 1;
     if (tracks[2])
         *(float*)((char*)tracks[2] + 0xfc + f178 * 4) = value();
-    render((rgl::scene*)a, b, c, d);
+    MissionUi::render(a, b, c, d);
 }

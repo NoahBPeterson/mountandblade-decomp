@@ -100,19 +100,14 @@ stream_base& w_body_part(stream_base& s, body_part* b)
 
 // @ 0x4172d0
 tstream3::tstream3() {}
-STREAM_FWD_TEXT_READER(tstream3)   // slots folded with text_stream's
-
-// mem_stream's slots the original's linker folded into other slot functions (identical code)
-SF_M(mem_stream, w_float, float*, w_int, int*)
-SF_M(mem_stream, w_bool, char*, w_byte, unsigned char*)
-SF_M(mem_stream, w_u64, unsigned __int64*, w_i64, __int64*)
-SF_M(mem_stream, w_uint, unsigned*, w_int, int*)
-SF_M(mem_stream, r_float, float*, r_int, int*)
-SF_M(mem_stream, r_bool, char*, r_byte, char*)
-SF_M(mem_stream, r_u64, unsigned __int64*, r_i64, __int64*)
-SF_M(mem_stream, r_uint, unsigned*, r_int, int*)
-SF_T(mem_stream, slot12, void*, slot12, void*)
-SF_T(mem_stream, slot22, void*, slot12, void*)
+// the write slots a reader does not have: text_stream2's "return *this" (0x415870, folded by the original's linker)
+stream_base& tstream3::w_float(float* v) { return *this; }
+stream_base& tstream3::w_bool(char* v) { return *this; }
+stream_base& tstream3::w_u64(unsigned __int64* v) { return *this; }
+stream_base& tstream3::w_i64(__int64* v) { return *this; }
+stream_base& tstream3::w_uint(unsigned* v) { return *this; }
+stream_base& tstream3::w_int(int* v) { return *this; }
+stream_base& tstream3::w_tstr(const rgl::string* s) { return *this; }
 
 // @ 0x417310
 text_stream2::~text_stream2() {}
@@ -272,6 +267,18 @@ stream_base& mem_stream::r_byte(char* v) { TS(buf).read(v, 1); return *this; }
 stream_base& mem_stream::r_int(int* v) { TS(buf).read(v, 4); return *this; }
 // @ 0x417b30
 stream_base& mem_stream::r_i64(__int64* v) { TS(buf).read(v, 8); return *this; }
+// The slots the original's linker folded into the ones around them (identical code, so each has its own body here): float
+// and unsigned are four-byte values, bool a byte, u64 eight; slot12/22 return *this (0x415870, folded across the streams)
+stream_base& mem_stream::w_float(float* v) { TS(buf).write(v, 4); return *this; }
+stream_base& mem_stream::w_bool(char* v) { TS(buf).write(v, 1); return *this; }
+stream_base& mem_stream::w_u64(unsigned __int64* v) { TS(buf).write(v, 8); return *this; }
+stream_base& mem_stream::w_uint(unsigned* v) { TS(buf).write(v, 4); return *this; }
+stream_base& mem_stream::r_float(float* v) { TS(buf).read(v, 4); return *this; }
+stream_base& mem_stream::r_bool(char* v) { TS(buf).read(v, 1); return *this; }
+stream_base& mem_stream::r_u64(unsigned __int64* v) { TS(buf).read(v, 8); return *this; }
+stream_base& mem_stream::r_uint(unsigned* v) { TS(buf).read(v, 4); return *this; }
+stream_base& mem_stream::slot12(void* v) { return *this; }
+stream_base& mem_stream::slot22(void* v) { return *this; }
 // @ 0x417b50
 stream_base& mem_stream::r_stream(stream_base* o)
 {

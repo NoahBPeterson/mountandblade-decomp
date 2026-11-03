@@ -7,6 +7,7 @@
 //       order and the helpers that follow their caller (refresh_page -> place_slot -> make_mesh) are
 //       __declspec(noinline), as the original calls them. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#define UIA_CTOR_OUT_OF_LINE   // add_strip_icon calls the constructor 0x48b1c0 (StripIcon is built out of line, then stores its vptr)
 #include "../../include/image_addrs.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -219,11 +220,14 @@ char PartyWindow::mouse_event(unsigned mask)
 }
 
 // @ 0x5021f0
-void* UiFrame::destroy(unsigned flags)
+// The container's destroying destructor as the party window's object holds it (the slot 0 of PartyPanel's table 0x599bf8 and of
+// text_box's 0x597050): the vector is freed through the pointer vector's out-of-line clear 0x41f4b0. PartyPanel stores the
+// original's table by hand (party_window.h), so this stays a function of its own.
+void* ContainerBase::destroy(unsigned flags)
 {
     *(void**)this = (void*)vtbl_5924a0;
-    release();
-    ((vec<mface>*)&f178)->clear();               // 0x41f4b0
+    ContainerBase::update_children();
+    ((vec<mface>*)&kids)->clear();               // 0x41f4b0
     ((WidgetDtor*)this)->base_dtor();
     if (flags & 1)
         ::operator delete(this);
@@ -258,15 +262,6 @@ char PartyWindow::refresh_event(unsigned mask)
     on_input(mask);
     refresh();
     return r;
-}
-
-// @ 0x502300
-void* WidgetDtor::destroy(unsigned char flag)
-{
-    base_dtor();
-    if (flag & 1)
-        ::operator delete(this);
-    return this;
 }
 
 // @ 0x502320

@@ -88,6 +88,11 @@ def audit(out, only=None):
             n_orig += 1
         j = bisect.bisect_right(vt_starts, ova)
         n_true = min(n_orig, (vt_starts[j] - ova) // 4) if j < len(vt_starts) else n_orig
+        if n_true < n_orig == e["slots"]:
+            # vtable_starts counts any dword of the image that names an .rdata address (a code immediate that happens to equal
+            # the address of a slot is enough), so a start can fall inside a real table. When the run of function pointers is
+            # exactly as long as the table we emit, the table is whole: the "start" in the middle is a coincidence.
+            n_true = n_orig
         i = bisect.bisect_right(sym_addrs, ours)
         n_ours = min(e["slots"], (sym_addrs[i] - ours) // 4) if i < len(sym_addrs) else e["slots"]
         rows, classes, agree, comparable = [], set(), 0, 0

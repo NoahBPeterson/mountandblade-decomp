@@ -293,10 +293,10 @@ extern GuiManager g_gui;                                 // 0x5d7080
 
 
 
-#include "../loading_screen.h"       // LoadingScreen: advance 0x50f440 here
+#include "../screen_records.h"       // C4c3290: advance 0x50f440 here
 
 // @ 0x50f440
-bool LoadingScreen::advance(int* step, int* total, tstring* text)
+bool C4c3290::advance(int* step, int* total, tstring* text)
 {
     bool finished = false;
 
@@ -312,7 +312,7 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
         FILE* f = fopen(path.c_str(), "r");
         if (f) {
             g_module_info.load(f);
-            f44 = (char*)g_module_info.count + 5;   // 0xa44238 = g_module_info.count
+            f44 = (int)((char*)g_module_info.count + 5);   // 0xa44238 = g_module_info.count
             fclose(f);
         } else {
             mb_error("Unable to find module info file");

@@ -9,7 +9,7 @@
 #include "../ui_globals.h"      // UI / core globals
 
 // @ 0x4f66e0
-void ConvScreen::open(int dialog, int* out)
+void Rec1208::slot_empty_2()
 {
     ((gui_manager*)g_gui)->reset();   // 0x42d1b0 (g_gui is the gui_manager)
 
@@ -222,7 +222,7 @@ void ConvScreen::open(int dialog, int* out)
 
     n_lines = 0;
 
-    refresh(-1, out);
+    refresh(-1, 0);
 
     if (target >= 0) {
         int i = 0;

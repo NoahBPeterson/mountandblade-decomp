@@ -27,6 +27,7 @@
 #include "../tstring.h"
 #include "./quest_page.h"
 #include "../window_mgr.h"      // g_windows slots 19 (0xa739cc), 20 (0xa739d0)
+#include "../screen_records.h"       // Recd8: the options screen record (slot 3 is update_settings 0x4d5f20)
 #include "../party/game.h"
 #include "../../include/game_recs.h"
 
@@ -236,88 +237,90 @@ void QuestPage::update_difficulty()
     }
 }
 
+#define W(x) ((Widget*)(void*)(x))
 // @ 0x4d5f20
-void QuestPage::update_settings(int reason)
+void Recd8::scale_3(float)
 {
-    if (w7c->changed(0x10000))
-        g_options.f08 = control_float(w7c);
-    if (w80->changed(0x10000))
-        g_options.f0c = control_float(w80);
-    if (w84->changed(0x10000))
-        g_options.f10 = control_float(w84);
-    if (w78->changed(0x10000)) {
-        g_options.f74 = control_float(w78);
+    if (W(s7c)->changed(0x10000))
+        g_music_volume = control_float(W(s7c));
+    if (W(s80)->changed(0x10000))
+        g_master_volume = control_float(W(s80));
+    if (W(s84)->changed(0x10000))
+        g_exp_arg = control_float(W(s84));
+    if (W(sl78)->changed(0x10000)) {
+        g_options.f74 = control_float(W(sl78));
         update_difficulty();
-        update_days();
+        ((QuestPage*)(void*)this)->update_days();
     }
-    if (w44->changed(0x10000)) {
-        g_options.i4c = control_value(w44);
-        update_difficulty();
-    }
-    if (w48->changed(0x10000)) {
-        g_options.i50 = control_value(w48);
+    if (W(dd44)->changed(0x10000)) {
+        g_opt_dmg_to_player = control_value(W(dd44));
         update_difficulty();
     }
-    if (w4c->changed(0x10000)) {
-        g_options.i44 = control_value(w4c);
+    if (W(dd48)->changed(0x10000)) {
+        g_opt_dmg_to_friends = control_value(W(dd48));
         update_difficulty();
     }
-    if (w50->changed(0x10000)) {
-        g_options.i48 = control_value(w50);
+    if (W(dd4c)->changed(0x10000)) {
+        g_difficulty = control_value(W(dd4c));
         update_difficulty();
     }
-    if (w54->changed(0x10000)) {
-        g_options.i70 = control_value(w54);
+    if (W(dd50)->changed(0x10000)) {
+        g_agent_count = control_value(W(dd50));
         update_difficulty();
     }
-    if (w58->changed(0x10000)) {
-        g_options.i6c = control_value(w58);
+    if (W(dd54)->changed(0x10000)) {
+        g_stick_mode = control_value(W(dd54));
         update_difficulty();
     }
-    if (w5c->changed(0x10000)) {
-        g_options.i64 = control_value(w5c);
-        ((KeysPage*)(void*)this)->set_enabled_text(w5c);
+    if (W(dd58)->changed(0x10000)) {
+        g_ctl_mode = control_value(W(dd58));
+        update_difficulty();
     }
-    if (w60->changed(0x10000)) {
-        g_options.i68 = control_value(w60);
-        ((KeysPage*)(void*)this)->set_enabled_text(w60);
+    if (W(b5c)->changed(0x10000)) {
+        g_flag5aa06c = control_value(W(b5c));
+        ((KeysPage*)(void*)this)->set_enabled_text(W(b5c));
     }
-    if (w64->changed(0x10000)) {
-        g_options.i54 = control_value(w64);
-        ((KeysPage*)(void*)this)->set_enabled_text(w64);
+    if (W(b60)->changed(0x10000)) {
+        g_flag5aa070 = control_value(W(b60));
+        ((KeysPage*)(void*)this)->set_enabled_text(W(b60));
     }
-    if (w68->changed(0x10000)) {
-        g_options.i58 = control_value(w68);
-        ((KeysPage*)(void*)this)->set_enabled_text(w68);
+    if (W(b64)->changed(0x10000)) {
+        g_fx_on = control_value(W(b64));
+        ((KeysPage*)(void*)this)->set_enabled_text(W(b64));
     }
-    if (w6c->changed(0x10000)) {
-        g_options.i5c = control_value(w6c);
-        ((KeysPage*)(void*)this)->set_enabled_text(w6c);
+    if (W(b68)->changed(0x10000)) {
+        g_opt_damage_msgs = control_value(W(b68));
+        ((KeysPage*)(void*)this)->set_enabled_text(W(b68));
     }
-    if (w70->changed(0x10000)) {
-        g_options.i60 = control_value(w70);
-        ((KeysPage*)(void*)this)->set_enabled_text(w70);
+    if (W(b6c)->changed(0x10000)) {
+        g_opt_shot_difficulty = control_value(W(b6c));
+        ((KeysPage*)(void*)this)->set_enabled_text(W(b6c));
     }
-    if (w74->changed(0x10000)) {
-        g_options.i78 = control_value(w74);
-        ((KeysPage*)(void*)this)->set_enabled_text(w74);
+    if (W(b70)->changed(0x10000)) {
+        g_opt_kill_msgs = control_value(W(b70));
+        ((KeysPage*)(void*)this)->set_enabled_text(W(b70));
     }
-    if (w88->changed(0x10000)) {
-        g_options.i14 = control_value(w88);
-        ((KeysPage*)(void*)this)->set_enabled_text(w88);
+    if (W(b74)->changed(0x10000)) {
+        g_show_messages = control_value(W(b74));
+        ((KeysPage*)(void*)this)->set_enabled_text(W(b74));
+    }
+    if (W(b88)->changed(0x10000)) {
+        g_invert = control_value(W(b88));
+        ((KeysPage*)(void*)this)->set_enabled_text(W(b88));
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)
-    if (w40->changed(0x10000)) {
-        g_main_menu.set_state(menu_option);
+    if (W(b40)->changed(0x10000)) {
+        g_main_menu.set_state(w18);
         return;
     }
-    if (w38->changed(0x10000)) {
+    if (W(b38)->changed(0x10000)) {
         slot_as<int>(20)[6] = 0x12;
         g_main_menu.set_state(0x14);
         return;
     }
-    if (w3c->changed(0x10000)) {
+    if (W(b3c)->changed(0x10000)) {
         slot_as<int>(19)[6] = 0x12;
         g_main_menu.set_state(0x13);
     }
 }
+#undef W

@@ -121,39 +121,5 @@ inline ValueWidget* item_value(MissionItem* it) { return *(ValueWidget**)((char*
 #include "../../include/clock_table.h"
 
 
-// ---- the screen object owning the callbacks -------------------------------------------------------------
-struct Hud {
-    char    pad00[0x4];
-    int     f04;                                    // +0x4 (page mode)
-    char    pad08[0x10 - 8];
-    int     f10;                                    // +0x10
-    char    pad14[0x18 - 0x14];
-    int     f18;                                    // +0x18
-    char    pad1c[0x30 - 0x1c];
-    Widget* f30;                                    // +0x30 (menu button)
-    Widget* f34;                                    // +0x34
-    Widget* f38;                                    // +0x38
-    MissionItem* f3c;                               // +0x3c (the clock item; its value source is at +0x484)
-    char    pad40[0x60 - 0x40];
-    Widget* f60;                                    // +0x60 (handle_buttons 0x4d5290: used flags open menu options)
-    Widget* f64;                                    // +0x64
-    Widget* f68;                                    // +0x68
-    Widget* f6c;                                    // +0x6c (may be null)
-    Widget* f70;                                    // +0x70
-    Widget* f74;                                    // +0x74
-    Widget* f78;                                    // +0x78
-    char    pad7c[0x88 - 0x7c];
-    int     f88;                                    // +0x88
-    char    pad8c[0x24c - 0x8c];
-    int     f24c;                                   // +0x24c
-    int     f250;                                   // +0x250
-    Widget* wi[1];                                  // +0x254 (page list)
-
-    void handle_buttons(int arg);                   // 0x4d5290
-    void on_mission_start(int arg);                 // 0x4d5980
-    void on_leave(int arg);                         // 0x4d59f0
-    void on_update(int arg);                        // 0x4d5a20
-};
-
 // A page object of the list at +0x254 (0x4d5ba0 fills it; only the call matters here).
 #endif

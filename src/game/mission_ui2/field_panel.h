@@ -54,7 +54,6 @@ struct FieldPanel : MissionPanel {      // MissionPanel is 0x498 bytes: its __in
     FieldPanel* mirror() const { return (FieldPanel*)slots[1]; }
     FieldShape* shape(int i) const { return (FieldShape*)tracks[i]; }
 
-    void update_bounds();                   // 0x48d020 (the union of the shapes' bounds)
     void set_color(unsigned rgb);           // 0x48d350
     void set_alpha(unsigned a);             // 0x48d3c0
     void update();                          // 0x48d470

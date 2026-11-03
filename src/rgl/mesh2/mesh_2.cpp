@@ -8,6 +8,8 @@
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"
+#include "../../game/screen_records.h"     // C4c3050: slot 3 (0x4ca6c0) is its pressed-button finder
+#include "../../game/ui/mission_ui.h"
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10, stamp 0x4c1ee0)
 #include "../../game/terrain_a/terrain.h"      // Terrain (the 0x845e7c8-byte world-map terrain object): its constructor 0x4ce720 ends this object
 
@@ -47,17 +49,17 @@ void screen_cfg::apply()
 }
 
 // @ 0x4ca6c0
-void dev_list::select_windowed(int a)
+void C4c3050::scale_3(float)
 {
     int found = -1;
-    for (int i = 0; i < nreg; i++) {
-        if (dev[i]) {
-            if (dev[i]->is_fullscreen(0x10000))
+    for (int i = 0; i < count; i++) {
+        if (rows[i]) {
+            if (((Widget*)(void*)rows[i])->changed(0x10000))
                 found = i;
         }
     }
     if (found != -1) {
-        dev[6] = (dev_rec*)found;
+        sel = found;
         found = (int)&g_windows;
         windows_cfg().apply();
     }
@@ -403,7 +405,7 @@ void rec_2e4::release()
 
 // @ 0x4cb650
 
-void rec_1ac::release()
+void Rec23c::slot_empty_1()
 {
     g_gui.reset();
     res_rec* r = p;
@@ -415,14 +417,10 @@ void rec_1ac::release()
 
 // @ 0x4cb680
 
-void rec_178::release()
+void Rec428::slot_empty_1()
 {
-    // TEMP (profiling run): the widget dispatch that lands here during FaceGen::init passes a 0x178-byte widget,
-    // so the destructor below frees the neighbouring heap block. Skipped so the run can reach the loading screen.
-    return;
-    void* self = this;
     g_gui.reset();
-    res_rec* r = ((rec_178*)self)->p;
+    res_rec* r = p;
     if (r) {
         ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);
@@ -629,7 +627,7 @@ void __fastcall fix_skeletons(std::vector<RegSkeleton>* list)
 {
     for (unsigned i = 0; i < list->size(); i++) {
         RegSkeleton* sk = &(*list)[i];
-        SkelRes* res = (SkelRes*)((resource_manager*)&g_resmgr)->get_object70(*(const rgl::string*)&sk->model);
+        SkelRes* res = (SkelRes*)g_resmgr.get_object70(*(const rgl::string*)&sk->model);
         if (res != 0) {
 #define DST(j) ((SkelBone*)(res->bones + (j) * 0xdc))
             for (unsigned j = 0; j < sk->bones.size() && (int)j < res->count; j++) {
@@ -785,7 +783,7 @@ void ObjectList::read(stream_base* s)
         vector4 big(10000000.0f, 10000000.0f, 10000000.0f);
         vector4 neg(-10000000.0f, -10000000.0f, -10000000.0f);
         s->r_tstr((rgl::string*)&entries[i].name);
-        entries[i].nodes.assign(as_mesh_vector(g_resmgr.find_meshes((const rgl::string*)&entries[i].name)));
+        entries[i].nodes.assign(as_mesh_vector(((resmgr*)&g_resmgr)->find_meshes((const rgl::string*)&entries[i].name)));
         entries[i].mn = big;
         entries[i].mx = neg;
         for (unsigned j = 0; j < entries[i].nodev().size(); j++) {
@@ -798,7 +796,7 @@ void ObjectList::read(stream_base* s)
         if (buf.equals("0")) {
             entries[i].shape = 0;
         } else {
-            entries[i].shape = (mesh*)((resource_manager*)&g_resmgr)->get_object60(*(const rgl::string*)&buf);
+            entries[i].shape = (mesh*)g_resmgr.get_object60(*(const rgl::string*)&buf);
             entries[i].body = body_copy_shape(entries[i].shape);
         }
     }
@@ -838,7 +836,7 @@ void MissionObj::read(stream_base* s)
     tstring t1;
     s->r_tstr((rgl::string*)&t0);
     if (t0.len > 1 && t0.differs(g_none)) {
-        std::vector<rgl::mesh*> nodes = g_resmgr.find_meshes((const rgl::string*)&t0);
+        std::vector<rgl::mesh*> nodes = ((resmgr*)&g_resmgr)->find_meshes((const rgl::string*)&t0);
         vec_assign_43f0a0(&nodes_, &as_mesh_vector(nodes));
         unsigned j = 0;
         while (1) {
@@ -855,7 +853,7 @@ void MissionObj::read(stream_base* s)
     }
     s->r_tstr((rgl::string*)&t1);
     if (t1.len > 1) {
-        shape = (mesh*)((resource_manager*)&g_resmgr)->get_object60(*(const rgl::string*)&t1);
+        shape = (mesh*)g_resmgr.get_object60(*(const rgl::string*)&t1);
         body = body_copy_shape(shape);
         vector4 b;
         vmax(&mx, &mx, body->get_bounds_max(&b));

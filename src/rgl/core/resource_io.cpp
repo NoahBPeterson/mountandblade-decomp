@@ -58,6 +58,16 @@ stream_base& text_stream::r_int(int* v)
     *v = mb_parse_int(tok);
     return *this;
 }
+// the original's linker folded this with r_int (0x415930): the same code, its own body
+stream_base& text_stream::r_uint(unsigned* v)
+{
+    char tok[8192];
+    int toklen;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &toklen);
+    *v = mb_parse_int(tok);
+    return *this;
+}
 
 // @ 0x4159a0
 int mb_parse_int(const char* s)
@@ -299,6 +309,7 @@ stream_base& w_skeleton(stream_base& s, skeleton* k)
 }
 
 // ---- textures -----------------------------------------------------------------------------------------
+int texture::type() { return 2; }                             // 0x48b590 (folded)
 // @ 0x416540
 int texture::load(int check_exists, rgl::string* root)
 {
@@ -390,6 +401,7 @@ int texture::unload()
 }
 
 // ---- shaders (`material`) -----------------------------------------------------------------------------
+int material::type() { return 4; }                            // 0x48c460 (folded)
 // @ 0x416830
 material::material()
 {
@@ -502,6 +514,7 @@ void material_io::create_shaders()
 }
 
 // ---- materials (`skin`) ---------------------------------------------------------------------------------
+int skin::type() { return 3; }                                // 0x48b880 (folded)
 // @ 0x416cd0
 skin::skin()
 {
@@ -586,4 +599,130 @@ void rgl::aabb::update()
         float dz = max.z - c->z;
         radius = (float)sqrt(dx * dx + dy * dy + dz * dz);
     }
+}
+
+// ---- text_stream2's read slots (copies of text_stream's, folded by the original's linker) ----
+// ---- text stream: read slots -----------------------------------------------------------------------
+// @ 0x415900
+void text_stream2::expect_token() { EXPECT_TOKEN(); }
+// @ 0x415930
+stream_base& text_stream2::r_int(int* v)
+{
+    char tok[8192];
+    int toklen;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &toklen);
+    *v = mb_parse_int(tok);
+    return *this;
+}
+// the original's linker folded this with r_int (0x415930): the same code, its own body
+stream_base& text_stream2::r_uint(unsigned* v)
+{
+    char tok[8192];
+    int toklen;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &toklen);
+    *v = mb_parse_int(tok);
+    return *this;
+}
+// @ 0x4159f0
+stream_base& text_stream2::r_byte(char* v)
+{
+    char tok[8192];
+    int toklen;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &toklen);
+    *v = (char)atoi(tok);
+    return *this;
+}
+// @ 0x415a60
+stream_base& text_stream2::r_i64(__int64* v)
+{
+    char tok[8192];
+    int toklen;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &toklen);
+    bool neg = false;
+    int start = 0;
+    if (tok[0] == '-') {
+        neg = true;
+        start = 1;
+    }
+    __int64 mult = 1;
+    *v = 0;
+    for (int i = toklen - 1; i >= start; i--) {
+        *v += (__int64)(tok[i] - '0') * mult;
+        mult *= 10;
+    }
+    if (neg)
+        *v = -*v;
+    return *this;
+}
+// @ 0x415b60
+stream_base& text_stream2::r_u64(unsigned __int64* v)
+{
+    char tok[8192];
+    int toklen;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &toklen);
+    *v = 0;
+    __int64 mult = 1;
+    for (int i = toklen - 1; i >= 0; i--) {
+        *v += (__int64)(tok[i] - '0') * mult;
+        mult *= 10;
+    }
+    return *this;
+}
+// @ 0x415c10
+stream_base& text_stream2::r_bool(char* v)
+{
+    char tok[8192];
+    int toklen;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &toklen);
+    *v = atoi(tok) != 0;
+    return *this;
+}
+// @ 0x415c80
+stream_base& text_stream2::r_float(float* v)
+{
+    char tok[0x2000];
+    int len;
+    EXPECT_TOKEN();
+    TS(buf).get_token(tok, &len);
+    *v = (float)atof(tok);
+    return *this;
+}
+// @ 0x415cf0
+// Reads a length, then that many raw bytes of this stream's buffer into o's buffer.
+stream_base& text_stream2::r_stream(stream_base* o)
+{
+    int n;
+    r_int(&n);
+    o->reset();
+    if (n) {
+        for (int i = 0; i < n; i++) {
+            char c;
+            TS(buf).read(&c, 1);
+            TS(o->buf).push_back(c);
+        }
+    }
+    return *this;
+}
+// @ 0x415d60
+// Like open_read, but opens in text mode and takes the byte count fread returns.
+bool text_stream2::open_read_text(const char* path)
+{
+    name.assign(path);
+    fp = fopen(path, "r");
+    if (fp)
+        failed = 0;
+    else
+        failed = 1;
+    if (!failed) {
+        size_t n = (size_t)file_length(fp);
+        read_from_inl(buf, fp, n);
+        fclose(fp);
+    }
+    return !failed;
 }

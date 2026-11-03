@@ -44,11 +44,11 @@
 #define STACK_IDS ((int*)((char*)g_game + 0x14058))   // GameData +0x14058: the per-stack random ids (0x20 per stack); +0x1405c is the tbl of game_data.h
 
 // @ 0x531590
-void StartMenu::select(int arg)
+void Rec118::scale_3(float)
 {
     int idx = -1;
     for (int i = 0; i < count; i++)
-        if (buttons[i]->changed(0x10000))
+        if (((Widget*)(void*)row[i])->changed(0x10000))
             idx = i;
     if (idx != -1)
     {
@@ -111,25 +111,25 @@ int MenuCtl::weight(unsigned flags)
 }
 
 // @ 0x531780
-void ContinueMenu::update(int arg)
+void Rec34::scale_3(float)
 {
     g_gui.flush();
-    if (f4 == 0)
+    if (w04 == 0)
     {
         char b;
-        if (buttons[0]->changed(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
+        if (((Widget*)(void*)f30)->changed(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
             g_map_flags.commit((char*)&b);
     }
     else
     {
         char b;
-        if (buttons[0]->changed(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
+        if (((Widget*)(void*)f30)->changed(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
             g_map_flags.commit((char*)&b);
     }
 }
 
 // @ 0x531800
-void XferWin::update(int)
+void C4c3160::scale_3(float)
 {
     int extra = 0;
     int slot;
@@ -139,7 +139,7 @@ void XferWin::update(int)
     int flag;
     int out;
     int i;
-    int troop;
+    int w14;
     int v;
     bool c48;
     bool c4c;
@@ -195,8 +195,8 @@ void XferWin::update(int)
 after_scroll:
     if (f8e4 >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_a17188 &&
         !g_keyboard.prev[0x2d] && g_cfg.cheat_mode && g_trial_mode) {
-        slot = slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
-        pid = f8dc != 0 ? sel_party : g_game->f78;
+        slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
+        pid = f8dc != 0 ? w10 : g_game->f78;
         // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
         Party* p = (Party*)((Scene*)(void*)party_mgr())->get(pid);   // 0x51ee50
         p->add_xp_to_stack(slot, 0xd2);                              // 0x4b1d80
@@ -204,7 +204,7 @@ after_scroll:
     }
 
     rows = 2;
-    if (state == 0 || state == 5)
+    if (w04 == 0 || w04 == 5)
         rows = 1;
     for (r = 0; r < rows; r++) {
         for (c = 0; c < 2; c++) {
@@ -216,9 +216,9 @@ after_scroll:
     }
 
     if (w50->changed(0x10000)) {
-        slot = slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
-        pid = f8dc != 0 ? sel_party : g_game->f78;
-        cmp_party = f8dc != 0 ? g_game->f78 : sel_party;
+        slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
+        pid = f8dc != 0 ? w10 : g_game->f78;
+        cmp_party = f8dc != 0 ? g_game->f78 : w10;
         count = 1;
         if (g_keyboard.down[0x1d] || g_keyboard.down[0x9d])
             count = party_index(pid)->stacks[slot].count;
@@ -226,21 +226,21 @@ after_scroll:
         for (i = 0; i < count; i++) {
             if (w50->f104 & 3)
                 break;
-            troop = party_index(pid)->stacks[slot].troop;
+            w14 = party_index(pid)->stacks[slot].troop;
             v = 0;
-            if (state == 3) {
-                v = g_game->sl_party_price(troop);
-            } else if (state == 2 && troop >= 0) {
+            if (w04 == 3) {
+                v = g_game->sl_party_price(w14);
+            } else if (w04 == 2 && w14 >= 0) {
                 g_trigger_result.store0 = 0;
                 g_trigger_result.store1 = 0;
-                bool ok = ((SoundCtl*)g_game)->emit_event(10, troop, g_game->f78);   // 0x435790
+                bool ok = ((SoundCtl*)g_game)->emit_event(10, w14, g_game->f78);   // 0x435790
                 v = g_trigger_result.store0;
                 if (!ok)
                     v = GI(0x13a20);
             }
             if (cmp_party == g_game->player)
                 v = -v;
-            if (state == 3 || state == 2)
+            if (w04 == 3 || w04 == 2)
                 move_men(v);
             stack_remove(pid, slot, cmp_party, &out, &flag);
             ((PartyScreen*)(void*)this)->refresh_selection();
@@ -260,8 +260,8 @@ after_scroll:
     c48 = w48->changed(0x10000);
     c4c = w4c->changed(0x10000);
     if (c48 || c4c) {
-        slot = slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
-        pid = f8dc != 0 ? sel_party : g_game->f78;
+        slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
+        pid = f8dc != 0 ? w10 : g_game->f78;
         sel = &party_index(pid)->stacks[slot];
         tsel = &g_game->troops[sel->troop];
         found = 0;
@@ -416,8 +416,8 @@ tail:
         action = 0xd;
         if (party_index(a)->stacks[b].flags & 1)
             action = 0xe;
-        troop = party_index(a)->stacks[b].troop;
-        ((MissionCtx*)&g_mission_ctx)->build_hero_table(troop, STACK_IDS[1 + b * 0x20],
+        w14 = party_index(a)->stacks[b].troop;
+        ((MissionCtx*)&g_mission_ctx)->build_hero_table(w14, STACK_IDS[1 + b * 0x20],
                     g_game->f78, action);
         slot_as<int>(16)[6] = 0xc;
         g_main_menu.set_state(0x10);
@@ -425,17 +425,17 @@ tail:
     }
 
 close_menu:
-    if (state == 4 && g_mission_ctx.f2c4 < 1)
+    if (w04 == 4 && g_mission_ctx.f2c4 < 1)
         gx()->update_party_sprites();
-    if (f18 == 100) {
+    if (w18 == 100) {
         g_map_flags.commit((char*)commit_out + 3);
         return;
     }
-    g_main_menu.set_state(f18);
+    g_main_menu.set_state(w18);
 }
 
 // @ 0x5324d0
-void XferWin::clear_selection()
+void C4c3160::clear_selection()
 {
     if (f8e4 != -1) {
         int idx = (f8e0 + f8dc * 2) * 0x40 + f8e4;
@@ -448,34 +448,34 @@ void XferWin::clear_selection()
 }
 
 // @ 0x532520
-void XferWin::get_cell(int a, int b, int c, int* main, int* cell)
+void C4c3160::get_cell(int a, int b, int c, int* main, int* cell)
 {
-    *cell = slots[(b + a * 2) * 0x40 + c];
+    *cell = sel_slots[(b + a * 2) * 0x40 + c];
     *main = g_game->f78;
     if (a != 0)
-        *main = sel_party;
+        *main = w10;
 }
 
 // @ 0x532560
-void XferWin::move_men(int amount)
+void C4c3160::move_men(int amount)
 {
     g_game->troops[g_game->player].f3b4 += amount;
-    g_game->troops[troop].f3b4 -= amount;
+    g_game->troops[w14].f3b4 -= amount;
 }
 
 struct Row { int v[8]; };
 typedef char assert_row[sizeof(Row) == 0x20 ? 1 : -1];
 
 // @ 0x5325b0
-void XferWin::apply(int which)
+void C4c3160::apply(int which)
 {
     GameData* g = g_game;
     int mainp = g->f78;
     int owner = g->player;
     if (which != 0) {
-        mainp = sel_party;
-        if (state == 3 || state == 2) {
-            owner = troop;
+        mainp = w10;
+        if (w04 == 3 || w04 == 2) {
+            owner = w14;
         } else {
             owner = party_mgr()->get(mainp)->stacks[0].troop;
         }
@@ -504,12 +504,12 @@ void XferWin::apply(int which)
 }
 
 // @ 0x532740
-void XferWin::swap_rows(int which)
+void C4c3160::swap_rows(int which)
 {
-    int slot = slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
+    int slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
     int owner = g_game->f78;
     if (f8dc != 0)
-        owner = sel_party;
+        owner = w10;
     PartyX* p = party_index(owner);
 
     Stack tmp = p->stacks[slot + which];
@@ -528,7 +528,7 @@ void XferWin::swap_rows(int which)
 }
 
 // @ 0x532830
-void XferWin::stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed)
+void C4c3160::stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed)
 {
     int* table;
     Row local;
@@ -647,7 +647,7 @@ void GameDataX::update_party_sprites()
 
 
 // @ 0x533020
-void XferWin::set_selection(int a, int b, int c)
+void C4c3160::set_selection(int a, int b, int c)
 {
     clear_selection();
     f8dc = a;
@@ -915,7 +915,7 @@ dispatch:
 }
 
 // @ 0x5337a0
-void TickScreen::on_tick(int code)
+void Rec58::scale_3(float)
 {
     if (W(this, 0x40)->changed(0x10000))
         ((LogScreen*)(void*)this)->build(1 != 0);

@@ -11,14 +11,14 @@
 004e4340 ??$_Uninit_copy@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@PAUloading_config@@V?$allocator@Uloading_config@@@3@@std@@YAPAUloading_config@@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@0@0PAU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
 004e43e0 ?draw_string@gui_manager@@QAEXPAUtstring@@MHD@Z
 004e4690 ?load@RagModel@@QAEXPAVTiXmlElement@@@Z
-004e4790 ?init@SaveWindow@@QAEXXZ
+004e4790 ?slot_empty_2@C4c31c0@@UAEXXZ
 004e4c70 ?label_refresh@@YAXPAUMissionUi@@Utstring@@@Z
 004e51e0 ?get_hex@ini_file@@QAEHPAH@Z
 004e5230 ?get_float@ini_file@@QAEMPAH@Z
-004e5270 ?list_saves@SaveWindow@@QAEXXZ
+004e5270 ?list_saves@C4c31c0@@QAEXXZ
 004e54e0 ?read_slot@SlotHeader@@QAE_NPAUSlotReader@@@Z
 004e5570 ?make_short_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z
-004e55f0 ?slot_button@SaveWindow@@QAEXPAUContainerBase@@HPAPAUUiAInline@@@Z
+004e55f0 ?slot_button@C4c31c0@@QAEXPAUContainerBase@@HPAPAUWidget@@@Z
 004e5d30 ?hex_field@ini_file@@QAEHABUtstring@@@Z
 004e5d80 ?create_stub@SavePanel@@QAEXXZ
 004e5d90 ?create@SavePanel@@QAEXXZ

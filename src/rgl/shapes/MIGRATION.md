@@ -87,7 +87,8 @@ What the module shows:
   emitted later in the same object or in a later one (not decided here).
 - **The `std::string` members and `std::logic_error`/`length_error` (0x40c0c0..0x40c630)** are template and
   exception-class COMDATs the linker placed at the first object that instantiates them (here, between the
-  contact dispatcher and the manifold). They are explicit instantiations in the module.
+  contact dispatcher and the manifold). The string members are explicit instantiations in the module; the exception classes
+  are std:: (rows in agent_combat.manifest.txt).
 - **The end is the next agent's start, not a boundary.** `renderer::set_blend_mode` (0x40e940, in the same
   slice s0040e060) and the following region continue the same emission order (`renderer` members again). The
   TU may well continue past 0x40e940; `vec<mface>::erase` (0x40fd40) and the call from 0x40dff0 to 0x40fd40
@@ -200,8 +201,9 @@ Removed:
   and `write_vec3` at 0x408570 (the slice had them reversed together with save/load).
 - `vec32`/`elem32` of s0040e060 (same template as `vec<mface>`, different name): one instantiation,
   `vec<mface>::insert_n`/`uninit_fill_n<mface>`, which is now byte-exact over the whole COMDAT.
-- `force_vtables` is kept (std::logic_error / length_error scalar deleting destructors and vtables forced into
-  the object, as in s0040bcb0), because they are not referenced by any function of this stretch.
+- `force_vtables` and the global-namespace copies of logic_error / length_error are gone: the std:: classes of <stdexcept> are the
+  original's (std::logic_error vtable 0x59c978, std::length_error 0x59c984); cl emits their members wherever one is thrown, and
+  their six rows (0x40c2c0..0x40c630) are in agent_combat.manifest.txt, whose vec_xlen (0x43e2a0) throws std::length_error.
 
 ## Files
 

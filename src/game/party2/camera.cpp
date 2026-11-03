@@ -36,6 +36,7 @@
 #include "./party_2.h"
 #include "../../include/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
 #include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
+#include "../ui/container.h"                 // ContainerBase (ui/mission_ui.h)
 #include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
@@ -76,10 +77,6 @@ struct ForceLabel {
 // level::nearest_face 0x439a50 (agent2/agent_stats.cpp): terrain_b/cell_grid.h
 struct PartyMgrW {
     int add_slot();   // 0x493960 world_data/world_data.cpp
-};
-struct ContainerW {                                                                 // world_data/world_data.cpp
-    void bounds_of(int* a, float* p3, float* p4, float* p5);                        // 0x490710 (ret 0x10)
-    void dtor_common();                                                             // 0x490520
 };
 struct SlotHolder40 {
     void set40(int idx, int val);   // 0x493db0 world_data/world_data.cpp
@@ -228,7 +225,6 @@ struct PObj {
     char on_event(unsigned ev);                 // 0x49aca0
     NodeA* create();                            // 0x49ad20
     void place(int* p);                         // 0x49b4b0
-    R8 text_rect();                             // 0x49b4f0
 };
 
 // ---- class B: the container (vptr 0x592848, base ctor 0x4931a0, size 0x190) ------------------------
@@ -374,36 +370,7 @@ void PObj::place(int* p)
     ((::Mission*)this)->add_placed(&b, p, p + 1, (const rgl::matrix*)((char*)g_game + 0x14014), &a);
 }
 
-// @ 0x49b4f0
-R8 PObj::text_rect()
-{
-    if (m118 == 0) {
-        mesh* m = new mesh;
-        {
-            tstring s("ui_font");
-            *(void**)((char*)m + 0x2c) = ((resmgr*)&orig::g_resmgr_obj)->lookup(s);
-        }
-        v31(4, m);
-    }
-    if (f122) {
-        *(int*)((char*)m118 + 0x114) = 1;
-        *(int*)((char*)m118 + 0x140) = 1;
-    }
-
-    R8 r;
-    float pos[4];
-    pos[1] = f13c;
-    pos[2] = 0.0f;
-    int arg = -1;
-    pos[0] = f138;
-    Font* font = f124 ? (Font*)f124 : g_font;
-
-    m118->clear_geometry();
-    font->layout_text((float*)&r, &name, (vector4*)pos, (float*)v140, m118, (int)&arg,
-                      (float*)&vf0[2], (float*)&vf0[0], f148);
-    v38(&f14c);
-    return r;
-}
+// 0x49b4f0 is MissionUi::get_xy (config/widget_mgr.cpp): the base class's text-rect slot, not this panel's
 
 } // namespace c49aca0
 
@@ -1335,12 +1302,12 @@ struct Object {
     int     sub0, sub1, sub2;                   // +0x17c
 
     void base_ctor() { ((MissionUi*)this)->MissionUi::MissionUi(); }                 // 0x48ae20
-    void dtor_common() { ((ContainerW*)this)->dtor_common(); }                         // 0x490520
+    void dtor_common() { ((ContainerBase*)this)->ContainerBase::~ContainerBase(); }     // 0x490520
     void update() { ((FieldPanel*)this)->update(); }                       // 0x48d470
     void terrain_refresh(void* p) { ((WItem*)this)->terrain_refresh((const float*)p); }                // 0x48f120  (p = &w20)
     void set_color(unsigned v) { ((FieldPanel*)this)->set_color(v); }             // 0x48d350
     void set_alpha(unsigned v) { ((FieldPanel*)this)->set_alpha(v); }             // 0x48d3c0
-    void bounds_of(void* scene, float* pos, void* c, void* d) { ((ContainerW*)this)->bounds_of((int*)scene, pos, (float*)c, (float*)d); }   // 0x490710
+    void bounds_of(void* scene, float* pos, void* c, void* d) { ((ContainerBase*)this)->ContainerBase::render((rgl::scene*)scene, pos, (int)c, (int)d); }   // 0x490710
 };
 
 // ---- the view itself -----------------------------------------------------------------------------

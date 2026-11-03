@@ -67,7 +67,7 @@ struct ConvScrollSrc {
 };
 
 // @ 0x4f73c0
-void ConvScreen::refresh(int sel, int* out)
+void Rec1208::refresh(int sel, int* out)
 {
     if (n_lines > 1) {
         if (sel >= 0) {

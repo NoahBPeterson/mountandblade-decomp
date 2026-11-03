@@ -6,34 +6,36 @@
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../triggers/item_rec.h"       // ItemRec2: the escape menu record (slot 3 is buttons 0x4e87d0)
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-// @ 0x4e87d0    MapScreen::buttons(int arg)
-void MapScreen::buttons(int arg)
+#define W(x) ((Widget*)(void*)(x))
+// @ 0x4e87d0    ItemRec2::scale_3(float)
+void ItemRec2::scale_3(float arg)
 {
-    source.pick(&arg);
+    ((MissionSource*)&owned)->pick((int*)&arg);
     bool save = false;
-    if (!f64->changed(0x10000)) {
-        if (f74 == 0 || !f74->changed(0x10000)) {
-            if (f68->changed(0x10000)) {
+    if (!W(row1)->changed(0x10000)) {
+        if (row5 == 0 || !W(row5)->changed(0x10000)) {
+            if (W(row2)->changed(0x10000)) {
                 *(int*)(slot_as<char>(18) + 0x18) = 5;
                 g_main_menu.set_state(0x12);
                 return;
             }
-            if (f6c != 0 && f6c->changed(0x10000)) {
+            if (row3 != 0 && W(row3)->changed(0x10000)) {
                 save_game(-1, 0);
                 g_msglog.add(*g_strtable.lookup(tstring("ui_game_saved")), -1);
-                g_main_menu.set_state(menu_sel);
+                g_main_menu.set_state(w18);
                 return;
             }
-            if (f70 != 0 && f70->changed(0x10000)) {
+            if (row4 != 0 && W(row4)->changed(0x10000)) {
                 *(int*)(slot_as<char>(21) + 0x18) = 5;
                 g_main_menu.set_state(0x15);
                 return;
             }
-            if (f60->changed(0x10000) || (char)g_keyboard.is_ready(1)) {
-                g_main_menu.set_state(menu_sel);
+            if (W(row0)->changed(0x10000) || (char)((Slot*)(void*)&g_keyboard)->is_ready(1)) {
+                g_main_menu.set_state(w18);
                 return;
             }
             return;
@@ -52,39 +54,12 @@ void MapScreen::buttons(int arg)
     }
     g_main_menu.set_state(4);
 }
+#undef W
 
-// ---- the file writer (stream classes of s00417850/mbbin.h: vtable 0x54a740 -> 0x54add8) ----------------
-// This file's own tstring-based copy of the stream root (rgl/stream.h cannot be included here: see stream_fwd.h).
-#include "../../rgl/stream_fwd.h"
-struct stream_root {
-    virtual void reset();                               // slot 0
-    virtual void rewind();                              // slot 1
-    STREAM_SLOTS_OF(stream_root, rgl::string, = 0)
-    virtual bool at_end();                              // 23
-    virtual void set_autoflush(char f);                 // 24
-    virtual char get_autoflush();                       // 25
-    virtual int flush();                                // 26 (+0x68)
-    tstring name;                                       // +4
-    int state;                                          // +0x14
-    char autoflush;                                     // +0x18
-    int flushed;                                        // +0x1c
-    tstring buf;                                        // +0x20
-    stream_root() { autoflush = 0; flushed = 0; }
-};
-struct file_writer_base : stream_root {
-    FILE* fp;                                           // +0x30
-    char failed;                                        // +0x34
-    char is_open;                                       // +0x35
-    file_writer_base() { failed = 1; is_open = 0; state = 0; }
-};
-#undef SF_RT
-#define SF_RT stream_root
-struct file_writer : file_writer_base {
-    STREAM_SLOTS_OF(stream_root, rgl::string, )
-    virtual int flush();
-};
-STREAM_FWD_BIN_WRITER(file_writer)
-int file_writer::flush() { return ((bin_writer*)this)->bin_writer::flush(); }
+// ---- the file writer (vtable 0x54add8 = bin_writer; its constructor is inline here, stream_inline.h) ----
+#include "../../rgl/stream.h"
+#include "../../rgl/stream_inline.h"
+__forceinline bin_writer::bin_writer() {}   // inline here (resmgr.cpp load_pack calls the out-of-line 0x417c10)
 
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../../include/clock_table.h"
@@ -113,7 +88,7 @@ int save_game(int version, tstring* name)
     sprintf(dirA, "");
     save_path(dirA);
     mb_snprintf(pathB, 0x200, "%s%s\\sg%d%d.sav", dirA, ps, ver / 10, ver % 10);
-    file_writer w;
+    bin_writer w;
     sprintf(dirC, "");
     save_path(dirC);
     g = g_game;
@@ -137,7 +112,7 @@ int save_game(int version, tstring* name)
                 LOG("Closing new save game file...");
                 int rc = 1;
                 if (w.is_open) {
-                    rc = ((stream_root*)&w)->flush();
+                    rc = ((stream_base*)&w)->flush();
                     if (!rc)
                         rc = fclose(w.fp);
                     w.failed = 1;
@@ -216,6 +191,3 @@ void GameData::load_header(SaveCtx* h)
     h->stamp = (float)(g_ticks[f13b18] - clock) * 1e-5f;
 }
 
-// ItemRec2 slot 3 (0x4e87d0 MapScreen::buttons).
-#include "../triggers/item_rec.h"
-void ItemRec2::scale_3(const float* a) { ((MapScreen*)this)->buttons((int)a); }

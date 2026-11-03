@@ -463,23 +463,7 @@ UiAInline* __cdecl make_short_button(MissionUi* frame, const tstring* text, floa
 struct TStringArray {                                             // an array of tstrings allocated with new[] (the count sits in front of the first element)
     __declspec(noinline) void* destroy(unsigned flags);           // 0x4fd0e0 (this = the first element; called, not inlined, by 0x4fc820)
 };
-struct LogScreen {                                                // the game-log window (built by 0x4fc820)
-    char pad0[4];
-    int show_log;                                                 // +4 (nonzero: the full game log; 0 = the recent messages: 0x4fc810 passes it on)
-    char pad8[0x2c - 8];
-    FrameWidget* frame;                                           // +0x2c
-    MWidget* log;                                                 // +0x30
-    MissionUi* bar;                                               // +0x34
-    MissionUi* slider;                                            // +0x38
-    MissionUi* tab_return;                                        // +0x3c
-    MissionUi* tab_log;                                           // +0x40
-    MissionUi* tab_recent;                                        // +0x44
-    MissionUi* tab_troops;                                        // +0x48
-    MissionUi* tab_locations;                                     // +0x4c
-    MissionUi* tab_factions;                                      // +0x50
-    MissionUi* tab_quests;                                        // +0x54
-    void build(bool show);                                        // 0x4fc820 (ret 4)
-    void build_thunk();                                           // 0x4fc810 (builds the log screen from the flag at +4)
-};
+#include "../screen_records.h"
+typedef Rec58 LogScreen;                                          // the game-log window: the record of screen_records.h (built by 0x4fc820)
 
 #endif // AGENT5_HUD_H
