@@ -94,6 +94,7 @@ static inline void set_quality(int v, int which)
 }
 
 // ---- the page ----------------------------------------------------------------------------------------
+#include "../screen_records.h"       // Recf0: the video options page record (slot 3 is update 0x4d63b0)
 struct VideoPage {
     char    pad00[0x18];
     int     option;                                         // +0x18 (the option the menu returns to)
@@ -129,18 +130,18 @@ struct VideoPage {
     char    changed_config;                                 // +0xec (something was applied)
     char    apply_requested;                                // +0xed (write the config and leave)
 
-    void update(int reason);                                // 0x4d63b0
 };
 
+#define W(x) ((Widget*)(void*)(x))
 // @ 0x4d63b0
-void VideoPage::update(int reason)
+void Recf0::scale_3(float)
 {
-    if (w50->changed(0x10000)) {
-        orig::g_opt_blood = settings_value(w50);
-        update_performance_caption(this);
+    if (W(blood)->changed(0x10000)) {
+        orig::g_opt_blood = settings_value(W(blood));
+        update_performance_caption((VideoPage*)this);
     }
 
-    if (w60->changed(0x10000)) {
+    if (W(change)->changed(0x10000)) {
         // switching the renderer: replace the two menu captions and always return to the main menu
         {
             tstring explanation("ui_change_directx_explanation");
@@ -156,60 +157,60 @@ void VideoPage::update(int reason)
         ((WindowMgrW*)(void*)&m)->open(0);
     }
 
-    if (w64->changed(0x10000)) {
-        orig::g_char_detail = settings_value(w64);
-        set_enabled_text_local(w64, this);
-        update_performance_caption(this);
+    if (W(quality[0])->changed(0x10000)) {
+        orig::g_char_detail = settings_value(W(quality[0]));
+        set_enabled_text_local(W(quality[0]), this);
+        update_performance_caption((VideoPage*)this);
     }
-    if (w68->changed(0x10000)) {
-        g_options.i28 = settings_value(w68);
-        set_enabled_text_local(w68, this);
-        update_performance_caption(this);
+    if (W(quality[1])->changed(0x10000)) {
+        g_options.i28 = settings_value(W(quality[1]));
+        set_enabled_text_local(W(quality[1]), this);
+        update_performance_caption((VideoPage*)this);
     }
-    if (w6c->changed(0x10000)) {
-        g_options.i2c = settings_value(w6c);
-        set_enabled_text_local(w6c, this);
-        changed_config = 1;
-        update_performance_caption(this);
+    if (W(quality[2])->changed(0x10000)) {
+        g_options.i2c = settings_value(W(quality[2]));
+        set_enabled_text_local(W(quality[2]), this);
+        f_ec = 1;
+        update_performance_caption((VideoPage*)this);
     }
-    if (w54->changed(0x10000)) {
-        g_options.i7c = settings_value(w54);
-        changed_config = 1;
-        update_performance_caption(this);
+    if (W(plant_shadows)->changed(0x10000)) {
+        g_options.i7c = settings_value(W(plant_shadows));
+        f_ec = 1;
+        update_performance_caption((VideoPage*)this);
     }
-    if (w70->changed(0x10000)) {
-        g_options.i20 = settings_value(w70);
-        set_enabled_text_local(w70, this);
-        update_performance_caption(this);
+    if (W(quality[3])->changed(0x10000)) {
+        g_options.i20 = settings_value(W(quality[3]));
+        set_enabled_text_local(W(quality[3]), this);
+        update_performance_caption((VideoPage*)this);
     }
-    if (w74->changed(0x10000)) {
-        g_options.i38 = settings_value(w74);
-        set_enabled_text_local(w74, this);
-        update_performance_caption(this);
+    if (W(quality[4])->changed(0x10000)) {
+        g_options.i38 = settings_value(W(quality[4]));
+        set_enabled_text_local(W(quality[4]), this);
+        update_performance_caption((VideoPage*)this);
     }
-    if (w78->changed(0x10000)) {
-        g_cfg.fake_reflections = settings_value(w78);
-        set_enabled_text_local(w78, this);
-        changed_config = 1;
-        update_performance_caption(this);
+    if (W(quality[5])->changed(0x10000)) {
+        g_cfg.fake_reflections = settings_value(W(quality[5]));
+        set_enabled_text_local(W(quality[5]), this);
+        f_ec = 1;
+        update_performance_caption((VideoPage*)this);
     }
-    if (w5c->changed(0x10000)) {
-        g_cfg.shadow_quality_req = 2 - settings_value(w5c);
-        changed_config = 1;
-        update_performance_caption(this);
+    if (W(shadow_quality)->changed(0x10000)) {
+        g_cfg.shadow_quality_req = 2 - settings_value(W(shadow_quality));
+        f_ec = 1;
+        update_performance_caption((VideoPage*)this);
     }
-    if (w48->changed(0x10000)) {
-        set_quality(5 - settings_value(w48), 0);
-        update_performance_caption(this);
+    if (W(corpses)->changed(0x10000)) {
+        set_quality(5 - settings_value(W(corpses)), 0);
+        update_performance_caption((VideoPage*)this);
     }
-    if (w4c->changed(0x10000)) {
-        set_quality(5 - settings_value(w4c), 1);
-        update_performance_caption(this);
+    if (W(ragdolls)->changed(0x10000)) {
+        set_quality(5 - settings_value(W(ragdolls)), 1);
+        update_performance_caption((VideoPage*)this);
     }
 
-    if (w34->changed(0x10000)) {
+    if (W(ui_scale)->changed(0x10000)) {
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
-        float gamma = w34->get_float();
+        float gamma = W(ui_scale)->get_float();
         orig::g_scale_x = gamma;
         float inv = orig::g_one / gamma;
         vector4 v, vi;
@@ -228,12 +229,12 @@ void VideoPage::update(int reason)
             tstring k("ui_default");
             text = *g_strtable.lookup(k);
         }
-        { char r[8]; w98->set_text(r, text); }
-        { char r[8]; w98->get_xy(r); }
+        { char r[8]; W(val_gamma)->set_text(r, text); }
+        { char r[8]; W(val_gamma)->get_xy(r); }
     }
 
-    if (w44->changed(0x10000)) {
-        int pct = (int)w44->get_float();
+    if (W(ragdoll_limit)->changed(0x10000)) {
+        int pct = (int)W(ragdoll_limit)->get_float();
         g_options.i34 = pct;
         char buf[0x40];
         {
@@ -243,23 +244,23 @@ void VideoPage::update(int reason)
         }
         {
             tstring text(buf);
-            { char r[8]; wa0->set_text(r, text); }
+            { char r[8]; W(val_grass_density)->set_text(r, text); }
         }
-        { char r[8]; wa0->get_xy(r); }
-        changed_config = 1;
-        update_performance_caption(this);
+        { char r[8]; W(val_grass_density)->get_xy(r); }
+        f_ec = 1;
+        update_performance_caption((VideoPage*)this);
     }
 
-    if (w38->changed(0x10000)) {
-        orig::g_scale_y = w38->get_float();
-        update_performance_caption(this);
+    if (W(y_scale)->changed(0x10000)) {
+        orig::g_scale_y = W(y_scale)->get_float();
+        update_performance_caption((VideoPage*)this);
     }
-    if (w3c->changed(0x10000)) {
-        orig::g_scale_z = w3c->get_float();
-        update_performance_caption(this);
+    if (W(z_scale)->changed(0x10000)) {
+        orig::g_scale_z = W(z_scale)->get_float();
+        update_performance_caption((VideoPage*)this);
     }
-    if (w40->changed(0x10000)) {
-        int pct = (int)w40->get_float();
+    if (W(days)->changed(0x10000)) {
+        int pct = (int)W(days)->get_float();
         g_cfg.texture_detail = pct;
         char buf[0x40];
         {
@@ -269,16 +270,16 @@ void VideoPage::update(int reason)
         }
         {
             tstring text(buf);
-            { char r[8]; w80->set_text(r, text); }
+            { char r[8]; W(val_texture_detail)->set_text(r, text); }
         }
-        { char r[8]; w80->get_xy(r); }
-        update_performance_caption(this);
+        { char r[8]; W(val_texture_detail)->get_xy(r); }
+        update_performance_caption((VideoPage*)this);
     }
 
-    if (w58->changed(0x10000)) {
+    if (W(resolution)->changed(0x10000)) {
         // texture detail: "WxH" labels, split at the 'x' and taken as integers
-        int idx = settings_value(w58);
-        tstring label(*value_label(w58, idx));
+        int idx = settings_value(W(resolution));
+        tstring label(*value_label(W(resolution), idx));
         int a = label.find('x', 0);
         int b = label.find(' ', 0);
         {
@@ -290,19 +291,19 @@ void VideoPage::update(int reason)
         g_cfg.display_height = atol(right.c_str());
         }
         run_settings_probe();
-        update_performance_caption(this);
+        update_performance_caption((VideoPage*)this);
     }
 
-    if (w30->changed(0x10000)) {
-        apply_requested = 1;
-        if (applied_value != g_cfg.texture_detail) {
+    if (W(done)->changed(0x10000)) {
+        f_ed = 1;
+        if (day_saved != g_cfg.texture_detail) {
             g_resmgr.unload_textures();
             g_resmgr.load_textures();
         }
         void* f = mb_open_user_file("rgl_config.txt", (const char*)orig::g_rgl_name);
         ((rgl_config*)&g_cfg)->save((FILE*)f);
         fclose((FILE*)f);
-        if (changed_config) {
+        if (f_ec) {
             {
                 // 0x4d6ab9: the key is looked up and the text goes in as the body; the title is the empty string
                 tstring key("ui_change_graphics_settings_explanation");
@@ -314,9 +315,10 @@ void VideoPage::update(int reason)
         }
     }
 
-    if (apply_requested) {
+    if (f_ed) {
         // the last menu entry is checked -> go back to the page that opened the options
         if (current_screen_id() != 0)
-            g_main_menu.set_state(option);
+            g_main_menu.set_state(w18);
     }
 }
+#undef W

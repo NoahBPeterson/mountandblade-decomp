@@ -118,16 +118,6 @@ struct rec_2e4 {
     char pad0[0x2e4];
     res_rec* p;                                  // +0x2e4
 };
-struct rec_1ac {
-    void release();                              // 0x4cb650
-    char pad0[0x1ac];
-    res_rec* p;                                  // +0x1ac
-};
-struct rec_178 {
-    void release();                              // 0x4cb680
-    char pad0[0x178];
-    res_rec* p;                                  // +0x178
-};
 
 struct vec3_holder {
     void clear();                                // 0x4cb6b0
@@ -326,14 +316,10 @@ struct named_object;
 namespace rgl { struct mesh; }
 // global at 0x5d6fa0: two classes of the original name it (rgl/resource_manager.cpp's resource_manager owns the lookups,
 // rgl/core/resmgr.h's resmgr owns find_meshes); the object is the same
-struct resource_manager {
-    named_object* get_object70(const rgl::string& name);          // 0x418cf0 (ret 4): the skeleton resource
-    named_object* get_object60(const rgl::string& name);          // 0x418c10 (ret 4): the mesh
-};
+#include "../resource.h"   // resource_manager: the one definition (lookups 0x418c10 / 0x418cf0)
 struct resmgr {
     std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (hidden return pointer first, ret 8)
 };
-extern resmgr g_resmgr;                                         // 0x5d6fa0
 inline const mesh_vector& as_mesh_vector(const std::vector<rgl::mesh*>& v) { return *(const mesh_vector*)&v; }   // the same 0x10 bytes (allocator word, first, last, end)
 
 // the 0x18-byte alternative-text record: its implicit ctor only builds the leading tstring

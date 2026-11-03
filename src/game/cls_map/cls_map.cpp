@@ -415,7 +415,7 @@ void gui_manager::rebuild()
 TwoVec::~TwoVec() {}
 
 // @ 0x4daa10   the loading screen: the overlay window, the logo, the hint line and one random hint text
-void LoadingScreen::init()
+void C4c2fb0::slot_empty_2()
 {
     g_gui.reset();
 
@@ -503,8 +503,8 @@ void LoadingScreen::init()
         struct { int a, b; } ret;
         vt(text)->d41(&ret, (void*)&full);
     }
-    step = 0;
-    total = 0;
+    counter = 0;
+    f40 = 0;
 }
 
 // @ 0x4dc190
@@ -742,20 +742,20 @@ void MissionScreen::fill_mission_grid()
     vt(overlay)->d50(row[2]);
 
 // @ 0x4dae40
-void MissionScreen::init_mission_window()
+void Rec44::slot_empty_2()
 {
     row[4] = 0;
     NEW_OVERLAY("mission_window")
     if (g_mission_ctx.mode == 2)
-        fill_mission_grid();
+        ((MissionScreen*)this)->fill_mission_grid();
     else if (g_mission_ctx.mode == 3 || g_mission_ctx.mode == 4 || g_mission_ctx.mode == 5)
-        fill_single_mission();
+        ((MissionScreen*)this)->fill_single_mission();
     ADD_ROOT((void*)overlay);
     g_gui_dirty = 1;
 }
 
 // @ 0x4db1f0
-void MissionScreen::init_meeting_window()
+void Rec118::slot_empty_2()
 {
     NEW_OVERLAY_BASE("meeting_window")
     for (int i = 0; i < 16; i++) {
@@ -788,9 +788,9 @@ void MissionScreen::init_meeting_window()
     } while (j < 3);
     ADD_ROOT((void*)overlay);
     g_gui_dirty = 1;
-    fill_mission_row(0);
-    fill_mission_row(1);
-    fill_mission_row(2);
+    ((MissionScreen*)this)->fill_mission_row(0);
+    ((MissionScreen*)this)->fill_mission_row(1);
+    ((MissionScreen*)this)->fill_mission_row(2);
 }
 
 // @ 0x4db440
@@ -851,7 +851,7 @@ void MissionScreen::fill_mission_row(int side)
 }
 
 // @ 0x4db660
-void MissionScreen::init_done_window()
+void Rec3c::slot_empty_2()
 {
     g_gui.reset();
     { NEW_OVERLAY_WINDOW(p_) overlay = p_; }
@@ -892,8 +892,8 @@ void MissionScreen::init_done_window()
         struct { int a, b; } ret;
         vt(overlay)->d41(&ret, &none);
     }
-    if (f4 == 0)
-        draw_faction_report();
+    if (w04 == 0)
+        ((MissionScreen*)this)->draw_faction_report();
 }
 
 // @ 0x4db810
@@ -1193,8 +1193,9 @@ UiAInline* new_medium_button(MissionUi* parent, const tstring* text, float a, fl
 
 // ---- 0x4dcef0..0x4ddf80: the main menu, the save scan, the menu rows, the block owner and the escape / message menus ----
 // @ 0x4dcef0
-void MainMenuScreen::create()
+void ItemRec::slot_empty_2()
 {
+    BlockOwner& block = *(BlockOwner*)&owned;       // the +0x30 sub-object (index, timer, menu block) as the block owner sees it
     char text[0x200];
     int ids[9];
     char version_digits[0x40];
@@ -1443,8 +1444,9 @@ void BlockOwner::init(ContainerBase* parent, int which)
 }
 
 // @ 0x4dda40
-void EscapeMenu::create()
+void ItemRec2::slot_empty_2()
 {
+    BlockOwner& block = *(BlockOwner*)&owned;
     g_gui.reset();
     NEW_OVERLAY_WINDOW(w)
     win = w;
@@ -1552,7 +1554,7 @@ void EscapeMenu::create()
 }
 
 // @ 0x4ddf80
-void MessageMenu::create_message()
+void C4c3050::slot_empty_2()
 {
     ContainerBase* w;
     {
@@ -1587,7 +1589,7 @@ void MessageMenu::create_message()
     v[1] = 0.1f;
     vt(image)->d25(v);
 
-    vt(image)->d41(v, &text);
+    vt(image)->d41(v, &name);
     vt(win)->d50(image);
 
     rows[0] = 0;
@@ -1600,7 +1602,7 @@ void MessageMenu::create_message()
     for (int i = 0; i < count; i++) {
         tstring t1("longer_button_down");
         tstring t2("longer_button");
-        rows[i] = new_sized_button(win, texts[i], 0.05f,
+        rows[i] = new_sized_button(win, ((tstring*)t6c)[i], 0.05f,
                                    0.3f - (float)(i - count + 6) * 0.05f,
                                    0.04f, t2, t1, 9.7f, 0.072f, 0.085f);
     }
@@ -1614,7 +1616,7 @@ void MessageMenu::create_message()
 
 // ---- 0x4de1b0..0x4de6f0: the debrief menu --------------------------------------------------------------------------------
 // @ 0x4de1b0
-void DebriefMenu::create_report()
+void Rec38::slot_empty_2()
 {
     float tv[2];
     ContainerBase* w;
@@ -1636,7 +1638,7 @@ void DebriefMenu::create_report()
     vt(win)->d31(0, make_background(v + 2, -1));
 
     PartyMgr* party = &g_game->parties;
-    int h = ((Map10007*)party)->lookup(f10);
+    int h = ((Map10007*)party)->lookup(w10);
     Party** page = party->pages._Myfirst;
     char* rec = (char*)((h & 0xf) * 0x5ac8 + (char*)page[h >> 4]);
     const tstring* text;
@@ -1750,7 +1752,7 @@ void PanelMesh::build_panel(const float* base, const float* size, const float* u
 }
 
 // @ 0x4de5b0
-void DebriefMenu::create_debrief()
+void Rec34::slot_empty_2()
 {
     stop_all((void*)&orig::g_sound_mgr);
 
@@ -1933,7 +1935,7 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
 #define COLOR_ENABLED 0xffdfcfbfu   // the ui colour word every label of the screen is tinted with (edi in the original)
 
 // @ 0x4de6f0
-void OptionsScreen::open()
+void Recd8::slot_empty_2()
 {
     g_gui.reset();
     { NEW_OVERLAY_WINDOW(p_) root = p_; }
@@ -2171,7 +2173,7 @@ static __forceinline int drop_count(DropDown* d) { return d->rows_first ? (int)(
 #define DD_TEXT(dd, text) { tstring t_(text); vt(dd)->d50(&t_); }
 
 // @ 0x4e05c0
-void OptionsWin::init()
+void Recf0::slot_empty_2()
 {
     f_ec = 0;
     f_ed = 0;
@@ -2407,7 +2409,7 @@ void OptionsWin::init()
 
 // ---- 0x4e25a0: the key-binding page -----------------------------------------------------------------------------------------------
 // @ 0x4e25a0
-void OptionsMenu::init()
+void Rec1bc::slot_empty_2()
 {
     f1b8 = -1;
     g_gui.reset();
@@ -2473,7 +2475,7 @@ void OptionsMenu::init()
         float c = 0.677f - (float)(i % 0x13) * 0.037f;
         if (i >= 0x13)
             x = 0.35f;
-        MissionUi* tb = make_hint(quad, slot_text(i), x, c, 0.185f, 0.03f);
+        MissionUi* tb = make_hint(quad, ((OptionsMenu*)this)->slot_text(i), x, c, 0.185f, 0.03f);
         slots[i] = tb;
         iv = 8;
         vt(tb)->d29(&iv);
@@ -2488,14 +2490,14 @@ void OptionsMenu::init()
     }
     for (int i = 0; i < 7; i++) {
         float c = 0.677f - (float)i * 0.037f;
-        MissionUi* tb = make_hint(quad, key_text(i), 0.72f, c, 0.13f, 0.03f);
+        MissionUi* tb = make_hint(quad, ((OptionsMenu*)this)->key_text(i), 0.72f, c, 0.13f, 0.03f);
         captions[i] = tb;
         iv = 8;
         vt(tb)->d29(&iv);
         iv = 0xfff0f0f0;
         vt(tb)->d38(&iv);
         tstring t;
-        key_name(i, &t);
+        ((OptionsMenu*)this)->key_name(i, &t);
         MissionUi* b = make_hint(quad, t, 0.86f, c, 0.12f, 0.03f);
         key_values[i] = b;
         iv = 0x10;
@@ -2524,7 +2526,7 @@ void OptionsMenu::init()
     ADD_ROOT_REF(q);
     g_game_keys.copy_slots();
     f1b4 = 0;
-    refresh();
+    ((KeysPage*)this)->refresh();
 }
 
 // @ 0x4e2cb0
@@ -2786,7 +2788,7 @@ extern float g_meeting_dy;                      // 0x54b8b4 (0.03f)
 extern tstring g_meeting_name;                  // 0xa70464 (the text the game fills per row)
 
 // @ 0x4e3780
-void MeetingWindow::init()
+void Rec48::slot_empty_2()
 {
     g_gui.reset();
     { NEW_OVERLAY_WINDOW(p_) bg = p_; }
@@ -2858,25 +2860,25 @@ void MeetingWindow::init()
 }
 
 // @ 0x4e3aa0
-void MeetingWindow::init2()
+void C4c3290::slot_empty_2()
 {
     g_gui.reset();
     f44 = 10;
     f48 = 0;
-    { NEW_OVERLAY_WINDOW(p_) bg = p_; }
+    { NEW_OVERLAY_WINDOW(p_) overlay = p_; }
     float f2[2];
     f2[0] = -0.001f;
     f2[1] = -0.001f;
-    vt(bg)->d22(f2);
+    vt(overlay)->d22(f2);
     f2[0] = 1.002f;
     f2[1] = 0.752f;
-    vt(bg)->d25(f2);
+    vt(overlay)->d25(f2);
     {
         tstring name("load_window");
-        vt(bg)->d31(0, res_get(name)->clone());
+        vt(overlay)->d31(0, res_get(name)->clone());
     }
     int iv = 0xff442323;
-    vt(bg)->d38(&iv);
+    vt(overlay)->d38(&iv);
     // the picture's name outlives the logo and the hint blocks (the original destroys it only after them)
     int t = rand() % 0x3dc9;
     float f = (float)t * 6.3223117e-005f;
@@ -2887,10 +2889,10 @@ void MeetingWindow::init2()
         pic.assign("ini_pic_mb_warrior_3");
     else if (f < 0.75f)
         pic.assign("ini_pic_mb_warrior_4");
-    vt(bg)->d32(2, res_get(pic)->clone());
+    vt(overlay)->d32(2, res_get(pic)->clone());
     {
         MissionUi* logo_ = new MissionUi;
-        import_btn = logo_;
+        logo = logo_;
         f2[0] = 0.05f;
         f2[1] = 0.6f;
         vt(logo_)->d22(f2);
@@ -2900,19 +2902,19 @@ void MeetingWindow::init2()
         tstring name("warrider_logo");
         vt(logo_)->d31(0, res_get(name)->clone());
     }
-    vt(bg)->d50(import_btn);
-    export_btn = new_progress_bar(bg, 0.1f, 0.07f, 0.8f, 0.03f);
+    vt(overlay)->d50(logo);
+    bar = new_progress_bar(overlay, 0.1f, 0.07f, 0.8f, 0.03f);
     {
         tstring t("");
-        done = make_hint(bg, t, 0.13f, 0.12f, 0.3f, 0.04f);
+        hint = make_hint(overlay, t, 0.13f, 0.12f, 0.3f, 0.04f);
     }
     {
-        void* w = bg;
+        void* w = overlay;
         g_gui_dirty = 1;
         ADD_ROOT_REF(w);
     }
-    panel = 0;
-    f40 = 0;
+    step = 0;
+    total = 0;
 }
 
 // ---- 0x4e3d50: the progress bar maker --------------------------------------------------------------------------------------------
@@ -2954,6 +2956,3 @@ progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, floa
 
 // ItemRec / ItemRec2 slot 2 (0x4dcef0 MainMenuScreen::create, 0x4dda40 EscapeMenu::create): the record IS the screen
 // object those take in ecx, so the body forwards `this` unchanged and cl tail-calls the member.
-#include "../triggers/item_rec.h"
-void ItemRec::slot_empty_2()  { ((MainMenuScreen*)this)->create(); }
-void ItemRec2::slot_empty_2() { ((EscapeMenu*)this)->create(); }

@@ -116,32 +116,7 @@ void __fastcall fn_4c2ea0(void* self)
 }                                                   // ~bin_reader: the two strings (inlined in the original)
 
 // @ 0x4c2fb0
-C4c2fb0::C4c2fb0()
-{
-    tstring* p = (tstring*)t58;
-    CONSTRUCT_TSTRING(p);
-    CONSTRUCT_TSTRING(p + 1);
-}
-
-// @ 0x4c3000
-void* __fastcall destroy_C4c2fb0(C4c2fb0* self, int, int flags)
-{
-    self->dtor();
-    if (flags & 1)
-        operator delete(self);
-    return self;
-}
-
-// @ 0x4c3020
-void C4c2fb0::dtor()
-{
-    tstring* p = (tstring*)t58;
-    (p + 1)->~tstring();
-    p->~tstring();
-    t48.~tstring();
-    *(void**)this = (void*)vtbl_5947d8;
-    name.~tstring();
-}
+C4c2fb0::C4c2fb0() {}                               // path, then the header's two strings: the members' constructors; the destructors (0x4c3000, 0x4c3020) are the compiler's
 
 // @ 0x4c3050
 C4c3050::C4c3050()
@@ -151,8 +126,8 @@ C4c3050::C4c3050()
         CONSTRUCT_TSTRING(p);
         p++;
     }
-    v50 = -1;
-    v54 = 0;
+    sel = -1;
+    count = 0;
 }
 
 // @ 0x4c30b0
@@ -167,42 +142,15 @@ void ResultWindow::slot_empty_1()
     g_gui.f1709 = 1;
 }
 
-// @ 0x4c30c0
-void* __fastcall destroy_C4c3050(C4c3050* self, int, int flags)
-{
-    self->dtor();
-    if (flags & 1)
-        operator delete(self);
-    return self;
-}
-
 // @ 0x4c30e0
-void C4c3050::dtor()
+C4c3050::~C4c3050()                                 // the deleting destructor is the compiler's (0x4c30c0)
 {
-    *(void**)this = (void*)vtbl_C4c3050;
     char* p = (char*)this + 0xcc;
     for (int i = 6; i > 0; i--) {
         p -= 0x10;
         ((tstring*)p)->~tstring();
     }
-    t5c.~tstring();
-    *(void**)this = (void*)vtbl_5947d8;
-    name.~tstring();
-}
-
-// @ 0x4c3120
-// Deleting destructor of the class with vtable 0x595804 (implicit dtor: tstring at +0x84 and the base's
-// tstring at +0x1c). Declared as a __fastcall free function: `self` lands in ECX and the dummy int in EDX
-// (unused), leaving `flags` at [esp+4] so the epilogue is the original's `ret 4`.
-void* __fastcall destroy_C4c3120(void* self, int, int flags)
-{
-    ((tstring*)((char*)self + 0x84))->~tstring();
-    *((void**)self) = (void*)vtbl_5947d8;
-    ((tstring*)((char*)self + 0x1c))->~tstring();
-    if (flags & 1)
-        operator delete(self);
-    return self;
-}
+}                                                   // t5c, then the base: the compiler's
 
 // @ 0x4c3160
 C4c3160::C4c3160()
@@ -220,66 +168,10 @@ C4c3160::C4c3160()
 }
 
 // @ 0x4c31c0
-C4c31c0::C4c31c0()
-{
-    char* p = body;
-    for (int i = 0; i < 9; i++, p += 0x30) {
-        CONSTRUCT_TSTRING(p);
-        CONSTRUCT_TSTRING(p + 0x10);
-    }
-    CONSTRUCT_TSTRING(t224);
-}
-
-// @ 0x4c3220
-void* __fastcall destroy_C4c31c0(C4c31c0* self, int, int flags)
-{
-    self->dtor();
-    if (flags & 1)
-        operator delete(self);
-    return self;
-}
-
-// @ 0x4c3240
-void C4c31c0::dtor()
-{
-    ((tstring*)t224)->~tstring();
-    char* p = (char*)this + 0x2c + 9 * 0x30;
-    for (int i = 9; i > 0; i--) {
-        p -= 0x30;
-        ((tstring*)(p + 0x10))->~tstring();
-        ((tstring*)p)->~tstring();
-    }
-    *(void**)this = (void*)vtbl_5947d8;
-    name.~tstring();
-}
+C4c31c0::C4c31c0() {}                               // the nine rows' strings, then t224; the destructors (0x4c3220, 0x4c3240) are the compiler's
 
 // @ 0x4c3290
-C4c3290::C4c3290()
-{
-    tstring* p = (tstring*)t60;
-    CONSTRUCT_TSTRING(p);
-    CONSTRUCT_TSTRING(p + 1);
-}
-
-// @ 0x4c32e0
-void* __fastcall destroy_C4c3290(C4c3290* self, int, int flags)
-{
-    self->dtor();
-    if (flags & 1)
-        operator delete(self);
-    return self;
-}
-
-// @ 0x4c3300
-void C4c3290::dtor()
-{
-    tstring* p = (tstring*)t60;
-    (p + 1)->~tstring();
-    p->~tstring();
-    t50.~tstring();
-    *(void**)this = (void*)vtbl_5947d8;
-    name.~tstring();
-}
+C4c3290::C4c3290() {}                               // t50, t60, t70: the members' constructors; the destructors (0x4c32e0, 0x4c3300) are the compiler's
 
 // Tail-call thunks: `mov ecx, 0x8ee3c48; jmp 0x4bf870` -> a thiscall member call on the editor singleton
 // (the MapEditorDialog instance, ?g_editor_dialog@@3UMapEditorDialog@@A).

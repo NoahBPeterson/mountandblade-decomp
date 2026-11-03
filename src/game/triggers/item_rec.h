@@ -17,6 +17,8 @@
 #ifndef GAME_TRIGGERS_ITEM_REC_H
 #define GAME_TRIGGERS_ITEM_REC_H
 #include "../head_rec.h"
+struct ContainerBase;
+struct MissionUi;
 
 extern __int64 g_ticks[];                       // 0x5e2948 clock table, 1e-5 s ticks
 
@@ -29,8 +31,8 @@ struct owned_block {
     ~owned_block();                             // 0x4c8bf0 (src/rgl/mesh2/gui_edit.cpp conv_clear: releases the block)
 };
 
-struct ItemRec : head_rec {                     // vtable 0x596124
-    char pad2c[4];                              // +0x2c
+struct ItemRec : head_rec {                     // vtable 0x596124 (the main menu)
+    ContainerBase* win;                         // +0x2c the window
     owned_block owned;                          // +0x30
     int f40;                                    // +0x40 -1
     int pad44;
@@ -39,15 +41,27 @@ struct ItemRec : head_rec {                     // vtable 0x596124
     __int64 stamp;                              // +0x50 g_ticks[0]
     float f58;                                  // +0x58 1.0f
     int f5c;                                    // +0x5c 0
+    MissionUi* row_tutorial;                    // +0x60 the main menu's rows (scale_3 0x4d5290 tests their used flags)
+    MissionUi* row_new_game;                    // +0x64
+    MissionUi* row_restore;                     // +0x68
+    MissionUi* row_custom;                      // +0x6c (may be null)
+    MissionUi* row_options;                     // +0x70
+    MissionUi* row_credits;                     // +0x74
+    MissionUi* row_exit;                        // +0x78
+    MissionUi* version;                         // +0x7c
+    MissionUi* logo;                            // +0x80
+    MissionUi* pic;                             // +0x84
+    int     first_free;                         // +0x88
+    char    pad8c[0x90 - 0x8c];
     virtual void slot_empty_1();                // slot 1  0x4c6e00 reset_gui        (gui_edit.cpp)
     virtual void slot_empty_2();                // slot 2  0x4dcef0 MainMenuScreen::create (cls_map.cpp)
-    virtual void scale_3(const float*);         // slot 3  0x4d5290 Hud::handle_buttons    (hud.cpp)
+    virtual void scale_3(float);         // slot 3  0x4d5290 Hud::handle_buttons    (hud.cpp)
     virtual char pure_7() { return 1; }         // slot 7  0x48b170 (overrides the base's pure slot)
     ItemRec();                                  // 0x4ce870
 };
 
-struct ItemRec2 : head_rec {                    // vtable 0x596148
-    char pad2c[4];
+struct ItemRec2 : head_rec {                    // vtable 0x596148 (the escape menu)
+    ContainerBase* win;                         // +0x2c the window
     owned_block owned;
     int f40;
     int pad44;
@@ -56,9 +70,17 @@ struct ItemRec2 : head_rec {                    // vtable 0x596148
     __int64 stamp;
     float f58;
     int f5c;
+    MissionUi* row0;                            // +0x60
+    MissionUi* row1;                            // +0x64
+    MissionUi* row2;                            // +0x68
+    MissionUi* row3;                            // +0x6c
+    MissionUi* row4;                            // +0x70
+    MissionUi* row5;                            // +0x74
+    MissionUi* logo;                            // +0x78
+    char pad7c[0x80 - 0x7c];
     virtual void slot_empty_1();                // slot 1  0x4c6e00 reset_gui        (gui_edit.cpp)
     virtual void slot_empty_2();                // slot 2  0x4dda40 EscapeMenu::create    (cls_map.cpp)
-    virtual void scale_3(const float*);         // slot 3  0x4e87d0 MapScreen::buttons    (save_game.cpp)
+    virtual void scale_3(float);         // slot 3  0x4e87d0 MapScreen::buttons    (save_game.cpp)
     virtual char pure_7() { return 1; }         // slot 7  0x48b170
     ItemRec2();                                 // 0x4ce8d0
 };

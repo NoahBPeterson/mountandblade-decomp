@@ -1377,9 +1377,9 @@ void GameScreen::build()
 }
 
 // @ 0x4fc810
-void LogScreen::build_thunk()
+void Rec58::slot_empty_2()
 {
-    build(show_log != 0);
+    build(w04 != 0);
 }
 
 // the parameter table lookup every tab button position goes through: a missing key yields 0 (inlined at each of its four uses)
@@ -1408,7 +1408,7 @@ static MissionUi* make_tab(FrameWidget* frame, const char* name, float x, float 
 }
 
 // @ 0x4fc820
-void LogScreen::build(bool show)
+void Rec58::build(bool show)
 {
     float v[2];
     g_gui.reset();

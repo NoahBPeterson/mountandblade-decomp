@@ -20,6 +20,7 @@
 #include "./mesh2_common.h"
 #include "./head_rec.h"
 #include "../../game/result_window.h"
+#include "../../game/screen_records.h"
 
 using rgl::vector4;
 
@@ -53,68 +54,7 @@ struct C4c2d10 {
     C4c2d10();               // 0x4c2d10
 };
 
-struct C4c2fb0 : head_rec {  // vtable 0x595798
-    char  pad2c[0x1c];       // +0x2c
-    tstring t48;             // +0x48
-    char    t58[0x20];       // +0x58, +0x68: two tstrings (built/destroyed through one pointer)
-    C4c2fb0();               // 0x4c2fb0
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(const float*);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    __declspec(noinline) void dtor();   // 0x4c3020 (called, not inlined, by the deleting dtor 0x4c3000)
-};
-
-struct C4c3050 : head_rec {  // vtable 0x5957bc
-    char  pad2c[0x24];       // +0x2c
-    int   v50;               // +0x50 (set to -1)
-    int   v54;               // +0x54
-    int   v58;               // +0x58
-    tstring t5c;             // +0x5c
-    char    t6c[0x60];       // +0x6c (6 tstrings, 0x10 apart; built/destroyed by hand in the ctor/dtor)
-    C4c3050();               // 0x4c3050
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(const float*);
-    virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
-    void dtor();             // 0x4c30e0
-};
-
-struct Slot20 {              // 0x20 bytes
-    int a, b, c, d, e, f, g, h;
-};
-struct C4c3160 : head_rec {  // vtable 0x595870
-    char   body[0x8e8 - 0x2c];
-    Slot20 slots[0x80];      // +0x8e8
-    C4c3160();               // 0x4c3160
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(const float*);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-};
-
-struct C4c31c0 : head_rec {  // vtable 0x595924
-    char    body[0x224 - 0x2c];  // +0x2c: 9 pairs of tstrings, 0x30 apart (built/destroyed by hand)
-    char    t224[0x10];      // +0x224 tstring
-    C4c31c0();               // 0x4c31c0
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(const float*);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    void dtor();             // 0x4c3240
-};
-
-struct C4c3290 : head_rec {  // vtable 0x595a20
-    char  pad2c[0x24];       // +0x2c
-    tstring t50;             // +0x50
-    char    t60[0x20];       // +0x60, +0x70: two tstrings (built/destroyed through one pointer)
-    C4c3290();               // 0x4c3290
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(const float*);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    __declspec(noinline) void dtor();   // 0x4c3300 (called, not inlined, by the deleting dtor 0x4c32e0)
-};
+// C4c3160 (vtable 0x595870, the party exchange window) is declared in game/screen_records.h
 
 // 0x18-byte entry of the block read by 0x4c2dd0 (tstring, two ints): config.h's clip_slot (same layout; its constructor
 // 0x4be720 is out of line, the array new goes through the vector constructor iterator). rec_tables.cpp includes config.h.
@@ -386,11 +326,6 @@ struct music_set {
     int count2;                // +8  number of names
     music_name* names;         // +0xc [count2]
     void load(stream_base* s, int load_samples, const tstring* dir);   // 0x4c4340 (thiscall, ret 0xc)
-};
-
-struct tstring_pair {
-    tstring a;       // +0
-    tstring b;       // +0x10
 };
 
 // the object with two pair arrays: arrays at +0 / +4, counts at +8 / +0xc (destroyed by 0x4c4640)
