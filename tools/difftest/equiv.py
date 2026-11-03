@@ -59,14 +59,14 @@ copy of a block with identical bytes, --ulp), with the call index, its callee an
 mismatch (only for an input whose every other observable agrees, and only at a call pair whose callee and
 arguments agree).
 """
-import argparse, bisect, collections, glob, json, math, os, random, re, struct, sys, time, zlib
+import argparse, bisect, collections, glob, json, math, os, random, re, struct, sys, tempfile, time, zlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import capstone                                    # noqa: E402
 try:
     os.nice(10)                                    # yield the CPU to interactive work
-except OSError:
+except (OSError, AttributeError):                  # no os.nice on Windows: the worker starts at Idle priority
     pass
 import numpy as np                                 # noqa: E402
 from capstone import x86_const as CX               # noqa: E402
@@ -74,6 +74,7 @@ from unicorn import UcError, UC_HOOK_CODE, UC_HOOK_BLOCK, UC_HOOK_MEM_READ, UC_H
 from unicorn.x86_const import *                    # noqa: E402,F401,F403
 
 import slice as S                                  # noqa: E402
+from winnative import lock as lock_fd              # noqa: E402  (flock / msvcrt.locking)
 import resolve as R
 import resaudit as RA                              # noqa: E402
 import regfacts as RF                                # noqa: E402
@@ -6283,14 +6284,14 @@ MAX_PROCS = int(os.environ.get("DIFFTEST_MAX_PROCS", os.cpu_count() or 2))
 def cpu_slot():
     """Hold one of MAX_PROCS machine-wide slots (flock'd files) while emulating, so concurrent
     checkers (batch shards, agents) use at most one core each (DIFFTEST_MAX_PROCS, default all). Blocks until a slot is free."""
-    import fcntl
-    d = os.path.join("/tmp", "difftest-slots-%d" % os.getuid())
+    d = os.path.join("/tmp", "difftest-slots-%d" % os.getuid()) if hasattr(os, "getuid") else \
+        os.path.join(tempfile.gettempdir(), "difftest-slots")
     os.makedirs(d, exist_ok=True)
     while True:
         for i in range(MAX_PROCS):
             fd = os.open(os.path.join(d, "slot%d" % i), os.O_CREAT | os.O_RDWR)
             try:
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                lock_fd(fd, wait=False)
                 return fd
             except OSError:
                 os.close(fd)

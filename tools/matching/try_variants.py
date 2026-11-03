@@ -7,6 +7,7 @@ Every function symbol in the object is compared; prints diff-byte counts, best f
 import os, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cmpobj import parse_coff, coff_constants, constant_diffs
+from winnative import CL, winpath
 import pefile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,8 +16,8 @@ flags = sys.argv[3:] or ["/O2", "/MT", "/Gy", "/TP"]
 os.makedirs(os.path.join(ROOT, "work", "match", "variants"), exist_ok=True)
 obj = os.path.join(ROOT, "work", "match", "variants",
                    os.path.abspath(src).replace(ROOT, "").strip("/").replace("/", "_") + ".obj")
-w = lambda p: "Z:" + os.path.abspath(p).replace("/", "\\")
-r = subprocess.run([os.path.join(ROOT, "tools/matching/cl.sh"), "/nologo", "/c", *flags, "/I" + w(os.path.join(ROOT, "match", "include")), "/Fo" + w(obj), w(src)],
+w = lambda p: winpath(os.path.abspath(p))
+r = subprocess.run([CL, "/nologo", "/c", *flags, "/I" + w(os.path.join(ROOT, "match", "include")), "/Fo" + w(obj), w(src)],
                    capture_output=True, text=True)
 if r.returncode:
     sys.exit(r.stdout + r.stderr)

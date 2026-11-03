@@ -12,7 +12,7 @@ work/run_all_m/<key>.lock, work/run_all_m/<key>.json, key = hash of the manifest
 manifests never wait for each other (fix pass 6 F26: mig7 agents waited 20-40 minutes on the shared lock).
 Exit 0 iff every listed function matches.
 """
-import argparse, bisect, fcntl, glob, hashlib, json, os, subprocess, sys
+import argparse, bisect, glob, hashlib, json, os, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -20,16 +20,13 @@ import pefile
 from cmpobj import parse_coff, REL_SIZES, coff_constants, constant_diffs
 import imgcache
 import asm_audit
+from winnative import CL, winpath, lock as lock_file    # cl.sh under wine on the Mac, cl.exe on Windows
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IMAGE = os.path.join(ROOT, "work", "mb.analysis.bin")
 OUT = os.path.join(ROOT, "work", "match")
 DEFAULT_FLAGS = ["/O2", "/MT", "/Gy", "/TP"]  # cl 13.10; static CRT; /EHsc only where the original has EH frames
-INCLUDE = "/I" + "Z:" + os.path.join(ROOT, "match", "include").replace("/", "\\")
-
-
-def winpath(p):
-    return "Z:" + p.replace("/", "\\")
+INCLUDE = "/I" + winpath(os.path.join(ROOT, "match", "include"))
 
 
 def resolve_flags(flags):
@@ -82,7 +79,7 @@ def read_rows(paths, filt):
 def compile_one(key):
     src, flags = key
     obj = obj_path(src, list(flags))
-    r = subprocess.run([os.path.join(ROOT, "tools", "matching", "cl.sh"), "/nologo", "/c", *resolve_flags(flags), INCLUDE,
+    r = subprocess.run([CL, "/nologo", "/c", *resolve_flags(flags), INCLUDE,
                         "/Fo" + winpath(obj), winpath(os.path.join(ROOT, "match", src))],
                        capture_output=True, text=True)
     return key, (obj if r.returncode == 0 else None), (r.stdout + r.stderr)[-2000:]
@@ -137,10 +134,10 @@ def main():
         res_path = os.path.join(ROOT, "work", "run_all_m", key + ".json")
     lock = open(lock_path, "w")
     try:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_file(lock, wait=False)
     except BlockingIOError:
         print("waiting for another run_all.py to finish (%s)" % os.path.relpath(lock_path, ROOT), flush=True)
-        fcntl.flock(lock, fcntl.LOCK_EX)
+        lock_file(lock)
 
     rows = read_rows(manifests(a.manifest), a.filter)
     keys = sorted(set((r[0], r[3]) for r in rows))

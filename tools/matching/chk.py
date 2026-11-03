@@ -14,7 +14,7 @@ import argparse, glob, hashlib, json, os, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cmpobj import parse_coff, REL_SIZES, coff_constants, constant_diffs
-from run_all import Original, winpath, DEFAULT_FLAGS, INCLUDE, ROOT, resolve_flags
+from run_all import Original, winpath, CL, DEFAULT_FLAGS, INCLUDE, ROOT, resolve_flags
 from card import load_funcs, bounds
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 from slice import marker_names, demangle_qual, base_ident  # noqa: E402
@@ -81,7 +81,7 @@ def main():
     os.makedirs(os.path.dirname(obj), exist_ok=True)
     if os.path.exists(obj):
         os.remove(obj)  # never score a stale object from an earlier compile
-    r = subprocess.run([os.path.join(ROOT, "tools", "matching", "cl.sh"), "/nologo", "/c", *flags, INCLUDE,
+    r = subprocess.run([CL, "/nologo", "/c", *flags, INCLUDE,
                         "/Fo" + winpath(obj), winpath(src)], capture_output=True, text=True)
     if r.returncode or not os.path.exists(obj):
         sys.exit("COMPILE FAIL\n" + (r.stdout + r.stderr)[-3000:])
