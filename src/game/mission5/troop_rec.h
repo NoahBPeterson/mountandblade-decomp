@@ -24,11 +24,8 @@ struct GameData {                                   // include/game_data.h (its 
 void __cdecl mb_error(const char* fmt, ...);        // 0x42cc80
 float frand();                                      // 0x40e400 (returns st0)
 
-// ---- the text reader the new-game start builds on its stack (vtable 0x54ac88; inline ctor, as in module_load.h) -----
-struct TextReader : file_reader_base {
-    STREAM_SLOTS
-    TextReader() {}
-};
+// ---- the text reader the new-game start builds on its stack (vtable 0x54ac88, tstream3; constructor inline) -----
+#include "../../rgl/stream_inline.h"
 
 // ---- the scene's party table (Game +0xf8): the regions game.h's Scene leaves as padding ----------------------------
 // free index list (IntVec, +0x138bc: allocator word, first, last, end; game.h's Zero3 f138c0 overlays its first three

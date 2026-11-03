@@ -275,11 +275,199 @@ stream_base& text_stream::w_stream(stream_base* o)
 // (also slot 22, and every "return *this" slot of the other stream classes: ICF)
 stream_base& text_stream::slot12(void* v) { return *this; }
 stream_base& text_stream::slot22(void* v) { return *this; }   // folded with slot12
-stream_base& text_stream::w_uint(unsigned* v) { return text_stream::w_int((int*)v); }   // folded with w_int
-stream_base& text_stream::r_uint(unsigned* v) { return text_stream::r_int((int*)v); }   // folded with r_int
+// the original's linker folded this with w_int (0x415500): the same code, its own body
+stream_base& text_stream::w_uint(unsigned* v)
+{
+    char tmp[128];
+    _itoa(*v, tmp, 10);
+    { tstring t(tmp); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
 
 // @ 0x415880
 stream_base& text_stream::r_tstr(rgl::string* v)
+{
+    tstring tmp;
+    expect_token();
+    if (state == 1) {
+        TS(buf).get_string(tmp);
+        if (!tmp.equals(TS(*v)))
+            mb_error("format broken");
+        state = 0;
+        return *this;
+    }
+    TS(buf).get_string(TS(*v));
+    return *this;
+}
+
+// ---- text_stream2 (vtable 0x54a890): the original's linker folded its slots with text_stream's; each class has its own copy ----
+// @ 0x415290
+bool text_stream2::open_read(const char* path)
+{
+    TS(name).assign(path);
+    fp = fopen(path, "rb");
+    if (fp)
+        failed = 0;
+    else
+        failed = 1;
+    if (!failed) {
+        size_t n = (size_t)file_length(fp);
+        buf.read_from(fp, n);
+        fclose(fp);
+    }
+    return !failed;
+}
+// @ 0x4153a0
+stream_base& text_stream2::w_cstr(const char* s)
+{
+    { tstring t(s); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
+// @ 0x415410
+stream_base& text_stream2::w_tstr(const rgl::string* s)
+{
+    TS(buf).append(TS(*s));
+    { tstring t(" "); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
+// @ 0x415470
+stream_base& text_stream2::w_byte(unsigned char* v)
+{
+    char tmp[128];
+    _itoa(*v, tmp, 10);
+    { tstring t(tmp); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
+// @ 0x415500
+// (also slot 7, w_uint: ICF)
+stream_base& text_stream2::w_int(int* v)
+{
+    char tmp[128];
+    _itoa(*v, tmp, 10);
+    { tstring t(tmp); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
+// @ 0x415590
+stream_base& text_stream2::w_i64(__int64* v)
+{
+    tstring s;
+    int digits[32];
+    bool neg = false;
+    __int64 x = *v;
+    if (x < 0) {
+        x = -x;
+        neg = true;
+    }
+    int n = 0;
+    if (x == 0) {
+        digits[0] = 0;
+        n = 1;
+    } else {
+        unsigned __int64 u = x;
+        while (u > 0) {
+            digits[n++] = (int)(u % 10);
+            u /= 10;
+        }
+    }
+    if (neg)
+        s.push_back('-');
+    while (n > 0) {
+        s.push_back((char)(digits[n - 1] + '0'));
+        n--;
+    }
+    w_tstr((const rgl::string*)&s);
+    if (autoflush)
+        flush();
+    return *this;
+}
+// @ 0x415670
+stream_base& text_stream2::w_u64(unsigned __int64* v)
+{
+    tstring s;
+    int digits[32];
+    int n = 0;
+    unsigned __int64 u = *v;
+    if (u == 0) {
+        digits[0] = 0;
+        n = 1;
+    }
+    while (u > 0) {
+        digits[n++] = (int)(u % 10);
+        u /= 10;
+    }
+    while (n > 0) {
+        s.push_back((char)(digits[n - 1] + '0'));
+        n--;
+    }
+    w_tstr((const rgl::string*)&s);
+    if (autoflush)
+        flush();
+    return *this;
+}
+// @ 0x415730
+stream_base& text_stream2::w_bool(char* v)
+{
+    if (*v)
+        { tstring t("1 "); TS(buf).append(t); }
+    else
+        { tstring t("0 "); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
+// @ 0x415790
+stream_base& text_stream2::w_float(float* v)
+{
+    char tmp[128];
+    mb_snprintf(tmp, 128, "%f ", (double)*v);
+    { tstring t(tmp); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
+// @ 0x415800
+stream_base& text_stream2::w_stream(stream_base* o)
+{
+    int len = o->buf.len;
+    w_int(&len);
+    { tstring t(" "); TS(buf).append(t); }
+    TS(buf).append(TS(o->buf));
+    if (autoflush)
+        flush();
+    return *this;
+}
+// @ 0x415870
+// (also slot 22, and every "return *this" slot of the other stream classes: ICF)
+stream_base& text_stream2::slot12(void* v) { return *this; }
+stream_base& text_stream2::slot22(void* v) { return *this; }   // folded with slot12
+// the original's linker folded this with w_int (0x415500): the same code, its own body
+stream_base& text_stream2::w_uint(unsigned* v)
+{
+    char tmp[128];
+    _itoa(*v, tmp, 10);
+    { tstring t(tmp); TS(buf).append(t); }
+    { tstring t(" "); TS(buf).append(t); }
+    if (autoflush)
+        flush();
+    return *this;
+}
+
+// @ 0x415880
+stream_base& text_stream2::r_tstr(rgl::string* v)
 {
     tstring tmp;
     expect_token();

@@ -27,8 +27,9 @@ extern LogHub g_log;                            // 0x5a9f60
 // (named Scene before; collided with party/game.h's Scene) and mission5 (the full record) each saw one half of it; GameData's
 // Level494 (src/include/game_data.h) is the same record seen without the vtable.
 // the embedded file stream of the scene record (0x30 bytes: vptr, name, state, autoflush, flushed, buf; inline ctor)
-struct file_stream_s : stream_base {
-    STREAM_SLOTS
+// vtable 0x54acf8: mem_stream's table, nothing overridden; the destructors of the scene record inline the user-declared mem_stream one
+#include "../../rgl/stream_inline.h"
+struct file_stream_s : mem_stream {
     file_stream_s() { state = 0; }
 };
 #include "../item_ref.h"           // ItemRef (the +0x114 pairs)

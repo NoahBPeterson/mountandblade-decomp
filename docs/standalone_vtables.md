@@ -119,7 +119,11 @@ Lessons that cost time:
 
 ## Still open (see the audit)
 
-Base classes whose placeholder virtuals (`s00()`, `d10()`) the derived classes override in the original; the stream
-families built from `STREAM_FWD_*` forwarding macros (each class should define its own real slot bodies, which the
-ICF trial link folds); records whose tables are shorter than the original's. Re-run the audit after each family: the
+Base classes whose placeholder virtuals (`s00()`, `d10()`) the derived classes override in the original; records whose tables
+are shorter than the original's. The stream families are done: `src/rgl/stream.h` has the real chain (`text_stream` ->
+`outfile_b`/`outfile`; `text_stream2` -> `text_reader_base` -> `tstream3`; `mem_stream` -> `bin_reader_base` -> `bin_reader`;
+`bin_writer`), every class defines its own slot bodies (the `STREAM_FWD_*` macros and `stream_fwd.h` are gone), and the
+constructors/destructors the original inlines into its loaders are in `src/rgl/stream_inline.h`. An audit "long" on the log
+file's 0x595618 is a tool artifact: the dtor calls slot 26 by absolute address, which `vtable_starts` reads as a table start.
+Re-run the audit after each family: the
 `stub` / `placeholder` / `dtor` counts per module are the remaining work.
