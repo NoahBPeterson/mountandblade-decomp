@@ -172,5 +172,34 @@
    "reached through tables": 17005900,
    "library data": 57058
   }
+ },
+ "2026-11-03T09:59:10-06:00": {
+  "data_labels": 705,
+  "aliases": 467,
+  "traps": 252,
+  "redirects": 308,
+  "vtable_slots_rewritten": 5,
+  "vptr_stores_moved": 523,
+  "vtbl_externs": 21,
+  "placeholder_virtuals": 45,
+  "forwarding_stubs": 577,
+  "data_definitions": 111,
+  "when": "2026-11-03T09:59:10-06:00",
+  "commit": "d0d004e2",
+  "build": "step2_V2",
+  "items": {
+   "defined in source": 144,
+   "generated from source": 2555,
+   "borrowed from image": 399,
+   "reached through tables": 624,
+   "library data": 538
+  },
+  "bytes": {
+   "defined in source": 55677,
+   "generated from source": 318720,
+   "borrowed from image": 126857611,
+   "reached through tables": 17005900,
+   "library data": 57058
+  }
  }
 }
