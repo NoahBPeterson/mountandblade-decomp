@@ -7,6 +7,7 @@
 // Names and layouts are provisional; every offset comes from this slice's disassembly and the
 // verified neighbours (ini_file: s004bd170, widget slots: s00502300 / s004dfd50).
 #include <windows.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/rgl_math.h"
 
 #define MB_NOTHROW throw()

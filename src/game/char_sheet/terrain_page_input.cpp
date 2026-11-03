@@ -1,8 +1,10 @@
 #include "./terrain_page_input.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../bit_words.h"      // g_bits 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../key_names.h"
+#include "../../include/render_flags.h"
 
 unsigned g_5e2464 = (unsigned)g_bit[2];                       // 0x5e2464 (no reader in this source; set at startup like its twin)
 unsigned g_5e2468 = (unsigned)g_bit[4];                       // 0x5e2468

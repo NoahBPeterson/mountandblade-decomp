@@ -202,7 +202,7 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                                   
 struct V4 { float x, y, z, w; };               // constructor-free storage for the local arrays of start_ragdoll
 struct M4 { V4 s, f, u, o; };
 
-extern int g_ui_enabled;                // 0x5aa060
+
 
 // ---- the blow record (0x58 bytes; agent/agent.h calls it RecZSubB with the fields m0..m54 and the initialiser 0x4353a0, which the
 // manifests bind by that name, so this is the second declaration of the same record, with the names the blow code uses) ----

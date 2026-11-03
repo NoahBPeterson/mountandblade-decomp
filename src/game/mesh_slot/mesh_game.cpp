@@ -10,6 +10,13 @@
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 #include "../../include/msg_log.h"
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+long long g_tick_cur;                              // 0x5e2980 (the last frame's tick count)
+unsigned char g_mt_inited;                         // 0x5e2a09
+float g_paused_time;                               // 0x5e2a0c
+int g_psys_scene;                                  // 0xa170c0
+
+
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
@@ -217,7 +224,6 @@ void agent_equip_fill(EntityG* e, int kind, int troop, int f94, void* s0, void* 
                       void* f1a4, void* f1a8, void* slots, int id);   // 0x482240 (__stdcall, ret 0x34)
 void setup_item_meshes(SkelBodyV* body, int kind, int troop, char* inv, int f130, ItemRef* slots, int id);  // 0x47cfe0 (cdecl)
 extern char g_script[]; // 0xa70440
-extern int g_spawn_hi;                  // 0xa7044c
 #include "../skill_cap.h"
 extern char g_gui[]; // 0x5d7080
 #include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
@@ -402,7 +408,7 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
     TroopRecS* t = &(*(TroopRecS**)(((char*)g_game) + 0x13a00))[troop];
     int v = t->f7a & 0xf;
     if (v < 0) v = 0;
-    if (v > g_skill_tbl[36].cap) v = g_skill_tbl[36].cap;
+    if (v > g_skill_tbl[36].max_rank) v = g_skill_tbl[36].max_rank;
     float h = (float)(t->f58 + 0x23 + v * 2);
     a->f5720 = h;
     if (t->skin & 0x10) {
@@ -595,11 +601,7 @@ struct psys_rec {                       // the shadow object's target skin (Shad
     char pad0[0x48];
     char* scene;
 };
-extern long long g_tick_cur;            // 0x5e2980 (the last frame's tick count)
-extern unsigned char g_mt_inited;                   // 0x5e2a09
-extern float g_paused_time;             // 0x5e2a0c
 #include "../../include/fx.h"
-extern int g_psys_scene;                // 0xa170c0
 extern "C" int rand();                 // 0x536a9f
 
 // @ 0x483f60 -- the per-frame mission tick: the shadow-object upkeep, the 100 kHz frame clock, the carried-item sweep, the

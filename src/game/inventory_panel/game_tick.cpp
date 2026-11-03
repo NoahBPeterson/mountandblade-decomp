@@ -23,6 +23,12 @@
 #include "../battle_rec.h"      // BattleRec (update_nav_anim 0x4b71e0)
 #include "../shared_vars.h"
 #include "../key_names.h"
+#include "../game_globals.h"
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+float g_step_tbl[5] = {0.01f, 0.01f, 0.01f, 0.01f, 0.01f};  // 0x5a9c20 per-clock step (seconds); [0] is the frame step
+
 
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
 #define FLD(T, off) (*(T*)((char*)this + (off)))
@@ -81,7 +87,6 @@ struct Cfg30 {                                      // the object at game+0x30
 extern float    g_step;                 // 0x5a9c20  frame step (seconds)
 extern const float g_rate_marker;       // 0x590cd0  marker decay per second
 
-extern int g_use_shaders;                                   // 0x5e28fc  0 = linear colour path
 extern int g_page_rows;                              // 0xa73298
 extern int g_page_cols;                              // 0xa73294
 extern char g_map_pages[];                                // 0xa73094  host grid (array of cell pointers)
@@ -258,7 +263,7 @@ void GameG::resume_strings(tstring* a, tstring* b)
 void GameG::update_markers()
 {
     for (unsigned i = 0; i < (unsigned)g_mat_vec[0].count(); i++) {
-        g_mat_vec[0].at<Marker>(i)->f1f8 -= g_step * g_rate_marker;
+        g_mat_vec[0].at<Marker>(i)->f1f8 -= g_step_tbl[0] * 0.02f;
         g_mat_vec[0].at<Marker>(i)->f208 = g_mat_vec[0].at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_mat_vec[2].count(); i++) {
@@ -284,7 +289,7 @@ void GameG::update_markers()
 // @ 0x517350
 void GameG::update_colors()
 {
-    float t = g_step * 0.9f;
+    float t = g_step_tbl[0] * 0.9f;
     float s = 1.0f - t;
 
     rgl::vector4 c;

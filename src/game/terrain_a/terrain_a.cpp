@@ -10,6 +10,7 @@
 //       view draw pass. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./common.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/options.h"   // g_options
 #include "./terrain.h"
 #include "./game_state.h"
@@ -25,14 +26,28 @@ unsigned g_river_mask_b = (unsigned)g_bit[2];               // 0x5e2584
 unsigned g_river_mask_a = (unsigned)g_bit[4];               // 0x5e2580
 struct Mission;
 extern Mission* g_mission;                                  // 0x5e292c
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+
+
+
+
+
+
+
+
+
+
+const ivec2 g_nbr[8] = {{0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}};  // 0x591340 (rdata)
+const char* g_name_elevation = "ground_elevation";  // 0x5a9bf4
+const char* g_name_leveling = "ground_leveling";    // 0x5a9bf8
+
 
 using rgl::vector4;
 using rgl::matrix;
 
 namespace rgl { struct entity; struct world { entity* create_entity(int type_id); }; }   // 0x428440 (rgl/scene/world.h)
-struct render_cache {
-    void set_blend_mode(int mode);   // 0x40e940 (rgl/particles/render_cache.h; that header's g_render clashes with renderer.h's)
-};
 
 // 0x466cd0 (emit_particle) calls the cell lookup as a function with a void result; terrain.h declares that view as
 // terrain_obj::cell_of, which is the function Terrain::cell_of (0x464b40) defined below.
@@ -1647,8 +1662,8 @@ int Rec468770::max_hit_points()
     int v = b7a & 0xf;
     if (v < 0)
         v = 0;
-    else if (v > g_skill_tbl[36].cap)
-        v = g_skill_tbl[36].cap;
+    else if (v > g_skill_tbl[36].max_rank)
+        v = g_skill_tbl[36].max_rank;
     return base + v * 2 + 0x23;
 }
 
@@ -3106,7 +3121,7 @@ void drawer::draw(view_t* v)
         if (g_alpha_test)
             g_render.dev->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
         g_alpha_test = 0;
-        ((render_cache*)&g_render)->set_blend_mode(2);   // 0x40e940: render_cache (rgl/particles/render_cache.h) is the same object as renderer
+        g_render.set_blend_mode(2);   // 0x40e940: render_cache (rgl/particles/render_cache.h) is the same object as renderer
         if (v->f164) {
             if (g_render.b54b) {
                 g_render.b54b = 0;

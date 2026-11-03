@@ -26,8 +26,15 @@ void mb_error(const char* fmt, ...);                 // 0x42cc80
 #include "../../rgl/stream_fwd.h"
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../shared_vars.h"
+#include "../dialog_mgr.h"                  // DialogMgr: g_dialogs 0x8ed50c8
+#include "../../include/rec78.h"             // Rec78 (PropKind): g_propkinds 0x5e29dc
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+extern DialogMgr g_dialogs;                               // 0x8ed50c8 (constructed by the compiler: DialogMgr::DialogMgr 0x4c2470, ~DialogMgr 0x4c4090)
+extern tstring g_module_path;                              // 0x8ee3c28
+Rec78* g_propkinds;                                 // 0x5e29dc
+int g_menu_count;                                   // 0x5e29b4
+int g_party_template_count;                        // 0x5e29fc
 int g_loaded_sound_count;                      // 0x5d878c
 char g_path[0x100];                            // 0x8ee41f0
 int g_map_icon_count;   // 0x5e29f4
@@ -85,7 +92,6 @@ STREAM_FWD_TEXT_READER(tstream3)
 
 // ---------------------------------------------------------------- module path helper
 
-extern tstring g_module_path;                        // 0x8ee3c28
 
 // g_path = <module path><file name>; abort the load if the file cannot be opened.  Inlined at
 // all sixteen call sites in the original.  The stream is returned as a base reference, which is
@@ -148,6 +154,7 @@ struct MapIcon {
 
 // mission_templates.txt element (0x58 bytes): inline ctor, read 0x4c2300, array reject 0x4c3430 (../mode_rec.h: ModeRec).
 #include "../mode_rec.h"
+#include "../game_globals.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 MissionTemplate* g_mission_templates;                       // 0x5e2a00 mission templates (0x58-byte records, count 0x5e2a04)
@@ -201,10 +208,6 @@ struct rec34_list {
 struct MeshTable { char pad; };                      // 0x8ed4f58
 struct elem48_holder;
 void __fastcall load_elem48_array(elem48_holder* self, int, stream_base* s);   // 0x4c3fb0 (MeshTable::load: rgl/mesh2/rec_tables.cpp)
-struct DialogTable { char pad; };                    // 0x8ed50c8
-struct DialogMgr {
-    void read(stream_base* s);   // 0x460ab0 (DialogTable::read)
-};
 struct pair_holder {
     void load1(stream_base* s);   // 0x4c46d0 / 0x4c47d0 (StringTable::load1 / load2: rgl/mesh2/rec_tables.h)
     void load2(stream_base* s);   // 0x4c47d0
@@ -222,7 +225,6 @@ extern TableauTable g_tableaus;                       // 0xa75f40
 extern PresentationTable g_presentations;            // 0xa75f2c
 extern ScriptTable g_scripts;                        // 0xa75eb0
 extern MeshTable g_meshes;                           // 0x8ed4f58
-extern DialogTable g_dialogs;                        // 0x8ed50c8
 
 // logging sink (0x5a9f60): w_cstr is vtable slot 10 (+0x28).
 struct LogSink {
@@ -236,9 +238,7 @@ extern LogSink g_log;                                // 0x5a9f60
 
 
 extern int g_propkind_count;                        // 0x5e29e0
-extern MissionObj* g_propkinds;                       // 0x5e29dc
 
-extern int g_menu_count;                             // 0x5e29b4
 extern MenuRec* g_menus;                             // 0x5e29b0
 
 MapIcon* g_map_icons;                               // 0x5e29f0 (.bss) the map-icon table, built by the loader below
@@ -315,9 +315,9 @@ void load_module_files()
         destroy_record_array(g_propkinds, 0, 3);
         g_propkinds = 0;
     }
-    g_propkinds = new MissionObj[g_propkind_count];
+    g_propkinds = (Rec78*)new MissionObj[g_propkind_count];
     for (int i = 0; i < g_propkind_count; i++)
-        g_propkinds[i].read((stream_base*)&s_scene);
+        ((MissionObj*)g_propkinds)[i].read((stream_base*)&s_scene);
     s_scene.failed = 1;
 
     // menus.txt
@@ -415,7 +415,7 @@ void load_module_files()
     in_conversation.r_tstr(&str1);
     in_conversation.r_tstr(&str2);
     in_conversation.r_int(&version);
-    ((DialogMgr*)&g_dialogs)->read((stream_base*)&s_conversation);
+    g_dialogs.read((stream_base*)&s_conversation);
     s_conversation.failed = 1;
     log.w_cstr("Loading mission templates...\n");
 

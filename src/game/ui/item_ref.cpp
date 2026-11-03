@@ -15,6 +15,7 @@
 #include "./item_ref.h"
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/clock_table.h"
 
 // @ 0x4625d0
 void snd_slot::update(int arg)

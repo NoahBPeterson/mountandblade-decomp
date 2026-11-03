@@ -7,6 +7,7 @@
 // `resource_manager` is the other half of this object) and ends where core/frustum_grid.cpp (0x41e470) begins;
 // the forward calls 0x41a2c0 -> 0x41ef30, 0x41ca60 -> 0x41f970 only put a boundary below world_items.cpp.
 #include <windows.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../game/config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <d3d9.h>
 #include <d3dx9.h>
@@ -40,12 +41,32 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/render_flags.h"
 #include "../../game/ui_globals.h"      // UI / core globals
 
 using namespace rgl;
 
-extern int g_mesh_npts;                        // 0x5e2998 (point count of the mesh being read)
-extern __int64 g_bit[];                        // 0x5a8e68 g_bit[i] == 1 << i
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_mesh_npts;                                    // 0x5e2998 (point count of the mesh being read)
+unsigned __int64 g_bit[64] = {  // 0x5a8e68 (g_bit[i] == 1 << i; the table of single-bit masks)
+    0x1ui64, 0x2ui64, 0x4ui64, 0x8ui64,
+    0x10ui64, 0x20ui64, 0x40ui64, 0x80ui64,
+    0x100ui64, 0x200ui64, 0x400ui64, 0x800ui64,
+    0x1000ui64, 0x2000ui64, 0x4000ui64, 0x8000ui64,
+    0x10000ui64, 0x20000ui64, 0x40000ui64, 0x80000ui64,
+    0x100000ui64, 0x200000ui64, 0x400000ui64, 0x800000ui64,
+    0x1000000ui64, 0x2000000ui64, 0x4000000ui64, 0x8000000ui64,
+    0x10000000ui64, 0x20000000ui64, 0x40000000ui64, 0x80000000ui64,
+    0x100000000ui64, 0x200000000ui64, 0x400000000ui64, 0x800000000ui64,
+    0x1000000000ui64, 0x2000000000ui64, 0x4000000000ui64, 0x8000000000ui64,
+    0x10000000000ui64, 0x20000000000ui64, 0x40000000000ui64, 0x80000000000ui64,
+    0x100000000000ui64, 0x200000000000ui64, 0x400000000000ui64, 0x800000000000ui64,
+    0x1000000000000ui64, 0x2000000000000ui64, 0x4000000000000ui64, 0x8000000000000ui64,
+    0x10000000000000ui64, 0x20000000000000ui64, 0x40000000000000ui64, 0x80000000000000ui64,
+    0x100000000000000ui64, 0x200000000000000ui64, 0x400000000000000ui64, 0x800000000000000ui64,
+    0x1000000000000000ui64, 0x2000000000000000ui64, 0x4000000000000000ui64, 0x8000000000000000ui64
+};
 
 // ---- serialisers -----------------------------------------------------------------------------------------------
 // @ 0x419190

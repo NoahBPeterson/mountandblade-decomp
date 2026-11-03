@@ -1,11 +1,12 @@
 #include "./save_state.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../list8.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
-extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 bytes)
+
 #include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 

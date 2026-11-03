@@ -58,8 +58,11 @@ struct Pool {
 float __cdecl signed_angle(const vec2* a, const vec2* b);   // 0x4381e0 (agent2/agent_types.h)
 int __stdcall id_matches_dir(int id, int dir);          // 0x4326d0 (src/rgl/xmlcfg/game_util.h: static, this unused; Agent::id_matches_dir of agent_obj.h is the thiscall spelling)
 float __cdecl accel_factor(const float* a, const float* b, const float* c);   // 0x435ae0
-extern float g_stick_x;                                 // 0xa178e0
-extern float g_stick_y;                                 // 0xa178e4
+
+
+
+
+
 int __cdecl group_base(int id);                         // 0x432130
 int __cdecl not_group_base(int id);                     // 0x4320b0
 

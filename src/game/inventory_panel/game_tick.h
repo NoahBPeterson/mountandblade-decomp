@@ -6,6 +6,7 @@
 #ifndef GAME_INVENTORY_PANEL_GAME_TICK_H
 #define GAME_INVENTORY_PANEL_GAME_TICK_H
 #include "./inv_common.h"
+#include "../int_vec.h"                   // RawVec (the marker lists are g_mat_vec)
 
 // the paged pool of 0x98-byte map records at game+0xcc (0x517960, 0x5179b0, 0x516ac0)
 struct MapRec {                         // 0x98 bytes

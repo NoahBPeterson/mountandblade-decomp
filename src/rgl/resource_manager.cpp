@@ -28,6 +28,18 @@
 #include "./resource_manager.h"
 #include "../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+options g_options = {  // 0x5aa008
+    /*i00*/ 3, /*i04*/ 3, /*f08*/ 0.4f, /*f0c*/ 1.0f, /*f10*/ 0.5f, /*i14*/ 0,
+    /*i18*/ 1, /*i1c*/ 1, /*i20*/ 1, /*i24*/ 1, /*i28*/ 1, /*i2c*/ 1,
+    /*i30*/ 1, /*i34*/ 50, /*i38*/ 1, /*i3c*/ 20, /*i40*/ 5, /*i44*/ 2,
+    /*i48*/ 0, /*i4c*/ 0, /*i50*/ 0, /*i54*/ 1, /*i58*/ 1, /*i5c*/ 1,
+    /*i60*/ 1, /*i64*/ 1, /*i68*/ 0, /*i6c*/ 2, /*i70*/ 0, /*f74*/ 0.3422f,
+    /*i78*/ 1, /*i7c*/ 2, /*f80*/ 2.2f, /*f84*/ 0.5f, /*f88*/ 0.5f, /*i8c*/ 0,
+    /*i90*/ 0, /*i94*/ 0, /*i98*/ 0
+};
+
+
 // ---- binary file streams ---------------------------------------------------------------------
 // @ 0x417bb0
 int bin_writer::flush()
@@ -119,6 +131,7 @@ void deleting_dtor_standin2(texture* a, effect_set* b)
 // surviving functions): a pointer-sized list element and an 8-byte vector element.
 struct res_obj;
 #include "../include/pod_elems.h"   // E8 (shared)
+#include "../include/render_flags.h"
 
 namespace std {
 // 0x4180d0 std::_Copy_opt
@@ -244,8 +257,8 @@ int texture::create()
             loaded = 0;
             if (width <= 0x400)
                 return 0;
-            if (g_shadow_quality > 0) {
-                g_shadow_quality = g_shadow_quality - 1;
+            if (g_cfg.shadowmap_quality > 0) {
+                g_cfg.shadowmap_quality = g_cfg.shadowmap_quality - 1;
                 mb_error("Unable to create depth stencil surface width=%d height=%d. Shadowmap quality will be reduced next time you start the game.", width, height);
                 FILE* f = mb_open_user_file("rgl_config.txt", "w");
                 ((rgl_config&)g_cfg).save(f);
@@ -276,8 +289,8 @@ int texture::create()
                 g_options.save();
                 return 0;
             }
-            if (g_shadow_quality > 0) {
-                g_shadow_quality = g_shadow_quality - 1;
+            if (g_cfg.shadowmap_quality > 0) {
+                g_cfg.shadowmap_quality = g_cfg.shadowmap_quality - 1;
                 mb_error("Unable to create render target texture width=%d height=%d. Shadowmap quality will be reduced next time you start the game.", width, height);
                 FILE* f = mb_open_user_file("rgl_config.txt", "w");
                 ((rgl_config&)g_cfg).save(f);

@@ -15,6 +15,8 @@ struct DialogMgr;   // dialog_manager.h
 
 // The table of single-bit masks (8-byte entries 1<<i) starts here;
 extern unsigned __int64 g_bit[]; // 0x5a8e68 (g_bit[i] == 1 << i)
+// Experience needed per level (rdata, 64 entries; game_2.cpp defines it; entry n+1 is the next level's bound).
+extern const int g_level_xp[64]; // 0x5937c8
 // -1 = nothing pending: set to -1 by agent_hud (0x4f7f00 path) and world_app, tested in mission_5.cpp (0 = rebuild mission geometry, then reset to -1).
 extern int g_pending_action; // 0x5a9f18 -1 = none; 0 = rebuild mission geometry
 // Log file handle shared by cls_map.cpp (g_5a9f90) and char_sheet/editor_ui.h (g_log_file).
@@ -120,7 +122,7 @@ extern AnimDefV* g_anims; // 0xa76628
 // DialogMgr (dialog_manager.h, +0 count, +4 recs ...);
 extern DialogMgr g_dialogs; // 0x8ed50c8
 // The empty string copied by the conversation refresh (conv_refresh.cpp);
-extern tstring g_empty_string; // 0x8ee30f0
+
 // The module directory string;
 extern tstring g_module_path; // 0x8ee3c28
 // trigger_vec.cpp load_game_variables: the selected module name;

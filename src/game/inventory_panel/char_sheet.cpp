@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <stddef.h>
@@ -119,6 +120,7 @@ extern GuiManager g_gui;                        // 0x5d7080
 
 // settings table at 0xa44240: 0x2c-byte records, key tstring at +0, text pointer at +0x20
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
+#include "../skill_cap.h"
 #include "../ui_globals.h"      // UI / core globals
 
 
@@ -173,8 +175,8 @@ static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstri
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ini_file.h"
 
-#include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp (canonical, defined in triggers/trigger_vec.cpp)
-extern char g_skill_tbl[];                    // 0x8ee3100 (records of 0x44 bytes)
+
+#include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp_one_handed (canonical, defined in triggers/trigger_vec.cpp)
 
 // the two mode/tutorial objects touched at the end
 struct TutorialMenuRec {                        // the menu record the holder's first dword points to (renamed from MainMenu: 0xa73980 itself is main_menu.h's MainMenu)

@@ -13,6 +13,7 @@
 // 0x42c080 find, 0x42c4a0 substr, 0x42c900 insert. 0x5e293c holds the game's ID3DXEffect*: the gamma values go to
 // its SetVector (COM, +0x88).
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/options.h"   // g_options
 #include "../config/config_block.h"   // g_cfg
 #include <windows.h>
@@ -67,11 +68,11 @@ extern ID3DXEffect* g_effect;                                                // 
 #include "../../rgl/text_stream.h"             // mb_open_user_file (0x415160)
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../float_consts.h"   // shared float constants kept in memory
+#include "../config/config_block.h"
+#include "../../rgl/options.h"
 // 0x4b99c0: settings refresh.
 void run_settings_probe();                            // 0x4b99c0 (options_dlg.h; that header's winsock2.h cannot follow windows.h)
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index (clamped to 5).
-struct GraphicsQuality { int a; int b; };
-extern GraphicsQuality g_graphics_quality;                                  // 0x5aa008
 
 // 0x4d6b80 and 0x4d6dd0 live in slice s004d6b80.
 // WindowMgrW (world_data/world_data.h; main_menu.h's `reset` is its old name): open(n) 0x494260 on the main menu object
@@ -91,7 +92,7 @@ static inline void set_enabled_text_local(Widget* w, void* page) { ((KeysPage*)p
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index.
 static inline void set_quality(int v, int which)
 {
-    Config* c = (Config*)(void*)&g_graphics_quality;
+    Config* c = (Config*)(void*)&g_options;
     if (which) c->set_texture_quality(v); else c->set_triple_buffering(v);
 }
 

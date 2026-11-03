@@ -12,6 +12,7 @@
 // trigger_entry_vec, big_obj) are one module.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <string.h>
 #include <stdlib.h>
@@ -39,6 +40,11 @@ int g_compatible_module_version;                            // 0x5e29b8
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_display_wp[7];   // 0x5e2900
 ID3DXEffect* g_effect;   // 0x5e293c
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+
+
 
 
 // ---- data this module owns (docs/standalone_data.md) ----
@@ -1154,7 +1160,7 @@ HRESULT Core::RestoreDeviceObjects()
     IDirect3DDevice9* dev = m_pd3dDevice;
     g_render.dev = dev;
     dev->GetDeviceCaps(&g_caps);
-    g_renderer_vsync = -1;
+    g_render.vsync = -1;
     g_render.pad504 = 0;
     if (g_use_shaders) {
         if (build_shader() < 0)
@@ -1482,17 +1488,9 @@ void PresentationRec::read(stream_base& s)
 // @ 0x4c2470
 // (the dialog manager, ../dialog_manager.h DialogMgr; that header cannot be mixed with the stream.h-based ones, so the
 //  constructor works on the raw object: 0x400 + 0x400 lines of 0x1c bytes whose text sits at +0xc, cur_text at +0xe028)
-void* __fastcall dialog_mgr_ctor(void* self)
+DialogMgr::DialogMgr()
 {
-    char* p = (char*)self + 0x30;
-    for (int i = 0; i < 0x400; i++, p += 0x1c)
-        ((tstring*)p)->tstring::tstring();
-    p = (char*)self + 0x7030;
-    for (int i = 0; i < 0x400; i++, p += 0x1c)
-        ((tstring*)p)->tstring::tstring();
-    ((tstring*)((char*)self + 0xe028))->tstring::tstring();
-    *(int*)((char*)self + 4) = 0;
-    return self;
+    recs = 0;
 }
 
 // @ 0x4c2b20
@@ -1602,7 +1600,7 @@ void music_player::advance_piece()
             w[0] = 0;
             w[12] = -1;
         }
-    } else if (g_options.f08 > g_music_volume_floor) {
+    } else if (g_options.f08 > 0.02f) {
         bool forced = false;
         int sel = -1;
         int best = -1;
@@ -1679,7 +1677,7 @@ void music_player::advance_piece()
         w[1] = 0;
         w[13] = -1;
     } else if ((*(int*)((char*)&g_script + 0x3c)) >= 0) {
-        if (g_options.f08 > g_music_volume_floor) {
+        if (g_options.f08 > 0.02f) {
             int slot = 1;
             play((*(int*)((char*)&g_script + 0x3c)), &slot);
         }

@@ -25,6 +25,8 @@ using rgl::vertex60;
 // ---- globals ------------------------------------------------------------------------------------------------
 extern __int64 g_ticks[];                   // 0x5e2948 clock table (1e-5 s ticks)
 
+
+
 using rgl::unpack_color;                    // 0x40e4e0 (cdecl)
 
 // parent-chain accessors of rgl::mesh that stay out of line here (the header inlines one level of get50/get90)

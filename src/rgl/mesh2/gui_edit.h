@@ -104,6 +104,10 @@ struct block_copier {
 // 0x4c5080..0x4c5150: the editor's item records
 // ============================================================================================================
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
+#include "../../game/game_globals.h"
+#include "../../game/string_table.h"
+#include "../../include/item_mod.h"
+#include "../../game/skill_cap.h"
 struct item38 { char d[0x38]; };               // 0x38-byte record (tstring at +0x24)
 struct ArrSet;
 struct allocArr { void construct(ArrSet* p, const ArrSet& v); };   // 0x46b6c0 (game/terrain_a/terrain_a.cpp: thiscall ret 8; the allocator in ecx is unused)
@@ -144,10 +148,6 @@ struct gui_child {                               // polymorphic child (deleted t
 struct mesh_bnd {};   // the scene node whose min/max corners come from mnode::calc_bounds (0x438d80, thiscall, ret 8)
 extern const float g_f95;                        // 0x54b890 = 0.95
 extern const float g_f05;                        // 0x54b4d0 = 0.05
-extern const float g_f011;                       // 0x595c98 = 0.011
-extern const float g_f989;                       // 0x595c94 = 0.989
-extern const float g_f739;                       // 0x595c90 = 0.739
-extern const float g_f728;                       // 0x595c8c = 0.728
 
 struct gui_view {
     std::vector<gui_child*> kids;   // +0 (begin +4, end +8)
@@ -175,32 +175,13 @@ struct gui_view {
 // 0x4c6080..0x4c6860: the translated-name accessors of the record classes, and the reference-object page
 // ============================================================================================================
 // String constants of 0x4c6330..0x4c6620 ("{***}" is the placeholder appended to an untranslated name)
-extern const char s__pl[];                      // 0x5923b0 "_pl"
-extern const char s__text[];                    // 0x5923b4 "_text"
-extern const char s__door[];                    // 0x595c9c "{***}"
-extern const char s_suffix_door[];              // 0x595d64 "_door"
-extern const char s_prefix_desc[];              // 0x595ca4 "_desc"
-extern const char s_invalid_item[];             // 0x595cac "INVALID ITEM"
-extern const char s_item_name[];                // 0x595cbc "ui_item_itemname"
-extern const char s_unknown[];                  // 0x595cd0 "ui_unknown_unknownname"
-extern const char s_prop[];                     // 0x595ce8 "ui_prop_propname"
-extern const char s_invalid_plant[];            // 0x595cfc "INVALID PLANT"
-extern const char s_plant[];                    // 0x595d0c "ui_plant_plantname"
-extern const char s_passage[];                  // 0x595d20 "ui_passage_menu_item_passagename"
-extern const char s_entry_point[];              // 0x595d44 "ui_entry_point_entrypointname"
 
 struct RefRecord;                                                // below
 
 // ---- the record classes of the language export (save_language_files 0x4c8ca0) -----------------------------
 // Every `translated()` of these classes is one of the accessors defined in gui_edit.cpp; the ones with equal
 // field layouts share code in the original (RecA = TroopRec/ItemKind/QuestRec, RecB = PartyRec, RecC = FactionRec).
-struct GroundSpec {             // 0x20-byte record (array pointer at 0x5e28f8, count at 0x5e29e8)
-    char pad0[0x4];
-    char* name;                 // +0x4
-    char pad8[0x20 - 0x8];
-};
-extern GroundSpec* g_ptypes;              // 0x5e28f8
-extern int g_ptype_count;                 // 0x5e29e8
+#include "../../game/ptype.h"             // ptype (the 0x20-byte ground spec), g_ptypes 0x5e28f8, g_ptype_count 0x5e29e8
 
 #include "../../include/item_kind.h"       // ItemKind (name / plural / key at +0 / +0x10 / +0x20), g_items 0x5e29d0
 inline const tstring* ItemKind::plural_name() { return suffix_or(key, "_pl", plural); }
@@ -464,9 +445,6 @@ struct RenderConfig {                                   // game/config/config.h 
 };   // the methods are Config's init_defaults 0x4bc020 / load_file 0x4bbf70 and rgl_config::save 0x415fb0 (called through casts in gui_edit.cpp)
 
 extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb_skin_%s.smf")
-extern char g_rgl_name[];                               // 0x54b048 ("rgl_config.txt")
-extern const char g_mode_rb[];                          // 0x54a8fc ("rb")
-extern const char g_mode_wb[];                          // 0x54b058 ("wb")
 
 // the settings / configuration dialog
 struct ConfigDialog {
@@ -540,15 +518,6 @@ struct Map {
     MapRecord* records_end;                             // +0x6690
 };
 
-extern tstring g_module_path;                           // 0x8ee3c28 (global file-name prefix)
-extern char g_ui_play[];                                // 0x595e0c
-extern char g_ui_configure[];                           // 0x595dfc
-extern char g_ui_check_for_new_version[];               // 0x595de0
-extern char g_ui_download_new_settings[];               // 0x595dc4
-extern char g_ui_website[];                             // 0x595db8
-extern char g_ui_cancel2[];                             // 0x595dac
-extern char g_ui_current_setting[];                     // 0x595d98
-extern char g_bmp_main[];                               // 0x595d8c ("main.bmp")
 
 // the localized text of `key` (the table stores a missing key as an empty string)
 inline const char* text(const char* key)
@@ -790,15 +759,7 @@ struct item38_vec {
 inline const tstring* QuestRec::text_name() { return suffix_or(key, "_text", desc); }
 
 extern int g_party_template_count;                                         // 0x5e29fc
-extern GameString* g_strings;                                      // 0xa75ea0
-extern int g_n_game_strings;                                            // 0xa75ea8
-extern QuickString* g_quick_strings;                                    // 0xa75ea4
-extern int g_n_quick_strings;                                           // 0xa75eac
-extern DialogRec* g_dialogs;                                            // 0x8ed50cc
-extern int g_n_dialogs;                                                 // 0x8ed50c8
-extern ModRec g_item_modifiers[];                                            // 0xa75f70 (43 x 0x28)
-extern ModRec g_item_modifiers[]; // 0xa75f70 (43 x 0x28)
-extern SkillRec g_skill_tbl[];                                             // 0x8ee3100 (42 x 0x44)
+#include "../../game/menu_rec.h"   // MenuRec* g_menus (0x5e29b0)
 extern int g_menu_count;                                                   // 0x5e29b4
 
 

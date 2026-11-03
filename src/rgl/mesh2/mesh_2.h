@@ -375,7 +375,7 @@ struct csv_row {                                                // 0x238 bytes (
     csv_row();                                                  // 0x4cdf20
 };
 
-extern std::vector<RegSkeleton> g_skeletons;                      // 0x5d6fa0 + 0x70 (provisional)
+extern std::vector<RegSkeleton> g_skeletons;                      // 0xa180e8 (the registered skeletons, filled from skeleton_bodies.xml)
 struct allocstr {
     void construct(tstring* p, const tstring& v);   // 0x436c90 (game/agent2/agent_types.h)
 };

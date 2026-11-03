@@ -289,7 +289,7 @@ int Troop::nibble(int i)
 {
     int v = (nib[i / 8] >> ((i % 8) * 4)) & 0xf;
     if (v < 0) return 0;
-    int cap = g_skill_tbl[i].cap;
+    int cap = g_skill_tbl[i].max_rank;
     if (v > cap) v = cap;
     return v;
 }
@@ -316,7 +316,7 @@ ItemRef Wielder::ranged_ref()
 int find_in_table20(const tstring* name)
 {
     for (int i = 0; i < g_ptype_count; i++)
-        if (g_tbl20[i].name.equals(*name)) return i;
+        if (g_ptypes[i].name.equals(*name)) return i;
     return 0;
 }
 // @ 0x4352a0
@@ -324,7 +324,7 @@ int find_in_table78(const tstring* name)
 {
     int r = -1;
     for (int i = 0; i < g_propkind_count && r == -1; i++)
-        if (g_tbl78[i].name.equals(*name)) r = i;
+        if (g_propkinds[i].name.equals(*name)) r = i;
     return r;
 }
 
@@ -477,10 +477,10 @@ void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const i
         name = g_items[*id].key;
         o->value = *value;
     } else if (k == 4) {
-        name = g_tbl20[*id].name;
+        name = g_ptypes[*id].name;
         o->value = *value;
     } else if (k == 0) {
-        name = g_tbl78[*id].name;
+        name = g_propkinds[*id].name;
     } else {
         int zero = 0;
         o->value = clamp_index(value, &zero, &g_value_max);

@@ -5,8 +5,8 @@
 #define GAME_VIEW_STATE_H
 #include "../include/rgl_base.h"
 #include "../include/vec.h"
+#include "../include/clock_table.h"
 
-extern __int64 g_ticks[];                       // 0x5e2948 clock table, 1e-5 s ticks
 
 // 8-byte tick values stored as two dwords: the agent's sub-objects are not 8-byte aligned (ViewState is 0x5374 long)
 struct tick { int lo, hi; };

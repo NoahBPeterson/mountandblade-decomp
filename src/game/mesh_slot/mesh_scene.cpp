@@ -11,6 +11,7 @@
 #include "../../include/sound_mgr.h"   // SoundMgr, g_sound_mgr 0x5aa128 (play 0x442650)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
+#include "../../include/render_flags.h"
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through troop_mgr.h) declares a global ::vat with the same signature
@@ -42,6 +43,7 @@ extern "C" int __stdcall FSOUND_StopSound(int channel);   // 0x5342a6
 float frand();                                   // 0x40e400
 
 // constants of the projectile code
+extern float g_f54a6f0;        // 0x54a6f0 (0.01f)
 extern float g_f54b3b4;        // 0x54b3b4 (0.8f: reach without an item)
 extern float g_f54b708;        // 0x54b708 (per-tick gravity coefficient)
 extern float g_f590fa4;        // 0x590fa4 (1.7f: first-sample distance)
@@ -52,6 +54,9 @@ extern float g_f59190c;        // 0x59190c (0.92f)
 extern float g_f591908;        // 0x591908 (0.0027f)
 extern float g_f54b660;        // 0x54b660 (0.0001f)
 extern float g_f54b8b0;        // 0x54b8b0 (1.5f)
+extern float g_f54a6d0;        // 0x54a6d0 (1e-5f)
+extern float g_f590c90;        // 0x590c90 (40.0f)
+extern float g_f590d94;        // 0x590d94 (0.6f)
 
 // ---- 0x47cae0 ----------------------------------------------------------------------------------------------------
 
@@ -335,7 +340,7 @@ void MissileU::update(float dt)
     // the velocity is a sum of two vector temporaries (vel * speed, and the gravity step); like the original, only some of
     // the components are spilled to float locals
     vector4 sv = vel * speed;
-    vector4 gv(dt * 0.0f, dt * 0.0f, dt * g_f54b708);
+    vector4 gv(dt * 0.0f, dt * 0.0f, dt * (-9.8f));
     v.x = gv.x + sv.x;
     v.y = gv.y + sv.y;
     v.z = gv.z + sv.z;
@@ -348,12 +353,12 @@ void MissileU::update(float dt)
         float dx = pos.x - prev.x;
         float dy = pos.y - prev.y;
         float dz = pos.z - prev.z;
-        if ((float)sqrt(dy * dy + (dz * dz + dx * dx)) > g_f590fa4)
+        if ((float)sqrt(dy * dy + (dz * dz + dx * dx)) > 1.7f)
             ent->f140 = 1;
     }
 
     if (troop < 0)
-        d.z = g_f54b3b4;
+        d.z = 0.8f;
     else
         d.z = (float)g_items[troop].weight * 0.01f;
     pb.x = d.z * vel.x;
@@ -386,9 +391,9 @@ void MissileU::update(float dt)
             clk.start = g_ticks[clk.clock];
         } else {
             if (mode == 1) {
-                pb.z = v.z * g_f590e68;
-                pa.x = v.x * g_f590e68 + pos.x;
-                pa.y = v.y * g_f590e68 + pos.y;
+                pb.z = v.z * 0.23f;
+                pa.x = v.x * 0.23f + pos.x;
+                pa.y = v.y * 0.23f + pos.y;
                 pa.z = pb.z + pos.z;
                 d.x = g_mission->view.o.x - pa.x;
                 d.y = g_mission->view.o.y - pa.y;
@@ -396,7 +401,7 @@ void MissileU::update(float dt)
                 if (d.x * vel.x + (d.y * vel.y + d.z * vel.z) < 0.0f
                     && g_mission->view.o.z - g_one < pa.z) {
                     mode = 3;
-                    if (d.out_length() < g_f591334) {
+                    if (d.out_length() < 20.0f) {
                         tmp = v.out_length();
                         int snd = 0x35;
                         int t = g_items[item].type_flags & 0xff;
@@ -475,8 +480,8 @@ after_item_sound:
     if (ent != 0) {
         speed = (float)sqrt(v.y * v.y + (v.z * v.z + v.x * v.x));
         v.normalize();
-        speed = speed - (speed * speed * dt) * g_f591908;
-        if (speed > g_f54b660) {
+        speed = speed - (speed * speed * dt) * 0.0027f;
+        if (speed > 0.0001f) {
             vel = v;
             vel.normalize();
         }
@@ -495,7 +500,7 @@ after_item_sound:
             tmp = 1.5707964f;
             ent->meshes[0]->m_cc.rotate_about_f(&tmp);
             if (tumble > 0.0f) {
-                tmp = g_f54b8b0 - clk.elapsed() * tumble;
+                tmp = 1.5f - clk.elapsed() * tumble;
                 ent->meshes[0]->m_cc.rotate_about_u(&tmp);
             }
         }

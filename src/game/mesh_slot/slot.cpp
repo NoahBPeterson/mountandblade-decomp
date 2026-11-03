@@ -9,12 +9,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../tstring.h"
+#include "../slot.h"
 
 
 #define NOINL __declspec(noinline)     // keeps the definition's name visible to tools/difftest/slice.py's marker scan
 #include "../../include/fx.h"
 #include "../../include/dialog_rec.h"   // DialogBlock: the 0x1c-byte script block, whose runner emit 0x4b09e0 the channel play calls
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+Slot g_keyboard;                                    // 0xa170c8 (.bss)
+
 
 // DirectInput-style device interface (vtable: +0x1c poll/acquire, +0x24 GetDeviceState).
 struct SomeIface {
@@ -50,29 +55,6 @@ struct TimeKey {
     void calc();                                            // 0x487620
 };
 
-struct Slot {
-    char pad0[4];
-    SomeIface* kb;                                          // +4  (0x100-byte key device)
-    SomeIface* state;                                       // +8  (0x14-byte state device)
-    int key[0x100];                                         // +0xc  (key[0xe0..0xe7] + edges are filled by read_state)
-    int now[0x100];                                         // +0x40c (snapshot of key taken at the top of update)
-    float f80c;                                             // +0x80c
-    float f810;                                             // +0x810
-    float f814;                                             // +0x814
-    float f818;                                             // +0x818
-    float f81c;                                             // +0x81c
-    int clock820;                                           // +0x820
-    __int64 t828;                                           // +0x828
-    int clock830;                                           // +0x830
-    __int64 t838;                                           // +0x838
-    char b840;                                              // +0x840
-    char pad841[0x878 - 0x841];
-
-    void update(float dt);                                  // 0x487930
-    int read_keys();                                        // 0x487640
-    int read_state();                                       // 0x4876e0
-    int is_ready(int i);                                    // 0x487900
-};
 
 struct Buffer {                                             // the widget base (vtable 0x591c80), as far as its destructor goes
     // Only the destructor is declared: slot 0 of MissionUi's 49-slot table (ui/mission_ui.h; the other slots are defined in
@@ -107,15 +89,15 @@ int Slot::read_keys()
     if (kb) {
         int keys[0x40];
         memset(keys, 0, sizeof keys);
-        if (kb->Read(0x100, keys) < 0) {
-            if (kb->GetStatus() == 0x8007001e) {
-                while (kb->GetStatus() == 0x8007001e)
+        if (((SomeIface*)kb)->Read(0x100, keys) < 0) {
+            if (((SomeIface*)kb)->GetStatus() == 0x8007001e) {
+                while (((SomeIface*)kb)->GetStatus() == 0x8007001e)
                     ;
             }
         } else {
             const unsigned char* b = (const unsigned char*)keys;
             for (int i = 0; i < 0xe0; i++)
-                key[i] = b[i] & 0x80;
+                down[i] = b[i] & 0x80;
         }
     }
     return 0;
@@ -126,29 +108,29 @@ int Slot::read_state()
 {
     if (state) {
         int buf[5] = {0};
-        if (state->Read(0x14, buf) < 0) {
-            if (state->GetStatus() == 0x8007001e) {
-                while (state->GetStatus() == 0x8007001e)
+        if (((SomeIface*)state)->Read(0x14, buf) < 0) {
+            if (((SomeIface*)state)->GetStatus() == 0x8007001e) {
+                while (((SomeIface*)state)->GetStatus() == 0x8007001e)
                     ;
             }
         } else {
             const unsigned char* b = (const unsigned char*)buf;
             for (int i = 0; i < 8; i++)
-                key[0xe0 + i] = b[12 + i] & 0x80;
-            key[0xee] = 0;
-            f80c = (float)buf[0];
-            f810 = (float)buf[1];
-            f814 = (float)buf[2];
-            key[0xef] = 0;
+                down[0xe0 + i] = b[12 + i] & 0x80;
+            down[0xee] = 0;
+            axis[0] = (float)buf[0];
+            axis[1] = (float)buf[1];
+            axis[2] = (float)buf[2];
+            down[0xef] = 0;
             if (buf[2] > 0) {
                 if ((float)(g_ticks[clock830] - t838) * 0.00001f > 0.5f) {
                     t838 = g_ticks[clock830];
-                    key[0xee] = 1;
+                    down[0xee] = 1;
                 }
             } else if (buf[2] < 0) {
                 if ((float)(g_ticks[clock830] - t838) * 0.00001f > 0.5f) {
                     t838 = g_ticks[clock830];
-                    key[0xef] = 1;
+                    down[0xef] = 1;
                 }
             }
         }
@@ -159,7 +141,7 @@ int Slot::read_state()
 // @ 0x487900
 int Slot::is_ready(int i)
 {
-    if (key[i] && !now[i])
+    if (down[i] && !prev[i])
         return 1;
     return 0;
 }
@@ -167,7 +149,7 @@ int Slot::is_ready(int i)
 // @ 0x487930
 void Slot::update(float dt)
 {
-    memcpy(now, key, sizeof(key));
+    memcpy(prev, down, sizeof(down));
     read_keys();
     read_state();
     bool ch = false;
@@ -178,12 +160,12 @@ void Slot::update(float dt)
     if (0.2f > f)
         f = 0.2f;
     f81c *= f;
-    if (f80c != 0.0f || f810 != 0.0f) {
-        f818 = f818 * 0.5f + f80c;
-        f81c = f81c * 0.5f + f810;
+    if (axis[0] != 0.0f || axis[1] != 0.0f) {
+        f818 = f818 * 0.5f + axis[0];
+        f81c = f81c * 0.5f + axis[1];
     }
     for (int i = 0; i < 0x100; i++) {
-        if (now[i] != key[i])
+        if (prev[i] != down[i])
             ch = true;
     }
     if (ch)
@@ -251,6 +233,7 @@ extern "C" double floor(double v);     // 0x536b10 CRT floor (x87 double arg on 
 extern const float g_half;              // 0x549d70 0.5f
 extern const float g_zero;              // 0x549ca8 0.0f
 extern const float g_k002;              // 0x590cd0 0.02f
+extern const float g_zero;              // 0x549ca8 0.0f
 
 // The tick table's scale: a float at 0x54a6d0 (loaded with fmul, so it must be a global, not a literal).
 
@@ -371,16 +354,16 @@ void Effect::animate(float dt)
         volatile float sum = sp + q;
         out0 = (e4 * f88 + (periodE - e4) * a8) * (g_one / periodE);
         out1 = sum * (g_one / periodE);
-        pair[0] = out0 * g_k002;
-        pair[1] = out1 * g_k002;
+        pair[0] = out0 * 0.02f;
+        pair[1] = out1 * 0.02f;
         d27(pair);
         changed = true;
     } else if (c4) {
         out0 = f88;
         out1 = f8c;
         c4 = 0;
-        pair[0] = out0 * g_k002;
-        pair[1] = out1 * g_k002;
+        pair[0] = out0 * 0.02f;
+        pair[1] = out1 * 0.02f;
         d27(pair);
         changed = true;
     }

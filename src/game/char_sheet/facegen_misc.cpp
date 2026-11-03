@@ -1,4 +1,5 @@
 #include "./facegen_misc.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -282,6 +283,7 @@ void Animator::pack_state(PackedState* out)
 }
 
 // @ 0x4ebb80
+
 #include "../main_menu.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_editor_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)

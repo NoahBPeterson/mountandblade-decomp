@@ -18,7 +18,6 @@
 #define GAME_TRIGGERS_ITEM_REC_H
 #include "../head_rec.h"
 
-extern __int64 g_ticks[];                       // 0x5e2948 clock table, 1e-5 s ticks
 
 // The owned block at +0x30 (three pointers, cleared by the constructors, released by the destructor).
 struct owned_block {

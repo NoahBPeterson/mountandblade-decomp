@@ -43,6 +43,7 @@ extern char g_5e212c;                           // 0x5e212c
 #include "../renderer.h"
 extern float g_590bb8;                          // 0x590bb8
 extern float g_54b3b4;                          // 0x54b3b4
+extern float g_549cdc;                          // 0x549cdc (1.0f)
 
 // ---- callees -------------------------------------------------------------------------------------------
 // (stop_all 0x494310, clone 0x41c6d0, make_short_button 0x4e5570, new_medium_button 0x4dce70, make_hint 0x4dada0, ctor_4ed630: cs_common.h / cs_res.h)
@@ -54,7 +55,8 @@ extern float g_54b3b4;                          // 0x54b3b4
 #include "../ui_globals.h"      // UI / core globals
 
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
-#define g_psys ((char*)&orig::g_shadow_map)                         // the shadow / particle system (ShadowMap, ShadowMapP: cs_common.h)
+extern ShadowMap g_shadow_map;                                        // 0xa70248 (cs_common.h's view of the shadow-map object)
+#define g_psys ((char*)&g_shadow_map)                         // the shadow / particle system (ShadowMap, ShadowMapP: cs_common.h)
 
 static Widget* new_widget(int size)
 {

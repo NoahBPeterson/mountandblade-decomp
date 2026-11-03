@@ -7,6 +7,7 @@
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "./party_screen.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)

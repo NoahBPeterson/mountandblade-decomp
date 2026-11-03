@@ -14,6 +14,7 @@
 //       map editor starts (0x52cf60, class Mesh | Elem). The map's boundary 0x5249f0 is not kept (see game_2.cpp).
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "./mission_5.h"
@@ -30,6 +31,11 @@ struct Presentation;
 extern Presentation* g_presentation;                        // 0x5e299c
 #include "../key_names.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+extern const float g_aim_range_tbl[14] = {-0.5f, 3.1415927f, -2.0f, 2.0f, -1.5f, 2.5f, -1.0f, 3.0f, -1.3f, 2.8f, -3.0f, 1.0f, 5.0f, 4.0f};  // 0x59390c (rdata: {lo, hi} pairs)
+
 #include "../ui_globals.h"      // UI / core globals
 
 // ======================================================= slice s00525160: functions
@@ -80,7 +86,7 @@ void Game_s25160::handle_event(int code)
         else
         {
             float pair[2];
-            pair[0] = (float)(s + 0x64) * orig::k_0_00105f + orig::k_0_02f;
+            pair[0] = (float)(s + 0x64) * 0.00105f + 0.02f;
             pair[1] = 0.02f;
             f11e4->v22(pair);
             f11e8->v45();
@@ -151,7 +157,7 @@ done:
 
     if (v == 1)
         goto case1;
-    if (g_cfg.enable_edit_mode != 0 && *(int*)&orig::g_a17110 != 0 && *(int*)&orig::g_a17510 == 0)
+    if (g_cfg.enable_edit_mode != 0 && *(int*)&g_keyboard.down[15] != 0 && *(int*)&g_keyboard.prev[15] == 0)
         goto case1;
 
     if (v == 0x10)
@@ -165,7 +171,7 @@ done:
     if (v == 4)
     {
         char* b2 = *(char**)&g_game;
-        char* rec = *(char**)(b2 + 0x13a00) + g_conversation_troop * 0x508;
+        char* rec = *(char**)(b2 + 0x13a00) + g_dialogs.fc * 0x508;
         int save = *(int*)(rec + 0x34);
         int flags = *(int*)(rec + 0x30);
         (void)save;
@@ -176,21 +182,21 @@ done:
         }
         char* t = *(char**)(g_windows + 0x20);
         *(int*)(t + 0x18) = 0x10;
-        *(int*)(t + 0x14) = g_conversation_troop;
+        *(int*)(t + 0x14) = g_dialogs.fc;
         *(int*)(t + 4) = 2;
         g_dlg.open(8);
         return;
     }
 
     if (v == 3)
-        f1200 = g_conversation_troop;
+        f1200 = g_dialogs.fc;
     if (v == 2 || v == 3)
     {
         char* t = *(char**)(g_windows + 0x20);
         *(int*)(t + 0x18) = 0x10;
         int a = *(int*)(*(char**)&g_game + 0x13af0);
         if (a == 0)
-            a = g_conversation_troop;
+            a = g_dialogs.fc;
         *(int*)(t + 0x14) = a;
         *(int*)(t + 4) = ((v != 3) ? 0 : 3) + 1;
         g_dlg.open(8);
@@ -203,12 +209,12 @@ done:
         *(int*)(t + 0x18) = 0x10;
         if (v == 5 || v == 6 || v == 7)
         {
-            *(int*)(t + 0x10) = g_encountered_party;
+            *(int*)(t + 0x10) = g_dialogs.f10;
         }
         else
         {
             *(int*)(t + 0x10) = -1;
-            *(int*)(t + 0x14) = g_conversation_troop;
+            *(int*)(t + 0x14) = g_dialogs.fc;
         }
         if (v == 5)
         {
@@ -243,7 +249,7 @@ done:
     {
         char* t = *(char**)(g_windows + 0x3c);
         *(int*)(t + 0x18) = 0x10;
-        *(int*)(t + 0x14) = g_conversation_troop;
+        *(int*)(t + 0x14) = g_dialogs.fc;
         *(int*)(t + 4) = (v != 0xb) + 1;
         ((VObj_s25160*)t)->v4();
         g_dlg.open(0xf);
@@ -268,7 +274,7 @@ case1:
 #undef g_game_s257f0
 #define g_game_s257f0 (*(Game_s257f0**)&g_game)
 #undef g_n_dialogs_s257f0
-#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)g_dialogs)
+#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)&g_dialogs)
 #undef AGENT
 #define AGENT(id) (g_mission_s257f0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 // @ 0x526070 -------------------------------------------------------------------------------------------
@@ -408,7 +414,7 @@ void ViewObj_s257f0::update()
 #undef g_game_s26130
 #define g_game_s26130 (*(Game_s26130**)&g_game)
 #undef g_n_dialogs_s26130
-#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)g_dialogs)
+#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)&g_dialogs)
 // @ 0x526130 -------------------------------------------------------------------------------------------
 int find_listener_agent()
 {
@@ -515,12 +521,12 @@ void Screen_s261e0::tick(float dt)
     // ---- renderer "ready" rate keys ----------------------------------------------------------------
     {
         char c7 = g_keyready_s261e0.is_ready(0xd0);
-        unsigned char c8 = g_a17908;
+        unsigned char c8 = g_keyboard.b840;
         if (c7 || ((*(int*)((char*)&g_keyboard + 0x34c)) != 0 && c8 != 0))
-            g_vert_budget -= 5;
+            rgl::g_vert_budget -= 5;
         c7 = g_keyready_s261e0.is_ready(0xc8);
         if (c7 || ((*(int*)((char*)&g_keyboard + 0x32c)) != 0 && c8 != 0))
-            g_vert_budget += 5;
+            rgl::g_vert_budget += 5;
     }
 
     update(sdt);
@@ -554,7 +560,7 @@ void Screen_s261e0::tick(float dt)
             *(int*)((char*)g_game_s261e0 + 0x1a1a8) = *(int*)(p + 4);
             *(int*)((char*)g_game_s261e0 + 0x1a1ac) = *(int*)(p + 8);
             *(int*)((char*)g_game_s261e0 + 0x1a1b0) = *(int*)(p + 12);
-            *(float*)((char*)g_game_s261e0 + 0x1a1ac) += g_f54b8b0;
+            *(float*)((char*)g_game_s261e0 + 0x1a1ac) += 1.5f;
         }
         g_game_s261e0->f139e4 = 0;
         g_game_s261e0->f1a090 = 1;
@@ -1013,7 +1019,7 @@ void Screen_s261e0::tick(float dt)
             Agent_s261e0* a = page_agent_s261e0((int)id);
             int dialog_id = a->f88;
             g_w_a739c0_s261e0->f18 = 0xe;
-            g_dialogmgr.start(dialog_id, (int)id, -1, 0, 0);
+            g_dialogs.start(dialog_id, (int)id, -1, 0, 0);
             g_mission_s261e0->f6558 = a->f88;
             g_game_s261e0->f13a08 = a->f88;
             g_main_menu_s261e0.set_state(0x10);
@@ -1319,12 +1325,12 @@ void ResourceOwner_s27c90::release()
 void ViewCtrl_s284a0::update(float dt)
 {
     if (g_game_s284a0->f1a090) {
-        if (g_a17188) return;
-        if (g_a17128) return;
-        if (g_a17184) return;
-        if (g_a1712c) return;
-        if (g_a17190) return;
-        if (g_a1715c) return;
+        if (g_keyboard.down[45]) return;
+        if (g_keyboard.down[21]) return;
+        if (g_keyboard.down[44]) return;
+        if (g_keyboard.down[22]) return;
+        if (g_keyboard.down[47]) return;
+        if (g_keyboard.down[34]) return;
         if ((*(int*)((char*)&g_keyboard + 0x5c))) return;
         if (g_game_s284a0->f1a090)
             dt = g_step_tbl[0];
@@ -1423,7 +1429,7 @@ void ViewCtrl_s284a0::update(float dt)
     // ---- movement / action bits ---------------------------------------------------------------------
     a->in_flags = 0;
     if (!g_game_s284a0->f1a090) {
-        if (g_a1717c == 0)
+        if (g_keyboard.down[42] == 0)
             a->in_flags = 0x200000;
         if (g_keys_s284a0.clicked(5))
             a->in_flags |= 0x100000;
@@ -1497,7 +1503,7 @@ void ViewCtrl_s284a0::update(float dt)
         fov = limit;
 
     // ---- the "use / attack" keys walk the agent table and hit the agent under the crosshair ---------
-    if (g_cfg.cheat_mode != 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) && g_a171d0 != 0 && g_a175d0 == 0) {
+    if (g_cfg.cheat_mode != 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) && g_keyboard.down[63] != 0 && g_keyboard.prev[63] == 0) {
         Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
         int old = t->f7c;
         t->f7c = (old == 2) ? 1 : 2;
@@ -1517,14 +1523,14 @@ void ViewCtrl_s284a0::update(float dt)
                 b.pos = AGENT(i)->pos;
                 b.damage = 100.0f;
                 AGENT(i)->note_blow(&b);
-                if (g_a1717c == 0)
+                if (g_keyboard.down[42] == 0)
                     done = true;
             }
             t->next_used(&i);
         }
     }
 
-    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171d4 != 0 && g_a175d4 == 0) {
+    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_keyboard.down[64] != 0 && g_keyboard.prev[64] == 0) {
         AgentTable_s284a0* t = &g_mission_s284a0->agents;
         bool done = false;
         unsigned i = t->first_used();
@@ -1539,14 +1545,14 @@ void ViewCtrl_s284a0::update(float dt)
                 b.pos = AGENT(i)->pos;
                 b.damage = 100.0f;
                 AGENT(i)->note_blow(&b);
-                if (g_a1717c == 0)
+                if (g_keyboard.down[42] == 0)
                     done = true;
             }
             t->next_used(&i);
         }
     }
 
-    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171c8 != 0 && g_a175c8 == 0) {
+    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_keyboard.down[61] != 0 && g_keyboard.prev[61] == 0) {
         Blow_s284a0 b;
         b.f48 = 2;
         b.f38 = 0;
@@ -1557,7 +1563,7 @@ void ViewCtrl_s284a0::update(float dt)
     }
 
     if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) {
-        if (g_a17160 != 0 && g_a17560 == 0 && g_cfg.cheat_mode != 0) {
+        if (g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0 && g_cfg.cheat_mode != 0) {
             Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
             t->f5724 = t->f5720;
         }
@@ -1576,11 +1582,11 @@ void MissionHud_s29130::update_marks()
 {
     Agent_s29130* a = &g_scene_s29130->agents.pages[g_scene_s29130->cur_agent_s29130 >> 4][g_scene_s29130->cur_agent_s29130 & 0xf];
 
-    float y = (0.5f / tanf(f288 * g_deg2rad * 0.5f)) * tanf(a->aim_error);
+    float y = (g_half / tanf(f288 * 0.017453292f * g_half)) * tanf(a->aim_error);
 
     float p[2];
     p[0] = 0.5f;
-    p[1] = y + g_0375;
+    p[1] = y + 0.375f;
     w[0]->set_pos(p);
 
     float x = 0.0f;
@@ -1590,8 +1596,8 @@ void MissionHud_s29130::update_marks()
     float s = (float)sin(2.268928f);
     float nx = p[0] * c - p[1] * s;
     float ny = p[0] * s + p[1] * c;
-    p[0] = nx + 0.5f;
-    p[1] = ny + g_0375;
+    p[0] = nx + g_half;
+    p[1] = ny + 0.375f;
     w[1]->set_pos(p);
 
     p[0] = x;
@@ -1600,8 +1606,8 @@ void MissionHud_s29130::update_marks()
     s = (float)sin(-2.268928f);
     nx = p[0] * c - p[1] * s;
     ny = p[0] * s + p[1] * c;
-    p[0] = nx + 0.5f;
-    p[1] = ny + g_0375;
+    p[0] = nx + g_half;
+    p[1] = ny + 0.375f;
     w[2]->set_pos(p);
 
     w[0]->hide();
@@ -1628,7 +1634,7 @@ void MissionHud_s29130::update_marks()
                     bool in_range = true;
                     if (a2->mount != -1) {
                         int idx = a2->f56c4 * 2;
-                        in_range = (g_range_tbl[idx] <= aim && aim < g_range_tbl[idx + 1]);
+                        in_range = (g_aim_range_tbl[idx] <= aim && aim < g_aim_range_tbl[idx + 1]);
                     }
                     if (in_range) {
                         target[0] = 0.9f;
@@ -1670,7 +1676,7 @@ void MissionHud_s29130::update_marks()
             marks[i]->color = 0xffffff;
         else
             marks[i]->color = 0xffbb11;
-        int alpha = (int)(color[i] * g_255);
+        int alpha = (int)(color[i] * 255.0f);
         if (alpha) {
             if (i < 3)
                 w[i]->show();
@@ -1751,7 +1757,7 @@ void Mission_s29840::fn_529840(int)
                     int cur = troop_tbl_s29840()[g_game_s29840->cur_troop].b0;
                     int v;
                     if (t->b0 > cur)
-                        v = (int)(a->f5730 / ((t->b0 - cur) + g_exp_rate) * g_exp_rate);
+                        v = (int)(a->f5730 / ((t->b0 - cur) + 7.0f) * 7.0f);
                     else
                         v = a->f5730;
                     party_mgr_s29840()->get(a->f1bc)->add_xp_to_stack(a->f1c0, v);
@@ -2347,7 +2353,7 @@ void Screen_s2ae70::order_tick()
     int kind = a->kind;
     if (kind < 0 || kind >= 8)
         kind = 7;
-    if (g_cfg.cheat_mode && g_a1717c && (*(int*)((char*)&g_keyboard + 0x80)))
+    if (g_cfg.cheat_mode && g_keyboard.down[42] && (*(int*)((char*)&g_keyboard + 0x80)))
         kind = 1;
 
     m->order(kind, f2a0);
@@ -2544,7 +2550,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
 // @ 0x52ba10
 void Mission_s2b5c0::update_ui()
 {
-    if (g_a17160 != 0 && g_a17560 == 0)
+    if (g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0)
         g_game_s2b5c0->f1a20c = (g_game_s2b5c0->f1a20c == 0);
 
     g_mission_s2b5c0->f65d0->f140 = 0;
@@ -2566,7 +2572,7 @@ void Mission_s2b5c0::update_ui()
     if (g_game_s2b5c0->f1a20c != 0)
         return;
 
-    if (g_a171b8 == 0 || g_a175b8 != 0)
+    if (g_keyboard.down[57] == 0 || g_keyboard.prev[57] != 0)
         goto L_bb21;
 
     g_game_s2b5c0->f1a098 = 1 - g_game_s2b5c0->f1a098;
@@ -2622,7 +2628,7 @@ L_bbc5:
 // epilogue); the whole state machine is emitted once at 0x52ba10 in Mission_s2b5c0::update_ui.
 void Mission_s2b5c0::update_ui_continue()
 {
-    if (g_a17160 != 0 && g_a17560 == 0)
+    if (g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0)
         g_game_s2b5c0->f1a20c = (g_game_s2b5c0->f1a20c == 0);
 
     g_mission_s2b5c0->f65d0->f140 = 0;
@@ -2644,7 +2650,7 @@ void Mission_s2b5c0::update_ui_continue()
     if (g_game_s2b5c0->f1a20c != 0)
         return;
 
-    if (g_a171b8 == 0 || g_a175b8 != 0)
+    if (g_keyboard.down[57] == 0 || g_keyboard.prev[57] != 0)
         goto L_bb21;
 
     g_game_s2b5c0->f1a098 = 1 - g_game_s2b5c0->f1a098;
@@ -2707,12 +2713,12 @@ void Mission_s2b5c0::update_cursor()
     // union reproduces both the byte store and the dword load.
     union { bool b; int i; } f;
 
-    if ((*(int*)((char*)&g_keyboard + 0x390)) == 0 && g_a1745c == 0)
+    if ((*(int*)((char*)&g_keyboard + 0x390)) == 0 && g_keyboard.down[226] == 0)
         goto L_bd6f;
 
     if ((*(float*)((char*)&g_keyboard + 0x810)) != 0.0f || (*(float*)((char*)&g_keyboard + 0x80c)) != 0.0f) {
         this->find_position(&ok, &pos);
-        f.b = (g_a1745c != 0);
+        f.b = (g_keyboard.down[226] != 0);
         if (ok) {
             int mode = 0;
             if (g_game_s2b5c0->game_mode == 2)
@@ -2734,9 +2740,9 @@ L_bd6f:
     if ((*(int*)((char*)&g_keyboard + 0x790)) != 0)
         goto L_bd8a;
 L_bd78:
-    if (g_a1745c != 0)
+    if (g_keyboard.down[226] != 0)
         return;
-    if (g_a1785c == 0)
+    if (g_keyboard.prev[226] == 0)
         return;
 L_bd8a:
     if (this->f2f0 != 0) {

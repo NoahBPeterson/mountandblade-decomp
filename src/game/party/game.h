@@ -443,7 +443,7 @@ struct Game {
 #include "../list8.h"                        // List8 : I64Vec, g_list_a70480 (0xa70480; read first by 0x51dbd0 after the clock)
 extern PartyTemplate* g_party_templates;    // 0x5e29f8 (0xb0-byte records)
 extern int g_party_template_count;             // 0x5e29fc
-extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 bytes, up to 0x8ee3c60; the first dword of each is saved)
+
 
 // ---- layout checks (a wrong pad above is a compile error here) ----
 typedef char chk_game_kind[offsetof(Game, kind) == 0x0 ? 1 : -1];

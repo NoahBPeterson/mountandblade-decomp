@@ -257,9 +257,11 @@ struct SourceScreen : ScreenBase {          // vtables 0x5961f0 / 0x596214: +0x3
 };
 
 // ---- globals -----------------------------------------------------------------------------------------------------------
-extern int g_a17188;                        // 0xa17188
-extern int g_a17588;                        // 0xa17588
-extern int g_a5a9fbc;                       // 0x5a9fbc
+
+
+
+
+
 extern int g_trial_mode;                    // 0x5e29c4
 extern int g_a735c4;                        // 0xa735c4
 

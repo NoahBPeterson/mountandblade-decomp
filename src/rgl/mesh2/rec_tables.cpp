@@ -17,6 +17,13 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../options.h"   // g_options 0x5aa008
 #include "../../game/shared_vars.h"
+#include "../../game/slot.h"
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+
+int g_use_shaders;                                  // 0x5e28fc
+
 
 // agent.h's allocator tag of the one-int record (0x436d80); declared here to avoid that header
 struct int1 { int a; };
@@ -88,7 +95,6 @@ void Blk2dd0::read(stream_base* s)
 // 0x25 bindings of two ints each, or the default table (code_table::init) when the file is missing or wrong.
 static void user_path(char* name);                  // below (a local copy; its argument travels in ESI)
 struct code_table { void init(); };                 // 0x4be7c0 (game/triggers/trigger_vec.cpp)
-extern const char g_key_file[];                     // 0x595788 the key file's name
 
 // @ 0x4c2ea0
 void __fastcall fn_4c2ea0(void* self)
@@ -96,7 +102,7 @@ void __fastcall fn_4c2ea0(void* self)
     WL_MARKER(12)
     bin_reader r;
     char path[0x104];
-    sprintf(path, g_key_file);
+    sprintf(path, "controls.dat");
     user_path(path);
     ((text_stream*)&r)->open_read(path);
     if (r.failed) {
@@ -321,8 +327,6 @@ void script_dialog_proc()
 struct TriggerEntryVec;
 int entry_vec_resize(stream_base* s, TriggerEntryVec* v);   // 0x4c2250 (game/triggers/trigger_vec.cpp)
 void mb_error(const char* fmt, ...);                // 0x42cc80
-extern const char g_skyboxes_file[];                // 0x595a44
-extern const char g_cant_open_fmt[];                // 0x594580
 extern char g_skyboxes[];                           // 0xa76628
 
 // @ 0x4c3350
@@ -330,10 +334,10 @@ void load_skyboxes()
 {
     tstream3 r;
     tstring path(g_module_path);
-    path.append(tstring(g_skyboxes_file));
+    path.append(tstring("actions.txt"));
     const char* nm = path.buf ? path.buf : (const char*)&path.buf;
     if (!((text_stream*)&r)->open_read_text(nm))
-        mb_error(g_cant_open_fmt, nm);
+        mb_error("Unable to open %s", nm);
     entry_vec_resize(&r, (TriggerEntryVec*)g_skyboxes);
     r.failed = 1;
 }
@@ -382,19 +386,19 @@ int __fastcall renderer_setup(GameAppView* self)
 {
     self->font->set_device(self->device);
     g_render.dev = self->device;
-    g_renderer_width = self->width;
+    g_render.width = self->width;
     if (self->windowed)
-        g_renderer_height = self->height;
+        g_render.height = self->height;
     else
-        g_renderer_height = self->height;
+        g_render.height = self->height;
     g_render.dev->GetDeviceCaps(&g_caps);
-    g_renderer_vsync = -1;
+    g_render.vsync = -1;
     g_render.pad504 = 0;
     g_use_shaders = 0;
     if (((unsigned*)&g_caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_caps)[0xcc / 4] >= 0xffff0200 &&
-        ((unsigned*)&g_caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_caps)[0xd4 / 4] & 1) != 0 && g_shader_support != 0)
+        ((unsigned*)&g_caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_caps)[0xd4 / 4] & 1) != 0 && g_cfg.use_vertex_shaders != 0)
         g_use_shaders = 1;
-    apply_input_settings((InputSet*)&orig::g_render);
+    apply_input_settings((InputSet*)&g_render);
     ((void (__fastcall*)(void*))load_game_variables)(self);
     {
         tstring k1("buffer_size_dx7_regular_ffp_dynamic");
@@ -420,7 +424,7 @@ int __fastcall renderer_setup(GameAppView* self)
         g_batch.init_decls(&v10, &v9, &v8, &v7, &v6, &v5, &v4, &v3, &v2, &v1);
     }
     ((resmgr*)&orig::g_resmgr_obj)->load_all(1, (rgl::string*)&g_module_path);
-    ((InputSet*)&orig::g_input_a)->init_devices(self->hwnd);
+    g_keyboard.init_devices(self->hwnd);
     return 0;
 }
 
@@ -590,10 +594,10 @@ void __fastcall load_elem48_array(elem48_holder* self, int, stream_base* s)
 // @ 0x4c4090
 // Destructor: frees the object at +4, then the members die in reverse order: s_e028, the 0x400 records of ts_b,
 // the 0x400 records of ts_a (each record's tstring is at +0xc).
-scenefile_obj::~scenefile_obj()
+DialogMgr::~DialogMgr()
 {
-    if (w004 != 0)
-        w004->vdel(3);
+    if (recs != 0)
+        recs->vdel(3);
 }
 
 // @ 0x4c4100

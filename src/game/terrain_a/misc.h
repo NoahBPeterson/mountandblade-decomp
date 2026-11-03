@@ -111,7 +111,7 @@ void __cdecl vmin3(float* a, const float* b);   // 0x468360
 
 // ---- render-state cache calls (global object 0xa17910; the class is src/game/renderer.h's, which needs rgl.h) ---------
 #include "../../include/renderer.h"       // renderer (shared)
-extern IDirect3DBaseTexture9* g_tex_cache[];    // 0xa17e5c texture bound per stage
+
 
 // ---- texture / shader / skin: the members the binders add (views of src/rgl/resource.h's classes) ---------------------
 struct texture_x : texture {
@@ -314,15 +314,6 @@ struct drawer {
     IDirect3DIndexBuffer9* ib(int i) { return *(IDirect3DIndexBuffer9**)((char*)this + 0x350 + i * 0x4c); }
     void draw(view_t* v);                       // 0x46d8c0
 };
-extern char g_light_on[64];                     // 0xa17e17 per-light enable cache
-extern int g_e68;                               // 0xa17e68 pixel shader bound
-extern int g_tss_a;                             // 0xa17e6c
-extern int g_tss_b;                             // 0xa17e70
-extern int g_tss_c;                             // 0xa17e78
-extern int g_tss_d;                             // 0xa17e7c
-extern int g_alpha_test;                        // 0xa17ea0
-extern int g_texfactor;                         // 0xa17ea4
-extern int g_cull_cur;                          // 0xa17ed0
 extern unsigned g_stage_arg[6];                 // 0x5a9c00 D3DTA_* by 3-bit code
 
 #endif // TERRAIN_A_MISC_H

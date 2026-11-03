@@ -6,6 +6,7 @@
 #include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
 #include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
+#include "../../include/render_flags.h"
 
 namespace rgl { struct mat3; }
 rgl::mat3* __cdecl identity3(rgl::mat3* out);     // 0x40cd60 (rgl/shapes/shapes.cpp: the global function; fills the 3x3 and returns out)
@@ -186,9 +187,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         float mtx[16];
         ::identity3((rgl::mat3*)mtx);
         mtx[12] = mtx[13] = mtx[14] = mtx[15] = 0.0f;
-        mtx[0] *= g_lod_scale;  mtx[1] *= g_lod_scale;  mtx[2]  *= g_lod_scale;
-        mtx[4] *= g_lod_scale;  mtx[5] *= g_lod_scale;  mtx[6]  *= g_lod_scale;
-        mtx[8] *= g_lod_scale;  mtx[9] *= g_lod_scale;  mtx[10] *= g_lod_scale;
+        mtx[0] *= 0.95f;  mtx[1] *= 0.95f;  mtx[2]  *= 0.95f;
+        mtx[4] *= 0.95f;  mtx[5] *= 0.95f;  mtx[6]  *= 0.95f;
+        mtx[8] *= 0.95f;  mtx[9] *= 0.95f;  mtx[10] *= 0.95f;
 
         if (w->item < 0) {
             // no weapon: just place the previously-owned meshes on bone 9

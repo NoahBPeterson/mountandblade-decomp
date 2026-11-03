@@ -118,6 +118,7 @@ inline ValueWidget* item_value(MissionItem* it) { return *(ValueWidget**)((char*
 // item family at +0x10 (its sound is the family-th ItemSound), the current clock slot at +0x18 and the
 // 64-bit tick the slot was entered at (+0x20/+0x24).
 #include "../mission_source.h"                  // MissionSource (pick 0x4d5410)
+#include "../../include/clock_table.h"
 
 
 // ---- the screen object owning the callbacks -------------------------------------------------------------

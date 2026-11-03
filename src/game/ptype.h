@@ -30,5 +30,6 @@ struct ptype {
 };
 extern ptype* g_ptypes;                         // 0x5e28f8
 extern int g_ptype_count;                       // 0x5e29e8
+extern int g_num_ground_specs;                  // 0x5e29ec count of the skyboxes.txt ground specs (module_load.cpp loads them; mesh_start walks them)
 
 #endif // GAME_PTYPE_H

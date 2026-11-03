@@ -68,8 +68,8 @@ int  __cdecl crt_sprintf(char* buf, const char* fmt, ...);      // 0x536f8f
 int  __cdecl crt_remove(const char* path);                      // 0x539023
 void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
-extern int g_a17420;                                            // 0xa17420
-extern int g_a17820;                                            // 0xa17820
+
+
 extern char* g_save_dialog;                                     // 0xa7398c
 extern char g_main_menu_obj[];                                  // 0xa73980
 

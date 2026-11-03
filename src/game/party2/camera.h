@@ -17,6 +17,10 @@ struct VarTable {
 struct ScriptState;
 extern ScriptState g_script;                        // 0xa70440 (seen through VarTable below)
 #include "../config/config_block.h"           // Config g_cfg (0x5a9f98)
+extern int g_cur_opcode;                            // 0x5e25a0
+extern int g_cur_param;                             // 0x5e2590
+struct Config;
+extern int g_lineno;                                // 0x5e2598  script line number
 // report(msg) (0x49cc60): a file-static of the original translation unit (msg in ecx); camera.cpp has a local copy of
 // src/game/script/script_interpreter.cpp's definition, as for check_party (0x49d160).
 int __fastcall size(void* p);             // 0x40f010 (count = (last-first)>>2)
@@ -28,7 +32,7 @@ extern LogStream g_log;                        // 0x5a9f60
 
 // keyboard state: per-scan-code ints, held state at 0xa17000 and this frame's press at 0xa17400 (see s0052cf60)
 extern int g_key_a[256];                        // 0xa17000
-extern int g_key_b[256];                        // 0xa17400
+
 
 // the game data's "current emitter audio" state at +0x1a068..+0x1a07c (see s00435490.h SoundCtl)
 struct EmitAudio {
@@ -62,8 +66,8 @@ struct ScriptStack {
 struct Operation {                              // statement pointer in ECX (the interpreter's own class, script/script_interpreter.cpp)
     char execute(__int64* locals, int* context, int* error);    // 0x49fa10 (thiscall, ret 0xc)
 };
-struct KeyState { void frame(int a); };         // 0x487930 (thiscall, ret 4)
-extern KeyState g_keyboard;                     // 0xa170c8
+#include "../slot.h"                              // Slot, g_keyboard (0xa170c8)
+#include "../config/config_block.h"
 char __fastcall check_script_param(int* value, int* limit);   // 0x49ccc0
 void pump_messages();                           // 0x4bb310
 void set_debug_label();                         // 0x4bb390

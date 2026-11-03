@@ -16,6 +16,7 @@
 #include "../../rgl/mesh_x.h"        // mesh_x: compute_bounds 0x419300, set_bone_index 0x47b360
 #include "../../rgl/rgl_math.h"
 #include "../ui/mission_ui.h"
+#include "../../include/clock_table.h"
 
 using rgl::vector4;
 

@@ -11,6 +11,10 @@
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10, stamp 0x4c1ee0)
 #include "../../game/terrain_a/terrain.h"      // Terrain (the 0x845e7c8-byte world-map terrain object): its constructor 0x4ce720 ends this object
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+extern std::vector<RegSkeleton> g_skeletons;                    // 0xa180e8
+
+
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 
 // canonical declarations of callees defined in other modules, reached through this module's layout views

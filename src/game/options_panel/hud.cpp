@@ -306,7 +306,7 @@ void MissionSource::pick(int* arg)
     if (family < 0)                     // 0x4d541b: jl to the epilogue -- nothing else runs without a family
         return;
     {
-        __int64 now = *(__int64*)(g_ticks_ + slot * 2);
+        __int64 now = g_ticks[slot];
         __int64 d = now - *(__int64*)&tick_lo;      // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
         g_spawn_lo = (__int64)(int)((double)d * 1000.0f * 1e-5f);
         play_family_sound(family, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended

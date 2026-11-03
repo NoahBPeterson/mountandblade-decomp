@@ -26,9 +26,6 @@ const float g_3ac49ba6 = 1.5e-3f;       // 0x3ac49ba6 (capsule radius)
 // ---- globals ------------------------------------------------------------------------------------------------
 // (the menu-mode flag is g_game->f1a20c, the selected entity g_game->f1a1b4, the scene is *g_mission: all fields of the pointed-to
 //  objects, not globals of their own)
-extern int* g_ptypes;                 // 0x5e28f8 pointer to the map rows (0x20 bytes)
-extern int g_ptype_count;                 // 0x5e29e8
-extern int* g_propkinds;              // 0x5e29dc pointer to the point rows (0x78 bytes)
 
 // ---- types --------------------------------------------------------------------------------------------------
 #include "../tstring.h"
@@ -70,6 +67,8 @@ struct OverlayItf {                     // vtable 0x590064
     virtual void release(int a);
 };
 #include "./gui_ctx.h"                // GuiCtx (was Ctx; shared with render_shape.h)
+#include "../../include/rec78.h"
+#include "../ptype.h"
 
 // ------------------------------------------------------------------------------------------------------------
 #endif

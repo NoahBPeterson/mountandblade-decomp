@@ -80,6 +80,7 @@ void __cdecl build_appearance(AgentBody* b, int kind, int troop, int f94, ItemRe
 
 // ---- globals and engine objects the HUD code uses ---------------------------------------------------------------------
 #include "../gui_mgr.h"                                         // GuiManager: the gui manager at 0x5d7080
+#include "../../include/render_flags.h"
 #include "../ui_globals.h"      // UI / core globals
 extern GuiManager g_gui;                                              // 0x5d7080
 extern char g_hud_flag;                                           // 0x5e212c (set to 1 by 0x4f7f00)
@@ -87,7 +88,6 @@ extern char g_scene_dirty;                                          // 0x5e2938 
 extern int g_pending_action;                                            // 0x5a9f18 (set to -1)
 
 
-extern __int64 g_ticks[];                                         // 0x5e2948 clock table (1e-5 s ticks)
 struct UiVec {                                                    // a widget list at game +0x1a1b8
     void resize(int a, int b);                                     // 0x43f310 (ret 8)
 };
@@ -177,8 +177,8 @@ extern DustTerrain g_terrain;                                 // 0xa76630 (the m
 extern int g_use_shaders;                                      // 0x5e28fc
 extern ShadowMap g_shadow_map;                                        // 0xa70248
 #include "../ui_globals.h"      // g_screen_w / g_screen_h (viewport size)
-extern float g_scale_a;                                           // 0x5aa08c
-extern float g_scale_b;                                           // 0x5aa090
+
+
 
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);   // 0x432510 (max(lo, min(v, hi - 1)))
 int __stdcall FSOUND_3D_Listener_SetAttributes(float* pos, float* vel, float fx, float fy, float fz, float ux, float uy, float uz);   // 0x5342dc (_FSOUND_3D_Listener_SetAttributes@32)

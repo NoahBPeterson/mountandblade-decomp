@@ -13,6 +13,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding them
 #include "./party_2.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_module_settings.seeing_range
@@ -32,6 +33,7 @@ int g_5a75f60;                                       // 0xa75f60 (.bss) set by t
 rgl::vector4 g_event_pos;                            // 0xa708c0 (.bss) where the party's map event happened (emit_event 0x14 reads it)
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
+#include "../../rgl/options.h"
 
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160
@@ -249,6 +251,9 @@ extern float g_k1_05;                               // 0x590f24
 extern float g_k0;                                  // 0x549ca8
 extern float g_k3;                                  // 0x54a710
 extern float g_k0_02;                               // 0x590cd0
+extern float g_k0;                                  // 0x549ca8
+extern float g_k3;                                  // 0x54a710
+extern float g_k0_4;                                // 0x54b3b8
 
 // @ 0x4b1b20
 void copy_items_forward(E92* dst, E92* end, const E92* src)

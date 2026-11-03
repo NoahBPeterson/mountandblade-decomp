@@ -16,6 +16,7 @@
 // the implicit ones, swapped forget() arguments, a restore() two dwords off, a performance formula missing
 // four factors, a save() that never wrote the table, and no body for 0x4d7270.
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/options.h"   // g_options
 #include "../config/config_block.h"   // g_cfg
 #include <windows.h>
@@ -44,6 +45,8 @@ using rgl::vector4;
 #include "../key_names.h"
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../float_consts.h"   // shared float constants kept in memory
+#include "../terrain_a/game_state.h"
+#include "../../include/render_flags.h"
 
 // 0x4bab70 (byte-exact in s004bab70): build the user path of a file name in place. A static function in the
 // original, so cl passes `out` in esi; this is a local copy with the same body.
@@ -120,9 +123,6 @@ struct options_panel {
     void key_name(int which, tstring* out);                               // 0x4d7370
     void key_binding_name(int slot, tstring* out, int* translated);       // 0x4d7d10
 };
-struct Slot {
-    int is_ready(int index);   // 0x487900
-};
 extern ControlKeyTable g_game_keys;                                                // 0xa73730
 
 // ---- the page ----------------------------------------------------------------------------------------
@@ -164,20 +164,20 @@ void KeysPage::update_perf()
 {
     float perf = 100.0f;
     if (g_options.i28)
-        perf = orig::g_scale_z * 5.0f + 100.0f;
-    perf += orig::g_opt_blood * 5;
+        perf = g_scale_z * 5.0f + 100.0f;
+    perf += g_opt_blood * 5;
     perf += g_options.i20 * 6;
-    int limit = *(int*)&orig::g_max_dead;
+    int limit = *(int*)&g_max_dead;
     if (limit >= 100) limit = 100;
     perf += limit * 0.2f;
     limit = g_options.i40;
     if (limit >= 5) limit = 5;
     perf += limit;
     int d3d = g_options.i2c;
-    char high = orig::g_use_hw_shadow;
+    char high = g_use_hw_shadow;
     perf += g_options.i34 * 0.1f;
     int shadows = orig::g_use_shaders;
-    perf += orig::g_scale_y * 10.0f;
+    perf += g_scale_y * 10.0f;
 
     if (d3d) {
         if (g_cfg.shadow_quality_req >= 2)
@@ -241,7 +241,7 @@ void KeysPage::update(int reason)
         p->w164->show();
         int pressed = -1;
         for (int i = 0; i < 0x100; i++)             // the last bound key wins
-            if ((char)((Slot*)(void*)&g_key_names)->is_ready(i))   // the caller tests al only
+            if ((char)g_keyboard.is_ready(i))   // the caller tests al only
                 pressed = i;
         if (pressed >= 0) {
             if (pressed != 1) {

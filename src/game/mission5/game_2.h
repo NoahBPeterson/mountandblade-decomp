@@ -51,6 +51,7 @@ struct file_text : file_text_base {                 // vtable 0x54ac88: text rea
 #include "../../include/ptr_tag.h"             // ptr_tag: std::_Nonscalar_ptr_iterator_tag (empty, passed by value)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../../include/render_flags.h"
 // The out-of-line instances of std::vector<tstring> / std::vector<int> that other objects define (agent_combat.cpp 0x43e310 and 0x43e2a0,
 // gui_manager 0x42d360, mesh_obj.cpp 0x410610) are called through their std:: names: an explicit specialization declared without a
 // definition makes every use a call. The accessors below reach the protected members from the hand-written vector views.
@@ -128,19 +129,9 @@ struct SimpleTrigger {              // 0x30 bytes: SimpleRec of game.h
 };
 typedef char SimpleTrigger_size_check[sizeof(SimpleTrigger) == 0x30 ? 1 : -1];
 
-// skills.txt record (0x44 bytes, table g_skill_tbl 0x8ee3100)
-struct SkillFile {
-    tstring f0;                     // 0x00
-    tstring f10;                    // 0x10
-    tstring f20;                    // 0x20
-    char pad30[4];
-    int f34;                        // 0x34
-    int f38;                        // 0x38
-    char pad3c[4];
-    int f40;                        // 0x40
-};
-extern SkillFile g_skill_file[42];  // 0x8ee3100
-stream_base& __cdecl read_skill(stream_base& s, SkillFile& r);     // 0x5243c0
+// skills.txt record: SkillRec (include/skill_rec.h), table g_skill_tbl 0x8ee3100
+#include "../skill_cap.h"
+stream_base& __cdecl read_skill(stream_base& s, SkillRec& r);     // 0x5243c0
 
 // ---- the Data\*.txt record classes (full layouts; records.h's RecS / RecQ / RecT / RecY are the destructor-side views of the
 // same records: padded, without constructors, RecS / RecT with the wrong size, RecY without the embedded streams) ---------
@@ -258,7 +249,7 @@ struct Local : growable_array {
 struct SkeletonBody { void load(const tstring& path); };           // 0x50fc60 (inventory_panel/skeleton_load.cpp; ret 4)
 struct RegSkeleton;
 void __fastcall fix_skeletons(std::vector<RegSkeleton>* list);       // 0x4cd850 (rgl/mesh2/mesh_2.cpp)
-extern char g_skeletons[];                          // 0xa180e8 skeleton-body table
+extern std::vector<RegSkeleton> g_skeletons;               // 0xa180e8 skeleton-body table (rgl/mesh2/mesh_2.cpp)
 
 // trigger vectors at Game +0x139e8 / +0x139f4 (game.h: TriggerTag / SimpleTag, whose padding these resize)
 #include "../trigger_vecs.h"           // TriggerVec / GameVec
@@ -337,7 +328,6 @@ extern float g_sizey;                // 0xa732b0
 #define g_map_sea_direction_i (*(int*)&g_module_settings.map_sea_direction)
 #define g_map_river_direction_i (*(int*)&g_module_settings.map_river_direction)
 extern unsigned __int64 g_bit[]; // 0x5a8e68
-extern int    g_use_shaders;                // 0x5e28fc
 void __stdcall scan_arrays(void* p, int unused); // 0x523630
 void     noise_fractal(float a, float b, int c, int d, const float* in, float* out); // 0x414fc0
 int      rand();                                                               // 0x536a9f

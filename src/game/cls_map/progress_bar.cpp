@@ -86,6 +86,7 @@ void progress_bar::update()
 // constructor (0x4d3640, the one definition: options_panel/ragdoll_models.cpp) through this forwarder.
 #include "../model_b.h"
 #include "../module_name.h"      // g_module_name (0x8ee3c38)
+#include "../../include/render_flags.h"
 #include "../ui_globals.h"      // UI / core globals
 inline loading_config::loading_config() { new ((void*)this) model_b; }
 template class std::vector<E50>;

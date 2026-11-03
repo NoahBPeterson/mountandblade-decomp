@@ -20,6 +20,7 @@
 
 // ---- the writer: src/game/out_stream.h ---------------------------------------------------------------------
 #include "../out_stream.h"
+
 #include "../../include/fx.h"                        // g_ticks (0x5e2948): the clock table, g_ticks[1] is the 64-bit counter at 0x5e2950
 
 // the record the scalar block writes: src/game/rec5c.h; the 8-byte element vector: src/game/list8.h; the 0x508-byte

@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./editor_ui.h"
@@ -296,7 +297,7 @@ int __cdecl engine_init()
         tstring n("core_pictures");
         g_alloc.load_pack((const rgl::string&)n, 0);
     }
-    g_strtable.load(&g_path_prefix);
+    g_strtable.load(&g_module_path);
     {
         FontDef* p = (FontDef*)::operator new(0x386c);
         if (p != 0)

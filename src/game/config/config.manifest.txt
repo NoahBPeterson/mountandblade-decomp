@@ -18,10 +18,10 @@
 ../src/game/config/config.cpp  ?set_texture_quality@Config@@QAEXH@Z  004bc100  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0RagBody@@QAE@XZ  004bc170  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load@RagBody@@QAEXPAVTiXmlElement@@@Z  004bc1f0  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ??0DisplayState@@QAE@XZ  004bc2d0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ??0renderer@@QAE@XZ  004bc2d0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?apply_input_settings@@YIXPAUInputSet@@@Z  004bc350  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?release_input_devices@@YIXPAUInputSet@@@Z  004bc3d0  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?init_devices@InputSet@@QAEHPAUHWND__@@@Z  004bc430  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?release_input_devices@@YIXPAUSlot@@@Z  004bc3d0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?init_devices@Slot@@QAEHPAUHWND__@@@Z  004bc430  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?release@buffer_pair@@QAEXXZ  004bc540  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?init_shaders@render_batch@@QAEXXZ  004bcfb0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?release_decls@render_batch@@QAEHXZ  004bd0c0  /O2 /MT /Gy /TP

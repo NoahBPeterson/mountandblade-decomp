@@ -24,9 +24,7 @@ int slot_class(int item, int flag);     // 0x4350c0 (register convention, define
 // named record tables (0x435260, 0x4352a0)
 struct Rec20 { tstring name; char pad[0x10]; };      // 0x20-byte named record (table g_tbl20)
 #include "../../include/rec78.h"    // Rec78: the 0x78-byte named record (table g_tbl78), shared with ui/troop_inv and rgl/mesh2
-extern Rec20* g_tbl20;                  // 0x5e28f8
 #include "../ptype.h"
-extern Rec78* g_tbl78;                  // 0x5e29dc
 int find_in_table20(const tstring* name);   // 0x435260 (cdecl)
 int find_in_table78(const tstring* name);   // 0x4352a0 (cdecl)
 int ftoi_helper(int x);                     // 0x435440
@@ -35,7 +33,6 @@ int ftoi_helper(int x);                     // 0x435440
 // (the address comments below stay bare: the resolver reads the last 0x... of a declaration's comment)
 #include "../skill_cap.h"            // SkillCap, g_skill_tbl 0x8ee3100 (shared with agent2)
 
-extern const int g_tier_dist[11];       // 0x590a70
 #include "../../include/troop.h"   // Troop / TroopRec: the 0x508-byte troop record (has_flag10 0x435130, stat_int 0x435150, scaled_b0 0x435170, nibble 0x4351a0, falloff 0x4375b0, adjust 0x437770)
 
 // ---- two item references at +0x80 of the record 0x4351f0 reads (a different object than Troop: ints, not floats)

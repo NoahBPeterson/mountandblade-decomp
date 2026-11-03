@@ -1,4 +1,5 @@
 #include "./screen.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -163,9 +164,9 @@ void GuiScreen::process(int param)
     }
 
     count = 0x10;
-    if (g_keyboard.mouse_dev) {
-        if (g_keyboard.mouse_dev->vtbl->GetDeviceData(g_keyboard.mouse_dev, 0x14, buf, &count, 0)) {
-            while (g_keyboard.mouse_dev->vtbl->Acquire(g_keyboard.mouse_dev) == (long)0x8007001e)
+    if (((DiDev*)g_keyboard.state)) {
+        if (((DiDev*)g_keyboard.state)->vtbl->GetDeviceData(((DiDev*)g_keyboard.state), 0x14, buf, &count, 0)) {
+            while (((DiDev*)g_keyboard.state)->vtbl->Acquire(((DiDev*)g_keyboard.state)) == (long)0x8007001e)
                 ;
         }
     }
@@ -228,8 +229,8 @@ void GuiScreen::process(int param)
                         ((gui_view*)(void*)this)->wheel_step(0x200);
                     }
                     else {
-                        cr->x = g_ticks[cr->idx * 2];
-                        cr->y = g_ticks[cr->idx * 2 + 1];
+                        cr->x = ((float*)g_ticks)[cr->idx * 2];
+                        cr->y = ((float*)g_ticks)[cr->idx * 2 + 1];
                     }
                 }
                 else {
@@ -244,8 +245,8 @@ void GuiScreen::process(int param)
                         ((gui_view*)(void*)this)->wheel_step(0x400);
                     }
                     else {
-                        cr->x = g_ticks[cr->idx * 2];
-                        cr->y = g_ticks[cr->idx * 2 + 1];
+                        cr->x = ((float*)g_ticks)[cr->idx * 2];
+                        cr->y = ((float*)g_ticks)[cr->idx * 2 + 1];
                     }
                 }
                 else {
@@ -260,8 +261,8 @@ void GuiScreen::process(int param)
                         ((gui_view*)(void*)this)->wheel_step(0x800);
                     }
                     else {
-                        cr->x = g_ticks[cr->idx * 2];
-                        cr->y = g_ticks[cr->idx * 2 + 1];
+                        cr->x = ((float*)g_ticks)[cr->idx * 2];
+                        cr->y = ((float*)g_ticks)[cr->idx * 2 + 1];
                     }
                 }
                 else {
@@ -299,6 +300,6 @@ void __cdecl frame_hook(void)
 {
     if ((g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0xd2] && !g_keyboard.prev[0xd2])
         take_screenshot();
-    else if (g_cfg.enable_edit_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && (g_a1717c || g_keyboard.down[0x36]) && g_a17190 && !g_a17590)
+    else if (g_cfg.enable_edit_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && (g_keyboard.down[42] || g_keyboard.down[0x36]) && g_keyboard.down[47] && !g_keyboard.prev[47])
         menu_variables_loaded(0);   // 0x4ebb80
 }

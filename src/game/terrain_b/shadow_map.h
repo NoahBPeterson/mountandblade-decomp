@@ -3,7 +3,7 @@
 #define TERRAIN_B_SHADOW_MAP_H
 #include "./cell_grid.h"
 
-extern int g_shadow_quality;         // 0x5aa000
+
 
 #include "../shadow_map.h"            // ShadowMap (shared with terrain_a)
 

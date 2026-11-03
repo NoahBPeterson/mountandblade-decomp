@@ -21,6 +21,7 @@
 // the prologue emitted right after the game test and no epilogue on the early-out) could not be reproduced
 // from any source shape tried here, so it is recorded in nonmatching.txt rather than manifest.txt.
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <windows.h>
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"

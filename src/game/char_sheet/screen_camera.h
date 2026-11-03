@@ -81,9 +81,8 @@ struct WorldCam {
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
 // ---- globals ------------------------------------------------------------------------------------------
-extern int g_a1717c;                            // 0xa1717c
 
-extern int g_5a9fbc;                            // 0x5a9fbc
+
 extern float g_map_min_x;                            // 0x5aa120  map min x (-50)
 extern float g_map_max_x;                            // 0x5aa118  map max x ( 50)
 extern float g_map_min_y;                            // 0x5aa124  map min y (-50)
@@ -108,8 +107,12 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #define C_54B4D0 (orig::k_0_05f)             // 0.05
 #define C_54B3B8 (orig::k_0_4f)             // 0.4
 #define C_590C74 (orig::k_0_08f)             // 0.08
-#define C_590FA4 (orig::k_1_7f)             // 1.7
-#define C_54B8B0 (orig::k_1_5f)             // 1.5
+#define C_590FA4 (1.7f)             // 1.7
+#define C_591AF4 (orig::k_0_94f)             // 0.94
+#define C_590C48 (orig::k_1_6f)             // 1.6
+#define C_5911D8 (orig::k_0_98f)             // 0.98
+#define C_54B8B0 (1.5f)             // 1.5
+#define C_549D6C (orig::k_0_9f)             // 0.9
 
 // the listener frame (written by 0x5342dc, from the map frame) is g_sound_mgr.frame
 #include "../../include/sound_mgr.h"

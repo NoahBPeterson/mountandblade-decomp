@@ -23,7 +23,7 @@
 struct Emit;
 struct SpawnSet;
 #include "../prop_kind.h"                  // PropKind (0x78 bytes; shared with mesh_slot/mesh_start.cpp)
-extern PropKind* g_propkinds;                   // 0x5e29dc
+
 struct EntFlag { char pad0[0x140]; char flag; };         // scene entity: +0x140 visibility (0x472050)
 
 // ---- spawn rules (0x473a60) ---------------------------------------------------------------------------------------

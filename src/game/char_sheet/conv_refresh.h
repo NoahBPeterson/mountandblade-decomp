@@ -27,6 +27,7 @@ struct setting { int f0; char* value; char pad[0x2c - 8]; };   // string pointer
 extern int g_n_settings;                                 // 0xa70240
 extern setting g_settings;                               // 0xa44240 (entry i at 0xa4425c + 0x2c*i)
 
+
 // lookup of one setting, 0.0f when the key is missing (the original inlines this seven times)
 static float setting_float(const char* name)
 {

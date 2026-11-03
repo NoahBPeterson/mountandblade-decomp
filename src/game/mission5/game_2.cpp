@@ -12,6 +12,7 @@
 //       kept: 0x5236f0 calls 0x524360..0x524d60 in turn and they are its record helpers (see MIGRATION.md).
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <string.h>
 #include "./game_2.h"
 #include "../../include/troop.h"          // g_level_xp
@@ -33,6 +34,34 @@ void __fastcall tstring_ctor(tstring* p);                      // 0x42bbd0 (tstr
 #include "../../include/iface.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../party/nav_graph.h"      // g_nav (0xa732b8)
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+extern SkillRec g_skill_tbl[42];                           // 0x8ee3100 (skills.txt: description, name, key, attribute, rank limit)
+char g_map_pages[0x200];                            // 0xa73094 page grid of the map
+int g_page_cols;                                    // 0xa73294
+int g_page_rows;                                    // 0xa73298
+float g_minx;                                       // 0xa7329c
+float g_miny;                                       // 0xa732a0
+float g_maxx;                                       // 0xa732a4
+float g_maxy;                                       // 0xa732a8
+float g_sizex;                                      // 0xa732ac
+float g_sizey;                                      // 0xa732b0
+RawVec g_mat_vec[4];                                // 0xa732bc
+
+
+
+extern const int g_level_xp[64] = {  // 0x5937c8 experience bound per level (rdata)
+    0, 0, 600, 1360, 2296, 3426, 4768, 6345,
+    8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362,
+    40682, 47892, 56103, 65441, 77233, 90809, 106425, 124371,
+    144981, 168636, 195769, 226879, 262533, 303381, 350164, 412091,
+    484440, 568947, 667638, 782877, 917424, 1074494, 1257843, 1471851,
+    1721626, 2070551, 2489361, 2992033, 3595340, 4319408, 5188389, 6231267,
+    7482821, 8984785, 11236531, 14051314, 17569892, 21968215, 27466219, 34338823,
+    42929679, 53668349, 67091786, 83871183, 160204600, 320304600, 644046000, 2050460000
+};
+
 
 // ---- the map object (0xa732b8): vertex and group vectors of the ground geometry ---------------------------------------
 // The records and vectors are the ones world_grid.cpp (rgl/dynamic) defines: ground_v36 (0x24 bytes: position, normal, a flag) and ground_g136
@@ -387,24 +416,24 @@ void Game::build_map_trees()
     void* snow_arr[0x40];   for (int i = 0; i < 0x40; i++) snow_arr[i] = 0;
     void* steppe_arr[0x40]; for (int i = 0; i < 0x40; i++) steppe_arr[i] = 0;
     void* desert_arr[0x40]; for (int i = 0; i < 0x40; i++) desert_arr[i] = 0;
-    for (int i = 0; i < 4; i++) if (g_map_tree_types_a[i] > 0x40) g_map_tree_types_a[i] = 0x40;
+    for (int i = 0; i < 4; i++) if (g_map_tree_types[i] > 0x40) g_map_tree_types[i] = 0x40;
 
-    for (int i = 0; i < g_map_tree_types_a[0]; i++) {
+    for (int i = 0; i < g_map_tree_types[0]; i++) {
         tmp->assign("map_tree_");                                    // 0x59c0d8
         tmp->push_back((char)('a' + i));
         map_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
-    for (int i = 0; i < g_map_tree_types_a[1]; i++) {
+    for (int i = 0; i < g_map_tree_types[1]; i++) {
         tmp->assign("snow_tree_");                                   // 0x59c0cc
         tmp->push_back((char)('a' + i));
         snow_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
-    for (int i = 0; i < g_map_tree_types_a[2]; i++) {
+    for (int i = 0; i < g_map_tree_types[2]; i++) {
         tmp->assign("steppe_tree_");                                 // 0x59c0bc
         tmp->push_back((char)('a' + i));
         steppe_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
-    for (int i = 0; i < g_map_tree_types_a[3]; i++) {
+    for (int i = 0; i < g_map_tree_types[3]; i++) {
         tmp->assign("desert_tree_");                                 // 0x59c0ac
         tmp->push_back((char)('a' + i));
         desert_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
@@ -671,13 +700,13 @@ void Game::build_map_trees()
                             if (t == 0xc) goto lab_ce0;
                             if (t == 10) {
                                 chosen = steppe_arr[0];
-                                if (g_map_tree_types_a[2] > 1) chosen = steppe_arr[rand() % g_map_tree_types_a[2]];
+                                if (g_map_tree_types[2] > 1) chosen = steppe_arr[rand() % g_map_tree_types[2]];
                             } else if (t == 0xd) {
                                 chosen = desert_arr[0];
-                                if (g_map_tree_types_a[3] > 1) chosen = desert_arr[rand() % g_map_tree_types_a[3]];
+                                if (g_map_tree_types[3] > 1) chosen = desert_arr[rand() % g_map_tree_types[3]];
                             } else {
-                                chosen = (g_map_tree_types_a[0] < 2) ? map_arr[0]
-                                       : map_arr[rand() % g_map_tree_types_a[0]];
+                                chosen = (g_map_tree_types[0] < 2) ? map_arr[0]
+                                       : map_arr[rand() % g_map_tree_types[0]];
                             }
                         } else {
                             if (t != 0xc) {
@@ -686,7 +715,7 @@ void Game::build_map_trees()
                             }
                         lab_ce0:
                             chosen = snow_arr[0];
-                            if (g_map_tree_types_a[1] > 1) chosen = snow_arr[rand() % g_map_tree_types_a[1]];
+                            if (g_map_tree_types[1] > 1) chosen = snow_arr[rand() % g_map_tree_types[1]];
                         }
                         if (chosen != 0) {
                             float mat[16];
@@ -919,7 +948,6 @@ void __stdcall scan_arrays(void* p, int unused)
 }
 
 // ---- Game::load_game_data and the record helpers that follow it (binary order) -----------------------------------------
-extern SkillFile g_skill_tbl[42];                    // 0x8ee3100 (the skill table; kept as a hex name for the equivalence resolver)
 
 // @ 0x5236f0
 void Game::load_game_data(int extra_triggers)
@@ -962,18 +990,18 @@ void Game::load_game_data(int extra_triggers)
     for (i = 0; i < skill_count && i < 42; i++)
         read_skill(s_skills, g_skill_tbl[i]);
     for (; i < 42; i++) {
-        g_skill_tbl[i].f34 = 0;
-        g_skill_tbl[i].f38 = 0;
-        g_skill_tbl[i].f40 = 0x100;
+        g_skill_tbl[i].max_rank = 0;
+        g_skill_tbl[i].cap = 0;
+        g_skill_tbl[i].attr = 0x100;
     }
     s_skills.failed = 1;
 
     // ---- Data\skeleton_bodies.xml -----------------------------------------------------------------------
     {
         tstring path("Data\\skeleton_bodies.xml");
-        ((SkeletonBody*)g_skeletons)->load(path);
+        ((SkeletonBody*)&g_skeletons)->load(path);
     }
-    fix_skeletons((std::vector<RegSkeleton>*)g_skeletons);
+    fix_skeletons(&g_skeletons);
 
     // ---- troops.txt -------------------------------------------------------------------------------------
     file_text s_troops;                                  // +0xb8
@@ -1110,13 +1138,13 @@ void TriggerStmt::init(int op, int idx)
 }
 
 // @ 0x5243c0
-stream_base& read_skill(stream_base& s, SkillFile& r)
+stream_base& read_skill(stream_base& s, SkillRec& r)
 {
-    s.r_tstr(RSTR(&r.f20));
-    s.r_tstr(RSTR(&r.f10)).r_int(&r.f40).r_int(&r.f34).r_tstr(RSTR(&r.f0));
-    r.f10.underscores_to_spaces();
-    r.f0.underscores_to_spaces();
-    r.f38 = r.f34;
+    s.r_tstr(RSTR(&r.key));
+    s.r_tstr(RSTR(&r.name)).r_int((int*)&r.attr).r_int(&r.max_rank).r_tstr(RSTR(&r.desc));
+    r.name.underscores_to_spaces();
+    r.desc.underscores_to_spaces();
+    r.cap = r.max_rank;
     return s;
 }
 

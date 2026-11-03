@@ -28,6 +28,10 @@ using rgl::vector4;
 
 extern int g_use_shaders;                       // 0x5e28fc: programmable pipeline in use
 
+extern float g_k_0_2;                           // 0x54b4c8
+extern float g_k_1_20;                          // 0x54b4d0
+extern float g_k_reach;                         // 0x598e8c (36.0)
+
 // ---- engine std::vector views (alloc, begin, end, cap): size() is inline, capacity()/resize are out of line ---
 #include "../../include/mat4.h"
 #include "./cs_common.h"
@@ -105,6 +109,7 @@ struct frame60 {                                // 0x60: one frame of a dust mes
 };
 
 #include "../ptype.h"                      // AnimBox (meshes at +0x14) / ptype / g_ptypes (shared with terrain_a, terrain_b)
+#include "../../include/render_flags.h"
 
 struct DustParticle {                               // 0xa0, list at mission + 0x5c3b8f8
     int type;                                   // +0x00

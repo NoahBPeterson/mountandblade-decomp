@@ -12,6 +12,7 @@
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdio.h>
 #include <stdlib.h>
 #include <new>
@@ -72,7 +73,8 @@ struct WidgetB;
 WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
 void __cdecl label_refresh(MissionUi* w, tstring name);                // 0x4e4c70 (cdecl, the name by value; cls_map/progress_bar.cpp)
 struct GameData { tstring string_value(int index); };                  // 0x48e9e0 (include/game_data.h; ret 8: hidden return)
-extern int g_tutorial_off;                      // 0x5a9fac (non-zero: tutorials are switched off)
+
+
 extern void* g_windows[];                       // 0xa73980 (the window manager: its first screen is the message box)
 struct WindowOpener {                           // the window manager (world_data.h WindowMgrW)
     void open(int window);                      // 0x494260 (ret 4)

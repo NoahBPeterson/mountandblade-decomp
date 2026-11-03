@@ -114,7 +114,7 @@ struct SkillRow {                                   // the 42 x 0x44-byte skill 
     unsigned flags;                                 // +0x30 bit 4 = shown on the skills page (0x5059c0)
     char pad34[0x44 - 0x34];
 };
-extern SkillRow g_skill_rows[];                     // 0x8ee3110
+
 
 // ---- objects and functions of other translation units --------------------------------------------------------------
 #include "../game_globals.h"      // g_module_settings (canonical)

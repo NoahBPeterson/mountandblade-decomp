@@ -33,6 +33,9 @@ struct OptionsDlg {
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../map_icon.h"      // g_map_icons (0x5e29f0)
+#include "../../include/rec78.h"
+#include "../ptype.h"
+#include "../../include/render_flags.h"
 #include "../module_name.h"      // g_module_name (0x8ee3c38)
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
@@ -838,8 +841,8 @@ void MissionScreen::fill_mission_row(int side)
         char buf[0x14];   // 0x14 like the original: its sprintf of a long count pair overflows into the line buffer that follows
         if (u->flags32 & 0x10) {
             int h = ((unsigned char*)u)[0x7a] & 0xf;
-            if (h > g_skill_tbl[36].cap)
-                h = g_skill_tbl[36].cap;
+            if (h > g_skill_tbl[36].max_rank)
+                h = g_skill_tbl[36].max_rank;
             sprintf(buf, " %d%%",
                     (int)(u->hp * 100.0f / (u->lvl58 + h * 2 + 0x23) + 0.0001f));
         } else {

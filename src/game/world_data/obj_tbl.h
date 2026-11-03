@@ -10,6 +10,7 @@
 #include "../game_globals.h"      // canonical g_map_icons
 #include "./tableau.h"
 #include "./widget_mgr_w.h"
+#include "../../include/render_flags.h"
 
 // ---- mesh members the shared headers lack (same object as rgl::mesh) ---------------------------------------------------------------------
 // (translate 0x44f240 and add_quad 0x44e970 are rgl::mesh's own, set_bone_index 0x47b360 is mesh_x's: rgl/mesh.h, rgl/mesh_x.h)
@@ -52,5 +53,6 @@ struct SceneRec48 {
 extern float g_one;                                             // 0x549cdc (1.0f)
 extern float g_zero;                                            // 0x549ca8 (0.0f)
 extern int g_use_shaders;                                        // 0x5e28fc (non-zero: gamma on colours)
+extern float g_zero;                                            // 0x549ca8 (0.0f)
 
 #endif // GAME_WORLD_DATA_OBJ_TBL_H

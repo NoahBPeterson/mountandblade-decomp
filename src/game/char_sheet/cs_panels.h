@@ -28,6 +28,8 @@
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
 extern "C" double atof(const char* s);              // 0x537352
 
+
+
 #include "../../rgl/text_stream.h"           // mb_snprintf 0x415100 (size-limited formatter)
 void mb_vsprintf(char* buf, const char* fmt, ...);          // 0x536f8f (unlimited formatter)
 

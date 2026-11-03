@@ -7,6 +7,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdlib.h>
 #include <string.h>
 #include <new>

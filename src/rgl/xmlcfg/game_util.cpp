@@ -30,6 +30,10 @@
 #include "../../game/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/clock_table.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+
 
 // ---- Newton Game Dynamics imports (cdecl) -----------------------------------------------------------
 extern "C" {
@@ -561,7 +565,6 @@ void Obj3::reset_pending(int v)
 
 // @ 0x433840  (agent/MIGRATION.md calls it Curve::step_reached; Curve and Channel are the same 0xd8-byte record)
 #include "../../include/fx.h"
-extern float g_step_tbl[];      // 0x5a9c20 per-clock step (seconds)
 bool Channel::busy()
 {
     bool r;

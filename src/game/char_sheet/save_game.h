@@ -60,7 +60,8 @@ struct SaveCtx;
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 #pragma pack(push, 4)
 #pragma pack(pop)
-extern __int64 g_ticks[2];                              // 0x5e2948
+#include "../../include/clock_table.h"   // g_ticks (0x5e2948)
+extern float g_54a6d0;                                  // 0x54a6d0
 extern int   g_59811c;                                  // 0x59811c ("WRDR")
 extern char  g_598120;                                  // 0x598120
 #include "../game_globals.h"
@@ -126,11 +127,8 @@ struct MapScreen {
 // ---- callees --------------------------------------------------------------------------------------------
 #include "../terrain_desc.h"
 int  save_game(int arg, tstring* name);                 // 0x4e8980
-struct Slot {
-    int is_ready(int v);   // 0x487900 (ret 4; ui/slot.cpp: the keyboard 0xa170c8 is a Slot)
-};
-struct ButtonState;
-extern ButtonState g_keyboard;                            // 0xa170c8
+#include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
+#include "../../include/render_flags.h"
 struct GameW {
     void world_free();   // 0x492f40 (world_data/world_data.h)
 };

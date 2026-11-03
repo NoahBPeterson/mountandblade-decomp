@@ -32,6 +32,19 @@
 #include "../../include/mat4.h"
 #include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../slot.h"
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+extern renderer g_render;                                  // 0xa17910 (constructed by the compiler: renderer::renderer 0x4bc2d0)
+Config g_cfg = {  // 0x5a9f98
+    /*first_time*/ 1, /*texture_detail*/ 50, /*show_framerate*/ 0, /*max_framerate*/ 100, /*start_windowed*/ 0, /*skip_tutorial*/ 0,
+    /*enable_edit_mode*/ 0, /*force_single_threading*/ 0, /*debug_mode*/ 0, /*cheat_mode*/ 0, /*enable_blood*/ 1, /*fake_reflections*/ 1,
+    /*disable_frequency_variation*/ 0, /*use_vertex_shaders*/ 1, /*use_pixel_shaders*/ 1, /*disable_music*/ 0, /*disable_sound*/ 0, /*unk44*/ 0,
+    /*render_buffer_size*/ 15, /*display_width*/ 0, /*display_height*/ 0, /*display_bits*/ 32, /*antialiasing*/ 1, /*sample_quality*/ 0,
+    /*force_vsync*/ 0, /*unk64*/ 1, /*shadowmap_quality*/ 1, /*unk6c*/ 1
+};
+
 
 // ---- imports and library functions the slices declared by hand ------------------------------------------------------
 extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(HWND hwnd, int csidl, HANDLE token, DWORD flags, char* path);   // 0x5492c0
@@ -795,20 +808,20 @@ void RagBody::load(TiXmlElement* src)
 
 // @ 0x4bc2d0
 // Clears the input state and rebuilds both view matrices with a unit last column.
-DisplayState::DisplayState()
+renderer::renderer()
 {
     Matrix tmp;
     Matrix* m;
-    unk618 = 0;
-    unk74c = 0;
-    mat1 = *(Matrix*)identity_pos((pos*)&tmp);
-    m = &mat1;
+    dev = 0;
+    width = 0;
+    *(Matrix*)&view = *(Matrix*)identity_pos((pos*)&tmp);
+    m = (Matrix*)&view;
     m->m[3] = 0;
     m->m[7] = 0;
     m->m[11] = 0;
     m->m[15] = 1.0f;
-    mat2 = *(Matrix*)identity_pos((pos*)&tmp);
-    m = &mat2;
+    *(Matrix*)&cur = *(Matrix*)identity_pos((pos*)&tmp);
+    m = (Matrix*)&cur;
     m->m[3] = 0;
     m->m[7] = 0;
     m->m[11] = 0;
@@ -838,17 +851,17 @@ void __fastcall apply_input_settings(InputSet* self)
 
 // @ 0x4bc3d0
 // Unacquires and releases the keyboard and the mouse, then the DirectInput object itself.
-void __fastcall release_input_devices(InputSet* self)
+void __fastcall release_input_devices(Slot* self)
 {
-    if (self->keyboard != 0) self->keyboard->Unacquire();
-    if (self->mouse != 0) self->mouse->Unacquire();
-    if (self->keyboard != 0) {
-        self->keyboard->Release();
-        self->keyboard = 0;
+    if (self->kb != 0) self->kb->Unacquire();
+    if (self->state != 0) self->state->Unacquire();
+    if (self->kb != 0) {
+        self->kb->Release();
+        self->kb = 0;
     }
-    if (self->mouse != 0) {
-        self->mouse->Release();
-        self->mouse = 0;
+    if (self->state != 0) {
+        self->state->Release();
+        self->state = 0;
     }
     if (self->dinput != 0) {
         self->dinput->Release();
@@ -858,7 +871,7 @@ void __fastcall release_input_devices(InputSet* self)
 
 // @ 0x4bc430
 // Creates DirectInput, the keyboard and the buffered mouse, then starts them.
-int InputSet::init_devices(HWND hwnd)
+int Slot::init_devices(HWND__* hwnd)
 {
     DIPROPDWORD buffer_size;
     HRESULT hr;
@@ -866,29 +879,29 @@ int InputSet::init_devices(HWND hwnd)
     release_input_devices(this);
     hr = DirectInput8Create(GetModuleHandleA(0), 0x0800, IID_IDirectInput8A, (void**)&dinput, 0);
     if (hr >= 0) {
-        hr = dinput->CreateDevice(GUID_SysKeyboard, &keyboard, 0);
+        hr = dinput->CreateDevice(GUID_SysKeyboard, &kb, 0);
         if (hr >= 0) {
-            hr = keyboard->SetDataFormat(&c_dfDIKeyboard);
+            hr = kb->SetDataFormat(&c_dfDIKeyboard);
             if (hr >= 0) {
-                hr = keyboard->SetCooperativeLevel(hwnd, 0x16);
+                hr = kb->SetCooperativeLevel((HWND)hwnd, 0x16);
                 if (hr >= 0) {
-                    keyboard->Acquire();
-                    hr = dinput->CreateDevice(GUID_SysMouse, &mouse, 0);
+                    kb->Acquire();
+                    hr = dinput->CreateDevice(GUID_SysMouse, &state, 0);
                     if (hr >= 0) {
                         // 0x59c6c4 is c_dfDIMouse2 (0x14 bytes, 11 objects): Slot::read_state (0x4876e0) reads 0x14 with
                         // GetDeviceState, which fails against the 16-byte c_dfDIMouse (no mission mouse look or buttons)
-                        hr = mouse->SetDataFormat(&c_dfDIMouse2);
+                        hr = state->SetDataFormat(&c_dfDIMouse2);
                         if (hr >= 0) {
-                            hr = mouse->SetCooperativeLevel(hwnd, 6);
+                            hr = state->SetCooperativeLevel((HWND)hwnd, 6);
                             if (hr >= 0) {
                                 buffer_size.diph.dwSize = 0x14;
                                 buffer_size.diph.dwHeaderSize = 0x10;
                                 buffer_size.diph.dwObj = 0;
                                 buffer_size.diph.dwHow = 0;
                                 buffer_size.dwData = 0x10;
-                                hr = mouse->SetProperty(DIPROP_BUFFERSIZE, &buffer_size.diph);
+                                hr = state->SetProperty(DIPROP_BUFFERSIZE, &buffer_size.diph);
                                 if (hr >= 0) {
-                                    mouse->Acquire();
+                                    state->Acquire();
                                     hr = 0;
                                 }
                             }

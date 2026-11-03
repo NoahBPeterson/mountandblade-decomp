@@ -53,7 +53,7 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
-extern unsigned __int64 g_pow2[];                           // 0x5a8e70  g_pow2[n] = 2 << n
+
 #include "../bit_words.h"
 // (set_field_a 0x464a60 is Terrain's: cs_common.h)
 
@@ -78,8 +78,6 @@ extern float g_0_01;                                        // 0x54ab28 (0.01f)
 extern const float g_ten;                                   // 0x549d74 (10.0f; this was declared g_one, which the linker bound to a 1.0f definition of another address)
 extern float g_half;                                        // 0x549d70 (0.5f)
 #include "../renderer.h"
-extern void* g_a17110;                                      // 0xa17110
-extern void* g_a17510;                                      // 0xa17510
 extern terrain_obj g_terrain_obj;                           // 0xa76630
 
 // the page: src/game/terrain_page.h (Paged, TerrainPage)

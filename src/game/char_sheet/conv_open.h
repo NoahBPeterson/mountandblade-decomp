@@ -33,6 +33,7 @@ using rgl::vector4;
 struct cfg_entry { int f0; char* value; char pad[0x2c - 8]; };  // config-table entry (0xa4425c + 0x2c*i)
 extern int g_n_strings;                                  // 0xa70240
 extern cfg_entry g_strings;                                  // 0xa44240 (indexed from 0xa4425c)
+
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
 
 // lookup of one setting (0x4bd5a0 + atof), 0.0f when the key is missing

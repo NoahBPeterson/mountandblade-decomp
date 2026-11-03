@@ -4,6 +4,7 @@
 #include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../slot.h"
 
 static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the camera sliders; passed by address)
 
@@ -131,7 +132,7 @@ done:
     simulate(dt);
     world->step(dt);
     path(dt);
-    if (page_changed(back_btn) || (g_a17110 != 0 && g_a17510 == 0))
+    if (page_changed(back_btn) || (g_keyboard.down[15] != 0 && g_keyboard.prev[15] == 0))
         g_main_menu.set_state(option);
 }
 

@@ -9,6 +9,7 @@
 //       Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdio.h>
 #include "./game.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)

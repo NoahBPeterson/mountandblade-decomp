@@ -8,6 +8,7 @@
 //       (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <stdlib.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdexcept>
 #include "./agent_combat.h"
 #include "../tstring.h"

@@ -8,6 +8,7 @@
 // constructor the original inlined (vtable store, member constructors, field stores) is written out as the stores it
 // makes; the vtables it stores are the original's (their slots point at our functions after the glue relocates them).
 #include <new>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/ptr_tag.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,14 +16,14 @@
 #include <string>
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../last_scene.h"
-#include "../key_names.h"      // g_keyboard (0xa170c8)
+#include "../../include/clock_table.h"
 #include "../animator.h"       // Animator g_anim (0x8ed4f60)
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
 extern char g_5d7080[];     // 0x5d7080 the gui manager
-extern unsigned g_5a8e78;   // 0x5a8e78 (size mask)
-extern unsigned g_5a8e88;   // 0x5a8e88 (type mask)
+
+
 extern unsigned g_5e2464;   // 0x5e2464
 extern unsigned g_5e2468;   // 0x5e2468
 extern float g_549cdc;      // 0x549cdc
@@ -37,20 +38,19 @@ extern float g_5a9f28[2];   // 0x5a9f28 (defined in cls_map.cpp: {x, y})
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
 extern char g_5fe898[];     // 0x5fe898
-extern char g_5e2948[];     // 0x5e2948 the tick counter (64-bit)
-extern char g_a178f0[];     // 0xa178f0
-extern char g_a17900[];     // 0xa17900
-extern char g_a170d4[];     // 0xa170d4 the key state table (0x100 dwords)
-extern char g_a178e0[];     // 0xa178e0
-extern char g_a17910[];     // 0xa17910 the display state
-extern char g_a180e8[];     // 0xa180e8 the skeleton name vector (allocator, first, last, end)
+
+
+
+
+
 extern char g_a181f8[];     // 0xa181f8 the physics set (vector of E56)
 extern char g_a18238[];     // 0xa18238 module.ini (ini file: 0x1000 entries of 0x2c)
 extern char g_a44238[];     // 0xa44238 (end of its entries)
 extern char g_a44240[];     // 0xa44240 the game config (ini file)
 extern char g_a70240[];     // 0xa70240 (end of its entries)
-extern char g_a70248[];     // 0xa70248
-extern char g_a70260[];     // 0xa70260 the scene
+
+struct ShadowMap;
+extern ShadowMap g_shadow_map;   // 0xa70248 (game_state.cpp)
 extern char g_a70440[];     // 0xa70440
 extern char g_a73300[];     // 0xa73300 the mission context
 extern char g_a73730[];     // 0xa73730 the game keys (0x4a dwords)
@@ -64,14 +64,16 @@ extern char g_a75ea0[];     // 0xa75ea0 the game strings
 extern char g_a75eb0[];     // 0xa75eb0 the scripts
 extern char g_a75f2c[];     // 0xa75f2c the presentations
 extern char g_a75f40[];     // 0xa75f40 the tableaus
-extern char g_a75f70[];     // 0xa75f70 0x2b item modifiers of 0x28
 extern char g_a76628[];     // 0xa76628
 extern char g_a76630[];     // 0xa76630 the terrain
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 extern char g_8ed4f58[];    // 0x8ed4f58 the meshes
 extern char g_8ed5090[];    // 0x8ed5090 the particle systems
+
+extern char g_a17910[];     // 0xa17910 the display state
+extern char g_a180e8[];     // 0xa180e8 the skeleton name vector (allocator, first, last, end)
+extern char g_a75f70[];     // 0xa75f70 0x2b item modifiers of 0x28
 extern char g_8ed50c8[];    // 0x8ed50c8 the dialogs
-extern char g_8ee3120[];    // 0x8ee3120 0x2a records of 0x44 (three strings each, at -0x20, -0x10, 0)
 extern char g_8ee3c28[];    // 0x8ee3c28 the module path
 extern char g_8ee3c38[];    // 0x8ee3c38 the module name
 extern char g_8ee3c48[];    // 0x8ee3c48 the application
@@ -302,7 +304,7 @@ void __cdecl static_init_547b30() { new (g_5fe898) GuiScreen; atexit(static_dtor
 // @ 0x547b50   input state: both tick snapshots, the key table, the axes
 void __cdecl static_init_547b50()
 {
-    int lo = AT(int, g_5e2948, 0), hi = AT(int, g_5e2948, 4);
+    int lo = ((int*)g_ticks)[0], hi = ((int*)g_ticks)[1];
     AT(int, g_a178f0, 0) = lo;
     AT(int, g_a178f0, 4) = hi;
     AT(int, g_a17900, 0) = lo;
@@ -310,8 +312,8 @@ void __cdecl static_init_547b50()
     memset(g_a170d4, 0, 0x400);
     AT(int, g_a178e0, 0) = 0;
     AT(int, g_a178e0, 4) = 0;
-    g_keyboard.axis[0] = 0;
-    g_keyboard.axis[1] = 0;
+    AT(int, (char*)&g_a178d4, 0) = 0;
+    AT(int, (char*)&g_a178d4, 4) = 0;
 }
 // @ 0x547ba0
 void __cdecl static_init_547ba0() { new (g_a17910) DisplayState; }
@@ -325,7 +327,7 @@ void __cdecl static_init_547dc0() { new (g_a44240) ini_file; atexit(static_dtor_
 void __cdecl static_init_547de0()
 {
     new (g_a70260) rgl::scene;
-    AT(int, g_a70248, 0) = 0;  AT(int, g_a70248, 4) = 0;  AT(int, g_a70248, 8) = 0;  AT(int, g_a70248, 0xc) = 0;
+    AT(int, (char*)&g_shadow_map, 0) = 0;  AT(int, (char*)&g_shadow_map, 4) = 0;  AT(int, (char*)&g_shadow_map, 8) = 0;  AT(int, (char*)&g_shadow_map, 0xc) = 0;   // the inlined ShadowMap constructor (game_state.cpp defines the object)
     g_a70438 = 0;
     atexit(static_dtor_548490);
 }

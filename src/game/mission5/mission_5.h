@@ -9,6 +9,7 @@
 #ifndef MISSION5_MISSION_5_H
 #define MISSION5_MISSION_5_H
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
@@ -39,13 +40,14 @@ extern Mission* g_mission;                       // 0x5e292c
 extern GameData* g_game;                         // 0x5e2930
 extern ItemKind* g_items;                        // 0x5e29d0
 extern MissionTemplate* g_mission_templates;     // 0x5e2a00
-extern char g_dialogs[]; // 0x8ed50c8
+#include "../dialog_mgr.h"           // DialogMgr g_dialogs (0x8ed50c8)
 extern int g_conversation_troop;   // 0x8ed50d4
 extern int g_encountered_party;    // 0x8ed50d8
-extern int g_conversation_agent;   // 0x8ed50dc
+
 #include "../str_table.h"   // StrTable g_strtable (0x5e2a18): the one definition
 extern char g_gui[]; // 0x5d7080
 extern char g_game_keys[]; // 0xa73730
+#include "../slot.h"                        // Slot, g_keyboard (0xa170c8)
 extern char g_windows[]; // 0xa73980
 #include "../map_flags.h"      // MapFlags, g_map_flags (0x5e291c): the one definition
 extern char g_mission_ctx[]; // 0xa73300
@@ -56,6 +58,8 @@ extern char g_game_keys[]; // 0xa73730
 #include "../prop_kind.h"
 #include "../menu_rec.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/render_flags.h"
+#include "../config/config_block.h"
 #include "../ui_globals.h"      // UI / core globals
 extern char g_terrain[]; // 0xa76630
 extern char g_app_obj[]; // 0x8ee3c48
@@ -140,7 +144,7 @@ struct Game_s25160 {
 // ======================================================= slice s005257f0: classes, globals, helpers
 #define g_mission_s257f0 (*(Mission_s257f0**)&g_mission)
 #define g_game_s257f0 (*(Game_s257f0**)&g_game)
-#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)g_dialogs)
+#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)&g_dialogs)
 // Slice s005257f0: the dialogue "look at" update of the view object (0x5257f0) and its two agent lookups,
 // find_speaker_agent (0x526070) and find_listener_agent (0x526130).  The lookup pair scans the mission's
 // agent table for the agent whose troop id (+0x88) equals the current dialogue speaker / listener.
@@ -244,7 +248,7 @@ static __forceinline float clamp01_s257f0(float x)
 // ======================================================= slice s00526130: classes, globals, helpers
 #define g_mission_s26130 (*(Mission_s26130**)&g_mission)
 #define g_game_s26130 (*(Game_s26130**)&g_game)
-#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)g_dialogs)
+#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)&g_dialogs)
 // Slice s00526130: the dialogue-listener agent lookup (0x526130).  It scans the mission's agent table for
 // the used agent whose troop id (+0x88) equals DialogMgr_s26130::listener and returns the last match, or -1.
 // Names provisional; every callee/global carries its VA.
@@ -360,13 +364,13 @@ struct KeyReady_s261e0 {
 
 
 // 2-entry binding arrays of the mission-editor actions
-extern int g_keys_7350[2];                              // 0xa73750
-extern int g_keys_7388[2];                              // 0xa73788
-extern int g_keys_73a8[2];                              // 0xa737a8
-extern int g_keys_73b0[2];                              // 0xa737b0
-extern int g_keys_73b8[2];                              // 0xa737b8
-extern int g_keys_73c0[2];                              // 0xa737c0
-extern int g_keys_73c8[2];                              // 0xa737c8
+#define g_keys_7350 ((int*)(g_game_keys + 0x20))              // 0xa73730 + 0x20: the two bindings of one action
+#define g_keys_7388 ((int*)(g_game_keys + 0x58))              // 0xa73730 + 0x58: the two bindings of one action
+#define g_keys_73a8 ((int*)(g_game_keys + 0x78))              // 0xa73730 + 0x78: the two bindings of one action
+#define g_keys_73b0 ((int*)(g_game_keys + 0x80))              // 0xa73730 + 0x80: the two bindings of one action
+#define g_keys_73b8 ((int*)(g_game_keys + 0x88))              // 0xa73730 + 0x88: the two bindings of one action
+#define g_keys_73c0 ((int*)(g_game_keys + 0x90))              // 0xa73730 + 0x90: the two bindings of one action
+#define g_keys_73c8 ((int*)(g_game_keys + 0x98))              // 0xa73730 + 0x98: the two bindings of one action
 
 // -----------------------------------------------------------------------------------------------------
 // agents / mission / game data
@@ -529,7 +533,6 @@ struct DialogMgr_s261e0 {
 };
 // The dialog manager is a fixed object at 0x8ed50c8 (outside the tool's annotation range, so it is
 // named through a literal cast here).
-extern DialogMgr_s261e0 g_dialogmgr;          // 0x8ed50c8
 
 struct Flags5e291c_s261e0 {
     char b0, b1, b2, pad3;
@@ -555,7 +558,6 @@ extern HANDLE g_mt_event;                                  // 0x5e28d8
 extern int  g_pending_action;                                  // 0x5a9f18
 extern int  g_vert_budget;                                  // 0x5a9c34
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
-extern unsigned char g_a17908;                          // 0xa17908
 #include "../../include/renderer.h"
 extern char g_script[]; // 0xa70440
 #define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
@@ -583,6 +585,7 @@ extern const float g_f549cdc;                           // 0x549cdc = 1.0f
 extern const float g_f54a6d0;                           // 0x54a6d0 = 1e-05f
 extern const float g_f54b8b0;                           // 0x54b8b0 = 1.5f
 extern const float g_f590b38;                           // 0x590b38 = 8.0f
+extern const float g_f549d7c;                           // 0x549d7c = 0.1f
 
 // ---- plain callees ----------------------------------------------------------------------------------
 void __cdecl restore_defaults();                        // 0x4d3a50
@@ -987,23 +990,8 @@ struct KeyNames_s284a0 {                                       // 0xa170c8
 
 
 // ---- globals ----------------------------------------------------------------------------------------
-extern int g_a17188;                                    // 0xa17188
-extern int g_a17128;                                    // 0xa17128
-extern int g_a17184;                                    // 0xa17184
-extern int g_a1712c;                                    // 0xa1712c
-extern int g_a17190;                                    // 0xa17190
-extern int g_a1715c;                                    // 0xa1715c
-extern int g_a1717c;                                    // 0xa1717c
-extern int g_a171d0;                                    // 0xa171d0
-extern int g_a175d0;                                    // 0xa175d0
-extern int g_a171d4;                                    // 0xa171d4
-extern int g_a175d4;                                    // 0xa175d4
-extern int g_a171c8;                                    // 0xa171c8
-extern int g_a175c8;                                    // 0xa175c8
-extern int g_a17160;                                    // 0xa17160
-extern int g_a17560;                                    // 0xa17560
-extern int g_a73790;                                    // 0xa73790
-extern int g_a73794;                                    // 0xa73794
+#define g_a73790 (*(int*)(g_game_keys + 0x60))           // 0xa73790
+#define g_a73794 (*(int*)(g_game_keys + 0x64))           // 0xa73794
 #include "../../include/fx.h"
 #include "../../rgl/resource_manager.h"
 
@@ -1164,12 +1152,15 @@ struct MissionHud_s29130 {
 
 struct ItemKind_s29130 { char pad[0x1c8]; int type; char pad1cc[0x238 - 0x1cc]; };
 
+extern float g_half;                                          // 0x549d70 (0.5f)
 extern float g_deg2rad;                                       // 0x590ce4 (0.017453292)
 extern float g_0375;                                          // 0x59c310 (0.375f)
 extern float g_2p5;                                           // 0x590c4c (2.5f)
 extern float g_255;                                           // 0x590cec (255.0f)
+extern float g_1p2;                                           // 0x590b94 (1.2f)
 extern float g_0;                                             // 0x549ca8 (0.0f)
-extern float g_range_tbl[];                                   // 0x59390c (lo/hi pairs)
+extern float g_1;                                             // 0x549cdc (1.0f)
+extern const float g_aim_range_tbl[14];                         // 0x59390c (lo/hi pairs)
 
 float __cdecl signed_angle(void* a, void* b);                 // 0x4381e0
 
@@ -1309,7 +1300,6 @@ struct Mission_s29840 {
 // ---- externals -----------------------------------------------------------------------------------------
 
 
-extern float g_exp_rate;                                      // 0x590c54 (7.0f)
 
 inline PartyMgr_s29840* party_mgr_s29840() { return (PartyMgr_s29840*)((char*)g_game_s29840 + 0xf8); }
 inline Troop_s29840* troop_tbl_s29840() { return *(Troop_s29840**)((char*)g_game_s29840 + 0x13a00); }
@@ -1646,7 +1636,6 @@ struct Mission_s2ae70 {
 };
 
 
-extern int g_a1717c;                                    // 0xa1717c
 
 // ---- the mission screen --------------------------------------------------------------------------------
 struct Screen_s2ae70 {
@@ -1867,13 +1856,6 @@ struct Editor_s2b5c0 {
 
 
 
-extern int g_a17160;                                    // 0xa17160
-extern int g_a17560;                                    // 0xa17560
-extern int g_a171b8;                                    // 0xa171b8
-extern int g_a175b8;                                    // 0xa175b8
-extern int g_a1745c;                                    // 0xa1745c
-extern int g_a1785c;                                    // 0xa1785c
-extern int g_use_shaders;                                    // 0x5e28fc
 
 // =====================================================================================================
 //  Mission_s2b5c0::order_agent
@@ -1902,7 +1884,6 @@ struct CampaignGame_s2bf40 {
     float f1a0dc;                                       // +0x1a0dc
 };
 
-extern int g_use_shaders;                                    // 0x5e28fc
 
 struct Terrain_s2bf40 {
     char pad0[0x60];
@@ -2056,11 +2037,6 @@ struct ConvScreen {
 struct CreateGameOptionsPage {
     void update_checks();   // 0x4bf640
 };
-struct DialogMgr {
-    int listener();   // 0x460670
-    int speaker();   // 0x460640
-    void start(int, int, int, int, char);   // 0x4610b0
-};
 struct ForceLabel {
     void make_label(char*);   // 0x48d940
 };
@@ -2149,9 +2125,6 @@ struct Shape {
     void build_ribbons(rgl::mesh*);   // 0x4e6a70
     void build_spikes(rgl::mesh*);   // 0x4e65e0
     void polygon_to_mesh(rgl::mesh*);   // 0x4e75a0
-};
-struct Slot {
-    int is_ready(int);   // 0x487900
 };
 struct TerrainX {
     void emit_particle(int, int, int, int, float);   // 0x47ff60
