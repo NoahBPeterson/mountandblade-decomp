@@ -743,7 +743,7 @@ vector4 Terrain::sample(const float* p)
     vector4 c11 = *q11;
     vector4 a, b;
     // the vector4(x, y, z) temporaries leave w untouched: when a blended a / b leaves through the early
-    // returns, the original returns whatever its stack held in that lane (an uninitialised slot)
+    // returns, the original returns whatever its stack held in that lane (an uninitialised slot; the harness models it as uninitialised-in-both)
     if (p[1] < c00.y) {
         a = *q00;
     } else if (c01.y < p[1]) {
@@ -751,8 +751,8 @@ vector4 Terrain::sample(const float* p)
     } else {
         float t = (p[1] - c00.y) / (c01.y - c00.y);
         float u = 1.0f - t;
-        volatile float sx = c00.x * u;
-        volatile float sy = c00.y * u;
+        float sx = c00.x * u;
+        float sy = c00.y * u;
         a = vector4(q01->x * t + sx, t * c01.y + sy, q01->z * t + u * q00->z);
     }
     if (p[1] < c10.y) {
@@ -762,8 +762,8 @@ vector4 Terrain::sample(const float* p)
     } else {
         float t = (p[1] - c10.y) / (c11.y - c10.y);
         float u = 1.0f - t;
-        volatile float sx = c10.x * u;
-        volatile float sy = c10.y * u;
+        float sx = c10.x * u;
+        float sy = c10.y * u;
         b = vector4(q11->x * t + sx, t * c11.y + sy, q11->z * t + u * q10->z);
     }
     if (p[0] < c00.x) {
@@ -774,8 +774,8 @@ vector4 Terrain::sample(const float* p)
     }
     float t = (p[0] - c00.x) / (c10.x - c00.x);
     float u = 1.0f - t;
-    volatile float sx = a.x * u;
-    volatile float sy = a.y * u;
+    float sx = a.x * u;
+    float sy = a.y * u;
     vector4 r(b.x * t + sx, b.y * t + sy, b.z * t + u * a.z);
     r.w = q10->w;
     return r;
